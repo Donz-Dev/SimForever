@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import exampleWarrior from '../../src/data/profiles/example-warrior.json';
+import { MAX_CHARACTER_LEVEL } from '../../src/game/character';
 import {
   CURRENT_PROFILE_VERSION,
   cloneProfile,
@@ -159,6 +160,45 @@ describe('validateProfile', () => {
       expect(validateProfile(withCharacter('dwarf', 'shaman')).ok).toBe(true);
       expect(validateProfile(withCharacter('high_order_skyborne', 'druid')).ok).toBe(true);
       expect(validateProfile(withCharacter('windshaper_skyborne', 'shaman')).ok).toBe(true);
+    });
+  });
+
+  describe('level', () => {
+    const base = createDefaultProfile();
+    const atLevel = (level: unknown) => ({
+      ...base,
+      character: { ...base.character, level },
+    });
+
+    it('accepts the range 1 to 60', () => {
+      expect(validateProfile(atLevel(1)).ok).toBe(true);
+      expect(validateProfile(atLevel(30)).ok).toBe(true);
+      expect(validateProfile(atLevel(MAX_CHARACTER_LEVEL)).ok).toBe(true);
+    });
+
+    it('rejects anything above the cap', () => {
+      // 80 was the old placeholder default and is Wrath-era, not Forever.
+      const result = validateProfile(atLevel(61));
+
+      expect(result.ok).toBe(false);
+      if (result.ok) return;
+      expect(result.issues).toContainEqual(
+        expect.objectContaining({
+          path: 'character.level',
+          message: expect.stringContaining('between 1 and 60'),
+        }),
+      );
+      expect(validateProfile(atLevel(80)).ok).toBe(false);
+    });
+
+    it('rejects zero, negatives and fractions', () => {
+      expect(validateProfile(atLevel(0)).ok).toBe(false);
+      expect(validateProfile(atLevel(-1)).ok).toBe(false);
+      expect(validateProfile(atLevel(59.5)).ok).toBe(false);
+    });
+
+    it('caps at 60, matching Classic', () => {
+      expect(MAX_CHARACTER_LEVEL).toBe(60);
     });
   });
 

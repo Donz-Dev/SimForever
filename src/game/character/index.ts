@@ -8,7 +8,13 @@
 export type { ClassId, FactionId, RaceId } from './ids';
 export { CLASS_IDS, FACTION_IDS, RACE_IDS, isClassId, isFactionId, isRaceId } from './ids';
 export type { ClassDefinition, FactionDefinition, RaceDefinition } from './definitions';
-export { CLASSES, FACTIONS, RACES } from './definitions';
+export {
+  CLASSES,
+  FACTIONS,
+  MAX_CHARACTER_LEVEL,
+  MIN_CHARACTER_LEVEL,
+  RACES,
+} from './definitions';
 export type { CharacterSelection } from './selection';
 export {
   applySelection,

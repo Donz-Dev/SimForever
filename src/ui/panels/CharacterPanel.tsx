@@ -3,6 +3,8 @@ import type { CharacterSelection } from '../../game/character';
 import {
   CLASSES,
   FACTIONS,
+  MAX_CHARACTER_LEVEL,
+  MIN_CHARACTER_LEVEL,
   applySelection,
   classesForRace,
   getRace,
@@ -93,8 +95,10 @@ export function CharacterPanel({ profile, onChange }: CharacterPanelProps) {
 
       <NumberField
         label="Level"
+        hint={`max ${MAX_CHARACTER_LEVEL}`}
         value={profile.character.level}
-        min={1}
+        min={MIN_CHARACTER_LEVEL}
+        max={MAX_CHARACTER_LEVEL}
         onChange={(level) =>
           onChange({ ...profile, character: { ...profile.character, level } })
         }

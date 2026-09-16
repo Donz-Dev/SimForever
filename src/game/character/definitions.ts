@@ -18,6 +18,19 @@ import type { ClassId, FactionId, RaceId } from './ids';
  * edit that breaks one fails the build rather than the simulation.
  */
 
+/**
+ * The level cap in World of Warcraft: Forever, matching Classic.
+ *
+ * Kept here rather than in the engine because it is a ruleset decision, not a
+ * simulation rule: raising the cap in a future patch is a content change.
+ * Anything that scales with level — base stats, rating conversions, ability
+ * coefficients — should read this rather than hard-coding 60.
+ */
+export const MAX_CHARACTER_LEVEL = 60;
+
+/** The lowest level a character can be. */
+export const MIN_CHARACTER_LEVEL = 1;
+
 export interface FactionDefinition {
   readonly id: FactionId;
   readonly name: string;
