@@ -7,6 +7,7 @@ import { startResourceRegeneration } from '../resources';
 import type {
   AttackChanceProvider,
   AttackChances,
+  AttackContext,
   AttackResolution,
   AttackTableKind,
 } from '../combat/attackTable';
@@ -250,16 +251,22 @@ export class Simulation implements SimulationContext {
     kind: AttackTableKind,
     source: Combatant,
     target: Combatant,
+    context?: AttackContext,
   ): AttackChances {
-    return this.chanceProvider(kind, source, target);
+    return this.chanceProvider(kind, source, target, context);
   }
 
   rollAttack(
     kind: AttackTableKind,
     source: Combatant,
     target: Combatant,
+    context?: AttackContext,
   ): AttackResolution {
-    return resolveAttackTable(kind, this.attackChances(kind, source, target), this.rng);
+    return resolveAttackTable(
+      kind,
+      this.attackChances(kind, source, target, context),
+      this.rng,
+    );
   }
 
   killCombatant(target: Combatant, killer?: Combatant): void {

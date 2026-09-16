@@ -10,7 +10,7 @@ import type { ClassId, CombatStyleId, RaceId } from '../game/character';
  * moves on. Getting this in before anyone has saved anything is much cheaper
  * than retrofitting it later.
  */
-export const CURRENT_PROFILE_VERSION = 2;
+export const CURRENT_PROFILE_VERSION = 3;
 
 export interface CharacterSection {
   readonly name: string;
@@ -57,6 +57,11 @@ export interface EncounterSection {
   readonly targetName: string;
   readonly targetHealth: number;
   readonly targetArmor: number;
+  /**
+   * Target level. Sets defense skill (5 x level), the armor constant and
+   * crit suppression, so it shapes the entire combat table.
+   */
+  readonly targetLevel: number;
 }
 
 /**
@@ -105,7 +110,8 @@ export function createDefaultProfile(): CharacterProfile {
     encounter: {
       targetName: 'Training Dummy',
       targetHealth: 100_000,
-      targetArmor: 0,
+      targetArmor: 3731,
+      targetLevel: 63,
     },
   };
 }

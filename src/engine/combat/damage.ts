@@ -1,14 +1,10 @@
-import type { Combatant, ResourceGeneration } from '../actors/Combatant';
+import type { Combatant, ResourceGeneration, WeaponSlot } from '../actors/Combatant';
 import type { SimulationContext } from '../simulation/SimulationContext';
 import type { DamageSchool } from './DamageSchool';
 import { isPhysical } from './DamageSchool';
 import type { AttackOutcome, AttackResolution, AttackTableKind } from './attackTable';
 import { resolveAttackTable } from './attackTable';
-import {
-  ARMOR_CONSTANT,
-  MAX_ARMOR_REDUCTION,
-  versatilityMultiplierFrom,
-} from './ratings';
+import { armorConstantForLevel, versatilityMultiplierFrom } from './ratings';
 
 /**
  * A request to deal damage, as an ability describes it.
@@ -40,6 +36,23 @@ export interface DamageRequest {
   readonly attackTable?: AttackTableKind;
   /** True for damage-over-time ticks. Recorded in telemetry. */
   readonly periodic?: boolean;
+  /**
+   * Which weapon produced this, when it matters.
+   *
+   * A dual-wielder's hands are not equivalent: the off-hand has its own
+   * miss chance and weapon skill, so the combat table needs to know which
+   * one swung.
+   */
+  readonly weaponSlot?: WeaponSlot;
+  /**
+   * Whether armor reduces this damage.
+   *
+   * Defaults to true for physical damage and false otherwise. Set it
+   * explicitly for physical damage that ignores armor, such as a bleed:
+   * armor applies to hit-based physical damage, and that is decided per
+   * event rather than inferred from the school alone.
+   */
+  readonly appliesArmor?: boolean;
 }
 
 /** The fully resolved outcome of a damage request. */
@@ -81,15 +94,31 @@ export function scaleByPower(request: DamageRequest): number {
 }
 
 /**
- * Fraction of a physical hit removed by armor.
+ * The fraction of damage that gets THROUGH armor:
  *
- * Diminishing by construction: doubling armor does not halve damage again.
- * Magical schools return 0 here until resistances are implemented.
+ *     multiplier = 1 - armor / (400 + 85 * level + armor)
+ *
+ * A 3731-armor level 63 target lets 60.67% through, which is the familiar
+ * "just under 40% reduction" against a raid boss.
+ *
+ * Note the naming carefully. The source calls this expression
+ * `Armor_Reduction`, but what it computes is the multiplier, not the amount
+ * removed. Reading it as the reduction would turn a 39% reduction into a 61%
+ * one, which is exactly the sort of error that produces plausible numbers.
  */
-export function armorReduction(armor: number, school: DamageSchool): number {
-  if (!isPhysical(school) || armor <= 0) return 0;
-  const reduction = armor / (armor + ARMOR_CONSTANT);
-  return Math.min(MAX_ARMOR_REDUCTION, reduction);
+export function armorDamageMultiplier(armor: number, targetLevel: number): number {
+  if (armor <= 0) return 1;
+  return 1 - armor / (armorConstantForLevel(targetLevel) + armor);
+}
+
+/** The fraction of damage armor removes. The complement of the multiplier. */
+export function armorReduction(armor: number, targetLevel: number): number {
+  return 1 - armorDamageMultiplier(armor, targetLevel);
+}
+
+/** Whether armor applies to a request, defaulting to "yes if physical". */
+export function appliesArmor(request: DamageRequest): boolean {
+  return request.appliesArmor ?? isPhysical(request.school);
 }
 
 /**
@@ -103,7 +132,12 @@ function rollTable(
   if (!request.attackTable) {
     return { outcome: 'hit', avoided: false, damageMultiplier: 1, rolls: [] };
   }
-  const chances = context.attackChances(request.attackTable, request.source, request.target);
+  const chances = context.attackChances(
+    request.attackTable,
+    request.source,
+    request.target,
+    { slot: request.weaponSlot },
+  );
   return resolveAttackTable(request.attackTable, chances, context.rng);
 }
 
@@ -118,7 +152,7 @@ export function resolveDamage(
   request: DamageRequest,
   attack: AttackResolution,
 ): DamageResolution {
-  const { source, target, school } = request;
+  const { source, target } = request;
 
   // A missed, dodged or parried attack does no damage and skips the rest of
   // the pipeline entirely.
@@ -144,7 +178,9 @@ export function resolveDamage(
 
   const afterTarget = afterAttacker * target.damageTakenMultiplier;
 
-  const reduction = armorReduction(target.stats.get('armor'), school);
+  const reduction = appliesArmor(request)
+    ? armorReduction(target.stats.get('armor'), target.level)
+    : 0;
   const mitigated = afterTarget * reduction;
   const afterMitigation = afterTarget - mitigated;
 

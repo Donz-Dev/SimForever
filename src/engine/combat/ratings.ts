@@ -30,13 +30,16 @@ export const RATING_PER_PERCENT = {
 export const CRITICAL_STRIKE_MULTIPLIER = 2.0;
 
 /**
- * Armor constant in `reduction = armor / (armor + K)`. A larger K means armor
- * is worth less. Real WoW scales K with attacker level.
+ * The armor constant, which scales with the defender's level:
+ *
+ *     K = 400 + 85 * level
+ *
+ * A larger K means armor is worth less. At level 63 it is 5755, which puts a
+ * 3731-armor raid boss at just under 40% physical reduction.
  */
-export const ARMOR_CONSTANT = 7390;
-
-/** Armor can never remove more than this fraction of a physical hit. */
-export const MAX_ARMOR_REDUCTION = 0.85;
+export function armorConstantForLevel(level: number): number {
+  return 400 + 85 * level;
+}
 
 /**
  * Melee and ranged crit chance as a fraction in [0, 1].

@@ -1,14 +1,24 @@
 import { Combatant } from '../../engine';
 
+/**
+ * Raid boss level, three above a level 60 character.
+ *
+ * The gap is what drives the whole combat table: 315 defense skill against
+ * 300 weapon skill, and 4.8 percentage points of crit suppression.
+ */
+export const RAID_BOSS_LEVEL = 63;
+
+/** Armor of a level 63 raid boss: just under 40% physical reduction. */
+export const RAID_BOSS_ARMOR = 3731;
+
 export interface TrainingDummyOptions {
   readonly id?: string;
   readonly name?: string;
   readonly health?: number;
-  /**
-   * Physical damage reduction. Defaults to 0 so that first-run numbers are easy
-   * to check by hand: damage dealt is damage taken.
-   */
+  /** Physical damage reduction. Defaults to raid boss armor. */
   readonly armor?: number;
+  /** Defaults to raid boss level. Drives defense skill and crit suppression. */
+  readonly level?: number;
 }
 
 /**
@@ -26,6 +36,7 @@ export function createTrainingDummy(options: TrainingDummyOptions = {}): Combata
     kind: 'enemy',
     faction: 'hostile',
     maxHealth: options.health ?? 100_000,
-    stats: { armor: options.armor ?? 0 },
+    level: options.level ?? RAID_BOSS_LEVEL,
+    stats: { armor: options.armor ?? RAID_BOSS_ARMOR },
   });
 }

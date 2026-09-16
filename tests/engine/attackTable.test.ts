@@ -116,7 +116,8 @@ describe('1. melee auto-attack (single roll)', () => {
     parry: 1400,
     glance: 4000,
     crit: 2000,
-    glanceMultiplier: 0.7,
+    glanceMultiplierMin: 0.7,
+    glanceMultiplierMax: 0.7,
     critMultiplier: 2,
   });
 

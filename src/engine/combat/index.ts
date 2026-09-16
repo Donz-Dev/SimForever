@@ -3,6 +3,7 @@ export { DAMAGE_SCHOOLS, isPhysical } from './DamageSchool';
 export type {
   AttackChanceProvider,
   AttackChances,
+  AttackContext,
   AttackOutcome,
   AttackResolution,
   AttackTableKind,
@@ -21,6 +22,8 @@ export {
 } from './attackTable';
 export type { DamageRequest, DamageResolution } from './damage';
 export {
+  appliesArmor,
+  armorDamageMultiplier,
   armorReduction,
   dealDamage,
   grantGeneratedResource,
@@ -30,10 +33,9 @@ export {
 export type { HealRequest, HealResolution } from './healing';
 export { applyHealing, resolveHealing } from './healing';
 export {
-  ARMOR_CONSTANT,
-  MAX_ARMOR_REDUCTION,
   RATING_PER_PERCENT,
   applyHaste,
+  armorConstantForLevel,
   critChanceFrom,
   hasteMultiplierFrom,
   spellCritChanceFrom,

@@ -57,6 +57,8 @@ export const RENDING_WOUND: AuraDefinition = {
         // No attack table: whether this effect landed was decided when it was
         // applied, so its ticks do not roll again.
         periodic: true,
+        // A bleed is physical but ignores armor.
+        appliesArmor: false,
       });
     },
   },

@@ -38,7 +38,12 @@ describe('profile serialization', () => {
         iterations: 500,
         seed: 987654,
       },
-      encounter: { targetName: 'Boss', targetHealth: 5_000_000, targetArmor: 7390 },
+      encounter: {
+        targetName: 'Boss',
+        targetHealth: 5_000_000,
+        targetArmor: 3731,
+        targetLevel: 63,
+      },
     };
 
     const result = parseProfile(serializeProfile(original));

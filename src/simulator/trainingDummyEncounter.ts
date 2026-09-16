@@ -48,6 +48,7 @@ export function trainingDummyEncounter(
         name: profile.encounter.targetName,
         health: profile.encounter.targetHealth,
         armor: profile.encounter.targetArmor,
+        level: profile.encounter.targetLevel,
       }),
     ],
 

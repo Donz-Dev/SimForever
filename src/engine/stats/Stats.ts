@@ -33,6 +33,11 @@ export const STAT_NAMES = [
   'critChance',
   'spellCritChance',
   'dodgeChance',
+  /**
+   * Chance to hit, in percentage points, SUBTRACTED from miss chance rather
+   * than added to anything. 5 means "5% less likely to miss".
+   */
+  'hitChance',
 
   /** Mana restored per five seconds. */
   'manaPer5',

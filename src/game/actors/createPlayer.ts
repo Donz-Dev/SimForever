@@ -18,6 +18,7 @@ import {
   resourceSpecsFor,
   statDerivationFor,
 } from '../character';
+import { MAX_CHARACTER_LEVEL } from '../character';
 import { RAGE_FROM_DAMAGE_TAKEN, regenerationFor } from '../combat/resourceRules';
 import { rotationFor } from '../rotations/basicMeleeRotation';
 import { autoAttackModeForStyle, weaponsForStyle } from './weapons';
@@ -106,6 +107,7 @@ export function createPlayer(options: PlayerOptions): Combatant {
     name: options.name ?? 'Player',
     kind: 'player',
     faction: 'friendly',
+    level: MAX_CHARACTER_LEVEL,
     maxHealth: baseHitPointsFor(race, characterClass, style) + derived.hitPoints,
     stats: startingStats,
     statDerivation: statDerivationFor(characterClass, style),

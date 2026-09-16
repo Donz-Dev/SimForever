@@ -1,7 +1,12 @@
 import type { Ability } from '../abilities/Ability';
 import type { CastCheck } from '../abilities/casting';
 import type { Combatant } from '../actors/Combatant';
-import type { AttackChances, AttackResolution, AttackTableKind } from '../combat/attackTable';
+import type {
+  AttackChances,
+  AttackContext,
+  AttackResolution,
+  AttackTableKind,
+} from '../combat/attackTable';
 import type { AuraDefinition, AuraInstance } from '../effects';
 import type { CombatEvent, ScheduledEvent } from '../events';
 import type { CombatEndReason, TelemetrySink } from '../logging';
@@ -79,6 +84,7 @@ export interface SimulationContext {
     kind: AttackTableKind,
     source: Combatant,
     target: Combatant,
+    context?: AttackContext,
   ): AttackChances;
 
   /**
@@ -92,6 +98,7 @@ export interface SimulationContext {
     kind: AttackTableKind,
     source: Combatant,
     target: Combatant,
+    context?: AttackContext,
   ): AttackResolution;
 
   /** Kill a combatant, clear its auras, and end combat if that was the last one. */

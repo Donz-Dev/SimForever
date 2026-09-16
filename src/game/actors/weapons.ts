@@ -19,6 +19,15 @@ import { RAGE_FROM_AUTO_ATTACK } from '../combat/resourceRules';
  * Rage is proportional to damage actually dealt, not a flat award per swing.
  * A missed or dodged swing therefore generates nothing.
  */
+/**
+ * Weapon skill for a level 60 character with the skill maxed.
+ *
+ * Compared against the target's defense skill (5 x level) to derive miss,
+ * dodge and glancing chances. A level 63 target has 315 defense, so a maxed
+ * character still fights at a 15-point deficit.
+ */
+export const MAX_WEAPON_SKILL_AT_60 = 300;
+
 const RAGE_ON_HIT = RAGE_FROM_AUTO_ATTACK;
 
 /**
@@ -39,6 +48,7 @@ export const PLACEHOLDER_ONE_HAND: WeaponProfile = {
   damageVariance: 0.15,
   powerCoefficient: 0.35,
   school: 'physical',
+  skill: MAX_WEAPON_SKILL_AT_60,
   generates: RAGE_ON_HIT,
 };
 
@@ -57,6 +67,7 @@ export const PLACEHOLDER_RANGED: WeaponProfile = {
   damageVariance: 0.15,
   powerCoefficient: 0.35,
   school: 'physical',
+  skill: MAX_WEAPON_SKILL_AT_60,
   // No rage: nothing that shoots uses it.
 };
 
