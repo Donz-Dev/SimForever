@@ -2,7 +2,7 @@ import type { DistributionSummary, SimulationResult } from '../analysis';
 import { StreamingDamageTotals, summarize } from '../analysis';
 import type { SimulationConfig } from '../engine';
 import { Simulation, deriveSeed, toSeconds } from '../engine';
-import { trainingDummyEncounter } from '../game/encounters/trainingDummyEncounter';
+import { trainingDummyEncounter } from './trainingDummyEncounter';
 import type { CharacterProfile } from '../profiles';
 import { runSimulation } from './runSimulation';
 

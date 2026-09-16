@@ -61,16 +61,18 @@ the tests, a future CLI, a Web Worker, or a server.
    └────┬────┘  └───────────┘
         │ uses
    ┌────▼────┐
-   │  Game   │   src/game   (content: abilities, auras, actors, encounters)
+   │  Game   │   src/game   (content: races, classes, abilities, auras, actors)
    └─────────┘
 ```
 
 Dependencies point one way only:
 
 - `engine` depends on nothing in the project.
-- `game` depends on `engine` and `profiles`.
+- `game` depends on `engine` only.
+- `profiles` depends on `engine` and `game/character` (for race and class ids).
 - `analysis` depends on `engine` types only.
-- `simulator` wires engine + analysis + game together.
+- `simulator` wires engine + analysis + game + profiles together, and owns the
+  profile-to-config translation.
 - `ui` depends on `simulator` and `profiles`. Never on `engine` internals.
 
 The engine does **not** depend on `analysis`. It produces a stream of telemetry
@@ -124,11 +126,11 @@ src/
 │   └── logging/         Telemetry events, sinks, combat log formatting
 │
 ├── game/                Game CONTENT. Data, not rules.
+│   ├── character/       Factions, races, classes and their combinations
 │   ├── abilities/       Example abilities
 │   ├── auras/           Example buffs and debuffs
 │   ├── actors/          Player and training dummy factories
-│   ├── rotations/       Example priority list
-│   └── encounters/      Profile -> SimulationConfig
+│   └── rotations/       Example priority list
 │
 ├── profiles/            Versioned, JSON-safe character profiles
 ├── analysis/            Analyzers: damage, healing, statistics

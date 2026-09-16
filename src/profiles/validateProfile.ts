@@ -1,5 +1,12 @@
 import { STAT_NAMES } from '../engine';
 import type { StatName } from '../engine';
+import {
+  className,
+  isClassId,
+  isRaceId,
+  isValidCombination,
+  raceName,
+} from '../game/character';
 import type { CharacterProfile } from './CharacterProfile';
 
 /** A validation failure, with enough detail to show next to the right field. */
@@ -40,9 +47,38 @@ export function validateProfile(value: unknown): ValidationResult {
     issues.push({ path: 'character', message: 'Missing character section.' });
   } else {
     requireNonEmptyString(character.name, 'character.name', issues);
-    requireNonEmptyString(character.race, 'character.race', issues);
-    requireNonEmptyString(character.characterClass, 'character.characterClass', issues);
     requirePositiveInteger(character.level, 'character.level', issues);
+
+    // Narrowed through the guard into a local, because TypeScript cannot carry
+    // a type guard's result across a stored boolean.
+    const race = isRaceId(character.race) ? character.race : null;
+    const characterClass = isClassId(character.characterClass)
+      ? character.characterClass
+      : null;
+
+    if (race === null) {
+      issues.push({
+        path: 'character.race',
+        message: `Unknown race ${JSON.stringify(character.race)}.`,
+      });
+    }
+    if (characterClass === null) {
+      issues.push({
+        path: 'character.characterClass',
+        message: `Unknown class ${JSON.stringify(character.characterClass)}.`,
+      });
+    }
+
+    // Only worth checking once both ids are real. Reporting "Orc cannot be a
+    // Frobnicator" on top of "unknown class Frobnicator" is noise.
+    if (race !== null && characterClass !== null && !isValidCombination(race, characterClass)) {
+      issues.push({
+        path: 'character.characterClass',
+        message:
+          `${raceName(race)} cannot be a ${className(characterClass)} ` +
+          'in World of Warcraft: Forever.',
+      });
+    }
   }
 
   const stats = value.stats;

@@ -1,9 +1,9 @@
-import type { SimulationConfig } from '../../engine';
-import { seconds } from '../../engine';
-import type { CharacterProfile } from '../../profiles';
-import { createPlayer } from '../actors/createPlayer';
-import { createTrainingDummy } from '../actors/createTrainingDummy';
-import { BATTLE_FURY } from '../auras/exampleAuras';
+import type { SimulationConfig } from '../engine';
+import { seconds } from '../engine';
+import type { CharacterProfile } from '../profiles';
+import { createPlayer } from '../game/actors/createPlayer';
+import { createTrainingDummy } from '../game/actors/createTrainingDummy';
+import { BATTLE_FURY } from '../game/auras/exampleAuras';
 
 /**
  * Build a runnable simulation config from a character profile.

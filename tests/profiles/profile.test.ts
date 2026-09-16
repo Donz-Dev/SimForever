@@ -25,9 +25,10 @@ describe('profile serialization', () => {
       ...createDefaultProfile(),
       character: {
         name: 'Testbeard',
-        race: 'Dwarf',
-        characterClass: 'Paladin',
-        level: 70,
+        // Dwarf Paladin is legal in Forever, as it was in Classic.
+        race: 'dwarf' as const,
+        characterClass: 'paladin' as const,
+        level: 60,
       },
       stats: { strength: 1234, attackPower: 5678, critRating: 900, hasteRating: 450 },
       simulation: {
@@ -108,6 +109,57 @@ describe('validateProfile', () => {
     expect(paths).toContain('stats');
     expect(paths).toContain('simulation');
     expect(paths).toContain('encounter');
+  });
+
+  describe('race and class', () => {
+    const base = createDefaultProfile();
+    const withCharacter = (race: string, characterClass: string) => ({
+      ...base,
+      character: { ...base.character, race, characterClass },
+    });
+
+    it('accepts a legal combination', () => {
+      expect(validateProfile(withCharacter('troll', 'warlock')).ok).toBe(true);
+    });
+
+    it('rejects an illegal combination with a readable message', () => {
+      const result = validateProfile(withCharacter('tauren', 'mage'));
+
+      expect(result.ok).toBe(false);
+      if (result.ok) return;
+      expect(result.issues).toContainEqual(
+        expect.objectContaining({
+          path: 'character.characterClass',
+          message: expect.stringContaining('Tauren cannot be a Mage'),
+        }),
+      );
+    });
+
+    it('rejects an unknown race or class', () => {
+      expect(validateProfile(withCharacter('murloc', 'warrior')).ok).toBe(false);
+      expect(validateProfile(withCharacter('human', 'death_knight')).ok).toBe(false);
+    });
+
+    it('rejects display names, which are not ids', () => {
+      // Profiles store `night_elf`, never `Night Elf`.
+      expect(validateProfile(withCharacter('Night Elf', 'Druid')).ok).toBe(false);
+    });
+
+    it('does not pile a combination error on top of an unknown id', () => {
+      const result = validateProfile(withCharacter('orc', 'frobnicator'));
+
+      expect(result.ok).toBe(false);
+      if (result.ok) return;
+      expect(result.issues).toHaveLength(1);
+      expect(result.issues[0].message).toMatch(/Unknown class/);
+    });
+
+    it('accepts the Forever-specific combinations', () => {
+      expect(validateProfile(withCharacter('undead', 'paladin')).ok).toBe(true);
+      expect(validateProfile(withCharacter('dwarf', 'shaman')).ok).toBe(true);
+      expect(validateProfile(withCharacter('high_order_skyborne', 'druid')).ok).toBe(true);
+      expect(validateProfile(withCharacter('windshaper_skyborne', 'shaman')).ok).toBe(true);
+    });
   });
 
   it('rejects an unknown stat name', () => {

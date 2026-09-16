@@ -2,9 +2,9 @@
   "version": 1,
   "character": {
     "name": "Thunderaxe",
-    "race": "Orc",
-    "characterClass": "Warrior",
-    "level": 80
+    "race": "orc",
+    "characterClass": "warrior",
+    "level": 60
   },
   "stats": {
     "strength": 2400,
