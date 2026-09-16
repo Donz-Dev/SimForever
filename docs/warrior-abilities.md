@@ -156,11 +156,44 @@ Also missing:
   sending corrections, so **no gating is implemented yet** and the rotation does
   not stance dance.
 - **Mortal Strike and Bloodthirst are both present**, at the same 30 rage and
-  the same 6 second cooldown. In Classic a warrior has one or the other by
-  talent, never both. The sheet says nothing about exclusivity, so both are in
-  the book and both are in the rotation.
+  the same 6 second cooldown.
+
+  **ANSWERED by the talent calculator** (see below): Mortal Strike, Bloodthirst
+  and Shield Slam are the 31-point capstones of Arms, Fury and Protection. Two
+  capstones costs 62 points against a budget of 51, so a warrior can reach
+  exactly one. `abilitiesForClass` currently hands out all three at once, which
+  is now known to be wrong; fixing it needs talents to actually gate abilities,
+  which is the next step after talent effects exist.
 
 ---
+
+## A second Forever source, and where it disagrees
+
+The talent calculator at https://www.wowhead.com/forever/talent-calc/warrior is
+the source for `src/game/talents/warriorTalents.ts`. Its tooltips restate some
+of the same abilities, which makes it a check on the spreadsheet.
+
+Where they AGREE, confidence goes up:
+
+| Ability | Spreadsheet | Calculator |
+| --- | --- | --- |
+| Bloodthirst | 30 base, 0.35 coefficient | "35% of your Attack Power plus 30" |
+| Shield Slam | 421 to 439 + shield block value | "421 to 439 damage, increased by your Block Value" |
+| Spearing Strike | 40% Weapon Damage | "deals 40% weapon damage" |
+
+Where they DISAGREE:
+
+| Ability | Spreadsheet | Calculator |
+| --- | --- | --- |
+| **Mortal Strike** | base damage **160** | "weapon damage plus **85**" |
+
+Both are Forever sources and both are current. The code uses **160**, because
+that is the sheet the ruleset owner supplied directly, but this is unresolved
+and one of the two is wrong. It is a single constant in
+`game/abilities/warrior.ts` if it needs flipping.
+
+The calculator also confirms **Spearing Strike is an Arms talent**, which is why
+it had no Classic counterpart to check against.
 
 ## Engine changes this required
 

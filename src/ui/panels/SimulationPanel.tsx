@@ -32,7 +32,6 @@ export function SimulationPanel({
       />
       <NumberField
         label="Duration variance"
-        hint="0 = fixed, 0.1 = +/-10%"
         value={profile.simulation.durationVariance}
         min={0}
         max={1}
@@ -41,18 +40,10 @@ export function SimulationPanel({
       />
       <NumberField
         label="Iterations"
-        hint="more = less noise"
         value={profile.simulation.iterations}
         min={1}
         max={50_000}
         onChange={(iterations) => setSimulation({ iterations: Math.round(iterations) })}
-      />
-      <NumberField
-        label="Seed"
-        hint="same seed = same fight"
-        value={profile.simulation.seed}
-        min={0}
-        onChange={(seed) => setSimulation({ seed: Math.round(seed) })}
       />
 
       <button type="button" className="run-button" onClick={onRun} disabled={isRunning}>

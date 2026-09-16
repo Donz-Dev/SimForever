@@ -3,6 +3,11 @@ import type { BatchResult } from '../../simulator';
 import { runProfileBatch } from '../../simulator';
 import type { CharacterProfile } from '../../profiles';
 
+/** A fresh non-negative integer seed, in the range the engine expects. */
+function randomSeed(): number {
+  return Math.floor(Math.random() * 2 ** 31);
+}
+
 export type SimulationState =
   | { readonly status: 'idle' }
   | { readonly status: 'running' }
@@ -20,6 +25,15 @@ export type SimulationState =
  * The run is deferred by one frame so the browser can paint the "Running..."
  * state first; the engine is synchronous and would otherwise block the paint.
  * Moving iterations onto Web Workers later changes this file and nothing else.
+ *
+ * Every run draws a FRESH SEED rather than using the profile's. Two clicks of
+ * Run on an unchanged setup should show the spread the fight actually has;
+ * reusing one seed would repeat a single fight and make a noisy result look
+ * certain. The seed used is recorded on the result and printed in the combat
+ * log, so a run can still be identified after the fact.
+ *
+ * The profile's own seed is left alone, so a saved profile still describes a
+ * reproducible fight for anything that runs it directly.
  */
 export function useSimulation() {
   const [state, setState] = useState<SimulationState>({ status: 'idle' });
@@ -31,7 +45,10 @@ export function useSimulation() {
 
     setTimeout(() => {
       try {
-        const batch = runProfileBatch(profile, (fraction) => setProgress(fraction));
+        const batch = runProfileBatch(
+          { ...profile, simulation: { ...profile.simulation, seed: randomSeed() } },
+          (fraction) => setProgress(fraction),
+        );
         setState({ status: 'done', batch });
       } catch (error) {
         setState({
