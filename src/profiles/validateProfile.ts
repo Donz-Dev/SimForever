@@ -1,6 +1,8 @@
 import { STAT_NAMES } from '../engine';
 import type { StatName } from '../engine';
 import {
+  MAX_CHARACTER_LEVEL,
+  MIN_CHARACTER_LEVEL,
   className,
   isClassId,
   isRaceId,
@@ -47,7 +49,13 @@ export function validateProfile(value: unknown): ValidationResult {
     issues.push({ path: 'character', message: 'Missing character section.' });
   } else {
     requireNonEmptyString(character.name, 'character.name', issues);
-    requirePositiveInteger(character.level, 'character.level', issues);
+    requireIntegerInRange(
+      character.level,
+      'character.level',
+      MIN_CHARACTER_LEVEL,
+      MAX_CHARACTER_LEVEL,
+      issues,
+    );
 
     // Narrowed through the guard into a local, because TypeScript cannot carry
     // a type guard's result across a stored boolean.
@@ -170,6 +178,18 @@ function requireInteger(value: unknown, path: string, issues: ValidationIssue[])
 function requirePositiveInteger(value: unknown, path: string, issues: ValidationIssue[]): void {
   if (typeof value !== 'number' || !Number.isInteger(value) || value <= 0) {
     issues.push({ path, message: 'Must be a positive integer.' });
+  }
+}
+
+function requireIntegerInRange(
+  value: unknown,
+  path: string,
+  min: number,
+  max: number,
+  issues: ValidationIssue[],
+): void {
+  if (typeof value !== 'number' || !Number.isInteger(value) || value < min || value > max) {
+    issues.push({ path, message: `Must be a whole number between ${min} and ${max}.` });
   }
 }
 

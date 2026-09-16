@@ -32,6 +32,12 @@ source data would pass no matter what the source data said.
 | Factions | Alliance, Horde |
 | Races | 5 per faction, 10 total |
 | Classes | 9 |
+| Level cap | 60, as in Classic |
+
+`MAX_CHARACTER_LEVEL` lives in `game/character/definitions.ts` because the cap
+is a ruleset decision, not a simulation rule — raising it in a future patch is a
+content change. Anything that scales with level (base stats, rating conversions,
+ability coefficients) should read it rather than hard-coding 60.
 
 ```typescript
 {
