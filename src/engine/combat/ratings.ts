@@ -18,8 +18,13 @@ export const RATING_PER_PERCENT = {
   versatility: 205,
 } as const;
 
-/** Crit chance every character has before any rating. */
-export const BASE_CRIT_CHANCE = 0.05;
+/*
+ * There is no universal base crit constant any more.
+ *
+ * A character's base crit is a class constant from the base stats table, and
+ * agility adds to it through the class conversion table. Both are content, so
+ * the engine reads `stats.critChance` rather than owning a number of its own.
+ */
 
 /** Damage multiplier on a critical strike. */
 export const CRITICAL_STRIKE_MULTIPLIER = 2.0;
@@ -33,10 +38,24 @@ export const ARMOR_CONSTANT = 7390;
 /** Armor can never remove more than this fraction of a physical hit. */
 export const MAX_ARMOR_REDUCTION = 0.85;
 
-/** Crit chance in [0, 1] from a character's effective stats. */
+/**
+ * Melee and ranged crit chance as a fraction in [0, 1].
+ *
+ * `stats.critChance` is in percentage POINTS and already includes the class
+ * base constant plus whatever agility contributed, so this mostly just converts
+ * units. Rating is added on top for gear that grants it.
+ *
+ * The class constants can be negative (a Hunter's base is -1.53), which is why
+ * the result is clamped rather than assumed positive.
+ */
 export function critChanceFrom(stats: Stats): number {
   const fromRating = stats.critRating / RATING_PER_PERCENT.crit / 100;
-  return clamp01(BASE_CRIT_CHANCE + fromRating);
+  return clamp01(stats.critChance / 100 + fromRating);
+}
+
+/** Spell crit chance as a fraction in [0, 1]. */
+export function spellCritChanceFrom(stats: Stats): number {
+  return clamp01(stats.spellCritChance / 100);
 }
 
 /**

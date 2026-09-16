@@ -7,7 +7,10 @@ import {
   baseManaFor,
   baseStatsFor,
   baseStatsToEngineStats,
+  conversionsFor,
+  deriveFromPrimaries,
   resourceSpecsFor,
+  statDerivationFor,
 } from '../character';
 import { BASIC_MELEE_ROTATION } from '../rotations/basicMeleeRotation';
 
@@ -42,14 +45,21 @@ export interface PlayerOptions {
 /**
  * Build a player combatant for a race, class and form.
  *
- * Health, mana and every primary stat come from the base stats table. Anything
- * passed in as `bonusStats` is ADDED to that base, matching how gear works: a
- * profile describes what a character has beyond being a level 60 Tauren Druid,
- * not their stats from scratch.
+ * Three layers, in order:
  *
- * Crit chance is not applied. The base table's crit values are class constants
- * that other contributions add to, some of them negative, and the
- * agility-to-crit conversion that completes the formula does not exist yet.
+ *   1. **Base stats** for the race, class and form, from the spreadsheet.
+ *   2. **Gear and other bonuses** from the profile, added on top.
+ *   3. **Conversions**, which turn the resulting primary stats into attack
+ *      power, armor, crit, dodge, mana regen, hit points and mana.
+ *
+ * Steps 1 and 2 happen here. Step 3 is handed to the stat block as a function,
+ * so it re-runs whenever a buff changes a primary stat: a +10% strength
+ * blessing raises attack power, which it would not if attack power had been
+ * computed once and frozen.
+ *
+ * Hit points and mana are the exception. They are resource maximums rather than
+ * stats, so they are computed once here from the starting stats. A buff that
+ * changes stamina mid-fight will not currently resize the health pool.
  */
 export function createPlayer(options: PlayerOptions): Combatant {
   const { race, characterClass, form } = options;
@@ -63,10 +73,15 @@ export function createPlayer(options: PlayerOptions): Combatant {
     );
   }
 
-  const stats = addStats(
+  // Layers 1 and 2: the stats a character has before any conversion.
+  const startingStats = addStats(
     makeStats(baseStatsToEngineStats(base)),
     options.bonusStats ?? {},
   );
+
+  // Layer 3, for the resource maximums only. The stat block handles the rest.
+  const conversions = conversionsFor(characterClass, form);
+  const derived = deriveFromPrimaries(startingStats, conversions);
 
   const abilities = abilitiesForClass(characterClass);
 
@@ -75,9 +90,13 @@ export function createPlayer(options: PlayerOptions): Combatant {
     name: options.name ?? 'Player',
     kind: 'player',
     faction: 'friendly',
-    maxHealth: baseHitPointsFor(race, characterClass, form),
-    stats,
-    resources: resourceSpecsFor(characterClass, baseManaFor(race, characterClass)),
+    maxHealth: baseHitPointsFor(race, characterClass, form) + derived.hitPoints,
+    stats: startingStats,
+    statDerivation: statDerivationFor(characterClass, form),
+    resources: resourceSpecsFor(
+      characterClass,
+      baseManaFor(race, characterClass) + derived.mana,
+    ),
     abilities,
     // No abilities means nothing for a rotation to choose, so it is left off
     // rather than scheduling decision events that can never do anything.

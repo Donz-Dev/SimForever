@@ -31,6 +31,12 @@ export {
   baseStatsFor,
   baseStatsToEngineStats,
 } from './baseStatLookup';
+export type { StatConversions } from './conversions';
+export {
+  conversionsFor,
+  deriveFromPrimaries,
+  statDerivationFor,
+} from './conversions';
 export {
   FIXED_RESOURCE_MAXIMUMS,
   activeResourceFor,

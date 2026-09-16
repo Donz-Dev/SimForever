@@ -137,14 +137,13 @@ These are **constants**, not calculated results — the floor everything else is
 added to. A profile's `stats` section is gear and other bonuses, **added on
 top**, not the character's stats from scratch.
 
-### Crit chance is stored but not used
+### Crit chance
 
-The crit columns are class constants that other contributions add to, and some
-are negative — a Hunter's base is `-1.53`. They are therefore not a character's
-actual crit chance, and `baseStatsToEngineStats` deliberately leaves them out.
+The crit columns are **base constants**, and some are negative — a Hunter's is
+`-1.53`. The class conversion table adds the contribution from agility (and from
+intellect, for spell crit) on top, which is what brings them positive.
 
-Wiring them up needs the **agility-to-crit** and **intellect-to-spell-crit**
-conversions, which do not exist yet.
+An Orc Hunter: `-1.53 + 122 agility / 53 = 0.77%`.
 
 ### Two interpretations, not data
 
@@ -168,6 +167,85 @@ crit are identical across all of them.
 | Caster | 1303 | -20 (Tauren -36) |
 | Bear | 2543 | 160 |
 | Cat | 1303 | 100 |
+
+## Stat conversions
+
+Base stats are the input. `src/game/character/conversions.ts` turns them into
+everything else, and the numbers vary per class — and, for the Druid, per form.
+
+```
+Base stats (race + class + form)
+        +  gear and other bonuses
+        =  primary stats
+                 |
+                 v   class conversion table
+        attack power, ranged attack power, armor,
+        crit %, dodge %, spell crit %, MP5,
+        hit points, mana
+```
+
+### The table
+
+| Class | Str -> AP | Agi -> AP | Agi -> crit | Int -> mana | Int -> spell crit | Spirit -> MP5 |
+| --- | --- | --- | --- | --- | --- | --- |
+| Warrior | 2 | - | 20 = 1% | - | - | - |
+| Rogue | 1 | 1 | 29 = 1% | - | - | - |
+| Hunter | 1 | 1 (+2 ranged) | 53 = 1% | 15 | - | 2 = 1 |
+| Shaman | 2 | - | 20 = 1% | 15 | 59.5 = 1% | 2 = 1 |
+| Paladin | 2 | - | 20 = 1% | 15 | 54 = 1% | 2 = 1 |
+| Mage | - | - | **none** | 15 | 59.5 = 1% | 8 = 5 |
+| Priest | - | - | **none** | 15 | 59.5 = 1% | 8 = 5 |
+| Warlock | - | - | **none** | 15 | 60.6 = 1% | 8 = 5 |
+| Druid (Caster/Moonkin/Tree) | 2 | - | 20 = 1% | 15 | 61 = 1% | 2 = 1 |
+| Druid (Bear) | 2 | - | 20 = 1% | 15 | - | 2 = 1 |
+| Druid (Cat) | 2 | 1 | 20 = 1% | 15 | - | 2 = 1 |
+
+Universal: **1 Agility = 2 Armor**, **1 Stamina = 10 Hit Points**, and every
+class gets dodge from agility.
+
+Note that Mage, Priest and Warlock get **no crit from agility at all** — which
+is different from getting a very small amount, and is why the field is `null`
+rather than a large number.
+
+Ratios are stored as the source states them (`agilityPerCritPercent: 20`, not
+`0.05` crit per agility) so the table can be checked against the source by eye.
+
+### Conversions re-run when stats change
+
+The derivation is a *function* on the stat block, not a value computed once at
+character creation. It runs in two passes: resolve the primary stats from base
+and modifiers, then feed those through the conversions and resolve again.
+
+That is what makes a +10% strength blessing raise attack power. Computing attack
+power once at creation would leave it stuck at the unbuffed value.
+
+Derivation never produces a primary stat, so the two passes always agree on the
+primaries and the process terminates.
+
+### Worked examples
+
+These come from the source and are pinned as tests in
+`tests/game/conversions.test.ts`. If any of them breaks, the conversions are
+wrong regardless of what the rest of the suite says.
+
+| | |
+| --- | --- |
+| Troll Shaman hit points | `1100 + 96 x 10` = **2060** |
+| Night Elf Druid (Bear) hit points | `2543 + 69 x 10` = **3233** |
+| Tauren Druid (Caster) attack power | `-36 + 70 x 2` = **104** |
+| Orc Hunter crit chance | `-1.53 + 122 / 53` = **0.77%** |
+
+### What is not wired yet
+
+- **MP5 is computed but nothing regenerates.** Mana regen needs a tick interval
+  and the rule for whether it applies while casting, neither of which exists.
+  The number is shown in the UI, labelled as not yet regenerating.
+- **Dodge is computed but never rolled.** There is no avoidance step in the
+  damage pipeline.
+- **Hit points and mana are sized once at character creation.** A buff that
+  changes stamina or intellect mid-fight will not resize the pools, because
+  those are resource maximums rather than stats. Every other converted stat does
+  update.
 
 ## Level
 

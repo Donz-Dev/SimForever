@@ -128,10 +128,13 @@ describe('class resources', () => {
       expect(activeResourceFor('druid')).toBe('mana');
     });
 
-    it('declares four forms', () => {
+    it('declares five forms', () => {
+      // Tree of Life comes from the stat conversion table, which lists it
+      // alongside Caster and Moonkin.
       expect(formsFor('druid').map((form) => form.id)).toEqual([
         'caster',
         'moonkin',
+        'tree',
         'bear',
         'cat',
       ]);

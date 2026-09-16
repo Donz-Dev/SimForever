@@ -6,17 +6,18 @@ import type { ClassId, FormId, RaceId } from './ids';
 /**
  * Forms that have no row of their own and borrow another form's stats.
  *
- * Moonkin Form is declared as a Druid form that uses mana, but the base stats
- * spreadsheet has no Moonkin row. Since the Druid's forms differ only in hit
- * points and attack power, and Moonkin shares Caster Form's resource, it
- * borrows Caster Form's numbers.
+ * Moonkin Form and Tree of Life Form are both declared Druid forms with no row
+ * in the base stats spreadsheet. Since the Druid's forms differ only in hit
+ * points and attack power, and both share Caster Form's stat conversions, they
+ * borrow Caster Form's numbers.
  *
- * This is an INTERPRETATION, not data. If Moonkin should have its own hit
- * points or attack power, it needs a row in the spreadsheet and this entry
+ * These are INTERPRETATIONS, not data. If either form should have its own hit
+ * points or attack power, it needs a row in the spreadsheet and its entry here
  * should go away.
  */
 const FORM_STAT_FALLBACKS: Partial<Record<FormId, FormId>> = {
   moonkin: 'caster',
+  tree: 'caster',
 };
 
 /**
@@ -97,10 +98,9 @@ export function baseHitPointsFor(
  * Hit points and mana are deliberately left out: they are resource maximums,
  * not stats, and live on the combatant's `health` and mana pools instead.
  *
- * Crit chance is also left out. Those values are class constants that other
- * contributions add to, some of them negative, so feeding them in as a
- * character's actual crit would be wrong. Wiring them up needs the
- * agility-to-crit conversion, which does not exist yet.
+ * The crit values ARE included, as the base constants they are. They can be
+ * negative — a Hunter's is -1.53 — and the class conversion table adds the
+ * contribution from agility and intellect on top.
  */
 export function baseStatsToEngineStats(base: BaseStatBlock): PartialStats {
   return {
@@ -111,6 +111,8 @@ export function baseStatsToEngineStats(base: BaseStatBlock): PartialStats {
     spirit: base.spirit,
     attackPower: base.attackPower,
     rangedAttackPower: base.rangedAttackPower,
+    critChance: base.critChance,
+    spellCritChance: base.spellCritChance,
   };
 }
 

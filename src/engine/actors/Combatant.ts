@@ -5,7 +5,7 @@ import { AuraCollection } from '../effects';
 import type { ResourceSpec, ResourceType } from '../resources';
 import { Resource, ResourceCollection } from '../resources';
 import type { Rotation } from '../rotation/Rotation';
-import type { PartialStats } from '../stats';
+import type { PartialStats, StatDerivation } from '../stats';
 import { StatBlock } from '../stats';
 import type { Milliseconds } from '../time';
 
@@ -54,6 +54,12 @@ export interface CombatantOptions {
   readonly abilities?: readonly Ability[];
   readonly rotation?: Rotation;
   readonly weapon?: WeaponProfile;
+  /**
+   * Turns primary stats into the secondary stats they produce, re-run whenever
+   * a buff changes a primary stat. The conversion numbers are class content, so
+   * the engine takes a function rather than knowing them.
+   */
+  readonly statDerivation?: StatDerivation;
   /** For pets and summons: the id of the combatant that owns them. */
   readonly ownerId?: string;
 }
@@ -100,7 +106,7 @@ export class Combatant {
     this.faction = options.faction;
     this.ownerId = options.ownerId;
 
-    this.stats = new StatBlock(options.stats);
+    this.stats = new StatBlock(options.stats, options.statDerivation);
     this.health = new Resource('health', options.maxHealth);
     this.resources = new ResourceCollection(options.resources ?? []);
     this.auras = new AuraCollection(this);
