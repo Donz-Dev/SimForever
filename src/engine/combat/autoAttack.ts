@@ -80,13 +80,18 @@ function swing(
   const variance = weapon.damageVariance ?? DEFAULT_DAMAGE_VARIANCE;
   const roll = context.rng.nextFloat(1 - variance, 1 + variance);
 
+  // The multiplier scales the whole swing, attack power contribution included,
+  // rather than only the weapon's own damage. A half-damage off-hand that still
+  // got full attack power scaling would get stronger as the character geared up.
+  const multiplier = weapon.damageMultiplier ?? 1;
+
   dealDamage(context, {
     source: attacker,
     target,
     abilityName: weapon.name,
     school: weapon.school ?? 'physical',
-    baseAmount: weapon.baseDamage * roll,
-    powerCoefficient: weapon.powerCoefficient ?? 0,
+    baseAmount: weapon.baseDamage * roll * multiplier,
+    powerCoefficient: (weapon.powerCoefficient ?? 0) * multiplier,
   });
 
   if (weapon.generates) {

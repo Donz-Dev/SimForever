@@ -12,6 +12,13 @@ import {
   resolveCombatStyle,
 } from '../../src/game/character';
 import { createPlayer } from '../../src/game/actors/createPlayer';
+import {
+  BASE_BEAR_PAW_DAMAGE,
+  BASE_CAT_PAW_DAMAGE,
+  OFF_HAND_DAMAGE_MULTIPLIER,
+} from '../../src/game/actors/weapons';
+import { createDefaultProfile } from '../../src/profiles';
+import { runProfile } from '../../src/simulator';
 import { swingingSlots } from '../../src/engine';
 
 /**
@@ -186,6 +193,13 @@ describe('weapon slots on the built combatant', () => {
     expect(build('druid', 'cat').weapons.mainHand?.name).toBe('Cat Paw');
   });
 
+  it('uses the stated paw damage values', () => {
+    expect(build('druid', 'bear').weapons.mainHand?.baseDamage).toBe(BASE_BEAR_PAW_DAMAGE);
+    expect(build('druid', 'cat').weapons.mainHand?.baseDamage).toBe(BASE_CAT_PAW_DAMAGE);
+    expect(BASE_BEAR_PAW_DAMAGE).toBe(100);
+    expect(BASE_CAT_PAW_DAMAGE).toBe(50);
+  });
+
   it('never schedules a slot with no weapon in it', () => {
     for (const characterClass of CLASS_IDS) {
       for (const style of combatStylesFor(characterClass)) {
@@ -198,6 +212,58 @@ describe('weapon slots on the built combatant', () => {
         }
       }
     }
+  });
+});
+
+describe('dual-wield off-hand penalty', () => {
+  const warrior = (offHandDamageMultiplier?: number) =>
+    createPlayer({
+      race: 'orc',
+      characterClass: 'warrior',
+      combatStyle: 'dual_wield',
+      offHandDamageMultiplier,
+    });
+
+  it('halves off-hand damage by default', () => {
+    expect(OFF_HAND_DAMAGE_MULTIPLIER).toBe(0.5);
+    expect(warrior().weapons.offHand?.damageMultiplier).toBe(0.5);
+  });
+
+  it('leaves the main hand at full damage', () => {
+    // The penalty is a property of the hand, not of the weapon in it.
+    expect(warrior().weapons.mainHand?.damageMultiplier).toBeUndefined();
+  });
+
+  it('can be overridden, as a talent would', () => {
+    expect(warrior(0.75).weapons.offHand?.damageMultiplier).toBe(0.75);
+    expect(warrior(1).weapons.offHand?.damageMultiplier).toBe(1);
+  });
+
+  it('applies to the whole swing, attack power included', () => {
+    // A half-damage off-hand that still got full attack power scaling would
+    // grow stronger relative to the main hand as the character geared up.
+    const result = runProfile({
+      ...createDefaultProfile(),
+      character: {
+        ...createDefaultProfile().character,
+        race: 'orc',
+        characterClass: 'warrior',
+        combatStyle: 'dual_wield',
+      },
+      stats: { attackPower: 2000 },
+    });
+
+    const abilities = result.damage.byActor[0].abilities;
+    const main = abilities.find((entry) => entry.abilityName === 'Melee');
+    const off = abilities.find((entry) => entry.abilityName === 'Melee (Off Hand)');
+
+    expect(main).toBeDefined();
+    expect(off).toBeDefined();
+    if (!main || !off) return;
+
+    // Both hands use the same weapon numbers, so the average hit should differ
+    // by the penalty and nothing else.
+    expect(off.average / main.average).toBeCloseTo(OFF_HAND_DAMAGE_MULTIPLIER, 1);
   });
 });
 

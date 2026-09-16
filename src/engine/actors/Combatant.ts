@@ -51,6 +51,15 @@ export interface WeaponProfile {
   readonly damageVariance?: number;
   /** Attack power contribution per swing. */
   readonly powerCoefficient?: number;
+  /**
+   * Multiplies this weapon's entire auto-attack, base damage and attack power
+   * contribution alike. Defaults to 1.
+   *
+   * Exists for the dual-wield off-hand penalty, which is a property of the hand
+   * rather than of the weapon in it. Talents that change that penalty adjust
+   * this value when the character is built.
+   */
+  readonly damageMultiplier?: number;
   readonly school?: DamageSchool;
   /** Resource generated per landed swing, if any. */
   readonly generates?: { resource: ResourceType; amount: number };

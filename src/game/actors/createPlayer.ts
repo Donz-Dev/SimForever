@@ -31,6 +31,11 @@ export interface PlayerOptions {
    * Added to the base rather than replacing it.
    */
   readonly bonusStats?: PartialStats;
+  /**
+   * Overrides the dual-wield off-hand damage penalty. Defaults to
+   * OFF_HAND_DAMAGE_MULTIPLIER; talents that change it pass a value here.
+   */
+  readonly offHandDamageMultiplier?: number;
 }
 
 /**
@@ -95,7 +100,9 @@ export function createPlayer(options: PlayerOptions): Combatant {
     // No abilities means nothing for a rotation to choose, so it is left off
     // rather than scheduling decision events that can never do anything.
     rotation: abilities.length > 0 ? rotation : undefined,
-    weapons: weaponsForStyle(style),
+    weapons: weaponsForStyle(style, {
+      offHandDamageMultiplier: options.offHandDamageMultiplier,
+    }),
     autoAttack: autoAttackModeForStyle(style),
   });
 }

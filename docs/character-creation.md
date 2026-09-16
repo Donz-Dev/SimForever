@@ -222,19 +222,40 @@ use. A profile carrying a stale style — a character that was a bear Druid and 
 now a Warrior — resolves to the class default rather than failing. A test applies
 every (class x style) pair and asserts the result is always legal.
 
-### Missing data
+### Paw damage
 
-**BaseBearPaw and BaseCatPaw.** Bear and Cat attack with their own damage rather
-than an equipped weapon, and the source names those values but has not provided
-them. `PLACEHOLDER_BEAR_PAW` and `PLACEHOLDER_CAT_PAW` stand in and are wrong.
+Bear and Cat attack with their own damage rather than an equipped weapon:
 
-They are named loudly rather than hidden behind a plausible number, because a
-druid sim built on invented paw damage produces results that look entirely
-reasonable and mean nothing.
+| | |
+| --- | --- |
+| `BASE_BEAR_PAW_DAMAGE` | 100 |
+| `BASE_CAT_PAW_DAMAGE` | 50 |
 
-Also absent: any **off-hand damage penalty**. Dual-wield off-hand swings
-currently hit for full damage, which is almost certainly not the intent. No
-penalty is modelled rather than a guessed one being applied.
+These are **assumed** values pending confirmation. Everything else about the
+paws — swing speed, attack power scaling, damage variance — is still
+placeholder, so a druid's auto-attack damage is directionally right rather than
+accurate.
+
+### Off-hand damage penalty
+
+`OFF_HAND_DAMAGE_MULTIPLIER` is **0.5**: a dual-wield off-hand deals half
+damage.
+
+The multiplier scales the **whole swing**, attack power contribution included.
+Halving only the weapon's own damage would let the off-hand grow stronger
+relative to the main hand as a character geared up, which is not what a
+percentage penalty means.
+
+Talents are expected to change this, so it is not baked in:
+
+```typescript
+createPlayer({ race, characterClass, combatStyle: 'dual_wield',
+               offHandDamageMultiplier: 0.75 });   // a talent improved it
+```
+
+The penalty lives on the off-hand `WeaponProfile` rather than on the weapon
+itself, because it is a property of the hand: the same sword swings for full in
+the main hand and half in the off-hand.
 
 ## Stat conversions
 
