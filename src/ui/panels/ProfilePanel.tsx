@@ -9,6 +9,14 @@ interface ProfilePanelProps {
 }
 
 /**
+ * NOT CURRENTLY MOUNTED.
+ *
+ * Taken out of the interface, which now offers Import and Load buttons above
+ * the character name instead. Kept because the round-trip wiring below —
+ * `serializeProfile` out, `parseProfile` in, validation issues rendered — is
+ * exactly what those buttons need, and rewriting it from scratch would be
+ * worse than reading it.
+ *
  * Import and export the current profile as JSON.
  *
  * Deliberately a plain text box rather than a file picker: it proves the

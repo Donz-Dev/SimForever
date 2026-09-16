@@ -83,6 +83,9 @@ export function CharacterPanel({
 
   const classDefinition = getClass(selection.characterClass);
   const abilityCount = abilitiesForClass(selection.characterClass, style).length;
+  // A profile is not valid without a name, so there is nothing to confirm until
+  // there is one. Trimmed, because a name of spaces fails the same check.
+  const named = profile.character.name.trim().length > 0;
 
   return (
     <Panel
@@ -142,8 +145,8 @@ export function CharacterPanel({
         </p>
       ) : null}
 
-      <button type="button" className="confirm" onClick={onConfirm}>
-        Confirm character
+      <button type="button" className="confirm" onClick={onConfirm} disabled={!named}>
+        {named ? 'Confirm character' : 'Name your character'}
       </button>
     </Panel>
   );

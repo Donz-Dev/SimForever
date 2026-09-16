@@ -7,7 +7,6 @@ import { CharacterPanel } from './panels/CharacterPanel';
 import { CharacterSheetPanel } from './panels/CharacterSheetPanel';
 import { CombatLogPanel } from './panels/CombatLogPanel';
 import { EncounterPanel } from './panels/EncounterPanel';
-import { ProfilePanel } from './panels/ProfilePanel';
 import { ResultsPanel } from './panels/ResultsPanel';
 import { SimulationPanel } from './panels/SimulationPanel';
 
@@ -24,7 +23,14 @@ import { SimulationPanel } from './panels/SimulationPanel';
  * about a character, so none of it appears until there is one.
  */
 export function App() {
-  const [profile, setProfile] = useState<CharacterProfile>(createDefaultProfile);
+  // The default profile is named, because `requireNonEmptyString` makes a name
+  // part of what a valid profile IS. The UI starts blank anyway and refuses to
+  // confirm until one is typed, so the field enforces the format's own rule
+  // rather than inventing a new one.
+  const [profile, setProfile] = useState<CharacterProfile>(() => {
+    const base = createDefaultProfile();
+    return { ...base, character: { ...base.character, name: '' } };
+  });
   const [confirmed, setConfirmed] = useState(false);
   const { state, progress, run, reset } = useSimulation();
 
@@ -55,7 +61,7 @@ export function App() {
 
           {confirmed ? (
             <>
-              <CharacterSheetPanel profile={profile} onChange={setProfile} />
+              <CharacterSheetPanel profile={profile} />
               <EncounterPanel profile={profile} onChange={setProfile} />
               <SimulationPanel
                 profile={profile}
@@ -64,19 +70,12 @@ export function App() {
                 isRunning={state.status === 'running'}
                 progress={progress}
               />
-              <ProfilePanel profile={profile} onChange={setProfile} />
             </>
           ) : null}
         </div>
 
         {confirmed ? (
           <div className="column column-results">
-            {state.status === 'idle' ? (
-              <div className="placeholder">
-                <p>Set the encounter and run a simulation.</p>
-              </div>
-            ) : null}
-
             {state.status === 'running' ? (
               <div className="placeholder">
                 <p>Running...</p>

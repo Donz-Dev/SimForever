@@ -2,27 +2,31 @@ import type { CharacterProfile } from '../../profiles';
 import type { CombatStyleId } from '../../game/character';
 import { createPlayer } from '../../game/actors/createPlayer';
 import { getClass, resolveCombatStyle, resourceLabel } from '../../game/character';
-import { NumberField } from '../components/Field';
 import { Panel } from '../components/Panel';
 
 interface CharacterSheetPanelProps {
   readonly profile: CharacterProfile;
-  readonly onChange: (profile: CharacterProfile) => void;
 }
 
 /**
  * Step two: what the character is worth.
  *
  * Split out of the character panel, which now only answers "who is fighting".
- * This is the part that changes as gear does, so it sits next to the gear
- * inputs that drive it.
+ * This one answers "what are they worth".
  *
  * The derivation column that used to sit beside every stat is gone. It
  * explained where each number came from, which is worth reading exactly once
  * and is noise on every later glance; the same information lives in
  * `docs/character-creation.md`, where it can be read deliberately.
+ *
+ * Read-only. The gear and bonus inputs that used to sit below have gone with
+ * gear itself still unimplemented: four number fields that add to a stat are
+ * not gear, and until real items exist they only invite tuning against numbers
+ * that mean nothing. `profile.stats` still exists and is still applied, so a
+ * profile carrying bonuses is honoured; there is simply no longer a box here
+ * encouraging anyone to invent some.
  */
-export function CharacterSheetPanel({ profile, onChange }: CharacterSheetPanelProps) {
+export function CharacterSheetPanel({ profile }: CharacterSheetPanelProps) {
   const style = resolveCombatStyle(
     profile.character.characterClass,
     profile.character.combatStyle,
@@ -31,43 +35,6 @@ export function CharacterSheetPanel({ profile, onChange }: CharacterSheetPanelPr
   return (
     <Panel title="Character sheet">
       <CharacterSheet profile={profile} style={style} />
-
-      <h3>Gear and other bonuses</h3>
-      <NumberField
-        label="Attack Power"
-        value={profile.stats.attackPower ?? 0}
-        min={0}
-        onChange={(value) =>
-          onChange({ ...profile, stats: { ...profile.stats, attackPower: value } })
-        }
-      />
-      <NumberField
-        label="Strength"
-        value={profile.stats.strength ?? 0}
-        min={0}
-        onChange={(value) =>
-          onChange({ ...profile, stats: { ...profile.stats, strength: value } })
-        }
-      />
-      <NumberField
-        label="Agility"
-        value={profile.stats.agility ?? 0}
-        min={0}
-        onChange={(value) =>
-          onChange({ ...profile, stats: { ...profile.stats, agility: value } })
-        }
-      />
-      <NumberField
-        label="Hit %"
-        hint="reduces miss chance"
-        value={profile.stats.hitChance ?? 0}
-        min={0}
-        max={100}
-        step={0.5}
-        onChange={(value) =>
-          onChange({ ...profile, stats: { ...profile.stats, hitChance: value } })
-        }
-      />
     </Panel>
   );
 }
