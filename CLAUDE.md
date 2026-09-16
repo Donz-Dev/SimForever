@@ -130,11 +130,33 @@ missing data explicitly.
 Tests passing is not the same as the app working. Run the real thing in the
 browser and check actual numbers against hand-computed expectations.
 
-**If browser numbers disagree with the tests, suspect a stale Vite cache**
-before suspecting the code. This has happened: the dev server served
-transformed modules from before an engine change, and the browser showed a
-level-60 combat table while the tests and a direct `vite-node` probe showed the
-correct level-63 one. Restart with `npm run dev -- --force`.
+**First check the two numbers are even supposed to match.** The UI runs
+`runProfileBatch` and renders `batch.representative`, *not*
+`runProfile(profile)`. Even at one iteration the batch derives its own seed, so
+the browser is showing a different fight from a direct `runProfile` call with
+the same profile — the log's `Combat begins (seed ...)` line gives the derived
+seed, not the profile's. To reproduce what the browser shows, call
+`runProfileBatch` and read `.representative`.
+
+**Then, if they should match and do not, suspect a stale Vite cache** before
+suspecting the code. This has happened: the dev server served transformed
+modules from before an engine change, and the browser showed a level-60 combat
+table while the tests and a direct `vite-node` probe showed the correct level-63
+one. Restart with `npm run dev -- --force`.
+
+Those two are in that order for a reason. The cache warning is the memorable
+one, so a mismatch reads as a cache bug on sight — and that cost a long detour
+of server restarts and cache clearing before `runProfileBatch` turned out to
+reproduce the browser's numbers exactly, outside the browser.
+
+**Verify a probabilistic mechanic against its rate, over many seeds, not
+against whether it showed up in one fight.** A 6.5% dodge chance is absent from
+an entire 100-second fight about once in every two hundred runs, which is often
+enough to happen on the seed you are looking at. Loop over a few dozen seeds and
+compare the observed rate with the one the combat table specifies. The same goes
+for asserting on it in a test: naming a specific ability in a training-dummy
+assertion pins a rotation decision rather than the behaviour under test, and
+breaks as soon as the rage economy shifts.
 
 ## Environment
 
