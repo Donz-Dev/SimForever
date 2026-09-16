@@ -1,14 +1,9 @@
 import type { CharacterProfile } from '../../profiles';
 import type { CharacterSelection, CombatStyleId } from '../../game/character';
 import { abilitiesForClass } from '../../game/abilities/abilitiesForClass';
-import { createPlayer } from '../../game/actors/createPlayer';
 import {
-  CLASSES,
   FACTIONS,
-  MAX_CHARACTER_LEVEL,
   applySelection,
-  baseManaFor,
-  baseStatsFor,
   classesForRace,
   combatStylesFor,
   getClass,
@@ -16,26 +11,43 @@ import {
   getRace,
   racesForFaction,
   resolveCombatStyle,
-  resourceLabel,
 } from '../../game/character';
-import { NumberField, TextField } from '../components/Field';
+import { TextField } from '../components/Field';
 import { OptionGroup } from '../components/OptionGroup';
 import { Panel } from '../components/Panel';
 
 interface CharacterPanelProps {
   readonly profile: CharacterProfile;
   readonly onChange: (profile: CharacterProfile) => void;
+  /** True once the character has been confirmed and the rest is in play. */
+  readonly confirmed: boolean;
+  readonly onConfirm: () => void;
+  readonly onEdit: () => void;
+  readonly onImport: () => void;
+  readonly onLoad: () => void;
 }
 
 /**
- * Character creation, in the order the game asks for it: faction, race, class.
+ * Step one: who is fighting.
+ *
+ * Character creation, in the order the game asks for it: faction, race, class,
+ * style. Nothing else appears until it is confirmed, because everything else —
+ * gear, the encounter, the run — is a decision about a character that does not
+ * exist yet.
  *
  * The component holds no rules of its own. Which races belong to a faction,
- * which classes a race may play, what happens to the current class when the
- * race changes, and what a level 60 character of that race and class starts
- * with are all answered by `game/character`.
+ * which classes a race may play, and what happens to the current class when the
+ * race changes are all answered by `game/character`.
  */
-export function CharacterPanel({ profile, onChange }: CharacterPanelProps) {
+export function CharacterPanel({
+  profile,
+  onChange,
+  confirmed,
+  onConfirm,
+  onEdit,
+  onImport,
+  onLoad,
+}: CharacterPanelProps) {
   const race = getRace(profile.character.race);
   const selection: CharacterSelection = {
     faction: race?.faction ?? 'alliance',
@@ -45,7 +57,6 @@ export function CharacterPanel({ profile, onChange }: CharacterPanelProps) {
 
   const styles = combatStylesFor(selection.characterClass);
   const style = resolveCombatStyle(selection.characterClass, profile.character.combatStyle);
-  const styleDefinition = getCombatStyle(style);
 
   const applyChange = (change: Partial<CharacterSelection>) => {
     const next = applySelection(change, selection);
@@ -63,20 +74,32 @@ export function CharacterPanel({ profile, onChange }: CharacterPanelProps) {
     });
   };
 
-  const setStyle = (next: CombatStyleId) => {
-    onChange({ ...profile, character: { ...profile.character, combatStyle: next } });
-  };
+  // Once confirmed the whole block collapses to a single line. Editing is an
+  // explicit action, so a stray click cannot silently rebuild the character
+  // underneath results that were run against the old one.
+  if (confirmed) {
+    return <ConfirmedCharacter profile={profile} style={style} onEdit={onEdit} />;
+  }
 
-  const availableClasses = classesForRace(selection.race);
-  const unavailable = CLASSES.filter(
-    (entry) => !availableClasses.some((available) => available.id === entry.id),
-  );
-
+  const styleDefinition = getCombatStyle(style);
   const classDefinition = getClass(selection.characterClass);
-  const abilityCount = abilitiesForClass(selection.characterClass).length;
+  const abilityCount = abilitiesForClass(selection.characterClass, style).length;
 
   return (
-    <Panel title="Character" subtitle="World of Warcraft: Forever">
+    <Panel
+      title="Character"
+      subtitle="World of Warcraft: Forever"
+      actions={
+        <>
+          <button type="button" onClick={onImport}>
+            Import
+          </button>
+          <button type="button" onClick={onLoad}>
+            Load
+          </button>
+        </>
+      }
+    >
       <TextField
         label="Name"
         value={profile.character.name}
@@ -100,262 +123,63 @@ export function CharacterPanel({ profile, onChange }: CharacterPanelProps) {
 
       <OptionGroup
         label="Class"
-        options={availableClasses}
+        options={classesForRace(selection.race)}
         value={selection.characterClass}
         onChange={(characterClass) => applyChange({ characterClass })}
       />
 
-      <OptionGroup
-        label="Combat style"
-        options={styles}
-        value={style}
-        onChange={setStyle}
-      />
-      {styleDefinition ? (
-        <p className="muted">{styleDefinition.summary}</p>
-      ) : null}
-      <WeaponSlots style={style} />
-
-      {unavailable.length > 0 ? (
-        <p className="muted">
-          Not available to {race?.name ?? 'this race'}:{' '}
-          {unavailable.map((entry) => entry.name).join(', ')}
-        </p>
-      ) : null}
-
-      <div className="field">
-        <span className="field-label">
-          Level
-          <span className="field-hint">fixed for now</span>
-        </span>
-        <div className="readonly-value">{MAX_CHARACTER_LEVEL}</div>
-      </div>
-
-      <h3>Character sheet</h3>
-      <CharacterSheet profile={profile} style={style} />
+      <OptionGroup label="Combat style" options={styles} value={style} onChange={(next) =>
+        onChange({ ...profile, character: { ...profile.character, combatStyle: next } })
+      } />
+      {styleDefinition ? <p className="muted">{styleDefinition.summary}</p> : null}
 
       {abilityCount === 0 ? (
-        <p className="muted">
-          No abilities are implemented for {classDefinition?.name ?? 'this class'} yet, so
-          it will fight with auto attacks only.
+        <p className="muted warn">
+          No abilities are implemented for {classDefinition?.name ?? 'this class'} yet, so it
+          will fight with auto attacks only.
         </p>
       ) : null}
 
-      <h3>Gear and other bonuses</h3>
-      <p className="muted">Added on top of the base stats above.</p>
-      <NumberField
-        label="Attack Power"
-        value={profile.stats.attackPower ?? 0}
-        min={0}
-        onChange={(value) =>
-          onChange({ ...profile, stats: { ...profile.stats, attackPower: value } })
-        }
-      />
-      <NumberField
-        label="Strength"
-        value={profile.stats.strength ?? 0}
-        min={0}
-        onChange={(value) =>
-          onChange({ ...profile, stats: { ...profile.stats, strength: value } })
-        }
-      />
-      <NumberField
-        label="Agility"
-        value={profile.stats.agility ?? 0}
-        min={0}
-        onChange={(value) =>
-          onChange({ ...profile, stats: { ...profile.stats, agility: value } })
-        }
-      />
-      <NumberField
-        label="Hit %"
-        hint="reduces miss chance"
-        value={profile.stats.hitChance ?? 0}
-        min={0}
-        max={100}
-        step={0.5}
-        onChange={(value) =>
-          onChange({ ...profile, stats: { ...profile.stats, hitChance: value } })
-        }
-      />
+      <button type="button" className="confirm" onClick={onConfirm}>
+        Confirm character
+      </button>
     </Panel>
   );
 }
 
 /**
- * The character as the simulation will actually see it: base stats, plus gear,
- * with the class conversions applied.
+ * The confirmed character, as one line.
  *
- * Built by calling the same `createPlayer` the simulation uses, rather than
- * recomputing the numbers here. A character sheet that disagreed with the fight
- * would be worse than no character sheet.
+ * Everything the choices above produced, in the order they were made, so the
+ * summary reads back as a sentence rather than as a list of fields.
  */
-function CharacterSheet({
+function ConfirmedCharacter({
   profile,
   style,
+  onEdit,
 }: {
   readonly profile: CharacterProfile;
   readonly style: CombatStyleId;
+  readonly onEdit: () => void;
 }) {
-  const base = baseStatsFor(profile.character.race, profile.character.characterClass, style);
-  if (!base) return <p className="muted">No base stats for this combination.</p>;
-
-  const player = createPlayer({
-    race: profile.character.race,
-    characterClass: profile.character.characterClass,
-    combatStyle: style,
-    bonusStats: profile.stats,
-  });
-
-  const stats = player.stats.effective;
-  const mana = player.resources.get('mana');
-  const definition = getClass(profile.character.characterClass);
-  const other = definition && definition.primaryResource !== 'mana'
-    ? player.resources.get(definition.primaryResource)
-    : undefined;
-
-  const rows: { label: string; value: string; from?: string }[] = [
-    {
-      label: 'Hit Points',
-      value: round(player.health.maximum),
-      from: `${base.hitPoints} base + ${base.stamina} stamina`,
-    },
-    ...(mana
-      ? [
-          {
-            label: 'Mana',
-            value: round(mana.maximum),
-            from: `${baseManaFor(profile.character.race, profile.character.characterClass)} base + ${base.intellect} intellect`,
-          },
-        ]
-      : []),
-    ...(other ? [{ label: resourceLabel(other.type), value: round(other.maximum) }] : []),
-
-    { label: 'Strength', value: round(stats.strength) },
-    { label: 'Agility', value: round(stats.agility) },
-    { label: 'Stamina', value: round(stats.stamina) },
-    { label: 'Intellect', value: round(stats.intellect) },
-    { label: 'Spirit', value: round(stats.spirit) },
-
-    {
-      label: 'Attack Power',
-      value: round(stats.attackPower),
-      from: `${base.attackPower} base + strength`,
-    },
-    ...(stats.rangedAttackPower !== 0
-      ? [{ label: 'Ranged Attack Power', value: round(stats.rangedAttackPower) }]
-      : []),
-    { label: 'Armor', value: round(stats.armor), from: 'agility' },
-    {
-      label: 'Crit Chance',
-      value: `${stats.critChance.toFixed(2)}%`,
-      from: `${base.critChance}% base + agility`,
-    },
-    ...(stats.spellCritChance !== 0
-      ? [
-          {
-            label: 'Spell Crit Chance',
-            value: `${stats.spellCritChance.toFixed(2)}%`,
-            from: `${base.spellCritChance}% base + intellect`,
-          },
-        ]
-      : []),
-    { label: 'Dodge Chance', value: `${stats.dodgeChance.toFixed(2)}%`, from: 'agility' },
-    ...(stats.manaPer5 !== 0
-      ? [
-          {
-            label: 'Mana per 5 sec',
-            value: stats.manaPer5.toFixed(1),
-            from: 'spirit (not yet regenerating)',
-          },
-        ]
-      : []),
-  ];
+  const race = getRace(profile.character.race);
+  const classDefinition = getClass(profile.character.characterClass);
+  const styleDefinition = getCombatStyle(style);
 
   return (
-    <table className="base-stats">
-      <tbody>
-        {rows.map((row) => (
-          <tr key={row.label}>
-            <td>{row.label}</td>
-            <td className="numeric">{row.value}</td>
-            <td className="numeric muted">{row.from ?? ''}</td>
-          </tr>
-        ))}
-      </tbody>
-    </table>
+    <section className="panel character-summary">
+      <div className="character-summary-body">
+        <div>
+          <strong>{profile.character.name}</strong>
+          <span className="muted">
+            {race?.name} {classDefinition?.name}
+            {styleDefinition ? ` · ${styleDefinition.name}` : ''}
+          </span>
+        </div>
+        <button type="button" onClick={onEdit}>
+          Change
+        </button>
+      </div>
+    </section>
   );
-}
-
-function round(value: number): string {
-  return Math.round(value).toLocaleString('en-US');
-}
-
-/**
- * Which equipment slots the current style uses.
- *
- * Gear does not exist yet, so this describes the rules rather than showing what
- * is equipped. It is the part of the style selector that "prompts the GUI to
- * display the correct information": a two-hander has no off-hand, a ranged
- * style needs a bow, a bear does not swing what it is holding.
- */
-function WeaponSlots({ style }: { readonly style: CombatStyleId }) {
-  const definition = getCombatStyle(style);
-  if (!definition) return null;
-
-  const rows: { slot: string; rule: string }[] = [
-    { slot: 'Main hand', rule: describeMainHand(definition.mainHand) },
-    { slot: 'Off hand', rule: describeOffHand(definition.offHand) },
-    { slot: 'Ranged', rule: describeRanged(definition.rangedSlot) },
-  ];
-
-  return (
-    <table className="base-stats">
-      <tbody>
-        {rows.map((row) => (
-          <tr key={row.slot}>
-            <td>{row.slot}</td>
-            <td className="numeric muted">{row.rule}</td>
-          </tr>
-        ))}
-      </tbody>
-    </table>
-  );
-}
-
-function describeMainHand(rule: string): string {
-  switch (rule) {
-    case 'two-hand':
-      return 'two-handed weapon, swings';
-    case 'one-hand':
-      return 'one-handed weapon, swings';
-    case 'stat-stick':
-      return 'stats only, does not swing';
-    default:
-      return 'unused';
-  }
-}
-
-function describeOffHand(rule: string): string {
-  switch (rule) {
-    case 'weapon':
-      return 'second weapon, swings';
-    case 'shield':
-      return 'shield';
-    case 'stat-stick':
-      return 'stats only, does not swing';
-    default:
-      return 'unused';
-  }
-}
-
-function describeRanged(rule: string): string {
-  switch (rule) {
-    case 'required':
-      return 'required, swings';
-    case 'stat-stick':
-      return 'stats only';
-    default:
-      return 'unused';
-  }
 }

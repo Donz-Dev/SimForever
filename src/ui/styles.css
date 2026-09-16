@@ -44,15 +44,37 @@ body {
   padding-bottom: 16px;
 }
 
-.app-header h1 {
-  margin: 0;
-  font-size: 28px;
-  letter-spacing: 0.02em;
-  color: var(--accent);
+.app-header {
+  display: flex;
+  align-items: baseline;
+  gap: 20px;
+  flex-wrap: wrap;
 }
 
-.app-header p {
-  margin: 4px 0 0;
+/* The wordmark scales with the viewport rather than sitting at a fixed size,
+   so it stays legible on a phone without a second breakpoint. */
+.logo {
+  width: clamp(240px, 34vw, 340px);
+  height: auto;
+  display: block;
+}
+
+.logo-sim {
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 46px;
+  font-weight: 700;
+  letter-spacing: 0.22em;
+}
+
+.logo-forever {
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 44px;
+  font-weight: 700;
+  letter-spacing: 0.10em;
+}
+
+.tagline {
+  margin: 0;
   color: var(--text-muted);
 }
 
@@ -74,6 +96,49 @@ body {
   flex-direction: column;
   gap: 16px;
   min-width: 0;
+}
+
+/* --- character step --- */
+
+/* Before the character is confirmed there is one column and nothing to put
+   beside it, so the layout collapses rather than leaving a gap where results
+   will eventually be. */
+.app-layout.single {
+  grid-template-columns: minmax(280px, 460px);
+  justify-content: center;
+}
+
+.confirm {
+  width: 100%;
+  margin-top: 16px;
+  padding: 10px 12px;
+  background: rgba(200, 164, 92, 0.16);
+  border-color: var(--accent);
+  color: var(--accent-strong);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+
+.confirm:hover:not(:disabled) {
+  background: rgba(200, 164, 92, 0.26);
+}
+
+.character-summary-body {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 16px;
+}
+
+.character-summary-body strong {
+  color: var(--accent-strong);
+  margin-right: 8px;
+}
+
+.warn {
+  color: var(--accent);
 }
 
 /* --- panels --- */
