@@ -1,5 +1,8 @@
 # SimForever
 
+[![CI](https://github.com/Donz-Dev/SimForever/actions/workflows/ci.yml/badge.svg)](https://github.com/Donz-Dev/SimForever/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+
 An event-driven World of Warcraft combat simulator that runs in the browser.
 
 The project is at its first milestone: a complete, tested simulation engine with a
