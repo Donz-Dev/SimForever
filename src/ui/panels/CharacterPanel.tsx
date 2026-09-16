@@ -1,6 +1,6 @@
 import type { CharacterProfile } from '../../profiles';
 import type { CharacterSelection, CombatStyleId } from '../../game/character';
-import { abilitiesForClass } from '../../game/abilities/exampleAbilities';
+import { abilitiesForClass } from '../../game/abilities/abilitiesForClass';
 import { createPlayer } from '../../game/actors/createPlayer';
 import {
   CLASSES,

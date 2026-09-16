@@ -2,6 +2,7 @@ import type { AutoAttackMode, WeaponProfile, WeaponSlot } from '../../engine';
 import type { CombatStyleId } from '../character';
 import { getCombatStyle } from '../character';
 import { RAGE_FROM_AUTO_ATTACK } from '../combat/resourceRules';
+import { attackPowerCoefficientFor } from '../combat/weaponDamage';
 
 /*
  * PLACEHOLDER WEAPONS.
@@ -11,8 +12,17 @@ import { RAGE_FROM_AUTO_ATTACK } from '../combat/resourceRules';
  * auto-attack modes observable and are replaced the moment real item data
  * arrives.
  *
- * The paw damage and the off-hand penalty below are the exception: those are
- * stated values rather than invented ones. See the notes on each.
+ * The base damage figures and swing speeds below are STILL INVENTED, and they
+ * now distort more than they used to: Forever's weapon damage formula makes
+ * every weapon-damage ability scale off both of them, so a placeholder weapon
+ * puts placeholder numbers into Mortal Strike as well as into auto-attacks.
+ *
+ * The attack power coefficients are NOT invented. Each is derived from its
+ * weapon's speed by the ruleset's own formula, so they stay correct when the
+ * real speeds arrive. See `game/combat/weaponDamage.ts`.
+ *
+ * The paw damage and the off-hand penalty below are the other exception: those
+ * are stated values rather than invented ones. See the notes on each.
  */
 
 /*
@@ -46,7 +56,7 @@ export const PLACEHOLDER_ONE_HAND: WeaponProfile = {
   swingTimerMs: 2600,
   baseDamage: 80,
   damageVariance: 0.15,
-  powerCoefficient: 0.35,
+  powerCoefficient: attackPowerCoefficientFor(2600),
   school: 'physical',
   skill: MAX_WEAPON_SKILL_AT_60,
   generates: RAGE_ON_HIT,
@@ -58,6 +68,9 @@ export const PLACEHOLDER_TWO_HANDER: WeaponProfile = {
   // Slower and harder-hitting, so the two styles are distinguishable at all.
   swingTimerMs: 3400,
   baseDamage: 140,
+  // Re-derived: the coefficient follows the speed, so it cannot be left behind
+  // by a spread from a faster weapon.
+  powerCoefficient: attackPowerCoefficientFor(3400),
 };
 
 export const PLACEHOLDER_RANGED: WeaponProfile = {
@@ -65,7 +78,7 @@ export const PLACEHOLDER_RANGED: WeaponProfile = {
   swingTimerMs: 2900,
   baseDamage: 110,
   damageVariance: 0.15,
-  powerCoefficient: 0.35,
+  powerCoefficient: attackPowerCoefficientFor(2900),
   school: 'physical',
   skill: MAX_WEAPON_SKILL_AT_60,
   // No rage: nothing that shoots uses it.
@@ -79,6 +92,7 @@ export function makeOffHand(
     ...PLACEHOLDER_ONE_HAND,
     name: 'Melee (Off Hand)',
     swingTimerMs: 2400,
+    powerCoefficient: attackPowerCoefficientFor(2400),
     damageMultiplier,
   };
 }
@@ -99,7 +113,7 @@ export const BEAR_PAW: WeaponProfile = {
   swingTimerMs: 2500,
   baseDamage: BASE_BEAR_PAW_DAMAGE,
   damageVariance: 0.15,
-  powerCoefficient: 0.35,
+  powerCoefficient: attackPowerCoefficientFor(2500),
   school: 'physical',
   // Bears build rage by attacking, as warriors do.
   generates: RAGE_ON_HIT,
@@ -110,7 +124,7 @@ export const CAT_PAW: WeaponProfile = {
   swingTimerMs: 1000,
   baseDamage: BASE_CAT_PAW_DAMAGE,
   damageVariance: 0.15,
-  powerCoefficient: 0.35,
+  powerCoefficient: attackPowerCoefficientFor(1000),
   school: 'physical',
   // Cats run on energy, which regenerates on a timer rather than per swing.
   // Energy regeneration is not implemented, so a cat currently never refills.

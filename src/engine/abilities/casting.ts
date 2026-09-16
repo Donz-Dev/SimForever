@@ -14,6 +14,7 @@ export type CastRejection =
   | 'on_cooldown'
   | 'not_enough_resource'
   | 'invalid_target'
+  | 'already_queued'
   | 'condition_failed';
 
 export type CastCheck = { ok: true } | { ok: false; reason: CastRejection };
@@ -50,6 +51,12 @@ export function checkCast(
 
   if ((ability.requiresTarget ?? true) && (!target || !target.isAlive)) {
     return { ok: false, reason: 'invalid_target' };
+  }
+
+  // Already armed and waiting for the swing. Without this a priority list would
+  // re-arm it every time it was evaluated and pay the cost again each time.
+  if (ability.onNextSwing && caster.queuedSwing(ability.onNextSwing) === ability.id) {
+    return { ok: false, reason: 'already_queued' };
   }
 
   const abilityContext: AbilityContext = { simulation: context, caster, target, ability };
@@ -116,6 +123,14 @@ export function castAbility(
 
   const castTime = castLength(ability, haste);
   const abilityContext: AbilityContext = { simulation: context, caster, target, ability };
+
+  // An on-next-swing ability is paid for and armed here; the auto-attack that
+  // follows runs its effect. Nothing lands now, so it returns before the cast
+  // path below.
+  if (ability.onNextSwing) {
+    caster.queueNextSwing(ability.onNextSwing, ability.id);
+    return { ok: true };
+  }
 
   if (castTime <= 0) {
     ability.onCast(abilityContext);

@@ -1,4 +1,4 @@
-import type { Combatant } from '../actors/Combatant';
+import type { Combatant, WeaponSlot } from '../actors/Combatant';
 import type { AttackTableKind } from '../combat/attackTable';
 import type { ResourceType } from '../resources';
 import type { SimulationContext } from '../simulation/SimulationContext';
@@ -68,6 +68,20 @@ export interface Ability {
    * once rather than repeated in every damage call.
    */
   readonly attackTable?: AttackTableKind;
+
+  /**
+   * Queue this ability onto the next auto-attack with the given weapon instead
+   * of firing it immediately.
+   *
+   * The "on next swing" abilities: Heroic Strike and Cleave. Casting one pays
+   * its cost and arms it; the next swing of that weapon runs its `onCast` in
+   * place of the normal auto-attack, and the swing timer is unaffected.
+   *
+   * Only one can be armed at a time. Arming a second replaces the first, and
+   * the replaced ability's cost is NOT refunded — a detail no source states
+   * either way, so it is the simple reading rather than a researched one.
+   */
+  readonly onNextSwing?: WeaponSlot;
 
   /**
    * Extra conditions beyond cooldown, cost and target, which the engine
