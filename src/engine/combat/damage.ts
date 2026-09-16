@@ -1,4 +1,4 @@
-import type { Combatant } from '../actors/Combatant';
+import type { Combatant, ResourceGeneration } from '../actors/Combatant';
 import type { SimulationContext } from '../simulation/SimulationContext';
 import type { DamageSchool } from './DamageSchool';
 import { isPhysical } from './DamageSchool';
@@ -204,9 +204,35 @@ export function dealDamage(
     periodic: request.periodic ?? false,
   });
 
+  // Taking damage can generate resource: this is how a warrior builds rage
+  // from being hit. Proportional to damage actually taken, so an avoided
+  // attack generates nothing.
+  grantGeneratedResource(context, target, target.resourceOnDamageTaken, resolution.amount);
+
   if (healthBefore > 0 && target.health.isEmpty) {
     context.killCombatant(target, source);
   }
 
   return resolution;
+}
+
+/**
+ * Grant a resource generation award, flat and damage-proportional parts alike.
+ *
+ * Shared by damage dealt and damage taken. A zero or negative award is skipped
+ * rather than emitting a telemetry event for nothing.
+ */
+export function grantGeneratedResource(
+  context: SimulationContext,
+  actor: Combatant,
+  generation: ResourceGeneration | undefined,
+  damage: number,
+): void {
+  if (!generation) return;
+
+  const amount =
+    (generation.flat ?? 0) + (generation.perDamage ?? 0) * Math.max(0, damage);
+  if (amount <= 0) return;
+
+  context.grantResource(actor, generation.resource, amount);
 }

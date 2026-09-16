@@ -1,7 +1,7 @@
 import type { Combatant, WeaponProfile, WeaponSlot } from '../actors/Combatant';
 import { EventPriority, createEvent } from '../events';
 import type { SimulationContext } from '../simulation/SimulationContext';
-import { dealDamage } from './damage';
+import { dealDamage, grantGeneratedResource } from './damage';
 import { applyHaste, hasteMultiplierFrom } from './ratings';
 
 /** Damage varies this much either side of the weapon's base, unless overridden. */
@@ -85,7 +85,7 @@ function swing(
   // got full attack power scaling would get stronger as the character geared up.
   const multiplier = weapon.damageMultiplier ?? 1;
 
-  dealDamage(context, {
+  const result = dealDamage(context, {
     source: attacker,
     target,
     abilityName: weapon.name,
@@ -97,8 +97,9 @@ function swing(
     attackTable: slot === 'ranged' ? 'ranged-auto' : 'melee-auto',
   });
 
-  if (weapon.generates) {
-    context.grantResource(attacker, weapon.generates.resource, weapon.generates.amount);
-  }
+  // Resource from damage DEALT, proportional to what actually landed. A missed
+  // or dodged swing generates nothing, which is the behaviour that makes a
+  // high-miss build rage-starved as well as low-damage.
+  grantGeneratedResource(context, attacker, weapon.generates, result.amount);
 
 }

@@ -162,6 +162,8 @@ docs/                    Architecture documentation
 - Auras: durations, stacks, periodic ticks, stat modifiers, refresh behaviour
 - Abilities: cast time, cooldowns, charges, global cooldown, resource costs, haste
 - Auto attacks on an independent, hasted swing timer
+- Resource generation: rage proportional to damage dealt and taken, energy in
+  fixed batches, mana on a five-second rule with a casting-bypass stat
 - Six combat tables (melee/ranged auto, melee/ranged special, spell, and
   attacks received) resolving on an integer 1-10000 die, with single-roll and
   two-roll semantics

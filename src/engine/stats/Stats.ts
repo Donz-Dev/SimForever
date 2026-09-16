@@ -36,6 +36,11 @@ export const STAT_NAMES = [
 
   /** Mana restored per five seconds. */
   'manaPer5',
+  /**
+   * Percentage of mana regeneration that continues while casting, in
+   * percentage POINTS. 0 means regeneration stops entirely after spending.
+   */
+  'manaRegenBypass',
 
   // Secondary ratings (raw rating, not percentage). Kept for rulesets and gear
   // that grant rating rather than a flat percentage.

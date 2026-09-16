@@ -3,6 +3,7 @@ export type {
   CombatantKind,
   CombatantOptions,
   Faction,
+  ResourceGeneration,
   WeaponProfile,
   WeaponSlot,
 } from './Combatant';
