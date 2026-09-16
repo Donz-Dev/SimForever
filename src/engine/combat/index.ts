@@ -20,7 +20,13 @@ export {
   toRollUnits,
 } from './attackTable';
 export type { DamageRequest, DamageResolution } from './damage';
-export { armorReduction, dealDamage, resolveDamage, scaleByPower } from './damage';
+export {
+  armorReduction,
+  dealDamage,
+  grantGeneratedResource,
+  resolveDamage,
+  scaleByPower,
+} from './damage';
 export type { HealRequest, HealResolution } from './healing';
 export { applyHealing, resolveHealing } from './healing';
 export {

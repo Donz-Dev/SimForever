@@ -43,17 +43,32 @@ export function fixedMaximumFor(resource: ResourceType): number | undefined {
 }
 
 /**
+ * Overrides for resource maximums, for talents that raise a cap.
+ *
+ * Rage and energy are both normally 100 and both can be increased, so neither
+ * cap is baked in any deeper than `FIXED_RESOURCE_MAXIMUMS`.
+ */
+export type ResourceMaximumOverrides = Partial<Record<ResourceType, number>>;
+
+/**
  * The resource pools a character of this class starts a fight with.
  *
  * A Druid gets all three, because switching to bear form mid-fight must not
  * have to create a rage pool that did not exist a moment earlier.
  */
-export function resourceSpecsFor(characterClass: ClassId, maxMana: number): ResourceSpec[] {
+export function resourceSpecsFor(
+  characterClass: ClassId,
+  maxMana: number,
+  overrides: ResourceMaximumOverrides = {},
+): ResourceSpec[] {
   const definition = CLASS_BY_ID.get(characterClass);
   if (!definition) return [];
 
   return definition.resources.map((resource) => {
-    const maximum = fixedMaximumFor(resource) ?? (resource === 'mana' ? maxMana : 0);
+    const maximum =
+      overrides[resource] ??
+      fixedMaximumFor(resource) ??
+      (resource === 'mana' ? maxMana : 0);
     return {
       type: resource,
       maximum,

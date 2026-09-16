@@ -1,7 +1,12 @@
 import type { PartialStats } from '../../engine';
 import { Combatant, addStats, makeStats } from '../../engine';
 import { abilitiesForClass } from '../abilities/exampleAbilities';
-import type { ClassId, CombatStyleId, RaceId } from '../character';
+import type {
+  ClassId,
+  CombatStyleId,
+  RaceId,
+  ResourceMaximumOverrides,
+} from '../character';
 import {
   baseHitPointsFor,
   baseManaFor,
@@ -13,6 +18,7 @@ import {
   resourceSpecsFor,
   statDerivationFor,
 } from '../character';
+import { RAGE_FROM_DAMAGE_TAKEN, regenerationFor } from '../combat/resourceRules';
 import { rotationFor } from '../rotations/basicMeleeRotation';
 import { autoAttackModeForStyle, weaponsForStyle } from './weapons';
 
@@ -36,6 +42,11 @@ export interface PlayerOptions {
    * OFF_HAND_DAMAGE_MULTIPLIER; talents that change it pass a value here.
    */
   readonly offHandDamageMultiplier?: number;
+  /**
+   * Raises a resource cap, for talents that do so. Rage and energy are both
+   * normally 100 and both can be increased.
+   */
+  readonly resourceMaximums?: ResourceMaximumOverrides;
 }
 
 /**
@@ -81,6 +92,12 @@ export function createPlayer(options: PlayerOptions): Combatant {
   const conversions = conversionsFor(characterClass, style);
   const derived = deriveFromPrimaries(startingStats, conversions);
 
+  const resources = resourceSpecsFor(
+    characterClass,
+    baseManaFor(race, characterClass) + derived.mana,
+    options.resourceMaximums,
+  );
+
   const abilities = abilitiesForClass(characterClass, style);
   const rotation = rotationFor(characterClass, style);
 
@@ -92,10 +109,13 @@ export function createPlayer(options: PlayerOptions): Combatant {
     maxHealth: baseHitPointsFor(race, characterClass, style) + derived.hitPoints,
     stats: startingStats,
     statDerivation: statDerivationFor(characterClass, style),
-    resources: resourceSpecsFor(
-      characterClass,
-      baseManaFor(race, characterClass) + derived.mana,
-    ),
+    resources,
+    regeneration: regenerationFor(resources.map((spec) => spec.type)),
+    // Only classes with a rage pool build rage from being hit; for everyone
+    // else `grantResource` finds no pool and ignores it.
+    resourceOnDamageTaken: resources.some((spec) => spec.type === 'rage')
+      ? RAGE_FROM_DAMAGE_TAKEN
+      : undefined,
     abilities,
     // No abilities means nothing for a rotation to choose, so it is left off
     // rather than scheduling decision events that can never do anything.

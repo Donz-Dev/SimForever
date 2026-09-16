@@ -3,6 +3,7 @@ import type { CastCheck } from '../abilities/casting';
 import { castAbility, checkCast } from '../abilities/casting';
 import type { Combatant } from '../actors/Combatant';
 import { startAutoAttack } from '../combat/autoAttack';
+import { startResourceRegeneration } from '../resources';
 import type {
   AttackChanceProvider,
   AttackChances,
@@ -315,6 +316,7 @@ export class Simulation implements SimulationContext {
     for (const actor of this.actors) {
       if (!actor.isAlive) continue;
       startAutoAttack(this, actor);
+      startResourceRegeneration(this, actor);
       if (actor.rotation) {
         this.scheduleDecision(actor, 0);
       }

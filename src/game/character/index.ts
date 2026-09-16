@@ -51,6 +51,7 @@ export {
   deriveFromPrimaries,
   statDerivationFor,
 } from './conversions';
+export type { ResourceMaximumOverrides } from './resources';
 export {
   FIXED_RESOURCE_MAXIMUMS,
   activeResourceFor,

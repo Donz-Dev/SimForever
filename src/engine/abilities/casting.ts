@@ -87,6 +87,9 @@ export function castAbility(
   if (ability.cost) {
     const pool = caster.resources.require(ability.cost.resource);
     pool.spend(ability.cost.amount);
+    // Recorded so rules keyed on recent spending work: mana regeneration stops
+    // for a few seconds after a cast.
+    caster.recordResourceSpend(ability.cost.resource, now);
     context.telemetry.emit({
       type: 'resource_spent',
       timestamp: now,

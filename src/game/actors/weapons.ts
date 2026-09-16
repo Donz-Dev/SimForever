@@ -1,6 +1,7 @@
 import type { AutoAttackMode, WeaponProfile, WeaponSlot } from '../../engine';
 import type { CombatStyleId } from '../character';
 import { getCombatStyle } from '../character';
+import { RAGE_FROM_AUTO_ATTACK } from '../combat/resourceRules';
 
 /*
  * PLACEHOLDER WEAPONS.
@@ -14,7 +15,11 @@ import { getCombatStyle } from '../character';
  * stated values rather than invented ones. See the notes on each.
  */
 
-const RAGE_PER_SWING = { resource: 'rage', amount: 15 } as const;
+/*
+ * Rage is proportional to damage actually dealt, not a flat award per swing.
+ * A missed or dodged swing therefore generates nothing.
+ */
+const RAGE_ON_HIT = RAGE_FROM_AUTO_ATTACK;
 
 /**
  * How much of its damage a dual-wield off-hand deals.
@@ -34,7 +39,7 @@ export const PLACEHOLDER_ONE_HAND: WeaponProfile = {
   damageVariance: 0.15,
   powerCoefficient: 0.35,
   school: 'physical',
-  generates: RAGE_PER_SWING,
+  generates: RAGE_ON_HIT,
 };
 
 export const PLACEHOLDER_TWO_HANDER: WeaponProfile = {
@@ -86,7 +91,7 @@ export const BEAR_PAW: WeaponProfile = {
   powerCoefficient: 0.35,
   school: 'physical',
   // Bears build rage by attacking, as warriors do.
-  generates: RAGE_PER_SWING,
+  generates: RAGE_ON_HIT,
 };
 
 export const CAT_PAW: WeaponProfile = {
