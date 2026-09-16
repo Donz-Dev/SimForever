@@ -227,6 +227,36 @@ button:disabled {
   font-weight: 600;
 }
 
+.readonly-value {
+  padding: 7px 10px;
+  background: #0d1015;
+  border: 1px solid var(--panel-border);
+  border-radius: 4px;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: 13px;
+}
+
+.resource-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.resource-list li {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 5px 10px;
+  border-bottom: 1px solid var(--panel-border);
+  font-size: 13px;
+}
+
+.resource-list li:last-child {
+  border-bottom: none;
+}
+
 .run-button {
   width: 100%;
   margin-top: 16px;

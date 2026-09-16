@@ -5,9 +5,32 @@
  * faction, then race, then class. Everything here is World of Warcraft:
  * Forever content, not engine behaviour.
  */
-export type { ClassId, FactionId, RaceId } from './ids';
-export { CLASS_IDS, FACTION_IDS, RACE_IDS, isClassId, isFactionId, isRaceId } from './ids';
-export type { ClassDefinition, FactionDefinition, RaceDefinition } from './definitions';
+export type { ClassId, FactionId, FormId, RaceId } from './ids';
+export {
+  CLASS_IDS,
+  FACTION_IDS,
+  FORM_IDS,
+  RACE_IDS,
+  isClassId,
+  isFactionId,
+  isRaceId,
+} from './ids';
+export type {
+  ClassDefinition,
+  FactionDefinition,
+  FormDefinition,
+  RaceDefinition,
+} from './definitions';
+export {
+  FIXED_RESOURCE_MAXIMUMS,
+  PLACEHOLDER_MAX_MANA,
+  activeResourceFor,
+  classUsesResource,
+  fixedMaximumFor,
+  formsFor,
+  resourceLabel,
+  resourceSpecsFor,
+} from './resources';
 export {
   CLASSES,
   FACTIONS,

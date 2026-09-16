@@ -1,4 +1,5 @@
-import type { ClassId, FactionId, RaceId } from './ids';
+import type { ResourceType } from '../../engine';
+import type { ClassId, FactionId, FormId, RaceId } from './ids';
 
 /**
  * Character creation data for World of Warcraft: Forever.
@@ -44,9 +45,31 @@ export interface RaceDefinition {
   readonly classes: readonly ClassId[];
 }
 
+/** A form or stance, and the resource that drives play while in it. */
+export interface FormDefinition {
+  readonly id: FormId;
+  readonly name: string;
+  readonly resource: ResourceType;
+}
+
 export interface ClassDefinition {
   readonly id: ClassId;
   readonly name: string;
+  /**
+   * Every resource pool a character of this class owns.
+   *
+   * Usually one. The Druid has three, because a bear still has a mana pool it
+   * is not currently using — which is exactly how the game models it, and why
+   * this is a list rather than a single value.
+   *
+   * Health is not listed: every combatant has it, so it lives on `Combatant`
+   * rather than being repeated on all nine classes.
+   */
+  readonly resources: readonly ResourceType[];
+  /** The resource that drives play by default, i.e. in `forms[0]` if any. */
+  readonly primaryResource: ResourceType;
+  /** Forms that change the active resource. Empty for every class but Druid. */
+  readonly forms: readonly FormDefinition[];
 }
 
 export const FACTIONS: readonly FactionDefinition[] = [
@@ -54,16 +77,34 @@ export const FACTIONS: readonly FactionDefinition[] = [
   { id: 'horde', name: 'Horde' },
 ];
 
+/** A class with one resource and no forms, which is eight of the nine. */
+function simpleClass(id: ClassId, name: string, resource: ResourceType): ClassDefinition {
+  return { id, name, resources: [resource], primaryResource: resource, forms: [] };
+}
+
 export const CLASSES: readonly ClassDefinition[] = [
-  { id: 'druid', name: 'Druid' },
-  { id: 'hunter', name: 'Hunter' },
-  { id: 'mage', name: 'Mage' },
-  { id: 'paladin', name: 'Paladin' },
-  { id: 'priest', name: 'Priest' },
-  { id: 'rogue', name: 'Rogue' },
-  { id: 'shaman', name: 'Shaman' },
-  { id: 'warlock', name: 'Warlock' },
-  { id: 'warrior', name: 'Warrior' },
+  {
+    id: 'druid',
+    name: 'Druid',
+    // The only class whose resource depends on what it is currently doing.
+    // All three pools exist at once; the form decides which one matters.
+    resources: ['mana', 'rage', 'energy'],
+    primaryResource: 'mana',
+    forms: [
+      { id: 'caster', name: 'Caster Form', resource: 'mana' },
+      { id: 'moonkin', name: 'Moonkin Form', resource: 'mana' },
+      { id: 'bear', name: 'Bear Form', resource: 'rage' },
+      { id: 'cat', name: 'Cat Form', resource: 'energy' },
+    ],
+  },
+  simpleClass('hunter', 'Hunter', 'mana'),
+  simpleClass('mage', 'Mage', 'mana'),
+  simpleClass('paladin', 'Paladin', 'mana'),
+  simpleClass('priest', 'Priest', 'mana'),
+  simpleClass('rogue', 'Rogue', 'energy'),
+  simpleClass('shaman', 'Shaman', 'mana'),
+  simpleClass('warlock', 'Warlock', 'mana'),
+  simpleClass('warrior', 'Warrior', 'rage'),
 ];
 
 export const RACES: readonly RaceDefinition[] = [

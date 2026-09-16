@@ -120,6 +120,31 @@ describe('player versus training dummy', () => {
     expect(result.actors.find((actor) => actor.faction === 'hostile')?.isAlive).toBe(false);
   });
 
+  it('runs a class with no abilities on auto attacks alone', () => {
+    // A Mage has mana and no implemented abilities, so it must still produce a
+    // valid fight rather than stalling or throwing.
+    const result = runProfile({
+      ...profile,
+      character: { ...profile.character, race: 'gnome', characterClass: 'mage' },
+    });
+
+    expect(result.endReason).toBe('duration_expired');
+    expect(result.damage.total).toBeGreaterThan(0);
+
+    const used = result.damage.byActor[0].abilities.map((entry) => entry.abilityName);
+    expect(used).toEqual(['Melee']);
+  });
+
+  it('gives a warrior more damage than a mage, via its abilities', () => {
+    const asWarrior = runProfile(profile);
+    const asMage = runProfile({
+      ...profile,
+      character: { ...profile.character, race: 'gnome', characterClass: 'mage' },
+    });
+
+    expect(asWarrior.damage.total).toBeGreaterThan(asMage.damage.total);
+  });
+
   it('runs a short fight without error', () => {
     const result = runProfile({
       ...profile,

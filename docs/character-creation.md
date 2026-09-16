@@ -58,6 +58,67 @@ throws that guarantee away.
 Bulk content that will be imported from an external export — items, spells —
 still belongs in `src/data` as JSON. See [`src/data/README.md`](../src/data/README.md).
 
+## Resources
+
+Every class has **Health**. It lives on `Combatant`, not on the class
+definitions, so there is one source of truth rather than nine copies.
+
+Beyond that, one resource drives how each class plays:
+
+| Class | Resource |
+| --- | --- |
+| Warrior | Rage |
+| Rogue | Energy |
+| Mage, Warlock, Shaman, Paladin, Priest, Hunter | Mana |
+| Druid | depends on form |
+
+### The Druid
+
+The Druid is why `ClassDefinition.resources` is a list rather than a single
+value:
+
+| Form | Resource |
+| --- | --- |
+| Caster Form | Mana |
+| Moonkin Form | Mana |
+| Bear Form | Rage |
+| Cat Form | Energy |
+
+A Druid combatant is built with **all three pools at once**, even in caster
+form. A bear still has a mana pool it is not currently using, and creating the
+rage pool only on shapeshift would mean conjuring state mid-fight. The form
+decides which pool *matters*, not which pools exist.
+
+`activeResourceFor(classId, formId?)` answers "what drives play right now". For
+the eight classes with no forms it always returns the primary resource, so
+callers never need to special-case the Druid.
+
+### Maximums
+
+Rage and energy are fixed at **100** for everyone, at every level — they are
+ruleset constants, in `FIXED_RESOURCE_MAXIMUMS`.
+
+**Mana is not implemented.** It scales with intellect and level, and neither the
+base values nor the conversion exist yet, so `PLACEHOLDER_MAX_MANA` stands in.
+Any mana number currently produced is structurally correct and numerically made
+up. Replacing it needs base mana per class at each level, and the
+intellect-to-mana conversion.
+
+### Starting values
+
+Rage starts at **0**; mana and energy start **full**. This is what makes the
+opening seconds of a rage rotation different from everyone else's — a warrior
+walks in with nothing and builds it by swinging.
+
+## Level
+
+Level is **fixed at 60** and is not editable in the UI.
+
+The field remains on the profile and validation still accepts 1–60, so
+level-dependent formulas can be written per level rather than against a
+hard-coded 60. `MAX_CHARACTER_LEVEL` is the constant to read; nothing should
+write `60` inline.
+
 ## Querying
 
 ```typescript
@@ -115,14 +176,23 @@ character.characterClass: Tauren cannot be a Mage in World of Warcraft: Forever.
 
 ## What this does not do yet
 
-Race and class are currently **recorded but not simulated** — they do not change
-any combat numbers. The next steps, each of which is additive:
+**Class now affects the simulation** — it determines the resource pools a
+character gets. Race still does not.
 
-- **Primary resource per class** (Warrior rage, Mage mana, Rogue energy), so
-  `createPlayer` stops hard-coding rage.
-- **Base stats per race and class**, and per level.
-- **Racial traits**, as auras applied at combat start.
-- **Class ability lists and rotations**, replacing the example content.
+Known gaps, each additive:
+
+- **Mana pool sizes** are a placeholder. Needs base mana per class per level and
+  the intellect-to-mana conversion.
+- **Base health** is a flat 1000 for everyone. Needs base health per class per
+  level and the stamina conversion.
+- **Only the Warrior has abilities.** Every other class fights with auto attacks
+  alone, which the UI says plainly rather than hiding.
+- **Shapeshifting is not implemented.** The Druid owns all three pools and the
+  form-to-resource mapping exists, but nothing switches forms yet, and forms
+  also change armor, abilities and attack power in ways not modelled here.
+- **Racial traits** do not exist. They slot in as auras applied at combat start,
+  keyed off `profile.character.race`.
+- **Base stats per race** do not exist.
 
 ## Adding a race or class
 
