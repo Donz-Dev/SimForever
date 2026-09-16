@@ -44,6 +44,11 @@ export function App() {
 
   const editCharacter = () => {
     setConfirmed(false);
+    // Talent ids are unique WITHIN a class, not across them, so an allocation
+    // means nothing once the class changes. Cleared on every edit rather than
+    // only on a class change, because a half-kept tree is more confusing than
+    // an empty one.
+    setTalents({});
     // Results belong to the character that produced them. Leaving them on
     // screen beside a character being rebuilt invites reading one as the other.
     reset();
@@ -85,6 +90,7 @@ export function App() {
         {confirmed ? (
           <div className="column column-results">
             <TalentPanel
+              characterClass={profile.character.characterClass}
               allocation={talents}
               onChange={setTalents}
               collapsed={talentsCollapsed}

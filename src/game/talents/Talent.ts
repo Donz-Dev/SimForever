@@ -1,5 +1,11 @@
-/** The three Warrior talent trees. */
-export type WarriorTreeId = 'arms' | 'fury' | 'protection';
+/**
+ * A talent tree's id, slugified from its display name: `feral_combat`.
+ *
+ * A plain string rather than a union, because there are twenty-seven of them
+ * across nine classes and they come from data rather than from code. The class
+ * they belong to is what makes one unambiguous.
+ */
+export type TalentTreeId = string;
 
 /**
  * One talent, as the tree draws it.
@@ -10,23 +16,52 @@ export type WarriorTreeId = 'arms' | 'fury' | 'protection';
  * from a dense array with holes in it.
  */
 export interface Talent {
+  /** Slugified name. UNIQUE WITHIN A CLASS, not across classes. */
   readonly id: string;
   readonly name: string;
-  readonly tree: WarriorTreeId;
+  readonly tree: TalentTreeId;
   readonly row: number;
   readonly col: number;
   /** Maximum points that can be spent in it. */
   readonly ranks: number;
   /** Points needed in this tree before it unlocks. Row 0 talents need none. */
   readonly tier: number;
-  /** A talent that must be maxed first, by id. */
+  /**
+   * A talent that must be at full rank first, by id.
+   *
+   * Usually directly above; sometimes BESIDE, on the same row. The Paladin's
+   * Divine Precision and the Priest's Improved Mind Flay both point sideways at
+   * their neighbour, which is the arrow the calculator draws.
+   */
   readonly requires?: string;
-  /** Points needed in `requires`, when there is one. */
+  /** Points needed in `requires`, which is always that talent's full rank. */
   readonly requiresRanks?: number;
   /** Icon name on the shared WoW icon CDN. */
   readonly icon: string;
   /** Rank one text, as the source states it. */
   readonly description: string;
+}
+
+export interface TalentTree {
+  readonly id: TalentTreeId;
+  readonly name: string;
+  readonly talents: readonly Talent[];
+}
+
+/**
+ * Everything one class's talents amount to.
+ *
+ * Carries its own `byId` index because TALENT IDS ARE NOT UNIQUE ACROSS
+ * CLASSES -- `deflection` belongs to the Hunter, Paladin, Rogue and Warrior,
+ * and `toughness` to three more. A single global map would silently answer with
+ * whichever class happened to load last.
+ */
+export interface ClassTalents {
+  readonly classId: string;
+  /** Where the data came from, for anyone checking a number. */
+  readonly source: string;
+  readonly trees: readonly TalentTree[];
+  readonly byId: ReadonlyMap<string, Talent>;
 }
 
 /** Total talent points a level 60 character has to spend. */
