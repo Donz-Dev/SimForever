@@ -2,6 +2,8 @@ import { describe, expect, it } from 'vitest';
 import type { AttackResolution, WeaponProfile } from '../../src/engine';
 import {
   NO_CHANCES,
+  ROLL_MAX,
+  dealDamage,
   resolveDamage,
   scaleByPower,
   seconds,
@@ -19,13 +21,18 @@ import {
   EXECUTE_HEALTH_THRESHOLD,
   HEROIC_STRIKE,
   MORTAL_STRIKE,
+  OVERPOWER,
+  REVENGE,
   REVENGE_DAMAGE,
   SHIELD_SLAM_DAMAGE,
   SPEARING_STRIKE_WEAPON_FRACTION,
   WARRIOR_ABILITIES,
   warriorAbility,
 } from '../../src/game/abilities/warrior';
+import { WARRIOR_REACTIONS } from '../../src/game/reactions/warrior';
 import {
+  OVERPOWER_READY,
+  REVENGE_READY,
   REND_DAMAGE_PER_TICK,
   REND_DURATION_MS,
   REND_TICK_COUNT,
@@ -485,5 +492,122 @@ describe('on-next-swing, end to end', () => {
     // Armed. A priority list re-evaluating must not pay for it a second time.
     expect(simulation.canCast(player, HEROIC_STRIKE, dummy)).toBe(false);
     expect(player.resources.require('rage').current).toBe(85);
+  });
+});
+
+describe('Overpower and Revenge, through the reaction hook', () => {
+  /** Chances that force one outcome on a single-roll melee table. */
+  const alwaysDodge = () => ({ ...NO_CHANCES, dodge: ROLL_MAX });
+
+  it('opens the Overpower window when the target dodges', () => {
+    const warrior = makeAttacker({
+      stats: { attackPower: 0 },
+      reactions: WARRIOR_REACTIONS,
+      abilities: [OVERPOWER],
+      resources: [{ type: 'rage', maximum: 100, initial: 100 }],
+    });
+    const dummy = makeTarget();
+    const simulation = buildSimulation([warrior, dummy], { attackChances: alwaysDodge });
+    simulation.begin();
+
+    // Closed before anything happens: Overpower is not freely castable.
+    expect(simulation.canCast(warrior, OVERPOWER, dummy)).toBe(false);
+
+    dealDamage(simulation, {
+      source: warrior,
+      target: dummy,
+      abilityName: 'Melee',
+      school: 'physical',
+      baseAmount: 100,
+      attackTable: 'melee-auto',
+    });
+
+    expect(warrior.auras.remainingMs(OVERPOWER_READY.id, simulation.clock.now())).toBeGreaterThan(
+      0,
+    );
+    expect(simulation.canCast(warrior, OVERPOWER, dummy)).toBe(true);
+  });
+
+  it('consumes the window when Overpower is used', () => {
+    const warrior = makeAttacker({
+      stats: { attackPower: 0 },
+      reactions: WARRIOR_REACTIONS,
+      abilities: [OVERPOWER],
+      resources: [{ type: 'rage', maximum: 100, initial: 100 }],
+    });
+    const dummy = makeTarget();
+    const simulation = buildSimulation([warrior, dummy], {
+      // The dodge opens the window; Overpower itself then lands.
+      attackChances: (kind) =>
+        kind === 'melee-auto' ? { ...NO_CHANCES, dodge: ROLL_MAX } : NO_CHANCES,
+    });
+    simulation.begin();
+
+    dealDamage(simulation, {
+      source: warrior,
+      target: dummy,
+      abilityName: 'Melee',
+      school: 'physical',
+      baseAmount: 100,
+      attackTable: 'melee-auto',
+    });
+    expect(simulation.canCast(warrior, OVERPOWER, dummy)).toBe(true);
+
+    simulation.cast(warrior, OVERPOWER, dummy);
+
+    // Spent, not merely on cooldown: the window is gone.
+    expect(warrior.auras.remainingMs(OVERPOWER_READY.id, simulation.clock.now())).toBe(0);
+  });
+
+  it('does not open the window when the attack simply lands', () => {
+    const warrior = makeAttacker({
+      stats: { attackPower: 0 },
+      reactions: WARRIOR_REACTIONS,
+      abilities: [OVERPOWER],
+      resources: [{ type: 'rage', maximum: 100, initial: 100 }],
+    });
+    const dummy = makeTarget();
+    const simulation = buildSimulation([warrior, dummy], { attackChances: () => NO_CHANCES });
+    simulation.begin();
+
+    dealDamage(simulation, {
+      source: warrior,
+      target: dummy,
+      abilityName: 'Melee',
+      school: 'physical',
+      baseAmount: 100,
+      attackTable: 'melee-auto',
+    });
+
+    expect(simulation.canCast(warrior, OVERPOWER, dummy)).toBe(false);
+  });
+
+  it('opens the Revenge window when the warrior is the one avoiding', () => {
+    // The mirror image: Revenge keys off attacks RECEIVED. Nothing attacks the
+    // player in a real fight yet, so this is the only place it is exercised.
+    const warrior = makeAttacker({
+      reactions: WARRIOR_REACTIONS,
+      abilities: [REVENGE],
+      resources: [{ type: 'rage', maximum: 100, initial: 100 }],
+    });
+    const boss = makeTarget({ stats: { attackPower: 0 } });
+    const simulation = buildSimulation([warrior, boss], {
+      attackChances: () => ({ ...NO_CHANCES, dodge: ROLL_MAX }),
+    });
+    simulation.begin();
+
+    expect(simulation.canCast(warrior, REVENGE, boss)).toBe(false);
+
+    dealDamage(simulation, {
+      source: boss,
+      target: warrior,
+      abilityName: 'Boss Swing',
+      school: 'physical',
+      baseAmount: 100,
+      attackTable: 'melee-received',
+    });
+
+    expect(warrior.auras.remainingMs(REVENGE_READY.id, simulation.clock.now())).toBeGreaterThan(0);
+    expect(simulation.canCast(warrior, REVENGE, boss)).toBe(true);
   });
 });

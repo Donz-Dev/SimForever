@@ -25,10 +25,11 @@ What works end to end:
 | **Armor** | level-scaled, applied per damage event |
 | **Resources** | rage from damage, energy in batches, mana on the five-second rule |
 | **Abilities** | all 26 Warrior abilities from the ruleset spreadsheet, with weapon-damage scaling and on-next-swing |
+| **Reactions** | content can respond to an attack result; Overpower fires off a target dodge |
 | **Analysis** | DPS, per-ability breakdown with attempts/hits/crit/glance/avoid rates |
 | **UI** | React panels driving the real engine; combat log; Monte Carlo batches |
 
-**498 tests**, CI green on Node 20 and 22.
+**511 tests**, CI green on Node 20 and 22.
 
 ## The next task
 
@@ -37,15 +38,18 @@ What works end to end:
 its gaps. Each other class needs the same: a spreadsheet from the ruleset owner,
 then definitions, a rotation and hand-transcribed tests.
 
-Before that, two things are worth closing:
+Before that, one thing is worth closing:
 
-1. **A hook for reactive abilities.** Nothing lets content observe an attack
-   result, so Overpower (needs a target dodge) and Revenge (needs the warrior to
-   block, parry or dodge) are defined but can never be cast. Rogues, Hunters and
-   Druids will all want the same hook.
-2. **Effect values for the nine Warrior buffs and debuffs.** They are defined,
-   castable and completely inert. Until they arrive the rotation cannot use any
-   of them.
+**Effect values for the nine Warrior buffs and debuffs.** They are defined,
+castable and completely inert. Until they arrive the rotation cannot use any of
+them.
+
+The reactive proc hook is now built. `Reaction` in `engine/combat/reactions.ts`
+lets content watch an attack result and respond, and Overpower runs on it: the
+target dodges, a window opens, the rotation spends 5 rage on it. Measured at
+6.13% dodges over 4860 swings against an expected 6.5%, with 281 windows opening
+and 257 of them used. A Rogue's Riposte and a Druid's Savage Defense want the
+same hook.
 
 An ability definition looks like this:
 

@@ -20,6 +20,7 @@ import {
 } from '../character';
 import { MAX_CHARACTER_LEVEL } from '../character';
 import { RAGE_FROM_DAMAGE_TAKEN, regenerationFor } from '../combat/resourceRules';
+import { reactionsForClass } from '../reactions/reactionsForClass';
 import { rotationFor } from '../rotations/rotationFor';
 import { autoAttackModeForStyle, weaponsForStyle } from './weapons';
 
@@ -119,6 +120,8 @@ export function createPlayer(options: PlayerOptions): Combatant {
       ? RAGE_FROM_DAMAGE_TAKEN
       : undefined,
     abilities,
+    // Reactive procs: a Warrior's Overpower opening because the target dodged.
+    reactions: reactionsForClass(characterClass, style),
     // No abilities means nothing for a rotation to choose, so it is left off
     // rather than scheduling decision events that can never do anything.
     rotation: abilities.length > 0 ? rotation : undefined,

@@ -1,6 +1,7 @@
 import type { Ability } from '../abilities/Ability';
 import { AbilityBook } from '../abilities/AbilityBook';
 import type { DamageSchool } from '../combat/DamageSchool';
+import type { Reaction } from '../combat/reactions';
 import { AuraCollection } from '../effects';
 import type { ResourceRegen, ResourceSpec, ResourceType } from '../resources';
 import { Resource, ResourceCollection } from '../resources';
@@ -121,6 +122,12 @@ export interface CombatantOptions {
    * the engine takes a function rather than knowing them.
    */
   readonly statDerivation?: StatDerivation;
+  /**
+   * Things that happen in response to an attack result: a Warrior's Overpower
+   * becoming available because the target dodged. Content, like the derivation
+   * above.
+   */
+  readonly reactions?: readonly Reaction[];
   /** For pets and summons: the id of the combatant that owns them. */
   readonly ownerId?: string;
 }
@@ -152,6 +159,7 @@ export class Combatant {
   readonly autoAttack: AutoAttackMode;
   readonly regeneration: readonly ResourceRegen[];
   readonly resourceOnDamageTaken: ResourceGeneration | undefined;
+  readonly reactions: readonly Reaction[];
 
   /**
    * When each resource was last spent.
@@ -201,6 +209,15 @@ export class Combatant {
 
   private alive = true;
 
+  /**
+   * True while this combatant's reactions are running.
+   *
+   * A reaction that deals damage re-enters the damage pipeline, which would
+   * offer the same actor its reactions again. This stops that recursion without
+   * preventing a different combatant from reacting to what the reaction did.
+   */
+  private reacting = false;
+
   constructor(options: CombatantOptions) {
     this.id = options.id;
     this.name = options.name;
@@ -219,6 +236,7 @@ export class Combatant {
     this.autoAttack = options.autoAttack ?? 'none';
     this.regeneration = options.regeneration ?? [];
     this.resourceOnDamageTaken = options.resourceOnDamageTaken;
+    this.reactions = options.reactions ?? [];
   }
 
   get isAlive(): boolean {
@@ -308,6 +326,21 @@ export class Combatant {
   spentWithin(resource: ResourceType, now: Milliseconds, windowMs: Milliseconds): boolean {
     const last = this.lastSpend.get(resource);
     return last !== undefined && now - last < windowMs;
+  }
+
+  /**
+   * Claim the reaction lock. False when reactions are already running for this
+   * combatant, in which case the caller must not run them again.
+   */
+  beginReacting(): boolean {
+    if (this.reacting) return false;
+    this.reacting = true;
+    return true;
+  }
+
+  /** Release the reaction lock. Always paired with `beginReacting`. */
+  endReacting(): void {
+    this.reacting = false;
   }
 
   /** Mark as dead. Called by the simulation, not directly by content. */

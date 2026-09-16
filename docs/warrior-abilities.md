@@ -169,6 +169,7 @@ Also missing:
 | `DamageRequest.weaponScaling` | abilities that deal weapon damage, with the off-hand penalty applied once to the total |
 | `Ability.onNextSwing` | Heroic Strike and Cleave replace the next auto-attack rather than landing on cast |
 | Auto-attacks route through `weaponScaling` | a swing and a Mortal Strike can no longer disagree about the same weapon |
+| `Reaction` | Overpower and Revenge respond to an attack result |
 
 ## Still not reachable
 
