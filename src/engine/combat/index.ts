@@ -33,6 +33,8 @@ export {
   scaleByPower,
   weaponDamageFor,
 } from './damage';
+export type { AttackEvent, Reaction, ReactionTrigger } from './reactions';
+export { runReactions } from './reactions';
 export type { HealRequest, HealResolution } from './healing';
 export { applyHealing, resolveHealing } from './healing';
 export {

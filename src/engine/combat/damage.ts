@@ -5,6 +5,8 @@ import { isPhysical } from './DamageSchool';
 import type { AttackOutcome, AttackResolution, AttackTableKind } from './attackTable';
 import { resolveAttackTable } from './attackTable';
 import { armorConstantForLevel, versatilityMultiplierFrom } from './ratings';
+import type { AttackEvent } from './reactions';
+import { runReactions } from './reactions';
 
 /** Damage varies this much either side of a weapon's base, unless overridden. */
 export const DEFAULT_DAMAGE_VARIANCE = 0.15;
@@ -355,6 +357,29 @@ export function dealDamage(
 
   if (healthBefore > 0 && target.health.isEmpty) {
     context.killCombatant(target, source);
+  }
+
+  // Reactions run last, after the damage has landed, the telemetry has been
+  // emitted and any death has been processed. A reaction therefore sees a
+  // settled world rather than a half-applied one.
+  //
+  // Only attacks that consulted a combat table qualify: an outcome is what a
+  // reaction keys off, and damage with no table has no meaningful outcome.
+  // Periodic ticks are excluded too — a bleed ticking is not an attack anyone
+  // parries.
+  if (request.attackTable && !request.periodic) {
+    const event: AttackEvent = {
+      attacker: source,
+      defender: target,
+      outcome: resolution.outcome,
+      abilityId: request.abilityId,
+      abilityName: request.abilityName,
+      amount: resolution.amount,
+      weaponSlot: request.weaponSlot,
+      critical: resolution.critical,
+    };
+    runReactions(context, source, 'dealt', event);
+    runReactions(context, target, 'taken', event);
   }
 
   return resolution;

@@ -20,11 +20,10 @@ import { EXECUTE_HEALTH_THRESHOLD } from '../abilities/warrior';
  * gates is an open question with the ruleset owner, and a rotation that stance
  * dances for no modelled benefit would be pure loss.
  *
- * Overpower and Revenge are both in the warrior's book but appear in no list.
- * They are reactive — Overpower needs the target to have dodged, Revenge needs
- * the warrior to have blocked, parried or dodged — and the engine has no way
- * for content to observe an attack result yet, so neither trigger ever fires.
- * Listing them would be listing abilities that can never be cast.
+ * Revenge is in the warrior's book but appears in no list. It is reactive on
+ * being attacked, and nothing attacks the player yet, so its window never
+ * opens. Overpower is the same mechanism on the other side of the swing and
+ * DOES fire, because the training dummy dodges.
  *
  * Charge is left out because its real constraints (a minimum range, being out
  * of combat) are not modelled. Against a stationary dummy it would be a free
@@ -106,6 +105,13 @@ export const REND_REFRESH_WINDOW_MS = 2000;
  */
 const CORE_STRIKES: readonly PriorityEntry[] = [
   { abilityId: 'execute' },
+  // Overpower whenever the window is open, and not pooled against anything.
+  //
+  // It costs 5 rage for weapon damage plus 35, which is far and away the best
+  // rage a warrior can spend, and the window closes on its own whether or not
+  // it is used. Its `canCast` already refuses when the target has not dodged,
+  // so no condition is needed here.
+  { abilityId: 'overpower' },
   // Rend outranks Mortal Strike, and is NOT pooled against it.
   //
   // It is the most rage-efficient thing a warrior can do: 147 damage for 10
