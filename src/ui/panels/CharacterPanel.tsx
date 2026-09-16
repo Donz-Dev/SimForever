@@ -1,14 +1,17 @@
 import type { CharacterProfile } from '../../profiles';
-import type { CharacterSelection } from '../../game/character';
+import type { CharacterSelection, ClassId } from '../../game/character';
+import { abilitiesForClass } from '../../game/abilities/exampleAbilities';
 import {
   CLASSES,
   FACTIONS,
   MAX_CHARACTER_LEVEL,
-  MIN_CHARACTER_LEVEL,
   applySelection,
   classesForRace,
+  formsFor,
+  getClass,
   getRace,
   racesForFaction,
+  resourceLabel,
 } from '../../game/character';
 import { NumberField, TextField } from '../components/Field';
 import { OptionGroup } from '../components/OptionGroup';
@@ -56,6 +59,9 @@ export function CharacterPanel({ profile, onChange }: CharacterPanelProps) {
     (entry) => !availableClasses.some((available) => available.id === entry.id),
   );
 
+  const classDefinition = getClass(selection.characterClass);
+  const abilityCount = abilitiesForClass(selection.characterClass).length;
+
   return (
     <Panel title="Character" subtitle="World of Warcraft: Forever">
       <TextField
@@ -93,18 +99,26 @@ export function CharacterPanel({ profile, onChange }: CharacterPanelProps) {
         </p>
       ) : null}
 
-      <NumberField
-        label="Level"
-        hint={`max ${MAX_CHARACTER_LEVEL}`}
-        value={profile.character.level}
-        min={MIN_CHARACTER_LEVEL}
-        max={MAX_CHARACTER_LEVEL}
-        onChange={(level) =>
-          onChange({ ...profile, character: { ...profile.character, level } })
-        }
-      />
+      <div className="field">
+        <span className="field-label">
+          Level
+          <span className="field-hint">fixed for now</span>
+        </span>
+        <div className="readonly-value">{MAX_CHARACTER_LEVEL}</div>
+      </div>
+
+      <h3>Resources</h3>
+      <ResourceSummary characterClass={selection.characterClass} />
+
+      {abilityCount === 0 ? (
+        <p className="muted">
+          No abilities are implemented for {classDefinition?.name ?? 'this class'} yet, so
+          it will fight with auto attacks only.
+        </p>
+      ) : null}
 
       <h3>Stats</h3>
+
       <NumberField
         label="Attack Power"
         value={profile.stats.attackPower ?? 0}
@@ -132,5 +146,48 @@ export function CharacterPanel({ profile, onChange }: CharacterPanelProps) {
         }
       />
     </Panel>
+  );
+}
+
+/**
+ * Which resource a class runs on.
+ *
+ * Every class also has Health; it is shown here because it is about to matter,
+ * and because "Mana" alone would read as the complete answer when it is not.
+ * The Druid is the one class where the answer depends on form.
+ */
+function ResourceSummary({ characterClass }: { readonly characterClass: ClassId }) {
+  const forms = formsFor(characterClass);
+  const definition = getClass(characterClass);
+  if (!definition) return null;
+
+  if (forms.length === 0) {
+    return (
+      <ul className="resource-list">
+        <li>
+          <span>Health</span>
+          <span className="muted">all classes</span>
+        </li>
+        <li>
+          <span>{resourceLabel(definition.primaryResource)}</span>
+          <span className="muted">primary</span>
+        </li>
+      </ul>
+    );
+  }
+
+  return (
+    <ul className="resource-list">
+      <li>
+        <span>Health</span>
+        <span className="muted">all classes</span>
+      </li>
+      {forms.map((form) => (
+        <li key={form.id}>
+          <span>{resourceLabel(form.resource)}</span>
+          <span className="muted">{form.name}</span>
+        </li>
+      ))}
+    </ul>
   );
 }

@@ -1,6 +1,7 @@
 import type { Ability } from '../../engine';
 import { dealDamage, seconds } from '../../engine';
 import { RENDING_WOUND } from '../auras/exampleAuras';
+import type { ClassId } from '../character';
 
 /**
  * Example abilities.
@@ -65,3 +66,17 @@ export const HEROIC_BLOW: Ability = {
 };
 
 export const EXAMPLE_ABILITIES: readonly Ability[] = [STRIKE, HEROIC_BLOW];
+
+/**
+ * Abilities a class knows.
+ *
+ * Only the Warrior has any: the two example abilities above both cost rage, so
+ * handing them to a Mage would be nonsense. Every other class currently returns
+ * an empty list and fights with auto attacks alone.
+ *
+ * That gap is deliberate and visible rather than papered over with invented
+ * spells. It is the next thing real content fills in.
+ */
+export function abilitiesForClass(characterClass: ClassId): readonly Ability[] {
+  return characterClass === 'warrior' ? EXAMPLE_ABILITIES : [];
+}

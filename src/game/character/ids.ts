@@ -33,6 +33,16 @@ export const RACE_IDS = [
 ] as const;
 export type RaceId = (typeof RACE_IDS)[number];
 
+/**
+ * Forms and stances that a class can be in.
+ *
+ * Only the Druid has any right now, and only because its form changes which
+ * resource drives play. Warrior stances would slot in here the same way, even
+ * though all three use rage.
+ */
+export const FORM_IDS = ['caster', 'moonkin', 'bear', 'cat'] as const;
+export type FormId = (typeof FORM_IDS)[number];
+
 export const CLASS_IDS = [
   'druid',
   'hunter',
