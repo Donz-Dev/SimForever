@@ -1,4 +1,4 @@
-import type { PartialStats } from '../../engine';
+import type { PartialStats, WeaponProfile, WeaponSlot } from '../../engine';
 import { Combatant, addStats, makeStats } from '../../engine';
 import { abilitiesForClass } from '../abilities/abilitiesForClass';
 import type {
@@ -22,6 +22,8 @@ import { MAX_CHARACTER_LEVEL } from '../character';
 import { RAGE_FROM_DAMAGE_TAKEN, regenerationFor } from '../combat/resourceRules';
 import { reactionsForClass } from '../reactions/reactionsForClass';
 import { rotationFor } from '../rotations/rotationFor';
+import type { Equipment } from '../items/Item';
+import { statsForStyle, weaponsForEquipment } from '../items/equipment';
 import { autoAttackModeForStyle, weaponsForStyle } from './weapons';
 
 export interface PlayerOptions {
@@ -49,6 +51,14 @@ export interface PlayerOptions {
    * normally 100 and both can be increased.
    */
   readonly resourceMaximums?: ResourceMaximumOverrides;
+  /**
+   * What the character has equipped.
+   *
+   * Its stats are added on top of `bonusStats`, and its weapons REPLACE the
+   * placeholder ones. An empty set falls back to the placeholders, which is
+   * what every character did before items existed.
+   */
+  readonly equipment?: Equipment;
 }
 
 /**
@@ -84,9 +94,12 @@ export function createPlayer(options: PlayerOptions): Combatant {
     );
   }
 
-  // Layers 1 and 2: the stats a character has before any conversion.
+  // Layers 1 and 2: the stats a character has before any conversion. Gear
+  // first, then the profile's own bonuses on top, so a profile can still add
+  // to a geared character rather than being replaced by one.
+  const equipment = options.equipment ?? {};
   const startingStats = addStats(
-    makeStats(baseStatsToEngineStats(base)),
+    addStats(makeStats(baseStatsToEngineStats(base)), statsForStyle(equipment, style)),
     options.bonusStats ?? {},
   );
 
@@ -125,9 +138,28 @@ export function createPlayer(options: PlayerOptions): Combatant {
     // No abilities means nothing for a rotation to choose, so it is left off
     // rather than scheduling decision events that can never do anything.
     rotation: abilities.length > 0 ? rotation : undefined,
-    weapons: weaponsForStyle(style, {
-      offHandDamageMultiplier: options.offHandDamageMultiplier,
-    }),
+    // Real weapons when something is equipped, placeholders otherwise. The
+    // placeholders are invented and the items are not, so anything equipped
+    // wins outright rather than being merged.
+    weapons: weaponsFor(equipment, style, options.offHandDamageMultiplier),
     autoAttack: autoAttackModeForStyle(style),
   });
+}
+
+/**
+ * The weapons a character swings.
+ *
+ * Equipped items win outright over the placeholders. A partly equipped
+ * character -- a main hand but no off hand -- gets the placeholder for the
+ * empty slot rather than nothing, so a half-built character still swings and
+ * the missing piece is obvious in the results rather than silent.
+ */
+function weaponsFor(
+  equipment: Equipment,
+  style: CombatStyleId,
+  offHandDamageMultiplier?: number,
+): Partial<Record<WeaponSlot, WeaponProfile>> {
+  const placeholders = weaponsForStyle(style, { offHandDamageMultiplier });
+  const equipped = weaponsForEquipment(equipment, style, { offHandDamageMultiplier });
+  return { ...placeholders, ...equipped };
 }

@@ -96,7 +96,7 @@ export function App() {
               collapsed={talentsCollapsed}
               onToggleCollapsed={() => setTalentsCollapsed((was) => !was)}
             />
-            <GearPanel />
+            <GearPanel profile={profile} onChange={setProfile} />
 
             {state.status === 'running' ? (
               <div className="placeholder">

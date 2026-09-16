@@ -11,7 +11,16 @@ import {
   isValidCombination,
   raceName,
 } from '../game/character';
+import type { Equipment, EquipmentSlot } from '../game/items/Item';
+import { ENCHANTS_BY_ID, ITEMS_BY_ID } from '../game/items/itemData';
 import type { CharacterProfile } from './CharacterProfile';
+
+/** Every slot a profile may name. */
+const EQUIPMENT_SLOT_SET: ReadonlySet<string> = new Set<EquipmentSlot>([
+  'head', 'neck', 'shoulders', 'cloak', 'chest', 'wrists', 'gloves', 'waist',
+  'legs', 'feet', 'ring1', 'ring2', 'trinket1', 'trinket2',
+  'mainHand', 'offHand', 'twoHand', 'ranged',
+]);
 
 /** A validation failure, with enough detail to show next to the right field. */
 export interface ValidationIssue {
@@ -124,6 +133,41 @@ export function validateProfile(value: unknown): ValidationResult {
     }
   }
 
+  const equipment = value.equipment;
+  if (!isRecord(equipment)) {
+    issues.push({ path: 'equipment', message: 'Missing equipment section.' });
+  } else {
+    for (const [slot, equipped] of Object.entries(equipment)) {
+      if (!EQUIPMENT_SLOT_SET.has(slot)) {
+        issues.push({ path: `equipment.${slot}`, message: `Unknown equipment slot "${slot}".` });
+        continue;
+      }
+      if (!isRecord(equipped)) {
+        issues.push({ path: `equipment.${slot}`, message: 'Must be an object.' });
+        continue;
+      }
+      // An unknown id is rejected rather than ignored. A profile naming an item
+      // this build does not have is not a profile this build can reproduce, and
+      // silently dropping it would change the character without saying so.
+      if (typeof equipped.itemId !== 'number' || !ITEMS_BY_ID.has(equipped.itemId)) {
+        issues.push({ path: `equipment.${slot}.itemId`, message: 'Unknown item id.' });
+        continue;
+      }
+      const item = ITEMS_BY_ID.get(equipped.itemId);
+      if (item && !item.slots.includes(slot as EquipmentSlot)) {
+        issues.push({
+          path: `equipment.${slot}`,
+          message: `${item.name} cannot be equipped in ${slot}.`,
+        });
+      }
+      if (equipped.enchantId !== undefined) {
+        if (typeof equipped.enchantId !== 'number' || !ENCHANTS_BY_ID.has(equipped.enchantId)) {
+          issues.push({ path: `equipment.${slot}.enchantId`, message: 'Unknown enchant id.' });
+        }
+      }
+    }
+  }
+
   const simulation = value.simulation;
   if (!isRecord(simulation)) {
     issues.push({ path: 'simulation', message: 'Missing simulation section.' });
@@ -168,6 +212,7 @@ export function validateProfile(value: unknown): ValidationResult {
           : {}),
       },
       stats: cleanStats,
+      equipment: cleanEquipment(validated.equipment),
       simulation: {
         durationSeconds: validated.simulation.durationSeconds,
         durationVariance: validated.simulation.durationVariance,
@@ -186,6 +231,19 @@ export function validateProfile(value: unknown): ValidationResult {
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+/** Rebuild the equipment, dropping anything not asked for. */
+function cleanEquipment(equipment: Equipment): Equipment {
+  const clean: Record<string, { itemId: number; enchantId?: number }> = {};
+  for (const [slot, equipped] of Object.entries(equipment)) {
+    if (!equipped) continue;
+    clean[slot] = {
+      itemId: equipped.itemId,
+      ...(equipped.enchantId !== undefined ? { enchantId: equipped.enchantId } : {}),
+    };
+  }
+  return clean as Equipment;
 }
 
 function requireNonEmptyString(value: unknown, path: string, issues: ValidationIssue[]): void {

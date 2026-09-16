@@ -1,5 +1,6 @@
 import type { PartialStats } from '../engine';
 import type { ClassId, CombatStyleId, RaceId } from '../game/character';
+import type { Equipment } from '../game/items/Item';
 
 /**
  * The profile format version.
@@ -10,7 +11,7 @@ import type { ClassId, CombatStyleId, RaceId } from '../game/character';
  * moves on. Getting this in before anyone has saved anything is much cheaper
  * than retrofitting it later.
  */
-export const CURRENT_PROFILE_VERSION = 3;
+export const CURRENT_PROFILE_VERSION = 4;
 
 export interface CharacterSection {
   readonly name: string;
@@ -80,6 +81,15 @@ export interface CharacterProfile {
    * being a level 60 Tauren Druid, not their stats from scratch.
    */
   readonly stats: PartialStats;
+  /**
+   * What is equipped, by slot, as item ids with an optional enchant.
+   *
+   * Ids rather than copies of the items: an item's numbers belong to the item
+   * data, and a profile that carried its own would drift the moment that data
+   * was corrected. Added in format version 4; older profiles have none, which
+   * reads as an empty set.
+   */
+  readonly equipment: Equipment;
   readonly simulation: SimulationSection;
   readonly encounter: EncounterSection;
 }
@@ -101,6 +111,8 @@ export function createDefaultProfile(): CharacterProfile {
       critRating: 0,
       hasteRating: 0,
     },
+    // Nothing equipped. Gear is chosen in the Gear panel.
+    equipment: {},
     simulation: {
       durationSeconds: 100,
       durationVariance: 0,
@@ -122,6 +134,11 @@ export function cloneProfile(profile: CharacterProfile): CharacterProfile {
     version: profile.version,
     character: { ...profile.character },
     stats: { ...profile.stats },
+    // One level deeper than a spread: each slot is its own object, so copying
+    // only the map would leave both profiles sharing the same slot entries.
+    equipment: Object.fromEntries(
+      Object.entries(profile.equipment).map(([slot, equipped]) => [slot, { ...equipped }]),
+    ),
     simulation: { ...profile.simulation },
     encounter: { ...profile.encounter },
   };
