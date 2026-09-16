@@ -4,14 +4,27 @@ import type { ClassId } from '../../src/game/character';
 import {
   CLASSES,
   CLASS_IDS,
-  PLACEHOLDER_MAX_MANA,
   activeResourceFor,
+  baseManaFor,
   classUsesResource,
   fixedMaximumFor,
   formsFor,
+  racesForClass,
   resourceSpecsFor,
 } from '../../src/game/character';
 import { createPlayer } from '../../src/game/actors/createPlayer';
+
+/** The first race that can play a class, so each class can be instantiated. */
+function anyRaceFor(characterClass: ClassId) {
+  const race = racesForClass(characterClass)[0];
+  if (!race) throw new Error(`No race can play ${characterClass}`);
+  return race.id;
+}
+
+/** Build a player of a class, on whichever race happens to allow it. */
+function player(characterClass: ClassId, form?: 'caster' | 'bear' | 'cat' | 'moonkin') {
+  return createPlayer({ race: anyRaceFor(characterClass), characterClass, form });
+}
 
 /**
  * The resource each class runs on, written out independently of the source
@@ -40,7 +53,7 @@ describe('class resources', () => {
 
   it('gives every class at least one resource', () => {
     for (const id of CLASS_IDS) {
-      expect(resourceSpecsFor(id).length, id).toBeGreaterThan(0);
+      expect(resourceSpecsFor(id, baseManaFor(anyRaceFor(id), id)).length, id).toBeGreaterThan(0);
     }
   });
 
@@ -73,21 +86,21 @@ describe('class resources', () => {
 
   describe('starting values', () => {
     it('starts a warrior with no rage', () => {
-      const rage = resourceSpecsFor('warrior').find((spec) => spec.type === 'rage');
+      const rage = resourceSpecsFor('warrior', baseManaFor(anyRaceFor('warrior'), 'warrior')).find((spec) => spec.type === 'rage');
       expect(rage).toMatchObject({ maximum: 100, initial: 0 });
     });
 
     it('starts a rogue with full energy', () => {
-      const energy = resourceSpecsFor('rogue').find((spec) => spec.type === 'energy');
+      const energy = resourceSpecsFor('rogue', baseManaFor(anyRaceFor('rogue'), 'rogue')).find((spec) => spec.type === 'energy');
       expect(energy).toMatchObject({ maximum: 100, initial: 100 });
     });
 
-    it('starts a mage with full mana', () => {
-      const mana = resourceSpecsFor('mage').find((spec) => spec.type === 'mana');
-      expect(mana).toMatchObject({
-        maximum: PLACEHOLDER_MAX_MANA,
-        initial: PLACEHOLDER_MAX_MANA,
-      });
+    it('starts a mage with full mana, from the base stats table', () => {
+      // Human Mage base mana is 933 in the spreadsheet.
+      const mana = resourceSpecsFor('mage', baseManaFor('human', 'mage')).find(
+        (spec) => spec.type === 'mana',
+      );
+      expect(mana).toMatchObject({ maximum: 933, initial: 933 });
     });
 
     it('accepts an explicit mana maximum', () => {
@@ -100,7 +113,7 @@ describe('class resources', () => {
     it('owns all three pools at once', () => {
       // A bear still has a mana pool it is not using. Creating the rage pool
       // only on shapeshift would mean conjuring state mid-fight.
-      const types = resourceSpecsFor('druid').map((spec) => spec.type).sort();
+      const types = resourceSpecsFor('druid', baseManaFor(anyRaceFor('druid'), 'druid')).map((spec) => spec.type).sort();
       expect(types).toEqual(['energy', 'mana', 'rage']);
     });
 
@@ -125,12 +138,13 @@ describe('class resources', () => {
     });
 
     it('starts with rage empty but mana and energy full', () => {
-      const specs = resourceSpecsFor('druid');
+      const specs = resourceSpecsFor('druid', baseManaFor(anyRaceFor('druid'), 'druid'));
       const byType = new Map(specs.map((spec) => [spec.type, spec]));
 
       expect(byType.get('rage')).toMatchObject({ initial: 0 });
       expect(byType.get('energy')).toMatchObject({ initial: 100 });
-      expect(byType.get('mana')?.initial).toBe(PLACEHOLDER_MAX_MANA);
+      // Druid base mana is 964, taken from Caster Form.
+      expect(byType.get('mana')?.initial).toBe(964);
     });
   });
 
@@ -161,12 +175,12 @@ describe('class resources', () => {
 
 describe('createPlayer', () => {
   it('gives each class the right pools', () => {
-    expect(createPlayer({ characterClass: 'warrior' }).resources.types).toEqual(['rage']);
-    expect(createPlayer({ characterClass: 'rogue' }).resources.types).toEqual(['energy']);
-    expect(createPlayer({ characterClass: 'mage' }).resources.types).toEqual(['mana']);
+    expect(player('warrior').resources.types).toEqual(['rage']);
+    expect(player('rogue').resources.types).toEqual(['energy']);
+    expect(player('mage').resources.types).toEqual(['mana']);
     // Copied before sorting: `types` is readonly, and sorting in place would
     // reorder the combatant's own resource list.
-    expect([...createPlayer({ characterClass: 'druid' }).resources.types].sort()).toEqual([
+    expect([...player('druid').resources.types].sort()).toEqual([
       'energy',
       'mana',
       'rage',
@@ -176,30 +190,30 @@ describe('createPlayer', () => {
   it('no longer hands a rage bar to everyone', () => {
     // Regression: createPlayer used to hard-code rage regardless of class.
     for (const id of CLASS_IDS) {
-      const player = createPlayer({ characterClass: id });
+      const combatant = player(id);
       const expectsRage = id === 'warrior' || id === 'druid';
-      expect(player.resources.has('rage'), id).toBe(expectsRage);
+      expect(combatant.resources.has('rage'), id).toBe(expectsRage);
     }
   });
 
   it('gives every class health', () => {
     for (const id of CLASS_IDS) {
-      const player = createPlayer({ characterClass: id });
-      expect(player.health.maximum, id).toBeGreaterThan(0);
-      expect(player.health.current, id).toBe(player.health.maximum);
+      const combatant = player(id);
+      expect(combatant.health.maximum, id).toBeGreaterThan(0);
+      expect(combatant.health.current, id).toBe(combatant.health.maximum);
     }
   });
 
   it('only gives the warrior abilities and a rotation for now', () => {
-    const warrior = createPlayer({ characterClass: 'warrior' });
+    const warrior = player('warrior');
     expect(warrior.abilities.all.length).toBeGreaterThan(0);
     expect(warrior.rotation).toBeDefined();
 
     for (const id of CLASS_IDS) {
       if (id === 'warrior') continue;
-      const player = createPlayer({ characterClass: id });
-      expect(player.abilities.all, id).toHaveLength(0);
-      expect(player.rotation, id).toBeUndefined();
+      const combatant = player(id);
+      expect(combatant.abilities.all, id).toHaveLength(0);
+      expect(combatant.rotation, id).toBeUndefined();
     }
   });
 });

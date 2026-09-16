@@ -1,8 +1,14 @@
 import type { PartialStats, WeaponProfile } from '../../engine';
-import { Combatant } from '../../engine';
+import { Combatant, addStats, makeStats } from '../../engine';
 import { abilitiesForClass } from '../abilities/exampleAbilities';
-import type { ClassId } from '../character';
-import { resourceSpecsFor } from '../character';
+import type { ClassId, FormId, RaceId } from '../character';
+import {
+  baseHitPointsFor,
+  baseManaFor,
+  baseStatsFor,
+  baseStatsToEngineStats,
+  resourceSpecsFor,
+} from '../character';
 import { BASIC_MELEE_ROTATION } from '../rotations/basicMeleeRotation';
 
 /** Default weapon for the example player. */
@@ -21,43 +27,57 @@ export const EXAMPLE_WEAPON: WeaponProfile = {
 export interface PlayerOptions {
   readonly id?: string;
   readonly name?: string;
-  /** Determines which resource pools and abilities the character gets. */
+  readonly race: RaceId;
   readonly characterClass: ClassId;
-  readonly maxHealth?: number;
-  readonly stats?: PartialStats;
+  /** Only meaningful for the Druid. Defaults to the class's default form. */
+  readonly form?: FormId;
+  /**
+   * Stats from gear, buffs and anything else on top of the race/class base.
+   * Added to the base rather than replacing it.
+   */
+  readonly bonusStats?: PartialStats;
   readonly weapon?: WeaponProfile;
-  /** Overrides the placeholder mana pool once real mana data exists. */
-  readonly maxMana?: number;
 }
 
 /**
- * Build a player combatant for a class.
+ * Build a player combatant for a race, class and form.
  *
- * Resource pools come from the class definition rather than being hard-coded,
- * so a Mage gets mana and a Rogue gets energy. A Druid gets all three at once,
- * because changing form mid-fight must not have to conjure a pool that did not
- * exist a moment earlier.
+ * Health, mana and every primary stat come from the base stats table. Anything
+ * passed in as `bonusStats` is ADDED to that base, matching how gear works: a
+ * profile describes what a character has beyond being a level 60 Tauren Druid,
+ * not their stats from scratch.
  *
- * Abilities are still Warrior-only example content; every other class fights
- * with auto attacks alone until real class content is written.
+ * Crit chance is not applied. The base table's crit values are class constants
+ * that other contributions add to, some of them negative, and the
+ * agility-to-crit conversion that completes the formula does not exist yet.
  */
 export function createPlayer(options: PlayerOptions): Combatant {
-  const abilities = abilitiesForClass(options.characterClass);
+  const { race, characterClass, form } = options;
+
+  const base = baseStatsFor(race, characterClass, form);
+  if (!base) {
+    throw new Error(
+      `No base stats for ${race} ${characterClass}` +
+        (form ? ` in ${form} form` : '') +
+        '. Is that a legal combination?',
+    );
+  }
+
+  const stats = addStats(
+    makeStats(baseStatsToEngineStats(base)),
+    options.bonusStats ?? {},
+  );
+
+  const abilities = abilitiesForClass(characterClass);
 
   return new Combatant({
     id: options.id ?? 'player_1',
     name: options.name ?? 'Player',
     kind: 'player',
     faction: 'friendly',
-    maxHealth: options.maxHealth ?? 1000,
-    stats: {
-      strength: 100,
-      attackPower: 100,
-      critRating: 0,
-      hasteRating: 0,
-      ...options.stats,
-    },
-    resources: resourceSpecsFor(options.characterClass, options.maxMana),
+    maxHealth: baseHitPointsFor(race, characterClass, form),
+    stats,
+    resources: resourceSpecsFor(characterClass, baseManaFor(race, characterClass)),
     abilities,
     // No abilities means nothing for a rotation to choose, so it is left off
     // rather than scheduling decision events that can never do anything.

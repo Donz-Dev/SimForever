@@ -1,5 +1,5 @@
 import type { PartialStats } from '../engine';
-import type { ClassId, RaceId } from '../game/character';
+import type { ClassId, FormId, RaceId } from '../game/character';
 
 /**
  * The profile format version.
@@ -26,6 +26,12 @@ export interface CharacterSection {
   readonly race: RaceId;
   readonly characterClass: ClassId;
   readonly level: number;
+  /**
+   * The form to simulate in. Only meaningful for the Druid, whose hit points,
+   * attack power and active resource all depend on it. Omitted for every other
+   * class.
+   */
+  readonly form?: FormId;
 }
 
 export interface SimulationSection {
@@ -61,6 +67,11 @@ export interface EncounterSection {
 export interface CharacterProfile {
   readonly version: number;
   readonly character: CharacterSection;
+  /**
+   * Stats from gear, buffs and anything else, ADDED to the race and class base
+   * from the base stats table. A profile describes what a character has beyond
+   * being a level 60 Tauren Druid, not their stats from scratch.
+   */
   readonly stats: PartialStats;
   readonly simulation: SimulationSection;
   readonly encounter: EncounterSection;
@@ -76,9 +87,10 @@ export function createDefaultProfile(): CharacterProfile {
       characterClass: 'warrior',
       level: 60,
     },
+    // Stats from gear and other sources, ADDED to the race/class base. A brand
+    // new character has none, which is why these are all zero.
     stats: {
-      strength: 100,
-      attackPower: 100,
+      attackPower: 0,
       critRating: 0,
       hasteRating: 0,
     },

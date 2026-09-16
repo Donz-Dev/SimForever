@@ -72,3 +72,9 @@ export function isRaceId(value: unknown): value is RaceId {
 export function isClassId(value: unknown): value is ClassId {
   return typeof value === 'string' && CLASS_ID_SET.has(value);
 }
+
+const FORM_ID_SET: ReadonlySet<string> = new Set(FORM_IDS);
+
+export function isFormId(value: unknown): value is FormId {
+  return typeof value === 'string' && FORM_ID_SET.has(value);
+}

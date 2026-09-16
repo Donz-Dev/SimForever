@@ -26,8 +26,10 @@ export function trainingDummyEncounter(
     createCombatants: () => [
       createPlayer({
         name: profile.character.name,
+        race: profile.character.race,
         characterClass: profile.character.characterClass,
-        stats: profile.stats,
+        form: profile.character.form,
+        bonusStats: profile.stats,
       }),
       createTrainingDummy({
         name: profile.encounter.targetName,

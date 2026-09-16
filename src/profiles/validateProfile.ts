@@ -4,7 +4,9 @@ import {
   MAX_CHARACTER_LEVEL,
   MIN_CHARACTER_LEVEL,
   className,
+  formsFor,
   isClassId,
+  isFormId,
   isRaceId,
   isValidCombination,
   raceName,
@@ -87,6 +89,27 @@ export function validateProfile(value: unknown): ValidationResult {
           'in World of Warcraft: Forever.',
       });
     }
+
+    // Form is optional, and only the Druid has any.
+    if (character.form !== undefined) {
+      if (!isFormId(character.form)) {
+        issues.push({
+          path: 'character.form',
+          message: `Unknown form ${JSON.stringify(character.form)}.`,
+        });
+      } else if (characterClass !== null) {
+        const available = formsFor(characterClass);
+        if (!available.some((entry) => entry.id === character.form)) {
+          issues.push({
+            path: 'character.form',
+            message:
+              available.length === 0
+                ? `${className(characterClass)} has no forms.`
+                : `${className(characterClass)} has no ${String(character.form)} form.`,
+          });
+        }
+      }
+    }
   }
 
   const stats = value.stats;
@@ -142,6 +165,9 @@ export function validateProfile(value: unknown): ValidationResult {
         race: validated.character.race,
         characterClass: validated.character.characterClass,
         level: validated.character.level,
+        ...(validated.character.form !== undefined
+          ? { form: validated.character.form }
+          : {}),
       },
       stats: cleanStats,
       simulation: {

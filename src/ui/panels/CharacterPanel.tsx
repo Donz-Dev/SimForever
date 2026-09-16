@@ -1,11 +1,13 @@
 import type { CharacterProfile } from '../../profiles';
-import type { CharacterSelection, ClassId } from '../../game/character';
+import type { CharacterSelection, ClassId, FormId, RaceId } from '../../game/character';
 import { abilitiesForClass } from '../../game/abilities/exampleAbilities';
 import {
   CLASSES,
   FACTIONS,
   MAX_CHARACTER_LEVEL,
   applySelection,
+  baseManaFor,
+  baseStatsFor,
   classesForRace,
   formsFor,
   getClass,
@@ -26,13 +28,9 @@ interface CharacterPanelProps {
  * Character creation, in the order the game asks for it: faction, race, class.
  *
  * The component holds no rules of its own. Which races belong to a faction,
- * which classes a race may play, and what happens to the current class when the
- * race changes are all answered by `game/character`, so the same logic is
- * tested without rendering anything and reused by any future CLI.
- *
- * Faction is derived from the race rather than stored on the profile, which is
- * why there is no faction field to read back: an Alliance Orc cannot be
- * represented, so it cannot be chosen by accident.
+ * which classes a race may play, what happens to the current class when the
+ * race changes, and what a level 60 character of that race and class starts
+ * with are all answered by `game/character`.
  */
 export function CharacterPanel({ profile, onChange }: CharacterPanelProps) {
   const race = getRace(profile.character.race);
@@ -42,16 +40,29 @@ export function CharacterPanel({ profile, onChange }: CharacterPanelProps) {
     characterClass: profile.character.characterClass,
   };
 
+  const forms = formsFor(selection.characterClass);
+  const form: FormId | undefined =
+    forms.length > 0 ? (profile.character.form ?? forms[0].id) : undefined;
+
   const applyChange = (change: Partial<CharacterSelection>) => {
     const next = applySelection(change, selection);
+    const nextForms = formsFor(next.characterClass);
+
     onChange({
       ...profile,
       character: {
         ...profile.character,
         race: next.race,
         characterClass: next.characterClass,
+        // Drop the form when the new class has none, so a Warrior profile does
+        // not quietly carry "bear" around.
+        ...(nextForms.length > 0 ? { form: nextForms[0].id } : { form: undefined }),
       },
     });
+  };
+
+  const setForm = (next: FormId) => {
+    onChange({ ...profile, character: { ...profile.character, form: next } });
   };
 
   const availableClasses = classesForRace(selection.race);
@@ -92,6 +103,10 @@ export function CharacterPanel({ profile, onChange }: CharacterPanelProps) {
         onChange={(characterClass) => applyChange({ characterClass })}
       />
 
+      {forms.length > 0 && form ? (
+        <OptionGroup label="Form" options={forms} value={form} onChange={setForm} />
+      ) : null}
+
       {unavailable.length > 0 ? (
         <p className="muted">
           Not available to {race?.name ?? 'this race'}:{' '}
@@ -107,8 +122,12 @@ export function CharacterPanel({ profile, onChange }: CharacterPanelProps) {
         <div className="readonly-value">{MAX_CHARACTER_LEVEL}</div>
       </div>
 
-      <h3>Resources</h3>
-      <ResourceSummary characterClass={selection.characterClass} />
+      <h3>Base stats</h3>
+      <BaseStatTable
+        race={selection.race}
+        characterClass={selection.characterClass}
+        form={form}
+      />
 
       {abilityCount === 0 ? (
         <p className="muted">
@@ -117,8 +136,8 @@ export function CharacterPanel({ profile, onChange }: CharacterPanelProps) {
         </p>
       ) : null}
 
-      <h3>Stats</h3>
-
+      <h3>Gear and other bonuses</h3>
+      <p className="muted">Added on top of the base stats above.</p>
       <NumberField
         label="Attack Power"
         value={profile.stats.attackPower ?? 0}
@@ -128,21 +147,19 @@ export function CharacterPanel({ profile, onChange }: CharacterPanelProps) {
         }
       />
       <NumberField
-        label="Crit Rating"
-        hint="180 rating = 1%"
-        value={profile.stats.critRating ?? 0}
+        label="Strength"
+        value={profile.stats.strength ?? 0}
         min={0}
         onChange={(value) =>
-          onChange({ ...profile, stats: { ...profile.stats, critRating: value } })
+          onChange({ ...profile, stats: { ...profile.stats, strength: value } })
         }
       />
       <NumberField
-        label="Haste Rating"
-        hint="170 rating = 1%"
-        value={profile.stats.hasteRating ?? 0}
+        label="Agility"
+        value={profile.stats.agility ?? 0}
         min={0}
         onChange={(value) =>
-          onChange({ ...profile, stats: { ...profile.stats, hasteRating: value } })
+          onChange({ ...profile, stats: { ...profile.stats, agility: value } })
         }
       />
     </Panel>
@@ -150,44 +167,69 @@ export function CharacterPanel({ profile, onChange }: CharacterPanelProps) {
 }
 
 /**
- * Which resource a class runs on.
+ * What a level 60 character of this race, class and form starts with, before
+ * any gear.
  *
- * Every class also has Health; it is shown here because it is about to matter,
- * and because "Mana" alone would read as the complete answer when it is not.
- * The Druid is the one class where the answer depends on form.
+ * Crit chance is shown but marked, because those numbers are class constants
+ * that other contributions add to rather than a character's actual crit.
  */
-function ResourceSummary({ characterClass }: { readonly characterClass: ClassId }) {
-  const forms = formsFor(characterClass);
-  const definition = getClass(characterClass);
-  if (!definition) return null;
+function BaseStatTable({
+  race,
+  characterClass,
+  form,
+}: {
+  readonly race: RaceId;
+  readonly characterClass: ClassId;
+  readonly form: FormId | undefined;
+}) {
+  const stats = baseStatsFor(race, characterClass, form);
+  if (!stats) return <p className="muted">No base stats for this combination.</p>;
 
-  if (forms.length === 0) {
-    return (
-      <ul className="resource-list">
-        <li>
-          <span>Health</span>
-          <span className="muted">all classes</span>
-        </li>
-        <li>
-          <span>{resourceLabel(definition.primaryResource)}</span>
-          <span className="muted">primary</span>
-        </li>
-      </ul>
-    );
-  }
+  const mana = baseManaFor(race, characterClass);
+  const definition = getClass(characterClass);
+
+  const rows: { label: string; value: string; note?: string }[] = [
+    { label: 'Hit Points', value: stats.hitPoints.toLocaleString('en-US') },
+    ...(mana > 0
+      ? [{ label: resourceLabel('mana'), value: mana.toLocaleString('en-US') }]
+      : []),
+    ...(definition && definition.primaryResource !== 'mana'
+      ? [{ label: resourceLabel(definition.primaryResource), value: '100' }]
+      : []),
+    { label: 'Strength', value: String(stats.strength) },
+    { label: 'Agility', value: String(stats.agility) },
+    { label: 'Stamina', value: String(stats.stamina) },
+    { label: 'Intellect', value: String(stats.intellect) },
+    { label: 'Spirit', value: String(stats.spirit) },
+    { label: 'Attack Power', value: String(stats.attackPower) },
+    ...(stats.rangedAttackPower !== 0
+      ? [{ label: 'Ranged Attack Power', value: String(stats.rangedAttackPower) }]
+      : []),
+    { label: 'Crit Chance', value: `${stats.critChance}%`, note: 'base constant' },
+    {
+      label: 'Spell Crit Chance',
+      value: `${stats.spellCritChance}%`,
+      note: 'base constant',
+    },
+  ];
 
   return (
-    <ul className="resource-list">
-      <li>
-        <span>Health</span>
-        <span className="muted">all classes</span>
-      </li>
-      {forms.map((form) => (
-        <li key={form.id}>
-          <span>{resourceLabel(form.resource)}</span>
-          <span className="muted">{form.name}</span>
-        </li>
-      ))}
-    </ul>
+    <>
+      <table className="base-stats">
+        <tbody>
+          {rows.map((row) => (
+            <tr key={row.label}>
+              <td>{row.label}</td>
+              <td className="numeric">{row.value}</td>
+              <td className="numeric muted">{row.note ?? ''}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      <p className="muted">
+        Crit values are class constants that other contributions add to, not a
+        character&apos;s actual crit chance, and are not yet used in combat.
+      </p>
+    </>
   );
 }
