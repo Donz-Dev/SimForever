@@ -1,6 +1,5 @@
-import type { TalentAllocation, WarriorTreeId } from './Talent';
+import type { ClassTalents, TalentAllocation, TalentTreeId } from './Talent';
 import { POINTS_PER_TIER, TOTAL_TALENT_POINTS } from './Talent';
-import { WARRIOR_TALENTS_BY_ID, WARRIOR_TREES } from './warriorTalents';
 
 /**
  * The rules for spending talent points.
@@ -8,6 +7,12 @@ import { WARRIOR_TALENTS_BY_ID, WARRIOR_TREES } from './warriorTalents';
  * Pure functions over an allocation, with no React and no DOM, so the tree's
  * behaviour can be checked without rendering anything. The panel calls these
  * and draws the answer.
+ *
+ * Every function takes the class's `ClassTalents` rather than reaching for a
+ * global index, because TALENT IDS ARE NOT UNIQUE ACROSS CLASSES: `deflection`
+ * is a Hunter, Paladin, Rogue and Warrior talent, with different rank caps and
+ * different rows. A global lookup would answer with whichever class won the
+ * race to register it.
  *
  * Three rules, and they compose:
  *
@@ -20,14 +25,18 @@ import { WARRIOR_TALENTS_BY_ID, WARRIOR_TREES } from './warriorTalents';
  * -- pulling a point out of tier 1 must not strand a tier 6 capstone. Rather
  * than reasoning about which talents depend on which, `canUnspend` simply
  * applies the removal and asks whether the result is still legal. That is
- * slower and completely reliable, and the allocation is 54 entries.
+ * slower and completely reliable, and a class has around fifty talents.
  */
 
 /** Points spent in one tree. */
-export function pointsInTree(allocation: TalentAllocation, tree: WarriorTreeId): number {
+export function pointsInTree(
+  talents: ClassTalents,
+  allocation: TalentAllocation,
+  tree: TalentTreeId,
+): number {
   let total = 0;
   for (const [id, points] of Object.entries(allocation)) {
-    if (WARRIOR_TALENTS_BY_ID.get(id)?.tree === tree) total += points;
+    if (talents.byId.get(id)?.tree === tree) total += points;
   }
   return total;
 }
@@ -48,11 +57,15 @@ export function pointsRemaining(allocation: TalentAllocation): number {
  * Only meaningful when the talent has points in it; a talent at zero has
  * nothing to justify.
  */
-function requirementsMet(allocation: TalentAllocation, talentId: string): boolean {
-  const talent = WARRIOR_TALENTS_BY_ID.get(talentId);
+function requirementsMet(
+  talents: ClassTalents,
+  allocation: TalentAllocation,
+  talentId: string,
+): boolean {
+  const talent = talents.byId.get(talentId);
   if (!talent) return false;
 
-  if (pointsInTree(allocation, talent.tree) < talent.tier) return false;
+  if (pointsInTree(talents, allocation, talent.tree) < talent.tier) return false;
 
   if (talent.requires) {
     const have = allocation[talent.requires] ?? 0;
@@ -68,45 +81,61 @@ function requirementsMet(allocation: TalentAllocation, talentId: string): boolea
  * is how the source calculator behaves: five points in row 0 open row 1, and a
  * talent never blocks itself.
  */
-export function isLegal(allocation: TalentAllocation): boolean {
+export function isLegal(talents: ClassTalents, allocation: TalentAllocation): boolean {
   if (pointsSpent(allocation) > TOTAL_TALENT_POINTS) return false;
 
   for (const [id, points] of Object.entries(allocation)) {
     if (points === 0) continue;
 
-    const talent = WARRIOR_TALENTS_BY_ID.get(id);
+    const talent = talents.byId.get(id);
     if (!talent) return false;
     if (points > talent.ranks || points < 0) return false;
-    if (!requirementsMet(allocation, id)) return false;
+    if (!requirementsMet(talents, allocation, id)) return false;
   }
   return true;
 }
 
 /** Whether one more point can go into a talent. */
-export function canSpend(allocation: TalentAllocation, talentId: string): boolean {
-  const talent = WARRIOR_TALENTS_BY_ID.get(talentId);
+export function canSpend(
+  talents: ClassTalents,
+  allocation: TalentAllocation,
+  talentId: string,
+): boolean {
+  const talent = talents.byId.get(talentId);
   if (!talent) return false;
   if (pointsRemaining(allocation) <= 0) return false;
   if ((allocation[talentId] ?? 0) >= talent.ranks) return false;
 
-  return requirementsMet(allocation, talentId);
+  return requirementsMet(talents, allocation, talentId);
 }
 
 /** One more point in a talent, or the allocation unchanged if it cannot go in. */
-export function spend(allocation: TalentAllocation, talentId: string): TalentAllocation {
-  if (!canSpend(allocation, talentId)) return allocation;
+export function spend(
+  talents: ClassTalents,
+  allocation: TalentAllocation,
+  talentId: string,
+): TalentAllocation {
+  if (!canSpend(talents, allocation, talentId)) return allocation;
   return { ...allocation, [talentId]: (allocation[talentId] ?? 0) + 1 };
 }
 
 /** Whether a point can come back out without stranding something else. */
-export function canUnspend(allocation: TalentAllocation, talentId: string): boolean {
+export function canUnspend(
+  talents: ClassTalents,
+  allocation: TalentAllocation,
+  talentId: string,
+): boolean {
   if ((allocation[talentId] ?? 0) <= 0) return false;
-  return isLegal(withoutOnePoint(allocation, talentId));
+  return isLegal(talents, withoutOnePoint(allocation, talentId));
 }
 
 /** One point back out, or the allocation unchanged if that would strand a talent. */
-export function unspend(allocation: TalentAllocation, talentId: string): TalentAllocation {
-  if (!canUnspend(allocation, talentId)) return allocation;
+export function unspend(
+  talents: ClassTalents,
+  allocation: TalentAllocation,
+  talentId: string,
+): TalentAllocation {
+  if (!canUnspend(talents, allocation, talentId)) return allocation;
   return withoutOnePoint(allocation, talentId);
 }
 
@@ -116,14 +145,15 @@ function withoutOnePoint(allocation: TalentAllocation, talentId: string): Talent
   return next;
 }
 
-/** Clear one tree, leaving the other two alone. */
+/** Clear one tree, leaving the others alone. */
 export function resetTree(
+  talents: ClassTalents,
   allocation: TalentAllocation,
-  tree: WarriorTreeId,
+  tree: TalentTreeId,
 ): TalentAllocation {
   const next: Record<string, number> = {};
   for (const [id, points] of Object.entries(allocation)) {
-    if (WARRIOR_TALENTS_BY_ID.get(id)?.tree !== tree) next[id] = points;
+    if (talents.byId.get(id)?.tree !== tree) next[id] = points;
   }
   return next;
 }
@@ -131,10 +161,10 @@ export function resetTree(
 /**
  * The tree distribution, as the calculator prints it: "0/0/0".
  *
- * Always in Arms / Fury / Protection order, whatever order points went in.
+ * Always in the class's own tree order, whatever order points went in.
  */
-export function distribution(allocation: TalentAllocation): string {
-  return WARRIOR_TREES.map((tree) => pointsInTree(allocation, tree.id)).join('/');
+export function distribution(talents: ClassTalents, allocation: TalentAllocation): string {
+  return talents.trees.map((tree) => pointsInTree(talents, allocation, tree.id)).join('/');
 }
 
 /** Points needed in a tree before a row opens. */

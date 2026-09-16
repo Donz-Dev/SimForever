@@ -26,11 +26,11 @@ What works end to end:
 | **Resources** | rage from damage, energy in batches, mana on the five-second rule |
 | **Abilities** | all 26 Warrior abilities from the ruleset spreadsheet, with weapon-damage scaling and on-next-swing |
 | **Reactions** | content can respond to an attack result; Overpower fires off a target dodge |
-| **Talents** | all three Warrior trees, real data, spendable in the UI -- but NO talent has an effect |
+| **Talents** | all 470 talents, nine classes, real data, spendable in the UI -- but NO talent has an effect |
 | **Analysis** | DPS, per-ability breakdown with attempts/hits/crit/glance/avoid rates |
 | **UI** | React panels driving the real engine; combat log; Monte Carlo batches |
 
-**535 tests**, CI green on Node 20 and 22.
+**589 tests**, CI green on Node 20 and 22.
 
 ## The next task
 
@@ -212,10 +212,10 @@ Roughly in order of value:
    definitions for the other eight classes.
 3. **Hit from gear**, so miss stops being fixed.
 4. **Bear/Cat paw swing speed and AP coefficients.**
-5. **Talent EFFECTS.** The trees themselves are now real data in
-   `game/talents/warriorTalents.ts`, read from the Forever talent calculator,
-   and points can be spent in the UI. Not one talent does anything: a full build
-   and an empty one produce identical numbers. Several hooks already anticipate
+5. **Talent EFFECTS.** The trees themselves are now real data for ALL NINE
+   CLASSES in `src/data/talents/*.json`, read from the Forever talent
+   calculators, and points can be spent in the UI. Not one of the 470 talents
+   does anything: a full build and an empty one produce identical numbers. Several hooks already anticipate
    them -- `offHandDamageMultiplier`, `resourceMaximums`, `manaRegenBypass`,
    `WeaponProfile.skill`.
 

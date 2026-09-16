@@ -1,7 +1,7 @@
-import type { Talent, TalentAllocation } from '../../game/talents/Talent';
+import type { ClassId } from '../../game/character';
+import type { ClassTalents, Talent, TalentAllocation, TalentTree } from '../../game/talents/Talent';
 import { TOTAL_TALENT_POINTS } from '../../game/talents/Talent';
-import type { TalentTree } from '../../game/talents/warriorTalents';
-import { WARRIOR_TREES } from '../../game/talents/warriorTalents';
+import { accentFor, talentsForClass } from '../../game/talents/talentData';
 import {
   canSpend,
   canUnspend,
@@ -30,6 +30,7 @@ const TREE_COLUMNS = 4;
 type TalentUpdate = (previous: TalentAllocation) => TalentAllocation;
 
 interface TalentPanelProps {
+  readonly characterClass: ClassId;
   readonly allocation: TalentAllocation;
   readonly onChange: (update: TalentUpdate) => void;
   readonly collapsed: boolean;
@@ -37,13 +38,13 @@ interface TalentPanelProps {
 }
 
 /**
- * The three Warrior talent trees.
+ * The three talent trees of whichever class is selected.
  *
  * Left click spends a point, right click takes one back -- the binding every
  * talent calculator has used for twenty years, so it needs no instructions.
  *
  * NOTHING SPENT HERE AFFECTS A SIMULATION. The trees are real data from the
- * Forever calculator, but no talent has an implemented effect, so a full build
+ * Forever calculators, but no talent has an implemented effect, so a full build
  * and an empty one produce identical numbers. Said once, on screen, rather than
  * left for someone to discover by running both.
  *
@@ -51,11 +52,15 @@ interface TalentPanelProps {
  * off screen on a laptop, and the trees are set once and then watched rarely.
  */
 export function TalentPanel({
+  characterClass,
   allocation,
   onChange,
   collapsed,
   onToggleCollapsed,
 }: TalentPanelProps) {
+  const talents = talentsForClass(characterClass);
+  if (!talents) return null;
+
   const remaining = pointsRemaining(allocation);
 
   return (
@@ -63,7 +68,7 @@ export function TalentPanel({
       <header className="panel-header">
         <div className="talent-header-left">
           <h2>Talents</h2>
-          <span className="talent-distribution">{distribution(allocation)}</span>
+          <span className="talent-distribution">{distribution(talents, allocation)}</span>
         </div>
         <div className="panel-actions">
           <span className={remaining === 0 ? 'talent-remaining spent' : 'talent-remaining'}>
@@ -88,10 +93,12 @@ export function TalentPanel({
             choices do not change a single number in the results.
           </p>
           <div className="talent-trees">
-            {WARRIOR_TREES.map((tree) => (
+            {talents.trees.map((tree, index) => (
               <TalentTreeView
                 key={tree.id}
+                talents={talents}
                 tree={tree}
+                accent={accentFor(index)}
                 allocation={allocation}
                 onChange={onChange}
               />
@@ -104,21 +111,25 @@ export function TalentPanel({
 }
 
 function TalentTreeView({
+  talents,
   tree,
+  accent,
   allocation,
   onChange,
 }: {
+  readonly talents: ClassTalents;
   readonly tree: TalentTree;
+  readonly accent: string;
   readonly allocation: TalentAllocation;
   readonly onChange: (update: TalentUpdate) => void;
 }) {
-  const spent = pointsInTree(allocation, tree.id);
+  const spent = pointsInTree(talents, allocation, tree.id);
   // One row past the deepest talent, so the capstone row still has a cell.
   const rows = Math.max(...tree.talents.map((talent) => talent.row)) + 1;
 
   return (
-    <div className="talent-tree" style={{ borderColor: tree.accent }}>
-      <header className="talent-tree-header" style={{ background: `${tree.accent}33` }}>
+    <div className="talent-tree" style={{ borderColor: accent }}>
+      <header className="talent-tree-header" style={{ background: `${accent}33` }}>
         <span className="talent-tree-name">{tree.name}</span>
         <span className="talent-tree-points">
           {spent} / {TOTAL_TALENT_POINTS}
@@ -135,6 +146,7 @@ function TalentTreeView({
         {tree.talents.map((talent) => (
           <TalentCell
             key={talent.id}
+            talents={talents}
             talent={talent}
             allocation={allocation}
             onChange={onChange}
@@ -146,7 +158,7 @@ function TalentTreeView({
         type="button"
         className="talent-reset"
         disabled={spent === 0}
-        onClick={() => onChange((previous) => resetTree(previous, tree.id))}
+        onClick={() => onChange((previous) => resetTree(talents, previous, tree.id))}
       >
         Reset {tree.name}
       </button>
@@ -155,19 +167,22 @@ function TalentTreeView({
 }
 
 function TalentCell({
+  talents,
   talent,
   allocation,
   onChange,
 }: {
+  readonly talents: ClassTalents;
   readonly talent: Talent;
   readonly allocation: TalentAllocation;
   readonly onChange: (update: TalentUpdate) => void;
 }) {
   const points = allocation[talent.id] ?? 0;
-  const addable = canSpend(allocation, talent.id);
-  const removable = canUnspend(allocation, talent.id);
+  const addable = canSpend(talents, allocation, talent.id);
+  const removable = canUnspend(talents, allocation, talent.id);
 
-  const state = points >= talent.ranks ? 'maxed' : points > 0 ? 'partial' : addable ? 'open' : 'locked';
+  const state =
+    points >= talent.ranks ? 'maxed' : points > 0 ? 'partial' : addable ? 'open' : 'locked';
 
   return (
     <button
@@ -175,11 +190,11 @@ function TalentCell({
       className={`talent ${state}`}
       // Grid positions are one-based; the data is zero-based.
       style={{ gridColumn: talent.col + 1, gridRow: talent.row + 1 }}
-      onClick={() => onChange((previous) => spend(previous, talent.id))}
+      onClick={() => onChange((previous) => spend(talents, previous, talent.id))}
       onContextMenu={(event) => {
         // Right click removes, which means suppressing the browser menu.
         event.preventDefault();
-        onChange((previous) => unspend(previous, talent.id));
+        onChange((previous) => unspend(talents, previous, talent.id));
       }}
       disabled={!addable && !removable}
       title={`${talent.name} (${points}/${talent.ranks})\n\n${talent.description}${
