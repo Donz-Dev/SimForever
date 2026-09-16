@@ -498,3 +498,204 @@ button:disabled {
   color: var(--error);
   font-size: 12px;
 }
+
+/* --- talents --- */
+
+.talent-header-left {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+}
+
+.talent-distribution {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.talent-remaining {
+  align-self: center;
+  font-size: 12px;
+  color: var(--accent-strong);
+}
+
+/* Nothing left to spend is the expected end state, not a warning. */
+.talent-remaining.spent {
+  color: var(--text-muted);
+}
+
+.talent-toggle {
+  min-width: 28px;
+  line-height: 1;
+}
+
+.talent-warning {
+  margin: 0 0 12px;
+}
+
+.talent-trees {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+
+/* Three trees side by side need the width; below that they stack rather than
+   squeezing four icon columns into a phone. */
+@media (max-width: 1100px) {
+  .talent-trees {
+    grid-template-columns: 1fr;
+  }
+}
+
+.talent-tree {
+  border: 1px solid var(--panel-border);
+  border-radius: 6px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.talent-tree-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--panel-border);
+}
+
+.talent-tree-name {
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--text);
+}
+
+.talent-tree-points {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.talent-grid {
+  display: grid;
+  gap: 8px;
+  padding: 12px;
+  background: #0d1015;
+  flex: 1;
+}
+
+.talent {
+  position: relative;
+  padding: 0;
+  width: 100%;
+  aspect-ratio: 1;
+  background: none;
+  border: 2px solid var(--panel-border);
+  border-radius: 4px;
+  overflow: visible;
+  cursor: pointer;
+}
+
+.talent-icon {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: 2px;
+  object-fit: cover;
+}
+
+/* A locked talent is dimmed rather than hidden: knowing what is further down
+   the tree is most of why anyone opens a talent calculator. */
+.talent.locked .talent-icon {
+  filter: grayscale(0.85) brightness(0.62);
+}
+
+.talent.open {
+  border-color: #4a5464;
+}
+
+.talent.open:hover {
+  border-color: var(--accent);
+}
+
+.talent.partial {
+  border-color: var(--accent);
+}
+
+.talent.maxed {
+  border-color: #58c46a;
+}
+
+.talent:disabled {
+  cursor: default;
+}
+
+.talent-rank {
+  position: absolute;
+  right: -4px;
+  bottom: -6px;
+  padding: 0 3px;
+  background: #0d1015;
+  border: 1px solid var(--panel-border);
+  border-radius: 3px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  line-height: 1.4;
+  color: var(--text-muted);
+}
+
+.talent.partial .talent-rank {
+  color: var(--accent-strong);
+}
+
+.talent.maxed .talent-rank {
+  color: #58c46a;
+}
+
+.talent-reset {
+  margin: 10px;
+  font-size: 12px;
+}
+
+/* --- gear --- */
+
+.gear-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 8px;
+}
+
+.gear-slot {
+  display: grid;
+  grid-template-columns: 84px 1fr 96px;
+  align-items: center;
+  gap: 6px;
+}
+
+.gear-slot-name {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.gear-select {
+  width: 100%;
+  padding: 6px 8px;
+  background: #11141a;
+  border: 1px solid var(--panel-border);
+  border-radius: 4px;
+  color: var(--text-muted);
+  font-family: inherit;
+  font-size: 12px;
+}
+
+.gear-select:disabled {
+  opacity: 0.7;
+  cursor: default;
+}
+
+.gear-no-enchant {
+  text-align: center;
+  font-size: 12px;
+  color: var(--text-muted);
+  opacity: 0.5;
+}

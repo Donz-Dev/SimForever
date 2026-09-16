@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import type { TalentAllocation } from '../game/talents/Talent';
 import type { CharacterProfile } from '../profiles';
 import { createDefaultProfile } from '../profiles';
 import { Logo } from './components/Logo';
@@ -7,8 +8,10 @@ import { CharacterPanel } from './panels/CharacterPanel';
 import { CharacterSheetPanel } from './panels/CharacterSheetPanel';
 import { CombatLogPanel } from './panels/CombatLogPanel';
 import { EncounterPanel } from './panels/EncounterPanel';
+import { GearPanel } from './panels/GearPanel';
 import { ResultsPanel } from './panels/ResultsPanel';
 import { SimulationPanel } from './panels/SimulationPanel';
+import { TalentPanel } from './panels/TalentPanel';
 
 /**
  * The application shell.
@@ -32,6 +35,11 @@ export function App() {
     return { ...base, character: { ...base.character, name: '' } };
   });
   const [confirmed, setConfirmed] = useState(false);
+  // Talents live in UI state, not on the profile. They have no effect on a
+  // simulation yet, and putting them in the profile would mean a format version
+  // and a migration for data nothing reads. That comes with the effects.
+  const [talents, setTalents] = useState<TalentAllocation>({});
+  const [talentsCollapsed, setTalentsCollapsed] = useState(false);
   const { state, progress, run, reset } = useSimulation();
 
   const editCharacter = () => {
@@ -76,6 +84,14 @@ export function App() {
 
         {confirmed ? (
           <div className="column column-results">
+            <TalentPanel
+              allocation={talents}
+              onChange={setTalents}
+              collapsed={talentsCollapsed}
+              onToggleCollapsed={() => setTalentsCollapsed((was) => !was)}
+            />
+            <GearPanel />
+
             {state.status === 'running' ? (
               <div className="placeholder">
                 <p>Running...</p>

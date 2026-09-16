@@ -26,10 +26,11 @@ What works end to end:
 | **Resources** | rage from damage, energy in batches, mana on the five-second rule |
 | **Abilities** | all 26 Warrior abilities from the ruleset spreadsheet, with weapon-damage scaling and on-next-swing |
 | **Reactions** | content can respond to an attack result; Overpower fires off a target dodge |
+| **Talents** | all three Warrior trees, real data, spendable in the UI -- but NO talent has an effect |
 | **Analysis** | DPS, per-ability breakdown with attempts/hits/crit/glance/avoid rates |
 | **UI** | React panels driving the real engine; combat log; Monte Carlo batches |
 
-**511 tests**, CI green on Node 20 and 22.
+**535 tests**, CI green on Node 20 and 22.
 
 ## The next task
 
@@ -211,8 +212,18 @@ Roughly in order of value:
    definitions for the other eight classes.
 3. **Hit from gear**, so miss stops being fixed.
 4. **Bear/Cat paw swing speed and AP coefficients.**
-5. **Talents**, which several hooks already anticipate: `offHandDamageMultiplier`,
-   `resourceMaximums`, `manaRegenBypass`, `WeaponProfile.skill`.
+5. **Talent EFFECTS.** The trees themselves are now real data in
+   `game/talents/warriorTalents.ts`, read from the Forever talent calculator,
+   and points can be spent in the UI. Not one talent does anything: a full build
+   and an empty one produce identical numbers. Several hooks already anticipate
+   them -- `offHandDamageMultiplier`, `resourceMaximums`, `manaRegenBypass`,
+   `WeaponProfile.skill`.
+
+   Talents also need to GATE abilities. Mortal Strike, Bloodthirst and Shield
+   Slam are 31-point capstones in three different trees, so a warrior can reach
+   exactly one; `abilitiesForClass` currently grants all three.
+6. **Item data**, which the gear panel is a mock-up for: seventeen slots, an
+   item and an enchant each, every list empty because nothing exists to fill it.
 
 ## Built but unreachable
 
