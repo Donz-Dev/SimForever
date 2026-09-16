@@ -1,4 +1,4 @@
-import type { Combatant } from '../actors/Combatant';
+import type { Combatant, WeaponSlot } from '../actors/Combatant';
 import type { RNG } from '../rng';
 
 /**
@@ -77,8 +77,15 @@ export interface AttackChances {
   readonly glance: RollUnits;
   readonly crush: RollUnits;
   readonly crit: RollUnits;
-  /** Damage multiplier on a glancing blow. 0.7 is a 30% reduction. */
-  readonly glanceMultiplier: number;
+  /**
+   * Damage multiplier range for a glancing blow, rolled uniformly.
+   *
+   * A range rather than a single value because the penalty is genuinely
+   * variable: at a 15-point skill deficit a glance lands somewhere between 55%
+   * and 75% of normal damage. Set both ends the same for a fixed penalty.
+   */
+  readonly glanceMultiplierMin: number;
+  readonly glanceMultiplierMax: number;
   /** Damage multiplier on a critical strike. */
   readonly critMultiplier: number;
   /** Damage multiplier on a crushing blow. */
@@ -92,7 +99,8 @@ export const NO_CHANCES: AttackChances = {
   glance: 0,
   crush: 0,
   crit: 0,
-  glanceMultiplier: 1,
+  glanceMultiplierMin: 1,
+  glanceMultiplierMax: 1,
   critMultiplier: 1,
   crushMultiplier: 1,
 };
@@ -104,10 +112,22 @@ export const NO_CHANCES: AttackChances = {
  * they are injected. A simulation without a provider falls back to
  * `defaultAttackChances`, which only rolls crit.
  */
+/**
+ * Extra context an attack carries beyond who is hitting whom.
+ *
+ * The weapon slot matters because a dual-wielder's hands are not equivalent:
+ * the off-hand carries its own miss penalty and may have a different weapon
+ * skill, so it needs its own chances.
+ */
+export interface AttackContext {
+  readonly slot?: WeaponSlot;
+}
+
 export type AttackChanceProvider = (
   kind: AttackTableKind,
   source: Combatant,
   target: Combatant,
+  context?: AttackContext,
 ) => AttackChances;
 
 export interface AttackResolution {
@@ -201,18 +221,18 @@ export function resolveAttackTable(
 
   const firstOutcome = walk(shape.firstRoll, chances, first);
   if (firstOutcome !== null) {
-    return finish(firstOutcome, chances, rolls);
+    return finish(firstOutcome, chances, rolls, rng);
   }
 
   if (shape.secondRoll.length === 0) {
-    return finish('hit', chances, rolls);
+    return finish('hit', chances, rolls, rng);
   }
 
   const second = rng.nextInt(1, ROLL_MAX);
   rolls.push(second);
 
   const secondOutcome = walk(shape.secondRoll, chances, second);
-  return finish(secondOutcome ?? 'hit', chances, rolls);
+  return finish(secondOutcome ?? 'hit', chances, rolls, rng);
 }
 
 /**
@@ -257,24 +277,29 @@ function finish(
   outcome: AttackOutcome,
   chances: AttackChances,
   rolls: number[],
+  rng: RNG,
 ): AttackResolution {
   const avoided = AVOIDED_OUTCOMES.has(outcome);
   return {
     outcome,
     avoided,
-    damageMultiplier: multiplierFor(outcome, chances),
+    damageMultiplier: multiplierFor(outcome, chances, rng),
     rolls,
   };
 }
 
-function multiplierFor(outcome: AttackOutcome, chances: AttackChances): number {
+function multiplierFor(
+  outcome: AttackOutcome,
+  chances: AttackChances,
+  rng: RNG,
+): number {
   switch (outcome) {
     case 'miss':
     case 'dodge':
     case 'parry':
       return 0;
     case 'glance':
-      return chances.glanceMultiplier;
+      return rollGlanceMultiplier(chances, rng);
     case 'crush':
       return chances.crushMultiplier;
     case 'crit':
@@ -282,6 +307,23 @@ function multiplierFor(outcome: AttackOutcome, chances: AttackChances): number {
     case 'hit':
       return 1;
   }
+}
+
+/**
+ * A glancing blow's damage, rolled uniformly within its range.
+ *
+ * Rolled in whole percentage points, matching how the bounds are derived: both
+ * ends are floored to integers, so a finer roll would imply a precision the
+ * inputs do not have.
+ *
+ * Consumes an RNG draw only when the range is actually a range, so a fixed
+ * penalty does not silently shift the random stream.
+ */
+function rollGlanceMultiplier(chances: AttackChances, rng: RNG): number {
+  const min = Math.round(chances.glanceMultiplierMin * 100);
+  const max = Math.round(chances.glanceMultiplierMax * 100);
+  if (max <= min) return chances.glanceMultiplierMin;
+  return rng.nextInt(min, max) / 100;
 }
 
 /**

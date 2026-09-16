@@ -95,6 +95,7 @@ function swing(
     // Ranged weapons use the ranged table, which has no dodge, parry or
     // glancing blow.
     attackTable: slot === 'ranged' ? 'ranged-auto' : 'melee-auto',
+    weaponSlot: slot,
   });
 
   // Resource from damage DEALT, proportional to what actually landed. A missed

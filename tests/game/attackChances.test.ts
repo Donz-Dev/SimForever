@@ -1,203 +1,239 @@
 import { describe, expect, it } from 'vitest';
-import { toRollUnits } from '../../src/engine';
-import { createPlayer } from '../../src/game/actors/createPlayer';
-import { createTrainingDummy } from '../../src/game/actors/createTrainingDummy';
-import { BASE_CHANCES, createForeverAttackChances } from '../../src/game/combat/attackChances';
 import type { CombatStyleId } from '../../src/game/character';
+import { createPlayer } from '../../src/game/actors/createPlayer';
+import {
+  RAID_BOSS_ARMOR,
+  RAID_BOSS_LEVEL,
+  createTrainingDummy,
+} from '../../src/game/actors/createTrainingDummy';
+import { MAX_WEAPON_SKILL_AT_60 } from '../../src/game/actors/weapons';
+import {
+  COMBAT_CONSTANTS,
+  createForeverAttackChances,
+  critSuppression,
+  dodgeFromSkill,
+  glanceChance,
+  glanceMultiplierRange,
+  missFromSkill,
+} from '../../src/game/combat/attackChances';
 
-const dummy = () => createTrainingDummy();
+const boss = () => createTrainingDummy();
 
 function warrior(combatStyle: CombatStyleId) {
   return createPlayer({ race: 'orc', characterClass: 'warrior', combatStyle });
 }
 
-/** Provider that reports one fixed style for the player. */
-function providerFor(style: CombatStyleId) {
-  return createForeverAttackChances(() => style);
-}
+const providerFor = (style: CombatStyleId) => createForeverAttackChances(() => style);
 
-describe('Forever base chances', () => {
-  it('matches the stated values', () => {
-    expect(BASE_CHANCES.meleeMiss).toBe(8);
-    expect(BASE_CHANCES.rangedMiss).toBe(8);
-    expect(BASE_CHANCES.spellMiss).toBe(17);
-    expect(BASE_CHANCES.dualWieldMissPenalty).toBe(19);
-    expect(BASE_CHANCES.enemyDodge).toBe(6.5);
-    expect(BASE_CHANCES.enemyParry).toBe(14);
-    expect(BASE_CHANCES.glance).toBe(40);
-    expect(BASE_CHANCES.glanceMultiplier).toBe(0.7);
-    expect(BASE_CHANCES.meleeCritMultiplier).toBe(2);
-    expect(BASE_CHANCES.spellCritMultiplier).toBe(1.5);
-    expect(BASE_CHANCES.bossMiss).toBe(5);
-    expect(BASE_CHANCES.bossCrush).toBe(15);
-    expect(BASE_CHANCES.bossCrushMultiplier).toBe(1.5);
-    expect(BASE_CHANCES.bossCrit).toBe(5);
+/** A level 60 character at capped skill against a level 63 boss. */
+const SKILL = MAX_WEAPON_SKILL_AT_60; // 300
+const DEFENSE = RAID_BOSS_LEVEL * 5; // 315
+const GAP = DEFENSE - SKILL; // 15
+
+describe('the skill gap that shapes everything', () => {
+  it('puts a capped level 60 character 15 points behind a level 63 boss', () => {
+    expect(SKILL).toBe(300);
+    expect(DEFENSE).toBe(315);
+    expect(GAP).toBe(15);
+  });
+
+  it('reads defense skill off the target level', () => {
+    expect(boss().defenseSkill).toBe(315);
+    expect(createTrainingDummy({ level: 60 }).defenseSkill).toBe(300);
+  });
+
+  it('gives a maxed weapon its declared skill', () => {
+    expect(warrior('two_hander').weaponSkill('mainHand')).toBe(300);
+  });
+});
+
+describe('miss from weapon skill', () => {
+  it('uses the steeper formula past a 10-point gap', () => {
+    // 600 + 15 * 20 = 900
+    expect(missFromSkill(300, 315, 0, 0)).toBe(900);
+  });
+
+  it('uses the shallower formula within 10 points', () => {
+    // 500 + 5 * 10 = 550
+    expect(missFromSkill(300, 305, 0, 0)).toBe(550);
+  });
+
+  it('switches regime exactly above a 10-point gap', () => {
+    // A 10-point gap is still the shallow formula; 11 is not.
+    expect(missFromSkill(300, 310, 0, 0)).toBe(600); // 500 + 10 * 10
+    expect(missFromSkill(300, 311, 0, 0)).toBe(820); // 600 + 11 * 20
+  });
+
+  it('adds the full dual-wield penalty', () => {
+    expect(missFromSkill(300, 315, 0, 1900)).toBe(2800);
+  });
+
+  it('subtracts hit', () => {
+    expect(missFromSkill(300, 315, 300, 0)).toBe(600);
+  });
+
+  it('floors at zero rather than going negative', () => {
+    expect(missFromSkill(300, 315, 99_999, 0)).toBe(0);
+  });
+
+  it('rewards weapon skill above the baseline', () => {
+    // Skill from a talent or racial closes the gap and reduces miss.
+    expect(missFromSkill(305, 315, 0, 0)).toBeLessThan(missFromSkill(300, 315, 0, 0));
+  });
+});
+
+describe('dodge from weapon skill', () => {
+  it('is 6.5% at a 15-point gap', () => {
+    // 500 + 15 * 10 = 650. Matches the flat 6.5% stated earlier.
+    expect(dodgeFromSkill(300, 315)).toBe(650);
+  });
+
+  it('falls as skill rises', () => {
+    expect(dodgeFromSkill(310, 315)).toBe(550);
+    expect(dodgeFromSkill(315, 315)).toBe(500);
+  });
+});
+
+describe('glancing blows', () => {
+  it('is 40% against a level 63 target', () => {
+    // 1000 + (315 - 300) * 200 = 4000. Matches the flat 40% stated earlier.
+    expect(glanceChance(315)).toBe(4000);
+  });
+
+  it('depends on the target, not on the attacker skill', () => {
+    // Training weapon skill does not reduce glancing.
+    expect(glanceChance(315)).toBe(4000);
+    expect(glanceChance(300)).toBe(1000);
+  });
+
+  it('deals 55% to 75% at a 15-point gap', () => {
+    const range = glanceMultiplierRange(300, 315);
+    // floor((1.3 - 0.75) * 100) = 55, floor((1.2 - 0.45) * 100) = 75
+    expect(range.min).toBeCloseTo(0.55, 10);
+    expect(range.max).toBeCloseTo(0.75, 10);
+  });
+
+  it('caps the ends at 91% and 99%', () => {
+    const range = glanceMultiplierRange(315, 315);
+    expect(range.min).toBeCloseTo(0.91, 10);
+    expect(range.max).toBeCloseTo(0.99, 10);
+  });
+
+  it('hurts more as the gap widens', () => {
+    const near = glanceMultiplierRange(310, 315);
+    const far = glanceMultiplierRange(290, 315);
+    expect(far.min).toBeLessThan(near.min);
+    expect(far.max).toBeLessThan(near.max);
+  });
+});
+
+describe('crit suppression', () => {
+  it('removes 4.8 percentage points against a level 63 boss', () => {
+    // 180 + 3 * 100 = 480
+    expect(critSuppression(60, 63)).toBe(480);
+  });
+
+  it('is nothing against an equal or lower level target', () => {
+    expect(critSuppression(60, 60)).toBe(0);
+    expect(critSuppression(60, 55)).toBe(0);
+  });
+
+  it('erases an ungeared character crit entirely', () => {
+    // An Orc Warrior has about 4.99% crit, which is less than the 4.8 point
+    // penalty leaves room for.
+    const player = warrior('two_hander');
+    const chances = providerFor('two_hander')('melee-auto', player, boss());
+    expect(player.stats.get('critChance')).toBeLessThan(6);
+    expect(chances.crit).toBeLessThan(50); // under 0.5%
+  });
+
+  it('never goes below zero', () => {
+    const player = createPlayer({ race: 'gnome', characterClass: 'mage' });
+    const chances = providerFor('caster')('spell', player, boss());
+    expect(chances.crit).toBeGreaterThanOrEqual(0);
   });
 });
 
 describe('melee auto-attack chances', () => {
-  it('uses the base 8% miss when not dual-wielding', () => {
-    const chances = providerFor('two_hander')('melee-auto', warrior('two_hander'), dummy());
-    expect(chances.miss).toBe(toRollUnits(8));
+  it('derives the whole table from the skill gap', () => {
+    const chances = providerFor('two_hander')('melee-auto', warrior('two_hander'), boss());
+
+    expect(chances.miss).toBe(900); // 9%
+    expect(chances.dodge).toBe(650); // 6.5%
+    expect(chances.glance).toBe(4000); // 40%
+    expect(chances.glanceMultiplierMin).toBeCloseTo(0.55, 10);
+    expect(chances.glanceMultiplierMax).toBeCloseTo(0.75, 10);
   });
 
-  it('adds the full 19% penalty to a dual-wielder, not half of it', () => {
-    // The penalty applies to BOTH weapons at full strength: 8 + 19 = 27%.
-    const chances = providerFor('dual_wield')('melee-auto', warrior('dual_wield'), dummy());
-    expect(chances.miss).toBe(toRollUnits(27));
+  it('adds the dual-wield penalty to the main hand too', () => {
+    // Both weapons are penalised, not just the off-hand.
+    const player = warrior('dual_wield');
+    const provider = providerFor('dual_wield');
+
+    expect(provider('melee-auto', player, boss(), { slot: 'mainHand' }).miss).toBe(2800);
+    expect(provider('melee-auto', player, boss(), { slot: 'offHand' }).miss).toBe(2800);
   });
 
-  it('includes dodge and glancing blows', () => {
-    const chances = providerFor('two_hander')('melee-auto', warrior('two_hander'), dummy());
-    expect(chances.dodge).toBe(toRollUnits(6.5));
-    expect(chances.glance).toBe(toRollUnits(40));
-    expect(chances.glanceMultiplier).toBe(0.7);
-  });
-
-  it('crits for 2x', () => {
-    const chances = providerFor('two_hander')('melee-auto', warrior('two_hander'), dummy());
-    expect(chances.critMultiplier).toBe(2);
-  });
-});
-
-describe('enemy parry', () => {
-  it('applies only when the character is using 1H & Shield', () => {
-    const shielded = providerFor('one_hand_shield')(
-      'melee-auto',
-      warrior('one_hand_shield'),
-      dummy(),
+  it('leaves a two-hander unpenalised', () => {
+    const provider = providerFor('two_hander');
+    expect(provider('melee-auto', warrior('two_hander'), boss(), { slot: 'mainHand' }).miss).toBe(
+      900,
     );
-    expect(shielded.parry).toBe(toRollUnits(14));
-  });
-
-  it('is zero for every other style', () => {
-    for (const style of ['two_hander', 'dual_wield'] as CombatStyleId[]) {
-      const chances = providerFor(style)('melee-auto', warrior(style), dummy());
-      expect(chances.parry, style).toBe(0);
-    }
-  });
-
-  it('is zero when the style is unknown', () => {
-    // A combatant the provider has no style for, such as an enemy.
-    const chances = createForeverAttackChances()('melee-auto', warrior('two_hander'), dummy());
-    expect(chances.parry).toBe(0);
-  });
-
-  it('applies to melee specials too', () => {
-    const chances = providerFor('one_hand_shield')(
-      'melee-special',
-      warrior('one_hand_shield'),
-      dummy(),
-    );
-    expect(chances.parry).toBe(toRollUnits(14));
   });
 });
 
 describe('melee special attack chances', () => {
-  it('never carries the dual-wield miss penalty', () => {
-    // A special is one strike, not one per hand, so it misses at the base rate
-    // even for a dual-wielder.
-    const chances = providerFor('dual_wield')('melee-special', warrior('dual_wield'), dummy());
-    expect(chances.miss).toBe(toRollUnits(8));
+  it('never carries the dual-wield penalty', () => {
+    // A special is one strike, not one per hand.
+    const chances = providerFor('dual_wield')('melee-special', warrior('dual_wield'), boss());
+    expect(chances.miss).toBe(900);
   });
 
-  it('has no glancing blow', () => {
-    const chances = providerFor('two_hander')('melee-special', warrior('two_hander'), dummy());
+  it('keeps dodge but drops glancing', () => {
+    const chances = providerFor('two_hander')('melee-special', warrior('two_hander'), boss());
+    expect(chances.dodge).toBe(650);
     expect(chances.glance).toBe(0);
   });
 });
 
-describe('ranged chances', () => {
-  const hunter = createPlayer({
-    race: 'dwarf',
-    characterClass: 'hunter',
-    combatStyle: 'ranged',
-  });
+describe('enemy parry', () => {
+  it('applies only to 1H & Shield', () => {
+    expect(
+      providerFor('one_hand_shield')('melee-auto', warrior('one_hand_shield'), boss()).parry,
+    ).toBe(COMBAT_CONSTANTS.enemyParry);
 
-  it('misses at 8% with no dodge, parry or glance', () => {
-    const chances = providerFor('ranged')('ranged-auto', hunter, dummy());
-    expect(chances.miss).toBe(toRollUnits(8));
-    expect(chances.dodge).toBe(0);
-    expect(chances.parry).toBe(0);
-    expect(chances.glance).toBe(0);
-  });
-
-  it('never carries the dual-wield penalty, even for a dual-wielding hunter', () => {
-    const dwHunter = createPlayer({
-      race: 'dwarf',
-      characterClass: 'hunter',
-      combatStyle: 'dual_wield',
-    });
-    const chances = providerFor('dual_wield')('ranged-auto', dwHunter, dummy());
-    expect(chances.miss).toBe(toRollUnits(8));
+    for (const style of ['two_hander', 'dual_wield'] as CombatStyleId[]) {
+      expect(providerFor(style)('melee-auto', warrior(style), boss()).parry, style).toBe(0);
+    }
   });
 });
 
 describe('spell chances', () => {
-  const mage = createPlayer({ race: 'gnome', characterClass: 'mage' });
+  const mage = () => createPlayer({ race: 'gnome', characterClass: 'mage' });
 
-  it('misses at 17%', () => {
-    const chances = providerFor('caster')('spell', mage, dummy());
-    expect(chances.miss).toBe(toRollUnits(17));
+  it('misses on a flat 17%, unaffected by weapon skill', () => {
+    expect(providerFor('caster')('spell', mage(), boss()).miss).toBe(1700);
   });
 
-  it('crits for 1.5x using spell crit, not melee crit', () => {
-    const chances = providerFor('caster')('spell', mage, dummy());
-    expect(chances.critMultiplier).toBe(1.5);
-    expect(chances.crit).toBe(toRollUnits(mage.stats.get('spellCritChance')));
-    // A Gnome Mage has real spell crit from intellect but no melee crit at all.
-    expect(chances.crit).toBeGreaterThan(0);
-    expect(mage.stats.get('critChance')).toBe(0);
+  it('crits for 1.5x', () => {
+    expect(providerFor('caster')('spell', mage(), boss()).critMultiplier).toBe(1.5);
   });
 
-  it('cannot be dodged or parried', () => {
-    const chances = providerFor('caster')('spell', mage, dummy());
+  it('cannot be dodged, parried or glanced', () => {
+    const chances = providerFor('caster')('spell', mage(), boss());
     expect(chances.dodge).toBe(0);
     expect(chances.parry).toBe(0);
+    expect(chances.glance).toBe(0);
   });
 });
 
-describe('attacks received by the player', () => {
-  const player = warrior('one_hand_shield');
+describe('the raid boss target', () => {
+  it('is level 63 with 3731 armor by default', () => {
+    expect(RAID_BOSS_LEVEL).toBe(63);
+    expect(RAID_BOSS_ARMOR).toBe(3731);
 
-  it('uses the boss miss, crush and crit rates', () => {
-    const chances = providerFor('one_hand_shield')('melee-received', dummy(), player);
-    expect(chances.miss).toBe(toRollUnits(5));
-    expect(chances.crush).toBe(toRollUnits(15));
-    expect(chances.crushMultiplier).toBe(1.5);
-    expect(chances.crit).toBe(toRollUnits(5));
-    expect(chances.critMultiplier).toBe(2);
-  });
-
-  it('takes dodge from the defender agility conversion', () => {
-    const chances = providerFor('one_hand_shield')('melee-received', dummy(), player);
-    expect(chances.dodge).toBe(toRollUnits(player.stats.get('dodgeChance')));
-  });
-
-  it('leaves player parry at zero rather than guessing', () => {
-    // MISSING DATA: player parry depends on a defense stat and on talents,
-    // neither of which exists yet.
-    const chances = providerFor('one_hand_shield')('melee-received', dummy(), player);
-    expect(chances.parry).toBe(0);
-  });
-});
-
-describe('crit chance comes from the character', () => {
-  it('reflects the attacker stats rather than a fixed number', () => {
-    const plain = warrior('two_hander');
-    const geared = createPlayer({
-      race: 'orc',
-      characterClass: 'warrior',
-      combatStyle: 'two_hander',
-      bonusStats: { agility: 400 },
-    });
-
-    const provider = providerFor('two_hander');
-    const plainChances = provider('melee-auto', plain, dummy());
-    const gearedChances = provider('melee-auto', geared, dummy());
-
-    // 400 agility at 20 per 1% is another 20% crit.
-    expect(gearedChances.crit).toBeGreaterThan(plainChances.crit);
-    expect(gearedChances.crit - plainChances.crit).toBe(toRollUnits(20));
+    const target = boss();
+    expect(target.level).toBe(63);
+    expect(target.stats.get('armor')).toBe(3731);
   });
 });

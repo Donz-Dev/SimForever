@@ -58,30 +58,82 @@ aligned with what actually happened.
 Glancing blows only exist on melee auto-attacks. Crushing blows only exist on
 attacks the player receives.
 
-## The Forever numbers
+## Weapon skill versus defense skill
 
-In `src/game/combat/attackChances.ts`. The table *structure* is engine
-mechanics; these numbers are content, so they are injected through
-`SimulationConfig.attackChances`.
+Most of the table is **derived** from the gap between the attacker's weapon
+skill and the defender's defense skill, not from flat numbers.
+
+```
+defense skill = 5 x target level
+```
+
+A level 60 character caps weapon skill at **300**. A level 63 raid boss has
+**315** defense. That 15-point deficit is what shapes everything below.
+
+| | Formula | At a 15-point gap |
+| --- | --- | --- |
+| Miss (gap > 10) | `600 - hit + 1900*dualWield + gap * 20` | 9% |
+| Miss (gap <= 10) | `500 - hit + 1900*dualWield + gap * 10` | - |
+| Dodge | `500 + gap * 10` | 6.5% |
+| Glance | `1000 + (defense - 300) * 200` | 40% |
+| Glance damage | floored, capped at 91 / 99 | 55%..75% |
+| Crit suppression | `180 + (targetLevel - level) * 100` | -4.8 points |
+
+Two things are worth noticing.
+
+**The miss formula has two regimes.** Past a 10-point gap both the base and the
+per-point penalty rise, which is why a level 63 target is disproportionately
+harder to hit than a level 62 one.
+
+**Dodge and glance reproduce the earlier flat values exactly** at a 15-point
+gap: 6.5% and 40%. The formulas are consistent with the constants they replace;
+only miss moves, from 8% to 9%.
+
+**Glancing blows depend on the target, not the attacker.** Training weapon skill
+reduces miss and dodge but cannot reduce glancing at all.
+
+**Crit suppression is brutal.** At level 63 it removes 4.8 percentage points,
+which is more than an ungeared character has. A Warrior with 5.14% crit lands at
+**0.34%** against a raid boss.
+
+### Flat numbers that remain
 
 | | |
 | --- | --- |
-| Melee miss | 8% |
-| **Dual-wield miss penalty** | **+19%, on both weapons** |
-| Ranged miss | 8% |
-| Spell miss (resist) | 17% |
-| Enemy dodge | 6.5% |
+| Dual-wield miss penalty | **+19%, in full on both weapons** |
+| Spell miss (resist) | 17%, unaffected by weapon skill |
 | Enemy parry | 14%, or 0% (see below) |
-| Glancing blow | 40%, dealing 70% damage |
 | Melee / ranged crit | 2x |
 | Spell crit | 1.5x |
 | Boss miss / crush / crit | 5% / 15% (1.5x) / 5% (2x) |
 
 The dual-wield penalty is applied **in full to each weapon**, not halved and not
-applied to one hand. A dual-wielding warrior's auto-attacks miss 27% of the
-time.
+applied to one hand. Special attacks never carry it: a special is one strike,
+not one per hand.
 
-Special attacks never carry it: a special is one strike, not one per hand.
+**Ranged is an interpretation.** The source gives no ranged formula, so ranged
+attacks use the special-attack shape with the ranged weapon's skill: no
+dual-wield penalty, no dodge, no parry, no glancing blow.
+
+## Armor
+
+```
+damage multiplier = 1 - armor / (400 + 85 * targetLevel + armor)
+```
+
+A 3731-armor level 63 target lets **60.67%** through, the familiar "just under
+40% reduction" against a raid boss.
+
+**Read the naming carefully.** The source calls this expression
+`Armor_Reduction`, but what it computes is the *multiplier*, not the amount
+removed. Taking it as the reduction would turn a 39% reduction into a 61% one —
+exactly the sort of error that produces plausible-looking numbers. The code
+exposes both `armorDamageMultiplier` and `armorReduction`, and a test asserts
+they sum to 1.
+
+Armor applies to **hit-based physical damage**, decided per damage event rather
+than inferred from the school. A bleed is physical and sets
+`appliesArmor: false`.
 
 ### Enemy parry
 
@@ -150,9 +202,13 @@ hits.
 
 ## What is not implemented
 
-- **Hit rating and spell hit** do not exist, so miss chances are always the base
-  values. This is the biggest single gap: gear reducing miss is a large part of
-  melee and caster scaling.
+- **Hit comes from a `hitChance` stat** measured in percentage points, which the
+  miss formulas subtract. No gear grants it yet, so it is zero unless set by
+  hand.
+- **Weapon skill above the cap** is supported by the formulas but nothing grants
+  it. Talents and racials that raise weapon skill would set `WeaponProfile.skill`.
+- **Defense skill is exactly 5 x level.** A defense stat that raises it beyond
+  that does not exist.
 - **Table 6 is built but unused.** Nothing attacks the player yet. Player dodge
   comes from the agility conversion; **player parry is 0**, because it depends
   on a defense stat and talents that do not exist. It is left at zero rather

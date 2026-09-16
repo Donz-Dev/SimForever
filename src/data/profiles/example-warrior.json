@@ -1,5 +1,5 @@
 {
-  "version": 2,
+  "version": 3,
   "character": {
     "name": "Thunderaxe",
     "race": "orc",
@@ -24,6 +24,7 @@
   "encounter": {
     "targetName": "Raid Boss",
     "targetHealth": 2000000,
-    "targetArmor": 7390
+    "targetArmor": 3731,
+    "targetLevel": 63
   }
 }

@@ -167,6 +167,17 @@ export function CharacterPanel({ profile, onChange }: CharacterPanelProps) {
           onChange({ ...profile, stats: { ...profile.stats, agility: value } })
         }
       />
+      <NumberField
+        label="Hit %"
+        hint="reduces miss chance"
+        value={profile.stats.hitChance ?? 0}
+        min={0}
+        max={100}
+        step={0.5}
+        onChange={(value) =>
+          onChange({ ...profile, stats: { ...profile.stats, hitChance: value } })
+        }
+      />
     </Panel>
   );
 }

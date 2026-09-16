@@ -2,8 +2,8 @@ import { describe, expect, it } from 'vitest';
 import type { DamageTelemetryEvent } from '../../src/engine';
 import type { AttackResolution } from '../../src/engine';
 import {
-  ARMOR_CONSTANT,
-  MAX_ARMOR_REDUCTION,
+  armorConstantForLevel,
+  armorDamageMultiplier,
   armorReduction,
   dealDamage,
   resolveDamage,
@@ -84,29 +84,44 @@ describe('scaleByPower', () => {
   });
 });
 
-describe('armorReduction', () => {
-  it('is zero without armor', () => {
-    expect(armorReduction(0, 'physical')).toBe(0);
+describe('armor', () => {
+  it('uses a level-scaled constant of 400 + 85 * level', () => {
+    expect(armorConstantForLevel(63)).toBe(5755);
+    expect(armorConstantForLevel(60)).toBe(5500);
   });
 
-  it('never applies to magical schools', () => {
-    expect(armorReduction(50_000, 'fire')).toBe(0);
-    expect(armorReduction(50_000, 'shadow')).toBe(0);
+  it('is zero without armor', () => {
+    expect(armorReduction(0, 63)).toBe(0);
+    expect(armorDamageMultiplier(0, 63)).toBe(1);
+  });
+
+  it('puts a raid boss at just under 40% reduction', () => {
+    // 3731 armor at level 63: the familiar Classic figure.
+    expect(armorReduction(3731, 63)).toBeCloseTo(0.3933, 4);
+    expect(armorDamageMultiplier(3731, 63)).toBeCloseTo(0.6067, 4);
+  });
+
+  it('keeps the multiplier and the reduction complementary', () => {
+    // The source names the expression Armor_Reduction but it computes the
+    // multiplier. Confusing the two would flip a 39% reduction into a 61% one.
+    for (const armor of [0, 500, 3731, 20_000]) {
+      expect(armorReduction(armor, 63) + armorDamageMultiplier(armor, 63)).toBeCloseTo(1, 10);
+    }
   });
 
   it('removes half at the armor constant', () => {
-    expect(armorReduction(ARMOR_CONSTANT, 'physical')).toBeCloseTo(0.5, 6);
+    expect(armorReduction(armorConstantForLevel(63), 63)).toBeCloseTo(0.5, 6);
   });
 
   it('diminishes rather than scaling linearly', () => {
-    const single = armorReduction(5000, 'physical');
-    const double = armorReduction(10_000, 'physical');
+    const single = armorReduction(5000, 63);
+    const double = armorReduction(10_000, 63);
     expect(double).toBeGreaterThan(single);
     expect(double).toBeLessThan(single * 2);
   });
 
-  it('is capped', () => {
-    expect(armorReduction(100_000_000, 'physical')).toBe(MAX_ARMOR_REDUCTION);
+  it('makes armor worth less against a higher-level target', () => {
+    expect(armorReduction(3731, 63)).toBeLessThan(armorReduction(3731, 60));
   });
 });
 
@@ -182,7 +197,7 @@ describe('resolveDamage', () => {
 
   it('reduces physical damage by the target armor', () => {
     const source = makeAttacker({ stats: { attackPower: 0 } });
-    const target = makeTarget({ stats: { armor: ARMOR_CONSTANT } });
+    const target = makeTarget({ level: 63, stats: { armor: armorConstantForLevel(63) } });
 
     const result = resolveDamage(
       {

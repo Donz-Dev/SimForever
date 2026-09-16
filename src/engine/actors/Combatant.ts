@@ -52,6 +52,14 @@ export interface WeaponProfile {
   /** Attack power contribution per swing. */
   readonly powerCoefficient?: number;
   /**
+   * The wielder's skill with this weapon.
+   *
+   * Compared against the target's defense skill to derive miss, dodge and
+   * glancing chances. Defaults to five times the wielder's level, which is the
+   * maximum an untalented character can have.
+   */
+  readonly skill?: number;
+  /**
    * Multiplies this weapon's entire auto-attack, base damage and attack power
    * contribution alike. Defaults to 1.
    *
@@ -87,6 +95,11 @@ export interface CombatantOptions {
   readonly kind: CombatantKind;
   readonly faction: Faction;
   readonly maxHealth: number;
+  /**
+   * Character or creature level. Drives the skill difference that shapes the
+   * combat tables, and the armor constant. Defaults to 60.
+   */
+  readonly level?: number;
   readonly stats?: PartialStats;
   readonly resources?: readonly ResourceSpec[];
   readonly abilities?: readonly Ability[];
@@ -126,6 +139,7 @@ export class Combatant {
   readonly name: string;
   readonly kind: CombatantKind;
   readonly faction: Faction;
+  readonly level: number;
   readonly ownerId: string | undefined;
 
   readonly stats: StatBlock;
@@ -165,6 +179,7 @@ export class Combatant {
     this.name = options.name;
     this.kind = options.kind;
     this.faction = options.faction;
+    this.level = options.level ?? 60;
     this.ownerId = options.ownerId;
 
     this.stats = new StatBlock(options.stats, options.statDerivation);
@@ -229,6 +244,27 @@ export class Combatant {
   /** Multiplies healing this combatant does. */
   get healingDoneMultiplier(): number {
     return this.auraMultiplier('healingDoneMultiplier');
+  }
+
+  /**
+   * This combatant's skill with the weapon in a slot.
+   *
+   * Falls back to five times its level, the maximum an untalented character
+   * reaches, so a weapon that does not state a skill is treated as fully
+   * trained rather than unskilled.
+   */
+  weaponSkill(slot: WeaponSlot): number {
+    return this.weapons[slot]?.skill ?? this.level * 5;
+  }
+
+  /**
+   * Defense skill, which is five times level for a creature.
+   *
+   * A defense stat that raises this beyond the level baseline does not exist
+   * yet; when it does, it is added here.
+   */
+  get defenseSkill(): number {
+    return this.level * 5;
   }
 
   /** Record that a resource was just spent. Called by the engine on payment. */

@@ -19,6 +19,21 @@ const migrations: Record<number, Migration> = {
    * so `form: 'bear'` is already a valid style id. Profiles for other classes
    * had no form at all and simply pick up their class default.
    */
+  /**
+   * Version 3 added `encounter.targetLevel`, which drives defense skill, the
+   * armor constant and crit suppression.
+   *
+   * Older profiles were all written against a raid boss, so they take 63.
+   */
+  2: (profile) => {
+    const encounter = profile.encounter;
+    if (typeof encounter !== 'object' || encounter === null) return profile;
+    return {
+      ...profile,
+      encounter: { targetLevel: 63, ...(encounter as Record<string, unknown>) },
+    };
+  },
+
   1: (profile) => {
     const character = profile.character;
     if (typeof character !== 'object' || character === null) return profile;
