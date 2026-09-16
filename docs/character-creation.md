@@ -98,17 +98,76 @@ callers never need to special-case the Druid.
 Rage and energy are fixed at **100** for everyone, at every level — they are
 ruleset constants, in `FIXED_RESOURCE_MAXIMUMS`.
 
-**Mana is not implemented.** It scales with intellect and level, and neither the
-base values nor the conversion exist yet, so `PLACEHOLDER_MAX_MANA` stands in.
-Any mana number currently produced is structurally correct and numerically made
-up. Replacing it needs base mana per class at each level, and the
-intellect-to-mana conversion.
+**Base mana is real data**, per race and class, from the base stats table. What
+is still missing is the intellect contribution on top of it, so a geared
+caster's pool is understated rather than invented.
 
 ### Starting values
 
 Rage starts at **0**; mana and energy start **full**. This is what makes the
 opening seconds of a rage rotation different from everyone else's — a warrior
 walks in with nothing and builds it by swinging.
+
+## Base stats
+
+`src/game/character/baseStats.ts` holds what a level 60 character of each race,
+class and form starts with, before any gear, buffs or talents.
+
+**It is a generated file.** `tools/import_base_stats.py` produces it from
+`WoWForeverBaseStats.xlsx`:
+
+```bash
+pip install openpyxl
+python tools/import_base_stats.py path/to/WoWForeverBaseStats.xlsx
+```
+
+Transcribing 65 rows of eleven numbers by hand would introduce errors that look
+exactly like real data. Never edit the generated file — re-run the generator.
+
+`tests/game/baseStats.test.ts` checks it against values read off the spreadsheet
+**by hand**, independently. A test that read the generated file to build its
+expectations would prove nothing.
+
+### What the table holds
+
+Hit Points, Mana, Strength, Agility, Stamina, Intellect, Spirit, Attack Power,
+Ranged Attack Power, Crit Chance, Spell Crit Chance.
+
+These are **constants**, not calculated results — the floor everything else is
+added to. A profile's `stats` section is gear and other bonuses, **added on
+top**, not the character's stats from scratch.
+
+### Crit chance is stored but not used
+
+The crit columns are class constants that other contributions add to, and some
+are negative — a Hunter's base is `-1.53`. They are therefore not a character's
+actual crit chance, and `baseStatsToEngineStats` deliberately leaves them out.
+
+Wiring them up needs the **agility-to-crit** and **intellect-to-spell-crit**
+conversions, which do not exist yet.
+
+### Two interpretations, not data
+
+Both are marked in the code and will change if the spreadsheet says otherwise:
+
+1. **Moonkin Form has no row.** It is declared as a Druid form that uses mana,
+   but the sheet has only Caster, Bear and Cat. Since forms differ only in hit
+   points and attack power, Moonkin borrows Caster Form's numbers.
+2. **Bear and Cat show `Mana: 0`.** Read as "mana is not this form's resource",
+   not "the pool is destroyed" — a bear still has mana it simply is not
+   spending. The pool is always sized from Caster Form, so shifting mid-fight
+   does not silently discard it.
+
+### Forms
+
+Only hit points and attack power differ between Druid forms. Primary stats and
+crit are identical across all of them.
+
+| Form | Hit Points | Attack Power |
+| --- | --- | --- |
+| Caster | 1303 | -20 (Tauren -36) |
+| Bear | 2543 | 160 |
+| Cat | 1303 | 100 |
 
 ## Level
 

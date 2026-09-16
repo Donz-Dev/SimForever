@@ -203,14 +203,24 @@ describe('validateProfile', () => {
   });
 
   it('rejects an unknown stat name', () => {
-    const profile = { ...createDefaultProfile(), stats: { strength: 100, spirit: 50 } };
+    // `spirit` used to be the example here and is now a real stat, which is
+    // exactly the drift this test exists to catch.
+    const profile = { ...createDefaultProfile(), stats: { strength: 100, cunning: 50 } };
     const result = validateProfile(profile);
 
     expect(result.ok).toBe(false);
     if (result.ok) return;
     expect(result.issues).toContainEqual(
-      expect.objectContaining({ path: 'stats.spirit' }),
+      expect.objectContaining({ path: 'stats.cunning' }),
     );
+  });
+
+  it('accepts the stats added with the base stats table', () => {
+    const profile = {
+      ...createDefaultProfile(),
+      stats: { spirit: 50, rangedAttackPower: 110 },
+    };
+    expect(validateProfile(profile).ok).toBe(true);
   });
 
   it('rejects a non-numeric stat', () => {

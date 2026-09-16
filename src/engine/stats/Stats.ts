@@ -16,9 +16,11 @@ export const STAT_NAMES = [
   'agility',
   'stamina',
   'intellect',
+  'spirit',
 
   // Derived offensive power
   'attackPower',
+  'rangedAttackPower',
   'spellPower',
 
   // Secondary ratings (raw rating, not percentage)

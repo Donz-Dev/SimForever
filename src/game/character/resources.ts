@@ -16,15 +16,13 @@ export const FIXED_RESOURCE_MAXIMUMS: Partial<Record<ResourceType, number>> = {
   energy: 100,
 };
 
-/**
- * PLACEHOLDER mana pool, used until the real formula arrives.
+/*
+ * There is no placeholder mana constant any more. Base mana is real data now,
+ * per race and class, in baseStats.ts. Callers pass it in.
  *
- * Real mana is base mana (per class, per level) plus a contribution from
- * intellect. Both are content this project does not have yet. Anything that
- * looks at this constant is reporting a number that is structurally correct and
- * numerically made up.
+ * What is still missing is the intellect-to-mana contribution on top of the
+ * base, so a geared caster's pool is understated rather than invented.
  */
-export const PLACEHOLDER_MAX_MANA = 4000;
 
 /**
  * Resources that begin combat full.
@@ -50,10 +48,7 @@ export function fixedMaximumFor(resource: ResourceType): number | undefined {
  * A Druid gets all three, because switching to bear form mid-fight must not
  * have to create a rage pool that did not exist a moment earlier.
  */
-export function resourceSpecsFor(
-  characterClass: ClassId,
-  maxMana: number = PLACEHOLDER_MAX_MANA,
-): ResourceSpec[] {
+export function resourceSpecsFor(characterClass: ClassId, maxMana: number): ResourceSpec[] {
   const definition = CLASS_BY_ID.get(characterClass);
   if (!definition) return [];
 

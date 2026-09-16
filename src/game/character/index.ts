@@ -13,6 +13,7 @@ export {
   RACE_IDS,
   isClassId,
   isFactionId,
+  isFormId,
   isRaceId,
 } from './ids';
 export type {
@@ -21,9 +22,17 @@ export type {
   FormDefinition,
   RaceDefinition,
 } from './definitions';
+export type { BaseStatBlock, BaseStatVariant } from './baseStatTypes';
+export { BASE_STATS } from './baseStats';
+export {
+  allBaseStatEntries,
+  baseHitPointsFor,
+  baseManaFor,
+  baseStatsFor,
+  baseStatsToEngineStats,
+} from './baseStatLookup';
 export {
   FIXED_RESOURCE_MAXIMUMS,
-  PLACEHOLDER_MAX_MANA,
   activeResourceFor,
   classUsesResource,
   fixedMaximumFor,

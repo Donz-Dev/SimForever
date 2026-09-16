@@ -148,6 +148,8 @@ docs/                    Architecture documentation
 - Deterministic, seeded runs
 - Ten races and nine classes with the Forever combination rules, and per-class
   resources (including the Druid's form-dependent mana/rage/energy)
+- Base stats at level 60 for all 65 race/class/form combinations, generated from
+  the source spreadsheet rather than transcribed
 - Combatants with stats, resources, auras and abilities
 - Stat modifier system with flat, additive-percent and multiplicative-percent buckets
 - Auras: durations, stacks, periodic ticks, stat modifiers, refresh behaviour
