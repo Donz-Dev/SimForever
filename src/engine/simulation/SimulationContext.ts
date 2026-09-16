@@ -1,6 +1,7 @@
 import type { Ability } from '../abilities/Ability';
 import type { CastCheck } from '../abilities/casting';
 import type { Combatant } from '../actors/Combatant';
+import type { AttackChances, AttackResolution, AttackTableKind } from '../combat/attackTable';
 import type { AuraDefinition, AuraInstance } from '../effects';
 import type { CombatEvent, ScheduledEvent } from '../events';
 import type { CombatEndReason, TelemetrySink } from '../logging';
@@ -68,6 +69,30 @@ export interface SimulationContext {
 
   /** Give an actor a resource and record it in telemetry. */
   grantResource(actor: Combatant, resource: ResourceType, amount: number): void;
+
+  /**
+   * The chances for an attack, from the ruleset's provider.
+   *
+   * The table structure is engine mechanics; these numbers are content.
+   */
+  attackChances(
+    kind: AttackTableKind,
+    source: Combatant,
+    target: Combatant,
+  ): AttackChances;
+
+  /**
+   * Roll an attack against its combat table without dealing damage.
+   *
+   * For effects whose landing is decided separately from their damage: a
+   * damage-over-time spell rolls the spell table once to see whether it was
+   * resisted, then ticks unconditionally.
+   */
+  rollAttack(
+    kind: AttackTableKind,
+    source: Combatant,
+    target: Combatant,
+  ): AttackResolution;
 
   /** Kill a combatant, clear its auras, and end combat if that was the last one. */
   killCombatant(target: Combatant, killer?: Combatant): void;

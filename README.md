@@ -106,6 +106,8 @@ Everything else in the simulation is an event that schedules further events.
 | **Telemetry is the single source of truth** | The engine keeps no running totals. Adding a statistic means adding an analyzer, never touching combat code. |
 | **One `Combatant` class, not a hierarchy** | Every difference between a player, a boss and a pet turned out to be data. A flat collection of combatants is what lets the same engine run 1v1 and a 20-player raid. |
 
+| **Attacks resolve on integer dice** | Combat rolls 1-10000 and truncates every percentage into that space, so an outcome is exactly reproducible rather than depending on floating-point accumulation order. |
+
 Longer explanations live in [`docs/`](docs/).
 
 ## Directory structure
@@ -160,6 +162,9 @@ docs/                    Architecture documentation
 - Auras: durations, stacks, periodic ticks, stat modifiers, refresh behaviour
 - Abilities: cast time, cooldowns, charges, global cooldown, resource costs, haste
 - Auto attacks on an independent, hasted swing timer
+- Six combat tables (melee/ranged auto, melee/ranged special, spell, and
+  attacks received) resolving on an integer 1-10000 die, with single-roll and
+  two-roll semantics
 - Damage pipeline: power scaling, crit, attacker/target modifiers, armor, overkill
 - Healing pipeline with overhealing (foundation; no content uses it yet)
 - Action-priority-list rotations

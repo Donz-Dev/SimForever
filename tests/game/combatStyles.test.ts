@@ -242,15 +242,20 @@ describe('dual-wield off-hand penalty', () => {
   it('applies to the whole swing, attack power included', () => {
     // A half-damage off-hand that still got full attack power scaling would
     // grow stronger relative to the main hand as the character geared up.
+    //
+    // A long fight, because both hands now roll the full melee table and the
+    // per-hand averages need enough landed swings to settle.
+    const base = createDefaultProfile();
     const result = runProfile({
-      ...createDefaultProfile(),
+      ...base,
       character: {
-        ...createDefaultProfile().character,
+        ...base.character,
         race: 'orc',
         characterClass: 'warrior',
         combatStyle: 'dual_wield',
       },
       stats: { attackPower: 2000 },
+      simulation: { ...base.simulation, durationSeconds: 1800 },
     });
 
     const abilities = result.damage.byActor[0].abilities;
@@ -261,8 +266,8 @@ describe('dual-wield off-hand penalty', () => {
     expect(off).toBeDefined();
     if (!main || !off) return;
 
-    // Both hands use the same weapon numbers, so the average hit should differ
-    // by the penalty and nothing else.
+    // Both hands use the same weapon numbers and roll the same table, so the
+    // average LANDED hit should differ by the penalty and nothing else.
     expect(off.average / main.average).toBeCloseTo(OFF_HAND_DAMAGE_MULTIPLIER, 1);
   });
 });

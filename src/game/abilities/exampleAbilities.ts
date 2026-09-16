@@ -25,10 +25,11 @@ export const STRIKE: Ability = {
   name: 'Strike',
   cooldownMs: seconds(4.5),
   cost: { resource: 'rage', amount: 20 },
-  onCast: ({ simulation, caster, target }) => {
+  attackTable: 'melee-special',
+  onCast: ({ simulation, caster, target, ability }) => {
     if (!target) return;
 
-    dealDamage(simulation, {
+    const result = dealDamage(simulation, {
       source: caster,
       target,
       abilityId: 'strike',
@@ -36,9 +37,13 @@ export const STRIKE: Ability = {
       school: 'physical',
       baseAmount: 120,
       powerCoefficient: 0.9,
+      attackTable: ability.attackTable,
     });
 
-    simulation.applyAura(target, RENDING_WOUND, caster.id);
+    // A missed, dodged or parried strike applies nothing.
+    if (!result.avoided) {
+      simulation.applyAura(target, RENDING_WOUND, caster.id);
+    }
   },
 };
 
@@ -50,7 +55,8 @@ export const HEROIC_BLOW: Ability = {
   id: 'heroic_blow',
   name: 'Heroic Blow',
   cost: { resource: 'rage', amount: 35 },
-  onCast: ({ simulation, caster, target }) => {
+  attackTable: 'melee-special',
+  onCast: ({ simulation, caster, target, ability }) => {
     if (!target) return;
 
     dealDamage(simulation, {
@@ -61,6 +67,7 @@ export const HEROIC_BLOW: Ability = {
       school: 'physical',
       baseAmount: 95,
       powerCoefficient: 0.75,
+      attackTable: ability.attackTable,
     });
   },
 };

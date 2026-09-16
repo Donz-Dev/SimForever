@@ -3,6 +3,13 @@ import type { CastCheck } from '../abilities/casting';
 import { castAbility, checkCast } from '../abilities/casting';
 import type { Combatant } from '../actors/Combatant';
 import { startAutoAttack } from '../combat/autoAttack';
+import type {
+  AttackChanceProvider,
+  AttackChances,
+  AttackResolution,
+  AttackTableKind,
+} from '../combat/attackTable';
+import { defaultAttackChances, resolveAttackTable } from '../combat/attackTable';
 import type { AuraDefinition, AuraInstance } from '../effects';
 import type { CombatEvent, ScheduledEvent } from '../events';
 import { EventPriority, EventQueue, createEvent } from '../events';
@@ -61,6 +68,7 @@ export class Simulation implements SimulationContext {
   private readonly actorsById = new Map<string, Combatant>();
 
   private readonly plannedDurationMs: Milliseconds;
+  private readonly chanceProvider: AttackChanceProvider;
   private endReason: CombatEndReason | null = null;
   private eventsProcessed = 0;
   private started = false;
@@ -85,6 +93,7 @@ export class Simulation implements SimulationContext {
     // Duration variance is rolled before anything else, so that for a given
     // seed the fight length is fixed regardless of what happens during it.
     this.plannedDurationMs = rollDuration(config, this.rng);
+    this.chanceProvider = config.attackChances ?? defaultAttackChances;
 
     this.actors = config.createCombatants();
     for (const actor of this.actors) {
@@ -234,6 +243,22 @@ export class Simulation implements SimulationContext {
       wasted,
       current: pool.current,
     });
+  }
+
+  attackChances(
+    kind: AttackTableKind,
+    source: Combatant,
+    target: Combatant,
+  ): AttackChances {
+    return this.chanceProvider(kind, source, target);
+  }
+
+  rollAttack(
+    kind: AttackTableKind,
+    source: Combatant,
+    target: Combatant,
+  ): AttackResolution {
+    return resolveAttackTable(kind, this.attackChances(kind, source, target), this.rng);
   }
 
   killCombatant(target: Combatant, killer?: Combatant): void {

@@ -92,14 +92,13 @@ function swing(
     school: weapon.school ?? 'physical',
     baseAmount: weapon.baseDamage * roll * multiplier,
     powerCoefficient: (weapon.powerCoefficient ?? 0) * multiplier,
+    // Ranged weapons use the ranged table, which has no dodge, parry or
+    // glancing blow.
+    attackTable: slot === 'ranged' ? 'ranged-auto' : 'melee-auto',
   });
 
   if (weapon.generates) {
     context.grantResource(attacker, weapon.generates.resource, weapon.generates.amount);
   }
 
-  // `slot` is carried through so that a future off-hand damage penalty, or
-  // slot-specific procs, have somewhere to hook in without changing the shape
-  // of this function.
-  void slot;
 }

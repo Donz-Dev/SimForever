@@ -1,8 +1,10 @@
 import type { Combatant } from '../actors/Combatant';
 import type { RNG } from '../rng';
 import type { SimulationContext } from '../simulation/SimulationContext';
-import { applyCriticalMultiplier, rollCritical } from './damage';
-import { versatilityMultiplierFrom } from './ratings';
+import { spellCritChanceFrom, versatilityMultiplierFrom } from './ratings';
+
+/** Healing crits for this much. Matches the spell crit multiplier. */
+const HEALING_CRIT_MULTIPLIER = 1.5;
 
 /**
  * Healing mirrors damage deliberately: same request/resolve/apply shape, same
@@ -41,8 +43,11 @@ export function resolveHealing(request: HealRequest, rng: RNG): HealResolution {
   const coefficient = request.powerCoefficient ?? 0;
   const scaled = request.baseAmount + coefficient * source.stats.get('spellPower');
 
-  const critical = rollCritical(source, rng, request.canCrit ?? true);
-  const afterCrit = applyCriticalMultiplier(scaled, critical);
+  // Healing does not miss, so it rolls crit directly rather than going through
+  // a combat table.
+  const critical =
+    (request.canCrit ?? true) && rng.rollChance(spellCritChanceFrom(source.stats.effective));
+  const afterCrit = critical ? scaled * HEALING_CRIT_MULTIPLIER : scaled;
 
   const raw =
     afterCrit *

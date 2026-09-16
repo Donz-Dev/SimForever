@@ -57,6 +57,8 @@ export function ResultsPanel({ batch }: ResultsPanelProps) {
               <th className="numeric">Hits</th>
               <th className="numeric">Average</th>
               <th className="numeric">Crit</th>
+              <th className="numeric">Glance</th>
+              <th className="numeric">Avoided</th>
             </tr>
           </thead>
           <tbody>
@@ -73,9 +75,22 @@ export function ResultsPanel({ batch }: ResultsPanelProps) {
                     <span className="share-text">{(ability.share * 100).toFixed(1)}%</span>
                   </span>
                 </td>
-                <td className="numeric">{ability.hits}</td>
+                <td className="numeric">
+                  {ability.hits}
+                  {ability.attempts !== ability.hits ? (
+                    <span className="muted"> / {ability.attempts}</span>
+                  ) : null}
+                </td>
                 <td className="numeric">{formatNumber(ability.average)}</td>
                 <td className="numeric">{(ability.critRate * 100).toFixed(1)}%</td>
+                <td className="numeric">
+                  {ability.glances > 0 ? `${(ability.glanceRate * 100).toFixed(1)}%` : '-'}
+                </td>
+                <td className="numeric">
+                  {ability.attempts > ability.hits
+                    ? `${(ability.avoidRate * 100).toFixed(1)}%`
+                    : '-'}
+                </td>
               </tr>
             ))}
           </tbody>

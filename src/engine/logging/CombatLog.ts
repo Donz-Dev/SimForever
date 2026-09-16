@@ -28,12 +28,21 @@ export function formatCombatLogLine(event: TelemetryEvent, nameOf: NameResolver)
     }
 
     case 'damage': {
-      const verb = event.periodic ? 'ticks on' : 'hits';
-      const crit = event.critical ? ' (critical)' : '';
+      // An avoided attack has no damage to report, so it reads as what
+      // happened instead of "for 0".
+      if (event.outcome === 'miss' || event.outcome === 'dodge' || event.outcome === 'parry') {
+        return (
+          `${time}  ${nameOf(event.sourceId)} ${event.abilityName} ` +
+          `${describeAvoidance(event.outcome)} ${nameOf(event.targetId)}`
+        );
+      }
+
+      const verb = event.periodic ? 'ticks on' : describeHitVerb(event.outcome);
+      const qualifier = describeOutcome(event.outcome);
       const extra = describeDamageExtras(event.mitigated, event.absorbed, event.overkill);
       return (
         `${time}  ${nameOf(event.sourceId)} ${event.abilityName} ${verb} ` +
-        `${nameOf(event.targetId)} for ${formatAmount(event.amount)}${crit}${extra}`
+        `${nameOf(event.targetId)} for ${formatAmount(event.amount)}${qualifier}${extra}`
       );
     }
 
@@ -108,6 +117,36 @@ export function formatConciseCombatLog(
   return events
     .filter((event) => !VERBOSE_EVENT_TYPES.has(event.type))
     .map((event) => formatCombatLogLine(event, nameOf));
+}
+
+/** How an avoided attack reads: "misses", "is dodged by", "is parried by". */
+function describeAvoidance(outcome: string): string {
+  switch (outcome) {
+    case 'miss':
+      return 'misses';
+    case 'dodge':
+      return 'is dodged by';
+    case 'parry':
+      return 'is parried by';
+    default:
+      return 'fails against';
+  }
+}
+
+function describeHitVerb(outcome: string): string {
+  return outcome === 'glance' ? 'glances' : 'hits';
+}
+
+function describeOutcome(outcome: string): string {
+  switch (outcome) {
+    case 'crit':
+      return ' (critical)';
+    case 'crush':
+      return ' (crushing)';
+    // No qualifier for a glance: the verb is already "glances".
+    default:
+      return '';
+  }
 }
 
 function describeEndReason(reason: string): string {

@@ -1,4 +1,5 @@
 import type { Milliseconds } from '../time';
+import type { AttackOutcome } from '../combat/attackTable';
 import type { DamageSchool } from '../combat/DamageSchool';
 import type { ResourceType } from '../resources';
 
@@ -49,6 +50,11 @@ export interface DamageTelemetryEvent extends TelemetryBase {
   readonly school: DamageSchool;
   /** Damage actually applied to the target's health. */
   readonly amount: number;
+  /**
+   * What the combat table produced: hit, crit, glance, miss, dodge, parry or
+   * crush. `hit` for damage that never rolled a table, such as a DoT tick.
+   */
+  readonly outcome: AttackOutcome;
   readonly critical: boolean;
   /** Removed by armor or resistance before absorbs. */
   readonly mitigated: number;

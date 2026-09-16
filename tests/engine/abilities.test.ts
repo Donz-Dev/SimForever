@@ -26,7 +26,6 @@ const SIMPLE_STRIKE: Ability = {
       abilityName: 'Simple Strike',
       school: 'physical',
       baseAmount: 100,
-      canCrit: false,
     });
   },
 };
@@ -44,7 +43,6 @@ const SLOW_BOLT: Ability = {
       abilityName: 'Slow Bolt',
       school: 'fire',
       baseAmount: 500,
-      canCrit: false,
     });
   },
 };
