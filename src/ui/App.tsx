@@ -39,7 +39,6 @@ export function App() {
     <div className="app">
       <header className="app-header">
         <Logo />
-        <p className="tagline">A World of Warcraft combat simulator</p>
       </header>
 
       <main className={confirmed ? 'app-layout' : 'app-layout single'}>

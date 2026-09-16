@@ -46,9 +46,7 @@ body {
 
 .app-header {
   display: flex;
-  align-items: baseline;
-  gap: 20px;
-  flex-wrap: wrap;
+  justify-content: center;
 }
 
 /* The wordmark scales with the viewport rather than sitting at a fixed size,
@@ -73,10 +71,6 @@ body {
   letter-spacing: 0.10em;
 }
 
-.tagline {
-  margin: 0;
-  color: var(--text-muted);
-}
 
 .app-layout {
   display: grid;

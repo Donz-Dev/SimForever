@@ -28,10 +28,7 @@ export function OptionGroup<T extends string>({
 }: OptionGroupProps<T>) {
   return (
     <div className="field">
-      <span className="field-label">
-        {label}
-        <span className="field-hint">{options.length} available</span>
-      </span>
+      <span className="field-label">{label}</span>
       <div
         className="option-group"
         style={columns ? { gridTemplateColumns: `repeat(${columns}, 1fr)` } : undefined}

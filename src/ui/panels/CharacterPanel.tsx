@@ -81,14 +81,12 @@ export function CharacterPanel({
     return <ConfirmedCharacter profile={profile} style={style} onEdit={onEdit} />;
   }
 
-  const styleDefinition = getCombatStyle(style);
   const classDefinition = getClass(selection.characterClass);
   const abilityCount = abilitiesForClass(selection.characterClass, style).length;
 
   return (
     <Panel
       title="Character"
-      subtitle="World of Warcraft: Forever"
       actions={
         <>
           <button type="button" onClick={onImport}>
@@ -128,10 +126,14 @@ export function CharacterPanel({
         onChange={(characterClass) => applyChange({ characterClass })}
       />
 
-      <OptionGroup label="Combat style" options={styles} value={style} onChange={(next) =>
-        onChange({ ...profile, character: { ...profile.character, combatStyle: next } })
-      } />
-      {styleDefinition ? <p className="muted">{styleDefinition.summary}</p> : null}
+      <OptionGroup
+        label="Combat style"
+        options={styles}
+        value={style}
+        onChange={(next) =>
+          onChange({ ...profile, character: { ...profile.character, combatStyle: next } })
+        }
+      />
 
       {abilityCount === 0 ? (
         <p className="muted warn">
