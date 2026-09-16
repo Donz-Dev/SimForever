@@ -1,95 +1,176 @@
+import type { CharacterProfile } from '../../profiles';
+import { resolveCombatStyle } from '../../game/character';
+import type { Equipment, EquipmentSlot } from '../../game/items/Item';
+import { enchantsForSlot, itemsForSlot } from '../../game/items/itemData';
+import { unmodelledEffects } from '../../game/items/equipment';
 import { Panel } from '../components/Panel';
 
-/**
- * A gear slot, and whether anything can be enchanted into it.
- *
- * Which slots take an enchant is a ruleset question with a real answer, and
- * this is NOT it -- the flags below follow the usual Classic pattern and are a
- * placeholder like everything else here. They decide only whether a second
- * dropdown is drawn.
- */
-interface GearSlot {
-  readonly id: string;
+/** A gear slot, as the panel lists it. */
+interface SlotRow {
+  readonly id: EquipmentSlot;
   readonly name: string;
-  readonly enchantable: boolean;
 }
 
 /**
- * The slots, in the order a character sheet lists them: the two hands first,
- * because for a simulator they are the ones that matter, then head to feet,
- * then the jewellery.
+ * The slots, in the order a character sheet lists them: the hands first,
+ * because for a simulator they are what matters, then head to feet, then the
+ * jewellery.
+ *
+ * `twoHand` sits beside the one-hand slots rather than replacing them, so a
+ * character can keep both sets and switch between them by changing combat
+ * style. Only the ones the style uses are applied.
  */
-const GEAR_SLOTS: readonly GearSlot[] = [
-  { id: 'mainHand', name: 'Main Hand', enchantable: true },
-  { id: 'offHand', name: 'Off Hand', enchantable: true },
-  { id: 'ranged', name: 'Ranged', enchantable: true },
+const SLOTS: readonly SlotRow[] = [
+  { id: 'mainHand', name: 'Main Hand' },
+  { id: 'offHand', name: 'Off Hand' },
+  { id: 'twoHand', name: 'Two-Hander' },
+  { id: 'ranged', name: 'Ranged' },
 
-  { id: 'head', name: 'Head', enchantable: true },
-  { id: 'neck', name: 'Neck', enchantable: false },
-  { id: 'shoulders', name: 'Shoulders', enchantable: true },
-  { id: 'cloak', name: 'Cloak', enchantable: true },
-  { id: 'chest', name: 'Chest', enchantable: true },
-  { id: 'wrists', name: 'Wrists', enchantable: true },
-  { id: 'gloves', name: 'Gloves', enchantable: true },
-  { id: 'waist', name: 'Waist', enchantable: false },
-  { id: 'legs', name: 'Legs', enchantable: true },
-  { id: 'feet', name: 'Feet', enchantable: true },
+  { id: 'head', name: 'Head' },
+  { id: 'neck', name: 'Neck' },
+  { id: 'shoulders', name: 'Shoulders' },
+  { id: 'cloak', name: 'Cloak' },
+  { id: 'chest', name: 'Chest' },
+  { id: 'wrists', name: 'Wrists' },
+  { id: 'gloves', name: 'Gloves' },
+  { id: 'waist', name: 'Waist' },
+  { id: 'legs', name: 'Legs' },
+  { id: 'feet', name: 'Feet' },
 
-  { id: 'ring1', name: 'Ring', enchantable: false },
-  { id: 'ring2', name: 'Ring', enchantable: false },
-  { id: 'trinket1', name: 'Trinket', enchantable: false },
-  { id: 'trinket2', name: 'Trinket', enchantable: false },
+  { id: 'ring1', name: 'Ring 1' },
+  { id: 'ring2', name: 'Ring 2' },
+  { id: 'trinket1', name: 'Trinket 1' },
+  { id: 'trinket2', name: 'Trinket 2' },
 ];
+
+interface GearPanelProps {
+  readonly profile: CharacterProfile;
+  readonly onChange: (profile: CharacterProfile) => void;
+}
 
 /**
  * Gear selection.
  *
- * A MOCK-UP. There is no item data in this project -- `src/data/items` is still
- * an empty promise, and every character currently swings the same placeholder
- * weapon. So every dropdown below is empty except for its "Empty" entry, and
- * choosing something is not possible because there is nothing to choose.
+ * Real items now, not a mock-up: what is chosen here changes the character
+ * sheet and the fight. Equipping a weapon replaces the invented placeholder
+ * that every character used to swing, which was the single largest source of
+ * wrong numbers in the whole simulator.
  *
- * It is here to settle the SHAPE of the thing: seventeen slots, an item per
- * slot, an enchant on the slots that take one. When real item data arrives it
- * fills these lists and nothing about this layout has to change.
- *
- * Deliberately not wired to the profile. A control that appeared to equip
- * something while changing no number in the results would be worse than a
- * control that plainly does nothing.
+ * What an item does NOT do is listed under the slots. A chance-on-hit proc, an
+ * extra attack, a resistance: all recorded from the item's own words and none
+ * of them applied. A geared character here is weaker than the same character in
+ * the game, and by exactly the listed amount.
  */
-export function GearPanel() {
+export function GearPanel({ profile, onChange }: GearPanelProps) {
+  const style = resolveCombatStyle(
+    profile.character.characterClass,
+    profile.character.combatStyle,
+  );
+
+  const setSlot = (slot: EquipmentSlot, next: Equipment[EquipmentSlot]) => {
+    const equipment: Record<string, unknown> = { ...profile.equipment };
+    if (next) equipment[slot] = next;
+    else delete equipment[slot];
+    onChange({ ...profile, equipment: equipment as Equipment });
+  };
+
+  const missing = unmodelledEffects(profile.equipment, style);
+
   return (
     <Panel title="Gear">
-      <p className="muted warn">
-        A mock-up. No item data exists yet, so every slot is empty and nothing here
-        changes a simulation.
-      </p>
-
       <div className="gear-grid">
-        {GEAR_SLOTS.map((slot) => (
-          <GearSlotRow key={slot.id} slot={slot} />
+        {SLOTS.map((slot) => (
+          <GearSlotRow
+            key={slot.id}
+            slot={slot}
+            equipped={profile.equipment[slot.id]}
+            onChange={(next) => setSlot(slot.id, next)}
+          />
         ))}
       </div>
+
+      {missing.length > 0 ? (
+        <>
+          <h3>Equipped but not simulated</h3>
+          <p className="muted warn">
+            These are on the character and do nothing. The results are lower than the real
+            game by whatever they are worth.
+          </p>
+          <ul className="issues">
+            {missing.map((effect, index) => (
+              <li key={`${effect.itemName}-${index}`}>
+                <strong>{effect.itemName}</strong> — {effect.text}
+                <span className="muted"> {effect.reason}</span>
+              </li>
+            ))}
+          </ul>
+        </>
+      ) : null}
     </Panel>
   );
 }
 
-function GearSlotRow({ slot }: { readonly slot: GearSlot }) {
+function GearSlotRow({
+  slot,
+  equipped,
+  onChange,
+}: {
+  readonly slot: SlotRow;
+  readonly equipped: Equipment[EquipmentSlot];
+  readonly onChange: (next: Equipment[EquipmentSlot]) => void;
+}) {
+  const items = itemsForSlot(slot.id);
+  const enchants = enchantsForSlot(slot.id);
+
   return (
     <div className="gear-slot">
       <span className="gear-slot-name">{slot.name}</span>
-      <select className="gear-select" defaultValue="" disabled aria-label={`${slot.name} item`}>
-        <option value="">Empty</option>
+
+      <select
+        className="gear-select"
+        value={equipped ? String(equipped.itemId) : ''}
+        aria-label={`${slot.name} item`}
+        disabled={items.length === 0}
+        onChange={(event) => {
+          const value = event.target.value;
+          if (!value) {
+            onChange(undefined);
+            return;
+          }
+          // Changing the item drops the enchant: an enchant belongs to the
+          // thing it was applied to, not to the slot.
+          onChange({ itemId: Number(value) });
+        }}
+      >
+        <option value="">{items.length === 0 ? 'No items' : 'Empty'}</option>
+        {items.map((item) => (
+          <option key={item.id} value={item.id}>
+            {item.name}
+          </option>
+        ))}
       </select>
-      {slot.enchantable ? (
+
+      {enchants.length > 0 ? (
         <select
           className="gear-select gear-enchant"
-          defaultValue=""
-          disabled
+          value={equipped?.enchantId !== undefined ? String(equipped.enchantId) : ''}
           aria-label={`${slot.name} enchant`}
           title="Enchant"
+          disabled={!equipped}
+          onChange={(event) => {
+            if (!equipped) return;
+            const value = event.target.value;
+            onChange(
+              value ? { itemId: equipped.itemId, enchantId: Number(value) } : { itemId: equipped.itemId },
+            );
+          }}
         >
           <option value="">None</option>
+          {enchants.map((enchant) => (
+            <option key={enchant.id} value={enchant.id}>
+              {enchant.name.replace(/^Enchant Weapon - /, '')}
+            </option>
+          ))}
         </select>
       ) : (
         <span className="gear-no-enchant">—</span>

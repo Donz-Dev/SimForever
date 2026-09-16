@@ -59,6 +59,7 @@ function CharacterSheet({
     characterClass: profile.character.characterClass,
     combatStyle: style,
     bonusStats: profile.stats,
+    equipment: profile.equipment,
   });
 
   const stats = player.stats.effective;

@@ -26,11 +26,12 @@ What works end to end:
 | **Resources** | rage from damage, energy in batches, mana on the five-second rule |
 | **Abilities** | all 26 Warrior abilities from the ruleset spreadsheet, with weapon-damage scaling and on-next-swing |
 | **Reactions** | content can respond to an attack result; Overpower fires off a target dodge |
+| **Gear** | 18 real items and the Crusader enchant, equippable, driving stats and weapons |
 | **Talents** | all 470 talents, nine classes, real data, spendable in the UI -- but NO talent has an effect |
 | **Analysis** | DPS, per-ability breakdown with attempts/hits/crit/glance/avoid rates |
 | **UI** | React panels driving the real engine; combat log; Monte Carlo batches |
 
-**589 tests**, CI green on Node 20 and 22.
+**624 tests**, CI green on Node 20 and 22.
 
 ## The next task
 
@@ -91,18 +92,17 @@ so per-style priority lists are a change to those two functions alone.
 The engine is correct; some of its **inputs are still invented**. In rough order
 of how much they distort results:
 
-1. **Weapon stats are placeholders**, and they now matter much more than they
-   did. Every character swings the same imaginary weapon: 2.6s/80 damage
-   one-hand, 3.4s/140 two-hander, 2.9s/110 ranged. Forever's weapon damage
-   formula makes ability damage scale off both the base damage AND the speed, so
-   a placeholder weapon puts placeholder numbers straight into Mortal Strike.
-   It also sets rage income, which is currently only ~0.9 rage/sec and is the
-   binding constraint on the whole Warrior rotation. In
-   `src/game/actors/weapons.ts`.
+1. **Weapon stats are placeholders UNTIL SOMETHING IS EQUIPPED.** A character
+   with an empty Gear panel still swings the same imaginary weapon: 2.6s/80
+   damage one-hand, 3.4s/140 two-hander, 2.9s/110 ranged, in
+   `src/game/actors/weapons.ts`. Equipping a real weapon replaces it outright.
 
-   The attack power *coefficients* are no longer invented: each is derived from
+   There are now 18 real items to equip, but they are WoW CLASSIC items rather
+   than Forever ones -- see `src/data/items/README.md`. So the placeholder
+   problem is solved in shape and only half solved in substance.
+
+   The attack power *coefficients* were never the problem: each is derived from
    its weapon's speed by the ruleset formula in `game/combat/weaponDamage.ts`.
-   This replaced a flat invented 0.35 that was overstating auto-attack damage.
 2. **Bear/Cat paw swing speed and AP coefficients** are invented. The *damage*
    values (100 / 50) are real.
 3. **No gear grants `hitChance`**, so miss is always the base value. Hit is a

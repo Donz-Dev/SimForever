@@ -42,6 +42,7 @@ export function trainingDummyEncounter(
         characterClass: profile.character.characterClass,
         combatStyle: profile.character.combatStyle,
         bonusStats: profile.stats,
+        equipment: profile.equipment,
       }),
       createTrainingDummy({
         name: profile.encounter.targetName,

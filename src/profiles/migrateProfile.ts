@@ -12,6 +12,15 @@ type Migration = (profile: Record<string, unknown>) => Record<string, unknown>;
  */
 const migrations: Record<number, Migration> = {
   /**
+   * Version 4 added `equipment`, which holds what is worn by slot.
+   *
+   * Older profiles predate items existing at all, so they equip nothing. Their
+   * `stats` block still applies on top, which is how a profile written against
+   * the old "type your attack power in" model keeps producing the same numbers.
+   */
+  3: (profile) => ({ equipment: {}, ...profile }),
+
+  /**
    * Version 2 replaced the Druid-only `character.form` with `combatStyle`,
    * which every class has.
    *
