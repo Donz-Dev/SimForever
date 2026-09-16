@@ -1,0 +1,57 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+# Least privilege: the workflow only needs to read the repository.
+permissions:
+  contents: read
+
+# A new push to a branch makes the previous run's result irrelevant, so cancel
+# it rather than paying for both. `main` is excluded so its history of runs
+# stays complete.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
+jobs:
+  test:
+    name: test
+    runs-on: ubuntu-latest
+
+    strategy:
+      # Report every failing version, rather than stopping at the first.
+      fail-fast: false
+      matrix:
+        # 20.x is the minimum the README claims; 22.x is current LTS. Testing
+        # both means that claim is verified rather than assumed.
+        node-version: ['20.x', '22.x']
+
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: npm
+
+      # `npm ci` installs exactly what package-lock.json specifies and fails if
+      # the lockfile is out of sync, which `npm install` would silently fix.
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Type check
+        run: npm run typecheck
+
+      - name: Run tests
+        run: npm test
+
+      # Runs tsc again as part of the build script. The few seconds are worth
+      # it: this proves the app actually bundles, which type checking does not.
+      - name: Build
+        run: npm run build
