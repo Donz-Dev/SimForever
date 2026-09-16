@@ -1,5 +1,5 @@
 import type { ResourceType } from '../../engine';
-import type { ClassId, FactionId, FormId, RaceId } from './ids';
+import type { ClassId, FactionId, CombatStyleId, RaceId } from './ids';
 
 /**
  * Character creation data for World of Warcraft: Forever.
@@ -47,7 +47,7 @@ export interface RaceDefinition {
 
 /** A form or stance, and the resource that drives play while in it. */
 export interface FormDefinition {
-  readonly id: FormId;
+  readonly id: CombatStyleId;
   readonly name: string;
   readonly resource: ResourceType;
 }

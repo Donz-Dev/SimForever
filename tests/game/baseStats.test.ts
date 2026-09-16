@@ -192,7 +192,7 @@ describe('Druid forms', () => {
     });
 
     it('keeps a mana pool on a bear-form Druid', () => {
-      const bear = createPlayer({ race: 'tauren', characterClass: 'druid', form: 'bear' });
+      const bear = createPlayer({ race: 'tauren', characterClass: 'druid', combatStyle: 'bear' });
       expect(bear.resources.has('mana')).toBe(true);
       // 964 base mana + 95 intellect * 15.
       expect(bear.resources.require('mana').maximum).toBe(2389);
@@ -270,8 +270,8 @@ describe('createPlayer uses base stats', () => {
   });
 
   it('gives a bear-form Druid its form hit points and attack power', () => {
-    const caster = createPlayer({ race: 'tauren', characterClass: 'druid', form: 'caster' });
-    const bear = createPlayer({ race: 'tauren', characterClass: 'druid', form: 'bear' });
+    const caster = createPlayer({ race: 'tauren', characterClass: 'druid', combatStyle: 'caster' });
+    const bear = createPlayer({ race: 'tauren', characterClass: 'druid', combatStyle: 'bear' });
 
     // Both add 72 stamina * 10 on top of their form's base hit points.
     expect(caster.health.maximum).toBe(2023); // 1303 + 720

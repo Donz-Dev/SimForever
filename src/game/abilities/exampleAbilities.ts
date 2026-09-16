@@ -1,7 +1,7 @@
 import type { Ability } from '../../engine';
 import { dealDamage, seconds } from '../../engine';
 import { RENDING_WOUND } from '../auras/exampleAuras';
-import type { ClassId } from '../character';
+import type { ClassId, CombatStyleId } from '../character';
 
 /**
  * Example abilities.
@@ -77,6 +77,13 @@ export const EXAMPLE_ABILITIES: readonly Ability[] = [STRIKE, HEROIC_BLOW];
  * That gap is deliberate and visible rather than papered over with invented
  * spells. It is the next thing real content fills in.
  */
-export function abilitiesForClass(characterClass: ClassId): readonly Ability[] {
+export function abilitiesForClass(
+  characterClass: ClassId,
+  _style?: CombatStyleId,
+): readonly Ability[] {
+  // The style will matter as soon as real content exists: a Warrior's
+  // two-hander and dual-wield lists differ, and a Druid's bear and cat lists
+  // share almost nothing. The parameter is here so callers are already passing
+  // it when that happens.
   return characterClass === 'warrior' ? EXAMPLE_ABILITIES : [];
 }

@@ -50,7 +50,7 @@ describe('profile serialization', () => {
   it('writes readable, indented JSON', () => {
     const json = serializeProfile(createDefaultProfile());
     expect(json).toContain('\n');
-    expect(json).toContain('  "version": 1');
+    expect(json).toContain(`  "version": ${CURRENT_PROFILE_VERSION}`);
   });
 
   it('stamps the current version', () => {
@@ -288,6 +288,52 @@ describe('versioning', () => {
     expect(result.ok).toBe(false);
     if (result.ok) return;
     expect(result.issues[0].message).toMatch(/newer version/i);
+  });
+
+  it('migrates a version 1 profile, renaming form to combatStyle', () => {
+    // Version 2 replaced the Druid-only `form` with `combatStyle`. The values
+    // carry over unchanged, because a Druid's forms became its styles.
+    const legacy = {
+      version: 1,
+      character: {
+        name: 'Old Bear',
+        race: 'tauren',
+        characterClass: 'druid',
+        level: 60,
+        form: 'bear',
+      },
+      stats: {},
+      simulation: {
+        durationSeconds: 100,
+        durationVariance: 0,
+        iterations: 1,
+        seed: 1,
+      },
+      encounter: { targetName: 'Dummy', targetHealth: 1000, targetArmor: 0 },
+    };
+
+    const result = loadProfile(legacy);
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+
+    expect(result.migrated).toBe(true);
+    expect(result.profile.version).toBe(CURRENT_PROFILE_VERSION);
+    expect(result.profile.character.combatStyle).toBe('bear');
+    expect(result.profile.character).not.toHaveProperty('form');
+  });
+
+  it('migrates a version 1 profile that had no form', () => {
+    const legacy = {
+      ...createDefaultProfile(),
+      version: 1,
+      character: { name: 'Old Warrior', race: 'orc', characterClass: 'warrior', level: 60 },
+    };
+
+    const result = loadProfile(legacy);
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    // No style stored means "use the class default" rather than an error.
+    expect(result.profile.character.combatStyle).toBeUndefined();
   });
 
   it('reports a current-version profile as not migrated', () => {

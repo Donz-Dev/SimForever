@@ -34,14 +34,28 @@ export const RACE_IDS = [
 export type RaceId = (typeof RACE_IDS)[number];
 
 /**
- * Forms and stances that a class can be in.
+ * Ways of fighting: which weapons auto-attack, and which rotation applies.
  *
- * Only the Druid has any right now, and only because its form changes which
- * resource drives play. Warrior stances would slot in here the same way, even
- * though all three use rage.
+ * Combat style and Druid form are deliberately one concept. A Druid's styles
+ * ARE its forms — they change its resource and its stat conversions — while
+ * every other class has styles that describe a weapon configuration instead.
+ * Modelling them separately would mean two selectors that always had to agree.
  */
-export const FORM_IDS = ['caster', 'moonkin', 'tree', 'bear', 'cat'] as const;
-export type FormId = (typeof FORM_IDS)[number];
+export const COMBAT_STYLE_IDS = [
+  // Weapon configurations
+  'two_hander',
+  'one_hand_shield',
+  'dual_wield',
+  'ranged',
+  // Caster stance, and the Druid forms that behave like it
+  'caster',
+  'moonkin',
+  'tree',
+  // Druid forms with their own attacks and resources
+  'bear',
+  'cat',
+] as const;
+export type CombatStyleId = (typeof COMBAT_STYLE_IDS)[number];
 
 export const CLASS_IDS = [
   'druid',
@@ -73,8 +87,8 @@ export function isClassId(value: unknown): value is ClassId {
   return typeof value === 'string' && CLASS_ID_SET.has(value);
 }
 
-const FORM_ID_SET: ReadonlySet<string> = new Set(FORM_IDS);
+const COMBAT_STYLE_ID_SET: ReadonlySet<string> = new Set(COMBAT_STYLE_IDS);
 
-export function isFormId(value: unknown): value is FormId {
-  return typeof value === 'string' && FORM_ID_SET.has(value);
+export function isCombatStyleId(value: unknown): value is CombatStyleId {
+  return typeof value === 'string' && COMBAT_STYLE_ID_SET.has(value);
 }

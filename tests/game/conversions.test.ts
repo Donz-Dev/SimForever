@@ -28,7 +28,7 @@ describe('worked examples from the conversion table', () => {
     const player = createPlayer({
       race: 'night_elf',
       characterClass: 'druid',
-      form: 'bear',
+      combatStyle: 'bear',
     });
     expect(player.health.maximum).toBe(3233);
   });
@@ -38,7 +38,7 @@ describe('worked examples from the conversion table', () => {
     const player = createPlayer({
       race: 'tauren',
       characterClass: 'druid',
-      form: 'caster',
+      combatStyle: 'caster',
     });
     expect(player.stats.get('attackPower')).toBe(104);
   });

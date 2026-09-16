@@ -150,12 +150,15 @@ describe('Simulation', () => {
         buildSimulation(
           [
             makeAttacker({
-              weapon: {
-                name: 'Test Weapon',
-                swingTimerMs: 2000,
-                baseDamage: 100,
-                damageVariance: 0.3,
+              weapons: {
+                mainHand: {
+                  name: 'Test Weapon',
+                  swingTimerMs: 2000,
+                  baseDamage: 100,
+                  damageVariance: 0.3,
+                },
               },
+              autoAttack: 'main-hand',
               stats: { attackPower: 100, critRating: 5000 },
             }),
             makeTarget({ maxHealth: 1_000_000 }),
@@ -171,7 +174,10 @@ describe('Simulation', () => {
         buildSimulation(
           [
             makeAttacker({
-              weapon: { name: 'Test Weapon', swingTimerMs: 2000, baseDamage: 100 },
+              weapons: {
+                mainHand: { name: 'Test Weapon', swingTimerMs: 2000, baseDamage: 100 },
+              },
+              autoAttack: 'main-hand',
               stats: { attackPower: 100, critRating: 5000 },
             }),
             makeTarget({ maxHealth: 1_000_000 }),

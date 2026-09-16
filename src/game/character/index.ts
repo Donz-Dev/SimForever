@@ -5,17 +5,31 @@
  * faction, then race, then class. Everything here is World of Warcraft:
  * Forever content, not engine behaviour.
  */
-export type { ClassId, FactionId, FormId, RaceId } from './ids';
+export type { ClassId, CombatStyleId, FactionId, RaceId } from './ids';
 export {
   CLASS_IDS,
+  COMBAT_STYLE_IDS,
   FACTION_IDS,
-  FORM_IDS,
   RACE_IDS,
   isClassId,
+  isCombatStyleId,
   isFactionId,
-  isFormId,
   isRaceId,
 } from './ids';
+export type {
+  CombatStyleDefinition,
+  MainHandRule,
+  OffHandRule,
+  RangedRule,
+} from './combatStyles';
+export {
+  COMBAT_STYLES,
+  classHasCombatStyle,
+  combatStylesFor,
+  defaultCombatStyleFor,
+  getCombatStyle,
+  resolveCombatStyle,
+} from './combatStyles';
 export type {
   ClassDefinition,
   FactionDefinition,

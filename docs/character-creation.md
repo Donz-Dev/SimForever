@@ -168,6 +168,95 @@ crit are identical across all of them.
 | Bear | 2543 | 160 |
 | Cat | 1303 | 100 |
 
+## Combat styles
+
+The selector after class. It decides **which weapons auto-attack**, **which
+action priority list runs**, and what the UI shows for equipment slots.
+
+Combat style and Druid form are **one concept, not two**. A Druid's styles are
+its forms, so they also drive its resource and stat conversions; every other
+class has styles that describe a weapon configuration. Modelling them separately
+would mean two selectors that always had to agree with each other.
+
+| Class | Styles (first is the default) |
+| --- | --- |
+| Warrior | **Dual-Wield**, Two-Hander, 1H & Shield |
+| Rogue | **Dual-Wield** |
+| Shaman | **Caster**, Two-Hander |
+| Paladin | **1H & Shield**, Two-Hander, Caster |
+| Hunter | **Ranged**, Two-Hander, Dual-Wield |
+| Mage / Warlock / Priest | **Caster** |
+| Druid | **Cat**, Caster, Bear, Tree of Life, Moonkin |
+
+### What each style does
+
+| Style | Auto-attack | Main hand | Off hand | Ranged |
+| --- | --- | --- | --- | --- |
+| Two-Hander | main hand only | two-handed, swings | none | - |
+| 1H & Shield | main hand only | one-handed, swings | shield | - |
+| Dual-Wield | **both hands** | one-handed, swings | weapon, swings | - |
+| Ranged | ranged only | stat stick | stat stick | required, swings |
+| Caster / Tree / Moonkin | **none** | stat stick | stat stick | - |
+| Bear / Cat | paws, not weapons | stat stick | stat stick | - |
+
+A *stat stick* is an item that can be equipped and contributes its stats but
+never swings.
+
+### Independent swing timers
+
+Dual-wield runs a **separate timer per hand**. The off-hand does not wait for
+the main hand, so the two drift apart over a fight exactly as they do in game.
+This is why `Combatant` holds weapons by slot and the auto-attack scheduler
+takes a slot rather than assuming one weapon.
+
+### Casters genuinely do nothing
+
+A Mage currently deals **zero damage**: the Caster style never auto-attacks, and
+no class abilities exist yet. That is correct rather than broken, and there is a
+test asserting the fight still completes cleanly instead of stalling.
+
+### Resolution
+
+`resolveCombatStyle(class, requested)` always returns something the class can
+use. A profile carrying a stale style — a character that was a bear Druid and is
+now a Warrior — resolves to the class default rather than failing. A test applies
+every (class x style) pair and asserts the result is always legal.
+
+### Paw damage
+
+Bear and Cat attack with their own damage rather than an equipped weapon:
+
+| | |
+| --- | --- |
+| `BASE_BEAR_PAW_DAMAGE` | 100 |
+| `BASE_CAT_PAW_DAMAGE` | 50 |
+
+These are **assumed** values pending confirmation. Everything else about the
+paws — swing speed, attack power scaling, damage variance — is still
+placeholder, so a druid's auto-attack damage is directionally right rather than
+accurate.
+
+### Off-hand damage penalty
+
+`OFF_HAND_DAMAGE_MULTIPLIER` is **0.5**: a dual-wield off-hand deals half
+damage.
+
+The multiplier scales the **whole swing**, attack power contribution included.
+Halving only the weapon's own damage would let the off-hand grow stronger
+relative to the main hand as a character geared up, which is not what a
+percentage penalty means.
+
+Talents are expected to change this, so it is not baked in:
+
+```typescript
+createPlayer({ race, characterClass, combatStyle: 'dual_wield',
+               offHandDamageMultiplier: 0.75 });   // a talent improved it
+```
+
+The penalty lives on the off-hand `WeaponProfile` rather than on the weapon
+itself, because it is a property of the hand: the same sword swings for full in
+the main hand and half in the off-hand.
+
 ## Stat conversions
 
 Base stats are the input. `src/game/character/conversions.ts` turns them into

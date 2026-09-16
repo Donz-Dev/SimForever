@@ -21,6 +21,19 @@ export type CombatantKind = 'player' | 'enemy' | 'pet' | 'summon';
 /** Who this combatant fights. Targeting uses this, not the kind. */
 export type Faction = 'friendly' | 'hostile';
 
+/** Where a weapon sits. Which of these swing is decided by the auto-attack mode. */
+export type WeaponSlot = 'mainHand' | 'offHand' | 'ranged';
+
+/**
+ * Which weapons auto-attack.
+ *
+ * - `none`       nothing swings (casters)
+ * - `main-hand`  the main hand only (two-handers, sword and board, bear, cat)
+ * - `dual-wield` both hands, on independent timers
+ * - `ranged`     the ranged weapon only
+ */
+export type AutoAttackMode = 'none' | 'main-hand' | 'dual-wield' | 'ranged';
+
 /**
  * A weapon's auto-attack behaviour.
  *
@@ -38,6 +51,15 @@ export interface WeaponProfile {
   readonly damageVariance?: number;
   /** Attack power contribution per swing. */
   readonly powerCoefficient?: number;
+  /**
+   * Multiplies this weapon's entire auto-attack, base damage and attack power
+   * contribution alike. Defaults to 1.
+   *
+   * Exists for the dual-wield off-hand penalty, which is a property of the hand
+   * rather than of the weapon in it. Talents that change that penalty adjust
+   * this value when the character is built.
+   */
+  readonly damageMultiplier?: number;
   readonly school?: DamageSchool;
   /** Resource generated per landed swing, if any. */
   readonly generates?: { resource: ResourceType; amount: number };
@@ -53,7 +75,10 @@ export interface CombatantOptions {
   readonly resources?: readonly ResourceSpec[];
   readonly abilities?: readonly Ability[];
   readonly rotation?: Rotation;
-  readonly weapon?: WeaponProfile;
+  /** Weapons by slot. Which ones swing is decided by `autoAttack`. */
+  readonly weapons?: Partial<Record<WeaponSlot, WeaponProfile>>;
+  /** Defaults to `none`: a combatant with no declared mode does not swing. */
+  readonly autoAttack?: AutoAttackMode;
   /**
    * Turns primary stats into the secondary stats they produce, re-run whenever
    * a buff changes a primary stat. The conversion numbers are class content, so
@@ -86,7 +111,8 @@ export class Combatant {
   readonly auras: AuraCollection;
   readonly abilities: AbilityBook;
   readonly rotation: Rotation | undefined;
-  readonly weapon: WeaponProfile | undefined;
+  readonly weapons: Partial<Record<WeaponSlot, WeaponProfile>>;
+  readonly autoAttack: AutoAttackMode;
 
   /**
    * When this combatant's global cooldown ends. Shared across abilities, which
@@ -112,7 +138,8 @@ export class Combatant {
     this.auras = new AuraCollection(this);
     this.abilities = new AbilityBook(options.abilities ?? []);
     this.rotation = options.rotation;
-    this.weapon = options.weapon;
+    this.weapons = options.weapons ?? {};
+    this.autoAttack = options.autoAttack ?? 'none';
   }
 
   get isAlive(): boolean {

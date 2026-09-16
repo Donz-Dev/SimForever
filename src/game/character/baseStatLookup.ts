@@ -1,7 +1,7 @@
 import type { PartialStats } from '../../engine';
 import { BASE_STATS } from './baseStats';
 import type { BaseStatBlock } from './baseStatTypes';
-import type { ClassId, FormId, RaceId } from './ids';
+import type { ClassId, CombatStyleId, RaceId } from './ids';
 
 /**
  * Forms that have no row of their own and borrow another form's stats.
@@ -15,7 +15,7 @@ import type { ClassId, FormId, RaceId } from './ids';
  * points or attack power, it needs a row in the spreadsheet and its entry here
  * should go away.
  */
-const FORM_STAT_FALLBACKS: Partial<Record<FormId, FormId>> = {
+const FORM_STAT_FALLBACKS: Partial<Record<CombatStyleId, CombatStyleId>> = {
   moonkin: 'caster',
   tree: 'caster',
 };
@@ -31,7 +31,7 @@ const FORM_STAT_FALLBACKS: Partial<Record<FormId, FormId>> = {
  * Also an interpretation. It matters because a Druid shifting to bear form
  * mid-fight must not silently lose its mana.
  */
-const MANA_REFERENCE_FORM: FormId = 'caster';
+const MANA_REFERENCE_FORM: CombatStyleId = 'caster';
 
 /**
  * Base stats for a race, class and form at level 60.
@@ -42,7 +42,7 @@ const MANA_REFERENCE_FORM: FormId = 'caster';
 export function baseStatsFor(
   race: RaceId,
   characterClass: ClassId,
-  form?: FormId,
+  form?: CombatStyleId,
 ): BaseStatBlock | undefined {
   const variants = BASE_STATS[race]?.[characterClass];
   if (!variants || variants.length === 0) return undefined;
@@ -87,7 +87,7 @@ export function baseManaFor(race: RaceId, characterClass: ClassId): number {
 export function baseHitPointsFor(
   race: RaceId,
   characterClass: ClassId,
-  form?: FormId,
+  form?: CombatStyleId,
 ): number {
   return baseStatsFor(race, characterClass, form)?.hitPoints ?? 0;
 }
@@ -120,23 +120,23 @@ export function baseStatsToEngineStats(base: BaseStatBlock): PartialStats {
 export function allBaseStatEntries(): {
   race: RaceId;
   characterClass: ClassId;
-  form: FormId | null;
+  form: CombatStyleId | null;
   stats: BaseStatBlock;
 }[] {
   const entries: {
     race: RaceId;
     characterClass: ClassId;
-    form: FormId | null;
+    form: CombatStyleId | null;
     stats: BaseStatBlock;
   }[] = [];
 
   for (const [race, classes] of Object.entries(BASE_STATS) as [
     RaceId,
-    Partial<Record<ClassId, readonly { form: FormId | null; stats: BaseStatBlock }[]>>,
+    Partial<Record<ClassId, readonly { form: CombatStyleId | null; stats: BaseStatBlock }[]>>,
   ][]) {
     for (const [characterClass, variants] of Object.entries(classes) as [
       ClassId,
-      readonly { form: FormId | null; stats: BaseStatBlock }[],
+      readonly { form: CombatStyleId | null; stats: BaseStatBlock }[],
     ][]) {
       for (const variant of variants) {
         entries.push({ race, characterClass, form: variant.form, stats: variant.stats });
