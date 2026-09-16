@@ -5,7 +5,6 @@ import { createPlayer } from '../game/actors/createPlayer';
 import { createForeverAttackChances } from '../game/combat/attackChances';
 import { resolveCombatStyle } from '../game/character';
 import { createTrainingDummy } from '../game/actors/createTrainingDummy';
-import { BATTLE_FURY } from '../game/auras/exampleAuras';
 
 /**
  * Build a runnable simulation config from a character profile.
@@ -52,13 +51,17 @@ export function trainingDummyEncounter(
       }),
     ],
 
-    onCombatStart: (context) => {
-      // Opening buffs go here. Applied at time 0, before any event fires.
-      for (const actor of context.combatants) {
-        if (actor.kind === 'player') {
-          context.applyAura(actor, BATTLE_FURY, actor.id);
-        }
-      }
-    },
+    // No opening buffs.
+    //
+    // This used to apply `BATTLE_FURY`, an example aura granting an invented
+    // +10% attack power, to every player. It inflated every damage figure the
+    // simulator produced, and a character sheet reading 400 attack power fought
+    // at 440. Removed rather than kept, because a buff nobody asked for that
+    // silently moves every number is exactly the kind of invented data this
+    // project refuses.
+    //
+    // Real raid buffs belong here when there is real data for them. Battle
+    // Shout is already defined in `game/auras/warrior.ts`, awaiting its
+    // numbers.
   };
 }

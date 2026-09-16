@@ -24,14 +24,30 @@ What works end to end:
 | **Combat tables** | all six, on an integer 1–10000 die, derived from weapon skill vs defense skill |
 | **Armor** | level-scaled, applied per damage event |
 | **Resources** | rage from damage, energy in batches, mana on the five-second rule |
+| **Abilities** | all 26 Warrior abilities from the ruleset spreadsheet, with weapon-damage scaling and on-next-swing |
 | **Analysis** | DPS, per-ability breakdown with attempts/hits/crit/glance/avoid rates |
 | **UI** | React panels driving the real engine; combat log; Monte Carlo batches |
 
-**451 tests**, CI green on Node 20 and 22.
+**498 tests**, CI green on Node 20 and 22.
 
 ## The next task
 
-**Class abilities.** Everything they need is in place:
+**The remaining eight classes' abilities.** The Warrior is done — see
+[docs/warrior-abilities.md](docs/warrior-abilities.md) for its source data and
+its gaps. Each other class needs the same: a spreadsheet from the ruleset owner,
+then definitions, a rotation and hand-transcribed tests.
+
+Before that, two things are worth closing:
+
+1. **A hook for reactive abilities.** Nothing lets content observe an attack
+   result, so Overpower (needs a target dodge) and Revenge (needs the warrior to
+   block, parry or dodge) are defined but can never be cast. Rogues, Hunters and
+   Druids will all want the same hook.
+2. **Effect values for the nine Warrior buffs and debuffs.** They are defined,
+   castable and completely inert. Until they arrive the rotation cannot use any
+   of them.
+
+An ability definition looks like this:
 
 ```typescript
 export const MORTAL_STRIKE: Ability = {
@@ -41,13 +57,19 @@ export const MORTAL_STRIKE: Ability = {
   cost: { resource: 'rage', amount: 30 },
   attackTable: 'melee-special',
   onCast: ({ simulation, caster, target, ability }) => {
+    if (!target) return;
     dealDamage(simulation, {
       source: caster, target,
-      abilityName: 'Mortal Strike',
+      abilityId: ability.id,
+      abilityName: ability.name,
       school: 'physical',
       baseAmount: 160,
-      powerCoefficient: 1,
+      // "Weapon Damage" in the sheet. The weapon's own damage and its attack
+      // power contribution are supplied by the pipeline, and the off-hand
+      // penalty applies once to the finished total.
+      weaponScaling: { slot: 'mainHand' },
       attackTable: ability.attackTable,
+      weaponSlot: 'mainHand',
     });
   },
 };
@@ -57,29 +79,44 @@ Wire new abilities through `abilitiesForClass(class, style)` and
 `rotationFor(class, style)` in `src/game/`. Both already take the combat style,
 so per-style priority lists are a change to those two functions alone.
 
-**Eight of the nine classes currently do nothing** — only the Warrior has
-abilities, and those are placeholder content.
+**Eight of the nine classes still do nothing.** Only the Warrior has content.
 
 ## Read this before trusting any number
 
 The engine is correct; some of its **inputs are still invented**. In rough order
 of how much they distort results:
 
-1. **Weapon stats are placeholders.** Every character swings the same imaginary
-   weapon: 2.6s/80 damage one-hand, 3.4s/140 two-hander, 2.9s/110 ranged. This is
-   now the largest source of wrong numbers, because armor and glancing both scale
-   off weapon damage. In `src/game/actors/weapons.ts`.
+1. **Weapon stats are placeholders**, and they now matter much more than they
+   did. Every character swings the same imaginary weapon: 2.6s/80 damage
+   one-hand, 3.4s/140 two-hander, 2.9s/110 ranged. Forever's weapon damage
+   formula makes ability damage scale off both the base damage AND the speed, so
+   a placeholder weapon puts placeholder numbers straight into Mortal Strike.
+   It also sets rage income, which is currently only ~0.9 rage/sec and is the
+   binding constraint on the whole Warrior rotation. In
+   `src/game/actors/weapons.ts`.
+
+   The attack power *coefficients* are no longer invented: each is derived from
+   its weapon's speed by the ruleset formula in `game/combat/weaponDamage.ts`.
+   This replaced a flat invented 0.35 that was overstating auto-attack damage.
 2. **Bear/Cat paw swing speed and AP coefficients** are invented. The *damage*
    values (100 / 50) are real.
 3. **No gear grants `hitChance`**, so miss is always the base value. Hit is a
    large part of melee and caster scaling.
 4. **`manaRegenBypass`** exists as a stat but nothing grants it.
 
-**The example Warrior rotation is currently broken and its DPS is meaningless.**
-At 4.2 rage/sec, Strike starves Heroic Blow completely so it never fires, and
-crit suppression leaves it at 0.34% crit. That is the resource and combat model
-working correctly on placeholder content — real abilities will resolve it. Do
-not tune anything against the current ~78 DPS figure.
+**The Warrior rotation now runs on real data, but its DPS is still not a
+number to trust** — roughly 35 DPS over 400 iterations. Rage income comes from
+placeholder weapon damage, and at ~0.9 rage/sec the warrior can barely afford a
+30-rage Mortal Strike. Real weapon data will change the rotation's *shape*, not
+just its total: Rend currently outranks Mortal Strike only because rage is
+scarce and a bleed ignores armor. Re-measure the priority list when weapons
+land.
+
+**No buffs are applied at combat start.** `BATTLE_FURY`, an example aura
+granting an invented +10% attack power, used to be applied to every player and
+was removed. It inflated every figure the simulator produced, and made a
+character sheet reading 400 attack power fight at 440. Real raid buffs go in
+`simulator/trainingDummyEncounter.ts` when there is real data for them.
 
 ## Interpretations awaiting confirmation
 
@@ -90,6 +127,8 @@ Each is isolated in one place and cheap to flip. All are flagged in code.
 | `Armor_Reduction` computes the **damage multiplier**, not the reduction. Chosen because it reproduces the known ~40% figure for a 3731-armor boss; reading it the other way gives 61%. | `engine/combat/damage.ts` | Swap `armorReduction` / `armorDamageMultiplier` at the call site |
 | **Enemy parry applies only to 1H & Shield** — read as "only a tank with a shield stands in front of the target". | `PARRYABLE_STYLES` in `game/combat/attackChances.ts` | Change that set, or key it off facing/threat |
 | **Ranged uses the special-attack miss shape** with the ranged weapon's skill. No ranged formula was given. | `game/combat/attackChances.ts` | Add a ranged branch |
+| **Thunder Clap, Intercept and Charge use the literal ranged table**, confirmed by the ruleset owner. A Warrior holds no ranged weapon, so weapon skill falls back to 5 x level. | `game/abilities/warrior.ts` | Change their `attackTable` |
+| **Warrior stance gating is not implemented.** The sheet has no Battle Stance row and states no stance requirements; corrections are pending from the ruleset owner. | `game/abilities/warrior.ts` | Add `canCast` stance checks and re-run the rotation |
 | **Moonkin and Tree of Life borrow Caster Form's base stats.** Neither has a spreadsheet row. | `FORM_STAT_FALLBACKS` in `game/character/baseStatLookup.ts` | Add rows to the spreadsheet and delete the fallback |
 | **Bear/Cat `Mana: 0` means "not this form's resource"**, not "the pool is destroyed". A bear keeps its mana. | `MANA_REFERENCE_FORM`, same file | Change the constant |
 | **Tree of Life uses mana** — it appeared in the conversion table but not the resource list. | `game/character/definitions.ts` | Change its `resource` |
@@ -145,7 +184,7 @@ src/
 │   ├── character/   races, classes, combat styles, base stats, conversions
 │   ├── combat/      attackChances (the combat table numbers), resourceRules
 │   ├── actors/      createPlayer, createTrainingDummy, weapons
-│   ├── abilities/   example abilities  ← next work lands here
+│   ├── abilities/   warrior.ts (real), exampleAbilities.ts (the other classes)
 │   └── rotations/   rotationFor(class, style)
 │
 ├── analysis/        analyzers; SimulationResult
@@ -162,8 +201,10 @@ Longer explanations: [`docs/`](docs/) — `architecture.md`,
 
 Roughly in order of value:
 
-1. **Class ability definitions** — costs, cooldowns, coefficients, attack tables.
-2. **Weapon data**, to replace the placeholders.
+1. **Weapon data**, to replace the placeholders. Now the single biggest
+   distortion, because it drives ability damage and rage income alike.
+2. **Effect values for the Warrior's nine buffs and debuffs**, and ability
+   definitions for the other eight classes.
 3. **Hit from gear**, so miss stops being fixed.
 4. **Bear/Cat paw swing speed and AP coefficients.**
 5. **Talents**, which several hooks already anticipate: `offHandDamageMultiplier`,

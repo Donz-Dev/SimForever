@@ -1,6 +1,6 @@
 import type { PartialStats } from '../../engine';
 import { Combatant, addStats, makeStats } from '../../engine';
-import { abilitiesForClass } from '../abilities/exampleAbilities';
+import { abilitiesForClass } from '../abilities/abilitiesForClass';
 import type {
   ClassId,
   CombatStyleId,
@@ -20,7 +20,7 @@ import {
 } from '../character';
 import { MAX_CHARACTER_LEVEL } from '../character';
 import { RAGE_FROM_DAMAGE_TAKEN, regenerationFor } from '../combat/resourceRules';
-import { rotationFor } from '../rotations/basicMeleeRotation';
+import { rotationFor } from '../rotations/rotationFor';
 import { autoAttackModeForStyle, weaponsForStyle } from './weapons';
 
 export interface PlayerOptions {

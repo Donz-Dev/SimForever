@@ -35,21 +35,21 @@ describe('player versus training dummy', () => {
     expect(dummy.isAlive).toBe(true);
   });
 
-  it('uses auto attacks and both abilities', () => {
+  it('uses auto attacks and real warrior abilities', () => {
     const result = runProfile(profile);
     const used = result.damage.byActor[0].abilities.map((entry) => entry.abilityName);
 
     expect(used).toContain('Melee');
-    expect(used).toContain('Strike');
-    expect(used).toContain('Rending Wound');
+    expect(used).toContain('Mortal Strike');
+    expect(used).toContain('Rend');
   });
 
-  it('keeps the bleed stacked on the target', () => {
+  it('keeps Rend ticking on the target', () => {
     const result = runProfile(profile);
-    const stackEvents = result.timeline.filter(
-      (event) => event.type === 'aura_stacks_changed' && event.auraId === 'rending_wound',
+    const ticks = result.timeline.filter(
+      (event) => event.type === 'damage' && event.abilityId === 'rend' && event.periodic,
     );
-    expect(stackEvents.length).toBeGreaterThan(0);
+    expect(ticks.length).toBeGreaterThan(0);
   });
 
   it('produces a combat log that starts and ends with the fight', () => {
@@ -61,9 +61,9 @@ describe('player versus training dummy', () => {
 
     const attackPattern = new RegExp(`${profile.character.name} .*hits Training Dummy for`);
     expect(result.combatLog.some((line) => attackPattern.test(line))).toBe(true);
-    expect(result.combatLog.some((line) => /casts Strike at Training Dummy/.test(line))).toBe(
-      true,
-    );
+    expect(
+      result.combatLog.some((line) => /casts Mortal Strike at Training Dummy/.test(line)),
+    ).toBe(true);
   });
 
   it('derives the combat log from the same events as the damage totals', () => {
