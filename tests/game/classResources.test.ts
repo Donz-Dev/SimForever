@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { ResourceType } from '../../src/engine';
-import type { ClassId } from '../../src/game/character';
+import type { ClassId, CombatStyleId } from '../../src/game/character';
 import {
   CLASSES,
   CLASS_IDS,
@@ -22,8 +22,8 @@ function anyRaceFor(characterClass: ClassId) {
 }
 
 /** Build a player of a class, on whichever race happens to allow it. */
-function player(characterClass: ClassId, form?: 'caster' | 'bear' | 'cat' | 'moonkin') {
-  return createPlayer({ race: anyRaceFor(characterClass), characterClass, form });
+function player(characterClass: ClassId, combatStyle?: CombatStyleId) {
+  return createPlayer({ race: anyRaceFor(characterClass), characterClass, combatStyle });
 }
 
 /**

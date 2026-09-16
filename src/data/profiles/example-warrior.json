@@ -1,10 +1,11 @@
 {
-  "version": 1,
+  "version": 2,
   "character": {
     "name": "Thunderaxe",
     "race": "orc",
     "characterClass": "warrior",
-    "level": 60
+    "level": 60,
+    "combatStyle": "two_hander"
   },
   "stats": {
     "strength": 300,

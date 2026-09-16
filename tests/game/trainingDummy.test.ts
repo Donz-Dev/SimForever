@@ -120,29 +120,75 @@ describe('player versus training dummy', () => {
     expect(result.actors.find((actor) => actor.faction === 'hostile')?.isAlive).toBe(false);
   });
 
-  it('runs a class with no abilities on auto attacks alone', () => {
-    // A Mage has mana and no implemented abilities, so it must still produce a
-    // valid fight rather than stalling or throwing.
+  it('runs a caster that does nothing at all without stalling', () => {
+    // A Mage uses the Caster style, which never auto-attacks, and has no
+    // implemented abilities. It therefore deals literally no damage. The fight
+    // must still complete cleanly rather than hanging or throwing.
     const result = runProfile({
       ...profile,
       character: { ...profile.character, race: 'gnome', characterClass: 'mage' },
     });
 
     expect(result.endReason).toBe('duration_expired');
-    expect(result.damage.total).toBeGreaterThan(0);
-
-    const used = result.damage.byActor[0].abilities.map((entry) => entry.abilityName);
-    expect(used).toEqual(['Melee']);
+    expect(result.damage.total).toBe(0);
+    expect(result.damage.byActor).toHaveLength(0);
   });
 
-  it('gives a warrior more damage than a mage, via its abilities', () => {
+  it('gives a melee class damage where a caster has none', () => {
     const asWarrior = runProfile(profile);
     const asMage = runProfile({
       ...profile,
       character: { ...profile.character, race: 'gnome', characterClass: 'mage' },
     });
 
-    expect(asWarrior.damage.total).toBeGreaterThan(asMage.damage.total);
+    expect(asWarrior.damage.total).toBeGreaterThan(0);
+    expect(asMage.damage.total).toBe(0);
+  });
+
+  it('swings both weapons for a dual-wielding warrior', () => {
+    // Dual-Wield is the Warrior default, so the stock profile should show two
+    // separate auto-attack sources on independent timers.
+    const result = runProfile(profile);
+    const used = result.damage.byActor[0].abilities.map((entry) => entry.abilityName);
+
+    expect(used).toContain('Melee');
+    expect(used).toContain('Melee (Off Hand)');
+  });
+
+  it('swings only the main hand with a two-hander', () => {
+    const result = runProfile({
+      ...profile,
+      character: { ...profile.character, combatStyle: 'two_hander' },
+    });
+    const used = result.damage.byActor[0].abilities.map((entry) => entry.abilityName);
+
+    expect(used).toContain('Melee (Two-Hander)');
+    expect(used).not.toContain('Melee (Off Hand)');
+  });
+
+  it('uses a ranged weapon for a hunter', () => {
+    const result = runProfile({
+      ...profile,
+      character: { ...profile.character, race: 'dwarf', characterClass: 'hunter' },
+    });
+    const used = result.damage.byActor[0].abilities.map((entry) => entry.abilityName);
+
+    expect(used).toEqual(['Ranged']);
+  });
+
+  it('uses paws rather than weapons for a druid in cat form', () => {
+    const result = runProfile({
+      ...profile,
+      character: {
+        ...profile.character,
+        race: 'night_elf',
+        characterClass: 'druid',
+        combatStyle: 'cat',
+      },
+    });
+    const used = result.damage.byActor[0].abilities.map((entry) => entry.abilityName);
+
+    expect(used).toEqual(['Cat Paw']);
   });
 
   it('runs a short fight without error', () => {

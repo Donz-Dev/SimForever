@@ -1,5 +1,5 @@
 import type { PartialStats, StatDerivation, Stats } from '../../engine';
-import type { ClassId, FormId } from './ids';
+import type { ClassId, CombatStyleId } from './ids';
 
 /**
  * How one class turns primary stats into everything else.
@@ -149,7 +149,7 @@ const DRUID_CAT: StatConversions = {
   attackPowerPerAgility: 1,
 };
 
-const DRUID_BY_FORM: Record<FormId, StatConversions> = {
+const DRUID_BY_FORM: Partial<Record<CombatStyleId, StatConversions>> = {
   caster: DRUID_CASTER,
   moonkin: DRUID_CASTER,
   tree: DRUID_CASTER,
@@ -176,10 +176,11 @@ const BY_CLASS: Record<Exclude<ClassId, 'druid'>, StatConversions> = {
  */
 export function conversionsFor(
   characterClass: ClassId,
-  form?: FormId,
+  form?: CombatStyleId,
 ): StatConversions {
   if (characterClass === 'druid') {
-    return DRUID_BY_FORM[form ?? 'caster'];
+    // A style the Druid does not have (or none given) means caster form.
+    return DRUID_BY_FORM[form ?? 'caster'] ?? DRUID_CASTER;
   }
   return BY_CLASS[characterClass];
 }
@@ -223,7 +224,7 @@ export function deriveFromPrimaries(
  */
 export function statDerivationFor(
   characterClass: ClassId,
-  form?: FormId,
+  form?: CombatStyleId,
 ): StatDerivation {
   const conversions = conversionsFor(characterClass, form);
 

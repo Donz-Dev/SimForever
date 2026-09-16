@@ -1,4 +1,4 @@
-import type { FormId } from './ids';
+import type { CombatStyleId } from './ids';
 
 /**
  * A character's stats at level 60 with no gear, buffs or talents.
@@ -44,6 +44,6 @@ export interface BaseStatBlock {
  * per form, because bear form changes hit points and attack power.
  */
 export interface BaseStatVariant {
-  readonly form: FormId | null;
+  readonly form: CombatStyleId | null;
   readonly stats: BaseStatBlock;
 }

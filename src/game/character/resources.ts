@@ -1,7 +1,7 @@
 import type { ResourceSpec, ResourceType } from '../../engine';
 import type { ClassDefinition, FormDefinition } from './definitions';
 import { CLASSES } from './definitions';
-import type { ClassId, FormId } from './ids';
+import type { ClassId, CombatStyleId } from './ids';
 
 /**
  * Resource caps that are fixed by the ruleset rather than derived from a
@@ -75,7 +75,7 @@ export function formsFor(characterClass: ClassId): readonly FormDefinition[] {
  */
 export function activeResourceFor(
   characterClass: ClassId,
-  form?: FormId,
+  form?: CombatStyleId,
 ): ResourceType | undefined {
   const definition = CLASS_BY_ID.get(characterClass);
   if (!definition) return undefined;

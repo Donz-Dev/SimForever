@@ -1,5 +1,5 @@
 import type { PartialStats } from '../engine';
-import type { ClassId, FormId, RaceId } from '../game/character';
+import type { ClassId, CombatStyleId, RaceId } from '../game/character';
 
 /**
  * The profile format version.
@@ -10,7 +10,7 @@ import type { ClassId, FormId, RaceId } from '../game/character';
  * moves on. Getting this in before anyone has saved anything is much cheaper
  * than retrofitting it later.
  */
-export const CURRENT_PROFILE_VERSION = 1;
+export const CURRENT_PROFILE_VERSION = 2;
 
 export interface CharacterSection {
   readonly name: string;
@@ -27,11 +27,13 @@ export interface CharacterSection {
   readonly characterClass: ClassId;
   readonly level: number;
   /**
-   * The form to simulate in. Only meaningful for the Druid, whose hit points,
-   * attack power and active resource all depend on it. Omitted for every other
-   * class.
+   * How the character fights: which weapons auto-attack, and which action
+   * priority list applies.
+   *
+   * For a Druid this is also its form, and so determines hit points, attack
+   * power and the active resource. Omitted means "use the class default".
    */
-  readonly form?: FormId;
+  readonly combatStyle?: CombatStyleId;
 }
 
 export interface SimulationSection {

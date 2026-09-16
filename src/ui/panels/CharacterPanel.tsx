@@ -1,5 +1,5 @@
 import type { CharacterProfile } from '../../profiles';
-import type { CharacterSelection, FormId } from '../../game/character';
+import type { CharacterSelection, CombatStyleId } from '../../game/character';
 import { abilitiesForClass } from '../../game/abilities/exampleAbilities';
 import { createPlayer } from '../../game/actors/createPlayer';
 import {
@@ -10,10 +10,12 @@ import {
   baseManaFor,
   baseStatsFor,
   classesForRace,
-  formsFor,
+  combatStylesFor,
   getClass,
+  getCombatStyle,
   getRace,
   racesForFaction,
+  resolveCombatStyle,
   resourceLabel,
 } from '../../game/character';
 import { NumberField, TextField } from '../components/Field';
@@ -41,13 +43,12 @@ export function CharacterPanel({ profile, onChange }: CharacterPanelProps) {
     characterClass: profile.character.characterClass,
   };
 
-  const forms = formsFor(selection.characterClass);
-  const form: FormId | undefined =
-    forms.length > 0 ? (profile.character.form ?? forms[0].id) : undefined;
+  const styles = combatStylesFor(selection.characterClass);
+  const style = resolveCombatStyle(selection.characterClass, profile.character.combatStyle);
+  const styleDefinition = getCombatStyle(style);
 
   const applyChange = (change: Partial<CharacterSelection>) => {
     const next = applySelection(change, selection);
-    const nextForms = formsFor(next.characterClass);
 
     onChange({
       ...profile,
@@ -55,15 +56,15 @@ export function CharacterPanel({ profile, onChange }: CharacterPanelProps) {
         ...profile.character,
         race: next.race,
         characterClass: next.characterClass,
-        // Drop the form when the new class has none, so a Warrior profile does
-        // not quietly carry "bear" around.
-        ...(nextForms.length > 0 ? { form: nextForms[0].id } : { form: undefined }),
+        // Re-resolve against the new class, so a profile does not quietly carry
+        // "bear" around after switching away from Druid.
+        combatStyle: resolveCombatStyle(next.characterClass, profile.character.combatStyle),
       },
     });
   };
 
-  const setForm = (next: FormId) => {
-    onChange({ ...profile, character: { ...profile.character, form: next } });
+  const setStyle = (next: CombatStyleId) => {
+    onChange({ ...profile, character: { ...profile.character, combatStyle: next } });
   };
 
   const availableClasses = classesForRace(selection.race);
@@ -104,9 +105,16 @@ export function CharacterPanel({ profile, onChange }: CharacterPanelProps) {
         onChange={(characterClass) => applyChange({ characterClass })}
       />
 
-      {forms.length > 0 && form ? (
-        <OptionGroup label="Form" options={forms} value={form} onChange={setForm} />
+      <OptionGroup
+        label="Combat style"
+        options={styles}
+        value={style}
+        onChange={setStyle}
+      />
+      {styleDefinition ? (
+        <p className="muted">{styleDefinition.summary}</p>
       ) : null}
+      <WeaponSlots style={style} />
 
       {unavailable.length > 0 ? (
         <p className="muted">
@@ -124,7 +132,7 @@ export function CharacterPanel({ profile, onChange }: CharacterPanelProps) {
       </div>
 
       <h3>Character sheet</h3>
-      <CharacterSheet profile={profile} form={form} />
+      <CharacterSheet profile={profile} style={style} />
 
       {abilityCount === 0 ? (
         <p className="muted">
@@ -173,18 +181,18 @@ export function CharacterPanel({ profile, onChange }: CharacterPanelProps) {
  */
 function CharacterSheet({
   profile,
-  form,
+  style,
 }: {
   readonly profile: CharacterProfile;
-  readonly form: FormId | undefined;
+  readonly style: CombatStyleId;
 }) {
-  const base = baseStatsFor(profile.character.race, profile.character.characterClass, form);
+  const base = baseStatsFor(profile.character.race, profile.character.characterClass, style);
   if (!base) return <p className="muted">No base stats for this combination.</p>;
 
   const player = createPlayer({
     race: profile.character.race,
     characterClass: profile.character.characterClass,
-    form,
+    combatStyle: style,
     bonusStats: profile.stats,
   });
 
@@ -270,4 +278,73 @@ function CharacterSheet({
 
 function round(value: number): string {
   return Math.round(value).toLocaleString('en-US');
+}
+
+/**
+ * Which equipment slots the current style uses.
+ *
+ * Gear does not exist yet, so this describes the rules rather than showing what
+ * is equipped. It is the part of the style selector that "prompts the GUI to
+ * display the correct information": a two-hander has no off-hand, a ranged
+ * style needs a bow, a bear does not swing what it is holding.
+ */
+function WeaponSlots({ style }: { readonly style: CombatStyleId }) {
+  const definition = getCombatStyle(style);
+  if (!definition) return null;
+
+  const rows: { slot: string; rule: string }[] = [
+    { slot: 'Main hand', rule: describeMainHand(definition.mainHand) },
+    { slot: 'Off hand', rule: describeOffHand(definition.offHand) },
+    { slot: 'Ranged', rule: describeRanged(definition.rangedSlot) },
+  ];
+
+  return (
+    <table className="base-stats">
+      <tbody>
+        {rows.map((row) => (
+          <tr key={row.slot}>
+            <td>{row.slot}</td>
+            <td className="numeric muted">{row.rule}</td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  );
+}
+
+function describeMainHand(rule: string): string {
+  switch (rule) {
+    case 'two-hand':
+      return 'two-handed weapon, swings';
+    case 'one-hand':
+      return 'one-handed weapon, swings';
+    case 'stat-stick':
+      return 'stats only, does not swing';
+    default:
+      return 'unused';
+  }
+}
+
+function describeOffHand(rule: string): string {
+  switch (rule) {
+    case 'weapon':
+      return 'second weapon, swings';
+    case 'shield':
+      return 'shield';
+    case 'stat-stick':
+      return 'stats only, does not swing';
+    default:
+      return 'unused';
+  }
+}
+
+function describeRanged(rule: string): string {
+  switch (rule) {
+    case 'required':
+      return 'required, swings';
+    case 'stat-stick':
+      return 'stats only';
+    default:
+      return 'unused';
+  }
 }

@@ -3,10 +3,10 @@ import type { StatName } from '../engine';
 import {
   MAX_CHARACTER_LEVEL,
   MIN_CHARACTER_LEVEL,
+  classHasCombatStyle,
   className,
-  formsFor,
   isClassId,
-  isFormId,
+  isCombatStyleId,
   isRaceId,
   isValidCombination,
   raceName,
@@ -90,24 +90,21 @@ export function validateProfile(value: unknown): ValidationResult {
       });
     }
 
-    // Form is optional, and only the Druid has any.
-    if (character.form !== undefined) {
-      if (!isFormId(character.form)) {
+    // Combat style is optional; omitting it means "use the class default".
+    if (character.combatStyle !== undefined) {
+      if (!isCombatStyleId(character.combatStyle)) {
         issues.push({
-          path: 'character.form',
-          message: `Unknown form ${JSON.stringify(character.form)}.`,
+          path: 'character.combatStyle',
+          message: `Unknown combat style ${JSON.stringify(character.combatStyle)}.`,
         });
-      } else if (characterClass !== null) {
-        const available = formsFor(characterClass);
-        if (!available.some((entry) => entry.id === character.form)) {
-          issues.push({
-            path: 'character.form',
-            message:
-              available.length === 0
-                ? `${className(characterClass)} has no forms.`
-                : `${className(characterClass)} has no ${String(character.form)} form.`,
-          });
-        }
+      } else if (
+        characterClass !== null &&
+        !classHasCombatStyle(characterClass, character.combatStyle)
+      ) {
+        issues.push({
+          path: 'character.combatStyle',
+          message: `${className(characterClass)} cannot use the ${character.combatStyle} style.`,
+        });
       }
     }
   }
@@ -165,8 +162,8 @@ export function validateProfile(value: unknown): ValidationResult {
         race: validated.character.race,
         characterClass: validated.character.characterClass,
         level: validated.character.level,
-        ...(validated.character.form !== undefined
-          ? { form: validated.character.form }
+        ...(validated.character.combatStyle !== undefined
+          ? { combatStyle: validated.character.combatStyle }
           : {}),
       },
       stats: cleanStats,

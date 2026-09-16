@@ -9,12 +9,27 @@ type Migration = (profile: Record<string, unknown>) => Record<string, unknown>;
  * `migrations[1]` turns a version-1 profile into a version-2 profile. To change
  * the format: bump CURRENT_PROFILE_VERSION, then add the step that gets old
  * files to the new shape.
- *
- * Empty for now, because version 1 is the first version. The machinery is here
- * anyway, since the cost of adding it now is a few lines and the cost of adding
- * it after people have saved profiles is a support problem.
  */
-const migrations: Record<number, Migration> = {};
+const migrations: Record<number, Migration> = {
+  /**
+   * Version 2 replaced the Druid-only `character.form` with `combatStyle`,
+   * which every class has.
+   *
+   * The values carry over unchanged: a Druid's forms became its combat styles,
+   * so `form: 'bear'` is already a valid style id. Profiles for other classes
+   * had no form at all and simply pick up their class default.
+   */
+  1: (profile) => {
+    const character = profile.character;
+    if (typeof character !== 'object' || character === null) return profile;
+
+    const { form, ...rest } = character as Record<string, unknown>;
+    return {
+      ...profile,
+      character: form === undefined ? rest : { ...rest, combatStyle: form },
+    };
+  },
+};
 
 export type MigrationResult =
   | { readonly ok: true; readonly value: unknown; readonly migrated: boolean }
