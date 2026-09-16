@@ -20,15 +20,18 @@ export {
   toPercent,
   toRollUnits,
 } from './attackTable';
-export type { DamageRequest, DamageResolution } from './damage';
+export type { DamageRequest, DamageResolution, WeaponScaling } from './damage';
 export {
+  DEFAULT_DAMAGE_VARIANCE,
   appliesArmor,
   armorDamageMultiplier,
   armorReduction,
   dealDamage,
   grantGeneratedResource,
+  handMultiplier,
   resolveDamage,
   scaleByPower,
+  weaponDamageFor,
 } from './damage';
 export type { HealRequest, HealResolution } from './healing';
 export { applyHealing, resolveHealing } from './healing';

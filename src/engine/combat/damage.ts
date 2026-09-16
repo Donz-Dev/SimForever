@@ -6,6 +6,37 @@ import type { AttackOutcome, AttackResolution, AttackTableKind } from './attackT
 import { resolveAttackTable } from './attackTable';
 import { armorConstantForLevel, versatilityMultiplierFrom } from './ratings';
 
+/** Damage varies this much either side of a weapon's base, unless overridden. */
+export const DEFAULT_DAMAGE_VARIANCE = 0.15;
+
+/**
+ * An ability's scaling with the weapon actually equipped.
+ *
+ * A great many melee abilities are "a swing, plus something". Rather than every
+ * one of them reaching for the weapon and reimplementing the roll, they declare
+ * the slot and the pipeline supplies
+ *
+ *     weapon base damage (rolled) + weapon's power coefficient * attack power
+ *
+ * The coefficient lives on the weapon because it is derived from the weapon's
+ * speed, and how it is derived is a ruleset number that belongs in `game`.
+ *
+ * The hand's damage multiplier — the dual-wield off-hand penalty — is applied
+ * ONCE to the finished total, after the ability's own flat damage has been
+ * added. Applying it to the weapon portion alone would leave an off-hand
+ * Mortal Strike dealing full value for its 160, which is not how the ruleset
+ * reads.
+ */
+export interface WeaponScaling {
+  readonly slot: WeaponSlot;
+  /**
+   * Fraction of the weapon's damage this ability deals. Defaults to 1.
+   *
+   * Forever's Spearing Strike is 0.4.
+   */
+  readonly fraction?: number;
+}
+
 /**
  * A request to deal damage, as an ability describes it.
  *
@@ -26,6 +57,13 @@ export interface DamageRequest {
    * (magical) and added to `baseAmount`.
    */
   readonly powerCoefficient?: number;
+  /**
+   * Scaling with the equipped weapon, for abilities that deal weapon damage.
+   *
+   * Added on top of `baseAmount`, so Mortal Strike is `baseAmount: 160` plus
+   * full weapon scaling, exactly as the ruleset states it.
+   */
+  readonly weaponScaling?: WeaponScaling;
   /**
    * Which combat table resolves this attack.
    *
@@ -83,14 +121,62 @@ export interface DamageResolution {
  * standing up a whole simulation.
  */
 
-/** Flat damage plus the attacker's power contribution. */
-export function scaleByPower(request: DamageRequest): number {
-  const coefficient = request.powerCoefficient ?? 0;
-  if (coefficient === 0) return request.baseAmount;
+/**
+ * The weapon's contribution to an ability that scales with it, before the
+ * hand's damage multiplier.
+ *
+ * `roll` is the already-drawn damage variance multiplier, kept as a parameter
+ * so this stays a pure function and can be checked against a hand-computed
+ * number without an RNG.
+ *
+ * A slot holding no weapon contributes nothing rather than throwing: a style
+ * whose ranged slot is empty can still cast an ability that would have used
+ * it, and the missing damage is visible in the results.
+ */
+export function weaponDamageFor(request: DamageRequest, roll: number): number {
+  const scaling = request.weaponScaling;
+  if (!scaling) return 0;
 
-  const stats = request.source.stats.effective;
-  const power = isPhysical(request.school) ? stats.attackPower : stats.spellPower;
-  return request.baseAmount + coefficient * power;
+  const weapon = request.source.weapons[scaling.slot];
+  if (!weapon) return 0;
+
+  const attackPower = request.source.stats.effective.attackPower;
+  const base = weapon.baseDamage * roll;
+  const power = (weapon.powerCoefficient ?? 0) * attackPower;
+
+  return (base + power) * (scaling.fraction ?? 1);
+}
+
+/**
+ * The multiplier for the hand this ability swings with, or 1 when it does not
+ * use a weapon at all.
+ *
+ * Read from the weapon rather than the request so that the off-hand penalty
+ * cannot be forgotten at a call site.
+ */
+export function handMultiplier(request: DamageRequest): number {
+  const scaling = request.weaponScaling;
+  if (!scaling) return 1;
+  return request.source.weapons[scaling.slot]?.damageMultiplier ?? 1;
+}
+
+/**
+ * Flat damage, the attacker's power contribution, and the weapon's damage.
+ *
+ * The hand's multiplier applies to the finished sum, not to the weapon portion
+ * alone. See `WeaponScaling`.
+ */
+export function scaleByPower(request: DamageRequest, weaponDamage = 0): number {
+  const coefficient = request.powerCoefficient ?? 0;
+
+  let total = request.baseAmount + weaponDamage;
+  if (coefficient !== 0) {
+    const stats = request.source.stats.effective;
+    const power = isPhysical(request.school) ? stats.attackPower : stats.spellPower;
+    total += coefficient * power;
+  }
+
+  return total * handMultiplier(request);
 }
 
 /**
@@ -141,6 +227,22 @@ function rollTable(
   return resolveAttackTable(request.attackTable, chances, context.rng);
 }
 
+/** Draw the weapon's damage variance and resolve its contribution. */
+function rollWeaponDamage(
+  request: DamageRequest,
+  context: SimulationContext,
+): number {
+  const scaling = request.weaponScaling;
+  if (!scaling) return 0;
+
+  const weapon = request.source.weapons[scaling.slot];
+  if (!weapon) return 0;
+
+  const variance = weapon.damageVariance ?? DEFAULT_DAMAGE_VARIANCE;
+  const roll = context.rng.nextFloat(1 - variance, 1 + variance);
+  return weaponDamageFor(request, roll);
+}
+
 /**
  * Run a damage request through the whole pipeline without applying it.
  *
@@ -151,6 +253,7 @@ function rollTable(
 export function resolveDamage(
   request: DamageRequest,
   attack: AttackResolution,
+  weaponDamage = 0,
 ): DamageResolution {
   const { source, target } = request;
 
@@ -168,7 +271,7 @@ export function resolveDamage(
     };
   }
 
-  const scaled = scaleByPower(request);
+  const scaled = scaleByPower(request, weaponDamage);
   const critical = attack.outcome === 'crit';
   const afterCrit = scaled * attack.damageMultiplier;
 
@@ -211,8 +314,13 @@ export function dealDamage(
   context: SimulationContext,
   request: DamageRequest,
 ): DamageResolution {
+  // Drawn BEFORE the table roll, and not drawn at all for an ability with no
+  // weapon scaling. Both matter: the order fixes the RNG sequence for a seeded
+  // run, and an ability that never touches the weapon must not consume a
+  // number and shift every roll after it.
+  const weaponDamage = rollWeaponDamage(request, context);
   const attack = rollTable(request, context);
-  const resolution = resolveDamage(request, attack);
+  const resolution = resolveDamage(request, attack, weaponDamage);
   const { target, source } = request;
 
   const healthBefore = target.health.current;

@@ -172,6 +172,33 @@ export class Combatant {
   /** When the current cast finishes, or 0 when not casting. */
   castEndsAt: Milliseconds = 0;
 
+  /**
+   * An ability armed to replace the next swing of a weapon, by slot.
+   *
+   * Heroic Strike and Cleave are "on next swing": they are paid for and armed,
+   * then land as part of the following auto-attack rather than on their own.
+   * Held here rather than in the ability book because it is per-combatant
+   * state about a weapon, not about a cooldown.
+   */
+  private readonly queuedSwings = new Map<WeaponSlot, string>();
+
+  /** Arm an ability to replace the next swing of a slot. */
+  queueNextSwing(slot: WeaponSlot, abilityId: string): void {
+    this.queuedSwings.set(slot, abilityId);
+  }
+
+  /** The ability armed for a slot, if any. */
+  queuedSwing(slot: WeaponSlot): string | undefined {
+    return this.queuedSwings.get(slot);
+  }
+
+  /** Take the armed ability for a slot, clearing it. */
+  takeQueuedSwing(slot: WeaponSlot): string | undefined {
+    const abilityId = this.queuedSwings.get(slot);
+    this.queuedSwings.delete(slot);
+    return abilityId;
+  }
+
   private alive = true;
 
   constructor(options: CombatantOptions) {

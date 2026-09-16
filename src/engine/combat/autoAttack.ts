@@ -4,9 +4,6 @@ import type { SimulationContext } from '../simulation/SimulationContext';
 import { dealDamage, grantGeneratedResource } from './damage';
 import { applyHaste, hasteMultiplierFrom } from './ratings';
 
-/** Damage varies this much either side of the weapon's base, unless overridden. */
-const DEFAULT_DAMAGE_VARIANCE = 0.15;
-
 /**
  * Auto attacks: off-GCD swings that repeat on their own timers.
  *
@@ -77,21 +74,31 @@ function swing(
   const target = context.defaultTargetFor(attacker);
   if (!target) return;
 
-  const variance = weapon.damageVariance ?? DEFAULT_DAMAGE_VARIANCE;
-  const roll = context.rng.nextFloat(1 - variance, 1 + variance);
+  // An on-next-swing ability replaces this swing entirely. It was paid for and
+  // armed when it was cast, so all that is left is to run its effect. The swing
+  // timer is untouched either way, which is what makes these abilities free
+  // throughput rather than a replacement for a global cooldown.
+  const queuedId = attacker.takeQueuedSwing(slot);
+  if (queuedId !== undefined) {
+    const queued = attacker.abilities.get(queuedId);
+    if (queued) {
+      queued.onCast({ simulation: context, caster: attacker, target, ability: queued });
+      return;
+    }
+  }
 
-  // The multiplier scales the whole swing, attack power contribution included,
-  // rather than only the weapon's own damage. A half-damage off-hand that still
-  // got full attack power scaling would get stronger as the character geared up.
-  const multiplier = weapon.damageMultiplier ?? 1;
-
+  // An auto attack IS weapon damage and nothing else, so it goes through the
+  // same scaling every weapon-damage ability uses. The damage roll, the attack
+  // power contribution and the off-hand penalty are all handled there, which is
+  // what stops a swing and a Mortal Strike from ever disagreeing about the same
+  // weapon.
   const result = dealDamage(context, {
     source: attacker,
     target,
     abilityName: weapon.name,
     school: weapon.school ?? 'physical',
-    baseAmount: weapon.baseDamage * roll * multiplier,
-    powerCoefficient: (weapon.powerCoefficient ?? 0) * multiplier,
+    baseAmount: 0,
+    weaponScaling: { slot },
     // Ranged weapons use the ranged table, which has no dodge, parry or
     // glancing blow.
     attackTable: slot === 'ranged' ? 'ranged-auto' : 'melee-auto',
