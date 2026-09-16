@@ -1,4 +1,5 @@
 import type { PartialStats } from '../engine';
+import type { ClassId, RaceId } from '../game/character';
 
 /**
  * The profile format version.
@@ -13,8 +14,17 @@ export const CURRENT_PROFILE_VERSION = 1;
 
 export interface CharacterSection {
   readonly name: string;
-  readonly race: string;
-  readonly characterClass: string;
+  /**
+   * Race and class are stored as ids (`night_elf`, not `Night Elf`), so that
+   * display names can be reworded without invalidating saved profiles.
+   *
+   * Faction is deliberately NOT stored. It is determined by the race, so
+   * storing it would allow a profile to claim an Alliance Orc. Derive it with
+   * `getRace(profile.character.race).faction`. If Forever ever introduces a
+   * race playable by both factions, this becomes a real field.
+   */
+  readonly race: RaceId;
+  readonly characterClass: ClassId;
   readonly level: number;
 }
 
@@ -62,9 +72,9 @@ export function createDefaultProfile(): CharacterProfile {
     version: CURRENT_PROFILE_VERSION,
     character: {
       name: 'Example',
-      race: 'Human',
-      characterClass: 'Warrior',
-      level: 80,
+      race: 'human',
+      characterClass: 'warrior',
+      level: 60,
     },
     stats: {
       strength: 100,

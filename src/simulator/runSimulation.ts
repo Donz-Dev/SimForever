@@ -2,7 +2,7 @@ import type { SimulationConfig } from '../engine';
 import { Simulation } from '../engine';
 import type { SimulationResult } from '../analysis';
 import { buildSimulationResult } from '../analysis';
-import { trainingDummyEncounter } from '../game/encounters/trainingDummyEncounter';
+import { trainingDummyEncounter } from './trainingDummyEncounter';
 import type { CharacterProfile } from '../profiles';
 
 /**

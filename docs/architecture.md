@@ -26,8 +26,13 @@ This is not architectural purity for its own sake. It buys four concrete things:
 ```
 ui  ──▶  simulator  ──▶  engine
                    ├──▶  analysis  ──▶  (engine types only)
-                   └──▶  game      ──▶  engine, profiles
+                   ├──▶  game      ──▶  engine
+                   └──▶  profiles  ──▶  engine, game/character
 ```
+
+`simulator` owns the profile-to-config translation, so `game` never has to know
+what a profile is. That keeps the arrow out of `game` pointing in one direction
+only: at the engine.
 
 Dependencies point one way. If you find yourself wanting an arrow that points
 back up, that is the signal that something is in the wrong layer.
@@ -39,8 +44,8 @@ damage, healing, RNG, telemetry. It knows nothing about warriors or fireballs.
 
 ### `game` — the content
 
-What exists in the game. Specific abilities, auras, actors, rotations,
-encounters. Content is data handed to the engine, not new engine code. A new
+What exists in the game. Factions, races, classes, specific abilities, auras,
+actors, rotations. Content is data handed to the engine, not new engine code. A new
 class should add files here and change nothing in `engine`; if it can't, the
 engine is missing an abstraction and that is the thing to fix.
 
@@ -61,6 +66,11 @@ without anything above noticing.
 Versioned, JSON-safe character configuration. Validation and migration live
 here. Everything entering the app from a file, a paste box or storage goes
 through `parseProfile`.
+
+Profiles store race and class as ids from `game/character`, and validation
+rejects combinations the ruleset forbids. Faction is deliberately *not* stored:
+it is determined by the race, so storing it would make an Alliance Orc
+representable.
 
 ### `ui` — React
 
@@ -176,6 +186,8 @@ architecture has room for it.
 | **Resource regeneration** | A repeating event at `EventPriority.Regeneration`, which is already reserved. |
 | **Threat, movement, range** | Combatant state plus a check in `checkCast`. Range is why `Ability.requiresTarget` exists rather than assuming a target. |
 | **Gear and talents** | Profile sections that contribute stats and modify ability definitions before the combatant is built. |
+| **Racial traits** | Auras applied at combat start, keyed off `profile.character.race`. |
+| **Class abilities and resources** | Class definitions in `game/character` gain an ability list and a primary resource; `createPlayer` reads them instead of hard-coding. |
 | **Web Workers** | Inside `src/simulator`. The engine is already free of shared state; `SimulationResult` is plain serialisable data. |
 | **WebAssembly / server** | Same seam. Replace the body of `runSimulation`; the UI contract does not change. |
 

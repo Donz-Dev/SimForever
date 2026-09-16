@@ -196,6 +196,37 @@ button:disabled {
   cursor: default;
 }
 
+/* --- option groups (faction / race / class) --- */
+
+.option-group {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
+  gap: 4px;
+}
+
+.option {
+  padding: 7px 8px;
+  background: #11141a;
+  border: 1px solid var(--panel-border);
+  border-radius: 4px;
+  color: var(--text-muted);
+  font-size: 12px;
+  text-align: center;
+  cursor: pointer;
+}
+
+.option:hover:not(.selected) {
+  color: var(--text);
+  border-color: #3b4250;
+}
+
+.option.selected {
+  background: rgba(200, 164, 92, 0.16);
+  border-color: var(--accent);
+  color: var(--accent-strong);
+  font-weight: 600;
+}
+
 .run-button {
   width: 100%;
   margin-top: 16px;
