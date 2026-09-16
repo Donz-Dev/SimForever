@@ -172,3 +172,14 @@ The architecture is built to accept all of these without a rewrite; see
 - Add a test with the behaviour, not after it.
 
 Run `npm test` and `npm run typecheck` before opening a pull request.
+
+## License
+
+[MIT](LICENSE).
+
+## Disclaimer
+
+SimForever is an unofficial fan project and is not affiliated with, endorsed by,
+or sponsored by Blizzard Entertainment. World of Warcraft and Warcraft are
+trademarks of Blizzard Entertainment, Inc. All game data referenced by this
+project remains the property of its respective owners.
