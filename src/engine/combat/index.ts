@@ -13,12 +13,12 @@ export type { HealRequest, HealResolution } from './healing';
 export { applyHealing, resolveHealing } from './healing';
 export {
   ARMOR_CONSTANT,
-  BASE_CRIT_CHANCE,
   CRITICAL_STRIKE_MULTIPLIER,
   MAX_ARMOR_REDUCTION,
   RATING_PER_PERCENT,
   applyHaste,
   critChanceFrom,
   hasteMultiplierFrom,
+  spellCritChanceFrom,
   versatilityMultiplierFrom,
 } from './ratings';

@@ -1,6 +1,7 @@
 import type { CharacterProfile } from '../../profiles';
-import type { CharacterSelection, ClassId, FormId, RaceId } from '../../game/character';
+import type { CharacterSelection, FormId } from '../../game/character';
 import { abilitiesForClass } from '../../game/abilities/exampleAbilities';
+import { createPlayer } from '../../game/actors/createPlayer';
 import {
   CLASSES,
   FACTIONS,
@@ -122,12 +123,8 @@ export function CharacterPanel({ profile, onChange }: CharacterPanelProps) {
         <div className="readonly-value">{MAX_CHARACTER_LEVEL}</div>
       </div>
 
-      <h3>Base stats</h3>
-      <BaseStatTable
-        race={selection.race}
-        characterClass={selection.characterClass}
-        form={form}
-      />
+      <h3>Character sheet</h3>
+      <CharacterSheet profile={profile} form={form} />
 
       {abilityCount === 0 ? (
         <p className="muted">
@@ -167,69 +164,110 @@ export function CharacterPanel({ profile, onChange }: CharacterPanelProps) {
 }
 
 /**
- * What a level 60 character of this race, class and form starts with, before
- * any gear.
+ * The character as the simulation will actually see it: base stats, plus gear,
+ * with the class conversions applied.
  *
- * Crit chance is shown but marked, because those numbers are class constants
- * that other contributions add to rather than a character's actual crit.
+ * Built by calling the same `createPlayer` the simulation uses, rather than
+ * recomputing the numbers here. A character sheet that disagreed with the fight
+ * would be worse than no character sheet.
  */
-function BaseStatTable({
-  race,
-  characterClass,
+function CharacterSheet({
+  profile,
   form,
 }: {
-  readonly race: RaceId;
-  readonly characterClass: ClassId;
+  readonly profile: CharacterProfile;
   readonly form: FormId | undefined;
 }) {
-  const stats = baseStatsFor(race, characterClass, form);
-  if (!stats) return <p className="muted">No base stats for this combination.</p>;
+  const base = baseStatsFor(profile.character.race, profile.character.characterClass, form);
+  if (!base) return <p className="muted">No base stats for this combination.</p>;
 
-  const mana = baseManaFor(race, characterClass);
-  const definition = getClass(characterClass);
+  const player = createPlayer({
+    race: profile.character.race,
+    characterClass: profile.character.characterClass,
+    form,
+    bonusStats: profile.stats,
+  });
 
-  const rows: { label: string; value: string; note?: string }[] = [
-    { label: 'Hit Points', value: stats.hitPoints.toLocaleString('en-US') },
-    ...(mana > 0
-      ? [{ label: resourceLabel('mana'), value: mana.toLocaleString('en-US') }]
-      : []),
-    ...(definition && definition.primaryResource !== 'mana'
-      ? [{ label: resourceLabel(definition.primaryResource), value: '100' }]
-      : []),
-    { label: 'Strength', value: String(stats.strength) },
-    { label: 'Agility', value: String(stats.agility) },
-    { label: 'Stamina', value: String(stats.stamina) },
-    { label: 'Intellect', value: String(stats.intellect) },
-    { label: 'Spirit', value: String(stats.spirit) },
-    { label: 'Attack Power', value: String(stats.attackPower) },
-    ...(stats.rangedAttackPower !== 0
-      ? [{ label: 'Ranged Attack Power', value: String(stats.rangedAttackPower) }]
-      : []),
-    { label: 'Crit Chance', value: `${stats.critChance}%`, note: 'base constant' },
+  const stats = player.stats.effective;
+  const mana = player.resources.get('mana');
+  const definition = getClass(profile.character.characterClass);
+  const other = definition && definition.primaryResource !== 'mana'
+    ? player.resources.get(definition.primaryResource)
+    : undefined;
+
+  const rows: { label: string; value: string; from?: string }[] = [
     {
-      label: 'Spell Crit Chance',
-      value: `${stats.spellCritChance}%`,
-      note: 'base constant',
+      label: 'Hit Points',
+      value: round(player.health.maximum),
+      from: `${base.hitPoints} base + ${base.stamina} stamina`,
     },
+    ...(mana
+      ? [
+          {
+            label: 'Mana',
+            value: round(mana.maximum),
+            from: `${baseManaFor(profile.character.race, profile.character.characterClass)} base + ${base.intellect} intellect`,
+          },
+        ]
+      : []),
+    ...(other ? [{ label: resourceLabel(other.type), value: round(other.maximum) }] : []),
+
+    { label: 'Strength', value: round(stats.strength) },
+    { label: 'Agility', value: round(stats.agility) },
+    { label: 'Stamina', value: round(stats.stamina) },
+    { label: 'Intellect', value: round(stats.intellect) },
+    { label: 'Spirit', value: round(stats.spirit) },
+
+    {
+      label: 'Attack Power',
+      value: round(stats.attackPower),
+      from: `${base.attackPower} base + strength`,
+    },
+    ...(stats.rangedAttackPower !== 0
+      ? [{ label: 'Ranged Attack Power', value: round(stats.rangedAttackPower) }]
+      : []),
+    { label: 'Armor', value: round(stats.armor), from: 'agility' },
+    {
+      label: 'Crit Chance',
+      value: `${stats.critChance.toFixed(2)}%`,
+      from: `${base.critChance}% base + agility`,
+    },
+    ...(stats.spellCritChance !== 0
+      ? [
+          {
+            label: 'Spell Crit Chance',
+            value: `${stats.spellCritChance.toFixed(2)}%`,
+            from: `${base.spellCritChance}% base + intellect`,
+          },
+        ]
+      : []),
+    { label: 'Dodge Chance', value: `${stats.dodgeChance.toFixed(2)}%`, from: 'agility' },
+    ...(stats.manaPer5 !== 0
+      ? [
+          {
+            label: 'Mana per 5 sec',
+            value: stats.manaPer5.toFixed(1),
+            from: 'spirit (not yet regenerating)',
+          },
+        ]
+      : []),
   ];
 
   return (
-    <>
-      <table className="base-stats">
-        <tbody>
-          {rows.map((row) => (
-            <tr key={row.label}>
-              <td>{row.label}</td>
-              <td className="numeric">{row.value}</td>
-              <td className="numeric muted">{row.note ?? ''}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-      <p className="muted">
-        Crit values are class constants that other contributions add to, not a
-        character&apos;s actual crit chance, and are not yet used in combat.
-      </p>
-    </>
+    <table className="base-stats">
+      <tbody>
+        {rows.map((row) => (
+          <tr key={row.label}>
+            <td>{row.label}</td>
+            <td className="numeric">{row.value}</td>
+            <td className="numeric muted">{row.from ?? ''}</td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
   );
+}
+
+function round(value: number): string {
+  return Math.round(value).toLocaleString('en-US');
 }

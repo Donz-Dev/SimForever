@@ -40,7 +40,7 @@ export type RaceId = (typeof RACE_IDS)[number];
  * resource drives play. Warrior stances would slot in here the same way, even
  * though all three use rage.
  */
-export const FORM_IDS = ['caster', 'moonkin', 'bear', 'cat'] as const;
+export const FORM_IDS = ['caster', 'moonkin', 'tree', 'bear', 'cat'] as const;
 export type FormId = (typeof FORM_IDS)[number];
 
 export const CLASS_IDS = [

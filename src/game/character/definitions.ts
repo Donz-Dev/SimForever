@@ -93,6 +93,11 @@ export const CLASSES: readonly ClassDefinition[] = [
     forms: [
       { id: 'caster', name: 'Caster Form', resource: 'mana' },
       { id: 'moonkin', name: 'Moonkin Form', resource: 'mana' },
+      // Tree of Life appears in the stat conversion table alongside Caster and
+      // Moonkin, but was not in the resource list and has no base stats row.
+      // It is assumed to use mana, like the two forms it shares conversions
+      // with. Both assumptions are flagged in docs/character-creation.md.
+      { id: 'tree', name: 'Tree of Life Form', resource: 'mana' },
       { id: 'bear', name: 'Bear Form', resource: 'rage' },
       { id: 'cat', name: 'Cat Form', resource: 'energy' },
     ],

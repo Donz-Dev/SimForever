@@ -150,6 +150,9 @@ docs/                    Architecture documentation
   resources (including the Druid's form-dependent mana/rage/energy)
 - Base stats at level 60 for all 65 race/class/form combinations, generated from
   the source spreadsheet rather than transcribed
+- Per-class stat conversions (strength to attack power, agility to crit and
+  armor, stamina to health, intellect to mana and spell crit, spirit to MP5),
+  re-derived whenever a buff changes a primary stat
 - Combatants with stats, resources, auras and abilities
 - Stat modifier system with flat, additive-percent and multiplicative-percent buckets
 - Auras: durations, stacks, periodic ticks, stat modifiers, refresh behaviour

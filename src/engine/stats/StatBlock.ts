@@ -18,13 +18,24 @@ import type { StatModifier } from './StatModifier';
  * its unbuffed state. Recomputation is lazy and cached: reading a stat between
  * two buff applications costs nothing.
  */
+/**
+ * Turns resolved primary stats into the secondary stats they produce.
+ *
+ * The conversion table is game content (a Warrior gets 2 attack power per
+ * strength, a Rogue gets 1), so the engine takes it as a function rather than
+ * knowing any of the numbers.
+ */
+export type StatDerivation = (primary: Readonly<Stats>) => PartialStats;
+
 export class StatBlock {
   private readonly base: Stats;
   private readonly modifiers: StatModifier[] = [];
+  private readonly derivation: StatDerivation | undefined;
   private cache: Stats | null = null;
 
-  constructor(base: PartialStats = {}) {
+  constructor(base: PartialStats = {}, derivation?: StatDerivation) {
     this.base = makeStats(base);
+    this.derivation = derivation;
   }
 
   /** The unmodified stats this character was built with. */
@@ -79,11 +90,30 @@ export class StatBlock {
     return this.modifiers;
   }
 
+  /**
+   * Effective stats, in two passes.
+   *
+   * Pass one resolves everything from base and modifiers. Pass two feeds the
+   * resolved PRIMARY stats through the derivation and folds what comes back in
+   * as extra flat contributions, then resolves again.
+   *
+   * Two passes rather than one because derivation has to see primary stats that
+   * are already fully buffed: a +10% strength blessing must increase attack
+   * power too, which it would not if attack power were derived from base
+   * strength. Derivation never produces a primary stat, so the primaries are
+   * identical in both passes and this terminates.
+   */
   private computeEffective(): Stats {
+    const firstPass = this.resolve({});
+    if (!this.derivation) return firstPass;
+    return this.resolve(this.derivation(firstPass));
+  }
+
+  private resolve(extra: PartialStats): Stats {
     const result = makeStats();
 
     for (const stat of STAT_NAMES) {
-      let flatTotal = this.base[stat];
+      let flatTotal = this.base[stat] + (extra[stat] ?? 0);
       let percentAddTotal = 0;
       let percentMulProduct = 1;
 

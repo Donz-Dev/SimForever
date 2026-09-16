@@ -23,7 +23,22 @@ export const STAT_NAMES = [
   'rangedAttackPower',
   'spellPower',
 
-  // Secondary ratings (raw rating, not percentage)
+  /*
+   * Percentage-point chances.
+   *
+   * These hold percentage POINTS, not fractions: 5.25 means 5.25%. A
+   * Classic-style ruleset expresses crit and dodge directly rather than through
+   * ratings, and these are what the conversion tables produce.
+   */
+  'critChance',
+  'spellCritChance',
+  'dodgeChance',
+
+  /** Mana restored per five seconds. */
+  'manaPer5',
+
+  // Secondary ratings (raw rating, not percentage). Kept for rulesets and gear
+  // that grant rating rather than a flat percentage.
   'critRating',
   'hasteRating',
   'masteryRating',
@@ -37,6 +52,22 @@ export const STAT_NAMES = [
 ] as const;
 
 export type StatName = (typeof STAT_NAMES)[number];
+
+/**
+ * Stats a character has directly, rather than deriving from something else.
+ *
+ * Conversions read these and produce the rest, so they have to be fully
+ * resolved before any derivation runs. See StatBlock.
+ */
+export const PRIMARY_STAT_NAMES = [
+  'strength',
+  'agility',
+  'stamina',
+  'intellect',
+  'spirit',
+] as const satisfies readonly StatName[];
+
+export type PrimaryStatName = (typeof PRIMARY_STAT_NAMES)[number];
 
 /** A complete set of stat values. */
 export type Stats = Record<StatName, number>;

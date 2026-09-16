@@ -194,7 +194,8 @@ describe('Druid forms', () => {
     it('keeps a mana pool on a bear-form Druid', () => {
       const bear = createPlayer({ race: 'tauren', characterClass: 'druid', form: 'bear' });
       expect(bear.resources.has('mana')).toBe(true);
-      expect(bear.resources.require('mana').maximum).toBe(964);
+      // 964 base mana + 95 intellect * 15.
+      expect(bear.resources.require('mana').maximum).toBe(2389);
     });
   });
 });
@@ -213,20 +214,22 @@ describe('baseStatsToEngineStats', () => {
       spirit: 69,
       attackPower: 100,
       rangedAttackPower: 110,
+      // The crit constants are carried through as the base they are; the
+      // conversion table adds the agility and intellect contributions on top.
+      critChance: -1.53,
+      spellCritChance: 4.66,
     });
   });
 
-  it('leaves out hit points, mana and crit chance', () => {
-    // Hit points and mana are resource maximums, not stats. Crit chance is a
-    // class constant that other contributions add to, so feeding it in as a
-    // character's actual crit would be wrong.
+  it('leaves out hit points and mana', () => {
+    // They are resource maximums, not stats, so the stat block has nowhere to
+    // put them.
     const base = baseStatsFor('human', 'warrior');
     if (!base) return;
     const mapped = baseStatsToEngineStats(base) as Record<string, number>;
 
     expect(mapped.hitPoints).toBeUndefined();
     expect(mapped.mana).toBeUndefined();
-    expect(mapped.critChance).toBeUndefined();
   });
 
   it('only produces names the engine recognises', () => {
@@ -239,16 +242,21 @@ describe('baseStatsToEngineStats', () => {
 });
 
 describe('createPlayer uses base stats', () => {
-  it('builds a Tauren Warrior from the table', () => {
+  it('builds a Tauren Warrior, conversions applied', () => {
     const player = createPlayer({ race: 'tauren', characterClass: 'warrior' });
 
-    expect(player.health.maximum).toBe(1509);
+    // Primary stats are the raw base values.
     expect(player.stats.get('strength')).toBe(125);
     expect(player.stats.get('agility')).toBe(75);
-    expect(player.stats.get('attackPower')).toBe(160);
+
+    // Everything else is base plus what the conversions add.
+    expect(player.health.maximum).toBe(2629); // 1509 + 112 stamina * 10
+    expect(player.stats.get('attackPower')).toBe(410); // 160 + 125 str * 2
+    expect(player.stats.get('armor')).toBe(150); // 75 agi * 2
+    expect(player.stats.get('critChance')).toBeCloseTo(4.89, 6); // 1.14 + 75/20
   });
 
-  it('adds bonus stats on top of the base rather than replacing it', () => {
+  it('adds bonus stats to the base before converting, not after', () => {
     const player = createPlayer({
       race: 'tauren',
       characterClass: 'warrior',
@@ -256,17 +264,22 @@ describe('createPlayer uses base stats', () => {
     });
 
     expect(player.stats.get('strength')).toBe(325); // 125 base + 200 gear
-    expect(player.stats.get('attackPower')).toBe(660); // 160 base + 500 gear
+    // 160 base AP + 500 gear AP + 325 total strength * 2. Gear strength has to
+    // be converted too, which is the whole point of deriving from the total.
+    expect(player.stats.get('attackPower')).toBe(1310);
   });
 
   it('gives a bear-form Druid its form hit points and attack power', () => {
     const caster = createPlayer({ race: 'tauren', characterClass: 'druid', form: 'caster' });
     const bear = createPlayer({ race: 'tauren', characterClass: 'druid', form: 'bear' });
 
-    expect(caster.health.maximum).toBe(1303);
-    expect(bear.health.maximum).toBe(2543);
-    expect(caster.stats.get('attackPower')).toBe(-36);
-    expect(bear.stats.get('attackPower')).toBe(160);
+    // Both add 72 stamina * 10 on top of their form's base hit points.
+    expect(caster.health.maximum).toBe(2023); // 1303 + 720
+    expect(bear.health.maximum).toBe(3263); // 2543 + 720
+
+    // 70 strength * 2 on top of the form's base attack power.
+    expect(caster.stats.get('attackPower')).toBe(104); // -36 + 140
+    expect(bear.stats.get('attackPower')).toBe(300); // 160 + 140
   });
 
   it('refuses an illegal combination rather than inventing stats', () => {
@@ -279,8 +292,10 @@ describe('createPlayer uses base stats', () => {
     for (const race of RACE_IDS) {
       for (const characterClass of classesForRace(race)) {
         const player = createPlayer({ race, characterClass: characterClass.id });
-        expect(player.health.maximum, `${race} ${characterClass.id}`).toBeGreaterThan(0);
-        expect(baseHitPointsFor(race, characterClass.id)).toBe(player.health.maximum);
+        const stats = baseStatsFor(race, characterClass.id);
+        expect(player.health.maximum, `${race} ${characterClass.id}`).toBe(
+          baseHitPointsFor(race, characterClass.id) + (stats?.stamina ?? 0) * 10,
+        );
       }
     }
   });
