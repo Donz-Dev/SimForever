@@ -110,6 +110,13 @@ Everything else in the simulation is an event that schedules further events.
 
 Longer explanations live in [`docs/`](docs/).
 
+Two files sit at the root for anyone (or any AI assistant) picking the project up:
+
+- **[CLAUDE.md](CLAUDE.md)** — durable architectural constraints and working
+  conventions. Claude Code loads it automatically each session.
+- **[HANDOVER.md](HANDOVER.md)** — current status: what works, what is still
+  placeholder, open interpretations, and the next task.
+
 ## Directory structure
 
 ```
