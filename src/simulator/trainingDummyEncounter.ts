@@ -2,6 +2,8 @@ import type { SimulationConfig } from '../engine';
 import { seconds } from '../engine';
 import type { CharacterProfile } from '../profiles';
 import { createPlayer } from '../game/actors/createPlayer';
+import { createForeverAttackChances } from '../game/combat/attackChances';
+import { resolveCombatStyle } from '../game/character';
 import { createTrainingDummy } from '../game/actors/createTrainingDummy';
 import { BATTLE_FURY } from '../game/auras/exampleAuras';
 
@@ -20,6 +22,17 @@ export function trainingDummyEncounter(
     durationMs: seconds(profile.simulation.durationSeconds),
     durationVariance: profile.simulation.durationVariance,
     seed,
+
+    // The combat tables need to know the player's style, because enemy parry
+    // only applies to a character standing in front of the target.
+    attackChances: createForeverAttackChances((id) =>
+      id === 'player_1'
+        ? resolveCombatStyle(
+            profile.character.characterClass,
+            profile.character.combatStyle,
+          )
+        : undefined,
+    ),
 
     // A factory, not an array: every Monte Carlo iteration needs its own fresh
     // combatants rather than the previous iteration's leftovers.

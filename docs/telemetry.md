@@ -43,6 +43,7 @@ event type surfaces every place that needs updating.
   abilityName: 'Strike',
   school: 'physical',
   amount: 219,             // what reached the target's health
+  outcome: 'hit',          // hit | crit | glance | miss | dodge | parry | crush
   critical: false,
   mitigated: 0,            // removed by armor or resistance
   absorbed: 0,             // removed by shields
@@ -122,9 +123,16 @@ interface Analyzer<T> {
 time. Implemented so far:
 
 - **`DamageAnalyzer`** — total, DPS, per-actor and per-ability breakdown with
-  hits, crit rate, average and share. Counts only damage dealt by friendly
-  actors, since that is what a DPS sim measures; damage taken is a different
-  question and deserves its own analyzer rather than a flag on this one.
+  attempts, landed hits, crit rate, glance rate, avoid rate, average and share.
+  Counts only damage dealt by friendly actors, since that is what a DPS sim
+  measures; damage taken is a different question and deserves its own analyzer
+  rather than a flag on this one.
+
+  **`attempts` and `hits` are different numbers.** Every resolution is an
+  attempt; only the ones that were not missed, dodged or parried are hits.
+  Averages and crit rates are computed over hits, because averaging damage over
+  attempts would fold every miss in as a zero and report a weapon as hitting for
+  far less than it does.
 - **`HealingAnalyzer`** — total, HPS, overhealing per actor.
 
 `buildSimulationResult` runs both and assembles the `SimulationResult` the UI

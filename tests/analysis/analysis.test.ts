@@ -39,6 +39,7 @@ function damage(
     abilityName,
     school: 'physical',
     amount,
+    outcome: options.critical ? 'crit' : 'hit',
     critical: options.critical ?? false,
     mitigated: 0,
     absorbed: 0,

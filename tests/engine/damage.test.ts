@@ -1,15 +1,44 @@
 import { describe, expect, it } from 'vitest';
 import type { DamageTelemetryEvent } from '../../src/engine';
+import type { AttackResolution } from '../../src/engine';
 import {
   ARMOR_CONSTANT,
-  CRITICAL_STRIKE_MULTIPLIER,
   MAX_ARMOR_REDUCTION,
-  SeededRNG,
   armorReduction,
   dealDamage,
   resolveDamage,
   scaleByPower,
 } from '../../src/engine';
+
+/*
+ * The combat table roll and the damage calculation are separate steps, so these
+ * tests hand `resolveDamage` an explicit outcome rather than rolling for one.
+ * That makes each case exact instead of probabilistic.
+ */
+const HIT: AttackResolution = {
+  outcome: 'hit',
+  avoided: false,
+  damageMultiplier: 1,
+  rolls: [],
+};
+const CRIT: AttackResolution = {
+  outcome: 'crit',
+  avoided: false,
+  damageMultiplier: 2,
+  rolls: [],
+};
+const GLANCE: AttackResolution = {
+  outcome: 'glance',
+  avoided: false,
+  damageMultiplier: 0.7,
+  rolls: [],
+};
+const MISS: AttackResolution = {
+  outcome: 'miss',
+  avoided: true,
+  damageMultiplier: 0,
+  rolls: [],
+};
 import { buildSimulation } from '../helpers/buildSimulation';
 import { makeAttacker, makeTarget } from '../helpers/actors';
 
@@ -82,8 +111,6 @@ describe('armorReduction', () => {
 });
 
 describe('resolveDamage', () => {
-  const rng = () => new SeededRNG(1);
-
   it('leaves a non-crit at its scaled value when nothing mitigates it', () => {
     const source = makeAttacker({ stats: { attackPower: 100 } });
     const target = makeTarget({ stats: { armor: 0 } });
@@ -96,9 +123,8 @@ describe('resolveDamage', () => {
         school: 'physical',
         baseAmount: 100,
         powerCoefficient: 1,
-        canCrit: false,
       },
-      rng(),
+      HIT,
     );
 
     expect(result.critical).toBe(false);
@@ -106,17 +132,52 @@ describe('resolveDamage', () => {
     expect(result.mitigated).toBe(0);
   });
 
-  it('multiplies a critical strike', () => {
-    const source = makeAttacker({ stats: { attackPower: 0, critRating: 1_000_000 } });
+  it('deals nothing at all when the attack is avoided', () => {
+    const source = makeAttacker({ stats: { attackPower: 1000 } });
+    const target = makeTarget({ stats: { armor: 0 } });
+
+    const result = resolveDamage(
+      {
+        source,
+        target,
+        abilityName: 'Test',
+        school: 'physical',
+        baseAmount: 100,
+        powerCoefficient: 1,
+      },
+      MISS,
+    );
+
+    expect(result.amount).toBe(0);
+    expect(result.avoided).toBe(true);
+    expect(result.outcome).toBe('miss');
+    expect(result.raw).toBe(0);
+  });
+
+  it('reduces a glancing blow by the glance multiplier', () => {
+    const source = makeAttacker({ stats: { attackPower: 0 } });
     const target = makeTarget({ stats: { armor: 0 } });
 
     const result = resolveDamage(
       { source, target, abilityName: 'Test', school: 'physical', baseAmount: 100 },
-      rng(),
+      GLANCE,
+    );
+
+    expect(result.outcome).toBe('glance');
+    expect(result.amount).toBeCloseTo(70, 6);
+  });
+
+  it('multiplies a critical strike', () => {
+    const source = makeAttacker({ stats: { attackPower: 0 } });
+    const target = makeTarget({ stats: { armor: 0 } });
+
+    const result = resolveDamage(
+      { source, target, abilityName: 'Test', school: 'physical', baseAmount: 100 },
+      CRIT,
     );
 
     expect(result.critical).toBe(true);
-    expect(result.amount).toBe(100 * CRITICAL_STRIKE_MULTIPLIER);
+    expect(result.amount).toBe(200);
   });
 
   it('reduces physical damage by the target armor', () => {
@@ -130,22 +191,21 @@ describe('resolveDamage', () => {
         abilityName: 'Test',
         school: 'physical',
         baseAmount: 1000,
-        canCrit: false,
       },
-      rng(),
+      HIT,
     );
 
     expect(result.amount).toBeCloseTo(500, 6);
     expect(result.mitigated).toBeCloseTo(500, 6);
   });
 
-  it('is reproducible for a given seed', () => {
+  it('is a pure function of its inputs', () => {
     const run = (): number => {
       const source = makeAttacker();
       const target = makeTarget();
       return resolveDamage(
         { source, target, abilityName: 'Test', school: 'physical', baseAmount: 100 },
-        new SeededRNG(777),
+        HIT,
       ).amount;
     };
     expect(run()).toBe(run());
@@ -165,7 +225,6 @@ describe('dealDamage', () => {
       abilityName: 'Test',
       school: 'physical',
       baseAmount: 250,
-      canCrit: false,
     });
 
     expect(target.health.current).toBe(750);
@@ -184,7 +243,6 @@ describe('dealDamage', () => {
         abilityName: 'Test',
         school: 'physical',
         baseAmount: 100,
-        canCrit: false,
       });
     }
 
@@ -204,7 +262,6 @@ describe('dealDamage', () => {
       abilityName: 'Test Ability',
       school: 'fire',
       baseAmount: 300,
-      canCrit: false,
     });
 
     const damageEvents = sim.recordedTelemetry.filter(
@@ -240,7 +297,6 @@ describe('dealDamage', () => {
         abilityName: 'Test',
         school: 'physical',
         baseAmount: 81.7,
-        canCrit: false,
       });
     }
 
@@ -263,7 +319,6 @@ describe('dealDamage', () => {
       abilityName: 'Overkill',
       school: 'physical',
       baseAmount: 250,
-      canCrit: false,
     });
 
     expect(target.health.current).toBe(0);
@@ -287,7 +342,6 @@ describe('dealDamage', () => {
       abilityName: 'Killing Blow',
       school: 'physical',
       baseAmount: 100,
-      canCrit: false,
     });
 
     expect(target.isAlive).toBe(false);
@@ -308,7 +362,6 @@ describe('dealDamage', () => {
         abilityName: 'Test',
         school: 'physical',
         baseAmount: 100,
-        canCrit: false,
       });
     }
 

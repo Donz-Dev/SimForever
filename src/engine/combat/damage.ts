@@ -1,13 +1,12 @@
 import type { Combatant } from '../actors/Combatant';
-import type { RNG } from '../rng';
 import type { SimulationContext } from '../simulation/SimulationContext';
 import type { DamageSchool } from './DamageSchool';
 import { isPhysical } from './DamageSchool';
+import type { AttackOutcome, AttackResolution, AttackTableKind } from './attackTable';
+import { resolveAttackTable } from './attackTable';
 import {
   ARMOR_CONSTANT,
-  CRITICAL_STRIKE_MULTIPLIER,
   MAX_ARMOR_REDUCTION,
-  critChanceFrom,
   versatilityMultiplierFrom,
 } from './ratings';
 
@@ -31,14 +30,24 @@ export interface DamageRequest {
    * (magical) and added to `baseAmount`.
    */
   readonly powerCoefficient?: number;
-  /** Defaults to true. Periodic ticks in some games cannot crit. */
-  readonly canCrit?: boolean;
+  /**
+   * Which combat table resolves this attack.
+   *
+   * Omitted means the damage lands unconditionally with no roll: a
+   * damage-over-time tick, whose landing was already decided when the effect
+   * was applied.
+   */
+  readonly attackTable?: AttackTableKind;
   /** True for damage-over-time ticks. Recorded in telemetry. */
   readonly periodic?: boolean;
 }
 
 /** The fully resolved outcome of a damage request. */
 export interface DamageResolution {
+  /** What the combat table produced. `hit` when no table was consulted. */
+  readonly outcome: AttackOutcome;
+  /** True when the attack was missed, dodged or parried. */
+  readonly avoided: boolean;
   /** Damage before mitigation and absorbs, after power scaling and crit. */
   readonly raw: number;
   /** Removed by armor or resistance. */
@@ -71,16 +80,6 @@ export function scaleByPower(request: DamageRequest): number {
   return request.baseAmount + coefficient * power;
 }
 
-/** Whether this hit crits, given the attacker's stats and the shared RNG. */
-export function rollCritical(source: Combatant, rng: RNG, canCrit: boolean): boolean {
-  if (!canCrit) return false;
-  return rng.rollChance(critChanceFrom(source.stats.effective));
-}
-
-export function applyCriticalMultiplier(amount: number, critical: boolean): number {
-  return critical ? amount * CRITICAL_STRIKE_MULTIPLIER : amount;
-}
-
 /**
  * Fraction of a physical hit removed by armor.
  *
@@ -94,17 +93,50 @@ export function armorReduction(armor: number, school: DamageSchool): number {
 }
 
 /**
+ * The attack table result for a request, or a guaranteed hit when it has no
+ * table.
+ */
+function rollTable(
+  request: DamageRequest,
+  context: SimulationContext,
+): AttackResolution {
+  if (!request.attackTable) {
+    return { outcome: 'hit', avoided: false, damageMultiplier: 1, rolls: [] };
+  }
+  const chances = context.attackChances(request.attackTable, request.source, request.target);
+  return resolveAttackTable(request.attackTable, chances, context.rng);
+}
+
+/**
  * Run a damage request through the whole pipeline without applying it.
  *
- * Pure apart from consuming one RNG roll, which makes it safe to call from
- * tests and from a future "what would this hit for?" tooltip.
+ * `attack` is the already-rolled combat table result, so the roll and the
+ * damage calculation stay separable: an ability can roll the table once and use
+ * the outcome for something other than damage.
  */
-export function resolveDamage(request: DamageRequest, rng: RNG): DamageResolution {
+export function resolveDamage(
+  request: DamageRequest,
+  attack: AttackResolution,
+): DamageResolution {
   const { source, target, school } = request;
 
+  // A missed, dodged or parried attack does no damage and skips the rest of
+  // the pipeline entirely.
+  if (attack.avoided) {
+    return {
+      outcome: attack.outcome,
+      avoided: true,
+      raw: 0,
+      mitigated: 0,
+      absorbed: 0,
+      amount: 0,
+      critical: false,
+    };
+  }
+
   const scaled = scaleByPower(request);
-  const critical = rollCritical(source, rng, request.canCrit ?? true);
-  const afterCrit = applyCriticalMultiplier(scaled, critical);
+  const critical = attack.outcome === 'crit';
+  const afterCrit = scaled * attack.damageMultiplier;
 
   const attackerMultiplier =
     source.damageDoneMultiplier * versatilityMultiplierFrom(source.stats.effective);
@@ -123,6 +155,8 @@ export function resolveDamage(request: DamageRequest, rng: RNG): DamageResolutio
   const amount = Math.max(0, afterMitigation - absorbed);
 
   return {
+    outcome: attack.outcome,
+    avoided: false,
     raw: afterTarget,
     mitigated,
     absorbed,
@@ -141,7 +175,8 @@ export function dealDamage(
   context: SimulationContext,
   request: DamageRequest,
 ): DamageResolution {
-  const resolution = resolveDamage(request, context.rng);
+  const attack = rollTable(request, context);
+  const resolution = resolveDamage(request, attack);
   const { target, source } = request;
 
   const healthBefore = target.health.current;
@@ -161,6 +196,7 @@ export function dealDamage(
     abilityName: request.abilityName,
     school: request.school,
     amount: resolution.amount,
+    outcome: resolution.outcome,
     critical: resolution.critical,
     mitigated: resolution.mitigated,
     absorbed: resolution.absorbed,

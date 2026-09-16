@@ -1,4 +1,5 @@
 import type { Combatant } from '../actors/Combatant';
+import type { AttackChanceProvider } from '../combat/attackTable';
 import type { Milliseconds } from '../time';
 import type { SimulationContext } from './SimulationContext';
 
@@ -29,6 +30,14 @@ export interface SimulationConfig {
 
   /** Builds a fresh set of combatants for one iteration. */
   readonly createCombatants: () => Combatant[];
+
+  /**
+   * Supplies miss, dodge, parry, glance and crit chances for the combat tables.
+   *
+   * Defaults to `defaultAttackChances`, which only rolls crit. Real rulesets
+   * pass their own; the numbers are content, not engine.
+   */
+  readonly attackChances?: AttackChanceProvider;
 
   /**
    * Runs once at time 0, after combatants exist and before any event fires.

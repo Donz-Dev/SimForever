@@ -52,7 +52,7 @@ export function checkCast(
     return { ok: false, reason: 'invalid_target' };
   }
 
-  const abilityContext: AbilityContext = { simulation: context, caster, target };
+  const abilityContext: AbilityContext = { simulation: context, caster, target, ability };
   if (ability.canCast && !ability.canCast(abilityContext)) {
     return { ok: false, reason: 'condition_failed' };
   }
@@ -112,7 +112,7 @@ export function castAbility(
   });
 
   const castTime = castLength(ability, haste);
-  const abilityContext: AbilityContext = { simulation: context, caster, target };
+  const abilityContext: AbilityContext = { simulation: context, caster, target, ability };
 
   if (castTime <= 0) {
     ability.onCast(abilityContext);
@@ -125,7 +125,7 @@ export function castAbility(
     createEvent(`cast-complete:${ability.id}`, EventPriority.CastComplete, (ctx) => {
       caster.castEndsAt = 0;
       if (!caster.isAlive) return;
-      ability.onCast({ simulation: ctx, caster, target });
+      ability.onCast({ simulation: ctx, caster, target, ability });
     }),
   );
 

@@ -46,7 +46,6 @@ const BLEED: AuraDefinition = {
         abilityName: aura.name,
         school: 'physical',
         baseAmount: 10,
-        canCrit: false,
         periodic: true,
       });
     },
@@ -272,7 +271,6 @@ describe('AuraCollection', () => {
       abilityName: 'Finisher',
       school: 'physical',
       baseAmount: 1_000_000,
-      canCrit: false,
     });
 
     expect(target.auras.size).toBe(0);

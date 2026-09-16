@@ -1,14 +1,33 @@
 import { toSeconds } from '../engine';
 import type { AnalysisInput, Analyzer } from './Analyzer';
 
-/** How one ability performed for one actor. */
+/**
+ * How one ability performed for one actor.
+ *
+ * `attempts` counts every swing or cast; `hits` counts only the ones that
+ * landed. The distinction matters as soon as attacks can be avoided: averaging
+ * damage over attempts would quietly fold every miss in as a zero and report a
+ * weapon as hitting for far less than it does.
+ */
 export interface AbilityDamageBreakdown {
   readonly abilityName: string;
+  /** Every resolution, landed or not. */
+  readonly attempts: number;
+  /** Resolutions that dealt damage. */
   readonly hits: number;
   readonly crits: number;
-  /** Fraction of hits that crit, in [0, 1]. */
+  readonly glances: number;
+  readonly misses: number;
+  readonly dodges: number;
+  readonly parries: number;
+  /** Fraction of LANDED hits that crit, in [0, 1]. */
   readonly critRate: number;
+  /** Fraction of landed hits that glanced, in [0, 1]. */
+  readonly glanceRate: number;
+  /** Fraction of attempts that were missed, dodged or parried, in [0, 1]. */
+  readonly avoidRate: number;
   readonly total: number;
+  /** Average damage per LANDED hit. */
   readonly average: number;
   readonly overkill: number;
   /** Fraction of this actor's total damage, in [0, 1]. */
@@ -63,14 +82,40 @@ export class DamageAnalyzer implements Analyzer<DamageSummary> {
 
       let entry = abilities.get(event.abilityName);
       if (!entry) {
-        entry = { hits: 0, crits: 0, total: 0, overkill: 0 };
+        entry = {
+          attempts: 0,
+          hits: 0,
+          crits: 0,
+          glances: 0,
+          misses: 0,
+          dodges: 0,
+          parries: 0,
+          total: 0,
+          overkill: 0,
+        };
         abilities.set(event.abilityName, entry);
       }
 
-      entry.hits++;
-      if (event.critical) entry.crits++;
-      entry.total += event.amount;
-      entry.overkill += event.overkill;
+      entry.attempts++;
+
+      switch (event.outcome) {
+        case 'miss':
+          entry.misses++;
+          break;
+        case 'dodge':
+          entry.dodges++;
+          break;
+        case 'parry':
+          entry.parries++;
+          break;
+        default:
+          entry.hits++;
+          if (event.outcome === 'crit') entry.crits++;
+          if (event.outcome === 'glance') entry.glances++;
+          entry.total += event.amount;
+          entry.overkill += event.overkill;
+          break;
+      }
     }
 
     const elapsedSeconds = Math.max(toSeconds(input.elapsedMs), 0.001);
@@ -80,16 +125,26 @@ export class DamageAnalyzer implements Analyzer<DamageSummary> {
         const total = [...abilities.values()].reduce((sum, entry) => sum + entry.total, 0);
 
         const breakdowns: AbilityDamageBreakdown[] = [...abilities.entries()]
-          .map(([abilityName, entry]) => ({
-            abilityName,
-            hits: entry.hits,
-            crits: entry.crits,
-            critRate: entry.hits === 0 ? 0 : entry.crits / entry.hits,
-            total: entry.total,
-            average: entry.hits === 0 ? 0 : entry.total / entry.hits,
-            overkill: entry.overkill,
-            share: total === 0 ? 0 : entry.total / total,
-          }))
+          .map(([abilityName, entry]) => {
+            const avoided = entry.misses + entry.dodges + entry.parries;
+            return {
+              abilityName,
+              attempts: entry.attempts,
+              hits: entry.hits,
+              crits: entry.crits,
+              glances: entry.glances,
+              misses: entry.misses,
+              dodges: entry.dodges,
+              parries: entry.parries,
+              critRate: entry.hits === 0 ? 0 : entry.crits / entry.hits,
+              glanceRate: entry.hits === 0 ? 0 : entry.glances / entry.hits,
+              avoidRate: entry.attempts === 0 ? 0 : avoided / entry.attempts,
+              total: entry.total,
+              average: entry.hits === 0 ? 0 : entry.total / entry.hits,
+              overkill: entry.overkill,
+              share: total === 0 ? 0 : entry.total / total,
+            };
+          })
           .sort((a, b) => b.total - a.total);
 
         return {
@@ -113,8 +168,13 @@ export class DamageAnalyzer implements Analyzer<DamageSummary> {
 }
 
 interface MutableBreakdown {
+  attempts: number;
   hits: number;
   crits: number;
+  glances: number;
+  misses: number;
+  dodges: number;
+  parries: number;
   total: number;
   overkill: number;
 }

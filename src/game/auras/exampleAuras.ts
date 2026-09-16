@@ -54,6 +54,8 @@ export const RENDING_WOUND: AuraDefinition = {
         school: 'physical',
         baseAmount: REND_TICK_DAMAGE * aura.stacks,
         powerCoefficient: 0.08 * aura.stacks,
+        // No attack table: whether this effect landed was decided when it was
+        // applied, so its ticks do not roll again.
         periodic: true,
       });
     },

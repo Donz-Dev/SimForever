@@ -1,4 +1,5 @@
 import type { Combatant } from '../actors/Combatant';
+import type { AttackTableKind } from '../combat/attackTable';
 import type { ResourceType } from '../resources';
 import type { SimulationContext } from '../simulation/SimulationContext';
 import type { Milliseconds } from '../time';
@@ -20,6 +21,8 @@ export interface AbilityContext {
   readonly simulation: SimulationContext;
   readonly caster: Combatant;
   readonly target: Combatant | undefined;
+  /** The ability being cast, so `onCast` can read its own declared values. */
+  readonly ability: Ability;
 }
 
 /**
@@ -52,6 +55,19 @@ export interface Ability {
   readonly cost?: AbilityCost;
   /** Whether a living hostile target is required. Defaults to true. */
   readonly requiresTarget?: boolean;
+
+  /**
+   * Which combat table this ability resolves against.
+   *
+   * Mortal Strike and Rend are `melee-special`; Multi-Shot is
+   * `ranged-special`; Fireball and Shadow Word: Pain are `spell`. Even an
+   * ability that deals no direct damage declares one, because its table decides
+   * whether it lands at all.
+   *
+   * Read inside `onCast` through `context.ability`, so the table is declared
+   * once rather than repeated in every damage call.
+   */
+  readonly attackTable?: AttackTableKind;
 
   /**
    * Extra conditions beyond cooldown, cost and target, which the engine
