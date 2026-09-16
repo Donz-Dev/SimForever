@@ -1,0 +1,62 @@
+import { CURRENT_PROFILE_VERSION } from './CharacterProfile';
+
+/** Transforms a profile one version forward. */
+type Migration = (profile: Record<string, unknown>) => Record<string, unknown>;
+
+/**
+ * Migrations keyed by the version they upgrade FROM.
+ *
+ * `migrations[1]` turns a version-1 profile into a version-2 profile. To change
+ * the format: bump CURRENT_PROFILE_VERSION, then add the step that gets old
+ * files to the new shape.
+ *
+ * Empty for now, because version 1 is the first version. The machinery is here
+ * anyway, since the cost of adding it now is a few lines and the cost of adding
+ * it after people have saved profiles is a support problem.
+ */
+const migrations: Record<number, Migration> = {};
+
+export type MigrationResult =
+  | { readonly ok: true; readonly value: unknown; readonly migrated: boolean }
+  | { readonly ok: false; readonly message: string };
+
+/**
+ * Bring a parsed profile up to the current version.
+ *
+ * Runs before validation: an old file is valid for its own version, not for
+ * this one, so it has to be upgraded before it can be checked.
+ */
+export function migrateProfile(value: unknown): MigrationResult {
+  if (typeof value !== 'object' || value === null || Array.isArray(value)) {
+    return { ok: false, message: 'Profile must be an object.' };
+  }
+
+  let current = { ...(value as Record<string, unknown>) };
+  const version = current.version;
+
+  if (typeof version !== 'number' || !Number.isInteger(version) || version < 1) {
+    return { ok: false, message: 'Profile is missing a valid version number.' };
+  }
+
+  if (version > CURRENT_PROFILE_VERSION) {
+    return {
+      ok: false,
+      message:
+        `This profile was saved by a newer version of SimForever ` +
+        `(format ${version}, this build understands ${CURRENT_PROFILE_VERSION}).`,
+    };
+  }
+
+  let migrated = false;
+  for (let from = version; from < CURRENT_PROFILE_VERSION; from++) {
+    const migration = migrations[from];
+    if (!migration) {
+      return { ok: false, message: `No migration from profile version ${from}.` };
+    }
+    current = migration(current);
+    current.version = from + 1;
+    migrated = true;
+  }
+
+  return { ok: true, value: current, migrated };
+}

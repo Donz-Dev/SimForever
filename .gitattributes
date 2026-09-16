@@ -1,0 +1,9 @@
+# Normalise line endings across the team.
+#
+# Without this, a contributor on Windows and one on macOS produce whole-file
+# diffs every time they touch a file, which makes review impossible. LF in the
+# repository and in every working copy.
+* text=auto eol=lf
+
+# Generated; collapse it in pull request diffs.
+package-lock.json linguist-generated=true -diff

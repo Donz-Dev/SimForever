@@ -1,0 +1,28 @@
+{
+  "version": 1,
+  "character": {
+    "name": "Thunderaxe",
+    "race": "Orc",
+    "characterClass": "Warrior",
+    "level": 80
+  },
+  "stats": {
+    "strength": 2400,
+    "attackPower": 1800,
+    "critRating": 1450,
+    "hasteRating": 980,
+    "masteryRating": 1100,
+    "versatilityRating": 620
+  },
+  "simulation": {
+    "durationSeconds": 300,
+    "durationVariance": 0.1,
+    "iterations": 1000,
+    "seed": 20260916
+  },
+  "encounter": {
+    "targetName": "Raid Boss",
+    "targetHealth": 50000000,
+    "targetArmor": 7390
+  }
+}

@@ -1,0 +1,361 @@
+/*
+ * Plain CSS, no framework.
+ *
+ * The UI exists to prove the engine can be driven from a browser. Keeping the
+ * styling to one small file means there is nothing to unpick when the real
+ * interface gets designed.
+ */
+
+:root {
+  --bg: #14161a;
+  --panel: #1c1f26;
+  --panel-border: #2a2f3a;
+  --text: #e4e6eb;
+  --text-muted: #8b93a5;
+  --accent: #c8a45c;
+  --accent-strong: #e0b968;
+  --error: #e06c6c;
+  --font-ui: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: ui-monospace, 'Cascadia Code', 'Consolas', monospace;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-ui);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.app {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 24px 16px 64px;
+}
+
+.app-header {
+  border-bottom: 1px solid var(--panel-border);
+  margin-bottom: 24px;
+  padding-bottom: 16px;
+}
+
+.app-header h1 {
+  margin: 0;
+  font-size: 28px;
+  letter-spacing: 0.02em;
+  color: var(--accent);
+}
+
+.app-header p {
+  margin: 4px 0 0;
+  color: var(--text-muted);
+}
+
+.app-layout {
+  display: grid;
+  grid-template-columns: minmax(280px, 340px) 1fr;
+  gap: 20px;
+  align-items: start;
+}
+
+@media (max-width: 900px) {
+  .app-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+.column {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+}
+
+/* --- panels --- */
+
+.panel {
+  background: var(--panel);
+  border: 1px solid var(--panel-border);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.panel-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--panel-border);
+}
+
+.panel-header h2 {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+}
+
+.panel-subtitle {
+  margin: 2px 0 0;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.panel-actions {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.panel-body {
+  padding: 16px;
+}
+
+.panel-body h3 {
+  margin: 20px 0 8px;
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+}
+
+.panel-body h3:first-child {
+  margin-top: 0;
+}
+
+/* --- form fields --- */
+
+.field {
+  display: block;
+  margin-bottom: 12px;
+}
+
+.field:last-child {
+  margin-bottom: 0;
+}
+
+.field-label {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 4px;
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.field-hint {
+  font-size: 11px;
+  opacity: 0.7;
+}
+
+input[type='text'],
+input[type='number'],
+textarea {
+  width: 100%;
+  padding: 7px 10px;
+  background: #11141a;
+  border: 1px solid var(--panel-border);
+  border-radius: 4px;
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-size: 13px;
+}
+
+input:focus,
+textarea:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+button {
+  padding: 6px 12px;
+  background: #262b35;
+  border: 1px solid var(--panel-border);
+  border-radius: 4px;
+  color: var(--text);
+  font-family: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+button:hover:not(:disabled) {
+  border-color: var(--accent);
+}
+
+button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.run-button {
+  width: 100%;
+  margin-top: 16px;
+  padding: 11px;
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #14161a;
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.run-button:hover:not(:disabled) {
+  background: var(--accent-strong);
+}
+
+.progress {
+  height: 4px;
+  margin-top: 8px;
+  background: #11141a;
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.progress-bar {
+  height: 100%;
+  background: var(--accent);
+  transition: width 0.1s linear;
+}
+
+/* --- results --- */
+
+.stat-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 12px;
+}
+
+.stat {
+  display: flex;
+  flex-direction: column;
+  padding: 10px 12px;
+  background: #11141a;
+  border-radius: 6px;
+}
+
+.stat-label {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+}
+
+.stat-value {
+  font-family: var(--font-mono);
+  font-size: 19px;
+  color: var(--accent);
+}
+
+.breakdown {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.breakdown th,
+.breakdown td {
+  padding: 7px 10px;
+  border-bottom: 1px solid var(--panel-border);
+  text-align: left;
+}
+
+.breakdown th {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+}
+
+.breakdown td {
+  font-family: var(--font-mono);
+}
+
+.breakdown tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.numeric {
+  text-align: right !important;
+}
+
+.share {
+  position: relative;
+  display: inline-block;
+  min-width: 72px;
+}
+
+.share-bar {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(200, 164, 92, 0.22);
+  border-radius: 2px;
+}
+
+.share-text {
+  position: relative;
+}
+
+.end-reason {
+  margin-bottom: 0;
+}
+
+/* --- combat log --- */
+
+.combat-log {
+  max-height: 520px;
+  margin: 0;
+  padding: 12px;
+  overflow: auto;
+  background: #11141a;
+  border-radius: 6px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  line-height: 1.6;
+  white-space: pre;
+}
+
+.profile-json {
+  height: 220px;
+  resize: vertical;
+  white-space: pre;
+}
+
+/* --- misc --- */
+
+.placeholder {
+  padding: 48px 24px;
+  background: var(--panel);
+  border: 1px dashed var(--panel-border);
+  border-radius: 8px;
+  color: var(--text-muted);
+  text-align: center;
+}
+
+.placeholder.error {
+  border-color: var(--error);
+  color: var(--error);
+}
+
+.muted {
+  color: var(--text-muted);
+  font-size: 12px;
+}
+
+.issues {
+  margin: 12px 0 0;
+  padding-left: 20px;
+  color: var(--error);
+  font-size: 12px;
+}
