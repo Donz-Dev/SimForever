@@ -38,7 +38,8 @@ ui  ──▶  simulator  ──▶  engine
 ```
 
 - **`engine`** — the rules. How combat works. Knows nothing about warriors or fireballs.
-- **`game`** — the content. Races, classes, abilities, the Forever numbers.
+- **`game`** — the content. Races, classes, abilities, talents, items, the Forever numbers.
+- **`data`** — bulk content from external sources, as JSON. A script writes it; nothing hand-edits it.
 - **`analysis`** — turns telemetry into statistics. Never touches a live simulation.
 - **`simulator`** — the only place engine + game + analysis are wired together. The UI imports from here.
 - **`profiles`** — versioned JSON character configuration.
@@ -77,6 +78,49 @@ event with `amount: 0`. Averaging over attempts folds every miss in as a zero.
 order)`. `Periodic` sorts before `AuraExpiration` so a DoT's final tick, due at
 the moment it falls off, still lands.
 
+**At most one pending swing per weapon slot.** `scheduleSwing` cancels whatever
+that slot was waiting on before scheduling. Without it an extra attack forks the
+chain: it fires from inside a swing, which has not yet scheduled its successor,
+so the extra attack schedules one and the original schedules another — two
+independent timers on one weapon, doubling again with every proc. Four Hand of
+Justice procs turned 115 main-hand swings into 211, which reads as a very good
+trinket rather than as a bug.
+
+**A dual-wielder has two combat tables, not one shown twice.** Miss and enemy
+dodge both derive from the WIELDING WEAPON's skill, so a sword in one hand and a
+mace in the other diverge the moment anything grants skill with one and not the
+other. Anything reporting them must ask per slot. The dual-wield penalty lands on
+both hands, so it is skill and not the penalty that separates them.
+
+**A stat that only applies sometimes is a bug waiting to happen.** Equipment
+resolution strips the slots a combat style cannot fill, and stripping one slot
+too many silently discarded a bow's attack power from every melee character.
+Only genuine conflicts are exclusive: a two-hander against a one-hander, and an
+off-hand the style cannot hold. A ranged weapon coexists with a sword and simply
+does not swing.
+
+## Where the Forever data comes from
+
+Three sources, and knowing which answers what saves a lot of asking.
+
+**`C:\Users\Donz\Documents\WoWForever*`** — the ruleset owner's own files, and
+the highest authority. Base stats (`.xlsx`), the combat table, stat conversions,
+resources, expected stats, and one ability spreadsheet per class as they are
+written. `WoWForeverSimGuidance.docx` is NOT data; it is screenshots of an
+architecture discussion.
+
+**`wowhead.com/forever/talent-calc/<class>`** — the talent trees, and a useful
+cross-check on ability numbers because its tooltips restate them. Client-side
+rendered, so a plain fetch gets a page with no talents in it; the data is in the
+DOM. `src/data/talents/README.md` has the selectors.
+
+**`nether.wowhead.com/classic/tooltip/item/<id>`** — Classic item and spell
+tooltips, as plain JSON. No browser needed. Used for the current items, which are
+Classic stand-ins rather than Forever data. `src/data/items/README.md` has the
+markers to parse.
+
+When a number is missing, check whether one of these answers it before asking.
+
 ## Never invent game data
 
 This is the most important working rule.
@@ -92,14 +136,48 @@ to flip. Example: the source names an expression `Armor_Reduction` but it
 computes the damage *multiplier* — resolved by checking it against the known
 ~40% figure for a 3731-armor raid boss.
 
-## Generated files
+**When an effect cannot be modelled, keep its own words and surface them.** Items
+carry an `unmodelled` list holding the source's exact text and one line on why it
+does nothing, and the Gear panel prints every one under "Equipped but not
+simulated". An effect that matches no rule is never guessed at — which is what
+kept Crusader granting nothing until its proc rate arrived, rather than quietly
+inheriting a plausible one. The same applies to `PLACEHOLDER_*` constants: a
+visibly inert buff is the honest failure mode.
+
+**Two sources can disagree.** The ability spreadsheets and the Forever talent
+calculator both describe the same abilities, and where they agree confidence
+rises. Where they disagree, say so in the docs and pick the one the ruleset owner
+supplied directly — do not average them or quietly prefer the newer.
+
+## Generated and scraped data
 
 `src/game/character/baseStats.ts` is **generated** by
 `tools/import_base_stats.py` from the base stats spreadsheet. Never edit it by
 hand; re-run the generator.
 
-Its tests check it against values transcribed **independently by hand**. A test
-that derived expectations from the generated file would prove nothing.
+`src/data/talents/*.json` (470 talents, nine classes) and
+`src/data/items/classic-warrior.json` (18 items) were **scraped once** and are
+checked in. Each directory has a README recording exactly where the data came
+from and how to refresh it. Never hand-edit either.
+
+**Prove a transfer rather than trusting it.** Both data sets came out of a
+browser, and both were hashed with SHA-256 there and re-hashed on disk before
+being accepted. For 113KB of talents that is the difference between confidence
+and hope. The clipboard is a working channel for this on Windows
+(`document.execCommand('copy')` after a real click, then `Get-Clipboard -Raw`),
+and it overwrites the user's clipboard, so say so.
+
+**Validate scraped data at load and throw.** `talentData.ts` checks tier against
+row, prerequisites resolving inside their own tree, and duplicate ids; the item
+loader recomputes each weapon's dps from its damage and speed and throws if the
+three disagree. A page that changes shape should fail loudly, not render a tree
+with a broken arrow.
+
+Tests check this data against values transcribed **independently by hand**. A
+test that derived its expectations from the file under test would prove nothing.
+Where the volume makes that impractical — 470 talents — transcribe the shape
+(tree names, sizes, capstones) and assert the invariants that must hold for all
+of them at once.
 
 ## Testing
 
