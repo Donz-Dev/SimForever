@@ -34,7 +34,7 @@ their talent trees and nothing else.
 
 The app is **live at <https://donz-dev.github.io/SimForever/>**, republished by
 `.github/workflows/deploy.yml` on every push to `main` that passes the tests.
-See "Deployment" in [README.md](README.md) for the one manual setting it needs
+See [docs/deployment.md](docs/deployment.md) for the one manual setting it needs
 and why a production build carries a `/SimForever/` path prefix.
 
 A geared dual-wield Warrior runs at roughly **140 DPS** against a level 63

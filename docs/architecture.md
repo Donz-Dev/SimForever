@@ -199,6 +199,10 @@ architecture has room for it.
 - **No premature optimisation.** The engine is written to be readable. When it
   becomes too slow, the order is: measure, then Web Workers, then hot paths,
   then consider another language. Not before.
+- **No combatant hierarchy.** One `Combatant` class, not a `Player` / `Boss` /
+  `Pet` tree. Every difference between them turned out to be data — stats, a
+  rotation, a kind flag — and a flat collection of combatants is exactly what
+  lets the same engine run a 1v1 training dummy and a twenty-player raid.
 - **No per-caster aura instances yet.** One instance per aura per target. Raid
   simulation needs per-caster tracking, and that changes the collection's key
   from `auraId` to `auraId + casterId` and nothing else.
