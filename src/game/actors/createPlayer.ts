@@ -23,6 +23,7 @@ import { RAGE_FROM_DAMAGE_TAKEN, regenerationFor } from '../combat/resourceRules
 import { reactionsForClass } from '../reactions/reactionsForClass';
 import { rotationFor } from '../rotations/rotationFor';
 import type { Equipment } from '../items/Item';
+import type { TalentAllocation } from '../talents/Talent';
 import { liveEquipment, statsForStyle, weaponsForEquipment } from '../items/equipment';
 import { reactionsForEquipment } from '../items/procs';
 import { autoAttackModeForStyle, weaponsForStyle } from './weapons';
@@ -60,6 +61,15 @@ export interface PlayerOptions {
    * what every character did before items existed.
    */
   readonly equipment?: Equipment;
+  /**
+   * Points spent per talent, which decide the talent-granted abilities the
+   * character knows.
+   *
+   * Omitted means none spent, so a warrior built without one knows no Mortal
+   * Strike, Bloodthirst or Shield Slam — the trees make those mutually
+   * exclusive capstones, and nobody reaches more than one.
+   */
+  readonly talents?: TalentAllocation;
 }
 
 /**
@@ -114,7 +124,7 @@ export function createPlayer(options: PlayerOptions): Combatant {
     options.resourceMaximums,
   );
 
-  const abilities = abilitiesForClass(characterClass, style);
+  const abilities = abilitiesForClass(characterClass, style, options.talents);
   const rotation = rotationFor(characterClass, style);
 
   return new Combatant({

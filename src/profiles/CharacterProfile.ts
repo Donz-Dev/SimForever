@@ -1,6 +1,7 @@
 import type { PartialStats } from '../engine';
 import type { ClassId, CombatStyleId, RaceId } from '../game/character';
 import type { Equipment } from '../game/items/Item';
+import type { TalentAllocation } from '../game/talents/Talent';
 
 /**
  * The profile format version.
@@ -11,7 +12,7 @@ import type { Equipment } from '../game/items/Item';
  * moves on. Getting this in before anyone has saved anything is much cheaper
  * than retrofitting it later.
  */
-export const CURRENT_PROFILE_VERSION = 4;
+export const CURRENT_PROFILE_VERSION = 5;
 
 export interface CharacterSection {
   readonly name: string;
@@ -90,6 +91,20 @@ export interface CharacterProfile {
    * reads as an empty set.
    */
   readonly equipment: Equipment;
+  /**
+   * Points spent per talent, by talent id.
+   *
+   * Talent ids are unique WITHIN a class, not across classes, so this map only
+   * means anything alongside `character.characterClass`. A profile that changed
+   * class would be carrying another class's talents, which is why the UI clears
+   * them when the class changes rather than trying to translate them.
+   *
+   * Added in format version 5, when talents first affected a simulation by
+   * gating which abilities a character knows. Older profiles have none, which
+   * reads as an empty allocation: no talents, and therefore no talent-granted
+   * abilities.
+   */
+  readonly talents: TalentAllocation;
   readonly simulation: SimulationSection;
   readonly encounter: EncounterSection;
 }
@@ -113,6 +128,9 @@ export function createDefaultProfile(): CharacterProfile {
     },
     // Nothing equipped. Gear is chosen in the Gear panel.
     equipment: {},
+    // No talents spent. A warrior with an empty tree knows no Mortal Strike,
+    // no Bloodthirst and no Shield Slam, which is what the trees say.
+    talents: {},
     simulation: {
       durationSeconds: 100,
       durationVariance: 0,
@@ -139,6 +157,7 @@ export function cloneProfile(profile: CharacterProfile): CharacterProfile {
     equipment: Object.fromEntries(
       Object.entries(profile.equipment).map(([slot, equipped]) => [slot, { ...equipped }]),
     ),
+    talents: { ...profile.talents },
     simulation: { ...profile.simulation },
     encounter: { ...profile.encounter },
   };

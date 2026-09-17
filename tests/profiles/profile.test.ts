@@ -341,6 +341,105 @@ describe('versioning', () => {
     expect(result.profile.character.combatStyle).toBeUndefined();
   });
 
+  it('migrates a version 4 profile by giving it an empty talent allocation', () => {
+    /*
+     * Version 5 put talents on the profile, and an empty allocation is NOT a
+     * neutral default: from version 5 it means the warrior knows no Mortal
+     * Strike, Bloodthirst or Shield Slam, because all three are 31-point
+     * capstones. An old profile therefore fights weaker than it used to, which
+     * is the old number having been wrong rather than the new one.
+     */
+    const v4 = { ...createDefaultProfile(), version: 4 } as unknown as Record<string, unknown>;
+    delete v4.talents;
+
+    const result = loadProfile(v4);
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+
+    expect(result.migrated).toBe(true);
+    expect(result.profile.version).toBe(CURRENT_PROFILE_VERSION);
+    expect(result.profile.talents).toEqual({});
+  });
+
+  it('keeps the talents a version 5 profile already carries', () => {
+    // A legal allocation: Improved Heroic Strike is row 0, so it needs no
+    // points beneath it. A lone `mortal_strike: 1` would be REJECTED, because
+    // row 6 needs 30 points in Arms first — see the legality test below.
+    const profile = { ...createDefaultProfile(), talents: { improved_heroic_strike: 3 } };
+
+    const result = loadProfile(profile);
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.profile.talents).toEqual({ improved_heroic_strike: 3 });
+  });
+});
+
+describe('talents on the profile', () => {
+  const withTalents = (talents: Record<string, number>) => ({
+    ...createDefaultProfile(),
+    talents,
+  });
+
+  it('accepts a legal allocation', () => {
+    const result = validateProfile(withTalents({ improved_heroic_strike: 3 }));
+    expect(result.ok).toBe(true);
+  });
+
+  it('rejects a talent this build does not have', () => {
+    // Rejected rather than ignored, exactly as an unknown item id is: a profile
+    // naming a talent that does not exist is not one this build can reproduce.
+    const result = validateProfile(withTalents({ not_a_real_talent: 1 }));
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    expect(result.issues.some((issue) => issue.path === 'talents.not_a_real_talent')).toBe(true);
+  });
+
+  it("rejects another class's talent", () => {
+    // `moonglow` is a Druid talent; a warrior profile must not carry it.
+    const result = validateProfile(withTalents({ moonglow: 1 }));
+    expect(result.ok).toBe(false);
+  });
+
+  it('rejects more points than a talent has ranks', () => {
+    // Improved Heroic Strike has three.
+    const result = validateProfile(withTalents({ improved_heroic_strike: 4 }));
+    expect(result.ok).toBe(false);
+  });
+
+  it('rejects a negative or fractional point count', () => {
+    expect(validateProfile(withTalents({ improved_heroic_strike: -1 })).ok).toBe(false);
+    expect(validateProfile(withTalents({ improved_heroic_strike: 1.5 })).ok).toBe(false);
+  });
+
+  it('rejects an allocation no character could actually reach', () => {
+    // Every talent is individually fine; the tier requirement is not met, and
+    // only a whole-allocation check can see that.
+    const result = validateProfile(withTalents({ mortal_strike: 1 }));
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    expect(result.issues.some((issue) => issue.path === 'talents')).toBe(true);
+  });
+
+  it('rejects a missing talents section', () => {
+    const profile = createDefaultProfile() as unknown as Record<string, unknown>;
+    delete profile.talents;
+    expect(validateProfile(profile).ok).toBe(false);
+  });
+
+  it('drops talents at zero points, so one allocation has one representation', () => {
+    const result = validateProfile(withTalents({ improved_heroic_strike: 3, deflection: 0 }));
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.profile.talents).toEqual({ improved_heroic_strike: 3 });
+  });
+
+  it('copies talents rather than sharing them', () => {
+    const original = withTalents({ improved_heroic_strike: 3 });
+    const copy = cloneProfile(original);
+    (copy.talents as Record<string, number>).improved_heroic_strike = 1;
+    expect(original.talents.improved_heroic_strike).toBe(3);
+  });
+
   it('reports a current-version profile as not migrated', () => {
     const result = loadProfile(createDefaultProfile());
     expect(result.ok).toBe(true);

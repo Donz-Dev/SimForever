@@ -12,6 +12,18 @@ type Migration = (profile: Record<string, unknown>) => Record<string, unknown>;
  */
 const migrations: Record<number, Migration> = {
   /**
+   * Version 5 added `talents`, the points spent per talent id.
+   *
+   * Older profiles predate talents affecting anything, so they spend none. That
+   * is not a neutral default: from version 5 an empty allocation means a warrior
+   * knows no Mortal Strike, Bloodthirst or Shield Slam, because those are
+   * 31-point capstones rather than baseline abilities. A version 4 profile
+   * therefore produces LOWER damage than it used to, which is the old number
+   * being wrong rather than the new one.
+   */
+  4: (profile) => ({ talents: {}, ...profile }),
+
+  /**
    * Version 4 added `equipment`, which holds what is worn by slot.
    *
    * Older profiles predate items existing at all, so they equip nothing. Their

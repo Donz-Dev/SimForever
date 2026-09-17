@@ -8,18 +8,26 @@ repository, or sent to a server.
 
 ```json
 {
-  "version": 1,
+  "version": 5,
   "character": {
     "name": "Example",
-    "race": "Human",
-    "characterClass": "Warrior",
-    "level": 80
+    "race": "human",
+    "characterClass": "warrior",
+    "level": 60,
+    "combatStyle": "dual_wield"
   },
   "stats": {
-    "strength": 100,
-    "attackPower": 100,
+    "attackPower": 0,
     "critRating": 0,
     "hasteRating": 0
+  },
+  "equipment": {
+    "mainHand": { "itemId": 17075, "enchantId": 20034 },
+    "trinket1": { "itemId": 11815 }
+  },
+  "talents": {
+    "improved_heroic_strike": 3,
+    "deep_wounds": 3
   },
   "simulation": {
     "durationSeconds": 100,
@@ -30,13 +38,39 @@ repository, or sent to a server.
   "encounter": {
     "targetName": "Training Dummy",
     "targetHealth": 100000,
-    "targetArmor": 0
+    "targetArmor": 3731,
+    "targetLevel": 63
   }
 }
 ```
 
-Gear, talents, consumables, professions and rotation settings become further
-sections as those systems are built.
+Races and classes are stored as **ids** (`human`, not `Human`), so display names
+can be reworded without invalidating saved files. Faction is deliberately absent:
+it follows from the race, so storing it would let a profile claim an Alliance
+Orc.
+
+Consumables, professions and rotation settings become further sections as those
+systems are built.
+
+### `equipment` holds ids, not copies
+
+An item's numbers belong to the item data. A profile carrying its own copy would
+drift the moment that data was corrected.
+
+### `talents` decides which abilities exist
+
+Points spent per talent id. This is not decoration: talent-granted abilities are
+only in a character's book when the talent has a point in it, so an empty
+allocation means a warrior knows no Mortal Strike, no Bloodthirst and no Shield
+Slam. All three are 31-point capstones in three different trees, and 51 points
+reaches exactly one.
+
+**Talent ids are unique within a class, not across classes** — `deflection`
+belongs to four of them — so an allocation only means anything alongside
+`character.characterClass`. Validation checks the ids against that class's trees
+and rejects an unknown one rather than dropping it, and it rejects an allocation
+no character could actually reach: over budget, a tier requirement unmet, or a
+prerequisite missing.
 
 ### Seconds, not milliseconds
 
@@ -98,7 +132,7 @@ extra keys are dropped instead of riding along into the rest of the app.
 
 ## Versioning and migration
 
-Every profile carries a `version`. `CURRENT_PROFILE_VERSION` is 1.
+Every profile carries a `version`. `CURRENT_PROFILE_VERSION` is 5.
 
 The order is always **parse → migrate → validate**. An old file is valid for its
 own version, not the current one, so validating first would reject files that
@@ -118,7 +152,7 @@ const migrations: Record<number, Migration> = {
 };
 ```
 
-Migrations run in sequence, so a version-1 file loaded by a build at version 4
+Migrations run in sequence, so a version-1 file loaded by a build at version 5
 passes through 1→2, 2→3 and 3→4.
 
 A profile from a *newer* format is refused with a clear message rather than

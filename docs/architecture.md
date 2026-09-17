@@ -27,7 +27,7 @@ This is not architectural purity for its own sake. It buys four concrete things:
 ui  ──▶  simulator  ──▶  engine
                    ├──▶  analysis  ──▶  (engine types only)
                    ├──▶  game      ──▶  engine
-                   └──▶  profiles  ──▶  engine, game/character
+                   └──▶  profiles  ──▶  engine, game/character, game/talents
 ```
 
 `simulator` owns the profile-to-config translation, so `game` never has to know
