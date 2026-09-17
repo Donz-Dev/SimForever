@@ -93,8 +93,24 @@ function warriorRows(profile: CharacterProfile, style: CombatStyleId): readonly 
   const stats = player.stats.effective;
 
   const percent = (units: number) => `${toPercent(units).toFixed(2)}%`;
-  const missFor = (slot: 'mainHand' | 'offHand') =>
-    chances('melee-auto', player, target, { slot }).miss;
+  const forSlot = (slot: 'mainHand' | 'offHand') =>
+    chances('melee-auto', player, target, { slot });
+
+  /**
+   * A combat table number, per hand when there are two.
+   *
+   * Miss and enemy dodge BOTH derive from the wielding weapon's skill, so a
+   * sword in one hand and a mace in the other give two different answers the
+   * moment anything grants skill with one and not the other. Showing a single
+   * figure would average away a difference the fight does not average away.
+   *
+   * The dual-wield penalty applies to both hands, so it is not what separates
+   * them -- weapon skill is.
+   */
+  const perHand = (pick: (chances: ReturnType<typeof forSlot>) => number) =>
+    style === 'dual_wield'
+      ? `MH: ${percent(pick(forSlot('mainHand')))} | OH: ${percent(pick(forSlot('offHand')))}`
+      : percent(pick(forSlot('mainHand')));
 
   const rows: SheetRow[] = [
     { label: 'Hit Points', value: round(player.health.maximum) },
@@ -104,25 +120,16 @@ function warriorRows(profile: CharacterProfile, style: CombatStyleId): readonly 
     { label: 'Attack Power', value: round(stats.attackPower) },
   ];
 
-  // Chance to miss is per hand, and only a dual-wielder has two of them. One
-  // number for a dual-wielder would hide the penalty that makes the off-hand
-  // miss far more often than the main.
-  rows.push({
-    label: 'Chance to Miss',
-    value:
-      style === 'dual_wield'
-        ? `MH: ${percent(missFor('mainHand'))} | OH: ${percent(missFor('offHand'))}`
-        : percent(missFor('mainHand')),
-  });
-
-  const auto = chances('melee-auto', player, target, { slot: 'mainHand' });
-  rows.push({ label: 'Enemy Dodge', value: percent(auto.dodge) });
+  rows.push({ label: 'Chance to Miss', value: perHand((c) => c.miss) });
+  rows.push({ label: 'Enemy Dodge', value: perHand((c) => c.dodge) });
 
   // Enemy parry applies only to a character standing in front of the target,
-  // which the ruleset reads as one holding a shield. A zero for everyone else
-  // would suggest the number was computed and came out at nil.
+  // which the ruleset reads as one holding a shield -- so there is only ever
+  // one hand to report it for. It does not derive from weapon skill either. A
+  // zero for everyone else would suggest the number was computed and came out
+  // at nil.
   if (style === 'one_hand_shield') {
-    rows.push({ label: 'Enemy Parry', value: percent(auto.parry) });
+    rows.push({ label: 'Enemy Parry', value: percent(forSlot('mainHand').parry) });
   }
 
   rows.push({ label: 'Crit Chance', value: `${stats.critChance.toFixed(2)}%` });
