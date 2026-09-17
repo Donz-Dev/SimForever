@@ -99,9 +99,14 @@ export const REND_REFRESH_WINDOW_MS = 2000;
  * everything: banking rage for anything else at that point wastes it.
  *
  * Mortal Strike and Bloodthirst are both in the sheet, both cost 30 rage and
- * both have a 6 second cooldown. In Classic a warrior has one or the other by
- * talent, never both; Forever's sheet lists them together and says nothing
- * about exclusivity, so both are here.
+ * both have a 6 second cooldown. They are 31-point capstones in two different
+ * trees, so a warrior reaches exactly one — `abilitiesForClass` enforces that
+ * from the talent allocation.
+ *
+ * Both still appear in this list, and that is deliberate rather than an
+ * oversight. `PriorityRotation` skips an entry whose ability the actor does not
+ * know, so one list serves every build and the ordering states the preference
+ * for the warrior who somehow has both rather than pretending it cannot happen.
  */
 const CORE_STRIKES: readonly PriorityEntry[] = [
   { abilityId: 'execute' },

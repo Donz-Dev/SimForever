@@ -1,5 +1,8 @@
 import { useState } from 'react';
 import type { TalentAllocation } from '../game/talents/Talent';
+
+/** How TalentPanel asks for a change: applied to whatever is current. */
+type TalentUpdate = (previous: TalentAllocation) => TalentAllocation;
 import type { CharacterProfile } from '../profiles';
 import { createDefaultProfile } from '../profiles';
 import { Logo } from './components/Logo';
@@ -35,10 +38,13 @@ export function App() {
     return { ...base, character: { ...base.character, name: '' } };
   });
   const [confirmed, setConfirmed] = useState(false);
-  // Talents live in UI state, not on the profile. They have no effect on a
-  // simulation yet, and putting them in the profile would mean a format version
-  // and a migration for data nothing reads. That comes with the effects.
-  const [talents, setTalents] = useState<TalentAllocation>({});
+  // Talents live ON THE PROFILE, because they now decide which abilities a
+  // character knows and so change what a simulation produces. They were UI
+  // state for as long as they changed nothing; format version 5 is where that
+  // stopped being true.
+  const talents = profile.talents;
+  const setTalents = (update: TalentUpdate) =>
+    setProfile((previous) => ({ ...previous, talents: update(previous.talents) }));
   const [talentsCollapsed, setTalentsCollapsed] = useState(false);
   const { state, progress, run, reset } = useSimulation();
 
@@ -48,7 +54,7 @@ export function App() {
     // means nothing once the class changes. Cleared on every edit rather than
     // only on a class change, because a half-kept tree is more confusing than
     // an empty one.
-    setTalents({});
+    setTalents(() => ({}));
     // Results belong to the character that produced them. Leaving them on
     // screen beside a character being rebuilt invites reading one as the other.
     reset();

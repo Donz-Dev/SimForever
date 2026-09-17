@@ -26,11 +26,11 @@ their talent trees and nothing else.
 | **Reactions** | content responds to an attack result: Overpower off a target dodge, and every item proc |
 | **Gear** | 18 items and the Crusader enchant, equippable, driving stats, weapons and procs |
 | **Procs** | PPM (Vis'kag, Crusader) and flat-chance with an internal cooldown (Hand of Justice) |
-| **Talents** | all 470 talents, nine classes, spendable in the UI — but **no talent has an effect** |
+| **Talents** | all 470 talents, nine classes, spendable in the UI, saved on the profile, and **gating which abilities a character has**. No talent changes any other number yet |
 | **Analysis** | DPS, per-ability breakdown with attempts/hits/crit/glance/avoid rates |
 | **UI** | two-step character flow, per-class character sheet, style-aware gear, talent trees, combat log, Monte Carlo batches |
 
-**648 tests**, CI green on Node 20 and 22. Profile format **v4**.
+**684 tests**, CI green on Node 20 and 22. Profile format **v5**.
 
 The app is **live at <https://donz-dev.github.io/SimForever/>**, republished by
 `.github/workflows/deploy.yml` on every push to `main` that passes the tests.
@@ -47,17 +47,24 @@ Two candidates, and they are not close in value.
 
 ### 1. Talent effects — the biggest gap between what is shown and what is computed
 
-470 talents across nine classes are real data and **not one of them does
-anything**. A full build and an empty one produce identical results. Two things
-need deciding before writing any:
+470 talents across nine classes are real data, and **gating is the only thing
+any of them does**. Taking Mortal Strike gives you Mortal Strike; taking
+Deflection still does nothing at all.
+
+**Gating is done** — talents live on the profile at format v5, and
+`abilitiesForClass` grants Mortal Strike, Bloodthirst, Shield Slam and Spearing
+Strike only to a character whose allocation contains them. See
+`docs/talent-effects-proposal.md`.
+
+What remains is the effects themselves, and one decision:
 
 - **How a talent expresses its effect.** A stat modifier, a modifier on an
   existing ability, or a new ability entirely. All three occur in the first ten
-  Warrior talents.
-- **Talents must gate abilities.** Mortal Strike, Bloodthirst and Shield Slam
-  are 31-point capstones in three different trees, so a warrior reaches exactly
-  one. `abilitiesForClass` currently grants all three at once, which the trees
-  prove is impossible.
+  Warrior talents. The proposal recommends a declarative union with a function
+  escape hatch; it has not been accepted or rejected.
+- **The per-rank values exist but are not captured.** `src/data/talents/values/`
+  holds an entry for all 470 talents; three have values and 467 are `null`. See
+  that directory's README.
 
 ### 2. The remaining eight classes' abilities
 
@@ -183,9 +190,15 @@ into a compile error; JSON widens strings to `string`. Bulk external content
 rank caps. Every function in `talentRules.ts` takes a `ClassTalents` for that
 reason; a global index would answer with whichever class loaded last.
 
-**Talents live in UI state, not on the profile.** They have no effect yet, and
-persisting them would mean a format version and a migration for data nothing
-reads. That comes with the effects.
+**Talents live on the profile, at format v5.** They were UI state for as long as
+they changed nothing — persisting them would have meant a format version and a
+migration for data nothing read. Gating abilities is what made them matter, so
+that is when they moved.
+
+**An empty allocation is not a neutral default.** From v5 it means a warrior
+knows no Mortal Strike, Bloodthirst or Shield Slam, because all three are
+31-point capstones. A migrated v4 profile therefore fights *weaker* than it did
+before — the old number was wrong, not the new one.
 
 **Equipment is stored as item ids, not copies.** An item's numbers belong to the
 item data; a profile carrying its own would drift the moment that data was

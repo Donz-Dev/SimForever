@@ -34,7 +34,7 @@ in the wrong layer.
 ui  ──▶  simulator  ──▶  engine
                    ├──▶  analysis  ──▶  (engine types only)
                    ├──▶  game      ──▶  engine
-                   └──▶  profiles  ──▶  engine, game/character
+                   └──▶  profiles  ──▶  engine, game/character, game/talents
 ```
 
 - **`engine`** — the rules. How combat works. Knows nothing about warriors or fireballs.

@@ -13,6 +13,9 @@ import {
 } from '../game/character';
 import type { Equipment, EquipmentSlot } from '../game/items/Item';
 import { ENCHANTS_BY_ID, ITEMS_BY_ID } from '../game/items/itemData';
+import type { TalentAllocation } from '../game/talents/Talent';
+import { talentsForClass } from '../game/talents/talentData';
+import { isLegal } from '../game/talents/talentRules';
 import type { CharacterProfile } from './CharacterProfile';
 
 /** Every slot a profile may name. */
@@ -168,6 +171,59 @@ export function validateProfile(value: unknown): ValidationResult {
     }
   }
 
+  const talents = value.talents;
+  if (!isRecord(talents)) {
+    issues.push({ path: 'talents', message: 'Missing talents section.' });
+  } else {
+    // Talent ids only mean anything for a particular class, so a profile whose
+    // class is already invalid cannot have its talents checked. The class issue
+    // is the one worth reporting; a pile of "unknown talent" errors underneath
+    // it would just be noise.
+    const classId = isRecord(character) && isClassId(character.characterClass)
+      ? character.characterClass
+      : undefined;
+    const classTalents = classId ? talentsForClass(classId) : undefined;
+
+    for (const [id, points] of Object.entries(talents)) {
+      if (typeof points !== 'number' || !Number.isInteger(points) || points < 0) {
+        issues.push({ path: `talents.${id}`, message: 'Points must be a non-negative integer.' });
+        continue;
+      }
+      if (!classTalents) continue;
+      const talent = classTalents.byId.get(id);
+      // Rejected rather than ignored, for the same reason an unknown item id is:
+      // a profile naming a talent this build does not have is not a profile this
+      // build can reproduce, and dropping it would change the character silently.
+      if (!talent) {
+        issues.push({
+          path: `talents.${id}`,
+          message: `Unknown talent "${id}" for ${className(classId!)}.`,
+        });
+        continue;
+      }
+      if (points > talent.ranks) {
+        issues.push({
+          path: `talents.${id}`,
+          message: `${talent.name} has ${talent.ranks} rank(s); got ${points}.`,
+        });
+      }
+    }
+
+    // Per-talent checks above cannot catch an allocation that is individually
+    // fine and collectively impossible -- 51 points spread so that a capstone's
+    // tier requirement is unmet, or more than 51 points in total.
+    if (classTalents && issues.every((issue) => !issue.path.startsWith('talents'))) {
+      if (!isLegal(classTalents, talents as TalentAllocation)) {
+        issues.push({
+          path: 'talents',
+          message:
+            'Allocation is not reachable: check the total spent, the tier ' +
+            'requirements in each tree, and any talent prerequisites.',
+        });
+      }
+    }
+  }
+
   const simulation = value.simulation;
   if (!isRecord(simulation)) {
     issues.push({ path: 'simulation', message: 'Missing simulation section.' });
@@ -213,6 +269,7 @@ export function validateProfile(value: unknown): ValidationResult {
       },
       stats: cleanStats,
       equipment: cleanEquipment(validated.equipment),
+      talents: cleanTalents(validated.talents),
       simulation: {
         durationSeconds: validated.simulation.durationSeconds,
         durationVariance: validated.simulation.durationVariance,
@@ -231,6 +288,21 @@ export function validateProfile(value: unknown): ValidationResult {
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+/**
+ * Rebuild the allocation, dropping zeroes.
+ *
+ * A talent at zero points is the same as one that was never mentioned, and
+ * keeping both representations would mean every comparison had to normalise
+ * first.
+ */
+function cleanTalents(talents: TalentAllocation): TalentAllocation {
+  const clean: Record<string, number> = {};
+  for (const [id, points] of Object.entries(talents)) {
+    if (points > 0) clean[id] = points;
+  }
+  return clean;
 }
 
 /** Rebuild the equipment, dropping anything not asked for. */
