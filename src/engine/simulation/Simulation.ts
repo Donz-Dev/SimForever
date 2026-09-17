@@ -1,8 +1,8 @@
 import type { Ability } from '../abilities/Ability';
 import type { CastCheck } from '../abilities/casting';
 import { castAbility, checkCast } from '../abilities/casting';
-import type { Combatant } from '../actors/Combatant';
-import { startAutoAttack } from '../combat/autoAttack';
+import type { Combatant, WeaponSlot } from '../actors/Combatant';
+import { extraAttack, startAutoAttack } from '../combat/autoAttack';
 import { startResourceRegeneration } from '../resources';
 import type {
   AttackChanceProvider,
@@ -267,6 +267,10 @@ export class Simulation implements SimulationContext {
       this.attackChances(kind, source, target, context),
       this.rng,
     );
+  }
+
+  extraAttack(actor: Combatant, slot: WeaponSlot): void {
+    extraAttack(this, actor, slot);
   }
 
   killCombatant(target: Combatant, killer?: Combatant): void {

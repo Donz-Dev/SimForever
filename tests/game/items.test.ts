@@ -146,18 +146,18 @@ describe('the item data', () => {
 });
 
 describe('what the items do that the simulator does not', () => {
-  it("records Vis'kag's proc rather than inventing a rate", () => {
+  it("does not list Vis'kag's proc as missing, now that it is implemented", () => {
     const viskag = ITEMS_BY_ID.get(17075);
     expect(viskag?.stats).toEqual({});
-    expect(viskag?.unmodelled).toHaveLength(1);
-    expect(viskag?.unmodelled[0].text).toContain('fatal wound for 240 damage');
+    // The chance-on-hit is a reaction in procs.ts, so it is neither a stat nor
+    // a gap.
+    expect(viskag?.unmodelled).toEqual([]);
   });
 
-  it("records Hand of Justice's extra attack, and keeps its attack power", () => {
+  it("keeps Hand of Justice's attack power and implements its proc", () => {
     const hoj = ITEMS_BY_ID.get(11815);
-    // The +20 Attack Power IS modelled; the proc is not.
     expect(hoj?.stats.attackPower).toBe(20);
-    expect(hoj?.unmodelled.map((e) => e.text).join(' ')).toContain('extra attack');
+    expect(hoj?.unmodelled).toEqual([]);
   });
 
   it('records the fire resistance on the Might set as unmodelled', () => {
@@ -165,11 +165,14 @@ describe('what the items do that the simulator does not', () => {
     expect(chest?.unmodelled.some((e) => /Fire Resistance/.test(e.text))).toBe(true);
   });
 
-  it('grants nothing for Crusader, whose proc rate is only "often"', () => {
+  it('grants Crusader no flat stats, because its strength is a proc', () => {
     expect(CRUSADER.name).toBe('Enchant Weapon - Crusader');
+    // The +100 Strength is an aura from a proc, not a permanent stat.
     expect(CRUSADER.stats).toEqual({});
+    // Only the heal remains unmodelled, and only because nothing damages the
+    // player.
     expect(CRUSADER.unmodelled).toHaveLength(1);
-    expect(CRUSADER.unmodelled[0].text).toContain('increases Strength by 100');
+    expect(CRUSADER.unmodelled[0].text).toContain('Heals for 75 to 125');
   });
 
   it('offers Crusader on melee weapons only', () => {
@@ -188,11 +191,10 @@ describe('what the items do that the simulator does not', () => {
     };
     const missing = unmodelledEffects(equipment, 'dual_wield');
 
-    expect(missing.map((e) => e.itemName).sort()).toEqual([
-      'Enchant Weapon - Crusader',
-      'Hand of Justice',
-      "Vis'kag the Bloodletter",
-    ]);
+    // Vis'kag's proc, Crusader's strength and Hand of Justice's extra attack
+    // are all implemented now; only Crusader's heal is left.
+    expect(missing.map((e) => e.itemName)).toEqual(['Enchant Weapon - Crusader']);
+    expect(missing[0].text).toContain('Heals');
   });
 });
 

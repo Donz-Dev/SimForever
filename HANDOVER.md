@@ -26,12 +26,12 @@ What works end to end:
 | **Resources** | rage from damage, energy in batches, mana on the five-second rule |
 | **Abilities** | all 26 Warrior abilities from the ruleset spreadsheet, with weapon-damage scaling and on-next-swing |
 | **Reactions** | content can respond to an attack result; Overpower fires off a target dodge |
-| **Gear** | 18 real items and the Crusader enchant, equippable, driving stats and weapons |
+| **Gear** | 18 real items and the Crusader enchant, equippable, driving stats, weapons and procs |
 | **Talents** | all 470 talents, nine classes, real data, spendable in the UI -- but NO talent has an effect |
 | **Analysis** | DPS, per-ability breakdown with attempts/hits/crit/glance/avoid rates |
 | **UI** | React panels driving the real engine; combat log; Monte Carlo batches |
 
-**624 tests**, CI green on Node 20 and 22.
+**643 tests**, CI green on Node 20 and 22.
 
 ## The next task
 

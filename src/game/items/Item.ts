@@ -26,6 +26,7 @@ export type EquipmentSlot =
   | 'mainHand'
   | 'offHand'
   | 'twoHand'
+  | 'shield'
   | 'ranged';
 
 /** A weapon's own numbers, straight off the item. */
@@ -110,6 +111,7 @@ export const WEAPON_SLOTS: readonly EquipmentSlot[] = [
   'mainHand',
   'offHand',
   'twoHand',
+  'shield',
   'ranged',
 ];
 
@@ -120,6 +122,9 @@ export function weaponSlotFor(slot: EquipmentSlot): WeaponSlot | undefined {
     case 'twoHand':
       return 'mainHand';
     case 'offHand':
+    // A shield occupies the off hand. It never swings, but it is the same slot,
+    // so anything in it has to resolve there.
+    case 'shield':
       return 'offHand';
     case 'ranged':
       return 'ranged';

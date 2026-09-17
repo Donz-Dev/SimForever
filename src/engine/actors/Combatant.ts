@@ -2,6 +2,7 @@ import type { Ability } from '../abilities/Ability';
 import { AbilityBook } from '../abilities/AbilityBook';
 import type { DamageSchool } from '../combat/DamageSchool';
 import type { Reaction } from '../combat/reactions';
+import type { ScheduledEvent } from '../events';
 import { AuraCollection } from '../effects';
 import type { ResourceRegen, ResourceSpec, ResourceType } from '../resources';
 import { Resource, ResourceCollection } from '../resources';
@@ -189,6 +190,26 @@ export class Combatant {
    * state about a weapon, not about a cooldown.
    */
   private readonly queuedSwings = new Map<WeaponSlot, string>();
+
+  /**
+   * The scheduled swing each weapon is waiting on.
+   *
+   * Kept so an extra attack can cancel and replace it. Swings reschedule
+   * themselves, so nothing else needs the handle; without it, "resets the swing
+   * timer" cannot be expressed at all.
+   */
+  private readonly pendingSwings = new Map<WeaponSlot, ScheduledEvent>();
+
+  /** Record, or clear, the swing a slot is waiting on. */
+  setPendingSwing(slot: WeaponSlot, handle: ScheduledEvent | null): void {
+    if (handle) this.pendingSwings.set(slot, handle);
+    else this.pendingSwings.delete(slot);
+  }
+
+  /** The swing a slot is waiting on, if any. */
+  pendingSwing(slot: WeaponSlot): ScheduledEvent | undefined {
+    return this.pendingSwings.get(slot);
+  }
 
   /** Arm an ability to replace the next swing of a slot. */
   queueNextSwing(slot: WeaponSlot, abilityId: string): void {
