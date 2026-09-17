@@ -1,0 +1,378 @@
+{
+  "class": "rogue",
+  "source": "https://www.wowhead.com/forever/talent-calc/rogue",
+  "structure": "src/data/talents/rogue.json",
+  "talents": {
+    "improved_gouge": {
+      "name": "Improved Gouge",
+      "tree": "assassination",
+      "ranks": 3,
+      "text": "Increases the duration of your Gouge ability by 0.5 sec.",
+      "values": null
+    },
+    "remorseless_attacks": {
+      "name": "Remorseless Attacks",
+      "tree": "assassination",
+      "ranks": 2,
+      "text": "After killing a non-trivial enemy, gives you a 20% increased critical strike chance on your next Sinister Strike, Backstab, Ambush, Mutilate, or Ghostly Strike. Lasts 20 sec.",
+      "values": null
+    },
+    "malice": {
+      "name": "Malice",
+      "tree": "assassination",
+      "ranks": 5,
+      "text": "Increases your critical strike chance with all attacks and Poisons by 1%.",
+      "values": null
+    },
+    "ruthlessness": {
+      "name": "Ruthlessness",
+      "tree": "assassination",
+      "ranks": 3,
+      "text": "Gives your finishing moves a 20% chance to add a Combo Point to your target.",
+      "values": null
+    },
+    "murder": {
+      "name": "Murder",
+      "tree": "assassination",
+      "ranks": 2,
+      "text": "Increases all damage dealt by 2% against Humanoid and Giant targets.",
+      "values": null
+    },
+    "improved_slice_and_dice": {
+      "name": "Improved Slice and Dice",
+      "tree": "assassination",
+      "ranks": 3,
+      "text": "Increases the duration of your Slice and Dice ability by 15%.",
+      "values": null
+    },
+    "relentless_strikes": {
+      "name": "Relentless Strikes",
+      "tree": "assassination",
+      "ranks": 1,
+      "text": "Your finishing moves have a 20% chance per Combo Point to restore 25 Energy.",
+      "values": null
+    },
+    "improved_expose_armor": {
+      "name": "Improved Expose Armor",
+      "tree": "assassination",
+      "ranks": 2,
+      "text": "Reduces the Energy cost of your Expose Armor ability by 5, and refunds 1 Combo Point when cast with 5 Combo Points.",
+      "values": null
+    },
+    "lethality": {
+      "name": "Lethality",
+      "tree": "assassination",
+      "ranks": 5,
+      "text": "Increases the critical strike damage bonus of your Sinister Strike, Gouge, Backstab, Mutilate, Ghostly Strike, and Hemorrhage abilities by 6%.",
+      "values": null
+    },
+    "vile_poisons": {
+      "name": "Vile Poisons",
+      "tree": "assassination",
+      "ranks": 5,
+      "text": "Increases the damage dealt by your poisons by 4% and gives your poisons an additional 8% chance to resist dispel effects.",
+      "values": null
+    },
+    "cold_blood": {
+      "name": "Cold Blood",
+      "tree": "assassination",
+      "ranks": 1,
+      "text": "When activated, increases the critical strike chance of your next Sinister Strike, Backstab, Ambush, Eviscerate, or Mutilate by 100%.",
+      "values": null
+    },
+    "improved_poisons": {
+      "name": "Improved Poisons",
+      "tree": "assassination",
+      "ranks": 5,
+      "text": "Increases the chance to apply Poisons to your target by 2%, and gives Poison applications a 10% chance to not consume a charge.",
+      "values": null
+    },
+    "vigor": {
+      "name": "Vigor",
+      "tree": "assassination",
+      "ranks": 2,
+      "text": "Increases your maximum Energy by 5.",
+      "values": null
+    },
+    "mutilate": {
+      "name": "Mutilate",
+      "tree": "assassination",
+      "ranks": 1,
+      "text": "Instantly attacks with both weapons for 75% weapon damage plus an additional 13 with each weapon. Damage increased by 20% against Poisoned targets. Awards 2 Combo Points.",
+      "values": null
+    },
+    "improved_kidney_shot": {
+      "name": "Improved Kidney Shot",
+      "tree": "assassination",
+      "ranks": 2,
+      "text": "Enemies Stunned by your Kidney Shot ability take 5% increased damage from your poisons and attacks.",
+      "values": null
+    },
+    "seal_fate": {
+      "name": "Seal Fate",
+      "tree": "assassination",
+      "ranks": 5,
+      "text": "Your critical strikes from abilities that add Combo Points have a 20% chance to add an additional Combo Point.",
+      "values": null
+    },
+    "venom": {
+      "name": "Venom",
+      "tree": "assassination",
+      "ranks": 1,
+      "text": "Finishing move that increases the damage of your Poisons by 30% and your chance to apply Poisons by 10%. Lasts longer per combo point: 1 point: 9 seconds 2 points: 12 seconds 3 points: 15 seconds 4 points: 18 seconds 5 points: 21 seconds",
+      "values": null
+    },
+    "improved_eviscerate": {
+      "name": "Improved Eviscerate",
+      "tree": "combat",
+      "ranks": 3,
+      "text": "Increases the damage done by your Eviscerate ability by 7%.",
+      "values": null
+    },
+    "improved_sinister_strike": {
+      "name": "Improved Sinister Strike",
+      "tree": "combat",
+      "ranks": 2,
+      "text": "Reduces the Energy cost of your Sinister Strike ability by 3.",
+      "values": null
+    },
+    "lightning_reflexes": {
+      "name": "Lightning Reflexes",
+      "tree": "combat",
+      "ranks": 5,
+      "text": "Increases your Dodge chance by 1%.",
+      "values": null
+    },
+    "puncturing_wounds": {
+      "name": "Puncturing Wounds",
+      "tree": "combat",
+      "ranks": 3,
+      "text": "Increases the critical strike chance of your Backstab by 10% and your Mutilate by 5%, and gives Backstab a 15% chance to add an additional Combo Point.",
+      "values": null
+    },
+    "deflection": {
+      "name": "Deflection",
+      "tree": "combat",
+      "ranks": 3,
+      "text": "Increases your Parry chance by 2%.",
+      "values": null
+    },
+    "precision": {
+      "name": "Precision",
+      "tree": "combat",
+      "ranks": 3,
+      "text": "Increases your chance to hit with all attacks and Poisons by 1%.",
+      "values": null
+    },
+    "endurance": {
+      "name": "Endurance",
+      "tree": "combat",
+      "ranks": 2,
+      "text": "Reduces the cooldown of your Sprint and Evasion abilities by 30%.",
+      "values": null
+    },
+    "riposte": {
+      "name": "Riposte",
+      "tree": "combat",
+      "ranks": 1,
+      "text": "A strike that becomes active after parrying an opponent's attack. This attack deals 150% weapon damage and disarms the target for 6 sec.",
+      "values": null
+    },
+    "improved_sprint": {
+      "name": "Improved Sprint",
+      "tree": "combat",
+      "ranks": 2,
+      "text": "Gives a 50% chance to remove all movement impairing effects when you activate your Sprint ability.",
+      "values": null
+    },
+    "improved_kick": {
+      "name": "Improved Kick",
+      "tree": "combat",
+      "ranks": 2,
+      "text": "Gives your Kick ability a 50% chance to Silence the target for 2 sec.",
+      "values": null
+    },
+    "restless_blades": {
+      "name": "Restless Blades",
+      "tree": "combat",
+      "ranks": 1,
+      "text": "Your damaging finishing moves reduce the remaining cooldown of your Adrenaline Rush, Blade Flurry, Evasion, Sprint, and Vanish abilities by 2 sec per combo point.",
+      "values": null
+    },
+    "dual_wield_specialization": {
+      "name": "Dual Wield Specialization",
+      "tree": "combat",
+      "ranks": 5,
+      "text": "Increases the damage done by your off-hand weapon by 5%.",
+      "values": null
+    },
+    "blade_flurry": {
+      "name": "Blade Flurry",
+      "tree": "combat",
+      "ranks": 1,
+      "text": "Increases your melee attack speed by 20% and your melee attacks strike an additional nearby opponent. Lasts 15 sec.",
+      "values": null
+    },
+    "hack_and_slash": {
+      "name": "Hack and Slash",
+      "tree": "combat",
+      "ranks": 5,
+      "text": "Gives your melee weapon attacks a benefit depending on the weapon. Axe/Sword: Your successful melee attacks have a 1% chance to trigger an extra attack on the target. Dagger/Fist: Increases your critical strike chance by 1%. Mace: Your attacks ignore 3% of your target's armor.",
+      "values": null
+    },
+    "weapon_expertise": {
+      "name": "Weapon Expertise",
+      "tree": "combat",
+      "ranks": 2,
+      "text": "Reduces the chance for your attacks to be Dodged or Parried by 1%.",
+      "values": null
+    },
+    "aggression": {
+      "name": "Aggression",
+      "tree": "combat",
+      "ranks": 3,
+      "text": "Increases the damage of your Sinister Strike, Backstab, and Eviscerate abilities by 2%.",
+      "values": null
+    },
+    "adrenaline_rush": {
+      "name": "Adrenaline Rush",
+      "tree": "combat",
+      "ranks": 1,
+      "text": "Increases your Energy regeneration rate by 100% for 15 sec.",
+      "values": null
+    },
+    "camouflage": {
+      "name": "Camouflage",
+      "tree": "subtlety",
+      "ranks": 5,
+      "text": "Reduces your speed penalty from your Stealth ability by 3% and reduces its cooldown by 2 sec.",
+      "values": null
+    },
+    "master_of_deception": {
+      "name": "Master of Deception",
+      "tree": "subtlety",
+      "ranks": 3,
+      "text": "Reduces the chance enemies have to detect you while in Stealth mode as if you were 1 level higher.",
+      "values": null
+    },
+    "opportunity": {
+      "name": "Opportunity",
+      "tree": "subtlety",
+      "ranks": 2,
+      "text": "Increases the damage dealt by your Backstab, Garrote, Ambush, and Mutilate abilities by 5%.",
+      "values": null
+    },
+    "setup": {
+      "name": "Setup",
+      "tree": "subtlety",
+      "ranks": 3,
+      "text": "Gives you a 33% chance to add a Combo Point to your target after Dodging an attack or fully resisting a spell.",
+      "values": null
+    },
+    "elusiveness": {
+      "name": "Elusiveness",
+      "tree": "subtlety",
+      "ranks": 2,
+      "text": "Reduces the cooldown of your Vanish and Blind abilities by 45 sec.",
+      "values": null
+    },
+    "dirty_tricks": {
+      "name": "Dirty Tricks",
+      "tree": "subtlety",
+      "ranks": 2,
+      "text": "Reduces the Energy cost of your Sap and Blind abilities by 25%.",
+      "values": null
+    },
+    "improved_ambush": {
+      "name": "Improved Ambush",
+      "tree": "subtlety",
+      "ranks": 3,
+      "text": "Increases the critical strike chance of your Ambush ability by 15%.",
+      "values": null
+    },
+    "initiative": {
+      "name": "Initiative",
+      "tree": "subtlety",
+      "ranks": 3,
+      "text": "Gives you a 33% chance to add an additional combo point to your target when using your Ambush, Garrote, or Cheap Shot ability.",
+      "values": null
+    },
+    "ghostly_strike": {
+      "name": "Ghostly Strike",
+      "tree": "subtlety",
+      "ranks": 1,
+      "text": "A strike that deals 125% (180% if a Dagger is equipped in your Main Hand) weapon damage and increases your chance to dodge by 15% for 7 sec. Awards 1 combo point.",
+      "values": null
+    },
+    "improved_distract": {
+      "name": "Improved Distract",
+      "tree": "subtlety",
+      "ranks": 2,
+      "text": "Increases the radius of your Distract ability by 3 yds, and further reduces the Stealth detection of distracted enemies as though they were an additional 1 level lower.",
+      "values": null
+    },
+    "heightened_senses": {
+      "name": "Heightened Senses",
+      "tree": "subtlety",
+      "ranks": 2,
+      "text": "Increases your Stealth detection as if you were 1 level higher and reduces your chance to be hit by spells and ranged attacks by 2%.",
+      "values": null
+    },
+    "premeditation": {
+      "name": "Premeditation",
+      "tree": "subtlety",
+      "ranks": 1,
+      "text": "Adds 2 Combo Points to your target. You must add to or use those combo points within 20 sec or the combo points are lost.",
+      "values": null
+    },
+    "serrated_blades": {
+      "name": "Serrated Blades",
+      "tree": "subtlety",
+      "ranks": 3,
+      "text": "Causes your attacks to ignore 3% of your target's Armor and increases the damage dealt by your Rupture ability by 10%.",
+      "values": null
+    },
+    "dirty_deeds": {
+      "name": "Dirty Deeds",
+      "tree": "subtlety",
+      "ranks": 2,
+      "text": "Reduces the Energy cost of your Cheap Shot and Garrote abilities by 10, and your Garrote ability no longer requires you to be behind your target.",
+      "values": null
+    },
+    "preparation": {
+      "name": "Preparation",
+      "tree": "subtlety",
+      "ranks": 1,
+      "text": "When activated, this ability immediately finishes the cooldown on your other Rogue abilities.",
+      "values": null
+    },
+    "hemorrhage": {
+      "name": "Hemorrhage",
+      "tree": "subtlety",
+      "ranks": 1,
+      "text": "An instant strike that deals 100% weapon damage (145% if a Dagger is equipped) and causes the target to take 15% increased Rupture damage from the Rogue. Lasts 15 sec. Awards 1 Combo Point.",
+      "values": null
+    },
+    "quietus": {
+      "name": "Quietus",
+      "tree": "subtlety",
+      "ranks": 5,
+      "text": "Your Sinister Strike, Ghostly Strike, and Hemorrhage abilities cause 2% more damage against targets below 35% health.",
+      "values": null
+    },
+    "cutthroat": {
+      "name": "Cutthroat",
+      "tree": "subtlety",
+      "ranks": 5,
+      "text": "Your Backstab has a 3% chance to cause your next Ambush within 10 sec to not require Stealth.",
+      "values": null
+    },
+    "thousand_cuts": {
+      "name": "Thousand Cuts",
+      "tree": "subtlety",
+      "ranks": 1,
+      "text": "When your Rupture ability deals periodic damage, the Energy cost of your next Hemorrhage or Backstab ability within 10 sec is reduced by 3, stacking up to 5 times.",
+      "values": null
+    }
+  }
+}
