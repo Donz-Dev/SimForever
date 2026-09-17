@@ -11,9 +11,10 @@ The two decisions, as [HANDOVER.md](../HANDOVER.md) states them:
    Strike, Bloodthirst *and* Shield Slam, which three 31-point capstones in
    three different trees make impossible.
 
-There is also a third thing, which is not a design decision but a data gap, and
-it turns out to be the largest single obstacle. It is in "The rank problem"
-below and it is worth reading first.
+A third thing — not a design decision but a data gap — was the largest obstacle
+in the first draft: 77% of talents had no values beyond rank one, and it was
+unknown whether any source held the rest. **That is now resolved**; see "The
+rank problem" below.
 
 ---
 
@@ -50,36 +51,52 @@ common thing a talent does, and plain stat changes are a minority.
 
 ---
 
-## The rank problem
+## The rank problem — resolved
 
-**This blocks more talents than either design decision, and no design choice
-can work around it.**
+**This was the largest obstacle in the first draft of this proposal. It is now
+answered, and the answer was yes.**
 
-The scrape captured the rank-one tooltip and nothing else. From
-[`src/data/talents/README.md`](../src/data/talents/README.md):
+The original scrape took `data-simple-tooltip`, which holds the rank-one text
+only, so 361 of the 470 talents — 77% of them — had no values beyond rank one.
+The open question was whether the Forever calculator exposed the rest at all.
 
-> the child `<a>`'s `data-simple-tooltip` | the name and the rank-one text
+It does. The calculator **rewrites the tooltip as points go in**, so reading
+rank three of a talent means putting three points into it:
 
-So for Improved Rend we know rank 1 is +12%. We do not know rank 2 or rank 3.
-**361 of the 470 talents have more than one rank** — 77% of them.
-
-Three ways to fill that in, and only one of them is allowed here:
-
-| Approach | Verdict |
+| Points | Tooltip |
 | --- | --- |
-| Assume linear: rank *n* = rank 1 × *n* | **No.** Classic is full of non-linear ranks. This invents data for 361 talents and every result downstream looks reasonable and means nothing. |
-| Re-scrape per-rank tooltips from the Forever calculator | **Worth checking first.** Whether the calculator exposes per-rank text at all is UNVERIFIED — the original scrape took `data-simple-tooltip`, which carries rank one. If richer tooltips exist, `src/data/talents/README.md` has the selectors and this is one more pass plus a hash check. |
-| Ask the ruleset owner for a talent spreadsheet | **Best**, and consistent with how abilities were sourced. |
+| 1 | Reduces the cost of your Heroic Strike ability by **1** Rage |
+| 2 | ...by **2** Rage |
+| 3 | ...by **3** Rage |
 
-**Recommendation: settle this before writing effect values.** The design below
-works either way, because it stores an explicit value per rank rather than a
-formula — but with rank-one-only data, only the 109 single-rank talents can be
-given real numbers, and the rest would sit as `unmodelled` until the data
-arrives.
+Deflection reads 1/2/3/4/5 and Flurry 5/10/15/20/25 the same way.
 
-That is a perfectly honest interim state, and it is roughly the position the
-nine inert Warrior buffs are already in. It should just be a decision rather
-than a surprise.
+Those values now live in [`src/data/talents/values/`](../src/data/talents/values/),
+one hand-editable file per class, holding the text with a `{0}` where the number
+goes and the value at each rank. `tools/talent_ranks_browser.js` captures them
+and `tools/derive_talent_values.js` folds a capture in.
+
+**What this changes for the design below.** Nothing structural — `perRank` was
+already an explicit array rather than a formula, precisely so that unknown ranks
+could not be extrapolated. What changes is the prognosis: the effects work is no
+longer gated on a data source that might not exist. The remaining risk is
+ordinary and bounded.
+
+**What is still outstanding:**
+
+- **The bulk capture is not done.** Three of 470 values are filled; the rest are
+  `null`, meaning not known yet rather than zero. Wowhead began returning 403
+  partway through the nine classes. Re-running it is two documented steps in
+  `src/data/talents/values/README.md`.
+- **Assuming linear ranks remains forbidden.** It always was, and now there is
+  no excuse for it whatsoever: the real numbers are one capture away.
+- **The calculator is a source, not an authority.** It says Mortal Strike is
+  weapon damage "plus 85"; the ruleset owner confirmed 160. Where the two
+  disagree the owner wins, which is why `fill` will not overwrite an existing
+  value without `--overwrite`.
+- **A ruleset-owner talent spreadsheet would still be better** than scraped
+  tooltips, for the same reason it was better for abilities. It is no longer
+  blocking, though — it is a cross-check.
 
 ---
 
@@ -161,6 +178,17 @@ talent whose ranks 2+ are unknown **cannot be written at all** rather than
 being quietly extrapolated. A `perRank` shorter than the talent's `ranks` should
 be a load-time validation error, in the same spirit as `talentData.ts` already
 throwing on a bad tier or an unresolvable prerequisite.
+
+**Where `perRank` comes from.** It should read
+`src/data/talents/values/<class>.json` rather than restating those numbers in
+TypeScript. That file already holds a value per rank, is hand-editable for
+balance changes, and is deliberately separate from the scraped tree structure.
+Duplicating its numbers into an effect definition would recreate exactly the
+drift the items data avoided by storing item ids on a profile instead of copies.
+
+That leaves the effect definition saying *what a talent does with its number*
+and the values file saying *what the number is* — which is the same split as
+"rules go in `engine`, numbers go in `game`", one level down.
 
 ---
 
@@ -255,8 +283,10 @@ their absence.
 
 ## Suggested order
 
-1. **Settle the rank data question.** Everything else is cheaper afterwards and
-   nothing is wasted by doing it first.
+1. **Finish the values capture.** The mechanism works and the files exist; 467
+   of 470 values are still `null` because wowhead started returning 403. Two
+   documented steps, and everything after this is cheaper for having real
+   numbers to test against.
 2. **Profile v5** with a talents section and its migration. Small, self-contained,
    and unblocks everything.
 3. **Gate the abilities.** Pass the allocation to `abilitiesForClass` and
@@ -294,5 +324,7 @@ Steps 2 and 3 are worth doing even if Decision 1 is rejected outright.
 2. **Decision 2:** talents move onto the profile at v5 and gate abilities via
    `abilitiesForClass` and `rotationFor`. Accept?
 
-And the one that is not a design decision: **where do per-rank values come
-from** — a re-scrape, or the ruleset owner?
+The third question — **where do per-rank values come from** — is answered: the
+calculator exposes them, `src/data/talents/values/` holds them, and the capture
+just needs finishing. A ruleset-owner talent spreadsheet would still be a
+worthwhile cross-check, but nothing is blocked on it.
