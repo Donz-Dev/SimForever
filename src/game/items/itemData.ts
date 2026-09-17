@@ -80,6 +80,10 @@ const SLOTS_BY_INVENTORY_TYPE: Readonly<Record<string, readonly EquipmentSlot[]>
   'One-Hand': ['mainHand', 'offHand'],
   'Main Hand': ['mainHand'],
   'Two-Hand': ['twoHand'],
+  // No shields are imported yet, so nothing maps here. The slot exists so the
+  // interface can offer it and say plainly that it is empty.
+  Shield: ['shield'],
+  'Off Hand': ['offHand'],
   Ranged: ['ranged'],
 };
 
@@ -124,6 +128,18 @@ const EFFECT_RULES: readonly EffectRule[] = [
 /** Bonus weapon skill, which is a weapon property rather than a stat. */
 const WEAPON_SKILL_PATTERN = /^Increased ([\w\- ]+) \+(\d+)\.?$/;
 
+/**
+ * Effects implemented as reactions in `procs.ts` rather than as stats.
+ *
+ * They are neither a stat nor unmodelled: a proc is behaviour, so it lives with
+ * the other behaviour and is listed here only so it stops being reported as
+ * missing. The ruleset owner supplied the rates the tooltips do not give.
+ */
+const MODELLED_AS_PROCS: readonly RegExp[] = [
+  /Delivers a fatal wound for \d+ damage/,
+  /chance on melee hit to gain 1 extra attack/,
+];
+
 /** Why a given effect is not modelled. Keyed by the kind, with a default. */
 function reasonFor(kind: string, text: string): string {
   if (/chance on hit/i.test(kind)) {
@@ -162,6 +178,8 @@ function buildStats(item: RawItem): {
   }
 
   for (const effect of item.effects) {
+    if (MODELLED_AS_PROCS.some((pattern) => pattern.test(effect.text))) continue;
+
     const skill = effect.text.match(WEAPON_SKILL_PATTERN);
     if (skill) {
       bonusSkill += Number(skill[2]);
@@ -236,11 +254,13 @@ export const ITEMS_BY_ID: ReadonlyMap<number, Item> = new Map(
 /**
  * Enchant Weapon - Crusader.
  *
- * Its effect is a PROC -- "often when attacking in melee it heals for 75 to 125
- * and increases Strength by 100 for 15 sec" -- and "often" is not a number.
- * Classic players know it as roughly one proc per minute, but the source does
- * not say so anywhere, so nothing here grants any strength. The enchant is
- * selectable and inert, and says so.
+ * Its effect is a PROC, and the tooltip rates it only as "often". The ruleset
+ * owner supplied the missing number: 1.1 procs per minute, which on a 2.5
+ * second weapon is a 4.58% chance per attack. That is implemented in
+ * `procs.ts`, so nothing is unmodelled here any more.
+ *
+ * The HEAL is still not modelled, and is listed. Nothing damages the player, so
+ * it would restore nothing even if it were.
  */
 export const CRUSADER: Enchant = {
   id: data.enchants[0].id,
@@ -253,9 +273,8 @@ export const CRUSADER: Enchant = {
   unmodelled: [
     {
       kind: 'Enchant',
-      text: 'Often when attacking in melee it heals for 75 to 125 and increases Strength by 100 for 15 sec.',
-      reason:
-        'The proc rate is stated only as "often". Guessing it would invent the number that decides its whole value.',
+      text: 'Heals for 75 to 125 on proc.',
+      reason: 'Nothing damages the player, so a heal would restore nothing.',
     },
   ],
   tooltip: data.enchants[0].tooltip,

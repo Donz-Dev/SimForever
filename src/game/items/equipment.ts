@@ -59,9 +59,20 @@ export function statsForStyle(equipment: Equipment, style: CombatStyleId): Parti
 }
 
 /**
- * The equipped set with the weapon slots this style cannot use removed.
+ * The equipped set with the slots this style cannot physically fill removed.
  *
- * Armour and jewellery are untouched; only the hands are in question.
+ * Only genuine conflicts are dropped, and there are two:
+ *
+ *   - A two-hander and a one-hander both want the main hand, so a style takes
+ *     one or the other and the loser contributes nothing.
+ *   - A style with no off-hand weapon cannot hold one.
+ *
+ * THE RANGED SLOT IS NOT A CONFLICT. A bow sits alongside a sword; it simply
+ * does not swing while the character is meleeing. Stripping it here discarded
+ * Striker's Mark's +22 attack power and +1% hit from every melee warrior, which
+ * is the kind of missing stat that looks like nothing at all. Whether the bow
+ * SWINGS is decided separately, in `weaponsForEquipment`, off the style's own
+ * ranged rule.
  */
 export function liveEquipment(equipment: Equipment, style: CombatStyleId): Equipment {
   const definition = getCombatStyle(style);
@@ -69,13 +80,15 @@ export function liveEquipment(equipment: Equipment, style: CombatStyleId): Equip
 
   const usesTwoHand = definition?.mainHand === 'two-hand';
   const usesOffHandWeapon = definition?.offHand === 'weapon';
-  const usesRanged = definition?.rangedSlot === 'required';
+  const usesShield = definition?.offHand === 'shield';
 
   if (usesTwoHand) delete next.mainHand;
   else delete next.twoHand;
 
+  // The off hand holds a weapon or a shield, never both and never either
+  // unless the style says so.
   if (!usesOffHandWeapon) delete next.offHand;
-  if (!usesRanged) delete next.ranged;
+  if (!usesShield) delete next.shield;
 
   return next as Equipment;
 }
@@ -99,9 +112,16 @@ export function weaponsForEquipment(
   const live = liveEquipment(equipment, style);
   const weapons: Partial<Record<WeaponSlot, WeaponProfile>> = {};
 
+  // A bow contributes its stats whatever the style, but only SWINGS when the
+  // style says the ranged slot is in use.
+  const definition = getCombatStyle(style);
+  const rangedSwings = definition?.rangedSlot === 'required';
+
   for (const [slotName, equipped] of Object.entries(live)) {
     if (!equipped) continue;
     const slot = slotName as EquipmentSlot;
+    if (slot === 'ranged' && !rangedSwings) continue;
+
     const weaponSlot = weaponSlotFor(slot);
     if (!weaponSlot) continue;
 
@@ -157,19 +177,28 @@ export function unmodelledEffects(
 ): readonly (UnmodelledEffect & { readonly itemName: string })[] {
   const live = liveEquipment(equipment, style);
   const out: (UnmodelledEffect & { itemName: string })[] = [];
+  // Crusader on both hands is two enchants but one gap; listing it twice reads
+  // as two different things being missing.
+  const seen = new Set<string>();
+  const push = (effect: UnmodelledEffect, itemName: string) => {
+    const key = `${itemName}::${effect.text}`;
+    if (seen.has(key)) return;
+    seen.add(key);
+    out.push({ ...effect, itemName });
+  };
 
   for (const equipped of Object.values(live)) {
     if (!equipped) continue;
 
     const item = ITEMS_BY_ID.get(equipped.itemId);
     if (item) {
-      for (const effect of item.unmodelled) out.push({ ...effect, itemName: item.name });
+      for (const effect of item.unmodelled) push(effect, item.name);
     }
 
     if (equipped.enchantId !== undefined) {
       const enchant = ENCHANTS_BY_ID.get(equipped.enchantId);
       if (enchant) {
-        for (const effect of enchant.unmodelled) out.push({ ...effect, itemName: enchant.name });
+        for (const effect of enchant.unmodelled) push(effect, enchant.name);
       }
     }
   }

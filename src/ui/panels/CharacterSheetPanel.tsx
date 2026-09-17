@@ -1,30 +1,38 @@
 import type { CharacterProfile } from '../../profiles';
-import type { CombatStyleId } from '../../game/character';
+import type { ClassId, CombatStyleId } from '../../game/character';
 import { createPlayer } from '../../game/actors/createPlayer';
+import { createTrainingDummy } from '../../game/actors/createTrainingDummy';
+import { createForeverAttackChances } from '../../game/combat/attackChances';
 import { getClass, resolveCombatStyle, resourceLabel } from '../../game/character';
+import { hasteMultiplierFrom, toPercent } from '../../engine';
 import { Panel } from '../components/Panel';
 
 interface CharacterSheetPanelProps {
   readonly profile: CharacterProfile;
 }
 
+/** One line of the sheet. */
+interface SheetRow {
+  readonly label: string;
+  readonly value: string;
+}
+
+/** Which classes have a considered sheet. Everything else gets the generic one. */
+const TAILORED: ReadonlySet<ClassId> = new Set<ClassId>(['warrior']);
+
 /**
  * Step two: what the character is worth.
  *
- * Split out of the character panel, which now only answers "who is fighting".
- * This one answers "what are they worth".
+ * The rows are chosen PER CLASS, because the stats that decide a fight are not
+ * the same for everyone: a warrior lives on attack power, chance to miss and
+ * crit, and a mage on none of the three. Only the Warrior has a considered list
+ * so far; the rest fall back to a generic dump, which is at least honest about
+ * being generic rather than confidently showing a Mage its attack power.
  *
- * The derivation column that used to sit beside every stat is gone. It
- * explained where each number came from, which is worth reading exactly once
- * and is noise on every later glance; the same information lives in
- * `docs/character-creation.md`, where it can be read deliberately.
- *
- * Read-only. The gear and bonus inputs that used to sit below have gone with
- * gear itself still unimplemented: four number fields that add to a stat are
- * not gear, and until real items exist they only invite tuning against numbers
- * that mean nothing. `profile.stats` still exists and is still applied, so a
- * profile carrying bonuses is honoured; there is simply no longer a box here
- * encouraging anyone to invent some.
+ * Several rows are not stats at all but combat table numbers -- chance to miss,
+ * enemy dodge, enemy parry. Those depend on the TARGET as much as on the
+ * character, so they are computed against the encounter's own target rather
+ * than against an assumed raid boss.
  */
 export function CharacterSheetPanel({ profile }: CharacterSheetPanelProps) {
   const style = resolveCombatStyle(
@@ -32,36 +40,110 @@ export function CharacterSheetPanel({ profile }: CharacterSheetPanelProps) {
     profile.character.combatStyle,
   );
 
+  const rows = TAILORED.has(profile.character.characterClass)
+    ? warriorRows(profile, style)
+    : genericRows(profile, style);
+
   return (
     <Panel title="Character sheet">
-      <CharacterSheet profile={profile} style={style} />
+      <table className="base-stats">
+        <tbody>
+          {rows.map((row) => (
+            <tr key={row.label}>
+              <td>{row.label}</td>
+              <td className="numeric">{row.value}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </Panel>
   );
 }
 
 /**
- * The character as the simulation will actually see it: base stats, plus gear,
- * with the class conversions applied.
+ * Build the character the simulation will build.
  *
- * Built by calling the same `createPlayer` the simulation uses, rather than
- * recomputing the numbers here. A character sheet that disagreed with the fight
- * would be worse than no character sheet.
+ * The same `createPlayer` the fight uses, rather than recomputing anything
+ * here. A character sheet that disagreed with the fight would be worse than no
+ * character sheet.
  */
-function CharacterSheet({
-  profile,
-  style,
-}: {
-  readonly profile: CharacterProfile;
-  readonly style: CombatStyleId;
-}) {
-  const player = createPlayer({
+function buildPlayer(profile: CharacterProfile, style: CombatStyleId) {
+  return createPlayer({
     race: profile.character.race,
     characterClass: profile.character.characterClass,
     combatStyle: style,
     bonusStats: profile.stats,
     equipment: profile.equipment,
   });
+}
 
+const round = (value: number) => Math.round(value).toLocaleString('en-US');
+
+function warriorRows(profile: CharacterProfile, style: CombatStyleId): readonly SheetRow[] {
+  const player = buildPlayer(profile, style);
+  const target = createTrainingDummy({
+    health: profile.encounter.targetHealth,
+    armor: profile.encounter.targetArmor,
+    level: profile.encounter.targetLevel,
+  });
+
+  // The same provider the fight uses, so the percentages shown are the ones
+  // that will actually be rolled against.
+  const chances = createForeverAttackChances(() => style);
+  const stats = player.stats.effective;
+
+  const percent = (units: number) => `${toPercent(units).toFixed(2)}%`;
+  const forSlot = (slot: 'mainHand' | 'offHand') =>
+    chances('melee-auto', player, target, { slot });
+
+  /**
+   * A combat table number, per hand when there are two.
+   *
+   * Miss and enemy dodge BOTH derive from the wielding weapon's skill, so a
+   * sword in one hand and a mace in the other give two different answers the
+   * moment anything grants skill with one and not the other. Showing a single
+   * figure would average away a difference the fight does not average away.
+   *
+   * The dual-wield penalty applies to both hands, so it is not what separates
+   * them -- weapon skill is.
+   */
+  const perHand = (pick: (chances: ReturnType<typeof forSlot>) => number) =>
+    style === 'dual_wield'
+      ? `MH: ${percent(pick(forSlot('mainHand')))} | OH: ${percent(pick(forSlot('offHand')))}`
+      : percent(pick(forSlot('mainHand')));
+
+  const rows: SheetRow[] = [
+    { label: 'Hit Points', value: round(player.health.maximum) },
+    { label: 'Armor', value: round(stats.armor) },
+    { label: 'Strength', value: round(stats.strength) },
+    { label: 'Agility', value: round(stats.agility) },
+    { label: 'Attack Power', value: round(stats.attackPower) },
+  ];
+
+  rows.push({ label: 'Chance to Miss', value: perHand((c) => c.miss) });
+  rows.push({ label: 'Enemy Dodge', value: perHand((c) => c.dodge) });
+
+  // Enemy parry applies only to a character standing in front of the target,
+  // which the ruleset reads as one holding a shield -- so there is only ever
+  // one hand to report it for. It does not derive from weapon skill either. A
+  // zero for everyone else would suggest the number was computed and came out
+  // at nil.
+  if (style === 'one_hand_shield') {
+    rows.push({ label: 'Enemy Parry', value: percent(forSlot('mainHand').parry) });
+  }
+
+  rows.push({ label: 'Crit Chance', value: `${stats.critChance.toFixed(2)}%` });
+  rows.push({
+    label: 'Haste',
+    value: `${((hasteMultiplierFrom(stats) - 1) * 100).toFixed(2)}%`,
+  });
+
+  return rows;
+}
+
+/** The fallback, for the eight classes with no considered list yet. */
+function genericRows(profile: CharacterProfile, style: CombatStyleId): readonly SheetRow[] {
+  const player = buildPlayer(profile, style);
   const stats = player.stats.effective;
   const mana = player.resources.get('mana');
   const definition = getClass(profile.character.characterClass);
@@ -70,44 +152,20 @@ function CharacterSheet({
       ? player.resources.get(definition.primaryResource)
       : undefined;
 
-  const rows: { label: string; value: string }[] = [
+  return [
     { label: 'Hit Points', value: round(player.health.maximum) },
     ...(mana ? [{ label: 'Mana', value: round(mana.maximum) }] : []),
     ...(other ? [{ label: resourceLabel(other.type), value: round(other.maximum) }] : []),
-
     { label: 'Strength', value: round(stats.strength) },
     { label: 'Agility', value: round(stats.agility) },
     { label: 'Stamina', value: round(stats.stamina) },
     { label: 'Intellect', value: round(stats.intellect) },
     { label: 'Spirit', value: round(stats.spirit) },
-
     { label: 'Attack Power', value: round(stats.attackPower) },
-    ...(stats.rangedAttackPower !== 0
-      ? [{ label: 'Ranged Attack Power', value: round(stats.rangedAttackPower) }]
-      : []),
     { label: 'Armor', value: round(stats.armor) },
     { label: 'Crit Chance', value: `${stats.critChance.toFixed(2)}%` },
     ...(stats.spellCritChance !== 0
       ? [{ label: 'Spell Crit Chance', value: `${stats.spellCritChance.toFixed(2)}%` }]
       : []),
-    { label: 'Dodge Chance', value: `${stats.dodgeChance.toFixed(2)}%` },
-    ...(stats.manaPer5 !== 0 ? [{ label: 'Mana per 5 sec', value: stats.manaPer5.toFixed(1) }] : []),
   ];
-
-  return (
-    <table className="base-stats">
-      <tbody>
-        {rows.map((row) => (
-          <tr key={row.label}>
-            <td>{row.label}</td>
-            <td className="numeric">{row.value}</td>
-          </tr>
-        ))}
-      </tbody>
-    </table>
-  );
-}
-
-function round(value: number): string {
-  return Math.round(value).toLocaleString('en-US');
 }

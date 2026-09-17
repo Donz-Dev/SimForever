@@ -1,4 +1,5 @@
 import type { CharacterProfile } from '../../profiles';
+import type { CombatStyleId } from '../../game/character';
 import { resolveCombatStyle } from '../../game/character';
 import type { Equipment, EquipmentSlot } from '../../game/items/Item';
 import { enchantsForSlot, itemsForSlot } from '../../game/items/itemData';
@@ -11,20 +12,8 @@ interface SlotRow {
   readonly name: string;
 }
 
-/**
- * The slots, in the order a character sheet lists them: the hands first,
- * because for a simulator they are what matters, then head to feet, then the
- * jewellery.
- *
- * `twoHand` sits beside the one-hand slots rather than replacing them, so a
- * character can keep both sets and switch between them by changing combat
- * style. Only the ones the style uses are applied.
- */
-const SLOTS: readonly SlotRow[] = [
-  { id: 'mainHand', name: 'Main Hand' },
-  { id: 'offHand', name: 'Off Hand' },
-  { id: 'twoHand', name: 'Two-Hander' },
-  { id: 'ranged', name: 'Ranged' },
+/** The armour and jewellery, which every style fills the same way. */
+const COMMON_SLOTS: readonly SlotRow[] = [
 
   { id: 'head', name: 'Head' },
   { id: 'neck', name: 'Neck' },
@@ -42,6 +31,49 @@ const SLOTS: readonly SlotRow[] = [
   { id: 'trinket1', name: 'Trinket 1' },
   { id: 'trinket2', name: 'Trinket 2' },
 ];
+
+/**
+ * The weapon slots a style can actually fill.
+ *
+ * A dual-wielder has no use for a two-hander and a two-hander has no off hand,
+ * so showing those dropdowns invites equipping something that will be ignored.
+ * The 1H & Shield style holds a SHIELD rather than a second weapon, which is a
+ * different slot with a different list.
+ *
+ * The ranged slot is offered to every melee style. A bow does not swing while
+ * meleeing, but it is equipped and its stats count.
+ */
+function weaponSlotsFor(style: CombatStyleId): readonly SlotRow[] {
+  const ranged: SlotRow = { id: 'ranged', name: 'Ranged' };
+
+  switch (style) {
+    case 'two_hander':
+      return [{ id: 'twoHand', name: 'Two-Hander' }, ranged];
+    case 'one_hand_shield':
+      return [
+        { id: 'mainHand', name: 'Main Hand' },
+        { id: 'shield', name: 'Shield' },
+        ranged,
+      ];
+    case 'dual_wield':
+      return [
+        { id: 'mainHand', name: 'Main Hand' },
+        { id: 'offHand', name: 'Off Hand' },
+        ranged,
+      ];
+    case 'ranged':
+      return [ranged, { id: 'mainHand', name: 'Main Hand' }];
+    default:
+      // Forms and caster styles: no considered list yet, so offer everything
+      // rather than guessing which hands a Moonkin uses.
+      return [
+        { id: 'mainHand', name: 'Main Hand' },
+        { id: 'offHand', name: 'Off Hand' },
+        { id: 'twoHand', name: 'Two-Hander' },
+        ranged,
+      ];
+  }
+}
 
 interface GearPanelProps {
   readonly profile: CharacterProfile;
@@ -75,11 +107,12 @@ export function GearPanel({ profile, onChange }: GearPanelProps) {
   };
 
   const missing = unmodelledEffects(profile.equipment, style);
+  const slots = [...weaponSlotsFor(style), ...COMMON_SLOTS];
 
   return (
     <Panel title="Gear">
       <div className="gear-grid">
-        {SLOTS.map((slot) => (
+        {slots.map((slot) => (
           <GearSlotRow
             key={slot.id}
             slot={slot}
@@ -142,7 +175,9 @@ function GearSlotRow({
           onChange({ itemId: Number(value) });
         }}
       >
-        <option value="">{items.length === 0 ? 'No items' : 'Empty'}</option>
+        <option value="">
+          {items.length === 0 ? `No ${slot.name.toLowerCase()} items yet` : 'Empty'}
+        </option>
         {items.map((item) => (
           <option key={item.id} value={item.id}>
             {item.name}

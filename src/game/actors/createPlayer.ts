@@ -23,7 +23,8 @@ import { RAGE_FROM_DAMAGE_TAKEN, regenerationFor } from '../combat/resourceRules
 import { reactionsForClass } from '../reactions/reactionsForClass';
 import { rotationFor } from '../rotations/rotationFor';
 import type { Equipment } from '../items/Item';
-import { statsForStyle, weaponsForEquipment } from '../items/equipment';
+import { liveEquipment, statsForStyle, weaponsForEquipment } from '../items/equipment';
+import { reactionsForEquipment } from '../items/procs';
 import { autoAttackModeForStyle, weaponsForStyle } from './weapons';
 
 export interface PlayerOptions {
@@ -133,8 +134,14 @@ export function createPlayer(options: PlayerOptions): Combatant {
       ? RAGE_FROM_DAMAGE_TAKEN
       : undefined,
     abilities,
-    // Reactive procs: a Warrior's Overpower opening because the target dodged.
-    reactions: reactionsForClass(characterClass, style),
+    // Reactive procs, from two sources: the class (a Warrior's Overpower opening
+    // because the target dodged) and the gear (Vis'kag, Crusader, Hand of
+    // Justice). Gear procs are built per character rather than shared, because
+    // Hand of Justice carries its own internal cooldown.
+    reactions: [
+      ...reactionsForClass(characterClass, style),
+      ...reactionsForEquipment(liveEquipment(equipment, style)),
+    ],
     // No abilities means nothing for a rotation to choose, so it is left off
     // rather than scheduling decision events that can never do anything.
     rotation: abilities.length > 0 ? rotation : undefined,

@@ -1,6 +1,6 @@
 import type { Ability } from '../abilities/Ability';
 import type { CastCheck } from '../abilities/casting';
-import type { Combatant } from '../actors/Combatant';
+import type { Combatant, WeaponSlot } from '../actors/Combatant';
 import type {
   AttackChances,
   AttackContext,
@@ -100,6 +100,16 @@ export interface SimulationContext {
     target: Combatant,
     context?: AttackContext,
   ): AttackResolution;
+
+  /**
+   * Complete a weapon's swing immediately and restart its timer.
+   *
+   * What an "extra attack" is. Content asks for it rather than reaching into
+   * the auto-attack scheduler, so the swing goes through the same path as any
+   * other -- a queued Heroic Strike is consumed by it exactly as it would be by
+   * a normal swing.
+   */
+  extraAttack(actor: Combatant, slot: WeaponSlot): void;
 
   /** Kill a combatant, clear its auras, and end combat if that was the last one. */
   killCombatant(target: Combatant, killer?: Combatant): void;

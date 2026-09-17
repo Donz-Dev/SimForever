@@ -42,9 +42,13 @@ nothing, and the Gear panel lists every one of them under "Equipped but not
 simulated". A geared character here is weaker than the same character in the
 game, by exactly the listed amount.
 
-Currently unmodelled: Vis'kag's chance-on-hit (the proc RATE is not stated
-anywhere), Hand of Justice's extra attack (no such mechanic), Crusader (its rate
-is stated only as "often"), and all Fire Resistance (not a stat the engine has).
+Procs are the exception: they are behaviour, not stats, so they live in
+`src/game/items/procs.ts` rather than being either. Vis'kag, Crusader and Hand
+of Justice are all implemented there, using rates the ruleset owner supplied --
+the tooltips give none of them, saying only "Chance on hit" and "often".
+
+Currently unmodelled: all Fire Resistance (not a stat the engine has), and
+Crusader's heal (nothing damages the player, so it would restore nothing).
 
 ## A check worth keeping
 

@@ -181,16 +181,15 @@ Where they AGREE, confidence goes up:
 | Shield Slam | 421 to 439 + shield block value | "421 to 439 damage, increased by your Block Value" |
 | Spearing Strike | 40% Weapon Damage | "deals 40% weapon damage" |
 
-Where they DISAGREE:
+Where they DISAGREED:
 
 | Ability | Spreadsheet | Calculator |
 | --- | --- | --- |
 | **Mortal Strike** | base damage **160** | "weapon damage plus **85**" |
 
-Both are Forever sources and both are current. The code uses **160**, because
-that is the sheet the ruleset owner supplied directly, but this is unresolved
-and one of the two is wrong. It is a single constant in
-`game/abilities/warrior.ts` if it needs flipping.
+**RESOLVED: 160 is correct.** Confirmed by the ruleset owner. Mortal Strike is
+weapon damage plus 160; the talent calculator's 85 is wrong for Forever. The
+code always used 160, so nothing changed.
 
 The calculator also confirms **Spearing Strike is an Arms talent**, which is why
 it had no Classic counterpart to check against.

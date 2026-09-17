@@ -38,6 +38,44 @@ export function swingingSlots(attacker: Combatant): readonly WeaponSlot[] {
   }
 }
 
+/**
+ * An extra attack: complete this weapon's swing NOW and restart its timer.
+ *
+ * Hand of Justice and effects like it. The swing is scheduled at the current
+ * timestamp rather than run inline, for two reasons. It lets the reaction that
+ * triggered it finish first, so the extra swing can itself proc things --
+ * an extra attack is a real attack. And it keeps every swing on one code path,
+ * so a queued Heroic Strike is consumed by the extra swing exactly as it would
+ * be by a normal one.
+ *
+ * The swing timer resets because `scheduleSwing` keeps at most one pending
+ * swing per slot: the one this extra attack schedules replaces whatever was
+ * outstanding. That single invariant is also what stops a proc from forking the
+ * chain into two independent timers.
+ */
+export function extraAttack(
+  context: SimulationContext,
+  attacker: Combatant,
+  slot: WeaponSlot,
+): void {
+  const weapon = attacker.weapons[slot];
+  if (!weapon) return;
+
+  context.events.schedule(
+    context.clock.now(),
+    createEvent(`extra-attack:${attacker.id}:${slot}`, EventPriority.AutoAttack, (ctx) => {
+      if (!attacker.isAlive || ctx.hasEnded) return;
+
+      if (ctx.defaultTargetFor(attacker)) {
+        swing(ctx, attacker, weapon, slot);
+      }
+
+      const haste = hasteMultiplierFrom(attacker.stats.effective);
+      scheduleSwing(ctx, attacker, slot, applyHaste(weapon.swingTimerMs, haste));
+    }),
+  );
+}
+
 function scheduleSwing(
   context: SimulationContext,
   attacker: Combatant,
@@ -47,7 +85,20 @@ function scheduleSwing(
   const weapon = attacker.weapons[slot];
   if (!weapon) return;
 
-  context.events.schedule(
+  // At most ONE pending swing per slot, always.
+  //
+  // Without this an extra attack forks the chain. It fires from inside a swing,
+  // which has not yet scheduled its successor, so the extra attack schedules
+  // one and then the original swing schedules another -- two independent
+  // timers on one weapon, doubling again with every proc. Four Hand of Justice
+  // procs turned 115 main-hand swings into 211.
+  //
+  // Cancelling here is harmless in the normal case: the handle a firing swing
+  // holds is its own, and cancelling an event that has already run does
+  // nothing.
+  context.events.cancel(attacker.pendingSwing(slot));
+
+  const handle = context.events.schedule(
     context.clock.now() + delayMs,
     createEvent(`auto-attack:${attacker.id}:${slot}`, EventPriority.AutoAttack, (ctx) => {
       if (!attacker.isAlive || ctx.hasEnded) return;
@@ -63,6 +114,10 @@ function scheduleSwing(
       scheduleSwing(ctx, attacker, slot, applyHaste(weapon.swingTimerMs, haste));
     }),
   );
+
+  // Kept so an extra attack can cancel it. A swing that has already fired
+  // clears its own handle when it reschedules.
+  attacker.setPendingSwing(slot, handle);
 }
 
 function swing(
