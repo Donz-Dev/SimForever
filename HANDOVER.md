@@ -26,11 +26,11 @@ their talent trees and nothing else.
 | **Reactions** | content responds to an attack result: Overpower off a target dodge, and every item proc |
 | **Gear** | 18 items and the Crusader enchant, equippable, driving stats, weapons and procs |
 | **Procs** | PPM (Vis'kag, Crusader) and flat-chance with an internal cooldown (Hand of Justice) |
-| **Talents** | all 470 talents, nine classes, spendable in the UI, saved on the profile, and **gating which abilities a character has**. No talent changes any other number yet |
+| **Talents** | all 470 talents, nine classes, spendable in the UI and saved on the profile. The Warrior's per-rank values are captured; 14 of its 54 talents have real effects and the other 40 say on screen why they cannot |
 | **Analysis** | DPS, per-ability breakdown with attempts/hits/crit/glance/avoid rates |
 | **UI** | two-step character flow, per-class character sheet, style-aware gear, talent trees, combat log, Monte Carlo batches |
 
-**684 tests**, CI green on Node 20 and 22. Profile format **v5**.
+**714 tests**, CI green on Node 20 and 22. Profile format **v5**.
 
 The app is **live at <https://donz-dev.github.io/SimForever/>**, republished by
 `.github/workflows/deploy.yml` on every push to `main` that passes the tests.
@@ -45,26 +45,29 @@ dummy. That figure is meaningful for comparing changes to each other; see
 
 Two candidates, and they are not close in value.
 
-### 1. Talent effects — the biggest gap between what is shown and what is computed
+### 1. Talent effects for the other eight classes, and the rest of the Warrior's
 
-470 talents across nine classes are real data, and **gating is the only thing
-any of them does**. Taking Mortal Strike gives you Mortal Strike; taking
-Deflection still does nothing at all.
+The mechanism is built and the Warrior is the worked example. A talent declares
+what it does in `game/talents/<class>Effects.ts`, and what its number IS lives
+separately in `src/data/talents/values/<class>.json`, per rank, hand-editable.
+See `docs/talent-effects-proposal.md` for why, and `TalentEffect.ts` for the
+shape.
 
-**Gating is done** — talents live on the profile at format v5, and
-`abilitiesForClass` grants Mortal Strike, Bloodthirst, Shield Slam and Spearing
-Strike only to a character whose allocation contains them. See
-`docs/talent-effects-proposal.md`.
+**Warrior: 14 of 54 talents do something.** The other 40 declare `unmodelled`
+with a specific reason, and the talent panel prints every one under "Chosen but
+not simulated". That list is also the work queue — each reason names the exact
+obstacle.
 
-What remains is the effects themselves, and one decision:
+What remains, roughly in order:
 
-- **How a talent expresses its effect.** A stat modifier, a modifier on an
-  existing ability, or a new ability entirely. All three occur in the first ten
-  Warrior talents. The proposal recommends a declarative union with a function
-  escape hatch; it has not been accepted or rejected.
-- **The per-rank values exist but are not captured.** `src/data/talents/values/`
-  holds an entry for all 470 talents; three have values and 467 are `null`. See
-  that directory's README.
+- **Capture the other eight classes' values.** Two documented steps per class in
+  `src/data/talents/values/README.md`. Do a few at a time; wowhead rate-limited
+  an attempt at all nine in one sitting.
+- **Effect tables for those classes**, once they have abilities at all.
+- **The engine gaps the unmodelled reasons name**, each of which unlocks several
+  talents at once: a block outcome, player parry, per-ability crit and damage
+  scaling, a crit damage multiplier, conditional multipliers, and letting
+  talents contribute reactions and combat-start auras.
 
 ### 2. The remaining eight classes' abilities
 
@@ -277,7 +280,8 @@ issues round trip is exactly what they need, which is why it was kept.
 
 Roughly in order of value.
 
-1. **Talent effects**, and talents gating abilities. See "The next task".
+1. **Per-rank talent values for the other eight classes.** The Warrior's are
+   captured; see `src/data/talents/values/README.md`.
 2. **Ability spreadsheets for the other eight classes.**
 3. **Effect values for the Warrior's nine inert buffs and debuffs.**
 4. **Forever item data**, to replace the Classic stand-ins. More items of any

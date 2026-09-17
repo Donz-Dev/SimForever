@@ -32,9 +32,10 @@ from a formula.
 ## Status
 
 Under active development. The Warrior is the finished class; the other eight
-can be built but do not have their abilities yet. Talents decide which abilities
-a character has, but do not yet change any other number. Results are best used
-to compare one setup against another.
+can be built but do not have their abilities yet, and only the Warrior's talent
+values are captured. A talent that cannot be simulated says so on screen rather
+than quietly doing nothing. Results are best used to compare one setup against
+another.
 
 ## Running it locally
 

@@ -1,6 +1,8 @@
 import type { ClassId } from '../../game/character';
 import type { ClassTalents, Talent, TalentAllocation, TalentTree } from '../../game/talents/Talent';
 import { TOTAL_TALENT_POINTS } from '../../game/talents/Talent';
+import type { UnmodelledTalent } from '../../game/talents/TalentEffect';
+import { talentBuild } from '../../game/talents/talentBuild';
 import { accentFor, talentsForClass } from '../../game/talents/talentData';
 import {
   canSpend,
@@ -43,10 +45,11 @@ interface TalentPanelProps {
  * Left click spends a point, right click takes one back -- the binding every
  * talent calculator has used for twenty years, so it needs no instructions.
  *
- * NOTHING SPENT HERE AFFECTS A SIMULATION. The trees are real data from the
- * Forever calculators, but no talent has an implemented effect, so a full build
- * and an empty one produce identical numbers. Said once, on screen, rather than
- * left for someone to discover by running both.
+ * SOME OF THIS AFFECTS A SIMULATION AND SOME DOES NOT. A talent that grants an
+ * ability, changes a stat, raises a resource cap or alters an ability's cost or
+ * cooldown is real; everything else is listed under "Chosen but not simulated"
+ * with the reason it cannot be modelled yet. Said on screen, per talent, rather
+ * than left for someone to discover by running two builds and comparing.
  *
  * Collapsible because it is tall: three trees of seven rows push the results
  * off screen on a laptop, and the trees are set once and then watched rarely.
@@ -62,6 +65,10 @@ export function TalentPanel({
   if (!talents) return null;
 
   const remaining = pointsRemaining(allocation);
+  // Which of the spent talents are doing nothing, and why. The Gear panel
+  // prints the same list for items under "Equipped but not simulated"; a talent
+  // that silently did nothing would look exactly like one that worked.
+  const { unmodelled } = talentBuild(characterClass, allocation);
 
   return (
     <section className="panel talent-panel">
@@ -88,10 +95,25 @@ export function TalentPanel({
 
       {collapsed ? null : (
         <div className="panel-body talent-body">
-          <p className="muted warn talent-warning">
-            Talents are display only. No talent has an implemented effect yet, so these
-            choices do not change a single number in the results.
-          </p>
+          {unmodelled.length > 0 ? (
+            <>
+              <p className="muted warn talent-warning">
+                Chosen but not simulated. These have points in them and do nothing, so
+                the results are lower than the real game by whatever they are worth.
+              </p>
+              <ul className="issues">
+                {unmodelled.map((entry: UnmodelledTalent) => (
+                  <li key={entry.talentId}>
+                    <strong>
+                      {entry.name} ({entry.rank}/{talents.byId.get(entry.talentId)?.ranks ?? entry.rank})
+                    </strong>{' '}
+                    — {entry.text}
+                    <span className="muted"> {entry.reason}</span>
+                  </li>
+                ))}
+              </ul>
+            </>
+          ) : null}
           <div className="talent-trees">
             {talents.trees.map((tree, index) => (
               <TalentTreeView
