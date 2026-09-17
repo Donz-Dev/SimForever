@@ -29,20 +29,11 @@ Every number comes from a real simulated fight — a seeded, event-driven engine
 resolving each swing on the ruleset's own combat table. Nothing is estimated
 from a formula.
 
-## What is finished, and what is not
+## Status
 
-The simulator is under active development and honest about its gaps:
-
-- **The Warrior is complete** — all 26 abilities, real gear, working procs. The
-  other eight classes can be built and will auto-attack, but have no abilities
-  yet.
-- **Talents are display only.** All 470 are there and spendable, but no talent
-  changes a single number in the result yet.
-- **The items are WoW Classic stand-ins**, not Forever items, so their values
-  may differ from the ruleset's own.
-
-Results are good for comparing one setup against another. Treat an absolute DPS
-number as provisional.
+Under active development. The Warrior is the finished class; the other eight
+can be built but do not have their abilities yet, and talents are display only
+for now. Results are best used to compare one setup against another.
 
 ## Running it locally
 
