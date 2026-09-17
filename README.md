@@ -1,9 +1,13 @@
 # SimForever
 
 [![CI](https://github.com/Donz-Dev/SimForever/actions/workflows/ci.yml/badge.svg)](https://github.com/Donz-Dev/SimForever/actions/workflows/ci.yml)
+[![Deploy](https://github.com/Donz-Dev/SimForever/actions/workflows/deploy.yml/badge.svg)](https://github.com/Donz-Dev/SimForever/actions/workflows/deploy.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 An event-driven World of Warcraft combat simulator that runs in the browser.
+
+**Try it: [donz-dev.github.io/SimForever](https://donz-dev.github.io/SimForever/)** —
+every push to `main` that passes the tests deploys there.
 
 The project is at its first milestone: a complete, tested simulation engine with a
 small amount of example content — one player, one training dummy, an auto-attack,
@@ -36,6 +40,28 @@ and a real fight executes in the browser.
 | `npm test` | Run the test suite once |
 | `npm run test:watch` | Re-run tests as files change |
 | `npm run typecheck` | Type check without building |
+
+## Deployment
+
+The app is entirely client-side — no server, no database, no API keys. A build
+is a folder of static files, and `.github/workflows/deploy.yml` publishes it to
+[GitHub Pages](https://donz-dev.github.io/SimForever/) on every push to `main`
+that type checks, passes the tests and builds. Nothing is published from a
+laptop; the live site is always a commit on `main`.
+
+Two things about it are worth knowing before changing anything:
+
+- **Pages must be switched on once, by hand**, under
+  Settings → Pages → Build and deployment → Source → **GitHub Actions**. Until
+  that is done the deploy job fails and CI carries on unaffected.
+- **A project site is served from a subdirectory**, so a production build sets
+  `base: '/SimForever/'` in [vite.config.ts](vite.config.ts) and every asset URL
+  carries that prefix. The dev server is unaffected and stays at `/`. Run
+  `npm run preview` to see exactly what Pages will serve, prefix included; it is
+  the only local command that reproduces the deployed paths.
+
+Moving to a custom domain, or to a `donz-dev.github.io` user site, means setting
+that `base` back to `'/'`.
 
 ## Architecture
 
