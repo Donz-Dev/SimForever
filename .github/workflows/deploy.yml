@@ -1,0 +1,85 @@
+name: Deploy
+
+# Publishes the built app to GitHub Pages at https://donz-dev.github.io/SimForever/
+#
+# One manual step enables this, once: Settings → Pages → Build and deployment →
+# Source → "GitHub Actions". Without it the deploy step fails with "Pages is not
+# enabled", and nothing else in the repository is affected.
+
+on:
+  push:
+    branches: [main]
+  # Lets a deploy be re-run from the Actions tab without an empty commit —
+  # useful when Pages itself was misconfigured rather than the code.
+  workflow_dispatch:
+
+# The default GITHUB_TOKEN cannot publish Pages, so this workflow asks for more
+# than CI does. `pages: write` is the deploy itself; `id-token: write` lets
+# actions/deploy-pages prove to Pages which workflow run produced the artifact.
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Pages hosts exactly one live version, so overlapping deploys are a race for
+# it. `cancel-in-progress: false` lets an already-running deploy finish rather
+# than leaving the site half-published; the newer commit deploys straight after.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          # One version, not CI's matrix: this builds the artifact that ships,
+          # and CI has already proven both versions work.
+          node-version: '22.x'
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      # CI runs on this same commit, but it runs in parallel and this workflow
+      # cannot see its result. Re-running the checks here costs about a minute
+      # and is what makes a broken build unable to reach the live site.
+      - name: Type check
+        run: npm run typecheck
+
+      - name: Run tests
+        run: npm test
+
+      - name: Build
+        run: npm run build
+
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload the built site
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+  deploy:
+    name: deploy
+    needs: build
+    runs-on: ubuntu-latest
+
+    # Surfaces the live URL on the run's summary page and in the repository's
+    # Environments list, so the deployed commit is always identifiable.
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
