@@ -1,3 +1,4 @@
+import { AbilityModifiers } from '../combat/abilityModifiers';
 import type { Ability } from '../abilities/Ability';
 import { AbilityBook } from '../abilities/AbilityBook';
 import type { DamageSchool } from '../combat/DamageSchool';
@@ -129,6 +130,11 @@ export interface CombatantOptions {
    * above.
    */
   readonly reactions?: readonly Reaction[];
+  /**
+   * Per-ability crit and damage modifiers, from talents, gear or anything else
+   * that changes one ability rather than the whole character.
+   */
+  readonly abilityModifiers?: AbilityModifiers;
   /** For pets and summons: the id of the combatant that owns them. */
   readonly ownerId?: string;
 }
@@ -161,6 +167,7 @@ export class Combatant {
   readonly regeneration: readonly ResourceRegen[];
   readonly resourceOnDamageTaken: ResourceGeneration | undefined;
   readonly reactions: readonly Reaction[];
+  readonly abilityModifiers: AbilityModifiers;
 
   /**
    * When each resource was last spent.
@@ -258,6 +265,7 @@ export class Combatant {
     this.regeneration = options.regeneration ?? [];
     this.resourceOnDamageTaken = options.resourceOnDamageTaken;
     this.reactions = options.reactions ?? [];
+    this.abilityModifiers = options.abilityModifiers ?? new AbilityModifiers();
   }
 
   get isAlive(): boolean {

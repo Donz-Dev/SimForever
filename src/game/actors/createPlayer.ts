@@ -160,6 +160,10 @@ export function createPlayer(options: PlayerOptions): Combatant {
       ? RAGE_FROM_DAMAGE_TAKEN
       : undefined,
     abilities,
+    // Per-ability crit and damage scaling, from talents today and from gear or
+    // set bonuses later. Held on the combatant so `dealDamage` can consult it
+    // without every ability's `onCast` having to remember to.
+    abilityModifiers: build.abilityModifiers,
     // Reactive procs, from two sources: the class (a Warrior's Overpower opening
     // because the target dodged) and the gear (Vis'kag, Crusader, Hand of
     // Justice). Gear procs are built per character rather than shared, because

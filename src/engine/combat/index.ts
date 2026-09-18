@@ -46,3 +46,5 @@ export {
   spellCritChanceFrom,
   versatilityMultiplierFrom,
 } from './ratings';
+export type { AbilityModifier } from './abilityModifiers';
+export { ALL_ABILITIES, AbilityModifiers } from './abilityModifiers';

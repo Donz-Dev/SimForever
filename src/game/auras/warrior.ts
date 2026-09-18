@@ -70,9 +70,14 @@ export const REND: AuraDefinition = {
         // power at all.
         powerCoefficient: 0,
         // No attack table. Whether Rend landed was decided when it was
-        // applied, so its ticks do not roll again.
+        // applied, so its ticks do not roll the table again.
         periodic: true,
-        // A bleed is physical but ignores armor.
+        // RULESET: every damage-over-time effect in Forever can crit, at the
+        // crit chance of the kind of event that applied it. Rend is applied by
+        // a melee special, so its ticks crit at melee crit chance.
+        critFrom: 'melee-special',
+        // A bleed is physical but ignores armor. True of every DoT here, not
+        // just this one.
         appliesArmor: false,
       });
     },

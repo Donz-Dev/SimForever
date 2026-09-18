@@ -41,14 +41,9 @@ export const WARRIOR_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
     },
   ],
 
-  improved_rend: [
-    {
-      kind: 'unmodelled',
-      reason:
-        "Scales one aura's periodic damage. Damage multipliers are whole-character " +
-        '(an aura\'s `damageDoneMultiplier`); nothing scales a single effect.',
-    },
-  ],
+  // Scales the bleed, not the cast: a periodic tick carries the AURA's id.
+  improved_rend: [{ kind: 'abilityDamage', abilityId: 'rend' }],
+
 
   improved_charge: [
     {
@@ -68,15 +63,8 @@ export const WARRIOR_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
     },
   ],
 
-  improved_overpower: [
-    {
-      kind: 'unmodelled',
-      reason:
-        'Crit chance for ONE ability. Crit comes from the stat block via the ' +
-        'attack table, and `AttackContext` carries only the weapon slot, so there ' +
-        'is nowhere to put a per-ability bonus.',
-    },
-  ],
+  improved_overpower: [{ kind: 'abilityCrit', abilityId: 'overpower' }],
+
 
   anger_management: [
     {
@@ -109,12 +97,8 @@ export const WARRIOR_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
     },
   ],
 
-  impale: [
-    {
-      kind: 'unmodelled',
-      reason: 'Raises the critical strike multiplier, which is fixed in the attack table.',
-    },
-  ],
+  impale: [{ kind: 'critDamageBonus' }],
+
 
   bloodthrill: [
     { kind: 'unmodelled', reason: 'A chance to open the Overpower window: a reaction.' },
@@ -285,13 +269,15 @@ export const WARRIOR_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
   ],
 
   improved_revenge: [
+    { kind: 'abilityDamage', abilityId: 'revenge' },
     {
       kind: 'unmodelled',
       reason:
-        "Scales one ability's damage; nothing scales a single ability. Revenge " +
-        'also needs the player to be attacked, which nothing does.',
+        'The damage scaling works, but Revenge needs the player to be attacked ' +
+        'to open its window and nothing attacks the player, so it never fires.',
     },
   ],
+
 
   defiance: [{ kind: 'unmodelled', reason: 'Threat, which the engine does not track.' }],
 

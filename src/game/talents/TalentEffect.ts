@@ -76,6 +76,34 @@ export type TalentEffect =
   | { readonly kind: 'resourceMax'; readonly resource: ResourceType }
 
   /**
+   * Adds to ONE ability's crit chance, in percentage points.
+   *
+   * Improved Overpower's "+25% critical strike chance of your Overpower".
+   * Distinct from a `stat` effect on `critChance`, which would raise crit for
+   * everything the character does.
+   */
+  | { readonly kind: 'abilityCrit'; readonly abilityId: string }
+
+  /**
+   * Multiplies ONE ability's damage. The talent's value is a PERCENTAGE, so 12
+   * becomes x1.12.
+   *
+   * The ability id can be an aura's, because a periodic tick carries the aura's
+   * id -- which is how Improved Rend scales a bleed rather than a cast.
+   */
+  | { readonly kind: 'abilityDamage'; readonly abilityId: string }
+
+  /**
+   * Raises the critical strike damage BONUS for every ability, as a percentage
+   * of the bonus rather than of the total.
+   *
+   * Impale's "+10% critical strike damage bonus" on a x2 melee crit gives
+   * 1 + (2 - 1) x 1.1 = x2.1, not x2.2. Auto attacks are not abilities and are
+   * untouched.
+   */
+  | { readonly kind: 'critDamageBonus' }
+
+  /**
    * The talent's effect cannot be modelled, and this says why.
    *
    * NOT a gap in this list waiting to be filled in — a first-class outcome, and

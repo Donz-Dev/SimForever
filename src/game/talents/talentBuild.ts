@@ -1,5 +1,6 @@
 import type { PartialStats, ResourceType, StatModifierSpec, StatName } from '../../engine';
-import { seconds } from '../../engine';
+import { ALL_ABILITIES, AbilityModifiers, seconds } from '../../engine';
+import { COMBAT_CONSTANTS } from '../combat/attackChances';
 import type { ClassId } from '../character';
 import type { TalentAllocation } from './Talent';
 import type { TalentEffects, UnmodelledTalent } from './TalentEffect';
@@ -41,6 +42,8 @@ export interface TalentBuild {
   readonly abilityCostReduction: ReadonlyMap<string, number>;
   /** Cooldown to SUBTRACT from an ability, in milliseconds, by ability id. */
   readonly abilityCooldownReductionMs: ReadonlyMap<string, number>;
+  /** Per-ability crit, crit damage and damage scaling, for the combatant. */
+  readonly abilityModifiers: AbilityModifiers;
   /**
    * Talents with points in them that are doing nothing, and why.
    *
@@ -58,6 +61,7 @@ const EMPTY: TalentBuild = {
   grantedAbilities: new Set(),
   abilityCostReduction: new Map(),
   abilityCooldownReductionMs: new Map(),
+  abilityModifiers: new AbilityModifiers(),
   unmodelled: [],
 };
 
@@ -86,6 +90,7 @@ export function talentBuild(
   const grantedAbilities = new Set<string>();
   const abilityCostReduction = new Map<string, number>();
   const abilityCooldownReductionMs = new Map<string, number>();
+  const abilityModifiers = new AbilityModifiers();
   const unmodelled: UnmodelledTalent[] = [];
 
   const report = (talentId: string, rank: number, reason: string) => {
@@ -158,6 +163,25 @@ export function talentBuild(
         case 'resourceMax':
           resourceMaximums[effect.resource] = (resourceMaximums[effect.resource] ?? 0) + value;
           break;
+        case 'abilityCrit':
+          abilityModifiers.add(effect.abilityId, { critBonus: value });
+          break;
+        case 'abilityDamage':
+          abilityModifiers.add(effect.abilityId, { damageMultiplier: 1 + value / 100 });
+          break;
+        case 'critDamageBonus':
+          /*
+           * The talent raises the BONUS half of the multiplier, not the whole
+           * thing. A melee crit multiplies by 2, so the bonus is 1.0 and "+10%"
+           * adds 0.1, giving 2.1. INTERPRETATION: the melee multiplier is used,
+           * because every Warrior ability is melee. A class with spell crits
+           * would need this per school.
+           */
+          abilityModifiers.add(ALL_ABILITIES, {
+            critMultiplierBonus:
+              (COMBAT_CONSTANTS.meleeCritMultiplier - 1) * (value / 100),
+          });
+          break;
       }
     }
   }
@@ -169,6 +193,7 @@ export function talentBuild(
     grantedAbilities,
     abilityCostReduction,
     abilityCooldownReductionMs,
+    abilityModifiers,
     unmodelled,
   };
 }
