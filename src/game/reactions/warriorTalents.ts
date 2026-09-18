@@ -56,13 +56,16 @@ export const flurry: TalentReactionBuilder = (hastePercent) => ({
   },
 });
 
+/** Rage a proc of Unbridled Wrath grants, by whether the weapon is two-handed. */
+export const UNBRIDLED_WRATH_RAGE = { oneHanded: 1, twoHanded: 2 } as const;
+
 /**
  * Unbridled Wrath: a chance at extra rage when a melee weapon deals damage.
  *
- * PARTIAL. The source says "1 additional Rage ... increased to 2 Rage for
- * two-handed weapons", and the engine has no weapon TYPE, only a speed and a
- * damage. One rage is granted, which is the one-handed case; a two-hander is
- * understated by one rage per proc. Flagged in the talent's own entry.
+ * "This effect is increased to 2 Rage for two-handed weapons", so the amount is
+ * decided by the weapon that SWUNG rather than by the character -- a warrior
+ * cannot hold a two-hander and an off-hand at once, but reading the slot keeps
+ * it right whatever is equipped.
  */
 export const unbridledWrath: TalentReactionBuilder = (chancePercent) => ({
   id: 'unbridled_wrath',
@@ -70,8 +73,13 @@ export const unbridledWrath: TalentReactionBuilder = (chancePercent) => ({
   outcomes: ['hit', 'crit', 'glance'],
   canTrigger: (context, _actor, attack) =>
     isMelee(attack.weaponSlot) && context.rng.rollChance(chancePercent / 100),
-  onTrigger: (context, actor) => {
-    context.grantResource(actor, 'rage', 1);
+  onTrigger: (context, actor, attack) => {
+    const weapon = attack.weaponSlot ? actor.weapons[attack.weaponSlot] : undefined;
+    context.grantResource(
+      actor,
+      'rage',
+      weapon?.twoHanded ? UNBRIDLED_WRATH_RAGE.twoHanded : UNBRIDLED_WRATH_RAGE.oneHanded,
+    );
   },
 });
 

@@ -9,7 +9,7 @@ import type { TalentEffects } from './TalentEffect';
  * test asserts the coverage both ways, which is how three entries lost to a
  * careless edit were caught.
  *
- * 24 are fully modelled and 8 more are PARTLY modelled — something real plus an
+ * 25 are fully modelled and 7 more are PARTLY modelled — something real plus an
  * `unmodelled` entry naming the part that is missing. 21 do nothing at all.
  *
  * NINE GRANT AN ABILITY, and those are where being wrong costs most: an ability
@@ -33,6 +33,10 @@ import type { TalentEffects } from './TalentEffect';
  *
  * The Gear panel's "Equipped but not simulated" does the same job for items,
  * and the Talent panel prints these the same way.
+ *
+ * Edge cases, interpretations and the talents that are deliberately only PARTLY
+ * modelled are all written up in `docs/talent-effects.md`. Read that before
+ * deciding a reason below is out of date -- three of them already were.
  *
  * The NUMBERS are not here. They live in `src/data/talents/values/warrior.json`,
  * per rank, hand-editable. This file says what a talent does with its number.
@@ -153,17 +157,7 @@ export const WARRIOR_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
     { kind: 'unmodelled', reason: 'Stun and fear duration. Nothing stuns or fears the player.' },
   ],
 
-  unbridled_wrath: [
-    { kind: 'reaction', reactionId: 'unbridled_wrath' },
-    {
-      kind: 'unmodelled',
-      reason:
-        'PARTIAL: the proc grants 1 rage, the one-handed case. The source doubles ' +
-        'it to 2 for a two-handed weapon, and the engine has no weapon TYPE -- ' +
-        'only a speed and a damage -- so a two-hander is understated by one rage ' +
-        'per proc.',
-    },
-  ],
+  unbridled_wrath: [{ kind: 'reaction', reactionId: 'unbridled_wrath' }],
 
   improved_cleave: [{ kind: 'abilityCost', abilityId: 'cleave' }],
 

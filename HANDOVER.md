@@ -50,9 +50,11 @@ Two candidates, and they are not close in value.
 The mechanism is built and the Warrior is the worked example. A talent declares
 what it does in `game/talents/warriorEffects.ts`; what its number IS lives in
 `src/data/talents/values/warrior.json`, per rank, hand-editable. See
-`TalentEffect.ts` for the shape and `docs/talent-effects-proposal.md` for why.
+[docs/talent-effects.md](docs/talent-effects.md) for what the code does and
+**every edge case and interpretation** the Warrior turned up. The design
+rationale is in the proposal on PR #22, which is not merged.
 
-**Warrior: 24 talents fully modelled, 8 partly, 21 inert.** Every one of the 53
+**Warrior: 25 talents fully modelled, 7 partly, 21 inert.** Every one of the 53
 has an explicit entry, and the inert ones name their own obstacle, so the list
 below IS the work queue. The Talent panel prints them under "Chosen but not
 simulated".
@@ -71,14 +73,20 @@ Grouped, because each blocker unlocks several at once:
 | **The ability it modifies is inert** | Improved Bloodrage, Improved Berserker Rage, Improved Shield Wall | Waiting on effect values for those buffs. |
 | **Talents cannot apply a combat-start aura** | Anger Management, Death Wish | The aura mechanism exists and `trainingDummyEncounter` has the slot; nothing wires a talent to it yet. Probably the cheapest remaining win. |
 | **Ability not implemented** | Improved Disarm, Improved Shield Bash, and the five ability grants below | Disarm and Shield Bash are absent from the ability spreadsheet. |
-| **Partly modelled, by choice** | Unbridled Wrath, Weaponmaster, Dual Wield Specialization, Raging Blows | Each does the part that is expressible and flags the rest. |
+| **Partly modelled, by choice** | Weaponmaster, Dual Wield Specialization, Raging Blows | Each does the part that is expressible and flags the rest. |
 
 **More edge cases almost certainly remain.** The 53 were classified by reading
 each talent's text against what the engine can express, and the classification
-has already been wrong twice — Improved Rend and Improved Overpower were both
-filed as impossible before per-ability scaling existed. Once the blockers above
-are cleared, every remaining `unmodelled` reason deserves re-reading rather than
-being trusted.
+has already been wrong **three times** — Improved Rend and Improved Overpower
+were both filed as impossible before per-ability scaling existed, and Unbridled
+Wrath's two-handed clause was written off as needing a weapon type that had been
+added an hour earlier. Once the blockers above are cleared, every remaining
+`unmodelled` reason deserves re-reading rather than being trusted; they are
+written specifically enough to check quickly.
+
+The ones found so far are in
+[docs/talent-effects.md](docs/talent-effects.md) — edge cases, interpretations,
+and the talents that are deliberately only partly modelled.
 
 #### Data still needed
 
