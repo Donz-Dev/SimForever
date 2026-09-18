@@ -256,10 +256,22 @@ function buildChances(
       return {
         ...NO_CHANCES,
         miss: COMBAT_CONSTANTS.bossMiss,
-        // MISSING DATA: the player's dodge and parry against incoming attacks
-        // depend on a defense stat and on talents, neither of which exists.
+        /*
+         * The player's own avoidance, read from its stats exactly as the
+         * attacker's crit is. Both are percentage POINTS and both come from the
+         * character -- agility through the class conversion table, and talents
+         * such as Deflection on top.
+         *
+         * STILL MISSING: defense skill. In Classic a player's defense skill is
+         * compared against the attacker's weapon skill and shifts miss, crit
+         * and avoidance together, the same way the player's weapon skill shifts
+         * the tables it attacks with. Forever has not given that formula, so
+         * `bossMiss`, `bossCrit` and `bossCrush` below are flat ruleset numbers
+         * rather than derived ones, and a defense skill talent cannot be
+         * modelled yet. That is the ONLY missing piece here now.
+         */
         dodge: toRollUnits(target.stats.get('dodgeChance')),
-        parry: 0,
+        parry: toRollUnits(target.stats.get('parryChance')),
         crush: COMBAT_CONSTANTS.bossCrush,
         crit: COMBAT_CONSTANTS.bossCrit,
         crushMultiplier: COMBAT_CONSTANTS.bossCrushMultiplier,

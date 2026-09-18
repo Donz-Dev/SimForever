@@ -34,6 +34,15 @@ export const STAT_NAMES = [
   'spellCritChance',
   'dodgeChance',
   /**
+   * Chance to PARRY an incoming attack, in percentage points.
+   *
+   * The mirror of `dodgeChance`, and read by the attacks-received table the
+   * same way. Distinct from `parryRating`, which is a rating a conversion would
+   * turn into this; nothing in Forever grants parry rating today, and talents
+   * grant the percentage directly.
+   */
+  'parryChance',
+  /**
    * Chance to hit, in percentage points, SUBTRACTED from miss chance rather
    * than added to anything. 5 means "5% less likely to miss".
    */

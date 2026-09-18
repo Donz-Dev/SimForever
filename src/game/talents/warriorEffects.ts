@@ -3,24 +3,36 @@ import type { TalentEffects } from './TalentEffect';
 /**
  * What every Warrior talent does, by talent id.
  *
- * ALL 54 have an entry. A talent that cannot be modelled says so and says why,
+ * ALL 53 have an entry. A talent that cannot be modelled says so and says why,
  * rather than being absent — absence would be indistinguishable from an
- * oversight, and this file is the only place that can tell the difference.
+ * oversight, and this file is the only place that can tell the difference. A
+ * test asserts the coverage both ways, which is how three entries lost to a
+ * careless edit were caught.
  *
- * 14 of the 54 do something today. The other 40 are `unmodelled`, and their
- * reasons fall into a handful of groups:
+ * 24 are fully modelled and 8 more are PARTLY modelled — something real plus an
+ * `unmodelled` entry naming the part that is missing. 21 do nothing at all.
  *
- *   - the engine has no such concept yet (parry, block, defense skill, threat,
- *     stances, per-ability crit, crit damage bonus)
- *   - the ability they modify is itself inert, pending its numbers from the
+ * NINE GRANT AN ABILITY, and those are where being wrong costs most: an ability
+ * handed to a character who never took its talent is free damage that nothing
+ * in the results explains, which is exactly what happened when every warrior
+ * had all three 31-point capstones at once. All nine declare `grantAbility`, so
+ * `abilitiesForClass` gates them from one list. Four have an implemented
+ * ability today; the other five declare the grant anyway, so they are gated
+ * correctly the moment their ability exists rather than being remembered later.
+ *
+ * The reasons a talent is unmodelled fall into a few groups, and each names its
+ * own specific obstacle so the list doubles as the work queue:
+ *
+ *   - a concept the engine does not have (threat, movement, stuns, multiple
+ *     targets, defense skill, block)
+ *   - the ability it modifies is itself inert, pending its numbers from the
  *     ruleset owner (Bloodrage, Berserker Rage, Shield Wall, Shield Block)
- *   - nothing attacks the player, so nothing can trigger them
- *   - they need a mechanism that exists but is not wired to talents yet
- *     (reactions, auras applied at combat start)
+ *   - nothing attacks the player, so nothing can trigger it
+ *   - it needs a mechanism that exists but is not wired to talents yet
+ *     (combat-start auras)
  *
- * Every reason names the specific obstacle, so the list doubles as the work
- * queue. The Gear panel's "Equipped but not simulated" does the same job for
- * items, and for the same reason.
+ * The Gear panel's "Equipped but not simulated" does the same job for items,
+ * and the Talent panel prints these the same way.
  *
  * The NUMBERS are not here. They live in `src/data/talents/values/warrior.json`,
  * per rank, hand-editable. This file says what a talent does with its number.
@@ -31,15 +43,8 @@ export const WARRIOR_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
   // ---------------------------------------------------------------------
   improved_heroic_strike: [{ kind: 'abilityCost', abilityId: 'heroic_strike' }],
 
-  deflection: [
-    {
-      kind: 'unmodelled',
-      reason:
-        'The engine has no parry chance for the player. `parryRating` exists as ' +
-        'a stat but player parry in the attacks-received table is deliberately 0 ' +
-        'pending a defense stat, so a parry bonus would land nowhere.',
-    },
-  ],
+  // Parry is held in percentage POINTS, like dodge and crit, so no scaling.
+  deflection: [{ kind: 'stat', stat: 'parryChance', operation: 'flat' }],
 
   // Scales the bleed, not the cast: a periodic tick carries the AURA's id.
   improved_rend: [{ kind: 'abilityDamage', abilityId: 'rend' }],
@@ -83,7 +88,15 @@ export const WARRIOR_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
   bloodthrill: [{ kind: 'reaction', reactionId: 'bloodthrill' }],
 
   sweeping_strikes: [
-    { kind: 'unmodelled', reason: 'Strikes an additional target; the encounter has one.' },
+    { kind: 'grantAbility', abilityId: 'sweeping_strikes' },
+    {
+      kind: 'unmodelled',
+      reason:
+        'The ability itself is not implemented -- it is not in the Warrior '+
+        'ability spreadsheet, so it has no cost, cooldown or damage. The GRANT '+
+        'is declared above, so the moment the ability exists it is gated '+
+        'correctly rather than handed to everyone.',
+    },
   ],
 
   /*
@@ -154,7 +167,17 @@ export const WARRIOR_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
 
   improved_cleave: [{ kind: 'abilityCost', abilityId: 'cleave' }],
 
-  piercing_howl: [{ kind: 'unmodelled', reason: 'Movement speed. Nothing moves.' }],
+  piercing_howl: [
+    { kind: 'grantAbility', abilityId: 'piercing_howl' },
+    {
+      kind: 'unmodelled',
+      reason:
+        'The ability itself is not implemented -- it is not in the Warrior '+
+        'ability spreadsheet, so it has no cost, cooldown or damage. The GRANT '+
+        'is declared above, so the moment the ability exists it is gated '+
+        'correctly rather than handed to everyone.',
+    },
+  ],
 
   blood_craze: [
     {
@@ -194,11 +217,14 @@ export const WARRIOR_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
   precision: [{ kind: 'stat', stat: 'hitChance', operation: 'flat' }],
 
   death_wish: [
+    { kind: 'grantAbility', abilityId: 'death_wish' },
     {
       kind: 'unmodelled',
       reason:
-        'An activated buff. The aura mechanism would carry it, but the rotation ' +
-        'has no notion of cooldowns worth pressing for a damage buff.',
+        'The ability itself is not implemented -- it is not in the Warrior '+
+        'ability spreadsheet, so it has no cost, cooldown or damage. The GRANT '+
+        'is declared above, so the moment the ability exists it is gated '+
+        'correctly rather than handed to everyone.',
     },
   ],
 
@@ -255,7 +281,15 @@ export const WARRIOR_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
   improved_thunder_clap: [{ kind: 'abilityCost', abilityId: 'thunder_clap' }],
 
   last_stand: [
-    { kind: 'unmodelled', reason: 'Temporary maximum health. Nothing threatens the player.' },
+    { kind: 'grantAbility', abilityId: 'last_stand' },
+    {
+      kind: 'unmodelled',
+      reason:
+        'The ability itself is not implemented -- it is not in the Warrior '+
+        'ability spreadsheet, so it has no cost, cooldown or damage. The GRANT '+
+        'is declared above, so the moment the ability exists it is gated '+
+        'correctly rather than handed to everyone.',
+    },
   ],
 
   master_of_defense: [
@@ -287,9 +321,21 @@ export const WARRIOR_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
     { kind: 'unmodelled', reason: 'Modifies Shield Wall, which is castable but inert.' },
   ],
 
-  concussion_blow: [{ kind: 'unmodelled', reason: 'A stun. Nothing can be stunned.' }],
+  concussion_blow: [
+    { kind: 'grantAbility', abilityId: 'concussion_blow' },
+    {
+      kind: 'unmodelled',
+      reason:
+        'The ability itself is not implemented -- it is not in the Warrior '+
+        'ability spreadsheet, so it has no cost, cooldown or damage. The GRANT '+
+        'is declared above, so the moment the ability exists it is gated '+
+        'correctly rather than handed to everyone.',
+    },
+  ],
 
-  improved_shield_bash: [{ kind: 'unmodelled', reason: 'Shield Bash is not an implemented ability.' }],
+  improved_shield_bash: [
+    { kind: 'unmodelled', reason: 'Shield Bash is not an implemented ability.' },
+  ],
 
   // Two stats at once. `percentAdd` wants a fraction, so 2% is scaled to 0.02.
   vitality: [
@@ -304,16 +350,6 @@ export const WARRIOR_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
         'Reduces the cost of "your offensive abilities", and the source does not ' +
         'say which those are. Choosing the set would be inventing the talent, so ' +
         'it waits for the ruleset owner to name them.',
-    },
-  ],
-
-  bastion: [
-    {
-      kind: 'unmodelled',
-      reason:
-        'Not on the live Forever calculator any more — it was removed, and Focused ' +
-        'Rage moved into its place. It survives here only because the scraped tree ' +
-        'structure predates that change. See src/data/talents/values/README.md.',
     },
   ],
 

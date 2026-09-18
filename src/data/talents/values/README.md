@@ -2,8 +2,8 @@
 
 What each talent's number is, at each rank. One file per class, **hand-editable**.
 
-470 talents. Every value starts as `null`, meaning *not known yet* — never
-meaning zero, and never standing in for a number nobody has.
+469 talents. A value of `null` means *not known yet* — never zero, and never
+standing in for a number nobody has.
 
 ## Why this is separate from `../<class>.json`
 
@@ -125,7 +125,7 @@ That is also why `fill` never overwrites an existing value without
 | --- | --- | --- |
 | Values filled | 41 | 0 |
 | Single rank (no variable to identify) | 12 | — |
-| Not captured | 1 (`bastion`, see below) | all |
+| Not captured | none | all |
 
 The capture was verified against the talent structure already in the repo, which
 was scraped independently months earlier by a different method: **all 53 rank-one
@@ -155,14 +155,16 @@ live calculator is the newer of the two:
 | `bastion` | Protection, row 5, col 2, 5 ranks | **not present** |
 | `focused_rage` | Protection, row 5, col 0 | Protection, row 5, **col 2** |
 
-So Forever removed Bastion and moved Focused Rage into its place. `bastion` is
-left here with `values: null` rather than deleted, because deleting it would be
-a change to talent *structure*, which belongs to `../warrior.json` and its own
-scrape — and that file cannot be regenerated from this capture, which does not
-carry icons, tiers or prerequisites.
+So Forever removed Bastion and moved Focused Rage into its place. **Both have
+now been corrected in `../warrior.json` by hand** — the only hand edit that file
+has ever taken — because leaving them would have meant the app offering a talent
+the ruleset does not have. The hand-transcribed counts in
+`tests/game/talents.test.ts` were updated with the reason beside them, and the
+Warrior is now 53 talents rather than 54.
 
-**Until the structure is re-scraped, the app still offers Bastion as a spendable
-talent that the ruleset no longer has.**
+**The rest of that file has not been re-scraped.** Bastion was found only
+because capturing values tripped over it; the eight classes with no values
+captured yet may have drifted the same way and nobody would know.
 
 ### Filling the rest
 

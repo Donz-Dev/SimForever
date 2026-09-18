@@ -92,6 +92,33 @@ mace in the other diverge the moment anything grants skill with one and not the
 other. Anything reporting them must ask per slot. The dual-wield penalty lands on
 both hands, so it is skill and not the penalty that separates them.
 
+**Every damage-over-time effect can crit, and none of them are reduced by
+armor.** This is a Forever rule, given by the ruleset owner as a correction to
+the original combat table guidance, and it is not WoW Classic's behaviour. A
+tick does not re-roll the combat table — whether the effect landed was settled
+when it was applied — but it *does* roll for a crit, at the crit chance of **the
+kind of event that applied it**: Rend and Deep Wounds are applied by melee
+attacks, so they crit at melee crit chance. `DamageRequest.critFrom` names that
+table. A DoT with no `critFrom` cannot crit and consumes no random number, so
+adding the field never shifts a seeded run that does not use it. Bleeds are
+physical and still ignore armor: set `appliesArmor: false` on every one.
+
+**A cast interrupts the swing in progress, and the swing timer resets.** That is
+what makes a cast a real cost to a melee character rather than free damage
+between swings. `Ability.swingTimer: 'hold'` is the exception — the timer runs on
+behind the cast and a swing that comes due *during* it waits for the cast to
+finish rather than being lost. The Warrior's Improved Slam is exactly that, and
+it is worth far more than the quarter second of cast time the same talent
+removes.
+
+**Per-ability crit and damage go through `AbilityModifiers` on the combatant**,
+not through the ability's own `onCast`. `dealDamage` consults them, so an
+ability respects them without knowing they exist — otherwise every ability would
+have to remember to look, and the one that forgot would be quietly wrong. Auto
+attacks carry no `abilityId`, so nothing there touches them, including the
+`ALL_ABILITIES` entry. A crit *multiplier* bonus raises the bonus half: a x2
+melee crit with "+10% crit damage" is 1 + (2-1) x 1.1 = x2.1, never x2.2.
+
 **A stat that only applies sometimes is a bug waiting to happen.** Equipment
 resolution strips the slots a combat style cannot fill, and stripping one slot
 too many silently discarded a bow's attack power from every melee character.

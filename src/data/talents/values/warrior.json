@@ -622,13 +622,6 @@
         3
       ]
     },
-    "bastion": {
-      "name": "Bastion",
-      "tree": "protection",
-      "ranks": 5,
-      "text": "Increases all damage you deal by 2% while a shield is equipped.",
-      "values": null
-    },
     "shield_slam": {
       "name": "Shield Slam",
       "tree": "protection",
