@@ -76,15 +76,7 @@ export const WARRIOR_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
     },
   ],
 
-  deep_wounds: [
-    {
-      kind: 'unmodelled',
-      reason:
-        'Applies a bleed on a critical strike. That is a reaction, the same ' +
-        'mechanism Overpower and the item procs use; talents cannot contribute ' +
-        'reactions yet.',
-    },
-  ],
+  deep_wounds: [{ kind: 'reaction', reactionId: 'deep_wounds' }],
 
   spearing_strike: [{ kind: 'grantAbility', abilityId: 'spearing_strike' }],
 
@@ -100,9 +92,7 @@ export const WARRIOR_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
   impale: [{ kind: 'critDamageBonus' }],
 
 
-  bloodthrill: [
-    { kind: 'unmodelled', reason: 'A chance to open the Overpower window: a reaction.' },
-  ],
+  bloodthrill: [{ kind: 'reaction', reactionId: 'bloodthrill' }],
 
   sweeping_strikes: [
     { kind: 'unmodelled', reason: 'Strikes an additional target; the encounter has one.' },
@@ -148,7 +138,15 @@ export const WARRIOR_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
   ],
 
   unbridled_wrath: [
-    { kind: 'unmodelled', reason: 'A chance of extra rage on a melee hit: a reaction.' },
+    { kind: 'reaction', reactionId: 'unbridled_wrath' },
+    {
+      kind: 'unmodelled',
+      reason:
+        'PARTIAL: the proc grants 1 rage, the one-handed case. The source doubles ' +
+        'it to 2 for a two-handed weapon, and the engine has no weapon TYPE -- ' +
+        'only a speed and a damage -- so a two-hander is understated by one rage ' +
+        'per proc.',
+    },
   ],
 
   improved_cleave: [{ kind: 'abilityCost', abilityId: 'cleave' }],
@@ -212,14 +210,7 @@ export const WARRIOR_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
     },
   ],
 
-  flurry: [
-    {
-      kind: 'unmodelled',
-      reason:
-        'Haste for a fixed number of swings after a crit: a reaction that applies ' +
-        'a charge-limited aura. Auras expire on time, not on a swing count.',
-    },
-  ],
+  flurry: [{ kind: 'reaction', reactionId: 'flurry' }],
 
   bloodthirst: [{ kind: 'grantAbility', abilityId: 'bloodthirst' }],
 

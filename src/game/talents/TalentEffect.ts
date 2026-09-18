@@ -104,6 +104,17 @@ export type TalentEffect =
   | { readonly kind: 'critDamageBonus' }
 
   /**
+   * Grants a reaction: something that happens in response to an attack result.
+   *
+   * The reaction itself is built by a per-class registry, from the talent's
+   * value at the character's rank, because a proc is genuinely code — a chance
+   * roll, a condition on the attack, an aura to apply. This is the escape hatch
+   * the design allows for, kept narrow: the TABLE stays declarative and says
+   * WHICH reaction, while the registry says what it does.
+   */
+  | { readonly kind: 'reaction'; readonly reactionId: string }
+
+  /**
    * The talent's effect cannot be modelled, and this says why.
    *
    * NOT a gap in this list waiting to be filled in — a first-class outcome, and

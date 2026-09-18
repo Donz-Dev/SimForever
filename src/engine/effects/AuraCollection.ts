@@ -88,6 +88,25 @@ export class AuraCollection {
   }
 
   /** Remove an aura before it expires. No-op if it is not present. */
+  /**
+   * Spend one stack of every aura that a swing consumes, dropping any that run
+   * out.
+   *
+   * Called by the auto-attack, which is the only thing that knows a swing just
+   * happened. The engine does not know what Flurry is; it knows that some auras
+   * are counted in swings.
+   */
+  consumeSwingCharges(context: SimulationContext): void {
+    for (const instance of [...this.auras.values()]) {
+      if (!instance.definition.consumedBySwing) continue;
+      if (instance.stacks > 1) {
+        instance.stacks -= 1;
+      } else {
+        this.remove(context, instance.id);
+      }
+    }
+  }
+
   remove(context: SimulationContext, auraId: string): void {
     const instance = this.auras.get(auraId);
     if (!instance) return;

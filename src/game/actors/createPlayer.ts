@@ -171,6 +171,9 @@ export function createPlayer(options: PlayerOptions): Combatant {
     reactions: [
       ...reactionsForClass(characterClass, style),
       ...reactionsForEquipment(liveEquipment(equipment, style)),
+      // Talent procs: Deep Wounds, Flurry and the rest. Built per character
+      // from the rank taken, so they carry that character's numbers.
+      ...build.reactions,
     ],
     // No abilities means nothing for a rotation to choose, so it is left off
     // rather than scheduling decision events that can never do anything.

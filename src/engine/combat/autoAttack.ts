@@ -67,6 +67,7 @@ export function extraAttack(
       if (!attacker.isAlive || ctx.hasEnded) return;
 
       if (ctx.defaultTargetFor(attacker)) {
+        attacker.auras.consumeSwingCharges(ctx);
         swing(ctx, attacker, weapon, slot);
       }
 
@@ -105,6 +106,9 @@ function scheduleSwing(
 
       const target = ctx.defaultTargetFor(attacker);
       if (target) {
+        // Spent BEFORE the swing resolves, so an effect applied by this swing's
+        // own critical strike is not immediately eaten by it.
+        attacker.auras.consumeSwingCharges(ctx);
         swing(ctx, attacker, weapon, slot);
       }
 

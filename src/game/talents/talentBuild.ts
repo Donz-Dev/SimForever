@@ -1,6 +1,14 @@
-import type { PartialStats, ResourceType, StatModifierSpec, StatName } from '../../engine';
+import type {
+  PartialStats,
+  Reaction,
+  ResourceType,
+  StatModifierSpec,
+  StatName,
+} from '../../engine';
 import { ALL_ABILITIES, AbilityModifiers, seconds } from '../../engine';
 import { COMBAT_CONSTANTS } from '../combat/attackChances';
+import type { TalentReactionBuilder } from '../reactions/warriorTalents';
+import { WARRIOR_TALENT_REACTIONS } from '../reactions/warriorTalents';
 import type { ClassId } from '../character';
 import type { TalentAllocation } from './Talent';
 import type { TalentEffects, UnmodelledTalent } from './TalentEffect';
@@ -11,6 +19,11 @@ import { WARRIOR_TALENT_EFFECTS } from './warriorEffects';
 /** Effect tables per class. Only the Warrior has one. */
 const EFFECTS: Partial<Record<ClassId, Readonly<Record<string, TalentEffects>>>> = {
   warrior: WARRIOR_TALENT_EFFECTS,
+};
+
+/** Reaction builders per class, keyed by talent id. */
+const REACTIONS: Partial<Record<ClassId, Readonly<Record<string, TalentReactionBuilder>>>> = {
+  warrior: WARRIOR_TALENT_REACTIONS,
 };
 
 /**
@@ -44,6 +57,8 @@ export interface TalentBuild {
   readonly abilityCooldownReductionMs: ReadonlyMap<string, number>;
   /** Per-ability crit, crit damage and damage scaling, for the combatant. */
   readonly abilityModifiers: AbilityModifiers;
+  /** Reactions the talents grant, added to the ones every character has. */
+  readonly reactions: readonly Reaction[];
   /**
    * Talents with points in them that are doing nothing, and why.
    *
@@ -62,6 +77,7 @@ const EMPTY: TalentBuild = {
   abilityCostReduction: new Map(),
   abilityCooldownReductionMs: new Map(),
   abilityModifiers: new AbilityModifiers(),
+  reactions: [],
   unmodelled: [],
 };
 
@@ -91,6 +107,7 @@ export function talentBuild(
   const abilityCostReduction = new Map<string, number>();
   const abilityCooldownReductionMs = new Map<string, number>();
   const abilityModifiers = new AbilityModifiers();
+  const reactions: Reaction[] = [];
   const unmodelled: UnmodelledTalent[] = [];
 
   const report = (talentId: string, rank: number, reason: string) => {
@@ -169,6 +186,15 @@ export function talentBuild(
         case 'abilityDamage':
           abilityModifiers.add(effect.abilityId, { damageMultiplier: 1 + value / 100 });
           break;
+        case 'reaction': {
+          const build = REACTIONS[characterClass]?.[effect.reactionId];
+          if (!build) {
+            report(talentId, rank, `No reaction is registered as "${effect.reactionId}".`);
+            break;
+          }
+          reactions.push(build(value));
+          break;
+        }
         case 'critDamageBonus':
           /*
            * The talent raises the BONUS half of the multiplier, not the whole
@@ -194,6 +220,7 @@ export function talentBuild(
     abilityCostReduction,
     abilityCooldownReductionMs,
     abilityModifiers,
+    reactions,
     unmodelled,
   };
 }
