@@ -26,11 +26,11 @@ their talent trees and nothing else.
 | **Reactions** | content responds to an attack result: Overpower off a target dodge, and every item proc |
 | **Gear** | 18 items and the Crusader enchant, equippable, driving stats, weapons and procs |
 | **Procs** | PPM (Vis'kag, Crusader) and flat-chance with an internal cooldown (Hand of Justice) |
-| **Talents** | all 470 talents, nine classes, spendable in the UI, saved on the profile, and **gating which abilities a character has**. No talent changes any other number yet |
+| **Talents** | all 469 talents, nine classes, spendable in the UI and saved on the profile. The Warrior's per-rank values are captured; **32 of its 53 talents do something**, 21 say on screen why they cannot |
 | **Analysis** | DPS, per-ability breakdown with attempts/hits/crit/glance/avoid rates |
 | **UI** | two-step character flow, per-class character sheet, style-aware gear, talent trees, combat log, Monte Carlo batches |
 
-**684 tests**, CI green on Node 20 and 22. Profile format **v5**.
+**772 tests**, CI green on Node 20 and 22. Profile format **v5**.
 
 The app is **live at <https://donz-dev.github.io/SimForever/>**, republished by
 `.github/workflows/deploy.yml` on every push to `main` that passes the tests.
@@ -45,26 +45,55 @@ dummy. That figure is meaningful for comparing changes to each other; see
 
 Two candidates, and they are not close in value.
 
-### 1. Talent effects — the biggest gap between what is shown and what is computed
+### 1. Talent effects for the other eight classes, and the rest of the Warrior's
 
-470 talents across nine classes are real data, and **gating is the only thing
-any of them does**. Taking Mortal Strike gives you Mortal Strike; taking
-Deflection still does nothing at all.
+The mechanism is built and the Warrior is the worked example. A talent declares
+what it does in `game/talents/warriorEffects.ts`; what its number IS lives in
+`src/data/talents/values/warrior.json`, per rank, hand-editable. See
+[docs/talent-effects.md](docs/talent-effects.md) for what the code does and
+**every edge case and interpretation** the Warrior turned up. The design
+rationale is in the proposal on PR #22, which is not merged.
 
-**Gating is done** — talents live on the profile at format v5, and
-`abilitiesForClass` grants Mortal Strike, Bloodthirst, Shield Slam and Spearing
-Strike only to a character whose allocation contains them. See
-`docs/talent-effects-proposal.md`.
+**Warrior: 25 talents fully modelled, 7 partly, 21 inert.** Every one of the 53
+has an explicit entry, and the inert ones name their own obstacle, so the list
+below IS the work queue. The Talent panel prints them under "Chosen but not
+simulated".
 
-What remains is the effects themselves, and one decision:
+#### What the remaining talents are blocked on
 
-- **How a talent expresses its effect.** A stat modifier, a modifier on an
-  existing ability, or a new ability entirely. All three occur in the first ten
-  Warrior talents. The proposal recommends a declarative union with a function
-  escape hatch; it has not been accepted or rejected.
-- **The per-rank values exist but are not captured.** `src/data/talents/values/`
-  holds an entry for all 470 talents; three have values and 467 are `null`. See
-  that directory's README.
+Grouped, because each blocker unlocks several at once:
+
+| Blocker | Talents | Note |
+| --- | --- | --- |
+| **Concepts the engine has no notion of** — threat, movement, stuns, multiple targets, shout radius, fear/stun duration | Defiance, Piercing Howl, Concussion Blow, Sweeping Strikes, Booming Voice, Iron Will, Improved Hamstring | **Deliberately left absent.** None of them matters against a single stationary dummy, and each would need an encounter model that does not exist. Revisit when encounters gain positions, adds or mechanics. |
+| **Nothing attacks the player** | Blood Craze, Enrage, Master of Defense, Improved Revenge (its trigger), Last Stand | The pipeline exists — Table 6, rage from damage taken, Revenge — but no content swings at the player. |
+| **No block outcome** | Shield Specialization, Improved Overpower's shield clause | One stat and one table entry; also fixes Revenge catching two thirds of its triggers and Shield Slam's missing "+ block value". |
+| **No defense skill** | Anticipation | The attacks-received table uses flat ruleset constants for boss miss, crit and crush. Defense skill would have to shift them by a formula Forever has not given. **Player parry and dodge are now wired** and read from the character's stats, so only the skill comparison is missing. |
+| **Stances gate nothing** | Improved Tactical Mastery, Vanguard | Waiting on the ruleset owner; see below. |
+| **The ability it modifies is inert** | Improved Bloodrage, Improved Berserker Rage, Improved Shield Wall | Waiting on effect values for those buffs. |
+| **Talents cannot apply a combat-start aura** | Anger Management, Death Wish | The aura mechanism exists and `trainingDummyEncounter` has the slot; nothing wires a talent to it yet. Probably the cheapest remaining win. |
+| **Ability not implemented** | Improved Disarm, Improved Shield Bash, and the five ability grants below | Disarm and Shield Bash are absent from the ability spreadsheet. |
+| **Partly modelled, by choice** | Weaponmaster, Dual Wield Specialization, Raging Blows | Each does the part that is expressible and flags the rest. |
+
+**More edge cases almost certainly remain.** The 53 were classified by reading
+each talent's text against what the engine can express, and the classification
+has already been wrong **three times** — Improved Rend and Improved Overpower
+were both filed as impossible before per-ability scaling existed, and Unbridled
+Wrath's two-handed clause was written off as needing a weapon type that had been
+added an hour earlier. Once the blockers above are cleared, every remaining
+`unmodelled` reason deserves re-reading rather than being trusted; they are
+written specifically enough to check quickly.
+
+The ones found so far are in
+[docs/talent-effects.md](docs/talent-effects.md) — edge cases, interpretations,
+and the talents that are deliberately only partly modelled.
+
+#### Data still needed
+
+- **Per-rank values for the other eight classes.** Two documented steps per
+  class in `src/data/talents/values/README.md`. Do a few at a time; wowhead
+  rate-limited an attempt at all nine in one sitting.
+- **Effect tables for those classes**, once they have abilities at all.
 
 ### 2. The remaining eight classes' abilities
 
@@ -105,6 +134,20 @@ Wire new abilities through `abilitiesForClass(class, style)` and
 `rotationFor(class, style)`, and new procs through `reactionsForClass`. All
 three already take what they need, so adding a class is a change to those
 functions alone.
+
+## The Protection tree changed under us
+
+Forever **removed Bastion** and moved Focused Rage into the slot it vacated.
+Confirmed against the live calculator on 2026-09-17, which is why the Warrior
+now has 53 talents and the project 469. The structure file was corrected by hand
+to match — the one hand edit `src/data/talents/*.json` has ever taken — and the
+hand-transcribed test in `tests/game/talents.test.ts` was updated with the
+reason beside it.
+
+**The rest of that file has not been re-scraped.** Bastion is the change we
+found because the values capture tripped over it; there may be others in the
+eight classes nobody has captured values for yet. A full re-scrape is the honest
+fix and is not done.
 
 ## Waiting on the ruleset owner
 
@@ -277,7 +320,8 @@ issues round trip is exactly what they need, which is why it was kept.
 
 Roughly in order of value.
 
-1. **Talent effects**, and talents gating abilities. See "The next task".
+1. **Per-rank talent values for the other eight classes.** The Warrior's are
+   captured; see `src/data/talents/values/README.md`.
 2. **Ability spreadsheets for the other eight classes.**
 3. **Effect values for the Warrior's nine inert buffs and debuffs.**
 4. **Forever item data**, to replace the Classic stand-ins. More items of any

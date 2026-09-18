@@ -48,6 +48,19 @@ export interface AuraDefinition {
   readonly periodic?: PeriodicEffect;
   /** Defaults to `reset`. */
   readonly refreshBehaviour?: AuraRefreshBehaviour;
+  /**
+   * Each auto-attack swing by the carrier consumes one stack, and the aura
+   * falls off when the last one goes.
+   *
+   * WoW has a whole family of "for your next N swings" effects — Flurry,
+   * Heroic Strike's queue, Sweeping Strikes — and an aura that expires on TIME
+   * cannot express any of them. The charge is spent at the START of a swing, so
+   * the swing that benefits is the swing that pays: an effect applied by a crit
+   * mid-swing is not eaten by the swing that applied it.
+   *
+   * `durationMs` still applies as a backstop for a carrier who stops swinging.
+   */
+  readonly consumedBySwing?: boolean;
   readonly onApply?: (context: SimulationContext, aura: AuraInstance) => void;
   readonly onExpire?: (context: SimulationContext, aura: AuraInstance) => void;
 }

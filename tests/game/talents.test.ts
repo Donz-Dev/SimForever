@@ -23,7 +23,7 @@ import {
  * said -- the same reason the base stats and the ability sheet are each written
  * out twice.
  *
- * The 470 individual talents are not transcribed; what is checked instead is
+ * The 469 individual talents are not transcribed; what is checked instead is
  * every structural invariant that must hold for all of them at once.
  */
 interface ClassSpec {
@@ -91,14 +91,17 @@ const SPEC: Readonly<Record<string, ClassSpec>> = {
     trees: [
       ['arms', 17, 'Mortal Strike'],
       ['fury', 18, 'Bloodthirst'],
-      ['protection', 19, 'Shield Slam'],
+      // 18, not 19: Forever REMOVED Bastion from this tree, and Focused Rage
+      // moved into the slot it vacated. Confirmed against the live calculator
+      // on 2026-09-17; see src/data/talents/values/README.md.
+      ['protection', 18, 'Shield Slam'],
     ],
   },
 };
 
 const CLASS_IDS = Object.keys(SPEC);
 
-/** The 470 above, summed, so the total is asserted rather than assumed. */
+/** The 469 above, summed, so the total is asserted rather than assumed. */
 const TOTAL_TALENTS = Object.values(SPEC)
   .flatMap((spec) => spec.trees)
   .reduce((sum, [, count]) => sum + count, 0);
@@ -121,8 +124,8 @@ describe('every class has its trees', () => {
     expect(classesWithTalents()).toEqual([...CLASS_IDS].sort());
   });
 
-  it('adds up to 470 talents', () => {
-    expect(TOTAL_TALENTS).toBe(470);
+  it('adds up to 469 talents', () => {
+    expect(TOTAL_TALENTS).toBe(469);
     const loaded = CLASS_IDS.reduce(
       (sum, id) => sum + talentsOf(id).trees.reduce((n, tree) => n + tree.talents.length, 0),
       0,

@@ -67,6 +67,7 @@ export function extraAttack(
       if (!attacker.isAlive || ctx.hasEnded) return;
 
       if (ctx.defaultTargetFor(attacker)) {
+        attacker.auras.consumeSwingCharges(ctx);
         swing(ctx, attacker, weapon, slot);
       }
 
@@ -74,6 +75,22 @@ export function extraAttack(
       scheduleSwing(ctx, attacker, slot, applyHaste(weapon.swingTimerMs, haste));
     }),
   );
+}
+
+/**
+ * Restart every swinging weapon's timer from now.
+ *
+ * What a cast does to a melee character by default: the swing in progress is
+ * lost and the timer begins again. Exported because casting is what calls it,
+ * and casting lives in the abilities layer.
+ */
+export function resetSwingTimers(context: SimulationContext, attacker: Combatant): void {
+  for (const slot of swingingSlots(attacker)) {
+    const weapon = attacker.weapons[slot];
+    if (!weapon) continue;
+    const haste = hasteMultiplierFrom(attacker.stats.effective);
+    scheduleSwing(context, attacker, slot, applyHaste(weapon.swingTimerMs, haste));
+  }
 }
 
 function scheduleSwing(
@@ -103,8 +120,21 @@ function scheduleSwing(
     createEvent(`auto-attack:${attacker.id}:${slot}`, EventPriority.AutoAttack, (ctx) => {
       if (!attacker.isAlive || ctx.hasEnded) return;
 
+      // A swing that comes due mid-cast is HELD, not lost: it waits for the
+      // cast to finish and then lands. A cast that resets the swing timer has
+      // already pushed this swing back, so in practice only a `hold` cast or a
+      // cast longer than a swing timer reaches here.
+      const remainingCast = attacker.castEndsAt - ctx.clock.now();
+      if (remainingCast > 0) {
+        scheduleSwing(ctx, attacker, slot, remainingCast);
+        return;
+      }
+
       const target = ctx.defaultTargetFor(attacker);
       if (target) {
+        // Spent BEFORE the swing resolves, so an effect applied by this swing's
+        // own critical strike is not immediately eaten by it.
+        attacker.auras.consumeSwingCharges(ctx);
         swing(ctx, attacker, weapon, slot);
       }
 

@@ -581,7 +581,7 @@
         },
         {
           "row": 5,
-          "col": 0,
+          "col": 2,
           "ranks": 3,
           "name": "Focused Rage",
           "icon": "ability_warrior_focusedrage",
@@ -589,17 +589,6 @@
           "requires": null,
           "requiresRanks": null,
           "description": "Reduces the Rage cost of your offensive abilities by 1."
-        },
-        {
-          "row": 5,
-          "col": 2,
-          "ranks": 5,
-          "name": "Bastion",
-          "icon": "inv_shield_04",
-          "tier": 25,
-          "requires": null,
-          "requiresRanks": null,
-          "description": "Increases all damage you deal by 2% while a shield is equipped."
         },
         {
           "row": 6,

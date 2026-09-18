@@ -1,4 +1,4 @@
-import type { PartialStats, WeaponProfile, WeaponSlot } from '../../engine';
+import type { PartialStats, WeaponProfile, WeaponSlot, WeaponType } from '../../engine';
 import type { CombatStyleId } from '../character';
 import { getCombatStyle } from '../character';
 import { attackPowerCoefficientFor } from '../combat/weaponDamage';
@@ -137,6 +137,33 @@ export function weaponsForEquipment(
 /** Base weapon skill: five times level, which a level 60 has maxed at 300. */
 export const BASE_WEAPON_SKILL = 300;
 
+/**
+ * The item data's `subclass` string, as the engine's weapon type.
+ *
+ * Wowhead's wording, lowercased. An unrecognised subclass becomes `unknown`
+ * rather than throwing: a weapon whose type nothing keys off still swings
+ * perfectly well, and failing to load a whole item over a naming change would
+ * be worse than the talent that cares about it not applying.
+ */
+const WEAPON_TYPES: Readonly<Record<string, WeaponType>> = {
+  sword: 'sword',
+  axe: 'axe',
+  mace: 'mace',
+  polearm: 'polearm',
+  staff: 'staff',
+  dagger: 'dagger',
+  'fist weapon': 'fist',
+  bow: 'bow',
+  gun: 'gun',
+  crossbow: 'crossbow',
+  thrown: 'thrown',
+  wand: 'wand',
+};
+
+export function weaponTypeFor(subclass: string | undefined): WeaponType {
+  return WEAPON_TYPES[(subclass ?? '').toLowerCase()] ?? 'unknown';
+}
+
 function toWeaponProfile(
   item: Item,
   slot: WeaponSlot,
@@ -146,6 +173,8 @@ function toWeaponProfile(
   if (!weapon) throw new Error(`${item.name} is not a weapon`);
 
   const swingTimerMs = Math.round(weapon.speed * 1000);
+  // A two-hander is the item that can go in the two-hand slot.
+  const twoHanded = item.slots.includes('twoHand');
   const midpoint = (weapon.minDamage + weapon.maxDamage) / 2;
   // Half the spread, as a fraction of the midpoint. 100-187 around 143.5 is
   // +/-30.3%, which the engine rolls uniformly to reproduce the same range.
@@ -153,6 +182,8 @@ function toWeaponProfile(
 
   return {
     name: item.name,
+    weaponType: weaponTypeFor(weapon.subclass),
+    twoHanded,
     swingTimerMs,
     baseDamage: midpoint,
     damageVariance: variance,

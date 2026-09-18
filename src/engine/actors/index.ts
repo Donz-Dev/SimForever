@@ -5,6 +5,7 @@ export type {
   Faction,
   ResourceGeneration,
   WeaponProfile,
+  WeaponType,
   WeaponSlot,
 } from './Combatant';
 export { Combatant } from './Combatant';

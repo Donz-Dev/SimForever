@@ -93,8 +93,13 @@ globalThis.TalentRanks = (function () {
    *
    * Filling row N is what unlocks row N+1, so the sweep pays for its own tier
    * requirements as it descends and never needs a separate "spend 30 points to
-   * unlock the capstone" step. A tree holds more ranks than the 51-point budget
-   * covers, so whatever a pass cannot afford is left for the next pass.
+   * unlock the capstone" step.
+   *
+   * It cannot finish a tree that holds more ranks than the point budget, and
+   * the Warrior's Fury tree is exactly that: 57 ranks against 51 points, which
+   * leaves Flurry and Bloodthirst unreachable. `captureOne` below picks those
+   * up. (Arms holds 47 and Protection 50, so both complete in one sweep, which
+   * is why this shortfall is easy to miss on two trees out of three.)
    */
   async function sweepTree(ti, treeName, recorded) {
     const plan = Q()[ti]
@@ -120,6 +125,50 @@ globalThis.TalentRanks = (function () {
     return got;
   }
 
+  /*
+   * Capture ONE talent the sweep could not afford.
+   *
+   * Buys the cheapest route to its tier — any talents in lower rows, whether or
+   * not they have already been recorded — then satisfies a named prerequisite
+   * if one still blocks it, then maxes the target. Slower per talent than the
+   * sweep, which is why it is the fallback rather than the strategy.
+   */
+  async function captureOne(ti, treeName, t) {
+    if (!(await reset())) throw new Error('Could not clear the board; reload the page and start again.');
+
+    let guard = 0;
+    while (treePoints(ti) < t.r * 5 && guard++ < 200) {
+      const candidate = Q()[ti]
+        .filter((c) => R(c) < t.r && P(c) < M(c))
+        .sort((a, b) => R(a) - R(b))[0];
+      if (!candidate) break;
+      if (!(await spend(ti, R(candidate), C(candidate)))) break;
+    }
+
+    // "Requires 30 points in Arms Talents<br>Requires 1 point in Sweeping Strikes"
+    const error = at(ti, t.r, t.cl).getAttribute('data-error-message') || '';
+    const prerequisite = (error.match(/Requires \d+ points? in ([^<]+)$/) || [])[1];
+    if (prerequisite) {
+      const p = Q()[ti].find((c) => nameOf(c) === prerequisite.trim());
+      if (p) {
+        const co = { r: R(p), cl: C(p) };
+        for (let i = 0; i < 10; i++) {
+          const el = at(ti, co.r, co.cl);
+          if (P(el) >= M(el)) break;
+          if (!(await spend(ti, co.r, co.cl))) break;
+        }
+      }
+    }
+
+    const ranks = [];
+    for (let r = 1; r <= t.max; r++) {
+      if (!(await spend(ti, t.r, t.cl))) break;
+      ranks.push(bodyOf(at(ti, t.r, t.cl)));
+    }
+    if (ranks.length !== t.max || !ranks.every((x) => x)) return null;
+    return { tree: treeName, name: t.name, row: t.r, col: t.cl, maxRanks: t.max, ranks };
+  }
+
   async function extract() {
     const treeNames = [...document.querySelectorAll('.ctc-tree')].map((t) =>
       (t.querySelector('.ctc-tree-header-name, .ctc-tree-title')?.textContent || '').trim(),
@@ -138,6 +187,23 @@ globalThis.TalentRanks = (function () {
       }
       if (!progressed) break;
     }
+
+    // Anything the sweeps could not afford, one at a time.
+    for (let ti = 0; ti < treeNames.length; ti++) {
+      const plan = Q()[ti]
+        .map((c) => ({ r: R(c), cl: C(c), name: nameOf(c), max: M(c) }))
+        .sort((a, b) => a.r - b.r || a.cl - b.cl);
+      for (const t of plan) {
+        const key = `${treeNames[ti]}/${t.name}`;
+        if (recorded.has(key)) continue;
+        const got = await captureOne(ti, treeNames[ti], t);
+        if (got) {
+          recorded.add(key);
+          out.push(got);
+        }
+      }
+    }
+
     await reset();
     out.sort((a, b) => treeNames.indexOf(a.tree) - treeNames.indexOf(b.tree) || a.row - b.row || a.col - b.col);
     return { talents: out, expected };

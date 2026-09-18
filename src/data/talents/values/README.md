@@ -2,8 +2,8 @@
 
 What each talent's number is, at each rank. One file per class, **hand-editable**.
 
-470 talents. Every value starts as `null`, meaning *not known yet* — never
-meaning zero, and never standing in for a number nobody has.
+469 talents. A value of `null` means *not known yet* — never zero, and never
+standing in for a number nobody has.
 
 ## Why this is separate from `../<class>.json`
 
@@ -119,14 +119,54 @@ That is also why `fill` never overwrites an existing value without
 
 ## Status
 
-**Three of 470 values are filled in; the rest are `null`.**
+**The Warrior is captured. The other eight classes are not.**
 
-Improved Heroic Strike (1/2/3), Deflection (1–5) and Flurry (5/10/15/20/25) were
-read directly off the calculator and are real. They are here because they prove
-the whole path works, end to end, and because they show the format on genuine
-data rather than an invented example.
+| | Warrior | Other eight |
+| --- | --- | --- |
+| Values filled | 41 | 0 |
+| Single rank (no variable to identify) | 12 | — |
+| Not captured | none | all |
 
-The bulk run has **not** been done. Wowhead began returning 403 partway through
-capturing the nine classes, and the answer to that is to wait rather than to
-push harder. Run the two steps above when it lets you back in; every remaining
-`null` is a number nobody has yet, not a zero.
+The capture was verified against the talent structure already in the repo, which
+was scraped independently months earlier by a different method: **all 53 rank-one
+texts matched exactly**. That is a real cross-check, not a self-consistency one.
+
+### Assuming linear ranks would have been wrong
+
+Three of the Warrior's 41 multi-rank values do not follow `rank one x n`:
+
+```
+improved_rend      12, 23, 35     (not 12, 24, 36)
+improved_execute    3,  5         (not 3, 6)
+improved_disarm     7, 13, 20     (not 7, 14, 21)
+```
+
+Seven percent, wrong by a little, in a way nothing downstream could have
+detected. This is the argument for capturing values rather than extrapolating
+them, and it is no longer hypothetical.
+
+### The Protection tree has changed since the structure was scraped
+
+The live calculator and `../warrior.json` disagree about two things, and the
+live calculator is the newer of the two:
+
+| | `../warrior.json` (scraped earlier) | Live calculator |
+| --- | --- | --- |
+| `bastion` | Protection, row 5, col 2, 5 ranks | **not present** |
+| `focused_rage` | Protection, row 5, col 0 | Protection, row 5, **col 2** |
+
+So Forever removed Bastion and moved Focused Rage into its place. **Both have
+now been corrected in `../warrior.json` by hand** — the only hand edit that file
+has ever taken — because leaving them would have meant the app offering a talent
+the ruleset does not have. The hand-transcribed counts in
+`tests/game/talents.test.ts` were updated with the reason beside them, and the
+Warrior is now 53 talents rather than 54.
+
+**The rest of that file has not been re-scraped.** Bastion was found only
+because capturing values tripped over it; the eight classes with no values
+captured yet may have drifted the same way and nobody would know.
+
+### Filling the rest
+
+Two documented steps, above. Nothing is blocked; wowhead rate-limited an earlier
+attempt at all nine classes in one sitting, so do them a few at a time.

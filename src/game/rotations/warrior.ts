@@ -29,9 +29,13 @@ import { EXECUTE_HEALTH_THRESHOLD } from '../abilities/warrior';
  * of combat) are not modelled. Against a stationary dummy it would be a free
  * 15 rage every 15 seconds, which would flatter the results.
  *
- * Slam is left out because its 1.5 second cast does not currently pause the
- * swing timer, and whether it should is unstated. Including it would credit the
- * warrior with a swing it may not get.
+ * Slam is in the list but CONDITIONAL, and the condition is the whole point of
+ * it. A cast interrupts the swing in progress and resets the swing timer, so an
+ * untalented Slam trades a full swing for its own damage and is a loss. With
+ * Improved Slam it holds the swing instead, and is not. The entry therefore
+ * asks the ability itself whether it holds the swing, rather than asking which
+ * talents were taken -- the rotation stays a statement about what is worth
+ * casting, and the talent stays the thing that changed it.
  */
 
 /**
@@ -140,6 +144,12 @@ const CORE_STRIKES: readonly PriorityEntry[] = [
   { abilityId: 'bloodthirst' },
   pooled('whirlwind', 25),
   pooled('spearing_strike', 15),
+  // Only worth casting when it does not cost a swing. See the note above.
+  pooled(
+    'slam',
+    15,
+    (_context, actor) => actor.abilities.get('slam')?.swingTimer === 'hold',
+  ),
 ];
 
 /** Dump genuinely surplus rage into the next swing. */

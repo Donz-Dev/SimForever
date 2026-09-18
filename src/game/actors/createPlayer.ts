@@ -1,6 +1,11 @@
-import type { PartialStats, WeaponProfile, WeaponSlot } from '../../engine';
-import { Combatant, addStats, makeStats } from '../../engine';
-import { abilitiesForClass } from '../abilities/abilitiesForClass';
+import type {
+  PartialStats,
+  ResourceType as ResourceTypeName,
+  WeaponProfile,
+  WeaponSlot,
+} from '../../engine';
+import { Combatant, addStats, bindModifiers, makeStats } from '../../engine';
+import { abilitiesForBuild } from '../abilities/abilitiesForClass';
 import type {
   ClassId,
   CombatStyleId,
@@ -19,11 +24,13 @@ import {
   statDerivationFor,
 } from '../character';
 import { MAX_CHARACTER_LEVEL } from '../character';
+import { fixedMaximumFor } from '../character';
 import { RAGE_FROM_DAMAGE_TAKEN, regenerationFor } from '../combat/resourceRules';
 import { reactionsForClass } from '../reactions/reactionsForClass';
 import { rotationFor } from '../rotations/rotationFor';
 import type { Equipment } from '../items/Item';
 import type { TalentAllocation } from '../talents/Talent';
+import { talentBuild } from '../talents/talentBuild';
 import { liveEquipment, statsForStyle, weaponsForEquipment } from '../items/equipment';
 import { reactionsForEquipment } from '../items/procs';
 import { autoAttackModeForStyle, weaponsForStyle } from './weapons';
@@ -105,13 +112,27 @@ export function createPlayer(options: PlayerOptions): Combatant {
     );
   }
 
+  // Weapons first, because talents can be conditional on what is held: "+3%
+  // damage with two-handed weapons" cannot be resolved without knowing the
+  // weapon. Nothing about the weapons depends on the talents in turn, so the
+  // order is settled rather than circular.
+  const equipmentForWeapons = options.equipment ?? {};
+  const weapons = weaponsFor(equipmentForWeapons, style, options.offHandDamageMultiplier);
+
+  // Talents are settled before the fight and never change during it, so they
+  // resolve once, here, into plain data. Nothing below this line knows that
+  // talents exist.
+  const build = talentBuild(characterClass, options.talents, { mainHand: weapons.mainHand });
+
   // Layers 1 and 2: the stats a character has before any conversion. Gear
-  // first, then the profile's own bonuses on top, so a profile can still add
-  // to a geared character rather than being replaced by one.
+  // first, then the profile's own bonuses, then the flat part of the talents.
   const equipment = options.equipment ?? {};
   const startingStats = addStats(
-    addStats(makeStats(baseStatsToEngineStats(base)), statsForStyle(equipment, style)),
-    options.bonusStats ?? {},
+    addStats(
+      addStats(makeStats(baseStatsToEngineStats(base)), statsForStyle(equipment, style)),
+      options.bonusStats ?? {},
+    ),
+    build.stats,
   );
 
   // Layer 3, for the resource maximums only. The stat block handles the rest.
@@ -121,13 +142,15 @@ export function createPlayer(options: PlayerOptions): Combatant {
   const resources = resourceSpecsFor(
     characterClass,
     baseManaFor(race, characterClass) + derived.mana,
-    options.resourceMaximums,
+    // Explicit overrides win over talents, so a caller testing a specific cap
+    // is not quietly overruled by a build.
+    { ...talentResourceMaximums(build.resourceMaximums), ...options.resourceMaximums },
   );
 
-  const abilities = abilitiesForClass(characterClass, style, options.talents);
+  const abilities = abilitiesForBuild(characterClass, style, build);
   const rotation = rotationFor(characterClass, style);
 
-  return new Combatant({
+  const player = new Combatant({
     id: options.id ?? 'player_1',
     name: options.name ?? 'Player',
     kind: 'player',
@@ -144,6 +167,14 @@ export function createPlayer(options: PlayerOptions): Combatant {
       ? RAGE_FROM_DAMAGE_TAKEN
       : undefined,
     abilities,
+    // Per-ability crit and damage scaling, from talents today and from gear or
+    // set bonuses later. Held on the combatant so `dealDamage` can consult it
+    // without every ability's `onCast` having to remember to.
+    abilityModifiers: build.abilityModifiers,
+    // A talent conditional on the weapon held -- Two-Handed Weapon
+    // Specialization -- multiplies everything including auto attacks, so it
+    // cannot ride on `abilityModifiers`, which deliberately skips swings.
+    damageMultiplier: build.damageMultiplier,
     // Reactive procs, from two sources: the class (a Warrior's Overpower opening
     // because the target dodged) and the gear (Vis'kag, Crusader, Hand of
     // Justice). Gear procs are built per character rather than shared, because
@@ -151,6 +182,9 @@ export function createPlayer(options: PlayerOptions): Combatant {
     reactions: [
       ...reactionsForClass(characterClass, style),
       ...reactionsForEquipment(liveEquipment(equipment, style)),
+      // Talent procs: Deep Wounds, Flurry and the rest. Built per character
+      // from the rank taken, so they carry that character's numbers.
+      ...build.reactions,
     ],
     // No abilities means nothing for a rotation to choose, so it is left off
     // rather than scheduling decision events that can never do anything.
@@ -158,9 +192,52 @@ export function createPlayer(options: PlayerOptions): Combatant {
     // Real weapons when something is equipped, placeholders otherwise. The
     // placeholders are invented and the items are not, so anything equipped
     // wins outright rather than being merged.
-    weapons: weaponsFor(equipment, style, options.offHandDamageMultiplier),
+    weapons,
     autoAttack: autoAttackModeForStyle(style),
   });
+
+  /*
+   * Percentage talents stay MODIFIERS rather than being folded into the base.
+   *
+   * "+2% Stamina" applied as a flat number would be computed once against the
+   * unbuffed stat and then be wrong for the rest of the fight. As a modifier it
+   * re-derives with everything else, which is the whole reason derived stats
+   * are a function over the block rather than a value computed at creation.
+   *
+   * They share one source id so they are removable together, though nothing
+   * removes them: a talent lasts as long as the character does.
+   */
+  if (build.statModifiers.length > 0) {
+    player.stats.addModifiers(bindModifiers(build.statModifiers, TALENT_MODIFIER_SOURCE));
+  }
+
+  return player;
+}
+
+/** Source id for every stat modifier a talent contributes. */
+export const TALENT_MODIFIER_SOURCE = 'talents';
+
+/**
+ * Turn a talent's "+10 maximum rage" into the absolute cap the spec wants.
+ *
+ * A talent states a DELTA and `resourceSpecsFor` takes an absolute, so the two
+ * meet here rather than in the talent table -- a talent should say what it adds
+ * without having to know what it is adding to.
+ *
+ * A resource with no fixed maximum (mana, which is derived from stats) is
+ * skipped rather than guessed at: adding a delta to a number this function does
+ * not have would mean inventing the base.
+ */
+function talentResourceMaximums(
+  deltas: Partial<Record<ResourceTypeName, number>>,
+): ResourceMaximumOverrides {
+  const overrides: Partial<Record<ResourceTypeName, number>> = {};
+  for (const [resource, delta] of Object.entries(deltas) as [ResourceTypeName, number][]) {
+    const base = fixedMaximumFor(resource);
+    if (base === undefined) continue;
+    overrides[resource] = base + delta;
+  }
+  return overrides;
 }
 
 /**

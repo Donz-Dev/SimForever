@@ -74,6 +74,10 @@ function buildPlayer(profile: CharacterProfile, style: CombatStyleId) {
     combatStyle: style,
     bonusStats: profile.stats,
     equipment: profile.equipment,
+    // Talents too, or the sheet reports a crit chance the fight does not use.
+    // This panel exists to agree with the simulation; leaving them out is
+    // exactly the disagreement the comment above is about.
+    talents: profile.talents,
   });
 }
 

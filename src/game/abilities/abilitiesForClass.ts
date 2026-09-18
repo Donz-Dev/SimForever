@@ -1,6 +1,11 @@
 import type { Ability } from '../../engine';
+import { DEFAULT_GCD_MS, MINIMUM_GCD_MS } from '../../engine';
 import type { ClassId, CombatStyleId } from '../character';
 import type { TalentAllocation } from '../talents/Talent';
+import type { TalentEffects } from '../talents/TalentEffect';
+import type { TalentBuild } from '../talents/talentBuild';
+import { talentBuild } from '../talents/talentBuild';
+import { WARRIOR_TALENT_EFFECTS } from '../talents/warriorEffects';
 import { WARRIOR_ABILITIES } from './warrior';
 
 /**
@@ -23,17 +28,29 @@ import { WARRIOR_ABILITIES } from './warrior';
  * mapping existed every warrior was handed all three, which made every measured
  * damage figure too high for a reason nothing in the results could show.
  */
-const WARRIOR_TALENT_ABILITIES: Readonly<Record<string, string>> = {
-  mortal_strike: 'mortal_strike',
-  bloodthirst: 'bloodthirst',
-  shield_slam: 'shield_slam',
-  spearing_strike: 'spearing_strike',
+const TALENT_ABILITIES: Partial<Record<ClassId, Readonly<Record<string, string>>>> = {
+  warrior: grantsByAbility(WARRIOR_TALENT_EFFECTS),
 };
 
-/** Which abilities each class gets from talents rather than from levelling. */
-const TALENT_ABILITIES: Partial<Record<ClassId, Readonly<Record<string, string>>>> = {
-  warrior: WARRIOR_TALENT_ABILITIES,
-};
+/**
+ * Invert a class's effect table into `ability id -> the talent granting it`.
+ *
+ * Derived rather than written out a second time. The effect table is where a
+ * talent says what it does, including `grantAbility`, so a separate hand-kept
+ * list would be a second source for the same fact and would eventually
+ * disagree with the first.
+ */
+function grantsByAbility(
+  effects: Readonly<Record<string, TalentEffects>>,
+): Readonly<Record<string, string>> {
+  const map: Record<string, string> = {};
+  for (const [talentId, declared] of Object.entries(effects)) {
+    for (const effect of declared) {
+      if (effect.kind === 'grantAbility') map[effect.abilityId] = talentId;
+    }
+  }
+  return map;
+}
 
 /** The talent id that grants an ability, if a talent grants it at all. */
 export function talentGranting(
@@ -67,7 +84,23 @@ export function abilitiesForClass(
   style?: CombatStyleId,
   talents?: TalentAllocation,
 ): readonly Ability[] {
+  return abilitiesForBuild(characterClass, style, talentBuild(characterClass, talents));
+}
+
+/**
+ * The same thing, for a caller that has already resolved the build.
+ *
+ * `createPlayer` needs the build anyway, for stats and resource caps, so this
+ * saves resolving the allocation twice and — more usefully — keeps one code
+ * path deciding what a character knows.
+ */
+export function abilitiesForBuild(
+  characterClass: ClassId,
+  style: CombatStyleId | undefined,
+  build: TalentBuild,
+): readonly Ability[] {
   if (characterClass !== 'warrior') return [];
+  const granted = TALENT_ABILITIES[characterClass] ?? {};
 
   return WARRIOR_ABILITIES.filter((ability) => {
     // Shield Slam needs a shield. Gating on the weapon rather than on a stance
@@ -76,8 +109,55 @@ export function abilitiesForClass(
     // put away their shield still cannot use it.
     if (ability.id === 'shield_slam' && style !== 'one_hand_shield') return false;
 
-    const required = WARRIOR_TALENT_ABILITIES[ability.id];
-    if (required === undefined) return true;
-    return (talents?.[required] ?? 0) > 0;
-  });
+    if (granted[ability.id] === undefined) return true;
+    return build.grantedAbilities.has(ability.id);
+  }).map((ability) => applyTalentChanges(ability, build));
+}
+
+/**
+ * Apply a build's cost and cooldown reductions to one ability.
+ *
+ * Returns a COPY. Ability definitions are module-level constants shared by
+ * every character in every iteration of a Monte Carlo batch, so editing one in
+ * place would leak a talent into characters that never took it — and the bug
+ * would compound across iterations rather than showing up on the first.
+ *
+ * A cost cannot go below zero, and neither can a cooldown; a talent that
+ * reduces one further than it goes simply takes it to nothing.
+ */
+function applyTalentChanges(ability: Ability, build: TalentBuild): Ability {
+  const costReduction = build.abilityCostReduction.get(ability.id) ?? 0;
+  const cooldownReduction = build.abilityCooldownReductionMs.get(ability.id) ?? 0;
+  const bonuses = build.abilityBonuses.get(ability.id);
+  const castReduction = build.abilityCastTimeReductionMs.get(ability.id) ?? 0;
+  const gcdReduction = build.abilityGcdReductionMs.get(ability.id) ?? 0;
+  const holdsSwing = build.abilitiesHoldingSwing.has(ability.id);
+  if (
+    costReduction === 0 &&
+    cooldownReduction === 0 &&
+    castReduction === 0 &&
+    gcdReduction === 0 &&
+    !holdsSwing &&
+    !bonuses
+  ) {
+    return ability;
+  }
+
+  return {
+    ...ability,
+    ...(bonuses ? { bonuses } : {}),
+    ...(holdsSwing ? { swingTimer: 'hold' as const } : {}),
+    ...(ability.castTimeMs && castReduction > 0
+      ? { castTimeMs: Math.max(0, ability.castTimeMs - castReduction) }
+      : {}),
+    ...(gcdReduction > 0
+      ? { gcdMs: Math.max(MINIMUM_GCD_MS, (ability.gcdMs ?? DEFAULT_GCD_MS) - gcdReduction) }
+      : {}),
+    ...(ability.cost && costReduction > 0
+      ? { cost: { ...ability.cost, amount: Math.max(0, ability.cost.amount - costReduction) } }
+      : {}),
+    ...(ability.cooldownMs && cooldownReduction > 0
+      ? { cooldownMs: Math.max(0, ability.cooldownMs - cooldownReduction) }
+      : {}),
+  };
 }

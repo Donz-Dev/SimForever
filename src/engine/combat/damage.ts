@@ -2,8 +2,14 @@ import type { Combatant, ResourceGeneration, WeaponSlot } from '../actors/Combat
 import type { SimulationContext } from '../simulation/SimulationContext';
 import type { DamageSchool } from './DamageSchool';
 import { isPhysical } from './DamageSchool';
-import type { AttackOutcome, AttackResolution, AttackTableKind } from './attackTable';
-import { resolveAttackTable } from './attackTable';
+import type {
+  AttackChances,
+  AttackOutcome,
+  AttackResolution,
+  AttackTableKind,
+} from './attackTable';
+import { ROLL_MAX, resolveAttackTable, toRollUnits } from './attackTable';
+import type { AbilityModifier } from './abilityModifiers';
 import { armorConstantForLevel, versatilityMultiplierFrom } from './ratings';
 import type { AttackEvent } from './reactions';
 import { runReactions } from './reactions';
@@ -76,6 +82,21 @@ export interface DamageRequest {
   readonly attackTable?: AttackTableKind;
   /** True for damage-over-time ticks. Recorded in telemetry. */
   readonly periodic?: boolean;
+  /**
+   * Roll for a critical strike even though there is no attack table.
+   *
+   * RULESET: in Forever, every damage-over-time effect can crit. A tick does
+   * not re-roll the combat table — whether the effect landed was settled when
+   * it was applied — but it does roll crit, at the crit chance of the KIND OF
+   * EVENT THAT APPLIED IT. A Rend tick uses melee crit because Rend is applied
+   * by a melee attack; a warlock's Corruption would use spell crit.
+   *
+   * So this names the table to take the crit chance and crit multiplier from,
+   * without resolving against it. Omitted means a tick cannot crit, which is
+   * the WoW Classic behaviour and NOT the Forever one -- every DoT in this
+   * ruleset should set it.
+   */
+  readonly critFrom?: AttackTableKind;
   /**
    * Which weapon produced this, when it matters.
    *
@@ -217,16 +238,71 @@ function rollTable(
   request: DamageRequest,
   context: SimulationContext,
 ): AttackResolution {
+  const modifier = request.source.abilityModifiers.for(request.abilityId);
+
   if (!request.attackTable) {
-    return { outcome: 'hit', avoided: false, damageMultiplier: 1, rolls: [] };
+    // No table. Either it lands flatly, or -- for a damage-over-time tick in
+    // this ruleset -- it lands and rolls only for a crit.
+    if (!request.critFrom) {
+      return { outcome: 'hit', avoided: false, damageMultiplier: 1, rolls: [] };
+    }
+    return rollPeriodicCrit(request, context, modifier);
   }
+
   const chances = context.attackChances(
     request.attackTable,
     request.source,
     request.target,
     { slot: request.weaponSlot },
   );
-  return resolveAttackTable(request.attackTable, chances, context.rng);
+  return resolveAttackTable(request.attackTable, withModifier(chances, modifier), context.rng);
+}
+
+/**
+ * Apply an ability's own crit bonus and crit damage bonus to the chances.
+ *
+ * The bonus is truncated into roll units the same way every other percentage
+ * is, so an ability-specific crit lands on the same integer die as the rest of
+ * the table rather than on a slightly different one.
+ */
+function withModifier(chances: AttackChances, modifier: AbilityModifier): AttackChances {
+  if (!modifier.critBonus && !modifier.critMultiplierBonus) return chances;
+  return {
+    ...chances,
+    crit: chances.crit + toRollUnits(modifier.critBonus ?? 0),
+    critMultiplier: chances.critMultiplier + (modifier.critMultiplierBonus ?? 0),
+  };
+}
+
+/**
+ * Roll a crit for a damage-over-time tick.
+ *
+ * One roll on the same 1-10000 integer die as every other chance, against the
+ * crit of the table that applied the effect. Nothing else on that table is
+ * consulted: a tick cannot miss, be dodged, be parried or glance, because its
+ * landing was decided when the aura went on.
+ */
+function rollPeriodicCrit(
+  request: DamageRequest,
+  context: SimulationContext,
+  modifier: AbilityModifier,
+): AttackResolution {
+  const chances = withModifier(
+    context.attackChances(request.critFrom!, request.source, request.target, {
+      slot: request.weaponSlot,
+    }),
+    modifier,
+  );
+  const roll = context.rng.nextInt(1, ROLL_MAX);
+  if (roll <= chances.crit) {
+    return {
+      outcome: 'crit',
+      avoided: false,
+      damageMultiplier: chances.critMultiplier,
+      rolls: [roll],
+    };
+  }
+  return { outcome: 'hit', avoided: false, damageMultiplier: 1, rolls: [roll] };
 }
 
 /** Draw the weapon's damage variance and resolve its contribution. */
@@ -279,7 +355,12 @@ export function resolveDamage(
 
   const attackerMultiplier =
     source.damageDoneMultiplier * versatilityMultiplierFrom(source.stats.effective);
-  const afterAttacker = afterCrit * attackerMultiplier;
+  // Per-ability scaling sits alongside the whole-character multipliers rather
+  // than replacing them: "+20% Revenge damage" and "+10% damage done" are
+  // different effects and both apply.
+  const abilityMultiplier =
+    source.abilityModifiers.for(request.abilityId).damageMultiplier ?? 1;
+  const afterAttacker = afterCrit * attackerMultiplier * abilityMultiplier;
 
   const afterTarget = afterAttacker * target.damageTakenMultiplier;
 

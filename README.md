@@ -32,9 +32,10 @@ from a formula.
 ## Status
 
 Under active development. The Warrior is the finished class; the other eight
-can be built but do not have their abilities yet. Talents decide which abilities
-a character has, but do not yet change any other number. Results are best used
-to compare one setup against another.
+can be built but do not have their abilities yet, and only the Warrior's talent
+values are captured. A talent that cannot be simulated says so on screen rather
+than quietly doing nothing. Results are best used to compare one setup against
+another.
 
 ## Running it locally
 
@@ -64,7 +65,7 @@ The simulation engine is plain TypeScript that knows nothing about React, the
 DOM, or WoW specifically — it is the rules, and the game content is data handed
 to it. [`docs/architecture.md`](docs/architecture.md) explains why, and the rest
 of [`docs/`](docs/) covers the engine, combat tables, character creation,
-resources, telemetry, profiles and the Warrior's abilities.
+resources, telemetry, profiles, talent effects and the Warrior's abilities.
 
 Two files at the root are for anyone picking the project up:
 
