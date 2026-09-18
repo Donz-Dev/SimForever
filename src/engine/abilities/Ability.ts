@@ -84,6 +84,40 @@ export interface Ability {
   readonly onNextSwing?: WeaponSlot;
 
   /**
+   * Named numbers a talent or effect has added to THIS ability, read by its own
+   * `onCast`.
+   *
+   * The declared fields above cover what every ability has -- cost, cooldown,
+   * cast time. They cannot cover "the rage Charge generates", because that is a
+   * number inside one ability's body and means nothing to any other. Rather
+   * than give every such number a field, an ability that has one names it here
+   * and reads `context.ability.bonuses?.<key>`.
+   *
+   * Abilities are shared constants, so a bonus arrives on a COPY built for the
+   * character that earned it.
+   */
+  readonly bonuses?: Readonly<Record<string, number>>;
+
+  /**
+   * What starting a cast does to an auto attack already in progress.
+   *
+   * RULESET: casting anything with a cast time interrupts the swing in
+   * progress, and the swing timer RESETS -- the swing that was coming is lost.
+   * That is the default, and it is why a cast ability is a real cost to a melee
+   * character rather than free damage between swings.
+   *
+   * `hold` is the exception some effects grant: the swing timer keeps running
+   * behind the cast, and a swing that comes due DURING it is held until the
+   * cast finishes. Both then resolve and the timer restarts. The Warrior's
+   * Improved Slam is exactly this -- "Slam no longer interrupts your melee
+   * swing time" -- and it is worth far more than the quarter second of cast
+   * time the same talent removes.
+   *
+   * Ignored by an instant ability, which never interrupts anything.
+   */
+  readonly swingTimer?: 'reset' | 'hold';
+
+  /**
    * Extra conditions beyond cooldown, cost and target, which the engine
    * already checks. Use for things like "only below 20% health".
    */

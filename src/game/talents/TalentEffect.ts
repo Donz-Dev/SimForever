@@ -1,5 +1,5 @@
 import type { StatModifierOperation, StatName } from '../../engine';
-import type { ResourceType } from '../../engine';
+import type { ResourceType, WeaponType } from '../../engine';
 
 /**
  * What a talent does.
@@ -115,6 +115,54 @@ export type TalentEffect =
   | { readonly kind: 'reaction'; readonly reactionId: string }
 
   /**
+   * A named number handed to ONE ability, read by that ability's own `onCast`.
+   *
+   * For a value that lives inside an ability's body rather than in a declared
+   * field: the rage Charge generates, say. The ability names the key it reads,
+   * and the talent names the same key here.
+   */
+  | { readonly kind: 'abilityBonus'; readonly abilityId: string; readonly key: string }
+
+  /** Reduces an ability's cast time by the talent's value, in SECONDS. */
+  | { readonly kind: 'abilityCastTime'; readonly abilityId: string }
+
+  /** Reduces an ability's global cooldown by the talent's value, in SECONDS. */
+  | { readonly kind: 'abilityGcd'; readonly abilityId: string }
+
+  /**
+   * Stops an ability's cast from resetting the melee swing timer.
+   *
+   * Takes no value: Improved Slam either lets the swing run behind the cast or
+   * it does not. Both ranks grant it, which is why it is separate from the cast
+   * time reduction that does scale.
+   */
+  | { readonly kind: 'abilityHoldsSwing'; readonly abilityId: string }
+
+  /**
+   * Multiplies ALL damage, but only while the character is holding the right
+   * weapon. The talent's value is a PERCENTAGE, so 3 becomes x1.03.
+   *
+   * Unlike `abilityDamage` this covers auto attacks too, which is what "damage
+   * you deal with two-handed weapons" means. The condition is evaluated when
+   * the character is built, because that is when the weapons are known — a
+   * character does not swap weapons mid-fight here.
+   */
+  | {
+      readonly kind: 'conditionalDamage';
+      readonly requires: WeaponRequirement;
+    }
+
+  /**
+   * Adds crit chance to every ability, but only with the right weapon.
+   *
+   * Weaponmaster's axe and polearm clause.
+   */
+  | {
+      readonly kind: 'conditionalCrit';
+      readonly requires: WeaponRequirement;
+    }
+
+  /**
    * The talent's effect cannot be modelled, and this says why.
    *
    * NOT a gap in this list waiting to be filled in — a first-class outcome, and
@@ -128,6 +176,20 @@ export type TalentEffect =
    * would be invisibly wrong, and this project would rather be the first.
    */
   | { readonly kind: 'unmodelled'; readonly reason: string };
+
+/**
+ * What a character must be holding for a conditional effect to apply.
+ *
+ * Checked against the MAIN HAND, which is what "the weapon you are using"
+ * means for a talent; an off-hand of a different type is a case no Warrior
+ * talent here distinguishes.
+ */
+export interface WeaponRequirement {
+  /** Any one of these types satisfies it. */
+  readonly weaponTypes?: readonly WeaponType[];
+  /** Whether the weapon must be two-handed. */
+  readonly twoHanded?: boolean;
+}
 
 /** Every effect a talent has. Most have one; some have several. */
 export type TalentEffects = readonly TalentEffect[];

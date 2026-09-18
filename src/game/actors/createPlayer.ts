@@ -112,10 +112,17 @@ export function createPlayer(options: PlayerOptions): Combatant {
     );
   }
 
+  // Weapons first, because talents can be conditional on what is held: "+3%
+  // damage with two-handed weapons" cannot be resolved without knowing the
+  // weapon. Nothing about the weapons depends on the talents in turn, so the
+  // order is settled rather than circular.
+  const equipmentForWeapons = options.equipment ?? {};
+  const weapons = weaponsFor(equipmentForWeapons, style, options.offHandDamageMultiplier);
+
   // Talents are settled before the fight and never change during it, so they
   // resolve once, here, into plain data. Nothing below this line knows that
   // talents exist.
-  const build = talentBuild(characterClass, options.talents);
+  const build = talentBuild(characterClass, options.talents, { mainHand: weapons.mainHand });
 
   // Layers 1 and 2: the stats a character has before any conversion. Gear
   // first, then the profile's own bonuses, then the flat part of the talents.
@@ -164,6 +171,10 @@ export function createPlayer(options: PlayerOptions): Combatant {
     // set bonuses later. Held on the combatant so `dealDamage` can consult it
     // without every ability's `onCast` having to remember to.
     abilityModifiers: build.abilityModifiers,
+    // A talent conditional on the weapon held -- Two-Handed Weapon
+    // Specialization -- multiplies everything including auto attacks, so it
+    // cannot ride on `abilityModifiers`, which deliberately skips swings.
+    damageMultiplier: build.damageMultiplier,
     // Reactive procs, from two sources: the class (a Warrior's Overpower opening
     // because the target dodged) and the gear (Vis'kag, Crusader, Hand of
     // Justice). Gear procs are built per character rather than shared, because
@@ -181,7 +192,7 @@ export function createPlayer(options: PlayerOptions): Combatant {
     // Real weapons when something is equipped, placeholders otherwise. The
     // placeholders are invented and the items are not, so anything equipped
     // wins outright rather than being merged.
-    weapons: weaponsFor(equipment, style, options.offHandDamageMultiplier),
+    weapons,
     autoAttack: autoAttackModeForStyle(style),
   });
 

@@ -1,5 +1,6 @@
 import type { Combatant } from '../actors/Combatant';
 import { applyHaste, hasteMultiplierFrom } from '../combat/ratings';
+import { resetSwingTimers } from '../combat/autoAttack';
 import { EventPriority, createEvent } from '../events';
 import type { SimulationContext } from '../simulation/SimulationContext';
 import type { Milliseconds } from '../time';
@@ -135,6 +136,15 @@ export function castAbility(
   if (castTime <= 0) {
     ability.onCast(abilityContext);
     return { ok: true };
+  }
+
+  /*
+   * Starting a cast interrupts the swing in progress unless the ability says
+   * otherwise. Done BEFORE `castEndsAt` is set, so the reset schedules a full
+   * swing from now rather than being held behind the cast that caused it.
+   */
+  if ((ability.swingTimer ?? 'reset') === 'reset') {
+    resetSwingTimers(context, caster);
   }
 
   caster.castEndsAt = now + castTime;

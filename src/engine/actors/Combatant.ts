@@ -44,8 +44,35 @@ export type AutoAttackMode = 'none' | 'main-hand' | 'dual-wield' | 'ranged';
  * they are not modelled as abilities. The numbers are content; the swing timer
  * scheduling is in `engine/combat/autoAttack.ts`.
  */
+/**
+ * What kind of weapon this is.
+ *
+ * The engine does not care -- damage is damage -- but content does: WoW is full
+ * of "increases damage with axes" and "your maces ignore armor". Kept as a
+ * closed union so a typo is a compile error, and `unknown` for a placeholder
+ * weapon that never came from an item.
+ */
+export type WeaponType =
+  | 'sword'
+  | 'axe'
+  | 'mace'
+  | 'polearm'
+  | 'staff'
+  | 'dagger'
+  | 'fist'
+  | 'bow'
+  | 'gun'
+  | 'crossbow'
+  | 'thrown'
+  | 'wand'
+  | 'unknown';
+
 export interface WeaponProfile {
   readonly name: string;
+  /** What kind of weapon it is, for content that cares. */
+  readonly weaponType?: WeaponType;
+  /** Whether it occupies both hands. */
+  readonly twoHanded?: boolean;
   /** Unhasted time between swings. */
   readonly swingTimerMs: Milliseconds;
   /** Average damage per swing before attack power. */
@@ -135,6 +162,15 @@ export interface CombatantOptions {
    * that changes one ability rather than the whole character.
    */
   readonly abilityModifiers?: AbilityModifiers;
+  /**
+   * A permanent multiplier on every point of damage this combatant deals,
+   * multiplied together with whatever auras contribute.
+   *
+   * For an effect decided when the character is built rather than during the
+   * fight -- a talent conditional on the weapon held, a set bonus. An effect
+   * that comes and goes belongs in an aura, which has the lifecycle for it.
+   */
+  readonly damageMultiplier?: number;
   /** For pets and summons: the id of the combatant that owns them. */
   readonly ownerId?: string;
 }
@@ -168,6 +204,7 @@ export class Combatant {
   readonly resourceOnDamageTaken: ResourceGeneration | undefined;
   readonly reactions: readonly Reaction[];
   readonly abilityModifiers: AbilityModifiers;
+  readonly baseDamageMultiplier: number;
 
   /**
    * When each resource was last spent.
@@ -266,6 +303,7 @@ export class Combatant {
     this.resourceOnDamageTaken = options.resourceOnDamageTaken;
     this.reactions = options.reactions ?? [];
     this.abilityModifiers = options.abilityModifiers ?? new AbilityModifiers();
+    this.baseDamageMultiplier = options.damageMultiplier ?? 1;
   }
 
   get isAlive(): boolean {
@@ -307,7 +345,7 @@ export class Combatant {
    * cached multiplier is a far nastier bug than a few extra multiplications.
    */
   get damageDoneMultiplier(): number {
-    return this.auraMultiplier('damageDoneMultiplier');
+    return this.baseDamageMultiplier * this.auraMultiplier('damageDoneMultiplier');
   }
 
   /** Multiplies damage this combatant takes. */

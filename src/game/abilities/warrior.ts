@@ -682,6 +682,9 @@ export const SHIELD_BLOCK_ABILITY: Ability = {
 /** The rage Charge generates, per the sheet's "Generates 15". */
 export const CHARGE_RAGE_GENERATED = 15;
 
+/** The key Improved Charge uses to add to the rage Charge generates. */
+export const CHARGE_RAGE_BONUS = 'rage';
+
 /**
  * Free, 15 second cooldown, and it GENERATES 15 rage rather than costing any.
  *
@@ -698,8 +701,12 @@ export const CHARGE: Ability = {
   cooldownMs: seconds(15),
   attackTable: 'ranged-special',
   requiresTarget: false,
-  onCast: ({ simulation, caster }) => {
-    simulation.grantResource(caster, 'rage', CHARGE_RAGE_GENERATED);
+  onCast: ({ simulation, caster, ability }) => {
+    // Improved Charge adds to the rage generated. That number lives inside this
+    // body rather than in a declared field, so it arrives as a named bonus on
+    // the copy of this ability built for a character who took the talent.
+    const bonus = ability.bonuses?.[CHARGE_RAGE_BONUS] ?? 0;
+    simulation.grantResource(caster, 'rage', CHARGE_RAGE_GENERATED + bonus);
   },
 };
 

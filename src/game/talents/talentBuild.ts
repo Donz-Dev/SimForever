@@ -4,6 +4,7 @@ import type {
   ResourceType,
   StatModifierSpec,
   StatName,
+  WeaponProfile,
 } from '../../engine';
 import { ALL_ABILITIES, AbilityModifiers, seconds } from '../../engine';
 import { COMBAT_CONSTANTS } from '../combat/attackChances';
@@ -11,7 +12,7 @@ import type { TalentReactionBuilder } from '../reactions/warriorTalents';
 import { WARRIOR_TALENT_REACTIONS } from '../reactions/warriorTalents';
 import type { ClassId } from '../character';
 import type { TalentAllocation } from './Talent';
-import type { TalentEffects, UnmodelledTalent } from './TalentEffect';
+import type { TalentEffects, UnmodelledTalent, WeaponRequirement } from './TalentEffect';
 import { talentsForClass } from './talentData';
 import { talentDescription, talentNumber } from './talentValues';
 import { WARRIOR_TALENT_EFFECTS } from './warriorEffects';
@@ -60,6 +61,21 @@ export interface TalentBuild {
   /** Reactions the talents grant, added to the ones every character has. */
   readonly reactions: readonly Reaction[];
   /**
+   * A multiplier on ALL damage, from talents conditional on the weapon held.
+   *
+   * Separate from `abilityModifiers` because it covers auto attacks, which are
+   * not abilities.
+   */
+  readonly damageMultiplier: number;
+  /** Named numbers handed to a specific ability's `onCast`, by ability id. */
+  readonly abilityBonuses: ReadonlyMap<string, Readonly<Record<string, number>>>;
+  /** Cast time to SUBTRACT from an ability, in milliseconds. */
+  readonly abilityCastTimeReductionMs: ReadonlyMap<string, number>;
+  /** Global cooldown to SUBTRACT from an ability, in milliseconds. */
+  readonly abilityGcdReductionMs: ReadonlyMap<string, number>;
+  /** Abilities whose cast lets the swing timer run on rather than resetting. */
+  readonly abilitiesHoldingSwing: ReadonlySet<string>;
+  /**
    * Talents with points in them that are doing nothing, and why.
    *
    * Shown to the person under "Chosen but not simulated", the same way the Gear
@@ -78,6 +94,11 @@ const EMPTY: TalentBuild = {
   abilityCooldownReductionMs: new Map(),
   abilityModifiers: new AbilityModifiers(),
   reactions: [],
+  damageMultiplier: 1,
+  abilityBonuses: new Map(),
+  abilityCastTimeReductionMs: new Map(),
+  abilityGcdReductionMs: new Map(),
+  abilitiesHoldingSwing: new Set(),
   unmodelled: [],
 };
 
@@ -90,9 +111,34 @@ const EMPTY: TalentBuild = {
  * talent is reported as unmodelled, so a gap in the data looks like a gap
  * rather than like a talent that works and is worth nothing.
  */
+/**
+ * What the character is holding, for talents conditional on the weapon.
+ *
+ * Optional: a caller that does not supply it gets no conditional effects, and
+ * the talents that need one are reported as unmodelled rather than silently
+ * applying. That is the same rule as a missing value -- an effect that cannot
+ * be evaluated must not quietly become nothing.
+ */
+export interface TalentBuildContext {
+  readonly mainHand?: WeaponProfile;
+}
+
+/** Whether the held weapon satisfies a conditional effect. */
+function meets(requires: WeaponRequirement, weapon: WeaponProfile | undefined): boolean {
+  if (!weapon) return false;
+  if (requires.twoHanded !== undefined && (weapon.twoHanded ?? false) !== requires.twoHanded) {
+    return false;
+  }
+  if (requires.weaponTypes && !requires.weaponTypes.includes(weapon.weaponType ?? 'unknown')) {
+    return false;
+  }
+  return true;
+}
+
 export function talentBuild(
   characterClass: ClassId,
   allocation: TalentAllocation | undefined,
+  context: TalentBuildContext = {},
 ): TalentBuild {
   if (!allocation) return EMPTY;
 
@@ -108,6 +154,11 @@ export function talentBuild(
   const abilityCooldownReductionMs = new Map<string, number>();
   const abilityModifiers = new AbilityModifiers();
   const reactions: Reaction[] = [];
+  const abilityBonuses = new Map<string, Record<string, number>>();
+  const abilityCastTimeReductionMs = new Map<string, number>();
+  const abilityGcdReductionMs = new Map<string, number>();
+  const abilitiesHoldingSwing = new Set<string>();
+  let damageMultiplier = 1;
   const unmodelled: UnmodelledTalent[] = [];
 
   const report = (talentId: string, rank: number, reason: string) => {
@@ -141,6 +192,12 @@ export function talentBuild(
 
       if (effect.kind === 'grantAbility') {
         grantedAbilities.add(effect.abilityId);
+        continue;
+      }
+
+      // Takes no value: the ability either holds the swing or it does not.
+      if (effect.kind === 'abilityHoldsSwing') {
+        abilitiesHoldingSwing.add(effect.abilityId);
         continue;
       }
 
@@ -195,6 +252,48 @@ export function talentBuild(
           reactions.push(build(value));
           break;
         }
+        case 'abilityCastTime':
+          abilityCastTimeReductionMs.set(
+            effect.abilityId,
+            (abilityCastTimeReductionMs.get(effect.abilityId) ?? 0) + seconds(value),
+          );
+          break;
+        case 'abilityGcd':
+          abilityGcdReductionMs.set(
+            effect.abilityId,
+            (abilityGcdReductionMs.get(effect.abilityId) ?? 0) + seconds(value),
+          );
+          break;
+        case 'abilityBonus': {
+          const existing = abilityBonuses.get(effect.abilityId) ?? {};
+          existing[effect.key] = (existing[effect.key] ?? 0) + value;
+          abilityBonuses.set(effect.abilityId, existing);
+          break;
+        }
+        case 'conditionalDamage':
+          if (meets(effect.requires, context.mainHand)) {
+            damageMultiplier *= 1 + value / 100;
+          } else {
+            report(
+              talentId,
+              rank,
+              'Applies only with a particular weapon, and this character is not ' +
+                'holding one. Not an error -- equip the right weapon and it works.',
+            );
+          }
+          break;
+        case 'conditionalCrit':
+          if (meets(effect.requires, context.mainHand)) {
+            abilityModifiers.add(ALL_ABILITIES, { critBonus: value });
+          } else {
+            report(
+              talentId,
+              rank,
+              'Applies only with a particular weapon, and this character is not ' +
+                'holding one. Not an error -- equip the right weapon and it works.',
+            );
+          }
+          break;
         case 'critDamageBonus':
           /*
            * The talent raises the BONUS half of the multiplier, not the whole
@@ -221,6 +320,11 @@ export function talentBuild(
     abilityCooldownReductionMs,
     abilityModifiers,
     reactions,
+    damageMultiplier,
+    abilityBonuses,
+    abilityCastTimeReductionMs,
+    abilityGcdReductionMs,
+    abilitiesHoldingSwing,
     unmodelled,
   };
 }

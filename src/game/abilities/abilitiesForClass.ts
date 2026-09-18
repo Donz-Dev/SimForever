@@ -1,4 +1,5 @@
 import type { Ability } from '../../engine';
+import { DEFAULT_GCD_MS, MINIMUM_GCD_MS } from '../../engine';
 import type { ClassId, CombatStyleId } from '../character';
 import type { TalentAllocation } from '../talents/Talent';
 import type { TalentEffects } from '../talents/TalentEffect';
@@ -127,10 +128,31 @@ export function abilitiesForBuild(
 function applyTalentChanges(ability: Ability, build: TalentBuild): Ability {
   const costReduction = build.abilityCostReduction.get(ability.id) ?? 0;
   const cooldownReduction = build.abilityCooldownReductionMs.get(ability.id) ?? 0;
-  if (costReduction === 0 && cooldownReduction === 0) return ability;
+  const bonuses = build.abilityBonuses.get(ability.id);
+  const castReduction = build.abilityCastTimeReductionMs.get(ability.id) ?? 0;
+  const gcdReduction = build.abilityGcdReductionMs.get(ability.id) ?? 0;
+  const holdsSwing = build.abilitiesHoldingSwing.has(ability.id);
+  if (
+    costReduction === 0 &&
+    cooldownReduction === 0 &&
+    castReduction === 0 &&
+    gcdReduction === 0 &&
+    !holdsSwing &&
+    !bonuses
+  ) {
+    return ability;
+  }
 
   return {
     ...ability,
+    ...(bonuses ? { bonuses } : {}),
+    ...(holdsSwing ? { swingTimer: 'hold' as const } : {}),
+    ...(ability.castTimeMs && castReduction > 0
+      ? { castTimeMs: Math.max(0, ability.castTimeMs - castReduction) }
+      : {}),
+    ...(gcdReduction > 0
+      ? { gcdMs: Math.max(MINIMUM_GCD_MS, (ability.gcdMs ?? DEFAULT_GCD_MS) - gcdReduction) }
+      : {}),
     ...(ability.cost && costReduction > 0
       ? { cost: { ...ability.cost, amount: Math.max(0, ability.cost.amount - costReduction) } }
       : {}),

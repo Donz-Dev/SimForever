@@ -45,16 +45,7 @@ export const WARRIOR_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
   improved_rend: [{ kind: 'abilityDamage', abilityId: 'rend' }],
 
 
-  improved_charge: [
-    {
-      kind: 'unmodelled',
-      reason:
-        'Changes the rage Charge generates, which is a number inside its `onCast` ' +
-        'rather than a declared field. Charge is also absent from the rotation, ' +
-        'because its real constraints (minimum range, being out of combat) are ' +
-        'not modelled.',
-    },
-  ],
+  improved_charge: [{ kind: 'abilityBonus', abilityId: 'charge', key: 'rage' }],
 
   improved_tactical_mastery: [
     {
@@ -80,13 +71,10 @@ export const WARRIOR_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
 
   spearing_strike: [{ kind: 'grantAbility', abilityId: 'spearing_strike' }],
 
+  // Covers auto attacks as well as abilities, so it is a whole-character
+  // multiplier rather than a per-ability one -- conditional on what is held.
   two_handed_weapon_specialization: [
-    {
-      kind: 'unmodelled',
-      reason:
-        'Damage conditional on the weapon type held. Damage multipliers apply to ' +
-        'the whole character and nothing is conditional on what is equipped.',
-    },
+    { kind: 'conditionalDamage', requires: { twoHanded: true } },
   ],
 
   impale: [{ kind: 'critDamageBonus' }],
@@ -98,23 +86,38 @@ export const WARRIOR_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
     { kind: 'unmodelled', reason: 'Strikes an additional target; the encounter has one.' },
   ],
 
+  /*
+   * Three clauses, one per weapon family, and only two of them can be modelled.
+   * The axe and polearm crit is expressible; the sword extra-attack chance
+   * needs a reaction that can trigger another swing, which `extraAttack`
+   * supports but nothing wires to a talent yet; the mace and staff armor
+   * ignore has no home in the damage pipeline at all.
+   *
+   * The crit clause applies on its own rather than the talent being written off
+   * whole: with an axe equipped it is exactly right, and with anything else it
+   * reports as not applying rather than silently contributing.
+   */
   weaponmaster: [
+    { kind: 'conditionalCrit', requires: { weaponTypes: ['axe', 'polearm'] } },
     {
       kind: 'unmodelled',
       reason:
-        'Three different effects chosen by weapon type, one of which (ignoring a ' +
-        "percentage of the target's armor) the damage pipeline cannot express.",
+        'PARTIAL: the axe and polearm crit bonus works. The mace and staff ' +
+        'clause ignores a percentage of the target armor, which the damage ' +
+        'pipeline cannot express, and the sword clause needs a talent-granted ' +
+        'reaction that triggers an extra attack.',
     },
   ],
 
+  /*
+   * Two effects that scale and one that does not. "Slam no longer interrupts
+   * your melee swing time" is granted by both ranks, and is worth far more than
+   * the quarter second of cast time: without it a Slam costs a whole swing.
+   */
   improved_slam: [
-    {
-      kind: 'unmodelled',
-      reason:
-        "Shortens Slam's cast. Slam is absent from the rotation because its cast " +
-        'does not currently pause the swing timer, and whether it should is ' +
-        'unstated — so shortening it would change a number that is already wrong.',
-    },
+    { kind: 'abilityCastTime', abilityId: 'slam' },
+    { kind: 'abilityGcd', abilityId: 'slam' },
+    { kind: 'abilityHoldsSwing', abilityId: 'slam' },
   ],
 
   improved_hamstring: [
