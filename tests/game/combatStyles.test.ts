@@ -251,12 +251,20 @@ describe('dual-wield off-hand penalty', () => {
    * penalty. Per-seed the ratio ranges 0.461 to 0.508; the mean is stable.
    *
    * WORTH A LOOK, NOT YET EXPLAINED: the mean sits at about 0.477 rather than
-   * 0.500, consistently, on every seed measured. The old tolerance was wide
-   * enough to hide a systematic 2.3% offset as well as the noise. Both hands
-   * use the same weapon numbers and roll the same table, so the average landed
-   * hit should differ by the penalty and nothing else -- and it differs by
-   * slightly more than the penalty. That is either an artifact of how landed
-   * averages are taken per hand or a real asymmetry, and nobody has looked.
+   * 0.500, consistently, on every seed measured.
+   *
+   * The obvious explanation is that the two hands hold DIFFERENT WEAPONS, and
+   * for a geared warrior that is true -- Vis'kag in one hand and Brutality
+   * Blade in the other, so their ratio says nothing about the off-hand penalty.
+   * It is NOT the explanation here. This test equips nothing, so both hands use
+   * the same `PLACEHOLDER_ONE_HAND`: same speed, same damage, same table.
+   *
+   * Narrowed, not solved. A ROGUE dual-wielding the same placeholders reads
+   * 0.4677, and a rogue has no abilities implemented at all -- so the gap is in
+   * the auto-attack path and not in anything the rotation does. In one sampled
+   * hour the off hand also took 460 swings to the main hand's 425, which two
+   * identical 2.6 second weapons should not, so the swing scheduling is the
+   * first place to look rather than the damage pipeline.
    */
   it('applies to the whole swing, attack power included', () => {
     const base = createDefaultProfile();
