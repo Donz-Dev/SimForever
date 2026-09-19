@@ -9,8 +9,10 @@ import type { TalentEffects } from './TalentEffect';
  * test asserts the coverage both ways, which is how three entries lost to a
  * careless edit were caught.
  *
- * 25 are fully modelled and 8 more are PARTLY modelled — something real plus an
- * `unmodelled` entry naming the part that is missing. 21 do nothing at all.
+ * 27 are fully modelled and 6 more are PARTLY modelled — something real plus an
+ * `unmodelled` entry naming the part that is missing. 20 do nothing at all.
+ * Those three numbers must sum to 53; the previous count said 21 inert and
+ * summed to 54, which is how the drift below went unnoticed.
  *
  * NINE GRANT AN ABILITY, and those are where being wrong costs most: an ability
  * handed to a character who never took its talent is free damage that nothing
@@ -27,16 +29,24 @@ import type { TalentEffects } from './TalentEffect';
  *     targets, defense skill)
  *   - the ability it modifies is itself inert, pending its numbers from the
  *     ruleset owner (Bloodrage, Berserker Rage, Shield Wall, Shield Block)
- *   - nothing attacks the player, so nothing can trigger it
  *   - it needs a mechanism that exists but is not wired to talents yet
- *     (combat-start auras)
+ *     (combat-start auras, a talent-granted reaction)
+ *
+ * "Nothing attacks the player" USED to be a group here, and is not one any
+ * more: `encounter.targetAttacks` makes the target swing back. Five entries
+ * went on claiming it long after that shipped — two of them on talents that had
+ * become fully modelled without anyone noticing. Whether the switch is ON is an
+ * encounter setting, not a modelling gap, so it is not a reason to file
+ * anything as unmodelled.
  *
  * The Gear panel's "Equipped but not simulated" does the same job for items,
  * and the Talent panel prints these the same way.
  *
  * Edge cases, interpretations and the talents that are deliberately only PARTLY
  * modelled are all written up in `docs/talent-effects.md`. Read that before
- * deciding a reason below is out of date -- three of them already were.
+ * deciding a reason below is out of date -- eight of them already were, in two
+ * separate rounds. A reason here is a claim about the engine on the day it was
+ * written, and it does not re-check itself.
  *
  * The NUMBERS are not here. They live in `src/data/talents/values/warrior.json`,
  * per rank, hand-editable. This file says what a talent does with its number.
@@ -176,7 +186,11 @@ export const WARRIOR_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
   blood_craze: [
     {
       kind: 'unmodelled',
-      reason: 'Heals after being critically hit. Nothing attacks the player.',
+      reason:
+        'Regenerates a percentage of health after being critically hit. The ' +
+        'trigger is reachable now that the target swings back, but the healing ' +
+        'itself would not be observable: the player cannot drop below one ' +
+        'health, so a heal has nothing to restore and survival is not modelled.',
     },
   ],
 
@@ -204,7 +218,17 @@ export const WARRIOR_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
     },
   ],
 
-  enrage: [{ kind: 'unmodelled', reason: 'Triggers on being hit. Nothing attacks the player.' }],
+  enrage: [
+    {
+      kind: 'unmodelled',
+      reason:
+        'A 30% chance on being hit to deal increased physical damage for 12 ' +
+        'seconds. NOT BLOCKED ANY MORE -- the target swings back, and the per- ' +
+        'rank values are captured. It needs a talent-granted reaction that ' +
+        'applies a damage-done aura, which is the same shape as Shield ' +
+        'Specialization and is simply not written yet.',
+    },
+  ],
 
   improved_execute: [{ kind: 'abilityCost', abilityId: 'execute' }],
 
@@ -242,20 +266,16 @@ export const WARRIOR_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
   // ---------------------------------------------------------------------
   /*
    * Two values: block chance is the first, the rage proc chance the second.
-   * Both halves are modelled and NEITHER can fire, because nothing attacks the
-   * player -- so the talent also says that out loud rather than appearing to
-   * work.
+   *
+   * FULLY MODELLED. It carried an `unmodelled` entry saying neither half could
+   * fire because nothing attacked the player; that stopped being true when
+   * `encounter.targetAttacks` landed, and the entry outlived it. Both halves
+   * run whenever the target swings back. Whether that switch is on is an
+   * encounter choice, not a gap in the model, so nothing is flagged here.
    */
   shield_specialization: [
     { kind: 'stat', stat: 'blockChance', operation: 'flat' },
     { kind: 'reaction', reactionId: 'shield_specialization', valueIndex: 1 },
-    {
-      kind: 'unmodelled',
-      reason:
-        'Both halves are implemented -- block chance and the rage proc -- but ' +
-        'both need the warrior to be ATTACKED, and nothing attacks the player ' +
-        'yet. They will work the moment something does.',
-    },
   ],
 
   anticipation: [
@@ -296,18 +316,23 @@ export const WARRIOR_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
   ],
 
   master_of_defense: [
-    { kind: 'unmodelled', reason: 'Rage on a dodge or parry by the player, which never happens.' },
-  ],
-
-  improved_revenge: [
-    { kind: 'abilityDamage', abilityId: 'revenge' },
     {
       kind: 'unmodelled',
       reason:
-        'The damage scaling works, but Revenge needs the player to be attacked ' +
-        'to open its window and nothing attacks the player, so it never fires.',
+        'A chance to generate 5 rage when the player dodges or parries with a ' +
+        'shield equipped. NOT BLOCKED ANY MORE -- the player dodges and parries ' +
+        'whenever the target swings back, and the per-rank values are captured. ' +
+        'It needs a talent-granted reaction on those two outcomes, which is the ' +
+        'same shape as Shield Specialization on a block.',
     },
   ],
+
+  /*
+   * FULLY MODELLED, for the same reason as Shield Specialization above: the
+   * `unmodelled` entry here said Revenge could never fire, and Revenge has been
+   * in the rotation since the target learned to swing back.
+   */
+  improved_revenge: [{ kind: 'abilityDamage', abilityId: 'revenge' }],
 
 
   defiance: [{ kind: 'unmodelled', reason: 'Threat, which the engine does not track.' }],

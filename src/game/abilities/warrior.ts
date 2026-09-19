@@ -275,9 +275,10 @@ function rollRange(simulation: SimulationContext, range: DamageRange): number {
  * "81 to 99" flat, 5 rage, 5 second cooldown, no scaling of any kind.
  *
  * Requires that the warrior recently blocked, parried or dodged — CONFIRMED by
- * the ruleset owner, not stated in the sheet. Nothing attacks the player yet,
- * so `REVENGE_READY` never gets applied and Revenge is currently uncastable.
- * That is the honest state, not a bug to work around.
+ * the ruleset owner, not stated in the sheet. `REVENGE_READY` is applied by the
+ * `revenge_on_avoid` reaction whenever `encounter.targetAttacks` is on, so
+ * Revenge is castable in an attacking encounter and silently skipped in a
+ * standing one, where its `canCast` refuses.
  */
 export const REVENGE: Ability = {
   id: 'revenge',
