@@ -1,5 +1,5 @@
 import type { Reaction } from '../../engine';
-import { OVERPOWER_READY, REND } from '../auras/warrior';
+import { ENRAGE_TRIGGER_CHANCE, OVERPOWER_READY, REND, enrageAura } from '../auras/warrior';
 import { FLURRY_SWINGS, deepWoundsAura, flurryAura } from '../auras/warriorTalents';
 
 /**
@@ -125,6 +125,72 @@ export const shieldSpecialization: TalentReactionBuilder = (chancePercent) => ({
   },
 });
 
+/** Rage a Master of Defense proc grants. Stated by the source. */
+export const MASTER_OF_DEFENSE_RAGE = 5;
+
+/**
+ * Master of Defense: a chance at rage when the warrior DODGES or PARRIES.
+ *
+ * The same shape as Shield Specialization one outcome over. Both fire on
+ * attacks RECEIVED, so both need something to be attacking the player --
+ * `encounter.targetAttacks`, which is off by default. That is an encounter
+ * setting and not a gap in the model, so neither carries an unmodelled note.
+ *
+ * "While a shield is equipped" is NOT expressed here. A reaction has no view of
+ * the actor's gear, and the talent sits at tier 10 of Protection where a
+ * shield is the point. Overstates it for a Protection warrior who dual-wields,
+ * which is not a build anyone makes.
+ */
+export const masterOfDefense: TalentReactionBuilder = (chancePercent) => ({
+  id: 'master_of_defense',
+  on: 'taken',
+  outcomes: ['dodge', 'parry'],
+  canTrigger: (context) => context.rng.rollChance(chancePercent / 100),
+  onTrigger: (context, actor) => {
+    context.grantResource(actor, 'rage', MASTER_OF_DEFENSE_RAGE);
+  },
+});
+
+/**
+ * Enrage: a chance at increased physical damage after BEING HIT.
+ *
+ * The 30% trigger chance is fixed and the damage bonus is what ranks up, so
+ * unlike every other builder here the rank value is the AURA's magnitude rather
+ * than the proc chance.
+ */
+export const enrage: TalentReactionBuilder = (damageBonusPercent) => ({
+  id: 'enrage',
+  on: 'taken',
+  // Any landed attack. A miss, dodge or parry is not "being the victim of a
+  // damaging attack", so the avoided outcomes are deliberately absent.
+  outcomes: ['hit', 'crit', 'crush', 'glance', 'block'],
+  canTrigger: (context) => context.rng.rollChance(ENRAGE_TRIGGER_CHANCE / 100),
+  onTrigger: (context, actor) => {
+    context.applyAura(actor, enrageAura(damageBonusPercent), actor.id);
+  },
+});
+
+/**
+ * Weaponmaster's SWORD clause: a chance at an extra attack.
+ *
+ * Its third value, hence `valueIndex: 2` where the talent declares it. The
+ * other two clauses -- crit with an axe or polearm, armor penetration with a
+ * mace or staff -- are a stat and an armor-ignoring modifier rather than a
+ * reaction, and are still unmodelled. The talent says so.
+ *
+ * NOT GATED ON CARRYING A SWORD, because a reaction cannot see the weapon. The
+ * talent's own `unmodelled` note carries that caveat.
+ */
+export const weaponmasterSword: TalentReactionBuilder = (chancePercent) => ({
+  id: 'weaponmaster_sword',
+  on: 'dealt',
+  outcomes: ['hit', 'crit', 'glance'],
+  canTrigger: (context) => context.rng.rollChance(chancePercent / 100),
+  onTrigger: (context, actor) => {
+    context.extraAttack(actor, 'mainHand');
+  },
+});
+
 /** Every Warrior talent that grants a reaction, by talent id. */
 export const WARRIOR_TALENT_REACTIONS: Readonly<Record<string, TalentReactionBuilder>> = {
   deep_wounds: deepWounds,
@@ -132,4 +198,7 @@ export const WARRIOR_TALENT_REACTIONS: Readonly<Record<string, TalentReactionBui
   unbridled_wrath: unbridledWrath,
   bloodthrill,
   shield_specialization: shieldSpecialization,
+  master_of_defense: masterOfDefense,
+  enrage,
+  weaponmaster: weaponmasterSword,
 };

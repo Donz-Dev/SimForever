@@ -2,11 +2,17 @@ import { describe, expect, it } from 'vitest';
 import { createPlayer } from '../../src/game/actors/createPlayer';
 import { talentBuild } from '../../src/game/talents/talentBuild';
 import { talentsForClass } from '../../src/game/talents/talentData';
+import { legalise } from '../helpers/legalTalents';
 import { talentNumber, talentValue } from '../../src/game/talents/talentValues';
 import { WARRIOR_TALENT_EFFECTS } from '../../src/game/talents/warriorEffects';
 
 const warrior = (talents: Record<string, number> = {}) =>
-  createPlayer({ race: 'human', characterClass: 'warrior', combatStyle: 'dual_wield', talents });
+  createPlayer({
+    race: 'human',
+    characterClass: 'warrior',
+    combatStyle: 'dual_wield',
+    talents: legalise(talents),
+  });
 
 /*
  * Values transcribed BY HAND from the Forever talent calculator, not read out
@@ -21,7 +27,6 @@ const HAND_TRANSCRIBED: Record<string, readonly number[]> = {
   improved_heroic_strike: [1, 2, 3],
   cruelty: [1, 2, 3, 4, 5],
   precision: [1, 2, 3],
-  vitality: [2, 4, 6, 8, 10],
   boundless_rage: [10, 20, 30],
   improved_execute: [3, 5],
   improved_intercept: [5, 10],
@@ -92,31 +97,25 @@ describe('stat effects', () => {
     expect(warrior({ precision: 3 }).stats.effective.hitChance).toBeCloseTo(3, 5);
   });
 
-  it('applies Vitality as a percentage of stamina and strength', () => {
-    const before = warrior();
-    const after = warrior({ vitality: 5 }); // +10%
-    expect(after.stats.effective.stamina).toBeCloseTo(before.stats.effective.stamina * 1.1, 5);
-    expect(after.stats.effective.strength).toBeCloseTo(before.stats.effective.strength * 1.1, 5);
-  });
-
-  it('re-derives attack power from the strength Vitality added', () => {
-    /*
-     * The reason percentage talents stay modifiers rather than being folded
-     * into a flat number. Attack power is a FUNCTION of strength, so it has to
-     * move when strength does; computing it once at creation would leave it at
-     * its untalented value.
-     */
-    const before = warrior().stats.effective.attackPower;
-    const after = warrior({ vitality: 5 }).stats.effective.attackPower;
-    expect(after).toBeGreaterThan(before);
-  });
-});
-
-describe('resource and ability effects', () => {
-  it('raises the rage cap by Boundless Rage', () => {
-    expect(warrior().resources.get('rage')?.maximum).toBe(100);
-    expect(warrior({ boundless_rage: 3 }).resources.get('rage')?.maximum).toBe(130);
-  });
+  /*
+   * VITALITY IS GONE, and with it the only Warrior talent that used
+   * `percentAdd`.
+   *
+   * Two tests lived here: one asserting Vitality raised stamina and strength by
+   * a percentage, and one asserting attack power RE-DERIVED from the strength
+   * it added -- the reason percentage talents stay modifiers instead of being
+   * folded into a flat number at creation.
+   *
+   * Forever's tier 20 Protection talent is Bastion, not Vitality; the
+   * repository had Vitality because a hand edit put the wrong talent in that
+   * slot. No Warrior talent scales a stat by a percentage any more, so there is
+   * nothing here to point these at.
+   *
+   * The mechanism itself is not untested: `StatBlock` applies percentAdd and
+   * the derivation function re-runs on every read, both covered in
+   * tests/engine/stats.test.ts. What is lost is the coverage of a talent using
+   * it, and that returns the moment one does.
+   */
 
   it('reduces an ability cost', () => {
     const cost = (c: ReturnType<typeof warrior>, id: string) => c.abilities.get(id)?.cost?.amount;

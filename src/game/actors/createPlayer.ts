@@ -30,7 +30,10 @@ import { reactionsForClass } from '../reactions/reactionsForClass';
 import { rotationFor } from '../rotations/rotationFor';
 import type { Equipment } from '../items/Item';
 import type { TalentAllocation } from '../talents/Talent';
+import { BATTLE_STANCE } from '../auras/warrior';
 import { talentBuild } from '../talents/talentBuild';
+import { legalAllocation } from '../talents/talentRules';
+import { talentsForClass } from '../talents/talentData';
 import { liveEquipment, statsForStyle, weaponsForEquipment } from '../items/equipment';
 import { reactionsForEquipment } from '../items/procs';
 import { autoAttackModeForStyle, weaponsForStyle } from './weapons';
@@ -127,10 +130,29 @@ export function createPlayer(options: PlayerOptions): Combatant {
   const equipmentForWeapons = options.equipment ?? {};
   const weapons = weaponsFor(equipmentForWeapons, style, options.offHandDamageMultiplier);
 
-  // Talents are settled before the fight and never change during it, so they
-  // resolve once, here, into plain data. Nothing below this line knows that
-  // talents exist.
-  const build = talentBuild(characterClass, options.talents, { mainHand: weapons.mainHand });
+  /*
+   * Talents are settled before the fight and never change during it, so they
+   * resolve once, here, into plain data. Nothing below this line knows that
+   * talents exist.
+   *
+   * ILLEGAL TALENTS ARE STRIPPED FIRST, and this is the only place that
+   * happens. The UI refuses an illegal click, so a build made by hand is always
+   * legal -- but a profile loaded from JSON goes nowhere near the UI, and until
+   * this line existed such a profile could put one point in Mortal Strike, a
+   * 31-point capstone requiring Sweeping Strikes, and be handed the ability.
+   * Every rule was known and none was applied.
+   *
+   * Stripping here rather than inside `talentBuild` is deliberate: that
+   * function's job is to turn an allocation into effects, and a unit test that
+   * puts five points in Flurry to check what Flurry does should not have to
+   * spend twenty-five more to make the point legal.
+   */
+  const declaredTalents = options.talents ?? {};
+  const classTalents = talentsForClass(characterClass);
+  const legal = classTalents
+    ? legalAllocation(classTalents, declaredTalents)
+    : { allocation: declaredTalents, dropped: [] as readonly string[] };
+  const build = talentBuild(characterClass, legal.allocation, { mainHand: weapons.mainHand });
 
   // Layers 1 and 2: the stats a character has before any conversion. Gear
   // first, then the profile's own bonuses, then the flat part of the talents.
@@ -198,6 +220,22 @@ export function createPlayer(options: PlayerOptions): Combatant {
     // No abilities means nothing for a rotation to choose, so it is left off
     // rather than scheduling decision events that can never do anything.
     rotation: abilities.length > 0 ? rotation : undefined,
+    /*
+     * A Warrior is ALWAYS IN A STANCE, and starts in Battle Stance.
+     *
+     * Forever's Battle Stance does nothing at all -- "A balanced combat
+     * stance", in full -- so this grants no damage. What it grants is
+     * legality: Overpower, Rend, Execute, Thunder Clap, Hamstring and Charge
+     * all require Battle Stance, and a warrior in no stance could cast none of
+     * them. Starting stanceless is technically what the gating rules say and
+     * is not what they mean.
+     *
+     * The rotation does not stance dance, so a Warrior stays in Battle Stance
+     * for the whole fight and everything gated on Berserker or Defensive is
+     * simply never cast. That is honest and it is not complete -- see
+     * docs/warrior-completion.md.
+     */
+    openingAuras: characterClass === 'warrior' ? [BATTLE_STANCE] : [],
     // Real weapons when something is equipped, placeholders otherwise. The
     // placeholders are invented and the items are not, so anything equipped
     // wins outright rather than being merged.

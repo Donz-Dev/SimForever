@@ -1,5 +1,6 @@
 import type { Ability } from '../abilities/Ability';
 import type { CastCheck } from '../abilities/casting';
+import type { CastRejection } from '../abilities/casting';
 import type { Combatant, WeaponSlot } from '../actors/Combatant';
 import type {
   AttackChances,
@@ -65,6 +66,17 @@ export interface SimulationContext {
 
   /** Side-effect-free castability check. */
   canCast(actor: Combatant, ability: Ability, target: Combatant | undefined): boolean;
+  /**
+   * Why an ability cannot be cast, or undefined when it can.
+   *
+   * `canCast` answers yes or no; a rotation sometimes needs to know WHICH rule
+   * refused, because one of them -- the wrong stance -- is fixable on the spot.
+   */
+  castRejection(
+    actor: Combatant,
+    ability: Ability,
+    target: Combatant | undefined,
+  ): CastRejection | undefined;
 
   /** Use an ability, paying costs and starting cooldowns. */
   cast(actor: Combatant, ability: Ability, target: Combatant | undefined): CastCheck;

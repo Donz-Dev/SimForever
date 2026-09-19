@@ -43,13 +43,13 @@ talent builds it uses.
 
 | Build | Standing target | Target swings back |
 | --- | --- | --- |
-| Dual-wield, no talents | **148.13** +/- 1.83 | **224.04** +/- 1.76 |
-| Two-hander, no talents | **148.57** +/- 1.60 | - |
-| 1H & Shield, no talents | **90.01** +/- 1.41 | - |
-| 1H & Shield, 31-pt Protection | **101.37** +/- 2.14 | **219.07** +/- 2.52 |
-| Dual-wield, 31-pt Arms | **187.41** +/- 2.66 | - |
-| Fury to Death Wish | **182.98** +/- 2.17 | - |
-| the same, without Death Wish | **171.39** +/- 2.10 | - |
+| Dual-wield, no talents | **149.67** +/- 1.96 | **221.55** +/- 2.29 |
+| Two-hander, no talents | **150.34** +/- 1.88 | - |
+| 1H & Shield, no talents | **91.16** +/- 1.85 | - |
+| 1H & Shield, 31-pt Protection | **92.03** +/- 2.24 | **151.88** +/- 2.19 |
+| Dual-wield, 31-pt Arms | **184.43** +/- 2.44 | - |
+| Fury to Death Wish | **185.03** +/- 2.91 | - |
+| the same, without Death Wish | **173.81** +/- 2.63 | - |
 
 **Not comparable to anything published before 2026-09-18.** The ability effect
 magnitudes arrived, and three of the rotation's strongest actions stopped doing

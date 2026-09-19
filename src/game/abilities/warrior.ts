@@ -176,6 +176,7 @@ export const WHIRLWIND_MAX_TARGETS = 4;
  */
 export const WHIRLWIND: Ability = {
   id: 'whirlwind',
+  stances: ['berserker_stance'],
   name: 'Whirlwind',
   cooldownMs: seconds(10),
   cost: { resource: 'rage', amount: 25 },
@@ -239,6 +240,7 @@ export const SPEARING_STRIKE: Ability = {
  */
 export const OVERPOWER: Ability = {
   id: 'overpower',
+  stances: ['battle_stance'],
   name: 'Overpower',
   cooldownMs: seconds(5),
   cost: { resource: 'rage', amount: 5 },
@@ -298,6 +300,7 @@ export const SHIELD_SLAM_DAMAGE = 655;
  */
 export const REVENGE: Ability = {
   id: 'revenge',
+  stances: ['defensive_stance'],
   name: 'Revenge',
   cooldownMs: seconds(5),
   cost: { resource: 'rage', amount: 5 },
@@ -366,6 +369,7 @@ export const SHIELD_SLAM: Ability = {
  */
 export const HAMSTRING: Ability = {
   id: 'hamstring',
+  stances: ['battle_stance', 'berserker_stance'],
   name: 'Hamstring',
   cost: { resource: 'rage', amount: 10 },
   attackTable: 'melee-special',
@@ -393,6 +397,7 @@ export const HAMSTRING: Ability = {
  */
 export const THUNDER_CLAP: Ability = {
   id: 'thunder_clap',
+  stances: ['battle_stance', 'defensive_stance'],
   name: 'Thunder Clap',
   cooldownMs: seconds(4),
   cost: { resource: 'rage', amount: 20 },
@@ -421,6 +426,7 @@ export const THUNDER_CLAP: Ability = {
  */
 export const INTERCEPT: Ability = {
   id: 'intercept',
+  stances: ['berserker_stance'],
   name: 'Intercept',
   cooldownMs: seconds(30),
   cost: { resource: 'rage', amount: 10 },
@@ -472,6 +478,7 @@ export const EXECUTE_HEALTH_THRESHOLD = 0.2;
  */
 export const EXECUTE: Ability = {
   id: 'execute',
+  stances: ['battle_stance', 'berserker_stance'],
   name: 'Execute',
   cost: { resource: 'rage', amount: EXECUTE_BASE_COST },
   attackTable: 'melee-special',
@@ -577,6 +584,7 @@ export const CLEAVE: Ability = {
 /** 10 rage, no cooldown. Applies the bleed; see `REND` for its numbers. */
 export const REND_ABILITY: Ability = {
   id: 'rend_cast',
+  stances: ['battle_stance', 'defensive_stance'],
   name: 'Rend',
   cost: { resource: 'rage', amount: 10 },
   attackTable: 'melee-special',
@@ -639,6 +647,7 @@ export const BATTLE_SHOUT_ABILITY: Ability = {
 /** Free, 30 minute cooldown. 100 points of crit for 15 sec, at +20% damage taken. */
 export const RECKLESSNESS_ABILITY: Ability = {
   id: 'recklessness_cast',
+  stances: ['berserker_stance'],
   name: 'Recklessness',
   cooldownMs: seconds(1800),
   requiresTarget: false,
@@ -657,6 +666,7 @@ export const RECKLESSNESS_ABILITY: Ability = {
  */
 export const BERSERKER_RAGE_ABILITY: Ability = {
   id: 'berserker_rage_cast',
+  stances: ['berserker_stance'],
   name: 'Berserker Rage',
   cooldownMs: seconds(30),
   requiresTarget: false,
@@ -688,6 +698,7 @@ export const BLOODRAGE_ABILITY: Ability = {
 /** Free, 30 minute cooldown. Takes 60% off damage taken for 12 sec. */
 export const SHIELD_WALL_ABILITY: Ability = {
   id: 'shield_wall_cast',
+  stances: ['defensive_stance'],
   name: 'Shield Wall',
   cooldownMs: seconds(1800),
   requiresTarget: false,
@@ -705,6 +716,7 @@ export const SHIELD_WALL_ABILITY: Ability = {
  */
 export const SHIELD_BLOCK_ABILITY: Ability = {
   id: 'shield_block_cast',
+  stances: ['defensive_stance'],
   name: 'Shield Block',
   cost: { resource: 'rage', amount: 10 },
   cooldownMs: seconds(5),
@@ -763,6 +775,7 @@ export const LAST_STAND_ABILITY: Ability = {
  */
 export const SWEEPING_STRIKES_ABILITY: Ability = {
   id: 'sweeping_strikes',
+  stances: ['battle_stance'],
   name: 'Sweeping Strikes',
   cooldownMs: seconds(30),
   cost: { resource: 'rage', amount: 30 },
@@ -795,6 +808,7 @@ export const CHARGE_RAGE_BONUS = 'rage';
  */
 export const CHARGE: Ability = {
   id: 'charge',
+  stances: ['battle_stance'],
   name: 'Charge',
   cooldownMs: seconds(15),
   attackTable: 'ranged-special',
@@ -811,6 +825,7 @@ export const CHARGE: Ability = {
 /** Swap to a stance, clearing whichever one is currently up. */
 function stanceAbility(id: string, aura: (typeof WARRIOR_STANCES)[number]): Ability {
   return {
+    grantsStance: aura.id,
     id,
     name: aura.name,
     cooldownMs: seconds(1),

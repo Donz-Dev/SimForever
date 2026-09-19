@@ -16,13 +16,13 @@ talent builds it uses.
 
 | Build | Standing target | Target swings back |
 | --- | --- | --- |
-| Dual-wield, no talents | **148.13** ± 1.83 | **224.04** ± 1.76 |
-| Two-hander, no talents | **148.57** ± 1.60 | — |
-| 1H & Shield, no talents | **90.01** ± 1.41 | — |
-| 1H & Shield, 31-pt Protection | **101.37** ± 2.14 | **219.07** ± 2.52 |
-| Dual-wield, 31-pt Arms | **187.41** ± 2.66 | — |
-| Fury to Death Wish | **182.98** ± 2.17 | — |
-| the same, without Death Wish | **171.39** ± 2.10 | — |
+| Dual-wield, no talents | **149.67** ± 1.96 | **221.55** ± 2.29 |
+| Two-hander, no talents | **150.34** ± 1.88 | — |
+| 1H & Shield, no talents | **91.16** ± 1.85 | — |
+| 1H & Shield, 31-pt Protection | **92.03** ± 2.24 | **151.88** ± 2.19 |
+| Dual-wield, 31-pt Arms | **184.43** ± 2.44 | — |
+| Fury to Death Wish | **185.03** ± 2.91 | — |
+| the same, without Death Wish | **173.81** ± 2.63 | — |
 
 > The two columns differ by **rage from damage taken**, which is enormous. A
 > damage warrior is not the one being hit, which is why `targetAttacks` is off
@@ -306,7 +306,7 @@ Struck through rather than deleted, so finished work is not re-derived.
 ## 5. Full talent audit — all 53, against the Forever calculator
 
 Audited against <https://www.wowhead.com/forever/talent-calc/warrior> on
-2026-09-18. **28 of 53 are fully simulated, 5 partly, 20 not at all**, which is
+2026-09-18. **28 of 53 are fully simulated, 6 partly, 19 not at all**, which is
 why a build shows entries under "Chosen but not simulated" in the Talent panel.
 That list is not an error: it is the panel refusing to let an unmodelled talent
 look like it is working.

@@ -2,9 +2,10 @@ import { describe, expect, it } from 'vitest';
 import { createPlayer } from '../../src/game/actors/createPlayer';
 import { DEEP_WOUNDS_DURATION_MS, FLURRY_SWINGS, flurryAura, weaponAverageDamage } from '../../src/game/auras/warriorTalents';
 import { talentBuild } from '../../src/game/talents/talentBuild';
+import { legalise } from '../helpers/legalTalents';
 
 const warrior = (talents: Record<string, number> = {}) =>
-  createPlayer({ race: 'human', characterClass: 'warrior', combatStyle: 'dual_wield', talents });
+  createPlayer({ race: 'human', characterClass: 'warrior', combatStyle: 'dual_wield', talents: legalise(talents) });
 
 describe('talents contribute reactions', () => {
   const reactionIds = (talents: Record<string, number>) =>

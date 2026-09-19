@@ -122,6 +122,11 @@ export function report(label: string, m: Measurement): Measurement {
  * silently ignored, so it measured a near-talentless warrior and called it a
  * full Arms build. `npx vite-node` over `talentsForClass('warrior')` prints the
  * real ids.
+ *
+ * AND IT WAS ILLEGAL. Mortal Strike requires a point in Sweeping Strikes, which
+ * this build skipped, so `createPlayer` would now strip Mortal Strike from it
+ * entirely -- and before it enforced the rules, the build was measured with a
+ * capstone it had not earned. The point comes out of Bloodthrill.
  */
 const ARMS_31: TalentAllocation = {
   improved_heroic_strike: 3,
@@ -134,7 +139,8 @@ const ARMS_31: TalentAllocation = {
   deep_wounds: 3, // 24
   spearing_strike: 1,
   impale: 2, // 27
-  bloodthrill: 3, // 30
+  sweeping_strikes: 1, // 28 -- Mortal Strike REQUIRES a point here
+  bloodthrill: 2, // 30
   mortal_strike: 1, // 31
 };
 
