@@ -50,10 +50,41 @@ function spell(id: number) {
 }
 
 describe('the captured spell data', () => {
-  it('covers every ability whose magnitude the spreadsheet omits', () => {
-    // Transcribed by hand from src/data/abilities/README.md's table.
-    const expected = [25289, 11556, 11597, 1719, 18499, 2687, 871, 2565, 2457, 71, 2458];
+  it('covers every Warrior ability the simulator models', () => {
+    // Transcribed by hand from tools/import_spell.mjs's manifest: the 26 from
+    // the ability spreadsheet, the three stances, and the five that talents
+    // grant and the spreadsheet omits.
+    const expected = [
+      21553, 23894, 23925, 11605, 1680, 1310222, 11585, 25288, 20662, 25286,
+      20569, 11574, 7373, 11581, 20617, 11578, 25289, 11556, 11597, 1719,
+      18499, 2687, 871, 2565, 2457, 71, 2458, 12292, 12328, 12323, 12975, 12809,
+    ];
     expect(spellData.spells.map((s) => s.id).sort()).toEqual([...expected].sort());
+  });
+
+  /*
+   * Stance gating, which docs/warrior-completion.md recorded as blocked on the
+   * ruleset owner. Transcribed by hand from the audit, not read back out of the
+   * file under test.
+   *
+   * An empty list means ANY STANCE, which is an answer. Several abilities allow
+   * TWO stances -- reading only the first halves the answer, which an earlier
+   * version of the importer did.
+   */
+  it('records stance gating, including the multi-stance abilities', () => {
+    const stances = (id: number) => spell(id).stances;
+    expect(stances(11574)).toEqual(['battle', 'defensive']); // Rend
+    expect(stances(20662)).toEqual(['battle', 'berserker']); // Execute
+    expect(stances(25288)).toEqual(['defensive']); // Revenge
+    expect(stances(1680)).toEqual(['berserker']); // Whirlwind
+    expect(stances(21553)).toEqual([]); // Mortal Strike: any stance
+  });
+
+  it('confirms Mortal Strike is 160, against the talent calculator', () => {
+    // HANDOVER records this as resolved: the ruleset owner said 160 and the
+    // Forever talent calculator tooltip says 85. Forever's spell data is a
+    // second independent source for 160.
+    expect(spell(21553).description).toContain('weapon damage plus 160');
   });
 
   it('is Forever data, not Classic', () => {

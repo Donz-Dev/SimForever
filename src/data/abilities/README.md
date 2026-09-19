@@ -1,7 +1,11 @@
 # Warrior ability effect magnitudes
 
-`forever-warrior.json` holds the Forever tooltip for every Warrior ability the
-**ability spreadsheet leaves without an effect magnitude**.
+`forever-warrior.json` holds Forever's own data for **all 32 Warrior spells the
+simulator cares about** — the 26 from the ability spreadsheet, the three stances,
+and the five that talents grant and the spreadsheet omits entirely.
+
+For each: the rendered tooltip, the raw effect rows, and which stances it can be
+used in.
 
 **Generated, never hand-edited.** `tools/import_spell.mjs` writes it.
 
@@ -20,8 +24,6 @@ already served Forever *item* data serves Forever *spell* data:
 ```
 https://nether.wowhead.com/forever/tooltip/spell/<id>
 ```
-
-These are Forever's own numbers, and they are **not** Classic's:
 
 These are Forever's own numbers, and they are **not** Classic's. Every row below
 was fetched from both endpoints rather than recalled:
@@ -42,6 +44,13 @@ guessed the Classic figure at −300 from memory and had to be corrected by
 fetching it. A number recalled rather than looked up is an invented number
 wearing a citation.
 
+## The audit
+
+[`docs/warrior-ability-audit.md`](../../../docs/warrior-ability-audit.md) is the
+reading of this file: stance gating for all 32, what the three stances do, where
+Forever agrees with the ruleset owner's spreadsheet and the four places it does
+not. **Read that rather than re-deriving it from the JSON.**
+
 ## Where the numbers go
 
 **The magnitudes are transcribed by hand** into named constants in
@@ -59,7 +68,8 @@ constant against the stored tooltip text, so a transcription typo fails.
 ## Refreshing
 
 ```bash
-node tools/import_spell.mjs --verify        # re-fetch all, diff, exit 1 on drift
+node tools/import_spell.mjs --verify        # re-fetch all 32, diff, exit 1 on drift
+node tools/import_spell.mjs --refresh       # re-capture
 node tools/import_spell.mjs forever 25289   # print one spell
 node tools/import_spell.mjs classic 25289   # the Classic one, for comparison
 ```
@@ -72,23 +82,13 @@ without this check.
 
 ## Ranks
 
-Anything with ranks is captured at its **max rank for level 60**, because that
-is the only level the simulator runs at. The rank matters a great deal: Battle
-Shout rank 1 grants 12 attack power and rank 7 grants 140.
+Everything with ranks is captured at its **max rank for level 60**, the only
+level the simulator runs at. The rank matters a great deal: Battle Shout rank 1
+grants 12 attack power and rank 7 grants 140.
 
-| Spell | Id | Rank |
-| --- | --- | --- |
-| Battle Shout | 25289 | 7 |
-| Demoralizing Shout | 11556 | 5 |
-| Sunder Armor | 11597 | 5 |
-| Recklessness | 1719 | — |
-| Berserker Rage | 18499 | — |
-| Bloodrage | 2687 | — |
-| Shield Wall | 871 | — |
-| Shield Block | 2565 | — |
-| Battle Stance | 2457 | — |
-| Defensive Stance | 71 | — |
-| Berserker Stance | 2458 | — |
+The id and rank of each is the manifest at the top of `tools/import_spell.mjs`,
+which is also where the mapping to the simulator's own ability ids lives. The
+list came from <https://www.wowhead.com/forever/class=1/warrior>.
 
 ## What is still missing after this
 
