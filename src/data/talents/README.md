@@ -3,7 +3,11 @@
 One file per class, read out of the World of Warcraft: Forever talent
 calculators at `https://www.wowhead.com/forever/talent-calc/<class>`.
 
-**470 talents across 27 trees.** Nine classes, three trees each.
+**469 talents across 27 trees.** Nine classes, three trees each.
+
+Forever REMOVED the Warrior's Bastion and moved Focused Rage into its slot,
+which is the one hand edit this data has ever taken. See
+`values/README.md`; the other eight classes have not been re-checked.
 
 ## How these were produced
 

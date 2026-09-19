@@ -191,7 +191,7 @@ because a partly-modelled talent is the easiest kind to forget.
 | Talent | Works | Missing |
 | --- | --- | --- |
 | **Weaponmaster** | The axe and polearm crit bonus | The mace and staff clause ignores a percentage of the target's armor, which the damage pipeline cannot express; the sword clause needs a reaction that triggers an extra attack. `extraAttack` exists but no talent is wired to it, and the effect would need to read the talent's THIRD value rather than its first. |
-| **Improved Revenge** | The damage scaling | Revenge needs the player to be attacked to open its window, and nothing attacks the player. |
+| **Improved Revenge** | The damage scaling, and Revenge itself now fires | Only in an encounter where `targetAttacks` is on. With a standing target its window never opens. |
 | **The five ability grants** | The gate | The abilities themselves are not implemented. |
 
 **Deliberately not partly modelled:**

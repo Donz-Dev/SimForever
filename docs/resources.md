@@ -127,7 +127,8 @@ according to their own rules regardless of which form it is in.
   any event), but no ability uses it.
 - **Energy and mana triggers from talents or set bonuses**, described in the
   source as rare.
-- **Damage taken** never happens, because nothing attacks the player yet. Rage
+- **Damage taken** happens only when `encounter.targetAttacks` is on, which is
+  off by default because a damage warrior is not the one being hit. Rage
   from being hit is implemented and wired; it simply never fires.
 - **Resource analysis.** Telemetry records every gain with the amount wasted to
   the cap, so rage capping and mana downtime are measurable, but no analyzer

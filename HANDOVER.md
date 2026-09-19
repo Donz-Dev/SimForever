@@ -24,7 +24,7 @@ their talent trees and nothing else.
 | **Resources** | rage from damage, energy in batches, mana on the five-second rule |
 | **Abilities** | all 26 Warrior abilities from the ruleset spreadsheet, with weapon-damage scaling and on-next-swing |
 | **Reactions** | content responds to an attack result: Overpower off a target dodge, and every item proc |
-| **Gear** | 18 items and the Crusader enchant, equippable, driving stats, weapons and procs. A **starting set** is equipped automatically when a Warrior is created, so the first fight is a geared one |
+| **Gear** | 19 items and the Crusader enchant, equippable, driving stats, weapons and procs. A **starting set** is equipped automatically when a Warrior is created, so the first fight is a geared one |
 | **Procs** | PPM (Vis'kag, Crusader) and flat-chance with an internal cooldown (Hand of Justice) |
 | **Talents** | all 469 talents, nine classes, spendable in the UI and saved on the profile. The Warrior's per-rank values are captured; **33 of its 53 talents do something**, 20 say on screen why they cannot |
 | **Analysis** | DPS, per-ability breakdown with attempts/hits/crit/glance/avoid rates |
@@ -37,24 +37,42 @@ The app is **live at <https://donz-dev.github.io/SimForever/>**, republished by
 See [docs/deployment.md](docs/deployment.md) for the one manual setting it needs
 and why a production build carries a `/SimForever/` path prefix.
 
-Measured with the starting set against a level 63 dummy, 12 seeds x 6
-iterations: an untalented dual-wielder runs at **120 DPS**, a full Arms build at
-**160**, a two-hander at **119**, and 1H & Shield at **79** — the last held down
-partly by the item data containing no shields at all.
+Measured with the starting set against a level 63 dummy, 10 seeds x 5
+iterations:
 
-The old "roughly 140" figure here was measured when every warrior was handed all
-three 31-point capstones at once, and is gone.
+| Build | Standing target | Target swings back |
+| --- | --- | --- |
+| Dual-wield, no talents | 118.97 | 182.91 |
+| Two-hander, no talents | 119.07 | — |
+| 1H & Shield, Shield Slam | 81.33 | 152.12 |
+| Dual-wield, full Arms build | 160.60 | — |
 
-These are meaningful for comparing builds to each other and nothing else; see
-"Read this before trusting any number".
+The two columns differ by rage from damage taken, which is enormous. A damage
+warrior is not the one being hit, which is why `targetAttacks` is off by
+default; read the right column as a tanking scenario.
+
+These compare builds to each other and nothing else; see "Read this before
+trusting any number".
 
 **[docs/warrior-completion.md](docs/warrior-completion.md) is the action list
-for finishing the Warrior**, audited rather than assumed, with what is blocked
-on the ruleset owner separated from what is doable now.
+for finishing the Warrior** — the nine inert abilities, what is blocked on the
+ruleset owner, and what is doable now. **Start there.**
 
 ## The next task
 
-Two candidates, and they are not close in value.
+**Finishing the Warrior is the priority, and
+[docs/warrior-completion.md](docs/warrior-completion.md) is the ordered list.**
+In short:
+
+1. **The nine inert abilities** — the biggest single gap, and no longer blocked:
+   fill them with flagged Classic values, add each to the rotation with a
+   measured priority, re-measure the baselines. Battle Shout, Sunder Armor and
+   Recklessness will move DPS materially.
+2. **Re-measure the rotation** — its ordering was tuned against placeholder
+   weapons, and the rage economy has changed twice since. Needs no new data.
+3. **Wire Import/Load**, **combat-start aura talents**, **armour enchants**.
+
+The two longer-range candidates below remain after that.
 
 ### 1. Talent effects for the other eight classes, and the rest of the Warrior's
 
@@ -65,7 +83,7 @@ what it does in `game/talents/warriorEffects.ts`; what its number IS lives in
 **every edge case and interpretation** the Warrior turned up. The design
 rationale is in the proposal on PR #22, which is not merged.
 
-**Warrior: 25 talents fully modelled, 7 partly, 21 inert.** Every one of the 53
+**Warrior: 25 talents fully modelled, 8 partly, 20 inert.** Every one of the 53
 has an explicit entry, and the inert ones name their own obstacle, so the list
 below IS the work queue. The Talent panel prints them under "Chosen but not
 simulated".
@@ -166,10 +184,17 @@ Work that is blocked, not merely unstarted.
 
 | Needed | Blocks |
 | --- | --- |
-| **Warrior stance gating** — which abilities require which stance. Corrections were promised and never arrived. The sheet has no Battle Stance row at all. | Stances are defined but gate nothing; the rotation does not stance dance |
-| **Effect values for nine Warrior buffs/debuffs** — Battle Shout, Demoralizing Shout, Sunder Armor, Recklessness, Berserker Rage, Bloodrage, Shield Wall, Shield Block, and both stances. Costs and cooldowns are known; magnitudes and durations are not. | All nine are castable and completely inert, and deliberately absent from the rotation |
+| **Warrior stance gating** — which abilities require which stance. Corrections were promised and never arrived. The sheet has no Battle Stance row at all. | Stances are defined but gate nothing; the rotation does not stance dance. Improved Tactical Mastery and Vanguard wait on it |
+| **Effect MAGNITUDES for nine Warrior abilities** — attack power from Battle Shout, armor per Sunder stack, the Recklessness crit bonus, and so on. The durations and stack counts are already populated with plausible figures; it is the magnitudes that are zero. | All nine are castable and completely inert, and deliberately absent from every rotation. See §1 of `docs/warrior-completion.md` for the constant-by-constant list |
+| **Rows for five abilities talents grant** — Sweeping Strikes, Death Wish, Piercing Howl, Last Stand, Concussion Blow | Five talents grant an ability that does not exist. The grants are declared, so they gate correctly the moment the abilities do |
+| **Defense skill formula** | Anticipation. Player dodge, parry and block are all wired; only the skill comparison is missing |
 | **Ability spreadsheets for the other eight classes** | Those classes fight with auto-attacks only |
-| **Forever item data** | The 18 items are WoW Classic, not Forever |
+| **Forever item IDS** — not the data, which is reachable | 18 of 19 items are Classic stand-ins. `nether.wowhead.com/forever/tooltip/item/<id>` works and `tools/import_item.mjs` imports from it; only the ids are missing |
+
+**The nine inert abilities do not have to stay inert.** The standing decision is
+to fill them with WoW Classic values kept under their `PLACEHOLDER_` names and
+flagged in the UI — see "Borrowing a Classic value" in
+[CLAUDE.md](CLAUDE.md), and §1 of the completion doc for how.
 
 **Resolved, do not re-litigate:** Mortal Strike is weapon damage **+160**. The
 Forever talent calculator says "plus 85"; the ruleset owner confirmed 160 and
@@ -331,19 +356,24 @@ issues round trip is exactly what they need, which is why it was kept.
 
 Roughly in order of value.
 
-1. **Per-rank talent values for the other eight classes.** The Warrior's are
+1. **Effect magnitudes for the Warrior's nine inert abilities.** The single
+   biggest gap in the class, and the one thing that would most change its
+   numbers. §1 of `docs/warrior-completion.md` lists them constant by constant.
+   Fillable from Classic in the meantime — see "Borrowing a Classic value" in
+   CLAUDE.md.
+2. **Warrior stance gating**, and rows for the five abilities talents grant but
+   the spreadsheet does not list.
+3. **Per-rank talent values for the other eight classes.** The Warrior's are
    captured; see `src/data/talents/values/README.md`.
-2. **Ability spreadsheets for the other eight classes.**
-3. **Effect values for the Warrior's nine inert buffs and debuffs.**
-4. **Forever item data**, to replace the Classic stand-ins. More items of any
-   kind also help: there are no shields at all, so the 1H & Shield style has an
-   empty slot, and no one-handed weapon grants weapon skill, so a dual-wielder's
-   two combat tables cannot yet diverge.
-5. **Bear/Cat paw swing speed and AP coefficients.**
-6. **A `block` outcome and a block value stat.** Revenge triggers on block in
-   Classic and the engine has no such outcome, so it catches two thirds of what
-   it should; Shield Slam is missing its "+ shield block value". One stat, two
-   fixes.
+4. **Ability spreadsheets for the other eight classes.**
+5. **Forever item ids.** The DATA is reachable —
+   `nether.wowhead.com/forever/tooltip/item/<id>` works and
+   `tools/import_item.mjs` imports from it — so this is a list of ids, not a
+   blocked request. More items of any kind also help: no one-handed weapon
+   grants weapon skill, so a dual-wielder's two combat tables cannot yet
+   diverge, and there are no armour enchants at all.
+6. **A defense skill formula**, the last piece of the attacks-received table.
+7. **Bear/Cat paw swing speed and AP coefficients.**
 
 ## Built but unreachable
 
