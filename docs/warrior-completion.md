@@ -152,17 +152,39 @@ good against fast attackers — asserted directly.
 **Still unreachable:** Shield Specialization and Revenge both need the warrior to
 be attacked. See 2.4.
 
-### 2.4 Make something attack the player
+### 2.4 ~~Make something attack the player~~ — DONE
 
-Five talents and three built-but-unreachable systems all wait on this single
-gap: Table 6 (attacks received), rage from damage taken, and Revenge are all
-implemented and tested, and none of them has ever fired in a real fight.
+`encounter.targetAttacks` makes the target swing back, and everything that was
+waiting on it now runs: the attacks-received table, rage from damage taken,
+Revenge, block, and Shield Specialization.
 
-Blood Craze, Enrage, Master of Defense, Last Stand and Improved Revenge's
-trigger are inert for this reason alone.
+**It is OFF by default, and that is a judgement rather than an oversight.** A
+dual-wielding damage warrior in a raid is not the one being hit, and rage from
+damage taken is enormous: switching it on takes a geared dual-wielder from
+**119.65 to 182.13 DPS**. Handing that to a build that would never earn it would
+flatter every number it produces.
 
-**Done when:** the training dummy swings back on a timer, with a damage figure
-from the ruleset owner or a clearly flagged placeholder.
+Three things this turned up that were invisible before:
+
+- **Revenge was in the book but in no rotation**, because its window could never
+  open. It is now in the list, above everything but Execute — 5 rage for a flat
+  81-99 is the cheapest damage a warrior has.
+- **Blocks had no word in the combat log.** A blocked blow lands, so it was
+  printed as an ordinary hit, and 44% of a shield warrior's incoming attacks
+  were invisible. They now read `hits X for 1,891 (blocked)`.
+- **Overkill was reported on a character who survived**, because an assumed
+  healer floors health at one rather than preventing the damage.
+
+**A HEALER IS ASSUMED AND NOT MODELLED.** A geared warrior has under 4,000
+health and takes 4,000-per-swing blows every two seconds; without the assumption
+every fight would end in the first few seconds. The damage lands in full and
+still generates rage — the character simply does not fall over. **Nothing about
+such a run says whether they would survive.**
+
+**The swing damage and speed are Classic placeholders**, on the profile and
+editable, with the caveat printed beside the switch in the Encounter panel.
+Forever gives the attacks-received TABLE — boss miss, crit, crush and their
+multipliers are real — but not how hard a boss hits.
 
 ### 2.5 Wire the Import and Load buttons
 

@@ -242,6 +242,11 @@ export function validateProfile(value: unknown): ValidationResult {
     requirePositiveNumber(encounter.targetHealth, 'encounter.targetHealth', issues);
     requireNonNegativeNumber(encounter.targetArmor, 'encounter.targetArmor', issues);
     requirePositiveInteger(encounter.targetLevel, 'encounter.targetLevel', issues);
+    if (typeof encounter.targetAttacks !== 'boolean') {
+      issues.push({ path: 'encounter.targetAttacks', message: 'Must be true or false.' });
+    }
+    requireNonNegativeNumber(encounter.targetSwingDamage, 'encounter.targetSwingDamage', issues);
+    requirePositiveNumber(encounter.targetSwingSeconds, 'encounter.targetSwingSeconds', issues);
   }
 
   if (issues.length > 0) return { ok: false, issues };
@@ -281,6 +286,9 @@ export function validateProfile(value: unknown): ValidationResult {
         targetHealth: validated.encounter.targetHealth,
         targetArmor: validated.encounter.targetArmor,
         targetLevel: validated.encounter.targetLevel,
+        targetAttacks: validated.encounter.targetAttacks,
+        targetSwingDamage: validated.encounter.targetSwingDamage,
+        targetSwingSeconds: validated.encounter.targetSwingSeconds,
       },
     },
   };

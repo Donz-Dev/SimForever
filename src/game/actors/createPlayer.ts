@@ -77,6 +77,14 @@ export interface PlayerOptions {
    * exclusive capstones, and nobody reaches more than one.
    */
   readonly talents?: TalentAllocation;
+  /**
+   * Damage cannot take this character below one health.
+   *
+   * For an encounter where the target hits back and a healer is ASSUMED but not
+   * modelled. Survival is not what such a run measures; see the engine field of
+   * the same name.
+   */
+  readonly survivesLethalDamage?: boolean;
 }
 
 /**
@@ -175,6 +183,7 @@ export function createPlayer(options: PlayerOptions): Combatant {
     // Specialization -- multiplies everything including auto attacks, so it
     // cannot ride on `abilityModifiers`, which deliberately skips swings.
     damageMultiplier: build.damageMultiplier,
+    survivesLethalDamage: options.survivesLethalDamage,
     // Reactive procs, from two sources: the class (a Warrior's Overpower opening
     // because the target dodged) and the gear (Vis'kag, Crusader, Hand of
     // Justice). Gear procs are built per character rather than shared, because

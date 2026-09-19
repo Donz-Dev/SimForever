@@ -30,7 +30,7 @@ their talent trees and nothing else.
 | **Analysis** | DPS, per-ability breakdown with attempts/hits/crit/glance/avoid rates |
 | **UI** | two-step character flow, per-class character sheet, style-aware gear, talent trees, combat log, Monte Carlo batches |
 
-**802 tests**, CI green on Node 20 and 22. Profile format **v5**.
+**817 tests**, CI green on Node 20 and 22. Profile format **v6**.
 
 The app is **live at <https://donz-dev.github.io/SimForever/>**, republished by
 `.github/workflows/deploy.yml` on every push to `main` that passes the tests.
@@ -77,7 +77,7 @@ Grouped, because each blocker unlocks several at once:
 | Blocker | Talents | Note |
 | --- | --- | --- |
 | **Concepts the engine has no notion of** — threat, movement, stuns, multiple targets, shout radius, fear/stun duration | Defiance, Piercing Howl, Concussion Blow, Sweeping Strikes, Booming Voice, Iron Will, Improved Hamstring | **Deliberately left absent.** None of them matters against a single stationary dummy, and each would need an encounter model that does not exist. Revisit when encounters gain positions, adds or mechanics. |
-| **Nothing attacks the player** | Blood Craze, Enrage, Master of Defense, Improved Revenge (its trigger), Shield Specialization, Last Stand | The pipeline exists — Table 6, rage from damage taken, Revenge — but no content swings at the player. |
+| ~~Nothing attacks the player~~ | — | **Done.** `encounter.targetAttacks` makes the target swing back; Table 6, rage from damage taken, Revenge, block and Shield Specialization all run. Off by default — see below. |
 | ~~No block outcome~~ | — | **Done.** The engine has a `block` outcome and `blockChance`/`blockValue` stats; Shield Slam, Revenge and Shield Specialization all use them. |
 | **No defense skill** | Anticipation | The attacks-received table uses flat ruleset constants for boss miss, crit and crush. Defense skill would have to shift them by a formula Forever has not given. **Player parry and dodge are now wired** and read from the character's stats, so only the skill comparison is missing. |
 | **Stances gate nothing** | Improved Tactical Mastery, Vanguard | Waiting on the ruleset owner; see below. |
@@ -347,12 +347,21 @@ Roughly in order of value.
 
 ## Built but unreachable
 
-- **Table 6 (attacks received by the player)** — nothing attacks the player yet.
-  Player parry within it is 0, not guessed, because it needs a defense stat.
-- **Rage from damage taken** — implemented and wired, never fires.
-- **Revenge** — reaction wired and tested, but it needs the warrior to be
-  attacked.
-- **Healing** — full pipeline with overhealing; no content heals.
+Three entries left this list at once when the target learned to swing back. They
+are kept here, struck through, because "built and never run" is a state worth
+remembering: all three had passing tests and none of them had ever executed in a
+real fight, and two carried bugs that only showed when they finally did.
+
+- ~~**Table 6 (attacks received by the player)**~~ — runs whenever
+  `encounter.targetAttacks` is on. Player dodge, parry and block all come from
+  the character's own stats. Only DEFENSE SKILL is still missing.
+- ~~**Rage from damage taken**~~ — runs, and is large: it takes a geared
+  dual-wielder from 119.65 to 182.13 DPS, which is why the switch defaults off.
+- ~~**Revenge**~~ — its window opens on a dodge, parry or block, and the rotation
+  casts it above everything but Execute.
+- **Healing** — full pipeline with overhealing; no content heals. A healer in an
+  attacking encounter is ASSUMED rather than modelled: the character cannot drop
+  below one health, so nothing says whether they would survive.
 - **Resource waste analysis** — telemetry records every gain with the amount lost
   to the cap, so rage capping and mana downtime are measurable. No analyzer
   reports them yet. Cheap and useful before tuning a rotation.

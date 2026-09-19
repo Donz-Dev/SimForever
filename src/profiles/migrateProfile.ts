@@ -12,6 +12,29 @@ type Migration = (profile: Record<string, unknown>) => Record<string, unknown>;
  */
 const migrations: Record<number, Migration> = {
   /**
+   * Version 6 let the target swing back.
+   *
+   * Older profiles fought a target that stood still, so they keep doing that:
+   * `targetAttacks` defaults to false and nothing about their results changes.
+   * That is the point of choosing false as the default -- a migration that
+   * silently started hitting every saved character would move every number
+   * they had already recorded.
+   */
+  5: (profile) => {
+    const encounter = profile.encounter;
+    if (typeof encounter !== 'object' || encounter === null) return profile;
+    return {
+      ...profile,
+      encounter: {
+        targetAttacks: false,
+        targetSwingDamage: 4000,
+        targetSwingSeconds: 2,
+        ...(encounter as Record<string, unknown>),
+      },
+    };
+  },
+
+  /**
    * Version 5 added `talents`, the points spent per talent id.
    *
    * Older profiles predate talents affecting anything, so they spend none. That

@@ -1,4 +1,5 @@
 import { Combatant } from '../../engine';
+import { bossMeleeWeapon } from '../encounters/raidBoss';
 
 /**
  * Raid boss level, three above a level 60 character.
@@ -19,15 +20,31 @@ export interface TrainingDummyOptions {
   readonly armor?: number;
   /** Defaults to raid boss level. Drives defense skill and crit suppression. */
   readonly level?: number;
+  /**
+   * Whether it swings back.
+   *
+   * Off by default, which is what makes it a training dummy. Turning it on is
+   * what brings the attacks-received table, rage from damage taken and Revenge
+   * to life -- none of which has ever fired in a real fight.
+   */
+  readonly attacks?: boolean;
+  /** Damage per swing before armor. Defaults to the placeholder boss figure. */
+  readonly swingDamage?: number;
+  /** Seconds between swings. Defaults to the placeholder boss figure. */
+  readonly swingSeconds?: number;
 }
 
 /**
- * A target that stands still and does nothing.
+ * A target that stands still, and optionally hits back.
  *
- * It has no rotation and no weapon, so it schedules no events of its own. That
- * is the whole point: it isolates player output from anything the encounter
- * might do. Bosses that fight back are encounter content and belong in
- * `src/game/encounters`.
+ * With `attacks` off it has no rotation and no weapon, so it schedules no
+ * events of its own. That isolates player output from anything the encounter
+ * might do, and is the right default for measuring damage.
+ *
+ * With `attacks` on it swings on a timer using the numbers in
+ * `encounters/raidBoss.ts`, every one of which is a flagged placeholder
+ * borrowed from Classic. That is what makes the attacks-received table, rage
+ * from damage taken and Revenge reachable at all.
  */
 export function createTrainingDummy(options: TrainingDummyOptions = {}): Combatant {
   return new Combatant({
@@ -38,5 +55,16 @@ export function createTrainingDummy(options: TrainingDummyOptions = {}): Combata
     maxHealth: options.health ?? 100_000,
     level: options.level ?? RAID_BOSS_LEVEL,
     stats: { armor: options.armor ?? RAID_BOSS_ARMOR },
+    ...(options.attacks
+      ? {
+          autoAttack: 'main-hand' as const,
+          weapons: {
+            mainHand: bossMeleeWeapon({
+              damage: options.swingDamage,
+              swingSeconds: options.swingSeconds,
+            }),
+          },
+        }
+      : {}),
   });
 }

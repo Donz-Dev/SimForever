@@ -12,7 +12,7 @@ import type { TalentAllocation } from '../game/talents/Talent';
  * moves on. Getting this in before anyone has saved anything is much cheaper
  * than retrofitting it later.
  */
-export const CURRENT_PROFILE_VERSION = 5;
+export const CURRENT_PROFILE_VERSION = 6;
 
 export interface CharacterSection {
   readonly name: string;
@@ -64,6 +64,27 @@ export interface EncounterSection {
    * crit suppression, so it shapes the entire combat table.
    */
   readonly targetLevel: number;
+  /**
+   * Whether the target swings back.
+   *
+   * OFF by default, and that default is a judgement rather than an oversight: a
+   * dual-wielding damage warrior in a raid is not the one being hit, and
+   * turning this on for them would hand them rage they would never have.
+   *
+   * Turning it on is what makes the attacks-received table, rage from damage
+   * taken, Revenge and six Warrior talents reachable at all.
+   */
+  readonly targetAttacks: boolean;
+  /**
+   * Damage per target swing, BEFORE armor and the attacks-received table.
+   *
+   * A PLACEHOLDER borrowed from Classic, not Forever data. It is on the profile
+   * rather than buried in code so that it is visible, editable, and obviously
+   * a number someone chose. See `game/encounters/raidBoss.ts`.
+   */
+  readonly targetSwingDamage: number;
+  /** Seconds between target swings. Also a Classic placeholder. */
+  readonly targetSwingSeconds: number;
 }
 
 /**
@@ -142,6 +163,11 @@ export function createDefaultProfile(): CharacterProfile {
       targetHealth: 100_000,
       targetArmor: 3731,
       targetLevel: 63,
+      // Off by default: a damage warrior is not the one being hit. See the
+      // field's own note.
+      targetAttacks: false,
+      targetSwingDamage: 4000,
+      targetSwingSeconds: 2,
     },
   };
 }

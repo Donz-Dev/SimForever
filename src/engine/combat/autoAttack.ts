@@ -184,9 +184,21 @@ function swing(
     school: weapon.school ?? 'physical',
     baseAmount: 0,
     weaponScaling: { slot },
-    // Ranged weapons use the ranged table, which has no dodge, parry or
-    // glancing blow.
-    attackTable: slot === 'ranged' ? 'ranged-auto' : 'melee-auto',
+    /*
+     * Which table resolves a swing depends on WHO IS BEING HIT, not on who is
+     * swinging. `melee-received` is the attacks-received table: it is the one
+     * with crushing blows and with the defender's own dodge, parry and block,
+     * and it is the right one for anything swinging at the player.
+     *
+     * Ranged weapons use the ranged table either way, which has no dodge,
+     * parry or glancing blow.
+     */
+    attackTable:
+      slot === 'ranged'
+        ? 'ranged-auto'
+        : target.isPlayerControlled
+          ? 'melee-received'
+          : 'melee-auto',
     weaponSlot: slot,
   });
 
