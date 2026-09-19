@@ -24,7 +24,7 @@ their talent trees and nothing else.
 | **Resources** | rage from damage, energy in batches, mana on the five-second rule |
 | **Abilities** | all 26 Warrior abilities from the ruleset spreadsheet, with weapon-damage scaling and on-next-swing |
 | **Reactions** | content responds to an attack result: Overpower off a target dodge, and every item proc |
-| **Gear** | 18 items and the Crusader enchant, equippable, driving stats, weapons and procs |
+| **Gear** | 18 items and the Crusader enchant, equippable, driving stats, weapons and procs. A **starting set** is equipped automatically when a Warrior is created, so the first fight is a geared one |
 | **Procs** | PPM (Vis'kag, Crusader) and flat-chance with an internal cooldown (Hand of Justice) |
 | **Talents** | all 469 talents, nine classes, spendable in the UI and saved on the profile. The Warrior's per-rank values are captured; **32 of its 53 talents do something**, 21 say on screen why they cannot |
 | **Analysis** | DPS, per-ability breakdown with attempts/hits/crit/glance/avoid rates |
@@ -37,9 +37,20 @@ The app is **live at <https://donz-dev.github.io/SimForever/>**, republished by
 See [docs/deployment.md](docs/deployment.md) for the one manual setting it needs
 and why a production build carries a `/SimForever/` path prefix.
 
-A geared dual-wield Warrior runs at roughly **140 DPS** against a level 63
-dummy. That figure is meaningful for comparing changes to each other; see
+Measured with the starting set against a level 63 dummy, 12 seeds x 6
+iterations: an untalented dual-wielder runs at **120 DPS**, a full Arms build at
+**160**, a two-hander at **119**, and 1H & Shield at **79** — the last held down
+partly by the item data containing no shields at all.
+
+The old "roughly 140" figure here was measured when every warrior was handed all
+three 31-point capstones at once, and is gone.
+
+These are meaningful for comparing builds to each other and nothing else; see
 "Read this before trusting any number".
+
+**[docs/warrior-completion.md](docs/warrior-completion.md) is the action list
+for finishing the Warrior**, audited rather than assumed, with what is blocked
+on the ruleset owner separated from what is doable now.
 
 ## The next task
 

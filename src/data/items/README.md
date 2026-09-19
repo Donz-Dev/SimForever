@@ -1,26 +1,44 @@
 # Item data
 
-`classic-warrior.json` holds 18 items and 1 enchant, scraped once from
-Wowhead's Classic tooltip endpoint.
+`classic-warrior.json` holds 19 items and 1 enchant.
 
-**These are WoW CLASSIC items, in a WoW: Forever simulator.** The Tier 1
+**Eighteen of them are WoW CLASSIC items, in a WoW: Forever simulator.** The Tier 1
 Unstoppable Might set is Season of Discovery. They were chosen deliberately, to
 replace the invented placeholder weapons with real numbers, but a Forever item
 of the same name may not carry the same values. Nothing in this file is Forever
 data.
 
+The nineteenth, **The Immovable Object**, is a real Forever item and the first
+one here.
+
 ## Where it came from
 
-`https://nether.wowhead.com/classic/tooltip/item/<id>` returns JSON: a name, an
+`https://nether.wowhead.com/<game>/tooltip/item/<id>` returns JSON: a name, an
 icon, and the tooltip as HTML. That is the whole source — no page rendering
 needed, unlike the talent calculators.
 
-The extracted text was hashed with SHA-256 in the browser and the written file
-had to hash to the same value, so this is the bytes the endpoint produced rather
-than a transcription of them.
+**Both `classic` and `forever` work**, with the same shape. Forever is the
+ruleset this simulator is for and is always the one to prefer; the Classic
+eighteen predate anyone checking whether a Forever endpoint existed.
 
-To add an item: fetch its tooltip, append it, and add the slot to
-`SLOTS_BY_INVENTORY_TYPE` in `itemData.ts` if it is a kind nothing else uses.
+## Adding an item
+
+```bash
+node tools/import_item.mjs forever 19321   # prints the entry to append
+node tools/import_item.mjs --verify        # re-parse everything already on file
+```
+
+The first eighteen were parsed in a browser and transferred with a SHA-256
+check, which proved the BYTES arrived intact — not that they were parsed
+correctly. `--verify` closes that gap: it re-fetches every item on file and
+diffs the parse against what is stored. **It currently reproduces all 19
+exactly**, which is why the tool can be trusted with the next one.
+
+Add the slot to `SLOTS_BY_INVENTORY_TYPE` in `itemData.ts` if it is a kind
+nothing else uses. Note that a SHIELD is resolved by its subclass rather than
+its inventory type: Wowhead calls a shield's slot "Off Hand", the same as a held
+off-hand item, so mapping on inventory type alone would put a shield in the
+off-hand weapon slot where a dual-wielder could swing it.
 
 ## What the loader does with it
 
