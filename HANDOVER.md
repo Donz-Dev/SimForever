@@ -22,7 +22,7 @@ their talent trees and nothing else.
 | **Combat tables** | all six, on an integer 1–10000 die, derived from weapon skill vs defense skill, including a **block** outcome |
 | **Armor** | level-scaled, applied per damage event |
 | **Resources** | rage from damage, energy in batches, mana on the five-second rule |
-| **Abilities** | all 26 Warrior abilities from the ruleset spreadsheet, with weapon-damage scaling and on-next-swing |
+| **Abilities** | all 26 Warrior abilities from the ruleset spreadsheet, with weapon-damage scaling and on-next-swing. Effect magnitudes for the ten the sheet leaves blank come from Forever's own spell data |
 | **Reactions** | content responds to an attack result: Overpower off a target dodge, and every item proc |
 | **Gear** | 19 items and the Crusader enchant, equippable, driving stats, weapons and procs. A **starting set** is equipped automatically when a Warrior is created, so the first fight is a geared one |
 | **Procs** | PPM (Vis'kag, Crusader) and flat-chance with an internal cooldown (Hand of Justice) |
@@ -37,15 +37,22 @@ The app is **live at <https://donz-dev.github.io/SimForever/>**, republished by
 See [docs/deployment.md](docs/deployment.md) for the one manual setting it needs
 and why a production build carries a `/SimForever/` path prefix.
 
-Measured with the starting set against a level 63 dummy, 10 seeds x 5
-iterations:
+Starting set, level 63 dummy, **300 fights a row** with a 95% interval.
+Reproduce with `npx vite-node tools/measure_rotation.ts`, which writes out the
+talent builds it uses.
 
 | Build | Standing target | Target swings back |
 | --- | --- | --- |
-| Dual-wield, no talents | 118.97 | 182.91 |
-| Two-hander, no talents | 119.07 | — |
-| 1H & Shield, Shield Slam | 81.33 | 152.12 |
-| Dual-wield, full Arms build | 160.60 | — |
+| Dual-wield, no talents | **148.13** +/- 1.83 | **221.85** +/- 1.75 |
+| Two-hander, no talents | **148.57** +/- 1.60 | - |
+| 1H & Shield, no talents | **90.01** +/- 1.41 | - |
+| 1H & Shield, 31-pt Protection | **93.63** +/- 1.74 | **176.69** +/- 1.71 |
+| Dual-wield, 31-pt Arms | **187.41** +/- 2.66 | - |
+
+**Not comparable to anything published before 2026-09-18.** The ability effect
+magnitudes arrived, and three of the rotation's strongest actions stopped doing
+nothing -- worth +28.32 DPS on its own. The old table also recorded no talent
+builds, so two of its rows could not be reproduced by anyone.
 
 The two columns differ by rage from damage taken, which is enormous. A damage
 warrior is not the one being hit, which is why `targetAttacks` is off by
@@ -64,13 +71,18 @@ ruleset owner, and what is doable now. **Start there.**
 [docs/warrior-completion.md](docs/warrior-completion.md) is the ordered list.**
 In short:
 
-1. **The ten inert abilities** — the biggest single gap, and no longer blocked:
-   fill them with flagged Classic values, add each to the rotation with a
-   measured priority, re-measure the baselines. Battle Shout, Sunder Armor and
-   Recklessness will move DPS materially.
-2. **Re-measure the rotation** — its ordering was tuned against placeholder
-   weapons, and the rage economy has changed twice since. Needs no new data.
-3. **Wire Import/Load**, **combat-start aura talents**, **armour enchants**.
+1. ~~**The ten inert abilities**~~ and ~~**re-measure the rotation**~~ are both
+   **done**. The magnitudes were never missing: Forever serves spell tooltips at
+   `nether.wowhead.com/forever/tooltip/spell/<id>`, the same host as the item
+   endpoint, and borrowing from Classic would have been 30% wrong on
+   Demoralizing Shout alone.
+2. **Capture the other sixteen Warrior spells.** Cheap, and it would answer the
+   stance-gating question filed as blocked on the ruleset owner for months --
+   four of the eleven captured already state their required stance. See section
+   3.6 of the completion doc.
+3. **Enrage and Master of Defense** -- not blocked, values captured, each needs
+   a talent-granted reaction of the shape Shield Specialization already uses.
+4. **Wire Import/Load**, **combat-start aura talents**, **armour enchants**.
 
 The two longer-range candidates below remain after that.
 
@@ -195,16 +207,18 @@ Work that is blocked, not merely unstarted.
 | Needed | Blocks |
 | --- | --- |
 | **Warrior stance gating** — which abilities require which stance. Corrections were promised and never arrived. The sheet has no Battle Stance row at all. | Stances are defined but gate nothing; the rotation does not stance dance. Improved Tactical Mastery and Vanguard wait on it |
-| **Effect MAGNITUDES for ten Warrior abilities** — attack power from Battle Shout, armor per Sunder stack, the Recklessness crit bonus, and so on. The durations and stack counts are already populated with plausible figures; it is the magnitudes that are zero. | All ten are castable and completely inert, and deliberately absent from every rotation. Seven need only a number; Bloodrage, Berserker Rage and Shield Block need a mechanism too. See §1 of `docs/warrior-completion.md` |
+| ~~**Effect MAGNITUDES for ten Warrior abilities**~~ | **Not blocked, and never was.** Forever serves them at `nether.wowhead.com/forever/tooltip/spell/<id>`. Seven are filled. Berserker Rage has no magnitude even in Forever; Bloodrage and Shield Block need a mechanism rather than a number. |
 | **Rows for five abilities talents grant** — Sweeping Strikes, Death Wish, Piercing Howl, Last Stand, Concussion Blow | Five talents grant an ability that does not exist. The grants are declared, so they gate correctly the moment the abilities do |
 | **Defense skill formula** | Anticipation. Player dodge, parry and block are all wired; only the skill comparison is missing |
 | **Ability spreadsheets for the other eight classes** | Those classes fight with auto-attacks only |
 | **Forever item IDS** — not the data, which is reachable | 18 of 19 items are Classic stand-ins. `nether.wowhead.com/forever/tooltip/item/<id>` works and `tools/import_item.mjs` imports from it; only the ids are missing |
 
-**The ten inert abilities do not have to stay inert.** The standing decision is
-to fill them with WoW Classic values kept under their `PLACEHOLDER_` names and
-flagged in the UI — see "Borrowing a Classic value" in
-[CLAUDE.md](CLAUDE.md), and §1 of the completion doc for how.
+**The Classic-borrowing decision was never exercised, and should not have
+been.** Forever's own spell data was reachable the whole time at
+`nether.wowhead.com/forever/tooltip/spell/<id>` — the same host as the item
+endpoint, which had been in use for months. Borrowing Classic's Demoralizing
+Shout would have been 30% too weak. Before recording a number as blocked on the
+ruleset owner, try the obvious neighbouring URL.
 
 **Resolved, do not re-litigate:** Mortal Strike is weapon damage **+160**. The
 Forever talent calculator says "plus 85"; the ruleset owner confirmed 160 and
@@ -366,11 +380,9 @@ issues round trip is exactly what they need, which is why it was kept.
 
 Roughly in order of value.
 
-1. **Effect magnitudes for the Warrior's ten inert abilities.** The single
-   biggest gap in the class, and the one thing that would most change its
-   numbers. §1 of `docs/warrior-completion.md` lists them constant by constant.
-   Fillable from Classic in the meantime — see "Borrowing a Classic value" in
-   CLAUDE.md.
+1. ~~**Effect magnitudes for the Warrior's ten inert abilities.**~~ Done, from
+   Forever's own spell data. What remains is **the other sixteen Warrior
+   spells**, which would likely answer stance gating too.
 2. **Warrior stance gating**, and rows for the five abilities talents grant but
    the spreadsheet does not list.
 3. **Per-rank talent values for the other eight classes.** The Warrior's are

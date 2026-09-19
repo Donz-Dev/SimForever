@@ -574,7 +574,7 @@ export const REND_ABILITY: Ability = {
   },
 };
 
-/** 15 rage, no cooldown. Effect values are placeholders; see `SUNDER_ARMOR`. */
+/** 15 rage, no cooldown. Removes 450 armor a stack to 5 stacks; see `SUNDER_ARMOR`. */
 export const SUNDER_ARMOR_ABILITY: Ability = {
   id: 'sunder_armor_cast',
   name: 'Sunder Armor',
@@ -590,7 +590,7 @@ export const SUNDER_ARMOR_ABILITY: Ability = {
   },
 };
 
-/** 10 rage, no cooldown. Effect values are placeholders. */
+/** 10 rage, no cooldown. Removes 210 attack power from the target for 45 sec. */
 export const DEMORALIZING_SHOUT_ABILITY: Ability = {
   id: 'demoralizing_shout_cast',
   name: 'Demoralizing Shout',
@@ -605,7 +605,7 @@ export const DEMORALIZING_SHOUT_ABILITY: Ability = {
 // Self buffs
 // ---------------------------------------------------------------------------
 
-/** 10 rage, no cooldown. The attack power figure is a placeholder. */
+/** 10 rage, no cooldown. Grants 140 attack power for 3 min. */
 export const BATTLE_SHOUT_ABILITY: Ability = {
   id: 'battle_shout_cast',
   name: 'Battle Shout',
@@ -616,7 +616,7 @@ export const BATTLE_SHOUT_ABILITY: Ability = {
   },
 };
 
-/** Free, 30 minute cooldown. Effect and duration are placeholders. */
+/** Free, 30 minute cooldown. 100 points of crit for 15 sec, at +20% damage taken. */
 export const RECKLESSNESS_ABILITY: Ability = {
   id: 'recklessness_cast',
   name: 'Recklessness',
@@ -627,7 +627,14 @@ export const RECKLESSNESS_ABILITY: Ability = {
   },
 };
 
-/** Free, 30 second cooldown. Effect and duration are placeholders. */
+/**
+ * Free, 30 second cooldown, and STILL INERT.
+ *
+ * The one ability Forever's own spell data does not answer: its tooltip says it
+ * generates "extra rage when taking damage" and names no number, and its other
+ * half is immunity to Fear and Incapacitate, which the engine has no notion of.
+ * Not a gap in the capture -- a gap in the source.
+ */
 export const BERSERKER_RAGE_ABILITY: Ability = {
   id: 'berserker_rage_cast',
   name: 'Berserker Rage',
@@ -658,7 +665,7 @@ export const BLOODRAGE_ABILITY: Ability = {
   },
 };
 
-/** Free, 30 minute cooldown. Effect and duration are placeholders. */
+/** Free, 30 minute cooldown. Takes 60% off damage taken for 12 sec. */
 export const SHIELD_WALL_ABILITY: Ability = {
   id: 'shield_wall_cast',
   name: 'Shield Wall',
@@ -669,7 +676,13 @@ export const SHIELD_WALL_ABILITY: Ability = {
   },
 };
 
-/** 10 rage, 5 second cooldown. Effect and duration are placeholders. */
+/**
+ * 10 rage, 5 second cooldown. Forever grants +75% block for 7 sec, limited to
+ * TWO attacks -- and that per-attack charge limit is the part the aura system
+ * cannot express yet, so the aura carries no block modifier and this stays
+ * inert. Granting +75% block for a full 7 seconds with no charge cap would
+ * overstate it badly.
+ */
 export const SHIELD_BLOCK_ABILITY: Ability = {
   id: 'shield_block_cast',
   name: 'Shield Block',
