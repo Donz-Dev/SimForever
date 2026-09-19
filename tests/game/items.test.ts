@@ -50,8 +50,35 @@ const MIGHT_SET: readonly (readonly [id: number, name: string, str: number, sta:
 ];
 
 describe('the item data', () => {
-  it('holds all eighteen items', () => {
-    expect(ITEMS).toHaveLength(18);
+  it('holds all nineteen items', () => {
+    expect(ITEMS).toHaveLength(19);
+  });
+
+  /*
+   * The first FOREVER item, as opposed to the eighteen Classic stand-ins around
+   * it. Transcribed by hand from the tooltip at
+   * https://www.wowhead.com/forever/item=19321.
+   */
+  it('has the Forever shield, with its block stats visibly unmodelled', () => {
+    const shield = ITEMS_BY_ID.get(19321);
+    expect(shield).toBeDefined();
+    if (!shield) return;
+
+    expect(shield.name).toBe('The Immovable Object');
+    expect(shield.slots).toEqual(['shield']);
+    expect(shield.stats.armor).toBe(2468);
+    expect(shield.stats.stamina).toBe(15);
+    expect(shield.source).toContain('/forever/');
+
+    /*
+     * "44 Block" and "+27 Block Value" have nowhere to go: the engine has no
+     * block outcome and no block value stat. They must be VISIBLE rather than
+     * dropped, which is what puts them in the Gear panel's "Equipped but not
+     * simulated" list.
+     */
+    const unmodelled = shield.unmodelled.map((effect) => effect.text);
+    expect(unmodelled).toContain('44 Block');
+    expect(unmodelled).toContain('+27 Block Value');
   });
 
   it.each(MIGHT_SET)('%s: %s has the stated strength, stamina and armor', (id, name, str, sta, armor) => {

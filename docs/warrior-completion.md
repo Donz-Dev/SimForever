@@ -18,7 +18,7 @@ Measured with the full starting set, 12 seeds x 6 iterations, level 63 dummy:
 | Dual-wield, no talents | 120.17 |
 | Dual-wield, a full Arms build | 160.60 |
 | Two-hander, no talents | 119.27 |
-| 1H & Shield, no talents | 78.65 |
+| 1H & Shield, no talents | 77.37 |
 
 > **HANDOVER's "roughly 140 DPS" is stale.** It was measured when every warrior
 > was handed all three 31-point capstones at once. Gated, an untalented
@@ -30,8 +30,8 @@ Measured with the full starting set, 12 seeds x 6 iterations, level 63 dummy:
 | Abilities the rotation ever casts | **9** | the other 18 are inert, situational, or unreachable |
 | Abilities that are castable but do NOTHING | **9** | 21 `PLACEHOLDER_*` constants behind them |
 | Talents fully modelled | 25 of 53 | 7 partly, 21 inert |
-| Items | 18 | one armour set, three weapons, one bow |
-| Shields in the item data | **0** | the 1H & Shield style cannot fill its own slot |
+| Items | 19 | one armour set, three weapons, one bow, one shield |
+| Of those, actual FOREVER items | **1** | The Immovable Object. The rest are Classic stand-ins |
 | Armour enchants | **0** | only Crusader, for weapons |
 
 ---
@@ -71,15 +71,18 @@ Two talents wait on this: Improved Tactical Mastery and Vanguard.
 
 **Ask for:** which abilities require which stance, and what each stance does.
 
-### 1.3 Forever item data
+### 1.3 Forever item data — NOT blocked any more
 
-The 18 items are **WoW Classic stand-ins**, not Forever items. The Tier 1
-"Unstoppable Might" set is Season of Discovery. A Forever item of the same name
-may carry different values.
+**`https://nether.wowhead.com/forever/tooltip/item/<id>` works.** Forever has its
+own tooltip endpoint with the same shape as the Classic one, so Forever item
+data is available for anything with an id. The Immovable Object was imported
+through it and is the first real Forever item in the repo.
 
-**Ask for:** whatever item data exists. Failing that, the set is a usable
-baseline and should be labelled as one — which
-[`startingSets.ts`](../src/game/items/startingSets.ts) now does.
+The other 18 are still Classic stand-ins. Replacing them is now a matter of
+**being given the item ids**, not of the data being unavailable.
+
+**Ask for:** a list of Forever item ids, or a page to take them from.
+`node tools/import_item.mjs forever <id>` does the rest.
 
 ### 1.4 The five missing abilities
 
@@ -94,18 +97,23 @@ exist.
 
 ## 2. Doable now, highest value first
 
-### 2.1 Shields, and armour enchants
+### 2.1 Armour enchants ~~and shields~~
 
-The 1H & Shield style **cannot fill its own shield slot** — there are no shields
-in the item data at all. That style measures 78.65 DPS against dual-wield's
-120.17, and some unknown part of that gap is simply a missing item.
+**The shield is done.** The Immovable Object is equipped by the 1H & Shield
+starting set, and it settled a question worth recording: **the missing shield was
+not the reason that style lags.**
 
-Scraping a shield is one call to the tooltip endpoint documented in
-`src/data/items/README.md`; no browser needed. The same pass could add armour
-enchants, of which there are currently none.
+With it equipped, armour goes from 4,701 to 7,169 and DPS goes *down* slightly,
+77.37 against the 78.65 measured without it — because the pairing puts Brutality
+Blade in the main hand in place of Vis'kag and its proc, and because **every
+defensive point the shield adds is unmodelled**: nothing attacks the player, and
+the engine has no block outcome, so "44 Block" and "+27 Block Value" both sit in
+the Gear panel's "Equipped but not simulated" list.
 
-**Done when:** a shield can be equipped, the starting set fills that slot, and
-the three styles are comparable on equal footing.
+So the 1H & Shield gap is Shield Slam, block, and nothing swinging back — items
+2.3 and 2.4 below. Adding the item did not close it and was never going to.
+
+**Still to do here:** armour enchants, of which there are none.
 
 ### 2.2 Re-measure the rotation against real gear
 

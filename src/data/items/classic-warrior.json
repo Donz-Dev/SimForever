@@ -485,6 +485,33 @@
         }
       ],
       "tooltip": "Cape of the Black Baron \nItem Level 63 \nBinds when picked up Back 45 Armor \n+15 Agility Requires Level 58\nEquip: +20 Attack Power. \nSell Price: 1 64 98"
+    },
+    {
+      "id": 19321,
+      "name": "The Immovable Object",
+      "quality": 4,
+      "icon": "spell_frost_chillingarmor",
+      "source": "https://www.wowhead.com/forever/item=19321",
+      "itemLevel": 65,
+      "inventoryType": "Off Hand",
+      "subclass": "Shield",
+      "armor": 2468,
+      "weapon": null,
+      "stats": {
+        "stamina": 15
+      },
+      "resistances": {},
+      "effects": [
+        {
+          "kind": "Stat",
+          "text": "44 Block"
+        },
+        {
+          "kind": "Stat",
+          "text": "+27 Block Value"
+        }
+      ],
+      "tooltip": "The Immovable Object\nItem Level 65\nBinds when picked up\nUnique\nOff Hand Shield\n2468 Armor\n44 Block\n+15 Stamina\n+27 Block Value\nDurability 120 / 120\nRequires Level 60\nSell Price: 15 90 59"
     }
   ],
   "enchants": [

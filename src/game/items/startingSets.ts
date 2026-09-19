@@ -45,13 +45,7 @@ const WARRIOR_ARMOUR: Partial<Record<EquipmentSlot, number>> = {
   ranged: 17069, // Striker's Mark
 };
 
-/**
- * Weapons per style.
- *
- * `one_hand_shield` has NO SHIELD, because the item data contains none. The
- * slot is left empty rather than filled with something invented, so the gap is
- * visible in the panel exactly where it matters.
- */
+/** Weapons per style. */
 const WARRIOR_WEAPONS: Partial<Record<CombatStyleId, Partial<Record<EquipmentSlot, number>>>> = {
   dual_wield: {
     mainHand: 17075, // Vis'kag the Bloodletter -- the slower weapon leads
@@ -61,7 +55,11 @@ const WARRIOR_WEAPONS: Partial<Record<CombatStyleId, Partial<Record<EquipmentSlo
     twoHand: 228229, // Obsidian Edged Blade
   },
   one_hand_shield: {
-    mainHand: 17075, // Vis'kag the Bloodletter
+    // Brutality Blade rather than Vis'kag: the ruleset owner's own pairing, and
+    // the faster weapon is the better one-hander when it is not being used to
+    // carry an off-hand's swing timer.
+    mainHand: 228265, // Brutality Blade
+    shield: 19321, // The Immovable Object -- the first real FOREVER item here
   },
 };
 

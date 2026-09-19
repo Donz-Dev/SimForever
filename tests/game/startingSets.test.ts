@@ -34,7 +34,7 @@ const WARRIOR_ARMOUR: Partial<Record<EquipmentSlot, string>> = {
 const WARRIOR_WEAPONS: Record<string, Partial<Record<EquipmentSlot, string>>> = {
   dual_wield: { mainHand: "Vis'kag the Bloodletter", offHand: 'Brutality Blade' },
   two_hander: { twoHand: 'Obsidian Edged Blade' },
-  one_hand_shield: { mainHand: "Vis'kag the Bloodletter" },
+  one_hand_shield: { mainHand: 'Brutality Blade', shield: 'The Immovable Object' },
 };
 
 const nameOf = (itemId: number) => ITEMS_BY_ID.get(itemId)?.name;
@@ -62,14 +62,21 @@ describe('the Warrior starting set', () => {
     });
   }
 
-  it('leaves the shield slot empty, because the item data has no shields', () => {
+  it('puts the shield in the shield slot, not the off hand', () => {
     /*
-     * Deliberate. An invented shield would be worse than a visible gap, and the
-     * gap is exactly where a person would look for one.
+     * Wowhead gives a shield the inventory type "Off Hand", the same as a held
+     * off-hand item, and only the subclass says otherwise. Getting this wrong
+     * would let a dual-wielder equip a shield and SWING it.
      */
+    const shield = ITEMS_BY_ID.get(19321);
+    expect(shield?.slots).toEqual(['shield']);
+
     const set = startingEquipmentFor('warrior', 'one_hand_shield');
-    expect(set.shield).toBeUndefined();
-    expect([...ITEMS_BY_ID.values()].filter((item) => item.slots.includes('shield'))).toEqual([]);
+    expect(set.shield?.itemId).toBe(19321);
+    expect(set.offHand).toBeUndefined();
+
+    // And a dual-wielder is never handed one.
+    expect(startingEquipmentFor('warrior', 'dual_wield').shield).toBeUndefined();
   });
 
   it('gives nothing to a class with no curated set', () => {

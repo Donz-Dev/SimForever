@@ -80,8 +80,9 @@ const SLOTS_BY_INVENTORY_TYPE: Readonly<Record<string, readonly EquipmentSlot[]>
   'One-Hand': ['mainHand', 'offHand'],
   'Main Hand': ['mainHand'],
   'Two-Hand': ['twoHand'],
-  // No shields are imported yet, so nothing maps here. The slot exists so the
-  // interface can offer it and say plainly that it is empty.
+  // Reached through the SUBCLASS rather than the inventory type: Wowhead calls
+  // a shield's slot "Off Hand", which is also a held off-hand item's. See
+  // `buildItem`.
   Shield: ['shield'],
   'Off Hand': ['offHand'],
   Ranged: ['ranged'],
@@ -206,7 +207,18 @@ function buildStats(item: RawItem): {
 }
 
 function buildItem(item: RawItem): Item {
-  const slots = SLOTS_BY_INVENTORY_TYPE[item.inventoryType];
+  /*
+   * A SHIELD is resolved by its subclass, not its inventory type.
+   *
+   * Wowhead gives a shield the inventory type "Off Hand", the same as a held
+   * off-hand trinket, and only the subclass says it is a shield. Mapping on the
+   * inventory type alone would put The Immovable Object in the off-hand WEAPON
+   * slot, where a dual-wielder could equip it and swing it.
+   */
+  const slots =
+    item.subclass === 'Shield'
+      ? SLOTS_BY_INVENTORY_TYPE.Shield
+      : SLOTS_BY_INVENTORY_TYPE[item.inventoryType];
   if (!slots) {
     throw new Error(`${item.name}: no slot mapping for inventory type "${item.inventoryType}"`);
   }
