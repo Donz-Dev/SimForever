@@ -204,8 +204,13 @@ export const BLOODRAGE: AuraDefinition = {
  * Block costs 10 rage on a 5 second cooldown. Neither has a stated effect or
  * duration.
  *
- * Both are damage-taken effects, and nothing attacks the player yet, so they
- * are inert for a second reason as well.
+ * Both are damage-taken effects, and something does attack the player now, so
+ * the only thing keeping them inert is the missing magnitudes.
+ *
+ * Shield Block needs more than a number. Its effect is a block chance bonus and
+ * there is no `blockChance` modifier below to fill in -- `blockChance` became a
+ * real stat with a real outcome behind it after this was written, so the aura
+ * has to gain the modifier before any value can reach it.
  */
 export const PLACEHOLDER_SHIELD_WALL_DAMAGE_TAKEN_MULTIPLIER = 1;
 export const PLACEHOLDER_SHIELD_WALL_DURATION_MS = seconds(10);
@@ -307,7 +312,7 @@ export const OVERPOWER_READY: AuraDefinition = {
  * Marks that the warrior blocked, parried or dodged, which is what Revenge
  * keys off. Same provenance and the same placeholder window as above.
  *
- * Nothing attacks the player yet, so this never fires today.
+ * Fires whenever `encounter.targetAttacks` is on, which is off by default.
  */
 export const PLACEHOLDER_REVENGE_WINDOW_MS = seconds(5);
 

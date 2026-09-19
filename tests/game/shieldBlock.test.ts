@@ -105,9 +105,19 @@ describe('Shield Specialization', () => {
     expect(reaction?.outcomes).toEqual(['block']);
   });
 
-  it('still says it cannot fire, because nothing attacks the player', () => {
+  /*
+   * This assertion used to be its exact opposite: it required the talent to
+   * report that it could not fire because nothing attacked the player. That was
+   * true when it was written and stopped being true when `targetAttacks`
+   * landed, and the test went on enforcing the stale caveat rather than
+   * catching it -- a test pinned to a temporary limitation outlives the
+   * limitation. It now pins the thing that should stay true instead: both
+   * halves are modelled, so the talent claims no gap.
+   */
+  it('reports no unmodelled gap, because both halves are implemented', () => {
     const build = talentBuild('warrior', { shield_specialization: 5 });
-    expect(build.unmodelled.map((entry) => entry.talentId)).toContain('shield_specialization');
-    expect(build.unmodelled[0].reason).toMatch(/attack/i);
+    expect(build.unmodelled.map((entry) => entry.talentId)).not.toContain(
+      'shield_specialization',
+    );
   });
 });

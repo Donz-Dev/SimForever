@@ -209,10 +209,11 @@ hits.
   it. Talents and racials that raise weapon skill would set `WeaponProfile.skill`.
 - **Defense skill is exactly 5 x level.** A defense stat that raises it beyond
   that does not exist.
-- **Table 6 is built but unused.** Nothing attacks the player yet. Player dodge
-  comes from the agility conversion; **player parry is 0**, because it depends
-  on a defense stat and talents that do not exist. It is left at zero rather
-  than guessed.
+- **Table 6 runs whenever `encounter.targetAttacks` is on**, which is off by
+  default. Player dodge comes from the agility conversion and **player parry is
+  read from `parryChance`**, which the Deflection talent grants — both were
+  documented here as unreachable and are not. What is still missing is defense
+  skill: the table uses flat ruleset constants for boss miss, crit and crush.
 - **Defense stat, resistances and level-based miss** are all absent.
 - **Glance penalty is fixed at 30%.** The source notes it "can be adjusted by
   stats"; no such stat exists yet.

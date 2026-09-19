@@ -1,7 +1,11 @@
 # Finishing the Warrior
 
-What is left before the Warrior is a class you can trust end to end. Audited
-from the code, last checked 2026-09-18.
+What is left before the Warrior is a class you can trust end to end. Counts and
+file claims audited against the code on 2026-09-18.
+
+> The DPS table below was **not** re-measured on that date — it is carried
+> forward from the run that added `targetAttacks`. The audit date covers the
+> counts and the code references, not the numbers.
 
 Read this alongside [talent-effects.md](talent-effects.md), which covers how a
 talent expresses itself and every edge case the Warrior turned up.
@@ -27,20 +31,26 @@ Measured with the starting set, 10 seeds × 5 iterations, level 63 dummy:
 | --- | --- | --- |
 | Abilities defined | 27 | from the ability spreadsheet |
 | Abilities a rotation casts | **11** | the other 16 are inert, situational or unreachable |
-| Abilities castable that do NOTHING | **9** | see §1 |
-| Talents fully modelled | 25 of 53 | 8 partly, 20 inert |
+| Abilities castable that do NOTHING | **10** | see §1 |
+| Talents fully modelled | 27 of 53 | 6 partly, 20 inert |
 | Items | 19 | 1 is real Forever data, 18 are Classic stand-ins |
 | Armour enchants | **0** | only Crusader, for weapons |
 
 ---
 
-## 1. The nine inert abilities — the biggest single gap
+## 1. The ten inert abilities — the biggest single gap
 
 Battle Shout, Demoralizing Shout, Sunder Armor, Recklessness, Berserker Rage,
 Bloodrage, Shield Wall, Shield Block and the two non-Battle stances are
 **castable and do nothing**. They are deliberately absent from every rotation,
 because burning a global cooldown for no effect would make the warrior look
 worse than it is.
+
+> That is **ten**, and this document called it nine in three places while
+> listing ten — the table below had nine rows because Shield Block was written
+> up separately. Battle Stance is inert too, which would make eleven, but its
+> emptiness is deliberate: the sheet has no Battle Stance row and a neutral
+> stance that does nothing is the honest reading, not a missing number.
 
 ### What is missing is narrower than it looks
 
@@ -49,17 +59,27 @@ All 21 constants live in one file, `src/game/auras/warrior.ts`, and they are
 it is the **magnitudes** that are zero, and a zero magnitude is what makes an
 ability inert.
 
+**Seven need only a number.** Fill the constant and they work:
+
 | Ability | Constant that is empty | Currently | Needs |
 | --- | --- | --- | --- |
 | **Battle Shout** | `PLACEHOLDER_BATTLE_SHOUT_ATTACK_POWER` | `0` | attack power granted |
 | **Demoralizing Shout** | `PLACEHOLDER_DEMORALIZING_SHOUT_ATTACK_POWER` | `0` | attack power removed from the target |
 | **Sunder Armor** | `PLACEHOLDER_SUNDER_ARMOR_PER_STACK` | `0` | armor removed per stack |
 | **Recklessness** | `PLACEHOLDER_RECKLESSNESS_CRIT_BONUS` | `0` | crit percentage points |
-| **Bloodrage** | `PLACEHOLDER_BLOODRAGE_INSTANT_RAGE` | `0` | instant rage, and rage per tick |
 | **Shield Wall** | `PLACEHOLDER_SHIELD_WALL_DAMAGE_TAKEN_MULTIPLIER` | `1` | damage taken multiplier |
 | **Defensive Stance** | `..._DAMAGE_DONE`, `..._DAMAGE_TAKEN` | `1`, `1` | both multipliers |
 | **Berserker Stance** | `..._DAMAGE_TAKEN`, `..._CRIT_BONUS` | `1`, `0` | multiplier and crit |
-| **Berserker Rage** | — | duration only | what it actually does |
+
+**Three need code as well**, and there is no constant waiting to receive a
+value — the aura carries no modifier of the right kind at all. A number alone
+will not switch these on:
+
+| Ability | State | Needs, beyond the number |
+| --- | --- | --- |
+| **Bloodrage** | `PLACEHOLDER_BLOODRAGE_INSTANT_RAGE` is `0`, and the aura has no periodic | A rage grant on cast, and a per-tick mechanism. There is **no rage-per-tick constant** to fill; this document previously asked for one that does not exist |
+| **Berserker Rage** | duration only, `// No modifiers at all` | Whatever it does has to be expressible first — nothing is stated, so nothing is claimed |
+| **Shield Block** | duration only, no modifier | A `blockChance` modifier on the aura. `blockChance` became a real stat with a real outcome after the constant was written, so this is now possible — it just is not wired |
 
 Already plausible and *probably* fine, but still `PLACEHOLDER_` because nothing
 confirmed them: Battle Shout 120s, Demoralizing Shout 30s, Recklessness 15s,
@@ -75,7 +95,9 @@ unverified. A visibly borrowed number is better than an inert ability; a
 
 Then, per ability:
 
-1. Fill the constant, leaving the prefix and the comment.
+1. Fill the constant, leaving the prefix and the comment. For the three in the
+   second table, write the mechanism first — otherwise the value lands nowhere
+   and the ability stays inert while looking done.
 2. Add it to `game/rotations/warrior.ts` with a **measured** priority, not a
    guessed one. The existing entries record their measurements in comments;
    match that.
@@ -83,13 +105,6 @@ Then, per ability:
 
 **Three will move DPS materially:** Battle Shout (attack power on every swing),
 Sunder Armor (armor is in every physical damage event), and Recklessness.
-
-### One that is newly possible
-
-**Shield Block** has a duration and no effect. Its effect is a block chance
-bonus — and `blockChance` is now a real stat with a real outcome behind it, so
-it can be modelled the moment someone supplies the number. That was impossible
-when the constant was written.
 
 ---
 
@@ -125,18 +140,12 @@ a skill comparison needs a formula Forever has not given.
 
 Anticipation is the one talent waiting on it.
 
-### 2.4 Forever item ids — not blocked, just unstarted
+### 2.4 Forever item ids
 
-`https://nether.wowhead.com/forever/tooltip/item/<id>` **works**. Forever item
-data is available for anything with an id; only the ids are missing.
+The ids, and only the ids. The DATA is reachable — see §3.5, which is where the
+tooling for it lives, because that part is not blocked at all.
 
-```bash
-node tools/import_item.mjs forever <id>   # prints the entry to append
-node tools/import_item.mjs --verify       # re-parses everything on file
-```
-
-`--verify` currently reproduces all 19 items exactly, which is why the tool can
-be trusted with the next one.
+**Ask for:** item ids. Anything with one can be imported today.
 
 ---
 
@@ -168,16 +177,41 @@ build is worth something in a way it was not before.
 
 ### 3.3 Talents needing only wiring
 
+- **Enrage** and **Master of Defense** — both were filed as blocked on nothing
+  attacking the player, and both stopped being blocked when `targetAttacks`
+  landed. Their per-rank values are already captured: Enrage is a 30% chance on
+  being hit to deal 2–10% more physical damage for 12s, Master of Defense a
+  50/100% chance of 5 rage on a dodge or parry with a shield. Each needs a
+  talent-granted reaction, which is the shape Shield Specialization already
+  uses on a block. **The cheapest remaining talent wins.**
 - **Combat-start auras** — Anger Management and Death Wish. The aura mechanism
   exists and `trainingDummyEncounter` has the slot for opening buffs; nothing
-  connects a talent to it. The cheapest remaining talent win.
+  connects a talent to it.
 - **Weaponmaster's sword clause** — needs a talent-granted reaction that
   triggers an extra attack. `extraAttack` exists, and effects can now read a
   talent's third value through `valueIndex`.
 
+**Blood Craze stays inert, and for a real reason.** Its trigger is reachable
+now, but it regenerates health, the player cannot drop below one health, and
+survival is not modelled — so there is nothing for the heal to restore. It
+becomes meaningful when survival does.
+
 ### 3.4 Armour enchants
 
 There are none. Only Crusader, for weapons.
+
+### 3.5 More Forever items
+
+Not blocked — `https://nether.wowhead.com/forever/tooltip/item/<id>` **works**,
+and the importer is written. Only the ids are missing (§2.4).
+
+```bash
+node tools/import_item.mjs forever <id>   # prints the entry to append
+node tools/import_item.mjs --verify       # re-parses everything on file
+```
+
+`--verify` currently reproduces all 19 items exactly, which is why the tool can
+be trusted with the next one.
 
 ---
 
@@ -190,7 +224,8 @@ Struck through rather than deleted, so finished work is not re-derived.
   Specialization is modelled, and the shield's own block stats are real.
 - ~~**Make something attack the player**~~ — `encounter.targetAttacks`. Brought
   the attacks-received table, rage from damage taken, Revenge and block to life,
-  and exposed three bugs that could not show while nothing swung.
+  and exposed three bugs that could not show while nothing swung. **Five talent
+  entries went on claiming it had not happened**, for three commits; see §5.
 - ~~**Shields**~~ — The Immovable Object, the first real Forever item. It also
   settled that the missing shield was *never* why 1H & Shield lagged.
 - ~~**A starting set**~~ — a Warrior begins geared, so the first number a person
@@ -205,9 +240,25 @@ and moved Focused Rage into its slot, found only because capturing values
 tripped over it. The eight classes with no values captured could have drifted
 the same way and nobody would know.
 
-**Unmodelled reasons go stale.** The classification has been wrong three times.
-When a blocker clears, re-read every remaining reason rather than trusting it —
-they are written specifically enough to check quickly.
+**Unmodelled reasons go stale, and this is the failure mode that recurs.** The
+classification has now been wrong **eight times, in two rounds**. The first
+three — Improved Rend, Improved Overpower, Unbridled Wrath — were each blocked
+on something that already existed. The second five all claimed nothing attacked
+the player, three commits after something did: Enrage, Master of Defense and
+Blood Craze stayed inert for a reason that had expired, and **Shield
+Specialization and Improved Revenge were fully working while still printing a
+caveat saying they could not fire.**
+
+Two lessons, both paid for:
+
+- **Clearing a blocker is not done until every reason that named it is
+  re-read.** §4 recorded `targetAttacks` as finished and nobody swept the
+  reasons; the count of fully-modelled talents was understated by two for three
+  commits.
+- **A test pinned to a temporary limitation outlives the limitation.** The
+  Shield Specialization test was named *"still says it cannot fire, because
+  nothing attacks the player"* and enforced the stale caveat instead of
+  catching it. Assert what should stay true, not what happens to be true today.
 
 **Survival is not modelled.** With `targetAttacks` on, a healer is *assumed*: the
 character cannot drop below one health. Such a run says nothing about whether

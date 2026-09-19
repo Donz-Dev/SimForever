@@ -55,7 +55,7 @@ These compare builds to each other and nothing else; see "Read this before
 trusting any number".
 
 **[docs/warrior-completion.md](docs/warrior-completion.md) is the action list
-for finishing the Warrior** — the nine inert abilities, what is blocked on the
+for finishing the Warrior** — the ten inert abilities, what is blocked on the
 ruleset owner, and what is doable now. **Start there.**
 
 ## The next task
@@ -64,7 +64,7 @@ ruleset owner, and what is doable now. **Start there.**
 [docs/warrior-completion.md](docs/warrior-completion.md) is the ordered list.**
 In short:
 
-1. **The nine inert abilities** — the biggest single gap, and no longer blocked:
+1. **The ten inert abilities** — the biggest single gap, and no longer blocked:
    fill them with flagged Classic values, add each to the rotation with a
    measured priority, re-measure the baselines. Battle Shout, Sunder Armor and
    Recklessness will move DPS materially.
@@ -83,7 +83,7 @@ what it does in `game/talents/warriorEffects.ts`; what its number IS lives in
 **every edge case and interpretation** the Warrior turned up. The design
 rationale is in the proposal on PR #22, which is not merged.
 
-**Warrior: 25 talents fully modelled, 8 partly, 20 inert.** Every one of the 53
+**Warrior: 27 talents fully modelled, 6 partly, 20 inert.** Every one of the 53
 has an explicit entry, and the inert ones name their own obstacle, so the list
 below IS the work queue. The Talent panel prints them under "Chosen but not
 simulated".
@@ -95,23 +95,33 @@ Grouped, because each blocker unlocks several at once:
 | Blocker | Talents | Note |
 | --- | --- | --- |
 | **Concepts the engine has no notion of** — threat, movement, stuns, multiple targets, shout radius, fear/stun duration | Defiance, Piercing Howl, Concussion Blow, Sweeping Strikes, Booming Voice, Iron Will, Improved Hamstring | **Deliberately left absent.** None of them matters against a single stationary dummy, and each would need an encounter model that does not exist. Revisit when encounters gain positions, adds or mechanics. |
-| ~~Nothing attacks the player~~ | — | **Done.** `encounter.targetAttacks` makes the target swing back; Table 6, rage from damage taken, Revenge, block and Shield Specialization all run. Off by default — see below. |
+| ~~Nothing attacks the player~~ | ~~Enrage, Master of Defense, Blood Craze, Shield Specialization, Improved Revenge~~ | **Done, and the reasons were not swept for three commits.** `encounter.targetAttacks` makes the target swing back; Table 6, rage from damage taken, Revenge, block and Shield Specialization all run. This row used to hold an em-dash, asserting nothing waited on it — five entries did. Shield Specialization and Improved Revenge turned out to be **fully modelled already**; the other three moved to the two rows below. |
 | ~~No block outcome~~ | — | **Done.** The engine has a `block` outcome and `blockChance`/`blockValue` stats; Shield Slam, Revenge and Shield Specialization all use them. |
 | **No defense skill** | Anticipation | The attacks-received table uses flat ruleset constants for boss miss, crit and crush. Defense skill would have to shift them by a formula Forever has not given. **Player parry and dodge are now wired** and read from the character's stats, so only the skill comparison is missing. |
 | **Stances gate nothing** | Improved Tactical Mastery, Vanguard | Waiting on the ruleset owner; see below. |
 | **The ability it modifies is inert** | Improved Bloodrage, Improved Berserker Rage, Improved Shield Wall | Waiting on effect values for those buffs. |
 | **Talents cannot apply a combat-start aura** | Anger Management, Death Wish | The aura mechanism exists and `trainingDummyEncounter` has the slot; nothing wires a talent to it yet. Probably the cheapest remaining win. |
 | **Ability not implemented** | Improved Disarm, Improved Shield Bash, and the five ability grants below | Disarm and Shield Bash are absent from the ability spreadsheet. |
-| **Partly modelled, by choice** | Weaponmaster, Dual Wield Specialization, Raging Blows | Each does the part that is expressible and flags the rest. |
+| **Needs a talent-granted reaction** | Enrage, Master of Defense, Weaponmaster's sword clause | **Not blocked on data.** Values are captured and the trigger exists; Shield Specialization is the worked example of the shape. The cheapest remaining talent wins. |
+| **Needs a concept the engine lacks** | Toughness, Blood Craze | Toughness scales armor FROM ITEMS and the engine holds one combined armor number. Blood Craze heals, and the player cannot drop below one health, so survival is not modelled. |
+| **The source does not say what it affects** | Focused Rage | Reduces the cost of "your offensive abilities" without naming them. Choosing the set would be inventing the talent. |
+| **Would be understated by modelling part of it** | Dual Wield Specialization, Raging Blows | Each is several effects at once and the expressible subset alone misrepresents the talent. Both are wholly inert, not partly modelled. |
+| **Partly modelled, by choice** | Weaponmaster | Does the part that is expressible and flags the rest. Dual Wield Specialization and Raging Blows were listed here too and are in fact wholly inert — each declares only an `unmodelled` reason. |
 
 **More edge cases almost certainly remain.** The 53 were classified by reading
 each talent's text against what the engine can express, and the classification
-has already been wrong **three times** — Improved Rend and Improved Overpower
-were both filed as impossible before per-ability scaling existed, and Unbridled
-Wrath's two-handed clause was written off as needing a weapon type that had been
-added an hour earlier. Once the blockers above are cleared, every remaining
-`unmodelled` reason deserves re-reading rather than being trusted; they are
-written specifically enough to check quickly.
+has already been wrong **eight times, in two rounds**. Improved Rend and Improved
+Overpower were both filed as impossible before per-ability scaling existed, and
+Unbridled Wrath's two-handed clause was written off as needing a weapon type that
+had been added an hour earlier. Then five more all claimed nothing attacked the
+player, three commits after something did — and two of those five were working
+perfectly while telling the user on screen that they could not fire.
+
+**Clearing a blocker is not finished until every reason naming it has been
+re-read.** That step was skipped once already and cost two talents' worth of
+understated coverage. Every remaining `unmodelled` reason deserves re-reading
+rather than being trusted; they are written specifically enough to check
+quickly.
 
 The ones found so far are in
 [docs/talent-effects.md](docs/talent-effects.md) — edge cases, interpretations,
@@ -185,13 +195,13 @@ Work that is blocked, not merely unstarted.
 | Needed | Blocks |
 | --- | --- |
 | **Warrior stance gating** — which abilities require which stance. Corrections were promised and never arrived. The sheet has no Battle Stance row at all. | Stances are defined but gate nothing; the rotation does not stance dance. Improved Tactical Mastery and Vanguard wait on it |
-| **Effect MAGNITUDES for nine Warrior abilities** — attack power from Battle Shout, armor per Sunder stack, the Recklessness crit bonus, and so on. The durations and stack counts are already populated with plausible figures; it is the magnitudes that are zero. | All nine are castable and completely inert, and deliberately absent from every rotation. See §1 of `docs/warrior-completion.md` for the constant-by-constant list |
+| **Effect MAGNITUDES for ten Warrior abilities** — attack power from Battle Shout, armor per Sunder stack, the Recklessness crit bonus, and so on. The durations and stack counts are already populated with plausible figures; it is the magnitudes that are zero. | All ten are castable and completely inert, and deliberately absent from every rotation. Seven need only a number; Bloodrage, Berserker Rage and Shield Block need a mechanism too. See §1 of `docs/warrior-completion.md` |
 | **Rows for five abilities talents grant** — Sweeping Strikes, Death Wish, Piercing Howl, Last Stand, Concussion Blow | Five talents grant an ability that does not exist. The grants are declared, so they gate correctly the moment the abilities do |
 | **Defense skill formula** | Anticipation. Player dodge, parry and block are all wired; only the skill comparison is missing |
 | **Ability spreadsheets for the other eight classes** | Those classes fight with auto-attacks only |
 | **Forever item IDS** — not the data, which is reachable | 18 of 19 items are Classic stand-ins. `nether.wowhead.com/forever/tooltip/item/<id>` works and `tools/import_item.mjs` imports from it; only the ids are missing |
 
-**The nine inert abilities do not have to stay inert.** The standing decision is
+**The ten inert abilities do not have to stay inert.** The standing decision is
 to fill them with WoW Classic values kept under their `PLACEHOLDER_` names and
 flagged in the UI — see "Borrowing a Classic value" in
 [CLAUDE.md](CLAUDE.md), and §1 of the completion doc for how.
@@ -356,7 +366,7 @@ issues round trip is exactly what they need, which is why it was kept.
 
 Roughly in order of value.
 
-1. **Effect magnitudes for the Warrior's nine inert abilities.** The single
+1. **Effect magnitudes for the Warrior's ten inert abilities.** The single
    biggest gap in the class, and the one thing that would most change its
    numbers. §1 of `docs/warrior-completion.md` lists them constant by constant.
    Fillable from Classic in the meantime — see "Borrowing a Classic value" in
