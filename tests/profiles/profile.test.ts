@@ -43,6 +43,10 @@ describe('profile serialization', () => {
         targetHealth: 5_000_000,
         targetArmor: 3731,
         targetLevel: 63,
+        // A boss that hits back, which is what a tanking run looks like.
+        targetAttacks: true,
+        targetSwingDamage: 4500,
+        targetSwingSeconds: 2,
       },
     };
 

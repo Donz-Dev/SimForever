@@ -415,12 +415,29 @@ export function dealDamage(
   const { target, source } = request;
 
   const healthBefore = target.health.current;
-  target.health.drain(resolution.amount);
+  /*
+   * A combatant an assumed healer keeps up never drops below one health. The
+   * damage is NOT reduced -- the full amount is reported and still generates
+   * rage -- it simply does not finish them. See `survivesLethalDamage`.
+   */
+  const drained = target.survivesLethalDamage
+    ? Math.min(resolution.amount, Math.max(0, healthBefore - 1))
+    : resolution.amount;
+  target.health.drain(drained);
 
-  // Computed from the health that was there, not from the difference the drain
-  // reported. Subtracting two large floats leaves residue, which showed up as a
-  // fraction of a point of "overkill" on a target at full health.
-  const overkill = Math.max(0, resolution.amount - healthBefore);
+  /*
+   * Computed from the health that was there, not from the difference the drain
+   * reported. Subtracting two large floats leaves residue, which showed up as a
+   * fraction of a point of "overkill" on a target at full health.
+   *
+   * A target an assumed healer keeps up has NO overkill, whatever the size of
+   * the hit: overkill is damage spent past a death, and nothing died. Reporting
+   * it anyway produced combat log lines like "hits Example for 6,374 (3,765
+   * overkill)" against a character who was still standing.
+   */
+  const overkill = target.survivesLethalDamage
+    ? 0
+    : Math.max(0, resolution.amount - healthBefore);
 
   context.telemetry.emit({
     type: 'damage',

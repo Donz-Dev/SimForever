@@ -44,12 +44,23 @@ export function trainingDummyEncounter(
         bonusStats: profile.stats,
         equipment: profile.equipment,
         talents: profile.talents,
+        /*
+         * A healer is ASSUMED, not modelled. Without this a warrior taking
+         * boss swings dies in three of them and every fight ends early, which
+         * would make the whole feature useless. The damage still lands in full
+         * and still generates rage; survival is simply not what is being
+         * measured. See `survivesLethalDamage`.
+         */
+        survivesLethalDamage: profile.encounter.targetAttacks,
       }),
       createTrainingDummy({
         name: profile.encounter.targetName,
         health: profile.encounter.targetHealth,
         armor: profile.encounter.targetArmor,
         level: profile.encounter.targetLevel,
+        attacks: profile.encounter.targetAttacks,
+        swingDamage: profile.encounter.targetSwingDamage,
+        swingSeconds: profile.encounter.targetSwingSeconds,
       }),
     ],
 

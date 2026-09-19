@@ -82,3 +82,23 @@ function clamp(value: number, min?: number, max?: number): number {
   if (max !== undefined) result = Math.min(max, result);
   return result;
 }
+
+interface CheckboxFieldProps {
+  readonly label: string;
+  readonly hint?: string;
+  readonly checked: boolean;
+  readonly onChange: (checked: boolean) => void;
+}
+
+/** A labelled on/off switch. */
+export function CheckboxField({ label, hint, checked, onChange }: CheckboxFieldProps) {
+  return (
+    <Field label={label} hint={hint}>
+      <input
+        type="checkbox"
+        checked={checked}
+        onChange={(event) => onChange(event.target.checked)}
+      />
+    </Field>
+  );
+}

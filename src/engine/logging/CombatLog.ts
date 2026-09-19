@@ -143,6 +143,14 @@ function describeOutcome(outcome: string): string {
       return ' (critical)';
     case 'crush':
       return ' (crushing)';
+    /*
+     * A block LANDS, so it reads as a hit with a qualifier rather than as an
+     * avoidance. Without this a blocked blow was indistinguishable from an
+     * ordinary one in the log, and 44% of a shield warrior's incoming attacks
+     * looked like plain hits.
+     */
+    case 'block':
+      return ' (blocked)';
     // No qualifier for a glance: the verb is already "glances".
     default:
       return '';
