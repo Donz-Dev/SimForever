@@ -16,7 +16,8 @@ machine — no character you build is ever sent anywhere.
 ## What it does
 
 - Build a character: faction, race, class and combat style, with only the
-  combinations the ruleset allows
+  combinations the ruleset allows — a Warrior starts in a full set of gear
+  rather than naked
 - Equip weapons, armour, trinkets and enchants, and watch the character sheet
   re-derive itself
 - Fight a target dummy of any level and armour for as long as you like
@@ -66,6 +67,8 @@ DOM, or WoW specifically — it is the rules, and the game content is data hande
 to it. [`docs/architecture.md`](docs/architecture.md) explains why, and the rest
 of [`docs/`](docs/) covers the engine, combat tables, character creation,
 resources, telemetry, profiles, talent effects and the Warrior's abilities.
+[`docs/warrior-completion.md`](docs/warrior-completion.md) is the action list for
+finishing the Warrior.
 
 Two files at the root are for anyone picking the project up:
 

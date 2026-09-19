@@ -5,6 +5,8 @@ import type { TalentAllocation } from '../game/talents/Talent';
 type TalentUpdate = (previous: TalentAllocation) => TalentAllocation;
 import type { CharacterProfile } from '../profiles';
 import { createDefaultProfile } from '../profiles';
+import { resolveCombatStyle } from '../game/character';
+import { startingEquipmentFor } from '../game/items/startingSets';
 import { Logo } from './components/Logo';
 import { useSimulation } from './hooks/useSimulation';
 import { CharacterPanel } from './panels/CharacterPanel';
@@ -48,6 +50,33 @@ export function App() {
   const [talentsCollapsed, setTalentsCollapsed] = useState(false);
   const { state, progress, run, reset } = useSimulation();
 
+  /**
+   * Settle the character, and dress it if it is still naked.
+   *
+   * A character created with nineteen empty slots fights with placeholder
+   * weapons and no stats, and still produces a confident-looking DPS figure --
+   * meaningless, but not OBVIOUSLY meaningless. Starting from a real set means
+   * the first number a person sees is one worth reading.
+   *
+   * Only when the equipment is EMPTY. A profile that already has gear, whether
+   * chosen here or loaded from a file, is never overwritten by confirming the
+   * character again.
+   */
+  const confirmCharacter = () => {
+    setProfile((previous) =>
+      Object.keys(previous.equipment).length > 0
+        ? previous
+        : {
+            ...previous,
+            equipment: startingEquipmentFor(
+              previous.character.characterClass,
+              resolveCombatStyle(previous.character.characterClass, previous.character.combatStyle),
+            ),
+          },
+    );
+    setConfirmed(true);
+  };
+
   const editCharacter = () => {
     setConfirmed(false);
     // Talent ids are unique WITHIN a class, not across them, so an allocation
@@ -72,7 +101,7 @@ export function App() {
             profile={profile}
             onChange={setProfile}
             confirmed={confirmed}
-            onConfirm={() => setConfirmed(true)}
+            onConfirm={confirmCharacter}
             onEdit={editCharacter}
             onImport={() => undefined}
             onLoad={() => undefined}

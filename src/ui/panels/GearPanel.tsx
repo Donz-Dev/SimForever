@@ -4,6 +4,7 @@ import { resolveCombatStyle } from '../../game/character';
 import type { Equipment, EquipmentSlot } from '../../game/items/Item';
 import { enchantsForSlot, itemsForSlot } from '../../game/items/itemData';
 import { unmodelledEffects } from '../../game/items/equipment';
+import { hasStartingEquipment, startingEquipmentFor } from '../../game/items/startingSets';
 import { Panel } from '../components/Panel';
 
 /** A gear slot, as the panel lists it. */
@@ -108,9 +109,37 @@ export function GearPanel({ profile, onChange }: GearPanelProps) {
 
   const missing = unmodelledEffects(profile.equipment, style);
   const slots = [...weaponSlotsFor(style), ...COMMON_SLOTS];
+  const equipped = Object.keys(profile.equipment).length;
+
+  /*
+   * The starting set is offered as a button as well as being applied when a
+   * character is created, so it is recoverable. Someone who empties a slot to
+   * see what it was worth needs a way back that is not nineteen dropdowns.
+   */
+  const equipStartingSet = () =>
+    onChange({
+      ...profile,
+      equipment: startingEquipmentFor(profile.character.characterClass, style),
+    });
+
+  const clearAll = () => onChange({ ...profile, equipment: {} });
 
   return (
-    <Panel title="Gear">
+    <Panel
+      title="Gear"
+      actions={
+        hasStartingEquipment(profile.character.characterClass) ? (
+          <>
+            <button type="button" onClick={equipStartingSet}>
+              Starting set
+            </button>
+            <button type="button" onClick={clearAll} disabled={equipped === 0}>
+              Clear
+            </button>
+          </>
+        ) : undefined
+      }
+    >
       <div className="gear-grid">
         {slots.map((slot) => (
           <GearSlotRow
