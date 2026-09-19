@@ -11,6 +11,7 @@ import {
   SWEEPING_STRIKES_CHARGES,
 } from '../../src/game/auras/warrior';
 import { warriorAbility } from '../../src/game/abilities/warrior';
+import { legalise } from '../helpers/legalTalents';
 
 /*
  * The three abilities that talents grant and the ability spreadsheet has no
@@ -27,7 +28,7 @@ function geared(talents: Record<string, number>) {
     ...base,
     character: { ...base.character, combatStyle: 'dual_wield' as const },
     equipment: startingEquipmentFor('warrior', 'dual_wield'),
-    talents,
+    talents: legalise(talents),
     simulation: { ...base.simulation, seed: 99, durationSeconds: 120 },
   };
 }

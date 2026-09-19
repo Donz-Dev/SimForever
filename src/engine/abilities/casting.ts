@@ -16,6 +16,7 @@ export type CastRejection =
   | 'not_enough_resource'
   | 'invalid_target'
   | 'already_queued'
+  | 'wrong_stance'
   | 'condition_failed';
 
 export type CastCheck = { ok: true } | { ok: false; reason: CastRejection };
@@ -63,6 +64,30 @@ export function checkCast(
   const abilityContext: AbilityContext = { simulation: context, caster, target, ability };
   if (ability.canCast && !ability.canCast(abilityContext)) {
     return { ok: false, reason: 'condition_failed' };
+  }
+
+  /*
+   * Stance gating, and it is deliberately THE LAST CHECK.
+   *
+   * An empty or absent list means any stance, which is what most of the
+   * Warrior's abilities genuinely are. Expressed as "one of these auras must be
+   * up" rather than as a stance concept, so the engine keeps knowing nothing
+   * about warriors: a stance is an aura that lasts until another replaces it.
+   *
+   * LAST, because a rotation acts on this rejection rather than skipping it --
+   * `wrong_stance` is the one refusal that says "not yet, and here is how". If
+   * it were checked before the ability's own `canCast`, a Revenge whose window
+   * is shut would report the stance as the problem, and the rotation would
+   * spend a stance change reaching for something it still could not cast. It
+   * did: 81 of 140 casts in a sampled fight were stance swaps and Revenge was
+   * never cast once.
+   *
+   * So the rule is: report the wrong stance only when the stance is genuinely
+   * the only thing in the way.
+   */
+  if (ability.stances && ability.stances.length > 0) {
+    const inOne = ability.stances.some((id) => caster.auras.has(id));
+    if (!inOne) return { ok: false, reason: 'wrong_stance' };
   }
 
   return { ok: true };

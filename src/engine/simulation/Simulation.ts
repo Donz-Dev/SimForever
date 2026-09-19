@@ -25,6 +25,7 @@ import type { SimulationConfig } from './SimulationConfig';
 import { MutableSimulationClock } from './SimulationClock';
 import type { SimulationContext } from './SimulationContext';
 import type { ActorSnapshot, SimulationRun } from './SimulationRun';
+import type { CastRejection } from '../abilities/casting';
 
 /**
  * How often an idle actor re-checks its rotation.
@@ -223,6 +224,15 @@ export class Simulation implements SimulationContext {
     return checkCast(this, actor, ability, target).ok;
   }
 
+  castRejection(
+    actor: Combatant,
+    ability: Ability,
+    target: Combatant | undefined,
+  ): CastRejection | undefined {
+    const check = checkCast(this, actor, ability, target);
+    return check.ok ? undefined : check.reason;
+  }
+
   cast(actor: Combatant, ability: Ability, target: Combatant | undefined): CastCheck {
     return castAbility(this, actor, ability, target);
   }
@@ -323,6 +333,17 @@ export class Simulation implements SimulationContext {
     );
 
     this.config.onCombatStart?.(this);
+
+    /*
+     * States a combatant is simply always in, applied before anything swings.
+     *
+     * Before `onCombatStart`, so an encounter's opening buffs can still replace
+     * one -- and before auto attack, so the first swing already has them.
+     */
+    for (const actor of this.actors) {
+      if (!actor.isAlive) continue;
+      for (const aura of actor.openingAuras) this.applyAura(actor, aura, actor.id);
+    }
 
     for (const actor of this.actors) {
       if (!actor.isAlive) continue;

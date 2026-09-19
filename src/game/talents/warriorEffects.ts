@@ -124,15 +124,28 @@ export const WARRIOR_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
    * whole: with an axe equipped it is exactly right, and with anything else it
    * reports as not applying rather than silently contributing.
    */
+  /*
+   * PARTLY MODELLED, and the sword clause is the part that is.
+   *
+   * Three clauses by weapon type: crit with an axe or polearm, armor
+   * penetration with a mace or staff, and a chance at an extra attack with a
+   * sword. The third is a reaction and is implemented, reading the talent's
+   * THIRD value through `valueIndex`.
+   *
+   * The other two are unmodelled for the same reason as each other: an ability
+   * cannot ask what weapon type it is holding. Nothing in the engine carries a
+   * weapon's type -- only its speed, damage and skill -- so all three clauses
+   * are ungated and the sword one fires whatever the warrior is wielding.
+   */
   weaponmaster: [
-    { kind: 'conditionalCrit', requires: { weaponTypes: ['axe', 'polearm'] } },
+    { kind: 'reaction', reactionId: 'weaponmaster', valueIndex: 2 },
     {
       kind: 'unmodelled',
       reason:
-        'PARTIAL: the axe and polearm crit bonus works. The mace and staff ' +
-        'clause ignores a percentage of the target armor, which the damage ' +
-        'pipeline cannot express, and the sword clause needs a talent-granted ' +
-        'reaction that triggers an extra attack.',
+        'Only the SWORD clause is modelled -- a chance at an extra attack -- ' +
+        'and it is not gated on carrying a sword, because the engine does not ' +
+        'record a weapon type. The axe/polearm crit and mace/staff armor ' +
+        'penetration clauses are absent for the same reason.',
     },
   ],
 
@@ -217,17 +230,16 @@ export const WARRIOR_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
     },
   ],
 
-  enrage: [
-    {
-      kind: 'unmodelled',
-      reason:
-        'A 30% chance on being hit to deal increased physical damage for 12 ' +
-        'seconds. NOT BLOCKED ANY MORE -- the target swings back, and the per- ' +
-        'rank values are captured. It needs a talent-granted reaction that ' +
-        'applies a damage-done aura, which is the same shape as Shield ' +
-        'Specialization and is simply not written yet.',
-    },
-  ],
+  /*
+   * FULLY MODELLED. A 30% chance on being hit to deal 2-10% more physical
+   * damage for 12 seconds. The rank value is the DAMAGE BONUS, not the proc
+   * chance, which is fixed at 30% -- the one reaction here where the two are
+   * not the same number.
+   *
+   * Fires only when something attacks the player, which is an encounter
+   * setting (`targetAttacks`, off by default) and not a gap in the model.
+   */
+  enrage: [{ kind: 'reaction', reactionId: 'enrage' }],
 
   improved_execute: [{ kind: 'abilityCost', abilityId: 'execute' }],
 
@@ -309,15 +321,23 @@ export const WARRIOR_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
     },
   ],
 
+  /*
+   * FULLY MODELLED, apart from its shield clause. A 50/100% chance of 5 rage
+   * when the warrior dodges or parries.
+   *
+   * "While a shield is equipped" is not expressed: a reaction cannot see the
+   * actor's gear. The talent sits at tier 10 of Protection, where a shield is
+   * the entire point, so the overstatement applies only to a Protection warrior
+   * who dual-wields.
+   */
   master_of_defense: [
+    { kind: 'reaction', reactionId: 'master_of_defense' },
     {
       kind: 'unmodelled',
       reason:
-        'A chance to generate 5 rage when the player dodges or parries with a ' +
-        'shield equipped. NOT BLOCKED ANY MORE -- the player dodges and parries ' +
-        'whenever the target swings back, and the per-rank values are captured. ' +
-        'It needs a talent-granted reaction on those two outcomes, which is the ' +
-        'same shape as Shield Specialization on a block.',
+        'The rage proc is implemented. Its "while a shield is equipped" ' +
+        'condition is not -- a reaction cannot see the wearer gear -- so it ' +
+        'would also fire for a Protection warrior holding two weapons.',
     },
   ],
 
@@ -360,9 +380,33 @@ export const WARRIOR_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
   ],
 
   // Two stats at once. `percentAdd` wants a fraction, so 2% is scaled to 0.02.
-  vitality: [
-    { kind: 'stat', stat: 'stamina', operation: 'percentAdd', scale: 0.01 },
-    { kind: 'stat', stat: 'strength', operation: 'percentAdd', scale: 0.01 },
+  /*
+   * BASTION REPLACED VITALITY IN THIS SLOT, and the replacement is a fact about
+   * the tree rather than a rename. Forever's tier 20 Protection talent is
+   * "Increases all damage you deal by 10% while a shield is equipped"; the
+   * repository had Vitality, a stamina and strength percentage, because the
+   * structure file was once hand-corrected and the hand edit put the wrong
+   * talent here. Re-scraped 2026-09-18.
+   *
+   * Its effect is expressible -- a damage multiplier conditional on a shield --
+   * and its PER-RANK VALUES ARE NOT KNOWN. Forever prints the same 10% at every
+   * rank and the talent has no per-rank spell ids, so the split across five
+   * ranks is unpublished. 2/4/6/8/10 is the obvious guess and is exactly the
+   * plausible invented number this project refuses.
+   *
+   * So it is declared unmodelled, not given a number. Capture the ranks with
+   * tools/talent_ranks_browser.js and this becomes a `damageMultiplier` effect
+   * gated on a shield.
+   */
+  bastion: [
+    {
+      kind: 'unmodelled',
+      reason:
+        'Increases all damage done while a shield is equipped -- 10% at max ' +
+        'rank. The per-rank split is not published: Forever prints the same ' +
+        'figure at every rank and the talent has no per-rank spell ids. The ' +
+        'effect is expressible; the numbers are missing.',
+    },
   ],
 
   focused_rage: [

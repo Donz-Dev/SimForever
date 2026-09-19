@@ -12,7 +12,12 @@ import type { TalentReactionBuilder } from '../reactions/warriorTalents';
 import { WARRIOR_TALENT_REACTIONS } from '../reactions/warriorTalents';
 import type { ClassId } from '../character';
 import type { TalentAllocation } from './Talent';
-import type { TalentEffects, UnmodelledTalent, WeaponRequirement } from './TalentEffect';
+import type {
+  IllegalTalent,
+  TalentEffects,
+  UnmodelledTalent,
+  WeaponRequirement,
+} from './TalentEffect';
 import { talentsForClass } from './talentData';
 import { talentDescription, talentNumber } from './talentValues';
 import { WARRIOR_TALENT_EFFECTS } from './warriorEffects';
@@ -83,6 +88,13 @@ export interface TalentBuild {
    * nothing would be indistinguishable from one that worked.
    */
   readonly unmodelled: readonly UnmodelledTalent[];
+  /**
+   * Talents that were allocated points but whose requirements are not met, and
+   * which therefore contributed nothing. Empty for any build made in the UI,
+   * which will not let an illegal point be spent; not empty for a profile
+   * loaded from JSON, which nothing else checks.
+   */
+  readonly illegal: readonly IllegalTalent[];
 }
 
 const EMPTY: TalentBuild = {
@@ -100,6 +112,7 @@ const EMPTY: TalentBuild = {
   abilityGcdReductionMs: new Map(),
   abilitiesHoldingSwing: new Set(),
   unmodelled: [],
+  illegal: [],
 };
 
 /**
@@ -331,5 +344,6 @@ export function talentBuild(
     abilityGcdReductionMs,
     abilitiesHoldingSwing,
     unmodelled,
+    illegal: [],
   };
 }

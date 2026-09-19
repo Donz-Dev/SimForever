@@ -35,6 +35,30 @@ import { EXECUTE_HEALTH_THRESHOLD } from '../abilities/warrior';
  *     so its aura carries no block modifier at all.
  *   - The STANCES gate nothing, so stance dancing is pure loss. Unchanged.
  *
+ * STANCE DANCING IS NAIVE, AND IT COSTS REAL DAMAGE.
+ *
+ * Abilities are stance-gated now (see docs/warrior-ability-audit.md) and
+ * `PriorityRotation` swaps stance for the highest-priority ability that is
+ * blocked only by its stance. That is enough to make Revenge, Whirlwind and
+ * Recklessness reachable at all, and it is not a good rotation.
+ *
+ * DEFENSIVE STANCE IS -10% DAMAGE DONE. The list swaps into it for Revenge and
+ * then does everything else from there until something pulls it back, so a
+ * shield warrior spends much of the fight taking a tenth off every hit to keep
+ * a 153-damage ability available. Measured: 1H & Shield with the target
+ * swinging back reads 151.88 with gating against 219.07 without it. Most of
+ * that gap is the stance penalty being modelled for the first time, not a
+ * regression -- but some of it is the rotation being stupid.
+ *
+ * WHAT IS NOT MODELLED, and it matters in the other direction: swapping costs
+ * NO RAGE here. In Classic a swap drops rage unless Tactical Mastery preserves
+ * it, and Forever states nothing either way. So dancing is cheaper here than it
+ * should be, while the stance penalty it incurs is fully counted.
+ *
+ * The honest reading is that both stance-dancing numbers are provisional. A
+ * rotation that weighed the stance cost against what the swap buys would beat
+ * this one, and nobody has written it.
+ *
  * Revenge is IN the list now. It is reactive on being attacked, so its window
  * only opens in an encounter where the target swings back -- and until one
  * existed, listing it would have been dead weight. Its `canCast` refuses when

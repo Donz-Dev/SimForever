@@ -216,3 +216,18 @@ export interface UnmodelledTalent {
   readonly text: string;
   readonly reason: string;
 }
+
+/**
+ * A talent that was allocated points but whose own requirements are not met.
+ *
+ * DISTINCT FROM `UnmodelledTalent`, and the difference matters to a reader: an
+ * unmodelled talent is one the simulator cannot express, while an illegal one
+ * is not really the character's at all. Showing them in the same list would
+ * tell someone their build is missing features when it is actually invalid.
+ */
+export interface IllegalTalent {
+  readonly talentId: string;
+  readonly name: string;
+  readonly rank: number;
+  readonly reason: string;
+}

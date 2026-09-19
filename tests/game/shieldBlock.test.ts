@@ -7,6 +7,7 @@ import { startingEquipmentFor } from '../../src/game/items/startingSets';
 import { WARRIOR_REACTIONS } from '../../src/game/reactions/warrior';
 import { talentBuild } from '../../src/game/talents/talentBuild';
 import { SHIELD_SLAM_DAMAGE } from '../../src/game/abilities/warrior';
+import { legalise } from '../helpers/legalTalents';
 
 /*
  * The Immovable Object's own numbers, transcribed BY HAND from
@@ -14,13 +15,19 @@ import { SHIELD_SLAM_DAMAGE } from '../../src/game/abilities/warrior';
  */
 const SHIELD = { id: 19321, blockChance: 44, blockValue: 27, armor: 2468, stamina: 15 };
 
+/*
+ * `createPlayer` strips talents whose tier gate or prerequisite is not met, so
+ * `{ shield_slam: 1 }` alone -- a 31-point capstone needing Concussion Blow --
+ * now builds a warrior with no Shield Slam. `legalise` pads the allocation up
+ * to something a player could actually have.
+ */
 const shieldWarrior = (talents: Record<string, number> = {}) =>
   createPlayer({
     race: 'human',
     characterClass: 'warrior',
     combatStyle: 'one_hand_shield',
     equipment: startingEquipmentFor('warrior', 'one_hand_shield'),
-    talents,
+    talents: legalise(talents),
   });
 
 describe('a shield gives block chance and block value', () => {
