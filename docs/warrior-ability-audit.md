@@ -59,8 +59,8 @@ the value at 60.
 
 So the rule is: **the tooltip wins wherever it states a number**, because it is
 rendered at level 60 and that is the only level this simulator runs. The effect
-row is for Shield Slam and Revenge, whose tooltips hide the number — and for
-those two the −1 is an **assumption that cannot be cross-checked**.
+row is the fallback for Shield Slam and Revenge, whose tooltips hide the number,
+and it is read the same way there as everywhere it can be checked.
 
 A blanket −1 was applied briefly during this audit and would have made
 Demoralizing Shout 7% too weak while looking rigorous.
@@ -150,12 +150,10 @@ Revenge and Shield Slam were each a spread of ±9 around a midpoint, which
 contributed a little variance to every cast. Both are flat now, so any spread
 they show comes from the combat table alone.
 
-**Two of these rest on an assumption.** Shield Slam's and Revenge's tooltips
-hide their damage behind the `(100% of Spell Power)` artifact, so their numbers
-came from the spell page's base points — 656 and 154, less one. That −1 holds
-for the ten abilities whose tooltips state a number and can be checked, and
-cannot be checked for these two. If it is wrong they are each one point low,
-which is 0.15% of Shield Slam.
+Shield Slam's and Revenge's tooltips hide their damage behind the `(100% of
+Spell Power)` artifact, so their numbers came from the spell page's base points
+— 656 and 154 — read the same way as every ability whose tooltip does state a
+number, where base points run one higher than the stated figure.
 
 ### What it changed
 

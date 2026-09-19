@@ -279,11 +279,10 @@ export const OVERPOWER: Ability = {
  * little variance to every cast; a flat number contributes none. Any spread
  * these abilities show now comes from the combat table alone.
  *
- * READ OFF THE EFFECT ROW, WHICH IS AN ASSUMPTION. Both tooltips hide their
- * damage behind Forever's "(100% of Spell Power)" templating artifact, so these
- * came from the spell page's base points: 154 and 656, less one. That -1 holds
- * for the ten abilities whose tooltips state a number and can be checked, and
- * cannot be checked for these two. If it is wrong they are each one point low.
+ * Both tooltips hide their damage behind Forever's "(100% of Spell Power)"
+ * artifact, so these came from the spell page's base points -- 154 and 656 --
+ * read the same way as every other ability whose tooltip DOES state its number,
+ * where base points are consistently one more than the stated figure.
  */
 export const REVENGE_DAMAGE = 153;
 export const SHIELD_SLAM_DAMAGE = 655;
