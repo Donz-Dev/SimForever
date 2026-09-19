@@ -92,6 +92,17 @@ mace in the other diverge the moment anything grants skill with one and not the
 other. Anything reporting them must ask per slot. The dual-wield penalty lands on
 both hands, so it is skill and not the penalty that separates them.
 
+**Which combat table resolves an attack depends on who is being HIT**, not on
+who is swinging. `melee-received` is the attacks-received table: the one with
+crushing blows and with the DEFENDER's dodge, parry and block. Auto-attacks once
+hardcoded `melee-auto`, which would have resolved a boss swing on the player's
+own table.
+
+**A block LANDS, and is reduced by a flat amount.** It is deliberately not in
+`AVOIDED_OUTCOMES`, and its reduction happens in the damage pipeline rather than
+as a table multiplier. That flatness is the whole character of the stat: 30
+block value takes half of a 60-damage hit and a tenth of a 300 one.
+
 **Every damage-over-time effect can crit, and none of them are reduced by
 armor.** This is a Forever rule, given by the ruleset owner as a correction to
 the original combat table guidance, and it is not WoW Classic's behaviour. A
@@ -176,14 +187,29 @@ calculator both describe the same abilities, and where they agree confidence
 rises. Where they disagree, say so in the docs and pick the one the ruleset owner
 supplied directly — do not average them or quietly prefer the newer.
 
+**Borrowing a Classic value is allowed, and only when it stays visible.** The
+project owner's standing decision: where Forever has not supplied a number,
+prefer a WoW Classic one over leaving a system unreachable — on three
+conditions, all of which must hold.
+
+1. It keeps a `PLACEHOLDER_` name, so nothing can read it without seeing that.
+2. A comment says it is Classic and unverified, and what it would take to
+   confirm it.
+3. Where a person can see the result, the app says so — the way the Encounter
+   panel prints the caveat beside the "target attacks back" switch.
+
+A visibly borrowed number beats an inert system. A *silently* borrowed one is
+worse than either, because it produces a confident figure nobody can audit. If
+any of the three conditions cannot be met, leave it inert instead.
+
 ## Generated and scraped data
 
 `src/game/character/baseStats.ts` is **generated** by
 `tools/import_base_stats.py` from the base stats spreadsheet. Never edit it by
 hand; re-run the generator.
 
-`src/data/talents/*.json` (470 talents, nine classes) and
-`src/data/items/classic-warrior.json` (18 items) were **scraped once** and are
+`src/data/talents/*.json` (469 talents, nine classes) and
+`src/data/items/classic-warrior.json` (19 items) were **scraped** and are
 checked in. Each directory has a README recording exactly where the data came
 from and how to refresh it. Never hand-edit either.
 
@@ -202,7 +228,7 @@ with a broken arrow.
 
 Tests check this data against values transcribed **independently by hand**. A
 test that derived its expectations from the file under test would prove nothing.
-Where the volume makes that impractical — 470 talents — transcribe the shape
+Where the volume makes that impractical — 469 talents — transcribe the shape
 (tree names, sizes, capstones) and assert the invariants that must hold for all
 of them at once.
 

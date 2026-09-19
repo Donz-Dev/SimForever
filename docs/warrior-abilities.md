@@ -206,7 +206,7 @@ it had no Classic counterpart to check against.
 ## Still not reachable
 
 - **Revenge** can never be cast. It needs the warrior to have been attacked, and
-  nothing attacks the player yet.
+  nothing attacks the player unless `encounter.targetAttacks` is on.
 - **Overpower** can never be cast. It needs the engine to let content observe an
   attack result, which does not exist — there is no hook for a reactive proc.
   This is the next engine gap worth closing.

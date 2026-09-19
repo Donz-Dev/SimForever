@@ -1,250 +1,219 @@
 # Finishing the Warrior
 
-What is left before the Warrior is a class you can trust end to end, from an
-audit of the code on 2026-09-18 rather than from the status docs.
+What is left before the Warrior is a class you can trust end to end. Audited
+from the code, last checked 2026-09-18.
 
-The Warrior already works: it can be built, geared, talented and fought, and
-every number traces to a source. This is the list of what still does not, in the
-order that buys the most.
+Read this alongside [talent-effects.md](talent-effects.md), which covers how a
+talent expresses itself and every edge case the Warrior turned up.
 
 ---
 
-## Where it actually stands
+## Where it stands
 
-Measured with the full starting set, 12 seeds x 6 iterations, level 63 dummy:
+Measured with the starting set, 10 seeds × 5 iterations, level 63 dummy:
 
-| Build | DPS |
-| --- | --- |
-| Dual-wield, no talents | 120.17 |
-| Dual-wield, a full Arms build | 160.60 |
-| Two-hander, no talents | 119.27 |
-| 1H & Shield, no talents | 77.37 |
-| 1H & Shield, Shield Slam | 82.67 |
+| Build | Standing target | Target swings back |
+| --- | --- | --- |
+| Dual-wield, no talents | 118.97 | 182.91 |
+| Two-hander, no talents | 119.07 | — |
+| 1H & Shield, Shield Slam | 81.33 | 152.12 |
+| Dual-wield, full Arms build | 160.60 | — |
 
-> **HANDOVER's "roughly 140 DPS" is stale.** It was measured when every warrior
-> was handed all three 31-point capstones at once. Gated, an untalented
-> dual-wielder is 120 and a talented one 160.
+> The two columns differ by **rage from damage taken**, which is enormous. A
+> damage warrior is not the one being hit, which is why `targetAttacks` is off
+> by default. Treat the right column as a tanking scenario.
 
 | | Count | |
 | --- | --- | --- |
 | Abilities defined | 27 | from the ability spreadsheet |
-| Abilities the rotation ever casts | **9** | the other 18 are inert, situational, or unreachable |
-| Abilities that are castable but do NOTHING | **9** | 21 `PLACEHOLDER_*` constants behind them |
+| Abilities a rotation casts | **11** | the other 16 are inert, situational or unreachable |
+| Abilities castable that do NOTHING | **9** | see §1 |
 | Talents fully modelled | 25 of 53 | 8 partly, 20 inert |
-| Items | 19 | one armour set, three weapons, one bow, one shield |
-| Of those, actual FOREVER items | **1** | The Immovable Object. The rest are Classic stand-ins |
+| Items | 19 | 1 is real Forever data, 18 are Classic stand-ins |
 | Armour enchants | **0** | only Crusader, for weapons |
 
 ---
 
-## 1. Blocked on the ruleset owner
-
-Nothing in this section can be done without data. It is first because it is the
-largest single block of missing behaviour, and because asking costs nothing.
-
-### 1.1 Effect values for nine abilities
+## 1. The nine inert abilities — the biggest single gap
 
 Battle Shout, Demoralizing Shout, Sunder Armor, Recklessness, Berserker Rage,
-Bloodrage, Shield Wall, Shield Block, and both non-Battle stances are
-**castable and completely inert**. Costs and cooldowns are known; magnitudes and
-durations are not. There are 21 `PLACEHOLDER_*` constants in
-`game/auras/warrior.ts` holding the gaps.
+Bloodrage, Shield Wall, Shield Block and the two non-Battle stances are
+**castable and do nothing**. They are deliberately absent from every rotation,
+because burning a global cooldown for no effect would make the warrior look
+worse than it is.
 
-They are deliberately absent from the rotation, because casting them would burn
-a global cooldown for nothing and make the warrior look worse than it is.
+### What is missing is narrower than it looks
 
-**Ask for:** attack power granted by Battle Shout and removed by Demoralizing
-Shout; armor per Sunder stack, max stacks, duration; Recklessness crit bonus and
-duration; Bloodrage instant and per-tick rage; Shield Wall and Shield Block
-magnitudes.
+All 21 constants live in one file, `src/game/auras/warrior.ts`, and they are
+**not all empty**. Durations and stack counts already carry plausible figures;
+it is the **magnitudes** that are zero, and a zero magnitude is what makes an
+ability inert.
 
-**Then:** fill the constants, delete the `PLACEHOLDER_` prefixes, and add each to
-the rotation with a measured priority. Three of them — Battle Shout, Sunder
-Armor, Recklessness — will move DPS materially.
+| Ability | Constant that is empty | Currently | Needs |
+| --- | --- | --- | --- |
+| **Battle Shout** | `PLACEHOLDER_BATTLE_SHOUT_ATTACK_POWER` | `0` | attack power granted |
+| **Demoralizing Shout** | `PLACEHOLDER_DEMORALIZING_SHOUT_ATTACK_POWER` | `0` | attack power removed from the target |
+| **Sunder Armor** | `PLACEHOLDER_SUNDER_ARMOR_PER_STACK` | `0` | armor removed per stack |
+| **Recklessness** | `PLACEHOLDER_RECKLESSNESS_CRIT_BONUS` | `0` | crit percentage points |
+| **Bloodrage** | `PLACEHOLDER_BLOODRAGE_INSTANT_RAGE` | `0` | instant rage, and rage per tick |
+| **Shield Wall** | `PLACEHOLDER_SHIELD_WALL_DAMAGE_TAKEN_MULTIPLIER` | `1` | damage taken multiplier |
+| **Defensive Stance** | `..._DAMAGE_DONE`, `..._DAMAGE_TAKEN` | `1`, `1` | both multipliers |
+| **Berserker Stance** | `..._DAMAGE_TAKEN`, `..._CRIT_BONUS` | `1`, `0` | multiplier and crit |
+| **Berserker Rage** | — | duration only | what it actually does |
 
-### 1.2 Stance gating
+Already plausible and *probably* fine, but still `PLACEHOLDER_` because nothing
+confirmed them: Battle Shout 120s, Demoralizing Shout 30s, Recklessness 15s,
+Sunder 5 stacks over 30s, Bloodrage 10s, Shield Wall 10s, Shield Block 5s, and
+the Overpower and Revenge windows at 5s.
+
+### How to fill them
+
+**The standing decision is: use WoW Classic values, loudly flagged.** Keep the
+`PLACEHOLDER_` prefix, keep the comment saying the number is Classic and
+unverified. A visibly borrowed number is better than an inert ability; a
+*silently* borrowed one is worse than either.
+
+Then, per ability:
+
+1. Fill the constant, leaving the prefix and the comment.
+2. Add it to `game/rotations/warrior.ts` with a **measured** priority, not a
+   guessed one. The existing entries record their measurements in comments;
+   match that.
+3. Re-measure the baselines at the top of this document.
+
+**Three will move DPS materially:** Battle Shout (attack power on every swing),
+Sunder Armor (armor is in every physical damage event), and Recklessness.
+
+### One that is newly possible
+
+**Shield Block** has a duration and no effect. Its effect is a block chance
+bonus — and `blockChance` is now a real stat with a real outcome behind it, so
+it can be modelled the moment someone supplies the number. That was impossible
+when the constant was written.
+
+---
+
+## 2. Still blocked on the ruleset owner
+
+Nothing here can be done without data, and asking costs nothing.
+
+### 2.1 Stance gating
 
 **Corrections were promised and never arrived.** The sheet has no Battle Stance
 row at all. Stances exist as auras, cost nothing, gate nothing, and are absent
 from the rotation because stance dancing for no modelled benefit is pure loss.
 
-Two talents wait on this: Improved Tactical Mastery and Vanguard.
+Two talents wait on it: Improved Tactical Mastery and Vanguard.
 
 **Ask for:** which abilities require which stance, and what each stance does.
 
-### 1.3 Forever item data — NOT blocked any more
-
-**`https://nether.wowhead.com/forever/tooltip/item/<id>` works.** Forever has its
-own tooltip endpoint with the same shape as the Classic one, so Forever item
-data is available for anything with an id. The Immovable Object was imported
-through it and is the first real Forever item in the repo.
-
-The other 18 are still Classic stand-ins. Replacing them is now a matter of
-**being given the item ids**, not of the data being unavailable.
-
-**Ask for:** a list of Forever item ids, or a page to take them from.
-`node tools/import_item.mjs forever <id>` does the rest.
-
-### 1.4 The five missing abilities
+### 2.2 The five missing abilities
 
 Sweeping Strikes, Death Wish, Piercing Howl, Last Stand and Concussion Blow are
-talents that grant an ability, and none of those abilities is in the spreadsheet.
-The grants are already declared, so they gate correctly the moment the abilities
-exist.
+talents that grant an ability, and none of those abilities is in the
+spreadsheet. The grants are already declared, so they gate correctly the moment
+the abilities exist.
 
 **Ask for:** their rows.
 
+### 2.3 Defense skill
+
+Player dodge, parry and block are all wired and read from the character's own
+stats. What is missing is **defense skill only**: the attacks-received table
+uses flat ruleset constants for boss miss, crit and crush, and shifting them by
+a skill comparison needs a formula Forever has not given.
+
+Anticipation is the one talent waiting on it.
+
+### 2.4 Forever item ids — not blocked, just unstarted
+
+`https://nether.wowhead.com/forever/tooltip/item/<id>` **works**. Forever item
+data is available for anything with an id; only the ids are missing.
+
+```bash
+node tools/import_item.mjs forever <id>   # prints the entry to append
+node tools/import_item.mjs --verify       # re-parses everything on file
+```
+
+`--verify` currently reproduces all 19 items exactly, which is why the tool can
+be trusted with the next one.
+
 ---
 
-## 2. Doable now, highest value first
+## 3. Doable now, no new data needed
 
-### 2.1 Armour enchants ~~and shields~~
+### 3.1 Re-measure the rotation — most urgent
 
-**The shield is done.** The Immovable Object is equipped by the 1H & Shield
-starting set, and it settled a question worth recording: **the missing shield was
-not the reason that style lags.**
+`game/rotations/warrior.ts` puts Rend above Mortal Strike, and its comment is
+explicit that the ordering was measured **against placeholder weapons**, where
+rage was scarce and an armor-ignoring bleed was the best rage a warrior could
+spend.
 
-With it equipped, armour goes from 4,701 to 7,169 and DPS goes *down* slightly,
-77.37 against the 78.65 measured without it — because the pairing puts Brutality
-Blade in the main hand in place of Vis'kag and its proc, and because **every
-defensive point the shield adds is unmodelled**: nothing attacks the player, and
-the engine has no block outcome, so "44 Block" and "+27 Block Value" both sit in
-the Gear panel's "Equipped but not simulated" list.
-
-So the 1H & Shield gap is Shield Slam, block, and nothing swinging back — items
-2.3 and 2.4 below. Adding the item did not close it and was never going to.
-
-**Still to do here:** armour enchants, of which there are none.
-
-### 2.2 Re-measure the rotation against real gear
-
-`game/rotations/warrior.ts` puts Rend above Mortal Strike, and the comment is
-explicit that the ordering was measured **against placeholder weapons** where
-rage was scarce and a bleed ignoring armor was the best rage a warrior could
-spend. The starting set changes the rage economy completely.
-
-The Mortal Strike rage reserve (30) is a heuristic from the same era.
+The rage economy has since changed **twice**: the starting set, and the target
+swinging back. The 30-rage Mortal Strike reserve is a heuristic from the same
+era. Neither has been re-measured.
 
 **Done when:** the priority list and the reserve are re-measured over a few
-hundred iterations with the starting set, and the comment records the new
-numbers. This is cheap and may be worth several DPS in either direction.
+hundred iterations with the starting set, in both the standing and attacking
+cases, and the comments record the new numbers.
 
-### 2.3 ~~A block outcome and a block value stat~~ — DONE
+### 3.2 Wire the Import and Load buttons
 
-The engine has a `block` outcome and `blockChance` / `blockValue` stats, and all
-four things it was holding up now work:
+`ProfilePanel.tsx` is **written and not mounted**. Its serialize-out, parse-in
+and render-issues round trip is exactly what the Import and Load buttons above
+the character name need, and those buttons currently call `() => undefined`.
 
-- **Shield Slam** adds the wielder's block value, as the ruleset states. Worth
-  **5.3 DPS** on a 1H & Shield warrior: 77.37 to 82.67.
-- **Revenge** triggers on a block as well as a dodge and a parry — all three of
-  the ways Classic opens its window, instead of two thirds of them.
-- **Shield Specialization** is modelled, both halves: block chance from its
-  first value and a rage proc from its second.
-- **The Immovable Object's** "44 Block" and "+27 Block Value" are real stats
-  rather than entries in "Equipped but not simulated".
+Profiles now carry talents, equipment and the encounter switches, so saving a
+build is worth something in a way it was not before.
 
-A block LANDS and is reduced by a FLAT amount, which is why it is not in
-`AVOIDED_OUTCOMES` and why its reduction happens in the damage pipeline rather
-than as a table multiplier. That also makes block value worth proportionally
-more against a small hit than a large one, which is the behaviour that makes it
-good against fast attackers — asserted directly.
-
-**Still unreachable:** Shield Specialization and Revenge both need the warrior to
-be attacked. See 2.4.
-
-### 2.4 ~~Make something attack the player~~ — DONE
-
-`encounter.targetAttacks` makes the target swing back, and everything that was
-waiting on it now runs: the attacks-received table, rage from damage taken,
-Revenge, block, and Shield Specialization.
-
-**It is OFF by default, and that is a judgement rather than an oversight.** A
-dual-wielding damage warrior in a raid is not the one being hit, and rage from
-damage taken is enormous: switching it on takes a geared dual-wielder from
-**119.65 to 182.13 DPS**. Handing that to a build that would never earn it would
-flatter every number it produces.
-
-Three things this turned up that were invisible before:
-
-- **Revenge was in the book but in no rotation**, because its window could never
-  open. It is now in the list, above everything but Execute — 5 rage for a flat
-  81-99 is the cheapest damage a warrior has.
-- **Blocks had no word in the combat log.** A blocked blow lands, so it was
-  printed as an ordinary hit, and 44% of a shield warrior's incoming attacks
-  were invisible. They now read `hits X for 1,891 (blocked)`.
-- **Overkill was reported on a character who survived**, because an assumed
-  healer floors health at one rather than preventing the damage.
-
-**A HEALER IS ASSUMED AND NOT MODELLED.** A geared warrior has under 4,000
-health and takes 4,000-per-swing blows every two seconds; without the assumption
-every fight would end in the first few seconds. The damage lands in full and
-still generates rage — the character simply does not fall over. **Nothing about
-such a run says whether they would survive.**
-
-**The swing damage and speed are Classic placeholders**, on the profile and
-editable, with the caveat printed beside the switch in the Encounter panel.
-Forever gives the attacks-received TABLE — boss miss, crit, crush and their
-multipliers are real — but not how hard a boss hits.
-
-### 2.5 Wire the Import and Load buttons
-
-`ProfilePanel.tsx` is **written and not mounted**. Its serialize-out,
-parse-in and render-issues round trip is exactly what the Import and Load
-buttons above the character name need, and those buttons currently call
-`() => undefined`.
-
-Profiles now carry talents and equipment, so saving a build is worth something
-in a way it was not before.
-
-**Done when:** a build can be exported to JSON, pasted back, and reproduce the
-same fight.
-
-### 2.6 Talents that need only wiring
-
-Two remaining talent blockers need no new ruleset data:
+### 3.3 Talents needing only wiring
 
 - **Combat-start auras** — Anger Management and Death Wish. The aura mechanism
-  exists, `trainingDummyEncounter` has the slot for opening buffs, and nothing
-  connects a talent to it. Probably the cheapest remaining talent win.
+  exists and `trainingDummyEncounter` has the slot for opening buffs; nothing
+  connects a talent to it. The cheapest remaining talent win.
 - **Weaponmaster's sword clause** — needs a talent-granted reaction that
-  triggers an extra attack. `extraAttack` exists in the engine; the effect would
-  need to read the talent's *third* value rather than its first.
+  triggers an extra attack. `extraAttack` exists, and effects can now read a
+  talent's third value through `valueIndex`.
 
-### 2.7 Defense skill
+### 3.4 Armour enchants
 
-Player parry and dodge are wired and read from the character's stats. What is
-missing is **defense skill only**: the attacks-received table uses flat ruleset
-constants for boss miss, crit and crush, and shifting them by a skill comparison
-needs a formula Forever has not given.
-
-Anticipation is the one talent waiting on this. Worth asking for alongside 1.2.
+There are none. Only Crusader, for weapons.
 
 ---
 
-## 3. Deliberately not doing yet
+## 4. Done
 
-Recorded so nobody re-derives the decision.
+Struck through rather than deleted, so finished work is not re-derived.
 
-| | Why |
-| --- | --- |
-| Threat, movement, stuns, multiple targets, shout radius | None matters against a single stationary dummy, and each needs an encounter model that does not exist. Seven talents sit here. |
-| Dual Wield Specialization, Raging Blows | Partly modelling either would understate it by an unknown amount rather than visibly not working. |
-| Re-scraping the other eight classes' talent structure | Real, but it is not Warrior work. See below. |
+- ~~**A block outcome and block value**~~ — Shield Slam gained its missing damage
+  component (+5.3 DPS), Revenge triggers on all three of its openings, Shield
+  Specialization is modelled, and the shield's own block stats are real.
+- ~~**Make something attack the player**~~ — `encounter.targetAttacks`. Brought
+  the attacks-received table, rage from damage taken, Revenge and block to life,
+  and exposed three bugs that could not show while nothing swung.
+- ~~**Shields**~~ — The Immovable Object, the first real Forever item. It also
+  settled that the missing shield was *never* why 1H & Shield lagged.
+- ~~**A starting set**~~ — a Warrior begins geared, so the first number a person
+  sees is one worth reading.
 
 ---
 
-## 4. Standing risks
+## 5. Standing risks
 
 **The talent structure has only been corrected for Bastion.** Forever removed it
-and moved Focused Rage into its slot, and that was found only because capturing
-values tripped over it. The eight classes with no values captured could have
-drifted the same way and nobody would know. A re-scrape is the honest fix.
+and moved Focused Rage into its slot, found only because capturing values
+tripped over it. The eight classes with no values captured could have drifted
+the same way and nobody would know.
 
-**The unmodelled reasons go stale.** The classification has been wrong three
-times — Improved Rend and Improved Overpower were filed as impossible before
-per-ability scaling existed, and Unbridled Wrath's two-handed clause was written
-off for want of a weapon type added an hour earlier. When a blocker above
-clears, re-read every remaining reason rather than trusting it.
+**Unmodelled reasons go stale.** The classification has been wrong three times.
+When a blocker clears, re-read every remaining reason rather than trusting it —
+they are written specifically enough to check quickly.
 
-**Nothing here changes the fact that the items are Classic.** Every DPS figure
-in this document is good for comparing builds to each other and nothing else.
+**Survival is not modelled.** With `targetAttacks` on, a healer is *assumed*: the
+character cannot drop below one health. Such a run says nothing about whether
+they would live.
+
+**Every absolute number is provisional.** 18 of 19 items are Classic, the boss
+swing figures are Classic, and if the nine abilities above are filled from
+Classic then a large part of the warrior's output will be too. Comparisons
+between builds hold; absolute DPS does not.
