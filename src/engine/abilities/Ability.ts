@@ -1,4 +1,5 @@
 import type { Combatant, WeaponSlot } from '../actors/Combatant';
+import type { TargetSelection } from '../combat/targeting';
 import type { AttackTableKind } from '../combat/attackTable';
 import type { ResourceType } from '../resources';
 import type { SimulationContext } from '../simulation/SimulationContext';
@@ -68,6 +69,20 @@ export interface Ability {
    * once rather than repeated in every damage call.
    */
   readonly attackTable?: AttackTableKind;
+
+  /**
+   * How many enemies this ability strikes.
+   *
+   * Omitted means one, which is what nearly everything does. Declaring it is
+   * how an ability states that it hits more WITHOUT that claim depending on an
+   * encounter that can supply more -- see `engine/combat/targeting.ts`, which
+   * resolves every selection to the single target an encounter actually has.
+   *
+   * So this is documentation that the engine will honour later, rather than
+   * behaviour today. It is on the ability rather than in `onCast` so that the
+   * combat log and any analyzer can ask without running the cast.
+   */
+  readonly targets?: TargetSelection;
 
   /**
    * Queue this ability onto the next auto-attack with the given weapon instead

@@ -108,12 +108,25 @@ describe('warrior abilities match the spreadsheet', () => {
     expect(ability.attackTable).toBe(row.attackTable);
   });
 
-  it('defines every row in the sheet and nothing else', () => {
-    // Battle Stance is the one exception: it is NOT in the spreadsheet and is
-    // defined anyway, because two stances with no way back to a neutral one is
-    // not a coherent ruleset. Flagged in docs/warrior-abilities.md.
+  it('defines every row in the sheet, and nothing the sources do not have', () => {
+    /*
+     * FOUR are defined that the spreadsheet does not contain, and each has a
+     * source.
+     *
+     * Battle Stance: not in the spreadsheet, defined anyway because two stances
+     * with no way back to a neutral one is not a coherent ruleset. Forever's
+     * spell data has since confirmed it exists and does nothing.
+     *
+     * Death Wish, Last Stand, Sweeping Strikes: granted by talents, and the
+     * spreadsheet has no rows for them at all. Their numbers come from Forever
+     * directly -- see docs/warrior-ability-audit.md.
+     *
+     * Listed by hand rather than derived, so adding a fifth is a deliberate act
+     * that fails this test until someone writes down where it came from.
+     */
+    const beyondTheSheet = ['battle_stance_cast', 'death_wish', 'last_stand', 'sweeping_strikes'];
     const defined = WARRIOR_ABILITIES.map((ability) => ability.id).sort();
-    const expected = [...SHEET.map((row) => row.id), 'battle_stance_cast'].sort();
+    const expected = [...SHEET.map((row) => row.id), ...beyondTheSheet].sort();
 
     expect(defined).toEqual(expected);
   });

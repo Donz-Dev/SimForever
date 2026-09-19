@@ -24,6 +24,12 @@ const TALENT_GRANTED = [
 
 /*
  * Every Warrior talent that grants an ability, transcribed by hand. NINE, not
+ * SEVEN of the nine are implemented. Sweeping Strikes, Death Wish and Last
+ * Stand joined once Forever's spell data supplied rows the ability spreadsheet
+ * never had. Concussion Blow (stuns) and Piercing Howl (snares) are the two
+ * that remain, and they are OUT OF SCOPE rather than pending -- the project
+ * owner classes both as non-combat.
+ *
  * the four above: the other five grant an ability that is not implemented yet,
  * because it is absent from the ability spreadsheet.
  *
@@ -35,12 +41,12 @@ const TALENT_GRANTED = [
 const ABILITY_GRANTING_TALENTS = [
   { talent: 'mortal_strike', ability: 'mortal_strike', tree: 'arms', implemented: true },
   { talent: 'spearing_strike', ability: 'spearing_strike', tree: 'arms', implemented: true },
-  { talent: 'sweeping_strikes', ability: 'sweeping_strikes', tree: 'arms', implemented: false },
+  { talent: 'sweeping_strikes', ability: 'sweeping_strikes', tree: 'arms', implemented: true },
   { talent: 'bloodthirst', ability: 'bloodthirst', tree: 'fury', implemented: true },
-  { talent: 'death_wish', ability: 'death_wish', tree: 'fury', implemented: false },
+  { talent: 'death_wish', ability: 'death_wish', tree: 'fury', implemented: true },
   { talent: 'piercing_howl', ability: 'piercing_howl', tree: 'fury', implemented: false },
   { talent: 'shield_slam', ability: 'shield_slam', tree: 'protection', implemented: true },
-  { talent: 'last_stand', ability: 'last_stand', tree: 'protection', implemented: false },
+  { talent: 'last_stand', ability: 'last_stand', tree: 'protection', implemented: true },
   { talent: 'concussion_blow', ability: 'concussion_blow', tree: 'protection', implemented: false },
 ] as const;
 

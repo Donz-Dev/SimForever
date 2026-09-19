@@ -162,6 +162,28 @@ report(
   measure(warrior({ style: 'one_hand_shield', talents: PROTECTION_31 })),
 );
 report('Dual-wield, 31-pt Arms (Mortal Strike)', measure(warrior({ talents: ARMS_31 })));
+
+/*
+ * Death Wish sits at tier 20 of Fury, so a build reaching it is a Fury build.
+ * Measured against the same build without the talent, which is the only
+ * comparison that isolates the ability rather than the tree.
+ */
+const FURY_DEATH_WISH: TalentAllocation = {
+  booming_voice: 5,
+  cruelty: 5, // 10
+  unbridled_wrath: 5, // 15
+  improved_cleave: 3,
+  boundless_rage: 3, // 21
+  enrage: 5, // 26
+  precision: 3, // 29
+  death_wish: 1, // 30
+};
+const FURY_NO_DEATH_WISH: TalentAllocation = { ...FURY_DEATH_WISH, death_wish: 0 };
+
+console.log('');
+const withDW = report('Fury build WITH Death Wish', measure(warrior({ talents: FURY_DEATH_WISH })));
+const withoutDW = report('Fury build without it', measure(warrior({ talents: FURY_NO_DEATH_WISH })));
+difference('  Death Wish is worth', withDW, withoutDW);
 console.log('');
 report('Dual-wield, target swings back', measure(warrior({ targetAttacks: true })));
 report(

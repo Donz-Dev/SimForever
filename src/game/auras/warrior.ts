@@ -1,4 +1,4 @@
-import type { AuraDefinition } from '../../engine';
+import type { AuraDefinition, SimulationContext } from '../../engine';
 import { dealDamage, flat, seconds } from '../../engine';
 
 /**
@@ -385,6 +385,113 @@ export const REVENGE_READY: AuraDefinition = {
   refreshBehaviour: 'reset',
 };
 
+// ---------------------------------------------------------------------------
+// Granted by talents. Absent from the ability spreadsheet; values from Forever.
+// ---------------------------------------------------------------------------
+
+/**
+ * The combatant an aura is sitting on.
+ *
+ * `AuraInstance` carries a `targetId` rather than the combatant, so that an
+ * aura cannot keep a dead reference alive. Everything that needs the actor
+ * looks it up.
+ */
+function combatantIn(context: SimulationContext, id: string) {
+  return context.combatants.find((actor) => actor.id === id);
+}
+
+/*
+ * Spell 12328, Death Wish: "increases your Physical damage done by 20% and
+ * makes you immune to Fear effects, but increases all damage you take by 5%.
+ * Lasts 30 sec." 10 rage, 3 minute cooldown, usable in any stance.
+ *
+ * THE "PHYSICAL" QUALIFIER IS NOT EXPRESSED, and for a warrior it does not
+ * matter: `damageDoneMultiplier` is school-agnostic and every point of warrior
+ * damage in this simulator is physical. It would matter for a class with a
+ * magic school, and the day an aura needs to scale one school and not another
+ * is the day this needs a `damageDoneBySchool`.
+ *
+ * The fear immunity is dropped; the engine has no fear.
+ */
+export const DEATH_WISH_DAMAGE_DONE = 1.2;
+export const DEATH_WISH_DAMAGE_TAKEN = 1.05;
+export const DEATH_WISH_DURATION_MS = seconds(30);
+
+export const DEATH_WISH: AuraDefinition = {
+  id: 'death_wish',
+  name: 'Death Wish',
+  durationMs: DEATH_WISH_DURATION_MS,
+  damageDoneMultiplier: DEATH_WISH_DAMAGE_DONE,
+  damageTakenMultiplier: DEATH_WISH_DAMAGE_TAKEN,
+};
+
+/*
+ * Spell 12975, Last Stand: "temporarily grants you 30% of your maximum health
+ * for 20 sec. After the effect expires, the health is lost." Free, 3 minute
+ * cooldown, any stance.
+ *
+ * MODELLED HONESTLY AND WORTH ALMOST NOTHING HERE. It raises the maximum and
+ * grants the same amount as current health, then takes both back on expiry --
+ * which is what "the health is lost" means, and is why it is a survival
+ * cooldown rather than a heal.
+ *
+ * The player in this simulator CANNOT DROP BELOW ONE HEALTH, so extra health
+ * changes no outcome: nothing dies, and no analyzer reports survival. It is
+ * implemented because it is fully expressible and because a talent that grants
+ * an ability should grant a real one -- not because it will move a number.
+ * Anything reading Last Stand's worth from this simulator is reading the wrong
+ * simulator.
+ */
+export const LAST_STAND_HEALTH_FRACTION = 0.3;
+export const LAST_STAND_DURATION_MS = seconds(20);
+
+export const LAST_STAND: AuraDefinition = {
+  id: 'last_stand',
+  name: 'Last Stand',
+  durationMs: LAST_STAND_DURATION_MS,
+  onApply: (context, aura) => {
+    const health = combatantIn(context, aura.targetId)?.health;
+    if (!health) return;
+    const granted = Math.floor(health.maximum * LAST_STAND_HEALTH_FRACTION);
+    health.setMaximum(health.maximum + granted);
+    health.gain(granted);
+  },
+  onExpire: (context, aura) => {
+    const health = combatantIn(context, aura.targetId)?.health;
+    if (!health) return;
+    const granted = Math.floor(
+      (health.maximum / (1 + LAST_STAND_HEALTH_FRACTION)) * LAST_STAND_HEALTH_FRACTION,
+    );
+    health.setMaximum(health.maximum - granted);
+    // "The health is lost": the pool shrinks and current follows it down, which
+    // is what can kill a character the instant Last Stand ends.
+    health.set(Math.min(health.current, health.maximum));
+  },
+};
+
+/*
+ * Spell 12292, Sweeping Strikes: "Your next 5 melee attacks strike an
+ * additional nearby opponent." 30 rage, 30 second cooldown, Battle Stance.
+ *
+ * DOES NOTHING AGAINST ONE TARGET, and that is the whole ability. Its entire
+ * effect is the additional opponent, and an encounter here has exactly one
+ * enemy -- so this is 30 rage and a global cooldown for no damage whatever.
+ *
+ * It is defined rather than omitted so that the talent grants something real
+ * and so the charge count is written down. It is deliberately absent from every
+ * rotation, for the same reason the inert buffs were. See
+ * `engine/combat/targeting.ts`.
+ */
+export const SWEEPING_STRIKES_CHARGES = 5;
+export const SWEEPING_STRIKES_DURATION_MS = seconds(30);
+
+export const SWEEPING_STRIKES: AuraDefinition = {
+  id: 'sweeping_strikes',
+  name: 'Sweeping Strikes',
+  durationMs: SWEEPING_STRIKES_DURATION_MS,
+  maxStacks: SWEEPING_STRIKES_CHARGES,
+};
+
 /** Unused today; kept so the import surface matches the other modules. */
 export const WARRIOR_AURAS: readonly AuraDefinition[] = [
   REND,
@@ -401,4 +508,7 @@ export const WARRIOR_AURAS: readonly AuraDefinition[] = [
   BERSERKER_STANCE,
   OVERPOWER_READY,
   REVENGE_READY,
+  DEATH_WISH,
+  LAST_STAND,
+  SWEEPING_STRIKES,
 ];

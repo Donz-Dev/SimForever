@@ -16,11 +16,13 @@ talent builds it uses.
 
 | Build | Standing target | Target swings back |
 | --- | --- | --- |
-| Dual-wield, no talents | **148.13** ± 1.83 | **221.85** ± 1.75 |
-| Two-hander, no talents | **148.57** ± 1.60 | — |
-| 1H & Shield, no talents | **90.01** ± 1.41 | — |
-| 1H & Shield, 31-pt Protection | **93.63** ± 1.74 | **176.69** ± 1.71 |
-| Dual-wield, 31-pt Arms | **187.41** ± 2.66 | — |
+| Dual-wield, no talents | **148.00** ± 2.17 | **222.10** ± 1.99 |
+| Two-hander, no talents | **148.58** ± 1.75 | — |
+| 1H & Shield, no talents | **89.93** ± 1.65 | — |
+| 1H & Shield, 31-pt Protection | **93.98** ± 2.01 | **176.81** ± 1.70 |
+| Dual-wield, 31-pt Arms | **187.56** ± 2.91 | — |
+| Fury to Death Wish | **182.52** ± 2.49 | — |
+| the same, without Death Wish | **170.75** ± 2.15 | — |
 
 > The two columns differ by **rage from damage taken**, which is enormous. A
 > damage warrior is not the one being hit, which is why `targetAttacks` is off

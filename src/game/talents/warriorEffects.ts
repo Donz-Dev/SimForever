@@ -106,10 +106,10 @@ export const WARRIOR_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
     {
       kind: 'unmodelled',
       reason:
-        'The ability itself is not implemented -- it is not in the Warrior '+
-        'ability spreadsheet, so it has no cost, cooldown or damage. The GRANT '+
-        'is declared above, so the moment the ability exists it is gated '+
-        'correctly rather than handed to everyone.',
+        'The ability is implemented and does nothing: its whole effect is that ' +
+        'the next 5 melee attacks strike an ADDITIONAL opponent, and an ' +
+        'encounter here has exactly one enemy. Not a missing number -- a ' +
+        'missing second target. See engine/combat/targeting.ts.',
     },
   ],
 
@@ -176,10 +176,9 @@ export const WARRIOR_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
     {
       kind: 'unmodelled',
       reason:
-        'The ability itself is not implemented -- it is not in the Warrior '+
-        'ability spreadsheet, so it has no cost, cooldown or damage. The GRANT '+
-        'is declared above, so the moment the ability exists it is gated '+
-        'correctly rather than handed to everyone.',
+        'Dazes nearby enemies, -50% movement for 6 sec. NOT TO BE IMPLEMENTED: the ' +
+        'project owner classes snares as non-combat, so this is out of scope ' +
+        'rather than waiting on anything.',
     },
   ],
 
@@ -234,17 +233,12 @@ export const WARRIOR_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
 
   precision: [{ kind: 'stat', stat: 'hitChance', operation: 'flat' }],
 
-  death_wish: [
-    { kind: 'grantAbility', abilityId: 'death_wish' },
-    {
-      kind: 'unmodelled',
-      reason:
-        'The ability itself is not implemented -- it is not in the Warrior '+
-        'ability spreadsheet, so it has no cost, cooldown or damage. The GRANT '+
-        'is declared above, so the moment the ability exists it is gated '+
-        'correctly rather than handed to everyone.',
-    },
-  ],
+  /*
+   * FULLY MODELLED. The ability was missing from the spreadsheet and is in
+   * Forever's spell data: +20% damage done, +5% damage taken, 30 sec, 10 rage,
+   * 3 minute cooldown.
+   */
+  death_wish: [{ kind: 'grantAbility', abilityId: 'death_wish' }],
 
   improved_intercept: [{ kind: 'abilityCooldown', abilityId: 'intercept', unit: 'seconds' }],
 
@@ -308,10 +302,10 @@ export const WARRIOR_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
     {
       kind: 'unmodelled',
       reason:
-        'The ability itself is not implemented -- it is not in the Warrior '+
-        'ability spreadsheet, so it has no cost, cooldown or damage. The GRANT '+
-        'is declared above, so the moment the ability exists it is gated '+
-        'correctly rather than handed to everyone.',
+        'The ability is implemented -- 30% more maximum health for 20 sec -- ' +
+        'but it changes no outcome, because the player cannot drop below one ' +
+        'health and survival is not modelled. It is a real ability with ' +
+        'nothing here to measure it against.',
     },
   ],
 
@@ -354,10 +348,10 @@ export const WARRIOR_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
     {
       kind: 'unmodelled',
       reason:
-        'The ability itself is not implemented -- it is not in the Warrior '+
-        'ability spreadsheet, so it has no cost, cooldown or damage. The GRANT '+
-        'is declared above, so the moment the ability exists it is gated '+
-        'correctly rather than handed to everyone.',
+        'Stuns the target for 5 sec. NOT TO BE IMPLEMENTED: the project owner ' +
+        'classes stuns as non-combat, so this is out of scope rather than ' +
+        'waiting on anything. The ability grant is still declared so the talent ' +
+        'gates correctly.',
     },
   ],
 

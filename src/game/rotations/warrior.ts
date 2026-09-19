@@ -176,6 +176,22 @@ const OPENERS: readonly PriorityEntry[] = [
    */
   { abilityId: 'recklessness_cast' },
   /*
+   * Death Wish, if the talent granted it: 10 rage for +20% damage done and +5%
+   * damage taken, 30 seconds, on a 3 minute cooldown.
+   *
+   * `PriorityRotation` skips an ability the actor does not know, so this line
+   * costs an untalented warrior nothing and the list stays one list.
+   *
+   * Beside Recklessness for the same reason: a cooldown longer than the fight
+   * is a question of WHEN, and the answer is immediately.
+   *
+   * MEASURED at +11.77 +/- 3.29 DPS over 250 fights, against the same Fury
+   * build with the point moved off Death Wish. Isolating the ability rather
+   * than the tree is the only comparison that means anything: a build that
+   * reaches tier 20 of Fury differs from a talentless one in a dozen ways.
+   */
+  { abilityId: 'death_wish' },
+  /*
    * Sunder Armor to five stacks, then leave it alone.
    *
    * 450 armor a stack to a cap of five is 2250 off the boss's 3731. At +12.51

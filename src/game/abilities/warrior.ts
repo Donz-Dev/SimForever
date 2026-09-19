@@ -17,6 +17,9 @@ import {
   SHIELD_WALL,
   SUNDER_ARMOR,
   WARRIOR_STANCES,
+  DEATH_WISH,
+  LAST_STAND,
+  SWEEPING_STRIKES,
 } from '../auras/warrior';
 
 /**
@@ -165,6 +168,7 @@ export const WHIRLWIND: Ability = {
   cooldownMs: seconds(10),
   cost: { resource: 'rage', amount: 25 },
   attackTable: 'melee-special',
+  targets: { maxTargets: WHIRLWIND_MAX_TARGETS },
   onCast: ({ simulation, caster, ability }) => {
     const targets = simulation.enemiesOf(caster).slice(0, WHIRLWIND_MAX_TARGETS);
     for (const target of targets) {
@@ -380,6 +384,8 @@ export const THUNDER_CLAP: Ability = {
   cooldownMs: seconds(4),
   cost: { resource: 'rage', amount: 20 },
   attackTable: 'ranged-special',
+  // "all nearby enemies", with no stated cap. One, here.
+  targets: { maxTargets: Infinity },
   onCast: ({ simulation, caster, target, ability }) => {
     if (!target) return;
     dealDamage(simulation, {
@@ -531,6 +537,7 @@ export const CLEAVE: Ability = {
   name: 'Cleave',
   cost: { resource: 'rage', amount: 20 },
   attackTable: 'melee-special',
+  targets: { maxTargets: CLEAVE_MAX_TARGETS },
   onNextSwing: MAIN_HAND,
   onCast: ({ simulation, caster, ability }) => {
     const targets = simulation.enemiesOf(caster).slice(0, CLEAVE_MAX_TARGETS);
@@ -695,6 +702,65 @@ export const SHIELD_BLOCK_ABILITY: Ability = {
 };
 
 // ---------------------------------------------------------------------------
+// Granted by talents. Not in the ability spreadsheet; from Forever's spell data
+// ---------------------------------------------------------------------------
+
+/**
+ * 10 rage, 3 minute cooldown, any stance.
+ *
+ * +20% damage done and +5% damage taken for 30 seconds. A straightforward
+ * damage cooldown and, unlike the other four talent grants, fully expressible.
+ */
+export const DEATH_WISH_ABILITY: Ability = {
+  id: 'death_wish',
+  name: 'Death Wish',
+  cooldownMs: seconds(180),
+  cost: { resource: 'rage', amount: 10 },
+  requiresTarget: false,
+  onCast: ({ simulation, caster }) => {
+    simulation.applyAura(caster, DEATH_WISH, caster.id);
+  },
+};
+
+/**
+ * Free, 3 minute cooldown, any stance.
+ *
+ * Raises maximum health 30% for 20 seconds and takes it back afterwards. It
+ * changes no outcome here, because the player cannot drop below one health --
+ * see `LAST_STAND` for why it is implemented anyway.
+ */
+export const LAST_STAND_ABILITY: Ability = {
+  id: 'last_stand',
+  name: 'Last Stand',
+  cooldownMs: seconds(180),
+  requiresTarget: false,
+  onCast: ({ simulation, caster }) => {
+    simulation.applyAura(caster, LAST_STAND, caster.id);
+  },
+};
+
+/**
+ * 30 rage, 30 second cooldown, Battle Stance.
+ *
+ * INERT AGAINST ONE TARGET, which is every encounter this simulator has. Its
+ * only effect is that the next five melee attacks strike an additional
+ * opponent, and there is no additional opponent. Defined so the talent grants
+ * something real; kept out of every rotation so it does not burn rage for
+ * nothing.
+ */
+export const SWEEPING_STRIKES_ABILITY: Ability = {
+  id: 'sweeping_strikes',
+  name: 'Sweeping Strikes',
+  cooldownMs: seconds(30),
+  cost: { resource: 'rage', amount: 30 },
+  requiresTarget: false,
+  targets: { maxTargets: 2 },
+  onCast: ({ simulation, caster }) => {
+    simulation.applyAura(caster, SWEEPING_STRIKES, caster.id);
+  },
+};
+
+// ---------------------------------------------------------------------------
 // Charge and stances
 // ---------------------------------------------------------------------------
 
@@ -805,6 +871,9 @@ export const WARRIOR_ABILITIES: readonly Ability[] = [
   BATTLE_STANCE_ABILITY,
   DEFENSIVE_STANCE_ABILITY,
   BERSERKER_STANCE_ABILITY,
+  DEATH_WISH_ABILITY,
+  LAST_STAND_ABILITY,
+  SWEEPING_STRIKES_ABILITY,
 ];
 
 /** Look one up by id, for tests and for the rotation. */
