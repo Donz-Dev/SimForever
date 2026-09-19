@@ -1,7 +1,12 @@
 import type { Combatant, PriorityEntry, Rotation, SimulationContext } from '../../engine';
 import { PriorityRotation } from '../../engine';
 import type { CombatStyleId } from '../character';
-import { REND } from '../auras/warrior';
+import {
+  BATTLE_SHOUT,
+  REND,
+  SUNDER_ARMOR,
+  SUNDER_ARMOR_MAX_STACKS,
+} from '../auras/warrior';
 import { EXECUTE_HEALTH_THRESHOLD } from '../abilities/warrior';
 
 /**
@@ -9,16 +14,26 @@ import { EXECUTE_HEALTH_THRESHOLD } from '../abilities/warrior';
  *
  * WHAT IS NOT HERE, AND WHY
  *
- * The spreadsheet gives costs, cooldowns and damage. It does not give effect
- * values for any buff or debuff, so Battle Shout, Demoralizing Shout, Sunder
- * Armor, Recklessness, Bloodrage, Berserker Rage, Shield Wall and Shield Block
- * currently DO NOTHING. Casting them would burn a global cooldown to no effect
- * and make the rotation look worse than it is, so they are left out. They come
- * in the moment their numbers do.
+ * The spreadsheet gives costs, cooldowns and damage and no effect magnitudes,
+ * so for months Battle Shout, Demoralizing Shout, Sunder Armor, Recklessness,
+ * Bloodrage, Berserker Rage, Shield Wall and Shield Block all DID NOTHING and
+ * were all left out. Forever's own spell data supplied the magnitudes (see
+ * `src/data/abilities/README.md`), and the three that raise damage are now in
+ * the list with measured priorities.
  *
- * Stances are left out for a different reason: which abilities each stance
- * gates is an open question with the ruleset owner, and a rotation that stance
- * dances for no modelled benefit would be pure loss.
+ * Still out, each for its own reason:
+ *
+ *   - DEMORALIZING SHOUT lowers the TARGET's attack power. Against a standing
+ *     dummy that is nothing, and when the target swings back it is actively
+ *     NEGATIVE for damage: less damage taken is less rage from damage taken.
+ *     It is a survival cooldown in a simulator that does not model survival.
+ *   - BERSERKER RAGE is still inert. Forever's tooltip names no magnitude.
+ *   - BLOODRAGE grants rage, and the grant is not wired: the aura has no
+ *     periodic and there is no per-tick mechanism yet.
+ *   - SHIELD WALL and SHIELD BLOCK are damage-taken effects that cost a global
+ *     cooldown. Shield Block's "only 2 attacks" charge cap is not expressible,
+ *     so its aura carries no block modifier at all.
+ *   - The STANCES gate nothing, so stance dancing is pure loss. Unchanged.
  *
  * Revenge is IN the list now. It is reactive on being attacked, so its window
  * only opens in an encounter where the target swings back -- and until one
@@ -98,6 +113,104 @@ export const HEROIC_STRIKE_RAGE_THRESHOLD = 50;
  * usual compromise.
  */
 export const REND_REFRESH_WINDOW_MS = 2000;
+
+/**
+ * Buffs and debuffs that raise damage, above the strikes that spend the rage.
+ *
+ * MEASURED, not assumed. `npx vite-node tools/measure_rotation.ts` is the
+ * harness; every figure here is 200 fights on a geared dual-wielder against the
+ * level 63 dummy, quoted with a 95% interval. Each ability's worth was found by
+ * REMOVING it and re-running, not by adding it to an empty list, so the numbers
+ * are what dropping it would cost rather than what adding it to nothing gains.
+ *
+ *   all three openers   148.20 +/- 2.38
+ *   without Sunder      135.69            -12.51
+ *   without Battle Shout 136.37           -11.83
+ *   without Recklessness 142.87            -5.33
+ *   no openers at all   119.88 +/- 1.71   -28.32
+ *
+ * Together they are worth +28.32 DPS, a quarter of the class's output, which is
+ * the size of the hole that sat in the rotation while these were inert.
+ *
+ * WHETHER THEY GO ABOVE OR BELOW THE STRIKES IS NOT MEASURABLE. Above reads
+ * 148.20 +/- 2.38 and below 145.44 +/- 2.13, a gap of 2.76 against a combined
+ * interval of 3.19 -- and in the attacking case below is very slightly ahead.
+ * They are kept above on the principle that a buff multiplying everything after
+ * it should be paid for before the first strike rather than after, and the
+ * honest statement is that the measurement does not object rather than that it
+ * agrees. Anyone reordering these should not expect to find a difference.
+ */
+const OPENERS: readonly PriorityEntry[] = [
+  /*
+   * Battle Shout, once: 140 attack power for three minutes at 10 rage. It
+   * outlasts every fight this simulator runs, so the condition is simply
+   * "not up".
+   *
+   * FIRST IN THIS LIST IS NOT FIRST IN THE FIGHT. A warrior opens at zero rage,
+   * so Battle Shout cannot be paid for until a few swings have landed -- in a
+   * sampled fight it goes up at 7.5 seconds, behind the free Recklessness. The
+   * list states a preference; the rage bar decides when it is honoured.
+   *
+   * Worth +11.83 DPS -- attack power is in every swing and every weapon damage
+   * ability, so it compounds with everything.
+   */
+  {
+    abilityId: 'battle_shout_cast',
+    condition: (context, actor) =>
+      actor.auras.remainingMs(BATTLE_SHOUT.id, context.clock.now()) <= 0,
+  },
+  /*
+   * Recklessness next: free, and 100 points of crit for 15 seconds.
+   *
+   * On a 30 minute cooldown it fires once and never again, so it is a question
+   * of WHEN rather than whether, and the answer is immediately -- a crit window
+   * spent on early swings is worth the same as one spent on late swings, and
+   * casting it at the start guarantees it is spent at all.
+   *
+   * It also raises damage TAKEN by 20%, which is a real cost only when the
+   * target swings back -- and measuring both ways shows that is not a cost at
+   * all here: +5.33 DPS standing and +6.56 when attacked, because the extra
+   * damage taken feeds rage. In a simulator where the player cannot die, a
+   * damage-taken penalty is a rage BONUS. Read that second figure with the
+   * caveat that survival is not modelled.
+   */
+  { abilityId: 'recklessness_cast' },
+  /*
+   * Death Wish, if the talent granted it: 10 rage for +20% damage done and +5%
+   * damage taken, 30 seconds, on a 3 minute cooldown.
+   *
+   * `PriorityRotation` skips an ability the actor does not know, so this line
+   * costs an untalented warrior nothing and the list stays one list.
+   *
+   * Beside Recklessness for the same reason: a cooldown longer than the fight
+   * is a question of WHEN, and the answer is immediately.
+   *
+   * MEASURED at +11.77 +/- 3.29 DPS over 250 fights, against the same Fury
+   * build with the point moved off Death Wish. Isolating the ability rather
+   * than the tree is the only comparison that means anything: a build that
+   * reaches tier 20 of Fury differs from a talentless one in a dozen ways.
+   */
+  { abilityId: 'death_wish' },
+  /*
+   * Sunder Armor to five stacks, then leave it alone.
+   *
+   * 450 armor a stack to a cap of five is 2250 off the boss's 3731. At +12.51
+   * DPS it is the LARGEST single gain of the three, ahead of Battle Shout, and
+   * worth its five global cooldowns early because every physical hit for the
+   * rest of the fight lands against less armor.
+   *
+   * The condition stops at the cap rather than refreshing: the debuff lasts 30
+   * seconds and `refreshBehaviour: 'reset'` means any later application renews
+   * the whole stack, so re-applying at the cap would spend 15 rage to replace a
+   * debuff that is already at full strength. The rotation re-applies only once
+   * it has actually fallen off, which against a 100 second fight happens once.
+   */
+  {
+    abilityId: 'sunder_armor_cast',
+    condition: (_context, _actor, target) =>
+      target !== undefined && target.auras.stacksOf(SUNDER_ARMOR.id) < SUNDER_ARMOR_MAX_STACKS,
+  },
+];
 
 /**
  * The strikes every warrior opens with, whatever it is holding.
@@ -183,6 +296,7 @@ const FILLERS: readonly PriorityEntry[] = [
  * auto attacks.
  */
 export const WARRIOR_MELEE_ROTATION: Rotation = new PriorityRotation('Warrior', [
+  ...OPENERS,
   ...CORE_STRIKES,
   ...FILLERS,
 ]);
@@ -195,7 +309,32 @@ export const WARRIOR_MELEE_ROTATION: Rotation = new PriorityRotation('Warrior', 
  */
 export const WARRIOR_SHIELD_ROTATION: Rotation = new PriorityRotation('Warrior (Shield)', [
   { abilityId: 'execute' },
+  /*
+   * SHIELD SLAM OUTRANKS THE OPENERS, which is the opposite of how the melee
+   * list is built, and it is measured rather than reasoned.
+   *
+   * A shield warrior is RAGE STARVED in a way a dual-wielder is not: one
+   * moderate weapon, no off-hand, and standing still it takes no damage to
+   * convert. Sunder Armor's five stacks cost 75 rage, and spending that first
+   * left Shield Slam cast TWICE in a hundred seconds against thirteen times
+   * when the target swings back. At 655 plus block value it is far too large a
+   * hit to starve.
+   *
+   * Measured over 250 fights a row, against the openers-first order:
+   *
+   *   standing        101.69 +/- 2.42  against  97.33 +/- 2.03   +4.36
+   *   target attacks  218.57 +/- 2.53  against 206.43 +/- 2.12  +12.14
+   *
+   * Both survive their intervals. Dropping Sunder entirely was also tried and
+   * is better standing (102.63) but worse when attacked (207.77), so this
+   * ordering wins on the case that matters and keeps the armour debuff.
+   *
+   * THE LESSON, which cost a wrong ordering to learn: the opener priorities
+   * were measured on a dual-wielder and applied to both lists. A rotation
+   * measured on one build is not measured for another.
+   */
   { abilityId: 'shield_slam' },
+  ...OPENERS,
   ...CORE_STRIKES.filter((entry) => entry.abilityId !== 'execute'),
   ...FILLERS,
 ]);

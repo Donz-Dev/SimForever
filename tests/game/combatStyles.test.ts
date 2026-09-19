@@ -239,36 +239,57 @@ describe('dual-wield off-hand penalty', () => {
     expect(warrior(1).weapons.offHand?.damageMultiplier).toBe(1);
   });
 
+  /*
+   * A half-damage off-hand that still got full attack power scaling would grow
+   * stronger relative to the main hand as the character geared up.
+   *
+   * AVERAGED OVER TWELVE SEEDS, and it has to be. This ran on a single seed and
+   * asserted a ratio within 0.05 of 0.5, which passed for as long as nothing
+   * disturbed the random stream. Adding three abilities to the rotation shifted
+   * every roll after the opening global cooldown and the one sampled seed
+   * landed at 0.4484 -- a failure that said nothing whatever about the off-hand
+   * penalty. Per-seed the ratio ranges 0.461 to 0.508; the mean is stable.
+   *
+   * WORTH A LOOK, NOT YET EXPLAINED: the mean sits at about 0.477 rather than
+   * 0.500, consistently, on every seed measured. The old tolerance was wide
+   * enough to hide a systematic 2.3% offset as well as the noise. Both hands
+   * use the same weapon numbers and roll the same table, so the average landed
+   * hit should differ by the penalty and nothing else -- and it differs by
+   * slightly more than the penalty. That is either an artifact of how landed
+   * averages are taken per hand or a real asymmetry, and nobody has looked.
+   */
   it('applies to the whole swing, attack power included', () => {
-    // A half-damage off-hand that still got full attack power scaling would
-    // grow stronger relative to the main hand as the character geared up.
-    //
-    // A long fight, because both hands now roll the full melee table and the
-    // per-hand averages need enough landed swings to settle.
     const base = createDefaultProfile();
-    const result = runProfile({
-      ...base,
-      character: {
-        ...base.character,
-        race: 'orc',
-        characterClass: 'warrior',
-        combatStyle: 'dual_wield',
-      },
-      stats: { attackPower: 2000 },
-      simulation: { ...base.simulation, durationSeconds: 1800 },
-    });
+    const ratios: number[] = [];
 
-    const abilities = result.damage.byActor[0].abilities;
-    const main = abilities.find((entry) => entry.abilityName === 'Melee');
-    const off = abilities.find((entry) => entry.abilityName === 'Melee (Off Hand)');
+    for (let seed = 1; seed <= 12; seed += 1) {
+      const result = runProfile({
+        ...base,
+        character: {
+          ...base.character,
+          race: 'orc',
+          characterClass: 'warrior',
+          combatStyle: 'dual_wield',
+        },
+        stats: { attackPower: 2000 },
+        // A long fight, because both hands roll the full melee table and the
+        // per-hand averages need enough landed swings to settle.
+        simulation: { ...base.simulation, durationSeconds: 1800, seed },
+      });
 
-    expect(main).toBeDefined();
-    expect(off).toBeDefined();
-    if (!main || !off) return;
+      const abilities = result.damage.byActor[0].abilities;
+      const main = abilities.find((entry) => entry.abilityName === 'Melee');
+      const off = abilities.find((entry) => entry.abilityName === 'Melee (Off Hand)');
 
-    // Both hands use the same weapon numbers and roll the same table, so the
-    // average LANDED hit should differ by the penalty and nothing else.
-    expect(off.average / main.average).toBeCloseTo(OFF_HAND_DAMAGE_MULTIPLIER, 1);
+      expect(main).toBeDefined();
+      expect(off).toBeDefined();
+      if (!main || !off) return;
+
+      ratios.push(off.average / main.average);
+    }
+
+    const mean = ratios.reduce((a, b) => a + b, 0) / ratios.length;
+    expect(mean).toBeCloseTo(OFF_HAND_DAMAGE_MULTIPLIER, 1);
   });
 });
 

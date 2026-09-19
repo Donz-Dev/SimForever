@@ -1,4 +1,4 @@
-import type { Ability, SimulationContext } from '../../engine';
+import type { Ability } from '../../engine';
 import { dealDamage, seconds } from '../../engine';
 import {
   BATTLE_SHOUT,
@@ -17,6 +17,9 @@ import {
   SHIELD_WALL,
   SUNDER_ARMOR,
   WARRIOR_STANCES,
+  DEATH_WISH,
+  LAST_STAND,
+  SWEEPING_STRIKES,
 } from '../auras/warrior';
 
 /**
@@ -96,6 +99,9 @@ export const MORTAL_STRIKE: Ability = {
  * column where the weapon-damage abilities say "Weapon Damage", so Bloodthirst
  * scales with attack power alone and ignores the weapon entirely.
  */
+/** "35% of your Attack Power", spell 23894 rank 4. */
+export const BLOODTHIRST_POWER_COEFFICIENT = 0.35;
+
 export const BLOODTHIRST: Ability = {
   id: 'bloodthirst',
   name: 'Bloodthirst',
@@ -110,8 +116,13 @@ export const BLOODTHIRST: Ability = {
       abilityId: ability.id,
       abilityName: ability.name,
       school: PHYSICAL,
-      baseAmount: 30,
-      powerCoefficient: 0.35,
+      /*
+       * NO FLAT COMPONENT. The spreadsheet gave "30 + 35% of attack power";
+       * Forever gives "damage equal to 35% of your Attack Power" and nothing
+       * else. The ruleset owner chose Forever, so the 30 is gone.
+       */
+      baseAmount: 0,
+      powerCoefficient: BLOODTHIRST_POWER_COEFFICIENT,
       attackTable: ability.attackTable,
       weaponSlot: MAIN_HAND,
     });
@@ -119,14 +130,18 @@ export const BLOODTHIRST: Ability = {
 };
 
 /**
- * Weapon damage with a 1.5 second cast time, 15 rage, no cooldown.
+ * Weapon damage plus 87, with a 1.5 second cast time, 15 rage, no cooldown.
  *
- * The sheet gives no base damage, so Slam is pure weapon damage.
+ * THE SPREADSHEET GIVES NO BASE DAMAGE AT ALL and Forever gives 87, so this was
+ * pure weapon damage and is not. See docs/warrior-ability-audit.md.
  *
  * UNSTATED: whether the cast pauses the swing timer, as it does in Classic.
  * It currently does not, which makes Slam slightly better than it should be if
  * Forever kept that behaviour.
  */
+/** "weapon damage plus 87", spell 11605 rank 5. The spreadsheet gave none. */
+export const SLAM_BASE_DAMAGE = 87;
+
 export const SLAM: Ability = {
   id: 'slam',
   name: 'Slam',
@@ -141,7 +156,7 @@ export const SLAM: Ability = {
       abilityId: ability.id,
       abilityName: ability.name,
       school: PHYSICAL,
-      baseAmount: 0,
+      baseAmount: SLAM_BASE_DAMAGE,
       weaponScaling: { slot: MAIN_HAND },
       attackTable: ability.attackTable,
       weaponSlot: MAIN_HAND,
@@ -165,6 +180,7 @@ export const WHIRLWIND: Ability = {
   cooldownMs: seconds(10),
   cost: { resource: 'rage', amount: 25 },
   attackTable: 'melee-special',
+  targets: { maxTargets: WHIRLWIND_MAX_TARGETS },
   onCast: ({ simulation, caster, ability }) => {
     const targets = simulation.enemiesOf(caster).slice(0, WHIRLWIND_MAX_TARGETS);
     for (const target of targets) {
@@ -251,28 +267,29 @@ export const OVERPOWER: Ability = {
 // ---------------------------------------------------------------------------
 
 /**
- * Damage stated as a range in the sheet.
+ * Revenge and Shield Slam damage, FROM FOREVER rather than the spreadsheet.
  *
- * Revenge is "81 to 99" and Shield Slam "421 to 439". Both are a flat plus or
- * minus 9 around their midpoint rather than a percentage band, which is why
- * these are kept as explicit bounds and rolled uniformly rather than converted
- * into the `damageVariance` fraction weapons use.
+ * The ability spreadsheet gives Revenge as "81 to 99" and Shield Slam as "421
+ * to 439". Forever's own spell data gives 153 and 655, both flat. The ruleset
+ * owner chose Forever for both -- see docs/warrior-ability-audit.md, which
+ * records the disagreement and the decision.
+ *
+ * THE RANGES ARE GONE, and that is a real change in shape and not only in
+ * magnitude. A spread of plus or minus nine around a midpoint contributed a
+ * little variance to every cast; a flat number contributes none. Any spread
+ * these abilities show now comes from the combat table alone.
+ *
+ * READ OFF THE EFFECT ROW, WHICH IS AN ASSUMPTION. Both tooltips hide their
+ * damage behind Forever's "(100% of Spell Power)" templating artifact, so these
+ * came from the spell page's base points: 154 and 656, less one. That -1 holds
+ * for the ten abilities whose tooltips state a number and can be checked, and
+ * cannot be checked for these two. If it is wrong they are each one point low.
  */
-export interface DamageRange {
-  readonly min: number;
-  readonly max: number;
-}
-
-export const REVENGE_DAMAGE: DamageRange = { min: 81, max: 99 };
-export const SHIELD_SLAM_DAMAGE: DamageRange = { min: 421, max: 439 };
-
-/** A uniform roll inside a stated damage range. */
-function rollRange(simulation: SimulationContext, range: DamageRange): number {
-  return simulation.rng.nextFloat(range.min, range.max);
-}
+export const REVENGE_DAMAGE = 153;
+export const SHIELD_SLAM_DAMAGE = 655;
 
 /**
- * "81 to 99" flat, 5 rage, 5 second cooldown, no scaling of any kind.
+ * 153 flat, 5 rage, 5 second cooldown, no scaling of any kind.
  *
  * Requires that the warrior recently blocked, parried or dodged — CONFIRMED by
  * the ruleset owner, not stated in the sheet. `REVENGE_READY` is applied by the
@@ -296,7 +313,7 @@ export const REVENGE: Ability = {
       abilityId: ability.id,
       abilityName: ability.name,
       school: PHYSICAL,
-      baseAmount: rollRange(simulation, REVENGE_DAMAGE),
+      baseAmount: REVENGE_DAMAGE,
       attackTable: ability.attackTable,
       weaponSlot: MAIN_HAND,
     });
@@ -305,14 +322,16 @@ export const REVENGE: Ability = {
 };
 
 /**
- * "421 to 439 + shield block value" flat, 20 rage, 6 second cooldown.
+ * 655 plus shield block value, 20 rage, 6 second cooldown.
  *
- * THE SHIELD BLOCK VALUE IS MISSING. No such stat exists in the engine and no
- * gear grants one, so Shield Slam currently deals only its stated range. Its
- * damage is therefore too low by whatever a shield would have contributed.
+ * 655 is Forever's figure against the spreadsheet's 421 to 439 -- a little over
+ * half again as much, and the single largest correction in this class. The
+ * rotation has called Shield Slam "undervalued here" since it was written, and
+ * 1H & Shield has been by some way the weakest build the simulator reports.
  *
  * Gated on carrying a shield rather than on a stance, which is how Classic
- * expresses it; the sheet says nothing either way.
+ * expresses it. Forever's Forms row is empty for Shield Slam, so it is usable
+ * in ANY stance -- the shield requirement is what restricts it.
  */
 export const SHIELD_SLAM: Ability = {
   id: 'shield_slam',
@@ -333,8 +352,7 @@ export const SHIELD_SLAM: Ability = {
        * from the shield in their off hand. A warrior with no shield cannot cast
        * this at all, so the term is never zero in practice.
        */
-      baseAmount:
-        rollRange(simulation, SHIELD_SLAM_DAMAGE) + caster.stats.get('blockValue'),
+      baseAmount: SHIELD_SLAM_DAMAGE + caster.stats.get('blockValue'),
       attackTable: ability.attackTable,
       weaponSlot: MAIN_HAND,
     });
@@ -380,6 +398,8 @@ export const THUNDER_CLAP: Ability = {
   cooldownMs: seconds(4),
   cost: { resource: 'rage', amount: 20 },
   attackTable: 'ranged-special',
+  // "all nearby enemies", with no stated cap. One, here.
+  targets: { maxTargets: Infinity },
   onCast: ({ simulation, caster, target, ability }) => {
     if (!target) return;
     dealDamage(simulation, {
@@ -531,6 +551,7 @@ export const CLEAVE: Ability = {
   name: 'Cleave',
   cost: { resource: 'rage', amount: 20 },
   attackTable: 'melee-special',
+  targets: { maxTargets: CLEAVE_MAX_TARGETS },
   onNextSwing: MAIN_HAND,
   onCast: ({ simulation, caster, ability }) => {
     const targets = simulation.enemiesOf(caster).slice(0, CLEAVE_MAX_TARGETS);
@@ -574,7 +595,7 @@ export const REND_ABILITY: Ability = {
   },
 };
 
-/** 15 rage, no cooldown. Effect values are placeholders; see `SUNDER_ARMOR`. */
+/** 15 rage, no cooldown. Removes 450 armor a stack to 5 stacks; see `SUNDER_ARMOR`. */
 export const SUNDER_ARMOR_ABILITY: Ability = {
   id: 'sunder_armor_cast',
   name: 'Sunder Armor',
@@ -590,7 +611,7 @@ export const SUNDER_ARMOR_ABILITY: Ability = {
   },
 };
 
-/** 10 rage, no cooldown. Effect values are placeholders. */
+/** 10 rage, no cooldown. Removes 210 attack power from the target for 45 sec. */
 export const DEMORALIZING_SHOUT_ABILITY: Ability = {
   id: 'demoralizing_shout_cast',
   name: 'Demoralizing Shout',
@@ -605,7 +626,7 @@ export const DEMORALIZING_SHOUT_ABILITY: Ability = {
 // Self buffs
 // ---------------------------------------------------------------------------
 
-/** 10 rage, no cooldown. The attack power figure is a placeholder. */
+/** 10 rage, no cooldown. Grants 140 attack power for 3 min. */
 export const BATTLE_SHOUT_ABILITY: Ability = {
   id: 'battle_shout_cast',
   name: 'Battle Shout',
@@ -616,7 +637,7 @@ export const BATTLE_SHOUT_ABILITY: Ability = {
   },
 };
 
-/** Free, 30 minute cooldown. Effect and duration are placeholders. */
+/** Free, 30 minute cooldown. 100 points of crit for 15 sec, at +20% damage taken. */
 export const RECKLESSNESS_ABILITY: Ability = {
   id: 'recklessness_cast',
   name: 'Recklessness',
@@ -627,7 +648,14 @@ export const RECKLESSNESS_ABILITY: Ability = {
   },
 };
 
-/** Free, 30 second cooldown. Effect and duration are placeholders. */
+/**
+ * Free, 30 second cooldown, and STILL INERT.
+ *
+ * The one ability Forever's own spell data does not answer: its tooltip says it
+ * generates "extra rage when taking damage" and names no number, and its other
+ * half is immunity to Fear and Incapacitate, which the engine has no notion of.
+ * Not a gap in the capture -- a gap in the source.
+ */
 export const BERSERKER_RAGE_ABILITY: Ability = {
   id: 'berserker_rage_cast',
   name: 'Berserker Rage',
@@ -658,7 +686,7 @@ export const BLOODRAGE_ABILITY: Ability = {
   },
 };
 
-/** Free, 30 minute cooldown. Effect and duration are placeholders. */
+/** Free, 30 minute cooldown. Takes 60% off damage taken for 12 sec. */
 export const SHIELD_WALL_ABILITY: Ability = {
   id: 'shield_wall_cast',
   name: 'Shield Wall',
@@ -669,7 +697,13 @@ export const SHIELD_WALL_ABILITY: Ability = {
   },
 };
 
-/** 10 rage, 5 second cooldown. Effect and duration are placeholders. */
+/**
+ * 10 rage, 5 second cooldown. Forever grants +75% block for 7 sec, limited to
+ * TWO attacks -- and that per-attack charge limit is the part the aura system
+ * cannot express yet, so the aura carries no block modifier and this stays
+ * inert. Granting +75% block for a full 7 seconds with no charge cap would
+ * overstate it badly.
+ */
 export const SHIELD_BLOCK_ABILITY: Ability = {
   id: 'shield_block_cast',
   name: 'Shield Block',
@@ -678,6 +712,65 @@ export const SHIELD_BLOCK_ABILITY: Ability = {
   requiresTarget: false,
   onCast: ({ simulation, caster }) => {
     simulation.applyAura(caster, SHIELD_BLOCK, caster.id);
+  },
+};
+
+// ---------------------------------------------------------------------------
+// Granted by talents. Not in the ability spreadsheet; from Forever's spell data
+// ---------------------------------------------------------------------------
+
+/**
+ * 10 rage, 3 minute cooldown, any stance.
+ *
+ * +20% damage done and +5% damage taken for 30 seconds. A straightforward
+ * damage cooldown and, unlike the other four talent grants, fully expressible.
+ */
+export const DEATH_WISH_ABILITY: Ability = {
+  id: 'death_wish',
+  name: 'Death Wish',
+  cooldownMs: seconds(180),
+  cost: { resource: 'rage', amount: 10 },
+  requiresTarget: false,
+  onCast: ({ simulation, caster }) => {
+    simulation.applyAura(caster, DEATH_WISH, caster.id);
+  },
+};
+
+/**
+ * Free, 3 minute cooldown, any stance.
+ *
+ * Raises maximum health 30% for 20 seconds and takes it back afterwards. It
+ * changes no outcome here, because the player cannot drop below one health --
+ * see `LAST_STAND` for why it is implemented anyway.
+ */
+export const LAST_STAND_ABILITY: Ability = {
+  id: 'last_stand',
+  name: 'Last Stand',
+  cooldownMs: seconds(180),
+  requiresTarget: false,
+  onCast: ({ simulation, caster }) => {
+    simulation.applyAura(caster, LAST_STAND, caster.id);
+  },
+};
+
+/**
+ * 30 rage, 30 second cooldown, Battle Stance.
+ *
+ * INERT AGAINST ONE TARGET, which is every encounter this simulator has. Its
+ * only effect is that the next five melee attacks strike an additional
+ * opponent, and there is no additional opponent. Defined so the talent grants
+ * something real; kept out of every rotation so it does not burn rage for
+ * nothing.
+ */
+export const SWEEPING_STRIKES_ABILITY: Ability = {
+  id: 'sweeping_strikes',
+  name: 'Sweeping Strikes',
+  cooldownMs: seconds(30),
+  cost: { resource: 'rage', amount: 30 },
+  requiresTarget: false,
+  targets: { maxTargets: 2 },
+  onCast: ({ simulation, caster }) => {
+    simulation.applyAura(caster, SWEEPING_STRIKES, caster.id);
   },
 };
 
@@ -792,6 +885,9 @@ export const WARRIOR_ABILITIES: readonly Ability[] = [
   BATTLE_STANCE_ABILITY,
   DEFENSIVE_STANCE_ABILITY,
   BERSERKER_STANCE_ABILITY,
+  DEATH_WISH_ABILITY,
+  LAST_STAND_ABILITY,
+  SWEEPING_STRIKES_ABILITY,
 ];
 
 /** Look one up by id, for tests and for the rotation. */

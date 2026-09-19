@@ -72,10 +72,12 @@ describe('Shield Slam', () => {
     expect(slam).toBeDefined();
     expect(warrior.stats.effective.blockValue).toBe(SHIELD.blockValue);
 
-    const min = SHIELD_SLAM_DAMAGE.min + SHIELD.blockValue;
-    const max = SHIELD_SLAM_DAMAGE.max + SHIELD.blockValue;
-    expect(min).toBe(448);
-    expect(max).toBe(466);
+    /*
+     * 655 from Forever plus the shield's own block value. The spreadsheet's
+     * "421 to 439" was replaced by the ruleset owner's decision, and with it
+     * the range: Shield Slam is flat now, so there is one number and not two.
+     */
+    expect(SHIELD_SLAM_DAMAGE + SHIELD.blockValue).toBe(682);
   });
 });
 

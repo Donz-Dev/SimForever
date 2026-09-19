@@ -1,4 +1,4 @@
-import type { AuraDefinition } from '../../engine';
+import type { AuraDefinition, SimulationContext } from '../../engine';
 import { dealDamage, flat, seconds } from '../../engine';
 
 /**
@@ -9,20 +9,35 @@ import { dealDamage, flat, seconds } from '../../engine';
  * not say.
  *
  * ----------------------------------------------------------------------------
- * MOST OF THIS FILE IS PLACEHOLDER DATA.
+ * WHERE THE MAGNITUDES COME FROM
  *
  * The spreadsheet gives a cost, a cooldown and an attack table for every buff
  * and debuff, and NOTHING ELSE. No magnitudes, no durations, no stack counts.
- * Nine of its twenty-six rows are like this.
+ * Ten of its rows are like this, and for months every one of them was a
+ * `PLACEHOLDER_` constant holding zero -- castable, logged, and inert.
  *
- * So every `PLACEHOLDER_*` constant below is INVENTED. They exist so the
- * abilities can be defined, cast and seen in a combat log rather than silently
- * missing, and so that the rotation has something to call. They must not be
- * read as Forever values, and no conclusion about a warrior's damage should be
- * drawn while any of them are still in use.
+ * They are not placeholders any more. `nether.wowhead.com/forever/tooltip/spell/`
+ * serves Forever's own spell data, the same way the item endpoint already
+ * served Forever items, and `src/data/abilities/forever-warrior.json` holds the
+ * captured tooltip for all eleven. Each constant below names the spell id it
+ * was read from, and `tests/game/warriorAbilityValues.test.ts` asserts every one
+ * against the stored text so a transcription typo fails.
  *
- * Each is a single named constant so that replacing it with a real number is a
- * one-line change with no arithmetic.
+ * THESE ARE NOT CLASSIC VALUES, and the difference is not cosmetic: Forever's
+ * Demoralizing Shout removes 210 attack power for 45 seconds where Classic
+ * removes 146 for 30. The standing decision to borrow from Classic was never
+ * exercised, and would have been 30% wrong on that ability alone.
+ *
+ * WHAT IS STILL PLACEHOLDER, and why each one is:
+ *
+ *   - `PLACEHOLDER_BERSERKER_RAGE_*` -- Forever's own tooltip gives no
+ *     magnitude. "Generating extra rage when taking damage", no number.
+ *   - the Overpower and Revenge windows -- reactive windows are not a spell and
+ *     have no tooltip; the 5 second figure is still assumed.
+ *
+ * Everything else below is sourced. Battle Stance carries no modifiers because
+ * Forever says it has none ("A balanced combat stance"), which the engine had
+ * assumed and is now confirmed.
  * ----------------------------------------------------------------------------
  */
 
@@ -89,29 +104,28 @@ export const REND: AuraDefinition = {
 // ---------------------------------------------------------------------------
 
 /**
- * PLACEHOLDER. The sheet gives Sunder Armor a 15 rage cost and no cooldown, and
- * states neither how much armor a stack removes, how many stacks it reaches,
- * nor how long it lasts.
+ * Spell 11597, rank 5: "reducing it by 450 per Sunder Armor ... Can be applied
+ * up to 5 times. Lasts 30 sec."
  *
- * Armor reduction feeds straight into every physical damage event, so a wrong
- * value here moves every number in the simulation.
+ * Armor reduction feeds straight into every physical damage event, so this is
+ * the single most load-bearing number in the file. The stack count and duration
+ * were already right; only the magnitude was missing.
  */
-export const PLACEHOLDER_SUNDER_ARMOR_PER_STACK = 0;
-export const PLACEHOLDER_SUNDER_ARMOR_MAX_STACKS = 5;
-export const PLACEHOLDER_SUNDER_ARMOR_DURATION_MS = seconds(30);
+export const SUNDER_ARMOR_PER_STACK = 450;
+export const SUNDER_ARMOR_MAX_STACKS = 5;
+export const SUNDER_ARMOR_DURATION_MS = seconds(30);
 
 export const SUNDER_ARMOR: AuraDefinition = {
   id: 'sunder_armor',
   name: 'Sunder Armor',
-  durationMs: PLACEHOLDER_SUNDER_ARMOR_DURATION_MS,
-  maxStacks: PLACEHOLDER_SUNDER_ARMOR_MAX_STACKS,
+  durationMs: SUNDER_ARMOR_DURATION_MS,
+  maxStacks: SUNDER_ARMOR_MAX_STACKS,
   isDebuff: true,
   refreshBehaviour: 'reset',
   modifiersScaleWithStacks: true,
-  // Zero until the real figure arrives: an invented armor reduction would
-  // quietly inflate every physical hit in the fight. A visibly inert debuff is
-  // the honest failure mode.
-  statModifiers: [flat('armor', -PLACEHOLDER_SUNDER_ARMOR_PER_STACK)],
+  // 450 per stack to a maximum of 5 is 2250 armor off a 3731-armor boss, which
+  // is most of the way to halving its mitigation. Sunder is not a small effect.
+  statModifiers: [flat('armor', -SUNDER_ARMOR_PER_STACK)],
 };
 
 // ---------------------------------------------------------------------------
@@ -119,32 +133,50 @@ export const SUNDER_ARMOR: AuraDefinition = {
 // ---------------------------------------------------------------------------
 
 /**
- * PLACEHOLDER. Battle Shout costs 10 rage with no cooldown; the sheet gives no
- * attack power figure, no duration and no radius.
+ * Spell 25289, rank 7: "increasing the melee attack power of all party members
+ * within 20 yards by 140. Lasts 3 min."
+ *
+ * The rank matters: rank 1 grants 12. The simulator runs at level 60 only, so
+ * rank 7 is the only one that can apply.
+ *
+ * The 20 yard radius and the party are both dropped -- the engine simulates one
+ * character, so a party-wide buff is a self-buff here. That understates Battle
+ * Shout's real worth to a raid by a factor of the raid, and is the honest
+ * reading for a single-character simulator.
+ *
+ * The duration was PLACEHOLDER 120s and is really 180s. At three minutes it
+ * outlasts most fights, so it is cast once and never refreshed.
  */
-export const PLACEHOLDER_BATTLE_SHOUT_ATTACK_POWER = 0;
-export const PLACEHOLDER_BATTLE_SHOUT_DURATION_MS = seconds(120);
+export const BATTLE_SHOUT_ATTACK_POWER = 140;
+export const BATTLE_SHOUT_DURATION_MS = seconds(180);
 
 export const BATTLE_SHOUT: AuraDefinition = {
   id: 'battle_shout',
   name: 'Battle Shout',
-  durationMs: PLACEHOLDER_BATTLE_SHOUT_DURATION_MS,
-  statModifiers: [flat('attackPower', PLACEHOLDER_BATTLE_SHOUT_ATTACK_POWER)],
+  durationMs: BATTLE_SHOUT_DURATION_MS,
+  statModifiers: [flat('attackPower', BATTLE_SHOUT_ATTACK_POWER)],
 };
 
 /**
- * PLACEHOLDER. Demoralizing Shout costs 10 rage with no cooldown; the sheet
- * gives no attack power reduction and no duration.
+ * Spell 11556, rank 5: "Reduces the melee attack power of all enemies within 10
+ * yards by 210 for 45 sec."
+ *
+ * CLASSIC SAYS 146 FOR 30 SECONDS. This is the ability that most justifies
+ * having fetched Forever's own numbers rather than borrowing: the standing
+ * decision would have made it 30% too weak and a third too short.
+ *
+ * Only useful when the target attacks back, since it lowers the TARGET's damage
+ * and changes nothing a standing dummy does.
  */
-export const PLACEHOLDER_DEMORALIZING_SHOUT_ATTACK_POWER = 0;
-export const PLACEHOLDER_DEMORALIZING_SHOUT_DURATION_MS = seconds(30);
+export const DEMORALIZING_SHOUT_ATTACK_POWER = 210;
+export const DEMORALIZING_SHOUT_DURATION_MS = seconds(45);
 
 export const DEMORALIZING_SHOUT: AuraDefinition = {
   id: 'demoralizing_shout',
   name: 'Demoralizing Shout',
-  durationMs: PLACEHOLDER_DEMORALIZING_SHOUT_DURATION_MS,
+  durationMs: DEMORALIZING_SHOUT_DURATION_MS,
   isDebuff: true,
-  statModifiers: [flat('attackPower', -PLACEHOLDER_DEMORALIZING_SHOUT_ATTACK_POWER)],
+  statModifiers: [flat('attackPower', -DEMORALIZING_SHOUT_ATTACK_POWER)],
 };
 
 // ---------------------------------------------------------------------------
@@ -152,20 +184,32 @@ export const DEMORALIZING_SHOUT: AuraDefinition = {
 // ---------------------------------------------------------------------------
 
 /**
- * PLACEHOLDER. Recklessness has a 30 minute cooldown and costs nothing. The
- * sheet says nothing about what it does or how long it lasts.
+ * Spell 1719: "The warrior will gain 100% increased critical strike chance and
+ * will be immune to Fear effects for the next 15 sec, but all damage taken is
+ * increased by 20%."
  *
- * A 30 minute cooldown will never come up twice in a raid-length fight, so the
+ * A 30 minute cooldown never comes up twice in a raid-length fight, so the
  * duration matters far more than the cooldown does.
+ *
+ * 100 PERCENTAGE POINTS, not a 100% relative increase. Crit chance is held in
+ * points everywhere in this engine, and the reading that makes Recklessness the
+ * ability it is known to be is "every attack crits". The combat table clamps
+ * anything above the space left by miss and dodge, so the excess is not wasted
+ * arithmetic -- it is what guarantees the clamp.
+ *
+ * The fear immunity is dropped: the engine has no fear. The damage taken
+ * penalty is NOT dropped, because something attacks the player now.
  */
-export const PLACEHOLDER_RECKLESSNESS_CRIT_BONUS = 0;
-export const PLACEHOLDER_RECKLESSNESS_DURATION_MS = seconds(15);
+export const RECKLESSNESS_CRIT_BONUS = 100;
+export const RECKLESSNESS_DAMAGE_TAKEN_MULTIPLIER = 1.2;
+export const RECKLESSNESS_DURATION_MS = seconds(15);
 
 export const RECKLESSNESS: AuraDefinition = {
   id: 'recklessness',
   name: 'Recklessness',
-  durationMs: PLACEHOLDER_RECKLESSNESS_DURATION_MS,
-  statModifiers: [flat('critChance', PLACEHOLDER_RECKLESSNESS_CRIT_BONUS)],
+  durationMs: RECKLESSNESS_DURATION_MS,
+  damageTakenMultiplier: RECKLESSNESS_DAMAGE_TAKEN_MULTIPLIER,
+  statModifiers: [flat('critChance', RECKLESSNESS_CRIT_BONUS)],
 };
 
 /**
@@ -212,14 +256,20 @@ export const BLOODRAGE: AuraDefinition = {
  * real stat with a real outcome behind it after this was written, so the aura
  * has to gain the modifier before any value can reach it.
  */
-export const PLACEHOLDER_SHIELD_WALL_DAMAGE_TAKEN_MULTIPLIER = 1;
-export const PLACEHOLDER_SHIELD_WALL_DURATION_MS = seconds(10);
+/*
+ * Spell 871: "Reduces the damage taken from all attacks by 60% for 12 sec."
+ *
+ * CLASSIC SAYS 75% FOR 10 SECONDS on a 30 minute cooldown; Forever is weaker,
+ * longer, and on a 15 minute cooldown. 60% taken off is a multiplier of 0.40.
+ */
+export const SHIELD_WALL_DAMAGE_TAKEN_MULTIPLIER = 0.4;
+export const SHIELD_WALL_DURATION_MS = seconds(12);
 
 export const SHIELD_WALL: AuraDefinition = {
   id: 'shield_wall',
   name: 'Shield Wall',
-  durationMs: PLACEHOLDER_SHIELD_WALL_DURATION_MS,
-  damageTakenMultiplier: PLACEHOLDER_SHIELD_WALL_DAMAGE_TAKEN_MULTIPLIER,
+  durationMs: SHIELD_WALL_DURATION_MS,
+  damageTakenMultiplier: SHIELD_WALL_DAMAGE_TAKEN_MULTIPLIER,
 };
 
 export const PLACEHOLDER_SHIELD_BLOCK_DURATION_MS = seconds(5);
@@ -248,10 +298,22 @@ export const SHIELD_BLOCK: AuraDefinition = {
  * The gating — which abilities require which stance — is deliberately NOT
  * expressed yet, and is an open question with the ruleset owner.
  */
-export const PLACEHOLDER_DEFENSIVE_STANCE_DAMAGE_DONE = 1;
-export const PLACEHOLDER_DEFENSIVE_STANCE_DAMAGE_TAKEN = 1;
-export const PLACEHOLDER_BERSERKER_STANCE_DAMAGE_TAKEN = 1;
-export const PLACEHOLDER_BERSERKER_STANCE_CRIT_BONUS = 0;
+/*
+ * Spell 71, Defensive Stance: "Decreases damage taken by 10% and damage caused
+ * by 10%. Increases all threat generated by 30%." The threat clause is dropped;
+ * the engine does not track threat.
+ *
+ * Spell 2458, Berserker Stance: "Critical strike chance increased by 3% and all
+ * damage taken is increased by 10%."
+ *
+ * Spell 2457, Battle Stance: "A balanced combat stance." That is the entire
+ * tooltip. It really does nothing, which this file previously ASSUMED and can
+ * now state.
+ */
+export const DEFENSIVE_STANCE_DAMAGE_DONE = 0.9;
+export const DEFENSIVE_STANCE_DAMAGE_TAKEN = 0.9;
+export const BERSERKER_STANCE_DAMAGE_TAKEN = 1.1;
+export const BERSERKER_STANCE_CRIT_BONUS = 3;
 
 /** A stance lasts until another replaces it. */
 const STANCE_DURATION_MS = 0;
@@ -266,16 +328,16 @@ export const DEFENSIVE_STANCE: AuraDefinition = {
   id: 'defensive_stance',
   name: 'Defensive Stance',
   durationMs: STANCE_DURATION_MS,
-  damageDoneMultiplier: PLACEHOLDER_DEFENSIVE_STANCE_DAMAGE_DONE,
-  damageTakenMultiplier: PLACEHOLDER_DEFENSIVE_STANCE_DAMAGE_TAKEN,
+  damageDoneMultiplier: DEFENSIVE_STANCE_DAMAGE_DONE,
+  damageTakenMultiplier: DEFENSIVE_STANCE_DAMAGE_TAKEN,
 };
 
 export const BERSERKER_STANCE: AuraDefinition = {
   id: 'berserker_stance',
   name: 'Berserker Stance',
   durationMs: STANCE_DURATION_MS,
-  damageTakenMultiplier: PLACEHOLDER_BERSERKER_STANCE_DAMAGE_TAKEN,
-  statModifiers: [flat('critChance', PLACEHOLDER_BERSERKER_STANCE_CRIT_BONUS)],
+  damageTakenMultiplier: BERSERKER_STANCE_DAMAGE_TAKEN,
+  statModifiers: [flat('critChance', BERSERKER_STANCE_CRIT_BONUS)],
 };
 
 /** Every stance, so that applying one can clear the others. */
@@ -323,6 +385,113 @@ export const REVENGE_READY: AuraDefinition = {
   refreshBehaviour: 'reset',
 };
 
+// ---------------------------------------------------------------------------
+// Granted by talents. Absent from the ability spreadsheet; values from Forever.
+// ---------------------------------------------------------------------------
+
+/**
+ * The combatant an aura is sitting on.
+ *
+ * `AuraInstance` carries a `targetId` rather than the combatant, so that an
+ * aura cannot keep a dead reference alive. Everything that needs the actor
+ * looks it up.
+ */
+function combatantIn(context: SimulationContext, id: string) {
+  return context.combatants.find((actor) => actor.id === id);
+}
+
+/*
+ * Spell 12328, Death Wish: "increases your Physical damage done by 20% and
+ * makes you immune to Fear effects, but increases all damage you take by 5%.
+ * Lasts 30 sec." 10 rage, 3 minute cooldown, usable in any stance.
+ *
+ * THE "PHYSICAL" QUALIFIER IS NOT EXPRESSED, and for a warrior it does not
+ * matter: `damageDoneMultiplier` is school-agnostic and every point of warrior
+ * damage in this simulator is physical. It would matter for a class with a
+ * magic school, and the day an aura needs to scale one school and not another
+ * is the day this needs a `damageDoneBySchool`.
+ *
+ * The fear immunity is dropped; the engine has no fear.
+ */
+export const DEATH_WISH_DAMAGE_DONE = 1.2;
+export const DEATH_WISH_DAMAGE_TAKEN = 1.05;
+export const DEATH_WISH_DURATION_MS = seconds(30);
+
+export const DEATH_WISH: AuraDefinition = {
+  id: 'death_wish',
+  name: 'Death Wish',
+  durationMs: DEATH_WISH_DURATION_MS,
+  damageDoneMultiplier: DEATH_WISH_DAMAGE_DONE,
+  damageTakenMultiplier: DEATH_WISH_DAMAGE_TAKEN,
+};
+
+/*
+ * Spell 12975, Last Stand: "temporarily grants you 30% of your maximum health
+ * for 20 sec. After the effect expires, the health is lost." Free, 3 minute
+ * cooldown, any stance.
+ *
+ * MODELLED HONESTLY AND WORTH ALMOST NOTHING HERE. It raises the maximum and
+ * grants the same amount as current health, then takes both back on expiry --
+ * which is what "the health is lost" means, and is why it is a survival
+ * cooldown rather than a heal.
+ *
+ * The player in this simulator CANNOT DROP BELOW ONE HEALTH, so extra health
+ * changes no outcome: nothing dies, and no analyzer reports survival. It is
+ * implemented because it is fully expressible and because a talent that grants
+ * an ability should grant a real one -- not because it will move a number.
+ * Anything reading Last Stand's worth from this simulator is reading the wrong
+ * simulator.
+ */
+export const LAST_STAND_HEALTH_FRACTION = 0.3;
+export const LAST_STAND_DURATION_MS = seconds(20);
+
+export const LAST_STAND: AuraDefinition = {
+  id: 'last_stand',
+  name: 'Last Stand',
+  durationMs: LAST_STAND_DURATION_MS,
+  onApply: (context, aura) => {
+    const health = combatantIn(context, aura.targetId)?.health;
+    if (!health) return;
+    const granted = Math.floor(health.maximum * LAST_STAND_HEALTH_FRACTION);
+    health.setMaximum(health.maximum + granted);
+    health.gain(granted);
+  },
+  onExpire: (context, aura) => {
+    const health = combatantIn(context, aura.targetId)?.health;
+    if (!health) return;
+    const granted = Math.floor(
+      (health.maximum / (1 + LAST_STAND_HEALTH_FRACTION)) * LAST_STAND_HEALTH_FRACTION,
+    );
+    health.setMaximum(health.maximum - granted);
+    // "The health is lost": the pool shrinks and current follows it down, which
+    // is what can kill a character the instant Last Stand ends.
+    health.set(Math.min(health.current, health.maximum));
+  },
+};
+
+/*
+ * Spell 12292, Sweeping Strikes: "Your next 5 melee attacks strike an
+ * additional nearby opponent." 30 rage, 30 second cooldown, Battle Stance.
+ *
+ * DOES NOTHING AGAINST ONE TARGET, and that is the whole ability. Its entire
+ * effect is the additional opponent, and an encounter here has exactly one
+ * enemy -- so this is 30 rage and a global cooldown for no damage whatever.
+ *
+ * It is defined rather than omitted so that the talent grants something real
+ * and so the charge count is written down. It is deliberately absent from every
+ * rotation, for the same reason the inert buffs were. See
+ * `engine/combat/targeting.ts`.
+ */
+export const SWEEPING_STRIKES_CHARGES = 5;
+export const SWEEPING_STRIKES_DURATION_MS = seconds(30);
+
+export const SWEEPING_STRIKES: AuraDefinition = {
+  id: 'sweeping_strikes',
+  name: 'Sweeping Strikes',
+  durationMs: SWEEPING_STRIKES_DURATION_MS,
+  maxStacks: SWEEPING_STRIKES_CHARGES,
+};
+
 /** Unused today; kept so the import surface matches the other modules. */
 export const WARRIOR_AURAS: readonly AuraDefinition[] = [
   REND,
@@ -339,4 +508,7 @@ export const WARRIOR_AURAS: readonly AuraDefinition[] = [
   BERSERKER_STANCE,
   OVERPOWER_READY,
   REVENGE_READY,
+  DEATH_WISH,
+  LAST_STAND,
+  SWEEPING_STRIKES,
 ];
