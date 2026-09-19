@@ -99,6 +99,9 @@ describe('table shapes', () => {
       'miss',
       'dodge',
       'parry',
+      // Block sits after avoidance and before crush: a blow that was going to
+      // be avoided is avoided outright, and everything left can be blocked.
+      'block',
       'crush',
       'crit',
       'hit',

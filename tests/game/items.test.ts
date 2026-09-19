@@ -59,7 +59,7 @@ describe('the item data', () => {
    * it. Transcribed by hand from the tooltip at
    * https://www.wowhead.com/forever/item=19321.
    */
-  it('has the Forever shield, with its block stats visibly unmodelled', () => {
+  it('has the Forever shield, with its block stats modelled', () => {
     const shield = ITEMS_BY_ID.get(19321);
     expect(shield).toBeDefined();
     if (!shield) return;
@@ -71,14 +71,14 @@ describe('the item data', () => {
     expect(shield.source).toContain('/forever/');
 
     /*
-     * "44 Block" and "+27 Block Value" have nowhere to go: the engine has no
-     * block outcome and no block value stat. They must be VISIBLE rather than
-     * dropped, which is what puts them in the Gear panel's "Equipped but not
-     * simulated" list.
+     * "44 Block" is a block CHANCE in percentage points and "+27 Block Value"
+     * is the flat damage a block removes. Both were unmodelled until the engine
+     * gained a block outcome; a test asserting they were unmodelled is now the
+     * thing that would be wrong.
      */
-    const unmodelled = shield.unmodelled.map((effect) => effect.text);
-    expect(unmodelled).toContain('44 Block');
-    expect(unmodelled).toContain('+27 Block Value');
+    expect(shield.stats.blockChance).toBe(44);
+    expect(shield.stats.blockValue).toBe(27);
+    expect(shield.unmodelled.map((effect) => effect.text)).toEqual([]);
   });
 
   it.each(MIGHT_SET)('%s: %s has the stated strength, stamina and armor', (id, name, str, sta, armor) => {

@@ -327,8 +327,13 @@ export const SHIELD_SLAM: Ability = {
       abilityId: ability.id,
       abilityName: ability.name,
       school: PHYSICAL,
-      // MISSING: + shield block value.
-      baseAmount: rollRange(simulation, SHIELD_SLAM_DAMAGE),
+      /*
+       * "increased by your Block Value", which is a stat the wielder carries
+       * from the shield in their off hand. A warrior with no shield cannot cast
+       * this at all, so the term is never zero in practice.
+       */
+      baseAmount:
+        rollRange(simulation, SHIELD_SLAM_DAMAGE) + caster.stats.get('blockValue'),
       attackTable: ability.attackTable,
       weaponSlot: MAIN_HAND,
     });

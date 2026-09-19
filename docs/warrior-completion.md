@@ -19,6 +19,7 @@ Measured with the full starting set, 12 seeds x 6 iterations, level 63 dummy:
 | Dual-wield, a full Arms build | 160.60 |
 | Two-hander, no talents | 119.27 |
 | 1H & Shield, no talents | 77.37 |
+| 1H & Shield, Shield Slam | 82.67 |
 
 > **HANDOVER's "roughly 140 DPS" is stale.** It was measured when every warrior
 > was handed all three 31-point capstones at once. Gated, an untalented
@@ -29,7 +30,7 @@ Measured with the full starting set, 12 seeds x 6 iterations, level 63 dummy:
 | Abilities defined | 27 | from the ability spreadsheet |
 | Abilities the rotation ever casts | **9** | the other 18 are inert, situational, or unreachable |
 | Abilities that are castable but do NOTHING | **9** | 21 `PLACEHOLDER_*` constants behind them |
-| Talents fully modelled | 25 of 53 | 7 partly, 21 inert |
+| Talents fully modelled | 25 of 53 | 8 partly, 20 inert |
 | Items | 19 | one armour set, three weapons, one bow, one shield |
 | Of those, actual FOREVER items | **1** | The Immovable Object. The rest are Classic stand-ins |
 | Armour enchants | **0** | only Crusader, for weapons |
@@ -128,17 +129,28 @@ The Mortal Strike rage reserve (30) is a heuristic from the same era.
 hundred iterations with the starting set, and the comment records the new
 numbers. This is cheap and may be worth several DPS in either direction.
 
-### 2.3 A block outcome and a block value stat
+### 2.3 ~~A block outcome and a block value stat~~ — DONE
 
-One stat and one table entry, and it fixes **four** things:
+The engine has a `block` outcome and `blockChance` / `blockValue` stats, and all
+four things it was holding up now work:
 
-- Shield Slam is missing its "+ shield block value" component
-- Revenge triggers on block in Classic, so it catches two thirds of what it should
-- Shield Specialization (talent) is entirely unmodelled
-- The 1H & Shield style has no defensive identity at all
+- **Shield Slam** adds the wielder's block value, as the ruleset states. Worth
+  **5.3 DPS** on a 1H & Shield warrior: 77.37 to 82.67.
+- **Revenge** triggers on a block as well as a dodge and a parry — all three of
+  the ways Classic opens its window, instead of two thirds of them.
+- **Shield Specialization** is modelled, both halves: block chance from its
+  first value and a rage proc from its second.
+- **The Immovable Object's** "44 Block" and "+27 Block Value" are real stats
+  rather than entries in "Equipped but not simulated".
 
-**Done when:** `melee-received` can produce `block`, a block value stat exists,
-and Revenge lists it among its trigger outcomes.
+A block LANDS and is reduced by a FLAT amount, which is why it is not in
+`AVOIDED_OUTCOMES` and why its reduction happens in the damage pipeline rather
+than as a table multiplier. That also makes block value worth proportionally
+more against a small hit than a large one, which is the behaviour that makes it
+good against fast attackers — asserted directly.
+
+**Still unreachable:** Shield Specialization and Revenge both need the warrior to
+be attacked. See 2.4.
 
 ### 2.4 Make something attack the player
 

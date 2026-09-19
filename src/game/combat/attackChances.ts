@@ -272,6 +272,9 @@ function buildChances(
          */
         dodge: toRollUnits(target.stats.get('dodgeChance')),
         parry: toRollUnits(target.stats.get('parryChance')),
+        // Block comes from the shield, so a character without one has 0 here
+        // and the outcome simply never comes up.
+        block: toRollUnits(target.stats.get('blockChance')),
         crush: COMBAT_CONSTANTS.bossCrush,
         crit: COMBAT_CONSTANTS.bossCrit,
         crushMultiplier: COMBAT_CONSTANTS.bossCrushMultiplier,
