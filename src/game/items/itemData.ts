@@ -102,6 +102,21 @@ interface EffectRule {
 
 const EFFECT_RULES: readonly EffectRule[] = [
   {
+    // A shield's "44 Block" -- its block CHANCE, in percentage points.
+    pattern: /^(\d+) Block$/,
+    apply: (value, into) => {
+      into.blockChance = (into.blockChance ?? 0) + value;
+    },
+  },
+  {
+    // A shield's "+27 Block Value" -- flat damage a block removes, and the
+    // amount Shield Slam adds to its own damage.
+    pattern: /^\+(\d+) Block Value$/,
+    apply: (value, into) => {
+      into.blockValue = (into.blockValue ?? 0) + value;
+    },
+  },
+  {
     // "+20 Attack Power."
     pattern: /^\+(\d+) Attack Power\.?$/,
     apply: (value, into) => {

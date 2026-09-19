@@ -47,6 +47,7 @@ export type TalentEffect =
       readonly stat: StatName;
       readonly operation: StatModifierOperation;
       readonly scale?: number;
+      readonly valueIndex?: number;
     }
 
   /** Reduces an ability's resource cost by the talent's value. */
@@ -112,7 +113,11 @@ export type TalentEffect =
    * the design allows for, kept narrow: the TABLE stays declarative and says
    * WHICH reaction, while the registry says what it does.
    */
-  | { readonly kind: 'reaction'; readonly reactionId: string }
+  | {
+      readonly kind: 'reaction';
+      readonly reactionId: string;
+      readonly valueIndex?: number;
+    }
 
   /**
    * A named number handed to ONE ability, read by that ability's own `onCast`.
@@ -190,6 +195,14 @@ export interface WeaponRequirement {
   /** Whether the weapon must be two-handed. */
   readonly twoHanded?: boolean;
 }
+
+/**
+ * Which of a talent's values an effect reads, when the talent varies several.
+ *
+ * Defaults to the first. Shield Specialization's block chance is value 0 and
+ * its rage proc chance is value 1, and an effect that took the wrong one would
+ * be quietly wrong rather than visibly broken.
+ */
 
 /** Every effect a talent has. Most have one; some have several. */
 export type TalentEffects = readonly TalentEffect[];

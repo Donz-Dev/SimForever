@@ -42,6 +42,17 @@ export const STAT_NAMES = [
    * grant the percentage directly.
    */
   'parryChance',
+  /** Chance to BLOCK an incoming attack with a shield, in percentage points. */
+  'blockChance',
+  /**
+   * Flat damage a block removes.
+   *
+   * Not a percentage and not a chance: a blocked blow lands and is reduced by
+   * this many points. It is also read by Shield Slam, whose damage the ruleset
+   * increases by the wielder's block value -- so it is an OFFENSIVE stat for a
+   * warrior with a shield as much as a defensive one.
+   */
+  'blockValue',
   /**
    * Chance to hit, in percentage points, SUBTRACTED from miss chance rather
    * than added to anything. 5 means "5% less likely to miss".

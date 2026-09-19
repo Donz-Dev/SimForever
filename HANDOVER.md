@@ -19,18 +19,18 @@ their talent trees and nothing else.
 | **Character creation** | faction → race → class → combat style, with cascading validity |
 | **Base stats** | all 65 race/class/form combinations at level 60, generated from the spreadsheet |
 | **Stat conversions** | per class (and per Druid form), re-derived when a buff moves a primary stat |
-| **Combat tables** | all six, on an integer 1–10000 die, derived from weapon skill vs defense skill |
+| **Combat tables** | all six, on an integer 1–10000 die, derived from weapon skill vs defense skill, including a **block** outcome |
 | **Armor** | level-scaled, applied per damage event |
 | **Resources** | rage from damage, energy in batches, mana on the five-second rule |
 | **Abilities** | all 26 Warrior abilities from the ruleset spreadsheet, with weapon-damage scaling and on-next-swing |
 | **Reactions** | content responds to an attack result: Overpower off a target dodge, and every item proc |
 | **Gear** | 18 items and the Crusader enchant, equippable, driving stats, weapons and procs. A **starting set** is equipped automatically when a Warrior is created, so the first fight is a geared one |
 | **Procs** | PPM (Vis'kag, Crusader) and flat-chance with an internal cooldown (Hand of Justice) |
-| **Talents** | all 469 talents, nine classes, spendable in the UI and saved on the profile. The Warrior's per-rank values are captured; **32 of its 53 talents do something**, 21 say on screen why they cannot |
+| **Talents** | all 469 talents, nine classes, spendable in the UI and saved on the profile. The Warrior's per-rank values are captured; **33 of its 53 talents do something**, 20 say on screen why they cannot |
 | **Analysis** | DPS, per-ability breakdown with attempts/hits/crit/glance/avoid rates |
 | **UI** | two-step character flow, per-class character sheet, style-aware gear, talent trees, combat log, Monte Carlo batches |
 
-**772 tests**, CI green on Node 20 and 22. Profile format **v5**.
+**802 tests**, CI green on Node 20 and 22. Profile format **v5**.
 
 The app is **live at <https://donz-dev.github.io/SimForever/>**, republished by
 `.github/workflows/deploy.yml` on every push to `main` that passes the tests.
@@ -77,8 +77,8 @@ Grouped, because each blocker unlocks several at once:
 | Blocker | Talents | Note |
 | --- | --- | --- |
 | **Concepts the engine has no notion of** — threat, movement, stuns, multiple targets, shout radius, fear/stun duration | Defiance, Piercing Howl, Concussion Blow, Sweeping Strikes, Booming Voice, Iron Will, Improved Hamstring | **Deliberately left absent.** None of them matters against a single stationary dummy, and each would need an encounter model that does not exist. Revisit when encounters gain positions, adds or mechanics. |
-| **Nothing attacks the player** | Blood Craze, Enrage, Master of Defense, Improved Revenge (its trigger), Last Stand | The pipeline exists — Table 6, rage from damage taken, Revenge — but no content swings at the player. |
-| **No block outcome** | Shield Specialization, Improved Overpower's shield clause | One stat and one table entry; also fixes Revenge catching two thirds of its triggers and Shield Slam's missing "+ block value". |
+| **Nothing attacks the player** | Blood Craze, Enrage, Master of Defense, Improved Revenge (its trigger), Shield Specialization, Last Stand | The pipeline exists — Table 6, rage from damage taken, Revenge — but no content swings at the player. |
+| ~~No block outcome~~ | — | **Done.** The engine has a `block` outcome and `blockChance`/`blockValue` stats; Shield Slam, Revenge and Shield Specialization all use them. |
 | **No defense skill** | Anticipation | The attacks-received table uses flat ruleset constants for boss miss, crit and crush. Defense skill would have to shift them by a formula Forever has not given. **Player parry and dodge are now wired** and read from the character's stats, so only the skill comparison is missing. |
 | **Stances gate nothing** | Improved Tactical Mastery, Vanguard | Waiting on the ruleset owner; see below. |
 | **The ability it modifies is inert** | Improved Bloodrage, Improved Berserker Rage, Improved Shield Wall | Waiting on effect values for those buffs. |

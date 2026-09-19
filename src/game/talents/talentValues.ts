@@ -85,15 +85,27 @@ export function talentValue(
   return entry.values[rank - 1];
 }
 
-/** The first number of a talent's value, for effects that use exactly one. */
+/**
+ * One number from a talent's value at a rank.
+ *
+ * `index` picks which, for a talent that varies several. Shield Specialization
+ * varies block chance AND a rage proc chance, and an effect that silently took
+ * the first would give the rage proc a 1% chance instead of 20%.
+ *
+ * An index past the end is undefined rather than a fallback to the first:
+ * reading the wrong number is worse than reading none, because none is
+ * reported as unmodelled and the wrong one is not reported at all.
+ */
 export function talentNumber(
   characterClass: ClassId,
   talentId: string,
   rank: number,
+  index = 0,
 ): number | undefined {
   const value = talentValue(characterClass, talentId, rank);
   if (value === undefined) return undefined;
-  return typeof value === 'number' ? value : value[0];
+  if (typeof value === 'number') return index === 0 ? value : undefined;
+  return value[index];
 }
 
 /** The source's own wording, with `{0}` where the per-rank number goes. */

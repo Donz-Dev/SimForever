@@ -104,10 +104,32 @@ export const bloodthrill: TalentReactionBuilder = (chancePercent) => ({
   },
 });
 
+/** Rage a Shield Specialization proc grants. Stated by the source. */
+export const SHIELD_SPECIALIZATION_RAGE = 5;
+
+/**
+ * Shield Specialization: a chance at rage when the warrior BLOCKS.
+ *
+ * Fires on attacks RECEIVED, so it needs something to be attacking the player.
+ * Nothing does yet, which is why the talent carries an `unmodelled` note
+ * alongside this saying so -- the proc is right and simply never gets a chance
+ * to run.
+ */
+export const shieldSpecialization: TalentReactionBuilder = (chancePercent) => ({
+  id: 'shield_specialization',
+  on: 'taken',
+  outcomes: ['block'],
+  canTrigger: (context) => context.rng.rollChance(chancePercent / 100),
+  onTrigger: (context, actor) => {
+    context.grantResource(actor, 'rage', SHIELD_SPECIALIZATION_RAGE);
+  },
+});
+
 /** Every Warrior talent that grants a reaction, by talent id. */
 export const WARRIOR_TALENT_REACTIONS: Readonly<Record<string, TalentReactionBuilder>> = {
   deep_wounds: deepWounds,
   flurry,
   unbridled_wrath: unbridledWrath,
   bloodthrill,
+  shield_specialization: shieldSpecialization,
 };

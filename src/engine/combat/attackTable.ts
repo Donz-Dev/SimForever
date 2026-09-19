@@ -51,6 +51,15 @@ export type AttackOutcome =
   | 'miss'
   | 'dodge'
   | 'parry'
+  /**
+   * A shield took part of the blow.
+   *
+   * NOT an avoided outcome: a blocked attack LANDS, and is reduced by a flat
+   * amount -- the defender's block value -- rather than by a multiplier. That
+   * is why it is absent from AVOIDED_OUTCOMES below and why its reduction is
+   * applied in the damage pipeline rather than here.
+   */
+  | 'block'
   | 'glance'
   | 'crush'
   | 'crit'
@@ -74,6 +83,8 @@ export interface AttackChances {
   readonly miss: RollUnits;
   readonly dodge: RollUnits;
   readonly parry: RollUnits;
+  /** Chance the defender's shield takes part of the blow. */
+  readonly block: RollUnits;
   readonly glance: RollUnits;
   readonly crush: RollUnits;
   readonly crit: RollUnits;
@@ -96,6 +107,7 @@ export const NO_CHANCES: AttackChances = {
   miss: 0,
   dodge: 0,
   parry: 0,
+  block: 0,
   glance: 0,
   crush: 0,
   crit: 0,
@@ -182,9 +194,15 @@ const TABLES: Record<AttackTableKind, TableShape> = {
     firstRoll: ['miss'],
     secondRoll: ['crit'],
   },
-  // 6. Melee attacks received by the player, including crushing blows.
+  /*
+   * 6. Melee attacks received by the player, including crushing blows.
+   *
+   * Block sits after the avoidance outcomes and before crush and crit, which
+   * is where Classic puts it: a blow that was going to be avoided is avoided
+   * outright, and everything left can be partly blocked.
+   */
   'melee-received': {
-    firstRoll: ['miss', 'dodge', 'parry', 'crush', 'crit'],
+    firstRoll: ['miss', 'dodge', 'parry', 'block', 'crush', 'crit'],
     secondRoll: [],
   },
 };
@@ -262,6 +280,8 @@ function chanceFor(outcome: AttackOutcome, chances: AttackChances): RollUnits {
       return chances.dodge;
     case 'parry':
       return chances.parry;
+    case 'block':
+      return chances.block;
     case 'glance':
       return chances.glance;
     case 'crush':
@@ -298,6 +318,10 @@ function multiplierFor(
     case 'dodge':
     case 'parry':
       return 0;
+    // A blocked blow lands in full and is then reduced by a FLAT amount in the
+    // damage pipeline, so it carries no multiplier of its own.
+    case 'block':
+      return 1;
     case 'glance':
       return rollGlanceMultiplier(chances, rng);
     case 'crush':

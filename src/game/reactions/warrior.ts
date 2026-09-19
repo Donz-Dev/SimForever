@@ -36,18 +36,17 @@ export const OVERPOWER_ON_DODGE: Reaction = {
  *
  * Fires on attacks the warrior RECEIVED.
  *
- * INCOMPLETE: in Classic this also triggers on a BLOCK, and the engine has no
- * block outcome — `melee-received` produces miss, dodge, parry, crush, crit and
- * hit. Blocking needs a block chance, a block value and a table entry, none of
- * which exist. Until then Revenge triggers on two thirds of what it should.
+ * Triggers on a dodge, a parry OR a block, which is all three of the ways
+ * Classic opens the window. Block was missing until the engine gained the
+ * outcome, and Revenge caught two thirds of what it should.
  *
- * It also never fires in practice yet, for a second and more basic reason:
- * nothing attacks the player.
+ * It still never fires in practice, for a more basic reason: nothing attacks
+ * the player.
  */
 export const REVENGE_ON_AVOID: Reaction = {
   id: 'revenge_on_avoid',
   on: 'taken',
-  outcomes: ['dodge', 'parry'],
+  outcomes: ['dodge', 'parry', 'block'],
   onTrigger: (context, actor) => {
     context.applyAura(actor, REVENGE_READY, actor.id);
   },

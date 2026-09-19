@@ -201,7 +201,12 @@ export function talentBuild(
         continue;
       }
 
-      const value = talentNumber(characterClass, talentId, rank);
+      const value = talentNumber(
+        characterClass,
+        talentId,
+        rank,
+        'valueIndex' in effect ? (effect.valueIndex ?? 0) : 0,
+      );
       if (value === undefined) {
         report(
           talentId,

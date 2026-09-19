@@ -367,8 +367,16 @@ export function resolveDamage(
   const reduction = appliesArmor(request)
     ? armorReduction(target.stats.get('armor'), target.level)
     : 0;
-  const mitigated = afterTarget * reduction;
-  const afterMitigation = afterTarget - mitigated;
+  /*
+   * A BLOCK removes a flat amount, not a fraction, and it is removed after
+   * armor rather than before. Armor scales with the size of the hit and a block
+   * does not, so a block is worth proportionally more against a small blow --
+   * which is the behaviour that makes block value good against fast attackers
+   * and poor against big ones.
+   */
+  const blocked = attack.outcome === 'block' ? target.stats.get('blockValue') : 0;
+  const mitigated = afterTarget * reduction + blocked;
+  const afterMitigation = Math.max(0, afterTarget - mitigated);
 
   // Absorb shields are not implemented yet; the field exists so that adding
   // them later does not change this function's shape or its telemetry.

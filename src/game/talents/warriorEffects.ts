@@ -9,7 +9,7 @@ import type { TalentEffects } from './TalentEffect';
  * test asserts the coverage both ways, which is how three entries lost to a
  * careless edit were caught.
  *
- * 25 are fully modelled and 7 more are PARTLY modelled — something real plus an
+ * 25 are fully modelled and 8 more are PARTLY modelled — something real plus an
  * `unmodelled` entry naming the part that is missing. 21 do nothing at all.
  *
  * NINE GRANT AN ABILITY, and those are where being wrong costs most: an ability
@@ -24,7 +24,7 @@ import type { TalentEffects } from './TalentEffect';
  * own specific obstacle so the list doubles as the work queue:
  *
  *   - a concept the engine does not have (threat, movement, stuns, multiple
- *     targets, defense skill, block)
+ *     targets, defense skill)
  *   - the ability it modifies is itself inert, pending its numbers from the
  *     ruleset owner (Bloodrage, Berserker Rage, Shield Wall, Shield Block)
  *   - nothing attacks the player, so nothing can trigger it
@@ -240,12 +240,21 @@ export const WARRIOR_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
   // ---------------------------------------------------------------------
   // Protection
   // ---------------------------------------------------------------------
+  /*
+   * Two values: block chance is the first, the rage proc chance the second.
+   * Both halves are modelled and NEITHER can fire, because nothing attacks the
+   * player -- so the talent also says that out loud rather than appearing to
+   * work.
+   */
   shield_specialization: [
+    { kind: 'stat', stat: 'blockChance', operation: 'flat' },
+    { kind: 'reaction', reactionId: 'shield_specialization', valueIndex: 1 },
     {
       kind: 'unmodelled',
       reason:
-        'Block chance and rage on a block. The engine has no block outcome at all ' +
-        '— the same gap that leaves Revenge catching two thirds of its triggers.',
+        'Both halves are implemented -- block chance and the rage proc -- but ' +
+        'both need the warrior to be ATTACKED, and nothing attacks the player ' +
+        'yet. They will work the moment something does.',
     },
   ],
 
