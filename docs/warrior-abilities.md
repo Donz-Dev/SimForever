@@ -1,5 +1,12 @@
 # Warrior abilities
 
+> **SUPERSEDED IN FOUR PLACES.** Shield Slam, Revenge, Slam and Bloodthirst now
+> take their damage from Forever's own spell data rather than from the
+> spreadsheet below, by the ruleset owner's decision on 2026-09-18. This file
+> remains the verbatim record of what the spreadsheet says; it is no longer a
+> complete description of what the simulator does. See
+> [warrior-ability-audit.md](warrior-ability-audit.md).
+
 Source: **`WoWForeverWarriorAbilities.xlsx`**, supplied by the ruleset owner.
 
 This file is the provenance record. The spreadsheet lives outside the repository

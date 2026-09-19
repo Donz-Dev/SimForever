@@ -309,8 +309,32 @@ export const WARRIOR_MELEE_ROTATION: Rotation = new PriorityRotation('Warrior', 
  */
 export const WARRIOR_SHIELD_ROTATION: Rotation = new PriorityRotation('Warrior (Shield)', [
   { abilityId: 'execute' },
-  ...OPENERS,
+  /*
+   * SHIELD SLAM OUTRANKS THE OPENERS, which is the opposite of how the melee
+   * list is built, and it is measured rather than reasoned.
+   *
+   * A shield warrior is RAGE STARVED in a way a dual-wielder is not: one
+   * moderate weapon, no off-hand, and standing still it takes no damage to
+   * convert. Sunder Armor's five stacks cost 75 rage, and spending that first
+   * left Shield Slam cast TWICE in a hundred seconds against thirteen times
+   * when the target swings back. At 655 plus block value it is far too large a
+   * hit to starve.
+   *
+   * Measured over 250 fights a row, against the openers-first order:
+   *
+   *   standing        101.69 +/- 2.42  against  97.33 +/- 2.03   +4.36
+   *   target attacks  218.57 +/- 2.53  against 206.43 +/- 2.12  +12.14
+   *
+   * Both survive their intervals. Dropping Sunder entirely was also tried and
+   * is better standing (102.63) but worse when attacked (207.77), so this
+   * ordering wins on the case that matters and keeps the armour debuff.
+   *
+   * THE LESSON, which cost a wrong ordering to learn: the opener priorities
+   * were measured on a dual-wielder and applied to both lists. A rotation
+   * measured on one build is not measured for another.
+   */
   { abilityId: 'shield_slam' },
+  ...OPENERS,
   ...CORE_STRIKES.filter((entry) => entry.abilityId !== 'execute'),
   ...FILLERS,
 ]);

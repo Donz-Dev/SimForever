@@ -1,4 +1,4 @@
-import type { Ability, SimulationContext } from '../../engine';
+import type { Ability } from '../../engine';
 import { dealDamage, seconds } from '../../engine';
 import {
   BATTLE_SHOUT,
@@ -99,6 +99,9 @@ export const MORTAL_STRIKE: Ability = {
  * column where the weapon-damage abilities say "Weapon Damage", so Bloodthirst
  * scales with attack power alone and ignores the weapon entirely.
  */
+/** "35% of your Attack Power", spell 23894 rank 4. */
+export const BLOODTHIRST_POWER_COEFFICIENT = 0.35;
+
 export const BLOODTHIRST: Ability = {
   id: 'bloodthirst',
   name: 'Bloodthirst',
@@ -113,8 +116,13 @@ export const BLOODTHIRST: Ability = {
       abilityId: ability.id,
       abilityName: ability.name,
       school: PHYSICAL,
-      baseAmount: 30,
-      powerCoefficient: 0.35,
+      /*
+       * NO FLAT COMPONENT. The spreadsheet gave "30 + 35% of attack power";
+       * Forever gives "damage equal to 35% of your Attack Power" and nothing
+       * else. The ruleset owner chose Forever, so the 30 is gone.
+       */
+      baseAmount: 0,
+      powerCoefficient: BLOODTHIRST_POWER_COEFFICIENT,
       attackTable: ability.attackTable,
       weaponSlot: MAIN_HAND,
     });
@@ -122,14 +130,18 @@ export const BLOODTHIRST: Ability = {
 };
 
 /**
- * Weapon damage with a 1.5 second cast time, 15 rage, no cooldown.
+ * Weapon damage plus 87, with a 1.5 second cast time, 15 rage, no cooldown.
  *
- * The sheet gives no base damage, so Slam is pure weapon damage.
+ * THE SPREADSHEET GIVES NO BASE DAMAGE AT ALL and Forever gives 87, so this was
+ * pure weapon damage and is not. See docs/warrior-ability-audit.md.
  *
  * UNSTATED: whether the cast pauses the swing timer, as it does in Classic.
  * It currently does not, which makes Slam slightly better than it should be if
  * Forever kept that behaviour.
  */
+/** "weapon damage plus 87", spell 11605 rank 5. The spreadsheet gave none. */
+export const SLAM_BASE_DAMAGE = 87;
+
 export const SLAM: Ability = {
   id: 'slam',
   name: 'Slam',
@@ -144,7 +156,7 @@ export const SLAM: Ability = {
       abilityId: ability.id,
       abilityName: ability.name,
       school: PHYSICAL,
-      baseAmount: 0,
+      baseAmount: SLAM_BASE_DAMAGE,
       weaponScaling: { slot: MAIN_HAND },
       attackTable: ability.attackTable,
       weaponSlot: MAIN_HAND,
@@ -255,28 +267,29 @@ export const OVERPOWER: Ability = {
 // ---------------------------------------------------------------------------
 
 /**
- * Damage stated as a range in the sheet.
+ * Revenge and Shield Slam damage, FROM FOREVER rather than the spreadsheet.
  *
- * Revenge is "81 to 99" and Shield Slam "421 to 439". Both are a flat plus or
- * minus 9 around their midpoint rather than a percentage band, which is why
- * these are kept as explicit bounds and rolled uniformly rather than converted
- * into the `damageVariance` fraction weapons use.
+ * The ability spreadsheet gives Revenge as "81 to 99" and Shield Slam as "421
+ * to 439". Forever's own spell data gives 153 and 655, both flat. The ruleset
+ * owner chose Forever for both -- see docs/warrior-ability-audit.md, which
+ * records the disagreement and the decision.
+ *
+ * THE RANGES ARE GONE, and that is a real change in shape and not only in
+ * magnitude. A spread of plus or minus nine around a midpoint contributed a
+ * little variance to every cast; a flat number contributes none. Any spread
+ * these abilities show now comes from the combat table alone.
+ *
+ * READ OFF THE EFFECT ROW, WHICH IS AN ASSUMPTION. Both tooltips hide their
+ * damage behind Forever's "(100% of Spell Power)" templating artifact, so these
+ * came from the spell page's base points: 154 and 656, less one. That -1 holds
+ * for the ten abilities whose tooltips state a number and can be checked, and
+ * cannot be checked for these two. If it is wrong they are each one point low.
  */
-export interface DamageRange {
-  readonly min: number;
-  readonly max: number;
-}
-
-export const REVENGE_DAMAGE: DamageRange = { min: 81, max: 99 };
-export const SHIELD_SLAM_DAMAGE: DamageRange = { min: 421, max: 439 };
-
-/** A uniform roll inside a stated damage range. */
-function rollRange(simulation: SimulationContext, range: DamageRange): number {
-  return simulation.rng.nextFloat(range.min, range.max);
-}
+export const REVENGE_DAMAGE = 153;
+export const SHIELD_SLAM_DAMAGE = 655;
 
 /**
- * "81 to 99" flat, 5 rage, 5 second cooldown, no scaling of any kind.
+ * 153 flat, 5 rage, 5 second cooldown, no scaling of any kind.
  *
  * Requires that the warrior recently blocked, parried or dodged — CONFIRMED by
  * the ruleset owner, not stated in the sheet. `REVENGE_READY` is applied by the
@@ -300,7 +313,7 @@ export const REVENGE: Ability = {
       abilityId: ability.id,
       abilityName: ability.name,
       school: PHYSICAL,
-      baseAmount: rollRange(simulation, REVENGE_DAMAGE),
+      baseAmount: REVENGE_DAMAGE,
       attackTable: ability.attackTable,
       weaponSlot: MAIN_HAND,
     });
@@ -309,14 +322,16 @@ export const REVENGE: Ability = {
 };
 
 /**
- * "421 to 439 + shield block value" flat, 20 rage, 6 second cooldown.
+ * 655 plus shield block value, 20 rage, 6 second cooldown.
  *
- * THE SHIELD BLOCK VALUE IS MISSING. No such stat exists in the engine and no
- * gear grants one, so Shield Slam currently deals only its stated range. Its
- * damage is therefore too low by whatever a shield would have contributed.
+ * 655 is Forever's figure against the spreadsheet's 421 to 439 -- a little over
+ * half again as much, and the single largest correction in this class. The
+ * rotation has called Shield Slam "undervalued here" since it was written, and
+ * 1H & Shield has been by some way the weakest build the simulator reports.
  *
  * Gated on carrying a shield rather than on a stance, which is how Classic
- * expresses it; the sheet says nothing either way.
+ * expresses it. Forever's Forms row is empty for Shield Slam, so it is usable
+ * in ANY stance -- the shield requirement is what restricts it.
  */
 export const SHIELD_SLAM: Ability = {
   id: 'shield_slam',
@@ -337,8 +352,7 @@ export const SHIELD_SLAM: Ability = {
        * from the shield in their off hand. A warrior with no shield cannot cast
        * this at all, so the term is never zero in practice.
        */
-      baseAmount:
-        rollRange(simulation, SHIELD_SLAM_DAMAGE) + caster.stats.get('blockValue'),
+      baseAmount: SHIELD_SLAM_DAMAGE + caster.stats.get('blockValue'),
       attackTable: ability.attackTable,
       weaponSlot: MAIN_HAND,
     });

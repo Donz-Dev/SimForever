@@ -12,9 +12,12 @@ node tools/import_spell.mjs --refresh   # re-capture
 ```
 
 Companion to [warrior-abilities.md](warrior-abilities.md), which holds the
-ruleset owner's spreadsheet transcribed verbatim. **That file is what the
-simulator implements. This file is what Forever says.** Where they disagree,
-both are recorded and neither is quietly preferred.
+ruleset owner's spreadsheet transcribed verbatim.
+
+**Where the two disagreed, the ruleset owner chose Forever** — all four cases,
+listed below. The spreadsheet file is kept as the record of what it said, not as
+what the simulator implements; when they differ, this file is now the one the
+code follows.
 
 ---
 
@@ -130,33 +133,63 @@ confirmed wrong.
 
 ---
 
-## Where they disagree — the findings
+## Where they disagreed — RESOLVED IN FOREVER'S FAVOUR
 
-**Nothing here has been changed.** `CLAUDE.md` is explicit: where two sources
-disagree, say so and prefer the one the ruleset owner supplied directly, rather
-than averaging them or quietly preferring the newer. The spreadsheet is the
-direct supply. These need a decision.
+The audit found four places the ability spreadsheet and Forever disagree. **The
+ruleset owner chose Forever for all four**, and all four are now implemented.
 
-| Ability | Spreadsheet (implemented) | Forever | Gap |
-| --- | --- | --- | --- |
-| **Shield Slam** | 421–439 | **655**, plus block value | Forever is ~50% higher |
-| **Revenge** | 81–99 | **153** flat | Forever is ~70% higher |
-| **Slam** | weapon damage, no bonus | weapon damage **+87** | a whole missing component |
-| **Bloodthirst** | **30** + 35% attack power | 35% attack power, no flat part | a spurious flat 30 |
+| Ability | Was (spreadsheet) | Now (Forever) |
+| --- | --- | --- |
+| **Shield Slam** | 421–439 + block value | **655** + block value |
+| **Revenge** | 81–99 | **153** |
+| **Slam** | weapon damage, no bonus | weapon damage **+87** |
+| **Bloodthirst** | 30 + 35% attack power | **35% attack power**, no flat part |
 
-Two smaller notes:
+**The ranges are gone, and that is a change in shape as well as magnitude.**
+Revenge and Shield Slam were each a spread of ±9 around a midpoint, which
+contributed a little variance to every cast. Both are flat now, so any spread
+they show comes from the combat table alone.
 
-- **Intercept** is implemented at 65 base damage. Forever's tooltip hides its
-  damage behind the Spell Power artifact and its effect rows carry only the
-  charge, so **Forever cannot confirm or deny 65**. Left alone.
-- **Whirlwind** is weapon damage against *up to 4 enemies* in Forever. The
-  engine simulates one target, so the multi-target clause is unmodelled — which
-  understates Whirlwind against anything but a single dummy.
+**Two of these rest on an assumption.** Shield Slam's and Revenge's tooltips
+hide their damage behind the `(100% of Spell Power)` artifact, so their numbers
+came from the spell page's base points — 656 and 154, less one. That −1 holds
+for the ten abilities whose tooltips state a number and can be checked, and
+cannot be checked for these two. If it is wrong they are each one point low,
+which is 0.15% of Shield Slam.
 
-Shield Slam's gap is the one with a knock-on: the rotation comment in
-`game/rotations/warrior.ts` calls Shield Slam "undervalued here", and 1H &
-Shield is the weakest build the simulator reports. If 655 is right, that is
-most of the explanation.
+### What it changed
+
+| | Before | After |
+| --- | --- | --- |
+| 1H & Shield, 31-pt Protection | 93.98 | **101.37** |
+| 1H & Shield Protection, target swings back | 176.81 | **219.07** |
+| Dual-wield, target swings back | 222.10 | **224.04** |
+
+**1H & Shield was the build this was about**, and it gained most — a quarter
+more damage when the target swings back. Shield Slam at 655 and Revenge at 153
+are both defensive-stance abilities that only come into their own when something
+is hitting back.
+
+The standing dual-wield figure did not move at all, and should not have: it uses
+none of the four. Slam needs Improved Slam to be worth casting, Bloodthirst is a
+Fury capstone, and Revenge and Shield Slam both need a shield or an attacker.
+
+### And it exposed a wrong rotation ordering
+
+Raising Shield Slam to 655 made it obvious that it was **barely being cast** —
+twice in a hundred seconds standing, against thirteen times when attacked. A
+shield warrior is rage starved in a way a dual-wielder is not, and Sunder
+Armor's five stacks cost 75 rage ahead of it.
+
+The opener priorities had been measured on a dual-wielder and applied to both
+lists. Measuring the shield list on its own put Shield Slam above the openers:
+
+```
+standing        101.69 +/- 2.42  against  97.33 +/- 2.03   +4.36
+target attacks  218.57 +/- 2.53  against 206.43 +/- 2.12  +12.14
+```
+
+**A rotation measured on one build is not measured for another.**
 
 ---
 

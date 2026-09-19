@@ -306,16 +306,21 @@ describe('abilities that do not use weapon damage', () => {
     expect(amount).toBeCloseTo(275, 6);
   });
 
-  it('gives Revenge and Shield Slam a flat plus-or-minus nine range', () => {
-    // Both ranges in the sheet are symmetric around their midpoint by exactly
-    // 9 damage, not by a percentage.
-    expect(REVENGE_DAMAGE).toEqual({ min: 81, max: 99 });
-    expect(SHIELD_SLAM_DAMAGE).toEqual({ min: 421, max: 439 });
-
-    const revengeMid = (REVENGE_DAMAGE.min + REVENGE_DAMAGE.max) / 2;
-    const shieldSlamMid = (SHIELD_SLAM_DAMAGE.min + SHIELD_SLAM_DAMAGE.max) / 2;
-    expect(REVENGE_DAMAGE.max - revengeMid).toBe(9);
-    expect(SHIELD_SLAM_DAMAGE.max - shieldSlamMid).toBe(9);
+  /*
+   * Revenge and Shield Slam are FLAT, and take their numbers from Forever
+   * rather than from the ability spreadsheet.
+   *
+   * This test used to assert the opposite: that both were a range symmetric by
+   * exactly 9 around a midpoint, 81-99 and 421-439. The ruleset owner chose
+   * Forever's 153 and 655 after the audit found the disagreement, and the
+   * ranges went with them -- so any spread these two show now comes from the
+   * combat table and nowhere else.
+   *
+   * Written out by hand from docs/warrior-ability-audit.md.
+   */
+  it('gives Revenge and Shield Slam flat Forever damage, not the sheet ranges', () => {
+    expect(REVENGE_DAMAGE).toBe(153);
+    expect(SHIELD_SLAM_DAMAGE).toBe(655);
   });
 
   it('gives Mortal Strike weapon scaling and Bloodthirst none', () => {
