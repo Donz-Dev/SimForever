@@ -12,6 +12,21 @@ export const RAID_BOSS_LEVEL = 63;
 /** Armor of a level 63 raid boss: just under 40% physical reduction. */
 export const RAID_BOSS_ARMOR = 3731;
 
+/**
+ * The armor values an encounter can be set to, highest first.
+ *
+ * Supplied by the ruleset owner as the three targets worth measuring against.
+ * They are DELIBERATELY UNLABELLED: nothing states which boss or tier each one
+ * is, and naming them would be inventing that. The Encounter panel shows the
+ * damage reduction each produces instead, which is derived from the armor
+ * formula rather than asserted.
+ *
+ * A profile is not restricted to these. `targetArmor` stays a plain number and
+ * is still validated as one, so a profile carrying any other value keeps it and
+ * the panel offers it back rather than snapping to the nearest listed figure.
+ */
+export const TARGET_ARMOR_OPTIONS: readonly number[] = [4638, RAID_BOSS_ARMOR, 3009];
+
 export interface TrainingDummyOptions {
   readonly id?: string;
   readonly name?: string;
