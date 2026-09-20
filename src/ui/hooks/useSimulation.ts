@@ -29,8 +29,8 @@ export type SimulationState =
  * Every run draws a FRESH SEED rather than using the profile's. Two clicks of
  * Run on an unchanged setup should show the spread the fight actually has;
  * reusing one seed would repeat a single fight and make a noisy result look
- * certain. The seed used is recorded on the result and printed in the combat
- * log, so a run can still be identified after the fact.
+ * certain. The seed used is recorded on the result and is NOT SHOWN ANYWHERE:
+ * a seed on screen invites reading one fight as the answer, so a run can still be identified after the fact.
  *
  * The profile's own seed is left alone, so a saved profile still describes a
  * reproducible fight for anything that runs it directly.

@@ -79,6 +79,7 @@ export const unbridledWrath: TalentReactionBuilder = (chancePercent) => ({
       actor,
       'rage',
       weapon?.twoHanded ? UNBRIDLED_WRATH_RAGE.twoHanded : UNBRIDLED_WRATH_RAGE.oneHanded,
+      { id: 'unbridled_wrath', name: 'Unbridled Wrath' },
     );
   },
 });
@@ -121,7 +122,10 @@ export const shieldSpecialization: TalentReactionBuilder = (chancePercent) => ({
   outcomes: ['block'],
   canTrigger: (context) => context.rng.rollChance(chancePercent / 100),
   onTrigger: (context, actor) => {
-    context.grantResource(actor, 'rage', SHIELD_SPECIALIZATION_RAGE);
+    context.grantResource(actor, 'rage', SHIELD_SPECIALIZATION_RAGE, {
+      id: 'shield_specialization',
+      name: 'Shield Specialization',
+    });
   },
 });
 
@@ -147,7 +151,10 @@ export const masterOfDefense: TalentReactionBuilder = (chancePercent) => ({
   outcomes: ['dodge', 'parry'],
   canTrigger: (context) => context.rng.rollChance(chancePercent / 100),
   onTrigger: (context, actor) => {
-    context.grantResource(actor, 'rage', MASTER_OF_DEFENSE_RAGE);
+    context.grantResource(actor, 'rage', MASTER_OF_DEFENSE_RAGE, {
+      id: 'master_of_defense',
+      name: 'Master of Defense',
+    });
   },
 });
 

@@ -17,7 +17,7 @@ import type { CombatEvent, ScheduledEvent } from '../events';
 import { EventPriority, EventQueue, createEvent } from '../events';
 import type { CombatEndReason, TelemetryEvent, TelemetrySink } from '../logging';
 import { TelemetryRecorder } from '../logging';
-import type { ResourceType } from '../resources';
+import type { ResourceType, ResourceSource } from '../resources';
 import type { RNG } from '../rng';
 import { SeededRNG } from '../rng';
 import type { Milliseconds } from '../time';
@@ -241,7 +241,12 @@ export class Simulation implements SimulationContext {
     return target.auras.apply(this, definition, sourceId);
   }
 
-  grantResource(actor: Combatant, resource: ResourceType, amount: number): void {
+  grantResource(
+    actor: Combatant,
+    resource: ResourceType,
+    amount: number,
+    source?: ResourceSource,
+  ): void {
     const pool = actor.resources.get(resource);
     if (!pool || amount <= 0) return;
 
@@ -254,6 +259,8 @@ export class Simulation implements SimulationContext {
       amount: gained,
       wasted,
       current: pool.current,
+      source: source?.id,
+      sourceName: source?.name,
     });
   }
 

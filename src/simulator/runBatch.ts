@@ -1,5 +1,11 @@
-import type { DistributionSummary, SimulationResult } from '../analysis';
-import { StreamingDamageTotals, summarize } from '../analysis';
+import type {
+  BatchAbilityTotals,
+  BatchDamageTaken,
+  BatchResourceFlow,
+  DistributionSummary,
+  SimulationResult,
+} from '../analysis';
+import { BatchTotals, summarize } from '../analysis';
 import type { SimulationConfig } from '../engine';
 import { Simulation, deriveSeed, toSeconds } from '../engine';
 import { trainingDummyEncounter } from './trainingDummyEncounter';
@@ -20,11 +26,24 @@ export interface BatchResult {
   /** DPS across every iteration. */
   readonly dps: DistributionSummary;
   /**
-   * A full result for the iteration whose DPS landed closest to the median, so
-   * the combat log shown alongside a batch is a typical fight rather than an
-   * outlier.
+   * A full result for the iteration whose DPS landed closest to the median.
+   *
+   * FOR THE COMBAT LOG ONLY. A log has to be a single fight to make any sense,
+   * and this is a typical one. Every NUMBER a reader sees comes from the
+   * aggregate below instead -- see `BatchTotals` for why reading a breakdown
+   * off one iteration made a 2500-iteration batch report forty swings.
    */
   readonly representative: SimulationResult;
+  /** Mean damage dealt by the player per iteration. */
+  readonly meanDamage: number;
+  /** Mean fight length in milliseconds. */
+  readonly meanDurationMs: number;
+  /** The player's damage breakdown, pooled across every iteration. */
+  readonly abilities: readonly BatchAbilityTotals[];
+  /** What hit the player, pooled across every iteration. */
+  readonly damageTaken: readonly BatchDamageTaken[];
+  /** Where the player's rage came from and went, across every iteration. */
+  readonly rage: BatchResourceFlow;
   /** Wall-clock time the batch took, in milliseconds. */
   readonly elapsedRealMs: number;
 }
@@ -47,13 +66,21 @@ export function runBatch(config: SimulationConfig, options: BatchOptions): Batch
 
   const dpsSamples: number[] = new Array(iterations);
   const seeds: number[] = new Array(iterations);
+  const durations: number[] = new Array(iterations);
+
+  /*
+   * ONE accumulator for the whole batch, not one per iteration. It holds
+   * running sums and no events, so 2500 iterations cost the same memory as one.
+   */
+  const totals = new BatchTotals();
+  let playerId = '';
+  let damageSoFar = 0;
 
   for (let index = 0; index < iterations; index++) {
     const seed = deriveSeed(options.baseSeed, index);
     seeds[index] = seed;
 
     // Aggregate as we go; the event stream for this iteration is discarded.
-    const totals = new StreamingDamageTotals();
     const simulation = new Simulation({ ...config, seed }, totals);
     const run = simulation.run();
 
@@ -62,7 +89,19 @@ export function runBatch(config: SimulationConfig, options: BatchOptions): Batch
       .map((actor) => actor.id);
 
     const elapsedSeconds = Math.max(toSeconds(run.elapsedMs), 0.001);
-    dpsSamples[index] = totals.totalForAny(friendlyIds) / elapsedSeconds;
+    durations[index] = run.elapsedMs;
+    if (!playerId) playerId = friendlyIds[0] ?? '';
+
+    /*
+     * DPS FOR THIS ITERATION ALONE. `totals` now runs for the whole batch, so
+     * its total is cumulative and the per-iteration figure is the difference
+     * since the last one. Reading the cumulative total here was the first
+     * version of this and made iteration 2500 look 2500 times as good.
+     */
+    const cumulative = totals.totalForAny(friendlyIds);
+    dpsSamples[index] = (cumulative - damageSoFar) / elapsedSeconds;
+    damageSoFar = cumulative;
+    totals.finishIteration();
 
     options.onProgress?.((index + 1) / iterations);
   }
@@ -80,6 +119,11 @@ export function runBatch(config: SimulationConfig, options: BatchOptions): Batch
     baseSeed: options.baseSeed,
     dps,
     representative,
+    meanDamage: totals.meanDamageFor(playerId),
+    meanDurationMs: durations.reduce((a, b) => a + b, 0) / Math.max(1, durations.length),
+    abilities: totals.abilityBreakdown(playerId),
+    damageTaken: totals.damageTaken(playerId),
+    rage: totals.resourceFlow(playerId, 'rage'),
     elapsedRealMs: Date.now() - startedAt,
   };
 }

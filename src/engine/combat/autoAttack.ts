@@ -205,6 +205,9 @@ function swing(
   // Resource from damage DEALT, proportional to what actually landed. A missed
   // or dodged swing generates nothing, which is the behaviour that makes a
   // high-miss build rage-starved as well as low-damage.
-  grantGeneratedResource(context, attacker, weapon.generates, result.amount);
+  grantGeneratedResource(context, attacker, weapon.generates, result.amount, {
+    id: 'auto_attack',
+    name: 'Auto attack',
+  });
 
 }

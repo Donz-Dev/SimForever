@@ -98,6 +98,23 @@ export interface ResourceTelemetryEvent extends TelemetryBase {
   /** Amount lost to the cap on a gain. Always 0 for a spend. */
   readonly wasted: number;
   readonly current: number;
+  /**
+   * WHAT moved the resource: an ability id for a spend, and for a gain the
+   * mechanism that produced it -- an auto attack, damage taken, a proc, a
+   * regeneration tick.
+   *
+   * Without this a rage economy cannot be audited at all. "83 rage spent" says
+   * nothing about whether Improved Heroic Strike is working; "Heroic Strike, 12
+   * uses, 156 rage" says it directly. The analyzers build both rage breakdowns
+   * out of this one field.
+   *
+   * Optional only so that a caller with genuinely nothing to say can omit it,
+   * and those show as "unattributed" rather than being folded into something
+   * that looks accounted for.
+   */
+  readonly source?: string;
+  /** Human-readable form of `source`, for a breakdown a person reads. */
+  readonly sourceName?: string;
 }
 
 export interface DeathTelemetryEvent extends TelemetryBase {

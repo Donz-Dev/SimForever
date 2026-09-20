@@ -17,7 +17,16 @@ export function formatCombatLogLine(event: TelemetryEvent, nameOf: NameResolver)
 
   switch (event.type) {
     case 'combat_start':
-      return `${time}  Combat begins (seed ${event.seed})`;
+      /*
+       * THE SEED IS DELIBERATELY NOT PRINTED. A reader comparing two builds
+       * should be reading a distribution, and a seed on screen invites reading
+       * one fight as the answer -- which is the habit this whole batch
+       * aggregate exists to break.
+       *
+       * It is still on the telemetry event and on the result, so a tool can
+       * reproduce a fight; it simply is not shown to a person.
+       */
+      return `${time}  Combat begins`;
 
     case 'combat_end':
       return `${time}  Combat ends (${describeEndReason(event.reason)})`;
