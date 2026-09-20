@@ -407,6 +407,7 @@ export class Simulation implements SimulationContext {
       maxHealth: actor.health.maximum,
       finalHealth: actor.health.current,
       isAlive: actor.isAlive,
+      rotation: actor.rotation?.name,
     }));
 
     return {

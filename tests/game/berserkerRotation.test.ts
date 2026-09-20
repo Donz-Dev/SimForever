@@ -225,3 +225,35 @@ describe('dual-wield in Berserker Stance uses its own list', () => {
     expect(batch.rage.spent.some((row) => row.sourceId === 'stance_change')).toBe(false);
   });
 });
+
+describe('the result says which priority list ran', () => {
+  /*
+   * Someone auditing a build asked why Rend was being cast in Berserker
+   * Stance. It was not -- they were on a stale bundle -- but nothing on screen
+   * could have told them which of the three Warrior lists had produced the
+   * numbers they were reading. Which list runs depends on combat style AND
+   * stance together, so it is not derivable from the character sheet.
+   */
+  function named(style: 'dual_wield' | 'one_hand_shield', stance: 'battle' | 'berserker') {
+    const base = createDefaultProfile();
+    return runProfileBatch({
+      ...base,
+      character: { ...base.character, combatStyle: style, stance },
+      equipment: startingEquipmentFor('warrior', style),
+      simulation: { ...base.simulation, iterations: 2, seed: 1 },
+    } as never).rotationName;
+  }
+
+  it('names the Berserker list when that is what ran', () => {
+    expect(named('dual_wield', 'berserker')).toBe('Warrior (Dual-Wield, Berserker)');
+  });
+
+  it('names the general list when the stance changes the answer', () => {
+    // Same style, same gear, same everything visible -- different list.
+    expect(named('dual_wield', 'battle')).toBe('Warrior');
+  });
+
+  it('names the shield list', () => {
+    expect(named('one_hand_shield', 'battle')).toBe('Warrior (Shield)');
+  });
+});

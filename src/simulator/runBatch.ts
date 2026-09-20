@@ -34,6 +34,16 @@ export interface BatchResult {
    * off one iteration made a 2500-iteration batch report forty swings.
    */
   readonly representative: SimulationResult;
+  /**
+   * The priority list the player actually ran.
+   *
+   * Shown because it is not derivable from the character sheet: a Warrior's
+   * list depends on combat style AND stance, and two builds that look
+   * identical in every visible field can run different rotations. Someone
+   * reading a result asked why Rend was being cast, and nothing on screen
+   * could tell them which of three lists had produced it.
+   */
+  readonly rotationName: string | undefined;
   /** Mean damage dealt by the player per iteration. */
   readonly meanDamage: number;
   /** Mean fight length in milliseconds. */
@@ -74,6 +84,7 @@ export function runBatch(config: SimulationConfig, options: BatchOptions): Batch
    */
   const totals = new BatchTotals();
   let playerId = '';
+  let rotationName: string | undefined;
   let damageSoFar = 0;
 
   for (let index = 0; index < iterations; index++) {
@@ -90,7 +101,10 @@ export function runBatch(config: SimulationConfig, options: BatchOptions): Batch
 
     const elapsedSeconds = Math.max(toSeconds(run.elapsedMs), 0.001);
     durations[index] = run.elapsedMs;
-    if (!playerId) playerId = friendlyIds[0] ?? '';
+    if (!playerId) {
+      playerId = friendlyIds[0] ?? '';
+      rotationName = run.actors.find((actor) => actor.id === playerId)?.rotation;
+    }
 
     /*
      * DPS FOR THIS ITERATION ALONE. `totals` now runs for the whole batch, so
@@ -119,6 +133,7 @@ export function runBatch(config: SimulationConfig, options: BatchOptions): Batch
     baseSeed: options.baseSeed,
     dps,
     representative,
+    rotationName,
     meanDamage: totals.meanDamageFor(playerId),
     meanDurationMs: durations.reduce((a, b) => a + b, 0) / Math.max(1, durations.length),
     abilities: totals.abilityBreakdown(playerId),
