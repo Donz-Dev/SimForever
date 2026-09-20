@@ -42,6 +42,21 @@ export interface SimulationContext {
 
   /** True once combat has ended; long-running effects should check this. */
   readonly hasEnded: boolean;
+  /**
+   * How long this fight is scheduled to last, in milliseconds.
+   *
+   * Rolled once at the start from the configured duration and its variance, so
+   * it is the length of THIS iteration rather than the configured average. A
+   * rotation timing something to the end of the fight has to read this rather
+   * than the profile, or a run with duration variance aims at the wrong
+   * moment.
+   *
+   * It is knowledge a real player does not have, and that is a deliberate
+   * simulator convention rather than an oversight: an execute phase and a
+   * saved cooldown are both decisions about the end of the fight, and a sim
+   * that cannot express them cannot model a rotation anyone actually uses.
+   */
+  readonly plannedDurationMs: Milliseconds;
 
   combatant(id: string): Combatant | undefined;
 

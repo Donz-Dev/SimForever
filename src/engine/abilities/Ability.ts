@@ -107,6 +107,20 @@ export interface Ability {
   readonly grantsStance?: string;
 
   /**
+   * A cooldown SHARED with every other ability naming the same group.
+   *
+   * Using one starts the group's cooldown for all of them, on top of the
+   * ability's own. The Warrior's three stances share one second: changing to
+   * Defensive must stop you changing to Berserker in the same instant, and
+   * each stance having its own one-second cooldown did not stop that at all --
+   * a warrior could cycle all three without the clock moving.
+   *
+   * The group's length is `cooldownMs` of whichever ability triggered it, so a
+   * group of abilities with the same cooldown needs nothing else said.
+   */
+  readonly cooldownGroup?: string;
+
+  /**
    * Queue this ability onto the next auto-attack with the given weapon instead
    * of firing it immediately.
    *

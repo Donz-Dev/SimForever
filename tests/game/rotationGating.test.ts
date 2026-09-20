@@ -34,11 +34,24 @@ const GRANTED: readonly string[] = Object.values(WARRIOR_TALENT_EFFECTS)
 
 const STYLES: readonly CombatStyleId[] = ['dual_wield', 'two_hander', 'one_hand_shield'];
 
-function fight(style: CombatStyleId, talents: Record<string, number>, attacks = false) {
+function fight(
+  style: CombatStyleId,
+  talents: Record<string, number>,
+  attacks = false,
+  stance: 'battle' | 'defensive' | 'berserker' = 'battle',
+) {
+  /*
+   * BATTLE STANCE BY DEFAULT, which is not the dual-wield default.
+   *
+   * Dual-wield in Berserker has its own priority list, and that list contains
+   * neither Mortal Strike nor Rend -- so a test checking that a granted
+   * ability gets CAST has to run a rotation that would cast it. The gating
+   * these tests are about is the same in every stance; the list is not.
+   */
   const base = createDefaultProfile();
   return runProfile({
     ...base,
-    character: { ...base.character, combatStyle: style },
+    character: { ...base.character, combatStyle: style, stance },
     equipment: startingEquipmentFor('warrior', style),
     talents,
     simulation: { ...base.simulation, seed: 4, durationSeconds: 180 },

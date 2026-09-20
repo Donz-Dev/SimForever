@@ -26,6 +26,14 @@ interface AbilityState {
 export class AbilityBook {
   private readonly abilities = new Map<string, Ability>();
   private readonly states = new Map<string, AbilityState>();
+  /**
+   * When each shared cooldown group becomes usable again.
+   *
+   * Separate from per-ability state because a group is not an ability: it has
+   * no charges and belongs to no single entry. Kept as an absolute timestamp
+   * rather than a remaining duration so nothing has to tick it.
+   */
+  private readonly groupReadyAt = new Map<string, Milliseconds>();
 
   constructor(abilities: readonly Ability[] = []) {
     for (const ability of abilities) {
@@ -62,9 +70,21 @@ export class AbilityBook {
     return state.available;
   }
 
-  /** True if at least one charge is up. */
+  /** True if at least one charge is up AND no shared cooldown is blocking. */
   isReady(abilityId: string, now: Milliseconds): boolean {
+    if (this.groupRemaining(abilityId, now) > 0) return false;
     return this.chargesAvailable(abilityId, now) > 0;
+  }
+
+  /**
+   * Time left on this ability's shared cooldown group, or 0.
+   *
+   * An ability in no group is never blocked by one.
+   */
+  groupRemaining(abilityId: string, now: Milliseconds): Milliseconds {
+    const group = this.abilities.get(abilityId)?.cooldownGroup;
+    if (!group) return 0;
+    return Math.max(0, (this.groupReadyAt.get(group) ?? 0) - now);
   }
 
   /** Time until the next charge becomes available. 0 when one is already up. */
@@ -74,10 +94,13 @@ export class AbilityBook {
     if (!ability || !state) return 0;
 
     this.sync(ability, state, now);
-    if (state.available > 0 || state.rechargeStartedAt === null) return 0;
+
+    const group = this.groupRemaining(abilityId, now);
+    if (state.available > 0 || state.rechargeStartedAt === null) return group;
 
     const cooldown = ability.cooldownMs ?? 0;
-    return Math.max(0, state.rechargeStartedAt + cooldown - now);
+    // Whichever runs longer: both have to be clear before it can be used.
+    return Math.max(group, Math.max(0, state.rechargeStartedAt + cooldown - now));
   }
 
   /** Consume a charge and start its recharge. Returns false if none were up. */
@@ -94,6 +117,17 @@ export class AbilityBook {
     // charge does not restart the timer already running for the first.
     if (state.rechargeStartedAt === null) {
       state.rechargeStartedAt = now;
+    }
+
+    /*
+     * Start the shared cooldown for everything in the group, including this
+     * ability. Extends rather than overwrites, so a shorter cooldown used
+     * while a longer one is running cannot cut it short.
+     */
+    if (ability.cooldownGroup) {
+      const until = now + (ability.cooldownMs ?? 0);
+      const existing = this.groupReadyAt.get(ability.cooldownGroup) ?? 0;
+      this.groupReadyAt.set(ability.cooldownGroup, Math.max(existing, until));
     }
     return true;
   }

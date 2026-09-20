@@ -8,7 +8,23 @@ import { runProfile, runProfileBatch } from '../../src/simulator';
  * dummy, a real fight running through the real engine.
  */
 describe('player versus training dummy', () => {
-  const profile = createDefaultProfile();
+  /*
+   * BATTLE STANCE, stated rather than defaulted.
+   *
+   * The default profile is a dual-wield Warrior, and dual-wield in Berserker
+   * Stance now has its own priority list -- one with no Rend in it. A test
+   * that asserts Rend ticks has to run a rotation that casts Rend, and the
+   * only honest way to do that is to say which rotation it means.
+   *
+   * CLAUDE.md warns about exactly this: naming an ability in a training-dummy
+   * assertion pins a rotation decision rather than the behaviour under test.
+   * These assertions are about the engine end to end, so they pick the list
+   * that exercises it rather than following whatever the default happens to be.
+   */
+  const profile = {
+    ...createDefaultProfile(),
+    character: { ...createDefaultProfile().character, stance: 'battle' as const },
+  };
 
   it('completes and reports the configured duration', () => {
     const result = runProfile(profile);

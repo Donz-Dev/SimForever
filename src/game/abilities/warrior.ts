@@ -9,7 +9,7 @@ import {
   DEFENSIVE_STANCE,
   DEMORALIZING_SHOUT,
   OVERPOWER_READY,
-  PLACEHOLDER_BLOODRAGE_INSTANT_RAGE,
+  BLOODRAGE_INSTANT_RAGE,
   RECKLESSNESS,
   REND,
   REVENGE_READY,
@@ -484,8 +484,28 @@ export const EXECUTE: Ability = {
   name: 'Execute',
   cost: { resource: 'rage', amount: EXECUTE_BASE_COST },
   attackTable: 'melee-special',
-  canCast: ({ target }) =>
-    target !== undefined && target.health.fraction <= EXECUTE_HEALTH_THRESHOLD,
+  /*
+   * Below 20% health, OR inside the last 20% of a fixed-length fight.
+   *
+   * The health rule is the real one. The second exists because a TRAINING
+   * DUMMY NEVER GETS THERE: it has a hundred thousand health and takes perhaps
+   * fifteen in a hundred seconds, so a gate on health alone means Execute is
+   * in every Warrior list and has never once been cast.
+   *
+   * A fixed-duration encounter has no other way to express an execute phase,
+   * and the fraction is the same 20% -- of time rather than of health. It is a
+   * SIMULATOR CONVENTION and not a ruleset statement, which is why both halves
+   * are here rather than the health one being replaced.
+   *
+   * This affects every Warrior rotation, not only the one that asked for it:
+   * Execute now fires in the last twenty seconds of a hundred-second fight
+   * where before it never fired at all.
+   */
+  canCast: ({ target, simulation }) => {
+    if (target !== undefined && target.health.fraction <= EXECUTE_HEALTH_THRESHOLD) return true;
+    const remaining = simulation.plannedDurationMs - simulation.clock.now();
+    return remaining <= simulation.plannedDurationMs * EXECUTE_HEALTH_THRESHOLD;
+  },
   onCast: ({ simulation, caster, target, ability }) => {
     if (!target) return;
 
@@ -678,11 +698,14 @@ export const BERSERKER_RAGE_ABILITY: Ability = {
 };
 
 /**
- * Free, 60 second cooldown.
+ * Free, 60 second cooldown, any stance.
  *
- * The rage it grants is a placeholder set to zero, so casting it currently
- * costs a global cooldown and achieves nothing. That is deliberate: an invented
- * rage figure would change the rotation's whole shape.
+ * Ten rage on cast and ten more over ten seconds, both from Forever. It was
+ * inert not for want of a number but for want of a periodic on the aura --
+ * there was nowhere for "over 10 sec" to live.
+ *
+ * Its 20% of base health cost is NOT modelled, which overstates it: the player
+ * cannot drop below one health, so the cost is free here.
  */
 export const BLOODRAGE_ABILITY: Ability = {
   id: 'bloodrage_cast',
@@ -691,12 +714,10 @@ export const BLOODRAGE_ABILITY: Ability = {
   requiresTarget: false,
   onCast: ({ simulation, caster }) => {
     simulation.applyAura(caster, BLOODRAGE, caster.id);
-    if (PLACEHOLDER_BLOODRAGE_INSTANT_RAGE > 0) {
-      simulation.grantResource(caster, 'rage', PLACEHOLDER_BLOODRAGE_INSTANT_RAGE, {
-        id: 'bloodrage',
-        name: 'Bloodrage',
-      });
-    }
+    simulation.grantResource(caster, 'rage', BLOODRAGE_INSTANT_RAGE, {
+      id: 'bloodrage',
+      name: 'Bloodrage',
+    });
   },
 };
 
@@ -837,6 +858,14 @@ function stanceAbility(id: string, aura: (typeof WARRIOR_STANCES)[number]): Abil
     id,
     name: aura.name,
     cooldownMs: seconds(1),
+    /*
+     * ONE SECOND SHARED BY ALL THREE, stated by the ruleset owner.
+     *
+     * Each stance having its own cooldown did not achieve this: a warrior
+     * could go Berserker to Defensive to Battle without the clock moving,
+     * because no two casts were the same ability. Only the group stops that.
+     */
+    cooldownGroup: 'warrior_stance',
     requiresTarget: false,
     // A stance swap is not a global cooldown in any ruleset that has stances.
     // UNSTATED in the sheet; this is an assumption.

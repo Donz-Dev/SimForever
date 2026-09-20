@@ -369,11 +369,43 @@ describe('Execute', () => {
     const nearlyDead = makeTarget({ maxHealth: 1000 });
     nearlyDead.health.drain(900); // 10% left
 
-    const context = (target: typeof healthy) =>
-      ({ simulation: undefined, caster, target, ability: EXECUTE }) as never;
+    /*
+     * A clock is needed now, because Execute also accepts the last 20% of a
+     * fixed-length fight -- a training dummy never reaches 20% health, so a
+     * gate on health alone meant Execute was in every list and never cast.
+     * Early in the fight here, so only the health rule can be satisfied.
+     */
+    const early = (target: typeof healthy) =>
+      ({
+        simulation: { plannedDurationMs: 100_000, clock: { now: () => 0 } },
+        caster,
+        target,
+        ability: EXECUTE,
+      }) as never;
 
-    expect(EXECUTE.canCast?.(context(healthy))).toBe(false);
-    expect(EXECUTE.canCast?.(context(nearlyDead))).toBe(true);
+    expect(EXECUTE.canCast?.(early(healthy))).toBe(false);
+    expect(EXECUTE.canCast?.(early(nearlyDead))).toBe(true);
+  });
+
+  it('accepts a healthy target inside the last fifth of the fight', () => {
+    /*
+     * The simulator convention, not a ruleset statement. Twenty percent of
+     * TIME stands in for twenty percent of health, because a dummy's health
+     * barely moves and an execute phase has to be expressible somehow.
+     */
+    const caster = makeAttacker({ resources: [{ type: 'rage', maximum: 100, initial: 100 }] });
+    const healthy = makeTarget({ maxHealth: 1000 });
+    const at = (nowMs: number) =>
+      ({
+        simulation: { plannedDurationMs: 100_000, clock: { now: () => nowMs } },
+        caster,
+        target: healthy,
+        ability: EXECUTE,
+      }) as never;
+
+    expect(EXECUTE.canCast?.(at(79_000))).toBe(false); // 21% left
+    expect(EXECUTE.canCast?.(at(80_000))).toBe(true); // exactly 20% left
+    expect(EXECUTE.canCast?.(at(95_000))).toBe(true);
   });
 
   it('is worth 600 plus 15 per point of leftover rage', () => {

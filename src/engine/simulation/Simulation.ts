@@ -70,7 +70,7 @@ export class Simulation implements SimulationContext {
   private readonly actors: Combatant[];
   private readonly actorsById = new Map<string, Combatant>();
 
-  private readonly plannedDurationMs: Milliseconds;
+  readonly plannedDurationMs: Milliseconds;
   private readonly chanceProvider: AttackChanceProvider;
   private endReason: CombatEndReason | null = null;
   private eventsProcessed = 0;

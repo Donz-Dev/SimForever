@@ -190,7 +190,7 @@ export function createPlayer(options: PlayerOptions): Combatant {
   );
 
   const abilities = abilitiesForBuild(characterClass, style, build);
-  const rotation = rotationFor(characterClass, style);
+  const rotation = rotationFor(characterClass, style, resolveStance(style, options.stance));
 
   const player = new Combatant({
     id: options.id ?? 'player_1',
