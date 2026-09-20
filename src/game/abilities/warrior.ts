@@ -460,13 +460,19 @@ export const EXECUTE_DAMAGE_PER_RAGE = 15;
 export const EXECUTE_BASE_COST = 15;
 
 /**
- * The health fraction below which Execute may be used.
+ * The last fraction of the fight in which Execute may be used.
  *
- * CONFIRMED by the ruleset owner as Classic's 20%. The spreadsheet states no
- * threshold, so without that confirmation Execute would have been usable at
- * full health and worth an absurd amount of DPS.
+ * TWENTY PERCENT, confirmed by the ruleset owner, and it is a fraction of TIME
+ * rather than of the target's health. That is not an approximation of the game
+ * rule -- it is the rule for this simulator, because the encounter is a damage
+ * sink running for a fixed duration rather than something with a health bar to
+ * whittle down.
+ *
+ * It was a health fraction, and could never fire: a hundred thousand health
+ * taking fifteen thousand damage in a hundred seconds never reaches 20%, so
+ * Execute was in every Warrior list and had never been cast.
  */
-export const EXECUTE_HEALTH_THRESHOLD = 0.2;
+export const EXECUTE_PHASE_FRACTION = 0.2;
 
 /**
  * "600 + 15 * each point of remaining rage after cost was taken out", costing
@@ -485,26 +491,22 @@ export const EXECUTE: Ability = {
   cost: { resource: 'rage', amount: EXECUTE_BASE_COST },
   attackTable: 'melee-special',
   /*
-   * Below 20% health, OR inside the last 20% of a fixed-length fight.
+   * TIME ONLY. The last 20% of the fight, and nothing about the target's
+   * health.
    *
-   * The health rule is the real one. The second exists because a TRAINING
-   * DUMMY NEVER GETS THERE: it has a hundred thousand health and takes perhaps
-   * fifteen in a hundred seconds, so a gate on health alone means Execute is
-   * in every Warrior list and has never once been cast.
+   * The ruleset owner's decision, and it follows from what the encounter is:
+   * the target does not need a hit point pool, it needs to take damage for a
+   * predetermined duration. A health gate could never fire against it -- a
+   * hundred thousand health taking fifteen thousand in a hundred seconds --
+   * so Execute sat in every Warrior list and was never once cast.
    *
-   * A fixed-duration encounter has no other way to express an execute phase,
-   * and the fraction is the same 20% -- of time rather than of health. It is a
-   * SIMULATOR CONVENTION and not a ruleset statement, which is why both halves
-   * are here rather than the health one being replaced.
-   *
-   * This affects every Warrior rotation, not only the one that asked for it:
-   * Execute now fires in the last twenty seconds of a hundred-second fight
-   * where before it never fired at all.
+   * Keeping a health branch "for realism" would mean an execute phase that
+   * appears only in fights nobody runs here, and two ways for the same
+   * ability to become available that can never both be true. One rule.
    */
-  canCast: ({ target, simulation }) => {
-    if (target !== undefined && target.health.fraction <= EXECUTE_HEALTH_THRESHOLD) return true;
+  canCast: ({ simulation }) => {
     const remaining = simulation.plannedDurationMs - simulation.clock.now();
-    return remaining <= simulation.plannedDurationMs * EXECUTE_HEALTH_THRESHOLD;
+    return remaining <= simulation.plannedDurationMs * EXECUTE_PHASE_FRACTION;
   },
   onCast: ({ simulation, caster, target, ability }) => {
     if (!target) return;

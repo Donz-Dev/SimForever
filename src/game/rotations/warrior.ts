@@ -7,7 +7,7 @@ import {
   SUNDER_ARMOR,
   SUNDER_ARMOR_MAX_STACKS,
 } from '../auras/warrior';
-import { EXECUTE_HEALTH_THRESHOLD } from '../abilities/warrior';
+import { EXECUTE_PHASE_FRACTION } from '../abilities/warrior';
 import { seconds } from '../../engine';
 
 /**
@@ -438,7 +438,7 @@ const WARRIOR_DUAL_WIELD_BERSERKER: readonly PriorityEntry[] = [
   {
     abilityId: 'execute',
     condition: (context) =>
-      remainingMs(context) <= context.plannedDurationMs * EXECUTE_HEALTH_THRESHOLD,
+      remainingMs(context) <= context.plannedDurationMs * EXECUTE_PHASE_FRACTION,
   },
   // Surplus rage into the next swing.
   {
@@ -473,4 +473,4 @@ export function warriorRotation(style: CombatStyleId, stance?: StanceId): Rotati
 }
 
 /** Re-exported so the threshold is documented in one place. */
-export { EXECUTE_HEALTH_THRESHOLD };
+export { EXECUTE_PHASE_FRACTION };

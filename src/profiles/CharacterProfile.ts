@@ -70,6 +70,19 @@ export interface SimulationSection {
 
 export interface EncounterSection {
   readonly targetName: string;
+  /**
+   * A nominal pool for damage to be subtracted from. IT DOES NOT END A FIGHT.
+   *
+   * The target is a damage sink running for a predetermined duration, not
+   * something with a health bar to get through: it carries
+   * `survivesLethalDamage`, so a fight always runs its full length however
+   * hard it is hit. The number exists so the combat log and the overkill
+   * column have somewhere to point, and nothing should be concluded from it.
+   *
+   * Kept rather than removed because it is not user-editable and removing it
+   * is a profile format change for no gain. It is NOT a difficulty setting,
+   * and lowering it does not shorten a fight.
+   */
   readonly targetHealth: number;
   readonly targetArmor: number;
   /**

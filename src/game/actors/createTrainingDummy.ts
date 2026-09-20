@@ -48,6 +48,20 @@ export interface TrainingDummyOptions {
  */
 export function createTrainingDummy(options: TrainingDummyOptions = {}): Combatant {
   return new Combatant({
+    /*
+     * IT DOES NOT DIE, whatever it is hit with.
+     *
+     * The ruleset owner's decision, and it is what the encounter has always
+     * been for: a target that takes damage for a predetermined duration, not
+     * something with a health bar to get through. Its health pool is a number
+     * damage is subtracted from so the log has somewhere to put it, and
+     * nothing should depend on the total.
+     *
+     * Without this a long enough fight ends early -- a rogue probe at one hour
+     * killed a hundred-thousand-health dummy and cut the iteration short,
+     * which silently changes the denominator of every per-second figure in it.
+     */
+    survivesLethalDamage: true,
     id: options.id ?? 'dummy_1',
     name: options.name ?? 'Training Dummy',
     kind: 'enemy',

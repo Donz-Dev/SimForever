@@ -134,15 +134,27 @@ describe('player versus training dummy', () => {
     expect(armored.damage.total).toBeLessThan(unarmored.damage.total);
   });
 
-  it('ends early when the target dies', () => {
+  it('runs the full duration even when the target is dealt lethal damage', () => {
+    /*
+     * THE TARGET DOES NOT DIE. This asserted the opposite until the ruleset
+     * owner settled what the encounter is: a damage sink running for a
+     * predetermined duration, not something with a health bar to get through.
+     *
+     * Two thousand health against a geared warrior is gone in seconds, and
+     * ending there would cut the iteration short -- which silently changes the
+     * denominator of every per-second figure in it. At 2500 iterations a
+     * handful of short ones is a quiet bias rather than an obvious failure.
+     */
     const result = runProfile({
       ...profile,
       encounter: { ...profile.encounter, targetHealth: 2000 },
     });
 
-    expect(result.endReason).toBe('all_enemies_dead');
-    expect(result.durationMs).toBeLessThan(100_000);
-    expect(result.actors.find((actor) => actor.faction === 'hostile')?.isAlive).toBe(false);
+    expect(result.endReason).toBe('duration_expired');
+    expect(toSeconds(result.durationMs)).toBe(100);
+    expect(result.actors.find((actor) => actor.faction === 'hostile')?.isAlive).toBe(true);
+    // And it kept taking damage the whole time, well past its nominal pool.
+    expect(result.damage.total).toBeGreaterThan(2000);
   });
 
   it('runs a caster that does nothing at all without stalling', () => {
