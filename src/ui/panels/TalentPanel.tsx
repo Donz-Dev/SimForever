@@ -151,7 +151,13 @@ function TalentTreeView({
 
   return (
     <div className="talent-tree" style={{ borderColor: accent }}>
-      <header className="talent-tree-header" style={{ background: `${accent}33` }}>
+      {/* color-mix rather than an `${accent}33` suffix: the accent is a custom
+          property now, and appending alpha digits to `var(--tree-1)` produces
+          a string no browser parses. */}
+      <header
+        className="talent-tree-header"
+        style={{ background: `color-mix(in srgb, ${accent} 20%, transparent)` }}
+      >
         <span className="talent-tree-name">{tree.name}</span>
         <span className="talent-tree-points">
           {spent} / {TOTAL_TALENT_POINTS}

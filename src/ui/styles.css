@@ -6,18 +6,230 @@
  * interface gets designed.
  */
 
-:root {
-  --bg: #14161a;
-  --panel: #1c1f26;
-  --panel-border: #2a2f3a;
-  --text: #e4e6eb;
-  --text-muted: #8b93a5;
+/* ---------------------------------------------------------------------------
+   THEMES
+
+   Four schemes, chosen from conventions that are already load-bearing in
+   product and marketing design rather than invented here:
+
+     abyss      deep teal + copper                 complementary, fintech/SaaS
+     graphite   neutral charcoal + ember orange    the developer-tool pairing
+     midnight   near-black navy + burnished gold   the premium/luxury pairing
+     obsidian   near-black + electric violet       the modern dark-mode SaaS
+
+   Abyssal Copper is the CHOSEN scheme, and holds the bare `:root` as well as
+   its own selector. That is not tidiness: the page paints before React runs,
+   and whichever scheme sits on `:root` is what shows for that frame. Leaving
+   another one there would flash the wrong colours on every load.
+
+   Every one is dark, and every one is expressed in the SAME role tokens, so a
+   rule never names a colour. A theme that had to add a rule would not be a
+   theme -- it would be a second stylesheet.
+
+   Roles, not shades. `--surface-sunken` means "a well cut into a panel", and
+   an input, a stat tile and the progress track all use it because they are
+   all that. Naming it `--grey-900` is how the character sheet and the gear
+   list drifted apart in the first place.
+   --------------------------------------------------------------------------- */
+
+:root,
+:root[data-theme='abyss'] {
+  --bg: #0b1417;
+  --bg-deep: #070f11;
+  --surface: #101e22;
+  --surface-raised: #18292e;
+  --surface-sunken: #0c181b;
+  --border: #1e333a;
+  --border-strong: #2e4b54;
+  --text: #e2ecee;
+  --text-muted: #8aa2a7;
+  --accent: #d98a5f;
+  --accent-strong: #f2a97d;
+  --accent-contrast: #140903;
+  --success: #56c2a0;
+  --error: #e2706b;
+
+  --logo-metal-1: #f7d3ba;
+  --logo-metal-2: #e0a077;
+  --logo-metal-3: #b96a3c;
+  --logo-metal-4: #7d4321;
+  --logo-metal-edge: #5a2f16;
+  --logo-second-1: #f4fbfc;
+  --logo-second-2: #cfe4e6;
+  --logo-second-3: #92aeb2;
+  --logo-second-4: #64807f;
+  --logo-second-edge: #3d5a5d;
+  --logo-disc-1: #1c7b7d;
+  --logo-disc-2: #10484f;
+  --logo-disc-3: #07222a;
+  --logo-inset: #0a1f24;
+  --logo-rim-1: #f2c6a6;
+  --logo-rim-2: #c9793f;
+  --logo-rim-3: #7d431c;
+}
+
+:root[data-theme='graphite'] {
+  --bg: #121214;
+  --bg-deep: #0b0b0d;
+  --surface: #1a1a1d;
+  --surface-raised: #252529;
+  --surface-sunken: #141416;
+  --border: #2c2c31;
+  --border-strong: #42424a;
+  --text: #ededee;
+  --text-muted: #9a9aa2;
+  --accent: #e8722c;
+  --accent-strong: #ff9354;
+  --accent-contrast: #180a02;
+  --success: #4fbf68;
+  --error: #e2544e;
+
+  --logo-metal-1: #ffd9b0;
+  --logo-metal-2: #f0a05a;
+  --logo-metal-3: #c86a24;
+  --logo-metal-4: #8a4413;
+  --logo-metal-edge: #5c2d0c;
+  --logo-second-1: #ffffff;
+  --logo-second-2: #e4e4e6;
+  --logo-second-3: #a2a2a9;
+  --logo-second-4: #6e6e76;
+  --logo-second-edge: #48484f;
+  --logo-disc-1: #6b3320;
+  --logo-disc-2: #3d1c11;
+  --logo-disc-3: #1c0d07;
+  --logo-inset: #1e1310;
+  --logo-rim-1: #ffd9b0;
+  --logo-rim-2: #d07b2e;
+  --logo-rim-3: #7a3f10;
+}
+
+:root[data-theme='midnight'] {
+  --bg: #0f1116;
+  --bg-deep: #090b0f;
+  --surface: #171a21;
+  --surface-raised: #212530;
+  --surface-sunken: #101318;
+  --border: #272c37;
+  --border-strong: #3b4252;
+  --text: #e7e9ef;
+  --text-muted: #949cae;
   --accent: #c8a45c;
-  --accent-strong: #e0b968;
+  --accent-strong: #e3bf72;
+  --accent-contrast: #100d06;
+  --success: #5fc46a;
   --error: #e06c6c;
+
+  --logo-metal-1: #f6e3a8;
+  --logo-metal-2: #e0b968;
+  --logo-metal-3: #b8862f;
+  --logo-metal-4: #8a5f1d;
+  --logo-metal-edge: #5f4110;
+  --logo-second-1: #ffffff;
+  --logo-second-2: #dfe4ee;
+  --logo-second-3: #9aa4b6;
+  --logo-second-4: #6d778a;
+  --logo-second-edge: #4b5364;
+  --logo-disc-1: #2f7d96;
+  --logo-disc-2: #1b5268;
+  --logo-disc-3: #0d2b39;
+  --logo-inset: #0e2937;
+  --logo-rim-1: #f2dda2;
+  --logo-rim-2: #c2903a;
+  --logo-rim-3: #7d5518;
+}
+
+:root[data-theme='obsidian'] {
+  --bg: #0d0d12;
+  --bg-deep: #08080c;
+  --surface: #15151d;
+  --surface-raised: #1f1f2a;
+  --surface-sunken: #101016;
+  --border: #262633;
+  --border-strong: #3b3b4e;
+  --text: #e9e9f1;
+  --text-muted: #9494a9;
+  --accent: #8b6cf0;
+  --accent-strong: #a992ff;
+  --accent-contrast: #0b0715;
+  --success: #4fc98a;
+  --error: #f0616e;
+
+  --logo-metal-1: #ded7ff;
+  --logo-metal-2: #ab92f5;
+  --logo-metal-3: #7a5ce0;
+  --logo-metal-4: #4b32a0;
+  --logo-metal-edge: #33207a;
+  --logo-second-1: #ffffff;
+  --logo-second-2: #e4e4f0;
+  --logo-second-3: #a6a6c0;
+  --logo-second-4: #74748c;
+  --logo-second-edge: #4a4a60;
+  --logo-disc-1: #4a37a8;
+  --logo-disc-2: #2a1d63;
+  --logo-disc-3: #120c2e;
+  --logo-inset: #14102b;
+  --logo-rim-1: #d6cbff;
+  --logo-rim-2: #8f74e8;
+  --logo-rim-3: #533aa8;
+}
+
+/* ---------------------------------------------------------------------------
+   Shared across every theme.
+   --------------------------------------------------------------------------- */
+
+:root {
+  /* Accent washes are DERIVED, so a new theme sets one accent and gets all
+     three. They were three hand-written rgba() literals of the old gold,
+     which is why nothing else could ever be the accent colour. */
+  --accent-wash: color-mix(in srgb, var(--accent) 16%, transparent);
+  --accent-wash-hover: color-mix(in srgb, var(--accent) 26%, transparent);
+  --accent-bar: color-mix(in srgb, var(--accent) 22%, transparent);
+
+  /*
+   * Series colours for the donuts, and DELIBERATELY THE SAME IN ALL FOUR
+   * THEMES.
+   *
+   * Identity belongs to the thing being measured: Heroic Strike's slice
+   * should not change colour because the chrome did. They are the validated
+   * dark-surface categorical steps, in the order that clears the
+   * colour-vision-deficiency gates, and the set passes every check against
+   * all four themes' panel surfaces -- lightness band, chroma floor, adjacent
+   * CVD separation, normal-vision separation and 3:1 contrast.
+   *
+   * The order is the safety mechanism, not decoration. Do not re-order them
+   * to make a particular chart look nicer.
+   */
+  --series-1: #3987e5;
+  --series-2: #d95926;
+  --series-3: #199e70;
+  --series-4: #c98500;
+  --series-5: #d55181;
+  --series-6: #008300;
+  --series-7: #9085e9;
+  --series-8: #e66767;
+
+  /*
+   * Talent tree accents, and fixed across themes for the same reason the
+   * series colours are: they say WHICH TREE, and Arms should not change
+   * colour because the page did. Muted enough to frame a grid of icons
+   * without competing with them.
+   */
+  --tree-1: #b4622a;
+  --tree-2: #a33b2a;
+  --tree-3: #3a6f93;
+
   --font-ui: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   --font-mono: ui-monospace, 'Cascadia Code', 'Consolas', monospace;
+
+  /* One control geometry. Every input, select and button is built from these
+     rather than from its own numbers. */
+  --radius: 4px;
+  --radius-panel: 8px;
+  --control-padding: 7px 10px;
+  --control-font-size: 13px;
+  --label-font-size: 13px;
 }
+
 
 * {
   box-sizing: border-box;
@@ -39,14 +251,92 @@ body {
 }
 
 .app-header {
-  border-bottom: 1px solid var(--panel-border);
+  border-bottom: 1px solid var(--border);
   margin-bottom: 24px;
   padding-bottom: 16px;
 }
 
 .app-header {
   display: flex;
+  align-items: center;
   justify-content: center;
+  position: relative;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+/* --- theme picker --- */
+
+/* Absolute at desktop widths so the wordmark stays centred on the PAGE rather
+   than on the space left over beside the swatches. It rejoins the flow when
+   there is no room for both, which is why the header wraps. */
+.theme-picker {
+  display: flex;
+  gap: 6px;
+}
+
+@media (min-width: 860px) {
+  .theme-picker {
+    position: absolute;
+    right: 0;
+    top: 50%;
+    transform: translateY(-50%);
+  }
+}
+
+.theme-swatch {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 5px 9px 5px 6px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--text-muted);
+  font-size: 11px;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+}
+
+.theme-swatch:hover:not(.selected) {
+  border-color: var(--border-strong);
+  color: var(--text);
+}
+
+.theme-swatch.selected {
+  background: var(--accent-wash);
+  border-color: var(--accent);
+  color: var(--accent-strong);
+  font-weight: 600;
+}
+
+/* The chip previews the scheme it switches to, so the colours are inline
+   literals from the theme table rather than tokens -- the tokens only ever
+   hold the scheme currently showing. */
+.theme-swatch-chip {
+  display: flex;
+  align-items: flex-end;
+  justify-content: flex-end;
+  width: 18px;
+  height: 18px;
+  border: 1px solid var(--border-strong);
+  border-radius: 3px;
+  overflow: hidden;
+  flex: 0 0 auto;
+}
+
+.theme-swatch-accent {
+  width: 9px;
+  height: 9px;
+  border-top-left-radius: 3px;
+}
+
+/* Names cost more width than they are worth on a phone; the swatch and its
+   title attribute still say which is which. */
+@media (max-width: 620px) {
+  .theme-swatch-name {
+    display: none;
+  }
 }
 
 /* The wordmark scales with the viewport rather than sitting at a fixed size,
@@ -106,7 +396,7 @@ body {
   width: 100%;
   margin-top: 16px;
   padding: 10px 12px;
-  background: rgba(200, 164, 92, 0.16);
+  background: var(--accent-wash);
   border-color: var(--accent);
   color: var(--accent-strong);
   font-size: 13px;
@@ -115,7 +405,7 @@ body {
 }
 
 .confirm:hover:not(:disabled) {
-  background: rgba(200, 164, 92, 0.26);
+  background: var(--accent-wash-hover);
 }
 
 .character-summary-body {
@@ -138,9 +428,9 @@ body {
 /* --- panels --- */
 
 .panel {
-  background: var(--panel);
-  border: 1px solid var(--panel-border);
-  border-radius: 8px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-panel);
   overflow: hidden;
 }
 
@@ -150,7 +440,7 @@ body {
   justify-content: space-between;
   gap: 12px;
   padding: 12px 16px;
-  border-bottom: 1px solid var(--panel-border);
+  border-bottom: 1px solid var(--border);
 }
 
 .panel-header h2 {
@@ -207,7 +497,7 @@ body {
   justify-content: space-between;
   gap: 8px;
   margin-bottom: 4px;
-  font-size: 13px;
+  font-size: var(--label-font-size);
   color: var(--text-muted);
 }
 
@@ -216,42 +506,48 @@ body {
   opacity: 0.7;
 }
 
+/*
+ * ONE CONTROL, WHEREVER IT APPEARS.
+ *
+ * The gear selects used to be their own thing -- 12px, the UI font, muted
+ * text, tighter padding -- so a dropdown in the Gear panel and a dropdown in
+ * the Encounter panel were visibly different controls doing the same job. The
+ * character sheet and the gear list read as two applications for the same
+ * reason. There is now one rule and one set of geometry tokens, and a new
+ * control gets them by being in this selector list rather than by someone
+ * remembering the numbers.
+ */
 input[type='text'],
 input[type='number'],
-textarea {
+textarea,
+select {
   width: 100%;
-  padding: 7px 10px;
-  background: #11141a;
-  border: 1px solid var(--panel-border);
-  border-radius: 4px;
+  padding: var(--control-padding);
+  background: var(--surface-sunken);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
   color: var(--text);
   font-family: var(--font-mono);
-  font-size: 13px;
+  font-size: var(--control-font-size);
 }
 
-/* A field's dropdown matches its text and number inputs. */
-.field select {
-  width: 100%;
-  padding: 7px 10px;
-  background: #11141a;
-  border: 1px solid var(--panel-border);
-  border-radius: 4px;
-  color: var(--text);
-  font-family: var(--font-mono);
-  font-size: 13px;
+select:hover:not(:disabled),
+input:hover:not(:disabled),
+textarea:hover {
+  border-color: var(--border-strong);
 }
 
 input:focus,
 textarea:focus,
-.field select:focus {
+select:focus {
   outline: none;
   border-color: var(--accent);
 }
 
 button {
   padding: 6px 12px;
-  background: #262b35;
-  border: 1px solid var(--panel-border);
+  background: var(--surface-raised);
+  border: 1px solid var(--border);
   border-radius: 4px;
   color: var(--text);
   font-family: inherit;
@@ -277,9 +573,9 @@ button:disabled {
 }
 
 .option {
-  padding: 7px 8px;
-  background: #11141a;
-  border: 1px solid var(--panel-border);
+  padding: var(--control-padding);
+  background: var(--surface-sunken);
+  border: 1px solid var(--border);
   border-radius: 4px;
   color: var(--text-muted);
   font-size: 12px;
@@ -289,35 +585,41 @@ button:disabled {
 
 .option:hover:not(.selected) {
   color: var(--text);
-  border-color: #3b4250;
+  border-color: var(--border-strong);
 }
 
 .option.selected {
-  background: rgba(200, 164, 92, 0.16);
+  background: var(--accent-wash);
   border-color: var(--accent);
   color: var(--accent-strong);
   font-weight: 600;
 }
 
 .readonly-value {
-  padding: 7px 10px;
-  background: #0d1015;
-  border: 1px solid var(--panel-border);
+  padding: var(--control-padding);
+  background: var(--bg-deep);
+  border: 1px solid var(--border);
   border-radius: 4px;
   color: var(--text-muted);
   font-family: var(--font-mono);
   font-size: 13px;
 }
 
+/*
+ * The character sheet, the resource list, the results breakdown and the donut
+ * legends are all the same object: a label on the left, a mono figure on the
+ * right, separated by a hairline. They had four different paddings and three
+ * different font sizes. One set of numbers now, so the panels line up.
+ */
 .base-stats {
   width: 100%;
   border-collapse: collapse;
-  font-size: 13px;
+  font-size: var(--control-font-size);
 }
 
 .base-stats td {
-  padding: 4px 8px;
-  border-bottom: 1px solid var(--panel-border);
+  padding: 5px 10px;
+  border-bottom: 1px solid var(--border);
 }
 
 .base-stats td.numeric {
@@ -340,8 +642,8 @@ button:disabled {
   justify-content: space-between;
   gap: 8px;
   padding: 5px 10px;
-  border-bottom: 1px solid var(--panel-border);
-  font-size: 13px;
+  border-bottom: 1px solid var(--border);
+  font-size: var(--control-font-size);
 }
 
 .resource-list li:last-child {
@@ -354,7 +656,7 @@ button:disabled {
   padding: 11px;
   background: var(--accent);
   border-color: var(--accent);
-  color: #14161a;
+  color: var(--accent-contrast);
   font-size: 14px;
   font-weight: 600;
   letter-spacing: 0.04em;
@@ -368,7 +670,7 @@ button:disabled {
 .progress {
   height: 4px;
   margin-top: 8px;
-  background: #11141a;
+  background: var(--surface-sunken);
   border-radius: 2px;
   overflow: hidden;
 }
@@ -391,7 +693,7 @@ button:disabled {
   display: flex;
   flex-direction: column;
   padding: 10px 12px;
-  background: #11141a;
+  background: var(--surface-sunken);
   border-radius: 6px;
 }
 
@@ -411,13 +713,13 @@ button:disabled {
 .breakdown {
   width: 100%;
   border-collapse: collapse;
-  font-size: 13px;
+  font-size: var(--control-font-size);
 }
 
 .breakdown th,
 .breakdown td {
   padding: 7px 10px;
-  border-bottom: 1px solid var(--panel-border);
+  border-bottom: 1px solid var(--border);
   text-align: left;
 }
 
@@ -451,7 +753,7 @@ button:disabled {
   top: 0;
   right: 0;
   bottom: 0;
-  background: rgba(200, 164, 92, 0.22);
+  background: var(--accent-bar);
   border-radius: 2px;
 }
 
@@ -470,7 +772,7 @@ button:disabled {
   margin: 0;
   padding: 12px;
   overflow: auto;
-  background: #11141a;
+  background: var(--surface-sunken);
   border-radius: 6px;
   font-family: var(--font-mono);
   font-size: 12px;
@@ -488,9 +790,9 @@ button:disabled {
 
 .placeholder {
   padding: 48px 24px;
-  background: var(--panel);
-  border: 1px dashed var(--panel-border);
-  border-radius: 8px;
+  background: var(--surface);
+  border: 1px dashed var(--border);
+  border-radius: var(--radius-panel);
   color: var(--text-muted);
   text-align: center;
 }
@@ -561,7 +863,7 @@ button:disabled {
 }
 
 .talent-tree {
-  border: 1px solid var(--panel-border);
+  border: 1px solid var(--border);
   border-radius: 6px;
   overflow: hidden;
   display: flex;
@@ -573,7 +875,7 @@ button:disabled {
   align-items: baseline;
   justify-content: space-between;
   padding: 8px 10px;
-  border-bottom: 1px solid var(--panel-border);
+  border-bottom: 1px solid var(--border);
 }
 
 .talent-tree-name {
@@ -593,7 +895,7 @@ button:disabled {
   display: grid;
   gap: 8px;
   padding: 12px;
-  background: #0d1015;
+  background: var(--bg-deep);
   flex: 1;
 }
 
@@ -603,7 +905,7 @@ button:disabled {
   width: 100%;
   aspect-ratio: 1;
   background: none;
-  border: 2px solid var(--panel-border);
+  border: 2px solid var(--border);
   border-radius: 4px;
   overflow: visible;
   cursor: pointer;
@@ -624,7 +926,7 @@ button:disabled {
 }
 
 .talent.open {
-  border-color: #4a5464;
+  border-color: var(--border-strong);
 }
 
 .talent.open:hover {
@@ -636,7 +938,7 @@ button:disabled {
 }
 
 .talent.maxed {
-  border-color: #58c46a;
+  border-color: var(--success);
 }
 
 .talent:disabled {
@@ -648,8 +950,8 @@ button:disabled {
   right: -4px;
   bottom: -6px;
   padding: 0 3px;
-  background: #0d1015;
-  border: 1px solid var(--panel-border);
+  background: var(--bg-deep);
+  border: 1px solid var(--border);
   border-radius: 3px;
   font-family: var(--font-mono);
   font-size: 10px;
@@ -662,7 +964,7 @@ button:disabled {
 }
 
 .talent.maxed .talent-rank {
-  color: #58c46a;
+  color: var(--success);
 }
 
 .talent-reset {
@@ -685,20 +987,10 @@ button:disabled {
   gap: 6px;
 }
 
+/* Matches .field-label, because it is one. */
 .gear-slot-name {
-  font-size: 12px;
+  font-size: var(--label-font-size);
   color: var(--text-muted);
-}
-
-.gear-select {
-  width: 100%;
-  padding: 6px 8px;
-  background: #11141a;
-  border: 1px solid var(--panel-border);
-  border-radius: 4px;
-  color: var(--text-muted);
-  font-family: inherit;
-  font-size: 12px;
 }
 
 .gear-select:disabled {
@@ -770,15 +1062,15 @@ button:disabled {
   margin: 0;
   padding: 0;
   flex: 1 1 auto;
-  font-size: 12px;
+  font-size: var(--control-font-size);
 }
 
 .donut-legend li {
   display: flex;
   align-items: baseline;
   gap: 8px;
-  padding: 3px 0;
-  border-bottom: 1px solid var(--panel-border);
+  padding: 5px 0;
+  border-bottom: 1px solid var(--border);
 }
 
 .donut-legend li:last-child {

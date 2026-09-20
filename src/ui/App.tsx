@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import type { TalentAllocation } from '../game/talents/Talent';
 
 /** How TalentPanel asks for a change: applied to whatever is current. */
@@ -8,6 +8,8 @@ import { createDefaultProfile } from '../profiles';
 import { resolveCombatStyle } from '../game/character';
 import { startingEquipmentFor } from '../game/items/startingSets';
 import { Logo } from './components/Logo';
+import { ThemePicker } from './components/ThemePicker';
+import { applyTheme, storeTheme, storedTheme } from './theme';
 import { useSimulation } from './hooks/useSimulation';
 import { CharacterPanel } from './panels/CharacterPanel';
 import { CharacterSheetPanel } from './panels/CharacterSheetPanel';
@@ -48,6 +50,22 @@ export function App() {
   const setTalents = (update: TalentUpdate) =>
     setProfile((previous) => ({ ...previous, talents: update(previous.talents) }));
   const [talentsCollapsed, setTalentsCollapsed] = useState(false);
+
+  /*
+   * The colour scheme, which is the one piece of state that is NOT part of the
+   * profile. A profile describes a character and a fight; what the page looks
+   * like while someone reads it is not part of either, and writing it in would
+   * mean a profile shared between two people carried one of them's taste.
+   *
+   * It lives in this browser instead, and is re-applied to the document rather
+   * than rendered, because the tokens hang off the root element and sit above
+   * React's tree.
+   */
+  const [theme, setTheme] = useState(storedTheme);
+  useEffect(() => {
+    applyTheme(theme, document.documentElement);
+    storeTheme(theme);
+  }, [theme]);
   const { state, progress, run, reset } = useSimulation();
 
   /**
@@ -93,6 +111,7 @@ export function App() {
     <div className="app">
       <header className="app-header">
         <Logo />
+        <ThemePicker value={theme} onChange={setTheme} />
       </header>
 
       <main className={confirmed ? 'app-layout' : 'app-layout single'}>
