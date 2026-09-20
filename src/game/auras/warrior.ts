@@ -340,6 +340,22 @@ export const BERSERKER_STANCE: AuraDefinition = {
   statModifiers: [flat('critChance', BERSERKER_STANCE_CRIT_BONUS)],
 };
 
+/**
+ * Rage kept when changing stance, before Improved Tactical Mastery.
+ *
+ * Stated by the ruleset owner: a stance change drops everything above ten.
+ * This is why stance dancing is a real cost and not a free action, and until
+ * now the simulator charged nothing for it -- which the rotation exploited,
+ * swapping whenever an ability in another stance looked slightly better.
+ *
+ * Improved Tactical Mastery adds to the floor rather than multiplying it:
+ * "retain up to an additional 3/6/9/12/15 Rage", so rank 5 keeps 25.
+ */
+export const STANCE_RAGE_FLOOR = 10;
+
+/** The bonus key Improved Tactical Mastery adds to that floor. */
+export const STANCE_RAGE_RETAINED_BONUS = 'rageRetained';
+
 /** Every stance, so that applying one can clear the others. */
 export const WARRIOR_STANCES: readonly AuraDefinition[] = [
   BATTLE_STANCE,
@@ -361,12 +377,30 @@ export const WARRIOR_STANCES: readonly AuraDefinition[] = [
  * an aura already has a duration, a refresh rule and a visible lifetime in the
  * combat log. The window length is NOT stated anywhere and is a placeholder.
  */
-export const PLACEHOLDER_OVERPOWER_WINDOW_MS = seconds(5);
+export const OVERPOWER_WINDOW_MS = seconds(6);
 
+/**
+ * The Overpower window: ONE charge, six seconds, consumed by a single use.
+ *
+ * Stated by the ruleset owner: a dodge grants one hidden charge against that
+ * target, the cap is one, it expires after six seconds or when an Overpower
+ * spends it, and another dodge inside the window refreshes the six seconds
+ * without stacking. Bloodthrill's own tooltip corroborates the duration --
+ * "activate your Overpower ability for 1 attack ... Lasts 6 sec".
+ *
+ * It was a PLACEHOLDER five seconds, assumed because nothing stated it.
+ *
+ * Every clause is a property of this aura rather than logic somewhere:
+ * `maxStacks` defaults to one, `durationMs` expires it, `refreshBehaviour:
+ * 'reset'` restarts the clock without a second stack, and Overpower's own
+ * `onCast` removes it. Bloodthrill applies the same aura, so it inherits all
+ * four -- which is what "works exactly the same besides the trigger" means.
+ */
 export const OVERPOWER_READY: AuraDefinition = {
   id: 'overpower_ready',
   name: 'Overpower Ready',
-  durationMs: PLACEHOLDER_OVERPOWER_WINDOW_MS,
+  durationMs: OVERPOWER_WINDOW_MS,
+  maxStacks: 1,
   refreshBehaviour: 'reset',
 };
 

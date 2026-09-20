@@ -11,6 +11,8 @@ import { Simulation, seconds } from '../../src/engine';
 export function buildSimulation(
   combatants: Combatant[],
   overrides: Partial<SimulationConfig> = {},
+  /** A sink, for a test that needs to read the event stream. */
+  sink?: ConstructorParameters<typeof Simulation>[1],
 ): Simulation {
   const config: SimulationConfig = {
     durationMs: seconds(60),
@@ -18,5 +20,5 @@ export function buildSimulation(
     createCombatants: () => combatants,
     ...overrides,
   };
-  return new Simulation(config);
+  return new Simulation(config, sink);
 }

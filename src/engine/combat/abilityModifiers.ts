@@ -72,6 +72,17 @@ export class AbilityModifiers {
   for(abilityId: string | undefined): AbilityModifier {
     if (abilityId === undefined) return NONE;
     const all = this.byAbility.get(ALL_ABILITIES);
+    /*
+     * ASKING FOR THE CATCH-ALL KEY RETURNS IT ONCE, not twice.
+     *
+     * Without this, `for(ALL_ABILITIES)` looked up the all-abilities entry as
+     * both `all` and `own` and combined it with itself, so a talent granting
+     * +20% crit damage to everything read back as +40%. Every per-ability
+     * lookup was correct, which is why it survived: nothing in the damage
+     * pipeline queries the catch-all key, and a test written to check Impale's
+     * "your abilities" wording was the first thing that did.
+     */
+    if (abilityId === ALL_ABILITIES) return all ?? NONE;
     const own = this.byAbility.get(abilityId);
     if (!all) return own ?? NONE;
     if (!own) return all;

@@ -9,8 +9,8 @@ import type { TalentEffects } from './TalentEffect';
  * test asserts the coverage both ways, which is how three entries lost to a
  * careless edit were caught.
  *
- * 27 are fully modelled and 6 more are PARTLY modelled — something real plus an
- * `unmodelled` entry naming the part that is missing. 20 do nothing at all.
+ * 29 are fully modelled and 6 more are PARTLY modelled — something real plus an
+ * `unmodelled` entry naming the part that is missing. 18 do nothing at all.
  * Those three numbers must sum to 53; the previous count said 21 inert and
  * summed to 54, which is how the drift below went unnoticed.
  *
@@ -66,11 +66,20 @@ export const WARRIOR_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
 
   improved_charge: [{ kind: 'abilityBonus', abilityId: 'charge', key: 'rage' }],
 
+  /*
+   * "Retain up to an additional 3/6/9/12/15 Rage when you change stances", so
+   * rank 5 keeps 25 against the base floor of 10.
+   *
+   * Declared once per stance ability rather than as a character-wide value.
+   * Repetitive, and it keeps the rule where the rule belongs: a stance change
+   * is the thing that costs rage, so the ability that performs one carries the
+   * number. A character-wide field would have to be read by something, and the
+   * only reader would be these same three abilities.
+   */
   improved_tactical_mastery: [
-    {
-      kind: 'unmodelled',
-      reason: 'Rage retained on a stance change. Stances are defined but gate nothing.',
-    },
+    { kind: 'abilityBonus', abilityId: 'battle_stance_cast', key: 'rageRetained' },
+    { kind: 'abilityBonus', abilityId: 'defensive_stance_cast', key: 'rageRetained' },
+    { kind: 'abilityBonus', abilityId: 'berserker_stance_cast', key: 'rageRetained' },
   ],
 
   improved_overpower: [{ kind: 'abilityCrit', abilityId: 'overpower' }],
@@ -137,15 +146,39 @@ export const WARRIOR_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
    * weapon's type -- only its speed, damage and skill -- so all three clauses
    * are ungated and the sword one fires whatever the warrior is wielding.
    */
+  /*
+   * Three clauses, one per weapon family, and two of the three are real.
+   *
+   *   Axe/Polearm  +1-5% crit         -- applied when the MAIN HAND is one
+   *   Sword        1-5% extra attack  -- per swinging weapon, either hand
+   *   Mace/Staff   3-15% armor ignore -- not modelled
+   *
+   * The sword clause reads the talent's THIRD value (`valueIndex: 2`) and is
+   * gated on the weapon that actually swung, so a mace-and-sword dual wielder
+   * gets it from the sword and gets it from the off hand. Its extra attack is
+   * always a MAIN HAND swing, matching Hand of Justice: an off-hand sword's
+   * proc swings the main-hand mace.
+   *
+   * A previous version of this entry said the engine "does not record a weapon
+   * type". It does -- `WeaponProfile.weaponType`, filled from the item's
+   * subclass -- and the clause was ungated as a result.
+   *
+   * The crit clause is MAIN HAND ONLY, and that is an interpretation rather
+   * than the rule: `critChance` is a whole-character stat with no per-slot
+   * form, so a bonus earned by an off-hand axe would apply to main-hand swings
+   * too. Main hand is the reading that is right for the hand doing most of the
+   * damage and wrong for the other, which beats being wrong for both.
+   */
   weaponmaster: [
+    { kind: 'conditionalCrit', requires: { weaponTypes: ['axe', 'polearm'] } },
     { kind: 'reaction', reactionId: 'weaponmaster', valueIndex: 2 },
     {
       kind: 'unmodelled',
       reason:
-        'Only the SWORD clause is modelled -- a chance at an extra attack -- ' +
-        'and it is not gated on carrying a sword, because the engine does not ' +
-        'record a weapon type. The axe/polearm crit and mace/staff armor ' +
-        'penetration clauses are absent for the same reason.',
+        'The mace and staff clause ignores a percentage of the target armor, ' +
+        'which the damage pipeline cannot express. The axe/polearm crit and ' +
+        'the sword extra attack both work; the crit reads the MAIN HAND only, ' +
+        'because crit chance has no per-slot form in this engine.',
     },
   ],
 

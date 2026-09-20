@@ -192,8 +192,30 @@ export const weaponmasterSword: TalentReactionBuilder = (chancePercent) => ({
   id: 'weaponmaster_sword',
   on: 'dealt',
   outcomes: ['hit', 'crit', 'glance'],
-  canTrigger: (context) => context.rng.rollChance(chancePercent / 100),
+  canTrigger: (context, actor, attack) => {
+    /*
+     * GATED ON THE WEAPON THAT SWUNG, not on the main hand.
+     *
+     * A warrior holding a mace and a sword gets this from the sword only, and
+     * gets it from the off hand -- so the check reads the slot the attack came
+     * from rather than asking what the character is "wielding". Reading the
+     * main hand would give a main-hand mace the sword's proc and deny it to
+     * the sword entirely, which is exactly backwards.
+     */
+    if (!isMelee(attack.weaponSlot)) return false;
+    const weapon = attack.weaponSlot ? actor.weapons[attack.weaponSlot] : undefined;
+    if (weapon?.weaponType !== 'sword') return false;
+    return context.rng.rollChance(chancePercent / 100);
+  },
   onTrigger: (context, actor) => {
+    /*
+     * THE EXTRA ATTACK IS ALWAYS THE MAIN HAND, whichever hand procced it.
+     *
+     * Stated by the ruleset owner, and it matters for a mace/sword pairing:
+     * an off-hand sword's proc swings the main-hand mace. Hand of Justice
+     * already does this, and the two now agree -- an extra attack in this
+     * engine means a main-hand swing.
+     */
     context.extraAttack(actor, 'mainHand');
   },
 });

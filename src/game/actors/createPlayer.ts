@@ -152,7 +152,10 @@ export function createPlayer(options: PlayerOptions): Combatant {
   const legal = classTalents
     ? legalAllocation(classTalents, declaredTalents)
     : { allocation: declaredTalents, dropped: [] as readonly string[] };
-  const build = talentBuild(characterClass, legal.allocation, { mainHand: weapons.mainHand });
+  const build = talentBuild(characterClass, legal.allocation, {
+    mainHand: weapons.mainHand,
+    offHand: weapons.offHand,
+  });
 
   // Layers 1 and 2: the stats a character has before any conversion. Gear
   // first, then the profile's own bonuses, then the flat part of the talents.

@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { seconds } from '../../src/engine';
+import { TelemetryRecorder } from '../../src/engine/logging';
 import { createPlayer } from '../../src/game/actors/createPlayer';
 import {
   ENERGY_PER_TICK,
@@ -172,15 +173,33 @@ describe('rage', () => {
   });
 
   it('is stored as a decimal even though it displays as an integer', () => {
+    /*
+     * Asserted on the GAINS, not on the balance at an arbitrary moment.
+     *
+     * This used to read `current` six seconds in and require it to be non-zero
+     * and fractional. Both were incidental: the balance is whatever the
+     * rotation has not spent yet, so widening the Overpower window from five
+     * seconds to six -- one more cast, five more rage spent -- took it to
+     * exactly zero and failed a test about how rage is STORED.
+     *
+     * A gain is the thing that is fractional. Damage divided by 230.6
+     * essentially never lands on a whole number, and that is true of every
+     * gain regardless of what is spent afterwards.
+     */
     const player = warrior();
     const target = makeTarget({ maxHealth: 1_000_000 });
-    const sim = buildSimulation([player, target], { durationMs: seconds(60), seed: 11 });
+    const recorder = new TelemetryRecorder();
+    const sim = buildSimulation([player, target], {
+      durationMs: seconds(60),
+      seed: 11,
+    }, recorder);
     sim.advanceTo(seconds(6));
 
-    const current = player.resources.require('rage').current;
-    expect(current).toBeGreaterThan(0);
-    // Damage divided by 230.6 essentially never lands on a whole number.
-    expect(Number.isInteger(current)).toBe(false);
+    const gains = recorder.all.flatMap((event) =>
+      event.type === 'resource_gained' && event.resource === 'rage' ? [event.amount] : [],
+    );
+    expect(gains.length).toBeGreaterThan(0);
+    expect(gains.some((amount) => !Number.isInteger(amount))).toBe(true);
   });
 
   it('caps at the maximum', () => {
