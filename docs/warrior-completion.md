@@ -306,7 +306,7 @@ Struck through rather than deleted, so finished work is not re-derived.
 ## 5. Full talent audit — all 53, against the Forever calculator
 
 Audited against <https://www.wowhead.com/forever/talent-calc/warrior> on
-2026-09-18. **28 of 53 are fully simulated, 6 partly, 19 not at all**, which is
+2026-09-18. **29 of 53 are fully simulated, 6 partly, 18 not at all**, which is
 why a build shows entries under "Chosen but not simulated" in the Talent panel.
 That list is not an error: it is the panel refusing to let an unmodelled talent
 look like it is working.

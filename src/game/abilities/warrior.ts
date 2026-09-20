@@ -16,6 +16,8 @@ import {
   SHIELD_BLOCK,
   SHIELD_WALL,
   SUNDER_ARMOR,
+  STANCE_RAGE_FLOOR,
+  STANCE_RAGE_RETAINED_BONUS,
   WARRIOR_STANCES,
   DEATH_WISH,
   LAST_STAND,
@@ -839,11 +841,56 @@ function stanceAbility(id: string, aura: (typeof WARRIOR_STANCES)[number]): Abil
     // A stance swap is not a global cooldown in any ruleset that has stances.
     // UNSTATED in the sheet; this is an assumption.
     triggersGcd: false,
-    onCast: ({ simulation, caster }) => {
+    onCast: ({ simulation, caster, ability: self }) => {
+      const already = caster.auras.has(aura.id);
       for (const stance of WARRIOR_STANCES) {
         if (stance.id !== aura.id) caster.auras.remove(simulation, stance.id);
       }
       simulation.applyAura(caster, aura, caster.id);
+
+      /*
+       * CHANGING STANCE DROPS RAGE ABOVE THE FLOOR. This is the cost that makes
+       * stance dancing a decision rather than a free action, and the simulator
+       * charged nothing for it until now -- so the rotation swapped whenever
+       * anything in another stance looked marginally better.
+       *
+       * Only on an actual CHANGE. Re-casting the stance you are already in is
+       * not a change and must not burn the bar; without this guard a rotation
+       * that re-confirmed its stance would drain itself.
+       *
+       * Improved Tactical Mastery raises the floor through a named bonus, the
+       * same way Improved Charge raises Charge's rage, so the number lives with
+       * the talent and the rule lives here.
+       */
+      if (!already) {
+        const rage = caster.resources.get('rage');
+        const floor = STANCE_RAGE_FLOOR + (self.bonuses?.[STANCE_RAGE_RETAINED_BONUS] ?? 0);
+        if (rage && rage.current > floor) {
+          const lost = rage.current - floor;
+          rage.drain(lost);
+          /*
+           * EMITTED, not just drained. Rage that leaves the bar without a
+           * telemetry event is rage the ledger cannot account for -- gained
+           * minus spent stops equalling what is left, and a test caught
+           * exactly that within a minute of the drain being added.
+           *
+           * It also has to be visible for its own sake: the cost of stance
+           * dancing is the thing this talent is about, and it belongs in the
+           * rage breakdown beside the abilities that spent the rest.
+           */
+          simulation.telemetry.emit({
+            type: 'resource_spent',
+            timestamp: simulation.clock.now(),
+            actorId: caster.id,
+            resource: 'rage',
+            amount: lost,
+            wasted: 0,
+            current: rage.current,
+            source: 'stance_change',
+            sourceName: 'Stance change',
+          });
+        }
+      }
     },
   };
 }

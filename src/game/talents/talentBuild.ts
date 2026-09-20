@@ -134,6 +134,15 @@ const EMPTY: TalentBuild = {
  */
 export interface TalentBuildContext {
   readonly mainHand?: WeaponProfile;
+  /**
+   * The off hand, because a talent can care about EITHER weapon.
+   *
+   * Weaponmaster gives a different benefit per weapon family and a dual
+   * wielder can hold two families at once -- a mace and a sword is a real
+   * build, and judging it by the main hand alone silently drops the off
+   * hand's clause.
+   */
+  readonly offHand?: WeaponProfile;
 }
 
 /** Whether the held weapon satisfies a conditional effect. */
@@ -301,6 +310,17 @@ export function talentBuild(
           }
           break;
         case 'conditionalCrit':
+          /*
+           * MAIN HAND ONLY, deliberately, and it is an interpretation.
+           *
+           * `critChance` is a whole-character stat: the engine has no per-slot
+           * crit, so a bonus earned by the off hand would also apply to main
+           * hand swings. Awarding it on the main hand is the reading that is
+           * right for the hand doing most of the damage and wrong for the
+           * other one, which beats being wrong for both.
+           *
+           * The Gear and Talent panels say which weapon it is reading.
+           */
           if (meets(effect.requires, context.mainHand)) {
             abilityModifiers.add(ALL_ABILITIES, { critBonus: value });
           } else {
