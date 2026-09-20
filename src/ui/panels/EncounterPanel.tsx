@@ -1,4 +1,3 @@
-import { armorReduction } from '../../engine';
 import { TARGET_ARMOR_OPTIONS } from '../../game/actors/createTrainingDummy';
 import type { CharacterProfile } from '../../profiles';
 import type { SelectOption } from '../components/Field';
@@ -24,34 +23,6 @@ interface EncounterPanelProps {
  * depend on two borrowed Classic placeholders, which is why they are shown
  * beside the switch rather than buried in code.
  */
-/**
- * The armor choices, with the reduction each one actually produces.
- *
- * The percentage is computed by the engine's own armor formula against the
- * target's level, so it moves when the level does and cannot drift away from
- * what the simulation uses. It is not a label for the value -- nothing states
- * which boss any of the three figures belongs to.
- *
- * A profile whose armor is not one of the three keeps it: it is appended,
- * ordered with the rest, and marked. Dropping it would rewrite the encounter
- * the moment the panel rendered.
- */
-export function armorOptions(
-  current: number,
-  targetLevel: number,
-): readonly SelectOption<number>[] {
-  const values = TARGET_ARMOR_OPTIONS.includes(current)
-    ? [...TARGET_ARMOR_OPTIONS]
-    : [...TARGET_ARMOR_OPTIONS, current].sort((a, b) => b - a);
-
-  return values.map((armor) => ({
-    value: armor,
-    label: `${armor.toLocaleString()} — ${(armorReduction(armor, targetLevel) * 100).toFixed(1)}% reduced${
-      TARGET_ARMOR_OPTIONS.includes(armor) ? '' : ' (from profile)'
-    }`,
-  }));
-}
-
 export function EncounterPanel({ profile, onChange }: EncounterPanelProps) {
   const setEncounter = (changes: Partial<CharacterProfile['encounter']>) => {
     onChange({ ...profile, encounter: { ...profile.encounter, ...changes } });
@@ -73,9 +44,8 @@ export function EncounterPanel({ profile, onChange }: EncounterPanelProps) {
       />
       <SelectField
         label="Armor"
-        hint="physical reduction at this level"
         value={profile.encounter.targetArmor}
-        options={armorOptions(profile.encounter.targetArmor, profile.encounter.targetLevel)}
+        options={armorOptions(profile.encounter.targetArmor)}
         onChange={(targetArmor) => setEncounter({ targetArmor })}
       />
 
@@ -117,4 +87,23 @@ export function EncounterPanel({ profile, onChange }: EncounterPanelProps) {
       ) : null}
     </Panel>
   );
+}
+
+/**
+ * The armor values the encounter can be set to.
+ *
+ * Just the numbers. Nothing states which boss or tier any of the three is, so
+ * there is nothing true to label them with.
+ *
+ * A profile whose armor is not one of the three KEEPS it: it is appended and
+ * ordered with the rest. Dropping it would rewrite the encounter the moment
+ * the panel rendered, because a select whose value matches no option renders
+ * blank and reports the first option on the next change.
+ */
+export function armorOptions(current: number): readonly SelectOption<number>[] {
+  const values = TARGET_ARMOR_OPTIONS.includes(current)
+    ? [...TARGET_ARMOR_OPTIONS]
+    : [...TARGET_ARMOR_OPTIONS, current].sort((a, b) => b - a);
+
+  return values.map((armor) => ({ value: armor, label: armor.toLocaleString() }));
 }

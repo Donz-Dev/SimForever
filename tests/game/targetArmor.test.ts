@@ -1,5 +1,4 @@
 import { describe, expect, it } from 'vitest';
-import { armorReduction } from '../../src/engine';
 import {
   createTrainingDummy,
   RAID_BOSS_ARMOR,
@@ -40,32 +39,20 @@ describe('the three target armor values', () => {
 
 describe('the armor dropdown', () => {
   it('lists the three, in order', () => {
-    expect(armorOptions(3731, 63).map((option) => option.value)).toEqual([4638, 3731, 3009]);
+    expect(armorOptions(3731).map((option) => option.value)).toEqual([4638, 3731, 3009]);
   });
 
-  it('states the reduction the simulation will actually apply', () => {
+  it('labels each option with the number and nothing else', () => {
     /*
-     * The percentage is derived, not written down, so it cannot disagree with
-     * the engine. Computed here from the same function the panel calls, but
-     * checked against a hand figure too: 3731 armor at level 63 is the
-     * familiar just-under-40%.
+     * Deliberately bare. The panel once printed the damage reduction beside
+     * each figure; the ruleset owner asked for the number alone, and there is
+     * nothing else true to say -- nothing states which boss or tier any of the
+     * three is.
      */
-    const at63 = armorOptions(3731, 63);
-    expect(at63[1].label).toContain('39.3% reduced');
-    expect(at63[0].label).toContain('4,638');
-
-    for (const option of at63) {
-      const expected = `${(armorReduction(option.value, 63) * 100).toFixed(1)}% reduced`;
-      expect(option.label).toContain(expected);
+    for (const option of armorOptions(3731)) {
+      expect(option.label).not.toContain('%');
+      expect(option.label.replace(/\D/g, '')).toBe(String(option.value));
     }
-  });
-
-  it('moves with the target level', () => {
-    // The same armor is worth less against a higher-level target, and the
-    // label has to follow or it becomes a lie about the fight being run.
-    const [, at60] = armorOptions(3731, 60);
-    const [, at63] = armorOptions(3731, 63);
-    expect(at60.label).not.toBe(at63.label);
   });
 
   it('keeps an armor value the list does not know about', () => {
@@ -74,14 +61,7 @@ describe('the armor dropdown', () => {
      * select whose value matches no option renders blank and reports the first
      * option on the next change, which would silently rewrite the encounter.
      */
-    const options = armorOptions(4000, 63);
+    const options = armorOptions(4000);
     expect(options.map((option) => option.value)).toEqual([4638, 4000, 3731, 3009]);
-    expect(options[1].label).toContain('from profile');
-  });
-
-  it('marks only the unknown one', () => {
-    for (const option of armorOptions(3009, 63)) {
-      expect(option.label).not.toContain('from profile');
-    }
   });
 });
