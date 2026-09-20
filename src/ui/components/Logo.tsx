@@ -7,6 +7,12 @@
  * ARTWORK for this project, not a copy of that logo or of any Blizzard mark.
  * Nothing here traces their lettering or their emblem.
  *
+ * EVERY COLOUR IS A TOKEN, so the wordmark belongs to whichever scheme is
+ * showing: gold over teal in Midnight, bronze over ember in Graphite, copper
+ * over deep teal in Abyssal, platinum over violet in Obsidian. A logo that
+ * stayed gold on a violet page would be the one thing on screen that had not
+ * been designed.
+ *
  * Inline SVG rather than an image file so it inherits the page's colours,
  * stays sharp at any size, and costs no extra request. It is decorative: the
  * accessible name comes from the `title` element, and the tagline beside it is
@@ -26,31 +32,31 @@ export function Logo() {
       <defs>
         {/* Gold, lit from above: highlight at the top, deep amber in the body. */}
         <linearGradient id="gold" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="#f6e3a8" />
-          <stop offset="38%" stopColor="#e0b968" />
-          <stop offset="62%" stopColor="#b8862f" />
-          <stop offset="100%" stopColor="#8a5f1d" />
+          <stop offset="0%" stopColor="var(--logo-metal-1)" />
+          <stop offset="38%" stopColor="var(--logo-metal-2)" />
+          <stop offset="62%" stopColor="var(--logo-metal-3)" />
+          <stop offset="100%" stopColor="var(--logo-metal-4)" />
         </linearGradient>
 
         {/* Silver for the lower word, so the two read as different metals. */}
         <linearGradient id="silver" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="#ffffff" />
-          <stop offset="45%" stopColor="#dfe4ee" />
-          <stop offset="70%" stopColor="#9aa4b6" />
-          <stop offset="100%" stopColor="#6d778a" />
+          <stop offset="0%" stopColor="var(--logo-second-1)" />
+          <stop offset="45%" stopColor="var(--logo-second-2)" />
+          <stop offset="70%" stopColor="var(--logo-second-3)" />
+          <stop offset="100%" stopColor="var(--logo-second-4)" />
         </linearGradient>
 
         {/* The disc behind the medallion. */}
         <radialGradient id="disc" cx="50%" cy="42%" r="62%">
-          <stop offset="0%" stopColor="#2f7d96" />
-          <stop offset="55%" stopColor="#1b5268" />
-          <stop offset="100%" stopColor="#0d2b39" />
+          <stop offset="0%" stopColor="var(--logo-disc-1)" />
+          <stop offset="55%" stopColor="var(--logo-disc-2)" />
+          <stop offset="100%" stopColor="var(--logo-disc-3)" />
         </radialGradient>
 
         <linearGradient id="rim" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="#f2dda2" />
-          <stop offset="50%" stopColor="#c2903a" />
-          <stop offset="100%" stopColor="#7d5518" />
+          <stop offset="0%" stopColor="var(--logo-rim-1)" />
+          <stop offset="50%" stopColor="var(--logo-rim-2)" />
+          <stop offset="100%" stopColor="var(--logo-rim-3)" />
         </linearGradient>
 
         <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
@@ -68,15 +74,15 @@ export function Logo() {
         <path
           d="M0 -58 L41 -41 L58 0 L41 41 L0 58 L-41 41 L-58 0 L-41 -41 Z"
           fill="url(#rim)"
-          stroke="#6b4713"
+          stroke="var(--logo-metal-edge)"
           strokeWidth="1.5"
         />
         {/* Inset shoulder, which is what makes the frame read as forged metal
             rather than as a flat outline. */}
         <path
           d="M0 -48 L34 -34 L48 0 L34 34 L0 48 L-34 34 L-48 0 L-34 -34 Z"
-          fill="#0e2937"
-          stroke="#8a6320"
+          fill="var(--logo-inset)"
+          stroke="var(--logo-metal-edge)"
           strokeWidth="1"
         />
         <circle cx="0" cy="0" r="39" fill="url(#disc)" />
@@ -94,7 +100,7 @@ export function Logo() {
 
         {/* A stylised blade over the disc: this is a combat simulator, and the
             emblem should say so in one glance. */}
-        <g fill="url(#gold)" stroke="#6b4713" strokeWidth="0.8">
+        <g fill="url(#gold)" stroke="var(--logo-metal-edge)" strokeWidth="0.8">
           <path d="M0 -30 L5 -16 L5 14 L-5 14 L-5 -16 Z" />
           <path d="M-15 14 L15 14 L13 20 L-13 20 Z" />
           <path d="M-3 20 L3 20 L3 30 L0 33 L-3 30 Z" />
@@ -113,7 +119,7 @@ export function Logo() {
           textAnchor="middle"
           className="logo-sim"
           fill="url(#gold)"
-          stroke="#5f4110"
+          stroke="var(--logo-metal-edge)"
           strokeWidth="0.6"
         >
           SIM
@@ -124,7 +130,7 @@ export function Logo() {
           textAnchor="middle"
           className="logo-forever"
           fill="url(#silver)"
-          stroke="#4b5364"
+          stroke="var(--logo-second-edge)"
           strokeWidth="0.6"
         >
           FOREVER
@@ -137,7 +143,7 @@ export function Logo() {
       {/* A flat colour, not `url(#rim)`. That gradient is in objectBoundingBox
           units, and a horizontal line has a zero-height box, so the gradient
           degenerates and the stroke all but disappears. */}
-      <g stroke="#c2903a" fill="none" strokeWidth="2" strokeLinecap="round">
+      <g stroke="var(--logo-rim-2)" fill="none" strokeWidth="2" strokeLinecap="round">
         <path d="M146 118 H402" />
         <path d="M146 118 q -10 0 -14 -6" />
         <path d="M402 118 q 10 0 14 -6" />

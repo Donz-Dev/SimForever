@@ -30,16 +30,29 @@ const CENTRE = SIZE / 2;
  * Distinguishable at a glance AND in order, so the biggest slice is always the
  * same colour as the first row of the legend beside it. Deliberately not a
  * gradient: adjacent slices have to be told apart, not ranked by eye.
+ *
+ * The eight are a VALIDATED categorical set, and the order is the safety
+ * mechanism rather than a preference -- it is what clears the
+ * colour-vision-deficiency separation gate between neighbouring slices. The
+ * set passes the lightness band, chroma floor, adjacent CVD separation,
+ * normal-vision separation and 3:1 contrast checks against all four themes'
+ * panel surfaces. Re-ordering them to make one chart look nicer breaks that.
+ *
+ * They are the same in every theme on purpose: a slice's colour says WHAT it
+ * measures, and that does not change because the chrome did.
+ *
+ * Nothing is identified by colour alone -- every slice is named in the legend
+ * beside it, which is what the gate requires of a set this size.
  */
 const COLOURS = [
-  '#c2703d',
-  '#4f8ab5',
-  '#7ba05b',
-  '#a8557d',
-  '#c9a227',
-  '#5f7d8c',
-  '#9b6bbf',
-  '#b5563f',
+  'var(--series-1)',
+  'var(--series-2)',
+  'var(--series-3)',
+  'var(--series-4)',
+  'var(--series-5)',
+  'var(--series-6)',
+  'var(--series-7)',
+  'var(--series-8)',
 ];
 
 export function DonutChart({ title, slices, unit }: DonutChartProps) {

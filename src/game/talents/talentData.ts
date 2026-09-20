@@ -130,13 +130,23 @@ export function classesWithTalents(): readonly string[] {
 }
 
 /**
- * Accent colour for a tree, by its position in the class.
+ * Accent for a tree, by its position in the class.
  *
  * Keyed on position rather than on tree name so that twenty-seven trees do not
  * each need a hand-picked colour. The order matches the calculator's own, which
  * for most classes runs caster, melee, support.
+ *
+ * A CSS CUSTOM PROPERTY, not a hex value. This is the game layer, and it has
+ * no business holding three literal colours -- the values now sit with every
+ * other colour in `ui/styles.css`, and what stays here is the one thing that
+ * is actually game knowledge: that a class has three trees and which position
+ * each one is in.
  */
-export const TREE_ACCENTS: readonly string[] = ['#b4622a', '#a33b2a', '#3a6f93'];
+export const TREE_ACCENTS: readonly string[] = [
+  'var(--tree-1)',
+  'var(--tree-2)',
+  'var(--tree-3)',
+];
 
 export function accentFor(index: number): string {
   return TREE_ACCENTS[index % TREE_ACCENTS.length];
