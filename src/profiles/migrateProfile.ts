@@ -12,6 +12,21 @@ type Migration = (profile: Record<string, unknown>) => Record<string, unknown>;
  */
 const migrations: Record<number, Migration> = {
   /**
+   * Version 7 added `character.stance`.
+   *
+   * Left UNSET rather than filled in, so an old profile takes its combat
+   * style's default -- which is what it was already doing implicitly, because
+   * every Warrior opened in Battle Stance regardless of what it was holding.
+   *
+   * THAT MEANS A MIGRATED DUAL-WIELD OR SHIELD PROFILE CHANGES BEHAVIOUR: it
+   * now opens in Berserker or Defensive instead of Battle, which is the stance
+   * the build actually wants and is a different fight from the one it recorded.
+   * Writing 'battle' here would preserve the old numbers and preserve a
+   * character standing in the wrong stance, so the default wins.
+   */
+  6: (profile) => profile,
+
+  /**
    * Version 6 let the target swing back.
    *
    * Older profiles fought a target that stood still, so they keep doing that:

@@ -230,13 +230,48 @@ export const BERSERKER_RAGE: AuraDefinition = {
  * ruleset it grants rage, which is exactly the sort of number that changes a
  * rotation's shape — and the sheet does not give it.
  */
-export const PLACEHOLDER_BLOODRAGE_INSTANT_RAGE = 0;
-export const PLACEHOLDER_BLOODRAGE_DURATION_MS = seconds(10);
+/*
+ * Spell 2687: "Generates 10 rage at the cost of health, and then generates an
+ * additional 10 rage over 10 sec." Free, 1 minute cooldown, any stance, and it
+ * costs 20% of base health.
+ *
+ * NO LONGER A PLACEHOLDER. It was inert not for want of a number -- Forever
+ * states both halves -- but for want of a mechanism: the aura had no periodic,
+ * so there was nowhere for "over 10 sec" to live.
+ *
+ * The ten over ten seconds is modelled as one rage a second rather than a lump
+ * at the end, which is the reading that matters to a rotation: rage arriving
+ * steadily can be spent as it lands.
+ *
+ * THE HEALTH COST IS NOT MODELLED, and that overstates the ability. The player
+ * cannot drop below one health and survival is not simulated, so paying 20% of
+ * base health costs nothing here. Real, and it is the same caveat that makes
+ * Last Stand worth nothing.
+ */
+export const BLOODRAGE_INSTANT_RAGE = 10;
+export const BLOODRAGE_RAGE_OVER_TIME = 10;
+export const BLOODRAGE_DURATION_MS = seconds(10);
+export const BLOODRAGE_TICK_INTERVAL_MS = seconds(1);
+
+/** One rage a second for ten seconds. */
+const BLOODRAGE_RAGE_PER_TICK =
+  BLOODRAGE_RAGE_OVER_TIME / (BLOODRAGE_DURATION_MS / BLOODRAGE_TICK_INTERVAL_MS);
 
 export const BLOODRAGE: AuraDefinition = {
   id: 'bloodrage',
   name: 'Bloodrage',
-  durationMs: PLACEHOLDER_BLOODRAGE_DURATION_MS,
+  durationMs: BLOODRAGE_DURATION_MS,
+  periodic: {
+    intervalMs: BLOODRAGE_TICK_INTERVAL_MS,
+    onTick: (context, aura) => {
+      const actor = combatantIn(context, aura.targetId);
+      if (!actor) return;
+      context.grantResource(actor, 'rage', BLOODRAGE_RAGE_PER_TICK, {
+        id: 'bloodrage',
+        name: 'Bloodrage',
+      });
+    },
+  },
 };
 
 // ---------------------------------------------------------------------------

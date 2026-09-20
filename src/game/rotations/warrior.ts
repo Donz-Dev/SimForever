@@ -1,13 +1,14 @@
 import type { Combatant, PriorityEntry, Rotation, SimulationContext } from '../../engine';
 import { PriorityRotation } from '../../engine';
-import type { CombatStyleId } from '../character';
+import type { CombatStyleId, StanceId } from '../character';
 import {
   BATTLE_SHOUT,
   REND,
   SUNDER_ARMOR,
   SUNDER_ARMOR_MAX_STACKS,
 } from '../auras/warrior';
-import { EXECUTE_HEALTH_THRESHOLD } from '../abilities/warrior';
+import { EXECUTE_PHASE_FRACTION } from '../abilities/warrior';
+import { seconds } from '../../engine';
 
 /**
  * Warrior action priority lists.
@@ -363,10 +364,113 @@ export const WARRIOR_SHIELD_ROTATION: Rotation = new PriorityRotation('Warrior (
   ...FILLERS,
 ]);
 
-/** The list a warrior of this combat style uses. */
-export function warriorRotation(style: CombatStyleId): Rotation {
+/**
+ * Seconds of fight left when Death Wish goes out.
+ *
+ * Death Wish lasts 30 seconds, so casting it with 35 left covers the end of
+ * the fight with a little slack for the global cooldown it waits behind.
+ */
+export const DEATH_WISH_WINDOW_MS = seconds(35);
+
+/** Refresh Sunder Armor with less than this left, rather than at zero. */
+export const SUNDER_REFRESH_WINDOW_MS = seconds(4);
+
+/** Rage above which the surplus goes into Heroic Strike. */
+export const BERSERKER_HEROIC_STRIKE_RAGE = 42;
+
+/** Milliseconds of fight remaining. */
+function remainingMs(context: SimulationContext): number {
+  return context.plannedDurationMs - context.clock.now();
+}
+
+/**
+ * Dual-wield, Berserker Stance. Specified by the ruleset owner, in this order.
+ *
+ * NOTHING IN THIS LIST LEAVES BERSERKER STANCE, and that is the whole point of
+ * it. Battle Shout, Sunder Armor, Death Wish, Heroic Strike, Bloodthirst and
+ * Bloodrage are usable in any stance; Whirlwind and Execute are Berserker
+ * abilities. So a warrior running this never pays the stance-change cost --
+ * the other lists spend hundreds of rage a fight swapping for Overpower and
+ * Rend, and this one simply does not reach for them.
+ *
+ * It is also DELIBERATELY NOT the melee list with a filter. The order is
+ * different, the Heroic Strike threshold is different, there is no Mortal
+ * Strike rage reserve, and Rend and Overpower are absent rather than
+ * unreachable. Deriving it from the other list would make every one of those a
+ * coincidence rather than a decision.
+ */
+const WARRIOR_DUAL_WIELD_BERSERKER: readonly PriorityEntry[] = [
+  // Once, and it lasts three minutes.
+  {
+    abilityId: 'battle_shout_cast',
+    condition: (context, actor) =>
+      actor.auras.remainingMs(BATTLE_SHOUT.id, context.clock.now()) <= 0,
+  },
+  /*
+   * Build to five stacks, then hold it there.
+   *
+   * Two conditions, and both are needed: below five stacks it is still being
+   * built, and with under four seconds left it is about to fall off and take
+   * all five with it. `refreshBehaviour: 'reset'` means one cast renews the
+   * whole stack, so the refresh is cheap and losing it is not.
+   */
+  {
+    abilityId: 'sunder_armor_cast',
+    condition: (context, _actor, target) => {
+      if (!target) return false;
+      const stacks = target.auras.stacksOf(SUNDER_ARMOR.id);
+      if (stacks < SUNDER_ARMOR_MAX_STACKS) return true;
+      return target.auras.remainingMs(SUNDER_ARMOR.id, context.clock.now()) <
+        SUNDER_REFRESH_WINDOW_MS;
+    },
+  },
+  // Timed to cover the end of the fight rather than used on cooldown.
+  {
+    abilityId: 'death_wish',
+    condition: (context) => remainingMs(context) <= DEATH_WISH_WINDOW_MS,
+  },
+  /*
+   * The execute phase, measured in TIME rather than target health.
+   *
+   * A training dummy never drops to 20% health, so Execute's own gate accepts
+   * the last 20% of a fixed-length fight as well. See `EXECUTE`.
+   */
+  {
+    abilityId: 'execute',
+    condition: (context) =>
+      remainingMs(context) <= context.plannedDurationMs * EXECUTE_PHASE_FRACTION,
+  },
+  // Surplus rage into the next swing.
+  {
+    abilityId: 'heroic_strike',
+    condition: (_context, actor) =>
+      (actor.resources.get('rage')?.current ?? 0) >= BERSERKER_HEROIC_STRIKE_RAGE,
+  },
+  { abilityId: 'bloodthirst' },
+  { abilityId: 'whirlwind' },
+  // Last, so it fills a gap rather than taking a global cooldown from a strike.
+  { abilityId: 'bloodrage_cast' },
+];
+
+export const WARRIOR_DUAL_WIELD_BERSERKER_ROTATION: Rotation = new PriorityRotation(
+  'Warrior (Dual-Wield, Berserker)',
+  WARRIOR_DUAL_WIELD_BERSERKER,
+);
+
+/**
+ * The list a warrior of this combat style and stance uses.
+ *
+ * Stance selects a list as well as gating abilities, because a rotation that
+ * never leaves its stance is a different rotation and not a filtered one.
+ * Dual-wield in Berserker has its own; everything else falls back to the two
+ * general lists.
+ */
+export function warriorRotation(style: CombatStyleId, stance?: StanceId): Rotation {
+  if (style === 'dual_wield' && stance === 'berserker') {
+    return WARRIOR_DUAL_WIELD_BERSERKER_ROTATION;
+  }
   return style === 'one_hand_shield' ? WARRIOR_SHIELD_ROTATION : WARRIOR_MELEE_ROTATION;
 }
 
 /** Re-exported so the threshold is documented in one place. */
-export { EXECUTE_HEALTH_THRESHOLD };
+export { EXECUTE_PHASE_FRACTION };

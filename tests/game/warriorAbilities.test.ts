@@ -18,7 +18,7 @@ import {
   EXECUTE_BASE_COST,
   EXECUTE_BASE_DAMAGE,
   EXECUTE_DAMAGE_PER_RAGE,
-  EXECUTE_HEALTH_THRESHOLD,
+  EXECUTE_PHASE_FRACTION,
   HEROIC_STRIKE,
   MORTAL_STRIKE,
   OVERPOWER,
@@ -359,21 +359,54 @@ describe('Rend', () => {
 describe('Execute', () => {
   it('costs 15 and is only usable below twenty percent health', () => {
     expect(EXECUTE_BASE_COST).toBe(15);
-    expect(EXECUTE_HEALTH_THRESHOLD).toBe(0.2);
+    expect(EXECUTE_PHASE_FRACTION).toBe(0.2);
     expect(EXECUTE.cost).toEqual({ resource: 'rage', amount: 15 });
   });
 
-  it('refuses a target above the threshold and accepts one below it', () => {
+  it('ignores the target health entirely', () => {
+    /*
+     * EXECUTE IS TIME-BASED ONLY, by the ruleset owner's decision.
+     *
+     * This test used to assert the opposite -- refused above 20% health,
+     * accepted below. That rule could never fire here: the encounter is a
+     * damage sink with a nominal health pool it never runs out of, so Execute
+     * was in every Warrior list and had never once been cast.
+     *
+     * A nearly dead target early in the fight is therefore refused, which
+     * reads oddly and is the correct answer for this simulator.
+     */
     const caster = makeAttacker({ resources: [{ type: 'rage', maximum: 100, initial: 100 }] });
-    const healthy = makeTarget({ maxHealth: 1000 });
     const nearlyDead = makeTarget({ maxHealth: 1000 });
     nearlyDead.health.drain(900); // 10% left
 
-    const context = (target: typeof healthy) =>
-      ({ simulation: undefined, caster, target, ability: EXECUTE }) as never;
+    const early = {
+      simulation: { plannedDurationMs: 100_000, clock: { now: () => 0 } },
+      caster,
+      target: nearlyDead,
+      ability: EXECUTE,
+    } as never;
 
-    expect(EXECUTE.canCast?.(context(healthy))).toBe(false);
-    expect(EXECUTE.canCast?.(context(nearlyDead))).toBe(true);
+    expect(EXECUTE.canCast?.(early)).toBe(false);
+  });
+
+  it('accepts a healthy target inside the last fifth of the fight', () => {
+    /*
+     * The rule, not an approximation of one. The encounter runs for a fixed
+     * duration, so the execute phase is the last fifth of it.
+     */
+    const caster = makeAttacker({ resources: [{ type: 'rage', maximum: 100, initial: 100 }] });
+    const healthy = makeTarget({ maxHealth: 1000 });
+    const at = (nowMs: number) =>
+      ({
+        simulation: { plannedDurationMs: 100_000, clock: { now: () => nowMs } },
+        caster,
+        target: healthy,
+        ability: EXECUTE,
+      }) as never;
+
+    expect(EXECUTE.canCast?.(at(79_000))).toBe(false); // 21% left
+    expect(EXECUTE.canCast?.(at(80_000))).toBe(true); // exactly 20% left
+    expect(EXECUTE.canCast?.(at(95_000))).toBe(true);
   });
 
   it('is worth 600 plus 15 per point of leftover rage', () => {

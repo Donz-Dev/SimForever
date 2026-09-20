@@ -40,6 +40,14 @@ export interface Measurement {
 
 export interface BuildOptions {
   readonly style?: CombatStyleId;
+  /**
+   * Which stance, and therefore WHICH PRIORITY LIST.
+   *
+   * Dual-wield in Berserker has its own list. Omitting this takes the style's
+   * default, which is what the app does -- so a row with no stance named is
+   * measuring the list a player would actually get.
+   */
+  readonly stance?: 'battle' | 'defensive' | 'berserker';
   readonly talents?: TalentAllocation;
   readonly targetAttacks?: boolean;
 }
@@ -58,7 +66,7 @@ export function warrior(options: BuildOptions = {}): CharacterProfile {
    */
   const profile: CharacterProfile = {
     ...base,
-    character: { ...base.character, combatStyle: style },
+    character: { ...base.character, combatStyle: style, stance: options.stance },
     equipment: startingEquipmentFor('warrior', style),
     talents: options.talents ?? {},
     simulation: { ...base.simulation, iterations: ITERATIONS },
@@ -160,9 +168,9 @@ const PROTECTION_31: TalentAllocation = {
 
 console.log(`\nSEEDS=${SEEDS} ITERATIONS=${ITERATIONS}  (${SEEDS * ITERATIONS} fights per row)\n`);
 
-report('Dual-wield, no talents', measure(warrior()));
-report('Two-hander, no talents', measure(warrior({ style: 'two_hander' })));
-report('1H & Shield, no talents', measure(warrior({ style: 'one_hand_shield' })));
+report('Dual-wield / Berserker (default)', measure(warrior()));
+report('Two-hander / Battle (default)', measure(warrior({ style: 'two_hander' })));
+report('1H & Shield / Defensive (default)', measure(warrior({ style: 'one_hand_shield' })));
 report(
   '1H & Shield, 31-pt Protection (Shield Slam)',
   measure(warrior({ style: 'one_hand_shield', talents: PROTECTION_31 })),
@@ -191,7 +199,11 @@ const withDW = report('Fury build WITH Death Wish', measure(warrior({ talents: F
 const withoutDW = report('Fury build without it', measure(warrior({ talents: FURY_NO_DEATH_WISH })));
 difference('  Death Wish is worth', withDW, withoutDW);
 console.log('');
-report('Dual-wield, target swings back', measure(warrior({ targetAttacks: true })));
+report('Dual-wield / Berserker, attacked', measure(warrior({ targetAttacks: true })));
+report(
+  'Dual-wield / Battle (general list)',
+  measure(warrior({ stance: 'battle' })),
+);
 report(
   '1H & Shield Prot, target swings back',
   measure(warrior({ style: 'one_hand_shield', talents: PROTECTION_31, targetAttacks: true })),

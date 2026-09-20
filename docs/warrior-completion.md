@@ -16,13 +16,20 @@ talent builds it uses.
 
 | Build | Standing target | Target swings back |
 | --- | --- | --- |
-| Dual-wield, no talents | **149.67** ± 1.96 | **221.55** ± 2.29 |
-| Two-hander, no talents | **150.34** ± 1.88 | — |
-| 1H & Shield, no talents | **91.16** ± 1.85 | — |
-| 1H & Shield, 31-pt Protection | **92.03** ± 2.24 | **151.88** ± 2.19 |
-| Dual-wield, 31-pt Arms | **184.43** ± 2.44 | — |
-| Fury to Death Wish | **185.03** ± 2.91 | — |
-| the same, without Death Wish | **173.81** ± 2.63 | — |
+| Dual-wield / Berserker (default) | **168.61** ± 2.15 | **293.42** ± 2.82 |
+| Dual-wield / Battle (general list) | **151.52** ± 3.13 | — |
+| Two-hander / Battle (default) | **144.54** ± 2.09 | — |
+| 1H & Shield / Defensive (default) | **95.48** ± 1.77 | — |
+| 1H & Shield, 31-pt Protection | **95.55** ± 1.81 | **160.01** ± 2.06 |
+| Dual-wield, 31-pt Arms | **186.07** ± 2.31 | — |
+| Fury to Death Wish | **215.29** ± 2.90 | — |
+| the same, without Death Wish | **198.60** ± 2.76 | — |
+
+**Two rules changed every figure here.** Execute is now gated on the last 20% of
+the fight rather than on target health, so it fires in every list where it
+previously never fired at all; and the target no longer dies, so an iteration
+always runs its full duration. The dual-wield rows also use the new
+Berserker-stance priority list unless they say Battle.
 
 > The two columns differ by **rage from damage taken**, which is enormous. A
 > damage warrior is not the one being hit, which is why `targetAttacks` is off

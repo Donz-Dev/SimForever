@@ -794,3 +794,9 @@ button:disabled {
     align-items: flex-start;
   }
 }
+
+/* The one-line summary of what the chosen stance does, under its buttons. */
+.stance-note {
+  margin: -6px 0 4px;
+  font-size: 12px;
+}
