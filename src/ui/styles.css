@@ -12,10 +12,15 @@
    Four schemes, chosen from conventions that are already load-bearing in
    product and marketing design rather than invented here:
 
-     midnight   near-black navy + burnished gold   the premium/luxury pairing
-     graphite   neutral charcoal + ember orange    the developer-tool pairing
      abyss      deep teal + copper                 complementary, fintech/SaaS
+     graphite   neutral charcoal + ember orange    the developer-tool pairing
+     midnight   near-black navy + burnished gold   the premium/luxury pairing
      obsidian   near-black + electric violet       the modern dark-mode SaaS
+
+   Abyssal Copper is the CHOSEN scheme, and holds the bare `:root` as well as
+   its own selector. That is not tidiness: the page paints before React runs,
+   and whichever scheme sits on `:root` is what shows for that frame. Leaving
+   another one there would flash the wrong colours on every load.
 
    Every one is dark, and every one is expressed in the SAME role tokens, so a
    rule never names a colour. A theme that had to add a rule would not be a
@@ -28,39 +33,39 @@
    --------------------------------------------------------------------------- */
 
 :root,
-:root[data-theme='midnight'] {
-  --bg: #0f1116;
-  --bg-deep: #090b0f;
-  --surface: #171a21;
-  --surface-raised: #212530;
-  --surface-sunken: #101318;
-  --border: #272c37;
-  --border-strong: #3b4252;
-  --text: #e7e9ef;
-  --text-muted: #949cae;
-  --accent: #c8a45c;
-  --accent-strong: #e3bf72;
-  --accent-contrast: #100d06;
-  --success: #5fc46a;
-  --error: #e06c6c;
+:root[data-theme='abyss'] {
+  --bg: #0b1417;
+  --bg-deep: #070f11;
+  --surface: #101e22;
+  --surface-raised: #18292e;
+  --surface-sunken: #0c181b;
+  --border: #1e333a;
+  --border-strong: #2e4b54;
+  --text: #e2ecee;
+  --text-muted: #8aa2a7;
+  --accent: #d98a5f;
+  --accent-strong: #f2a97d;
+  --accent-contrast: #140903;
+  --success: #56c2a0;
+  --error: #e2706b;
 
-  --logo-metal-1: #f6e3a8;
-  --logo-metal-2: #e0b968;
-  --logo-metal-3: #b8862f;
-  --logo-metal-4: #8a5f1d;
-  --logo-metal-edge: #5f4110;
-  --logo-second-1: #ffffff;
-  --logo-second-2: #dfe4ee;
-  --logo-second-3: #9aa4b6;
-  --logo-second-4: #6d778a;
-  --logo-second-edge: #4b5364;
-  --logo-disc-1: #2f7d96;
-  --logo-disc-2: #1b5268;
-  --logo-disc-3: #0d2b39;
-  --logo-inset: #0e2937;
-  --logo-rim-1: #f2dda2;
-  --logo-rim-2: #c2903a;
-  --logo-rim-3: #7d5518;
+  --logo-metal-1: #f7d3ba;
+  --logo-metal-2: #e0a077;
+  --logo-metal-3: #b96a3c;
+  --logo-metal-4: #7d4321;
+  --logo-metal-edge: #5a2f16;
+  --logo-second-1: #f4fbfc;
+  --logo-second-2: #cfe4e6;
+  --logo-second-3: #92aeb2;
+  --logo-second-4: #64807f;
+  --logo-second-edge: #3d5a5d;
+  --logo-disc-1: #1c7b7d;
+  --logo-disc-2: #10484f;
+  --logo-disc-3: #07222a;
+  --logo-inset: #0a1f24;
+  --logo-rim-1: #f2c6a6;
+  --logo-rim-2: #c9793f;
+  --logo-rim-3: #7d431c;
 }
 
 :root[data-theme='graphite'] {
@@ -98,39 +103,39 @@
   --logo-rim-3: #7a3f10;
 }
 
-:root[data-theme='abyss'] {
-  --bg: #0b1417;
-  --bg-deep: #070f11;
-  --surface: #101e22;
-  --surface-raised: #18292e;
-  --surface-sunken: #0c181b;
-  --border: #1e333a;
-  --border-strong: #2e4b54;
-  --text: #e2ecee;
-  --text-muted: #8aa2a7;
-  --accent: #d98a5f;
-  --accent-strong: #f2a97d;
-  --accent-contrast: #140903;
-  --success: #56c2a0;
-  --error: #e2706b;
+:root[data-theme='midnight'] {
+  --bg: #0f1116;
+  --bg-deep: #090b0f;
+  --surface: #171a21;
+  --surface-raised: #212530;
+  --surface-sunken: #101318;
+  --border: #272c37;
+  --border-strong: #3b4252;
+  --text: #e7e9ef;
+  --text-muted: #949cae;
+  --accent: #c8a45c;
+  --accent-strong: #e3bf72;
+  --accent-contrast: #100d06;
+  --success: #5fc46a;
+  --error: #e06c6c;
 
-  --logo-metal-1: #f7d3ba;
-  --logo-metal-2: #e0a077;
-  --logo-metal-3: #b96a3c;
-  --logo-metal-4: #7d4321;
-  --logo-metal-edge: #5a2f16;
-  --logo-second-1: #f4fbfc;
-  --logo-second-2: #cfe4e6;
-  --logo-second-3: #92aeb2;
-  --logo-second-4: #64807f;
-  --logo-second-edge: #3d5a5d;
-  --logo-disc-1: #1c7b7d;
-  --logo-disc-2: #10484f;
-  --logo-disc-3: #07222a;
-  --logo-inset: #0a1f24;
-  --logo-rim-1: #f2c6a6;
-  --logo-rim-2: #c9793f;
-  --logo-rim-3: #7d431c;
+  --logo-metal-1: #f6e3a8;
+  --logo-metal-2: #e0b968;
+  --logo-metal-3: #b8862f;
+  --logo-metal-4: #8a5f1d;
+  --logo-metal-edge: #5f4110;
+  --logo-second-1: #ffffff;
+  --logo-second-2: #dfe4ee;
+  --logo-second-3: #9aa4b6;
+  --logo-second-4: #6d778a;
+  --logo-second-edge: #4b5364;
+  --logo-disc-1: #2f7d96;
+  --logo-disc-2: #1b5268;
+  --logo-disc-3: #0d2b39;
+  --logo-inset: #0e2937;
+  --logo-rim-1: #f2dda2;
+  --logo-rim-2: #c2903a;
+  --logo-rim-3: #7d5518;
 }
 
 :root[data-theme='obsidian'] {

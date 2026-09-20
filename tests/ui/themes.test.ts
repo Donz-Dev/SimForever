@@ -27,18 +27,33 @@ function tokensIn(body: string): string[] {
 }
 
 describe('the theme catalogue', () => {
-  it('offers exactly four schemes', () => {
+  it('offers exactly four schemes, the chosen one first', () => {
     expect(THEMES.map((theme) => theme.id)).toEqual([
-      'midnight',
-      'graphite',
       'abyss',
+      'graphite',
+      'midnight',
       'obsidian',
     ]);
   });
 
-  it('opens in Midnight Gold', () => {
-    expect(DEFAULT_THEME).toBe('midnight');
+  it('opens in Abyssal Copper', () => {
+    expect(DEFAULT_THEME).toBe('abyss');
     expect(THEMES.some((theme) => theme.id === DEFAULT_THEME)).toBe(true);
+  });
+
+  it('gives the default scheme the bare :root selector too', () => {
+    /*
+     * THE ONE THAT WOULD BITE. The page paints before React runs, so the
+     * scheme on the bare `:root` is what shows for that first frame. If
+     * DEFAULT_THEME and that block disagree, every load flashes the wrong
+     * colours and then corrects itself -- which looks like a rendering bug
+     * rather than a one-character mismatch in a stylesheet.
+     */
+    expect(CSS).toContain(`:root,
+:root[data-theme='${DEFAULT_THEME}'] {`);
+
+    // And exactly one block holds it, or the later one silently wins.
+    expect(CSS.match(/^:root,$/gm)).toHaveLength(1);
   });
 
   it('gives every scheme a name, a note and a swatch', () => {
@@ -67,7 +82,7 @@ describe('every scheme defines the same roles', () => {
    * default's value for it, which is how a "dark violet" scheme ends up with
    * one gold border nobody can explain.
    */
-  const base = tokensIn(block(":root,\n:root[data-theme='midnight']"));
+  const base = tokensIn(block(":root,\n:root[data-theme='abyss']"));
 
   it('defines a good number of roles, not a handful', () => {
     // Guards the guard: if the block parser broke and returned nothing, every
@@ -75,8 +90,8 @@ describe('every scheme defines the same roles', () => {
     expect(base.length).toBeGreaterThan(20);
   });
 
-  for (const id of ['graphite', 'abyss', 'obsidian']) {
-    it(`${id} defines every role midnight does, and no extras`, () => {
+  for (const id of ['graphite', 'midnight', 'obsidian']) {
+    it(`${id} defines every role the default does, and no extras`, () => {
       expect([...tokensIn(block(`:root[data-theme='${id}']`))].sort()).toEqual(
         [...base].sort(),
       );
@@ -132,10 +147,10 @@ describe('the chart series palette', () => {
      * four schemes. Declaring them per theme is how that would stop being
      * true.
      */
-    for (const id of ['midnight', 'graphite', 'abyss', 'obsidian']) {
+    for (const id of ['abyss', 'graphite', 'midnight', 'obsidian']) {
       const body =
-        id === 'midnight'
-          ? block(":root,\n:root[data-theme='midnight']")
+        id === 'abyss'
+          ? block(":root,\n:root[data-theme='abyss']")
           : block(`:root[data-theme='${id}']`);
       expect(body).not.toContain('--series-');
     }

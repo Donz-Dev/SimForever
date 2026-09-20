@@ -7,11 +7,15 @@
  * stylesheet, and the two would drift the way the character sheet and the gear
  * list already had.
  *
- * The pairings are conventions rather than inventions. Gold on near-black is
- * what premium and luxury brands reach for; charcoal with an ember accent is
- * the developer-tool look; teal against copper is a complementary pair used
- * across fintech and enterprise SaaS; near-black with electric violet is the
+ * The pairings are conventions rather than inventions. Teal against copper is
+ * a complementary pair used across fintech and enterprise SaaS; charcoal with
+ * an ember accent is the developer-tool look; gold on near-black is what
+ * premium and luxury brands reach for; near-black with electric violet is the
  * current dark-mode SaaS default.
+ *
+ * The other three are KEPT rather than deleted once one was picked. They cost
+ * nothing -- each is a block of values, no rule and no branch -- and a scheme
+ * is cheap to try and expensive to reconstruct.
  *
  * The chart series colours are NOT part of a theme. They stay fixed, because a
  * slice's colour identifies what it measures and should not move when the
@@ -30,10 +34,10 @@ export interface ThemeDefinition {
 
 export const THEMES: readonly ThemeDefinition[] = [
   {
-    id: 'midnight',
-    name: 'Midnight Gold',
-    note: 'Near-black navy and burnished gold',
-    swatch: ['#0f1116', '#c8a45c'],
+    id: 'abyss',
+    name: 'Abyssal Copper',
+    note: 'Deep teal against copper',
+    swatch: ['#0b1417', '#d98a5f'],
   },
   {
     id: 'graphite',
@@ -42,10 +46,10 @@ export const THEMES: readonly ThemeDefinition[] = [
     swatch: ['#121214', '#e8722c'],
   },
   {
-    id: 'abyss',
-    name: 'Abyssal Copper',
-    note: 'Deep teal against copper',
-    swatch: ['#0b1417', '#d98a5f'],
+    id: 'midnight',
+    name: 'Midnight Gold',
+    note: 'Near-black navy and burnished gold',
+    swatch: ['#0f1116', '#c8a45c'],
   },
   {
     id: 'obsidian',
@@ -55,7 +59,14 @@ export const THEMES: readonly ThemeDefinition[] = [
   },
 ];
 
-export const DEFAULT_THEME: ThemeId = 'midnight';
+/*
+ * The scheme chosen by the project owner, and the one a first visit opens in.
+ *
+ * It must match whichever block holds the bare `:root` selector in
+ * `styles.css`, or the page paints in one scheme for the frame before React
+ * runs and then swaps. A test pins the pair together.
+ */
+export const DEFAULT_THEME: ThemeId = 'abyss';
 
 const KNOWN = new Set<string>(THEMES.map((theme) => theme.id));
 
