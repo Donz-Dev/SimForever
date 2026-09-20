@@ -62,7 +62,10 @@ function scheduleTick(
 
         const amount = regen.amountPerTick(actor, ctx);
         if (amount > 0) {
-          ctx.grantResource(actor, regen.resource, amount);
+          ctx.grantResource(actor, regen.resource, amount, {
+            id: 'regeneration',
+            name: 'Regeneration',
+          });
         }
 
         scheduleTick(ctx, actor, regen);

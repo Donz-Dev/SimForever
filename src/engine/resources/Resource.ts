@@ -127,3 +127,15 @@ export class Resource {
 function clamp(value: number, min: number, max: number): number {
   return Math.min(max, Math.max(min, value));
 }
+
+/**
+ * What caused a resource to move.
+ *
+ * An id for grouping and a name for reading. Both, because a breakdown keyed on
+ * a display name merges two mechanisms that happen to share one and splits one
+ * that gets renamed.
+ */
+export interface ResourceSource {
+  readonly id: string;
+  readonly name: string;
+}

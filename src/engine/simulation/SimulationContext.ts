@@ -11,7 +11,7 @@ import type {
 import type { AuraDefinition, AuraInstance } from '../effects';
 import type { CombatEvent, ScheduledEvent } from '../events';
 import type { CombatEndReason, TelemetrySink } from '../logging';
-import type { ResourceType } from '../resources';
+import type { ResourceSource, ResourceType } from '../resources';
 import type { RNG } from '../rng';
 import type { Milliseconds } from '../time';
 import type { SimulationClock } from './SimulationClock';
@@ -85,7 +85,19 @@ export interface SimulationContext {
   applyAura(target: Combatant, definition: AuraDefinition, sourceId: string): AuraInstance;
 
   /** Give an actor a resource and record it in telemetry. */
-  grantResource(actor: Combatant, resource: ResourceType, amount: number): void;
+  /**
+   * Grant a resource, recording WHAT granted it.
+   *
+   * `source` is optional so an existing caller keeps compiling, and anything
+   * that omits it shows up as unattributed in a rage breakdown rather than
+   * disappearing into a total. Every caller in this repository passes one.
+   */
+  grantResource(
+    actor: Combatant,
+    resource: ResourceType,
+    amount: number,
+    source?: ResourceSource,
+  ): void;
 
   /**
    * The chances for an attack, from the ruleset's provider.

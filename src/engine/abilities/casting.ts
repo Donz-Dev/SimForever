@@ -131,6 +131,10 @@ export function castAbility(
       amount: ability.cost.amount,
       wasted: 0,
       current: pool.current,
+      // Which ability spent it. This is what turns "83 rage spent" into a
+      // breakdown a person can audit a cost-reduction talent against.
+      source: ability.id,
+      sourceName: ability.name,
     });
   }
 

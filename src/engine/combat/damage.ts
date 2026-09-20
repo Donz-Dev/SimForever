@@ -13,6 +13,7 @@ import type { AbilityModifier } from './abilityModifiers';
 import { armorConstantForLevel, versatilityMultiplierFrom } from './ratings';
 import type { AttackEvent } from './reactions';
 import { runReactions } from './reactions';
+import type { ResourceSource } from '../resources';
 
 /** Damage varies this much either side of a weapon's base, unless overridden. */
 export const DEFAULT_DAMAGE_VARIANCE = 0.15;
@@ -459,7 +460,17 @@ export function dealDamage(
   // Taking damage can generate resource: this is how a warrior builds rage
   // from being hit. Proportional to damage actually taken, so an avoided
   // attack generates nothing.
-  grantGeneratedResource(context, target, target.resourceOnDamageTaken, resolution.amount);
+  /*
+   * Rage from damage comes from two directions and they are worth telling
+   * apart: a warrior generates it by HITTING and, when something hits back, by
+   * BEING HIT. The second is enormous -- it is most of the gap between the
+   * standing and attacking baselines -- so folding both into one "damage" row
+   * would hide the single biggest term in a tank's rage economy.
+   */
+  grantGeneratedResource(context, target, target.resourceOnDamageTaken, resolution.amount, {
+    id: 'damage_taken',
+    name: 'Damage taken',
+  });
 
   if (healthBefore > 0 && target.health.isEmpty) {
     context.killCombatant(target, source);
@@ -502,6 +513,7 @@ export function grantGeneratedResource(
   actor: Combatant,
   generation: ResourceGeneration | undefined,
   damage: number,
+  source?: ResourceSource,
 ): void {
   if (!generation) return;
 
@@ -509,5 +521,5 @@ export function grantGeneratedResource(
     (generation.flat ?? 0) + (generation.perDamage ?? 0) * Math.max(0, damage);
   if (amount <= 0) return;
 
-  context.grantResource(actor, generation.resource, amount);
+  context.grantResource(actor, generation.resource, amount, source);
 }

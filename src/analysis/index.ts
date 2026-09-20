@@ -12,3 +12,10 @@ export type { ActorResult, SimulationResult } from './SimulationResult';
 export { buildSimulationResult } from './SimulationResult';
 export type { DistributionSummary } from './statistics';
 export { percentile, summarize } from './statistics';
+export type {
+  BatchAbilityTotals,
+  BatchDamageTaken,
+  BatchResourceFlow,
+  BatchResourceTotals,
+} from './BatchTotals';
+export { BatchTotals } from './BatchTotals';

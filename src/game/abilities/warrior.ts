@@ -690,7 +690,10 @@ export const BLOODRAGE_ABILITY: Ability = {
   onCast: ({ simulation, caster }) => {
     simulation.applyAura(caster, BLOODRAGE, caster.id);
     if (PLACEHOLDER_BLOODRAGE_INSTANT_RAGE > 0) {
-      simulation.grantResource(caster, 'rage', PLACEHOLDER_BLOODRAGE_INSTANT_RAGE);
+      simulation.grantResource(caster, 'rage', PLACEHOLDER_BLOODRAGE_INSTANT_RAGE, {
+        id: 'bloodrage',
+        name: 'Bloodrage',
+      });
     }
   },
 };
@@ -818,7 +821,10 @@ export const CHARGE: Ability = {
     // body rather than in a declared field, so it arrives as a named bonus on
     // the copy of this ability built for a character who took the talent.
     const bonus = ability.bonuses?.[CHARGE_RAGE_BONUS] ?? 0;
-    simulation.grantResource(caster, 'rage', CHARGE_RAGE_GENERATED + bonus);
+    simulation.grantResource(caster, 'rage', CHARGE_RAGE_GENERATED + bonus, {
+      id: 'charge',
+      name: 'Charge',
+    });
   },
 };
 

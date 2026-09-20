@@ -699,3 +699,98 @@ button:disabled {
   color: var(--text-muted);
   opacity: 0.5;
 }
+
+/* ---------------------------------------------------------------------------
+   Rage donuts. Inline SVG, no chart library: the page has no dependency
+   heavier than React and a charting package would be the biggest thing in the
+   bundle for a dozen arcs.
+   --------------------------------------------------------------------------- */
+
+.donut-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 24px;
+  margin: 12px 0 18px;
+}
+
+.donut {
+  flex: 1 1 320px;
+  min-width: 300px;
+}
+
+.donut h4 {
+  margin: 0 0 8px;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+.donut-body {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.donut-body svg {
+  flex: 0 0 auto;
+}
+
+.donut-total {
+  fill: var(--text);
+  font-family: var(--font-mono);
+  font-size: 17px;
+  text-anchor: middle;
+}
+
+.donut-unit {
+  fill: var(--text-muted);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  text-anchor: middle;
+}
+
+.donut-legend {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  flex: 1 1 auto;
+  font-size: 12px;
+}
+
+.donut-legend li {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  padding: 3px 0;
+  border-bottom: 1px solid var(--panel-border);
+}
+
+.donut-legend li:last-child {
+  border-bottom: none;
+}
+
+.donut-swatch {
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+  flex: 0 0 auto;
+}
+
+.donut-label {
+  flex: 1 1 auto;
+}
+
+.donut-value {
+  font-family: var(--font-mono);
+  white-space: nowrap;
+}
+
+@media (max-width: 720px) {
+  .donut-body {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
