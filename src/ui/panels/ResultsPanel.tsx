@@ -29,11 +29,22 @@ export function ResultsPanel({ batch }: ResultsPanelProps) {
     <Panel
       title="Results"
       subtitle={
-        isBatch
-          ? `Average of ${batch.iterations.toLocaleString()} iterations · ${(
-              batch.elapsedRealMs / 1000
-            ).toFixed(2)}s`
-          : 'Single iteration'
+        /*
+         * THE PRIORITY LIST IS NAMED HERE, and it has to be: a Warrior's list
+         * depends on combat style AND stance together, so two builds that look
+         * identical on the character sheet can run different rotations. Without
+         * this the only way to tell which one ran was to read the combat log
+         * and infer it from what was missing.
+         */
+        [
+          isBatch
+            ? `Average of ${batch.iterations.toLocaleString()} iterations`
+            : 'Single iteration',
+          batch.rotationName,
+          `${(batch.elapsedRealMs / 1000).toFixed(2)}s`,
+        ]
+          .filter(Boolean)
+          .join(' · ')
       }
     >
       <div className="stat-grid">

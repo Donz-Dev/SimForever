@@ -11,6 +11,14 @@ export interface ActorSnapshot {
   readonly maxHealth: number;
   readonly finalHealth: number;
   readonly isAlive: boolean;
+  /**
+   * The name of the priority list this actor ran, if it had one.
+   *
+   * Recorded because which list ran is NOT derivable from the character: a
+   * Warrior's depends on combat style and stance together, so two builds that
+   * look identical in every visible field can run different rotations.
+   */
+  readonly rotation?: string;
 }
 
 /**
