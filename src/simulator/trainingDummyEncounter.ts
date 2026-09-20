@@ -7,6 +7,24 @@ import { resolveCombatStyle } from '../game/character';
 import { createTrainingDummy } from '../game/actors/createTrainingDummy';
 
 /**
+ * How much a fight's length varies from the length asked for, either side.
+ *
+ * FIXED, and not exposed. It used to be a profile field defaulting to zero,
+ * which meant the app shipped with every iteration exactly the same length --
+ * and a fixed length lets a rotation line up with the clock in a way no real
+ * fight does. Anything keyed to a fraction of the fight, Execute above all,
+ * fired at the same absolute second in all three thousand iterations.
+ *
+ * Five percent is the project owner's figure. It is not a Forever ruleset
+ * number and nothing in the source states one: it is a modelling choice about
+ * how the encounter is set up, in the same category as fight length itself.
+ *
+ * Mean DPS barely moves under it, because damage and duration scale together.
+ * What it widens is the spread, and what it breaks is the clock alignment.
+ */
+export const FIGHT_DURATION_VARIANCE = 0.05;
+
+/**
  * Build a runnable simulation config from a character profile.
  *
  * This is the seam between profile data (human-facing, in seconds, JSON-safe)
@@ -19,7 +37,7 @@ export function trainingDummyEncounter(
 ): SimulationConfig {
   return {
     durationMs: seconds(profile.simulation.durationSeconds),
-    durationVariance: profile.simulation.durationVariance,
+    durationVariance: FIGHT_DURATION_VARIANCE,
     seed,
 
     // The combat tables need to know the player's style, because enemy parry

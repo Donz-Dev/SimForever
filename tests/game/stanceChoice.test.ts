@@ -126,7 +126,7 @@ describe('the opening stance is honoured, and the rotation dances away from it',
   });
 });
 
-describe('profile format 7', () => {
+describe('profile format 8', () => {
   it('leaves an older profile without a stance, so it takes the default', () => {
     /*
      * Deliberately NOT backfilled with 'battle'. Writing that in would
@@ -142,7 +142,7 @@ describe('profile format 7', () => {
       version: number;
       character: { combatStyle?: never; stance?: never };
     };
-    expect(migrated.version).toBe(7);
+    expect(migrated.version).toBe(8);
     expect(migrated.character.stance).toBeUndefined();
     expect(resolveStance(migrated.character.combatStyle, migrated.character.stance)).toBe(
       'battle',

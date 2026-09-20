@@ -229,7 +229,6 @@ export function validateProfile(value: unknown): ValidationResult {
     issues.push({ path: 'simulation', message: 'Missing simulation section.' });
   } else {
     requirePositiveNumber(simulation.durationSeconds, 'simulation.durationSeconds', issues);
-    requireFraction(simulation.durationVariance, 'simulation.durationVariance', issues);
     requirePositiveInteger(simulation.iterations, 'simulation.iterations', issues);
     requireInteger(simulation.seed, 'simulation.seed', issues);
   }
@@ -277,7 +276,6 @@ export function validateProfile(value: unknown): ValidationResult {
       talents: cleanTalents(validated.talents),
       simulation: {
         durationSeconds: validated.simulation.durationSeconds,
-        durationVariance: validated.simulation.durationVariance,
         iterations: validated.simulation.iterations,
         seed: validated.simulation.seed,
       },
@@ -369,11 +367,5 @@ function requireNonNegativeNumber(
 ): void {
   if (typeof value !== 'number' || !Number.isFinite(value) || value < 0) {
     issues.push({ path, message: 'Must be zero or greater.' });
-  }
-}
-
-function requireFraction(value: unknown, path: string, issues: ValidationIssue[]): void {
-  if (typeof value !== 'number' || !Number.isFinite(value) || value < 0 || value > 1) {
-    issues.push({ path, message: 'Must be between 0 and 1.' });
   }
 }

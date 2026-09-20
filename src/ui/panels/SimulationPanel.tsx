@@ -23,20 +23,19 @@ export function SimulationPanel({
 
   return (
     <Panel title="Simulation">
+      {/*
+        No variance field. Fight length varies by a fixed fraction the
+        simulator applies to every run -- see FIGHT_DURATION_VARIANCE. It was
+        a box defaulting to zero, which is the setting that makes every
+        iteration identical in length, and that is not a choice worth
+        offering.
+      */}
       <NumberField
         label="Duration (seconds)"
         value={profile.simulation.durationSeconds}
         min={1}
         max={3600}
         onChange={(durationSeconds) => setSimulation({ durationSeconds })}
-      />
-      <NumberField
-        label="Duration variance"
-        value={profile.simulation.durationVariance}
-        min={0}
-        max={1}
-        step={0.05}
-        onChange={(durationVariance) => setSimulation({ durationVariance })}
       />
       <NumberField
         label="Iterations"

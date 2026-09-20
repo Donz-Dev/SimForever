@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { toSeconds } from '../../src/engine';
 import { createDefaultProfile } from '../../src/profiles';
-import { runProfile, runProfileBatch } from '../../src/simulator';
+import { FIGHT_DURATION_VARIANCE, runProfile, runProfileBatch } from '../../src/simulator';
 
 /**
  * End-to-end tests for the first-milestone prototype: one player, one training
@@ -26,11 +26,23 @@ describe('player versus training dummy', () => {
     character: { ...createDefaultProfile().character, stance: 'battle' as const },
   };
 
-  it('completes and reports the configured duration', () => {
+  /** The band a fight of `asked` seconds is allowed to land in. */
+  function withinVariance(actualSeconds: number, asked: number) {
+    expect(actualSeconds).toBeGreaterThanOrEqual(asked * (1 - FIGHT_DURATION_VARIANCE));
+    expect(actualSeconds).toBeLessThanOrEqual(asked * (1 + FIGHT_DURATION_VARIANCE));
+  }
+
+  it('completes, and runs for the configured duration give or take the variance', () => {
+    /*
+     * NOT an exact equality any more. Fight length varies by a fixed fraction
+     * the simulator applies to every run, so the assertion is a band. It was
+     * exact only because the shipped default was variance zero -- every
+     * iteration the same length, which is the one thing a real fight never is.
+     */
     const result = runProfile(profile);
 
     expect(result.endReason).toBe('duration_expired');
-    expect(toSeconds(result.durationMs)).toBe(100);
+    withinVariance(toSeconds(result.durationMs), profile.simulation.durationSeconds);
   });
 
   it('deals damage and produces a positive DPS', () => {
@@ -38,7 +50,11 @@ describe('player versus training dummy', () => {
 
     expect(result.damage.total).toBeGreaterThan(0);
     expect(result.damage.dps).toBeGreaterThan(0);
-    expect(result.damage.dps).toBeCloseTo(result.damage.total / 100, 6);
+    // Against the duration the fight ACTUALLY ran, not the one asked for.
+    expect(result.damage.dps).toBeCloseTo(
+      result.damage.total / toSeconds(result.durationMs),
+      6,
+    );
   });
 
   it('reduces the dummy health by exactly the damage dealt', () => {
@@ -151,7 +167,7 @@ describe('player versus training dummy', () => {
     });
 
     expect(result.endReason).toBe('duration_expired');
-    expect(toSeconds(result.durationMs)).toBe(100);
+    withinVariance(toSeconds(result.durationMs), profile.simulation.durationSeconds);
     expect(result.actors.find((actor) => actor.faction === 'hostile')?.isAlive).toBe(true);
     // And it kept taking damage the whole time, well past its nominal pool.
     expect(result.damage.total).toBeGreaterThan(2000);
@@ -233,7 +249,7 @@ describe('player versus training dummy', () => {
       ...profile,
       simulation: { ...profile.simulation, durationSeconds: 10 },
     });
-    expect(toSeconds(result.durationMs)).toBe(10);
+    withinVariance(toSeconds(result.durationMs), 10);
     expect(result.damage.total).toBeGreaterThan(0);
   });
 });
@@ -243,7 +259,6 @@ describe('Monte Carlo batch', () => {
     ...createDefaultProfile(),
     simulation: {
       durationSeconds: 60,
-      durationVariance: 0.1,
       iterations: 25,
       seed: 12345,
     },
