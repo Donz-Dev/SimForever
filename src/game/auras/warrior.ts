@@ -492,6 +492,27 @@ export const SWEEPING_STRIKES: AuraDefinition = {
   maxStacks: SWEEPING_STRIKES_CHARGES,
 };
 
+/*
+ * Spell 12317, Enrage: "a 30% chance to deal X% increased Physical damage for
+ * 12 sec after being the victim of any damaging attack." 2/4/6/8/10 by rank.
+ *
+ * The MAGNITUDE is per rank and lives in the values file, so the aura is built
+ * per rank rather than being a constant here. The 30% trigger chance and the 12
+ * second duration do not vary and do.
+ */
+export const ENRAGE_TRIGGER_CHANCE = 30;
+export const ENRAGE_DURATION_MS = seconds(12);
+
+export function enrageAura(damageBonusPercent: number): AuraDefinition {
+  return {
+    id: 'enrage',
+    name: 'Enrage',
+    durationMs: ENRAGE_DURATION_MS,
+    damageDoneMultiplier: 1 + damageBonusPercent / 100,
+    refreshBehaviour: 'reset',
+  };
+}
+
 /** Unused today; kept so the import surface matches the other modules. */
 export const WARRIOR_AURAS: readonly AuraDefinition[] = [
   REND,

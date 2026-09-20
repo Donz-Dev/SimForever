@@ -57,7 +57,7 @@ export function pointsRemaining(allocation: TalentAllocation): number {
  * Only meaningful when the talent has points in it; a talent at zero has
  * nothing to justify.
  */
-function requirementsMet(
+export function requirementsMet(
   talents: ClassTalents,
   allocation: TalentAllocation,
   talentId: string,
@@ -170,4 +170,53 @@ export function distribution(talents: ClassTalents, allocation: TalentAllocation
 /** Points needed in a tree before a row opens. */
 export function tierForRow(row: number): number {
   return row * POINTS_PER_TIER;
+}
+
+/**
+ * The subset of an allocation that is actually legal, with everything else
+ * dropped.
+ *
+ * WHY THIS EXISTS. `isLegal` answers yes or no, and the UI uses it to refuse an
+ * illegal click. Nothing stood between a profile loaded from JSON and the
+ * simulator, so an allocation could put a single point in Mortal Strike -- a
+ * 31-point capstone with Sweeping Strikes as a prerequisite -- and be granted
+ * the ability. Every talent rule was known and none of them was applied.
+ *
+ * DROPS ITERATE TO A FIXED POINT, which is the part worth getting right.
+ * Removing an illegal talent lowers the points in its tree, which can push
+ * another talent below its tier gate, which can strip a prerequisite from a
+ * third. One pass would leave an allocation that is still illegal and now
+ * looks vetted.
+ *
+ * Returns the same object when nothing is dropped, so the common case costs
+ * nothing and a caller can tell whether anything happened by identity.
+ */
+export function legalAllocation(
+  talents: ClassTalents,
+  allocation: TalentAllocation,
+): { allocation: TalentAllocation; dropped: readonly string[] } {
+  let current: TalentAllocation = allocation;
+  const dropped: string[] = [];
+
+  for (;;) {
+    const offending = Object.entries(current)
+      .filter(([, points]) => points > 0)
+      .filter(([id, points]) => {
+        const talent = talents.byId.get(id);
+        if (!talent || points > talent.ranks || points < 0) return true;
+        return !requirementsMet(talents, current, id);
+      })
+      .map(([id]) => id);
+
+    if (offending.length === 0) break;
+
+    const next: Record<string, number> = { ...current };
+    for (const id of offending) {
+      delete next[id];
+      dropped.push(id);
+    }
+    current = next;
+  }
+
+  return { allocation: current, dropped };
 }

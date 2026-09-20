@@ -85,6 +85,28 @@ export interface Ability {
   readonly targets?: TargetSelection;
 
   /**
+   * Which stances (or other forms) this ability can be used in.
+   *
+   * Omitted or empty means ANY, which is a real answer and not an absence of
+   * one -- Forever's Mortal Strike genuinely has no stance requirement.
+   *
+   * The engine treats these as aura ids the caster must have one of. That keeps
+   * stances a content concept: the engine knows only "one of these auras must
+   * be up", and the Warrior's three stances happen to be auras.
+   */
+  readonly stances?: readonly string[];
+
+  /**
+   * The stance aura id this ability PUTS the caster in, if it is a stance
+   * change.
+   *
+   * Lets a rotation find the swap that unblocks a stance-gated ability without
+   * knowing what a Warrior stance is: it looks for the ability that grants one
+   * of the stances the blocked ability accepts.
+   */
+  readonly grantsStance?: string;
+
+  /**
    * Queue this ability onto the next auto-attack with the given weapon instead
    * of firing it immediately.
    *

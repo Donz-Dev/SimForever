@@ -1,4 +1,5 @@
 import { AbilityModifiers } from '../combat/abilityModifiers';
+import type { AuraDefinition } from '../effects/Aura';
 import type { Ability } from '../abilities/Ability';
 import { AbilityBook } from '../abilities/AbilityBook';
 import type { DamageSchool } from '../combat/DamageSchool';
@@ -146,6 +147,18 @@ export interface CombatantOptions {
   readonly resources?: readonly ResourceSpec[];
   readonly abilities?: readonly Ability[];
   readonly rotation?: Rotation;
+  /**
+   * Auras applied to this combatant the moment combat begins.
+   *
+   * For a state a character is simply always in, rather than a buff someone
+   * cast. A Warrior is always in a stance, and starting in none made every
+   * stance-gated ability uncastable -- which is technically what the rules say
+   * and is not what the rules mean.
+   *
+   * NOT a place for raid buffs. Those are an encounter's business and belong in
+   * `trainingDummyEncounter`, where a reader can see what was assumed.
+   */
+  readonly openingAuras?: readonly AuraDefinition[];
   /** Weapons by slot. Which ones swing is decided by `autoAttack`. */
   readonly weapons?: Partial<Record<WeaponSlot, WeaponProfile>>;
   /** Defaults to `none`: a combatant with no declared mode does not swing. */
@@ -220,6 +233,8 @@ export class Combatant {
   readonly health: Resource;
   readonly resources: ResourceCollection;
   readonly auras: AuraCollection;
+  /** Applied by the simulation when combat begins. See the option. */
+  readonly openingAuras: readonly AuraDefinition[];
   readonly abilities: AbilityBook;
   readonly rotation: Rotation | undefined;
   readonly weapons: Partial<Record<WeaponSlot, WeaponProfile>>;
@@ -318,6 +333,7 @@ export class Combatant {
 
     this.stats = new StatBlock(options.stats, options.statDerivation);
     this.health = new Resource('health', options.maxHealth);
+    this.openingAuras = options.openingAuras ?? [];
     this.resources = new ResourceCollection(options.resources ?? []);
     this.auras = new AuraCollection(this);
     this.abilities = new AbilityBook(options.abilities ?? []);

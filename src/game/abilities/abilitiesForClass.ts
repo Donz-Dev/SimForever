@@ -7,6 +7,8 @@ import type { TalentBuild } from '../talents/talentBuild';
 import { talentBuild } from '../talents/talentBuild';
 import { WARRIOR_TALENT_EFFECTS } from '../talents/warriorEffects';
 import { WARRIOR_ABILITIES } from './warrior';
+import { legalAllocation } from '../talents/talentRules';
+import { talentsForClass } from '../talents/talentData';
 
 /**
  * Abilities that exist only because a talent grants them, as
@@ -84,7 +86,24 @@ export function abilitiesForClass(
   style?: CombatStyleId,
   talents?: TalentAllocation,
 ): readonly Ability[] {
-  return abilitiesForBuild(characterClass, style, talentBuild(characterClass, talents));
+  /*
+   * ILLEGAL TALENTS ARE STRIPPED BEFORE ANYTHING IS GRANTED.
+   *
+   * This is the function that decides what a character knows, so it is the
+   * function that has to refuse an unearned capstone. One point in Mortal
+   * Strike -- tier 30 of Arms, and a prerequisite of its own -- used to hand
+   * the ability over, because the allocation was taken at face value.
+   *
+   * `createPlayer` strips as well, and that is not redundant: it needs the
+   * legal allocation for stats and resource caps too, and the UI calls this one
+   * directly to decide what to show. Both entry points now apply the rules, and
+   * a test pins each.
+   */
+  const talentTree = talentsForClass(characterClass);
+  const legal =
+    talentTree && talents ? legalAllocation(talentTree, talents).allocation : (talents ?? {});
+
+  return abilitiesForBuild(characterClass, style, talentBuild(characterClass, legal));
 }
 
 /**

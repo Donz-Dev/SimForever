@@ -6,6 +6,7 @@ import { TOTAL_TALENT_POINTS } from '../../src/game/talents/Talent';
 import { talentsForClass } from '../../src/game/talents/talentData';
 import { WARRIOR_TALENT_EFFECTS } from '../../src/game/talents/warriorEffects';
 import { isLegal } from '../../src/game/talents/talentRules';
+import { legalise } from '../helpers/legalTalents';
 
 /*
  * Which Warrior abilities come from a talent, transcribed BY HAND from the
@@ -74,16 +75,19 @@ describe('talent-gated abilities', () => {
   it('still grants the abilities no talent gates', () => {
     for (const ability of ALWAYS_KNOWN) {
       expect(idsFor('dual_wield')).toContain(ability);
-      expect(idsFor('dual_wield', { mortal_strike: 1 })).toContain(ability);
+      expect(idsFor('dual_wield', legalise({ mortal_strike: 1 }))).toContain(ability);
     }
   });
 
   for (const { ability, talent } of TALENT_GRANTED) {
-    it(`grants ${ability} only when ${talent} has a point in it`, () => {
+    it(`grants ${ability} only when ${talent} is legally taken`, () => {
       // Shield Slam needs a shield as well, so it is the style to test under.
       const style = ability === 'shield_slam' ? 'one_hand_shield' : 'dual_wield';
-      expect(idsFor(style, { [talent]: 1 })).toContain(ability);
+      expect(idsFor(style, legalise({ [talent]: 1 }))).toContain(ability);
       expect(idsFor(style, {})).not.toContain(ability);
+      // And a single unearned point grants nothing, which is the rule that was
+      // missing: every one of these sits behind a tier, a prerequisite or both.
+      expect(idsFor(style, { [talent]: 1 })).not.toContain(ability);
     });
   }
 
@@ -92,10 +96,10 @@ describe('talent-gated abilities', () => {
       (t) => t.ability,
     );
 
-    const arms = idsFor('dual_wield', { mortal_strike: 1 });
+    const arms = idsFor('dual_wield', legalise({ mortal_strike: 1 }));
     expect(arms.filter((id) => capstones.includes(id))).toEqual(['mortal_strike']);
 
-    const fury = idsFor('dual_wield', { bloodthirst: 1 });
+    const fury = idsFor('dual_wield', legalise({ bloodthirst: 1 }));
     expect(fury.filter((id) => capstones.includes(id))).toEqual(['bloodthirst']);
   });
 
@@ -105,9 +109,9 @@ describe('talent-gated abilities', () => {
   });
 
   it('needs both a shield and the talent for Shield Slam', () => {
-    expect(idsFor('one_hand_shield', { shield_slam: 1 })).toContain('shield_slam');
+    expect(idsFor('one_hand_shield', legalise({ shield_slam: 1 }))).toContain('shield_slam');
     // Took the talent, put the shield away.
-    expect(idsFor('dual_wield', { shield_slam: 1 })).not.toContain('shield_slam');
+    expect(idsFor('dual_wield', legalise({ shield_slam: 1 }))).not.toContain('shield_slam');
     // Holding a shield, never took the talent.
     expect(idsFor('one_hand_shield', {})).not.toContain('shield_slam');
   });
@@ -120,7 +124,10 @@ describe('talent-gated abilities', () => {
       race: 'human',
       characterClass: 'warrior',
       combatStyle: 'dual_wield',
-      talents: { mortal_strike: 1 },
+      // Padded to a legal build: Mortal Strike is a 31-point capstone that
+      // also requires a point in Sweeping Strikes, and createPlayer now strips
+      // a talent whose requirements are not met.
+      talents: legalise({ mortal_strike: 1 }),
     });
     expect(with_.abilities.has('mortal_strike')).toBe(true);
   });
@@ -216,9 +223,16 @@ describe('every ability locked behind a talent is unreachable without it', () =>
     });
 
     if (implemented) {
-      it(`${ability} becomes castable once ${talent} is taken`, () => {
+      it(`${ability} becomes castable once ${talent} is LEGALLY taken`, () => {
+        /*
+         * `legalise` pads the allocation up to a build a player could have.
+         * One bare point is not enough any more: `abilitiesForClass` strips
+         * talents whose tier or prerequisite is unmet, so a single point in a
+         * 31-point capstone grants nothing -- which is the whole point of the
+         * gating, and used not to be true.
+         */
         const style = ability === 'shield_slam' ? 'one_hand_shield' : 'dual_wield';
-        expect(idsFor(style, { [talent]: 1 })).toContain(ability);
+        expect(idsFor(style, legalise({ [talent]: 1 }))).toContain(ability);
       });
     } else {
       it(`${ability} is declared but has no implementation yet`, () => {

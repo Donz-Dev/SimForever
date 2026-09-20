@@ -41,6 +41,7 @@ import {
 } from '../../src/game/auras/warrior';
 import { makeAttacker, makeTarget } from '../helpers/actors';
 import { buildSimulation } from '../helpers/buildSimulation';
+import { BATTLE_STANCE, DEFENSIVE_STANCE } from '../../src/game/auras/warrior';
 
 /*
  * WoWForeverWarriorAbilities.xlsx, transcribed BY HAND.
@@ -522,6 +523,11 @@ describe('Overpower and Revenge, through the reaction hook', () => {
       stats: { attackPower: 0 },
       reactions: WARRIOR_REACTIONS,
       abilities: [OVERPOWER],
+      // A warrior is always in a stance, and Overpower requires Battle Stance.
+      // A bare Combatant has none, so without this the ability is refused for
+      // the stance rather than for the window -- which is what the test is
+      // actually about.
+      openingAuras: [BATTLE_STANCE],
       resources: [{ type: 'rage', maximum: 100, initial: 100 }],
     });
     const dummy = makeTarget();
@@ -551,6 +557,11 @@ describe('Overpower and Revenge, through the reaction hook', () => {
       stats: { attackPower: 0 },
       reactions: WARRIOR_REACTIONS,
       abilities: [OVERPOWER],
+      // A warrior is always in a stance, and Overpower requires Battle Stance.
+      // A bare Combatant has none, so without this the ability is refused for
+      // the stance rather than for the window -- which is what the test is
+      // actually about.
+      openingAuras: [BATTLE_STANCE],
       resources: [{ type: 'rage', maximum: 100, initial: 100 }],
     });
     const dummy = makeTarget();
@@ -582,6 +593,11 @@ describe('Overpower and Revenge, through the reaction hook', () => {
       stats: { attackPower: 0 },
       reactions: WARRIOR_REACTIONS,
       abilities: [OVERPOWER],
+      // A warrior is always in a stance, and Overpower requires Battle Stance.
+      // A bare Combatant has none, so without this the ability is refused for
+      // the stance rather than for the window -- which is what the test is
+      // actually about.
+      openingAuras: [BATTLE_STANCE],
       resources: [{ type: 'rage', maximum: 100, initial: 100 }],
     });
     const dummy = makeTarget();
@@ -606,6 +622,8 @@ describe('Overpower and Revenge, through the reaction hook', () => {
     const warrior = makeAttacker({
       reactions: WARRIOR_REACTIONS,
       abilities: [REVENGE],
+      // Revenge requires Defensive Stance.
+      openingAuras: [DEFENSIVE_STANCE],
       resources: [{ type: 'rage', maximum: 100, initial: 100 }],
     });
     const boss = makeTarget({ stats: { attackPower: 0 } });
