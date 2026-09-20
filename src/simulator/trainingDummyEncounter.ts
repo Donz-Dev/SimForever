@@ -41,6 +41,7 @@ export function trainingDummyEncounter(
         race: profile.character.race,
         characterClass: profile.character.characterClass,
         combatStyle: profile.character.combatStyle,
+        stance: profile.character.stance,
         bonusStats: profile.stats,
         equipment: profile.equipment,
         talents: profile.talents,

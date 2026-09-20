@@ -85,3 +85,5 @@ export {
   racesForClass,
   racesForFaction,
 } from './selection';
+export type { StanceDefinition, StanceId } from './stances';
+export { STANCES, defaultStanceFor, getStance, resolveStance } from './stances';

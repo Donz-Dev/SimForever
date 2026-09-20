@@ -1,5 +1,5 @@
 import type { PartialStats } from '../engine';
-import type { ClassId, CombatStyleId, RaceId } from '../game/character';
+import type { ClassId, CombatStyleId, RaceId, StanceId } from '../game/character';
 import type { Equipment } from '../game/items/Item';
 import type { TalentAllocation } from '../game/talents/Talent';
 
@@ -12,7 +12,7 @@ import type { TalentAllocation } from '../game/talents/Talent';
  * moves on. Getting this in before anyone has saved anything is much cheaper
  * than retrofitting it later.
  */
-export const CURRENT_PROFILE_VERSION = 6;
+export const CURRENT_PROFILE_VERSION = 7;
 
 export interface CharacterSection {
   readonly name: string;
@@ -36,6 +36,19 @@ export interface CharacterSection {
    * power and the active resource. Omitted means "use the class default".
    */
   readonly combatStyle?: CombatStyleId;
+  /**
+   * Which stance a Warrior fights in. Meaningless for every other class.
+   *
+   * A PLAYER CHOICE rather than something the rotation works out. Stance
+   * gating left several abilities reachable only by swapping, and a rotation
+   * that swaps whenever anything in another stance looks castable spent 540
+   * rage a fight doing it. Choosing up front removes most of that, because
+   * most of the swapping was the character starting in the wrong stance.
+   *
+   * Omitted means the combat style's default -- Battle for a two-hander,
+   * Berserker for dual-wield, Defensive for a shield.
+   */
+  readonly stance?: StanceId;
 }
 
 export interface SimulationSection {

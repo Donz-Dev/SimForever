@@ -37,7 +37,13 @@ describe('changing stance costs rage', () => {
     sim.begin();
     const rage = player.resources.require('rage');
     rage.gain(startingRage);
-    sim.cast(player, player.abilities.get('berserker_stance_cast')!, undefined);
+    /*
+     * Defensive, because a dual-wielder now OPENS in Berserker: swapping to
+     * the stance already held is not a change and costs nothing, which is a
+     * separate rule tested below. Picking the stance the character is not in
+     * is what makes this a test of the cost.
+     */
+    sim.cast(player, player.abilities.get('defensive_stance_cast')!, undefined);
     return rage.current;
   }
 
@@ -81,7 +87,8 @@ describe('changing stance costs rage', () => {
     sim.begin();
     const rage = player.resources.require('rage');
     rage.gain(80);
-    sim.cast(player, player.abilities.get('battle_stance_cast')!, undefined);
+    // Berserker is where a dual-wielder starts, so this is a no-op.
+    sim.cast(player, player.abilities.get('berserker_stance_cast')!, undefined);
     expect(rage.current).toBe(80);
   });
 
@@ -98,7 +105,7 @@ describe('changing stance costs rage', () => {
     const sim = buildSimulation([player, dummy]);
     sim.begin();
     player.resources.require('rage').gain(100);
-    sim.cast(player, player.abilities.get('berserker_stance_cast')!, undefined);
+    sim.cast(player, player.abilities.get('defensive_stance_cast')!, undefined);
     // Nothing to assert on the sink here -- the ledger test in
     // resourceGeneration.test.ts is what proves it. This pins the rage itself.
     expect(player.resources.require('rage').current).toBe(10);

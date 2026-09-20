@@ -11,6 +11,10 @@ import {
   getRace,
   racesForFaction,
   resolveCombatStyle,
+  STANCES,
+  defaultStanceFor,
+  getStance,
+  resolveStance,
 } from '../../game/character';
 import { TextField } from '../components/Field';
 import { OptionGroup } from '../components/OptionGroup';
@@ -57,6 +61,15 @@ export function CharacterPanel({
 
   const styles = combatStylesFor(selection.characterClass);
   const style = resolveCombatStyle(selection.characterClass, profile.character.combatStyle);
+  /*
+   * Only the Warrior has stances, so only the Warrior is asked. Resolved
+   * rather than read straight off the profile, so a profile written before
+   * stances existed opens in its style's default instead of nowhere -- a
+   * warrior in no stance cannot cast Overpower, Rend, Execute, Thunder Clap,
+   * Hamstring or Charge.
+   */
+  const isWarrior = selection.characterClass === 'warrior';
+  const stance = resolveStance(style, profile.character.stance);
 
   const applyChange = (change: Partial<CharacterSelection>) => {
     const next = applySelection(change, selection);
@@ -70,6 +83,17 @@ export function CharacterPanel({
         // Re-resolve against the new class, so a profile does not quietly carry
         // "bear" around after switching away from Druid.
         combatStyle: resolveCombatStyle(next.characterClass, profile.character.combatStyle),
+        /*
+         * A stance belongs to a Warrior and to nobody else, so changing class
+         * away from Warrior drops it rather than leaving a Mage carrying
+         * "defensive" around. Changing TO Warrior takes the style's default.
+         */
+        stance:
+          next.characterClass === 'warrior'
+            ? defaultStanceFor(
+                resolveCombatStyle(next.characterClass, profile.character.combatStyle),
+              )
+            : undefined,
       },
     });
   };
@@ -134,9 +158,40 @@ export function CharacterPanel({
         options={styles}
         value={style}
         onChange={(next) =>
-          onChange({ ...profile, character: { ...profile.character, combatStyle: next } })
+          onChange({
+            ...profile,
+            character: {
+              ...profile.character,
+              combatStyle: next,
+              /*
+               * Changing style RESETS the stance to that style's default.
+               *
+               * Each default is the stance the build actually wants, and
+               * carrying the old one across is how a shield warrior ends up in
+               * Berserker without having chosen it. Overriding afterwards is
+               * one click; noticing a stance you did not pick is not.
+               */
+              stance: next && selection.characterClass === 'warrior'
+                ? defaultStanceFor(next)
+                : profile.character.stance,
+            },
+          })
         }
       />
+
+      {isWarrior ? (
+        <>
+          <OptionGroup
+            label="Stance"
+            options={STANCES}
+            value={stance}
+            onChange={(next) =>
+              onChange({ ...profile, character: { ...profile.character, stance: next } })
+            }
+          />
+          <p className="muted stance-note">{getStance(stance)?.effect}</p>
+        </>
+      ) : null}
 
       {abilityCount === 0 ? (
         <p className="muted warn">
@@ -170,6 +225,15 @@ function ConfirmedCharacter({
   const race = getRace(profile.character.race);
   const classDefinition = getClass(profile.character.characterClass);
   const styleDefinition = getCombatStyle(style);
+  /*
+   * The stance is on the summary line because it changes what the character
+   * can cast. A collapsed summary that omitted it would leave someone
+   * comparing two runs with no way to see that the stance differed.
+   */
+  const stanceDefinition =
+    profile.character.characterClass === 'warrior'
+      ? getStance(resolveStance(style, profile.character.stance))
+      : undefined;
 
   return (
     <section className="panel character-summary">
@@ -179,6 +243,7 @@ function ConfirmedCharacter({
           <span className="muted">
             {race?.name} {classDefinition?.name}
             {styleDefinition ? ` · ${styleDefinition.name}` : ''}
+            {stanceDefinition ? ` · ${stanceDefinition.name}` : ''}
           </span>
         </div>
         <button type="button" onClick={onEdit}>

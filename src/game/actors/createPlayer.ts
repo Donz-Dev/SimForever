@@ -11,6 +11,7 @@ import type {
   CombatStyleId,
   RaceId,
   ResourceMaximumOverrides,
+  StanceId,
 } from '../character';
 import {
   baseHitPointsFor,
@@ -22,6 +23,7 @@ import {
   resolveCombatStyle,
   resourceSpecsFor,
   statDerivationFor,
+  resolveStance,
 } from '../character';
 import { MAX_CHARACTER_LEVEL } from '../character';
 import { fixedMaximumFor } from '../character';
@@ -30,7 +32,7 @@ import { reactionsForClass } from '../reactions/reactionsForClass';
 import { rotationFor } from '../rotations/rotationFor';
 import type { Equipment } from '../items/Item';
 import type { TalentAllocation } from '../talents/Talent';
-import { BATTLE_STANCE } from '../auras/warrior';
+import { WARRIOR_STANCES } from '../auras/warrior';
 import { talentBuild } from '../talents/talentBuild';
 import { legalAllocation } from '../talents/talentRules';
 import { talentsForClass } from '../talents/talentData';
@@ -48,6 +50,13 @@ export interface PlayerOptions {
    * class cannot use falls back to it too.
    */
   readonly combatStyle?: CombatStyleId;
+  /**
+   * Which stance a Warrior opens in. Ignored by every other class.
+   *
+   * Omitted takes the combat style's default: Battle for a two-hander,
+   * Berserker for dual-wield, Defensive for a shield.
+   */
+  readonly stance?: StanceId;
   /**
    * Stats from gear, buffs and anything else on top of the race/class base.
    * Added to the base rather than replacing it.
@@ -224,21 +233,26 @@ export function createPlayer(options: PlayerOptions): Combatant {
     // rather than scheduling decision events that can never do anything.
     rotation: abilities.length > 0 ? rotation : undefined,
     /*
-     * A Warrior is ALWAYS IN A STANCE, and starts in Battle Stance.
+     * A Warrior is ALWAYS IN A STANCE, and opens in the one that was chosen.
      *
-     * Forever's Battle Stance does nothing at all -- "A balanced combat
-     * stance", in full -- so this grants no damage. What it grants is
-     * legality: Overpower, Rend, Execute, Thunder Clap, Hamstring and Charge
-     * all require Battle Stance, and a warrior in no stance could cast none of
-     * them. Starting stanceless is technically what the gating rules say and
-     * is not what they mean.
+     * Starting stanceless was never right: Overpower, Rend, Execute, Thunder
+     * Clap, Hamstring and Charge all require a stance, and a warrior in none
+     * could cast none of them.
      *
-     * The rotation does not stance dance, so a Warrior stays in Battle Stance
-     * for the whole fight and everything gated on Berserker or Defensive is
-     * simply never cast. That is honest and it is not complete -- see
-     * docs/warrior-completion.md.
+     * It used to open in Battle Stance whatever it was holding, which is why
+     * the rotation danced so much -- a dual-wielder had to swap to reach
+     * Whirlwind and Recklessness, and a shield warrior to reach Revenge and
+     * Shield Slam, paying ten rage above the floor every time. Opening in the
+     * build's own stance removes most of those swaps, which is the cheapest
+     * fix available for a problem that otherwise needs a rotation smart enough
+     * to price a stance change.
+     *
+     * The player picks it; the style only supplies the default.
      */
-    openingAuras: characterClass === 'warrior' ? [BATTLE_STANCE] : [],
+    openingAuras:
+      characterClass === 'warrior'
+        ? [stanceAuraFor(resolveStance(style, options.stance))]
+        : [],
     // Real weapons when something is equipped, placeholders otherwise. The
     // placeholders are invented and the items are not, so anything equipped
     // wins outright rather than being merged.
@@ -306,4 +320,18 @@ function weaponsFor(
   const placeholders = weaponsForStyle(style, { offHandDamageMultiplier });
   const equipped = weaponsForEquipment(equipment, style, { offHandDamageMultiplier });
   return { ...placeholders, ...equipped };
+}
+
+/**
+ * The aura for a stance id.
+ *
+ * Looked up by id rather than kept as a map so the two lists cannot drift:
+ * `STANCES` describes them for a person choosing, `WARRIOR_STANCES` is what
+ * the engine applies, and this is the single place they meet. A miss falls
+ * back to Battle Stance, because a Warrior in no stance can cast almost
+ * nothing.
+ */
+function stanceAuraFor(stance: StanceId): (typeof WARRIOR_STANCES)[number] {
+  const auraId = `${stance}_stance`;
+  return WARRIOR_STANCES.find((aura) => aura.id === auraId) ?? WARRIOR_STANCES[0];
 }
