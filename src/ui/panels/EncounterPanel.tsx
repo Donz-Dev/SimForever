@@ -1,5 +1,8 @@
+import { armorReduction } from '../../engine';
+import { TARGET_ARMOR_OPTIONS } from '../../game/actors/createTrainingDummy';
 import type { CharacterProfile } from '../../profiles';
-import { CheckboxField, NumberField, TextField } from '../components/Field';
+import type { SelectOption } from '../components/Field';
+import { CheckboxField, NumberField, SelectField, TextField } from '../components/Field';
 import { Panel } from '../components/Panel';
 
 interface EncounterPanelProps {
@@ -21,6 +24,34 @@ interface EncounterPanelProps {
  * depend on two borrowed Classic placeholders, which is why they are shown
  * beside the switch rather than buried in code.
  */
+/**
+ * The armor choices, with the reduction each one actually produces.
+ *
+ * The percentage is computed by the engine's own armor formula against the
+ * target's level, so it moves when the level does and cannot drift away from
+ * what the simulation uses. It is not a label for the value -- nothing states
+ * which boss any of the three figures belongs to.
+ *
+ * A profile whose armor is not one of the three keeps it: it is appended,
+ * ordered with the rest, and marked. Dropping it would rewrite the encounter
+ * the moment the panel rendered.
+ */
+export function armorOptions(
+  current: number,
+  targetLevel: number,
+): readonly SelectOption<number>[] {
+  const values = TARGET_ARMOR_OPTIONS.includes(current)
+    ? [...TARGET_ARMOR_OPTIONS]
+    : [...TARGET_ARMOR_OPTIONS, current].sort((a, b) => b - a);
+
+  return values.map((armor) => ({
+    value: armor,
+    label: `${armor.toLocaleString()} — ${(armorReduction(armor, targetLevel) * 100).toFixed(1)}% reduced${
+      TARGET_ARMOR_OPTIONS.includes(armor) ? '' : ' (from profile)'
+    }`,
+  }));
+}
+
 export function EncounterPanel({ profile, onChange }: EncounterPanelProps) {
   const setEncounter = (changes: Partial<CharacterProfile['encounter']>) => {
     onChange({ ...profile, encounter: { ...profile.encounter, ...changes } });
@@ -40,11 +71,11 @@ export function EncounterPanel({ profile, onChange }: EncounterPanelProps) {
         max={99}
         onChange={(targetLevel) => setEncounter({ targetLevel })}
       />
-      <NumberField
+      <SelectField
         label="Armor"
+        hint="physical reduction at this level"
         value={profile.encounter.targetArmor}
-        min={0}
-        step={100}
+        options={armorOptions(profile.encounter.targetArmor, profile.encounter.targetLevel)}
         onChange={(targetArmor) => setEncounter({ targetArmor })}
       />
 

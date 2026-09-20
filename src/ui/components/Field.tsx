@@ -62,6 +62,55 @@ export function NumberField({
   );
 }
 
+export interface SelectOption<T extends string | number> {
+  readonly value: T;
+  readonly label: string;
+}
+
+interface SelectFieldProps<T extends string | number> {
+  readonly label: string;
+  readonly hint?: string;
+  readonly value: T;
+  readonly options: readonly SelectOption<T>[];
+  readonly onChange: (value: T) => void;
+}
+
+/**
+ * A field with a fixed set of choices.
+ *
+ * The caller is responsible for the option list containing the current value.
+ * A `<select>` whose value matches no option renders blank and, worse, reports
+ * the first option on the next change -- so a value the list does not know
+ * about would be silently replaced by one it does. Where that can happen the
+ * caller adds the current value to the list; `EncounterPanel` does exactly
+ * that for an armor figure typed into an older profile.
+ */
+export function SelectField<T extends string | number>({
+  label,
+  hint,
+  value,
+  options,
+  onChange,
+}: SelectFieldProps<T>) {
+  return (
+    <Field label={label} hint={hint}>
+      <select
+        value={String(value)}
+        onChange={(event) => {
+          const chosen = options.find((option) => String(option.value) === event.target.value);
+          if (chosen) onChange(chosen.value);
+        }}
+      >
+        {options.map((option) => (
+          <option key={String(option.value)} value={String(option.value)}>
+            {option.label}
+          </option>
+        ))}
+      </select>
+    </Field>
+  );
+}
+
 interface TextFieldProps {
   readonly label: string;
   readonly value: string;
