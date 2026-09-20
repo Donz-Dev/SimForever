@@ -12,6 +12,30 @@ type Migration = (profile: Record<string, unknown>) => Record<string, unknown>;
  */
 const migrations: Record<number, Migration> = {
   /**
+   * Version 8 took `simulation.durationVariance` off the profile.
+   *
+   * Fight length now varies by a fixed fraction built into the simulator, so
+   * the field has nowhere to be read from and is dropped rather than carried
+   * along as dead data -- validation rebuilds a profile field by field, so a
+   * leftover key would be silently discarded anyway, and doing it here makes
+   * it visible.
+   *
+   * THIS CHANGES EVERY OLD PROFILE'S RESULTS. They all ran at variance 0, a
+   * fixed fight length every iteration; now every iteration is a slightly
+   * different length. Mean DPS barely moves -- damage and duration scale
+   * together -- but the spread widens, and anything keyed to a fraction of
+   * the fight, Execute above all, now fires at a different absolute second in
+   * each one. That is the intent: a fixed length let a rotation line up with
+   * the clock in a way no real fight does.
+   */
+  7: (profile) => {
+    const simulation = profile.simulation;
+    if (typeof simulation !== 'object' || simulation === null) return profile;
+    const { durationVariance: _dropped, ...rest } = simulation as Record<string, unknown>;
+    return { ...profile, simulation: rest };
+  },
+
+  /**
    * Version 7 added `character.stance`.
    *
    * Left UNSET rather than filled in, so an old profile takes its combat

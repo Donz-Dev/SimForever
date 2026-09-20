@@ -20,15 +20,36 @@ function batch(talents: Record<string, number> = {}, iterations = 120) {
     character: { ...base.character, combatStyle: 'dual_wield' },
     equipment: startingEquipmentFor('warrior', 'dual_wield'),
     talents,
-    simulation: { ...base.simulation, iterations, seed: 31 },
+    /*
+     * Duration stated rather than defaulted. These assertions bound a swing
+     * COUNT, so they depend on fight length -- leaving it to the default put
+     * them a couple of swings from their own threshold the day the default
+     * moved from 100 seconds to 60.
+     */
+    simulation: { ...base.simulation, durationSeconds: 100, iterations, seed: 31 },
   } as never);
 }
 
 describe('a batch averages every iteration', () => {
   it('reports mean damage consistent with mean DPS and duration', () => {
+    /*
+     * CLOSE, BUT NO LONGER IDENTICAL, and the gap is real rather than a
+     * rounding artefact.
+     *
+     * `dps.mean` is the mean of each iteration's damage/duration; dividing
+     * mean damage by mean duration is the ratio of the means. Those are the
+     * same number only when every iteration is the same length, which is what
+     * the shipped default used to be. Fight length now varies by
+     * FIGHT_DURATION_VARIANCE, so they separate by about the squared
+     * coefficient of variation -- a fraction of a percent at +/-5%.
+     *
+     * Pinned as a tolerance rather than an equality so that a real
+     * disagreement, the kind that means the aggregator is summing the wrong
+     * population, still fails.
+     */
     const b = batch();
-    // damage = dps * seconds, and both are means over the same iterations.
-    expect(b.meanDamage / (b.meanDurationMs / 1000)).toBeCloseTo(b.dps.mean, 4);
+    const ratioOfMeans = b.meanDamage / (b.meanDurationMs / 1000);
+    expect(Math.abs(ratioOfMeans - b.dps.mean) / b.dps.mean).toBeLessThan(0.005);
   });
 
   it('does not report the representative iteration as the total', () => {
@@ -51,8 +72,8 @@ describe('a batch averages every iteration', () => {
     // A single fight's estimate swings several points either way.
     expect(main!.critRate).toBeGreaterThan(0.1);
     expect(main!.critRate).toBeLessThan(0.3);
-    // Attempts are a per-iteration mean, so a 100s fight with a 2.6s weapon is
-    // tens of swings, not thousands.
+    // Attempts are a per-iteration mean, so a hundred-second fight with a 2.6s
+    // weapon is tens of swings, not thousands.
     expect(main!.attempts).toBeGreaterThan(20);
     expect(main!.attempts).toBeLessThan(60);
   });

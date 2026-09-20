@@ -34,7 +34,6 @@ describe('profile serialization', () => {
       stats: { strength: 1234, attackPower: 5678, critRating: 900, hasteRating: 450 },
       simulation: {
         durationSeconds: 300,
-        durationVariance: 0.2,
         iterations: 500,
         seed: 987654,
       },
@@ -237,17 +236,22 @@ describe('validateProfile', () => {
     expect(validateProfile(profile).ok).toBe(false);
   });
 
-  it('rejects an out-of-range duration variance', () => {
+  it('drops a duration variance rather than rejecting it', () => {
+    /*
+     * The field left the profile in version 8 -- fight length now varies by a
+     * fixed fraction the simulator applies. A file still carrying one is not
+     * an error: validation rebuilds a profile field by field, so the key is
+     * dropped the same way any other unknown key is.
+     */
     const base = createDefaultProfile();
-    const profile = {
+    const result = validateProfile({
       ...base,
       simulation: { ...base.simulation, durationVariance: 1.5 },
-    };
+    });
 
-    const result = validateProfile(profile);
-    expect(result.ok).toBe(false);
-    if (result.ok) return;
-    expect(result.issues[0].path).toBe('simulation.durationVariance');
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.profile.simulation).not.toHaveProperty('durationVariance');
   });
 
   it('rejects a non-positive duration and iteration count', () => {
@@ -318,6 +322,7 @@ describe('versioning', () => {
         iterations: 1,
         seed: 1,
       },
+      /* Keeps its variance field, which the version 8 migration removes. */
       encounter: { targetName: 'Dummy', targetHealth: 1000, targetArmor: 0 },
     };
 
@@ -329,6 +334,7 @@ describe('versioning', () => {
     expect(result.profile.version).toBe(CURRENT_PROFILE_VERSION);
     expect(result.profile.character.combatStyle).toBe('bear');
     expect(result.profile.character).not.toHaveProperty('form');
+    expect(result.profile.simulation).not.toHaveProperty('durationVariance');
   });
 
   it('migrates a version 1 profile that had no form', () => {

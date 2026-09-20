@@ -8,7 +8,7 @@ repository, or sent to a server.
 
 ```json
 {
-  "version": 5,
+  "version": 8,
   "character": {
     "name": "Example",
     "race": "human",
@@ -30,9 +30,8 @@ repository, or sent to a server.
     "deep_wounds": 3
   },
   "simulation": {
-    "durationSeconds": 100,
-    "durationVariance": 0,
-    "iterations": 1,
+    "durationSeconds": 60,
+    "iterations": 3000,
     "seed": 12345
   },
   "encounter": {
@@ -123,7 +122,6 @@ fixing a hand-edited file sees the whole list at once:
 
 ```
 stats.spirit: Unknown stat "spirit".
-simulation.durationVariance: Must be between 0 and 1.
 encounter.targetArmor: Must be zero or greater.
 ```
 
@@ -132,7 +130,7 @@ extra keys are dropped instead of riding along into the rest of the app.
 
 ## Versioning and migration
 
-Every profile carries a `version`. `CURRENT_PROFILE_VERSION` is 5.
+Every profile carries a `version`. `CURRENT_PROFILE_VERSION` is 8.
 
 The order is always **parse → migrate → validate**. An old file is valid for its
 own version, not the current one, so validating first would reject files that
@@ -152,15 +150,19 @@ const migrations: Record<number, Migration> = {
 };
 ```
 
-Migrations run in sequence, so a version-1 file loaded by a build at version 5
-passes through 1→2, 2→3 and 3→4.
+Migrations run in sequence, so a version-1 file loaded by a build at version 8
+passes through 1→2, 2→3 and so on up to 7→8.
 
 A profile from a *newer* format is refused with a clear message rather than
 silently mangled.
 
-`migrations` is empty today because version 1 is the first version. The
-machinery is in place anyway: adding it now costs a few lines, and adding it
-after people have saved profiles is a support problem.
+**A migration says what it does to the numbers, not just to the shape.** Four
+of them change results, and each says so in its own comment: version 5 made an
+empty talent allocation mean a Warrior knows no capstone ability, version 7 let
+a dual-wielder open in Berserker Stance instead of Battle, and version 8
+dropped `durationVariance` so every fight now varies in length. A migration
+that quietly moves a saved character's recorded numbers is the one that costs
+someone a day.
 
 ## Using a profile
 

@@ -12,7 +12,7 @@ import type { TalentAllocation } from '../game/talents/Talent';
  * moves on. Getting this in before anyone has saved anything is much cheaper
  * than retrofitting it later.
  */
-export const CURRENT_PROFILE_VERSION = 7;
+export const CURRENT_PROFILE_VERSION = 8;
 
 export interface CharacterSection {
   readonly name: string;
@@ -60,8 +60,11 @@ export interface SimulationSection {
    * that converts, which is how the two conventions never get mixed up.
    */
   readonly durationSeconds: number;
-  /** Fraction of random variation in fight length. 0.1 means +/-10%. */
-  readonly durationVariance: number;
+  /*
+   * Fight length no longer varies by profile. It varies by a FIXED fraction
+   * built into the simulator -- see FIGHT_DURATION_VARIANCE. Removed in
+   * version 8; older profiles have the field dropped on migration.
+   */
   /** Monte Carlo iteration count. 1 runs a single fight. */
   readonly iterations: number;
   /** Base RNG seed. The same seed reproduces the run exactly. */
@@ -179,9 +182,18 @@ export function createDefaultProfile(): CharacterProfile {
     // no Bloodthirst and no Shield Slam, which is what the trees say.
     talents: {},
     simulation: {
-      durationSeconds: 100,
-      durationVariance: 0,
-      iterations: 1,
+      /*
+       * Sixty seconds and three thousand iterations, both the project owner's
+       * choice.
+       *
+       * The iteration count is the one that matters: a single fight is a
+       * sample, not a result, and reading one was the source of several
+       * "findings" that turned out to be noise. Three thousand of them at this
+       * length runs in a couple of seconds, so there is no reason to default
+       * to fewer.
+       */
+      durationSeconds: 60,
+      iterations: 3000,
       seed: 12345,
     },
     encounter: {

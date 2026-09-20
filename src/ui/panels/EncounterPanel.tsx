@@ -51,7 +51,6 @@ export function EncounterPanel({ profile, onChange }: EncounterPanelProps) {
 
       <CheckboxField
         label="Target attacks back"
-        hint="off for a damage warrior"
         checked={profile.encounter.targetAttacks}
         onChange={(targetAttacks) => setEncounter({ targetAttacks })}
       />
