@@ -13,9 +13,20 @@
  * premium and luxury brands reach for; near-black with electric violet is the
  * current dark-mode SaaS default.
  *
- * The other three are KEPT rather than deleted once one was picked. They cost
- * nothing -- each is a block of values, no rule and no branch -- and a scheme
- * is cheap to try and expensive to reconstruct.
+ * NOT EXPOSED IN THE INTERFACE. The picker was there to choose with, and the
+ * choice is made: Abyssal Copper holds the bare `:root`, so it is what the
+ * page renders with no JavaScript involved at all.
+ *
+ * The other three are KEPT rather than deleted. Each is a block of values
+ * with no rule and no branch behind it, so they cost nothing at runtime, and
+ * a scheme is cheap to try and expensive to reconstruct. To see one, set
+ * `data-theme` on the root element:
+ *
+ *     document.documentElement.dataset.theme = 'obsidian';
+ *
+ * This module is what keeps them honest. Nothing imports it, and that is the
+ * point -- it is the catalogue the tests check the stylesheet against, so a
+ * scheme cannot quietly lose a token or disagree with the default.
  *
  * The chart series colours are NOT part of a theme. They stay fixed, because a
  * slice's colour identifies what it measures and should not move when the
@@ -26,9 +37,9 @@ export type ThemeId = 'midnight' | 'graphite' | 'abyss' | 'obsidian';
 export interface ThemeDefinition {
   readonly id: ThemeId;
   readonly name: string;
-  /** What the pairing is, for the person choosing. */
+  /** What the pairing is. */
   readonly note: string;
-  /** Page background and accent, for the picker's own swatch. */
+  /** Page background and accent, for identifying it at a glance. */
   readonly swatch: readonly [background: string, accent: string];
 }
 
@@ -60,11 +71,12 @@ export const THEMES: readonly ThemeDefinition[] = [
 ];
 
 /*
- * The scheme chosen by the project owner, and the one a first visit opens in.
+ * The scheme chosen by the project owner, and the only one anyone sees.
  *
  * It must match whichever block holds the bare `:root` selector in
- * `styles.css`, or the page paints in one scheme for the frame before React
- * runs and then swaps. A test pins the pair together.
+ * `styles.css`. With no picker that is not a flash-of-wrong-colour risk any
+ * more -- it is the whole mechanism, because nothing else ever sets
+ * `data-theme`. A test pins the pair together.
  */
 export const DEFAULT_THEME: ThemeId = 'abyss';
 
@@ -73,42 +85,4 @@ const KNOWN = new Set<string>(THEMES.map((theme) => theme.id));
 /** Whether a stored or hand-typed value is a theme this build knows. */
 export function isThemeId(value: unknown): value is ThemeId {
   return typeof value === 'string' && KNOWN.has(value);
-}
-
-/** Storage key for the viewer's choice. Their browser only; nothing reads it back. */
-export const THEME_STORAGE_KEY = 'simforever.theme';
-
-/**
- * The theme to open in.
- *
- * Wrapped because `localStorage` throws outright in a private window with site
- * data blocked, and a colour preference is not worth a blank page.
- */
-export function storedTheme(): ThemeId {
-  try {
-    const stored = globalThis.localStorage?.getItem(THEME_STORAGE_KEY);
-    return isThemeId(stored) ? stored : DEFAULT_THEME;
-  } catch {
-    return DEFAULT_THEME;
-  }
-}
-
-export function storeTheme(theme: ThemeId): void {
-  try {
-    globalThis.localStorage?.setItem(THEME_STORAGE_KEY, theme);
-  } catch {
-    // A viewer who cannot store it simply picks again next visit.
-  }
-}
-
-/**
- * Put the theme on the document.
- *
- * `data-theme` on the root element, which is what every `:root[data-theme=...]`
- * block in the stylesheet keys off. The default is written out rather than
- * left off, so the attribute always says which scheme is showing -- a missing
- * attribute and "midnight" would otherwise look the same to anyone debugging.
- */
-export function applyTheme(theme: ThemeId, root: HTMLElement): void {
-  root.dataset.theme = theme;
 }

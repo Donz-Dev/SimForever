@@ -18,9 +18,14 @@
      obsidian   near-black + electric violet       the modern dark-mode SaaS
 
    Abyssal Copper is the CHOSEN scheme, and holds the bare `:root` as well as
-   its own selector. That is not tidiness: the page paints before React runs,
-   and whichever scheme sits on `:root` is what shows for that frame. Leaving
-   another one there would flash the wrong colours on every load.
+   its own selector. Nothing in the interface sets `data-theme`, so that bare
+   selector is the entire mechanism -- the page renders in this scheme with no
+   JavaScript involved.
+
+   The other three are kept because they cost nothing: a block of values, no
+   rule and no branch. To look at one, set the attribute by hand:
+
+     document.documentElement.dataset.theme = 'obsidian';
 
    Every one is dark, and every one is expressed in the SAME role tokens, so a
    rule never names a colour. A theme that had to add a rule would not be a
@@ -251,92 +256,11 @@ body {
 }
 
 .app-header {
-  border-bottom: 1px solid var(--border);
+  display: flex;
+  justify-content: center;
   margin-bottom: 24px;
   padding-bottom: 16px;
-}
-
-.app-header {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  position: relative;
-  gap: 16px;
-  flex-wrap: wrap;
-}
-
-/* --- theme picker --- */
-
-/* Absolute at desktop widths so the wordmark stays centred on the PAGE rather
-   than on the space left over beside the swatches. It rejoins the flow when
-   there is no room for both, which is why the header wraps. */
-.theme-picker {
-  display: flex;
-  gap: 6px;
-}
-
-@media (min-width: 860px) {
-  .theme-picker {
-    position: absolute;
-    right: 0;
-    top: 50%;
-    transform: translateY(-50%);
-  }
-}
-
-.theme-swatch {
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  padding: 5px 9px 5px 6px;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  color: var(--text-muted);
-  font-size: 11px;
-  letter-spacing: 0.02em;
-  cursor: pointer;
-}
-
-.theme-swatch:hover:not(.selected) {
-  border-color: var(--border-strong);
-  color: var(--text);
-}
-
-.theme-swatch.selected {
-  background: var(--accent-wash);
-  border-color: var(--accent);
-  color: var(--accent-strong);
-  font-weight: 600;
-}
-
-/* The chip previews the scheme it switches to, so the colours are inline
-   literals from the theme table rather than tokens -- the tokens only ever
-   hold the scheme currently showing. */
-.theme-swatch-chip {
-  display: flex;
-  align-items: flex-end;
-  justify-content: flex-end;
-  width: 18px;
-  height: 18px;
-  border: 1px solid var(--border-strong);
-  border-radius: 3px;
-  overflow: hidden;
-  flex: 0 0 auto;
-}
-
-.theme-swatch-accent {
-  width: 9px;
-  height: 9px;
-  border-top-left-radius: 3px;
-}
-
-/* Names cost more width than they are worth on a phone; the swatch and its
-   title attribute still say which is which. */
-@media (max-width: 620px) {
-  .theme-swatch-name {
-    display: none;
-  }
+  border-bottom: 1px solid var(--border);
 }
 
 /* The wordmark scales with the viewport rather than sitting at a fixed size,
@@ -360,7 +284,6 @@ body {
   font-weight: 700;
   letter-spacing: 0.10em;
 }
-
 
 .app-layout {
   display: grid;
