@@ -137,17 +137,10 @@ export function Logo() {
         </text>
       </g>
 
-      {/* Flourish under the lower word, as the source has. Sized to the word
-          rather than to the canvas, so it does not trail off into empty space
-          on the right. */}
-      {/* A flat colour, not `url(#rim)`. That gradient is in objectBoundingBox
-          units, and a horizontal line has a zero-height box, so the gradient
-          degenerates and the stroke all but disappears. */}
-      <g stroke="var(--logo-rim-2)" fill="none" strokeWidth="2" strokeLinecap="round">
-        <path d="M146 118 H402" />
-        <path d="M146 118 q -10 0 -14 -6" />
-        <path d="M402 118 q 10 0 14 -6" />
-      </g>
+      {/* No flourish under the lower word. There was a hooked rule there,
+          echoing the source mark, and at the size the wordmark actually
+          renders it sat close enough to FOREVER's baseline to read as an
+          underline through the descenders rather than as an ornament. */}
     </svg>
   );
 }
