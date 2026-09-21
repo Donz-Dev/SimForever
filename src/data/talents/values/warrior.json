@@ -332,9 +332,9 @@
    "name": "Raging Blows",
    "tree": "fury",
    "ranks": 1,
-   "text": "Causes your Whirlwind to also strike with your off-hand weapon, and reduces the Rage cost of your Cleave ability by 2.",
-   "values": null,
-   "note": "single rank"
+   "text": "Causes your Whirlwind to also strike with your off-hand weapon, and reduces the Rage cost of your Cleave ability by {0}.",
+   "values": [2],
+   "note": "single rank; the 2 filled in by hand on the ruleset owner's confirmation, per this directory's README - a single-rank talent has no variable the calculator can identify from its own text"
   },
   "enrage": {
    "name": "Enrage",

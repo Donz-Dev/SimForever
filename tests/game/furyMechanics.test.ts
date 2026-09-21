@@ -6,7 +6,7 @@ import {
   ANGER_MANAGEMENT_RAGE_PER_TICK,
 } from '../../src/game/auras/warrior';
 import { OFF_HAND_DAMAGE_MULTIPLIER } from '../../src/game/actors/weapons';
-import { WHIRLWIND_OFF_HAND_NAME } from '../../src/game/abilities/warrior';
+import { CLEAVE, WHIRLWIND_OFF_HAND_NAME } from '../../src/game/abilities/warrior';
 import { talentBuild } from '../../src/game/talents/talentBuild';
 import { WARRIOR_TALENT_EFFECTS } from '../../src/game/talents/warriorEffects';
 import { createDefaultProfile } from '../../src/profiles';
@@ -226,17 +226,24 @@ describe('Raging Blows', () => {
     expect(specced).toBeGreaterThan(plain * 1.15);
   });
 
-  it('still reports the Cleave half as unmodelled', () => {
+  it('takes two rage off Cleave', () => {
     /*
-     * Honest about the part that is missing. The two-rage reduction has no
-     * captured value -- the talent is single-rank, so its values entry is
-     * null and the number exists only in the tooltip's prose.
+     * The other half of the talent. Cleave costs twenty; the talent is single
+     * rank and the ruleset owner confirmed the two, which the values file now
+     * carries with a note saying who confirmed it.
+     *
+     * Written out by hand from the tooltip rather than read back from either
+     * the values file or the ability.
      */
-    const reasons = WARRIOR_TALENT_EFFECTS.raging_blows
-      .filter((effect) => effect.kind === 'unmodelled')
-      .map((effect) => (effect as { reason: string }).reason);
-    expect(reasons).toHaveLength(1);
-    expect(reasons[0]).toContain('Cleave');
+    const build = talentBuild('warrior', legalise({ raging_blows: 1 }));
+    expect(build.abilityCostReduction.get('cleave')).toBe(2);
+    expect(CLEAVE.cost?.amount).toBe(20);
+  });
+
+  it('reports nothing about itself as unmodelled any more', () => {
+    const kinds = WARRIOR_TALENT_EFFECTS.raging_blows.map((effect) => effect.kind);
+    expect(kinds).not.toContain('unmodelled');
+    expect(kinds).toEqual(['abilityFlag', 'abilityCost']);
   });
 });
 
