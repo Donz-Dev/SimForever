@@ -60,10 +60,27 @@ describe('the theme catalogue', () => {
     for (const theme of THEMES) {
       expect(theme.name.length).toBeGreaterThan(3);
       expect(theme.note.length).toBeGreaterThan(10);
-      // The picker paints its own chips from these, so both must be real hex.
       for (const colour of theme.swatch) {
         expect(colour).toMatch(/^#[0-9a-f]{6}$/);
       }
+    }
+  });
+
+  it('gives each swatch the real background and accent of its scheme', () => {
+    /*
+     * The swatch is how a scheme is identified at a glance without opening
+     * the stylesheet, so a swatch that has drifted from the scheme it names
+     * is worse than none -- it describes a theme that does not exist.
+     */
+    for (const theme of THEMES) {
+      const body =
+        theme.id === DEFAULT_THEME
+          ? block(`:root,
+:root[data-theme='${theme.id}']`)
+          : block(`:root[data-theme='${theme.id}']`);
+      const [background, accent] = theme.swatch;
+      expect(body).toContain(`--bg: ${background};`);
+      expect(body).toContain(`--accent: ${accent};`);
     }
   });
 
@@ -97,6 +114,42 @@ describe('every scheme defines the same roles', () => {
       );
     });
   }
+});
+
+describe('the schemes are not exposed in the interface', () => {
+  /*
+   * There was a picker in the header until the scheme was settled. It is
+   * gone, and with it the React state, the stored preference and the swatch
+   * styles -- the page now renders Abyssal Copper with no JavaScript at all,
+   * because that scheme holds the bare `:root`.
+   *
+   * The catalogue in `theme.ts` stays, and nothing imports it. That is
+   * deliberate: it is what these tests check the stylesheet against, so a
+   * scheme cannot quietly lose a token or drift from the default.
+   */
+  it('renders no theme control', () => {
+    const app = readFileSync(new URL('../../src/ui/App.tsx', import.meta.url), 'utf8');
+    expect(app).not.toContain('ThemePicker');
+    expect(app).not.toContain('theme');
+  });
+
+  it('leaves no styles for one behind', () => {
+    expect(CSS).not.toContain('theme-swatch');
+    expect(CSS).not.toContain('theme-picker');
+  });
+
+  it('still sizes the wordmark', () => {
+    /*
+     * Ripping the picker out took the `.logo` rules with it -- they sat
+     * directly after the block being removed -- and the wordmark rendered at
+     * 1233px instead of 340. Nothing failed: every colour was right, every
+     * test passed, and the page was unusable.
+     *
+     * A deletion that removes a neighbour is invisible to a test suite that
+     * only checks what it meant to change, so the size is pinned here.
+     */
+    expect(CSS).toContain('width: clamp(240px, 34vw, 340px);');
+  });
 });
 
 describe('no rule names a colour', () => {
