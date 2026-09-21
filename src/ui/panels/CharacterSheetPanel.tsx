@@ -144,6 +144,22 @@ function warriorRows(profile: CharacterProfile, style: CombatStyleId): readonly 
   ];
 
   rows.push({ label: 'Chance to Miss', value: perHand((c) => c.miss) });
+
+  /*
+   * OFF-HAND HIT, its own row when a talent grants any.
+   *
+   * The miss row above already moves -- ten points of hit is ten points less
+   * miss -- but a number that is simply lower than it was does not say WHY,
+   * and Dual Wield Specialization's third clause is the one that looks like
+   * nothing happened. This names it.
+   *
+   * Hidden at zero rather than shown as "0.00%", which would suggest a stat
+   * that exists and is worth nothing.
+   */
+  const offHandHit = player.hitBonusFor('offHand');
+  if (offHandHit > 0) {
+    rows.push({ label: 'Off-Hand Hit', value: `+${offHandHit.toFixed(2)}%` });
+  }
   rows.push({ label: 'Enemy Dodge', value: perHand((c) => c.dodge) });
 
   // Enemy parry applies only to a character standing in front of the target,

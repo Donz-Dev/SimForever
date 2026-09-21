@@ -1,4 +1,5 @@
 import type {
+  AuraDefinition,
   PartialStats,
   ResourceType as ResourceTypeName,
   WeaponProfile,
@@ -32,7 +33,7 @@ import { reactionsForClass } from '../reactions/reactionsForClass';
 import { rotationFor } from '../rotations/rotationFor';
 import type { Equipment } from '../items/Item';
 import type { TalentAllocation } from '../talents/Talent';
-import { WARRIOR_STANCES } from '../auras/warrior';
+import { TALENT_AURAS, WARRIOR_STANCES } from '../auras/warrior';
 import { talentBuild } from '../talents/talentBuild';
 import { legalAllocation } from '../talents/talentRules';
 import { talentsForClass } from '../talents/talentData';
@@ -166,6 +167,43 @@ export function createPlayer(options: PlayerOptions): Combatant {
     offHand: weapons.offHand,
   });
 
+  /*
+   * THE OFF HAND, AFTER TALENTS. Dual Wield Specialization changes what the
+   * off hand does, and it has to be applied here rather than when the weapon
+   * was built, because the weapons had to exist first for weapon-conditional
+   * talents to be resolvable at all.
+   *
+   * Not circular: the talent cares only that a one-hander is held, which the
+   * weapon already said. Nothing it changes feeds back into which talents
+   * apply.
+   *
+   * Damage and rage generation are properties OF THE WEAPON -- the engine
+   * reads both off the profile when a swing lands -- so they are multiplied
+   * into it here. Hit is not: it belongs to the combat table, and goes to the
+   * combatant as a per-slot bonus below.
+   */
+  if (weapons.offHand && (build.offHandDamageMultiplier !== 1 || build.offHandResourceMultiplier !== 1)) {
+    const offHand = weapons.offHand;
+    const generates = offHand.generates;
+    weapons.offHand = {
+      ...offHand,
+      damageMultiplier: (offHand.damageMultiplier ?? 1) * build.offHandDamageMultiplier,
+      ...(generates
+        ? {
+            generates: {
+              ...generates,
+              ...(generates.flat === undefined
+                ? {}
+                : { flat: generates.flat * build.offHandResourceMultiplier }),
+              ...(generates.perDamage === undefined
+                ? {}
+                : { perDamage: generates.perDamage * build.offHandResourceMultiplier }),
+            },
+          }
+        : {}),
+    };
+  }
+
   // Layers 1 and 2: the stats a character has before any conversion. Gear
   // first, then the profile's own bonuses, then the flat part of the talents.
   const equipment = options.equipment ?? {};
@@ -249,14 +287,30 @@ export function createPlayer(options: PlayerOptions): Combatant {
      *
      * The player picks it; the style only supplies the default.
      */
-    openingAuras:
-      characterClass === 'warrior'
+    openingAuras: [
+      ...(characterClass === 'warrior'
         ? [stanceAuraFor(resolveStance(style, options.stance))]
-        : [],
+        : []),
+      /*
+       * Auras a TALENT grants, for passives that do something on a timer
+       * rather than adding a number. Anger Management ticks a rage every
+       * three seconds, which no stat modifier can express.
+       *
+       * An id with no definition is dropped rather than throwing: the talent
+       * tables and the aura tables are separate files, and a typo should show
+       * up as a talent that visibly does nothing, not as a character that
+       * cannot be built.
+       */
+      ...[...build.grantedAuras]
+        .map((id) => TALENT_AURAS[id])
+        .filter((aura): aura is AuraDefinition => aura !== undefined),
+    ],
     // Real weapons when something is equipped, placeholders otherwise. The
     // placeholders are invented and the items are not, so anything equipped
     // wins outright rather than being merged.
     weapons,
+    // Off-hand-only hit, which no character-wide stat can express.
+    hitBonusBySlot: build.offHandHitBonus > 0 ? { offHand: build.offHandHitBonus } : {},
     autoAttack: autoAttackModeForStyle(style),
   });
 

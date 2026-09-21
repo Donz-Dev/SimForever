@@ -70,7 +70,9 @@ export class AuraCollection {
 
     this.applyStatModifiers(instance);
     this.scheduleExpiration(context, instance);
-    this.schedulePeriodicTick(context, instance);
+    // `true`: this is the aura's FIRST tick, the only one a periodic effect
+    // is allowed to place anywhere but one whole interval away.
+    this.schedulePeriodicTick(context, instance, true);
 
     context.telemetry.emit({
       type: 'aura_applied',
@@ -213,11 +215,19 @@ export class AuraCollection {
     );
   }
 
-  private schedulePeriodicTick(context: SimulationContext, instance: AuraInstance): void {
+  private schedulePeriodicTick(
+    context: SimulationContext,
+    instance: AuraInstance,
+    isFirst = false,
+  ): void {
     const periodic = instance.definition.periodic;
     if (!periodic) return;
 
-    const nextTick = context.clock.now() + periodic.intervalMs;
+    const delay =
+      isFirst && periodic.firstTickDelay
+        ? periodic.firstTickDelay(context)
+        : periodic.intervalMs;
+    const nextTick = context.clock.now() + delay;
     if (nextTick > instance.expiresAt) return;
 
     instance.tickHandle = context.events.schedule(

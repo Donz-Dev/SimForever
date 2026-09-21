@@ -181,11 +181,20 @@ function buildChances(
 ): AttackChances {
   const stats = source.stats.effective;
   const defense = target.defenseSkill;
-  const hit = toRollUnits(stats.hitChance);
 
-  // Which weapon swung decides both the skill used and the dual-wield penalty.
+  // Which weapon swung decides the skill used, the dual-wield penalty AND any
+  // hit that belongs to that hand alone.
   const slot: WeaponSlot = context.slot ?? 'mainHand';
   const skill = source.weaponSkill(slot);
+  /*
+   * PER-HAND HIT, added on top of the character-wide stat.
+   *
+   * Dual Wield Specialization gives ten points of hit to the off hand only.
+   * Folding that into `hitChance` would hand the main hand ten free points,
+   * which is both wrong and invisible -- the character sheet already reports
+   * the two hands separately for exactly this reason.
+   */
+  const hit = toRollUnits(stats.hitChance) + toRollUnits(source.hitBonusFor(slot));
 
   const crit = Math.max(
     0,

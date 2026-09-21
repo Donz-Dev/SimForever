@@ -17,6 +17,20 @@ export interface PeriodicEffect {
   readonly intervalMs: Milliseconds;
   /** Runs on every tick, including one at the moment the aura expires. */
   onTick(context: SimulationContext, aura: AuraInstance): void;
+  /**
+   * When the FIRST tick lands, if not one whole interval from now.
+   *
+   * Takes the context so it can roll, which is the reason it exists: a
+   * passive that ticks on its own timer did not start that timer when the
+   * pull did. Anger Management generates a rage every three seconds whether
+   * or not anyone is fighting, so a character entering combat is somewhere
+   * random inside the current three seconds -- and every fight in a batch
+   * starting its first tick at exactly 3000ms is a fiction that would show
+   * up as an artificially tight distribution.
+   *
+   * Only the first tick. The rest chain at the plain interval.
+   */
+  firstTickDelay?(context: SimulationContext): Milliseconds;
 }
 
 /**

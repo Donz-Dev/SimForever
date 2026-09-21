@@ -57,6 +57,26 @@ export interface TalentBuild {
   readonly resourceMaximums: Partial<Record<ResourceType, number>>;
   /** Abilities a talent grants, which the character otherwise would not have. */
   readonly grantedAbilities: ReadonlySet<string>;
+  /**
+   * Auras the character opens combat under, because a talent granted them.
+   *
+   * For passives that DO something rather than adding a number -- Anger
+   * Management ticks rage, which no stat modifier can express.
+   */
+  readonly grantedAuras: ReadonlySet<string>;
+  /**
+   * What the off hand does, relative to untalented.
+   *
+   * Three multipliers and a flat hit bonus, because Dual Wield Specialization
+   * moves three unrelated things at once and they land in three different
+   * places: the weapon's damage, the weapon's rage rule, and the combat table.
+   *
+   * 1 and 0 mean "no talent", so a caller can apply them unconditionally.
+   */
+  readonly offHandDamageMultiplier: number;
+  readonly offHandResourceMultiplier: number;
+  /** Percentage POINTS of hit, on off-hand attacks only. */
+  readonly offHandHitBonus: number;
   /** Resource cost to SUBTRACT from an ability, by ability id. */
   readonly abilityCostReduction: ReadonlyMap<string, number>;
   /** Cooldown to SUBTRACT from an ability, in milliseconds, by ability id. */
@@ -102,6 +122,10 @@ const EMPTY: TalentBuild = {
   statModifiers: [],
   resourceMaximums: {},
   grantedAbilities: new Set(),
+  grantedAuras: new Set(),
+  offHandDamageMultiplier: 1,
+  offHandResourceMultiplier: 1,
+  offHandHitBonus: 0,
   abilityCostReduction: new Map(),
   abilityCooldownReductionMs: new Map(),
   abilityModifiers: new AbilityModifiers(),
@@ -172,6 +196,10 @@ export function talentBuild(
   const statModifiers: StatModifierSpec[] = [];
   const resourceMaximums: Partial<Record<ResourceType, number>> = {};
   const grantedAbilities = new Set<string>();
+  const grantedAuras = new Set<string>();
+  let offHandDamageBonusPct = 0;
+  let offHandResourceBonusPct = 0;
+  let offHandHitBonus = 0;
   const abilityCostReduction = new Map<string, number>();
   const abilityCooldownReductionMs = new Map<string, number>();
   const abilityModifiers = new AbilityModifiers();
@@ -217,6 +245,26 @@ export function talentBuild(
         continue;
       }
 
+      /*
+       * No rank value read. A granted aura is on or off -- the aura itself
+       * carries its magnitude, the way a granted ability carries its damage.
+       */
+      if (effect.kind === 'grantAura') {
+        grantedAuras.add(effect.auraId);
+        continue;
+      }
+
+      /*
+       * On or off, no magnitude -- so it must be handled BEFORE the value
+       * lookup below, which would otherwise report the talent as having no
+       * recorded value and drop it.
+       */
+      if (effect.kind === 'abilityFlag') {
+        const existing = abilityBonuses.get(effect.abilityId) ?? {};
+        abilityBonuses.set(effect.abilityId, { ...existing, [effect.key]: 1 });
+        continue;
+      }
+
       // Takes no value: the ability either holds the swing or it does not.
       if (effect.kind === 'abilityHoldsSwing') {
         abilitiesHoldingSwing.add(effect.abilityId);
@@ -239,6 +287,20 @@ export function talentBuild(
       }
 
       switch (effect.kind) {
+        /*
+         * All three are PERCENTAGES on top of the off hand's existing
+         * behaviour, summed across ranks the way every other percentage
+         * talent is, and turned into multipliers by the caller.
+         */
+        case 'offHandDamage':
+          offHandDamageBonusPct += value;
+          break;
+        case 'offHandResourceGeneration':
+          offHandResourceBonusPct += value;
+          break;
+        case 'offHandHit':
+          offHandHitBonus += value;
+          break;
         case 'stat': {
           const amount = value * (effect.scale ?? 1);
           if (effect.operation === 'flat') {
@@ -354,6 +416,10 @@ export function talentBuild(
     statModifiers,
     resourceMaximums,
     grantedAbilities,
+    grantedAuras,
+    offHandDamageMultiplier: 1 + offHandDamageBonusPct / 100,
+    offHandResourceMultiplier: 1 + offHandResourceBonusPct / 100,
+    offHandHitBonus,
     abilityCostReduction,
     abilityCooldownReductionMs,
     abilityModifiers,

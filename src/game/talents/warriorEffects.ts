@@ -85,15 +85,17 @@ export const WARRIOR_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
   improved_overpower: [{ kind: 'abilityCrit', abilityId: 'overpower' }],
 
 
-  anger_management: [
-    {
-      kind: 'unmodelled',
-      reason:
-        'A passive that ticks rage in combat. That is an aura with a periodic ' +
-        'effect, applied at combat start — the mechanism exists, but no talent is ' +
-        'wired to apply one yet.',
-    },
-  ],
+  /*
+   * FULLY MODELLED. One rage every three seconds, from the talent's own
+   * words, with the first tick placed randomly in the first three seconds to
+   * model a pull that did not line up with the passive's timer.
+   *
+   * The second half of the tooltip -- "reduces Rage loss while out of combat
+   * by 30%" -- is out of scope by the ruleset owner's decision: there is no
+   * out-of-combat state here, so the character is always in combat and there
+   * is no decay to reduce.
+   */
+  anger_management: [{ kind: 'grantAura', auraId: 'anger_management' }],
 
   deep_wounds: [{ kind: 'reaction', reactionId: 'deep_wounds' }],
 
@@ -241,25 +243,47 @@ export const WARRIOR_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
 
   boundless_rage: [{ kind: 'resourceMax', resource: 'rage' }],
 
+  /*
+   * FULLY MODELLED, all three clauses. At 5/5: off-hand damage +25%, which
+   * takes the multiplier from 0.5 to 0.625; off-hand rage generation +100%,
+   * so it doubles; and +10 percentage points of hit on off-hand attacks only.
+   *
+   * Every rank is real captured data rather than interpolation -- the values
+   * file holds [5,20,2] through [25,100,10] and all three clauses were
+   * confirmed independently by the ruleset owner.
+   *
+   * Three effect kinds because the three land in three different places, and
+   * that is precisely why this went unmodelled: one kind could only ever have
+   * done a third of the talent.
+   */
   dual_wield_specialization: [
-    {
-      kind: 'unmodelled',
-      reason:
-        'Three effects at once: off-hand damage, off-hand rage generation and ' +
-        'off-hand hit chance. `createPlayer` could take the damage part through ' +
-        '`offHandDamageMultiplier`, but hit chance is a whole-character stat here ' +
-        'and rage generation is proportional with no per-hand term — so modelling ' +
-        'one third of the talent would understate it by an unknown amount rather ' +
-        'than visibly not working.',
-    },
+    { kind: 'offHandDamage', valueIndex: 0 },
+    { kind: 'offHandResourceGeneration', valueIndex: 1 },
+    { kind: 'offHandHit', valueIndex: 2 },
   ],
 
+  /*
+   * The Whirlwind half is MODELLED: the off hand strikes immediately after
+   * the main hand, carrying the off-hand damage penalty -- 0.625 with Dual
+   * Wield Specialization at 5/5 -- and not the off-hand miss penalty, which
+   * lives only in the auto-attack table and which a special never uses.
+   *
+   * The Cleave half is NOT, and is reported so. Cleave is implemented and
+   * costs 20 rage, but the two-rage reduction has no captured value: the
+   * talent is single-rank and its values entry is null, so the number exists
+   * only inside the tooltip's prose. Rather than type a 2 into the effect
+   * table from a sentence, it stays visible as a gap -- and Cleave is in no
+   * rotation, so nothing is currently measuring it.
+   */
   raging_blows: [
+    { kind: 'abilityFlag', abilityId: 'whirlwind', key: 'offHandStrike' },
     {
       kind: 'unmodelled',
       reason:
-        'Gives Whirlwind an off-hand strike, which its `onCast` does not do, and ' +
-        "also reduces Cleave's cost. The second half alone is not the talent.",
+        "The Cleave half. \"Reduces the Rage cost of your Cleave ability by 2\" " +
+        'has no captured per-rank value — the talent is single-rank, so its ' +
+        'values entry is null and the 2 exists only in the tooltip prose. The ' +
+        'Whirlwind off-hand strike, which is the rest of the talent, does work.',
     },
   ],
 

@@ -56,6 +56,7 @@ import {
  * silently wrong rather than broken.
  */
 const MAIN_HAND = 'mainHand' as const;
+const OFF_HAND = 'offHand' as const;
 
 /** Physical damage, which is all a warrior deals. */
 const PHYSICAL = 'physical' as const;
@@ -176,6 +177,18 @@ export const WHIRLWIND_MAX_TARGETS = 4;
  * single training dummy this is one hit; the loop is here so it stays correct
  * when an encounter has adds.
  */
+/**
+ * The bonus key Raging Blows sets on Whirlwind.
+ *
+ * Present and non-zero means "also strike with the off hand". A bonus rather
+ * than a second ability, so the cooldown, the cost and every per-ability
+ * modifier keep applying to one Whirlwind.
+ */
+export const WHIRLWIND_OFF_HAND_BONUS = 'offHandStrike';
+
+/** What the off-hand half of a Whirlwind is called in the breakdown. */
+export const WHIRLWIND_OFF_HAND_NAME = 'Whirlwind (Off Hand)';
+
 export const WHIRLWIND: Ability = {
   id: 'whirlwind',
   stances: ['berserker_stance'],
@@ -197,6 +210,37 @@ export const WHIRLWIND: Ability = {
         weaponScaling: { slot: MAIN_HAND },
         attackTable: ability.attackTable,
         weaponSlot: MAIN_HAND,
+      });
+    }
+
+    /*
+     * RAGING BLOWS: "Causes your Whirlwind to also strike with your off-hand
+     * weapon." Main hand first, off hand immediately after.
+     *
+     * It carries the off-hand DAMAGE penalty and not the off-hand MISS
+     * penalty. Both fall out of the model rather than being special-cased
+     * here: the damage penalty is `damageMultiplier` on the off-hand weapon
+     * profile, which any scaling off that slot picks up -- Dual Wield
+     * Specialization's 0.625 included -- and the miss penalty lives only in
+     * the `melee-auto` table, which a special never uses.
+     *
+     * Named separately in the breakdown so the second strike is visible;
+     * the ability id stays `whirlwind`, so talents keyed to it still apply.
+     */
+    const strikesOffHand = (ability.bonuses?.[WHIRLWIND_OFF_HAND_BONUS] ?? 0) > 0;
+    if (!strikesOffHand || !caster.weapons.offHand) return;
+
+    for (const target of targets) {
+      dealDamage(simulation, {
+        source: caster,
+        target,
+        abilityId: ability.id,
+        abilityName: WHIRLWIND_OFF_HAND_NAME,
+        school: PHYSICAL,
+        baseAmount: 0,
+        weaponScaling: { slot: OFF_HAND },
+        attackTable: ability.attackTable,
+        weaponSlot: OFF_HAND,
       });
     }
   },
