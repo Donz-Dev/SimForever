@@ -259,8 +259,13 @@ describe('an extra attack does not fork the swing timer', () => {
       },
       seed,
     );
+    /*
+     * Counted by HAND, not by weapon name. A swing is labelled by the hand
+     * that threw it now, and this test is about how many times the main hand
+     * swung -- which is what it always meant.
+     */
     return result.timeline.filter(
-      (event) => event.type === 'damage' && event.abilityName === "Vis'kag the Bloodletter",
+      (event) => event.type === 'damage' && event.abilityName === 'Main Hand Auto-Attack',
     ).length;
   }
 

@@ -66,6 +66,32 @@ export interface BatchResourceFlow {
   readonly totalWasted: number;
 }
 
+/**
+ * How much of a fight an aura was up for.
+ *
+ * ----------------------------------------------------------------------------
+ * WHY UPTIME AND NOT A COUNT.
+ *
+ * "Flurry procced 34 times" is not the question. Flurry is worth what it is
+ * worth for as long as it is up, and 34 procs that overlap heavily are worth
+ * far less than 34 that do not. The same goes for the debuffs: a Sunder Armor
+ * that falls off for eight seconds every minute is a different fight from one
+ * that never does, and no cast count distinguishes them.
+ *
+ * Averaged across the batch, not read off one iteration, for the reason every
+ * other figure here is.
+ * ----------------------------------------------------------------------------
+ */
+export interface BatchAuraUptime {
+  readonly auraId: string;
+  readonly auraName: string;
+  /** 0 to 1, mean across every iteration. */
+  readonly uptime: number;
+  /** Mean applications per iteration, refreshes included. */
+  readonly applications: number;
+  readonly isDebuff: boolean;
+}
+
 /** Damage the actor RECEIVED, by what hit it and how it landed. */
 export interface BatchDamageTaken {
   readonly sourceName: string;
@@ -93,6 +119,16 @@ interface ResourceAccumulator {
   wasted: number;
 }
 
+interface UptimeAccumulator {
+  name: string;
+  isDebuff: boolean;
+  /** Milliseconds up, summed over every iteration that has finished. */
+  totalMs: number;
+  applications: number;
+  /** When the current window opened, or undefined if it is not up. */
+  openedAt?: number;
+}
+
 interface TakenAccumulator {
   damage: number;
   attempts: number;
@@ -109,11 +145,31 @@ export class BatchTotals implements TelemetrySink {
   private readonly gained = new Map<string, Map<string, ResourceAccumulator>>();
   private readonly spent = new Map<string, Map<string, ResourceAccumulator>>();
   private readonly taken = new Map<string, Map<string, TakenAccumulator>>();
+  private readonly uptime = new Map<string, Map<string, UptimeAccumulator>>();
   private iterations = 0;
+  private totalDurationMs = 0;
 
-  /** Call once per completed iteration, so means divide by the right number. */
-  finishIteration(): void {
+  /**
+   * Call once per completed iteration, so means divide by the right number.
+   *
+   * The iteration's LENGTH is needed too, and not just to divide by: an aura
+   * that is still up when the fight ends never emits a removal, so its final
+   * window has no closing timestamp. Closing them here is the difference
+   * between Battle Shout reading 100% and reading 0% -- it is applied once,
+   * lasts three minutes, and in a sixty second fight it is never removed at
+   * all.
+   */
+  finishIteration(durationMs: number): void {
     this.iterations += 1;
+    this.totalDurationMs += durationMs;
+
+    for (const perActor of this.uptime.values()) {
+      for (const entry of perActor.values()) {
+        if (entry.openedAt === undefined) continue;
+        entry.totalMs += Math.max(0, durationMs - entry.openedAt);
+        entry.openedAt = undefined;
+      }
+    }
   }
 
   emit(event: TelemetryEvent): void {
@@ -124,6 +180,15 @@ export class BatchTotals implements TelemetrySink {
       );
       this.recordDealt(event);
       this.recordTaken(event);
+      return;
+    }
+
+    if (
+      event.type === 'aura_applied' ||
+      event.type === 'aura_refreshed' ||
+      event.type === 'aura_removed'
+    ) {
+      this.recordAura(event);
       return;
     }
 
@@ -147,6 +212,41 @@ export class BatchTotals implements TelemetrySink {
       entry.wasted += event.wasted;
       perActor.set(id, entry);
     }
+  }
+
+  private recordAura(event: Extract<TelemetryEvent, { type: `aura_${string}` }>): void {
+    /*
+     * Keyed on WHO IS CARRYING IT, not on who applied it. A debuff belongs to
+     * the target and a buff to the player, and the panel asks for each
+     * separately -- keying on the caster would file Sunder Armor under the
+     * warrior and make "uptime on the target" unanswerable.
+     */
+    const perActor = mapFor(this.uptime, event.targetId);
+    const entry = perActor.get(event.auraId) ?? {
+      name: event.auraName,
+      isDebuff: event.isDebuff,
+      totalMs: 0,
+      applications: 0,
+    };
+
+    if (event.type === 'aura_removed') {
+      if (entry.openedAt !== undefined) {
+        entry.totalMs += Math.max(0, event.timestamp - entry.openedAt);
+        entry.openedAt = undefined;
+      }
+    } else {
+      entry.applications += 1;
+      /*
+       * A REFRESH DOES NOT REOPEN THE WINDOW. It extends the one already
+       * running, so closing and reopening here would lose nothing but would
+       * also count nothing -- the window is continuous either way. What it
+       * must not do is overwrite `openedAt`, which would silently discard
+       * every millisecond since the aura first went up.
+       */
+      if (entry.openedAt === undefined) entry.openedAt = event.timestamp;
+    }
+
+    perActor.set(event.auraId, entry);
   }
 
   private recordDealt(event: Extract<TelemetryEvent, { type: 'damage' }>): void {
@@ -233,6 +333,35 @@ export class BatchTotals implements TelemetrySink {
         };
       })
       .sort((a, b) => b.damage - a.damage);
+  }
+
+  /**
+   * Aura uptime on one actor, longest first.
+   *
+   * Divided by the batch's TOTAL fight time rather than by iterations times a
+   * nominal length, because fights vary in length by FIGHT_DURATION_VARIANCE
+   * and a three-second difference is a five percent error on a sixty second
+   * fight.
+   *
+   * Clamped to 1. An aura cannot be up for more than the fight, and a figure
+   * over 100% would be a bug in this accounting rather than a finding -- but
+   * it should not be shown as one either.
+   */
+  auraUptime(actorId: string, kind: 'buff' | 'debuff'): readonly BatchAuraUptime[] {
+    const perActor = this.uptime.get(actorId);
+    if (!perActor || this.totalDurationMs <= 0) return [];
+
+    return [...perActor.entries()]
+      .filter(([, entry]) => entry.isDebuff === (kind === 'debuff'))
+      .map(([auraId, entry]) => ({
+        auraId,
+        auraName: entry.name,
+        uptime: Math.min(1, entry.totalMs / this.totalDurationMs),
+        applications: this.per(entry.applications),
+        isDebuff: entry.isDebuff,
+      }))
+      .filter((entry) => entry.uptime > 0)
+      .sort((a, b) => b.uptime - a.uptime);
   }
 
   resourceFlow(actorId: string, resource: string): BatchResourceFlow {

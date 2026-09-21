@@ -161,6 +161,15 @@ export interface CombatantOptions {
   readonly openingAuras?: readonly AuraDefinition[];
   /** Weapons by slot. Which ones swing is decided by `autoAttack`. */
   readonly weapons?: Partial<Record<WeaponSlot, WeaponProfile>>;
+  /**
+   * Extra hit chance that applies only when a particular hand swings.
+   *
+   * Percentage POINTS, added to the character-wide hit stat by the combat
+   * table. A whole-character stat cannot express it: Dual Wield
+   * Specialization gives ten points of hit to the OFF HAND only, and folding
+   * that into `hitChance` would hand the main hand ten free points too.
+   */
+  readonly hitBonusBySlot?: Partial<Record<WeaponSlot, number>>;
   /** Defaults to `none`: a combatant with no declared mode does not swing. */
   readonly autoAttack?: AutoAttackMode;
   /** Resources that refill on a timer. */
@@ -238,6 +247,7 @@ export class Combatant {
   readonly abilities: AbilityBook;
   readonly rotation: Rotation | undefined;
   readonly weapons: Partial<Record<WeaponSlot, WeaponProfile>>;
+  readonly hitBonusBySlot: Partial<Record<WeaponSlot, number>>;
   readonly autoAttack: AutoAttackMode;
   readonly regeneration: readonly ResourceRegen[];
   readonly resourceOnDamageTaken: ResourceGeneration | undefined;
@@ -339,6 +349,7 @@ export class Combatant {
     this.abilities = new AbilityBook(options.abilities ?? []);
     this.rotation = options.rotation;
     this.weapons = options.weapons ?? {};
+    this.hitBonusBySlot = options.hitBonusBySlot ?? {};
     this.autoAttack = options.autoAttack ?? 'none';
     this.regeneration = options.regeneration ?? [];
     this.resourceOnDamageTaken = options.resourceOnDamageTaken;
@@ -407,6 +418,11 @@ export class Combatant {
    * reaches, so a weapon that does not state a skill is treated as fully
    * trained rather than unskilled.
    */
+  /** Extra hit, in percentage points, that only this hand gets. */
+  hitBonusFor(slot: WeaponSlot): number {
+    return this.hitBonusBySlot[slot] ?? 0;
+  }
+
   weaponSkill(slot: WeaponSlot): number {
     return this.weapons[slot]?.skill ?? this.level * 5;
   }

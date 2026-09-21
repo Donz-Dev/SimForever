@@ -82,7 +82,7 @@ describe('rage', () => {
 
     // Only auto-attacks generate rage. Strike, Heroic Blow and Rending Wound
     // all deal damage and grant nothing.
-    const autoNames = new Set(['Melee', 'Melee (Two-Hander)', 'Melee (Off Hand)']);
+    const autoNames = new Set(['Main Hand Auto-Attack', 'Off Hand Auto-Attack']);
     const autoDamage = sim.recordedTelemetry.reduce(
       (sum, event) =>
         event.type === 'damage' && event.sourceId === player.id && autoNames.has(event.abilityName)
@@ -131,7 +131,7 @@ describe('rage', () => {
 
     // Every rage gain sits immediately after an auto-attack in the stream.
     const stream = sim.recordedTelemetry;
-    const autoNames = new Set(['Melee', 'Melee (Two-Hander)', 'Melee (Off Hand)']);
+    const autoNames = new Set(['Main Hand Auto-Attack', 'Off Hand Auto-Attack']);
 
     for (let i = 0; i < stream.length; i++) {
       const event = stream[i];

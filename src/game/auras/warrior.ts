@@ -257,6 +257,55 @@ export const BLOODRAGE_TICK_INTERVAL_MS = seconds(1);
 const BLOODRAGE_RAGE_PER_TICK =
   BLOODRAGE_RAGE_OVER_TIME / (BLOODRAGE_DURATION_MS / BLOODRAGE_TICK_INTERVAL_MS);
 
+/* ---------------------------------------------------------------------------
+   Anger Management
+   --------------------------------------------------------------------------- */
+
+/**
+ * "Generates 1 Rage every 3 sec while in combat."
+ *
+ * The out-of-combat half of the tooltip -- "reduces Rage loss while out of
+ * combat by 30%" -- is deliberately not modelled, on the ruleset owner's
+ * instruction: this simulator has no out-of-combat state, so the character is
+ * always in combat and there is no rage decay for it to reduce.
+ */
+export const ANGER_MANAGEMENT_RAGE_PER_TICK = 1;
+export const ANGER_MANAGEMENT_INTERVAL_MS = seconds(3);
+
+/**
+ * The widest the first tick can be from the pull.
+ *
+ * A passive on its own timer did not start that timer when the pull did, so a
+ * character entering combat is somewhere random inside the current three
+ * seconds. Rolled per fight rather than fixed: every iteration in a batch
+ * ticking at exactly 3000ms would give one extra rage to fights of one length
+ * and not another, and tighten the distribution around a fiction.
+ *
+ * 1 to 3000 milliseconds inclusive, which is the ruleset owner's model of a
+ * random combat start.
+ */
+export const ANGER_MANAGEMENT_MAX_START_OFFSET_MS = 3000;
+
+export const ANGER_MANAGEMENT: AuraDefinition = {
+  id: 'anger_management',
+  name: 'Anger Management',
+  // Permanent: it is a passive, not something applied and lost.
+  durationMs: 0,
+  periodic: {
+    intervalMs: ANGER_MANAGEMENT_INTERVAL_MS,
+    firstTickDelay: (context) =>
+      context.rng.nextInt(1, ANGER_MANAGEMENT_MAX_START_OFFSET_MS),
+    onTick: (context, aura) => {
+      const actor = combatantIn(context, aura.targetId);
+      if (!actor) return;
+      context.grantResource(actor, 'rage', ANGER_MANAGEMENT_RAGE_PER_TICK, {
+        id: 'anger_management',
+        name: 'Anger Management',
+      });
+    },
+  },
+};
+
 export const BLOODRAGE: AuraDefinition = {
   id: 'bloodrage',
   name: 'Bloodrage',
@@ -392,6 +441,17 @@ export const STANCE_RAGE_FLOOR = 10;
 export const STANCE_RAGE_RETAINED_BONUS = 'rageRetained';
 
 /** Every stance, so that applying one can clear the others. */
+/**
+ * Auras a TALENT puts on a character, by the id its effect names.
+ *
+ * Kept as a lookup rather than imported directly by `createPlayer`, so the
+ * talent tables stay data: a talent says `{ kind: 'grantAura', auraId }` and
+ * never imports an aura.
+ */
+export const TALENT_AURAS: Readonly<Record<string, AuraDefinition>> = {
+  anger_management: ANGER_MANAGEMENT,
+};
+
 export const WARRIOR_STANCES: readonly AuraDefinition[] = [
   BATTLE_STANCE,
   DEFENSIVE_STANCE,

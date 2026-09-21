@@ -518,11 +518,12 @@ describe('on-next-swing, end to end', () => {
 
     // Armed once, so it lands exactly once and then normal swings resume.
     expect(byName.get('Heroic Strike')).toBe(1);
-    expect(byName.get('Melee')).toBeGreaterThan(1);
+    expect(byName.get('Main Hand Auto-Attack')).toBeGreaterThan(1);
 
     // 10 seconds at 2.6s per swing is 4 swings (0, 2.6, 5.2, 7.8). One of them
     // became Heroic Strike; the timer was not delayed by it.
-    const swings = (byName.get('Melee') ?? 0) + (byName.get('Heroic Strike') ?? 0);
+    const swings =
+      (byName.get('Main Hand Auto-Attack') ?? 0) + (byName.get('Heroic Strike') ?? 0);
     expect(swings).toBe(4);
   });
 

@@ -286,8 +286,8 @@ describe('dual-wield off-hand penalty', () => {
       });
 
       const abilities = result.damage.byActor[0].abilities;
-      const main = abilities.find((entry) => entry.abilityName === 'Melee');
-      const off = abilities.find((entry) => entry.abilityName === 'Melee (Off Hand)');
+      const main = abilities.find((entry) => entry.abilityName === 'Main Hand Auto-Attack');
+      const off = abilities.find((entry) => entry.abilityName === 'Off Hand Auto-Attack');
 
       expect(main).toBeDefined();
       expect(off).toBeDefined();
