@@ -14,6 +14,7 @@ import {
   STANCES,
   defaultStanceFor,
   getStance,
+  isTankBuild,
   resolveStance,
 } from '../../game/character';
 import { TextField } from '../components/Field';
@@ -43,6 +44,35 @@ interface CharacterPanelProps {
  * which classes a race may play, and what happens to the current class when the
  * race changes are all answered by `game/character`.
  */
+/**
+ * Turn the target's swings ON when a build BECOMES a tank.
+ *
+ * A shield warrior in Defensive Stance is not being simulated at all with a
+ * target that stands still: the attacks-received table, rage from damage
+ * taken, Revenge, Shield Block and six talents are all waiting on something
+ * swinging back. Making the person find a checkbox in another panel before
+ * any of that exists is a trap, and the numbers they read in the meantime are
+ * confidently wrong rather than obviously wrong.
+ *
+ * ON THE TRANSITION ONLY, which is what keeps it from fighting the person. It
+ * fires when the build was not a tank and now is; picking Defensive and then
+ * deliberately switching the target's swings back off leaves them off, because
+ * nothing about the build changed afterwards.
+ *
+ * And it never switches them off. Leaving the tank configuration is not a
+ * statement about what the encounter should be, and someone measuring a damage
+ * build against a boss that hits back is doing something reasonable.
+ */
+function withTankEncounter(
+  previous: CharacterProfile,
+  next: CharacterProfile,
+): CharacterProfile {
+  const was = isTankBuild(previous.character.combatStyle, previous.character.stance);
+  const now = isTankBuild(next.character.combatStyle, next.character.stance);
+  if (was || !now || next.encounter.targetAttacks) return next;
+  return { ...next, encounter: { ...next.encounter, targetAttacks: true } };
+}
+
 export function CharacterPanel({
   profile,
   onChange,
@@ -158,24 +188,27 @@ export function CharacterPanel({
         options={styles}
         value={style}
         onChange={(next) =>
-          onChange({
-            ...profile,
-            character: {
-              ...profile.character,
-              combatStyle: next,
-              /*
-               * Changing style RESETS the stance to that style's default.
-               *
-               * Each default is the stance the build actually wants, and
-               * carrying the old one across is how a shield warrior ends up in
-               * Berserker without having chosen it. Overriding afterwards is
-               * one click; noticing a stance you did not pick is not.
-               */
-              stance: next && selection.characterClass === 'warrior'
-                ? defaultStanceFor(next)
-                : profile.character.stance,
-            },
-          })
+          onChange(
+            withTankEncounter(profile, {
+              ...profile,
+              character: {
+                ...profile.character,
+                combatStyle: next,
+                /*
+                 * Changing style RESETS the stance to that style's default.
+                 *
+                 * Each default is the stance the build actually wants, and
+                 * carrying the old one across is how a shield warrior ends up
+                 * in Berserker without having chosen it. Overriding afterwards
+                 * is one click; noticing a stance you did not pick is not.
+                 */
+                stance:
+                  next && selection.characterClass === 'warrior'
+                    ? defaultStanceFor(next)
+                    : profile.character.stance,
+              },
+            }),
+          )
         }
       />
 
@@ -186,7 +219,12 @@ export function CharacterPanel({
             options={STANCES}
             value={stance}
             onChange={(next) =>
-              onChange({ ...profile, character: { ...profile.character, stance: next } })
+              onChange(
+                withTankEncounter(profile, {
+                  ...profile,
+                  character: { ...profile.character, stance: next },
+                }),
+              )
             }
           />
           <p className="muted stance-note">{getStance(stance)?.effect}</p>

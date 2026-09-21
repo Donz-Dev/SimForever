@@ -162,6 +162,9 @@ function DamageTaken({ batch }: ResultsPanelProps) {
           <tr>
             <th>Source</th>
             <th className="numeric">Damage</th>
+            <th className="numeric">Mitigated</th>
+            <th className="numeric">Armor</th>
+            <th className="numeric">Avoided</th>
             <th className="numeric">Swings</th>
             <th className="numeric">Average</th>
             {seen.map((outcome) => (
@@ -176,6 +179,16 @@ function DamageTaken({ batch }: ResultsPanelProps) {
             <tr key={row.sourceName}>
               <td>{row.sourceName}</td>
               <td className="numeric">{fixed(row.damage)}</td>
+              {/* What armor stopped, and what fraction of the swing that was.
+                  A tank's armor is invisible in every other column: a swing
+                  that lands for 2,700 after 40% reduction reports 2,700 and
+                  says nothing about the 1,800 it removed. */}
+              <td className="numeric">{fixed(row.mitigated)}</td>
+              <td className="numeric">{pct(row.mitigationRate)}</td>
+              {/* Whole swings removed, which is a different thing from shaving
+                  every swing. Two builds can take the same damage very
+                  differently. */}
+              <td className="numeric">{pct(row.avoidRate)}</td>
               <td className="numeric">{fixed(row.attempts)}</td>
               <td className="numeric">{fixed(row.average)}</td>
               {seen.map((outcome) => (

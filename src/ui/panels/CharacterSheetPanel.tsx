@@ -2,11 +2,11 @@ import type { CharacterProfile } from '../../profiles';
 import type { ClassId, CombatStyleId } from '../../game/character';
 import { createPlayer } from '../../game/actors/createPlayer';
 import { characterAtCombatStart } from '../../simulator';
-import { getStance, resolveStance } from '../../game/character';
+import { getStance, isTankBuild, resolveStance } from '../../game/character';
 import { createTrainingDummy } from '../../game/actors/createTrainingDummy';
 import { createForeverAttackChances } from '../../game/combat/attackChances';
 import { getClass, resolveCombatStyle, resourceLabel } from '../../game/character';
-import { hasteMultiplierFrom, toPercent } from '../../engine';
+import { armorReduction, hasteMultiplierFrom, toPercent } from '../../engine';
 import { Panel } from '../components/Panel';
 
 interface CharacterSheetPanelProps {
@@ -185,6 +185,45 @@ function warriorRows(profile: CharacterProfile, style: CombatStyleId): readonly 
    * every other tool and with the game, and would also be wrong the moment
    * the encounter's target level changed.
    */
+  /*
+   * DEFENSIVE ROWS, for a build that is actually tanking.
+   *
+   * Shown only for a shield in Defensive Stance, because for anyone else they
+   * are five rows of zero and noise -- a dual-wielder has no block chance and
+   * no reason to care about its parry. The same rule decides whether the
+   * encounter's target swings back.
+   *
+   * These are the numbers the attacks-received table actually rolls against,
+   * read from the same character the fight builds.
+   */
+  if (isTankBuild(style, profile.character.stance)) {
+    const received = chances('melee-received', target, player, {});
+
+    rows.push({
+      label: 'Defense Skill',
+      // Total, not the surplus. 300 of it is free at level 60 and the
+      // character sheet in game shows the whole number.
+      value: round(player.defenseSkill),
+    });
+    rows.push({ label: 'Dodge', value: percent(received.dodge) });
+    rows.push({ label: 'Parry', value: percent(received.parry) });
+    rows.push({ label: 'Block', value: percent(received.block) });
+    rows.push({ label: 'Block Value', value: round(stats.blockValue) });
+    /*
+     * The boss's side of the same table. Its miss and crit are what defense
+     * skill moves, and a tank has no other way to see that the talent did
+     * anything -- the character's own dodge going up is only three of the five
+     * things a point of defense buys.
+     */
+    rows.push({ label: 'Target Miss', value: percent(received.miss) });
+    rows.push({ label: 'Target Crit', value: percent(received.crit) });
+    rows.push({ label: 'Target Crush', value: percent(received.crush) });
+    rows.push({
+      label: 'Armor Reduction',
+      value: `${(armorReduction(stats.armor, profile.encounter.targetLevel) * 100).toFixed(2)}%`,
+    });
+  }
+
   rows.push({ label: 'Crit Chance', value: `${stats.critChance.toFixed(2)}%` });
   rows.push({
     label: 'Haste',

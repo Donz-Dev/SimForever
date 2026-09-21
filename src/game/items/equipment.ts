@@ -59,6 +59,22 @@ export function statsForStyle(equipment: Equipment, style: CombatStyleId): Parti
 }
 
 /**
+ * Armor contributed BY EQUIPPED ITEMS, on its own.
+ *
+ * Toughness raises "your Armor value from items", and a character's armor is
+ * items plus everything else -- the class base, and in time buffs and consumables
+ * that are not worn. One combined number cannot express the talent: a
+ * percentage of it would scale the base too and overstate what Toughness does.
+ *
+ * Derived from the same `liveEquipment` the stats are, so the two can never
+ * disagree about which slots this style actually fills. Reading the equipment
+ * map directly would count a two-hander's armor on a shield build.
+ */
+export function armorFromItems(equipment: Equipment, style: CombatStyleId): number {
+  return statsFromEquipment(liveEquipment(equipment, style)).armor ?? 0;
+}
+
+/**
  * The equipped set with the slots this style cannot physically fill removed.
  *
  * Only genuine conflicts are dropped, and there are two:

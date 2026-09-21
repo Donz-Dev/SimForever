@@ -7,7 +7,7 @@ import type {
   RollUnits,
   WeaponSlot,
 } from '../../engine';
-import { NO_CHANCES, toRollUnits } from '../../engine';
+import { NO_CHANCES, ROLL_MAX, toRollUnits } from '../../engine';
 import type { CombatStyleId } from '../character';
 
 /**
@@ -63,6 +63,21 @@ export const COMBAT_CONSTANTS = {
   spellCritMultiplier: 1.5,
 
   /* --- Attacks received by the player --- */
+  /**
+   * What ONE point of defense skill above the baseline is worth, in roll
+   * units, to each of the five things it touches.
+   *
+   * Given by the ruleset owner: a point of defense adds 0.04 percentage points
+   * to the attacker's miss chance and to the defender's dodge, parry and
+   * block, and takes 0.04 away from the attacker's crit. 0.04% is 4 roll
+   * units.
+   *
+   * This is what Anticipation was blocked on, and the comment in the received
+   * table below said so: the formula did not exist, so a defense skill talent
+   * could not be modelled. It exists now.
+   */
+  defensePerSkill: 4,
+
   bossMiss: 500,
   bossCrush: 1500,
   bossCrushMultiplier: 1.5,
@@ -261,35 +276,65 @@ function buildChances(
         critMultiplier: COMBAT_CONSTANTS.spellCritMultiplier,
       };
 
-    case 'melee-received':
+    case 'melee-received': {
+      /*
+       * DEFENSE SKILL ABOVE THE BASELINE, which is the only part that counts.
+       *
+       * `bossMiss`, `bossCrit` and `bossCrush` are flat ruleset figures for a
+       * character at the level baseline, so charging for all 300 points would
+       * move every one of them before a talent was spent. What a talent or a
+       * piece of gear ADDED is the surplus, and that is what is worth 0.04
+       * percentage points a point to five separate numbers.
+       *
+       * This is what Anticipation was blocked on. The formula is the ruleset
+       * owner's.
+       */
+      const surplus = target.defenseSkill - target.baseDefenseSkill;
+      const fromDefense = surplus * COMBAT_CONSTANTS.defensePerSkill;
+
       return {
         ...NO_CHANCES,
-        miss: COMBAT_CONSTANTS.bossMiss,
+        miss: clampChance(COMBAT_CONSTANTS.bossMiss + fromDefense),
         /*
          * The player's own avoidance, read from its stats exactly as the
-         * attacker's crit is. Both are percentage POINTS and both come from the
-         * character -- agility through the class conversion table, and talents
-         * such as Deflection on top.
-         *
-         * STILL MISSING: defense skill. In Classic a player's defense skill is
-         * compared against the attacker's weapon skill and shifts miss, crit
-         * and avoidance together, the same way the player's weapon skill shifts
-         * the tables it attacks with. Forever has not given that formula, so
-         * `bossMiss`, `bossCrit` and `bossCrush` below are flat ruleset numbers
-         * rather than derived ones, and a defense skill talent cannot be
-         * modelled yet. That is the ONLY missing piece here now.
+         * attacker's crit is. Percentage POINTS from the character -- agility
+         * through the class conversion table, talents such as Deflection on
+         * top, and now defense skill as well.
          */
-        dodge: toRollUnits(target.stats.get('dodgeChance')),
-        parry: toRollUnits(target.stats.get('parryChance')),
+        dodge: clampChance(toRollUnits(target.stats.get('dodgeChance')) + fromDefense),
+        parry: clampChance(toRollUnits(target.stats.get('parryChance')) + fromDefense),
         // Block comes from the shield, so a character without one has 0 here
-        // and the outcome simply never comes up.
-        block: toRollUnits(target.stats.get('blockChance')),
+        // and the outcome simply never comes up. Defense does not conjure one:
+        // no shield means no block chance to add to.
+        block:
+          target.stats.get('blockChance') > 0
+            ? clampChance(toRollUnits(target.stats.get('blockChance')) + fromDefense)
+            : 0,
         crush: COMBAT_CONSTANTS.bossCrush,
-        crit: COMBAT_CONSTANTS.bossCrit,
+        crit: clampChance(COMBAT_CONSTANTS.bossCrit - fromDefense),
         crushMultiplier: COMBAT_CONSTANTS.bossCrushMultiplier,
         critMultiplier: COMBAT_CONSTANTS.bossCritMultiplier,
       };
+    }
   }
+}
+
+/**
+ * Keep a chance inside the table.
+ *
+ * NOTHING MAY GO NEGATIVE OR PAST 100%, on the ruleset owner's instruction,
+ * and defense skill can push in both directions at once: it takes from the
+ * attacker's crit while adding to four other slices. At 125 points of surplus
+ * the boss's 5% crit would go to zero and then keep going, and a negative
+ * slice does not just contribute nothing -- it would pull the cumulative walk
+ * BACKWARDS and hand its range to whatever came before it.
+ *
+ * The total going over 100% needs no clamp here: the table walks a cumulative
+ * range, so an overflowing earlier slice squeezes out later ones, which is the
+ * behaviour a real combat table has.
+ */
+function clampChance(units: RollUnits): RollUnits {
+  return Math.max(0, Math.min(ROLL_MAX, units));
 }
 
 /** Enemy parry, which only applies to a character standing in front of it. */

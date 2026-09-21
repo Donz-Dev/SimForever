@@ -334,28 +334,32 @@ export const WARRIOR_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
     { kind: 'reaction', reactionId: 'shield_specialization', valueIndex: 1 },
   ],
 
-  anticipation: [
-    {
-      kind: 'unmodelled',
-      reason:
-        'Defense skill, which the player does not have. Defense skill exists only ' +
-        'for the target, where it shapes the combat table.',
-    },
-  ],
+  /*
+   * FULLY MODELLED, now that the ruleset owner has given the formula. 4 skill
+   * a rank to 20 at 5/5, and one point of defense skill is worth 0.04
+   * percentage points to FIVE numbers at once: the attacker's miss goes up,
+   * its crit goes down, and the defender's dodge, parry and block all go up.
+   *
+   * The talent was blocked on exactly that formula and the received table said
+   * so -- "a defense skill talent cannot be modelled yet. That is the ONLY
+   * missing piece here now."
+   */
+  anticipation: [{ kind: 'stat', stat: 'defenseSkill', operation: 'flat' }],
 
   improved_bloodrage: [
     { kind: 'unmodelled', reason: 'Modifies Bloodrage, which is castable but inert.' },
   ],
 
-  toughness: [
-    {
-      kind: 'unmodelled',
-      reason:
-        'Raises armor FROM ITEMS by a percentage. The engine holds one armor ' +
-        'number, base and gear combined, so a percentage here would also scale ' +
-        'the base and overstate the talent.',
-    },
-  ],
+  /*
+   * FULLY MODELLED. 10% more armor FROM ITEMS at 5/5.
+   *
+   * The old reason was right about the problem and wrong that it was
+   * unsolvable: the engine held one armor number, so a percentage would have
+   * scaled the class base too. `armorFromItems` reads the equipped
+   * contribution on its own, and the talent adds a flat amount computed from
+   * that -- so a character in no armor gets nothing, which is correct.
+   */
+  toughness: [{ kind: 'itemArmorPercent' }],
 
   improved_thunder_clap: [{ kind: 'abilityCost', abilityId: 'thunder_clap' }],
 
@@ -448,16 +452,19 @@ export const WARRIOR_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
    * tools/talent_ranks_browser.js and this becomes a `damageMultiplier` effect
    * gated on a shield.
    */
-  bastion: [
-    {
-      kind: 'unmodelled',
-      reason:
-        'Increases all damage done while a shield is equipped -- 10% at max ' +
-        'rank. The per-rank split is not published: Forever prints the same ' +
-        'figure at every rank and the talent has no per-rank spell ids. The ' +
-        'effect is expressible; the numbers are missing.',
-    },
-  ],
+  /*
+   * MODELLED, with a caveat recorded in the values file rather than here.
+   *
+   * The ruleset owner confirmed rank 5: a 1.1x multiplier on ALL damage the
+   * character deals, for as long as a shield is equipped. Ranks 1 to 4 are a
+   * linear fill and are NOT confirmed -- Forever prints the same figure at
+   * every rank and the talent has no per-rank spell ids. See the note on the
+   * entry in `src/data/talents/values/warrior.json`.
+   *
+   * `conditionalDamage` rather than a per-ability modifier, because "all
+   * damage you deal" includes auto attacks, which are not abilities.
+   */
+  bastion: [{ kind: 'conditionalDamage', requires: { shield: true } }],
 
   focused_rage: [
     {

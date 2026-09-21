@@ -88,6 +88,25 @@ export function defaultStanceFor(style: CombatStyleId | undefined): StanceId {
  * know -- opens somewhere sensible instead of nowhere. A Warrior in no stance
  * cannot cast Overpower, Rend, Execute, Thunder Clap, Hamstring or Charge.
  */
+/**
+ * Whether a build is TANKING: a shield, in Defensive Stance.
+ *
+ * Named once because three things key off it and they must not drift -- the
+ * encounter defaulting to a target that swings back, the character sheet
+ * showing defensive rows, and the results showing what was mitigated.
+ *
+ * Both halves are required. A shield warrior in Berserker Stance is a damage
+ * build holding a shield, and a two-hander in Defensive is a damage build
+ * paying ten percent for nothing; neither is what the defensive numbers are
+ * for.
+ */
+export function isTankBuild(
+  style: CombatStyleId | undefined,
+  stance: StanceId | undefined,
+): boolean {
+  return style === 'one_hand_shield' && resolveStance(style, stance) === 'defensive';
+}
+
 export function resolveStance(
   style: CombatStyleId | undefined,
   requested: StanceId | undefined,

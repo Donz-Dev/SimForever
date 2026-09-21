@@ -37,7 +37,12 @@ import { TALENT_AURAS, WARRIOR_STANCES } from '../auras/warrior';
 import { talentBuild } from '../talents/talentBuild';
 import { legalAllocation } from '../talents/talentRules';
 import { talentsForClass } from '../talents/talentData';
-import { liveEquipment, statsForStyle, weaponsForEquipment } from '../items/equipment';
+import {
+  armorFromItems,
+  liveEquipment,
+  statsForStyle,
+  weaponsForEquipment,
+} from '../items/equipment';
 import { reactionsForEquipment } from '../items/procs';
 import { autoAttackModeForStyle, weaponsForStyle } from './weapons';
 
@@ -165,6 +170,13 @@ export function createPlayer(options: PlayerOptions): Combatant {
   const build = talentBuild(characterClass, legal.allocation, {
     mainHand: weapons.mainHand,
     offHand: weapons.offHand,
+    // A shield is not a weapon and does not appear in `weapons`, so it is
+    // asked about separately. Bastion needs it and swings with nothing.
+    hasShield: liveEquipment(equipmentForWeapons, style).shield !== undefined,
+    // Armor from items ALONE, which is what Toughness scales. The character's
+    // armor is this plus the class base, and a percentage of the total would
+    // overstate the talent.
+    itemArmor: armorFromItems(equipmentForWeapons, style),
   });
 
   /*
