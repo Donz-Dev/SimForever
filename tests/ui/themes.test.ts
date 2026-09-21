@@ -116,6 +116,99 @@ describe('every scheme defines the same roles', () => {
   }
 });
 
+describe('text is legible against its own surface', () => {
+  /*
+   * Measured, not judged by eye. A third text step was tried for field hints
+   * and came out at 3.2-3.5:1 against these surfaces -- under the 4.5:1
+   * floor for normal text -- and lifting it to pass made it the same colour
+   * as the step above. It was dropped rather than shipped, and this is what
+   * would have caught it.
+   */
+  const channel = (c: number) => {
+    const v = c / 255;
+    return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4);
+  };
+  const luminance = (hex: string) => {
+    const n = Number.parseInt(hex.slice(1), 16);
+    return (
+      0.2126 * channel((n >> 16) & 255) +
+      0.7152 * channel((n >> 8) & 255) +
+      0.0722 * channel(n & 255)
+    );
+  };
+  const contrast = (a: string, b: string) => {
+    const [high, low] = [luminance(a), luminance(b)].sort((x, y) => y - x);
+    return (high + 0.05) / (low + 0.05);
+  };
+
+  /* Plain string work, not a RegExp built from a template literal: `\s`
+     inside a template is an escape, so the pattern silently became `s` and
+     matched nothing. */
+  const valueOf = (body: string, token: string) => {
+    const line = body
+      .split(/\r?\n/)
+      .map((l) => l.trim())
+      .find((l) => l.startsWith(`${token}:`));
+    expect(line, `${token} missing`).toBeDefined();
+    return line!.slice(token.length + 1).trim().replace(';', '');
+  };
+
+  for (const theme of THEMES) {
+    it(`${theme.id} clears 4.5:1 for both text steps`, () => {
+      const body =
+        theme.id === DEFAULT_THEME
+          ? block(`:root,
+:root[data-theme='${theme.id}']`)
+          : block(`:root[data-theme='${theme.id}']`);
+
+      // Against the panel, which is what most text actually sits on -- not
+      // against the page, which is darker and would flatter every value.
+      const surface = valueOf(body, '--surface');
+      expect(contrast(valueOf(body, '--text'), surface)).toBeGreaterThanOrEqual(4.5);
+      expect(contrast(valueOf(body, '--text-muted'), surface)).toBeGreaterThanOrEqual(4.5);
+    });
+  }
+
+  it('keeps a real gap between a label and a value', () => {
+    /*
+     * The point of the whole change. Both were `--text`, so a label and its
+     * number were the same white and the sheet read as a wall. Three steps of
+     * separation is the floor for them reading as different kinds of thing.
+     */
+    for (const theme of THEMES) {
+      const body =
+        theme.id === DEFAULT_THEME
+          ? block(`:root,
+:root[data-theme='${theme.id}']`)
+          : block(`:root[data-theme='${theme.id}']`);
+      expect(
+        contrast(valueOf(body, '--text'), valueOf(body, '--text-muted')),
+      ).toBeGreaterThan(2.5);
+    }
+  });
+
+  it('gives the value cells the bright step and the labels the muted one', () => {
+    // `.numeric` marks every value cell in both tables, so this is the split.
+    const labelRule = CSS.slice(CSS.indexOf('.base-stats td {'));
+    expect(labelRule.slice(0, labelRule.indexOf('}'))).toContain('color: var(--text-muted)');
+    const valueRule = CSS.slice(CSS.indexOf('.base-stats td.numeric {'));
+    expect(valueRule.slice(0, valueRule.indexOf('}'))).toContain('color: var(--text)');
+  });
+
+  it('never dims text with opacity', () => {
+    /*
+     * Opacity multiplies against the backdrop, so the same class renders a
+     * different colour on a panel than in a sunken well. Two text rules used
+     * it; what is left is on buttons and disabled controls, which is a state
+     * rather than a colour.
+     */
+    for (const selector of ['.field-hint {', '.gear-no-enchant {']) {
+      const rule = CSS.slice(CSS.indexOf(selector));
+      expect(rule.slice(0, rule.indexOf('}'))).not.toContain('opacity');
+    }
+  });
+});
+
 describe('the schemes are not exposed in the interface', () => {
   /*
    * There was a picker in the header until the scheme was settled. It is
