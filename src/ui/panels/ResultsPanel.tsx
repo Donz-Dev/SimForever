@@ -3,6 +3,7 @@ import type { AttackOutcome } from '../../engine';
 import { toSeconds } from '../../engine';
 import { Panel } from '../components/Panel';
 import { DonutChart } from '../charts/DonutChart';
+import { UptimeBars } from '../charts/UptimeBars';
 
 interface ResultsPanelProps {
   readonly batch: BatchResult;
@@ -118,6 +119,16 @@ export function ResultsPanel({ batch }: ResultsPanelProps) {
       )}
 
       <DamageTaken batch={batch} />
+      <UptimeBars
+        title="Buff uptime"
+        rows={batch.buffUptime}
+        empty="Nothing was buffing the character."
+      />
+      <UptimeBars
+        title="Debuff uptime on the target"
+        rows={batch.debuffUptime}
+        empty="Nothing was on the target."
+      />
       <RageEconomy batch={batch} />
 
       <p className="muted end-reason">

@@ -71,7 +71,7 @@ describe('player versus training dummy', () => {
     const result = runProfile(profile);
     const used = result.damage.byActor[0].abilities.map((entry) => entry.abilityName);
 
-    expect(used).toContain('Melee');
+    expect(used).toContain('Main Hand Auto-Attack');
     expect(used).toContain('Rend');
 
     // Which spenders get used depends on the rage economy, and the rage economy
@@ -79,7 +79,7 @@ describe('player versus training dummy', () => {
     // pinned a rotation decision rather than the thing under test, and broke as
     // soon as Overpower started out-competing Mortal Strike for rage. What
     // matters here is that the warrior fights with abilities at all.
-    const autoAttacks = ['Melee', 'Melee (Off Hand)'];
+    const autoAttacks = ['Main Hand Auto-Attack', 'Off Hand Auto-Attack'];
     const abilities = used.filter((name) => !autoAttacks.includes(name));
     expect(abilities.length).toBeGreaterThanOrEqual(2);
   });
@@ -204,8 +204,8 @@ describe('player versus training dummy', () => {
     const result = runProfile(profile);
     const used = result.damage.byActor[0].abilities.map((entry) => entry.abilityName);
 
-    expect(used).toContain('Melee');
-    expect(used).toContain('Melee (Off Hand)');
+    expect(used).toContain('Main Hand Auto-Attack');
+    expect(used).toContain('Off Hand Auto-Attack');
   });
 
   it('swings only the main hand with a two-hander', () => {
@@ -215,8 +215,8 @@ describe('player versus training dummy', () => {
     });
     const used = result.damage.byActor[0].abilities.map((entry) => entry.abilityName);
 
-    expect(used).toContain('Melee (Two-Hander)');
-    expect(used).not.toContain('Melee (Off Hand)');
+    expect(used).toContain('Main Hand Auto-Attack');
+    expect(used).not.toContain('Off Hand Auto-Attack');
   });
 
   it('uses a ranged weapon for a hunter', () => {
@@ -226,7 +226,7 @@ describe('player versus training dummy', () => {
     });
     const used = result.damage.byActor[0].abilities.map((entry) => entry.abilityName);
 
-    expect(used).toEqual(['Ranged']);
+    expect(used).toEqual(['Ranged Auto-Attack']);
   });
 
   it('uses paws rather than weapons for a druid in cat form', () => {
@@ -241,7 +241,7 @@ describe('player versus training dummy', () => {
     });
     const used = result.damage.byActor[0].abilities.map((entry) => entry.abilityName);
 
-    expect(used).toEqual(['Cat Paw']);
+    expect(used).toEqual(['Main Hand Auto-Attack']);
   });
 
   it('runs a short fight without error', () => {

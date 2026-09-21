@@ -14,6 +14,7 @@ export type { DistributionSummary } from './statistics';
 export { percentile, summarize } from './statistics';
 export type {
   BatchAbilityTotals,
+  BatchAuraUptime,
   BatchDamageTaken,
   BatchResourceFlow,
   BatchResourceTotals,

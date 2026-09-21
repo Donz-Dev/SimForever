@@ -24,6 +24,39 @@ export function startAutoAttack(context: SimulationContext, attacker: Combatant)
   }
 }
 
+/**
+ * What an auto attack is CALLED, by the hand that threw it.
+ *
+ * Not the weapon's name. A dual-wielder's breakdown used to read
+ * "Vis'kag the Bloodletter" and "Brutality Blade", which says which item but
+ * not which hand -- and the hand is the thing being audited. Off-hand swings
+ * carry a damage penalty, a separate miss chance and their own rage rate, so
+ * "is the off hand pulling its weight" is a question the table has to be able
+ * to answer without the reader remembering which sword is where.
+ *
+ * Weapon identity has not gone anywhere: the Gear panel says what is equipped.
+ */
+export const AUTO_ATTACK_NAMES: Readonly<Record<WeaponSlot, string>> = {
+  mainHand: 'Main Hand Auto-Attack',
+  offHand: 'Off Hand Auto-Attack',
+  ranged: 'Ranged Auto-Attack',
+};
+
+/**
+ * Where the rage from a swing is attributed, by hand.
+ *
+ * One `auto_attack` bucket could not show the split, and the split is the
+ * point: Dual Wield Specialization doubles off-hand rage generation, which is
+ * invisible in a total that mixes both hands together.
+ */
+export const AUTO_ATTACK_RESOURCE_SOURCES: Readonly<
+  Record<WeaponSlot, { readonly id: string; readonly name: string }>
+> = {
+  mainHand: { id: 'auto_attack_main_hand', name: 'Main hand auto attack' },
+  offHand: { id: 'auto_attack_off_hand', name: 'Off hand auto attack' },
+  ranged: { id: 'auto_attack_ranged', name: 'Ranged auto attack' },
+};
+
 /** The weapon slots that auto-attack, given the combatant's mode. */
 export function swingingSlots(attacker: Combatant): readonly WeaponSlot[] {
   switch (attacker.autoAttack) {
@@ -180,7 +213,7 @@ function swing(
   const result = dealDamage(context, {
     source: attacker,
     target,
-    abilityName: weapon.name,
+    abilityName: AUTO_ATTACK_NAMES[slot],
     school: weapon.school ?? 'physical',
     baseAmount: 0,
     weaponScaling: { slot },
@@ -205,9 +238,12 @@ function swing(
   // Resource from damage DEALT, proportional to what actually landed. A missed
   // or dodged swing generates nothing, which is the behaviour that makes a
   // high-miss build rage-starved as well as low-damage.
-  grantGeneratedResource(context, attacker, weapon.generates, result.amount, {
-    id: 'auto_attack',
-    name: 'Auto attack',
-  });
+  grantGeneratedResource(
+    context,
+    attacker,
+    weapon.generates,
+    result.amount,
+    AUTO_ATTACK_RESOURCE_SOURCES[slot],
+  );
 
 }

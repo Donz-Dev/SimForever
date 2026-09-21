@@ -1065,6 +1065,76 @@ button:disabled {
   }
 }
 
+/* --- uptime bars --- */
+
+.uptime-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+/* The track is the only flexible column, so every bar starts and ends at the
+   same x whatever an aura is called. A bar whose zero moves with the label
+   length cannot be compared to the one above it. */
+.uptime-row {
+  display: grid;
+  grid-template-columns: 160px minmax(0, 1fr) 64px 110px;
+  align-items: center;
+  gap: 10px;
+  padding: 5px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: var(--control-font-size);
+}
+
+.uptime-row:last-child {
+  border-bottom: none;
+}
+
+.uptime-name {
+  color: var(--text);
+  font-weight: 500;
+}
+
+.uptime-track {
+  position: relative;
+  height: 10px;
+  background: var(--surface-sunken);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.uptime-fill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  background: var(--accent);
+  border-radius: 2px;
+}
+
+.uptime-value {
+  font-family: var(--font-mono);
+  color: var(--text);
+  font-weight: 500;
+  text-align: right;
+}
+
+.uptime-count {
+  text-align: right;
+  white-space: nowrap;
+}
+
+@media (max-width: 760px) {
+  .uptime-row {
+    grid-template-columns: 1fr 56px;
+  }
+
+  /* The track and the count are the first things to go: the name and the
+     percentage are the reading. */
+  .uptime-track,
+  .uptime-count {
+    display: none;
+  }
+}
+
 /* The one-line summary of what the chosen stance does, under its buttons. */
 .stance-note {
   margin: -6px 0 4px;

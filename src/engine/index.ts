@@ -20,7 +20,13 @@ export * from './effects';
 export * from './abilities';
 export * from './actors';
 export * from './combat';
-export { extraAttack, startAutoAttack, swingingSlots } from './combat/autoAttack';
+export {
+  AUTO_ATTACK_NAMES,
+  AUTO_ATTACK_RESOURCE_SOURCES,
+  extraAttack,
+  startAutoAttack,
+  swingingSlots,
+} from './combat/autoAttack';
 export * from './rotation';
 export * from './logging';
 export * from './simulation';

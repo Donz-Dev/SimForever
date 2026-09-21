@@ -66,7 +66,7 @@ function swingTimes(
 
   const run = simulation.run();
   return run.telemetry
-    .filter((event) => event.type === 'damage' && event.abilityName === 'Test Weapon')
+    .filter((event) => event.type === 'damage' && event.abilityName === 'Main Hand Auto-Attack')
     .map((event) => event.timestamp);
 }
 

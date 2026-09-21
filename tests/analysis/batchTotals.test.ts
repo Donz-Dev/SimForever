@@ -66,7 +66,7 @@ describe('a batch averages every iteration', () => {
 
   it('pools ability rates over the batch, not over one fight', () => {
     const b = batch();
-    const main = b.abilities.find((a) => a.abilityName.includes("Vis'kag"));
+    const main = b.abilities.find((a) => a.abilityName === 'Main Hand Auto-Attack');
     expect(main).toBeDefined();
     // Over 120 fights a crit rate settles near the character sheet's figure.
     // A single fight's estimate swings several points either way.
@@ -98,7 +98,7 @@ describe('rage is attributed to a source', () => {
   it('names auto attack as the source of a standing warrior rage', () => {
     // Nothing is hitting back, so damage taken cannot contribute.
     const b = batch();
-    expect(b.rage.gained.map((r) => r.sourceId)).toContain('auto_attack');
+    expect(b.rage.gained.map((r) => r.sourceId)).toContain('auto_attack_main_hand');
     expect(b.rage.gained.map((r) => r.sourceId)).not.toContain('damage_taken');
   });
 

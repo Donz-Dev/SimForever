@@ -6,6 +6,7 @@ import type {
   SimulationResult,
 } from '../analysis';
 import { BatchTotals, summarize } from '../analysis';
+import type { BatchAuraUptime } from '../analysis';
 import type { SimulationConfig } from '../engine';
 import { Simulation, deriveSeed, toSeconds } from '../engine';
 import { trainingDummyEncounter } from './trainingDummyEncounter';
@@ -54,6 +55,10 @@ export interface BatchResult {
   readonly damageTaken: readonly BatchDamageTaken[];
   /** Where the player's rage came from and went, across every iteration. */
   readonly rage: BatchResourceFlow;
+  /** Aura uptime on the player, longest first. */
+  readonly buffUptime: readonly BatchAuraUptime[];
+  /** Aura uptime on the target, longest first. */
+  readonly debuffUptime: readonly BatchAuraUptime[];
   /** Wall-clock time the batch took, in milliseconds. */
   readonly elapsedRealMs: number;
 }
@@ -77,6 +82,7 @@ export function runBatch(config: SimulationConfig, options: BatchOptions): Batch
   const dpsSamples: number[] = new Array(iterations);
   const seeds: number[] = new Array(iterations);
   const durations: number[] = new Array(iterations);
+  let enemyIds: string[] = [];
 
   /*
    * ONE accumulator for the whole batch, not one per iteration. It holds
@@ -98,6 +104,11 @@ export function runBatch(config: SimulationConfig, options: BatchOptions): Batch
     const friendlyIds = run.actors
       .filter((actor) => actor.faction === 'friendly')
       .map((actor) => actor.id);
+    if (enemyIds.length === 0) {
+      enemyIds = run.actors
+        .filter((actor) => actor.faction === 'hostile')
+        .map((actor) => actor.id);
+    }
 
     const elapsedSeconds = Math.max(toSeconds(run.elapsedMs), 0.001);
     durations[index] = run.elapsedMs;
@@ -115,7 +126,7 @@ export function runBatch(config: SimulationConfig, options: BatchOptions): Batch
     const cumulative = totals.totalForAny(friendlyIds);
     dpsSamples[index] = (cumulative - damageSoFar) / elapsedSeconds;
     damageSoFar = cumulative;
-    totals.finishIteration();
+    totals.finishIteration(run.elapsedMs);
 
     options.onProgress?.((index + 1) / iterations);
   }
@@ -139,6 +150,13 @@ export function runBatch(config: SimulationConfig, options: BatchOptions): Batch
     abilities: totals.abilityBreakdown(playerId),
     damageTaken: totals.damageTaken(playerId),
     rage: totals.resourceFlow(playerId, 'rage'),
+    buffUptime: totals.auraUptime(playerId, 'buff'),
+    /*
+     * Debuffs are read off the TARGET, not the player. "Sunder Armor uptime"
+     * means how long the boss carried it, which is the only reading that
+     * matters and the only one the aura lives on.
+     */
+    debuffUptime: enemyIds.flatMap((id) => totals.auraUptime(id, 'debuff')),
     elapsedRealMs: Date.now() - startedAt,
   };
 }

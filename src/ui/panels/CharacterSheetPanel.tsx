@@ -1,6 +1,8 @@
 import type { CharacterProfile } from '../../profiles';
 import type { ClassId, CombatStyleId } from '../../game/character';
 import { createPlayer } from '../../game/actors/createPlayer';
+import { characterAtCombatStart } from '../../simulator';
+import { getStance, resolveStance } from '../../game/character';
 import { createTrainingDummy } from '../../game/actors/createTrainingDummy';
 import { createForeverAttackChances } from '../../game/combat/attackChances';
 import { getClass, resolveCombatStyle, resourceLabel } from '../../game/character';
@@ -61,24 +63,30 @@ export function CharacterSheetPanel({ profile }: CharacterSheetPanelProps) {
 }
 
 /**
- * Build the character the simulation will build.
+ * Build the character the simulation will build, AT THE MOMENT IT BEGINS.
  *
- * The same `createPlayer` the fight uses, rather than recomputing anything
- * here. A character sheet that disagreed with the fight would be worse than no
- * character sheet.
+ * Not `createPlayer` alone, which was the bug this replaces. A stance is an
+ * aura, and an aura's stat modifiers are applied when combat starts --
+ * `createPlayer` only records which auras to open with. So the sheet was
+ * showing a Warrior standing in no stance, and a Berserker dual-wielder's
+ * crit chance read three percentage points below what the fight would roll.
+ *
+ * Adding three in this file would have fixed the number and created the real
+ * problem: two places that know what Berserker Stance is worth. This asks the
+ * simulator instead, so the sheet cannot disagree with the fight.
  */
 function buildPlayer(profile: CharacterProfile, style: CombatStyleId) {
-  return createPlayer({
-    race: profile.character.race,
-    characterClass: profile.character.characterClass,
-    combatStyle: style,
-    bonusStats: profile.stats,
-    equipment: profile.equipment,
-    // Talents too, or the sheet reports a crit chance the fight does not use.
-    // This panel exists to agree with the simulation; leaving them out is
-    // exactly the disagreement the comment above is about.
-    talents: profile.talents,
-  });
+  return (
+    characterAtCombatStart(profile) ??
+    createPlayer({
+      race: profile.character.race,
+      characterClass: profile.character.characterClass,
+      combatStyle: style,
+      bonusStats: profile.stats,
+      equipment: profile.equipment,
+      talents: profile.talents,
+    })
+  );
 }
 
 const round = (value: number) => Math.round(value).toLocaleString('en-US');
@@ -117,6 +125,17 @@ function warriorRows(profile: CharacterProfile, style: CombatStyleId): readonly 
       : percent(pick(forSlot('mainHand')));
 
   const rows: SheetRow[] = [
+    /*
+     * The stance leads, because it changes almost everything under it: crit,
+     * damage done, damage taken, and which abilities are even castable. It
+     * was visible only in the one-line summary above the sheet, which is the
+     * wrong place for something this load-bearing.
+     */
+    {
+      label: 'Stance',
+      value:
+        getStance(resolveStance(style, profile.character.stance))?.name ?? 'None',
+    },
     { label: 'Hit Points', value: round(player.health.maximum) },
     { label: 'Armor', value: round(stats.armor) },
     { label: 'Strength', value: round(stats.strength) },
@@ -136,6 +155,20 @@ function warriorRows(profile: CharacterProfile, style: CombatStyleId): readonly 
     rows.push({ label: 'Enemy Parry', value: percent(forSlot('mainHand').parry) });
   }
 
+  /*
+   * THE CHARACTER SHEET FIGURE, which is what the in-game one shows.
+   *
+   * Crit suppression against a higher-level target -- 4.8 points against a
+   * level 63 boss -- is deliberately NOT subtracted here. It is not a
+   * property of the character; it is applied by the combat table when the
+   * roll happens, the same way it is hidden in game. `critSuppression` in
+   * `game/combat/attackChances.ts` is the one place it lives, and the crit
+   * rates in the results breakdown are what it looks like once applied.
+   *
+   * Showing the suppressed number here would make the sheet disagree with
+   * every other tool and with the game, and would also be wrong the moment
+   * the encounter's target level changed.
+   */
   rows.push({ label: 'Crit Chance', value: `${stats.critChance.toFixed(2)}%` });
   rows.push({
     label: 'Haste',
