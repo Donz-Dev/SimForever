@@ -59,6 +59,51 @@ export function statsForStyle(equipment: Equipment, style: CombatStyleId): Parti
 }
 
 /**
+ * Armor contributed BY EQUIPPED ITEMS, on its own.
+ *
+ * Toughness raises "your Armor value from items", and a character's armor is
+ * items plus everything else -- the class base, and in time buffs and consumables
+ * that are not worn. One combined number cannot express the talent: a
+ * percentage of it would scale the base too and overstate what Toughness does.
+ *
+ * Derived from the same `liveEquipment` the stats are, so the two can never
+ * disagree about which slots this style actually fills. Reading the equipment
+ * map directly would count a two-hander's armor on a shield build.
+ */
+/**
+ * Resistance by school across the equipped set, FOR DISPLAY ONLY.
+ *
+ * Nothing in the engine reads this. There is no resistance stat and Forever
+ * states no formula for magic mitigation, so a resistance cannot change a
+ * fight -- the ruleset owner asked for a total to look at, and that is all
+ * this is. The Gear panel still lists every one under "Equipped but not
+ * simulated", which is what stops a number on screen from implying a
+ * mechanic behind it.
+ *
+ * Off the same `liveEquipment` as everything else, so a two-hander's
+ * resistance is not counted on a shield build.
+ */
+export function resistancesFromItems(
+  equipment: Equipment,
+  style: CombatStyleId,
+): Readonly<Record<string, number>> {
+  const total: Record<string, number> = {};
+  for (const equipped of Object.values(liveEquipment(equipment, style))) {
+    if (!equipped) continue;
+    const item = ITEMS_BY_ID.get(equipped.itemId);
+    if (!item) continue;
+    for (const [school, value] of Object.entries(item.resistances)) {
+      total[school] = (total[school] ?? 0) + value;
+    }
+  }
+  return total;
+}
+
+export function armorFromItems(equipment: Equipment, style: CombatStyleId): number {
+  return statsFromEquipment(liveEquipment(equipment, style)).armor ?? 0;
+}
+
+/**
  * The equipped set with the slots this style cannot physically fill removed.
  *
  * Only genuine conflicts are dropped, and there are two:

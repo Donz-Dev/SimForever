@@ -158,6 +158,10 @@ const EMPTY: TalentBuild = {
  */
 export interface TalentBuildContext {
   readonly mainHand?: WeaponProfile;
+  /** Whether a shield is equipped, for talents that ask. */
+  readonly hasShield?: boolean;
+  /** Armor the equipped items supply, for talents that scale it. */
+  readonly itemArmor?: number;
   /**
    * The off hand, because a talent can care about EITHER weapon.
    *
@@ -170,7 +174,18 @@ export interface TalentBuildContext {
 }
 
 /** Whether the held weapon satisfies a conditional effect. */
-function meets(requires: WeaponRequirement, weapon: WeaponProfile | undefined): boolean {
+function meets(
+  requires: WeaponRequirement,
+  weapon: WeaponProfile | undefined,
+  hasShield = false,
+): boolean {
+  /*
+   * A SHIELD CLAUSE IS ABOUT THE CHARACTER, not the weapon in a hand, so it is
+   * checked before the weapon is even looked at. Bastion has no weapon clause
+   * at all -- requiring one here would have made it never apply.
+   */
+  if (requires.shield !== undefined && requires.shield !== hasShield) return false;
+  if (requires.weaponTypes === undefined && requires.twoHanded === undefined) return true;
   if (!weapon) return false;
   if (requires.twoHanded !== undefined && (weapon.twoHanded ?? false) !== requires.twoHanded) {
     return false;
@@ -301,6 +316,25 @@ export function talentBuild(
         case 'offHandHit':
           offHandHitBonus += value;
           break;
+        /*
+         * A percentage of the armor ITEMS supply, contributed flat. Not a
+         * modifier on `armor`, which would scale the class base too -- the
+         * whole reason Toughness could not be modelled before.
+         */
+        case 'itemArmorPercent': {
+          const itemArmor = context.itemArmor ?? 0;
+          if (itemArmor > 0) {
+            stats.armor = (stats.armor ?? 0) + (itemArmor * value) / 100;
+          } else {
+            report(
+              talentId,
+              rank,
+              'Scales the armor equipped items supply, and this character has ' +
+                'no armor from items. Not an error -- equip something and it works.',
+            );
+          }
+          break;
+        }
         case 'stat': {
           const amount = value * (effect.scale ?? 1);
           if (effect.operation === 'flat') {
@@ -360,14 +394,17 @@ export function talentBuild(
           break;
         }
         case 'conditionalDamage':
-          if (meets(effect.requires, context.mainHand)) {
+          if (meets(effect.requires, context.mainHand, context.hasShield)) {
             damageMultiplier *= 1 + value / 100;
           } else {
             report(
               talentId,
               rank,
-              'Applies only with a particular weapon, and this character is not ' +
-                'holding one. Not an error -- equip the right weapon and it works.',
+              effect.requires.shield
+                ? 'Applies only while a shield is equipped, and this character ' +
+                    'has none. Not an error -- equip one and it works.'
+                : 'Applies only with a particular weapon, and this character is not ' +
+                    'holding one. Not an error -- equip the right weapon and it works.',
             );
           }
           break;
@@ -383,7 +420,7 @@ export function talentBuild(
            *
            * The Gear and Talent panels say which weapon it is reading.
            */
-          if (meets(effect.requires, context.mainHand)) {
+          if (meets(effect.requires, context.mainHand, context.hasShield)) {
             abilityModifiers.add(ALL_ABILITIES, { critBonus: value });
           } else {
             report(

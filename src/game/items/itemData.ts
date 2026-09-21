@@ -239,6 +239,9 @@ function buildItem(item: RawItem): Item {
   }
 
   const { stats, unmodelled, bonusSkill } = buildStats(item);
+  // Carried through for display. Still in `unmodelled` too: the sheet shows
+  // the total and the Gear panel says it does nothing, and both are true.
+  const resistances = { ...item.resistances };
 
   let weapon: ItemWeapon | undefined;
   if (item.weapon) {
@@ -266,6 +269,7 @@ function buildItem(item: RawItem): Item {
     stats,
     ...(weapon ? { weapon } : {}),
     unmodelled,
+    resistances,
     tooltip: item.tooltip,
   };
 }

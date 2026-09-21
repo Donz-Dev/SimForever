@@ -83,6 +83,16 @@ export type TalentEffect =
    */
   | { readonly kind: 'grantAura'; readonly auraId: string }
   /**
+   * A PERCENTAGE of the armor equipped items supply, added on top.
+   *
+   * Toughness raises "your Armor value from items", and armor as the engine
+   * holds it is items plus the class base. A plain percentage modifier on the
+   * `armor` stat would scale the base as well and overstate the talent, which
+   * is exactly why it went unmodelled -- so this reads the item contribution
+   * on its own and contributes a flat amount.
+   */
+  | { readonly kind: 'itemArmorPercent' }
+  /**
    * A PERCENTAGE added to what the off hand already does.
    *
    * Three separate kinds rather than one, because the three land in three
@@ -240,6 +250,14 @@ export interface WeaponRequirement {
   readonly weaponTypes?: readonly WeaponType[];
   /** Whether the weapon must be two-handed. */
   readonly twoHanded?: boolean;
+  /**
+   * Whether a SHIELD must be equipped.
+   *
+   * Not a weapon, which is why it sits beside the weapon clauses rather than
+   * inside them: Bastion asks what is in the off hand, not what is being swung
+   * with. A build can satisfy this and the weapon clauses independently.
+   */
+  readonly shield?: boolean;
 }
 
 /**

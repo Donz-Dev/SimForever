@@ -76,6 +76,15 @@ export const STAT_NAMES = [
 
   // Defensive
   'armor',
+  /**
+   * Defense skill ABOVE the level baseline, in skill points.
+   *
+   * Not the whole number: every character has five per level for free, which
+   * is a property of being level 60 rather than a stat anything grants. This
+   * holds only what a talent or a piece of gear added on top, so a character
+   * with none has zero here and `Combatant.defenseSkill` still answers 300.
+   */
+  'defenseSkill',
   'dodgeRating',
   'parryRating',
   'blockRating',

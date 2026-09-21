@@ -1,12 +1,13 @@
 import type { CharacterProfile } from '../../profiles';
 import type { ClassId, CombatStyleId } from '../../game/character';
 import { createPlayer } from '../../game/actors/createPlayer';
+import { resistancesFromItems } from '../../game/items/equipment';
 import { characterAtCombatStart } from '../../simulator';
-import { getStance, resolveStance } from '../../game/character';
+import { getStance, isTankBuild, resolveStance } from '../../game/character';
 import { createTrainingDummy } from '../../game/actors/createTrainingDummy';
 import { createForeverAttackChances } from '../../game/combat/attackChances';
 import { getClass, resolveCombatStyle, resourceLabel } from '../../game/character';
-import { hasteMultiplierFrom, toPercent } from '../../engine';
+import { armorReduction, hasteMultiplierFrom, toPercent } from '../../engine';
 import { Panel } from '../components/Panel';
 
 interface CharacterSheetPanelProps {
@@ -185,6 +186,65 @@ function warriorRows(profile: CharacterProfile, style: CombatStyleId): readonly 
    * every other tool and with the game, and would also be wrong the moment
    * the encounter's target level changed.
    */
+  /*
+   * DEFENSIVE ROWS, for a build that is actually tanking.
+   *
+   * Shown only for a shield in Defensive Stance, because for anyone else they
+   * are five rows of zero and noise -- a dual-wielder has no block chance and
+   * no reason to care about its parry. The same rule decides whether the
+   * encounter's target swings back.
+   *
+   * These are the numbers the attacks-received table actually rolls against,
+   * read from the same character the fight builds.
+   */
+  if (isTankBuild(style, profile.character.stance)) {
+    const received = chances('melee-received', target, player, {});
+
+    rows.push({
+      label: 'Defense Skill',
+      // Total, not the surplus. 300 of it is free at level 60 and the
+      // character sheet in game shows the whole number.
+      value: round(player.defenseSkill),
+    });
+    rows.push({ label: 'Dodge', value: percent(received.dodge) });
+    rows.push({ label: 'Parry', value: percent(received.parry) });
+    rows.push({ label: 'Block', value: percent(received.block) });
+    rows.push({ label: 'Block Value', value: round(stats.blockValue) });
+    /*
+     * The boss's side of the same table. Its miss and crit are what defense
+     * skill moves, and a tank has no other way to see that the talent did
+     * anything -- the character's own dodge going up is only three of the five
+     * things a point of defense buys.
+     */
+    rows.push({ label: 'Target Miss', value: percent(received.miss) });
+    rows.push({ label: 'Target Crit', value: percent(received.crit) });
+    rows.push({ label: 'Target Crush', value: percent(received.crush) });
+    rows.push({
+      label: 'Armor Reduction',
+      value: `${(armorReduction(stats.armor, profile.encounter.targetLevel) * 100).toFixed(2)}%`,
+    });
+
+    /*
+     * RESISTANCE, AND IT DOES NOTHING. Requested for display, and labelled so
+     * on the row itself -- the engine has no resistance stat and Forever
+     * states no formula for magic mitigation, so no fight changes because of
+     * this number. The Gear panel lists every piece under "Equipped but not
+     * simulated" as well.
+     *
+     * Only schools the gear actually carries get a row. A run of zeroes would
+     * suggest five stats that exist and are worth nothing.
+     */
+    for (const [school, value] of Object.entries(
+      resistancesFromItems(profile.equipment, style),
+    )) {
+      if (value <= 0) continue;
+      rows.push({
+        label: `${school.charAt(0).toUpperCase() + school.slice(1)} Resistance`,
+        value: `${round(value)} (not simulated)`,
+      });
+    }
+  }
+
   rows.push({ label: 'Crit Chance', value: `${stats.critChance.toFixed(2)}%` });
   rows.push({
     label: 'Haste',

@@ -99,6 +99,24 @@ export interface BatchDamageTaken {
   readonly attempts: number;
   readonly hits: number;
   readonly average: number;
+  /**
+   * Mean damage per iteration that armor removed before it landed.
+   *
+   * The whole point of a tank's armor, and invisible in every other number
+   * here: a swing that hits for 2,700 after 40% armor reduction reports 2,700,
+   * and nothing says the other 1,800 was stopped.
+   */
+  readonly mitigated: number;
+  /** Mitigated over what was swung for, pooled across the batch. */
+  readonly mitigationRate: number;
+  /**
+   * Share of swings that never landed at all -- miss, dodge or parry.
+   *
+   * Distinct from mitigation, and the distinction matters to a tank: armor
+   * shaves every hit, while avoidance removes whole swings. Two builds with
+   * the same damage taken can get there very differently.
+   */
+  readonly avoidRate: number;
   /** Outcome counts as a fraction of attempts, pooled over the batch. */
   readonly rates: Readonly<Record<AttackOutcome, number>>;
 }
@@ -131,8 +149,10 @@ interface UptimeAccumulator {
 
 interface TakenAccumulator {
   damage: number;
+  mitigated: number;
   attempts: number;
   hits: number;
+  avoided: number;
   outcomes: Map<AttackOutcome, number>;
 }
 
@@ -265,13 +285,17 @@ export class BatchTotals implements TelemetrySink {
     const perActor = mapFor(this.taken, event.targetId);
     const entry = perActor.get(event.abilityName) ?? {
       damage: 0,
+      mitigated: 0,
       attempts: 0,
       hits: 0,
+      avoided: 0,
       outcomes: new Map<AttackOutcome, number>(),
     };
     entry.damage += event.amount;
+    entry.mitigated += event.mitigated;
     entry.attempts += 1;
-    if (!AVOIDED.has(event.outcome)) entry.hits += 1;
+    if (AVOIDED.has(event.outcome)) entry.avoided += 1;
+    else entry.hits += 1;
     entry.outcomes.set(event.outcome, (entry.outcomes.get(event.outcome) ?? 0) + 1);
     perActor.set(event.abilityName, entry);
   }
@@ -323,9 +347,14 @@ export class BatchTotals implements TelemetrySink {
         for (const [outcome, count] of e.outcomes) {
           rates[outcome] = e.attempts > 0 ? count / e.attempts : 0;
         }
+        // What was swung FOR: what landed plus what armor took off it.
+        const swungFor = e.damage + e.mitigated;
         return {
           sourceName,
           damage: this.per(e.damage),
+          mitigated: this.per(e.mitigated),
+          mitigationRate: swungFor > 0 ? e.mitigated / swungFor : 0,
+          avoidRate: e.attempts > 0 ? e.avoided / e.attempts : 0,
           attempts: this.per(e.attempts),
           hits: this.per(e.hits),
           average: e.hits > 0 ? e.damage / e.hits : 0,

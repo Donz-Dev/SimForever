@@ -45,28 +45,41 @@ const WARRIOR_ARMOUR: Partial<Record<EquipmentSlot, number>> = {
   ranged: 17069, // Striker's Mark
 };
 
-/** Weapons per style. */
-const WARRIOR_WEAPONS: Partial<Record<CombatStyleId, Partial<Record<EquipmentSlot, number>>>> = {
+/** Crusader, the only weapon enchant in the item data. */
+const CRUSADER = 20034;
+
+/** Weapons per style, with the enchant where the set carries one. */
+const WARRIOR_WEAPONS: Partial<Record<CombatStyleId, Equipment>> = {
   dual_wield: {
-    mainHand: 17075, // Vis'kag the Bloodletter -- the slower weapon leads
-    offHand: 228265, // Brutality Blade
+    mainHand: { itemId: 17075 }, // Vis'kag the Bloodletter -- the slower weapon leads
+    offHand: { itemId: 228265 }, // Brutality Blade
   },
   two_hander: {
-    twoHand: 228229, // Obsidian Edged Blade
+    twoHand: { itemId: 228229 }, // Obsidian Edged Blade
   },
   one_hand_shield: {
-    // Brutality Blade rather than Vis'kag: the ruleset owner's own pairing, and
-    // the faster weapon is the better one-hander when it is not being used to
-    // carry an off-hand's swing timer.
-    mainHand: 228265, // Brutality Blade
-    shield: 19321, // The Immovable Object -- the first real FOREVER item here
+    /*
+     * Brutality Blade rather than Vis'kag: the ruleset owner's own pairing, and
+     * the faster weapon is the better one-hander when it is not being used to
+     * carry an off-hand's swing timer.
+     *
+     * ENCHANTED, which the other sets are not. The ruleset owner names this as
+     * the tank build's default gear, and a tank holds one weapon -- so the one
+     * enchant it can carry is part of the set rather than a choice to make
+     * afterwards.
+     */
+    mainHand: { itemId: 228265, enchantId: CRUSADER }, // Brutality Blade
+    shield: { itemId: 19321 }, // The Immovable Object -- the first real FOREVER item
   },
 };
 
-const STARTING_SETS: Partial<
-  Record<ClassId, (style: CombatStyleId) => Partial<Record<EquipmentSlot, number>>>
-> = {
-  warrior: (style) => ({ ...WARRIOR_ARMOUR, ...(WARRIOR_WEAPONS[style] ?? {}) }),
+const STARTING_SETS: Partial<Record<ClassId, (style: CombatStyleId) => Equipment>> = {
+  warrior: (style) => ({
+    ...(Object.fromEntries(
+      Object.entries(WARRIOR_ARMOUR).map(([slot, itemId]) => [slot, { itemId }]),
+    ) as Equipment),
+    ...(WARRIOR_WEAPONS[style] ?? {}),
+  }),
 };
 
 /**
@@ -83,12 +96,13 @@ export function startingEquipmentFor(
   const build = STARTING_SETS[characterClass];
   if (!build) return {};
 
-  const equipment: Record<string, { itemId: number }> = {};
-  for (const [slot, itemId] of Object.entries(build(style))) {
+  const equipment: Record<string, { itemId: number; enchantId?: number }> = {};
+  for (const [slot, equipped] of Object.entries(build(style))) {
+    if (!equipped) continue;
     // Silently skipping an id the data no longer has would produce a set with a
     // hole in it that nothing explains. The test below catches that at build
     // time; this guard keeps a stale id from reaching a profile at runtime.
-    if (ITEMS_BY_ID.has(itemId)) equipment[slot] = { itemId };
+    if (ITEMS_BY_ID.has(equipped.itemId)) equipment[slot] = { ...equipped };
   }
   return equipment as Equipment;
 }

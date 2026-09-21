@@ -427,14 +427,23 @@ export class Combatant {
     return this.weapons[slot]?.skill ?? this.level * 5;
   }
 
+  /** Five times level, the baseline every character has for free. */
+  get baseDefenseSkill(): number {
+    return this.level * 5;
+  }
+
   /**
-   * Defense skill, which is five times level for a creature.
+   * Defense skill: the level baseline plus whatever raised it.
    *
-   * A defense stat that raises this beyond the level baseline does not exist
-   * yet; when it does, it is added here.
+   * The `defenseSkill` stat holds only the surplus, because five per level is
+   * a property of being level 60 and not something a talent granted. Keeping
+   * the two apart is what lets the received table charge for the SURPLUS --
+   * the boss's flat miss, crit and crush figures are already calibrated for a
+   * character at the baseline, so counting all 300 points would move them by
+   * twelve percent before a single talent was spent.
    */
   get defenseSkill(): number {
-    return this.level * 5;
+    return this.baseDefenseSkill + this.stats.get('defenseSkill');
   }
 
   /** Record that a resource was just spent. Called by the engine on payment. */
