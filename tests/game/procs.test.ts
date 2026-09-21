@@ -6,7 +6,8 @@ import {
   CRUSADER_STRENGTH,
   HAND_OF_JUSTICE_CHANCE,
   HAND_OF_JUSTICE_ICD_MS,
-  HOLY_STRENGTH,
+  HOLY_STRENGTH_MAIN_HAND,
+  HOLY_STRENGTH_OFF_HAND,
   VISKAG_DAMAGE,
   VISKAG_PPM,
   ppmChance,
@@ -53,17 +54,30 @@ describe('Crusader', () => {
   it('grants a hundred strength for fifteen seconds', () => {
     expect(CRUSADER_STRENGTH).toBe(100);
     expect(toSeconds(CRUSADER_DURATION_MS)).toBe(15);
-    expect(HOLY_STRENGTH.statModifiers?.[0]).toMatchObject({
-      stat: 'strength',
-      value: 100,
-    });
+    for (const aura of [HOLY_STRENGTH_MAIN_HAND, HOLY_STRENGTH_OFF_HAND]) {
+      expect(aura.statModifiers?.[0]).toMatchObject({ stat: 'strength', value: 100 });
+      expect(toSeconds(aura.durationMs)).toBe(15);
+    }
   });
 
-  it('refreshes rather than stacking', () => {
-    // "capable of triggering again to refresh its duration" -- so a second proc
-    // resets the timer rather than granting another hundred.
-    expect(HOLY_STRENGTH.refreshBehaviour).toBe('reset');
-    expect(HOLY_STRENGTH.maxStacks ?? 1).toBe(1);
+  it('refreshes ITSELF rather than stacking with itself', () => {
+    // "capable of triggering again to refresh its duration" -- so a second
+    // main-hand proc resets the main hand's timer rather than granting another
+    // hundred. The stacking is BETWEEN hands, not within one.
+    for (const aura of [HOLY_STRENGTH_MAIN_HAND, HOLY_STRENGTH_OFF_HAND]) {
+      expect(aura.refreshBehaviour).toBe('reset');
+      expect(aura.maxStacks ?? 1).toBe(1);
+    }
+  });
+
+  it('gives each hand its own aura, so both can be up at once', () => {
+    /*
+     * A FOREVER RULE, given by the ruleset owner, and not what this file
+     * assumed. Both hands used to share one `holy_strength`, so a dual-wielder
+     * enchanted on both weapons got one hundred strength however often either
+     * hand fired. Two separate auras is two hundred.
+     */
+    expect(HOLY_STRENGTH_MAIN_HAND.id).not.toBe(HOLY_STRENGTH_OFF_HAND.id);
   });
 
   it('builds one reaction per enchanted weapon', () => {
@@ -191,7 +205,7 @@ describe('procs in a real fight', () => {
       const result = runProfile(gearedProfile(seed), seed);
       for (const event of result.timeline) {
         if (event.type === 'damage' && event.abilityId === 'fatal_wound') fatalWounds++;
-        if (event.type === 'aura_applied' && event.auraId === 'holy_strength') holyStrength++;
+        if (event.type === 'aura_applied' && event.auraId.startsWith('holy_strength')) holyStrength++;
       }
       extraAttacks += result.combatLog.filter((line) => /extra/i.test(line)).length;
     }
@@ -199,6 +213,52 @@ describe('procs in a real fight', () => {
     expect(fatalWounds).toBeGreaterThan(0);
     expect(holyStrength).toBeGreaterThan(0);
     void extraAttacks;
+  });
+
+  it('stacks both hands, for two hundred strength', () => {
+    /*
+     * THE POINT OF SPLITTING THE AURA. Both hands enchanted, both procs up at
+     * once, and the character has TWO hundred strength -- not one, which is
+     * what a single shared aura gave however often either hand fired.
+     *
+     * Measured on the strength the character actually has while both are up,
+     * because that is the thing the change is for. Asserted as "some moment
+     * reaches 200" rather than on a rate: over twelve fights at 1.1 procs per
+     * minute per hand, the overlap is common but not guaranteed on any one.
+     */
+    const base = 0;
+    let bothUp = 0;
+    let highest = base;
+
+    for (let seed = 1; seed <= 12; seed++) {
+      const result = runProfile(gearedProfile(seed), seed);
+      const up = new Set<string>();
+      for (const event of result.timeline) {
+        if (event.type === 'aura_applied' && event.auraId.startsWith('holy_strength')) {
+          up.add(event.auraId);
+        }
+        if (event.type === 'aura_removed' && event.auraId.startsWith('holy_strength')) {
+          up.delete(event.auraId);
+        }
+        highest = Math.max(highest, up.size * CRUSADER_STRENGTH);
+        if (up.size === 2) bothUp += 1;
+      }
+    }
+
+    expect(highest).toBe(2 * CRUSADER_STRENGTH);
+    expect(bothUp).toBeGreaterThan(0);
+  });
+
+  it('names each hand separately, so the uptime chart can tell them apart', () => {
+    const ids = new Set<string>();
+    for (let seed = 1; seed <= 12; seed++) {
+      for (const event of runProfile(gearedProfile(seed), seed).timeline) {
+        if (event.type === 'aura_applied' && event.auraId.startsWith('holy_strength')) {
+          ids.add(event.auraId);
+        }
+      }
+    }
+    expect([...ids].sort()).toEqual(['holy_strength_mainHand', 'holy_strength_offHand']);
   });
 
   it("deals Vis'kag's stated damage", () => {

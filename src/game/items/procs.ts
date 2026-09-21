@@ -118,30 +118,66 @@ export const CRUSADER_STRENGTH = 100;
 export const CRUSADER_DURATION_MS = seconds(15);
 
 /**
- * Holy Strength.
+ * Holy Strength, ONE AURA PER HAND.
  *
- * Refreshes rather than stacking: a second proc while it is up resets the
- * fifteen seconds, which is what "capable of triggering again to refresh its
- * duration" means.
+ * ----------------------------------------------------------------------------
+ * THE TWO HANDS STACK. This is a Forever rule given by the ruleset owner, and
+ * it is not what this file assumed.
  *
- * The heal is not modelled. Nothing damages the player, so healing has nothing
- * to restore, and the strength is the entire reason anyone uses this.
+ * Both hands used to share a single `holy_strength`, so the second to proc
+ * refreshed the first and a dual-wielder enchanted on both weapons got one
+ * hundred strength however often either hand fired. Forever gives each hand
+ * its own effect, so both up at once is TWO HUNDRED strength.
+ *
+ * That is a real damage change and not a reporting one -- and it also answers
+ * the uptime question, because there are now genuinely two buffs to chart
+ * rather than one shared window that could not be attributed to a hand.
+ *
+ * Each still refreshes ITSELF rather than stacking: a second main-hand proc
+ * while the main hand's buff is up resets its fifteen seconds, which is what
+ * "capable of triggering again to refresh its duration" means. The stacking is
+ * between hands, not within one.
+ *
+ * The heal is not modelled. Nothing damages the player by default, so healing
+ * has nothing to restore, and the strength is the entire reason anyone uses
+ * this.
+ * ----------------------------------------------------------------------------
  */
-export const HOLY_STRENGTH: AuraDefinition = {
-  id: 'holy_strength',
-  name: 'Holy Strength',
-  durationMs: CRUSADER_DURATION_MS,
-  refreshBehaviour: 'reset',
-  statModifiers: [flat('strength', CRUSADER_STRENGTH)],
+function holyStrengthFor(slot: WeaponSlot): AuraDefinition {
+  return {
+    id: `holy_strength_${slot}`,
+    name: slot === 'offHand' ? 'Holy Strength (Off Hand)' : 'Holy Strength (Main Hand)',
+    durationMs: CRUSADER_DURATION_MS,
+    refreshBehaviour: 'reset',
+    statModifiers: [flat('strength', CRUSADER_STRENGTH)],
+  };
+}
+
+export const HOLY_STRENGTH_MAIN_HAND = holyStrengthFor('mainHand');
+export const HOLY_STRENGTH_OFF_HAND = holyStrengthFor('offHand');
+
+/** Both, so a caller can look one up by the hand that procced it. */
+export const HOLY_STRENGTH_BY_SLOT: Partial<Record<WeaponSlot, AuraDefinition>> = {
+  mainHand: HOLY_STRENGTH_MAIN_HAND,
+  offHand: HOLY_STRENGTH_OFF_HAND,
 };
 
 /**
- * Crusader can be on both hands at once, and each is its own effect rolling off
- * its own weapon's speed. They share one aura, so the second to proc refreshes
- * the first rather than granting a separate hundred strength.
+ * Crusader can be on both hands at once, each rolling off its own weapon's
+ * speed and each granting its own hundred strength.
+ *
+ * The aura is chosen by the hand that PROCCED, which is the attack's slot --
+ * not by the reaction's configured slot, though `canTrigger` has already made
+ * those the same. Reading it off the attack keeps the two from ever drifting.
  */
-function crusaderProc(context: Parameters<Reaction['onTrigger']>[0], actor: Combatant) {
-  context.applyAura(actor, HOLY_STRENGTH, actor.id);
+function crusaderProc(
+  context: Parameters<Reaction['onTrigger']>[0],
+  actor: Combatant,
+  attack: AttackEvent,
+) {
+  const aura = attack.weaponSlot ? HOLY_STRENGTH_BY_SLOT[attack.weaponSlot] : undefined;
+  if (!aura) return;
+  context.applyAura(actor, aura, actor.id);
 }
 
 // ---------------------------------------------------------------------------

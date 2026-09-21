@@ -268,23 +268,16 @@ export const WARRIOR_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
    * Wield Specialization at 5/5 -- and not the off-hand miss penalty, which
    * lives only in the auto-attack table and which a special never uses.
    *
-   * The Cleave half is NOT, and is reported so. Cleave is implemented and
-   * costs 20 rage, but the two-rage reduction has no captured value: the
-   * talent is single-rank and its values entry is null, so the number exists
-   * only inside the tooltip's prose. Rather than type a 2 into the effect
-   * table from a sentence, it stays visible as a gap -- and Cleave is in no
-   * rotation, so nothing is currently measuring it.
+   * The Cleave half is modelled too, now that the ruleset owner has confirmed
+   * the number: one rank, two rage off Cleave's twenty. A single-rank talent
+   * has no variable the calculator can identify from its own text, so the
+   * values file carries `null` until someone fills it in by hand -- which is
+   * exactly the workflow that directory's README describes, and the note on
+   * the entry records who confirmed it.
    */
   raging_blows: [
     { kind: 'abilityFlag', abilityId: 'whirlwind', key: 'offHandStrike' },
-    {
-      kind: 'unmodelled',
-      reason:
-        "The Cleave half. \"Reduces the Rage cost of your Cleave ability by 2\" " +
-        'has no captured per-rank value — the talent is single-rank, so its ' +
-        'values entry is null and the 2 exists only in the tooltip prose. The ' +
-        'Whirlwind off-hand strike, which is the rest of the talent, does work.',
-    },
+    { kind: 'abilityCost', abilityId: 'cleave' },
   ],
 
   /*
