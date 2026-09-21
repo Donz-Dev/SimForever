@@ -27,12 +27,27 @@ export interface StatConversions {
   readonly intellectPerSpellCritPercent: number | null;
   /** Mana per five seconds, per point of spirit. */
   readonly manaPer5PerSpirit: number;
+  /**
+   * Parry chance the class simply has, in percentage points.
+   *
+   * NOT derived from a primary, which is why it sits here rather than in the
+   * conversion table proper: it is a flat class baseline, like base crit,
+   * except that the base stats spreadsheet does not carry it. The ruleset
+   * owner states 5% for the Warrior.
+   *
+   * Defaults to 0 through `COMMON`, so a class nobody has given a figure for
+   * parries nothing rather than inheriting the Warrior's.
+   */
+  readonly baseParryPercent: number;
 }
 
 /** Shared by every class: the conversions that never vary. */
 const COMMON = {
   armorPerAgility: 2,
   hitPointsPerStamina: 10,
+  // No parry unless a class says otherwise. A number nobody supplied is zero
+  // here rather than a plausible guess.
+  baseParryPercent: 0,
 } as const;
 
 /** No mana, no spell crit, no regen. Warriors and Rogues. */
@@ -55,6 +70,8 @@ const WARRIOR: StatConversions = {
   rangedAttackPowerPerAgility: 0,
   agilityPerCritPercent: 20,
   agilityPerDodgePercent: 20,
+  // Stated by the ruleset owner: a Warrior parries 5% before any talent.
+  baseParryPercent: 5,
 };
 
 const ROGUE: StatConversions = {
@@ -209,6 +226,12 @@ export function deriveFromPrimaries(
     armor: agility * conversions.armorPerAgility,
     critChance: ratio(agility, conversions.agilityPerCritPercent),
     dodgeChance: ratio(agility, conversions.agilityPerDodgePercent),
+    /*
+     * Flat, and it ignores every primary. It rides along here because this is
+     * the one function that owns the whole per-class table, and the caller
+     * already folds what this returns on top of the base stats.
+     */
+    parryChance: conversions.baseParryPercent,
     spellCritChance: ratio(intellect, conversions.intellectPerSpellCritPercent),
     manaPer5: spirit * conversions.manaPer5PerSpirit,
     hitPoints: stamina * conversions.hitPointsPerStamina,

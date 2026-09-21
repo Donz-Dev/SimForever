@@ -623,7 +623,7 @@
    "ranks": 5,
    "text": "Increases all damage you deal by {0}% while a shield is equipped.",
    "values": [2, 4, 6, 8, 10],
-   "note": "RANK 5 ONLY IS CONFIRMED: the ruleset owner states a 1.1x multiplier on all damage at 5/5 while a shield is equipped, which is the 10 here. RANKS 1-4 ARE A LINEAR FILL AND ARE NOT CONFIRMED -- Forever prints the same figure at every rank and the talent has no per-rank spell ids, so the split cannot be read from the tooltip. 2/4/6/8/10 matches every other five-rank Protection talent (Anticipation 4..20, Toughness 2..10), which is why it is the fill chosen, but it remains an assumption and a build at 1-4 points should not be trusted. Confirm with tools/talent_ranks_browser.js, which drives the calculator and reads the tooltip as points go in."
+   "note": "Confirmed by the ruleset owner: 2/4/6/8/10, a 1.1x multiplier on all damage at 5/5 while a shield is equipped. Forever's own tooltip prints the same figure at every rank and the talent has no per-rank spell ids, so the split is not readable from the calculator -- it was proposed as the pattern every other five-rank Protection talent follows (Anticipation 4..20, Toughness 2..10) and confirmed directly rather than captured."
   }
  }
 }

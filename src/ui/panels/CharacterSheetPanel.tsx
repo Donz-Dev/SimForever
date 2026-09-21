@@ -1,6 +1,7 @@
 import type { CharacterProfile } from '../../profiles';
 import type { ClassId, CombatStyleId } from '../../game/character';
 import { createPlayer } from '../../game/actors/createPlayer';
+import { resistancesFromItems } from '../../game/items/equipment';
 import { characterAtCombatStart } from '../../simulator';
 import { getStance, isTankBuild, resolveStance } from '../../game/character';
 import { createTrainingDummy } from '../../game/actors/createTrainingDummy';
@@ -222,6 +223,26 @@ function warriorRows(profile: CharacterProfile, style: CombatStyleId): readonly 
       label: 'Armor Reduction',
       value: `${(armorReduction(stats.armor, profile.encounter.targetLevel) * 100).toFixed(2)}%`,
     });
+
+    /*
+     * RESISTANCE, AND IT DOES NOTHING. Requested for display, and labelled so
+     * on the row itself -- the engine has no resistance stat and Forever
+     * states no formula for magic mitigation, so no fight changes because of
+     * this number. The Gear panel lists every piece under "Equipped but not
+     * simulated" as well.
+     *
+     * Only schools the gear actually carries get a row. A run of zeroes would
+     * suggest five stats that exist and are worth nothing.
+     */
+    for (const [school, value] of Object.entries(
+      resistancesFromItems(profile.equipment, style),
+    )) {
+      if (value <= 0) continue;
+      rows.push({
+        label: `${school.charAt(0).toUpperCase() + school.slice(1)} Resistance`,
+        value: `${round(value)} (not simulated)`,
+      });
+    }
   }
 
   rows.push({ label: 'Crit Chance', value: `${stats.critChance.toFixed(2)}%` });

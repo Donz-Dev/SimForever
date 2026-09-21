@@ -1,12 +1,13 @@
 import { describe, expect, it } from 'vitest';
-import { ROLL_MAX, toPercent } from '../../src/engine';
+import { ROLL_MAX, STAT_NAMES, toPercent } from '../../src/engine';
 import {
   COMBAT_CONSTANTS,
   createForeverAttackChances,
 } from '../../src/game/combat/attackChances';
 import { createPlayer } from '../../src/game/actors/createPlayer';
 import { createTrainingDummy } from '../../src/game/actors/createTrainingDummy';
-import { armorFromItems } from '../../src/game/items/equipment';
+import { armorFromItems, resistancesFromItems } from '../../src/game/items/equipment';
+import { ITEMS_BY_ID } from '../../src/game/items/itemData';
 import { isTankBuild } from '../../src/game/character';
 import { startingEquipmentFor } from '../../src/game/items/startingSets';
 import { WARRIOR_TALENT_EFFECTS } from '../../src/game/talents/warriorEffects';
@@ -302,6 +303,77 @@ describe('Bastion', () => {
       kind: 'conditionalDamage',
       requires: { shield: true },
     });
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Base parry, and resistances that are shown but not simulated
+// ---------------------------------------------------------------------------
+
+describe('a Warrior parries five percent before any talent', () => {
+  it('has it with no gear and no talents', () => {
+    // Stated by the ruleset owner. The base stats spreadsheet does not carry
+    // parry, so it is a hand-written class baseline.
+    const bare = createPlayer({
+      race: 'tauren',
+      characterClass: 'warrior',
+      combatStyle: 'one_hand_shield',
+    });
+    expect(bare.stats.effective.parryChance).toBeCloseTo(5, 10);
+  });
+
+  it('stacks with Deflection and with defense skill', () => {
+    // Deflection is 1% a rank, so 5/5 doubles the baseline.
+    expect(built(legalise({ deflection: 5 })).stats.effective.parryChance).toBeCloseTo(10, 10);
+  });
+
+  it('gives a class nobody supplied a figure for nothing', () => {
+    /*
+     * Zero rather than the Warrior's five. A number nobody stated is not
+     * inherited from whoever happened to be asked first.
+     */
+    const rogue = createPlayer({
+      race: 'orc',
+      characterClass: 'rogue',
+      combatStyle: 'dual_wield',
+    });
+    expect(rogue.stats.effective.parryChance).toBe(0);
+  });
+
+  it('reaches the table the boss actually rolls against', () => {
+    const chances = createForeverAttackChances(() => 'one_hand_shield');
+    const boss = createTrainingDummy({ attacks: true });
+    expect(chances('melee-received', boss, built(), {}).parry).toBe(500);
+  });
+});
+
+describe('resistances are totalled for display and nothing else', () => {
+  it('sums the equipped set', () => {
+    const total = resistancesFromItems(
+      startingEquipmentFor('warrior', 'one_hand_shield'),
+      'one_hand_shield',
+    );
+    expect(Object.keys(total).length).toBeGreaterThan(0);
+    for (const value of Object.values(total)) expect(value).toBeGreaterThan(0);
+  });
+
+  it('is NOT a stat, and changes no fight', () => {
+    /*
+     * The whole caveat. There is no resistance stat and no Forever formula for
+     * magic mitigation, so this number is looked at and never read. If it ever
+     * becomes a mechanic, this test is the thing that should fail.
+     */
+    expect(STAT_NAMES).not.toContain('resistance');
+    const stats = built().stats.effective as Record<string, number>;
+    expect(stats.fireResistance).toBeUndefined();
+  });
+
+  it('still reports every piece as not simulated', () => {
+    // Shown on the sheet AND listed as doing nothing. Both are true, and
+    // dropping the second would make a displayed number look functional.
+    const item = ITEMS_BY_ID.get(226496)!; // Treads of Might, +5 Fire
+    expect(Object.keys(item.resistances).length).toBeGreaterThan(0);
+    expect(item.unmodelled.some((effect) => /Resistance/.test(effect.text))).toBe(true);
   });
 });
 

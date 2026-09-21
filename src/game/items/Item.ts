@@ -82,6 +82,16 @@ export interface Item {
   readonly stats: PartialStats;
   readonly weapon?: ItemWeapon;
   readonly unmodelled: readonly UnmodelledEffect[];
+  /**
+   * Resistance by school, FOR DISPLAY ONLY.
+   *
+   * The engine has no resistance stat and Forever states no formula for magic
+   * mitigation, so nothing reads these in a fight -- they are carried so the
+   * character sheet can total them, on the ruleset owner's instruction, and
+   * they stay in `unmodelled` as well so nobody mistakes a displayed number
+   * for a simulated one.
+   */
+  readonly resistances: Readonly<Record<string, number>>;
   /** The full tooltip text, so the source is never more than a glance away. */
   readonly tooltip: string;
 }
