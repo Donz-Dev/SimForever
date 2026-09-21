@@ -46,8 +46,8 @@
   --surface-sunken: #0c181b;
   --border: #1e333a;
   --border-strong: #2e4b54;
-  --text: #e2ecee;
-  --text-muted: #8aa2a7;
+  --text: #f2fafb;
+  --text-muted: #7d8f93;
   --accent: #d98a5f;
   --accent-strong: #f2a97d;
   --accent-contrast: #140903;
@@ -81,8 +81,8 @@
   --surface-sunken: #141416;
   --border: #2c2c31;
   --border-strong: #42424a;
-  --text: #ededee;
-  --text-muted: #9a9aa2;
+  --text: #fbfbfc;
+  --text-muted: #8d8d96;
   --accent: #e8722c;
   --accent-strong: #ff9354;
   --accent-contrast: #180a02;
@@ -116,8 +116,8 @@
   --surface-sunken: #101318;
   --border: #272c37;
   --border-strong: #3b4252;
-  --text: #e7e9ef;
-  --text-muted: #949cae;
+  --text: #f4f6fa;
+  --text-muted: #88909f;
   --accent: #c8a45c;
   --accent-strong: #e3bf72;
   --accent-contrast: #100d06;
@@ -151,8 +151,8 @@
   --surface-sunken: #101016;
   --border: #262633;
   --border-strong: #3b3b4e;
-  --text: #e9e9f1;
-  --text-muted: #9494a9;
+  --text: #f6f6fb;
+  --text-muted: #88889c;
   --accent: #8b6cf0;
   --accent-strong: #a992ff;
   --accent-contrast: #0b0715;
@@ -424,9 +424,20 @@ body {
   color: var(--text-muted);
 }
 
+/*
+ * A TOKEN, not `opacity: 0.7`. Opacity multiplies against whatever is behind
+ * it, so the same hint was a different colour on a panel than on a sunken
+ * well; a token is one value wherever it lands.
+ *
+ * And the same value as a label, not a dimmer one. A third text step was
+ * tried and measured at 3.2-3.5:1 against these surfaces -- under the 4.5:1
+ * floor -- and lifting it to pass made it indistinguishable from this one.
+ * Eleven pixels against thirteen is the hierarchy here; there is not room in
+ * a dark range for three legible steps.
+ */
 .field-hint {
   font-size: 11px;
-  opacity: 0.7;
+  color: var(--text-muted);
 }
 
 /*
@@ -540,13 +551,27 @@ button:disabled {
   font-size: var(--control-font-size);
 }
 
+/*
+ * A LABEL AND ITS VALUE ARE NOT THE SAME KIND OF TEXT.
+ *
+ * Both were `--text`, so "Hit Points" and "3,919" sat at identical weight and
+ * identical white, and the sheet read as a wall rather than as pairs. The
+ * label is chrome -- you know what row you are on -- and the number is the
+ * thing being read.
+ *
+ * `.numeric` already marked every value cell in both tables, so the split
+ * needed no markup change.
+ */
 .base-stats td {
   padding: 5px 10px;
   border-bottom: 1px solid var(--border);
+  color: var(--text-muted);
 }
 
 .base-stats td.numeric {
   font-family: var(--font-mono);
+  color: var(--text);
+  font-weight: 500;
 }
 
 .base-stats tr:last-child td {
@@ -567,6 +592,13 @@ button:disabled {
   padding: 5px 10px;
   border-bottom: 1px solid var(--border);
   font-size: var(--control-font-size);
+  color: var(--text-muted);
+}
+
+.resource-list li strong,
+.resource-list li span:last-child {
+  color: var(--text);
+  font-weight: 500;
 }
 
 .resource-list li:last-child {
@@ -630,6 +662,7 @@ button:disabled {
 .stat-value {
   font-family: var(--font-mono);
   font-size: 19px;
+  font-weight: 500;
   color: var(--accent);
 }
 
@@ -653,8 +686,15 @@ button:disabled {
   color: var(--text-muted);
 }
 
+/* A name is a value, not a label: the first column of a breakdown says WHICH
+   ability, which is half of what the row is for. Only the header recedes. */
 .breakdown td {
   font-family: var(--font-mono);
+  color: var(--text);
+}
+
+.breakdown td.numeric {
+  font-weight: 500;
 }
 
 .breakdown tbody tr:last-child td {
@@ -925,7 +965,6 @@ button:disabled {
   text-align: center;
   font-size: 12px;
   color: var(--text-muted);
-  opacity: 0.5;
 }
 
 /* ---------------------------------------------------------------------------
@@ -1009,11 +1048,14 @@ button:disabled {
 
 .donut-label {
   flex: 1 1 auto;
+  color: var(--text-muted);
 }
 
 .donut-value {
   font-family: var(--font-mono);
   white-space: nowrap;
+  color: var(--text);
+  font-weight: 500;
 }
 
 @media (max-width: 720px) {
