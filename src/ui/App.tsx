@@ -127,6 +127,11 @@ export function App() {
           <div className="column column-results">
             <TalentPanel
               characterClass={profile.character.characterClass}
+              equipment={profile.equipment}
+              combatStyle={resolveCombatStyle(
+                profile.character.characterClass,
+                profile.character.combatStyle,
+              )}
               allocation={talents}
               onChange={setTalents}
               collapsed={talentsCollapsed}

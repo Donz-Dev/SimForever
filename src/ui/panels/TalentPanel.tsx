@@ -1,8 +1,10 @@
-import type { ClassId } from '../../game/character';
+import type { ClassId, CombatStyleId } from '../../game/character';
 import type { ClassTalents, Talent, TalentAllocation, TalentTree } from '../../game/talents/Talent';
 import { TOTAL_TALENT_POINTS } from '../../game/talents/Talent';
 import type { UnmodelledTalent } from '../../game/talents/TalentEffect';
-import { talentBuild } from '../../game/talents/talentBuild';
+import { talentBuild, talentContextFor } from '../../game/talents/talentBuild';
+import { weaponsFor } from '../../game/actors/createPlayer';
+import type { Equipment } from '../../game/items/Item';
 import { accentFor, talentsForClass } from '../../game/talents/talentData';
 import {
   canSpend,
@@ -33,6 +35,9 @@ type TalentUpdate = (previous: TalentAllocation) => TalentAllocation;
 
 interface TalentPanelProps {
   readonly characterClass: ClassId;
+  /** What the character is holding, so conditional talents can be judged. */
+  readonly equipment: Equipment;
+  readonly combatStyle: CombatStyleId;
   readonly allocation: TalentAllocation;
   readonly onChange: (update: TalentUpdate) => void;
   readonly collapsed: boolean;
@@ -56,6 +61,8 @@ interface TalentPanelProps {
  */
 export function TalentPanel({
   characterClass,
+  equipment,
+  combatStyle,
   allocation,
   onChange,
   collapsed,
@@ -68,7 +75,20 @@ export function TalentPanel({
   // Which of the spent talents are doing nothing, and why. The Gear panel
   // prints the same list for items under "Equipped but not simulated"; a talent
   // that silently did nothing would look exactly like one that worked.
-  const { unmodelled } = talentBuild(characterClass, allocation);
+  /*
+   * BUILT AGAINST THE GEAR, which it was not before.
+   *
+   * This called `talentBuild` with no context, so every conditional talent
+   * reported "this character is not holding one" however the character was
+   * geared -- Toughness read "no armor from items" on a warrior in a full
+   * set. `talentContextFor` is the same function `createPlayer` uses, so the
+   * panel and the fight cannot disagree about what is equipped.
+   */
+  const { unmodelled } = talentBuild(
+    characterClass,
+    allocation,
+    talentContextFor(equipment, combatStyle, weaponsFor(equipment, combatStyle)),
+  );
 
   return (
     <section className="panel talent-panel">

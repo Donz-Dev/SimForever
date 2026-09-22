@@ -27,6 +27,8 @@ export interface StatConversions {
   readonly intellectPerSpellCritPercent: number | null;
   /** Mana per five seconds, per point of spirit. */
   readonly manaPer5PerSpirit: number;
+  /** Strength needed for one point of block value. */
+  readonly strengthPerBlockValue: number;
   /**
    * Parry chance the class simply has, in percentage points.
    *
@@ -45,6 +47,15 @@ export interface StatConversions {
 const COMMON = {
   armorPerAgility: 2,
   hitPointsPerStamina: 10,
+  /*
+   * Twenty strength is a point of block value, for everyone.
+   *
+   * Stated by the ruleset owner. Derived rather than folded in, so it follows
+   * TOTAL strength -- a Crusader proc is a hundred strength and therefore five
+   * more block value for its fifteen seconds, which a number computed once at
+   * character creation would miss.
+   */
+  strengthPerBlockValue: 20,
   // No parry unless a class says otherwise. A number nobody supplied is zero
   // here rather than a plausible guess.
   baseParryPercent: 0,
@@ -232,6 +243,7 @@ export function deriveFromPrimaries(
      * already folds what this returns on top of the base stats.
      */
     parryChance: conversions.baseParryPercent,
+    blockValue: ratio(strength, conversions.strengthPerBlockValue),
     spellCritChance: ratio(intellect, conversions.intellectPerSpellCritPercent),
     manaPer5: spirit * conversions.manaPer5PerSpirit,
     hitPoints: stamina * conversions.hitPointsPerStamina,

@@ -34,17 +34,16 @@ import { rotationFor } from '../rotations/rotationFor';
 import type { Equipment } from '../items/Item';
 import type { TalentAllocation } from '../talents/Talent';
 import { TALENT_AURAS, WARRIOR_STANCES } from '../auras/warrior';
-import { talentBuild } from '../talents/talentBuild';
+import { talentBuild, talentContextFor } from '../talents/talentBuild';
 import { legalAllocation } from '../talents/talentRules';
 import { talentsForClass } from '../talents/talentData';
-import {
-  armorFromItems,
-  liveEquipment,
-  statsForStyle,
-  weaponsForEquipment,
-} from '../items/equipment';
+import { liveEquipment, statsForStyle, weaponsForEquipment } from '../items/equipment';
 import { reactionsForEquipment } from '../items/procs';
-import { autoAttackModeForStyle, weaponsForStyle } from './weapons';
+import {
+  BASE_BLOCK_CHANCE_WITH_SHIELD,
+  autoAttackModeForStyle,
+  weaponsForStyle,
+} from './weapons';
 
 export interface PlayerOptions {
   readonly id?: string;
@@ -167,17 +166,11 @@ export function createPlayer(options: PlayerOptions): Combatant {
   const legal = classTalents
     ? legalAllocation(classTalents, declaredTalents)
     : { allocation: declaredTalents, dropped: [] as readonly string[] };
-  const build = talentBuild(characterClass, legal.allocation, {
-    mainHand: weapons.mainHand,
-    offHand: weapons.offHand,
-    // A shield is not a weapon and does not appear in `weapons`, so it is
-    // asked about separately. Bastion needs it and swings with nothing.
-    hasShield: liveEquipment(equipmentForWeapons, style).shield !== undefined,
-    // Armor from items ALONE, which is what Toughness scales. The character's
-    // armor is this plus the class base, and a percentage of the total would
-    // overstate the talent.
-    itemArmor: armorFromItems(equipmentForWeapons, style),
-  });
+  const build = talentBuild(
+    characterClass,
+    legal.allocation,
+    talentContextFor(equipmentForWeapons, style, weapons),
+  );
 
   /*
    * THE OFF HAND, AFTER TALENTS. Dual Wield Specialization changes what the
@@ -219,9 +212,22 @@ export function createPlayer(options: PlayerOptions): Combatant {
   // Layers 1 and 2: the stats a character has before any conversion. Gear
   // first, then the profile's own bonuses, then the flat part of the talents.
   const equipment = options.equipment ?? {};
+  /*
+   * Five percent block for HOLDING A SHIELD, before anything adds to it.
+   *
+   * Granted here rather than in the class baseline because it belongs to the
+   * shield: a warrior dual-wielding blocks nothing at all. Everything else --
+   * talents, defense skill, Shield Block -- adds on top of this.
+   */
+  const shieldBlock = liveEquipment(equipment, style).shield
+    ? { blockChance: BASE_BLOCK_CHANCE_WITH_SHIELD }
+    : {};
   const startingStats = addStats(
     addStats(
-      addStats(makeStats(baseStatsToEngineStats(base)), statsForStyle(equipment, style)),
+      addStats(
+        addStats(makeStats(baseStatsToEngineStats(base)), statsForStyle(equipment, style)),
+        shieldBlock,
+      ),
       options.bonusStats ?? {},
     ),
     build.stats,
@@ -378,7 +384,15 @@ function talentResourceMaximums(
  * empty slot rather than nothing, so a half-built character still swings and
  * the missing piece is obvious in the results rather than silent.
  */
-function weaponsFor(
+/**
+ * The weapons a character ends up with: equipped where it has something, and
+ * placeholders where it does not.
+ *
+ * Exported so the Talent panel can describe the same character the fight
+ * builds. A panel that resolved weapons differently would report talents as
+ * inert that the fight applies, which is exactly what it used to do.
+ */
+export function weaponsFor(
   equipment: Equipment,
   style: CombatStyleId,
   offHandDamageMultiplier?: number,

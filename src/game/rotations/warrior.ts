@@ -1,8 +1,10 @@
 import type { Combatant, PriorityEntry, Rotation, SimulationContext } from '../../engine';
 import { PriorityRotation } from '../../engine';
 import type { CombatStyleId, StanceId } from '../character';
+import { isTankBuild } from '../character';
 import {
   BATTLE_SHOUT,
+  DEFENSIVE_STANCE,
   REND,
   SUNDER_ARMOR,
   SUNDER_ARMOR_MAX_STACKS,
@@ -378,6 +380,14 @@ export const SUNDER_REFRESH_WINDOW_MS = seconds(4);
 /** Rage above which the surplus goes into Heroic Strike. */
 export const BERSERKER_HEROIC_STRIKE_RAGE = 42;
 
+/**
+ * Rage at which the tank list spends on Heroic Strike.
+ *
+ * The ruleset owner's figure, and lower than the Berserker list's 42: a tank
+ * generates less rage and has more that must be paid for.
+ */
+export const DEFENSIVE_HEROIC_STRIKE_RAGE = 26;
+
 /** Milliseconds of fight remaining. */
 function remainingMs(context: SimulationContext): number {
   return context.plannedDurationMs - context.clock.now();
@@ -458,6 +468,93 @@ export const WARRIOR_DUAL_WIELD_BERSERKER_ROTATION: Rotation = new PriorityRotat
 );
 
 /**
+ * 1H & Shield, Defensive Stance. Specified by the ruleset owner, in this order.
+ *
+ * ----------------------------------------------------------------------------
+ * A TANK'S LIST, and like the Berserker one it is a list rather than the
+ * general shield list with a filter. The order is the owner's, the Heroic
+ * Strike threshold is its own, and what is absent is absent on purpose.
+ *
+ * It OPENS BY GETTING INTO DEFENSIVE STANCE and stays there. Every other
+ * entry is castable in Defensive, so the only stance change it ever makes is
+ * the one that puts it right -- which matters more here than anywhere, since
+ * Defensive Stance is where the damage reduction and Revenge live, and the
+ * general shield list spends hundreds of rage a fight dancing out of it.
+ *
+ * Revenge needs no condition of its own: it is gated on the window a dodge,
+ * parry or block opens, and `checkCast` refuses it until then. Writing the
+ * condition here as well would put the same rule in two places and let them
+ * drift. The same goes for Shield Slam and its talent -- a character without
+ * it does not have the ability at all.
+ * ----------------------------------------------------------------------------
+ */
+const WARRIOR_SHIELD_DEFENSIVE: readonly PriorityEntry[] = [
+  /*
+   * First, and only when it is not already up.
+   *
+   * A stance is an aura that lasts until another replaces it, so this fires
+   * once at the pull and then never again -- unless something else moved the
+   * character, which is exactly when it should fire.
+   */
+  {
+    abilityId: 'defensive_stance_cast',
+    condition: (context, actor) =>
+      actor.auras.remainingMs(DEFENSIVE_STANCE.id, context.clock.now()) <= 0,
+  },
+  {
+    abilityId: 'battle_shout_cast',
+    condition: (context, actor) =>
+      actor.auras.remainingMs(BATTLE_SHOUT.id, context.clock.now()) <= 0,
+  },
+  /*
+   * To five stacks, and then held there.
+   *
+   * The owner's wording is "if not 5 stacks", and the refresh window is kept
+   * as well: `refreshBehaviour: 'reset'` means one cast renews the whole
+   * stack, so letting it expire throws away five casts rather than one.
+   */
+  {
+    abilityId: 'sunder_armor_cast',
+    condition: (context, _actor, target) => {
+      if (!target) return false;
+      const stacks = target.auras.stacksOf(SUNDER_ARMOR.id);
+      if (stacks < SUNDER_ARMOR_MAX_STACKS) return true;
+      return (
+        target.auras.remainingMs(SUNDER_ARMOR.id, context.clock.now()) <
+        SUNDER_REFRESH_WINDOW_MS
+      );
+    },
+  },
+  /*
+   * Surplus rage into the next swing, at 26 rather than the Berserker list's
+   * 42. A tank has less rage to spare and more to spend it on.
+   */
+  {
+    abilityId: 'heroic_strike',
+    condition: (_context, actor) =>
+      (actor.resources.get('rage')?.current ?? 0) >= DEFENSIVE_HEROIC_STRIKE_RAGE,
+  },
+  // Talent-gated: a character without Shield Slam does not know the ability,
+  // so the entry is simply skipped rather than needing a condition.
+  { abilityId: 'shield_slam' },
+  // Gated on the window an avoided attack opens. `checkCast` refuses it until
+  // then, so repeating that rule here would be a second copy of it.
+  { abilityId: 'revenge' },
+  { abilityId: 'thunder_clap' },
+  // Last: a bleed is worth least when everything else is available.
+  {
+    abilityId: 'rend',
+    condition: (context, _actor, target) =>
+      !!target && target.auras.remainingMs(REND.id, context.clock.now()) <= 0,
+  },
+];
+
+export const WARRIOR_SHIELD_DEFENSIVE_ROTATION: Rotation = new PriorityRotation(
+  'Warrior (Shield, Defensive)',
+  WARRIOR_SHIELD_DEFENSIVE,
+);
+
+/**
  * The list a warrior of this combat style and stance uses.
  *
  * Stance selects a list as well as gating abilities, because a rotation that
@@ -469,6 +566,10 @@ export function warriorRotation(style: CombatStyleId, stance?: StanceId): Rotati
   if (style === 'dual_wield' && stance === 'berserker') {
     return WARRIOR_DUAL_WIELD_BERSERKER_ROTATION;
   }
+  // The tank list, by the same rule that picks the Berserker one: style AND
+  // stance together, because a shield warrior in Berserker is a different
+  // character from one in Defensive.
+  if (isTankBuild(style, stance)) return WARRIOR_SHIELD_DEFENSIVE_ROTATION;
   return style === 'one_hand_shield' ? WARRIOR_SHIELD_ROTATION : WARRIOR_MELEE_ROTATION;
 }
 

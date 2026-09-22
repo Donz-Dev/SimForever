@@ -51,6 +51,16 @@ const RAGE_ON_HIT = RAGE_FROM_AUTO_ATTACK;
  */
 export const OFF_HAND_DAMAGE_MULTIPLIER = 0.5;
 
+/**
+ * Block chance a character has for holding a shield at all.
+ *
+ * Stated by the ruleset owner: 5%, before talents, before defense skill and
+ * before Shield Block. It belongs to the SHIELD rather than to the class -- a
+ * warrior dual-wielding blocks nothing -- so it is granted when one is
+ * equipped rather than sitting in the class baseline the way base parry does.
+ */
+export const BASE_BLOCK_CHANCE_WITH_SHIELD = 5;
+
 export const PLACEHOLDER_ONE_HAND: WeaponProfile = {
   name: 'Melee',
   swingTimerMs: 2600,

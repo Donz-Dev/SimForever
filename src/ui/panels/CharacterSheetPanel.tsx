@@ -225,11 +225,15 @@ function warriorRows(profile: CharacterProfile, style: CombatStyleId): readonly 
     });
 
     /*
-     * RESISTANCE, AND IT DOES NOTHING. Requested for display, and labelled so
-     * on the row itself -- the engine has no resistance stat and Forever
-     * states no formula for magic mitigation, so no fight changes because of
-     * this number. The Gear panel lists every piece under "Equipped but not
-     * simulated" as well.
+     * RESISTANCE, AND IT STILL DOES NOTHING -- there is no resistance stat and
+     * Forever states no formula for magic mitigation, so no fight changes
+     * because of this number. It is here on the ruleset owner's instruction,
+     * as a total to look at.
+     *
+     * The row no longer says "(not simulated)" and the Gear panel no longer
+     * repeats one line per piece: nineteen slots of plate produced a wall of
+     * rows saying the same thing nineteen times, which buried the effects that
+     * genuinely have no mechanic behind them.
      *
      * Only schools the gear actually carries get a row. A run of zeroes would
      * suggest five stats that exist and are worth nothing.
@@ -240,7 +244,7 @@ function warriorRows(profile: CharacterProfile, style: CombatStyleId): readonly 
       if (value <= 0) continue;
       rows.push({
         label: `${school.charAt(0).toUpperCase() + school.slice(1)} Resistance`,
-        value: `${round(value)} (not simulated)`,
+        value: round(value),
       });
     }
   }
