@@ -117,10 +117,11 @@ physical and still ignore armor: set `appliesArmor: false` on every one.
 **The global cooldown is 1.5 seconds, 1.0 for a Rogue and a Cat-Form Druid,
 and it belongs to the CLASS rather than to the ability.** It arrives on the
 combatant as `baseGcdMs`, because the same ability costs a Rogue one second
-and a Warrior one and a half. Being off it means two things and both are
-enforced: the ability does not START a global cooldown, and it is not BLOCKED
-by one already running — Shield Block goes out while a Sunder Armor global
-cooldown is still ticking. On-next-swing abilities are off it by DERIVATION,
+and a Warrior one and a half. Being off it means ONE thing: the ability does not
+START a global cooldown. It is still BLOCKED by one already running, and what
+being off it buys is that the action AFTER it is free. Haste does not affect
+the global cooldown at all, only cast time. On-next-swing abilities are off it
+by DERIVATION,
 `triggersGcd ?? onNextSwing === undefined`, so a new one gets the rule without
 anyone remembering it; the failure mode of declaring it per ability is silent,
 because an ability that wrongly takes a global cooldown still costs the right

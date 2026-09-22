@@ -24,19 +24,23 @@ Four, and each is a different kind of thing.
 | **Bloodrage, Shield Block, Charge** | Named by the ruleset owner. Three Warrior abilities that simply do not cost one. |
 | **Warrior stances** | Not on the global cooldown, but they share a **1 second cooldown among the three**. |
 
-### Off the global cooldown means two things
+### Off the global cooldown means one thing, not two
 
-Both halves matter, and having only the first is a bug that is easy to miss:
+> **Off the global cooldown means the ability does not START one. It is still
+> BLOCKED by one already running.**
 
-1. Using the ability does not **start** a global cooldown.
-2. The ability is not **blocked** by one that is already running.
+The ruleset owner's ruling, and it is the narrower of the two readings.
+A running global cooldown blocks everything, without exception.
 
-Shield Block goes out while a Sunder Armor global cooldown is still ticking.
-That is the whole point of it being off the global cooldown, and a rotation
-built on the first half alone would still be waiting.
+So Shield Block still waits its turn to go out — and what being off the global
+cooldown buys is that the action **after** it is free. Cast Shield Block and
+Shield Slam follows immediately rather than 1.5 seconds later. That is why
+Shield Block can sit above Shield Slam in the tank list without costing it a
+strike.
 
-`checkCast` enforces (2) and `castAbility` enforces (1), and both read the
-same `triggersGcd(ability)` so they cannot disagree.
+`castAbility` reads `triggersGcd(ability)` to decide whether to start one.
+`checkCast` does not consult it at all: it refuses anything while
+`caster.isOnGcd(now)`.
 
 ### On-next-swing is derived, not declared
 
@@ -81,24 +85,37 @@ style as well as a class.
 
 ## Haste
 
-A hasted global cooldown is floored at `MINIMUM_GCD_MS`, 750ms — and the floor
-can never *raise* a global cooldown that is already shorter than it, which a
-naive `Math.max` would do to a Rogue at 1.0 seconds the moment haste was
-involved.
+> **Haste does not affect the global cooldown.**
 
-Whether Forever hastes the physical global cooldown at all is **not stated**,
-and the current behaviour — that it does, via `affectedByHaste` defaulting to
-true — is an inherited assumption rather than a ruleset fact. Worth confirming.
+The ruleset owner's ruling. `gcdLength` takes no haste multiplier at all,
+rather than taking one and ignoring it — a parameter nothing reads is an
+invitation to start reading it.
+
+`affectedByHaste` still governs **cast time**, which is a different question
+with a different answer: a hasted Slam casts faster, and the global cooldown
+it costs is 1.5 seconds either way.
+
+`MINIMUM_GCD_MS` (750ms) still exists, and no longer has anything to do with
+haste. It is the floor for a **talent** that shortens the global cooldown —
+Improved Slam is the one — so a stack of reductions cannot reach zero.
 
 ## What this changed when it was written down
 
-Writing the rule out found three abilities disagreeing with it:
+Writing the rule out found four abilities disagreeing with it. **Heroic
+Strike, Cleave, Bloodrage and Charge** were all taking a global cooldown they
+should not, and had been since they were written.
 
-- **Heroic Strike and Cleave** were taking a global cooldown they should not.
-- **Bloodrage and Charge** were too.
+None of them looked broken: they cost the right resource, dealt the right
+damage and appeared in the right place in a breakdown. The only symptom was a
+rotation getting slightly fewer actions than it should, which is invisible
+without something to compare against.
 
-All four had been that way since they were written, and none of them looked
-broken: they cost the right resource, dealt the right damage and appeared in
-the right place in a breakdown. The only symptom was a rotation getting
-slightly fewer actions than it should, which is invisible without something to
-compare against.
+Two further things were settled by asking rather than assumed:
+
+- Whether an off-GCD ability is blocked by a running global cooldown. The
+  first implementation said no; the ruling is **yes**.
+- Whether haste shortens the global cooldown. The inherited behaviour said
+  yes; the ruling is **no**.
+
+Both had been decided by whoever wrote the code first, which is exactly the
+kind of thing this document exists to stop.

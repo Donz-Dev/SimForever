@@ -5,7 +5,7 @@ import { EventPriority, createEvent } from '../events';
 import type { SimulationContext } from '../simulation/SimulationContext';
 import type { Milliseconds } from '../time';
 import type { Ability, AbilityContext } from './Ability';
-import { DEFAULT_GCD_MS, MINIMUM_GCD_MS } from './Ability';
+import { DEFAULT_GCD_MS } from './Ability';
 
 /** Why an ability could not be used. Useful for debugging a stuck rotation. */
 export type CastRejection =
@@ -40,11 +40,16 @@ export function checkCast(
   if (caster.isCasting(now)) return { ok: false, reason: 'already_casting' };
 
   /*
-   * An ability that does not trigger the global cooldown is not BLOCKED by one
-   * either. That is the whole point of being off it: Shield Block goes out
-   * while a Sunder Armor global cooldown is still running.
+   * A RUNNING GLOBAL COOLDOWN BLOCKS EVERYTHING, including abilities that do
+   * not start one.
+   *
+   * The ruleset owner's ruling, and it is the narrower of the two readings:
+   * "off the global cooldown" here means an ability does not SPEND one, not
+   * that it ignores one already running. So Shield Block is free in the sense
+   * that the strike after it is not delayed -- and it still has to wait for
+   * the current global cooldown to finish before it goes out.
    */
-  if (triggersGcd(ability) && caster.isOnGcd(now)) {
+  if (caster.isOnGcd(now)) {
     return { ok: false, reason: 'on_gcd' };
   }
 
@@ -144,7 +149,7 @@ export function castAbility(
   }
 
   if (triggersGcd(ability)) {
-    caster.gcdReadyAt = now + gcdLength(ability, haste, caster.baseGcdMs);
+    caster.gcdReadyAt = now + gcdLength(ability, caster.baseGcdMs);
   }
 
   context.telemetry.emit({
@@ -223,7 +228,17 @@ export function triggersGcd(ability: Ability): boolean {
 }
 
 /**
- * Hasted global cooldown, floored at MINIMUM_GCD_MS.
+ * How long a global cooldown lasts. HASTE DOES NOT TOUCH IT.
+ *
+ * The ruleset owner's ruling, and it is why this takes no haste multiplier at
+ * all rather than taking one and ignoring it: a parameter nothing reads is an
+ * invitation to start reading it. `affectedByHaste` still governs CAST TIME,
+ * which is a different question with a different answer.
+ *
+ * With no hasting there is no floor to apply here either. `MINIMUM_GCD_MS`
+ * still exists and is still used, but by the TALENT path -- a talent that
+ * shortens the global cooldown, like Improved Slam, needs something to stop
+ * it reaching zero. Haste no longer has anything to be floored.
  *
  * `baseGcdMs` is the CASTER'S, because how long a global cooldown lasts is a
  * property of the class rather than of the ability -- a Rogue's is 1.0 seconds
@@ -232,11 +247,7 @@ export function triggersGcd(ability: Ability): boolean {
  */
 export function gcdLength(
   ability: Ability,
-  hasteMultiplier: number,
   baseGcdMs: Milliseconds = DEFAULT_GCD_MS,
 ): Milliseconds {
-  const base = ability.gcdMs ?? baseGcdMs;
-  if (!(ability.affectedByHaste ?? true)) return base;
-  // The floor cannot raise a global cooldown that is already shorter than it.
-  return Math.max(Math.min(MINIMUM_GCD_MS, base), applyHaste(base, hasteMultiplier));
+  return ability.gcdMs ?? baseGcdMs;
 }

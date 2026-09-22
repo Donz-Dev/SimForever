@@ -93,8 +93,8 @@ describe('how long a global cooldown is', () => {
     expect(rogue.baseGcdMs).toBe(QUICKENED_GCD_MS);
 
     const ability = plain();
-    expect(gcdLength(ability, 1, warrior.baseGcdMs)).toBe(1500);
-    expect(gcdLength(ability, 1, rogue.baseGcdMs)).toBe(1000);
+    expect(gcdLength(ability, warrior.baseGcdMs)).toBe(1500);
+    expect(gcdLength(ability, rogue.baseGcdMs)).toBe(1000);
   });
 
   it('keeps a 1.5 second fallback for an actor with no class', () => {
@@ -103,18 +103,32 @@ describe('how long a global cooldown is', () => {
     expect(createTrainingDummy().baseGcdMs).toBe(1500);
   });
 
-  it('never lets the haste floor LENGTHEN a short global cooldown', () => {
+  it('is NOT shortened by haste', () => {
     /*
-     * A naive `Math.max(MINIMUM_GCD_MS, ...)` would take a Rogue's 1.0 second
-     * global cooldown and make it 750ms at worst -- fine -- but a ruleset with
-     * a base below the floor would have it raised instead. The floor is a
-     * floor on the HASTED value, not a minimum the base must clear.
+     * The ruleset owner's ruling. `gcdLength` takes no haste multiplier at
+     * all rather than taking one and ignoring it -- a parameter nothing reads
+     * is an invitation to start reading it.
+     *
+     * `affectedByHaste` still governs CAST TIME, which is a different
+     * question with a different answer.
      */
+    const player = createPlayer({
+      race: 'human',
+      characterClass: 'warrior',
+      combatStyle: 'dual_wield',
+      // Enough haste rating to move anything that haste touches.
+      bonusStats: { hasteRating: 2000 },
+    });
+    expect(gcdLength(plain(), player.baseGcdMs)).toBe(STANDARD_GCD_MS);
+  });
+
+  it('keeps a floor for a TALENT that shortens it, not for haste', () => {
+    // Improved Slam reduces a global cooldown; it needs something to stop at.
     expect(MINIMUM_GCD_MS).toBe(750);
-    const short = plain({ gcdMs: 500 });
-    expect(gcdLength(short, 1, STANDARD_GCD_MS)).toBe(500);
-    // And it still floors a hasted one that started above it.
-    expect(gcdLength(plain(), 10, STANDARD_GCD_MS)).toBe(MINIMUM_GCD_MS);
+  });
+
+  it('honours an ability that overrides the length', () => {
+    expect(gcdLength(plain({ gcdMs: 500 }), STANDARD_GCD_MS)).toBe(500);
   });
 });
 
@@ -186,11 +200,14 @@ describe('being off the global cooldown means two things', () => {
     expect(player.isOnGcd(sim.clock.now())).toBe(false);
   });
 
-  it('is not BLOCKED by one already running', () => {
+  it('IS still blocked by one already running', () => {
     /*
-     * THE HALF THAT IS EASY TO MISS, and without which a rotation built on
-     * off-GCD abilities would still be waiting. Shield Block goes out while a
-     * Sunder Armor global cooldown is still ticking.
+     * THE NARROWER OF THE TWO READINGS, and the ruleset owner's: "off the
+     * global cooldown" means an ability does not SPEND one, not that it
+     * ignores one already running.
+     *
+     * So Shield Block is free in the sense that the strike after it is not
+     * delayed, and it still waits its turn to go out.
      */
     const { player, sim, dummy } = warrior();
     sim.cast(player, player.abilities.get('sunder_armor_cast')!, dummy);
@@ -198,12 +215,26 @@ describe('being off the global cooldown means two things', () => {
 
     expect(
       sim.canCast(player, player.abilities.get('shield_block_cast')!, dummy),
-    ).toBe(true);
-    // And an ordinary ability is refused at the same moment.
-    expect(sim.canCast(player, player.abilities.get('revenge')!, dummy)).toBe(false);
+    ).toBe(false);
+    // An ordinary ability is refused at the same moment, for the same reason.
+    expect(sim.canCast(player, player.abilities.get('thunder_clap')!, dummy)).toBe(false);
   });
 
-  it('starts a global cooldown of the caster own length for anything else', () => {
+  it('leaves the next action free, which is what being off it buys', () => {
+    /*
+     * The whole value of the exception. After Shield Block the character is
+     * not on a global cooldown, so the strike below it in the list goes out
+     * immediately rather than 1.5 seconds later.
+     */
+    const { player, sim, dummy } = warrior();
+    sim.cast(player, player.abilities.get('shield_block_cast')!, dummy);
+    // Sunder Armor rather than Revenge: Revenge needs an avoided attack to
+    // have opened its window, so it would be refused for a reason that has
+    // nothing to do with the global cooldown.
+    expect(sim.canCast(player, player.abilities.get('sunder_armor_cast')!, dummy)).toBe(true);
+  });
+
+  it("starts a global cooldown of the caster's own length for anything else", () => {
     const { player, sim, dummy } = warrior();
     const before = sim.clock.now();
     sim.cast(player, player.abilities.get('sunder_armor_cast')!, dummy);

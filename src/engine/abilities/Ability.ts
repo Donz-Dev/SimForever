@@ -16,7 +16,13 @@ import type { Milliseconds } from '../time';
  */
 export const DEFAULT_GCD_MS = 1500;
 
-/** The floor a hasted global cooldown cannot go below. */
+/**
+ * The floor a SHORTENED global cooldown cannot go below.
+ *
+ * Haste does not touch the global cooldown in this ruleset, so this is not
+ * about haste -- it is the floor for a talent that reduces it, such as the
+ * Warrior's Improved Slam. See `abilitiesForClass`.
+ */
 export const MINIMUM_GCD_MS = 750;
 
 /** What an ability costs to use. */
