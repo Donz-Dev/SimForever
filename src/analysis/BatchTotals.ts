@@ -29,6 +29,18 @@ import type { AttackOutcome, TelemetryEvent, TelemetrySink } from '../engine';
 /** Per-ability damage, pooled across a whole batch. */
 export interface BatchAbilityTotals {
   readonly abilityName: string;
+  /**
+   * Mean casts per iteration.
+   *
+   * COUNTED FROM THE CAST EVENT, not from damage, so an ability that deals
+   * none still has a row. Battle Shout, Sunder Armor, Bloodrage and every
+   * stance were invisible in this table -- a rotation could be casting one
+   * forty times a fight and the only evidence was the rage it spent.
+   *
+   * Zero for anything that deals damage without being cast: an auto attack, a
+   * proc, a bleed tick. Those are not uses of an ability.
+   */
+  readonly uses: number;
   /** Mean damage per iteration. */
   readonly damage: number;
   /** Mean attempts per iteration, landed or not. */
@@ -122,6 +134,7 @@ export interface BatchDamageTaken {
 }
 
 interface AbilityAccumulator {
+  uses: number;
   damage: number;
   attempts: number;
   hits: number;
@@ -200,6 +213,21 @@ export class BatchTotals implements TelemetrySink {
       );
       this.recordDealt(event);
       this.recordTaken(event);
+      return;
+    }
+
+    if (event.type === 'cast') {
+      /*
+       * Keyed on the ability's NAME, the same key the damage rows use, so a
+       * cast and the damage it caused land in one row rather than two. An
+       * ability whose damage is named differently -- Whirlwind's off-hand
+       * strike -- gets its own row with no uses, which is correct: it is one
+       * cast producing two strikes.
+       */
+      const perActor = mapFor(this.abilities, event.sourceId);
+      const entry = perActor.get(event.abilityName) ?? blankAbility();
+      entry.uses += 1;
+      perActor.set(event.abilityName, entry);
       return;
     }
 
@@ -322,6 +350,7 @@ export class BatchTotals implements TelemetrySink {
     return [...perActor.entries()]
       .map(([abilityName, e]) => ({
         abilityName,
+        uses: this.per(e.uses),
         damage: this.per(e.damage),
         attempts: this.per(e.attempts),
         hits: this.per(e.hits),
@@ -441,5 +470,5 @@ function mapFor<T>(outer: Map<string, Map<string, T>>, key: string): Map<string,
 }
 
 function blankAbility(): AbilityAccumulator {
-  return { damage: 0, attempts: 0, hits: 0, crits: 0, glances: 0, avoided: 0 };
+  return { uses: 0, damage: 0, attempts: 0, hits: 0, crits: 0, glances: 0, avoided: 0 };
 }

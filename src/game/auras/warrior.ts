@@ -306,22 +306,42 @@ export const ANGER_MANAGEMENT: AuraDefinition = {
   },
 };
 
-export const BLOODRAGE: AuraDefinition = {
-  id: 'bloodrage',
-  name: 'Bloodrage',
-  durationMs: BLOODRAGE_DURATION_MS,
-  periodic: {
-    intervalMs: BLOODRAGE_TICK_INTERVAL_MS,
-    onTick: (context, aura) => {
-      const actor = combatantIn(context, aura.targetId);
-      if (!actor) return;
-      context.grantResource(actor, 'rage', BLOODRAGE_RAGE_PER_TICK, {
-        id: 'bloodrage',
-        name: 'Bloodrage',
-      });
+/**
+ * Bloodrage's over-time half, scaled by Improved Bloodrage.
+ *
+ * A FUNCTION rather than a constant, because the talent multiplies "all the
+ * Rage generated" and the over-time half is most of it. An aura definition is
+ * a module-level object shared by every character in every iteration of a
+ * batch, so the multiplier cannot be written into the shared one -- it has to
+ * produce a definition per character, the way `enrageAura` does.
+ *
+ * The ID STAYS `bloodrage` whatever the multiplier, so telemetry, uptime and
+ * the rage breakdown group a talented cast with an untalented one.
+ */
+export function bloodrageAura(rageMultiplier = 1): AuraDefinition {
+  return {
+    id: 'bloodrage',
+    name: 'Bloodrage',
+    durationMs: BLOODRAGE_DURATION_MS,
+    periodic: {
+      intervalMs: BLOODRAGE_TICK_INTERVAL_MS,
+      onTick: (context, aura) => {
+        const actor = combatantIn(context, aura.targetId);
+        if (!actor) return;
+        context.grantResource(actor, 'rage', BLOODRAGE_RAGE_PER_TICK * rageMultiplier, {
+          id: 'bloodrage',
+          name: 'Bloodrage',
+        });
+      },
     },
-  },
-};
+  };
+}
+
+/** The bonus key Improved Bloodrage sets, as a percentage. */
+export const BLOODRAGE_RAGE_BONUS = 'ragePercent';
+
+/** The untalented one, for anything that just needs the definition. */
+export const BLOODRAGE: AuraDefinition = bloodrageAura();
 
 // ---------------------------------------------------------------------------
 // Defensive — PLACEHOLDER

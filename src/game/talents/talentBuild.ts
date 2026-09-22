@@ -82,6 +82,13 @@ export interface TalentBuild {
   readonly offHandHitBonus: number;
   /** Resource cost to SUBTRACT from an ability, by ability id. */
   readonly abilityCostReduction: ReadonlyMap<string, number>;
+  /**
+   * Resource cost to SUBTRACT from every ability that rolls a combat table.
+   *
+   * Derived from `attackTable` rather than a list of ids, so an ability added
+   * later is covered without anyone remembering to add it.
+   */
+  readonly attackAbilityCostReduction: number;
   /** Cooldown to SUBTRACT from an ability, in milliseconds, by ability id. */
   readonly abilityCooldownReductionMs: ReadonlyMap<string, number>;
   /** Per-ability crit, crit damage and damage scaling, for the combatant. */
@@ -130,6 +137,7 @@ const EMPTY: TalentBuild = {
   offHandResourceMultiplier: 1,
   offHandHitBonus: 0,
   abilityCostReduction: new Map(),
+  attackAbilityCostReduction: 0,
   abilityCooldownReductionMs: new Map(),
   abilityModifiers: new AbilityModifiers(),
   reactions: [],
@@ -252,6 +260,7 @@ export function talentBuild(
   let offHandResourceBonusPct = 0;
   let offHandHitBonus = 0;
   const abilityCostReduction = new Map<string, number>();
+  let attackAbilityCostReduction = 0;
   const abilityCooldownReductionMs = new Map<string, number>();
   const abilityModifiers = new AbilityModifiers();
   const reactions: Reaction[] = [];
@@ -386,6 +395,9 @@ export function talentBuild(
             (abilityCostReduction.get(effect.abilityId) ?? 0) + value,
           );
           break;
+        case 'attackAbilityCost':
+          attackAbilityCostReduction += value;
+          break;
         case 'abilityCooldown':
           abilityCooldownReductionMs.set(
             effect.abilityId,
@@ -494,6 +506,7 @@ export function talentBuild(
     offHandResourceMultiplier: 1 + offHandResourceBonusPct / 100,
     offHandHitBonus,
     abilityCostReduction,
+    attackAbilityCostReduction,
     abilityCooldownReductionMs,
     abilityModifiers,
     reactions,

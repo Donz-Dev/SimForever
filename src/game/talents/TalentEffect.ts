@@ -52,6 +52,20 @@ export type TalentEffect =
 
   /** Reduces an ability's resource cost by the talent's value. */
   | { readonly kind: 'abilityCost'; readonly abilityId: string }
+  /**
+   * Resource cost to SUBTRACT from every ability that rolls a combat table.
+   *
+   * Focused Rage reduces the cost of "your offensive abilities", and the
+   * source never says which those are. The ruleset owner has: an ability is
+   * offensive if it is PROCESSED THROUGH A COMBAT TABLE. Heroic Strike,
+   * Thunder Clap and Sunder Armor are; Battle Shout is not.
+   *
+   * That is a property the abilities already carry -- `attackTable` -- so the
+   * set is derived rather than listed. A list would need editing every time
+   * an ability was added, and the edit that was forgotten would silently make
+   * the talent weaker.
+   */
+  | { readonly kind: 'attackAbilityCost' }
 
   /**
    * Reduces an ability's cooldown by the talent's value.
