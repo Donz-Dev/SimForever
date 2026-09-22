@@ -65,7 +65,14 @@ export class AuraCollection {
       return this.refresh(context, existing);
     }
 
-    const instance = new AuraInstance(definition, sourceId, this.owner.id, context.clock.now());
+    const instance = new AuraInstance(
+      definition,
+      sourceId,
+      this.owner.id,
+      context.clock.now(),
+      // A charge effect starts full rather than building to its cap.
+      definition.chargesOnApply ?? 1,
+    );
     this.auras.set(definition.id, instance);
 
     this.applyStatModifiers(instance);
@@ -103,6 +110,25 @@ export class AuraCollection {
       if (!instance.definition.consumedBySwing) continue;
       if (instance.stacks > 1) {
         instance.stacks -= 1;
+      } else {
+        this.remove(context, instance.id);
+      }
+    }
+  }
+
+  /**
+   * Spend one stack of every aura a BLOCK consumes, dropping any that run out.
+   *
+   * Called by the damage pipeline when this combatant blocks. The mirror of
+   * `consumeSwingCharges`, which fires when it swings.
+   */
+  consumeBlockCharges(context: SimulationContext): void {
+    for (const instance of [...this.auras.values()]) {
+      if (!instance.definition.consumedByBlock) continue;
+      if (instance.stacks > 1) {
+        instance.stacks -= 1;
+        // The stat modifiers do not scale with stacks here -- the charge is a
+        // count of uses, not a magnitude -- so nothing needs reapplying.
       } else {
         this.remove(context, instance.id);
       }

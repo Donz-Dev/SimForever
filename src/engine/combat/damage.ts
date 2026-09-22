@@ -415,6 +415,19 @@ export function dealDamage(
   const resolution = resolveDamage(request, attack, weaponDamage);
   const { target, source } = request;
 
+  /*
+   * A BLOCK SPENDS A CHARGE, and it is spent here rather than inside
+   * `resolveDamage` because that function deliberately applies nothing -- an
+   * ability can resolve a hit without it happening.
+   *
+   * After the damage is worked out, so the block that pays is the block that
+   * benefits. Shield Block is "two blocks", and consuming the charge first
+   * would make the second one land unblocked.
+   */
+  if (attack.outcome === 'block') {
+    target.auras.consumeBlockCharges(context);
+  }
+
   const healthBefore = target.health.current;
   /*
    * A combatant an assumed healer keeps up never drops below one health. The

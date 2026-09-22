@@ -534,6 +534,17 @@ const WARRIOR_SHIELD_DEFENSIVE: readonly PriorityEntry[] = [
     condition: (_context, actor) =>
       (actor.resources.get('rage')?.current ?? 0) >= DEFENSIVE_HEROIC_STRIKE_RAGE,
   },
+  /*
+   * Above Shield Slam, and it costs nothing to put there: Shield Block does
+   * not trigger the global cooldown, so taking this entry does not delay the
+   * strike below it. Casting it is a rage cost and a five second cooldown,
+   * nothing more.
+   *
+   * No condition. It lasts two blocks or seven seconds, so "cast it whenever
+   * it is off cooldown" is the whole rule -- and the cooldown check in
+   * `checkCast` already enforces the only limit there is.
+   */
+  { abilityId: 'shield_block_cast' },
   // Talent-gated: a character without Shield Slam does not know the ability,
   // so the entry is simply skipped rather than needing a condition.
   { abilityId: 'shield_slam' },
