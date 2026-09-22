@@ -5,7 +5,7 @@ import { EventPriority, createEvent } from '../events';
 import type { SimulationContext } from '../simulation/SimulationContext';
 import type { Milliseconds } from '../time';
 import type { Ability, AbilityContext } from './Ability';
-import { DEFAULT_GCD_MS, MINIMUM_GCD_MS } from './Ability';
+import { DEFAULT_GCD_MS } from './Ability';
 
 /** Why an ability could not be used. Useful for debugging a stuck rotation. */
 export type CastRejection =
@@ -39,7 +39,17 @@ export function checkCast(
   if (!caster.isAlive) return { ok: false, reason: 'caster_dead' };
   if (caster.isCasting(now)) return { ok: false, reason: 'already_casting' };
 
-  if ((ability.triggersGcd ?? true) && caster.isOnGcd(now)) {
+  /*
+   * A RUNNING GLOBAL COOLDOWN BLOCKS EVERYTHING, including abilities that do
+   * not start one.
+   *
+   * The ruleset owner's ruling, and it is the narrower of the two readings:
+   * "off the global cooldown" here means an ability does not SPEND one, not
+   * that it ignores one already running. So Shield Block is free in the sense
+   * that the strike after it is not delayed -- and it still has to wait for
+   * the current global cooldown to finish before it goes out.
+   */
+  if (caster.isOnGcd(now)) {
     return { ok: false, reason: 'on_gcd' };
   }
 
@@ -138,8 +148,8 @@ export function castAbility(
     });
   }
 
-  if (ability.triggersGcd ?? true) {
-    caster.gcdReadyAt = now + gcdLength(ability, haste);
+  if (triggersGcd(ability)) {
+    caster.gcdReadyAt = now + gcdLength(ability, caster.baseGcdMs);
   }
 
   context.telemetry.emit({
@@ -196,9 +206,48 @@ export function castLength(ability: Ability, hasteMultiplier: number): Milliseco
   return (ability.affectedByHaste ?? true) ? applyHaste(base, hasteMultiplier) : base;
 }
 
-/** Hasted global cooldown, floored at MINIMUM_GCD_MS. */
-export function gcdLength(ability: Ability, hasteMultiplier: number): Milliseconds {
-  const base = ability.gcdMs ?? DEFAULT_GCD_MS;
-  if (!(ability.affectedByHaste ?? true)) return base;
-  return Math.max(MINIMUM_GCD_MS, applyHaste(base, hasteMultiplier));
+/**
+ * Whether using this ability starts a global cooldown.
+ *
+ * ----------------------------------------------------------------------------
+ * ON-NEXT-SWING ABILITIES ARE OFF THE GLOBAL COOLDOWN, and that is derived
+ * here rather than written on each one.
+ *
+ * Heroic Strike and Cleave are not cast: they are ARMED, and replace the next
+ * swing when it lands. Nothing is spent from the character's action budget to
+ * arm one, which is exactly what makes them the place surplus rage goes.
+ *
+ * Deriving it from `onNextSwing` rather than setting `triggersGcd: false` on
+ * each means a new on-next-swing ability gets the rule for free instead of
+ * needing someone to remember it. An ability that genuinely wants both can
+ * still say `triggersGcd: true`.
+ * ----------------------------------------------------------------------------
+ */
+export function triggersGcd(ability: Ability): boolean {
+  return ability.triggersGcd ?? ability.onNextSwing === undefined;
+}
+
+/**
+ * How long a global cooldown lasts. HASTE DOES NOT TOUCH IT.
+ *
+ * The ruleset owner's ruling, and it is why this takes no haste multiplier at
+ * all rather than taking one and ignoring it: a parameter nothing reads is an
+ * invitation to start reading it. `affectedByHaste` still governs CAST TIME,
+ * which is a different question with a different answer.
+ *
+ * With no hasting there is no floor to apply here either. `MINIMUM_GCD_MS`
+ * still exists and is still used, but by the TALENT path -- a talent that
+ * shortens the global cooldown, like Improved Slam, needs something to stop
+ * it reaching zero. Haste no longer has anything to be floored.
+ *
+ * `baseGcdMs` is the CASTER'S, because how long a global cooldown lasts is a
+ * property of the class rather than of the ability -- a Rogue's is 1.0 seconds
+ * and a Warrior's is 1.5, for the same Sinister Strike-shaped ability. An
+ * ability may still override it with `gcdMs`.
+ */
+export function gcdLength(
+  ability: Ability,
+  baseGcdMs: Milliseconds = DEFAULT_GCD_MS,
+): Milliseconds {
+  return ability.gcdMs ?? baseGcdMs;
 }

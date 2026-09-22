@@ -129,19 +129,29 @@ describe('AbilityBook', () => {
   });
 });
 
-describe('haste applied to cast time and GCD', () => {
-  it('leaves both unchanged without haste', () => {
+describe('haste applied to cast time, but NOT to the global cooldown', () => {
+  it('leaves a cast unchanged without haste', () => {
     expect(castLength(SLOW_BOLT, 1)).toBe(seconds(2));
-    expect(gcdLength(SIMPLE_STRIKE, 1)).toBe(DEFAULT_GCD_MS);
   });
 
-  it('shortens both with haste', () => {
+  it('shortens a cast with haste', () => {
     expect(castLength(SLOW_BOLT, 1.25)).toBe(1600);
-    expect(gcdLength(SIMPLE_STRIKE, 1.25)).toBe(1200);
   });
 
-  it('floors the GCD', () => {
-    expect(gcdLength(SIMPLE_STRIKE, 10)).toBe(MINIMUM_GCD_MS);
+  it('does not shorten the global cooldown with haste at all', () => {
+    /*
+     * The ruleset owner's ruling. `gcdLength` takes no haste multiplier now
+     * -- its second argument is the CASTER'S base length -- so this is
+     * asserted by the shape of the call as much as by the number.
+     */
+    expect(gcdLength(SIMPLE_STRIKE, DEFAULT_GCD_MS)).toBe(DEFAULT_GCD_MS);
+    expect(gcdLength(SIMPLE_STRIKE)).toBe(DEFAULT_GCD_MS);
+  });
+
+  it('still has a floor, for a TALENT that shortens it', () => {
+    // Not for haste, which no longer touches it. Improved Slam is the one
+    // that reduces a global cooldown, and it needs something to stop at.
+    expect(MINIMUM_GCD_MS).toBe(750);
   });
 
   it('reports an instant ability as zero cast time', () => {

@@ -114,6 +114,20 @@ table. A DoT with no `critFrom` cannot crit and consumes no random number, so
 adding the field never shifts a seeded run that does not use it. Bleeds are
 physical and still ignore armor: set `appliesArmor: false` on every one.
 
+**The global cooldown is 1.5 seconds, 1.0 for a Rogue and a Cat-Form Druid,
+and it belongs to the CLASS rather than to the ability.** It arrives on the
+combatant as `baseGcdMs`, because the same ability costs a Rogue one second
+and a Warrior one and a half. Being off it means ONE thing: the ability does not
+START a global cooldown. It is still BLOCKED by one already running, and what
+being off it buys is that the action AFTER it is free. Haste does not affect
+the global cooldown at all, only cast time. On-next-swing abilities are off it
+by DERIVATION,
+`triggersGcd ?? onNextSwing === undefined`, so a new one gets the rule without
+anyone remembering it; the failure mode of declaring it per ability is silent,
+because an ability that wrongly takes a global cooldown still costs the right
+rage and deals the right damage. Full rules, exceptions and provenance in
+[docs/global-cooldown.md](docs/global-cooldown.md).
+
 **A cast interrupts the swing in progress, and the swing timer resets.** That is
 what makes a cast a real cost to a melee character rather than free damage
 between swings. `Ability.swingTimer: 'hold'` is the exception — the timer runs on
