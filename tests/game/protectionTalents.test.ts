@@ -20,7 +20,9 @@ import { isTankBuild } from '../../src/game/character';
 import { startingEquipmentFor } from '../../src/game/items/startingSets';
 import { BASE_BLOCK_CHANCE_WITH_SHIELD } from '../../src/game/actors/weapons';
 import {
+  DEFENSIVE_BLOODRAGE_RAGE,
   DEFENSIVE_HEROIC_STRIKE_RAGE,
+  WARRIOR_SHIELD_DEFENSIVE,
   WARRIOR_SHIELD_DEFENSIVE_ROTATION,
   warriorRotation,
 } from '../../src/game/rotations/warrior';
@@ -266,17 +268,31 @@ describe('Toughness', () => {
 // ---------------------------------------------------------------------------
 
 describe('Bastion', () => {
-  it('multiplies all damage by 1.1 at 5/5 with a shield', () => {
-    // The ruleset owner's figure, written out by hand.
+  it('raises DPS by MORE than its ten percent, and that is not a bug', () => {
+    /*
+     * A 1.1x damage multiplier moves DPS by about 16%, not 10, and the extra
+     * is real: a warrior's rage income is proportional to damage dealt, so
+     * more damage buys more rage, which buys more casts, which deal more
+     * damage. The loop is the whole reason rage-starved builds scale oddly.
+     *
+     * It reads 1.1 exactly on a single swing, which is the test below --
+     * that is where the multiplier lives, uncontaminated by the feedback.
+     * Asserting 1.1 here would be asserting that the feedback does not exist.
+     */
     const plain = runProfileBatch(tank()).dps.mean;
     const specced = runProfileBatch(tank(legalise({ bastion: 5 }))).dps.mean;
-    expect(specced / plain).toBeCloseTo(1.1, 1);
+    const ratio = specced / plain;
+    expect(ratio).toBeGreaterThan(1.1);
+    expect(ratio).toBeLessThan(1.25);
   });
 
-  it('covers AUTO ATTACKS, not only abilities', () => {
+  it('is exactly 1.1 on a single swing, and covers AUTO ATTACKS', () => {
     /*
      * "All damage you deal", so it cannot be a per-ability modifier -- auto
      * attacks carry no ability id and nothing keyed to one reaches them.
+     *
+     * The average of one swing is where the multiplier is visible on its own:
+     * no rage feedback, no extra casts, just the number.
      */
     const swing = (talents: Record<string, number>) =>
       runProfileBatch(tank(talents)).abilities.find(
@@ -489,6 +505,45 @@ describe('the Protection priority list', () => {
     expect(WARRIOR_SHIELD_DEFENSIVE_ROTATION.name).toBe('Warrior (Shield, Defensive)');
     const result = runProfileBatch(tank(legalise({ shield_slam: 1 })));
     expect(result.rotationName).toBe('Warrior (Shield, Defensive)');
+  });
+
+  it('opens with Bloodrage while there is room for the rage', () => {
+    /*
+     * First in the list, and it costs nothing to be there: Bloodrage is off
+     * the global cooldown, so the entry does not delay the stance or the
+     * shout below it. A tank opens at zero rage and can do nothing until it
+     * has some.
+     */
+    const result = runProfileBatch(tank());
+    const rage = result.rage.gained.find((row) => row.sourceId === 'bloodrage');
+    expect(rage).toBeDefined();
+    expect(rage!.amount).toBeGreaterThan(15);
+
+    const row = result.abilities.find((entry) => entry.abilityName === 'Bloodrage');
+    expect(row?.uses ?? 0).toBeGreaterThan(0);
+  });
+
+  it('holds Bloodrage back once rage is high', () => {
+    /*
+     * Fifty is the ruleset owner's threshold, and the reason is waste:
+     * Bloodrage gives ten at once and ten over ten seconds, so casting it
+     * near the cap throws most of the second half away.
+     *
+     * Asserted against a character that STARTS full, where the condition is
+     * the only thing that could stop the cast.
+     */
+    expect(DEFENSIVE_BLOODRAGE_RAGE).toBe(50);
+
+    const player = built();
+    const pool = player.resources.get('rage')!;
+    pool.gain(pool.maximum);
+
+    const entry = WARRIOR_SHIELD_DEFENSIVE[0];
+    expect(entry.abilityId).toBe('bloodrage_cast');
+    expect(entry.condition?.(undefined as never, player, undefined)).toBe(false);
+
+    pool.drain(pool.current);
+    expect(entry.condition?.(undefined as never, player, undefined)).toBe(true);
   });
 
   it('never leaves Defensive Stance', () => {
