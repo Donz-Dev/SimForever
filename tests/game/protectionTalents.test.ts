@@ -1,11 +1,19 @@
 import { describe, expect, it } from 'vitest';
-import { ROLL_MAX, STAT_NAMES, toPercent } from '../../src/engine';
+import { ROLL_MAX, STAT_NAMES, toPercent, toSeconds } from '../../src/engine';
 import {
   COMBAT_CONSTANTS,
   createForeverAttackChances,
 } from '../../src/game/combat/attackChances';
 import { createPlayer } from '../../src/game/actors/createPlayer';
 import { createTrainingDummy } from '../../src/game/actors/createTrainingDummy';
+import { buildSimulation } from '../helpers/buildSimulation';
+import { SHIELD_BLOCK_ABILITY } from '../../src/game/abilities/warrior';
+import {
+  SHIELD_BLOCK,
+  SHIELD_BLOCK_BLOCK_CHANCE,
+  SHIELD_BLOCK_CHARGES,
+  SHIELD_BLOCK_DURATION_MS,
+} from '../../src/game/auras/warrior';
 import { armorFromItems, resistancesFromItems } from '../../src/game/items/equipment';
 import { ITEMS_BY_ID } from '../../src/game/items/itemData';
 import { isTankBuild } from '../../src/game/character';
@@ -544,6 +552,110 @@ describe('the Protection priority list', () => {
     expect(names).toContain('Thunder Clap');
     // Named so the day it changes is a visible change rather than a surprise.
     expect(names).not.toContain('Rend');
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Shield Block
+// ---------------------------------------------------------------------------
+
+describe('Shield Block', () => {
+  /*
+   * Spell 2565, transcribed BY HAND from the captured tooltip: "Increases
+   * chance to block by 75% for 7 sec, but will only block 2 attacks."
+   * 10 rage, instant, 5 second cooldown, Defensive Stance.
+   */
+  it('is seventy-five percent block, for seven seconds or two blocks', () => {
+    expect(SHIELD_BLOCK_BLOCK_CHANCE).toBe(75);
+    expect(toSeconds(SHIELD_BLOCK_DURATION_MS)).toBe(7);
+    expect(SHIELD_BLOCK_CHARGES).toBe(2);
+    expect(SHIELD_BLOCK.statModifiers?.[0]).toMatchObject({
+      stat: 'blockChance',
+      value: 75,
+    });
+  });
+
+  it('starts at its full two charges rather than building to them', () => {
+    /*
+     * A charge effect is full from the moment it is cast. Without
+     * `chargesOnApply` the only way to reach two was to cast it twice, which
+     * is neither what the tooltip says nor possible inside its own cooldown.
+     */
+    expect(SHIELD_BLOCK.chargesOnApply).toBe(2);
+    expect(SHIELD_BLOCK.consumedByBlock).toBe(true);
+  });
+
+  it('does NOT trigger the global cooldown', () => {
+    /*
+     * THE RULESET OWNER'S STATEMENT, not something read from a source --
+     * Forever's spell page gives the cost, cooldown, stance and effect and
+     * says nothing about the global cooldown, and no ability capture carries
+     * one. Recorded here so the provenance is not lost.
+     *
+     * It matters: off the global cooldown, Shield Block sits above Shield
+     * Slam in the tank list without costing it a strike.
+     */
+    expect(SHIELD_BLOCK_ABILITY.triggersGcd).toBe(false);
+  });
+
+  it('leaves the global cooldown alone when it is cast', () => {
+    // Asserted on the behaviour as well as the flag, because a flag nothing
+    // reads is the failure mode this whole project keeps finding.
+    const player = built();
+    const dummy = createTrainingDummy({ name: 'D', health: 100_000, armor: 0, level: 63 });
+    const sim = buildSimulation([player, dummy]);
+    sim.begin();
+    player.resources.get('rage')?.gain(100);
+
+    const before = player.gcdReadyAt;
+    sim.cast(player, player.abilities.get('shield_block_cast')!, undefined);
+    expect(player.gcdReadyAt).toBe(before);
+  });
+
+  it('raises block chance while it is up', () => {
+    const player = built();
+    const dummy = createTrainingDummy({ name: 'D', health: 100_000, armor: 0, level: 63 });
+    const sim = buildSimulation([player, dummy]);
+    sim.begin();
+    player.resources.get('rage')?.gain(100);
+
+    const before = player.stats.effective.blockChance;
+    sim.cast(player, player.abilities.get('shield_block_cast')!, undefined);
+    expect(player.stats.effective.blockChance - before).toBe(75);
+  });
+
+  it('falls off after two blocks', () => {
+    /*
+     * The charge limit, which is why the aura granted nothing before this:
+     * seventy-five percent for a full seven seconds with no cap would have
+     * overstated it badly, so it was left inert instead.
+     */
+    const player = built();
+    const dummy = createTrainingDummy({ name: 'D', health: 100_000, armor: 0, level: 63 });
+    const sim = buildSimulation([player, dummy]);
+    sim.begin();
+    player.resources.get('rage')?.gain(100);
+    sim.cast(player, player.abilities.get('shield_block_cast')!, undefined);
+
+    expect(player.auras.stacksOf(SHIELD_BLOCK.id)).toBe(2);
+    player.auras.consumeBlockCharges(sim);
+    expect(player.auras.stacksOf(SHIELD_BLOCK.id)).toBe(1);
+    player.auras.consumeBlockCharges(sim);
+    expect(player.auras.remainingMs(SHIELD_BLOCK.id, sim.clock.now())).toBe(0);
+  });
+
+  it('raises the block rate in a real fight', () => {
+    // The measurement that proves it is not inert any more. Without it the
+    // tank blocks at its base rate; with it, about half of every swing.
+    const row = runProfileBatch(tank()).damageTaken[0];
+    expect(row.rates.block ?? 0).toBeGreaterThan(0.4);
+  });
+
+  it('is cast by the tank list, above Shield Slam', () => {
+    const result = runProfileBatch(tank(legalise({ shield_slam: 1 })));
+    const uptime = result.buffUptime.find((row) => row.auraName === 'Shield Block');
+    expect(uptime).toBeDefined();
+    expect(uptime!.applications).toBeGreaterThan(3);
   });
 });
 

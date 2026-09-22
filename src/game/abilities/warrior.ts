@@ -780,11 +780,18 @@ export const SHIELD_WALL_ABILITY: Ability = {
 };
 
 /**
- * 10 rage, 5 second cooldown. Forever grants +75% block for 7 sec, limited to
- * TWO attacks -- and that per-attack charge limit is the part the aura system
- * cannot express yet, so the aura carries no block modifier and this stays
- * inert. Granting +75% block for a full 7 seconds with no charge cap would
- * overstate it badly.
+ * 10 rage, 5 second cooldown, Defensive Stance. +75% block for 7 seconds or
+ * two blocks, whichever ends first.
+ *
+ * NO GLOBAL COOLDOWN, and this is the one number here that is NOT from the
+ * captured data. Forever's spell page states the cost, the cooldown, the
+ * stance and the effect; it says nothing about the global cooldown, and
+ * neither does any other ability's capture -- Wowhead does not publish it.
+ *
+ * So `triggersGcd: false` is the RULESET OWNER'S STATEMENT rather than
+ * something verified against a source, and it is recorded here as such. It
+ * matters: off the global cooldown, Shield Block is free to sit above Shield
+ * Slam in the tank list without costing it a strike.
  */
 export const SHIELD_BLOCK_ABILITY: Ability = {
   id: 'shield_block_cast',
@@ -793,6 +800,7 @@ export const SHIELD_BLOCK_ABILITY: Ability = {
   cost: { resource: 'rage', amount: 10 },
   cooldownMs: seconds(5),
   requiresTarget: false,
+  triggersGcd: false,
   onCast: ({ simulation, caster }) => {
     simulation.applyAura(caster, SHIELD_BLOCK, caster.id);
   },

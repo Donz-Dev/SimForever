@@ -356,12 +356,33 @@ export const SHIELD_WALL: AuraDefinition = {
   damageTakenMultiplier: SHIELD_WALL_DAMAGE_TAKEN_MULTIPLIER,
 };
 
-export const PLACEHOLDER_SHIELD_BLOCK_DURATION_MS = seconds(5);
+/*
+ * Spell 2565: "Increases chance to block by 75% for 7 sec, but will only block
+ * 2 attacks."
+ *
+ * ALL THREE NUMBERS ARE FOREVER'S OWN, from the captured spell data, and none
+ * of them is what this file used to say. The duration was a PLACEHOLDER five
+ * seconds, and the aura carried no block modifier at all -- the two-attack
+ * limit could not be expressed, so rather than overstate the effect by
+ * granting seventy-five percent for a full seven seconds it granted nothing,
+ * and Shield Block was castable and inert.
+ *
+ * The charge limit exists now: `consumedByBlock` spends a stack per block and
+ * `chargesOnApply` starts it full, so the aura ends on two blocks or seven
+ * seconds, whichever comes first.
+ */
+export const SHIELD_BLOCK_BLOCK_CHANCE = 75;
+export const SHIELD_BLOCK_DURATION_MS = seconds(7);
+export const SHIELD_BLOCK_CHARGES = 2;
 
 export const SHIELD_BLOCK: AuraDefinition = {
   id: 'shield_block',
   name: 'Shield Block',
-  durationMs: PLACEHOLDER_SHIELD_BLOCK_DURATION_MS,
+  durationMs: SHIELD_BLOCK_DURATION_MS,
+  maxStacks: SHIELD_BLOCK_CHARGES,
+  chargesOnApply: SHIELD_BLOCK_CHARGES,
+  consumedByBlock: true,
+  statModifiers: [flat('blockChance', SHIELD_BLOCK_BLOCK_CHANCE)],
 };
 
 // ---------------------------------------------------------------------------

@@ -75,6 +75,29 @@ export interface AuraDefinition {
    * `durationMs` still applies as a backstop for a carrier who stops swinging.
    */
   readonly consumedBySwing?: boolean;
+  /**
+   * Each attack the carrier BLOCKS consumes one stack.
+   *
+   * The mirror of `consumedBySwing`, and needed for the same reason: "will
+   * only block 2 attacks" is a charge limit, not a duration, and an aura that
+   * expires on time alone cannot express it. Shield Block grants a large
+   * block chance for seven seconds OR two blocks, whichever ends first.
+   *
+   * Keyed on the BLOCK rather than on being attacked, because that is what
+   * the effect says. A swing that misses the carrier costs it nothing.
+   *
+   * `durationMs` still applies as a backstop for a carrier nothing hits.
+   */
+  readonly consumedByBlock?: boolean;
+  /**
+   * Stacks the aura begins with, when that is not one.
+   *
+   * A charge effect starts FULL -- Shield Block is two blocks from the moment
+   * it is cast, not one that builds. Without this the only way to reach two
+   * was to cast it twice, which is neither what the tooltip says nor possible
+   * inside its own cooldown.
+   */
+  readonly chargesOnApply?: number;
   readonly onApply?: (context: SimulationContext, aura: AuraInstance) => void;
   readonly onExpire?: (context: SimulationContext, aura: AuraInstance) => void;
 }
