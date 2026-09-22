@@ -213,13 +213,14 @@ that moves a number. Measured at **+11.77 ± 3.29 DPS** over 250 fights against
 the same Fury build with the point spent elsewhere — isolating the ability, not
 the tree.
 
-**Last Stand is implemented and changes no outcome**, which is worth stating
-plainly rather than leaving someone to discover it. It raises maximum health
-30%, grants that much, and takes both back when it expires. The player here
-cannot drop below one health and no analyzer reports survival, so extra health
-decides nothing. It exists because it is fully expressible and a talent that
-grants an ability should grant a real one — not because it will show up in a
-result.
+**Last Stand was implemented and changed no outcome, and that has stopped being
+true.** It raises maximum health 30%, grants that much, and takes both back
+when it expires. When this was written the player could not drop below one
+health and nothing reported survival, so the extra health decided nothing.
+
+The character can now die, and deaths are reported — so Last Stand is a real
+decision, and nothing in the Protection list casts it. That is a gap rather than
+a finding; see [incoming-damage.md](incoming-damage.md).
 
 **Sweeping Strikes is implemented and does nothing**, for a different reason: its
 entire effect is the *additional* opponent, and every encounter here has exactly

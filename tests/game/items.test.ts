@@ -209,10 +209,12 @@ describe('what the items do that the simulator does not', () => {
     expect(CRUSADER.name).toBe('Enchant Weapon - Crusader');
     // The +100 Strength is an aura from a proc, not a permanent stat.
     expect(CRUSADER.stats).toEqual({});
-    // Only the heal remains unmodelled, and only because nothing damages the
-    // player.
-    expect(CRUSADER.unmodelled).toHaveLength(1);
-    expect(CRUSADER.unmodelled[0].text).toContain('Heals for 75 to 125');
+    /*
+     * NOTHING is unmodelled any more. The heal was, and its reason said
+     * "Nothing damages the player, so a heal would restore nothing" -- true
+     * when written, and expired the day the target started killing people.
+     */
+    expect(CRUSADER.unmodelled).toEqual([]);
   });
 
   it('offers Crusader on melee weapons only', () => {
@@ -231,10 +233,9 @@ describe('what the items do that the simulator does not', () => {
     };
     const missing = unmodelledEffects(equipment, 'dual_wield');
 
-    // Vis'kag's proc, Crusader's strength and Hand of Justice's extra attack
-    // are all implemented now; only Crusader's heal is left.
-    expect(missing.map((e) => e.itemName)).toEqual(['Enchant Weapon - Crusader']);
-    expect(missing[0].text).toContain('Heals');
+    // Vis'kag's proc, Crusader's strength and heal, and Hand of Justice's
+    // extra attack are all implemented. This set is fully simulated.
+    expect(missing).toEqual([]);
   });
 });
 

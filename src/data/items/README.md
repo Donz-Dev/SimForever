@@ -65,8 +65,11 @@ Procs are the exception: they are behaviour, not stats, so they live in
 of Justice are all implemented there, using rates the ruleset owner supplied --
 the tooltips give none of them, saying only "Chance on hit" and "often".
 
-Currently unmodelled: all Fire Resistance (not a stat the engine has), and
-Crusader's heal (nothing damages the player, so it would restore nothing).
+Currently unmodelled: nothing. Resistances are totalled on the character sheet
+for display and are deliberately not a combat stat, which is the ruleset
+owner's decision rather than a gap. Crusader's heal was the last real omission
+and is implemented -- its reason, "nothing damages the player", expired when
+the encounter grew a ramping target and a healer.
 
 ## A check worth keeping
 

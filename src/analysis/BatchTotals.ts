@@ -133,6 +133,38 @@ export interface BatchDamageTaken {
   readonly rates: Readonly<Record<AttackOutcome, number>>;
 }
 
+/**
+ * Whether the character lived, and what it took.
+ *
+ * ----------------------------------------------------------------------------
+ * WHY DEATHS ARE A NUMBER AND NOT A YES OR NO.
+ *
+ * The character can die more than once in a fight. They are stood back up at
+ * full health when they do, and the encounter does not care -- the target's
+ * damage ramp keeps climbing through a death exactly as it would through a
+ * dodge. So "did they survive" has no answer and "how many times did the
+ * encounter kill them" has a useful one, and at three thousand iterations the
+ * mean of it is the real figure: a build that dies on nine fights in ten reads
+ * 0.9, not "sometimes".
+ *
+ * Healing is here rather than in its own section because it is the other half
+ * of the same sentence. Damage taken alone says nothing -- a tank taking
+ * 300,000 over a minute is fine or dead depending entirely on what came back
+ * the other way -- and the assumed healer's output is the only thing that
+ * makes the deaths mean anything.
+ * ----------------------------------------------------------------------------
+ */
+export interface BatchSurvival {
+  /** Mean deaths per iteration. */
+  readonly deaths: number;
+  /** Mean damage taken per iteration, after armor and everything else. */
+  readonly damageTaken: number;
+  /** Mean healing per iteration that actually restored health. */
+  readonly healingReceived: number;
+  /** Mean healing per iteration that landed on a full health bar. */
+  readonly overhealing: number;
+}
+
 interface AbilityAccumulator {
   uses: number;
   damage: number;
@@ -160,6 +192,11 @@ interface UptimeAccumulator {
   openedAt?: number;
 }
 
+interface HealingAccumulator {
+  received: number;
+  overhealing: number;
+}
+
 interface TakenAccumulator {
   damage: number;
   mitigated: number;
@@ -179,6 +216,8 @@ export class BatchTotals implements TelemetrySink {
   private readonly spent = new Map<string, Map<string, ResourceAccumulator>>();
   private readonly taken = new Map<string, Map<string, TakenAccumulator>>();
   private readonly uptime = new Map<string, Map<string, UptimeAccumulator>>();
+  private readonly deathsByActor = new Map<string, number>();
+  private readonly healingByTarget = new Map<string, HealingAccumulator>();
   private iterations = 0;
   private totalDurationMs = 0;
 
@@ -213,6 +252,29 @@ export class BatchTotals implements TelemetrySink {
       );
       this.recordDealt(event);
       this.recordTaken(event);
+      return;
+    }
+
+    /*
+     * Keyed on the actor who DIED, not on whoever killed them. The question
+     * this answers is "how often did the encounter kill this character", and
+     * a death the target caused and a death a bleed caused are both deaths.
+     */
+    if (event.type === 'death') {
+      this.deathsByActor.set(event.actorId, (this.deathsByActor.get(event.actorId) ?? 0) + 1);
+      return;
+    }
+
+    /*
+     * Keyed on the TARGET, which is healing RECEIVED. `HealingAnalyzer` keys
+     * the same events on the source, which is healing done -- a different
+     * question with a different answer the moment anyone heals anyone else.
+     */
+    if (event.type === 'heal') {
+      const entry = this.healingByTarget.get(event.targetId) ?? { received: 0, overhealing: 0 };
+      entry.received += event.amount;
+      entry.overhealing += event.overhealing;
+      this.healingByTarget.set(event.targetId, entry);
       return;
     }
 
@@ -420,6 +482,21 @@ export class BatchTotals implements TelemetrySink {
       }))
       .filter((entry) => entry.uptime > 0)
       .sort((a, b) => b.uptime - a.uptime);
+  }
+
+  /** Deaths, damage taken and healing received, per iteration. */
+  survival(actorId: string): BatchSurvival {
+    let damageTaken = 0;
+    for (const entry of this.taken.get(actorId)?.values() ?? []) damageTaken += entry.damage;
+
+    const healing = this.healingByTarget.get(actorId);
+
+    return {
+      deaths: this.per(this.deathsByActor.get(actorId) ?? 0),
+      damageTaken: this.per(damageTaken),
+      healingReceived: this.per(healing?.received ?? 0),
+      overhealing: this.per(healing?.overhealing ?? 0),
+    };
   }
 
   resourceFlow(actorId: string, resource: string): BatchResourceFlow {

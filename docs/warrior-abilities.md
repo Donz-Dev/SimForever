@@ -210,10 +210,17 @@ it had no Classic counterpart to check against.
 | Auto-attacks route through `weaponScaling` | a swing and a Mortal Strike can no longer disagree about the same weapon |
 | `Reaction` | Overpower and Revenge respond to an attack result |
 
-## Still not reachable
+## Two things that were not reachable
 
-- **Revenge** can never be cast. It needs the warrior to have been attacked, and
-  nothing attacks the player unless `encounter.targetAttacks` is on.
-- **Overpower** can never be cast. It needs the engine to let content observe an
-  attack result, which does not exist — there is no hook for a reactive proc.
-  This is the next engine gap worth closing.
+Both entries here are struck through, and the section is kept rather than
+deleted: "built and never run" is a state worth remembering, and the Overpower
+entry in particular outlived the very gap it named by several months.
+
+- ~~**Revenge**~~ is cast, and sits fourth from the bottom of the Protection
+  list. It needs the warrior to have been attacked, which `encounter.targetAttacks`
+  now provides -- along with a target that ramps until it kills them. See
+  [incoming-damage.md](incoming-damage.md).
+- ~~**Overpower**~~ is cast too. The hook it was waiting on is `Reaction`, listed
+  two rows above in this very table — the gap was closed and this entry outlived
+  it. Its window opens on a target dodge and reads about 19% uptime on the tank
+  build.

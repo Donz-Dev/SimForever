@@ -19,18 +19,24 @@ their talent trees and nothing else.
 | **Character creation** | faction → race → class → combat style, with cascading validity |
 | **Base stats** | all 65 race/class/form combinations at level 60, generated from the spreadsheet |
 | **Stat conversions** | per class (and per Druid form), re-derived when a buff moves a primary stat |
-| **Combat tables** | all six, on an integer 1–10000 die, derived from weapon skill vs defense skill, including a **block** outcome |
+| **Combat tables** | all six, on an integer 1–10000 die, derived from weapon skill vs defense skill, including a **block** outcome. **Defense skill is live**: the surplus above the level baseline moves boss miss, boss crit, dodge, parry and block by 0.04 points each, every one clamped to 0–100% |
 | **Armor** | level-scaled, applied per damage event |
 | **Resources** | rage from damage, energy in batches, mana on the five-second rule |
 | **Abilities** | all 26 Warrior abilities from the ruleset spreadsheet, with weapon-damage scaling and on-next-swing. Effect magnitudes for the ten the sheet leaves blank come from Forever's own spell data |
 | **Reactions** | content responds to an attack result: Overpower off a target dodge, and every item proc |
 | **Gear** | 19 items and the Crusader enchant, equippable, driving stats, weapons and procs. A **starting set** is equipped automatically when a Warrior is created, so the first fight is a geared one |
 | **Procs** | PPM (Vis'kag, Crusader) and flat-chance with an internal cooldown (Hand of Justice) |
-| **Talents** | all 469 talents, nine classes, spendable in the UI and saved on the profile. The Warrior's per-rank values are captured; **33 of its 53 talents do something**, 20 say on screen why they cannot |
-| **Analysis** | DPS, per-ability breakdown with attempts/hits/crit/glance/avoid rates |
-| **UI** | two-step character flow, per-class character sheet, style-aware gear, talent trees, combat log, Monte Carlo batches |
+| **Talents** | all 469 talents, nine classes, spendable in the UI and saved on the profile. The Warrior's per-rank values are captured; **43 of its 53 talents do something** (37 fully, 6 partly), 10 say on screen why they cannot |
+| **Encounter** | the target optionally hits back, **ramping 10% a swing**, against a character held up by an assumed healer who can be out-damaged. Deaths are counted. See [docs/incoming-damage.md](docs/incoming-damage.md) |
+| **Analysis** | DPS, per-ability breakdown with uses/attempts/hits/crit/glance/avoid rates, buff and debuff uptime, rage economy, deaths and healing received |
+| **UI** | two-step character flow, per-class character sheet (offensive and defensive), style-aware gear, talent trees, combat log, Monte Carlo batches, uptime bar charts |
 
-**817 tests**, CI green on Node 20 and 22. Profile format **v6**.
+**1,128 tests**, CI green on Node 20 and 22. Profile format **v8**.
+
+The interface is one theme, **Abyssal Copper**, chosen from four mock-ups. The
+other three still exist in `ui/styles.css` under `:root[data-theme=...]` and
+`ui/theme.ts` catalogues all four; nothing switches between them and the picker
+that briefly did was removed on request.
 
 The app is **live at <https://donz-dev.github.io/SimForever/>**, republished by
 `.github/workflows/deploy.yml` on every push to `main` that passes the tests.
@@ -41,31 +47,39 @@ Starting set, level 63 dummy, **300 fights a row** with a 95% interval.
 Reproduce with `npx vite-node tools/measure_rotation.ts`, which writes out the
 talent builds it uses.
 
+Re-measured **2026-09-22**, after the encounter learned to ramp.
+
 | Build | Standing target | Target swings back |
 | --- | --- | --- |
-| Dual-wield / Berserker (default) | **168.61** +/- 2.15 | **293.42** +/- 2.82 |
-| Dual-wield / Battle (general list) | **151.52** +/- 3.13 | - |
-| Two-hander / Battle (default) | **144.54** +/- 2.09 | - |
-| 1H & Shield / Defensive (default) | **95.48** +/- 1.77 | - |
-| 1H & Shield, 31-pt Protection | **95.55** +/- 1.81 | **160.01** +/- 2.06 |
-| Dual-wield, 31-pt Arms | **186.07** +/- 2.31 | - |
-| Fury to Death Wish | **215.29** +/- 2.90 | - |
-| the same, without Death Wish | **198.60** +/- 2.76 | - |
+| Dual-wield / Berserker (default) | **163.92** +/- 2.67 | **357.22** +/- 3.37 |
+| Dual-wield / Battle (general list) | **161.59** +/- 2.53 | - |
+| Two-hander / Battle (default) | **153.43** +/- 1.64 | - |
+| 1H & Shield / Defensive (default) | **64.31** +/- 1.17 | - |
+| 1H & Shield, 31-pt Protection | **66.45** +/- 1.23 | **158.61** +/- 1.77 |
+| Dual-wield, 31-pt Arms | **188.82** +/- 2.43 | - |
+| Fury to Death Wish | **222.26** +/- 3.57 | - |
+| the same, without Death Wish | **194.45** +/- 3.55 | - |
 
-**Two rules changed every figure here.** Execute is now gated on the last 20% of
-the fight rather than on target health, so it fires in every list where it
-previously never fired at all; and the target no longer dies, so an iteration
-always runs its full duration. The dual-wield rows also use the new
-Berserker-stance priority list unless they say Battle.
+**The two columns are now a much bigger gap than they were**, because the
+target ramps: 294.54 to 357.22 for the dual-wielder, 141.87 to 158.61 for the
+tank, both measured against the same build the day before. The whole difference
+is rage from damage taken, which is proportional to damage, and the late fight
+produces several times what the character can spend — on the default tank
+build, rage wasted at the cap runs about four times rage gained.
+
+**The shield rows fell hard between 2026-09-18 and now** — 95.48 to 64.31 on a
+standing target — and it was not one change. Defensive Stance's damage penalty,
+the Protection priority list and Shield Block all landed in between, and none
+of them is aimed at a target that does not fight back.
 
 **Not comparable to anything published before 2026-09-18.** The ability effect
 magnitudes arrived, and three of the rotation's strongest actions stopped doing
 nothing -- worth +28.32 DPS on its own. The old table also recorded no talent
 builds, so two of its rows could not be reproduced by anyone.
 
-The two columns differ by rage from damage taken, which is enormous. A damage
-warrior is not the one being hit, which is why `targetAttacks` is off by
-default; read the right column as a tanking scenario.
+A damage warrior is not the one being hit, which is why `targetAttacks` is off
+by default; read the right column as a tanking scenario, and note that it is a
+statement about the ramp's settings as much as about the character.
 
 These compare builds to each other and nothing else; see "Read this before
 trusting any number".
@@ -73,6 +87,25 @@ trusting any number".
 **[docs/warrior-completion.md](docs/warrior-completion.md) is the action list
 for finishing the Warrior** — the ten inert abilities, what is blocked on the
 ruleset owner, and what is doable now. **Start there.**
+
+## The encounter now fights back properly
+
+The target ramps 10% a swing, an assumed healer restores 500-1500 a second, and
+the character dies and is stood back up as often as the encounter manages it.
+**[docs/incoming-damage.md](docs/incoming-damage.md) is the whole story**, and
+it matters because the ruleset owner's stated next step is the Protection
+priority list — everything in it keyed on being hurt now has something to react
+to.
+
+Two things worth knowing before working on that list:
+
+- **The default tank dies about twenty times in sixty seconds**, first at around
+  two seconds in on a crushing blow. That is the ramp doing what it was asked to
+  do, not a bug, but it means the last half of the fight is a character being
+  one-shot from full and the first half is where a rotation decision matters.
+- **Rage stops being scarce.** Wasted at the cap runs about four times gained,
+  so a list tuned on the standing-target rage economy is being tested against a
+  different one.
 
 ## The next task
 
@@ -104,10 +137,16 @@ what it does in `game/talents/warriorEffects.ts`; what its number IS lives in
 **every edge case and interpretation** the Warrior turned up. The design
 rationale is in the proposal on PR #22, which is not merged.
 
-**Warrior: 27 talents fully modelled, 6 partly, 20 inert.** Every one of the 53
+**Warrior: 37 talents fully modelled, 6 partly, 10 inert.** Every one of the 53
 has an explicit entry, and the inert ones name their own obstacle, so the list
 below IS the work queue. The Talent panel prints them under "Chosen but not
 simulated".
+
+The ten still inert are `improved_hamstring`, `booming_voice`, `iron_will`,
+`blood_craze`, `improved_berserker_rage`, `defiance`, `improved_disarm`,
+`vanguard`, `improved_shield_wall` and `improved_shield_bash`. Regenerate the
+list with a three-line script over `WARRIOR_TALENT_EFFECTS`: a talent is inert
+when every one of its effects is `unmodelled`.
 
 #### What the remaining talents are blocked on
 
@@ -118,15 +157,15 @@ Grouped, because each blocker unlocks several at once:
 | **Concepts the engine has no notion of** — threat, movement, stuns, multiple targets, shout radius, fear/stun duration | Defiance, Piercing Howl, Concussion Blow, Sweeping Strikes, Booming Voice, Iron Will, Improved Hamstring | **Deliberately left absent.** None of them matters against a single stationary dummy, and each would need an encounter model that does not exist. Revisit when encounters gain positions, adds or mechanics. |
 | ~~Nothing attacks the player~~ | ~~Enrage, Master of Defense, Blood Craze, Shield Specialization, Improved Revenge~~ | **Done, and the reasons were not swept for three commits.** `encounter.targetAttacks` makes the target swing back; Table 6, rage from damage taken, Revenge, block and Shield Specialization all run. This row used to hold an em-dash, asserting nothing waited on it — five entries did. Shield Specialization and Improved Revenge turned out to be **fully modelled already**; the other three moved to the two rows below. |
 | ~~No block outcome~~ | — | **Done.** The engine has a `block` outcome and `blockChance`/`blockValue` stats; Shield Slam, Revenge and Shield Specialization all use them. |
-| **No defense skill** | Anticipation | The attacks-received table uses flat ruleset constants for boss miss, crit and crush. Defense skill would have to shift them by a formula Forever has not given. **Player parry and dodge are now wired** and read from the character's stats, so only the skill comparison is missing. |
+| ~~No defense skill~~ | ~~Anticipation~~ | **Done.** The ruleset owner gave the formula: each point of defense skill above the level baseline moves boss miss, boss crit, player dodge, parry and block by 0.04 percentage points, every one clamped so it cannot go negative or past 100%. |
 | **Stances gate nothing** | Improved Tactical Mastery, Vanguard | Waiting on the ruleset owner; see below. |
-| **The ability it modifies is inert** | Improved Bloodrage, Improved Berserker Rage, Improved Shield Wall | Waiting on effect values for those buffs. |
-| **Talents cannot apply a combat-start aura** | Anger Management, Death Wish | The aura mechanism exists and `trainingDummyEncounter` has the slot; nothing wires a talent to it yet. Probably the cheapest remaining win. |
+| **The ability it modifies is inert** | Improved Berserker Rage, Improved Shield Wall | **Improved Bloodrage left this row** when Bloodrage got its periodic half: 10 rage on cast and 10 over ten seconds, and the talent raises BOTH by 25/50%. |
+| ~~Talents cannot apply a combat-start aura~~ | ~~Anger Management, Death Wish~~ | **Done.** `grantAura` on a talent effect puts a definition in the character's opening auras, via `TALENT_AURAS`. Anger Management's first tick is rolled 1-3000ms into the fight, so a batch does not tighten its distribution around a fiction. |
 | **Ability not implemented** | Improved Disarm, Improved Shield Bash, and the five ability grants below | Disarm and Shield Bash are absent from the ability spreadsheet. |
 | **Needs a talent-granted reaction** | Enrage, Master of Defense, Weaponmaster's sword clause | **Not blocked on data.** Values are captured and the trigger exists; Shield Specialization is the worked example of the shape. The cheapest remaining talent wins. |
-| **Needs a concept the engine lacks** | Toughness, Blood Craze | Toughness scales armor FROM ITEMS and the engine holds one combined armor number. Blood Craze heals, and the player cannot drop below one health, so survival is not modelled. |
-| **The source does not say what it affects** | Focused Rage | Reduces the cost of "your offensive abilities" without naming them. Choosing the set would be inventing the talent. |
-| **Would be understated by modelling part of it** | Dual Wield Specialization, Raging Blows | Each is several effects at once and the expressible subset alone misrepresents the talent. Both are wholly inert, not partly modelled. |
+| **Needs a concept the engine lacks** | Blood Craze | **Toughness left this row**: armor from items is now tracked separately from armor derived from stats, and the talent scales only the first. **Blood Craze is no longer blocked either** and has not been done — the player can be critically struck and healing is real, so "regenerates 3% of health over 6 sec after a crit" is now a periodic aura on a reaction, of exactly the shape Enrage uses. |
+| ~~The source does not say what it affects~~ | ~~Focused Rage~~ | **Done.** The ruleset owner defined "offensive": an ability is offensive if it is processed through a combat table. Derived from `attackTable`, not from a list of ability ids, so a new ability gets it without anyone remembering. |
+| ~~Would be understated by modelling part of it~~ | ~~Dual Wield Specialization, Raging Blows~~ | **Done, once the ruleset owner supplied all the parts.** Dual Wield Specialization is off-hand damage 0.5 to 0.625, doubled off-hand rage and +10% off-hand hit; Raging Blows makes Whirlwind strike with both hands, main first, the off hand taking the damage penalty but not the miss penalty. |
 | **Partly modelled, by choice** | Weaponmaster | Does the part that is expressible and flags the rest. Dual Wield Specialization and Raging Blows were listed here too and are in fact wholly inert — each declares only an `unmodelled` reason. |
 
 **More edge cases almost certainly remain.** The 53 were classified by reading
@@ -218,7 +257,7 @@ Work that is blocked, not merely unstarted.
 | **Warrior stance gating** — which abilities require which stance. Corrections were promised and never arrived. The sheet has no Battle Stance row at all. | Stances are defined but gate nothing; the rotation does not stance dance. Improved Tactical Mastery and Vanguard wait on it |
 | ~~**Effect MAGNITUDES for ten Warrior abilities**~~ | **Not blocked, and never was.** Forever serves them at `nether.wowhead.com/forever/tooltip/spell/<id>`. Seven are filled. Berserker Rage has no magnitude even in Forever; Bloodrage and Shield Block need a mechanism rather than a number. |
 | **Rows for five abilities talents grant** — Sweeping Strikes, Death Wish, Piercing Howl, Last Stand, Concussion Blow | Five talents grant an ability that does not exist. The grants are declared, so they gate correctly the moment the abilities do |
-| **Defense skill formula** | Anticipation. Player dodge, parry and block are all wired; only the skill comparison is missing |
+| ~~**Defense skill formula**~~ | **Supplied.** 0.04 percentage points per point of skill, on boss miss, boss crit, dodge, parry and block alike, clamped at both ends |
 | **Ability spreadsheets for the other eight classes** | Those classes fight with auto-attacks only |
 | **Forever item IDS** — not the data, which is reachable | 18 of 19 items are Classic stand-ins. `nether.wowhead.com/forever/tooltip/item/<id>` works and `tools/import_item.mjs` imports from it; only the ids are missing |
 
@@ -249,10 +288,16 @@ of how much they distort results.
    were never invented: each derives from its weapon's speed by the ruleset
    formula in `game/combat/weaponDamage.ts`.
 
-3. **Four item effects are equipped and do nothing**, listed in the Gear panel
-   under "Equipped but not simulated": all Fire Resistance (not a stat the
-   engine has) and Crusader's heal (nothing damages the player). A geared
-   character is weaker here than in the game by exactly that much.
+3. **The starting set is now fully simulated.** Resistances are totalled on the
+   character sheet for display and are deliberately not a combat stat, which is
+   the ruleset owner's decision rather than a gap. Crusader's heal was the last
+   real omission and works now — its reason said "nothing damages the player",
+   which stopped being true when the target started killing people.
+
+   **The bigger caveat has moved to the encounter.** Every figure from a fight
+   with the target attacking depends on three settings nothing in Forever
+   states: the opening swing damage, the swing speed, and the 10% ramp. See
+   [docs/incoming-damage.md](docs/incoming-damage.md).
 
 4. **Bear/Cat paw swing speed and AP coefficients** are invented. The *damage*
    values (100 / 50) are real.
@@ -360,6 +405,7 @@ src/
 │   ├── character/   races, classes, combat styles, base stats, conversions
 │   ├── combat/      attackChances, resourceRules, weaponDamage (the speed/14 formula)
 │   ├── actors/      createPlayer, createTrainingDummy, placeholder weapons
+│   ├── encounters/  raidBoss (the boss melee and its ramp), externalHealer
 │   ├── abilities/   warrior.ts (real), abilitiesForClass.ts (the lookup)
 │   ├── auras/       warrior.ts — Rend is real, the rest are PLACEHOLDER
 │   ├── items/       Item, itemData (loads the JSON), equipment, procs
@@ -373,13 +419,16 @@ src/
 │
 ├── analysis/        analyzers; SimulationResult
 ├── simulator/       runProfile, runProfileBatch, trainingDummyEncounter
-├── profiles/        versioned profiles (format v4), validation, migration
+├── profiles/        versioned profiles (format v8), validation, migration
 └── ui/              React panels
 ```
 
 Longer explanations: [`docs/`](docs/) — `architecture.md`,
 `simulation-engine.md`, `combat-tables.md`, `character-creation.md`,
-`resources.md`, `telemetry.md`, `profiles.md`, `warrior-abilities.md`.
+`resources.md`, `telemetry.md`, `profiles.md`, `warrior-abilities.md`,
+`global-cooldown.md` (a fundamental rule, written down after it was found
+broken in four places) and `incoming-damage.md` (the ramp, the assumed healer
+and how death is counted).
 
 `ProfilePanel.tsx` is **not mounted**. Import and Load buttons sit above the
 character name as placeholders; the panel's serialize-out / parse-in / render-
@@ -420,9 +469,13 @@ real fight, and two carried bugs that only showed when they finally did.
   dual-wielder from 119.65 to 182.13 DPS, which is why the switch defaults off.
 - ~~**Revenge**~~ — its window opens on a dodge, parry or block, and the rotation
   casts it above everything but Execute.
-- **Healing** — full pipeline with overhealing; no content heals. A healer in an
-  attacking encounter is ASSUMED rather than modelled: the character cannot drop
-  below one health, so nothing says whether they would survive.
-- **Resource waste analysis** — telemetry records every gain with the amount lost
-  to the cap, so rage capping and mana downtime are measurable. No analyzer
-  reports them yet. Cheap and useful before tuning a rotation.
+- ~~**Healing**~~ — two things heal now. The encounter's assumed healer restores
+  a random 500-1500 a second while the target attacks, and Crusader's enchant
+  heals 75-125 on proc. The character is no longer immortal: they die, are stood
+  back up at full, and the deaths are counted in the results. What is still not
+  modelled is a healer with a spell book — see
+  [docs/incoming-damage.md](docs/incoming-damage.md) for why that is deliberate.
+- ~~**Resource waste analysis**~~ — the Results panel reports rage gained, spent,
+  wasted at the cap and unspent, with donuts for source and destination. It
+  immediately found something: a ramped tank wastes roughly four times what it
+  gains, so the back half of that fight is not rage-constrained at all.

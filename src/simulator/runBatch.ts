@@ -2,6 +2,7 @@ import type {
   BatchAbilityTotals,
   BatchDamageTaken,
   BatchResourceFlow,
+  BatchSurvival,
   DistributionSummary,
   SimulationResult,
 } from '../analysis';
@@ -53,6 +54,12 @@ export interface BatchResult {
   readonly abilities: readonly BatchAbilityTotals[];
   /** What hit the player, pooled across every iteration. */
   readonly damageTaken: readonly BatchDamageTaken[];
+  /**
+   * Deaths, damage taken and healing received, per iteration.
+   *
+   * All zero in a fight the target does not swing in, which is the default.
+   */
+  readonly survival: BatchSurvival;
   /** Where the player's rage came from and went, across every iteration. */
   readonly rage: BatchResourceFlow;
   /** Aura uptime on the player, longest first. */
@@ -149,6 +156,7 @@ export function runBatch(config: SimulationConfig, options: BatchOptions): Batch
     meanDurationMs: durations.reduce((a, b) => a + b, 0) / Math.max(1, durations.length),
     abilities: totals.abilityBreakdown(playerId),
     damageTaken: totals.damageTaken(playerId),
+    survival: totals.survival(playerId),
     rage: totals.resourceFlow(playerId, 'rage'),
     buffUptime: totals.auraUptime(playerId, 'buff'),
     /*

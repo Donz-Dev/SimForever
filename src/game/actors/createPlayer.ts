@@ -34,6 +34,7 @@ import { rotationFor } from '../rotations/rotationFor';
 import type { Equipment } from '../items/Item';
 import type { TalentAllocation } from '../talents/Talent';
 import { TALENT_AURAS, WARRIOR_STANCES } from '../auras/warrior';
+import { EXTERNAL_HEALER } from '../encounters/externalHealer';
 import { talentBuild, talentContextFor } from '../talents/talentBuild';
 import { legalAllocation } from '../talents/talentRules';
 import { talentsForClass } from '../talents/talentData';
@@ -95,13 +96,23 @@ export interface PlayerOptions {
    */
   readonly talents?: TalentAllocation;
   /**
-   * Damage cannot take this character below one health.
+   * The character can die, and is put back on their feet when they do.
    *
-   * For an encounter where the target hits back and a healer is ASSUMED but not
-   * modelled. Survival is not what such a run measures; see the engine field of
-   * the same name.
+   * For an encounter where the target hits back. Deaths are counted rather
+   * than prevented, which is the difference between this and the immunity it
+   * replaced -- see `revivesOnDeath` on the engine's own options.
    */
-  readonly survivesLethalDamage?: boolean;
+  readonly revivesOnDeath?: boolean;
+  /**
+   * A healer is keeping this character up: a flat random amount every second,
+   * from nobody in particular.
+   *
+   * An ENCOUNTER setting rather than a property of the character, which is why
+   * it arrives as a flag instead of the caller handing over an aura. What the
+   * healer does is fixed content in `encounters/externalHealer.ts`; all the
+   * encounter chooses is whether there is one.
+   */
+  readonly externalHealing?: boolean;
 }
 
 /**
@@ -273,7 +284,7 @@ export function createPlayer(options: PlayerOptions): Combatant {
     // Specialization -- multiplies everything including auto attacks, so it
     // cannot ride on `abilityModifiers`, which deliberately skips swings.
     damageMultiplier: build.damageMultiplier,
-    survivesLethalDamage: options.survivesLethalDamage,
+    revivesOnDeath: options.revivesOnDeath,
     // Reactive procs, from two sources: the class (a Warrior's Overpower opening
     // because the target dodged) and the gear (Vis'kag, Crusader, Hand of
     // Justice). Gear procs are built per character rather than shared, because
@@ -322,6 +333,12 @@ export function createPlayer(options: PlayerOptions): Combatant {
       ...[...build.grantedAuras]
         .map((id) => TALENT_AURAS[id])
         .filter((aura): aura is AuraDefinition => aura !== undefined),
+      /*
+       * The assumed healer, when the encounter has one. Nothing is hitting a
+       * character in a fight without one, so a healer there would tick pure
+       * overhealing into the log for the whole fight.
+       */
+      ...(options.externalHealing ? [EXTERNAL_HEALER] : []),
     ],
     // Real weapons when something is equipped, placeholders otherwise. The
     // placeholders are invented and the items are not, so anything equipped

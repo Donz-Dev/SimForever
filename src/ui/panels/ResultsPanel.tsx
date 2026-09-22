@@ -153,6 +153,12 @@ export function ResultsPanel({ batch }: ResultsPanelProps) {
  * nowhere to see whether it did anything. Dodge, parry and block only ever
  * appear on attacks the player RECEIVES, so the damage-done table above cannot
  * show them however long you stare at it.
+ *
+ * DEATHS LIVE HERE TOO, above the table, because a death is the last thing
+ * damage taken does and there is nowhere else it belongs. The character is
+ * stood back up at full health and the fight carries on, so a fight can
+ * contain several -- which is why it is a mean with two decimals and not a
+ * yes or a no.
  */
 function DamageTaken({ batch }: ResultsPanelProps) {
   if (batch.damageTaken.length === 0) return null;
@@ -162,9 +168,30 @@ function DamageTaken({ batch }: ResultsPanelProps) {
     batch.damageTaken.some((row) => (row.rates[outcome] ?? 0) > 0),
   );
 
+  const { survival } = batch;
+
   return (
     <>
       <h3>Damage taken</h3>
+      {/*
+       * DEATHS AND HEALING BEFORE THE SWING TABLE, because the table below
+       * cannot be read without them. The target ramps ten percent a swing, so
+       * "286,000 damage taken" describes a fight that was comfortable for
+       * thirty seconds and unsurvivable after it -- and the only figure that
+       * says which half you are looking at is how many times it killed the
+       * character.
+       *
+       * Healing is the other half of the same sentence. It comes from an
+       * assumed healer with no caster behind it, so the number is the
+       * encounter's setting rather than anything about this character -- but
+       * without it, damage taken has nothing to be measured against.
+       */}
+      <div className="stat-grid">
+        <Stat label="Damage taken" value={fixed(survival.damageTaken)} />
+        <Stat label="Healing received" value={fixed(survival.healingReceived)} />
+        <Stat label="Overhealing" value={fixed(survival.overhealing)} />
+        <Stat label="Deaths" value={fixed(survival.deaths)} />
+      </div>
       <table className="breakdown">
         <thead>
           <tr>

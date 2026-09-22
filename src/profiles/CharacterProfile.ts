@@ -79,7 +79,8 @@ export interface EncounterSection {
    * The target is a damage sink running for a predetermined duration, not
    * something with a health bar to get through: it carries
    * `survivesLethalDamage`, so a fight always runs its full length however
-   * hard it is hit. The number exists so the combat log and the overkill
+   * hard it is hit. The CHARACTER no longer carries it -- they can die, and
+   * are stood back up when they do -- but the target still does. The number exists so the combat log and the overkill
    * column have somewhere to point, and nothing should be concluded from it.
    *
    * Kept rather than removed because it is not user-editable and removing it
@@ -105,11 +106,14 @@ export interface EncounterSection {
    */
   readonly targetAttacks: boolean;
   /**
-   * Damage per target swing, BEFORE armor and the attacks-received table.
+   * Damage of the target's FIRST swing, before armor and the attacks-received
+   * table. Every swing after it is ten percent harder than the one before.
    *
    * A PLACEHOLDER borrowed from Classic, not Forever data. It is on the profile
    * rather than buried in code so that it is visible, editable, and obviously
-   * a number someone chose. See `game/encounters/raidBoss.ts`.
+   * a number someone chose. The ramp that compounds it is NOT on the profile,
+   * because nobody asked to vary it: see `BOSS_SWING_DAMAGE_RAMP` in
+   * `game/encounters/raidBoss.ts`.
    */
   readonly targetSwingDamage: number;
   /** Seconds between target swings. Also a Classic placeholder. */
@@ -204,7 +208,8 @@ export function createDefaultProfile(): CharacterProfile {
       // Off by default: a damage warrior is not the one being hit. See the
       // field's own note.
       targetAttacks: false,
-      targetSwingDamage: 4000,
+      // The opening swing. It grows by ten percent every swing from there.
+      targetSwingDamage: 5000,
       targetSwingSeconds: 2,
     },
   };
