@@ -1,6 +1,7 @@
 import { AbilityModifiers } from '../combat/abilityModifiers';
 import type { AuraDefinition } from '../effects/Aura';
 import type { Ability } from '../abilities/Ability';
+import { DEFAULT_GCD_MS } from '../abilities/Ability';
 import { AbilityBook } from '../abilities/AbilityBook';
 import type { DamageSchool } from '../combat/DamageSchool';
 import type { Reaction } from '../combat/reactions';
@@ -170,6 +171,15 @@ export interface CombatantOptions {
    * that into `hitChance` would hand the main hand ten free points too.
    */
   readonly hitBonusBySlot?: Partial<Record<WeaponSlot, number>>;
+  /**
+   * How long this combatant's global cooldown is, before haste.
+   *
+   * On the COMBATANT rather than on each ability, because it is a property of
+   * the class: Forever gives most classes 1.5 seconds and gives a Rogue, or a
+   * Druid in Cat Form, 1.0 -- for the same abilities. An ability that needs a
+   * different one still overrides it with `gcdMs`.
+   */
+  readonly baseGcdMs?: Milliseconds;
   /** Defaults to `none`: a combatant with no declared mode does not swing. */
   readonly autoAttack?: AutoAttackMode;
   /** Resources that refill on a timer. */
@@ -248,6 +258,7 @@ export class Combatant {
   readonly rotation: Rotation | undefined;
   readonly weapons: Partial<Record<WeaponSlot, WeaponProfile>>;
   readonly hitBonusBySlot: Partial<Record<WeaponSlot, number>>;
+  readonly baseGcdMs: Milliseconds;
   readonly autoAttack: AutoAttackMode;
   readonly regeneration: readonly ResourceRegen[];
   readonly resourceOnDamageTaken: ResourceGeneration | undefined;
@@ -350,6 +361,7 @@ export class Combatant {
     this.rotation = options.rotation;
     this.weapons = options.weapons ?? {};
     this.hitBonusBySlot = options.hitBonusBySlot ?? {};
+    this.baseGcdMs = options.baseGcdMs ?? DEFAULT_GCD_MS;
     this.autoAttack = options.autoAttack ?? 'none';
     this.regeneration = options.regeneration ?? [];
     this.resourceOnDamageTaken = options.resourceOnDamageTaken;

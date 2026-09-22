@@ -87,3 +87,8 @@ export {
 } from './selection';
 export type { StanceDefinition, StanceId } from './stances';
 export { STANCES, defaultStanceFor, getStance, isTankBuild, resolveStance } from './stances';
+export {
+  QUICKENED_GCD_MS,
+  STANDARD_GCD_MS,
+  globalCooldownFor,
+} from './globalCooldown';

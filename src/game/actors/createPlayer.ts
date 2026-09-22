@@ -27,7 +27,7 @@ import {
   resolveStance,
 } from '../character';
 import { MAX_CHARACTER_LEVEL } from '../character';
-import { fixedMaximumFor } from '../character';
+import { fixedMaximumFor, globalCooldownFor } from '../character';
 import { RAGE_FROM_DAMAGE_TAKEN, regenerationFor } from '../combat/resourceRules';
 import { reactionsForClass } from '../reactions/reactionsForClass';
 import { rotationFor } from '../rotations/rotationFor';
@@ -330,6 +330,8 @@ export function createPlayer(options: PlayerOptions): Combatant {
     // Off-hand-only hit, which no character-wide stat can express.
     hitBonusBySlot: build.offHandHitBonus > 0 ? { offHand: build.offHandHitBonus } : {},
     autoAttack: autoAttackModeForStyle(style),
+    // 1.5 seconds for everyone but a Rogue and a Cat-Form Druid, who get 1.0.
+    baseGcdMs: globalCooldownFor(characterClass, style),
   });
 
   /*

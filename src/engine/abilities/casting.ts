@@ -39,7 +39,12 @@ export function checkCast(
   if (!caster.isAlive) return { ok: false, reason: 'caster_dead' };
   if (caster.isCasting(now)) return { ok: false, reason: 'already_casting' };
 
-  if ((ability.triggersGcd ?? true) && caster.isOnGcd(now)) {
+  /*
+   * An ability that does not trigger the global cooldown is not BLOCKED by one
+   * either. That is the whole point of being off it: Shield Block goes out
+   * while a Sunder Armor global cooldown is still running.
+   */
+  if (triggersGcd(ability) && caster.isOnGcd(now)) {
     return { ok: false, reason: 'on_gcd' };
   }
 
@@ -138,8 +143,8 @@ export function castAbility(
     });
   }
 
-  if (ability.triggersGcd ?? true) {
-    caster.gcdReadyAt = now + gcdLength(ability, haste);
+  if (triggersGcd(ability)) {
+    caster.gcdReadyAt = now + gcdLength(ability, haste, caster.baseGcdMs);
   }
 
   context.telemetry.emit({
@@ -196,9 +201,42 @@ export function castLength(ability: Ability, hasteMultiplier: number): Milliseco
   return (ability.affectedByHaste ?? true) ? applyHaste(base, hasteMultiplier) : base;
 }
 
-/** Hasted global cooldown, floored at MINIMUM_GCD_MS. */
-export function gcdLength(ability: Ability, hasteMultiplier: number): Milliseconds {
-  const base = ability.gcdMs ?? DEFAULT_GCD_MS;
+/**
+ * Whether using this ability starts a global cooldown.
+ *
+ * ----------------------------------------------------------------------------
+ * ON-NEXT-SWING ABILITIES ARE OFF THE GLOBAL COOLDOWN, and that is derived
+ * here rather than written on each one.
+ *
+ * Heroic Strike and Cleave are not cast: they are ARMED, and replace the next
+ * swing when it lands. Nothing is spent from the character's action budget to
+ * arm one, which is exactly what makes them the place surplus rage goes.
+ *
+ * Deriving it from `onNextSwing` rather than setting `triggersGcd: false` on
+ * each means a new on-next-swing ability gets the rule for free instead of
+ * needing someone to remember it. An ability that genuinely wants both can
+ * still say `triggersGcd: true`.
+ * ----------------------------------------------------------------------------
+ */
+export function triggersGcd(ability: Ability): boolean {
+  return ability.triggersGcd ?? ability.onNextSwing === undefined;
+}
+
+/**
+ * Hasted global cooldown, floored at MINIMUM_GCD_MS.
+ *
+ * `baseGcdMs` is the CASTER'S, because how long a global cooldown lasts is a
+ * property of the class rather than of the ability -- a Rogue's is 1.0 seconds
+ * and a Warrior's is 1.5, for the same Sinister Strike-shaped ability. An
+ * ability may still override it with `gcdMs`.
+ */
+export function gcdLength(
+  ability: Ability,
+  hasteMultiplier: number,
+  baseGcdMs: Milliseconds = DEFAULT_GCD_MS,
+): Milliseconds {
+  const base = ability.gcdMs ?? baseGcdMs;
   if (!(ability.affectedByHaste ?? true)) return base;
-  return Math.max(MINIMUM_GCD_MS, applyHaste(base, hasteMultiplier));
+  // The floor cannot raise a global cooldown that is already shorter than it.
+  return Math.max(Math.min(MINIMUM_GCD_MS, base), applyHaste(base, hasteMultiplier));
 }

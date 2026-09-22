@@ -5,7 +5,15 @@ import type { ResourceType } from '../resources';
 import type { SimulationContext } from '../simulation/SimulationContext';
 import type { Milliseconds } from '../time';
 
-/** The default global cooldown before haste. */
+/**
+ * The global cooldown a combatant has unless it says otherwise.
+ *
+ * A FALLBACK, not the rule. How long a class's global cooldown is belongs to
+ * the ruleset, so it arrives on the combatant (`baseGcdMs`) from the game
+ * layer -- Forever gives most classes 1.5 seconds and gives a Rogue, or a
+ * Druid in Cat Form, 1.0. This value is what an actor built without one gets,
+ * which in practice means a training dummy.
+ */
 export const DEFAULT_GCD_MS = 1500;
 
 /** The floor a hasted global cooldown cannot go below. */
@@ -49,7 +57,7 @@ export interface Ability {
   readonly charges?: number;
   /** Whether using it starts the global cooldown. Defaults to true. */
   readonly triggersGcd?: boolean;
-  /** Override the global cooldown length. Defaults to DEFAULT_GCD_MS. */
+  /** Override the global cooldown length. Defaults to the caster's own. */
   readonly gcdMs?: Milliseconds;
   /** Whether haste shortens the cast time and GCD. Defaults to true. */
   readonly affectedByHaste?: boolean;

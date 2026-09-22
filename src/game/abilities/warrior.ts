@@ -758,6 +758,9 @@ export const BLOODRAGE_ABILITY: Ability = {
   name: 'Bloodrage',
   cooldownMs: seconds(60),
   requiresTarget: false,
+  // Off the global cooldown, by the ruleset owner's rule. See
+  // docs/global-cooldown.md for the three Warrior abilities this covers.
+  triggersGcd: false,
   onCast: ({ simulation, caster }) => {
     simulation.applyAura(caster, BLOODRAGE, caster.id);
     simulation.grantResource(caster, 'rage', BLOODRAGE_INSTANT_RAGE, {
@@ -783,14 +786,15 @@ export const SHIELD_WALL_ABILITY: Ability = {
  * 10 rage, 5 second cooldown, Defensive Stance. +75% block for 7 seconds or
  * two blocks, whichever ends first.
  *
- * NO GLOBAL COOLDOWN, and this is the one number here that is NOT from the
- * captured data. Forever's spell page states the cost, the cooldown, the
- * stance and the effect; it says nothing about the global cooldown, and
- * neither does any other ability's capture -- Wowhead does not publish it.
+ * NO GLOBAL COOLDOWN. One of three Warrior abilities the ruleset owner names
+ * as exceptions, with Bloodrage and Charge -- see docs/global-cooldown.md.
  *
- * So `triggersGcd: false` is the RULESET OWNER'S STATEMENT rather than
- * something verified against a source, and it is recorded here as such. It
- * matters: off the global cooldown, Shield Block is free to sit above Shield
+ * It is the owner's statement rather than a captured value: Forever's spell
+ * page gives the cost, the cooldown, the stance and the effect and says
+ * nothing about the global cooldown, and no ability capture carries one
+ * because Wowhead does not publish it.
+ *
+ * It matters here: off the global cooldown, Shield Block sits above Shield
  * Slam in the tank list without costing it a strike.
  */
 export const SHIELD_BLOCK_ABILITY: Ability = {
@@ -893,6 +897,9 @@ export const CHARGE: Ability = {
   cooldownMs: seconds(15),
   attackTable: 'ranged-special',
   requiresTarget: false,
+  // Off the global cooldown, by the ruleset owner's rule. See
+  // docs/global-cooldown.md for the three Warrior abilities this covers.
+  triggersGcd: false,
   onCast: ({ simulation, caster, ability }) => {
     // Improved Charge adds to the rage generated. That number lives inside this
     // body rather than in a declared field, so it arrives as a named bonus on
