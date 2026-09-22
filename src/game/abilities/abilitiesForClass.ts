@@ -145,7 +145,17 @@ export function abilitiesForBuild(
  * reduces one further than it goes simply takes it to nothing.
  */
 function applyTalentChanges(ability: Ability, build: TalentBuild): Ability {
-  const costReduction = build.abilityCostReduction.get(ability.id) ?? 0;
+  /*
+   * A per-ability reduction PLUS the one that covers everything rolling a
+   * combat table. Both apply: Improved Heroic Strike and Focused Rage are
+   * different talents and a warrior with both pays for neither twice.
+   *
+   * "Offensive" is `attackTable`, on the ruleset owner's definition -- Heroic
+   * Strike, Thunder Clap and Sunder Armor have one and Battle Shout does not.
+   */
+  const costReduction =
+    (build.abilityCostReduction.get(ability.id) ?? 0) +
+    (ability.attackTable ? build.attackAbilityCostReduction : 0);
   const cooldownReduction = build.abilityCooldownReductionMs.get(ability.id) ?? 0;
   const bonuses = build.abilityBonuses.get(ability.id);
   const castReduction = build.abilityCastTimeReductionMs.get(ability.id) ?? 0;

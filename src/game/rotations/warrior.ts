@@ -388,6 +388,14 @@ export const BERSERKER_HEROIC_STRIKE_RAGE = 42;
  */
 export const DEFENSIVE_HEROIC_STRIKE_RAGE = 26;
 
+/**
+ * Rage below which the tank list casts Bloodrage.
+ *
+ * The ruleset owner's figure. Bloodrage gives ten at once and ten over ten
+ * seconds, so casting it near the cap throws most of the second half away.
+ */
+export const DEFENSIVE_BLOODRAGE_RAGE = 50;
+
 /** Milliseconds of fight remaining. */
 function remainingMs(context: SimulationContext): number {
   return context.plannedDurationMs - context.clock.now();
@@ -488,9 +496,32 @@ export const WARRIOR_DUAL_WIELD_BERSERKER_ROTATION: Rotation = new PriorityRotat
  * it does not have the ability at all.
  * ----------------------------------------------------------------------------
  */
-const WARRIOR_SHIELD_DEFENSIVE: readonly PriorityEntry[] = [
+/*
+ * Exported as DATA as well as wrapped in a rotation, so a test can assert on
+ * the order and the conditions without the rotation having to expose its
+ * entries. What order a list is in is the thing being specified.
+ */
+export const WARRIOR_SHIELD_DEFENSIVE: readonly PriorityEntry[] = [
   /*
-   * First, and only when it is not already up.
+   * FIRST, and only while there is room for the rage.
+   *
+   * Above the stance because it costs nothing to be there: Bloodrage is off
+   * the global cooldown, so taking this entry does not delay whatever comes
+   * next. A tank opens at zero rage and can do nothing until it has some,
+   * which is the one moment in the fight when twenty rage matters most.
+   *
+   * The fifty is the ruleset owner's. Bloodrage grants ten immediately and
+   * ten more over ten seconds, so casting it near the cap throws most of the
+   * second half away -- rage lost to the cap is the one waste this list can
+   * actually avoid.
+   */
+  {
+    abilityId: 'bloodrage_cast',
+    condition: (_context, actor) =>
+      (actor.resources.get('rage')?.current ?? 0) < DEFENSIVE_BLOODRAGE_RAGE,
+  },
+  /*
+   * Then the stance, and only when it is not already up.
    *
    * A stance is an aura that lasts until another replaces it, so this fires
    * once at the pull and then never again -- unless something else moved the

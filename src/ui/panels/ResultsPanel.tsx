@@ -77,6 +77,10 @@ export function ResultsPanel({ batch }: ResultsPanelProps) {
           <thead>
             <tr>
               <th>Ability</th>
+              {/* Casts, from the cast event rather than from damage, so an
+                  ability that deals none still has a row. Battle Shout,
+                  Sunder Armor and Bloodrage were invisible here. */}
+              <th className="numeric">Uses</th>
               <th className="numeric">Damage</th>
               <th className="numeric">Share</th>
               <th className="numeric">Hits</th>
@@ -90,6 +94,10 @@ export function ResultsPanel({ batch }: ResultsPanelProps) {
             {batch.abilities.map((ability) => (
               <tr key={ability.abilityName}>
                 <td>{ability.abilityName}</td>
+                {/* A dash rather than 0.00 for something that is not cast at
+                    all -- an auto attack, a proc, a bleed tick. Zero uses
+                    would read as an ability nobody used. */}
+                <td className="numeric">{ability.uses > 0 ? fixed(ability.uses) : '-'}</td>
                 <td className="numeric">{fixed(ability.damage)}</td>
                 <td className="numeric">
                   <span className="share">
