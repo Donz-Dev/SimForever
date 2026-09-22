@@ -1,4 +1,9 @@
 import { TARGET_ARMOR_OPTIONS } from '../../game/actors/createTrainingDummy';
+import {
+  EXTERNAL_HEAL_MAXIMUM,
+  EXTERNAL_HEAL_MINIMUM,
+} from '../../game/encounters/externalHealer';
+import { BOSS_SWING_DAMAGE_RAMP } from '../../game/encounters/raidBoss';
 import type { CharacterProfile } from '../../profiles';
 import type { SelectOption } from '../components/Field';
 import { CheckboxField, NumberField, SelectField, TextField } from '../components/Field';
@@ -22,8 +27,16 @@ interface EncounterPanelProps {
  * and six Warrior talents to life -- and what makes every resulting number
  * depend on two borrowed Classic placeholders, which is why they are shown
  * beside the switch rather than buried in code.
+ *
+ * It also turns on the ramp and the assumed healer, neither of which is
+ * editable. Nobody asked to vary them, and a field for every modelling choice
+ * is how a panel becomes unreadable -- but they change every number on the
+ * results page, so they are stated here in words.
  */
 export function EncounterPanel({ profile, onChange }: EncounterPanelProps) {
+  // Read from the constant rather than written out, so the sentence cannot
+  // drift away from the mechanic the way a hardcoded "10%" eventually does.
+  const rampPercent = BOSS_SWING_DAMAGE_RAMP * 100;
   const setEncounter = (changes: Partial<CharacterProfile['encounter']>) => {
     onChange({ ...profile, encounter: { ...profile.encounter, ...changes } });
   };
@@ -59,7 +72,7 @@ export function EncounterPanel({ profile, onChange }: EncounterPanelProps) {
         <>
           <NumberField
             label="Swing damage"
-            hint="before armor"
+            hint="first swing, before armor"
             value={profile.encounter.targetSwingDamage}
             min={0}
             step={100}
@@ -79,8 +92,12 @@ export function EncounterPanel({ profile, onChange }: EncounterPanelProps) {
             the figures above as about the character.
           </p>
           <p className="muted">
-            A healer is assumed but not modelled: the character cannot die, so nothing here
-            says whether they would survive.
+            Each swing hits <strong>{rampPercent}% harder than the one before</strong>, so the
+            fight gets away from the character on purpose. A healer is assumed but not
+            modelled: {EXTERNAL_HEAL_MINIMUM.toLocaleString()} to{' '}
+            {EXTERNAL_HEAL_MAXIMUM.toLocaleString()} every second, from nobody. The character
+            can die, is put straight back on their feet, and the ramp carries on regardless —
+            the results count the deaths.
           </p>
         </>
       ) : null}

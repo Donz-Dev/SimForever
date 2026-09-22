@@ -1,5 +1,5 @@
 import type { AttackEvent, AuraDefinition, Combatant, Reaction, WeaponSlot } from '../../engine';
-import { dealDamage, flat, seconds } from '../../engine';
+import { applyHealing, dealDamage, flat, seconds } from '../../engine';
 import { ITEMS_BY_ID } from './itemData';
 
 /**
@@ -118,6 +118,20 @@ export const CRUSADER_STRENGTH = 100;
 export const CRUSADER_DURATION_MS = seconds(15);
 
 /**
+ * "Heals for 75 to 125 on proc."
+ *
+ * Both figures are the enchant's own tooltip. Nothing here is invented.
+ *
+ * THIS WAS LISTED AS UNMODELLED UNTIL THE ENCOUNTER GREW A HEALER. Its reason
+ * read "Nothing damages the player, so a heal would restore nothing", which
+ * was true on the day it was written and stopped being true the moment the
+ * target started killing people. A reason is a claim about the engine at a
+ * point in time, and this one expired.
+ */
+export const CRUSADER_HEAL_MINIMUM = 75;
+export const CRUSADER_HEAL_MAXIMUM = 125;
+
+/**
  * Holy Strength, ONE AURA PER HAND.
  *
  * ----------------------------------------------------------------------------
@@ -138,9 +152,9 @@ export const CRUSADER_DURATION_MS = seconds(15);
  * "capable of triggering again to refresh its duration" means. The stacking is
  * between hands, not within one.
  *
- * The heal is not modelled. Nothing damages the player by default, so healing
- * has nothing to restore, and the strength is the entire reason anyone uses
- * this.
+ * The heal IS modelled, and lands on the same proc. It is small next to a
+ * hundred strength and it is not why anyone uses this, but it is real and a
+ * character being hit has somewhere to put it.
  * ----------------------------------------------------------------------------
  */
 function holyStrengthFor(slot: WeaponSlot): AuraDefinition {
@@ -178,6 +192,25 @@ function crusaderProc(
   const aura = attack.weaponSlot ? HOLY_STRENGTH_BY_SLOT[attack.weaponSlot] : undefined;
   if (!aura) return;
   context.applyAura(actor, aura, actor.id);
+
+  /*
+   * The heal, on the same proc. Rolled AFTER the aura so that adding it moved
+   * nothing that came before it in the random stream -- though it does shift
+   * everything after, so a seeded run with Crusader equipped is a different
+   * fight from the one the same seed produced before this existed.
+   *
+   * `external` is not set: this heal genuinely comes from the character's own
+   * enchant, so if anything ever raises their healing done it should raise
+   * this too. That is the difference between it and the assumed healer.
+   */
+  applyHealing(context, {
+    source: actor,
+    target: actor,
+    abilityId: 'crusader',
+    abilityName: 'Holy Strength',
+    baseAmount: context.rng.nextInt(CRUSADER_HEAL_MINIMUM, CRUSADER_HEAL_MAXIMUM),
+    canCrit: false,
+  });
 }
 
 // ---------------------------------------------------------------------------

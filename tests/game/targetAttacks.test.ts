@@ -84,23 +84,31 @@ describe("a target that swings back", () => {
     expect(incoming.some((line) => /crushing/.test(line))).toBe(true);
   });
 
-  it("does not kill the player, because a healer is assumed", () => {
+  it("kills the player without ending the fight", () => {
     /*
-     * A geared warrior has under 4,000 health and takes 4,000-per-swing blows
-     * every two seconds. Without the assumption every fight would end in the
-     * first few seconds and nothing else could be measured.
+     * A geared warrior has under 4,000 health and the target opens at 5,000 a
+     * swing and ramps from there, so it kills them -- repeatedly. The fight
+     * still runs its full length, because the character is stood back up every
+     * time rather than being made immortal.
+     *
+     * This used to assert the opposite. `survivesLethalDamage` held health at
+     * one and nothing could ever die, which kept the fight running at the
+     * price of making "did that kill them" unanswerable.
      */
     const run = fight(geared("dual_wield"), true).representative;
     expect(run.endReason).toBe("duration_expired");
+    expect(run.timeline.some((event) => event.type === "death")).toBe(true);
   });
 
-  it("reports no overkill on a character who survived", () => {
+  it("reports overkill, now that there is something to overkill", () => {
+    /*
+     * The other half of dropping the immunity. An immortal character had no
+     * overkill by definition -- the engine suppressed it, because reporting
+     * "3,765 overkill" against somebody still standing is nonsense. A
+     * character who genuinely died has a real number there.
+     */
     const log = fight(geared("dual_wield"), true).representative.combatLog;
-    const incoming = log.filter((line) =>
-      /Training Dummy Main Hand Auto-Attack hits/.test(line),
-    );
-    expect(incoming.length).toBeGreaterThan(0);
-    expect(incoming.some((line) => /overkill/.test(line))).toBe(false);
+    expect(log.some((line) => /overkill/.test(line))).toBe(true);
   });
 });
 
@@ -188,13 +196,31 @@ describe("profile version 6", () => {
 describe("the assumed healer", () => {
   it("is only assumed when something is attacking", () => {
     const still = createPlayer({ race: "human", characterClass: "warrior" });
-    expect(still.survivesLethalDamage).toBe(false);
+    expect(still.revivesOnDeath).toBe(false);
+    expect(still.openingAuras.map((aura) => aura.id)).not.toContain("external_healer");
 
     const hit = createPlayer({
       race: "human",
       characterClass: "warrior",
-      survivesLethalDamage: true,
+      revivesOnDeath: true,
+      externalHealing: true,
     });
-    expect(hit.survivesLethalDamage).toBe(true);
+    expect(hit.revivesOnDeath).toBe(true);
+    expect(hit.openingAuras.map((aura) => aura.id)).toContain("external_healer");
+  });
+
+  it("no longer makes the character immortal", () => {
+    /*
+     * It used to. `survivesLethalDamage` stopped health at one and made a
+     * death impossible, so "how close was that" had no answer at all. The
+     * character now dies and is stood back up, and the deaths are counted.
+     */
+    const hit = createPlayer({
+      race: "human",
+      characterClass: "warrior",
+      revivesOnDeath: true,
+      externalHealing: true,
+    });
+    expect(hit.survivesLethalDamage).toBe(false);
   });
 });

@@ -128,6 +128,19 @@ because an ability that wrongly takes a global cooldown still costs the right
 rage and deals the right damage. Full rules, exceptions and provenance in
 [docs/global-cooldown.md](docs/global-cooldown.md).
 
+**An encounter that hits back RAMPS, and the character can die.** Turning on
+`targetAttacks` brings three mechanisms at once, none of them Forever ruleset
+data: the target's damage grows 10% a swing compounding, an assumed healer
+restores a random 500-1500 a second, and the character dies at zero health and
+is stood back up at full. Survival is modelled as a COUNT OF DEATHS rather than
+as an immunity, which is the whole difference: the character used to carry
+`survivesLethalDamage` and could not die, so "how close was that" had no answer
+at all. A revive does not mark the character dead even for an instant --
+marking them would cancel their own swing timers and skip the reactions the
+killing blow was meant to trigger -- and it does not reset the target's ramp,
+because a ramp that reset would hand a character an easier fight for dying.
+Full rules and provenance in [docs/incoming-damage.md](docs/incoming-damage.md).
+
 **A cast interrupts the swing in progress, and the swing timer resets.** That is
 what makes a cast a real cost to a melee character rather than free damage
 between swings. `Ability.swingTimer: 'hold'` is the exception — the timer runs on
@@ -187,6 +200,15 @@ state the interpretation in a comment, and isolate it in one place so it is chea
 to flip. Example: the source names an expression `Armor_Reduction` but it
 computes the damage *multiplier* — resolved by checking it against the known
 ~40% figure for a 3731-armor raid boss.
+
+**An `unmodelled` reason is a claim about the engine ON THE DAY IT WAS WRITTEN,
+and it expires.** Clearing a blocker is not finished until every reason naming
+it has been re-read. This has now been missed twice: five talents still said
+nothing attacked the player three commits after something did, and Crusader's
+heal said "nothing damages the player, so a heal would restore nothing" for as
+long as that was true and for a while after it was not. The reasons are written
+specifically enough to check quickly, which is the point of writing them that
+way.
 
 **When an effect cannot be modelled, keep its own words and surface them.** Items
 carry an `unmodelled` list holding the source's exact text and one line on why it

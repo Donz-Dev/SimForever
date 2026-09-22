@@ -294,6 +294,31 @@ export class Simulation implements SimulationContext {
     // Two lethal hits landing in the same instant must not kill twice.
     if (target.isDeathProcessed) return;
 
+    /*
+     * A COMBATANT THAT REVIVES DIES AND STANDS BACK UP IN THE SAME INSTANT.
+     *
+     * The death is emitted first, so it is counted, and then health returns to
+     * full. It is deliberately NOT marked dead in between: marking it would
+     * make every `isAlive` check between here and the revive read false, which
+     * in one tick of the event loop would cancel the character's own auto
+     * attacks and skip their reactions -- including the one the killing blow
+     * was meant to trigger.
+     *
+     * Nothing else is reset. Auras stay up, cooldowns keep running, and
+     * anything ramping against the character keeps ramping: a death is a
+     * recorded event in an encounter that does not care, not a fresh pull.
+     */
+    if (target.revivesOnDeath) {
+      this.telemetry.emit({
+        type: 'death',
+        timestamp: this.clock.now(),
+        actorId: target.id,
+        killerId: killer?.id,
+      });
+      target.health.fill();
+      return;
+    }
+
     target.markDead();
     target.auras.removeAll(this);
 

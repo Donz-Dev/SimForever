@@ -1,5 +1,5 @@
 import { Combatant } from '../../engine';
-import { bossMeleeWeapon } from '../encounters/raidBoss';
+import { BOSS_DAMAGE_RAMP_REACTION, bossMeleeWeapon } from '../encounters/raidBoss';
 
 /**
  * Raid boss level, three above a level 60 character.
@@ -60,6 +60,12 @@ export interface TrainingDummyOptions {
  * `encounters/raidBoss.ts`, every one of which is a flagged placeholder
  * borrowed from Classic. That is what makes the attacks-received table, rage
  * from damage taken and Revenge reachable at all.
+ *
+ * It also RAMPS: every swing raises its damage by ten percent, compounding, so
+ * a fight that begins survivable does not stay that way. The character is held
+ * up by an assumed healer (`encounters/externalHealer.ts`) and dies when the
+ * ramp outruns it -- which is the whole point, and the reason a Protection
+ * warrior has anything to react to.
  */
 export function createTrainingDummy(options: TrainingDummyOptions = {}): Combatant {
   return new Combatant({
@@ -93,6 +99,12 @@ export function createTrainingDummy(options: TrainingDummyOptions = {}): Combata
               swingSeconds: options.swingSeconds,
             }),
           },
+          /*
+           * The ramp: each swing makes the next one ten percent harder. It
+           * rides on the weapon rather than being part of the dummy, because a
+           * target that is not swinging has nothing to ramp.
+           */
+          reactions: [BOSS_DAMAGE_RAMP_REACTION],
         }
       : {}),
   });

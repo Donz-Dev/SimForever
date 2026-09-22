@@ -305,8 +305,10 @@ export const ITEMS_BY_ID: ReadonlyMap<number, Item> = new Map(
  * second weapon is a 4.58% chance per attack. That is implemented in
  * `procs.ts`, so nothing is unmodelled here any more.
  *
- * The HEAL is still not modelled, and is listed. Nothing damages the player, so
- * it would restore nothing even if it were.
+ * The HEAL is modelled too, since the encounter grew a healer and a character
+ * who can die. Its old reason -- "Nothing damages the player, so a heal would
+ * restore nothing" -- was true when written and expired the day the target
+ * started killing people. Nothing here is unmodelled any more.
  */
 export const CRUSADER: Enchant = {
   id: data.enchants[0].id,
@@ -316,13 +318,8 @@ export const CRUSADER: Enchant = {
   // Melee weapons only. The ranged slot is excluded deliberately.
   slots: ['mainHand', 'offHand', 'twoHand'],
   stats: {},
-  unmodelled: [
-    {
-      kind: 'Enchant',
-      text: 'Heals for 75 to 125 on proc.',
-      reason: 'Nothing damages the player, so a heal would restore nothing.',
-    },
-  ],
+  // Empty, not absent: every part of this enchant is now simulated.
+  unmodelled: [],
   tooltip: data.enchants[0].tooltip,
 };
 

@@ -207,13 +207,19 @@ hits.
   hand.
 - **Weapon skill above the cap** is supported by the formulas but nothing grants
   it. Talents and racials that raise weapon skill would set `WeaponProfile.skill`.
-- **Defense skill is exactly 5 x level.** A defense stat that raises it beyond
-  that does not exist.
+- ~~**Defense skill is exactly 5 x level.**~~ **Defense skill is live.** The
+  baseline is still 5 x level; what the ruleset owner supplied is what a
+  SURPLUS above it does. Each point moves boss miss up, boss crit down, and
+  player dodge, parry and block up, by **0.04 percentage points each**, and
+  every one is clamped so it cannot go negative or past 100%. Anticipation
+  grants 20 of them.
 - **Table 6 runs whenever `encounter.targetAttacks` is on**, which is off by
-  default. Player dodge comes from the agility conversion and **player parry is
-  read from `parryChance`**, which the Deflection talent grants — both were
-  documented here as unreachable and are not. What is still missing is defense
-  skill: the table uses flat ruleset constants for boss miss, crit and crush.
-- **Defense stat, resistances and level-based miss** are all absent.
+  default. Player dodge comes from the agility conversion, **player parry is
+  read from `parryChance`** (base 5% for a Warrior, plus Deflection), and block
+  chance and block value are both real — all of them were documented here as
+  unreachable and are not.
+- **Resistances and level-based miss** are absent. Resistances are totalled on
+  the character sheet for display only, which is the ruleset owner's decision
+  rather than a gap.
 - **Glance penalty is fixed at 30%.** The source notes it "can be adjusted by
   stats"; no such stat exists yet.

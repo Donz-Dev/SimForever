@@ -234,10 +234,12 @@ build is worth something in a way it was not before.
   triggers an extra attack. `extraAttack` exists, and effects can now read a
   talent's third value through `valueIndex`.
 
-**Blood Craze stays inert, and for a real reason.** Its trigger is reachable
-now, but it regenerates health, the player cannot drop below one health, and
-survival is not modelled — so there is nothing for the heal to restore. It
-becomes meaningful when survival does.
+**Blood Craze stayed inert for a real reason, and that reason has expired.** Its
+trigger was reachable; what was missing was anything for the heal to restore,
+because the player could not drop below one health. Both halves are now there:
+the character takes real damage from a ramping target and healing is modelled,
+so "regenerates 3% of health over 6 sec after a crit" is a periodic aura on a
+reaction, of the shape Enrage already uses. **Not blocked, and not done.**
 
 ### 3.4 Armour enchants
 
@@ -437,13 +439,14 @@ Grouped, because each blocker covers several:
 | **The ability it modifies is inert** | Improved Bloodrage, Improved Berserker Rage, Improved Shield Wall | Waits on Bloodrage's rage mechanism and Berserker Rage's missing magnitude |
 | **No defense skill** | Anticipation | Needs a formula Forever has not given |
 | **Talent-driven combat-start aura** | Anger Management | The mechanism exists; nothing wires a talent to it |
-| **Engine holds one armor number** | Toughness | It scales armor FROM ITEMS, and the engine cannot separate item armor from base |
-| **Source does not say what it affects** | Focused Rage | "Your offensive abilities", unnamed. Choosing the set would be inventing the talent |
-| **Modelling part would misrepresent it** | Dual Wield Specialization, Raging Blows | Each is several effects at once, and the expressible subset alone understates them |
-| **Survival is not modelled** | Blood Craze | Heals after a crit, and the player cannot drop below one health |
+| ~~Engine holds one armor number~~ | ~~Toughness~~ | **Done.** Armor from items is tracked separately from armor derived from stats, and the talent scales only the first |
+| ~~Source does not say what it affects~~ | ~~Focused Rage~~ | **Done.** The ruleset owner defined "offensive" as processed through a combat table, and the talent reads `attackTable` rather than a list of ids |
+| ~~Modelling part would misrepresent it~~ | ~~Dual Wield Specialization, Raging Blows~~ | **Done**, once every part arrived at once |
+| **Survival is not modelled** | Blood Craze | **This reason has expired.** The character now dies, is counted, and is healed; nothing blocks it |
 
-**Six of the twenty are out of scope rather than pending**, so the honest
-denominator is 47, of which 33 do something.
+**Six of these are out of scope rather than pending.** Of the 53, **43 now do
+something** — 37 fully and 6 partly — leaving 10 inert, four of which are the
+out-of-scope kind.
 
 ### The order worth doing them in
 
@@ -493,9 +496,13 @@ Two lessons, both paid for:
   nothing attacks the player"* and enforced the stale caveat instead of
   catching it. Assert what should stay true, not what happens to be true today.
 
-**Survival is not modelled.** With `targetAttacks` on, a healer is *assumed*: the
-character cannot drop below one health. Such a run says nothing about whether
-they would live.
+**Survival is modelled as a DEATH COUNT, not as survival.** With `targetAttacks`
+on, an assumed healer restores a random 500-1500 a second and the target ramps
+10% a swing until it wins. The character dies, is stood back up at full, and
+each death is counted — about twenty of them in a default sixty second tank
+fight. Something is putting them back on their feet and nothing in the ruleset
+says what, so the figure means "how often would this configuration have killed
+them" and not "would they live". See [incoming-damage.md](incoming-damage.md).
 
 **Every absolute number is provisional, but less so than it was.** 18 of 19
 items are still Classic and the boss swing figures are still Classic. The

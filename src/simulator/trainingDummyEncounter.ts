@@ -64,13 +64,18 @@ export function trainingDummyEncounter(
         equipment: profile.equipment,
         talents: profile.talents,
         /*
-         * A healer is ASSUMED, not modelled. Without this a warrior taking
-         * boss swings dies in three of them and every fight ends early, which
-         * would make the whole feature useless. The damage still lands in full
-         * and still generates rage; survival is simply not what is being
-         * measured. See `survivesLethalDamage`.
+         * A healer is ASSUMED, not modelled: a random 500 to 1500 every
+         * second, and nothing behind it. See `encounters/externalHealer.ts`.
+         *
+         * The character can still be killed, and is stood back up when they
+         * are. That pairing is the whole model -- the healer is what stops the
+         * fight ending in three swings, and the deaths are what says when it
+         * stopped being enough. Both are on the same switch, because a healer
+         * with nothing to heal is noise and a revive with nothing to revive
+         * from is dead code.
          */
-        survivesLethalDamage: profile.encounter.targetAttacks,
+        externalHealing: profile.encounter.targetAttacks,
+        revivesOnDeath: profile.encounter.targetAttacks,
       }),
       createTrainingDummy({
         name: profile.encounter.targetName,
