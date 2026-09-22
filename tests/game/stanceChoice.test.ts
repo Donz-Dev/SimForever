@@ -83,25 +83,20 @@ describe('a warrior opens combat in its chosen stance', () => {
   });
 });
 
-describe('the opening stance is honoured, and the rotation dances away from it', () => {
+describe('the tank list stays in Defensive Stance', () => {
   /*
-   * THIS IS NOT A FIX FOR STANCE DANCING, and the measurement says so.
+   * THIS USED TO BE THE OPPOSITE TEST, and it was right at the time.
    *
-   * The intent was that starting a build in its own stance would remove most
-   * of the swapping -- a shield warrior opening in Defensive already has
-   * Revenge, Shield Slam and Shield Wall. It does not, because the rotation
-   * swaps for the abilities OUTSIDE whichever stance it is in, and after the
-   * first few seconds the opening stance no longer matters.
+   * A shield warrior opening in Defensive Stance used to dance straight back
+   * out of it -- eighteen swaps and 540 rage a fight -- because the general
+   * shield list reaches for abilities in other stances and the opening stance
+   * stopped mattering after the first few seconds. That was measured and
+   * pinned here as a near-equality, with a comment saying plainly that
+   * choosing a stance was real and its effect on results was not.
    *
-   * Measured over 200 iterations, 1H & Shield against an attacking target:
-   *
-   *   opening in Battle      122.51 DPS   18.41 swaps   543.9 rage
-   *   opening in Defensive   122.51 DPS   18.32 swaps   542.3 rage
-   *   opening in Berserker   121.91 DPS   17.77 swaps   540.7 rage
-   *
-   * So the choice is real and its effect on results is not. Making it matter
-   * needs the rotation to RESPECT the chosen stance rather than treating it as
-   * a starting position -- a separate decision, deliberately not taken here.
+   * The tank list fixes it, which is what a per-stance list is FOR: every
+   * entry in it is castable in Defensive, so the only stance change it makes
+   * is the one that puts it right at the pull.
    */
   function swaps(stance: 'battle' | 'defensive'): number {
     const base = createDefaultProfile();
@@ -115,14 +110,38 @@ describe('the opening stance is honoured, and the rotation dances away from it',
     return batch.rage.spent.find((row) => row.sourceId === 'stance_change')?.count ?? 0;
   }
 
-  it('swaps about as much whichever stance it opens in', () => {
-    // Pinned as a near-equality rather than an improvement, because asserting
-    // an improvement here would be asserting something that is not true.
-    expect(Math.abs(swaps('defensive') - swaps('battle'))).toBeLessThan(2);
+  it('never changes stance at all', () => {
+    /*
+     * Zero, not "about one". The character OPENS in Defensive -- that is what
+     * choosing the stance does -- so the list's first entry finds the aura
+     * already up and falls straight through to Battle Shout.
+     */
+    expect(swaps('defensive')).toBe(0);
   });
 
-  it('still swaps a great deal, whatever it opens in', () => {
-    expect(swaps('defensive')).toBeGreaterThan(5);
+  it('is only the tank list that stays put', () => {
+    /*
+     * A shield warrior in Battle Stance is NOT a tank build, so it gets the
+     * general shield list and dances as it always did. The tank list is
+     * chosen by style AND stance together, and this is the difference that
+     * makes visible.
+     */
+    expect(swaps('battle')).toBeGreaterThan(3);
+  });
+
+  it('keeps Defensive Stance up for the whole fight', () => {
+    // The point of the list: Defensive is where the damage reduction and
+    // Revenge live, and the general list spends most of a fight outside it.
+    const base = createDefaultProfile();
+    const batch = runProfileBatch({
+      ...base,
+      character: { ...base.character, combatStyle: 'one_hand_shield', stance: 'defensive' },
+      equipment: startingEquipmentFor('warrior', 'one_hand_shield'),
+      simulation: { ...base.simulation, iterations: 40, seed: 12 },
+      encounter: { ...base.encounter, targetAttacks: true },
+    } as never);
+    const defensive = batch.buffUptime.find((row) => row.auraName === 'Defensive Stance');
+    expect(defensive?.uptime).toBeCloseTo(1, 2);
   });
 });
 

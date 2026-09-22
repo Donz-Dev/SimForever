@@ -12,8 +12,19 @@ import { legalise } from '../helpers/legalTalents';
 /*
  * The Immovable Object's own numbers, transcribed BY HAND from
  * https://www.wowhead.com/forever/item=19321 rather than read from the data.
+ *
+ * "44 Block" IS BLOCK VALUE, not block chance. This file used to say
+ * otherwise, which gave the shield a 44% chance to block -- wrong in a way
+ * that looks entirely plausible on a tank. The two block lines add:
+ * 44 inherent + 27 bonus = 71.
  */
-const SHIELD = { id: 19321, blockChance: 44, blockValue: 27, armor: 2468, stamina: 15 };
+const SHIELD = { id: 19321, blockValue: 44 + 27, armor: 2468, stamina: 15 };
+
+/** Block chance for holding a shield at all, before anything adds to it. */
+const BASE_BLOCK = 5;
+
+/** A point of strength is a twentieth of a point of block value. */
+const blockValueFromStrength = (strength: number) => strength / 20;
 
 /*
  * `createPlayer` strips talents whose tier gate or prerequisite is not met, so
@@ -31,16 +42,30 @@ const shieldWarrior = (talents: Record<string, number> = {}) =>
   });
 
 describe('a shield gives block chance and block value', () => {
-  it('reads both off the item', () => {
+  it('reads BLOCK VALUE off the item, and no block chance at all', () => {
     const item = ITEMS_BY_ID.get(SHIELD.id);
-    expect(item?.stats.blockChance).toBe(SHIELD.blockChance);
     expect(item?.stats.blockValue).toBe(SHIELD.blockValue);
+    // A shield grants no chance. That comes from the flat 5% for holding one,
+    // from talents, from defense skill and from Shield Block.
+    expect(item?.stats.blockChance).toBeUndefined();
   });
 
-  it('carries them onto the character', () => {
+  it('gives five percent block for holding a shield', () => {
+    expect(shieldWarrior().stats.effective.blockChance).toBe(BASE_BLOCK);
+  });
+
+  it('adds the shield value and a twentieth of strength', () => {
+    /*
+     * Block value follows TOTAL strength, so it moves when anything buffs it
+     * -- a Crusader proc is a hundred strength and five more block value.
+     * Computing it once at creation would miss that.
+     */
     const warrior = shieldWarrior();
-    expect(warrior.stats.effective.blockChance).toBe(SHIELD.blockChance);
-    expect(warrior.stats.effective.blockValue).toBe(SHIELD.blockValue);
+    const strength = warrior.stats.effective.strength;
+    expect(warrior.stats.effective.blockValue).toBeCloseTo(
+      SHIELD.blockValue + blockValueFromStrength(strength),
+      6,
+    );
   });
 
   it('gives a warrior without a shield neither', () => {
@@ -51,7 +76,9 @@ describe('a shield gives block chance and block value', () => {
       equipment: startingEquipmentFor('warrior', 'dual_wield'),
     });
     expect(dualWield.stats.effective.blockChance).toBe(0);
-    expect(dualWield.stats.effective.blockValue).toBe(0);
+    // Block VALUE is not zero -- strength gives it -- but it can never be used,
+    // because nothing without a shield ever rolls a block.
+    expect(dualWield.stats.effective.blockValue).toBeGreaterThan(0);
   });
 
   it('reaches the attacks-received table', () => {
@@ -63,8 +90,8 @@ describe('a shield gives block chance and block value', () => {
       warrior,
       {},
     );
-    // 44% as roll units on the 1-10000 die.
-    expect(chances.block).toBe(4400);
+    // 5% as roll units on the 1-10000 die.
+    expect(chances.block).toBe(500);
   });
 });
 
@@ -77,14 +104,15 @@ describe('Shield Slam', () => {
     const warrior = shieldWarrior({ shield_slam: 1 });
     const slam = warrior.abilities.get('shield_slam');
     expect(slam).toBeDefined();
-    expect(warrior.stats.effective.blockValue).toBe(SHIELD.blockValue);
 
     /*
-     * 655 from Forever plus the shield's own block value. The spreadsheet's
-     * "421 to 439" was replaced by the ruleset owner's decision, and with it
-     * the range: Shield Slam is flat now, so there is one number and not two.
+     * 655 from Forever plus the character's block value -- the shield's 71
+     * and a twentieth of its strength, which is what makes Shield Slam scale
+     * with strength at all.
      */
-    expect(SHIELD_SLAM_DAMAGE + SHIELD.blockValue).toBe(682);
+    const blockValue = warrior.stats.effective.blockValue;
+    expect(blockValue).toBeGreaterThan(SHIELD.blockValue);
+    expect(SHIELD_SLAM_DAMAGE + SHIELD.blockValue).toBe(726);
   });
 });
 
@@ -100,9 +128,10 @@ describe('Revenge', () => {
 
 describe('Shield Specialization', () => {
   it('adds block chance from its FIRST value', () => {
-    // Rank 5 is "+5% block and a 100% chance of 5 rage": 5 and 100.
+    // Rank 5 is "+5% block and a 100% chance of 5 rage": 5 and 100. On top of
+    // the flat 5% for holding a shield.
     const warrior = shieldWarrior({ shield_specialization: 5 });
-    expect(warrior.stats.effective.blockChance).toBe(SHIELD.blockChance + 5);
+    expect(warrior.stats.effective.blockChance).toBe(BASE_BLOCK + 5);
   });
 
   it('grants a rage reaction from its SECOND value', () => {

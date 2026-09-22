@@ -149,7 +149,12 @@ describe('dual-wield in Berserker Stance uses its own list', () => {
     // Any other combination falls back to the general lists.
     expect(warriorRotation('dual_wield', 'battle').name).toBe('Warrior');
     expect(warriorRotation('two_hander', 'berserker').name).toBe('Warrior');
-    expect(warriorRotation('one_hand_shield', 'defensive').name).toBe('Warrior (Shield)');
+    // A shield in Defensive has its own tank list now.
+    expect(warriorRotation('one_hand_shield', 'defensive').name).toBe(
+      'Warrior (Shield, Defensive)',
+    );
+    // A shield OUT of Defensive falls back to the general shield list.
+    expect(warriorRotation('one_hand_shield', 'berserker').name).toBe('Warrior (Shield)');
   });
 
   function fight(talents: Record<string, number> = {}) {

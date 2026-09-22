@@ -6,11 +6,14 @@ import type {
   StatName,
   WeaponProfile,
 } from '../../engine';
+import type { WeaponSlot } from '../../engine';
 import { ALL_ABILITIES, AbilityModifiers, seconds } from '../../engine';
 import { COMBAT_CONSTANTS } from '../combat/attackChances';
 import type { TalentReactionBuilder } from '../reactions/warriorTalents';
 import { WARRIOR_TALENT_REACTIONS } from '../reactions/warriorTalents';
-import type { ClassId } from '../character';
+import type { ClassId, CombatStyleId } from '../character';
+import type { Equipment } from '../items/Item';
+import { armorFromItems, liveEquipment } from '../items/equipment';
 import type { TalentAllocation } from './Talent';
 import type {
   IllegalTalent,
@@ -194,6 +197,39 @@ function meets(
     return false;
   }
   return true;
+}
+
+/**
+ * WHAT THE CHARACTER IS HOLDING, from the equipment.
+ *
+ * ----------------------------------------------------------------------------
+ * ONE PLACE, because two produced a real bug. `createPlayer` built this inline
+ * and the Talent panel called `talentBuild` with NO context at all, so every
+ * conditional talent reported "this character is not holding one" however the
+ * character was geared. Toughness was the one that made it obvious -- it read
+ * "no armor from items" on a warrior in a full set -- but Two-Handed Weapon
+ * Specialization, Weaponmaster and Bastion had been saying the same thing for
+ * as long as they had existed.
+ *
+ * A panel that describes a build has to build it the same way the fight does.
+ * ----------------------------------------------------------------------------
+ */
+export function talentContextFor(
+  equipment: Equipment,
+  style: CombatStyleId,
+  weapons: Partial<Record<WeaponSlot, WeaponProfile>>,
+): TalentBuildContext {
+  return {
+    mainHand: weapons.mainHand,
+    offHand: weapons.offHand,
+    // A shield is not a weapon and does not appear in `weapons`, so it is
+    // asked about separately. Bastion needs it and swings with nothing.
+    hasShield: liveEquipment(equipment, style).shield !== undefined,
+    // Armor from items ALONE, which is what Toughness scales. The character's
+    // armor is this plus the class base, and a percentage of the total would
+    // overstate the talent.
+    itemArmor: armorFromItems(equipment, style),
+  };
 }
 
 export function talentBuild(

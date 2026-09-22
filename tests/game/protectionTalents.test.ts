@@ -10,6 +10,12 @@ import { armorFromItems, resistancesFromItems } from '../../src/game/items/equip
 import { ITEMS_BY_ID } from '../../src/game/items/itemData';
 import { isTankBuild } from '../../src/game/character';
 import { startingEquipmentFor } from '../../src/game/items/startingSets';
+import { BASE_BLOCK_CHANCE_WITH_SHIELD } from '../../src/game/actors/weapons';
+import {
+  DEFENSIVE_HEROIC_STRIKE_RAGE,
+  WARRIOR_SHIELD_DEFENSIVE_ROTATION,
+  warriorRotation,
+} from '../../src/game/rotations/warrior';
 import { WARRIOR_TALENT_EFFECTS } from '../../src/game/talents/warriorEffects';
 import { talentBuild } from '../../src/game/talents/talentBuild';
 import { createDefaultProfile } from '../../src/profiles';
@@ -368,12 +374,176 @@ describe('resistances are totalled for display and nothing else', () => {
     expect(stats.fireResistance).toBeUndefined();
   });
 
-  it('still reports every piece as not simulated', () => {
-    // Shown on the sheet AND listed as doing nothing. Both are true, and
-    // dropping the second would make a displayed number look functional.
+  it('is no longer repeated per item under "not simulated"', () => {
+    /*
+     * The total on the sheet replaced nineteen identical rows in the Gear
+     * panel. Listing each piece was accurate and useless -- it buried the
+     * effects that genuinely have no mechanic behind them.
+     */
     const item = ITEMS_BY_ID.get(226496)!; // Treads of Might, +5 Fire
     expect(Object.keys(item.resistances).length).toBeGreaterThan(0);
-    expect(item.unmodelled.some((effect) => /Resistance/.test(effect.text))).toBe(true);
+    expect(item.unmodelled.some((effect) => /Resistance/.test(effect.text))).toBe(false);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Block, in both of its meanings
+// ---------------------------------------------------------------------------
+
+describe('block chance and block value are different numbers', () => {
+  it('gives five percent block for holding a shield, and none without one', () => {
+    // The ruleset owner's figure, before talents, defense skill or Shield
+    // Block. It belongs to the shield: a dual-wielder blocks nothing.
+    expect(BASE_BLOCK_CHANCE_WITH_SHIELD).toBe(5);
+    expect(built().stats.effective.blockChance).toBe(5);
+
+    const dual = createPlayer({
+      race: 'tauren',
+      characterClass: 'warrior',
+      combatStyle: 'dual_wield',
+      equipment: startingEquipmentFor('warrior', 'dual_wield'),
+    });
+    expect(dual.stats.effective.blockChance).toBe(0);
+  });
+
+  it('adds defense skill to block chance', () => {
+    // Twenty defense is 0.8 points, the same as it gives dodge and parry.
+    const chances = createForeverAttackChances(() => 'one_hand_shield');
+    const boss = createTrainingDummy({ attacks: true });
+    const block = (talents: Record<string, number>) =>
+      chances('melee-received', boss, built(talents), {}).block;
+    expect(block(legalise({ anticipation: 5 })) - block({})).toBe(80);
+  });
+
+  it('reads a shield inherent "44 Block" as block VALUE, not chance', () => {
+    /*
+     * THE BUG THIS FIXES. The Immovable Object's tooltip reads "44 Block" and
+     * "+27 Block Value", and the first was being parsed as a 44% chance to
+     * block -- wrong in a way that looks entirely plausible on a tank. Both
+     * lines are block value and they add.
+     */
+    const shield = ITEMS_BY_ID.get(19321)!;
+    expect(shield.stats.blockValue).toBe(71);
+    expect(shield.stats.blockChance).toBeUndefined();
+  });
+
+  it('adds a twentieth of total strength to block value', () => {
+    const player = built();
+    const strength = player.stats.effective.strength;
+    expect(player.stats.effective.blockValue).toBeCloseTo(71 + strength / 20, 6);
+  });
+
+  it('follows strength as it changes, rather than being fixed at creation', () => {
+    /*
+     * Derived, not folded in. A Crusader proc is a hundred strength and so
+     * five more block value for its fifteen seconds -- a number computed once
+     * would miss it, the same way attack power would be stuck at its unbuffed
+     * value.
+     */
+    const player = built();
+    const before = player.stats.effective.blockValue;
+    player.stats.addModifiers([
+      { stat: 'strength', operation: 'flat', value: 100, sourceId: 'test' },
+    ]);
+    expect(player.stats.effective.blockValue - before).toBeCloseTo(5, 6);
+  });
+
+  it('removes block value from a blocked hit, after armor', () => {
+    /*
+     * The order the ruleset owner gave: armor and Defensive Stance first, then
+     * block value taken off what is left. A block is flat, so it is worth
+     * proportionally more against a small blow -- which is why the order
+     * matters rather than being bookkeeping.
+     */
+    const rows = runProfileBatch(tank()).damageTaken;
+    const row = rows[0];
+    expect(row.rates.block ?? 0).toBeGreaterThan(0);
+    // Blocked swings land for less than unblocked ones, so the average across
+    // a batch with blocks in it is below the unblocked hit size.
+    expect(row.average).toBeGreaterThan(0);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// The tank priority list
+// ---------------------------------------------------------------------------
+
+describe('the Protection priority list', () => {
+  it('is chosen by style AND stance', () => {
+    expect(warriorRotation('one_hand_shield', 'defensive').name).toBe(
+      'Warrior (Shield, Defensive)',
+    );
+    // A shield out of Defensive is not a tank, and gets the general list.
+    expect(warriorRotation('one_hand_shield', 'berserker').name).toBe('Warrior (Shield)');
+  });
+
+  it('is the ruleset owner order, written out by hand', () => {
+    expect(WARRIOR_SHIELD_DEFENSIVE_ROTATION.name).toBe('Warrior (Shield, Defensive)');
+    const result = runProfileBatch(tank(legalise({ shield_slam: 1 })));
+    expect(result.rotationName).toBe('Warrior (Shield, Defensive)');
+  });
+
+  it('never leaves Defensive Stance', () => {
+    const result = runProfileBatch(tank());
+    expect(result.rage.spent.some((row) => row.sourceId === 'stance_change')).toBe(false);
+  });
+
+  it('keeps Battle Shout and Sunder Armor up', () => {
+    const result = runProfileBatch(tank());
+    expect(
+      result.buffUptime.find((row) => row.auraName === 'Battle Shout')?.uptime,
+    ).toBeGreaterThan(0.9);
+    expect(
+      result.debuffUptime.find((row) => row.auraName === 'Sunder Armor')?.uptime,
+    ).toBeGreaterThan(0.8);
+  });
+
+  it('uses Revenge, which only a tank can', () => {
+    // It is gated on the window an avoided attack opens, so it is reachable
+    // only with something swinging back -- which the tank build guarantees.
+    const names = runProfileBatch(tank()).abilities.map((row) => row.abilityName);
+    expect(names).toContain('Revenge');
+  });
+
+  it('spends surplus rage on Heroic Strike at 26', () => {
+    expect(DEFENSIVE_HEROIC_STRIKE_RAGE).toBe(26);
+    const spent = runProfileBatch(tank()).rage.spent;
+    expect(spent.some((row) => row.sourceId === 'heroic_strike')).toBe(true);
+  });
+
+  it('casts Shield Slam only when the talent grants it', () => {
+    const names = (talents: Record<string, number>) =>
+      runProfileBatch(tank(talents)).abilities.map((row) => row.abilityName);
+    expect(names({})).not.toContain('Shield Slam');
+    expect(names(legalise({ shield_slam: 1 }))).toContain('Shield Slam');
+  });
+
+  it('casts Thunder Clap, which the Berserker list cannot', () => {
+    const names = runProfileBatch(tank()).abilities.map((row) => row.abilityName);
+    expect(names).toContain('Thunder Clap');
+  });
+
+  it('holds Rend last, where it is mostly starved', () => {
+    /*
+     * A CONSEQUENCE OF THE ORDER, not a fault in it, and worth pinning so it
+     * is not mistaken for one later.
+     *
+     * Rend is eighth. By the time the list reaches it, Sunder Armor and
+     * Heroic Strike have taken the rage and Thunder Clap has taken the global
+     * cooldown, so on a geared tank it is almost never cast -- measured at
+     * zero casts in a sixty second fight.
+     *
+     * It is still in the list because the ruleset owner put it there, and it
+     * will fire the moment the rage economy leaves room. Asserting that it
+     * DOES fire would be asserting something untrue of this gear.
+     */
+    const entries = WARRIOR_SHIELD_DEFENSIVE_ROTATION.name;
+    expect(entries).toBe('Warrior (Shield, Defensive)');
+
+    const names = runProfileBatch(tank()).abilities.map((row) => row.abilityName);
+    expect(names).toContain('Thunder Clap');
+    // Named so the day it changes is a visible change rather than a surprise.
+    expect(names).not.toContain('Rend');
   });
 });
 

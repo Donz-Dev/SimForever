@@ -102,18 +102,38 @@ interface EffectRule {
 
 const EFFECT_RULES: readonly EffectRule[] = [
   {
-    // A shield's "44 Block" -- its block CHANCE, in percentage points.
+    /*
+     * A shield's "44 Block" is its INHERENT BLOCK VALUE, not a block chance.
+     *
+     * This was read as chance, which gave The Immovable Object a 44% chance to
+     * block and a block value of 27 -- both wrong, and wrong in a way that
+     * looked plausible on a tank. A shield's own line and its "+27 Block
+     * Value" bonus are the same kind of number and they add: 44 + 27 = 71.
+     *
+     * Block CHANCE comes from the base 5% every shield user has, from talents,
+     * from defense skill and from Shield Block. No item in this data grants
+     * any.
+     */
     pattern: /^(\d+) Block$/,
     apply: (value, into) => {
-      into.blockChance = (into.blockChance ?? 0) + value;
+      into.blockValue = (into.blockValue ?? 0) + value;
     },
   },
   {
-    // A shield's "+27 Block Value" -- flat damage a block removes, and the
-    // amount Shield Slam adds to its own damage.
+    // "+27 Block Value" -- flat damage a block removes, and the amount Shield
+    // Slam adds to its own damage. Found on shields and on other slots alike.
     pattern: /^\+(\d+) Block Value$/,
     apply: (value, into) => {
       into.blockValue = (into.blockValue ?? 0) + value;
+    },
+  },
+  {
+    // A percentage chance, which is the other thing "block" can mean. Nothing
+    // in the current data matches; the rule exists so a future item is read
+    // rather than reported as unmodelled.
+    pattern: /^\+?(\d+)% (?:Chance to Block|Block Chance)$/,
+    apply: (value, into) => {
+      into.blockChance = (into.blockChance ?? 0) + value;
     },
   },
   {
@@ -164,9 +184,6 @@ function reasonFor(kind: string, text: string): string {
   if (/extra attack/i.test(text)) {
     return 'The engine has no extra-attack mechanic.';
   }
-  if (/Resistance/i.test(text)) {
-    return 'Resistances are not a stat the engine has.';
-  }
   return 'No engine mechanic for this yet.';
 }
 
@@ -182,17 +199,15 @@ function buildStats(item: RawItem): {
   for (const [name, value] of Object.entries(item.stats)) stats[name] = value;
   if (item.armor) stats.armor = item.armor;
 
-  for (const [school, value] of Object.entries(item.resistances)) {
-    // The scrape lowercases the school for use as a key; the display text puts
-    // it back the way the tooltip reads.
-    const named = school.charAt(0).toUpperCase() + school.slice(1);
-    unmodelled.push({
-      kind: 'Equip',
-      text: `+${value} ${named} Resistance`,
-      reason: reasonFor('Equip', 'Resistance'),
-    });
-  }
-
+  /*
+   * RESISTANCES ARE NOT LISTED AS UNMODELLED ANY MORE.
+   *
+   * They are carried on the item and totalled on the character sheet, which
+   * is what the ruleset owner asked for. Repeating every piece under
+   * "Equipped but not simulated" was accurate and useless -- nineteen slots
+   * of plate produce a wall of rows that says the same thing nineteen times
+   * and buries the effects that are genuinely missing a mechanic.
+   */
   for (const effect of item.effects) {
     if (MODELLED_AS_PROCS.some((pattern) => pattern.test(effect.text))) continue;
 

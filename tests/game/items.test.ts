@@ -71,13 +71,18 @@ describe('the item data', () => {
     expect(shield.source).toContain('/forever/');
 
     /*
-     * "44 Block" is a block CHANCE in percentage points and "+27 Block Value"
-     * is the flat damage a block removes. Both were unmodelled until the engine
-     * gained a block outcome; a test asserting they were unmodelled is now the
-     * thing that would be wrong.
+     * BOTH LINES ARE BLOCK VALUE, and this test used to say otherwise.
+     *
+     * "44 Block" on a shield is its INHERENT BLOCK VALUE, not a chance. Read
+     * as a chance it gave The Immovable Object a 44% chance to block, which is
+     * wrong in a way that looks entirely plausible on a tank. It adds to the
+     * "+27 Block Value" line: 44 + 27 = 71.
+     *
+     * The shield grants no block CHANCE at all. That comes from the flat 5%
+     * for holding one, from talents, from defense skill and from Shield Block.
      */
-    expect(shield.stats.blockChance).toBe(44);
-    expect(shield.stats.blockValue).toBe(27);
+    expect(shield.stats.blockValue).toBe(71);
+    expect(shield.stats.blockChance).toBeUndefined();
     expect(shield.unmodelled.map((effect) => effect.text)).toEqual([]);
   });
 
@@ -187,9 +192,17 @@ describe('what the items do that the simulator does not', () => {
     expect(hoj?.unmodelled).toEqual([]);
   });
 
-  it('records the fire resistance on the Might set as unmodelled', () => {
+  it('does NOT list resistances as unmodelled any more', () => {
+    /*
+     * They are carried on the item and totalled on the character sheet
+     * instead. Nineteen slots of plate produced a wall of rows saying the same
+     * thing nineteen times, which buried the effects that genuinely have no
+     * mechanic behind them.
+     */
     const chest = ITEMS_BY_ID.get(226494);
-    expect(chest?.unmodelled.some((e) => /Fire Resistance/.test(e.text))).toBe(true);
+    expect(chest?.unmodelled.some((e) => /Resistance/.test(e.text))).toBe(false);
+    // Still on the item, for the sheet to total.
+    expect(chest?.resistances.fire).toBeGreaterThan(0);
   });
 
   it('grants Crusader no flat stats, because its strength is a proc', () => {
