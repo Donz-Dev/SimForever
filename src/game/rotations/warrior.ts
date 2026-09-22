@@ -5,6 +5,8 @@ import { isTankBuild } from '../character';
 import {
   BATTLE_SHOUT,
   DEFENSIVE_STANCE,
+  DEMORALIZING_SHOUT,
+  LAST_STAND,
   REND,
   SUNDER_ARMOR,
   SUNDER_ARMOR_MAX_STACKS,
@@ -24,19 +26,28 @@ import { seconds } from '../../engine';
  * `src/data/abilities/README.md`), and the three that raise damage are now in
  * the list with measured priorities.
  *
- * Still out, each for its own reason:
+ * Most of that paragraph's successors are now IN the tank list, and the
+ * reasons they were out are worth keeping because every one of them expired:
  *
- *   - DEMORALIZING SHOUT lowers the TARGET's attack power. Against a standing
- *     dummy that is nothing, and when the target swings back it is actively
- *     NEGATIVE for damage: less damage taken is less rage from damage taken.
- *     It is a survival cooldown in a simulator that does not model survival.
+ *   - BLOODRAGE's grant is wired -- ten on cast and ten over ten seconds --
+ *     and it opens the tank list.
+ *   - SHIELD BLOCK's "only 2 attacks" is expressible as `consumedByBlock`, and
+ *     it does not cost a global cooldown after all: it is one of the three
+ *     Warrior abilities the ruleset owner names as exceptions.
+ *   - SHIELD WALL was "a damage-taken effect in a simulator that does not
+ *     model survival". Survival is modelled now, as a count of deaths, so it
+ *     is a real decision and it is second in the tank list.
+ *   - The STANCES gate plenty, and the two stance-specific lists exist
+ *     precisely so that neither ever dances.
+ *
+ * Still out:
+ *
  *   - BERSERKER RAGE is still inert. Forever's tooltip names no magnitude.
- *   - BLOODRAGE grants rage, and the grant is not wired: the aura has no
- *     periodic and there is no per-tick mechanism yet.
- *   - SHIELD WALL and SHIELD BLOCK are damage-taken effects that cost a global
- *     cooldown. Shield Block's "only 2 attacks" charge cap is not expressible,
- *     so its aura carries no block modifier at all.
- *   - The STANCES gate nothing, so stance dancing is pure loss. Unchanged.
+ *   - DEMORALIZING SHOUT is IN the tank list at the ruleset owner's request
+ *     and still does nothing, for a different reason than before: it removes
+ *     210 attack power and the boss melee has `powerCoefficient: 0`, so there
+ *     is no attack power term for it to reduce. It becomes real the day a
+ *     target's damage is derived rather than stated.
  *
  * STANCE DANCING IS NAIVE, AND IT COSTS REAL DAMAGE.
  *
@@ -322,11 +333,22 @@ const FILLERS: readonly PriorityEntry[] = [
  * dual-wield miss chance both apply to weapon damage abilities, not just to
  * auto attacks.
  */
-export const WARRIOR_MELEE_ROTATION: Rotation = new PriorityRotation('Warrior', [
+/*
+ * Exported as DATA as well as wrapped, like the two stance-specific lists, so
+ * that `tests/game/rotationIds.test.ts` can check every id in it resolves to
+ * a real ability. `PriorityRotation` skips an id it cannot resolve in silence,
+ * and one list carried a misspelled one for its whole life.
+ */
+export const WARRIOR_BATTLE: readonly PriorityEntry[] = [
   ...OPENERS,
   ...CORE_STRIKES,
   ...FILLERS,
-]);
+];
+
+export const WARRIOR_MELEE_ROTATION: Rotation = new PriorityRotation(
+  'Warrior',
+  WARRIOR_BATTLE,
+);
 
 /**
  * With a shield, Shield Slam joins the list.
@@ -334,7 +356,7 @@ export const WARRIOR_MELEE_ROTATION: Rotation = new PriorityRotation('Warrior', 
  * Its "+ shield block value" component is missing from the engine entirely, so
  * it currently deals only its stated 421-439 and is undervalued here.
  */
-export const WARRIOR_SHIELD_ROTATION: Rotation = new PriorityRotation('Warrior (Shield)', [
+export const WARRIOR_SHIELD: readonly PriorityEntry[] = [
   { abilityId: 'execute' },
   /*
    * SHIELD SLAM OUTRANKS THE OPENERS, which is the opposite of how the melee
@@ -364,7 +386,12 @@ export const WARRIOR_SHIELD_ROTATION: Rotation = new PriorityRotation('Warrior (
   ...OPENERS,
   ...CORE_STRIKES.filter((entry) => entry.abilityId !== 'execute'),
   ...FILLERS,
-]);
+];
+
+export const WARRIOR_SHIELD_ROTATION: Rotation = new PriorityRotation(
+  'Warrior (Shield)',
+  WARRIOR_SHIELD,
+);
 
 /**
  * Seconds of fight left when Death Wish goes out.
@@ -396,6 +423,16 @@ export const DEFENSIVE_HEROIC_STRIKE_RAGE = 26;
  */
 export const DEFENSIVE_BLOODRAGE_RAGE = 50;
 
+/**
+ * Health below which the tank list reaches for a survival cooldown.
+ *
+ * The ruleset owner's figure, and the first entry in any list that has ever
+ * read the character's health -- which was impossible until the encounter
+ * started killing people. Last Stand goes first and Shield Wall behind it,
+ * because Last Stand has a three minute cooldown and Shield Wall has thirty.
+ */
+export const DEFENSIVE_EMERGENCY_HEALTH = 0.3;
+
 /** Milliseconds of fight remaining. */
 function remainingMs(context: SimulationContext): number {
   return context.plannedDurationMs - context.clock.now();
@@ -417,7 +454,7 @@ function remainingMs(context: SimulationContext): number {
  * unreachable. Deriving it from the other list would make every one of those a
  * coincidence rather than a decision.
  */
-const WARRIOR_DUAL_WIELD_BERSERKER: readonly PriorityEntry[] = [
+export const WARRIOR_DUAL_WIELD_BERSERKER: readonly PriorityEntry[] = [
   // Once, and it lasts three minutes.
   {
     abilityId: 'battle_shout_cast',
@@ -503,7 +540,43 @@ export const WARRIOR_DUAL_WIELD_BERSERKER_ROTATION: Rotation = new PriorityRotat
  */
 export const WARRIOR_SHIELD_DEFENSIVE: readonly PriorityEntry[] = [
   /*
-   * FIRST, and only while there is room for the rage.
+   * SURVIVAL FIRST. Two entries that nothing in this project could have
+   * written a week ago, because the character could not drop below one health
+   * and no rotation had any reason to look at the number.
+   *
+   * Last Stand raises maximum health 30% and grants that much, on a three
+   * minute cooldown. It goes above Shield Wall because it is the one that
+   * comes back: Shield Wall's thirty minute cooldown means a sixty second
+   * fight gets exactly one, so spending it while the cheaper cooldown is
+   * available wastes the only one there is.
+   */
+  {
+    abilityId: 'last_stand',
+    condition: (_context, actor) => actor.health.fraction < DEFENSIVE_EMERGENCY_HEALTH,
+  },
+  /*
+   * Shield Wall, only once Last Stand cannot help.
+   *
+   * Both halves of that matter and they are different questions. "Last Stand
+   * is not active" stops the two being stacked on one swing, and "Last Stand
+   * is on cooldown" stops Shield Wall being spent while the cheap cooldown is
+   * sitting there ready.
+   *
+   * `isReady` answers false for an ability the character does not KNOW, which
+   * is the behaviour wanted here: an untalented warrior has no Last Stand to
+   * wait for, so Shield Wall should not wait for it.
+   */
+  {
+    abilityId: 'shield_wall_cast',
+    condition: (context, actor) => {
+      if (actor.health.fraction >= DEFENSIVE_EMERGENCY_HEALTH) return false;
+      const now = context.clock.now();
+      if (actor.auras.remainingMs(LAST_STAND.id, now) > 0) return false;
+      return !actor.abilities.isReady('last_stand', now);
+    },
+  },
+  /*
+   * FIRST OF THE ROTATION PROPER, and only while there is room for the rage.
    *
    * Above the stance because it costs nothing to be there: Bloodrage is off
    * the global cooldown, so taking this entry does not delay whatever comes
@@ -557,6 +630,25 @@ export const WARRIOR_SHIELD_DEFENSIVE: readonly PriorityEntry[] = [
     },
   },
   /*
+   * Demoralizing Shout, kept up on the target.
+   *
+   * IT DOES NOTHING TO THIS TARGET, and that is worth saying plainly rather
+   * than leaving someone to find it in a result. It removes 210 attack power,
+   * and the boss melee in `encounters/raidBoss.ts` carries
+   * `powerCoefficient: 0` -- the swing damage IS the whole swing, with no
+   * attack power term for this to reduce. So the entry costs 10 rage and a
+   * global cooldown and changes no incoming damage at all.
+   *
+   * It is in the list because the ruleset owner put it there. It becomes real
+   * the moment a target's damage is derived from its attack power instead of
+   * being stated outright, and nothing else about the entry would change.
+   */
+  {
+    abilityId: 'demoralizing_shout_cast',
+    condition: (context, _actor, target) =>
+      !!target && target.auras.remainingMs(DEMORALIZING_SHOUT.id, context.clock.now()) <= 0,
+  },
+  /*
    * Surplus rage into the next swing, at 26 rather than the Berserker list's
    * 42. A tank has less rage to spare and more to spend it on.
    */
@@ -583,9 +675,17 @@ export const WARRIOR_SHIELD_DEFENSIVE: readonly PriorityEntry[] = [
   // then, so repeating that rule here would be a second copy of it.
   { abilityId: 'revenge' },
   { abilityId: 'thunder_clap' },
-  // Last: a bleed is worth least when everything else is available.
+  /*
+   * Last: a bleed is worth least when everything else is available.
+   *
+   * The id is `rend_cast`, not `rend`. It said `rend` from the day this list
+   * was written, and `PriorityRotation` skips an id it cannot resolve without
+   * a word -- so the entry was dead at any position and any rage level, and
+   * the zero casts it produced read as "starved" rather than "misspelled".
+   * `tests/game/rotationIds.test.ts` now refuses the whole class of it.
+   */
   {
-    abilityId: 'rend',
+    abilityId: 'rend_cast',
     condition: (context, _actor, target) =>
       !!target && target.auras.remainingMs(REND.id, context.clock.now()) <= 0,
   },
