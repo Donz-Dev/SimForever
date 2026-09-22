@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import type { Combatant, TelemetryEvent } from '../../src/engine';
-import { Simulation } from '../../src/engine';
+import type { TelemetryEvent } from '../../src/engine';
+import { Combatant, Simulation } from '../../src/engine';
 import { createPlayer } from '../../src/game/actors/createPlayer';
 import { createTrainingDummy } from '../../src/game/actors/createTrainingDummy';
 import {
@@ -63,6 +63,34 @@ const timelineOf = (seed: number, durationSeconds = 60): readonly TelemetryEvent
       simulation: { ...profile.simulation, seed, durationSeconds },
     } as never),
   ).timeline;
+};
+
+/**
+ * The target swinging at a post with no armor, no rotation and nothing to say.
+ *
+ * For measuring what the TARGET swings for, with nothing on the defending side
+ * able to move the number.
+ */
+const bareSwings = (seed: number) => {
+  const post = new Combatant({
+    id: 'post_1',
+    name: 'Post',
+    kind: 'player',
+    faction: 'friendly',
+    level: 60,
+    maxHealth: 1_000_000,
+    // No armor at all, so what lands IS what was swung for.
+    stats: { armor: 0 },
+    survivesLethalDamage: true,
+  });
+
+  const run = runSimulation({
+    durationMs: 20_000,
+    seed,
+    createCombatants: () => [post, createTrainingDummy({ attacks: true })],
+  });
+
+  return bossSwings(run.timeline);
 };
 
 const bossSwings = (timeline: readonly TelemetryEvent[]) =>
@@ -168,15 +196,25 @@ describe('the damage ramp', () => {
 
   it('makes each swing ten percent harder than the last', () => {
     /*
-     * Measured rather than read off the aura: swing four over swing one should
-     * be 1.1^3 = 1.331. Avoided swings are skipped, because a dodge reports
-     * zero and would drag down a mean it was never part of.
+     * Measured rather than read off the aura: swing four over swing one is
+     * 1.1^3 = 1.331.
+     *
+     * AGAINST A BARE TARGET, not the tank profile. This ran through a real
+     * character once and broke the day the tank list learned to cast Shield
+     * Wall: sixty percent off damage taken lands on `amount` and not on
+     * `mitigated`, so swing four was measured through a damage reduction
+     * swing one never saw, and the ratio read 1.12. Anything the defender
+     * does is noise in a measurement of what the ATTACKER swings for.
+     *
+     * So: no armor, no stance, no rotation, no health worth speaking of, and
+     * only plain hits -- a crit or a crush would multiply one sample and not
+     * its neighbour.
      */
     const swungFor = (index: number) => {
       const samples: number[] = [];
-      for (let seed = 0; seed < 120; seed++) {
-        const swing = bossSwings(timelineOf(500 + seed, 12))[index];
-        if (swing && swing.amount > 0) samples.push(swing.amount + swing.mitigated);
+      for (let seed = 0; seed < 150; seed++) {
+        const swing = bareSwings(seed)[index];
+        if (swing && swing.outcome === 'hit') samples.push(swing.amount);
       }
       return samples.reduce((a, b) => a + b, 0) / samples.length;
     };

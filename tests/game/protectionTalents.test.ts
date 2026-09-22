@@ -286,19 +286,33 @@ describe('Bastion', () => {
     expect(ratio).toBeLessThan(1.25);
   });
 
-  it('is exactly 1.1 on a single swing, and covers AUTO ATTACKS', () => {
+  it('is exactly 1.1, and reaches AUTO ATTACKS because it is not per-ability', () => {
     /*
-     * "All damage you deal", so it cannot be a per-ability modifier -- auto
-     * attacks carry no ability id and nothing keyed to one reaches them.
+     * "All damage you deal", so it cannot be a per-ability modifier: auto
+     * attacks carry no ability id and nothing keyed to one reaches them. It
+     * is the combatant's own `damageMultiplier`, which `dealDamage` applies
+     * to everything.
      *
-     * The average of one swing is where the multiplier is visible on its own:
-     * no rage feedback, no extra casts, just the number.
+     * ASSERTED EXACTLY, not measured. This test used to divide the mean auto
+     * attack of two sixty-iteration batches and expect 1.1 within 0.05, and
+     * it passed by luck: the same measurement reads 1.04 on one seed and 1.13
+     * on another at that sample size, converging on 1.1 only around 1500
+     * iterations. A test that a different seed would have failed was not
+     * testing the multiplier.
      */
-    const swing = (talents: Record<string, number>) =>
-      runProfileBatch(tank(talents)).abilities.find(
-        (row) => row.abilityName === 'Main Hand Auto-Attack',
-      )!.average;
-    expect(swing(legalise({ bastion: 5 })) / swing({})).toBeCloseTo(1.1, 1);
+    const player = built(legalise({ bastion: 5 }));
+    expect(player.baseDamageMultiplier).toBeCloseTo(1.1, 10);
+    expect(built({}).baseDamageMultiplier).toBe(1);
+
+    /*
+     * LIVE, the tank deals 0.99 and not 1.1: Defensive Stance takes ten
+     * percent off damage done, and the two multiply rather than cancelling to
+     * something either of them would claim. Worth pinning, because "Bastion
+     * is +10%" and "this tank hits for 1% less than an unspecced one" are
+     * both true and look contradictory in a result.
+     */
+    expect(player.damageDoneMultiplier).toBeCloseTo(1.1 * 0.9, 10);
+    expect(built({}).damageDoneMultiplier).toBeCloseTo(0.9, 10);
   });
 
   it('does nothing without a shield, and SAYS SO rather than failing quietly', () => {
@@ -538,8 +552,13 @@ describe('the Protection priority list', () => {
     const pool = player.resources.get('rage')!;
     pool.gain(pool.maximum);
 
-    const entry = WARRIOR_SHIELD_DEFENSIVE[0];
-    expect(entry.abilityId).toBe('bloodrage_cast');
+    /*
+     * Third, not first: the two survival cooldowns were put above it. Found
+     * by id rather than by index so that reordering the list around it does
+     * not fail a test about Bloodrage's threshold.
+     */
+    const entry = WARRIOR_SHIELD_DEFENSIVE.find((e) => e.abilityId === 'bloodrage_cast')!;
+    expect(entry).toBeDefined();
     expect(entry.condition?.(undefined as never, player, undefined)).toBe(false);
 
     pool.drain(pool.current);
@@ -586,27 +605,25 @@ describe('the Protection priority list', () => {
     expect(names).toContain('Thunder Clap');
   });
 
-  it('holds Rend last, where it is mostly starved', () => {
+  it('casts Rend last, and DOES cast it', () => {
     /*
-     * A CONSEQUENCE OF THE ORDER, not a fault in it, and worth pinning so it
-     * is not mistaken for one later.
+     * THIS TEST USED TO ASSERT THE OPPOSITE, and it was wrong in the worst
+     * way a test can be: it pinned a bug and explained it.
      *
-     * Rend is eighth. By the time the list reaches it, Sunder Armor and
-     * Heroic Strike have taken the rage and Thunder Clap has taken the global
-     * cooldown, so on a geared tank it is almost never cast -- measured at
-     * zero casts in a sixty second fight.
+     * Rend really was measured at zero casts, and the explanation written
+     * here -- last in the list, starved of rage and global cooldowns -- was
+     * plausible and false. The entry said `abilityId: 'rend'` and the ability
+     * is `rend_cast`, so `PriorityRotation` skipped it in silence at any
+     * position and any rage. Asserting the zero made the bug permanent.
      *
-     * It is still in the list because the ruleset owner put it there, and it
-     * will fire the moment the rage economy leaves room. Asserting that it
-     * DOES fire would be asserting something untrue of this gear.
+     * The lesson is the one `docs/talent-audit-method.md` already records:
+     * assert what should stay true, not what happens to be true today.
      */
-    const entries = WARRIOR_SHIELD_DEFENSIVE_ROTATION.name;
-    expect(entries).toBe('Warrior (Shield, Defensive)');
+    expect(WARRIOR_SHIELD_DEFENSIVE_ROTATION.name).toBe('Warrior (Shield, Defensive)');
 
     const names = runProfileBatch(tank()).abilities.map((row) => row.abilityName);
     expect(names).toContain('Thunder Clap');
-    // Named so the day it changes is a visible change rather than a surprise.
-    expect(names).not.toContain('Rend');
+    expect(names).toContain('Rend');
   });
 });
 
