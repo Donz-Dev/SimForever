@@ -33,8 +33,8 @@ export {
   scaleByPower,
   weaponDamageFor,
 } from './damage';
-export type { AttackEvent, Reaction, ReactionTrigger } from './reactions';
-export { runReactions, isWeaponUse, isWeaponUseOf } from './reactions';
+export type { AttackEvent, AbilityCastEvent, CastReaction, Reaction, ReactionTrigger } from './reactions';
+export { runReactions, runCastReactions, isWeaponUse, isWeaponUseOf } from './reactions';
 export type { HealRequest, HealResolution } from './healing';
 export { applyHealing, resolveHealing } from './healing';
 export {

@@ -1,4 +1,5 @@
 import warriorValues from '../../data/talents/values/warrior.json';
+import rogueValues from '../../data/talents/values/rogue.json';
 import type { ClassId } from '../character';
 
 /**
@@ -31,8 +32,19 @@ interface ValuesFile {
   readonly talents: Record<string, ValuesEntry>;
 }
 
+/*
+ * A CLASS ABSENT HERE HAS NO VALUES AT ALL, and every one of its talents is
+ * reported unmodelled -- which is honest and completely silent. The Rogue
+ * shipped with its whole tree inert for exactly that reason: Malice, Aggression
+ * and the rest all resolved to no number, so the build reported twenty
+ * unmodelled talents and nobody noticed, because "unmodelled" is what an
+ * unfinished class is supposed to say.
+ *
+ * Add the class here in the same commit as its effects table.
+ */
 const FILES: Partial<Record<ClassId, ValuesFile>> = {
   warrior: warriorValues as ValuesFile,
+  rogue: rogueValues as ValuesFile,
 };
 
 /*

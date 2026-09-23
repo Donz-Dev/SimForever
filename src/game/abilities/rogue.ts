@@ -83,6 +83,8 @@ export const SINISTER_STRIKE_BASE_DAMAGE = 68;
 
 export const SINISTER_STRIKE: Ability = {
   id: 'sinister_strike',
+  // Declared so Seal Fate can see it; the award itself is in `onCast`.
+  comboPointsAwarded: 1,
   name: 'Sinister Strike',
   cost: { resource: 'energy', amount: 45 },
   attackTable: 'melee-special',
@@ -122,6 +124,8 @@ export const BACKSTAB_WEAPON_FRACTION = 1.5;
 
 export const BACKSTAB: Ability = {
   id: 'backstab',
+  // Declared so Seal Fate can see it; the award itself is in `onCast`.
+  comboPointsAwarded: 1,
   name: 'Backstab',
   cost: { resource: 'energy', amount: 60 },
   attackTable: 'melee-special',
@@ -164,6 +168,7 @@ export const MUTILATE_COMBO_POINTS = 2;
 
 export const MUTILATE: Ability = {
   id: 'mutilate',
+  comboPointsAwarded: MUTILATE_COMBO_POINTS,
   name: 'Mutilate',
   cost: { resource: 'energy', amount: 60 },
   attackTable: 'melee-special',
@@ -211,6 +216,8 @@ export const HEMORRHAGE_DAGGER_FRACTION = 1.45;
 
 export const HEMORRHAGE: Ability = {
   id: 'hemorrhage',
+  // Declared so Seal Fate can see it; the award itself is in `onCast`.
+  comboPointsAwarded: 1,
   name: 'Hemorrhage',
   cost: { resource: 'energy', amount: 35 },
   attackTable: 'melee-special',
@@ -249,6 +256,8 @@ export const GHOSTLY_STRIKE_DAGGER_FRACTION = 1.8;
 
 export const GHOSTLY_STRIKE: Ability = {
   id: 'ghostly_strike',
+  // Declared so Seal Fate can see it; the award itself is in `onCast`.
+  comboPointsAwarded: 1,
   name: 'Ghostly Strike',
   cost: { resource: 'energy', amount: 40 },
   cooldownMs: seconds(20),

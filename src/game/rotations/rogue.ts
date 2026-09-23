@@ -41,30 +41,23 @@ const AT_FIVE = (_context: SimulationContext, actor: Combatant): boolean =>
  * a point spent on Eviscerate buys damage that scales linearly with it.
  *
  * ----------------------------------------------------------------------------
- * AND EVISCERATE STILL NEVER FIRES, AT ANY THRESHOLD. Measured at one, two,
- * three, four and five combo points: Slice and Dice consumes the entire combo
- * point budget every time, and DPS moves by six points across the whole range.
+ * THIS USED TO SAY EVISCERATE NEVER FIRED, and it was right about the
+ * behaviour and wrong about why.
  *
- *     SnD at >= 1   259.7      SnD at >= 4   256.0
- *     SnD at >= 2   260.0      SnD at >= 5   254.3
- *     SnD at >= 3   254.3
+ * Measured across every threshold, Eviscerate fired zero times and DPS moved
+ * six points. The note blamed Relentless Strikes being unmodelled. That was
+ * one of two causes and the smaller one: the Rogue was also MISSING FROM
+ * `talentValues.ts`, so every rank value resolved to nothing and all twenty of
+ * its talents were silently inert. Invisible, because a talent with no value
+ * reports itself unmodelled -- which is what an unfinished class is meant to
+ * say.
  *
- * WHY. A Rogue spends about 700 energy in a sixty second fight -- 100 to start
- * and 10 a second -- which is roughly seventeen Sinister Strikes and therefore
- * seventeen combo points. Slice and Dice wants fifteen of them to hold 21
- * seconds of uptime three times over. There is nothing left, and no ordering
- * of the list creates any.
+ * Both fixed. Eviscerate fires about once a fight on the Combat build and the
+ * three profiles gained 21, 55 and 88 DPS.
  *
- * THE MISSING PIECE IS PROBABLY RELENTLESS STRIKES, which returns 25 energy on
- * a finisher with a 20% chance per combo point -- about a full Sinister Strike
- * back per five-point finisher, and compounding, because that energy buys the
- * points for the next one. It is `unmodelled` because a reaction fires on
- * damage and cannot see a cast; see `rogueEffects.ts`.
- *
- * SO THIS IS REPORTED RATHER THAN TUNED AROUND. Two combo points is the best
- * of the five measured and the margin is inside the noise; picking it does not
- * make the class work, and pretending otherwise by reordering the list would
- * hide a gap the results page should be showing.
+ * TWO IS STILL THE THRESHOLD, and still by measurement rather than by taste:
+ * Slice and Dice buys uptime with a point and Eviscerate buys damage, and the
+ * point where those cross has not moved.
  * ----------------------------------------------------------------------------
  */
 const SLICE_AND_DICE_MINIMUM_POINTS = 2;

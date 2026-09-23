@@ -209,6 +209,26 @@ than the build.
 every fight here opens in combat, so the only legal moment is timestamp zero.
 The rule is on the ability, not on each list that includes it.
 
+**A REACTION FIRES ON DAMAGE; A CAST REACTION FIRES ON A CAST, and the second
+exists because four Rogue talents needed it.** Relentless Strikes, Ruthlessness
+and Improved Expose Armor all pay out when a FINISHER IS USED, and a finisher
+spends its combo points inside its own `onCast` -- so neither the cost system
+nor a damage reaction can see what happened. `AbilityCastEvent` carries what
+the cast SPENT, MEASURED BY SNAPSHOTTING every pool around it, which covers the
+declared cost and anything the ability drained itself. Measuring rather than
+asking each ability to declare is the point: the ability that forgot would be
+silently inert. Seal Fate needed no new hook, only a new FACT --
+`Ability.comboPointsAwarded`, because a reaction sees an ability id and nothing
+about what the ability does.
+
+**A CLASS MISSING FROM `talentValues.ts` HAS ITS WHOLE TREE SILENTLY INERT, and
+nothing says so.** Every rank value resolves to nothing, every talent reports
+itself `unmodelled`, and that is exactly what an unfinished class is supposed
+to look like -- so twenty dead talents read as progress. The Rogue shipped that
+way for a day. **Register the values file in the same commit as the effects
+table**, and check a new class's talents actually change a number rather than
+trusting the build to complain.
+
 **A WEAPON PROC FIRES ON A USE, AND A USE IS A SWING OR AN ABILITY.** Anything
 that goes through a combat table and needs that weapon counts -- Bloodthirst,
 Mortal Strike, Rend and Heroic Strike are all main-hand uses, which is the

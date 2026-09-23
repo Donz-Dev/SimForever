@@ -67,7 +67,7 @@ proven. What is missing is entirely in `game`:
 
 **Do this first.** It is the cheapest thing on the list and unblocks the most.
 
-### 1b. What the Rogue turned up — **an on-cast hook**
+### 1b. What the Rogue turned up — **an on-cast hook**, since done
 
 Three profiles shipped on 2026-09-23 and the class exposed one gap the survey
 did not predict, wanted by **four talents at once**:
@@ -83,12 +83,16 @@ A `reaction` fires on damage dealt or taken. None of these is a damage event:
 three key off a CAST and the fourth needs the ability to declare that it
 builds combo points.
 
-**It is not cosmetic.** With Relentless Strikes absent, the Rogue cannot afford
-its own finisher: Slice and Dice consumes the entire combo point budget and
-**Eviscerate fires zero times at any threshold** — measured at one through five
-points, with DPS moving six points across the whole range. That is recorded in
-`rotations/rogue.ts` and asserted in `tests/game/rogueAbilities.test.ts` rather
-than tuned around.
+**DONE 2026-09-23.** `castReaction` is the effect kind; the engine snapshots
+every resource pool around a cast and reports the difference, so "per combo
+point spent" is answerable without any ability declaring anything. Seal Fate
+needed no new hook, only a new fact — `Ability.comboPointsAwarded`.
+
+**It was not cosmetic.** Without it the Rogue could not afford its own
+finisher: Eviscerate fired zero times at every threshold. Fixing it — together
+with a second bug found on the way, the Rogue missing from `talentValues.ts`
+and therefore having its whole tree inert — moved the three profiles by **21,
+55 and 88 DPS**.
 
 ### 2. Channelled casts — **engine**
 

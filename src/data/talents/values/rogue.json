@@ -79,9 +79,11 @@
    "name": "Relentless Strikes",
    "tree": "assassination",
    "ranks": 1,
-   "text": "Your finishing moves have a 20% chance per Combo Point to restore 25 Energy.",
-   "values": null,
-   "note": "single rank"
+   "text": "Your finishing moves have a {0}% chance per Combo Point to restore 25 Energy.",
+   "values": [
+    20
+   ],
+   "note": "single rank; the value filled in by hand per this directory README -- a single-rank talent has no variable the importer can identify from its own text"
   },
   "improved_expose_armor": {
    "name": "Improved Expose Armor",
@@ -354,9 +356,11 @@
    "name": "Flawless Execution",
    "tree": "combat",
    "ranks": 1,
-   "text": "Reduces the Energy cost of your Eviscerate ability by 10.",
-   "values": null,
-   "note": "single rank"
+   "text": "Reduces the Energy cost of your Eviscerate ability by {0}.",
+   "values": [
+    10
+   ],
+   "note": "single rank; the value filled in by hand per this directory README -- a single-rank talent has no variable the importer can identify from its own text"
   },
   "dual_wield_specialization": {
    "name": "Dual Wield Specialization",
