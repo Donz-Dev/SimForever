@@ -1,3 +1,5 @@
+import type { DamageSchool } from './DamageSchool';
+
 /**
  * Per-ability modifiers: crit chance, crit damage and damage, for ONE ability
  * rather than for the whole character.
@@ -107,4 +109,47 @@ function combine(a: AbilityModifier, b: AbilityModifier): AbilityModifier {
     critMultiplierBonus: (a.critMultiplierBonus ?? 0) + (b.critMultiplierBonus ?? 0),
     damageMultiplier: (a.damageMultiplier ?? 1) * (b.damageMultiplier ?? 1),
   };
+}
+
+/**
+ * The same three modifiers, keyed by SCHOOL rather than by ability.
+ *
+ * ------------------------------------------------------------------------------
+ * WHY IT IS THE SAME SHAPE AND NOT A NEW ONE. "Increases the damage done by
+ * your Fire spells by 10%" and "increases the damage done by your Revenge by
+ * 20%" differ only in what they select. Giving the school version its own
+ * fields would mean two `combine` rules that have to agree about whether crit
+ * chances add and damage multiplies -- and they do, for the same reason.
+ *
+ * WHO ASKED FOR IT, and it is not only the Mage:
+ *
+ *   Mage      Fire Power, Piercing Ice, Critical Mass, Arcane Impact,
+ *             Ice Shards and Arcane Mind -- six talents, and the last two are
+ *             +100% crit DAMAGE each
+ *   Druid     Moonfury and Vengeance, both `unmodelled` since the Druid landed
+ *   Shaman    Elemental Fury, which was applied WHOLE-CHARACTER with a written
+ *             caveat because there was nowhere else to put it
+ *
+ * A SCHOOL IS NOT OPTIONAL THE WAY AN ABILITY ID IS. Every `DamageRequest`
+ * carries one, including an auto attack, which is `physical` -- so unlike
+ * `AbilityModifiers`, nothing here is skipped for a swing. That is correct:
+ * "your Fire spells" simply never matches a physical hit, and a talent that
+ * genuinely raised physical damage would want to reach swings.
+ * ------------------------------------------------------------------------------
+ */
+export class SchoolModifiers {
+  private readonly bySchool = new Map<DamageSchool, AbilityModifier>();
+
+  add(school: DamageSchool, modifier: AbilityModifier): void {
+    const existing = this.bySchool.get(school);
+    this.bySchool.set(school, existing ? combine(existing, modifier) : modifier);
+  }
+
+  for(school: DamageSchool): AbilityModifier {
+    return this.bySchool.get(school) ?? NONE;
+  }
+
+  get isEmpty(): boolean {
+    return this.bySchool.size === 0;
+  }
 }

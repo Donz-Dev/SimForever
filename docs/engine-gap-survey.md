@@ -171,11 +171,21 @@ rather than by class:
 | --- | --- | --- |
 | ~~**1**~~ | ~~Bear + Moonkin Druid~~, ~~Ele + Enhance Shaman~~ **done**; Frostfire / Arcane / Fire Mage, Shockadin, Seal Twist Ret, Prot Pally | content only |
 | ~~**1b**~~ | ~~Venom / Combat / Rupture Rogue~~, ~~Cat Druid~~ **all done** | ~~combo points~~ **done** |
-| **2** | Shadow Priest | channelled casts |
+| ~~**2**~~ | Shadow Priest | ~~channelled casts~~ **done** |
 | **3** | BM Hunter, LW Ranged, LW Melee, SM/DS Warlock, Firelock | pets |
 
-**Eleven of twenty done, and the Shaman needed no engine change either** —
-the fourth class in a row where the survey was right about that.
+**Eleven of twenty done.** The Shaman needed no engine change — the fourth
+class in a row where the survey was right about that. **The Mage is the first
+that does**, and it needed two:
+
+**Per-school modifiers.** `SchoolModifiers`, the missing middle between one
+ability and the whole character. Six Mage talents want it — Fire Power,
+Piercing Ice, Critical Mass, Arcane Impact, and the two +100% crit-damage ones
+— and it retroactively fixed three talents on shipped classes.
+
+**Channelled casts.** `Ability.channelTicks`. Arcane Missiles is the Arcane
+mage's core spender, and this was the last Wave 2 feature, so **Shadow Priest
+is unblocked too**.
 
 ### Two gaps the survey did not have, both found by building
 

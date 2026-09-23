@@ -335,3 +335,57 @@ describe('Eclipse, which was the first talent to ask for the engine rule', () =>
     expect(spent).toBeGreaterThan(pool);
   });
 });
+
+describe('Moonfury and Vengeance, which were unmodelled for want of a school', () => {
+  it('raises Arcane and Nature only, leaving a Feral druid untouched', () => {
+    /*
+     * ------------------------------------------------------------------------
+     * BOTH WERE INERT, and the reason written down at the time was the same:
+     * the declarations available were per-ABILITY or whole-CHARACTER, and both
+     * tooltips are per-SCHOOL. Listing every Balance spell by id was
+     * unmaintainable and a blanket multiplier would have raised a Cat's
+     * bleeds.
+     *
+     * `physical` is on neither list, which is what makes the Feral trees safe
+     * -- asserted rather than argued.
+     * ------------------------------------------------------------------------
+     */
+    const built = PRESETS_BY_ID.get('druid_moonkin')!.build();
+    const moonkin = createPlayer({
+      race: 'tauren',
+      characterClass: 'druid',
+      combatStyle: 'moonkin',
+      talents: built.talents,
+    });
+
+    // Moonfury 5/5 is +10% Arcane and Nature damage.
+    expect(moonkin.schoolModifiers.for('arcane').damageMultiplier).toBeCloseTo(1.1, 6);
+    expect(moonkin.schoolModifiers.for('nature').damageMultiplier).toBeCloseTo(1.1, 6);
+    expect(moonkin.schoolModifiers.for('physical').damageMultiplier ?? 1).toBe(1);
+
+    /*
+     * Vengeance 5/5 is "+100% critical strike damage BONUS". A spell crit
+     * multiplies by 1.5, so the bonus being doubled is 0.5 and the crit
+     * becomes 2.0x -- NOT 2.5x, which is what using the melee figure would
+     * give. That distinction is the whole of the Elemental Fury correction on
+     * the Shaman.
+     */
+    expect(moonkin.schoolModifiers.for('arcane').critMultiplierBonus).toBeCloseTo(0.5, 6);
+    expect(moonkin.schoolModifiers.for('physical').critMultiplierBonus ?? 0).toBe(0);
+  });
+
+  it('leaves the Cat and the Bear exactly where they were', () => {
+    // Neither spends a point in deep Balance, so neither should move. This is
+    // the check that a school multiplier did not leak into the Feral builds.
+    for (const preset of ['druid_cat', 'druid_bear']) {
+      const built = PRESETS_BY_ID.get(preset)!.build();
+      const actor = createPlayer({
+        race: 'tauren',
+        characterClass: 'druid',
+        combatStyle: built.character.combatStyle as never,
+        talents: built.talents,
+      });
+      expect(actor.schoolModifiers.isEmpty, preset).toBe(true);
+    }
+  });
+});

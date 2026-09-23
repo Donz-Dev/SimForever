@@ -1,3 +1,4 @@
+import type { DamageSchool } from '../../engine';
 import type { StatModifierOperation, StatName } from '../../engine';
 import type { ResourceType, WeaponType } from '../../engine';
 
@@ -163,6 +164,31 @@ export type TalentEffect =
    * untouched.
    */
   | { readonly kind: 'critDamageBonus' }
+
+  /**
+   * Damage, crit chance or crit damage for a SCHOOL rather than an ability.
+   *
+   * ----------------------------------------------------------------------
+   * "Increases the damage done by your Fire spells by 10%." Before this the
+   * only choices were `abilityDamage`, which names one ability and would have
+   * to list every fire spell a Mage owns, and `damageMultiplier`, which is
+   * every school at once.
+   *
+   * Both alternatives were TAKEN, and both were wrong in a way that was
+   * written down at the time. The Druid's Moonfury and Vengeance were left
+   * `unmodelled` because listing abilities was unmaintainable; the Shaman's
+   * Elemental Fury was applied whole-character with a caveat saying it also
+   * raised physical crits it should not.
+   *
+   * `schools` lists what the tooltip lists, so a talent naming three schools
+   * is one entry rather than three.
+   * ----------------------------------------------------------------------
+   */
+  | {
+      readonly kind: 'schoolDamage' | 'schoolCrit' | 'schoolCritDamage';
+      readonly schools: readonly DamageSchool[];
+      readonly valueIndex?: number;
+    }
 
   /**
    * Grants a reaction: something that happens in response to an attack result.

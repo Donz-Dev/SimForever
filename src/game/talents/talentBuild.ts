@@ -8,7 +8,7 @@ import type {
   WeaponProfile,
 } from '../../engine';
 import type { WeaponSlot } from '../../engine';
-import { ALL_ABILITIES, AbilityModifiers, seconds } from '../../engine';
+import { ALL_ABILITIES, AbilityModifiers, SchoolModifiers, isPhysical, seconds } from '../../engine';
 import { COMBAT_CONSTANTS } from '../combat/attackChances';
 import type { TalentReactionBuilder } from '../reactions/warriorTalents';
 import { WARRIOR_TALENT_REACTIONS } from '../reactions/warriorTalents';
@@ -113,6 +113,8 @@ export interface TalentBuild {
   readonly abilityCooldownReductionMs: ReadonlyMap<string, number>;
   /** Per-ability crit, crit damage and damage scaling, for the combatant. */
   readonly abilityModifiers: AbilityModifiers;
+  /** Per-school crit, crit damage and damage. See `SchoolModifiers`. */
+  readonly schoolModifiers: SchoolModifiers;
   /** Reactions the talents grant, added to the ones every character has. */
   readonly reactions: readonly Reaction[];
   /** Procs that fire when an ability is USED. See `castReaction`. */
@@ -169,6 +171,7 @@ const EMPTY: TalentBuild = {
   attackAbilityCostReduction: 0,
   abilityCooldownReductionMs: new Map(),
   abilityModifiers: new AbilityModifiers(),
+  schoolModifiers: new SchoolModifiers(),
   reactions: [],
   damageMultiplier: 1,
   abilityBonuses: new Map(),
@@ -294,6 +297,7 @@ export function talentBuild(
   let attackAbilityCostReduction = 0;
   const abilityCooldownReductionMs = new Map<string, number>();
   const abilityModifiers = new AbilityModifiers();
+  const schoolModifiers = new SchoolModifiers();
   const reactions: Reaction[] = [];
   const abilityBonuses = new Map<string, Record<string, number>>();
   const abilityCastTimeReductionMs = new Map<string, number>();
@@ -548,6 +552,38 @@ export function talentBuild(
             );
           }
           break;
+        /*
+         * PER SCHOOL. The tooltip names the schools and the effect lists them,
+         * so a talent covering three is one entry rather than three.
+         */
+        case 'schoolDamage':
+          for (const school of effect.schools) {
+            schoolModifiers.add(school, { damageMultiplier: 1 + value / 100 });
+          }
+          break;
+        case 'schoolCrit':
+          for (const school of effect.schools) {
+            schoolModifiers.add(school, { critBonus: value });
+          }
+          break;
+        case 'schoolCritDamage':
+          for (const school of effect.schools) {
+            /*
+             * THE BONUS HALF, AND THE HALF DEPENDS ON THE SCHOOL. A spell crit
+             * multiplies by 1.5 and a melee one by 2, so the bonus being
+             * raised is 0.5 or 1.0 -- and Ice Shards' "+100% critical strike
+             * damage bonus" is worth twice as much to a melee crit as to a
+             * spell one. Using the melee figure for a Mage would overstate
+             * every frost crit it ever landed.
+             */
+            const base = isPhysical(school)
+              ? COMBAT_CONSTANTS.meleeCritMultiplier
+              : COMBAT_CONSTANTS.spellCritMultiplier;
+            schoolModifiers.add(school, {
+              critMultiplierBonus: (base - 1) * (value / 100),
+            });
+          }
+          break;
         case 'critDamageBonus':
           /*
            * The talent raises the BONUS half of the multiplier, not the whole
@@ -578,6 +614,7 @@ export function talentBuild(
     attackAbilityCostReduction,
     abilityCooldownReductionMs,
     abilityModifiers,
+    schoolModifiers,
     reactions,
     damageMultiplier,
     abilityBonuses,

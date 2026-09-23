@@ -57,6 +57,33 @@ export interface Ability {
 
   /** Time to cast. 0 (the default) means instant. */
   readonly castTimeMs?: Milliseconds;
+  /**
+   * How many times the effect runs DURING the cast, rather than once at the
+   * end of it. This is what makes a cast a CHANNEL.
+   *
+   * ----------------------------------------------------------------------
+   * A CHANNEL IS A CAST THAT TICKS, and almost everything else about it is
+   * already a cast: the caster is locked for `castTimeMs`, the cost is paid
+   * at the start, the global cooldown runs, and the swing timer resets.
+   *
+   * So the only new rule is WHEN the effect runs. `onCast` is called once per
+   * tick, evenly spaced, with the LAST tick at the moment the channel ends --
+   * which is where a non-channelled cast's single effect already lands, so a
+   * one-tick channel and an ordinary cast are the same thing. That is the
+   * check that the two paths have not drifted.
+   *
+   * Arcane Missiles is "209 Arcane damage each second for 5 sec": five ticks
+   * over five seconds. Modelling it as a 5-second cast dealing 1045 at the
+   * end would be the same total and the wrong shape -- every point of it
+   * would arrive after the fight ended rather than during, and a haste
+   * change would move all of it at once.
+   *
+   * HASTE SHORTENS THE WHOLE CHANNEL, so the ticks come faster and there are
+   * still `channelTicks` of them. That is Classic's behaviour for Arcane
+   * Missiles and it is what falls out of scheduling them inside `castTimeMs`.
+   * ----------------------------------------------------------------------
+   */
+  readonly channelTicks?: number;
   /** Time before it can be used again. 0 (the default) means no cooldown. */
   readonly cooldownMs?: Milliseconds;
   /** Number of independent charges. Defaults to 1. */

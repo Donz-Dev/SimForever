@@ -221,14 +221,31 @@ export function castAbility(
   }
 
   caster.castEndsAt = now + castTime;
-  context.events.schedule(
-    caster.castEndsAt,
-    createEvent(`cast-complete:${ability.id}`, EventPriority.CastComplete, (ctx) => {
-      caster.castEndsAt = 0;
-      if (!caster.isAlive) return;
-      runCast(ctx, { simulation: ctx, caster, target, ability });
-    }),
-  );
+
+  /*
+   * A CHANNEL IS A CAST THAT TICKS, and the ticks are scheduled INSIDE the
+   * cast it already locked the caster for.
+   *
+   * `ticks` evenly spaced with the last one landing exactly at the end --
+   * which is where an ordinary cast's single effect already lands, so a
+   * one-tick channel and a plain cast are the same thing. Haste has already
+   * shortened `castTime`, so it shortens the gaps rather than dropping ticks.
+   *
+   * `castEndsAt` is cleared by the LAST tick only. A tick that ran and left
+   * the caster free would let a rotation act in the middle of its own channel.
+   */
+  const ticks = Math.max(1, ability.channelTicks ?? 1);
+  for (let i = 1; i <= ticks; i += 1) {
+    const last = i === ticks;
+    context.events.schedule(
+      now + Math.round((castTime * i) / ticks),
+      createEvent(`cast-complete:${ability.id}`, EventPriority.CastComplete, (ctx) => {
+        if (last) caster.castEndsAt = 0;
+        if (!caster.isAlive) return;
+        runCast(ctx, { simulation: ctx, caster, target, ability });
+      }),
+    );
+  }
 
   return { ok: true };
 }

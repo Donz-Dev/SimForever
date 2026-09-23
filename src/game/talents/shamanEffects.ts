@@ -101,23 +101,19 @@ export const SHAMAN_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
      * "Increases the critical strike damage bonus of your Searing and Magma
      * Totems and your Fire, Frost, and Nature spells by {0}%."
      *
-     * `critDamageBonus` IS WHOLE-CHARACTER AND HAS NO SCHOOL, so applying it
-     * to an Elemental shaman is exact -- every damaging spell it casts is
-     * Fire, Frost or Nature -- and too generous for an Enhancement one, whose
-     * Stormstrike and swings are physical.
+     * CORRECTED. This shipped as a whole-character `critDamageBonus` with a
+     * written caveat saying it wrongly raised an Enhancement shaman's
+     * PHYSICAL crits too -- Stormstrike and every swing. `schoolCritDamage`
+     * is the declaration it wanted, and the caveat is gone rather than
+     * being restated.
      *
-     * Declared anyway, because the alternative is a 100% crit damage bonus
-     * reading as inert for the build that takes five points in it. The
-     * overreach is stated rather than hidden.
+     * That is a real reduction for Enhancement, which takes five points in it
+     * and lands most of its damage with a two-hander.
      */
-    { kind: 'critDamageBonus' },
+    { kind: 'schoolCritDamage', schools: ['fire', 'frost', 'nature'] },
     {
       kind: 'unmodelled',
-      reason:
-        'It applies to every ability rather than only to Fire, Frost and ' +
-        'Nature: `critDamageBonus` has no school. Exact for Elemental, whose ' +
-        'damage is all three; generous to an Enhancement shaman, whose ' +
-        'physical crits get it too.',
+      reason: `Its Searing and Magma Totem clauses do nothing. ${TOTEMS_NOT_MODELLED}`,
     },
   ],
 

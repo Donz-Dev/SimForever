@@ -47,7 +47,7 @@ export {
   versatilityMultiplierFrom,
 } from './ratings';
 export type { AbilityModifier } from './abilityModifiers';
-export { ALL_ABILITIES, AbilityModifiers } from './abilityModifiers';
+export { ALL_ABILITIES, AbilityModifiers, SchoolModifiers } from './abilityModifiers';
 
 export type { TargetSelection } from './targeting';
 export { SINGLE_TARGET, selectTargets, unreachedTargets } from './targeting';
