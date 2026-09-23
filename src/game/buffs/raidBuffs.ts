@@ -302,7 +302,9 @@ const manaSpringTotem: RaidBuff = {
 const windfuryTotem: RaidBuff = {
   id: 'windfury_totem',
   name: 'Windfury Totem',
-  detail: '20% chance on each main-hand swing of an extra attack at +246 attack power',
+  detail:
+    '20% chance on each main-hand use -- swing or ability -- of an extra attack ' +
+    'at +246 attack power',
   source: 'Shaman',
   appliesTo: 'player',
   /*

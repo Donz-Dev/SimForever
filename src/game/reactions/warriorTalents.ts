@@ -1,4 +1,5 @@
 import type { Reaction } from '../../engine';
+import { isWeaponUse } from '../../engine';
 import { ENRAGE_TRIGGER_CHANCE, OVERPOWER_READY, REND, enrageAura } from '../auras/warrior';
 import {
   FLURRY_SWINGS,
@@ -21,7 +22,14 @@ import {
 export type TalentReactionBuilder = (value: number) => Reaction;
 
 /** Only melee swings and melee specials carry a weapon slot. */
-const isMelee = (slot: string | undefined) => slot === 'mainHand' || slot === 'offHand';
+/*
+ * `isWeaponUse` REPLACED A PRIVATE COPY OF THIS TEST. It used to be a
+ * one-liner here, and the proc reactions in `items/procs.ts` and
+ * `buffs/windfury.ts` re-derived the same idea in their own files -- two of
+ * them wrongly. It is one function in the engine now, and its doc comment
+ * carries the ruleset: a "use" of a weapon is a swing OR an ability that
+ * needs that weapon.
+ */
 
 /**
  * Deep Wounds: a critical strike applies a bleed.
@@ -35,7 +43,7 @@ export const deepWounds: TalentReactionBuilder = (percentOfWeaponDamage) => ({
   id: 'deep_wounds',
   on: 'dealt',
   outcomes: ['crit'],
-  canTrigger: (_context, _actor, attack) => isMelee(attack.weaponSlot),
+  canTrigger: (_context, _actor, attack) => isWeaponUse(attack),
   onTrigger: (context, actor, attack) => {
     context.applyAura(attack.defender, deepWoundsAura(percentOfWeaponDamage), actor.id);
   },
@@ -52,7 +60,7 @@ export const flurry: TalentReactionBuilder = (hastePercent) => ({
   id: 'flurry',
   on: 'dealt',
   outcomes: ['crit'],
-  canTrigger: (_context, _actor, attack) => isMelee(attack.weaponSlot),
+  canTrigger: (_context, _actor, attack) => isWeaponUse(attack),
   onTrigger: (context, actor) => {
     // Applied at full charges every time: the source says "your next 3 swings",
     // so a second crit refreshes the window rather than topping up a spent one.
@@ -77,7 +85,7 @@ export const unbridledWrath: TalentReactionBuilder = (chancePercent) => ({
   on: 'dealt',
   outcomes: ['hit', 'crit', 'glance'],
   canTrigger: (context, _actor, attack) =>
-    isMelee(attack.weaponSlot) && context.rng.rollChance(chancePercent / 100),
+    isWeaponUse(attack) && context.rng.rollChance(chancePercent / 100),
   onTrigger: (context, actor, attack) => {
     const weapon = attack.weaponSlot ? actor.weapons[attack.weaponSlot] : undefined;
     context.grantResource(
@@ -102,7 +110,7 @@ export const bloodthrill: TalentReactionBuilder = (chancePercent) => ({
   on: 'dealt',
   outcomes: ['hit', 'crit', 'glance'],
   canTrigger: (context, _actor, attack) =>
-    isMelee(attack.weaponSlot) &&
+    isWeaponUse(attack) &&
     attack.defender.auras.has(REND.id) &&
     context.rng.rollChance(chancePercent / 100),
   onTrigger: (context, actor) => {
@@ -215,7 +223,7 @@ export const weaponmasterSword: TalentReactionBuilder = (chancePercent) => ({
      * main hand would give a main-hand mace the sword's proc and deny it to
      * the sword entirely, which is exactly backwards.
      */
-    if (!isMelee(attack.weaponSlot)) return false;
+    if (!isWeaponUse(attack)) return false;
     const weapon = attack.weaponSlot ? actor.weapons[attack.weaponSlot] : undefined;
     if (weapon?.weaponType !== 'sword') return false;
     return context.rng.rollChance(chancePercent / 100);

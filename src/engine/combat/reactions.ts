@@ -22,6 +22,56 @@ export interface AttackEvent {
 }
 
 /**
+ * Whether this attack was a USE OF A MELEE WEAPON, which is what a weapon-bound
+ * effect triggers from.
+ *
+ * ----------------------------------------------------------------------------
+ * THE RULESET, from the ruleset owner, and it is the whole of the rule:
+ *
+ *   A "use" of a weapon is a SWING OR AN ABILITY. Anything that goes through a
+ *   combat table and needs the weapon to be used counts. An auto-attack is a
+ *   use; so are Bloodthirst, Mortal Strike, Rend and Heroic Strike, every one
+ *   of which is a "main hand swing" for the purpose of triggering effects.
+ *
+ *   Thunder Clap is NOT, because it does not require a melee weapon. Neither
+ *   are Intercept and Charge. They resolve on the ranged table with
+ *   `weaponSlot: 'ranged'`, which is exactly what this function excludes.
+ *
+ * WHY A SLOT IS ENOUGH TO DECIDE IT. A reaction only ever sees attacks that
+ * consulted a combat table and were not periodic -- `dealDamage` will not
+ * dispatch any other kind -- so by the time this runs, "went through a combat
+ * table" is already true. All that is left to ask is which weapon swung, and
+ * an ability that needs no weapon does not name a melee slot.
+ *
+ * WHY IT IS HERE rather than in `game`. It was a private one-liner in
+ * `game/reactions/warriorTalents.ts` and the reactions that live in other
+ * files re-derived it -- two of them wrongly. Hand of Justice asked only
+ * whether the attack landed, so Thunder Clap procced an extra melee attack;
+ * Windfury refused every `abilityId`, so Bloodthirst and Mortal Strike procced
+ * nothing. Naming the concept once is the fix for both.
+ * ----------------------------------------------------------------------------
+ */
+export function isWeaponUse(attack: AttackEvent): boolean {
+  return attack.weaponSlot === 'mainHand' || attack.weaponSlot === 'offHand';
+}
+
+/**
+ * Whether this attack was a use of the weapon in ONE PARTICULAR slot.
+ *
+ * What makes an off-hand enchant an off-hand enchant: a main-hand Crusader is
+ * triggered by main-hand uses and by nothing else, and the same weapon in the
+ * other hand is a separate effect with a separate roll.
+ *
+ * WHIRLWIND WITH RAGING BLOWS IS THE CASE THAT SHOWS THE DIFFERENCE. It strikes
+ * with both hands, as two attacks, so it is a main-hand use AND an off-hand
+ * use: it can trigger main-hand Crusader, off-hand Crusader and Windfury, and
+ * Windfury only from the main-hand half.
+ */
+export function isWeaponUseOf(attack: AttackEvent, slot: WeaponSlot): boolean {
+  return isWeaponUse(attack) && attack.weaponSlot === slot;
+}
+
+/**
  * Which side of an attack a reaction watches.
  *
  * - `dealt` fires on the attacker, for attacks it made
