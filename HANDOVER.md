@@ -231,6 +231,38 @@ Classic's 25).
 The site also has a talent calculator and a sourced change list, which would be
 a second opinion on the Wowhead-scraped tree in `src/data/talents/`. Not done.
 
+## What each preset actually simulates
+
+Every choice the three presets make -- race, style, stance, each talent, each
+item, each enchant, each raid buff and each priority-list entry -- classified
+full / partial / inert, in
+[docs/profile-coverage.md](docs/profile-coverage.md). Regenerate with:
+
+```bash
+npx vite-node tools/profile_coverage.ts --markdown
+```
+
+| Preset | Full | Partial | Inert |
+| --- | --- | --- | --- |
+| 2H Arms | 56 | 1 | 4 |
+| DW Fury | 55 | 1 | 4 |
+| Prot Warr | 60 | 2 | 4 |
+
+**"Inert" means inert IN THAT PROFILE**, not missing from the engine. Improved
+Cleave is fully implemented and tested; Cleave is in no priority list, so its
+three points change nothing for an Arms warrior.
+
+**The inert rows are all talent points**, and they are the finding: eleven
+points across the three builds do nothing. Two are the owner's own informed
+choices (Improved Cleave, Improved Tactical Mastery); the rest fall out of
+which abilities each priority list reaches and whether the target swings back.
+No gear, no enchant and no raid buff is inert in any preset.
+
+**It is measured, not read off the rotation.** The generator runs twelve fights
+per preset and collects every ability and aura id the telemetry carries.
+Reading the priority list statically got real answers wrong -- Improved Rend
+modifies `rend`, the bleed's id, while the list casts `rend_cast`.
+
 ## Extra attacks: what triggers a proc
 
 The ruleset owner's rule, settled 2026-09-23 and written down in
@@ -639,7 +671,8 @@ against the client, and the five numbers it moved) and
 `warrior-talent-audit.md` (the talents against the client, which found
 nothing wrong, and the rank-1 rule that explains three old arguments) and
 `extra-attacks.md` (what counts as using a weapon, and the two procs that
-had it wrong).
+had it wrong) and `profile-coverage.md` (what each preset actually
+simulates, choice by choice).
 
 `ProfilePanel.tsx` is **not mounted**. Import and Load buttons sit above the
 character name as placeholders; the panel's serialize-out / parse-in / render-
