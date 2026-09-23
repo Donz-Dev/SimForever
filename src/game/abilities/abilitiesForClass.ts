@@ -6,7 +6,9 @@ import type { TalentEffects } from '../talents/TalentEffect';
 import type { TalentBuild } from '../talents/talentBuild';
 import { talentBuild } from '../talents/talentBuild';
 import { WARRIOR_TALENT_EFFECTS } from '../talents/warriorEffects';
+import { ROGUE_TALENT_EFFECTS } from '../talents/rogueEffects';
 import { WARRIOR_ABILITIES } from './warrior';
+import { ROGUE_ABILITIES } from './rogue';
 import { legalAllocation } from '../talents/talentRules';
 import { talentsForClass } from '../talents/talentData';
 
@@ -30,8 +32,20 @@ import { talentsForClass } from '../talents/talentData';
  * mapping existed every warrior was handed all three, which made every measured
  * damage figure too high for a reason nothing in the results could show.
  */
+/**
+ * Every ability a class knows before talents are considered.
+ *
+ * A class absent here has no abilities at all, which is what every unwritten
+ * class returns today.
+ */
+const CLASS_ABILITIES: Partial<Record<ClassId, readonly Ability[]>> = {
+  warrior: WARRIOR_ABILITIES,
+  rogue: ROGUE_ABILITIES,
+};
+
 const TALENT_ABILITIES: Partial<Record<ClassId, Readonly<Record<string, string>>>> = {
   warrior: grantsByAbility(WARRIOR_TALENT_EFFECTS),
+  rogue: grantsByAbility(ROGUE_TALENT_EFFECTS),
 };
 
 /**
@@ -118,16 +132,24 @@ export function abilitiesForBuild(
   style: CombatStyleId | undefined,
   build: TalentBuild,
 ): readonly Ability[] {
-  if (characterClass !== 'warrior') return [];
+  const known = CLASS_ABILITIES[characterClass];
+  if (!known) return [];
   const granted = TALENT_ABILITIES[characterClass] ?? {};
 
-  return WARRIOR_ABILITIES.filter((ability) => {
+  return known.filter((ability) => {
     // Shield Slam needs a shield. Gating on the weapon rather than on a stance
     // is how Classic expresses it; the spreadsheet says nothing either way.
     // This is checked before the talent, so a warrior who took Shield Slam and
     // put away their shield still cannot use it.
     if (ability.id === 'shield_slam' && style !== 'one_hand_shield') return false;
 
+    /*
+     * A ROGUE'S DAGGER ABILITIES ARE GATED ON THE WEAPON, like Shield Slam:
+     * Backstab and Mutilate say "Requires Daggers" and their own `canCast`
+     * enforces it per cast. They stay in the book either way, so a character
+     * who swaps weapons mid-fight would gain them -- which nothing does here,
+     * and is the correct behaviour if anything ever did.
+     */
     if (granted[ability.id] === undefined) return true;
     return build.grantedAbilities.has(ability.id);
   }).map((ability) => applyTalentChanges(ability, build));

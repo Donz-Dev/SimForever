@@ -70,8 +70,18 @@ separated by `-`, trailing zeroes dropped.
 
 ### 3. Import the abilities
 
-Not yet a tool. `tools/import_spell.mjs` does it per spell id for the Warrior;
-`spellbooks.js` above would generalise it.
+```bash
+node tools/import_forever_spells.mjs rogue            # look
+node tools/import_forever_spells.mjs rogue --write    # write the JSON
+node tools/import_forever_spells.mjs --all --write    # every class
+```
+
+**Max rank only**, by construction — the rank a level 60 trains, which is the
+one thing this data set makes easy to get wrong.
+
+It does NOT carry the effect rows that a spell page has, because it does not
+need to: those existed to recover numbers Forever's own tooltip hid behind
+"(100% of Spell Power)", and this source renders the real figures instead.
 
 Read [warrior-abilities.md](warrior-abilities.md) and
 [warrior-ability-audit.md](warrior-ability-audit.md) first — between them they

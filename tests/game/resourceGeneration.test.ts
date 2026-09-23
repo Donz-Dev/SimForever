@@ -328,10 +328,18 @@ describe('energy', () => {
     expect(ENERGY_TICK_INTERVAL_MS).toBe(seconds(2));
   });
 
+  /*
+   * NOTHING TO ATTACK, so the energy is not being spent while these watch it
+   * tick. The Rogue gained a priority list when the class was implemented, and
+   * these two measure REGENERATION -- a character spending at the same time
+   * measures the difference between the two and fails on a number nobody
+   * chose. With no enemy its builders have no target and its finishers have no
+   * combo points, so the bar is left alone.
+   */
   it('ticks on schedule', () => {
     const player = rogue();
     const energy = player.resources.require('energy');
-    const sim = buildSimulation([player, makeTarget()], { durationMs: seconds(60) });
+    const sim = buildSimulation([player], { durationMs: seconds(60) });
 
     // Drain it so the ticks have somewhere to land.
     energy.spend(100);
@@ -353,7 +361,8 @@ describe('energy', () => {
   it('stops at the cap rather than overflowing', () => {
     const player = rogue();
     const energy = player.resources.require('energy');
-    const sim = buildSimulation([player, makeTarget()], { durationMs: seconds(60) });
+    // No enemy, for the reason above.
+    const sim = buildSimulation([player], { durationMs: seconds(60) });
 
     sim.advanceTo(seconds(30));
     expect(energy.current).toBe(energy.maximum);

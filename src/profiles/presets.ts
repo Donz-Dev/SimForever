@@ -224,6 +224,106 @@ const PROT_WARR_TALENTS: TalentAllocation = {
   shield_slam: 1,
 };
 
+
+/**
+ * ----------------------------------------------------------------------------
+ * THE THREE ROGUE BUILDS, decoded from the ruleset owner's talentsforever.com
+ * URLs by `tools/decode_talent_build.mjs` rather than transcribed.
+ *
+ * Each decodes to exactly 51 points, which the decoder checks: the encoding is
+ * one digit per talent IN TREE ORDER, so a tree of the wrong length lands every
+ * digit after it on a different talent and produces a legal-looking build
+ * nobody chose. See docs/class-implementation.md.
+ * ----------------------------------------------------------------------------
+ */
+
+/** Venom -- Assassination 37 / Combat 12 / Subtlety 2. Mutilate and poisons. */
+const ROGUE_VENOM_TALENTS: TalentAllocation = {
+  malice: 5,
+  ruthlessness: 3,
+  murder: 2,
+  improved_slice_and_dice: 3,
+  relentless_strikes: 1,
+  lethality: 5,
+  vile_poisons: 5,
+  cold_blood: 1,
+  improved_poisons: 5,
+  mutilate: 1,
+  seal_fate: 5,
+  venom: 1,
+  improved_eviscerate: 3,
+  lightning_reflexes: 3,
+  puncturing_wounds: 3,
+  precision: 3,
+  opportunity: 2,
+};
+
+/** Combat -- Assassination 18 / Combat 33. Sinister Strike and the cooldowns. */
+const ROGUE_COMBAT_TALENTS: TalentAllocation = {
+  malice: 5,
+  ruthlessness: 3,
+  murder: 2,
+  improved_slice_and_dice: 3,
+  relentless_strikes: 1,
+  lethality: 4,
+  improved_eviscerate: 3,
+  improved_sinister_strike: 2,
+  deflection: 3,
+  precision: 3,
+  endurance: 1,
+  riposte: 1,
+  improved_sprint: 2,
+  flawless_execution: 1,
+  dual_wield_specialization: 5,
+  blade_flurry: 1,
+  hack_and_slash: 5,
+  weapon_expertise: 2,
+  aggression: 3,
+  adrenaline_rush: 1,
+};
+
+/** Rupture -- Assassination 12 / Combat 8 / Subtlety 31. Hemorrhage and bleeds. */
+const ROGUE_RUPTURE_TALENTS: TalentAllocation = {
+  malice: 5,
+  ruthlessness: 2,
+  improved_slice_and_dice: 3,
+  lethality: 2,
+  improved_eviscerate: 3,
+  lightning_reflexes: 2,
+  puncturing_wounds: 3,
+  camouflage: 5,
+  master_of_deception: 3,
+  opportunity: 2,
+  improved_ambush: 3,
+  initiative: 3,
+  ghostly_strike: 1,
+  improved_distract: 2,
+  premeditation: 1,
+  serrated_blades: 3,
+  preparation: 1,
+  hemorrhage: 1,
+  cutthroat: 5,
+  thousand_cuts: 1,
+};
+
+/**
+ * A GEAR SHELL, and said to be one.
+ *
+ * The item data holds nineteen Classic stand-ins curated for a Warrior, and
+ * nothing in it is leather, a dagger or a Rogue's. These three carry the same
+ * armour the Warrior presets do, so a Rogue has stats at all, and Brutality
+ * Blade in each hand because it is the only one-hander there is.
+ *
+ * WHICH MAKES BACKSTAB AND MUTILATE UNCASTABLE: both require daggers, and
+ * their own `canCast` refuses rather than pretending. The Venom build is the
+ * one this costs -- it falls back to Sinister Strike, which is exactly what
+ * its priority list is written to do.
+ */
+const ROGUE_WEAPONS: Equipment = {
+  mainHand: { itemId: 228265, enchantId: CRUSADER },
+  offHand: { itemId: 228265, enchantId: CRUSADER },
+};
+
 export const PROFILE_PRESETS: readonly ProfilePreset[] = [
   {
     id: 'two_hand_arms',
@@ -320,6 +420,66 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = [
          */
         targetAttacks: true,
       },
+    }),
+  },
+  {
+    id: 'rogue_venom',
+    label: 'Venom',
+    detail: 'Undead, dual-wield, standing target. 37 Assassination / 12 Combat',
+    build: () => ({
+      ...createDefaultProfile(),
+      character: {
+        name: 'Venom',
+        race: 'undead',
+        characterClass: 'rogue',
+        level: 60,
+        combatStyle: 'dual_wield',
+        stance: 'battle',
+      },
+      talents: { ...ROGUE_VENOM_TALENTS },
+      raidBuffs: [...PRESET_RAID_BUFFS],
+      equipment: { ...SHARED_ARMOUR, ...ROGUE_WEAPONS },
+      encounter: { ...createDefaultProfile().encounter, targetAttacks: false },
+    }),
+  },
+  {
+    id: 'rogue_combat',
+    label: 'Combat',
+    detail: 'Orc, dual-wield, standing target. 18 Assassination / 33 Combat',
+    build: () => ({
+      ...createDefaultProfile(),
+      character: {
+        name: 'Combat',
+        race: 'orc',
+        characterClass: 'rogue',
+        level: 60,
+        combatStyle: 'dual_wield',
+        stance: 'battle',
+      },
+      talents: { ...ROGUE_COMBAT_TALENTS },
+      raidBuffs: [...PRESET_RAID_BUFFS],
+      equipment: { ...SHARED_ARMOUR, ...ROGUE_WEAPONS },
+      encounter: { ...createDefaultProfile().encounter, targetAttacks: false },
+    }),
+  },
+  {
+    id: 'rogue_rupture',
+    label: 'Rupture',
+    detail: 'Undead, dual-wield, standing target. 31 Subtlety',
+    build: () => ({
+      ...createDefaultProfile(),
+      character: {
+        name: 'Rupture',
+        race: 'undead',
+        characterClass: 'rogue',
+        level: 60,
+        combatStyle: 'dual_wield',
+        stance: 'battle',
+      },
+      talents: { ...ROGUE_RUPTURE_TALENTS },
+      raidBuffs: [...PRESET_RAID_BUFFS],
+      equipment: { ...SHARED_ARMOUR, ...ROGUE_WEAPONS },
+      encounter: { ...createDefaultProfile().encounter, targetAttacks: false },
     }),
   },
 ];
