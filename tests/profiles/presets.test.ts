@@ -107,20 +107,20 @@ describe('the preset catalogue', () => {
     }
   });
 
-  it('spends all fifty-one, except 2H Arms which is three short', () => {
+  it('spends all fifty-one, in every preset', () => {
     /*
-     * WRITTEN OUT PER PRESET rather than asserted as a rule, because it is not
-     * one. Two of the three spend everything; the ruleset owner's 2H Arms list
-     * comes to forty-eight and choosing where three more go would be inventing
-     * a build. Pinned so that filling them in has to be deliberate.
+     * 2H Arms came to forty-eight as first given and was left that way rather
+     * than filled in, because choosing where three points went would have been
+     * inventing a build. The ruleset owner named Improved Cleave.
      */
     const spent = (id: string) =>
       Object.values(PRESETS_BY_ID.get(id)!.build().talents).reduce((a, b) => a + b, 0);
 
     expect(TOTAL_TALENT_POINTS).toBe(51);
-    expect(spent('dw_fury')).toBe(51);
-    expect(spent('prot_warr')).toBe(51);
-    expect(spent('two_hand_arms')).toBe(48);
+    for (const preset of PROFILE_PRESETS) {
+      expect(spent(preset.id), preset.id).toBe(TOTAL_TALENT_POINTS);
+      expect(pointsRemaining(preset.build().talents), preset.id).toBe(0);
+    }
   });
 });
 
@@ -324,7 +324,7 @@ describe('2H Arms', () => {
     expect(p.encounter.targetAttacks).toBe(false);
   });
 
-  it('spends 38 in Arms and 10 in Fury, leaving three', () => {
+  it('spends 38 in Arms and 13 in Fury', () => {
     // Hand-counted from the owner's list.
     const talents = profile().talents;
     const inTree = (id: string) =>
@@ -333,9 +333,23 @@ describe('2H Arms', () => {
         .reduce((total, rank) => total + rank[1], 0);
 
     expect(inTree('arms')).toBe(38);
-    expect(inTree('fury')).toBe(10);
+    expect(inTree('fury')).toBe(13);
     expect(inTree('protection')).toBe(0);
-    expect(pointsRemaining(talents)).toBe(3);
+    expect(pointsRemaining(talents)).toBe(0);
+  });
+
+  it('spends its last three on Improved Cleave, which does nothing here', () => {
+    /*
+     * The ruleset owner's choice for the three the list was short. Worth a
+     * test of its own because it changes no number in a result: Improved
+     * Cleave reduces Cleave's rage cost, and CLEAVE IS IN NO PRIORITY LIST --
+     * it is an on-next-swing ability for hitting two targets, and every
+     * encounter here has one.
+     *
+     * Its ten-point Fury requirement is met exactly by Cruelty and Unbridled
+     * Wrath, so the placement is legal as well as deliberate.
+     */
+    expect(profile().talents.improved_cleave).toBe(3);
   });
 
   it('takes the ranks the owner named', () => {
@@ -357,6 +371,7 @@ describe('2H Arms', () => {
     expect(t.mortal_strike).toBe(1);
     expect(t.cruelty).toBe(5);
     expect(t.unbridled_wrath).toBe(5);
+    expect(t.improved_cleave).toBe(3);
   });
 
   it('holds one enchanted two-hander and no off hand', () => {

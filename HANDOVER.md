@@ -33,7 +33,7 @@ their talent trees and nothing else.
 | **Analysis** | DPS, per-ability breakdown with uses/attempts/hits/crit/glance/avoid rates, buff and debuff uptime, rage economy, deaths and healing received |
 | **UI** | two-step character flow, per-class character sheet (offensive and defensive), style-aware gear, talent trees, combat log, Monte Carlo batches, uptime bar charts |
 
-**1,249 tests**, CI green on Node 20 and 22. Profile format **v9**.
+**1,250 tests**, CI green on Node 20 and 22. Profile format **v9**.
 
 The interface is one theme, **Abyssal Copper**, chosen from four mock-ups. The
 other three still exist in `ui/styles.css` under `:root[data-theme=...]` and
@@ -113,7 +113,7 @@ Three buttons on the creation screen, at the very top:
 
 | | |
 | --- | --- |
-| **2H Arms** | Orc, two-hander, Battle Stance, standing target. 38 Arms / 10 Fury, **three points unspent**. ~284 DPS |
+| **2H Arms** | Orc, two-hander, Battle Stance, standing target. 38 Arms / 13 Fury. ~287 DPS |
 | **DW Fury** | Orc, dual-wield, Berserker Stance, standing target. 18 Arms / 33 Fury, both weapons enchanted with Crusader. ~392 DPS |
 | **Prot Warr** | Tauren, shield, Defensive Stance, target swings back. 17 Arms / 34 Protection. ~247 DPS |
 
@@ -130,9 +130,16 @@ recorded where the allocation is written:
   the owner chose to give up. `legalAllocation` would have dropped exactly that
   talent on its own -- landing on the right build by accident, with nobody aware
   a point had gone.
-- **2H Arms comes to 48, three short.** Legal, so nothing is stripped; it simply
-  does not spend everything. Left as given, because choosing where three more go
-  would be inventing a build.
+- **2H Arms came to 48, three short.** Left that way rather than filled in,
+  because choosing where three points went would have been inventing a build.
+  The owner named Improved Cleave, which brings it to 51.
+
+**Two of 2H Arms' talents change no number in a result**, and both are the
+owner's deliberate choices. Improved Cleave reduces Cleave's rage cost and
+Cleave is in no priority list -- it is an on-next-swing ability for two targets
+and every encounter here has one. Improved Tactical Mastery retains rage through
+a stance change and this list never changes stance after the pull. Eight points
+between them.
 
 **Each preset has its own priority list**, chosen by style AND stance: `2H Arms`
 runs `Warrior (Two-Hander, Battle)`, `DW Fury` the Berserker list and `Prot Warr`

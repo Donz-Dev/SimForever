@@ -73,18 +73,23 @@ const SHARED_ARMOUR: Equipment = {
 };
 
 /**
- * 2H Arms: 38 in Arms, 10 in Fury. FORTY-EIGHT, with three points unspent.
+ * 2H Arms: 38 in Arms, 13 in Fury. Fifty-one exactly.
  *
  * ----------------------------------------------------------------------------
- * THREE POINTS SHORT OF THE CAP, and left that way on purpose: this is the
- * ruleset owner's list as given, and choosing where three more go would be
- * inventing a build.
+ * THE LAST THREE WENT INTO IMPROVED CLEAVE, which the ruleset owner named when
+ * the list as first given came to forty-eight. It was left three short rather
+ * than filled in, because choosing where they went would have been inventing a
+ * build.
  *
- * It is legal -- every tier is reached and every prerequisite met, including
- * Mortal Strike's thirty points in Arms with thirty-seven before it -- so
- * nothing is stripped. It simply does not spend everything, which the Talent
- * panel shows as "3 points left" and a test pins so that filling them in has
- * to be a deliberate act.
+ * IT DOES NOTHING HERE, and that is worth saying rather than leaving to be
+ * discovered. Improved Cleave reduces Cleave's rage cost by three, and CLEAVE
+ * IS IN NO PRIORITY LIST -- it is an on-next-swing ability for hitting two
+ * targets, and every encounter this simulator has is one target. Three points
+ * of a real talent that changes no number in a result.
+ *
+ * It is not the only one: Improved Tactical Mastery's five points retain rage
+ * through a stance change, and this list never changes stance after the pull.
+ * Both are the owner's choices and both are honoured as given.
  * ----------------------------------------------------------------------------
  */
 const TWO_HAND_ARMS_TALENTS: TalentAllocation = {
@@ -104,9 +109,11 @@ const TWO_HAND_ARMS_TALENTS: TalentAllocation = {
   weaponmaster: 5,
   improved_slam: 2,
   mortal_strike: 1,
-  // Fury, 10
+  // Fury, 13
   cruelty: 5,
   unbridled_wrath: 5,
+  // Requires ten points in Fury, which the two above supply exactly.
+  improved_cleave: 3,
 };
 
 /**
