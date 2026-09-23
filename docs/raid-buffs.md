@@ -46,7 +46,7 @@ stack, and cannot disagree about the magnitude — one refreshes the other.
 
 | Entry | Note |
 | --- | --- |
-| **Battle Shout** | The owner's raid figure is +139 and the ability spreadsheet says +140. Asked which wins, the owner chose the spreadsheet. |
+| **Battle Shout** | **+139.** The owner's raid figure was 139 and the ability spreadsheet said 140; asked which won, the owner chose the spreadsheet. The client-derived spellbook then agreed with the raid figure, and the owner asked for the spellbook to be matched — so both are 139 now. Our capture still says 140 and is the odd one out. |
 | **Sunder Armor** | Applied five times, which is the 2,250 armor the owner states and exactly what five casts produce. |
 | **Demoralizing Shout** | Deliberately absent — *"make it a comment, keep it inert for now."* It would change nothing anyway: the boss's swing damage is stated rather than derived from attack power. |
 
@@ -128,12 +128,17 @@ the raid entry reuses that aura rather than declaring a copy — so a raid that
 supplied it and a warrior keeping it up refresh one debuff instead of stacking
 two.
 
-That took its uptime from a one-shot **50%** to **74.7%**. Not higher, and the
-gap is a finding rather than a bug: Thunder Clap is **twelfth** in the tank
-list, below the stance, Battle Shout, five Sunder Armors, Demoralizing Shout,
-Heroic Strike, Shield Block, Shield Slam and Revenge — so the first cast lands
-at about **16.9 seconds**. It was a damage ability when that order was chosen
-and it is a mitigation one now.
+That took its uptime from a one-shot **50%** to **100%** in the Prot Warr
+preset, where the warrior recasts it all fight. Thunder Clap is **twelfth** in
+the tank list, below the stance, Battle Shout, five Sunder Armors, Demoralizing
+Shout, Heroic Strike, Shield Block, Shield Slam and Revenge, so the first cast
+lands late — but the raid's own application covers the opening thirty seconds,
+which is what closes the gap.
+
+**Its cooldown is 6 seconds, not 4** (corrected 2026-09-23 against the
+spellbook; the spreadsheet said 4, which is the Classic value). That costs the
+tank about half a cast a fight, **8.62 → 8.22**, and costs the debuff nothing:
+a 30 second slow covers a 6 second cooldown with room to spare.
 
 ## Windfury is the only proc, and it has two traps in it
 

@@ -97,14 +97,36 @@ export const MORTAL_STRIKE: Ability = {
 };
 
 /**
- * "30" base damage plus a stated 0.35 attack power coefficient, 30 rage, 6
+ * "48" base damage plus a stated 0.35 attack power coefficient, 30 rage, 6
  * second cooldown.
  *
  * NOT a weapon damage ability. The sheet gives it a number in the coefficient
  * column where the weapon-damage abilities say "Weapon Damage", so Bloodthirst
  * scales with attack power alone and ignores the weapon entirely.
+ *
+ * ----------------------------------------------------------------------------
+ * THE FLAT COMPONENT WAS HIDDEN BY THE SPELL POWER ARTIFACT, not absent.
+ *
+ * Spell 23894's description reads "35% of your Attack Power plus (100% of
+ * Spell Power)" -- the same Forever rendering bug that hid Revenge's and
+ * Shield Slam's damage. This was read as "and nothing else", the spreadsheet's
+ * 30 was dropped, and Bloodthirst lost its flat half entirely.
+ *
+ * The number was in the capture the whole time, in the effect rows, which is
+ * exactly where Revenge's 153 and Shield Slam's 655 came from:
+ *
+ *     effect 1   School Damage (Physical)          49   ->  48
+ *     effect 2   Dummy                             36   ->  35, the coefficient
+ *
+ * Base points run one higher than the stated figure throughout this data set,
+ * and both rows obey it. The spellbook, which renders the same client data
+ * without the artifact, states it outright: "35% of your Attack Power plus 48".
+ * ----------------------------------------------------------------------------
  */
-/** "35% of your Attack Power", spell 23894 rank 4. */
+/** "plus 48", spell 23894 rank 4, effect row 49. */
+export const BLOODTHIRST_BASE_DAMAGE = 48;
+
+/** "35% of your Attack Power", spell 23894 rank 4, effect row 36. */
 export const BLOODTHIRST_POWER_COEFFICIENT = 0.35;
 
 export const BLOODTHIRST: Ability = {
@@ -121,12 +143,7 @@ export const BLOODTHIRST: Ability = {
       abilityId: ability.id,
       abilityName: ability.name,
       school: PHYSICAL,
-      /*
-       * NO FLAT COMPONENT. The spreadsheet gave "30 + 35% of attack power";
-       * Forever gives "damage equal to 35% of your Attack Power" and nothing
-       * else. The ruleset owner chose Forever, so the 30 is gone.
-       */
-      baseAmount: 0,
+      baseAmount: BLOODTHIRST_BASE_DAMAGE,
       powerCoefficient: BLOODTHIRST_POWER_COEFFICIENT,
       attackTable: ability.attackTable,
       weaponSlot: MAIN_HAND,
@@ -135,22 +152,34 @@ export const BLOODTHIRST: Ability = {
 };
 
 /**
- * Weapon damage plus 68, 1.5 second cast, 15 rage, FIFTEEN SECOND COOLDOWN.
+ * Weapon damage plus 87, 1.5 second cast, 15 rage, FIFTEEN SECOND COOLDOWN.
  *
  * ----------------------------------------------------------------------------
- * BOTH OF THOSE WERE WRONG, and they were wrong in different ways.
- *
  * THE COOLDOWN. The spreadsheet's row says 0 and this had none. Forever's
- * captured tooltip says "1.5 sec cast 15 sec cooldown", and the ruleset owner
- * confirms fifteen. Two sources against the sheet, which is the same shape as
- * Shield Wall's cooldown and resolved the same way.
+ * captured tooltip says "1.5 sec cast 15 sec cooldown", the ruleset owner
+ * confirms fifteen, and the spellbook carries it on ALL FIVE ranks. Three
+ * sources against the sheet, which is the same shape as Shield Wall's
+ * cooldown and resolved the same way.
  *
- * THE BASE DAMAGE. The spreadsheet gives none at all, so this took 87 from
- * Forever's own tooltip -- "causing weapon damage plus 87", with an effect row
- * of 88. The ruleset owner says SIXTY-EIGHT, which overrules both. That is the
- * first time a captured tooltip has been overruled on a figure it states
- * outright rather than on one it contradicts itself about, and it is recorded
- * here rather than quietly replaced.
+ * THE BASE DAMAGE WENT 87 -> 68 -> 87, and the round trip is worth keeping
+ * because the trap is reusable.
+ *
+ * FOREVER ADDED A FIFTH RANK. Classic's Slam stops at rank 4; Forever inserts
+ * one at the bottom and every rank moves down a level:
+ *
+ *     rank 3     Forever level 38, +43     Classic level 46, +68
+ *     rank 4     Forever level 46, +68     Classic level 54, +87
+ *     rank 5     Forever level 54, +87     Classic does not have it
+ *
+ * So "+68" and "+87" are BOTH Forever figures, for different ranks, and the
+ * spellbook opens Slam on rank 4 -- the rank whose level matches Classic's
+ * max. Reading the page as it opens gives 68. The ruleset owner read it that
+ * way and ruled 68; the number is real, it is simply not the one a level 60
+ * warrior has. `forever-warrior.json` holds spell 11605, which is rank 5 at
+ * level 54, and says 87 with an effect row of 88.
+ *
+ * THE SIMULATOR RUNS AT LEVEL 60, so rank 5 is the only rank that can apply --
+ * the same argument that picks Battle Shout rank 7 over rank 1's twelve.
  *
  * WHAT THE COOLDOWN CHANGES. Slam was an on-demand filler, castable whenever
  * rage and the swing timer allowed; four casts a minute is now the ceiling. It
@@ -162,7 +191,7 @@ export const BLOODTHIRST: Ability = {
  * `swingTimer: 'hold'`, which is worth far more than the cast time it removes.
  * ----------------------------------------------------------------------------
  */
-export const SLAM_BASE_DAMAGE = 68;
+export const SLAM_BASE_DAMAGE = 87;
 export const SLAM_COOLDOWN_MS = seconds(15);
 
 export const SLAM: Ability = {
@@ -456,7 +485,25 @@ export const HAMSTRING: Ability = {
 };
 
 /**
- * "103" flat, 20 rage, 4 second cooldown, no scaling.
+ * "103" flat, 20 rage, SIX second cooldown, no scaling.
+ *
+ * ----------------------------------------------------------------------------
+ * THE SPREADSHEET SAYS FOUR, AND FOUR IS THE CLASSIC VALUE.
+ *
+ *   - `WoWForeverWarriorAbilities.xlsx`        4 seconds
+ *   - WoW Classic                              4 seconds
+ *   - `forever-warrior.json`, spell 11581      "Instant 6 sec cooldown"
+ *   - The spellbook, beta client               6, listed as a deliberate change
+ *
+ * We had four, and our OWN capture said six. The sheet's row was taken over a
+ * tooltip that contradicted it, which is the opposite of how Shield Wall and
+ * Slam were settled, and it went unnoticed because four is also what Classic
+ * does -- a wrong number that looks right from two directions at once.
+ *
+ * It matters more now than it did when it was written. Thunder Clap was a
+ * damage ability then; it carries the swing slow now, so its cooldown sets how
+ * hard a tank can hold that debuff up.
+ * ----------------------------------------------------------------------------
  *
  * Listed as a RANGED Special Attack, and implemented literally as the ruleset
  * owner confirmed. A warrior has no ranged weapon in any of its three styles,
@@ -473,7 +520,7 @@ export const THUNDER_CLAP: Ability = {
   id: 'thunder_clap',
   stances: ['battle_stance', 'defensive_stance'],
   name: 'Thunder Clap',
-  cooldownMs: seconds(4),
+  cooldownMs: seconds(6),
   cost: { resource: 'rage', amount: 20 },
   attackTable: 'ranged-special',
   // "all nearby enemies", with no stated cap. One, here.
@@ -723,12 +770,12 @@ export const SUNDER_ARMOR_ABILITY: Ability = {
 };
 
 /**
- * 10 rage, no cooldown. Removes 210 attack power from the target for 45 sec.
+ * 10 rage, no cooldown. Removes 196 attack power from the target for 45 sec.
  *
  * ----------------------------------------------------------------------------
  * CAST, AND WORTH NOTHING. The ruleset owner's decision, for now.
  *
- * The debuff is real and applies the full -210 attack power. What it has no
+ * The debuff is real and applies the full -196 attack power. What it has no
  * effect on is the target's damage, because the boss melee in
  * `encounters/raidBoss.ts` carries `powerCoefficient: 0` -- its swing damage
  * IS the whole swing, stated outright rather than derived from attack power,
@@ -751,7 +798,7 @@ export const DEMORALIZING_SHOUT_ABILITY: Ability = {
   name: 'Demoralizing Shout',
   cost: { resource: 'rage', amount: 10 },
   unmodelled:
-    'The -210 attack power lands, but the target has no attack power term: ' +
+    'The -196 attack power lands, but the target has no attack power term: ' +
     'its swing damage is stated outright, not derived. Cast at full cost, ' +
     'for no reduction in damage taken.',
   onCast: ({ simulation, caster, target }) => {
@@ -764,7 +811,7 @@ export const DEMORALIZING_SHOUT_ABILITY: Ability = {
 // Self buffs
 // ---------------------------------------------------------------------------
 
-/** 10 rage, no cooldown. Grants 140 attack power for 3 min. */
+/** 10 rage, no cooldown. Grants 139 attack power for 3 min. */
 export const BATTLE_SHOUT_ABILITY: Ability = {
   id: 'battle_shout_cast',
   name: 'Battle Shout',

@@ -1,11 +1,11 @@
 # Warrior abilities
 
-> **SUPERSEDED IN FOUR PLACES.** Shield Slam, Revenge, Slam and Bloodthirst now
-> take their damage from Forever's own spell data rather than from the
-> spreadsheet below, by the ruleset owner's decision on 2026-09-18. This file
-> remains the verbatim record of what the spreadsheet says; it is no longer a
-> complete description of what the simulator does. See
-> [warrior-ability-audit.md](warrior-ability-audit.md).
+> **SUPERSEDED IN SIX PLACES.** Shield Slam, Revenge, Slam, Bloodthirst,
+> Thunder Clap and Demoralizing Shout now take their numbers from Forever's own
+> client data rather than from the spreadsheet below, by the ruleset owner's
+> decisions on 2026-09-18 and 2026-09-23. This file remains the verbatim record
+> of what the spreadsheet says; it is no longer a complete description of what
+> the simulator does. See [warrior-ability-audit.md](warrior-ability-audit.md).
 
 Source: **`WoWForeverWarriorAbilities.xlsx`**, supplied by the ruleset owner.
 
@@ -30,7 +30,7 @@ Cooldown and cast time are in seconds, as the sheet states them.
 | Cleave | 20 | 0 | 0 | Melee Special Attack | 50 | Weapon Damage (hits a second target if possible) |
 | Bloodthirst | 30 | 6 | 0 | Melee Special Attack | 30 | 0.35 |
 | Battle Shout | 10 | 0 | 0 | Other/Buff | | |
-| Thunder Clap | 20 | 4 | 0 | Ranged Special Attack | 103 | 0 |
+| Thunder Clap | 20 | 4 — Forever's client says **6**. See below. | 0 | Ranged Special Attack | 103 | 0 |
 | Sunder Armor | 15 | 0 | 0 | Melee Special Attack | | |
 | Execute | 15 + all remaining rage | 0 | 0 | Melee Special Attack | 600 + 15 × each point of remaining rage after cost was taken out | 0 |
 | Slam | 15 | 0 | 1.5 | Melee Special Attack | | Weapon Damage |
@@ -194,14 +194,34 @@ Where they DISAGREED:
 | --- | --- | --- | --- |
 | **Mortal Strike** | base damage **160** | calculator: "weapon damage plus **85**" | **160** |
 | **Shield Wall** | cooldown **1800s** | spell tooltip: "Instant **15 min** cooldown"; 2/2 Improved takes off **11 min** | **900s** |
-| **Slam** | cooldown **0** | spell tooltip: "1.5 sec cast **15 sec cooldown**" | **15s** |
-| **Slam** | base damage: none given | spell tooltip: "weapon damage plus **87**", effect row **88** | **68** |
+| **Slam** | cooldown **0** | spell tooltip: "1.5 sec cast **15 sec cooldown**"; spellbook, all five ranks | **15s** |
+| **Slam** | base damage: none given | spell tooltip: "weapon damage plus **87**", effect row **88**; spellbook rank 5 | **87** |
+| **Thunder Clap** | cooldown **4s** | spell tooltip: "Instant **6 sec** cooldown"; spellbook, listed as a change from Classic's 4 | **6s** |
+| **Bloodthirst** | base damage **30** | effect row **49**; spellbook: "35% of your Attack Power plus **48**" | **48** |
+| **Demoralizing Shout** | no magnitude | description **210**, effect row **-195**; spellbook **196** | **196** |
+| **Battle Shout** | no magnitude | capture **140** description and row; spellbook and the owner's raid list **139** | **139** |
 
-**Slam is the first figure a captured tooltip has been overruled on outright.**
-The sheet gives no base damage, so the code took Forever's 87; the ruleset
-owner says 68. Everywhere else a capture has been overruled it was because it
-contradicted itself or the sheet. Its cooldown went the other way: two sources
-against the sheet, resolved like Shield Wall's.
+**Thunder Clap's 4 is the sheet's only figure that was taken over a capture
+that contradicted it**, and it survived because 4 is also the Classic value —
+wrong from two directions at once looks right. Six is now settled.
+
+**Slam's base damage went 87 → 68 → 87.** Forever adds a fifth rank Classic
+does not have and shifts every rank down a level, so rank 4 is +68 and rank 5
+is +87, and the spellbook opens the spell on rank 4. Both numbers are real
+Forever figures; only rank 5 is the one a level 60 warrior trains. Its cooldown
+was never in doubt after the capture: three sources against the sheet.
+
+**Two of these were in our own capture and were read from the wrong line.**
+Demoralizing Shout's description says 210 and its effect row says −195, which
+is 196 once base points are allowed for. Bloodthirst's description hides its
+flat damage behind Forever's "(100% of Spell Power)" artifact, and its effect
+row says 49, which is 48 — the same reading that produced Revenge's 153 and
+Shield Slam's 655. **Read the effect rows.**
+
+**Battle Shout is the one where the capture still disagrees.** It says 140 in
+the description AND the effect row, so the base-points rule does not explain
+it. The owner's raid list and the spellbook both say 139, and the owner asked
+for the spellbook to be matched. Worth one attack power.
 
 **Mortal Strike — RESOLVED: 160 is correct.** Confirmed by the ruleset owner.
 Mortal Strike is weapon damage plus 160; the talent calculator's 85 is wrong

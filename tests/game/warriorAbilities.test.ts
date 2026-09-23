@@ -64,8 +64,15 @@ import { BATTLE_STANCE, DEFENSIVE_STANCE } from '../../src/game/auras/warrior';
  * leave nineteen.
  *
  * SLAM. The sheet says no cooldown; the captured tooltip says "1.5 sec cast 15
- * sec cooldown" and the owner confirms fifteen. Two sources against the sheet
- * again, and the same resolution.
+ * sec cooldown", the owner confirms fifteen, and the spellbook carries it on
+ * all five ranks. Three sources against the sheet, and the same resolution.
+ *
+ * THUNDER CLAP. The sheet says 4, which is also the Classic value -- a wrong
+ * number that looked right from two directions. The captured tooltip says
+ * "Instant 6 sec cooldown" and the spellbook lists it as a deliberate Forever
+ * change from Classic's 4. The sheet's row was taken over our own capture here,
+ * which is the opposite of how Shield Wall and Slam were settled; the owner
+ * asked for the spellbook to be matched, so it is six.
  *
  * The owner's word outranks their own spreadsheet, which is the only thing
  * that can. This table is otherwise the sheet verbatim, and an override
@@ -91,7 +98,8 @@ const SHEET: readonly SheetRow[] = [
   { id: 'cleave', name: 'Cleave', rageCost: 20, cooldownSeconds: 0, castSeconds: 0, attackTable: 'melee-special' },
   { id: 'bloodthirst', name: 'Bloodthirst', rageCost: 30, cooldownSeconds: 6, castSeconds: 0, attackTable: 'melee-special' },
   { id: 'battle_shout_cast', name: 'Battle Shout', rageCost: 10, cooldownSeconds: 0, castSeconds: 0, attackTable: undefined },
-  { id: 'thunder_clap', name: 'Thunder Clap', rageCost: 20, cooldownSeconds: 4, castSeconds: 0, attackTable: 'ranged-special' },
+  // OVERRIDDEN, see above: the sheet says 4 and the client says 6.
+  { id: 'thunder_clap', name: 'Thunder Clap', rageCost: 20, cooldownSeconds: 6, castSeconds: 0, attackTable: 'ranged-special' },
   { id: 'sunder_armor_cast', name: 'Sunder Armor', rageCost: 15, cooldownSeconds: 0, castSeconds: 0, attackTable: 'melee-special' },
   { id: 'execute', name: 'Execute', rageCost: 15, cooldownSeconds: 0, castSeconds: 0, attackTable: 'melee-special' },
   // OVERRIDDEN, see above: the sheet says 0 and the ruleset owner says 15.

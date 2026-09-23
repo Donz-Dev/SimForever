@@ -1,7 +1,8 @@
 # Warrior ability audit against Forever
 
 Every Warrior ability the simulator models, checked against Forever's own spell
-data on **2026-09-18**.
+data on **2026-09-18**, and re-checked against the client-derived spellbook on
+**2026-09-23**.
 
 The data is captured in `src/data/abilities/forever-warrior.json` and this
 document is the reading of it. **Neither needs scraping again** — refresh with:
@@ -18,6 +19,11 @@ ruleset owner's spreadsheet transcribed verbatim.
 listed below. The spreadsheet file is kept as the record of what it said, not as
 what the simulator implements; when they differ, this file is now the one the
 code follows.
+
+**The 2026-09-23 pass added a third source and moved five numbers.** See
+[the spellbook section](#the-spellbook-and-what-the-second-pass-found) at the
+end: four of the five were already sitting in the capture above, in effect rows
+nobody had read, and the fifth was a rank confusion.
 
 ---
 
@@ -119,7 +125,7 @@ confidence in the rest.
 | Heroic Strike | +157 |
 | Cleave | +50 |
 | Hamstring | +45 |
-| Thunder Clap | +103 |
+| Thunder Clap | +103 — but NOT its cooldown; see the spellbook section |
 | Execute | 600 base, +15 per extra rage |
 | Rend | 147 over 21 sec |
 | Charge | generates 15 rage |
@@ -278,3 +284,73 @@ multi-target fight is reading the wrong simulator.
   max, so Forever cannot say whether Shield Slam's 655 is flat or the centre of
   a range the way the spreadsheet's 421–439 is.
 - **Intercept's damage**, as above.
+
+
+---
+
+## The spellbook, and what the second pass found
+
+On **2026-09-23** the ruleset owner supplied a third source:
+
+| | |
+| --- | --- |
+| <https://foreverchanges.pro/spellbook/warrior> | Every Warrior spell, read from the beta client and diffed against Classic Era |
+| Forever build | `1.60.1.69913` |
+| Classic Era build | `1.15.9.69722` |
+
+It carries cost, cast time, cooldown, training level and tooltip **per rank**
+for all 42 Warrior spells, Forever beside Classic. The page renders a payload;
+the structured data is in the RSC flight script rather than the DOM.
+
+**Twenty-three of the twenty-seven abilities the simulator models matched
+exactly**, including every figure the project had previously had to rule on:
+Shield Wall's 15 minutes, Shield Block's 7 seconds and two charges, Mortal
+Strike's 160, Shield Slam's 640–670, Revenge's 138–168, Recklessness, Death
+Wish and all three stances. Nothing the simulator models is absent from
+Forever.
+
+### The five that moved
+
+| Ability | Was | Now | Why it was wrong |
+| --- | --- | --- | --- |
+| **Slam** | +68 | **+87** | Read off rank 4. Forever adds a rank 5 that Classic has no equivalent for, and the spellbook opens the spell on rank 4. |
+| **Thunder Clap** | 4s cooldown | **6s** | The spreadsheet's 4 was taken over our own capture's "6 sec cooldown". 4 is also the Classic value, so it looked right from two directions. |
+| **Bloodthirst** | +0 flat | **+48** | The description hides it behind the "(100% of Spell Power)" artifact. Effect row 49. |
+| **Demoralizing Shout** | −210 AP | **−196** | The description says 210 and the effect row says −195. The row wins. |
+| **Battle Shout** | +140 AP | **+139** | The only one the capture still disputes — it says 140 in both the description and the row. |
+
+### The lesson, which is one line
+
+**Read the effect rows, not only the description.** Revenge and Shield Slam
+were already read that way, because their descriptions were unreadable.
+Demoralizing Shout's description was readable *and wrong*, which is worse:
+nothing prompted anyone to look at the line beneath it.
+
+Base points run **one higher** than the stated figure throughout this data set
+— Slam 88/87, Thunder Clap 104/103, Bloodthirst 49/48, Demoralizing Shout
+195/196 — and Battle Shout is the sole exception, which is what makes it a real
+disagreement rather than an artifact.
+
+### What it changed
+
+Measured over 500 iterations at seed 12345, the three presets:
+
+| Preset | Before | After |
+| --- | --- | --- |
+| 2H Arms | 557.2 | **558.5** |
+| DW Fury | 632.7 | **640.5** |
+| Prot Warr | 346.4 | **347.3** |
+
+Fury moves most because Bloodthirst is cast 7.6 times a fight and gained 48
+damage each time. The tank casts Thunder Clap **8.62 → 8.22** times, and its
+debuff uptime stays at 100% — a 30 second slow covers a 6 second cooldown with
+room to spare, so the cooldown correction costs mitigation nothing and returns
+the rage to Heroic Strike.
+
+### Three abilities Forever has that the simulator does not
+
+| | |
+| --- | --- |
+| **Victory Rush** | New in Forever. Needs a recent kill, so genuinely inert against a single boss. |
+| **Retaliation** | **15 min in Forever, down from 30.** A real Arms cooldown once the target swings back, and not modelled. |
+| **Tactical Mastery** | No longer a talent — trained at level 14, and 10 rage retained rather than Classic's 25. The simulator does not model stance-change rage at all, and no preset changes stance mid-fight. |

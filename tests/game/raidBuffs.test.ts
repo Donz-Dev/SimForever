@@ -204,15 +204,19 @@ describe('buffs on the character', () => {
     expect(buffed.stats.get('attackPower')).toBe(plain.stats.get('attackPower'));
   });
 
-  it('reuse the Warrior spreadsheet value for Battle Shout, not a second copy', () => {
+  it('reuse the Warrior ability value for Battle Shout, not a second copy', () => {
     /*
-     * The owner's raid figure is +139 and the ability sheet says +140. Asked
-     * which wins, the owner chose the sheet -- so this is the SAME aura a
-     * warrior's own cast applies, which is also what stops the two stacking.
+     * The owner's raid figure was +139 and the ability sheet said +140. Asked
+     * which won, the owner chose the sheet; the spellbook then agreed with the
+     * raid figure and the owner asked for the spellbook to be matched, so both
+     * are 139 and the question is closed.
+     *
+     * It is the SAME aura a warrior's own cast applies, which is what stops the
+     * two stacking -- and why one number moving moved both.
      */
     const plain = sheet([]);
     const buffed = sheet(['battle_shout']);
-    expect(buffed.stats.get('attackPower')).toBe(plain.stats.get('attackPower') + 140);
+    expect(buffed.stats.get('attackPower')).toBe(plain.stats.get('attackPower') + 139);
     expect(RAID_BUFFS_BY_ID.get('battle_shout')!.aura!.id).toBe('battle_shout');
   });
 });
