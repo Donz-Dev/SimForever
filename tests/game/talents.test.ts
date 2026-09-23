@@ -18,13 +18,32 @@ import {
 
 /*
  * Every class's tree NAMES, SIZES and CAPSTONE are transcribed by hand below,
- * from the Forever talent calculators, rather than read back out of the data.
+ * from talentsforever.com's rendered trees, rather than read back out of the
+ * data.
  * A test that asked the data what the data said would pass whatever the data
  * said -- the same reason the base stats and the ability sheet are each written
  * out twice.
  *
- * The 469 individual talents are not transcribed; what is checked instead is
+ * The 468 individual talents are not transcribed; what is checked instead is
  * every structural invariant that must hold for all of them at once.
+ *
+ * ----------------------------------------------------------------------------
+ * THIS TEST EARNED ITS KEEP ON 2026-09-23, and it is worth saying how.
+ *
+ * The talent data moved from a Wowhead scrape to the beta client's own files.
+ * Counting talents per class found ONE difference, in Druid. This test found
+ * two more that a count could not, because the counts matched:
+ *
+ *   rogue/combat        "Restless Blades" -> "Flawless Execution"
+ *   warlock/affliction  "Drain Hope"      -> "Wrack"
+ *   druid/balance       "Balance of Nature" is not in the client at all
+ *
+ * Three wrong talents in 469. That is a 99.4% accurate scrape and it would
+ * still have been fatal, because talentsforever.com encodes a build as one
+ * digit per talent IN TREE ORDER -- so a tree that is the wrong length or in
+ * the wrong order decodes every profile after it into different talents, and
+ * every profile in this project is specified by one of those URLs.
+ * ----------------------------------------------------------------------------
  */
 interface ClassSpec {
   readonly trees: readonly (readonly [id: string, count: number, capstone: string])[];
@@ -33,7 +52,7 @@ interface ClassSpec {
 const SPEC: Readonly<Record<string, ClassSpec>> = {
   druid: {
     trees: [
-      ['balance', 17, 'Moonkin Form'],
+      ['balance', 16, 'Moonkin Form'],
       ['feral_combat', 19, 'Berserk'],
       ['restoration', 16, 'Wild Growth'],
     ],
@@ -82,7 +101,7 @@ const SPEC: Readonly<Record<string, ClassSpec>> = {
   },
   warlock: {
     trees: [
-      ['affliction', 17, 'Drain Hope'],
+      ['affliction', 17, 'Wrack'],
       ['demonology', 19, 'Demonic Pact'],
       ['destruction', 16, 'Incinerate'],
     ],
@@ -101,7 +120,7 @@ const SPEC: Readonly<Record<string, ClassSpec>> = {
 
 const CLASS_IDS = Object.keys(SPEC);
 
-/** The 469 above, summed, so the total is asserted rather than assumed. */
+/** The 468 above, summed, so the total is asserted rather than assumed. */
 const TOTAL_TALENTS = Object.values(SPEC)
   .flatMap((spec) => spec.trees)
   .reduce((sum, [, count]) => sum + count, 0);
@@ -124,8 +143,8 @@ describe('every class has its trees', () => {
     expect(classesWithTalents()).toEqual([...CLASS_IDS].sort());
   });
 
-  it('adds up to 469 talents', () => {
-    expect(TOTAL_TALENTS).toBe(469);
+  it('adds up to 468 talents', () => {
+    expect(TOTAL_TALENTS).toBe(468);
     const loaded = CLASS_IDS.reduce(
       (sum, id) => sum + talentsOf(id).trees.reduce((n, tree) => n + tree.talents.length, 0),
       0,
@@ -157,9 +176,12 @@ describe('every class has its trees', () => {
 
   it('records where each class came from', () => {
     for (const classId of CLASS_IDS) {
-      expect(talentsOf(classId).source).toBe(
-        `https://www.wowhead.com/forever/talent-calc/${classId}`,
-      );
+      /*
+       * ONE SOURCE FOR EVERY CLASS NOW, and a static file rather than a page:
+       * `tools/import_forever_talents.mjs` fetches it with plain `fetch`, with
+       * no browser, no DOM walk and no clipboard.
+       */
+      expect(talentsOf(classId).source).toBe('https://talentsforever.com/talents.js');
     }
   });
 });

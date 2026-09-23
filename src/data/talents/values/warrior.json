@@ -1,6 +1,6 @@
 {
  "class": "warrior",
- "source": "https://www.wowhead.com/forever/talent-calc/warrior",
+ "source": "https://talentsforever.com/talents.js",
  "structure": "src/data/talents/warrior.json",
  "talents": {
   "improved_heroic_strike": {
@@ -83,11 +83,20 @@
    "name": "Deep Wounds",
    "tree": "arms",
    "ranks": 3,
-   "text": "Your critical strikes cause your opponent to Bleed, dealing {0}% of your melee weapon's average damage over 12 sec.",
+   "text": "Your critical strikes cause your opponent to Bleed, dealing {0}% of your melee weapon's average damage over {1} sec.",
    "values": [
-    20,
-    40,
-    60
+    [
+     20,
+     12
+    ],
+    [
+     40,
+     12
+    ],
+    [
+     60,
+     12
+    ]
    ]
   },
   "spearing_strike": {
@@ -123,13 +132,33 @@
    "name": "Bloodthrill",
    "tree": "arms",
    "ranks": 5,
-   "text": "Your melee attacks against targets afflicted by your Rend have a {0}% chance to activate your Overpower ability for 1 attack on your current target. Lasts 6 sec.",
+   "text": "Your melee attacks against targets afflicted by your Rend have a {0}% chance to activate your Overpower ability for {1} attack on your current target. Lasts {2} sec.",
    "values": [
-    2,
-    4,
-    6,
-    8,
-    10
+    [
+     2,
+     1,
+     6
+    ],
+    [
+     4,
+     1,
+     6
+    ],
+    [
+     6,
+     1,
+     6
+    ],
+    [
+     8,
+     1,
+     6
+    ],
+    [
+     10,
+     1,
+     6
+    ]
    ]
   },
   "sweeping_strikes": {
@@ -144,7 +173,7 @@
    "name": "Weaponmaster",
    "tree": "arms",
    "ranks": 5,
-   "text": "Gives your melee weapon attacks a benefit depending on the weapon. Axe/Polearm: Increases your critical strike chance by {0}%. Mace/Staff: Your attacks ignore {1}% of your target's armor. Sword: Your successful melee attacks have a {2}% chance to trigger an extra attack on the target.",
+   "text": "Gives your melee weapon attacks a benefit depending on the weapon.\n\n Axe/Polearm: Increases your\n critical strike chance by {0}%.\n\n Mace/Staff: Your attacks ignore\n {1}% of your target's armor.\n\n Sword: Your successful melee \n attacks have a {2}% chance to \n trigger an extra attack on the \n target.",
    "values": [
     [
      1,
@@ -187,11 +216,20 @@
    "name": "Improved Hamstring",
    "tree": "arms",
    "ranks": 3,
-   "text": "Gives your Hamstring ability a {0}% chance to immobilize the target for 5 sec.",
+   "text": "Gives your Hamstring ability a {0}% chance to immobilize the target for {1} sec.",
    "values": [
-    5,
-    10,
-    15
+    [
+     5,
+     5
+    ],
+    [
+     10,
+     5
+    ],
+    [
+     15,
+     5
+    ]
    ]
   },
   "mortal_strike": {
@@ -219,7 +257,7 @@
    "name": "Cruelty",
    "tree": "fury",
    "ranks": 5,
-   "text": "Increases your chance to get a critical strike with melee attacks by {0}%.",
+   "text": "Improves your chance to get a critical strike with melee attacks by {0}%.",
    "values": [
     1,
     2,
@@ -245,13 +283,33 @@
    "name": "Unbridled Wrath",
    "tree": "fury",
    "ranks": 5,
-   "text": "Gives you a {0}% chance to generate 1 additional Rage when you deal melee damage with a weapon. This effect is increased to 2 Rage for two-handed weapons.",
+   "text": "Gives you a {0}% chance to generate {1} additional Rage when you deal melee damage with a weapon. This effect is increased to {2} Rage for two-handed weapons.",
    "values": [
-    12,
-    24,
-    36,
-    48,
-    60
+    [
+     12,
+     1,
+     2
+    ],
+    [
+     24,
+     1,
+     2
+    ],
+    [
+     36,
+     1,
+     2
+    ],
+    [
+     48,
+     1,
+     2
+    ],
+    [
+     60,
+     1,
+     2
+    ]
    ]
   },
   "improved_cleave": {
@@ -277,11 +335,23 @@
    "name": "Blood Craze",
    "tree": "fury",
    "ranks": 3,
-   "text": "Regenerates {0}% of your total Health over 6 sec after being the victim of a critical strike, dealing damage with Bloodthirst, or suffering more than 20% of your maximum Health from a single attack.",
+   "text": "Regenerates {0}% of your total Health over {1} sec after being the victim of a critical strike, dealing damage with Bloodthirst, or suffering more than {2}% of your maximum Health from a single attack.",
    "values": [
-    1,
-    2,
-    3
+    [
+     1,
+     6,
+     20
+    ],
+    [
+     2,
+     6,
+     20
+    ],
+    [
+     3,
+     6,
+     20
+    ]
    ]
   },
   "boundless_rage": {
@@ -333,20 +403,42 @@
    "tree": "fury",
    "ranks": 1,
    "text": "Causes your Whirlwind to also strike with your off-hand weapon, and reduces the Rage cost of your Cleave ability by {0}.",
-   "values": [2],
+   "values": [
+    2
+   ],
    "note": "single rank; the 2 filled in by hand on the ruleset owner's confirmation, per this directory's README - a single-rank talent has no variable the calculator can identify from its own text"
   },
   "enrage": {
    "name": "Enrage",
    "tree": "fury",
    "ranks": 5,
-   "text": "Gives you a 30% chance to deal {0}% increased Physical damage for 12 sec after being the victim of any damaging attack.",
+   "text": "Gives you a {0}% chance to deal {1}% increased Physical damage for {2} sec after being the victim of any damaging attack.",
    "values": [
-    2,
-    4,
-    6,
-    8,
-    10
+    [
+     30,
+     2,
+     12
+    ],
+    [
+     30,
+     4,
+     12
+    ],
+    [
+     30,
+     6,
+     12
+    ],
+    [
+     30,
+     8,
+     12
+    ],
+    [
+     30,
+     10,
+     12
+    ]
    ]
   },
   "improved_execute": {
@@ -363,7 +455,7 @@
    "name": "Precision",
    "tree": "fury",
    "ranks": 3,
-   "text": "Increases your chance to hit with all abilities and attacks by {0}%.",
+   "text": "Improves your chance to hit by {0}%.",
    "values": [
     1,
     2,
@@ -408,13 +500,28 @@
    "name": "Flurry",
    "tree": "fury",
    "ranks": 5,
-   "text": "Increases your melee attack speed by {0}% for your next 3 swings after dealing a melee critical strike.",
+   "text": "Increases your melee attack speed by {0}% for your next {1} swings after dealing a melee critical strike.",
    "values": [
-    5,
-    10,
-    15,
-    20,
-    25
+    [
+     5,
+     3
+    ],
+    [
+     10,
+     3
+    ],
+    [
+     15,
+     3
+    ],
+    [
+     20,
+     3
+    ],
+    [
+     25,
+     3
+    ]
    ]
   },
   "bloodthirst": {
@@ -429,27 +536,32 @@
    "name": "Shield Specialization",
    "tree": "protection",
    "ranks": 5,
-   "text": "Increases your chance to Block attacks with your shield by {0}% and grants you a {1}% chance to generate 5 Rage when you Block.",
+   "text": "Increases your chance to Block attacks with your shield by {0}% and grants you a {1}% chance to generate {2} Rage when you Block.",
    "values": [
     [
      1,
-     20
+     20,
+     5
     ],
     [
      2,
-     40
+     40,
+     5
     ],
     [
      3,
-     60
+     60,
+     5
     ],
     [
      4,
-     80
+     80,
+     5
     ],
     [
      5,
-     100
+     100,
+     5
     ]
    ]
   },
@@ -512,10 +624,16 @@
    "name": "Master of Defense",
    "tree": "protection",
    "ranks": 2,
-   "text": "Grants you a {0}% chance to generate 5 Rage when you Dodge or Parry while a shield is equipped.",
+   "text": "Grants you a {0}% chance to generate {1} Rage when you Dodge or Parry while a shield is equipped.",
    "values": [
-    50,
-    100
+    [
+     50,
+     5
+    ],
+    [
+     100,
+     5
+    ]
    ]
   },
   "improved_revenge": {
@@ -592,10 +710,29 @@
    "name": "Improved Shield Bash",
    "tree": "protection",
    "ranks": 2,
-   "text": "Gives your Shield Bash ability a {0}% chance to Silence the target for 3 sec.",
+   "text": "Gives your Shield Bash ability a {0}% chance to Silence the target for {1} sec.",
    "values": [
-    50,
-    100
+    [
+     50,
+     3
+    ],
+    [
+     100,
+     3
+    ]
+   ]
+  },
+  "bastion": {
+   "name": "Bastion",
+   "tree": "protection",
+   "ranks": 5,
+   "text": "Increases all damage you deal by {0}% while a shield is equipped.",
+   "values": [
+    2,
+    4,
+    6,
+    8,
+    10
    ]
   },
   "focused_rage": {
@@ -616,14 +753,6 @@
    "text": "Slam the target with your shield, causing 421 to 439 damage, increased by your Block Value, and has a 50% chance of dispelling 1 magic effect on the target. Causes a very high amount of threat.",
    "values": null,
    "note": "single rank"
-  },
-  "bastion": {
-   "name": "Bastion",
-   "tree": "protection",
-   "ranks": 5,
-   "text": "Increases all damage you deal by {0}% while a shield is equipped.",
-   "values": [2, 4, 6, 8, 10],
-   "note": "Confirmed by the ruleset owner: 2/4/6/8/10, a 1.1x multiplier on all damage at 5/5 while a shield is equipped. Forever's own tooltip prints the same figure at every rank and the talent has no per-rank spell ids, so the split is not readable from the calculator -- it was proposed as the pattern every other five-rank Protection talent follows (Anticipation 4..20, Toughness 2..10) and confirmed directly rather than captured."
   }
  }
 }

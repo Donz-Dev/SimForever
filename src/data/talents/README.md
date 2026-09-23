@@ -1,5 +1,25 @@
 # Talent data
 
+> **SOURCE CHANGED 2026-09-23.** These files now come from the WoW Forever beta
+> client, via `talentsforever.com/talents.js`, imported by
+> `tools/import_forever_talents.mjs`. They were scraped from
+> `wowhead.com/forever/talent-calc` before that.
+>
+> The scrape was 468 of 469 talents correct, and the three it got wrong were
+> still fatal: talentsforever encodes a saved build as one digit per talent in
+> tree order, so a tree of the wrong length or order decodes a profile into
+> different talents. See [docs/class-implementation.md](../../../docs/class-implementation.md).
+>
+> | | ours was | the client says |
+> | --- | --- | --- |
+> | rogue / combat | Restless Blades | **Flawless Execution** |
+> | warlock / affliction | Drain Hope | **Wrack** |
+> | druid / balance | Balance of Nature | *not in the client at all* |
+>
+> The instructions below describe the old browser scrape. They are kept because
+> the Wowhead calculator is still a useful second opinion, and because the
+> selectors took a while to work out.
+
 One file per class, read out of the World of Warcraft: Forever talent
 calculators at `https://www.wowhead.com/forever/talent-calc/<class>`.
 
