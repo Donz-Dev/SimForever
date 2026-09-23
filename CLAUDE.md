@@ -198,7 +198,7 @@ does not swing.
 
 ## Where the Forever data comes from
 
-Three sources, and knowing which answers what saves a lot of asking.
+Four sources, and knowing which answers what saves a lot of asking.
 
 **`C:\Users\Donz\Documents\WoWForever*`** — the ruleset owner's own files, and
 the highest authority. Base stats (`.xlsx`), the combat table, stat conversions,
@@ -215,6 +215,23 @@ DOM. `src/data/talents/README.md` has the selectors.
 tooltips, as plain JSON. No browser needed. Used for the current items, which are
 Classic stand-ins rather than Forever data. `src/data/items/README.md` has the
 markers to parse.
+
+**`foreverchanges.pro/spellbook/<class>`** — every spell of a class read from
+the **beta client** and diffed against the Classic Era client, per rank, with
+cost, cast time, cooldown, training level and tooltip. The closest thing to the
+client itself that does not require the client. Its structured data is in the
+page's RSC flight script, not the DOM.
+
+Two things it is uniquely good at, both of which have already caught a bug:
+
+- **Ranks.** It states which rank is the max and at what level, and it OPENS on
+  a rank that is not always the max. Forever shifts ranks down and sometimes
+  adds one, so reading the page as it loads can give a real Forever number for
+  the wrong rank. That is how Slam became 68 instead of 87.
+- **Deliberate changes.** It separates "Forever changed this" from "Forever
+  inherited this", so a value that matches Classic can be confirmed as intended
+  rather than assumed. Thunder Clap's cooldown is 6 in Forever and 4 in Classic,
+  and our spreadsheet's 4 had gone unquestioned because it agreed with Classic.
 
 When a number is missing, check whether one of these answers it before asking.
 
@@ -250,10 +267,22 @@ kept Crusader granting nothing until its proc rate arrived, rather than quietly
 inheriting a plausible one. The same applies to `PLACEHOLDER_*` constants: a
 visibly inert buff is the honest failure mode.
 
-**Two sources can disagree.** The ability spreadsheets and the Forever talent
-calculator both describe the same abilities, and where they agree confidence
-rises. Where they disagree, say so in the docs and pick the one the ruleset owner
-supplied directly — do not average them or quietly prefer the newer.
+**Two sources can disagree.** The ability spreadsheets, the Forever talent
+calculator and the spellbook all describe the same abilities, and where they
+agree confidence rises. Where they disagree, say so in the docs and pick the one
+the ruleset owner supplied directly — do not average them or quietly prefer the
+newer.
+
+**A CAPTURED TOOLTIP CAN DISAGREE WITH ITSELF, so read the effect rows and not
+only the description.** Base points in this data set run consistently ONE higher
+than the stated figure, so an effect row of 49 is a 48. Revenge and Shield Slam
+were read that way from the start because their descriptions were unreadable —
+Forever renders "(100% of Spell Power)" where the number should be. The trap is
+the tooltip whose description is perfectly readable and disagrees with its own
+row anyway: Demoralizing Shout said 210 above a row saying −195, and the 210 was
+transcribed for months because nothing prompted anyone to look down one line.
+Four of the five corrections on 2026-09-23 were already sitting in a file we had
+captured; only the reading was wrong.
 
 **Borrowing a Classic value is allowed, and only when it stays visible.** The
 project owner's standing decision: where Forever has not supplied a number,

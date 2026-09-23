@@ -22,7 +22,7 @@ their talent trees and nothing else.
 | **Combat tables** | all six, on an integer 1–10000 die, derived from weapon skill vs defense skill, including a **block** outcome. **Defense skill is live**: the surplus above the level baseline moves boss miss, boss crit, dodge, parry and block by 0.04 points each, every one clamped to 0–100% |
 | **Armor** | level-scaled, applied per damage event |
 | **Resources** | rage from damage, energy in batches, mana on the five-second rule |
-| **Abilities** | all 26 Warrior abilities from the ruleset spreadsheet, with weapon-damage scaling and on-next-swing. Effect magnitudes for the ten the sheet leaves blank come from Forever's own spell data |
+| **Abilities** | all 26 Warrior abilities from the ruleset spreadsheet, with weapon-damage scaling and on-next-swing. Effect magnitudes for the ten the sheet leaves blank come from Forever's own spell data, audited against the client-derived spellbook on 2026-09-23 |
 | **Reactions** | content responds to an attack result: Overpower off a target dodge, and every item proc |
 | **Gear** | 19 items and the Crusader enchant, equippable, driving stats, weapons and procs. A **starting set** is equipped automatically when a Warrior is created, so the first fight is a geared one |
 | **Procs** | PPM (Vis'kag, Crusader) and flat-chance with an internal cooldown (Hand of Justice) |
@@ -33,7 +33,7 @@ their talent trees and nothing else.
 | **Analysis** | DPS, per-ability breakdown with uses/attempts/hits/crit/glance/avoid rates, buff and debuff uptime, rage economy, deaths and healing received |
 | **UI** | two-step character flow, per-class character sheet (offensive and defensive), style-aware gear, talent trees, combat log, Monte Carlo batches, uptime bar charts |
 
-**1,253 tests**, CI green on Node 20 and 22. Profile format **v9**.
+**1,255 tests**, CI green on Node 20 and 22. Profile format **v9**.
 
 The interface is one theme, **Abyssal Copper**, chosen from four mock-ups. The
 other three still exist in `ui/styles.css` under `:root[data-theme=...]` and
@@ -58,22 +58,35 @@ two sets of figures.
 
 | Build | Standing target | Target swings back |
 | --- | --- | --- |
-| Dual-wield / Berserker (default) | **163.92** +/- 2.67 | **357.22** +/- 3.37 |
-| Dual-wield / Battle (general list) | **161.59** +/- 2.53 | - |
-| Two-hander / Battle (default) | **152.33** +/- 2.49 | - |
-| 1H & Shield / Defensive (default) | **64.64** +/- 1.09 | - |
-| 1H & Shield, 31-pt Protection | **66.40** +/- 1.36 | **153.71** +/- 1.76 |
-| Dual-wield, 31-pt Arms | **188.82** +/- 2.43 | - |
-| Fury to Death Wish | **222.26** +/- 3.57 | - |
-| the same, without Death Wish | **194.45** +/- 3.55 | - |
+| Dual-wield / Berserker (default) | **163.71** +/- 2.67 | **357.13** +/- 3.37 |
+| Dual-wield / Battle (general list) | **161.30** +/- 2.39 | - |
+| Two-hander / Battle (default) | **152.23** +/- 2.53 | - |
+| 1H & Shield / Defensive (default) | **64.55** +/- 1.08 | - |
+| 1H & Shield, 31-pt Protection | **66.38** +/- 1.34 | **151.31** +/- 1.57 |
+| Dual-wield, 31-pt Arms | **188.68** +/- 2.43 | - |
+| Fury to Death Wish | **222.02** +/- 3.50 | - |
+| the same, without Death Wish | **194.40** +/- 3.29 | - |
 
-**Two rows have moved since 2026-09-22, each for one reason.** The tank with the
-target attacking fell from 158.61 to 153.71, because Thunder Clap now slows the
-target and a fifth fewer swings taken is a fifth less rage from damage taken.
-The two-hander went 153.43 to 158.93 when it got its own priority list, then
-back to 152.33 when Slam was corrected -- weapon damage plus 68 rather than 87,
-and a fifteen second cooldown where it had none. Everything else is inside its
-interval.
+**Every row fell slightly on 2026-09-23**, by a tenth to three tenths of a
+point, and it is one cause: Battle Shout is 139 attack power rather than 140.
+One attack power is about 0.07 damage a swing, it is in every build, and it is
+the only change in that pass that reaches a build with no talents.
+
+**The tank with the target attacking fell further, 153.71 to 151.31**, and that
+is Thunder Clap's cooldown going from 4 seconds to 6. Isolated by changing
+nothing else, the same build measures **144.61 at 4 seconds and 143.11 at 6**,
+with casts falling **8.86 to 7.46** -- so about 1.5 of the drop is the cooldown
+and the rest is Battle Shout and noise. It is the one build that casts Thunder
+Clap on cooldown all fight.
+
+**No baseline row takes Bloodthirst**, which is a 31-point capstone, so the +48
+that moved DW Fury by eight points does not appear in this table at all.
+
+**Earlier moves, kept for the record.** The tank fell from 158.61 to 153.71 when
+Thunder Clap began slowing the target -- a fifth fewer swings taken is a fifth
+less rage from damage taken. The two-hander went 153.43 to 158.93 when it got
+its own priority list, then back to about 152 when Slam gained a fifteen second
+cooldown where it had none.
 
 That same change is why Bastion's DPS ratio fell from about 1.16 to 1.106. It
 is a rage economy loosening, not a talent getting worse.
@@ -115,9 +128,9 @@ Three buttons on the creation screen, at the very top:
 
 | | |
 | --- | --- |
-| **2H Arms** | Orc, two-hander, Battle Stance, standing target. 38 Arms / 13 Fury | **557 DPS** |
-| **DW Fury** | Orc, dual-wield, Berserker Stance, standing target. 18 Arms / 33 Fury, Crusader on both weapons | **633 DPS** |
-| **Prot Warr** | Tauren, shield, Defensive Stance, target swings back. 17 Arms / 34 Protection | **346 DPS** |
+| **2H Arms** | Orc, two-hander, Battle Stance, standing target. 38 Arms / 13 Fury | **559 DPS** |
+| **DW Fury** | Orc, dual-wield, Berserker Stance, standing target. 18 Arms / 33 Fury, Crusader on both weapons | **641 DPS** |
+| **Prot Warr** | Tauren, shield, Defensive Stance, target swings back. 17 Arms / 34 Protection | **347 DPS** |
 
 **All three carry the same twelve raid buffs**, which is what makes those
 figures so much higher than the baselines above -- and the only way two presets
@@ -181,6 +194,43 @@ Two things worth knowing before working on that list:
 
 ## The next task
 
+## A fourth source: the spellbook
+
+<https://foreverchanges.pro/spellbook/warrior> carries **every spell of a class
+read from the beta client** (`1.60.1.69913`) and diffed against the Classic Era
+client, per rank, with cost, cast time, cooldown, training level and tooltip.
+There is a page per class, so the other eight are already waiting.
+
+Audited against it on **2026-09-23**: 23 of the 27 Warrior abilities the
+simulator models matched exactly, and **five numbers moved** -- Slam +68 to
++87, Thunder Clap's cooldown 4s to 6s, Bloodthirst +0 to +48 flat,
+Demoralizing Shout -210 to -196, Battle Shout +140 to +139. Nothing the
+simulator models is absent from Forever.
+
+**Four of the five were already in `forever-warrior.json`**, in effect rows
+nobody had read. That is the lesson worth carrying to the other classes:
+
+> **Read the effect rows, not only the description.** Base points run one
+> higher than the stated figure. Demoralizing Shout's description said 210
+> above a row saying -195, and the description was transcribed.
+
+The fifth, Slam, was a **rank** confusion: Forever adds a rank Classic has no
+equivalent for, shifts every rank down a level, and the spellbook opens a spell
+on a rank that is not always the max. Check `max_rank` before reading a number
+off it.
+
+Full findings in
+[docs/warrior-ability-audit.md](docs/warrior-ability-audit.md).
+
+**Three Forever abilities are still unmodelled and now visible**: Victory Rush
+(new, needs a kill, inert against one boss), Retaliation (**15 min in Forever,
+down from 30** -- a real Arms cooldown once the target swings back) and
+Tactical Mastery (no longer a talent; trained, and 10 rage retained rather than
+Classic's 25).
+
+The site also has a talent calculator and a sourced change list, which would be
+a second opinion on the Wowhead-scraped tree in `src/data/talents/`. Not done.
+
 **Finishing the Warrior is the priority, and
 [docs/warrior-completion.md](docs/warrior-completion.md) is the ordered list.**
 In short:
@@ -188,7 +238,7 @@ In short:
 1. ~~**The ten inert abilities**~~ and ~~**re-measure the rotation**~~ are both
    **done**. The magnitudes were never missing: Forever serves spell tooltips at
    `nether.wowhead.com/forever/tooltip/spell/<id>`, the same host as the item
-   endpoint, and borrowing from Classic would have been 30% wrong on
+   endpoint, and borrowing from Classic would have been 40% wrong on
    Demoralizing Shout alone.
 2. **Capture the other sixteen Warrior spells.** Cheap, and it would answer the
    stance-gating question filed as blocked on the ruleset owner for months --

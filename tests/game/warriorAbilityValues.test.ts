@@ -96,11 +96,23 @@ describe('the captured spell data', () => {
 });
 
 describe('Battle Shout', () => {
-  // Spell 25289, rank 7: "increasing the melee attack power of all party
-  // members within 20 yards by 140. Lasts 3 min."
-  it('grants 140 attack power', () => {
-    expect(BATTLE_SHOUT_ATTACK_POWER).toBe(140);
+  /*
+   * Spell 25289, rank 7. 139 attack power for 3 min.
+   *
+   * THE CAPTURE SAYS 140 AND IS NOT USED FOR THE MAGNITUDE. Both the ruleset
+   * owner's raid buff list and the spellbook say 139, and the owner asked for
+   * the spellbook to be matched. Check 2 -- tying the transcription to a
+   * stored source -- therefore cannot run for this one number, so the
+   * disagreement is asserted instead, and it fails if the capture is ever
+   * refreshed to agree.
+   */
+  it('grants 139 attack power', () => {
+    expect(BATTLE_SHOUT_ATTACK_POWER).toBe(139);
+  });
+
+  it('is the one magnitude the capture disagrees with', () => {
     expect(spell(25289).description).toContain('by 140');
+    expect(BATTLE_SHOUT_ATTACK_POWER).toBe(139);
   });
 
   it('lasts 3 minutes', () => {
@@ -117,20 +129,37 @@ describe('Battle Shout', () => {
 
 describe('Demoralizing Shout', () => {
   /*
-   * Spell 11556, rank 5: "Reduces the melee attack power of all enemies within
-   * 10 yards by 210 for 45 sec."
+   * Spell 11556, rank 5. 196 attack power for 45 sec.
    *
-   * CLASSIC IS 146 FOR 30 SEC. This is the ability that most justified fetching
-   * Forever's own numbers: borrowing would have been 30% too weak.
+   * THE DESCRIPTION AND THE EFFECT ROW DISAGREE, and the row wins:
+   *
+   *     description   "...by 210 for 45 sec."
+   *     effect row    Apply Aura: Mod Melee Attack Power    -195
+   *
+   * Base points run one higher than the stated figure across this data set --
+   * Slam 88/87, Thunder Clap 104/103, Bloodthirst 49/48 -- so -195 is 196.
+   * The spellbook and the owner's raid buff list both say 196.
+   *
+   * CLASSIC IS 140 FOR 30 SEC. This is the ability that most justified
+   * fetching Forever's own numbers: borrowing would have been 40% too weak.
    */
-  it('removes 210 attack power for 45 seconds', () => {
-    expect(DEMORALIZING_SHOUT_ATTACK_POWER).toBe(210);
+  it('removes 196 attack power for 45 seconds', () => {
+    expect(DEMORALIZING_SHOUT_ATTACK_POWER).toBe(196);
     expect(DEMORALIZING_SHOUT_DURATION_MS).toBe(45_000);
-    expect(spell(11556).description).toContain('by 210 for 45 sec');
+    expect(spell(11556).description).toContain('for 45 sec');
+  });
+
+  it('reads the effect row, not the description', () => {
+    const power = spell(11556).effects.find((e) =>
+      e.type.includes('Mod Melee Attack Power'),
+    );
+    expect(power?.value).toBe(-(DEMORALIZING_SHOUT_ATTACK_POWER - 1));
+    // And the description it contradicts is still there to be seen.
+    expect(spell(11556).description).toContain('by 210');
   });
 
   it('is not the Classic value', () => {
-    expect(DEMORALIZING_SHOUT_ATTACK_POWER).not.toBe(146);
+    expect(DEMORALIZING_SHOUT_ATTACK_POWER).not.toBe(140);
   });
 });
 

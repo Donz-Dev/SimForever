@@ -115,15 +115,19 @@ function critChanceEverywhere(points: number): readonly StatModifierSpec[] {
  * a warrior who casts it and a raid that supplied it cannot stack or disagree
  * -- one refreshes the other.
  *
- * The ruleset owner's raid figure is +139 attack power and the ability
- * spreadsheet says +140. Asked which wins, the owner chose the spreadsheet, so
- * this is 140 and the one-point difference is recorded here rather than
- * silently averaged.
+ * +139, AND IT TOOK THREE ANSWERS TO GET THERE. The owner's raid figure was
+ * 139, the ability spreadsheet said 140, and asked which won the owner chose
+ * the spreadsheet. The client-derived spellbook then agreed with the raid
+ * figure, and the owner asked for the spellbook to be matched -- so it is 139
+ * and the question is closed. `forever-warrior.json` still says 140 and is
+ * now the only source that does.
+ *
+ * Because it is one aura, that one point moved the warrior's own cast too.
  */
 const battleShout: RaidBuff = {
   id: 'battle_shout',
   name: 'Battle Shout',
-  detail: '+140 attack power for 3 minutes',
+  detail: '+139 attack power for 3 minutes',
   source: 'Warrior',
   appliesTo: 'player',
   aura: BATTLE_SHOUT,
@@ -391,10 +395,10 @@ const thunderClapSlow: RaidBuff = {
  * term for the debuff to reduce. The Warrior's own Demoralizing Shout is in
  * the Protection list for the same reason and says so on the results page.
  *
- * Note also that the owner's raid figure here is 196 and the ability
- * spreadsheet says 210. The spreadsheet wins, by the same ruling that settled
- * Battle Shout, so this entry would reuse `DEMORALIZING_SHOUT` rather than
- * declaring a second magnitude.
+ * The owner's raid figure of 196 is now the implemented one. The capture's
+ * description said 210 above an effect row saying -195, which is 196 -- so
+ * this entry would reuse `DEMORALIZING_SHOUT` rather than declaring a second
+ * magnitude, and the two would agree.
  */
 
 /*

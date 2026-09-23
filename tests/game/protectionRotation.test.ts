@@ -231,7 +231,7 @@ describe('Demoralizing Shout', () => {
 
   it('CHANGES NOTHING, and the reason is the target rather than the shout', () => {
     /*
-     * It removes 210 attack power. The boss melee carries
+     * It removes 196 attack power. The boss melee carries
      * `powerCoefficient: 0` -- its swing damage IS the whole swing, with no
      * attack power term at all -- so there is nothing for the debuff to take
      * away, and the entry costs 10 rage and a global cooldown for nothing.
@@ -239,13 +239,13 @@ describe('Demoralizing Shout', () => {
      * In the list at the ruleset owner's request, who has chosen to skip the
      * attack power reduction for now and keep casting it.
      */
-    expect(DEMORALIZING_SHOUT_ATTACK_POWER).toBe(210);
+    expect(DEMORALIZING_SHOUT_ATTACK_POWER).toBe(196);
     expect(bossMeleeWeapon().powerCoefficient).toBe(0);
   });
 
   it('keeps its modifier, so it starts working on its own one day', () => {
     /*
-     * The -210 is NOT stripped out. It is not wrong -- the target simply has
+     * The -196 is NOT stripped out. It is not wrong -- the target simply has
      * nothing for it to bite on -- and removing it would mean remembering to
      * put it back the day a target derives its damage from attack power.
      * Forgetting that is the failure mode this project keeps meeting.

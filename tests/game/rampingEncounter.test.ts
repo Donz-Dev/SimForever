@@ -317,27 +317,42 @@ describe("Crusader's heal, which was unmodelled until there was damage", () => {
      * unmodelled was "Nothing damages the player, so a heal would restore
      * nothing" -- a claim about the engine on the day it was written, and
      * false from the day the target started killing people.
+     *
+     * POOLED OVER TWENTY SEEDS, NOT READ OFF ONE. Crusader procs about 1.4
+     * times in a sixty second fight and is absent from roughly a quarter of
+     * them, so "did it proc" is a coin flip dressed as an assertion. This was
+     * written against seed 41 and passed until Thunder Clap's cooldown moved
+     * the random stream by two seconds, at which point seed 41 became one of
+     * the quiet ones and the test failed without anything being wrong.
+     *
+     * It is the third time a single-seed probabilistic check has broken here.
      */
     expect(CRUSADER_HEAL_MINIMUM).toBe(75);
     expect(CRUSADER_HEAL_MAXIMUM).toBe(125);
     expect(CRUSADER.unmodelled).toEqual([]);
 
     const profile = tank();
-    const timeline = runSimulation(
-      trainingDummyEncounter({
-        ...profile,
-        equipment: {
-          ...profile.equipment,
-          mainHand: { itemId: 228265, enchantId: 20034 },
-        },
-        simulation: { ...profile.simulation, seed: 41 },
-      } as never),
-    ).timeline;
+    let procs = 0;
+    const crusader: Extract<TelemetryEvent, { type: 'heal' }>[] = [];
 
-    const crusader = timeline.filter(
-      (event): event is Extract<TelemetryEvent, { type: 'heal' }> =>
-        event.type === 'heal' && event.abilityId === 'crusader',
-    );
+    for (let seed = 1; seed <= 20; seed += 1) {
+      const timeline = runSimulation(
+        trainingDummyEncounter({
+          ...profile,
+          equipment: {
+            ...profile.equipment,
+            mainHand: { itemId: 228265, enchantId: 20034 },
+          },
+          simulation: { ...profile.simulation, seed },
+        } as never),
+      ).timeline;
+
+      for (const event of timeline) {
+        if (event.type === 'heal' && event.abilityId === 'crusader') crusader.push(event);
+        if (event.type === 'aura_applied' && event.auraId === 'holy_strength_mainHand') procs += 1;
+      }
+    }
+
     expect(crusader.length).toBeGreaterThan(0);
 
     for (const heal of crusader) {
@@ -347,10 +362,7 @@ describe("Crusader's heal, which was unmodelled until there was damage", () => {
     }
 
     // One heal per proc, and a proc is what applies Holy Strength.
-    const procs = timeline.filter(
-      (event) => event.type === 'aura_applied' && event.auraId === 'holy_strength_mainHand',
-    );
-    expect(crusader.length).toBeGreaterThanOrEqual(procs.length);
+    expect(crusader.length).toBeGreaterThanOrEqual(procs);
   });
 });
 

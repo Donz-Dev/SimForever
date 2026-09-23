@@ -24,9 +24,16 @@ import { RATING_PER_PERCENT, dealDamage, flat, seconds } from '../../engine';
  * against the stored text so a transcription typo fails.
  *
  * THESE ARE NOT CLASSIC VALUES, and the difference is not cosmetic: Forever's
- * Demoralizing Shout removes 210 attack power for 45 seconds where Classic
- * removes 146 for 30. The standing decision to borrow from Classic was never
- * exercised, and would have been 30% wrong on that ability alone.
+ * Demoralizing Shout removes 196 attack power for 45 seconds where Classic
+ * removes 140 for 30. The standing decision to borrow from Classic was never
+ * exercised, and would have been 40% wrong on that ability alone.
+ *
+ * READ THE EFFECT ROWS, NOT ONLY THE DESCRIPTION. Several of these tooltips
+ * render Forever's "(100% of Spell Power)" artifact in place of the number,
+ * and Demoralizing Shout's states a figure its own effect row contradicts.
+ * The rows are authoritative, allowing for base points running one higher
+ * than the stated value. `foreverchanges.pro/spellbook/warrior` renders the
+ * same client data without the artifact and is the quickest cross-check.
  *
  * WHAT IS STILL PLACEHOLDER, and why each one is:
  *
@@ -134,10 +141,31 @@ export const SUNDER_ARMOR: AuraDefinition = {
 
 /**
  * Spell 25289, rank 7: "increasing the melee attack power of all party members
- * within 20 yards by 140. Lasts 3 min."
+ * within 20 yards by 139. Lasts 3 min."
  *
  * The rank matters: rank 1 grants 12. The simulator runs at level 60 only, so
  * rank 7 is the only one that can apply.
+ *
+ * ----------------------------------------------------------------------------
+ * 139, NOT 140, AND THIS IS THE ONE CHANGE HERE THAT OUR OWN CAPTURE DISPUTES.
+ *
+ *   - The ruleset owner's raid buff list     139
+ *   - The spellbook, beta client             139
+ *   - `forever-warrior.json`, spell 25289    140, in BOTH the description and
+ *                                            the effect row
+ *
+ * The capture is self-consistent, so this is not the base-points artifact that
+ * explains Revenge, Shield Slam and Bloodthirst -- everywhere else an effect
+ * row runs one higher than the stated figure, and here the two agree on 140.
+ *
+ * It was asked and answered once already, the other way: given 139 against
+ * 140, the owner chose the spreadsheet. It is 139 now because they asked for
+ * the spellbook to be matched, and because the owner's own raid figure was
+ * 139 to begin with -- two sources the owner supplied against one scrape.
+ *
+ * ONE ATTACK POWER, which is 0.07 of a point of damage per swing. The reason
+ * to record it at all is that the next such gap might not be one.
+ * ----------------------------------------------------------------------------
  *
  * The 20 yard radius and the party are both dropped -- the engine simulates one
  * character, so a party-wide buff is a self-buff here. That understates Battle
@@ -147,7 +175,7 @@ export const SUNDER_ARMOR: AuraDefinition = {
  * The duration was PLACEHOLDER 120s and is really 180s. At three minutes it
  * outlasts most fights, so it is cast once and never refreshed.
  */
-export const BATTLE_SHOUT_ATTACK_POWER = 140;
+export const BATTLE_SHOUT_ATTACK_POWER = 139;
 export const BATTLE_SHOUT_DURATION_MS = seconds(180);
 
 export const BATTLE_SHOUT: AuraDefinition = {
@@ -158,17 +186,34 @@ export const BATTLE_SHOUT: AuraDefinition = {
 };
 
 /**
- * Spell 11556, rank 5: "Reduces the melee attack power of all enemies within 10
- * yards by 210 for 45 sec."
+ * Spell 11556, rank 5: reduces the melee attack power of all enemies within 10
+ * yards by 196 for 45 sec.
  *
- * CLASSIC SAYS 146 FOR 30 SECONDS. This is the ability that most justifies
+ * CLASSIC SAYS 140 FOR 30 SECONDS. This is the ability that most justifies
  * having fetched Forever's own numbers rather than borrowing: the standing
- * decision would have made it 30% too weak and a third too short.
+ * decision would have made it a quarter too weak and a third too short.
+ *
+ * ----------------------------------------------------------------------------
+ * 196, AND THE CAPTURE SAID SO IN THE PLACE WE DID NOT LOOK.
+ *
+ *     description      "...by 210 for 45 sec."
+ *     effect row       Apply Aura: Mod Melee Attack Power     -195
+ *
+ * Base points run one higher than the stated figure throughout this data set,
+ * so -195 IS 196, and the capture disagrees with itself by fourteen. The
+ * description was transcribed and the effect row was not.
+ *
+ * Both the ruleset owner's raid buff list and the spellbook say 196, which is
+ * the effect row and not the description. The same disagreement resolved the
+ * same way for Revenge and Shield Slam, where the description was unreadable
+ * rather than merely wrong -- here it was readable AND wrong, which is worse,
+ * because nothing prompted anyone to check the row beneath it.
+ * ----------------------------------------------------------------------------
  *
  * Only useful when the target attacks back, since it lowers the TARGET's damage
  * and changes nothing a standing dummy does.
  */
-export const DEMORALIZING_SHOUT_ATTACK_POWER = 210;
+export const DEMORALIZING_SHOUT_ATTACK_POWER = 196;
 export const DEMORALIZING_SHOUT_DURATION_MS = seconds(45);
 
 export const DEMORALIZING_SHOUT: AuraDefinition = {
