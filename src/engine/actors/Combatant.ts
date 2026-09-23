@@ -115,10 +115,23 @@ export interface WeaponProfile {
  */
 export interface ResourceGeneration {
   readonly resource: ResourceType;
-  /** Granted once per event, regardless of damage. */
+  /** Granted once per event, regardless of how much damage there was. */
   readonly flat?: number;
   /** Multiplied by the damage involved. */
   readonly perDamage?: number;
+  /**
+   * Whether a `flat` award needs the event to have dealt damage at all.
+   *
+   * A `perDamage` award is self-limiting -- no damage, nothing granted -- but a
+   * flat one is not, and a swing that MISSED is still an event. Forever's rage
+   * is a flat amount per swing and is still rage from damage DEALT, so it needs
+   * both halves: the size of the award does not depend on the damage, and its
+   * existence does.
+   *
+   * Left off by default, because a ruleset that genuinely pays per swing
+   * regardless of outcome is a reasonable thing to want.
+   */
+  readonly requiresDamage?: boolean;
 }
 
 export interface CombatantOptions {

@@ -1,7 +1,7 @@
 import type { AutoAttackMode, WeaponProfile, WeaponSlot } from '../../engine';
 import type { CombatStyleId } from '../character';
 import { getCombatStyle } from '../character';
-import { RAGE_FROM_AUTO_ATTACK } from '../combat/resourceRules';
+import { RAGE_FROM_BEAR_PAW, rageFromSwing } from '../combat/resourceRules';
 import { attackPowerCoefficientFor } from '../combat/weaponDamage';
 
 /*
@@ -38,7 +38,17 @@ import { attackPowerCoefficientFor } from '../combat/weaponDamage';
  */
 export const MAX_WEAPON_SKILL_AT_60 = 300;
 
-const RAGE_ON_HIT = RAGE_FROM_AUTO_ATTACK;
+/*
+ * Rage is per swing now, from handedness and BASE speed, so these placeholders
+ * cannot share one constant any more: a two-hander earns half again what a
+ * one-hander does. Each profile below derives its own from its own speed.
+ *
+ * `swingTimerMs` IS the base speed for a placeholder -- nothing has hasted it
+ * at the point of definition -- which is the one place the two are safely the
+ * same number.
+ */
+const RAGE_ON_HIT_ONE_HAND = rageFromSwing(2.6, false);
+const RAGE_ON_HIT_TWO_HAND = rageFromSwing(3.4, true);
 
 /**
  * How much of its damage a dual-wield off-hand deals.
@@ -69,7 +79,7 @@ export const PLACEHOLDER_ONE_HAND: WeaponProfile = {
   powerCoefficient: attackPowerCoefficientFor(2600),
   school: 'physical',
   skill: MAX_WEAPON_SKILL_AT_60,
-  generates: RAGE_ON_HIT,
+  generates: RAGE_ON_HIT_ONE_HAND,
 };
 
 export const PLACEHOLDER_TWO_HANDER: WeaponProfile = {
@@ -79,8 +89,10 @@ export const PLACEHOLDER_TWO_HANDER: WeaponProfile = {
   swingTimerMs: 3400,
   baseDamage: 140,
   // Re-derived: the coefficient follows the speed, so it cannot be left behind
-  // by a spread from a faster weapon.
+  // by a spread from a faster weapon. The rage award follows it too, and for
+  // the same reason -- both are functions of the speed being overridden above.
   powerCoefficient: attackPowerCoefficientFor(3400),
+  generates: RAGE_ON_HIT_TWO_HAND,
 };
 
 export const PLACEHOLDER_RANGED: WeaponProfile = {
@@ -125,8 +137,9 @@ export const BEAR_PAW: WeaponProfile = {
   damageVariance: 0.15,
   powerCoefficient: attackPowerCoefficientFor(2500),
   school: 'physical',
-  // Bears build rage by attacking, as warriors do.
-  generates: RAGE_ON_HIT,
+  // Bears build rage by attacking, as warriors do -- at the one-hand constant
+  // and a stated 2.5 second speed, which is what `RAGE_FROM_BEAR_PAW` holds.
+  generates: RAGE_FROM_BEAR_PAW,
 };
 
 export const CAT_PAW: WeaponProfile = {

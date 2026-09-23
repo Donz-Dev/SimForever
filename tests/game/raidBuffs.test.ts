@@ -329,11 +329,18 @@ describe('the Warrior keeps Thunder Clap up', () => {
      * renews it every cast: measured at 8.93 casts and 74.7% uptime.
      *
      * NOT HIGHER, and the gap is worth knowing about rather than asserting
-     * away. Thunder Clap is twelfth in the tank list, below the stance, Battle
-     * Shout, five Sunder Armors, Demoralizing Shout, Heroic Strike, Shield
-     * Block, Shield Slam and Revenge -- so the FIRST cast lands at about 16.9
-     * seconds and the slow is simply absent before then. It was a damage
-     * ability when that order was chosen, and it is a mitigation one now.
+     * away. Thunder Clap is near the BOTTOM of the tank list, below the
+     * stance, Battle Shout, five Sunder Armors, Demoralizing Shout, Heroic
+     * Strike, Shield Block, Shield Slam and Revenge -- so the first cast lands
+     * late and the slow is simply absent before then. It was a damage ability
+     * when that order was chosen, and it is a mitigation one now.
+     *
+     * IT FELL FROM 74.7% TO ABOUT 67% WHEN THE RAGE FORMULA CHANGED, which is
+     * the opposite of what more rage sounds like it should do. The list is no
+     * longer rage-limited; it is GLOBAL-COOLDOWN limited. Every entry above
+     * Thunder Clap can now afford to fire whenever it is ready, so the
+     * cooldowns it used to slip between are gone. Rage stopped being the
+     * scarce thing and the order of the list started mattering more.
      */
     const profile = {
       ...(fury([], 200) as unknown as Record<string, unknown>),
@@ -352,8 +359,9 @@ describe('the Warrior keeps Thunder Clap up', () => {
     // Renewed on every cast, so applications track casts one for one.
     expect(slow?.applications ?? 0).toBeGreaterThan(5);
     // Better than the raid's one-shot 50%, and short of the 100% a list that
-    // reached it sooner would give.
-    expect(slow?.uptime ?? 0).toBeGreaterThan(0.7);
+    // reached it sooner would give. The band is wide because where it lands
+    // inside it is a property of the list's ORDER, which is the owner's.
+    expect(slow?.uptime ?? 0).toBeGreaterThan(0.6);
     expect(slow?.uptime ?? 0).toBeLessThan(0.9);
   });
 

@@ -109,10 +109,20 @@ describe('Dual Wield Specialization', () => {
   });
 
   it('doubles off-hand rage generation at 5/5', () => {
-    const plain = offHand(0).weapons.offHand?.generates?.perDamage ?? 0;
-    const talented = offHand(5).weapons.offHand?.generates?.perDamage ?? 0;
+    /*
+     * READS `flat`, NOT `perDamage`. Forever's rage from damage dealt is a
+     * flat `R x S` per swing rather than a rate on the damage, so the talent's
+     * multiplier lands on the other field. The multiplier itself is unchanged
+     * and so is what the talent is worth -- twice the off hand's rage -- which
+     * is why this assertion reads the same.
+     */
+    const plain = offHand(0).weapons.offHand?.generates?.flat ?? 0;
+    const talented = offHand(5).weapons.offHand?.generates?.flat ?? 0;
     expect(plain).toBeGreaterThan(0);
     expect(talented).toBeCloseTo(plain * 2, 10);
+
+    // And nothing scales with damage on either.
+    expect(offHand(5).weapons.offHand?.generates?.perDamage).toBeUndefined();
   });
 
   it('gives ten points of hit to the off hand and NONE to the main hand', () => {

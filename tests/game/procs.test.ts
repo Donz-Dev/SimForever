@@ -340,9 +340,21 @@ describe('an extra attack does not fork the swing timer', () => {
       procced += mainHandSwings(withTrinket, seed);
     }
 
-    // A 2.6 second weapon over 300 seconds is about 115 swings.
+    /*
+     * A 2.6 second weapon over 300 seconds is about 115 swings IF NOTHING
+     * INTERRUPTS IT -- and something does. A cast resets the swing timer, so
+     * the real count is the ceiling minus whatever the rotation spent.
+     *
+     * IT DROPPED TO ABOUT 98 WHEN THE RAGE FORMULA CHANGED, and that is the
+     * mechanism working rather than failing: Forever pays a flat `R x S` per
+     * swing, which roughly doubles a dual-wielder's income, so the character
+     * casts far more and loses more swings to doing it.
+     *
+     * The band is the SHAPE of the thing -- a swing timer's worth of swings,
+     * not two -- and the assertion that matters is the fork check below.
+     */
     const perFight = plain / 10;
-    expect(perFight).toBeGreaterThan(100);
+    expect(perFight).toBeGreaterThan(85);
     expect(perFight).toBeLessThan(125);
 
     // Hand of Justice adds a few, never a multiple. Anything past a tenth more

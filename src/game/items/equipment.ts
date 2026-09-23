@@ -2,7 +2,7 @@ import type { PartialStats, WeaponProfile, WeaponSlot, WeaponType } from '../../
 import type { CombatStyleId } from '../character';
 import { getCombatStyle } from '../character';
 import { attackPowerCoefficientFor } from '../combat/weaponDamage';
-import { RAGE_FROM_AUTO_ATTACK } from '../combat/resourceRules';
+import { rageFromSwing } from '../combat/resourceRules';
 import { OFF_HAND_DAMAGE_MULTIPLIER } from '../actors/weapons';
 import type { Equipment, EquipmentSlot, Item, UnmodelledEffect } from './Item';
 import { weaponSlotFor } from './Item';
@@ -241,8 +241,15 @@ function toWeaponProfile(
     ...(slot === 'offHand'
       ? { damageMultiplier: offHandDamageMultiplier ?? OFF_HAND_DAMAGE_MULTIPLIER }
       : {}),
-    // Only melee weapons build rage. A bow never does.
-    ...(slot === 'ranged' ? {} : { generates: RAGE_FROM_AUTO_ATTACK }),
+    /*
+     * Only melee weapons build rage. A bow never does.
+     *
+     * `weapon.speed` is the ITEM's base speed, which is exactly the S in
+     * Forever's `rage = R x S` -- not `swingTimerMs`, which is the same number
+     * until haste shortens it. Handing over the hasted timer would make haste
+     * generate rage, which this formula specifically stopped doing.
+     */
+    ...(slot === 'ranged' ? {} : { generates: rageFromSwing(weapon.speed, twoHanded) }),
   };
 }
 

@@ -30,7 +30,7 @@ import {
 } from '../character';
 import { MAX_CHARACTER_LEVEL } from '../character';
 import { fixedMaximumFor, globalCooldownFor } from '../character';
-import { RAGE_FROM_DAMAGE_TAKEN, regenerationFor } from '../combat/resourceRules';
+import { rageFromDamageTaken, regenerationFor } from '../combat/resourceRules';
 import { reactionsForClass } from '../reactions/reactionsForClass';
 import { rotationFor } from '../rotations/rotationFor';
 import type { Equipment } from '../items/Item';
@@ -290,6 +290,13 @@ export function createPlayer(options: PlayerOptions): Combatant {
     conversions,
   );
 
+  /*
+   * Named once, because two things read it and they must not disagree: the
+   * health pool, and the rage a point of damage taken is worth under Forever's
+   * `D x 10 / H`.
+   */
+  const maximumHealth = baseHitPointsFor(race, characterClass, style) + derived.hitPoints;
+
   const resources = resourceSpecsFor(
     characterClass,
     baseManaFor(race, characterClass) + derived.mana,
@@ -307,15 +314,22 @@ export function createPlayer(options: PlayerOptions): Combatant {
     kind: 'player',
     faction: 'friendly',
     level: MAX_CHARACTER_LEVEL,
-    maxHealth: baseHitPointsFor(race, characterClass, style) + derived.hitPoints,
+    maxHealth: maximumHealth,
     stats: startingStats,
     statDerivation: statDerivationFor(characterClass, style),
     resources,
     regeneration: regenerationFor(resources.map((spec) => spec.type)),
-    // Only classes with a rage pool build rage from being hit; for everyone
-    // else `grantResource` finds no pool and ignores it.
+    /*
+     * Only classes with a rage pool build rage from being hit; for everyone
+     * else `grantResource` finds no pool and ignores it.
+     *
+     * IT READS MAXIMUM HEALTH NOW, because Forever's rule is `D x 10 / H`. The
+     * same number the pool itself is sized from, taken once here -- so a raid
+     * that buffed stamina raises the health AND lowers the rage each point of
+     * damage is worth, consistently, rather than one of the two.
+     */
     resourceOnDamageTaken: resources.some((spec) => spec.type === 'rage')
-      ? RAGE_FROM_DAMAGE_TAKEN
+      ? rageFromDamageTaken(maximumHealth)
       : undefined,
     abilities,
     // Per-ability crit and damage scaling, from talents today and from gear or

@@ -18,27 +18,153 @@ rage.maximum;   // 100
 | Cap | 100, raisable by talents |
 | Regenerates on a timer | **no** |
 
-Rage is earned by fighting, never granted by the clock:
+Rage is earned by fighting, never granted by the clock.
+
+### Dealing damage
+
+```
+rage gained = R x S
+
+  R   3.46 for one-handed weapons and for druid (Bear) paw attacks
+      4.5  for two-handed weapons
+  S   the BASE speed of the weapon, before any modifier
+```
+
+`S` is the item's own speed — 2.5 for a bear's paws, which are not an item.
+
+**It does not depend on the damage at all.** A swing is worth the same rage
+whether it crits for eight hundred or glances for ninety. What it depends on is
+how long the character waited for it.
+
+**Which makes it a rate, for swings the timer produces.** `R × S` rage every
+`S` seconds is `R` rage per second, so the speed cancels and the handedness
+constant is the *floor*:
+
+| | Rage per second, unaided |
+| --- | --- |
+| Two-handed | **4.5** |
+| One-handed | **3.46** |
+| Dual-wield | **6.92** — 3.46 per hand, each on its own timer |
+| Bear | **3.46** |
+
+- **A fast weapon is no longer better for rage.** Speed is exactly cancelled.
+- **Haste does not raise it.** "Base speed before any modifiers" is the item's
+  number, so a hasted warrior swings more often for proportionally less each
+  time. Under the old rule haste raised damage and damage *was* rage.
+- **Rage income no longer scales with gear or buffs.** It is the same 4.5 a
+  second in a full raid as it is naked. This is the single largest behavioural
+  change: see [the measurements below](#what-the-change-was-worth).
+
+### Extra attacks break the cancellation, and that is the interesting part
+
+An extra attack from Windfury, Hand of Justice or Weaponmaster pays a **full
+`R × S`** for a swing that consumed no time at all. The speed only cancels
+against the swing *timer*; a proc has no timer to cancel against.
+
+**So a slow weapon is worth more per proc, not less.** The 2H Arms preset
+carries a 3.6 second two-hander:
+
+```
+4.5 x 3.6 = 16.2 rage per swing, procced or not
+```
+
+against a dual-wielder's `3.46 × 2.6 = 9.0`. Measured, that preset draws
+**370 rage a minute from main-hand swings — 6.2 a second against a 4.5 floor**,
+because roughly six of its twenty-three swings a fight are procs.
+
+This is the one place the new rule rewards a gear choice, and it does it
+backwards from the old one: slow weapons used to be good for rage because they
+hit hard, and are now good for rage because each proc is worth a whole slow
+swing.
+
+**A miss still earns nothing.** The rule is rage from damage *dealt*, so the
+award is flat but conditional — `ResourceGeneration.requiresDamage` is what
+expresses that. Without it a flat award would pay out on a swing that never
+landed.
+
+**Only auto-attacks generate rage from damage dealt.** Ability damage grants
+none unless an ability says otherwise.
+
+### Taking damage
+
+```
+rage gained = D x 10 / H
+
+  D   pre-armor damage to be dealt
+  H   maximum hit points
+```
+
+**Taking your entire health bar is worth ten rage.** A tenth of it is worth
+one. The figure is easy to misread: ten sounds small until you notice that a
+ramping boss deals a tank many times their health over a fight, which is why
+damage taken is still most of a tank's income.
+
+**It is a fraction of the character rather than a fixed rate.** The old rule
+paid the same rage for the same damage however large the character was, so
+stamina quietly cost rage. This one does not.
+
+**A blocked hit gives the rage of the unblocked amount.** So `D` is
+`resolution.raw` *minus the block* — and armor, block and Defensive Stance all
+behave differently:
+
+| | Reduces the rage? | |
+| --- | :-: | --- |
+| Defensive Stance's −10% | **yes** | it reduces the damage to be dealt, before any of this |
+| Armor | **no** | that is what "pre-armor" means |
+| A block | **yes** | by its flat block value |
+
+**Armor and a block are one step in this engine**, so they had to be told
+apart: `DamageResolution` carries `blocked` beside `mitigated`, which is their
+sum. Reading `mitigated` would take armor off too and leave a tank earning a
+fraction of what it should.
+
+**Which makes block value worth less to a tank than it looks.** A block removes
+damage *and* the rage that damage would have paid, so it trades throughput for
+survival rather than being free mitigation.
+
+### The old formulas
+
+Kept, commented out, in `game/combat/resourceRules.ts`, in case Forever changes
+back:
 
 ```
 rage from dealing damage = damage / 230.6 * 7.5
 rage from taking damage  = damage / 230.6 * 2.5
 ```
 
-`RAGE_CONVERSION_FACTOR` is 230.6 at level 60. It scales with level in the real
-game, which is why it is named rather than folded into the coefficients.
+Both sides were proportional to damage, scaled by a level-dependent constant.
 
-**Only auto-attacks generate rage from damage dealt.** Ability damage grants
-none unless an ability says otherwise, which the source describes as rare.
+### What the change was worth
 
-Generation is purely proportional with **no flat component**, so a missed or
-dodged swing generates nothing at all. That is what makes a high-miss build
-rage-starved as well as low-damage, and it is why the dual-wield miss penalty
-hurts twice over.
+Measured on identical seeds, 500 iterations for the presets and 400 fights a
+row for the baselines.
 
-Rage is **stored as a decimal** and displayed as an integer. Damage divided by
-230.6 essentially never lands on a whole number, and truncating on every gain
-would leak a fraction of a point per swing.
+**Raid-buffed presets all fell**, because their rage no longer scales with the
+damage the raid buffs let them deal:
+
+| Preset | Before | After | Rage a fight |
+| --- | --- | --- | --- |
+| 2H Arms | 619.3 | **583.1** | 546 → 459 |
+| DW Fury | 689.2 | **641.7** | 784 → 666 |
+| Prot Warr | 375.5 | **356.8** | 779 → 704 |
+
+**Unbuffed baselines all rose**, for the same reason read the other way — a
+character dealing little damage used to earn little rage and now earns the same
+flat income as anyone else:
+
+| Build | Before | After |
+| --- | --- | --- |
+| Dual-wield / Berserker | 163.71 | **189.44** |
+| Two-hander / Battle | 162.44 | **183.66** |
+| Dual-wield, 31-pt Arms | 185.84 | **213.43** |
+| 1H & Shield, 31-pt Protection | 66.40 | **72.77** |
+| Prot, target swings back | 151.49 | **151.12** |
+
+The tank barely moves when the target attacks back, because most of its income
+is damage taken and that side stayed proportional.
+
+Rage is **stored as a decimal** and displayed as an integer, so a fraction of a
+point is never lost to truncation on the way in.
 
 ## Energy
 

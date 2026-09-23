@@ -173,6 +173,27 @@ point of `revivesOnDeath` — dropping the lot would switch off the assumed
 healer at the moment it is needed most. Which effects survive dying is a
 property of the effect, so the flag is on the aura and not on the character.
 
+**RAGE IS A FLAT RATE PER SWING, NOT A SHARE OF THE DAMAGE.** Forever's rule is
+`rage = R x S`, R being 3.46 for a one-hander or a bear's paws and 4.5 for a
+two-hander, S the weapon's BASE speed before any modifier. `R x S` every `S`
+seconds is `R` per second, so the speed cancels: a two-hander earns 4.5 a
+second and a dual-wielder 6.92, and haste raises neither. EXTRA ATTACKS BREAK
+THAT CANCELLATION -- a Windfury or Hand of Justice proc pays a full `R x S` for
+a swing that cost no time, so a slow two-hander earns 16.2 a proc against a
+dual-wielder's 9.0, and the 2H Arms preset runs at 6.2 rage a second against a
+4.5 floor. **Rage income no
+longer scales with gear, buffs or damage**, which moved every measured figure
+in this project in both directions at once -- unbuffed builds gained, the
+raid-buffed presets lost. A miss still earns nothing, because it is rage from
+damage DEALT, and that is `ResourceGeneration.requiresDamage` rather than a
+consequence of the arithmetic. Taking damage is `D x 10 / H` off the PRE-ARMOR
+figure MINUS THE BLOCK: Defensive Stance reduces the rage earned, armor does
+not, and a block does -- "blocked hits give the rage of the unblocked amount".
+Armor and a block are one pipeline step, so `DamageResolution` carries
+`blocked` separately to tell them apart. The old
+damage-proportional formulas are commented out rather than deleted, on the
+owner's instruction. Full rules in [docs/resources.md](docs/resources.md).
+
 **A ROTATION WILL CHANGE STANCE TO REACH AN ABILITY, and that is not always
 wanted.** `PriorityRotation` treats a wrong stance as "not yet, and here is
 how" -- which is why Revenge, Whirlwind and Recklessness are reachable at all.

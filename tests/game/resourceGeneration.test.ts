@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { seconds } from '../../src/engine';
+import type { AttackResolution } from '../../src/engine';
+import { resolveDamage, seconds } from '../../src/engine';
 import { TelemetryRecorder } from '../../src/engine/logging';
 import { createPlayer } from '../../src/game/actors/createPlayer';
 import {
@@ -8,13 +9,15 @@ import {
   MANA_REGEN_LOCKOUT_MS,
   MANA_TICK_FRACTION,
   MANA_TICK_INTERVAL_MS,
-  RAGE_CONVERSION_FACTOR,
-  RAGE_PER_DAMAGE_DEALT,
-  RAGE_PER_DAMAGE_TAKEN,
+  RAGE_PER_MAXIMUM_HEALTH_TAKEN,
+  RAGE_PER_SECOND_ONE_HAND,
+  RAGE_PER_SECOND_TWO_HAND,
   manaPerTick,
+  rageFromDamageTaken,
+  rageFromSwing,
 } from '../../src/game/combat/resourceRules';
 import { buildSimulation } from '../helpers/buildSimulation';
-import { makeTarget } from '../helpers/actors';
+import { makeAttacker, makeTarget } from '../helpers/actors';
 
 const warrior = () =>
   createPlayer({ race: 'orc', characterClass: 'warrior', combatStyle: 'two_hander' });
@@ -63,65 +66,124 @@ describe('starting values', () => {
 });
 
 describe('rage', () => {
-  it('uses the stated conversion factor', () => {
-    expect(RAGE_CONVERSION_FACTOR).toBe(230.6);
-    expect(RAGE_PER_DAMAGE_DEALT).toBeCloseTo(7.5 / 230.6, 10);
-    expect(RAGE_PER_DAMAGE_TAKEN).toBeCloseTo(2.5 / 230.6, 10);
+  /*
+   * --------------------------------------------------------------------------
+   * FOREVER'S FORMULAS, written out by hand from the ruleset owner's words:
+   *
+   *     dealing   rage = R x S     R = 3.46 one-hand, 4.5 two-hand
+   *                                S = base weapon speed, before modifiers
+   *     taking    rage = D x 10 / H   D = pre-armor damage, H = max health
+   *
+   * The old pair -- damage / 230.6 x 7.5 and x 2.5 -- are commented out in
+   * `resourceRules.ts` rather than deleted, in case Forever changes back.
+   * --------------------------------------------------------------------------
+   */
+  it('pays a flat amount per swing, from handedness and BASE speed', () => {
+    expect(RAGE_PER_SECOND_ONE_HAND).toBe(3.46);
+    expect(RAGE_PER_SECOND_TWO_HAND).toBe(4.5);
+
+    // A 2.6 second one-hander and a 3.4 second two-hander, by hand.
+    expect(rageFromSwing(2.6, false).flat).toBeCloseTo(8.996, 10);
+    expect(rageFromSwing(3.4, true).flat).toBeCloseTo(15.3, 10);
+
+    // Nothing about it scales with the damage the swing did.
+    expect(rageFromSwing(2.6, false).perDamage).toBeUndefined();
   });
 
-  it('is worth three times as much to deal damage as to take it', () => {
-    expect(RAGE_PER_DAMAGE_DEALT / RAGE_PER_DAMAGE_TAKEN).toBeCloseTo(3, 10);
+  it('earns nothing from a swing that missed', () => {
+    /*
+     * The rule is rage from damage DEALT. A flat award would otherwise pay out
+     * on a miss, which is the one way a flat-per-swing rule differs from the
+     * proportional one it replaced -- and the behaviour that makes a high-miss
+     * build rage-starved as well as low-damage.
+     */
+    expect(rageFromSwing(2.6, false).requiresDamage).toBe(true);
   });
 
-  it('generates in proportion to auto-attack damage only', () => {
+  it('is a RATE: speed cancels, so a fast weapon earns no more', () => {
+    /*
+     * R x S rage every S seconds is R rage per second whatever S is. Worth
+     * asserting because it is the least obvious consequence of the change and
+     * the one most likely to be "corrected" by someone who expects a fast
+     * weapon to build rage faster.
+     */
+    for (const speed of [1.5, 2.6, 3.8]) {
+      const perSwing = rageFromSwing(speed, false).flat!;
+      expect(perSwing / speed).toBeCloseTo(RAGE_PER_SECOND_ONE_HAND, 10);
+    }
+  });
+
+  it('pays TEN rage for a whole health bar taken, whatever the character', () => {
+    /*
+     * `D x 10 / H`, so D = H gives exactly 10 -- taking your entire maximum
+     * health, in one blow or over a fight, is worth ten rage. A tenth of it is
+     * worth one.
+     *
+     * THE SCALE IS EASY TO MISREAD, which is why it is asserted at both ends:
+     * ten sounds like a lot until you notice what has to happen to earn it.
+     * A tank still earns hundreds over a fight, because a ramping boss deals
+     * many times their health bar.
+     *
+     * The same fraction whatever the character, which is the real change: the
+     * old rule paid per point of damage, so stamina quietly cost rage.
+     */
+    expect(RAGE_PER_MAXIMUM_HEALTH_TAKEN).toBe(10);
+
+    for (const maxHealth of [3000, 5106, 20_000]) {
+      const perDamage = rageFromDamageTaken(maxHealth)!.perDamage!;
+      expect(perDamage * maxHealth).toBeCloseTo(10, 10);
+      expect(perDamage * (maxHealth / 10)).toBeCloseTo(1, 10);
+    }
+
+    // A character with no health pool has no rule to apply.
+    expect(rageFromDamageTaken(0)).toBeUndefined();
+  });
+
+  it('pays the same rage per swing however hard the swing hit', () => {
+    /*
+     * --------------------------------------------------------------------------
+     * THIS TEST USED TO ASSERT THE OPPOSITE, and it was the clearest statement
+     * of the old rule: total rage offered equalled total auto-attack damage
+     * times a constant.
+     *
+     * Forever's rule has no damage term at all. What is checked instead is
+     * that every main-hand award is the SAME number -- the weapon's `R x S` --
+     * and that the swings it came from varied in damage, so the constancy is a
+     * real property rather than an artifact of every swing hitting alike.
+     * --------------------------------------------------------------------------
+     */
     const player = warrior();
     const target = makeTarget({ maxHealth: 10_000_000 });
     const sim = buildSimulation([player, target], { durationMs: seconds(60), seed: 5 });
 
     sim.advanceTo(seconds(30));
 
-    // Only auto-attacks generate rage. Strike, Heroic Blow and Rending Wound
-    // all deal damage and grant nothing.
-    const autoNames = new Set(['Main Hand Auto-Attack', 'Off Hand Auto-Attack']);
-    const autoDamage = sim.recordedTelemetry.reduce(
-      (sum, event) =>
-        event.type === 'damage' && event.sourceId === player.id && autoNames.has(event.abilityName)
-          ? sum + event.amount
-          : sum,
-      0,
-    );
-
-    /*
-     * Everything the pool was offered, including what the cap threw away --
-     * EXCEPT Charge, which is a flat grant rather than a conversion.
-     *
-     * Charge opens the two-hander list and hands over a stated 15 rage for no
-     * damage at all. It is not an exception to the rule under test; it is a
-     * different mechanism, and folding it in would make this assertion read as
-     * "damage converts to rage, plus fifteen".
-     *
-     * Excluded by SOURCE rather than by subtracting 15, so the test keeps
-     * failing if Charge's rage ever starts scaling with something.
-     */
-    const offered = sim.recordedTelemetry.reduce(
-      (sum, event) =>
+    const awards = sim.recordedTelemetry.filter(
+      (event) =>
         event.type === 'resource_gained' &&
         event.resource === 'rage' &&
-        event.source !== 'charge'
-          ? sum + event.amount + event.wasted
-          : sum,
-      0,
+        event.source === 'auto_attack_main_hand',
     );
+    expect(awards.length).toBeGreaterThan(3);
 
-    // And it really did fire, so the exclusion above is not silently empty.
-    expect(
-      sim.recordedTelemetry.some(
-        (event) => event.type === 'resource_gained' && event.source === 'charge',
-      ),
-    ).toBe(true);
+    // The placeholder two-hander is 3.4 seconds: 4.5 x 3.4 = 15.3.
+    const expected = rageFromSwing(3.4, true).flat!;
+    for (const award of awards) {
+      if (award.type !== 'resource_gained') continue;
+      expect(award.amount + award.wasted).toBeCloseTo(expected, 6);
+    }
 
-    expect(autoDamage).toBeGreaterThan(0);
-    expect(offered).toBeCloseTo(autoDamage * RAGE_PER_DAMAGE_DEALT, 4);
+    // And the swings really did differ in damage, so the above means something.
+    const autoDamage = sim.recordedTelemetry
+      .filter(
+        (event) =>
+          event.type === 'damage' &&
+          event.sourceId === player.id &&
+          event.abilityName === 'Main Hand Auto-Attack' &&
+          event.amount > 0,
+      )
+      .map((event) => (event.type === 'damage' ? event.amount : 0));
+    expect(new Set(autoDamage).size).toBeGreaterThan(1);
   });
 
   it('balances as a ledger: gained minus spent is what is left', () => {
@@ -240,12 +302,18 @@ describe('rage', () => {
     expect(warrior().regeneration.map((regen) => regen.resource)).not.toContain('rage');
   });
 
-  it('is generated by taking damage', () => {
+  it('is generated by taking damage, at a rate set by THIS character health', () => {
+    /*
+     * Built per character now, because H is that character's maximum health.
+     * Two warriors of different size earn different rage from the same blow,
+     * and the same FRACTION of their health bar from it.
+     */
     const player = warrior();
-    expect(player.resourceOnDamageTaken).toMatchObject({
-      resource: 'rage',
-      perDamage: RAGE_PER_DAMAGE_TAKEN,
-    });
+    expect(player.resourceOnDamageTaken?.resource).toBe('rage');
+    expect(player.resourceOnDamageTaken?.perDamage).toBeCloseTo(
+      RAGE_PER_MAXIMUM_HEALTH_TAKEN / player.health.maximum,
+      12,
+    );
   });
 
   it('gives no damage-taken rage to classes without a rage pool', () => {
@@ -498,5 +566,102 @@ describe('regeneration timers by class', () => {
     // Energy ticked; mana is inside its lockout and did not.
     expect(energy.current).toBe(20);
     expect(mana.current).toBe(mana.maximum - 1000);
+  });
+});
+
+describe('extra attacks pay a full swing of rage', () => {
+  it('is what stops R x S being a clean rate, and favours a slow weapon', () => {
+    /*
+     * ------------------------------------------------------------------------
+     * THE ONE PLACE THE SPEED DOES NOT CANCEL, and it is easy to miss.
+     *
+     * `R x S` every `S` seconds is `R` per second -- but only for swings the
+     * TIMER produced. A Windfury, Hand of Justice or Weaponmaster proc pays a
+     * full `R x S` for a swing that consumed no time at all, because there is
+     * no timer for the speed to cancel against.
+     *
+     * So the slower the weapon, the more each proc is worth. That is backwards
+     * from the old rule, where a slow weapon was good for rage because it hit
+     * hard; it is now good for rage because a proc is worth a whole slow swing.
+     *
+     * Caught while checking the 2H Arms preset in the browser: it draws about
+     * 370 rage a minute from main-hand swings -- 6.2 a second against a 4.5
+     * "floor" -- because roughly six of its twenty-three swings are procs.
+     * ------------------------------------------------------------------------
+     */
+    // Obsidian Edged Blade is 3.6 seconds; Vis'kag is 2.6.
+    const twoHandProc = rageFromSwing(3.6, true).flat!;
+    const dualWieldProc = rageFromSwing(2.6, false).flat!;
+
+    expect(twoHandProc).toBeCloseTo(16.2, 10);
+    expect(dualWieldProc).toBeCloseTo(8.996, 10);
+    expect(twoHandProc).toBeGreaterThan(dualWieldProc * 1.5);
+  });
+});
+
+describe('rage from damage taken, against armor and against a block', () => {
+  /*
+   * ----------------------------------------------------------------------------
+   * TWO RULINGS THAT PULL AGAINST EACH OTHER ON THE SAME PIPELINE STEP:
+   *
+   *   "D = pre-armor damage to be dealt"
+   *   "Blocked hits give the rage of the unblocked amount"
+   *
+   * So armor does NOT reduce the rage and a block DOES -- and in this engine
+   * they are removed together, as one `mitigated` figure. Getting it wrong in
+   * either direction is quiet: reading `amount` would leave a tank earning a
+   * fraction of what it should, and reading `raw` would pay full rage for a
+   * blow that was blocked.
+   * ----------------------------------------------------------------------------
+   */
+  const BLOCKED: AttackResolution = {
+    outcome: 'block',
+    avoided: false,
+    damageMultiplier: 1,
+    rolls: [],
+  };
+  const HIT: AttackResolution = { outcome: 'hit', avoided: false, damageMultiplier: 1, rolls: [] };
+
+  /** What one blow of `baseAmount` pays a warrior of `maxHealth`. */
+  function rageFrom(attack: AttackResolution, armor: number, blockValue: number): number {
+    const player = createPlayer({
+      race: 'orc',
+      characterClass: 'warrior',
+      combatStyle: 'one_hand_shield',
+    });
+    const target = makeTarget({ stats: { armor, blockValue } });
+    const resolution = resolveDamage(
+      {
+        source: makeAttacker(),
+        target,
+        abilityName: 'Boss Swing',
+        school: 'physical',
+        baseAmount: 1000,
+      },
+      attack,
+    );
+    const rageable = Math.max(0, resolution.raw - resolution.blocked);
+    return (player.resourceOnDamageTaken?.perDamage ?? 0) * rageable;
+  }
+
+  it('ignores armor entirely', () => {
+    // Armor removes most of a 1000 point blow and none of the rage.
+    expect(rageFrom(HIT, 3731, 0)).toBeCloseTo(rageFrom(HIT, 0, 0), 10);
+  });
+
+  it('takes the block off, by its flat value', () => {
+    const unblocked = rageFrom(HIT, 0, 0);
+    const blocked = rageFrom(BLOCKED, 0, 250);
+    // A quarter of the blow was blocked, so a quarter of the rage is gone.
+    expect(blocked).toBeCloseTo(unblocked * 0.75, 6);
+  });
+
+  it('takes the block off even through armor, which is the combination', () => {
+    /*
+     * The case a `mitigated`-based reading gets wrong: armor and the block are
+     * one number there, so taking it off would remove both.
+     */
+    const throughArmour = rageFrom(BLOCKED, 3731, 250);
+    expect(throughArmour).toBeCloseTo(rageFrom(BLOCKED, 0, 250), 10);
   });
 });
