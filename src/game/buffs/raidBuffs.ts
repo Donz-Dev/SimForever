@@ -365,14 +365,15 @@ const moonkinForm: RaidBuff = {
  * applies, so a raid that already put it on the target and a warrior keeping
  * it up refresh one aura rather than stacking two.
  *
- * The three sources disagree about what "20% slower" means and the ruleset
- * owner settled it at attack speed minus twenty. `THUNDER_CLAP_SLOW` in
- * `auras/warrior.ts` has the whole of it.
+ * "20% slower" is the swing time getting a fifth LONGER -- 2.00 seconds
+ * becomes 2.40 -- which is the ruleset owner's ruling and agrees with
+ * Forever's own description. `THUNDER_CLAP_SLOW` in `auras/warrior.ts` has the
+ * whole of it, including the earlier ruling it replaced.
  */
 const thunderClapSlow: RaidBuff = {
   id: 'thunder_clap',
   name: 'Thunder Clap',
-  detail: 'Target attacks 20% slower for 30 seconds',
+  detail: "Target's attacks take 20% longer for 30 seconds",
   source: 'Warrior',
   appliesTo: 'enemy',
   aura: THUNDER_CLAP_SLOW,

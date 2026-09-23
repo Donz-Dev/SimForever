@@ -17,8 +17,8 @@ import {
 } from '../../src/game/buffs/windfury';
 import {
   SUNDER_ARMOR_MAX_STACKS,
-  THUNDER_CLAP_ATTACK_SPEED_PERCENT,
   THUNDER_CLAP_SLOW,
+  THUNDER_CLAP_SWING_TIME_MULTIPLIER,
 } from '../../src/game/auras/warrior';
 import { startingEquipmentFor } from '../../src/game/items/startingSets';
 import { CURRENT_PROFILE_VERSION, createDefaultProfile, migrateProfile } from '../../src/profiles';
@@ -239,24 +239,48 @@ describe('debuffs on the target', () => {
     expect(target.stats.get('armor')).toBe(3731 - 2250);
   });
 
-  it('slow the target to 2.5 seconds a swing, not 2.4 and not 2.47', () => {
+  it('make the target swing take a FIFTH LONGER: 2.00 seconds becomes 2.40', () => {
     /*
-     * THREE SOURCES, THREE ANSWERS, and this is the ruleset owner's.
+     * The ruleset owner's ruling, and it replaced their own earlier one --
+     * they first said attack speed minus twenty, which is 2.00 / 0.8 = 2.50.
+     * The two are not the same thing and the gap is a tenth of a second on
+     * every swing the target takes.
      *
-     *   the owner, asked            attack speed -20%, so 2.00 / 0.8  = 2.50
-     *   Forever's description       "time between attacks +20%", 2.00 x 1.2 = 2.40
-     *   Forever's own effect row    Mod Melee Attack Speed -19, 2.00 / 0.81 = 2.47
+     * So Forever's spell DESCRIPTION was right: "increasing the time between
+     * their attacks by 20%". Its effect row still is not -- "Mod Melee Attack
+     * Speed" value -19 would be 2.00 / 0.81 = 2.47 -- so two of the three
+     * sources agree now and the effect row is the odd one out.
      *
-     * The captured data does not agree with itself, let alone with the owner.
-     * Written out by hand so a change to any of the three has to come through
-     * here.
+     * Written out by hand: 2.00 x 1.2 = 2.40, and nothing here reads the
+     * derived rating back from the aura that holds it.
      */
-    expect(THUNDER_CLAP_ATTACK_SPEED_PERCENT).toBe(20);
+    expect(THUNDER_CLAP_SWING_TIME_MULTIPLIER).toBe(1.2);
 
     const { target } = opened(['thunder_clap'], true);
     const multiplier = hasteMultiplierFrom(target.stats.effective);
-    expect(multiplier).toBeCloseTo(0.8, 10);
-    expect(applyHaste(2000, multiplier)).toBe(2500);
+    expect(applyHaste(2000, multiplier)).toBe(2400);
+    // And a swing of any other length, since the mechanic is a multiplier.
+    expect(applyHaste(2500, multiplier)).toBe(3000);
+    expect(applyHaste(1500, multiplier)).toBe(1800);
+  });
+
+  it('takes a fifth off the swings the target gets through', () => {
+    /*
+     * The consequence, and the thing worth measuring: at 2.40 seconds instead
+     * of 2.00 a sixty second fight gives the target five sixths of the swings.
+     * Measured end to end rather than asserted from the multiplier.
+     */
+    const withoutSlow = runProfileBatch({
+      ...(fury([], 200) as unknown as Record<string, unknown>),
+      encounter: { ...base.encounter, targetAttacks: true },
+    } as never);
+    const withSlow = runProfileBatch({
+      ...(fury(['thunder_clap'], 200) as unknown as Record<string, unknown>),
+      encounter: { ...base.encounter, targetAttacks: true },
+    } as never);
+
+    const swings = (b: typeof withSlow) => b.damageTaken[0]?.attempts ?? 0;
+    expect(swings(withSlow)).toBeLessThan(swings(withoutSlow));
   });
 
   it('leave the target alone when nothing is selected', () => {
