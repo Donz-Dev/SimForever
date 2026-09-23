@@ -473,6 +473,95 @@ const SHAMAN_WEAPONS: Equipment = {
   twoHand: { itemId: 228229, enchantId: CRUSADER },
 };
 
+/**
+ * THE THREE MAGE BUILDS, decoded from the owner's URLs. 0/29/22, 47/4/0 and
+ * 10/39/2, each exactly 51 points.
+ *
+ * FROSTFIRE HAS NO CAPSTONE IN EITHER TREE, which is why the rotation is
+ * chosen by points spent rather than by a 31-point talent the way the Rogue's
+ * is.
+ */
+const MAGE_FROSTFIRE_TALENTS: TalentAllocation = {
+  improved_fireball: 5,
+  ignite: 5,
+  flame_throwing: 1,
+  burning_soul: 3,
+  pyroblast: 1,
+  improved_scorch: 3,
+  hot_streak: 1,
+  master_of_elements: 3,
+  critical_mass: 3,
+  fire_power: 4,
+  elemental_precision: 5,
+  ice_shards: 5,
+  piercing_ice: 3,
+  frost_channeling: 3,
+  ice_lance: 1,
+  shatter: 3,
+  fingers_of_frost: 2,
+};
+
+const MAGE_ARCANE_TALENTS: TalentAllocation = {
+  wand_specialization: 2,
+  arcane_focus: 5,
+  improved_channeling: 5,
+  arcane_subtlety: 2,
+  magic_absorption: 2,
+  arcane_concentration: 5,
+  arcane_resilience: 2,
+  arcane_geometry: 2,
+  arcane_impact: 3,
+  arcane_blast: 1,
+  arcane_shielding: 2,
+  improved_counterspell: 2,
+  arcane_meditation: 3,
+  missile_barrage: 1,
+  presence_of_mind: 1,
+  arcane_mind: 5,
+  arcane_instability: 3,
+  arcane_power: 1,
+  wake_of_fire: 1,
+  incineration: 3,
+};
+
+const MAGE_FIRE_TALENTS: TalentAllocation = {
+  arcane_focus: 5,
+  arcane_concentration: 5,
+  wake_of_fire: 2,
+  incineration: 3,
+  improved_fireball: 5,
+  ignite: 5,
+  flame_throwing: 2,
+  impact: 3,
+  burning_soul: 3,
+  pyroblast: 1,
+  improved_scorch: 3,
+  hot_streak: 1,
+  master_of_elements: 1,
+  critical_mass: 3,
+  blast_wave: 1,
+  fire_power: 5,
+  combustion: 1,
+  elemental_precision: 2,
+};
+
+/**
+ * A GEAR SHELL, and said to be one.
+ *
+ * The item data is nineteen Classic stand-ins curated for a Warrior. There is
+ * no cloth in it, no staff and no caster weapon of any kind, so all three Mage
+ * profiles carry the Warrior's plate and hold Obsidian Edged Blade as a STAT
+ * STICK they never swing -- `caster` has no auto-attack at all.
+ *
+ * WHICH MEANS `spellPower` READS ZERO, for the third class running. A Mage
+ * figure here is a FLOOR rather than an estimate, and for the same two reasons
+ * the Moonkin and the Elemental shaman are: no caster item, and no spell power
+ * coefficient in Forever's spell data to multiply even if there were.
+ */
+const MAGE_WEAPONS: Equipment = {
+  twoHand: { itemId: 228229, enchantId: CRUSADER },
+};
+
 export const PROFILE_PRESETS: readonly ProfilePreset[] = [
   {
     id: 'two_hand_arms',
@@ -741,6 +830,66 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = [
        */
       raidBuffs: PRESET_RAID_BUFFS.filter((id) => id !== 'windfury_totem'),
       equipment: { ...SHARED_ARMOUR, ...SHAMAN_WEAPONS },
+      encounter: { ...createDefaultProfile().encounter, targetAttacks: false },
+    }),
+  },
+  {
+    id: 'mage_frostfire',
+    label: 'Frostfire',
+    detail: 'Gnome, caster, standing target. 29 Fire / 22 Frost',
+    build: () => ({
+      ...createDefaultProfile(),
+      character: {
+        name: 'Frostfire Mage',
+        race: 'gnome',
+        characterClass: 'mage',
+        level: 60,
+        combatStyle: 'caster',
+        stance: 'battle',
+      },
+      talents: { ...MAGE_FROSTFIRE_TALENTS },
+      raidBuffs: [...PRESET_RAID_BUFFS],
+      equipment: { ...SHARED_ARMOUR, ...MAGE_WEAPONS },
+      encounter: { ...createDefaultProfile().encounter, targetAttacks: false },
+    }),
+  },
+  {
+    id: 'mage_arcane',
+    label: 'Arcane',
+    detail: 'Gnome, caster, standing target. 47 Arcane / 4 Fire',
+    build: () => ({
+      ...createDefaultProfile(),
+      character: {
+        name: 'Arcane Mage',
+        race: 'gnome',
+        characterClass: 'mage',
+        level: 60,
+        combatStyle: 'caster',
+        stance: 'battle',
+      },
+      talents: { ...MAGE_ARCANE_TALENTS },
+      raidBuffs: [...PRESET_RAID_BUFFS],
+      equipment: { ...SHARED_ARMOUR, ...MAGE_WEAPONS },
+      encounter: { ...createDefaultProfile().encounter, targetAttacks: false },
+    }),
+  },
+  {
+    id: 'mage_fire',
+    label: 'Fire',
+    detail: 'Gnome, caster, standing target. 39 Fire / 10 Arcane',
+    build: () => ({
+      ...createDefaultProfile(),
+      character: {
+        name: 'Fire Mage',
+        race: 'gnome',
+        characterClass: 'mage',
+        level: 60,
+        combatStyle: 'caster',
+        stance: 'battle',
+      },
+      talents: { ...MAGE_FIRE_TALENTS },
+      raidBuffs: [...PRESET_RAID_BUFFS],
+      equipment: { ...SHARED_ARMOUR, ...MAGE_WEAPONS },
       encounter: { ...createDefaultProfile().encounter, targetAttacks: false },
     }),
   },

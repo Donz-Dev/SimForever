@@ -548,7 +548,19 @@ export class Combatant {
     let product = this.damageTakenMultiplier;
     for (const aura of this.auras.active) {
       const bySchool = aura.definition.damageTakenBySchool;
-      if (bySchool?.[school] !== undefined) product *= bySchool[school]!;
+      if (bySchool?.[school] === undefined) continue;
+      /*
+       * STACKS COMPOUND, matching `auraMultiplier` exactly rather than adding.
+       *
+       * Improved Scorch is "+3% Fire damage, stacking up to 5 times", and the
+       * source does not say which. This engine already answers that question
+       * for every other damage multiplier -- `modifiersScaleWithStacks` raises
+       * it to the POWER of the stack count -- so 1.03 at five stacks is 1.159
+       * and not 1.150. A one-percent difference, and a second convention for
+       * the same flag would be worth far more trouble than it.
+       */
+      product *=
+        bySchool[school]! ** (aura.definition.modifiersScaleWithStacks ? aura.stacks : 1);
     }
     return product;
   }

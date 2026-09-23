@@ -174,12 +174,18 @@ describe('player versus training dummy', () => {
   });
 
   it('runs a caster that does nothing at all without stalling', () => {
-    // A Mage uses the Caster style, which never auto-attacks, and has no
-    // implemented abilities. It therefore deals literally no damage. The fight
-    // must still complete cleanly rather than hanging or throwing.
+    /*
+     * A Warlock uses the Caster style, which never auto-attacks, and has no
+     * implemented abilities. It therefore deals literally no damage, and the
+     * fight must still complete cleanly rather than hanging or throwing.
+     *
+     * THIS NAMED THE MAGE until the Mage was written. A "class with nothing in
+     * it" fixture has to move as classes arrive, and it failing is the signal
+     * that one did.
+     */
     const result = runProfile({
       ...profile,
-      character: { ...profile.character, race: 'gnome', characterClass: 'mage' },
+      character: { ...profile.character, race: 'undead', characterClass: 'warlock' },
     });
 
     expect(result.endReason).toBe('duration_expired');
@@ -189,13 +195,13 @@ describe('player versus training dummy', () => {
 
   it('gives a melee class damage where a caster has none', () => {
     const asWarrior = runProfile(profile);
-    const asMage = runProfile({
+    const asCaster = runProfile({
       ...profile,
-      character: { ...profile.character, race: 'gnome', characterClass: 'mage' },
+      character: { ...profile.character, race: 'undead', characterClass: 'warlock' },
     });
 
     expect(asWarrior.damage.total).toBeGreaterThan(0);
-    expect(asMage.damage.total).toBe(0);
+    expect(asCaster.damage.total).toBe(0);
   });
 
   it('swings both weapons for a dual-wielding warrior', () => {

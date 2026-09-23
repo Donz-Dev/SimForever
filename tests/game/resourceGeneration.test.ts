@@ -23,6 +23,17 @@ const warrior = () =>
   createPlayer({ race: 'orc', characterClass: 'warrior', combatStyle: 'two_hander' });
 const rogue = () => createPlayer({ race: 'orc', characterClass: 'rogue' });
 const mage = () => createPlayer({ race: 'gnome', characterClass: 'mage' });
+/*
+ * A CASTER THAT DOES NOTHING, for the two tests that run a real simulation and
+ * need the pool left alone.
+ *
+ * It was the Mage until the Mage was written, and then those tests began
+ * failing because a Mage now has a priority list and SPENDS -- which is the
+ * correct behaviour and the wrong fixture. Mana is mana, so an unwritten
+ * caster serves; this will have to move again when the Warlock arrives, and
+ * the failure is the signal.
+ */
+const quietCaster = () => createPlayer({ race: 'undead', characterClass: 'warlock' });
 
 describe('every resource has a current and a maximum', () => {
   it('reports both for rage, energy and mana', () => {
@@ -399,7 +410,7 @@ describe('mana', () => {
   });
 
   it('regenerates while it has not spent', () => {
-    const player = mage();
+    const player = quietCaster();
     const mana = player.resources.require('mana');
     const sim = buildSimulation([player, makeTarget()], { durationMs: seconds(60) });
 
@@ -489,7 +500,7 @@ describe('mana', () => {
   });
 
   it('caps at maximum', () => {
-    const player = mage();
+    const player = quietCaster();
     const mana = player.resources.require('mana');
     const sim = buildSimulation([player, makeTarget()], { durationMs: seconds(120) });
 

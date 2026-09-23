@@ -15,6 +15,7 @@ import { WARRIOR_TALENT_REACTIONS } from '../reactions/warriorTalents';
 import { ROGUE_TALENT_REACTIONS, ROGUE_CAST_REACTIONS } from '../reactions/rogueTalents';
 import { DRUID_TALENT_REACTIONS } from '../reactions/druidTalents';
 import { SHAMAN_TALENT_REACTIONS } from '../reactions/shamanTalents';
+import { MAGE_TALENT_REACTIONS } from '../reactions/mageTalents';
 import type { ClassId, CombatStyleId } from '../character';
 import type { Equipment } from '../items/Item';
 import { armorFromItems, liveEquipment } from '../items/equipment';
@@ -31,6 +32,7 @@ import { WARRIOR_TALENT_EFFECTS } from './warriorEffects';
 import { ROGUE_TALENT_EFFECTS } from './rogueEffects';
 import { DRUID_TALENT_EFFECTS } from './druidEffects';
 import { SHAMAN_TALENT_EFFECTS } from './shamanEffects';
+import { MAGE_TALENT_EFFECTS } from './mageEffects';
 
 /** Effect tables per class. Only the Warrior has one. */
 const EFFECTS: Partial<Record<ClassId, Readonly<Record<string, TalentEffects>>>> = {
@@ -38,6 +40,7 @@ const EFFECTS: Partial<Record<ClassId, Readonly<Record<string, TalentEffects>>>>
   rogue: ROGUE_TALENT_EFFECTS,
   druid: DRUID_TALENT_EFFECTS,
   shaman: SHAMAN_TALENT_EFFECTS,
+  mage: MAGE_TALENT_EFFECTS,
 };
 
 /** Reaction builders per class, keyed by talent id. */
@@ -53,6 +56,7 @@ const REACTIONS: Partial<Record<ClassId, Readonly<Record<string, TalentReactionB
   rogue: ROGUE_TALENT_REACTIONS,
   druid: DRUID_TALENT_REACTIONS,
   shaman: SHAMAN_TALENT_REACTIONS,
+  mage: MAGE_TALENT_REACTIONS,
 };
 
 /**

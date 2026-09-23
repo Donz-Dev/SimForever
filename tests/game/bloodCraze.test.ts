@@ -252,6 +252,18 @@ describe('the regeneration itself', () => {
 // In a fight
 // ---------------------------------------------------------------------------
 
+/**
+ * THREE FULL MONTE CARLO BATCHES IN ONE TEST, which is what it costs to
+ * compare three talent ranks against each other honestly.
+ *
+ * It runs in about 1.6 seconds alone and took more than five under the
+ * parallel load of the whole suite once the Mage's tests were added -- so it
+ * began failing on a timeout rather than on a number. Raised rather than
+ * trimmed: the three batches ARE the test, and a smaller sample would make a
+ * ~90-health difference indistinguishable from noise.
+ */
+const SLOW_TEST_TIMEOUT_MS = 30_000;
+
 describe('Blood Craze in a real fight', () => {
   const healingWith = (talents: Record<string, number>) =>
     runProfileBatch(tankProfile(talents)).survival.healingReceived;
@@ -269,7 +281,7 @@ describe('Blood Craze in a real fight', () => {
 
     expect(one).toBeGreaterThan(none);
     expect(three).toBeGreaterThan(one);
-  });
+  }, SLOW_TEST_TIMEOUT_MS);
 
   it('is up almost the whole fight, because the target hits that hard', () => {
     /*

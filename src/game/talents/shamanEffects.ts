@@ -170,7 +170,9 @@ export const SHAMAN_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
     { kind: 'stat', stat: 'spellCritChance', operation: 'flat' },
   ],
 
-  ancestral_knowledge: [{ kind: 'stat', stat: 'intellect', operation: 'percentAdd' }],
+  ancestral_knowledge: [
+    { kind: 'stat', stat: 'intellect', operation: 'percentAdd', scale: 0.01 },
+  ],
 
   guardian_totems: [{ kind: 'unmodelled', reason: TOTEMS_NOT_MODELLED }],
 
@@ -220,7 +222,7 @@ export const SHAMAN_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
 
   anticipation: [{ kind: 'stat', stat: 'dodgeChance', operation: 'flat' }],
 
-  toughness: [{ kind: 'stat', stat: 'stamina', operation: 'percentAdd' }],
+  toughness: [{ kind: 'stat', stat: 'stamina', operation: 'percentAdd', scale: 0.01 }],
 
   flurry: [{ kind: 'reaction', reactionId: 'flurry' }],
 

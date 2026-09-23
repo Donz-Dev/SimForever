@@ -9,10 +9,12 @@ import { WARRIOR_TALENT_EFFECTS } from '../talents/warriorEffects';
 import { ROGUE_TALENT_EFFECTS } from '../talents/rogueEffects';
 import { DRUID_TALENT_EFFECTS } from '../talents/druidEffects';
 import { SHAMAN_TALENT_EFFECTS } from '../talents/shamanEffects';
+import { MAGE_TALENT_EFFECTS } from '../talents/mageEffects';
 import { WARRIOR_ABILITIES } from './warrior';
 import { ROGUE_ABILITIES } from './rogue';
 import { DRUID_ABILITIES } from './druid';
 import { SHAMAN_ABILITIES } from './shaman';
+import { MAGE_ABILITIES } from './mage';
 import { legalAllocation } from '../talents/talentRules';
 import { talentsForClass } from '../talents/talentData';
 
@@ -47,6 +49,7 @@ const CLASS_ABILITIES: Partial<Record<ClassId, readonly Ability[]>> = {
   rogue: ROGUE_ABILITIES,
   druid: DRUID_ABILITIES,
   shaman: SHAMAN_ABILITIES,
+  mage: MAGE_ABILITIES,
 };
 
 const TALENT_ABILITIES: Partial<Record<ClassId, Readonly<Record<string, string>>>> = {
@@ -54,6 +57,7 @@ const TALENT_ABILITIES: Partial<Record<ClassId, Readonly<Record<string, string>>
   rogue: grantsByAbility(ROGUE_TALENT_EFFECTS),
   druid: grantsByAbility(DRUID_TALENT_EFFECTS),
   shaman: grantsByAbility(SHAMAN_TALENT_EFFECTS),
+  mage: grantsByAbility(MAGE_TALENT_EFFECTS),
 };
 
 /**

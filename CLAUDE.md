@@ -226,6 +226,15 @@ owner's ruling. So a spell lands for full against a raid boss, and
 `resistancesFromItems` being computed and never read is CORRECT rather than a
 gap. The engine gap survey had it the other way round and was wrong to.
 
+**THE WRONG ROTATION IS WORSE THAN NO ROTATION, because nothing about it
+looks wrong.** The Mage's list is chosen by points spent -- three `caster`
+builds with no stance, no form, and a 0/29/22 Frostfire build with no capstone
+for the Rogue's test to find -- and the first version compared two trees and
+never looked at Fire. The owner's 10/39/2 FIRE build came back as ARCANE, ran
+a list built around a spell it had one point in, and produced a perfectly
+ordinary 143.9 DPS without casting Fireball once. Nothing errored and nothing
+was missing.
+
 **A CASTER'S DAMAGE DOES NOT SCALE WITH GEAR YET, and it is the source rather
 than the engine.** `dealDamage` reads `spellPower` for any non-physical school
 and has since before any caster existed; what is missing is that every Druid
@@ -265,6 +274,17 @@ the Moonkin is MANA-bound, spending ~3,400 from a ~2,800 pool over sixty
 seconds: time it was not using is worth nothing, and the DPS figure did not
 move. That is why the tests assert the MECHANISM and not a damage delta --
 a test measuring DPS would have passed identically before the rule existed.
+
+**A `percentAdd` STAT EFFECT WITHOUT `scale: 0.01` IS A THOUSAND PERCENT.**
+`StatBlock` computes `(base + flat) * (1 + sum(percentAdd))`, so the modifier
+wants a FRACTION and a talent states a PERCENTAGE. The Warrior's one entry
+scales it and says why; the Druid, the Shaman and the Mage all forgot, which
+multiplied intellect by ELEVEN -- an Arcane mage read 1,529 intellect against
+a base of 139 and 28.9% spell crit against a true 5.8%. It survived two class
+PRs because a caster with a very large mana pool looks exactly like a caster
+with a very large mana pool. `classRegistration.test.ts` now fails for any
+unscaled percentage operation, which is structural and gets a new class for
+free.
 
 **A CLASS HAS TO BE REGISTERED IN FOUR PLACES AND MISSING ANY ONE IS SILENT.**
 `talentValues.ts`'s `FILES`, `talentBuild.ts`'s `EFFECTS` **and** its
