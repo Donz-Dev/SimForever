@@ -1,5 +1,5 @@
 import type { AuraDefinition, Reaction } from '../../engine';
-import { flat, seconds } from '../../engine';
+import { flat, isWeaponUseOf, seconds } from '../../engine';
 
 /**
  * Windfury Totem.
@@ -8,11 +8,20 @@ import { flat, seconds } from '../../engine';
  * THE RULE, from the ruleset owner:
  *
  *   Each main hand swing has a 20% chance to trigger an extra attack. It
- *   follows the same rules as the extra attacks already implemented (Sword
- *   Specialization, Hand of Justice) with one exception: a 1.5 second internal
- *   cooldown after it triggers, and a 1.5 second buff of +246 attack power
- *   when it triggers -- so attack power + 246 has to be known before the
- *   extra attack goes out.
+ *   follows the same rules as the extra attacks already implemented
+ *   (Weaponmaster's sword clause, Hand of Justice) with one exception: a 1.5
+ *   second internal cooldown after it triggers, and a 1.5 second buff of +246
+ *   attack power when it triggers -- so attack power + 246 has to be known
+ *   before the extra attack goes out.
+ *
+ * AND "SWING" MEANS "USE", settled later by the same owner: a swing OR an
+ * ability that needs the main-hand weapon. See `isWeaponUse` in the engine and
+ * docs/extra-attacks.md. Confining this to auto-attacks was worth about 40 DPS
+ * to a Fury warrior and 27 to a tank, who swings least and casts most.
+ *
+ * (The original wording named Sword Specialization, which does not exist in
+ * Forever -- it is one of nine talents the ruleset removed. Weaponmaster's
+ * sword clause is the same effect.)
  *
  * WHAT THE +246 REACHES, which the owner settled: the extra attack, and
  * anything else that swings inside the 1.5 seconds. NOT the swing that procced
@@ -65,11 +74,22 @@ export function windfuryTotemReaction(): Reaction {
     // connected, and the slot check below is what keeps it off the off hand.
     outcomes: ['hit', 'crit', 'glance', 'crush'],
     canTrigger: (context, _actor, attack) => {
-      // MAIN HAND ONLY, and only an auto attack: "each main hand swing".
-      // An ability carries an `abilityId`, so this refuses Mortal Strike
-      // while accepting the swing it replaced.
-      if (attack.weaponSlot !== 'mainHand') return false;
-      if (attack.abilityId !== undefined) return false;
+      /*
+       * MAIN HAND ONLY, and "swing" means USE -- an auto-attack or any
+       * ability that needs the main-hand weapon. Bloodthirst, Mortal Strike,
+       * Rend and Heroic Strike all count; Thunder Clap does not, because it
+       * needs no melee weapon.
+       *
+       * THIS USED TO REFUSE EVERY `abilityId`, which made Windfury an
+       * auto-attack-only effect and cost a Fury warrior most of it. The
+       * ruleset owner settled it: a use is a swing or an ability.
+       *
+       * Whirlwind with Raging Blows strikes with both hands as two attacks.
+       * Only the main-hand half reaches here, which is the right answer for a
+       * main-hand-only totem and falls out of the slot check rather than
+       * needing a case.
+       */
+      if (!isWeaponUseOf(attack, 'mainHand')) return false;
 
       const now = context.clock.now();
       if (lastProcAt !== null && now - lastProcAt < WINDFURY_INTERNAL_COOLDOWN_MS) {

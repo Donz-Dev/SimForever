@@ -1,5 +1,12 @@
 import type { AttackEvent, AuraDefinition, Combatant, Reaction, WeaponSlot } from '../../engine';
-import { applyHealing, dealDamage, flat, seconds } from '../../engine';
+import {
+  applyHealing,
+  dealDamage,
+  flat,
+  isWeaponUse,
+  isWeaponUseOf,
+  seconds,
+} from '../../engine';
 import { ITEMS_BY_ID } from './itemData';
 
 /**
@@ -63,7 +70,8 @@ function weaponProc(options: {
     outcomes: ['hit', 'crit', 'glance', 'crush'],
     canTrigger: (context, actor, attack) => {
       if (!canProc(attack)) return false;
-      if (attack.weaponSlot !== options.slot) return false;
+      // A use of THIS weapon: a swing with it, or an ability that needed it.
+      if (!isWeaponUseOf(attack, options.slot)) return false;
 
       const speed = triggeringSpeedSeconds(actor, attack.weaponSlot);
       if (speed === undefined) return false;
@@ -231,8 +239,18 @@ export const HAND_OF_JUSTICE_ICD_MS = 1500;
 /**
  * Hand of Justice.
  *
- * NOT a PPM effect -- a flat 2% on ANY attack, ability or swing, from either
- * hand. The internal cooldown is what keeps it bounded rather than the roll.
+ * NOT a PPM effect -- a flat 2% on any USE of a melee weapon, ability or
+ * swing, from EITHER hand. The internal cooldown is what keeps it bounded
+ * rather than the roll.
+ *
+ * A GLOBAL extra-attack source, in the ruleset owner's words, as against a
+ * weapon-bound one: it does not care which hand, only that a melee weapon was
+ * used. That is the whole difference between it and Crusader, and between it
+ * and Windfury.
+ *
+ * IT USED TO ACCEPT ANY LANDED ATTACK, which included Thunder Clap, Intercept
+ * and Charge -- three abilities that need no melee weapon and resolve on the
+ * ranged table. `isWeaponUse` is what excludes them.
  */
 export function handOfJusticeReaction(): Reaction {
   // The last time it fired, per combatant. Held in the closure rather than on
@@ -246,6 +264,7 @@ export function handOfJusticeReaction(): Reaction {
     outcomes: ['hit', 'crit', 'glance', 'crush'],
     canTrigger: (context, _actor, attack) => {
       if (!canProc(attack)) return false;
+      if (!isWeaponUse(attack)) return false;
 
       const now = context.clock.now();
       if (lastProcAt !== null && now - lastProcAt < HAND_OF_JUSTICE_ICD_MS) return false;

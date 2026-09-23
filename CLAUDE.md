@@ -173,6 +173,25 @@ point of `revivesOnDeath` — dropping the lot would switch off the assumed
 healer at the moment it is needed most. Which effects survive dying is a
 property of the effect, so the flag is on the aura and not on the character.
 
+**A WEAPON PROC FIRES ON A USE, AND A USE IS A SWING OR AN ABILITY.** Anything
+that goes through a combat table and needs that weapon counts -- Bloodthirst,
+Mortal Strike, Rend and Heroic Strike are all main-hand uses, which is the
+ruleset owner's own wording. Thunder Clap is not, because it needs no melee
+weapon; it and Intercept and Charge resolve on the ranged table, which is how
+`isWeaponUse` tells them apart. A WEAPON-BOUND effect fires only from a use of
+its own weapon, so a main-hand Crusader and an off-hand Crusader are two
+effects with two rolls and Windfury is main-hand only; a GLOBAL one, Hand of
+Justice, fires from either hand. Whirlwind with Raging Blows strikes with both
+hands as two attacks, so one cast can trigger both Crusaders and Windfury, and
+Windfury only from the main-hand half. Shield Slam triggers MAIN HAND effects,
+settled by the owner because the rule alone did not answer it -- it strikes
+with the shield, but the effects it feeds are the main hand's.
+The rule lived as a private one-liner in
+one file while the procs in two others re-derived it and got it wrong: Windfury
+refused every ability and was worth a third of what it should have been, and
+Hand of Justice procced off Thunder Clap. It is `isWeaponUse` in the engine
+now. Full rules in [docs/extra-attacks.md](docs/extra-attacks.md).
+
 **A cast interrupts the swing in progress, and the swing timer resets.** That is
 what makes a cast a real cost to a melee character rather than free damage
 between swings. `Ability.swingTimer: 'hold'` is the exception — the timer runs on
@@ -241,6 +260,14 @@ Two things it is uniquely good at, both of which have already caught a bug:
   and our spreadsheet's 4 had gone unquestioned because it agreed with Classic.
 
 When a number is missing, check whether one of these answers it before asking.
+
+**IF AN ABILITY BEING ABLE TO PROC EFFECTS IS IN QUESTION, ASK.** The ruleset
+owner's standing instruction. It is cheap to follow and the alternative is
+expensive, because a wrong answer here does not look wrong: Windfury spent its
+whole life refusing abilities and every figure the simulator produced was
+self-consistent and too low. A proc that never fires leaves nothing behind to
+notice. The weapon-use rule above decides most abilities on its own; bring the
+ones it does not, as Shield Slam had to be brought.
 
 ## Never invent game data
 

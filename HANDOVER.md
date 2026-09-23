@@ -25,7 +25,7 @@ their talent trees and nothing else.
 | **Abilities** | all 26 Warrior abilities from the ruleset spreadsheet, with weapon-damage scaling and on-next-swing. Effect magnitudes for the ten the sheet leaves blank come from Forever's own spell data, audited against the client-derived spellbook on 2026-09-23 |
 | **Reactions** | content responds to an attack result: Overpower off a target dodge, and every item proc |
 | **Gear** | 19 items and the Crusader enchant, equippable, driving stats, weapons and procs. A **starting set** is equipped automatically when a Warrior is created, so the first fight is a geared one |
-| **Procs** | PPM (Vis'kag, Crusader) and flat-chance with an internal cooldown (Hand of Justice) |
+| **Procs** | PPM (Vis'kag, Crusader) and flat-chance with an internal cooldown (Hand of Justice), all firing on a weapon USE -- a swing or an ability. See [docs/extra-attacks.md](docs/extra-attacks.md) |
 | **Talents** | all 469 talents, nine classes, spendable in the UI and saved on the profile. The Warrior's per-rank values are captured; **45 of its 53 talents do something** (39 fully, 6 partly), 8 say on screen why they cannot |
 | **Encounter** | the target optionally hits back, **ramping 10% a swing**, against a character held up by an assumed healer who can be out-damaged. Deaths are counted. See [docs/incoming-damage.md](docs/incoming-damage.md) |
 | **Raid buffs** | 20 buffs, debuffs and totems selectable per profile and applied before the first swing, Windfury's proc included. Nothing on by default. See [docs/raid-buffs.md](docs/raid-buffs.md) |
@@ -33,7 +33,7 @@ their talent trees and nothing else.
 | **Analysis** | DPS, per-ability breakdown with uses/attempts/hits/crit/glance/avoid rates, buff and debuff uptime, rage economy, deaths and healing received |
 | **UI** | two-step character flow, per-class character sheet (offensive and defensive), style-aware gear, talent trees, combat log, Monte Carlo batches, uptime bar charts |
 
-**1,255 tests**, CI green on Node 20 and 22. Profile format **v9**.
+**1,305 tests**, CI green on Node 20 and 22. Profile format **v9**.
 
 The interface is one theme, **Abyssal Copper**, chosen from four mock-ups. The
 other three still exist in `ui/styles.css` under `:root[data-theme=...]` and
@@ -128,9 +128,9 @@ Three buttons on the creation screen, at the very top:
 
 | | |
 | --- | --- |
-| **2H Arms** | Orc, two-hander, Battle Stance, standing target. 38 Arms / 13 Fury | **559 DPS** |
-| **DW Fury** | Orc, dual-wield, Berserker Stance, standing target. 18 Arms / 33 Fury, Crusader on both weapons | **641 DPS** |
-| **Prot Warr** | Tauren, shield, Defensive Stance, target swings back. 17 Arms / 34 Protection | **347 DPS** |
+| **2H Arms** | Orc, two-hander, Battle Stance, standing target. 38 Arms / 13 Fury | **606 DPS** |
+| **DW Fury** | Orc, dual-wield, Berserker Stance, standing target. 18 Arms / 33 Fury, Crusader on both weapons | **680 DPS** |
+| **Prot Warr** | Tauren, shield, Defensive Stance, target swings back. 17 Arms / 34 Protection | **375 DPS** |
 
 **All three carry the same twelve raid buffs**, which is what makes those
 figures so much higher than the baselines above -- and the only way two presets
@@ -230,6 +230,48 @@ Classic's 25).
 
 The site also has a talent calculator and a sourced change list, which would be
 a second opinion on the Wowhead-scraped tree in `src/data/talents/`. Not done.
+
+## Extra attacks: what triggers a proc
+
+The ruleset owner's rule, settled 2026-09-23 and written down in
+[docs/extra-attacks.md](docs/extra-attacks.md):
+
+> A **use** of a weapon is a **swing or an ability** -- anything that goes
+> through a combat table and needs that weapon. Bloodthirst and Rend are
+> main-hand uses. Thunder Clap is not, because it needs no melee weapon.
+
+**Weapon-bound** effects (Crusader, Vis'kag, Windfury, Weaponmaster's sword
+clause) fire only from a use of their own weapon; **global** ones (Hand of
+Justice) from either hand. Whirlwind with Raging Blows strikes with both hands
+as two attacks, so one cast can trigger both Crusaders and Windfury -- Windfury
+only from the main-hand half.
+
+**Two of the four had it wrong**, each having re-derived the rule privately in
+its own file. Windfury refused every `abilityId`, making it auto-attack-only;
+Hand of Justice accepted any landed attack, including Thunder Clap. It is
+`isWeaponUse` in the engine now, named once.
+
+| Preset | Before | After |
+| --- | --- | --- |
+| 2H Arms | 558.5 | **605.9** |
+| DW Fury | 640.5 | **679.9** |
+| Prot Warr | 347.3 | **374.7** |
+
+Windfury's uptime went **1.4% to 15.5%** on the tank, the build that casts
+most and swings least. The unbuffed baselines below did not move outside their
+intervals, because they carry no Windfury and the Hand of Justice restriction
+is worth very little.
+
+**Shield Slam triggers MAIN HAND effects**, settled by the ruleset owner. It
+was the one ability the rule did not answer by itself -- it is declared
+main-hand and resolves on the melee table, but its tooltip says "Requires
+Shields" and it strikes with an off-hand item. The answer matched what the code
+already did, so nothing changed.
+
+**A standing instruction came with it:** *if an ability being able to proc
+effects is in question, ask.* A wrong answer there does not look wrong -- a
+proc that never fires leaves nothing behind -- which is exactly how Windfury
+went unnoticed.
 
 ## The talents are confirmed, by a second client-derived source
 
@@ -595,7 +637,9 @@ how death is counted), `raid-buffs.md` (what the rest of the group supplies,
 and the two traps in Windfury), `warrior-ability-audit.md` (the abilities
 against the client, and the five numbers it moved) and
 `warrior-talent-audit.md` (the talents against the client, which found
-nothing wrong, and the rank-1 rule that explains three old arguments).
+nothing wrong, and the rank-1 rule that explains three old arguments) and
+`extra-attacks.md` (what counts as using a weapon, and the two procs that
+had it wrong).
 
 `ProfilePanel.tsx` is **not mounted**. Import and Load buttons sit above the
 character name as placeholders; the panel's serialize-out / parse-in / render-

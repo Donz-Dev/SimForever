@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { AttackEvent, Combatant } from '../../src/engine';
+import type { AttackEvent, Combatant, WeaponSlot } from '../../src/engine';
 import { Simulation, applyHaste, hasteMultiplierFrom } from '../../src/engine';
 import {
   RAID_BUFFS,
@@ -479,10 +479,32 @@ describe('Windfury Totem', () => {
     expect(player.stats.get('attackPower')).toBe(before + WINDFURY_ATTACK_POWER);
   });
 
-  it('refuses the off hand and refuses an ability', () => {
+  it('takes a MAIN HAND USE, which includes abilities', () => {
+    /*
+     * ----------------------------------------------------------------------------
+     * THIS TEST USED TO ASSERT THE OPPOSITE, and it was wrong twice over.
+     *
+     * It read "refuses the off hand and refuses an ability", and the reaction
+     * did refuse every `abilityId` -- so Windfury was an auto-attack-only
+     * effect. The ruleset owner settled it: a "use" of a weapon is a SWING OR
+     * AN ABILITY, and Bloodthirst, Mortal Strike, Rend and Heroic Strike are
+     * all main-hand uses.
+     *
+     * IT ALSO PASSED FOR THE WRONG REASON once the gate was fixed, which is
+     * the part worth keeping in mind. `canTrigger` rolls the 20% chance as its
+     * last step, so a `false` can mean "refused" OR "rolled badly" -- and with
+     * a live RNG the ability row went on passing after it had stopped being
+     * true. Every case below uses a scripted roll that ALWAYS succeeds, so a
+     * false can only mean the gate refused.
+     * ----------------------------------------------------------------------------
+     */
     const { simulation, player, target } = opened(['windfury_totem']);
-    const reaction = windfuryTotemReaction();
-    const swing = (weaponSlot: 'mainHand' | 'offHand', abilityId?: string): AttackEvent => ({
+    const alwaysRolls = {
+      ...simulation,
+      rng: { ...simulation.rng, rollChance: () => true },
+    } as unknown as typeof simulation;
+
+    const use = (weaponSlot: WeaponSlot, abilityId?: string): AttackEvent => ({
       attacker: player,
       defender: target,
       outcome: 'hit',
@@ -493,11 +515,23 @@ describe('Windfury Totem', () => {
       critical: false,
     });
 
-    // "Each MAIN HAND swing", and a swing rather than a strike.
-    expect(reaction.canTrigger?.(simulation, player, swing('offHand'))).toBe(false);
-    expect(reaction.canTrigger?.(simulation, player, swing('mainHand', 'mortal_strike'))).toBe(
-      false,
-    );
+    const procs = (weaponSlot: WeaponSlot, abilityId?: string) =>
+      windfuryTotemReaction().canTrigger?.(alwaysRolls, player, use(weaponSlot, abilityId));
+
+    // A main-hand use, by swing or by ability.
+    expect(procs('mainHand')).toBe(true);
+    expect(procs('mainHand', 'bloodthirst')).toBe(true);
+    expect(procs('mainHand', 'mortal_strike')).toBe(true);
+    expect(procs('mainHand', 'rend_cast')).toBe(true);
+    expect(procs('mainHand', 'heroic_strike')).toBe(true);
+
+    // "Each MAIN HAND swing" -- the off hand is still refused, and that is the
+    // half of the old test that was right.
+    expect(procs('offHand')).toBe(false);
+    expect(procs('offHand', 'whirlwind')).toBe(false);
+
+    // Thunder Clap needs no melee weapon, so it is not a use of one.
+    expect(procs('ranged', 'thunder_clap')).toBe(false);
   });
 
   it('is built once PER CHARACTER, so two fights cannot share a cooldown', () => {
@@ -514,22 +548,38 @@ describe('Windfury Totem', () => {
     expect(RAID_BUFFS_BY_ID.get('windfury_totem')!.buildReaction).toBe(windfuryTotemReaction);
   });
 
-  it('procs on about a fifth of the swings that land', () => {
+  it('procs on about a fifth of the main-hand USES that land', () => {
     /*
-     * 20% of LANDED main-hand swings, not of attempts: the outcome list is
-     * hit, crit, glance and crush, which is exactly the rule Hand of Justice
-     * follows and what the owner asked for. A dual-wielder avoids about a
-     * quarter of their swings, and the 1.5 second cooldown eats a few more, so
-     * the rate against attempts reads nearer 13%.
+     * 20% of LANDED main-hand uses, not of attempts, and a use is a swing or
+     * an ability. The denominator is therefore auto-attacks PLUS every
+     * main-hand ability -- which is the whole correction, and why this rate
+     * used to be measured against swings alone and read far too low.
+     *
+     * The 1.5 second internal cooldown pulls the observed rate below 20%: a
+     * warrior can easily take two main-hand actions inside it.
      */
     const batch = runProfileBatch(fury(['windfury_totem'], 400));
-    const swings = batch.abilities.find((a) => a.abilityName === 'Main Hand Auto-Attack')!;
     const totem = batch.buffUptime.find((b) => b.auraName === 'Windfury Totem');
 
+    const mainHandUses = batch.abilities
+      .filter((a) => a.abilityName !== 'Off Hand Auto-Attack')
+      .reduce((sum, a) => sum + a.attempts, 0);
+
     expect(totem?.applications ?? 0).toBeGreaterThan(2);
-    const perAttempt = (totem?.applications ?? 0) / swings.attempts;
-    expect(perAttempt).toBeGreaterThan(0.08);
-    expect(perAttempt).toBeLessThan(WINDFURY_PROC_CHANCE);
+    const perUse = (totem?.applications ?? 0) / mainHandUses;
+    expect(perUse).toBeGreaterThan(0.05);
+    expect(perUse).toBeLessThan(WINDFURY_PROC_CHANCE);
+  });
+
+  it('is worth much more now that abilities count', () => {
+    /*
+     * Measured, not assumed. A Fury warrior takes far more main-hand ACTIONS
+     * than main-hand swings -- a slow weapon and a full rotation -- so
+     * confining Windfury to auto-attacks was hiding most of the totem.
+     */
+    const autoOnly = runProfileBatch(fury([], 300)).dps.mean;
+    const withTotem = runProfileBatch(fury(['windfury_totem'], 300)).dps.mean;
+    expect(withTotem).toBeGreaterThan(autoOnly * 1.05);
   });
 
   it('is worth real damage', () => {
