@@ -1,4 +1,5 @@
 import type { ResourceSpec, ResourceType } from '../../engine';
+import { MAX_COMBO_POINTS } from '../combat/comboPoints';
 import type { ClassDefinition, FormDefinition } from './definitions';
 import { CLASSES } from './definitions';
 import type { ClassId, CombatStyleId } from './ids';
@@ -14,6 +15,13 @@ import type { ClassId, CombatStyleId } from './ids';
 export const FIXED_RESOURCE_MAXIMUMS: Partial<Record<ResourceType, number>> = {
   rage: 100,
   energy: 100,
+  /*
+   * WITHOUT THIS THE POOL IS BUILT WITH A MAXIMUM OF ZERO, and every combo
+   * point awarded is wasted the instant it is granted -- no error, no warning,
+   * just a finisher that never has anything to spend. See
+   * `game/combat/comboPoints.ts`.
+   */
+  comboPoints: MAX_COMBO_POINTS,
 };
 
 /*
