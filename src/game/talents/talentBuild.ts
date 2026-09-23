@@ -111,6 +111,13 @@ export interface TalentBuild {
   /** Abilities whose cast lets the swing timer run on rather than resetting. */
   readonly abilitiesHoldingSwing: ReadonlySet<string>;
   /**
+   * Extra stances a talent makes an ability usable in.
+   *
+   * Vanguard's Charge in Defensive Stance. Added to the ability's own list
+   * rather than replacing it, so Battle Stance still works.
+   */
+  readonly abilityExtraStances: ReadonlyMap<string, readonly string[]>;
+  /**
    * Talents with points in them that are doing nothing, and why.
    *
    * Shown to the person under "Chosen but not simulated", the same way the Gear
@@ -146,6 +153,7 @@ const EMPTY: TalentBuild = {
   abilityCastTimeReductionMs: new Map(),
   abilityGcdReductionMs: new Map(),
   abilitiesHoldingSwing: new Set(),
+  abilityExtraStances: new Map(),
   unmodelled: [],
   illegal: [],
 };
@@ -268,6 +276,7 @@ export function talentBuild(
   const abilityCastTimeReductionMs = new Map<string, number>();
   const abilityGcdReductionMs = new Map<string, number>();
   const abilitiesHoldingSwing = new Set<string>();
+  const abilityExtraStances = new Map<string, string[]>();
   let damageMultiplier = 1;
   const unmodelled: UnmodelledTalent[] = [];
 
@@ -328,6 +337,15 @@ export function talentBuild(
       // Takes no value: the ability either holds the swing or it does not.
       if (effect.kind === 'abilityHoldsSwing') {
         abilitiesHoldingSwing.add(effect.abilityId);
+        continue;
+      }
+
+      // Also value-free: the stance is named on the effect, not looked up.
+      if (effect.kind === 'abilityStance') {
+        const already = abilityExtraStances.get(effect.abilityId) ?? [];
+        if (!already.includes(effect.stance)) {
+          abilityExtraStances.set(effect.abilityId, [...already, effect.stance]);
+        }
         continue;
       }
 
@@ -418,6 +436,24 @@ export function talentBuild(
           const build = REACTIONS[characterClass]?.[effect.reactionId];
           if (!build) {
             report(talentId, rank, `No reaction is registered as "${effect.reactionId}".`);
+            break;
+          }
+          /*
+           * GEAR-GATED AT BUILD TIME. A reaction cannot see the off hand when
+           * it fires, so "while a shield is equipped" is checked once, here,
+           * where the equipment is in scope. Not registering it at all is the
+           * accurate outcome: the proc does not exist for this character.
+           */
+          if (effect.requires && !meets(effect.requires, context.mainHand, context.hasShield)) {
+            report(
+              talentId,
+              rank,
+              effect.requires.shield
+                ? 'Its proc needs a shield equipped, and this character has none. ' +
+                    'Not an error -- equip one and it works.'
+                : 'Its proc needs a particular weapon, and this character is not ' +
+                    'holding one. Not an error -- equip the right weapon and it works.',
+            );
             break;
           }
           reactions.push(build(value));
@@ -515,6 +551,7 @@ export function talentBuild(
     abilityCastTimeReductionMs,
     abilityGcdReductionMs,
     abilitiesHoldingSwing,
+    abilityExtraStances,
     unmodelled,
     illegal: [],
   };

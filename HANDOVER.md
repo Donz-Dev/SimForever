@@ -26,7 +26,7 @@ their talent trees and nothing else.
 | **Reactions** | content responds to an attack result: Overpower off a target dodge, and every item proc |
 | **Gear** | 19 items and the Crusader enchant, equippable, driving stats, weapons and procs. A **starting set** is equipped automatically when a Warrior is created, so the first fight is a geared one |
 | **Procs** | PPM (Vis'kag, Crusader) and flat-chance with an internal cooldown (Hand of Justice), all firing on a weapon USE -- a swing or an ability. See [docs/extra-attacks.md](docs/extra-attacks.md) |
-| **Talents** | all 469 talents, nine classes, spendable in the UI and saved on the profile. The Warrior's per-rank values are captured; **45 of its 53 talents do something** (39 fully, 6 partly), 8 say on screen why they cannot |
+| **Talents** | all 469 talents, nine classes, spendable in the UI and saved on the profile. The Warrior's per-rank values are captured; **46 of its 53 talents do something** (43 fully, 3 partly), 7 say on screen why they cannot |
 | **Encounter** | the target optionally hits back, **ramping 10% a swing**, against a character held up by an assumed healer who can be out-damaged. Deaths are counted. See [docs/incoming-damage.md](docs/incoming-damage.md) |
 | **Raid buffs** | 20 buffs, debuffs and totems selectable per profile and applied before the first swing, Windfury's proc included. Nothing on by default. See [docs/raid-buffs.md](docs/raid-buffs.md) |
 | **Presets** | **2H Arms**, **DW Fury** and **Prot Warr**, one button each on the creation screen: name, race, style, stance, the whole tree, gear and whether the target swings back, all at once |
@@ -60,10 +60,10 @@ two sets of figures.
 | --- | --- | --- |
 | Dual-wield / Berserker (default) | **163.71** +/- 2.67 | **357.13** +/- 3.37 |
 | Dual-wield / Battle (general list) | **161.30** +/- 2.39 | - |
-| Two-hander / Battle (default) | **152.23** +/- 2.53 | - |
+| Two-hander / Battle (default) | **162.44** +/- 2.11 | - |
 | 1H & Shield / Defensive (default) | **64.55** +/- 1.08 | - |
 | 1H & Shield, 31-pt Protection | **66.38** +/- 1.34 | **151.31** +/- 1.57 |
-| Dual-wield, 31-pt Arms | **188.68** +/- 2.43 | - |
+| Dual-wield, 31-pt Arms | **185.84** +/- 3.13 | - |
 | Fury to Death Wish | **222.02** +/- 3.50 | - |
 | the same, without Death Wish | **194.40** +/- 3.29 | - |
 
@@ -128,9 +128,9 @@ Three buttons on the creation screen, at the very top:
 
 | | |
 | --- | --- |
-| **2H Arms** | Orc, two-hander, Battle Stance, standing target. 38 Arms / 13 Fury | **606 DPS** |
-| **DW Fury** | Orc, dual-wield, Berserker Stance, standing target. 18 Arms / 33 Fury, Crusader on both weapons | **680 DPS** |
-| **Prot Warr** | Tauren, shield, Defensive Stance, target swings back. 17 Arms / 34 Protection | **375 DPS** |
+| **2H Arms** | Orc, two-hander, Battle Stance, standing target. 38 Arms / 13 Fury | **619 DPS** |
+| **DW Fury** | Orc, dual-wield, Berserker Stance, standing target. 18 Arms / 33 Fury, Crusader on both weapons | **689 DPS** |
+| **Prot Warr** | Tauren, shield, Defensive Stance, target swings back. 17 Arms / 34 Protection | **376 DPS** |
 
 **All three carry the same twelve raid buffs**, which is what makes those
 figures so much higher than the baselines above -- and the only way two presets
@@ -230,6 +230,31 @@ Classic's 25).
 
 The site also has a talent calculator and a sourced change list, which would be
 a second opinion on the Wowhead-scraped tree in `src/data/talents/`. Not done.
+
+## Charge opens a list, once
+
+The ruleset owner's rule: **if Charge is in a priority list it is used exactly
+once, as the first player action**, because it cannot be used in combat after
+that. `CHARGE.canCast` allows it only at timestamp zero -- a fight that opens
+in combat leaves exactly one legal moment, and the clock can name it.
+
+It is first in the **Two-Hander / Battle** and **Shield / Defensive** lists. It
+is off the global cooldown, so it costs the entries below it nothing, and it
+hands over 18 rage (15, plus 3 from 1/2 Improved Charge) before the first
+swing. Worth **+10.2 DPS** to the unbuffed two-hander baseline and **+13** to
+the 2H Arms preset.
+
+**In the Protection list it is gated on Vanguard, with no talent named
+anywhere.** Charge lists Battle Stance; Vanguard adds Defensive to the
+character's own copy. A tank without it is in a stance Charge does not allow,
+so the entry is refused.
+
+**AND THAT NEARLY WENT VERY WRONG.** `PriorityRotation` treats a wrong stance
+as "not yet, and here is how" and will cast a stance change to unblock an entry
+-- right for Revenge, catastrophic for Charge. Dropping it into the Protection
+list sent the tank into Battle Stance at the pull. Three stance tests caught
+it. The entry's `condition` now refuses unless the character is already in a
+stance Charge allows, and a condition is checked before the swap is considered.
 
 ## Extra attacks: what triggers a proc
 
@@ -336,13 +361,19 @@ what it does in `game/talents/warriorEffects.ts`; what its number IS lives in
 **every edge case and interpretation** the Warrior turned up. The design
 rationale is in the proposal on PR #22, which is not merged.
 
-**Warrior: 39 talents fully modelled, 6 partly, 8 inert.** Every one of the 53
+**Warrior: 43 talents carry no caveat, 3 partly, 7 inert.** Every one of the 53
 has an explicit entry, and the inert ones name their own obstacle, so the list
 below IS the work queue. The Talent panel prints them under "Chosen but not
 simulated".
 
-The eight still inert are `improved_hamstring`, `booming_voice`, `iron_will`,
-`improved_berserker_rage`, `defiance`, `improved_disarm`, `vanguard` and
+**ONE OF THE 43 IS DELIBERATELY SILENT RATHER THAN COMPLETE.** Concussion Blow
+stuns, stuns are out of scope, and the ruleset owner asked for no note about it
+on the GUI -- so it carries no `unmodelled` entry and counts here as if it were
+finished. It is the only exception, it is written down beside the talent, and
+a count is the wrong place to find that out.
+
+The seven still inert are `improved_hamstring`, `booming_voice`, `iron_will`,
+`improved_berserker_rage`, `defiance`, `improved_disarm` and
 `improved_shield_bash`. Regenerate the list with a three-line script over
 `WARRIOR_TALENT_EFFECTS`: a talent is inert when every one of its effects is
 `unmodelled`.

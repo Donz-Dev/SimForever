@@ -161,12 +161,26 @@ function applyTalentChanges(ability: Ability, build: TalentBuild): Ability {
   const castReduction = build.abilityCastTimeReductionMs.get(ability.id) ?? 0;
   const gcdReduction = build.abilityGcdReductionMs.get(ability.id) ?? 0;
   const holdsSwing = build.abilitiesHoldingSwing.has(ability.id);
+  /*
+   * ADDED TO the ability's own stances, never replacing them. Vanguard gives
+   * Charge Defensive Stance and must not take Battle Stance away; an ability
+   * with no list of its own is usable in every stance already, so a talent
+   * granting one stance to it would be a restriction rather than a gift --
+   * hence the guard.
+   */
+  const extraStances = build.abilityExtraStances.get(ability.id);
+  const stances =
+    extraStances && ability.stances
+      ? [...new Set([...ability.stances, ...extraStances])]
+      : undefined;
+
   if (
     costReduction === 0 &&
     cooldownReduction === 0 &&
     castReduction === 0 &&
     gcdReduction === 0 &&
     !holdsSwing &&
+    !stances &&
     !bonuses
   ) {
     return ability;
@@ -176,6 +190,7 @@ function applyTalentChanges(ability: Ability, build: TalentBuild): Ability {
     ...ability,
     ...(bonuses ? { bonuses } : {}),
     ...(holdsSwing ? { swingTimer: 'hold' as const } : {}),
+    ...(stances ? { stances: stances as Ability['stances'] } : {}),
     ...(ability.castTimeMs && castReduction > 0
       ? { castTimeMs: Math.max(0, ability.castTimeMs - castReduction) }
       : {}),

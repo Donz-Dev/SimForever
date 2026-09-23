@@ -231,10 +231,14 @@ export const WARRIOR_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
   ],
 
   /*
-   * MODELLED, apart from its tick cadence. All three triggers fire:
+   * FULLY MODELLED. All three triggers fire:
    * being critically struck, taking more than 20% of maximum health from one
    * blow, and landing a Bloodthirst. Two reactions, because the first two
    * watch attacks RECEIVED and the third one dealt.
+   *
+   * THE TICK CADENCE IS NOW THE RULESET OWNER'S, not a placeholder: once every
+   * two seconds for three ticks across the six. It was the last thing about
+   * this talent that came from Classic rather than from Forever.
    *
    * Its old reason said the healing "would not be observable: the player
    * cannot drop below one health, so a heal has nothing to restore and
@@ -245,16 +249,6 @@ export const WARRIOR_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
   blood_craze: [
     { kind: 'reaction', reactionId: 'blood_craze' },
     { kind: 'reaction', reactionId: 'blood_craze_bloodthirst' },
-    {
-      kind: 'unmodelled',
-      reason:
-        'The total and the six seconds come from the source; the TICK ' +
-        'CADENCE does not. Nothing states it, so it uses the three ticks ' +
-        'Classic has, as a flagged placeholder. ' +
-        'The amount healed is unaffected -- what a wrong ' +
-        'cadence moves is when inside those six seconds it arrives, which ' +
-        'matters only when a fight is close.',
-    },
   ],
 
   boundless_rage: [{ kind: 'resourceMax', resource: 'rage' }],
@@ -419,25 +413,24 @@ export const WARRIOR_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
   last_stand: [{ kind: 'grantAbility', abilityId: 'last_stand' }],
 
   /*
-   * FULLY MODELLED, apart from its shield clause. A 50/100% chance of 5 rage
-   * when the warrior dodges or parries.
+   * FULLY MODELLED: a 50/100% chance of 5 rage when the warrior dodges or
+   * parries, while a shield is equipped.
    *
-   * "While a shield is equipped" is not expressed: a reaction cannot see the
-   * actor's gear. The talent sits at tier 10 of Protection, where a shield is
-   * the entire point, so the overstatement applies only to a Protection warrior
-   * who dual-wields.
+   * It used to carry a note: "a reaction cannot see the wearer gear, so it
+   * would also fire for a Protection warrior holding two weapons". True of the
+   * reaction, and the wrong place to give up -- EQUIPPING A SHIELD IS A CHOICE
+   * THE PLAYER MAKES ON THE GUI, as the ruleset owner put it, so the engine is
+   * entitled to know about it.
+   *
+   * It is knowable exactly once, when the build is assembled and the equipment
+   * is in scope. `requires` on the reaction effect does that: no shield, no
+   * proc registered at all, which is more accurate than a proc that fires and
+   * a note admitting it should not have. Bastion has gated on the same field
+   * for as long as it has existed.
    */
   master_of_defense: [
-    { kind: 'reaction', reactionId: 'master_of_defense' },
-    {
-      kind: 'unmodelled',
-      reason:
-        'The rage proc is implemented. Its "while a shield is equipped" ' +
-        'condition is not -- a reaction cannot see the wearer gear -- so it ' +
-        'would also fire for a Protection warrior holding two weapons.',
-    },
+    { kind: 'reaction', reactionId: 'master_of_defense', requires: { shield: true } },
   ],
-
   /*
    * FULLY MODELLED, for the same reason as Shield Specialization above: the
    * `unmodelled` entry here said Revenge could never fire, and Revenge has been
@@ -453,22 +446,21 @@ export const WARRIOR_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
   improved_disarm: [{ kind: 'unmodelled', reason: 'Disarm is not an implemented ability.' }],
 
   /*
-   * REASON CORRECTED 2026-09-23. It used to read "Stances gate nothing", which
-   * was true when it was written and has been false since abilities got a
-   * `stances` field: fourteen Warrior abilities carry one, Charge among them,
-   * and `casting.ts` refuses a cast made in the wrong stance.
+   * FULLY MODELLED, and it took three steps to get here.
    *
-   * It is still inert, for two reasons that are both about Charge rather than
-   * about stances, and either one alone would be enough.
+   * It first read "Stances gate nothing", which was true when written and
+   * false from the day abilities got a `stances` field. Corrected to "Charge
+   * is in no priority list and cannot be used in combat" -- also true, until
+   * the ruleset owner put Charge in two lists as the opening action and asked
+   * for this one to gate the Protection version of it.
+   *
+   * SO IT IS THE GATE ITSELF NOW. Charge declares `stances: ['battle_stance']`
+   * and a Protection warrior opens in Defensive, so `casting.ts` refuses the
+   * cast; Vanguard adds Defensive Stance and the same entry starts working.
+   * Nothing in the Protection list has to mention the talent -- the rule is
+   * the ability's stance list, and the talent edits it.
    */
-  vanguard: [
-    {
-      kind: 'unmodelled',
-      reason:
-        'Adds Defensive Stance to Charge, which no priority list casts and ' +
-        'which cannot be used in combat -- and every fight here opens in it.',
-    },
-  ],
+  vanguard: [{ kind: 'abilityStance', abilityId: 'charge', stance: 'defensive_stance' }],
 
   /*
    * FULLY MODELLED. 5.5 minutes off at 1/2 and 11 at 2/2, from the captured
@@ -487,17 +479,23 @@ export const WARRIOR_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
     { kind: 'abilityCooldown', abilityId: 'shield_wall_cast', unit: 'minutes' },
   ],
 
-  concussion_blow: [
-    { kind: 'grantAbility', abilityId: 'concussion_blow' },
-    {
-      kind: 'unmodelled',
-      reason:
-        'Stuns the target for 5 sec. NOT TO BE IMPLEMENTED: the project owner ' +
-        'classes stuns as non-combat, so this is out of scope rather than ' +
-        'waiting on anything. The ability grant is still declared so the talent ' +
-        'gates correctly.',
-    },
-  ],
+  /*
+   * NOT TO BE IMPLEMENTED, AND DELIBERATELY SILENT ON THE GUI.
+   *
+   * It stuns the target for 5 sec, and the project owner classes stuns as
+   * non-combat -- so this is out of scope rather than waiting on anything.
+   *
+   * THE `unmodelled` ENTRY WAS REMOVED ON THE OWNER'S INSTRUCTION: "no note
+   * about this needs to be made on the GUI". That is a deliberate exception to
+   * the rule that an inert choice says so where it is made, and it is written
+   * here because the exception is the surprising part. The talent is not
+   * broken and is not waiting on data; there is nothing for a reader to act
+   * on, so the panel stays quiet.
+   *
+   * The ability grant stays so the talent gates its tier correctly, and no
+   * priority list casts it.
+   */
+  concussion_blow: [{ kind: 'grantAbility', abilityId: 'concussion_blow' }],
 
   improved_shield_bash: [
     { kind: 'unmodelled', reason: 'Shield Bash is not an implemented ability.' },

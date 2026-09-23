@@ -277,12 +277,27 @@ describe('Blood Craze and Enrage stay tied to being attacked', () => {
     expect(result.buffUptime.some((row) => row.auraName.includes('Enrage'))).toBe(true);
   });
 
-  it('keeps Blood Craze reported as unmodelled, for a stated reason', () => {
-    // Healing is not observable: the character cannot drop below one health.
-    const reasons = WARRIOR_TALENT_EFFECTS.blood_craze
-      .filter((effect) => effect.kind === 'unmodelled')
-      .map((effect) => (effect as { reason: string }).reason);
-    expect(reasons).toHaveLength(1);
-    expect(reasons[0]).toMatch(/health|heal/i);
+  it('reports Blood Craze as fully modelled, with nothing left to caveat', () => {
+    /*
+     * IT CARRIED TWO DIFFERENT CAVEATS AND OUTLIVED BOTH.
+     *
+     * The first said the healing "is not observable: the character cannot drop
+     * below one health" -- true until the encounter started killing people.
+     * The second said its TICK CADENCE was a placeholder borrowed from
+     * Classic, which the ruleset owner has now stated: every two seconds,
+     * three ticks.
+     *
+     * Asserted as EMPTY rather than deleted, so a caveat cannot quietly come
+     * back without a test failing. Both of its reactions are still checked
+     * above.
+     */
+    const reasons = WARRIOR_TALENT_EFFECTS.blood_craze.filter(
+      (effect) => effect.kind === 'unmodelled',
+    );
+    expect(reasons).toEqual([]);
+    expect(WARRIOR_TALENT_EFFECTS.blood_craze.map((e) => e.kind)).toEqual([
+      'reaction',
+      'reaction',
+    ]);
   });
 });

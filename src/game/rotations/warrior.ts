@@ -128,6 +128,40 @@ function spendableRage(context: SimulationContext, actor: Combatant): number {
 }
 
 /** An entry that only fires when it can be paid for out of spare rage. */
+/**
+ * Charge, at the pull, and NEVER by changing stance to reach it.
+ *
+ * ----------------------------------------------------------------------------
+ * TWO RULES IN ONE CONDITION, and the second is the one that bites.
+ *
+ * WHEN. The ability's own `canCast` allows it only at timestamp zero -- it
+ * cannot be used in combat, and a fight that opens in combat leaves exactly
+ * one legal moment. That rule lives on `CHARGE` so every list gets it.
+ *
+ * AND ONLY FROM A STANCE THAT ALREADY ALLOWS IT. `PriorityRotation` treats a
+ * wrong stance as "not yet, and here is how" and will cast a stance change to
+ * unblock an entry. That is right for Revenge and wrong here: dropping Charge
+ * into the Protection list sent the tank into Battle Stance at the pull,
+ * which is a different character. A `condition` is checked BEFORE the swap is
+ * considered, so refusing here refuses the swap too.
+ *
+ * IT IS ALSO EXACTLY THE VANGUARD GATE the ruleset owner asked for, with no
+ * talent named anywhere. Charge allows Battle Stance; Vanguard adds Defensive
+ * to the character's own copy. A Protection warrior without it is in a stance
+ * Charge does not list, so this returns false; with it, the same entry starts
+ * working. Reading the ability's stance list rather than the talent means the
+ * rule cannot drift from the talent that grants it.
+ * ----------------------------------------------------------------------------
+ */
+const chargeAtThePull: PriorityEntry = {
+  abilityId: 'charge',
+  condition: (_context, actor) => {
+    const charge = actor.abilities.get('charge');
+    if (!charge?.stances) return true;
+    return charge.stances.some((stanceId) => actor.auras.has(stanceId));
+  },
+};
+
 function pooled(abilityId: string, cost: number, extra?: PriorityEntry['condition']): PriorityEntry {
   return {
     abilityId,
@@ -504,6 +538,15 @@ export const WARRIOR_DUAL_WIELD_BERSERKER: readonly PriorityEntry[] = [
   },
   { abilityId: 'bloodthirst' },
   { abilityId: 'whirlwind' },
+  /*
+   * Below both, on the ruleset owner's instruction. It was in the character's
+   * talents and in no list this build could reach, so one point was doing
+   * nothing -- see docs/profile-coverage.md, which is what turned it up.
+   *
+   * Not `pooled`: the two strikes above it already take priority, so rationing
+   * it behind a rage floor as well would keep it in the same place it was.
+   */
+  { abilityId: 'spearing_strike' },
   // Last, so it fills a gap rather than taking a global cooldown from a strike.
   { abilityId: 'bloodrage_cast' },
 ];
@@ -540,6 +583,9 @@ export const WARRIOR_DUAL_WIELD_BERSERKER_ROTATION: Rotation = new PriorityRotat
  * entries. What order a list is in is the thing being specified.
  */
 export const WARRIOR_SHIELD_DEFENSIVE: readonly PriorityEntry[] = [
+  // At the pull, and only with Vanguard. See `chargeAtThePull`, which reads
+  // the stance list rather than naming the talent.
+  chargeAtThePull,
   /*
    * SURVIVAL FIRST. Two entries that nothing in this project could have
    * written a week ago, because the character could not drop below one health
@@ -766,6 +812,12 @@ function mainHandSwingIn(context: SimulationContext, actor: Combatant): number {
  * ----------------------------------------------------------------------------
  */
 export const WARRIOR_TWO_HAND_BATTLE: readonly PriorityEntry[] = [
+  /*
+   * FIRST, because it is the one entry whose window is a single instant: put
+   * it below anything and that anything takes the instant. It is off the
+   * global cooldown, so it costs the entries below it nothing.
+   */
+  chargeAtThePull,
   /*
    * The stance first, and only when it is not already up. A stance lasts until
    * another replaces it, so this fires once at the pull and then never again.
