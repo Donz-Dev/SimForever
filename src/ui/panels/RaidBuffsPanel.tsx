@@ -1,5 +1,9 @@
 import type { RaidBuff } from '../../game/buffs/raidBuffs';
-import { RAID_BUFFS } from '../../game/buffs/raidBuffs';
+import {
+  RAID_BUFFS,
+  RAID_BUFFS_BY_ID,
+  withRaidBuff,
+} from '../../game/buffs/raidBuffs';
 import type { CharacterProfile } from '../../profiles';
 import { Panel } from '../components/Panel';
 
@@ -35,19 +39,21 @@ interface RaidBuffsPanelProps {
 export function RaidBuffsPanel({ profile, onChange }: RaidBuffsPanelProps) {
   const chosen = new Set(profile.raidBuffs);
 
+  /*
+   * Turning one on can turn another OFF. Leader of the Pack and Moonkin Form
+   * are the same +3%, and the ruleset owner's ruling is that they do not stack
+   * and that the panel is where to say so -- the engine is right to add two
+   * different auras together, and what is wrong is choosing both.
+   *
+   * `withRaidBuff` also returns the ids in catalogue order, so two profiles
+   * with the same selection are the same file rather than a diff of whichever
+   * switch was flipped first.
+   */
   const toggle = (id: string) => {
-    const next = new Set(chosen);
-    if (next.has(id)) next.delete(id);
-    else next.add(id);
-    /*
-     * Written back in CATALOGUE order rather than click order, so two profiles
-     * with the same buffs are the same file. A list whose order depended on
-     * which switch was flipped first would make every export a diff.
-     */
-    onChange({
-      ...profile,
-      raidBuffs: RAID_BUFFS.filter((buff) => next.has(buff.id)).map((buff) => buff.id),
-    });
+    const raidBuffs = chosen.has(id)
+      ? profile.raidBuffs.filter((existing) => existing !== id)
+      : withRaidBuff(profile.raidBuffs, id);
+    onChange({ ...profile, raidBuffs });
   };
 
   const onPlayer = RAID_BUFFS.filter((buff) => buff.appliesTo === 'player');
@@ -140,7 +146,17 @@ function BuffGroup({
                     onChange={() => onToggle(buff.id)}
                   />
                   <span className="buff-name">{buff.name}</span>
-                  <span className="buff-detail muted">{buff.detail}</span>
+                  <span className="buff-detail muted">
+                    {buff.detail}
+                    {/* Named rather than left to be discovered by ticking it
+                        and watching another box clear itself. */}
+                    {buff.exclusiveWith ? (
+                      <em>
+                        {' '}
+                        — replaces {RAID_BUFFS_BY_ID.get(buff.exclusiveWith)?.name}
+                      </em>
+                    ) : null}
+                  </span>
                 </label>
               </li>
             ))}

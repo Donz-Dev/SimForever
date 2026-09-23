@@ -1,6 +1,11 @@
 import type { AuraDefinition, Reaction, StatModifierSpec, Stats } from '../../engine';
-import { RATING_PER_PERCENT, flat, percentMultiplicative, seconds } from '../../engine';
-import { BATTLE_SHOUT, SUNDER_ARMOR, SUNDER_ARMOR_MAX_STACKS } from '../auras/warrior';
+import { flat, percentMultiplicative, seconds } from '../../engine';
+import {
+  BATTLE_SHOUT,
+  SUNDER_ARMOR,
+  SUNDER_ARMOR_MAX_STACKS,
+  THUNDER_CLAP_SLOW,
+} from '../auras/warrior';
 import { windfuryTotemReaction } from './windfury';
 
 /**
@@ -57,6 +62,24 @@ export interface RaidBuff {
    * negative and the proc never fired again for the life of the process.
    */
   readonly buildReaction?: () => Reaction;
+  /**
+   * Another entry this one cannot be selected alongside.
+   *
+   * ----------------------------------------------------------------------------
+   * THE RULESET OWNER'S RULING, and their choice of where to enforce it:
+   * "Leader of the Pack and Moonkin Form don't stack, but that can be handled
+   * on the GUI."
+   *
+   * So it is a SELECTION rule rather than a combat one. The engine will happily
+   * carry two auras granting +3% crit and add them to +6%, which is correct
+   * behaviour for two different auras; what is wrong is choosing both, and the
+   * panel refuses that by turning one off when the other goes on.
+   *
+   * Declared in ONE direction and read in both, so the two entries cannot
+   * disagree about whether they exclude each other.
+   * ----------------------------------------------------------------------------
+   */
+  readonly exclusiveWith?: string;
   /**
    * What this entry does NOT do, in one line.
    *
@@ -315,10 +338,7 @@ const leaderOfThePack: RaidBuff = {
     durationMs: 0,
     statModifiers: critChanceEverywhere(3),
   },
-  unmodelled:
-    'Identical to Moonkin Form. Selecting both gives +6% here; nothing in the ' +
-    'source says whether two auras of the same effect stack, so neither is ' +
-    'refused.',
+  exclusiveWith: 'moonkin_form',
 };
 
 const moonkinForm: RaidBuff = {
@@ -333,46 +353,29 @@ const moonkinForm: RaidBuff = {
     durationMs: 0,
     statModifiers: critChanceEverywhere(3),
   },
-  unmodelled:
-    'Identical to Leader of the Pack. Selecting both gives +6% here; nothing ' +
-    'in the source says whether two auras of the same effect stack, so ' +
-    'neither is refused.',
+  exclusiveWith: 'leader_of_the_pack',
 };
 
 // ---------------------------------------------------------------------------
 // Target debuffs
 // ---------------------------------------------------------------------------
 
-/**
- * Thunder Clap's slow, as a NEGATIVE HASTE RATING on the target.
+/*
+ * REUSED, not redeclared -- the same debuff the Warrior's own Thunder Clap now
+ * applies, so a raid that already put it on the target and a warrior keeping
+ * it up refresh one aura rather than stacking two.
  *
- * "Attacks 20% slower" is attack speed minus 20%, which the ruleset owner
- * confirmed means a 2.0 second swing becomes 2.5 -- the swing timer is divided
- * by the haste multiplier, so 0.8 lengthens it by a quarter rather than a
- * fifth. That is how the engine's haste already works, which is why this is a
- * haste rating and not a second slowing mechanism.
- *
- * Converted with the SAME constant `hasteMultiplierFrom` divides by, so the
- * round trip is exact whatever that constant is set to.
+ * The three sources disagree about what "20% slower" means and the ruleset
+ * owner settled it at attack speed minus twenty. `THUNDER_CLAP_SLOW` in
+ * `auras/warrior.ts` has the whole of it.
  */
-export const THUNDER_CLAP_ATTACK_SPEED_PERCENT = 20;
-export const THUNDER_CLAP_SLOW_DURATION_MS = seconds(30);
-
 const thunderClapSlow: RaidBuff = {
   id: 'thunder_clap',
   name: 'Thunder Clap',
   detail: 'Target attacks 20% slower for 30 seconds',
   source: 'Warrior',
   appliesTo: 'enemy',
-  aura: {
-    id: 'thunder_clap_slow',
-    name: 'Thunder Clap',
-    durationMs: THUNDER_CLAP_SLOW_DURATION_MS,
-    isDebuff: true,
-    statModifiers: [
-      flat('hasteRating', -THUNDER_CLAP_ATTACK_SPEED_PERCENT * RATING_PER_PERCENT.haste),
-    ],
-  },
+  aura: THUNDER_CLAP_SLOW,
 };
 
 /*
@@ -483,8 +486,9 @@ const curseOfTheElements: RaidBuff = {
   },
   unmodelled:
     'Magic schools only, and every Warrior ability is physical -- Shield Slam ' +
-    'included. It changes nothing until a class that deals magic damage ' +
-    'exists. Also a curse, like Curse of Recklessness.',
+    'included -- so it changes nothing until a class that deals magic damage ' +
+    'exists. Expected rather than a gap: the ruleset owner is content that it ' +
+    'will work for other classes. Also a curse, like Curse of Recklessness.',
 };
 
 // ---------------------------------------------------------------------------
@@ -527,6 +531,30 @@ export const RAID_BUFFS_BY_ID: ReadonlyMap<string, RaidBuff> = new Map(
 export function selectedRaidBuffs(ids: readonly string[]): readonly RaidBuff[] {
   const chosen = new Set(ids);
   return RAID_BUFFS.filter((buff) => chosen.has(buff.id));
+}
+
+/** Whether two entries are declared mutually exclusive, in either direction. */
+export function areExclusive(a: RaidBuff, b: RaidBuff): boolean {
+  return a.exclusiveWith === b.id || b.exclusiveWith === a.id;
+}
+
+/**
+ * Turn one entry on, switching off anything it cannot sit beside.
+ *
+ * Returns ids in CATALOGUE order, so two profiles with the same selection are
+ * the same file -- a list whose order depended on which switch was flipped
+ * first would make every export a diff.
+ */
+export function withRaidBuff(ids: readonly string[], id: string): readonly string[] {
+  const buff = RAID_BUFFS_BY_ID.get(id);
+  if (!buff) return ids;
+
+  const chosen = new Set(ids);
+  chosen.add(id);
+  for (const other of RAID_BUFFS) {
+    if (other.id !== id && areExclusive(buff, other)) chosen.delete(other.id);
+  }
+  return RAID_BUFFS.filter((entry) => chosen.has(entry.id)).map((entry) => entry.id);
 }
 
 /**

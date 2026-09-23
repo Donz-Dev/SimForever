@@ -92,19 +92,36 @@ strength  344 base + 53 (Strength of Earth) + 16 (Mark of the Wild) = 413
           x 1.1 (Blessing of Kings) = 454.3
 ```
 
-## Thunder Clap slows by a quarter, not a fifth
+## Thunder Clap slows by a quarter, and three sources disagree
 
-> "Attacks 20% slower" is **attack speed −20%**, so a 2.0 second swing becomes
-> 2.5 — a quarter longer, not a fifth.
+| Source | 2.00 second swing becomes |
+| --- | --- |
+| **The ruleset owner, asked directly** | **2.50** — attack speed −20% |
+| Forever's spell description | 2.40 — "increasing the **time between** their attacks by 20%" |
+| Forever's own effect row | 2.47 — "Mod Melee Attack Speed", value −19 |
 
-The ruleset owner's ruling. It is carried as a **negative haste rating**, which
-is how the engine already expresses attack speed, converted with the same
-constant `hasteMultiplierFrom` divides by so the round trip is exact.
+The captured data does not agree with itself, let alone with the owner: its
+description says the swing gets a fifth longer while its effect row says the
+speed drops nineteen percent. **The owner's direct answer settles it**, by the
+rule that settled Shield Wall's cooldown, and the other two are written down
+rather than lost. Worth resolving — it is a quarter versus a fifth of the
+swings that kill the character.
 
-It is a 30 second debuff applied once at the pull and never refreshed, so it
-reads 50% uptime in a 60 second fight. **The Warrior's own Thunder Clap does
-not apply it** — that ability deals damage and nothing else — so nothing keeps
-it up.
+Carried as a **negative haste rating**, which is how the engine already
+expresses attack speed, converted with the same constant `hasteMultiplierFrom`
+divides by so the round trip is exact.
+
+**The Warrior's own Thunder Clap applies it**, on the owner's instruction, and
+the raid entry reuses that aura rather than declaring a copy — so a raid that
+supplied it and a warrior keeping it up refresh one debuff instead of stacking
+two.
+
+That took its uptime from a one-shot **50%** to **74.7%**. Not higher, and the
+gap is a finding rather than a bug: Thunder Clap is **twelfth** in the tank
+list, below the stance, Battle Shout, five Sunder Armors, Demoralizing Shout,
+Heroic Strike, Shield Block, Shield Slam and Revenge — so the first cast lands
+at about **16.9 seconds**. It was a damage ability when that order was chosen
+and it is a mitigation one now.
 
 ## Windfury is the only proc, and it has two traps in it
 
@@ -156,9 +173,22 @@ is made.
 
 | Entry | Why |
 | --- | --- |
-| **Curse of the Elements** | Magic schools only, and every Warrior ability is physical, Shield Slam included. It works the day a caster exists; `damageTakenBySchool` is checked by a test that fires real fire damage. |
-| **Leader of the Pack / Moonkin Form** | Identical effects. Selecting both gives +6%. Nothing in the source says whether two auras of the same effect stack, so neither is refused. |
+| **Curse of the Elements** | Magic schools only, and every Warrior ability is physical, Shield Slam included. The ruleset owner is content with that — "it'll work for other classes" — and `damageTakenBySchool` is checked by a test that fires real fire damage. |
 | **Curse of Recklessness / Curse of the Elements** | Both curses. Only one curse holds on a target in WoW; nothing in the source says so, so both apply here. |
+
+## Entries that cannot sit beside each other
+
+> Leader of the Pack and Moonkin Form don't stack, but that can be handled on
+> the GUI.
+
+The ruleset owner's ruling, and their choice of where to enforce it — so it is
+a **selection** rule rather than a combat one. The engine is right to add two
+different +3% auras to +6%; what is wrong is choosing both. `exclusiveWith`
+declares the pair in one direction and is read in both, and the panel turns one
+off when the other goes on and says "replaces Moonkin Form" beside the switch.
+
+Nothing else in the catalogue is exclusive. The two curses are not, because
+nothing in the source says a target holds only one.
 
 ## What it is worth
 

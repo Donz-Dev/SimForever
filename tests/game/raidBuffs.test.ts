@@ -4,8 +4,9 @@ import { Simulation, applyHaste, hasteMultiplierFrom } from '../../src/engine';
 import {
   RAID_BUFFS,
   RAID_BUFFS_BY_ID,
-  THUNDER_CLAP_ATTACK_SPEED_PERCENT,
+  areExclusive,
   selectedRaidBuffs,
+  withRaidBuff,
 } from '../../src/game/buffs/raidBuffs';
 import {
   WINDFURY_ATTACK_POWER,
@@ -14,7 +15,11 @@ import {
   WINDFURY_PROC_CHANCE,
   windfuryTotemReaction,
 } from '../../src/game/buffs/windfury';
-import { SUNDER_ARMOR_MAX_STACKS } from '../../src/game/auras/warrior';
+import {
+  SUNDER_ARMOR_MAX_STACKS,
+  THUNDER_CLAP_ATTACK_SPEED_PERCENT,
+  THUNDER_CLAP_SLOW,
+} from '../../src/game/auras/warrior';
 import { startingEquipmentFor } from '../../src/game/items/startingSets';
 import { CURRENT_PROFILE_VERSION, createDefaultProfile, migrateProfile } from '../../src/profiles';
 import { characterAtCombatStart, runProfileBatch } from '../../src/simulator';
@@ -234,11 +239,17 @@ describe('debuffs on the target', () => {
     expect(target.stats.get('armor')).toBe(3731 - 2250);
   });
 
-  it('slow the target to 2.5 seconds a swing, not 2.4', () => {
+  it('slow the target to 2.5 seconds a swing, not 2.4 and not 2.47', () => {
     /*
-     * The ruleset owner's ruling: "attacks 20% slower" is attack speed minus
-     * twenty percent, so a 2.0 second swing becomes 2.0 / 0.8 = 2.5 -- a
-     * quarter longer, not a fifth. Written out by hand.
+     * THREE SOURCES, THREE ANSWERS, and this is the ruleset owner's.
+     *
+     *   the owner, asked            attack speed -20%, so 2.00 / 0.8  = 2.50
+     *   Forever's description       "time between attacks +20%", 2.00 x 1.2 = 2.40
+     *   Forever's own effect row    Mod Melee Attack Speed -19, 2.00 / 0.81 = 2.47
+     *
+     * The captured data does not agree with itself, let alone with the owner.
+     * Written out by hand so a change to any of the three has to come through
+     * here.
      */
     expect(THUNDER_CLAP_ATTACK_SPEED_PERCENT).toBe(20);
 
@@ -265,6 +276,119 @@ describe('debuffs on the target', () => {
     expect(target.damageTakenMultiplierFor('shadow')).toBeCloseTo(1.08, 10);
     expect(target.damageTakenMultiplierFor('arcane')).toBeCloseTo(1.08, 10);
     expect(target.damageTakenMultiplierFor('physical')).toBe(1);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Thunder Clap, which the Warrior now applies itself
+// ---------------------------------------------------------------------------
+
+describe('the Warrior keeps Thunder Clap up', () => {
+  it('applies the SAME debuff the raid supplies', () => {
+    /*
+     * One aura, so a raid that already put it on the target and a warrior
+     * casting it every few seconds refresh one debuff rather than stacking
+     * two. The raid entry reuses this rather than declaring a copy.
+     */
+    expect(RAID_BUFFS_BY_ID.get('thunder_clap')!.aura).toBe(THUNDER_CLAP_SLOW);
+  });
+
+  it('renews it, where the raid version falls off at thirty seconds', () => {
+    /*
+     * THE POINT OF THE CHANGE. Applied once at the pull by an assumed raid it
+     * lasts 30 seconds of a 60 second fight and nothing renews it -- 50%
+     * uptime, and all of it in the half where the target is weakest. A warrior
+     * renews it every cast: measured at 8.93 casts and 74.7% uptime.
+     *
+     * NOT HIGHER, and the gap is worth knowing about rather than asserting
+     * away. Thunder Clap is twelfth in the tank list, below the stance, Battle
+     * Shout, five Sunder Armors, Demoralizing Shout, Heroic Strike, Shield
+     * Block, Shield Slam and Revenge -- so the FIRST cast lands at about 16.9
+     * seconds and the slow is simply absent before then. It was a damage
+     * ability when that order was chosen, and it is a mitigation one now.
+     */
+    const profile = {
+      ...(fury([], 200) as unknown as Record<string, unknown>),
+      character: {
+        ...base.character,
+        race: 'tauren',
+        combatStyle: 'one_hand_shield',
+        stance: 'defensive',
+      },
+      equipment: startingEquipmentFor('warrior', 'one_hand_shield'),
+      encounter: { ...base.encounter, targetAttacks: true },
+    };
+
+    const batch = runProfileBatch(profile as never);
+    const slow = batch.debuffUptime.find((row) => row.auraId === 'thunder_clap');
+    // Renewed on every cast, so applications track casts one for one.
+    expect(slow?.applications ?? 0).toBeGreaterThan(5);
+    // Better than the raid's one-shot 50%, and short of the 100% a list that
+    // reached it sooner would give.
+    expect(slow?.uptime ?? 0).toBeGreaterThan(0.7);
+    expect(slow?.uptime ?? 0).toBeLessThan(0.9);
+  });
+
+  it('slows the target even when the swing misses', () => {
+    /*
+     * The slow is a separate effect of the cast, not a rider on the hit: the
+     * spell applies an aura AND deals damage, and nothing in the source ties
+     * the first to the second.
+     */
+    const { simulation, player, target } = opened([], true);
+    const clap = player.abilities.get('thunder_clap');
+    expect(clap).toBeDefined();
+    clap!.onCast({ simulation, caster: player, target, ability: clap! });
+    expect(target.auras.stacksOf('thunder_clap')).toBe(1);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Entries that cannot sit beside each other
+// ---------------------------------------------------------------------------
+
+describe('Leader of the Pack and Moonkin Form', () => {
+  it('are declared exclusive, in both directions', () => {
+    /*
+     * The ruleset owner's ruling and their choice of where to enforce it:
+     * they do not stack, and the GUI is where to say so. The engine is right
+     * to add two different +3% auras to +6%; what is wrong is choosing both.
+     */
+    const pack = RAID_BUFFS_BY_ID.get('leader_of_the_pack')!;
+    const moonkin = RAID_BUFFS_BY_ID.get('moonkin_form')!;
+    expect(areExclusive(pack, moonkin)).toBe(true);
+    expect(areExclusive(moonkin, pack)).toBe(true);
+  });
+
+  it('replace each other when selected', () => {
+    const withPack = withRaidBuff(['battle_shout'], 'leader_of_the_pack');
+    expect(withPack).toEqual(['battle_shout', 'leader_of_the_pack']);
+
+    const withMoonkin = withRaidBuff(withPack, 'moonkin_form');
+    expect(withMoonkin).toContain('moonkin_form');
+    expect(withMoonkin).not.toContain('leader_of_the_pack');
+    // Everything unrelated is left alone.
+    expect(withMoonkin).toContain('battle_shout');
+  });
+
+  it('give three percent, never six', () => {
+    const plain = sheet([]);
+    const one = sheet(withRaidBuff(withRaidBuff([], 'leader_of_the_pack'), 'moonkin_form'));
+    expect(one.stats.get('critChance')).toBeCloseTo(plain.stats.get('critChance') + 3, 6);
+  });
+
+  it('keeps the selection in catalogue order', () => {
+    // So two profiles with the same buffs are the same file, rather than a
+    // diff of whichever switch was flipped first.
+    const clicked = withRaidBuff(withRaidBuff([], 'faerie_fire'), 'battle_shout');
+    expect(clicked).toEqual(['battle_shout', 'faerie_fire']);
+  });
+
+  it('is the only exclusive pair, and nothing points at a missing entry', () => {
+    for (const buff of RAID_BUFFS) {
+      if (!buff.exclusiveWith) continue;
+      expect(RAID_BUFFS_BY_ID.has(buff.exclusiveWith), buff.id).toBe(true);
+    }
   });
 });
 

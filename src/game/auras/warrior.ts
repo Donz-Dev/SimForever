@@ -1,5 +1,5 @@
 import type { AuraDefinition, SimulationContext } from '../../engine';
-import { dealDamage, flat, seconds } from '../../engine';
+import { RATING_PER_PERCENT, dealDamage, flat, seconds } from '../../engine';
 
 /**
  * Warrior auras, from WoWForeverWarriorAbilities.xlsx.
@@ -371,6 +371,54 @@ export const BLOODRAGE: AuraDefinition = bloodrageAura();
  * minutes, confirmed by the ruleset owner against their own spreadsheet's
  * thirty. See `SHIELD_WALL_ABILITY` for how that was settled.
  */
+/*
+ * Thunder Clap's slow, spell 11581.
+ *
+ * ----------------------------------------------------------------------------
+ * THE SOURCES DISAGREE ABOUT WHAT 20% MEANS, and this is the ruleset owner's
+ * answer.
+ *
+ *   - the owner, asked directly    attack speed MINUS 20%, so a 2.00 second
+ *                                  swing becomes 2.00 / 0.8 = 2.50
+ *   - Forever's spell description  "increasing the TIME BETWEEN their attacks
+ *                                  by 20%", which is 2.00 x 1.2 = 2.40
+ *   - Forever's own effect row     "Mod Melee Attack Speed", value -19, which
+ *                                  is 2.00 / 0.81 = 2.47
+ *
+ * Three readings, three answers, and the captured data does not even agree
+ * with itself -- its description says the swing gets a fifth longer while its
+ * effect row says the speed drops by nineteen percent. The owner's direct
+ * answer settles it, by the rule that settled Shield Wall's cooldown, and the
+ * other two are written down here rather than lost.
+ *
+ * WORTH RESOLVING. It is a quarter versus a fifth of the target's swings, and
+ * the target is what kills the character.
+ *
+ * Carried as a NEGATIVE HASTE RATING because that is how the engine already
+ * expresses attack speed -- `applyHaste` divides a swing timer by the haste
+ * multiplier -- and converted with the same constant `hasteMultiplierFrom`
+ * divides by, so the round trip is exact whatever that constant is set to.
+ *
+ * THE SAME AURA THE RAID APPLIES. `game/buffs/raidBuffs.ts` lists Thunder Clap
+ * as something the raid may already have put on the target, and it reuses this
+ * rather than declaring a second copy -- so a warrior keeping it up and a raid
+ * that supplied it refresh one debuff instead of stacking two.
+ * ----------------------------------------------------------------------------
+ */
+export const THUNDER_CLAP_ATTACK_SPEED_PERCENT = 20;
+export const THUNDER_CLAP_SLOW_DURATION_MS = seconds(30);
+
+export const THUNDER_CLAP_SLOW: AuraDefinition = {
+  id: 'thunder_clap',
+  name: 'Thunder Clap',
+  durationMs: THUNDER_CLAP_SLOW_DURATION_MS,
+  isDebuff: true,
+  refreshBehaviour: 'reset',
+  statModifiers: [
+    flat('hasteRating', -THUNDER_CLAP_ATTACK_SPEED_PERCENT * RATING_PER_PERCENT.haste),
+  ],
+};
+
 export const SHIELD_WALL_DAMAGE_TAKEN_MULTIPLIER = 0.4;
 export const SHIELD_WALL_DURATION_MS = seconds(12);
 

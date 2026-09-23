@@ -248,8 +248,17 @@ describe('the assumed healer', () => {
   });
 
   it('heals between five hundred and fifteen hundred, every time', () => {
+    /*
+     * FILTERED TO THE HEALER'S OWN ABILITY ID, because it is no longer the
+     * only thing healing this character. Crusader's enchant heals 75 to 125 on
+     * proc, and the tank's starting set carries it -- so a filter on the event
+     * type alone caught a 95 point Crusader tick and failed against a floor of
+     * 500. It was right by luck until a change moved the random stream enough
+     * for Crusader to proc inside this window.
+     */
     const heals = timelineOf(22, 60).filter(
-      (event): event is Extract<TelemetryEvent, { type: 'heal' }> => event.type === 'heal',
+      (event): event is Extract<TelemetryEvent, { type: 'heal' }> =>
+        event.type === 'heal' && event.abilityId === 'external_healer',
     );
     expect(heals.length).toBeGreaterThan(50);
 
