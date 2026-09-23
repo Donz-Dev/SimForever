@@ -141,6 +141,15 @@ killing blow was meant to trigger -- and it does not reset the target's ramp,
 because a ramp that reset would hand a character an easier fight for dying.
 Full rules and provenance in [docs/incoming-damage.md](docs/incoming-damage.md).
 
+**A revive keeps auras, except the ones spent to prevent it.** An aura declares
+`removedOnDeath`, and Last Stand and Shield Wall are the two that do: a
+survival cooldown that visibly failed does not carry through the death it
+failed to stop, and Last Stand would otherwise drag its borrowed maximum health
+into a pool that was just refilled. Everything ELSE stays up, which is the
+point of `revivesOnDeath` — dropping the lot would switch off the assumed
+healer at the moment it is needed most. Which effects survive dying is a
+property of the effect, so the flag is on the aura and not on the character.
+
 **A cast interrupts the swing in progress, and the swing timer resets.** That is
 what makes a cast a real cost to a melee character rather than free damage
 between swings. `Ability.swingTimer: 'hold'` is the exception — the timer runs on

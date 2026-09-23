@@ -199,7 +199,7 @@ target attacks  218.57 +/- 2.53  against 206.43 +/- 2.12  +12.14
 | Ability | Spell | Forever says | Status |
 | --- | --- | --- | --- |
 | **Death Wish** | 12328 | +20% physical damage, +5% damage taken, 30 sec, 10 rage, 3 min | **Implemented**, in the rotation, **+11.77 ± 3.29 DPS** |
-| **Last Stand** | 12975 | +30% maximum health for 20 sec, lost when it ends | **Implemented**, and worth nothing here — see below |
+| **Last Stand** | 12975 | +30% maximum health for 20 sec, lost when it ends | **Implemented and used.** First entry of the Protection list |
 | **Sweeping Strikes** | 12292 | next 5 melee attacks strike an additional nearby opponent, 30 rage, Battle Stance | **Implemented and inert** — no second target |
 | **Concussion Blow** | 12809 | stuns the target for 5 sec | **Out of scope.** Stuns are non-combat |
 | **Piercing Howl** | 12323 | dazes nearby enemies, −50% movement, 6 sec | **Out of scope.** Snares are non-combat |
@@ -213,14 +213,23 @@ that moves a number. Measured at **+11.77 ± 3.29 DPS** over 250 fights against
 the same Fury build with the point spent elsewhere — isolating the ability, not
 the tree.
 
-**Last Stand was implemented and changed no outcome, and that has stopped being
-true.** It raises maximum health 30%, grants that much, and takes both back
-when it expires. When this was written the player could not drop below one
-health and nothing reported survival, so the extra health decided nothing.
+**Last Stand was implemented and changed no outcome, and that has stopped
+being true twice over.** When this was first written the player could not drop
+below one health and nothing reported survival, so the extra health decided
+nothing. The character can now die and the deaths are counted, so it is a real
+decision — and it is the FIRST entry of the Protection list, cast under 30%
+health about once a fight.
 
-The character can now die, and deaths are reported — so Last Stand is a real
-decision, and nothing in the Protection list casts it. That is a gap rather than
-a finding; see [incoming-damage.md](incoming-damage.md).
+Finishing it turned up the part that had never worked. Expiry dropped the
+maximum and merely clamped current health into it, so a warrior who cast Last
+Stand while hurt kept every borrowed point — a 1,200 health heal on a three
+minute cooldown, which is the opposite of "after the effect expires, the health
+is lost". Expiry now takes the granted health back as well, floored at one so
+it cannot itself be the killing blow. That floor is an interpretation: the
+source says what is lost, not what happens when there is not enough of it.
+
+It is also removed outright when the character dies, with Shield Wall — see
+[incoming-damage.md](incoming-damage.md).
 
 **Sweeping Strikes is implemented and does nothing**, for a different reason: its
 entire effect is the *additional* opponent, and every encounter here has exactly

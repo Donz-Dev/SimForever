@@ -372,17 +372,19 @@ export const WARRIOR_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
 
   improved_thunder_clap: [{ kind: 'abilityCost', abilityId: 'thunder_clap' }],
 
-  last_stand: [
-    { kind: 'grantAbility', abilityId: 'last_stand' },
-    {
-      kind: 'unmodelled',
-      reason:
-        'The ability is implemented -- 30% more maximum health for 20 sec -- ' +
-        'but it changes no outcome, because the player cannot drop below one ' +
-        'health and survival is not modelled. It is a real ability with ' +
-        'nothing here to measure it against.',
-    },
-  ],
+  /*
+   * FULLY MODELLED, and the last of this file's reasons to expire.
+   *
+   * It said: "the ability is implemented, but it changes no outcome, because
+   * the player cannot drop below one health and survival is not modelled. It
+   * is a real ability with nothing here to measure it against." Every clause
+   * was true when it was written and none of them is now. The character dies,
+   * the deaths are counted, and Last Stand is the FIRST entry of the
+   * Protection list -- cast at under 30% health, about once a fight.
+   *
+   * Nothing about the talent changed to make that happen. The encounter did.
+   */
+  last_stand: [{ kind: 'grantAbility', abilityId: 'last_stand' }],
 
   /*
    * FULLY MODELLED, apart from its shield clause. A 50/100% chance of 5 rage

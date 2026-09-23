@@ -42,7 +42,7 @@ Cooldown and cast time are in seconds, as the sheet states them.
 | Whirlwind | 25 | 10 | 0 | Melee Special Attack | | Weapon Damage (can hit up to 4 targets) |
 | Berserker Rage | 0 | 30 | 0 | Other/Buff | | |
 | Berserker Stance | 0 | 1 | 0 | Other/Buff | | |
-| Shield Wall | 0 | 1800 | 0 | Other/Buff | | |
+| Shield Wall | 0 | 1800 | 0 | Other/Buff | | Forever's spell tooltip says **15 min**, not 30. See below. |
 | Shield Block | 10 | 5 | 0 | Other/Buff | | |
 | Defensive Stance | 0 | 1 | 0 | Other/Buff | | |
 | Bloodrage | 0 | 60 | 0 | Other/Buff | | |
@@ -190,13 +190,25 @@ Where they AGREE, confidence goes up:
 
 Where they DISAGREED:
 
-| Ability | Spreadsheet | Calculator |
+| Ability | Spreadsheet | Other Forever source |
 | --- | --- | --- |
-| **Mortal Strike** | base damage **160** | "weapon damage plus **85**" |
+| **Mortal Strike** | base damage **160** | calculator: "weapon damage plus **85**" |
+| **Shield Wall** | cooldown **1800s** | spell tooltip: "Instant **15 min** cooldown" |
 
-**RESOLVED: 160 is correct.** Confirmed by the ruleset owner. Mortal Strike is
-weapon damage plus 160; the talent calculator's 85 is wrong for Forever. The
-code always used 160, so nothing changed.
+**Mortal Strike — RESOLVED: 160 is correct.** Confirmed by the ruleset owner.
+Mortal Strike is weapon damage plus 160; the talent calculator's 85 is wrong
+for Forever. The code always used 160, so nothing changed.
+
+**Shield Wall — OPEN, and the code uses 1800.** The spreadsheet wins by the
+standing rule: where two sources disagree, take the one the ruleset owner
+supplied directly. Worth asking about, because it is a factor of two on a
+cooldown that the Improved Shield Wall talent then reduces.
+
+It is also a worked example of why the hand-transcribed ability test exists.
+The cooldown was changed to 900 on the strength of the captured tooltip alone
+— the aura's own comment had asserted fifteen minutes since it was written, so
+the capture looked like confirmation rather than a second opinion — and
+`tests/game/warriorAbilities.test.ts` refused it in the same run.
 
 The calculator also confirms **Spearing Strike is an Arms talent**, which is why
 it had no Classic counterpart to check against.

@@ -26,7 +26,7 @@ their talent trees and nothing else.
 | **Reactions** | content responds to an attack result: Overpower off a target dodge, and every item proc |
 | **Gear** | 19 items and the Crusader enchant, equippable, driving stats, weapons and procs. A **starting set** is equipped automatically when a Warrior is created, so the first fight is a geared one |
 | **Procs** | PPM (Vis'kag, Crusader) and flat-chance with an internal cooldown (Hand of Justice) |
-| **Talents** | all 469 talents, nine classes, spendable in the UI and saved on the profile. The Warrior's per-rank values are captured; **43 of its 53 talents do something** (37 fully, 6 partly), 10 say on screen why they cannot |
+| **Talents** | all 469 talents, nine classes, spendable in the UI and saved on the profile. The Warrior's per-rank values are captured; **43 of its 53 talents do something** (38 fully, 5 partly), 10 say on screen why they cannot |
 | **Encounter** | the target optionally hits back, **ramping 10% a swing**, against a character held up by an assumed healer who can be out-damaged. Deaths are counted. See [docs/incoming-damage.md](docs/incoming-damage.md) |
 | **Analysis** | DPS, per-ability breakdown with uses/attempts/hits/crit/glance/avoid rates, buff and debuff uptime, rage economy, deaths and healing received |
 | **UI** | two-step character flow, per-class character sheet (offensive and defensive), style-aware gear, talent trees, combat log, Monte Carlo batches, uptime bar charts |
@@ -137,7 +137,7 @@ what it does in `game/talents/warriorEffects.ts`; what its number IS lives in
 **every edge case and interpretation** the Warrior turned up. The design
 rationale is in the proposal on PR #22, which is not merged.
 
-**Warrior: 37 talents fully modelled, 6 partly, 10 inert.** Every one of the 53
+**Warrior: 38 talents fully modelled, 5 partly, 10 inert.** Every one of the 53
 has an explicit entry, and the inert ones name their own obstacle, so the list
 below IS the work queue. The Talent panel prints them under "Chosen but not
 simulated".

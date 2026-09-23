@@ -812,7 +812,29 @@ export const BLOODRAGE_ABILITY: Ability = {
   },
 };
 
-/** Free, 30 minute cooldown. Takes 60% off damage taken for 12 sec. */
+/**
+ * Free, Defensive Stance. Takes 60% off damage taken for 12 sec.
+ *
+ * ----------------------------------------------------------------------------
+ * THE TWO SOURCES DISAGREE ABOUT THE COOLDOWN, and this is the spreadsheet's
+ * answer.
+ *
+ *   - `WoWForeverWarriorAbilities.xlsx`      1800 seconds (30 minutes)
+ *   - Forever's captured spell tooltip       "Instant 15 min cooldown"
+ *
+ * The spreadsheet wins, by the project's standing rule: where two sources
+ * disagree, take the one the ruleset owner supplied directly rather than the
+ * newer or the more convenient. It was changed to 900 on the strength of the
+ * capture alone and the hand-transcribed spreadsheet test caught it, which is
+ * exactly what that test is for.
+ *
+ * Worth resolving, because it is a factor of two on a cooldown that Improved
+ * Shield Wall then reduces -- and because the aura's own comment in
+ * `auras/warrior.ts` has quietly asserted fifteen minutes since it was
+ * written. Invisible in a sixty second fight, where either figure allows
+ * exactly one cast.
+ * ----------------------------------------------------------------------------
+ */
 export const SHIELD_WALL_ABILITY: Ability = {
   id: 'shield_wall_cast',
   stances: ['defensive_stance'],

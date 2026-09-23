@@ -363,8 +363,14 @@ export const BLOODRAGE: AuraDefinition = bloodrageAura();
 /*
  * Spell 871: "Reduces the damage taken from all attacks by 60% for 12 sec."
  *
- * CLASSIC SAYS 75% FOR 10 SECONDS on a 30 minute cooldown; Forever is weaker,
- * longer, and on a 15 minute cooldown. 60% taken off is a multiplier of 0.40.
+ * CLASSIC SAYS 75% FOR 10 SECONDS; Forever is weaker and longer, and 60% taken
+ * off is a multiplier of 0.40. Both figures here are Forever's, and the two
+ * sources agree on them.
+ *
+ * THEY DISAGREE ABOUT THE COOLDOWN. This comment used to state Forever's as
+ * fifteen minutes, which is the captured tooltip; the ruleset owner's
+ * spreadsheet says thirty. The spreadsheet wins and the ability carries 1800
+ * seconds -- see `SHIELD_WALL_ABILITY` for the whole of it.
  */
 export const SHIELD_WALL_DAMAGE_TAKEN_MULTIPLIER = 0.4;
 export const SHIELD_WALL_DURATION_MS = seconds(12);
@@ -374,6 +380,8 @@ export const SHIELD_WALL: AuraDefinition = {
   name: 'Shield Wall',
   durationMs: SHIELD_WALL_DURATION_MS,
   damageTakenMultiplier: SHIELD_WALL_DAMAGE_TAKEN_MULTIPLIER,
+  // Spent to prevent a death, so it does not survive one. See the flag.
+  removedOnDeath: true,
 };
 
 /*
@@ -598,44 +606,82 @@ export const DEATH_WISH: AuraDefinition = {
 /*
  * Spell 12975, Last Stand: "temporarily grants you 30% of your maximum health
  * for 20 sec. After the effect expires, the health is lost." Free, 3 minute
- * cooldown, any stance.
+ * cooldown, ANY STANCE -- its captured entry has an empty `stances` list, so
+ * unlike Shield Wall it is not a Defensive-only ability. Every figure here is
+ * from that capture.
  *
- * MODELLED HONESTLY AND WORTH ALMOST NOTHING HERE. It raises the maximum and
- * grants the same amount as current health, then takes both back on expiry --
- * which is what "the health is lost" means, and is why it is a survival
- * cooldown rather than a heal.
+ * ----------------------------------------------------------------------------
+ * "THE HEALTH IS LOST" IS THE WHOLE ABILITY, and it used to be the one part
+ * that was not modelled.
  *
- * The player in this simulator CANNOT DROP BELOW ONE HEALTH, so extra health
- * changes no outcome: nothing dies, and no analyzer reports survival. It is
- * implemented because it is fully expressible and because a talent that grants
- * an ability should grant a real one -- not because it will move a number.
- * Anything reading Last Stand's worth from this simulator is reading the wrong
- * simulator.
+ * Applying it raises the maximum by 30% and grants the same amount as current
+ * health. Expiry used to take the MAXIMUM back and then merely clamp current
+ * into it -- which meant a warrior who cast Last Stand while hurt kept every
+ * point of the borrowed health for the rest of the fight. That is a 1,200
+ * point heal on a three minute cooldown, and the tooltip says the opposite in
+ * so many words.
+ *
+ * So expiry now removes the granted amount from CURRENT health as well. That
+ * is what makes this a survival cooldown -- a window, not a heal -- and it is
+ * the difference between casting it at 20% health and being saved, versus
+ * casting it and being back at 20% twenty seconds later.
+ *
+ * INTERPRETATION, and the one thing the source does not settle: whether the
+ * loss can KILL. "The health is lost" says what goes, not what happens if
+ * there is not enough of it. It is floored at one health here, so Last Stand
+ * can fail to save a character but can never be the thing that finishes them
+ * -- an ability that saves you and then kills you is the more extraordinary
+ * claim, and nothing states it. One line to flip if the ruleset owner says
+ * otherwise.
+ *
+ * WHAT CHANGED AROUND IT. This used to end "the player cannot drop below one
+ * health, so extra health changes no outcome; anything reading Last Stand's
+ * worth from this simulator is reading the wrong simulator". That was true
+ * when written. The character now dies, is counted, and casts this at 30%
+ * health as the first entry of the Protection list.
+ * ----------------------------------------------------------------------------
  */
 export const LAST_STAND_HEALTH_FRACTION = 0.3;
 export const LAST_STAND_DURATION_MS = seconds(20);
+
+/** How much health Last Stand borrows for a pool of this size. */
+export function lastStandGrant(maximumHealth: number): number {
+  return Math.floor(maximumHealth * LAST_STAND_HEALTH_FRACTION);
+}
 
 export const LAST_STAND: AuraDefinition = {
   id: 'last_stand',
   name: 'Last Stand',
   durationMs: LAST_STAND_DURATION_MS,
+  // Spent to prevent a death, so it does not survive one. See the flag.
+  removedOnDeath: true,
   onApply: (context, aura) => {
     const health = combatantIn(context, aura.targetId)?.health;
     if (!health) return;
-    const granted = Math.floor(health.maximum * LAST_STAND_HEALTH_FRACTION);
+    const granted = lastStandGrant(health.maximum);
     health.setMaximum(health.maximum + granted);
     health.gain(granted);
   },
   onExpire: (context, aura) => {
     const health = combatantIn(context, aura.targetId)?.health;
     if (!health) return;
+
+    /*
+     * Recovered from the inflated maximum rather than remembered, and it is
+     * exact: with a maximum of b + floor(0.3b), this expression is always
+     * floor(0.3b) again. It would stop being exact if anything else resized
+     * the pool while Last Stand was up, and nothing does -- a buff that moved
+     * stamina would not currently resize health either.
+     */
     const granted = Math.floor(
       (health.maximum / (1 + LAST_STAND_HEALTH_FRACTION)) * LAST_STAND_HEALTH_FRACTION,
     );
     health.setMaximum(health.maximum - granted);
-    // "The health is lost": the pool shrinks and current follows it down, which
-    // is what can kill a character the instant Last Stand ends.
-    health.set(Math.min(health.current, health.maximum));
+
+    // "The health is lost." Both halves go: the pool shrinks AND the borrowed
+    // current health is taken back, floored at one so the expiry cannot be
+    // the killing blow. See the interpretation note above.
+    health.set(Math.max(1, Math.min(health.current - granted, health.maximum)));
   },
 };
 
