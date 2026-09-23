@@ -363,7 +363,10 @@ export function resolveDamage(
     source.abilityModifiers.for(request.abilityId).damageMultiplier ?? 1;
   const afterAttacker = afterCrit * attackerMultiplier * abilityMultiplier;
 
-  const afterTarget = afterAttacker * target.damageTakenMultiplier;
+  // Per SCHOOL, which folds in the blanket multiplier as well. Curse of the
+  // Elements raises magic and leaves physical alone, so the school has to
+  // reach this line rather than being decided before it.
+  const afterTarget = afterAttacker * target.damageTakenMultiplierFor(request.school);
 
   const reduction = appliesArmor(request)
     ? armorReduction(target.stats.get('armor'), target.level)

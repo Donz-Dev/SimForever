@@ -14,6 +14,7 @@ import { CharacterSheetPanel } from './panels/CharacterSheetPanel';
 import { CombatLogPanel } from './panels/CombatLogPanel';
 import { EncounterPanel } from './panels/EncounterPanel';
 import { GearPanel } from './panels/GearPanel';
+import { RaidBuffsPanel } from './panels/RaidBuffsPanel';
 import { ResultsPanel } from './panels/ResultsPanel';
 import { SimulationPanel } from './panels/SimulationPanel';
 import { TalentPanel } from './panels/TalentPanel';
@@ -138,6 +139,9 @@ export function App() {
               onToggleCollapsed={() => setTalentsCollapsed((was) => !was)}
             />
             <GearPanel profile={profile} onChange={setProfile} />
+            {/* After the gear, because it is the same kind of decision: what
+                the character walks in carrying. Set once and rarely touched. */}
+            <RaidBuffsPanel profile={profile} onChange={setProfile} />
 
             {state.status === 'running' ? (
               <div className="placeholder">

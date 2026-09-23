@@ -31,9 +31,11 @@ describe('a new profile', () => {
     expect(simulation.iterations).toBe(3000);
   });
 
-  it('is format 8', () => {
-    expect(CURRENT_PROFILE_VERSION).toBe(8);
-    expect(createDefaultProfile().version).toBe(8);
+  it('is format 9', () => {
+    // Version 9 added `raidBuffs`. Written out rather than read from the
+    // constant, so a bump has to be deliberate.
+    expect(CURRENT_PROFILE_VERSION).toBe(9);
+    expect(createDefaultProfile().version).toBe(9);
   });
 
   it('has no variance field at all', () => {
@@ -108,7 +110,8 @@ describe('an older profile loses its variance field', () => {
     if (!result.ok) return;
 
     const migrated = result.value as { version: number; simulation: Record<string, unknown> };
-    expect(migrated.version).toBe(8);
+    // Carried all the way to the current format, not just to 8.
+    expect(migrated.version).toBe(CURRENT_PROFILE_VERSION);
     expect(migrated.simulation).not.toHaveProperty('durationVariance');
     // Everything else it chose is kept. Only the field that has nowhere left
     // to be read from goes.

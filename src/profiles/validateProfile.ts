@@ -248,6 +248,19 @@ export function validateProfile(value: unknown): ValidationResult {
     requirePositiveNumber(encounter.targetSwingSeconds, 'encounter.targetSwingSeconds', issues);
   }
 
+  /*
+   * A LIST OF STRINGS, and unknown ids are not an error here.
+   *
+   * Which ids exist is `game/buffs/raidBuffs.ts`'s business, and a profile
+   * saved when an entry existed should still load after it is renamed.
+   * `selectedRaidBuffs` drops what it does not recognise, so the failure mode
+   * is one missing buff rather than a character that will not load.
+   */
+  const raidBuffs = value.raidBuffs;
+  if (!Array.isArray(raidBuffs) || raidBuffs.some((id) => typeof id !== 'string')) {
+    issues.push({ path: 'raidBuffs', message: 'Must be a list of buff ids.' });
+  }
+
   if (issues.length > 0) return { ok: false, issues };
 
   // Rebuild rather than casting, so unknown extra keys are dropped instead of
@@ -270,6 +283,16 @@ export function validateProfile(value: unknown): ValidationResult {
         ...(validated.character.combatStyle !== undefined
           ? { combatStyle: validated.character.combatStyle }
           : {}),
+        /*
+         * THE STANCE WAS BEING DROPPED HERE. This function rebuilds the
+         * profile field by field so unknown keys cannot ride along, and
+         * `stance` was never added -- so a warrior saved in Berserker loaded
+         * back in their style's default. Silent, and only visible to someone
+         * who chose a non-default stance and then reloaded.
+         */
+        ...(validated.character.stance !== undefined
+          ? { stance: validated.character.stance }
+          : {}),
       },
       stats: cleanStats,
       equipment: cleanEquipment(validated.equipment),
@@ -288,6 +311,7 @@ export function validateProfile(value: unknown): ValidationResult {
         targetSwingDamage: validated.encounter.targetSwingDamage,
         targetSwingSeconds: validated.encounter.targetSwingSeconds,
       },
+      raidBuffs: [...validated.raidBuffs],
     },
   };
 }

@@ -1,6 +1,8 @@
 import type {
   AuraDefinition,
   PartialStats,
+  Reaction,
+  Stats,
   ResourceType as ResourceTypeName,
   WeaponProfile,
   WeaponSlot,
@@ -113,6 +115,38 @@ export interface PlayerOptions {
    * encounter chooses is whether there is one.
    */
   readonly externalHealing?: boolean;
+  /**
+   * Procs from outside the character: today, Windfury Totem.
+   *
+   * Kept apart from class, gear and talent reactions because it is the
+   * ENCOUNTER's business who else is in the raid, and the character would have
+   * none of these standing alone.
+   */
+  readonly extraReactions?: readonly Reaction[];
+  /**
+   * Stats to size the HEALTH AND MANA POOLS from, when they are not the
+   * character's own starting stats.
+   *
+   * ----------------------------------------------------------------------------
+   * BECAUSE THE POOLS ARE A SNAPSHOT. They are resource maximums rather than
+   * derived stats, so unlike attack power or crit they do not re-derive when a
+   * buff moves stamina -- and Power Word: Fortitude's +70 stamina would have
+   * granted NO HEALTH, which is the entire point of it.
+   *
+   * So the encounter passes a TRANSFORM -- a function from the character's own
+   * stats to the stats they will have once the raid buffs are up -- and the
+   * pools are sized from the result. A function rather than a delta because
+   * Blessing of Kings is multiplicative: +10% of a total cannot be written
+   * down without knowing the total. The buffs are still
+   * applied as auras; nothing is counted twice, because the pools are computed
+   * once here and never again.
+   *
+   * The underlying limitation is unchanged: a buff landing MID-fight still
+   * does not resize the pool. Everything this covers is up before the first
+   * swing, which is what makes the snapshot right.
+   * ----------------------------------------------------------------------------
+   */
+  readonly poolStats?: (own: Readonly<Stats>) => Readonly<Stats>;
 }
 
 /**
@@ -246,7 +280,15 @@ export function createPlayer(options: PlayerOptions): Combatant {
 
   // Layer 3, for the resource maximums only. The stat block handles the rest.
   const conversions = conversionsFor(characterClass, style);
-  const derived = deriveFromPrimaries(startingStats, conversions);
+  /*
+   * From `poolStats` when the encounter supplied them -- the character's own
+   * stats PLUS whatever raid buffs will be up before the first swing. See the
+   * option for why the pools need that and nothing else does.
+   */
+  const derived = deriveFromPrimaries(
+    options.poolStats ? options.poolStats(startingStats) : startingStats,
+    conversions,
+  );
 
   const resources = resourceSpecsFor(
     characterClass,
@@ -295,6 +337,8 @@ export function createPlayer(options: PlayerOptions): Combatant {
       // Talent procs: Deep Wounds, Flurry and the rest. Built per character
       // from the rank taken, so they carry that character's numbers.
       ...build.reactions,
+      // Whoever else is in the raid. Windfury Totem is the only one today.
+      ...(options.extraReactions ?? []),
     ],
     // No abilities means nothing for a rotation to choose, so it is left off
     // rather than scheduling decision events that can never do anything.
