@@ -241,7 +241,19 @@ describe('player versus training dummy', () => {
     });
     const used = result.damage.byActor[0].abilities.map((entry) => entry.abilityName);
 
-    expect(used).toEqual(['Main Hand Auto-Attack']);
+    /*
+     * THE AUTO-ATTACK IS THE POINT, not that it is alone. This asserted an
+     * exact list of one while the Druid had no abilities at all; it now runs a
+     * Cat rotation, so the check is that the swing comes from a paw rather
+     * than from the two-hander in the stat-stick slot.
+     */
+    expect(used).toContain('Main Hand Auto-Attack');
+    expect(used).not.toContain('Off Hand Auto-Attack');
+
+    const swing = result.damage.byActor[0].abilities.find(
+      (entry) => entry.abilityName === 'Main Hand Auto-Attack',
+    );
+    expect(swing?.attempts ?? 0).toBeGreaterThan(0);
   });
 
   it('runs a short fight without error', () => {
