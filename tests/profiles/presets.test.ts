@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { PRESETS_BY_ID, PROFILE_PRESETS, validateProfile } from '../../src/profiles';
+import {
+  PRESETS_BY_ID,
+  PROFILE_PRESETS,
+  createDefaultProfile,
+  validateProfile,
+} from '../../src/profiles';
 import { CURRENT_PROFILE_VERSION } from '../../src/profiles';
 import { TOTAL_TALENT_POINTS } from '../../src/game/talents/Talent';
 import { talentsForClass } from '../../src/game/talents/talentData';
@@ -61,12 +66,63 @@ describe('the preset catalogue', () => {
     }
   });
 
-  it('assumes no raid buffs, like every other starting point', () => {
-    // Nothing in the specification mentions them, and inventing a raid would
-    // move every number a preset produces.
-    for (const preset of PROFILE_PRESETS) {
-      expect(preset.build().raidBuffs, preset.id).toEqual([]);
-    }
+  it('assumes the SAME raid for all three', () => {
+    /*
+     * One raid, so two presets differ by the character and not by who else
+     * turned up -- which is the only way their numbers can be compared at all.
+     *
+     * A new profile still starts with none. That is what keeps every figure
+     * measured without them comparable; a preset is a stated character, and
+     * the raid is part of what it states.
+     */
+    const [first, ...rest] = PROFILE_PRESETS.map((preset) => preset.build().raidBuffs);
+    expect(first.length).toBeGreaterThan(0);
+    for (const other of rest) expect(other).toEqual(first);
+    expect(createDefaultProfile().raidBuffs).toEqual([]);
+  });
+
+  it('takes the twelve the ruleset owner ticked, and no others', () => {
+    /*
+     * Written out by hand from the owner's own screen. What is ABSENT is
+     * absent on purpose: no Arcane Intellect, Blessing of Wisdom or Mana
+     * Spring Totem, because a warrior has no mana; no Trueshot Aura, whose
+     * ranged attack power reaches a bow that never swings; no Grace of Air
+     * Totem; no Moonkin Form, which cannot sit beside Leader of the Pack; and
+     * neither curse.
+     */
+    expect(PRESETS_BY_ID.get('dw_fury')!.build().raidBuffs).toEqual([
+      'battle_shout',
+      'thunder_clap',
+      'sunder_armor',
+      'power_word_fortitude',
+      'divine_spirit',
+      'blessing_of_kings',
+      'blessing_of_might',
+      'faerie_fire',
+      'mark_of_the_wild',
+      'strength_of_earth_totem',
+      'windfury_totem',
+      'leader_of_the_pack',
+    ]);
+  });
+
+  it('starts the target at five Sunders, so the list only refreshes', () => {
+    /*
+     * THE RULESET OWNER'S REASON for adding the list to the presets: with the
+     * raid's five stacks already up, the warrior stops opening every fight by
+     * applying five of its own and only renews what is there.
+     *
+     * A large change to the rage economy rather than a cosmetic one -- Sunder
+     * went from 6.56 casts a fight to 2.35 on the Arms build, and Mortal
+     * Strike from 1.73 to 6.92 with the rage that freed.
+     */
+    const p = PRESETS_BY_ID.get('two_hand_arms')!.build();
+    const batch = runProfileBatch({ ...p, simulation: { ...p.simulation, iterations: 60 } });
+    const sunder = batch.abilities.find((row) => row.abilityName === 'Sunder Armor');
+    expect(sunder?.uses ?? 0).toBeLessThan(4);
+
+    const uptime = batch.debuffUptime.find((row) => row.auraId === 'sunder_armor');
+    expect(uptime?.uptime ?? 0).toBeGreaterThan(0.95);
   });
 
   it('returns a FRESH profile each time', () => {
@@ -396,7 +452,6 @@ describe('2H Arms', () => {
       batch.abilities.find((row) => row.abilityName === name)?.uses ?? 0;
 
     for (const name of [
-      'Battle Shout',
       'Sunder Armor',
       'Rend',
       'Mortal Strike',
@@ -408,5 +463,24 @@ describe('2H Arms', () => {
       expect(uses(name), name).toBeGreaterThan(0);
     }
     expect(batch.dps.mean).toBeGreaterThan(0);
+  });
+
+  it('does NOT cast Battle Shout, because the raid already did', () => {
+    /*
+     * The reuse paying off. The raid entry and the Warrior's own ability are
+     * the SAME aura, so the list's "if not active" condition finds it up from
+     * the pull and falls straight through -- saving a global cooldown and ten
+     * rage every fight rather than stacking a second copy.
+     *
+     * This test asserted the opposite until the raid was added to the presets,
+     * which is exactly the change that should have flipped it.
+     */
+    const p = profile();
+    const batch = runProfileBatch({ ...p, simulation: { ...p.simulation, iterations: 40 } });
+    expect(batch.abilities.find((row) => row.abilityName === 'Battle Shout')).toBeUndefined();
+
+    const shout = batch.buffUptime.find((row) => row.auraId === 'battle_shout');
+    expect(shout?.uptime ?? 0).toBeGreaterThan(0.99);
+    expect(shout?.applications ?? 0).toBeCloseTo(1, 1);
   });
 });

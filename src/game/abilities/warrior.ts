@@ -135,22 +135,41 @@ export const BLOODTHIRST: Ability = {
 };
 
 /**
- * Weapon damage plus 87, with a 1.5 second cast time, 15 rage, no cooldown.
+ * Weapon damage plus 68, 1.5 second cast, 15 rage, FIFTEEN SECOND COOLDOWN.
  *
- * THE SPREADSHEET GIVES NO BASE DAMAGE AT ALL and Forever gives 87, so this was
- * pure weapon damage and is not. See docs/warrior-ability-audit.md.
+ * ----------------------------------------------------------------------------
+ * BOTH OF THOSE WERE WRONG, and they were wrong in different ways.
  *
- * UNSTATED: whether the cast pauses the swing timer, as it does in Classic.
- * It currently does not, which makes Slam slightly better than it should be if
- * Forever kept that behaviour.
+ * THE COOLDOWN. The spreadsheet's row says 0 and this had none. Forever's
+ * captured tooltip says "1.5 sec cast 15 sec cooldown", and the ruleset owner
+ * confirms fifteen. Two sources against the sheet, which is the same shape as
+ * Shield Wall's cooldown and resolved the same way.
+ *
+ * THE BASE DAMAGE. The spreadsheet gives none at all, so this took 87 from
+ * Forever's own tooltip -- "causing weapon damage plus 87", with an effect row
+ * of 88. The ruleset owner says SIXTY-EIGHT, which overrules both. That is the
+ * first time a captured tooltip has been overruled on a figure it states
+ * outright rather than on one it contradicts itself about, and it is recorded
+ * here rather than quietly replaced.
+ *
+ * WHAT THE COOLDOWN CHANGES. Slam was an on-demand filler, castable whenever
+ * rage and the swing timer allowed; four casts a minute is now the ceiling. It
+ * was the best damage per rage in the Arms list after Overpower, so a list
+ * built around spamming it is a list that no longer exists.
+ *
+ * UNSTATED: whether the cast pauses the swing timer, as it does in Classic. It
+ * does not, unless Improved Slam is taken -- that talent grants
+ * `swingTimer: 'hold'`, which is worth far more than the cast time it removes.
+ * ----------------------------------------------------------------------------
  */
-/** "weapon damage plus 87", spell 11605 rank 5. The spreadsheet gave none. */
-export const SLAM_BASE_DAMAGE = 87;
+export const SLAM_BASE_DAMAGE = 68;
+export const SLAM_COOLDOWN_MS = seconds(15);
 
 export const SLAM: Ability = {
   id: 'slam',
   name: 'Slam',
   castTimeMs: seconds(1.5),
+  cooldownMs: SLAM_COOLDOWN_MS,
   cost: { resource: 'rage', amount: 15 },
   attackTable: 'melee-special',
   onCast: ({ simulation, caster, target, ability }) => {

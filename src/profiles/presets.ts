@@ -26,9 +26,11 @@ import { createDefaultProfile } from './CharacterProfile';
  * over is the profile FORMAT -- these build on `createDefaultProfile`, so a
  * format change reaches them without anything here being edited.
  *
- * RAID BUFFS ARE DELIBERATELY NOT SET. Nothing in the ruleset owner's
- * specification mentions them, and inventing a raid would move every number a
- * preset produces. They stay empty, exactly as a new profile's do.
+ * THE RAID IS THE SAME FOR ALL THREE, and it is the ruleset owner's own
+ * selection rather than a guess -- see `PRESET_RAID_BUFFS`. A new profile still
+ * starts with none, which is what keeps every figure measured without them
+ * comparable; a preset is a stated character, and this is part of what it
+ * states.
  * ----------------------------------------------------------------------------
  */
 
@@ -44,6 +46,45 @@ export interface ProfilePreset {
 
 /** Crusader, the only weapon enchant in the item data. */
 const CRUSADER = 20034;
+
+/**
+ * The raid every preset assumes, chosen by the ruleset owner.
+ *
+ * ----------------------------------------------------------------------------
+ * IDENTICAL FOR ALL THREE. One raid, so two presets differ by the character and
+ * not by who else turned up -- which is the only way their numbers can be
+ * compared to each other at all.
+ *
+ * WHAT IS ABSENT IS ABSENT ON PURPOSE. No Arcane Intellect, Blessing of Wisdom
+ * or Mana Spring Totem, because a warrior has no mana; no Trueshot Aura,
+ * because the ranged attack power reaches a bow that does not swing; no Grace
+ * of Air Totem; no Moonkin Form, which is Leader of the Pack's other half and
+ * cannot be taken alongside it; and neither curse.
+ *
+ * SUNDER ARMOR IS THE INTERESTING ONE. The target starts at five stacks, so the
+ * warrior's own list stops opening every fight by applying five of them and
+ * only refreshes what the raid supplied. That was the ruleset owner's reason
+ * for adding the list to the presets, and it is a large change to the rage
+ * economy rather than a cosmetic one.
+ *
+ * In catalogue order, so the file matches what `withRaidBuff` writes back and
+ * a preset can be compared to a hand-edited profile without a diff.
+ * ----------------------------------------------------------------------------
+ */
+const PRESET_RAID_BUFFS: readonly string[] = [
+  'battle_shout',
+  'thunder_clap',
+  'sunder_armor',
+  'power_word_fortitude',
+  'divine_spirit',
+  'blessing_of_kings',
+  'blessing_of_might',
+  'faerie_fire',
+  'mark_of_the_wild',
+  'strength_of_earth_totem',
+  'windfury_totem',
+  'leader_of_the_pack',
+];
 
 /**
  * Everything that is not a weapon, shared by all three builds.
@@ -199,6 +240,7 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = [
         stance: 'battle',
       },
       talents: { ...TWO_HAND_ARMS_TALENTS },
+      raidBuffs: [...PRESET_RAID_BUFFS],
       equipment: {
         ...SHARED_ARMOUR,
         // Obsidian Edged Blade, enchanted. A two-hander carries one weapon and
@@ -227,6 +269,7 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = [
         stance: 'berserker',
       },
       talents: { ...DW_FURY_TALENTS },
+      raidBuffs: [...PRESET_RAID_BUFFS],
       equipment: {
         ...SHARED_ARMOUR,
         /*
@@ -260,6 +303,7 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = [
         stance: 'defensive',
       },
       talents: { ...PROT_WARR_TALENTS },
+      raidBuffs: [...PRESET_RAID_BUFFS],
       equipment: {
         ...SHARED_ARMOUR,
         mainHand: { itemId: 228265, enchantId: CRUSADER }, // Brutality Blade
