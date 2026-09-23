@@ -790,6 +790,41 @@ const WARLOCK_WEAPONS: Equipment = {
   twoHand: { itemId: 228229, enchantId: CRUSADER },
 };
 
+/**
+ * THE SHADOW PRIEST BUILD, decoded from the owner's URL. 16/3/32, exactly 51
+ * points, and the twenty-first profile in the project.
+ */
+const PRIEST_SHADOW_TALENTS: TalentAllocation = {
+  twin_disciplines: 5,
+  silent_resolve: 2,
+  improved_power_word_shield: 3,
+  mental_agility: 3,
+  meditation: 3,
+  twilight_focus: 3,
+  shadow_focus: 5,
+  spirit_tap: 5,
+  shadow_affinity: 3,
+  improved_shadow_word_pain: 2,
+  shadow_reach: 2,
+  mind_flay: 1,
+  improved_mind_flay: 2,
+  vampiric_embrace: 1,
+  shadow_weaving: 3,
+  devouring_contagion: 2,
+  darkness: 5,
+  shadowform: 1,
+};
+
+/**
+ * A GEAR SHELL, and said to be one. Nineteen Classic stand-ins curated for a
+ * Warrior, so a Priest carries the same plate and a two-hander it never swings
+ * -- `caster` has no auto-attack. `spellPower` reads zero, which is why this
+ * is a floor like every other caster in the project.
+ */
+const PRIEST_WEAPONS: Equipment = {
+  twoHand: { itemId: 228229, enchantId: CRUSADER },
+};
+
 export const PROFILE_PRESETS: readonly ProfilePreset[] = [
   {
     id: 'two_hand_arms',
@@ -1283,6 +1318,26 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = [
       talents: { ...WARLOCK_DESTRUCTION_TALENTS },
       raidBuffs: [...PRESET_RAID_BUFFS],
       equipment: { ...SHARED_ARMOUR, ...WARLOCK_WEAPONS },
+      encounter: { ...createDefaultProfile().encounter, targetAttacks: false },
+    }),
+  },
+  {
+    id: 'shadow_priest',
+    label: 'Shadow',
+    detail: 'Troll, caster, Shadowform, standing target. 32 Shadow',
+    build: () => ({
+      ...createDefaultProfile(),
+      character: {
+        name: 'Shadow Priest',
+        race: 'troll',
+        characterClass: 'priest',
+        level: 60,
+        combatStyle: 'caster',
+        stance: 'battle',
+      },
+      talents: { ...PRIEST_SHADOW_TALENTS },
+      raidBuffs: [...PRESET_RAID_BUFFS],
+      equipment: { ...SHARED_ARMOUR, ...PRIEST_WEAPONS },
       encounter: { ...createDefaultProfile().encounter, targetAttacks: false },
     }),
   },

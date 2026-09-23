@@ -9,6 +9,7 @@ import { mageRotation } from './mage';
 import { paladinRotation } from './paladin';
 import { hunterRotation } from './hunter';
 import { warlockRotation } from './warlock';
+import { priestRotation } from './priest';
 
 /**
  * The action priority list for a class and combat style.
@@ -59,5 +60,7 @@ export function rotationFor(
   // AND THE WARLOCK BY CAPSTONE. Wrack is 31 into Affliction and Incinerate 31
   // into Destruction, and 51 points cannot reach both.
   if (characterClass === 'warlock') return warlockRotation(talents ?? {});
+  // The ninth and last. One profile, so one list.
+  if (characterClass === 'priest') return priestRotation(talents ?? {});
   return undefined;
 }

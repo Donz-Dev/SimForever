@@ -727,8 +727,10 @@
    "tree": "shadow",
    "ranks": 1,
    "text": "Assume Shadowform, increasing your Shadow damage by 10%, reducing the Mana cost of all Shadow spells by 50%, increasing the critical strike damage bonus of your Shadow spells by 100%, and reducing Physical damage taken by you by 15%. However, you may not cast healing spells while in this form.",
-   "values": null,
-   "note": "single rank"
+   "values": [
+    100
+   ],
+   "note": "single rank; the 100 filled in by hand per this directory's README -- the text states four numbers and this is the one an effect reads, the '+100% critical strike damage bonus of your Shadow spells'. Its other three (10% Shadow damage, 50% Shadow mana, 15% physical taken) are named constants on the aura in game/auras/priest.ts"
   }
  }
 }

@@ -70,6 +70,7 @@ describe('the preset catalogue', () => {
       'lw_melee',
       'warlock_smds',
       'warlock_firelock',
+      'shadow_priest',
     ]);
     expect(PROFILE_PRESETS.map((preset) => preset.label)).toEqual([
       '2H Arms',
@@ -94,6 +95,7 @@ describe('the preset catalogue', () => {
       'LW Melee',
       'SM/DS',
       'Firelock',
+      'Shadow',
     ]);
   });
 
