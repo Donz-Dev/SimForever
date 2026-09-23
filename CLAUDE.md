@@ -266,12 +266,22 @@ cross-check on ability numbers because its tooltips restate them. Client-side
 rendered, so a plain fetch gets a page with no talents in it; the data is in the
 DOM. `src/data/talents/README.md` has the selectors.
 
-**`talentsforever.com/<class>`** — the same trees read from the beta client
-(`1.60.1.69876`), with **every rank's text**, the Classic comparison per talent,
-and the talents Forever removed. Its structured data is `window.TALENT_DATA`,
-so nothing needs scraping. Audited against our Wowhead capture on 2026-09-23:
-all 53 Warrior talents and all 154 rank values matched, which is the strongest
-confirmation the talent data has had.
+**`talentsforever.com`** — the beta client's own files, served as four static
+JavaScript assignments that plain `fetch` reaches. **This is the source of
+record for talents**, imported by `tools/import_forever_talents.mjs`.
+
+| | |
+| --- | --- |
+| `/talents.js` | all nine classes' trees, every rank's text, prerequisites, and each granted ability's cost line |
+| `/spellbooks.js` | every trainer spell to 60, every rank |
+| `/spelldesc.js` | spell descriptions with cast, range and cooldown |
+| `/racials.js` | racials by faction and race |
+
+It replaced the Wowhead talent scrape, which was 468 of 469 talents correct and
+still not good enough: a build URL encodes one digit per talent IN TREE ORDER,
+so a tree of the wrong length decodes a profile into different talents without
+failing. See [docs/class-implementation.md](docs/class-implementation.md), which
+is the process for every remaining class.
 
 **`nether.wowhead.com/classic/tooltip/item/<id>`** — Classic item and spell
 tooltips, as plain JSON. No browser needed. Used for the current items, which are
