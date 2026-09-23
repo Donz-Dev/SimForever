@@ -32,7 +32,25 @@ export interface PetFamilyDefinition {
   readonly swingSeconds?: number;
 }
 
-export const PET_FAMILY_IDS = ['cat', 'wolf', 'bear', 'raptor', 'boar'] as const;
+/**
+ * Pet families, HUNTER AND WARLOCK BOTH.
+ *
+ * One list rather than two, because the profile field is one field: "which
+ * companion did you choose". A Warlock's is then sacrificed by Demonic
+ * Sacrifice and a Hunter's fights, which is a difference in what the class
+ * does with it rather than in what was chosen.
+ */
+export const PET_FAMILY_IDS = [
+  'cat',
+  'wolf',
+  'bear',
+  'raptor',
+  'boar',
+  'imp',
+  'voidwalker',
+  'succubus',
+  'felhunter',
+] as const;
 export type PetFamilyId = (typeof PET_FAMILY_IDS)[number];
 
 /** The spellbook's own family names, which the "Pet:" lines are written in. */
@@ -42,6 +60,10 @@ const SPELLBOOK_NAME: Record<PetFamilyId, string> = {
   bear: 'Bear',
   raptor: 'Raptor',
   boar: 'Boar',
+  imp: 'Imp',
+  voidwalker: 'Voidwalker',
+  succubus: 'Succubus',
+  felhunter: 'Felhunter',
 };
 
 export const PET_FAMILIES: Record<PetFamilyId, PetFamilyDefinition> = {
@@ -50,6 +72,10 @@ export const PET_FAMILIES: Record<PetFamilyId, PetFamilyDefinition> = {
   bear: { id: 'bear', name: 'Bear' },
   raptor: { id: 'raptor', name: 'Raptor' },
   boar: { id: 'boar', name: 'Boar' },
+  imp: { id: 'imp', name: 'Imp' },
+  voidwalker: { id: 'voidwalker', name: 'Voidwalker' },
+  succubus: { id: 'succubus', name: 'Succubus' },
+  felhunter: { id: 'felhunter', name: 'Felhunter' },
 };
 
 export function isPetFamilyId(value: unknown): value is PetFamilyId {

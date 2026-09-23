@@ -175,17 +175,18 @@ describe('player versus training dummy', () => {
 
   it('runs a caster that does nothing at all without stalling', () => {
     /*
-     * A Warlock uses the Caster style, which never auto-attacks, and has no
+     * A Priest uses the Caster style, which never auto-attacks, and has no
      * implemented abilities. It therefore deals literally no damage, and the
      * fight must still complete cleanly rather than hanging or throwing.
      *
-     * THIS NAMED THE MAGE until the Mage was written. A "class with nothing in
-     * it" fixture has to move as classes arrive, and it failing is the signal
-     * that one did.
+     * THIS NAMED THE MAGE, THEN THE WARLOCK. A "class with nothing in it"
+     * fixture has to move as classes arrive, and it failing is the signal that
+     * one did. The Priest is the LAST one -- when it is written, this wants a
+     * bare combatant rather than a class.
      */
     const result = runProfile({
       ...profile,
-      character: { ...profile.character, race: 'undead', characterClass: 'warlock' },
+      character: { ...profile.character, race: 'undead', characterClass: 'priest' },
     });
 
     expect(result.endReason).toBe('duration_expired');
@@ -197,7 +198,7 @@ describe('player versus training dummy', () => {
     const asWarrior = runProfile(profile);
     const asCaster = runProfile({
       ...profile,
-      character: { ...profile.character, race: 'undead', characterClass: 'warlock' },
+      character: { ...profile.character, race: 'undead', characterClass: 'priest' },
     });
 
     expect(asWarrior.damage.total).toBeGreaterThan(0);

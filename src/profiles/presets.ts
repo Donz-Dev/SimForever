@@ -732,6 +732,64 @@ const HUNTER_MELEE_WEAPONS: Equipment = {
   twoHand: { itemId: 228229, enchantId: CRUSADER },
 };
 
+/**
+ * THE TWO WARLOCK BUILDS, decoded from the owner's URLs. 40/11/0 and 5/11/35,
+ * each exactly 51 points.
+ *
+ * BOTH TAKE DEMONIC SACRIFICE, so neither keeps a demon: SM/DS sacrifices the
+ * Imp for +15% Shadow and Firelock the Succubus for +15% Fire, which is what
+ * those profile names mean. That makes the Warlock the second class running
+ * whose builds opt out of the pet system, after both Lone Wolf hunters.
+ */
+const WARLOCK_AFFLICTION_TALENTS: TalentAllocation = {
+  suppression: 5,
+  improved_corruption: 5,
+  malediction: 5,
+  improved_drains: 3,
+  improved_bane_of_agony: 2,
+  pandemic: 3,
+  malevolence: 5,
+  nightfall: 2,
+  siphon_life: 1,
+  soul_siphon: 3,
+  shadow_mastery: 5,
+  wrack: 1,
+  demonic_embrace: 5,
+  demonic_aegis: 2,
+  fel_vitality: 3,
+  demonic_sacrifice: 1,
+};
+
+const WARLOCK_DESTRUCTION_TALENTS: TalentAllocation = {
+  suppression: 5,
+  demonic_embrace: 5,
+  demonic_aegis: 2,
+  fel_vitality: 3,
+  demonic_sacrifice: 1,
+  destructive_reach: 2,
+  bane: 5,
+  cataclysm: 3,
+  aftermath: 5,
+  ruin: 5,
+  shadowburn: 1,
+  agonizing_flames: 3,
+  conflagrate: 1,
+  bane_of_havoc: 1,
+  fire_and_brimstone: 3,
+  shadow_and_flame: 5,
+  incinerate: 1,
+};
+
+/**
+ * A GEAR SHELL, and said to be one. Nineteen Classic stand-ins curated for a
+ * Warrior, so a Warlock carries the same plate and a two-hander it never
+ * swings -- `caster` has no auto-attack. `spellPower` reads zero, which is
+ * why this is a floor like every other caster in the project.
+ */
+const WARLOCK_WEAPONS: Equipment = {
+  twoHand: { itemId: 228229, enchantId: CRUSADER },
+};
+
 export const PROFILE_PRESETS: readonly ProfilePreset[] = [
   {
     id: 'two_hand_arms',
@@ -1181,6 +1239,50 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = [
       talents: { ...HUNTER_LONE_WOLF_MELEE_TALENTS },
       raidBuffs: [...PRESET_RAID_BUFFS],
       equipment: { ...SHARED_ARMOUR, ...HUNTER_MELEE_WEAPONS },
+      encounter: { ...createDefaultProfile().encounter, targetAttacks: false },
+    }),
+  },
+  {
+    id: 'warlock_smds',
+    label: 'SM/DS',
+    detail: 'Undead, caster, Imp sacrificed, standing target. 40 Affliction',
+    build: () => ({
+      ...createDefaultProfile(),
+      character: {
+        name: 'SM/DS',
+        race: 'undead',
+        characterClass: 'warlock',
+        level: 60,
+        combatStyle: 'caster',
+        stance: 'battle',
+        // Sacrificed rather than kept: Demonic Sacrifice names which buff.
+        petFamily: 'imp',
+      },
+      talents: { ...WARLOCK_AFFLICTION_TALENTS },
+      raidBuffs: [...PRESET_RAID_BUFFS],
+      equipment: { ...SHARED_ARMOUR, ...WARLOCK_WEAPONS },
+      encounter: { ...createDefaultProfile().encounter, targetAttacks: false },
+    }),
+  },
+  {
+    id: 'warlock_firelock',
+    label: 'Firelock',
+    detail: 'Undead, caster, Succubus sacrificed, standing target. 35 Destruction',
+    build: () => ({
+      ...createDefaultProfile(),
+      character: {
+        name: 'Firelock',
+        race: 'undead',
+        characterClass: 'warlock',
+        level: 60,
+        combatStyle: 'caster',
+        stance: 'battle',
+        // Sacrificed rather than kept: Demonic Sacrifice names which buff.
+        petFamily: 'succubus',
+      },
+      talents: { ...WARLOCK_DESTRUCTION_TALENTS },
+      raidBuffs: [...PRESET_RAID_BUFFS],
+      equipment: { ...SHARED_ARMOUR, ...WARLOCK_WEAPONS },
       encounter: { ...createDefaultProfile().encounter, targetAttacks: false },
     }),
   },

@@ -68,6 +68,8 @@ describe('the preset catalogue', () => {
       'bm_hunter',
       'lw_ranged',
       'lw_melee',
+      'warlock_smds',
+      'warlock_firelock',
     ]);
     expect(PROFILE_PRESETS.map((preset) => preset.label)).toEqual([
       '2H Arms',
@@ -90,6 +92,8 @@ describe('the preset catalogue', () => {
       'BM Hunter',
       'LW Ranged',
       'LW Melee',
+      'SM/DS',
+      'Firelock',
     ]);
   });
 

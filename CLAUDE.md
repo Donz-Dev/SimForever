@@ -235,6 +235,13 @@ a list built around a spell it had one point in, and produced a perfectly
 ordinary 143.9 DPS without casting Fireball once. Nothing errored and nothing
 was missing.
 
+**TWO CLASSES IN A ROW BRING NO PET, AND BOTH SAY SO IN A TALENT.** Lone Wolf
+is "+20% damage while you do not have an active pet" and Demonic Sacrifice
+kills the demon for a two-hour buff -- so four of the five profiles that the
+gap survey listed as blocked on pets turned out not to want one. The pet work
+the Beast Mastery hunter needed is not wasted; it is simply not what the other
+four do, and that is a property of the BUILDS rather than of the engine.
+
 **A PET IS A SECOND FRIENDLY COMBATANT, AND ALMOST ALL OF THAT ALREADY
 WORKED.** `dps` has summed every friendly actor since batching was written,
 `CombatantKind` has had `pet`, `ownerId` has been on `Combatant`, and a

@@ -10,6 +10,8 @@ import { raidBuffPoolStats, selectedRaidBuffs } from '../game/buffs/raidBuffs';
 import { createPet } from '../game/actors/createPet';
 import { isPetFamilyId } from '../game/character/petFamilies';
 import { hasPet } from '../game/rotations/hunter';
+import { sacrificedDemon } from '../game/rotations/warlock';
+import { demonicSacrificeAura } from '../game/auras/warlock';
 
 /**
  * How much a fight's length varies from the length asked for, either side.
@@ -104,7 +106,22 @@ export function trainingDummyEncounter(
      * this and the old `BATTLE_FURY` is entirely that somebody asked for it.
      */
     onCombatStart: (context) => {
+      /*
+       * DEMONIC SACRIFICE IS APPLIED HERE RATHER THAN CAST.
+       *
+       * Its buff lasts TWO HOURS, which against a sixty-second fight is
+       * forever -- a Warlock arrives having already sacrificed its demon, and
+       * spending a global cooldown on it at the pull would be modelling the
+       * wrong thing entirely. Which demon decides which buff, and that comes
+       * from the profile's chosen companion.
+       */
+      const demon = sacrificedDemon(profile.talents ?? {}, profile.character.petFamily);
+      const sacrifice = demon ? demonicSacrificeAura(demon) : undefined;
+
       for (const actor of context.combatants) {
+        if (sacrifice && actor.isPlayerControlled) {
+          context.applyAura(actor, sacrifice, actor.id);
+        }
         const applicable = actor.isPlayerControlled ? onPlayer : onTarget;
         for (const buff of applicable) {
           // An entry with no aura is a PROC -- Windfury Totem -- and its own

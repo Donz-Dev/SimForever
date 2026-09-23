@@ -153,7 +153,18 @@ export type TalentEffect =
    * The ability id can be an aura's, because a periodic tick carries the aura's
    * id -- which is how Improved Rend scales a bleed rather than a cast.
    */
-  | { readonly kind: 'abilityDamage'; readonly abilityId: string }
+  | {
+      readonly kind: 'abilityDamage';
+      readonly abilityId: string;
+      /**
+       * Which of the talent's numbers to read, for one that varies several.
+       *
+       * Improved Corruption is "-2 sec cast time AND +10% damage" -- two
+       * values in one row, and taking the first for the damage would give
+       * Corruption a 2% bonus instead of 10%.
+       */
+      readonly valueIndex?: number;
+    }
 
   /**
    * Raises the critical strike damage BONUS for every ability, as a percentage

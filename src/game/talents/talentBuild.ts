@@ -18,6 +18,7 @@ import { SHAMAN_TALENT_REACTIONS } from '../reactions/shamanTalents';
 import { MAGE_TALENT_REACTIONS } from '../reactions/mageTalents';
 import { PALADIN_TALENT_REACTIONS } from '../reactions/paladinTalents';
 import { HUNTER_TALENT_REACTIONS } from '../reactions/hunterTalents';
+import { WARLOCK_TALENT_REACTIONS } from '../reactions/warlockTalents';
 import type { ClassId, CombatStyleId } from '../character';
 import type { Equipment } from '../items/Item';
 import { armorFromItems, liveEquipment } from '../items/equipment';
@@ -37,6 +38,7 @@ import { SHAMAN_TALENT_EFFECTS } from './shamanEffects';
 import { MAGE_TALENT_EFFECTS } from './mageEffects';
 import { PALADIN_TALENT_EFFECTS } from './paladinEffects';
 import { HUNTER_TALENT_EFFECTS } from './hunterEffects';
+import { WARLOCK_TALENT_EFFECTS } from './warlockEffects';
 
 /** Effect tables per class. Only the Warrior has one. */
 const EFFECTS: Partial<Record<ClassId, Readonly<Record<string, TalentEffects>>>> = {
@@ -47,6 +49,7 @@ const EFFECTS: Partial<Record<ClassId, Readonly<Record<string, TalentEffects>>>>
   mage: MAGE_TALENT_EFFECTS,
   paladin: PALADIN_TALENT_EFFECTS,
   hunter: HUNTER_TALENT_EFFECTS,
+  warlock: WARLOCK_TALENT_EFFECTS,
 };
 
 /** Reaction builders per class, keyed by talent id. */
@@ -65,6 +68,7 @@ const REACTIONS: Partial<Record<ClassId, Readonly<Record<string, TalentReactionB
   mage: MAGE_TALENT_REACTIONS,
   paladin: PALADIN_TALENT_REACTIONS,
   hunter: HUNTER_TALENT_REACTIONS,
+  warlock: WARLOCK_TALENT_REACTIONS,
 };
 
 /**

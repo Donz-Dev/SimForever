@@ -8,6 +8,7 @@ import { shamanRotation } from './shaman';
 import { mageRotation } from './mage';
 import { paladinRotation } from './paladin';
 import { hunterRotation } from './hunter';
+import { warlockRotation } from './warlock';
 
 /**
  * The action priority list for a class and combat style.
@@ -55,5 +56,8 @@ export function rotationFor(
    * would separate them. One stands in melee and the other does not.
    */
   if (characterClass === 'hunter') return hunterRotation(style, talents ?? {});
+  // AND THE WARLOCK BY CAPSTONE. Wrack is 31 into Affliction and Incinerate 31
+  // into Destruction, and 51 points cannot reach both.
+  if (characterClass === 'warlock') return warlockRotation(talents ?? {});
   return undefined;
 }

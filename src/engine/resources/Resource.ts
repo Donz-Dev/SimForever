@@ -14,6 +14,7 @@ export const RESOURCE_TYPES = [
   'runicPower',
   'holyPower',
   'comboPoints',
+  'soulShards',
 ] as const;
 
 export type ResourceType = (typeof RESOURCE_TYPES)[number];
