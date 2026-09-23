@@ -24,9 +24,11 @@ import type { TalentEffects } from './TalentEffect';
  *                    application mechanic and neither is captured.
  *   STEALTH          six talents. Every fight opens in combat, so nothing here
  *                    is ever stealthed.
- *   REACTIVE HOOKS   Relentless Strikes and Seal Fate both need a hook on
- *                    "a finisher was cast" and "an ability that awards a combo
- *                    point critted". Reactions fire on damage, not on either.
+ *   ~~REACTIVE HOOKS~~  DONE. Four talents keyed off a CAST rather than a hit,
+ *                    and `castReaction` is the effect kind that reaches them.
+ *                    Seal Fate needed only one new fact, not a new hook:
+ *                    `Ability.comboPointsAwarded`, so a crit reaction can ask
+ *                    whether the ability that critted builds points.
  *   ARMOR PENETRATION  ignoring a percentage of armor, which the damage
  *                    pipeline has no form for. Weaponmaster's mace clause is
  *                    the Warrior's version of exactly this.
@@ -48,15 +50,7 @@ export const ROGUE_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
 
   malice: [{ kind: 'stat', stat: 'critChance', operation: 'flat' }],
 
-  ruthlessness: [
-    {
-      kind: 'unmodelled',
-      reason:
-        'Returns a combo point when a FINISHER is cast, and a reaction fires ' +
-        'on damage rather than on a cast. Needs an on-cast hook, which ' +
-        'Relentless Strikes and Seal Fate also want.',
-    },
-  ],
+  ruthlessness: [{ kind: 'castReaction', reactionId: 'ruthlessness' }],
 
   murder: [
     {
@@ -74,24 +68,11 @@ export const ROGUE_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
     { kind: 'abilityBonus', abilityId: 'slice_and_dice', key: 'durationPercent' },
   ],
 
-  relentless_strikes: [
-    {
-      kind: 'unmodelled',
-      reason:
-        'Restores energy on a FINISHER, per combo point spent. A reaction ' +
-        'fires on damage and cannot see either, so this needs an on-cast hook ' +
-        'that knows what was spent.',
-    },
-  ],
+  relentless_strikes: [{ kind: 'castReaction', reactionId: 'relentless_strikes' }],
 
   improved_expose_armor: [
     { kind: 'abilityCost', abilityId: 'expose_armor' },
-    {
-      kind: 'unmodelled',
-      reason:
-        'The energy reduction applies. Refunding 2 combo points when cast at ' +
-        '5 does not: it needs the same on-cast hook.',
-    },
+    { kind: 'castReaction', reactionId: 'improved_expose_armor' },
   ],
 
   lethality: [
@@ -118,15 +99,7 @@ export const ROGUE_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
     { kind: 'unmodelled', reason: 'Keyed to a stun, which the project owner classes as out of scope.' },
   ],
 
-  seal_fate: [
-    {
-      kind: 'unmodelled',
-      reason:
-        'Adds a combo point when an ability that awards one CRITS. A reaction ' +
-        'sees the crit but not whether the ability awards a point, so this ' +
-        'needs the builders to declare that they do.',
-    },
-  ],
+  seal_fate: [{ kind: 'reaction', reactionId: 'seal_fate' }],
 
   venom: [
     { kind: 'unmodelled', reason: 'A finisher whose whole effect is on poisons.' },

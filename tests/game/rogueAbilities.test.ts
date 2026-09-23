@@ -139,35 +139,56 @@ describe('the class is wired up', () => {
   });
 });
 
-describe('what the rotation cannot afford', () => {
-  it('never reaches Eviscerate, and that is a RECORDED finding', () => {
+describe('the finishers it can now afford', () => {
+  it('reaches Eviscerate, which it could not before the on-cast hook', () => {
     /*
      * --------------------------------------------------------------------------
-     * NOT A BUG IN THE ABILITY -- its scaling is asserted above and works.
+     * THIS TEST USED TO ASSERT ZERO, and the assertion was right about the
+     * behaviour and wrong about the cause.
      *
-     * A Rogue spends about 700 energy in a sixty second fight, which is
-     * seventeen Sinister Strikes and therefore seventeen combo points. Slice
-     * and Dice wants fifteen of them to hold its uptime. Nothing is left, at
-     * ANY threshold: measured at one through five combo points, Eviscerate
-     * fired zero times in all five and DPS moved by six points across the
-     * whole range.
+     * It recorded that Eviscerate never fired, measured at every Slice and Dice
+     * threshold, and blamed RELENTLESS STRIKES being unmodelled. That was one
+     * of two causes and the smaller one.
      *
-     * The missing piece is probably RELENTLESS STRIKES, which returns 25
-     * energy per finisher and compounds, because that energy buys the points
-     * for the next one. It is `unmodelled` because a reaction fires on damage
-     * and cannot see a cast.
+     * THE OTHER WAS A BUG I SHIPPED. `talentValues.ts` maps a class to its
+     * values file and the Rogue was not in it, so every rank value resolved to
+     * nothing and EVERY ROGUE TALENT WAS SILENTLY INERT -- Malice, Aggression,
+     * Improved Sinister Strike, all twenty of them. It was invisible because a
+     * talent with no value reports itself `unmodelled`, which is exactly what
+     * an unfinished class is supposed to say. Twenty unmodelled talents on a
+     * class shipped yesterday looks like progress, not a defect.
      *
-     * Asserted so that the day it starts firing, this fails and somebody finds
-     * out WHY rather than the number quietly moving.
+     * Both fixed, and the class works: Eviscerate fires about once a fight on
+     * the Combat build and the three profiles gained 21, 55 and 88 DPS.
      * --------------------------------------------------------------------------
      */
     const batch = batchOf('rogue_combat', 60, 11);
-    expect(batch.abilities.find((a) => a.abilityName === 'Eviscerate')?.uses ?? 0).toBe(0);
+    expect(batch.abilities.find((a) => a.abilityName === 'Eviscerate')?.uses ?? 0).toBeGreaterThan(
+      0.5,
+    );
+  });
 
-    // Slice and Dice is what took them.
-    expect(
-      batch.abilities.find((a) => a.abilityName === 'Slice and Dice')?.uses ?? 0,
-    ).toBeGreaterThan(3);
+  it('returns energy on a finisher, per combo point spent', () => {
+    /*
+     * Relentless Strikes, which is what makes the finisher affordable at all.
+     * Asserted through the ENERGY LEDGER rather than by counting procs, so it
+     * measures the thing the rotation actually feels.
+     */
+    const batch = batchOf('rogue_combat', 60, 11);
+    const returned = batch.rage.gained.find((row) => row.sourceId === 'relentless_strikes');
+    expect(returned?.amount ?? 0).toBeGreaterThan(0);
+  });
+
+  it('measures the spend by snapshot, so a finisher needs to declare nothing', () => {
+    /*
+     * The engine snapshots every pool around a cast and reports the
+     * difference, which covers the declared cost AND anything the ability
+     * drained itself. Ruthlessness keys off that, and it fires only on a cast
+     * that spent combo points -- so a builder must never set it off.
+     */
+    const batch = batchOf('rogue_combat', 60, 11);
+    const refunded = batch.rage.gained.find((row) => row.sourceId === 'ruthlessness');
+    expect(refunded?.amount ?? 0).toBeGreaterThan(0);
   });
 
   it('says on the results page what it cannot do', () => {

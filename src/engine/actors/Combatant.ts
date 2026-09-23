@@ -4,7 +4,7 @@ import type { Ability } from '../abilities/Ability';
 import { DEFAULT_GCD_MS } from '../abilities/Ability';
 import { AbilityBook } from '../abilities/AbilityBook';
 import type { DamageSchool } from '../combat/DamageSchool';
-import type { Reaction } from '../combat/reactions';
+import type { CastReaction, Reaction } from '../combat/reactions';
 import type { ScheduledEvent } from '../events';
 import { AuraCollection } from '../effects';
 import type { ResourceRegen, ResourceSpec, ResourceType } from '../resources';
@@ -203,6 +203,13 @@ export interface CombatantOptions {
    */
   readonly reactions?: readonly Reaction[];
   /**
+   * Reactions to a cast rather than to an attack.
+   *
+   * A separate list because a cast event is not an attack event -- see
+   * `CastEvent`. Everything that reacts to being hit stays where it was.
+   */
+  readonly castReactions?: readonly CastReaction[];
+  /**
    * Per-ability crit and damage modifiers, from talents, gear or anything else
    * that changes one ability rather than the whole character.
    */
@@ -290,6 +297,7 @@ export class Combatant {
   readonly regeneration: readonly ResourceRegen[];
   readonly resourceOnDamageTaken: ResourceGeneration | undefined;
   readonly reactions: readonly Reaction[];
+  readonly castReactions: readonly CastReaction[];
   readonly abilityModifiers: AbilityModifiers;
   readonly baseDamageMultiplier: number;
   readonly survivesLethalDamage: boolean;
@@ -394,6 +402,7 @@ export class Combatant {
     this.regeneration = options.regeneration ?? [];
     this.resourceOnDamageTaken = options.resourceOnDamageTaken;
     this.reactions = options.reactions ?? [];
+    this.castReactions = options.castReactions ?? [];
     this.abilityModifiers = options.abilityModifiers ?? new AbilityModifiers();
     this.baseDamageMultiplier = options.damageMultiplier ?? 1;
     this.survivesLethalDamage = options.survivesLethalDamage ?? false;

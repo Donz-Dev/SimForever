@@ -359,6 +359,12 @@ export function createPlayer(options: PlayerOptions): Combatant {
       // Whoever else is in the raid. Windfury Totem is the only one today.
       ...(options.extraReactions ?? []),
     ],
+    /*
+     * Procs that fire when an ability is USED rather than when one lands.
+     * A separate list because a cast event is not an attack event -- see
+     * `AbilityCastEvent`. Four Rogue talents are why it exists.
+     */
+    castReactions: build.castReactions,
     // No abilities means nothing for a rotation to choose, so it is left off
     // rather than scheduling decision events that can never do anything.
     rotation: abilities.length > 0 ? rotation : undefined,

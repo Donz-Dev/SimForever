@@ -154,6 +154,22 @@ export interface Ability {
   readonly unmodelled?: string;
 
   /**
+   * How many combo points landing this ability awards.
+   *
+   * DECLARED RATHER THAN INFERRED, because a reaction watching a critical
+   * strike can see the ability id and nothing about what the ability does.
+   * Seal Fate is the talent that needs it -- "your critical strikes from
+   * abilities that add Combo Points have a chance to add an additional one" --
+   * and the set of such abilities is a property of the class, not of the
+   * engine.
+   *
+   * The ability still awards its own points inside `onCast`; this only makes
+   * the fact visible from outside. They can disagree, which is why the Rogue
+   * test asserts every builder declares what it grants.
+   */
+  readonly comboPointsAwarded?: number;
+
+  /**
    * Queue this ability onto the next auto-attack with the given weapon instead
    * of firing it immediately.
    *

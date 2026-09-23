@@ -1,5 +1,7 @@
 import type { Combatant } from '../actors/Combatant';
 import { applyHaste, hasteMultiplierFrom } from '../combat/ratings';
+import { runCastReactions } from '../combat/reactions';
+import type { ResourceType } from '../resources/Resource';
 import { resetSwingTimers } from '../combat/autoAttack';
 import { EventPriority, createEvent } from '../events';
 import type { SimulationContext } from '../simulation/SimulationContext';
@@ -173,7 +175,7 @@ export function castAbility(
   }
 
   if (castTime <= 0) {
-    ability.onCast(abilityContext);
+    runCast(context, abilityContext);
     return { ok: true };
   }
 
@@ -192,11 +194,57 @@ export function castAbility(
     createEvent(`cast-complete:${ability.id}`, EventPriority.CastComplete, (ctx) => {
       caster.castEndsAt = 0;
       if (!caster.isAlive) return;
-      ability.onCast({ simulation: ctx, caster, target, ability });
+      runCast(ctx, { simulation: ctx, caster, target, ability });
     }),
   );
 
   return { ok: true };
+}
+
+
+/**
+ * Run an ability's effect and tell the caster's cast reactions what it spent.
+ *
+ * ----------------------------------------------------------------------------
+ * THE SPEND IS MEASURED BY SNAPSHOT, before and after, across every pool the
+ * caster owns. That covers the declared `cost`, which the engine took, AND
+ * anything the ability drained itself -- Execute emptying the rage bar, a
+ * Rogue finisher emptying its combo points.
+ *
+ * Measuring rather than declaring is deliberate. Asking each ability to report
+ * what it spent would put the burden on every ability to remember, and the one
+ * that forgot would be silently inert -- the exact failure mode this project
+ * keeps meeting. Nothing has to opt in.
+ *
+ * A POOL THAT GAINED reports nothing rather than a negative: Bloodrage grants
+ * rage inside its own `onCast`, and "spent -10 rage" is not a thing a reaction
+ * should have to reason about.
+ * ----------------------------------------------------------------------------
+ */
+function runCast(context: SimulationContext, abilityContext: AbilityContext): void {
+  const { caster, ability, target } = abilityContext;
+
+  if (caster.castReactions.length === 0) {
+    // Nothing is listening, so nothing needs measuring.
+    ability.onCast(abilityContext);
+    return;
+  }
+
+  const before = new Map<ResourceType, number>();
+  for (const type of caster.resources.types) {
+    before.set(type, caster.resources.get(type)?.current ?? 0);
+  }
+
+  ability.onCast(abilityContext);
+
+  const spent: Partial<Record<ResourceType, number>> = {};
+  for (const [type, had] of before) {
+    const now = caster.resources.get(type)?.current ?? 0;
+    const difference = had - now;
+    if (difference > 0) spent[type] = difference;
+  }
+
+  runCastReactions(context, caster, { caster, target, ability, spent });
 }
 
 /** Hasted cast time, or 0 for an instant ability. */

@@ -1,4 +1,5 @@
 import type {
+  CastReaction,
   PartialStats,
   Reaction,
   ResourceType,
@@ -11,6 +12,7 @@ import { ALL_ABILITIES, AbilityModifiers, seconds } from '../../engine';
 import { COMBAT_CONSTANTS } from '../combat/attackChances';
 import type { TalentReactionBuilder } from '../reactions/warriorTalents';
 import { WARRIOR_TALENT_REACTIONS } from '../reactions/warriorTalents';
+import { ROGUE_TALENT_REACTIONS, ROGUE_CAST_REACTIONS } from '../reactions/rogueTalents';
 import type { ClassId, CombatStyleId } from '../character';
 import type { Equipment } from '../items/Item';
 import { armorFromItems, liveEquipment } from '../items/equipment';
@@ -33,8 +35,16 @@ const EFFECTS: Partial<Record<ClassId, Readonly<Record<string, TalentEffects>>>>
 };
 
 /** Reaction builders per class, keyed by talent id. */
+/** Procs that fire when an ability is USED, by class. */
+const CAST_REACTIONS: Partial<
+  Record<ClassId, Readonly<Record<string, (value: number) => CastReaction>>>
+> = {
+  rogue: ROGUE_CAST_REACTIONS,
+};
+
 const REACTIONS: Partial<Record<ClassId, Readonly<Record<string, TalentReactionBuilder>>>> = {
   warrior: WARRIOR_TALENT_REACTIONS,
+  rogue: ROGUE_TALENT_REACTIONS,
 };
 
 /**
@@ -97,6 +107,8 @@ export interface TalentBuild {
   readonly abilityModifiers: AbilityModifiers;
   /** Reactions the talents grant, added to the ones every character has. */
   readonly reactions: readonly Reaction[];
+  /** Procs that fire when an ability is USED. See `castReaction`. */
+  readonly castReactions: readonly CastReaction[];
   /**
    * A multiplier on ALL damage, from talents conditional on the weapon held.
    *
@@ -156,6 +168,7 @@ const EMPTY: TalentBuild = {
   abilityGcdReductionMs: new Map(),
   abilitiesHoldingSwing: new Set(),
   abilityExtraStances: new Map(),
+  castReactions: [],
   unmodelled: [],
   illegal: [],
 };
@@ -279,6 +292,7 @@ export function talentBuild(
   const abilityGcdReductionMs = new Map<string, number>();
   const abilitiesHoldingSwing = new Set<string>();
   const abilityExtraStances = new Map<string, string[]>();
+  const castReactions: CastReaction[] = [];
   let damageMultiplier = 1;
   const unmodelled: UnmodelledTalent[] = [];
 
@@ -461,6 +475,15 @@ export function talentBuild(
           reactions.push(build(value));
           break;
         }
+        case 'castReaction': {
+          const build = CAST_REACTIONS[characterClass]?.[effect.reactionId];
+          if (!build) {
+            report(talentId, rank, `No cast reaction is registered as "${effect.reactionId}".`);
+            break;
+          }
+          castReactions.push(build(value));
+          break;
+        }
         case 'abilityCastTime':
           abilityCastTimeReductionMs.set(
             effect.abilityId,
@@ -554,6 +577,7 @@ export function talentBuild(
     abilityGcdReductionMs,
     abilitiesHoldingSwing,
     abilityExtraStances,
+    castReactions,
     unmodelled,
     illegal: [],
   };

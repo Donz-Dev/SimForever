@@ -1,3 +1,5 @@
+import type { Ability } from '../abilities/Ability';
+import type { ResourceType } from '../resources/Resource';
 import type { Combatant, WeaponSlot } from '../actors/Combatant';
 import type { SimulationContext } from '../simulation/SimulationContext';
 import type { AttackOutcome } from './attackTable';
@@ -136,6 +138,78 @@ export interface Reaction {
  * firing does not stop another's, so a riposte that provokes a counter-riposte
  * still works.
  */
+/**
+ * A cast that has finished, handed to anything reacting to it.
+ *
+ * ----------------------------------------------------------------------------
+ * NAMED `AbilityCastEvent` because `CastEvent` is already a telemetry line.
+ * The two are easy to confuse and mean different things: one is what was
+ * logged, this is what a reaction is offered.
+ *
+ * A SEPARATE TYPE FROM `AttackEvent`, AND A SEPARATE LIST, because a cast is
+ * not an attack and sharing one would make every existing reaction narrow a
+ * union it does not care about. The two triggers answer different questions:
+ * "something was hit" and "something was used".
+ *
+ * `spent` IS MEASURED, NOT DECLARED. The engine snapshots every resource pool
+ * before the ability runs and again after, and reports the difference -- so it
+ * covers the declared `cost` AND anything the ability drained itself. Execute
+ * emptying the rage bar and a Rogue finisher emptying its combo points are the
+ * same shape to this, and neither has to remember to announce it.
+ *
+ * WHY THAT MATTERS: four Rogue talents key off "a finisher was cast and spent
+ * N combo points", and a finisher spends them inside its own `onCast`. Asking
+ * abilities to report what they spent would have put the burden on every
+ * ability to get right, and the one that forgot would be silently inert.
+ * ----------------------------------------------------------------------------
+ */
+export interface AbilityCastEvent {
+  readonly caster: Combatant;
+  readonly target: Combatant | undefined;
+  readonly ability: Ability;
+  /** What the pools lost across the cast, by resource. Absent means nothing. */
+  readonly spent: Readonly<Partial<Record<ResourceType, number>>>;
+}
+
+/** Something that happens in response to an ability being used. */
+export interface CastReaction {
+  readonly id: string;
+  /** Only this ability, when given. Otherwise every cast. */
+  readonly abilityId?: string;
+  readonly canTrigger?: (
+    context: SimulationContext,
+    actor: Combatant,
+    cast: AbilityCastEvent,
+  ) => boolean;
+  readonly onTrigger: (context: SimulationContext, actor: Combatant, cast: AbilityCastEvent) => void;
+}
+
+/**
+ * Offer a finished cast to the caster's cast reactions.
+ *
+ * Guarded by the same re-entry flag attack reactions use: a reaction that
+ * grants a resource must not be able to provoke itself.
+ */
+export function runCastReactions(
+  context: SimulationContext,
+  actor: Combatant,
+  cast: AbilityCastEvent,
+): void {
+  if (actor.castReactions.length === 0) return;
+  if (!actor.isAlive) return;
+  if (!actor.beginReacting()) return;
+
+  try {
+    for (const reaction of actor.castReactions) {
+      if (reaction.abilityId !== undefined && reaction.abilityId !== cast.ability.id) continue;
+      if (reaction.canTrigger && !reaction.canTrigger(context, actor, cast)) continue;
+      reaction.onTrigger(context, actor, cast);
+    }
+  } finally {
+    actor.endReacting();
+  }
+}
+
 export function runReactions(
   context: SimulationContext,
   actor: Combatant,

@@ -251,6 +251,30 @@ export type TalentEffect =
   | { readonly kind: 'abilityStance'; readonly abilityId: string; readonly stance: string }
 
   /**
+   * A proc that fires when an ABILITY IS USED rather than when one lands.
+   *
+   * ----------------------------------------------------------------------------
+   * THE SECOND ESCAPE HATCH, and it is narrow for the same reason `reaction`
+   * is: the table stays declarative and says WHICH proc, while a per-class
+   * registry says what it does.
+   *
+   * It exists because four Rogue talents key off a CAST and not a hit:
+   * Relentless Strikes and Ruthlessness both pay out when a finisher is used,
+   * Improved Expose Armor refunds when one is used at five combo points. A
+   * `reaction` fires on damage dealt or taken and can see neither.
+   *
+   * The event carries what the cast SPENT, measured by snapshotting the pools
+   * around it -- so "per combo point spent" is answerable without any ability
+   * having to announce anything. See `engine/combat/reactions.ts`.
+   * ----------------------------------------------------------------------------
+   */
+  | {
+      readonly kind: 'castReaction';
+      readonly reactionId: string;
+      readonly valueIndex?: number;
+    }
+
+  /**
    * Multiplies ALL damage, but only while the character is holding the right
    * weapon. The talent's value is a PERCENTAGE, so 3 becomes x1.03.
    *
