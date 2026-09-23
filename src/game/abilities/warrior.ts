@@ -687,11 +687,38 @@ export const SUNDER_ARMOR_ABILITY: Ability = {
   },
 };
 
-/** 10 rage, no cooldown. Removes 210 attack power from the target for 45 sec. */
+/**
+ * 10 rage, no cooldown. Removes 210 attack power from the target for 45 sec.
+ *
+ * ----------------------------------------------------------------------------
+ * CAST, AND WORTH NOTHING. The ruleset owner's decision, for now.
+ *
+ * The debuff is real and applies the full -210 attack power. What it has no
+ * effect on is the target's damage, because the boss melee in
+ * `encounters/raidBoss.ts` carries `powerCoefficient: 0` -- its swing damage
+ * IS the whole swing, stated outright rather than derived from attack power,
+ * so there is no term for this to reduce.
+ *
+ * The modifier is deliberately LEFT IN rather than stripped out. It is not
+ * wrong; the target simply has nothing for it to bite on, and the day a target
+ * derives its damage from attack power this starts working with no change
+ * here. Removing it would mean remembering to put it back, which is the
+ * failure mode this project keeps running into.
+ *
+ * So the ability is in the tank list and costs 10 rage and a global cooldown a
+ * cast, at about 80% uptime, and changes no incoming damage at all. That is a
+ * fact somebody reading a result has to be told, which is what `unmodelled`
+ * below is for.
+ * ----------------------------------------------------------------------------
+ */
 export const DEMORALIZING_SHOUT_ABILITY: Ability = {
   id: 'demoralizing_shout_cast',
   name: 'Demoralizing Shout',
   cost: { resource: 'rage', amount: 10 },
+  unmodelled:
+    'The -210 attack power lands, but the target has no attack power term: ' +
+    'its swing damage is stated outright, not derived. Cast at full cost, ' +
+    'for no reduction in damage taken.',
   onCast: ({ simulation, caster, target }) => {
     if (!target) return;
     simulation.applyAura(target, DEMORALIZING_SHOUT, caster.id);
@@ -739,6 +766,10 @@ export const BERSERKER_RAGE_ABILITY: Ability = {
   name: 'Berserker Rage',
   cooldownMs: seconds(30),
   requiresTarget: false,
+  unmodelled:
+    'Forever names no number for the extra rage it generates, and its other ' +
+    'half is immunity to Fear and Incapacitate, which the engine has no ' +
+    'notion of. A gap in the source, not in the capture.',
   onCast: ({ simulation, caster }) => {
     simulation.applyAura(caster, BERSERKER_RAGE, caster.id);
   },

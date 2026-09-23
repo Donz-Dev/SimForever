@@ -135,6 +135,25 @@ export interface Ability {
   readonly cooldownGroup?: string;
 
   /**
+   * Why this ability does LESS than its description says, in one line.
+   *
+   * The same discipline items follow, and for the same reason: an effect that
+   * cannot be modelled keeps its own words and is surfaced where a person can
+   * see it, rather than being quietly dropped. The Results panel prints every
+   * one that a fight actually cast, under "Cast but not simulated".
+   *
+   * A plain string rather than the richer shape items carry, because the
+   * engine may not reach into the game layer for a type -- and because an
+   * ability has one reason, where an item can have several effects with
+   * several.
+   *
+   * It is a claim about the engine ON THE DAY IT IS WRITTEN, and it expires.
+   * Clearing a blocker means re-reading every reason that named it; this
+   * project has missed that twice. See the note in CLAUDE.md.
+   */
+  readonly unmodelled?: string;
+
+  /**
    * Queue this ability onto the next auto-attack with the given weapon instead
    * of firing it immediately.
    *
