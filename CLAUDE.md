@@ -211,6 +211,13 @@ cross-check on ability numbers because its tooltips restate them. Client-side
 rendered, so a plain fetch gets a page with no talents in it; the data is in the
 DOM. `src/data/talents/README.md` has the selectors.
 
+**`talentsforever.com/<class>`** — the same trees read from the beta client
+(`1.60.1.69876`), with **every rank's text**, the Classic comparison per talent,
+and the talents Forever removed. Its structured data is `window.TALENT_DATA`,
+so nothing needs scraping. Audited against our Wowhead capture on 2026-09-23:
+all 53 Warrior talents and all 154 rank values matched, which is the strongest
+confirmation the talent data has had.
+
 **`nether.wowhead.com/classic/tooltip/item/<id>`** — Classic item and spell
 tooltips, as plain JSON. No browser needed. Used for the current items, which are
 Classic stand-ins rather than Forever data. `src/data/items/README.md` has the
@@ -272,6 +279,22 @@ calculator and the spellbook all describe the same abilities, and where they
 agree confidence rises. Where they disagree, say so in the docs and pick the one
 the ruleset owner supplied directly — do not average them or quietly prefer the
 newer.
+
+**A TALENT TOOLTIP SHOWS RANK 1 OF THE ABILITY IT GRANTS, not the rank a level
+60 character has.** This explains every "disagreement" the project ever had
+between a talent calculator and an ability sheet, and they were never
+disagreements at all:
+
+| Ability | Talent tooltip (rank 1) | Level 60 (max rank) |
+| --- | --- | --- |
+| Mortal Strike | 85 | **160** |
+| Bloodthirst | 30 | **48** |
+| Shield Slam | 421 to 439 | **640 to 670** |
+
+Three separate arguments, one rule. The ruleset owner's spreadsheet mixes the
+two — Mortal Strike is max rank, Bloodthirst and Shield Slam are rank 1 — so
+the sheet cannot settle this by itself. **Check the rank before comparing two
+sources**, and prefer the spellbook, which states `max_rank` outright.
 
 **A CAPTURED TOOLTIP CAN DISAGREE WITH ITSELF, so read the effect rows and not
 only the description.** Base points in this data set run consistently ONE higher

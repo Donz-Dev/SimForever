@@ -320,12 +320,28 @@ export const WARRIOR_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
 
   improved_intercept: [{ kind: 'abilityCooldown', abilityId: 'intercept', unit: 'seconds' }],
 
+  /*
+   * REASON CORRECTED 2026-09-23. It used to read "inert pending its effect
+   * values from the ruleset owner", and the values have been in
+   * `data/talents/values/warrior.json` since the talents were captured: 5 Rage
+   * and 50% at 1/2, 10 and 100% at 2/2. The blocker it named no longer exists.
+   *
+   * The instant Rage does NOT depend on the base ability's missing magnitude --
+   * Berserker Rage's own "generating extra rage when taking damage" still has
+   * no number anywhere, including the spellbook, but this talent grants its
+   * Rage on activation and could be modelled on its own.
+   *
+   * What stops it is the rotation: no Warrior priority list casts Berserker
+   * Rage, so an ability-cost or on-cast effect would never fire. That is a
+   * smaller and much more checkable claim than the one it replaces.
+   */
   improved_berserker_rage: [
     {
       kind: 'unmodelled',
       reason:
-        'Modifies Berserker Rage, which is castable but completely inert pending ' +
-        'its effect values from the ruleset owner.',
+        'Grants Rage when Berserker Rage is activated, and no priority list ' +
+        'casts Berserker Rage. The movement-impairing clause has nothing to ' +
+        'remove.',
     },
   ],
 
@@ -436,8 +452,22 @@ export const WARRIOR_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
 
   improved_disarm: [{ kind: 'unmodelled', reason: 'Disarm is not an implemented ability.' }],
 
+  /*
+   * REASON CORRECTED 2026-09-23. It used to read "Stances gate nothing", which
+   * was true when it was written and has been false since abilities got a
+   * `stances` field: fourteen Warrior abilities carry one, Charge among them,
+   * and `casting.ts` refuses a cast made in the wrong stance.
+   *
+   * It is still inert, for two reasons that are both about Charge rather than
+   * about stances, and either one alone would be enough.
+   */
   vanguard: [
-    { kind: 'unmodelled', reason: 'Makes Charge usable in a stance. Stances gate nothing.' },
+    {
+      kind: 'unmodelled',
+      reason:
+        'Adds Defensive Stance to Charge, which no priority list casts and ' +
+        'which cannot be used in combat -- and every fight here opens in it.',
+    },
   ],
 
   /*

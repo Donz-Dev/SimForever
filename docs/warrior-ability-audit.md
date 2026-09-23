@@ -347,6 +347,10 @@ debuff uptime stays at 100% — a 30 second slow covers a 6 second cooldown with
 room to spare, so the cooldown correction costs mitigation nothing and returns
 the rage to Heroic Strike.
 
+On the unbuffed `PROTECTION_31` baseline, where Thunder Clap is cast on
+cooldown all fight, the same correction is worth **153.66 → 151.31** with casts
+falling **8.87 → 7.49** — which is the whole of that row's move.
+
 ### Three abilities Forever has that the simulator does not
 
 | | |

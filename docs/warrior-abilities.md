@@ -223,9 +223,26 @@ the description AND the effect row, so the base-points rule does not explain
 it. The owner's raid list and the spellbook both say 139, and the owner asked
 for the spellbook to be matched. Worth one attack power.
 
-**Mortal Strike — RESOLVED: 160 is correct.** Confirmed by the ruleset owner.
-Mortal Strike is weapon damage plus 160; the talent calculator's 85 is wrong
-for Forever. The code always used 160, so nothing changed.
+**Mortal Strike — RESOLVED: 160 is correct, and the calculator was never
+wrong.** Confirmed by the ruleset owner, and then explained on 2026-09-23: a
+talent tooltip shows **rank 1** of the ability it grants, because that is what
+the talent point gives you. Mortal Strike's ranks are 85 / 110 / 135 / 160 at
+levels 40 / 48 / 54 / 60. The calculator said 85 because it was describing
+rank 1.
+
+**The same rule settles two more arguments**, and all three were the same
+mistake:
+
+| Ability | Talent tooltip (rank 1) | Level 60 (max rank) |
+| --- | --- | --- |
+| Mortal Strike | 85 | **160** |
+| Bloodthirst | 30 | **48** |
+| Shield Slam | 421 to 439 | **640 to 670** |
+
+**The spreadsheet mixes the two.** It gives Mortal Strike at max rank and
+Bloodthirst and Shield Slam at rank 1, so it cannot settle a rank question by
+itself. Every value the code uses is max rank, which is the only rank a level
+60 simulator can reach.
 
 **Shield Wall — RESOLVED: 15 minutes, and the sheet is wrong.** Asked directly,
 the ruleset owner states 15 minutes, reduced to 4 by 2/2 Improved Shield Wall.
