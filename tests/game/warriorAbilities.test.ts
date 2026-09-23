@@ -53,6 +53,21 @@ import { BATTLE_STANCE, DEFENSIVE_STANCE } from '../../src/game/auras/warrior';
  *
  * Cooldowns and cast times are in SECONDS here, as the sheet states them, and
  * are converted at the point of comparison.
+ *
+ * ----------------------------------------------------------------------------
+ * ONE ROW IS DELIBERATELY NOT THE SHEET'S, and it is marked where it sits.
+ *
+ * Shield Wall. The sheet says 1800 seconds; the ruleset owner, asked directly,
+ * says fifteen minutes, reduced to four by 2/2 Improved Shield Wall. Forever's
+ * captured spell tooltip agrees, and so does the talent's own captured value:
+ * eleven minutes off fifteen leaves four exactly, where off thirty it would
+ * leave nineteen.
+ *
+ * The owner's word outranks their own spreadsheet, which is the only thing
+ * that can. This table is otherwise the sheet verbatim, and an override
+ * without that sentence beside it would turn a hand-transcribed check into a
+ * place to file whatever the code happens to do.
+ * ----------------------------------------------------------------------------
  */
 interface SheetRow {
   readonly id: string;
@@ -84,7 +99,8 @@ const SHEET: readonly SheetRow[] = [
   { id: 'whirlwind', name: 'Whirlwind', rageCost: 25, cooldownSeconds: 10, castSeconds: 0, attackTable: 'melee-special' },
   { id: 'berserker_rage_cast', name: 'Berserker Rage', rageCost: undefined, cooldownSeconds: 30, castSeconds: 0, attackTable: undefined },
   { id: 'berserker_stance_cast', name: 'Berserker Stance', rageCost: undefined, cooldownSeconds: 1, castSeconds: 0, attackTable: undefined },
-  { id: 'shield_wall_cast', name: 'Shield Wall', rageCost: undefined, cooldownSeconds: 1800, castSeconds: 0, attackTable: undefined },
+  // OVERRIDDEN, see above: the sheet says 1800 and the ruleset owner says 900.
+  { id: 'shield_wall_cast', name: 'Shield Wall', rageCost: undefined, cooldownSeconds: 900, castSeconds: 0, attackTable: undefined },
   { id: 'shield_block_cast', name: 'Shield Block', rageCost: 10, cooldownSeconds: 5, castSeconds: 0, attackTable: undefined },
   { id: 'defensive_stance_cast', name: 'Defensive Stance', rageCost: undefined, cooldownSeconds: 1, castSeconds: 0, attackTable: undefined },
   { id: 'bloodrage_cast', name: 'Bloodrage', rageCost: undefined, cooldownSeconds: 60, castSeconds: 0, attackTable: undefined },

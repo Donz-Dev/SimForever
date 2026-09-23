@@ -194,21 +194,29 @@ Where they DISAGREED:
 | --- | --- | --- |
 | **Mortal Strike** | base damage **160** | calculator: "weapon damage plus **85**" |
 | **Shield Wall** | cooldown **1800s** | spell tooltip: "Instant **15 min** cooldown" |
+| | | talent values: 2/2 Improved takes off **11 min** |
 
 **Mortal Strike — RESOLVED: 160 is correct.** Confirmed by the ruleset owner.
 Mortal Strike is weapon damage plus 160; the talent calculator's 85 is wrong
 for Forever. The code always used 160, so nothing changed.
 
-**Shield Wall — OPEN, and the code uses 1800.** The spreadsheet wins by the
-standing rule: where two sources disagree, take the one the ruleset owner
-supplied directly. Worth asking about, because it is a factor of two on a
-cooldown that the Improved Shield Wall talent then reduces.
+**Shield Wall — RESOLVED: 15 minutes, and the sheet is wrong.** Asked directly,
+the ruleset owner states 15 minutes, reduced to 4 by 2/2 Improved Shield Wall.
+The captured tooltip agrees, and so does the talent's own captured value:
+11 minutes off 15 leaves 4 exactly, where off 30 it would leave 19 — not a
+number anyone writes a talent for.
 
-It is also a worked example of why the hand-transcribed ability test exists.
-The cooldown was changed to 900 on the strength of the captured tooltip alone
-— the aura's own comment had asserted fifteen minutes since it was written, so
-the capture looked like confirmation rather than a second opinion — and
-`tests/game/warriorAbilities.test.ts` refused it in the same run.
+**This is the first spreadsheet row to be overruled**, so the hand-transcribed
+test in `tests/game/warriorAbilities.test.ts` carries the override with the
+reason written beside it. An override without that sentence would turn a check
+on the source into a place to file whatever the code happens to do.
+
+It is also a worked example of why that test exists. The cooldown was first
+changed to 900 on the strength of the captured tooltip alone — the aura's own
+comment had asserted fifteen minutes since it was written, so the capture
+looked like confirmation rather than a second opinion — and the test refused
+it, correctly. What was missing was the third source, which was one question
+away.
 
 The calculator also confirms **Spearing Strike is an Arms talent**, which is why
 it had no Classic counterpart to check against.

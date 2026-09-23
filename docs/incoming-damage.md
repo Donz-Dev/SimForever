@@ -111,6 +111,11 @@ would make every `isAlive` check between the death and the revive read false,
 which inside one tick of the event loop cancels their own swing timers and
 skips the reactions the killing blow was meant to trigger.
 
+**A survival cooldown that fails is spent.** Last Stand's expiry leaves the
+character at **1 health rather than killing them** — the ruleset owner's
+ruling, since the tooltip says what is lost and not what happens when there is
+not enough of it.
+
 **It drops the survival cooldowns and nothing else.** Last Stand and Shield
 Wall carry `removedOnDeath`, because a cooldown spent to prevent this exact
 death does not survive it — and Last Stand in particular would otherwise carry

@@ -813,33 +813,39 @@ export const BLOODRAGE_ABILITY: Ability = {
 };
 
 /**
- * Free, Defensive Stance. Takes 60% off damage taken for 12 sec.
+ * Free, Defensive Stance, 15 minute cooldown. Takes 60% off damage taken for
+ * 12 sec.
  *
  * ----------------------------------------------------------------------------
- * THE TWO SOURCES DISAGREE ABOUT THE COOLDOWN, and this is the spreadsheet's
- * answer.
+ * THE SPREADSHEET IS WRONG ABOUT THIS ONE, and it is the first row of it that
+ * has been overruled.
  *
  *   - `WoWForeverWarriorAbilities.xlsx`      1800 seconds (30 minutes)
  *   - Forever's captured spell tooltip       "Instant 15 min cooldown"
+ *   - THE RULESET OWNER, asked directly      15 minutes, 4 with 2/2 Improved
+ *                                            Shield Wall
  *
- * The spreadsheet wins, by the project's standing rule: where two sources
- * disagree, take the one the ruleset owner supplied directly rather than the
- * newer or the more convenient. It was changed to 900 on the strength of the
- * capture alone and the hand-transcribed spreadsheet test caught it, which is
- * exactly what that test is for.
+ * The owner's word settles it, and the talent corroborates it independently:
+ * Improved Shield Wall's captured value at 2/2 is ELEVEN MINUTES, and
+ * 15 - 11 = 4 exactly as stated. Off the spreadsheet's thirty it would leave
+ * nineteen, which is not a number anyone would write a talent for.
  *
- * Worth resolving, because it is a factor of two on a cooldown that Improved
- * Shield Wall then reduces -- and because the aura's own comment in
- * `auras/warrior.ts` has quietly asserted fifteen minutes since it was
- * written. Invisible in a sixty second fight, where either figure allows
- * exactly one cast.
+ * WORTH KNOWING HOW THIS WENT. The cooldown was first changed to 900 on the
+ * strength of the capture alone, and `tests/game/warriorAbilities.test.ts`
+ * refused it -- correctly, because at that point the only evidence was a
+ * second source disagreeing with the owner's own file, and the standing rule
+ * says the file wins. The test was right to refuse and the change was right to
+ * make; what was missing was the third source, which was one question away.
+ *
+ * Invisible in a sixty second fight, where any of these figures allows exactly
+ * one cast. Not invisible to Improved Shield Wall, nor to a longer encounter.
  * ----------------------------------------------------------------------------
  */
 export const SHIELD_WALL_ABILITY: Ability = {
   id: 'shield_wall_cast',
   stances: ['defensive_stance'],
   name: 'Shield Wall',
-  cooldownMs: seconds(1800),
+  cooldownMs: seconds(900),
   requiresTarget: false,
   onCast: ({ simulation, caster }) => {
     simulation.applyAura(caster, SHIELD_WALL, caster.id);
@@ -900,7 +906,7 @@ export const DEATH_WISH_ABILITY: Ability = {
  *
  * Raises maximum health 30% for 20 seconds and takes it back afterwards. It
  * changes no outcome here, because the player cannot drop below one health --
- * see `LAST_STAND` for why it is implemented anyway.
+ * see `LAST_STAND` for the whole of it.
  */
 export const LAST_STAND_ABILITY: Ability = {
   id: 'last_stand',

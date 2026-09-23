@@ -424,8 +424,21 @@ export const WARRIOR_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
     { kind: 'unmodelled', reason: 'Makes Charge usable in a stance. Stances gate nothing.' },
   ],
 
+  /*
+   * FULLY MODELLED. 5.5 minutes off at 1/2 and 11 at 2/2, from the captured
+   * per-rank values.
+   *
+   * Its old reason said "modifies Shield Wall, which is castable but inert" --
+   * true until Shield Wall got its damage reduction, and until survival was
+   * something a run could measure.
+   *
+   * ITS VALUES ARE ALSO WHAT SETTLED SHIELD WALL'S COOLDOWN. Eleven minutes
+   * off a fifteen minute cooldown leaves four, which is exactly what the
+   * ruleset owner states. Off the spreadsheet's thirty it would leave
+   * nineteen, which is not a number anyone would write a talent for.
+   */
   improved_shield_wall: [
-    { kind: 'unmodelled', reason: 'Modifies Shield Wall, which is castable but inert.' },
+    { kind: 'abilityCooldown', abilityId: 'shield_wall_cast', unit: 'minutes' },
   ],
 
   concussion_blow: [

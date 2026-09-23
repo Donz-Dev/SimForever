@@ -420,7 +420,7 @@ a stated gap. `no` means it is inert, and the Talent panel says so on screen.
 | 15 | Improved Sunder Armor | 3 | Reduces the Rage cost of your Sunder Armor ability by 3. | **yes** |
 | 15 | Improved Disarm | 3 | Reduces the cooldown of your Disarm ability by 20 secs. | **no** |
 | 15 | Vanguard | 1 | Your Charge ability is now usable while in Defensive Stance. | **no** |
-| 20 | Improved Shield Wall | 2 | Reduces the cooldown of your Shield Wall ability by 11 min. | **no** |
+| 20 | Improved Shield Wall | 2 | Reduces the cooldown of your Shield Wall ability by 11 min. | yes |
 | 20 | Concussion Blow | 1 | Stuns the target for 5 sec. | partly |
 | 20 | Improved Shield Bash | 2 | Gives your Shield Bash ability a 100% chance to Silence the target for 3 sec. | **no** |
 | 20 | Vitality | 5 | Increases your Stamina and Strength by 10%. | **yes** |
@@ -436,7 +436,7 @@ Grouped, because each blocker covers several:
 | **Needs a talent-granted reaction** | Enrage, Master of Defense, Weaponmaster's sword clause | **Yes, today.** Values captured, trigger exists, Shield Specialization is the worked example. The cheapest remaining wins |
 | **Out of scope by decision** | Improved Hamstring, Improved Disarm, Improved Shield Bash, Defiance, Booming Voice, Iron Will | Snares, disarms, threat and shout radius. Non-combat |
 | **Stances gate nothing yet** | Improved Tactical Mastery, Vanguard | **Yes** — the gating data now exists. Needs `Ability.stance` and a rotation willing to swap |
-| **The ability it modifies is inert** | Improved Bloodrage, Improved Berserker Rage, Improved Shield Wall | Waits on Bloodrage's rage mechanism and Berserker Rage's missing magnitude |
+| **The ability it modifies is inert** | Improved Berserker Rage | **Improved Bloodrage and Improved Shield Wall both left this row.** Only Berserker Rage's missing magnitude remains, and that is a gap in the source |
 | **No defense skill** | Anticipation | Needs a formula Forever has not given |
 | **Talent-driven combat-start aura** | Anger Management | The mechanism exists; nothing wires a talent to it |
 | ~~Engine holds one armor number~~ | ~~Toughness~~ | **Done.** Armor from items is tracked separately from armor derived from stats, and the talent scales only the first |

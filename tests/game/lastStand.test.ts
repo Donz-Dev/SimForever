@@ -19,6 +19,7 @@ import { createDefaultProfile } from '../../src/profiles';
 import { startingEquipmentFor } from '../../src/game/items/startingSets';
 import { runProfileBatch } from '../../src/simulator';
 import { trainingDummyEncounter } from '../../src/simulator/trainingDummyEncounter';
+import { legalise } from '../helpers/legalTalents';
 
 /*
  * Last Stand, and what a death does to a survival cooldown.
@@ -178,12 +179,12 @@ describe('borrowing the health', () => {
     }
   });
 
-  it('cannot itself be the killing blow', () => {
+  it('leaves the character at one health rather than killing them', () => {
     /*
-     * INTERPRETATION, flagged in the aura: the source says what is lost and
-     * not what happens when there is not enough of it. Floored at one health,
-     * because an ability that saves you and then kills you is the more
-     * extraordinary claim and nothing states it.
+     * THE RULESET OWNER'S RULING, in those words. The tooltip says what is
+     * lost and not what happens when there is not enough of it, so this went
+     * in as a floor of one health and flagged as an interpretation; asked
+     * directly, the owner confirmed it.
      */
     const { simulation, player } = opened();
 
@@ -292,7 +293,65 @@ describe('Last Stand in the Protection list', () => {
     // Different cooldowns, different durations: they are not two copies of
     // one button, and the list reaches for the cheap one first.
     expect(SHIELD_WALL_DURATION_MS).toBe(12_000);
-    expect(SHIELD_WALL_ABILITY.cooldownMs).toBe(1_800_000);
+    expect(SHIELD_WALL_ABILITY.cooldownMs).toBe(900_000);
     expect(LAST_STAND_ABILITY.cooldownMs).toBe(180_000);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Shield Wall's cooldown, and the talent that settled it
+// ---------------------------------------------------------------------------
+
+describe('Shield Wall', () => {
+  it('is fifteen minutes, which overrules the spreadsheet', () => {
+    /*
+     * Three sources, and they did not agree:
+     *
+     *   WoWForeverWarriorAbilities.xlsx   1800 seconds
+     *   Forever's captured tooltip        "Instant 15 min cooldown"
+     *   the ruleset owner, asked          15 minutes, 4 with 2/2 Improved
+     *
+     * The owner's word outranks their own file, which is the only thing that
+     * can. Written out by hand rather than read from the ability.
+     */
+    expect(SHIELD_WALL_ABILITY.cooldownMs).toBe(15 * 60 * 1000);
+  });
+
+  it('comes down to four minutes at 2/2 Improved Shield Wall', () => {
+    /*
+     * The ruleset owner's figure, and the INDEPENDENT CHECK on the fifteen
+     * above: the talent's own captured value at 2/2 is eleven minutes, and
+     * 15 - 11 = 4 exactly. Off the spreadsheet's thirty it would leave
+     * nineteen, which is not a number anyone writes a talent for.
+     */
+    const cooldownOf = (talents: Record<string, number>) =>
+      abilitiesForClass('warrior', 'one_hand_shield', talents).find(
+        (a) => a.id === 'shield_wall_cast',
+      )?.cooldownMs;
+
+    expect(cooldownOf({})).toBe(15 * 60 * 1000);
+    expect(cooldownOf(legalise({ improved_shield_wall: 2 }))).toBe(4 * 60 * 1000);
+  });
+
+  it('comes down to nine and a half at 1/2', () => {
+    // 5.5 minutes off at rank 1, from the same captured values.
+    const cooldown = abilitiesForClass(
+      'warrior',
+      'one_hand_shield',
+      legalise({ improved_shield_wall: 1 }),
+    ).find((a) => a.id === 'shield_wall_cast')?.cooldownMs;
+
+    expect(cooldown).toBe(9.5 * 60 * 1000);
+  });
+
+  it('is no longer reported as unmodelled', () => {
+    /*
+     * Its reason said "modifies Shield Wall, which is castable but inert" --
+     * true until Shield Wall got its damage reduction, and until survival was
+     * something a run could measure.
+     */
+    expect(WARRIOR_TALENT_EFFECTS.improved_shield_wall).toEqual([
+      { kind: 'abilityCooldown', abilityId: 'shield_wall_cast', unit: 'minutes' },
+    ]);
   });
 });

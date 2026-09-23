@@ -367,10 +367,9 @@ export const BLOODRAGE: AuraDefinition = bloodrageAura();
  * off is a multiplier of 0.40. Both figures here are Forever's, and the two
  * sources agree on them.
  *
- * THEY DISAGREE ABOUT THE COOLDOWN. This comment used to state Forever's as
- * fifteen minutes, which is the captured tooltip; the ruleset owner's
- * spreadsheet says thirty. The spreadsheet wins and the ability carries 1800
- * seconds -- see `SHIELD_WALL_ABILITY` for the whole of it.
+ * THEY DISAGREED ABOUT THE COOLDOWN, and this comment was right: fifteen
+ * minutes, confirmed by the ruleset owner against their own spreadsheet's
+ * thirty. See `SHIELD_WALL_ABILITY` for how that was settled.
  */
 export const SHIELD_WALL_DAMAGE_TAKEN_MULTIPLIER = 0.4;
 export const SHIELD_WALL_DURATION_MS = seconds(12);
@@ -626,13 +625,12 @@ export const DEATH_WISH: AuraDefinition = {
  * the difference between casting it at 20% health and being saved, versus
  * casting it and being back at 20% twenty seconds later.
  *
- * INTERPRETATION, and the one thing the source does not settle: whether the
- * loss can KILL. "The health is lost" says what goes, not what happens if
- * there is not enough of it. It is floored at one health here, so Last Stand
- * can fail to save a character but can never be the thing that finishes them
- * -- an ability that saves you and then kills you is the more extraordinary
- * claim, and nothing states it. One line to flip if the ruleset owner says
- * otherwise.
+ * IT CANNOT KILL. "The health is lost" says what goes, not what happens if
+ * there is not enough of it, so this was implemented as a floor of one health
+ * and flagged as an interpretation -- and the ruleset owner has since
+ * confirmed it: Last Stand leaves you at 1 hit point rather than killing you.
+ * So it can fail to save a character and can never be the thing that finishes
+ * them.
  *
  * WHAT CHANGED AROUND IT. This used to end "the player cannot drop below one
  * health, so extra health changes no outcome; anything reading Last Stand's
