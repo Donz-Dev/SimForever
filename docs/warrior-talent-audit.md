@@ -85,6 +85,51 @@ be used in combat, and every fight here opens in it.
 This is the third and fourth time a stale reason has been caught. The rule in
 CLAUDE.md exists because of the first two.
 
+## Weaponmaster's sword clause, checked on request
+
+**It is implemented correctly.** Verified against the reaction's own
+`canTrigger`, one case at a time:
+
+| Main hand | Off hand | Swinging | Procs |
+| --- | --- | --- | --- |
+| sword | sword | main hand | **yes** |
+| sword | sword | off hand | **yes** |
+| mace | sword | off hand | **yes** |
+| sword | mace | off hand | no |
+| mace | sword | main hand | no |
+| axe | axe | main hand | no |
+| sword | sword | ranged | no |
+
+The two mixed rows are the ones that matter: the gate reads **the weapon in
+the slot that swung**, so an off-hand sword procs beside a main-hand mace and
+an off-hand mace does not proc beside a main-hand sword. Reading the character's
+"weapon" instead would get both backwards.
+
+The chance is **1% per rank**, 5% at 5/5, which is the talent's third value —
+`[1,3,1] [2,6,2] [3,9,3] [4,12,4] [5,15,5]`, being crit / armor ignore / extra
+attack. `valueIndex: 2` picks it correctly. The extra attack always swings the
+**main hand**, whichever hand procced, matching Hand of Justice.
+
+`['hit', 'crit', 'glance']` covers every landing outcome that can occur:
+measured over 25 fights, a player's attacks on the boss produce only hit, crit,
+glance, miss and dodge. No block, parry or crush.
+
+### Two things found while checking
+
+**The doc comment above it was wrong.** It read *"NOT GATED ON CARRYING A
+SWORD, because a reaction cannot see the weapon"*, directly above code that has
+read `actor.weapons[slot]` since it was written. Nothing failed, because the
+gate was untested — the tests covered the crit clause, the reaction being
+granted and the extra attack's slot, and never `canTrigger` itself. There is a
+matrix now.
+
+**Every weapon in the item data is a Sword.** `classic-warrior.json` holds
+Vis'kag, Brutality Blade, Obsidian Edged Blade and a bow, so in practice the
+sword clause always applies and **the axe/polearm crit clause can never fire
+for any build that can be made**. The gate is right and currently unreachable.
+That is an item-data gap rather than a talent one, and it is the reason a wrong
+comment could sit above correct code without anything noticing.
+
 ## Talents Forever removed from Classic
 
 Recorded because their absence is a fact about Forever rather than a gap in our

@@ -283,6 +283,70 @@ describe('Weaponmaster depends on which weapon swung', () => {
     expect(WARRIOR_TALENT_REACTIONS.weaponmaster).toBeDefined();
   });
 
+  /*
+   * ----------------------------------------------------------------------------
+   * THE GATE ITSELF, which went untested while a comment above it claimed it
+   * did not exist. The comment said "NOT GATED ON CARRYING A SWORD, because a
+   * reaction cannot see the weapon"; the code below it had read
+   * `actor.weapons[slot]` all along. Nothing failed, because every weapon in
+   * the item data is a Sword, so the gate never refuses in a real build.
+   *
+   * Written as a matrix because the interesting cases are the MIXED ones, and
+   * those are exactly the ones a per-character reading would get backwards.
+   * ----------------------------------------------------------------------------
+   */
+  const alwaysRolls = { rng: { rollChance: () => true } } as never;
+  const holding = (mainHand: string, offHand: string) =>
+    ({ weapons: { mainHand: { weaponType: mainHand }, offHand: { weaponType: offHand } } }) as never;
+
+  it.each([
+    { mainHand: 'sword', offHand: 'sword', swung: 'mainHand', procs: true },
+    { mainHand: 'sword', offHand: 'sword', swung: 'offHand', procs: true },
+    // The two that a per-character reading gets exactly backwards.
+    { mainHand: 'mace', offHand: 'sword', swung: 'offHand', procs: true },
+    { mainHand: 'sword', offHand: 'mace', swung: 'offHand', procs: false },
+    { mainHand: 'mace', offHand: 'sword', swung: 'mainHand', procs: false },
+    { mainHand: 'axe', offHand: 'axe', swung: 'mainHand', procs: false },
+    // A bow is not a melee attack, whatever is in the other hands.
+    { mainHand: 'sword', offHand: 'sword', swung: 'ranged', procs: false },
+  ])(
+    '$mainHand/$offHand swinging $swung -> proc $procs',
+    ({ mainHand, offHand, swung, procs }) => {
+      const reaction = WARRIOR_TALENT_REACTIONS.weaponmaster(5);
+      const result = reaction.canTrigger?.(
+        alwaysRolls,
+        holding(mainHand, offHand),
+        { weaponSlot: swung } as never,
+      );
+      expect(result ?? false).toBe(procs);
+    },
+  );
+
+  it('rolls 1% per rank, which is the value the talent declares', () => {
+    /*
+     * Transcribed by hand from the beta client's per-rank values, where
+     * Weaponmaster reads [1,3,1] [2,6,2] [3,9,3] [4,12,4] [5,15,5] -- crit,
+     * armor ignore, extra attack. The third is what this reaction takes.
+     */
+    for (const rank of [1, 2, 3, 4, 5]) {
+      let rolled = -1;
+      const capture = {
+        rng: {
+          rollChance: (chance: number) => {
+            rolled = chance;
+            return false;
+          },
+        },
+      } as never;
+      WARRIOR_TALENT_REACTIONS.weaponmaster(rank).canTrigger?.(
+        capture,
+        holding('sword', 'sword'),
+        { weaponSlot: 'mainHand' } as never,
+      );
+      expect(rolled).toBeCloseTo(rank / 100, 10);
+    }
+  });
+
   it('triggers an extra attack with the MAIN HAND, whichever hand procced', () => {
     /*
      * Stated by the ruleset owner, and it matters for a mace-and-sword pairing:
