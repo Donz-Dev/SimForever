@@ -233,14 +233,37 @@ spell states FLAT damage -- "350 to 412 Arcane damage" -- and no coefficient at
 all, so there is nothing to multiply. None is invented. Combined with an item
 set curated for a Warrior, where a Moonkin's `spellPower` reads zero, a caster
 figure is a FLOOR rather than an estimate. Honest, and not yet worth quoting.
+**THE SHAMAN READS THE SAME WAY**, which settles it: two classes, flat damage
+and no coefficient in both, so this is how Forever's spell data is written
+rather than a Druid quirk.
 
-**A CLASS MISSING FROM `talentValues.ts` HAS ITS WHOLE TREE SILENTLY INERT, and
-nothing says so.** Every rank value resolves to nothing, every talent reports
-itself `unmodelled`, and that is exactly what an unfinished class is supposed
-to look like -- so twenty dead talents read as progress. The Rogue shipped that
-way for a day. **Register the values file in the same commit as the effects
-table**, and check a new class's talents actually change a number rather than
-trusting the build to complain.
+**A ONE-SHOT, PER-ABILITY CAST-TIME MODIFIER IS THE MISSING RULE THAT NOW
+BLOCKS THREE CLASSES.** Eclipse, Nature's Grace and Nature's Swiftness on the
+Druid; Maelstrom Weapon, the ENHANCEMENT CAPSTONE, on the Shaman; Presence of
+Mind and Arcane Blast on the Mage when it arrives. All shorten the NEXT cast of
+a named spell, and neither declaration reaches it: `abilityCastTime` is a
+standing talent reduction fixed when the character is built, and an aura
+reaches every ability or none. Stormstrike's +20% is the same shape ONE STEP
+easier -- a one-shot modifier on three named spells -- and it is done in
+content, because damage is read inside `onCast` where cast time is not. One
+engine feature, four classes.
+
+**A CLASS HAS TO BE REGISTERED IN FOUR PLACES AND MISSING ANY ONE IS SILENT.**
+`talentValues.ts`'s `FILES`, `talentBuild.ts`'s `EFFECTS` **and** its
+`REACTIONS`, and `abilitiesForClass`. Two of the four have now been missed, and
+the two failures do not even look alike. Missing the VALUES file makes every
+rank resolve to nothing so every talent reports itself `unmodelled` -- which is
+exactly what an unfinished class is supposed to look like, so twenty dead Rogue
+talents read as progress for a day. Missing `talentBuild`'s EFFECTS table is
+quieter still: nothing reports unmodelled at all, the tree simply produces no
+effects, and three talent-GRANTED abilities went missing from the Shaman's
+spellbook with no complaint -- 37% of an Elemental shaman's damage and 44% of
+an Enhancement one's, at figures that looked perfectly ordinary. A prose rule
+naming one file caught the first and missed the second, so the rule is now
+`tests/game/classRegistration.test.ts` instead: it fails when a class with
+abilities is absent from any registry. **Check a new class's talents actually
+change a number rather than trusting the build to complain**, because it will
+not.
 
 **A WEAPON PROC FIRES ON A USE, AND A USE IS A SWING OR AN ABILITY.** Anything
 that goes through a combat table and needs that weapon counts -- Bloodthirst,

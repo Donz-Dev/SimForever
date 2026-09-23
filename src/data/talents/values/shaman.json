@@ -137,8 +137,10 @@
    "tree": "elemental",
    "ranks": 1,
    "text": "Increases the critical strike chance of your Lightning Bolt and Chain Lightning spells by 3%.",
-   "values": null,
-   "note": "single rank"
+   "values": [
+    3
+   ],
+   "note": "single rank; the 3 filled in by hand per this directory's README -- a single-rank talent has no variable the calculator can identify from its own text, and the text states 3% outright"
   },
   "elemental_reach": {
    "name": "Elemental Reach",

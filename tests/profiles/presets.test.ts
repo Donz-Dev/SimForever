@@ -57,6 +57,8 @@ describe('the preset catalogue', () => {
       'druid_moonkin',
       'druid_cat',
       'druid_bear',
+      'shaman_elemental',
+      'shaman_enhancement',
     ]);
     expect(PROFILE_PRESETS.map((preset) => preset.label)).toEqual([
       '2H Arms',
@@ -68,6 +70,8 @@ describe('the preset catalogue', () => {
       'Moonkin',
       'Cat',
       'Bear',
+      'Ele Shaman',
+      'Enh Shaman',
     ]);
   });
 
@@ -100,9 +104,26 @@ describe('the preset catalogue', () => {
      * measured without them comparable; a preset is a stated character, and
      * the raid is part of what it states.
      */
-    const [first, ...rest] = PROFILE_PRESETS.map((preset) => preset.build().raidBuffs);
-    expect(first.length).toBeGreaterThan(0);
-    for (const other of rest) expect(other).toEqual(first);
+    /*
+     * ONE EXCEPTION, AND THE SPELL ITSELF IS WHY. An Enhancement shaman imbues
+     * its own main hand, and Windfury Weapon's tooltip says it "disables any
+     * benefit you personally receive from Windfury Totem" -- so that preset
+     * drops the totem and nothing else. Every other difference here would be
+     * a bug; this one is the ruleset.
+     */
+    const SELF_PROVIDED: Readonly<Record<string, readonly string[]>> = {
+      shaman_enhancement: ['windfury_totem'],
+    };
+    const expected = (id: string, buffs: readonly string[]) =>
+      buffs.filter((buff) => !(SELF_PROVIDED[id] ?? []).includes(buff));
+
+    const [first, ...rest] = PROFILE_PRESETS.map((preset) => [
+      preset.id,
+      preset.build().raidBuffs,
+    ] as const);
+    expect(first[1].length).toBeGreaterThan(0);
+    for (const [id, buffs] of rest) expect(buffs, id).toEqual(expected(id, first[1]));
+    expect(expected('shaman_enhancement', first[1])).toHaveLength(first[1].length - 1);
     expect(createDefaultProfile().raidBuffs).toEqual([]);
   });
 
