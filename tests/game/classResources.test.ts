@@ -216,7 +216,7 @@ describe('createPlayer', () => {
 
   it('gives abilities and a rotation to the classes that have them', () => {
     /*
-     * SEVEN OF NINE, and the list grows one class at a time. A class with no
+     * EIGHT OF NINE, and only the Priest is left. A class with no
      * entry gets an empty book and no rotation rather than a stand-in, so an
      * unwritten class produces nothing instead of producing something wrong.
      */
@@ -228,6 +228,7 @@ describe('createPlayer', () => {
       'mage',
       'paladin',
       'hunter',
+      'warlock',
     ]);
 
     for (const id of CLASS_IDS) {

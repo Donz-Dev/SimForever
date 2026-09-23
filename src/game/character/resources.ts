@@ -12,6 +12,9 @@ import type { ClassId, CombatStyleId } from './ids';
  * Mana is absent because it is not: it scales with intellect and level, and
  * inventing a number here would produce plausible-looking wrong results.
  */
+/** A Warlock's banked shards at the pull. See below; nothing states it. */
+export const PLACEHOLDER_SOUL_SHARDS = 10;
+
 export const FIXED_RESOURCE_MAXIMUMS: Partial<Record<ResourceType, number>> = {
   rage: 100,
   energy: 100,
@@ -22,6 +25,19 @@ export const FIXED_RESOURCE_MAXIMUMS: Partial<Record<ResourceType, number>> = {
    * `game/combat/comboPoints.ts`.
    */
   comboPoints: MAX_COMBO_POINTS,
+  /*
+   * SOUL SHARDS, AND THE POOL IS A PLACEHOLDER.
+   *
+   * A Warlock spends them on Shadowburn and Soul Fire and earns them from
+   * Drain Soul KILLING something -- which never happens against a target that
+   * survives every fight. So there is no income here at all, and what a
+   * Warlock actually has is whatever it banked before the pull.
+   *
+   * Nothing states that number. Ten is a visibly round placeholder and is
+   * enough that a sixty-second fight never runs dry, which keeps the absence
+   * of income from silently becoming the constraint being measured.
+   */
+  soulShards: PLACEHOLDER_SOUL_SHARDS,
 };
 
 /*
@@ -46,7 +62,13 @@ export const FIXED_RESOURCE_MAXIMUMS: Partial<Record<ResourceType, number>> = {
  * fighting, which is what makes the opening seconds of a warrior rotation
  * different from everyone else's.
  */
-const STARTS_FULL: ReadonlySet<ResourceType> = new Set<ResourceType>(['mana', 'energy']);
+const STARTS_FULL: ReadonlySet<ResourceType> = new Set<ResourceType>([
+  'mana',
+  'energy',
+  // A Warlock arrives with shards banked rather than earning them in the
+  // fight -- there is no income here at all. See `PLACEHOLDER_SOUL_SHARDS`.
+  'soulShards',
+]);
 
 const CLASS_BY_ID = new Map<ClassId, ClassDefinition>(
   CLASSES.map((entry) => [entry.id, entry]),
@@ -134,6 +156,8 @@ export function resourceLabel(resource: ResourceType): string {
       return 'Rage';
     case 'energy':
       return 'Energy';
+    case 'soulShards':
+      return 'Soul Shards';
     case 'focus':
       return 'Focus';
     case 'runicPower':

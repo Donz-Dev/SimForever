@@ -11,6 +11,7 @@ import { SHAMAN_TALENT_EFFECTS } from '../../src/game/talents/shamanEffects';
 import { MAGE_TALENT_EFFECTS } from '../../src/game/talents/mageEffects';
 import { PALADIN_TALENT_EFFECTS } from '../../src/game/talents/paladinEffects';
 import { HUNTER_TALENT_EFFECTS } from '../../src/game/talents/hunterEffects';
+import { WARLOCK_TALENT_EFFECTS } from '../../src/game/talents/warlockEffects';
 
 /*
  * ------------------------------------------------------------------------------
@@ -54,6 +55,7 @@ const EFFECT_TABLES = {
   mage: MAGE_TALENT_EFFECTS,
   paladin: PALADIN_TALENT_EFFECTS,
   hunter: HUNTER_TALENT_EFFECTS,
+  warlock: WARLOCK_TALENT_EFFECTS,
 } as const;
 
 const IMPLEMENTED = Object.keys(EFFECT_TABLES) as (keyof typeof EFFECT_TABLES)[];
@@ -70,6 +72,7 @@ describe('every implemented class is registered everywhere', () => {
       'mage',
       'paladin',
       'hunter',
+      'warlock',
     ]);
     for (const id of CLASS_IDS) {
       const hasAbilities = abilitiesForClass(id).length > 0;

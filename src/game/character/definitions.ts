@@ -123,7 +123,24 @@ export const CLASSES: readonly ClassDefinition[] = [
     forms: [],
   },
   simpleClass('shaman', 'Shaman', 'mana'),
-  simpleClass('warlock', 'Warlock', 'mana'),
+  {
+    id: 'warlock',
+    name: 'Warlock',
+    /*
+     * MANA AND SOUL SHARDS. Shards are spent by Shadowburn and Soul Fire and
+     * earned by Drain Soul KILLING something -- which never happens against a
+     * target that survives every fight. So a Warlock arrives with a banked
+     * pool and spends it, and the pool is a named placeholder because nothing
+     * states how many a Warlock walks in with.
+     *
+     * Without the pool the cost cannot be paid at all and Shadowburn is
+     * silently never cast: the priority list simply falls through to the next
+     * entry, which is what happened the first time this was written.
+     */
+    resources: ['mana', 'soulShards'],
+    primaryResource: 'mana',
+    forms: [],
+  },
   simpleClass('warrior', 'Warrior', 'rage'),
 ];
 

@@ -27,13 +27,16 @@ const mage = () => createPlayer({ race: 'gnome', characterClass: 'mage' });
  * A CASTER THAT DOES NOTHING, for the two tests that run a real simulation and
  * need the pool left alone.
  *
- * It was the Mage until the Mage was written, and then those tests began
- * failing because a Mage now has a priority list and SPENDS -- which is the
- * correct behaviour and the wrong fixture. Mana is mana, so an unwritten
- * caster serves; this will have to move again when the Warlock arrives, and
- * the failure is the signal.
+ * It was the Mage, then the Warlock, and is now the PRIEST -- the last class
+ * with no content at all. Each time one was written these tests began failing,
+ * because the class gained a priority list and started SPENDING: correct
+ * behaviour, wrong fixture. Mana is mana, so any unwritten caster serves.
+ *
+ * WHEN THE PRIEST IS WRITTEN THERE IS NOWHERE LEFT TO MOVE THIS, and the right
+ * answer then is a bare `makeAttacker` with a mana pool rather than a ninth
+ * class. Recorded here so the next person does not go looking for one.
  */
-const quietCaster = () => createPlayer({ race: 'undead', characterClass: 'warlock' });
+const quietCaster = () => createPlayer({ race: 'undead', characterClass: 'priest' });
 
 describe('every resource has a current and a maximum', () => {
   it('reports both for rage, energy and mana', () => {

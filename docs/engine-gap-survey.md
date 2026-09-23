@@ -172,9 +172,17 @@ rather than by class:
 | ~~**1**~~ | ~~Bear + Moonkin Druid~~, ~~Ele + Enhance Shaman~~ **done**; ~~Frostfire / Arcane / Fire Mage~~ **done**, ~~Shockadin, Seal Twist Ret, Prot Pally~~ **done** | content only |
 | ~~**1b**~~ | ~~Venom / Combat / Rupture Rogue~~, ~~Cat Druid~~ **all done** | ~~combo points~~ **done** |
 | ~~**2**~~ | Shadow Priest | ~~channelled casts~~ **done** |
-| ~~**3**~~ | ~~BM Hunter, LW Ranged, LW Melee~~ **done**; SM/DS Warlock, Firelock | ~~pets~~ **done** |
+| ~~**3**~~ | ~~BM Hunter, LW Ranged, LW Melee~~ **done**; ~~SM/DS Warlock, Firelock~~ **done** | ~~pets~~ **done** |
 
-**Twenty of twenty profiles are now in reach, and eighteen are done.** The Shaman needed no engine change — the fourth
+**ALL TWENTY PROFILES ARE DONE, across eight of nine classes.**
+
+The one engine feature never built is **adding a combatant mid-fight**, and
+nothing in the owner's twenty needs it: a Hunter's hawk is modelled as a
+periodic effect on its owner, on the owner's own call. The Warlock's Infernal
+and the Mage's elemental would want it.
+
+The Priest is the only class with no content, and its Shadow profile is not in
+the owner's twenty. Channelled casts, which it would need, already exist. The Shaman needed no engine change — the fourth
 class in a row where the survey was right about that. **The Mage is the first
 that does**, and it needed two:
 
