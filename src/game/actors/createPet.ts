@@ -1,6 +1,8 @@
 import type { Ability, Combatant as CombatantType } from '../../engine';
 import { Combatant, seconds } from '../../engine';
 import { regenerationFor } from '../combat/resourceRules';
+import type { PetModifiers } from '../talents/talentBuild';
+import { NO_PET_MODIFIERS } from '../talents/talentBuild';
 import { attackPowerCoefficientFor } from '../combat/weaponDamage';
 import type { PetFamilyId } from '../character/petFamilies';
 import { PET_FAMILIES, abilitiesForFamily } from '../character/petFamilies';
@@ -76,10 +78,21 @@ export interface PetOptions {
   readonly owner: CombatantType;
   readonly family: PetFamilyId;
   readonly name?: string;
-  /** Talent-driven changes the owner makes to its pet. */
-  readonly damageMultiplier?: number;
-  readonly critBonus?: number;
-  readonly healthMultiplier?: number;
+  /**
+   * What the OWNER'S TALENTS do to this pet, resolved by `talentBuild`.
+   *
+   * ----------------------------------------------------------------------
+   * SIX HUNTER TALENTS WERE INERT WITHOUT THIS, and they are most of what a
+   * Beast Mastery build spends its points on: Endurance Training, Focused
+   * Fire's pet half, Unleashed Fury, Ferocity, Frenzy and Bestial Discipline.
+   * Each said so in its own `unmodelled` reason, which is how they were found
+   * -- the reasons are written specifically enough to check.
+   *
+   * Handed over already resolved, so nothing here does arithmetic on a talent
+   * rank. `createPet` applies what it is given.
+   * ----------------------------------------------------------------------
+   */
+  readonly talents?: PetModifiers;
   readonly extraAbilities?: readonly Ability[];
 }
 
@@ -91,12 +104,12 @@ export function highestAttackPower(owner: CombatantType): number {
 
 export function createPet(options: PetOptions): CombatantType {
   const { owner, family } = options;
+  const talents = options.talents ?? NO_PET_MODIFIERS;
   const stats = owner.stats.effective;
   const definition = PET_FAMILIES[family];
 
   const attackPower = highestAttackPower(owner) * PET_ATTACK_POWER_SHARE;
-  const health =
-    stats.stamina * PET_HEALTH_PER_OWNER_STAMINA * (options.healthMultiplier ?? 1);
+  const health = stats.stamina * PET_HEALTH_PER_OWNER_STAMINA * talents.healthMultiplier;
 
   const known = abilitiesForFamily(family, PET_ABILITIES);
 
@@ -137,15 +150,31 @@ export function createPet(options: PetOptions): CombatantType {
     },
     stats: {
       attackPower,
-      armor: stats.armor * PET_ARMOR_SHARE,
+      armor: stats.armor * PET_ARMOR_SHARE * talents.armorMultiplier,
       // ONE HUNDRED PERCENT of the owner's, which is the wiki's figure and is
       // what makes a Hunter's crit gear worth double.
-      critChance: stats.critChance * PET_CRIT_SHARE,
+      /*
+       * A HUNDRED PERCENT OF THE OWNER'S, PLUS FEROCITY ON TOP. The wiki's
+       * figure is the inheritance; the talent is a further bonus and says so
+       * -- "increases the critical strike chance of your pets and hawks".
+       */
+      critChance: stats.critChance * PET_CRIT_SHARE + talents.critBonus,
     },
     resources: [{ type: 'focus', maximum: PET_FOCUS_MAXIMUM }],
-    regeneration: regenerationFor(['focus']),
+    /*
+     * BESTIAL DISCIPLINE RAISES FOCUS REGENERATION, so the rate is scaled
+     * rather than taken from the table directly. At 2/2 that is +20% on ten a
+     * second, which is one more Claw every few seconds.
+     */
+    regeneration: regenerationFor(['focus']).map((regen) => ({
+      ...regen,
+      amountPerTick: (actor, context) =>
+        regen.amountPerTick(actor, context) * talents.focusRegenMultiplier,
+    })),
     abilities: [...known, ...(options.extraAbilities ?? [])],
     rotation: PET_ROTATION,
-    damageMultiplier: options.damageMultiplier ?? 1,
+    damageMultiplier: talents.damageMultiplier,
+    // Frenzy, which fires on the PET'S crit and buffs the PET.
+    reactions: talents.reactions,
   });
 }

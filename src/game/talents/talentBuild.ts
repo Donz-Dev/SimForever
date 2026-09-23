@@ -78,6 +78,31 @@ const REACTIONS: Partial<Record<ClassId, Readonly<Record<string, TalentReactionB
  * combat, so resolving them into plain data here keeps the engine unaware that
  * talents exist at all. Nothing below `createPlayer` ever sees a talent.
  */
+/**
+ * Talent effects that land on a pet rather than on its owner.
+ *
+ * MULTIPLIERS RATHER THAN PERCENTAGES, resolved once here, so `createPet` does
+ * no arithmetic of its own -- it applies what it is handed.
+ */
+export interface PetModifiers {
+  readonly damageMultiplier: number;
+  /** Added to the pet's crit chance in percentage POINTS, on top of the 100% it inherits. */
+  readonly critBonus: number;
+  readonly healthMultiplier: number;
+  readonly armorMultiplier: number;
+  readonly focusRegenMultiplier: number;
+  readonly reactions: readonly Reaction[];
+}
+
+export const NO_PET_MODIFIERS: PetModifiers = {
+  damageMultiplier: 1,
+  critBonus: 0,
+  healthMultiplier: 1,
+  armorMultiplier: 1,
+  focusRegenMultiplier: 1,
+  reactions: [],
+};
+
 export interface TalentBuild {
   /** Flat additions, applied on top of gear and profile stats. */
   readonly stats: PartialStats;
@@ -164,6 +189,13 @@ export interface TalentBuild {
    * panel lists an item's unmodelled effects. A talent that silently did
    * nothing would be indistinguishable from one that worked.
    */
+  /**
+   * What the owner's talents do to its PET, for `createPet` to read.
+   *
+   * Empty for every class but the Hunter, and empty for a Hunter that took
+   * Lone Wolf -- which is the talent for having no pet at all.
+   */
+  readonly pet: PetModifiers;
   readonly unmodelled: readonly UnmodelledTalent[];
   /**
    * Talents that were allocated points but whose requirements are not met, and
@@ -188,6 +220,7 @@ const EMPTY: TalentBuild = {
   abilityCooldownReductionMs: new Map(),
   abilityModifiers: new AbilityModifiers(),
   schoolModifiers: new SchoolModifiers(),
+  pet: NO_PET_MODIFIERS,
   reactions: [],
   damageMultiplier: 1,
   abilityBonuses: new Map(),
@@ -314,6 +347,16 @@ export function talentBuild(
   const abilityCooldownReductionMs = new Map<string, number>();
   const abilityModifiers = new AbilityModifiers();
   const schoolModifiers = new SchoolModifiers();
+
+  // What the talents do to a PET. Percentages while they accumulate; turned
+  // into multipliers once, at the end, so two ranks of the same talent add
+  // the way every other percentage talent here does.
+  let petDamagePct = 0;
+  let petCritBonus = 0;
+  let petHealthPct = 0;
+  let petArmorPct = 0;
+  let petFocusRegenPct = 0;
+  const petReactions: Reaction[] = [];
   const reactions: Reaction[] = [];
   const abilityBonuses = new Map<string, Record<string, number>>();
   const abilityCastTimeReductionMs = new Map<string, number>();
@@ -600,6 +643,27 @@ export function talentBuild(
             });
           }
           break;
+        case 'petStat':
+          /*
+           * SUMMED AS PERCENTAGES, turned into multipliers at the end. Two
+           * talents each giving "+10% pet damage" give +20%, which is the
+           * rule every other percentage talent in this file follows.
+           */
+          if (effect.property === 'damage') petDamagePct += value;
+          else if (effect.property === 'crit') petCritBonus += value;
+          else if (effect.property === 'health') petHealthPct += value;
+          else if (effect.property === 'armor') petArmorPct += value;
+          else petFocusRegenPct += value;
+          break;
+        case 'petReaction': {
+          const buildPetReaction = REACTIONS[characterClass]?.[effect.reactionId];
+          if (!buildPetReaction) {
+            report(talentId, rank, `No reaction is registered as "${effect.reactionId}".`);
+            break;
+          }
+          petReactions.push(buildPetReaction(value));
+          break;
+        }
         case 'critDamageBonus':
           /*
            * The talent raises the BONUS half of the multiplier, not the whole
@@ -631,6 +695,14 @@ export function talentBuild(
     abilityCooldownReductionMs,
     abilityModifiers,
     schoolModifiers,
+    pet: {
+      damageMultiplier: 1 + petDamagePct / 100,
+      critBonus: petCritBonus,
+      healthMultiplier: 1 + petHealthPct / 100,
+      armorMultiplier: 1 + petArmorPct / 100,
+      focusRegenMultiplier: 1 + petFocusRegenPct / 100,
+      reactions: petReactions,
+    },
     reactions,
     damageMultiplier,
     abilityBonuses,

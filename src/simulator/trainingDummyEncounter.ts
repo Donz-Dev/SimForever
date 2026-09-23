@@ -10,6 +10,7 @@ import { raidBuffPoolStats, selectedRaidBuffs } from '../game/buffs/raidBuffs';
 import { createPet } from '../game/actors/createPet';
 import { isPetFamilyId } from '../game/character/petFamilies';
 import { hasPet } from '../game/rotations/hunter';
+import { talentBuild } from '../game/talents/talentBuild';
 import { sacrificedDemon } from '../game/rotations/warlock';
 import { demonicSacrificeAura } from '../game/auras/warlock';
 
@@ -119,9 +120,28 @@ export function trainingDummyEncounter(
       const sacrifice = demon ? demonicSacrificeAura(demon) : undefined;
 
       for (const actor of context.combatants) {
-        if (sacrifice && actor.isPlayerControlled) {
+        if (sacrifice && actor.kind === 'player') {
           context.applyAura(actor, sacrifice, actor.id);
         }
+
+        /*
+         * ------------------------------------------------------------------
+         * A PET RECEIVES NO RAID BUFFS, which is a Forever rule and not
+         * Classic's: "Pets can no longer receive external buffs. Player-
+         * applied buffs that worked on pets in Classic no longer apply."
+         *
+         * `isPlayerControlled` counts a pet, which is right for deciding who
+         * the raid is fighting and WRONG for deciding who the raid buffs. The
+         * first version of this used it and handed a Hunter's pet the whole
+         * raid -- Battle Shout, Blessing of Kings, the lot -- which also
+         * printed every buff twice on the results page. That duplication is
+         * how it was noticed.
+         *
+         * `kind === 'player'` is the narrower test and the correct one.
+         * ------------------------------------------------------------------
+         */
+        if (actor.kind === 'pet' || actor.kind === 'summon') continue;
+
         const applicable = actor.isPlayerControlled ? onPlayer : onTarget;
         for (const buff of applicable) {
           // An entry with no aura is a PROC -- Windfury Totem -- and its own
@@ -239,5 +259,17 @@ function petFor(profile: CharacterProfile, owner: Combatant): Combatant | undefi
   const family = isPetFamilyId(profile.character.petFamily)
     ? profile.character.petFamily
     : 'cat';
-  return createPet({ owner, family });
+
+  /*
+   * THE OWNER'S TALENTS REACH THE PET, which is what `TalentBuild.pet` is
+   * for. Six Hunter talents were inert until this line existed -- Endurance
+   * Training, Focused Fire's pet half, Unleashed Fury, Ferocity, Frenzy and
+   * Bestial Discipline -- and they are most of what a Beast Mastery build
+   * spends its points on.
+   *
+   * Resolved through `talentBuild` rather than read off the allocation here,
+   * so illegal talents are stripped by the same rules everything else uses.
+   */
+  const build = talentBuild('hunter', profile.talents ?? {});
+  return createPet({ owner, family, talents: build.pet });
 }
