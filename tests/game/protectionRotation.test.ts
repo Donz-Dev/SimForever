@@ -9,6 +9,7 @@ import {
 import { Simulation } from '../../src/engine';
 import { trainingDummyEncounter } from '../../src/simulator/trainingDummyEncounter';
 import {
+  DEMORALIZING_SHOUT,
   DEMORALIZING_SHOUT_ATTACK_POWER,
   LAST_STAND,
 } from '../../src/game/auras/warrior';
@@ -229,12 +230,48 @@ describe('Demoralizing Shout', () => {
      * attack power term at all -- so there is nothing for the debuff to take
      * away, and the entry costs 10 rage and a global cooldown for nothing.
      *
-     * In the list at the ruleset owner's request, and this test is here so
-     * that nobody reads its 79% uptime as an effect. It becomes real the day
-     * a target's damage is derived from its attack power.
+     * In the list at the ruleset owner's request, who has chosen to skip the
+     * attack power reduction for now and keep casting it.
      */
     expect(DEMORALIZING_SHOUT_ATTACK_POWER).toBe(210);
     expect(bossMeleeWeapon().powerCoefficient).toBe(0);
+  });
+
+  it('keeps its modifier, so it starts working on its own one day', () => {
+    /*
+     * The -210 is NOT stripped out. It is not wrong -- the target simply has
+     * nothing for it to bite on -- and removing it would mean remembering to
+     * put it back the day a target derives its damage from attack power.
+     * Forgetting that is the failure mode this project keeps meeting.
+     */
+    expect(DEMORALIZING_SHOUT.statModifiers).toEqual([
+      { stat: 'attackPower', value: -DEMORALIZING_SHOUT_ATTACK_POWER, operation: 'flat' },
+    ]);
+  });
+
+  it('SAYS SO on the results page, rather than reading as an effect', () => {
+    /*
+     * Eighty percent uptime on a debuff that reduces nothing is the most
+     * misleading thing on that page: every number is consistent with it
+     * working. The caveat is earned by the CAST, so it only appears for a
+     * fight that actually used it.
+     */
+    const batch = runProfileBatch(tank());
+    const caveat = batch.castButNotSimulated.find(
+      (row) => row.abilityName === 'Demoralizing Shout',
+    );
+    expect(caveat).toBeDefined();
+    expect(caveat!.uses).toBeGreaterThan(1);
+    expect(caveat!.reason).toMatch(/attack power/i);
+  });
+
+  it('does not caveat an inert ability that nothing cast', () => {
+    // Berserker Rage is inert too, and no tank list reaches it. Listing it
+    // would bury the one caveat that is actually about this result.
+    const batch = runProfileBatch(tank());
+    expect(batch.castButNotSimulated.map((row) => row.abilityName)).toEqual([
+      'Demoralizing Shout',
+    ]);
   });
 });
 

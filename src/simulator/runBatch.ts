@@ -14,6 +14,15 @@ import { trainingDummyEncounter } from './trainingDummyEncounter';
 import type { CharacterProfile } from '../profiles';
 import { runSimulation } from './runSimulation';
 
+/** An ability the fight CAST that does less than its description says. */
+export interface CastButNotSimulated {
+  readonly abilityName: string;
+  /** Mean casts per iteration, so the cost of it is visible too. */
+  readonly uses: number;
+  /** One line, from the ability's own `unmodelled`. */
+  readonly reason: string;
+}
+
 export interface BatchOptions {
   readonly iterations: number;
   /** Seeds for individual iterations are derived from this. */
@@ -66,6 +75,23 @@ export interface BatchResult {
   readonly buffUptime: readonly BatchAuraUptime[];
   /** Aura uptime on the target, longest first. */
   readonly debuffUptime: readonly BatchAuraUptime[];
+  /**
+   * Abilities the rotation actually cast that do less than they say.
+   *
+   * ----------------------------------------------------------------------------
+   * THE SAME DISCIPLINE THE GEAR PANEL APPLIES TO ITEMS, for the same reason.
+   *
+   * Demoralizing Shout sits in the tank list at about 80% uptime and reduces
+   * no damage at all, because the target's swing damage is stated outright
+   * rather than derived from the attack power the debuff removes. Every
+   * number on the page is consistent with it working. Nothing on the page
+   * said it did not, until this.
+   *
+   * Only abilities that were CAST. An inert ability no list reaches is not a
+   * caveat about this result, and listing it would bury the one that is.
+   * ----------------------------------------------------------------------------
+   */
+  readonly castButNotSimulated: readonly CastButNotSimulated[];
   /** Wall-clock time the batch took, in milliseconds. */
   readonly elapsedRealMs: number;
 }
@@ -99,6 +125,13 @@ export function runBatch(config: SimulationConfig, options: BatchOptions): Batch
   let playerId = '';
   let rotationName: string | undefined;
   let damageSoFar = 0;
+  /*
+   * Read off the player's ABILITY BOOK rather than from a static table,
+   * because what a character knows depends on their talents and their gear.
+   * Captured once, on the first iteration, since every iteration builds the
+   * same character.
+   */
+  let caveats: readonly { abilityName: string; reason: string }[] = [];
 
   for (let index = 0; index < iterations; index++) {
     const seed = deriveSeed(options.baseSeed, index);
@@ -122,6 +155,10 @@ export function runBatch(config: SimulationConfig, options: BatchOptions): Batch
     if (!playerId) {
       playerId = friendlyIds[0] ?? '';
       rotationName = run.actors.find((actor) => actor.id === playerId)?.rotation;
+      const player = simulation.combatants.find((actor) => actor.id === playerId);
+      caveats = (player?.abilities.all ?? [])
+        .filter((ability) => ability.unmodelled !== undefined)
+        .map((ability) => ({ abilityName: ability.name, reason: ability.unmodelled! }));
     }
 
     /*
@@ -146,6 +183,8 @@ export function runBatch(config: SimulationConfig, options: BatchOptions): Batch
   const representativeIndex = indexClosestTo(dpsSamples, dps.median);
   const representative = runSimulation({ ...config, seed: seeds[representativeIndex] });
 
+  const abilities = totals.abilityBreakdown(playerId);
+
   return {
     iterations,
     baseSeed: options.baseSeed,
@@ -154,7 +193,7 @@ export function runBatch(config: SimulationConfig, options: BatchOptions): Batch
     rotationName,
     meanDamage: totals.meanDamageFor(playerId),
     meanDurationMs: durations.reduce((a, b) => a + b, 0) / Math.max(1, durations.length),
-    abilities: totals.abilityBreakdown(playerId),
+    abilities,
     damageTaken: totals.damageTaken(playerId),
     survival: totals.survival(playerId),
     rage: totals.resourceFlow(playerId, 'rage'),
@@ -165,6 +204,7 @@ export function runBatch(config: SimulationConfig, options: BatchOptions): Batch
      * matters and the only one the aura lives on.
      */
     debuffUptime: enemyIds.flatMap((id) => totals.auraUptime(id, 'debuff')),
+    castButNotSimulated: castButNotSimulated(caveats, abilities),
     elapsedRealMs: Date.now() - startedAt,
   };
 }
@@ -179,6 +219,26 @@ export function runProfileBatch(
     baseSeed: profile.simulation.seed,
     onProgress,
   });
+}
+
+/**
+ * The caveats that this fight actually earned: an ability was cast, and it
+ * does less than it says.
+ *
+ * Matched on NAME, which is the key the breakdown uses. An ability whose
+ * damage is reported under a different name -- Whirlwind's off-hand strike --
+ * would not match, and correctly so: the caveat belongs to the cast.
+ */
+function castButNotSimulated(
+  caveats: readonly { abilityName: string; reason: string }[],
+  abilities: readonly BatchAbilityTotals[],
+): readonly CastButNotSimulated[] {
+  const uses = new Map(abilities.map((row) => [row.abilityName, row.uses]));
+
+  return caveats
+    .map((caveat) => ({ ...caveat, uses: uses.get(caveat.abilityName) ?? 0 }))
+    .filter((entry) => entry.uses > 0)
+    .sort((a, b) => b.uses - a.uses);
 }
 
 function indexClosestTo(values: readonly number[], target: number): number {
