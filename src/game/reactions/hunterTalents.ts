@@ -1,7 +1,7 @@
 import type { AuraDefinition } from '../../engine';
 import { isWeaponUseOf, seconds } from '../../engine';
 import type { TalentReactionBuilder } from './warriorTalents';
-import { DEADLY_ASPECTS } from '../auras/hunter';
+import { DEADLY_ASPECTS, FRENZY } from '../auras/hunter';
 
 /**
  * Hunter talent procs.
@@ -86,7 +86,33 @@ export const exposePrey: TalentReactionBuilder = (chancePercent) => ({
   },
 });
 
+/**
+ * Frenzy: the PET gains attack speed after ITS OWN critical strike.
+ *
+ * ----------------------------------------------------------------------------
+ * A REACTION THAT BELONGS TO SOMEBODY ELSE, which is what `petReaction` is
+ * for. It is built from the HUNTER'S talent rank and carried by the PET: it
+ * fires on the pet's crit and hastens the pet, and the Hunter is involved only
+ * in having spent the points.
+ *
+ * AT 5/5 THE CHANCE IS 100%, so a Beast Mastery pet is hasted by 30% for eight
+ * seconds after every crit it lands -- and it inherits the whole of the
+ * Hunter's crit chance, so it crits often. This was inert until now and it is
+ * the largest of the six pet talents that were.
+ * ----------------------------------------------------------------------------
+ */
+export const frenzy: TalentReactionBuilder = (chancePercent) => ({
+  id: 'frenzy',
+  on: 'dealt',
+  outcomes: ['crit'],
+  canTrigger: (context) => context.rng.rollChance(chancePercent / 100),
+  onTrigger: (context, actor) => {
+    context.applyAura(actor, FRENZY, actor.id);
+  },
+});
+
 export const HUNTER_TALENT_REACTIONS: Readonly<Record<string, TalentReactionBuilder>> = {
   deadly_aspects: deadlyAspects,
   expose_prey: exposePrey,
+  frenzy,
 };

@@ -357,6 +357,43 @@ export type TalentEffect =
    * A talent listed here is visibly inert. A talent given a guessed effect
    * would be invisibly wrong, and this project would rather be the first.
    */
+  /**
+   * Something the talent does to the owner's PET rather than to the owner.
+   *
+   * ----------------------------------------------------------------------
+   * A PET IS A SEPARATE COMBATANT, which is why this needs a kind of its
+   * own. Every other effect here lands on the character carrying the talent;
+   * these land on a creature built afterwards, from that character.
+   *
+   * SIX HUNTER TALENTS WERE INERT FOR WANT OF THIS -- Endurance Training,
+   * Focused Fire's pet half, Unleashed Fury, Ferocity, Frenzy and Bestial
+   * Discipline -- and every one of them said so in its `unmodelled` reason.
+   * They are most of what Beast Mastery spends its points on.
+   *
+   * The values are collected into `TalentBuild.pet` and handed to
+   * `createPet`, which is the only thing that builds one.
+   * ----------------------------------------------------------------------
+   */
+  | {
+      readonly kind: 'petStat';
+      readonly property: 'damage' | 'crit' | 'health' | 'armor' | 'focusRegen';
+      readonly valueIndex?: number;
+    }
+
+  /**
+   * A reaction the PET carries, built from the owner's talent rank.
+   *
+   * Frenzy is the one: "gives your pet a {0}% chance to gain a 30% attack
+   * speed increase for 8 sec after dealing a critical strike". It fires on
+   * the PET's crit and buffs the PET, so it belongs to the pet's own
+   * reaction list and not the Hunter's.
+   */
+  | {
+      readonly kind: 'petReaction';
+      readonly reactionId: string;
+      readonly valueIndex?: number;
+    }
+
   | { readonly kind: 'unmodelled'; readonly reason: string };
 
 /**

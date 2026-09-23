@@ -211,7 +211,17 @@ export function runBatch(config: SimulationConfig, options: BatchOptions): Batch
     damageTaken: totals.damageTaken(playerId),
     survival: totals.survival(playerId),
     rage: totals.resourceFlow(playerId, 'rage'),
-    buffUptime: totals.auraUptime(playerId, 'buff'),
+    /*
+     * EVERY FRIENDLY ACTOR, for the same reason the damage breakdown covers
+     * them: a talent the HUNTER spent points on can put a buff on its PET.
+     * Frenzy is exactly that -- 30% attack speed after the pet crits -- and
+     * reading the player alone made it invisible, so there was no way to tell
+     * a working pet talent from an inert one.
+     *
+     * Debuffs stay on the target and rage stays on the player, which are
+     * genuinely theirs.
+     */
+    buffUptime: friendlyIdsForReporting.flatMap((id) => totals.auraUptime(id, 'buff')),
     /*
      * Debuffs are read off the TARGET, not the player. "Sunder Armor uptime"
      * means how long the boss carried it, which is the only reading that

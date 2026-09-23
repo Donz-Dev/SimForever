@@ -16,9 +16,12 @@ import type { TalentEffects } from './TalentEffect';
  *
  * WHAT ELSE CLUSTERS:
  *
- *   PETS             eight, and they are live only for Beast Mastery. Both
- *                    Lone Wolf builds take the talent that says they have no
- *                    pet, so the whole cluster is correctly inert for them.
+ *   PETS             eight, and SIX OF THEM NOW WORK. They were all inert for
+ *                    one reason -- a talent effect reaches the character
+ *                    carrying it and a pet is a separate combatant -- which
+ *                    `petStat` and `petReaction` answer. Both Lone Wolf builds
+ *                    take the talent that says they have no pet, so the whole
+ *                    cluster is still correctly inert for them.
  *   TRAPS            six. Nothing here places a trap.
  *   MOVEMENT AND     seven. Roots, slows, disorients and speed, none of which
  *   CONTROL          a standing raid boss cares about.
@@ -43,7 +46,10 @@ export const HUNTER_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
 
   deadly_aspects: [{ kind: 'reaction', reactionId: 'deadly_aspects' }],
 
-  endurance_training: [{ kind: 'unmodelled', reason: 'Pet health and armor, neither of which is read.' }],
+  endurance_training: [
+    { kind: 'petStat', property: 'health' },
+    { kind: 'petStat', property: 'armor' },
+  ],
 
   focused_fire: [
     /*
@@ -53,12 +59,20 @@ export const HUNTER_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
      * combatant built afterwards.
      */
     { kind: 'conditionalDamage', requires: {} },
+    /*
+     * "Increases all damage YOU AND YOUR PET deal." Both halves now, which is
+     * what `petStat` was added for -- the pet half was inert and said so.
+     */
+    { kind: 'petStat', property: 'damage' },
     {
       kind: 'unmodelled',
       reason:
-        'Its bonus to the HUNTER applies. Its bonus to the PET does not: a ' +
-        'talent effect reaches the character carrying it, and the pet is a ' +
-        'separate combatant. So this understates a Beast Mastery build.',
+        'Its "WHILE YOUR PET IS ACTIVE" condition is not checked on the ' +
+        'HUNTER’S half: `conditionalDamage` selects on weapons and has no ' +
+        'clause for having a pet. So both Lone Wolf builds -- which take this ' +
+        'as a cheap route to Careful Aim and then take the talent for having ' +
+        'no pet -- get 2% they should not. The PET half is correctly nothing ' +
+        'for them, because no pet is built at all.',
     },
   ],
 
@@ -75,25 +89,23 @@ export const HUNTER_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
   bestial_swiftness: [{ kind: 'unmodelled', reason: NO_MOVEMENT }],
 
   unleashed_fury: [
-    {
-      kind: 'unmodelled',
-      reason:
-        'Raises PET and HAWK damage. The pet is a separate combatant a talent ' +
-        'effect cannot reach, and the hawk is a periodic effect rather than an ' +
-        'ability id. Both are real damage a Beast Mastery build is not getting.',
-    },
+    { kind: 'petStat', property: 'damage' },
+    /*
+     * "...AND YOUR HAWKS". A hawk is a periodic effect carrying the aura's own
+     * id, and `abilityDamage` reaches a periodic tick through exactly that --
+     * the route Improved Rend takes on the Warrior. So the hawk half needed
+     * no new machinery at all, only noticing it was available.
+     */
+    { kind: 'abilityDamage', abilityId: 'summon_hawk' },
   ],
 
   improved_mend_pet: [{ kind: 'unmodelled', reason: 'Healing a pet, and nothing damages it here.' }],
 
   ferocity: [
-    {
-      kind: 'unmodelled',
-      reason:
-        'Raises PET and HAWK crit. A pet already inherits 100% of the ' +
-        'Hunter crit chance, which is the Forever rule -- this talent is a ' +
-        'further bonus on top and reaches the pet, which a talent effect cannot.',
-    },
+    // ON TOP of the 100% of the Hunter's crit a pet already inherits, which
+    // is the Forever rule. The talent is a further bonus and says so.
+    { kind: 'petStat', property: 'crit' },
+    { kind: 'abilityCrit', abilityId: 'summon_hawk' },
   ],
 
   summon_hawk: [{ kind: 'grantAbility', abilityId: 'summon_hawk' }],
@@ -105,16 +117,17 @@ export const HUNTER_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
   intimidation: [{ kind: 'unmodelled', reason: 'A stun, which is out of scope as every stun is.' }],
 
   bestial_discipline: [
+    { kind: 'petStat', property: 'focusRegen' },
     {
       kind: 'unmodelled',
       reason:
-        'Pet focus regeneration, which the pet owns, plus mana regeneration ' +
-        'while casting -- and a Hunter has no cast long enough for the second ' +
-        'to matter.',
+        'Its pet focus regeneration applies. Its "mana regeneration continues ' +
+        'while casting" half does not matter: a Hunter has no cast long enough ' +
+        'for it to reach.',
     },
   ],
 
-  frenzy: [{ kind: 'unmodelled', reason: 'A PET haste proc, which a talent effect cannot reach.' }],
+  frenzy: [{ kind: 'petReaction', reactionId: 'frenzy' }],
 
   bestial_wrath: [{ kind: 'grantAbility', abilityId: 'bestial_wrath' }],
 

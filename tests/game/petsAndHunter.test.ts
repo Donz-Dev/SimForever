@@ -30,6 +30,7 @@ import {
 } from '../../src/game/auras/hunter';
 import { HUNTER_TALENT_EFFECTS } from '../../src/game/talents/hunterEffects';
 import { hasPet } from '../../src/game/rotations/hunter';
+import { talentBuild } from '../../src/game/talents/talentBuild';
 
 /*
  * Pets, and the Hunter that brings one. The scaling figures come from the
@@ -256,5 +257,113 @@ describe('the Hunter, whose numbers are Forever numbers', () => {
     const batch = batchOf('lw_melee', 30, 5);
     expect(batch.abilities.find((a) => a.abilityName === 'Mongoose Bite')?.uses ?? 0)
       .toBeGreaterThan(0);
+  });
+});
+
+describe("the owner's talents reach the pet", () => {
+  /*
+   * ----------------------------------------------------------------------------
+   * SIX TALENTS WERE INERT AND EVERY ONE OF THEM SAID SO. Endurance Training,
+   * Focused Fire's pet half, Unleashed Fury, Ferocity, Frenzy and Bestial
+   * Discipline all carried an `unmodelled` reason naming the same cause: a
+   * talent effect reaches the character carrying it, and a pet is a separate
+   * combatant built afterwards.
+   *
+   * They are most of what a Beast Mastery build spends its points on, so the
+   * profile was understating by a fifth. `petStat` and `petReaction` are the
+   * declarations that fix it, and `TalentBuild.pet` is where they collect.
+   *
+   * THE REASONS ARE WHAT FOUND THEM. CLAUDE.md says an `unmodelled` reason is
+   * a claim about the engine on the day it was written and expires; these six
+   * expired together the moment pets existed.
+   * ----------------------------------------------------------------------------
+   */
+  const bmBuild = () => talentBuild('hunter', PRESETS_BY_ID.get('bm_hunter')!.build().talents);
+
+  it('collects every pet talent into the build', () => {
+    const pet = bmBuild().pet;
+
+    // Unleashed Fury 5/5 is +15% and Focused Fire 2/2 is +2%, summed as
+    // percentages and turned into one multiplier.
+    expect(pet.damageMultiplier).toBeCloseTo(1.17, 6);
+    // Ferocity 5/5 is +10 crit, ON TOP of the 100% of the owner's it inherits.
+    expect(pet.critBonus).toBe(10);
+    // Endurance Training 3/3 is +9% health and armor.
+    expect(pet.healthMultiplier).toBeCloseTo(1.09, 6);
+    expect(pet.armorMultiplier).toBeCloseTo(1.09, 6);
+    // Bestial Discipline 2/2 is +20% focus regeneration.
+    expect(pet.focusRegenMultiplier).toBeCloseTo(1.2, 6);
+    // Frenzy is a reaction the PET carries.
+    expect(pet.reactions.map((r) => r.id)).toContain('frenzy');
+  });
+
+  it('applies them to the pet it builds', () => {
+    const owner = hunterFor('bm_hunter');
+    const pet = createPet({ owner, family: 'cat', talents: bmBuild().pet });
+    const stats = owner.stats.effective;
+
+    expect(pet.damageDoneMultiplier).toBeCloseTo(1.17, 6);
+    expect(pet.stats.get('critChance')).toBeCloseTo(stats.critChance + 10, 6);
+    expect(pet.health.maximum).toBe(
+      Math.round(stats.stamina * PET_HEALTH_PER_OWNER_STAMINA * 1.09),
+    );
+    expect(pet.reactions.map((r) => r.id)).toContain('frenzy');
+  });
+
+  it('reaches no pet for a Lone Wolf hunter, because none is built', () => {
+    /*
+     * THE MODIFIER EXISTS AND NOTHING RECEIVES IT. Both Lone Wolf builds take
+     * Focused Fire 2/2 -- a cheap tier-1 step towards Careful Aim -- so the
+     * build carries a 2% pet damage bonus. `petFor` then builds no pet, so it
+     * lands on nothing.
+     *
+     * That is the honest assertion. Claiming the build carries no modifier at
+     * all would be asserting a tidiness the code does not have, and would
+     * break the moment a Lone Wolf build spent a point differently.
+     */
+    const lone = talentBuild('hunter', PRESETS_BY_ID.get('lw_ranged')!.build().talents);
+    expect(lone.pet.reactions).toEqual([]);
+
+    const fought = batchOf('lw_ranged', 20, 5).abilities.map((a) => a.abilityName);
+    expect(fought).not.toContain('Claw');
+    expect(fought).not.toContain('Bite');
+  });
+
+  it('reaches the HAWKS too, through the aura id a tick carries', () => {
+    /*
+     * "Increases the damage done by your pets AND HAWKS." A hawk is a periodic
+     * effect whose ticks carry the aura's own id, and `abilityDamage` reaches
+     * a periodic tick through exactly that -- the route Improved Rend takes on
+     * the Warrior. The hawk half needed no new machinery, only noticing it was
+     * already there.
+     */
+    const build = bmBuild();
+    expect(build.abilityModifiers.for('summon_hawk').damageMultiplier).toBeCloseTo(1.15, 6);
+    expect(build.abilityModifiers.for('summon_hawk').critBonus).toBe(10);
+  });
+
+  it('shows Frenzy on the results page, or it cannot be audited', () => {
+    // Buff uptime read the PLAYER alone, so a buff a talent puts on the PET
+    // was invisible -- and a working pet talent looked exactly like an inert
+    // one. Every friendly actor is read now, as the damage table already was.
+    const uptime = batchOf('bm_hunter', 30, 5).buffUptime.find((b) => b.auraName === 'Frenzy');
+    expect(uptime?.uptime ?? 0).toBeGreaterThan(0.3);
+  });
+
+  it('gives a pet NO raid buffs, which is a Forever rule', () => {
+    /*
+     * ------------------------------------------------------------------------
+     * "Pets can no longer receive external buffs. Player-applied buffs that
+     * worked on pets in Classic no longer apply." -- the Forever Hunter wiki.
+     *
+     * `isPlayerControlled` counts a pet, which is right for deciding who the
+     * raid is FIGHTING and wrong for deciding who it BUFFS. Using it handed a
+     * Hunter's pet the whole raid, and printed every buff twice on the results
+     * page -- which is how it was noticed.
+     * ------------------------------------------------------------------------
+     */
+    const names = batchOf('bm_hunter', 20, 5).buffUptime.map((b) => b.auraName);
+    const battleShouts = names.filter((name) => name === 'Battle Shout');
+    expect(battleShouts).toHaveLength(1);
   });
 });

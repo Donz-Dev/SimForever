@@ -242,6 +242,34 @@ gap survey listed as blocked on pets turned out not to want one. The pet work
 the Beast Mastery hunter needed is not wasted; it is simply not what the other
 four do, and that is a property of the BUILDS rather than of the engine.
 
+**A TALENT REACHES THE OWNER; A PET NEEDS `petStat` AND `petReaction`.** Six
+Hunter talents were inert for one reason -- a talent effect lands on the
+character carrying it, and a pet is a separate combatant built afterwards --
+and they are most of what Beast Mastery spends its points on. Collected into
+`TalentBuild.pet` and handed to `createPet`, which applies what it is given
+and does no arithmetic on a rank. The HAWK halves of Unleashed Fury and
+Ferocity needed nothing new: a periodic tick carries its aura's id, so
+`abilityDamage` and `abilityCrit` on `summon_hawk` reach it, the same route
+Improved Rend takes.
+
+**EVERY `unmodelled` REASON ON THOSE SIX NAMED THE SAME CAUSE, WHICH IS HOW
+THEY WERE FOUND.** They expired together the moment pets existed. That is the
+third time reasons written specifically enough to re-read have paid for
+themselves.
+
+**A PET RECEIVES NO RAID BUFFS**, which is a Forever rule and not Classic's:
+"Pets can no longer receive external buffs." `isPlayerControlled` counts a pet
+-- right for deciding who the raid is FIGHTING, wrong for deciding who it
+BUFFS -- so using it handed a Hunter's pet the whole raid AND printed every
+buff twice on the results page. The duplication is how it was noticed;
+`kind === 'player'` is the narrower test.
+
+**REPORTING READS EVERY FRIENDLY ACTOR, NOT THE PLAYER.** Damage and buff
+uptime both: a talent the Hunter spent points on can put a buff on its pet,
+and reading the player alone made Frenzy invisible -- so a working pet talent
+looked exactly like an inert one. Rage and survival stay the player's, which
+they genuinely are.
+
 **A PET IS A SECOND FRIENDLY COMBATANT, AND ALMOST ALL OF THAT ALREADY
 WORKED.** `dps` has summed every friendly actor since batching was written,
 `CombatantKind` has had `pet`, `ownerId` has been on `Combatant`, and a
