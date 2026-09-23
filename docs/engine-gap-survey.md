@@ -169,12 +169,12 @@ rather than by class:
 
 | Wave | Profiles | Needs |
 | --- | --- | --- |
-| ~~**1**~~ | ~~Bear + Moonkin Druid~~, ~~Ele + Enhance Shaman~~ **done**; ~~Frostfire / Arcane / Fire Mage~~ **done**, Shockadin, Seal Twist Ret, Prot Pally | content only |
+| ~~**1**~~ | ~~Bear + Moonkin Druid~~, ~~Ele + Enhance Shaman~~ **done**; ~~Frostfire / Arcane / Fire Mage~~ **done**, ~~Shockadin, Seal Twist Ret, Prot Pally~~ **done** | content only |
 | ~~**1b**~~ | ~~Venom / Combat / Rupture Rogue~~, ~~Cat Druid~~ **all done** | ~~combo points~~ **done** |
 | ~~**2**~~ | Shadow Priest | ~~channelled casts~~ **done** |
 | **3** | BM Hunter, LW Ranged, LW Melee, SM/DS Warlock, Firelock | pets |
 
-**Fourteen of twenty done.** The Shaman needed no engine change — the fourth
+**Seventeen of twenty done, and WAVE 1 IS COMPLETE.** The Shaman needed no engine change — the fourth
 class in a row where the survey was right about that. **The Mage is the first
 that does**, and it needed two:
 

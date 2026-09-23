@@ -49,10 +49,10 @@ describe('talent values', () => {
   });
 
   it('has no values for a class that was never captured', () => {
-    // The Paladin, which has none. This named the MAGE until the Mage was
-    // written -- a class-not-yet-built test has to move as classes are built,
-    // and it failing is the signal that one arrived.
-    expect(talentNumber('paladin', 'divine_strength', 1)).toBeUndefined();
+    // The Priest, which has none. This named the Mage, then the Paladin --
+    // a class-not-yet-built fixture has to move as classes are built, and it
+    // failing is the signal that one arrived.
+    expect(talentNumber('priest', 'unbreakable_will', 1)).toBeUndefined();
   });
 
   it('keeps every varying number for a talent that varies several', () => {
@@ -185,7 +185,7 @@ describe('unmodelled talents are reported rather than silently inert', () => {
   });
 
   it('contributes nothing at all for a class with no effect table', () => {
-    const build = talentBuild('paladin', { divine_strength: 5 });
+    const build = talentBuild('priest', { unbreakable_will: 5 });
     expect(build.stats).toEqual({});
     expect(build.grantedAbilities.size).toBe(0);
     expect(build.unmodelled).toEqual([]);

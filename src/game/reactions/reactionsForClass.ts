@@ -4,6 +4,7 @@ import type { TalentAllocation } from '../talents/Talent';
 import { talentNumber } from '../talents/talentValues';
 import { WARRIOR_REACTIONS } from './warrior';
 import { windfuryWeaponReaction } from './shaman';
+import { PALADIN_REACTIONS } from './paladin';
 
 /**
  * Reactive procs a class has.
@@ -34,6 +35,13 @@ export function reactionsForClass(
   talents?: TalentAllocation,
 ): readonly Reaction[] {
   if (characterClass === 'warrior') return WARRIOR_REACTIONS;
+  /*
+   * EVERY PALADIN CARRIES EVERY SEAL'S PROC, and the AURA decides which one
+   * fires. A seal is swapped mid-fight -- the Retribution capstone is built
+   * around doing exactly that -- so binding the reaction to the seal at build
+   * time would make swapping do nothing.
+   */
+  if (characterClass === 'paladin') return PALADIN_REACTIONS;
 
   if (characterClass === 'shaman') {
     /*

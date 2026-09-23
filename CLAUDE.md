@@ -235,6 +235,31 @@ a list built around a spell it had one point in, and produced a perfectly
 ordinary 143.9 DPS without casting Fireball once. Nothing errored and nothing
 was missing.
 
+**A SEAL SCALES WITH SPELL POWER, AND IT IS THE ONLY THING THAT DOES.** The
+ruleset owner supplied the formula directly: `base + baseWeaponSpeed x (0.022
+x attackPower + 0.044 x spellPower)`, which makes a point of spell power worth
+exactly twice a point of attack power and makes a slow weapon hit harder --
+the tooltip's "slower weapons cause more Holy damage per swing" falls out of
+it rather than needing a rule. Which half of a stated range like "21 to 75" is
+the BASE is an interpretation, and the low end is read as the base because the
+range is described as the effect of speed; it is one named constant so it is
+cheap to flip.
+
+**SEAL DAMAGE IS NOT A WEAPON USE**, by the ruleset owner's ruling, and the
+swing that carried it still is. So a Seal of Righteousness hit triggers
+nothing -- not Windfury, not Crusader, not Hand of Justice, and not another
+seal -- while the auto-attack underneath it triggers everything as usual. It
+is enforced by dealing every seal hit with NO `weaponSlot`, which is the whole
+of `isWeaponUse`.
+
+**A BLOCK IS NOT AN ATTACK OUTCOME A REACTION CAN SEE.** Forever's block lands
+and is reduced by a flat amount inside the damage pipeline rather than being
+rolled as a table result, so `AttackOutcome` has no `block` for
+`melee-received` to produce. An aura can be SPENT by a block
+(`consumedByBlock`) and a reaction cannot FIRE on one -- which costs the
+Paladin two clauses, Reckoning's extra attack after blocking and Holy Shield's
+221 damage per block, and both say so.
+
 **A CASTER'S DAMAGE DOES NOT SCALE WITH GEAR YET, and it is the source rather
 than the engine.** `dealDamage` reads `spellPower` for any non-physical school
 and has since before any caster existed; what is missing is that every Druid

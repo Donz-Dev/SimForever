@@ -3,6 +3,7 @@ import rogueValues from '../../data/talents/values/rogue.json';
 import druidValues from '../../data/talents/values/druid.json';
 import shamanValues from '../../data/talents/values/shaman.json';
 import mageValues from '../../data/talents/values/mage.json';
+import paladinValues from '../../data/talents/values/paladin.json';
 import type { ClassId } from '../character';
 
 /**
@@ -51,6 +52,7 @@ const FILES: Partial<Record<ClassId, ValuesFile>> = {
   druid: druidValues as ValuesFile,
   shaman: shamanValues as ValuesFile,
   mage: mageValues as ValuesFile,
+  paladin: paladinValues as ValuesFile,
 };
 
 /*
