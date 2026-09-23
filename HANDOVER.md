@@ -262,11 +262,16 @@ most and swings least. The unbuffed baselines below did not move outside their
 intervals, because they carry no Windfury and the Hand of Justice restriction
 is worth very little.
 
-**Shield Slam is the one open question.** It is declared main-hand and resolves
-on the melee table, so it counts as a main-hand use -- but its tooltip says
-"Requires Shields", not "Requires Melee Weapon", and it strikes with an
-off-hand item. Left as it was and flagged rather than changed quietly. It is
-cast about nine times a fight on the tank.
+**Shield Slam triggers MAIN HAND effects**, settled by the ruleset owner. It
+was the one ability the rule did not answer by itself -- it is declared
+main-hand and resolves on the melee table, but its tooltip says "Requires
+Shields" and it strikes with an off-hand item. The answer matched what the code
+already did, so nothing changed.
+
+**A standing instruction came with it:** *if an ability being able to proc
+effects is in question, ask.* A wrong answer there does not look wrong -- a
+proc that never fires leaves nothing behind -- which is exactly how Windfury
+went unnoticed.
 
 ## The talents are confirmed, by a second client-derived source
 

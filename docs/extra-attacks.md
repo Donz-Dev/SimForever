@@ -98,16 +98,34 @@ live RNG happened to fail it. A `false` meant "refused" *or* "rolled badly".
 Every gate test now scripts the roll to succeed, so a false can only be a
 refusal.
 
-## What is still open
+## Shield Slam, settled
 
-**Shield Slam.** It is declared main-hand and resolves on the melee table, so
-by this rule it is a main-hand use and triggers main-hand Crusader and
-Windfury. But its tooltip says *"Requires Shields"*, not *"Requires Melee
-Weapon"* — it strikes with the **shield**, which is an off-hand item.
+> **Shield Slam can trigger main hand effects.**
 
-Every other ability treated as a use either states a melee weapon requirement
-or was named by the ruleset owner directly. Shield Slam does neither. It is
-left as a main-hand use because that is what the model already said, and
-changing it quietly would be worse than flagging it. **A question for the
-ruleset owner**, and it matters for the tank: Shield Slam is cast about nine
-times a fight there.
+The ruleset owner, asked directly. It was the one ability the rule above did
+not settle by itself: it is declared main-hand and resolves on the melee table,
+so it reads as a main-hand use — but its tooltip says *"Requires Shields"*, not
+*"Requires Melee Weapon"*, and it strikes with the **shield**, an off-hand
+item. Every other ability treated as a use either states a melee weapon
+requirement or was named by the owner directly.
+
+It triggers main-hand Crusader and Windfury, which is what the code already
+did. Nothing changed; the reason it does it is written down now.
+
+It is not a marginal case — the tank casts Shield Slam about nine times a
+fight.
+
+## When an ability's proc behaviour is in question, ASK
+
+The ruleset owner's standing instruction, given with the Shield Slam answer:
+
+> If an ability being able to proc effects is in question, ask me.
+
+This is cheap to follow and the alternative is expensive. A wrong answer here
+does not look wrong: Windfury spent its whole life refusing abilities and every
+figure the simulator produced was self-consistent and too low. There is no
+symptom to notice, because a proc that never fires leaves nothing behind.
+
+The rule above decides most abilities on its own. Where it does not — an
+ability that goes through a combat table but whose weapon requirement is
+unclear, as Shield Slam's was — that is the question to bring.

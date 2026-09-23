@@ -227,22 +227,29 @@ describe('which abilities the rule actually covers', () => {
     expect(ability?.attackTable).toBe('ranged-special');
   });
 
-  it('SHIELD SLAM IS THE ONE THAT IS ARGUABLE, and it is recorded rather than hidden', () => {
+  it('SHIELD SLAM TRIGGERS MAIN HAND EFFECTS, by the ruleset owner', () => {
     /*
-     * It is declared main-hand and resolves on the melee table, so by the rule
-     * above it is a main-hand use and triggers main-hand Crusader and
-     * Windfury.
+     * "Shield slam can trigger main hand effects" -- asked directly, because
+     * it was the one ability the rule could not settle by itself.
      *
-     * The tooltip says "Requires Shields", not "Requires Melee Weapon" -- it
-     * strikes with the shield, which is an OFF-HAND item. Every other ability
-     * in the list above either states a melee weapon requirement or was named
-     * by the ruleset owner directly; this one does neither.
+     * It is declared main-hand and resolves on the melee table, so it READS
+     * as a main-hand use -- but its tooltip says "Requires Shields", not
+     * "Requires Melee Weapon", and it strikes with the shield, which is an
+     * OFF-HAND item. Every other ability in the list above either states a
+     * melee weapon requirement or was named by the owner directly.
      *
-     * Left as a main-hand use because that is what the model already says and
-     * changing it silently would be worse. Flagged for the ruleset owner.
+     * The answer matched what the code already did, so nothing changed. The
+     * reason is written down now, which is the point: the next person to
+     * notice the "Requires Shields" line finds the ruling instead of
+     * re-opening it.
      */
     const shieldSlam = WARRIOR_ABILITIES.find((a) => a.id === 'shield_slam');
     expect(shieldSlam?.attackTable).toBe('melee-special');
     expect(effects.Windfury(use('mainHand', 'shield_slam'))).toBe(true);
+    expect(effects['main-hand Crusader'](use('mainHand', 'shield_slam'))).toBe(true);
+    expect(effects['Hand of Justice'](use('mainHand', 'shield_slam'))).toBe(true);
+    // It is the shield that swings, but the effects it feeds are the main
+    // hand's -- so the off-hand enchant is NOT triggered.
+    expect(effects['off-hand Crusader'](use('mainHand', 'shield_slam'))).toBe(false);
   });
 });
