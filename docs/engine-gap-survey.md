@@ -40,10 +40,22 @@ points drained and read in `onCast`.
 
 ## The gaps, in order of how many profiles they block
 
-### 1. Combo points — **not an engine change**
+### 1. Combo points — **DONE 2026-09-23, and it was not an engine change**
 
 Needed by **Cat Druid, Venom Rogue, Combat Rogue, Rupture Rogue** — four
 profiles, the largest single group.
+
+`game/combat/comboPoints.ts` holds the mechanism: a maximum of five, the pool
+on the Rogue and the Druid, and `awardComboPoint` / `spendComboPoints` /
+`hasComboPoints`. No engine file changed.
+
+**The maximum was the part that would have failed quietly.** A resource with no
+entry in `FIXED_RESOURCE_MAXIMUMS` is built with `maximum: 0`, so every point
+awarded overflows the instant it is granted — no error, just a finisher that
+never has anything to spend.
+
+The four profiles still need their own builders and finishers; what they no
+longer need is a decision about how combo points work.
 
 The resource type exists, the UI knows its label, and the finisher pattern is
 proven. What is missing is entirely in `game`:
@@ -116,7 +128,7 @@ rather than by class:
 | Wave | Profiles | Needs |
 | --- | --- | --- |
 | **1** | Bear Druid, Moonkin Druid, Ele Shaman, Enhance Shaman, Frostfire / Arcane / Fire Mage, Shockadin, Seal Twist Ret, Prot Pally | content only |
-| **1b** | Cat Druid, Venom / Combat / Rupture Rogue | combo points, which is content |
+| ~~**1b**~~ | Cat Druid, Venom / Combat / Rupture Rogue | ~~combo points~~ **done** |
 | **2** | Shadow Priest | channelled casts |
 | **3** | BM Hunter, LW Ranged, LW Melee, SM/DS Warlock, Firelock | pets |
 

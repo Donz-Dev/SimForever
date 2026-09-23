@@ -88,7 +88,12 @@ export const CLASSES: readonly ClassDefinition[] = [
     name: 'Druid',
     // The only class whose resource depends on what it is currently doing.
     // All three pools exist at once; the form decides which one matters.
-    resources: ['mana', 'rage', 'energy'],
+    /*
+     * COMBO POINTS ARE OWNED BY THE WHOLE DRUID, not by Cat Form, for the same
+     * reason rage is: switching form mid-fight must not have to create a pool
+     * that did not exist a moment earlier. Only Cat builds them.
+     */
+    resources: ['mana', 'rage', 'energy', 'comboPoints'],
     primaryResource: 'mana',
     forms: [
       { id: 'caster', name: 'Caster Form', resource: 'mana' },
@@ -106,7 +111,17 @@ export const CLASSES: readonly ClassDefinition[] = [
   simpleClass('mage', 'Mage', 'mana'),
   simpleClass('paladin', 'Paladin', 'mana'),
   simpleClass('priest', 'Priest', 'mana'),
-  simpleClass('rogue', 'Rogue', 'energy'),
+  /*
+   * The one class with two pools and no form to explain it: energy pays for
+   * the ability, combo points decide what the finisher is worth.
+   */
+  {
+    id: 'rogue',
+    name: 'Rogue',
+    resources: ['energy', 'comboPoints'],
+    primaryResource: 'energy',
+    forms: [],
+  },
   simpleClass('shaman', 'Shaman', 'mana'),
   simpleClass('warlock', 'Warlock', 'mana'),
   simpleClass('warrior', 'Warrior', 'rage'),

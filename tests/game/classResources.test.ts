@@ -110,11 +110,15 @@ describe('class resources', () => {
   });
 
   describe('the Druid', () => {
-    it('owns all three pools at once', () => {
-      // A bear still has a mana pool it is not using. Creating the rage pool
-      // only on shapeshift would mean conjuring state mid-fight.
+    it('owns all four pools at once', () => {
+      /*
+       * A bear still has a mana pool it is not using. Creating the rage pool
+       * only on shapeshift would mean conjuring state mid-fight, and the same
+       * argument added COMBO POINTS: only Cat Form builds them, and a druid
+       * who shifts into Cat must not have to grow the pool on the way in.
+       */
       const types = resourceSpecsFor('druid', baseManaFor(anyRaceFor('druid'), 'druid')).map((spec) => spec.type).sort();
-      expect(types).toEqual(['energy', 'mana', 'rage']);
+      expect(types).toEqual(['comboPoints', 'energy', 'mana', 'rage']);
     });
 
     it('maps each form to its resource', () => {
@@ -179,11 +183,14 @@ describe('class resources', () => {
 describe('createPlayer', () => {
   it('gives each class the right pools', () => {
     expect(player('warrior').resources.types).toEqual(['rage']);
-    expect(player('rogue').resources.types).toEqual(['energy']);
+    // Energy pays for the ability; combo points decide what the finisher is
+    // worth. The one class with two pools and no form to explain it.
+    expect(player('rogue').resources.types).toEqual(['energy', 'comboPoints']);
     expect(player('mage').resources.types).toEqual(['mana']);
     // Copied before sorting: `types` is readonly, and sorting in place would
     // reorder the combatant's own resource list.
     expect([...player('druid').resources.types].sort()).toEqual([
+      'comboPoints',
       'energy',
       'mana',
       'rage',
