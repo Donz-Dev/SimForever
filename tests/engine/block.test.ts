@@ -104,6 +104,53 @@ describe('block value', () => {
     expect(damage(HIT, 30).amount).toBeCloseTo(100, 5);
   });
 
+  it('is reported SEPARATELY from armor, which rage depends on', () => {
+    /*
+     * ------------------------------------------------------------------------
+     * ARMOR AND A BLOCK ARE ONE STEP IN THE PIPELINE AND TWO THINGS TO THE
+     * RAGE RULE, which is why `blocked` exists beside `mitigated`.
+     *
+     *   "D = pre-armor damage to be dealt"                 armor does not
+     *                                                      reduce the rage
+     *   "Blocked hits give the rage of the unblocked       a block does
+     *    amount"
+     *
+     * Both the ruleset owner's. `mitigated` is their sum, so reading it would
+     * take armor off as well and leave a tank earning a fraction of what it
+     * should; reading `raw` alone would ignore the block.
+     * ------------------------------------------------------------------------
+     */
+    const withArmour = resolveDamage(
+      {
+        source: makeAttacker(),
+        target: makeTarget({ stats: { armor: 3731, blockValue: 30 } }),
+        abilityName: 'Swing',
+        school: 'physical',
+        baseAmount: 100,
+      },
+      BLOCKED,
+    );
+
+    // The block's share is its own, whatever armor did.
+    expect(withArmour.blocked).toBeCloseTo(30, 5);
+    // And `mitigated` is still the total, armor included.
+    expect(withArmour.mitigated).toBeGreaterThan(withArmour.blocked);
+
+    // An unblocked hit blocks nothing, however much armor removed.
+    const unblocked = resolveDamage(
+      {
+        source: makeAttacker(),
+        target: makeTarget({ stats: { armor: 3731, blockValue: 30 } }),
+        abilityName: 'Swing',
+        school: 'physical',
+        baseAmount: 100,
+      },
+      HIT,
+    );
+    expect(unblocked.blocked).toBe(0);
+    expect(unblocked.mitigated).toBeGreaterThan(0);
+  });
+
   it('cannot take damage below zero', () => {
     // A block value larger than the hit absorbs it entirely and no further.
     expect(damage(BLOCKED, 500).amount).toBe(0);

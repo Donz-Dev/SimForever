@@ -270,10 +270,11 @@ directions at once: unbuffed builds gained, raid-buffed presets lost.
 flat but conditional. `ResourceGeneration.requiresDamage` is the field that
 says so; without it a flat award would pay out on a swing that never landed.
 
-**Damage taken reads `resolution.raw`**, the pre-armor figure, so Defensive
-Stance's -10% reduces the rage earned and armor does not. A block is removed at
-the same step as armor and so does not reduce it either -- the rule names armor
-and is silent on block, and that reading is flagged in the doc as one to check.
+**Damage taken reads `resolution.raw` minus the block.** Defensive Stance's
+-10% reduces the rage earned, armor does not, and a block does -- "blocked hits
+give the rage of the unblocked amount". Armor and a block are one pipeline step
+in this engine, so `DamageResolution` carries `blocked` beside `mitigated` to
+tell them apart.
 
 **It is per character now**, because `H` is that character's maximum health,
 read from the same snapshot the health pool is sized from.

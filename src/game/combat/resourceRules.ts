@@ -99,15 +99,24 @@ export const RAGE_FROM_BEAR_PAW: ResourceGeneration = rageFromSwing(
  * paid the same rage for the same damage however large the character was, so
  * stamina quietly cost rage; this one is flat in that respect.
  *
- * "PRE-ARMOR" IS `resolution.raw`, which is the damage after the attacker's and
- * the target's multipliers and before armor, block and absorbs. So Defensive
- * Stance's -10% DOES reduce the rage earned -- it reduces the damage to be
- * dealt -- while armor and Shield Block do NOT.
+ * "PRE-ARMOR" IS `resolution.raw` MINUS THE BLOCK, and the two halves of that
+ * come from two separate rulings that pull against each other on the same
+ * pipeline step:
  *
- * WORTH FLAGGING: a BLOCK is removed at the same step as armor in this engine,
- * so it does not reduce rage here either. The rule names armor and says nothing
- * about block, and reading it either way is defensible; this takes the reading
- * where every DEFENSIVE reduction behaves alike. Ask before changing it.
+ *   Defensive Stance -10%   DOES reduce the rage. It reduces the damage to be
+ *                           dealt, before any of this.
+ *   Armor                   does NOT. That is what "pre-armor" means.
+ *   A block                 DOES, by its flat value -- "blocked hits give the
+ *                           rage of the unblocked amount".
+ *
+ * ARMOR AND A BLOCK ARE ONE STEP IN THIS ENGINE and had to be told apart for
+ * that, which is why `DamageResolution` now carries `blocked` beside
+ * `mitigated`. Reading `mitigated` would take armor off as well and leave a
+ * tank earning a fraction of what it should.
+ *
+ * WHICH MAKES A BLOCK WORTH MORE THAN IT LOOKS to a Protection warrior: it
+ * removes damage AND the rage that damage would have paid, so block value
+ * trades throughput for survival rather than being free mitigation.
  * ----------------------------------------------------------------------------
  */
 export const RAGE_PER_MAXIMUM_HEALTH_TAKEN = 10;

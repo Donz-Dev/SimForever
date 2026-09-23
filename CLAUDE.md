@@ -187,7 +187,10 @@ in this project in both directions at once -- unbuffed builds gained, the
 raid-buffed presets lost. A miss still earns nothing, because it is rage from
 damage DEALT, and that is `ResourceGeneration.requiresDamage` rather than a
 consequence of the arithmetic. Taking damage is `D x 10 / H` off the PRE-ARMOR
-figure, so Defensive Stance reduces the rage earned and armor does not. The old
+figure MINUS THE BLOCK: Defensive Stance reduces the rage earned, armor does
+not, and a block does -- "blocked hits give the rage of the unblocked amount".
+Armor and a block are one pipeline step, so `DamageResolution` carries
+`blocked` separately to tell them apart. The old
 damage-proportional formulas are commented out rather than deleted, on the
 owner's instruction. Full rules in [docs/resources.md](docs/resources.md).
 

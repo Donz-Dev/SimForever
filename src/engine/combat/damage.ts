@@ -125,8 +125,17 @@ export interface DamageResolution {
   readonly avoided: boolean;
   /** Damage before mitigation and absorbs, after power scaling and crit. */
   readonly raw: number;
-  /** Removed by armor or resistance. */
+  /** Removed by armor or resistance, AND by a block. */
   readonly mitigated: number;
+  /**
+   * The block's share of `mitigated`, on its own.
+   *
+   * Separated because armor and a block are the same step in the pipeline and
+   * different things to Forever's rage rule: a blocked hit generates rage on
+   * the UNBLOCKED amount, while armor does not reduce the rage at all. Nothing
+   * can tell them apart from `mitigated`, which is their sum.
+   */
+  readonly blocked: number;
   /** Removed by shields. */
   readonly absorbed: number;
   /** What reached the target's health, including the overkill portion. */
@@ -344,6 +353,7 @@ export function resolveDamage(
       avoided: true,
       raw: 0,
       mitigated: 0,
+      blocked: 0,
       absorbed: 0,
       amount: 0,
       critical: false,
@@ -393,6 +403,7 @@ export function resolveDamage(
     avoided: false,
     raw: afterTarget,
     mitigated,
+    blocked,
     absorbed,
     amount,
     critical,
@@ -484,16 +495,25 @@ export function dealDamage(
    * would hide the single biggest term in a tank's rage economy.
    */
   /*
-   * `raw`, NOT `amount`: Forever's rule is "D = pre-armor damage to be dealt".
+   * "D = PRE-ARMOR DAMAGE TO BE DEALT", AND A BLOCKED HIT GIVES THE RAGE OF
+   * THE UNBLOCKED AMOUNT -- both the ruleset owner's words, and they pull in
+   * opposite directions on the same pipeline step.
+   *
    * `raw` is the figure after both sides' damage multipliers and before armor,
-   * block and absorbs, so Defensive Stance's -10% reduces the rage earned and
-   * armor does not.
+   * block and absorbs. Armor is meant to leave the rage alone, so `raw` is the
+   * right starting point; a block is not, so its share comes back off.
+   *
+   *   Defensive Stance -10%   DOES reduce the rage. It reduces the damage to
+   *                           be dealt, before any of this.
+   *   Armor                   does NOT. That is what "pre-armor" means.
+   *   A block                 DOES, by its flat value.
    *
    * It used to pass `amount`, which was right for the old formula -- rage in
-   * proportion to damage actually taken -- and would now understate a tank's
-   * income by whatever their armor removed, which is most of it.
+   * proportion to damage actually taken -- and would now understate a tank by
+   * whatever their armor removed, which is most of it.
    */
-  grantGeneratedResource(context, target, target.resourceOnDamageTaken, resolution.raw, {
+  const rageableDamage = Math.max(0, resolution.raw - resolution.blocked);
+  grantGeneratedResource(context, target, target.resourceOnDamageTaken, rageableDamage, {
     id: 'damage_taken',
     name: 'Damage taken',
   });

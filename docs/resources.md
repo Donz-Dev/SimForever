@@ -103,14 +103,24 @@ damage taken is still most of a tank's income.
 paid the same rage for the same damage however large the character was, so
 stamina quietly cost rage. This one does not.
 
-**"Pre-armor" is `resolution.raw`** — after both sides' damage multipliers and
-before armor, block and absorbs. So Defensive Stance's −10% *does* reduce the
-rage earned, because it reduces the damage to be dealt, while armor does not.
+**A blocked hit gives the rage of the unblocked amount.** So `D` is
+`resolution.raw` *minus the block* — and armor, block and Defensive Stance all
+behave differently:
 
-> **Open question.** A block is removed at the same pipeline step as armor, so
-> it does not reduce rage here either. The rule names armor and says nothing
-> about block. This takes the reading where every *defensive* reduction behaves
-> alike; ask the ruleset owner before changing it.
+| | Reduces the rage? | |
+| --- | :-: | --- |
+| Defensive Stance's −10% | **yes** | it reduces the damage to be dealt, before any of this |
+| Armor | **no** | that is what "pre-armor" means |
+| A block | **yes** | by its flat block value |
+
+**Armor and a block are one step in this engine**, so they had to be told
+apart: `DamageResolution` carries `blocked` beside `mitigated`, which is their
+sum. Reading `mitigated` would take armor off too and leave a tank earning a
+fraction of what it should.
+
+**Which makes block value worth less to a tank than it looks.** A block removes
+damage *and* the rage that damage would have paid, so it trades throughput for
+survival rather than being free mitigation.
 
 ### The old formulas
 

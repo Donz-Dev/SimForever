@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { seconds } from '../../src/engine';
+import type { AttackResolution } from '../../src/engine';
+import { resolveDamage, seconds } from '../../src/engine';
 import { TelemetryRecorder } from '../../src/engine/logging';
 import { createPlayer } from '../../src/game/actors/createPlayer';
 import {
@@ -16,7 +17,7 @@ import {
   rageFromSwing,
 } from '../../src/game/combat/resourceRules';
 import { buildSimulation } from '../helpers/buildSimulation';
-import { makeTarget } from '../helpers/actors';
+import { makeAttacker, makeTarget } from '../helpers/actors';
 
 const warrior = () =>
   createPlayer({ race: 'orc', characterClass: 'warrior', combatStyle: 'two_hander' });
@@ -595,5 +596,72 @@ describe('extra attacks pay a full swing of rage', () => {
     expect(twoHandProc).toBeCloseTo(16.2, 10);
     expect(dualWieldProc).toBeCloseTo(8.996, 10);
     expect(twoHandProc).toBeGreaterThan(dualWieldProc * 1.5);
+  });
+});
+
+describe('rage from damage taken, against armor and against a block', () => {
+  /*
+   * ----------------------------------------------------------------------------
+   * TWO RULINGS THAT PULL AGAINST EACH OTHER ON THE SAME PIPELINE STEP:
+   *
+   *   "D = pre-armor damage to be dealt"
+   *   "Blocked hits give the rage of the unblocked amount"
+   *
+   * So armor does NOT reduce the rage and a block DOES -- and in this engine
+   * they are removed together, as one `mitigated` figure. Getting it wrong in
+   * either direction is quiet: reading `amount` would leave a tank earning a
+   * fraction of what it should, and reading `raw` would pay full rage for a
+   * blow that was blocked.
+   * ----------------------------------------------------------------------------
+   */
+  const BLOCKED: AttackResolution = {
+    outcome: 'block',
+    avoided: false,
+    damageMultiplier: 1,
+    rolls: [],
+  };
+  const HIT: AttackResolution = { outcome: 'hit', avoided: false, damageMultiplier: 1, rolls: [] };
+
+  /** What one blow of `baseAmount` pays a warrior of `maxHealth`. */
+  function rageFrom(attack: AttackResolution, armor: number, blockValue: number): number {
+    const player = createPlayer({
+      race: 'orc',
+      characterClass: 'warrior',
+      combatStyle: 'one_hand_shield',
+    });
+    const target = makeTarget({ stats: { armor, blockValue } });
+    const resolution = resolveDamage(
+      {
+        source: makeAttacker(),
+        target,
+        abilityName: 'Boss Swing',
+        school: 'physical',
+        baseAmount: 1000,
+      },
+      attack,
+    );
+    const rageable = Math.max(0, resolution.raw - resolution.blocked);
+    return (player.resourceOnDamageTaken?.perDamage ?? 0) * rageable;
+  }
+
+  it('ignores armor entirely', () => {
+    // Armor removes most of a 1000 point blow and none of the rage.
+    expect(rageFrom(HIT, 3731, 0)).toBeCloseTo(rageFrom(HIT, 0, 0), 10);
+  });
+
+  it('takes the block off, by its flat value', () => {
+    const unblocked = rageFrom(HIT, 0, 0);
+    const blocked = rageFrom(BLOCKED, 0, 250);
+    // A quarter of the blow was blocked, so a quarter of the rage is gone.
+    expect(blocked).toBeCloseTo(unblocked * 0.75, 6);
+  });
+
+  it('takes the block off even through armor, which is the combination', () => {
+    /*
+     * The case a `mitigated`-based reading gets wrong: armor and the block are
+     * one number there, so taking it off would remove both.
+     */
+    const throughArmour = rageFrom(BLOCKED, 3731, 250);
+    expect(throughArmour).toBeCloseTo(rageFrom(BLOCKED, 0, 250), 10);
   });
 });
