@@ -26,7 +26,7 @@ their talent trees and nothing else.
 | **Reactions** | content responds to an attack result: Overpower off a target dodge, and every item proc |
 | **Gear** | 19 items and the Crusader enchant, equippable, driving stats, weapons and procs. A **starting set** is equipped automatically when a Warrior is created, so the first fight is a geared one |
 | **Procs** | PPM (Vis'kag, Crusader) and flat-chance with an internal cooldown (Hand of Justice) |
-| **Talents** | all 469 talents, nine classes, spendable in the UI and saved on the profile. The Warrior's per-rank values are captured; **44 of its 53 talents do something** (39 fully, 5 partly), 9 say on screen why they cannot |
+| **Talents** | all 469 talents, nine classes, spendable in the UI and saved on the profile. The Warrior's per-rank values are captured; **45 of its 53 talents do something** (39 fully, 6 partly), 8 say on screen why they cannot |
 | **Encounter** | the target optionally hits back, **ramping 10% a swing**, against a character held up by an assumed healer who can be out-damaged. Deaths are counted. See [docs/incoming-damage.md](docs/incoming-damage.md) |
 | **Analysis** | DPS, per-ability breakdown with uses/attempts/hits/crit/glance/avoid rates, buff and debuff uptime, rage economy, deaths and healing received |
 | **UI** | two-step character flow, per-class character sheet (offensive and defensive), style-aware gear, talent trees, combat log, Monte Carlo batches, uptime bar charts |
@@ -137,16 +137,16 @@ what it does in `game/talents/warriorEffects.ts`; what its number IS lives in
 **every edge case and interpretation** the Warrior turned up. The design
 rationale is in the proposal on PR #22, which is not merged.
 
-**Warrior: 39 talents fully modelled, 5 partly, 9 inert.** Every one of the 53
+**Warrior: 39 talents fully modelled, 6 partly, 8 inert.** Every one of the 53
 has an explicit entry, and the inert ones name their own obstacle, so the list
 below IS the work queue. The Talent panel prints them under "Chosen but not
 simulated".
 
-The nine still inert are `improved_hamstring`, `booming_voice`, `iron_will`,
-`blood_craze`, `improved_berserker_rage`, `defiance`, `improved_disarm`,
-`vanguard` and `improved_shield_bash`. Regenerate the list with a three-line
-script over `WARRIOR_TALENT_EFFECTS`: a talent is inert when every one of its
-effects is `unmodelled`.
+The eight still inert are `improved_hamstring`, `booming_voice`, `iron_will`,
+`improved_berserker_rage`, `defiance`, `improved_disarm`, `vanguard` and
+`improved_shield_bash`. Regenerate the list with a three-line script over
+`WARRIOR_TALENT_EFFECTS`: a talent is inert when every one of its effects is
+`unmodelled`.
 
 #### What the remaining talents are blocked on
 
@@ -163,7 +163,7 @@ Grouped, because each blocker unlocks several at once:
 | ~~Talents cannot apply a combat-start aura~~ | ~~Anger Management, Death Wish~~ | **Done.** `grantAura` on a talent effect puts a definition in the character's opening auras, via `TALENT_AURAS`. Anger Management's first tick is rolled 1-3000ms into the fight, so a batch does not tighten its distribution around a fiction. |
 | **Ability not implemented** | Improved Disarm, Improved Shield Bash, and the five ability grants below | Disarm and Shield Bash are absent from the ability spreadsheet. |
 | **Needs a talent-granted reaction** | Enrage, Master of Defense, Weaponmaster's sword clause | **Not blocked on data.** Values are captured and the trigger exists; Shield Specialization is the worked example of the shape. The cheapest remaining talent wins. |
-| **Needs a concept the engine lacks** | Blood Craze | **Toughness left this row**: armor from items is now tracked separately from armor derived from stats, and the talent scales only the first. **Blood Craze is no longer blocked either** and has not been done — the player can be critically struck and healing is real, so "regenerates 3% of health over 6 sec after a crit" is now a periodic aura on a reaction, of exactly the shape Enrage uses. |
+| ~~Needs a concept the engine lacks~~ | ~~Toughness, Blood Craze~~ | **Both done.** Toughness scales armor from items, which is now tracked separately from armor derived from stats. Blood Craze regenerates on all three of its triggers — being critically struck, taking more than 20% of maximum health from one blow, and landing a Bloodthirst. |
 | ~~The source does not say what it affects~~ | ~~Focused Rage~~ | **Done.** The ruleset owner defined "offensive": an ability is offensive if it is processed through a combat table. Derived from `attackTable`, not from a list of ability ids, so a new ability gets it without anyone remembering. |
 | ~~Would be understated by modelling part of it~~ | ~~Dual Wield Specialization, Raging Blows~~ | **Done, once the ruleset owner supplied all the parts.** Dual Wield Specialization is off-hand damage 0.5 to 0.625, doubled off-hand rage and +10% off-hand hit; Raging Blows makes Whirlwind strike with both hands, main first, the off hand taking the damage penalty but not the miss penalty. |
 | **Partly modelled, by choice** | Weaponmaster | Does the part that is expressible and flags the rest. Dual Wield Specialization and Raging Blows were listed here too and are in fact wholly inert — each declares only an `unmodelled` reason. |

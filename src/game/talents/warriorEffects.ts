@@ -230,14 +230,30 @@ export const WARRIOR_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
     },
   ],
 
+  /*
+   * MODELLED, apart from its tick cadence. All three triggers fire:
+   * being critically struck, taking more than 20% of maximum health from one
+   * blow, and landing a Bloodthirst. Two reactions, because the first two
+   * watch attacks RECEIVED and the third one dealt.
+   *
+   * Its old reason said the healing "would not be observable: the player
+   * cannot drop below one health, so a heal has nothing to restore and
+   * survival is not modelled". True when written. The character now dies,
+   * the deaths are counted, and healing received is a figure on the results
+   * page.
+   */
   blood_craze: [
+    { kind: 'reaction', reactionId: 'blood_craze' },
+    { kind: 'reaction', reactionId: 'blood_craze_bloodthirst' },
     {
       kind: 'unmodelled',
       reason:
-        'Regenerates a percentage of health after being critically hit. The ' +
-        'trigger is reachable now that the target swings back, but the healing ' +
-        'itself would not be observable: the player cannot drop below one ' +
-        'health, so a heal has nothing to restore and survival is not modelled.',
+        'The total and the six seconds come from the source; the TICK ' +
+        'CADENCE does not. Nothing states it, so it uses the three ticks ' +
+        'Classic has, as a flagged placeholder. ' +
+        'The amount healed is unaffected -- what a wrong ' +
+        'cadence moves is when inside those six seconds it arrives, which ' +
+        'matters only when a fight is close.',
     },
   ],
 

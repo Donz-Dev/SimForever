@@ -52,9 +52,15 @@ interface TalentPanelProps {
  *
  * SOME OF THIS AFFECTS A SIMULATION AND SOME DOES NOT. A talent that grants an
  * ability, changes a stat, raises a resource cap or alters an ability's cost or
- * cooldown is real; everything else is listed under "Chosen but not simulated"
- * with the reason it cannot be modelled yet. Said on screen, per talent, rather
- * than left for someone to discover by running two builds and comparing.
+ * cooldown is real; anything with a gap is listed below it with the reason.
+ * Said on screen, per talent, rather than left for someone to discover by
+ * running two builds and comparing.
+ *
+ * THE LIST IS NOT ONLY DEAD TALENTS, which is why it no longer says they "do
+ * nothing". A talent can be mostly modelled and carry one caveat -- Blood
+ * Craze regenerates exactly what it says and borrows only its tick cadence,
+ * and Weaponmaster does the clause it can express and flags the two it
+ * cannot. Calling those inert would be as wrong as saying nothing.
  *
  * Collapsible because it is tall: three trees of seven rows push the results
  * off screen on a laptop, and the trees are set once and then watched rarely.
@@ -118,8 +124,9 @@ export function TalentPanel({
           {unmodelled.length > 0 ? (
             <>
               <p className="muted warn talent-warning">
-                Chosen but not simulated. These have points in them and do nothing, so
-                the results are lower than the real game by whatever they are worth.
+                Chosen but not fully simulated. Each of these does less than it says —
+                several of them nothing at all — so the results are lower than the real
+                game by whatever the gap is worth.
               </p>
               <ul className="issues">
                 {unmodelled.map((entry: UnmodelledTalent) => (

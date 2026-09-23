@@ -234,12 +234,20 @@ build is worth something in a way it was not before.
   triggers an extra attack. `extraAttack` exists, and effects can now read a
   talent's third value through `valueIndex`.
 
-**Blood Craze stayed inert for a real reason, and that reason has expired.** Its
-trigger was reachable; what was missing was anything for the heal to restore,
-because the player could not drop below one health. Both halves are now there:
-the character takes real damage from a ramping target and healing is modelled,
-so "regenerates 3% of health over 6 sec after a crit" is a periodic aura on a
-reaction, of the shape Enrage already uses. **Not blocked, and not done.**
+**Blood Craze stayed inert for a real reason, that reason expired, and it is
+now done.** Its trigger was reachable; what was missing was anything for the
+heal to restore, because the player could not drop below one health.
+
+Finishing it turned up something the talent BUTTON does not show. The captured
+text has **three** triggers, not one: being critically struck, *dealing damage
+with Bloodthirst*, and *suffering more than 20% of maximum health from a single
+attack*. The button truncates after the first. It takes two reactions, because
+two clauses watch attacks received and one watches an attack dealt -- and the
+Bloodthirst clause is the only one a warrior nothing is hitting can ever meet,
+which is what makes this a Fury talent rather than a Protection one.
+
+The tick cadence is a flagged `PLACEHOLDER_`: the source gives a total and six
+seconds and says nothing about when inside them the healing lands.
 
 ### 3.4 Armour enchants
 
@@ -391,7 +399,7 @@ a stated gap. `no` means it is inert, and the Talent panel says so on screen.
 | 5 | Unbridled Wrath | 5 | Gives you a 60% chance to generate 1 additional Rage when you deal melee damage with a weapon. This effect is increased to 2 Rage for two-handed we... | **yes** |
 | 10 | Improved Cleave | 3 | Reduces the Rage cost of your Cleave ability by 3. | **yes** |
 | 10 | Piercing Howl | 1 | Causes all nearby enemies to be Dazed, reducing movement speed by 50% for 6 sec. | partly |
-| 10 | Blood Craze | 3 | Regenerates 3% of your total Health over 6 sec after being the victim of a critical strike, dealing damage with Bloodthirst, or suffering more than... | **no** |
+| 10 | Blood Craze | 3 | Regenerates 3% of your total Health over 6 sec after being the victim of a critical strike, dealing damage with Bloodthirst, or suffering more than... | partly |
 | 10 | Boundless Rage | 3 | Increases your maximum Rage by 30. | **yes** |
 | 15 | Dual Wield Specialization | 5 | Increases your off-hand weapon damage by 25%, off-hand Rage generation by 100%, and chance to hit with off-hand attacks by {2}%. | **no** |
 | 15 | Raging Blows | 1 | Causes your Whirlwind to also strike with your off-hand weapon, and reduces the Rage cost of your Cleave ability by 2. | **no** |
@@ -442,7 +450,7 @@ Grouped, because each blocker covers several:
 | ~~Engine holds one armor number~~ | ~~Toughness~~ | **Done.** Armor from items is tracked separately from armor derived from stats, and the talent scales only the first |
 | ~~Source does not say what it affects~~ | ~~Focused Rage~~ | **Done.** The ruleset owner defined "offensive" as processed through a combat table, and the talent reads `attackTable` rather than a list of ids |
 | ~~Modelling part would misrepresent it~~ | ~~Dual Wield Specialization, Raging Blows~~ | **Done**, once every part arrived at once |
-| **Survival is not modelled** | Blood Craze | **This reason has expired.** The character now dies, is counted, and is healed; nothing blocks it |
+| ~~Survival is not modelled~~ | ~~Blood Craze~~ | **Done.** All three triggers fire and the regeneration lands; only its tick cadence is a flagged placeholder |
 
 **Six of these are out of scope rather than pending.** Of the 53, **43 now do
 something** — 37 fully and 6 partly — leaving 10 inert, four of which are the
@@ -481,7 +489,7 @@ classification has now been wrong **eight times, in two rounds**. The first
 three — Improved Rend, Improved Overpower, Unbridled Wrath — were each blocked
 on something that already existed. The second five all claimed nothing attacked
 the player, three commits after something did: Enrage, Master of Defense and
-Blood Craze stayed inert for a reason that had expired, and **Shield
+Blood Craze stayed inert for reasons that had expired, and **Shield
 Specialization and Improved Revenge were fully working while still printing a
 caveat saying they could not fire.**
 
