@@ -148,6 +148,37 @@ export const ENERGY_REGEN: ResourceRegen = {
   amountPerTick: () => ENERGY_PER_TICK,
 };
 
+/* --- Focus --- */
+
+/**
+ * A pet's focus: "Pets regenerate 100 Focus over 10 sec, or 10 Focus per
+ * second", from the Forever Hunter wiki.
+ *
+ * ----------------------------------------------------------------------------
+ * THE WIKI STATES TWO RATES AND THEY DISAGREE. It says "about 25.5 Focus every
+ * 5.2 sec" -- which is 4.9 a second -- and then "100 Focus over 10 sec, or 10
+ * Focus per second". The second is written as the conclusion and is followed
+ * by "this is roughly double the Classic Focus regeneration rate", which
+ * Classic's ~5 a second makes true of 10 and false of 4.9.
+ *
+ * So ten is used, and the disagreement is recorded here rather than resolved
+ * silently. It is one constant, so flipping it is one edit.
+ *
+ * TICKED ONCE A SECOND rather than continuously. The wiki calls the new
+ * behaviour "continuous", which no event-driven engine can be; a one-second
+ * tick is the finest cadence that costs nothing and it delivers the stated
+ * rate exactly.
+ * ----------------------------------------------------------------------------
+ */
+export const FOCUS_PER_SECOND = 10;
+export const FOCUS_TICK_INTERVAL_MS = seconds(1);
+
+export const FOCUS_REGEN: ResourceRegen = {
+  resource: 'focus',
+  intervalMs: FOCUS_TICK_INTERVAL_MS,
+  amountPerTick: () => FOCUS_PER_SECOND,
+};
+
 /* --- Mana --- */
 
 /** Mana ticks on the same two-second cadence as energy. */
@@ -213,6 +244,7 @@ function clampPercent(value: number): number {
 export function regenerationFor(resources: readonly string[]): ResourceRegen[] {
   const regen: ResourceRegen[] = [];
   if (resources.includes('energy')) regen.push(ENERGY_REGEN);
+  if (resources.includes('focus')) regen.push(FOCUS_REGEN);
   if (resources.includes('mana')) regen.push(MANA_REGEN);
   return regen;
 }

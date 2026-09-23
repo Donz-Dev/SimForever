@@ -653,6 +653,85 @@ const PALADIN_SHIELD: Equipment = {
   shield: { itemId: 19321 }, // The Immovable Object
 };
 
+/**
+ * THE THREE HUNTER BUILDS, decoded from the owner's URLs. 31/20/0, 7/39/5 and
+ * 7/13/31, each exactly 51 points.
+ *
+ * ONLY THE FIRST BRINGS A PET. Both Lone Wolf builds take the talent that
+ * reads "while you do not have an active pet", which is what makes it a
+ * choice rather than an oversight -- and it is worth 20% damage for making it.
+ */
+const HUNTER_BEAST_MASTERY_TALENTS: TalentAllocation = {
+  deadly_aspects: 5,
+  endurance_training: 3,
+  focused_fire: 2,
+  bestial_swiftness: 1,
+  unleashed_fury: 5,
+  ferocity: 5,
+  summon_hawk: 1,
+  intimidation: 1,
+  bestial_discipline: 2,
+  frenzy: 5,
+  bestial_wrath: 1,
+  hawk_eye: 3,
+  lethal_attacks: 5,
+  efficiency: 2,
+  careful_aim: 5,
+  mortal_shots: 5,
+};
+
+const HUNTER_LONE_WOLF_RANGED_TALENTS: TalentAllocation = {
+  deadly_aspects: 5,
+  focused_fire: 2,
+  hawk_eye: 3,
+  lethal_attacks: 5,
+  careful_aim: 5,
+  rapid_killing: 2,
+  improved_arcane_shot: 5,
+  lone_wolf: 1,
+  trueshot_aura: 1,
+  mortal_shots: 5,
+  rapid_recuperation: 2,
+  barrage: 3,
+  scatter_shot: 1,
+  ranged_weapon_specialization: 5,
+  sniper_shot: 1,
+  improved_tracking: 5,
+};
+
+const HUNTER_LONE_WOLF_MELEE_TALENTS: TalentAllocation = {
+  deadly_aspects: 5,
+  focused_fire: 2,
+  lethal_attacks: 5,
+  careful_aim: 5,
+  rapid_killing: 2,
+  lone_wolf: 1,
+  improved_tracking: 5,
+  savage_strikes: 2,
+  survivalist: 4,
+  surefooted: 3,
+  deterrence: 1,
+  predator_s_edge: 5,
+  resourcefulness: 2,
+  expose_prey: 2,
+  strider_kick: 1,
+  lightning_reflexes: 5,
+  lacerating_strikes: 1,
+};
+
+/**
+ * A GEAR SHELL, and said to be one.
+ *
+ * Striker's Mark is already in SHARED_ARMOUR as the ranged slot, and the
+ * project's rule is that a ranged weapon coexists with a melee one and simply
+ * does not swing unless the style says so. So the two ranged builds need no
+ * weapon block at all -- they shoot the bow every profile already carries --
+ * and the melee build takes the two-hander.
+ */
+const HUNTER_MELEE_WEAPONS: Equipment = {
+  twoHand: { itemId: 228229, enchantId: CRUSADER },
+};
+
 export const PROFILE_PRESETS: readonly ProfilePreset[] = [
   {
     id: 'two_hand_arms',
@@ -1042,6 +1121,67 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = [
       raidBuffs: [...PRESET_RAID_BUFFS],
       equipment: { ...SHARED_ARMOUR, ...PALADIN_SHIELD },
       encounter: { ...createDefaultProfile().encounter, targetAttacks: true },
+    }),
+  },
+  {
+    id: 'bm_hunter',
+    label: 'BM Hunter',
+    detail: 'Orc, bow and a Cat, standing target. 31 Beast Mastery',
+    build: () => ({
+      ...createDefaultProfile(),
+      character: {
+        name: 'BM Hunter',
+        race: 'orc',
+        characterClass: 'hunter',
+        level: 60,
+        combatStyle: 'ranged',
+        stance: 'battle',
+        petFamily: 'cat',
+      },
+      talents: { ...HUNTER_BEAST_MASTERY_TALENTS },
+      raidBuffs: [...PRESET_RAID_BUFFS],
+      equipment: { ...SHARED_ARMOUR },
+      encounter: { ...createDefaultProfile().encounter, targetAttacks: false },
+    }),
+  },
+  {
+    id: 'lw_ranged',
+    label: 'LW Ranged',
+    detail: 'Orc, bow, no pet, standing target. 39 Marksmanship',
+    build: () => ({
+      ...createDefaultProfile(),
+      character: {
+        name: 'LW Ranged',
+        race: 'orc',
+        characterClass: 'hunter',
+        level: 60,
+        combatStyle: 'ranged',
+        stance: 'battle',
+      },
+      talents: { ...HUNTER_LONE_WOLF_RANGED_TALENTS },
+      raidBuffs: [...PRESET_RAID_BUFFS],
+      equipment: { ...SHARED_ARMOUR },
+      encounter: { ...createDefaultProfile().encounter, targetAttacks: false },
+    }),
+  },
+  {
+    id: 'lw_melee',
+    label: 'LW Melee',
+    detail: 'Orc, two-hander, no pet, standing target. 31 Survival',
+    build: () => ({
+      ...createDefaultProfile(),
+      character: {
+        name: 'LW Melee',
+        race: 'orc',
+        characterClass: 'hunter',
+        level: 60,
+        combatStyle: 'two_hander',
+        stance: 'battle',
+      },
+      talents: { ...HUNTER_LONE_WOLF_MELEE_TALENTS },
+      raidBuffs: [...PRESET_RAID_BUFFS],
+      equipment: { ...SHARED_ARMOUR, ...HUNTER_MELEE_WEAPONS },
+      encounter: { ...createDefaultProfile().encounter, targetAttacks: false },
     }),
   },
 ];

@@ -235,6 +235,32 @@ a list built around a spell it had one point in, and produced a perfectly
 ordinary 143.9 DPS without casting Fireball once. Nothing errored and nothing
 was missing.
 
+**A PET IS A SECOND FRIENDLY COMBATANT, AND ALMOST ALL OF THAT ALREADY
+WORKED.** `dps` has summed every friendly actor since batching was written,
+`CombatantKind` has had `pet`, `ownerId` has been on `Combatant`, and a
+`Combatant` carries its own rotation. The ONE thing missing was reporting:
+`abilityBreakdown` read a single actor, so a Beast Mastery hunter would have
+shown a DPS figure its own damage table could not account for. Pet stats come
+from the owner at Forever's rates -- 2 health a stamina, 30% of armor, 10% of
+the HIGHEST attack power source, and 100% of crit, which makes a Forever pet
+far more gear-sensitive than a Classic one. A pet's own base damage and swing
+speed are stated nowhere and are placeholders.
+
+**A TEMPORARY SUMMON IS MODELLED WITHOUT A COMBATANT**, on the ruleset owner's
+call: the engine cannot add one mid-fight, so a Hunter's hawk is a periodic
+effect on the Hunter that deals the hawk's damage. The damage lands and is
+credited; what is lost is that the hawk is not separately targetable. Adding
+combatants mid-fight remains the last item on the gap survey, wanted only by
+the Warlock's Infernal and the Mage's elemental.
+
+**`github.com/classic-hunter/forever-hunter/wiki` IS A FIFTH SOURCE**, named
+by the ruleset owner for pet scaling and carrying a full Forever-versus-Classic
+diff for the whole class. It is the only source for pet stat scaling and focus
+regeneration, and it states Forever ability numbers that differ sharply from
+Classic's -- Aimed Shot's bonus went 600 to 166, Raptor Strike's 140 to 70,
+Arcane Shot gained a 10% ranged attack power coefficient and lost its spell
+power one. Where it and the spellbook overlap they agree.
+
 **A SEAL SCALES WITH SPELL POWER, AND IT IS THE ONLY THING THAT DOES.** The
 ruleset owner supplied the formula directly: `base + baseWeaponSpeed x (0.022
 x attackPower + 0.044 x spellPower)`, which makes a point of spell power worth

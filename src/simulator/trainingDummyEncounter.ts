@@ -1,11 +1,15 @@
-import type { SimulationConfig } from '../engine';
+import type { Combatant, SimulationConfig } from '../engine';
 import { seconds } from '../engine';
 import type { CharacterProfile } from '../profiles';
 import { createPlayer } from '../game/actors/createPlayer';
 import { createForeverAttackChances } from '../game/combat/attackChances';
 import { resolveCombatStyle } from '../game/character';
 import { createTrainingDummy } from '../game/actors/createTrainingDummy';
+import type { RaidBuff } from '../game/buffs/raidBuffs';
 import { raidBuffPoolStats, selectedRaidBuffs } from '../game/buffs/raidBuffs';
+import { createPet } from '../game/actors/createPet';
+import { isPetFamilyId } from '../game/character/petFamilies';
+import { hasPet } from '../game/rotations/hunter';
 
 /**
  * How much a fight's length varies from the length asked for, either side.
@@ -64,62 +68,26 @@ export function trainingDummyEncounter(
 
     // A factory, not an array: every Monte Carlo iteration needs its own fresh
     // combatants rather than the previous iteration's leftovers.
-    createCombatants: () => [
-      createPlayer({
-        name: profile.character.name,
-        race: profile.character.race,
-        characterClass: profile.character.characterClass,
-        combatStyle: profile.character.combatStyle,
-        stance: profile.character.stance,
-        bonusStats: profile.stats,
-        equipment: profile.equipment,
-        talents: profile.talents,
-        /*
-         * A healer is ASSUMED, not modelled: a random 500 to 1500 every
-         * second, and nothing behind it. See `encounters/externalHealer.ts`.
-         *
-         * The character can still be killed, and is stood back up when they
-         * are. That pairing is the whole model -- the healer is what stops the
-         * fight ending in three swings, and the deaths are what says when it
-         * stopped being enough. Both are on the same switch, because a healer
-         * with nothing to heal is noise and a revive with nothing to revive
-         * from is dead code.
-         */
-        externalHealing: profile.encounter.targetAttacks,
-        revivesOnDeath: profile.encounter.targetAttacks,
-        /*
-         * WINDFURY AND ANYTHING ELSE THE RAID PROCS. A character standing
-         * alone has none of these, which is why they arrive from the encounter
-         * rather than from the class or the gear.
-         */
-        extraReactions: onPlayer.flatMap((buff) =>
-          /*
-           * BUILT HERE, inside the combatant factory, so every iteration gets
-           * its own. Windfury's internal cooldown is per-character state, and
-           * a reaction built once at module load shares that timer with every
-           * fight in the batch -- which silently stopped it proccing at all
-           * after the first iteration.
-           */
-          buff.buildReaction ? [buff.buildReaction()] : [],
-        ),
-        /*
-         * THE POOLS HAVE TO KNOW ABOUT THE BUFFS, and nothing else does.
-         * Health and mana are sized once from a stats snapshot, so Power Word:
-         * Fortitude's stamina would otherwise grant no health at all -- see
-         * `raidBuffPoolStats`.
-         */
-        poolStats: raidBuffPoolStats(profile.raidBuffs),
-      }),
-      createTrainingDummy({
-        name: profile.encounter.targetName,
-        health: profile.encounter.targetHealth,
-        armor: profile.encounter.targetArmor,
-        level: profile.encounter.targetLevel,
-        attacks: profile.encounter.targetAttacks,
-        swingDamage: profile.encounter.targetSwingDamage,
-        swingSeconds: profile.encounter.targetSwingSeconds,
-      }),
-    ],
+    /*
+     * ------------------------------------------------------------------------
+     * A PET IS A SECOND FRIENDLY COMBATANT, and almost everything about that
+     * already worked: `dps` has summed every friendly actor since batching was
+     * written, `CombatantKind` has had `pet`, and a `Combatant` carries its own
+     * rotation. What did NOT work was the reporting -- `abilityBreakdown` read
+     * one actor, so a Beast Mastery hunter would have shown a DPS figure its
+     * own damage table could not account for.
+     *
+     * BUILT INSIDE THE FACTORY, after the player, because it reads the
+     * player's finished stats: 2 health a stamina, 30% of armor, 10% of the
+     * highest attack power source and 100% of crit. A pet built from a
+     * half-assembled owner would inherit half a character.
+     * ------------------------------------------------------------------------
+     */
+    createCombatants: () => {
+      const player = createPlayerFor(profile, onPlayer);
+      const pet = petFor(profile, player);
+      return [player, ...(pet ? [pet] : []), createDummyFor(profile)];
+    },
 
     /*
      * THE RAID, applied before anything swings.
@@ -161,4 +129,98 @@ export function trainingDummyEncounter(
       }
     },
   };
+}
+
+/**
+ * The player, built fresh for every Monte Carlo iteration.
+ *
+ * Extracted from the combatant factory so the PET can be built from the
+ * finished article -- a pet reads its owner's assembled stats, and one built
+ * from a half-made character inherits half a character.
+ */
+function createPlayerFor(
+  profile: CharacterProfile,
+  onPlayer: readonly RaidBuff[],
+): Combatant {
+  return createPlayer({
+    name: profile.character.name,
+    race: profile.character.race,
+    characterClass: profile.character.characterClass,
+    combatStyle: profile.character.combatStyle,
+    stance: profile.character.stance,
+    bonusStats: profile.stats,
+    equipment: profile.equipment,
+    talents: profile.talents,
+    /*
+     * A healer is ASSUMED, not modelled: a random 500 to 1500 every
+     * second, and nothing behind it. See `encounters/externalHealer.ts`.
+     *
+     * The character can still be killed, and is stood back up when they
+     * are. That pairing is the whole model -- the healer is what stops the
+     * fight ending in three swings, and the deaths are what says when it
+     * stopped being enough. Both are on the same switch, because a healer
+     * with nothing to heal is noise and a revive with nothing to revive
+     * from is dead code.
+     */
+    externalHealing: profile.encounter.targetAttacks,
+    revivesOnDeath: profile.encounter.targetAttacks,
+    /*
+     * WINDFURY AND ANYTHING ELSE THE RAID PROCS. A character standing
+     * alone has none of these, which is why they arrive from the encounter
+     * rather than from the class or the gear.
+     */
+    extraReactions: onPlayer.flatMap((buff) =>
+      /*
+       * BUILT HERE, inside the combatant factory, so every iteration gets
+       * its own. Windfury's internal cooldown is per-character state, and
+       * a reaction built once at module load shares that timer with every
+       * fight in the batch -- which silently stopped it proccing at all
+       * after the first iteration.
+       */
+      buff.buildReaction ? [buff.buildReaction()] : [],
+    ),
+    /*
+     * THE POOLS HAVE TO KNOW ABOUT THE BUFFS, and nothing else does.
+     * Health and mana are sized once from a stats snapshot, so Power Word:
+     * Fortitude's stamina would otherwise grant no health at all -- see
+     * `raidBuffPoolStats`.
+     */
+    poolStats: raidBuffPoolStats(profile.raidBuffs),
+  });
+}
+
+function createDummyFor(profile: CharacterProfile): Combatant {
+  return createTrainingDummy({
+    name: profile.encounter.targetName,
+    health: profile.encounter.targetHealth,
+    armor: profile.encounter.targetArmor,
+    level: profile.encounter.targetLevel,
+    attacks: profile.encounter.targetAttacks,
+    swingDamage: profile.encounter.targetSwingDamage,
+    swingSeconds: profile.encounter.targetSwingSeconds,
+  });
+}
+
+/**
+ * A pet, when the build brings one.
+ *
+ * ----------------------------------------------------------------------------
+ * ONLY THE HUNTER, AND ONLY WITHOUT LONE WOLF. The talent reads "you deal 20%
+ * increased damage with all attacks WHILE YOU DO NOT HAVE AN ACTIVE PET", so a
+ * build that takes it has chosen not to bring one -- which makes the condition
+ * a property of the build rather than something to re-check each swing.
+ *
+ * THE FAMILY IS A PROFILE FIELD, on the ruleset owner's call: choosing a pet
+ * is a player action on the GUI, the same reasoning as the shield and the
+ * combat style. A Hunter profile with none named defaults to a Cat.
+ * ----------------------------------------------------------------------------
+ */
+function petFor(profile: CharacterProfile, owner: Combatant): Combatant | undefined {
+  if (profile.character.characterClass !== 'hunter') return undefined;
+  if (!hasPet(profile.talents ?? {})) return undefined;
+
+  const family = isPetFamilyId(profile.character.petFamily)
+    ? profile.character.petFamily
+    : 'cat';
+  return createPet({ owner, family });
 }

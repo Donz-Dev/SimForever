@@ -7,6 +7,7 @@ import { druidRotation } from './druid';
 import { shamanRotation } from './shaman';
 import { mageRotation } from './mage';
 import { paladinRotation } from './paladin';
+import { hunterRotation } from './hunter';
 
 /**
  * The action priority list for a class and combat style.
@@ -47,5 +48,12 @@ export function rotationFor(
   // AND THE PALADIN BY CAPSTONE, the Rogue's test: Holy Shield, Twist of Light
   // and Holy Shock each belong to exactly one of the three builds.
   if (characterClass === 'paladin') return paladinRotation(talents ?? {});
+  /*
+   * AND THE HUNTER BY BOTH. Beast Mastery is told by its capstone -- which is
+   * also the talent that means "I have a pet" -- and the two Lone Wolf builds
+   * by STYLE, because both take Lone Wolf and neither reaches a capstone that
+   * would separate them. One stands in melee and the other does not.
+   */
+  if (characterClass === 'hunter') return hunterRotation(style, talents ?? {});
   return undefined;
 }

@@ -29,6 +29,21 @@ export interface CharacterSection {
   readonly characterClass: ClassId;
   readonly level: number;
   /**
+   * Which pet family a Hunter brings, when it brings one.
+   *
+   * ----------------------------------------------------------------------
+   * A PLAYER ACTION ON THE GUI, which is the ruleset owner's standard for
+   * what the engine is entitled to know -- the same reasoning that made the
+   * shield a profile field rather than something inferred. Pet abilities are
+   * family-gated in the spellbook, so a Cat has Claw and a Wolf does not.
+   *
+   * Absent on every profile that is not a Hunter, and absent on a Hunter that
+   * took Lone Wolf, which is the talent for choosing to bring no pet at all.
+   * A Hunter with a pet and no family named defaults to a Cat.
+   * ----------------------------------------------------------------------
+   */
+  readonly petFamily?: string;
+  /**
    * How the character fights: which weapons auto-attack, and which action
    * priority list applies.
    *

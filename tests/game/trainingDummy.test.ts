@@ -232,7 +232,17 @@ describe('player versus training dummy', () => {
     });
     const used = result.damage.byActor[0].abilities.map((entry) => entry.abilityName);
 
-    expect(used).toEqual(['Ranged Auto-Attack']);
+    /*
+     * SHOOTS RATHER THAN SWINGS, which is the claim. It used to be written as
+     * "and does nothing else", which was true only while the Hunter had no
+     * abilities at all -- a talentless Hunter now opens with an Aspect and
+     * casts its trainer shots, so the list is no longer a single entry.
+     *
+     * The behaviour under test never changed: the ranged auto-attack is there
+     * and the melee one is not.
+     */
+    expect(used).toContain('Ranged Auto-Attack');
+    expect(used).not.toContain('Main Hand Auto-Attack');
   });
 
   it('uses paws rather than weapons for a druid in cat form', () => {
