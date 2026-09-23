@@ -46,10 +46,10 @@ export interface ProfilePreset {
 const CRUSADER = 20034;
 
 /**
- * Everything that is not a weapon, shared by both builds.
+ * Everything that is not a weapon, shared by all three builds.
  *
- * Identical in the ruleset owner's two lists, item for item, which is why it is
- * written once. The ids are the same ones `startingSets.ts` curates -- and this
+ * Identical in the ruleset owner's three lists, item for item, which is why it
+ * is written once. The ids are the same ones `startingSets.ts` curates -- and this
  * deliberately does NOT call that function, because a preset is a stated build
  * rather than "whatever the starting set happens to be today". If the starting
  * set changes, these should not silently change with it.
@@ -70,6 +70,43 @@ const SHARED_ARMOUR: Equipment = {
   ring2: { itemId: 228261 }, // Quick Strike Ring
   trinket1: { itemId: 13965 }, // Blackhand's Breadth
   trinket2: { itemId: 11815 }, // Hand of Justice
+};
+
+/**
+ * 2H Arms: 38 in Arms, 10 in Fury. FORTY-EIGHT, with three points unspent.
+ *
+ * ----------------------------------------------------------------------------
+ * THREE POINTS SHORT OF THE CAP, and left that way on purpose: this is the
+ * ruleset owner's list as given, and choosing where three more go would be
+ * inventing a build.
+ *
+ * It is legal -- every tier is reached and every prerequisite met, including
+ * Mortal Strike's thirty points in Arms with thirty-seven before it -- so
+ * nothing is stripped. It simply does not spend everything, which the Talent
+ * panel shows as "3 points left" and a test pins so that filling them in has
+ * to be a deliberate act.
+ * ----------------------------------------------------------------------------
+ */
+const TWO_HAND_ARMS_TALENTS: TalentAllocation = {
+  // Arms, 38
+  improved_heroic_strike: 3,
+  improved_rend: 3,
+  improved_charge: 1,
+  improved_tactical_mastery: 5,
+  improved_overpower: 2,
+  anger_management: 1,
+  deep_wounds: 3,
+  spearing_strike: 1,
+  two_handed_weapon_specialization: 3,
+  impale: 2,
+  bloodthrill: 5,
+  sweeping_strikes: 1,
+  weaponmaster: 5,
+  improved_slam: 2,
+  mortal_strike: 1,
+  // Fury, 10
+  cruelty: 5,
+  unbridled_wrath: 5,
 };
 
 /**
@@ -140,6 +177,34 @@ const PROT_WARR_TALENTS: TalentAllocation = {
 };
 
 export const PROFILE_PRESETS: readonly ProfilePreset[] = [
+  {
+    id: 'two_hand_arms',
+    label: '2H Arms',
+    detail: 'Orc, two-hander, Battle Stance, standing target',
+    build: () => ({
+      ...createDefaultProfile(),
+      character: {
+        name: '2H Arms',
+        race: 'orc',
+        characterClass: 'warrior',
+        level: 60,
+        combatStyle: 'two_hander',
+        stance: 'battle',
+      },
+      talents: { ...TWO_HAND_ARMS_TALENTS },
+      equipment: {
+        ...SHARED_ARMOUR,
+        // Obsidian Edged Blade, enchanted. A two-hander carries one weapon and
+        // therefore one Crusader.
+        twoHand: { itemId: 228229, enchantId: CRUSADER },
+      },
+      encounter: {
+        ...createDefaultProfile().encounter,
+        // A damage warrior is not the one being hit.
+        targetAttacks: false,
+      },
+    }),
+  },
   {
     id: 'dw_fury',
     label: 'DW Fury',

@@ -221,6 +221,34 @@ away.
 The calculator also confirms **Spearing Strike is an Arms talent**, which is why
 it had no Classic counterpart to check against.
 
+## The three priority lists
+
+Each is chosen by combat style AND stance together, because a rotation that
+never leaves its stance is a different rotation and not a filtered one. All
+three orders were given by the ruleset owner directly.
+
+| List | Chosen by | Notable |
+| --- | --- | --- |
+| **Warrior (Two-Hander, Battle)** | `two_hander` + Battle | Heroic Strike at **75** rage; Slam last, gated on **more than a second of swing timer left** |
+| **Warrior (Dual-Wield, Berserker)** | `dual_wield` + Berserker | Heroic Strike at 42; Death Wish timed to cover the end of the fight |
+| **Warrior (Shield, Defensive)** | shield + Defensive | Heroic Strike at 26; Last Stand and Shield Wall above everything |
+
+The two general lists remain for everything else. A **dual-wielder in Battle
+Stance** is now the only build that uses one.
+
+**Slam's condition is the only one in any list that reads the swing timer.** It
+is the one ability with a cast time, and Improved Slam takes that to half a
+second and makes it HOLD the swing rather than reset it — so a Slam started with
+more than a second left finishes well before the swing is due and costs it
+nothing. Read off the pending swing's own scheduled timestamp, which is the only
+thing that knows: haste, an extra attack and a cast that reset the timer all
+move it.
+
+**Sunder Armor refreshes at 3 seconds in the Arms list and 4 in the Protection
+one.** Both are the ruleset owner's, given for their own list, and nothing says
+they should agree — so they are two constants rather than one quietly applied to
+a list nobody checked it against.
+
 ## Engine changes this required
 
 | Change | Why |

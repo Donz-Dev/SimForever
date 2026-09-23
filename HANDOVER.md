@@ -29,11 +29,11 @@ their talent trees and nothing else.
 | **Talents** | all 469 talents, nine classes, spendable in the UI and saved on the profile. The Warrior's per-rank values are captured; **45 of its 53 talents do something** (39 fully, 6 partly), 8 say on screen why they cannot |
 | **Encounter** | the target optionally hits back, **ramping 10% a swing**, against a character held up by an assumed healer who can be out-damaged. Deaths are counted. See [docs/incoming-damage.md](docs/incoming-damage.md) |
 | **Raid buffs** | 20 buffs, debuffs and totems selectable per profile and applied before the first swing, Windfury's proc included. Nothing on by default. See [docs/raid-buffs.md](docs/raid-buffs.md) |
-| **Presets** | **DW Fury** and **Prot Warr**, one button each on the creation screen: name, race, style, stance, 51 talents, 17 gear slots and whether the target swings back, all at once |
+| **Presets** | **2H Arms**, **DW Fury** and **Prot Warr**, one button each on the creation screen: name, race, style, stance, the whole tree, gear and whether the target swings back, all at once |
 | **Analysis** | DPS, per-ability breakdown with uses/attempts/hits/crit/glance/avoid rates, buff and debuff uptime, rage economy, deaths and healing received |
 | **UI** | two-step character flow, per-class character sheet (offensive and defensive), style-aware gear, talent trees, combat log, Monte Carlo batches, uptime bar charts |
 
-**1,242 tests**, CI green on Node 20 and 22. Profile format **v9**.
+**1,249 tests**, CI green on Node 20 and 22. Profile format **v9**.
 
 The interface is one theme, **Abyssal Copper**, chosen from four mock-ups. The
 other three still exist in `ui/styles.css` under `:root[data-theme=...]` and
@@ -60,18 +60,18 @@ two sets of figures.
 | --- | --- | --- |
 | Dual-wield / Berserker (default) | **163.92** +/- 2.67 | **357.22** +/- 3.37 |
 | Dual-wield / Battle (general list) | **161.59** +/- 2.53 | - |
-| Two-hander / Battle (default) | **153.43** +/- 1.64 | - |
+| Two-hander / Battle (default) | **158.93** +/- 2.88 | - |
 | 1H & Shield / Defensive (default) | **64.64** +/- 1.09 | - |
 | 1H & Shield, 31-pt Protection | **66.40** +/- 1.36 | **153.71** +/- 1.76 |
 | Dual-wield, 31-pt Arms | **188.82** +/- 2.43 | - |
 | Fury to Death Wish | **222.26** +/- 3.57 | - |
 | the same, without Death Wish | **194.45** +/- 3.55 | - |
 
-**One row moved, and only one.** The tank with the target attacking fell from
-158.61 to 153.71 — outside its interval — because Thunder Clap now slows the
-target's swings by a fifth, and a fifth fewer swings taken is a fifth less rage
-from damage taken. Every other row is inside its interval, including the
-dual-wielder's attacked column: the Berserker list does not cast Thunder Clap.
+**Two rows have moved since 2026-09-22, each for one reason.** The tank with the
+target attacking fell from 158.61 to 153.71, because Thunder Clap now slows the
+target and a fifth fewer swings taken is a fifth less rage from damage taken.
+The two-hander rose from 153.43 to 158.93, because it has its own priority list
+now instead of the general melee one. Everything else is inside its interval.
 
 That same change is why Bastion's DPS ratio fell from about 1.16 to 1.106. It
 is a rage economy loosening, not a talent getting worse.
@@ -109,10 +109,11 @@ ruleset owner, and what is doable now. **Start there.**
 
 ## Start from a preset
 
-Two buttons on the creation screen, at the very top:
+Three buttons on the creation screen, at the very top:
 
 | | |
 | --- | --- |
+| **2H Arms** | Orc, two-hander, Battle Stance, standing target. 38 Arms / 10 Fury, **three points unspent**. ~284 DPS |
 | **DW Fury** | Orc, dual-wield, Berserker Stance, standing target. 18 Arms / 33 Fury, both weapons enchanted with Crusader. ~392 DPS |
 | **Prot Warr** | Tauren, shield, Defensive Stance, target swings back. 17 Arms / 34 Protection. ~247 DPS |
 
@@ -122,14 +123,21 @@ chosen", "if the target attacks back is checked" -- and those are not
 independent settings. A preset is the whole answer, named, and sets every field
 rather than inheriting any. See `profiles/presets.ts`.
 
-**A third, `2H - Arms`, is named but not built.** The ruleset owner listed it as
-a button and has not supplied its talents or gear, and guessing a 51-point tree
-would be inventing a build. Adding it is one entry in `PROFILE_PRESETS`.
+**Two of the three lists did not add up, in opposite directions**, and both are
+recorded where the allocation is written:
 
-**The Prot Warr list as given came to 52 points against a cap of 51.** Anger
-Management is the point the owner chose to give up. Worth knowing because
-`legalAllocation` would have dropped exactly that talent on its own -- landing
-on the right build by accident, with nobody aware a point had gone.
+- **Prot Warr came to 52 against a cap of 51.** Anger Management is the point
+  the owner chose to give up. `legalAllocation` would have dropped exactly that
+  talent on its own -- landing on the right build by accident, with nobody aware
+  a point had gone.
+- **2H Arms comes to 48, three short.** Legal, so nothing is stripped; it simply
+  does not spend everything. Left as given, because choosing where three more go
+  would be inventing a build.
+
+**Each preset has its own priority list**, chosen by style AND stance: `2H Arms`
+runs `Warrior (Two-Hander, Battle)`, `DW Fury` the Berserker list and `Prot Warr`
+the Defensive one. A dual-wielder in Battle Stance still gets the general melee
+list, which is the only build left using one.
 
 ## The encounter now fights back properly
 

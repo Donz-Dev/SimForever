@@ -28,9 +28,17 @@ import { characterAtCombatStart, runProfileBatch } from '../../src/simulator';
 const tree = talentsForClass('warrior')!;
 
 describe('the preset catalogue', () => {
-  it('offers the two builds, with stable ids', () => {
-    expect(PROFILE_PRESETS.map((preset) => preset.id)).toEqual(['dw_fury', 'prot_warr']);
-    expect(PROFILE_PRESETS.map((preset) => preset.label)).toEqual(['DW Fury', 'Prot Warr']);
+  it('offers the three builds, with stable ids', () => {
+    expect(PROFILE_PRESETS.map((preset) => preset.id)).toEqual([
+      'two_hand_arms',
+      'dw_fury',
+      'prot_warr',
+    ]);
+    expect(PROFILE_PRESETS.map((preset) => preset.label)).toEqual([
+      '2H Arms',
+      'DW Fury',
+      'Prot Warr',
+    ]);
   });
 
   it('builds a profile that VALIDATES, field for field', () => {
@@ -84,22 +92,35 @@ describe('the preset catalogue', () => {
     }
   });
 
-  it('spends every talent point, and spends them legally', () => {
+  it('spends its points LEGALLY, whatever it spends', () => {
     /*
-     * BOTH HALVES MATTER. Fifty-one exactly, and an allocation the tree
-     * accepts unchanged -- `legalAllocation` stripping something would mean
-     * the character that gets built is not the one that was written down.
+     * An allocation the tree accepts unchanged. `legalAllocation` stripping
+     * something would mean the character that gets built is not the one that
+     * was written down -- which is exactly what nearly happened to Prot Warr.
      */
     for (const preset of PROFILE_PRESETS) {
       const talents = preset.build().talents;
-      const spent = Object.values(talents).reduce((total, rank) => total + rank, 0);
-      expect(spent, `${preset.id} spends`).toBe(TOTAL_TALENT_POINTS);
-      expect(pointsRemaining(talents), preset.id).toBe(0);
-
       const legal = legalAllocation(tree, talents);
       expect(legal.dropped, `${preset.id} dropped`).toEqual([]);
       expect(legal.allocation, preset.id).toEqual(talents);
+      expect(pointsRemaining(talents), preset.id).toBeGreaterThanOrEqual(0);
     }
+  });
+
+  it('spends all fifty-one, except 2H Arms which is three short', () => {
+    /*
+     * WRITTEN OUT PER PRESET rather than asserted as a rule, because it is not
+     * one. Two of the three spend everything; the ruleset owner's 2H Arms list
+     * comes to forty-eight and choosing where three more go would be inventing
+     * a build. Pinned so that filling them in has to be deliberate.
+     */
+    const spent = (id: string) =>
+      Object.values(PRESETS_BY_ID.get(id)!.build().talents).reduce((a, b) => a + b, 0);
+
+    expect(TOTAL_TALENT_POINTS).toBe(51);
+    expect(spent('dw_fury')).toBe(51);
+    expect(spent('prot_warr')).toBe(51);
+    expect(spent('two_hand_arms')).toBe(48);
   });
 });
 
@@ -284,5 +305,93 @@ describe('Prot Warr', () => {
     // Taking damage, and being counted for it.
     expect(batch.survival.damageTaken).toBeGreaterThan(0);
     expect(batch.survival.deaths).toBeGreaterThan(0);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// 2H Arms
+// ---------------------------------------------------------------------------
+
+describe('2H Arms', () => {
+  const profile = () => PRESETS_BY_ID.get('two_hand_arms')!.build();
+
+  it('is an Orc two-hander in Battle Stance, against a standing target', () => {
+    const p = profile();
+    expect(p.character.name).toBe('2H Arms');
+    expect(p.character.race).toBe('orc');
+    expect(p.character.combatStyle).toBe('two_hander');
+    expect(p.character.stance).toBe('battle');
+    expect(p.encounter.targetAttacks).toBe(false);
+  });
+
+  it('spends 38 in Arms and 10 in Fury, leaving three', () => {
+    // Hand-counted from the owner's list.
+    const talents = profile().talents;
+    const inTree = (id: string) =>
+      Object.entries(talents)
+        .filter(([talentId]) => tree.byId.get(talentId)?.tree === id)
+        .reduce((total, rank) => total + rank[1], 0);
+
+    expect(inTree('arms')).toBe(38);
+    expect(inTree('fury')).toBe(10);
+    expect(inTree('protection')).toBe(0);
+    expect(pointsRemaining(talents)).toBe(3);
+  });
+
+  it('takes the ranks the owner named', () => {
+    const t = profile().talents;
+    expect(t.improved_heroic_strike).toBe(3);
+    expect(t.improved_rend).toBe(3);
+    expect(t.improved_charge).toBe(1);
+    expect(t.improved_tactical_mastery).toBe(5);
+    expect(t.improved_overpower).toBe(2);
+    expect(t.anger_management).toBe(1);
+    expect(t.deep_wounds).toBe(3);
+    expect(t.spearing_strike).toBe(1);
+    expect(t.two_handed_weapon_specialization).toBe(3);
+    expect(t.impale).toBe(2);
+    expect(t.bloodthrill).toBe(5);
+    expect(t.sweeping_strikes).toBe(1);
+    expect(t.weaponmaster).toBe(5);
+    expect(t.improved_slam).toBe(2);
+    expect(t.mortal_strike).toBe(1);
+    expect(t.cruelty).toBe(5);
+    expect(t.unbridled_wrath).toBe(5);
+  });
+
+  it('holds one enchanted two-hander and no off hand', () => {
+    const equipment = profile().equipment;
+    expect(equipment.twoHand).toEqual({ itemId: 228229, enchantId: 20034 });
+    expect(equipment.mainHand).toBeUndefined();
+    expect(equipment.offHand).toBeUndefined();
+    expect(equipment.shield).toBeUndefined();
+  });
+
+  it('runs the Arms priority list', () => {
+    const p = profile();
+    expect(
+      runProfileBatch({ ...p, simulation: { ...p.simulation, iterations: 1 } }).rotationName,
+    ).toBe('Warrior (Two-Hander, Battle)');
+  });
+
+  it('casts the whole list, Slam and Mortal Strike included', () => {
+    const p = profile();
+    const batch = runProfileBatch({ ...p, simulation: { ...p.simulation, iterations: 60 } });
+    const uses = (name: string) =>
+      batch.abilities.find((row) => row.abilityName === name)?.uses ?? 0;
+
+    for (const name of [
+      'Battle Shout',
+      'Sunder Armor',
+      'Rend',
+      'Mortal Strike',
+      'Execute',
+      'Spearing Strike',
+      'Slam',
+      'Overpower',
+    ]) {
+      expect(uses(name), name).toBeGreaterThan(0);
+    }
+    expect(batch.dps.mean).toBeGreaterThan(0);
   });
 });
