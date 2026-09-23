@@ -28,8 +28,15 @@ export const FIXED_RESOURCE_MAXIMUMS: Partial<Record<ResourceType, number>> = {
  * There is no placeholder mana constant any more. Base mana is real data now,
  * per race and class, in baseStats.ts. Callers pass it in.
  *
- * What is still missing is the intellect-to-mana contribution on top of the
- * base, so a geared caster's pool is understated rather than invented.
+ * THE INTELLECT CONTRIBUTION IS APPLIED TOO, and this comment used to say it
+ * was missing. It is `manaPerIntellect` in `conversions.ts` -- 15 a point, the
+ * ruleset owner's own figure from WoWForeverStatConversions.txt -- and
+ * `createPlayer` adds `derived.mana` to the base before building the pool.
+ *
+ * Left corrected rather than deleted because the stale version was believed:
+ * the engine gap survey recorded "intellect to mana is missing, affects all
+ * eight caster profiles" on the strength of it, and the first caster built
+ * found the code already doing it.
  */
 
 /**

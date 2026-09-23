@@ -123,24 +123,39 @@ it, and a `Combatant` can carry its own rotation. What is missing:
 The first two are content-shaped. The third is a real engine change and is only
 needed for *temporary* summons.
 
-### 4. Spell resistance — **engine, and it currently flatters casters**
+### 4. ~~Spell resistance~~ — **ruled out by the ruleset owner**
 
-`resistancesFromItems` exists in `game/items/equipment.ts` and **nothing reads
-it**. The damage pipeline applies armor to physical damage and nothing at all
-to magic, so every spell lands for full.
+> Assume resistances on enemy targets have no impact on damage for now.
 
-Not a blocker — every caster profile runs without it — but every caster figure
-will be too high until it is done, and that is worth knowing before any of them
-are quoted.
+So magic landing for full is CORRECT, and `resistancesFromItems` going unread
+is the right behaviour rather than a gap. This survey had it the other way and
+was wrong to.
 
-### 5. Intellect to mana — **content**
+### 5. ~~Intellect to mana~~ — **it was already done**
 
-`game/character/resources.ts` says so itself: base mana is real per-race,
-per-class data, and *"what is still missing is the intellect-to-mana
-contribution on top of the base, so a geared caster's pool is understated."*
+This survey recorded it as missing on the strength of a comment in
+`game/character/resources.ts` that said so. **The comment was stale.**
+`conversions.ts` has `manaPerIntellect: 15` — the ruleset owner's own figure —
+and `createPlayer` adds `derived.mana` to the base before building the pool.
+The first caster built found the code already doing it.
 
-Affects all eight caster profiles. Understating a pool is the safe direction,
-and it is still wrong.
+Recorded rather than quietly removed, because reading a comment instead of the
+code is how it got here.
+
+### 5b. What the Moonkin actually found — **two gaps, neither inventable**
+
+| | |
+| --- | --- |
+| **No spell power coefficients** | Every Druid spell states flat damage — "350 to 412 Arcane damage" — and no coefficient. None is invented, so **gear does not scale a caster's damage at all**. |
+| **No caster gear** | The item data is nineteen Classic stand-ins curated for a Warrior. A Moonkin's `spellPower` reads **0**. |
+
+Together those make the Moonkin's DPS a floor rather than an estimate: it is
+mana-limited, casting flat-damage spells, in plate. The figure is honest and
+not yet useful, which is the right failure mode — but do not quote it.
+
+**Resistance is NOT among these.** The ruleset owner ruled that resistances on
+enemy targets have no impact on damage for now, so `resistancesFromItems`
+staying unread is correct rather than a gap.
 
 ### 6. Threat — **out of scope, as it already is**
 
@@ -154,8 +169,8 @@ rather than by class:
 
 | Wave | Profiles | Needs |
 | --- | --- | --- |
-| **1** | Bear Druid, Moonkin Druid, Ele Shaman, Enhance Shaman, Frostfire / Arcane / Fire Mage, Shockadin, Seal Twist Ret, Prot Pally | content only |
-| ~~**1b**~~ | ~~Venom / Combat / Rupture Rogue~~ **done**, Cat Druid | ~~combo points~~ **done** |
+| ~~**1**~~ | ~~Bear + Moonkin Druid~~ **done**, Ele + Enhance Shaman, Frostfire / Arcane / Fire Mage, Shockadin, Seal Twist Ret, Prot Pally | content only |
+| ~~**1b**~~ | ~~Venom / Combat / Rupture Rogue~~, ~~Cat Druid~~ **all done** | ~~combo points~~ **done** |
 | **2** | Shadow Priest | channelled casts |
 | **3** | BM Hunter, LW Ranged, LW Melee, SM/DS Warlock, Firelock | pets |
 

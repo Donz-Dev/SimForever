@@ -3,6 +3,7 @@ import type { ClassId, CombatStyleId, StanceId } from '../character';
 import type { TalentAllocation } from '../talents/Talent';
 import { warriorRotation } from './warrior';
 import { rogueRotation } from './rogue';
+import { druidRotation } from './druid';
 
 /**
  * The action priority list for a class and combat style.
@@ -30,5 +31,8 @@ export function rotationFor(
 ): Rotation | undefined {
   if (characterClass === 'warrior') return warriorRotation(style, stance);
   if (characterClass === 'rogue') return rogueRotation(talents ?? {});
+  // A Druid's form IS its combat style, so the style selects the list -- the
+  // Warrior's arrangement rather than the Rogue's.
+  if (characterClass === 'druid') return druidRotation(style);
   return undefined;
 }

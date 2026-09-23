@@ -221,6 +221,19 @@ silently inert. Seal Fate needed no new hook, only a new FACT --
 `Ability.comboPointsAwarded`, because a reaction sees an ability id and nothing
 about what the ability does.
 
+**RESISTANCE ON AN ENEMY TARGET HAS NO EFFECT ON DAMAGE**, by the ruleset
+owner's ruling. So a spell lands for full against a raid boss, and
+`resistancesFromItems` being computed and never read is CORRECT rather than a
+gap. The engine gap survey had it the other way round and was wrong to.
+
+**A CASTER'S DAMAGE DOES NOT SCALE WITH GEAR YET, and it is the source rather
+than the engine.** `dealDamage` reads `spellPower` for any non-physical school
+and has since before any caster existed; what is missing is that every Druid
+spell states FLAT damage -- "350 to 412 Arcane damage" -- and no coefficient at
+all, so there is nothing to multiply. None is invented. Combined with an item
+set curated for a Warrior, where a Moonkin's `spellPower` reads zero, a caster
+figure is a FLOOR rather than an estimate. Honest, and not yet worth quoting.
+
 **A CLASS MISSING FROM `talentValues.ts` HAS ITS WHOLE TREE SILENTLY INERT, and
 nothing says so.** Every rank value resolves to nothing, every talent reports
 itself `unmodelled`, and that is exactly what an unfinished class is supposed

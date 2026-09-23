@@ -7,8 +7,10 @@ import type { TalentBuild } from '../talents/talentBuild';
 import { talentBuild } from '../talents/talentBuild';
 import { WARRIOR_TALENT_EFFECTS } from '../talents/warriorEffects';
 import { ROGUE_TALENT_EFFECTS } from '../talents/rogueEffects';
+import { DRUID_TALENT_EFFECTS } from '../talents/druidEffects';
 import { WARRIOR_ABILITIES } from './warrior';
 import { ROGUE_ABILITIES } from './rogue';
+import { DRUID_ABILITIES } from './druid';
 import { legalAllocation } from '../talents/talentRules';
 import { talentsForClass } from '../talents/talentData';
 
@@ -41,11 +43,13 @@ import { talentsForClass } from '../talents/talentData';
 const CLASS_ABILITIES: Partial<Record<ClassId, readonly Ability[]>> = {
   warrior: WARRIOR_ABILITIES,
   rogue: ROGUE_ABILITIES,
+  druid: DRUID_ABILITIES,
 };
 
 const TALENT_ABILITIES: Partial<Record<ClassId, Readonly<Record<string, string>>>> = {
   warrior: grantsByAbility(WARRIOR_TALENT_EFFECTS),
   rogue: grantsByAbility(ROGUE_TALENT_EFFECTS),
+  druid: grantsByAbility(DRUID_TALENT_EFFECTS),
 };
 
 /**

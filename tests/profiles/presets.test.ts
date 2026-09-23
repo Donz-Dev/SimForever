@@ -54,6 +54,9 @@ describe('the preset catalogue', () => {
       'rogue_venom',
       'rogue_combat',
       'rogue_rupture',
+      'druid_moonkin',
+      'druid_cat',
+      'druid_bear',
     ]);
     expect(PROFILE_PRESETS.map((preset) => preset.label)).toEqual([
       '2H Arms',
@@ -62,6 +65,9 @@ describe('the preset catalogue', () => {
       'Venom',
       'Combat',
       'Rupture',
+      'Moonkin',
+      'Cat',
+      'Bear',
     ]);
   });
 

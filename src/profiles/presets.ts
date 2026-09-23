@@ -324,6 +324,91 @@ const ROGUE_WEAPONS: Equipment = {
   offHand: { itemId: 228265, enchantId: CRUSADER },
 };
 
+
+/**
+ * THE THREE DRUID BUILDS, decoded from the owner's URLs. 38/0/13, 9/35/7 and
+ * 9/42/0, each exactly 51 points.
+ */
+const DRUID_MOONKIN_TALENTS: TalentAllocation = {
+  improved_wrath: 5,
+  genesis: 2,
+  moonglow: 3,
+  improved_moonfire: 2,
+  nature_s_majesty: 2,
+  nature_s_reach: 2,
+  nature_s_splendor: 1,
+  insect_swarm: 1,
+  vengeance: 5,
+  improved_starfire: 5,
+  nature_s_grace: 1,
+  eclipse: 3,
+  moonfury: 5,
+  moonkin_form: 1,
+  nature_s_focus: 5,
+  naturalist: 5,
+  reflection: 3,
+};
+
+const DRUID_CAT_TALENTS: TalentAllocation = {
+  genesis: 5,
+  nature_s_majesty: 2,
+  nature_s_reach: 2,
+  ferocity: 3,
+  heart_of_the_wild: 5,
+  feral_swiftness: 2,
+  savage_fury: 2,
+  feral_charge: 1,
+  sharpened_claws: 2,
+  shredding_attacks: 3,
+  predatory_strikes: 3,
+  primal_fury: 2,
+  predatory_instincts: 2,
+  leader_of_the_pack: 1,
+  king_of_the_jungle: 3,
+  rend_and_tear: 5,
+  berserk: 1,
+  furor: 5,
+  naturalist: 2,
+};
+
+const DRUID_BEAR_TALENTS: TalentAllocation = {
+  genesis: 5,
+  nature_s_majesty: 2,
+  nature_s_reach: 2,
+  ferocity: 4,
+  heart_of_the_wild: 5,
+  feral_swiftness: 2,
+  feral_instinct: 3,
+  thick_hide: 3,
+  savage_fury: 2,
+  feral_charge: 1,
+  sharpened_claws: 2,
+  mangle: 1,
+  predatory_strikes: 3,
+  primal_fury: 2,
+  predatory_instincts: 2,
+  leader_of_the_pack: 1,
+  natural_reaction: 5,
+  rend_and_tear: 5,
+  berserk: 1,
+};
+
+/**
+ * A GEAR SHELL for the Druid, and a thinner one than the Rogue's.
+ *
+ * Nothing in the item data is leather, a staff or an idol. These carry the
+ * shared armour so a Druid has stats at all, and ONE weapon rather than two --
+ * a Druid holds a two-hander or a one-hander and never dual-wields.
+ *
+ * IT MATTERS LESS THAN IT LOOKS. Cat and Bear are `damageSource: 'natural'`:
+ * they swing paws, and the equipped weapon is a stat stick whatever it is.
+ * Moonkin never auto-attacks at all. So the wrong weapon costs these three far
+ * less than it costs a Warrior.
+ */
+const DRUID_WEAPONS: Equipment = {
+  twoHand: { itemId: 228229, enchantId: CRUSADER },
+};
+
 export const PROFILE_PRESETS: readonly ProfilePreset[] = [
   {
     id: 'two_hand_arms',
@@ -480,6 +565,72 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = [
       raidBuffs: [...PRESET_RAID_BUFFS],
       equipment: { ...SHARED_ARMOUR, ...ROGUE_WEAPONS },
       encounter: { ...createDefaultProfile().encounter, targetAttacks: false },
+    }),
+  },
+  {
+    id: 'druid_moonkin',
+    label: 'Moonkin',
+    detail: 'Tauren, Moonkin Form, standing target. 38 Balance / 13 Restoration',
+    build: () => ({
+      ...createDefaultProfile(),
+      character: {
+        name: 'Moonkin',
+        race: 'tauren',
+        characterClass: 'druid',
+        level: 60,
+        combatStyle: 'moonkin',
+        stance: 'battle',
+      },
+      talents: { ...DRUID_MOONKIN_TALENTS },
+      raidBuffs: [...PRESET_RAID_BUFFS],
+      equipment: { ...SHARED_ARMOUR, ...DRUID_WEAPONS },
+      encounter: { ...createDefaultProfile().encounter, targetAttacks: false },
+    }),
+  },
+  {
+    id: 'druid_cat',
+    label: 'Cat',
+    detail: 'Tauren, Cat Form, standing target. 35 Feral Combat',
+    build: () => ({
+      ...createDefaultProfile(),
+      character: {
+        name: 'Cat',
+        race: 'tauren',
+        characterClass: 'druid',
+        level: 60,
+        combatStyle: 'cat',
+        stance: 'battle',
+      },
+      talents: { ...DRUID_CAT_TALENTS },
+      raidBuffs: [...PRESET_RAID_BUFFS],
+      equipment: { ...SHARED_ARMOUR, ...DRUID_WEAPONS },
+      encounter: { ...createDefaultProfile().encounter, targetAttacks: false },
+    }),
+  },
+  {
+    id: 'druid_bear',
+    label: 'Bear',
+    detail: 'Tauren, Bear Form, target swings back. 42 Feral Combat',
+    build: () => ({
+      ...createDefaultProfile(),
+      character: {
+        name: 'Bear',
+        race: 'tauren',
+        characterClass: 'druid',
+        level: 60,
+        combatStyle: 'bear',
+        stance: 'battle',
+      },
+      talents: { ...DRUID_BEAR_TALENTS },
+      raidBuffs: [...PRESET_RAID_BUFFS],
+      equipment: { ...SHARED_ARMOUR, ...DRUID_WEAPONS },
+      /*
+       * THE ONE DRUID PROFILE THAT IS HIT BACK, which is the whole point of
+       * Bear Form: rage is earned by taking damage as well as dealing it, and
+       * Natural Reaction, Primal Fury and Demoralizing Roar are all inert
+       * against a target that never swings.
+       */
+      encounter: { ...createDefaultProfile().encounter, targetAttacks: true },
     }),
   },
 ];

@@ -1,5 +1,6 @@
 import warriorValues from '../../data/talents/values/warrior.json';
 import rogueValues from '../../data/talents/values/rogue.json';
+import druidValues from '../../data/talents/values/druid.json';
 import type { ClassId } from '../character';
 
 /**
@@ -45,6 +46,7 @@ interface ValuesFile {
 const FILES: Partial<Record<ClassId, ValuesFile>> = {
   warrior: warriorValues as ValuesFile,
   rogue: rogueValues as ValuesFile,
+  druid: druidValues as ValuesFile,
 };
 
 /*
