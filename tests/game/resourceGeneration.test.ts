@@ -91,14 +91,34 @@ describe('rage', () => {
       0,
     );
 
-    // Everything the pool was offered, including what the cap threw away.
+    /*
+     * Everything the pool was offered, including what the cap threw away --
+     * EXCEPT Charge, which is a flat grant rather than a conversion.
+     *
+     * Charge opens the two-hander list and hands over a stated 15 rage for no
+     * damage at all. It is not an exception to the rule under test; it is a
+     * different mechanism, and folding it in would make this assertion read as
+     * "damage converts to rage, plus fifteen".
+     *
+     * Excluded by SOURCE rather than by subtracting 15, so the test keeps
+     * failing if Charge's rage ever starts scaling with something.
+     */
     const offered = sim.recordedTelemetry.reduce(
       (sum, event) =>
-        event.type === 'resource_gained' && event.resource === 'rage'
+        event.type === 'resource_gained' &&
+        event.resource === 'rage' &&
+        event.source !== 'charge'
           ? sum + event.amount + event.wasted
           : sum,
       0,
     );
+
+    // And it really did fire, so the exclusion above is not silently empty.
+    expect(
+      sim.recordedTelemetry.some(
+        (event) => event.type === 'resource_gained' && event.source === 'charge',
+      ),
+    ).toBe(true);
 
     expect(autoDamage).toBeGreaterThan(0);
     expect(offered).toBeCloseTo(autoDamage * RAGE_PER_DAMAGE_DEALT, 4);
@@ -136,6 +156,9 @@ describe('rage', () => {
     for (let i = 0; i < stream.length; i++) {
       const event = stream[i];
       if (event.type !== 'resource_gained' || event.resource !== 'rage') continue;
+      // Charge grants a flat 15 on cast, which is not damage converting to
+      // rage and does not sit behind an auto-attack. See the note above.
+      if (event.source === 'charge') continue;
 
       const previous = stream[i - 1];
       expect(previous?.type).toBe('damage');

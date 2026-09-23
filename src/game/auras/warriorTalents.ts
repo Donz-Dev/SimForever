@@ -139,27 +139,25 @@ export function flurryAura(hastePercent: number): AuraDefinition {
  * A HEAL-OVER-TIME, so it is the mirror of Deep Wounds above and shares its
  * shape. Both the PERCENTAGE and the SIX SECONDS are the source's own.
  *
- * WHAT THE SOURCE DOES NOT SAY IS THE TICK CADENCE. It gives a total and a
- * duration and nothing about when inside those six seconds the healing lands,
- * so the interval below is a PLACEHOLDER borrowed from Classic's three ticks.
+ * THE TICK CADENCE IS THE RULESET OWNER'S, given directly: once every two
+ * seconds, three ticks across the six. It is no longer a placeholder and no
+ * longer borrowed from Classic -- which happens to agree, and that agreement
+ * is now a coincidence rather than the reason.
  *
- * The total is unaffected by getting it wrong: 3% of maximum health arrives
- * within six seconds either way. What a wrong cadence moves is WHEN, and that
- * matters only at the margin -- a tick arriving at two seconds rather than six
- * is the difference between surviving the next swing and not. Against a target
- * that ramps ten percent a swing, that margin is narrow and real.
- *
- * Confirmable from Forever's spell page for the triggered heal, the way Rend's
- * three-second cadence was. The talent says so on screen until then.
+ * The figures matched all along, so nothing about a result changed when this
+ * was confirmed. What changed is that it can be relied on: the total was never
+ * in doubt -- 3% of maximum health arrives within six seconds whatever the
+ * cadence -- but WHEN it arrives decides whether a tick lands before the next
+ * swing or after it, and against a target ramping ten percent a swing that
+ * margin is narrow and real.
  * ----------------------------------------------------------------------------
  */
 export const BLOOD_CRAZE_DURATION_MS = seconds(6);
 
-/** PLACEHOLDER: Classic ticks three times. Forever states no cadence. */
-export const PLACEHOLDER_BLOOD_CRAZE_TICK_INTERVAL_MS = seconds(2);
+/** The ruleset owner's cadence: every two seconds, so three ticks in six. */
+export const BLOOD_CRAZE_TICK_INTERVAL_MS = seconds(2);
 
-export const BLOOD_CRAZE_TICKS =
-  BLOOD_CRAZE_DURATION_MS / PLACEHOLDER_BLOOD_CRAZE_TICK_INTERVAL_MS;
+export const BLOOD_CRAZE_TICKS = BLOOD_CRAZE_DURATION_MS / BLOOD_CRAZE_TICK_INTERVAL_MS;
 
 export function bloodCrazeAura(percentOfMaxHealth: number): AuraDefinition {
   return {
@@ -173,7 +171,7 @@ export function bloodCrazeAura(percentOfMaxHealth: number): AuraDefinition {
      */
     refreshBehaviour: 'reset',
     periodic: {
-      intervalMs: PLACEHOLDER_BLOOD_CRAZE_TICK_INTERVAL_MS,
+      intervalMs: BLOOD_CRAZE_TICK_INTERVAL_MS,
       onTick: (context, aura) => {
         const actor = context.combatant(aura.targetId);
         if (!actor || !actor.isAlive) return;

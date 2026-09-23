@@ -177,6 +177,29 @@ export type TalentEffect =
       readonly kind: 'reaction';
       readonly reactionId: string;
       readonly valueIndex?: number;
+      /**
+       * Gear the character must have for the proc to be registered at all.
+       *
+       * ----------------------------------------------------------------------
+       * WHY THE GATE IS HERE AND NOT INSIDE THE REACTION. A reaction receives
+       * the attack and the actor, and a `WeaponProfile` says nothing about
+       * what is in the off hand -- so "while a shield is equipped" cannot be
+       * checked at the moment it fires. It is knowable exactly once, when the
+       * build is assembled, which is where the character's equipment is in
+       * scope.
+       *
+       * Master of Defense is why this exists: its rage proc fired for a
+       * Protection warrior holding two weapons, and the talent carried an
+       * `unmodelled` note saying so rather than a fix. Equipping a shield is a
+       * choice the player makes on the GUI, so the engine is entitled to know
+       * about it -- the ruleset owner's point, and the reason the note was not
+       * the right answer.
+       *
+       * The same shape `conditionalDamage` and `conditionalCrit` already use,
+       * so a reader meets one rule rather than three.
+       * ----------------------------------------------------------------------
+       */
+      readonly requires?: WeaponRequirement;
     }
 
   /**
@@ -212,6 +235,20 @@ export type TalentEffect =
    * time reduction that does scale.
    */
   | { readonly kind: 'abilityHoldsSwing'; readonly abilityId: string }
+
+  /**
+   * Makes an ability usable in a stance it otherwise is not.
+   *
+   * Takes no value, like `abilityHoldsSwing`: Vanguard either lets Charge be
+   * used in Defensive Stance or it does not.
+   *
+   * ADDS to the ability's own list rather than replacing it, so a warrior with
+   * Vanguard can still Charge from Battle Stance. The stance gate in
+   * `casting.ts` reads that list, so nothing else has to know this talent
+   * exists -- which is the point of expressing it as data rather than as a
+   * special case inside Charge.
+   */
+  | { readonly kind: 'abilityStance'; readonly abilityId: string; readonly stance: string }
 
   /**
    * Multiplies ALL damage, but only while the character is holding the right

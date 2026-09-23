@@ -4,7 +4,7 @@ import { Simulation } from '../../src/engine';
 import {
   BLOOD_CRAZE_DURATION_MS,
   BLOOD_CRAZE_TICKS,
-  PLACEHOLDER_BLOOD_CRAZE_TICK_INTERVAL_MS,
+  BLOOD_CRAZE_TICK_INTERVAL_MS,
   bloodCrazeAura,
 } from '../../src/game/auras/warriorTalents';
 import {
@@ -195,23 +195,27 @@ describe('the regeneration itself', () => {
     }
   });
 
-  it('lasts six seconds, and its cadence is a flagged placeholder', () => {
+  it('lasts six seconds and ticks every two, which is now stated', () => {
     /*
-     * Six seconds is the source's. The tick interval is NOT stated anywhere,
-     * so it borrows Classic's three ticks and says so -- the talent carries an
-     * `unmodelled` entry naming exactly this, which is what puts it on screen.
+     * BOTH FIGURES ARE THE RULESET OWNER'S. The cadence was the last thing
+     * about this talent borrowed from Classic, carried as
+     * `PLACEHOLDER_BLOOD_CRAZE_TICK_INTERVAL_MS` with an `unmodelled` entry
+     * putting the caveat on screen. Given directly: every two seconds, three
+     * ticks.
      *
-     * The total does not depend on it. What a wrong cadence moves is WHEN
-     * inside those six seconds the healing lands, and against a target that
-     * ramps ten percent a swing that margin is narrow and real.
+     * NO NUMBER MOVED. Classic's cadence happened to be the same, so the
+     * confirmation changed nothing a result reports -- which is exactly why it
+     * was worth asking rather than assuming, and why the placeholder was
+     * honest to keep until it was.
+     *
+     * The talent carries no `unmodelled` entry any more, asserted here so that
+     * a caveat cannot creep back without this failing.
      */
     expect(BLOOD_CRAZE_DURATION_MS).toBe(6000);
-    expect(PLACEHOLDER_BLOOD_CRAZE_TICK_INTERVAL_MS).toBe(2000);
+    expect(BLOOD_CRAZE_TICK_INTERVAL_MS).toBe(2000);
     expect(BLOOD_CRAZE_TICKS).toBe(3);
 
-    const reasons = WARRIOR_TALENT_EFFECTS.blood_craze.filter((e) => e.kind === 'unmodelled');
-    expect(reasons).toHaveLength(1);
-    expect((reasons[0] as { reason: string }).reason).toMatch(/cadence/i);
+    expect(WARRIOR_TALENT_EFFECTS.blood_craze.filter((e) => e.kind === 'unmodelled')).toEqual([]);
   });
 
   it('restarts rather than stacking', () => {

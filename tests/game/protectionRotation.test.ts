@@ -38,6 +38,11 @@ import { legalise } from '../helpers/legalTalents';
  * said.
  */
 const EXPECTED_ORDER = [
+  // Added on the ruleset owner's instruction: once, at the pull, and only
+  // with Vanguard -- which is enforced by Charge's stance list rather than by
+  // a talent check here. Above the survival cooldowns because its window is a
+  // single instant and it takes no global cooldown from them.
+  'charge',
   'last_stand',
   'shield_wall_cast',
   'bloodrage_cast',
@@ -52,6 +57,19 @@ const EXPECTED_ORDER = [
   'thunder_clap',
   'rend_cast',
 ];
+
+/**
+ * An entry by its ability id, never by its index.
+ *
+ * Three tests reached into this list positionally and all three broke the
+ * moment Charge was inserted at the top -- an insertion three entries away
+ * from anything they were testing. The id is what each of them actually means.
+ */
+function entryFor(abilityId: string) {
+  const found = WARRIOR_SHIELD_DEFENSIVE.find((e) => e.abilityId === abilityId);
+  if (!found) throw new Error(`${abilityId} is not in the Protection list`);
+  return found;
+}
 
 /*
  * A 31-point Protection build that actually reaches Last Stand.
@@ -106,10 +124,34 @@ describe('the Protection list', () => {
     expect(WARRIOR_SHIELD_DEFENSIVE.map((entry) => entry.abilityId)).toEqual(EXPECTED_ORDER);
   });
 
-  it('puts the two survival cooldowns above everything', () => {
-    // Above even the stance, because a dead tank is in no stance at all.
-    expect(WARRIOR_SHIELD_DEFENSIVE[0].abilityId).toBe('last_stand');
-    expect(WARRIOR_SHIELD_DEFENSIVE[1].abilityId).toBe('shield_wall_cast');
+  it('puts the two survival cooldowns above everything that can repeat', () => {
+    /*
+     * Above even the stance, because a dead tank is in no stance at all.
+     *
+     * Charge sits above them and is not a counter-example: it is castable for
+     * one instant at the pull, when nothing is in danger, and is off the
+     * global cooldown. Anything else placed there would cost a survival
+     * cooldown the moment it was needed.
+     */
+    expect(WARRIOR_SHIELD_DEFENSIVE[0].abilityId).toBe('charge');
+    expect(WARRIOR_SHIELD_DEFENSIVE[1].abilityId).toBe('last_stand');
+    expect(WARRIOR_SHIELD_DEFENSIVE[2].abilityId).toBe('shield_wall_cast');
+  });
+
+  it('does not let Charge drag the tank into Battle Stance', () => {
+    /*
+     * THE TRAP THIS ENTRY WALKED INTO. `PriorityRotation` treats a wrong
+     * stance as "not yet, and here is how" and casts a stance change to
+     * unblock an entry -- right for Revenge, catastrophic here. Charge allows
+     * Battle Stance, so adding it sent the tank out of Defensive at the pull
+     * and three separate stance tests caught it.
+     *
+     * Its condition refuses unless the character is ALREADY in a stance Charge
+     * allows, and a condition is checked before the swap is considered.
+     */
+    const withoutVanguard = characterAtCombatStart(tank(PROTECTION_31))!;
+    const charge = entryFor('charge');
+    expect(charge.condition?.(undefined as never, withoutVanguard, undefined)).toBe(false);
   });
 });
 
@@ -122,7 +164,7 @@ describe('Last Stand', () => {
     expect(DEFENSIVE_EMERGENCY_HEALTH).toBe(0.3);
 
     const player = characterAtCombatStart(tank(PROTECTION_31))!;
-    const entry = WARRIOR_SHIELD_DEFENSIVE[0];
+    const entry = entryFor('last_stand');
 
     // Full health: no.
     expect(entry.condition?.(undefined as never, player, undefined)).toBe(false);
@@ -152,7 +194,7 @@ describe('Last Stand', () => {
 });
 
 describe('Shield Wall', () => {
-  const entry = WARRIOR_SHIELD_DEFENSIVE[1];
+  const entry = entryFor('shield_wall_cast');
 
   it('needs low health AND Last Stand out of the picture', () => {
     const player = characterAtCombatStart(tank(PROTECTION_31))!;

@@ -173,6 +173,21 @@ point of `revivesOnDeath` — dropping the lot would switch off the assumed
 healer at the moment it is needed most. Which effects survive dying is a
 property of the effect, so the flag is on the aura and not on the character.
 
+**A ROTATION WILL CHANGE STANCE TO REACH AN ABILITY, and that is not always
+wanted.** `PriorityRotation` treats a wrong stance as "not yet, and here is
+how" -- which is why Revenge, Whirlwind and Recklessness are reachable at all.
+An entry that must NOT provoke a swap says so in its `condition`, which is
+checked BEFORE the swap is considered: Charge lists Battle Stance, and adding
+it to the Protection list sent the tank out of Defensive at the pull until its
+condition required a stance the ability already allows. That same condition is
+how Vanguard gates it, without naming the talent -- the talent adds Defensive
+Stance to the character's copy of Charge, and the rule reads the ability rather
+than the build.
+
+**Charge is used ONCE, as the first action.** "Cannot be used in combat", and
+every fight here opens in combat, so the only legal moment is timestamp zero.
+The rule is on the ability, not on each list that includes it.
+
 **A WEAPON PROC FIRES ON A USE, AND A USE IS A SWING OR AN ABILITY.** Anything
 that goes through a combat table and needs that weapon counts -- Bloodthirst,
 Mortal Strike, Rend and Heroic Strike are all main-hand uses, which is the

@@ -1052,6 +1052,30 @@ export const CHARGE_RAGE_BONUS = 'rage';
  * training dummy that makes it a free 15 rage every 15 seconds, which is very
  * probably too generous. It is left out of the rotation for that reason.
  */
+/**
+ * "Cannot be used in combat", expressed in a simulator that opens IN combat.
+ *
+ * ----------------------------------------------------------------------------
+ * THE RULESET OWNER'S RULE: if Charge is in a priority list it is used exactly
+ * once, as the first player action, because it cannot be used after that.
+ *
+ * So the only moment it is legal is before anything has happened, and that is
+ * a moment the clock can name: timestamp zero. One test, on the ABILITY rather
+ * than on each list that includes it -- three lists would otherwise each carry
+ * a copy of the same rule and the fourth would forget it.
+ *
+ * WHY NOT A "HAS CAST IT" FLAG. That would allow a second Charge at fifteen
+ * seconds if the first were somehow skipped, which is the failure mode this
+ * rule exists to prevent. Zero is not "once"; it is "at the pull", and once
+ * falls out of it because the clock only passes zero one time.
+ *
+ * THE COOLDOWN IS NOW DECORATION and is kept anyway: it is Forever's number,
+ * and a rule that happens to make another rule unreachable is not a reason to
+ * delete the second one.
+ * ----------------------------------------------------------------------------
+ */
+export const CHARGE_OPENING_TIMESTAMP_MS = 0;
+
 export const CHARGE: Ability = {
   id: 'charge',
   stances: ['battle_stance'],
@@ -1059,6 +1083,7 @@ export const CHARGE: Ability = {
   cooldownMs: seconds(15),
   attackTable: 'ranged-special',
   requiresTarget: false,
+  canCast: ({ simulation }) => simulation.clock.now() === CHARGE_OPENING_TIMESTAMP_MS,
   // Off the global cooldown, by the ruleset owner's rule. See
   // docs/global-cooldown.md for the three Warrior abilities this covers.
   triggersGcd: false,
