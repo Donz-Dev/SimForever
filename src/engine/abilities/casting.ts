@@ -8,6 +8,7 @@ import type { SimulationContext } from '../simulation/SimulationContext';
 import type { Milliseconds } from '../time';
 import type { Ability, AbilityContext } from './Ability';
 import { DEFAULT_GCD_MS } from './Ability';
+import { castModifiersFor, resolveCast } from './castModifiers';
 
 /** Why an ability could not be used. Useful for debugging a stuck rotation. */
 export type CastRejection =
@@ -59,7 +60,20 @@ export function checkCast(
     return { ok: false, reason: 'on_cooldown' };
   }
 
-  if (ability.cost && !caster.resources.canAfford(ability.cost.resource, ability.cost.amount)) {
+  /*
+   * THE MODIFIED COST, not the printed one. Maelstrom Weapon takes 20% a stack
+   * off a Lightning Bolt's mana, and a rotation that checked the full 220
+   * would refuse a cast the character could afford -- silently, because a
+   * priority list simply moves to the next entry and nothing reports a spell
+   * it declined to consider.
+   *
+   * `resolveCast` is pure, which is what lets this check stay side-effect
+   * free; the charge is spent in `castAbility` by the cast that happens.
+   */
+  if (
+    ability.cost &&
+    !caster.resources.canAfford(ability.cost.resource, resolveCast(caster, ability).costAmount)
+  ) {
     return { ok: false, reason: 'not_enough_resource' };
   }
 
@@ -127,11 +141,21 @@ export function castAbility(
   const now = context.clock.now();
   const haste = hasteMultiplierFrom(caster.stats.effective);
 
+  /*
+   * RESOLVED ONCE AND USED FOR BOTH HALVES, then the charges are spent.
+   *
+   * Resolving twice would be a bug waiting for a stack to change between the
+   * two reads; spending before resolving would charge the cast a stack it
+   * never got the benefit of.
+   */
+  const resolved = resolveCast(caster, ability);
+  const matchedModifiers = resolved.modified ? castModifiersFor(caster, ability) : [];
+
   caster.abilities.consumeCharge(ability.id, now);
 
   if (ability.cost) {
     const pool = caster.resources.require(ability.cost.resource);
-    pool.spend(ability.cost.amount);
+    pool.spend(resolved.costAmount);
     // Recorded so rules keyed on recent spending work: mana regeneration stops
     // for a few seconds after a cast.
     caster.recordResourceSpend(ability.cost.resource, now);
@@ -140,7 +164,10 @@ export function castAbility(
       timestamp: now,
       actorId: caster.id,
       resource: ability.cost.resource,
-      amount: ability.cost.amount,
+      // What it ACTUALLY cost. The rage and mana panels are audit trails for
+      // exactly this kind of reduction, so reporting the printed cost would
+      // hide the talent that is doing the work.
+      amount: resolved.costAmount,
       wasted: 0,
       current: pool.current,
       // Which ability spent it. This is what turns "83 rage spent" into a
@@ -163,7 +190,12 @@ export function castAbility(
     abilityName: ability.name,
   });
 
-  const castTime = castLength(ability, haste);
+  // Spent here, on the cast that benefits, and AFTER the cost was paid from
+  // the same resolution. An ability that turns out to be on-next-swing below
+  // has still had its charge: it is a cast, and Eclipse counts casts.
+  caster.auras.consumeCastCharges(context, matchedModifiers);
+
+  const castTime = castLength(ability, haste, resolved.baseCastTimeMs);
   const abilityContext: AbilityContext = { simulation: context, caster, target, ability };
 
   // An on-next-swing ability is paid for and armed here; the auto-attack that
@@ -248,9 +280,20 @@ function runCast(context: SimulationContext, abilityContext: AbilityContext): vo
 }
 
 /** Hasted cast time, or 0 for an instant ability. */
-export function castLength(ability: Ability, hasteMultiplier: number): Milliseconds {
-  const base = ability.castTimeMs ?? 0;
+export function castLength(
+  ability: Ability,
+  hasteMultiplier: number,
+  /*
+   * The cast time AFTER the caster's cast modifiers, when there are any.
+   * Defaulted to the ability's own so every existing caller is unchanged --
+   * and so a caller that forgets is merely un-helped rather than wrong.
+   */
+  resolvedBaseMs?: Milliseconds,
+): Milliseconds {
+  const base = resolvedBaseMs ?? ability.castTimeMs ?? 0;
   if (base <= 0) return 0;
+  // HASTE LAST, so it scales whatever the modifiers left: a 20%-shorter cast
+  // is 20% shorter at every gear level rather than only at none.
   return (ability.affectedByHaste ?? true) ? applyHaste(base, hasteMultiplier) : base;
 }
 

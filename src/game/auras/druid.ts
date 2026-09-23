@@ -95,35 +95,55 @@ export const INSECT_SWARM: AuraDefinition = {
  * spells by 0.5 sec. Stores up to 4 charges. Lasts 15 sec."
  *
  * ----------------------------------------------------------------------------
- * NOT MODELLED, and it is the one Balance mechanic that genuinely needs
- * something the engine does not have.
+ * LIVE NOW, AND IT WAS THE FIRST TALENT TO ASK FOR THE RULE. It spent the
+ * Druid PR tracked and inert, and said so: cast time is resolved by the engine
+ * before `onCast` runs, so unlike Cold Blood's crit -- which the Rogue solved
+ * by having the five named abilities remove the aura themselves -- no amount
+ * of content could reach it. `CastModifier` on the aura is the engine rule
+ * that does, and Maelstrom Weapon on the Shaman wanted the same one.
  *
- * A charge that shortens the NEXT cast of a NAMED ability is neither a stat nor
- * a standing ability modifier: `abilityCastTime` is a permanent reduction from
- * a talent, and an aura's `statModifiers` cannot reach one ability's cast time.
- * What it needs is a per-ability, charge-consuming cast-time modifier -- the
- * same shape Cold Blood wanted for crit, and the Rogue solved by having the
- * five named abilities remove the aura themselves.
+ * A CHARGE PER STARFIRE, NOT A MAGNITUDE PER STACK. `scalesWithStacks` is
+ * deliberately off: four charges is four half-second Starfires, not one
+ * two-second discount. Maelstrom Weapon is the other arrangement, and the two
+ * are worth reading together.
  *
- * The aura exists so its uptime is visible and so the talent is not silent.
+ * TWO CHARGES A WRATH, capped at four -- so a Moonkin alternating Wrath and
+ * Starfire banks them faster than it spends them, and the cap is what stops
+ * the filler paying for the whole fight. Granted as two applications rather
+ * than by setting `stacks`, because `applyAura` already adds one and caps at
+ * `maxStacks`; reaching in to set it would duplicate that rule and be the copy
+ * that goes stale.
+ *
+ * THE HALF SECOND IS THE RANK 3 VALUE. Ranks 1 and 2 are 0.17 and 0.33, and
+ * the aura is built from the rank rather than from a constant for that reason.
  * ----------------------------------------------------------------------------
  */
 export const ECLIPSE_MAX_CHARGES = 4;
+export const ECLIPSE_CHARGES_PER_WRATH = 2;
 export const ECLIPSE_DURATION_MS = seconds(15);
+/** The maximum rank, for the catalogue below. Ranks 1 and 2 are 0.17 and 0.33. */
+export const ECLIPSE_RANK_3_SECONDS = 0.5;
 
-export const ECLIPSE: AuraDefinition = {
-  id: 'eclipse',
-  name: 'Eclipse',
-  durationMs: ECLIPSE_DURATION_MS,
-  maxStacks: ECLIPSE_MAX_CHARGES,
-  refreshBehaviour: 'reset',
-};
-
-export const ECLIPSE_UNMODELLED =
-  'Stacks are tracked and shorten nothing. A charge that cuts the cast time of ' +
-  'the NEXT Starfire needs a per-ability, charge-consuming cast-time modifier, ' +
-  'which the engine has no form for -- `abilityCastTime` is a standing talent ' +
-  'reduction and an aura cannot reach one ability.';
+export function eclipseAura(reductionSeconds: number): AuraDefinition {
+  return {
+    id: 'eclipse',
+    name: 'Eclipse',
+    durationMs: ECLIPSE_DURATION_MS,
+    maxStacks: ECLIPSE_MAX_CHARGES,
+    refreshBehaviour: 'reset',
+    castModifier: {
+      abilityIds: ['starfire'],
+      castTimeReductionMs: seconds(reductionSeconds),
+      consumedByCast: 'stack',
+      /*
+       * Starfire always has a cast time, so this changes nothing today. It is
+       * set because the charge is FOR a cast: an instant Starfire from some
+       * future effect must not silently eat one.
+       */
+      requiresCastTime: true,
+    },
+  };
+}
 
 // ---------------------------------------------------------------------------
 // Feral: Cat
@@ -313,7 +333,9 @@ function clampIndex(comboPoints: number): number {
 export const DRUID_AURAS: readonly AuraDefinition[] = [
   MOONFIRE_DOT,
   INSECT_SWARM,
-  ECLIPSE,
+  // Eclipse is built from its rank, so the list carries the rank-3 shape --
+  // this is a catalogue of the auras that exist, not a source of live ones.
+  eclipseAura(ECLIPSE_RANK_3_SECONDS),
   RAKE_DOT,
   TIGERS_FURY,
   LACERATE,

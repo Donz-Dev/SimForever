@@ -2,12 +2,12 @@ import type { Ability, Combatant, SimulationContext } from '../../engine';
 import { dealDamage, seconds } from '../../engine';
 import {
   FLAME_SHOCK_DOT,
-  MAELSTROM_WEAPON_UNMODELLED,
   RAGE_OF_THE_FARSEER,
   STORMSTRIKE_DAMAGE_BONUS,
   STORMSTRIKE_DEBUFF,
   WINDFURY_WEAPON_IMBUE,
 } from '../auras/shaman';
+import { MAELSTROM_WEAPON_UNMODELLED } from '../reactions/shamanTalents';
 
 /**
  * Shaman abilities, from the WoW Forever beta client (build 1.60.1.69876).

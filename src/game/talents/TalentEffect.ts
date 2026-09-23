@@ -208,8 +208,17 @@ export type TalentEffect =
    * For a value that lives inside an ability's body rather than in a declared
    * field: the rage Charge generates, say. The ability names the key it reads,
    * and the talent names the same key here.
+   *
+   * `valueIndex` picks which number, for a talent that varies several --
+   * Eclipse's row is "next 2 Starfires" then the half second, and taking the
+   * first would hand Wrath a two-SECOND reduction off a 3.5-second Starfire.
    */
-  | { readonly kind: 'abilityBonus'; readonly abilityId: string; readonly key: string }
+  | {
+      readonly kind: 'abilityBonus';
+      readonly abilityId: string;
+      readonly key: string;
+      readonly valueIndex?: number;
+    }
   /**
    * A named bonus on an ability that is ON or OFF, with no magnitude.
    *

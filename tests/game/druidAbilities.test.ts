@@ -1,18 +1,26 @@
 import { describe, expect, it } from 'vitest';
 import { createPlayer } from '../../src/game/actors/createPlayer';
 import { runProfileBatch } from '../../src/simulator';
+import { castAbility, resolveCast, seconds } from '../../src/engine';
+import { buildSimulation } from '../helpers/buildSimulation';
+import { makeAttacker, makeTarget } from '../helpers/actors';
+import { abilitiesForClass } from '../../src/game/abilities/abilitiesForClass';
 import { PRESETS_BY_ID } from '../../src/profiles/presets';
 import {
+  ECLIPSE_REDUCTION_BONUS,
   FEROCIOUS_BITE_BY_COMBO_POINT,
   MOONFIRE_DIRECT,
   STARFIRE_DAMAGE,
   WRATH_DAMAGE,
 } from '../../src/game/abilities/druid';
 import {
+  ECLIPSE_CHARGES_PER_WRATH,
+  ECLIPSE_MAX_CHARGES,
   INSECT_SWARM_TOTAL,
   MOONFIRE_DOT_TOTAL,
   RIP_BY_COMBO_POINT,
   RIP_DURATION_MS,
+  eclipseAura,
   ripAura,
 } from '../../src/game/auras/druid';
 import { DRUID_TALENT_EFFECTS } from '../../src/game/talents/druidEffects';
@@ -192,5 +200,138 @@ describe('the three builds run', () => {
     expect(intellect).toBeGreaterThan(0);
     expect(pool).toBeCloseTo(base + intellect * MANA_PER_INTELLECT, 6);
     expect(pool).toBeGreaterThan(base);
+  });
+});
+
+describe('Eclipse, which was the first talent to ask for the engine rule', () => {
+  const moonkin = () => {
+    const built = PRESETS_BY_ID.get('druid_moonkin')!.build();
+    return createPlayer({
+      race: 'tauren',
+      characterClass: 'druid',
+      combatStyle: 'moonkin',
+      talents: built.talents,
+      equipment: built.equipment,
+    });
+  };
+
+  it('hands Wrath the rank value, from the SECOND number in the row', () => {
+    /*
+     * Eclipse's row is [2, 0.5, 4, 15] at rank 3: the "next 2 Starfires", the
+     * half second, the four-charge cap and the fifteen seconds. Index 0 would
+     * hand Wrath a TWO-SECOND reduction off a three-second Starfire, and
+     * nothing would fail -- it would simply be four times too good.
+     */
+    expect(moonkin().abilities.get('wrath')?.bonuses?.[ECLIPSE_REDUCTION_BONUS]).toBe(0.5);
+  });
+
+  it('banks two charges a Wrath and caps at four', () => {
+    /*
+     * ------------------------------------------------------------------------
+     * DRIVEN BY HAND, AND ON A COMBATANT WITH NO ROTATION OF ITS OWN.
+     *
+     * A `createPlayer` Moonkin carries its priority list, which acts the
+     * moment the simulation begins and puts the character on the global
+     * cooldown -- so a manual `castAbility` is refused and the test measures
+     * nothing while appearing to measure something. It did exactly that.
+     *
+     * The abilities are the REAL ones, taken from the preset's build so they
+     * carry the talent's `bonuses`; only the actor around them is bare.
+     *
+     * THE CHARGES LAND AT CAST END. Wrath is a two-second cast, so its
+     * `onCast` is scheduled rather than run inline, and the clock has to be
+     * advanced past each cast.
+     * ------------------------------------------------------------------------
+     */
+    const built = PRESETS_BY_ID.get('druid_moonkin')!.build();
+    const book = abilitiesForClass('druid', 'moonkin', built.talents);
+    const actor = makeAttacker({
+      autoAttack: 'none',
+      abilities: book,
+      resources: [{ type: 'mana', maximum: 50_000 }],
+    });
+    const target = makeTarget();
+    const simulation = buildSimulation([actor, target]);
+    const wrath = actor.abilities.get('wrath')!;
+
+    const castOnce = (at: number) => {
+      simulation.advanceTo(at);
+      const result = castAbility(simulation, actor, wrath, target);
+      // Asserted, so a refused cast fails here rather than silently making
+      // the charge count zero.
+      expect(result).toEqual({ ok: true });
+      simulation.advanceTo(at + seconds(3));
+    };
+
+    castOnce(0);
+    expect(actor.auras.stacksOf('eclipse')).toBe(ECLIPSE_CHARGES_PER_WRATH);
+
+    // Two more Wraths is six charges asked for against a cap of four.
+    castOnce(seconds(4));
+    castOnce(seconds(8));
+    expect(actor.auras.stacksOf('eclipse')).toBe(ECLIPSE_MAX_CHARGES);
+  });
+
+  it('shortens Starfire by half a second and spends ONE charge doing it', () => {
+    const actor = moonkin();
+    const target = makeTarget();
+    const simulation = buildSimulation([actor, target]);
+    const starfire = actor.abilities.get('starfire')!;
+    const base = starfire.castTimeMs!;
+
+    simulation.applyAura(actor, eclipseAura(0.5), actor.id);
+    actor.auras.get('eclipse')!.stacks = ECLIPSE_MAX_CHARGES;
+
+    // Four charges is four SHORTER CASTS, not one two-second discount. The
+    // reduction is flat per cast because `scalesWithStacks` is off.
+    expect(resolveCast(actor, starfire).baseCastTimeMs).toBe(base - seconds(0.5));
+
+    // Spent at cast START, which is what makes the cast that benefits the
+    // cast that pays -- so this needs no clock advance.
+    castAbility(simulation, actor, starfire, target);
+    expect(actor.auras.stacksOf('eclipse')).toBe(ECLIPSE_MAX_CHARGES - 1);
+  });
+
+  it('does nothing for a Druid who did not take it', () => {
+    // A nought-second Eclipse would still consume a charge and shorten
+    // nothing, which looks like it is working. Wrath applies no aura at all.
+    const actor = makeAttacker({
+      autoAttack: 'none',
+      abilities: abilitiesForClass('druid', 'moonkin', { insect_swarm: 1 }),
+      resources: [{ type: 'mana', maximum: 50_000 }],
+    });
+    const target = makeTarget();
+    const simulation = buildSimulation([actor, target]);
+    expect(castAbility(simulation, actor, actor.abilities.get('wrath')!, target)).toEqual({
+      ok: true,
+    });
+    simulation.advanceTo(seconds(3));
+    expect(actor.auras.has('eclipse')).toBe(false);
+  });
+
+  it('buys the Moonkin nothing, because the Moonkin is MANA-bound not time-bound', () => {
+    /*
+     * --------------------------------------------------------------------------
+     * A CORRECT TALENT WORTH ZERO, AND THE REASON IS WORTH WRITING DOWN.
+     *
+     * Eclipse saves cast time. The Moonkin spends roughly 3,400 mana from a
+     * pool of about 2,800 over a sixty-second fight, so it is already idle
+     * waiting on regeneration -- and time it was not using is worth nothing.
+     *
+     * So the DPS figure is unchanged by a talent that demonstrably works,
+     * which is exactly why the assertions above are on the MECHANISM rather
+     * than on a damage delta. A test that measured the DPS would have passed
+     * identically before the rule existed.
+     * --------------------------------------------------------------------------
+     */
+    const built = PRESETS_BY_ID.get('druid_moonkin')!.build();
+    const batch = runProfileBatch({
+      ...built,
+      simulation: { ...built.simulation, iterations: 20, seed: 5 },
+    } as never);
+
+    const spent = batch.rage.totalSpent;
+    const pool = moonkin().resources.require('mana').maximum;
+    expect(spent).toBeGreaterThan(pool);
   });
 });

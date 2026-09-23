@@ -35,6 +35,97 @@ export interface PeriodicEffect {
 }
 
 /**
+ * How an aura changes the NEXT cast of an ability it names.
+ *
+ * ------------------------------------------------------------------------------
+ * THE SHAPE FOUR CLASSES ASKED FOR, and the reason none of the existing
+ * declarations fitted.
+ *
+ *   `abilityCastTime`    a STANDING talent reduction, resolved once when the
+ *                        character is built. Improved Starfire's half second
+ *                        is always there; Eclipse's is there twice and then
+ *                        gone.
+ *   an ordinary aura     reaches every ability or none. Nothing on
+ *                        `AuraDefinition` selects one.
+ *   content, in `onCast` too late. Cast time is resolved by the engine BEFORE
+ *                        `onCast` runs, which is exactly why Stormstrike's
+ *                        +20% could be done in content and this cannot.
+ *
+ * WHO WANTS IT: Eclipse on the Druid, Maelstrom Weapon on the Shaman -- the
+ * Enhancement capstone -- and, when those classes arrive, Presence of Mind,
+ * Hot Streak and Arcane Concentration on the Mage and Inner Focus on the
+ * Priest. Nature's Swiftness wants it too and wants to select by SCHOOL, which
+ * is deliberately not here yet: see the note on `abilityIds`.
+ * ------------------------------------------------------------------------------
+ */
+export interface CastModifier {
+  /**
+   * The abilities this changes. An ability not named here is untouched, and an
+   * empty list matches nothing.
+   *
+   * BY ID, AND ONLY BY ID FOR NOW. Nature's Swiftness and Presence of Mind
+   * select by school ("your next Nature spell") and by class, which would mean
+   * a `school` on every `Ability` -- a field that is silent when forgotten,
+   * which is the failure mode this project keeps meeting. It is worth adding
+   * when a whole class can be filled in at once rather than one talent at a
+   * time; until then those two stay `unmodelled` and say so.
+   */
+  readonly abilityIds: readonly string[];
+  /** Milliseconds taken off the cast, before haste. */
+  readonly castTimeReductionMs?: Milliseconds;
+  /**
+   * Fraction of the cast removed: 0.2 is a fifth faster, 1 is instant.
+   *
+   * Applied to the BASE cast time rather than the hasted one, so haste and
+   * this compose the same way round however they are ordered.
+   */
+  readonly castTimeFraction?: number;
+  /** Fraction of the resource cost removed. 1 makes the cast free. */
+  readonly costFraction?: number;
+  /**
+   * Multiply both fractions and the flat reduction by the current stacks.
+   *
+   * Maelstrom Weapon is 20% a stack to five; Eclipse is a flat half second a
+   * charge and takes one charge per Starfire rather than scaling, so it leaves
+   * this off.
+   */
+  readonly scalesWithStacks?: boolean;
+  /**
+   * What a cast spends, and the two answers are genuinely different effects.
+   *
+   * ----------------------------------------------------------------------
+   *   `stack`  one charge, dropping the aura at zero. Eclipse: "your next 2
+   *            Starfire spells", which is two casts each getting the full
+   *            half second.
+   *   `all`    the whole aura, however many stacks it held. Maelstrom
+   *            Weapon: "your NEXT Lightning Bolt", which is ONE cast that
+   *            every stack paid for together.
+   *
+   * Spending a stack where the effect spends all of them leaves four stacks
+   * behind for the next cast, which reads as a working talent and is worth
+   * several times what it should be. That is the whole reason this is not a
+   * boolean.
+   *
+   * The sibling of `consumedBySwing` and `consumedByBlock`, for the same
+   * reason all three exist: a charge limit is not a duration, and an aura
+   * that expires on time alone cannot express one.
+   *
+   * SPENT AT CAST START, on the cast that benefits. `durationMs` still
+   * applies as a backstop for a caster who casts something else instead.
+   * ----------------------------------------------------------------------
+   */
+  readonly consumedByCast?: 'stack' | 'all';
+  /**
+   * Only match an ability that HAS a cast time.
+   *
+   * "Your next Nature spell with a casting time less than 10 sec." An instant
+   * must not eat a charge meant for a cast, which would otherwise happen the
+   * moment a priority list reached Moonfire.
+   */
+  readonly requiresCastTime?: boolean;
+}
+
+/**
  * The static description of a buff or debuff. One definition, many instances:
  * this object is shared by every character carrying the effect, so it holds no
  * per-target state.
@@ -132,6 +223,14 @@ export interface AuraDefinition {
    * ----------------------------------------------------------------------------
    */
   readonly removedOnDeath?: boolean;
+  /**
+   * Changes the next cast of the abilities it names. See `CastModifier`.
+   *
+   * Read by `castAbility` and by `checkCast`, which BOTH have to see the same
+   * numbers: a rotation that checked the full mana cost would refuse a spell
+   * the character can actually afford, and would do it silently.
+   */
+  readonly castModifier?: CastModifier;
   readonly onApply?: (context: SimulationContext, aura: AuraInstance) => void;
   readonly onExpire?: (context: SimulationContext, aura: AuraInstance) => void;
 }

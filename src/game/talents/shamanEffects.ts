@@ -258,7 +258,22 @@ export const SHAMAN_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
     },
   ],
 
-  maelstrom_weapon: [{ kind: 'reaction', reactionId: 'maelstrom_weapon' }],
+  maelstrom_weapon: [
+    /*
+     * LIVE. The value handed to the reaction is the REDUCTION -- 4/8/12/16/20
+     * by rank, index 0 -- not the proc chance, which the tooltip does not
+     * state at all. The first version of this passed it in as the chance, and
+     * a 20% proc rate looked completely ordinary.
+     */
+    { kind: 'reaction', reactionId: 'maelstrom_weapon' },
+    {
+      kind: 'unmodelled',
+      reason:
+        'The cast time and mana reduction apply, per stack. Its PROC CHANCE ' +
+        'is a placeholder: the tooltip says only "a chance" and no value for ' +
+        'it exists in the client data.',
+    },
+  ],
 
   rage_of_the_farseer: [{ kind: 'grantAbility', abilityId: 'rage_of_the_farseer' }],
 

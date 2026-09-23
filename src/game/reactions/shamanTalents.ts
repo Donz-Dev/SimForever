@@ -1,10 +1,7 @@
 import { isWeaponUse } from '../../engine';
 import type { TalentReactionBuilder } from './warriorTalents';
 import { flurry } from './warriorTalents';
-import {
-  MAELSTROM_WEAPON,
-  elementalDevastationAura,
-} from '../auras/shaman';
+import { elementalDevastationAura, maelstromWeaponAura } from '../auras/shaman';
 
 /**
  * Shaman talent procs.
@@ -44,29 +41,64 @@ export const elementalDevastation: TalentReactionBuilder = (critPercent) => ({
 });
 
 /**
- * Maelstrom Weapon, TRACKED AND INERT.
+ * Maelstrom Weapon: melee damage stacks a discount on the next Lightning Bolt.
  *
- * The stacks are real -- rolled at the stated chance off a melee use, capped
- * at five, refreshed to thirty seconds -- and they buy nothing, because the
- * cast-time reduction they exist for has no declaration. See
- * `MAELSTROM_WEAPON_UNMODELLED` in `auras/shaman.ts`.
+ * ----------------------------------------------------------------------------
+ * LIVE NOW, and it carries the one number in this class that nobody has.
  *
- * Applied anyway so the capstone has visible uptime rather than being silent,
- * which is the same decision Eclipse carries on the Druid. A talent that does
- * nothing and SAYS SO is the honest failure mode; one that does nothing
- * quietly is the bug this project keeps finding.
+ * THE TOOLTIP STATES NO PROC CHANCE. "When you deal damage with a melee
+ * attack, you have A CHANCE to reduce the cast time and Mana cost of your next
+ * Lightning Bolt spell by {0}%." The `{0}` is the REDUCTION -- 4, 8, 12, 16,
+ * 20 by rank -- and the chance has no placeholder and no value anywhere in the
+ * client data.
+ *
+ * WHICH IS A BUG THIS FILE ALREADY SHIPPED. The first version passed
+ * `talentNumber(...)` straight in as `chancePercent`, so the reduction was
+ * being rolled as the chance: a 20% proc rate that happened to look completely
+ * ordinary, because 20% IS an ordinary proc rate. The aura did nothing at the
+ * time, so it moved no damage -- only the stack uptime on the results page --
+ * but the moment the aura started working it would have been wrong.
+ *
+ * So the chance is a PLACEHOLDER, named, and printed where a person can see
+ * it. The reduction is read from the talent, at index 0, which is where it
+ * actually lives.
+ * ----------------------------------------------------------------------------
  */
-export const maelstromWeapon: TalentReactionBuilder = (chancePercent) => ({
+
+/**
+ * UNVERIFIED, AND ONE LINE FROM THE RULESET OWNER WOULD SETTLE IT.
+ *
+ * Not borrowed from Classic, because Classic has no Maelstrom Weapon to borrow
+ * from -- it is a later-expansion talent that Forever has brought back, and
+ * the version it resembles procced on a per-minute rate rather than a flat
+ * chance. Inventing either shape would be inventing game data.
+ *
+ * Twenty percent is chosen to be VISIBLY a round number rather than a derived
+ * one, so it reads as the placeholder it is. The talent prints this caveat on
+ * the results page.
+ */
+export const PLACEHOLDER_MAELSTROM_WEAPON_PROC_CHANCE = 20;
+
+export const MAELSTROM_WEAPON_UNMODELLED =
+  'Its proc chance is a PLACEHOLDER. The tooltip states the reduction and ' +
+  'says only "a chance" for the rate, and no value for it exists in the ' +
+  'client data, so ' +
+  `${PLACEHOLDER_MAELSTROM_WEAPON_PROC_CHANCE}% is assumed and unverified. ` +
+  'The reduction itself, the five stacks and the thirty seconds are the ' +
+  "source's own.";
+
+export const maelstromWeapon: TalentReactionBuilder = (reductionPercentPerStack) => ({
   id: 'maelstrom_weapon',
   on: 'dealt',
   outcomes: ['hit', 'crit', 'glance', 'crush'],
   canTrigger: (context, _actor, attack) =>
-    isWeaponUse(attack) && context.rng.rollChance(chancePercent / 100),
+    isWeaponUse(attack) &&
+    context.rng.rollChance(PLACEHOLDER_MAELSTROM_WEAPON_PROC_CHANCE / 100),
   onTrigger: (context, actor) => {
     // `applyAura` adds a stack itself, up to `maxStacks`, and resets the
     // thirty seconds. Setting `stacks` here as well would count every proc
     // twice -- which the Warrior's Flurry does deliberately and this must not.
-    context.applyAura(actor, MAELSTROM_WEAPON, actor.id);
+    context.applyAura(actor, maelstromWeaponAura(reductionPercentPerStack), actor.id);
   },
 });
 

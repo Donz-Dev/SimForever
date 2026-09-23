@@ -105,15 +105,37 @@ export const DRUID_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
   overgrowth: [{ kind: 'unmodelled', reason: 'Entangling Roots targets.' }],
 
   nature_s_grace: [
+    /*
+     * NOT A ONE-SHOT, AND I HAD THIS WRONG. Forever's wording is "increasing
+     * your spellcasting speed and reducing your global cooldown by 10% for 3
+     * sec" -- a three-second HASTE window off a spell crit, not Classic's
+     * shorten-the-next-cast. It was recorded here and in CLAUDE.md as wanting
+     * the Eclipse rule, and it wants a reaction and an aura the engine has had
+     * all along.
+     *
+     * Reachable and simply not written yet, which is a different claim from
+     * "the engine cannot": see Elemental Devastation on the Shaman, which is
+     * the same spell-crit-grants-an-aura shape.
+     */
     {
       kind: 'unmodelled',
       reason:
-        'Shortens the NEXT cast after a spell crit. A one-shot, charge-consuming ' +
-        'cast-time modifier, which is the same gap Eclipse has.',
+        'A 3-second haste window from a non-periodic spell crit. Reachable -- ' +
+        'a cast-crit reaction plus a haste aura, both of which exist -- and ' +
+        'not written yet. Its global cooldown clause is separate: haste does ' +
+        'not affect the global cooldown in this engine.',
     },
   ],
 
-  eclipse: [{ kind: 'grantAura', auraId: 'eclipse' }],
+  eclipse: [
+    /*
+     * LIVE, and it was the talent that asked for the engine rule. Wrath grants
+     * the charges in its own `onCast` and Starfire spends them, so what the
+     * talent hands over is the per-rank half second -- 0.17, 0.33, 0.5 -- as
+     * the SECOND value in its row. Index 0 is the "next 2 Starfires" count.
+     */
+    { kind: 'abilityBonus', abilityId: 'wrath', key: 'eclipseReductionSeconds', valueIndex: 1 },
+  ],
 
   moonfury: [
     {
