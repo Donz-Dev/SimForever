@@ -58,17 +58,27 @@ two sets of figures.
 
 | Build | Standing target | Target swings back |
 | --- | --- | --- |
-| Dual-wield / Berserker (default) | **163.71** +/- 2.67 | **357.13** +/- 3.37 |
-| Dual-wield / Battle (general list) | **161.30** +/- 2.39 | - |
-| Two-hander / Battle (default) | **162.44** +/- 2.11 | - |
-| 1H & Shield / Defensive (default) | **64.55** +/- 1.08 | - |
-| 1H & Shield, 31-pt Protection | **66.38** +/- 1.34 | **151.31** +/- 1.57 |
-| Dual-wield, 31-pt Arms | **185.84** +/- 3.13 | - |
-| Fury to Death Wish | **222.02** +/- 3.50 | - |
-| the same, without Death Wish | **194.40** +/- 3.29 | - |
+| Dual-wield / Berserker (default) | **189.44** +/- 2.93 | **361.47** +/- 3.86 |
+| Dual-wield / Battle (general list) | **162.40** +/- 1.81 | - |
+| Two-hander / Battle (default) | **183.66** +/- 1.90 | - |
+| 1H & Shield / Defensive (default) | **69.53** +/- 1.06 | - |
+| 1H & Shield, 31-pt Protection | **72.77** +/- 1.55 | **151.12** +/- 1.65 |
+| Dual-wield, 31-pt Arms | **213.43** +/- 2.88 | - |
+| Fury to Death Wish | **240.72** +/- 2.89 | - |
+| the same, without Death Wish | **218.13** +/- 2.89 | - |
 
-**Every row fell slightly on 2026-09-23**, by a tenth to three tenths of a
-point, and it is one cause: Battle Shout is 139 attack power rather than 140.
+**EVERY ROW IN THIS TABLE MOVED ON 2026-09-23, and one change did it: the rage
+formula.** Forever pays a flat `R x S` per swing rather than a share of the
+damage, so rage income no longer scales with gear or buffs -- an unbuffed
+character earns the same 4.5 a second as a raid-buffed one. Unbuffed builds
+gained 5 to 28 DPS; the raid-buffed presets above LOST 19 to 47, for the same
+reason read the other way. See [docs/resources.md](docs/resources.md).
+
+The tank with the target attacking barely moved, because most of its income is
+damage taken and that side is still proportional.
+
+**Before that, every row fell slightly**, by a tenth to three tenths of a
+point, and it was one cause: Battle Shout is 139 attack power rather than 140.
 One attack power is about 0.07 damage a swing, it is in every build, and it is
 the only change in that pass that reaches a build with no talents.
 
@@ -128,9 +138,9 @@ Three buttons on the creation screen, at the very top:
 
 | | |
 | --- | --- |
-| **2H Arms** | Orc, two-hander, Battle Stance, standing target. 38 Arms / 13 Fury | **619 DPS** |
-| **DW Fury** | Orc, dual-wield, Berserker Stance, standing target. 18 Arms / 33 Fury, Crusader on both weapons | **689 DPS** |
-| **Prot Warr** | Tauren, shield, Defensive Stance, target swings back. 17 Arms / 34 Protection | **376 DPS** |
+| **2H Arms** | Orc, two-hander, Battle Stance, standing target. 38 Arms / 13 Fury | **583 DPS** |
+| **DW Fury** | Orc, dual-wield, Berserker Stance, standing target. 18 Arms / 33 Fury, Crusader on both weapons | **642 DPS** |
+| **Prot Warr** | Tauren, shield, Defensive Stance, target swings back. 17 Arms / 34 Protection | **357 DPS** |
 
 **All three carry the same twelve raid buffs**, which is what makes those
 figures so much higher than the baselines above -- and the only way two presets
@@ -230,6 +240,43 @@ Classic's 25).
 
 The site also has a talent calculator and a sourced change list, which would be
 a second opinion on the Wowhead-scraped tree in `src/data/talents/`. Not done.
+
+## Rage: a flat rate per swing, not a share of the damage
+
+Forever replaced both halves of the rage economy on 2026-09-23. The formulas,
+and everything that follows from them, are in
+[docs/resources.md](docs/resources.md):
+
+```
+dealing   rage = R x S        R = 3.46 one-hand / bear, 4.5 two-hand
+                              S = the weapon's BASE speed
+taking    rage = D x 10 / H   D = pre-armor damage, H = maximum hit points
+```
+
+**The old pair are commented out, not deleted**, in
+`game/combat/resourceRules.ts`, on the owner's instruction in case Forever
+changes back.
+
+**`R x S` every `S` seconds is `R` per second, so speed cancels.** A two-hander
+earns 4.5 rage a second and a dual-wielder 6.92 -- 3.46 per hand -- whatever
+they are holding, and haste does not raise it because `S` is the item's base
+speed. A fast weapon is no longer better for rage.
+
+**Rage income no longer scales with anything.** Not gear, not buffs, not
+damage. That is what moved every figure in this document, and in both
+directions at once: unbuffed builds gained, raid-buffed presets lost.
+
+**A miss still earns nothing** -- it is rage from damage DEALT, so the award is
+flat but conditional. `ResourceGeneration.requiresDamage` is the field that
+says so; without it a flat award would pay out on a swing that never landed.
+
+**Damage taken reads `resolution.raw`**, the pre-armor figure, so Defensive
+Stance's -10% reduces the rage earned and armor does not. A block is removed at
+the same step as armor and so does not reduce it either -- the rule names armor
+and is silent on block, and that reading is flagged in the doc as one to check.
+
+**It is per character now**, because `H` is that character's maximum health,
+read from the same snapshot the health pool is sized from.
 
 ## Charge opens a list, once
 

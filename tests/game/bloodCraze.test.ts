@@ -284,10 +284,27 @@ describe('Blood Craze in a real fight', () => {
     expect(uptime?.applications ?? 0).toBeGreaterThan(10);
   });
 
-  it('does no damage, so DPS does not move', () => {
+  it('does no damage of its own, and barely moves DPS', () => {
+    /*
+     * TWO ASSERTIONS, and the first is the one that means something. Blood
+     * Craze contributes no damage EVENTS at all -- that is exact, and it is
+     * what "it is a heal" actually says.
+     *
+     * The DPS comparison is deliberately loose. It used to be within half a
+     * point, and it is not any more: under Forever's rage rule a tank earns
+     * `D x 10 / H`, so maximum health is in the denominator -- and Last Stand
+     * raises maximum health while it is up. Blood Craze changes when the tank
+     * is low, which changes when Last Stand fires, which changes H, which
+     * changes the rage. A real chain rather than noise, and small.
+     */
+    const batch = runProfileBatch(tankProfile({ ...PAD, blood_craze: 3 }));
+    expect(batch.abilities.some((a) => a.abilityName === 'Blood Craze')).toBe(false);
+
     const dps = (talents: Record<string, number>) =>
       runProfileBatch(tankProfile(talents)).dps.mean;
-    expect(dps({ ...PAD, blood_craze: 3 })).toBeCloseTo(dps(PAD), 0);
+    const withIt = dps({ ...PAD, blood_craze: 3 });
+    const without = dps(PAD);
+    expect(Math.abs(withIt - without) / without).toBeLessThan(0.02);
   });
 
   it('fires for a warrior nothing is attacking, off Bloodthirst alone', () => {

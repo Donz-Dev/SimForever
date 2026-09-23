@@ -483,7 +483,17 @@ export function dealDamage(
    * standing and attacking baselines -- so folding both into one "damage" row
    * would hide the single biggest term in a tank's rage economy.
    */
-  grantGeneratedResource(context, target, target.resourceOnDamageTaken, resolution.amount, {
+  /*
+   * `raw`, NOT `amount`: Forever's rule is "D = pre-armor damage to be dealt".
+   * `raw` is the figure after both sides' damage multipliers and before armor,
+   * block and absorbs, so Defensive Stance's -10% reduces the rage earned and
+   * armor does not.
+   *
+   * It used to pass `amount`, which was right for the old formula -- rage in
+   * proportion to damage actually taken -- and would now understate a tank's
+   * income by whatever their armor removed, which is most of it.
+   */
+  grantGeneratedResource(context, target, target.resourceOnDamageTaken, resolution.raw, {
     id: 'damage_taken',
     name: 'Damage taken',
   });
@@ -532,6 +542,9 @@ export function grantGeneratedResource(
   source?: ResourceSource,
 ): void {
   if (!generation) return;
+  // A flat award that says it needs damage is skipped entirely when none
+  // landed. See `ResourceGeneration.requiresDamage`.
+  if (generation.requiresDamage && damage <= 0) return;
 
   const amount =
     (generation.flat ?? 0) + (generation.perDamage ?? 0) * Math.max(0, damage);
