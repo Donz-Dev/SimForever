@@ -111,10 +111,22 @@ would make every `isAlive` check between the death and the revive read false,
 which inside one tick of the event loop cancels their own swing timers and
 skips the reactions the killing blow was meant to trigger.
 
-**It does not drop auras**, unlike a real death. Survival is what is being
-measured, not a death-and-rebuff cycle, and dropping them would switch off the
-healer at the exact moment it is needed. This is a modelling choice and a
-defensible thing for the ruleset owner to change.
+**A survival cooldown that fails is spent.** Last Stand's expiry leaves the
+character at **1 health rather than killing them** — the ruleset owner's
+ruling, since the tooltip says what is lost and not what happens when there is
+not enough of it.
+
+**It drops the survival cooldowns and nothing else.** Last Stand and Shield
+Wall carry `removedOnDeath`, because a cooldown spent to prevent this exact
+death does not survive it — and Last Stand in particular would otherwise carry
+its borrowed maximum health into a pool that was just refilled. They are
+removed BEFORE the health is restored, so the character comes back at their own
+full health rather than an inflated one.
+
+Everything else stays up, unlike a real death. Survival is what is being
+measured, not a death-and-rebuff cycle, and dropping everything would switch
+off the assumed healer at the exact moment it is needed. Which effects survive
+dying is a property of the effect, so the flag is on the aura.
 
 **It does not touch the encounter.** The ramp keeps climbing straight through a
 death, which is the ruleset owner's rule and the reason a death is not a fresh

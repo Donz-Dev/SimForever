@@ -372,17 +372,19 @@ export const WARRIOR_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
 
   improved_thunder_clap: [{ kind: 'abilityCost', abilityId: 'thunder_clap' }],
 
-  last_stand: [
-    { kind: 'grantAbility', abilityId: 'last_stand' },
-    {
-      kind: 'unmodelled',
-      reason:
-        'The ability is implemented -- 30% more maximum health for 20 sec -- ' +
-        'but it changes no outcome, because the player cannot drop below one ' +
-        'health and survival is not modelled. It is a real ability with ' +
-        'nothing here to measure it against.',
-    },
-  ],
+  /*
+   * FULLY MODELLED, and the last of this file's reasons to expire.
+   *
+   * It said: "the ability is implemented, but it changes no outcome, because
+   * the player cannot drop below one health and survival is not modelled. It
+   * is a real ability with nothing here to measure it against." Every clause
+   * was true when it was written and none of them is now. The character dies,
+   * the deaths are counted, and Last Stand is the FIRST entry of the
+   * Protection list -- cast at under 30% health, about once a fight.
+   *
+   * Nothing about the talent changed to make that happen. The encounter did.
+   */
+  last_stand: [{ kind: 'grantAbility', abilityId: 'last_stand' }],
 
   /*
    * FULLY MODELLED, apart from its shield clause. A 50/100% chance of 5 rage
@@ -422,8 +424,21 @@ export const WARRIOR_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
     { kind: 'unmodelled', reason: 'Makes Charge usable in a stance. Stances gate nothing.' },
   ],
 
+  /*
+   * FULLY MODELLED. 5.5 minutes off at 1/2 and 11 at 2/2, from the captured
+   * per-rank values.
+   *
+   * Its old reason said "modifies Shield Wall, which is castable but inert" --
+   * true until Shield Wall got its damage reduction, and until survival was
+   * something a run could measure.
+   *
+   * ITS VALUES ARE ALSO WHAT SETTLED SHIELD WALL'S COOLDOWN. Eleven minutes
+   * off a fifteen minute cooldown leaves four, which is exactly what the
+   * ruleset owner states. Off the spreadsheet's thirty it would leave
+   * nineteen, which is not a number anyone would write a talent for.
+   */
   improved_shield_wall: [
-    { kind: 'unmodelled', reason: 'Modifies Shield Wall, which is castable but inert.' },
+    { kind: 'abilityCooldown', abilityId: 'shield_wall_cast', unit: 'minutes' },
   ],
 
   concussion_blow: [

@@ -141,6 +141,19 @@ export class AuraCollection {
     this.expire(context, instance);
   }
 
+  /**
+   * Remove only the auras that a death takes with it.
+   *
+   * For a combatant who dies and is stood back up: everything else carries on,
+   * because the run is measuring a fight through a death rather than a death
+   * and a rebuff. See `removedOnDeath` for which effects qualify and why.
+   */
+  removeOnDeath(context: SimulationContext): void {
+    for (const instance of [...this.auras.values()]) {
+      if (instance.definition.removedOnDeath) this.expire(context, instance);
+    }
+  }
+
   /** Remove every aura. Used when a combatant dies or combat ends. */
   removeAll(context: SimulationContext): void {
     for (const instance of [...this.auras.values()]) {

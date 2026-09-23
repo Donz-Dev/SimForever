@@ -98,6 +98,26 @@ export interface AuraDefinition {
    * inside its own cooldown.
    */
   readonly chargesOnApply?: number;
+  /**
+   * Lost when the carrier dies, rather than surviving the revive.
+   *
+   * ----------------------------------------------------------------------------
+   * A REVIVE KEEPS AURAS BY DEFAULT, and that default is right for most of
+   * them: `revivesOnDeath` exists so a fight can be measured through a death,
+   * not so a death becomes a rebuffing exercise, and dropping everything would
+   * switch off the assumed healer at the moment it is needed most.
+   *
+   * It is wrong for a SURVIVAL COOLDOWN. Last Stand and Shield Wall are spent
+   * to prevent the death that just happened; carrying them through it would
+   * mean a warrior gets the benefit of a cooldown that visibly failed, and
+   * Last Stand in particular would carry its borrowed maximum health into a
+   * pool that was just refilled.
+   *
+   * The flag is on the aura and not on the character, because which effects
+   * survive dying is a property of the effect.
+   * ----------------------------------------------------------------------------
+   */
+  readonly removedOnDeath?: boolean;
   readonly onApply?: (context: SimulationContext, aura: AuraInstance) => void;
   readonly onExpire?: (context: SimulationContext, aura: AuraInstance) => void;
 }

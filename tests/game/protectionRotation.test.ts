@@ -199,14 +199,20 @@ describe('Shield Wall', () => {
      * which is the behaviour wanted: there is nothing to wait for.
      *
      * Measured both ways, because this is the half of the condition most
-     * likely to be written backwards: an untalented tank uses Shield Wall
-     * almost every fight, and a talented one almost never.
+     * likely to be written backwards: an untalented tank reaches for Shield
+     * Wall in nearly every fight, and a talented one much less often --
+     * roughly 0.95 casts against 0.43.
+     *
+     * It is not zero for the talented build, and the gap narrowed sharply
+     * when Last Stand started LOSING its borrowed health on expiry. Last
+     * Stand is a three minute cooldown, so a fight gets one; after that the
+     * warrior drops under 30% again with nothing but Shield Wall left.
      */
-    const untalented = runProfileBatch(tank());
-    const talented = runProfileBatch(tank(PROTECTION_31));
+    const untalented = usesOf(runProfileBatch(tank()), 'Shield Wall');
+    const talented = usesOf(runProfileBatch(tank(PROTECTION_31)), 'Shield Wall');
 
-    expect(usesOf(untalented, 'Shield Wall')).toBeGreaterThan(0.5);
-    expect(usesOf(talented, 'Shield Wall')).toBeLessThan(0.2);
+    expect(untalented).toBeGreaterThan(0.5);
+    expect(talented).toBeLessThan(untalented * 0.75);
   });
 });
 

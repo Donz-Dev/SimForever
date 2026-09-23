@@ -26,7 +26,7 @@ their talent trees and nothing else.
 | **Reactions** | content responds to an attack result: Overpower off a target dodge, and every item proc |
 | **Gear** | 19 items and the Crusader enchant, equippable, driving stats, weapons and procs. A **starting set** is equipped automatically when a Warrior is created, so the first fight is a geared one |
 | **Procs** | PPM (Vis'kag, Crusader) and flat-chance with an internal cooldown (Hand of Justice) |
-| **Talents** | all 469 talents, nine classes, spendable in the UI and saved on the profile. The Warrior's per-rank values are captured; **43 of its 53 talents do something** (37 fully, 6 partly), 10 say on screen why they cannot |
+| **Talents** | all 469 talents, nine classes, spendable in the UI and saved on the profile. The Warrior's per-rank values are captured; **44 of its 53 talents do something** (39 fully, 5 partly), 9 say on screen why they cannot |
 | **Encounter** | the target optionally hits back, **ramping 10% a swing**, against a character held up by an assumed healer who can be out-damaged. Deaths are counted. See [docs/incoming-damage.md](docs/incoming-damage.md) |
 | **Analysis** | DPS, per-ability breakdown with uses/attempts/hits/crit/glance/avoid rates, buff and debuff uptime, rage economy, deaths and healing received |
 | **UI** | two-step character flow, per-class character sheet (offensive and defensive), style-aware gear, talent trees, combat log, Monte Carlo batches, uptime bar charts |
@@ -137,16 +137,16 @@ what it does in `game/talents/warriorEffects.ts`; what its number IS lives in
 **every edge case and interpretation** the Warrior turned up. The design
 rationale is in the proposal on PR #22, which is not merged.
 
-**Warrior: 37 talents fully modelled, 6 partly, 10 inert.** Every one of the 53
+**Warrior: 39 talents fully modelled, 5 partly, 9 inert.** Every one of the 53
 has an explicit entry, and the inert ones name their own obstacle, so the list
 below IS the work queue. The Talent panel prints them under "Chosen but not
 simulated".
 
-The ten still inert are `improved_hamstring`, `booming_voice`, `iron_will`,
+The nine still inert are `improved_hamstring`, `booming_voice`, `iron_will`,
 `blood_craze`, `improved_berserker_rage`, `defiance`, `improved_disarm`,
-`vanguard`, `improved_shield_wall` and `improved_shield_bash`. Regenerate the
-list with a three-line script over `WARRIOR_TALENT_EFFECTS`: a talent is inert
-when every one of its effects is `unmodelled`.
+`vanguard` and `improved_shield_bash`. Regenerate the list with a three-line
+script over `WARRIOR_TALENT_EFFECTS`: a talent is inert when every one of its
+effects is `unmodelled`.
 
 #### What the remaining talents are blocked on
 
@@ -159,7 +159,7 @@ Grouped, because each blocker unlocks several at once:
 | ~~No block outcome~~ | — | **Done.** The engine has a `block` outcome and `blockChance`/`blockValue` stats; Shield Slam, Revenge and Shield Specialization all use them. |
 | ~~No defense skill~~ | ~~Anticipation~~ | **Done.** The ruleset owner gave the formula: each point of defense skill above the level baseline moves boss miss, boss crit, player dodge, parry and block by 0.04 percentage points, every one clamped so it cannot go negative or past 100%. |
 | **Stances gate nothing** | Improved Tactical Mastery, Vanguard | Waiting on the ruleset owner; see below. |
-| **The ability it modifies is inert** | Improved Berserker Rage, Improved Shield Wall | **Improved Bloodrage left this row** when Bloodrage got its periodic half: 10 rage on cast and 10 over ten seconds, and the talent raises BOTH by 25/50%. |
+| **The ability it modifies is inert** | Improved Berserker Rage | **Improved Bloodrage and Improved Shield Wall have both left this row.** Bloodrage got its periodic half, and Shield Wall became a real decision once survival was measurable -- so the talent that cuts its cooldown from 15 minutes to 4 is modelled. |
 | ~~Talents cannot apply a combat-start aura~~ | ~~Anger Management, Death Wish~~ | **Done.** `grantAura` on a talent effect puts a definition in the character's opening auras, via `TALENT_AURAS`. Anger Management's first tick is rolled 1-3000ms into the fight, so a batch does not tighten its distribution around a fiction. |
 | **Ability not implemented** | Improved Disarm, Improved Shield Bash, and the five ability grants below | Disarm and Shield Bash are absent from the ability spreadsheet. |
 | **Needs a talent-granted reaction** | Enrage, Master of Defense, Weaponmaster's sword clause | **Not blocked on data.** Values are captured and the trigger exists; Shield Specialization is the worked example of the shape. The cheapest remaining talent wins. |

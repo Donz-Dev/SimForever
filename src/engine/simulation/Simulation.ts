@@ -304,9 +304,15 @@ export class Simulation implements SimulationContext {
      * attacks and skip their reactions -- including the one the killing blow
      * was meant to trigger.
      *
-     * Nothing else is reset. Auras stay up, cooldowns keep running, and
-     * anything ramping against the character keeps ramping: a death is a
+     * Almost nothing is reset. Cooldowns keep running, anything ramping
+     * against the character keeps ramping, and auras stay up -- a death is a
      * recorded event in an encounter that does not care, not a fresh pull.
+     *
+     * The exception is an aura that declares `removedOnDeath`: a survival
+     * cooldown spent to prevent this exact death does not survive it. They go
+     * BEFORE the health is restored, because Last Stand's expiry takes its
+     * borrowed maximum back and the character should come back at their own
+     * full health rather than a temporarily inflated one.
      */
     if (target.revivesOnDeath) {
       this.telemetry.emit({
@@ -315,6 +321,7 @@ export class Simulation implements SimulationContext {
         actorId: target.id,
         killerId: killer?.id,
       });
+      target.auras.removeOnDeath(this);
       target.health.fill();
       return;
     }
