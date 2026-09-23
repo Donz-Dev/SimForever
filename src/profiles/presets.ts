@@ -562,6 +562,97 @@ const MAGE_WEAPONS: Equipment = {
   twoHand: { itemId: 228229, enchantId: CRUSADER },
 };
 
+/**
+ * THE THREE PALADIN BUILDS, decoded from the owner's URLs. 13/0/38, 23/0/28
+ * and 8/36/7, each exactly 51 points.
+ *
+ * EACH HAS A DIFFERENT CAPSTONE, which is what lets the rotation tell them
+ * apart: Twist of Light, Holy Shock and Holy Shield belong to exactly one
+ * build each.
+ */
+const PALADIN_RETRIBUTION_TALENTS: TalentAllocation = {
+  improved_holy_strike: 2,
+  divine_strength: 5,
+  divine_intellect: 3,
+  improved_seals: 3,
+  benediction: 5,
+  improved_judgement: 2,
+  holy_conduit: 2,
+  conviction: 5,
+  vindication: 3,
+  sanctified_judgement: 3,
+  seal_of_command: 1,
+  pursuit_of_justice: 2,
+  sacred_arbiter: 1,
+  crusade: 2,
+  two_handed_weapon_specialization: 3,
+  vengeance: 3,
+  champion_of_the_light: 3,
+  instrument_of_law: 2,
+  twist_of_light: 1,
+};
+
+const PALADIN_SHOCKADIN_TALENTS: TalentAllocation = {
+  improved_holy_strike: 2,
+  divine_strength: 3,
+  divine_intellect: 5,
+  healing_light: 3,
+  improved_seals: 3,
+  reverence: 3,
+  divine_favor: 1,
+  divine_precision: 2,
+  holy_shock: 1,
+  benediction: 5,
+  improved_judgement: 2,
+  holy_conduit: 2,
+  conviction: 5,
+  sanctified_judgement: 3,
+  pursuit_of_justice: 2,
+  sacred_arbiter: 1,
+  crusade: 2,
+  vengeance: 3,
+  champion_of_the_light: 3,
+};
+
+const PALADIN_PROTECTION_TALENTS: TalentAllocation = {
+  improved_holy_strike: 2,
+  divine_strength: 3,
+  improved_seals: 3,
+  redoubt: 5,
+  precision: 3,
+  anticipation: 3,
+  improved_seal_of_fury: 1,
+  improved_righteous_fury: 3,
+  shield_specialization: 3,
+  sacred_duty: 2,
+  swift_judgement: 1,
+  one_handed_weapon_specialization: 3,
+  templar_s_bulwark: 1,
+  reckoning: 5,
+  iron_creed: 5,
+  holy_shield: 1,
+  deflection: 5,
+  improved_judgement: 2,
+};
+
+/**
+ * A GEAR SHELL, and said to be one.
+ *
+ * Retribution and Shockadin take the same two-hander every other two-handed
+ * build in this project uses. Protection takes the Warrior tank's shield and
+ * one-hander, because the whole Protection tree is written around a shield --
+ * Redoubt, Holy Shield and Shield Specialization are three of its five best
+ * talents and none of them do anything without one.
+ */
+const PALADIN_TWO_HAND: Equipment = {
+  twoHand: { itemId: 228229, enchantId: CRUSADER },
+};
+
+const PALADIN_SHIELD: Equipment = {
+  mainHand: { itemId: 228265, enchantId: CRUSADER }, // Brutality Blade
+  shield: { itemId: 19321 }, // The Immovable Object
+};
+
 export const PROFILE_PRESETS: readonly ProfilePreset[] = [
   {
     id: 'two_hand_arms',
@@ -891,6 +982,66 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = [
       raidBuffs: [...PRESET_RAID_BUFFS],
       equipment: { ...SHARED_ARMOUR, ...MAGE_WEAPONS },
       encounter: { ...createDefaultProfile().encounter, targetAttacks: false },
+    }),
+  },
+  {
+    id: 'pally_ret',
+    label: 'Seal Twist Ret',
+    detail: 'Human, two-hander, standing target. 13 Holy / 38 Retribution',
+    build: () => ({
+      ...createDefaultProfile(),
+      character: {
+        name: 'Seal Twist Ret',
+        race: 'human',
+        characterClass: 'paladin',
+        level: 60,
+        combatStyle: 'two_hander',
+        stance: 'battle',
+      },
+      talents: { ...PALADIN_RETRIBUTION_TALENTS },
+      raidBuffs: [...PRESET_RAID_BUFFS],
+      equipment: { ...SHARED_ARMOUR, ...PALADIN_TWO_HAND },
+      encounter: { ...createDefaultProfile().encounter, targetAttacks: false },
+    }),
+  },
+  {
+    id: 'pally_shockadin',
+    label: 'Shockadin',
+    detail: 'Human, two-hander, standing target. 23 Holy / 28 Retribution',
+    build: () => ({
+      ...createDefaultProfile(),
+      character: {
+        name: 'Shockadin',
+        race: 'human',
+        characterClass: 'paladin',
+        level: 60,
+        combatStyle: 'two_hander',
+        stance: 'battle',
+      },
+      talents: { ...PALADIN_SHOCKADIN_TALENTS },
+      raidBuffs: [...PRESET_RAID_BUFFS],
+      equipment: { ...SHARED_ARMOUR, ...PALADIN_TWO_HAND },
+      encounter: { ...createDefaultProfile().encounter, targetAttacks: false },
+    }),
+  },
+  {
+    id: 'prot_pally',
+    label: 'Prot Pally',
+    detail: 'Human, 1H and shield, target swings back. 36 Protection',
+    build: () => ({
+      ...createDefaultProfile(),
+      character: {
+        name: 'Prot Pally',
+        race: 'human',
+        characterClass: 'paladin',
+        level: 60,
+        combatStyle: 'one_hand_shield',
+        stance: 'battle',
+      },
+      talents: { ...PALADIN_PROTECTION_TALENTS },
+      raidBuffs: [...PRESET_RAID_BUFFS],
+      equipment: { ...SHARED_ARMOUR, ...PALADIN_SHIELD },
+      encounter: { ...createDefaultProfile().encounter, targetAttacks: true },
     }),
   },
 ];

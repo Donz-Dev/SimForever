@@ -62,6 +62,9 @@ describe('the preset catalogue', () => {
       'mage_frostfire',
       'mage_arcane',
       'mage_fire',
+      'pally_ret',
+      'pally_shockadin',
+      'prot_pally',
     ]);
     expect(PROFILE_PRESETS.map((preset) => preset.label)).toEqual([
       '2H Arms',
@@ -78,6 +81,9 @@ describe('the preset catalogue', () => {
       'Frostfire',
       'Arcane',
       'Fire',
+      'Seal Twist Ret',
+      'Shockadin',
+      'Prot Pally',
     ]);
   });
 

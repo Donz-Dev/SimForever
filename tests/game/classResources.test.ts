@@ -216,11 +216,11 @@ describe('createPlayer', () => {
 
   it('gives abilities and a rotation to the classes that have them', () => {
     /*
-     * FIVE OF NINE, and the list grows one class at a time. A class with no
+     * SIX OF NINE, and the list grows one class at a time. A class with no
      * entry gets an empty book and no rotation rather than a stand-in, so an
      * unwritten class produces nothing instead of producing something wrong.
      */
-    const implemented = new Set(['warrior', 'rogue', 'druid', 'shaman', 'mage']);
+    const implemented = new Set(['warrior', 'rogue', 'druid', 'shaman', 'mage', 'paladin']);
 
     for (const id of CLASS_IDS) {
       const combatant = player(id);

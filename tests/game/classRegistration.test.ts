@@ -9,6 +9,7 @@ import { ROGUE_TALENT_EFFECTS } from '../../src/game/talents/rogueEffects';
 import { DRUID_TALENT_EFFECTS } from '../../src/game/talents/druidEffects';
 import { SHAMAN_TALENT_EFFECTS } from '../../src/game/talents/shamanEffects';
 import { MAGE_TALENT_EFFECTS } from '../../src/game/talents/mageEffects';
+import { PALADIN_TALENT_EFFECTS } from '../../src/game/talents/paladinEffects';
 
 /*
  * ------------------------------------------------------------------------------
@@ -50,6 +51,7 @@ const EFFECT_TABLES = {
   druid: DRUID_TALENT_EFFECTS,
   shaman: SHAMAN_TALENT_EFFECTS,
   mage: MAGE_TALENT_EFFECTS,
+  paladin: PALADIN_TALENT_EFFECTS,
 } as const;
 
 const IMPLEMENTED = Object.keys(EFFECT_TABLES) as (keyof typeof EFFECT_TABLES)[];
@@ -58,7 +60,7 @@ describe('every implemented class is registered everywhere', () => {
   it('names the classes that have content, and no others', () => {
     // The one place this list is written down. A class arriving here without
     // arriving in the registries below fails the rest of this file.
-    expect(IMPLEMENTED).toEqual(['warrior', 'rogue', 'druid', 'shaman', 'mage']);
+    expect(IMPLEMENTED).toEqual(['warrior', 'rogue', 'druid', 'shaman', 'mage', 'paladin']);
     for (const id of CLASS_IDS) {
       const hasAbilities = abilitiesForClass(id).length > 0;
       expect(hasAbilities, id).toBe(IMPLEMENTED.includes(id as never));
