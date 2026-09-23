@@ -141,6 +141,17 @@ killing blow was meant to trigger -- and it does not reset the target's ramp,
 because a ramp that reset would hand a character an easier fight for dying.
 Full rules and provenance in [docs/incoming-damage.md](docs/incoming-damage.md).
 
+**A BUILD IS FIVE SETTINGS THAT HAVE TO AGREE, and `profiles/presets.ts` is
+where that is written down.** A Protection warrior is a shield AND Defensive
+Stance AND a target that swings back AND a particular tree AND particular gear;
+choosing three of the five produces a character nobody meant, and half the
+Protection tree silently does nothing. Almost every instruction about this
+simulator has been phrased as "if 1H and shield is selected", "if Battle Stance
+is chosen", "if the target attacks back is checked" -- a preset is that whole
+answer, named, and `isTankBuild` is the same idea inferred from two fields. A
+preset sets EVERY field rather than inheriting any, or it would behave
+differently depending on what was on screen when it was pressed.
+
 **Raid buffs are SELECTED, never assumed, and a pool has to be sized from
 them.** The catalogue is `game/buffs/raidBuffs.ts`, the profile stores chosen
 ids, and nothing is on by default -- a buff that applied itself would move every

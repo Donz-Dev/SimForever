@@ -29,10 +29,11 @@ their talent trees and nothing else.
 | **Talents** | all 469 talents, nine classes, spendable in the UI and saved on the profile. The Warrior's per-rank values are captured; **45 of its 53 talents do something** (39 fully, 6 partly), 8 say on screen why they cannot |
 | **Encounter** | the target optionally hits back, **ramping 10% a swing**, against a character held up by an assumed healer who can be out-damaged. Deaths are counted. See [docs/incoming-damage.md](docs/incoming-damage.md) |
 | **Raid buffs** | 20 buffs, debuffs and totems selectable per profile and applied before the first swing, Windfury's proc included. Nothing on by default. See [docs/raid-buffs.md](docs/raid-buffs.md) |
+| **Presets** | **DW Fury** and **Prot Warr**, one button each on the creation screen: name, race, style, stance, 51 talents, 17 gear slots and whether the target swings back, all at once |
 | **Analysis** | DPS, per-ability breakdown with uses/attempts/hits/crit/glance/avoid rates, buff and debuff uptime, rage economy, deaths and healing received |
 | **UI** | two-step character flow, per-class character sheet (offensive and defensive), style-aware gear, talent trees, combat log, Monte Carlo batches, uptime bar charts |
 
-**1,222 tests**, CI green on Node 20 and 22. Profile format **v9**.
+**1,242 tests**, CI green on Node 20 and 22. Profile format **v9**.
 
 The interface is one theme, **Abyssal Copper**, chosen from four mock-ups. The
 other three still exist in `ui/styles.css` under `:root[data-theme=...]` and
@@ -105,6 +106,30 @@ trusting any number".
 **[docs/warrior-completion.md](docs/warrior-completion.md) is the action list
 for finishing the Warrior** — the ten inert abilities, what is blocked on the
 ruleset owner, and what is doable now. **Start there.**
+
+## Start from a preset
+
+Two buttons on the creation screen, at the very top:
+
+| | |
+| --- | --- |
+| **DW Fury** | Orc, dual-wield, Berserker Stance, standing target. 18 Arms / 33 Fury, both weapons enchanted with Crusader. ~392 DPS |
+| **Prot Warr** | Tauren, shield, Defensive Stance, target swings back. 17 Arms / 34 Protection. ~247 DPS |
+
+They exist because almost every instruction about this simulator has been
+phrased as a condition -- "if 1H and shield is selected", "if Battle Stance is
+chosen", "if the target attacks back is checked" -- and those are not
+independent settings. A preset is the whole answer, named, and sets every field
+rather than inheriting any. See `profiles/presets.ts`.
+
+**A third, `2H - Arms`, is named but not built.** The ruleset owner listed it as
+a button and has not supplied its talents or gear, and guessing a 51-point tree
+would be inventing a build. Adding it is one entry in `PROFILE_PRESETS`.
+
+**The Prot Warr list as given came to 52 points against a cap of 51.** Anger
+Management is the point the owner chose to give up. Worth knowing because
+`legalAllocation` would have dropped exactly that talent on its own -- landing
+on the right build by accident, with nobody aware a point had gone.
 
 ## The encounter now fights back properly
 
@@ -443,7 +468,7 @@ src/
 │
 ├── analysis/        analyzers; SimulationResult
 ├── simulator/       runProfile, runProfileBatch, trainingDummyEncounter
-├── profiles/        versioned profiles (format v9), validation, migration
+├── profiles/        versioned profiles (format v9), validation, migration, presets
 └── ui/              React panels
 ```
 
