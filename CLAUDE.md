@@ -242,6 +242,17 @@ gap survey listed as blocked on pets turned out not to want one. The pet work
 the Beast Mastery hunter needed is not wasted; it is simply not what the other
 four do, and that is a property of the BUILDS rather than of the engine.
 
+**A PERCENTAGE MANA REDUCTION IS `CastModifier.costFraction`, AND IT TOOK
+NINE CLASSES TO NOTICE.** "Reduces the mana cost by 50%" is a FRACTION OF THE
+COST, which is exactly what that field is; `abilityCost` subtracts a flat
+amount, which is right for a 20-rage Mortal Strike and wrong for a 380-mana
+Immolate. The mismatch is the single most common `unmodelled` reason in the
+project -- Convection, Shamanistic Focus, Frost Channeling, Benediction,
+Cataclysm, Efficiency, Moonglow and more -- and the Priest's Shadowform is the
+first thing to express one, because it arrives on an AURA. A TALENT still
+cannot grant one: that wants a `grantCastModifier` effect kind, not a new
+rule, and Mental Agility and Devouring Contagion say so.
+
 **A TALENT REACHES THE OWNER; A PET NEEDS `petStat` AND `petReaction`.** Six
 Hunter talents were inert for one reason -- a talent effect lands on the
 character carrying it, and a pet is a separate combatant built afterwards --

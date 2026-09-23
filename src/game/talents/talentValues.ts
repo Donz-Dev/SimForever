@@ -6,6 +6,7 @@ import mageValues from '../../data/talents/values/mage.json';
 import paladinValues from '../../data/talents/values/paladin.json';
 import hunterValues from '../../data/talents/values/hunter.json';
 import warlockValues from '../../data/talents/values/warlock.json';
+import priestValues from '../../data/talents/values/priest.json';
 import type { ClassId } from '../character';
 
 /**
@@ -57,6 +58,7 @@ const FILES: Partial<Record<ClassId, ValuesFile>> = {
   paladin: paladinValues as ValuesFile,
   hunter: hunterValues as ValuesFile,
   warlock: warlockValues as ValuesFile,
+  priest: priestValues as ValuesFile,
 };
 
 /*

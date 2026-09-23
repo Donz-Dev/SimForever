@@ -13,6 +13,7 @@ import {
   RAGE_PER_SECOND_ONE_HAND,
   RAGE_PER_SECOND_TWO_HAND,
   manaPerTick,
+  regenerationFor,
   rageFromDamageTaken,
   rageFromSwing,
 } from '../../src/game/combat/resourceRules';
@@ -27,16 +28,31 @@ const mage = () => createPlayer({ race: 'gnome', characterClass: 'mage' });
  * A CASTER THAT DOES NOTHING, for the two tests that run a real simulation and
  * need the pool left alone.
  *
- * It was the Mage, then the Warlock, and is now the PRIEST -- the last class
- * with no content at all. Each time one was written these tests began failing,
- * because the class gained a priority list and started SPENDING: correct
- * behaviour, wrong fixture. Mana is mana, so any unwritten caster serves.
+ * ----------------------------------------------------------------------------
+ * NOT A CLASS ANY MORE, AND THIS IS THE END OF THAT ROAD. It was the Mage,
+ * then the Warlock, then the Priest -- each time one was written these tests
+ * began failing, because the class gained a priority list and started
+ * SPENDING. Correct behaviour, wrong fixture.
  *
- * WHEN THE PRIEST IS WRITTEN THERE IS NOWHERE LEFT TO MOVE THIS, and the right
- * answer then is a bare `makeAttacker` with a mana pool rather than a ninth
- * class. Recorded here so the next person does not go looking for one.
+ * With every class finished there is no tenth to move to, which the last note
+ * here predicted. So it is a BARE COMBATANT with a mana pool and the real
+ * regeneration rules: what these tests are about is the mana timer, not any
+ * class that happens to own one.
+ * ----------------------------------------------------------------------------
  */
-const quietCaster = () => createPlayer({ race: 'undead', characterClass: 'priest' });
+const quietCaster = () => {
+  const reference = createPlayer({ race: 'undead', characterClass: 'priest' });
+  return makeAttacker({
+    autoAttack: 'none',
+    // The real stats, so `manaPer5` derives the way it does for a character.
+    stats: {
+      spirit: reference.stats.get('spirit'),
+      intellect: reference.stats.get('intellect'),
+    },
+    resources: [{ type: 'mana', maximum: reference.resources.require('mana').maximum }],
+    regeneration: regenerationFor(['mana']),
+  });
+};
 
 describe('every resource has a current and a maximum', () => {
   it('reports both for rage, energy and mana', () => {

@@ -184,8 +184,17 @@ describe('unmodelled talents are reported rather than silently inert', () => {
     expect(build.unmodelled[0].reason).toMatch(/weapon/i);
   });
 
-  it('contributes nothing at all for a class with no effect table', () => {
-    const build = talentBuild('priest', { unbreakable_will: 5 });
+  it('contributes nothing at all for an allocation that spent nothing', () => {
+    /*
+     * THIS USED TO NAME A CLASS WITH NO EFFECT TABLE -- the Mage, then the
+     * Warlock, then the Priest. Every class has one now, so there is no such
+     * class to name and the premise is simply gone.
+     *
+     * What it was really asserting survives: a build that spent no points
+     * contributes nothing, grants nothing, and reports nothing as unmodelled.
+     * That is the invariant, and it never depended on an unfinished class.
+     */
+    const build = talentBuild('priest', {});
     expect(build.stats).toEqual({});
     expect(build.grantedAbilities.size).toBe(0);
     expect(build.unmodelled).toEqual([]);

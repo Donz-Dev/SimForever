@@ -173,36 +173,48 @@ describe('player versus training dummy', () => {
     expect(result.damage.total).toBeGreaterThan(2000);
   });
 
-  it('runs a caster that does nothing at all without stalling', () => {
+  it('runs a caster to the end of the fight without stalling', () => {
     /*
-     * A Priest uses the Caster style, which never auto-attacks, and has no
-     * implemented abilities. It therefore deals literally no damage, and the
-     * fight must still complete cleanly rather than hanging or throwing.
+     * ------------------------------------------------------------------------
+     * THIS USED TO SAY "does nothing at all", and it named a class with no
+     * abilities -- the Mage, then the Warlock, then the Priest. Every class
+     * has content now, so there is no such class left and the premise is gone.
      *
-     * THIS NAMED THE MAGE, THEN THE WARLOCK. A "class with nothing in it"
-     * fixture has to move as classes arrive, and it failing is the signal that
-     * one did. The Priest is the LAST one -- when it is written, this wants a
-     * bare combatant rather than a class.
+     * What it was really protecting survives and is asserted below: a `caster`
+     * NEVER AUTO-ATTACKS, and a fight driven only by scheduled casts runs to
+     * its full duration rather than hanging or ending early. That was the
+     * failure mode worth a test, and it never depended on the damage being
+     * zero.
+     * ------------------------------------------------------------------------
      */
     const result = runProfile({
       ...profile,
-      character: { ...profile.character, race: 'undead', characterClass: 'priest' },
+      character: { ...profile.character, race: 'troll', characterClass: 'priest' },
     });
 
     expect(result.endReason).toBe('duration_expired');
-    expect(result.damage.total).toBe(0);
-    expect(result.damage.byActor).toHaveLength(0);
+    withinVariance(toSeconds(result.durationMs), profile.simulation.durationSeconds);
+
+    const used = result.damage.byActor[0].abilities.map((entry) => entry.abilityName);
+    expect(used).not.toContain('Main Hand Auto-Attack');
+    expect(used).not.toContain('Ranged Auto-Attack');
   });
 
-  it('gives a melee class damage where a caster has none', () => {
+  it('gives a melee class auto-attacks where a caster has none', () => {
     const asWarrior = runProfile(profile);
     const asCaster = runProfile({
       ...profile,
-      character: { ...profile.character, race: 'undead', characterClass: 'priest' },
+      character: { ...profile.character, race: 'troll', characterClass: 'priest' },
     });
 
+    const namesOf = (run: typeof asWarrior) =>
+      run.damage.byActor[0].abilities.map((entry) => entry.abilityName);
+
+    expect(namesOf(asWarrior)).toContain('Main Hand Auto-Attack');
+    expect(namesOf(asCaster)).not.toContain('Main Hand Auto-Attack');
+    // And both still deal damage, which every class in the project now does.
     expect(asWarrior.damage.total).toBeGreaterThan(0);
-    expect(asCaster.damage.total).toBe(0);
+    expect(asCaster.damage.total).toBeGreaterThan(0);
   });
 
   it('swings both weapons for a dual-wielding warrior', () => {

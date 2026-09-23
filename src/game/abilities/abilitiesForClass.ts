@@ -13,6 +13,7 @@ import { MAGE_TALENT_EFFECTS } from '../talents/mageEffects';
 import { PALADIN_TALENT_EFFECTS } from '../talents/paladinEffects';
 import { HUNTER_TALENT_EFFECTS } from '../talents/hunterEffects';
 import { WARLOCK_TALENT_EFFECTS } from '../talents/warlockEffects';
+import { PRIEST_TALENT_EFFECTS } from '../talents/priestEffects';
 import { WARRIOR_ABILITIES } from './warrior';
 import { ROGUE_ABILITIES } from './rogue';
 import { DRUID_ABILITIES } from './druid';
@@ -21,6 +22,7 @@ import { MAGE_ABILITIES } from './mage';
 import { PALADIN_ABILITIES } from './paladin';
 import { HUNTER_ABILITIES } from './hunter';
 import { WARLOCK_ABILITIES } from './warlock';
+import { PRIEST_ABILITIES } from './priest';
 import { legalAllocation } from '../talents/talentRules';
 import { talentsForClass } from '../talents/talentData';
 
@@ -59,6 +61,7 @@ const CLASS_ABILITIES: Partial<Record<ClassId, readonly Ability[]>> = {
   paladin: PALADIN_ABILITIES,
   hunter: HUNTER_ABILITIES,
   warlock: WARLOCK_ABILITIES,
+  priest: PRIEST_ABILITIES,
 };
 
 const TALENT_ABILITIES: Partial<Record<ClassId, Readonly<Record<string, string>>>> = {
@@ -70,6 +73,7 @@ const TALENT_ABILITIES: Partial<Record<ClassId, Readonly<Record<string, string>>
   paladin: grantsByAbility(PALADIN_TALENT_EFFECTS),
   hunter: grantsByAbility(HUNTER_TALENT_EFFECTS),
   warlock: grantsByAbility(WARLOCK_TALENT_EFFECTS),
+  priest: grantsByAbility(PRIEST_TALENT_EFFECTS),
 };
 
 /**
