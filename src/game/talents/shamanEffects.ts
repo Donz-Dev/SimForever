@@ -10,12 +10,11 @@ import type { TalentEffects } from './TalentEffect';
  * ----------------------------------------------------------------------------
  * WHAT CLUSTERS HERE, and what it tells the next class:
  *
- *   PERCENTAGE MANA    seven talents reduce a mana cost by a PERCENTAGE.
- *   COSTS              `abilityCost` subtracts a FLAT amount, which is right
- *                      for a 20-rage Mortal Strike and wrong for a 450-mana
- *                      Earth Shock. This is now the most common single reason
- *                      in the project, and Convection alone is 10% off four
- *                      spells an Elemental shaman never stops casting.
+ *   PERCENTAGE MANA    WAS the biggest cluster here and is now gone.
+ *   COSTS              Convection and Shamanistic Focus are live through
+ *                      `grantCastModifier`, which is worth 10% off everything
+ *                      an Elemental shaman casts and 45% off its Shocks --
+ *                      about a third of the profile's damage.
  *   TOTEMS             six. A totem is a separate attacking or buffing entity
  *                      and the engine has none, so anything scaling one is
  *                      inert -- including Call of Flame's fire-totem clause
@@ -32,12 +31,6 @@ import type { TalentEffects } from './TalentEffect';
  * ----------------------------------------------------------------------------
  */
 
-/** Said once; seven talents say it. */
-const PERCENT_MANA_COST =
-  'Reduces a mana cost by a PERCENTAGE. `abilityCost` subtracts a flat ' +
-  'amount, which is right for rage and energy and wrong for a spell costing ' +
-  'hundreds of mana.';
-
 /** Said once; six talents say it. */
 const TOTEMS_NOT_MODELLED =
   'A totem is a separate entity that attacks or buffs on its own, and the ' +
@@ -49,7 +42,20 @@ const NO_PROFILE_HEALS = 'Healing, and neither Shaman profile heals.';
 export const SHAMAN_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
   // --- Elemental -----------------------------------------------------------
 
-  convection: [{ kind: 'unmodelled', reason: PERCENT_MANA_COST }],
+  convection: [
+    {
+      kind: 'grantCastModifier',
+      abilityIds: [
+        'earth_shock',
+        'flame_shock',
+        'frost_shock',
+        'lightning_bolt',
+        'chain_lightning',
+        'lava_burst',
+      ],
+      property: 'costFraction',
+    },
+  ],
 
   concussion: [
     { kind: 'abilityDamage', abilityId: 'lightning_bolt' },
@@ -218,7 +224,14 @@ export const SHAMAN_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
     },
   ],
 
-  shamanistic_focus: [{ kind: 'unmodelled', reason: PERCENT_MANA_COST }],
+  shamanistic_focus: [
+    // The Shocks. Lightning Shield is in its text and not in the book.
+    {
+      kind: 'grantCastModifier',
+      abilityIds: ['earth_shock', 'flame_shock', 'frost_shock'],
+      property: 'costFraction',
+    },
+  ],
 
   anticipation: [{ kind: 'stat', stat: 'dodgeChance', operation: 'flat' }],
 
@@ -281,7 +294,20 @@ export const SHAMAN_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
   totemic_focus: [{ kind: 'unmodelled', reason: TOTEMS_NOT_MODELLED }],
   mindfulness: [{ kind: 'unmodelled', reason: 'Threat, which the engine does not track.' }],
   natural_grace: [{ kind: 'unmodelled', reason: NO_PROFILE_HEALS }],
-  tidal_focus: [{ kind: 'unmodelled', reason: PERCENT_MANA_COST }],
+  tidal_focus: [
+    /*
+     * ITS HIT HALF IS REAL AND ITS MANA HALF REACHES NOTHING. "Reduces the
+     * Mana cost of your HEALING spells by 5% and improves your chance to hit
+     * by 5%" -- the hit applies to everything, and the healing spells are not
+     * in the book at all.
+     *
+     * So this is inert for want of a HEALING PROFILE rather than for want of
+     * a percentage cost, which is what its reason used to claim. A test on
+     * the wording caught it when that claim stopped being true elsewhere.
+     */
+    { kind: 'stat', stat: 'hitChance', operation: 'flat', valueIndex: 1 },
+    { kind: 'unmodelled', reason: `Its mana half is healing only. ${NO_PROFILE_HEALS}` },
+  ],
   improved_reincarnation: [
     { kind: 'unmodelled', reason: 'A self-resurrection out of combat.' },
   ],

@@ -242,21 +242,37 @@ export const PALADIN_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
   deflection: [{ kind: 'stat', stat: 'parryChance', operation: 'flat' }],
 
   benediction: [
+    /*
+     * "All INSTANT cast spells and abilities", which for a Paladin is every
+     * seal, Judgement, Holy Strike, Holy Shield and Consecration. Holy Shock
+     * is instant too and is on the list.
+     */
     {
-      kind: 'unmodelled',
-      reason:
-        'Reduces the cost of instant abilities by a PERCENTAGE. `abilityCost` ' +
-        'subtracts a flat amount, which is wrong for a 210-mana seal -- and ' +
-        'this is the most common unmodelled reason in the project.',
+      kind: 'grantCastModifier',
+      abilityIds: [
+        'seal_of_righteousness',
+        'seal_of_command',
+        'seal_of_the_crusader',
+        'seal_of_fury',
+        'judgement',
+        'holy_strike',
+        'holy_shock',
+        'holy_shield',
+        'consecration',
+      ],
+      property: 'costFraction',
     },
   ],
 
   improved_judgement: [{ kind: 'abilityCooldown', abilityId: 'judgement', unit: 'seconds' }],
 
   holy_conduit: [
+    // Consecration is the only one of its four in the book; the other three
+    // are Undead-and-Demon spells that do nothing here.
+    { kind: 'grantCastModifier', abilityIds: ['consecration'], property: 'costFraction' },
     {
       kind: 'unmodelled',
-      reason: `A percentage mana reduction on Consecration and three spells. ${NOT_UNDEAD}`,
+      reason: `Its Holy Wrath, Exorcism and Hammer of Wrath clauses. ${NOT_UNDEAD}`,
     },
   ],
 

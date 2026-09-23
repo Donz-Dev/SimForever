@@ -32,10 +32,8 @@ export const DRUID_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
 
   improved_wrath: [
     { kind: 'abilityCastTime', abilityId: 'wrath' },
-    {
-      kind: 'unmodelled',
-      reason: 'The cast time applies. Its 50% mana reduction is a second value the effect cannot read.',
-    },
+    // The SECOND value: "and its Mana cost by 50%". Index 0 is the half second.
+    { kind: 'grantCastModifier', abilityIds: ['wrath'], property: 'costFraction', valueIndex: 1 },
   ],
 
   genesis: [
@@ -48,12 +46,11 @@ export const DRUID_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
   ],
 
   moonglow: [
+    // "Your damaging spells" -- every nuke and both bleeds a Moonkin casts.
     {
-      kind: 'unmodelled',
-      reason:
-        'Reduces the mana cost of damaging spells by a PERCENTAGE. ' +
-        '`abilityCost` subtracts a flat amount, which is right for rage and ' +
-        'energy and wrong for a 375 mana spell.',
+      kind: 'grantCastModifier',
+      abilityIds: ['wrath', 'starfire', 'moonfire', 'insect_swarm'],
+      property: 'costFraction',
     },
   ],
 

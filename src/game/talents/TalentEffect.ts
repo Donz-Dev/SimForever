@@ -358,6 +358,40 @@ export type TalentEffect =
    * would be invisibly wrong, and this project would rather be the first.
    */
   /**
+   * A `CastModifier` the character carries from the pull, built from the
+   * talent's value.
+   *
+   * ----------------------------------------------------------------------
+   * THIS RETIRES THE MOST COMMON `unmodelled` REASON IN THE PROJECT.
+   *
+   * "Reduces the mana cost of your Shock spells by 45%" is a FRACTION OF THE
+   * COST, and `CastModifier.costFraction` has been exactly that since it was
+   * built for Maelstrom Weapon. What was missing was a way for a TALENT to
+   * hand one over: `abilityCost` subtracts a FLAT amount, which is right for
+   * a 20-rage Mortal Strike and wrong for a 450-mana Earth Shock, and eleven
+   * talents across seven classes said so in almost identical words.
+   *
+   * The Priest's Shadowform was the first thing to express one, and only
+   * because it arrives on an AURA rather than from a talent. This is the
+   * missing half, and it is a new EFFECT rather than a new rule -- the
+   * modifier, its resolution and its consumption all already existed.
+   *
+   * GRANTED AS A PERMANENT AURA, one per talent, so it goes through the same
+   * `resolveCast` path every other cast modifier does. Two of them on the
+   * same ability stack ADDITIVELY -- Shadowform's 50% and Mental Agility's
+   * 10% make 60% -- which is how percentage cost reductions behave and falls
+   * out of `resolveCast` subtracting each from the base.
+   * ----------------------------------------------------------------------
+   */
+  | {
+      readonly kind: 'grantCastModifier';
+      readonly abilityIds: readonly string[];
+      /** Which field of the modifier the talent's value feeds. */
+      readonly property: 'costFraction' | 'castTimeFraction';
+      readonly valueIndex?: number;
+    }
+
+  /**
    * Something the talent does to the owner's PET rather than to the owner.
    *
    * ----------------------------------------------------------------------

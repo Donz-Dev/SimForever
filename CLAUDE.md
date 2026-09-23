@@ -242,16 +242,34 @@ gap survey listed as blocked on pets turned out not to want one. The pet work
 the Beast Mastery hunter needed is not wasted; it is simply not what the other
 four do, and that is a property of the BUILDS rather than of the engine.
 
-**A PERCENTAGE MANA REDUCTION IS `CastModifier.costFraction`, AND IT TOOK
-NINE CLASSES TO NOTICE.** "Reduces the mana cost by 50%" is a FRACTION OF THE
-COST, which is exactly what that field is; `abilityCost` subtracts a flat
-amount, which is right for a 20-rage Mortal Strike and wrong for a 380-mana
-Immolate. The mismatch is the single most common `unmodelled` reason in the
-project -- Convection, Shamanistic Focus, Frost Channeling, Benediction,
-Cataclysm, Efficiency, Moonglow and more -- and the Priest's Shadowform is the
-first thing to express one, because it arrives on an AURA. A TALENT still
-cannot grant one: that wants a `grantCastModifier` effect kind, not a new
-rule, and Mental Agility and Devouring Contagion say so.
+**A PERCENTAGE MANA REDUCTION IS `CastModifier.costFraction`, AND A TALENT
+GRANTS ONE WITH `grantCastModifier`.** "Reduces the mana cost by 50%" is a
+FRACTION OF THE COST, which is what that field always was; `abilityCost`
+subtracts a flat amount, which is right for a 20-rage Mortal Strike and wrong
+for a 380-mana Immolate. That mismatch was the single most common `unmodelled`
+reason in the project -- eleven talents across SEVEN classes saying it in
+almost identical words -- and it was a missing DECLARATION rather than a
+missing rule: the modifier, its resolution and its consumption all already
+existed.
+
+**TWO OF THEM ON THE SAME ABILITY STACK ADDITIVELY.** Improved Wrath's 50% and
+Moonglow's 25% make 75%, not the 62.5% two multiplicative reductions would
+give, because `resolveCast` subtracts each from the BASE rather than from the
+running total. Both readings produce a plausible number, which is why there is
+a test on it.
+
+**IT ONLY MOVES A MANA-BOUND PROFILE, and that is the point.** A cost
+reduction is worth nothing to a build that never runs dry: the Moonkin gained
+48% and the Elemental shaman 32%, while Retribution -- which genuinely has
+Benediction applying -- did not move at all. A talent working and a talent
+mattering are different questions.
+
+**AN `unmodelled` REASON MATCHED BY WORDING IS A TEST.**
+`grantCastModifier.test.ts` fails if any talent still claims a percentage cost
+cannot be expressed, matching the SENTENCE rather than a list of ids -- so a
+new class writing the same complaint is caught. It found one on the way in:
+the Shaman's Tidal Focus, which is inert for want of a healing profile and had
+been given the percentage-cost reason by mistake.
 
 **A TALENT REACHES THE OWNER; A PET NEEDS `petStat` AND `petReaction`.** Six
 Hunter talents were inert for one reason -- a talent effect lands on the
