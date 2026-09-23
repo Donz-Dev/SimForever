@@ -22,6 +22,18 @@ diff** beside each one, which is what tells "Forever changed this" from
 "Forever inherited this". Its data is in the page's RSC payload; see
 [warrior-ability-audit.md](warrior-ability-audit.md) for the extraction.
 
+## Before starting a class: does the engine already do it?
+
+[engine-gap-survey.md](engine-gap-survey.md) answers that for all twenty
+profiles, checked against the code rather than assumed. The short version:
+**fourteen of the twenty need no engine change at all**, and the three features
+that block the rest are combo points (content, not engine), channelled casts,
+and pets.
+
+**Sequence by shared mechanism, not by class.** Ordering alphabetically would
+have built Druid's forms — which already exist — before combo points, which
+Cat Druid and all three Rogues are equally waiting on.
+
 ## The steps
 
 ### 1. Refresh the talent data
