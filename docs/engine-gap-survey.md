@@ -67,6 +67,29 @@ proven. What is missing is entirely in `game`:
 
 **Do this first.** It is the cheapest thing on the list and unblocks the most.
 
+### 1b. What the Rogue turned up — **an on-cast hook**
+
+Three profiles shipped on 2026-09-23 and the class exposed one gap the survey
+did not predict, wanted by **four talents at once**:
+
+| | |
+| --- | --- |
+| Relentless Strikes | returns energy **when a finisher is cast**, per point spent |
+| Ruthlessness | returns a combo point on the same event |
+| Improved Expose Armor | refunds combo points when cast at five |
+| Seal Fate | adds a point when an ability **that awards one** crits |
+
+A `reaction` fires on damage dealt or taken. None of these is a damage event:
+three key off a CAST and the fourth needs the ability to declare that it
+builds combo points.
+
+**It is not cosmetic.** With Relentless Strikes absent, the Rogue cannot afford
+its own finisher: Slice and Dice consumes the entire combo point budget and
+**Eviscerate fires zero times at any threshold** — measured at one through five
+points, with DPS moving six points across the whole range. That is recorded in
+`rotations/rogue.ts` and asserted in `tests/game/rogueAbilities.test.ts` rather
+than tuned around.
+
 ### 2. Channelled casts — **engine**
 
 Needed by **Shadow Priest**, and wanted by Warlock and Arcane Mage.
@@ -128,7 +151,7 @@ rather than by class:
 | Wave | Profiles | Needs |
 | --- | --- | --- |
 | **1** | Bear Druid, Moonkin Druid, Ele Shaman, Enhance Shaman, Frostfire / Arcane / Fire Mage, Shockadin, Seal Twist Ret, Prot Pally | content only |
-| ~~**1b**~~ | Cat Druid, Venom / Combat / Rupture Rogue | ~~combo points~~ **done** |
+| ~~**1b**~~ | ~~Venom / Combat / Rupture Rogue~~ **done**, Cat Druid | ~~combo points~~ **done** |
 | **2** | Shadow Priest | channelled casts |
 | **3** | BM Hunter, LW Ranged, LW Melee, SM/DS Warlock, Firelock | pets |
 

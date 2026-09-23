@@ -32,17 +32,36 @@ import { characterAtCombatStart, runProfileBatch } from '../../src/simulator';
 
 const tree = talentsForClass('warrior')!;
 
+/** The tree a preset's own class uses, so a test cannot ask the wrong one. */
+function treeFor(characterClass: string) {
+  const talents = talentsForClass(characterClass as never);
+  if (!talents) throw new Error(`no talents for ${characterClass}`);
+  return talents;
+}
+
 describe('the preset catalogue', () => {
-  it('offers the three builds, with stable ids', () => {
+  it('offers every build, with stable ids, class by class', () => {
+    /*
+     * IDS ARE STABLE BECAUSE A SAVED PROFILE CAN NAME ONE. Order is asserted
+     * too, because it is the order the buttons appear in on the creation
+     * screen, and a class arriving in the middle of the list would silently
+     * move everything after it.
+     */
     expect(PROFILE_PRESETS.map((preset) => preset.id)).toEqual([
       'two_hand_arms',
       'dw_fury',
       'prot_warr',
+      'rogue_venom',
+      'rogue_combat',
+      'rogue_rupture',
     ]);
     expect(PROFILE_PRESETS.map((preset) => preset.label)).toEqual([
       '2H Arms',
       'DW Fury',
       'Prot Warr',
+      'Venom',
+      'Combat',
+      'Rupture',
     ]);
   });
 
@@ -155,7 +174,16 @@ describe('the preset catalogue', () => {
      * was written down -- which is exactly what nearly happened to Prot Warr.
      */
     for (const preset of PROFILE_PRESETS) {
-      const talents = preset.build().talents;
+      const profile = preset.build();
+      const talents = profile.talents;
+      /*
+       * THE PRESET'S OWN CLASS, not a fixed one. This read the Warrior tree
+       * for every preset, which was true while every preset was a Warrior and
+       * reported all seventeen Rogue talents as dropped the moment one was
+       * not -- a failure that looks like a broken build rather than a test
+       * asking the wrong tree.
+       */
+      const tree = treeFor(profile.character.characterClass);
       const legal = legalAllocation(tree, talents);
       expect(legal.dropped, `${preset.id} dropped`).toEqual([]);
       expect(legal.allocation, preset.id).toEqual(talents);

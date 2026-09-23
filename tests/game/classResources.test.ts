@@ -214,16 +214,23 @@ describe('createPlayer', () => {
     }
   });
 
-  it('only gives the warrior abilities and a rotation for now', () => {
-    const warrior = player('warrior');
-    expect(warrior.abilities.all.length).toBeGreaterThan(0);
-    expect(warrior.rotation).toBeDefined();
+  it('gives abilities and a rotation to the classes that have them', () => {
+    /*
+     * TWO OF NINE, and the list grows one class at a time. A class with no
+     * entry gets an empty book and no rotation rather than a stand-in, so an
+     * unwritten class produces nothing instead of producing something wrong.
+     */
+    const implemented = new Set(['warrior', 'rogue']);
 
     for (const id of CLASS_IDS) {
-      if (id === 'warrior') continue;
       const combatant = player(id);
-      expect(combatant.abilities.all, id).toHaveLength(0);
-      expect(combatant.rotation, id).toBeUndefined();
+      if (implemented.has(id)) {
+        expect(combatant.abilities.all.length, id).toBeGreaterThan(0);
+        expect(combatant.rotation, id).toBeDefined();
+      } else {
+        expect(combatant.abilities.all, id).toHaveLength(0);
+        expect(combatant.rotation, id).toBeUndefined();
+      }
     }
   });
 });

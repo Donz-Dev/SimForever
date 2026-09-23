@@ -24,10 +24,12 @@ import type {
 import { talentsForClass } from './talentData';
 import { talentDescription, talentNumber } from './talentValues';
 import { WARRIOR_TALENT_EFFECTS } from './warriorEffects';
+import { ROGUE_TALENT_EFFECTS } from './rogueEffects';
 
 /** Effect tables per class. Only the Warrior has one. */
 const EFFECTS: Partial<Record<ClassId, Readonly<Record<string, TalentEffects>>>> = {
   warrior: WARRIOR_TALENT_EFFECTS,
+  rogue: ROGUE_TALENT_EFFECTS,
 };
 
 /** Reaction builders per class, keyed by talent id. */
