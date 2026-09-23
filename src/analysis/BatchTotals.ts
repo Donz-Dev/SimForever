@@ -402,9 +402,44 @@ export class BatchTotals implements TelemetrySink {
     return this.per(this.damageBySource.get(sourceId) ?? 0);
   }
 
-  abilityBreakdown(sourceId: string): readonly BatchAbilityTotals[] {
-    const perActor = this.abilities.get(sourceId);
-    if (!perActor) return [];
+  /**
+   * Every ability one or more actors used, pooled.
+   *
+   * ----------------------------------------------------------------------------
+   * SEVERAL ACTORS, BECAUSE A PET'S DAMAGE IS THE PLAYER'S DAMAGE. `dps`
+   * already sums every FRIENDLY actor -- it has since batching was written --
+   * so a breakdown covering only the player would add up to less than the DPS
+   * beside it, and a Beast Mastery hunter would show a third of its damage
+   * missing with nothing to say where it went.
+   *
+   * Rows are keyed by ability NAME, so a pet's Claw and a player's Claw would
+   * pool together. Nothing shares a name today and the pet's rows are labelled
+   * by its own abilities, but that is the failure this would have.
+   * ----------------------------------------------------------------------------
+   */
+  abilityBreakdown(sourceIds: string | Iterable<string>): readonly BatchAbilityTotals[] {
+    const ids = typeof sourceIds === 'string' ? [sourceIds] : [...sourceIds];
+
+    // Merged across actors before anything is derived, so `share` and
+    // `average` are computed over the whole pool rather than per actor.
+    const perActor = new Map<string, AbilityAccumulator>();
+    for (const id of ids) {
+      for (const [name, entry] of this.abilities.get(id) ?? []) {
+        const existing = perActor.get(name);
+        if (!existing) {
+          perActor.set(name, { ...entry });
+          continue;
+        }
+        existing.uses += entry.uses;
+        existing.damage += entry.damage;
+        existing.attempts += entry.attempts;
+        existing.hits += entry.hits;
+        existing.crits += entry.crits;
+        existing.glances += entry.glances;
+        existing.avoided += entry.avoided;
+      }
+    }
+    if (perActor.size === 0) return [];
 
     let total = 0;
     for (const entry of perActor.values()) total += entry.damage;

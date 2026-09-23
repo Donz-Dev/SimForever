@@ -65,6 +65,9 @@ describe('the preset catalogue', () => {
       'pally_ret',
       'pally_shockadin',
       'prot_pally',
+      'bm_hunter',
+      'lw_ranged',
+      'lw_melee',
     ]);
     expect(PROFILE_PRESETS.map((preset) => preset.label)).toEqual([
       '2H Arms',
@@ -84,6 +87,9 @@ describe('the preset catalogue', () => {
       'Seal Twist Ret',
       'Shockadin',
       'Prot Pally',
+      'BM Hunter',
+      'LW Ranged',
+      'LW Melee',
     ]);
   });
 

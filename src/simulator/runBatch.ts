@@ -123,6 +123,8 @@ export function runBatch(config: SimulationConfig, options: BatchOptions): Batch
    */
   const totals = new BatchTotals();
   let playerId = '';
+  // Every friendly actor, for the damage breakdown. A pet is one of these.
+  let friendlyIdsForReporting: readonly string[] = [];
   let rotationName: string | undefined;
   let damageSoFar = 0;
   /*
@@ -154,6 +156,7 @@ export function runBatch(config: SimulationConfig, options: BatchOptions): Batch
     durations[index] = run.elapsedMs;
     if (!playerId) {
       playerId = friendlyIds[0] ?? '';
+      friendlyIdsForReporting = friendlyIds;
       rotationName = run.actors.find((actor) => actor.id === playerId)?.rotation;
       const player = simulation.combatants.find((actor) => actor.id === playerId);
       caveats = (player?.abilities.all ?? [])
@@ -183,7 +186,18 @@ export function runBatch(config: SimulationConfig, options: BatchOptions): Batch
   const representativeIndex = indexClosestTo(dpsSamples, dps.median);
   const representative = runSimulation({ ...config, seed: seeds[representativeIndex] });
 
-  const abilities = totals.abilityBreakdown(playerId);
+  /*
+   * EVERY FRIENDLY ACTOR, NOT JUST THE PLAYER.
+   *
+   * `dps` has summed the whole friendly side since batching was written, so a
+   * breakdown covering only the player adds up to LESS than the DPS printed
+   * beside it -- and a Beast Mastery hunter would show a third of its damage
+   * missing with nothing on the page to say where it went.
+   *
+   * `playerId` still names the player alone for rage, buffs and survival,
+   * which are genuinely the player's. Damage is the one thing a pet shares.
+   */
+  const abilities = totals.abilityBreakdown(friendlyIdsForReporting);
 
   return {
     iterations,
