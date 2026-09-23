@@ -12,6 +12,17 @@ type Migration = (profile: Record<string, unknown>) => Record<string, unknown>;
  */
 const migrations: Record<number, Migration> = {
   /**
+   * Version 9 added `raidBuffs`, the ids of the buffs assumed to be up.
+   *
+   * Older profiles get an EMPTY list, so nothing about their results changes.
+   * That is the whole reason empty is the default rather than a sensible raid
+   * loadout: a migration that handed every saved character a raid's worth of
+   * attack power would invalidate every figure they had recorded, and would do
+   * it silently.
+   */
+  8: (profile) => ({ raidBuffs: [], ...profile }),
+
+  /**
    * Version 8 took `simulation.durationVariance` off the profile.
    *
    * Fight length now varies by a fixed fraction built into the simulator, so

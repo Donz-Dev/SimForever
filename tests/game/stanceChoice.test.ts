@@ -1,7 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import { createPlayer } from '../../src/game/actors/createPlayer';
 import { defaultStanceFor, resolveStance, STANCES } from '../../src/game/character';
-import { createDefaultProfile, migrateProfile } from '../../src/profiles';
+import {
+  CURRENT_PROFILE_VERSION,
+  createDefaultProfile,
+  migrateProfile,
+} from '../../src/profiles';
 import { runProfileBatch } from '../../src/simulator';
 import { startingEquipmentFor } from '../../src/game/items/startingSets';
 
@@ -145,7 +149,7 @@ describe('the tank list stays in Defensive Stance', () => {
   });
 });
 
-describe('profile format 8', () => {
+describe('an older profile with no stance', () => {
   it('leaves an older profile without a stance, so it takes the default', () => {
     /*
      * Deliberately NOT backfilled with 'battle'. Writing that in would
@@ -161,7 +165,9 @@ describe('profile format 8', () => {
       version: number;
       character: { combatStyle?: never; stance?: never };
     };
-    expect(migrated.version).toBe(8);
+    // Carried to the CURRENT format, whatever that is, rather than to the one
+    // this test was written against.
+    expect(migrated.version).toBe(CURRENT_PROFILE_VERSION);
     expect(migrated.character.stance).toBeUndefined();
     expect(resolveStance(migrated.character.combatStyle, migrated.character.stance)).toBe(
       'battle',

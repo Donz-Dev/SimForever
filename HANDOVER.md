@@ -28,10 +28,11 @@ their talent trees and nothing else.
 | **Procs** | PPM (Vis'kag, Crusader) and flat-chance with an internal cooldown (Hand of Justice) |
 | **Talents** | all 469 talents, nine classes, spendable in the UI and saved on the profile. The Warrior's per-rank values are captured; **45 of its 53 talents do something** (39 fully, 6 partly), 8 say on screen why they cannot |
 | **Encounter** | the target optionally hits back, **ramping 10% a swing**, against a character held up by an assumed healer who can be out-damaged. Deaths are counted. See [docs/incoming-damage.md](docs/incoming-damage.md) |
+| **Raid buffs** | 20 buffs, debuffs and totems selectable per profile and applied before the first swing, Windfury's proc included. Nothing on by default. See [docs/raid-buffs.md](docs/raid-buffs.md) |
 | **Analysis** | DPS, per-ability breakdown with uses/attempts/hits/crit/glance/avoid rates, buff and debuff uptime, rage economy, deaths and healing received |
 | **UI** | two-step character flow, per-class character sheet (offensive and defensive), style-aware gear, talent trees, combat log, Monte Carlo batches, uptime bar charts |
 
-**1,128 tests**, CI green on Node 20 and 22. Profile format **v8**.
+**1,213 tests**, CI green on Node 20 and 22. Profile format **v9**.
 
 The interface is one theme, **Abyssal Copper**, chosen from four mock-ups. The
 other three still exist in `ui/styles.css` under `:root[data-theme=...]` and
@@ -304,11 +305,16 @@ of how much they distort results.
 
 5. **`manaRegenBypass`** exists as a stat but nothing grants it.
 
-**No buffs are applied at combat start.** `BATTLE_FURY`, an example aura
-granting an invented +10% attack power, used to be applied to every player and
-was removed — it inflated every figure and made a sheet reading 400 attack power
-fight at 440. Real raid buffs go in `simulator/trainingDummyEncounter.ts` when
-there is real data for them.
+**Raid buffs exist now, and none of them is on by default.** `BATTLE_FURY`, an
+example aura granting an invented +10% attack power, used to be applied to
+every player and was removed — it inflated every figure and made a sheet
+reading 400 attack power fight at 440. The note left in its place said real
+raid buffs belonged there when there was real data for them, and there is:
+twenty entries, every number from the ruleset owner directly, selected per
+profile. See [docs/raid-buffs.md](docs/raid-buffs.md).
+
+**The baselines below were measured with none of them selected**, which is
+what an empty default is for.
 
 **The rotation was last tuned against placeholder weapons.** Rend outranks
 Mortal Strike in the priority list because rage was scarce and a bleed ignores
@@ -406,6 +412,7 @@ src/
 │   ├── combat/      attackChances, resourceRules, weaponDamage (the speed/14 formula)
 │   ├── actors/      createPlayer, createTrainingDummy, placeholder weapons
 │   ├── encounters/  raidBoss (the boss melee and its ramp), externalHealer
+│   ├── buffs/       raidBuffs (the catalogue), windfury (the one proc)
 │   ├── abilities/   warrior.ts (real), abilitiesForClass.ts (the lookup)
 │   ├── auras/       warrior.ts — Rend is real, the rest are PLACEHOLDER
 │   ├── items/       Item, itemData (loads the JSON), equipment, procs
@@ -419,7 +426,7 @@ src/
 │
 ├── analysis/        analyzers; SimulationResult
 ├── simulator/       runProfile, runProfileBatch, trainingDummyEncounter
-├── profiles/        versioned profiles (format v8), validation, migration
+├── profiles/        versioned profiles (format v9), validation, migration
 └── ui/              React panels
 ```
 
@@ -427,8 +434,9 @@ Longer explanations: [`docs/`](docs/) — `architecture.md`,
 `simulation-engine.md`, `combat-tables.md`, `character-creation.md`,
 `resources.md`, `telemetry.md`, `profiles.md`, `warrior-abilities.md`,
 `global-cooldown.md` (a fundamental rule, written down after it was found
-broken in four places) and `incoming-damage.md` (the ramp, the assumed healer
-and how death is counted).
+broken in four places), `incoming-damage.md` (the ramp, the assumed healer and
+how death is counted) and `raid-buffs.md` (what the rest of the group supplies,
+and the two traps in Windfury).
 
 `ProfilePanel.tsx` is **not mounted**. Import and Load buttons sit above the
 character name as placeholders; the panel's serialize-out / parse-in / render-

@@ -1140,3 +1140,51 @@ button:disabled {
   margin: -6px 0 4px;
   font-size: 12px;
 }
+
+/* --- raid buffs --- */
+
+/* Grouped by provider. The source label is a quiet column heading rather than
+   another row, so twenty buffs read as five groups instead of twenty lines. */
+.buff-group {
+  margin-top: 12px;
+}
+
+.buff-source {
+  display: block;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 4px;
+}
+
+.buff-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+/* Grid rather than flex, so the name column is the same width in every row and
+   the details line up down the panel. A ragged left edge on the descriptions
+   makes a list this long much harder to scan. */
+.buff-row {
+  display: grid;
+  grid-template-columns: auto minmax(120px, max-content) 1fr;
+  align-items: baseline;
+  gap: 8px;
+  padding: 3px 0;
+  cursor: pointer;
+}
+
+.buff-row:hover .buff-name {
+  color: var(--accent);
+}
+
+.buff-name {
+  color: var(--text);
+  font-weight: 500;
+}
+
+.buff-detail {
+  font-size: 12px;
+}

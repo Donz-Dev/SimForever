@@ -511,6 +511,22 @@ export class Combatant {
     this.health.set(0);
   }
 
+  /**
+   * How much more (or less) damage of one school this combatant takes.
+   *
+   * Multiplied on TOP of `damageTakenMultiplier`, not instead of it: a target
+   * under Curse of the Elements and a blanket damage-taken debuff is under
+   * both. Schools an aura does not name are untouched.
+   */
+  damageTakenMultiplierFor(school: DamageSchool): number {
+    let product = this.damageTakenMultiplier;
+    for (const aura of this.auras.active) {
+      const bySchool = aura.definition.damageTakenBySchool;
+      if (bySchool?.[school] !== undefined) product *= bySchool[school]!;
+    }
+    return product;
+  }
+
   private auraMultiplier(
     key: 'damageDoneMultiplier' | 'damageTakenMultiplier' | 'healingDoneMultiplier',
   ): number {

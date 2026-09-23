@@ -12,7 +12,7 @@ import type { TalentAllocation } from '../game/talents/Talent';
  * moves on. Getting this in before anyone has saved anything is much cheaper
  * than retrofitting it later.
  */
-export const CURRENT_PROFILE_VERSION = 8;
+export const CURRENT_PROFILE_VERSION = 9;
 
 export interface CharacterSection {
   readonly name: string;
@@ -161,6 +161,28 @@ export interface CharacterProfile {
   readonly talents: TalentAllocation;
   readonly simulation: SimulationSection;
   readonly encounter: EncounterSection;
+  /**
+   * Raid buffs, debuffs and consumables assumed to be up, by id.
+   *
+   * ----------------------------------------------------------------------------
+   * IDS, not copies, for the same reason equipment stores item ids: what a buff
+   * IS belongs to `game/buffs/raidBuffs.ts`, and a profile carrying its own
+   * numbers would drift the moment one was corrected.
+   *
+   * A LIST RATHER THAN A MAP of id to boolean. The question a profile answers
+   * is "which are on", and a map answers it twice -- an id absent and an id
+   * present with `false` would mean the same thing and could disagree.
+   *
+   * EMPTY BY DEFAULT, and that is a judgement rather than an oversight. Every
+   * number this project has ever recorded was measured without them, and a
+   * default that silently applied a raid's worth of attack power would move
+   * all of it. It is also how `BATTLE_FURY` went wrong: a buff nobody asked
+   * for inflating every figure.
+   *
+   * Added in format version 9. Older profiles have none, which reads as a
+   * character fighting unbuffed -- which is exactly what they were.
+   */
+  readonly raidBuffs: readonly string[];
 }
 
 /** A sensible starting profile, matching the first-milestone prototype. */
@@ -200,6 +222,9 @@ export function createDefaultProfile(): CharacterProfile {
       iterations: 3000,
       seed: 12345,
     },
+    // Nothing assumed. See the field: a default raid buff would move every
+    // number anyone has ever recorded.
+    raidBuffs: [],
     encounter: {
       targetName: 'Training Dummy',
       targetHealth: 100_000,
@@ -229,5 +254,6 @@ export function cloneProfile(profile: CharacterProfile): CharacterProfile {
     talents: { ...profile.talents },
     simulation: { ...profile.simulation },
     encounter: { ...profile.encounter },
+    raidBuffs: [...profile.raidBuffs],
   };
 }

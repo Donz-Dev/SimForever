@@ -1,3 +1,4 @@
+import type { DamageSchool } from '../combat/DamageSchool';
 import type { Milliseconds } from '../time';
 import type { StatModifierSpec } from '../stats';
 import type { SimulationContext } from '../simulation/SimulationContext';
@@ -55,8 +56,21 @@ export interface AuraDefinition {
   readonly modifiersScaleWithStacks?: boolean;
   /** Multiplies damage the carrier deals. 1.1 is +10%. */
   readonly damageDoneMultiplier?: number;
-  /** Multiplies damage the carrier takes. */
+  /** Multiplies damage the carrier takes, whatever school it is. */
   readonly damageTakenMultiplier?: number;
+  /**
+   * Multiplies damage the carrier takes FROM PARTICULAR SCHOOLS.
+   *
+   * Separate from `damageTakenMultiplier` because the two answer different
+   * questions and a debuff often names only some schools: Curse of the
+   * Elements raises every magic school by 8% and leaves physical alone, which
+   * one number cannot express.
+   *
+   * Schools not listed are unaffected. Both multipliers apply when both are
+   * present, which is correct -- "takes 20% more damage" and "takes 8% more
+   * fire damage" are different effects on the same target.
+   */
+  readonly damageTakenBySchool?: Partial<Record<DamageSchool, number>>;
   /** Multiplies healing the carrier does. */
   readonly healingDoneMultiplier?: number;
   readonly periodic?: PeriodicEffect;

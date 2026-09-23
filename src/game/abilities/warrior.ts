@@ -17,6 +17,7 @@ import {
   SHIELD_BLOCK,
   SHIELD_WALL,
   SUNDER_ARMOR,
+  THUNDER_CLAP_SLOW,
   STANCE_RAGE_FLOOR,
   STANCE_RAGE_RETAINED_BONUS,
   WARRIOR_STANCES,
@@ -441,6 +442,13 @@ export const HAMSTRING: Ability = {
  * Listed as a RANGED Special Attack, and implemented literally as the ruleset
  * owner confirmed. A warrior has no ranged weapon in any of its three styles,
  * so `weaponSkill('ranged')` falls back to five times its level.
+ *
+ * IT ALSO SLOWS, which it did not until the ruleset owner said so. The
+ * spreadsheet gives this row a damage figure and nothing else, and the slow
+ * arrived from the raid buff list -- where it was applied once at the pull by
+ * an assumed raid and fell off after thirty seconds with nothing to renew it.
+ * A warrior casting Thunder Clap every four seconds keeps it up all fight,
+ * which is what the ability is for. See `THUNDER_CLAP_SLOW`.
  */
 export const THUNDER_CLAP: Ability = {
   id: 'thunder_clap',
@@ -463,6 +471,14 @@ export const THUNDER_CLAP: Ability = {
       attackTable: ability.attackTable,
       weaponSlot: 'ranged',
     });
+
+    /*
+     * APPLIED WHETHER OR NOT THE DAMAGE LANDED. The slow is a separate effect
+     * of the cast rather than a rider on the hit -- the spell applies an aura
+     * and deals damage, and nothing in the source ties the first to the
+     * second. `dealDamage` above reports its own outcome either way.
+     */
+    simulation.applyAura(target, THUNDER_CLAP_SLOW, caster.id);
   },
 };
 

@@ -268,22 +268,38 @@ describe('Toughness', () => {
 // ---------------------------------------------------------------------------
 
 describe('Bastion', () => {
-  it('raises DPS by MORE than its ten percent, and that is not a bug', () => {
+  it('raises DPS by about its ten percent, plus whatever the rage loop adds', () => {
     /*
-     * A 1.1x damage multiplier moves DPS by about 16%, not 10, and the extra
-     * is real: a warrior's rage income is proportional to damage dealt, so
-     * more damage buys more rage, which buys more casts, which deal more
-     * damage. The loop is the whole reason rage-starved builds scale oddly.
+     * A 1.1x damage multiplier does not move DPS by exactly 10%, because a
+     * warrior's rage income is proportional to damage dealt: more damage buys
+     * more rage, which buys more casts, which deal more damage.
      *
-     * It reads 1.1 exactly on a single swing, which is the test below --
-     * that is where the multiplier lives, uncontaminated by the feedback.
-     * Asserting 1.1 here would be asserting that the feedback does not exist.
+     * HOW MUCH THAT LOOP IS WORTH DEPENDS ON THE WHOLE ENCOUNTER, and it has
+     * already changed twice. It read 1.16 when the tank was drowning in rage
+     * from a ramping target, and about 1.106 once Thunder Clap started slowing
+     * that target -- a fifth fewer swings taken is a fifth less rage from
+     * damage taken, and rage wasted at the cap fell from four times gained to
+     * about 1.3 times. A tank closer to rage-constrained gets more out of the
+     * extra rage and less out of the loop.
+     *
+     * MEASURED AT 400 ITERATIONS, not the helper's 60. At 60 this reads 1.089
+     * and the old assertion of "> 1.1" was passing on noise: the same
+     * comparison gives 1.098 at 400 and 1.106 at 1500.
+     *
+     * The exact 1.1 lives in the test below, on the combatant's own
+     * multiplier, uncontaminated by any of this.
      */
-    const plain = runProfileBatch(tank()).dps.mean;
-    const specced = runProfileBatch(tank(legalise({ bastion: 5 }))).dps.mean;
-    const ratio = specced / plain;
-    expect(ratio).toBeGreaterThan(1.1);
-    expect(ratio).toBeLessThan(1.25);
+    const base = createDefaultProfile();
+    const measure = (talents: Record<string, number> = {}) =>
+      runProfileBatch(
+        tank(talents, {
+          simulation: { ...base.simulation, iterations: 400, seed: 29, durationSeconds: 60 },
+        }),
+      ).dps.mean;
+
+    const ratio = measure(legalise({ bastion: 5 })) / measure();
+    expect(ratio).toBeGreaterThan(1.05);
+    expect(ratio).toBeLessThan(1.2);
   });
 
   it('is exactly 1.1, and reaches AUTO ATTACKS because it is not per-ability', () => {

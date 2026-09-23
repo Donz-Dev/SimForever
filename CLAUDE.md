@@ -141,6 +141,18 @@ killing blow was meant to trigger -- and it does not reset the target's ramp,
 because a ramp that reset would hand a character an easier fight for dying.
 Full rules and provenance in [docs/incoming-damage.md](docs/incoming-damage.md).
 
+**Raid buffs are SELECTED, never assumed, and a pool has to be sized from
+them.** The catalogue is `game/buffs/raidBuffs.ts`, the profile stores chosen
+ids, and nothing is on by default -- a buff that applied itself would move every
+figure ever recorded, which is exactly what `BATTLE_FURY` did. Health and mana
+are resource maximums computed ONCE from a stats snapshot, so a stamina buff
+applied as an aura grants no health at all: the encounter passes `poolStats`, a
+transform from the character's own stats to their buffed ones, and the pools are
+sized from that. A proc's reaction is built PER CHARACTER, because an internal
+cooldown is per-character state and one shared closure silently stopped Windfury
+proccing after the first iteration of a batch. Full rules in
+[docs/raid-buffs.md](docs/raid-buffs.md).
+
 **A revive keeps auras, except the ones spent to prevent it.** An aura declares
 `removedOnDeath`, and Last Stand and Shield Wall are the two that do: a
 survival cooldown that visibly failed does not carry through the death it

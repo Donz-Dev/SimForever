@@ -376,8 +376,16 @@ export class Simulation implements SimulationContext {
     /*
      * States a combatant is simply always in, applied before anything swings.
      *
-     * Before `onCombatStart`, so an encounter's opening buffs can still replace
-     * one -- and before auto attack, so the first swing already has them.
+     * AFTER `onCombatStart`, which is the opposite of what this comment used to
+     * claim -- it said "before", and the call above has always come first. The
+     * order matters less than it reads: stat modifiers combine in pools, so a
+     * raid buff and a stance give the same answer either way round.
+     *
+     * What it does settle is that an encounter buff cannot replace one of
+     * these, because this loop runs second and would refresh it. Nothing needs
+     * to today.
+     *
+     * Both run before auto attack, so the first swing already has everything.
      */
     for (const actor of this.actors) {
       if (!actor.isAlive) continue;
