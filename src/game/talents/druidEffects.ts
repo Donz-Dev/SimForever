@@ -87,15 +87,14 @@ export const DRUID_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
 
   insect_swarm: [{ kind: 'grantAbility', abilityId: 'insect_swarm' }],
 
-  vengeance: [
-    {
-      kind: 'unmodelled',
-      reason:
-        'Raises crit DAMAGE for Arcane and Nature spells only. ' +
-        '`critDamageBonus` is whole-character with no school, so applying it ' +
-        'would also raise a Feral druid melee crit.',
-    },
-  ],
+  /*
+   * LIVE NOW. Both of these were unmodelled for exactly one reason -- the
+   * declarations available were per-ABILITY or whole-CHARACTER, and the
+   * tooltips are per-SCHOOL. `schoolCritDamage` and `schoolDamage` are that
+   * missing middle, and a Feral druid's melee crits are untouched because
+   * `physical` is not on either list.
+   */
+  vengeance: [{ kind: 'schoolCritDamage', schools: ['arcane', 'nature'] }],
 
   improved_starfire: [
     { kind: 'abilityCastTime', abilityId: 'starfire' },
@@ -137,14 +136,7 @@ export const DRUID_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
     { kind: 'abilityBonus', abilityId: 'wrath', key: 'eclipseReductionSeconds', valueIndex: 1 },
   ],
 
-  moonfury: [
-    {
-      kind: 'unmodelled',
-      reason:
-        'Raises Arcane and Nature damage by school. `damageMultiplier` is ' +
-        'every school at once and would raise a Feral druid bleeds too.',
-    },
-  ],
+  moonfury: [{ kind: 'schoolDamage', schools: ['arcane', 'nature'] }],
 
   moonkin_form: [
     {

@@ -310,6 +310,30 @@ finish rather than being lost. The Warrior's Improved Slam is exactly that, and
 it is worth far more than the quarter second of cast time the same talent
 removes.
 
+**A MODIFIER CAN BE SCOPED TO A SCHOOL, and that is the missing middle
+between one ability and the whole character.** `SchoolModifiers` carries the
+same three fields as `AbilityModifiers` -- crit chance, crit damage bonus,
+damage multiplier -- keyed by `DamageSchool`, and `dealDamage` consults both.
+Before it existed a talent reading "your Fire spells" had two bad options and
+BOTH WERE TAKEN: the Druid's Moonfury and Vengeance were left inert because
+listing every Balance spell by id was unmaintainable, and the Shaman's
+Elemental Fury was applied whole-character with a caveat admitting it also
+raised physical crits. Fixing the second moved TWO things, because it was
+wrong twice: it reached physical, and it used the MELEE crit multiplier for a
+spell. A crit damage bonus raises the bonus HALF, and that half is 1.0 for a
+2x melee crit and 0.5 for a 1.5x spell crit -- so "+100%" takes a spell crit
+to 2.0x and not to 2.5x. Getting it right cost the Elemental shaman 9.9% and
+the Enhancement one 3.0%, and gained the Moonkin 14.6%.
+
+**A CHANNEL IS A CAST THAT TICKS, and nothing else about it is new.**
+`Ability.channelTicks` runs `onCast` that many times, evenly spaced inside
+`castTimeMs`, with the LAST tick where an ordinary cast's single effect
+already lands -- so a one-tick channel and a plain cast are the same thing,
+which is the check that the two paths have not drifted. The caster stays
+locked for the whole channel: a tick that freed them would let a rotation cast
+over its own channel every second. Haste shortens the channel, so the ticks
+come faster and there are still the same number of them.
+
 **Per-ability crit and damage go through `AbilityModifiers` on the combatant**,
 not through the ability's own `onCast`. `dealDamage` consults them, so an
 ability respects them without knowing they exist — otherwise every ability would

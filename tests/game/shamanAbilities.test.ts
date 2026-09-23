@@ -383,3 +383,39 @@ describe('Maelstrom Weapon, the capstone that was worth nothing twice over', () 
       .toBeGreaterThan(0);
   });
 });
+
+describe('Elemental Fury, corrected', () => {
+  it('no longer raises an Enhancement shaman PHYSICAL crits', () => {
+    /*
+     * ------------------------------------------------------------------------
+     * THIS SHIPPED WRONG, WITH A WRITTEN CAVEAT SAYING SO. "Increases the
+     * critical strike damage bonus of your Fire, Frost, and Nature spells"
+     * was applied as a whole-character `critDamageBonus` because nothing
+     * selected a school -- so it also raised Stormstrike and every swing,
+     * which is most of an Enhancement shaman's damage.
+     *
+     * TWO THINGS WERE WRONG, not one. It reached physical, AND it used the
+     * MELEE crit multiplier for a spell: a spell crit is 1.5x, so "+100% of
+     * the bonus" is +0.5 and not +1.0. The old code took a 1.5x spell crit to
+     * 2.5x where it should be 2.0x.
+     * ------------------------------------------------------------------------
+     */
+    const built = PRESETS_BY_ID.get('shaman_enhancement')!.build();
+    const actor = createPlayer({
+      race: 'tauren',
+      characterClass: 'shaman',
+      combatStyle: 'two_hander',
+      talents: built.talents,
+    });
+
+    expect(actor.schoolModifiers.for('physical').critMultiplierBonus ?? 0).toBe(0);
+    expect(actor.abilityModifiers.for('*').critMultiplierBonus ?? 0).toBe(0);
+
+    // 5/5 is +100% of a spell crit's 0.5 bonus.
+    for (const school of ['fire', 'frost', 'nature'] as const) {
+      expect(actor.schoolModifiers.for(school).critMultiplierBonus, school).toBeCloseTo(0.5, 6);
+    }
+    // And not arcane, which the tooltip does not name.
+    expect(actor.schoolModifiers.for('arcane').critMultiplierBonus ?? 0).toBe(0);
+  });
+});

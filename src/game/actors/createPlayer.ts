@@ -341,6 +341,9 @@ export function createPlayer(options: PlayerOptions): Combatant {
     // set bonuses later. Held on the combatant so `dealDamage` can consult it
     // without every ability's `onCast` having to remember to.
     abilityModifiers: build.abilityModifiers,
+    // The same three modifiers keyed by SCHOOL: "your Fire spells" rather than
+    // "your Fireball". Consulted by `dealDamage` alongside the per-ability one.
+    schoolModifiers: build.schoolModifiers,
     // A talent conditional on the weapon held -- Two-Handed Weapon
     // Specialization -- multiplies everything including auto attacks, so it
     // cannot ride on `abilityModifiers`, which deliberately skips swings.

@@ -248,7 +248,16 @@ function rollTable(
   request: DamageRequest,
   context: SimulationContext,
 ): AttackResolution {
-  const modifier = request.source.abilityModifiers.for(request.abilityId);
+  /*
+   * THE ABILITY'S MODIFIER AND ITS SCHOOL'S, COMBINED. Improved Scorch and
+   * Critical Mass are different effects on the same cast and both apply, the
+   * same way a per-ability multiplier already sits alongside the
+   * whole-character one.
+   */
+  const modifier = combineModifiers(
+    request.source.abilityModifiers.for(request.abilityId),
+    request.source.schoolModifiers.for(request.school),
+  );
 
   if (!request.attackTable) {
     // No table. Either it lands flatly, or -- for a damage-over-time tick in
@@ -275,6 +284,28 @@ function rollTable(
  * is, so an ability-specific crit lands on the same integer die as the rest of
  * the table rather than on a slightly different one.
  */
+/**
+ * Merge an ability's modifier with its school's.
+ *
+ * ONLY THE TWO CRIT FIELDS, because only they are wanted here: this feeds the
+ * attack TABLE, and the table decides crit chance and crit magnitude. Both
+ * add, which is the rule `AbilityModifiers` already combines entries by.
+ *
+ * THE DAMAGE MULTIPLIER IS DELIBERATELY NOT MERGED. The ability's is passed
+ * through untouched and the school's is applied on its own line further down,
+ * MULTIPLIED rather than added -- two independent +10% effects are +21%. Doing
+ * it here as well would apply the school's twice, so the school's is left out
+ * of this function entirely rather than being combined and then skipped.
+ */
+function combineModifiers(ability: AbilityModifier, school: AbilityModifier): AbilityModifier {
+  return {
+    critBonus: (ability.critBonus ?? 0) + (school.critBonus ?? 0),
+    critMultiplierBonus: (ability.critMultiplierBonus ?? 0) + (school.critMultiplierBonus ?? 0),
+    // Applied separately, by `schoolMultiplier` in `resolveDamage`.
+    damageMultiplier: ability.damageMultiplier,
+  };
+}
+
 function withModifier(chances: AttackChances, modifier: AbilityModifier): AttackChances {
   if (!modifier.critBonus && !modifier.critMultiplierBonus) return chances;
   return {
@@ -371,7 +402,14 @@ export function resolveDamage(
   // different effects and both apply.
   const abilityMultiplier =
     source.abilityModifiers.for(request.abilityId).damageMultiplier ?? 1;
-  const afterAttacker = afterCrit * attackerMultiplier * abilityMultiplier;
+  /*
+   * PER SCHOOL, on the ATTACKER'S side. The mirror of
+   * `damageTakenMultiplierFor` below: Fire Power raises the fire damage a Mage
+   * deals, Curse of the Elements raises the fire damage a target takes, and
+   * the two are different effects that both apply.
+   */
+  const schoolMultiplier = source.schoolModifiers.for(request.school).damageMultiplier ?? 1;
+  const afterAttacker = afterCrit * attackerMultiplier * abilityMultiplier * schoolMultiplier;
 
   // Per SCHOOL, which folds in the blanket multiplier as well. Curse of the
   // Elements raises magic and leaves physical alone, so the school has to

@@ -1,4 +1,4 @@
-import { AbilityModifiers } from '../combat/abilityModifiers';
+import { AbilityModifiers, SchoolModifiers } from '../combat/abilityModifiers';
 import type { AuraDefinition } from '../effects/Aura';
 import type { Ability } from '../abilities/Ability';
 import { DEFAULT_GCD_MS } from '../abilities/Ability';
@@ -214,6 +214,7 @@ export interface CombatantOptions {
    * that changes one ability rather than the whole character.
    */
   readonly abilityModifiers?: AbilityModifiers;
+  readonly schoolModifiers?: SchoolModifiers;
   /**
    * A permanent multiplier on every point of damage this combatant deals,
    * multiplied together with whatever auras contribute.
@@ -299,6 +300,8 @@ export class Combatant {
   readonly reactions: readonly Reaction[];
   readonly castReactions: readonly CastReaction[];
   readonly abilityModifiers: AbilityModifiers;
+  /** Per-school crit, crit damage and damage. See `SchoolModifiers`. */
+  readonly schoolModifiers: SchoolModifiers;
   readonly baseDamageMultiplier: number;
   readonly survivesLethalDamage: boolean;
   readonly revivesOnDeath: boolean;
@@ -404,6 +407,7 @@ export class Combatant {
     this.reactions = options.reactions ?? [];
     this.castReactions = options.castReactions ?? [];
     this.abilityModifiers = options.abilityModifiers ?? new AbilityModifiers();
+    this.schoolModifiers = options.schoolModifiers ?? new SchoolModifiers();
     this.baseDamageMultiplier = options.damageMultiplier ?? 1;
     this.survivesLethalDamage = options.survivesLethalDamage ?? false;
     this.revivesOnDeath = options.revivesOnDeath ?? false;
