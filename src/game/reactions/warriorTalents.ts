@@ -1,6 +1,11 @@
 import type { Reaction } from '../../engine';
 import { ENRAGE_TRIGGER_CHANCE, OVERPOWER_READY, REND, enrageAura } from '../auras/warrior';
-import { FLURRY_SWINGS, deepWoundsAura, flurryAura } from '../auras/warriorTalents';
+import {
+  FLURRY_SWINGS,
+  bloodCrazeAura,
+  deepWoundsAura,
+  flurryAura,
+} from '../auras/warriorTalents';
 
 /**
  * Reactions a Warrior talent grants.
@@ -220,9 +225,71 @@ export const weaponmasterSword: TalentReactionBuilder = (chancePercent) => ({
   },
 });
 
+/**
+ * The share of maximum health a single blow must exceed to set off Blood
+ * Craze's third clause. The source's own figure.
+ */
+export const BLOOD_CRAZE_BIG_HIT_FRACTION = 0.2;
+
+/**
+ * Blood Craze, the two clauses that fire off being HURT.
+ *
+ * "after being the victim of a critical strike ... or suffering more than 20%
+ * of your maximum Health from a single attack". One reaction rather than two,
+ * because both watch the same side of the same event and either one applies
+ * the same regeneration -- a crit that also happens to be a big hit is one
+ * proc, not two.
+ *
+ * Avoided outcomes are absent: a dodged blow is not one anybody suffered. A
+ * BLOCK is present, because a blocked attack lands and can still take a fifth
+ * of a health pool.
+ */
+export const bloodCrazeWhenHurt: TalentReactionBuilder = (percentOfMaxHealth) => ({
+  id: 'blood_craze',
+  on: 'taken',
+  outcomes: ['hit', 'crit', 'crush', 'glance', 'block'],
+  canTrigger: (_context, actor, attack) => {
+    if (attack.critical) return true;
+    return attack.amount > actor.health.maximum * BLOOD_CRAZE_BIG_HIT_FRACTION;
+  },
+  onTrigger: (context, actor) => {
+    context.applyAura(actor, bloodCrazeAura(percentOfMaxHealth), actor.id);
+  },
+});
+
+/**
+ * Blood Craze's third clause: "dealing damage with Bloodthirst".
+ *
+ * A SEPARATE reaction because it watches the other side of the attack, and
+ * `Reaction.on` names one side. It is also the only clause a warrior nothing
+ * is hitting can ever meet, which is the whole reason Blood Craze is a Fury
+ * talent rather than a Protection one.
+ *
+ * "Dealing damage" is read as LANDING it: a Bloodthirst the target dodged
+ * dealt none.
+ */
+export const bloodCrazeOnBloodthirst: TalentReactionBuilder = (percentOfMaxHealth) => ({
+  id: 'blood_craze_bloodthirst',
+  on: 'dealt',
+  outcomes: ['hit', 'crit', 'glance', 'crush', 'block'],
+  canTrigger: (_context, _actor, attack) =>
+    attack.abilityId === 'bloodthirst' && attack.amount > 0,
+  onTrigger: (context, actor) => {
+    context.applyAura(actor, bloodCrazeAura(percentOfMaxHealth), actor.id);
+  },
+});
+
 /** Every Warrior talent that grants a reaction, by talent id. */
 export const WARRIOR_TALENT_REACTIONS: Readonly<Record<string, TalentReactionBuilder>> = {
   deep_wounds: deepWounds,
+  /*
+   * Two entries for ONE talent, which the effect table reaches by declaring
+   * two `reaction` effects. A talent whose triggers sit on both sides of an
+   * attack cannot be one reaction, and nothing about the registry had to
+   * change to allow it.
+   */
+  blood_craze: bloodCrazeWhenHurt,
+  blood_craze_bloodthirst: bloodCrazeOnBloodthirst,
   flurry,
   unbridled_wrath: unbridledWrath,
   bloodthrill,
