@@ -190,8 +190,16 @@ export const enrage: TalentReactionBuilder = (damageBonusPercent) => ({
  * mace or staff -- are a stat and an armor-ignoring modifier rather than a
  * reaction, and are still unmodelled. The talent says so.
  *
- * NOT GATED ON CARRYING A SWORD, because a reaction cannot see the weapon. The
- * talent's own `unmodelled` note carries that caveat.
+ * GATED ON THE SWORD, per swinging weapon. An older version of this comment
+ * said the opposite -- "a reaction cannot see the weapon" -- and it was wrong
+ * about the code directly below it, which has read `actor.weapons[slot]`
+ * since it was written. The gate is verified by the matrix in
+ * `tests/game/armsTalentAudit.test.ts`.
+ *
+ * IN PRACTICE IT NEVER REFUSES, because every weapon in
+ * `data/items/classic-warrior.json` is a Sword. The gate is right and
+ * currently unreachable; the day an axe or a mace is added, it starts
+ * mattering and the axe/polearm crit clause starts firing too.
  */
 export const weaponmasterSword: TalentReactionBuilder = (chancePercent) => ({
   id: 'weaponmaster_sword',

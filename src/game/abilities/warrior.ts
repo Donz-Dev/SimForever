@@ -74,6 +74,16 @@ const PHYSICAL = 'physical' as const;
  * penalty applies to the finished total — which is why the engine takes
  * `weaponScaling` as a declaration rather than the ability computing it.
  */
+/**
+ * "weapon damage plus 160", spell 21553 rank 4.
+ *
+ * NAMED rather than inline because the talent that grants Mortal Strike
+ * describes RANK 1, which deals 85 -- the ranks are 85 / 110 / 135 / 160 at
+ * levels 40 / 48 / 54 / 60. That gap has been mistaken for a source
+ * disagreement three times. See `docs/warrior-talent-audit.md`.
+ */
+export const MORTAL_STRIKE_BASE_DAMAGE = 160;
+
 export const MORTAL_STRIKE: Ability = {
   id: 'mortal_strike',
   name: 'Mortal Strike',
@@ -88,7 +98,7 @@ export const MORTAL_STRIKE: Ability = {
       abilityId: ability.id,
       abilityName: ability.name,
       school: PHYSICAL,
-      baseAmount: 160,
+      baseAmount: MORTAL_STRIKE_BASE_DAMAGE,
       weaponScaling: { slot: MAIN_HAND },
       attackTable: ability.attackTable,
       weaponSlot: MAIN_HAND,

@@ -72,12 +72,12 @@ point, and it is one cause: Battle Shout is 139 attack power rather than 140.
 One attack power is about 0.07 damage a swing, it is in every build, and it is
 the only change in that pass that reaches a build with no talents.
 
-**The tank with the target attacking fell further, 153.71 to 151.31**, and that
-is Thunder Clap's cooldown going from 4 seconds to 6. Isolated by changing
-nothing else, the same build measures **144.61 at 4 seconds and 143.11 at 6**,
-with casts falling **8.86 to 7.46** -- so about 1.5 of the drop is the cooldown
-and the rest is Battle Shout and noise. It is the one build that casts Thunder
-Clap on cooldown all fight.
+**The tank with the target attacking fell further, 153.71 to 151.31**, and
+that is Thunder Clap's cooldown going from 4 seconds to 6 -- all of it.
+Isolated on the same `PROTECTION_31` build by changing nothing else, it
+measures **153.66 at 4 seconds and 151.31 at 6**, with casts falling **8.87 to
+7.49**. It is the one build that casts Thunder Clap on cooldown all fight, so
+it is the one build where Battle Shout's lost attack power is swamped.
 
 **No baseline row takes Bloodthirst**, which is a 31-point capstone, so the +48
 that moved DW Fury by eight points does not appear in this table at all.
@@ -230,6 +230,41 @@ Classic's 25).
 
 The site also has a talent calculator and a sourced change list, which would be
 a second opinion on the Wowhead-scraped tree in `src/data/talents/`. Not done.
+
+## The talents are confirmed, by a second client-derived source
+
+<https://talentsforever.com/warrior> reads the beta client (`1.60.1.69876`) and
+exposes the trees as `window.TALENT_DATA` -- every rank's text, the Classic
+comparison, and the talents Forever removed. There is a page per class.
+
+Audited **2026-09-23**: **53 of 53 talents and 154 of 154 rank values match**
+our Wowhead capture exactly. No errors. The only flagged row was `0.5` against
+`0.50` on Improved Slam.
+
+**A talent tooltip shows rank 1 of the ability it grants**, and that single
+fact explains three arguments this project has had:
+
+| Ability | Talent tooltip | Level 60 |
+| --- | --- | --- |
+| Mortal Strike | 85 | **160** |
+| Bloodthirst | 30 | **48** |
+| Shield Slam | 421 to 439 | **640 to 670** |
+
+The Mortal Strike one is recorded above as "resolved, do not re-litigate" after
+being escalated to the ruleset owner. It is still 160; the calculator was never
+wrong, it was describing rank 1. **The spreadsheet mixes the conventions** --
+Mortal Strike at max rank, the other two at rank 1 -- so it cannot settle a
+rank question alone.
+
+**Two `unmodelled` reasons had expired** and were corrected. Vanguard said
+"Stances gate nothing", which stopped being true when abilities got a `stances`
+field; Improved Berserker Rage said its values were pending, and they have been
+in `values/warrior.json` all along. Neither talent's behaviour changed -- both
+are inert because no priority list casts Charge or Berserker Rage -- but both
+reasons are shown to users, and both were false.
+
+Full findings in
+[docs/warrior-talent-audit.md](docs/warrior-talent-audit.md).
 
 **Finishing the Warrior is the priority, and
 [docs/warrior-completion.md](docs/warrior-completion.md) is the ordered list.**
@@ -556,8 +591,11 @@ Longer explanations: [`docs/`](docs/) — `architecture.md`,
 `resources.md`, `telemetry.md`, `profiles.md`, `warrior-abilities.md`,
 `global-cooldown.md` (a fundamental rule, written down after it was found
 broken in four places), `incoming-damage.md` (the ramp, the assumed healer and
-how death is counted) and `raid-buffs.md` (what the rest of the group supplies,
-and the two traps in Windfury).
+how death is counted), `raid-buffs.md` (what the rest of the group supplies,
+and the two traps in Windfury), `warrior-ability-audit.md` (the abilities
+against the client, and the five numbers it moved) and
+`warrior-talent-audit.md` (the talents against the client, which found
+nothing wrong, and the rank-1 rule that explains three old arguments).
 
 `ProfilePanel.tsx` is **not mounted**. Import and Load buttons sit above the
 character name as placeholders; the panel's serialize-out / parse-in / render-

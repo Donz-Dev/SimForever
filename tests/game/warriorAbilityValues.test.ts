@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import spellData from '../../src/data/abilities/forever-warrior.json';
+import talentValues from '../../src/data/talents/values/warrior.json';
+import {
+  BLOODTHIRST_BASE_DAMAGE,
+  MORTAL_STRIKE_BASE_DAMAGE,
+  SHIELD_SLAM_DAMAGE,
+} from '../../src/game/abilities/warrior';
 import {
   BATTLE_SHOUT_ATTACK_POWER,
   BATTLE_SHOUT_DURATION_MS,
@@ -262,5 +268,65 @@ describe('what is still missing', () => {
     const text = spell(18499).description;
     expect(text).toContain('generating extra rage when taking damage');
     expect(text).not.toMatch(/\d+ rage/i);
+  });
+});
+
+describe('a talent tooltip describes RANK 1, not the rank a level 60 has', () => {
+  /*
+   * ----------------------------------------------------------------------------
+   * THIS IS WHY THE TALENT CALCULATOR AND THE ABILITY SHEET KEPT DISAGREEING,
+   * and they never actually disagreed about anything.
+   *
+   * A talent grants rank 1 of the ability, so its tooltip describes rank 1.
+   * The rest come from a trainer. Three separate arguments in this project's
+   * history were the same misreading:
+   *
+   *              talent tooltip     level 60     the sheet
+   *   Mortal Strike     85            160        160, max rank
+   *   Bloodthirst       30             48         30, RANK 1
+   *   Shield Slam    421-439       640-670    421-439, RANK 1
+   *
+   * The spreadsheet mixes the two conventions, which is exactly why it could
+   * not settle the question by itself.
+   *
+   * Mortal Strike's 85 was escalated to the ruleset owner and recorded in
+   * HANDOVER as resolved and not to be re-litigated. It is asserted here
+   * instead, with the reason attached, so the next person to notice that our
+   * talent data says 85 while the code says 160 finds the answer rather than
+   * the argument.
+   * ----------------------------------------------------------------------------
+   */
+  const rankOneFromTalent = [
+    { ability: 'Mortal Strike', talentSays: 85, levelSixty: 160 },
+    { ability: 'Bloodthirst', talentSays: 30, levelSixty: 48 },
+    { ability: 'Shield Slam', talentSays: 421, levelSixty: 640 },
+  ];
+
+  it.each(rankOneFromTalent)(
+    '$ability: the talent says $talentSays and a level 60 deals $levelSixty',
+    ({ talentSays, levelSixty }) => {
+      // Written out by hand from the spellbook's rank list, not derived.
+      expect(levelSixty).toBeGreaterThan(talentSays);
+    },
+  );
+
+  it('the code uses the level 60 value for all three', () => {
+    // Mortal Strike and Shield Slam are flat in the ability; Bloodthirst's
+    // flat half is its own constant.
+    expect(BLOODTHIRST_BASE_DAMAGE).toBe(48);
+    expect(SHIELD_SLAM_DAMAGE).toBe(655); // the 640-670 midpoint
+    expect(MORTAL_STRIKE_BASE_DAMAGE).toBe(160);
+  });
+
+  it('and the talent data still says rank 1, which is correct FOR A TALENT', () => {
+    /*
+     * The capture is not wrong and must not be "fixed" to match the code.
+     * `values/warrior.json` describes what the talent point grants.
+     */
+    // Single-rank talents bake their numbers into the text and carry no
+    // `values` array, so this reads the text the panel actually shows.
+    expect(talentValues.talents.mortal_strike.text).toContain('weapon damage plus 85');
+    expect(talentValues.talents.shield_slam.text).toContain('421 to 439');
+    expect(talentValues.talents.bloodthirst.text).toContain('Attack Power plus 30');
   });
 });
