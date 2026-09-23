@@ -2,8 +2,8 @@ import type { Ability } from '../../engine';
 import { dealDamage, seconds } from '../../engine';
 import {
   DEMORALIZING_ROAR,
-  ECLIPSE,
-  ECLIPSE_UNMODELLED,
+  ECLIPSE_CHARGES_PER_WRATH,
+  eclipseAura,
   INSECT_SWARM,
   LACERATE,
   LACERATE_UNMODELLED,
@@ -48,6 +48,14 @@ const NO_SPELL_COEFFICIENT =
 /** The midpoint of a stated range. The combat table supplies the spread. */
 const midpoint = (low: number, high: number) => (low + high) / 2;
 
+/**
+ * Eclipse's per-rank half second, handed to Wrath by the talent.
+ *
+ * Named here and in `druidEffects.ts`, and a test asserts the two agree --
+ * a key that only one side spells correctly is silently zero.
+ */
+export const ECLIPSE_REDUCTION_BONUS = 'eclipseReductionSeconds';
+
 // ---------------------------------------------------------------------------
 // Balance
 // ---------------------------------------------------------------------------
@@ -73,11 +81,20 @@ export const WRATH: Ability = {
     });
 
     /*
-     * ECLIPSE stacks here and shortens nothing. Applied so the talent is not
-     * silent and its uptime is visible; `ECLIPSE_UNMODELLED` says why.
+     * ECLIPSE. Two charges a Wrath, each worth one shorter Starfire, capped at
+     * four -- and it is LIVE now rather than tracked and inert.
+     *
+     * THE TALENT'S OWN RANK VALUE arrives as an `abilityBonus`, which is the
+     * declaration for a number that lives inside an ability's body. Zero means
+     * the talent was not taken, and the aura is not applied at all: a
+     * nought-second Eclipse would still consume a charge and shorten nothing,
+     * which is worse than no aura because it looks like it is working.
      */
-    if (caster.abilities.get('starfire')) {
-      simulation.applyAura(caster, ECLIPSE, caster.id);
+    const eclipseSeconds = ability.bonuses?.[ECLIPSE_REDUCTION_BONUS] ?? 0;
+    if (eclipseSeconds > 0 && caster.abilities.get('starfire')) {
+      for (let i = 0; i < ECLIPSE_CHARGES_PER_WRATH; i += 1) {
+        simulation.applyAura(caster, eclipseAura(eclipseSeconds), caster.id);
+      }
     }
   },
   unmodelled: NO_SPELL_COEFFICIENT,
@@ -103,7 +120,7 @@ export const STARFIRE: Ability = {
       attackTable: ability.attackTable,
     });
   },
-  unmodelled: `${NO_SPELL_COEFFICIENT} ${ECLIPSE_UNMODELLED}`,
+  unmodelled: NO_SPELL_COEFFICIENT,
 };
 
 export const MOONFIRE_DIRECT = midpoint(128, 150);

@@ -237,16 +237,34 @@ figure is a FLOOR rather than an estimate. Honest, and not yet worth quoting.
 and no coefficient in both, so this is how Forever's spell data is written
 rather than a Druid quirk.
 
-**A ONE-SHOT, PER-ABILITY CAST-TIME MODIFIER IS THE MISSING RULE THAT NOW
-BLOCKS THREE CLASSES.** Eclipse, Nature's Grace and Nature's Swiftness on the
-Druid; Maelstrom Weapon, the ENHANCEMENT CAPSTONE, on the Shaman; Presence of
-Mind and Arcane Blast on the Mage when it arrives. All shorten the NEXT cast of
-a named spell, and neither declaration reaches it: `abilityCastTime` is a
-standing talent reduction fixed when the character is built, and an aura
-reaches every ability or none. Stormstrike's +20% is the same shape ONE STEP
-easier -- a one-shot modifier on three named spells -- and it is done in
-content, because damage is read inside `onCast` where cast time is not. One
-engine feature, four classes.
+**AN AURA CAN CHANGE THE NEXT CAST OF AN ABILITY IT NAMES**, which is
+`CastModifier` on `AuraDefinition` and the rule four classes asked for.
+`abilityCastTime` is a STANDING talent reduction fixed when the character is
+built, an ordinary aura reaches every ability or none, and content cannot
+reach cast time at all because the engine resolves it BEFORE `onCast` runs --
+which is exactly why Stormstrike's +20% could be done in content and Eclipse
+could not.
+
+**RESOLVING AND CONSUMING ARE TWO STEPS, and that is the whole design.**
+`checkCast` has to be side-effect free, because a rotation calls it on every
+candidate before committing to any -- so `resolveCast` is pure and
+`consumeCastCharges` is called once, by the cast that happens. Both halves
+must see the same cost or a priority list refuses a spell the character can
+afford, and does it SILENTLY: the list moves to the next entry and nothing
+reports a spell it declined to consider.
+
+**`consumedByCast` IS AN ENUM AND NOT A BOOLEAN.** Eclipse spends a `stack`
+-- "your next 2 Starfire spells" is two casts each getting the full half
+second -- and Maelstrom Weapon spends `all`, because "your NEXT Lightning
+Bolt" is ONE cast that every stack paid for. Spending a stack where the effect
+spends all of them leaves four behind for the next cast, which reads as a
+working talent and is worth several times what it should be.
+
+**A CORRECT TALENT CAN BE WORTH ZERO, and Eclipse is.** It saves cast time and
+the Moonkin is MANA-bound, spending ~3,400 from a ~2,800 pool over sixty
+seconds: time it was not using is worth nothing, and the DPS figure did not
+move. That is why the tests assert the MECHANISM and not a damage delta --
+a test measuring DPS would have passed identically before the rule existed.
 
 **A CLASS HAS TO BE REGISTERED IN FOUR PLACES AND MISSING ANY ONE IS SILENT.**
 `talentValues.ts`'s `FILES`, `talentBuild.ts`'s `EFFECTS` **and** its

@@ -179,13 +179,23 @@ the fourth class in a row where the survey was right about that.
 
 ### Two gaps the survey did not have, both found by building
 
-**A one-shot, per-ability cast-time modifier.** Eclipse, Nature's Grace and
-Nature's Swiftness on the Druid; **Maelstrom Weapon, the Enhancement
-capstone**, on the Shaman; Presence of Mind and Arcane Blast on the Mage. All
-shorten the *next* cast of a named spell, and no declaration reaches it —
-`abilityCastTime` is a standing reduction fixed at build time, and an aura
-reaches every ability or none. One engine feature, four classes, and the only
-one on this list that blocks a capstone.
+**~~A one-shot, per-ability cast-time modifier.~~ Done.** `CastModifier` on
+`AuraDefinition`, with `resolveCast` pure so `checkCast` stays side-effect
+free. **Eclipse** and **Maelstrom Weapon** are live against it and were both
+inert before. Still waiting on their classes: Presence of Mind, Hot Streak and
+Arcane Concentration (Mage), Inner Focus (Priest).
+
+**Nature's Swiftness is NOT among them**, and selecting by SCHOOL is what it
+needs — "your next Nature spell". That means a `school` on every `Ability`, a
+field that is silent when forgotten, so it is worth adding when a whole class
+can be filled in at once rather than one talent at a time.
+
+**Two claims in this survey were wrong, both mine.** Nature's Grace does not
+want this rule at all: Forever's wording is "increasing your spellcasting
+speed and reducing your global cooldown by 10% for 3 sec", which is a haste
+window off a spell crit — a reaction and an aura the engine has had all along.
+And Eclipse, now that it works, is worth **zero DPS** to the Moonkin, because
+that profile is mana-bound rather than time-bound.
 
 **Totems as damage.** A Shaman's Searing and Magma Totems attack on their own,
 which is the pet gap in Wave 3 wearing different clothes — and it lands on a

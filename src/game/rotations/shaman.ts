@@ -1,6 +1,7 @@
 import type { PriorityEntry, Rotation, SimulationContext, Combatant } from '../../engine';
 import { PriorityRotation } from '../../engine';
 import type { CombatStyleId } from '../character';
+import { MAELSTROM_WEAPON_MAX_STACKS } from '../auras/shaman';
 
 /**
  * Shaman priority lists — APL SHELLS.
@@ -29,6 +30,10 @@ const missing = (auraId: string) =>
 
 const withoutAura = (auraId: string) => (_context: SimulationContext, actor: Combatant): boolean =>
   !actor.auras.has(auraId);
+
+const atStacks = (auraId: string, stacks: number) =>
+  (_context: SimulationContext, actor: Combatant): boolean =>
+    actor.auras.stacksOf(auraId) >= stacks;
 
 // ---------------------------------------------------------------------------
 
@@ -78,6 +83,19 @@ export const SHAMAN_ENHANCEMENT: readonly PriorityEntry[] = [
   { abilityId: 'windfury_weapon', condition: withoutAura('windfury_weapon') },
   { abilityId: 'rage_of_the_farseer' },
   { abilityId: 'stormstrike' },
+  /*
+   * LIGHTNING BOLT AT FIVE MAELSTROM STACKS, AND ONLY THERE.
+   *
+   * This entry was missing, which made the Enhancement capstone worth exactly
+   * nothing: Maelstrom Weapon shortens the next Lightning Bolt and the list
+   * never cast one. The talent stacked to five and sat there.
+   *
+   * At five stacks the bolt is INSTANT and free -- 20% a stack, five stacks --
+   * so it costs a global cooldown and no swing time. Below five it is a
+   * 2.5-second cast on a character whose damage is its swings, which is why
+   * the threshold is the cap rather than anything lower.
+   */
+  { abilityId: 'lightning_bolt', condition: atStacks('maelstrom_weapon', MAELSTROM_WEAPON_MAX_STACKS) },
   { abilityId: 'earth_shock' },
 ];
 

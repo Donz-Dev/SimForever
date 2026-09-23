@@ -135,6 +135,31 @@ export class AuraCollection {
     }
   }
 
+  /**
+   * Spend one stack of every aura a CAST consumes, dropping any that run out.
+   *
+   * Called by `castAbility` with the auras `resolveCast` already matched, so
+   * the cast that is shortened is the cast that pays -- and so the rule that
+   * decides what applies lives in one place rather than being re-derived here
+   * and drifting.
+   *
+   * The third of these, after swings and blocks. Each spends a charge on a
+   * different event, and all three exist because "your next 2 Starfires" is a
+   * count rather than a duration.
+   */
+  consumeCastCharges(context: SimulationContext, matched: readonly AuraInstance[]): void {
+    for (const instance of matched) {
+      const spends = instance.definition.castModifier?.consumedByCast;
+      if (!spends) continue;
+      // `all` drops the aura whatever it held: one cast, every stack.
+      if (spends === 'stack' && instance.stacks > 1) {
+        instance.stacks -= 1;
+      } else {
+        this.remove(context, instance.id);
+      }
+    }
+  }
+
   remove(context: SimulationContext, auraId: string): void {
     const instance = this.auras.get(auraId);
     if (!instance) return;

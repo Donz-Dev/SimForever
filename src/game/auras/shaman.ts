@@ -203,43 +203,59 @@ export function elementalDevastationAura(critPercent: number): AuraDefinition {
 }
 
 /**
- * Maelstrom Weapon, TRACKED AND INERT.
+ * Maelstrom Weapon: "When you deal damage with a melee attack, you have a
+ * chance to reduce the cast time and Mana cost of your next Lightning Bolt
+ * spell by {0}%. Stacks up to 5 times. Lasts 30 sec."
  *
  * ----------------------------------------------------------------------------
- * THE ENHANCEMENT CAPSTONE, AND THE THIRD CLASS TO WANT THE SAME MISSING RULE.
+ * LIVE NOW. It spent the Shaman PR tracked and inert, saying so; the engine's
+ * `CastModifier` is the rule it wanted, and the Druid's Eclipse wanted the
+ * same one.
  *
- *   "When you deal damage with a melee attack, you have a chance to reduce the
- *    cast time and Mana cost of your next Lightning Bolt spell by 20%. Stacks
- *    up to 5 times. Lasts 30 sec."
+ * PER STACK, NOT IN TOTAL, and that is an interpretation rather than a quote.
+ * The tooltip states one percentage and then says "stacks up to 5 times",
+ * which is only meaningful if the stacks multiply it -- a flat 20% however
+ * many stacks were up would make four of them worthless. Read per stack, rank
+ * 5 reaches 100% at five stacks and Lightning Bolt becomes instant, which is
+ * the behaviour the ability is known for; rank 1's 4% reaches 20%. The
+ * alternative reading has a five-stack cap that does nothing at any rank.
+ * `scalesWithStacks` is how that is expressed, and Eclipse is the contrast:
+ * a charge per cast rather than a magnitude per stack.
  *
- * A ONE-SHOT, STACK-SCALED, PER-ABILITY CAST-TIME MODIFIER. Cast time is
- * resolved by the engine before `onCast` runs, so unlike Stormstrike's debuff
- * this cannot be done from content: `abilityCastTime` is a standing talent
- * reduction fixed when the character is built, and an aura reaches every
- * ability or none.
+ * THE MANA CLAUSE COMES FREE with the same field, which is the argument for
+ * the modifier carrying cost as well as cast time. Both halves are the same
+ * percentage and the tooltip gives them one number.
  *
- * The Druid found the same shape first -- Eclipse, Nature's Grace and Nature's
- * Swiftness -- and the Mage and Priest are waiting on it too. It is one engine
- * feature and it unblocks four classes.
- *
- * Applied anyway, so the stacks are VISIBLE on the results page and the
- * capstone is not silent. `MAELSTROM_WEAPON_UNMODELLED` is what the ability
- * and the talent both print.
+ * ITS PROC CHANCE IS NOT STATED ANYWHERE. See
+ * `PLACEHOLDER_MAELSTROM_WEAPON_PROC_CHANCE` in `reactions/shamanTalents.ts`.
  * ----------------------------------------------------------------------------
  */
 export const MAELSTROM_WEAPON_MAX_STACKS = 5;
 export const MAELSTROM_WEAPON_DURATION_MS = seconds(30);
 
-export const MAELSTROM_WEAPON_UNMODELLED =
-  'Maelstrom Weapon stacks are tracked and change nothing. Reducing the cast ' +
-  'time of the NEXT Lightning Bolt by 20% a stack needs a one-shot, ' +
-  'stack-scaled, per-ability cast-time modifier, which the engine does not ' +
-  'have -- the same rule Eclipse and Nature’s Swiftness want.';
+export function maelstromWeaponAura(reductionPercentPerStack: number): AuraDefinition {
+  return {
+    id: 'maelstrom_weapon',
+    name: 'Maelstrom Weapon',
+    durationMs: MAELSTROM_WEAPON_DURATION_MS,
+    maxStacks: MAELSTROM_WEAPON_MAX_STACKS,
+    refreshBehaviour: 'reset',
+    castModifier: {
+      abilityIds: ['lightning_bolt'],
+      castTimeFraction: reductionPercentPerStack / 100,
+      costFraction: reductionPercentPerStack / 100,
+      scalesWithStacks: true,
+      /*
+       * `all`, NOT `stack`. "Your NEXT Lightning Bolt" is one cast however
+       * many stacks paid for it, so five stacks buy one instant bolt and
+       * leave nothing behind. Spending a single stack instead would leave
+       * four up for the bolt after it -- which reads as a working talent and
+       * is worth several times what it should be.
+       *
+       * Eclipse is the other answer, and the reason this is an enum.
+       */
+      consumedByCast: 'all',
+    },
+  };
+}
 
-export const MAELSTROM_WEAPON: AuraDefinition = {
-  id: 'maelstrom_weapon',
-  name: 'Maelstrom Weapon',
-  durationMs: MAELSTROM_WEAPON_DURATION_MS,
-  maxStacks: MAELSTROM_WEAPON_MAX_STACKS,
-  refreshBehaviour: 'reset',
-};
