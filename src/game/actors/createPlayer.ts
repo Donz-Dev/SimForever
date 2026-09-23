@@ -409,6 +409,15 @@ export function createPlayer(options: PlayerOptions): Combatant {
         .map((id) => TALENT_AURAS[id])
         .filter((aura): aura is AuraDefinition => aura !== undefined),
       /*
+       * CAST MODIFIERS A TALENT GRANTS, one permanent aura per talent.
+       *
+       * This is how a percentage mana reduction finally reaches a cast:
+       * `resolveCast` reads cast modifiers off the caster's auras, so a
+       * talent that wants one has to arrive as an aura. Eleven talents across
+       * seven classes were `unmodelled` for exactly this and said so.
+       */
+      ...build.castModifierAuras,
+      /*
        * The assumed healer, when the encounter has one. Nothing is hitting a
        * character in a fight without one, so a healer there would tick pure
        * overhealing into the log for the whole fight.

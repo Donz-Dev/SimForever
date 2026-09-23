@@ -314,8 +314,10 @@
    "tree": "enhancement",
    "ranks": 1,
    "text": "Reduces the mana cost of your Shock and Lightning Shield spells by 45%.",
-   "values": null,
-   "note": "single rank"
+   "values": [
+    45
+   ],
+   "note": "single rank; the 45 filled in by hand per this directory's README -- the text states \"reduces the mana cost of your Shock and Lightning Shield spells by 45%\" outright"
   },
   "anticipation": {
    "name": "Anticipation",

@@ -160,12 +160,20 @@ export const HUNTER_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
   ],
 
   efficiency: [
+    // "Your Shots, Stings, and melee abilities" -- everything a Hunter pays
+    // mana for bar the Aspects.
     {
-      kind: 'unmodelled',
-      reason:
-        'Reduces mana costs by a PERCENTAGE. `abilityCost` subtracts a flat ' +
-        'amount, which is wrong for a 310-mana Aimed Shot -- and this remains ' +
-        'the most common unmodelled reason in the project.',
+      kind: 'grantCastModifier',
+      abilityIds: [
+        'arcane_shot',
+        'aimed_shot',
+        'multi_shot',
+        'sniper_shot',
+        'serpent_sting',
+        'raptor_strike',
+        'mongoose_bite',
+      ],
+      property: 'costFraction',
     },
   ],
 

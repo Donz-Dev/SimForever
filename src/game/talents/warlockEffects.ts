@@ -207,10 +207,9 @@ export const WARLOCK_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
 
   cataclysm: [
     {
-      kind: 'unmodelled',
-      reason:
-        'Reduces Destruction mana costs by a PERCENTAGE. `abilityCost` ' +
-        'subtracts a flat amount, which is wrong for a 380-mana Immolate.',
+      kind: 'grantCastModifier',
+      abilityIds: ['immolate', 'incinerate', 'conflagrate', 'searing_pain'],
+      property: 'costFraction',
     },
   ],
 

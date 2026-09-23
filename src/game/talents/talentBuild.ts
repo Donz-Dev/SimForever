@@ -7,7 +7,7 @@ import type {
   StatName,
   WeaponProfile,
 } from '../../engine';
-import type { WeaponSlot } from '../../engine';
+import type { AuraDefinition, WeaponSlot } from '../../engine';
 import { ALL_ABILITIES, AbilityModifiers, SchoolModifiers, isPhysical, seconds } from '../../engine';
 import { COMBAT_CONSTANTS } from '../combat/attackChances';
 import type { TalentReactionBuilder } from '../reactions/warriorTalents';
@@ -133,6 +133,14 @@ export interface TalentBuild {
    */
   readonly grantedAuras: ReadonlySet<string>;
   /**
+   * Cast modifiers a talent grants, as permanent auras applied at the pull.
+   *
+   * One per talent rather than one merged, so that two reductions on the same
+   * ability stack additively through `resolveCast` -- which is how percentage
+   * cost reductions behave -- and so a talent's contribution stays its own.
+   */
+  readonly castModifierAuras: readonly AuraDefinition[];
+  /**
    * What the off hand does, relative to untalented.
    *
    * Three multipliers and a flat hit bonus, because Dual Wield Specialization
@@ -216,6 +224,7 @@ const EMPTY: TalentBuild = {
   resourceMaximums: {},
   grantedAbilities: new Set(),
   grantedAuras: new Set(),
+  castModifierAuras: [],
   offHandDamageMultiplier: 1,
   offHandResourceMultiplier: 1,
   offHandHitBonus: 0,
@@ -343,6 +352,7 @@ export function talentBuild(
   const resourceMaximums: Partial<Record<ResourceType, number>> = {};
   const grantedAbilities = new Set<string>();
   const grantedAuras = new Set<string>();
+  const castModifierAuras: AuraDefinition[] = [];
   let offHandDamageBonusPct = 0;
   let offHandResourceBonusPct = 0;
   let offHandHitBonus = 0;
@@ -647,6 +657,22 @@ export function talentBuild(
             });
           }
           break;
+        case 'grantCastModifier':
+          /*
+           * A PERMANENT AURA, named after the talent so its contribution is
+           * its own on the results page rather than merged into a total
+           * nobody can attribute.
+           */
+          castModifierAuras.push({
+            id: `talent_${talentId}`,
+            name: talentId,
+            durationMs: 0,
+            castModifier: {
+              abilityIds: effect.abilityIds,
+              [effect.property]: value / 100,
+            },
+          });
+          break;
         case 'petStat':
           /*
            * SUMMED AS PERCENTAGES, turned into multipliers at the end. Two
@@ -691,6 +717,7 @@ export function talentBuild(
     resourceMaximums,
     grantedAbilities,
     grantedAuras,
+    castModifierAuras,
     offHandDamageMultiplier: 1 + offHandDamageBonusPct / 100,
     offHandResourceMultiplier: 1 + offHandResourceBonusPct / 100,
     offHandHitBonus,

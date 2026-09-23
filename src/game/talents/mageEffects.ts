@@ -210,12 +210,8 @@ export const MAGE_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
   piercing_ice: [{ kind: 'schoolDamage', schools: ['frost'] }],
 
   frost_channeling: [
-    {
-      kind: 'unmodelled',
-      reason:
-        'Reduces Frost mana costs by a PERCENTAGE. `abilityCost` subtracts a ' +
-        `flat amount, which is wrong for a 290-mana Frostbolt. ${NO_THREAT}`,
-    },
+    { kind: 'grantCastModifier', abilityIds: ['frostbolt', 'ice_lance'], property: 'costFraction' },
+    { kind: 'unmodelled', reason: `Its mana reduction applies. ${NO_THREAT}` },
   ],
 
   ice_lance: [{ kind: 'grantAbility', abilityId: 'ice_lance' }],

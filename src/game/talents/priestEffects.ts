@@ -72,18 +72,24 @@ export const PRIEST_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
 
   mental_agility: [
     /*
-     * A PERCENTAGE MANA REDUCTION, expressed at last. `CastModifier` is on an
-     * aura rather than a talent, so a talent cannot declare one directly --
-     * this is left unmodelled and says exactly what it would take, which is
-     * one new effect kind rather than a new rule.
+     * THE TALENT THAT NAMED THE MISSING EFFECT KIND, AND IT NOW USES IT. Its
+     * reason read "this wants a `grantCastModifier` and not a new rule", which
+     * turned out to be exactly right: the modifier, its resolution and its
+     * consumption all already existed, and only the declaration was missing.
+     *
+     * "Your Smite, Holy Fire, and INSTANT CAST spells" -- four of the Shadow
+     * build's spells are instants. It stacks with Shadowform's 50%
+     * ADDITIVELY, so a Shadow priest pays 60% less for those four.
      */
     {
-      kind: 'unmodelled',
-      reason:
-        'Reduces the mana cost of instants by a PERCENTAGE. `CastModifier` ' +
-        'can express that and lives on an AURA, and a talent has no effect ' +
-        'kind that grants one with values -- so this wants a `grantCastModifier` ' +
-        'and not a new rule. Shadowform does the same thing through its aura.',
+      kind: 'grantCastModifier',
+      abilityIds: [
+        'shadow_word_pain',
+        'devouring_plague',
+        'shadow_word_death',
+        'vampiric_embrace',
+      ],
+      property: 'costFraction',
     },
   ],
 
@@ -214,12 +220,12 @@ export const PRIEST_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
   silence: [{ kind: 'unmodelled', reason: 'A silence, and nothing the target does is a cast.' }],
 
   devouring_contagion: [
+    { kind: 'grantCastModifier', abilityIds: ['devouring_plague'], property: 'costFraction' },
     {
       kind: 'unmodelled',
       reason:
-        'Reduces Devouring Plague mana by a PERCENTAGE, which a talent has no ' +
-        'effect kind to grant -- the same gap Mental Agility has. Its spread ' +
-        'clause needs a target to die, which never happens.',
+        'Its mana reduction applies. Its spread clause needs a target to die, ' +
+        'which never happens.',
     },
   ],
 
