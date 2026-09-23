@@ -539,9 +539,10 @@ export const WARRIOR_DUAL_WIELD_BERSERKER: readonly PriorityEntry[] = [
   { abilityId: 'bloodthirst' },
   { abilityId: 'whirlwind' },
   /*
-   * Below both, on the ruleset owner's instruction. It was in the character's
-   * talents and in no list this build could reach, so one point was doing
-   * nothing -- see docs/profile-coverage.md, which is what turned it up.
+   * Below both, on the ruleset owner's instruction. It was in the DW Fury
+   * preset's talents and in no list that build could reach, so one point was
+   * doing nothing -- turned up by auditing each preset's choices against what
+   * the fight actually exercises.
    *
    * Not `pooled`: the two strikes above it already take priority, so rationing
    * it behind a rage floor as well would keep it in the same place it was.
