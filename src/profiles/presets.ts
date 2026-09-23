@@ -409,6 +409,70 @@ const DRUID_WEAPONS: Equipment = {
   twoHand: { itemId: 228229, enchantId: CRUSADER },
 };
 
+/**
+ * THE TWO SHAMAN BUILDS, decoded from the owner's URLs. 38/13/0 and 19/32/0,
+ * each exactly 51 points.
+ */
+const SHAMAN_ELEMENTAL_TALENTS: TalentAllocation = {
+  convection: 5,
+  concussion: 5,
+  reverberation: 5,
+  call_of_flame: 3,
+  elemental_focus: 1,
+  elemental_fury: 5,
+  eye_of_the_storm: 3,
+  call_of_thunder: 1,
+  elemental_reach: 2,
+  lightning_overload: 3,
+  earthbound: 1,
+  elemental_alacrity: 3,
+  lava_burst: 1,
+  thundering_strikes: 5,
+  ancestral_knowledge: 5,
+  improved_ghost_wolf: 2,
+  shamanistic_focus: 1,
+};
+
+const SHAMAN_ENHANCEMENT_TALENTS: TalentAllocation = {
+  concussion: 5,
+  call_of_flame: 3,
+  elemental_devastation: 3,
+  elemental_fury: 5,
+  improved_fire_nova: 2,
+  call_of_thunder: 1,
+  thundering_strikes: 5,
+  ancestral_knowledge: 2,
+  mental_dexterity: 3,
+  improved_ghost_wolf: 1,
+  elemental_weapons: 3,
+  shamanistic_focus: 1,
+  flurry: 5,
+  stormstrike: 1,
+  spirit_weapons: 1,
+  mental_quickness: 2,
+  improved_stormstrike: 2,
+  maelstrom_weapon: 5,
+  rage_of_the_farseer: 1,
+};
+
+/**
+ * A GEAR SHELL, and said to be one.
+ *
+ * The item data is nineteen Classic stand-ins curated for a Warrior and holds
+ * nothing mail, no shield and no caster weapon. Both Shaman profiles therefore
+ * carry the Warrior's plate, so they have stats at all, and Obsidian Edged
+ * Blade -- the only two-hander there is.
+ *
+ * WHICH SUITS ENHANCEMENT AND MISLEADS NOBODY ABOUT ELEMENTAL. A 3.6-second
+ * two-hander is exactly what Windfury Weapon wants, because a proc pays two
+ * full extra swings whatever the speed. Elemental holds the same blade as a
+ * STAT STICK and never swings it, and its `spellPower` reads zero for the same
+ * reason a Moonkin's does: there is no caster item in the data to equip.
+ */
+const SHAMAN_WEAPONS: Equipment = {
+  twoHand: { itemId: 228229, enchantId: CRUSADER },
+};
+
 export const PROFILE_PRESETS: readonly ProfilePreset[] = [
   {
     id: 'two_hand_arms',
@@ -631,6 +695,53 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = [
        * against a target that never swings.
        */
       encounter: { ...createDefaultProfile().encounter, targetAttacks: true },
+    }),
+  },
+  {
+    id: 'shaman_elemental',
+    label: 'Ele Shaman',
+    detail: 'Troll, caster, standing target. 38 Elemental / 13 Enhancement',
+    build: () => ({
+      ...createDefaultProfile(),
+      character: {
+        name: 'Ele Shaman',
+        race: 'troll',
+        characterClass: 'shaman',
+        level: 60,
+        combatStyle: 'caster',
+        stance: 'battle',
+      },
+      talents: { ...SHAMAN_ELEMENTAL_TALENTS },
+      raidBuffs: [...PRESET_RAID_BUFFS],
+      equipment: { ...SHARED_ARMOUR, ...SHAMAN_WEAPONS },
+      encounter: { ...createDefaultProfile().encounter, targetAttacks: false },
+    }),
+  },
+  {
+    id: 'shaman_enhancement',
+    label: 'Enh Shaman',
+    detail: 'Tauren, two-hander, standing target. 19 Elemental / 32 Enhancement',
+    build: () => ({
+      ...createDefaultProfile(),
+      character: {
+        name: 'Enh Shaman',
+        race: 'tauren',
+        characterClass: 'shaman',
+        level: 60,
+        combatStyle: 'two_hander',
+        stance: 'battle',
+      },
+      talents: { ...SHAMAN_ENHANCEMENT_TALENTS },
+      /*
+       * WINDFURY TOTEM IS NOT SELECTED, and it is the only preset that drops
+       * it. The imbue this build casts says so itself: "when applied to main
+       * hand, disables any benefit you personally receive from Windfury
+       * Totem." Ticking both would pay a Shaman twice for one effect, and the
+       * bigger of the two is the one it casts.
+       */
+      raidBuffs: PRESET_RAID_BUFFS.filter((id) => id !== 'windfury_totem'),
+      equipment: { ...SHARED_ARMOUR, ...SHAMAN_WEAPONS },
+      encounter: { ...createDefaultProfile().encounter, targetAttacks: false },
     }),
   },
 ];

@@ -351,7 +351,10 @@ export function createPlayer(options: PlayerOptions): Combatant {
     // Justice). Gear procs are built per character rather than shared, because
     // Hand of Justice carries its own internal cooldown.
     reactions: [
-      ...reactionsForClass(characterClass, style),
+      // The LEGAL allocation, not the declared one: an unearned Elemental
+      // Weapons must not scale Windfury Weapon any more than an unearned
+      // capstone grants its ability.
+      ...reactionsForClass(characterClass, style, legal.allocation),
       ...reactionsForEquipment(liveEquipment(equipment, style)),
       // Talent procs: Deep Wounds, Flurry and the rest. Built per character
       // from the rank taken, so they carry that character's numbers.

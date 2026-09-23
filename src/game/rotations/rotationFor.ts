@@ -4,6 +4,7 @@ import type { TalentAllocation } from '../talents/Talent';
 import { warriorRotation } from './warrior';
 import { rogueRotation } from './rogue';
 import { druidRotation } from './druid';
+import { shamanRotation } from './shaman';
 
 /**
  * The action priority list for a class and combat style.
@@ -34,5 +35,8 @@ export function rotationFor(
   // A Druid's form IS its combat style, so the style selects the list -- the
   // Warrior's arrangement rather than the Rogue's.
   if (characterClass === 'druid') return druidRotation(style);
+  // A Shaman's two specs are a caster and a two-hander, which the style
+  // already separates -- so the style selects the list here too.
+  if (characterClass === 'shaman') return shamanRotation(style);
   return undefined;
 }

@@ -169,10 +169,30 @@ rather than by class:
 
 | Wave | Profiles | Needs |
 | --- | --- | --- |
-| ~~**1**~~ | ~~Bear + Moonkin Druid~~ **done**, Ele + Enhance Shaman, Frostfire / Arcane / Fire Mage, Shockadin, Seal Twist Ret, Prot Pally | content only |
+| ~~**1**~~ | ~~Bear + Moonkin Druid~~, ~~Ele + Enhance Shaman~~ **done**; Frostfire / Arcane / Fire Mage, Shockadin, Seal Twist Ret, Prot Pally | content only |
 | ~~**1b**~~ | ~~Venom / Combat / Rupture Rogue~~, ~~Cat Druid~~ **all done** | ~~combo points~~ **done** |
 | **2** | Shadow Priest | channelled casts |
 | **3** | BM Hunter, LW Ranged, LW Melee, SM/DS Warlock, Firelock | pets |
+
+**Eleven of twenty done, and the Shaman needed no engine change either** —
+the fourth class in a row where the survey was right about that.
+
+### Two gaps the survey did not have, both found by building
+
+**A one-shot, per-ability cast-time modifier.** Eclipse, Nature's Grace and
+Nature's Swiftness on the Druid; **Maelstrom Weapon, the Enhancement
+capstone**, on the Shaman; Presence of Mind and Arcane Blast on the Mage. All
+shorten the *next* cast of a named spell, and no declaration reaches it —
+`abilityCastTime` is a standing reduction fixed at build time, and an aura
+reaches every ability or none. One engine feature, four classes, and the only
+one on this list that blocks a capstone.
+
+**Totems as damage.** A Shaman's Searing and Magma Totems attack on their own,
+which is the pet gap in Wave 3 wearing different clothes — and it lands on a
+Wave 1 profile. Elemental's measured figure is short by whatever they are
+worth. Searing Totem does not state an attack interval at all; Magma Totem
+does (73 every 2 seconds for 20) but is an area effect on a single-target
+fight, and Fire Nova needs an active fire totem to go off at all.
 
 **Ordering by class would have built Druid's forms before Rogue's combo
 points**, even though forms already exist and combo points are what both Cat
