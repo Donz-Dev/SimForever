@@ -32,7 +32,7 @@ their talent trees and nothing else.
 | **Analysis** | DPS, per-ability breakdown with uses/attempts/hits/crit/glance/avoid rates, buff and debuff uptime, rage economy, deaths and healing received |
 | **UI** | two-step character flow, per-class character sheet (offensive and defensive), style-aware gear, talent trees, combat log, Monte Carlo batches, uptime bar charts |
 
-**1,213 tests**, CI green on Node 20 and 22. Profile format **v9**.
+**1,222 tests**, CI green on Node 20 and 22. Profile format **v9**.
 
 The interface is one theme, **Abyssal Copper**, chosen from four mock-ups. The
 other three still exist in `ui/styles.css` under `:root[data-theme=...]` and
@@ -48,30 +48,47 @@ Starting set, level 63 dummy, **300 fights a row** with a 95% interval.
 Reproduce with `npx vite-node tools/measure_rotation.ts`, which writes out the
 talent builds it uses.
 
-Re-measured **2026-09-22**, after the encounter learned to ramp.
+Re-measured **2026-09-23**, after Thunder Clap learned to slow.
+
+**WITH NO RAID BUFFS SELECTED**, which is the default and is the only way these
+stay comparable to each other. Turning the raid on is worth roughly +60% to a
+Fury warrior; see [docs/raid-buffs.md](docs/raid-buffs.md) and do not mix the
+two sets of figures.
 
 | Build | Standing target | Target swings back |
 | --- | --- | --- |
 | Dual-wield / Berserker (default) | **163.92** +/- 2.67 | **357.22** +/- 3.37 |
 | Dual-wield / Battle (general list) | **161.59** +/- 2.53 | - |
 | Two-hander / Battle (default) | **153.43** +/- 1.64 | - |
-| 1H & Shield / Defensive (default) | **64.31** +/- 1.17 | - |
-| 1H & Shield, 31-pt Protection | **66.45** +/- 1.23 | **158.61** +/- 1.77 |
+| 1H & Shield / Defensive (default) | **64.64** +/- 1.09 | - |
+| 1H & Shield, 31-pt Protection | **66.40** +/- 1.36 | **153.71** +/- 1.76 |
 | Dual-wield, 31-pt Arms | **188.82** +/- 2.43 | - |
 | Fury to Death Wish | **222.26** +/- 3.57 | - |
 | the same, without Death Wish | **194.45** +/- 3.55 | - |
 
-**The two columns are now a much bigger gap than they were**, because the
-target ramps: 294.54 to 357.22 for the dual-wielder, 141.87 to 158.61 for the
-tank, both measured against the same build the day before. The whole difference
-is rage from damage taken, which is proportional to damage, and the late fight
-produces several times what the character can spend — on the default tank
-build, rage wasted at the cap runs about four times rage gained.
+**One row moved, and only one.** The tank with the target attacking fell from
+158.61 to 153.71 — outside its interval — because Thunder Clap now slows the
+target's swings by a fifth, and a fifth fewer swings taken is a fifth less rage
+from damage taken. Every other row is inside its interval, including the
+dual-wielder's attacked column: the Berserker list does not cast Thunder Clap.
 
-**The shield rows fell hard between 2026-09-18 and now** — 95.48 to 64.31 on a
-standing target — and it was not one change. Defensive Stance's damage penalty,
-the Protection priority list and Shield Block all landed in between, and none
-of them is aimed at a target that does not fight back.
+That same change is why Bastion's DPS ratio fell from about 1.16 to 1.106. It
+is a rage economy loosening, not a talent getting worse.
+
+**The two columns are far apart because the target ramps.** Turning it on took
+the dual-wielder from 294.54 to 357.22 and the tank from 141.87 to 158.61 on
+the day the ramp landed. The whole difference is rage from damage taken, which
+is proportional to damage.
+
+**How rage-flooded a tank is has moved twice in two days**, and it is worth
+watching, because it is what makes a damage talent worth more or less than its
+own multiplier. On the ramp alone, rage wasted at the cap ran about four times
+rage gained; with Thunder Clap slowing the target it is nearer 1.3 times.
+
+**The shield rows fell hard between 2026-09-18 and 2026-09-22** — 95.48 to
+64.64 on a standing target — and it was not one change. Defensive Stance's
+damage penalty, the Protection priority list and Shield Block all landed in
+between, and none of them is aimed at a target that does not fight back.
 
 **Not comparable to anything published before 2026-09-18.** The ability effect
 magnitudes arrived, and three of the rotation's strongest actions stopped doing

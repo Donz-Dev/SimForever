@@ -92,24 +92,36 @@ strength  344 base + 53 (Strength of Earth) + 16 (Mark of the Wild) = 413
           x 1.1 (Blessing of Kings) = 454.3
 ```
 
-## Thunder Clap slows by a quarter, and three sources disagree
+## Thunder Clap makes the swing a fifth longer
 
-| Source | 2.00 second swing becomes |
-| --- | --- |
-| **The ruleset owner, asked directly** | **2.50** — attack speed −20% |
-| Forever's spell description | 2.40 — "increasing the **time between** their attacks by 20%" |
-| Forever's own effect row | 2.47 — "Mod Melee Attack Speed", value −19 |
+> **swing time × 1.2** — a 2.00 second swing becomes **2.40**.
 
-The captured data does not agree with itself, let alone with the owner: its
-description says the swing gets a fifth longer while its effect row says the
-speed drops nineteen percent. **The owner's direct answer settles it**, by the
-rule that settled Shield Wall's cooldown, and the other two are written down
-rather than lost. Worth resolving — it is a quarter versus a fifth of the
-swings that kill the character.
+| Source | 2.00 second swing becomes | |
+| --- | --- | --- |
+| **The ruleset owner** | **2.40** — swing time × 1.2 | ✅ used |
+| Forever's spell description | 2.40 — "increasing the **time between** their attacks by 20%" | agrees |
+| Forever's own effect row | 2.47 — "Mod Melee Attack Speed", value −19 | still odd |
+| ~~The owner's first answer~~ | ~~2.50 — attack speed −20%~~ | replaced |
 
-Carried as a **negative haste rating**, which is how the engine already
-expresses attack speed, converted with the same constant `hasteMultiplierFrom`
-divides by so the round trip is exact.
+**The owner overturned their own earlier ruling**, and the new one means
+Forever's description was right all along. The two readings are not the same
+thing: a tenth of a second on every swing the target takes.
+
+The captured data still does not agree with itself — its effect row says the
+speed drops nineteen percent, which is 2.47 — so two of the three sources now
+agree and the effect row is the odd one out.
+
+Carried as a **negative haste rating**, because a swing time multiplier and a
+haste multiplier are reciprocals and the engine already has the second:
+`applyHaste` *divides* a swing timer by it. The aura holds the owner's 1.2
+literally and derives the rating, using the same constant
+`hasteMultiplierFrom` divides by, so the round trip is exact:
+
+```
+swing x 1.2  <=>  haste multiplier 1 / 1.2 = 0.8333...
+             <=>  haste -16.666...%
+             <=>  rating -2833.33
+```
 
 **The Warrior's own Thunder Clap applies it**, on the owner's instruction, and
 the raid entry reuses that aura rather than declaring a copy — so a raid that

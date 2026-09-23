@@ -375,29 +375,31 @@ export const BLOODRAGE: AuraDefinition = bloodrageAura();
  * Thunder Clap's slow, spell 11581.
  *
  * ----------------------------------------------------------------------------
- * THE SOURCES DISAGREE ABOUT WHAT 20% MEANS, and this is the ruleset owner's
- * answer.
+ * WHAT 20% MEANS, settled: the swing gets a FIFTH LONGER.
  *
- *   - the owner, asked directly    attack speed MINUS 20%, so a 2.00 second
- *                                  swing becomes 2.00 / 0.8 = 2.50
- *   - Forever's spell description  "increasing the TIME BETWEEN their attacks
- *                                  by 20%", which is 2.00 x 1.2 = 2.40
- *   - Forever's own effect row     "Mod Melee Attack Speed", value -19, which
- *                                  is 2.00 / 0.81 = 2.47
+ *   swing time x 1.2, so a 2.00 second swing becomes 2.40
  *
- * Three readings, three answers, and the captured data does not even agree
- * with itself -- its description says the swing gets a fifth longer while its
- * effect row says the speed drops by nineteen percent. The owner's direct
- * answer settles it, by the rule that settled Shield Wall's cooldown, and the
- * other two are written down here rather than lost.
+ * The ruleset owner's ruling, and it OVERTURNS THEIR OWN EARLIER ONE. Asked
+ * first, they said attack speed minus twenty, which is 2.00 / 0.8 = 2.50; the
+ * answer here replaced it. The two are not the same thing and the difference
+ * is a tenth of a second on every swing the target takes.
  *
- * WORTH RESOLVING. It is a quarter versus a fifth of the target's swings, and
- * the target is what kills the character.
+ * WHICH MEANS FOREVER'S OWN DESCRIPTION WAS RIGHT ALL ALONG -- "increasing the
+ * TIME BETWEEN their attacks by 20%" is exactly this. The captured data still
+ * does not agree with itself: its effect row says "Mod Melee Attack Speed",
+ * value -19, which would be 2.00 / 0.81 = 2.47. Two of the three sources now
+ * agree and the effect row is the odd one out.
  *
- * Carried as a NEGATIVE HASTE RATING because that is how the engine already
- * expresses attack speed -- `applyHaste` divides a swing timer by the haste
- * multiplier -- and converted with the same constant `hasteMultiplierFrom`
- * divides by, so the round trip is exact whatever that constant is set to.
+ * CARRIED AS A NEGATIVE HASTE RATING, because a swing time multiplier and a
+ * haste multiplier are reciprocals of each other and the engine already has
+ * the second: `applyHaste` DIVIDES a swing timer by it. So the aura holds the
+ * owner's 1.2 literally and the algebra to a rating is written out below,
+ * using the same constant `hasteMultiplierFrom` divides by -- which makes the
+ * round trip exact whatever that constant is set to.
+ *
+ *   swing x 1.2  <=>  haste multiplier 1 / 1.2  =  0.8333...
+ *                <=>  haste -16.666...%
+ *                <=>  rating -16.666... x 170   = -2833.33
  *
  * THE SAME AURA THE RAID APPLIES. `game/buffs/raidBuffs.ts` lists Thunder Clap
  * as something the raid may already have put on the target, and it reuses this
@@ -405,8 +407,18 @@ export const BLOODRAGE: AuraDefinition = bloodrageAura();
  * that supplied it refresh one debuff instead of stacking two.
  * ----------------------------------------------------------------------------
  */
-export const THUNDER_CLAP_ATTACK_SPEED_PERCENT = 20;
+export const THUNDER_CLAP_SWING_TIME_MULTIPLIER = 1.2;
 export const THUNDER_CLAP_SLOW_DURATION_MS = seconds(30);
+
+/**
+ * The haste rating that lengthens a swing by the multiplier above.
+ *
+ * Derived rather than written down, so the only number anyone has to check is
+ * the ruleset owner's 1.2. A hand-computed -2833.33 in its place would be one
+ * more thing to keep in step with `RATING_PER_PERCENT`.
+ */
+export const THUNDER_CLAP_HASTE_RATING =
+  (1 / THUNDER_CLAP_SWING_TIME_MULTIPLIER - 1) * 100 * RATING_PER_PERCENT.haste;
 
 export const THUNDER_CLAP_SLOW: AuraDefinition = {
   id: 'thunder_clap',
@@ -414,9 +426,7 @@ export const THUNDER_CLAP_SLOW: AuraDefinition = {
   durationMs: THUNDER_CLAP_SLOW_DURATION_MS,
   isDebuff: true,
   refreshBehaviour: 'reset',
-  statModifiers: [
-    flat('hasteRating', -THUNDER_CLAP_ATTACK_SPEED_PERCENT * RATING_PER_PERCENT.haste),
-  ],
+  statModifiers: [flat('hasteRating', THUNDER_CLAP_HASTE_RATING)],
 };
 
 export const SHIELD_WALL_DAMAGE_TAKEN_MULTIPLIER = 0.4;
