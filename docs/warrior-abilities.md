@@ -190,11 +190,18 @@ Where they AGREE, confidence goes up:
 
 Where they DISAGREED:
 
-| Ability | Spreadsheet | Other Forever source |
-| --- | --- | --- |
-| **Mortal Strike** | base damage **160** | calculator: "weapon damage plus **85**" |
-| **Shield Wall** | cooldown **1800s** | spell tooltip: "Instant **15 min** cooldown" |
-| | | talent values: 2/2 Improved takes off **11 min** |
+| Ability | Spreadsheet | Other Forever source | Resolved |
+| --- | --- | --- | --- |
+| **Mortal Strike** | base damage **160** | calculator: "weapon damage plus **85**" | **160** |
+| **Shield Wall** | cooldown **1800s** | spell tooltip: "Instant **15 min** cooldown"; 2/2 Improved takes off **11 min** | **900s** |
+| **Slam** | cooldown **0** | spell tooltip: "1.5 sec cast **15 sec cooldown**" | **15s** |
+| **Slam** | base damage: none given | spell tooltip: "weapon damage plus **87**", effect row **88** | **68** |
+
+**Slam is the first figure a captured tooltip has been overruled on outright.**
+The sheet gives no base damage, so the code took Forever's 87; the ruleset
+owner says 68. Everywhere else a capture has been overruled it was because it
+contradicted itself or the sheet. Its cooldown went the other way: two sources
+against the sheet, resolved like Shield Wall's.
 
 **Mortal Strike — RESOLVED: 160 is correct.** Confirmed by the ruleset owner.
 Mortal Strike is weapon damage plus 160; the talent calculator's 85 is wrong
@@ -220,6 +227,34 @@ away.
 
 The calculator also confirms **Spearing Strike is an Arms talent**, which is why
 it had no Classic counterpart to check against.
+
+## The three priority lists
+
+Each is chosen by combat style AND stance together, because a rotation that
+never leaves its stance is a different rotation and not a filtered one. All
+three orders were given by the ruleset owner directly.
+
+| List | Chosen by | Notable |
+| --- | --- | --- |
+| **Warrior (Two-Hander, Battle)** | `two_hander` + Battle | Heroic Strike at **75** rage; Slam last, gated on **more than a second of swing timer left** |
+| **Warrior (Dual-Wield, Berserker)** | `dual_wield` + Berserker | Heroic Strike at 42; Death Wish timed to cover the end of the fight |
+| **Warrior (Shield, Defensive)** | shield + Defensive | Heroic Strike at 26; Last Stand and Shield Wall above everything |
+
+The two general lists remain for everything else. A **dual-wielder in Battle
+Stance** is now the only build that uses one.
+
+**Slam's condition is the only one in any list that reads the swing timer.** It
+is the one ability with a cast time, and Improved Slam takes that to half a
+second and makes it HOLD the swing rather than reset it — so a Slam started with
+more than a second left finishes well before the swing is due and costs it
+nothing. Read off the pending swing's own scheduled timestamp, which is the only
+thing that knows: haste, an extra attack and a cast that reset the timer all
+move it.
+
+**Sunder Armor refreshes at 3 seconds in the Arms list and 4 in the Protection
+one.** Both are the ruleset owner's, given for their own list, and nothing says
+they should agree — so they are two constants rather than one quietly applied to
+a list nobody checked it against.
 
 ## Engine changes this required
 

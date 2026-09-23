@@ -4,6 +4,7 @@ import type { TalentAllocation } from '../game/talents/Talent';
 /** How TalentPanel asks for a change: applied to whatever is current. */
 type TalentUpdate = (previous: TalentAllocation) => TalentAllocation;
 import type { CharacterProfile } from '../profiles';
+import type { ProfilePreset } from '../profiles';
 import { createDefaultProfile } from '../profiles';
 import { resolveCombatStyle } from '../game/character';
 import { startingEquipmentFor } from '../game/items/startingSets';
@@ -64,6 +65,26 @@ export function App() {
    * chosen here or loaded from a file, is never overwritten by confirming the
    * character again.
    */
+  /**
+   * Take a ready-made character, and confirm it in the same step.
+   *
+   * CONFIRMED IMMEDIATELY, because a preset is already a settled character --
+   * every field it sets is set deliberately, so leaving someone on the
+   * creation screen to press Confirm on a build they did not assemble is a
+   * step that can only go wrong. `confirmCharacter` would also dress it from
+   * the starting set, which would quietly overwrite the gear the preset
+   * chose.
+   *
+   * The talents are on the profile, so they come with it; nothing else has to
+   * be told.
+   */
+  const applyPreset = (preset: ProfilePreset) => {
+    setProfile(preset.build());
+    setTalentsCollapsed(true);
+    setConfirmed(true);
+    reset();
+  };
+
   const confirmCharacter = () => {
     setProfile((previous) =>
       Object.keys(previous.equipment).length > 0
@@ -107,6 +128,7 @@ export function App() {
             onEdit={editCharacter}
             onImport={() => undefined}
             onLoad={() => undefined}
+            onPreset={applyPreset}
           />
 
           {confirmed ? (

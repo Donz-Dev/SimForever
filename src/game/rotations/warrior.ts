@@ -4,6 +4,7 @@ import type { CombatStyleId, StanceId } from '../character';
 import { isTankBuild } from '../character';
 import {
   BATTLE_SHOUT,
+  BATTLE_STANCE,
   DEFENSIVE_STANCE,
   DEMORALIZING_SHOUT,
   LAST_STAND,
@@ -696,6 +697,143 @@ export const WARRIOR_SHIELD_DEFENSIVE_ROTATION: Rotation = new PriorityRotation(
   WARRIOR_SHIELD_DEFENSIVE,
 );
 
+/** Rage above which the Arms list spends the surplus on Heroic Strike. */
+export const BATTLE_HEROIC_STRIKE_RAGE = 75;
+
+/**
+ * Refresh Sunder Armor with less than this left, in the ARMS list.
+ *
+ * THREE SECONDS, and the Protection list uses four. Both are the ruleset
+ * owner's, given for their own list, and nothing says they should agree -- so
+ * they are two constants rather than one shared value quietly applied to a
+ * list nobody checked it against. Worth unifying if the owner intends one
+ * rule; see `SUNDER_REFRESH_WINDOW_MS`.
+ */
+export const BATTLE_SUNDER_REFRESH_WINDOW_MS = seconds(3);
+
+/**
+ * How much of a swing must be left for the Arms list to cast Slam.
+ *
+ * ----------------------------------------------------------------------------
+ * THE RULESET OWNER'S RULE, and their reason in their own words: "this
+ * attempts to squeeze a Slam cast in without it affecting your auto-attack
+ * flow."
+ *
+ * Slam is the one ability in this list with a cast time, and Improved Slam
+ * takes it to half a second and makes it HOLD the swing rather than reset it.
+ * So a Slam started with more than a second of swing timer left finishes well
+ * before the swing is due and costs that swing nothing.
+ *
+ * Read off the pending swing's own scheduled timestamp, which is the only
+ * thing that actually knows -- haste, an extra attack and a cast that reset
+ * the timer all move it, and a rotation computing it from the weapon's speed
+ * would be guessing at all three.
+ * ----------------------------------------------------------------------------
+ */
+export const SLAM_SWING_WINDOW_MS = seconds(1);
+
+/** Milliseconds until this actor's main hand swings again, or 0 if it is idle. */
+function mainHandSwingIn(context: SimulationContext, actor: Combatant): number {
+  const pending = actor.pendingSwing('mainHand');
+  if (!pending || pending.cancelled) return 0;
+  return Math.max(0, pending.timestamp - context.clock.now());
+}
+
+/**
+ * Two-hander, Battle Stance. Specified by the ruleset owner, in this order.
+ *
+ * ----------------------------------------------------------------------------
+ * THE ARMS LIST, and the third to be given as an explicit order rather than
+ * assembled from shared fragments. Like the other two it is a LIST rather than
+ * the general melee list with a filter, and like them it never leaves its
+ * stance: every entry is castable in Battle, so the only stance change it
+ * makes is the one that puts it right at the pull.
+ *
+ * WHAT IS DIFFERENT FROM THE OTHER TWO.
+ *
+ *   - HEROIC STRIKE AT 75 RAGE, against Berserker's 42 and the tank's 26. An
+ *     Arms warrior has Mortal Strike, Slam, Rend and Execute to spend on, so
+ *     the surplus that goes into a swing is a much bigger surplus.
+ *   - SLAM IS LAST and gated on the swing timer, which is the only entry in
+ *     any list that reads it. See `SLAM_SWING_WINDOW_MS`.
+ *   - OVERPOWER IS THIRD, above everything that costs a global cooldown worth
+ *     having. It needs no condition here: it is gated on the window a target's
+ *     dodge opens, and `checkCast` refuses it until then.
+ *
+ * Execute needs no talent gate and Mortal Strike does: a warrior without the
+ * capstone simply does not know it, so the entry is skipped rather than
+ * needing a condition.
+ * ----------------------------------------------------------------------------
+ */
+export const WARRIOR_TWO_HAND_BATTLE: readonly PriorityEntry[] = [
+  /*
+   * The stance first, and only when it is not already up. A stance lasts until
+   * another replaces it, so this fires once at the pull and then never again.
+   */
+  {
+    abilityId: 'battle_stance_cast',
+    condition: (context, actor) =>
+      actor.auras.remainingMs(BATTLE_STANCE.id, context.clock.now()) <= 0,
+  },
+  {
+    abilityId: 'battle_shout_cast',
+    condition: (context, actor) =>
+      actor.auras.remainingMs(BATTLE_SHOUT.id, context.clock.now()) <= 0,
+  },
+  // Gated on the window a target's dodge opens; `checkCast` refuses it until
+  // then, so repeating that rule here would be a second copy of it.
+  { abilityId: 'overpower' },
+  {
+    abilityId: 'sunder_armor_cast',
+    condition: (context, _actor, target) => {
+      if (!target) return false;
+      const stacks = target.auras.stacksOf(SUNDER_ARMOR.id);
+      if (stacks < SUNDER_ARMOR_MAX_STACKS) return true;
+      return (
+        target.auras.remainingMs(SUNDER_ARMOR.id, context.clock.now()) <
+        BATTLE_SUNDER_REFRESH_WINDOW_MS
+      );
+    },
+  },
+  // Surplus rage into the next swing, at 75 -- see the constant.
+  {
+    abilityId: 'heroic_strike',
+    condition: (_context, actor) =>
+      (actor.resources.get('rage')?.current ?? 0) >= BATTLE_HEROIC_STRIKE_RAGE,
+  },
+  {
+    abilityId: 'rend_cast',
+    condition: (context, _actor, target) =>
+      !!target && target.auras.remainingMs(REND.id, context.clock.now()) <= 0,
+  },
+  // Talent-gated: a warrior without the capstone does not know it.
+  { abilityId: 'mortal_strike' },
+  /*
+   * The execute phase, measured in TIME rather than target health, because a
+   * training dummy never drops to 20%. The same rule the Berserker list uses.
+   */
+  {
+    abilityId: 'execute',
+    condition: (context) =>
+      remainingMs(context) <= context.plannedDurationMs * EXECUTE_PHASE_FRACTION,
+  },
+  { abilityId: 'spearing_strike' },
+  /*
+   * LAST, and only with room to cast it. The one entry in any list that reads
+   * the swing timer; see `SLAM_SWING_WINDOW_MS` for why a cast time makes this
+   * different from everything above it.
+   */
+  {
+    abilityId: 'slam',
+    condition: (context, actor) => mainHandSwingIn(context, actor) > SLAM_SWING_WINDOW_MS,
+  },
+];
+
+export const WARRIOR_TWO_HAND_BATTLE_ROTATION: Rotation = new PriorityRotation(
+  'Warrior (Two-Hander, Battle)',
+  WARRIOR_TWO_HAND_BATTLE,
+);
+
 /**
  * The list a warrior of this combat style and stance uses.
  *
@@ -712,6 +850,13 @@ export function warriorRotation(style: CombatStyleId, stance?: StanceId): Rotati
   // stance together, because a shield warrior in Berserker is a different
   // character from one in Defensive.
   if (isTankBuild(style, stance)) return WARRIOR_SHIELD_DEFENSIVE_ROTATION;
+  /*
+   * The Arms list, by the same rule again. A DUAL-WIELDER IN BATTLE STANCE
+   * does not get it: this is a two-hander's list -- Slam's cast and Heroic
+   * Strike at 75 rage both assume one big slow swing -- and a dual-wielder in
+   * Battle keeps the general melee list it has always had.
+   */
+  if (style === 'two_hander' && stance === 'battle') return WARRIOR_TWO_HAND_BATTLE_ROTATION;
   return style === 'one_hand_shield' ? WARRIOR_SHIELD_ROTATION : WARRIOR_MELEE_ROTATION;
 }
 

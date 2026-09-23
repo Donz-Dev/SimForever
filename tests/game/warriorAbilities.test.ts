@@ -55,13 +55,17 @@ import { BATTLE_STANCE, DEFENSIVE_STANCE } from '../../src/game/auras/warrior';
  * are converted at the point of comparison.
  *
  * ----------------------------------------------------------------------------
- * ONE ROW IS DELIBERATELY NOT THE SHEET'S, and it is marked where it sits.
+ * TWO ROWS ARE DELIBERATELY NOT THE SHEET'S, and each is marked where it sits.
  *
- * Shield Wall. The sheet says 1800 seconds; the ruleset owner, asked directly,
+ * SHIELD WALL. The sheet says 1800 seconds; the ruleset owner, asked directly,
  * says fifteen minutes, reduced to four by 2/2 Improved Shield Wall. Forever's
  * captured spell tooltip agrees, and so does the talent's own captured value:
  * eleven minutes off fifteen leaves four exactly, where off thirty it would
  * leave nineteen.
+ *
+ * SLAM. The sheet says no cooldown; the captured tooltip says "1.5 sec cast 15
+ * sec cooldown" and the owner confirms fifteen. Two sources against the sheet
+ * again, and the same resolution.
  *
  * The owner's word outranks their own spreadsheet, which is the only thing
  * that can. This table is otherwise the sheet verbatim, and an override
@@ -90,7 +94,8 @@ const SHEET: readonly SheetRow[] = [
   { id: 'thunder_clap', name: 'Thunder Clap', rageCost: 20, cooldownSeconds: 4, castSeconds: 0, attackTable: 'ranged-special' },
   { id: 'sunder_armor_cast', name: 'Sunder Armor', rageCost: 15, cooldownSeconds: 0, castSeconds: 0, attackTable: 'melee-special' },
   { id: 'execute', name: 'Execute', rageCost: 15, cooldownSeconds: 0, castSeconds: 0, attackTable: 'melee-special' },
-  { id: 'slam', name: 'Slam', rageCost: 15, cooldownSeconds: 0, castSeconds: 1.5, attackTable: 'melee-special' },
+  // OVERRIDDEN, see above: the sheet says 0 and the ruleset owner says 15.
+  { id: 'slam', name: 'Slam', rageCost: 15, cooldownSeconds: 15, castSeconds: 1.5, attackTable: 'melee-special' },
   { id: 'hamstring', name: 'Hamstring', rageCost: 10, cooldownSeconds: 0, castSeconds: 0, attackTable: 'melee-special' },
   { id: 'demoralizing_shout_cast', name: 'Demoralizing Shout', rageCost: 10, cooldownSeconds: 0, castSeconds: 0, attackTable: undefined },
   { id: 'intercept', name: 'Intercept', rageCost: 10, cooldownSeconds: 30, castSeconds: 0, attackTable: 'ranged-special' },

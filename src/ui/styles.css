@@ -1188,3 +1188,50 @@ button:disabled {
 .buff-detail {
   font-size: 12px;
 }
+
+/* --- profile presets --- */
+
+.presets {
+  margin-bottom: 14px;
+}
+
+/* Wraps rather than scrolls: three or four of these have to fit a narrow
+   config column, and a row that scrolls sideways hides the last one. */
+.preset-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+/* Accent-bordered rather than filled, so a preset reads as a shortcut and not
+   as the primary action -- Confirm below it is still the button that commits. */
+.preset {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  flex: 1 1 140px;
+  padding: 8px 10px;
+  text-align: left;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  background: var(--surface-raised);
+  cursor: pointer;
+}
+
+.preset:hover {
+  border-color: var(--accent);
+  background: var(--accent-wash);
+}
+
+.preset-label {
+  color: var(--text);
+  font-weight: 600;
+}
+
+.preset-detail {
+  color: var(--text-muted);
+  font-size: 11px;
+  line-height: 1.3;
+}
