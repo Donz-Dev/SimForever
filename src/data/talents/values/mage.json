@@ -197,8 +197,10 @@
    "tree": "arcane",
    "ranks": 1,
    "text": "Gives your Arcane Blast spell a 40% chance, and your Fireball, Frostbolt, and Frostfire Bolt spells a 20% chance to reduce the channeled duration of your next Arcane Missiles spell by 50%, reduce the Mana cost by 100%, and missiles fire every 0.5 sec.",
-   "values": null,
-   "note": "single rank"
+   "values": [
+    40
+   ],
+   "note": "single rank; the 40 filled in by hand per this directory's README -- the text states a 40% chance from Arcane Blast and 20% from three other spells, and the 40 is the one the reaction takes"
   },
   "presence_of_mind": {
    "name": "Presence of Mind",
@@ -444,8 +446,10 @@
    "tree": "fire",
    "ranks": 1,
    "text": "Your non-periodic critical strikes with Fireball, Frostfire Bolt, Fire Blast, and Scorch grant Hot Streak for 15 sec. Hot Streak reduces the cast time of Pyroblast by 25%, stacking up to 3 times.",
-   "values": null,
-   "note": "single rank"
+   "values": [
+    25
+   ],
+   "note": "single rank; the 25 filled in by hand per this directory's README -- the text states \"reduces the cast time of Pyroblast by 25%, stacking up to 3 times\" and a single-rank talent has no variable the calculator can identify"
   },
   "master_of_elements": {
    "name": "Master of Elements",

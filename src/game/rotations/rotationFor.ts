@@ -5,6 +5,7 @@ import { warriorRotation } from './warrior';
 import { rogueRotation } from './rogue';
 import { druidRotation } from './druid';
 import { shamanRotation } from './shaman';
+import { mageRotation } from './mage';
 
 /**
  * The action priority list for a class and combat style.
@@ -38,5 +39,9 @@ export function rotationFor(
   // A Shaman's two specs are a caster and a two-hander, which the style
   // already separates -- so the style selects the list here too.
   if (characterClass === 'shaman') return shamanRotation(style);
+  // AND TALENTS SELECT ONE FOR THE MAGE TOO, but by POINTS SPENT rather than
+  // by a capstone: all three builds are `caster`, and the Frostfire one is
+  // 0/29/22 with no 31-point talent for the Rogue's test to find.
+  if (characterClass === 'mage') return mageRotation(talents ?? {});
   return undefined;
 }

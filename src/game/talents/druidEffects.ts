@@ -159,7 +159,7 @@ export const DRUID_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
   ],
 
   heart_of_the_wild: [
-    { kind: 'stat', stat: 'intellect', operation: 'percentAdd' },
+    { kind: 'stat', stat: 'intellect', operation: 'percentAdd', scale: 0.01 },
     {
       kind: 'unmodelled',
       reason:
@@ -307,7 +307,7 @@ export const DRUID_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
     },
   ],
 
-  living_spirit: [{ kind: 'stat', stat: 'spirit', operation: 'percentAdd' }],
+  living_spirit: [{ kind: 'stat', stat: 'spirit', operation: 'percentAdd', scale: 0.01 }],
   improved_tranquility: [{ kind: 'unmodelled', reason: 'Threat and a healing cooldown.' }],
   improved_regrowth: [{ kind: 'unmodelled', reason: 'Healing, and no profile here heals.' }],
   wild_growth: [{ kind: 'unmodelled', reason: 'A heal, and no profile here heals.' }],

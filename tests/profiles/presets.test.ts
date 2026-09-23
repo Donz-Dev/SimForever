@@ -59,6 +59,9 @@ describe('the preset catalogue', () => {
       'druid_bear',
       'shaman_elemental',
       'shaman_enhancement',
+      'mage_frostfire',
+      'mage_arcane',
+      'mage_fire',
     ]);
     expect(PROFILE_PRESETS.map((preset) => preset.label)).toEqual([
       '2H Arms',
@@ -72,6 +75,9 @@ describe('the preset catalogue', () => {
       'Bear',
       'Ele Shaman',
       'Enh Shaman',
+      'Frostfire',
+      'Arcane',
+      'Fire',
     ]);
   });
 

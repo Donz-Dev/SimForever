@@ -8,6 +8,7 @@ import { WARRIOR_TALENT_EFFECTS } from '../../src/game/talents/warriorEffects';
 import { ROGUE_TALENT_EFFECTS } from '../../src/game/talents/rogueEffects';
 import { DRUID_TALENT_EFFECTS } from '../../src/game/talents/druidEffects';
 import { SHAMAN_TALENT_EFFECTS } from '../../src/game/talents/shamanEffects';
+import { MAGE_TALENT_EFFECTS } from '../../src/game/talents/mageEffects';
 
 /*
  * ------------------------------------------------------------------------------
@@ -48,6 +49,7 @@ const EFFECT_TABLES = {
   rogue: ROGUE_TALENT_EFFECTS,
   druid: DRUID_TALENT_EFFECTS,
   shaman: SHAMAN_TALENT_EFFECTS,
+  mage: MAGE_TALENT_EFFECTS,
 } as const;
 
 const IMPLEMENTED = Object.keys(EFFECT_TABLES) as (keyof typeof EFFECT_TABLES)[];
@@ -56,7 +58,7 @@ describe('every implemented class is registered everywhere', () => {
   it('names the classes that have content, and no others', () => {
     // The one place this list is written down. A class arriving here without
     // arriving in the registries below fails the rest of this file.
-    expect(IMPLEMENTED).toEqual(['warrior', 'rogue', 'druid', 'shaman']);
+    expect(IMPLEMENTED).toEqual(['warrior', 'rogue', 'druid', 'shaman', 'mage']);
     for (const id of CLASS_IDS) {
       const hasAbilities = abilitiesForClass(id).length > 0;
       expect(hasAbilities, id).toBe(IMPLEMENTED.includes(id as never));
@@ -118,4 +120,41 @@ describe('every implemented class is registered everywhere', () => {
       });
     });
   }
+
+  /*
+   * ----------------------------------------------------------------------------
+   * A `percentAdd` STAT EFFECT WITHOUT `scale` IS A THOUSAND PERCENT.
+   *
+   * `StatBlock` computes `(base + flat) * (1 + sum(percentAdd))`, so the
+   * modifier wants a FRACTION -- 0.1 for ten percent. A talent's value is a
+   * PERCENTAGE -- 10 for ten percent -- so it has to be scaled by 0.01, and
+   * the Warrior's one entry does exactly that with a comment saying why.
+   *
+   * The Druid, the Shaman and the Mage all forgot it, which multiplied
+   * intellect by ELEVEN. The Arcane mage read 1,529 intellect against a base
+   * of 139 and 28.9% spell crit against 2.5%, and it took building a third
+   * class to notice, because a caster with a very large mana pool looks like
+   * a caster with a very large mana pool.
+   *
+   * So this is structural rather than per-class: any percentage operation has
+   * to declare its scale, and a new class gets the check for free.
+   * ----------------------------------------------------------------------------
+   */
+  it('scales every percentAdd and percentMul stat effect', () => {
+    const offenders: string[] = [];
+
+    for (const characterClass of IMPLEMENTED) {
+      for (const [talentId, effects] of Object.entries(EFFECT_TABLES[characterClass])) {
+        for (const effect of effects) {
+          if (effect.kind !== 'stat') continue;
+          if (effect.operation === 'flat') continue;
+          if (effect.scale === undefined) {
+            offenders.push(`${characterClass}/${talentId} (${effect.operation})`);
+          }
+        }
+      }
+    }
+
+    expect(offenders).toEqual([]);
+  });
 });
