@@ -75,7 +75,8 @@ and 245 agility, on a class that gets NO ranged attack power from strength at
 all. Their own set is 58 and 334. Every Hunter figure before this was built on
 a stat the class cannot use for the thing it mostly does, which is a warning
 about the other eighteen profiles rather than a closed issue: `SHARED_ARMOUR`
-is still the Warrior set and eleven profiles still wear it.
+is still the Warrior set and TWENTY profiles still wear it -- every one
+but the three Hunters, and seventeen of those twenty are not Warriors.
 
 **The bottom of this table is not a balance finding.** See "What a caster
 figure means" below before quoting any of it.
@@ -397,7 +398,8 @@ node tools/import_forever_spells.mjs <class> --write
 In the order I would do them:
 
 1. **Gear for everyone else.** `SHARED_ARMOUR` is the Warrior set and
-   **eleven profiles still wear it**, so what was found for the Hunter is
+   **twenty profiles still wear it** -- all but the three Hunters, and
+   seventeen of them are not Warriors -- so what was found for the Hunter is
    almost certainly true elsewhere: a Rogue on plate stats, a caster whose
    `spellPower` reads zero. Four of the five lowest numbers in the table are
    casters and every one of those figures is a floor.

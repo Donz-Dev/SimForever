@@ -567,7 +567,8 @@ suite, that is a statement about the suite.
 could have caught it because a profile in the wrong gear runs perfectly. 370
 strength and 245 agility on a class that gets NO ranged attack power from
 strength; their own set is 58 and 334, and moving to it was worth up to 34%.
-`SHARED_ARMOUR` is still the Warrior set and eleven profiles still wear it.
+`SHARED_ARMOUR` is still the Warrior set and TWENTY profiles still wear it,
+seventeen of them not Warriors.
 **Check whose gear a profile is in before quoting its number.**
 
 **VALIDATE AN IMPORTED GEAR SET AGAINST THE PLANNER'S OWN STAT PANEL.** Every
