@@ -20,7 +20,7 @@ import { PALADIN_TALENT_REACTIONS } from '../reactions/paladinTalents';
 import { HUNTER_TALENT_REACTIONS } from '../reactions/hunterTalents';
 import { WARLOCK_TALENT_REACTIONS } from '../reactions/warlockTalents';
 import { PRIEST_TALENT_REACTIONS } from '../reactions/priestTalents';
-import type { ClassId, CombatStyleId } from '../character';
+import type { ClassId, CombatStyleId, StatFromStat } from '../character';
 import type { Equipment } from '../items/Item';
 import { armorFromItems, liveEquipment } from '../items/equipment';
 import type { TalentAllocation } from './Talent';
@@ -121,6 +121,15 @@ export interface TalentBuild {
    * attack power stuck at its starting figure.
    */
   readonly statModifiers: readonly StatModifierSpec[];
+  /**
+   * Stats worth a FRACTION OF ANOTHER STAT, folded into the derivation.
+   *
+   * Neither a flat stat nor a modifier, because it is neither: Careful Aim's
+   * attack power has to follow intellect the way the class table's already
+   * follows strength, so it is a term in the derivation function rather than
+   * a number computed once. `createPlayer` is the only reader.
+   */
+  readonly statConversions: readonly StatFromStat[];
   /** Resource caps to raise. */
   readonly resourceMaximums: Partial<Record<ResourceType, number>>;
   /** Abilities a talent grants, which the character otherwise would not have. */
@@ -221,6 +230,7 @@ export interface TalentBuild {
 const EMPTY: TalentBuild = {
   stats: {},
   statModifiers: [],
+  statConversions: [],
   resourceMaximums: {},
   grantedAbilities: new Set(),
   grantedAuras: new Set(),
@@ -349,6 +359,7 @@ export function talentBuild(
 
   const stats: Partial<Record<StatName, number>> = {};
   const statModifiers: StatModifierSpec[] = [];
+  const statConversions: StatFromStat[] = [];
   const resourceMaximums: Partial<Record<ResourceType, number>> = {};
   const grantedAbilities = new Set<string>();
   const grantedAuras = new Set<string>();
@@ -508,6 +519,24 @@ export function talentBuild(
           }
           break;
         }
+        /*
+         * A PERCENTAGE of another stat, kept as a conversion rather than
+         * resolved to a number here. `createPlayer` folds it into the
+         * derivation, so it re-derives when a buff moves the source stat --
+         * the same reason a "+2% Stamina" talent stays a modifier instead of
+         * becoming a flat amount.
+         *
+         * Ranks are pushed separately rather than summed, because a talent is
+         * read at ONE rank and two different talents converting into the same
+         * stat must both land. `withStatConversions` adds them all.
+         */
+        case 'statFromStat':
+          statConversions.push({
+            from: effect.from,
+            to: effect.to,
+            fraction: value / 100,
+          });
+          break;
         case 'abilityCost':
           abilityCostReduction.set(
             effect.abilityId,
@@ -714,6 +743,7 @@ export function talentBuild(
   return {
     stats,
     statModifiers,
+    statConversions,
     resourceMaximums,
     grantedAbilities,
     grantedAuras,

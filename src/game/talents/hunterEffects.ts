@@ -6,13 +6,12 @@ import type { TalentEffects } from './TalentEffect';
  * Every one of the 50 has an entry, and one that cannot be expressed says so.
  *
  * ----------------------------------------------------------------------------
- * THE FIFTH STAT-FROM-STAT TALENT IS HERE, AND IT IS THE BIGGEST YET. Careful
- * Aim reads "Increases your Attack Power by 100% of your Intellect", all three
- * profiles take it at 5/5, and nothing declares a stat derived from another
- * stat. The others are the Shaman's Mental Dexterity and Mental Quickness, the
- * Mage's Arcane Resilience and the Paladin's Champion of the Light -- five
- * talents across four classes now, which is enough to be a shape rather than
- * a coincidence.
+ * CAREFUL AIM WORKS NOW, and it was the talent that forced `statFromStat`.
+ * "Increases your Attack Power by 100% of your Intellect", taken at 5/5 by
+ * all three profiles, and for a long time nothing could declare a stat
+ * derived from another stat. Six talents across five classes said so; they
+ * were retired together, which is the fourth time reasons written
+ * specifically enough to re-read have paid for themselves.
  *
  * WHAT ELSE CLUSTERS:
  *
@@ -33,13 +32,6 @@ const NO_TRAPS = 'Traps, and no profile places one.';
 
 /** Said once; seven talents say it. */
 const NO_MOVEMENT = 'Movement or control, and the target neither moves nor can be controlled.';
-
-/** Said once; the Careful Aim family. */
-const STAT_FROM_STAT =
-  'A stat derived from a PERCENTAGE OF ANOTHER STAT, which has no declaration: ' +
-  '`stat` adds a flat amount or a percentage of the same stat, and nothing ' +
-  'crosses from one to another. The fifth talent in the project with this ' +
-  'shape and the largest -- all three Hunter profiles take it at full rank.';
 
 export const HUNTER_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
   // --- Beast Mastery -------------------------------------------------------
@@ -177,7 +169,21 @@ export const HUNTER_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
     },
   ],
 
-  careful_aim: [{ kind: 'unmodelled', reason: STAT_FROM_STAT }],
+  careful_aim: [
+    /*
+     * "Increases your Attack Power by {0}% of your Intellect", 100% at 5/5,
+     * and all three Hunter profiles take it at full rank.
+     *
+     * INTERPRETATION: `attackPower`, the plain one, because the talent says
+     * "Attack Power" and Forever names the ranged pool EXPLICITLY wherever it
+     * means it -- Aspect of the Hawk and Trueshot Aura both read "ranged
+     * attack power" and both are declared that way here. Reading a ranged
+     * meaning into a talent that does not say so would be inventing data.
+     *
+     * One place, so it is cheap to flip if the ruleset owner says otherwise.
+     */
+    { kind: 'statFromStat', from: 'intellect', to: 'attackPower' },
+  ],
 
   rapid_killing: [
     {

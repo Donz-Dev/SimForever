@@ -271,6 +271,37 @@ new class writing the same complaint is caught. It found one on the way in:
 the Shaman's Tidal Focus, which is inert for want of a healing profile and had
 been given the percentage-cost reason by mistake.
 
+**A STAT CAN BE WORTH A PERCENTAGE OF ANOTHER STAT, and that is
+`statFromStat` FOLDED INTO THE DERIVATION rather than a number computed once.**
+Six talents across five classes said this could not be expressed -- Careful
+Aim, Mental Dexterity, Mental Quickness, Arcane Resilience, Champion of the
+Light and Spiritual Guidance -- and like `grantCastModifier` it was a missing
+DECLARATION and not a missing rule. `StatBlock` already resolves in two passes
+so a derived stat sees FULLY BUFFED primaries, and it already takes the
+derivation as an injected function because which primary makes which secondary
+is game content; a conversion is one more term in that function. So Careful
+Aim follows a buffed intellect exactly as attack power already follows a
+buffed strength, and resolving it once at build time would freeze it at the
+unbuffed figure while still reading as a perfectly plausible attack power. It
+converts FROM a primary only, because the derivation is handed resolved
+primaries and all six talents read one.
+
+**IT MOVED FOUR PROFILES AND WAS WORTH EXACTLY ZERO TO TWO**, which is the
+Eclipse lesson again. Arcane Resilience is ARMOR on a Mage nothing attacks.
+Champion of the Light is spell power on a Seal Twist Ret whose seals are
+Command and Crusader -- and **Seal of Command is 70% of WEAPON damage with no
+spell power term**, so the one profile the gap survey named as "the first
+where it bites" is the one it does not bite at all. Shockadin, which casts
+Seal of Righteousness, gained 2.2%. The mechanism was right and the build was
+wrong, which is why the test asserts THE STAT ARRIVING and not a DPS delta.
+
+**A TALENT'S OWN RANK DOES NOT ALWAYS OPEN ITS OWN GATE.** Careful Aim is tier
+5, so `{ careful_aim: 5 }` alone is legal and `{ careful_aim: 1 }` is not --
+`createPlayer` strips the illegal one SILENTLY, and a rank-scaling test read
+that as "worth nothing at rank 1" rather than as "not allocated". Pad a
+single-talent allocation with tier-0 filler, the way `tests/helpers/legalise`
+does for the Warrior.
+
 **A TALENT REACHES THE OWNER; A PET NEEDS `petStat` AND `petReaction`.** Six
 Hunter talents were inert for one reason -- a talent effect lands on the
 character carrying it, and a pet is a separate combatant built afterwards --

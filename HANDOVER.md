@@ -12,7 +12,7 @@ status, that one is how.
 ## Where the project is
 
 **All nine classes and all 21 profiles are implemented**, every number traced
-to a source rather than invented. **1,534 tests**, CI green on Node 20 and 22.
+to a source rather than invented. **1,546 tests**, CI green on Node 20 and 22.
 Profile format **v9**.
 
 The twenty profiles were specified by the ruleset owner as
@@ -31,19 +31,19 @@ off moves all of them; see [docs/raid-buffs.md](docs/raid-buffs.md).
 | --- | --- | --- | --- |
 | DW Fury | Warrior | 18/33/0 | 643.2 |
 | 2H Arms | Warrior | 38/13/0 | 585.5 |
-| LW Melee | Hunter | 7/13/31 | 458.8 |
+| LW Melee | Hunter | 7/13/31 | **473.7** |
+| Enh Shaman | Shaman | 19/32/0 | **408.3** |
 | Seal Twist Ret | Paladin | 13/0/38 | 403.1 |
-| Enh Shaman | Shaman | 19/32/0 | 392.6 |
-| Shockadin | Paladin | 23/0/28 | 372.4 |
+| Shockadin | Paladin | 23/0/28 | **380.6** |
 | Prot Warr | Warrior | 17/0/34 | 357.5 |
 | Combat Rogue | Rogue | 18/33/0 | 347.6 |
 | Venom Rogue | Rogue | 37/12/2 | 308.5 |
 | Rupture Rogue | Rogue | 12/8/31 | 290.3 |
-| BM Hunter | Hunter | 31/20/0 | 282.8 |
+| BM Hunter | Hunter | 31/20/0 | **290.0** |
 | Cat Druid | Druid | 9/35/7 | 267.8 |
 | Shadow Priest | Priest | 16/3/32 | 266.1 |
 | Bear Druid | Druid | 9/42/0 | 241.9 |
-| LW Ranged | Hunter | 7/39/5 | 229.0 |
+| LW Ranged | Hunter | 7/39/5 | **237.2** |
 | Firelock | Warlock | 5/11/35 | 225.6 |
 | Arcane Mage | Mage | 47/4/0 | 210.2 |
 | Prot Pally | Paladin | 8/36/7 | 191.9 |
@@ -53,8 +53,16 @@ off moves all of them; see [docs/raid-buffs.md](docs/raid-buffs.md).
 | Moonkin | Druid | 38/0/13 | 94.2 |
 | Ele Shaman | Shaman | 38/13/0 | 70.3 |
 
+**Bold is what `statFromStat` moved**, and it is the whole of the change:
+Careful Aim for the three Hunters, Mental Dexterity and Mental Quickness for
+Enhancement, Champion of the Light for Shockadin. Two profiles that gained the
+talent did not move at all, on purpose -- see below.
+
 **The bottom of this table is not a balance finding.** See "What a caster
 figure means" below before quoting any of it.
+
+**The two ranged Hunter figures are still wrong, in the other direction.** See
+"Ranged attack power reaches nothing" under what to do next.
 
 ---
 
@@ -138,13 +146,15 @@ distinction matters more than the count.
 
 Write these reasons specifically enough to re-read. Six Hunter pet talents all
 named the same cause and expired together the moment pets existed; five Warrior
-talents said "nothing attacks the player" three commits after something did.
+talents said "nothing attacks the player" three commits after something did;
+**six stat-from-stat talents across five classes expired together** the day
+`statFromStat` was declared. That is the fourth time, and the reason it keeps
+working is that the reasons were specific enough to find by their wording.
 
 Still open, in order of how many talents they would retire:
 
 | Gap | Talents | Classes |
 | --- | --- | --- |
-| **Stat from stat** — a stat as a percentage of another | 6 | Shaman ×2, Mage, Paladin, Hunter, Priest |
 | **Spell hit per school** — the attack table decides hit before any per-school modifier is consulted | 5 | Mage ×2, Priest ×2, Paladin |
 | **Crit, or crit damage, for a LIST of abilities** — `critDamageBonus` is whole-character, `schoolCritDamage` is per school, `abilityCrit` names one; none selects a set | 3 | Warlock (Pandemic), Hunter (Mortal Shots, Savage Strikes) |
 | **Mid-fight summoning** — `Simulation` exposes `combatants` read-only | 2 | Warlock Infernal, Mage elemental |
@@ -152,11 +162,19 @@ Still open, in order of how many talents they would retire:
 | **A flat per-school damage bonus** — `damageTakenBySchool` multiplies | 1 | Paladin (Judgement of the Crusader, +161 Holy) |
 | **Threat** | ~15 | every class; deliberately out of scope |
 
-**Stat-from-stat is the obvious next one.** Careful Aim is 5/5 in all three
-Hunter builds; Champion of the Light matters to Retribution because the seal
-formula has a spell power term; Spiritual Guidance is Shadow's. Like
-`grantCastModifier`, it is likely a missing DECLARATION rather than a missing
-rule.
+**Stat-from-stat is done**, and it was a missing declaration rather than a
+missing rule, exactly as predicted -- `statFromStat`, folded into the
+derivation `StatBlock` already takes as an injected function. What the
+prediction got WRONG is worth keeping: it said Champion of the Light "matters
+to Retribution because the seal formula has a spell power term". Seal Twist
+Ret casts Seal of Command and Seal of the Crusader, and **Seal of Command is
+70% of WEAPON damage with no spell power term at all** -- so the talent is
+correct, the spell power is really on the character, and the figure did not
+move by a decimal. Shockadin, which casts Seal of Righteousness, gained 2.2%.
+Spiritual Guidance is a HOLY talent and the Shadow Priest does not take it.
+
+**Two of six moved nothing, and both are right.** Arcane Resilience is armor
+on a Mage nothing attacks. Assert the mechanism, not the DPS.
 
 ### Because of the target — these expire only if the encounter changes
 
@@ -268,6 +286,13 @@ re-read.
 5. **Bane of Agony's ramp** — did Forever keep Classic's 50/100/150 bands?
 6. **Seal of the Crusader's "deals less damage with each attack"** states no
    figure, so the seal is currently generous.
+7. **Careful Aim** reads "Increases your Attack Power by 100% of your
+   Intellect". Is that the MELEE pool, as declared, or the ranged one a Hunter
+   actually shoots with? Forever names ranged attack power explicitly in
+   Aspect of the Hawk and Trueshot Aura and does not here, which is why it is
+   declared as the plain one — but it is the difference between the talent
+   being worth ~14% of a ranged Hunter's power and worth almost nothing. One
+   line in `hunterEffects.ts`.
 
 Asked and answered already, for reference: seal damage is **not** a weapon use;
 a hawk is modelled **without** a real combatant; pet family is a **profile
@@ -309,16 +334,54 @@ node tools/import_forever_spells.mjs <class> --write
 
 In the order I would do them:
 
-1. **Stat-from-stat** — six talents, four classes, and likely a declaration
-   rather than a rule. Same shape as `grantCastModifier`, which retired eleven
-   talents across seven classes for about 400 lines.
+1. **Ranged attack power reaches nothing.** Found while declaring Careful Aim,
+   and it is the biggest accuracy problem in the project today.
+   `weaponDamageFor` reads `stats.effective.attackPower` for EVERY slot,
+   including `ranged` — so a Hunter's bow scales off MELEE attack power and is
+   completely unaffected by the ranged pool. Probed directly: +200 melee attack
+   power moved a bow hit from 168 to 209.43, and +200 ranged attack power left
+   it at 168.
+
+   The owner-named Hunter wiki settles it and disagrees:
+   `github.com/classic-hunter/forever-hunter/wiki/Attack-Formulas` gives Auto
+   Shot as `AmmoDPS x WeaponSpeed + (RAP / 14 x WeaponSpeed + Scope +
+   AverageWeaponDamage)`, and Stat-Mechanics states "1 Agility = 2 Ranged
+   Attack Power", "1 Agility = 1 Melee Attack Power" and "1 Strength = 1 Melee
+   Attack Power" — no ranged bonus from strength at all.
+
+   **So both ranged Hunter figures are overstated**, and the gear makes it
+   worse rather than better: `SHARED_ARMOUR` is the Warrior set, so a Hunter
+   carries 370 strength it should get no ranged attack power from. Measured on
+   the presets, melee attack power is 1187 against a ranged 601 — the bow is
+   swinging with roughly twice the power it should have.
+
+   Three things are currently inert because of it and all three should come
+   back: agility's 2 ranged attack power per point, Aspect of the Hawk, and
+   the Trueshot Aura raid buff. Only Arcane Shot's and Serpent Sting's own
+   coefficients read the ranged pool today.
+
+   **It changes what Careful Aim is worth, so do it before re-reading that
+   number.** Careful Aim is declared into `attackPower` — the plain one,
+   because the talent says "Attack Power" and Forever names the ranged pool
+   explicitly wherever it means it. Once the bow reads ranged attack power,
+   Careful Aim will be worth very little to the two ranged builds and
+   unchanged for LW Melee. **That is a question for the ruleset owner**: does
+   Careful Aim feed the ranged pool for a Hunter? It is one line in
+   `hunterEffects.ts`, deliberately.
+
 2. **Caster gear.** Every caster figure is a floor until some exists, and four
    of the five lowest numbers in the table are casters. This is a DATA task,
    not a code one — `nether.wowhead.com/classic/tooltip/item/<id>` returns
    plain JSON and `src/data/items/README.md` has the markers.
 3. **Spell hit per school** — five talents, and a genuine rule change: the hit
    roll happens before any per-school modifier is consulted.
-4. **The APLs are shells and say so.** Every list since the Warrior's is this
+4. **Crit, or crit damage, for a LIST of abilities** — three talents, two of
+   them Hunter, and it is the same missing middle `SchoolModifiers` filled for
+   damage schools, keyed by attack TABLE instead. It would retire Savage
+   Strikes and Ranged Weapon Specialization, both fully inert and both taken
+   at full rank by a Hunter profile, and make Mortal Shots and Predator's Edge
+   exact where they are currently applied whole-character.
+5. **The APLs are shells and say so.** Every list since the Warrior's is this
    project's guess at the standard shape, not the owner's own. They have been
    wrong twice in ways that cost real damage — the Shockadin seal and the
    missing Lightning Bolt in Enhancement. Worth reviewing with the owner

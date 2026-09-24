@@ -1,5 +1,5 @@
 import type { DamageSchool } from '../../engine';
-import type { StatModifierOperation, StatName } from '../../engine';
+import type { PrimaryStatName, StatModifierOperation, StatName } from '../../engine';
 import type { ResourceType, WeaponType } from '../../engine';
 
 /**
@@ -48,6 +48,39 @@ export type TalentEffect =
       readonly stat: StatName;
       readonly operation: StatModifierOperation;
       readonly scale?: number;
+      readonly valueIndex?: number;
+    }
+
+  /**
+   * A stat worth a PERCENTAGE OF ANOTHER STAT, re-derived as that stat moves.
+   *
+   * ----------------------------------------------------------------------
+   * "Increases your Attack Power by 100% of your Intellect." Six talents
+   * across five classes say this, in four directions, and none of them could
+   * be expressed: `stat` adds a flat amount or a percentage OF THE SAME
+   * STAT, and nothing crossed from one to another.
+   *
+   * A NEW DECLARATION RATHER THAN A NEW RULE, like `grantCastModifier` before
+   * it. `StatBlock` already resolves in two passes so that DERIVED stats see
+   * fully-buffed PRIMARY ones -- that is why a strength blessing raises
+   * attack power -- and it takes the derivation as an injected function
+   * precisely because which stat makes which is game content. This is one
+   * more term in that function, so Careful Aim follows a buffed intellect
+   * exactly the way attack power already follows a buffed strength. Folding
+   * it in as a flat number at build time would freeze it at the unbuffed
+   * value, which is the mistake the two-pass design exists to prevent.
+   *
+   * `from` must be a PRIMARY stat: the derivation is handed resolved
+   * primaries, and all six talents read one. Reading a derived stat would
+   * need a third pass and nothing asks for it.
+   *
+   * The value is a PERCENTAGE, so 100 means all of it.
+   * ----------------------------------------------------------------------
+   */
+  | {
+      readonly kind: 'statFromStat';
+      readonly from: PrimaryStatName;
+      readonly to: StatName;
       readonly valueIndex?: number;
     }
 

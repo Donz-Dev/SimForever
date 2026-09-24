@@ -45,11 +45,12 @@ export {
   baseStatsFor,
   baseStatsToEngineStats,
 } from './baseStatLookup';
-export type { StatConversions } from './conversions';
+export type { StatConversions, StatFromStat } from './conversions';
 export {
   conversionsFor,
   deriveFromPrimaries,
   statDerivationFor,
+  withStatConversions,
 } from './conversions';
 export type { ResourceMaximumOverrides } from './resources';
 export {

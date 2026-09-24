@@ -158,14 +158,16 @@ export const PRIEST_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
   ],
 
   spiritual_guidance: [
-    {
-      kind: 'unmodelled',
-      reason:
-        'Spell damage from a PERCENTAGE OF SPIRIT. The sixth stat-from-stat ' +
-        'talent in the project, after two on the Shaman and one each on the ' +
-        'Mage, Paladin and Hunter -- and nothing declares a stat derived from ' +
-        'another stat.',
-    },
+    /*
+     * "Increases your spell healing by up to {0}% of your total Spirit and
+     * your spell damage by up to {1}% of your total Spirit."
+     *
+     * TWO NUMBERS IN ONE ROW AND THE DAMAGE ONE IS SECOND -- 25% healing and
+     * 8% damage at 5/5. Taking the first would hand Shadow three times the
+     * spell power it earns, and it would look entirely plausible. The healing
+     * half is not modelled because nothing here measures healing.
+     */
+    { kind: 'statFromStat', from: 'spirit', to: 'spellPower', valueIndex: 1 },
   ],
 
   spiritual_healing: [{ kind: 'unmodelled', reason: NO_HEALING }],
