@@ -31,19 +31,19 @@ off moves all of them; see [docs/raid-buffs.md](docs/raid-buffs.md).
 | --- | --- | --- | --- |
 | DW Fury | Warrior | 18/33/0 | 643.2 |
 | 2H Arms | Warrior | 38/13/0 | 585.5 |
-| LW Melee | Hunter | 7/13/31 | **521.0** |
-| Enh Shaman | Shaman | 19/32/0 | **408.3** |
+| LW Melee | Hunter | 7/13/31 | **567.3** |
+| Enh Shaman | Shaman | 19/32/0 | 408.3 |
 | Seal Twist Ret | Paladin | 13/0/38 | 403.1 |
-| Shockadin | Paladin | 23/0/28 | **380.6** |
+| Shockadin | Paladin | 23/0/28 | 380.6 |
+| BM Hunter | Hunter | 31/20/0 | **376.2** |
 | Prot Warr | Warrior | 17/0/34 | 357.5 |
-| BM Hunter | Hunter | 31/20/0 | **354.0** |
+| LW Ranged | Hunter | 7/39/5 | **349.9** |
 | Combat Rogue | Rogue | 18/33/0 | 347.6 |
-| LW Ranged | Hunter | 7/39/5 | **326.7** |
 | Venom Rogue | Rogue | 37/12/2 | 308.5 |
 | Rupture Rogue | Rogue | 12/8/31 | 290.3 |
-| Cat Druid | Druid | 9/35/7 | **282.7** |
+| Cat Druid | Druid | 9/35/7 | 282.7 |
 | Shadow Priest | Priest | 16/3/32 | 266.1 |
-| Bear Druid | Druid | 9/42/0 | **263.1** |
+| Bear Druid | Druid | 9/42/0 | 263.1 |
 | Firelock | Warlock | 5/11/35 | 225.6 |
 | Arcane Mage | Mage | 47/4/0 | 210.2 |
 | Prot Pally | Paladin | 8/36/7 | 191.9 |
@@ -53,17 +53,17 @@ off moves all of them; see [docs/raid-buffs.md](docs/raid-buffs.md).
 | Moonkin | Druid | 38/0/13 | 94.2 |
 | Ele Shaman | Shaman | 38/13/0 | 70.3 |
 
-**Bold is what moved, from three changes**, all of them in one run of work:
+**Bold is what the APL review moved.** Everything else in this table is as the gear and talent work left it; see the sections below for those.
 
-| | was | statFromStat | + Hunter gear | + ranged AP | total |
-| --- | --- | --- | --- | --- | --- |
-| BM Hunter | 282.8 | 290.7 | 350.1 | **354.0** | +25.2% |
-| LW Ranged | 229.0 | 238.3 | 307.3 | **312.8** | +36.6% |
-| LW Melee | 458.8 | 474.6 | 500.1 | 500.1 | +9.0% |
-| Enh Shaman | 392.6 | **408.3** | — | — | +4.0% |
-| Shockadin | 372.4 | **380.6** | — | — | +2.2% |
-| Cat Druid | 267.8 | — | **282.7** | — | +5.6% |
-| Bear Druid | 241.9 | — | **263.1** | — | +8.8% |
+| | was | statFromStat | + gear | + ranged AP | + tables | + APL | total |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| BM Hunter | 282.8 | 290.7 | 350.1 | 354.0 | 354.0 | **376.2** | +33.0% |
+| LW Ranged | 229.0 | 238.3 | 307.3 | 312.8 | 326.7 | **349.9** | +52.8% |
+| LW Melee | 458.8 | 474.6 | 500.1 | 500.1 | 521.0 | **567.3** | +23.6% |
+| Enh Shaman | 392.6 | **408.3** | — | — | — | — | +4.0% |
+| Shockadin | 372.4 | **380.6** | — | — | — | — | +2.2% |
+| Cat Druid | 267.8 | — | **282.7** | — | — | — | +5.6% |
+| Bear Druid | 241.9 | — | **263.1** | — | — | — | +8.8% |
 
 Two profiles gained a stat-from-stat talent and did not move at all, on
 purpose. **The two Druids moved without touching a Druid**: they carry a
@@ -298,6 +298,56 @@ re-read.
 
 ---
 
+## What the APL review moved
+
+The Hunter lists were the first this project measured entry by entry rather
+than reasoned about. Each variant ran 30 batches of 10 fights, and a
+difference inside the interval was treated as no difference.
+
+| | was | now | what did it |
+| --- | --- | --- | --- |
+| LW Melee | 521.0 | **567.3** | Arcane Shot added, +55 |
+| LW Ranged | 326.7 | **349.9** | Aimed Shot dropped, +23 |
+| BM Hunter | 354.0 | **376.2** | Arcane Shot above Summon Hawk, +20 |
+
+**A CAST RESETS THE SWING TIMER, AND THE RANGED SLOT IS A SWING.** That one
+rule decided most of it. Aimed Shot is the heaviest shot in the book -- 784
+damage against Sniper Shot's 638, which is exactly why it was in the list --
+but two seconds of cast throws away most of a 3.2-second bow cycle, and
+auto-shot is 42% of a Marksmanship Hunter's damage. Dropping it is worth +23.
+Multi-Shot is out for the same reason at half the cast time. **Per-use damage
+says nothing about this**, and per-use damage is what the list had been
+ordered by.
+
+**TWO OF THE THREE RUN OUT OF MANA, AND THE THIRD DOES NOT.** A geared Hunter
+empties 3,651 mana by the 30-second mark and spends **half the fight on
+auto-shot alone**, so what binds is damage per MANA -- Serpent Sting 4.13,
+Sniper Shot 3.19, Arcane Shot 2.57, Aimed Shot 2.53. The melee build is the
+opposite and ends with 44% unspent, which is why adding one instant shot to it
+was the largest single entry in the review at +55.
+
+**THE COMMENT THAT WAS WRONG.** Summon Hawk and Arcane Shot share a cooldown
+group, and the note said "a hawk is 32 damage every two seconds for eighteen
+seconds against Arcane Shot's one hit. The hawk wins on paper." It counted the
+hawk's ticks and not its price: Arcane Shot above it is worth +20, and once it
+is above, the hawk never fires at all. **It is kept last rather than deleted**
+-- it measures identical either way, and a build with mana to spare would use
+it.
+
+**THE THREE LISTS DISAGREE ON PURPOSE.** Aimed Shot is worth -23 to
+Marksmanship and +4 to Beast Mastery, because Beast Mastery has no Sniper Shot
+to spend the mana on and its pet carries enough damage that the interrupted
+auto-shot is a smaller share. A rule that held for one build was checked
+against the others rather than assumed.
+
+**WHAT WAS CHECKED AND LEFT ALONE**, which is as much of the review as what
+changed: Aspect of the Beast is correct for the melee build and Aspect of the
+Hawk costs it 35 DPS; Serpent Sting is worth 23 and belongs where it is;
+Sniper Shot above Arcane Shot is 0.55 apart inside a 2.26 interval, so the
+order is not a finding and the capstone keeps the top on other grounds.
+
+---
+
 ## What the attack-table scope moved
 
 `AttackTableModifiers` is the same three fields as `SchoolModifiers` keyed by
@@ -461,11 +511,22 @@ In the order I would do them:
    DECLARATION rather than a missing rule, which is now the third time —
    after `grantCastModifier` and `statFromStat`. Both reasons were re-read
    when the attack-table scope landed and name all three existing scopes.
-4. **The APLs are shells and say so.** Every list since the Warrior's is this
-   project's guess at the standard shape, not the owner's own. They have been
-   wrong twice in ways that cost real damage — the Shockadin seal and the
-   missing Lightning Bolt in Enhancement. Worth reviewing with the owner
-   profile by profile.
+4. **The OTHER SEVEN CLASSES' APLs have not been measured.** The Hunter's
+   three now have, entry by entry, and the review moved them **+20 to +55
+   DPS each** — so the others are very likely leaving similar amounts on the
+   table. They remain this project's guess at the standard shape rather than
+   the owner's own, and they have been wrong three ways already: the
+   Shockadin seal, the missing Lightning Bolt in Enhancement, and now a
+   Hunter comment that argued for the wrong ability and was believed.
+
+   **The method is worth copying.** Patch one list, measure 30 batches of 10
+   fights, treat a difference inside the interval as no difference, and check
+   the two things that decided the whole Hunter review: whether the build is
+   resource-bound or global-cooldown-bound, and whether any listed ability
+   has a CAST TIME, because a cast resets the swing timer. Both are cheap to
+   check and neither is visible in per-use damage.
+
+   The Warrior's lists are the exception — they came from the owner.
 
 Not worth doing yet: **mid-fight summoning**. It is the last item on the gap
 survey and exactly two abilities want it, neither in any profile.

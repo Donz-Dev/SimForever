@@ -3,10 +3,27 @@ import { PriorityRotation } from '../../engine';
 import type { TalentAllocation } from '../talents/Talent';
 
 /**
- * Hunter priority lists — APL SHELLS.
+ * Hunter priority lists — MEASURED, though still not the ruleset owner's own.
  *
  * ----------------------------------------------------------------------------
- * SHELLS, AND SAID TO BE. Not the ruleset owner's own lists.
+ * WHAT CHANGED IS THAT EVERY ENTRY IS NOW ARGUED FROM A NUMBER. Each variant
+ * was measured over 30 batches of 10 fights, and a difference inside the
+ * interval was treated as no difference. The three lists disagree with each
+ * other on purpose, and each says why.
+ *
+ * THE ONE RULE THAT DECIDED MOST OF IT: A CAST RESETS THE SWING TIMER.
+ * `resetSwingTimers` runs for any ability with a cast time and covers the
+ * RANGED slot, so a two-second Aimed Shot throws away most of a 3.2-second bow
+ * cycle -- and auto-shot is 42% of a Marksmanship Hunter's damage. The per-use
+ * damage of a shot says nothing about this, which is why the list that read as
+ * obvious was worth 23 DPS less than the one that drops the heaviest shot in
+ * the book.
+ *
+ * TWO OF THE THREE RUN OUT OF MANA, and that decides the rest. A geared Hunter
+ * empties 3,651 mana by the 30-second mark and spends the REST OF THE FIGHT on
+ * auto-shot alone, so what binds is damage per MANA rather than damage per
+ * global cooldown. The melee build is the opposite -- it ends with 44% of its
+ * mana unspent -- which is why an instant shot was worth 55 DPS to it.
  *
  * CHOSEN BY TALENTS. All three builds could be `ranged`, and the Lone Wolf
  * melee one is not -- so style separates that one and the capstones separate
@@ -38,34 +55,61 @@ const hasAura = (auraId: string) => (_context: SimulationContext, actor: Combata
  * BESTIAL WRATH FIRST, because it buffs the pet for eighteen seconds and the
  * pet is the largest single share of this build.
  *
- * SUMMON HAWK SHARES ARCANE SHOT'S COOLDOWN, so the two compete directly --
- * a hawk is 32 damage every two seconds for eighteen seconds against Arcane
- * Shot's one hit. The hawk wins on paper and is above it here for that reason.
+ * THE HAWK LOSES TO ARCANE SHOT, and the note that used to sit here said the
+ * opposite. They share a cooldown group, so every six seconds is one or the
+ * other -- and "a hawk is 32 damage a tick for eighteen seconds against Arcane
+ * Shot's one hit" counted the hawk's ticks and not its price. Measured, putting
+ * Arcane Shot above it is worth +20 DPS, and once it is above, the hawk never
+ * fires at all.
+ *
+ * IT IS KEPT, LAST, rather than deleted. It measures identical to removing it,
+ * and a build with mana to spare would use it -- so this stays a priority
+ * decision rather than a deletion.
+ *
+ * AIMED SHOT STAYS HERE THOUGH THE MARKSMANSHIP LIST DROPS IT, which is the
+ * one place these lists genuinely disagree. Beast Mastery has no Sniper Shot
+ * to spend mana on, so Aimed is its best remaining sink, and the pet carries
+ * enough of the damage that the auto-shot the cast interrupts is a smaller
+ * share. Worth +4 here against -23 there.
  */
 export const HUNTER_BEAST_MASTERY: readonly PriorityEntry[] = [
   { abilityId: 'aspect_of_the_hawk' },
   { abilityId: 'bestial_wrath' },
   { abilityId: 'serpent_sting', condition: missingOn('serpent_sting') },
-  { abilityId: 'summon_hawk' },
   { abilityId: 'rapid_fire' },
-  { abilityId: 'aimed_shot' },
   { abilityId: 'arcane_shot' },
+  { abilityId: 'aimed_shot' },
+  { abilityId: 'summon_hawk' },
 ];
 
 /**
  * LONE WOLF RANGED — no pet, and 20% more damage for not having one.
  *
- * 7/39/5, the deep Marksmanship build. Sniper Shot is its capstone and Aimed
- * Shot is its heaviest trainer shot; both are ranged specials competing for
- * the same global cooldowns, so the list is simply the shots in order of what
- * they are worth.
+ * 7/39/5, the deep Marksmanship build.
+ *
+ * NO AIMED SHOT, AND IT IS THE HEAVIEST SHOT IN THE BOOK. 784 damage a cast
+ * against Sniper Shot's 638, which is exactly why it used to be here -- and
+ * dropping it is worth +23 DPS. Two seconds of cast time RESETS THE BOW, whose
+ * cycle is 3.2 seconds and whose auto-shots are 42% of this build's damage,
+ * and the 310 mana it spends is mana Sniper Shot does not get. This Hunter is
+ * dry by the 30-second mark and spends half the fight auto-shooting.
+ *
+ * So the ranking is damage per MANA and not damage per cast -- Serpent Sting
+ * 4.13, Sniper Shot 3.19, Arcane Shot 2.57, Aimed Shot 2.53 -- and the one
+ * with a cast time comes last on both counts.
+ *
+ * MULTI-SHOT IS OUT FOR THE SAME REASON, tested and worth -1: half a second of
+ * cast still resets the same bow.
+ *
+ * SNIPER ABOVE ARCANE IS NOT A MEASURED DIFFERENCE. Over 80 batches they are
+ * 0.55 apart inside a 2.26 interval, so the capstone goes first on the grounds
+ * that it hits harder and nothing argues otherwise.
  */
 export const HUNTER_LONE_WOLF_RANGED: readonly PriorityEntry[] = [
   { abilityId: 'aspect_of_the_hawk' },
   { abilityId: 'serpent_sting', condition: missingOn('serpent_sting') },
   { abilityId: 'rapid_fire' },
   { abilityId: 'sniper_shot' },
-  { abilityId: 'aimed_shot' },
   { abilityId: 'arcane_shot' },
 ];
 
@@ -80,10 +124,26 @@ export const HUNTER_LONE_WOLF_RANGED: readonly PriorityEntry[] = [
  * here: the ability says "can only be performed after you dodge" and nothing
  * attacks this Hunter. Its entry reads the aura rather than hoping.
  *
- * NO SERPENT STING. It is a ranged special and this build is standing in melee
- * with Aspect of the BEAST up, so its ranged attack power is the unbuffed one
- * -- and the sting's 15% coefficient reads that. It is still worth a global
- * cooldown, which is why it is last rather than absent.
+ * SERPENT STING NEAR THE BOTTOM. It is a ranged special and this build stands
+ * in melee with Aspect of the BEAST up, so its ranged attack power is the
+ * unbuffed one and the sting's 15% coefficient reads that. Still worth a
+ * global cooldown, which is why it is low rather than absent -- and moving it
+ * to the top is worth nothing measurable.
+ *
+ * ARCANE SHOT AT THE BOTTOM IS THE BIGGEST SINGLE ENTRY IN ANY OF THESE LISTS,
+ * at +55 DPS. This is the build that does NOT run out of mana -- it ends a
+ * fight with 44% unspent -- so the cooldowns on its melee abilities leave
+ * global cooldowns with nothing to put in them. An instant shot fills them
+ * with mana that was otherwise going to waste.
+ *
+ * AND ONLY AN INSTANT ONE. Adding Aimed Shot as well is -17 and Multi-Shot is
+ * -7, because a cast resets the MELEE swing here and this build's auto-attack
+ * is its single largest share. The same rule that removes Aimed Shot from the
+ * Marksmanship list keeps it out of this one.
+ *
+ * ASPECT OF THE BEAST IS CORRECT AND WAS WORTH CHECKING -- swapping it for
+ * Aspect of the Hawk costs 35 DPS, because Forever's Beast grants MELEE attack
+ * power and this Hunter swings a two-hander.
  */
 export const HUNTER_LONE_WOLF_MELEE: readonly PriorityEntry[] = [
   { abilityId: 'aspect_of_the_beast' },
@@ -92,6 +152,7 @@ export const HUNTER_LONE_WOLF_MELEE: readonly PriorityEntry[] = [
   { abilityId: 'strider_kick' },
   { abilityId: 'rapid_fire' },
   { abilityId: 'serpent_sting', condition: missingOn('serpent_sting') },
+  { abilityId: 'arcane_shot' },
 ];
 
 export const HUNTER_BEAST_MASTERY_ROTATION: Rotation = new PriorityRotation(

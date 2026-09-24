@@ -478,6 +478,39 @@ refused every ability and was worth a third of what it should have been, and
 Hand of Justice procced off Thunder Clap. It is `isWeaponUse` in the engine
 now. Full rules in [docs/extra-attacks.md](docs/extra-attacks.md).
 
+**A PRIORITY LIST ORDERED BY DAMAGE PER CAST IS ORDERED BY THE WRONG THING
+WHEN THE BUILD RUNS OUT OF RESOURCE.** A geared Hunter empties its mana by the
+30-second mark of a 60-second fight and spends the REST OF IT on auto-shot
+alone, so what binds is damage per MANA. Aimed Shot is the heaviest shot in the
+book and was in the list for that reason; dropping it is worth +23 DPS.
+**Check whether a build is resource-bound or global-cooldown-bound before
+reading its list**, because the two want opposite orders -- the melee Hunter
+ends fights with 44% of its mana unspent, and adding one instant shot to it was
+worth +55.
+
+**A CAST TIME IS A HIDDEN COST A PRIORITY LIST CANNOT SEE**, because the swing
+it resets belongs to a different line of the damage table. `resetSwingTimers`
+covers the RANGED slot, so a two-second Aimed Shot throws away most of a
+3.2-second bow cycle -- and auto-shot is 42% of a Marksmanship Hunter's damage.
+The same rule keeps every cast out of the MELEE Hunter's list, whose
+auto-attack is its largest share. **An instant ability and a cast ability are
+not comparable by their damage**, and per-use damage is exactly what a list
+tends to get sorted by.
+
+**MEASURE A LIST, DO NOT REASON ABOUT IT.** The Hunter's Summon Hawk sat above
+Arcane Shot on a shared cooldown because a comment said "a hawk is 32 damage
+every two seconds for eighteen seconds against Arcane Shot's one hit -- the
+hawk wins on paper". It counted the hawk's ticks and not its price, and Arcane
+Shot above it is worth +20. The comment was specific, plausible, and had been
+believed for as long as it had existed. Patch one entry, run 30 batches of 10,
+and treat a difference inside the interval as no difference.
+
+**THE SAME ABILITY CAN BE RIGHT IN ONE LIST AND WRONG IN ANOTHER.** Aimed Shot
+is worth -23 to Marksmanship and +4 to Beast Mastery: Beast Mastery has no
+Sniper Shot to spend the mana on, and its pet carries enough damage that the
+interrupted auto-shot is a smaller share. Check a finding against the other
+builds of the same class before generalising it.
+
 **A cast interrupts the swing in progress, and the swing timer resets.** That is
 what makes a cast a real cost to a melee character rather than free damage
 between swings. `Ability.swingTimer: 'hold'` is the exception — the timer runs on
