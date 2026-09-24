@@ -92,10 +92,14 @@ export const WARLOCK_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
     {
       kind: 'unmodelled',
       reason:
-        'Raises crit DAMAGE for seven named periodic spells. `critDamageBonus` ' +
-        'is whole-character and `schoolCritDamage` is per school -- neither ' +
-        'selects a list of abilities, so this is real damage the build is not ' +
-        'getting.',
+        'Raises crit DAMAGE for seven NAMED periodic spells, and none of the ' +
+        'three scopes selects a list: `critDamageBonus` is whole-character, ' +
+        '`schoolCritDamage` is per school, `attackTableCritDamage` is per ' +
+        'attack table. The field it wants -- `critMultiplierBonus` on ' +
+        '`AbilityModifiers` -- already exists and has no talent effect that ' +
+        'reaches it, the way `abilityCrit` reaches crit CHANCE. So this is a ' +
+        'missing declaration rather than a missing rule, and it is real ' +
+        'damage the build is not getting.',
     },
   ],
 

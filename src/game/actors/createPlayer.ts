@@ -357,6 +357,9 @@ export function createPlayer(options: PlayerOptions): Combatant {
     // The same three modifiers keyed by SCHOOL: "your Fire spells" rather than
     // "your Fireball". Consulted by `dealDamage` alongside the per-ability one.
     schoolModifiers: build.schoolModifiers,
+    // And the same three scoped to MELEE or RANGED -- "all your melee
+    // abilities", which is neither one ability nor one school.
+    attackTableModifiers: build.attackTableModifiers,
     // A talent conditional on the weapon held -- Two-Handed Weapon
     // Specialization -- multiplies everything including auto attacks, so it
     // cannot ride on `abilityModifiers`, which deliberately skips swings.

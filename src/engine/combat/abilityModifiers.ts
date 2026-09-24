@@ -1,4 +1,5 @@
 import type { DamageSchool } from './DamageSchool';
+import type { AttackTableKind } from './attackTable';
 
 /**
  * Per-ability modifiers: crit chance, crit damage and damage, for ONE ability
@@ -151,5 +152,70 @@ export class SchoolModifiers {
 
   get isEmpty(): boolean {
     return this.bySchool.size === 0;
+  }
+}
+
+/**
+ * The same three modifiers again, keyed by ATTACK TABLE.
+ *
+ * ------------------------------------------------------------------------------
+ * THE MISSING MIDDLE BETWEEN "one ability" AND "the whole character", on the
+ * other axis from `SchoolModifiers`. A school separates fire from frost; this
+ * separates MELEE from RANGED, and a swing from a special.
+ *
+ * Four Hunter talents asked for it and each wanted a different subset:
+ *
+ *   Savage Strikes     "the critical strike chance of all your MELEE
+ *                      ABILITIES" -- specials only, not swings
+ *   Ranged Weapon Spec "the damage you deal with RANGED WEAPONS" -- the
+ *                      weapon, so Auto Shot counts
+ *   Mortal Shots       "the critical strike damage bonus on all RANGED
+ *                      ABILITIES" -- specials only again
+ *   Predator's Edge    "your MELEE critical strike damage" -- not restricted
+ *                      to abilities, so swings count
+ *
+ * Two of them were left inert and two were applied WHOLE-CHARACTER with a
+ * written caveat, because `critDamageBonus` has no table and `critChance` is
+ * every attack a character makes. That is the same pair of bad options the
+ * Druid's Moonfury and the Shaman's Elemental Fury had before schools existed.
+ *
+ * IT KEYS ON THE TABLE ITSELF RATHER THAN ON A 'melee' | 'ranged' SPLIT, and
+ * the difference is the whole reason it works. The four talents above divide
+ * on TWO axes at once -- melee/ranged and ability/swing -- so a two-value
+ * enum could express none of them without a second flag. `AttackTableKind`
+ * already draws both lines, so each talent lists exactly the tables it covers
+ * and says so in the data rather than in a comment.
+ *
+ * THE OVERLOADED TABLE IS THE TRAP HERE. Thunder Clap, Intercept and Charge
+ * are MELEE Warrior abilities that declare `ranged-special`, because that
+ * table has no dodge or parry and because it is how `isWeaponUse` tells them
+ * apart. Nothing is wrong today -- these modifiers are per character and no
+ * Warrior carries a Hunter talent -- but a class whose own melee ability sits
+ * on a ranged table WOULD be selected wrongly. Check the abilities, not just
+ * the table name, before scoping a new talent this way.
+ * ------------------------------------------------------------------------------
+ */
+export class AttackTableModifiers {
+  private readonly byTable = new Map<AttackTableKind, AbilityModifier>();
+
+  add(table: AttackTableKind, modifier: AbilityModifier): void {
+    const existing = this.byTable.get(table);
+    this.byTable.set(table, existing ? combine(existing, modifier) : modifier);
+  }
+
+  /**
+   * The modifier for a table, or nothing.
+   *
+   * An absent table is a damage-over-time tick, whose landing was settled when
+   * the effect was applied -- the caller passes `critFrom` for those, which is
+   * the same table the tick already takes its crit chance from.
+   */
+  for(table: AttackTableKind | undefined): AbilityModifier {
+    if (table === undefined) return NONE;
+    return this.byTable.get(table) ?? NONE;
+  }
+
+  get isEmpty(): boolean {
+    return this.byTable.size === 0;
   }
 }

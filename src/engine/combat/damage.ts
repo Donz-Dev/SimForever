@@ -302,6 +302,13 @@ function rollTable(
   const modifier = combineModifiers(
     request.source.abilityModifiers.for(request.abilityId),
     request.source.schoolModifiers.for(request.school),
+    /*
+     * AND THE TABLE'S. `attackTable` for anything that rolls; `critFrom` for
+     * a damage-over-time tick, which is the same table the tick already takes
+     * its crit chance from -- so Mortal Shots reaching a Serpent Sting tick
+     * follows the rule that already decided whether the tick could crit.
+     */
+    request.source.attackTableModifiers.for(request.attackTable ?? request.critFrom),
   );
 
   if (!request.attackTable) {
@@ -342,11 +349,19 @@ function rollTable(
  * it here as well would apply the school's twice, so the school's is left out
  * of this function entirely rather than being combined and then skipped.
  */
-function combineModifiers(ability: AbilityModifier, school: AbilityModifier): AbilityModifier {
+function combineModifiers(
+  ability: AbilityModifier,
+  school: AbilityModifier,
+  table: AbilityModifier,
+): AbilityModifier {
   return {
-    critBonus: (ability.critBonus ?? 0) + (school.critBonus ?? 0),
-    critMultiplierBonus: (ability.critMultiplierBonus ?? 0) + (school.critMultiplierBonus ?? 0),
-    // Applied separately, by `schoolMultiplier` in `resolveDamage`.
+    critBonus: (ability.critBonus ?? 0) + (school.critBonus ?? 0) + (table.critBonus ?? 0),
+    critMultiplierBonus:
+      (ability.critMultiplierBonus ?? 0) +
+      (school.critMultiplierBonus ?? 0) +
+      (table.critMultiplierBonus ?? 0),
+    // Applied separately, by `schoolMultiplier` and `tableMultiplier` in
+    // `resolveDamage`, for the same reason the school's is.
     damageMultiplier: ability.damageMultiplier,
   };
 }
@@ -454,7 +469,23 @@ export function resolveDamage(
    * the two are different effects that both apply.
    */
   const schoolMultiplier = source.schoolModifiers.for(request.school).damageMultiplier ?? 1;
-  const afterAttacker = afterCrit * attackerMultiplier * abilityMultiplier * schoolMultiplier;
+  /*
+   * PER TABLE, alongside the other three. Ranged Weapon Specialization is
+   * "the damage you deal with ranged weapons", which is neither one ability
+   * nor one school nor the whole character.
+   *
+   * `attackTable` ONLY, and deliberately not `critFrom` the way the crit
+   * fields above do. `critFrom` declares one thing -- which table's CRIT a
+   * tick borrows -- and reading a damage multiplier off it would stretch it
+   * past what it claims. Serpent Sting is the case: it ticks NATURE damage
+   * with `critFrom: 'ranged-special'`, so Mortal Shots' crit damage reaches
+   * it correctly while "damage you deal with ranged WEAPONS" must not. A
+   * sting's poison is not weapon damage.
+   */
+  const tableMultiplier =
+    source.attackTableModifiers.for(request.attackTable).damageMultiplier ?? 1;
+  const afterAttacker =
+    afterCrit * attackerMultiplier * abilityMultiplier * schoolMultiplier * tableMultiplier;
 
   // Per SCHOOL, which folds in the blanket multiplier as well. Curse of the
   // Elements raises magic and leaves physical alone, so the school has to

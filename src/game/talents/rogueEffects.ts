@@ -79,9 +79,13 @@ export const ROGUE_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
     {
       kind: 'unmodelled',
       reason:
-        'Raises crit DAMAGE for six named abilities. `critDamageBonus` is ' +
-        'whole-character and `abilityCrit` is crit CHANCE, so neither fits; ' +
-        'it needs a per-ability crit multiplier.',
+        'Raises crit DAMAGE for six NAMED abilities, and none of the three ' +
+        'scopes selects a list: `critDamageBonus` is whole-character, ' +
+        '`schoolCritDamage` is per school, `attackTableCritDamage` is per ' +
+        'attack table. `abilityCrit` names one ability but sets crit CHANCE. ' +
+        'The field it wants -- `critMultiplierBonus` on `AbilityModifiers` -- ' +
+        'already exists with no talent effect reaching it, so this is a ' +
+        'missing declaration rather than a missing rule.',
     },
   ],
 

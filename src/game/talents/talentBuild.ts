@@ -8,7 +8,14 @@ import type {
   WeaponProfile,
 } from '../../engine';
 import type { AuraDefinition, WeaponSlot } from '../../engine';
-import { ALL_ABILITIES, AbilityModifiers, SchoolModifiers, isPhysical, seconds } from '../../engine';
+import {
+  ALL_ABILITIES,
+  AbilityModifiers,
+  AttackTableModifiers,
+  SchoolModifiers,
+  isPhysical,
+  seconds,
+} from '../../engine';
 import { COMBAT_CONSTANTS } from '../combat/attackChances';
 import type { TalentReactionBuilder } from '../reactions/warriorTalents';
 import { WARRIOR_TALENT_REACTIONS } from '../reactions/warriorTalents';
@@ -177,6 +184,13 @@ export interface TalentBuild {
   readonly abilityModifiers: AbilityModifiers;
   /** Per-school crit, crit damage and damage. See `SchoolModifiers`. */
   readonly schoolModifiers: SchoolModifiers;
+  /**
+   * The same three, scoped to MELEE or RANGED and to swings or specials.
+   *
+   * "All your melee abilities" is neither one ability nor one school nor the
+   * whole character. See `AttackTableModifiers`.
+   */
+  readonly attackTableModifiers: AttackTableModifiers;
   /** Reactions the talents grant, added to the ones every character has. */
   readonly reactions: readonly Reaction[];
   /** Procs that fire when an ability is USED. See `castReaction`. */
@@ -243,6 +257,7 @@ const EMPTY: TalentBuild = {
   abilityCooldownReductionMs: new Map(),
   abilityModifiers: new AbilityModifiers(),
   schoolModifiers: new SchoolModifiers(),
+  attackTableModifiers: new AttackTableModifiers(),
   pet: NO_PET_MODIFIERS,
   reactions: [],
   damageMultiplier: 1,
@@ -372,6 +387,7 @@ export function talentBuild(
   const abilityCooldownReductionMs = new Map<string, number>();
   const abilityModifiers = new AbilityModifiers();
   const schoolModifiers = new SchoolModifiers();
+  const attackTableModifiers = new AttackTableModifiers();
 
   // What the talents do to a PET. Percentages while they accumulate; turned
   // into multipliers once, at the end, so two ranks of the same talent add
@@ -686,6 +702,43 @@ export function talentBuild(
             });
           }
           break;
+        /*
+         * THE SAME THREE AGAIN, scoped to an attack TABLE. Each effect lists
+         * the tables its tooltip covers, so whether auto-attacks are included
+         * is stated in the data rather than assumed here.
+         */
+        case 'attackTableDamage':
+          for (const table of effect.tables) {
+            attackTableModifiers.add(table, { damageMultiplier: 1 + value / 100 });
+          }
+          break;
+        case 'attackTableCrit':
+          for (const table of effect.tables) {
+            attackTableModifiers.add(table, { critBonus: value });
+          }
+          break;
+        case 'attackTableCritDamage':
+          for (const table of effect.tables) {
+            /*
+             * THE BONUS HALF, and the half depends on the table for the same
+             * reason it depends on the school: a spell crit multiplies by 1.5
+             * and every physical table by 2, so "+30% critical strike damage"
+             * adds 0.3 to a melee crit and 0.15 to a spell one. Ranged crits
+             * at 2 like melee, which is why both read the same constant --
+             * taken from the table rather than assumed, so a ruleset that
+             * separates them later only has to change the constant.
+             */
+            const base =
+              table === 'spell'
+                ? COMBAT_CONSTANTS.spellCritMultiplier
+                : table === 'ranged-auto' || table === 'ranged-special'
+                  ? COMBAT_CONSTANTS.rangedCritMultiplier
+                  : COMBAT_CONSTANTS.meleeCritMultiplier;
+            attackTableModifiers.add(table, {
+              critMultiplierBonus: (base - 1) * (value / 100),
+            });
+          }
+          break;
         case 'grantCastModifier':
           /*
            * A PERMANENT AURA, named after the talent so its contribution is
@@ -756,6 +809,7 @@ export function talentBuild(
     abilityCooldownReductionMs,
     abilityModifiers,
     schoolModifiers,
+    attackTableModifiers,
     pet: {
       damageMultiplier: 1 + petDamagePct / 100,
       critBonus: petCritBonus,
