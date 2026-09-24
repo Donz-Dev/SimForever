@@ -486,6 +486,34 @@ finish rather than being lost. The Warrior's Improved Slam is exactly that, and
 it is worth far more than the quarter second of cast time the same talent
 removes.
 
+**AND TO AN ATTACK TABLE, which is the OTHER axis.** `AttackTableModifiers`
+is the same three fields keyed by `AttackTableKind`: a school separates fire
+from frost, this separates MELEE from RANGED and a SWING from a SPECIAL. **It
+keys on the TABLE and not on a `'melee' | 'ranged'` enum, and that is the
+whole reason it works** -- the four Hunter talents that wanted it divide on
+two axes at once, so a two-value enum could express none of them without a
+second flag. Savage Strikes is "all your melee ABILITIES" and stops at
+`melee-special`; Predator's Edge is "your MELEE critical strike damage",
+says nothing about abilities, and therefore reaches the swing -- which on a
+two-hander is worth more than the two previously inert talents together.
+**READ WHETHER THE TOOLTIP SAYS "ABILITIES" OR "WEAPONS"**, because both
+readings produce a plausible number.
+
+**A DoT TICK IS REACHED FOR CRIT AND NOT FOR DAMAGE.** `critFrom` declares
+one thing -- which table's CRIT a tick borrows -- so the crit fields read
+`attackTable ?? critFrom` and the damage multiplier reads `attackTable`
+alone. Serpent Sting ticks NATURE damage with `critFrom: 'ranged-special'`:
+Mortal Shots' crit damage belongs to it, and "the damage you deal with ranged
+WEAPONS" does not, because a sting's poison is not weapon damage.
+
+**THE OVERLOADED TABLE IS THE TRAP.** Thunder Clap, Intercept and Charge are
+MELEE Warrior abilities that declare `ranged-special`, because that table has
+no dodge or parry and because it is how `isWeaponUse` excludes them. Nothing
+is wrong today -- these modifiers are per character and no Warrior carries a
+Hunter talent -- but a class whose own melee ability sits on a ranged table
+would be selected wrongly. **Check the class's abilities, not just the table
+name**, before scoping a new talent this way.
+
 **A MODIFIER CAN BE SCOPED TO A SCHOOL, and that is the missing middle
 between one ability and the whole character.** `SchoolModifiers` carries the
 same three fields as `AbilityModifiers` -- crit chance, crit damage bonus,

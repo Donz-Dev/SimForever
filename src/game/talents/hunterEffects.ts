@@ -215,19 +215,21 @@ export const HUNTER_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
 
   mortal_shots: [
     /*
-     * "Increases the critical strike damage bonus on all RANGED abilities."
-     * `critDamageBonus` is whole-character with no school and no table, so it
-     * also raises a Lone Wolf melee build's crits -- which is why that build
-     * takes it and this note exists.
+     * "Increases the critical strike damage bonus on all RANGED ABILITIES."
+     *
+     * `ranged-special` only -- abilities, so Auto Shot is not included, which
+     * is what separates this from Ranged Weapon Specialization above.
+     *
+     * It reaches a Serpent Sting tick, and should: the tick borrows the
+     * ranged table for its crit, so the crit DAMAGE that goes with it belongs
+     * to the same table.
+     *
+     * It was `critDamageBonus`, which is whole-character with no table, and
+     * carried a note saying so. A ranged build has no melee ability to
+     * over-apply to, so this costs those two nothing and stops being a
+     * caveat.
      */
-    { kind: 'critDamageBonus' },
-    {
-      kind: 'unmodelled',
-      reason:
-        'It applies to every ability rather than only to ranged ones: ' +
-        '`critDamageBonus` has no table. Exact for the two ranged builds, ' +
-        'generous to the Lone Wolf melee one.',
-    },
+    { kind: 'attackTableCritDamage', tables: ['ranged-special'] },
   ],
 
   rapid_recuperation: [
@@ -244,13 +246,19 @@ export const HUNTER_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
   ],
 
   ranged_weapon_specialization: [
-    {
-      kind: 'unmodelled',
-      reason:
-        'Raises damage with RANGED weapons. `conditionalDamage` selects on the ' +
-        'MAIN HAND -- two-handed or not, and a weapon type -- and has no clause ' +
-        'for the ranged slot, so there is nothing to express it with.',
-    },
+    /*
+     * "Increases the damage you deal with RANGED WEAPONS."
+     *
+     * BOTH RANGED TABLES, because this one is about the WEAPON rather than
+     * about abilities -- Auto Shot is most of what a bow does and excluding
+     * it would gut the talent.
+     *
+     * A damage-over-time tick is deliberately out of reach: Serpent Sting
+     * ticks nature damage and only borrows the ranged table for its CRIT, so
+     * `dealDamage` looks this up on `attackTable` alone. A sting's poison is
+     * not weapon damage.
+     */
+    { kind: 'attackTableDamage', tables: ['ranged-auto', 'ranged-special'] },
   ],
 
   sniper_shot: [{ kind: 'grantAbility', abilityId: 'sniper_shot' }],
@@ -280,13 +288,15 @@ export const HUNTER_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
   entrapment: [{ kind: 'unmodelled', reason: NO_TRAPS }],
 
   savage_strikes: [
-    {
-      kind: 'unmodelled',
-      reason:
-        'Crit for MELEE ABILITIES as a group. `abilityCrit` names one ability ' +
-        'and `critChance` is every attack including ranged, so neither selects ' +
-        'the melee half of a hybrid class.',
-    },
+    /*
+     * "Increases the critical strike chance of all your MELEE ABILITIES."
+     *
+     * `melee-special` ONLY. Abilities, so the melee swing underneath them is
+     * not included -- that is `melee-auto` and the tooltip does not name it.
+     * The Hunter's three melee abilities all declare this table, so the
+     * selection is the class's own list without anyone writing one out.
+     */
+    { kind: 'attackTableCrit', tables: ['melee-special'] },
   ],
 
   survivalist: [{ kind: 'stat', stat: 'stamina', operation: 'percentAdd', scale: 0.01 }],
@@ -307,13 +317,25 @@ export const HUNTER_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
   survival_tactics: [{ kind: 'unmodelled', reason: NO_TRAPS }],
 
   predator_s_edge: [
-    { kind: 'critDamageBonus' },
+    /*
+     * "Increases your MELEE critical strike damage by {0}% and your offhand
+     * weapon damage by {1}%."
+     *
+     * BOTH MELEE TABLES. Unlike Savage Strikes this does not say "abilities",
+     * so the swing is included -- and for a two-hander build the swing is
+     * most of the damage, which makes the distinction worth reading twice.
+     *
+     * It was `critDamageBonus`, whole-character, which reached the Hunter's
+     * RANGED abilities as well. That was generous rather than exact, and the
+     * note saying so is what expired here.
+     */
+    { kind: 'attackTableCritDamage', tables: ['melee-auto', 'melee-special'] },
     {
       kind: 'unmodelled',
       reason:
-        'Its melee crit damage applies, through a whole-character bonus with ' +
-        'no table. Its off-hand clause does not: a Hunter here holds one melee ' +
-        'weapon.',
+        'Its melee crit damage applies. Its OFF-HAND clause does not: every ' +
+        'Hunter profile here holds one melee weapon, so there is no off hand ' +
+        'for the second number to raise.',
     },
   ],
 

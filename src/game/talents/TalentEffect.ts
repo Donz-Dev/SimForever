@@ -1,4 +1,4 @@
-import type { DamageSchool } from '../../engine';
+import type { AttackTableKind, DamageSchool } from '../../engine';
 import type { PrimaryStatName, StatModifierOperation, StatName } from '../../engine';
 import type { ResourceType, WeaponType } from '../../engine';
 
@@ -231,6 +231,32 @@ export type TalentEffect =
   | {
       readonly kind: 'schoolDamage' | 'schoolCrit' | 'schoolCritDamage';
       readonly schools: readonly DamageSchool[];
+      readonly valueIndex?: number;
+    }
+
+  /**
+   * Damage, crit chance or crit damage for an ATTACK TABLE.
+   *
+   * ----------------------------------------------------------------------
+   * THE OTHER AXIS FROM `schoolDamage`. A school separates fire from frost;
+   * this separates MELEE from RANGED, and a swing from a special.
+   *
+   * Four Hunter talents wanted it and each wanted a different subset --
+   * "all your melee ABILITIES", "the damage you deal with ranged WEAPONS",
+   * "all ranged ABILITIES", "your MELEE critical strike damage". Two were
+   * left inert and two were applied whole-character with a written caveat,
+   * which is the same pair of bad options the Druid's Moonfury had before
+   * schools existed.
+   *
+   * `tables` lists what the tooltip covers, so an effect says on its own
+   * face whether auto-attacks are included rather than leaving it to a
+   * comment. That distinction is the point: Savage Strikes is specials only
+   * and Ranged Weapon Specialization is the weapon, swings and all.
+   * ----------------------------------------------------------------------
+   */
+  | {
+      readonly kind: 'attackTableDamage' | 'attackTableCrit' | 'attackTableCritDamage';
+      readonly tables: readonly AttackTableKind[];
       readonly valueIndex?: number;
     }
 

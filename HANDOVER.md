@@ -12,7 +12,7 @@ status, that one is how.
 ## Where the project is
 
 **All nine classes and all 21 profiles are implemented**, every number traced
-to a source rather than invented. **1,555 tests**, CI green on Node 20 and 22.
+to a source rather than invented. **1,565 tests**, CI green on Node 20 and 22.
 Profile format **v9**.
 
 The twenty profiles were specified by the ruleset owner as
@@ -31,14 +31,14 @@ off moves all of them; see [docs/raid-buffs.md](docs/raid-buffs.md).
 | --- | --- | --- | --- |
 | DW Fury | Warrior | 18/33/0 | 643.2 |
 | 2H Arms | Warrior | 38/13/0 | 585.5 |
-| LW Melee | Hunter | 7/13/31 | **500.1** |
+| LW Melee | Hunter | 7/13/31 | **521.0** |
 | Enh Shaman | Shaman | 19/32/0 | **408.3** |
 | Seal Twist Ret | Paladin | 13/0/38 | 403.1 |
 | Shockadin | Paladin | 23/0/28 | **380.6** |
 | Prot Warr | Warrior | 17/0/34 | 357.5 |
 | BM Hunter | Hunter | 31/20/0 | **354.0** |
 | Combat Rogue | Rogue | 18/33/0 | 347.6 |
-| LW Ranged | Hunter | 7/39/5 | **312.8** |
+| LW Ranged | Hunter | 7/39/5 | **326.7** |
 | Venom Rogue | Rogue | 37/12/2 | 308.5 |
 | Rupture Rogue | Rogue | 12/8/31 | 290.3 |
 | Cat Druid | Druid | 9/35/7 | **282.7** |
@@ -180,7 +180,7 @@ Still open, in order of how many talents they would retire:
 | Gap | Talents | Classes |
 | --- | --- | --- |
 | **Spell hit per school** — the attack table decides hit before any per-school modifier is consulted | 5 | Mage ×2, Priest ×2, Paladin |
-| **Crit, or crit damage, for a LIST of abilities** — `critDamageBonus` is whole-character, `schoolCritDamage` is per school, `abilityCrit` names one; none selects a set | 3 | Warlock (Pandemic), Hunter (Mortal Shots, Savage Strikes) |
+| **Crit damage for a LIST of NAMED abilities** — `critMultiplierBonus` exists on `AbilityModifiers` and no talent effect reaches it, the way `abilityCrit` reaches crit CHANCE | 2 | Warlock (Pandemic), Rogue (Lethality) |
 | **Mid-fight summoning** — `Simulation` exposes `combatants` read-only | 2 | Warlock Infernal, Mage elemental |
 | **A one-shot per-ability CRIT modifier** — `CastModifier` carries cast time and cost, not crit | 2 | Paladin (Divine Favor), Priest (Inner Focus) |
 | **A flat per-school damage bonus** — `damageTakenBySchool` multiplies | 1 | Paladin (Judgement of the Crusader, +161 Holy) |
@@ -298,6 +298,48 @@ re-read.
 
 ---
 
+## What the attack-table scope moved
+
+`AttackTableModifiers` is the same three fields as `SchoolModifiers` keyed by
+`AttackTableKind` — the other axis. A school separates fire from frost; this
+separates MELEE from RANGED, and a SWING from a SPECIAL.
+
+**It keys on the table rather than on a `'melee' | 'ranged'` enum, and that is
+the whole reason it works.** The four Hunter talents divide on TWO axes at
+once, so a two-value enum could express none of them without a second flag:
+
+| Talent | Tooltip says | Tables |
+| --- | --- | --- |
+| Savage Strikes | "all your melee ABILITIES" | `melee-special` |
+| Ranged Weapon Spec | "damage with ranged WEAPONS" | both ranged |
+| Mortal Shots | "all ranged ABILITIES" | `ranged-special` |
+| Predator's Edge | "your MELEE critical strike damage" | both melee |
+
+Measured, 300 iterations and seed 12345:
+
+| | was | now | what moved |
+| --- | --- | --- | --- |
+| LW Melee | 500.1 | **521.0** | Savage Strikes +8.6, Predator's Edge reaching swings +15.5, no longer over-applying to Serpent Sting about −3.2 |
+| LW Ranged | 312.8 | **326.7** | Ranged Weapon Specialization, +13.9, previously inert |
+| BM Hunter | 354.0 | 354.0 | takes only Mortal Shots, which was already exact for a ranged build |
+
+**LW RANGED NOW HAS AN EMPTY "chosen but not fully simulated" LIST** — every
+talent it takes is modelled, which no Hunter build had managed before.
+
+**The swing-versus-special line is where the value is.** Predator's Edge says
+"melee critical strike damage" and not "melee abilities", so it reaches the
+two-hander's swing — worth more on its own than the two previously inert
+talents together. Getting that backwards would have been a plausible number
+forever.
+
+**A DoT tick is reached for CRIT and not for DAMAGE.** `critFrom` declares
+which table's crit a tick borrows and nothing more, so `dealDamage` looks the
+damage multiplier up on `attackTable` alone. Serpent Sting is the case: it
+ticks NATURE damage with `critFrom: 'ranged-special'`, so Mortal Shots reaches
+it and "damage you deal with ranged WEAPONS" correctly does not.
+
+---
+
 ## What the ranged attack power fix moved
 
 `weaponDamageFor` read `attackPower` for **every** weapon slot, so a bow
@@ -412,12 +454,13 @@ In the order I would do them:
 
 2. **Spell hit per school** — five talents, and a genuine rule change: the hit
    roll happens before any per-school modifier is consulted.
-3. **Crit, or crit damage, for a LIST of abilities** — three talents, two of
-   them Hunter, and it is the same missing middle `SchoolModifiers` filled for
-   damage schools, keyed by attack TABLE instead. It would retire Savage
-   Strikes and Ranged Weapon Specialization, both fully inert and both taken
-   at full rank by a Hunter profile, and make Mortal Shots and Predator's Edge
-   exact where they are currently applied whole-character.
+3. **Crit damage for a LIST of NAMED abilities** — two talents, Pandemic and
+   Lethality, and it should be the cheapest item here: `critMultiplierBonus`
+   already exists on `AbilityModifiers` and simply has no talent effect
+   reaching it, the way `abilityCrit` reaches crit CHANCE. A missing
+   DECLARATION rather than a missing rule, which is now the third time —
+   after `grantCastModifier` and `statFromStat`. Both reasons were re-read
+   when the attack-table scope landed and name all three existing scopes.
 4. **The APLs are shells and say so.** Every list since the Warrior's is this
    project's guess at the standard shape, not the owner's own. They have been
    wrong twice in ways that cost real damage — the Shockadin seal and the
