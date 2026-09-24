@@ -295,6 +295,16 @@ where it bites" is the one it does not bite at all. Shockadin, which casts
 Seal of Righteousness, gained 2.2%. The mechanism was right and the build was
 wrong, which is why the test asserts THE STAT ARRIVING and not a DPS delta.
 
+**CAREFUL AIM FEEDS BOTH ATTACK POWER POOLS, and the wording pointed the
+other way.** The ruleset owner's ruling: "Careful Aim contributes to attack
+power and ranged attack power". The talent says only "Attack Power", and
+Forever names the ranged pool EXPLICITLY everywhere else it means it -- Aspect
+of the Hawk and Trueshot Aura both read "ranged attack power" -- so reading
+the melee half alone was the defensible reading and it was wrong. This is the
+standing "if it is in question, ASK" instruction paying for itself a second
+time: a Hunter with only the melee half looks entirely ordinary, exactly the
+way Windfury refusing every ability did.
+
 **A TALENT'S OWN RANK DOES NOT ALWAYS OPEN ITS OWN GATE.** Careful Aim is tier
 5, so `{ careful_aim: 5 }` alone is legal and `{ careful_aim: 1 }` is not --
 `createPlayer` strips the illegal one SILENTLY, and a rank-scaling test read

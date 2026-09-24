@@ -174,15 +174,20 @@ export const HUNTER_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
      * "Increases your Attack Power by {0}% of your Intellect", 100% at 5/5,
      * and all three Hunter profiles take it at full rank.
      *
-     * INTERPRETATION: `attackPower`, the plain one, because the talent says
-     * "Attack Power" and Forever names the ranged pool EXPLICITLY wherever it
-     * means it -- Aspect of the Hawk and Trueshot Aura both read "ranged
-     * attack power" and both are declared that way here. Reading a ranged
-     * meaning into a talent that does not say so would be inventing data.
+     * BOTH POOLS, ON THE RULESET OWNER'S RULING -- "Careful Aim contributes
+     * to attack power and ranged attack power". Not an interpretation any
+     * more, and worth recording that the wording alone pointed the other way:
+     * the talent says only "Attack Power", and Forever names the ranged pool
+     * explicitly everywhere else it means it (Aspect of the Hawk, Trueshot
+     * Aura). Asking was the whole difference, because declaring the melee
+     * half alone would have produced a Hunter that looked entirely ordinary.
      *
-     * One place, so it is cheap to flip if the ruleset owner says otherwise.
+     * TWO CONVERSIONS RATHER THAN ONE EFFECT WITH TWO TARGETS, because that
+     * is what the shape already is: each is a separate term in the
+     * derivation, and `withStatConversions` adds them independently.
      */
     { kind: 'statFromStat', from: 'intellect', to: 'attackPower' },
+    { kind: 'statFromStat', from: 'intellect', to: 'rangedAttackPower' },
   ],
 
   rapid_killing: [

@@ -31,7 +31,7 @@ off moves all of them; see [docs/raid-buffs.md](docs/raid-buffs.md).
 | --- | --- | --- | --- |
 | DW Fury | Warrior | 18/33/0 | 643.2 |
 | 2H Arms | Warrior | 38/13/0 | 585.5 |
-| LW Melee | Hunter | 7/13/31 | **473.7** |
+| LW Melee | Hunter | 7/13/31 | **474.6** |
 | Enh Shaman | Shaman | 19/32/0 | **408.3** |
 | Seal Twist Ret | Paladin | 13/0/38 | 403.1 |
 | Shockadin | Paladin | 23/0/28 | **380.6** |
@@ -39,11 +39,11 @@ off moves all of them; see [docs/raid-buffs.md](docs/raid-buffs.md).
 | Combat Rogue | Rogue | 18/33/0 | 347.6 |
 | Venom Rogue | Rogue | 37/12/2 | 308.5 |
 | Rupture Rogue | Rogue | 12/8/31 | 290.3 |
-| BM Hunter | Hunter | 31/20/0 | **290.0** |
+| BM Hunter | Hunter | 31/20/0 | **290.7** |
 | Cat Druid | Druid | 9/35/7 | 267.8 |
 | Shadow Priest | Priest | 16/3/32 | 266.1 |
 | Bear Druid | Druid | 9/42/0 | 241.9 |
-| LW Ranged | Hunter | 7/39/5 | **237.2** |
+| LW Ranged | Hunter | 7/39/5 | **238.3** |
 | Firelock | Warlock | 5/11/35 | 225.6 |
 | Arcane Mage | Mage | 47/4/0 | 210.2 |
 | Prot Pally | Paladin | 8/36/7 | 191.9 |
@@ -286,17 +286,12 @@ re-read.
 5. **Bane of Agony's ramp** — did Forever keep Classic's 50/100/150 bands?
 6. **Seal of the Crusader's "deals less damage with each attack"** states no
    figure, so the seal is currently generous.
-7. **Careful Aim** reads "Increases your Attack Power by 100% of your
-   Intellect". Is that the MELEE pool, as declared, or the ranged one a Hunter
-   actually shoots with? Forever names ranged attack power explicitly in
-   Aspect of the Hawk and Trueshot Aura and does not here, which is why it is
-   declared as the plain one — but it is the difference between the talent
-   being worth ~14% of a ranged Hunter's power and worth almost nothing. One
-   line in `hunterEffects.ts`.
 
 Asked and answered already, for reference: seal damage is **not** a weapon use;
 a hawk is modelled **without** a real combatant; pet family is a **profile
-field**; Shield Slam triggers **main-hand** effects.
+field**; Shield Slam triggers **main-hand** effects; **Careful Aim contributes
+to attack power AND ranged attack power** — the wording pointed the other way
+and asking was the whole difference.
 
 ---
 
@@ -360,14 +355,14 @@ In the order I would do them:
    the Trueshot Aura raid buff. Only Arcane Shot's and Serpent Sting's own
    coefficients read the ranged pool today.
 
-   **It changes what Careful Aim is worth, so do it before re-reading that
-   number.** Careful Aim is declared into `attackPower` — the plain one,
-   because the talent says "Attack Power" and Forever names the ranged pool
-   explicitly wherever it means it. Once the bow reads ranged attack power,
-   Careful Aim will be worth very little to the two ranged builds and
-   unchanged for LW Melee. **That is a question for the ruleset owner**: does
-   Careful Aim feed the ranged pool for a Hunter? It is one line in
-   `hunterEffects.ts`, deliberately.
+   **Careful Aim is already waiting for it.** The ruleset owner settled that
+   one — "Careful Aim contributes to attack power and ranged attack power" —
+   so the talent feeds both pools and a Hunter reads 686 ranged attack power
+   against 601 before. Today that second conversion is worth about a DPS,
+   because the only things reading the ranged pool are Arcane Shot's 10% and
+   Serpent Sting's 15%. **The moment the bow reads it, it becomes the half
+   that matters**, which is a reason to expect this fix to cost the ranged
+   Hunters less than the raw 1187-against-686 gap suggests.
 
 2. **Caster gear.** Every caster figure is a floor until some exists, and four
    of the five lowest numbers in the table are casters. This is a DATA task,

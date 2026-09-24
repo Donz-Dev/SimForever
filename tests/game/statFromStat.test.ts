@@ -68,27 +68,40 @@ function hunter(rank?: number) {
 }
 
 describe('a stat worth a percentage of another stat', () => {
-  it('gives a Hunter attack power equal to its intellect', () => {
+  it('gives a Hunter BOTH attack power pools, equal to its intellect', () => {
     /*
+     * ------------------------------------------------------------------------
      * Careful Aim 5/5 is "+100% of your Intellect", and all three Hunter
-     * profiles take it at full rank. Measured as a DIFFERENCE between two
-     * otherwise identical characters, so the class table's own attack power
-     * never has to be restated here.
+     * profiles take it at full rank.
+     *
+     * BOTH POOLS, ON THE RULESET OWNER'S RULING. The wording alone pointed
+     * the other way -- the talent says only "Attack Power", and Forever names
+     * the ranged pool explicitly everywhere else it means it -- so this is
+     * pinned to the ANSWER rather than to the reading, and it fails if
+     * anybody later "corrects" it back to the melee half.
+     *
+     * Measured as a DIFFERENCE between two otherwise identical characters, so
+     * the class table's own attack power never has to be restated here.
+     * ------------------------------------------------------------------------
      */
     const withTalent = hunter(5);
     const without = hunter();
 
     const intellect = withTalent.stats.get('intellect');
     expect(intellect).toBeGreaterThan(0);
-    expect(withTalent.stats.get('attackPower') - without.stats.get('attackPower')).toBeCloseTo(
-      intellect,
-      6,
-    );
+
+    for (const pool of ['attackPower', 'rangedAttackPower'] as const) {
+      expect(withTalent.stats.get(pool) - without.stats.get(pool), pool).toBeCloseTo(
+        intellect,
+        6,
+      );
+    }
   });
 
   it('scales with the RANK, at the percentage the talent states', () => {
     // 20 / 40 / 60 / 80 / 100, per src/data/talents/values/hunter.json.
     const base = hunter().stats.get('attackPower');
+    const rangedBase = hunter().stats.get('rangedAttackPower');
     const intellect = hunter().stats.get('intellect');
 
     const RANKS: ReadonlyArray<readonly [number, number]> = [
@@ -102,6 +115,11 @@ describe('a stat worth a percentage of another stat', () => {
         (intellect * percent) / 100,
         6,
       );
+      // The ranged pool scales by the same rank, not a rank behind.
+      expect(
+        hunter(rank).stats.get('rangedAttackPower') - rangedBase,
+        `rank ${rank} ranged`,
+      ).toBeCloseTo((intellect * percent) / 100, 6);
     }
   });
 
@@ -280,7 +298,7 @@ describe('what it retired', () => {
     // Five classes, six talents between them. Asserted so a declaration
     // removed by accident is a failure rather than a quiet loss.
     const expected: Readonly<Record<string, number>> = {
-      hunter: 1, // Careful Aim
+      hunter: 2, // Careful Aim, into BOTH attack power pools
       shaman: 2, // Mental Dexterity, Mental Quickness
       mage: 1, // Arcane Resilience
       paladin: 1, // Champion of the Light
