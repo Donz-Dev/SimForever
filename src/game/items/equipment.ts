@@ -127,8 +127,24 @@ export function liveEquipment(equipment: Equipment, style: CombatStyleId): Equip
   const usesOffHandWeapon = definition?.offHand === 'weapon';
   const usesShield = definition?.offHand === 'shield';
 
+  /*
+   * A STAT-STICK MAIN HAND IS NOT A CHOICE BETWEEN THE TWO, it is "whatever
+   * is held, held".
+   *
+   * `mainHand: 'stat-stick'` says in as many words that melee weapons may be
+   * equipped and never swing, and both the Ranged and Caster styles use it --
+   * but this read "not two-hand" as "one-hand" and deleted the two-hander, so
+   * a Hunter holding Dreadforge Retaliator as a stat stick lost its 12
+   * agility and 30 attack power, and a caster holding a STAFF would lose the
+   * lot. That is the same mistake the ranged-slot comment above records, in
+   * the other direction: stripping a slot the style can actually fill.
+   *
+   * A character still cannot hold a one-hander and a two-hander at once, so
+   * when both are equipped the two-hander yields -- the same loser the
+   * swinging styles pick.
+   */
   if (usesTwoHand) delete next.mainHand;
-  else delete next.twoHand;
+  else if (definition?.mainHand === 'one-hand' || next.mainHand) delete next.twoHand;
 
   // The off hand holds a weapon or a shield, never both and never either
   // unless the style says so.
@@ -162,6 +178,25 @@ export function weaponsForEquipment(
   const definition = getCombatStyle(style);
   const rangedSwings = definition?.rangedSlot === 'required';
 
+  /*
+   * A STAT STICK IS HELD AND NEVER SWUNG, which is the whole meaning of the
+   * rule and has to be enforced HERE rather than by not equipping it.
+   *
+   * `createPlayer` merges these over the style's own weapons -- for a Cat that
+   * is `{ mainHand: CAT_PAW }` -- so anything returned for a stat-stick hand
+   * REPLACES the form's natural weapon. A Druid in Cat form was swinging an
+   * Obsidian Edged Blade: base 234 every 3.6 seconds instead of a paw's 50
+   * every 1.0, which read as a 62% damage increase and as a working feature.
+   *
+   * The stats are unaffected and still apply -- `statsForStyle` reads
+   * `liveEquipment`, not this -- so a stat stick goes on doing exactly what
+   * its name says.
+   */
+  const handIsStatStick = {
+    mainHand: definition?.mainHand === 'stat-stick',
+    offHand: definition?.offHand === 'stat-stick',
+  };
+
   for (const [slotName, equipped] of Object.entries(live)) {
     if (!equipped) continue;
     const slot = slotName as EquipmentSlot;
@@ -169,6 +204,7 @@ export function weaponsForEquipment(
 
     const weaponSlot = weaponSlotFor(slot);
     if (!weaponSlot) continue;
+    if (weaponSlot !== 'ranged' && handIsStatStick[weaponSlot]) continue;
 
     const item = ITEMS_BY_ID.get(equipped.itemId);
     if (!item?.weapon) continue;

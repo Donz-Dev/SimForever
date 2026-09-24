@@ -1,0 +1,344 @@
+{
+ "set": "sod-hunter",
+ "description": "A level 60 Hunter's gear, from a sixtyupgrades.com set supplied by the project owner. Season of Discovery items, the same source and id namespace as the Unstoppable Might set already in classic-warrior.json.",
+ "source": "https://sixtyupgrades.com/sod/set/kZxkfqEdDwGAZBxBwUcVPN",
+ "items": [
+  {
+   "id": 228291,
+   "name": "Crown of Destruction",
+   "quality": 4,
+   "icon": "inv_crown_02",
+   "source": "https://www.wowhead.com/classic/item=228291",
+   "itemLevel": 77,
+   "inventoryType": "Head",
+   "subclass": "Mail",
+   "armor": 397,
+   "weapon": null,
+   "stats": {
+    "stamina": 21,
+    "intellect": 9
+   },
+   "resistances": {
+    "fire": 15
+   },
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "Improves your chance to get a critical strike with all spells and attacks by 2%."
+    },
+    {
+     "kind": "Equip",
+     "text": "+50 Attack Power."
+    }
+   ],
+   "tooltip": "Crown of Destruction SoD Phase 4\nItem Level 77\nBinds when picked up\nHead Mail\n397 Armor\n+21 Stamina\n+9 Intellect\n+15 Fire Resistance\nDurability 85 / 85\nRequires Level 60\nEquip: Improves your chance to get a critical strike with all spells and attacks by 2%.\nEquip: +50 Attack Power.\nSell Price: 6 79 26"
+  },
+  {
+   "id": 226527,
+   "name": "Giantstalker's Epaulets",
+   "quality": 4,
+   "icon": "inv_shoulder_10",
+   "source": "https://www.wowhead.com/classic/item=226527",
+   "itemLevel": 66,
+   "inventoryType": "Shoulder",
+   "subclass": "Mail",
+   "armor": 317,
+   "weapon": null,
+   "stats": {
+    "agility": 20,
+    "stamina": 11,
+    "intellect": 7
+   },
+   "resistances": {
+    "fire": 7
+   },
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "Improves your chance to get a critical strike with all spells and attacks by 1%."
+    }
+   ],
+   "tooltip": "Giantstalker's Epaulets SoD Phase 4\nItem Level 66\nBinds when picked up\nShoulder Mail\n317 Armor\n+20 Agility\n+11 Stamina\n+7 Intellect\n+7 Fire Resistance\nDurability 85 / 85Classes: Hunter\nRequires Level 60\nEquip: Improves your chance to get a critical strike with all spells and attacks by 1%.\nGiantstalker Pursuit (0/8)Giantstalker's Belt\nGiantstalker's Boots\nGiantstalker's Bracers\nGiantstalker's Breastplate\nGiantstalker's Epaulets\nGiantstalker's Gloves\nGiantstalker's Helmet\nGiantstalker's Leggings\n(2) Set : You generate 100% more threat for 8 sec after using Distracting Shot.\n(4) Set : While tracking a creature type, you deal 3% increased damage to that creature type.\n(6) Set : Your next Shot ability within 12 sec after Aimed Shot deals 20% more damage.\nSell Price: 4 12 37"
+  },
+  {
+   "id": 226534,
+   "name": "Giantstalker's Breastplate",
+   "quality": 4,
+   "icon": "inv_chest_chain_03",
+   "source": "https://www.wowhead.com/classic/item=226534",
+   "itemLevel": 66,
+   "inventoryType": "Chest",
+   "subclass": "Mail",
+   "armor": 422,
+   "weapon": null,
+   "stats": {
+    "agility": 27,
+    "stamina": 14,
+    "intellect": 9
+   },
+   "resistances": {
+    "fire": 10
+   },
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "Improves your chance to get a critical strike by 1%."
+    },
+    {
+     "kind": "Equip",
+     "text": "Improves your chance to hit with all spells and attacks by 1%."
+    }
+   ],
+   "tooltip": "Giantstalker's Breastplate SoD Phase 4\nItem Level 66\nBinds when picked up\nChest Mail\n422 Armor\n+27 Agility\n+14 Stamina\n+9 Intellect\n+10 Fire Resistance\nDurability 140 / 140Classes: Hunter\nRequires Level 60\nEquip: Improves your chance to get a critical strike by 1%.\nEquip: Improves your chance to hit with all spells and attacks by 1%.\nGiantstalker Pursuit (0/8)Giantstalker's Belt\nGiantstalker's Boots\nGiantstalker's Bracers\nGiantstalker's Breastplate\nGiantstalker's Epaulets\nGiantstalker's Gloves\nGiantstalker's Helmet\nGiantstalker's Leggings\n(2) Set : You generate 100% more threat for 8 sec after using Distracting Shot.\n(4) Set : While tracking a creature type, you deal 3% increased damage to that creature type.\n(6) Set : Your next Shot ability within 12 sec after Aimed Shot deals 20% more damage.\nSell Price: 5 41 48"
+  },
+  {
+   "id": 228284,
+   "name": "Wristguards of True Flight",
+   "quality": 4,
+   "icon": "inv_bracer_02",
+   "source": "https://www.wowhead.com/classic/item=228284",
+   "itemLevel": 71,
+   "inventoryType": "Wrist",
+   "subclass": "Mail",
+   "armor": 198,
+   "weapon": null,
+   "stats": {
+    "agility": 22,
+    "stamina": 10
+   },
+   "resistances": {},
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "Improves your chance to hit with all spells and attacks by 1%."
+    }
+   ],
+   "tooltip": "Wristguards of True Flight SoD Phase 4\nItem Level 71\nBinds when picked up\nWrist Mail\n198 Armor\n+22 Agility\n+10 Stamina\nDurability 50 / 50\nRequires Level 60\nEquip: Improves your chance to hit with all spells and attacks by 1%.\nSell Price: 3 24 58"
+  },
+  {
+   "id": 227981,
+   "name": "Dreadforge Retaliator",
+   "quality": 3,
+   "icon": "inv_axe_22",
+   "source": "https://www.wowhead.com/classic/item=227981",
+   "itemLevel": 62,
+   "inventoryType": "Two-Hand",
+   "subclass": "Axe",
+   "armor": null,
+   "weapon": {
+    "minDamage": 157,
+    "maxDamage": 236,
+    "speed": 3.7,
+    "dps": 53.11
+   },
+   "stats": {
+    "agility": 12
+   },
+   "resistances": {},
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "Increases your chance to parry an attack by 1%."
+    },
+    {
+     "kind": "Equip",
+     "text": "Improves your chance to get a critical strike with all spells and attacks by 1%."
+    },
+    {
+     "kind": "Equip",
+     "text": "+30 Attack Power."
+    }
+   ],
+   "tooltip": "Dreadforge Retaliator\nItem Level 62\nBinds when picked up\nTwo-Hand Axe\n157 - 236 Damage\nSpeed 3.70\n(53.11 damage per second)\n+12 Agility\nDurability 100 / 100\nRequires Level 57\nEquip: Increases your chance to parry an attack by 1%.\nEquip: Improves your chance to get a critical strike with all spells and attacks by 1%.\nEquip: +30 Attack Power.\nSell Price: 6 78 52"
+  },
+  {
+   "id": 226528,
+   "name": "Giantstalker's Gloves",
+   "quality": 4,
+   "icon": "inv_gauntlets_10",
+   "source": "https://www.wowhead.com/classic/item=226528",
+   "itemLevel": 66,
+   "inventoryType": "Hands",
+   "subclass": "Mail",
+   "armor": 264,
+   "weapon": null,
+   "stats": {
+    "agility": 20,
+    "stamina": 11,
+    "intellect": 7
+   },
+   "resistances": {
+    "fire": 7
+   },
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "Improves your chance to get a critical strike with all spells and attacks by 1%."
+    }
+   ],
+   "tooltip": "Giantstalker's Gloves SoD Phase 4\nItem Level 66\nBinds when picked up\nHands Mail\n264 Armor\n+20 Agility\n+11 Stamina\n+7 Intellect\n+7 Fire Resistance\nDurability 50 / 50Classes: Hunter\nRequires Level 60\nEquip: Improves your chance to get a critical strike with all spells and attacks by 1%.\nGiantstalker Pursuit (0/8)Giantstalker's Belt\nGiantstalker's Boots\nGiantstalker's Bracers\nGiantstalker's Breastplate\nGiantstalker's Epaulets\nGiantstalker's Gloves\nGiantstalker's Helmet\nGiantstalker's Leggings\n(2) Set : You generate 100% more threat for 8 sec after using Distracting Shot.\n(4) Set : While tracking a creature type, you deal 3% increased damage to that creature type.\n(6) Set : Your next Shot ability within 12 sec after Aimed Shot deals 20% more damage.\nSell Price: 2 77 62"
+  },
+  {
+   "id": 226529,
+   "name": "Giantstalker's Belt",
+   "quality": 4,
+   "icon": "inv_belt_28",
+   "source": "https://www.wowhead.com/classic/item=226529",
+   "itemLevel": 66,
+   "inventoryType": "Waist",
+   "subclass": "Mail",
+   "armor": 237,
+   "weapon": null,
+   "stats": {
+    "agility": 20,
+    "stamina": 11,
+    "intellect": 7
+   },
+   "resistances": {
+    "fire": 7
+   },
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "Improves your chance to get a critical strike with all spells and attacks by 1%."
+    }
+   ],
+   "tooltip": "Giantstalker's Belt SoD Phase 4\nItem Level 66\nBinds when picked up\nWaist Mail\n237 Armor\n+20 Agility\n+11 Stamina\n+7 Intellect\n+7 Fire Resistance\nDurability 50 / 50Classes: Hunter\nRequires Level 60\nEquip: Improves your chance to get a critical strike with all spells and attacks by 1%.\nGiantstalker Pursuit (0/8)Giantstalker's Belt\nGiantstalker's Boots\nGiantstalker's Bracers\nGiantstalker's Breastplate\nGiantstalker's Epaulets\nGiantstalker's Gloves\nGiantstalker's Helmet\nGiantstalker's Leggings\n(2) Set : You generate 100% more threat for 8 sec after using Distracting Shot.\n(4) Set : While tracking a creature type, you deal 3% increased damage to that creature type.\n(6) Set : Your next Shot ability within 12 sec after Aimed Shot deals 20% more damage.\nSell Price: 2 76 63"
+  },
+  {
+   "id": 226532,
+   "name": "Giantstalker's Leggings",
+   "quality": 4,
+   "icon": "inv_pants_mail_03",
+   "source": "https://www.wowhead.com/classic/item=226532",
+   "itemLevel": 66,
+   "inventoryType": "Legs",
+   "subclass": "Mail",
+   "armor": 369,
+   "weapon": null,
+   "stats": {
+    "agility": 27,
+    "stamina": 14,
+    "intellect": 9
+   },
+   "resistances": {
+    "fire": 10
+   },
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "Improves your chance to get a critical strike with all spells and attacks by 1%."
+    },
+    {
+     "kind": "Equip",
+     "text": "Improves your chance to hit with all spells and attacks by 1%."
+    }
+   ],
+   "tooltip": "Giantstalker's Leggings SoD Phase 4\nItem Level 66\nBinds when picked up\nLegs Mail\n369 Armor\n+27 Agility\n+14 Stamina\n+9 Intellect\n+10 Fire Resistance\nDurability 105 / 105Classes: Hunter\nRequires Level 60\nEquip: Improves your chance to get a critical strike with all spells and attacks by 1%.\nEquip: Improves your chance to hit with all spells and attacks by 1%.\nGiantstalker Pursuit (0/8)Giantstalker's Belt\nGiantstalker's Boots\nGiantstalker's Bracers\nGiantstalker's Breastplate\nGiantstalker's Epaulets\nGiantstalker's Gloves\nGiantstalker's Helmet\nGiantstalker's Leggings\n(2) Set : You generate 100% more threat for 8 sec after using Distracting Shot.\n(4) Set : While tracking a creature type, you deal 3% increased damage to that creature type.\n(6) Set : Your next Shot ability within 12 sec after Aimed Shot deals 20% more damage.\nSell Price: 5 45 43"
+  },
+  {
+   "id": 226531,
+   "name": "Giantstalker's Boots",
+   "quality": 4,
+   "icon": "inv_boots_chain_13",
+   "source": "https://www.wowhead.com/classic/item=226531",
+   "itemLevel": 66,
+   "inventoryType": "Feet",
+   "subclass": "Mail",
+   "armor": 290,
+   "weapon": null,
+   "stats": {
+    "agility": 20,
+    "stamina": 11,
+    "intellect": 8
+   },
+   "resistances": {
+    "fire": 5
+   },
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "Improves your chance to get a critical strike with all spells and attacks by 1%."
+    }
+   ],
+   "tooltip": "Giantstalker's Boots SoD Phase 4\nItem Level 66\nBinds when picked up\nFeet Mail\n290 Armor\n+20 Agility\n+11 Stamina\n+8 Intellect\n+5 Fire Resistance\nDurability 70 / 70Classes: Hunter\nRequires Level 60\nEquip: Improves your chance to get a critical strike with all spells and attacks by 1%.\nGiantstalker Pursuit (0/8)Giantstalker's Belt\nGiantstalker's Boots\nGiantstalker's Bracers\nGiantstalker's Breastplate\nGiantstalker's Epaulets\nGiantstalker's Gloves\nGiantstalker's Helmet\nGiantstalker's Leggings\n(2) Set : You generate 100% more threat for 8 sec after using Distracting Shot.\n(4) Set : While tracking a creature type, you deal 3% increased damage to that creature type.\n(6) Set : Your next Shot ability within 12 sec after Aimed Shot deals 20% more damage.\nSell Price: 4 13 82"
+  },
+  {
+   "id": 228286,
+   "name": "Band of Accuria",
+   "quality": 4,
+   "icon": "inv_jewelry_ring_15",
+   "source": "https://www.wowhead.com/classic/item=228286",
+   "itemLevel": 77,
+   "inventoryType": "Finger",
+   "subclass": null,
+   "armor": null,
+   "weapon": null,
+   "stats": {
+    "agility": 17,
+    "stamina": 10
+   },
+   "resistances": {},
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "Improves your chance to hit with all spells and attacks by 2%."
+    }
+   ],
+   "tooltip": "Band of Accuria SoD Phase 4\nItem Level 77\nBinds when picked up\nUnique-Equipped\nFinger\n+17 Agility\n+10 Stamina\nRequires Level 60\nEquip: Improves your chance to hit with all spells and attacks by 2%.\nSell Price: 4 50 84"
+  },
+  {
+   "id": 18473,
+   "name": "Royal Seal of Eldre'Thalas",
+   "quality": 3,
+   "icon": "inv_jewelry_talisman_10",
+   "source": "https://www.wowhead.com/classic/item=18473",
+   "itemLevel": 62,
+   "inventoryType": "Trinket",
+   "subclass": null,
+   "armor": null,
+   "weapon": null,
+   "stats": {},
+   "resistances": {
+    "fire": 10
+   },
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "+48 ranged Attack Power."
+    }
+   ],
+   "tooltip": "Royal Seal of Eldre'Thalas\nItem Level 62\nBinds when picked up\nUnique\nTrinket\n+10 Fire ResistanceClasses: Hunter\nEquip: +48 ranged Attack Power.\n&quot;Blessed by the Shen'dralar Ancients.&quot;"
+  },
+  {
+   "id": 228334,
+   "name": "Rhok'delar, Longbow of the Ancient Keepers",
+   "quality": 4,
+   "icon": "inv_weapon_bow_01",
+   "source": "https://www.wowhead.com/classic/item=228334",
+   "itemLevel": 75,
+   "inventoryType": "Ranged",
+   "subclass": "Bow",
+   "armor": null,
+   "weapon": {
+    "minDamage": 99,
+    "maxDamage": 183,
+    "speed": 3.2,
+    "dps": 44.06
+   },
+   "stats": {},
+   "resistances": {},
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "Improves your chance to get a critical strike with all spells and attacks by 1%."
+    },
+    {
+     "kind": "Equip",
+     "text": "+17 ranged Attack Power."
+    }
+   ],
+   "tooltip": "Rhok'delar, Longbow of the Ancient Keepers\nItem Level 75\nBinds when picked up\nUnique\nRanged Bow\n99 - 183 Damage\nSpeed 3.20\n(44.06 damage per second)\nDurability 90 / 90Classes: Hunter\nRequires Level 60\nEquip: Improves your chance to get a critical strike with all spells and attacks by 1%.\nEquip: +17 ranged Attack Power."
+  }
+ ]
+}

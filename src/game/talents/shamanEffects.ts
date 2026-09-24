@@ -183,13 +183,13 @@ export const SHAMAN_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
   guardian_totems: [{ kind: 'unmodelled', reason: TOTEMS_NOT_MODELLED }],
 
   mental_dexterity: [
-    {
-      kind: 'unmodelled',
-      reason:
-        'Attack power from a PERCENTAGE OF INTELLECT. A stat derived from ' +
-        'another stat has no declaration: `stat` adds a flat amount or a ' +
-        'percentage of the same stat, and nothing crosses from one to another.',
-    },
+    /*
+     * "Increases your Attack Power by an amount equal to {0}% of your
+     * Intellect", 100% at 3/3. ON TOP OF the attack power the class table
+     * already makes from strength and agility, which is what
+     * `withStatConversions` adds rather than replaces.
+     */
+    { kind: 'statFromStat', from: 'intellect', to: 'attackPower' },
   ],
 
   improved_ghost_wolf: [
@@ -252,12 +252,8 @@ export const SHAMAN_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
   ],
 
   mental_quickness: [
-    {
-      kind: 'unmodelled',
-      reason:
-        'Spell damage from a PERCENTAGE OF INTELLECT -- the same missing ' +
-        'declaration as Mental Dexterity, in the other direction.',
-    },
+    // The same declaration as Mental Dexterity, into spell power instead.
+    { kind: 'statFromStat', from: 'intellect', to: 'spellPower' },
   ],
 
   improved_stormstrike: [

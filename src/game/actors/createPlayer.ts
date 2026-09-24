@@ -26,6 +26,7 @@ import {
   resolveCombatStyle,
   resourceSpecsFor,
   statDerivationFor,
+  withStatConversions,
   resolveStance,
 } from '../character';
 import { MAX_CHARACTER_LEVEL } from '../character';
@@ -321,7 +322,19 @@ export function createPlayer(options: PlayerOptions): Combatant {
     level: MAX_CHARACTER_LEVEL,
     maxHealth: maximumHealth,
     stats: startingStats,
-    statDerivation: statDerivationFor(characterClass, style),
+    /*
+     * The class table, plus any talent that makes one stat out of another.
+     *
+     * COMPOSED RATHER THAN COMPUTED, because the stat block re-runs this
+     * every time a modifier changes. Careful Aim's attack power therefore
+     * follows a buffed intellect, exactly as the class table's attack power
+     * already follows a buffed strength -- a flat number taken here would be
+     * stuck at the unbuffed figure for the whole fight.
+     */
+    statDerivation: withStatConversions(
+      statDerivationFor(characterClass, style),
+      build.statConversions,
+    ),
     resources,
     regeneration: regenerationFor(resources.map((spec) => spec.type)),
     /*

@@ -271,6 +271,47 @@ new class writing the same complaint is caught. It found one on the way in:
 the Shaman's Tidal Focus, which is inert for want of a healing profile and had
 been given the percentage-cost reason by mistake.
 
+**A STAT CAN BE WORTH A PERCENTAGE OF ANOTHER STAT, and that is
+`statFromStat` FOLDED INTO THE DERIVATION rather than a number computed once.**
+Six talents across five classes said this could not be expressed -- Careful
+Aim, Mental Dexterity, Mental Quickness, Arcane Resilience, Champion of the
+Light and Spiritual Guidance -- and like `grantCastModifier` it was a missing
+DECLARATION and not a missing rule. `StatBlock` already resolves in two passes
+so a derived stat sees FULLY BUFFED primaries, and it already takes the
+derivation as an injected function because which primary makes which secondary
+is game content; a conversion is one more term in that function. So Careful
+Aim follows a buffed intellect exactly as attack power already follows a
+buffed strength, and resolving it once at build time would freeze it at the
+unbuffed figure while still reading as a perfectly plausible attack power. It
+converts FROM a primary only, because the derivation is handed resolved
+primaries and all six talents read one.
+
+**IT MOVED FOUR PROFILES AND WAS WORTH EXACTLY ZERO TO TWO**, which is the
+Eclipse lesson again. Arcane Resilience is ARMOR on a Mage nothing attacks.
+Champion of the Light is spell power on a Seal Twist Ret whose seals are
+Command and Crusader -- and **Seal of Command is 70% of WEAPON damage with no
+spell power term**, so the one profile the gap survey named as "the first
+where it bites" is the one it does not bite at all. Shockadin, which casts
+Seal of Righteousness, gained 2.2%. The mechanism was right and the build was
+wrong, which is why the test asserts THE STAT ARRIVING and not a DPS delta.
+
+**CAREFUL AIM FEEDS BOTH ATTACK POWER POOLS, and the wording pointed the
+other way.** The ruleset owner's ruling: "Careful Aim contributes to attack
+power and ranged attack power". The talent says only "Attack Power", and
+Forever names the ranged pool EXPLICITLY everywhere else it means it -- Aspect
+of the Hawk and Trueshot Aura both read "ranged attack power" -- so reading
+the melee half alone was the defensible reading and it was wrong. This is the
+standing "if it is in question, ASK" instruction paying for itself a second
+time: a Hunter with only the melee half looks entirely ordinary, exactly the
+way Windfury refusing every ability did.
+
+**A TALENT'S OWN RANK DOES NOT ALWAYS OPEN ITS OWN GATE.** Careful Aim is tier
+5, so `{ careful_aim: 5 }` alone is legal and `{ careful_aim: 1 }` is not --
+`createPlayer` strips the illegal one SILENTLY, and a rank-scaling test read
+that as "worth nothing at rank 1" rather than as "not allocated". Pad a
+single-talent allocation with tier-0 filler, the way `tests/helpers/legalise`
+does for the Warrior.
+
 **A TALENT REACHES THE OWNER; A PET NEEDS `petStat` AND `petReaction`.** Six
 Hunter talents were inert for one reason -- a talent effect lands on the
 character carrying it, and a pet is a separate combatant built afterwards --
@@ -482,7 +523,60 @@ resolution strips the slots a combat style cannot fill, and stripping one slot
 too many silently discarded a bow's attack power from every melee character.
 Only genuine conflicts are exclusive: a two-hander against a one-hander, and an
 off-hand the style cannot hold. A ranged weapon coexists with a sword and simply
-does not swing.
+does not swing. **IT HAPPENED A SECOND TIME, IN THE MIRROR.** `mainHand:
+'stat-stick'` -- the Ranged and Caster styles, which say in as many words that
+melee weapons may be equipped and never swing -- was read as "not two-hand,
+therefore one-hand", so a held TWO-hander was deleted. A Hunter using Dreadforge
+Retaliator the way its own gear set does lost 12 agility and 30 attack power,
+and a caster holding a STAFF would lose everything on it.
+
+**AND THEN IT OVERSHOT.** Letting the two-hander through handed it over as a
+WEAPON, and `createPlayer` merges equipped weapons OVER the style's own -- so a
+Druid in Cat form swung an Obsidian Edged Blade, base 234 every 3.6 seconds
+instead of a paw's 50 every 1.0. That read as a 62% damage increase and as a
+working feature, and it is why the test pins the WEAPON NAME rather than a DPS
+figure. A stat-stick hand contributes STATS and never a weapon: held, never
+swung, which is what the style always said.
+
+**A STAT-STICK STYLE IS TWO SEPARATE QUESTIONS** -- is the item kept, and does
+it swing -- and the same commit got one wrong in each direction.
+
+**A RANGED WEAPON SCALES WITH RANGED ATTACK POWER**, and `weaponDamageFor`
+read `attackPower` for every slot, so a bow swung with the melee pool. The
+owner-named Hunter wiki gives Auto Shot as `RAP / 14 x WeaponSpeed + ...`, and
+`powerCoefficient` is `speed / 14`, so reading the matching pool reproduces it
+exactly. **IT KEYS ON `weaponScaling.slot` AND NEVER ON `weaponSlot`**: the
+latter says whose PROCS an attack triggers, and Thunder Clap and Intercept both
+declare `'ranged'` there so `isWeaponUse` excludes them, while being melee
+Warrior abilities that use the ranged TABLE for its lack of dodge and parry.
+
+**THE PREDICTION ABOUT IT WAS WRONG IN DIRECTION, and the reason is worth
+keeping.** It said the ranged Hunters were overstated; they went UP. At the
+pull a geared Hunter has more melee attack power than ranged, 1160 against
+1092 -- but the rotation opens with Aspect of the Hawk, +120 RANGED and
+nothing to melee, so the ranged pool leads at 1212 once the fight is running.
+**`characterAtCombatStart` processes no events**, so it shows the character a
+moment before its own opener lands; do not reason about in-fight scaling from
+it alone.
+
+**1,548 TESTS PASSED WITH THAT BUG IN**, because a Hunter with a plausible
+attack power produces a plausible number. When a fix moves nothing in the
+suite, that is a statement about the suite.
+
+**THE THREE HUNTERS WORE THE WARRIOR SET FOR THE WHOLE PROJECT**, and no test
+could have caught it because a profile in the wrong gear runs perfectly. 370
+strength and 245 agility on a class that gets NO ranged attack power from
+strength; their own set is 58 and 334, and moving to it was worth up to 34%.
+`SHARED_ARMOUR` is still the Warrior set and eleven profiles still wear it.
+**Check whose gear a profile is in before quoting its number.**
+
+**VALIDATE AN IMPORTED GEAR SET AGAINST THE PLANNER'S OWN STAT PANEL.** Every
+primary matched exactly -- 58 strength, 334 agility, 225 stamina, 118
+intellect, 73 spirit -- which is what turns "the ids parsed" into "the set is
+really on the character". The first attempt was 12 agility short and that was
+the one item not equipped, so the check located the gap rather than merely
+reporting one. Crit differing is CORRECT: base stats here are Forever's and a
+Classic planner's are not.
 
 ## Where the Forever data comes from
 

@@ -720,13 +720,64 @@ const HUNTER_LONE_WOLF_MELEE_TALENTS: TalentAllocation = {
 };
 
 /**
- * A GEAR SHELL, and said to be one.
+ * A HUNTER'S OWN GEAR, and no longer a Warrior's.
  *
- * Striker's Mark is already in SHARED_ARMOUR as the ranged slot, and the
- * project's rule is that a ranged weapon coexists with a melee one and simply
- * does not swing unless the style says so. So the two ranged builds need no
- * weapon block at all -- they shoot the bow every profile already carries --
- * and the melee build takes the two-hander.
+ * ----------------------------------------------------------------------------
+ * From a sixtyupgrades.com set the project owner supplied, item for item:
+ * full Giantstalker with Rhok'delar. Season of Discovery ids, the same source
+ * and namespace as the Unstoppable Might set `SHARED_ARMOUR` already uses --
+ * see `src/data/items/sod-hunter.json`.
+ *
+ * WHY IT MATTERS MORE THAN A GEAR SWAP USUALLY WOULD. The three Hunters wore
+ * `SHARED_ARMOUR`, which is the WARRIOR set: 370 strength and 245 agility. A
+ * Hunter is the other way round -- this set is 58 strength and 334 agility --
+ * and strength grants a Hunter NO ranged attack power at all. So every Hunter
+ * figure on file was built on a stat the class cannot use for the thing it
+ * mostly does.
+ *
+ * THE MELEE WEAPON IS SEPARATE, because the two ranged builds and the melee
+ * one want different things from that slot. Dreadforge Retaliator is a STAT
+ * STICK for a bow build -- 12 agility, 30 attack power and 1% crit off a
+ * two-hander that never swings, which is exactly how the set uses it. Handing
+ * it to LW Melee, whose two-hander IS its damage, would be 53.11 dps against
+ * the Obsidian Edged Blade's 64.86 and no Crusader; that build keeps its own
+ * weapon.
+ * ----------------------------------------------------------------------------
+ */
+const HUNTER_ARMOUR: Equipment = {
+  ranged: { itemId: 228334 }, // Rhok'delar, Longbow of the Ancient Keepers
+  head: { itemId: 228291 }, // Crown of Destruction
+  neck: { itemId: 228685 }, // Onyxia Tooth Pendant
+  shoulders: { itemId: 226527 }, // Giantstalker's Epaulets
+  cloak: { itemId: 13340 }, // Cape of the Black Baron
+  chest: { itemId: 226534 }, // Giantstalker's Breastplate
+  wrists: { itemId: 228284 }, // Wristguards of True Flight
+  gloves: { itemId: 226528 }, // Giantstalker's Gloves
+  waist: { itemId: 226529 }, // Giantstalker's Belt
+  legs: { itemId: 226532 }, // Giantstalker's Leggings
+  feet: { itemId: 226531 }, // Giantstalker's Boots
+  ring1: { itemId: 228286 }, // Band of Accuria
+  ring2: { itemId: 19325 }, // Don Julio's Band
+  trinket1: { itemId: 13965 }, // Blackhand's Breadth
+  trinket2: { itemId: 18473 }, // Royal Seal of Eldre'Thalas
+};
+
+/**
+ * The set's melee slot, for the two builds that only stand there holding it.
+ *
+ * A two-hander on a `ranged` style is a stat stick by the style's own
+ * definition and contributes its stats without ever swinging.
+ */
+const HUNTER_STAT_STICK: Equipment = {
+  twoHand: { itemId: 227981 }, // Dreadforge Retaliator
+};
+
+/**
+ * The melee build's two-hander, kept from before the Hunter set arrived.
+ *
+ * Its own stated weapon rather than the set's -- see HUNTER_ARMOUR above for
+ * why. It fills the same slot, so it replaces the stat stick rather than
+ * stacking with it.
  */
 const HUNTER_MELEE_WEAPONS: Equipment = {
   twoHand: { itemId: 228229, enchantId: CRUSADER },
@@ -1233,7 +1284,7 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = [
       },
       talents: { ...HUNTER_BEAST_MASTERY_TALENTS },
       raidBuffs: [...PRESET_RAID_BUFFS],
-      equipment: { ...SHARED_ARMOUR },
+      equipment: { ...HUNTER_ARMOUR, ...HUNTER_STAT_STICK },
       encounter: { ...createDefaultProfile().encounter, targetAttacks: false },
     }),
   },
@@ -1253,7 +1304,7 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = [
       },
       talents: { ...HUNTER_LONE_WOLF_RANGED_TALENTS },
       raidBuffs: [...PRESET_RAID_BUFFS],
-      equipment: { ...SHARED_ARMOUR },
+      equipment: { ...HUNTER_ARMOUR, ...HUNTER_STAT_STICK },
       encounter: { ...createDefaultProfile().encounter, targetAttacks: false },
     }),
   },
@@ -1273,7 +1324,7 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = [
       },
       talents: { ...HUNTER_LONE_WOLF_MELEE_TALENTS },
       raidBuffs: [...PRESET_RAID_BUFFS],
-      equipment: { ...SHARED_ARMOUR, ...HUNTER_MELEE_WEAPONS },
+      equipment: { ...HUNTER_ARMOUR, ...HUNTER_MELEE_WEAPONS },
       encounter: { ...createDefaultProfile().encounter, targetAttacks: false },
     }),
   },

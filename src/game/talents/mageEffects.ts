@@ -79,12 +79,15 @@ export const MAGE_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
   arcane_concentration: [{ kind: 'reaction', reactionId: 'arcane_concentration' }],
 
   arcane_resilience: [
-    {
-      kind: 'unmodelled',
-      reason:
-        'Armor from a PERCENTAGE OF INTELLECT. A stat derived from another ' +
-        'stat has no declaration -- the same gap the Shaman Mental Dexterity has.',
-    },
+    /*
+     * "Increases your Armor by an amount equal to {0}% of your Intellect."
+     *
+     * CORRECT AND WORTH NOTHING HERE, which is a different thing from inert:
+     * no Mage profile is attacked, so armor reduces no damage. Declared
+     * anyway, because a talent that works and does not matter must not look
+     * like one that cannot be expressed.
+     */
+    { kind: 'statFromStat', from: 'intellect', to: 'armor' },
   ],
 
   arcane_geometry: [{ kind: 'unmodelled', reason: NO_POSITION }],

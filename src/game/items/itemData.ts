@@ -1,13 +1,20 @@
 import type { PartialStats } from '../../engine';
 import type { Enchant, EquipmentSlot, Item, ItemWeapon, UnmodelledEffect } from './Item';
-import raw from '../../data/items/classic-warrior.json';
+import warriorItems from '../../data/items/classic-warrior.json';
+import hunterItems from '../../data/items/sod-hunter.json';
 
 /**
  * Items, from Wowhead's Classic tooltip data.
  *
- * Source: `https://nether.wowhead.com/classic/tooltip/item/<id>`, scraped once
- * into `src/data/items/classic-warrior.json` and hash-checked on the way in.
- * That file is the record; this one turns it into what the simulator uses.
+ * Source: `https://nether.wowhead.com/classic/tooltip/item/<id>`, scraped into
+ * `src/data/items/*.json` -- `classic-warrior.json` first and hash-checked on
+ * the way in, `sod-hunter.json` afterwards through `tools/import_item.mjs`.
+ * Those files are the record; this one turns them into what the simulator
+ * uses.
+ *
+ * ONE FILE PER SET, so "where did this number come from" has a per-file
+ * answer: each carries its own `source` and the set it was taken from. They
+ * are concatenated here and nothing downstream knows there were two.
  *
  * RULESET NOTE, and it matters. These are WoW CLASSIC items — the Tier 1
  * Unstoppable Might set is Season of Discovery — while everything else in this
@@ -141,6 +148,24 @@ const EFFECT_RULES: readonly EffectRule[] = [
     pattern: /^\+(\d+) Attack Power\.?$/,
     apply: (value, into) => {
       into.attackPower = (into.attackPower ?? 0) + value;
+    },
+  },
+  {
+    /*
+     * "+48 ranged Attack Power." -- the RANGED pool, which is a different
+     * stat and not a subset of the one above.
+     *
+     * It has to be matched BEFORE nothing, and it is listed after the plain
+     * rule only because that rule is anchored and cannot swallow it. A
+     * Hunter's gear says this on a trinket and on the bow itself, and
+     * without a rule the words fell through to `unmodelled` and 65 ranged
+     * attack power went quietly missing -- honest, because the Gear panel
+     * prints every unmodelled line, but wrong when the stat exists and the
+     * source names it unambiguously.
+     */
+    pattern: /^\+(\d+) ranged Attack Power\.?$/,
+    apply: (value, into) => {
+      into.rangedAttackPower = (into.rangedAttackPower ?? 0) + value;
     },
   },
   {
@@ -289,9 +314,26 @@ function buildItem(item: RawItem): Item {
   };
 }
 
-const data = raw as unknown as RawData;
+const data = warriorItems as unknown as RawData;
+const hunterData = hunterItems as unknown as RawData;
 
-export const ITEMS: readonly Item[] = data.items.map(buildItem);
+/*
+ * Both files, in one list. `classic-warrior.json` supplies four pieces the
+ * Hunter set also uses -- Onyxia Tooth Pendant, Cape of the Black Baron, Don
+ * Julio's Band and Blackhand's Breadth -- so the second file holds only what
+ * the first does not, and this throws rather than silently keeping one of two
+ * entries for the same id.
+ */
+const RAW_ITEMS = [...data.items, ...hunterData.items];
+
+const duplicates = RAW_ITEMS.map((item) => item.id).filter(
+  (id, index, all) => all.indexOf(id) !== index,
+);
+if (duplicates.length > 0) {
+  throw new Error(`Duplicate item ids across the item files: ${duplicates.join(', ')}`);
+}
+
+export const ITEMS: readonly Item[] = RAW_ITEMS.map(buildItem);
 
 export const ITEMS_BY_ID: ReadonlyMap<number, Item> = new Map(
   ITEMS.map((item) => [item.id, item] as const),

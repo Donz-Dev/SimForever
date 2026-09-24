@@ -1,4 +1,10 @@
-import type { PartialStats, StatDerivation, Stats } from '../../engine';
+import type {
+  PartialStats,
+  PrimaryStatName,
+  StatDerivation,
+  StatName,
+  Stats,
+} from '../../engine';
 import type { ClassId, CombatStyleId } from './ids';
 
 /**
@@ -269,6 +275,58 @@ export function statDerivationFor(
       conversions,
     );
     return stats;
+  };
+}
+
+/**
+ * One stat worth a fraction of another, on top of the class table.
+ *
+ * ----------------------------------------------------------------------------
+ * WHY THIS IS NOT A NEW ENGINE RULE.
+ *
+ * `StatBlock` takes its derivation as an injected function, because which
+ * primary makes which secondary is game content rather than engine policy --
+ * a Warrior gets 2 attack power per strength and a Rogue gets 1. Careful Aim's
+ * "100% of your Intellect" is one more term in exactly that function, so the
+ * rule it needs already exists: the block resolves in two passes so a derived
+ * stat sees FULLY BUFFED primaries, which is what makes a strength blessing
+ * raise attack power. A conversion added here inherits that for free.
+ *
+ * `fraction`, not a percentage: 1.0 is all of it. The talents state
+ * percentages and `talentBuild` divides once, so nothing downstream has to
+ * remember which it is holding.
+ * ----------------------------------------------------------------------------
+ */
+export interface StatFromStat {
+  readonly from: PrimaryStatName;
+  readonly to: StatName;
+  readonly fraction: number;
+}
+
+/**
+ * A derivation with extra conversions folded in after the class table.
+ *
+ * ADDED TO whatever the class already derives rather than replacing it: the
+ * Shaman's Mental Dexterity is attack power from intellect ON TOP OF the
+ * attack power it already gets from strength and agility, and a conversion
+ * that overwrote would silently delete the larger of the two.
+ *
+ * Returns the base derivation unchanged when there is nothing to add, so a
+ * character with no such talent allocates nothing and behaves identically.
+ */
+export function withStatConversions(
+  base: StatDerivation,
+  conversions: readonly StatFromStat[],
+): StatDerivation {
+  if (conversions.length === 0) return base;
+
+  return (primary) => {
+    const derived: PartialStats = { ...base(primary) };
+    for (const conversion of conversions) {
+      derived[conversion.to] =
+        (derived[conversion.to] ?? 0) + primary[conversion.from] * conversion.fraction;
+    }
+    return derived;
   };
 }
 

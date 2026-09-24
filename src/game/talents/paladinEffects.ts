@@ -335,14 +335,17 @@ export const PALADIN_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
   ],
 
   champion_of_the_light: [
-    {
-      kind: 'unmodelled',
-      reason:
-        'Spell damage from a PERCENTAGE OF INTELLECT. The fourth talent in the ' +
-        'project with that shape and the first where it bites: the seal formula ' +
-        'has a spell power term, so this is real damage the Retribution build ' +
-        'is not getting.',
-    },
+    /*
+     * "Increases your spell damage and healing by up to {0}% of your
+     * Intellect", 100% at 3/3.
+     *
+     * THE ONE PLACE IN THE PROJECT WHERE SPELL POWER REACHES A MELEE BUILD.
+     * The ruleset owner's seal formula has a spell power term worth twice an
+     * attack power one, so this is the only stat-from-stat talent that moves
+     * a physical-looking profile's damage. Everything else a caster owns
+     * reads flat damage with no coefficient.
+     */
+    { kind: 'statFromStat', from: 'intellect', to: 'spellPower' },
   ],
 
   instrument_of_law: [

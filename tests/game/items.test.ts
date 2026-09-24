@@ -50,8 +50,18 @@ const MIGHT_SET: readonly (readonly [id: number, name: string, str: number, sta:
 ];
 
 describe('the item data', () => {
-  it('holds all nineteen items', () => {
-    expect(ITEMS).toHaveLength(19);
+  it('holds both item files, and no id twice', () => {
+    /*
+     * Nineteen from `classic-warrior.json` and twelve from `sod-hunter.json`.
+     * The Hunter set overlaps the Warrior one by four pieces -- Onyxia Tooth
+     * Pendant, Cape of the Black Baron, Don Julio's Band and Blackhand's
+     * Breadth -- which is why the second file holds twelve and not sixteen.
+     * `itemData` throws on a duplicate id; this says the count out loud so
+     * that a file silently failing to load is a failure rather than a
+     * shorter list nobody notices.
+     */
+    expect(ITEMS).toHaveLength(31);
+    expect(new Set(ITEMS.map((item) => item.id)).size).toBe(31);
   });
 
   /*
@@ -167,13 +177,24 @@ describe('the item data', () => {
   });
 
   it('offers the right items per slot', () => {
-    expect(itemsForSlot('head').map((i) => i.name)).toEqual(['Jaws of Might']);
+    // Two head pieces now: the Warrior Tier 1 helm and the Hunter's.
+    expect(itemsForSlot('head').map((i) => i.name).sort()).toEqual([
+      'Crown of Destruction',
+      'Jaws of Might',
+    ]);
+    // The Hunter set's melee weapon is a TWO-hander, so it does not appear
+    // here -- which is the whole reason it is a stat stick for that build.
     expect(itemsForSlot('mainHand').map((i) => i.name).sort()).toEqual([
       'Brutality Blade',
       "Vis'kag the Bloodletter",
     ]);
-    expect(itemsForSlot('ring1')).toHaveLength(2);
-    expect(itemsForSlot('trinket2')).toHaveLength(2);
+    expect(itemsForSlot('twoHand').map((i) => i.name).sort()).toEqual([
+      'Dreadforge Retaliator',
+      'Obsidian Edged Blade',
+    ]);
+    // Don Julio's Band and Band of Accuria; Quick Strike Ring is main-hand.
+    expect(itemsForSlot('ring1')).toHaveLength(3);
+    expect(itemsForSlot('trinket2')).toHaveLength(3);
   });
 });
 
@@ -285,6 +306,59 @@ describe('equipping', () => {
     expect(twoHand.strength! - dual.strength!).toBe(42 - 10);
     expect(liveEquipment(FULL, 'dual_wield').twoHand).toBeUndefined();
     expect(liveEquipment(FULL, 'two_hander').mainHand).toBeUndefined();
+  });
+
+  it('KEEPS a two-hander a stat-stick style is holding', () => {
+    /*
+     * ------------------------------------------------------------------------
+     * The Ranged and Caster styles declare `mainHand: 'stat-stick'` and say in
+     * as many words that melee weapons may be equipped and never swing. This
+     * used to read "not two-hand" as "one-hand" and delete the two-hander, so
+     * a Hunter holding Dreadforge Retaliator as a stat stick silently lost its
+     * 12 agility and 30 attack power, and a caster holding a STAFF would lose
+     * the lot.
+     *
+     * The same mistake as stripping the ranged slot from a melee character,
+     * in the other direction: taking away a slot the style can actually fill.
+     * ------------------------------------------------------------------------
+     */
+    const twoHandOnly: Equipment = { twoHand: { itemId: 227981 } }; // Dreadforge Retaliator
+
+    const oneHandOnly: Equipment = { mainHand: { itemId: 17075 } }; // Vis'kag
+
+    for (const style of ['ranged', 'caster'] as const) {
+      expect(liveEquipment(twoHandOnly, style).twoHand, style).toBeDefined();
+      expect(statsForStyle(twoHandOnly, style).agility, style).toBe(12);
+
+      /*
+       * HELD, AND NEVER SWUNG -- neither kind produces a weapon.
+       *
+       * An earlier version of this test asserted the OPPOSITE, on the
+       * reasoning that `mainHand` was never stripped from a stat-stick style
+       * so a held one-hander had always produced a weapon profile here, and
+       * that the two kinds should therefore agree. They should, and they were
+       * agreeing on the wrong answer: `createPlayer` merges these OVER the
+       * style's own weapons, so a profile returned here replaces a Cat's paw.
+       * A Druid in form was swinging an Obsidian Edged Blade.
+       */
+      expect(weaponsForEquipment(oneHandOnly, style).mainHand, style).toBeUndefined();
+      expect(weaponsForEquipment(twoHandOnly, style).mainHand, style).toBeUndefined();
+    }
+
+    // A swinging style is unchanged: it still picks one hand or the other.
+    expect(liveEquipment(twoHandOnly, 'dual_wield').twoHand).toBeUndefined();
+    expect(liveEquipment(twoHandOnly, 'two_hander').twoHand).toBeDefined();
+  });
+
+  it('still refuses to hold a one-hander and a two-hander at once', () => {
+    // A stat-stick style can hold either, but not both. The two-hander
+    // yields, which is the same loser the swinging styles pick.
+    const both: Equipment = {
+      mainHand: { itemId: 17075 }, // Vis'kag
+      twoHand: { itemId: 227981 }, // Dreadforge Retaliator
+    };
+    expect(liveEquipment(both, 'ranged').twoHand).toBeUndefined();
+    expect(liveEquipment(both, 'ranged').mainHand).toBeDefined();
   });
 
   it('reproduces the weapon damage range through the engine profile', () => {
