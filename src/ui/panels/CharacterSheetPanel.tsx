@@ -142,6 +142,10 @@ function warriorRows(profile: CharacterProfile, style: CombatStyleId): readonly 
     { label: 'Strength', value: round(stats.strength) },
     { label: 'Agility', value: round(stats.agility) },
     { label: 'Attack Power', value: round(stats.attackPower) },
+    // The pool a bow actually scales with. Hidden when there is none.
+    ...(stats.rangedAttackPower !== 0
+      ? [{ label: 'Ranged Attack Power', value: round(stats.rangedAttackPower) }]
+      : []),
   ];
 
   rows.push({ label: 'Chance to Miss', value: perHand((c) => c.miss) });
@@ -279,6 +283,16 @@ function genericRows(profile: CharacterProfile, style: CombatStyleId): readonly 
     { label: 'Intellect', value: round(stats.intellect) },
     { label: 'Spirit', value: round(stats.spirit) },
     { label: 'Attack Power', value: round(stats.attackPower) },
+    /*
+     * RANGED ATTACK POWER IS A SEPARATE POOL AND NOW DRIVES A HUNTER'S
+     * DAMAGE, so it gets a row of its own -- but only where there is any.
+     * Showing "Ranged Attack Power 0" on nine classes out of ten is noise,
+     * and hiding it on the one class it decides is worse: the bow reads this
+     * number and nothing on the sheet said so.
+     */
+    ...(stats.rangedAttackPower !== 0
+      ? [{ label: 'Ranged Attack Power', value: round(stats.rangedAttackPower) }]
+      : []),
     { label: 'Armor', value: round(stats.armor) },
     { label: 'Crit Chance', value: `${stats.critChance.toFixed(2)}%` },
     ...(stats.spellCritChance !== 0

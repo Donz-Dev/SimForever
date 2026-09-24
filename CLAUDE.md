@@ -528,8 +528,40 @@ does not swing. **IT HAPPENED A SECOND TIME, IN THE MIRROR.** `mainHand:
 melee weapons may be equipped and never swing -- was read as "not two-hand,
 therefore one-hand", so a held TWO-hander was deleted. A Hunter using Dreadforge
 Retaliator the way its own gear set does lost 12 agility and 30 attack power,
-and a caster holding a STAFF would lose everything on it. What stops a stat
-stick being SWUNG is the style's `autoAttack`, never withholding the item.
+and a caster holding a STAFF would lose everything on it.
+
+**AND THEN IT OVERSHOT.** Letting the two-hander through handed it over as a
+WEAPON, and `createPlayer` merges equipped weapons OVER the style's own -- so a
+Druid in Cat form swung an Obsidian Edged Blade, base 234 every 3.6 seconds
+instead of a paw's 50 every 1.0. That read as a 62% damage increase and as a
+working feature, and it is why the test pins the WEAPON NAME rather than a DPS
+figure. A stat-stick hand contributes STATS and never a weapon: held, never
+swung, which is what the style always said.
+
+**A STAT-STICK STYLE IS TWO SEPARATE QUESTIONS** -- is the item kept, and does
+it swing -- and the same commit got one wrong in each direction.
+
+**A RANGED WEAPON SCALES WITH RANGED ATTACK POWER**, and `weaponDamageFor`
+read `attackPower` for every slot, so a bow swung with the melee pool. The
+owner-named Hunter wiki gives Auto Shot as `RAP / 14 x WeaponSpeed + ...`, and
+`powerCoefficient` is `speed / 14`, so reading the matching pool reproduces it
+exactly. **IT KEYS ON `weaponScaling.slot` AND NEVER ON `weaponSlot`**: the
+latter says whose PROCS an attack triggers, and Thunder Clap and Intercept both
+declare `'ranged'` there so `isWeaponUse` excludes them, while being melee
+Warrior abilities that use the ranged TABLE for its lack of dodge and parry.
+
+**THE PREDICTION ABOUT IT WAS WRONG IN DIRECTION, and the reason is worth
+keeping.** It said the ranged Hunters were overstated; they went UP. At the
+pull a geared Hunter has more melee attack power than ranged, 1160 against
+1092 -- but the rotation opens with Aspect of the Hawk, +120 RANGED and
+nothing to melee, so the ranged pool leads at 1212 once the fight is running.
+**`characterAtCombatStart` processes no events**, so it shows the character a
+moment before its own opener lands; do not reason about in-fight scaling from
+it alone.
+
+**1,548 TESTS PASSED WITH THAT BUG IN**, because a Hunter with a plausible
+attack power produces a plausible number. When a fix moves nothing in the
+suite, that is a statement about the suite.
 
 **THE THREE HUNTERS WORE THE WARRIOR SET FOR THE WHOLE PROJECT**, and no test
 could have caught it because a profile in the wrong gear runs perfectly. 370

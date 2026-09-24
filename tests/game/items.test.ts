@@ -331,15 +331,18 @@ describe('equipping', () => {
       expect(statsForStyle(twoHandOnly, style).agility, style).toBe(12);
 
       /*
-       * EXACTLY WHAT A ONE-HANDER ALREADY DID for the same style, which is
-       * the point: `mainHand` was never stripped from a stat-stick style, so
-       * a held one-hander has always produced a weapon profile here. What
-       * stops either being SWUNG is the style's `autoAttack`, not withholding
-       * the profile -- so the two kinds now agree instead of one silently
-       * vanishing.
+       * HELD, AND NEVER SWUNG -- neither kind produces a weapon.
+       *
+       * An earlier version of this test asserted the OPPOSITE, on the
+       * reasoning that `mainHand` was never stripped from a stat-stick style
+       * so a held one-hander had always produced a weapon profile here, and
+       * that the two kinds should therefore agree. They should, and they were
+       * agreeing on the wrong answer: `createPlayer` merges these OVER the
+       * style's own weapons, so a profile returned here replaces a Cat's paw.
+       * A Druid in form was swinging an Obsidian Edged Blade.
        */
-      expect(weaponsForEquipment(oneHandOnly, style).mainHand, style).toBeDefined();
-      expect(weaponsForEquipment(twoHandOnly, style).mainHand, style).toBeDefined();
+      expect(weaponsForEquipment(oneHandOnly, style).mainHand, style).toBeUndefined();
+      expect(weaponsForEquipment(twoHandOnly, style).mainHand, style).toBeUndefined();
     }
 
     // A swinging style is unchanged: it still picks one hand or the other.

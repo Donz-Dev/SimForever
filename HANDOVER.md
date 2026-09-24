@@ -12,7 +12,7 @@ status, that one is how.
 ## Where the project is
 
 **All nine classes and all 21 profiles are implemented**, every number traced
-to a source rather than invented. **1,548 tests**, CI green on Node 20 and 22.
+to a source rather than invented. **1,555 tests**, CI green on Node 20 and 22.
 Profile format **v9**.
 
 The twenty profiles were specified by the ruleset owner as
@@ -36,14 +36,14 @@ off moves all of them; see [docs/raid-buffs.md](docs/raid-buffs.md).
 | Seal Twist Ret | Paladin | 13/0/38 | 403.1 |
 | Shockadin | Paladin | 23/0/28 | **380.6** |
 | Prot Warr | Warrior | 17/0/34 | 357.5 |
-| BM Hunter | Hunter | 31/20/0 | **350.1** |
+| BM Hunter | Hunter | 31/20/0 | **354.0** |
 | Combat Rogue | Rogue | 18/33/0 | 347.6 |
+| LW Ranged | Hunter | 7/39/5 | **312.8** |
 | Venom Rogue | Rogue | 37/12/2 | 308.5 |
-| LW Ranged | Hunter | 7/39/5 | **307.3** |
 | Rupture Rogue | Rogue | 12/8/31 | 290.3 |
-| Cat Druid | Druid | 9/35/7 | 267.8 |
+| Cat Druid | Druid | 9/35/7 | **282.7** |
 | Shadow Priest | Priest | 16/3/32 | 266.1 |
-| Bear Druid | Druid | 9/42/0 | 241.9 |
+| Bear Druid | Druid | 9/42/0 | **263.1** |
 | Firelock | Warlock | 5/11/35 | 225.6 |
 | Arcane Mage | Mage | 47/4/0 | 210.2 |
 | Prot Pally | Paladin | 8/36/7 | 191.9 |
@@ -53,17 +53,22 @@ off moves all of them; see [docs/raid-buffs.md](docs/raid-buffs.md).
 | Moonkin | Druid | 38/0/13 | 94.2 |
 | Ele Shaman | Shaman | 38/13/0 | 70.3 |
 
-**Bold is what moved, from two changes.** `statFromStat` moved five profiles
--- Careful Aim for the three Hunters, Mental Dexterity and Mental Quickness
-for Enhancement, Champion of the Light for Shockadin -- and two that gained a
-talent did not move at all, on purpose. Then **the three Hunters got their own
-gear**, which is much the larger half:
+**Bold is what moved, from three changes**, all of them in one run of work:
 
-| | statFromStat | + Hunter gear | total |
-| --- | --- | --- | --- |
-| BM Hunter | 282.8 → 290.7 | → 350.1 | **+23.8%** |
-| LW Ranged | 229.0 → 238.3 | → 307.3 | **+34.2%** |
-| LW Melee | 458.8 → 474.6 | → 500.1 | **+9.0%** |
+| | was | statFromStat | + Hunter gear | + ranged AP | total |
+| --- | --- | --- | --- | --- | --- |
+| BM Hunter | 282.8 | 290.7 | 350.1 | **354.0** | +25.2% |
+| LW Ranged | 229.0 | 238.3 | 307.3 | **312.8** | +36.6% |
+| LW Melee | 458.8 | 474.6 | 500.1 | 500.1 | +9.0% |
+| Enh Shaman | 392.6 | **408.3** | — | — | +4.0% |
+| Shockadin | 372.4 | **380.6** | — | — | +2.2% |
+| Cat Druid | 267.8 | — | **282.7** | — | +5.6% |
+| Bear Druid | 241.9 | — | **263.1** | — | +8.8% |
+
+Two profiles gained a stat-from-stat talent and did not move at all, on
+purpose. **The two Druids moved without touching a Druid**: they carry a
+two-hander that a stat-stick style was deleting, so its 42 strength had never
+counted. LW Melee is unmoved by the ranged fix because it swings, not shoots.
 
 **THE THREE HUNTERS WERE WEARING THE WARRIOR SET** until now -- 370 strength
 and 245 agility, on a class that gets NO ranged attack power from strength at
@@ -75,10 +80,12 @@ is still the Warrior set and eleven profiles still wear it.
 **The bottom of this table is not a balance finding.** See "What a caster
 figure means" below before quoting any of it.
 
-**The two ranged Hunter figures are still wrong, in one direction.** The bow
-reads MELEE attack power; see "Ranged attack power reaches nothing" under what
-to do next. Their 1092 ranged attack power is now real, and still almost
-entirely unread.
+**The bow reads ranged attack power now**, and the prediction that said those
+two figures were OVERSTATED was wrong: they went UP. At the pull a geared
+Hunter has more melee attack power than ranged, 1160 against 1092, so reading
+the correct pool looks like a nerf -- but the rotation opens with Aspect of
+the Hawk, +120 ranged and nothing to melee, which puts the ranged pool ahead
+once the fight is running. See "What the ranged attack power fix moved".
 
 ---
 
@@ -290,6 +297,50 @@ re-read.
 
 ---
 
+## What the ranged attack power fix moved
+
+`weaponDamageFor` read `attackPower` for **every** weapon slot, so a bow
+scaled off melee attack power. Fixed to read the pool that matches the slot,
+which reproduces the Forever Hunter wiki's Auto Shot term exactly --
+`powerCoefficient` is `speed / 14`, so `coefficient x RAP` is `RAP / 14 x
+speed`.
+
+**THE PREDICTION ON FILE WAS WRONG IN DIRECTION.** It said both ranged Hunter
+figures were overstated; they went UP, by 3.9 and 5.5. At the pull a geared
+Hunter has MORE melee attack power than ranged -- 1160 against 1092 -- so the
+correct pool looks smaller. But the rotation opens with **Aspect of the Hawk,
++120 ranged and nothing to melee**, which puts the ranged pool ahead at 1212
+once the fight is actually running. `characterAtCombatStart` processes no
+events, so it shows the character a moment before that is true.
+
+Three sources of ranged attack power were being paid for and reaching
+nothing: the Aspect, agility's 2-per-point, and the Trueshot Aura raid buff --
+plus the +48 and +17 on the Hunter's own trinket and bow.
+
+**It keys on `weaponScaling.slot`, never on `weaponSlot`.** The latter says
+which weapon's PROCS an attack triggers, and Thunder Clap and Intercept both
+declare `'ranged'` there so `isWeaponUse` excludes them -- they are melee
+Warrior abilities using the ranged TABLE because it has no dodge or parry.
+Keying on it would hand a Warrior a ranged pool of zero.
+
+**1,548 TESTS PASSED WITH THE BUG IN.** Nothing asserted which pool a bow
+read, because a Hunter with a plausible attack power produces a plausible
+number. Five of the seven new tests fail without the fix.
+
+### And a stat stick that was being swung
+
+Found while measuring this: the fix that stopped a stat-stick style DELETING a
+two-hander let one through as a **weapon**. `createPlayer` merges equipped
+weapons over the style's own, so a Druid in Cat form was swinging an Obsidian
+Edged Blade -- base 234 every 3.6 seconds instead of a paw's 50 every 1.0 --
+which read as a 62% damage increase and as a working feature.
+
+A stat-stick hand now contributes stats and never a weapon, which is what both
+`combatStyles.ts` and `weaponsForStyle` already said it meant. Cat and Bear
+keep the 42 strength they had never been getting, worth 5.6% and 8.8%.
+
+---
+
 ## Open questions for the ruleset owner
 
 1. **Seal of Command's PPM.** You chose procs-per-minute; the figure did not
@@ -345,44 +396,8 @@ node tools/import_forever_spells.mjs <class> --write
 
 In the order I would do them:
 
-1. **Ranged attack power reaches nothing.** Found while declaring Careful Aim,
-   and it is the biggest accuracy problem in the project today.
-   `weaponDamageFor` reads `stats.effective.attackPower` for EVERY slot,
-   including `ranged` — so a Hunter's bow scales off MELEE attack power and is
-   completely unaffected by the ranged pool. Probed directly: +200 melee attack
-   power moved a bow hit from 168 to 209.43, and +200 ranged attack power left
-   it at 168.
-
-   The owner-named Hunter wiki settles it and disagrees:
-   `github.com/classic-hunter/forever-hunter/wiki/Attack-Formulas` gives Auto
-   Shot as `AmmoDPS x WeaponSpeed + (RAP / 14 x WeaponSpeed + Scope +
-   AverageWeaponDamage)`, and Stat-Mechanics states "1 Agility = 2 Ranged
-   Attack Power", "1 Agility = 1 Melee Attack Power" and "1 Strength = 1 Melee
-   Attack Power" — no ranged bonus from strength at all.
-
-   **So both ranged Hunter figures are overstated.** The Hunter set has
-   narrowed it — 1160 melee attack power against 1092 ranged, where the
-   Warrior set gave 1187 against 601 — so the fix now costs far less than it
-   would have. It still matters: 68 points of the gap, plus every source of
-   ranged attack power still being read by almost nothing.
-
-   Four things are currently inert because of it and all four should come
-   back: agility's 2 ranged attack power per point, Aspect of the Hawk, the
-   Trueshot Aura raid buff, and now the +48 and +17 ranged attack power the
-   Hunter's own trinket and bow carry. Only Arcane Shot's and Serpent Sting's
-   coefficients read the ranged pool today.
-
-   **Careful Aim is already waiting for it.** The ruleset owner settled that
-   one — "Careful Aim contributes to attack power and ranged attack power" —
-   so the talent feeds both pools and a Hunter reads 686 ranged attack power
-   against 601 before. Today that second conversion is worth about a DPS,
-   because the only things reading the ranged pool are Arcane Shot's 10% and
-   Serpent Sting's 15%. **The moment the bow reads it, it becomes the half
-   that matters**, which is a reason to expect this fix to cost the ranged
-   Hunters less than the raw 1187-against-686 gap suggests.
-
-2. **Gear for everyone else.** `SHARED_ARMOUR` is the Warrior set and
-   **eleven profiles still wear it**, so what was just found for the Hunter is
+1. **Gear for everyone else.** `SHARED_ARMOUR` is the Warrior set and
+   **eleven profiles still wear it**, so what was found for the Hunter is
    almost certainly true elsewhere: a Rogue on plate stats, a caster whose
    `spellPower` reads zero. Four of the five lowest numbers in the table are
    casters and every one of those figures is a floor.
@@ -392,15 +407,16 @@ In the order I would do them:
    `src/data/items/`, and the result checked against the planner's own stat
    panel — every primary matched exactly, which is what makes it a validated
    import rather than a hopeful one. It is a DATA task, not a code one.
-3. **Spell hit per school** — five talents, and a genuine rule change: the hit
+
+2. **Spell hit per school** — five talents, and a genuine rule change: the hit
    roll happens before any per-school modifier is consulted.
-4. **Crit, or crit damage, for a LIST of abilities** — three talents, two of
+3. **Crit, or crit damage, for a LIST of abilities** — three talents, two of
    them Hunter, and it is the same missing middle `SchoolModifiers` filled for
    damage schools, keyed by attack TABLE instead. It would retire Savage
    Strikes and Ranged Weapon Specialization, both fully inert and both taken
    at full rank by a Hunter profile, and make Mortal Shots and Predator's Edge
    exact where they are currently applied whole-character.
-5. **The APLs are shells and say so.** Every list since the Warrior's is this
+4. **The APLs are shells and say so.** Every list since the Warrior's is this
    project's guess at the standard shape, not the owner's own. They have been
    wrong twice in ways that cost real damage — the Shockadin seal and the
    missing Lightning Bolt in Enhancement. Worth reviewing with the owner

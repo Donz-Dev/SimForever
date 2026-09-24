@@ -173,11 +173,48 @@ export function weaponDamageFor(request: DamageRequest, roll: number): number {
   const weapon = request.source.weapons[scaling.slot];
   if (!weapon) return 0;
 
-  const attackPower = request.source.stats.effective.attackPower;
   const base = weapon.baseDamage * roll;
-  const power = (weapon.powerCoefficient ?? 0) * attackPower;
+  const power = (weapon.powerCoefficient ?? 0) * attackPowerFor(request);
 
   return (base + power) * (scaling.fraction ?? 1);
+}
+
+/**
+ * Which attack power pool a request draws on: RANGED for a ranged weapon,
+ * melee for everything else.
+ *
+ * ----------------------------------------------------------------------------
+ * RULESET: ranged weapon damage scales with RANGED attack power, and the two
+ * pools are genuinely separate -- a Hunter gets 2 ranged attack power per
+ * agility, 1 melee per agility, and 1 MELEE per strength with no ranged
+ * bonus at all. Stated by the Forever Hunter wiki the ruleset owner named,
+ * which gives Auto Shot as
+ *
+ *     AmmoDPS x WeaponSpeed + (RAP / 14 x WeaponSpeed + Scope + AvgWeaponDmg)
+ *
+ * and `powerCoefficient` is `speed / 14`, so this reproduces that term
+ * exactly.
+ *
+ * This read `attackPower` for EVERY slot, so a bow swung with melee attack
+ * power. Nothing looked wrong: the Hunters were in a Warrior's gear at the
+ * time, so 370 strength was quietly powering a bow that should get nothing
+ * from strength, and `rangedAttackPower` -- agility's conversion, Aspect of
+ * the Hawk, the Trueshot Aura raid buff, the +48 on the Hunter's own trinket
+ * -- reached only the two abilities that read the stat by hand.
+ *
+ * IT KEYS ON `weaponScaling.slot` AND NOT ON `weaponSlot`, which is a
+ * distinction with teeth. `weaponSlot` marks which weapon's PROCS an attack
+ * can trigger, and Thunder Clap and Intercept both declare `'ranged'` there
+ * precisely so that `isWeaponUse` excludes them -- they are melee Warrior
+ * abilities that resolve on the ranged TABLE because it has no dodge or
+ * parry. Keying on that would hand a Warrior ranged attack power the moment
+ * either grew a coefficient. `weaponScaling.slot` names the weapon actually
+ * contributing damage, which is the question being asked.
+ * ----------------------------------------------------------------------------
+ */
+export function attackPowerFor(request: DamageRequest): number {
+  const stats = request.source.stats.effective;
+  return request.weaponScaling?.slot === 'ranged' ? stats.rangedAttackPower : stats.attackPower;
 }
 
 /**
@@ -205,7 +242,15 @@ export function scaleByPower(request: DamageRequest, weaponDamage = 0): number {
   let total = request.baseAmount + weaponDamage;
   if (coefficient !== 0) {
     const stats = request.source.stats.effective;
-    const power = isPhysical(request.school) ? stats.attackPower : stats.spellPower;
+    /*
+     * THE SAME POOL `weaponDamageFor` USES, through the same function, so the
+     * two halves of one request cannot disagree about which attack power a
+     * bow scales with. Today nothing declares both a ranged weapon and a
+     * coefficient, so this changes no number -- it is here because the rule
+     * living privately in one file while another re-derived it is exactly how
+     * `isWeaponUse` went wrong.
+     */
+    const power = isPhysical(request.school) ? attackPowerFor(request) : stats.spellPower;
     total += coefficient * power;
   }
 

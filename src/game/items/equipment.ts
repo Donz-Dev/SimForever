@@ -178,6 +178,25 @@ export function weaponsForEquipment(
   const definition = getCombatStyle(style);
   const rangedSwings = definition?.rangedSlot === 'required';
 
+  /*
+   * A STAT STICK IS HELD AND NEVER SWUNG, which is the whole meaning of the
+   * rule and has to be enforced HERE rather than by not equipping it.
+   *
+   * `createPlayer` merges these over the style's own weapons -- for a Cat that
+   * is `{ mainHand: CAT_PAW }` -- so anything returned for a stat-stick hand
+   * REPLACES the form's natural weapon. A Druid in Cat form was swinging an
+   * Obsidian Edged Blade: base 234 every 3.6 seconds instead of a paw's 50
+   * every 1.0, which read as a 62% damage increase and as a working feature.
+   *
+   * The stats are unaffected and still apply -- `statsForStyle` reads
+   * `liveEquipment`, not this -- so a stat stick goes on doing exactly what
+   * its name says.
+   */
+  const handIsStatStick = {
+    mainHand: definition?.mainHand === 'stat-stick',
+    offHand: definition?.offHand === 'stat-stick',
+  };
+
   for (const [slotName, equipped] of Object.entries(live)) {
     if (!equipped) continue;
     const slot = slotName as EquipmentSlot;
@@ -185,6 +204,7 @@ export function weaponsForEquipment(
 
     const weaponSlot = weaponSlotFor(slot);
     if (!weaponSlot) continue;
+    if (weaponSlot !== 'ranged' && handIsStatStick[weaponSlot]) continue;
 
     const item = ITEMS_BY_ID.get(equipped.itemId);
     if (!item?.weapon) continue;
