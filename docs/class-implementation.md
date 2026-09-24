@@ -1,8 +1,13 @@
 # Implementing a class
 
-The Warrior took months. The other eight should not, and this is the process
-that makes the difference: **every number comes from the beta client, fetched
-by a tool, before any of it is written by hand.**
+The Warrior took months. The other eight did not, and this is the process that
+made the difference: **every number comes from the beta client, fetched by a
+tool, before any of it is written by hand.**
+
+**All nine classes and 21 profiles are now built this way.** The steps below
+are kept because they are also the process for CORRECTING one, and because a
+tenth class or a new profile would follow them unchanged. See
+[HANDOVER.md](../HANDOVER.md) for what each class actually has.
 
 ## The data pipeline
 
@@ -25,14 +30,20 @@ diff** beside each one, which is what tells "Forever changed this" from
 ## Before starting a class: does the engine already do it?
 
 [engine-gap-survey.md](engine-gap-survey.md) answers that for all twenty
-profiles, checked against the code rather than assumed. The short version:
-**fourteen of the twenty need no engine change at all**, and the three features
-that block the rest are combo points (content, not engine), channelled casts,
-and pets.
+profiles, checked against the code rather than assumed. **Every feature it
+named has since been built** — combo points (which turned out to be content,
+not engine), channelled casts, and pets — so it now reads as a record of what
+each class needed rather than as a plan.
 
 **Sequence by shared mechanism, not by class.** Ordering alphabetically would
-have built Druid's forms — which already exist — before combo points, which
-Cat Druid and all three Rogues are equally waiting on.
+have built Druid's forms — which already existed — before combo points, which
+Cat Druid and all three Rogues were equally waiting on. That ordering held for
+all nine.
+
+**And check which cause an inert talent has.** The survey called five profiles
+pet-blocked and four of them take a talent meaning "I bring no pet" — Lone
+Wolf, or Demonic Sacrifice. A build's own choice is not an engine gap. See
+CLAUDE.md, "Reading a class accurately".
 
 ## The steps
 
@@ -62,7 +73,7 @@ node tools/decode_talent_build.mjs <url> --verbose     # one, with the allocatio
 separated by `-`, trailing zeroes dropped.
 
 > **This is why step 1 comes first.** Position is the only key there is. Our
-> Wowhead scrape had three wrong talents in 469 — 99.4% accurate — and that
+> Wowhead scrape had three wrong talents in 468 — 99.4% accurate — and that
 > was still fatal. With the old Druid tree, the Moonkin build fails loudly
 > ("Insect Swarm given 5 of 1 ranks") and the **Cat build decodes cleanly to
 > 51 points with the wrong talents**, because its Balance segment stops before
@@ -89,7 +100,9 @@ hold every trap this project has hit reading Forever's spell data, and all of
 them are class-independent:
 
 - **A talent tooltip shows rank 1** of the ability it grants, not the rank a
-  level 60 has. Three separate arguments were the same misreading.
+  level 60 has. FIVE separate arguments were the same misreading — Mortal
+  Strike, Bloodthirst, Shield Slam, Lava Burst and Pyroblast, one per class
+  with a damage-granting capstone.
 - **Read the effect rows, not only the description.** Base points run one
   higher than the stated figure, and a description can disagree with its own
   row (Demoralizing Shout said 210 above a row saying −195).
