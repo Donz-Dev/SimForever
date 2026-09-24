@@ -12,7 +12,7 @@ status, that one is how.
 ## Where the project is
 
 **All nine classes and all 21 profiles are implemented**, every number traced
-to a source rather than invented. **1,546 tests**, CI green on Node 20 and 22.
+to a source rather than invented. **1,548 tests**, CI green on Node 20 and 22.
 Profile format **v9**.
 
 The twenty profiles were specified by the ruleset owner as
@@ -31,19 +31,19 @@ off moves all of them; see [docs/raid-buffs.md](docs/raid-buffs.md).
 | --- | --- | --- | --- |
 | DW Fury | Warrior | 18/33/0 | 643.2 |
 | 2H Arms | Warrior | 38/13/0 | 585.5 |
-| LW Melee | Hunter | 7/13/31 | **474.6** |
+| LW Melee | Hunter | 7/13/31 | **500.1** |
 | Enh Shaman | Shaman | 19/32/0 | **408.3** |
 | Seal Twist Ret | Paladin | 13/0/38 | 403.1 |
 | Shockadin | Paladin | 23/0/28 | **380.6** |
 | Prot Warr | Warrior | 17/0/34 | 357.5 |
+| BM Hunter | Hunter | 31/20/0 | **350.1** |
 | Combat Rogue | Rogue | 18/33/0 | 347.6 |
 | Venom Rogue | Rogue | 37/12/2 | 308.5 |
+| LW Ranged | Hunter | 7/39/5 | **307.3** |
 | Rupture Rogue | Rogue | 12/8/31 | 290.3 |
-| BM Hunter | Hunter | 31/20/0 | **290.7** |
 | Cat Druid | Druid | 9/35/7 | 267.8 |
 | Shadow Priest | Priest | 16/3/32 | 266.1 |
 | Bear Druid | Druid | 9/42/0 | 241.9 |
-| LW Ranged | Hunter | 7/39/5 | **238.3** |
 | Firelock | Warlock | 5/11/35 | 225.6 |
 | Arcane Mage | Mage | 47/4/0 | 210.2 |
 | Prot Pally | Paladin | 8/36/7 | 191.9 |
@@ -53,16 +53,32 @@ off moves all of them; see [docs/raid-buffs.md](docs/raid-buffs.md).
 | Moonkin | Druid | 38/0/13 | 94.2 |
 | Ele Shaman | Shaman | 38/13/0 | 70.3 |
 
-**Bold is what `statFromStat` moved**, and it is the whole of the change:
-Careful Aim for the three Hunters, Mental Dexterity and Mental Quickness for
-Enhancement, Champion of the Light for Shockadin. Two profiles that gained the
-talent did not move at all, on purpose -- see below.
+**Bold is what moved, from two changes.** `statFromStat` moved five profiles
+-- Careful Aim for the three Hunters, Mental Dexterity and Mental Quickness
+for Enhancement, Champion of the Light for Shockadin -- and two that gained a
+talent did not move at all, on purpose. Then **the three Hunters got their own
+gear**, which is much the larger half:
+
+| | statFromStat | + Hunter gear | total |
+| --- | --- | --- | --- |
+| BM Hunter | 282.8 → 290.7 | → 350.1 | **+23.8%** |
+| LW Ranged | 229.0 → 238.3 | → 307.3 | **+34.2%** |
+| LW Melee | 458.8 → 474.6 | → 500.1 | **+9.0%** |
+
+**THE THREE HUNTERS WERE WEARING THE WARRIOR SET** until now -- 370 strength
+and 245 agility, on a class that gets NO ranged attack power from strength at
+all. Their own set is 58 and 334. Every Hunter figure before this was built on
+a stat the class cannot use for the thing it mostly does, which is a warning
+about the other eighteen profiles rather than a closed issue: `SHARED_ARMOUR`
+is still the Warrior set and eleven profiles still wear it.
 
 **The bottom of this table is not a balance finding.** See "What a caster
 figure means" below before quoting any of it.
 
-**The two ranged Hunter figures are still wrong, in the other direction.** See
-"Ranged attack power reaches nothing" under what to do next.
+**The two ranged Hunter figures are still wrong, in one direction.** The bow
+reads MELEE attack power; see "Ranged attack power reaches nothing" under what
+to do next. Their 1092 ranged attack power is now real, and still almost
+entirely unread.
 
 ---
 
@@ -344,15 +360,16 @@ In the order I would do them:
    Attack Power", "1 Agility = 1 Melee Attack Power" and "1 Strength = 1 Melee
    Attack Power" — no ranged bonus from strength at all.
 
-   **So both ranged Hunter figures are overstated**, and the gear makes it
-   worse rather than better: `SHARED_ARMOUR` is the Warrior set, so a Hunter
-   carries 370 strength it should get no ranged attack power from. Measured on
-   the presets, melee attack power is 1187 against a ranged 601 — the bow is
-   swinging with roughly twice the power it should have.
+   **So both ranged Hunter figures are overstated.** The Hunter set has
+   narrowed it — 1160 melee attack power against 1092 ranged, where the
+   Warrior set gave 1187 against 601 — so the fix now costs far less than it
+   would have. It still matters: 68 points of the gap, plus every source of
+   ranged attack power still being read by almost nothing.
 
-   Three things are currently inert because of it and all three should come
-   back: agility's 2 ranged attack power per point, Aspect of the Hawk, and
-   the Trueshot Aura raid buff. Only Arcane Shot's and Serpent Sting's own
+   Four things are currently inert because of it and all four should come
+   back: agility's 2 ranged attack power per point, Aspect of the Hawk, the
+   Trueshot Aura raid buff, and now the +48 and +17 ranged attack power the
+   Hunter's own trinket and bow carry. Only Arcane Shot's and Serpent Sting's
    coefficients read the ranged pool today.
 
    **Careful Aim is already waiting for it.** The ruleset owner settled that
@@ -364,10 +381,17 @@ In the order I would do them:
    that matters**, which is a reason to expect this fix to cost the ranged
    Hunters less than the raw 1187-against-686 gap suggests.
 
-2. **Caster gear.** Every caster figure is a floor until some exists, and four
-   of the five lowest numbers in the table are casters. This is a DATA task,
-   not a code one — `nether.wowhead.com/classic/tooltip/item/<id>` returns
-   plain JSON and `src/data/items/README.md` has the markers.
+2. **Gear for everyone else.** `SHARED_ARMOUR` is the Warrior set and
+   **eleven profiles still wear it**, so what was just found for the Hunter is
+   almost certainly true elsewhere: a Rogue on plate stats, a caster whose
+   `spellPower` reads zero. Four of the five lowest numbers in the table are
+   casters and every one of those figures is a floor.
+
+   **The Hunter import is the worked example.** A sixtyupgrades.com set,
+   `tools/import_item.mjs classic <id>` per piece, one file per set under
+   `src/data/items/`, and the result checked against the planner's own stat
+   panel — every primary matched exactly, which is what makes it a validated
+   import rather than a hopeful one. It is a DATA task, not a code one.
 3. **Spell hit per school** — five talents, and a genuine rule change: the hit
    roll happens before any per-school modifier is consulted.
 4. **Crit, or crit damage, for a LIST of abilities** — three talents, two of

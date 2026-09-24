@@ -178,9 +178,16 @@ const [mode, second] = process.argv.slice(2);
 
 if (mode === '--verify') {
   const { readFileSync } = await import('node:fs');
-  const data = JSON.parse(readFileSync('src/data/items/classic-warrior.json', 'utf8'));
+  /*
+   * EVERY item file, not just the first. `sod-hunter.json` was added after
+   * this was written, and a verify that silently skipped it would turn the
+   * README's "re-parse everything already on file" into a false promise --
+   * which is worse than no check at all, because it reads as one.
+   */
+  const FILES = ['src/data/items/classic-warrior.json', 'src/data/items/sod-hunter.json'];
+  const storedItems = FILES.flatMap((file) => JSON.parse(readFileSync(file, 'utf8')).items);
   let same = 0;
-  for (const stored of data.items) {
+  for (const stored of storedItems) {
     const game = stored.source.includes('/forever/') ? 'forever' : 'classic';
     const fresh = await fetchItem(game, stored.id);
     const differences = [];
@@ -199,7 +206,7 @@ if (mode === '--verify') {
       for (const d of differences) console.log('  ' + d);
     } else same++;
   }
-  console.log(`\n${same} of ${data.items.length} items reproduce exactly.`);
+  console.log(`\n${same} of ${storedItems.length} items reproduce exactly.`);
 } else if (mode && second) {
   console.log(JSON.stringify(await fetchItem(mode, second), null, 1));
 } else {

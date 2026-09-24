@@ -63,7 +63,23 @@ function weaponSlotsFor(style: CombatStyleId): readonly SlotRow[] {
         ranged,
       ];
     case 'ranged':
-      return [ranged, { id: 'mainHand', name: 'Main Hand' }];
+      /*
+       * THE TWO-HANDER IS OFFERED HERE, because a ranged style holds melee
+       * weapons as STAT STICKS and a two-hander is one of them -- the Hunter
+       * gear set uses Dreadforge Retaliator exactly that way, for 12 agility
+       * and 30 attack power off a weapon that never swings.
+       *
+       * Leaving the row out did not stop it being equipped; a preset equips
+       * one directly. It only stopped the person SEEING it, which is the same
+       * shape of bug as the stats that apply only sometimes: gear on the
+       * character, counted in the totals, and absent from the panel that is
+       * supposed to list what is worn.
+       */
+      return [
+        ranged,
+        { id: 'mainHand', name: 'Main Hand' },
+        { id: 'twoHand', name: 'Two-Hander' },
+      ];
     default:
       // Forms and caster styles: no considered list yet, so offer everything
       // rather than guessing which hands a Moonkin uses.

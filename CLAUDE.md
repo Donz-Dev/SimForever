@@ -523,7 +523,28 @@ resolution strips the slots a combat style cannot fill, and stripping one slot
 too many silently discarded a bow's attack power from every melee character.
 Only genuine conflicts are exclusive: a two-hander against a one-hander, and an
 off-hand the style cannot hold. A ranged weapon coexists with a sword and simply
-does not swing.
+does not swing. **IT HAPPENED A SECOND TIME, IN THE MIRROR.** `mainHand:
+'stat-stick'` -- the Ranged and Caster styles, which say in as many words that
+melee weapons may be equipped and never swing -- was read as "not two-hand,
+therefore one-hand", so a held TWO-hander was deleted. A Hunter using Dreadforge
+Retaliator the way its own gear set does lost 12 agility and 30 attack power,
+and a caster holding a STAFF would lose everything on it. What stops a stat
+stick being SWUNG is the style's `autoAttack`, never withholding the item.
+
+**THE THREE HUNTERS WORE THE WARRIOR SET FOR THE WHOLE PROJECT**, and no test
+could have caught it because a profile in the wrong gear runs perfectly. 370
+strength and 245 agility on a class that gets NO ranged attack power from
+strength; their own set is 58 and 334, and moving to it was worth up to 34%.
+`SHARED_ARMOUR` is still the Warrior set and eleven profiles still wear it.
+**Check whose gear a profile is in before quoting its number.**
+
+**VALIDATE AN IMPORTED GEAR SET AGAINST THE PLANNER'S OWN STAT PANEL.** Every
+primary matched exactly -- 58 strength, 334 agility, 225 stamina, 118
+intellect, 73 spirit -- which is what turns "the ids parsed" into "the set is
+really on the character". The first attempt was 12 agility short and that was
+the one item not equipped, so the check located the gap rather than merely
+reporting one. Crit differing is CORRECT: base stats here are Forever's and a
+Classic planner's are not.
 
 ## Where the Forever data comes from
 
