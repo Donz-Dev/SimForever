@@ -295,7 +295,7 @@ export type TalentEffect =
        * so a reader meets one rule rather than three.
        * ----------------------------------------------------------------------
        */
-      readonly requires?: WeaponRequirement;
+      readonly requires?: BuildRequirement;
     }
 
   /**
@@ -390,7 +390,7 @@ export type TalentEffect =
    */
   | {
       readonly kind: 'conditionalDamage';
-      readonly requires: WeaponRequirement;
+      readonly requires: BuildRequirement;
     }
 
   /**
@@ -400,7 +400,7 @@ export type TalentEffect =
    */
   | {
       readonly kind: 'conditionalCrit';
-      readonly requires: WeaponRequirement;
+      readonly requires: BuildRequirement;
     }
 
   /**
@@ -490,13 +490,21 @@ export type TalentEffect =
   | { readonly kind: 'unmodelled'; readonly reason: string };
 
 /**
- * What a character must be holding for a conditional effect to apply.
+ * What a character must BE or be HOLDING for a conditional effect to apply.
  *
- * Checked against the MAIN HAND, which is what "the weapon you are using"
- * means for a talent; an off-hand of a different type is a case no Warrior
- * talent here distinguishes.
+ * ----------------------------------------------------------------------------
+ * IT WAS `WeaponRequirement` AND THE NAME HAD STOPPED BEING TRUE. `shield`
+ * was already not a weapon -- Bastion asks what is in the off hand rather than
+ * what is being swung with -- and `hasPet` is not even equipment. Two clauses
+ * out of four about something other than a weapon is a renamed interface, not
+ * a third exception.
+ *
+ * The weapon clauses are checked against the MAIN HAND, which is what "the
+ * weapon you are using" means for a talent; an off-hand of a different type is
+ * a case no Warrior talent here distinguishes.
+ * ----------------------------------------------------------------------------
  */
-export interface WeaponRequirement {
+export interface BuildRequirement {
   /** Any one of these types satisfies it. */
   readonly weaponTypes?: readonly WeaponType[];
   /** Whether the weapon must be two-handed. */
@@ -509,6 +517,21 @@ export interface WeaponRequirement {
    * with. A build can satisfy this and the weapon clauses independently.
    */
   readonly shield?: boolean;
+  /**
+   * Whether the character must have a PET in the fight.
+   *
+   * --------------------------------------------------------------------------
+   * FOCUSED FIRE IS WHY THIS EXISTS, and it was wrong rather than merely
+   * missing: "+2% to all damage you and your pet deal WHILE YOUR PET IS
+   * ACTIVE", declared with no requirement at all -- so both Lone Wolf builds,
+   * which take it as a cheap route to Careful Aim and then take the talent
+   * for having no pet, collected 2% for a pet that is never built.
+   *
+   * Answered by `bringsPet`, the same function the encounter uses to decide
+   * whether to build one, so the talent and the fight cannot disagree.
+   * --------------------------------------------------------------------------
+   */
+  readonly hasPet?: boolean;
 }
 
 /**

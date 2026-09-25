@@ -28,6 +28,43 @@ const PHYSICAL = 'physical' as const;
 const hasteFromPercent = (percent: number) =>
   flat('hasteRating', percent * RATING_PER_PERCENT.haste);
 
+/**
+ * Hunter’s Mark: "+71 Ranged Attack Power for all attackers against that
+ * target", 60 mana, instant, two minutes.
+ *
+ * ------------------------------------------------------------------------------
+ * A FOREVER NUMBER. The spellbook marks it `versusClassic: "changed"`, so 71 is
+ * this ruleset’s figure rather than one inherited.
+ *
+ * MODELLED AS A BUFF ON THE HUNTER, AND IT IS REALLY A DEBUFF ON THE TARGET.
+ * With one attacker and one target the two are numerically identical, and the
+ * engine has no route from "a debuff the target carries" to "the attacker’s
+ * ranged attack power" -- stat modifiers apply to the actor holding them. The
+ * difference would show in a raid, where the mark helps every hunter present;
+ * this simulates one character, which is the same reason Trueshot Aura is a
+ * selectable raid buff rather than an ability.
+ *
+ * WHY IT WAS MISSING UNTIL NOW, which is worth writing down: it was dismissed
+ * once as "a raid-buff-shaped ability no priority list casts". That was the
+ * wrong shape -- it is a single instant cast the Hunter makes on the pull, the
+ * same shape as the Aspect every list already opens with. And it was worth
+ * nothing to check while a bow scaled off MELEE attack power; once the ranged
+ * pool started driving auto-shot it became worth roughly ten DPS.
+ *
+ * TWO MINUTES OUTLASTS EVERY FIGHT HERE, so it is cast once and never
+ * refreshed. `canCast` refuses while it is up, so the entry falls through.
+ * ------------------------------------------------------------------------------
+ */
+export const HUNTERS_MARK_RANGED_ATTACK_POWER = 71;
+export const HUNTERS_MARK_DURATION_MS = seconds(120);
+
+export const HUNTERS_MARK: AuraDefinition = {
+  id: 'hunters_mark',
+  name: "Hunter’s Mark",
+  durationMs: HUNTERS_MARK_DURATION_MS,
+  statModifiers: [flat('rangedAttackPower', HUNTERS_MARK_RANGED_ATTACK_POWER)],
+};
+
 // ---------------------------------------------------------------------------
 // Aspects -- one at a time, like a stance or a seal
 // ---------------------------------------------------------------------------

@@ -5,6 +5,7 @@ import {
   ASPECT_AURA_IDS,
   ASPECT_OF_THE_BEAST,
   ASPECT_OF_THE_HAWK,
+  HUNTERS_MARK,
   BESTIAL_WRATH,
   HAWK_UNMODELLED,
   RAPID_FIRE,
@@ -77,6 +78,28 @@ export const ASPECT_OF_THE_HAWK_ABILITY: Ability = {
   requiresTarget: false,
   canCast: ({ caster }) => !caster.auras.has('aspect_of_the_hawk'),
   onCast: ({ simulation, caster }) => castAspect(simulation, caster, ASPECT_OF_THE_HAWK),
+};
+
+/**
+ * Hunter’s Mark. One instant cast on the pull, and it lasts the fight.
+ *
+ * The aura carries the caveat: it is really a debuff on the TARGET that helps
+ * every attacker, and with one attacker a buff on the Hunter is the same
+ * number. See `HUNTERS_MARK`.
+ */
+export const HUNTERS_MARK_ABILITY: Ability = {
+  id: 'hunters_mark',
+  name: "Hunter’s Mark",
+  cost: { resource: 'mana', amount: 60 },
+  requiresTarget: true,
+  canCast: ({ caster }) => !caster.auras.has('hunters_mark'),
+  onCast: ({ simulation, caster }) => {
+    simulation.applyAura(caster, HUNTERS_MARK, caster.id);
+  },
+  unmodelled:
+    'It is really a debuff on the TARGET, raising the ranged attack power of ' +
+    'every attacker against it. With one attacker that is the same number, so ' +
+    'it is applied to the Hunter -- the difference would only show in a raid.',
 };
 
 export const ASPECT_OF_THE_BEAST_ABILITY: Ability = {
@@ -388,6 +411,7 @@ export const SUMMON_HAWK: Ability = {
 };
 
 export const HUNTER_ABILITIES: readonly Ability[] = [
+  HUNTERS_MARK_ABILITY,
   ASPECT_OF_THE_HAWK_ABILITY,
   ASPECT_OF_THE_BEAST_ABILITY,
   ARCANE_SHOT,
