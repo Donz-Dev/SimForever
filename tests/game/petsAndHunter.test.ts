@@ -7,12 +7,15 @@ import {
   PET_ATTACK_POWER_SHARE,
   PET_CRIT_SHARE,
   PET_FOCUS_MAXIMUM,
+  PET_HAPPY_DAMAGE_MULTIPLIER,
   PET_HEALTH_PER_OWNER_STAMINA,
+  PLACEHOLDER_PET_BASE_DPS,
+  PLACEHOLDER_PET_SWING_SECONDS,
   createPet,
   highestAttackPower,
 } from '../../src/game/actors/createPet';
 import { FOCUS_PER_SECOND } from '../../src/game/combat/resourceRules';
-import { abilitiesForFamily } from '../../src/game/character/petFamilies';
+import { PET_FAMILIES, abilitiesForFamily } from '../../src/game/character/petFamilies';
 import { BITE, CLAW, PET_ABILITIES } from '../../src/game/abilities/pet';
 import {
   ARCANE_SHOT_DAMAGE,
@@ -75,16 +78,73 @@ describe('a pet is built from its owner', () => {
     const owner = hunterFor('bm_hunter');
     const pet = createPet({ owner, family: 'cat' });
     const stats = owner.stats.effective;
+    const cat = PET_FAMILIES.cat;
+
+    /*
+     * THE FAMILY MODIFIER SITS ON TOP OF THE INHERITANCE, and both are
+     * asserted so that neither can absorb the other. A Cat is 0.98 health and
+     * 1.00 armor -- stated by Petopia Classic and by the Forever Hunter wiki,
+     * which is why the Cat row is the one this test uses.
+     */
+    expect(cat.healthModifier).toBe(0.98);
+    expect(cat.armorModifier).toBe(1);
 
     expect(pet.health.maximum).toBe(
-      Math.round(stats.stamina * PET_HEALTH_PER_OWNER_STAMINA),
+      Math.round(stats.stamina * PET_HEALTH_PER_OWNER_STAMINA * cat.healthModifier),
     );
-    expect(pet.stats.get('armor')).toBeCloseTo(stats.armor * PET_ARMOR_SHARE, 6);
+    expect(pet.stats.get('armor')).toBeCloseTo(
+      stats.armor * PET_ARMOR_SHARE * cat.armorModifier,
+      6,
+    );
+    // Crit and attack power carry no family modifier: the source states three
+    // -- damage, health, armor -- and inventing a fourth is how a table grows
+    // a column nobody can cite.
     expect(pet.stats.get('critChance')).toBeCloseTo(stats.critChance * PET_CRIT_SHARE, 6);
     expect(pet.stats.get('attackPower')).toBeCloseTo(
       highestAttackPower(owner) * PET_ATTACK_POWER_SHARE,
       6,
     );
+  });
+
+  it('makes SWING SPEED damage-neutral, because the base is a DPS', () => {
+    /*
+     * ------------------------------------------------------------------------
+     * THE RULE BOTH SOURCES STATE, and the one the old model got backwards.
+     *
+     * The Forever Hunter wiki gives auto attack as
+     *
+     *     ((PetBaseDPS + AP / 14) x mods) x PetSwingSpeed
+     *
+     * and says "faster attack speed does not inherently increase the pet's
+     * base DPS". Petopia says the same from the other side: "faster pets may
+     * attack more frequently but they do proportionally less damage per hit".
+     *
+     * The old model carried a flat 100 damage PER SWING, so a one-second pet
+     * would have dealt twice a two-second pet's damage. Asserted as a RATIO
+     * rather than a figure, because the base DPS is still a placeholder and
+     * this must keep holding when a real one arrives.
+     * ------------------------------------------------------------------------
+     */
+    const owner = hunterFor('bm_hunter');
+    const pet = createPet({ owner, family: 'cat' });
+    const weapon = pet.weapons.mainHand;
+    expect(weapon).toBeDefined();
+    if (!weapon) return;
+
+    const swingSeconds = weapon.swingTimerMs / 1000;
+    expect(swingSeconds).toBe(PLACEHOLDER_PET_SWING_SECONDS);
+
+    // Base damage per swing is the DPS times the swing...
+    expect(weapon.baseDamage).toBeCloseTo(PLACEHOLDER_PET_BASE_DPS * swingSeconds, 6);
+    // ...so dividing it back out gives the same DPS whatever the swing is.
+    expect(weapon.baseDamage / swingSeconds).toBeCloseTo(PLACEHOLDER_PET_BASE_DPS, 6);
+
+    /*
+     * And the attack power term is the same shape: `powerCoefficient` is
+     * `speed / 14`, so `coefficient x AP` is `AP / 14 x speed` -- the wiki's
+     * term exactly, and also proportional to the swing.
+     */
+    expect(weapon.powerCoefficient).toBeCloseTo(swingSeconds / 14, 6);
   });
 
   it('reads the HIGHEST attack power source, not the ranged one', () => {
@@ -302,10 +362,21 @@ describe("the owner's talents reach the pet", () => {
     const pet = createPet({ owner, family: 'cat', talents: bmBuild().pet });
     const stats = owner.stats.effective;
 
-    expect(pet.damageDoneMultiplier).toBeCloseTo(1.17, 6);
+    /*
+     * THE TALENTS' 1.17, TIMES THE FAMILY AND HAPPINESS MODIFIERS. A Cat is
+     * 1.10 and a fed pet is 1.25, both from the wiki, and all three multiply
+     * -- the wiki's formula has them as separate factors inside the bracket
+     * the swing multiplies, and it puts the same two on Claw and Bite.
+     */
+    expect(PET_FAMILIES.cat.damageModifier).toBe(1.1);
+    expect(PET_HAPPY_DAMAGE_MULTIPLIER).toBe(1.25);
+    expect(pet.damageDoneMultiplier).toBeCloseTo(1.17 * 1.1 * 1.25, 6);
     expect(pet.stats.get('critChance')).toBeCloseTo(stats.critChance + 10, 6);
+    // Endurance Training's 1.09, and the Cat's own 0.98 on top.
     expect(pet.health.maximum).toBe(
-      Math.round(stats.stamina * PET_HEALTH_PER_OWNER_STAMINA * 1.09),
+      Math.round(
+        stats.stamina * PET_HEALTH_PER_OWNER_STAMINA * 1.09 * PET_FAMILIES.cat.healthModifier,
+      ),
     );
     expect(pet.reactions.map((r) => r.id)).toContain('frenzy');
   });

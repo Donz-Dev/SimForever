@@ -127,6 +127,7 @@ export function ResultsPanel({ batch }: ResultsPanelProps) {
       )}
 
       <CastButNotSimulated batch={batch} />
+      <PetCaveat batch={batch} />
       <DamageTaken batch={batch} />
       <UptimeBars
         title="Buff uptime"
@@ -164,6 +165,25 @@ export function ResultsPanel({ batch }: ResultsPanelProps) {
  * one. Only abilities the fight actually CAST appear: an inert ability no list
  * reaches says nothing about this result and would bury the one that does.
  */
+/*
+ * THE PET'S CAVEAT, which is about a NUMBER rather than about an ability.
+ *
+ * Its base DPS is invented, and this project's rule for an invented number is
+ * that a person can see it where the result is. `PET_UNMODELLED` existed and
+ * reached nothing for as long as pets have, so the figure beside it looked
+ * exactly as sourced as every other figure on the page.
+ */
+function PetCaveat({ batch }: ResultsPanelProps) {
+  if (!batch.petCaveat) return null;
+
+  return (
+    <>
+      <h3>The pet</h3>
+      <p className="muted warn">{batch.petCaveat}</p>
+    </>
+  );
+}
+
 function CastButNotSimulated({ batch }: ResultsPanelProps) {
   if (batch.castButNotSimulated.length === 0) return null;
 

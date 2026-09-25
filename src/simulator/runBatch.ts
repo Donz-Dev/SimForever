@@ -11,6 +11,7 @@ import type { BatchAuraUptime } from '../analysis';
 import type { SimulationConfig } from '../engine';
 import { Simulation, deriveSeed, toSeconds } from '../engine';
 import { trainingDummyEncounter } from './trainingDummyEncounter';
+import { PET_UNMODELLED } from '../game/actors/createPet';
 import type { CharacterProfile } from '../profiles';
 import { runSimulation } from './runSimulation';
 
@@ -92,6 +93,22 @@ export interface BatchResult {
    * ----------------------------------------------------------------------------
    */
   readonly castButNotSimulated: readonly CastButNotSimulated[];
+  /**
+   * The caveat on a PET, when this fight had one.
+   *
+   * --------------------------------------------------------------------------
+   * A SEPARATE CHANNEL BECAUSE A PET IS NOT AN ABILITY. `castButNotSimulated`
+   * is read off the player's ability book, so `PET_UNMODELLED` had no route to
+   * the page at all -- it was written, exported, and referenced by nothing,
+   * while its own comment claimed it was "printed in the app".
+   *
+   * That matters more than an ordinary gap: the pet's base DPS is an invented
+   * number, and the project's rule for those is that a person has to be able
+   * to see it. A placeholder nobody is told about is the failure mode the rule
+   * exists to prevent.
+   * --------------------------------------------------------------------------
+   */
+  readonly petCaveat?: string;
   /** Wall-clock time the batch took, in milliseconds. */
   readonly elapsedRealMs: number;
 }
@@ -134,6 +151,7 @@ export function runBatch(config: SimulationConfig, options: BatchOptions): Batch
    * same character.
    */
   let caveats: readonly { abilityName: string; reason: string }[] = [];
+  let hasPetInFight = false;
 
   for (let index = 0; index < iterations; index++) {
     const seed = deriveSeed(options.baseSeed, index);
@@ -162,6 +180,7 @@ export function runBatch(config: SimulationConfig, options: BatchOptions): Batch
       caveats = (player?.abilities.all ?? [])
         .filter((ability) => ability.unmodelled !== undefined)
         .map((ability) => ({ abilityName: ability.name, reason: ability.unmodelled! }));
+      hasPetInFight = simulation.combatants.some((actor) => actor.kind === 'pet');
     }
 
     /*
@@ -229,6 +248,9 @@ export function runBatch(config: SimulationConfig, options: BatchOptions): Batch
      */
     debuffUptime: enemyIds.flatMap((id) => totals.auraUptime(id, 'debuff')),
     castButNotSimulated: castButNotSimulated(caveats, abilities),
+    // Present only when a pet was actually built, so a Lone Wolf hunter and a
+    // sacrificed demon say nothing rather than carrying someone else's caveat.
+    ...(hasPetInFight ? { petCaveat: PET_UNMODELLED } : {}),
     elapsedRealMs: Date.now() - startedAt,
   };
 }

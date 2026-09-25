@@ -12,7 +12,7 @@ status, that one is how.
 ## Where the project is
 
 **All nine classes and all 21 profiles are implemented**, every number traced
-to a source rather than invented. **1,565 tests**, CI green on Node 20 and 22.
+to a source rather than invented. **1,566 tests**, CI green on Node 20 and 22.
 Profile format **v9**.
 
 The twenty profiles were specified by the ruleset owner as
@@ -31,11 +31,11 @@ off moves all of them; see [docs/raid-buffs.md](docs/raid-buffs.md).
 | --- | --- | --- | --- |
 | DW Fury | Warrior | 18/33/0 | 643.2 |
 | 2H Arms | Warrior | 38/13/0 | 585.5 |
-| LW Melee | Hunter | 7/13/31 | **567.3** |
+| LW Melee | Hunter | 7/13/31 | 567.3 |
+| BM Hunter | Hunter | 31/20/0 | **416.1** |
 | Enh Shaman | Shaman | 19/32/0 | 408.3 |
 | Seal Twist Ret | Paladin | 13/0/38 | 403.1 |
 | Shockadin | Paladin | 23/0/28 | 380.6 |
-| BM Hunter | Hunter | 31/20/0 | **376.2** |
 | Prot Warr | Warrior | 17/0/34 | 357.5 |
 | LW Ranged | Hunter | 7/39/5 | **349.9** |
 | Combat Rogue | Rogue | 18/33/0 | 347.6 |
@@ -53,7 +53,7 @@ off moves all of them; see [docs/raid-buffs.md](docs/raid-buffs.md).
 | Moonkin | Druid | 38/0/13 | 94.2 |
 | Ele Shaman | Shaman | 38/13/0 | 70.3 |
 
-**Bold is what the APL review moved.** Everything else in this table is as the gear and talent work left it; see the sections below for those.
+**Bold is what the pet work moved.** BM Hunter is the only profile with a pet, so it is the only one that could move. Everything else in this table is as the gear and talent work left it; see the sections below for those.
 
 | | was | statFromStat | + gear | + ranged AP | + tables | + APL | total |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -238,7 +238,7 @@ each is surfaced where a person can see it.
 | --- | --- | --- |
 | `PLACEHOLDER_SEAL_OF_COMMAND_PPM` | 7 | **The owner chose PPM and the figure has not arrived.** The largest number in Seal Twist Ret. |
 | `PLACEHOLDER_MAELSTROM_WEAPON_PROC_CHANCE` | 20 | The tooltip says only "a chance"; the `{0}` is the reduction. |
-| `PLACEHOLDER_PET_BASE_DAMAGE` / `_SWING_SECONDS` | 100 / 2 | The wiki says families differ and states none. Makes BM the roughest figure. |
+| `PLACEHOLDER_PET_BASE_DPS` | 50 | **One stated pet DPS or damage range at level 60.** Every source gives family modifiers RELATIVE to a base and none states the base. Swing speed is also still a placeholder and no longer affects damage. |
 | `PLACEHOLDER_WINDFURY_WEAPON_DURATION_MS` / `_INTERNAL_COOLDOWN_MS` | 1.5s | Borrowed from Windfury Totem, whose window the owner stated. |
 | `PLACEHOLDER_SOUL_SHARDS` | 10 | What a Warlock banks before a pull. No income in-fight. |
 | `PLACEHOLDER_COMBUSTION_DURATION_MS` | 30s | Its real end is "until 4 crits", which nothing counts. Generous. |
@@ -295,6 +295,73 @@ ranged attack power and Serpent Sting's 15% over its duration.
 So a caster figure is a **floor, not an estimate**. Tests pin both causes, so
 the day a coefficient or a caster item arrives they fail and the figures get
 re-read.
+
+---
+
+## What the pet work moved
+
+**BM Hunter 376.2 -> 416.1**, and no other profile, because no other profile
+brings a pet.
+
+The two pet placeholders were the roughest numbers left in the project. One of
+them is gone, one shrank, and one turned out not to matter.
+
+**THE BASE IS A DPS, NOT A PER-SWING DAMAGE**, which is the shape both sources
+state and the one the old model had backwards. The wiki gives auto attack as
+`((PetBaseDPS + AP / 14) x mods) x PetSwingSpeed`, and `powerCoefficient` was
+already `speed / 14`, so multiplying a base DPS by the swing reproduces that
+line exactly.
+
+**SO SWING SPEED NO LONGER AFFECTS DAMAGE AT ALL.** It used to: a flat 100 per
+swing meant a one-second pet would deal twice a two-second pet's damage, and
+both sources say the opposite in as many words -- the wiki that "faster attack
+speed does not inherently increase the pet's base DPS", Petopia that "faster
+pets may attack more frequently but they do proportionally less damage per
+hit". A placeholder that changes no number is a much smaller problem than one
+that does.
+
+**THE FAMILY MODIFIERS ARE REAL NOW**, from Petopia Classic, which your own
+wiki names as the source for per-family detail:
+
+| Family | Damage | Health | Armor |
+| --- | --- | --- | --- |
+| Cat | 1.10 | 0.98 | 1.00 |
+| Wolf | 1.00 | 1.00 | 1.05 |
+| Bear | 0.91 | 1.08 | 1.05 |
+| Raptor | 1.10 | 0.95 | 1.03 |
+| Boar | 0.90 | 1.04 | 1.09 |
+
+**The Cat row cross-checks exactly** against the wiki's own "Notable Family
+Modifiers" table, which is what makes the other four trustworthy from the same
+source. The four Warlock families are neutral and say so -- neither source
+covers a demon, and both Warlock profiles sacrifice theirs before the pull.
+
+**CLASSIC VALUES THAT ARE FOREVER'S VALUES.** The wiki's Forever-changes page
+lists what Forever does to pets -- six new abilities and one item -- and pet
+base damage, scaling and attack speed are not on it. That is the same
+derivation this project already used for Claw and Bite.
+
+**HAPPINESS IS 125%** for a fed pet, from the wiki's Happy / Content / Unhappy
+at 125 / 100 / 75. That one is an assumption about the PLAYER rather than the
+engine, the same kind Improved Tracking already makes, and it is stated on the
+constant rather than hidden.
+
+Together the Cat's 1.10 and the 1.25 are +37.5% on the pet, which is the whole
+of the DPS change.
+
+**AND THE CAVEAT NOW REACHES THE PAGE.** `PET_UNMODELLED` was written,
+exported, and referenced by NOTHING -- for as long as pets have existed --
+while its own comment claimed it was "printed in the app". The caveat channel
+reads the PLAYER's ability book, and a pet is not an ability, so it had no
+route. It has one now, shown under "The pet" beside the results and only when
+a pet was actually built. A placeholder nobody is told about is the failure
+mode the rule exists to prevent.
+
+**WHAT IS STILL INVENTED: one number.** `PLACEHOLDER_PET_BASE_DPS`, at 50 --
+deliberately the same 50 DPS the old 100-per-2-seconds worked out to, so the
+restructure moved nothing by itself and the modifiers are the only measured
+change. Every source states the family figures as RELATIVE and none states the
+absolute they are relative to.
 
 ---
 
@@ -441,8 +508,11 @@ keep the 42 strength they had never been getting, worth 5.6% and 8.8%.
 2. **Seal of Righteousness' base** — is the low end of "21 to 75" the `base`
    term in your formula, or is it the midpoint?
 3. **Maelstrom Weapon's proc chance.** Not in the client data at all.
-4. **Pet base damage and swing speed**, per family. The wiki says they differ
-   and states none.
+4. **One pet's base DPS, or one damage range, at level 60.** Narrowed a lot:
+   the family modifiers are now real (Petopia Classic, with the Cat row
+   cross-checked against your own wiki), happiness is the wiki's 125%, and
+   swing speed turned out not to affect damage at all. What no source states
+   is the ABSOLUTE figure all those modifiers are relative to.
 5. **Bane of Agony's ramp** — did Forever keep Classic's 50/100/150 bands?
 6. **Seal of the Crusader's "deals less damage with each attack"** states no
    figure, so the seal is currently generous.
