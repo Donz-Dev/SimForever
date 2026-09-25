@@ -1,5 +1,9 @@
 import type { AuraDefinition } from '../../engine';
 import { dealDamage, seconds } from '../../engine';
+import {
+  hybridSpellCoefficients,
+  periodicTickCoefficient,
+} from '../combat/spellCoefficient';
 
 /**
  * Warlock auras, from the WoW Forever beta client (build 1.60.1.69876).
@@ -30,6 +34,7 @@ function tick(
   aura: Parameters<NonNullable<AuraDefinition['periodic']>['onTick']>[1],
   amount: number,
   school: typeof SHADOW | typeof FIRE,
+  powerCoefficient = 0,
 ): void {
   const source = context.combatant(aura.sourceId);
   const target = context.combatant(aura.targetId);
@@ -42,9 +47,9 @@ function tick(
     abilityName: aura.name,
     school,
     baseAmount: amount,
-    // No coefficient is stated for any Warlock spell, as for every caster
-    // before this one. None is invented.
-    powerCoefficient: 0,
+    // Per TICK. A pure DoT takes the whole periodic coefficient; Immolate's
+    // burn takes its share of a hybrid pair.
+    powerCoefficient,
     periodic: true,
     critFrom: 'spell',
     appliesArmor: false,
@@ -59,6 +64,13 @@ function tick(
 export const CORRUPTION_TOTAL = 438;
 export const CORRUPTION_DURATION_MS = seconds(18);
 export const CORRUPTION_TICK_INTERVAL_MS = seconds(3);
+export const CORRUPTION_CAST_MS = seconds(2);
+
+/** A pure DoT: the cast deals no damage, so it takes the whole coefficient. */
+export const CORRUPTION_TICK_COEFFICIENT = periodicTickCoefficient(
+  CORRUPTION_DURATION_MS,
+  CORRUPTION_DURATION_MS / CORRUPTION_TICK_INTERVAL_MS,
+);
 
 export const CORRUPTION: AuraDefinition = {
   id: 'corruption',
@@ -74,6 +86,7 @@ export const CORRUPTION: AuraDefinition = {
         aura,
         CORRUPTION_TOTAL / (CORRUPTION_DURATION_MS / CORRUPTION_TICK_INTERVAL_MS),
         SHADOW,
+        CORRUPTION_TICK_COEFFICIENT,
       ),
   },
 };
@@ -108,6 +121,16 @@ export const BANE_OF_AGONY_UNMODELLED =
   'the source’s own and is exact; only its distribution inside the duration ' +
   'is flattened.';
 
+/**
+ * A pure DoT, and the LONGEST in the project at 24 seconds -- so 1.6 in total,
+ * which is the largest periodic coefficient here. Uncapped, by the same rule
+ * that leaves a channel uncapped: it is paid for in time.
+ */
+export const BANE_OF_AGONY_TICK_COEFFICIENT = periodicTickCoefficient(
+  BANE_OF_AGONY_DURATION_MS,
+  BANE_OF_AGONY_DURATION_MS / BANE_OF_AGONY_TICK_INTERVAL_MS,
+);
+
 export const BANE_OF_AGONY: AuraDefinition = {
   id: 'bane_of_agony',
   name: 'Bane of Agony',
@@ -122,6 +145,7 @@ export const BANE_OF_AGONY: AuraDefinition = {
         aura,
         BANE_OF_AGONY_TOTAL / (BANE_OF_AGONY_DURATION_MS / BANE_OF_AGONY_TICK_INTERVAL_MS),
         SHADOW,
+        BANE_OF_AGONY_TICK_COEFFICIENT,
       ),
   },
 };
@@ -139,6 +163,12 @@ export const SIPHON_LIFE_PER_TICK = 41;
 export const SIPHON_LIFE_DURATION_MS = seconds(30);
 export const SIPHON_LIFE_TICK_INTERVAL_MS = seconds(3);
 
+/** A pure DoT, 30 seconds in ten ticks: 2.0 in total, the largest of all. */
+export const SIPHON_LIFE_TICK_COEFFICIENT = periodicTickCoefficient(
+  SIPHON_LIFE_DURATION_MS,
+  SIPHON_LIFE_DURATION_MS / SIPHON_LIFE_TICK_INTERVAL_MS,
+);
+
 export const SIPHON_LIFE: AuraDefinition = {
   id: 'siphon_life',
   name: 'Siphon Life',
@@ -147,7 +177,8 @@ export const SIPHON_LIFE: AuraDefinition = {
   refreshBehaviour: 'reset',
   periodic: {
     intervalMs: SIPHON_LIFE_TICK_INTERVAL_MS,
-    onTick: (context, aura) => tick(context, aura, SIPHON_LIFE_PER_TICK, SHADOW),
+    onTick: (context, aura) =>
+      tick(context, aura, SIPHON_LIFE_PER_TICK, SHADOW, SIPHON_LIFE_TICK_COEFFICIENT),
   },
 };
 
@@ -205,6 +236,17 @@ export const IMMOLATE_DIRECT = 158;
 export const IMMOLATE_TOTAL = 275;
 export const IMMOLATE_DURATION_MS = seconds(15);
 export const IMMOLATE_TICK_INTERVAL_MS = seconds(3);
+export const IMMOLATE_CAST_MS = seconds(2);
+
+/**
+ * Immolate is a HYBRID: a 2-second cast leaving a 15-second burn. The pair is
+ * computed once, here, and the ability imports the direct half.
+ */
+export const IMMOLATE_COEFFICIENTS = hybridSpellCoefficients(
+  IMMOLATE_CAST_MS,
+  IMMOLATE_DURATION_MS,
+  IMMOLATE_DURATION_MS / IMMOLATE_TICK_INTERVAL_MS,
+);
 
 export const IMMOLATE: AuraDefinition = {
   id: 'immolate',
@@ -220,6 +262,7 @@ export const IMMOLATE: AuraDefinition = {
         aura,
         IMMOLATE_TOTAL / (IMMOLATE_DURATION_MS / IMMOLATE_TICK_INTERVAL_MS),
         FIRE,
+        IMMOLATE_COEFFICIENTS.perTick,
       ),
   },
 };

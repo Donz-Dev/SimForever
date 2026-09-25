@@ -1,5 +1,6 @@
 import type { AuraDefinition } from '../../engine';
 import { RATING_PER_PERCENT, dealDamage, flat, seconds } from '../../engine';
+import { hybridSpellCoefficients } from '../combat/spellCoefficient';
 
 /**
  * Shaman auras, from the WoW Forever beta client (build 1.60.1.69876).
@@ -54,6 +55,16 @@ export const FLAME_SHOCK_DOT_TOTAL = 176;
 export const FLAME_SHOCK_DOT_DURATION_MS = seconds(12);
 export const FLAME_SHOCK_TICK_INTERVAL_MS = seconds(3);
 
+/**
+ * Flame Shock is a HYBRID: an instant hit plus a 12-second burn, sharing one
+ * spell's scaling between them. See `hybridSpellCoefficients`.
+ */
+export const FLAME_SHOCK_COEFFICIENTS = hybridSpellCoefficients(
+  0,
+  FLAME_SHOCK_DOT_DURATION_MS,
+  FLAME_SHOCK_DOT_DURATION_MS / FLAME_SHOCK_TICK_INTERVAL_MS,
+);
+
 export const FLAME_SHOCK_DOT: AuraDefinition = {
   id: 'flame_shock',
   name: 'Flame Shock',
@@ -77,7 +88,7 @@ export const FLAME_SHOCK_DOT: AuraDefinition = {
           FLAME_SHOCK_DOT_TOTAL / (FLAME_SHOCK_DOT_DURATION_MS / FLAME_SHOCK_TICK_INTERVAL_MS),
         // No coefficient is stated, so none is invented -- the decision every
         // periodic effect in this project carries.
-        powerCoefficient: 0,
+        powerCoefficient: FLAME_SHOCK_COEFFICIENTS.perTick,
         periodic: true,
         critFrom: 'spell',
         appliesArmor: false,

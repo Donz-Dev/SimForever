@@ -4,10 +4,14 @@ import {
   BANE_OF_AGONY,
   BANE_OF_AGONY_UNMODELLED,
   CORRUPTION,
+  CORRUPTION_CAST_MS,
   IMMOLATE,
+  IMMOLATE_CAST_MS,
+  IMMOLATE_COEFFICIENTS,
   IMMOLATE_DIRECT,
   SIPHON_LIFE,
 } from '../auras/warlock';
+import { directSpellCoefficient } from '../combat/spellCoefficient';
 
 /**
  * Warlock abilities, from the WoW Forever beta client (build 1.60.1.69876).
@@ -18,10 +22,16 @@ import {
  * neither has one active. The demon they sacrifice is read from the same
  * profile field the Hunter's pet family uses.
  *
- * NO SPELL POWER COEFFICIENTS, for the fourth caster running. Druid, Shaman,
- * Mage and now Warlock all state flat damage and none. The Paladin's seals are
- * still the only thing in the project that scales with spell power, because
- * the ruleset owner supplied that formula directly.
+ * EVERY SPELL SCALES, AND THIS CLASS GAINED THE MOST OF ANY. SM/DS went
+ * 135.3 -> 331.7 and the Firelock 247.5 -> 479.1, because almost all of a
+ * Warlock's damage is PERIODIC and a DoT's coefficient is its duration over
+ * 15 -- uncapped, so Bane of Agony's 24 seconds is worth 1.6 and Siphon Life's
+ * 30 is worth 2.0, the two largest in the project.
+ *
+ * The spell text is unchanged and still states flat damage with no
+ * coefficient; the coefficient is the owner's universal RULE. See
+ * `game/combat/spellCoefficient.ts`. Immolate is the one hybrid here and its
+ * pair lives in `auras/warlock.ts`.
  *
  * SOUL SHARDS ARE A RESOURCE WITH NO INCOME HERE. Shadowburn and Soul Fire
  * cost one, and the only way to earn one is Drain Soul killing something --
@@ -39,12 +49,14 @@ const midpoint = (low: number, high: number) => (low + high) / 2;
 // ---------------------------------------------------------------------------
 
 export const SHADOW_BOLT_DAMAGE = midpoint(253, 283);
+export const SHADOW_BOLT_CAST_MS = seconds(3);
+export const SHADOW_BOLT_COEFFICIENT = directSpellCoefficient(SHADOW_BOLT_CAST_MS);
 
 export const SHADOW_BOLT: Ability = {
   id: 'shadow_bolt',
   name: 'Shadow Bolt',
   cost: { resource: 'mana', amount: 380 },
-  castTimeMs: seconds(3),
+  castTimeMs: SHADOW_BOLT_CAST_MS,
   attackTable: 'spell',
   onCast: ({ simulation, caster, target, ability }) => {
     if (!target) return;
@@ -55,6 +67,7 @@ export const SHADOW_BOLT: Ability = {
       abilityName: ability.name,
       school: 'shadow',
       baseAmount: SHADOW_BOLT_DAMAGE,
+      powerCoefficient: SHADOW_BOLT_COEFFICIENT,
       attackTable: ability.attackTable,
     });
   },
@@ -64,9 +77,14 @@ export const CORRUPTION_ABILITY: Ability = {
   id: 'corruption',
   name: 'Corruption',
   cost: { resource: 'mana', amount: 340 },
-  castTimeMs: seconds(2),
+  castTimeMs: CORRUPTION_CAST_MS,
   onCast: ({ simulation, caster, target }) => {
     if (!target) return;
+    /*
+     * A PURE DoT: the cast itself deals nothing, so the whole coefficient is
+     * on the aura's ticks and there is no direct half to weight against.
+     * NOTHING IS PASSED HERE -- the scaling lives with the damage.
+     */
     simulation.applyAura(target, CORRUPTION, caster.id);
   },
 };
@@ -138,7 +156,7 @@ export const IMMOLATE_ABILITY: Ability = {
   id: 'immolate',
   name: 'Immolate',
   cost: { resource: 'mana', amount: 380 },
-  castTimeMs: seconds(2),
+  castTimeMs: IMMOLATE_CAST_MS,
   attackTable: 'spell',
   onCast: ({ simulation, caster, target, ability }) => {
     if (!target) return;
@@ -150,6 +168,7 @@ export const IMMOLATE_ABILITY: Ability = {
       abilityName: ability.name,
       school: 'fire',
       baseAmount: IMMOLATE_DIRECT,
+      powerCoefficient: IMMOLATE_COEFFICIENTS.direct,
       attackTable: ability.attackTable,
     });
     if (!result.avoided) simulation.applyAura(target, IMMOLATE, caster.id);
@@ -165,12 +184,14 @@ export const IMMOLATE_ABILITY: Ability = {
  */
 export const INCINERATE_DAMAGE = midpoint(201, 233);
 export const INCINERATE_IMMOLATE_BONUS = 1.25;
+export const INCINERATE_CAST_MS = seconds(2.5);
+export const INCINERATE_COEFFICIENT = directSpellCoefficient(INCINERATE_CAST_MS);
 
 export const INCINERATE: Ability = {
   id: 'incinerate',
   name: 'Incinerate',
   cost: { resource: 'mana', amount: 325 },
-  castTimeMs: seconds(2.5),
+  castTimeMs: INCINERATE_CAST_MS,
   attackTable: 'spell',
   onCast: ({ simulation, caster, target, ability }) => {
     if (!target) return;
@@ -182,6 +203,7 @@ export const INCINERATE: Ability = {
       abilityName: ability.name,
       school: 'fire',
       baseAmount: INCINERATE_DAMAGE * (burning ? INCINERATE_IMMOLATE_BONUS : 1),
+      powerCoefficient: INCINERATE_COEFFICIENT,
       attackTable: ability.attackTable,
     });
   },
@@ -201,6 +223,7 @@ export const INCINERATE: Ability = {
  */
 export const CONFLAGRATE_DAMAGE = midpoint(251, 313);
 export const CONFLAGRATE_KEEPS_IMMOLATE = 'keepsImmolate';
+export const CONFLAGRATE_COEFFICIENT = directSpellCoefficient(0);
 
 export const CONFLAGRATE: Ability = {
   id: 'conflagrate',
@@ -218,6 +241,7 @@ export const CONFLAGRATE: Ability = {
       abilityName: ability.name,
       school: 'fire',
       baseAmount: CONFLAGRATE_DAMAGE,
+      powerCoefficient: CONFLAGRATE_COEFFICIENT,
       attackTable: ability.attackTable,
     });
 
@@ -236,6 +260,7 @@ export const CONFLAGRATE: Ability = {
  */
 export const SHADOWBURN_DAMAGE = midpoint(258, 288);
 export const SHADOWBURN_REFUNDS_SHARD = 'refundsShard';
+export const SHADOWBURN_COEFFICIENT = directSpellCoefficient(0);
 
 export const SHADOWBURN: Ability = {
   id: 'shadowburn',
@@ -252,6 +277,7 @@ export const SHADOWBURN: Ability = {
       abilityName: ability.name,
       school: 'shadow',
       baseAmount: SHADOWBURN_DAMAGE,
+      powerCoefficient: SHADOWBURN_COEFFICIENT,
       attackTable: ability.attackTable,
     });
 
@@ -265,12 +291,14 @@ export const SHADOWBURN: Ability = {
 };
 
 export const SEARING_PAIN_DAMAGE = midpoint(107, 125);
+export const SEARING_PAIN_CAST_MS = seconds(1.5);
+export const SEARING_PAIN_COEFFICIENT = directSpellCoefficient(SEARING_PAIN_CAST_MS);
 
 export const SEARING_PAIN: Ability = {
   id: 'searing_pain',
   name: 'Searing Pain',
   cost: { resource: 'mana', amount: 168 },
-  castTimeMs: seconds(1.5),
+  castTimeMs: SEARING_PAIN_CAST_MS,
   attackTable: 'spell',
   onCast: ({ simulation, caster, target, ability }) => {
     if (!target) return;
@@ -281,6 +309,7 @@ export const SEARING_PAIN: Ability = {
       abilityName: ability.name,
       school: 'fire',
       baseAmount: SEARING_PAIN_DAMAGE,
+      powerCoefficient: SEARING_PAIN_COEFFICIENT,
       attackTable: ability.attackTable,
     });
   },

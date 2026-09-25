@@ -15,6 +15,7 @@ import {
   activeSeal,
   echoAura,
 } from '../auras/paladin';
+import { directSpellCoefficient } from '../combat/spellCoefficient';
 
 /**
  * Paladin abilities, from the WoW Forever beta client (build 1.60.1.69876).
@@ -184,6 +185,18 @@ export const JUDGEMENT_OF_RIGHTEOUSNESS = midpoint(170, 186);
 export const JUDGEMENT_OF_COMMAND = midpoint(169, 187);
 export const JUDGEMENT_OF_FURY = midpoint(153, 167);
 
+/*
+ * AN INSTANT HOLY SPELL, so 1.5 / 3.5 -- and it reads HOLY-scoped spell power,
+ * which eight pieces of Lawbringer grant.
+ *
+ * THE SEALS ARE NOT THIS. A seal has the ruleset owner's own formula, `base +
+ * baseWeaponSpeed x (0.022 x AP + 0.044 x SP)`, supplied directly and
+ * unaffected by the universal cast-time rule -- a seal is not cast at the
+ * target and has no cast time to divide. A judgement IS a cast, so it takes
+ * the general rule like every other spell.
+ */
+export const JUDGEMENT_COEFFICIENT = directSpellCoefficient(0);
+
 export const JUDGEMENT: Ability = {
   id: 'judgement',
   name: 'Judgement',
@@ -216,6 +229,7 @@ export const JUDGEMENT: Ability = {
       abilityName: ability.name,
       school: HOLY,
       baseAmount: amount,
+      powerCoefficient: JUDGEMENT_COEFFICIENT,
       attackTable: ability.attackTable,
     });
   },
@@ -298,6 +312,7 @@ export const HOLY_STRIKE: Ability = {
  * The damage half only. Its heal is real and no Paladin profile here heals.
  */
 export const HOLY_SHOCK_DAMAGE = midpoint(334, 362);
+export const HOLY_SHOCK_COEFFICIENT = directSpellCoefficient(0);
 
 export const HOLY_SHOCK: Ability = {
   id: 'holy_shock',
@@ -314,6 +329,7 @@ export const HOLY_SHOCK: Ability = {
       abilityName: ability.name,
       school: HOLY,
       baseAmount: HOLY_SHOCK_DAMAGE,
+      powerCoefficient: HOLY_SHOCK_COEFFICIENT,
       attackTable: ability.attackTable,
     });
   },

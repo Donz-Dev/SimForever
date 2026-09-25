@@ -1,5 +1,6 @@
 import type { AuraDefinition } from '../../engine';
 import { dealDamage, seconds } from '../../engine';
+import { periodicTickCoefficient } from '../combat/spellCoefficient';
 
 /**
  * Priest auras, from the WoW Forever beta client (build 1.60.1.69876).
@@ -23,6 +24,7 @@ function tick(
   context: Parameters<NonNullable<AuraDefinition['periodic']>['onTick']>[0],
   aura: Parameters<NonNullable<AuraDefinition['periodic']>['onTick']>[1],
   amount: number,
+  powerCoefficient: number,
 ): void {
   const source = context.combatant(aura.sourceId);
   const target = context.combatant(aura.targetId);
@@ -35,8 +37,10 @@ function tick(
     abilityName: aura.name,
     school: SHADOW,
     baseAmount: amount,
-    // No coefficient is stated, as for every caster but the Paladin.
-    powerCoefficient: 0,
+    // Per TICK. Both of the Priest's DoTs are PURE -- their casts deal no
+    // damage of their own -- so each takes the whole periodic coefficient
+    // rather than a share of a hybrid pair.
+    powerCoefficient,
     periodic: true,
     critFrom: 'spell',
     appliesArmor: false,
@@ -56,6 +60,19 @@ export const SHADOW_WORD_PAIN_TOTAL = 762;
 export const SHADOW_WORD_PAIN_DURATION_MS = seconds(18);
 export const SHADOW_WORD_PAIN_TICK_INTERVAL_MS = seconds(3);
 
+/**
+ * Per tick, from the BASE eighteen seconds and its six ticks.
+ *
+ * Improved Shadow Word: Pain adds two more ticks at the same cadence, and they
+ * carry this same coefficient -- so the talent scales with gear exactly as the
+ * ticks it is adding to do. It comes to the tick interval over 15, which means
+ * base and talented give the same answer; see `periodicTickCoefficient`.
+ */
+export const SHADOW_WORD_PAIN_TICK_COEFFICIENT = periodicTickCoefficient(
+  SHADOW_WORD_PAIN_DURATION_MS,
+  SHADOW_WORD_PAIN_DURATION_MS / SHADOW_WORD_PAIN_TICK_INTERVAL_MS,
+);
+
 export function shadowWordPainAura(extraSeconds = 0): AuraDefinition {
   const duration = SHADOW_WORD_PAIN_DURATION_MS + seconds(extraSeconds);
   const perTick =
@@ -70,7 +87,8 @@ export function shadowWordPainAura(extraSeconds = 0): AuraDefinition {
     refreshBehaviour: 'reset',
     periodic: {
       intervalMs: SHADOW_WORD_PAIN_TICK_INTERVAL_MS,
-      onTick: (context, aura) => tick(context, aura, perTick),
+      onTick: (context, aura) =>
+        tick(context, aura, perTick, SHADOW_WORD_PAIN_TICK_COEFFICIENT),
     },
   };
 }
@@ -79,6 +97,12 @@ export function shadowWordPainAura(extraSeconds = 0): AuraDefinition {
 export const DEVOURING_PLAGUE_TOTAL = 848;
 export const DEVOURING_PLAGUE_DURATION_MS = seconds(24);
 export const DEVOURING_PLAGUE_TICK_INTERVAL_MS = seconds(3);
+
+/** A pure DoT, 24 seconds in eight ticks: 1.6 in total. */
+export const DEVOURING_PLAGUE_TICK_COEFFICIENT = periodicTickCoefficient(
+  DEVOURING_PLAGUE_DURATION_MS,
+  DEVOURING_PLAGUE_DURATION_MS / DEVOURING_PLAGUE_TICK_INTERVAL_MS,
+);
 
 export const DEVOURING_PLAGUE: AuraDefinition = {
   id: 'devouring_plague',
@@ -94,6 +118,7 @@ export const DEVOURING_PLAGUE: AuraDefinition = {
         aura,
         DEVOURING_PLAGUE_TOTAL /
           (DEVOURING_PLAGUE_DURATION_MS / DEVOURING_PLAGUE_TICK_INTERVAL_MS),
+        DEVOURING_PLAGUE_TICK_COEFFICIENT,
       ),
   },
 };

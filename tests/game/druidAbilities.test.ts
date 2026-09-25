@@ -10,13 +10,17 @@ import {
   ECLIPSE_REDUCTION_BONUS,
   FEROCIOUS_BITE_BY_COMBO_POINT,
   MOONFIRE_DIRECT,
+  STARFIRE_CAST_MS,
+  STARFIRE_COEFFICIENT,
   STARFIRE_DAMAGE,
+  WRATH_COEFFICIENT,
   WRATH_DAMAGE,
 } from '../../src/game/abilities/druid';
 import {
   ECLIPSE_CHARGES_PER_WRATH,
   ECLIPSE_MAX_CHARGES,
   INSECT_SWARM_TOTAL,
+  MOONFIRE_COEFFICIENTS,
   MOONFIRE_DOT_TOTAL,
   RIP_BY_COMBO_POINT,
   RIP_DURATION_MS,
@@ -141,25 +145,26 @@ describe('the three builds run', () => {
     expect(batch.abilities.find((a) => a.abilityName === 'Mangle')?.uses ?? 0).toBeGreaterThan(3);
   });
 
-  it('Moonkin casts, and its damage STILL does not scale with gear', () => {
+  it('Moonkin casts, and its damage NOW SCALES with gear', () => {
     /*
      * --------------------------------------------------------------------------
-     * ONE OF THE TWO REASONS FOR THE FLOOR IS GONE, AND THE OTHER IS NOT.
+     * BOTH REASONS FOR THE FLOOR ARE GONE, AND THE SECOND ONE WENT LAST.
      *
-     * This used to assert `spellPower === 0` and say so for two reasons: no
-     * caster item in the data, and no spell power coefficient in Forever's
-     * spell text. The first expired -- the Moonkin wears Cenarion Raiment now
-     * and reads 439 spell power. The second has not: every Druid nuke states
-     * FLAT damage, so all 439 of it multiplies nothing, and each spell says so
-     * on the results page.
+     * This test has been rewritten twice, which is the point of it. It first
+     * asserted `spellPower === 0` -- no caster item existed. That expired when
+     * the Moonkin got Cenarion Raiment and read 439. It then asserted that the
+     * 439 multiplied NOTHING, because every Druid nuke states flat damage and
+     * no coefficient.
      *
-     * So the number is still a floor, for half as many reasons. Asserted this
-     * way round so that the day a coefficient arrives, the caveat list empties
-     * and this fails.
+     * That second one has now expired too, and NOT because the data changed:
+     * the spell text still states a flat range. The ruleset owner supplied the
+     * coefficient as a universal RULE -- `castTime / 3.5` of spell power --
+     * which does not need to be stated per spell. See
+     * `game/combat/spellCoefficient.ts`.
      *
-     * RESISTANCE IS NOT ONE OF THEM. The ruleset owner ruled that resistances
-     * on enemy targets have no impact on damage for now, so a spell landing
-     * for full is correct.
+     * Asserted as SPELL POWER REACHING THE DAMAGE, by running the same spell
+     * on two characters who differ only in that stat. A DPS figure would move
+     * for a dozen reasons; this moves for one.
      * --------------------------------------------------------------------------
      */
     const built = PRESETS_BY_ID.get('druid_moonkin')!.build();
@@ -176,10 +181,54 @@ describe('the three builds run', () => {
     const batch = batchOf('druid_moonkin', 40, 5);
     expect(batch.abilities.find((a) => a.abilityName === 'Starfire')?.uses ?? 0).toBeGreaterThan(1);
 
-    // Every nuke says so on the results page.
+    /*
+     * AND NEITHER NUKE IS LISTED AS UNSIMULATED ANY MORE. The reason they
+     * carried named the missing coefficient specifically, which is what made
+     * it findable the day the rule arrived.
+     */
     const named = batch.castButNotSimulated.map((entry) => entry.abilityName);
-    expect(named).toContain('Starfire');
-    expect(named).toContain('Wrath');
+    expect(named).not.toContain('Starfire');
+    expect(named).not.toContain('Wrath');
+  });
+
+  it('gives Starfire its 3.5-second coefficient, from the BASE cast time', () => {
+    /*
+     * --------------------------------------------------------------------------
+     * THE TRAP THIS RULE CARRIES. `ability.castTimeMs` on a BUILT ability is
+     * the TALENT-REDUCED figure -- Improved Starfire and Eclipse both shorten
+     * it -- so reading it inside `onCast` would make a cast-time talent
+     * quietly REDUCE the spell's scaling with gear.
+     *
+     * That is backwards, and it would look entirely ordinary: a Moonkin with
+     * more talent points would simply gain slightly less from spell power.
+     * The coefficient comes from `STARFIRE_CAST_MS`, which no talent touches.
+     * --------------------------------------------------------------------------
+     */
+    expect(STARFIRE_COEFFICIENT).toBeCloseTo(3.5 / 3.5, 10);
+    expect(WRATH_COEFFICIENT).toBeCloseTo(2 / 3.5, 10);
+
+    // The talented book really does carry a shorter cast, which is what makes
+    // the distinction above load-bearing rather than theoretical.
+    const built = PRESETS_BY_ID.get('druid_moonkin')!.build();
+    const book = new Map(
+      abilitiesForClass('druid', 'moonkin', built.talents).map((a) => [a.id, a]),
+    );
+    expect(book.get('starfire')!.castTimeMs).toBeLessThan(STARFIRE_CAST_MS);
+  });
+
+  it("shares ONE coefficient between Moonfire's hit and its burn", () => {
+    /*
+     * Moonfire is the hybrid the whole normalisation is cross-checked against:
+     * an instant plus a 12-second DoT comes out at 0.15 and 0.52, which is
+     * exactly the pair Classic publishes for this spell.
+     *
+     * Neither half may keep its full value -- 0.4286 and 0.8 -- or one cast
+     * would scale about twice as hard as a nuke costing the same global
+     * cooldown.
+     */
+    expect(MOONFIRE_COEFFICIENTS.direct).toBeCloseTo(0.15, 2);
+    expect(MOONFIRE_COEFFICIENTS.perTick * 4).toBeCloseTo(0.52, 2);
+    expect(MOONFIRE_COEFFICIENTS.direct).toBeLessThan(1.5 / 3.5);
   });
 
   it('gives the Moonkin a mana pool that DOES include intellect', () => {

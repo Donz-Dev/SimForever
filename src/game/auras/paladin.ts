@@ -1,5 +1,6 @@
 import type { AuraDefinition, Combatant } from '../../engine';
 import { RATING_PER_PERCENT, dealDamage, flat, seconds } from '../../engine';
+import { periodicTickCoefficient } from '../combat/spellCoefficient';
 
 /**
  * Paladin auras, from the WoW Forever beta client (build 1.60.1.69876).
@@ -330,6 +331,15 @@ export const CONSECRATION_TOTAL = 96 + 216;
 export const CONSECRATION_DURATION_MS = seconds(8);
 export const CONSECRATION_TICK_INTERVAL_MS = seconds(2);
 
+/**
+ * A PURE periodic effect -- the cast deals no damage of its own -- so it takes
+ * the whole periodic coefficient rather than a share of a hybrid pair.
+ */
+export const CONSECRATION_TICK_COEFFICIENT = periodicTickCoefficient(
+  CONSECRATION_DURATION_MS,
+  CONSECRATION_DURATION_MS / CONSECRATION_TICK_INTERVAL_MS,
+);
+
 export const CONSECRATION_GROUND: AuraDefinition = {
   id: 'consecration',
   name: 'Consecration',
@@ -351,8 +361,8 @@ export const CONSECRATION_GROUND: AuraDefinition = {
         school: 'holy',
         baseAmount:
           CONSECRATION_TOTAL / (CONSECRATION_DURATION_MS / CONSECRATION_TICK_INTERVAL_MS),
-        // No coefficient is stated for it, unlike the seals, so none is used.
-        powerCoefficient: 0,
+        // A pure periodic effect: 8 seconds over 15, spread across its ticks.
+        powerCoefficient: CONSECRATION_TICK_COEFFICIENT,
         periodic: true,
         critFrom: 'spell',
         appliesArmor: false,

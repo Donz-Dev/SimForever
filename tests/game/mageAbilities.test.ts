@@ -3,6 +3,8 @@ import { createPlayer } from '../../src/game/actors/createPlayer';
 import { runProfileBatch } from '../../src/simulator';
 import { PRESETS_BY_ID } from '../../src/profiles/presets';
 import { abilitiesForClass } from '../../src/game/abilities/abilitiesForClass';
+import { directSpellCoefficient } from '../../src/game/combat/spellCoefficient';
+import type { TelemetryEvent } from '../../src/engine';
 import { resolveCast, seconds } from '../../src/engine';
 import { buildSimulation } from '../helpers/buildSimulation';
 import { makeAttacker, makeTarget } from '../helpers/actors';
@@ -10,6 +12,7 @@ import {
   ARCANE_BLAST_BASE_MANA_FRACTION,
   ARCANE_BLAST_DAMAGE,
   ARCANE_MISSILES_PER_TICK,
+  ARCANE_MISSILES_TICK_COEFFICIENT,
   ARCANE_MISSILES_TICKS,
   FIREBALL_DAMAGE,
   FROSTBOLT_DAMAGE,
@@ -25,6 +28,8 @@ import {
   HOT_STREAK_MAX_STACKS,
   HOT_STREAK_REDUCTION_PER_STACK,
   IMPROVED_SCORCH_MAX_STACKS,
+  PYROBLAST_COEFFICIENTS,
+  igniteAura,
   fireVulnerabilityAura,
 } from '../../src/game/auras/mage';
 import { MAGE_TALENT_EFFECTS } from '../../src/game/talents/mageEffects';
@@ -302,18 +307,100 @@ describe('the three fights', () => {
     expect(ARCANE_MISSILES_PER_TICK).toBe(209);
   });
 
-  it('gives all three a FLOOR, for the one reason that is left', () => {
+  it('NO LONGER GIVES THEM A FLOOR: both halves of it have expired', () => {
     /*
-     * THE GEAR HALF OF THIS EXPIRED. All three wear Arcanist now and read 452
-     * spell power -- 422 off the items and 30 off the staff enchant -- where
-     * the Warrior shell gave none. What remains is that Forever's Mage spells
-     * state FLAT damage with no spell power coefficient, so the 452 multiplies
-     * nothing and Fireball still says so on the results page.
+     * --------------------------------------------------------------------------
+     * TWO REASONS, BOTH GONE, AND NEITHER WAS A DATA CHANGE IN THE END.
+     *
+     * The gear half went first: all three wear Arcanist and read 452 spell
+     * power -- 422 off the items and 30 off the staff enchant -- where the
+     * Warrior shell gave none.
+     *
+     * The coefficient half has gone now. The spell TEXT still states a flat
+     * range and no coefficient, exactly as before; what arrived is the RULE,
+     * supplied by the ruleset owner as universal, so it never needed stating
+     * per spell. Nothing was invented and nothing was read from Classic.
+     * --------------------------------------------------------------------------
      */
     for (const preset of ['mage_fire', 'mage_frostfire', 'mage_arcane']) {
       expect(presetPlayer(preset).stats.get('spellPower'), preset).toBe(452);
     }
     const named = batchOf('mage_fire', 20, 5).castButNotSimulated.map((e) => e.abilityName);
-    expect(named).toContain('Fireball');
+    expect(named).not.toContain('Fireball');
+  });
+
+  it('CLAMPS PYROBLAST, which is the only spell here that reaches the cap', () => {
+    /*
+     * Six seconds over 3.5 is 1.714, and Classic clamps the cast at 3.5 so it
+     * is 1.0 instead -- the ruleset owner's ruling when asked, and the single
+     * largest judgement call in this feature. On a Mage's 452 spell power it
+     * is the difference between +775 and +452 on the direct half.
+     *
+     * Pyroblast is also a HYBRID, so the 1.0 is then shared with its burn.
+     * Both steps are asserted, because either alone would look reasonable.
+     */
+    expect(directSpellCoefficient(seconds(6))).toBeCloseTo(1, 10);
+    expect(directSpellCoefficient(seconds(6))).not.toBeCloseTo(6 / 3.5, 3);
+
+    // The pair, after the clamp: 1.0 direct against 0.8 for a 12-second DoT.
+    expect(PYROBLAST_COEFFICIENTS.direct).toBeCloseTo(1 / (1 + 0.8), 6);
+    expect(PYROBLAST_COEFFICIENTS.perTick * 4).toBeCloseTo(0.8 * (0.8 / 1.8), 6);
+  });
+
+  it('gives IGNITE no coefficient, because its size is already scaled', () => {
+    /*
+     * --------------------------------------------------------------------------
+     * THE ONE MAGICAL EFFECT IN THE PROJECT THAT DELIBERATELY DOES NOT SCALE.
+     *
+     * Ignite is "an additional N% of your spell's damage over 4 sec", so its
+     * magnitude is a SHARE OF THE CRIT THAT CAUSED IT -- and that hit already
+     * had its own coefficient applied. Giving Ignite one as well would apply
+     * spell power twice to the same damage, at a number that would look
+     * entirely reasonable.
+     *
+     * The rule is general: any effect whose size is derived from another hit
+     * takes no coefficient of its own. Asserted here because
+     * `everySpellScales.test.ts` cannot reach Ignite -- it is an aura with no
+     * ability behind it, so nothing casts it.
+     * --------------------------------------------------------------------------
+     */
+    const events: TelemetryEvent[] = [];
+    const actor = makeAttacker({
+      autoAttack: 'none',
+      stats: { spellPower: 5000 },
+      resources: [{ type: 'mana', maximum: 100_000 }],
+    });
+    const target = makeTarget({ maxHealth: 1_000_000 });
+    const simulation = buildSimulation([actor, target], { durationMs: seconds(30) }, {
+      emit: (event) => events.push(event),
+    });
+
+    // A fixed 400 of "spell damage that crit", which is what the reaction hands
+    // the aura. The ticks must total exactly that, untouched by the 5000.
+    const IGNITED = 400;
+    simulation.applyAura(target, igniteAura(IGNITED), actor.id);
+    simulation.advanceTo(seconds(10));
+
+    const total = events
+      .filter((e) => e.type === 'damage' && e.abilityId === 'ignite')
+      .reduce((sum, e) => sum + (e.type === 'damage' ? e.amount : 0), 0);
+
+    expect(total).toBeCloseTo(IGNITED, 6);
+  });
+
+  it('gives Arcane Missiles the CHANNEL rule, not five instants', () => {
+    /*
+     * The whole five-second channel is the cast: 1.429 shared across five
+     * missiles, 0.286 each. Treating each missile as its own instant would
+     * give 0.4286 each and 2.143 in total -- half as much again, on the
+     * Arcane build's core spender.
+     *
+     * AND IT IS NOT CLAMPED, unlike a six-second Pyroblast. A channel pays
+     * for its scaling in time, which is what the clamp on a single cast
+     * exists to prevent.
+     */
+    expect(ARCANE_MISSILES_TICK_COEFFICIENT).toBeCloseTo(5 / 3.5 / 5, 10);
+    expect(ARCANE_MISSILES_TICK_COEFFICIENT * ARCANE_MISSILES_TICKS).toBeGreaterThan(1);
+    expect(ARCANE_MISSILES_TICK_COEFFICIENT).not.toBeCloseTo(1.5 / 3.5, 3);
   });
 });
