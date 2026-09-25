@@ -40,7 +40,7 @@ export const CRUSADER = 20034;
  */
 export const SPELL_POWER = 22749;
 
-export /**
+/**
  * A ROGUE'S OWN GEAR, and no longer a Warrior's: full Nightslayer.
  *
  * ----------------------------------------------------------------------------
@@ -55,7 +55,7 @@ export /**
  * runs.
  * ----------------------------------------------------------------------------
  */
-const ROGUE_ARMOUR: Equipment = {
+export const ROGUE_ARMOUR: Equipment = {
   ranged: { itemId: 228252 }, // Striker's Mark
   head: { itemId: 226446 }, // Nightslayer Cover
   neck: { itemId: 228685 }, // Onyxia Tooth Pendant
@@ -83,7 +83,7 @@ export const ROGUE_SWORDS: Equipment = {
   offHand: { itemId: 228265, enchantId: CRUSADER }, // Brutality Blade
 };
 
-export /**
+/**
  * A DRUID'S OWN GEAR, in three sets rather than one.
  *
  * ----------------------------------------------------------------------------
@@ -105,7 +105,7 @@ export /**
  * item set, and the Gear panel prints it.
  * ----------------------------------------------------------------------------
  */
-const DRUID_MOONKIN_GEAR: Equipment = {
+export const DRUID_MOONKIN_GEAR: Equipment = {
   twoHand: { itemId: 228271, enchantId: SPELL_POWER }, // Staff of Dominance
   head: { itemId: 226658 }, // Cenarion Antlers
   neck: { itemId: 228289 }, // Choker of the Fire Lord
@@ -162,7 +162,7 @@ export const DRUID_BEAR_GEAR: Equipment = {
   relic: { itemId: 23198 }, // Idol of Brutality
 };
 
-export /**
+/**
  * A GEAR SHELL, and said to be one.
  *
  * Earthfury, in the two cuts the owner supplied: an Elemental caster set and an
@@ -177,7 +177,7 @@ export /**
  * ENHANCEMENT IS A TWO-HANDER, which is what the owner's set gives it: The
  * Unstoppable Force, 3.8 seconds, exactly what Windfury Weapon wants.
  */
-const SHAMAN_ELEMENTAL_GEAR: Equipment = {
+export const SHAMAN_ELEMENTAL_GEAR: Equipment = {
   mainHand: { itemId: 228263, enchantId: SPELL_POWER }, // Sorcerous Dagger
   shield: { itemId: 228142 }, // Earth and Fire
   head: { itemId: 227002 }, // Coif of The Five Thunders
@@ -222,7 +222,7 @@ export const SHAMAN_ENHANCEMENT_GEAR: Equipment = {
   relic: { itemId: 227977 },
 };
 
-export /**
+/**
  * A MAGE'S OWN GEAR: full Arcanist, and ONE set for all three builds.
  *
  * ----------------------------------------------------------------------------
@@ -231,12 +231,16 @@ export /**
  *
  * `spellPower` NO LONGER READS ZERO, which is the whole point of this import
  * for a caster: 452 of it by the planner's count, where the Warrior shell gave
- * none. A Mage figure is still a floor for the OTHER reason the handover gives
- * -- Forever's spell data states flat damage and no spell power coefficient --
- * but it is no longer a floor for lack of gear.
+ * none.
+ *
+ * AND IT IS NO LONGER A FLOOR AT ALL. This said a Mage figure was still one "for
+ * the OTHER reason the handover gives -- Forever's spell data states flat damage
+ * and no spell power coefficient". The data still states flat damage; a
+ * COEFFICIENT turned out to be a rule rather than data, and asking for it got
+ * one. All 452 points multiply something now. See docs/spell-coefficients.md.
  * ----------------------------------------------------------------------------
  */
-const MAGE_GEAR: Equipment = {
+export const MAGE_GEAR: Equipment = {
   twoHand: { itemId: 228271, enchantId: SPELL_POWER }, // Staff of Dominance
   ranged: { itemId: 228262 }, // Crimson Shocker, a wand that never fires here
   head: { itemId: 226562 }, // Arcanist Crown
@@ -255,7 +259,7 @@ const MAGE_GEAR: Equipment = {
   trinket2: { itemId: 13968 }, // Eye of the Beast
 };
 
-export /**
+/**
  * A PALADIN'S OWN GEAR, in the three sets the owner supplied separately.
  *
  * ----------------------------------------------------------------------------
@@ -288,7 +292,7 @@ export /**
  * Holy Shock and Consecration rather than through a seal.
  * ----------------------------------------------------------------------------
  */
-const PALADIN_RET_GEAR: Equipment = {
+export const PALADIN_RET_GEAR: Equipment = {
   twoHand: { itemId: 228229, enchantId: CRUSADER }, // Obsidian Edged Blade
   head: { itemId: 226976 }, // Soulforge Greathelm
   neck: { itemId: 228685 }, // Onyxia Tooth Pendant
@@ -347,7 +351,7 @@ export const PALADIN_PROT_GEAR: Equipment = {
   relic: { itemId: 22401 }, // Libram of Hope
 };
 
-export /**
+/**
  * A HUNTER'S OWN GEAR, and no longer a Warrior's.
  *
  * ----------------------------------------------------------------------------
@@ -372,7 +376,7 @@ export /**
  * weapon.
  * ----------------------------------------------------------------------------
  */
-const HUNTER_ARMOUR: Equipment = {
+export const HUNTER_ARMOUR: Equipment = {
   ranged: { itemId: 228334 }, // Rhok'delar, Longbow of the Ancient Keepers
   head: { itemId: 228291 }, // Crown of Destruction
   neck: { itemId: 228685 }, // Onyxia Tooth Pendant
@@ -390,34 +394,34 @@ const HUNTER_ARMOUR: Equipment = {
   trinket2: { itemId: 18473 }, // Royal Seal of Eldre'Thalas
 };
 
-export /**
+/**
  * The set's melee slot, for the two builds that only stand there holding it.
  *
  * A two-hander on a `ranged` style is a stat stick by the style's own
  * definition and contributes its stats without ever swinging.
  */
-const HUNTER_STAT_STICK: Equipment = {
+export const HUNTER_STAT_STICK: Equipment = {
   twoHand: { itemId: 227981 }, // Dreadforge Retaliator
 };
 
-export /**
+/**
  * The melee build's two-hander, kept from before the Hunter set arrived.
  *
  * Its own stated weapon rather than the set's -- see HUNTER_ARMOUR above for
  * why. It fills the same slot, so it replaces the stat stick rather than
  * stacking with it.
  */
-const HUNTER_MELEE_WEAPONS: Equipment = {
+export const HUNTER_MELEE_WEAPONS: Equipment = {
   twoHand: { itemId: 228229, enchantId: CRUSADER },
 };
 
-export /**
+/**
  * A WARLOCK'S OWN GEAR: Felheart, with the Deathmist mask and sandals.
  *
  * One set for both builds, as the owner supplied it. 471 spell power by the
  * planner's count, against the Warrior shell's nothing.
  */
-const WARLOCK_GEAR: Equipment = {
+export const WARLOCK_GEAR: Equipment = {
   twoHand: { itemId: 228271, enchantId: SPELL_POWER }, // Staff of Dominance
   ranged: { itemId: 220604 }, // Nightmare Trophy, a wand that never fires here
   head: { itemId: 226909 }, // Deathmist Mask
@@ -436,7 +440,7 @@ const WARLOCK_GEAR: Equipment = {
   trinket2: { itemId: 13968 }, // Eye of the Beast
 };
 
-export /**
+/**
  * A SHADOW PRIEST'S OWN GEAR: Vestments of Prophecy, with Anathema.
  *
  * ----------------------------------------------------------------------------
@@ -456,7 +460,7 @@ export /**
  * `docs/spell-coefficients.md`.
  * ----------------------------------------------------------------------------
  */
-const PRIEST_GEAR: Equipment = {
+export const PRIEST_GEAR: Equipment = {
   twoHand: { itemId: 228336, enchantId: SPELL_POWER }, // Anathema
   ranged: { itemId: 13396 }, // Skul's Ghastly Touch, a wand that never fires here
   head: { itemId: 226584 }, // Crown of Prophecy
