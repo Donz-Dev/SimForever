@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import { createPlayer } from '../../src/game/actors/createPlayer';
-import { runProfileBatch } from '../../src/simulator';
+import { characterAtCombatStart, runProfileBatch } from '../../src/simulator';
+import { seconds } from '../../src/engine';
+import { buildSimulation } from '../helpers/buildSimulation';
+import { makeTarget } from '../helpers/actors';
 import { PRESETS_BY_ID } from '../../src/profiles/presets';
 import {
   PET_ARMOR_SHARE,
@@ -32,7 +35,17 @@ import {
   SERPENT_STING_DURATION_MS,
 } from '../../src/game/auras/hunter';
 import { HUNTER_TALENT_EFFECTS } from '../../src/game/talents/hunterEffects';
-import { hasPet } from '../../src/game/rotations/hunter';
+import {
+  HUNTER_BEAST_MASTERY,
+  HUNTER_LONE_WOLF_MELEE,
+  HUNTER_LONE_WOLF_RANGED,
+  hasPet,
+} from '../../src/game/rotations/hunter';
+import { bringsPet } from '../../src/game/character/petFamilies';
+import {
+  HUNTERS_MARK,
+  HUNTERS_MARK_RANGED_ATTACK_POWER,
+} from '../../src/game/auras/hunter';
 import { talentBuild } from '../../src/game/talents/talentBuild';
 
 /*
@@ -189,6 +202,131 @@ describe('a pet is built from its owner', () => {
     expect(cat).toContain(BITE.id);
     expect(wolf).toContain(BITE.id);
     expect(wolf).not.toContain(CLAW.id);
+  });
+});
+
+describe('a talent that needs a pet', () => {
+  it('does NOT apply to a build that brings none', () => {
+    /*
+     * ------------------------------------------------------------------------
+     * FOCUSED FIRE WAS WRONG RATHER THAN MISSING. "+2% to all damage you and
+     * your pet deal WHILE YOUR PET IS ACTIVE", declared with no requirement at
+     * all -- so both Lone Wolf builds, which take it as a cheap route to
+     * Careful Aim and then take the talent that means "no pet", collected the
+     * 2% for a pet that is never built.
+     *
+     * Asserted on the MULTIPLIER rather than on DPS, because 2% of a figure
+     * nobody has hand-computed is exactly the kind of wrong number that looks
+     * right forever.
+     * ------------------------------------------------------------------------
+     */
+    const withPet = hunterFor('bm_hunter');
+    const withoutPet = hunterFor('lw_ranged');
+
+    expect(bringsPet('hunter', PRESETS_BY_ID.get('bm_hunter')!.build().talents)).toBe(true);
+    expect(bringsPet('hunter', PRESETS_BY_ID.get('lw_ranged')!.build().talents)).toBe(false);
+
+    // Beast Mastery takes Focused Fire 2/2 and has a pet: it gets the 2%.
+    expect(withPet.damageDoneMultiplier).toBeCloseTo(1.02, 6);
+
+    /*
+     * Lone Wolf Ranged takes Focused Fire 2/2 AND Improved Tracking 5/5, so
+     * its multiplier is the tracking alone -- 1.05, not the 1.0710 the two
+     * together used to give.
+     */
+    expect(withoutPet.damageDoneMultiplier).toBeCloseTo(1.05, 6);
+    expect(withoutPet.damageDoneMultiplier).not.toBeCloseTo(1.05 * 1.02, 6);
+  });
+
+  it('answers "will there be a pet" from ONE function', () => {
+    /*
+     * `bringsPet` is what the encounter uses to decide whether to BUILD a pet
+     * and what `talentBuild` uses to decide whether a pet-gated talent
+     * APPLIES. Two answers that must agree, so there is one of them -- the
+     * `isWeaponUse` lesson, which cost this project a Windfury that refused
+     * every ability.
+     */
+    expect(bringsPet('hunter', { lone_wolf: 1 })).toBe(false);
+    expect(bringsPet('hunter', {})).toBe(true);
+    // Only a Hunter's pet is ever constructed, so nobody else brings one.
+    expect(bringsPet('warlock', {})).toBe(false);
+    expect(bringsPet('mage', {})).toBe(false);
+  });
+
+  it('says WHICH clause failed, not just that one did', () => {
+    // "Applies only with a particular weapon" on a Lone Wolf hunter would be
+    // a true sentence about the wrong thing.
+    const build = talentBuild('hunter', PRESETS_BY_ID.get('lw_melee')!.build().talents, {
+      hasPet: false,
+    });
+    const focused = build.unmodelled.find((u) => u.talentId === 'focused_fire');
+    expect(focused?.reason).toMatch(/pet is active/i);
+    expect(focused?.reason).not.toMatch(/weapon/i);
+  });
+});
+
+describe("Hunter's Mark", () => {
+  it('grants the ranged attack power the spellbook states', () => {
+    /*
+     * 71, and Forever's own number: the spellbook marks the spell
+     * `versusClassic: "changed"`. Modelled as a buff on the HUNTER though it
+     * is really a debuff on the target -- with one attacker the two are the
+     * same number, and a stat modifier applies to whoever holds it.
+     */
+    expect(HUNTERS_MARK_RANGED_ATTACK_POWER).toBe(71);
+    expect(HUNTERS_MARK.statModifiers).toEqual([
+      { stat: 'rangedAttackPower', operation: 'flat', value: 71 },
+    ]);
+
+    /*
+     * And it reaches the character in a real fight. Measured as a DIFFERENCE
+     * across the cast, so the Hunter's own ranged attack power never has to be
+     * restated here.
+     */
+    const profile = PRESETS_BY_ID.get('bm_hunter')!.build();
+    const atPull = characterAtCombatStart(profile)!;
+    expect(atPull.auras.has('hunters_mark')).toBe(false);
+    const before = atPull.stats.get('rangedAttackPower');
+
+    const sim = buildSimulation([atPull, makeTarget()]);
+    sim.advanceTo(seconds(10));
+    expect(atPull.auras.has('hunters_mark')).toBe(true);
+
+    /*
+     * BOTH OPENERS ARE UP BY NOW and they STACK -- the Aspect's 120 and the
+     * Mark's 71. Asserted together rather than isolating one, because the
+     * stacking is the thing worth pinning: they are separate flat modifiers on
+     * the same stat, and the rotation opens with both precisely so that the
+     * bow reads 191 more than it would bare.
+     */
+    expect(atPull.auras.has('aspect_of_the_hawk')).toBe(true);
+    expect(atPull.stats.get('rangedAttackPower')).toBeCloseTo(
+      before + ASPECT_OF_THE_HAWK_ATTACK_POWER + HUNTERS_MARK_RANGED_ATTACK_POWER,
+      6,
+    );
+  });
+
+  it('is cast once, and only by the lists it pays for', () => {
+    /*
+     * ------------------------------------------------------------------------
+     * IN TWO LISTS OF THE THREE, measured over 40 batches: +8.0 to Beast
+     * Mastery, +0.8 to Lone Wolf Ranged inside a 3.3 interval, and -10.1 to
+     * Lone Wolf Melee.
+     *
+     * Ranged attack power buys a melee build almost nothing and the ability
+     * still costs a global cooldown at the pull. Measuring the STAT alone said
+     * +1.9 for that build; measuring the ABILITY said the opposite, which is
+     * the whole reason list membership is decided by running it.
+     * ------------------------------------------------------------------------
+     */
+    expect(HUNTER_BEAST_MASTERY.map((e) => e.abilityId)).toContain('hunters_mark');
+    expect(HUNTER_LONE_WOLF_RANGED.map((e) => e.abilityId)).toContain('hunters_mark');
+    expect(HUNTER_LONE_WOLF_MELEE.map((e) => e.abilityId)).not.toContain('hunters_mark');
+
+    // Two minutes outlasts the fight, so it is cast once and never refreshed.
+    const batch = batchOf('bm_hunter', 30, 5);
+    const mark = batch.abilities.find((a) => /Mark/.test(a.abilityName));
+    expect(mark?.uses).toBeCloseTo(1, 1);
   });
 });
 

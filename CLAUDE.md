@@ -351,6 +351,27 @@ the HIGHEST attack power source, and 100% of crit, which makes a Forever pet
 far more gear-sensitive than a Classic one. A pet's own base damage and swing
 speed are stated nowhere and are placeholders.
 
+**A CONDITION NOBODY DECLARED IS NOT AN OMISSION, IT IS A BONUS BEING PAID.**
+Focused Fire is "+2% while your pet is active" and was declared with
+`requires: {}` -- no requirement -- so both Lone Wolf builds, which take the
+talent that means "NO pet", collected the 2% anyway. An unexpressible
+condition that silently evaluates TRUE is worse than an inert talent, because
+an inert talent is reported and this was not. **`BuildRequirement` was
+`WeaponRequirement`** until `shield` and then `hasPet` made the name false.
+
+**ONE FUNCTION ANSWERS "WILL THERE BE A PET".** `bringsPet` is used by the
+encounter to decide whether to BUILD one and by `talentBuild` to decide
+whether a pet-gated talent APPLIES, and those two answers have to be the same
+answer. Keeping the rule privately in the encounter while the talent side
+re-derived it is exactly how `isWeaponUse` went wrong.
+
+**A STAT PROBE IS NOT AN ABILITY PROBE.** Hunter's Mark is +71 ranged attack
+power, and injecting 71 ranged attack power said it was worth +1.9 to the
+melee Hunter. Casting the actual ABILITY -- which also spends 60 mana and a
+global cooldown at the pull -- measured **-10.1**. It is in two of the three
+lists for that reason. When deciding whether something belongs in a priority
+list, measure the CAST and not the effect.
+
 **A PET'S BASE IS A DPS AND NOT A PER-SWING DAMAGE, which makes ITS SWING
 SPEED DAMAGE-NEUTRAL.** The Forever Hunter wiki gives auto attack as
 `((PetBaseDPS + AP / 14) x mods) x PetSwingSpeed`, and `powerCoefficient` is

@@ -1,4 +1,6 @@
 import type { Ability } from '../../engine';
+import type { TalentAllocation } from '../talents/Talent';
+import type { ClassId } from './ids';
 
 /**
  * Hunter pet families, and which abilities each one has.
@@ -137,4 +139,32 @@ export function abilitiesForFamily(
     const families = (ability as { families?: readonly string[] }).families;
     return families === undefined || families.includes(name);
   });
+}
+
+/**
+ * Whether this character will actually have a pet in the fight.
+ *
+ * ------------------------------------------------------------------------------
+ * ONE SOURCE, because two would disagree. `trainingDummyEncounter` decides
+ * whether to BUILD a pet and `talentBuild` decides whether a talent that needs
+ * one APPLIES, and those two answers have to be the same answer -- Focused Fire
+ * is "+2% while your pet is active", and for as long as this rule lived only
+ * inside the encounter, both Lone Wolf builds collected the 2% while bringing
+ * nothing to the fight.
+ *
+ * That is the `isWeaponUse` lesson again: a rule kept privately in one file
+ * while another re-derives it gets re-derived wrong.
+ *
+ * ONLY A HUNTER, because only a Hunter's pet is built. A Warlock's is chosen
+ * as a profile field and then sacrificed by Demonic Sacrifice in both
+ * profiles, and nothing constructs one -- so answering `true` for a Warlock
+ * would be describing a combatant that does not exist.
+ *
+ * LONE WOLF IS THE TALENT THAT MEANS "NO PET": "you deal 20% increased damage
+ * while you do not have an active pet".
+ * ------------------------------------------------------------------------------
+ */
+export function bringsPet(characterClass: ClassId, talents: TalentAllocation): boolean {
+  if (characterClass !== 'hunter') return false;
+  return (talents.lone_wolf ?? 0) === 0;
 }

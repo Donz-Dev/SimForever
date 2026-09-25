@@ -93,7 +93,13 @@ export function TalentPanel({
   const { unmodelled } = talentBuild(
     characterClass,
     allocation,
-    talentContextFor(equipment, combatStyle, weaponsFor(equipment, combatStyle)),
+    // The class and allocation too, so a pet-gated talent reports the same
+    // thing here that the fight applies -- the panel and the fight cannot
+    // disagree, which is the whole point of sharing this function.
+    talentContextFor(equipment, combatStyle, weaponsFor(equipment, combatStyle), {
+      characterClass,
+      talents: allocation,
+    }),
   );
 
   return (
