@@ -127,6 +127,35 @@ of the −33.6%. **This is the one decision in the import that is a build change
 rather than a gear change, and it is the one to revisit if the owner meant
 something else.**
 
+**A CHARACTER BUILT FROM SCRATCH GETS ITS CLASS'S SET TOO, which is a second
+path and was empty for eight of the nine classes.** `startingEquipmentFor` had a
+Warrior set and nothing else, and its own comment said why -- "the honest answer
+rather than dressing a Mage in plate" -- which was honest for exactly as long as
+there was no Mage gear. A from-scratch Mage landed in an empty Gear panel, fought
+with placeholder weapons, and produced a confident-looking number; it did not
+even get the "Starting set" and "Clear" buttons, which the panel hides for a
+class with no curated set.
+
+**THE TWO PALADIN SHIELD BUILDS ARE TOLD APART BY THE ENCOUNTER.** Protection and
+Shockadin both hold a one-hander and a shield -- the second only because Earth
+and Fire is a caster shield -- so the style cannot separate them, and
+`isTankBuild` cannot either, because stances belong to the Warrior. What does is
+`encounter.targetAttacks`, which is the ruleset owner's own answer and the same
+shape as `isTankBuild`: a build inferred from two fields rather than declared in
+one. It defaults to the damage build, because a character is created before the
+encounter is set up.
+
+**AND CHANGING CLASS NOW REPLACES THE GEAR.** It did not, so a Paladin switched
+over from a Mage kept ARCANIST CLOTH -- the same bug the stance beside it already
+guarded against with "a Mage should not quietly carry defensive around". A RACE
+change keeps the gear, because gear is not a race's.
+
+The twelve sets moved to [src/game/items/gearSets.ts](src/game/items/gearSets.ts)
+so both paths can name them. A preset still does not call
+`startingEquipmentFor`, which is a LOOKUP whose answer changes with what is on
+screen; spreading a named const is the opposite of that. **No preset figure
+moved by a decimal**, which is the check that a 434-line move changed nothing.
+
 **TWO FIGURES ARE UNDERSTATED BY A KNOWN AMOUNT.** Cat and Bear hold the Glaive
 of Obsidian Fury, whose "+172 Attack Power in Cat, Bear, and Dire Bear forms
 only" cannot be expressed -- an item stat is not conditional on the combat

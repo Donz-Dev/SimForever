@@ -26,6 +26,15 @@ numbers, but a Forever item of the same name may not carry the same values.
 more -- the owner's Protection Paladin set uses Earthen Guard -- and it is still
 on file and still selectable.
 
+## Where the sets themselves live
+
+The item DATA is here; which items make up a set is
+[`src/game/items/gearSets.ts`](../../game/items/gearSets.ts). Two things read
+it, in different layers: `profiles/presets.ts`, where a preset states a whole
+build, and `startingSets.ts`, which answers the narrower "which gear, given the
+class and style on screen" for a character created from scratch. They share the
+named sets and neither calls the other.
+
 ## Which file owns a shared piece
 
 **Twenty-two items are worn by more than one set.** Choker of the Fire Lord is in

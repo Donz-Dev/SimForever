@@ -94,6 +94,8 @@ export function App() {
             equipment: startingEquipmentFor(
               previous.character.characterClass,
               resolveCombatStyle(previous.character.characterClass, previous.character.combatStyle),
+              // Which of two Paladin shield builds is meant. See StartingSetOptions.
+              { targetAttacks: previous.encounter.targetAttacks },
             ),
           },
     );
