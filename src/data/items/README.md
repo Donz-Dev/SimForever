@@ -150,13 +150,14 @@ The wording also draws the damage/healing line for us: the scoped one says
 "damage", the blind one says "damage AND HEALING", so `resolveHealing` reads the
 stat alone and a Paladin's 161 Holy raises its seal and not its Holy Light.
 
-**It moved exactly one profile, and not the one that found it.** Forever's
-Priest spells state flat damage and no coefficient, so the Shadow Priest's full
-497 multiplies nothing and its DPS did not move by a tenth. The Paladin's seal
-is the one formula in the project with a spell power term, so Shockadin's 161
-Holy is worth ~9.5 DPS -- and Retribution's 79 is worth zero, because its seals
-are Command and Crusader and **Seal of Command is 70% of WEAPON damage with no
-spell power term**. Assert the stat arriving, not a DPS delta.
+**When it landed it moved exactly one profile, and not the one that found it**:
+the Shadow Priest's full 497 arrived and multiplied nothing, because Forever's
+spell data states flat damage. **The spell coefficient rule, in the same change,
+is what made it matter** -- `castTime / 3.5` of `spellPower + schoolSpellPower`,
+so the scoped half now scales every Shadow spell the Priest casts. Retribution's
+79 Holy is still worth zero, because its seals are Command and Crusader and
+**Seal of Command is 70% of WEAPON damage with no spell power term**. Assert the
+stat arriving, scoped to the right school, not a DPS delta.
 
 ## What is NOT modelled, and why
 

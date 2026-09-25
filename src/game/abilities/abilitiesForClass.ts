@@ -107,12 +107,16 @@ export function talentGranting(
 /**
  * Abilities a class knows.
  *
- * Only the Warrior has content, from WoWForeverWarriorAbilities.xlsx — see
- * `warrior.ts` and `docs/warrior-abilities.md`. Every other class returns an
- * empty list and fights with auto attacks alone.
+ * All nine classes have content. The Warrior's comes from
+ * WoWForeverWarriorAbilities.xlsx — see `warrior.ts` and `docs/warrior.md`;
+ * every other class is imported from the beta client spellbook at max rank, per
+ * `docs/class-implementation.md`.
  *
- * That gap is deliberate and visible rather than papered over with invented
- * spells. Each class is filled in as its spreadsheet arrives.
+ * **This is one of the four places a class must be registered**, and missing any
+ * one of them is silent. See CLAUDE.md, "Talents".
+ *
+ * Not every captured spell is declared — 113 of 478 — and which are deliberately
+ * excluded is a judgement to record rather than leave implied. See HANDOVER.md.
  *
  * Two things gate what comes back:
  *

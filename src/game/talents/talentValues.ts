@@ -16,9 +16,14 @@ import type { ClassId } from '../character';
  * a balance change is an edit to that file and nothing else. See its README for
  * the format and where the values came from.
  *
- * Only the Warrior is captured. Every other class loads nothing, so every one
- * of its talents reports "no value" and contributes nothing — the same visible
- * gap as an unmodelled effect, rather than a silent zero.
+ * All nine classes are captured. **`FILES` below is one of the four places a
+ * class must be registered**, and missing it makes every rank resolve to nothing
+ * so every talent reports "no value" — which is exactly what an unfinished class
+ * looks like, so twenty dead talents once read as progress for a day.
+ *
+ * A single-rank talent has no `{0}` placeholder for the importer to identify, so
+ * its values come back `null` and every effect reading one is silently dropped.
+ * Eight are hand-filled, each with a `note`.
  */
 
 /** One rank's value: a single number, or several when a talent varies several. */

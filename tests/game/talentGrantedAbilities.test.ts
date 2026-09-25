@@ -16,7 +16,7 @@ import { legalise } from '../helpers/legalTalents';
 /*
  * The three abilities that talents grant and the ability spreadsheet has no
  * rows for. Their numbers come from Forever's spell data; see
- * docs/warrior-ability-audit.md.
+ * docs/warrior.md.
  *
  * Values written out BY HAND from the tooltips, not read back out of the
  * constants under test.

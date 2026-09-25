@@ -405,20 +405,17 @@ character.characterClass: Tauren cannot be a Mage in World of Warcraft: Forever.
 **Class now affects the simulation** — it determines the resource pools a
 character gets. Race still does not.
 
-Known gaps, each additive:
+Known gaps. **Six of the seven originally listed here have expired** — mana and
+health both derive from stats now, base stats per race are generated from the
+owner's spreadsheet, all nine classes have abilities, and the Druid's forms are
+combat styles with three profiles built on them. What is left:
 
-- **Mana pool sizes** are a placeholder. Needs base mana per class per level and
-  the intellect-to-mana conversion.
-- **Base health** is a flat 1000 for everyone. Needs base health per class per
-  level and the stamina conversion.
-- **Only the Warrior has abilities.** Every other class fights with auto attacks
-  alone, which the UI says plainly rather than hiding.
-- **Shapeshifting is not implemented.** The Druid owns all three pools and the
-  form-to-resource mapping exists, but nothing switches forms yet, and forms
-  also change armor, abilities and attack power in ways not modelled here.
 - **Racial traits** do not exist. They slot in as auras applied at combat start,
-  keyed off `profile.character.race`.
-- **Base stats per race** do not exist.
+  keyed off `profile.character.race`, and `talentsforever.com/racials.js` has the
+  data by faction and race.
+- **A profile has no `faction` field.** Faction is derived from race. See
+  HANDOVER.md — the milestone asks for it as a default, so it is either that
+  derivation, stated, or a stored field and a format bump.
 
 ## Adding a race or class
 

@@ -58,8 +58,8 @@ const SOURCE_LIST = 'https://www.wowhead.com/forever/class=1/warrior';
  * plus the five that talents grant and the spreadsheet omits entirely.
  *
  * `ability` is the id used in src/game/abilities/warrior.ts, or null where the
- * simulator has no ability for it yet. Keeping the mapping here means the audit
- * in docs/warrior-abilities.md can be regenerated rather than re-derived.
+ * simulator has no ability for it yet. Keeping the mapping here means the
+ * figures in docs/warrior.md can be regenerated rather than re-derived.
  */
 const WARRIOR_SPELLS = [
   // --- strikes and damage, from the ability spreadsheet ---

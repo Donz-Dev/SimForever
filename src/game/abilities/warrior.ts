@@ -29,8 +29,9 @@ import {
 /**
  * Warrior abilities, from WoWForeverWarriorAbilities.xlsx.
  *
- * `docs/warrior-abilities.md` holds that spreadsheet transcribed verbatim
- * alongside everything it does not say. Read it before changing a number here.
+ * `docs/warrior.md` holds every figure the simulator implements, what the
+ * spreadsheet said where the two differ, and which source won. Read it before
+ * changing a number here.
  *
  * Every cost, cooldown, cast time, attack table and damage figure below is
  * taken from that sheet. Where a value is NOT in the sheet it is named
@@ -80,7 +81,7 @@ const PHYSICAL = 'physical' as const;
  * NAMED rather than inline because the talent that grants Mortal Strike
  * describes RANK 1, which deals 85 -- the ranks are 85 / 110 / 135 / 160 at
  * levels 40 / 48 / 54 / 60. That gap has been mistaken for a source
- * disagreement three times. See `docs/warrior-talent-audit.md`.
+ * disagreement three times. See `docs/warrior.md`.
  */
 export const MORTAL_STRIKE_BASE_DAMAGE = 160;
 
@@ -379,7 +380,7 @@ export const OVERPOWER: Ability = {
  *
  * The ability spreadsheet gives Revenge as "81 to 99" and Shield Slam as "421
  * to 439". Forever's own spell data gives 153 and 655, both flat. The ruleset
- * owner chose Forever for both -- see docs/warrior-ability-audit.md, which
+ * owner chose Forever for both -- see docs/warrior.md, which
  * records the disagreement and the decision.
  *
  * THE RANGES ARE GONE, and that is a real change in shape and not only in

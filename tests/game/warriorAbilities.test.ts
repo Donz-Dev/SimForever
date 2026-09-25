@@ -149,7 +149,7 @@ describe('warrior abilities match the spreadsheet', () => {
      *
      * Death Wish, Last Stand, Sweeping Strikes: granted by talents, and the
      * spreadsheet has no rows for them at all. Their numbers come from Forever
-     * directly -- see docs/warrior-ability-audit.md.
+     * directly -- see docs/warrior.md.
      *
      * Listed by hand rather than derived, so adding a fifth is a deliberate act
      * that fails this test until someone writes down where it came from.
@@ -346,7 +346,7 @@ describe('abilities that do not use weapon damage', () => {
    * ranges went with them -- so any spread these two show now comes from the
    * combat table and nowhere else.
    *
-   * Written out by hand from docs/warrior-ability-audit.md.
+   * Written out by hand from docs/warrior.md.
    */
   it('gives Revenge and Shield Slam flat Forever damage, not the sheet ranges', () => {
     expect(REVENGE_DAMAGE).toBe(153);
