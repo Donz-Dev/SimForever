@@ -12,7 +12,7 @@ status, that one is how.
 ## Where the project is
 
 **All nine classes and all 21 profiles are implemented**, every number traced
-to a source rather than invented. **1,639 tests**, CI green on Node 20 and 22.
+to a source rather than invented. **1,648 tests**, CI green on Node 20 and 22.
 Profile format **v9**.
 
 **EVERY PROFILE IS IN ITS OWN CLASS'S GEAR.** Twenty of them wore
@@ -36,10 +36,10 @@ off moves all of them; see [docs/raid-buffs.md](docs/raid-buffs.md).
 | --- | --- | --- | --- | --- |
 | DW Fury | Warrior | 18/33/0 | 643.2 | — |
 | 2H Arms | Warrior | 38/13/0 | 585.5 | — |
-| LW Melee | Hunter | 7/13/31 | 567.3 | — |
+| LW Melee | Hunter | 7/13/31 | 556.2 | — |
 | Shadow Priest | Priest | 16/3/32 | **510.9** | 285.0 |
 | Firelock | Warlock | 5/11/35 | **479.1** | 247.5 |
-| BM Hunter | Hunter | 31/20/0 | 416.1 | — |
+| BM Hunter | Hunter | 31/20/0 | 421.0 | — |
 | Enh Shaman | Shaman | 19/32/0 | **410.9** | 404.5 |
 | Arcane Mage | Mage | 47/4/0 | **405.1** | 242.6 |
 | Seal Twist Ret | Paladin | 13/0/38 | **391.9** | 380.2 |
@@ -47,7 +47,7 @@ off moves all of them; see [docs/raid-buffs.md](docs/raid-buffs.md).
 | Prot Warr | Warrior | 17/0/34 | 357.5 | — |
 | Fire Mage | Mage | 10/39/2 | **355.9** | 223.3 |
 | Moonkin | Druid | 38/0/13 | **353.1** | 166.2 |
-| LW Ranged | Hunter | 7/39/5 | 349.9 | — |
+| LW Ranged | Hunter | 7/39/5 | 342.1 | — |
 | SM/DS | Warlock | 40/11/0 | **331.7** | 135.3 |
 | Shockadin | Paladin | 23/0/28 | **324.5** | 262.2 |
 | Rupture Rogue | Rogue | 12/8/31 | 315.2 | — |
@@ -66,6 +66,11 @@ Bear, and all three Hunters -- which is the check that nothing leaked out of
 the spell path into shared code. The three Paladins and the Enhancement shaman
 moved a little, because each casts something. See "What spell coefficients
 moved".
+
+**The three Hunters' figures moved for an unrelated reason** and are shown as
+unmoved here because spell coefficients did not touch them: the Focused Fire
+fix and Hunter's Mark landed on `main` in between. See "The Hunter is done at
+the engine level".
 
 Two earlier changes are folded into the "was" column: the gear import, which
 moved seventeen of the twenty-three, and school-scoped spell power, which moved
