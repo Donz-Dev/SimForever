@@ -46,10 +46,40 @@ export interface AbilityModifier {
   readonly damageMultiplier?: number;
 }
 
+/**
+ * A SCHOOL's modifier: the three above, plus a flat power term.
+ *
+ * ------------------------------------------------------------------------------
+ * WHY THE EXTRA FIELD IS HERE AND NOT ON `AbilityModifier`. "Increases damage
+ * done by Shadow spells and effects by up to 39" is a SPELL POWER that only one
+ * school may read, and `dealDamage` consults it in exactly one place -- the
+ * coefficient term in `scaleByPower`, beside the character's school-blind
+ * `spellPower`. Putting it on the shared interface would let a talent hang one
+ * off an ABILITY or an ATTACK TABLE, where nothing reads it and it would do
+ * nothing at all without saying so. The type is the guard: only a school can
+ * carry one.
+ *
+ * IT IS NOT A STAT, deliberately. `STAT_NAMES` is a closed flat set and a keyed
+ * stat does not fit in it, which is the whole reason this lives here.
+ * ------------------------------------------------------------------------------
+ */
+export interface SchoolModifier extends AbilityModifier {
+  /**
+   * Spell power that only this school's damage reads, ADDED to the character's
+   * school-blind `spellPower`.
+   *
+   * DAMAGE ONLY. The item wording is "increases DAMAGE done by Shadow spells",
+   * while the school-blind line says "damage AND HEALING" -- so `applyHealing`
+   * deliberately does not consult this, and a Holy-scoped 161 on a Paladin
+   * raises its seal and not its heal.
+   */
+  readonly spellPower?: number;
+}
+
 /** Key meaning "every ability", for a modifier that is not ability-specific. */
 export const ALL_ABILITIES = '*';
 
-const NONE: AbilityModifier = {};
+const NONE: SchoolModifier = {};
 
 /**
  * A combatant's per-ability modifiers.
@@ -103,12 +133,17 @@ export class AbilityModifiers {
  * Chances and crit multiplier bonuses ADD; damage multipliers MULTIPLY. That
  * follows the same reasoning as the stat modifier buckets: two sources of "+5%
  * crit" give +10%, while two independent "+10% damage" effects give +21%.
+ *
+ * SPELL POWER ADDS, which is the only reading a flat power term has: eight
+ * pieces of Lawbringer each saying "up to N Holy" are one pool of Holy power,
+ * exactly as eight pieces each saying "+N Strength" are one pool of strength.
  */
-function combine(a: AbilityModifier, b: AbilityModifier): AbilityModifier {
+function combine(a: SchoolModifier, b: SchoolModifier): SchoolModifier {
   return {
     critBonus: (a.critBonus ?? 0) + (b.critBonus ?? 0),
     critMultiplierBonus: (a.critMultiplierBonus ?? 0) + (b.critMultiplierBonus ?? 0),
     damageMultiplier: (a.damageMultiplier ?? 1) * (b.damageMultiplier ?? 1),
+    spellPower: (a.spellPower ?? 0) + (b.spellPower ?? 0),
   };
 }
 
@@ -136,18 +171,37 @@ function combine(a: AbilityModifier, b: AbilityModifier): AbilityModifier {
  * `AbilityModifiers`, nothing here is skipped for a swing. That is correct:
  * "your Fire spells" simply never matches a physical hit, and a talent that
  * genuinely raised physical damage would want to reach swings.
+ *
+ * AND IT CARRIES ONE FIELD THE OTHER TWO DO NOT: a flat `spellPower` scoped to
+ * the school, which is what seventeen lines of Priest and Paladin gear say.
+ * Talents were the first caller of the other three; GEAR is the first caller of
+ * this one, and `createPlayer` folds the equipped set's into the build's.
  * ------------------------------------------------------------------------------
  */
 export class SchoolModifiers {
-  private readonly bySchool = new Map<DamageSchool, AbilityModifier>();
+  private readonly bySchool = new Map<DamageSchool, SchoolModifier>();
 
-  add(school: DamageSchool, modifier: AbilityModifier): void {
+  add(school: DamageSchool, modifier: SchoolModifier): void {
     const existing = this.bySchool.get(school);
     this.bySchool.set(school, existing ? combine(existing, modifier) : modifier);
   }
 
-  for(school: DamageSchool): AbilityModifier {
+  for(school: DamageSchool): SchoolModifier {
     return this.bySchool.get(school) ?? NONE;
+  }
+
+  /**
+   * Fold another set into this one, school by school, by the same `combine`
+   * two sources of one school already use.
+   *
+   * It exists so a caller with TWO sources -- the talent build and the
+   * equipped gear -- can produce one set without mutating either. Adding the
+   * gear's entries to `build.schoolModifiers` directly would work exactly
+   * once: a `TalentBuild` is a value, and a batch that reused one would hand
+   * the second character the first character's gear on top of its own.
+   */
+  merge(other: SchoolModifiers): void {
+    for (const [school, modifier] of other.bySchool) this.add(school, modifier);
   }
 
   get isEmpty(): boolean {

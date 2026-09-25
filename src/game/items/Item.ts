@@ -1,4 +1,4 @@
-import type { PartialStats, WeaponSlot } from '../../engine';
+import type { DamageSchool, PartialStats, WeaponSlot } from '../../engine';
 
 /**
  * Where an item goes.
@@ -89,6 +89,19 @@ export interface Item {
   /** Slots this item may go in. A ring lists both ring slots. */
   readonly slots: readonly EquipmentSlot[];
   readonly stats: PartialStats;
+  /**
+   * Spell power that only ONE school's damage reads.
+   *
+   * "Increases damage done by Shadow spells and effects by up to 39" is most
+   * of the Priest's set and eight pieces of Lawbringer say the same about
+   * Holy. It is NOT in `stats`, because `STAT_NAMES` is a closed flat set with
+   * no room for a keyed stat -- it becomes a `SchoolModifiers` entry, beside
+   * the crit and damage multiplier already keyed by school, and
+   * `spellPowerFor` adds it to the school-blind pool at the point of use.
+   *
+   * Empty for every item that grants none, which is most of them.
+   */
+  readonly schoolPower: Readonly<Partial<Record<DamageSchool, number>>>;
   readonly weapon?: ItemWeapon;
   readonly unmodelled: readonly UnmodelledEffect[];
   /**

@@ -1,6 +1,7 @@
 import type { Ability, Combatant, SimulationContext } from '../../engine';
 import { dealDamage, seconds } from '../../engine';
 import {
+  FLAME_SHOCK_COEFFICIENTS,
   FLAME_SHOCK_DOT,
   RAGE_OF_THE_FARSEER,
   STORMSTRIKE_DAMAGE_BONUS,
@@ -8,6 +9,7 @@ import {
   WINDFURY_WEAPON_IMBUE,
 } from '../auras/shaman';
 import { MAELSTROM_WEAPON_UNMODELLED } from '../reactions/shamanTalents';
+import { directSpellCoefficient } from '../combat/spellCoefficient';
 
 /**
  * Shaman abilities, from the WoW Forever beta client (build 1.60.1.69876).
@@ -21,10 +23,16 @@ import { MAELSTROM_WEAPON_UNMODELLED } from '../reactions/shamanTalents';
  * is empty and then stops. A Shaman that empties its bar keeps swinging, so
  * running dry costs it the abilities rather than the fight.
  *
- * NO SPELL POWER COEFFICIENTS, again. Every Shaman nuke states flat damage --
- * "189 to 211 Nature damage" -- and no coefficient, exactly as every Druid
- * spell did. So this is not a Druid quirk; it is how Forever's spell data
- * reads, and a caster figure here is a FLOOR rather than an estimate.
+ * EVERY NUKE SCALES NOW. The spell text still states flat damage -- "189 to
+ * 211 Nature damage" -- and no coefficient, exactly as every Druid spell does;
+ * the coefficient is the owner's universal `castTime / 3.5` RULE rather than
+ * per-spell data. This file recorded the flat text as a FLOOR, which read the
+ * data right and drew the wrong conclusion from it.
+ *
+ * IT MOVED THE ELEMENTAL SHAMAN 119.3 -> 279.0, which is the largest share of
+ * any class here: it casts for a living and carries 453 spell power that used
+ * to multiply nothing. Flame Shock is a hybrid; its pair is in
+ * `auras/shaman.ts`.
  *
  * RESISTANCE IS RULED TO HAVE NO EFFECT on an enemy target, so these land for
  * full against a raid boss.
@@ -49,11 +57,6 @@ const MAIN_HAND = 'mainHand' as const;
 const PHYSICAL = 'physical' as const;
 
 /** Said once, because every nuke in this file says it. */
-const NO_SPELL_COEFFICIENT =
-  'Its damage is flat. The source states a range and no spell power ' +
-  'coefficient, so none is invented -- a geared Shaman understates this ' +
-  'rather than guessing at it.';
-
 /** The midpoint of a stated range. The combat table supplies the spread. */
 const midpoint = (low: number, high: number) => (low + high) / 2;
 
@@ -77,12 +80,14 @@ function spendStormstrike(simulation: SimulationContext, target: Combatant): num
 // ---------------------------------------------------------------------------
 
 export const LIGHTNING_BOLT_DAMAGE = midpoint(189, 211);
+export const LIGHTNING_BOLT_CAST_MS = seconds(2.5);
+export const LIGHTNING_BOLT_COEFFICIENT = directSpellCoefficient(LIGHTNING_BOLT_CAST_MS);
 
 export const LIGHTNING_BOLT: Ability = {
   id: 'lightning_bolt',
   name: 'Lightning Bolt',
   cost: { resource: 'mana', amount: 220 },
-  castTimeMs: seconds(2.5),
+  castTimeMs: LIGHTNING_BOLT_CAST_MS,
   attackTable: 'spell',
   onCast: ({ simulation, caster, target, ability }) => {
     if (!target) return;
@@ -93,10 +98,11 @@ export const LIGHTNING_BOLT: Ability = {
       abilityName: ability.name,
       school: 'nature',
       baseAmount: LIGHTNING_BOLT_DAMAGE * spendStormstrike(simulation, target),
+      powerCoefficient: LIGHTNING_BOLT_COEFFICIENT,
       attackTable: ability.attackTable,
     });
   },
-  unmodelled: `${NO_SPELL_COEFFICIENT} ${MAELSTROM_WEAPON_UNMODELLED}`,
+  unmodelled: MAELSTROM_WEAPON_UNMODELLED,
 };
 
 /**
@@ -112,12 +118,14 @@ export const LIGHTNING_BOLT: Ability = {
  */
 export const CHAIN_LIGHTNING_DAMAGE = midpoint(119, 133);
 export const CHAIN_LIGHTNING_TARGETS = 3;
+export const CHAIN_LIGHTNING_CAST_MS = seconds(2);
+export const CHAIN_LIGHTNING_COEFFICIENT = directSpellCoefficient(CHAIN_LIGHTNING_CAST_MS);
 
 export const CHAIN_LIGHTNING: Ability = {
   id: 'chain_lightning',
   name: 'Chain Lightning',
   cost: { resource: 'mana', amount: 485 },
-  castTimeMs: seconds(2),
+  castTimeMs: CHAIN_LIGHTNING_CAST_MS,
   cooldownMs: seconds(6),
   attackTable: 'spell',
   onCast: ({ simulation, caster, target, ability }) => {
@@ -129,15 +137,17 @@ export const CHAIN_LIGHTNING: Ability = {
       abilityName: ability.name,
       school: 'nature',
       baseAmount: CHAIN_LIGHTNING_DAMAGE * spendStormstrike(simulation, target),
+      powerCoefficient: CHAIN_LIGHTNING_COEFFICIENT,
       attackTable: ability.attackTable,
     });
   },
   unmodelled:
-    `${NO_SPELL_COEFFICIENT} It also jumps to ${CHAIN_LIGHTNING_TARGETS - 1} further ` +
-    'enemies at 30% less damage each, and every encounter here has one target.',
+    `It also jumps to ${CHAIN_LIGHTNING_TARGETS - 1} further enemies at 30% less ` +
+    'damage each, and every encounter here has one target.',
 };
 
 export const EARTH_SHOCK_DAMAGE = midpoint(293, 309);
+export const EARTH_SHOCK_COEFFICIENT = directSpellCoefficient(0);
 
 export const EARTH_SHOCK: Ability = {
   id: 'earth_shock',
@@ -154,12 +164,13 @@ export const EARTH_SHOCK: Ability = {
       abilityName: ability.name,
       school: 'nature',
       baseAmount: EARTH_SHOCK_DAMAGE * spendStormstrike(simulation, target),
+      powerCoefficient: EARTH_SHOCK_COEFFICIENT,
       attackTable: ability.attackTable,
     });
   },
   unmodelled:
-    `${NO_SPELL_COEFFICIENT} Its interrupt and school lockout do nothing: ` +
-    'nothing the target does is a cast.',
+    'Its interrupt and school lockout do nothing: nothing the target does is ' +
+    'a cast.',
 };
 
 export const FLAME_SHOCK_DIRECT = 166;
@@ -181,14 +192,15 @@ export const FLAME_SHOCK: Ability = {
       abilityName: ability.name,
       school: 'fire',
       baseAmount: FLAME_SHOCK_DIRECT,
+      powerCoefficient: FLAME_SHOCK_COEFFICIENTS.direct,
       attackTable: ability.attackTable,
     });
     if (!result.avoided) simulation.applyAura(target, FLAME_SHOCK_DOT, caster.id);
   },
-  unmodelled: NO_SPELL_COEFFICIENT,
 };
 
 export const FROST_SHOCK_DAMAGE = midpoint(278, 294);
+export const FROST_SHOCK_COEFFICIENT = directSpellCoefficient(0);
 
 export const FROST_SHOCK: Ability = {
   id: 'frost_shock',
@@ -205,10 +217,11 @@ export const FROST_SHOCK: Ability = {
       abilityName: ability.name,
       school: 'frost',
       baseAmount: FROST_SHOCK_DAMAGE,
+      powerCoefficient: FROST_SHOCK_COEFFICIENT,
       attackTable: ability.attackTable,
     });
   },
-  unmodelled: `${NO_SPELL_COEFFICIENT} Its slow does nothing; nothing here moves.`,
+  unmodelled: 'Its slow does nothing; nothing here moves.',
 };
 
 /**
@@ -224,12 +237,14 @@ export const FROST_SHOCK: Ability = {
  */
 export const LAVA_BURST_DAMAGE = midpoint(192, 248);
 export const LAVA_BURST_FLAME_SHOCK_BONUS = 1.2;
+export const LAVA_BURST_CAST_MS = seconds(2.5);
+export const LAVA_BURST_COEFFICIENT = directSpellCoefficient(LAVA_BURST_CAST_MS);
 
 export const LAVA_BURST: Ability = {
   id: 'lava_burst',
   name: 'Lava Burst',
   cost: { resource: 'mana', amount: 265 },
-  castTimeMs: seconds(2.5),
+  castTimeMs: LAVA_BURST_CAST_MS,
   cooldownMs: seconds(10),
   attackTable: 'spell',
   onCast: ({ simulation, caster, target, ability }) => {
@@ -242,10 +257,18 @@ export const LAVA_BURST: Ability = {
       abilityName: ability.name,
       school: 'fire',
       baseAmount: LAVA_BURST_DAMAGE * (burning ? LAVA_BURST_FLAME_SHOCK_BONUS : 1),
+      /*
+       * THE FLAME SHOCK BONUS MULTIPLIES THE BASE AND NOT THE COEFFICIENT,
+       * which is a choice and is stated because both readings are plausible.
+       * "Deals 20% more damage if the target is affected by Flame Shock" is
+       * read as a bonus to the spell's own damage; scaling the coefficient as
+       * well would make the bonus grow with gear, which the tooltip does not
+       * say.
+       */
+      powerCoefficient: LAVA_BURST_COEFFICIENT,
       attackTable: ability.attackTable,
     });
   },
-  unmodelled: NO_SPELL_COEFFICIENT,
 };
 
 // ---------------------------------------------------------------------------

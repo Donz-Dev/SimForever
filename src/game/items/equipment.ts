@@ -1,4 +1,10 @@
-import type { PartialStats, WeaponProfile, WeaponSlot, WeaponType } from '../../engine';
+import type {
+  DamageSchool,
+  PartialStats,
+  WeaponProfile,
+  WeaponSlot,
+  WeaponType,
+} from '../../engine';
 import type { CombatStyleId } from '../character';
 import { getCombatStyle } from '../character';
 import { attackPowerCoefficientFor } from '../combat/weaponDamage';
@@ -56,6 +62,44 @@ export function statsFromEquipment(equipment: Equipment): PartialStats {
 export function statsForStyle(equipment: Equipment, style: CombatStyleId): PartialStats {
   const live = liveEquipment(equipment, style);
   return statsFromEquipment(live);
+}
+
+/**
+ * Spell power scoped to ONE SCHOOL, totalled across the equipped set.
+ *
+ * ----------------------------------------------------------------------------
+ * The other half of `statsForStyle`, for the item lines that name a school:
+ * "Increases damage done by Shadow spells and effects by up to 39". It is not
+ * a flat stat and cannot be one -- `STAT_NAMES` is a closed set -- so it takes
+ * its own route out of the equipment and lands on `SchoolModifiers` in
+ * `createPlayer`.
+ *
+ * OFF THE SAME `liveEquipment` AS EVERYTHING ELSE, which is the whole reason
+ * it is here rather than summed at the call site: a two-hander's Shadow power
+ * must not count on a build holding a one-hander, exactly as its strength must
+ * not. Reading the equipment map directly is the mistake this function exists
+ * to make impossible.
+ *
+ * Enchants contribute none. The two in the data are declared by hand rather
+ * than parsed, and neither names a school -- Enchant Weapon - Spell Power is
+ * "add up to 30 damage to spells", which is the school-BLIND stat.
+ * ----------------------------------------------------------------------------
+ */
+export function schoolPowerForStyle(
+  equipment: Equipment,
+  style: CombatStyleId,
+): Readonly<Partial<Record<DamageSchool, number>>> {
+  const total: Partial<Record<DamageSchool, number>> = {};
+  for (const equipped of Object.values(liveEquipment(equipment, style))) {
+    if (!equipped) continue;
+    const item = ITEMS_BY_ID.get(equipped.itemId);
+    if (!item) continue;
+    for (const [school, value] of Object.entries(item.schoolPower)) {
+      const key = school as DamageSchool;
+      total[key] = (total[key] ?? 0) + value;
+    }
+  }
+  return total;
 }
 
 /**

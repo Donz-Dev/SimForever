@@ -12,7 +12,7 @@ status, that one is how.
 ## Where the project is
 
 **All nine classes and all 21 profiles are implemented**, every number traced
-to a source rather than invented. **1,574 tests**, CI green on Node 20 and 22.
+to a source rather than invented. **1,648 tests**, CI green on Node 20 and 22.
 Profile format **v9**.
 
 **EVERY PROFILE IS IN ITS OWN CLASS'S GEAR.** Twenty of them wore
@@ -36,33 +36,45 @@ off moves all of them; see [docs/raid-buffs.md](docs/raid-buffs.md).
 | --- | --- | --- | --- | --- |
 | DW Fury | Warrior | 18/33/0 | 643.2 | — |
 | 2H Arms | Warrior | 38/13/0 | 585.5 | — |
-| LW Melee | Hunter | 7/13/31 | **556.2** | 567.3 |
-| BM Hunter | Hunter | 31/20/0 | **421.0** | 416.1 |
-| Enh Shaman | Shaman | 19/32/0 | **404.5** | 408.3 |
-| Seal Twist Ret | Paladin | 13/0/38 | **380.2** | 403.1 |
-| Combat Rogue | Rogue | 18/33/0 | **376.9** | 347.6 |
+| LW Melee | Hunter | 7/13/31 | 556.2 | — |
+| Shadow Priest | Priest | 16/3/32 | **510.9** | 285.0 |
+| Firelock | Warlock | 5/11/35 | **479.1** | 247.5 |
+| BM Hunter | Hunter | 31/20/0 | 421.0 | — |
+| Enh Shaman | Shaman | 19/32/0 | **410.9** | 404.5 |
+| Arcane Mage | Mage | 47/4/0 | **405.1** | 242.6 |
+| Seal Twist Ret | Paladin | 13/0/38 | **391.9** | 380.2 |
+| Combat Rogue | Rogue | 18/33/0 | 376.9 | — |
 | Prot Warr | Warrior | 17/0/34 | 357.5 | — |
-| LW Ranged | Hunter | 7/39/5 | **342.1** | 349.9 |
-| Rupture Rogue | Rogue | 12/8/31 | **315.2** | 290.3 |
-| Venom Rogue | Rogue | 37/12/2 | **314.4** | 308.5 |
-| Shadow Priest | Priest | 16/3/32 | **285.0** | 266.1 |
-| Cat Druid | Druid | 9/35/7 | **272.0** | 282.7 |
-| Shockadin | Paladin | 23/0/28 | **252.7** | 380.6 |
-| Firelock | Warlock | 5/11/35 | **247.5** | 225.6 |
-| Arcane Mage | Mage | 47/4/0 | **242.6** | 210.2 |
-| Fire Mage | Mage | 10/39/2 | **223.3** | 133.5 |
-| Bear Druid | Druid | 9/42/0 | **208.4** | 263.1 |
-| Frostfire Mage | Mage | 0/29/22 | **184.4** | 95.5 |
-| Moonkin | Druid | 38/0/13 | **166.2** | 94.2 |
-| SM/DS | Warlock | 40/11/0 | **135.3** | 129.3 |
-| Prot Pally | Paladin | 8/36/7 | **135.2** | 191.9 |
-| Ele Shaman | Shaman | 38/13/0 | **119.3** | 70.3 |
+| Fire Mage | Mage | 10/39/2 | **355.9** | 223.3 |
+| Moonkin | Druid | 38/0/13 | **353.1** | 166.2 |
+| LW Ranged | Hunter | 7/39/5 | 342.1 | — |
+| SM/DS | Warlock | 40/11/0 | **331.7** | 135.3 |
+| Shockadin | Paladin | 23/0/28 | **324.5** | 262.2 |
+| Rupture Rogue | Rogue | 12/8/31 | 315.2 | — |
+| Venom Rogue | Rogue | 37/12/2 | 314.4 | — |
+| Frostfire Mage | Mage | 0/29/22 | **305.6** | 184.4 |
+| Ele Shaman | Shaman | 38/13/0 | **279.0** | 119.3 |
+| Cat Druid | Druid | 9/35/7 | 272.0 | — |
+| Bear Druid | Druid | 9/42/0 | 208.4 | — |
+| Prot Pally | Paladin | 8/36/7 | **139.3** | 135.2 |
 
-**Bold is what the gear import moved, and it moved seventeen of the
-twenty-three in both directions.** The six unmoved are the three Warriors and
-the three Hunters, whose gear this did not touch -- and they are unmoved to the
-DECIMAL, which is the check that nothing leaked out of the sets into shared
-code. See "What the gear import moved".
+**Bold is what SPELL COEFFICIENTS moved, and the table is barely recognisable.**
+Every caster gained 59% to 145%; the Shadow Priest and the Firelock went from
+the bottom half to fourth and fifth. **The eleven pure melee profiles are
+unmoved TO THE DECIMAL** -- both Warriors, Prot Warr, all three Rogues, Cat and
+Bear, and all three Hunters -- which is the check that nothing leaked out of
+the spell path into shared code. The three Paladins and the Enhancement shaman
+moved a little, because each casts something. See "What spell coefficients
+moved".
+
+**The three Hunters' figures moved for an unrelated reason** and are shown as
+unmoved here because spell coefficients did not touch them: the Focused Fire
+fix and Hunter's Mark landed on `main` in between. See "The Hunter is done at
+the engine level".
+
+Two earlier changes are folded into the "was" column: the gear import, which
+moved seventeen of the twenty-three, and school-scoped spell power, which moved
+only Shockadin. Both are described in their own sections below.
 
 | | was | statFromStat | + gear | + ranged AP | + tables | + APL | total |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -266,14 +278,24 @@ they overlap — they have not yet disagreed.
 "Inert" has three different causes and they expire differently. This
 distinction matters more than the count.
 
-### Because of the engine — these expire, and three already have
+### Because of the engine — these expire, and five already have
 
 Write these reasons specifically enough to re-read. Six Hunter pet talents all
 named the same cause and expired together the moment pets existed; five Warrior
 talents said "nothing attacks the player" three commits after something did;
 **six stat-from-stat talents across five classes expired together** the day
-`statFromStat` was declared. That is the fourth time, and the reason it keeps
-working is that the reasons were specific enough to find by their wording.
+`statFromStat` was declared; **seventeen item lines expired together** the day
+`SchoolModifier` grew a `spellPower`; **twenty-nine `unmodelled` reasons and
+five class file headers expired together** the day the spell coefficient rule
+arrived. That is the sixth time, and the reason it keeps working is that the
+reasons were specific enough to find by their wording -- one is asserted by a
+test matching the SENTENCE, in `tests/game/items.test.ts`.
+
+**THE COEFFICIENT ONE IS THE CAUTIONARY CASE.** Those twenty-nine reasons were
+accurate about the DATA and drew the wrong conclusion from it: they said
+Forever states no coefficient, which is true and still true, and concluded that
+none could be modelled. A coefficient is a RULE. **When a reason blames the
+source, check that it is not really a question for the ruleset owner.**
 
 Still open, in order of how many talents they would retire:
 
@@ -284,6 +306,8 @@ Still open, in order of how many talents they would retire:
 | **Mid-fight summoning** — `Simulation` exposes `combatants` read-only | 2 | Warlock Infernal, Mage elemental |
 | **A one-shot per-ability CRIT modifier** — `CastModifier` carries cast time and cost, not crit | 2 | Paladin (Divine Favor), Priest (Inner Focus) |
 | **A flat per-school damage bonus** — `damageTakenBySchool` multiplies | 1 | Paladin (Judgement of the Crusader, +161 Holy) |
+| ~~**Spell power has no school**~~ — **CLEARED.** `SchoolModifier.spellPower`, read by `spellPowerFor` | 17 item lines | Priest (Shadow ×9), Paladin (Holy ×8) |
+| ~~**No spell power coefficients**~~ — **CLEARED, and it was a missing RULE rather than missing data.** `castTime / 3.5`, supplied by the owner | 29 reasons, 5 headers | Druid, Shaman, Mage, Warlock, Priest |
 | **Threat** | ~15 | every class; deliberately out of scope |
 
 **Stat-from-stat is done**, and it was a missing declaration rather than a
@@ -337,6 +361,9 @@ each is surfaced where a person can see it.
 | Constant | Value | What would settle it |
 | --- | --- | --- |
 | `PLACEHOLDER_SEAL_OF_COMMAND_PPM` | 7 | **The owner chose PPM and the figure has not arrived.** The largest number in Seal Twist Ret. |
+| `PLACEHOLDER_SPELL_COEFFICIENT_DOT_DIVISOR` | 15 | **Any Forever source stating one DoT's coefficient outright** — the durations are known, so a single figure settles the divisor. Classic's, on the owner's ruling. It decides most of the Shadow Priest and both Warlocks. |
+| `PLACEHOLDER_MAX_COEFFICIENT_CAST_SECONDS` | 3.5 | **Pyroblast's coefficient**, the only spell that reaches the clamp: 1.0 against an unclamped 1.714. Classic's, on the owner's ruling. |
+| the hybrid share formula | — | Any Forever source giving BOTH halves of one hybrid. Classic's, and it reproduces Classic's published Moonfire pair exactly. Not a named constant; it is `hybridSpellCoefficients`. |
 | `PLACEHOLDER_MAELSTROM_WEAPON_PROC_CHANCE` | 20 | The tooltip says only "a chance"; the `{0}` is the reduction. |
 | `PLACEHOLDER_PET_BASE_DPS` | 50 | **One stated pet DPS or damage range at level 60.** Every source gives family modifiers RELATIVE to a base and none states the base. Swing speed is also still a placeholder and no longer affects damage. |
 | `PLACEHOLDER_WINDFURY_WEAPON_DURATION_MS` / `_INTERNAL_COOLDOWN_MS` | 1.5s | Borrowed from Windfury Totem, whose window the owner stated. |
@@ -364,49 +391,154 @@ written down beside it.
 - **Every DoT cadence divides its stated total evenly.** Where a source gives a
   total and a duration but no interval, the cadence chosen is the one leaving
   whole ticks — Flame Shock's 176 over 12s is four of 44 at three seconds, and
-  two or four seconds both leave fractions.
+  two or four seconds both leave fractions. **This now decides a coefficient as
+  well as a tick size**, because the per-tick figure is the interval over 15.
+- **A hybrid's two halves share one coefficient by DURATION, not by damage.**
+  The consequence is Fireball, whose 60-damage burn is 11% of the spell and
+  takes 35% of its scaling. Stated in
+  [docs/spell-coefficients.md](docs/spell-coefficients.md) and isolated in one
+  function.
 
 ---
 
 ## What a caster figure means
 
-**The casters are still at the bottom of the table, and that is a data
-limitation rather than a finding.**
+**ALL THREE CAUSES HAVE NOW EXPIRED, and the casters are no longer at the
+bottom of the table.** This section has been rewritten four times and is kept
+as the record of how the caveat came apart, because each half looked like a
+data limitation and only one of them was.
 
-**ONE OF THE TWO CAUSES HAS EXPIRED.** Caster gear exists now -- every caster
-reads 200 to 453 spell power where it used to read zero -- and the four cloth
-profiles gained 4.6% to 93.1% for it. None of that gain is spell power
-multiplying damage. It is INTELLECT buying casts before the mana runs out, and
-SPELL CRIT, which caster gear grants and plate does not.
+1. ~~No caster gear exists.~~ **EXPIRED.** Twelve sets, imported from the
+   owner's own sixtyupgrades links. See "What the gear import moved".
+2. ~~Spell power has no school.~~ **EXPIRED.** `SchoolModifiers` carries a
+   `spellPower` per school, so the Shadow Priest's full 497 arrives. It moved
+   the Priest by ZERO at the time, because of cause 3.
+3. ~~Forever's spell data states flat damage and no coefficient.~~ **EXPIRED,
+   AND IT WAS NEVER A DATA PROBLEM.** The data still states a flat range and
+   no coefficient, exactly as it always did. What was missing was a universal
+   RULE -- `castTime / 3.5` -- which the ruleset owner supplied and which never
+   needed stating per spell. See "What spell coefficients moved".
 
-1. ~~No caster gear exists.~~ Twelve sets, imported from the owner's own
-   sixtyupgrades links. See "What the gear import moved".
-2. **Forever's spell data states flat damage and no coefficient.** Druid,
-   Shaman, Mage, Warlock and Priest all read the same way, so this is how the
-   source is written rather than a quirk of one class. **All 453 points of an
-   Elemental shaman's spell power multiply nothing**, and every nuke says so on
-   the results page.
+**THE THIRD ONE IS THE LESSON.** It was recorded as a data limitation in five
+class file headers, in the gap survey, and in three tests, and it was wrong in
+all nine places. Every one of them correctly observed that the spell text
+states no coefficient; every one of them concluded the wrong thing from it.
+**Check whether a missing number is missing DATA or a missing RULE before
+recording it as a gap** -- and if it is a rule, ASK, which is the standing
+instruction that settled this in one message.
 
-**AND A THIRD, WHICH BELONGS TO THE PRIEST ALONE.** Most of the spell power in
-Vestments of Prophecy is SHADOW-ONLY -- six of eight tier pieces and 75 on
-Anathema -- and `spellPower` here is one school-blind number, so ~293 of it is
-listed and not applied. Eight Paladin lines say the same about Holy.
-
-**The Paladin's seals are the single exception**, because the ruleset owner
-supplied the formula directly:
+**The Paladin's seals stay on their own formula**, supplied directly by the
+owner and unaffected by the cast-time rule, because a seal is not cast at a
+target and has no cast time to divide:
 
 ```
 damage = base + baseWeaponSpeed × (0.022 × attackPower + 0.044 × spellPower)
 ```
 
-The Hunter has two ability coefficients from the wiki — Arcane Shot's 10% of
-ranged attack power and Serpent Sting's 15% over its duration.
+The Hunter keeps its two wiki coefficients — Arcane Shot's 10% of ranged attack
+power and Serpent Sting's 15% over its duration — and neither reads spell
+power, because **Forever explicitly REMOVED Arcane Shot's spell power
+coefficient**. Applying the general rule to a Hunter shot would reinstate
+something Forever deliberately took out.
 
-So a caster figure is still a **floor, not an estimate** -- for one reason
-where it used to be two, and two for the Priest. Tests pin each cause, so the
-day a coefficient arrives they fail and the figures get re-read. That is how the
-gear half of this caveat was caught expiring: five tests asserting
-`spellPower === 0` failed the moment the sets landed.
+**So a caster figure is an ESTIMATE now rather than a floor.** What remains
+unmodelled for casters is ordinary content rather than a scaling hole: totems
+have no entity, Chain Lightning's jumps have no second target, and Blast Wave's
+area half lands on the one enemy there is. Those are all listed per ability on
+the results page.
+
+---
+
+## What spell coefficients moved
+
+**Every caster, by 59% to 145%. Eleven pure melee profiles, by nothing at all.**
+
+The ruleset owner supplied the rule directly:
+
+```
+damage = castTime / 3.5 x (spellPower + schoolSpellPower) + baseDamage
+```
+
+with an instant priced at 1.5 seconds. Full rules, the three borrowed cases and
+their provenance are in
+[docs/spell-coefficients.md](docs/spell-coefficients.md).
+
+| Profile | was | now | |
+| --- | --- | --- | --- |
+| SM/DS Warlock | 135.3 | **331.7** | +145.1% |
+| Ele Shaman | 119.3 | **279.0** | +133.9% |
+| Moonkin | 166.2 | **353.1** | +112.5% |
+| Firelock | 247.5 | **479.1** | +93.6% |
+| Shadow Priest | 285.0 | **510.9** | +79.3% |
+| Arcane Mage | 242.6 | **405.1** | +67.0% |
+| Frostfire Mage | 184.4 | **305.6** | +65.7% |
+| Fire Mage | 223.3 | **355.9** | +59.4% |
+| Shockadin | 262.2 | **324.5** | +23.8% |
+| Seal Twist Ret | 380.2 | **391.9** | +3.1% |
+| Prot Pally | 135.2 | **139.3** | +3.0% |
+| Enh Shaman | 404.5 | **410.9** | +1.6% |
+| the other eleven | — | — | unmoved to the decimal |
+
+**IT NEEDED NO ENGINE WORK.** `scaleByPower` has computed
+`baseAmount + coefficient x power` since before any caster existed, and
+`spellPowerFor(source, school)` -- added one change earlier for the
+school-scoped item stat -- is EXACTLY the owner's "(total spell damage +
+matching-school spell damage)". The whole feature is one file in `game` plus a
+`powerCoefficient` on each spell.
+
+**IT WAS A MISSING RULE, NOT MISSING DATA, AND THAT WAS RECORDED WRONG THREE
+TIMES.** Five class file headers said "no spell power coefficients, for the Nth
+caster running", the gap survey listed it as a data limitation, and three
+separate tests asserted that a caster figure was a floor. Every one of those
+was true about the DATA -- Forever's spell text still states a flat range and
+no coefficient, unchanged by this work -- and every one of them was the wrong
+conclusion, because the coefficient is a universal rule that never needed
+stating per spell. **Check whether a missing number is missing DATA or a
+missing RULE before recording it as a gap.**
+
+**THE ONE HAND-VERIFIED NUMBER.** A Shadow Priest's Mind Blast: 490 base, a
+1.5-second cast so 0.4286, and 497 Shadow spell power gives 703.00 exactly.
+The engine's non-crit hit is 850.63, which is 703 x 1.10 (Darkness) x 1.10
+(Shadow Weaving at five stacks) -- so the formula lands exactly and the school
+multipliers stack on top of it, which is the right order.
+
+### Two traps, both of which produce plausible numbers
+
+**`ability.castTimeMs` IS THE TALENT-REDUCED FIGURE.** `abilitiesForClass`
+overwrites it, so reading it inside `onCast` would make Improved Fireball
+quietly REDUCE Fireball's scaling with gear. A cast-time talent making a spell
+worse, at a number nobody would question. Every spell declares a named
+`*_CAST_MS` used for both its `castTimeMs` and its coefficient.
+
+**AN EFFECT SIZED FROM ANOTHER HIT TAKES NO COEFFICIENT.** Ignite is "an
+additional N% of your spell's damage" and that spell was already scaled, so a
+coefficient here applies spell power twice. Asserted at zero with 5,000 spell
+power on the character.
+
+### What the structural test caught about itself
+
+`everySpellScales.test.ts` casts every spell twice, at 0 and 1000 spell power,
+and demands the damage move. **Behavioural rather than declarative**, so no
+amount of writing `powerCoefficient` can satisfy it.
+
+Its FIRST version filtered the spell list on `attackTable === 'spell'` and
+silently skipped every PURE DoT -- Shadow Word: Pain, Corruption, Bane of
+Agony, Siphon Life, Devouring Plague and Consecration -- because a spell that
+only applies an aura declares no table. Those six are exactly what the periodic
+rule exists for, so the guard covered everything except the part most likely to
+be wrong. The list is DISCOVERED from the event stream now: anything dealing
+non-physical damage is a spell and must scale.
+
+### A consequence worth knowing before quoting Fireball
+
+The hybrid shares are weighted by each half's COEFFICIENT -- by duration -- and
+not by how much DAMAGE each half deals. Fireball is 483 direct plus 60 over
+eight seconds: the burn is 11% of the damage and takes 35% of the scaling, so
+Fireball gets 0.652 where a 3.5-second cast with no DoT gets 1.0. Classic
+sidesteps this by giving Fireball's DoT no coefficient at all.
+
+Left as the rule says rather than special-cased. If it should weight by damage
+share instead, that is a change to `hybridSpellCoefficients` and nothing else.
 
 ---
 
@@ -461,6 +593,66 @@ list.
 | **Content** the engine can already express | Lacerating Strikes (a bleed, and its value is `null` in the data -- the single-rank trap, so it needs hand-filling); Summon Hawk's second hawk, which is why BM is understated |
 | **Data** nobody has stated | Sniper Shot's mana cost, a placeholder at 200 with no cost line in the spellbook -- and it matters, because LW Ranged is mana-bound and Sniper Shot is its largest spender; the pet's base DPS |
 | **Target or build**, and these never expire | ~22 reasons: traps (6), movement and control (7), stuns, range, not being attacked (4), needing a kill, healing a pet |
+
+---
+
+## What school-scoped spell power moved
+
+**Shockadin 252.7 -> 262.2, and nothing else by a decimal.**
+
+`spellPower` was one school-blind number read by every non-physical school, and
+**seventeen item lines name a school instead** -- nine Priest pieces saying
+"Increases damage done by Shadow spells and effects by up to 39" and eight
+Lawbringer ones saying the same about Holy. They were carried as unmodelled
+text, which was honest and cost the Shadow Priest ~293 of the 497 its planner
+shows.
+
+**IT IS A FOURTH FIELD ON `SchoolModifier` AND NOT A STAT.** `STAT_NAMES` is a
+deliberately closed flat set with no room for a keyed stat, and the scope that
+already keys crit, crit damage and a damage multiplier by `DamageSchool` is
+exactly the shape a keyed spell power wants. `spellPowerFor(source, school)`
+adds the two halves AT THE POINT OF USE, so a buff still moves it -- resolving
+the sum when the character is built would freeze it at the unbuffed figure
+while reading as a perfectly plausible number.
+
+**THE FIELD IS ON THE SCHOOL SCOPE AND NOT ON THE SHARED `AbilityModifier`**,
+which is the guard rather than an accident. Hung off an ability or an attack
+table nothing would read it, and it would do nothing without saying so. The
+type is what makes that impossible.
+
+**GEAR IS THE FIRST CALLER OF A SCOPE TALENTS BUILT.** `createPlayer` folds the
+equipped set's entries into the build's -- into a NEW `SchoolModifiers`, never
+into `build.schoolModifiers`, because a `TalentBuild` is a value a caller may
+hold across several characters and mutating it works exactly once. That is the
+same shape as the shared Windfury closure that stopped proccing after one
+iteration of a batch.
+
+| | before | after | why |
+| --- | --- | --- | --- |
+| Shockadin | 252.7 | **262.2** | 161 Holy, and Seal of Righteousness is the project's only spell power coefficient |
+| Shadow Priest | 285.0 | 285.0 | gains all 293 of its Shadow power and multiplies nothing with it |
+| Seal Twist Ret | 380.2 | 380.2 | really carries 79 Holy; its seals are Command and Crusader |
+| Prot Pally | 135.2 | 135.2 | the tank cut of Lawbringer names Holy on no piece |
+| the other 19 | — | — | unmoved to the decimal |
+
+**THE PROFILE THAT FOUND IT GAINED NOTHING**, which is the Eclipse lesson a
+fourth time and the Champion of the Light one a second. Forever's Priest spells
+state FLAT damage and no coefficient, so a correctly scoped 497 multiplies
+nothing; Retribution's Seal of Command is **70% of WEAPON damage with no spell
+power term at all**. So the tests assert THE STAT ARRIVING, scoped to the right
+school, and never a DPS delta -- a damage test would have passed identically
+before the feature existed.
+
+**WHAT DID NOT CLEAR, and reads alike.** Judgement of the Crusader raises Holy
+damage TAKEN by a flat 161, on the target, from whoever deals it. Same school,
+same number, different side of the fight and different arithmetic -- spell
+power reaches damage only through a coefficient. Its reason says so now, because
+the two are easy to confuse.
+
+**Two relic lines want the scope BELOW this one**: Totem of the Storm's
+"Increases damage done by Chain Lightning and Lightning Bolt by up to 33" and
+Idol of the Moon's Moonfire equivalent. `AbilityModifiers` is their shape. Both
+are worth nothing today for the reason above.
 
 ---
 
@@ -725,22 +917,28 @@ node tools/import_forever_spells.mjs <class> --write
 
 In the order I would do them:
 
-1. **A SCHOOL-SCOPED SPELL POWER STAT**, which is now the largest known
-   shortfall in the item data. `spellPower` is one school-blind number, and
-   nineteen item lines across the Priest and Paladin sets name a school --
-   "Increases damage done by Shadow spells and effects by up to 39". The Shadow
-   Priest is missing ~293 of it, which the planner counts and this does not.
+1. **A STYLE-SCOPED ITEM STAT**, which is now the largest single unmodelled
+   line on any one item and worth 172 attack power to BOTH feral Druids:
+   "+172 Attack Power in Cat, Bear, and Dire Bear forms only" on the Glaive of
+   Obsidian Fury. `statsForStyle` already knows the combat style; the item rule
+   does not, so the line falls to `unmodelled`.
 
-   `SchoolModifiers` is the shape to follow: it already carries crit chance,
-   crit damage and a damage multiplier per `DamageSchool`, and this is one more
-   term. `STAT_NAMES` is a deliberately closed flat set, so a keyed stat does
-   not fit there -- the modifier belongs beside the other school-scoped ones,
-   read by `dealDamage` where it already reads `spellPower`.
+   **The school-scoped half of this pair is DONE** -- see "What school-scoped
+   spell power moved" -- and the shape it took is not the one to copy here. A
+   school is a property of the DAMAGE and belongs on `SchoolModifiers`; a form
+   is a property of the CHARACTER and is settled before the fight begins, so
+   this one really can end up in `stats`, gated where `liveEquipment` already
+   gates a slot the style cannot fill.
 
-   **A STYLE-SCOPED ITEM STAT is the same shape of gap**, worth 172 attack
-   power to both feral Druids: "+172 Attack Power in Cat, Bear, and Dire Bear
-   forms only" on the Glaive of Obsidian Fury. `statsForStyle` already knows the
-   style; the item rule does not.
+   Unlike the school work, **this should move a real number**: it is 172
+   attack power on two melee builds that currently get none of it.
+
+   **THE CASTER APLs ARE NOW WORTH MEASURING, and were not before.** Spell
+   coefficients changed what every caster's best spell is -- a long cast now
+   buys more scaling than a short one, and a DoT's coefficient is uncapped --
+   so the priority lists were ordered against a damage model that no longer
+   holds. Mind Flay more than doubled; Siphon Life's coefficient is 2.0. This
+   is item 4 below and it just became the largest untapped item in the list.
 
 2. **Spell hit per school** — five talents, and a genuine rule change: the hit
    roll happens before any per-school modifier is consulted.

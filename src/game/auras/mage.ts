@@ -1,5 +1,6 @@
 import type { AuraDefinition } from '../../engine';
 import { dealDamage, flat, seconds } from '../../engine';
+import { hybridSpellCoefficients } from '../combat/spellCoefficient';
 
 /**
  * Mage auras, from the WoW Forever beta client (build 1.60.1.69876).
@@ -42,12 +43,20 @@ export const FROZEN_UNMODELLED =
   'encounter here is one, so this is inert because of the target rather than ' +
   'because of the engine.';
 
-/** One periodic tick of a magical damage-over-time effect. */
+/**
+ * One periodic tick of a magical damage-over-time effect.
+ *
+ * THE COEFFICIENT IS PER TICK and is passed in, because each of these three is
+ * the DoT half of a hybrid: the cast and the burn share one spell's scaling
+ * between them, so the burn's share cannot be derived from the aura alone.
+ * See `hybridSpellCoefficients`.
+ */
 function tick(
   context: Parameters<NonNullable<AuraDefinition['periodic']>['onTick']>[0],
   aura: Parameters<NonNullable<AuraDefinition['periodic']>['onTick']>[1],
   amount: number,
   school: typeof ARCANE | typeof FIRE,
+  powerCoefficient: number,
 ): void {
   const source = context.combatant(aura.sourceId);
   const target = context.combatant(aura.targetId);
@@ -60,8 +69,7 @@ function tick(
     abilityName: aura.name,
     school,
     baseAmount: amount,
-    // No coefficient is stated for any of them, so none is invented.
-    powerCoefficient: 0,
+    powerCoefficient,
     periodic: true,
     critFrom: 'spell',
     appliesArmor: false,
@@ -71,6 +79,21 @@ function tick(
 // ---------------------------------------------------------------------------
 // The damage-over-time halves of the nukes
 // ---------------------------------------------------------------------------
+
+/*
+ * ----------------------------------------------------------------------------
+ * THE THREE HYBRID PAIRS LIVE HERE, BESIDE THE DoT HALF, and the ability file
+ * imports them. Both halves of a hybrid come out of ONE call, so the cast and
+ * the burn cannot end up weighted against different assumptions -- which is
+ * the only failure of this rule that would look entirely normal.
+ *
+ * THE CAST TIME IS THE BASE ONE, declared here and used by the ability for its
+ * own `castTimeMs` as well. Reading `ability.castTimeMs` inside `onCast`
+ * instead would read the TALENT-REDUCED time, and Improved Fireball would then
+ * quietly REDUCE Fireball's scaling -- a cast-time talent making a spell worse
+ * with gear, at a number nobody would question.
+ * ----------------------------------------------------------------------------
+ */
 
 /**
  * Fireball's burn: "an additional 60 Fire damage over 8 sec".
@@ -83,6 +106,14 @@ function tick(
 export const FIREBALL_DOT_TOTAL = 60;
 export const FIREBALL_DOT_DURATION_MS = seconds(8);
 export const FIREBALL_TICK_INTERVAL_MS = seconds(2);
+
+/** Fireball: a 3.5-second cast leaving an 8-second burn in four ticks. */
+export const FIREBALL_CAST_MS = seconds(3.5);
+export const FIREBALL_COEFFICIENTS = hybridSpellCoefficients(
+  FIREBALL_CAST_MS,
+  FIREBALL_DOT_DURATION_MS,
+  FIREBALL_DOT_DURATION_MS / FIREBALL_TICK_INTERVAL_MS,
+);
 
 export const FIREBALL_DOT: AuraDefinition = {
   id: 'fireball',
@@ -98,6 +129,7 @@ export const FIREBALL_DOT: AuraDefinition = {
         aura,
         FIREBALL_DOT_TOTAL / (FIREBALL_DOT_DURATION_MS / FIREBALL_TICK_INTERVAL_MS),
         FIRE,
+        FIREBALL_COEFFICIENTS.perTick,
       ),
   },
 };
@@ -106,6 +138,20 @@ export const FIREBALL_DOT: AuraDefinition = {
 export const PYROBLAST_DOT_TOTAL = 212;
 export const PYROBLAST_DOT_DURATION_MS = seconds(12);
 export const PYROBLAST_TICK_INTERVAL_MS = seconds(3);
+
+/**
+ * Pyroblast: a SIX-second cast leaving a 12-second burn in four ticks.
+ *
+ * THE ONE SPELL IN THE PROJECT THAT REACHES THE CAST CLAMP. Six seconds is
+ * treated as 3.5, so its direct half is computed from a coefficient of 1.0
+ * rather than 1.714 -- see `PLACEHOLDER_MAX_COEFFICIENT_CAST_SECONDS`.
+ */
+export const PYROBLAST_CAST_MS = seconds(6);
+export const PYROBLAST_COEFFICIENTS = hybridSpellCoefficients(
+  PYROBLAST_CAST_MS,
+  PYROBLAST_DOT_DURATION_MS,
+  PYROBLAST_DOT_DURATION_MS / PYROBLAST_TICK_INTERVAL_MS,
+);
 
 export const PYROBLAST_DOT: AuraDefinition = {
   id: 'pyroblast',
@@ -121,6 +167,7 @@ export const PYROBLAST_DOT: AuraDefinition = {
         aura,
         PYROBLAST_DOT_TOTAL / (PYROBLAST_DOT_DURATION_MS / PYROBLAST_TICK_INTERVAL_MS),
         FIRE,
+        PYROBLAST_COEFFICIENTS.perTick,
       ),
   },
 };
@@ -139,6 +186,14 @@ export const FROSTFIRE_DOT_TOTAL = 57;
 export const FROSTFIRE_DOT_DURATION_MS = seconds(9);
 export const FROSTFIRE_TICK_INTERVAL_MS = seconds(3);
 
+/** Frostfire Bolt: a 3-second cast leaving a 9-second burn in three ticks. */
+export const FROSTFIRE_CAST_MS = seconds(3);
+export const FROSTFIRE_COEFFICIENTS = hybridSpellCoefficients(
+  FROSTFIRE_CAST_MS,
+  FROSTFIRE_DOT_DURATION_MS,
+  FROSTFIRE_DOT_DURATION_MS / FROSTFIRE_TICK_INTERVAL_MS,
+);
+
 export const FROSTFIRE_DOT: AuraDefinition = {
   id: 'frostfire_bolt',
   name: 'Frostfire Bolt',
@@ -153,6 +208,7 @@ export const FROSTFIRE_DOT: AuraDefinition = {
         aura,
         FROSTFIRE_DOT_TOTAL / (FROSTFIRE_DOT_DURATION_MS / FROSTFIRE_TICK_INTERVAL_MS),
         FIRE,
+        FROSTFIRE_COEFFICIENTS.perTick,
       ),
   },
 };
@@ -197,7 +253,14 @@ export function igniteAura(totalDamage: number): AuraDefinition {
     refreshBehaviour: 'reset',
     periodic: {
       intervalMs: IGNITE_TICK_INTERVAL_MS,
-      onTick: (context, aura) => tick(context, aura, totalDamage / ticks, FIRE),
+      /*
+       * NO COEFFICIENT, AND THAT IS NOT AN OMISSION. Ignite's magnitude is a
+       * percentage OF THE CRIT THAT CAUSED IT, and that hit was already
+       * scaled by its own spell's coefficient -- so a coefficient here would
+       * apply spell power twice to the same damage. The 0 is the rule for
+       * every effect whose size is derived from another hit.
+       */
+      onTick: (context, aura) => tick(context, aura, totalDamage / ticks, FIRE, 0),
     },
   };
 }

@@ -9,6 +9,10 @@ import {
   VAMPIRIC_EMBRACE_UNMODELLED,
   shadowWordPainAura,
 } from '../auras/priest';
+import {
+  channelTickCoefficient,
+  directSpellCoefficient,
+} from '../combat/spellCoefficient';
 
 /**
  * Priest abilities, from the WoW Forever beta client (build 1.60.1.69876).
@@ -22,9 +26,18 @@ import {
  * Missiles. Three ticks over three seconds, each rolling the spell table on
  * its own -- the rule landed with the Mage and needed nothing new here.
  *
- * NO SPELL POWER COEFFICIENTS, for the fifth caster running. The Paladin's
- * seals remain the only thing in the project that scales with spell power,
- * because the ruleset owner supplied that formula directly.
+ * EVERY SPELL SCALES NOW, by the universal `castTime / 3.5` rule the ruleset
+ * owner supplied -- and this class is the one that shows what it is worth,
+ * because almost all of its damage is PERIODIC and CHANNELLED rather than
+ * direct. Its two DoTs take the whole periodic coefficient each, Mind Flay
+ * takes the channel rule, and only Mind Blast and Shadow Word: Death are
+ * ordinary casts. See `game/combat/spellCoefficient.ts`.
+ *
+ * WHAT USED TO BE HERE, and it expired: "no spell power coefficients, for the
+ * fifth caster running -- the Paladin's seals remain the only thing in the
+ * project that scales with spell power." True of the DATA, which still states
+ * flat damage, and wrong about the RULE, which is universal and did not need
+ * to be stated per spell.
  * ----------------------------------------------------------------------------
  */
 
@@ -40,6 +53,8 @@ export const SWP_EXTRA_SECONDS_BONUS = 'extraDurationSeconds';
 
 // ---------------------------------------------------------------------------
 
+export const MIND_BLAST_CAST_MS = seconds(1.5);
+export const MIND_BLAST_COEFFICIENT = directSpellCoefficient(MIND_BLAST_CAST_MS);
 export const MIND_BLAST_DAMAGE = midpoint(477, 503);
 
 export const MIND_BLAST: Ability = {
@@ -58,6 +73,7 @@ export const MIND_BLAST: Ability = {
       abilityName: ability.name,
       school: 'shadow',
       baseAmount: MIND_BLAST_DAMAGE,
+      powerCoefficient: MIND_BLAST_COEFFICIENT,
       attackTable: ability.attackTable,
     });
   },
@@ -95,12 +111,23 @@ export const SHADOW_WORD_PAIN: Ability = {
  */
 export const MIND_FLAY_TOTAL = 390;
 export const MIND_FLAY_TICKS = 3;
+export const MIND_FLAY_CHANNEL_MS = seconds(MIND_FLAY_TICKS);
+
+/*
+ * A CHANNEL, so the WHOLE three seconds is the cast: 0.857 in total, 0.286 a
+ * tick. Not `directSpellCoefficient(0)` per tick, which is what treating each
+ * tick as its own instant would give and would be worth half as much again.
+ */
+export const MIND_FLAY_TICK_COEFFICIENT = channelTickCoefficient(
+  MIND_FLAY_CHANNEL_MS,
+  MIND_FLAY_TICKS,
+);
 
 export const MIND_FLAY: Ability = {
   id: 'mind_flay',
   name: 'Mind Flay',
   cost: { resource: 'mana', amount: 205 },
-  castTimeMs: seconds(MIND_FLAY_TICKS),
+  castTimeMs: MIND_FLAY_CHANNEL_MS,
   channelTicks: MIND_FLAY_TICKS,
   attackTable: 'spell',
   onCast: ({ simulation, caster, target, ability }) => {
@@ -112,6 +139,7 @@ export const MIND_FLAY: Ability = {
       abilityName: ability.name,
       school: 'shadow',
       baseAmount: MIND_FLAY_TOTAL / MIND_FLAY_TICKS,
+      powerCoefficient: MIND_FLAY_TICK_COEFFICIENT,
       attackTable: ability.attackTable,
     });
   },
@@ -151,6 +179,7 @@ export const DEVOURING_PLAGUE_ABILITY: Ability = {
  */
 export const SHADOW_WORD_DEATH_DAMAGE = midpoint(444, 472);
 export const SHADOW_WORD_DEATH_BACKLASH_FRACTION = 0.1;
+export const SHADOW_WORD_DEATH_COEFFICIENT = directSpellCoefficient(0);
 
 export const SHADOW_WORD_DEATH: Ability = {
   id: 'shadow_word_death',
@@ -167,6 +196,7 @@ export const SHADOW_WORD_DEATH: Ability = {
       abilityName: ability.name,
       school: 'shadow',
       baseAmount: SHADOW_WORD_DEATH_DAMAGE,
+      powerCoefficient: SHADOW_WORD_DEATH_COEFFICIENT,
       attackTable: ability.attackTable,
     });
 

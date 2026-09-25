@@ -31,6 +31,7 @@ export {
   handMultiplier,
   resolveDamage,
   scaleByPower,
+  spellPowerFor,
   weaponDamageFor,
 } from './damage';
 export type { AttackEvent, AbilityCastEvent, CastReaction, Reaction, ReactionTrigger } from './reactions';
@@ -46,7 +47,7 @@ export {
   spellCritChanceFrom,
   versatilityMultiplierFrom,
 } from './ratings';
-export type { AbilityModifier } from './abilityModifiers';
+export type { AbilityModifier, SchoolModifier } from './abilityModifiers';
 export {
   ALL_ABILITIES,
   AbilityModifiers,

@@ -1,5 +1,5 @@
 import type { AttackEvent, Combatant, Reaction, SimulationContext } from '../../engine';
-import { dealDamage, isWeaponUse } from '../../engine';
+import { dealDamage, isWeaponUse, spellPowerFor } from '../../engine';
 import { ppmChance } from '../items/procs';
 import {
   ECHO_AURA_IDS,
@@ -99,7 +99,15 @@ export function sealOfRighteousnessProc(): Reaction {
           SEAL_OF_RIGHTEOUSNESS_BASE,
           baseSpeedSeconds(actor, attack),
           stats.attackPower,
-          stats.spellPower,
+          /*
+           * HOLY SPELL POWER, not the school-blind pool alone. Eight pieces
+           * of Lawbringer say "Increases damage done by Holy spells and
+           * effects by up to N" and the seal is Holy, so `spellPowerFor`
+           * adds them -- the same function `scaleByPower` uses, so the one
+           * ability in the project with a spell power coefficient cannot
+           * disagree with the pipeline about what a Holy point is worth.
+           */
+          spellPowerFor(actor, HOLY),
         ),
       );
     },
@@ -232,7 +240,8 @@ export function echoProc(): Reaction {
             SEAL_OF_RIGHTEOUSNESS_BASE,
             baseSpeedSeconds(actor, attack),
             stats.attackPower,
-            stats.spellPower,
+            // Holy-scoped gear included, exactly as the seal itself reads it.
+            spellPowerFor(actor, HOLY),
           ),
         );
         return;

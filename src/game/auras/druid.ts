@@ -1,5 +1,9 @@
 import type { AuraDefinition } from '../../engine';
 import { dealDamage, flat, seconds } from '../../engine';
+import {
+  hybridSpellCoefficients,
+  periodicTickCoefficient,
+} from '../combat/spellCoefficient';
 
 /**
  * Druid auras, from the WoW Forever beta client (build 1.60.1.69876).
@@ -42,6 +46,18 @@ export const MOONFIRE_DOT_TOTAL = 240;
 export const MOONFIRE_DOT_DURATION_MS = seconds(12);
 export const MOONFIRE_TICK_INTERVAL_MS = seconds(3);
 
+/**
+ * Moonfire is a HYBRID: an instant hit plus a 12-second burn, sharing one
+ * spell's scaling. Its pair is the cross-check for the whole normalisation --
+ * it comes out at 0.15 and 0.52, which is exactly what Classic publishes for
+ * this spell. See `hybridSpellCoefficients`.
+ */
+export const MOONFIRE_COEFFICIENTS = hybridSpellCoefficients(
+  0,
+  MOONFIRE_DOT_DURATION_MS,
+  MOONFIRE_DOT_DURATION_MS / MOONFIRE_TICK_INTERVAL_MS,
+);
+
 export const MOONFIRE_DOT: AuraDefinition = {
   id: 'moonfire',
   name: 'Moonfire',
@@ -51,7 +67,14 @@ export const MOONFIRE_DOT: AuraDefinition = {
   periodic: {
     intervalMs: MOONFIRE_TICK_INTERVAL_MS,
     onTick: (context, aura) => {
-      tick(context, aura, MOONFIRE_DOT_TOTAL / (MOONFIRE_DOT_DURATION_MS / MOONFIRE_TICK_INTERVAL_MS), ARCANE);
+      tick(
+        context,
+        aura,
+        MOONFIRE_DOT_TOTAL / (MOONFIRE_DOT_DURATION_MS / MOONFIRE_TICK_INTERVAL_MS),
+        ARCANE,
+        'spell',
+        MOONFIRE_COEFFICIENTS.perTick,
+      );
     },
   },
 };
@@ -70,6 +93,15 @@ export const INSECT_SWARM_DURATION_MS = seconds(12);
 export const INSECT_SWARM_TICK_INTERVAL_MS = seconds(2);
 export const INSECT_SWARM_HIT_REDUCTION = 2;
 
+/**
+ * Insect Swarm is a PURE DoT -- the cast deals no damage of its own -- so it
+ * takes the whole periodic coefficient rather than a share of one.
+ */
+export const INSECT_SWARM_TICK_COEFFICIENT = periodicTickCoefficient(
+  INSECT_SWARM_DURATION_MS,
+  INSECT_SWARM_DURATION_MS / INSECT_SWARM_TICK_INTERVAL_MS,
+);
+
 export const INSECT_SWARM: AuraDefinition = {
   id: 'insect_swarm',
   name: 'Insect Swarm',
@@ -85,6 +117,8 @@ export const INSECT_SWARM: AuraDefinition = {
         aura,
         INSECT_SWARM_TOTAL / (INSECT_SWARM_DURATION_MS / INSECT_SWARM_TICK_INTERVAL_MS),
         NATURE,
+        'spell',
+        INSECT_SWARM_TICK_COEFFICIENT,
       );
     },
   },
@@ -299,6 +333,7 @@ function tick(
   amount: number,
   school: typeof ARCANE | typeof NATURE | typeof PHYSICAL,
   critFrom: 'spell' | 'melee-special' = 'spell',
+  powerCoefficient = 0,
 ): void {
   const source = context.combatant(aura.sourceId);
   const target = context.combatant(aura.targetId);
@@ -312,12 +347,17 @@ function tick(
     school,
     baseAmount: amount,
     /*
-     * NO COEFFICIENT. Every one of these says "increased by your Attack Power"
-     * or nothing at all, and states no number, so none is invented -- the same
-     * decision Rupture and Rend carry. A geared Druid understates its bleeds
-     * rather than guessing at them.
+     * DEFAULTS TO NONE, AND THE BLEEDS KEEP THAT.
+     *
+     * Rake, Rip and Lacerate are PHYSICAL and say "increased by your Attack
+     * Power" without stating a number, so none is invented -- the same
+     * decision Rupture and Rend carry, and the spell coefficient rule does
+     * not reach them because they are not spells.
+     *
+     * The two SPELL effects here, Moonfire's burn and Insect Swarm, are
+     * passed one.
      */
-    powerCoefficient: 0,
+    powerCoefficient,
     periodic: true,
     critFrom,
     // A bleed is physical and still ignores armor; a magical tick is not

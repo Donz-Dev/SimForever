@@ -5,7 +5,7 @@ import { PRESETS_BY_ID } from '../../src/profiles/presets';
 import { abilitiesForClass } from '../../src/game/abilities/abilitiesForClass';
 import { buildSimulation } from '../helpers/buildSimulation';
 import { makeAttacker, makeTarget } from '../helpers/actors';
-import { castAbility, isWeaponUse, seconds } from '../../src/engine';
+import { castAbility, isWeaponUse, seconds, spellPowerFor } from '../../src/engine';
 import {
   HOLY_STRIKE_HOLY_DAMAGE,
   HOLY_STRIKE_WEAPON_FRACTION,
@@ -124,6 +124,62 @@ describe('the numbers', () => {
       2 * (sealDamage(base, 2, 100, 0) - base),
       6,
     );
+  });
+
+  it('reads HOLY spell power, which eight pieces of Lawbringer grant', () => {
+    /*
+     * ------------------------------------------------------------------------
+     * THE SEAL IS THE ONE THING IN THE PROJECT A SCHOOL-SCOPED SPELL POWER CAN
+     * REACH, and Lawbringer is covered in it: "Increases damage done by Holy
+     * spells and effects by up to 27" on the Crown, and seven more like it.
+     * Those lines were carried as unmodelled text until `SchoolModifiers`
+     * grew a spell power per school.
+     *
+     * Asserted as THE STAT ARRIVING, scoped to the right school, and not as a
+     * DPS delta -- because the same mechanism is worth a real number to one of
+     * these two builds and exactly nothing to the other, and only the stat
+     * says which is which.
+     * ------------------------------------------------------------------------
+     */
+    const shockadin = presetPlayer('pally_shockadin');
+    const blind = shockadin.stats.get('spellPower');
+
+    /*
+     * Eight Lawbringer pieces: 27 + 21 + 16 + 14 + 20 + 19 + 24 + 20.
+     *
+     * `toBeCloseTo` because the school-blind half is 373.3 -- Holy Power
+     * converts a percentage of intellect -- so the difference of two floats is
+     * 160.99999999999994 and the exact comparison is the wrong tool.
+     */
+    expect(spellPowerFor(shockadin, 'holy') - blind).toBeCloseTo(161, 6);
+    // And NOTHING else gained, which is the whole reason it is not a stat.
+    expect(spellPowerFor(shockadin, 'shadow')).toBe(blind);
+    expect(spellPowerFor(shockadin, 'physical')).toBe(blind);
+  });
+
+  it('is worth a real number to ONE of the two builds that carry it', () => {
+    /*
+     * ------------------------------------------------------------------------
+     * THE ECLIPSE LESSON, AND THE CHAMPION OF THE LIGHT ONE, FOR A THIRD TIME.
+     *
+     * Retribution wears four Lawbringer pieces and really does have 79 Holy
+     * spell power on it -- and gains NOTHING, because its seals are Command
+     * and Crusader. **Seal of Command is 70% of WEAPON damage with no spell
+     * power term at all**, so the stat arrives and multiplies nothing.
+     *
+     * Shockadin casts Seal of Righteousness, which is the one formula with a
+     * spell power coefficient, so its 161 is worth ~9.5 DPS.
+     *
+     * A talent WORKING and a talent MATTERING are different questions, which
+     * is why the assertion above is on the stat.
+     * ------------------------------------------------------------------------
+     */
+    const ret = presetPlayer('pally_ret');
+    expect(spellPowerFor(ret, 'holy') - ret.stats.get('spellPower')).toBeCloseTo(79, 6);
+
+    // Protection's tank cut of Lawbringer says nothing about Holy at all.
+    const prot = presetPlayer('prot_pally');
+    expect(spellPowerFor(prot, 'holy')).toBe(prot.stats.get('spellPower'));
   });
 
   it('makes a slow weapon hit harder, which is what the tooltip says', () => {

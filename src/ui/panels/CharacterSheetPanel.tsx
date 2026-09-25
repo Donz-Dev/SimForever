@@ -7,7 +7,7 @@ import { getStance, isTankBuild, resolveStance } from '../../game/character';
 import { createTrainingDummy } from '../../game/actors/createTrainingDummy';
 import { createForeverAttackChances } from '../../game/combat/attackChances';
 import { getClass, resolveCombatStyle, resourceLabel } from '../../game/character';
-import { armorReduction, hasteMultiplierFrom, toPercent } from '../../engine';
+import { DAMAGE_SCHOOLS, armorReduction, hasteMultiplierFrom, spellPowerFor, toPercent } from '../../engine';
 import { Panel } from '../components/Panel';
 
 interface CharacterSheetPanelProps {
@@ -294,9 +294,42 @@ function genericRows(profile: CharacterProfile, style: CombatStyleId): readonly 
       ? [{ label: 'Ranged Attack Power', value: round(stats.rangedAttackPower) }]
       : []),
     { label: 'Armor', value: round(stats.armor) },
+    /*
+     * SPELL POWER, AND THEN THE SCHOOLS THAT READ MORE OF IT.
+     *
+     * The first row is the school-blind stat, which is what "Increases damage
+     * and healing done by magical spells" grants. The rows under it are the
+     * schools whose gear says something narrower -- "Increases damage done by
+     * Shadow spells and effects by up to 39" -- and they show the TOTAL that
+     * school actually reads, not the difference, because the total is the
+     * figure a gear planner prints and the one worth comparing against.
+     *
+     * Hidden at zero, and hidden when no school differs: a Warrior has neither
+     * and rows of nil suggest a stat that was computed and came out at nothing.
+     * Without these, a Shadow Priest's 497 was invisible while being applied,
+     * which is the one thing worse than it being visible and missing.
+     */
+    ...(stats.spellPower !== 0 ? [{ label: 'Spell Power', value: round(stats.spellPower) }] : []),
+    ...scopedSpellPowerRows(player),
     { label: 'Crit Chance', value: `${stats.critChance.toFixed(2)}%` },
     ...(stats.spellCritChance !== 0
       ? [{ label: 'Spell Crit Chance', value: `${stats.spellCritChance.toFixed(2)}%` }]
       : []),
   ];
+}
+
+/**
+ * One row per school that reads MORE spell power than the stat block shows.
+ *
+ * `spellPowerFor` is the same function `dealDamage` and the Paladin's seal use,
+ * so the sheet cannot disagree with the fight about what a Holy point is worth.
+ */
+function scopedSpellPowerRows(player: ReturnType<typeof buildPlayer>): readonly SheetRow[] {
+  const blind = player.stats.effective.spellPower;
+  return DAMAGE_SCHOOLS.filter((school) => school !== 'physical')
+    .filter((school) => spellPowerFor(player, school) > blind)
+    .map((school) => ({
+      label: `${school.charAt(0).toUpperCase() + school.slice(1)} Spell Power`,
+      value: round(spellPowerFor(player, school)),
+    }));
 }
