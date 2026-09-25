@@ -218,6 +218,30 @@ export function attackPowerFor(request: DamageRequest): number {
 }
 
 /**
+ * The spell power that reaches ONE school: the character's school-blind pool,
+ * plus whatever is scoped to that school alone.
+ *
+ * ----------------------------------------------------------------------------
+ * "Increases damage done by SHADOW spells and effects by up to 39" is most of
+ * a Shadow Priest's spell power and every word of it is school-scoped, so a
+ * single number on the stat block cannot hold it -- adding it there would make
+ * the same character's Holy and Arcane spells hit harder. `STAT_NAMES` is a
+ * closed flat set and cannot key by school, so the scoped half lives on
+ * `SchoolModifiers` beside the crit and damage already keyed the same way.
+ *
+ * A FUNCTION RATHER THAN A FIELD, for the reason every derived stat here is
+ * one: it re-reads `stats.effective`, so a buff that moves spell power moves
+ * this too. And it is exported because `scaleByPower` is not the only caller
+ * -- the Paladin's seal formula reads spell power by hand, and the two must
+ * not disagree about what a Holy point is worth. That is the `isWeaponUse`
+ * lesson: a rule living privately in one file while another re-derives it.
+ * ----------------------------------------------------------------------------
+ */
+export function spellPowerFor(source: Combatant, school: DamageSchool): number {
+  return source.stats.effective.spellPower + (source.schoolModifiers.for(school).spellPower ?? 0);
+}
+
+/**
  * The multiplier for the hand this ability swings with, or 1 when it does not
  * use a weapon at all.
  *
@@ -241,7 +265,6 @@ export function scaleByPower(request: DamageRequest, weaponDamage = 0): number {
 
   let total = request.baseAmount + weaponDamage;
   if (coefficient !== 0) {
-    const stats = request.source.stats.effective;
     /*
      * THE SAME POOL `weaponDamageFor` USES, through the same function, so the
      * two halves of one request cannot disagree about which attack power a
@@ -249,8 +272,14 @@ export function scaleByPower(request: DamageRequest, weaponDamage = 0): number {
      * coefficient, so this changes no number -- it is here because the rule
      * living privately in one file while another re-derived it is exactly how
      * `isWeaponUse` went wrong.
+     *
+     * AND THE SPELL SIDE PICKS ITS POOL BY SCHOOL for the same reason: a
+     * Shadow-only 293 is the Priest's, a Holy-only 161 is the Shockadin's,
+     * and neither is the other's.
      */
-    const power = isPhysical(request.school) ? attackPowerFor(request) : stats.spellPower;
+    const power = isPhysical(request.school)
+      ? attackPowerFor(request)
+      : spellPowerFor(request.source, request.school);
     total += coefficient * power;
   }
 

@@ -175,6 +175,13 @@ export const SEAL_OF_FURY: AuraDefinition = {
  * -- a flat +161 to every Holy hit is a different shape entirely, and reading
  * it as +161% would be absurd.
  *
+ * AND `SchoolModifier.spellPower` IS NOT IT EITHER, which is worth saying
+ * because the two read alike and the number is even the same. That one is
+ * spell power on the ATTACKER, reaching damage only through a coefficient --
+ * so it is worth 0.044 x baseWeaponSpeed per point to a seal and nothing at
+ * all to anything else. This is a flat amount added to every Holy hit the
+ * TARGET takes, from whoever deals it. Different side, different arithmetic.
+ *
  * Applied as a tracked debuff so its uptime is visible and the judgement is
  * not silent, and the ability says what it is not doing.
  */

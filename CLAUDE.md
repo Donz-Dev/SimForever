@@ -451,13 +451,31 @@ profiles still gained 4.6% to 93.1% -- from INTELLECT, which buys casts before
 the mana runs out, and from SPELL CRIT, which caster gear grants and plate does
 not. A stat can matter through a resource rather than through a coefficient.
 
-**A SCHOOL-BLIND `spellPower` IS ITS OWN GAP, and the Priest found it.** Six of
-eight Vestments of Prophecy pieces and Anathema all say "Increases damage done
-by SHADOW spells and effects by up to N", and one number read by every
-non-physical school cannot hold that -- applying it would make the same
-character's Holy spells hit harder. So ~293 of a Shadow Priest's 497 is carried
-as unmodelled text. `SchoolModifiers` is the shape it wants; `STAT_NAMES` is a
-closed flat set and deliberately cannot key by school.
+**SPELL POWER CAN BE SCOPED TO A SCHOOL, AND IT IS NOT A STAT.** Seventeen item
+lines say "Increases damage done by SHADOW spells and effects by up to N" --
+nine Priest pieces and eight Lawbringer ones naming Holy -- and one number read
+by every non-physical school cannot hold that: applying it would make the same
+character's Holy spells hit harder. `STAT_NAMES` is a closed flat set and
+deliberately cannot key by school, so it is a FOURTH FIELD on `SchoolModifier`,
+beside the crit, crit damage and damage multiplier already keyed the same way,
+and `spellPowerFor` adds it to the school-blind pool AT THE POINT OF USE so a
+buff still moves it. **The field is on the school scope and not on the shared
+`AbilityModifier`**, which is the guard: hung off an ability or an attack table
+nothing would read it, and it would do nothing without saying so.
+
+**GEAR IS THE FIRST CALLER OF A SCOPE TALENTS BUILT**, so `createPlayer` folds
+the equipped set's entries into the build's -- into a NEW `SchoolModifiers`
+rather than into `build.schoolModifiers`, because a `TalentBuild` is a value a
+caller may hold across several characters and mutating it works exactly once.
+
+**IT WAS WORTH ZERO TO THE PROFILE THAT FOUND IT**, which is the Eclipse lesson
+a fourth time. The Shadow Priest's full 497 now arrives and its DPS did not move
+by a tenth, because Forever's Priest spells state flat damage and no
+coefficient. **Shockadin is the one profile it moved**, +9.5, because Seal of
+Righteousness is the project's only spell power coefficient -- and Retribution
+carries a real 79 Holy for nothing, since **Seal of Command is 70% of WEAPON
+damage with no spell power term**. Assert the stat arriving, scoped to the right
+school; a DPS test would have passed before the feature existed.
 
 **AN AURA CAN CHANGE THE NEXT CAST OF AN ABILITY IT NAMES**, which is
 `CastModifier` on `AuraDefinition` and the rule four classes asked for.

@@ -12,7 +12,7 @@ status, that one is how.
 ## Where the project is
 
 **All nine classes and all 21 profiles are implemented**, every number traced
-to a source rather than invented. **1,574 tests**, CI green on Node 20 and 22.
+to a source rather than invented. **1,578 tests**, CI green on Node 20 and 22.
 Profile format **v9**.
 
 **EVERY PROFILE IS IN ITS OWN CLASS'S GEAR.** Twenty of them wore
@@ -47,7 +47,7 @@ off moves all of them; see [docs/raid-buffs.md](docs/raid-buffs.md).
 | Venom Rogue | Rogue | 37/12/2 | **314.4** | 308.5 |
 | Shadow Priest | Priest | 16/3/32 | **285.0** | 266.1 |
 | Cat Druid | Druid | 9/35/7 | **272.0** | 282.7 |
-| Shockadin | Paladin | 23/0/28 | **252.7** | 380.6 |
+| Shockadin | Paladin | 23/0/28 | **262.2** | 252.7 |
 | Firelock | Warlock | 5/11/35 | **247.5** | 225.6 |
 | Arcane Mage | Mage | 47/4/0 | **242.6** | 210.2 |
 | Fire Mage | Mage | 10/39/2 | **223.3** | 133.5 |
@@ -63,6 +63,14 @@ twenty-three in both directions.** The six unmoved are the three Warriors and
 the three Hunters, whose gear this did not touch -- and they are unmoved to the
 DECIMAL, which is the check that nothing leaked out of the sets into shared
 code. See "What the gear import moved".
+
+**SCHOOL-SCOPED SPELL POWER MOVED EXACTLY ONE ROW SINCE.** Shockadin 252.7 ->
+262.2, for the 161 Holy spell power on eight pieces of Lawbringer, because Seal
+of Righteousness is the project's only spell power coefficient. The other
+twenty-two are unmoved TO THE DECIMAL -- including the Shadow Priest, which
+gained 293 points of correctly scoped Shadow power and 0.0 DPS, and Seal Twist
+Retribution, which really carries 79 Holy and spends it on seals that have no
+spell power term. See "What school-scoped spell power moved".
 
 | | was | statFromStat | + gear | + ranged AP | + tables | + APL | total |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -266,14 +274,17 @@ they overlap — they have not yet disagreed.
 "Inert" has three different causes and they expire differently. This
 distinction matters more than the count.
 
-### Because of the engine — these expire, and three already have
+### Because of the engine — these expire, and four already have
 
 Write these reasons specifically enough to re-read. Six Hunter pet talents all
 named the same cause and expired together the moment pets existed; five Warrior
 talents said "nothing attacks the player" three commits after something did;
 **six stat-from-stat talents across five classes expired together** the day
-`statFromStat` was declared. That is the fourth time, and the reason it keeps
-working is that the reasons were specific enough to find by their wording.
+`statFromStat` was declared; **seventeen item lines expired together** the day
+`SchoolModifier` grew a `spellPower`. That is the fifth time, and the reason it
+keeps working is that the reasons were specific enough to find by their
+wording -- the last one is asserted by a test matching the SENTENCE, in
+`tests/game/items.test.ts`.
 
 Still open, in order of how many talents they would retire:
 
@@ -284,6 +295,7 @@ Still open, in order of how many talents they would retire:
 | **Mid-fight summoning** — `Simulation` exposes `combatants` read-only | 2 | Warlock Infernal, Mage elemental |
 | **A one-shot per-ability CRIT modifier** — `CastModifier` carries cast time and cost, not crit | 2 | Paladin (Divine Favor), Priest (Inner Focus) |
 | **A flat per-school damage bonus** — `damageTakenBySchool` multiplies | 1 | Paladin (Judgement of the Crusader, +161 Holy) |
+| ~~**Spell power has no school**~~ — **CLEARED.** `SchoolModifier.spellPower`, read by `spellPowerFor` | 17 item lines | Priest (Shadow ×9), Paladin (Holy ×8) |
 | **Threat** | ~15 | every class; deliberately out of scope |
 
 **Stat-from-stat is done**, and it was a missing declaration rather than a
@@ -373,7 +385,7 @@ written down beside it.
 **The casters are still at the bottom of the table, and that is a data
 limitation rather than a finding.**
 
-**ONE OF THE TWO CAUSES HAS EXPIRED.** Caster gear exists now -- every caster
+**TWO OF THE THREE CAUSES HAVE EXPIRED.** Caster gear exists now -- every caster
 reads 200 to 453 spell power where it used to read zero -- and the four cloth
 profiles gained 4.6% to 93.1% for it. None of that gain is spell power
 multiplying damage. It is INTELLECT buying casts before the mana runs out, and
@@ -386,11 +398,11 @@ SPELL CRIT, which caster gear grants and plate does not.
    source is written rather than a quirk of one class. **All 453 points of an
    Elemental shaman's spell power multiply nothing**, and every nuke says so on
    the results page.
-
-**AND A THIRD, WHICH BELONGS TO THE PRIEST ALONE.** Most of the spell power in
-Vestments of Prophecy is SHADOW-ONLY -- six of eight tier pieces and 75 on
-Anathema -- and `spellPower` here is one school-blind number, so ~293 of it is
-listed and not applied. Eight Paladin lines say the same about Holy.
+3. ~~Spell power has no school.~~ **EXPIRED.** `SchoolModifiers` carries a
+   `spellPower` per school, so the Shadow Priest's full 497 arrives -- 204 on
+   the stat block, 293 scoped to Shadow, and nothing extra on Holy or Arcane.
+   **It moved the Priest by ZERO**, which is gap 2 above doing exactly what it
+   says: a correctly scoped 497 multiplies nothing.
 
 **The Paladin's seals are the single exception**, because the ruleset owner
 supplied the formula directly:
@@ -461,6 +473,66 @@ list.
 | **Content** the engine can already express | Lacerating Strikes (a bleed, and its value is `null` in the data -- the single-rank trap, so it needs hand-filling); Summon Hawk's second hawk, which is why BM is understated |
 | **Data** nobody has stated | Sniper Shot's mana cost, a placeholder at 200 with no cost line in the spellbook -- and it matters, because LW Ranged is mana-bound and Sniper Shot is its largest spender; the pet's base DPS |
 | **Target or build**, and these never expire | ~22 reasons: traps (6), movement and control (7), stuns, range, not being attacked (4), needing a kill, healing a pet |
+
+---
+
+## What school-scoped spell power moved
+
+**Shockadin 252.7 -> 262.2, and nothing else by a decimal.**
+
+`spellPower` was one school-blind number read by every non-physical school, and
+**seventeen item lines name a school instead** -- nine Priest pieces saying
+"Increases damage done by Shadow spells and effects by up to 39" and eight
+Lawbringer ones saying the same about Holy. They were carried as unmodelled
+text, which was honest and cost the Shadow Priest ~293 of the 497 its planner
+shows.
+
+**IT IS A FOURTH FIELD ON `SchoolModifier` AND NOT A STAT.** `STAT_NAMES` is a
+deliberately closed flat set with no room for a keyed stat, and the scope that
+already keys crit, crit damage and a damage multiplier by `DamageSchool` is
+exactly the shape a keyed spell power wants. `spellPowerFor(source, school)`
+adds the two halves AT THE POINT OF USE, so a buff still moves it -- resolving
+the sum when the character is built would freeze it at the unbuffed figure
+while reading as a perfectly plausible number.
+
+**THE FIELD IS ON THE SCHOOL SCOPE AND NOT ON THE SHARED `AbilityModifier`**,
+which is the guard rather than an accident. Hung off an ability or an attack
+table nothing would read it, and it would do nothing without saying so. The
+type is what makes that impossible.
+
+**GEAR IS THE FIRST CALLER OF A SCOPE TALENTS BUILT.** `createPlayer` folds the
+equipped set's entries into the build's -- into a NEW `SchoolModifiers`, never
+into `build.schoolModifiers`, because a `TalentBuild` is a value a caller may
+hold across several characters and mutating it works exactly once. That is the
+same shape as the shared Windfury closure that stopped proccing after one
+iteration of a batch.
+
+| | before | after | why |
+| --- | --- | --- | --- |
+| Shockadin | 252.7 | **262.2** | 161 Holy, and Seal of Righteousness is the project's only spell power coefficient |
+| Shadow Priest | 285.0 | 285.0 | gains all 293 of its Shadow power and multiplies nothing with it |
+| Seal Twist Ret | 380.2 | 380.2 | really carries 79 Holy; its seals are Command and Crusader |
+| Prot Pally | 135.2 | 135.2 | the tank cut of Lawbringer names Holy on no piece |
+| the other 19 | — | — | unmoved to the decimal |
+
+**THE PROFILE THAT FOUND IT GAINED NOTHING**, which is the Eclipse lesson a
+fourth time and the Champion of the Light one a second. Forever's Priest spells
+state FLAT damage and no coefficient, so a correctly scoped 497 multiplies
+nothing; Retribution's Seal of Command is **70% of WEAPON damage with no spell
+power term at all**. So the tests assert THE STAT ARRIVING, scoped to the right
+school, and never a DPS delta -- a damage test would have passed identically
+before the feature existed.
+
+**WHAT DID NOT CLEAR, and reads alike.** Judgement of the Crusader raises Holy
+damage TAKEN by a flat 161, on the target, from whoever deals it. Same school,
+same number, different side of the fight and different arithmetic -- spell
+power reaches damage only through a coefficient. Its reason says so now, because
+the two are easy to confuse.
+
+**Two relic lines want the scope BELOW this one**: Totem of the Storm's
+"Increases damage done by Chain Lightning and Lightning Bolt by up to 33" and
+Idol of the Moon's Moonfire equivalent. `AbilityModifiers` is their shape. Both
+are worth nothing today for the reason above.
 
 ---
 
@@ -725,22 +797,21 @@ node tools/import_forever_spells.mjs <class> --write
 
 In the order I would do them:
 
-1. **A SCHOOL-SCOPED SPELL POWER STAT**, which is now the largest known
-   shortfall in the item data. `spellPower` is one school-blind number, and
-   nineteen item lines across the Priest and Paladin sets name a school --
-   "Increases damage done by Shadow spells and effects by up to 39". The Shadow
-   Priest is missing ~293 of it, which the planner counts and this does not.
+1. **A STYLE-SCOPED ITEM STAT**, which is now the largest single unmodelled
+   line on any one item and worth 172 attack power to BOTH feral Druids:
+   "+172 Attack Power in Cat, Bear, and Dire Bear forms only" on the Glaive of
+   Obsidian Fury. `statsForStyle` already knows the combat style; the item rule
+   does not, so the line falls to `unmodelled`.
 
-   `SchoolModifiers` is the shape to follow: it already carries crit chance,
-   crit damage and a damage multiplier per `DamageSchool`, and this is one more
-   term. `STAT_NAMES` is a deliberately closed flat set, so a keyed stat does
-   not fit there -- the modifier belongs beside the other school-scoped ones,
-   read by `dealDamage` where it already reads `spellPower`.
+   **The school-scoped half of this pair is DONE** -- see "What school-scoped
+   spell power moved" -- and the shape it took is not the one to copy here. A
+   school is a property of the DAMAGE and belongs on `SchoolModifiers`; a form
+   is a property of the CHARACTER and is settled before the fight begins, so
+   this one really can end up in `stats`, gated where `liveEquipment` already
+   gates a slot the style cannot fill.
 
-   **A STYLE-SCOPED ITEM STAT is the same shape of gap**, worth 172 attack
-   power to both feral Druids: "+172 Attack Power in Cat, Bear, and Dire Bear
-   forms only" on the Glaive of Obsidian Fury. `statsForStyle` already knows the
-   style; the item rule does not.
+   Unlike the school work, **this should move a real number**: it is attack
+   power on a melee build, not spell power on a class with no coefficients.
 
 2. **Spell hit per school** — five talents, and a genuine rule change: the hit
    roll happens before any per-school modifier is consulted.

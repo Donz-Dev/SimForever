@@ -275,6 +275,17 @@ export /**
  * choice and it replaces The Immovable Object, which was the one real FOREVER
  * item in the whole project and is now equipped by nobody. It is still in the
  * item data and still selectable.
+ *
+ * LAWBRINGER IS COVERED IN HOLY SPELL POWER -- "Increases damage done by Holy
+ * spells and effects by up to 27" on the Crown, and seven more like it -- and
+ * it reaches these three builds very unevenly. Seal of Righteousness has the
+ * project's only spell-power SEAL formula, so Shockadin's 161 was worth ~9.5
+ * DPS the day the school-scoped stat landed; Retribution really carries 79 and
+ * gained nothing from it, because **Seal of Command is 70% of WEAPON damage**;
+ * Protection's tank cut names Holy on no piece at all.
+ *
+ * All three then gained again from SPELL COEFFICIENTS, through Judgement,
+ * Holy Shock and Consecration rather than through a seal.
  * ----------------------------------------------------------------------------
  */
 const PALADIN_RET_GEAR: Equipment = {
@@ -429,18 +440,20 @@ export /**
  * A SHADOW PRIEST'S OWN GEAR: Vestments of Prophecy, with Anathema.
  *
  * ----------------------------------------------------------------------------
- * AND IT IS THE ONE SET THE ENGINE CANNOT FULLY WEAR. Almost every spell power
+ * IT IS THE SET THAT FOUND SCHOOL-SCOPED SPELL POWER. Almost every spell power
  * line in it names a SCHOOL -- "Increases damage done by Shadow spells and
- * effects by up to 39" on six of the eight tier pieces, and 75 on Anathema --
- * and `spellPower` here is school-blind, one number read by every non-physical
- * school. Applying a Shadow-only bonus to it would make the Priest's Holy and
- * Arcane spells hit harder, which is wrong, so those lines stay unmodelled and
- * the Gear panel prints every one.
+ * effects by up to 39" on seven tier pieces, 75 on Anathema and 14 on Skul's
+ * -- and `spellPower` was one school-blind number, so ~293 of a stated 497 was
+ * carried as unmodelled text rather than applied.
  *
- * The planner reads 204 spell damage generic and 497 Shadow. This character
- * gets the 204. The ~293 difference is the single largest known shortfall in
- * the item data and it is a missing ENGINE STAT rather than missing data --
- * see `src/data/items/README.md`.
+ * ALL 497 ARRIVES NOW: 204 on the stat block, 293 scoped to Shadow through
+ * `SchoolModifiers`, and nothing extra on Holy or Arcane. The character sheet
+ * prints both rows.
+ *
+ * AND IT WAS WORTH NOTHING UNTIL SPELL COEFFICIENTS ARRIVED, because Priest
+ * spells stated flat damage and 497 points multiplied nothing. Both halves
+ * landed and the profile went 285.0 -> 510.9. See
+ * `docs/spell-coefficients.md`.
  * ----------------------------------------------------------------------------
  */
 const PRIEST_GEAR: Equipment = {

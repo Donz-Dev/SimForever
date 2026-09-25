@@ -1,4 +1,5 @@
-import type { PartialStats } from '../../engine';
+import type { DamageSchool, PartialStats } from '../../engine';
+import { DAMAGE_SCHOOLS } from '../../engine';
 import type { Enchant, EquipmentSlot, Item, ItemWeapon, UnmodelledEffect } from './Item';
 import warriorItems from '../../data/items/classic-warrior.json';
 import hunterItems from '../../data/items/sod-hunter.json';
@@ -247,11 +248,13 @@ const EFFECT_RULES: readonly EffectRule[] = [
      * before any caster existed; what was missing was gear that granted it.
      * Forty-two lines across these files do.
      *
-     * A SCHOOL-SPECIFIC LINE IS NOT THIS. "Increases damage done by Shadow
-     * spells and effects by up to 39" is most of the Priest's set, and there
-     * is no per-school spell power stat to put it in, so it stays unmodelled
-     * rather than being applied to every school at once. See
-     * `src/data/items/README.md`.
+     * A SCHOOL-SPECIFIC LINE IS NOT THIS, and it is no longer unmodelled
+     * either. "Increases damage done by Shadow spells and effects by up to 39"
+     * says SHADOW, so it goes to `SCHOOL_SPELL_POWER_PATTERN` below and onto
+     * that school alone. The two must not be folded together in either
+     * direction: a Shadow bonus in `spellPower` would raise the same
+     * character's Holy and Arcane spells, and a generic bonus on one school
+     * would be lost by the other six.
      */
     pattern:
       /^Increases damage and healing done by magical spells and effects by up to (\d+)\.?$/,
@@ -291,6 +294,30 @@ const EFFECT_RULES: readonly EffectRule[] = [
 const WEAPON_SKILL_PATTERN = /^Increased ([\w\- ]+) \+(\d+)\.?$/;
 
 /**
+ * "Increases damage done by Shadow spells and effects by up to 39."
+ *
+ * ----------------------------------------------------------------------------
+ * SPELL POWER SCOPED TO ONE SCHOOL, and it is handled HERE rather than in
+ * `EFFECT_RULES` for the same reason weapon skill is: it does not land in
+ * `stats`. `STAT_NAMES` is a deliberately closed flat set, so there is no
+ * `shadowSpellPower` to add and there should not be -- it goes on
+ * `SchoolModifiers`, beside the crit and damage that are already keyed by
+ * school, and `spellPowerFor` reads it.
+ *
+ * Seventeen lines across two sets say this: eight Lawbringer pieces naming
+ * Holy and nine Priest pieces naming Shadow, Anathema's 75 and Skul's 14 among
+ * them. They were the largest known shortfall in the item data.
+ *
+ * AN UNKNOWN SCHOOL FALLS THROUGH TO UNMODELLED rather than being invented.
+ * The capture is validated against `DAMAGE_SCHOOLS`, so a wording naming
+ * something the engine has no school for is reported instead of being dropped
+ * into a school that happens to sort first.
+ * ----------------------------------------------------------------------------
+ */
+const SCHOOL_SPELL_POWER_PATTERN =
+  /^Increases damage done by (\w+) spells and effects by up to (\d+)\.?$/;
+
+/**
  * Effects implemented as reactions in `procs.ts` rather than as stats.
  *
  * They are neither a stat nor unmodelled: a proc is behaviour, so it lives with
@@ -313,8 +340,15 @@ function reasonFor(kind: string, text: string): string {
   if (/extra attack/i.test(text)) {
     return 'The engine has no extra-attack mechanic.';
   }
+  /*
+   * THE SCHOOL-SPELL-POWER REASON IS GONE, because the blocker it named has
+   * cleared: `SchoolModifiers` carries a `spellPower` per school and
+   * `SCHOOL_SPELL_POWER_PATTERN` fills it. The wording only reaches this
+   * function now when the SCHOOL is one the engine does not have, which is a
+   * different claim and says so.
+   */
   if (/^Increases damage done by \w+ spells and effects by up to \d+/.test(text)) {
-    return 'Spell power here is school-blind, so a one-school bonus has nowhere to go.';
+    return 'The school named is not one the engine has, so there is nowhere to put it.';
   }
   if (/forms only\.?$/.test(text)) {
     return 'An item stat cannot be conditional on the combat style, so this is listed rather than applied.';
@@ -324,10 +358,12 @@ function reasonFor(kind: string, text: string): string {
 
 function buildStats(item: RawItem): {
   stats: PartialStats;
+  schoolPower: Partial<Record<DamageSchool, number>>;
   unmodelled: UnmodelledEffect[];
   bonusSkill: number;
 } {
   const stats: Record<string, number> = {};
+  const schoolPower: Partial<Record<DamageSchool, number>> = {};
   const unmodelled: UnmodelledEffect[] = [];
   let bonusSkill = 0;
 
@@ -370,6 +406,23 @@ function buildStats(item: RawItem): {
       continue;
     }
 
+    /*
+     * Spell power for one school. Tried after the named rules and after
+     * weapon skill, alongside them rather than in `EFFECT_RULES`, because
+     * like weapon skill it is not a flat stat and has nowhere to land in
+     * `stats`.
+     */
+    const scoped = effect.text.match(SCHOOL_SPELL_POWER_PATTERN);
+    if (scoped) {
+      const school = scoped[1].toLowerCase() as DamageSchool;
+      // Validated, not assumed: an unrecognised school is reported rather
+      // than silently credited to whichever one the cast happens to be.
+      if (DAMAGE_SCHOOLS.includes(school)) {
+        schoolPower[school] = (schoolPower[school] ?? 0) + Number(scoped[2]);
+        continue;
+      }
+    }
+
     unmodelled.push({
       kind: effect.kind,
       text: effect.text,
@@ -377,7 +430,7 @@ function buildStats(item: RawItem): {
     });
   }
 
-  return { stats: stats as PartialStats, unmodelled, bonusSkill };
+  return { stats: stats as PartialStats, schoolPower, unmodelled, bonusSkill };
 }
 
 function buildItem(item: RawItem): Item {
@@ -397,7 +450,7 @@ function buildItem(item: RawItem): Item {
     throw new Error(`${item.name}: no slot mapping for inventory type "${item.inventoryType}"`);
   }
 
-  const { stats, unmodelled, bonusSkill } = buildStats(item);
+  const { stats, schoolPower, unmodelled, bonusSkill } = buildStats(item);
   // Carried through for display. Still in `unmodelled` too: the sheet shows
   // the total and the Gear panel says it does nothing, and both are true.
   const resistances = { ...item.resistances };
@@ -426,6 +479,7 @@ function buildItem(item: RawItem): Item {
     quality: item.quality,
     slots,
     stats,
+    schoolPower,
     ...(weapon ? { weapon } : {}),
     unmodelled,
     resistances,

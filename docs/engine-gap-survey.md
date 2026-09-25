@@ -142,17 +142,21 @@ The first caster built found the code already doing it.
 Recorded rather than quietly removed, because reading a comment instead of the
 code is how it got here.
 
-### 5b. What the Moonkin actually found — **two gaps, neither inventable**
+### 5b. What the Moonkin actually found — **one gap left of three**
 
 | | |
 | --- | --- |
 | **No spell power coefficients** | Every Druid spell states flat damage — "350 to 412 Arcane damage" — and no coefficient. None is invented, so **gear does not scale a caster's damage at all**. |
 | ~~**No caster gear**~~ | **EXPIRED.** The Moonkin wears Cenarion Raiment and reads 439 spell power. Twelve sets were imported from the owner's own sixtyupgrades links; see `src/data/items/README.md`. |
-| **Spell power has no school** | New, and found by the same import. Most of the Priest's spell power is SHADOW-ONLY and `spellPower` is one school-blind number, so ~293 of it is listed and not applied. |
+| ~~**Spell power has no school**~~ | **EXPIRED.** `SchoolModifiers` carries a `spellPower` per school and `spellPowerFor` reads it, so the Shadow Priest's full 497 arrives -- 204 on the stat block, 293 scoped to Shadow. It moved the Priest's DPS by ZERO, because of the gap above it; the one profile it moved is Shockadin, whose seal has the project's only spell power coefficient. |
 
-The first gap is what still makes the Moonkin's DPS a floor: it is mana-limited,
-casting flat-damage spells, and all 439 points of its spell power multiply
-nothing. It gained 76.4% from its own gear anyway -- intellect buys casts and
+The first gap is now the ONLY one, and it is what still makes the Moonkin's DPS
+a floor: it is mana-limited, casting flat-damage spells, and all 439 points of
+its spell power multiply nothing. Clearing the school gap under it proved the
+point rather than fixing it -- the Shadow Priest gained 293 points of correctly
+scoped Shadow power and did not move by a tenth of a DPS.
+
+The Moonkin gained 76.4% from its own gear anyway -- intellect buys casts and
 caster gear grants spell crit -- which is honest and still not worth quoting as
 a balance figure.
 
