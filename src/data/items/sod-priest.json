@@ -1,0 +1,361 @@
+{
+ "set": "sod-priest",
+ "description": "A level 60 Shadow Priest's gear: full Vestments of Prophecy with Anathema and Skul's Ghastly Touch, from a sixtyupgrades.com set the owner supplied. Season of Discovery items. MOST OF THIS SET'S SPELL POWER IS SHADOW-ONLY and the engine has a single school-blind spellPower, so it is carried as unmodelled text rather than applied -- see src/data/items/README.md.",
+ "source": "https://sixtyupgrades.com/sod/set/3cmwQu296c7Fwqc2VzpxLQ",
+ "items": [
+  {
+   "id": 226584,
+   "name": "Crown of Prophecy",
+   "quality": 4,
+   "icon": "inv_helmet_34",
+   "source": "https://www.wowhead.com/classic/item=226584",
+   "itemLevel": 66,
+   "inventoryType": "Head",
+   "subclass": "Cloth",
+   "armor": 83,
+   "weapon": null,
+   "stats": {
+    "stamina": 13,
+    "intellect": 19
+   },
+   "resistances": {
+    "fire": 10
+   },
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "Increases damage done by Shadow spells and effects by up to 39."
+    },
+    {
+     "kind": "Equip",
+     "text": "Improves your chance to get a critical strike with all spells and attacks by 1%."
+    },
+    {
+     "kind": "Set",
+     "text": "(2) You may cast Flash Heal while in Shadowform."
+    },
+    {
+     "kind": "Set",
+     "text": "(4) Increases your critical strike chance with spells and attacks by 2%."
+    },
+    {
+     "kind": "Set",
+     "text": "(6) Mind Blast critical strikes reduce the duration of your next Mind Flay by 50% while increasing its total damage by 25%."
+    }
+   ],
+   "tooltip": "Crown of Prophecy SoD Phase 4\nItem Level 66\nBinds when picked up\nHead Cloth\n83 Armor\n+13 Stamina\n+19 Intellect\n+10 Fire Resistance\nDurability 60 / 60Classes: Priest\nRequires Level 60\nEquip: Increases damage done by Shadow spells and effects by up to 39.\nEquip: Improves your chance to get a critical strike with all spells and attacks by 1%.\nTwilight Prophecy (0/8)Belt of Prophecy\nCrown of Prophecy\nGarments of Prophecy\nHands of Prophecy\nLeggings of Prophecy\nSandals of Prophecy\nShoulderpads of Prophecy\nWristwraps of Prophecy\n(2) Set : You may cast Flash Heal while in Shadowform.\n(4) Set : Increases your critical strike chance with spells and attacks by 2%.\n(6) Set : Mind Blast critical strikes reduce the duration of your next Mind Flay by 50% while increasing its total damage by 25%.\nSell Price: 2 78 66"
+  },
+  {
+   "id": 226581,
+   "name": "Shoulderpads of Prophecy",
+   "quality": 4,
+   "icon": "inv_shoulder_02",
+   "source": "https://www.wowhead.com/classic/item=226581",
+   "itemLevel": 66,
+   "inventoryType": "Shoulder",
+   "subclass": "Cloth",
+   "armor": 76,
+   "weapon": null,
+   "stats": {
+    "stamina": 15,
+    "intellect": 17
+   },
+   "resistances": {
+    "fire": 7
+   },
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "Improves your chance to get a critical strike with all spells and attacks by 1%."
+    },
+    {
+     "kind": "Equip",
+     "text": "Increases damage done by Shadow spells and effects by up to 17."
+    },
+    {
+     "kind": "Set",
+     "text": "(2) You may cast Flash Heal while in Shadowform."
+    },
+    {
+     "kind": "Set",
+     "text": "(4) Increases your critical strike chance with spells and attacks by 2%."
+    },
+    {
+     "kind": "Set",
+     "text": "(6) Mind Blast critical strikes reduce the duration of your next Mind Flay by 50% while increasing its total damage by 25%."
+    }
+   ],
+   "tooltip": "Shoulderpads of Prophecy SoD Phase 4\nItem Level 66\nBinds when picked up\nShoulder Cloth\n76 Armor\n+15 Stamina\n+17 Intellect\n+7 Fire Resistance\nDurability 60 / 60Classes: Priest\nRequires Level 60\nEquip: Improves your chance to get a critical strike with all spells and attacks by 1%.\nEquip: Increases damage done by Shadow spells and effects by up to 17.\nTwilight Prophecy (0/8)Belt of Prophecy\nCrown of Prophecy\nGarments of Prophecy\nHands of Prophecy\nLeggings of Prophecy\nSandals of Prophecy\nShoulderpads of Prophecy\nWristwraps of Prophecy\n(2) Set : You may cast Flash Heal while in Shadowform.\n(4) Set : Increases your critical strike chance with spells and attacks by 2%.\n(6) Set : Mind Blast critical strikes reduce the duration of your next Mind Flay by 50% while increasing its total damage by 25%.\nSell Price: 2 54 90"
+  },
+  {
+   "id": 226582,
+   "name": "Garments of Prophecy",
+   "quality": 4,
+   "icon": "inv_chest_cloth_03",
+   "source": "https://www.wowhead.com/classic/item=226582",
+   "itemLevel": 66,
+   "inventoryType": "Chest",
+   "subclass": "Cloth",
+   "armor": 102,
+   "weapon": null,
+   "stats": {
+    "stamina": 15,
+    "intellect": 16
+   },
+   "resistances": {
+    "fire": 10
+   },
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "Increases damage done by Shadow spells and effects by up to 43."
+    },
+    {
+     "kind": "Equip",
+     "text": "Improves your chance to get a critical strike with all spells and attacks by 1%."
+    },
+    {
+     "kind": "Set",
+     "text": "(2) You may cast Flash Heal while in Shadowform."
+    },
+    {
+     "kind": "Set",
+     "text": "(4) Increases your critical strike chance with spells and attacks by 2%."
+    },
+    {
+     "kind": "Set",
+     "text": "(6) Mind Blast critical strikes reduce the duration of your next Mind Flay by 50% while increasing its total damage by 25%."
+    }
+   ],
+   "tooltip": "Garments of Prophecy SoD Phase 4\nItem Level 66\nBinds when picked up\nChest Cloth\n102 Armor\n+15 Stamina\n+16 Intellect\n+10 Fire Resistance\nDurability 100 / 100Classes: Priest\nRequires Level 60\nEquip: Increases damage done by Shadow spells and effects by up to 43.\nEquip: Improves your chance to get a critical strike with all spells and attacks by 1%.\nTwilight Prophecy (0/8)Belt of Prophecy\nCrown of Prophecy\nGarments of Prophecy\nHands of Prophecy\nLeggings of Prophecy\nSandals of Prophecy\nShoulderpads of Prophecy\nWristwraps of Prophecy\n(2) Set : You may cast Flash Heal while in Shadowform.\n(4) Set : Increases your critical strike chance with spells and attacks by 2%.\n(6) Set : Mind Blast critical strikes reduce the duration of your next Mind Flay by 50% while increasing its total damage by 25%.\nSell Price: 3 38 55"
+  },
+  {
+   "id": 226579,
+   "name": "Wristwraps of Prophecy",
+   "quality": 4,
+   "icon": "inv_bracer_09",
+   "source": "https://www.wowhead.com/classic/item=226579",
+   "itemLevel": 66,
+   "inventoryType": "Wrist",
+   "subclass": "Cloth",
+   "armor": 44,
+   "weapon": null,
+   "stats": {
+    "stamina": 8,
+    "intellect": 11
+   },
+   "resistances": {
+    "fire": 5
+   },
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "Increases damage done by Shadow spells and effects by up to 27."
+    },
+    {
+     "kind": "Set",
+     "text": "(2) You may cast Flash Heal while in Shadowform."
+    },
+    {
+     "kind": "Set",
+     "text": "(4) Increases your critical strike chance with spells and attacks by 2%."
+    },
+    {
+     "kind": "Set",
+     "text": "(6) Mind Blast critical strikes reduce the duration of your next Mind Flay by 50% while increasing its total damage by 25%."
+    }
+   ],
+   "tooltip": "Wristwraps of Prophecy SoD Phase 4\nItem Level 66\nBinds when picked up\nWrist Cloth\n44 Armor\n+8 Stamina\n+11 Intellect\n+5 Fire Resistance\nDurability 35 / 35Classes: Priest\nRequires Level 60\nEquip: Increases damage done by Shadow spells and effects by up to 27.\nTwilight Prophecy (0/8)Belt of Prophecy\nCrown of Prophecy\nGarments of Prophecy\nHands of Prophecy\nLeggings of Prophecy\nSandals of Prophecy\nShoulderpads of Prophecy\nWristwraps of Prophecy\n(2) Set : You may cast Flash Heal while in Shadowform.\n(4) Set : Increases your critical strike chance with spells and attacks by 2%.\n(6) Set : Mind Blast critical strikes reduce the duration of your next Mind Flay by 50% while increasing its total damage by 25%.\nSell Price: 1 71 89"
+  },
+  {
+   "id": 228336,
+   "name": "Anathema",
+   "quality": 4,
+   "icon": "inv_staff_12",
+   "source": "https://www.wowhead.com/classic/item=228336",
+   "itemLevel": 75,
+   "inventoryType": "Two-Hand",
+   "subclass": "Staff",
+   "armor": null,
+   "weapon": {
+    "minDamage": 131,
+    "maxDamage": 219,
+    "speed": 3,
+    "dps": 58.33
+   },
+   "stats": {
+    "stamina": 22,
+    "intellect": 34
+   },
+   "resistances": {
+    "shadow": 20
+   },
+   "effects": [
+    {
+     "kind": "Use",
+     "text": "Calls forth Benediction. (1 Min Cooldown)"
+    },
+    {
+     "kind": "Equip",
+     "text": "Improves your chance to get a critical strike with all spells and attacks by 1%."
+    },
+    {
+     "kind": "Equip",
+     "text": "Increases damage done by Shadow spells and effects by up to 75."
+    }
+   ],
+   "tooltip": "Anathema\nItem Level 75\nBinds when picked up\nUnique\nTwo-Hand Staff\n131 - 219 Damage\nSpeed 3.00\n(58.33 damage per second)\n+22 Stamina\n+34 Intellect\n+20 Shadow Resistance\nDurability 120 / 120Classes: Priest\nRequires Level 60\nUse: Calls forth Benediction. (1 Min Cooldown)\nEquip: Improves your chance to get a critical strike with all spells and attacks by 1%.\nEquip: Increases damage done by Shadow spells and effects by up to 75."
+  },
+  {
+   "id": 226585,
+   "name": "Hands of Prophecy",
+   "quality": 4,
+   "icon": "inv_gauntlets_14",
+   "source": "https://www.wowhead.com/classic/item=226585",
+   "itemLevel": 66,
+   "inventoryType": "Hands",
+   "subclass": "Cloth",
+   "armor": 63,
+   "weapon": null,
+   "stats": {
+    "stamina": 17,
+    "intellect": 12
+   },
+   "resistances": {
+    "fire": 7
+   },
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "Increases damage done by Shadow spells and effects by up to 21."
+    },
+    {
+     "kind": "Equip",
+     "text": "Improves your chance to get a critical strike with all spells and attacks by 1%."
+    },
+    {
+     "kind": "Set",
+     "text": "(2) You may cast Flash Heal while in Shadowform."
+    },
+    {
+     "kind": "Set",
+     "text": "(4) Increases your critical strike chance with spells and attacks by 2%."
+    },
+    {
+     "kind": "Set",
+     "text": "(6) Mind Blast critical strikes reduce the duration of your next Mind Flay by 50% while increasing its total damage by 25%."
+    }
+   ],
+   "tooltip": "Hands of Prophecy SoD Phase 4\nItem Level 66\nBinds when picked up\nHands Cloth\n63 Armor\n+17 Stamina\n+12 Intellect\n+7 Fire Resistance\nDurability 35 / 35Classes: Priest\nRequires Level 60\nEquip: Increases damage done by Shadow spells and effects by up to 21.\nEquip: Improves your chance to get a critical strike with all spells and attacks by 1%.\nTwilight Prophecy (0/8)Belt of Prophecy\nCrown of Prophecy\nGarments of Prophecy\nHands of Prophecy\nLeggings of Prophecy\nSandals of Prophecy\nShoulderpads of Prophecy\nWristwraps of Prophecy\n(2) Set : You may cast Flash Heal while in Shadowform.\n(4) Set : Increases your critical strike chance with spells and attacks by 2%.\n(6) Set : Mind Blast critical strikes reduce the duration of your next Mind Flay by 50% while increasing its total damage by 25%.\nSell Price: 1 80 40"
+  },
+  {
+   "id": 226583,
+   "name": "Leggings of Prophecy",
+   "quality": 4,
+   "icon": "inv_pants_08",
+   "source": "https://www.wowhead.com/classic/item=226583",
+   "itemLevel": 66,
+   "inventoryType": "Legs",
+   "subclass": "Cloth",
+   "armor": 89,
+   "weapon": null,
+   "stats": {
+    "stamina": 17,
+    "intellect": 19
+   },
+   "resistances": {
+    "fire": 10
+   },
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "Increases damage done by Shadow spells and effects by up to 36."
+    },
+    {
+     "kind": "Equip",
+     "text": "Improves your chance to get a critical strike with all spells and attacks by 1%."
+    },
+    {
+     "kind": "Set",
+     "text": "(2) You may cast Flash Heal while in Shadowform."
+    },
+    {
+     "kind": "Set",
+     "text": "(4) Increases your critical strike chance with spells and attacks by 2%."
+    },
+    {
+     "kind": "Set",
+     "text": "(6) Mind Blast critical strikes reduce the duration of your next Mind Flay by 50% while increasing its total damage by 25%."
+    }
+   ],
+   "tooltip": "Leggings of Prophecy SoD Phase 4\nItem Level 66\nBinds when picked up\nLegs Cloth\n89 Armor\n+17 Stamina\n+19 Intellect\n+10 Fire Resistance\nDurability 75 / 75Classes: Priest\nRequires Level 60\nEquip: Increases damage done by Shadow spells and effects by up to 36.\nEquip: Improves your chance to get a critical strike with all spells and attacks by 1%.\nTwilight Prophecy (0/8)Belt of Prophecy\nCrown of Prophecy\nGarments of Prophecy\nHands of Prophecy\nLeggings of Prophecy\nSandals of Prophecy\nShoulderpads of Prophecy\nWristwraps of Prophecy\n(2) Set : You may cast Flash Heal while in Shadowform.\n(4) Set : Increases your critical strike chance with spells and attacks by 2%.\n(6) Set : Mind Blast critical strikes reduce the duration of your next Mind Flay by 50% while increasing its total damage by 25%.\nSell Price: 3 72 86"
+  },
+  {
+   "id": 226586,
+   "name": "Sandals of Prophecy",
+   "quality": 4,
+   "icon": "inv_boots_07",
+   "source": "https://www.wowhead.com/classic/item=226586",
+   "itemLevel": 66,
+   "inventoryType": "Feet",
+   "subclass": "Cloth",
+   "armor": 70,
+   "weapon": null,
+   "stats": {
+    "stamina": 14,
+    "intellect": 17
+   },
+   "resistances": {
+    "fire": 5
+   },
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "Improves your chance to get a critical strike with all spells and attacks by 1%."
+    },
+    {
+     "kind": "Equip",
+     "text": "Increases damage done by Shadow spells and effects by up to 21."
+    },
+    {
+     "kind": "Set",
+     "text": "(2) You may cast Flash Heal while in Shadowform."
+    },
+    {
+     "kind": "Set",
+     "text": "(4) Increases your critical strike chance with spells and attacks by 2%."
+    },
+    {
+     "kind": "Set",
+     "text": "(6) Mind Blast critical strikes reduce the duration of your next Mind Flay by 50% while increasing its total damage by 25%."
+    }
+   ],
+   "tooltip": "Sandals of Prophecy SoD Phase 4\nItem Level 66\nBinds when picked up\nFeet Cloth\n70 Armor\n+14 Stamina\n+17 Intellect\n+5 Fire Resistance\nDurability 50 / 50Classes: Priest\nRequires Level 60\nEquip: Improves your chance to get a critical strike with all spells and attacks by 1%.\nEquip: Increases damage done by Shadow spells and effects by up to 21.\nTwilight Prophecy (0/8)Belt of Prophecy\nCrown of Prophecy\nGarments of Prophecy\nHands of Prophecy\nLeggings of Prophecy\nSandals of Prophecy\nShoulderpads of Prophecy\nWristwraps of Prophecy\n(2) Set : You may cast Flash Heal while in Shadowform.\n(4) Set : Increases your critical strike chance with spells and attacks by 2%.\n(6) Set : Mind Blast critical strikes reduce the duration of your next Mind Flay by 50% while increasing its total damage by 25%.\nSell Price: 2 69 62"
+  },
+  {
+   "id": 13396,
+   "name": "Skul's Ghastly Touch",
+   "quality": 3,
+   "icon": "inv_misc_bone_elfskull_01",
+   "source": "https://www.wowhead.com/classic/item=13396",
+   "itemLevel": 57,
+   "inventoryType": "Ranged",
+   "subclass": "Wand",
+   "armor": null,
+   "weapon": null,
+   "stats": {},
+   "resistances": {},
+   "effects": [
+    {
+     "kind": "Stat",
+     "text": "70 - 131 Shadow Damage"
+    },
+    {
+     "kind": "Equip",
+     "text": "Increases damage done by Shadow spells and effects by up to 14."
+    }
+   ],
+   "tooltip": "Skul's Ghastly Touch\nItem Level 57\nBinds when picked up\nRanged Wand\n70 - 131 Shadow Damage\nSpeed 1.80\n(55.83 damage per second)\nDurability 65 / 65\nRequires Level 52\nEquip: Increases damage done by Shadow spells and effects by up to 14.\nSell Price: 3 8 53"
+  }
+ ]
+}

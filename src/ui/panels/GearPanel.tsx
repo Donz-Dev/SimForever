@@ -31,6 +31,17 @@ const COMMON_SLOTS: readonly SlotRow[] = [
   { id: 'ring2', name: 'Ring 2' },
   { id: 'trinket1', name: 'Trinket 1' },
   { id: 'trinket2', name: 'Trinket 2' },
+
+  /*
+   * The relic slot: an idol, libram or totem.
+   *
+   * Offered to every class rather than only the three that have one, the same
+   * way the ranged row is offered to every melee style. `itemsForSlot('relic')`
+   * is empty for a class with no relic, so the row simply has nothing in it --
+   * and a Druid, Paladin or Shaman set that equips one can be SEEN, which is
+   * the whole point of the row.
+   */
+  { id: 'relic', name: 'Relic' },
 ];
 
 /**
@@ -81,12 +92,21 @@ function weaponSlotsFor(style: CombatStyleId): readonly SlotRow[] {
         { id: 'twoHand', name: 'Two-Hander' },
       ];
     default:
-      // Forms and caster styles: no considered list yet, so offer everything
-      // rather than guessing which hands a Moonkin uses.
+      /*
+       * Forms and caster styles: offer everything, because all four hands are
+       * stat sticks and any of them may be held.
+       *
+       * THE SHIELD ROW IS ONE OF THEM. A caster shield is a real item -- Earth
+       * and Fire carries 26 spell power -- and the Elemental shaman set wears
+       * one, so leaving the row out put a piece of the set on the character,
+       * counted in its totals, and nowhere on the panel that lists what is
+       * worn.
+       */
       return [
         { id: 'mainHand', name: 'Main Hand' },
         { id: 'offHand', name: 'Off Hand' },
         { id: 'twoHand', name: 'Two-Hander' },
+        { id: 'shield', name: 'Shield' },
         ranged,
       ];
   }

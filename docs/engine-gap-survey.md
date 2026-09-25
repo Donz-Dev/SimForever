@@ -147,11 +147,14 @@ code is how it got here.
 | | |
 | --- | --- |
 | **No spell power coefficients** | Every Druid spell states flat damage — "350 to 412 Arcane damage" — and no coefficient. None is invented, so **gear does not scale a caster's damage at all**. |
-| **No caster gear** | The item data is nineteen Classic stand-ins curated for a Warrior. A Moonkin's `spellPower` reads **0**. |
+| ~~**No caster gear**~~ | **EXPIRED.** The Moonkin wears Cenarion Raiment and reads 439 spell power. Twelve sets were imported from the owner's own sixtyupgrades links; see `src/data/items/README.md`. |
+| **Spell power has no school** | New, and found by the same import. Most of the Priest's spell power is SHADOW-ONLY and `spellPower` is one school-blind number, so ~293 of it is listed and not applied. |
 
-Together those make the Moonkin's DPS a floor rather than an estimate: it is
-mana-limited, casting flat-damage spells, in plate. The figure is honest and
-not yet useful, which is the right failure mode — but do not quote it.
+The first gap is what still makes the Moonkin's DPS a floor: it is mana-limited,
+casting flat-damage spells, and all 439 points of its spell power multiply
+nothing. It gained 76.4% from its own gear anyway -- intellect buys casts and
+caster gear grants spell crit -- which is honest and still not worth quoting as
+a balance figure.
 
 **Resistance is NOT among these.** The ruleset owner ruled that resistances on
 enemy targets have no impact on damage for now, so `resistancesFromItems`

@@ -417,12 +417,26 @@ Paladin two clauses, Reckoning's extra attack after blocking and Holy Shield's
 than the engine.** `dealDamage` reads `spellPower` for any non-physical school
 and has since before any caster existed; what is missing is that every Druid
 spell states FLAT damage -- "350 to 412 Arcane damage" -- and no coefficient at
-all, so there is nothing to multiply. None is invented. Combined with an item
-set curated for a Warrior, where a Moonkin's `spellPower` reads zero, a caster
-figure is a FLOOR rather than an estimate. Honest, and not yet worth quoting.
-**THE SHAMAN READS THE SAME WAY**, which settles it: two classes, flat damage
-and no coefficient in both, so this is how Forever's spell data is written
-rather than a Druid quirk.
+all, so there is nothing to multiply. None is invented. **THE SHAMAN READS THE
+SAME WAY**, which settles it: two classes, flat damage and no coefficient in
+both, so this is how Forever's spell data is written rather than a Druid quirk.
+
+**THE OTHER HALF OF THAT CAVEAT HAS EXPIRED, AND THE CASTERS MOVED ANYWAY.**
+"An item set curated for a Warrior, where a Moonkin's `spellPower` reads zero"
+was true for as long as there was no caster gear, and every caster now wears
+its own: 439 on the Moonkin, 453 on an Elemental shaman, 452 on all three
+Mages. **None of that spell power multiplies anything** and the four cloth
+profiles still gained 4.6% to 93.1% -- from INTELLECT, which buys casts before
+the mana runs out, and from SPELL CRIT, which caster gear grants and plate does
+not. A stat can matter through a resource rather than through a coefficient.
+
+**A SCHOOL-BLIND `spellPower` IS ITS OWN GAP, and the Priest found it.** Six of
+eight Vestments of Prophecy pieces and Anathema all say "Increases damage done
+by SHADOW spells and effects by up to N", and one number read by every
+non-physical school cannot hold that -- applying it would make the same
+character's Holy spells hit harder. So ~293 of a Shadow Priest's 497 is carried
+as unmodelled text. `SchoolModifiers` is the shape it wants; `STAT_NAMES` is a
+closed flat set and deliberately cannot key by school.
 
 **AN AURA CAN CHANGE THE NEXT CAST OF AN ABILITY IT NAMES**, which is
 `CastModifier` on `AuraDefinition` and the rule four classes asked for.
@@ -650,9 +664,76 @@ suite, that is a statement about the suite.
 could have caught it because a profile in the wrong gear runs perfectly. 370
 strength and 245 agility on a class that gets NO ranged attack power from
 strength; their own set is 58 and 334, and moving to it was worth up to 34%.
-`SHARED_ARMOUR` is still the Warrior set and TWENTY profiles still wear it,
-seventeen of them not Warriors.
+**ALL TWENTY-THREE PROFILES ARE IN THEIR OWN CLASS'S GEAR NOW**, from twelve
+sixtyupgrades sets the owner supplied, and seventeen figures moved -- in BOTH
+directions, because the Warrior set was never a neutral stand-in. It is a very
+strength-heavy plate set, so every melee hybrid that moved to its own class's
+gear LOST attack power: Retribution 5.7%, Bear 20.8%, Protection Paladin 29.5%.
+The old numbers were flattering.
 **Check whose gear a profile is in before quoting its number.**
+
+**THE SIX PROFILES WHOSE GEAR DID NOT CHANGE DID NOT MOVE BY A DECIMAL**, and
+that is the check that matters in a gear commit. Seventeen sets landing at once
+touches `liveEquipment`, the effect rules, the slot map and the enchant list --
+shared code every profile reads. Three Warriors and three Hunters coming back
+at exactly their old figures is what says the change stayed inside the sets.
+
+**A STAT-STICK OFF HAND HAD ITS STATS DELETED, which is the main hand's bug in
+the mirror.** `liveEquipment` was fixed for `mainHand: 'stat-stick'` when a
+Hunter lost a two-hander's stats, and the identical line two rows down went on
+deleting both off-hand slots for all five stat-stick styles -- so an Elemental
+shaman holding Earth and Fire, a CASTER shield worth 26 spell power, got
+nothing from it at all. **When a rule is fixed for one slot, check its
+siblings**: `offHand` and `shield` are both off-hand slots and both needed it.
+
+**"WITH ALL SPELLS AND ATTACKS" IS TWO STATS.** `critChance` and
+`spellCritChance` are separate and are read by separate tables -- the melee
+tables take the first, `kind === 'spell'` the second -- so an item line saying
+both has to grant both, which is what the raid buffs saying it already did.
+Sixty-two item lines say it, and granting only the melee half was invisible for
+exactly as long as no caster owned any gear.
+
+**`Increased Defense +7` WAS BEING EATEN BY THE WEAPON-SKILL PATTERN.**
+`^Increased (.+) \+(\d+)$` matches it, and a weapon's `bonusSkill` on a
+breastplate is dropped on the floor because only a weapon carries one -- so
+seventeen lines of defense skill, which moves five separate numbers on the
+attacks-received table, went nowhere. The named rules are tried BEFORE the
+weapon-skill pattern now, and "Increased Two-handed Swords +3" still falls
+through to the skill it is.
+
+**A SET BONUS WAS BEING DROPPED, WHICH IS THE ONE THING THIS PARSER MAY NOT
+DO.** It reads `(4) Set : ...` and starts with a bracket, so it matched neither
+the prefix list nor the bare-number fallback and went nowhere at all -- not
+unmodelled, dropped. It survived because the only set on file was the Warrior's,
+whose three bonuses are stance mechanics nobody was looking for; twenty profiles
+are in Tier 1 now and the Priest's four-piece is a flat +2% spell crit that
+would have read as simply missing. The full tooltip was always stored, so
+nothing was lost from the SOURCE -- only from the list of what the simulator
+does not do.
+
+**AN ITEM'S PROC IS KEYED BY ID, AND AN ITEM CAN HAVE TWO.** Five of the
+owner's sets name the Season of Discovery Hand of Justice, id 228722, while the
+proc was keyed to the Classic 11815. Its tooltip matches `MODELLED_AS_PROCS`, so
+the trinket would have read as fully SIMULATED -- not even listed as missing --
+while firing never once. The SoD tooltip also states a 2-second internal
+cooldown where the code carries the owner's 1.5; the disagreement is recorded
+rather than averaged.
+
+**A GEAR SET CAN FORCE A BUILD SETTING, and Shockadin's did.** Its set is a
+one-hander and a caster shield where the preset said `two_hander` -- under which
+`liveEquipment` deletes the main hand and both off-hand slots, leaving a Paladin
+holding nothing. Five settings have to agree, and when the owner supplies the
+gear it is the gear that says which one was wrong.
+
+**VALIDATE THE GEAR, NOT THE CHARACTER, AGAINST THE PLANNER.** The planner shows
+BASE + GEAR and nothing else, so comparing a preset's primaries to it flags every
+build that spends a talent point on a stat -- eleven of them, on the first run.
+Build the same character with no items and no talents, and check that
+`panel - base` is what the items supply. All twelve sets passed that; the
+differences that remained were all BASE, which is Forever's data and not to be
+"fixed", and one item where the two SOURCES disagree (sixtyupgrades has Cenarion
+Trousers at +20/+16, Wowhead at +18/+11; Wowhead's is kept because it is this
+project's item source and the one `--verify` reproduces).
 
 **VALIDATE AN IMPORTED GEAR SET AGAINST THE PLANNER'S OWN STAT PANEL.** Every
 primary matched exactly -- 58 strength, 334 agility, 225 stamina, 118
@@ -899,9 +980,17 @@ any of the three conditions cannot be met, leave it inert instead.
 hand; re-run the generator.
 
 `src/data/talents/*.json` (468 talents, nine classes) and
-`src/data/items/classic-warrior.json` (19 items) were **scraped** and are
-checked in. Each directory has a README recording exactly where the data came
-from and how to refresh it. Never hand-edit either.
+`src/data/items/*.json` (151 items in nine files, one per gear set) were
+**scraped** and are checked in. Each directory has a README recording exactly
+where the data came from and how to refresh it. Never hand-edit either.
+
+**THE ITEM FILES ARE REBUILT BY ONE COMMAND**, `node tools/import_item.mjs
+--build`, off the ordered spec in `tools/item-sets.json`. That spec is also
+what `--verify` reads, so a new set added to one is covered by the other -- they
+used to be two lists and a file was once added to only one, which turns "re-parse
+everything on file" into a false promise. **Twenty-two items are worn by more than
+one set**, `itemData` throws on a duplicate id, and the spec order is what
+decides which file owns each shared piece.
 
 **Prove a transfer rather than trusting it.** Both data sets came out of a
 browser, and both were hashed with SHA-256 there and re-hashed on disk before

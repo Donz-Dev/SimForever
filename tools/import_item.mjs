@@ -5,6 +5,17 @@
  *   node tools/import_item.mjs forever 19321
  *   node tools/import_item.mjs classic 17075
  *   node tools/import_item.mjs --verify            # re-parse every item on file
+ *   node tools/import_item.mjs --build             # rebuild every item file
+ *   node tools/import_item.mjs --build sod-rogue   # ...or just one of them
+ *
+ * WHICH FILE OWNS WHICH ITEM
+ *
+ * `tools/item-sets.json` lists every item file in BUILD ORDER with the ids it
+ * asks for. Twenty-two pieces are worn by more than one set, and `itemData.ts`
+ * throws on a duplicate id, so an id lands in the FIRST file that asks and is
+ * skipped in every later one. That decision lives in the spec and nowhere else,
+ * which is what makes the whole import one reproducible command rather than a
+ * hundred and twenty judgement calls.
  *
  * WHY A TOOL RATHER THAN HAND-TRANSCRIBING
  *
@@ -139,6 +150,24 @@ function parse(raw, game, id) {
       `Unique|Classes:|Speed |[\\d.]+ - [\\d.]+ Damage|\\([\\d.]+ damage per second\\))`,
   );
   for (const line of lines) {
+    /*
+     * A SET BONUS, which is written "(4) Set : ..." and starts with a bracket.
+     *
+     * So it matched neither the prefix list nor the bare-number fallback, and
+     * every one of them was DROPPED -- not unmodelled, dropped, the one thing
+     * this parser is not allowed to do. It went unnoticed because the only set
+     * on file was the Warrior's, whose three bonuses are all stance mechanics
+     * nobody was looking for; twenty profiles are now in Tier 1, and the
+     * Priest's four-piece is a flat +2% spell crit that would read as simply
+     * missing. The tooltip was always stored in full, so nothing was lost from
+     * the SOURCE -- only from the list of what the simulator does not do.
+     */
+    const setBonus = line.match(/^\((\d+)\) Set ?: ?(.*)$/);
+    if (setBonus) {
+      effects.push({ kind: 'Set', text: `(${setBonus[1]}) ${setBonus[2]}`.trim() });
+      continue;
+    }
+
     const prefix = PREFIXES.find((p) => line.startsWith(p + ':'));
     if (prefix) {
       effects.push({ kind: prefix, text: line.slice(prefix.length + 1).trim() });
@@ -174,17 +203,59 @@ async function fetchItem(game, id) {
   return parse(await response.json(), game, id);
 }
 
+/** One spell's tooltip, for an enchant. Same endpoint, different noun. */
+async function fetchEnchant(game, id) {
+  const response = await fetch(`https://nether.wowhead.com/${game}/tooltip/spell/${id}`);
+  if (!response.ok) throw new Error(`${game}/spell/${id}: HTTP ${response.status}`);
+  const raw = await response.json();
+  return {
+    id: Number(id),
+    name: raw.name,
+    icon: raw.icon,
+    source: `https://www.wowhead.com/${game}/spell=${id}`,
+    tooltip: toText(raw.tooltip),
+  };
+}
+
+const { readFileSync, writeFileSync } = await import('node:fs');
+
+const SPEC = JSON.parse(readFileSync('tools/item-sets.json', 'utf8'));
+
+/**
+ * Every item file, in build order. Read from the spec rather than repeated
+ * here: `sod-hunter.json` was once added to one list and not the other, and a
+ * `--verify` that silently skipped a file turns "re-parse everything on file"
+ * into a false promise -- which is worse than no check at all, because it reads
+ * as one.
+ */
+const FILES = SPEC.sets.map((set) => set.file);
+
+/**
+ * The ids a file currently holds, in order, EACH WITH ITS OWN GAME.
+ *
+ * Not the set's game. `classic-warrior.json` is nineteen Classic stand-ins and
+ * ONE real Forever item, and rebuilding the file with a single game silently
+ * replaced The Immovable Object with its Classic self -- same stats, different
+ * source url and a differently worded block line, which is exactly the kind of
+ * provenance loss this tool exists to prevent. The stored `source` says which
+ * endpoint an item came from, so it is read back rather than assumed, the same
+ * way `--verify` already does it.
+ */
+function storedEntries(file) {
+  return JSON.parse(readFileSync(file, 'utf8')).items.map((item) => ({
+    id: item.id,
+    game: item.source.includes('/forever/') ? 'forever' : 'classic',
+  }));
+}
+
+/** A spec id, which is either a bare id or `{ id, game }`. */
+function entryFor(id, setGame) {
+  return typeof id === 'number' ? { id, game: setGame } : { id: id.id, game: id.game ?? setGame };
+}
+
 const [mode, second] = process.argv.slice(2);
 
 if (mode === '--verify') {
-  const { readFileSync } = await import('node:fs');
-  /*
-   * EVERY item file, not just the first. `sod-hunter.json` was added after
-   * this was written, and a verify that silently skipped it would turn the
-   * README's "re-parse everything already on file" into a false promise --
-   * which is worse than no check at all, because it reads as one.
-   */
-  const FILES = ['src/data/items/classic-warrior.json', 'src/data/items/sod-hunter.json'];
   const storedItems = FILES.flatMap((file) => JSON.parse(readFileSync(file, 'utf8')).items);
   let same = 0;
   for (const stored of storedItems) {
@@ -196,7 +267,7 @@ if (mode === '--verify') {
         differences.push(`${key}: parsed ${JSON.stringify(fresh[key])} vs stored ${JSON.stringify(stored[key])}`);
       }
     }
-    for (const key of ['stats', 'resistances', 'weapon']) {
+    for (const key of ['stats', 'resistances', 'weapon', 'effects']) {
       if (JSON.stringify(fresh[key]) !== JSON.stringify(stored[key])) {
         differences.push(`${key}: parsed ${JSON.stringify(fresh[key])} vs stored ${JSON.stringify(stored[key])}`);
       }
@@ -207,10 +278,63 @@ if (mode === '--verify') {
     } else same++;
   }
   console.log(`\n${same} of ${storedItems.length} items reproduce exactly.`);
+} else if (mode === '--build') {
+  /*
+   * Rebuild the item files from the spec.
+   *
+   * Every top-level key a file already has is PRESERVED and only `items` is
+   * replaced, because `classic-warrior.json` also carries the enchants and
+   * rebuilding it must not drop them.
+   */
+  const owned = new Map();
+  for (const set of SPEC.sets) {
+    const entries = set.ids
+      ? set.ids.map((id) => entryFor(id, set.game))
+      : storedEntries(set.file);
+    const only = second !== undefined && !set.file.includes(second);
+
+    const items = [];
+    const skipped = [];
+    for (const entry of entries) {
+      const ownedBy = owned.get(entry.id);
+      if (ownedBy !== undefined) {
+        skipped.push(`${entry.id} (in ${ownedBy})`);
+        continue;
+      }
+      owned.set(entry.id, set.file);
+      if (!only) items.push(await fetchItem(entry.game, entry.id));
+    }
+
+    if (only) continue;
+
+    let file;
+    try {
+      file = JSON.parse(readFileSync(set.file, 'utf8'));
+    } catch {
+      file = {};
+    }
+    if (set.set !== undefined) file.set = set.set;
+    if (set.description !== undefined) file.description = set.description;
+    if (set.source !== undefined) file.source = set.source;
+    file.items = items;
+
+    for (const enchantSpec of SPEC.enchants ?? []) {
+      if (enchantSpec.file !== set.file) continue;
+      file.enchants = [];
+      for (const spellId of enchantSpec.spellIds) {
+        file.enchants.push(await fetchEnchant(enchantSpec.game, spellId));
+      }
+    }
+
+    writeFileSync(set.file, JSON.stringify(file, null, 1) + '\n');
+    console.log(`${set.file}: ${items.length} items`);
+    if (skipped.length) console.log(`  skipped, already owned: ${skipped.join(', ')}`);
+  }
 } else if (mode && second) {
   console.log(JSON.stringify(await fetchItem(mode, second), null, 1));
 } else {
   console.error('usage: import_item.mjs <forever|classic> <id>');
   console.error('       import_item.mjs --verify');
+  console.error('       import_item.mjs --build [file-name-fragment]');
   process.exit(1);
 }

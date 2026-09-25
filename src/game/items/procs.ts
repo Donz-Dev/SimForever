@@ -233,8 +233,26 @@ export const HAND_OF_JUSTICE_CHANCE = 0.02;
  *
  * Without it the effect chains off itself: the extra swing is an attack, so it
  * rolls again, and a run of them is possible. 1.5 seconds is the stated window.
+ *
+ * THE SEASON OF DISCOVERY TOOLTIP SAYS TWO SECONDS -- item 228722 spells out
+ * "(Proc chance: 2%, 2s cooldown)" where the Classic one states nothing at all.
+ * The 1.5 here is the ruleset owner's own figure and stays, because this is a
+ * Forever simulator and an SoD item is a stand-in; the disagreement is recorded
+ * rather than averaged. Both agree on the 2%.
  */
 export const HAND_OF_JUSTICE_ICD_MS = 1500;
+
+/**
+ * The trinket's ids. TWO of them, which is the whole reason this is a list.
+ *
+ * 11815 is the Classic Hand of Justice and 228722 the Season of Discovery one,
+ * and the sixtyupgrades sets the owner supplied all name the second. Keying the
+ * proc on one id meant five profiles could equip a trinket whose "2% chance on
+ * melee hit to gain 1 extra attack" is reported as MODELLED -- it matches
+ * `MODELLED_AS_PROCS`, so it is not even listed as missing -- while firing
+ * never. A proc that never fires leaves nothing behind to notice.
+ */
+export const HAND_OF_JUSTICE_IDS: readonly number[] = [11815, 228722];
 
 /**
  * Hand of Justice.
@@ -326,7 +344,10 @@ export function reactionsForEquipment(
   }
 
   for (const slot of ['trinket1', 'trinket2'] as const) {
-    if (equipment[slot]?.itemId === 11815) reactions.push(handOfJusticeReaction());
+    const itemId = equipment[slot]?.itemId;
+    if (itemId !== undefined && HAND_OF_JUSTICE_IDS.includes(itemId)) {
+      reactions.push(handOfJusticeReaction());
+    }
   }
 
   return reactions;

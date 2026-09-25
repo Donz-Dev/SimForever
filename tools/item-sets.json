@@ -1,0 +1,112 @@
+{
+ "_comment": [
+  "Every item file, in BUILD ORDER, for `node tools/import_item.mjs --build`.",
+  "",
+  "The order is load-bearing. An id is imported into the FIRST file that asks",
+  "for it and skipped in every later one, because `itemData.ts` throws on a",
+  "duplicate id across files -- by design, so nothing can silently keep one of",
+  "two entries for the same item. Twenty-two pieces are shared between these",
+  "sets (Choker of the Fire Lord is worn by five of them), so which file OWNS a",
+  "shared piece is decided here and nowhere else.",
+  "",
+  "`ids: null` means 'the ids already in the file, in their current order' --",
+  "the two files that predate this spec, rebuilt rather than re-listed."
+ ],
+ "sets": [
+  {
+   "file": "src/data/items/classic-warrior.json",
+   "game": "classic",
+   "ids": null
+  },
+  {
+   "file": "src/data/items/sod-hunter.json",
+   "game": "classic",
+   "ids": null
+  },
+  {
+   "file": "src/data/items/sod-rogue.json",
+   "set": "sod-rogue",
+   "description": "A level 60 Rogue's gear: full Nightslayer, with Perdition's Blade and Core Hound Tooth for the daggers build and Vis'kag and Brutality Blade -- both already in classic-warrior.json -- for Combat. From two sixtyupgrades.com sets the project owner supplied; the armour is identical between them and only the weapons differ. Season of Discovery items.",
+   "source": "https://sixtyupgrades.com/sod/set/rRozaoHr38Wt4Tc9VYjoL6 and https://sixtyupgrades.com/sod/set/qAbtRniPYvBHdQWHJbuaif",
+   "game": "classic",
+   "ids": [
+    226446, 228685, 226444, 13340, 226447, 226442, 228296, 228277, 226441,
+    226440, 226445, 226443, 228286, 19325, 228722, 228464, 228252, 17075,
+    228265
+   ]
+  },
+  {
+   "file": "src/data/items/sod-druid.json",
+   "set": "sod-druid",
+   "description": "A level 60 Druid's gear for all three forms: Cenarion Raiment in the caster, cat and bear variants the owner supplied as three separate sets, plus the idols each build uses. Season of Discovery items. This file also OWNS the caster jewellery the Mage, Warlock, Priest, Shaman and Shockadin sets share -- Choker of the Fire Lord, Drape of the Fire Lord, Mana Igniting Cord, Band of Sulfuras, Ring of Spell Power, Briarwood Reed, Eye of the Beast and Staff of Dominance -- because it is the first file that asks for them.",
+   "source": "https://sixtyupgrades.com/sod/set/dp32un6quRfiri9Ztnrg7z (Moonkin), https://sixtyupgrades.com/sod/set/7RpNjszTib9QhSQSANv6rX (Cat), https://sixtyupgrades.com/sod/set/5khxqXfnx3U1QSXaRsNv5G (Bear)",
+   "game": "classic",
+   "ids": [
+    226658, 228289, 226653, 228100, 226656, 226655, 228271, 226777, 228256,
+    226651, 226774, 228287, 228243, 12930, 13968, 23197,
+    226659, 19491, 226665, 226661, 226662, 227833, 226664, 226660, 226666,
+    226663, 220606,
+    226670, 226674, 228360, 226668, 226667, 226673, 228686, 23198
+   ]
+  },
+  {
+   "file": "src/data/items/sod-shaman.json",
+   "set": "sod-shaman",
+   "description": "A level 60 Shaman's gear: Earthfury in the Elemental caster variant and the Enhancement melee one, from two sixtyupgrades.com sets the owner supplied. Season of Discovery items. Elemental holds a shield -- Earth and Fire, a caster shield -- which the Shockadin set also wears.",
+   "source": "https://sixtyupgrades.com/sod/set/nJ2qTVuA516n6dtWG2zRmJ (Elemental), https://sixtyupgrades.com/sod/set/mTuJFHPSPpUX3myhndpfDQ (Enhancement)",
+   "game": "classic",
+   "ids": [
+    227002, 226624, 226619, 226626, 228263, 228142, 226621, 226623, 226620,
+    18471, 23199,
+    226640, 227024, 226642, 19323, 227022, 226641, 226639, 226636, 227977
+   ]
+  },
+  {
+   "file": "src/data/items/sod-mage.json",
+   "set": "sod-mage",
+   "description": "A level 60 Mage's gear: full Arcanist with the Robe of Volatile Power, a Staff of Dominance and a Crimson Shocker wand. One set for all three Mage profiles, from a sixtyupgrades.com set the owner supplied. Season of Discovery items.",
+   "source": "https://sixtyupgrades.com/sod/set/ei98MyLEYtWRdX6Nd3CMtx",
+   "game": "classic",
+   "ids": [226562, 226560, 228239, 226558, 226556, 226561, 226557, 228262]
+  },
+  {
+   "file": "src/data/items/sod-paladin.json",
+   "set": "sod-paladin",
+   "description": "A level 60 Paladin's gear in three variants the owner supplied separately: Retribution (Lawbringer and Soulforge with a two-hander), Shockadin (Lawbringer with a one-hander and a caster shield) and Protection (Lawbringer's tank pieces with Earthen Guard). Season of Discovery items.",
+   "source": "https://sixtyupgrades.com/sod/set/ocSyhg5nkyBnPBQN2WgpEe (Retribution), https://sixtyupgrades.com/sod/set/9VPCeQXbycTWsVTtFA9BYd (Shockadin), https://sixtyupgrades.com/sod/set/eT3tn2GwtQqJdHnUrFVDKJ (Protection)",
+   "game": "classic",
+   "ids": [
+    226976, 221783, 20691, 226973, 226596, 226975, 228295, 226598, 226601,
+    215435,
+    226599, 226602, 228269, 226600, 226597, 22401,
+    226607, 228249, 226605, 226595, 226603, 20688, 226608, 226604, 226606,
+    226609, 228242
+   ]
+  },
+  {
+   "file": "src/data/items/sod-warlock.json",
+   "set": "sod-warlock",
+   "description": "A level 60 Warlock's gear: Felheart with the Deathmist mask and sandals, a Staff of Dominance and a Nightmare Trophy wand. One set for both Warlock profiles, from a sixtyupgrades.com set the owner supplied. Season of Discovery items.",
+   "source": "https://sixtyupgrades.com/sod/set/cEarpk3WBaPjCxwLpuJVTz",
+   "game": "classic",
+   "ids": [226909, 226550, 226548, 226553, 226552, 226547, 226908, 220604]
+  },
+  {
+   "file": "src/data/items/sod-priest.json",
+   "set": "sod-priest",
+   "description": "A level 60 Shadow Priest's gear: full Vestments of Prophecy with Anathema and Skul's Ghastly Touch, from a sixtyupgrades.com set the owner supplied. Season of Discovery items. MOST OF THIS SET'S SPELL POWER IS SHADOW-ONLY and the engine has a single school-blind spellPower, so it is carried as unmodelled text rather than applied -- see src/data/items/README.md.",
+   "source": "https://sixtyupgrades.com/sod/set/3cmwQu296c7Fwqc2VzpxLQ",
+   "game": "classic",
+   "ids": [
+    226584, 226581, 226582, 226579, 228336, 226585, 226583, 226586, 13396
+   ]
+  }
+ ],
+ "enchants": [
+  {
+   "file": "src/data/items/classic-warrior.json",
+   "game": "classic",
+   "spellIds": [20034, 22749]
+  }
+ ]
+}

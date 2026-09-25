@@ -44,8 +44,17 @@ export interface ProfilePreset {
   readonly build: () => CharacterProfile;
 }
 
-/** Crusader, the only weapon enchant in the item data. */
+/** Crusader: a proc, and what every melee build's weapon carries. */
 const CRUSADER = 20034;
+
+/**
+ * Enchant Weapon - Spell Power, "add up to 30 damage to spells".
+ *
+ * The five caster sets name it on their staff or dagger, and it is a flat stat
+ * rather than a proc -- so it applies to a weapon that is only ever HELD, which
+ * is what a caster's main hand is.
+ */
+const SPELL_POWER = 22749;
 
 /**
  * The raid every preset assumes, chosen by the ruleset owner.
@@ -307,21 +316,48 @@ const ROGUE_RUPTURE_TALENTS: TalentAllocation = {
 };
 
 /**
- * A GEAR SHELL, and said to be one.
+ * A ROGUE'S OWN GEAR, and no longer a Warrior's: full Nightslayer.
  *
- * The item data holds nineteen Classic stand-ins curated for a Warrior, and
- * nothing in it is leather, a dagger or a Rogue's. These three carry the same
- * armour the Warrior presets do, so a Rogue has stats at all, and Brutality
- * Blade in each hand because it is the only one-hander there is.
+ * ----------------------------------------------------------------------------
+ * From the two sixtyupgrades.com sets the owner supplied -- see
+ * `src/data/items/sod-rogue.json`. The ARMOUR is identical between them, item
+ * for item, so it is written once and only the weapons differ.
  *
- * WHICH MAKES BACKSTAB AND MUTILATE UNCASTABLE: both require daggers, and
- * their own `canCast` refuses rather than pretending. The Venom build is the
- * one this costs -- it falls back to Sinister Strike, which is exactly what
- * its priority list is written to do.
+ * BACKSTAB AND MUTILATE ARE CASTABLE NOW, which the old shell made impossible.
+ * Both require daggers and the shell had a sword in each hand, so Venom fell
+ * back to Sinister Strike for its whole life. Perdition's Blade and Core Hound
+ * Tooth are both daggers, so the build the owner asked for is the build that
+ * runs.
+ * ----------------------------------------------------------------------------
  */
-const ROGUE_WEAPONS: Equipment = {
-  mainHand: { itemId: 228265, enchantId: CRUSADER },
-  offHand: { itemId: 228265, enchantId: CRUSADER },
+const ROGUE_ARMOUR: Equipment = {
+  ranged: { itemId: 228252 }, // Striker's Mark
+  head: { itemId: 226446 }, // Nightslayer Cover
+  neck: { itemId: 228685 }, // Onyxia Tooth Pendant
+  shoulders: { itemId: 226444 }, // Nightslayer Shoulder Pads
+  cloak: { itemId: 13340 }, // Cape of the Black Baron
+  chest: { itemId: 226447 }, // Nightslayer Chestpiece
+  wrists: { itemId: 226442 }, // Nightslayer Bracelets
+  gloves: { itemId: 226441 }, // Nightslayer Gloves
+  waist: { itemId: 226440 }, // Nightslayer Belt
+  legs: { itemId: 226445 }, // Nightslayer Pants
+  feet: { itemId: 226443 }, // Nightslayer Boots
+  ring1: { itemId: 228286 }, // Band of Accuria
+  ring2: { itemId: 19325 }, // Don Julio's Band
+  trinket1: { itemId: 228722 }, // Hand of Justice
+  trinket2: { itemId: 228464 }, // Royal Seal of Eldre'Thalas
+};
+
+/** Venom and Rupture: two daggers, which is what those builds are written for. */
+const ROGUE_DAGGERS: Equipment = {
+  mainHand: { itemId: 228296, enchantId: CRUSADER }, // Perdition's Blade
+  offHand: { itemId: 228277, enchantId: CRUSADER }, // Core Hound Tooth
+};
+
+/** Combat: two swords, the owner's own second set. */
+const ROGUE_SWORDS: Equipment = {
+  mainHand: { itemId: 17075, enchantId: CRUSADER }, // Vis'kag the Bloodletter
+  offHand: { itemId: 228265, enchantId: CRUSADER }, // Brutality Blade
 };
 
 
@@ -394,19 +430,82 @@ const DRUID_BEAR_TALENTS: TalentAllocation = {
 };
 
 /**
- * A GEAR SHELL for the Druid, and a thinner one than the Rogue's.
+ * A DRUID'S OWN GEAR, in three sets rather than one.
  *
- * Nothing in the item data is leather, a staff or an idol. These carry the
- * shared armour so a Druid has stats at all, and ONE weapon rather than two --
- * a Druid holds a two-hander or a one-hander and never dual-wields.
+ * ----------------------------------------------------------------------------
+ * The owner supplied Moonkin, Cat and Bear separately, and they share only six
+ * pieces between them -- Cenarion Raiment comes in a caster, a feral and a tank
+ * cut, and the three builds want different jewellery as well. So each is
+ * written out in full, the way a preset always is.
  *
- * IT MATTERS LESS THAN IT LOOKS. Cat and Bear are `damageSource: 'natural'`:
- * they swing paws, and the equipped weapon is a stat stick whatever it is.
- * Moonkin never auto-attacks at all. So the wrong weapon costs these three far
- * less than it costs a Warrior.
+ * THE FERAL WEAPON CARRIES NO CRUSADER, and the owner's own sets do. A Cat and
+ * a Bear swing PAWS: `damageSource: 'natural'`, and `weaponsForEquipment`
+ * refuses to build a weapon for a stat-stick hand, so the Glaive is held and
+ * never used. An enchant whose whole effect is a proc on a weapon use would
+ * have fired off paw swings that never touched the weapon -- the same reason
+ * the Hunter's stat stick carries none.
+ *
+ * ITS 172 ATTACK POWER IS LISTED AND NOT APPLIED. "+172 Attack Power in Cat,
+ * Bear, and Dire Bear forms only" is conditional on the combat style, and an
+ * item stat cannot be. It is the largest single unmodelled line in the whole
+ * item set, and the Gear panel prints it.
+ * ----------------------------------------------------------------------------
  */
-const DRUID_WEAPONS: Equipment = {
-  twoHand: { itemId: 228229, enchantId: CRUSADER },
+const DRUID_MOONKIN_GEAR: Equipment = {
+  twoHand: { itemId: 228271, enchantId: SPELL_POWER }, // Staff of Dominance
+  head: { itemId: 226658 }, // Cenarion Antlers
+  neck: { itemId: 228289 }, // Choker of the Fire Lord
+  shoulders: { itemId: 226653 }, // Cenarion Mantle
+  cloak: { itemId: 228100 }, // Drape of the Fire Lord
+  chest: { itemId: 226656 }, // Cenarion Embrace
+  wrists: { itemId: 226655 }, // Cenarion Wrists
+  gloves: { itemId: 226777 }, // Feralheart Hands
+  waist: { itemId: 228256 }, // Mana Igniting Cord
+  legs: { itemId: 226651 }, // Cenarion Pants
+  feet: { itemId: 226774 }, // Feralheart Galoshes
+  ring1: { itemId: 228287 }, // Band of Sulfuras
+  ring2: { itemId: 228243 }, // Ring of Spell Power
+  trinket1: { itemId: 12930 }, // Briarwood Reed
+  trinket2: { itemId: 13968 }, // Eye of the Beast
+  relic: { itemId: 23197 }, // Idol of the Moon
+};
+
+const DRUID_CAT_GEAR: Equipment = {
+  twoHand: { itemId: 227833 }, // Glaive of Obsidian Fury, held and never swung
+  head: { itemId: 226659 }, // Cenarion Horns
+  neck: { itemId: 19491 }, // Amulet of the Darkmoon
+  shoulders: { itemId: 226665 }, // Cenarion Shoulders
+  cloak: { itemId: 13340 }, // Cape of the Black Baron
+  chest: { itemId: 226661 }, // Cenarion Tunic
+  wrists: { itemId: 226662 }, // Cenarion Bands
+  gloves: { itemId: 226664 }, // Cenarion Fists
+  waist: { itemId: 226660 }, // Cenarion Girdle
+  legs: { itemId: 226666 }, // Cenarion Trousers
+  feet: { itemId: 226663 }, // Cenarion Treads
+  ring1: { itemId: 228261 }, // Quick Strike Ring
+  ring2: { itemId: 228286 }, // Band of Accuria
+  trinket1: { itemId: 228722 }, // Hand of Justice
+  trinket2: { itemId: 13965 }, // Blackhand's Breadth
+  relic: { itemId: 220606 }, // Idol of the Dream
+};
+
+const DRUID_BEAR_GEAR: Equipment = {
+  twoHand: { itemId: 227833 }, // Glaive of Obsidian Fury, held and never swung
+  head: { itemId: 226670 }, // Cenarion Crown
+  neck: { itemId: 228685 }, // Onyxia Tooth Pendant
+  shoulders: { itemId: 226674 }, // Cenarion Pauldrons
+  cloak: { itemId: 228360 }, // Eskhandar's Pelt
+  chest: { itemId: 226661 }, // Cenarion Tunic
+  wrists: { itemId: 226668 }, // Cenarion Wristguards
+  gloves: { itemId: 226664 }, // Cenarion Fists
+  waist: { itemId: 226667 }, // Cenarion Waistguard
+  legs: { itemId: 226666 }, // Cenarion Trousers
+  feet: { itemId: 226673 }, // Cenarion Walkers
+  ring1: { itemId: 228261 }, // Quick Strike Ring
+  ring2: { itemId: 228286 }, // Band of Accuria
+  trinket1: { itemId: 228722 }, // Hand of Justice
+  trinket2: { itemId: 228686 }, // Onyxia Blood Talisman
+  relic: { itemId: 23198 }, // Idol of Brutality
 };
 
 /**
@@ -458,19 +557,61 @@ const SHAMAN_ENHANCEMENT_TALENTS: TalentAllocation = {
 /**
  * A GEAR SHELL, and said to be one.
  *
- * The item data is nineteen Classic stand-ins curated for a Warrior and holds
- * nothing mail, no shield and no caster weapon. Both Shaman profiles therefore
- * carry the Warrior's plate, so they have stats at all, and Obsidian Edged
- * Blade -- the only two-hander there is.
+ * Earthfury, in the two cuts the owner supplied: an Elemental caster set and an
+ * Enhancement melee one. They share no armour piece at all.
  *
- * WHICH SUITS ENHANCEMENT AND MISLEADS NOBODY ABOUT ELEMENTAL. A 3.6-second
- * two-hander is exactly what Windfury Weapon wants, because a proc pays two
- * full extra swings whatever the speed. Elemental holds the same blade as a
- * STAT STICK and never swings it, and its `spellPower` reads zero for the same
- * reason a Moonkin's does: there is no caster item in the data to equip.
+ * ELEMENTAL HOLDS A SHIELD, and that is not a mistake. Earth and Fire is a
+ * CASTER shield -- 26 spell power, 9 stamina, 7 intellect -- and a caster style
+ * carries both hands as stat sticks, so the dagger and the shield contribute
+ * their stats and neither swings. `liveEquipment` used to delete both off-hand
+ * slots for every stat-stick style, which threw the shield away entirely.
+ *
+ * ENHANCEMENT IS A TWO-HANDER, which is what the owner's set gives it: The
+ * Unstoppable Force, 3.8 seconds, exactly what Windfury Weapon wants.
  */
-const SHAMAN_WEAPONS: Equipment = {
-  twoHand: { itemId: 228229, enchantId: CRUSADER },
+const SHAMAN_ELEMENTAL_GEAR: Equipment = {
+  mainHand: { itemId: 228263, enchantId: SPELL_POWER }, // Sorcerous Dagger
+  shield: { itemId: 228142 }, // Earth and Fire
+  head: { itemId: 227002 }, // Coif of The Five Thunders
+  neck: { itemId: 228289 }, // Choker of the Fire Lord
+  shoulders: { itemId: 226624 }, // Earthfury Mantle
+  cloak: { itemId: 228100 }, // Drape of the Fire Lord
+  chest: { itemId: 226619 }, // Earthfury Ringmail
+  wrists: { itemId: 226626 }, // Earthfury Wristbands
+  gloves: { itemId: 226621 }, // Earthfury Hands
+  waist: { itemId: 228256 }, // Mana Igniting Cord
+  legs: { itemId: 226623 }, // Earthfury Leggings
+  feet: { itemId: 226620 }, // Earthfury Walkers
+  ring1: { itemId: 228287 }, // Band of Sulfuras
+  ring2: { itemId: 228243 }, // Ring of Spell Power
+  trinket1: { itemId: 18471 }, // Royal Seal of Eldre'Thalas
+  trinket2: { itemId: 12930 }, // Briarwood Reed
+  relic: { itemId: 23199 }, // Totem of the Storm
+};
+
+const SHAMAN_ENHANCEMENT_GEAR: Equipment = {
+  twoHand: { itemId: 19323, enchantId: CRUSADER }, // The Unstoppable Force
+  head: { itemId: 228291 }, // Crown of Destruction
+  neck: { itemId: 228685 }, // Onyxia Tooth Pendant
+  shoulders: { itemId: 226640 }, // Earthfury Spaulders
+  cloak: { itemId: 228360 }, // Eskhandar's Pelt
+  chest: { itemId: 227024 }, // Chain of The Five Thunders
+  wrists: { itemId: 226642 }, // Earthfury Bindings
+  gloves: { itemId: 227022 }, // Fists of The Five Thunders
+  waist: { itemId: 226641 }, // Earthfury Girdle
+  legs: { itemId: 226639 }, // Earthfury Chain Leggings
+  feet: { itemId: 226636 }, // Earthfury Battleboots
+  ring1: { itemId: 228261 }, // Quick Strike Ring
+  ring2: { itemId: 228286 }, // Band of Accuria
+  trinket1: { itemId: 13965 }, // Blackhand's Breadth
+  trinket2: { itemId: 228722 }, // Hand of Justice
+  /*
+   * Totem of Rage, and it does NOTHING. The tooltip Wowhead serves for this id
+   * carries no equip line at all -- item level, binding, "Relic", and nothing
+   * else. Whatever the relic grants is not stated by the source, so nothing is
+   * invented; it is worn, and it is empty.
+   */
+  relic: { itemId: 227977 },
 };
 
 /**
@@ -546,20 +687,36 @@ const MAGE_FIRE_TALENTS: TalentAllocation = {
 };
 
 /**
- * A GEAR SHELL, and said to be one.
+ * A MAGE'S OWN GEAR: full Arcanist, and ONE set for all three builds.
  *
- * The item data is nineteen Classic stand-ins curated for a Warrior. There is
- * no cloth in it, no staff and no caster weapon of any kind, so all three Mage
- * profiles carry the Warrior's plate and hold Obsidian Edged Blade as a STAT
- * STICK they never swing -- `caster` has no auto-attack at all.
+ * ----------------------------------------------------------------------------
+ * The owner supplied a single set for Frostfire, Arcane and Fire, so all three
+ * share it -- unlike the Druid and the Paladin, whose specs came separately.
  *
- * WHICH MEANS `spellPower` READS ZERO, for the third class running. A Mage
- * figure here is a FLOOR rather than an estimate, and for the same two reasons
- * the Moonkin and the Elemental shaman are: no caster item, and no spell power
- * coefficient in Forever's spell data to multiply even if there were.
+ * `spellPower` NO LONGER READS ZERO, which is the whole point of this import
+ * for a caster: 452 of it by the planner's count, where the Warrior shell gave
+ * none. A Mage figure is still a floor for the OTHER reason the handover gives
+ * -- Forever's spell data states flat damage and no spell power coefficient --
+ * but it is no longer a floor for lack of gear.
+ * ----------------------------------------------------------------------------
  */
-const MAGE_WEAPONS: Equipment = {
-  twoHand: { itemId: 228229, enchantId: CRUSADER },
+const MAGE_GEAR: Equipment = {
+  twoHand: { itemId: 228271, enchantId: SPELL_POWER }, // Staff of Dominance
+  ranged: { itemId: 228262 }, // Crimson Shocker, a wand that never fires here
+  head: { itemId: 226562 }, // Arcanist Crown
+  neck: { itemId: 228289 }, // Choker of the Fire Lord
+  shoulders: { itemId: 226560 }, // Arcanist Mantle
+  cloak: { itemId: 228100 }, // Drape of the Fire Lord
+  chest: { itemId: 228239 }, // Robe of Volatile Power
+  wrists: { itemId: 226558 }, // Arcanist Bindings
+  gloves: { itemId: 226556 }, // Arcanist Gloves
+  waist: { itemId: 228256 }, // Mana Igniting Cord
+  legs: { itemId: 226561 }, // Arcanist Leggings
+  feet: { itemId: 226557 }, // Arcanist Boots
+  ring1: { itemId: 228287 }, // Band of Sulfuras
+  ring2: { itemId: 228243 }, // Ring of Spell Power
+  trinket1: { itemId: 12930 }, // Briarwood Reed
+  trinket2: { itemId: 13968 }, // Eye of the Beast
 };
 
 /**
@@ -636,21 +793,84 @@ const PALADIN_PROTECTION_TALENTS: TalentAllocation = {
 };
 
 /**
- * A GEAR SHELL, and said to be one.
+ * A PALADIN'S OWN GEAR, in the three sets the owner supplied separately.
  *
- * Retribution and Shockadin take the same two-hander every other two-handed
- * build in this project uses. Protection takes the Warrior tank's shield and
- * one-hander, because the whole Protection tree is written around a shield --
- * Redoubt, Holy Shield and Shield Specialization are three of its five best
- * talents and none of them do anything without one.
+ * ----------------------------------------------------------------------------
+ * Lawbringer in all three, with Soulforge on Retribution and the tank cut on
+ * Protection. Almost no piece is shared between them, which is why there are
+ * three and not one.
+ *
+ * SHOCKADIN CHANGED COMBAT STYLE, and the gear is what changed it. Its set is a
+ * ONE-HANDER and a caster SHIELD -- Azuresong Mageblade and Earth and Fire --
+ * where the preset said `two_hander`. Under a two-hand style `liveEquipment`
+ * deletes the main hand and both off-hand slots, so the build would have stood
+ * there with no weapon at all. A one-hander plus a shield IS `one_hand_shield`,
+ * the style the Paladin already has, so that is what it now uses. The other
+ * four settings are untouched; this is the one the gear forced.
+ *
+ * PROTECTION KEEPS ITS OWN SHIELD ONLY IN SPIRIT. Earthen Guard is the owner's
+ * choice and it replaces The Immovable Object, which was the one real FOREVER
+ * item in the whole project and is now equipped by nobody. It is still in the
+ * item data and still selectable.
+ * ----------------------------------------------------------------------------
  */
-const PALADIN_TWO_HAND: Equipment = {
-  twoHand: { itemId: 228229, enchantId: CRUSADER },
+const PALADIN_RET_GEAR: Equipment = {
+  twoHand: { itemId: 228229, enchantId: CRUSADER }, // Obsidian Edged Blade
+  head: { itemId: 226976 }, // Soulforge Greathelm
+  neck: { itemId: 228685 }, // Onyxia Tooth Pendant
+  shoulders: { itemId: 221783 }, // Lawbringer Spaulders
+  cloak: { itemId: 20691 }, // Windshear Cape
+  chest: { itemId: 226973 }, // Soulforge Breastplate
+  wrists: { itemId: 226596 }, // Lawbringer Warbands
+  gloves: { itemId: 226975 }, // Soulforge Gauntlets
+  waist: { itemId: 228295 }, // Onslaught Girdle
+  legs: { itemId: 226598 }, // Lawbringer Leggings
+  feet: { itemId: 226601 }, // Lawbringer Battleboots
+  ring1: { itemId: 228261 }, // Quick Strike Ring
+  ring2: { itemId: 19325 }, // Don Julio's Band
+  trinket1: { itemId: 228722 }, // Hand of Justice
+  trinket2: { itemId: 13965 }, // Blackhand's Breadth
+  relic: { itemId: 215435 }, // Libram of Benediction
 };
 
-const PALADIN_SHIELD: Equipment = {
-  mainHand: { itemId: 228265, enchantId: CRUSADER }, // Brutality Blade
-  shield: { itemId: 19321 }, // The Immovable Object
+const PALADIN_SHOCKADIN_GEAR: Equipment = {
+  mainHand: { itemId: 228269, enchantId: CRUSADER }, // Azuresong Mageblade
+  shield: { itemId: 228142 }, // Earth and Fire
+  head: { itemId: 226599 }, // Lawbringer Crown
+  neck: { itemId: 228289 }, // Choker of the Fire Lord
+  shoulders: { itemId: 221783 }, // Lawbringer Spaulders
+  cloak: { itemId: 228100 }, // Drape of the Fire Lord
+  chest: { itemId: 226602 }, // Lawbringer Breastplate
+  wrists: { itemId: 226596 }, // Lawbringer Warbands
+  gloves: { itemId: 226600 }, // Lawbringer Grips
+  waist: { itemId: 226597 }, // Lawbringer Girdle
+  legs: { itemId: 226598 }, // Lawbringer Leggings
+  feet: { itemId: 226601 }, // Lawbringer Battleboots
+  ring1: { itemId: 228287 }, // Band of Sulfuras
+  ring2: { itemId: 228243 }, // Ring of Spell Power
+  trinket1: { itemId: 12930 }, // Briarwood Reed
+  trinket2: { itemId: 13965 }, // Blackhand's Breadth
+  relic: { itemId: 22401 }, // Libram of Hope
+};
+
+const PALADIN_PROT_GEAR: Equipment = {
+  mainHand: { itemId: 228269, enchantId: CRUSADER }, // Azuresong Mageblade
+  shield: { itemId: 20688 }, // Earthen Guard
+  head: { itemId: 226607 }, // Lawbringer Headguard
+  neck: { itemId: 228249 }, // Medallion of Steadfast Might
+  shoulders: { itemId: 226605 }, // Lawbringer Pauldrons
+  cloak: { itemId: 228360 }, // Eskhandar's Pelt
+  chest: { itemId: 226595 }, // Lawbringer Chestguard
+  wrists: { itemId: 226603 }, // Lawbringer Vambraces
+  gloves: { itemId: 226608 }, // Lawbringer Handguards
+  waist: { itemId: 226604 }, // Lawbringer Battlebelt
+  legs: { itemId: 226606 }, // Lawbringer Legguards
+  feet: { itemId: 226609 }, // Lawbringer Sabatons
+  ring1: { itemId: 228242 }, // Heavy Dark Iron Ring
+  ring2: { itemId: 19325 }, // Don Julio's Band
+  trinket1: { itemId: 12930 }, // Briarwood Reed
+  trinket2: { itemId: 228686 }, // Onyxia Blood Talisman
+  relic: { itemId: 22401 }, // Libram of Hope
 };
 
 /**
@@ -832,13 +1052,28 @@ const WARLOCK_DESTRUCTION_TALENTS: TalentAllocation = {
 };
 
 /**
- * A GEAR SHELL, and said to be one. Nineteen Classic stand-ins curated for a
- * Warrior, so a Warlock carries the same plate and a two-hander it never
- * swings -- `caster` has no auto-attack. `spellPower` reads zero, which is
- * why this is a floor like every other caster in the project.
+ * A WARLOCK'S OWN GEAR: Felheart, with the Deathmist mask and sandals.
+ *
+ * One set for both builds, as the owner supplied it. 471 spell power by the
+ * planner's count, against the Warrior shell's nothing.
  */
-const WARLOCK_WEAPONS: Equipment = {
-  twoHand: { itemId: 228229, enchantId: CRUSADER },
+const WARLOCK_GEAR: Equipment = {
+  twoHand: { itemId: 228271, enchantId: SPELL_POWER }, // Staff of Dominance
+  ranged: { itemId: 220604 }, // Nightmare Trophy, a wand that never fires here
+  head: { itemId: 226909 }, // Deathmist Mask
+  neck: { itemId: 228289 }, // Choker of the Fire Lord
+  shoulders: { itemId: 226550 }, // Felheart Shoulder Pads
+  cloak: { itemId: 228100 }, // Drape of the Fire Lord
+  chest: { itemId: 226548 }, // Felheart Robes
+  wrists: { itemId: 226553 }, // Felheart Bracers
+  gloves: { itemId: 226552 }, // Felheart Gloves
+  waist: { itemId: 228256 }, // Mana Igniting Cord
+  legs: { itemId: 226547 }, // Felheart Pants
+  feet: { itemId: 226908 }, // Deathmist Sandals
+  ring1: { itemId: 228287 }, // Band of Sulfuras
+  ring2: { itemId: 228243 }, // Ring of Spell Power
+  trinket1: { itemId: 12930 }, // Briarwood Reed
+  trinket2: { itemId: 13968 }, // Eye of the Beast
 };
 
 /**
@@ -867,13 +1102,40 @@ const PRIEST_SHADOW_TALENTS: TalentAllocation = {
 };
 
 /**
- * A GEAR SHELL, and said to be one. Nineteen Classic stand-ins curated for a
- * Warrior, so a Priest carries the same plate and a two-hander it never swings
- * -- `caster` has no auto-attack. `spellPower` reads zero, which is why this
- * is a floor like every other caster in the project.
+ * A SHADOW PRIEST'S OWN GEAR: Vestments of Prophecy, with Anathema.
+ *
+ * ----------------------------------------------------------------------------
+ * AND IT IS THE ONE SET THE ENGINE CANNOT FULLY WEAR. Almost every spell power
+ * line in it names a SCHOOL -- "Increases damage done by Shadow spells and
+ * effects by up to 39" on six of the eight tier pieces, and 75 on Anathema --
+ * and `spellPower` here is school-blind, one number read by every non-physical
+ * school. Applying a Shadow-only bonus to it would make the Priest's Holy and
+ * Arcane spells hit harder, which is wrong, so those lines stay unmodelled and
+ * the Gear panel prints every one.
+ *
+ * The planner reads 204 spell damage generic and 497 Shadow. This character
+ * gets the 204. The ~293 difference is the single largest known shortfall in
+ * the item data and it is a missing ENGINE STAT rather than missing data --
+ * see `src/data/items/README.md`.
+ * ----------------------------------------------------------------------------
  */
-const PRIEST_WEAPONS: Equipment = {
-  twoHand: { itemId: 228229, enchantId: CRUSADER },
+const PRIEST_GEAR: Equipment = {
+  twoHand: { itemId: 228336, enchantId: SPELL_POWER }, // Anathema
+  ranged: { itemId: 13396 }, // Skul's Ghastly Touch, a wand that never fires here
+  head: { itemId: 226584 }, // Crown of Prophecy
+  neck: { itemId: 228289 }, // Choker of the Fire Lord
+  shoulders: { itemId: 226581 }, // Shoulderpads of Prophecy
+  cloak: { itemId: 228100 }, // Drape of the Fire Lord
+  chest: { itemId: 226582 }, // Garments of Prophecy
+  wrists: { itemId: 226579 }, // Wristwraps of Prophecy
+  gloves: { itemId: 226585 }, // Hands of Prophecy
+  waist: { itemId: 228256 }, // Mana Igniting Cord
+  legs: { itemId: 226583 }, // Leggings of Prophecy
+  feet: { itemId: 226586 }, // Sandals of Prophecy
+  ring1: { itemId: 228287 }, // Band of Sulfuras
+  ring2: { itemId: 228243 }, // Ring of Spell Power
+  trinket1: { itemId: 12930 }, // Briarwood Reed
+  trinket2: { itemId: 13968 }, // Eye of the Beast
 };
 
 export const PROFILE_PRESETS: readonly ProfilePreset[] = [
@@ -990,7 +1252,7 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = [
       },
       talents: { ...ROGUE_VENOM_TALENTS },
       raidBuffs: [...PRESET_RAID_BUFFS],
-      equipment: { ...SHARED_ARMOUR, ...ROGUE_WEAPONS },
+      equipment: { ...ROGUE_ARMOUR, ...ROGUE_DAGGERS },
       encounter: { ...createDefaultProfile().encounter, targetAttacks: false },
     }),
   },
@@ -1010,7 +1272,7 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = [
       },
       talents: { ...ROGUE_COMBAT_TALENTS },
       raidBuffs: [...PRESET_RAID_BUFFS],
-      equipment: { ...SHARED_ARMOUR, ...ROGUE_WEAPONS },
+      equipment: { ...ROGUE_ARMOUR, ...ROGUE_SWORDS },
       encounter: { ...createDefaultProfile().encounter, targetAttacks: false },
     }),
   },
@@ -1030,7 +1292,7 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = [
       },
       talents: { ...ROGUE_RUPTURE_TALENTS },
       raidBuffs: [...PRESET_RAID_BUFFS],
-      equipment: { ...SHARED_ARMOUR, ...ROGUE_WEAPONS },
+      equipment: { ...ROGUE_ARMOUR, ...ROGUE_DAGGERS },
       encounter: { ...createDefaultProfile().encounter, targetAttacks: false },
     }),
   },
@@ -1050,7 +1312,7 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = [
       },
       talents: { ...DRUID_MOONKIN_TALENTS },
       raidBuffs: [...PRESET_RAID_BUFFS],
-      equipment: { ...SHARED_ARMOUR, ...DRUID_WEAPONS },
+      equipment: { ...DRUID_MOONKIN_GEAR },
       encounter: { ...createDefaultProfile().encounter, targetAttacks: false },
     }),
   },
@@ -1070,7 +1332,7 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = [
       },
       talents: { ...DRUID_CAT_TALENTS },
       raidBuffs: [...PRESET_RAID_BUFFS],
-      equipment: { ...SHARED_ARMOUR, ...DRUID_WEAPONS },
+      equipment: { ...DRUID_CAT_GEAR },
       encounter: { ...createDefaultProfile().encounter, targetAttacks: false },
     }),
   },
@@ -1090,7 +1352,7 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = [
       },
       talents: { ...DRUID_BEAR_TALENTS },
       raidBuffs: [...PRESET_RAID_BUFFS],
-      equipment: { ...SHARED_ARMOUR, ...DRUID_WEAPONS },
+      equipment: { ...DRUID_BEAR_GEAR },
       /*
        * THE ONE DRUID PROFILE THAT IS HIT BACK, which is the whole point of
        * Bear Form: rage is earned by taking damage as well as dealing it, and
@@ -1116,7 +1378,7 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = [
       },
       talents: { ...SHAMAN_ELEMENTAL_TALENTS },
       raidBuffs: [...PRESET_RAID_BUFFS],
-      equipment: { ...SHARED_ARMOUR, ...SHAMAN_WEAPONS },
+      equipment: { ...SHAMAN_ELEMENTAL_GEAR },
       encounter: { ...createDefaultProfile().encounter, targetAttacks: false },
     }),
   },
@@ -1143,7 +1405,7 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = [
        * bigger of the two is the one it casts.
        */
       raidBuffs: PRESET_RAID_BUFFS.filter((id) => id !== 'windfury_totem'),
-      equipment: { ...SHARED_ARMOUR, ...SHAMAN_WEAPONS },
+      equipment: { ...SHAMAN_ENHANCEMENT_GEAR },
       encounter: { ...createDefaultProfile().encounter, targetAttacks: false },
     }),
   },
@@ -1163,7 +1425,7 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = [
       },
       talents: { ...MAGE_FROSTFIRE_TALENTS },
       raidBuffs: [...PRESET_RAID_BUFFS],
-      equipment: { ...SHARED_ARMOUR, ...MAGE_WEAPONS },
+      equipment: { ...MAGE_GEAR },
       encounter: { ...createDefaultProfile().encounter, targetAttacks: false },
     }),
   },
@@ -1183,7 +1445,7 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = [
       },
       talents: { ...MAGE_ARCANE_TALENTS },
       raidBuffs: [...PRESET_RAID_BUFFS],
-      equipment: { ...SHARED_ARMOUR, ...MAGE_WEAPONS },
+      equipment: { ...MAGE_GEAR },
       encounter: { ...createDefaultProfile().encounter, targetAttacks: false },
     }),
   },
@@ -1203,7 +1465,7 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = [
       },
       talents: { ...MAGE_FIRE_TALENTS },
       raidBuffs: [...PRESET_RAID_BUFFS],
-      equipment: { ...SHARED_ARMOUR, ...MAGE_WEAPONS },
+      equipment: { ...MAGE_GEAR },
       encounter: { ...createDefaultProfile().encounter, targetAttacks: false },
     }),
   },
@@ -1223,14 +1485,14 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = [
       },
       talents: { ...PALADIN_RETRIBUTION_TALENTS },
       raidBuffs: [...PRESET_RAID_BUFFS],
-      equipment: { ...SHARED_ARMOUR, ...PALADIN_TWO_HAND },
+      equipment: { ...PALADIN_RET_GEAR },
       encounter: { ...createDefaultProfile().encounter, targetAttacks: false },
     }),
   },
   {
     id: 'pally_shockadin',
     label: 'Shockadin',
-    detail: 'Human, two-hander, standing target. 23 Holy / 28 Retribution',
+    detail: 'Human, 1H and a caster shield, standing target. 23 Holy / 28 Retribution',
     build: () => ({
       ...createDefaultProfile(),
       character: {
@@ -1238,12 +1500,21 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = [
         race: 'human',
         characterClass: 'paladin',
         level: 60,
-        combatStyle: 'two_hander',
+        /*
+         * THE GEAR DECIDED THIS, and it used to be `two_hander`.
+         *
+         * The owner's Shockadin set is Azuresong Mageblade and Earth and Fire:
+         * a one-hander and a caster shield. A two-hand style deletes the main
+         * hand and both off-hand slots, so that set under that style is a
+         * Paladin holding nothing. Five settings have to agree, and this is the
+         * one that did not.
+         */
+        combatStyle: 'one_hand_shield',
         stance: 'battle',
       },
       talents: { ...PALADIN_SHOCKADIN_TALENTS },
       raidBuffs: [...PRESET_RAID_BUFFS],
-      equipment: { ...SHARED_ARMOUR, ...PALADIN_TWO_HAND },
+      equipment: { ...PALADIN_SHOCKADIN_GEAR },
       encounter: { ...createDefaultProfile().encounter, targetAttacks: false },
     }),
   },
@@ -1263,7 +1534,7 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = [
       },
       talents: { ...PALADIN_PROTECTION_TALENTS },
       raidBuffs: [...PRESET_RAID_BUFFS],
-      equipment: { ...SHARED_ARMOUR, ...PALADIN_SHIELD },
+      equipment: { ...PALADIN_PROT_GEAR },
       encounter: { ...createDefaultProfile().encounter, targetAttacks: true },
     }),
   },
@@ -1346,7 +1617,7 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = [
       },
       talents: { ...WARLOCK_AFFLICTION_TALENTS },
       raidBuffs: [...PRESET_RAID_BUFFS],
-      equipment: { ...SHARED_ARMOUR, ...WARLOCK_WEAPONS },
+      equipment: { ...WARLOCK_GEAR },
       encounter: { ...createDefaultProfile().encounter, targetAttacks: false },
     }),
   },
@@ -1368,7 +1639,7 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = [
       },
       talents: { ...WARLOCK_DESTRUCTION_TALENTS },
       raidBuffs: [...PRESET_RAID_BUFFS],
-      equipment: { ...SHARED_ARMOUR, ...WARLOCK_WEAPONS },
+      equipment: { ...WARLOCK_GEAR },
       encounter: { ...createDefaultProfile().encounter, targetAttacks: false },
     }),
   },
@@ -1388,7 +1659,7 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = [
       },
       talents: { ...PRIEST_SHADOW_TALENTS },
       raidBuffs: [...PRESET_RAID_BUFFS],
-      equipment: { ...SHARED_ARMOUR, ...PRIEST_WEAPONS },
+      equipment: { ...PRIEST_GEAR },
       encounter: { ...createDefaultProfile().encounter, targetAttacks: false },
     }),
   },

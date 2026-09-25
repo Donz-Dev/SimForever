@@ -1,0 +1,1023 @@
+{
+ "set": "sod-paladin",
+ "description": "A level 60 Paladin's gear in three variants the owner supplied separately: Retribution (Lawbringer and Soulforge with a two-hander), Shockadin (Lawbringer with a one-hander and a caster shield) and Protection (Lawbringer's tank pieces with Earthen Guard). Season of Discovery items.",
+ "source": "https://sixtyupgrades.com/sod/set/ocSyhg5nkyBnPBQN2WgpEe (Retribution), https://sixtyupgrades.com/sod/set/9VPCeQXbycTWsVTtFA9BYd (Shockadin), https://sixtyupgrades.com/sod/set/eT3tn2GwtQqJdHnUrFVDKJ (Protection)",
+ "items": [
+  {
+   "id": 226976,
+   "name": "Soulforge Greathelm",
+   "quality": 4,
+   "icon": "inv_helmet_08",
+   "source": "https://www.wowhead.com/classic/item=226976",
+   "itemLevel": 60,
+   "inventoryType": "Head",
+   "subclass": "Plate",
+   "armor": 556,
+   "weapon": null,
+   "stats": {
+    "strength": 30,
+    "stamina": 14,
+    "intellect": 14
+   },
+   "resistances": {},
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "Improves your chance to get a critical strike with all spells and attacks by 1%."
+    },
+    {
+     "kind": "Set",
+     "text": "(2) +40 Attack Power and up to 40 increased healing from spells."
+    },
+    {
+     "kind": "Set",
+     "text": "(4) 6% chance on melee autoattack and 4% chance on spellcast to increase your damage and healing done by magical spells and effects by up to 95 for 10 sec. (Proc chance: 6%)"
+    },
+    {
+     "kind": "Set",
+     "text": "(6) +8 All Resistances."
+    },
+    {
+     "kind": "Set",
+     "text": "(8) +200 Armor."
+    }
+   ],
+   "tooltip": "Soulforge Greathelm\nItem Level 60\nBinds when picked up\nHead Plate\n556 Armor\n+30 Strength\n+14 Stamina\n+14 Intellect\nDurability 100 / 100Classes: Paladin\nEquip: Improves your chance to get a critical strike with all spells and attacks by 1%.\nSoulforge Armor (0/8)Soulforge Boots\nSoulforge Chest\nSoulforge Gloves\nSoulforge Helm\nSoulforge Legs\nSoulforge Shoulders\nSoulforge Waist\nSoulforge Wrists\n(2) Set : +40 Attack Power and up to 40 increased healing from spells.\n(4) Set : 6% chance on melee autoattack and 4% chance on spellcast to increase your damage and healing done by magical spells and effects by up to 95 for 10 sec. (Proc chance: 6%)\n(6) Set : +8 All Resistances.\n(8) Set : +200 Armor.\nSell Price: 20"
+  },
+  {
+   "id": 221783,
+   "name": "Lawbringer Spaulders",
+   "quality": 4,
+   "icon": "inv_shoulder_20",
+   "source": "https://www.wowhead.com/classic/item=221783",
+   "itemLevel": 66,
+   "inventoryType": "Shoulder",
+   "subclass": "Plate",
+   "armor": 562,
+   "weapon": null,
+   "stats": {
+    "strength": 17,
+    "stamina": 15
+   },
+   "resistances": {
+    "fire": 7
+   },
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "Increases damage done by Holy spells and effects by up to 21."
+    },
+    {
+     "kind": "Equip",
+     "text": "Improves your chance to hit with all spells and attacks by 1%."
+    },
+    {
+     "kind": "Set",
+     "text": "(2) Your Judgement of Light and Judgement of Wisdom also grant the effects of Judgement of the Crusader."
+    },
+    {
+     "kind": "Set",
+     "text": "(4) Increases your critical strike chance with spells and attacks by 2%."
+    },
+    {
+     "kind": "Set",
+     "text": "(6) Your Seal of Command, Seal of Righteousness, Seal of Martyrdom, and Sunlight deal 35% less damage, but now persist for 6 seconds after you cast another Seal, or until you cast a third Seal. Your Judgements can now trigger multiple Seals if active."
+    }
+   ],
+   "tooltip": "Lawbringer Spaulders SoD Phase 4\nItem Level 66\nBinds when picked up\nShoulder Plate\n562 Armor\n+17 Strength\n+15 Stamina\n+7 Fire Resistance\nDurability 100 / 100Classes: Paladin\nRequires Level 60\nEquip: Increases damage done by Holy spells and effects by up to 21.\nEquip: Improves your chance to hit with all spells and attacks by 1%.\nLawbringer Radiance (0/8)Lawbringer Battleboots\nLawbringer Breastplate\nLawbringer Crown\nLawbringer Girdle\nLawbringer Grips\nLawbringer Leggings\nLawbringer Spaulders\nLawbringer Warbands\n(2) Set : Your Judgement of Light and Judgement of Wisdom also grant the effects of Judgement of the Crusader.\n(4) Set : Increases your critical strike chance with spells and attacks by 2%.\n(6) Set : Your Seal of Command, Seal of Righteousness, Seal of Martyrdom, and Sunlight deal 35% less damage, but now persist for 6 seconds after you cast another Seal, or until you cast a third Seal. Your Judgements can now trigger multiple Seals if active.\nSell Price: 2 54 85"
+  },
+  {
+   "id": 20691,
+   "name": "Windshear Cape",
+   "quality": 4,
+   "icon": "inv_misc_cape_20",
+   "source": "https://www.wowhead.com/classic/item=20691",
+   "itemLevel": 65,
+   "inventoryType": "Back",
+   "subclass": null,
+   "armor": 50,
+   "weapon": null,
+   "stats": {
+    "strength": 8,
+    "agility": 15,
+    "stamina": 14,
+    "intellect": 7
+   },
+   "resistances": {},
+   "effects": [],
+   "tooltip": "Windshear Cape\nItem Level 65\nBinds when picked up\nBack\n50 Armor\n+8 Strength\n+15 Agility\n+14 Stamina\n+7 Intellect\nRequires Level 60\nSell Price: 2 42 89"
+  },
+  {
+   "id": 226973,
+   "name": "Soulforge Breastplate",
+   "quality": 4,
+   "icon": "inv_chest_plate03",
+   "source": "https://www.wowhead.com/classic/item=226973",
+   "itemLevel": 60,
+   "inventoryType": "Chest",
+   "subclass": "Plate",
+   "armor": 684,
+   "weapon": null,
+   "stats": {
+    "strength": 26,
+    "agility": 14,
+    "stamina": 16,
+    "intellect": 10
+   },
+   "resistances": {},
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "Improves your chance to hit with all spells and attacks by 1%."
+    },
+    {
+     "kind": "Set",
+     "text": "(2) +40 Attack Power and up to 40 increased healing from spells."
+    },
+    {
+     "kind": "Set",
+     "text": "(4) 6% chance on melee autoattack and 4% chance on spellcast to increase your damage and healing done by magical spells and effects by up to 95 for 10 sec. (Proc chance: 6%)"
+    },
+    {
+     "kind": "Set",
+     "text": "(6) +8 All Resistances."
+    },
+    {
+     "kind": "Set",
+     "text": "(8) +200 Armor."
+    }
+   ],
+   "tooltip": "Soulforge Breastplate\nItem Level 60\nBinds when picked up\nChest Plate\n684 Armor\n+26 Strength\n+14 Agility\n+16 Stamina\n+10 Intellect\nDurability 165 / 165Classes: Paladin\nEquip: Improves your chance to hit with all spells and attacks by 1%.\nSoulforge Armor (0/8)Soulforge Boots\nSoulforge Chest\nSoulforge Gloves\nSoulforge Helm\nSoulforge Legs\nSoulforge Shoulders\nSoulforge Waist\nSoulforge Wrists\n(2) Set : +40 Attack Power and up to 40 increased healing from spells.\n(4) Set : 6% chance on melee autoattack and 4% chance on spellcast to increase your damage and healing done by magical spells and effects by up to 95 for 10 sec. (Proc chance: 6%)\n(6) Set : +8 All Resistances.\n(8) Set : +200 Armor.\nSell Price: 20"
+  },
+  {
+   "id": 226596,
+   "name": "Lawbringer Warbands",
+   "quality": 4,
+   "icon": "inv_bracer_18",
+   "source": "https://www.wowhead.com/classic/item=226596",
+   "itemLevel": 66,
+   "inventoryType": "Wrist",
+   "subclass": "Plate",
+   "armor": 328,
+   "weapon": null,
+   "stats": {
+    "strength": 13,
+    "stamina": 11
+   },
+   "resistances": {
+    "fire": 5
+   },
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "Improves your chance to hit with all spells and attacks by 1%."
+    },
+    {
+     "kind": "Equip",
+     "text": "Increases damage done by Holy spells and effects by up to 14."
+    },
+    {
+     "kind": "Set",
+     "text": "(2) Your Judgement of Light and Judgement of Wisdom also grant the effects of Judgement of the Crusader."
+    },
+    {
+     "kind": "Set",
+     "text": "(4) Increases your critical strike chance with spells and attacks by 2%."
+    },
+    {
+     "kind": "Set",
+     "text": "(6) Your Seal of Command, Seal of Righteousness, Seal of Martyrdom, and Sunlight deal 35% less damage, but now persist for 6 seconds after you cast another Seal, or until you cast a third Seal. Your Judgements can now trigger multiple Seals if active."
+    }
+   ],
+   "tooltip": "Lawbringer Warbands SoD Phase 4\nItem Level 66\nBinds when picked up\nWrist Plate\n328 Armor\n+13 Strength\n+11 Stamina\n+5 Fire Resistance\nDurability 55 / 55Classes: Paladin\nRequires Level 60\nEquip: Improves your chance to hit with all spells and attacks by 1%.\nEquip: Increases damage done by Holy spells and effects by up to 14.\nLawbringer Radiance (0/8)Lawbringer Battleboots\nLawbringer Breastplate\nLawbringer Crown\nLawbringer Girdle\nLawbringer Grips\nLawbringer Leggings\nLawbringer Spaulders\nLawbringer Warbands\n(2) Set : Your Judgement of Light and Judgement of Wisdom also grant the effects of Judgement of the Crusader.\n(4) Set : Increases your critical strike chance with spells and attacks by 2%.\n(6) Set : Your Seal of Command, Seal of Righteousness, Seal of Martyrdom, and Sunlight deal 35% less damage, but now persist for 6 seconds after you cast another Seal, or until you cast a third Seal. Your Judgements can now trigger multiple Seals if active.\nSell Price: 1 70 54"
+  },
+  {
+   "id": 226975,
+   "name": "Soulforge Gauntlets",
+   "quality": 4,
+   "icon": "inv_gauntlets_19",
+   "source": "https://www.wowhead.com/classic/item=226975",
+   "itemLevel": 55,
+   "inventoryType": "Hands",
+   "subclass": "Plate",
+   "armor": 393,
+   "weapon": null,
+   "stats": {
+    "strength": 16,
+    "stamina": 12,
+    "intellect": 11
+   },
+   "resistances": {},
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "Improves your chance to get a critical strike with all spells and attacks by 1%."
+    },
+    {
+     "kind": "Set",
+     "text": "(2) +40 Attack Power and up to 40 increased healing from spells."
+    },
+    {
+     "kind": "Set",
+     "text": "(4) 6% chance on melee autoattack and 4% chance on spellcast to increase your damage and healing done by magical spells and effects by up to 95 for 10 sec. (Proc chance: 6%)"
+    },
+    {
+     "kind": "Set",
+     "text": "(6) +8 All Resistances."
+    },
+    {
+     "kind": "Set",
+     "text": "(8) +200 Armor."
+    }
+   ],
+   "tooltip": "Soulforge Gauntlets\nItem Level 55\nBinds when picked up\nHands Plate\n393 Armor\n+16 Strength\n+12 Stamina\n+11 Intellect\nDurability 55 / 55Classes: Paladin\nEquip: Improves your chance to get a critical strike with all spells and attacks by 1%.\nSoulforge Armor (0/8)Soulforge Boots\nSoulforge Chest\nSoulforge Gloves\nSoulforge Helm\nSoulforge Legs\nSoulforge Shoulders\nSoulforge Waist\nSoulforge Wrists\n(2) Set : +40 Attack Power and up to 40 increased healing from spells.\n(4) Set : 6% chance on melee autoattack and 4% chance on spellcast to increase your damage and healing done by magical spells and effects by up to 95 for 10 sec. (Proc chance: 6%)\n(6) Set : +8 All Resistances.\n(8) Set : +200 Armor.\nSell Price: 10"
+  },
+  {
+   "id": 228295,
+   "name": "Onslaught Girdle",
+   "quality": 4,
+   "icon": "inv_belt_29",
+   "source": "https://www.wowhead.com/classic/item=228295",
+   "itemLevel": 77,
+   "inventoryType": "Waist",
+   "subclass": "Plate",
+   "armor": 488,
+   "weapon": null,
+   "stats": {
+    "strength": 31,
+    "stamina": 11
+   },
+   "resistances": {},
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "Improves your chance to get a critical strike with all spells and attacks by 1%."
+    },
+    {
+     "kind": "Equip",
+     "text": "Improves your chance to hit with all spells and attacks by 1%."
+    }
+   ],
+   "tooltip": "Onslaught Girdle SoD Phase 4\nItem Level 77\nBinds when picked up\nWaist Plate\n488 Armor\n+31 Strength\n+11 Stamina\nDurability 55 / 55\nRequires Level 60\nEquip: Improves your chance to get a critical strike with all spells and attacks by 1%.\nEquip: Improves your chance to hit with all spells and attacks by 1%.\nSell Price: 5 44 7"
+  },
+  {
+   "id": 226598,
+   "name": "Lawbringer Leggings",
+   "quality": 4,
+   "icon": "inv_pants_04",
+   "source": "https://www.wowhead.com/classic/item=226598",
+   "itemLevel": 66,
+   "inventoryType": "Legs",
+   "subclass": "Plate",
+   "armor": 655,
+   "weapon": null,
+   "stats": {
+    "strength": 22,
+    "stamina": 19
+   },
+   "resistances": {
+    "fire": 10
+   },
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "Improves your chance to get a critical strike with all spells and attacks by 1%."
+    },
+    {
+     "kind": "Equip",
+     "text": "Increases damage done by Holy spells and effects by up to 24."
+    },
+    {
+     "kind": "Equip",
+     "text": "Improves your chance to hit with all spells and attacks by 1%."
+    },
+    {
+     "kind": "Set",
+     "text": "(2) Your Judgement of Light and Judgement of Wisdom also grant the effects of Judgement of the Crusader."
+    },
+    {
+     "kind": "Set",
+     "text": "(4) Increases your critical strike chance with spells and attacks by 2%."
+    },
+    {
+     "kind": "Set",
+     "text": "(6) Your Seal of Command, Seal of Righteousness, Seal of Martyrdom, and Sunlight deal 35% less damage, but now persist for 6 seconds after you cast another Seal, or until you cast a third Seal. Your Judgements can now trigger multiple Seals if active."
+    }
+   ],
+   "tooltip": "Lawbringer Leggings SoD Phase 4\nItem Level 66\nBinds when picked up\nLegs Plate\n655 Armor\n+22 Strength\n+19 Stamina\n+10 Fire Resistance\nDurability 120 / 120Classes: Paladin\nRequires Level 60\nEquip: Improves your chance to get a critical strike with all spells and attacks by 1%.\nEquip: Increases damage done by Holy spells and effects by up to 24.\nEquip: Improves your chance to hit with all spells and attacks by 1%.\nLawbringer Radiance (0/8)Lawbringer Battleboots\nLawbringer Breastplate\nLawbringer Crown\nLawbringer Girdle\nLawbringer Grips\nLawbringer Leggings\nLawbringer Spaulders\nLawbringer Warbands\n(2) Set : Your Judgement of Light and Judgement of Wisdom also grant the effects of Judgement of the Crusader.\n(4) Set : Increases your critical strike chance with spells and attacks by 2%.\n(6) Set : Your Seal of Command, Seal of Righteousness, Seal of Martyrdom, and Sunlight deal 35% less damage, but now persist for 6 seconds after you cast another Seal, or until you cast a third Seal. Your Judgements can now trigger multiple Seals if active.\nSell Price: 3 38 48"
+  },
+  {
+   "id": 226601,
+   "name": "Lawbringer Battleboots",
+   "quality": 4,
+   "icon": "inv_boots_plate_09",
+   "source": "https://www.wowhead.com/classic/item=226601",
+   "itemLevel": 66,
+   "inventoryType": "Feet",
+   "subclass": "Plate",
+   "armor": 515,
+   "weapon": null,
+   "stats": {
+    "strength": 17,
+    "stamina": 15
+   },
+   "resistances": {
+    "fire": 5
+   },
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "Improves your chance to get a critical strike with all spells and attacks by 1%."
+    },
+    {
+     "kind": "Equip",
+     "text": "Increases damage done by Holy spells and effects by up to 20."
+    },
+    {
+     "kind": "Set",
+     "text": "(2) Your Judgement of Light and Judgement of Wisdom also grant the effects of Judgement of the Crusader."
+    },
+    {
+     "kind": "Set",
+     "text": "(4) Increases your critical strike chance with spells and attacks by 2%."
+    },
+    {
+     "kind": "Set",
+     "text": "(6) Your Seal of Command, Seal of Righteousness, Seal of Martyrdom, and Sunlight deal 35% less damage, but now persist for 6 seconds after you cast another Seal, or until you cast a third Seal. Your Judgements can now trigger multiple Seals if active."
+    }
+   ],
+   "tooltip": "Lawbringer Battleboots SoD Phase 4\nItem Level 66\nBinds when picked up\nFeet Plate\n515 Armor\n+17 Strength\n+15 Stamina\n+5 Fire Resistance\nDurability 75 / 75Classes: Paladin\nRequires Level 60\nEquip: Improves your chance to get a critical strike with all spells and attacks by 1%.\nEquip: Increases damage done by Holy spells and effects by up to 20.\nLawbringer Radiance (0/8)Lawbringer Battleboots\nLawbringer Breastplate\nLawbringer Crown\nLawbringer Girdle\nLawbringer Grips\nLawbringer Leggings\nLawbringer Spaulders\nLawbringer Warbands\n(2) Set : Your Judgement of Light and Judgement of Wisdom also grant the effects of Judgement of the Crusader.\n(4) Set : Increases your critical strike chance with spells and attacks by 2%.\n(6) Set : Your Seal of Command, Seal of Righteousness, Seal of Martyrdom, and Sunlight deal 35% less damage, but now persist for 6 seconds after you cast another Seal, or until you cast a third Seal. Your Judgements can now trigger multiple Seals if active.\nSell Price: 2 57 78"
+  },
+  {
+   "id": 215435,
+   "name": "Libram of Benediction",
+   "quality": 3,
+   "icon": "inv_misc_book_13",
+   "source": "https://www.wowhead.com/classic/item=215435",
+   "itemLevel": 45,
+   "inventoryType": "Relic",
+   "subclass": "Libram",
+   "armor": null,
+   "weapon": null,
+   "stats": {},
+   "resistances": {},
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "Reduces the mana cost of your Seal spells by 10."
+    }
+   ],
+   "tooltip": "Libram of Benediction SoD Phase 2\nItem Level 45\nBinds when picked up\nUnique\nRelic Libram\nRequires Level 40\nEquip: Reduces the mana cost of your Seal spells by 10.\nSell Price: 58 33"
+  },
+  {
+   "id": 226599,
+   "name": "Lawbringer Crown",
+   "quality": 4,
+   "icon": "inv_helmet_05",
+   "source": "https://www.wowhead.com/classic/item=226599",
+   "itemLevel": 66,
+   "inventoryType": "Head",
+   "subclass": "Plate",
+   "armor": 608,
+   "weapon": null,
+   "stats": {
+    "strength": 22,
+    "stamina": 17
+   },
+   "resistances": {
+    "fire": 10
+   },
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "Improves your chance to hit with all spells and attacks by 1%."
+    },
+    {
+     "kind": "Equip",
+     "text": "Increases damage done by Holy spells and effects by up to 27."
+    },
+    {
+     "kind": "Equip",
+     "text": "Improves your chance to get a critical strike with all spells and attacks by 1%."
+    },
+    {
+     "kind": "Set",
+     "text": "(2) Your Judgement of Light and Judgement of Wisdom also grant the effects of Judgement of the Crusader."
+    },
+    {
+     "kind": "Set",
+     "text": "(4) Increases your critical strike chance with spells and attacks by 2%."
+    },
+    {
+     "kind": "Set",
+     "text": "(6) Your Seal of Command, Seal of Righteousness, Seal of Martyrdom, and Sunlight deal 35% less damage, but now persist for 6 seconds after you cast another Seal, or until you cast a third Seal. Your Judgements can now trigger multiple Seals if active."
+    }
+   ],
+   "tooltip": "Lawbringer Crown SoD Phase 4\nItem Level 66\nBinds when picked up\nHead Plate\n608 Armor\n+22 Strength\n+17 Stamina\n+10 Fire Resistance\nDurability 100 / 100Classes: Paladin\nRequires Level 60\nEquip: Improves your chance to hit with all spells and attacks by 1%.\nEquip: Increases damage done by Holy spells and effects by up to 27.\nEquip: Improves your chance to get a critical strike with all spells and attacks by 1%.\nLawbringer Radiance (0/8)Lawbringer Battleboots\nLawbringer Breastplate\nLawbringer Crown\nLawbringer Girdle\nLawbringer Grips\nLawbringer Leggings\nLawbringer Spaulders\nLawbringer Warbands\n(2) Set : Your Judgement of Light and Judgement of Wisdom also grant the effects of Judgement of the Crusader.\n(4) Set : Increases your critical strike chance with spells and attacks by 2%.\n(6) Set : Your Seal of Command, Seal of Righteousness, Seal of Martyrdom, and Sunlight deal 35% less damage, but now persist for 6 seconds after you cast another Seal, or until you cast a third Seal. Your Judgements can now trigger multiple Seals if active.\nSell Price: 2 79 56"
+  },
+  {
+   "id": 226602,
+   "name": "Lawbringer Breastplate",
+   "quality": 4,
+   "icon": "inv_chest_plate03",
+   "source": "https://www.wowhead.com/classic/item=226602",
+   "itemLevel": 66,
+   "inventoryType": "Chest",
+   "subclass": "Plate",
+   "armor": 749,
+   "weapon": null,
+   "stats": {
+    "strength": 22,
+    "stamina": 19,
+    "intellect": 12
+   },
+   "resistances": {
+    "fire": 10
+   },
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "Improves your chance to get a critical strike with all spells and attacks by 1%."
+    },
+    {
+     "kind": "Equip",
+     "text": "Improves your chance to hit with all spells and attacks by 1%."
+    },
+    {
+     "kind": "Equip",
+     "text": "Increases damage done by Holy spells and effects by up to 16."
+    },
+    {
+     "kind": "Set",
+     "text": "(2) Your Judgement of Light and Judgement of Wisdom also grant the effects of Judgement of the Crusader."
+    },
+    {
+     "kind": "Set",
+     "text": "(4) Increases your critical strike chance with spells and attacks by 2%."
+    },
+    {
+     "kind": "Set",
+     "text": "(6) Your Seal of Command, Seal of Righteousness, Seal of Martyrdom, and Sunlight deal 35% less damage, but now persist for 6 seconds after you cast another Seal, or until you cast a third Seal. Your Judgements can now trigger multiple Seals if active."
+    }
+   ],
+   "tooltip": "Lawbringer Breastplate SoD Phase 4\nItem Level 66\nBinds when picked up\nChest Plate\n749 Armor\n+22 Strength\n+19 Stamina\n+12 Intellect\n+10 Fire Resistance\nDurability 165 / 165Classes: Paladin\nRequires Level 60\nEquip: Improves your chance to get a critical strike with all spells and attacks by 1%.\nEquip: Improves your chance to hit with all spells and attacks by 1%.\nEquip: Increases damage done by Holy spells and effects by up to 16.\nLawbringer Radiance (0/8)Lawbringer Battleboots\nLawbringer Breastplate\nLawbringer Crown\nLawbringer Girdle\nLawbringer Grips\nLawbringer Leggings\nLawbringer Spaulders\nLawbringer Warbands\n(2) Set : Your Judgement of Light and Judgement of Wisdom also grant the effects of Judgement of the Crusader.\n(4) Set : Increases your critical strike chance with spells and attacks by 2%.\n(6) Set : Your Seal of Command, Seal of Righteousness, Seal of Martyrdom, and Sunlight deal 35% less damage, but now persist for 6 seconds after you cast another Seal, or until you cast a third Seal. Your Judgements can now trigger multiple Seals if active.\nSell Price: 3 71 44"
+  },
+  {
+   "id": 228269,
+   "name": "Azuresong Mageblade",
+   "quality": 4,
+   "icon": "inv_sword_39",
+   "source": "https://www.wowhead.com/classic/item=228269",
+   "itemLevel": 71,
+   "inventoryType": "Main Hand",
+   "subclass": "Sword",
+   "armor": null,
+   "weapon": {
+    "minDamage": 64,
+    "maxDamage": 140,
+    "speed": 2.4,
+    "dps": 42.5
+   },
+   "stats": {
+    "stamina": 8,
+    "intellect": 12
+   },
+   "resistances": {},
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "Improves your chance to get a critical strike with all spells and attacks by 1%."
+    },
+    {
+     "kind": "Equip",
+     "text": "Increases damage and healing done by magical spells and effects by up to 44."
+    }
+   ],
+   "tooltip": "Azuresong Mageblade\nItem Level 71\nBinds when picked up\nMain Hand Sword\n64 - 140 Damage\nSpeed 2.40\n(42.50 damage per second)\n+8 Stamina\n+12 Intellect\nDurability 105 / 105\nRequires Level 60\nEquip: Improves your chance to get a critical strike with all spells and attacks by 1%.\nEquip: Increases damage and healing done by magical spells and effects by up to 44.\nSell Price: 11 18 23"
+  },
+  {
+   "id": 226600,
+   "name": "Lawbringer Grips",
+   "quality": 4,
+   "icon": "inv_gauntlets_29",
+   "source": "https://www.wowhead.com/classic/item=226600",
+   "itemLevel": 66,
+   "inventoryType": "Hands",
+   "subclass": "Plate",
+   "armor": 468,
+   "weapon": null,
+   "stats": {
+    "strength": 17,
+    "stamina": 15,
+    "intellect": 13
+   },
+   "resistances": {
+    "fire": 7
+   },
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "Increases damage done by Holy spells and effects by up to 20."
+    },
+    {
+     "kind": "Set",
+     "text": "(2) Your Judgement of Light and Judgement of Wisdom also grant the effects of Judgement of the Crusader."
+    },
+    {
+     "kind": "Set",
+     "text": "(4) Increases your critical strike chance with spells and attacks by 2%."
+    },
+    {
+     "kind": "Set",
+     "text": "(6) Your Seal of Command, Seal of Righteousness, Seal of Martyrdom, and Sunlight deal 35% less damage, but now persist for 6 seconds after you cast another Seal, or until you cast a third Seal. Your Judgements can now trigger multiple Seals if active."
+    }
+   ],
+   "tooltip": "Lawbringer Grips SoD Phase 4\nItem Level 66\nBinds when picked up\nHands Plate\n468 Armor\n+17 Strength\n+15 Stamina\n+13 Intellect\n+7 Fire Resistance\nDurability 55 / 55Classes: Paladin\nRequires Level 60\nEquip: Increases damage done by Holy spells and effects by up to 20.\nLawbringer Radiance (0/8)Lawbringer Battleboots\nLawbringer Breastplate\nLawbringer Crown\nLawbringer Girdle\nLawbringer Grips\nLawbringer Leggings\nLawbringer Spaulders\nLawbringer Warbands\n(2) Set : Your Judgement of Light and Judgement of Wisdom also grant the effects of Judgement of the Crusader.\n(4) Set : Increases your critical strike chance with spells and attacks by 2%.\n(6) Set : Your Seal of Command, Seal of Righteousness, Seal of Martyrdom, and Sunlight deal 35% less damage, but now persist for 6 seconds after you cast another Seal, or until you cast a third Seal. Your Judgements can now trigger multiple Seals if active.\nSell Price: 1 72 49"
+  },
+  {
+   "id": 226597,
+   "name": "Lawbringer Girdle",
+   "quality": 4,
+   "icon": "inv_belt_27",
+   "source": "https://www.wowhead.com/classic/item=226597",
+   "itemLevel": 66,
+   "inventoryType": "Waist",
+   "subclass": "Plate",
+   "armor": 421,
+   "weapon": null,
+   "stats": {
+    "strength": 17,
+    "stamina": 15
+   },
+   "resistances": {
+    "fire": 7
+   },
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "Increases damage done by Holy spells and effects by up to 19."
+    },
+    {
+     "kind": "Equip",
+     "text": "Improves your chance to get a critical strike with all spells and attacks by 1%."
+    },
+    {
+     "kind": "Set",
+     "text": "(2) Your Judgement of Light and Judgement of Wisdom also grant the effects of Judgement of the Crusader."
+    },
+    {
+     "kind": "Set",
+     "text": "(4) Increases your critical strike chance with spells and attacks by 2%."
+    },
+    {
+     "kind": "Set",
+     "text": "(6) Your Seal of Command, Seal of Righteousness, Seal of Martyrdom, and Sunlight deal 35% less damage, but now persist for 6 seconds after you cast another Seal, or until you cast a third Seal. Your Judgements can now trigger multiple Seals if active."
+    }
+   ],
+   "tooltip": "Lawbringer Girdle SoD Phase 4\nItem Level 66\nBinds when picked up\nWaist Plate\n421 Armor\n+17 Strength\n+15 Stamina\n+7 Fire Resistance\nDurability 55 / 55Classes: Paladin\nRequires Level 60\nEquip: Increases damage done by Holy spells and effects by up to 19.\nEquip: Improves your chance to get a critical strike with all spells and attacks by 1%.\nLawbringer Radiance (0/8)Lawbringer Battleboots\nLawbringer Breastplate\nLawbringer Crown\nLawbringer Girdle\nLawbringer Grips\nLawbringer Leggings\nLawbringer Spaulders\nLawbringer Warbands\n(2) Set : Your Judgement of Light and Judgement of Wisdom also grant the effects of Judgement of the Crusader.\n(4) Set : Increases your critical strike chance with spells and attacks by 2%.\n(6) Set : Your Seal of Command, Seal of Righteousness, Seal of Martyrdom, and Sunlight deal 35% less damage, but now persist for 6 seconds after you cast another Seal, or until you cast a third Seal. Your Judgements can now trigger multiple Seals if active.\nSell Price: 1 71 19"
+  },
+  {
+   "id": 22401,
+   "name": "Libram of Hope",
+   "quality": 3,
+   "icon": "inv_relics_libramofhope",
+   "source": "https://www.wowhead.com/classic/item=22401",
+   "itemLevel": 62,
+   "inventoryType": "Relic",
+   "subclass": "Libram",
+   "armor": null,
+   "weapon": null,
+   "stats": {},
+   "resistances": {},
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "Reduces the mana cost of your Seal spells by 20."
+    }
+   ],
+   "tooltip": "Libram of Hope\nItem Level 62\nBinds when picked up\nUnique\nRelic Libram\nRequires Level 57\nEquip: Reduces the mana cost of your Seal spells by 20.\nSell Price: 1 70 78"
+  },
+  {
+   "id": 226607,
+   "name": "Lawbringer Headguard",
+   "quality": 4,
+   "icon": "inv_helmet_05",
+   "source": "https://www.wowhead.com/classic/item=226607",
+   "itemLevel": 66,
+   "inventoryType": "Head",
+   "subclass": "Plate",
+   "armor": 608,
+   "weapon": null,
+   "stats": {
+    "strength": 18,
+    "stamina": 32
+   },
+   "resistances": {
+    "fire": 10
+   },
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "Improves your chance to hit with all spells and attacks by 1%."
+    },
+    {
+     "kind": "Equip",
+     "text": "Increases the block value of your shield by 10."
+    },
+    {
+     "kind": "Equip",
+     "text": "Increased Defense +7."
+    },
+    {
+     "kind": "Set",
+     "text": "(2) Increases the block value of your shield by 30."
+    },
+    {
+     "kind": "Set",
+     "text": "(4) Heal for 189 to 211 when you Block. Can only heal once every few seconds. (3.5s cooldown)"
+    },
+    {
+     "kind": "Set",
+     "text": "(6) Holy Shield no longer has charges and instead always lasts its full duration. In addition, its damage is increased by 80% of your shield block value."
+    }
+   ],
+   "tooltip": "Lawbringer Headguard SoD Phase 4\nItem Level 66\nBinds when picked up\nHead Plate\n608 Armor\n+18 Strength\n+32 Stamina\n+10 Fire Resistance\nDurability 100 / 100Classes: Paladin\nRequires Level 60\nEquip: Improves your chance to hit with all spells and attacks by 1%.\nEquip: Increases the block value of your shield by 10.\nEquip: Increased Defense +7.\nLawbringer Will (0/8)Lawbringer Battlebelt\nLawbringer Chestguard\nLawbringer Handguards\nLawbringer Headguard\nLawbringer Legguards\nLawbringer Pauldrons\nLawbringer Sabatons\nLawbringer Vambraces\n(2) Set : Increases the block value of your shield by 30.\n(4) Set : Heal for 189 to 211 when you Block. Can only heal once every few seconds. (3.5s cooldown)\n(6) Set : Holy Shield no longer has charges and instead always lasts its full duration. In addition, its damage is increased by 80% of your shield block value.\nSell Price: 2 79 56"
+  },
+  {
+   "id": 228249,
+   "name": "Medallion of Steadfast Might",
+   "quality": 4,
+   "icon": "inv_jewelry_amulet_03",
+   "source": "https://www.wowhead.com/classic/item=228249",
+   "itemLevel": 68,
+   "inventoryType": "Neck",
+   "subclass": null,
+   "armor": null,
+   "weapon": null,
+   "stats": {
+    "strength": 7,
+    "stamina": 21
+   },
+   "resistances": {},
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "Increased Defense +9."
+    }
+   ],
+   "tooltip": "Medallion of Steadfast Might SoD Phase 4\nItem Level 68\nBinds when picked up\nNeck\n+7 Strength\n+21 Stamina\nRequires Level 60\nEquip: Increased Defense +9.\nSell Price: 3 33 81"
+  },
+  {
+   "id": 226605,
+   "name": "Lawbringer Pauldrons",
+   "quality": 4,
+   "icon": "inv_shoulder_20",
+   "source": "https://www.wowhead.com/classic/item=226605",
+   "itemLevel": 66,
+   "inventoryType": "Shoulder",
+   "subclass": "Plate",
+   "armor": 562,
+   "weapon": null,
+   "stats": {
+    "strength": 13,
+    "stamina": 22
+   },
+   "resistances": {
+    "fire": 7
+   },
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "Increased Defense +9."
+    },
+    {
+     "kind": "Equip",
+     "text": "Increases the block value of your shield by 12."
+    },
+    {
+     "kind": "Set",
+     "text": "(2) Increases the block value of your shield by 30."
+    },
+    {
+     "kind": "Set",
+     "text": "(4) Heal for 189 to 211 when you Block. Can only heal once every few seconds. (3.5s cooldown)"
+    },
+    {
+     "kind": "Set",
+     "text": "(6) Holy Shield no longer has charges and instead always lasts its full duration. In addition, its damage is increased by 80% of your shield block value."
+    }
+   ],
+   "tooltip": "Lawbringer Pauldrons SoD Phase 4\nItem Level 66\nBinds when picked up\nShoulder Plate\n562 Armor\n+13 Strength\n+22 Stamina\n+7 Fire Resistance\nDurability 100 / 100Classes: Paladin\nRequires Level 60\nEquip: Increased Defense +9.\nEquip: Increases the block value of your shield by 12.\nLawbringer Will (0/8)Lawbringer Battlebelt\nLawbringer Chestguard\nLawbringer Handguards\nLawbringer Headguard\nLawbringer Legguards\nLawbringer Pauldrons\nLawbringer Sabatons\nLawbringer Vambraces\n(2) Set : Increases the block value of your shield by 30.\n(4) Set : Heal for 189 to 211 when you Block. Can only heal once every few seconds. (3.5s cooldown)\n(6) Set : Holy Shield no longer has charges and instead always lasts its full duration. In addition, its damage is increased by 80% of your shield block value.\nSell Price: 2 54 85"
+  },
+  {
+   "id": 226595,
+   "name": "Lawbringer Chestguard",
+   "quality": 4,
+   "icon": "inv_chest_plate03",
+   "source": "https://www.wowhead.com/classic/item=226595",
+   "itemLevel": 66,
+   "inventoryType": "Chest",
+   "subclass": "Plate",
+   "armor": 749,
+   "weapon": null,
+   "stats": {
+    "strength": 11,
+    "stamina": 35
+   },
+   "resistances": {
+    "fire": 10
+   },
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "Improves your chance to hit with all spells and attacks by 1%."
+    },
+    {
+     "kind": "Equip",
+     "text": "Increased Defense +8."
+    },
+    {
+     "kind": "Set",
+     "text": "(2) Increases the block value of your shield by 30."
+    },
+    {
+     "kind": "Set",
+     "text": "(4) Heal for 189 to 211 when you Block. Can only heal once every few seconds. (3.5s cooldown)"
+    },
+    {
+     "kind": "Set",
+     "text": "(6) Holy Shield no longer has charges and instead always lasts its full duration. In addition, its damage is increased by 80% of your shield block value."
+    }
+   ],
+   "tooltip": "Lawbringer Chestguard SoD Phase 4\nItem Level 66\nBinds when picked up\nChest Plate\n749 Armor\n+11 Strength\n+35 Stamina\n+10 Fire Resistance\nDurability 165 / 165Classes: Paladin\nRequires Level 60\nEquip: Improves your chance to hit with all spells and attacks by 1%.\nEquip: Increased Defense +8.\nLawbringer Will (0/8)Lawbringer Battlebelt\nLawbringer Chestguard\nLawbringer Handguards\nLawbringer Headguard\nLawbringer Legguards\nLawbringer Pauldrons\nLawbringer Sabatons\nLawbringer Vambraces\n(2) Set : Increases the block value of your shield by 30.\n(4) Set : Heal for 189 to 211 when you Block. Can only heal once every few seconds. (3.5s cooldown)\n(6) Set : Holy Shield no longer has charges and instead always lasts its full duration. In addition, its damage is increased by 80% of your shield block value.\nSell Price: 3 71 44"
+  },
+  {
+   "id": 226603,
+   "name": "Lawbringer Vambraces",
+   "quality": 4,
+   "icon": "inv_bracer_18",
+   "source": "https://www.wowhead.com/classic/item=226603",
+   "itemLevel": 66,
+   "inventoryType": "Wrist",
+   "subclass": "Plate",
+   "armor": 328,
+   "weapon": null,
+   "stats": {
+    "strength": 9,
+    "stamina": 13
+   },
+   "resistances": {
+    "fire": 5
+   },
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "Increased Defense +10."
+    },
+    {
+     "kind": "Equip",
+     "text": "Increases the block value of your shield by 10."
+    },
+    {
+     "kind": "Set",
+     "text": "(2) Increases the block value of your shield by 30."
+    },
+    {
+     "kind": "Set",
+     "text": "(4) Heal for 189 to 211 when you Block. Can only heal once every few seconds. (3.5s cooldown)"
+    },
+    {
+     "kind": "Set",
+     "text": "(6) Holy Shield no longer has charges and instead always lasts its full duration. In addition, its damage is increased by 80% of your shield block value."
+    }
+   ],
+   "tooltip": "Lawbringer Vambraces SoD Phase 4\nItem Level 66\nBinds when picked up\nWrist Plate\n328 Armor\n+9 Strength\n+13 Stamina\n+5 Fire Resistance\nDurability 55 / 55Classes: Paladin\nRequires Level 60\nEquip: Increased Defense +10.\nEquip: Increases the block value of your shield by 10.\nLawbringer Will (0/8)Lawbringer Battlebelt\nLawbringer Chestguard\nLawbringer Handguards\nLawbringer Headguard\nLawbringer Legguards\nLawbringer Pauldrons\nLawbringer Sabatons\nLawbringer Vambraces\n(2) Set : Increases the block value of your shield by 30.\n(4) Set : Heal for 189 to 211 when you Block. Can only heal once every few seconds. (3.5s cooldown)\n(6) Set : Holy Shield no longer has charges and instead always lasts its full duration. In addition, its damage is increased by 80% of your shield block value.\nSell Price: 1 70 54"
+  },
+  {
+   "id": 20688,
+   "name": "Earthen Guard",
+   "quality": 4,
+   "icon": "inv_shield_15",
+   "source": "https://www.wowhead.com/classic/item=20688",
+   "itemLevel": 65,
+   "inventoryType": "Off Hand",
+   "subclass": "Shield",
+   "armor": 2468,
+   "weapon": null,
+   "stats": {
+    "stamina": 19
+   },
+   "resistances": {},
+   "effects": [
+    {
+     "kind": "Stat",
+     "text": "44 Block"
+    },
+    {
+     "kind": "Equip",
+     "text": "Increased Defense +7."
+    },
+    {
+     "kind": "Equip",
+     "text": "Increases the block value of your shield by 12."
+    }
+   ],
+   "tooltip": "Earthen Guard\nItem Level 65\nBinds when picked up\nOff Hand Shield\n2468 Armor\n44 Block\n+19 Stamina\nDurability 120 / 120\nRequires Level 60\nEquip: Increased Defense +7.\nEquip: Increases the block value of your shield by 12.\nSell Price: 5 66 44"
+  },
+  {
+   "id": 226608,
+   "name": "Lawbringer Handguards",
+   "quality": 4,
+   "icon": "inv_gauntlets_29",
+   "source": "https://www.wowhead.com/classic/item=226608",
+   "itemLevel": 66,
+   "inventoryType": "Hands",
+   "subclass": "Plate",
+   "armor": 468,
+   "weapon": null,
+   "stats": {
+    "strength": 13,
+    "stamina": 24
+   },
+   "resistances": {
+    "fire": 7
+   },
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "Increased Defense +9."
+    },
+    {
+     "kind": "Equip",
+     "text": "Increases the block value of your shield by 10."
+    },
+    {
+     "kind": "Set",
+     "text": "(2) Increases the block value of your shield by 30."
+    },
+    {
+     "kind": "Set",
+     "text": "(4) Heal for 189 to 211 when you Block. Can only heal once every few seconds. (3.5s cooldown)"
+    },
+    {
+     "kind": "Set",
+     "text": "(6) Holy Shield no longer has charges and instead always lasts its full duration. In addition, its damage is increased by 80% of your shield block value."
+    }
+   ],
+   "tooltip": "Lawbringer Handguards SoD Phase 4\nItem Level 66\nBinds when picked up\nHands Plate\n468 Armor\n+13 Strength\n+24 Stamina\n+7 Fire Resistance\nDurability 55 / 55Classes: Paladin\nRequires Level 60\nEquip: Increased Defense +9.\nEquip: Increases the block value of your shield by 10.\nLawbringer Will (0/8)Lawbringer Battlebelt\nLawbringer Chestguard\nLawbringer Handguards\nLawbringer Headguard\nLawbringer Legguards\nLawbringer Pauldrons\nLawbringer Sabatons\nLawbringer Vambraces\n(2) Set : Increases the block value of your shield by 30.\n(4) Set : Heal for 189 to 211 when you Block. Can only heal once every few seconds. (3.5s cooldown)\n(6) Set : Holy Shield no longer has charges and instead always lasts its full duration. In addition, its damage is increased by 80% of your shield block value.\nSell Price: 1 72 49"
+  },
+  {
+   "id": 226604,
+   "name": "Lawbringer Battlebelt",
+   "quality": 4,
+   "icon": "inv_belt_27",
+   "source": "https://www.wowhead.com/classic/item=226604",
+   "itemLevel": 66,
+   "inventoryType": "Waist",
+   "subclass": "Plate",
+   "armor": 421,
+   "weapon": null,
+   "stats": {
+    "strength": 15,
+    "stamina": 20
+   },
+   "resistances": {
+    "fire": 7
+   },
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "Increased Defense +10."
+    },
+    {
+     "kind": "Equip",
+     "text": "Increases the block value of your shield by 10."
+    },
+    {
+     "kind": "Set",
+     "text": "(2) Increases the block value of your shield by 30."
+    },
+    {
+     "kind": "Set",
+     "text": "(4) Heal for 189 to 211 when you Block. Can only heal once every few seconds. (3.5s cooldown)"
+    },
+    {
+     "kind": "Set",
+     "text": "(6) Holy Shield no longer has charges and instead always lasts its full duration. In addition, its damage is increased by 80% of your shield block value."
+    }
+   ],
+   "tooltip": "Lawbringer Battlebelt SoD Phase 4\nItem Level 66\nBinds when picked up\nWaist Plate\n421 Armor\n+15 Strength\n+20 Stamina\n+7 Fire Resistance\nDurability 55 / 55Classes: Paladin\nRequires Level 60\nEquip: Increased Defense +10.\nEquip: Increases the block value of your shield by 10.\nLawbringer Will (0/8)Lawbringer Battlebelt\nLawbringer Chestguard\nLawbringer Handguards\nLawbringer Headguard\nLawbringer Legguards\nLawbringer Pauldrons\nLawbringer Sabatons\nLawbringer Vambraces\n(2) Set : Increases the block value of your shield by 30.\n(4) Set : Heal for 189 to 211 when you Block. Can only heal once every few seconds. (3.5s cooldown)\n(6) Set : Holy Shield no longer has charges and instead always lasts its full duration. In addition, its damage is increased by 80% of your shield block value.\nSell Price: 1 71 19"
+  },
+  {
+   "id": 226606,
+   "name": "Lawbringer Legguards",
+   "quality": 4,
+   "icon": "inv_pants_04",
+   "source": "https://www.wowhead.com/classic/item=226606",
+   "itemLevel": 66,
+   "inventoryType": "Legs",
+   "subclass": "Plate",
+   "armor": 655,
+   "weapon": null,
+   "stats": {
+    "strength": 15,
+    "stamina": 33
+   },
+   "resistances": {
+    "fire": 10
+   },
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "Improves your chance to hit with all spells and attacks by 1%."
+    },
+    {
+     "kind": "Equip",
+     "text": "Increases the block value of your shield by 12."
+    },
+    {
+     "kind": "Equip",
+     "text": "Increased Defense +7."
+    },
+    {
+     "kind": "Set",
+     "text": "(2) Increases the block value of your shield by 30."
+    },
+    {
+     "kind": "Set",
+     "text": "(4) Heal for 189 to 211 when you Block. Can only heal once every few seconds. (3.5s cooldown)"
+    },
+    {
+     "kind": "Set",
+     "text": "(6) Holy Shield no longer has charges and instead always lasts its full duration. In addition, its damage is increased by 80% of your shield block value."
+    }
+   ],
+   "tooltip": "Lawbringer Legguards SoD Phase 4\nItem Level 66\nBinds when picked up\nLegs Plate\n655 Armor\n+15 Strength\n+33 Stamina\n+10 Fire Resistance\nDurability 120 / 120Classes: Paladin\nRequires Level 60\nEquip: Improves your chance to hit with all spells and attacks by 1%.\nEquip: Increases the block value of your shield by 12.\nEquip: Increased Defense +7.\nLawbringer Will (0/8)Lawbringer Battlebelt\nLawbringer Chestguard\nLawbringer Handguards\nLawbringer Headguard\nLawbringer Legguards\nLawbringer Pauldrons\nLawbringer Sabatons\nLawbringer Vambraces\n(2) Set : Increases the block value of your shield by 30.\n(4) Set : Heal for 189 to 211 when you Block. Can only heal once every few seconds. (3.5s cooldown)\n(6) Set : Holy Shield no longer has charges and instead always lasts its full duration. In addition, its damage is increased by 80% of your shield block value.\nSell Price: 3 38 48"
+  },
+  {
+   "id": 226609,
+   "name": "Lawbringer Sabatons",
+   "quality": 4,
+   "icon": "inv_boots_plate_09",
+   "source": "https://www.wowhead.com/classic/item=226609",
+   "itemLevel": 66,
+   "inventoryType": "Feet",
+   "subclass": "Plate",
+   "armor": 515,
+   "weapon": null,
+   "stats": {
+    "strength": 16,
+    "stamina": 22
+   },
+   "resistances": {
+    "fire": 5
+   },
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "Increased Defense +8."
+    },
+    {
+     "kind": "Equip",
+     "text": "Increases the block value of your shield by 10."
+    },
+    {
+     "kind": "Set",
+     "text": "(2) Increases the block value of your shield by 30."
+    },
+    {
+     "kind": "Set",
+     "text": "(4) Heal for 189 to 211 when you Block. Can only heal once every few seconds. (3.5s cooldown)"
+    },
+    {
+     "kind": "Set",
+     "text": "(6) Holy Shield no longer has charges and instead always lasts its full duration. In addition, its damage is increased by 80% of your shield block value."
+    }
+   ],
+   "tooltip": "Lawbringer Sabatons SoD Phase 4\nItem Level 66\nBinds when picked up\nFeet Plate\n515 Armor\n+16 Strength\n+22 Stamina\n+5 Fire Resistance\nDurability 75 / 75Classes: Paladin\nRequires Level 60\nEquip: Increased Defense +8.\nEquip: Increases the block value of your shield by 10.\nLawbringer Will (0/8)Lawbringer Battlebelt\nLawbringer Chestguard\nLawbringer Handguards\nLawbringer Headguard\nLawbringer Legguards\nLawbringer Pauldrons\nLawbringer Sabatons\nLawbringer Vambraces\n(2) Set : Increases the block value of your shield by 30.\n(4) Set : Heal for 189 to 211 when you Block. Can only heal once every few seconds. (3.5s cooldown)\n(6) Set : Holy Shield no longer has charges and instead always lasts its full duration. In addition, its damage is increased by 80% of your shield block value.\nSell Price: 2 57 78"
+  },
+  {
+   "id": 228242,
+   "name": "Heavy Dark Iron Ring",
+   "quality": 4,
+   "icon": "inv_jewelry_ring_14",
+   "source": "https://www.wowhead.com/classic/item=228242",
+   "itemLevel": 66,
+   "inventoryType": "Finger",
+   "subclass": null,
+   "armor": 80,
+   "weapon": null,
+   "stats": {
+    "stamina": 20
+   },
+   "resistances": {},
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "Increased Defense +7."
+    }
+   ],
+   "tooltip": "Heavy Dark Iron Ring SoD Phase 4\nItem Level 66\nBinds when picked up\nUnique-Equipped\nFinger\n80 Armor\n+20 Stamina\nRequires Level 60\nEquip: Increased Defense +7.\nSell Price: 5 33 64"
+  }
+ ]
+}

@@ -123,19 +123,35 @@ describe('the class is wired up', () => {
     expect(strikes?.uses ?? 0).toBeGreaterThan(5);
   });
 
-  it('refuses the dagger abilities with the shell gear, rather than pretending', () => {
+  it('casts the dagger abilities now that it holds daggers', () => {
     /*
-     * The item data holds nineteen Classic stand-ins curated for a Warrior and
-     * not one dagger, so Backstab and Mutilate are uncastable. Their own
-     * `canCast` says so; the Venom list falls back to Sinister Strike, which
-     * is exactly what it is written to do.
+     * ------------------------------------------------------------------------
+     * THIS TEST USED TO ASSERT ZERO, AND IT WAS RIGHT AT THE TIME.
+     *
+     * The Rogues wore a Warrior's gear with a sword in each hand, so Backstab
+     * and Mutilate were uncastable and the Venom list fell back to Sinister
+     * Strike for its whole life. Their own `canCast` refused, which was the
+     * honest behaviour -- and it meant the build the owner asked for was never
+     * the build that ran.
+     *
+     * Perdition's Blade and Core Hound Tooth are both daggers, so it runs now.
+     * The two are checked TOGETHER rather than individually, because which of
+     * the two a priority list reaches is a rotation decision and not the thing
+     * under test.
+     * ------------------------------------------------------------------------
      */
     const venom = batchOf('rogue_venom', 20, 5);
-    expect(venom.abilities.find((a) => a.abilityName === 'Mutilate')?.uses ?? 0).toBe(0);
-    expect(venom.abilities.find((a) => a.abilityName === 'Backstab')?.uses ?? 0).toBe(0);
-    expect(
-      venom.abilities.find((a) => a.abilityName === 'Sinister Strike')?.uses ?? 0,
-    ).toBeGreaterThan(5);
+    const uses = (name: string) =>
+      venom.abilities.find((ability) => ability.abilityName === name)?.uses ?? 0;
+
+    expect(uses('Mutilate') + uses('Backstab')).toBeGreaterThan(0);
+
+    // Combat still swings swords, so it still cannot.
+    const combat = batchOf('rogue_combat', 20, 5);
+    const combatUses = (name: string) =>
+      combat.abilities.find((ability) => ability.abilityName === name)?.uses ?? 0;
+    expect(combatUses('Mutilate') + combatUses('Backstab')).toBe(0);
+    expect(combatUses('Sinister Strike')).toBeGreaterThan(5);
   });
 });
 

@@ -1,0 +1,735 @@
+{
+ "set": "sod-shaman",
+ "description": "A level 60 Shaman's gear: Earthfury in the Elemental caster variant and the Enhancement melee one, from two sixtyupgrades.com sets the owner supplied. Season of Discovery items. Elemental holds a shield -- Earth and Fire, a caster shield -- which the Shockadin set also wears.",
+ "source": "https://sixtyupgrades.com/sod/set/nJ2qTVuA516n6dtWG2zRmJ (Elemental), https://sixtyupgrades.com/sod/set/mTuJFHPSPpUX3myhndpfDQ (Enhancement)",
+ "items": [
+  {
+   "id": 227002,
+   "name": "Coif of The Five Thunders",
+   "quality": 4,
+   "icon": "inv_helmet_04",
+   "source": "https://www.wowhead.com/classic/item=227002",
+   "itemLevel": 60,
+   "inventoryType": "Head",
+   "subclass": "Mail",
+   "armor": 314,
+   "weapon": null,
+   "stats": {
+    "stamina": 18,
+    "intellect": 19
+   },
+   "resistances": {},
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "Improves your chance to get a critical strike with all spells and attacks by 1%."
+    },
+    {
+     "kind": "Equip",
+     "text": "Increases damage and healing done by magical spells and effects by up to 27."
+    },
+    {
+     "kind": "Set",
+     "text": "(2) +40 Attack Power, up to 23 increased damage from spells, and up to 44 increased healing from spells."
+    },
+    {
+     "kind": "Set",
+     "text": "(4) 6% chance on mainhand autoattack and 4% chance on spellcast to increase your damage and healing done by magical spells and effects by up to 95 for 10 sec. (Proc chance: 6%)"
+    },
+    {
+     "kind": "Set",
+     "text": "(6) +8 All Resistances."
+    },
+    {
+     "kind": "Set",
+     "text": "(8) +200 Armor."
+    }
+   ],
+   "tooltip": "Coif of The Five Thunders\nItem Level 60\nBinds when picked up\nHead Mail\n314 Armor\n+18 Stamina\n+19 Intellect\nDurability 85 / 85Classes: Shaman\nEquip: Improves your chance to get a critical strike with all spells and attacks by 1%.\nEquip: Increases damage and healing done by magical spells and effects by up to 27.\nThe Five Thunders (0/8)Boots of The Five Thunders\nChest of The Five Thunders\nGloves of The Five Thunders\nHelm of The Five Thunders\nLegs of The Five Thunders\nShoulders of The Five Thunders\nWaist of The Five Thunders\nWrists of The Five Thunders\n(2) Set : +40 Attack Power, up to 23 increased damage from spells, and up to 44 increased healing from spells.\n(4) Set : 6% chance on mainhand autoattack and 4% chance on spellcast to increase your damage and healing done by magical spells and effects by up to 95 for 10 sec. (Proc chance: 6%)\n(6) Set : +8 All Resistances.\n(8) Set : +200 Armor.\nSell Price: 20"
+  },
+  {
+   "id": 226624,
+   "name": "Earthfury Mantle",
+   "quality": 4,
+   "icon": "inv_shoulder_29",
+   "source": "https://www.wowhead.com/classic/item=226624",
+   "itemLevel": 66,
+   "inventoryType": "Shoulder",
+   "subclass": "Mail",
+   "armor": 317,
+   "weapon": null,
+   "stats": {
+    "stamina": 12,
+    "intellect": 15
+   },
+   "resistances": {
+    "fire": 7
+   },
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "Improves your chance to get a critical strike with all spells and attacks by 1%."
+    },
+    {
+     "kind": "Equip",
+     "text": "Increases damage and healing done by magical spells and effects by up to 20."
+    },
+    {
+     "kind": "Set",
+     "text": "(2) The radius of your totems that affect friendly targets is increased to 40 yd."
+    },
+    {
+     "kind": "Set",
+     "text": "(4) Your Lightning Bolt critical strikes have a 35% chance to reset the cooldown on Lava Burst and Chain Lightning and make the next Lava Burst or Chain Lightning within 10 sec instant. (Proc chance: 35%)"
+    },
+    {
+     "kind": "Set",
+     "text": "(6) Lava Burst now also refreshes the duration of Flame Shock on your target back to 12 sec."
+    }
+   ],
+   "tooltip": "Earthfury Mantle SoD Phase 4\nItem Level 66\nBinds when picked up\nShoulder Mail\n317 Armor\n+12 Stamina\n+15 Intellect\n+7 Fire Resistance\nDurability 85 / 85Classes: Shaman\nRequires Level 60\nEquip: Improves your chance to get a critical strike with all spells and attacks by 1%.\nEquip: Increases damage and healing done by magical spells and effects by up to 20.\nEarthfury Eruption (0/8)Earthfury Hands\nEarthfury Leggings\nEarthfury Mantle\nEarthfury Ringmail\nEarthfury Visor\nEarthfury Cord\nEarthfury Walkers\nEarthfury Wristbands\n(2) Set : The radius of your totems that affect friendly targets is increased to 40 yd.\n(4) Set : Your Lightning Bolt critical strikes have a 35% chance to reset the cooldown on Lava Burst and Chain Lightning and make the next Lava Burst or Chain Lightning within 10 sec instant. (Proc chance: 35%)\n(6) Set : Lava Burst now also refreshes the duration of Flame Shock on your target back to 12 sec.\nSell Price: 3 95 82"
+  },
+  {
+   "id": 226619,
+   "name": "Earthfury Ringmail",
+   "quality": 4,
+   "icon": "inv_chest_chain_11",
+   "source": "https://www.wowhead.com/classic/item=226619",
+   "itemLevel": 66,
+   "inventoryType": "Chest",
+   "subclass": "Mail",
+   "armor": 422,
+   "weapon": null,
+   "stats": {
+    "stamina": 14,
+    "intellect": 21
+   },
+   "resistances": {
+    "fire": 10
+   },
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "Improves your chance to get a critical strike with all spells and attacks by 1%."
+    },
+    {
+     "kind": "Equip",
+     "text": "Increases damage and healing done by magical spells and effects by up to 30."
+    },
+    {
+     "kind": "Set",
+     "text": "(2) The radius of your totems that affect friendly targets is increased to 40 yd."
+    },
+    {
+     "kind": "Set",
+     "text": "(4) Your Lightning Bolt critical strikes have a 35% chance to reset the cooldown on Lava Burst and Chain Lightning and make the next Lava Burst or Chain Lightning within 10 sec instant. (Proc chance: 35%)"
+    },
+    {
+     "kind": "Set",
+     "text": "(6) Lava Burst now also refreshes the duration of Flame Shock on your target back to 12 sec."
+    }
+   ],
+   "tooltip": "Earthfury Ringmail SoD Phase 4\nItem Level 66\nBinds when picked up\nChest Mail\n422 Armor\n+14 Stamina\n+21 Intellect\n+10 Fire Resistance\nDurability 140 / 140Classes: Shaman\nRequires Level 60\nEquip: Improves your chance to get a critical strike with all spells and attacks by 1%.\nEquip: Increases damage and healing done by magical spells and effects by up to 30.\nEarthfury Eruption (0/8)Earthfury Hands\nEarthfury Leggings\nEarthfury Mantle\nEarthfury Ringmail\nEarthfury Visor\nEarthfury Cord\nEarthfury Walkers\nEarthfury Wristbands\n(2) Set : The radius of your totems that affect friendly targets is increased to 40 yd.\n(4) Set : Your Lightning Bolt critical strikes have a 35% chance to reset the cooldown on Lava Burst and Chain Lightning and make the next Lava Burst or Chain Lightning within 10 sec instant. (Proc chance: 35%)\n(6) Set : Lava Burst now also refreshes the duration of Flame Shock on your target back to 12 sec.\nSell Price: 5 19 56"
+  },
+  {
+   "id": 226626,
+   "name": "Earthfury Wristbands",
+   "quality": 4,
+   "icon": "inv_bracer_16",
+   "source": "https://www.wowhead.com/classic/item=226626",
+   "itemLevel": 66,
+   "inventoryType": "Wrist",
+   "subclass": "Mail",
+   "armor": 185,
+   "weapon": null,
+   "stats": {
+    "stamina": 10,
+    "intellect": 11
+   },
+   "resistances": {
+    "fire": 5
+   },
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "Increases damage and healing done by magical spells and effects by up to 15."
+    },
+    {
+     "kind": "Equip",
+     "text": "Improves your chance to hit with all spells and attacks by 1%."
+    },
+    {
+     "kind": "Set",
+     "text": "(2) The radius of your totems that affect friendly targets is increased to 40 yd."
+    },
+    {
+     "kind": "Set",
+     "text": "(4) Your Lightning Bolt critical strikes have a 35% chance to reset the cooldown on Lava Burst and Chain Lightning and make the next Lava Burst or Chain Lightning within 10 sec instant. (Proc chance: 35%)"
+    },
+    {
+     "kind": "Set",
+     "text": "(6) Lava Burst now also refreshes the duration of Flame Shock on your target back to 12 sec."
+    }
+   ],
+   "tooltip": "Earthfury Wristbands SoD Phase 4\nItem Level 66\nBinds when picked up\nWrist Mail\n185 Armor\n+10 Stamina\n+11 Intellect\n+5 Fire Resistance\nDurability 50 / 50Classes: Shaman\nRequires Level 60\nEquip: Increases damage and healing done by magical spells and effects by up to 15.\nEquip: Improves your chance to hit with all spells and attacks by 1%.\nEarthfury Eruption (0/8)Earthfury Hands\nEarthfury Leggings\nEarthfury Mantle\nEarthfury Ringmail\nEarthfury Visor\nEarthfury Cord\nEarthfury Walkers\nEarthfury Wristbands\n(2) Set : The radius of your totems that affect friendly targets is increased to 40 yd.\n(4) Set : Your Lightning Bolt critical strikes have a 35% chance to reset the cooldown on Lava Burst and Chain Lightning and make the next Lava Burst or Chain Lightning within 10 sec instant. (Proc chance: 35%)\n(6) Set : Lava Burst now also refreshes the duration of Flame Shock on your target back to 12 sec.\nSell Price: 2 58 79"
+  },
+  {
+   "id": 228263,
+   "name": "Sorcerous Dagger",
+   "quality": 4,
+   "icon": "inv_weapon_shortblade_07",
+   "source": "https://www.wowhead.com/classic/item=228263",
+   "itemLevel": 68,
+   "inventoryType": "Main Hand",
+   "subclass": "Dagger",
+   "armor": 60,
+   "weapon": {
+    "minDamage": 36,
+    "maxDamage": 78,
+    "speed": 1.4,
+    "dps": 40.71
+   },
+   "stats": {
+    "stamina": 8,
+    "intellect": 16
+   },
+   "resistances": {},
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "Increases damage and healing done by magical spells and effects by up to 36."
+    }
+   ],
+   "tooltip": "Sorcerous Dagger\nItem Level 68\nBinds when picked up\nUnique-Equipped\nMain Hand Dagger\n36 - 78 Damage\nSpeed 1.40\n(40.71 damage per second)\n60 Armor\n+8 Stamina\n+16 Intellect\nDurability 75 / 75\nRequires Level 60\nEquip: Increases damage and healing done by magical spells and effects by up to 36.\nSell Price: 9 36 28"
+  },
+  {
+   "id": 228142,
+   "name": "Earth and Fire",
+   "quality": 4,
+   "icon": "inv_shield_10",
+   "source": "https://www.wowhead.com/classic/item=228142",
+   "itemLevel": 66,
+   "inventoryType": "Off Hand",
+   "subclass": "Shield",
+   "armor": 2504,
+   "weapon": null,
+   "stats": {
+    "stamina": 9,
+    "intellect": 7
+   },
+   "resistances": {},
+   "effects": [
+    {
+     "kind": "Stat",
+     "text": "45 Block"
+    },
+    {
+     "kind": "Equip",
+     "text": "Increases damage and healing done by magical spells and effects by up to 26."
+    }
+   ],
+   "tooltip": "Earth and Fire SoD Phase 4\nItem Level 66\nBinds when picked up\nOff Hand Shield\n2504 Armor\n45 Block\n+9 Stamina\n+7 Intellect\nDurability 120 / 120\nRequires Level 60\nEquip: Increases damage and healing done by magical spells and effects by up to 26.\nSell Price: 5 79 70"
+  },
+  {
+   "id": 226621,
+   "name": "Earthfury Hands",
+   "quality": 4,
+   "icon": "inv_gauntlets_11",
+   "source": "https://www.wowhead.com/classic/item=226621",
+   "itemLevel": 66,
+   "inventoryType": "Hands",
+   "subclass": "Mail",
+   "armor": 264,
+   "weapon": null,
+   "stats": {
+    "stamina": 12,
+    "intellect": 14
+   },
+   "resistances": {
+    "fire": 7
+   },
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "Improves your chance to hit with all spells and attacks by 1%."
+    },
+    {
+     "kind": "Equip",
+     "text": "Increases damage and healing done by magical spells and effects by up to 23."
+    },
+    {
+     "kind": "Set",
+     "text": "(2) The radius of your totems that affect friendly targets is increased to 40 yd."
+    },
+    {
+     "kind": "Set",
+     "text": "(4) Your Lightning Bolt critical strikes have a 35% chance to reset the cooldown on Lava Burst and Chain Lightning and make the next Lava Burst or Chain Lightning within 10 sec instant. (Proc chance: 35%)"
+    },
+    {
+     "kind": "Set",
+     "text": "(6) Lava Burst now also refreshes the duration of Flame Shock on your target back to 12 sec."
+    }
+   ],
+   "tooltip": "Earthfury Hands SoD Phase 4\nItem Level 66\nBinds when picked up\nHands Mail\n264 Armor\n+12 Stamina\n+14 Intellect\n+7 Fire Resistance\nDurability 50 / 50Classes: Shaman\nRequires Level 60\nEquip: Improves your chance to hit with all spells and attacks by 1%.\nEquip: Increases damage and healing done by magical spells and effects by up to 23.\nEarthfury Eruption (0/8)Earthfury Hands\nEarthfury Leggings\nEarthfury Mantle\nEarthfury Ringmail\nEarthfury Visor\nEarthfury Cord\nEarthfury Walkers\nEarthfury Wristbands\n(2) Set : The radius of your totems that affect friendly targets is increased to 40 yd.\n(4) Set : Your Lightning Bolt critical strikes have a 35% chance to reset the cooldown on Lava Burst and Chain Lightning and make the next Lava Burst or Chain Lightning within 10 sec instant. (Proc chance: 35%)\n(6) Set : Lava Burst now also refreshes the duration of Flame Shock on your target back to 12 sec.\nSell Price: 2 57 81"
+  },
+  {
+   "id": 226623,
+   "name": "Earthfury Leggings",
+   "quality": 4,
+   "icon": "inv_pants_03",
+   "source": "https://www.wowhead.com/classic/item=226623",
+   "itemLevel": 66,
+   "inventoryType": "Legs",
+   "subclass": "Mail",
+   "armor": 369,
+   "weapon": null,
+   "stats": {
+    "stamina": 19,
+    "intellect": 21
+   },
+   "resistances": {
+    "fire": 10
+   },
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "Increases damage and healing done by magical spells and effects by up to 26."
+    },
+    {
+     "kind": "Equip",
+     "text": "Improves your chance to get a critical strike with all spells and attacks by 1%."
+    },
+    {
+     "kind": "Set",
+     "text": "(2) The radius of your totems that affect friendly targets is increased to 40 yd."
+    },
+    {
+     "kind": "Set",
+     "text": "(4) Your Lightning Bolt critical strikes have a 35% chance to reset the cooldown on Lava Burst and Chain Lightning and make the next Lava Burst or Chain Lightning within 10 sec instant. (Proc chance: 35%)"
+    },
+    {
+     "kind": "Set",
+     "text": "(6) Lava Burst now also refreshes the duration of Flame Shock on your target back to 12 sec."
+    }
+   ],
+   "tooltip": "Earthfury Leggings SoD Phase 4\nItem Level 66\nBinds when picked up\nLegs Mail\n369 Armor\n+19 Stamina\n+21 Intellect\n+10 Fire Resistance\nDurability 105 / 105Classes: Shaman\nRequires Level 60\nEquip: Increases damage and healing done by magical spells and effects by up to 26.\nEquip: Improves your chance to get a critical strike with all spells and attacks by 1%.\nEarthfury Eruption (0/8)Earthfury Hands\nEarthfury Leggings\nEarthfury Mantle\nEarthfury Ringmail\nEarthfury Visor\nEarthfury Cord\nEarthfury Walkers\nEarthfury Wristbands\n(2) Set : The radius of your totems that affect friendly targets is increased to 40 yd.\n(4) Set : Your Lightning Bolt critical strikes have a 35% chance to reset the cooldown on Lava Burst and Chain Lightning and make the next Lava Burst or Chain Lightning within 10 sec instant. (Proc chance: 35%)\n(6) Set : Lava Burst now also refreshes the duration of Flame Shock on your target back to 12 sec.\nSell Price: 5 23 46"
+  },
+  {
+   "id": 226620,
+   "name": "Earthfury Walkers",
+   "quality": 4,
+   "icon": "inv_boots_plate_06",
+   "source": "https://www.wowhead.com/classic/item=226620",
+   "itemLevel": 66,
+   "inventoryType": "Feet",
+   "subclass": "Mail",
+   "armor": 290,
+   "weapon": null,
+   "stats": {
+    "stamina": 10,
+    "intellect": 14
+   },
+   "resistances": {
+    "fire": 5
+   },
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "Increases damage and healing done by magical spells and effects by up to 23."
+    },
+    {
+     "kind": "Equip",
+     "text": "Improves your chance to get a critical strike with all spells and attacks by 1%."
+    },
+    {
+     "kind": "Set",
+     "text": "(2) The radius of your totems that affect friendly targets is increased to 40 yd."
+    },
+    {
+     "kind": "Set",
+     "text": "(4) Your Lightning Bolt critical strikes have a 35% chance to reset the cooldown on Lava Burst and Chain Lightning and make the next Lava Burst or Chain Lightning within 10 sec instant. (Proc chance: 35%)"
+    },
+    {
+     "kind": "Set",
+     "text": "(6) Lava Burst now also refreshes the duration of Flame Shock on your target back to 12 sec."
+    }
+   ],
+   "tooltip": "Earthfury Walkers SoD Phase 4\nItem Level 66\nBinds when picked up\nFeet Mail\n290 Armor\n+10 Stamina\n+14 Intellect\n+5 Fire Resistance\nDurability 70 / 70Classes: Shaman\nRequires Level 60\nEquip: Increases damage and healing done by magical spells and effects by up to 23.\nEquip: Improves your chance to get a critical strike with all spells and attacks by 1%.\nEarthfury Eruption (0/8)Earthfury Hands\nEarthfury Leggings\nEarthfury Mantle\nEarthfury Ringmail\nEarthfury Visor\nEarthfury Cord\nEarthfury Walkers\nEarthfury Wristbands\n(2) Set : The radius of your totems that affect friendly targets is increased to 40 yd.\n(4) Set : Your Lightning Bolt critical strikes have a 35% chance to reset the cooldown on Lava Burst and Chain Lightning and make the next Lava Burst or Chain Lightning within 10 sec instant. (Proc chance: 35%)\n(6) Set : Lava Burst now also refreshes the duration of Flame Shock on your target back to 12 sec.\nSell Price: 3 85 50"
+  },
+  {
+   "id": 18471,
+   "name": "Royal Seal of Eldre'Thalas",
+   "quality": 3,
+   "icon": "inv_jewelry_talisman_10",
+   "source": "https://www.wowhead.com/classic/item=18471",
+   "itemLevel": 62,
+   "inventoryType": "Trinket",
+   "subclass": null,
+   "armor": null,
+   "weapon": null,
+   "stats": {},
+   "resistances": {
+    "fire": 10
+   },
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "Increases damage and healing done by magical spells and effects by up to 23."
+    }
+   ],
+   "tooltip": "Royal Seal of Eldre'Thalas\nItem Level 62\nBinds when picked up\nUnique\nTrinket\n+10 Fire ResistanceClasses: Shaman\nEquip: Increases damage and healing done by magical spells and effects by up to 23.\n&quot;Blessed by the Shen'dralar Ancients.&quot;"
+  },
+  {
+   "id": 23199,
+   "name": "Totem of the Storm",
+   "quality": 3,
+   "icon": "inv_relics_totemofrage",
+   "source": "https://www.wowhead.com/classic/item=23199",
+   "itemLevel": 65,
+   "inventoryType": "Relic",
+   "subclass": "Totem",
+   "armor": null,
+   "weapon": null,
+   "stats": {},
+   "resistances": {},
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "Increases damage done by Chain Lightning and Lightning Bolt by up to 33."
+    }
+   ],
+   "tooltip": "Totem of the Storm\nItem Level 65\nBinds when equipped\nUnique\nRelic Totem\nRequires Level 60\nEquip: Increases damage done by Chain Lightning and Lightning Bolt by up to 33.\nSell Price: 1 88 58"
+  },
+  {
+   "id": 226640,
+   "name": "Earthfury Spaulders",
+   "quality": 4,
+   "icon": "inv_shoulder_29",
+   "source": "https://www.wowhead.com/classic/item=226640",
+   "itemLevel": 66,
+   "inventoryType": "Shoulder",
+   "subclass": "Mail",
+   "armor": 317,
+   "weapon": null,
+   "stats": {
+    "strength": 17,
+    "stamina": 12,
+    "intellect": 15
+   },
+   "resistances": {
+    "fire": 7
+   },
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "Improves your chance to get a critical strike with all spells and attacks by 1%."
+    },
+    {
+     "kind": "Set",
+     "text": "(2) The radius of your totems that affect friendly targets is increased to 40 yd."
+    },
+    {
+     "kind": "Set",
+     "text": "(4) Increases your critical strike chance with spells and attacks by 2%."
+    },
+    {
+     "kind": "Set",
+     "text": "(6) Your Flurry talent grants an additional 10% increase to your attack speed."
+    }
+   ],
+   "tooltip": "Earthfury Spaulders SoD Phase 4\nItem Level 66\nBinds when picked up\nShoulder Mail\n317 Armor\n+17 Strength\n+12 Stamina\n+15 Intellect\n+7 Fire Resistance\nDurability 85 / 85Classes: Shaman\nRequires Level 60\nEquip: Improves your chance to get a critical strike with all spells and attacks by 1%.\nEarthfury Impact (0/8)Earthfury Battleboots\nEarthfury Bindings\nEarthfury Chain Leggings\nEarthfury Chainmail\nEarthfury Girdle\nEarthfury Grips\nEarthfury Headpiece\nEarthfury Spaulders\n(2) Set : The radius of your totems that affect friendly targets is increased to 40 yd.\n(4) Set : Increases your critical strike chance with spells and attacks by 2%.\n(6) Set : Your Flurry talent grants an additional 10% increase to your attack speed.\nSell Price: 3 95 82"
+  },
+  {
+   "id": 227024,
+   "name": "Chain of The Five Thunders",
+   "quality": 4,
+   "icon": "inv_chest_chain_11",
+   "source": "https://www.wowhead.com/classic/item=227024",
+   "itemLevel": 60,
+   "inventoryType": "Chest",
+   "subclass": "Mail",
+   "armor": 387,
+   "weapon": null,
+   "stats": {
+    "strength": 28,
+    "agility": 12,
+    "stamina": 14,
+    "intellect": 14
+   },
+   "resistances": {},
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "Improves your chance to hit with all spells and attacks by 1%."
+    },
+    {
+     "kind": "Set",
+     "text": "(2) +40 Attack Power, up to 23 increased damage from spells, and up to 44 increased healing from spells."
+    },
+    {
+     "kind": "Set",
+     "text": "(4) 6% chance on mainhand autoattack and 4% chance on spellcast to increase your damage and healing done by magical spells and effects by up to 95 for 10 sec. (Proc chance: 6%)"
+    },
+    {
+     "kind": "Set",
+     "text": "(6) +8 All Resistances."
+    },
+    {
+     "kind": "Set",
+     "text": "(8) +200 Armor."
+    }
+   ],
+   "tooltip": "Chain of The Five Thunders\nItem Level 60\nBinds when picked up\nChest Mail\n387 Armor\n+28 Strength\n+12 Agility\n+14 Stamina\n+14 Intellect\nDurability 140 / 140Classes: Shaman\nEquip: Improves your chance to hit with all spells and attacks by 1%.\nThe Five Thunders (0/8)Boots of The Five Thunders\nChest of The Five Thunders\nGloves of The Five Thunders\nHelm of The Five Thunders\nLegs of The Five Thunders\nShoulders of The Five Thunders\nWaist of The Five Thunders\nWrists of The Five Thunders\n(2) Set : +40 Attack Power, up to 23 increased damage from spells, and up to 44 increased healing from spells.\n(4) Set : 6% chance on mainhand autoattack and 4% chance on spellcast to increase your damage and healing done by magical spells and effects by up to 95 for 10 sec. (Proc chance: 6%)\n(6) Set : +8 All Resistances.\n(8) Set : +200 Armor.\nSell Price: 20"
+  },
+  {
+   "id": 226642,
+   "name": "Earthfury Bindings",
+   "quality": 4,
+   "icon": "inv_bracer_16",
+   "source": "https://www.wowhead.com/classic/item=226642",
+   "itemLevel": 66,
+   "inventoryType": "Wrist",
+   "subclass": "Mail",
+   "armor": 185,
+   "weapon": null,
+   "stats": {
+    "strength": 18,
+    "stamina": 11,
+    "intellect": 7
+   },
+   "resistances": {
+    "fire": 5
+   },
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "Increases damage and healing done by magical spells and effects by up to 6."
+    },
+    {
+     "kind": "Set",
+     "text": "(2) The radius of your totems that affect friendly targets is increased to 40 yd."
+    },
+    {
+     "kind": "Set",
+     "text": "(4) Increases your critical strike chance with spells and attacks by 2%."
+    },
+    {
+     "kind": "Set",
+     "text": "(6) Your Flurry talent grants an additional 10% increase to your attack speed."
+    }
+   ],
+   "tooltip": "Earthfury Bindings SoD Phase 4\nItem Level 66\nBinds when picked up\nWrist Mail\n185 Armor\n+18 Strength\n+11 Stamina\n+7 Intellect\n+5 Fire Resistance\nDurability 50 / 50Classes: Shaman\nRequires Level 60\nEquip: Increases damage and healing done by magical spells and effects by up to 6.\nEarthfury Impact (0/8)Earthfury Battleboots\nEarthfury Bindings\nEarthfury Chain Leggings\nEarthfury Chainmail\nEarthfury Girdle\nEarthfury Grips\nEarthfury Headpiece\nEarthfury Spaulders\n(2) Set : The radius of your totems that affect friendly targets is increased to 40 yd.\n(4) Set : Increases your critical strike chance with spells and attacks by 2%.\n(6) Set : Your Flurry talent grants an additional 10% increase to your attack speed.\nSell Price: 2 58 79"
+  },
+  {
+   "id": 19323,
+   "name": "The Unstoppable Force",
+   "quality": 4,
+   "icon": "inv_hammer_13",
+   "source": "https://www.wowhead.com/classic/item=19323",
+   "itemLevel": 65,
+   "inventoryType": "Two-Hand",
+   "subclass": "Mace",
+   "armor": null,
+   "weapon": {
+    "minDamage": 175,
+    "maxDamage": 292,
+    "speed": 3.8,
+    "dps": 61.45
+   },
+   "stats": {
+    "strength": 19,
+    "stamina": 15
+   },
+   "resistances": {},
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "Improves your chance to get a critical strike by 2%."
+    },
+    {
+     "kind": "Chance on hit",
+     "text": "Stuns target for 1 sec."
+    }
+   ],
+   "tooltip": "The Unstoppable Force\nItem Level 65\nBinds when picked up\nUnique\nTwo-Hand Mace\n175 - 292 Damage\nSpeed 3.80\n(61.45 damage per second)\n+19 Strength\n+15 Stamina\nDurability 120 / 120\nRequires Level 60\nEquip: Improves your chance to get a critical strike by 2%.\nChance on hit: Stuns target for 1 sec.\nSell Price: 31 29 80"
+  },
+  {
+   "id": 227022,
+   "name": "Fists of The Five Thunders",
+   "quality": 4,
+   "icon": "inv_gauntlets_11",
+   "source": "https://www.wowhead.com/classic/item=227022",
+   "itemLevel": 55,
+   "inventoryType": "Hands",
+   "subclass": "Mail",
+   "armor": 223,
+   "weapon": null,
+   "stats": {
+    "strength": 17,
+    "stamina": 15,
+    "intellect": 17
+   },
+   "resistances": {},
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "Improves your chance to hit with all spells and attacks by 1%."
+    },
+    {
+     "kind": "Set",
+     "text": "(2) +40 Attack Power, up to 23 increased damage from spells, and up to 44 increased healing from spells."
+    },
+    {
+     "kind": "Set",
+     "text": "(4) 6% chance on mainhand autoattack and 4% chance on spellcast to increase your damage and healing done by magical spells and effects by up to 95 for 10 sec. (Proc chance: 6%)"
+    },
+    {
+     "kind": "Set",
+     "text": "(6) +8 All Resistances."
+    },
+    {
+     "kind": "Set",
+     "text": "(8) +200 Armor."
+    }
+   ],
+   "tooltip": "Fists of The Five Thunders\nItem Level 55\nBinds when picked up\nHands Mail\n223 Armor\n+17 Strength\n+15 Stamina\n+17 Intellect\nDurability 50 / 50Classes: Shaman\nEquip: Improves your chance to hit with all spells and attacks by 1%.\nThe Five Thunders (0/8)Boots of The Five Thunders\nChest of The Five Thunders\nGloves of The Five Thunders\nHelm of The Five Thunders\nLegs of The Five Thunders\nShoulders of The Five Thunders\nWaist of The Five Thunders\nWrists of The Five Thunders\n(2) Set : +40 Attack Power, up to 23 increased damage from spells, and up to 44 increased healing from spells.\n(4) Set : 6% chance on mainhand autoattack and 4% chance on spellcast to increase your damage and healing done by magical spells and effects by up to 95 for 10 sec. (Proc chance: 6%)\n(6) Set : +8 All Resistances.\n(8) Set : +200 Armor.\nSell Price: 10"
+  },
+  {
+   "id": 226641,
+   "name": "Earthfury Girdle",
+   "quality": 4,
+   "icon": "inv_belt_14",
+   "source": "https://www.wowhead.com/classic/item=226641",
+   "itemLevel": 66,
+   "inventoryType": "Waist",
+   "subclass": "Mail",
+   "armor": 237,
+   "weapon": null,
+   "stats": {
+    "strength": 25,
+    "stamina": 9,
+    "intellect": 10
+   },
+   "resistances": {
+    "fire": 7
+   },
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "Improves your chance to hit with all spells and attacks by 1%."
+    },
+    {
+     "kind": "Set",
+     "text": "(2) The radius of your totems that affect friendly targets is increased to 40 yd."
+    },
+    {
+     "kind": "Set",
+     "text": "(4) Increases your critical strike chance with spells and attacks by 2%."
+    },
+    {
+     "kind": "Set",
+     "text": "(6) Your Flurry talent grants an additional 10% increase to your attack speed."
+    }
+   ],
+   "tooltip": "Earthfury Girdle SoD Phase 4\nItem Level 66\nBinds when picked up\nWaist Mail\n237 Armor\n+25 Strength\n+9 Stamina\n+10 Intellect\n+7 Fire Resistance\nDurability 50 / 50Classes: Shaman\nRequires Level 60\nEquip: Improves your chance to hit with all spells and attacks by 1%.\nEarthfury Impact (0/8)Earthfury Battleboots\nEarthfury Bindings\nEarthfury Chain Leggings\nEarthfury Chainmail\nEarthfury Girdle\nEarthfury Grips\nEarthfury Headpiece\nEarthfury Spaulders\n(2) Set : The radius of your totems that affect friendly targets is increased to 40 yd.\n(4) Set : Increases your critical strike chance with spells and attacks by 2%.\n(6) Set : Your Flurry talent grants an additional 10% increase to your attack speed.\nSell Price: 2 56 82"
+  },
+  {
+   "id": 226639,
+   "name": "Earthfury Chain Leggings",
+   "quality": 4,
+   "icon": "inv_pants_03",
+   "source": "https://www.wowhead.com/classic/item=226639",
+   "itemLevel": 66,
+   "inventoryType": "Legs",
+   "subclass": "Mail",
+   "armor": 369,
+   "weapon": null,
+   "stats": {
+    "strength": 22,
+    "stamina": 14,
+    "intellect": 21
+   },
+   "resistances": {
+    "fire": 10
+   },
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "Improves your chance to get a critical strike with all spells and attacks by 1%."
+    },
+    {
+     "kind": "Equip",
+     "text": "Improves your chance to hit with all spells and attacks by 1%."
+    },
+    {
+     "kind": "Set",
+     "text": "(2) The radius of your totems that affect friendly targets is increased to 40 yd."
+    },
+    {
+     "kind": "Set",
+     "text": "(4) Increases your critical strike chance with spells and attacks by 2%."
+    },
+    {
+     "kind": "Set",
+     "text": "(6) Your Flurry talent grants an additional 10% increase to your attack speed."
+    }
+   ],
+   "tooltip": "Earthfury Chain Leggings SoD Phase 4\nItem Level 66\nBinds when picked up\nLegs Mail\n369 Armor\n+22 Strength\n+14 Stamina\n+21 Intellect\n+10 Fire Resistance\nDurability 105 / 105Classes: Shaman\nRequires Level 60\nEquip: Improves your chance to get a critical strike with all spells and attacks by 1%.\nEquip: Improves your chance to hit with all spells and attacks by 1%.\nEarthfury Impact (0/8)Earthfury Battleboots\nEarthfury Bindings\nEarthfury Chain Leggings\nEarthfury Chainmail\nEarthfury Girdle\nEarthfury Grips\nEarthfury Headpiece\nEarthfury Spaulders\n(2) Set : The radius of your totems that affect friendly targets is increased to 40 yd.\n(4) Set : Increases your critical strike chance with spells and attacks by 2%.\n(6) Set : Your Flurry talent grants an additional 10% increase to your attack speed.\nSell Price: 5 23 46"
+  },
+  {
+   "id": 226636,
+   "name": "Earthfury Battleboots",
+   "quality": 4,
+   "icon": "inv_boots_plate_06",
+   "source": "https://www.wowhead.com/classic/item=226636",
+   "itemLevel": 66,
+   "inventoryType": "Feet",
+   "subclass": "Mail",
+   "armor": 290,
+   "weapon": null,
+   "stats": {
+    "strength": 25,
+    "stamina": 11,
+    "intellect": 9
+   },
+   "resistances": {
+    "fire": 5
+   },
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "Improves your chance to hit with all spells and attacks by 1%."
+    },
+    {
+     "kind": "Set",
+     "text": "(2) The radius of your totems that affect friendly targets is increased to 40 yd."
+    },
+    {
+     "kind": "Set",
+     "text": "(4) Increases your critical strike chance with spells and attacks by 2%."
+    },
+    {
+     "kind": "Set",
+     "text": "(6) Your Flurry talent grants an additional 10% increase to your attack speed."
+    }
+   ],
+   "tooltip": "Earthfury Battleboots SoD Phase 4\nItem Level 66\nBinds when picked up\nFeet Mail\n290 Armor\n+25 Strength\n+11 Stamina\n+9 Intellect\n+5 Fire Resistance\nDurability 70 / 70Classes: Shaman\nRequires Level 60\nEquip: Improves your chance to hit with all spells and attacks by 1%.\nEarthfury Impact (0/8)Earthfury Battleboots\nEarthfury Bindings\nEarthfury Chain Leggings\nEarthfury Chainmail\nEarthfury Girdle\nEarthfury Grips\nEarthfury Headpiece\nEarthfury Spaulders\n(2) Set : The radius of your totems that affect friendly targets is increased to 40 yd.\n(4) Set : Increases your critical strike chance with spells and attacks by 2%.\n(6) Set : Your Flurry talent grants an additional 10% increase to your attack speed.\nSell Price: 3 85 50"
+  },
+  {
+   "id": 227977,
+   "name": "Totem of Rage",
+   "quality": 3,
+   "icon": null,
+   "source": "https://www.wowhead.com/classic/item=227977",
+   "itemLevel": 57,
+   "inventoryType": "Relic",
+   "subclass": null,
+   "armor": null,
+   "weapon": null,
+   "stats": {},
+   "resistances": {},
+   "effects": [],
+   "tooltip": "Totem of Rage SoD Phase 4\nItem Level 57\nBinds when picked up\nUnique\nRelic\nRequires Level 52\nSell Price: 1 29 73"
+  }
+ ]
+}

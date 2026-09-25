@@ -27,7 +27,16 @@ export type EquipmentSlot =
   | 'offHand'
   | 'twoHand'
   | 'shield'
-  | 'ranged';
+  | 'ranged'
+  /**
+   * An idol, libram or totem.
+   *
+   * Every class that has one -- Druid, Paladin, Shaman -- wears one in the sets
+   * the owner supplied, and almost everything a relic does is named for a
+   * single ability, so most of one is unmodelled and listed. The slot exists so
+   * that a piece of the set is visible rather than absent.
+   */
+  | 'relic';
 
 /** A weapon's own numbers, straight off the item. */
 export interface ItemWeapon {

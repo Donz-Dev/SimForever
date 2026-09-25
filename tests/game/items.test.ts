@@ -1,6 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import type { Equipment } from '../../src/game/items/Item';
-import { CRUSADER, ITEMS, ITEMS_BY_ID, enchantsForSlot, itemsForSlot } from '../../src/game/items/itemData';
+import {
+  CRUSADER,
+  ITEMS,
+  ITEMS_BY_ID,
+  SPELL_POWER_ENCHANT,
+  enchantsForSlot,
+  itemsForSlot,
+} from '../../src/game/items/itemData';
 import {
   BASE_WEAPON_SKILL,
   liveEquipment,
@@ -52,16 +59,22 @@ const MIGHT_SET: readonly (readonly [id: number, name: string, str: number, sta:
 describe('the item data', () => {
   it('holds both item files, and no id twice', () => {
     /*
-     * Nineteen from `classic-warrior.json` and twelve from `sod-hunter.json`.
-     * The Hunter set overlaps the Warrior one by four pieces -- Onyxia Tooth
-     * Pendant, Cape of the Black Baron, Don Julio's Band and Blackhand's
-     * Breadth -- which is why the second file holds twelve and not sixteen.
-     * `itemData` throws on a duplicate id; this says the count out loud so
-     * that a file silently failing to load is a failure rather than a
-     * shorter list nobody notices.
+     * NINE FILES, and the count is per file so that one failing to load is a
+     * failure rather than a shorter list nobody notices.
+     *
+     *   classic-warrior 19, sod-hunter 12, sod-rogue 13, sod-druid 35,
+     *   sod-shaman 20, sod-mage 8, sod-paladin 27, sod-warlock 8, sod-priest 9
+     *
+     * Every one of them is SHORTER than the set it came from, because
+     * twenty-two pieces are worn by more than one set and an id belongs to the
+     * first file that asks for it -- `tools/item-sets.json` decides which.
+     * `itemData` throws on a duplicate, which is what makes that safe.
      */
-    expect(ITEMS).toHaveLength(31);
-    expect(new Set(ITEMS.map((item) => item.id)).size).toBe(31);
+    const PER_FILE = [19, 12, 13, 35, 20, 8, 27, 8, 9];
+    const total = PER_FILE.reduce((sum, count) => sum + count, 0);
+    expect(total).toBe(151);
+    expect(ITEMS).toHaveLength(total);
+    expect(new Set(ITEMS.map((item) => item.id)).size).toBe(total);
   });
 
   /*
@@ -177,24 +190,121 @@ describe('the item data', () => {
   });
 
   it('offers the right items per slot', () => {
-    // Two head pieces now: the Warrior Tier 1 helm and the Hunter's.
-    expect(itemsForSlot('head').map((i) => i.name).sort()).toEqual([
-      'Crown of Destruction',
-      'Jaws of Might',
-    ]);
-    // The Hunter set's melee weapon is a TWO-hander, so it does not appear
-    // here -- which is the whole reason it is a stat stick for that build.
-    expect(itemsForSlot('mainHand').map((i) => i.name).sort()).toEqual([
-      'Brutality Blade',
-      "Vis'kag the Bloodletter",
-    ]);
-    expect(itemsForSlot('twoHand').map((i) => i.name).sort()).toEqual([
-      'Dreadforge Retaliator',
-      'Obsidian Edged Blade',
-    ]);
-    // Don Julio's Band and Band of Accuria; Quick Strike Ring is main-hand.
-    expect(itemsForSlot('ring1')).toHaveLength(3);
-    expect(itemsForSlot('trinket2')).toHaveLength(3);
+    /*
+     * NOT AN EXHAUSTIVE LIST ANY MORE. With nine classes' gear on file the
+     * head slot alone holds a dozen, and a test that lists them all breaks
+     * every time a set arrives while saying nothing about the mapping. What
+     * matters is that each KIND of item lands where it belongs, so one of each
+     * is named and the exclusions are asserted instead.
+     */
+    const names = (slot: Parameters<typeof itemsForSlot>[0]) =>
+      itemsForSlot(slot).map((item) => item.name);
+
+    expect(names('head')).toContain('Jaws of Might');
+    expect(names('head')).toContain('Crown of Prophecy');
+    expect(names('mainHand')).toContain("Vis'kag the Bloodletter");
+    expect(names('twoHand')).toContain('Obsidian Edged Blade');
+    expect(names('twoHand')).toContain('Anathema');
+
+    // A two-hander is never offered for one hand, and a one-hander never for
+    // two. That is what makes the style rules able to pick one or the other.
+    expect(names('mainHand')).not.toContain('Obsidian Edged Blade');
+    expect(names('twoHand')).not.toContain("Vis'kag the Bloodletter");
+
+    /*
+     * A SHIELD IS RESOLVED BY SUBCLASS, so it goes in `shield` and never in the
+     * off-hand WEAPON slot where a dual-wielder could swing it. Earth and Fire
+     * is a caster shield and obeys the same rule.
+     */
+    expect(names('shield')).toContain('The Immovable Object');
+    expect(names('shield')).toContain('Earth and Fire');
+    expect(names('offHand')).not.toContain('Earth and Fire');
+
+    // A relic is offered nowhere else, and nothing else is offered as one.
+    expect(names('relic')).toContain('Idol of the Moon');
+    expect(names('relic')).toContain('Libram of Hope');
+    expect(names('relic').every((name) => /Idol|Libram|Totem/.test(name))).toBe(true);
+    expect(names('trinket1')).not.toContain('Idol of the Moon');
+
+    // A wand is a RANGED item, alongside the bows.
+    expect(names('ranged')).toContain('Crimson Shocker');
+    expect(names('ranged')).toContain("Striker's Mark");
+  });
+
+  it('reads spell power, spell crit and defense off the effect text', () => {
+    /*
+     * Four rules that arrived with the caster and tank sets. Every figure is
+     * transcribed by hand from the item's own tooltip.
+     */
+
+    // Staff of Dominance: "Increases damage and healing done by magical spells
+    // and effects by up to 47", and 2% crit "with all spells and attacks".
+    const staff = ITEMS_BY_ID.get(228271);
+    expect(staff?.stats.spellPower).toBe(47);
+
+    /*
+     * "WITH ALL SPELLS AND ATTACKS" IS TWO STATS. `critChance` and
+     * `spellCritChance` are read by different tables, so a line that says both
+     * has to grant both -- it used to grant only the melee half, which was
+     * invisible until there was caster gear to notice it on.
+     */
+    expect(staff?.stats.critChance).toBe(2);
+    expect(staff?.stats.spellCritChance).toBe(2);
+
+    // Eye of the Beast: "with spells" and nothing else, so spells only.
+    const eye = ITEMS_BY_ID.get(13968);
+    expect(eye?.stats.spellCritChance).toBe(2);
+    expect(eye?.stats.critChance).toBeUndefined();
+
+    // Blackhand's Breadth: no qualifier at all, so physical only.
+    const breadth = ITEMS_BY_ID.get(13965);
+    expect(breadth?.stats.critChance).toBe(2);
+    expect(breadth?.stats.spellCritChance).toBeUndefined();
+
+    /*
+     * Earthen Guard: "Increased Defense +7" and "Increases the block value of
+     * your shield by 12", on top of the shield's own "44 Block".
+     *
+     * Defense had to beat `WEAPON_SKILL_PATTERN`, which matches `Increased
+     * <anything> +N` and was turning it into a weapon's bonus skill -- dropped
+     * entirely, because a shield has no weapon to carry one.
+     */
+    const guard = ITEMS_BY_ID.get(20688);
+    expect(guard?.stats.defenseSkill).toBe(7);
+    expect(guard?.stats.blockValue).toBe(44 + 12);
+
+    // And the weapon-skill line itself still reads as weapon skill.
+    expect(ITEMS_BY_ID.get(228229)?.weapon?.bonusSkill).toBe(3);
+
+    /*
+     * A SCHOOL-SPECIFIC LINE IS NOT SPELL POWER. Anathema's +75 is Shadow only
+     * and `spellPower` is school-blind, so it is listed rather than applied --
+     * if this ever starts passing as spell power, the Priest's Holy spells got
+     * a bonus the item never gave them.
+     */
+    const anathema = ITEMS_BY_ID.get(228336);
+    expect(anathema?.stats.spellPower).toBeUndefined();
+    expect(anathema?.unmodelled.map((effect) => effect.text)).toContain(
+      'Increases damage done by Shadow spells and effects by up to 75.',
+    );
+  });
+
+  it('keeps a set bonus as text rather than dropping it', () => {
+    /*
+     * A set bonus reads "(4) Set : ..." and starts with a bracket, so it
+     * matched no prefix and no bare-number rule and was DROPPED -- not
+     * unmodelled, dropped. Nothing else in this parser is allowed to do that.
+     * Twenty profiles now wear Tier 1, and the Priest's four-piece is a flat
+     * +2% spell crit that would have read as simply missing.
+     */
+    const crown = ITEMS_BY_ID.get(226584);
+    const sets = crown?.unmodelled.filter((effect) => effect.kind === 'Set') ?? [];
+    expect(sets.map((effect) => effect.text)).toContain(
+      '(4) Increases your critical strike chance with spells and attacks by 2%.',
+    );
+    for (const bonus of sets) {
+      expect(bonus.reason).toContain('set bonus');
+    }
   });
 });
 
@@ -238,13 +348,20 @@ describe('what the items do that the simulator does not', () => {
     expect(CRUSADER.unmodelled).toEqual([]);
   });
 
-  it('offers Crusader on melee weapons only', () => {
-    expect(enchantsForSlot('mainHand').map((e) => e.id)).toEqual([20034]);
-    expect(enchantsForSlot('offHand').map((e) => e.id)).toEqual([20034]);
-    expect(enchantsForSlot('twoHand').map((e) => e.id)).toEqual([20034]);
+  it('offers both weapon enchants on melee weapons only', () => {
+    // Crusader and Spell Power. Both are melee-weapon enchants; the caster sets
+    // put the second on a staff, which is one.
+    expect(enchantsForSlot('mainHand').map((e) => e.id)).toEqual([20034, 22749]);
+    expect(enchantsForSlot('offHand').map((e) => e.id)).toEqual([20034, 22749]);
+    expect(enchantsForSlot('twoHand').map((e) => e.id)).toEqual([20034, 22749]);
     // Explicitly not the bow.
     expect(enchantsForSlot('ranged')).toEqual([]);
     expect(enchantsForSlot('head')).toEqual([]);
+
+    // Crusader is a proc and carries no stat; Spell Power is a flat 30, which
+    // the source states as "add up to 30 damage to spells".
+    expect(CRUSADER.stats).toEqual({});
+    expect(SPELL_POWER_ENCHANT.stats).toEqual({ spellPower: 30 });
   });
 
   it('lists what an equipped set fails to model', () => {
@@ -281,6 +398,41 @@ describe('equipping', () => {
     trinket2: { itemId: 11815 },
     cloak: { itemId: 13340 },
   };
+
+  it('keeps a stat-stick off hand, and a shield in one, for its STATS', () => {
+    /*
+     * ------------------------------------------------------------------------
+     * THE MIRROR OF THE MAIN-HAND BUG, AND IT SURVIVED THAT FIX.
+     *
+     * `offHand: 'stat-stick'` means held, contributing stats, never swinging --
+     * the same words the main hand's version uses. Five styles say it, and
+     * `liveEquipment` deleted both off-hand slots for every one of them, so an
+     * Elemental shaman holding Earth and Fire got nothing at all from a CASTER
+     * shield worth 26 spell power, 9 stamina and 7 intellect.
+     *
+     * The swing side was always right, and is what makes keeping the slot safe:
+     * `weaponsForEquipment` refuses to build a weapon for a stat-stick hand.
+     * ------------------------------------------------------------------------
+     */
+    const caster: Equipment = {
+      mainHand: { itemId: 228263 }, // Sorcerous Dagger
+      shield: { itemId: 228142 }, // Earth and Fire
+    };
+
+    const live = liveEquipment(caster, 'caster');
+    expect(live.mainHand).toBeDefined();
+    expect(live.shield).toBeDefined();
+
+    // 36 from the dagger and 26 from the shield, and neither swings.
+    expect(statsForStyle(caster, 'caster').spellPower).toBe(36 + 26);
+    expect(weaponsForEquipment(caster, 'caster')).toEqual({});
+
+    // A style that fills the off hand with a WEAPON still drops a shield, and a
+    // two-hand style drops both.
+    expect(liveEquipment(caster, 'dual_wield').shield).toBeUndefined();
+    expect(liveEquipment(caster, 'two_hander').shield).toBeUndefined();
+    expect(liveEquipment(caster, 'two_hander').mainHand).toBeUndefined();
+  });
 
   it('uses the one-handers while dual-wielding and ignores the two-hander', () => {
     const weapons = weaponsForEquipment(FULL, 'dual_wield');
