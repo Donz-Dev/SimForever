@@ -2,6 +2,13 @@ import type { PartialStats } from '../../engine';
 import type { Enchant, EquipmentSlot, Item, ItemWeapon, UnmodelledEffect } from './Item';
 import warriorItems from '../../data/items/classic-warrior.json';
 import hunterItems from '../../data/items/sod-hunter.json';
+import rogueItems from '../../data/items/sod-rogue.json';
+import druidItems from '../../data/items/sod-druid.json';
+import shamanItems from '../../data/items/sod-shaman.json';
+import mageItems from '../../data/items/sod-mage.json';
+import paladinItems from '../../data/items/sod-paladin.json';
+import warlockItems from '../../data/items/sod-warlock.json';
+import priestItems from '../../data/items/sod-priest.json';
 
 /**
  * Items, from Wowhead's Classic tooltip data.
@@ -92,7 +99,21 @@ const SLOTS_BY_INVENTORY_TYPE: Readonly<Record<string, readonly EquipmentSlot[]>
   // `buildItem`.
   Shield: ['shield'],
   'Off Hand': ['offHand'],
+  // A caster off-hand item: held, never swung. Wowhead's own words for the
+  // inventory type, and the same engine slot a shield uses.
+  'Held In Off-hand': ['offHand'],
   Ranged: ['ranged'],
+  /*
+   * An idol, libram or totem.
+   *
+   * Seven of them arrived with the Druid, Paladin and Shaman sets, and without
+   * a slot `buildItem` threw on the first one. Almost everything they do is
+   * ability-specific -- "the damage of your Moonfire spell", "the rage cost of
+   * Maul and Swipe" -- so most of a relic lands in `unmodelled` and is listed
+   * rather than applied. The slot exists so the item is VISIBLE: a set piece
+   * with nowhere to go is worse than one that visibly does nothing.
+   */
+  Relic: ['relic'],
 };
 
 /*
@@ -177,11 +198,91 @@ const EFFECT_RULES: readonly EffectRule[] = [
     },
   },
   {
-    // "Improves your chance to get a critical strike by 2%."
-    pattern:
-      /^Improves your chance to get a critical strike(?: with all spells and attacks)? by (\d+)%\.?$/,
+    // "Improves your chance to get a critical strike by 2%." Physical only:
+    // the wording names no spells, so it reaches no spell.
+    pattern: /^Improves your chance to get a critical strike by (\d+)%\.?$/,
     apply: (value, into) => {
       into.critChance = (into.critChance ?? 0) + value;
+    },
+  },
+  {
+    /*
+     * "...with all spells and attacks" IS TWO STATS, and it was one.
+     *
+     * `critChance` and `spellCritChance` are separate stats read by separate
+     * tables -- the melee tables use the first, `kind === 'spell'` uses the
+     * second -- so a line that says "all spells and attacks" has to grant
+     * both, exactly as the raid buffs that say it already do. This rule used
+     * to fold the qualified wording into the unqualified one and grant only
+     * the melee half, which was invisible for as long as nothing in the item
+     * data was caster gear: sixty-two lines across these files say it, and
+     * four caster profiles would have read a spell crit chance of whatever
+     * intellect alone gives them while wearing gear that says otherwise.
+     *
+     * Not double counting. One number, two stats, one of which each table
+     * reads.
+     */
+    pattern:
+      /^Improves your chance to get a critical strike with all spells and attacks by (\d+)%\.?$/,
+    apply: (value, into) => {
+      into.critChance = (into.critChance ?? 0) + value;
+      into.spellCritChance = (into.spellCritChance ?? 0) + value;
+    },
+  },
+  {
+    // "Improves your chance to get a critical strike with spells by 2%."
+    // Spells only, and the mirror of the unqualified rule above.
+    pattern: /^Improves your chance to get a critical strike with spells by (\d+)%\.?$/,
+    apply: (value, into) => {
+      into.spellCritChance = (into.spellCritChance ?? 0) + value;
+    },
+  },
+  {
+    /*
+     * "Increases damage and healing done by magical spells and effects by up
+     * to 47." -- SPELL POWER, and the only wording in this data that grants
+     * the school-blind kind.
+     *
+     * `dealDamage` has read `spellPower` for every non-physical school since
+     * before any caster existed; what was missing was gear that granted it.
+     * Forty-two lines across these files do.
+     *
+     * A SCHOOL-SPECIFIC LINE IS NOT THIS. "Increases damage done by Shadow
+     * spells and effects by up to 39" is most of the Priest's set, and there
+     * is no per-school spell power stat to put it in, so it stays unmodelled
+     * rather than being applied to every school at once. See
+     * `src/data/items/README.md`.
+     */
+    pattern:
+      /^Increases damage and healing done by magical spells and effects by up to (\d+)\.?$/,
+    apply: (value, into) => {
+      into.spellPower = (into.spellPower ?? 0) + value;
+    },
+  },
+  {
+    /*
+     * "Increased Defense +10." -- DEFENSE SKILL, seventeen lines of it across
+     * the tank and feral sets.
+     *
+     * It has to be matched here and before the weapon-skill pattern, which is
+     * `Increased <anything> +N` and was swallowing it. Worse than unmodelled:
+     * a weapon's `bonusSkill` on a piece of PLATE is dropped on the floor,
+     * because only a weapon carries one. `defenseSkill` is the surplus above
+     * the level baseline, which is exactly what a piece of gear grants, and it
+     * moves five separate numbers on the attacks-received table.
+     */
+    pattern: /^Increased Defense \+(\d+)\.?$/,
+    apply: (value, into) => {
+      into.defenseSkill = (into.defenseSkill ?? 0) + value;
+    },
+  },
+  {
+    // "Increases the block value of your shield by 27." The Classic wording for
+    // what the Forever tooltip states as "+27 Block Value"; The Immovable
+    // Object says it one way and eight Lawbringer pieces say it the other.
+    pattern: /^Increases the block value of your shield by (\d+)\.?$/,
+    apply: (value, into) => {
+      into.blockValue = (into.blockValue ?? 0) + value;
     },
   },
 ];
@@ -203,11 +304,20 @@ const MODELLED_AS_PROCS: readonly RegExp[] = [
 
 /** Why a given effect is not modelled. Keyed by the kind, with a default. */
 function reasonFor(kind: string, text: string): string {
+  if (kind === 'Set') {
+    return 'A set bonus counts pieces across the whole set, which nothing here tracks.';
+  }
   if (/chance on hit/i.test(kind)) {
     return 'The engine has a reaction hook, but the proc RATE is not stated anywhere on the item.';
   }
   if (/extra attack/i.test(text)) {
     return 'The engine has no extra-attack mechanic.';
+  }
+  if (/^Increases damage done by \w+ spells and effects by up to \d+/.test(text)) {
+    return 'Spell power here is school-blind, so a one-school bonus has nowhere to go.';
+  }
+  if (/forms only\.?$/.test(text)) {
+    return 'An item stat cannot be conditional on the combat style, so this is listed rather than applied.';
   }
   return 'No engine mechanic for this yet.';
 }
@@ -236,12 +346,15 @@ function buildStats(item: RawItem): {
   for (const effect of item.effects) {
     if (MODELLED_AS_PROCS.some((pattern) => pattern.test(effect.text))) continue;
 
-    const skill = effect.text.match(WEAPON_SKILL_PATTERN);
-    if (skill) {
-      bonusSkill += Number(skill[2]);
-      continue;
-    }
-
+    /*
+     * THE RULES COME FIRST, and the order is load-bearing.
+     *
+     * `WEAPON_SKILL_PATTERN` is `Increased <anything> +N`, so it also matches
+     * "Increased Defense +10" -- and a weapon's bonus skill on a breastplate
+     * is silently discarded, because only a weapon carries one. Trying the
+     * named rules first lets the defense rule claim it, and "Increased
+     * Two-handed Swords +3" still falls through to the weapon skill it is.
+     */
     const rule = EFFECT_RULES.find((candidate) => candidate.pattern.test(effect.text));
     if (rule) {
       const match = effect.text.match(rule.pattern);
@@ -249,6 +362,12 @@ function buildStats(item: RawItem): {
         rule.apply(Number(match[1]), stats);
         continue;
       }
+    }
+
+    const skill = effect.text.match(WEAPON_SKILL_PATTERN);
+    if (skill) {
+      bonusSkill += Number(skill[2]);
+      continue;
     }
 
     unmodelled.push({
@@ -315,16 +434,29 @@ function buildItem(item: RawItem): Item {
 }
 
 const data = warriorItems as unknown as RawData;
-const hunterData = hunterItems as unknown as RawData;
 
 /*
- * Both files, in one list. `classic-warrior.json` supplies four pieces the
- * Hunter set also uses -- Onyxia Tooth Pendant, Cape of the Black Baron, Don
- * Julio's Band and Blackhand's Breadth -- so the second file holds only what
- * the first does not, and this throws rather than silently keeping one of two
- * entries for the same id.
+ * EVERY item file, in the same order as `tools/item-sets.json`.
+ *
+ * That order is what decides which file OWNS a shared piece, and twenty-two of
+ * these are worn by more than one set -- Choker of the Fire Lord by five of
+ * them. An id lands in the first file that asks for it and is omitted from
+ * every later one, so this throws rather than silently keeping one of two
+ * entries for the same item.
  */
-const RAW_ITEMS = [...data.items, ...hunterData.items];
+const ITEM_FILES: readonly RawData[] = [
+  warriorItems,
+  hunterItems,
+  rogueItems,
+  druidItems,
+  shamanItems,
+  mageItems,
+  paladinItems,
+  warlockItems,
+  priestItems,
+] as unknown as readonly RawData[];
+
+const RAW_ITEMS = ITEM_FILES.flatMap((file) => file.items);
 
 const duplicates = RAW_ITEMS.map((item) => item.id).filter(
   (id, index, all) => all.indexOf(id) !== index,
@@ -340,32 +472,71 @@ export const ITEMS_BY_ID: ReadonlyMap<number, Item> = new Map(
 );
 
 /**
- * Enchant Weapon - Crusader.
+ * Which slots an enchant may go on, and what it grants, by spell id.
  *
- * Its effect is a PROC, and the tooltip rates it only as "often". The ruleset
- * owner supplied the missing number: 1.1 procs per minute, which on a 2.5
- * second weapon is a 4.58% chance per attack. That is implemented in
- * `procs.ts`, so nothing is unmodelled here any more.
- *
- * The HEAL is modelled too, since the encounter grew a healer and a character
- * who can die. Its old reason -- "Nothing damages the player, so a heal would
- * restore nothing" -- was true when written and expired the day the target
- * started killing people. Nothing here is unmodelled any more.
+ * The data file carries the enchant's NAME, ICON and TOOLTIP from the source.
+ * What it DOES is decided here, because a tooltip states an effect in prose and
+ * an enchant is either a stat or a proc -- the same split every item makes.
  */
-export const CRUSADER: Enchant = {
-  id: data.enchants[0].id,
-  name: data.enchants[0].name,
-  icon: data.enchants[0].icon,
-  source: data.enchants[0].source,
-  // Melee weapons only. The ranged slot is excluded deliberately.
-  slots: ['mainHand', 'offHand', 'twoHand'],
-  stats: {},
-  // Empty, not absent: every part of this enchant is now simulated.
-  unmodelled: [],
-  tooltip: data.enchants[0].tooltip,
+const ENCHANT_RULES: Readonly<
+  Record<number, { slots: readonly EquipmentSlot[]; stats: PartialStats; unmodelled: UnmodelledEffect[] }>
+> = {
+  /*
+   * Enchant Weapon - Crusader.
+   *
+   * Its effect is a PROC, and the tooltip rates it only as "often". The ruleset
+   * owner supplied the missing number: 1.1 procs per minute, which on a 2.5
+   * second weapon is a 4.58% chance per attack. That is implemented in
+   * `procs.ts`, so nothing is unmodelled here.
+   *
+   * The HEAL is modelled too, since the encounter grew a healer and a character
+   * who can die. Its old reason -- "Nothing damages the player, so a heal would
+   * restore nothing" -- was true when written and expired the day the target
+   * started killing people.
+   */
+  20034: {
+    // Melee weapons only. The ranged slot is excluded deliberately.
+    slots: ['mainHand', 'offHand', 'twoHand'],
+    stats: {},
+    // Empty, not absent: every part of this enchant is simulated.
+    unmodelled: [],
+  },
+  /*
+   * Enchant Weapon - Spell Power: "add up to 30 damage to spells".
+   *
+   * A flat stat rather than a proc, and the five caster sets all carry it --
+   * the sixtyupgrades sets name it on the staff or dagger in as many words.
+   * Leaving it out would have left every caster thirty spell power short of
+   * the planner it was validated against, which the primary-stat check does
+   * not look at.
+   */
+  22749: {
+    slots: ['mainHand', 'offHand', 'twoHand'],
+    stats: { spellPower: 30 },
+    unmodelled: [],
+  },
 };
 
-export const ENCHANTS: readonly Enchant[] = [CRUSADER];
+export const ENCHANTS: readonly Enchant[] = data.enchants.map((enchant) => {
+  const rule = ENCHANT_RULES[enchant.id];
+  if (!rule) throw new Error(`${enchant.name}: no enchant rule for spell ${enchant.id}`);
+  return {
+    id: enchant.id,
+    name: enchant.name,
+    icon: enchant.icon,
+    source: enchant.source,
+    slots: rule.slots,
+    stats: rule.stats,
+    unmodelled: rule.unmodelled,
+    tooltip: enchant.tooltip,
+  };
+});
+
+/** Enchant Weapon - Crusader, named because presets reference it directly. */
+export const CRUSADER: Enchant = ENCHANTS[0];
+
+/** Enchant Weapon - Spell Power, the caster sets' weapon enchant. */
+export const SPELL_POWER_ENCHANT: Enchant = ENCHANTS[1];
 
 export const ENCHANTS_BY_ID: ReadonlyMap<number, Enchant> = new Map(
   ENCHANTS.map((enchant) => [enchant.id, enchant] as const),

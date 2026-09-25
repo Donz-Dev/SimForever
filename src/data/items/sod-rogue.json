@@ -1,0 +1,467 @@
+{
+ "set": "sod-rogue",
+ "description": "A level 60 Rogue's gear: full Nightslayer, with Perdition's Blade and Core Hound Tooth for the daggers build and Vis'kag and Brutality Blade -- both already in classic-warrior.json -- for Combat. From two sixtyupgrades.com sets the project owner supplied; the armour is identical between them and only the weapons differ. Season of Discovery items.",
+ "source": "https://sixtyupgrades.com/sod/set/rRozaoHr38Wt4Tc9VYjoL6 and https://sixtyupgrades.com/sod/set/qAbtRniPYvBHdQWHJbuaif",
+ "items": [
+  {
+   "id": 226446,
+   "name": "Nightslayer Cover",
+   "quality": 4,
+   "icon": "inv_helmet_41",
+   "source": "https://www.wowhead.com/classic/item=226446",
+   "itemLevel": 66,
+   "inventoryType": "Head",
+   "subclass": "Leather",
+   "armor": 163,
+   "weapon": null,
+   "stats": {
+    "strength": 19,
+    "agility": 22,
+    "stamina": 15
+   },
+   "resistances": {
+    "fire": 10
+   },
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "Improves your chance to get a critical strike with all spells and attacks by 1%."
+    },
+    {
+     "kind": "Equip",
+     "text": "Improves your chance to hit with all spells and attacks by 1%."
+    },
+    {
+     "kind": "Set",
+     "text": "(2) Feint also grants Avoidance for 6 sec, reducing all damage taken from area of effect attacks from non-players by 50%."
+    },
+    {
+     "kind": "Set",
+     "text": "(4) Increases the critical strike damage bonus of your Poisons by 100%."
+    },
+    {
+     "kind": "Set",
+     "text": "(6) Your finishing moves have a 5% chance per combo point to make your next ability cost no energy."
+    }
+   ],
+   "tooltip": "Nightslayer Cover SoD Phase 4\nItem Level 66\nBinds when picked up\nHead Leather\n163 Armor\n+19 Strength\n+22 Agility\n+15 Stamina\n+10 Fire Resistance\nDurability 70 / 70Classes: Rogue\nRequires Level 60\nEquip: Improves your chance to get a critical strike with all spells and attacks by 1%.\nEquip: Improves your chance to hit with all spells and attacks by 1%.\nNightslayer Thrill (0/8)Nightslayer Belt\nNightslayer Bracelets\nNightslayer Chestpiece\nNightslayer Boots\nNightslayer Cover\nNightslayer Gloves\nNightslayer Pants\nNightslayer Shoulder Pads\n(2) Set : Feint also grants Avoidance for 6 sec, reducing all damage taken from area of effect attacks from non-players by 50%.\n(4) Set : Increases the critical strike damage bonus of your Poisons by 100%.\n(6) Set : Your finishing moves have a 5% chance per combo point to make your next ability cost no energy.\nSell Price: 3 24 76"
+  },
+  {
+   "id": 226444,
+   "name": "Nightslayer Shoulder Pads",
+   "quality": 4,
+   "icon": "inv_shoulder_25",
+   "source": "https://www.wowhead.com/classic/item=226444",
+   "itemLevel": 66,
+   "inventoryType": "Shoulder",
+   "subclass": "Leather",
+   "armor": 150,
+   "weapon": null,
+   "stats": {
+    "strength": 15,
+    "agility": 17,
+    "stamina": 12
+   },
+   "resistances": {
+    "fire": 7
+   },
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "Improves your chance to get a critical strike with all spells and attacks by 1%."
+    },
+    {
+     "kind": "Set",
+     "text": "(2) Feint also grants Avoidance for 6 sec, reducing all damage taken from area of effect attacks from non-players by 50%."
+    },
+    {
+     "kind": "Set",
+     "text": "(4) Increases the critical strike damage bonus of your Poisons by 100%."
+    },
+    {
+     "kind": "Set",
+     "text": "(6) Your finishing moves have a 5% chance per combo point to make your next ability cost no energy."
+    }
+   ],
+   "tooltip": "Nightslayer Shoulder Pads SoD Phase 4\nItem Level 66\nBinds when picked up\nShoulder Leather\n150 Armor\n+15 Strength\n+17 Agility\n+12 Stamina\n+7 Fire Resistance\nDurability 70 / 70Classes: Rogue\nRequires Level 60\nEquip: Improves your chance to get a critical strike with all spells and attacks by 1%.\nNightslayer Thrill (0/8)Nightslayer Belt\nNightslayer Bracelets\nNightslayer Chestpiece\nNightslayer Boots\nNightslayer Cover\nNightslayer Gloves\nNightslayer Pants\nNightslayer Shoulder Pads\n(2) Set : Feint also grants Avoidance for 6 sec, reducing all damage taken from area of effect attacks from non-players by 50%.\n(4) Set : Increases the critical strike damage bonus of your Poisons by 100%.\n(6) Set : Your finishing moves have a 5% chance per combo point to make your next ability cost no energy.\nSell Price: 3 27 19"
+  },
+  {
+   "id": 226447,
+   "name": "Nightslayer Chestpiece",
+   "quality": 4,
+   "icon": "inv_chest_cloth_07",
+   "source": "https://www.wowhead.com/classic/item=226447",
+   "itemLevel": 66,
+   "inventoryType": "Chest",
+   "subclass": "Leather",
+   "armor": 200,
+   "weapon": null,
+   "stats": {
+    "strength": 19,
+    "agility": 23,
+    "stamina": 16
+   },
+   "resistances": {
+    "fire": 10
+   },
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "Improves your chance to get a critical strike with all spells and attacks by 1%."
+    },
+    {
+     "kind": "Equip",
+     "text": "Improves your chance to hit with all spells and attacks by 1%."
+    },
+    {
+     "kind": "Set",
+     "text": "(2) Feint also grants Avoidance for 6 sec, reducing all damage taken from area of effect attacks from non-players by 50%."
+    },
+    {
+     "kind": "Set",
+     "text": "(4) Increases the critical strike damage bonus of your Poisons by 100%."
+    },
+    {
+     "kind": "Set",
+     "text": "(6) Your finishing moves have a 5% chance per combo point to make your next ability cost no energy."
+    }
+   ],
+   "tooltip": "Nightslayer Chestpiece SoD Phase 4\nItem Level 66\nBinds when picked up\nChest Leather\n200 Armor\n+19 Strength\n+23 Agility\n+16 Stamina\n+10 Fire Resistance\nDurability 120 / 120Classes: Rogue\nRequires Level 60\nEquip: Improves your chance to get a critical strike with all spells and attacks by 1%.\nEquip: Improves your chance to hit with all spells and attacks by 1%.\nNightslayer Thrill (0/8)Nightslayer Belt\nNightslayer Bracelets\nNightslayer Chestpiece\nNightslayer Boots\nNightslayer Cover\nNightslayer Gloves\nNightslayer Pants\nNightslayer Shoulder Pads\n(2) Set : Feint also grants Avoidance for 6 sec, reducing all damage taken from area of effect attacks from non-players by 50%.\n(4) Set : Increases the critical strike damage bonus of your Poisons by 100%.\n(6) Set : Your finishing moves have a 5% chance per combo point to make your next ability cost no energy.\nSell Price: 4 31 37"
+  },
+  {
+   "id": 226442,
+   "name": "Nightslayer Bracelets",
+   "quality": 4,
+   "icon": "inv_bracer_02",
+   "source": "https://www.wowhead.com/classic/item=226442",
+   "itemLevel": 66,
+   "inventoryType": "Wrist",
+   "subclass": "Leather",
+   "armor": 88,
+   "weapon": null,
+   "stats": {
+    "strength": 11,
+    "agility": 13,
+    "stamina": 10
+   },
+   "resistances": {
+    "fire": 5
+   },
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "Improves your chance to hit with all spells and attacks by 1%."
+    },
+    {
+     "kind": "Set",
+     "text": "(2) Feint also grants Avoidance for 6 sec, reducing all damage taken from area of effect attacks from non-players by 50%."
+    },
+    {
+     "kind": "Set",
+     "text": "(4) Increases the critical strike damage bonus of your Poisons by 100%."
+    },
+    {
+     "kind": "Set",
+     "text": "(6) Your finishing moves have a 5% chance per combo point to make your next ability cost no energy."
+    }
+   ],
+   "tooltip": "Nightslayer Bracelets SoD Phase 4\nItem Level 66\nBinds when picked up\nWrist Leather\n88 Armor\n+11 Strength\n+13 Agility\n+10 Stamina\n+5 Fire Resistance\nDurability 40 / 40Classes: Rogue\nRequires Level 60\nEquip: Improves your chance to hit with all spells and attacks by 1%.\nNightslayer Thrill (0/8)Nightslayer Belt\nNightslayer Bracelets\nNightslayer Chestpiece\nNightslayer Boots\nNightslayer Cover\nNightslayer Gloves\nNightslayer Pants\nNightslayer Shoulder Pads\n(2) Set : Feint also grants Avoidance for 6 sec, reducing all damage taken from area of effect attacks from non-players by 50%.\n(4) Set : Increases the critical strike damage bonus of your Poisons by 100%.\n(6) Set : Your finishing moves have a 5% chance per combo point to make your next ability cost no energy.\nSell Price: 2 19 77"
+  },
+  {
+   "id": 228296,
+   "name": "Perdition's Blade",
+   "quality": 4,
+   "icon": "inv_sword_48",
+   "source": "https://www.wowhead.com/classic/item=228296",
+   "itemLevel": 77,
+   "inventoryType": "One-Hand",
+   "subclass": "Dagger",
+   "armor": null,
+   "weapon": {
+    "minDamage": 78,
+    "maxDamage": 145,
+    "speed": 1.9,
+    "dps": 58.68
+   },
+   "stats": {},
+   "resistances": {},
+   "effects": [
+    {
+     "kind": "Chance on hit",
+     "text": "Blasts a target for 98 to 122 Fire damage."
+    }
+   ],
+   "tooltip": "Perdition's Blade\nItem Level 77\nBinds when picked up\nUnique-Equipped: (Unknown #654) (1)\nOne-Hand Dagger\n78 - 145 Damage\nSpeed 1.90\n(58.68 damage per second)\nDurability 75 / 75\nRequires Level 60\nChance on hit: Blasts a target for 98 to 122 Fire damage.\nSell Price: 14 87 14"
+  },
+  {
+   "id": 228277,
+   "name": "Core Hound Tooth",
+   "quality": 4,
+   "icon": "inv_weapon_shortblade_11",
+   "source": "https://www.wowhead.com/classic/item=228277",
+   "itemLevel": 71,
+   "inventoryType": "One-Hand",
+   "subclass": "Dagger",
+   "armor": null,
+   "weapon": {
+    "minDamage": 48,
+    "maxDamage": 89,
+    "speed": 1.3,
+    "dps": 52.69
+   },
+   "stats": {
+    "stamina": 9
+   },
+   "resistances": {},
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "Improves your chance to get a critical strike with all spells and attacks by 1%."
+    },
+    {
+     "kind": "Equip",
+     "text": "+22 Attack Power."
+    }
+   ],
+   "tooltip": "Core Hound Tooth\nItem Level 71\nBinds when picked up\nUnique-Equipped: (Unknown #656) (1)\nOne-Hand Dagger\n48 - 89 Damage\nSpeed 1.30\n(52.69 damage per second)\n+9 Stamina\nDurability 75 / 75\nRequires Level 60\nEquip: Improves your chance to get a critical strike with all spells and attacks by 1%.\nEquip: +22 Attack Power.\nSell Price: 11 62 36"
+  },
+  {
+   "id": 226441,
+   "name": "Nightslayer Gloves",
+   "quality": 4,
+   "icon": "inv_gauntlets_21",
+   "source": "https://www.wowhead.com/classic/item=226441",
+   "itemLevel": 66,
+   "inventoryType": "Hands",
+   "subclass": "Leather",
+   "armor": 125,
+   "weapon": null,
+   "stats": {
+    "strength": 15,
+    "agility": 17,
+    "stamina": 15
+   },
+   "resistances": {
+    "fire": 7
+   },
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "Improves your chance to hit with all spells and attacks by 1%."
+    },
+    {
+     "kind": "Set",
+     "text": "(2) Feint also grants Avoidance for 6 sec, reducing all damage taken from area of effect attacks from non-players by 50%."
+    },
+    {
+     "kind": "Set",
+     "text": "(4) Increases the critical strike damage bonus of your Poisons by 100%."
+    },
+    {
+     "kind": "Set",
+     "text": "(6) Your finishing moves have a 5% chance per combo point to make your next ability cost no energy."
+    }
+   ],
+   "tooltip": "Nightslayer Gloves SoD Phase 4\nItem Level 66\nBinds when picked up\nHands Leather\n125 Armor\n+15 Strength\n+17 Agility\n+15 Stamina\n+7 Fire Resistance\nDurability 40 / 40Classes: Rogue\nRequires Level 60\nEquip: Improves your chance to hit with all spells and attacks by 1%.\nNightslayer Thrill (0/8)Nightslayer Belt\nNightslayer Bracelets\nNightslayer Chestpiece\nNightslayer Boots\nNightslayer Cover\nNightslayer Gloves\nNightslayer Pants\nNightslayer Shoulder Pads\n(2) Set : Feint also grants Avoidance for 6 sec, reducing all damage taken from area of effect attacks from non-players by 50%.\n(4) Set : Increases the critical strike damage bonus of your Poisons by 100%.\n(6) Set : Your finishing moves have a 5% chance per combo point to make your next ability cost no energy.\nSell Price: 2 20 57"
+  },
+  {
+   "id": 226440,
+   "name": "Nightslayer Belt",
+   "quality": 4,
+   "icon": "inv_belt_23",
+   "source": "https://www.wowhead.com/classic/item=226440",
+   "itemLevel": 66,
+   "inventoryType": "Waist",
+   "subclass": "Leather",
+   "armor": 113,
+   "weapon": null,
+   "stats": {
+    "strength": 15,
+    "agility": 17,
+    "stamina": 15
+   },
+   "resistances": {
+    "fire": 7
+   },
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "Improves your chance to hit with all spells and attacks by 1%."
+    },
+    {
+     "kind": "Set",
+     "text": "(2) Feint also grants Avoidance for 6 sec, reducing all damage taken from area of effect attacks from non-players by 50%."
+    },
+    {
+     "kind": "Set",
+     "text": "(4) Increases the critical strike damage bonus of your Poisons by 100%."
+    },
+    {
+     "kind": "Set",
+     "text": "(6) Your finishing moves have a 5% chance per combo point to make your next ability cost no energy."
+    }
+   ],
+   "tooltip": "Nightslayer Belt SoD Phase 4\nItem Level 66\nBinds when picked up\nWaist Leather\n113 Armor\n+15 Strength\n+17 Agility\n+15 Stamina\n+7 Fire Resistance\nDurability 40 / 40Classes: Rogue\nRequires Level 60\nEquip: Improves your chance to hit with all spells and attacks by 1%.\nNightslayer Thrill (0/8)Nightslayer Belt\nNightslayer Bracelets\nNightslayer Chestpiece\nNightslayer Boots\nNightslayer Cover\nNightslayer Gloves\nNightslayer Pants\nNightslayer Shoulder Pads\n(2) Set : Feint also grants Avoidance for 6 sec, reducing all damage taken from area of effect attacks from non-players by 50%.\n(4) Set : Increases the critical strike damage bonus of your Poisons by 100%.\n(6) Set : Your finishing moves have a 5% chance per combo point to make your next ability cost no energy.\nSell Price: 2 21 39"
+  },
+  {
+   "id": 226445,
+   "name": "Nightslayer Pants",
+   "quality": 4,
+   "icon": "inv_pants_06",
+   "source": "https://www.wowhead.com/classic/item=226445",
+   "itemLevel": 66,
+   "inventoryType": "Legs",
+   "subclass": "Leather",
+   "armor": 175,
+   "weapon": null,
+   "stats": {
+    "strength": 19,
+    "agility": 21,
+    "stamina": 19
+   },
+   "resistances": {
+    "fire": 10
+   },
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "Improves your chance to get a critical strike with all spells and attacks by 1%."
+    },
+    {
+     "kind": "Equip",
+     "text": "Improves your chance to hit with all spells and attacks by 1%."
+    },
+    {
+     "kind": "Set",
+     "text": "(2) Feint also grants Avoidance for 6 sec, reducing all damage taken from area of effect attacks from non-players by 50%."
+    },
+    {
+     "kind": "Set",
+     "text": "(4) Increases the critical strike damage bonus of your Poisons by 100%."
+    },
+    {
+     "kind": "Set",
+     "text": "(6) Your finishing moves have a 5% chance per combo point to make your next ability cost no energy."
+    }
+   ],
+   "tooltip": "Nightslayer Pants SoD Phase 4\nItem Level 66\nBinds when picked up\nLegs Leather\n175 Armor\n+19 Strength\n+21 Agility\n+19 Stamina\n+10 Fire Resistance\nDurability 90 / 90Classes: Rogue\nRequires Level 60\nEquip: Improves your chance to get a critical strike with all spells and attacks by 1%.\nEquip: Improves your chance to hit with all spells and attacks by 1%.\nNightslayer Thrill (0/8)Nightslayer Belt\nNightslayer Bracelets\nNightslayer Chestpiece\nNightslayer Boots\nNightslayer Cover\nNightslayer Gloves\nNightslayer Pants\nNightslayer Shoulder Pads\n(2) Set : Feint also grants Avoidance for 6 sec, reducing all damage taken from area of effect attacks from non-players by 50%.\n(4) Set : Increases the critical strike damage bonus of your Poisons by 100%.\n(6) Set : Your finishing moves have a 5% chance per combo point to make your next ability cost no energy.\nSell Price: 4 34 66"
+  },
+  {
+   "id": 226443,
+   "name": "Nightslayer Boots",
+   "quality": 4,
+   "icon": "inv_boots_08",
+   "source": "https://www.wowhead.com/classic/item=226443",
+   "itemLevel": 66,
+   "inventoryType": "Feet",
+   "subclass": "Leather",
+   "armor": 138,
+   "weapon": null,
+   "stats": {
+    "strength": 15,
+    "agility": 17,
+    "stamina": 14
+   },
+   "resistances": {
+    "fire": 5
+   },
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "Improves your chance to get a critical strike with all spells and attacks by 1%."
+    },
+    {
+     "kind": "Set",
+     "text": "(2) Feint also grants Avoidance for 6 sec, reducing all damage taken from area of effect attacks from non-players by 50%."
+    },
+    {
+     "kind": "Set",
+     "text": "(4) Increases the critical strike damage bonus of your Poisons by 100%."
+    },
+    {
+     "kind": "Set",
+     "text": "(6) Your finishing moves have a 5% chance per combo point to make your next ability cost no energy."
+    }
+   ],
+   "tooltip": "Nightslayer Boots SoD Phase 4\nItem Level 66\nBinds when picked up\nFeet Leather\n138 Armor\n+15 Strength\n+17 Agility\n+14 Stamina\n+5 Fire Resistance\nDurability 60 / 60Classes: Rogue\nRequires Level 60\nEquip: Improves your chance to get a critical strike with all spells and attacks by 1%.\nNightslayer Thrill (0/8)Nightslayer Belt\nNightslayer Bracelets\nNightslayer Chestpiece\nNightslayer Boots\nNightslayer Cover\nNightslayer Gloves\nNightslayer Pants\nNightslayer Shoulder Pads\n(2) Set : Feint also grants Avoidance for 6 sec, reducing all damage taken from area of effect attacks from non-players by 50%.\n(4) Set : Increases the critical strike damage bonus of your Poisons by 100%.\n(6) Set : Your finishing moves have a 5% chance per combo point to make your next ability cost no energy.\nSell Price: 3 28 42"
+  },
+  {
+   "id": 228722,
+   "name": "Hand of Justice",
+   "quality": 3,
+   "icon": "inv_jewelry_talisman_01",
+   "source": "https://www.wowhead.com/classic/item=228722",
+   "itemLevel": 63,
+   "inventoryType": "Trinket",
+   "subclass": null,
+   "armor": null,
+   "weapon": null,
+   "stats": {},
+   "resistances": {},
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "2% chance on melee hit to gain 1 extra attack. (Proc chance: 2%, 2s cooldown)"
+    },
+    {
+     "kind": "Equip",
+     "text": "+28 Attack Power."
+    }
+   ],
+   "tooltip": "Hand of Justice SoD Phase 4\nItem Level 63\nBinds when picked up\nUnique-Equipped: Hand of Justice (1)\nTrinket\nRequires Level 58\nEquip: 2% chance on melee hit to gain 1 extra attack. (Proc chance: 2%, 2s cooldown)\nEquip: +28 Attack Power.\nSell Price: 1"
+  },
+  {
+   "id": 228464,
+   "name": "Royal Seal of Eldre'Thalas",
+   "quality": 3,
+   "icon": "inv_jewelry_talisman_10",
+   "source": "https://www.wowhead.com/classic/item=228464",
+   "itemLevel": 62,
+   "inventoryType": "Trinket",
+   "subclass": null,
+   "armor": null,
+   "weapon": null,
+   "stats": {},
+   "resistances": {
+    "fire": 10
+   },
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "Improves your chance to hit with all spells and attacks by 2%."
+    }
+   ],
+   "tooltip": "Royal Seal of Eldre'Thalas\nItem Level 62\nBinds when picked up\nUnique\nTrinket\n+10 Fire ResistanceClasses: Rogue\nEquip: Improves your chance to hit with all spells and attacks by 2%.\n&quot;Blessed by the Shen'dralar Ancients.&quot;"
+  },
+  {
+   "id": 228252,
+   "name": "Striker's Mark",
+   "quality": 4,
+   "icon": "inv_weapon_bow_08",
+   "source": "https://www.wowhead.com/classic/item=228252",
+   "itemLevel": 71,
+   "inventoryType": "Ranged",
+   "subclass": "Bow",
+   "armor": null,
+   "weapon": {
+    "minDamage": 92,
+    "maxDamage": 171,
+    "speed": 3.2,
+    "dps": 41.09
+   },
+   "stats": {},
+   "resistances": {},
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "Improves your chance to hit with all spells and attacks by 1%."
+    },
+    {
+     "kind": "Equip",
+     "text": "+22 Attack Power."
+    }
+   ],
+   "tooltip": "Striker's Mark\nItem Level 71\nBinds when picked up\nRanged Bow\n92 - 171 Damage\nSpeed 3.20\n(41.09 damage per second)\nDurability 90 / 90\nRequires Level 60\nEquip: Improves your chance to hit with all spells and attacks by 1%.\nEquip: +22 Attack Power.\nSell Price: 7 57 46"
+  }
+ ]
+}

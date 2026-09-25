@@ -1,0 +1,1193 @@
+{
+ "set": "sod-druid",
+ "description": "A level 60 Druid's gear for all three forms: Cenarion Raiment in the caster, cat and bear variants the owner supplied as three separate sets, plus the idols each build uses. Season of Discovery items. This file also OWNS the caster jewellery the Mage, Warlock, Priest, Shaman and Shockadin sets share -- Choker of the Fire Lord, Drape of the Fire Lord, Mana Igniting Cord, Band of Sulfuras, Ring of Spell Power, Briarwood Reed, Eye of the Beast and Staff of Dominance -- because it is the first file that asks for them.",
+ "source": "https://sixtyupgrades.com/sod/set/dp32un6quRfiri9Ztnrg7z (Moonkin), https://sixtyupgrades.com/sod/set/7RpNjszTib9QhSQSANv6rX (Cat), https://sixtyupgrades.com/sod/set/5khxqXfnx3U1QSXaRsNv5G (Bear)",
+ "items": [
+  {
+   "id": 226658,
+   "name": "Cenarion Antlers",
+   "quality": 4,
+   "icon": "inv_helmet_09",
+   "source": "https://www.wowhead.com/classic/item=226658",
+   "itemLevel": 66,
+   "inventoryType": "Head",
+   "subclass": "Leather",
+   "armor": 163,
+   "weapon": null,
+   "stats": {
+    "stamina": 10,
+    "intellect": 17
+   },
+   "resistances": {
+    "fire": 10
+   },
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "Increases damage and healing done by magical spells and effects by up to 36."
+    },
+    {
+     "kind": "Equip",
+     "text": "Improves your chance to get a critical strike with all spells and attacks by 1%."
+    },
+    {
+     "kind": "Set",
+     "text": "(2) Damage dealt by Thorns increased by 100% and duration increased by 200%."
+    },
+    {
+     "kind": "Set",
+     "text": "(4) Increases your chance to hit with spells and attacks by 3%."
+    },
+    {
+     "kind": "Set",
+     "text": "(6) Reduces the cooldown on Starfall by 50%."
+    }
+   ],
+   "tooltip": "Cenarion Antlers SoD Phase 4\nItem Level 66\nBinds when picked up\nHead Leather\n163 Armor\n+10 Stamina\n+17 Intellect\n+10 Fire Resistance\nDurability 70 / 70Classes: Druid\nRequires Level 60\nEquip: Increases damage and healing done by magical spells and effects by up to 36.\nEquip: Improves your chance to get a critical strike with all spells and attacks by 1%.\nCenarion Eclipse (0/8)Cenarion Antlers\nCenarion Cord\nCenarion Embrace\nCenarion Gauntlets\nCenarion Mantle\nCenarion Pants\nCenarion Sandals\nCenarion Wrists\n(2) Set : Damage dealt by Thorns increased by 100% and duration increased by 200%.\n(4) Set : Increases your chance to hit with spells and attacks by 3%.\n(6) Set : Reduces the cooldown on Starfall by 50%.\nSell Price: 3 49 49"
+  },
+  {
+   "id": 228289,
+   "name": "Choker of the Fire Lord",
+   "quality": 4,
+   "icon": "inv_jewelry_amulet_05",
+   "source": "https://www.wowhead.com/classic/item=228289",
+   "itemLevel": 77,
+   "inventoryType": "Neck",
+   "subclass": null,
+   "armor": null,
+   "weapon": null,
+   "stats": {
+    "stamina": 7,
+    "intellect": 7
+   },
+   "resistances": {},
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "Increases damage and healing done by magical spells and effects by up to 34."
+    }
+   ],
+   "tooltip": "Choker of the Fire Lord SoD Phase 4\nItem Level 77\nBinds when picked up\nNeck\n+7 Stamina\n+7 Intellect\nRequires Level 60\nEquip: Increases damage and healing done by magical spells and effects by up to 34.\nSell Price: 8 91 35"
+  },
+  {
+   "id": 226653,
+   "name": "Cenarion Mantle",
+   "quality": 4,
+   "icon": "inv_shoulder_07",
+   "source": "https://www.wowhead.com/classic/item=226653",
+   "itemLevel": 66,
+   "inventoryType": "Shoulder",
+   "subclass": "Leather",
+   "armor": 150,
+   "weapon": null,
+   "stats": {
+    "stamina": 12,
+    "intellect": 15
+   },
+   "resistances": {
+    "fire": 7
+   },
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "Improves your chance to hit with all spells and attacks by 1%."
+    },
+    {
+     "kind": "Equip",
+     "text": "Increases damage and healing done by magical spells and effects by up to 21."
+    },
+    {
+     "kind": "Set",
+     "text": "(2) Damage dealt by Thorns increased by 100% and duration increased by 200%."
+    },
+    {
+     "kind": "Set",
+     "text": "(4) Increases your chance to hit with spells and attacks by 3%."
+    },
+    {
+     "kind": "Set",
+     "text": "(6) Reduces the cooldown on Starfall by 50%."
+    }
+   ],
+   "tooltip": "Cenarion Mantle SoD Phase 4\nItem Level 66\nBinds when picked up\nShoulder Leather\n150 Armor\n+12 Stamina\n+15 Intellect\n+7 Fire Resistance\nDurability 70 / 70Classes: Druid\nRequires Level 60\nEquip: Improves your chance to hit with all spells and attacks by 1%.\nEquip: Increases damage and healing done by magical spells and effects by up to 21.\nCenarion Eclipse (0/8)Cenarion Antlers\nCenarion Cord\nCenarion Embrace\nCenarion Gauntlets\nCenarion Mantle\nCenarion Pants\nCenarion Sandals\nCenarion Wrists\n(2) Set : Damage dealt by Thorns increased by 100% and duration increased by 200%.\n(4) Set : Increases your chance to hit with spells and attacks by 3%.\n(6) Set : Reduces the cooldown on Starfall by 50%.\nSell Price: 3 18 59"
+  },
+  {
+   "id": 228100,
+   "name": "Drape of the Fire Lord",
+   "quality": 4,
+   "icon": "inv_misc_cape_18",
+   "source": "https://www.wowhead.com/classic/item=228100",
+   "itemLevel": 77,
+   "inventoryType": "Back",
+   "subclass": null,
+   "armor": 59,
+   "weapon": null,
+   "stats": {
+    "stamina": 10,
+    "intellect": 12
+   },
+   "resistances": {
+    "fire": 10
+   },
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "Increases damage and healing done by magical spells and effects by up to 21."
+    }
+   ],
+   "tooltip": "Drape of the Fire Lord SoD Phase 4\nItem Level 77\nBinds when picked up\nBack\n59 Armor\n+10 Stamina\n+12 Intellect\n+10 Fire Resistance\nRequires Level 60\nEquip: Increases damage and healing done by magical spells and effects by up to 21.\nSell Price: 4 59 64Dropped by: RagnarosDrop Chance: 100.00%"
+  },
+  {
+   "id": 226656,
+   "name": "Cenarion Embrace",
+   "quality": 4,
+   "icon": "inv_chest_cloth_06",
+   "source": "https://www.wowhead.com/classic/item=226656",
+   "itemLevel": 66,
+   "inventoryType": "Chest",
+   "subclass": "Leather",
+   "armor": 200,
+   "weapon": null,
+   "stats": {
+    "stamina": 14,
+    "intellect": 17
+   },
+   "resistances": {
+    "fire": 10
+   },
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "Increases damage and healing done by magical spells and effects by up to 35."
+    },
+    {
+     "kind": "Equip",
+     "text": "Improves your chance to get a critical strike with all spells and attacks by 1%."
+    },
+    {
+     "kind": "Set",
+     "text": "(2) Damage dealt by Thorns increased by 100% and duration increased by 200%."
+    },
+    {
+     "kind": "Set",
+     "text": "(4) Increases your chance to hit with spells and attacks by 3%."
+    },
+    {
+     "kind": "Set",
+     "text": "(6) Reduces the cooldown on Starfall by 50%."
+    }
+   ],
+   "tooltip": "Cenarion Embrace SoD Phase 4\nItem Level 66\nBinds when picked up\nChest Leather\n200 Armor\n+14 Stamina\n+17 Intellect\n+10 Fire Resistance\nDurability 120 / 120Classes: Druid\nRequires Level 60\nEquip: Increases damage and healing done by magical spells and effects by up to 35.\nEquip: Improves your chance to get a critical strike with all spells and attacks by 1%.\nCenarion Eclipse (0/8)Cenarion Antlers\nCenarion Cord\nCenarion Embrace\nCenarion Gauntlets\nCenarion Mantle\nCenarion Pants\nCenarion Sandals\nCenarion Wrists\n(2) Set : Damage dealt by Thorns increased by 100% and duration increased by 200%.\n(4) Set : Increases your chance to hit with spells and attacks by 3%.\n(6) Set : Reduces the cooldown on Starfall by 50%.\nSell Price: 4 64 39"
+  },
+  {
+   "id": 226655,
+   "name": "Cenarion Wrists",
+   "quality": 4,
+   "icon": "inv_bracer_03",
+   "source": "https://www.wowhead.com/classic/item=226655",
+   "itemLevel": 66,
+   "inventoryType": "Wrist",
+   "subclass": "Leather",
+   "armor": 88,
+   "weapon": null,
+   "stats": {
+    "stamina": 10,
+    "intellect": 11
+   },
+   "resistances": {
+    "fire": 5
+   },
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "Increases damage and healing done by magical spells and effects by up to 15."
+    },
+    {
+     "kind": "Equip",
+     "text": "Improves your chance to hit with all spells and attacks by 1%."
+    },
+    {
+     "kind": "Set",
+     "text": "(2) Damage dealt by Thorns increased by 100% and duration increased by 200%."
+    },
+    {
+     "kind": "Set",
+     "text": "(4) Increases your chance to hit with spells and attacks by 3%."
+    },
+    {
+     "kind": "Set",
+     "text": "(6) Reduces the cooldown on Starfall by 50%."
+    }
+   ],
+   "tooltip": "Cenarion Wrists SoD Phase 4\nItem Level 66\nBinds when picked up\nWrist Leather\n88 Armor\n+10 Stamina\n+11 Intellect\n+5 Fire Resistance\nDurability 40 / 40Classes: Druid\nRequires Level 60\nEquip: Increases damage and healing done by magical spells and effects by up to 15.\nEquip: Improves your chance to hit with all spells and attacks by 1%.\nCenarion Eclipse (0/8)Cenarion Antlers\nCenarion Cord\nCenarion Embrace\nCenarion Gauntlets\nCenarion Mantle\nCenarion Pants\nCenarion Sandals\nCenarion Wrists\n(2) Set : Damage dealt by Thorns increased by 100% and duration increased by 200%.\n(4) Set : Increases your chance to hit with spells and attacks by 3%.\n(6) Set : Reduces the cooldown on Starfall by 50%.\nSell Price: 2 29 72"
+  },
+  {
+   "id": 228271,
+   "name": "Staff of Dominance",
+   "quality": 4,
+   "icon": "inv_staff_13",
+   "source": "https://www.wowhead.com/classic/item=228271",
+   "itemLevel": 71,
+   "inventoryType": "Two-Hand",
+   "subclass": "Staff",
+   "armor": null,
+   "weapon": {
+    "minDamage": 125,
+    "maxDamage": 204,
+    "speed": 2.9,
+    "dps": 56.72
+   },
+   "stats": {
+    "stamina": 15,
+    "intellect": 29,
+    "spirit": 12
+   },
+   "resistances": {},
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "Improves your chance to get a critical strike with all spells and attacks by 2%."
+    },
+    {
+     "kind": "Equip",
+     "text": "Increases damage and healing done by magical spells and effects by up to 47."
+    }
+   ],
+   "tooltip": "Staff of Dominance\nItem Level 71\nBinds when picked up\nTwo-Hand Staff\n125 - 204 Damage\nSpeed 2.90\n(56.72 damage per second)\n+15 Stamina\n+29 Intellect\n+12 Spirit\nDurability 120 / 120\nRequires Level 60\nEquip: Improves your chance to get a critical strike with all spells and attacks by 2%.\nEquip: Increases damage and healing done by magical spells and effects by up to 47.\nSell Price: 14 52 95"
+  },
+  {
+   "id": 226777,
+   "name": "Feralheart Hands",
+   "quality": 4,
+   "icon": "inv_gauntlets_17",
+   "source": "https://www.wowhead.com/classic/item=226777",
+   "itemLevel": 55,
+   "inventoryType": "Hands",
+   "subclass": "Leather",
+   "armor": 108,
+   "weapon": null,
+   "stats": {
+    "stamina": 10,
+    "intellect": 10
+   },
+   "resistances": {},
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "Improves your chance to hit with all spells and attacks by 1%."
+    },
+    {
+     "kind": "Equip",
+     "text": "Increases damage and healing done by magical spells and effects by up to 23."
+    },
+    {
+     "kind": "Set",
+     "text": "(2) +40 Attack Power, up to 23 increased damage from spells, and up to 44 increased healing from spells."
+    },
+    {
+     "kind": "Set",
+     "text": "(4) 2% chance on spellcast to energize you for 300 mana, 6% chance on dealing a melee autoattack to energize you for 40 Energy, and 3% chance on being hit by a melee attack to energize you for 10 Rage. (Proc chance: 6%)"
+    },
+    {
+     "kind": "Set",
+     "text": "(6) +8 All Resistances."
+    },
+    {
+     "kind": "Set",
+     "text": "(8) +200 Armor."
+    }
+   ],
+   "tooltip": "Feralheart Hands\nItem Level 55\nBinds when picked up\nHands Leather\n108 Armor\n+10 Stamina\n+10 Intellect\nDurability 40 / 40Classes: Druid\nEquip: Improves your chance to hit with all spells and attacks by 1%.\nEquip: Increases damage and healing done by magical spells and effects by up to 23.\nFeralheart Raiment (0/8)Feralheart Boots\nFeralheart Chest\nFeralheart Gloves\nFeralheart Helm\nFeralheart Legs\nFeralheart Shoulders\nFeralheart Waist\nFeralheart Wrists\n(2) Set : +40 Attack Power, up to 23 increased damage from spells, and up to 44 increased healing from spells.\n(4) Set : 2% chance on spellcast to energize you for 300 mana, 6% chance on dealing a melee autoattack to energize you for 40 Energy, and 3% chance on being hit by a melee attack to energize you for 10 Rage. (Proc chance: 6%)\n(6) Set : +8 All Resistances.\n(8) Set : +200 Armor.\nSell Price: 10"
+  },
+  {
+   "id": 228256,
+   "name": "Mana Igniting Cord",
+   "quality": 4,
+   "icon": "inv_belt_11",
+   "source": "https://www.wowhead.com/classic/item=228256",
+   "itemLevel": 71,
+   "inventoryType": "Waist",
+   "subclass": "Cloth",
+   "armor": 61,
+   "weapon": null,
+   "stats": {
+    "stamina": 12,
+    "intellect": 15
+   },
+   "resistances": {},
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "Improves your chance to get a critical strike with all spells and attacks by 1%."
+    },
+    {
+     "kind": "Equip",
+     "text": "Increases damage and healing done by magical spells and effects by up to 28."
+    }
+   ],
+   "tooltip": "Mana Igniting Cord SoD Phase 4\nItem Level 71\nBinds when picked up\nWaist Cloth\n61 Armor\n+12 Stamina\n+15 Intellect\nDurability 35 / 35\nRequires Level 60\nEquip: Improves your chance to get a critical strike with all spells and attacks by 1%.\nEquip: Increases damage and healing done by magical spells and effects by up to 28.\nSell Price: 2 22 80"
+  },
+  {
+   "id": 226651,
+   "name": "Cenarion Pants",
+   "quality": 4,
+   "icon": "inv_pants_06",
+   "source": "https://www.wowhead.com/classic/item=226651",
+   "itemLevel": 66,
+   "inventoryType": "Legs",
+   "subclass": "Leather",
+   "armor": 175,
+   "weapon": null,
+   "stats": {
+    "stamina": 15,
+    "intellect": 16
+   },
+   "resistances": {
+    "fire": 10
+   },
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "Increases damage and healing done by magical spells and effects by up to 35."
+    },
+    {
+     "kind": "Equip",
+     "text": "Improves your chance to get a critical strike with all spells and attacks by 1%."
+    },
+    {
+     "kind": "Set",
+     "text": "(2) Damage dealt by Thorns increased by 100% and duration increased by 200%."
+    },
+    {
+     "kind": "Set",
+     "text": "(4) Increases your chance to hit with spells and attacks by 3%."
+    },
+    {
+     "kind": "Set",
+     "text": "(6) Reduces the cooldown on Starfall by 50%."
+    }
+   ],
+   "tooltip": "Cenarion Pants SoD Phase 4\nItem Level 66\nBinds when picked up\nLegs Leather\n175 Armor\n+15 Stamina\n+16 Intellect\n+10 Fire Resistance\nDurability 90 / 90Classes: Druid\nRequires Level 60\nEquip: Increases damage and healing done by magical spells and effects by up to 35.\nEquip: Improves your chance to get a critical strike with all spells and attacks by 1%.\nCenarion Eclipse (0/8)Cenarion Antlers\nCenarion Cord\nCenarion Embrace\nCenarion Gauntlets\nCenarion Mantle\nCenarion Pants\nCenarion Sandals\nCenarion Wrists\n(2) Set : Damage dealt by Thorns increased by 100% and duration increased by 200%.\n(4) Set : Increases your chance to hit with spells and attacks by 3%.\n(6) Set : Reduces the cooldown on Starfall by 50%.\nSell Price: 4 23 15"
+  },
+  {
+   "id": 226774,
+   "name": "Feralheart Galoshes",
+   "quality": 4,
+   "icon": "inv_boots_08",
+   "source": "https://www.wowhead.com/classic/item=226774",
+   "itemLevel": 60,
+   "inventoryType": "Feet",
+   "subclass": "Leather",
+   "armor": 127,
+   "weapon": null,
+   "stats": {
+    "stamina": 11,
+    "intellect": 14
+   },
+   "resistances": {},
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "Improves your chance to hit with all spells and attacks by 1%."
+    },
+    {
+     "kind": "Equip",
+     "text": "Increases damage and healing done by magical spells and effects by up to 23."
+    },
+    {
+     "kind": "Set",
+     "text": "(2) +40 Attack Power, up to 23 increased damage from spells, and up to 44 increased healing from spells."
+    },
+    {
+     "kind": "Set",
+     "text": "(4) 2% chance on spellcast to energize you for 300 mana, 6% chance on dealing a melee autoattack to energize you for 40 Energy, and 3% chance on being hit by a melee attack to energize you for 10 Rage. (Proc chance: 6%)"
+    },
+    {
+     "kind": "Set",
+     "text": "(6) +8 All Resistances."
+    },
+    {
+     "kind": "Set",
+     "text": "(8) +200 Armor."
+    }
+   ],
+   "tooltip": "Feralheart Galoshes\nItem Level 60\nBinds when picked up\nFeet Leather\n127 Armor\n+11 Stamina\n+14 Intellect\nDurability 60 / 60Classes: Druid\nEquip: Improves your chance to hit with all spells and attacks by 1%.\nEquip: Increases damage and healing done by magical spells and effects by up to 23.\nFeralheart Raiment (0/8)Feralheart Boots\nFeralheart Chest\nFeralheart Gloves\nFeralheart Helm\nFeralheart Legs\nFeralheart Shoulders\nFeralheart Waist\nFeralheart Wrists\n(2) Set : +40 Attack Power, up to 23 increased damage from spells, and up to 44 increased healing from spells.\n(4) Set : 2% chance on spellcast to energize you for 300 mana, 6% chance on dealing a melee autoattack to energize you for 40 Energy, and 3% chance on being hit by a melee attack to energize you for 10 Rage. (Proc chance: 6%)\n(6) Set : +8 All Resistances.\n(8) Set : +200 Armor.\nSell Price: 10"
+  },
+  {
+   "id": 228287,
+   "name": "Band of Sulfuras",
+   "quality": 4,
+   "icon": "inv_jewelry_ring_36",
+   "source": "https://www.wowhead.com/classic/item=228287",
+   "itemLevel": 77,
+   "inventoryType": "Finger",
+   "subclass": null,
+   "armor": null,
+   "weapon": null,
+   "stats": {
+    "intellect": 10
+   },
+   "resistances": {},
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "Improves your chance to hit with all spells and attacks by 1%."
+    },
+    {
+     "kind": "Equip",
+     "text": "Increases damage and healing done by magical spells and effects by up to 28."
+    }
+   ],
+   "tooltip": "Band of Sulfuras SoD Phase 4\nItem Level 77\nBinds when picked up\nUnique-Equipped\nFinger\n+10 Intellect\nRequires Level 60\nEquip: Improves your chance to hit with all spells and attacks by 1%.\nEquip: Increases damage and healing done by magical spells and effects by up to 28.\nSell Price: 7 98 53"
+  },
+  {
+   "id": 228243,
+   "name": "Ring of Spell Power",
+   "quality": 4,
+   "icon": "inv_jewelry_ring_38",
+   "source": "https://www.wowhead.com/classic/item=228243",
+   "itemLevel": 71,
+   "inventoryType": "Finger",
+   "subclass": null,
+   "armor": null,
+   "weapon": null,
+   "stats": {},
+   "resistances": {},
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "Increases damage and healing done by magical spells and effects by up to 34."
+    }
+   ],
+   "tooltip": "Ring of Spell Power SoD Phase 4\nItem Level 71\nBinds when picked up\nUnique-Equipped\nFinger\nRequires Level 60\nEquip: Increases damage and healing done by magical spells and effects by up to 34.\nSell Price: 9 14 53"
+  },
+  {
+   "id": 12930,
+   "name": "Briarwood Reed",
+   "quality": 3,
+   "icon": "inv_misc_root_02",
+   "source": "https://www.wowhead.com/classic/item=12930",
+   "itemLevel": 60,
+   "inventoryType": "Trinket",
+   "subclass": null,
+   "armor": null,
+   "weapon": null,
+   "stats": {},
+   "resistances": {},
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "Increases damage and healing done by magical spells and effects by up to 29."
+    }
+   ],
+   "tooltip": "Briarwood Reed\nItem Level 60\nBinds when picked up\nUnique\nTrinket\nRequires Level 55\nEquip: Increases damage and healing done by magical spells and effects by up to 29.\nSell Price: 1"
+  },
+  {
+   "id": 13968,
+   "name": "Eye of the Beast",
+   "quality": 3,
+   "icon": "inv_jewelry_talisman_08",
+   "source": "https://www.wowhead.com/classic/item=13968",
+   "itemLevel": 63,
+   "inventoryType": "Trinket",
+   "subclass": null,
+   "armor": null,
+   "weapon": null,
+   "stats": {},
+   "resistances": {},
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "Improves your chance to get a critical strike with spells by 2%."
+    }
+   ],
+   "tooltip": "Eye of the Beast\nItem Level 63\nBinds when picked up\nTrinket\nClasses: Priest, Shaman, Mage, Warlock, Druid\nEquip: Improves your chance to get a critical strike with spells by 2%.\nSell Price: 1 62 50"
+  },
+  {
+   "id": 23197,
+   "name": "Idol of the Moon",
+   "quality": 3,
+   "icon": "inv_relics_idolofrejuvenation",
+   "source": "https://www.wowhead.com/classic/item=23197",
+   "itemLevel": 65,
+   "inventoryType": "Relic",
+   "subclass": "Idol",
+   "armor": null,
+   "weapon": null,
+   "stats": {},
+   "resistances": {},
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "Increases the damage of your Moonfire spell by up to 33."
+    }
+   ],
+   "tooltip": "Idol of the Moon\nItem Level 65\nBinds when equipped\nUnique\nRelic Idol\nRequires Level 60\nEquip: Increases the damage of your Moonfire spell by up to 33.\nSell Price: 1 87 17"
+  },
+  {
+   "id": 226659,
+   "name": "Cenarion Horns",
+   "quality": 4,
+   "icon": "inv_helmet_09",
+   "source": "https://www.wowhead.com/classic/item=226659",
+   "itemLevel": 66,
+   "inventoryType": "Head",
+   "subclass": "Leather",
+   "armor": 163,
+   "weapon": null,
+   "stats": {
+    "strength": 21,
+    "agility": 19,
+    "stamina": 16,
+    "intellect": 15
+   },
+   "resistances": {
+    "fire": 10
+   },
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "Improves your chance to get a critical strike with all spells and attacks by 1%."
+    },
+    {
+     "kind": "Set",
+     "text": "(2) Your Faerie Fire (Feral) also increases the chance for all attacks to hit that target by 1% for 40 sec."
+    },
+    {
+     "kind": "Set",
+     "text": "(4) Periodic damage from your Rake and Rip can now be critical strikes."
+    },
+    {
+     "kind": "Set",
+     "text": "(6) Your Rip and Ferocious Bite have a 20% chance per combo point spent to refresh the duration of Savage Roar back to its initial value."
+    }
+   ],
+   "tooltip": "Cenarion Horns SoD Phase 4\nItem Level 66\nBinds when picked up\nHead Leather\n163 Armor\n+21 Strength\n+19 Agility\n+16 Stamina\n+15 Intellect\n+10 Fire Resistance\nDurability 70 / 70Classes: Druid\nRequires Level 60\nEquip: Improves your chance to get a critical strike with all spells and attacks by 1%.\nCenarion Cunning (0/8)Cenarion Bands\nCenarion Fists\nCenarion Girdle\nCenarion Horns\nCenarion Shoulders\nCenarion Treads\nCenarion Trousers\nCenarion Tunic\n(2) Set : Your Faerie Fire (Feral) also increases the chance for all attacks to hit that target by 1% for 40 sec.\n(4) Set : Periodic damage from your Rake and Rip can now be critical strikes.\n(6) Set : Your Rip and Ferocious Bite have a 20% chance per combo point spent to refresh the duration of Savage Roar back to its initial value.\nSell Price: 3 49 49"
+  },
+  {
+   "id": 19491,
+   "name": "Amulet of the Darkmoon",
+   "quality": 4,
+   "icon": "inv_jewelry_necklace_14",
+   "source": "https://www.wowhead.com/classic/item=19491",
+   "itemLevel": 65,
+   "inventoryType": "Neck",
+   "subclass": null,
+   "armor": null,
+   "weapon": null,
+   "stats": {
+    "strength": 10,
+    "agility": 19,
+    "stamina": 10
+   },
+   "resistances": {},
+   "effects": [],
+   "tooltip": "Amulet of the Darkmoon\nItem Level 65\nBinds when picked up\nNeck\n+10 Strength\n+19 Agility\n+10 Stamina\nRequires Level 60\nSell Price: 2 50"
+  },
+  {
+   "id": 226665,
+   "name": "Cenarion Shoulders",
+   "quality": 4,
+   "icon": "inv_shoulder_07",
+   "source": "https://www.wowhead.com/classic/item=226665",
+   "itemLevel": 66,
+   "inventoryType": "Shoulder",
+   "subclass": "Leather",
+   "armor": 150,
+   "weapon": null,
+   "stats": {
+    "strength": 18,
+    "agility": 12,
+    "stamina": 10,
+    "intellect": 8
+   },
+   "resistances": {
+    "fire": 7
+   },
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "Improves your chance to get a critical strike with all spells and attacks by 1%."
+    },
+    {
+     "kind": "Set",
+     "text": "(2) Your Faerie Fire (Feral) also increases the chance for all attacks to hit that target by 1% for 40 sec."
+    },
+    {
+     "kind": "Set",
+     "text": "(4) Periodic damage from your Rake and Rip can now be critical strikes."
+    },
+    {
+     "kind": "Set",
+     "text": "(6) Your Rip and Ferocious Bite have a 20% chance per combo point spent to refresh the duration of Savage Roar back to its initial value."
+    }
+   ],
+   "tooltip": "Cenarion Shoulders SoD Phase 4\nItem Level 66\nBinds when picked up\nShoulder Leather\n150 Armor\n+18 Strength\n+12 Agility\n+10 Stamina\n+8 Intellect\n+7 Fire Resistance\nDurability 70 / 70Classes: Druid\nRequires Level 60\nEquip: Improves your chance to get a critical strike with all spells and attacks by 1%.\nCenarion Cunning (0/8)Cenarion Bands\nCenarion Fists\nCenarion Girdle\nCenarion Horns\nCenarion Shoulders\nCenarion Treads\nCenarion Trousers\nCenarion Tunic\n(2) Set : Your Faerie Fire (Feral) also increases the chance for all attacks to hit that target by 1% for 40 sec.\n(4) Set : Periodic damage from your Rake and Rip can now be critical strikes.\n(6) Set : Your Rip and Ferocious Bite have a 20% chance per combo point spent to refresh the duration of Savage Roar back to its initial value.\nSell Price: 3 18 59"
+  },
+  {
+   "id": 226661,
+   "name": "Cenarion Tunic",
+   "quality": 4,
+   "icon": "inv_chest_cloth_06",
+   "source": "https://www.wowhead.com/classic/item=226661",
+   "itemLevel": 66,
+   "inventoryType": "Chest",
+   "subclass": "Leather",
+   "armor": 200,
+   "weapon": null,
+   "stats": {
+    "strength": 23,
+    "agility": 22,
+    "stamina": 16,
+    "intellect": 6
+   },
+   "resistances": {
+    "fire": 10
+   },
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "Improves your chance to hit with all spells and attacks by 1%."
+    },
+    {
+     "kind": "Set",
+     "text": "(2) Your Faerie Fire (Feral) also increases the chance for all attacks to hit that target by 1% for 40 sec."
+    },
+    {
+     "kind": "Set",
+     "text": "(4) Periodic damage from your Rake and Rip can now be critical strikes."
+    },
+    {
+     "kind": "Set",
+     "text": "(6) Your Rip and Ferocious Bite have a 20% chance per combo point spent to refresh the duration of Savage Roar back to its initial value."
+    }
+   ],
+   "tooltip": "Cenarion Tunic SoD Phase 4\nItem Level 66\nBinds when picked up\nChest Leather\n200 Armor\n+23 Strength\n+22 Agility\n+16 Stamina\n+6 Intellect\n+10 Fire Resistance\nDurability 120 / 120Classes: Druid\nRequires Level 60\nEquip: Improves your chance to hit with all spells and attacks by 1%.\nCenarion Cunning (0/8)Cenarion Bands\nCenarion Fists\nCenarion Girdle\nCenarion Horns\nCenarion Shoulders\nCenarion Treads\nCenarion Trousers\nCenarion Tunic\n(2) Set : Your Faerie Fire (Feral) also increases the chance for all attacks to hit that target by 1% for 40 sec.\n(4) Set : Periodic damage from your Rake and Rip can now be critical strikes.\n(6) Set : Your Rip and Ferocious Bite have a 20% chance per combo point spent to refresh the duration of Savage Roar back to its initial value.\nSell Price: 4 64 39"
+  },
+  {
+   "id": 226662,
+   "name": "Cenarion Bands",
+   "quality": 4,
+   "icon": "inv_bracer_03",
+   "source": "https://www.wowhead.com/classic/item=226662",
+   "itemLevel": 66,
+   "inventoryType": "Wrist",
+   "subclass": "Leather",
+   "armor": 88,
+   "weapon": null,
+   "stats": {
+    "strength": 17,
+    "agility": 12,
+    "stamina": 9
+   },
+   "resistances": {
+    "fire": 5
+   },
+   "effects": [
+    {
+     "kind": "Set",
+     "text": "(2) Your Faerie Fire (Feral) also increases the chance for all attacks to hit that target by 1% for 40 sec."
+    },
+    {
+     "kind": "Set",
+     "text": "(4) Periodic damage from your Rake and Rip can now be critical strikes."
+    },
+    {
+     "kind": "Set",
+     "text": "(6) Your Rip and Ferocious Bite have a 20% chance per combo point spent to refresh the duration of Savage Roar back to its initial value."
+    }
+   ],
+   "tooltip": "Cenarion Bands SoD Phase 4\nItem Level 66\nBinds when picked up\nWrist Leather\n88 Armor\n+17 Strength\n+12 Agility\n+9 Stamina\n+5 Fire Resistance\nDurability 40 / 40Classes: Druid\nRequires Level 60\nCenarion Cunning (0/8)Cenarion Bands\nCenarion Fists\nCenarion Girdle\nCenarion Horns\nCenarion Shoulders\nCenarion Treads\nCenarion Trousers\nCenarion Tunic\n(2) Set : Your Faerie Fire (Feral) also increases the chance for all attacks to hit that target by 1% for 40 sec.\n(4) Set : Periodic damage from your Rake and Rip can now be critical strikes.\n(6) Set : Your Rip and Ferocious Bite have a 20% chance per combo point spent to refresh the duration of Savage Roar back to its initial value.\nSell Price: 2 29 72"
+  },
+  {
+   "id": 227833,
+   "name": "Glaive of Obsidian Fury",
+   "quality": 4,
+   "icon": "inv_spear_08",
+   "source": "https://www.wowhead.com/classic/item=227833",
+   "itemLevel": 70,
+   "inventoryType": "Two-Hand",
+   "subclass": "Polearm",
+   "armor": null,
+   "weapon": {
+    "minDamage": 193,
+    "maxDamage": 290,
+    "speed": 3.6,
+    "dps": 67.08
+   },
+   "stats": {
+    "agility": 36,
+    "stamina": 15
+   },
+   "resistances": {
+    "fire": 15
+   },
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "Improves your chance to get a critical strike with all spells and attacks by 1%."
+    },
+    {
+     "kind": "Equip",
+     "text": "+172 Attack Power in Cat, Bear, and Dire Bear forms only."
+    }
+   ],
+   "tooltip": "Glaive of Obsidian Fury\nItem Level 70\nBinds when picked up\nTwo-Hand Polearm\n193 - 290 Damage\nSpeed 3.60\n(67.08 damage per second)\n+36 Agility\n+15 Stamina\n+15 Fire Resistance\nDurability 120 / 120\nRequires Level 60\nEquip: Improves your chance to get a critical strike with all spells and attacks by 1%.\nEquip: +172 Attack Power in Cat, Bear, and Dire Bear forms only.\nSell Price: 13 76 20"
+  },
+  {
+   "id": 226664,
+   "name": "Cenarion Fists",
+   "quality": 4,
+   "icon": "inv_gauntlets_07",
+   "source": "https://www.wowhead.com/classic/item=226664",
+   "itemLevel": 66,
+   "inventoryType": "Hands",
+   "subclass": "Leather",
+   "armor": 125,
+   "weapon": null,
+   "stats": {
+    "strength": 22,
+    "agility": 14,
+    "stamina": 10
+   },
+   "resistances": {
+    "fire": 7
+   },
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "Improves your chance to hit with all spells and attacks by 1%."
+    },
+    {
+     "kind": "Set",
+     "text": "(2) Your Faerie Fire (Feral) also increases the chance for all attacks to hit that target by 1% for 40 sec."
+    },
+    {
+     "kind": "Set",
+     "text": "(4) Periodic damage from your Rake and Rip can now be critical strikes."
+    },
+    {
+     "kind": "Set",
+     "text": "(6) Your Rip and Ferocious Bite have a 20% chance per combo point spent to refresh the duration of Savage Roar back to its initial value."
+    }
+   ],
+   "tooltip": "Cenarion Fists SoD Phase 4\nItem Level 66\nBinds when picked up\nHands Leather\n125 Armor\n+22 Strength\n+14 Agility\n+10 Stamina\n+7 Fire Resistance\nDurability 40 / 40Classes: Druid\nRequires Level 60\nEquip: Improves your chance to hit with all spells and attacks by 1%.\nCenarion Cunning (0/8)Cenarion Bands\nCenarion Fists\nCenarion Girdle\nCenarion Horns\nCenarion Shoulders\nCenarion Treads\nCenarion Trousers\nCenarion Tunic\n(2) Set : Your Faerie Fire (Feral) also increases the chance for all attacks to hit that target by 1% for 40 sec.\n(4) Set : Periodic damage from your Rake and Rip can now be critical strikes.\n(6) Set : Your Rip and Ferocious Bite have a 20% chance per combo point spent to refresh the duration of Savage Roar back to its initial value.\nSell Price: 2 30 55"
+  },
+  {
+   "id": 226660,
+   "name": "Cenarion Girdle",
+   "quality": 4,
+   "icon": "inv_belt_06",
+   "source": "https://www.wowhead.com/classic/item=226660",
+   "itemLevel": 66,
+   "inventoryType": "Waist",
+   "subclass": "Leather",
+   "armor": 113,
+   "weapon": null,
+   "stats": {
+    "strength": 19,
+    "agility": 17,
+    "stamina": 11,
+    "intellect": 9
+   },
+   "resistances": {
+    "fire": 7
+   },
+   "effects": [
+    {
+     "kind": "Set",
+     "text": "(2) Your Faerie Fire (Feral) also increases the chance for all attacks to hit that target by 1% for 40 sec."
+    },
+    {
+     "kind": "Set",
+     "text": "(4) Periodic damage from your Rake and Rip can now be critical strikes."
+    },
+    {
+     "kind": "Set",
+     "text": "(6) Your Rip and Ferocious Bite have a 20% chance per combo point spent to refresh the duration of Savage Roar back to its initial value."
+    }
+   ],
+   "tooltip": "Cenarion Girdle SoD Phase 4\nItem Level 66\nBinds when picked up\nWaist Leather\n113 Armor\n+19 Strength\n+17 Agility\n+11 Stamina\n+9 Intellect\n+7 Fire Resistance\nDurability 40 / 40Classes: Druid\nRequires Level 60\nCenarion Cunning (0/8)Cenarion Bands\nCenarion Fists\nCenarion Girdle\nCenarion Horns\nCenarion Shoulders\nCenarion Treads\nCenarion Trousers\nCenarion Tunic\n(2) Set : Your Faerie Fire (Feral) also increases the chance for all attacks to hit that target by 1% for 40 sec.\n(4) Set : Periodic damage from your Rake and Rip can now be critical strikes.\n(6) Set : Your Rip and Ferocious Bite have a 20% chance per combo point spent to refresh the duration of Savage Roar back to its initial value.\nSell Price: 2 22 21"
+  },
+  {
+   "id": 226666,
+   "name": "Cenarion Trousers",
+   "quality": 4,
+   "icon": "inv_pants_06",
+   "source": "https://www.wowhead.com/classic/item=226666",
+   "itemLevel": 66,
+   "inventoryType": "Legs",
+   "subclass": "Leather",
+   "armor": 175,
+   "weapon": null,
+   "stats": {
+    "strength": 20,
+    "agility": 18,
+    "stamina": 11,
+    "intellect": 10
+   },
+   "resistances": {
+    "fire": 10
+   },
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "Improves your chance to get a critical strike with all spells and attacks by 1%."
+    },
+    {
+     "kind": "Equip",
+     "text": "Improves your chance to hit with all spells and attacks by 1%."
+    },
+    {
+     "kind": "Set",
+     "text": "(2) Your Faerie Fire (Feral) also increases the chance for all attacks to hit that target by 1% for 40 sec."
+    },
+    {
+     "kind": "Set",
+     "text": "(4) Periodic damage from your Rake and Rip can now be critical strikes."
+    },
+    {
+     "kind": "Set",
+     "text": "(6) Your Rip and Ferocious Bite have a 20% chance per combo point spent to refresh the duration of Savage Roar back to its initial value."
+    }
+   ],
+   "tooltip": "Cenarion Trousers SoD Phase 4\nItem Level 66\nBinds when picked up\nLegs Leather\n175 Armor\n+20 Strength\n+18 Agility\n+11 Stamina\n+10 Intellect\n+10 Fire Resistance\nDurability 90 / 90Classes: Druid\nRequires Level 60\nEquip: Improves your chance to get a critical strike with all spells and attacks by 1%.\nEquip: Improves your chance to hit with all spells and attacks by 1%.\nCenarion Cunning (0/8)Cenarion Bands\nCenarion Fists\nCenarion Girdle\nCenarion Horns\nCenarion Shoulders\nCenarion Treads\nCenarion Trousers\nCenarion Tunic\n(2) Set : Your Faerie Fire (Feral) also increases the chance for all attacks to hit that target by 1% for 40 sec.\n(4) Set : Periodic damage from your Rake and Rip can now be critical strikes.\n(6) Set : Your Rip and Ferocious Bite have a 20% chance per combo point spent to refresh the duration of Savage Roar back to its initial value.\nSell Price: 4 23 15"
+  },
+  {
+   "id": 226663,
+   "name": "Cenarion Treads",
+   "quality": 4,
+   "icon": "inv_boots_08",
+   "source": "https://www.wowhead.com/classic/item=226663",
+   "itemLevel": 66,
+   "inventoryType": "Feet",
+   "subclass": "Leather",
+   "armor": 138,
+   "weapon": null,
+   "stats": {
+    "strength": 18,
+    "agility": 18,
+    "stamina": 13,
+    "intellect": 10
+   },
+   "resistances": {
+    "fire": 5
+   },
+   "effects": [
+    {
+     "kind": "Set",
+     "text": "(2) Your Faerie Fire (Feral) also increases the chance for all attacks to hit that target by 1% for 40 sec."
+    },
+    {
+     "kind": "Set",
+     "text": "(4) Periodic damage from your Rake and Rip can now be critical strikes."
+    },
+    {
+     "kind": "Set",
+     "text": "(6) Your Rip and Ferocious Bite have a 20% chance per combo point spent to refresh the duration of Savage Roar back to its initial value."
+    }
+   ],
+   "tooltip": "Cenarion Treads SoD Phase 4\nItem Level 66\nBinds when picked up\nFeet Leather\n138 Armor\n+18 Strength\n+18 Agility\n+13 Stamina\n+10 Intellect\n+5 Fire Resistance\nDurability 60 / 60Classes: Druid\nRequires Level 60\nCenarion Cunning (0/8)Cenarion Bands\nCenarion Fists\nCenarion Girdle\nCenarion Horns\nCenarion Shoulders\nCenarion Treads\nCenarion Trousers\nCenarion Tunic\n(2) Set : Your Faerie Fire (Feral) also increases the chance for all attacks to hit that target by 1% for 40 sec.\n(4) Set : Periodic damage from your Rake and Rip can now be critical strikes.\n(6) Set : Your Rip and Ferocious Bite have a 20% chance per combo point spent to refresh the duration of Savage Roar back to its initial value.\nSell Price: 3 43 39"
+  },
+  {
+   "id": 220606,
+   "name": "Idol of the Dream",
+   "quality": 3,
+   "icon": "inv_relics_idolofferocity",
+   "source": "https://www.wowhead.com/classic/item=220606",
+   "itemLevel": 55,
+   "inventoryType": "Relic",
+   "subclass": "Idol",
+   "armor": null,
+   "weapon": null,
+   "stats": {},
+   "resistances": {},
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "Increases the damage of Swipe and Shred by 2%."
+    }
+   ],
+   "tooltip": "Idol of the Dream SoD Phase 3\nItem Level 55\nBinds when picked up\nUnique\nRelic Idol\nRequires Level 50\nEquip: Increases the damage of Swipe and Shred by 2%.\nSell Price: 1 18 50"
+  },
+  {
+   "id": 226670,
+   "name": "Cenarion Crown",
+   "quality": 4,
+   "icon": "inv_helmet_09",
+   "source": "https://www.wowhead.com/classic/item=226670",
+   "itemLevel": 66,
+   "inventoryType": "Head",
+   "subclass": "Leather",
+   "armor": 313,
+   "weapon": null,
+   "stats": {
+    "strength": 15,
+    "stamina": 30
+   },
+   "resistances": {
+    "fire": 10
+   },
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "Increased Defense +10."
+    },
+    {
+     "kind": "Set",
+     "text": "(2) You may cast Rebirth and Innervate while in Bear Form or Dire Bear Form."
+    },
+    {
+     "kind": "Set",
+     "text": "(4) Reduces the cooldown of Enrage by 30 sec and it no longer reduces your armor."
+    },
+    {
+     "kind": "Set",
+     "text": "(6) Bear Form and Dire Bear Form increase all threat you generate by an additional 20%, and Cower now removes all your threat against the target but has a 20 sec longer cooldown."
+    }
+   ],
+   "tooltip": "Cenarion Crown SoD Phase 4\nItem Level 66\nBinds when picked up\nHead Leather\n313 Armor\n+15 Strength\n+30 Stamina\n+10 Fire Resistance\nDurability 70 / 70Classes: Druid\nRequires Level 60\nEquip: Increased Defense +10.\nCenarion Rage (0/8)Cenarion Armor\nCenarion Crown\nCenarion Grips\nCenarion Legguards\nCenarion Pauldrons\nCenarion Waistguard\nCenarion Walkers\nCenarion Wristguards\n(2) Set : You may cast Rebirth and Innervate while in Bear Form or Dire Bear Form.\n(4) Set : Reduces the cooldown of Enrage by 30 sec and it no longer reduces your armor.\n(6) Set : Bear Form and Dire Bear Form increase all threat you generate by an additional 20%, and Cower now removes all your threat against the target but has a 20 sec longer cooldown.\nSell Price: 3 49 49"
+  },
+  {
+   "id": 226674,
+   "name": "Cenarion Pauldrons",
+   "quality": 4,
+   "icon": "inv_shoulder_07",
+   "source": "https://www.wowhead.com/classic/item=226674",
+   "itemLevel": 66,
+   "inventoryType": "Shoulder",
+   "subclass": "Leather",
+   "armor": 270,
+   "weapon": null,
+   "stats": {
+    "strength": 11,
+    "stamina": 24
+   },
+   "resistances": {
+    "fire": 7
+   },
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "Increased Defense +7."
+    },
+    {
+     "kind": "Set",
+     "text": "(2) You may cast Rebirth and Innervate while in Bear Form or Dire Bear Form."
+    },
+    {
+     "kind": "Set",
+     "text": "(4) Reduces the cooldown of Enrage by 30 sec and it no longer reduces your armor."
+    },
+    {
+     "kind": "Set",
+     "text": "(6) Bear Form and Dire Bear Form increase all threat you generate by an additional 20%, and Cower now removes all your threat against the target but has a 20 sec longer cooldown."
+    }
+   ],
+   "tooltip": "Cenarion Pauldrons SoD Phase 4\nItem Level 66\nBinds when picked up\nShoulder Leather\n270 Armor\n+11 Strength\n+24 Stamina\n+7 Fire Resistance\nDurability 70 / 70Classes: Druid\nRequires Level 60\nEquip: Increased Defense +7.\nCenarion Rage (0/8)Cenarion Armor\nCenarion Crown\nCenarion Grips\nCenarion Legguards\nCenarion Pauldrons\nCenarion Waistguard\nCenarion Walkers\nCenarion Wristguards\n(2) Set : You may cast Rebirth and Innervate while in Bear Form or Dire Bear Form.\n(4) Set : Reduces the cooldown of Enrage by 30 sec and it no longer reduces your armor.\n(6) Set : Bear Form and Dire Bear Form increase all threat you generate by an additional 20%, and Cower now removes all your threat against the target but has a 20 sec longer cooldown.\nSell Price: 3 18 59"
+  },
+  {
+   "id": 228360,
+   "name": "Eskhandar's Pelt",
+   "quality": 4,
+   "icon": "inv_misc_cape_07",
+   "source": "https://www.wowhead.com/classic/item=228360",
+   "itemLevel": 66,
+   "inventoryType": "Back",
+   "subclass": null,
+   "armor": 51,
+   "weapon": null,
+   "stats": {
+    "stamina": 17
+   },
+   "resistances": {},
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "Improves your chance to get a critical strike with all spells and attacks by 1%."
+    },
+    {
+     "kind": "Equip",
+     "text": "+20 Attack Power."
+    },
+    {
+     "kind": "Set",
+     "text": "(2) Improves your chance to hit with all spells and attacks by 1%."
+    },
+    {
+     "kind": "Set",
+     "text": "(3) Improves your chance to get a critical strike with all spells and attacks by 1%."
+    },
+    {
+     "kind": "Set",
+     "text": "(4) 1% chance on a melee hit to call forth the spirit of Eskhandar to protect you in battle for 2 min. (Proc chance: 1%, 1m cooldown)"
+    }
+   ],
+   "tooltip": "Eskhandar's Pelt SoD Phase 4\nItem Level 66\nBinds when picked up\nUnique-Equipped\nBack\n51 Armor\n+17 Stamina\nRequires Level 60\nEquip: Improves your chance to get a critical strike with all spells and attacks by 1%.\nEquip: +20 Attack Power.\nSpirit of Eskhandar (0/4)Eskhandar's Right Claw\nEskhandar's Left Claw\nEskhandar's Pelt\nEskhandar's Collar\n(2) Set : Improves your chance to hit with all spells and attacks by 1%.\n(3) Set : Improves your chance to get a critical strike with all spells and attacks by 1%.\n(4) Set : 1% chance on a melee hit to call forth the spirit of Eskhandar to protect you in battle for 2 min. (Proc chance: 1%, 1m cooldown)\nSell Price: 2 73 70"
+  },
+  {
+   "id": 226668,
+   "name": "Cenarion Wristguards",
+   "quality": 4,
+   "icon": "inv_bracer_03",
+   "source": "https://www.wowhead.com/classic/item=226668",
+   "itemLevel": 66,
+   "inventoryType": "Wrist",
+   "subclass": "Leather",
+   "armor": 168,
+   "weapon": null,
+   "stats": {
+    "strength": 8,
+    "stamina": 18
+   },
+   "resistances": {
+    "fire": 5
+   },
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "Increased Defense +5."
+    },
+    {
+     "kind": "Set",
+     "text": "(2) You may cast Rebirth and Innervate while in Bear Form or Dire Bear Form."
+    },
+    {
+     "kind": "Set",
+     "text": "(4) Reduces the cooldown of Enrage by 30 sec and it no longer reduces your armor."
+    },
+    {
+     "kind": "Set",
+     "text": "(6) Bear Form and Dire Bear Form increase all threat you generate by an additional 20%, and Cower now removes all your threat against the target but has a 20 sec longer cooldown."
+    }
+   ],
+   "tooltip": "Cenarion Wristguards SoD Phase 4\nItem Level 66\nBinds when picked up\nWrist Leather\n168 Armor\n+8 Strength\n+18 Stamina\n+5 Fire Resistance\nDurability 40 / 40Classes: Druid\nRequires Level 60\nEquip: Increased Defense +5.\nCenarion Rage (0/8)Cenarion Armor\nCenarion Crown\nCenarion Grips\nCenarion Legguards\nCenarion Pauldrons\nCenarion Waistguard\nCenarion Walkers\nCenarion Wristguards\n(2) Set : You may cast Rebirth and Innervate while in Bear Form or Dire Bear Form.\n(4) Set : Reduces the cooldown of Enrage by 30 sec and it no longer reduces your armor.\n(6) Set : Bear Form and Dire Bear Form increase all threat you generate by an additional 20%, and Cower now removes all your threat against the target but has a 20 sec longer cooldown.\nSell Price: 2 29 72"
+  },
+  {
+   "id": 226667,
+   "name": "Cenarion Waistguard",
+   "quality": 4,
+   "icon": "inv_belt_06",
+   "source": "https://www.wowhead.com/classic/item=226667",
+   "itemLevel": 66,
+   "inventoryType": "Waist",
+   "subclass": "Leather",
+   "armor": 233,
+   "weapon": null,
+   "stats": {
+    "strength": 11,
+    "stamina": 24
+   },
+   "resistances": {
+    "fire": 7
+   },
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "Increased Defense +7."
+    },
+    {
+     "kind": "Set",
+     "text": "(2) You may cast Rebirth and Innervate while in Bear Form or Dire Bear Form."
+    },
+    {
+     "kind": "Set",
+     "text": "(4) Reduces the cooldown of Enrage by 30 sec and it no longer reduces your armor."
+    },
+    {
+     "kind": "Set",
+     "text": "(6) Bear Form and Dire Bear Form increase all threat you generate by an additional 20%, and Cower now removes all your threat against the target but has a 20 sec longer cooldown."
+    }
+   ],
+   "tooltip": "Cenarion Waistguard SoD Phase 4\nItem Level 66\nBinds when picked up\nWaist Leather\n233 Armor\n+11 Strength\n+24 Stamina\n+7 Fire Resistance\nDurability 40 / 40Classes: Druid\nRequires Level 60\nEquip: Increased Defense +7.\nCenarion Rage (0/8)Cenarion Armor\nCenarion Crown\nCenarion Grips\nCenarion Legguards\nCenarion Pauldrons\nCenarion Waistguard\nCenarion Walkers\nCenarion Wristguards\n(2) Set : You may cast Rebirth and Innervate while in Bear Form or Dire Bear Form.\n(4) Set : Reduces the cooldown of Enrage by 30 sec and it no longer reduces your armor.\n(6) Set : Bear Form and Dire Bear Form increase all threat you generate by an additional 20%, and Cower now removes all your threat against the target but has a 20 sec longer cooldown.\nSell Price: 2 22 21"
+  },
+  {
+   "id": 226673,
+   "name": "Cenarion Walkers",
+   "quality": 4,
+   "icon": "inv_boots_08",
+   "source": "https://www.wowhead.com/classic/item=226673",
+   "itemLevel": 66,
+   "inventoryType": "Feet",
+   "subclass": "Leather",
+   "armor": 258,
+   "weapon": null,
+   "stats": {
+    "strength": 12,
+    "stamina": 24
+   },
+   "resistances": {
+    "fire": 5
+   },
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "Increased Defense +7."
+    },
+    {
+     "kind": "Set",
+     "text": "(2) You may cast Rebirth and Innervate while in Bear Form or Dire Bear Form."
+    },
+    {
+     "kind": "Set",
+     "text": "(4) Reduces the cooldown of Enrage by 30 sec and it no longer reduces your armor."
+    },
+    {
+     "kind": "Set",
+     "text": "(6) Bear Form and Dire Bear Form increase all threat you generate by an additional 20%, and Cower now removes all your threat against the target but has a 20 sec longer cooldown."
+    }
+   ],
+   "tooltip": "Cenarion Walkers SoD Phase 4\nItem Level 66\nBinds when picked up\nFeet Leather\n258 Armor\n+12 Strength\n+24 Stamina\n+5 Fire Resistance\nDurability 60 / 60Classes: Druid\nRequires Level 60\nEquip: Increased Defense +7.\nCenarion Rage (0/8)Cenarion Armor\nCenarion Crown\nCenarion Grips\nCenarion Legguards\nCenarion Pauldrons\nCenarion Waistguard\nCenarion Walkers\nCenarion Wristguards\n(2) Set : You may cast Rebirth and Innervate while in Bear Form or Dire Bear Form.\n(4) Set : Reduces the cooldown of Enrage by 30 sec and it no longer reduces your armor.\n(6) Set : Bear Form and Dire Bear Form increase all threat you generate by an additional 20%, and Cower now removes all your threat against the target but has a 20 sec longer cooldown.\nSell Price: 3 43 39"
+  },
+  {
+   "id": 228686,
+   "name": "Onyxia Blood Talisman",
+   "quality": 4,
+   "icon": "spell_shadow_lifedrain",
+   "source": "https://www.wowhead.com/classic/item=228686",
+   "itemLevel": 74,
+   "inventoryType": "Trinket",
+   "subclass": null,
+   "armor": null,
+   "weapon": null,
+   "stats": {
+    "stamina": 18
+   },
+   "resistances": {
+    "fire": 20
+   },
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "Improves your chance to hit with all spells and attacks by 1%."
+    },
+    {
+     "kind": "Equip",
+     "text": "Increased Defense +11."
+    }
+   ],
+   "tooltip": "Onyxia Blood Talisman\nItem Level 74\nBinds when picked up\nTrinket\n+18 Stamina\n+20 Fire Resistance\nEquip: Improves your chance to hit with all spells and attacks by 1%.\nEquip: Increased Defense +11.\nSell Price: 4 60 30"
+  },
+  {
+   "id": 23198,
+   "name": "Idol of Brutality",
+   "quality": 3,
+   "icon": "inv_relics_idolofferocity",
+   "source": "https://www.wowhead.com/classic/item=23198",
+   "itemLevel": 65,
+   "inventoryType": "Relic",
+   "subclass": "Idol",
+   "armor": null,
+   "weapon": null,
+   "stats": {},
+   "resistances": {},
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "Reduces the rage cost of Maul and Swipe by 3."
+    }
+   ],
+   "tooltip": "Idol of Brutality\nItem Level 65\nBinds when picked up\nUnique\nRelic Idol\nRequires Level 60\nEquip: Reduces the rage cost of Maul and Swipe by 3.\nSell Price: 1 81 65"
+  }
+ ]
+}

@@ -12,8 +12,13 @@ status, that one is how.
 ## Where the project is
 
 **All nine classes and all 21 profiles are implemented**, every number traced
-to a source rather than invented. **1,566 tests**, CI green on Node 20 and 22.
+to a source rather than invented. **1,569 tests**, CI green on Node 20 and 22.
 Profile format **v9**.
+
+**EVERY PROFILE IS IN ITS OWN CLASS'S GEAR.** Twenty of them wore
+`SHARED_ARMOUR`, which is the Warrior set, and seventeen of those were not
+Warriors. Twelve sixtyupgrades sets the owner supplied replaced it -- 151 items
+on file now, in nine files, one per set. See "What the gear import moved".
 
 The twenty profiles were specified by the ruleset owner as
 `talentsforever.com` build URLs; the Shadow Priest was added afterwards as the
@@ -27,33 +32,37 @@ The app is live at <https://donz-dev.github.io/SimForever/>, republished by
 These are comparable to **each other** and to nothing else. Turning the raid
 off moves all of them; see [docs/raid-buffs.md](docs/raid-buffs.md).
 
-| Profile | Class | Talents | DPS |
-| --- | --- | --- | --- |
-| DW Fury | Warrior | 18/33/0 | 643.2 |
-| 2H Arms | Warrior | 38/13/0 | 585.5 |
-| LW Melee | Hunter | 7/13/31 | 567.3 |
-| BM Hunter | Hunter | 31/20/0 | **416.1** |
-| Enh Shaman | Shaman | 19/32/0 | 408.3 |
-| Seal Twist Ret | Paladin | 13/0/38 | 403.1 |
-| Shockadin | Paladin | 23/0/28 | 380.6 |
-| Prot Warr | Warrior | 17/0/34 | 357.5 |
-| LW Ranged | Hunter | 7/39/5 | **349.9** |
-| Combat Rogue | Rogue | 18/33/0 | 347.6 |
-| Venom Rogue | Rogue | 37/12/2 | 308.5 |
-| Rupture Rogue | Rogue | 12/8/31 | 290.3 |
-| Cat Druid | Druid | 9/35/7 | 282.7 |
-| Shadow Priest | Priest | 16/3/32 | 266.1 |
-| Bear Druid | Druid | 9/42/0 | 263.1 |
-| Firelock | Warlock | 5/11/35 | 225.6 |
-| Arcane Mage | Mage | 47/4/0 | 210.2 |
-| Prot Pally | Paladin | 8/36/7 | 191.9 |
-| Fire Mage | Mage | 10/39/2 | 133.5 |
-| SM/DS | Warlock | 40/11/0 | 129.3 |
-| Frostfire Mage | Mage | 0/29/22 | 95.5 |
-| Moonkin | Druid | 38/0/13 | 94.2 |
-| Ele Shaman | Shaman | 38/13/0 | 70.3 |
+| Profile | Class | Talents | DPS | was |
+| --- | --- | --- | --- | --- |
+| DW Fury | Warrior | 18/33/0 | 643.2 | — |
+| 2H Arms | Warrior | 38/13/0 | 585.5 | — |
+| LW Melee | Hunter | 7/13/31 | 567.3 | — |
+| BM Hunter | Hunter | 31/20/0 | 416.1 | — |
+| Enh Shaman | Shaman | 19/32/0 | **404.5** | 408.3 |
+| Seal Twist Ret | Paladin | 13/0/38 | **380.2** | 403.1 |
+| Combat Rogue | Rogue | 18/33/0 | **376.9** | 347.6 |
+| Prot Warr | Warrior | 17/0/34 | 357.5 | — |
+| LW Ranged | Hunter | 7/39/5 | 349.9 | — |
+| Rupture Rogue | Rogue | 12/8/31 | **315.2** | 290.3 |
+| Venom Rogue | Rogue | 37/12/2 | **314.4** | 308.5 |
+| Shadow Priest | Priest | 16/3/32 | **285.0** | 266.1 |
+| Cat Druid | Druid | 9/35/7 | **272.0** | 282.7 |
+| Shockadin | Paladin | 23/0/28 | **252.7** | 380.6 |
+| Firelock | Warlock | 5/11/35 | **247.5** | 225.6 |
+| Arcane Mage | Mage | 47/4/0 | **242.6** | 210.2 |
+| Fire Mage | Mage | 10/39/2 | **223.3** | 133.5 |
+| Bear Druid | Druid | 9/42/0 | **208.4** | 263.1 |
+| Frostfire Mage | Mage | 0/29/22 | **184.4** | 95.5 |
+| Moonkin | Druid | 38/0/13 | **166.2** | 94.2 |
+| SM/DS | Warlock | 40/11/0 | **135.3** | 129.3 |
+| Prot Pally | Paladin | 8/36/7 | **135.2** | 191.9 |
+| Ele Shaman | Shaman | 38/13/0 | **119.3** | 70.3 |
 
-**Bold is what the pet work moved.** BM Hunter is the only profile with a pet, so it is the only one that could move. Everything else in this table is as the gear and talent work left it; see the sections below for those.
+**Bold is what the gear import moved, and it moved seventeen of the
+twenty-three in both directions.** The six unmoved are the three Warriors and
+the three Hunters, whose gear this did not touch -- and they are unmoved to the
+DECIMAL, which is the check that nothing leaked out of the sets into shared
+code. See "What the gear import moved".
 
 | | was | statFromStat | + gear | + ranged AP | + tables | + APL | total |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -70,16 +79,78 @@ purpose. **The two Druids moved without touching a Druid**: they carry a
 two-hander that a stat-stick style was deleting, so its 42 strength had never
 counted. LW Melee is unmoved by the ranged fix because it swings, not shoots.
 
-**THE THREE HUNTERS WERE WEARING THE WARRIOR SET** until now -- 370 strength
-and 245 agility, on a class that gets NO ranged attack power from strength at
-all. Their own set is 58 and 334. Every Hunter figure before this was built on
-a stat the class cannot use for the thing it mostly does, which is a warning
-about the other eighteen profiles rather than a closed issue: `SHARED_ARMOUR`
-is still the Warrior set and TWENTY profiles still wear it -- every one
-but the three Hunters, and seventeen of those twenty are not Warriors.
+**THE WARRIOR SET IS NOW WORN ONLY BY WARRIORS.** It used to be worn by twenty
+profiles, seventeen of them not Warriors -- 370 strength and 245 agility on
+Rogues, Druids, Mages and Priests alike. Every figure any of them ever produced
+was built on somebody else's gear, and no test could have caught it: a profile
+in the wrong gear runs perfectly and produces a plausible number.
 
 **The bottom of this table is not a balance finding.** See "What a caster
 figure means" below before quoting any of it.
+
+### What the gear import moved
+
+Twelve sets, 120 new items, seventeen profiles. Grouped by WHY, because the
+reason matters more than the number:
+
+| Profile | Was | Now | | Why |
+| --- | --- | --- | --- | --- |
+| Frostfire Mage | 95.5 | 184.4 | +93.1% | cloth: intellect and spell crit where plate gave neither |
+| Moonkin | 94.2 | 166.2 | +76.4% | as above |
+| Ele Shaman | 70.3 | 119.3 | +69.7% | as above, plus a caster shield that used to be deleted |
+| Fire Mage | 133.5 | 223.3 | +67.3% | as above |
+| Arcane Mage | 210.2 | 242.6 | +15.4% | as above; least mana-bound of the three |
+| Firelock | 225.6 | 247.5 | +9.7% | as above |
+| Rupture Rogue | 290.3 | 315.2 | +8.6% | real Rogue weapons and leather |
+| Combat Rogue | 347.6 | 376.9 | +8.4% | as above |
+| Shadow Priest | 266.1 | 285.0 | +7.1% | cloth, but most of its spell power is Shadow-only and inert |
+| SM/DS | 129.3 | 135.3 | +4.6% | cloth; Shadow Bolt is flat-damage either way |
+| Venom Rogue | 308.5 | 314.4 | +1.9% | **it can finally cast Backstab and Mutilate** |
+| Enh Shaman | 408.3 | 404.5 | −0.9% | a 3.8s mace for a 3.6s sword, and less strength |
+| Cat Druid | 282.7 | 272.0 | −3.8% | leather has less strength than plate, and +172 AP is inert |
+| Seal Twist Ret | 403.1 | 380.2 | −5.7% | its own plate carries less strength than the Warrior's |
+| Bear Druid | 263.1 | 208.4 | −20.8% | as Cat, and the tank cut trades strength for stamina |
+| Prot Pally | 191.9 | 135.2 | −29.5% | a weaker one-hander and less block value than the Forever shield |
+| Shockadin | 380.6 | 252.7 | −33.6% | **a 2.4s one-hander for a 3.6s two-hander** |
+
+**THE WARRIOR SET WAS NOT A NEUTRAL STAND-IN.** It is a very strength-heavy
+plate set, so every melee hybrid that moved to its own class's gear LOST attack
+power. That is the honest figure and the old one was flattering.
+
+**SHOCKADIN ALSO CHANGED COMBAT STYLE, and the gear is what changed it.** Its
+set is Azuresong Mageblade and Earth and Fire -- a one-hander and a caster
+shield -- where the preset said `two_hander`, under which `liveEquipment`
+deletes the main hand and both off-hand slots and the build holds nothing at
+all. It is `one_hand_shield` now. Seal of Righteousness scales with weapon
+speed, so trading a 3.6-second two-hander for a 2.4-second one-hander is most
+of the −33.6%. **This is the one decision in the import that is a build change
+rather than a gear change, and it is the one to revisit if the owner meant
+something else.**
+
+**TWO FIGURES ARE UNDERSTATED BY A KNOWN AMOUNT.** Cat and Bear hold the Glaive
+of Obsidian Fury, whose "+172 Attack Power in Cat, Bear, and Dire Bear forms
+only" cannot be expressed -- an item stat is not conditional on the combat
+style -- and the Shadow Priest is missing ~293 Shadow-only spell power for want
+of a school-scoped spell power stat. Both are listed in the Gear panel and in
+[src/data/items/README.md](src/data/items/README.md).
+
+**FOUR BUGS SURFACED, all of which needed caster or tank gear to be visible:**
+
+- a stat-stick OFF HAND had its stats deleted, so a caster shield contributed
+  nothing. The main-hand half of this was fixed for the Hunter; the mirror
+  survived.
+- `Improves your chance to get a critical strike with all spells and attacks`
+  granted only the MELEE half. `critChance` and `spellCritChance` are separate
+  stats read by separate tables; sixty-two item lines say both.
+- `Increased Defense +N` was being swallowed by the weapon-skill pattern and
+  DROPPED, because only a weapon carries bonus skill. Seventeen lines.
+- SET BONUSES were dropped entirely -- not unmodelled, dropped. They are text
+  in `unmodelled` now, and the Priest's four-piece +2% spell crit is one.
+
+And one that would have been silent: five sets name the **Season of Discovery**
+Hand of Justice, id 228722, while the proc was keyed to the Classic 11815. Its
+tooltip matches `MODELLED_AS_PROCS`, so the trinket would have read as fully
+simulated while never firing once.
 
 **The bow reads ranged attack power now**, and the prediction that said those
 two figures were OVERSTATED was wrong: they went UP. At the pull a geared
@@ -270,17 +341,27 @@ written down beside it.
 
 ## What a caster figure means
 
-**Four of the five lowest numbers in the table are casters, and that is a data
+**The casters are still at the bottom of the table, and that is a data
 limitation rather than a finding.**
 
-Two causes, neither inventable:
+**ONE OF THE TWO CAUSES HAS EXPIRED.** Caster gear exists now -- every caster
+reads 200 to 453 spell power where it used to read zero -- and the four cloth
+profiles gained 4.6% to 93.1% for it. None of that gain is spell power
+multiplying damage. It is INTELLECT buying casts before the mana runs out, and
+SPELL CRIT, which caster gear grants and plate does not.
 
-1. **No caster gear exists.** The item data is nineteen Classic stand-ins
-   curated for a Warrior — no cloth, no staff, no caster weapon — so every
-   caster's `spellPower` reads **zero**.
+1. ~~No caster gear exists.~~ Twelve sets, imported from the owner's own
+   sixtyupgrades links. See "What the gear import moved".
 2. **Forever's spell data states flat damage and no coefficient.** Druid,
    Shaman, Mage, Warlock and Priest all read the same way, so this is how the
-   source is written rather than a quirk of one class.
+   source is written rather than a quirk of one class. **All 453 points of an
+   Elemental shaman's spell power multiply nothing**, and every nuke says so on
+   the results page.
+
+**AND A THIRD, WHICH BELONGS TO THE PRIEST ALONE.** Most of the spell power in
+Vestments of Prophecy is SHADOW-ONLY -- six of eight tier pieces and 75 on
+Anathema -- and `spellPower` here is one school-blind number, so ~293 of it is
+listed and not applied. Eight Paladin lines say the same about Holy.
 
 **The Paladin's seals are the single exception**, because the ruleset owner
 supplied the formula directly:
@@ -292,9 +373,11 @@ damage = base + baseWeaponSpeed × (0.022 × attackPower + 0.044 × spellPower)
 The Hunter has two ability coefficients from the wiki — Arcane Shot's 10% of
 ranged attack power and Serpent Sting's 15% over its duration.
 
-So a caster figure is a **floor, not an estimate**. Tests pin both causes, so
-the day a coefficient or a caster item arrives they fail and the figures get
-re-read.
+So a caster figure is still a **floor, not an estimate** -- for one reason
+where it used to be two, and two for the Priest. Tests pin each cause, so the
+day a coefficient arrives they fail and the figures get re-read. That is how the
+gear half of this caveat was caught expiring: five tests asserting
+`spellPower === 0` failed the moment the sets landed.
 
 ---
 
@@ -559,18 +642,22 @@ node tools/import_forever_spells.mjs <class> --write
 
 In the order I would do them:
 
-1. **Gear for everyone else.** `SHARED_ARMOUR` is the Warrior set and
-   **twenty profiles still wear it** -- all but the three Hunters, and
-   seventeen of them are not Warriors -- so what was found for the Hunter is
-   almost certainly true elsewhere: a Rogue on plate stats, a caster whose
-   `spellPower` reads zero. Four of the five lowest numbers in the table are
-   casters and every one of those figures is a floor.
+1. **A SCHOOL-SCOPED SPELL POWER STAT**, which is now the largest known
+   shortfall in the item data. `spellPower` is one school-blind number, and
+   nineteen item lines across the Priest and Paladin sets name a school --
+   "Increases damage done by Shadow spells and effects by up to 39". The Shadow
+   Priest is missing ~293 of it, which the planner counts and this does not.
 
-   **The Hunter import is the worked example.** A sixtyupgrades.com set,
-   `tools/import_item.mjs classic <id>` per piece, one file per set under
-   `src/data/items/`, and the result checked against the planner's own stat
-   panel — every primary matched exactly, which is what makes it a validated
-   import rather than a hopeful one. It is a DATA task, not a code one.
+   `SchoolModifiers` is the shape to follow: it already carries crit chance,
+   crit damage and a damage multiplier per `DamageSchool`, and this is one more
+   term. `STAT_NAMES` is a deliberately closed flat set, so a keyed stat does
+   not fit there -- the modifier belongs beside the other school-scoped ones,
+   read by `dealDamage` where it already reads `spellPower`.
+
+   **A STYLE-SCOPED ITEM STAT is the same shape of gap**, worth 172 attack
+   power to both feral Druids: "+172 Attack Power in Cat, Bear, and Dire Bear
+   forms only" on the Glaive of Obsidian Fury. `statsForStyle` already knows the
+   style; the item rule does not.
 
 2. **Spell hit per school** — five talents, and a genuine rule change: the hit
    roll happens before any per-school modifier is consulted.

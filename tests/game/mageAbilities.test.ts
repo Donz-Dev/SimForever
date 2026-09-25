@@ -165,7 +165,20 @@ describe('the talents that needed a school', () => {
      * actually look at.
      * ------------------------------------------------------------------------
      */
-    const plain = createPlayer({ race: 'gnome', characterClass: 'mage', combatStyle: 'caster' });
+    /*
+     * THE COMPARISON HAS TO WEAR THE SAME GEAR. It used to be a naked
+     * character, which worked only because the Warrior plate the Mage borrowed
+     * had no intellect on it at all -- 175 points of Arcanist intellect later,
+     * `base * 1.1` was comparing two different characters. Same items, no
+     * talents, so the only difference left is the talent under test.
+     */
+    const built = PRESETS_BY_ID.get('mage_arcane')!.build();
+    const plain = createPlayer({
+      race: 'gnome',
+      characterClass: 'mage',
+      combatStyle: 'caster',
+      equipment: built.equipment,
+    });
     const arcane = presetPlayer('mage_arcane');
 
     const base = plain.stats.get('intellect');
@@ -289,14 +302,16 @@ describe('the three fights', () => {
     expect(ARCANE_MISSILES_PER_TICK).toBe(209);
   });
 
-  it('gives all three a FLOOR, for the third class running', () => {
+  it('gives all three a FLOOR, for the one reason that is left', () => {
     /*
-     * No caster item in the data and no spell power coefficient in Forever's
-     * spell text. Druid, Shaman and now Mage: this is how the source is
-     * written rather than a quirk of any one class.
+     * THE GEAR HALF OF THIS EXPIRED. All three wear Arcanist now and read 452
+     * spell power -- 422 off the items and 30 off the staff enchant -- where
+     * the Warrior shell gave none. What remains is that Forever's Mage spells
+     * state FLAT damage with no spell power coefficient, so the 452 multiplies
+     * nothing and Fireball still says so on the results page.
      */
     for (const preset of ['mage_fire', 'mage_frostfire', 'mage_arcane']) {
-      expect(presetPlayer(preset).stats.get('spellPower'), preset).toBe(0);
+      expect(presetPlayer(preset).stats.get('spellPower'), preset).toBe(452);
     }
     const named = batchOf('mage_fire', 20, 5).castButNotSimulated.map((e) => e.abilityName);
     expect(named).toContain('Fireball');

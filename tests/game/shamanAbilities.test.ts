@@ -234,19 +234,19 @@ describe('the fights', () => {
   it('gives the Elemental shaman a FLOOR, for the same two reasons the Moonkin has one', () => {
     /*
      * --------------------------------------------------------------------------
-     * THE SECOND CASTER, AND THE LIMITATION IS NOT A DRUID QUIRK.
+     * THE CASTER ITEM ARRIVED; THE COEFFICIENT DID NOT.
      *
-     *   - every Shaman spell states FLAT damage and no spell power
-     *     coefficient, so gear cannot scale it
-     *   - the item data is nineteen Classic stand-ins curated for a Warrior,
-     *     so a Shaman's spellPower reads zero
+     * Earthfury plus a Sorcerous Dagger and Earth and Fire reads 453 spell
+     * power where the Warrior shell gave none, so the gear half of this caveat
+     * has expired. Every Shaman spell still states FLAT damage with no spell
+     * power coefficient, so the 453 multiplies nothing and Lightning Bolt and
+     * Lava Burst both still say so on the results page.
      *
-     * Two classes, same two causes. Asserted rather than described, so the day
-     * a coefficient or a caster item arrives, this fails and the figure is
-     * re-read.
+     * 26 of the 453 is the SHIELD, which is the part worth pinning: a caster
+     * shield in a stat-stick off hand used to be deleted outright.
      * --------------------------------------------------------------------------
      */
-    expect(presetPlayer('shaman_elemental').stats.get('spellPower')).toBe(0);
+    expect(presetPlayer('shaman_elemental').stats.get('spellPower')).toBe(453);
 
     const batch = batchOf('shaman_elemental', 40, 5);
     const named = batch.castButNotSimulated.map((entry) => entry.abilityName);

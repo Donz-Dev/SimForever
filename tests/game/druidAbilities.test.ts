@@ -141,20 +141,21 @@ describe('the three builds run', () => {
     expect(batch.abilities.find((a) => a.abilityName === 'Mangle')?.uses ?? 0).toBeGreaterThan(3);
   });
 
-  it('Moonkin casts, and its damage does not scale with gear at all', () => {
+  it('Moonkin casts, and its damage STILL does not scale with gear', () => {
     /*
      * --------------------------------------------------------------------------
-     * THE FIRST CASTER, AND ITS NUMBER IS A FLOOR RATHER THAN AN ESTIMATE.
+     * ONE OF THE TWO REASONS FOR THE FLOOR IS GONE, AND THE OTHER IS NOT.
      *
-     * Two things make it so, and neither is inventable:
+     * This used to assert `spellPower === 0` and say so for two reasons: no
+     * caster item in the data, and no spell power coefficient in Forever's
+     * spell text. The first expired -- the Moonkin wears Cenarion Raiment now
+     * and reads 439 spell power. The second has not: every Druid nuke states
+     * FLAT damage, so all 439 of it multiplies nothing, and each spell says so
+     * on the results page.
      *
-     *   - every Druid spell states FLAT damage and no spell power coefficient,
-     *     so gear cannot scale it
-     *   - the item data is nineteen Classic stand-ins curated for a Warrior,
-     *     so a Moonkin's spellPower reads zero
-     *
-     * Asserted rather than described, so that the day a coefficient or a
-     * caster item arrives, this fails and the figure is re-read.
+     * So the number is still a floor, for half as many reasons. Asserted this
+     * way round so that the day a coefficient arrives, the caveat list empties
+     * and this fails.
      *
      * RESISTANCE IS NOT ONE OF THEM. The ruleset owner ruled that resistances
      * on enemy targets have no impact on damage for now, so a spell landing
@@ -169,7 +170,8 @@ describe('the three builds run', () => {
       talents: built.talents,
       equipment: built.equipment,
     });
-    expect(player.stats.get('spellPower')).toBe(0);
+    // 409 off the items plus 30 from Enchant Weapon - Spell Power on the staff.
+    expect(player.stats.get('spellPower')).toBe(439);
 
     const batch = batchOf('druid_moonkin', 40, 5);
     expect(batch.abilities.find((a) => a.abilityName === 'Starfire')?.uses ?? 0).toBeGreaterThan(1);

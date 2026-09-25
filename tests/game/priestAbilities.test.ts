@@ -213,12 +213,23 @@ describe('the fight', () => {
     );
   });
 
-  it('gives it a FLOOR, for the fifth caster running', () => {
+  it('gives it a FLOOR, and this set is the worst case of it', () => {
     /*
-     * No caster item in the nineteen Classic stand-ins, and no spell power
-     * coefficient in Forever's Priest spell text. Druid, Shaman, Mage, Warlock
-     * and now Priest all read the same way -- the Paladin's seals remain the
-     * only thing in the project that scales with spell power.
+     * ------------------------------------------------------------------------
+     * TWO SHORTFALLS AT ONCE, WHICH NO OTHER PROFILE HAS.
+     *
+     * The first is the usual one: Forever's Priest spells state FLAT damage
+     * with no spell power coefficient, so spell power multiplies nothing.
+     *
+     * The second belongs to this set alone. Almost every spell power line in
+     * Vestments of Prophecy names a SCHOOL -- "Increases damage done by Shadow
+     * spells and effects by up to 39" -- and `spellPower` here is school-blind.
+     * Applying a Shadow-only bonus to it would make the Priest's Holy and
+     * Arcane spells hit harder, so those lines stay unmodelled and the Gear
+     * panel prints all eleven of them.
+     *
+     * The planner reads 204 generic and 497 Shadow. This is the 204.
+     * ------------------------------------------------------------------------
      */
     const actor = createPlayer({
       race: 'troll',
@@ -227,6 +238,6 @@ describe('the fight', () => {
       talents: shadowBuild().talents,
       equipment: shadowBuild().equipment,
     });
-    expect(actor.stats.get('spellPower')).toBe(0);
+    expect(actor.stats.get('spellPower')).toBe(204);
   });
 });

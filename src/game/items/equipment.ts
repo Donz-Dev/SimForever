@@ -146,10 +146,25 @@ export function liveEquipment(equipment: Equipment, style: CombatStyleId): Equip
   if (usesTwoHand) delete next.mainHand;
   else if (definition?.mainHand === 'one-hand' || next.mainHand) delete next.twoHand;
 
-  // The off hand holds a weapon or a shield, never both and never either
-  // unless the style says so.
-  if (!usesOffHandWeapon) delete next.offHand;
-  if (!usesShield) delete next.shield;
+  /*
+   * AND THE SAME THING IN THE OFF HAND, which is where it was still wrong.
+   *
+   * `offHand: 'stat-stick'` says exactly what the main hand's version says:
+   * held, contributing stats, never swinging. Five styles use it -- ranged,
+   * caster, moonkin, bear and cat -- and this deleted both off-hand slots for
+   * every one of them, so an Elemental shaman holding Earth and Fire, a CASTER
+   * shield with 26 spell power and 9 stamina, got nothing at all from it. The
+   * swing side is already right: `weaponsForEquipment` refuses to build a
+   * weapon for a stat-stick hand, so keeping the slot here cannot make one
+   * swing.
+   *
+   * A SHIELD IS AN OFF-HAND ITEM, so the stat-stick rule reaches both slots. It
+   * is also the one that yields if somehow both are filled, since nothing can
+   * hold a shield and a weapon in the same hand and no preset tries.
+   */
+  const offHandIsStatStick = definition?.offHand === 'stat-stick';
+  if (!usesOffHandWeapon && !offHandIsStatStick) delete next.offHand;
+  if (!usesShield && !(offHandIsStatStick && next.offHand === undefined)) delete next.shield;
 
   return next as Equipment;
 }

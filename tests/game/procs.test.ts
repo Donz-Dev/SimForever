@@ -6,6 +6,7 @@ import {
   CRUSADER_STRENGTH,
   HAND_OF_JUSTICE_CHANCE,
   HAND_OF_JUSTICE_ICD_MS,
+  HAND_OF_JUSTICE_IDS,
   HOLY_STRENGTH_MAIN_HAND,
   HOLY_STRENGTH_OFF_HAND,
   VISKAG_DAMAGE,
@@ -104,10 +105,28 @@ describe('Hand of Justice', () => {
     expect(HAND_OF_JUSTICE_ICD_MS).toBe(1500);
   });
 
-  it('is built once per Hand of Justice equipped', () => {
+  it('is built once per Hand of Justice equipped, from EITHER of its two ids', () => {
     expect(reactionsForEquipment({ trinket1: { itemId: 11815 } })).toHaveLength(1);
     expect(reactionsForEquipment({ trinket2: { itemId: 11815 } })).toHaveLength(1);
     expect(reactionsForEquipment({ trinket1: { itemId: 13965 } })).toHaveLength(0);
+
+    /*
+     * 228722 IS THE SEASON OF DISCOVERY HAND OF JUSTICE, and five of the
+     * owner's sets name that one rather than the Classic 11815.
+     *
+     * This mattered more than a second id usually would. Its "2% chance on
+     * melee hit to gain 1 extra attack" matches `MODELLED_AS_PROCS`, so the
+     * line is not even reported as missing -- the trinket would have read as
+     * fully simulated while firing never, and a proc that never fires leaves
+     * nothing behind to notice.
+     */
+    expect(reactionsForEquipment({ trinket1: { itemId: 228722 } })).toHaveLength(1);
+    expect(reactionsForEquipment({ trinket2: { itemId: 228722 } })).toHaveLength(1);
+    for (const id of HAND_OF_JUSTICE_IDS) {
+      expect(reactionsForEquipment({ trinket1: { itemId: id } })[0].id, String(id)).toBe(
+        'hand_of_justice',
+      );
+    }
   });
 
   it('gives each character its own cooldown', () => {

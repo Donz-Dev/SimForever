@@ -302,11 +302,25 @@ describe('the three builds', () => {
     const built = PRESETS_BY_ID.get('prot_pally')!.build();
     expect(built.equipment.shield).toBeDefined();
     expect(built.encounter.targetAttacks).toBe(true);
+    expect(built.character.combatStyle).toBe('one_hand_shield');
 
-    const others = ['pally_ret', 'pally_shockadin'];
-    for (const preset of others) {
-      expect(PRESETS_BY_ID.get(preset)!.build().equipment.shield, preset).toBeUndefined();
-    }
+    /*
+     * SHOCKADIN HOLDS ONE TOO, and it is not a tank. Its own set is a
+     * one-hander and Earth and Fire, a CASTER shield carrying 26 spell power --
+     * which is what moved the build off `two_hander`, where a one-hander and
+     * an off hand are both deleted. A shield is not the tank's alone; what
+     * makes Protection a tank is the tree, the stance and a target that swings
+     * back.
+     */
+    const shockadin = PRESETS_BY_ID.get('pally_shockadin')!.build();
+    expect(shockadin.equipment.shield).toBeDefined();
+    expect(shockadin.character.combatStyle).toBe('one_hand_shield');
+    expect(shockadin.encounter.targetAttacks).toBe(false);
+
+    // Retribution swings a two-hander and holds nothing in the other hand.
+    const ret = PRESETS_BY_ID.get('pally_ret')!.build();
+    expect(ret.equipment.shield).toBeUndefined();
+    expect(ret.equipment.twoHand).toBeDefined();
   });
 
   it('grants each capstone ability to exactly one build', () => {

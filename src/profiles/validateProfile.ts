@@ -23,6 +23,7 @@ const EQUIPMENT_SLOT_SET: ReadonlySet<string> = new Set<EquipmentSlot>([
   'head', 'neck', 'shoulders', 'cloak', 'chest', 'wrists', 'gloves', 'waist',
   'legs', 'feet', 'ring1', 'ring2', 'trinket1', 'trinket2',
   'mainHand', 'offHand', 'twoHand', 'shield', 'ranged',
+  'relic',
 ]);
 
 /** A validation failure, with enough detail to show next to the right field. */
