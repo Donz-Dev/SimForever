@@ -28,6 +28,7 @@ import { HUNTER_TALENT_REACTIONS } from '../reactions/hunterTalents';
 import { WARLOCK_TALENT_REACTIONS } from '../reactions/warlockTalents';
 import { PRIEST_TALENT_REACTIONS } from '../reactions/priestTalents';
 import type { ClassId, CombatStyleId, StatFromStat } from '../character';
+import { bringsPet } from '../character/petFamilies';
 import type { Equipment } from '../items/Item';
 import { armorFromItems, liveEquipment } from '../items/equipment';
 import type { TalentAllocation } from './Talent';
@@ -35,7 +36,7 @@ import type {
   IllegalTalent,
   TalentEffects,
   UnmodelledTalent,
-  WeaponRequirement,
+  BuildRequirement,
 } from './TalentEffect';
 import { talentsForClass } from './talentData';
 import { talentDescription, talentNumber } from './talentValues';
@@ -292,6 +293,16 @@ export interface TalentBuildContext {
   readonly mainHand?: WeaponProfile;
   /** Whether a shield is equipped, for talents that ask. */
   readonly hasShield?: boolean;
+  /**
+   * Whether a PET will be in the fight, for talents that ask.
+   *
+   * Supplied by the caller from `bringsPet` rather than derived here, because
+   * `talentBuild` is class-agnostic and which classes actually get a pet
+   * built is a property of the encounter. A caller that omits it gets `false`,
+   * which makes a pet-gated talent inert rather than silently applied -- the
+   * same rule a missing weapon already follows.
+   */
+  readonly hasPet?: boolean;
   /** Armor the equipped items supply, for talents that scale it. */
   readonly itemArmor?: number;
   /**
@@ -307,10 +318,18 @@ export interface TalentBuildContext {
 
 /** Whether the held weapon satisfies a conditional effect. */
 function meets(
-  requires: WeaponRequirement,
+  requires: BuildRequirement,
   weapon: WeaponProfile | undefined,
   hasShield = false,
+  hasPet = false,
 ): boolean {
+  /*
+   * THE PET CLAUSE FIRST, and like the shield it is about the CHARACTER rather
+   * than about a hand. Focused Fire is "+2% while your pet is active" and had
+   * no requirement at all, so both Lone Wolf builds took the bonus for a pet
+   * that is never built.
+   */
+  if (requires.hasPet !== undefined && requires.hasPet !== hasPet) return false;
   /*
    * A SHIELD CLAUSE IS ABOUT THE CHARACTER, not the weapon in a hand, so it is
    * checked before the weapon is even looked at. Bastion has no weapon clause
@@ -326,6 +345,34 @@ function meets(
     return false;
   }
   return true;
+}
+
+/**
+ * Why a conditional effect did not apply, in the character's own terms.
+ *
+ * NAMES THE CLAUSE THAT FAILED, because "applies only with a particular
+ * weapon" on a Lone Wolf hunter would be a true sentence about the wrong
+ * thing. A person reading the Talent panel needs to know it is the PET that is
+ * missing, not a sword.
+ */
+function unmetReason(requires: BuildRequirement): string {
+  if (requires.hasPet) {
+    return (
+      'Applies only while a pet is active, and this build has none -- Lone ' +
+      'Wolf is the talent for having no pet. Correctly inert rather than an ' +
+      'error, and the points are a route to the tier above.'
+    );
+  }
+  if (requires.shield) {
+    return (
+      'Applies only while a shield is equipped, and this character has none. ' +
+      'Not an error -- equip one and it works.'
+    );
+  }
+  return (
+    'Applies only with a particular weapon, and this character is not ' +
+    'holding one. Not an error -- equip the right weapon and it works.'
+  );
 }
 
 /**
@@ -347,6 +394,14 @@ export function talentContextFor(
   equipment: Equipment,
   style: CombatStyleId,
   weapons: Partial<Record<WeaponSlot, WeaponProfile>>,
+  /*
+   * THE CLASS AND THE ALLOCATION, so this can answer whether a pet will be in
+   * the fight. Optional because the two callers that have them are the two
+   * that matter -- `createPlayer` and the Talent panel -- and a caller without
+   * them gets `false`, which makes a pet-gated talent visibly inert rather
+   * than silently applied.
+   */
+  build?: { readonly characterClass: ClassId; readonly talents: TalentAllocation },
 ): TalentBuildContext {
   return {
     mainHand: weapons.mainHand,
@@ -354,6 +409,8 @@ export function talentContextFor(
     // A shield is not a weapon and does not appear in `weapons`, so it is
     // asked about separately. Bastion needs it and swings with nothing.
     hasShield: liveEquipment(equipment, style).shield !== undefined,
+    // The same function the encounter uses to decide whether to BUILD one.
+    hasPet: build ? bringsPet(build.characterClass, build.talents) : false,
     // Armor from items ALONE, which is what Toughness scales. The character's
     // armor is this plus the class base, and a percentage of the total would
     // overstate the talent.
@@ -590,7 +647,7 @@ export function talentBuild(
            * where the equipment is in scope. Not registering it at all is the
            * accurate outcome: the proc does not exist for this character.
            */
-          if (effect.requires && !meets(effect.requires, context.mainHand, context.hasShield)) {
+          if (effect.requires && !meets(effect.requires, context.mainHand, context.hasShield, context.hasPet)) {
             report(
               talentId,
               rank,
@@ -633,18 +690,10 @@ export function talentBuild(
           break;
         }
         case 'conditionalDamage':
-          if (meets(effect.requires, context.mainHand, context.hasShield)) {
+          if (meets(effect.requires, context.mainHand, context.hasShield, context.hasPet)) {
             damageMultiplier *= 1 + value / 100;
           } else {
-            report(
-              talentId,
-              rank,
-              effect.requires.shield
-                ? 'Applies only while a shield is equipped, and this character ' +
-                    'has none. Not an error -- equip one and it works.'
-                : 'Applies only with a particular weapon, and this character is not ' +
-                    'holding one. Not an error -- equip the right weapon and it works.',
-            );
+            report(talentId, rank, unmetReason(effect.requires));
           }
           break;
         case 'conditionalCrit':
@@ -659,7 +708,7 @@ export function talentBuild(
            *
            * The Gear and Talent panels say which weapon it is reading.
            */
-          if (meets(effect.requires, context.mainHand, context.hasShield)) {
+          if (meets(effect.requires, context.mainHand, context.hasShield, context.hasPet)) {
             abilityModifiers.add(ALL_ABILITIES, { critBonus: value });
           } else {
             report(

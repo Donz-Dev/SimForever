@@ -12,7 +12,7 @@ status, that one is how.
 ## Where the project is
 
 **All nine classes and all 21 profiles are implemented**, every number traced
-to a source rather than invented. **1,569 tests**, CI green on Node 20 and 22.
+to a source rather than invented. **1,574 tests**, CI green on Node 20 and 22.
 Profile format **v9**.
 
 **EVERY PROFILE IS IN ITS OWN CLASS'S GEAR.** Twenty of them wore
@@ -36,13 +36,13 @@ off moves all of them; see [docs/raid-buffs.md](docs/raid-buffs.md).
 | --- | --- | --- | --- | --- |
 | DW Fury | Warrior | 18/33/0 | 643.2 | — |
 | 2H Arms | Warrior | 38/13/0 | 585.5 | — |
-| LW Melee | Hunter | 7/13/31 | 567.3 | — |
-| BM Hunter | Hunter | 31/20/0 | 416.1 | — |
+| LW Melee | Hunter | 7/13/31 | **556.2** | 567.3 |
+| BM Hunter | Hunter | 31/20/0 | **421.0** | 416.1 |
 | Enh Shaman | Shaman | 19/32/0 | **404.5** | 408.3 |
 | Seal Twist Ret | Paladin | 13/0/38 | **380.2** | 403.1 |
 | Combat Rogue | Rogue | 18/33/0 | **376.9** | 347.6 |
 | Prot Warr | Warrior | 17/0/34 | 357.5 | — |
-| LW Ranged | Hunter | 7/39/5 | 349.9 | — |
+| LW Ranged | Hunter | 7/39/5 | **342.1** | 349.9 |
 | Rupture Rogue | Rogue | 12/8/31 | **315.2** | 290.3 |
 | Venom Rogue | Rogue | 37/12/2 | **314.4** | 308.5 |
 | Shadow Priest | Priest | 16/3/32 | **285.0** | 266.1 |
@@ -407,6 +407,60 @@ where it used to be two, and two for the Priest. Tests pin each cause, so the
 day a coefficient arrives they fail and the figures get re-read. That is how the
 gear half of this caveat was caught expiring: five tests asserting
 `spellPower === 0` failed the moment the sets landed.
+
+---
+
+## The Hunter is done at the engine level
+
+An audit of all 50 talents, every Hunter and pet ability, and the whole Forever
+spellbook against what is implemented found **one** thing the engine could not
+express -- and it was WRONG rather than merely missing.
+
+**`conditionalDamage` HAD NO "WHILE YOU HAVE A PET" CLAUSE.** Focused Fire is
+"+2% to all damage you and your pet deal while your pet is active", declared
+with `requires: {}` -- no requirement at all -- so **both Lone Wolf builds
+collected the 2% for a pet that is never built.** They take it as a cheap route
+to Careful Aim and then take the talent that means "no pet", so it was the one
+clause that mattered.
+
+`BuildRequirement` (renamed from `WeaponRequirement`, because `shield` was
+already not a weapon and `hasPet` is not even equipment) now carries it, and
+`bringsPet` answers it -- **the same function the encounter uses to decide
+whether to BUILD a pet**, so the talent and the fight cannot disagree. That is
+the `isWeaponUse` lesson: a rule kept privately in one file while another
+re-derives it gets re-derived wrong.
+
+**HUNTER'S MARK WAS NEVER IMPLEMENTED**, and it is 71 ranged attack power for
+two minutes off one instant cast. It had been dismissed once as "a raid-buff-
+shaped ability no priority list casts" -- the wrong shape, since it is a single
+cast the Hunter makes on the pull, exactly like the Aspect every list already
+opens with. It was also worth nothing to check while a bow scaled off MELEE
+attack power; that changed earlier in this run of work.
+
+| | was | now | what moved it |
+| --- | --- | --- | --- |
+| BM Hunter | 416.1 | **421.0** | Hunter's Mark, +8.0. Keeps Focused Fire: it has a pet |
+| LW Ranged | 349.9 | **342.1** | Focused Fire fix -6.9, Mark +0.8 (noise) |
+| LW Melee | 567.3 | **556.2** | Focused Fire fix -11.1, no Mark |
+
+**THE MARK IS IN TWO LISTS OF THE THREE, AND THAT IS MEASURED.** Over 40
+batches it is +8.0 to Beast Mastery, +0.8 to Lone Wolf Ranged inside a 3.3
+interval, and **-10.1 to Lone Wolf Melee**. Measuring the STAT alone said +1.9
+for the melee build; measuring the ABILITY -- which also spends 60 mana and a
+global cooldown at the pull -- said the opposite. A stat probe is not an
+ability probe.
+
+**TWO OF THE THREE HUNTER BUILDS NOW REPORT NOTHING INERT AT ALL.** Beast
+Mastery joined Lone Wolf Ranged with an empty "chosen but not fully simulated"
+list.
+
+### What is left on the Hunter, and none of it is the engine
+
+| Cause | Items |
+| --- | --- |
+| **Content** the engine can already express | Lacerating Strikes (a bleed, and its value is `null` in the data -- the single-rank trap, so it needs hand-filling); Summon Hawk's second hawk, which is why BM is understated |
+| **Data** nobody has stated | Sniper Shot's mana cost, a placeholder at 200 with no cost line in the spellbook -- and it matters, because LW Ranged is mana-bound and Sniper Shot is its largest spender; the pet's base DPS |
+| **Target or build**, and these never expire | ~22 reasons: traps (6), movement and control (7), stuns, range, not being attacked (4), needing a kill, healing a pet |
 
 ---
 

@@ -33,6 +33,16 @@ import type { TalentAllocation } from '../talents/Talent';
  * exclusive like a stance, nothing is up at the pull, and a ranged build with
  * no Aspect of the Hawk is missing 120 ranged attack power for the whole
  * fight. Its `canCast` refuses once it is up, so the entry falls through.
+ *
+ * HUNTER'S MARK IS IN TWO LISTS OF THE THREE, and that is measured rather than
+ * assumed. It is +71 ranged attack power for two minutes off one instant cast,
+ * which sounds like something every Hunter should open with -- and over 40
+ * batches it is +8.0 to Beast Mastery, +0.8 to Lone Wolf Ranged inside a 3.3
+ * interval, and **-10.1 to Lone Wolf Melee**. Ranged attack power buys a melee
+ * build almost nothing, and the global cooldown at the pull costs it a real
+ * opener. Measuring the stat on its own said +1.9 for that build; measuring
+ * the ABILITY, which also spends 60 mana and a global cooldown, said the
+ * opposite.
  * ----------------------------------------------------------------------------
  */
 
@@ -55,6 +65,10 @@ const hasAura = (auraId: string) => (_context: SimulationContext, actor: Combata
  * BESTIAL WRATH FIRST, because it buffs the pet for eighteen seconds and the
  * pet is the largest single share of this build.
  *
+ * HUNTER'S MARK IS WORTH THE MOST HERE, +8.0, and it is the only list where it
+ * is a clear gain: this build has the fewest competing uses for 60 mana, and a
+ * pet carrying a third of the damage makes the global cooldown cheap.
+ *
  * THE HAWK LOSES TO ARCANE SHOT, and the note that used to sit here said the
  * opposite. They share a cooldown group, so every six seconds is one or the
  * other -- and "a hawk is 32 damage a tick for eighteen seconds against Arcane
@@ -74,6 +88,7 @@ const hasAura = (auraId: string) => (_context: SimulationContext, actor: Combata
  */
 export const HUNTER_BEAST_MASTERY: readonly PriorityEntry[] = [
   { abilityId: 'aspect_of_the_hawk' },
+  { abilityId: 'hunters_mark' },
   { abilityId: 'bestial_wrath' },
   { abilityId: 'serpent_sting', condition: missingOn('serpent_sting') },
   { abilityId: 'rapid_fire' },
@@ -101,12 +116,19 @@ export const HUNTER_BEAST_MASTERY: readonly PriorityEntry[] = [
  * MULTI-SHOT IS OUT FOR THE SAME REASON, tested and worth -1: half a second of
  * cast still resets the same bow.
  *
+ * HUNTER'S MARK IS KEPT THOUGH IT MEASURES AS NOTHING, +0.8 inside a 3.3
+ * interval. The 71 ranged attack power it buys is real and the 60 mana it
+ * spends comes out of a build that is dry by the thirty-second mark, and the
+ * two cancel. It stays because a Hunter marks its target and it costs nothing
+ * measurable -- stated, because "no measured difference" is not "a gain".
+ *
  * SNIPER ABOVE ARCANE IS NOT A MEASURED DIFFERENCE. Over 80 batches they are
  * 0.55 apart inside a 2.26 interval, so the capstone goes first on the grounds
  * that it hits harder and nothing argues otherwise.
  */
 export const HUNTER_LONE_WOLF_RANGED: readonly PriorityEntry[] = [
   { abilityId: 'aspect_of_the_hawk' },
+  { abilityId: 'hunters_mark' },
   { abilityId: 'serpent_sting', condition: missingOn('serpent_sting') },
   { abilityId: 'rapid_fire' },
   { abilityId: 'sniper_shot' },
@@ -144,6 +166,13 @@ export const HUNTER_LONE_WOLF_RANGED: readonly PriorityEntry[] = [
  * ASPECT OF THE BEAST IS CORRECT AND WAS WORTH CHECKING -- swapping it for
  * Aspect of the Hawk costs 35 DPS, because Forever's Beast grants MELEE attack
  * power and this Hunter swings a two-hander.
+ *
+ * NO HUNTER'S MARK, WHICH IS THE ONE LIST IT DOES NOT BELONG IN. +71 RANGED
+ * attack power is worth about 1.9 to a build whose damage is melee swings,
+ * melee specials and a sting -- and the ability also costs a global cooldown
+ * at the pull. Measured at -10.1 over 40 batches, against a 7.7 interval. The
+ * Hunter would still cast it in the game; it is not in the damage list because
+ * the damage list is measured.
  */
 export const HUNTER_LONE_WOLF_MELEE: readonly PriorityEntry[] = [
   { abilityId: 'aspect_of_the_beast' },

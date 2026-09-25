@@ -45,27 +45,26 @@ export const HUNTER_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
 
   focused_fire: [
     /*
-     * "Increases all damage you and your pet deal by {0}% while your pet is
-     * active." The owner's half is expressible; the pet's is not, because a
-     * talent effect reaches the character it is on and the pet is a separate
-     * combatant built afterwards.
+     * "Increases all damage you and your pet deal by {0}% WHILE YOUR PET IS
+     * ACTIVE."
+     *
+     * THE CONDITION IS CHECKED NOW, and it was not merely missing before --
+     * it was wrong. Declared with `requires: {}`, meaning no requirement at
+     * all, both Lone Wolf builds collected the 2% for a pet that is never
+     * built. They take this as a cheap route to Careful Aim and then take
+     * the talent that means "no pet", so it was the one clause that mattered.
+     *
+     * `hasPet` is answered by `bringsPet`, the same function the encounter
+     * uses to decide whether to construct one -- so the talent and the fight
+     * cannot disagree.
      */
-    { kind: 'conditionalDamage', requires: {} },
+    { kind: 'conditionalDamage', requires: { hasPet: true } },
     /*
-     * "Increases all damage YOU AND YOUR PET deal." Both halves now, which is
-     * what `petStat` was added for -- the pet half was inert and said so.
+     * "Increases all damage YOU AND YOUR PET deal." Both halves, which is what
+     * `petStat` was added for. This one needs no condition: a build with no
+     * pet has nothing for it to land on.
      */
     { kind: 'petStat', property: 'damage' },
-    {
-      kind: 'unmodelled',
-      reason:
-        'Its "WHILE YOUR PET IS ACTIVE" condition is not checked on the ' +
-        'HUNTER’S half: `conditionalDamage` selects on weapons and has no ' +
-        'clause for having a pet. So both Lone Wolf builds -- which take this ' +
-        'as a cheap route to Careful Aim and then take the talent for having ' +
-        'no pet -- get 2% they should not. The PET half is correctly nothing ' +
-        'for them, because no pet is built at all.',
-    },
   ],
 
   improved_aspect_of_the_monkey: [

@@ -215,7 +215,10 @@ export function createPlayer(options: PlayerOptions): Combatant {
   const build = talentBuild(
     characterClass,
     legal.allocation,
-    talentContextFor(equipmentForWeapons, style, weapons),
+    talentContextFor(equipmentForWeapons, style, weapons, {
+      characterClass,
+      talents: declaredTalents,
+    }),
   );
 
   /*
