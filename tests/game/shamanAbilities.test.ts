@@ -231,16 +231,16 @@ describe('the fights', () => {
     expect(STORMSTRIKE_DAMAGE_BONUS).toBe(1.2);
   });
 
-  it('gives the Elemental shaman a FLOOR, for the same two reasons the Moonkin has one', () => {
+  it('NO LONGER GIVES THE ELEMENTAL SHAMAN A FLOOR: both causes expired', () => {
     /*
      * --------------------------------------------------------------------------
-     * THE CASTER ITEM ARRIVED; THE COEFFICIENT DID NOT.
+     * THE CASTER ITEM ARRIVED FIRST; THE COEFFICIENT ARRIVED SECOND.
      *
      * Earthfury plus a Sorcerous Dagger and Earth and Fire reads 453 spell
-     * power where the Warrior shell gave none, so the gear half of this caveat
-     * has expired. Every Shaman spell still states FLAT damage with no spell
-     * power coefficient, so the 453 multiplies nothing and Lightning Bolt and
-     * Lava Burst both still say so on the results page.
+     * power where the Warrior shell gave none. Every Shaman spell still states
+     * FLAT damage and no coefficient -- and that no longer matters, because the
+     * ruleset owner supplied the coefficient as a universal RULE rather than as
+     * per-spell data.
      *
      * 26 of the 453 is the SHIELD, which is the part worth pinning: a caster
      * shield in a stat-stick off hand used to be deleted outright.
@@ -250,20 +250,52 @@ describe('the fights', () => {
 
     const batch = batchOf('shaman_elemental', 40, 5);
     const named = batch.castButNotSimulated.map((entry) => entry.abilityName);
-    expect(named).toContain('Lightning Bolt');
-    expect(named).toContain('Lava Burst');
+
+    // Lava Burst had NOTHING else wrong with it, so it leaves the list.
+    expect(named).not.toContain('Lava Burst');
+
+    /*
+     * LIGHTNING BOLT STAYS ON IT, and that is correct rather than a miss: it
+     * carries a SECOND caveat, about the placeholder proc chance Maelstrom
+     * Weapon rides on, which has nothing to do with scaling.
+     *
+     * Asserted on the REASON TEXT rather than on the ability name, because
+     * "is it listed" cannot tell two different caveats apart -- and only the
+     * coefficient one was supposed to go.
+     */
+    const reasons = batch.castButNotSimulated
+      .filter((entry) => entry.abilityName === 'Lightning Bolt')
+      .map((entry) => entry.reason)
+      .join(' ');
+    expect(reasons).not.toMatch(/spell power coefficient/i);
+    expect(reasons).toMatch(/PLACEHOLDER/i);
   });
 
-  it('leaves the Enhancement shaman ahead of the Elemental one, by a lot', () => {
+  it('CLOSES MOST OF THE GAP to the Enhancement shaman, and that is the point', () => {
     /*
-     * Not a balance claim -- a claim about what is MISSING. Elemental's own
-     * damage is largely its totems, which the engine has no entity for, while
-     * Enhancement's is swings and a weapon proc that are fully modelled. The
-     * gap is the measure of the totem hole rather than of the spec.
+     * --------------------------------------------------------------------------
+     * THIS TEST ASSERTED A RATIO OF THREE AND NOW ASSERTS A RATIO OF ONE AND A
+     * HALF, WHICH IS THE WHOLE STORY OF THIS FEATURE.
+     *
+     * It used to read: "not a balance claim -- a claim about what is MISSING.
+     * Elemental's own damage is largely its totems, which the engine has no
+     * entity for, while Enhancement's is swings and a weapon proc that are
+     * fully modelled. The gap is the measure of the totem hole."
+     *
+     * Most of that gap was NOT the totem hole. It was 453 points of spell
+     * power multiplying nothing on a class that casts for a living, and the
+     * Elemental shaman roughly doubled the day the coefficient arrived.
+     *
+     * The totem hole is real and still open, so Enhancement stays ahead --
+     * but a claim that it is ahead "by a lot" was measuring the wrong thing,
+     * which is exactly the trap of asserting a DPS ratio rather than a
+     * mechanism.
+     * --------------------------------------------------------------------------
      */
     const elemental = batchOf('shaman_elemental', 40, 5).dps.mean;
     const enhancement = batchOf('shaman_enhancement', 40, 5).dps.mean;
-    expect(enhancement).toBeGreaterThan(elemental * 3);
+    expect(enhancement).toBeGreaterThan(elemental);
+    expect(enhancement).toBeLessThan(elemental * 2);
   });
 });
 

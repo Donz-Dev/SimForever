@@ -1,5 +1,6 @@
 import type { AuraDefinition, Combatant } from '../../engine';
 import { RATING_PER_PERCENT, dealDamage, flat, seconds } from '../../engine';
+import { periodicTickCoefficient } from '../combat/spellCoefficient';
 
 /**
  * Paladin auras, from the WoW Forever beta client (build 1.60.1.69876).
@@ -175,6 +176,13 @@ export const SEAL_OF_FURY: AuraDefinition = {
  * -- a flat +161 to every Holy hit is a different shape entirely, and reading
  * it as +161% would be absurd.
  *
+ * AND `SchoolModifier.spellPower` IS NOT IT EITHER, which is worth saying
+ * because the two read alike and the number is even the same. That one is
+ * spell power on the ATTACKER, reaching damage only through a coefficient --
+ * so it is worth 0.044 x baseWeaponSpeed per point to a seal and nothing at
+ * all to anything else. This is a flat amount added to every Holy hit the
+ * TARGET takes, from whoever deals it. Different side, different arithmetic.
+ *
  * Applied as a tracked debuff so its uptime is visible and the judgement is
  * not silent, and the ability says what it is not doing.
  */
@@ -323,6 +331,15 @@ export const CONSECRATION_TOTAL = 96 + 216;
 export const CONSECRATION_DURATION_MS = seconds(8);
 export const CONSECRATION_TICK_INTERVAL_MS = seconds(2);
 
+/**
+ * A PURE periodic effect -- the cast deals no damage of its own -- so it takes
+ * the whole periodic coefficient rather than a share of a hybrid pair.
+ */
+export const CONSECRATION_TICK_COEFFICIENT = periodicTickCoefficient(
+  CONSECRATION_DURATION_MS,
+  CONSECRATION_DURATION_MS / CONSECRATION_TICK_INTERVAL_MS,
+);
+
 export const CONSECRATION_GROUND: AuraDefinition = {
   id: 'consecration',
   name: 'Consecration',
@@ -344,8 +361,8 @@ export const CONSECRATION_GROUND: AuraDefinition = {
         school: 'holy',
         baseAmount:
           CONSECRATION_TOTAL / (CONSECRATION_DURATION_MS / CONSECRATION_TICK_INTERVAL_MS),
-        // No coefficient is stated for it, unlike the seals, so none is used.
-        powerCoefficient: 0,
+        // A pure periodic effect: 8 seconds over 15, spread across its ticks.
+        powerCoefficient: CONSECRATION_TICK_COEFFICIENT,
         periodic: true,
         critFrom: 'spell',
         appliesArmor: false,

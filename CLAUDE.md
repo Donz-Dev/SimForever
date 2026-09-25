@@ -434,30 +434,91 @@ rolled as a table result, so `AttackOutcome` has no `block` for
 Paladin two clauses, Reckoning's extra attack after blocking and Holy Shield's
 221 damage per block, and both say so.
 
-**A CASTER'S DAMAGE DOES NOT SCALE WITH GEAR YET, and it is the source rather
-than the engine.** `dealDamage` reads `spellPower` for any non-physical school
-and has since before any caster existed; what is missing is that every Druid
-spell states FLAT damage -- "350 to 412 Arcane damage" -- and no coefficient at
-all, so there is nothing to multiply. None is invented. **THE SHAMAN READS THE
-SAME WAY**, which settles it: two classes, flat damage and no coefficient in
-both, so this is how Forever's spell data is written rather than a Druid quirk.
+**A SPELL'S COEFFICIENT IS `castTime / 3.5`, AND IT IS A RULE RATHER THAN
+DATA.** The ruleset owner supplied it directly:
+`damage = castTime / 3.5 x (spellPower + schoolSpellPower) + baseDamage`, with
+an instant priced at 1.5 seconds. That second term is exactly
+`spellPowerFor(source, school)`, and `scaleByPower` has computed
+`baseAmount + coefficient x power` since before any caster existed -- so this
+needed NO engine work at all. **The spell DATA has not changed and still states
+flat damage with no coefficient**; what was missing was a universal RULE, which
+never needed stating per spell. Full rules and provenance in
+[docs/spell-coefficients.md](docs/spell-coefficients.md).
 
-**THE OTHER HALF OF THAT CAVEAT HAS EXPIRED, AND THE CASTERS MOVED ANYWAY.**
-"An item set curated for a Warrior, where a Moonkin's `spellPower` reads zero"
-was true for as long as there was no caster gear, and every caster now wears
-its own: 439 on the Moonkin, 453 on an Elemental shaman, 452 on all three
-Mages. **None of that spell power multiplies anything** and the four cloth
-profiles still gained 4.6% to 93.1% -- from INTELLECT, which buys casts before
-the mana runs out, and from SPELL CRIT, which caster gear grants and plate does
-not. A stat can matter through a resource rather than through a coefficient.
+**"A CASTER FIGURE IS A FLOOR" IS FINALLY DEAD, AND IT TOOK THREE GOES.** The
+caveat had two halves and each expired separately: first "no caster gear
+exists", when every caster got its own set; then "Forever's spell data states
+flat damage and no coefficient", which was TRUE OF THE DATA AND IRRELEVANT --
+the coefficient was a rule nobody had asked for yet. Five class file headers
+said it in almost identical words and all five expired at once. **Check whether
+a missing number is missing DATA or a missing RULE before recording it as a
+gap**; this one was written down three times as the former.
 
-**A SCHOOL-BLIND `spellPower` IS ITS OWN GAP, and the Priest found it.** Six of
-eight Vestments of Prophecy pieces and Anathema all say "Increases damage done
-by SHADOW spells and effects by up to N", and one number read by every
-non-physical school cannot hold that -- applying it would make the same
-character's Holy spells hit harder. So ~293 of a Shadow Priest's 497 is carried
-as unmodelled text. `SchoolModifiers` is the shape it wants; `STAT_NAMES` is a
-closed flat set and deliberately cannot key by school.
+**THREE OF THE FOUR CASES ARE CLASSIC'S, ON THE OWNER'S RULING, AND ONLY THE
+DIRECT ONE IS CLAMPED.** A channel is `duration / 3.5` split across its ticks,
+a DoT is `duration / 15`, a hybrid gives each half its own share of their sum
+-- and a direct cast clamps to `[1.5, 3.5]` seconds while the other two do
+not. That is Classic being self-consistent rather than an oversight: a
+five-second channel is worth 1.429 and a 24-second DoT 1.6, while a six-second
+Pyroblast is worth 1.0, because a channel and a DoT already pay for their
+coefficient in TIME. **The hybrid formula reproduces Classic's published pairs
+exactly** -- Moonfire at 0.1495 and 0.5209 against a stated 0.15 and 0.52 --
+which is what distinguishes the right transcription from one of the several
+that land NEAR it.
+
+**THE CAST TIME IS THE BASE ONE, AND `ability.castTimeMs` IS NOT IT.**
+`abilitiesForClass` overwrites that field with the TALENT-REDUCED figure, so
+reading it inside `onCast` makes Improved Fireball quietly REDUCE Fireball's
+scaling with gear -- a cast-time talent making a spell worse with gear, at a
+number nobody would question. Every spell declares a named `*_CAST_MS` and uses
+it for both its `castTimeMs` and its coefficient, so the two cannot drift.
+
+**AN EFFECT WHOSE SIZE COMES FROM ANOTHER HIT TAKES NO COEFFICIENT**, because
+that hit was already scaled. Ignite is "an additional N% of your spell's
+damage" and gets zero; giving it one applies spell power twice to the same
+damage.
+
+**A STRUCTURAL TEST THAT FILTERS ON `attackTable` MISSES EVERY PURE DoT.**
+`everySpellScales.test.ts` casts each spell twice at two spell powers and
+demands the damage move -- BEHAVIOURAL, so no declaration can satisfy it -- and
+its first version filtered on `attackTable === 'spell'`, which silently skipped
+Shadow Word: Pain, Corruption, Bane of Agony, Siphon Life, Devouring Plague and
+Consecration. A spell that only applies an aura declares no table, and those
+six are exactly what the periodic rule is for: the check covered everything
+except the part most likely to be wrong. The list is DISCOVERED from the event
+stream instead.
+
+**INTELLECT AND SPELL CRIT MATTERED BEFORE THE COEFFICIENT DID.** When caster
+gear arrived and multiplied nothing, the four cloth profiles still gained 4.6%
+to 93.1% -- from intellect buying casts before the mana ran out, and from spell
+crit, which caster gear grants and plate does not. A stat can matter through a
+resource rather than through a coefficient.
+
+**SPELL POWER CAN BE SCOPED TO A SCHOOL, AND IT IS NOT A STAT.** Seventeen item
+lines say "Increases damage done by SHADOW spells and effects by up to N" --
+nine Priest pieces and eight Lawbringer ones naming Holy -- and one number read
+by every non-physical school cannot hold that: applying it would make the same
+character's Holy spells hit harder. `STAT_NAMES` is a closed flat set and
+deliberately cannot key by school, so it is a FOURTH FIELD on `SchoolModifier`,
+beside the crit, crit damage and damage multiplier already keyed the same way,
+and `spellPowerFor` adds it to the school-blind pool AT THE POINT OF USE so a
+buff still moves it. **The field is on the school scope and not on the shared
+`AbilityModifier`**, which is the guard: hung off an ability or an attack table
+nothing would read it, and it would do nothing without saying so.
+
+**GEAR IS THE FIRST CALLER OF A SCOPE TALENTS BUILT**, so `createPlayer` folds
+the equipped set's entries into the build's -- into a NEW `SchoolModifiers`
+rather than into `build.schoolModifiers`, because a `TalentBuild` is a value a
+caller may hold across several characters and mutating it works exactly once.
+
+**IT WAS WORTH ZERO TO THE PROFILE THAT FOUND IT**, which is the Eclipse lesson
+a fourth time. The Shadow Priest's full 497 now arrives and its DPS did not move
+by a tenth, because Forever's Priest spells state flat damage and no
+coefficient. **Shockadin is the one profile it moved**, +9.5, because Seal of
+Righteousness is the project's only spell power coefficient -- and Retribution
+carries a real 79 Holy for nothing, since **Seal of Command is 70% of WEAPON
+damage with no spell power term**. Assert the stat arriving, scoped to the right
+school; a DPS test would have passed before the feature existed.
 
 **AN AURA CAN CHANGE THE NEXT CAST OF AN ABILITY IT NAMES**, which is
 `CastModifier` on `AuraDefinition` and the rule four classes asked for.

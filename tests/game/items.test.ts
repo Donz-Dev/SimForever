@@ -11,10 +11,12 @@ import {
 import {
   BASE_WEAPON_SKILL,
   liveEquipment,
+  schoolPowerForStyle,
   statsForStyle,
   unmodelledEffects,
   weaponsForEquipment,
 } from '../../src/game/items/equipment';
+import { PRESETS_BY_ID } from '../../src/profiles/presets';
 import { createPlayer } from '../../src/game/actors/createPlayer';
 import { attackPowerCoefficientFor } from '../../src/game/combat/weaponDamage';
 
@@ -277,16 +279,33 @@ describe('the item data', () => {
     expect(ITEMS_BY_ID.get(228229)?.weapon?.bonusSkill).toBe(3);
 
     /*
-     * A SCHOOL-SPECIFIC LINE IS NOT SPELL POWER. Anathema's +75 is Shadow only
-     * and `spellPower` is school-blind, so it is listed rather than applied --
-     * if this ever starts passing as spell power, the Priest's Holy spells got
-     * a bonus the item never gave them.
+     * A SCHOOL-SPECIFIC LINE IS SPELL POWER FOR THAT SCHOOL AND NOT FOR THE
+     * OTHER SIX. Anathema's +75 is Shadow only, so it lands in `schoolPower`
+     * and NOT in `stats.spellPower` -- if it ever starts arriving as the
+     * school-blind stat, the Priest's Holy and Arcane spells got a bonus the
+     * item never gave them.
+     *
+     * The assertion is in BOTH directions on purpose: it used to be a
+     * `unmodelled` line and the reason it carried named the missing engine
+     * stat. That blocker has cleared.
      */
     const anathema = ITEMS_BY_ID.get(228336);
     expect(anathema?.stats.spellPower).toBeUndefined();
-    expect(anathema?.unmodelled.map((effect) => effect.text)).toContain(
+    expect(anathema?.schoolPower.shadow).toBe(75);
+    expect(anathema?.schoolPower.holy).toBeUndefined();
+    expect(anathema?.unmodelled.map((effect) => effect.text)).not.toContain(
       'Increases damage done by Shadow spells and effects by up to 75.',
     );
+
+    /*
+     * AND THE SCHOOL-BLIND LINE IS STILL THE OTHER STAT. The Ring of Spell
+     * Power says "damage AND HEALING done by MAGICAL spells", which names no
+     * school -- folding the two wordings together in either direction loses a
+     * real distinction.
+     */
+    const ring = ITEMS_BY_ID.get(228243);
+    expect(ring?.stats.spellPower).toBeGreaterThan(0);
+    expect(Object.keys(ring?.schoolPower ?? {})).toHaveLength(0);
   });
 
   it('keeps a set bonus as text rather than dropping it', () => {
@@ -362,6 +381,59 @@ describe('what the items do that the simulator does not', () => {
     // the source states as "add up to 30 damage to spells".
     expect(CRUSADER.stats).toEqual({});
     expect(SPELL_POWER_ENCHANT.stats).toEqual({ spellPower: 30 });
+  });
+
+  it('NO LONGER CLAIMS a school-scoped spell power cannot be expressed', () => {
+    /*
+     * ------------------------------------------------------------------------
+     * AN `unmodelled` REASON MATCHED BY WORDING IS A TEST, which is the rule
+     * `grantCastModifier.test.ts` already writes down. A reason is a claim
+     * about the engine ON THE DAY IT WAS WRITTEN and it expires; this one
+     * expired when `SchoolModifiers` grew a spell power per school, and the
+     * failure mode of leaving it behind is a line the Gear panel prints as
+     * missing while the stat is quietly applied.
+     *
+     * Matched on the SENTENCE rather than on a list of item ids, so a new set
+     * writing the same complaint is caught.
+     * ------------------------------------------------------------------------
+     */
+    const stale = ITEMS.flatMap((item) =>
+      item.unmodelled
+        .filter((effect) => /school-blind/i.test(effect.reason))
+        .map((effect) => `${item.name}: ${effect.reason}`),
+    );
+    expect(stale).toEqual([]);
+
+    // And not one of the seventeen lines is listed as missing any more.
+    const scoped = ITEMS.flatMap((item) =>
+      item.unmodelled
+        .filter((e) => /^Increases damage done by \w+ spells and effects/.test(e.text))
+        .map((e) => `${item.name}: ${e.text}`),
+    );
+    expect(scoped).toEqual([]);
+  });
+
+  it('totals a school-scoped spell power across the equipped set', () => {
+    /*
+     * The Shadow Priest is the profile this was found on: its planner reads
+     * 204 generic and 497 Shadow, and the ~293 difference was the largest
+     * known shortfall in the item data.
+     *
+     * Off `liveEquipment` like everything else, so a two-hander's Shadow power
+     * cannot count on a build holding a one-hander.
+     */
+    const priest = PRESETS_BY_ID.get('shadow_priest')!.build();
+    expect(schoolPowerForStyle(priest.equipment, 'caster')).toEqual({ shadow: 293 });
+
+    // Eight Lawbringer pieces, on a Paladin whose seal is the one thing in the
+    // project that reads spell power.
+    const shockadin = PRESETS_BY_ID.get('pally_shockadin')!.build();
+    expect(schoolPowerForStyle(shockadin.equipment, 'one_hand_shield')).toEqual({ holy: 161 });
+
+    // A Warrior's set names no school at all, and gets an empty record rather
+    // than a zero for each of the seven.
+    const warrior = PRESETS_BY_ID.get('two_hand_arms')!.build();
+    expect(schoolPowerForStyle(warrior.equipment, 'two_hander')).toEqual({});
   });
 
   it('lists what an equipped set fails to model', () => {

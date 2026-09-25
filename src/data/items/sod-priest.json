@@ -1,6 +1,6 @@
 {
  "set": "sod-priest",
- "description": "A level 60 Shadow Priest's gear: full Vestments of Prophecy with Anathema and Skul's Ghastly Touch, from a sixtyupgrades.com set the owner supplied. Season of Discovery items. MOST OF THIS SET'S SPELL POWER IS SHADOW-ONLY and the engine has a single school-blind spellPower, so it is carried as unmodelled text rather than applied -- see src/data/items/README.md.",
+ "description": "A level 60 Shadow Priest's gear: full Vestments of Prophecy with Anathema and Skul's Ghastly Touch, from a sixtyupgrades.com set the owner supplied. Season of Discovery items. MOST OF THIS SET'S SPELL POWER IS SHADOW-ONLY -- 293 of a stated 497 -- and it is applied to the Shadow school alone, through Item.schoolPower and SchoolModifiers rather than through the school-blind spellPower stat. It still multiplies nothing, because Forever's Priest spells state flat damage and no coefficient; see src/data/items/README.md.",
  "source": "https://sixtyupgrades.com/sod/set/3cmwQu296c7Fwqc2VzpxLQ",
  "items": [
   {

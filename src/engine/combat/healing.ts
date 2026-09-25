@@ -54,6 +54,14 @@ export function resolveHealing(request: HealRequest, rng: RNG): HealResolution {
   const { source, target } = request;
 
   const coefficient = request.powerCoefficient ?? 0;
+  /*
+   * THE SCHOOL-BLIND POOL ONLY, and a heal has no school to scope it by
+   * anyway. The gear wording draws the line itself: the school-blind line is
+   * "increases damage AND HEALING done by magical spells", the scoped one is
+   * "increases DAMAGE done by Shadow spells" -- so a Holy-scoped 161 on a
+   * Paladin raises its Seal of Righteousness and not its Holy Light. See
+   * `spellPowerFor`, which is the damage side of the same question.
+   */
   const scaled = request.baseAmount + coefficient * source.stats.get('spellPower');
 
   // Healing does not miss, so it rolls crit directly rather than going through

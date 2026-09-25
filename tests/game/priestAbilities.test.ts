@@ -3,7 +3,7 @@ import { createPlayer } from '../../src/game/actors/createPlayer';
 import { runProfileBatch } from '../../src/simulator';
 import { PRESETS_BY_ID } from '../../src/profiles/presets';
 import { abilitiesForClass } from '../../src/game/abilities/abilitiesForClass';
-import { resolveCast } from '../../src/engine';
+import { resolveCast, spellPowerFor } from '../../src/engine';
 import { buildSimulation } from '../helpers/buildSimulation';
 import { makeAttacker, makeTarget } from '../helpers/actors';
 import {
@@ -213,22 +213,25 @@ describe('the fight', () => {
     );
   });
 
-  it('gives it a FLOOR, and this set is the worst case of it', () => {
+  it('gives it a FLOOR, and ONE of its two shortfalls has cleared', () => {
     /*
      * ------------------------------------------------------------------------
-     * TWO SHORTFALLS AT ONCE, WHICH NO OTHER PROFILE HAS.
+     * IT HAD TWO SHORTFALLS AT ONCE, AND NOW HAS ONE.
      *
-     * The first is the usual one: Forever's Priest spells state FLAT damage
-     * with no spell power coefficient, so spell power multiplies nothing.
+     * The one that CLEARED belonged to this set alone. Almost every spell
+     * power line in Vestments of Prophecy names a SCHOOL -- "Increases damage
+     * done by Shadow spells and effects by up to 39" -- and `spellPower` was
+     * one school-blind number, so ~293 of a stated 497 was carried as
+     * unmodelled text. `SchoolModifiers` now carries a spell power per school
+     * and `spellPowerFor` reads it, so the whole 497 arrives: 204 on the stat
+     * block, 293 scoped to Shadow, and NOTHING extra on Holy or Arcane.
      *
-     * The second belongs to this set alone. Almost every spell power line in
-     * Vestments of Prophecy names a SCHOOL -- "Increases damage done by Shadow
-     * spells and effects by up to 39" -- and `spellPower` here is school-blind.
-     * Applying a Shadow-only bonus to it would make the Priest's Holy and
-     * Arcane spells hit harder, so those lines stay unmodelled and the Gear
-     * panel prints all eleven of them.
-     *
-     * The planner reads 204 generic and 497 Shadow. This is the 204.
+     * The one that REMAINS is the usual one, and it is why this test asserts a
+     * STAT ARRIVING rather than a DPS delta: Forever's Priest spells state
+     * FLAT damage with no spell power coefficient, so all 497 points multiply
+     * nothing and the Shadow Priest's DPS did not move by so much as a tenth.
+     * A test written against its damage would have passed identically before
+     * the feature existed.
      * ------------------------------------------------------------------------
      */
     const actor = createPlayer({
@@ -238,6 +241,17 @@ describe('the fight', () => {
       talents: shadowBuild().talents,
       equipment: shadowBuild().equipment,
     });
+
+    // The school-blind half, unchanged and still the only thing on the stat
+    // block -- a keyed stat deliberately cannot go there.
     expect(actor.stats.get('spellPower')).toBe(204);
+
+    // The scoped half, and the planner's own total once the two are added.
+    expect(spellPowerFor(actor, 'shadow')).toBe(497);
+
+    // AND NO OTHER SCHOOL GAINED ANYTHING, which is the reason it could not
+    // be folded into the stat in the first place.
+    expect(spellPowerFor(actor, 'holy')).toBe(204);
+    expect(spellPowerFor(actor, 'arcane')).toBe(204);
   });
 });

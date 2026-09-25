@@ -142,19 +142,29 @@ The first caster built found the code already doing it.
 Recorded rather than quietly removed, because reading a comment instead of the
 code is how it got here.
 
-### 5b. What the Moonkin actually found — **two gaps, neither inventable**
+### 5b. What the Moonkin actually found — **all three have expired**
 
 | | |
 | --- | --- |
-| **No spell power coefficients** | Every Druid spell states flat damage — "350 to 412 Arcane damage" — and no coefficient. None is invented, so **gear does not scale a caster's damage at all**. |
+| ~~**No spell power coefficients**~~ | **EXPIRED, AND IT WAS NEVER A DATA GAP.** The spell text still states "350 to 412 Arcane damage" and no coefficient. The ruleset owner supplied the coefficient as a universal RULE -- `castTime / 3.5` of spell power -- which never needed stating per spell. Every caster gained 59% to 145%. See `docs/spell-coefficients.md`. |
 | ~~**No caster gear**~~ | **EXPIRED.** The Moonkin wears Cenarion Raiment and reads 439 spell power. Twelve sets were imported from the owner's own sixtyupgrades links; see `src/data/items/README.md`. |
-| **Spell power has no school** | New, and found by the same import. Most of the Priest's spell power is SHADOW-ONLY and `spellPower` is one school-blind number, so ~293 of it is listed and not applied. |
+| ~~**Spell power has no school**~~ | **EXPIRED.** `SchoolModifiers` carries a `spellPower` per school and `spellPowerFor` reads it, so the Shadow Priest's full 497 arrives -- 204 on the stat block, 293 scoped to Shadow. It moved the Priest's DPS by ZERO, because of the gap above it; the one profile it moved is Shockadin, whose seal has the project's only spell power coefficient. |
 
-The first gap is what still makes the Moonkin's DPS a floor: it is mana-limited,
-casting flat-damage spells, and all 439 points of its spell power multiply
-nothing. It gained 76.4% from its own gear anyway -- intellect buys casts and
-caster gear grants spell crit -- which is honest and still not worth quoting as
-a balance figure.
+**THE FIRST GAP WAS THE LAST TO GO AND IT WAS MISDIAGNOSED THE WHOLE TIME.** It
+was recorded here, and in five class file headers, as a limitation of Forever's
+spell DATA. The data was read correctly -- it really does state a flat range
+and no coefficient -- and the conclusion drawn from it was wrong: a coefficient
+is a RULE, and asking for it got one in a single message. The Moonkin went
+166.2 -> 353.1.
+
+**Check whether a missing number is missing DATA or a missing RULE before
+recording it as a gap**, and if it is a rule, ask. That is the standing "if it
+is in question, ASK" instruction paying for itself a third time, after Windfury
+and Careful Aim.
+
+The Moonkin had already gained 76.4% from its own gear before this, from
+intellect buying casts and from spell crit -- a stat mattering through a
+resource rather than through a coefficient.
 
 **Resistance is NOT among these.** The ruleset owner ruled that resistances on
 enemy targets have no impact on damage for now, so `resistancesFromItems`

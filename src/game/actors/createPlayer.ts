@@ -1,5 +1,6 @@
 import type {
   AuraDefinition,
+  DamageSchool,
   PartialStats,
   Reaction,
   Stats,
@@ -7,7 +8,7 @@ import type {
   WeaponProfile,
   WeaponSlot,
 } from '../../engine';
-import { Combatant, addStats, bindModifiers, makeStats } from '../../engine';
+import { Combatant, SchoolModifiers, addStats, bindModifiers, makeStats } from '../../engine';
 import { abilitiesForBuild } from '../abilities/abilitiesForClass';
 import type {
   ClassId,
@@ -41,7 +42,12 @@ import { EXTERNAL_HEALER } from '../encounters/externalHealer';
 import { talentBuild, talentContextFor } from '../talents/talentBuild';
 import { legalAllocation } from '../talents/talentRules';
 import { talentsForClass } from '../talents/talentData';
-import { liveEquipment, statsForStyle, weaponsForEquipment } from '../items/equipment';
+import {
+  liveEquipment,
+  schoolPowerForStyle,
+  statsForStyle,
+  weaponsForEquipment,
+} from '../items/equipment';
 import { reactionsForEquipment } from '../items/procs';
 import {
   BASE_BLOCK_CHANCE_WITH_SHIELD,
@@ -309,6 +315,30 @@ export function createPlayer(options: PlayerOptions): Combatant {
     { ...talentResourceMaximums(build.resourceMaximums), ...options.resourceMaximums },
   );
 
+  /*
+   * PER-SCHOOL MODIFIERS FROM TWO SOURCES, and gear is the new one.
+   *
+   * ------------------------------------------------------------------------
+   * Talents built this set until now -- Moonfury, Fire Power, Elemental Fury.
+   * Seventeen item lines add the fourth field to it: "Increases damage done by
+   * Shadow spells and effects by up to 39", which is spell power that only one
+   * school may read. `STAT_NAMES` is a closed flat set, so it cannot be a stat
+   * and joins the crit and damage already keyed by school.
+   *
+   * A NEW SET RATHER THAN ADDING TO `build.schoolModifiers`, because a
+   * `TalentBuild` is a VALUE and a caller may hold one across several
+   * characters. Mutating it would work exactly once and then hand the second
+   * character the first one's gear on top of its own -- the same shape of bug
+   * as the shared Windfury closure that stopped proccing after one iteration
+   * of a batch.
+   * ------------------------------------------------------------------------
+   */
+  const schoolModifiers = new SchoolModifiers();
+  schoolModifiers.merge(build.schoolModifiers);
+  for (const [school, spellPower] of Object.entries(schoolPowerForStyle(equipment, style))) {
+    schoolModifiers.add(school as DamageSchool, { spellPower });
+  }
+
   const abilities = abilitiesForBuild(characterClass, style, build);
   const rotation = rotationFor(
     characterClass,
@@ -357,9 +387,13 @@ export function createPlayer(options: PlayerOptions): Combatant {
     // set bonuses later. Held on the combatant so `dealDamage` can consult it
     // without every ability's `onCast` having to remember to.
     abilityModifiers: build.abilityModifiers,
-    // The same three modifiers keyed by SCHOOL: "your Fire spells" rather than
-    // "your Fireball". Consulted by `dealDamage` alongside the per-ability one.
-    schoolModifiers: build.schoolModifiers,
+    /*
+     * The same three modifiers keyed by SCHOOL -- "your Fire spells" rather
+     * than "your Fireball" -- plus a fourth field the other two scopes do not
+     * have: spell power for one school, which is where most of a Shadow
+     * Priest's and a Shockadin's gear lands. Talents and gear, combined above.
+     */
+    schoolModifiers,
     // And the same three scoped to MELEE or RANGED -- "all your melee
     // abilities", which is neither one ability nor one school.
     attackTableModifiers: build.attackTableModifiers,

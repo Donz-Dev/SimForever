@@ -1,6 +1,7 @@
 import type { Ability } from '../../engine';
 import { dealDamage, seconds } from '../../engine';
 import { baseManaFor } from '../character/baseStatLookup';
+import { channelTickCoefficient, directSpellCoefficient } from '../combat/spellCoefficient';
 import {
   ARCANE_BLAST,
   ARCANE_BLAST_UNMODELLED,
@@ -8,10 +9,16 @@ import {
   ARCANE_POWER_UNMODELLED,
   COMBUSTION,
   COMBUSTION_UNMODELLED,
+  FIREBALL_CAST_MS,
+  FIREBALL_COEFFICIENTS,
   FIREBALL_DOT,
+  FROSTFIRE_CAST_MS,
+  FROSTFIRE_COEFFICIENTS,
   FROSTFIRE_DOT,
   FROZEN_UNMODELLED,
   PRESENCE_OF_MIND,
+  PYROBLAST_CAST_MS,
+  PYROBLAST_COEFFICIENTS,
   PYROBLAST_DOT,
 } from '../auras/mage';
 
@@ -24,22 +31,22 @@ import {
  * talents read "your Fire spells" rather than naming an ability, and CHANNELLED
  * casts, because Arcane Missiles is the Arcane build's core spender.
  *
- * NO SPELL POWER COEFFICIENTS, for the third class running. Every Mage nuke
- * states flat damage -- "425 to 541 Fire damage" -- and no coefficient. Druid,
- * Shaman and now Mage: this is how Forever's spell data is written, and a
- * caster figure here is a FLOOR rather than an estimate.
+ * EVERY NUKE NOW SCALES, and the rule came from the ruleset owner rather than
+ * from the spell data: `castTime / 3.5` of the character's spell power, added
+ * to the flat damage the source states. The data is unchanged -- it still
+ * gives "425 to 541 Fire damage" and no coefficient -- but the coefficient is
+ * a RULE and it is universal, so it does not need to be stated per spell. See
+ * `game/combat/spellCoefficient.ts`.
+ *
+ * THREE OF THESE ARE HYBRIDS and their pairs live in `auras/mage.ts`, beside
+ * the burn each one leaves: Fireball, Pyroblast and Frostfire Bolt share one
+ * spell's scaling between the hit and the DoT rather than taking both.
  *
  * NOTHING FREEZES A RAID BOSS, which costs the Frost half of the Frostfire
  * build four talents and most of Ice Lance. See `FROZEN_UNMODELLED` -- they are
  * inert because of the TARGET rather than because of the engine.
  * ----------------------------------------------------------------------------
  */
-
-/** Said once, because every nuke in this file says it. */
-const NO_SPELL_COEFFICIENT =
-  'Its damage is flat. The source states a range and no spell power ' +
-  'coefficient, so none is invented -- a geared Mage understates this rather ' +
-  'than guessing at it.';
 
 /** The midpoint of a stated range. The combat table supplies the spread. */
 const midpoint = (low: number, high: number) => (low + high) / 2;
@@ -64,7 +71,7 @@ export const FIREBALL: Ability = {
   id: 'fireball',
   name: 'Fireball',
   cost: { resource: 'mana', amount: 410 },
-  castTimeMs: seconds(3.5),
+  castTimeMs: FIREBALL_CAST_MS,
   attackTable: 'spell',
   onCast: ({ simulation, caster, target, ability }) => {
     if (!target) return;
@@ -75,20 +82,25 @@ export const FIREBALL: Ability = {
       abilityName: ability.name,
       school: 'fire',
       baseAmount: FIREBALL_DAMAGE,
+      // The hit's share of the pair. NOT `directSpellCoefficient(3.5s)`: the
+      // burn takes the rest, and the two come out of one call so they cannot
+      // be weighted against different assumptions.
+      powerCoefficient: FIREBALL_COEFFICIENTS.direct,
       attackTable: ability.attackTable,
     });
     if (!result.avoided) simulation.applyAura(target, FIREBALL_DOT, caster.id);
   },
-  unmodelled: NO_SPELL_COEFFICIENT,
 };
 
 export const SCORCH_DAMAGE = midpoint(166, 196);
+export const SCORCH_CAST_MS = seconds(1.5);
+export const SCORCH_COEFFICIENT = directSpellCoefficient(SCORCH_CAST_MS);
 
 export const SCORCH: Ability = {
   id: 'scorch',
   name: 'Scorch',
   cost: { resource: 'mana', amount: 150 },
-  castTimeMs: seconds(1.5),
+  castTimeMs: SCORCH_CAST_MS,
   attackTable: 'spell',
   onCast: ({ simulation, caster, target, ability }) => {
     if (!target) return;
@@ -99,6 +111,7 @@ export const SCORCH: Ability = {
       abilityName: ability.name,
       school: 'fire',
       baseAmount: SCORCH_DAMAGE,
+      powerCoefficient: SCORCH_COEFFICIENT,
       attackTable: ability.attackTable,
     });
     /*
@@ -107,7 +120,6 @@ export const SCORCH: Ability = {
      * unconditionally would hand an untalented mage the debuff for free.
      */
   },
-  unmodelled: NO_SPELL_COEFFICIENT,
 };
 
 export const PYROBLAST_DAMAGE = midpoint(520, 646);
@@ -116,7 +128,7 @@ export const PYROBLAST: Ability = {
   id: 'pyroblast',
   name: 'Pyroblast',
   cost: { resource: 'mana', amount: 440 },
-  castTimeMs: seconds(6),
+  castTimeMs: PYROBLAST_CAST_MS,
   attackTable: 'spell',
   onCast: ({ simulation, caster, target, ability }) => {
     if (!target) return;
@@ -127,14 +139,16 @@ export const PYROBLAST: Ability = {
       abilityName: ability.name,
       school: 'fire',
       baseAmount: PYROBLAST_DAMAGE,
+      powerCoefficient: PYROBLAST_COEFFICIENTS.direct,
       attackTable: ability.attackTable,
     });
     if (!result.avoided) simulation.applyAura(target, PYROBLAST_DOT, caster.id);
   },
-  unmodelled: NO_SPELL_COEFFICIENT,
 };
 
 export const FIRE_BLAST_DAMAGE = midpoint(417, 489);
+/** Instant, so 1.5 / 3.5 by the owner's own wording. */
+export const FIRE_BLAST_COEFFICIENT = directSpellCoefficient(0);
 
 export const FIRE_BLAST: Ability = {
   id: 'fire_blast',
@@ -151,10 +165,10 @@ export const FIRE_BLAST: Ability = {
       abilityName: ability.name,
       school: 'fire',
       baseAmount: FIRE_BLAST_DAMAGE,
+      powerCoefficient: FIRE_BLAST_COEFFICIENT,
       attackTable: ability.attackTable,
     });
   },
-  unmodelled: NO_SPELL_COEFFICIENT,
 };
 
 /**
@@ -166,6 +180,7 @@ export const FIRE_BLAST: Ability = {
  * 60 trains rank 5.
  */
 export const BLAST_WAVE_DAMAGE = midpoint(453, 533);
+export const BLAST_WAVE_COEFFICIENT = directSpellCoefficient(0);
 
 export const BLAST_WAVE: Ability = {
   id: 'blast_wave',
@@ -182,12 +197,13 @@ export const BLAST_WAVE: Ability = {
       abilityName: ability.name,
       school: 'fire',
       baseAmount: BLAST_WAVE_DAMAGE,
+      powerCoefficient: BLAST_WAVE_COEFFICIENT,
       attackTable: ability.attackTable,
     });
   },
   unmodelled:
-    `${NO_SPELL_COEFFICIENT} It is an AREA effect and lands on the one target ` +
-    'this project has, so its value in a pull of several is not shown.',
+    'It is an AREA effect and lands on the one target this project has, so ' +
+    'its value in a pull of several is not shown.',
 };
 
 /** Combustion, granted by the Fire capstone. */
@@ -214,12 +230,14 @@ export const COMBUSTION_ABILITY: Ability = {
 // ---------------------------------------------------------------------------
 
 export const FROSTBOLT_DAMAGE = midpoint(457, 493);
+export const FROSTBOLT_CAST_MS = seconds(3);
+export const FROSTBOLT_COEFFICIENT = directSpellCoefficient(FROSTBOLT_CAST_MS);
 
 export const FROSTBOLT: Ability = {
   id: 'frostbolt',
   name: 'Frostbolt',
   cost: { resource: 'mana', amount: 290 },
-  castTimeMs: seconds(3),
+  castTimeMs: FROSTBOLT_CAST_MS,
   attackTable: 'spell',
   onCast: ({ simulation, caster, target, ability }) => {
     if (!target) return;
@@ -230,10 +248,11 @@ export const FROSTBOLT: Ability = {
       abilityName: ability.name,
       school: 'frost',
       baseAmount: FROSTBOLT_DAMAGE,
+      powerCoefficient: FROSTBOLT_COEFFICIENT,
       attackTable: ability.attackTable,
     });
   },
-  unmodelled: `${NO_SPELL_COEFFICIENT} Its slow does nothing; nothing here moves.`,
+  unmodelled: 'Its slow does nothing; nothing here moves.',
 };
 
 /**
@@ -254,7 +273,7 @@ export const FROSTFIRE_BOLT: Ability = {
   id: 'frostfire_bolt',
   name: 'Frostfire Bolt',
   cost: { resource: 'mana', amount: 370 },
-  castTimeMs: seconds(3),
+  castTimeMs: FROSTFIRE_CAST_MS,
   attackTable: 'spell',
   onCast: ({ simulation, caster, target, ability }) => {
     if (!target) return;
@@ -265,13 +284,15 @@ export const FROSTFIRE_BOLT: Ability = {
       abilityName: ability.name,
       school: 'fire',
       baseAmount: FROSTFIRE_BOLT_DAMAGE,
+      powerCoefficient: FROSTFIRE_COEFFICIENTS.direct,
       attackTable: ability.attackTable,
     });
     if (!result.avoided) simulation.applyAura(target, FROSTFIRE_DOT, caster.id);
   },
   unmodelled:
-    `${NO_SPELL_COEFFICIENT} It counts as both Frost and Fire; it is dealt as ` +
-    'Fire, which is the school both builds that cast it have talents for.',
+    'It counts as both Frost and Fire; it is dealt as Fire, which is the ' +
+    'school both builds that cast it have talents for. Its coefficient ' +
+    'therefore reads FIRE-scoped spell power and not Frost-scoped.',
 };
 
 /**
@@ -283,6 +304,7 @@ export const FROSTFIRE_BOLT: Ability = {
  */
 export const ICE_LANCE_DAMAGE = midpoint(136, 160);
 export const ICE_LANCE_FROZEN_MULTIPLIER = 4;
+export const ICE_LANCE_COEFFICIENT = directSpellCoefficient(0);
 
 export const ICE_LANCE: Ability = {
   id: 'ice_lance',
@@ -298,10 +320,11 @@ export const ICE_LANCE: Ability = {
       abilityName: ability.name,
       school: 'frost',
       baseAmount: ICE_LANCE_DAMAGE,
+      powerCoefficient: ICE_LANCE_COEFFICIENT,
       attackTable: ability.attackTable,
     });
   },
-  unmodelled: `${NO_SPELL_COEFFICIENT} ${FROZEN_UNMODELLED}`,
+  unmodelled: FROZEN_UNMODELLED,
 };
 
 // ---------------------------------------------------------------------------
@@ -325,12 +348,30 @@ export const ICE_LANCE: Ability = {
  */
 export const ARCANE_MISSILES_PER_TICK = 209;
 export const ARCANE_MISSILES_TICKS = 5;
+export const ARCANE_MISSILES_CHANNEL_MS = seconds(ARCANE_MISSILES_TICKS);
+
+/*
+ * THE WHOLE CHANNEL IS THE CAST, so five seconds over 3.5 is 1.429 shared
+ * evenly across the five missiles -- 0.286 each. It is the largest total
+ * coefficient in the project and it is NOT clamped, unlike a direct cast:
+ * a channel pays for its scaling in time, which is the thing the clamp on a
+ * direct cast exists to prevent.
+ *
+ * FROM THE BASE CHANNEL TIME, not the talented one. Missile Barrage halves
+ * the channel and keeps all five missiles; reading the shortened time here
+ * would make that talent cut the spell's scaling in half while doubling its
+ * rate, which nets out to nothing and would look like the talent working.
+ */
+export const ARCANE_MISSILES_TICK_COEFFICIENT = channelTickCoefficient(
+  ARCANE_MISSILES_CHANNEL_MS,
+  ARCANE_MISSILES_TICKS,
+);
 
 export const ARCANE_MISSILES: Ability = {
   id: 'arcane_missiles',
   name: 'Arcane Missiles',
   cost: { resource: 'mana', amount: 655 },
-  castTimeMs: seconds(ARCANE_MISSILES_TICKS),
+  castTimeMs: ARCANE_MISSILES_CHANNEL_MS,
   channelTicks: ARCANE_MISSILES_TICKS,
   attackTable: 'spell',
   onCast: ({ simulation, caster, target, ability }) => {
@@ -342,10 +383,11 @@ export const ARCANE_MISSILES: Ability = {
       abilityName: ability.name,
       school: 'arcane',
       baseAmount: ARCANE_MISSILES_PER_TICK,
+      // Per MISSILE. `onCast` runs once per tick for a channel.
+      powerCoefficient: ARCANE_MISSILES_TICK_COEFFICIENT,
       attackTable: ability.attackTable,
     });
   },
-  unmodelled: NO_SPELL_COEFFICIENT,
 };
 
 /**
@@ -359,6 +401,8 @@ export const ARCANE_MISSILES: Ability = {
  */
 export const ARCANE_BLAST_BASE_MANA_FRACTION = 0.15;
 export const ARCANE_BLAST_DAMAGE = midpoint(364, 424);
+export const ARCANE_BLAST_CAST_MS = seconds(2.5);
+export const ARCANE_BLAST_COEFFICIENT = directSpellCoefficient(ARCANE_BLAST_CAST_MS);
 
 export const ARCANE_BLAST_ABILITY: Ability = {
   id: 'arcane_blast',
@@ -367,7 +411,7 @@ export const ARCANE_BLAST_ABILITY: Ability = {
     resource: 'mana',
     amount: Math.round(MAGE_BASE_MANA * ARCANE_BLAST_BASE_MANA_FRACTION),
   },
-  castTimeMs: seconds(2.5),
+  castTimeMs: ARCANE_BLAST_CAST_MS,
   attackTable: 'spell',
   onCast: ({ simulation, caster, target, ability }) => {
     if (!target) return;
@@ -378,6 +422,7 @@ export const ARCANE_BLAST_ABILITY: Ability = {
       abilityName: ability.name,
       school: 'arcane',
       baseAmount: ARCANE_BLAST_DAMAGE,
+      powerCoefficient: ARCANE_BLAST_COEFFICIENT,
       attackTable: ability.attackTable,
     });
     /*
@@ -389,7 +434,7 @@ export const ARCANE_BLAST_ABILITY: Ability = {
      */
     simulation.applyAura(caster, ARCANE_BLAST, caster.id);
   },
-  unmodelled: `${NO_SPELL_COEFFICIENT} ${ARCANE_BLAST_UNMODELLED}`,
+  unmodelled: ARCANE_BLAST_UNMODELLED,
 };
 
 /** Arcane Power, granted by the Arcane capstone. */

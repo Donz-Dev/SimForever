@@ -8,12 +8,14 @@ import {
   LACERATE,
   LACERATE_UNMODELLED,
   MAUL_BONUS_DAMAGE,
+  MOONFIRE_COEFFICIENTS,
   MOONFIRE_DOT,
   RAKE_DOT,
   TIGERS_FURY,
   ripAura,
 } from '../auras/druid';
 import { awardComboPoint, hasComboPoints, spendComboPoints } from '../combat/comboPoints';
+import { directSpellCoefficient } from '../combat/spellCoefficient';
 
 /**
  * Druid abilities, from the WoW Forever beta client (build 1.60.1.69876).
@@ -30,20 +32,20 @@ import { awardComboPoint, hasComboPoints, spendComboPoints } from '../combat/com
  * rather than a gap -- which is a change from how the engine survey recorded
  * it, and the reason these figures are not "optimistic".
  *
- * NO SPELL POWER COEFFICIENTS. Every Druid spell states flat damage -- "62 to
- * 68 Nature damage" -- and no coefficient at all. None is invented, so a geared
- * Moonkin understates rather than guesses, and each ability says so.
+ * EVERY SPELL SCALES, AND THE DATA DID NOT CHANGE. The spell text still states
+ * flat damage -- "62 to 68 Nature damage" -- and no coefficient; what arrived
+ * is the ruleset owner's universal RULE, `castTime / 3.5` of spell power,
+ * which never needed stating per spell. This file said the opposite for as
+ * long as nobody had asked. See `game/combat/spellCoefficient.ts`.
+ *
+ * MOONFIRE IS A HYBRID and shares one coefficient between its hit and its
+ * burn; Insect Swarm is a PURE DoT and takes the whole periodic one. The pairs
+ * live in `auras/druid.ts`, beside the effect half.
  * ----------------------------------------------------------------------------
  */
 
 const MAIN_HAND = 'mainHand' as const;
 const PHYSICAL = 'physical' as const;
-
-/** Every Druid nuke states flat damage and no scaling. Said once, here. */
-const NO_SPELL_COEFFICIENT =
-  'Its damage is flat. The source states a range and no spell power ' +
-  'coefficient, so none is invented -- a geared Moonkin understates this ' +
-  'rather than guessing at it.';
 
 /** The midpoint of a stated range. The combat table supplies the spread. */
 const midpoint = (low: number, high: number) => (low + high) / 2;
@@ -61,12 +63,21 @@ export const ECLIPSE_REDUCTION_BONUS = 'eclipseReductionSeconds';
 // ---------------------------------------------------------------------------
 
 export const WRATH_DAMAGE = midpoint(62, 68);
+export const WRATH_CAST_MS = seconds(2);
+/*
+ * FROM THE BASE CAST TIME, not `ability.castTimeMs`. Improved Wrath reduces
+ * the cast by half a second a rank, and Eclipse shortens Starfire the same
+ * way -- reading the reduced figure would make a cast-time talent quietly
+ * REDUCE the spell's scaling with gear, which is backwards and would read as
+ * a perfectly ordinary number.
+ */
+export const WRATH_COEFFICIENT = directSpellCoefficient(WRATH_CAST_MS);
 
 export const WRATH: Ability = {
   id: 'wrath',
   name: 'Wrath',
   cost: { resource: 'mana', amount: 120 },
-  castTimeMs: seconds(2),
+  castTimeMs: WRATH_CAST_MS,
   attackTable: 'spell',
   onCast: ({ simulation, caster, target, ability }) => {
     if (!target) return;
@@ -77,6 +88,7 @@ export const WRATH: Ability = {
       abilityName: ability.name,
       school: 'nature',
       baseAmount: WRATH_DAMAGE,
+      powerCoefficient: WRATH_COEFFICIENT,
       attackTable: ability.attackTable,
     });
 
@@ -97,16 +109,17 @@ export const WRATH: Ability = {
       }
     }
   },
-  unmodelled: NO_SPELL_COEFFICIENT,
 };
 
 export const STARFIRE_DAMAGE = midpoint(350, 412);
+export const STARFIRE_CAST_MS = seconds(3.5);
+export const STARFIRE_COEFFICIENT = directSpellCoefficient(STARFIRE_CAST_MS);
 
 export const STARFIRE: Ability = {
   id: 'starfire',
   name: 'Starfire',
   cost: { resource: 'mana', amount: 340 },
-  castTimeMs: seconds(3.5),
+  castTimeMs: STARFIRE_CAST_MS,
   attackTable: 'spell',
   onCast: ({ simulation, caster, target, ability }) => {
     if (!target) return;
@@ -117,10 +130,10 @@ export const STARFIRE: Ability = {
       abilityName: ability.name,
       school: 'arcane',
       baseAmount: STARFIRE_DAMAGE,
+      powerCoefficient: STARFIRE_COEFFICIENT,
       attackTable: ability.attackTable,
     });
   },
-  unmodelled: NO_SPELL_COEFFICIENT,
 };
 
 export const MOONFIRE_DIRECT = midpoint(128, 150);
@@ -140,11 +153,11 @@ export const MOONFIRE: Ability = {
       abilityName: ability.name,
       school: 'arcane',
       baseAmount: MOONFIRE_DIRECT,
+      powerCoefficient: MOONFIRE_COEFFICIENTS.direct,
       attackTable: ability.attackTable,
     });
     if (!result.avoided) simulation.applyAura(target, MOONFIRE_DOT, caster.id);
   },
-  unmodelled: NO_SPELL_COEFFICIENT,
 };
 
 export const INSECT_SWARM_ABILITY: Ability = {

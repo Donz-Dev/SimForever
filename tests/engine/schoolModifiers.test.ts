@@ -4,9 +4,12 @@ import {
   ALL_ABILITIES,
   AbilityModifiers,
   SchoolModifiers,
+  SeededRNG,
   castAbility,
   dealDamage,
+  resolveHealing,
   seconds,
+  spellPowerFor,
 } from '../../src/engine';
 import { buildSimulation } from '../helpers/buildSimulation';
 import { makeAttacker, makeTarget } from '../helpers/actors';
@@ -238,5 +241,172 @@ describe('a channel is a cast that ticks', () => {
 
     const finished = run(5, seconds(5));
     expect(finished.actor.isCasting(seconds(5))).toBe(false);
+  });
+});
+
+/*
+ * ------------------------------------------------------------------------------
+ * RULESET: SPELL POWER CAN BE SCOPED TO A SCHOOL TOO, and that is the fourth
+ * field on `SchoolModifier` -- the one the other two scopes do not have.
+ *
+ * "Increases damage done by Shadow spells and effects by up to 39" is most of a
+ * Shadow Priest's spell power and every word of it names a school. One number
+ * on the stat block cannot hold that: adding it there would make the same
+ * character's Holy and Arcane spells hit harder, which is the item saying
+ * something it does not say. `STAT_NAMES` is a deliberately closed flat set and
+ * has no room for a keyed stat, so it joins the crit and damage already keyed
+ * the same way.
+ *
+ * GEAR IS THE FIRST CALLER, which is new. Talents built every other entry in
+ * this class; `createPlayer` folds the equipped set's in beside them.
+ * ------------------------------------------------------------------------------
+ */
+
+const COEFFICIENT = 0.5;
+
+/** A spell that actually SCALES, so the power term is visible in the damage. */
+const scalingSpellOf = (school: 'fire' | 'shadow'): Ability => ({
+  id: `scaling_${school}`,
+  name: `Scaling ${school}`,
+  requiresTarget: true,
+  onCast: ({ simulation, caster, target, ability }) => {
+    if (!target) return;
+    dealDamage(simulation, {
+      source: caster,
+      target,
+      abilityId: ability.id,
+      abilityName: ability.name,
+      school,
+      baseAmount: BASE,
+      powerCoefficient: COEFFICIENT,
+      appliesArmor: false,
+    });
+  },
+});
+
+function scalingFight(schoolModifiers: SchoolModifiers, spellPower: number) {
+  const actor: Combatant = makeAttacker({
+    autoAttack: 'none',
+    abilities: [scalingSpellOf('fire'), scalingSpellOf('shadow')],
+    stats: { spellPower },
+    schoolModifiers,
+  });
+  const target = makeTarget({ maxHealth: 1_000_000 });
+  const simulation = buildSimulation([actor, target]);
+
+  let at = 0;
+  const damage = (school: 'fire' | 'shadow') => {
+    at += seconds(2);
+    simulation.advanceTo(at);
+    const before = target.health.current;
+    const result = castAbility(
+      simulation,
+      actor,
+      actor.abilities.get(`scaling_${school}`)!,
+      target,
+    );
+    expect(result, school).toEqual({ ok: true });
+    return before - target.health.current;
+  };
+
+  return { damage, actor };
+}
+
+describe('per-school spell power', () => {
+  it('adds to the school-blind pool for the school it names, and only that one', () => {
+    const schools = new SchoolModifiers();
+    schools.add('shadow', { spellPower: 300 });
+    const { damage, actor } = scalingFight(schools, 200);
+
+    expect(spellPowerFor(actor, 'shadow')).toBe(500);
+    expect(spellPowerFor(actor, 'fire')).toBe(200);
+
+    // And the damage follows, because `scaleByPower` reads the same function.
+    expect(damage('shadow')).toBeCloseTo(BASE + COEFFICIENT * 500, 6);
+    expect(damage('fire')).toBeCloseTo(BASE + COEFFICIENT * 200, 6);
+  });
+
+  it('ADDS two sources for one school rather than multiplying them', () => {
+    /*
+     * Eight pieces of Lawbringer each saying "up to N Holy" are one pool of
+     * Holy power, exactly as eight pieces each saying "+N Strength" are one
+     * pool of strength. A flat power term has no other reading -- and
+     * `combine` multiplies the damage multiplier on the same object, so the
+     * two rules live one line apart and could easily have been swapped.
+     */
+    const schools = new SchoolModifiers();
+    schools.add('shadow', { spellPower: 100 });
+    schools.add('shadow', { spellPower: 39 });
+    const { actor } = scalingFight(schools, 0);
+
+    expect(spellPowerFor(actor, 'shadow')).toBe(139);
+  });
+
+  it('FOLLOWS A BUFF, because it is read at the point of use', () => {
+    /*
+     * The scoped half is fixed when the character is built; the school-blind
+     * half is a stat and moves. `spellPowerFor` re-reads `stats.effective`
+     * every call, so a buff that grants spell power raises the scoped school
+     * too -- resolving the sum once at build time would freeze it at the
+     * unbuffed figure while still reading as a perfectly plausible number.
+     */
+    const schools = new SchoolModifiers();
+    schools.add('shadow', { spellPower: 300 });
+    const { actor } = scalingFight(schools, 200);
+
+    actor.stats.addModifier({
+      sourceId: 'test_buff',
+      stat: 'spellPower',
+      operation: 'flat',
+      value: 50,
+    });
+    expect(spellPowerFor(actor, 'shadow')).toBe(550);
+    expect(spellPowerFor(actor, 'fire')).toBe(250);
+  });
+
+  it('merges two SETS of modifiers without mutating either', () => {
+    /*
+     * `createPlayer` has two sources -- the talent build and the equipped gear
+     * -- and a `TalentBuild` is a VALUE a caller may hold across several
+     * characters. Adding the gear to it directly would work exactly once and
+     * then hand the second character the first one's gear as well.
+     */
+    const fromTalents = new SchoolModifiers();
+    fromTalents.add('shadow', { damageMultiplier: 1.1 });
+
+    const combined = new SchoolModifiers();
+    combined.merge(fromTalents);
+    combined.add('shadow', { spellPower: 293 });
+
+    expect(combined.for('shadow').spellPower).toBe(293);
+    expect(combined.for('shadow').damageMultiplier).toBeCloseTo(1.1, 6);
+
+    // The source is untouched: no spell power leaked back into it.
+    expect(fromTalents.for('shadow').spellPower ?? 0).toBe(0);
+  });
+
+  it('is DAMAGE only, so a heal reads the school-blind pool alone', () => {
+    /*
+     * The gear wording draws this line itself: the school-blind line is
+     * "increases damage AND HEALING done by magical spells", the scoped one is
+     * "increases DAMAGE done by Shadow spells". So `resolveHealing` reads the
+     * stat and never `spellPowerFor` -- a Holy-scoped 161 on a Paladin raises
+     * its seal and not its Holy Light.
+     */
+    const schools = new SchoolModifiers();
+    schools.add('holy', { spellPower: 161 });
+    const actor = makeAttacker({
+      autoAttack: 'none',
+      stats: { spellPower: 100 },
+      schoolModifiers: schools,
+    });
+    const target = makeTarget({ maxHealth: 1_000_000 });
+    const rng = new SeededRNG(1);
+
+    const healed = resolveHealing(
+      { source: actor, target, abilityName: 'Test Heal', baseAmount: 500, powerCoefficient: 1, canCrit: false },
+      rng,
+    );
+    expect(healed.raw).toBeCloseTo(600, 6);
   });
 });

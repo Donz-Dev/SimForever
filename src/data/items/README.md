@@ -133,19 +133,35 @@ Spell Power is a flat 30 spell power, which the five caster sets put on a staff 
 a dagger. A stat enchant applies to a weapon that is only ever HELD, which is
 what a caster's main hand is.
 
+**SPELL POWER FOR ONE SCHOOL IS NOT THE SAME STAT, and it is not a stat at all.**
+"Increases damage done by Shadow spells and effects by up to 39" names a school;
+"Increases damage and healing done by magical spells and effects by up to 47"
+does not. Seventeen lines say the first -- nine Priest pieces naming Shadow,
+eight Lawbringer pieces naming Holy -- and they land in `Item.schoolPower`,
+which becomes a `SchoolModifiers` entry beside the crit and damage already keyed
+by school. `STAT_NAMES` is a deliberately closed flat set with no room for a
+keyed stat, which is why this has its own route out of the item rather than
+being `shadowSpellPower`.
+
+**They cannot be folded together in EITHER direction.** A Shadow-only bonus
+added to `spellPower` would make the same character's Holy and Arcane spells hit
+harder; a generic bonus filed under one school would be lost by the other six.
+The wording also draws the damage/healing line for us: the scoped one says
+"damage", the blind one says "damage AND HEALING", so `resolveHealing` reads the
+stat alone and a Paladin's 161 Holy raises its seal and not its Holy Light.
+
+**It moved exactly one profile, and not the one that found it.** Forever's
+Priest spells state flat damage and no coefficient, so the Shadow Priest's full
+497 multiplies nothing and its DPS did not move by a tenth. The Paladin's seal
+is the one formula in the project with a spell power term, so Shockadin's 161
+Holy is worth ~9.5 DPS -- and Retribution's 79 is worth zero, because its seals
+are Command and Crusader and **Seal of Command is 70% of WEAPON damage with no
+spell power term**. Assert the stat arriving, not a DPS delta.
+
 ## What is NOT modelled, and why
 
-Thirty-one lines across the nine files, plus every set bonus. The ones that cost
+Fourteen lines across the nine files, plus every set bonus. The ones that cost
 a real number:
-
-**SCHOOL-SPECIFIC SPELL POWER, which is most of the Priest's set.** "Increases
-damage done by Shadow spells and effects by up to 39" appears on six of the eight
-Vestments of Prophecy pieces and at 75 on Anathema, and `spellPower` here is one
-school-blind number. Applying a Shadow-only bonus to it would make the Priest's
-Holy and Arcane spells hit harder, so it is listed instead. The planner reads 204
-generic and 497 Shadow; this character gets the 204. **That ~293 is the largest
-known shortfall in the item data**, and it is a missing engine stat rather than
-missing data. Eight Paladin lines say the same thing about Holy.
 
 **+172 ATTACK POWER IN CAT, BEAR AND DIRE BEAR FORMS ONLY**, on the Glaive of
 Obsidian Fury that both feral Druids hold. An item stat cannot be conditional on
@@ -161,6 +177,14 @@ four-piece is a flat +2% spell crit that would have read as simply missing.
 **Ability-specific relic lines.** Almost everything an idol, libram or totem does
 names one ability: "the damage of your Moonfire spell", "the rage cost of Maul and
 Swipe". The `relic` slot exists so the item is visible rather than absent.
+
+**Two of them are SPELL POWER for a named ability**, which is the scope between
+the school-scoped kind above and nothing: Totem of the Storm's "Increases damage
+done by Chain Lightning and Lightning Bolt by up to 33" and Idol of the Moon's
+"Increases the damage of your Moonfire spell by up to 33". `AbilityModifiers` is
+the shape they want and it deliberately has no `spellPower` field -- the type is
+what stops a modifier being hung where nothing reads it. Worth nothing today in
+any case: neither the Shaman's nor the Druid's spells state a coefficient.
 
 **Totem of Rage grants nothing at all.** The tooltip Wowhead serves for id 227977
 carries no equip line -- item level, binding, "Relic", and nothing else. Whatever
