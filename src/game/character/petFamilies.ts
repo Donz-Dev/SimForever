@@ -22,15 +22,47 @@ export interface PetFamilyDefinition {
   /**
    * Base swing speed in seconds.
    *
-   * A PLACEHOLDER FOR EVERY FAMILY. The Forever Hunter wiki says "pets can
-   * have different base attack speeds" and "pet damage is currently not
-   * normalized by attack speed" -- which states that the numbers differ
-   * without stating any of them. Left undefined here so every family falls
-   * back to the one named placeholder in `createPet`, rather than inventing a
-   * spread that would look researched.
+   * STILL UNSET FOR EVERY FAMILY, and it no longer matters to the damage.
+   * Attack speed is a property of the INDIVIDUAL PET rather than the family
+   * -- Petopia lists Cats from 1.0 to 1.6 seconds and Bears from 2.0 to 2.5
+   * -- so there is no family figure to state. What changed is that it is now
+   * damage-NEUTRAL: `createPet` multiplies a base DPS by the swing, so a
+   * faster pet takes proportionally smaller bites of the same total. Both
+   * sources say so in as many words. See `PLACEHOLDER_PET_SWING_SECONDS`.
    */
   readonly swingSeconds?: number;
+  /**
+   * The family's damage, health and armor modifiers.
+   *
+   * --------------------------------------------------------------------------
+   * REAL NUMBERS, and the first pet figures in this project that are. From
+   * Petopia Classic, which the Forever Hunter wiki names as the source for
+   * per-family detail -- and the Cat row CROSS-CHECKS EXACTLY against the
+   * wiki's own "Notable Family Modifiers" table (1.10 / 0.98 / 1.00), which
+   * is what makes the other four trustworthy from the same table.
+   *
+   * CLASSIC VALUES THAT ARE FOREVER'S VALUES. The wiki's Forever-changes page
+   * lists what Forever does to pets -- six new abilities and one item -- and
+   * pet base damage, scaling and attack speed are not on it. That is the same
+   * derivation this project already used for Claw and Bite, whose numbers the
+   * wiki confirms are unchanged.
+   * --------------------------------------------------------------------------
+   */
+  readonly damageModifier: number;
+  readonly healthModifier: number;
+  readonly armorModifier: number;
 }
+
+/**
+ * A family nobody has figures for: neutral on all three.
+ *
+ * The four WARLOCK families. Petopia covers Hunter pets and the Forever
+ * Hunter wiki covers Hunter pets, so a demon has no row in either -- and
+ * both Warlock profiles take Demonic Sacrifice, which kills the demon before
+ * the pull, so no Warlock pet is ever built. Neutral and said to be, rather
+ * than a Hunter's numbers borrowed sideways.
+ */
+const UNMODIFIED = { damageModifier: 1, healthModifier: 1, armorModifier: 1 } as const;
 
 /**
  * Pet families, HUNTER AND WARLOCK BOTH.
@@ -67,15 +99,23 @@ const SPELLBOOK_NAME: Record<PetFamilyId, string> = {
 };
 
 export const PET_FAMILIES: Record<PetFamilyId, PetFamilyDefinition> = {
-  cat: { id: 'cat', name: 'Cat' },
-  wolf: { id: 'wolf', name: 'Wolf' },
-  bear: { id: 'bear', name: 'Bear' },
-  raptor: { id: 'raptor', name: 'Raptor' },
-  boar: { id: 'boar', name: 'Boar' },
-  imp: { id: 'imp', name: 'Imp' },
-  voidwalker: { id: 'voidwalker', name: 'Voidwalker' },
-  succubus: { id: 'succubus', name: 'Succubus' },
-  felhunter: { id: 'felhunter', name: 'Felhunter' },
+  // Damage / health / armor, per Petopia Classic. Cat is the one the Beast
+  // Mastery preset brings, and the one both sources state.
+  cat: { id: 'cat', name: 'Cat', damageModifier: 1.1, healthModifier: 0.98, armorModifier: 1.0 },
+  wolf: { id: 'wolf', name: 'Wolf', damageModifier: 1.0, healthModifier: 1.0, armorModifier: 1.05 },
+  bear: { id: 'bear', name: 'Bear', damageModifier: 0.91, healthModifier: 1.08, armorModifier: 1.05 },
+  raptor: {
+    id: 'raptor',
+    name: 'Raptor',
+    damageModifier: 1.1,
+    healthModifier: 0.95,
+    armorModifier: 1.03,
+  },
+  boar: { id: 'boar', name: 'Boar', damageModifier: 0.9, healthModifier: 1.04, armorModifier: 1.09 },
+  imp: { id: 'imp', name: 'Imp', ...UNMODIFIED },
+  voidwalker: { id: 'voidwalker', name: 'Voidwalker', ...UNMODIFIED },
+  succubus: { id: 'succubus', name: 'Succubus', ...UNMODIFIED },
+  felhunter: { id: 'felhunter', name: 'Felhunter', ...UNMODIFIED },
 };
 
 export function isPetFamilyId(value: unknown): value is PetFamilyId {

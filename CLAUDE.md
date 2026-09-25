@@ -351,6 +351,28 @@ the HIGHEST attack power source, and 100% of crit, which makes a Forever pet
 far more gear-sensitive than a Classic one. A pet's own base damage and swing
 speed are stated nowhere and are placeholders.
 
+**A PET'S BASE IS A DPS AND NOT A PER-SWING DAMAGE, which makes ITS SWING
+SPEED DAMAGE-NEUTRAL.** The Forever Hunter wiki gives auto attack as
+`((PetBaseDPS + AP / 14) x mods) x PetSwingSpeed`, and `powerCoefficient` is
+already `speed / 14`, so a base DPS multiplied by the swing reproduces the
+whole line. The model before it carried a flat 100 per swing, which meant a
+one-second pet dealt twice a two-second pet's damage -- and both sources say
+the opposite outright: the wiki that "faster attack speed does not inherently
+increase the pet's base DPS", Petopia that "faster pets may attack more
+frequently but they do proportionally less damage per hit". **A placeholder in
+the wrong UNIT is worse than a placeholder with the wrong value**, because the
+value is only wrong once and the unit is wrong every time something else moves.
+
+**PET FAMILY MODIFIERS ARE REAL DATA AND THE CAT ROW PROVES THE TABLE.**
+Petopia Classic states damage, health and armor per family -- Cat 1.10 / 0.98 /
+1.00 -- and the Forever wiki's own "Notable Family Modifiers" gives the same
+three for the Cat, which is what makes the other four trustworthy from the same
+source. **Forever's changes page does not list pet base damage, scaling or
+attack speed**, so Classic's are Forever's here, by the same derivation this
+project already used for Claw and Bite. Happiness is 125 / 100 / 75 and a fed
+pet is Happy -- an assumption about the player, like Improved Tracking's,
+stated on the constant.
+
 **A TEMPORARY SUMMON IS MODELLED WITHOUT A COMBATANT**, on the ruleset owner's
 call: the engine cannot add one mid-fight, so a Hunter's hawk is a periodic
 effect on the Hunter that deals the hawk's damage. The damage lands and is
