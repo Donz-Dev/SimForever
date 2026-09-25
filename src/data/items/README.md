@@ -61,7 +61,17 @@ node tools/import_item.mjs --verify        # re-parse EVERY item on file
 
 A new set is a new entry in `tools/item-sets.json` -- its file, its game, its
 description, the sixtyupgrades URL and the ids in slot order -- plus an import in
-`itemData.ts`'s `ITEM_FILES`. `--verify` reads the same spec, so **a file added to
+`itemData.ts`'s `ITEM_FILES`.
+
+**`--build` IS A GENERATOR AND NOT ONLY A REFRESH.** The spec lists every id and
+every file's own header, so deleting the whole of `src/data/items/*.json` and
+running it brings all 151 items back byte for byte, provenance included. It did
+not: the first two files said "reuse the ids already in the file", which left
+fourteen ids -- the Giantstalker pieces, Rhok'delar, Dreadforge Retaliator, the
+Royal Seal -- recorded nowhere but inside the data they were meant to rebuild.
+Deleting one of those files would have failed rather than regenerated it, and
+listing the ids alone brought the items back while silently dropping the
+sixtyupgrades link they came from. `--verify` reads the same spec, so **a file added to
 one is covered by the other**; the two lists used to be separate and a file was
 once added to only one, which turns "re-parse everything on file" into a false
 promise.

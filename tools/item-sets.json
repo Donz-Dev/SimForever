@@ -9,19 +9,44 @@
   "sets (Choker of the Fire Lord is worn by five of them), so which file OWNS a",
   "shared piece is decided here and nowhere else.",
   "",
-  "`ids: null` means 'the ids already in the file, in their current order' --",
-  "the two files that predate this spec, rebuilt rather than re-listed."
+  "EVERY FILE LISTS ITS OWN IDS, so `--build` can regenerate the whole item",
+  "data set from nothing. The first two used to say `ids: null`, meaning 'the ids",
+  "already in the file' -- which made a rebuild a REFRESH rather than a",
+  "generator: fourteen ids existed only inside the data files, and deleting one",
+  "would have failed instead of rebuilding it.",
+  "",
+  "A FILE'S OWN HEADER IS HERE TOO -- its set name, description and source url --",
+  "because a rebuild of a MISSING file restores whatever this says and nothing",
+  "else. Listing only the ids brought the twelve Hunter items back and dropped",
+  "the sixtyupgrades link they came from.",
+  "",
+  "AN ITEM'S GAME IS PER ITEM, NOT PER SET. `classic-warrior.json` is eighteen",
+  "Classic stand-ins and ONE real Forever item, so The Immovable Object names",
+  "its own endpoint; a file-wide game silently replaced it with its Classic",
+  "self once already."
  ],
  "sets": [
   {
    "file": "src/data/items/classic-warrior.json",
+   "source": "https://www.wowhead.com/classic",
    "game": "classic",
-   "ids": null
+   "ids": [
+    226495, 226492, 226494, 226499, 226497, 226498, 226493, 226496,
+    17075, 228265, 228229, 17069,
+    228685, 19325, 228261, 13965, 11815, 13340,
+    { "id": 19321, "game": "forever" }
+   ]
   },
   {
    "file": "src/data/items/sod-hunter.json",
+   "set": "sod-hunter",
+   "description": "A level 60 Hunter's gear, from a sixtyupgrades.com set supplied by the project owner. Season of Discovery items, the same source and id namespace as the Unstoppable Might set already in classic-warrior.json.",
+   "source": "https://sixtyupgrades.com/sod/set/kZxkfqEdDwGAZBxBwUcVPN",
    "game": "classic",
-   "ids": null
+   "ids": [
+    228291, 226527, 226534, 228284, 227981, 226528, 226529, 226532, 226531,
+    228286, 18473, 228334
+   ]
   },
   {
    "file": "src/data/items/sod-rogue.json",
@@ -94,7 +119,7 @@
   {
    "file": "src/data/items/sod-priest.json",
    "set": "sod-priest",
-   "description": "A level 60 Shadow Priest's gear: full Vestments of Prophecy with Anathema and Skul's Ghastly Touch, from a sixtyupgrades.com set the owner supplied. Season of Discovery items. MOST OF THIS SET'S SPELL POWER IS SHADOW-ONLY -- 293 of a stated 497 -- and it is applied to the Shadow school alone, through Item.schoolPower and SchoolModifiers rather than through the school-blind spellPower stat. It still multiplies nothing, because Forever's Priest spells state flat damage and no coefficient; see src/data/items/README.md.",
+   "description": "A level 60 Shadow Priest's gear: full Vestments of Prophecy with Anathema and Skul's Ghastly Touch, from a sixtyupgrades.com set the owner supplied. Season of Discovery items. MOST OF THIS SET'S SPELL POWER IS SHADOW-ONLY -- 293 of a stated 497 -- and it is applied to the Shadow school alone, through Item.schoolPower and SchoolModifiers rather than through the school-blind spellPower stat. It SCALES the Priest's spells, at the coefficient in docs/spell-coefficients.md -- this sentence used to say it multiplied nothing, which was true until a coefficient arrived; see src/data/items/README.md.",
    "source": "https://sixtyupgrades.com/sod/set/3cmwQu296c7Fwqc2VzpxLQ",
    "game": "classic",
    "ids": [
