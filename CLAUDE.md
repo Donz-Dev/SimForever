@@ -719,6 +719,30 @@ while firing never once. The SoD tooltip also states a 2-second internal
 cooldown where the code carries the owner's 1.5; the disagreement is recorded
 rather than averaged.
 
+**GEAR BELONGS TO A CLASS, so changing class replaces it.** `applyChange` in
+the Character panel already re-resolved the combat style and dropped the stance
+for exactly this reason -- "a profile should not quietly carry bear around", "a
+Mage should not quietly carry defensive around" -- and gear was not on that list,
+so a Paladin switched over from a Mage kept ARCANIST CLOTH. A RACE change keeps
+it: gear is not a race's, and re-rolling someone's slots because they switched
+Orc to Troll is the annoying kind of helpful.
+
+**THE TWO PALADIN SHIELD BUILDS ARE TOLD APART BY `encounter.targetAttacks`.**
+Protection and Shockadin both hold a one-hander and a shield -- the second only
+because Earth and Fire is a caster shield -- so the STYLE cannot separate them,
+and `isTankBuild` cannot either, because it reads a stance and stances belong to
+the Warrior. The ruleset owner's answer is the encounter: the target swings back
+at a tank and stands still for a Shockadin. Same shape as `isTankBuild`, one
+field further out.
+
+**THE SETS LIVE IN `game/items/gearSets.ts`, NOT IN `presets.ts` WHERE THEY WERE
+WRITTEN.** Two layers need them -- a preset, and the starting set a from-scratch
+character is given -- `game` may not import from `profiles`, and duplicating
+three hundred lines of item ids guarantees they drift. A preset naming one of
+those consts is still a stated build; what it deliberately does not do is call
+`startingEquipmentFor`, which is a LOOKUP whose answer changes with the class and
+style on screen.
+
 **A GEAR SET CAN FORCE A BUILD SETTING, and Shockadin's did.** Its set is a
 one-hander and a caster shield where the preset said `two_hander` -- under which
 `liveEquipment` deletes the main hand and both off-hand slots, leaving a Paladin

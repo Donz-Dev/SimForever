@@ -155,7 +155,11 @@ export function GearPanel({ profile, onChange }: GearPanelProps) {
   const equipStartingSet = () =>
     onChange({
       ...profile,
-      equipment: startingEquipmentFor(profile.character.characterClass, style),
+      equipment: startingEquipmentFor(profile.character.characterClass, style, {
+        // Pressed with the encounter already on screen, so unlike character
+        // creation this knows whether the target swings back.
+        targetAttacks: profile.encounter.targetAttacks,
+      }),
     });
 
   const clearAll = () => onChange({ ...profile, equipment: {} });

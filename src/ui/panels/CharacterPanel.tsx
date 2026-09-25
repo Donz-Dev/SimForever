@@ -1,6 +1,7 @@
 import type { CharacterProfile, ProfilePreset } from '../../profiles';
 import { PROFILE_PRESETS } from '../../profiles';
 import type { CharacterSelection, CombatStyleId } from '../../game/character';
+import { startingEquipmentFor } from '../../game/items/startingSets';
 import { abilitiesForClass } from '../../game/abilities/abilitiesForClass';
 import {
   FACTIONS,
@@ -114,9 +115,33 @@ export function CharacterPanel({
 
   const applyChange = (change: Partial<CharacterSelection>) => {
     const next = applySelection(change, selection);
+    const classChanged = next.characterClass !== selection.characterClass;
 
     onChange({
       ...profile,
+      /*
+       * GEAR BELONGS TO A CLASS, so changing class replaces it.
+       *
+       * The same rule the stance below already follows, and for the same reason:
+       * a Mage should not quietly carry "defensive" around, and a Paladin should
+       * not quietly carry ARCANIST CLOTH. Every class has a starting set now, so
+       * there is something to put there -- until there was, leaving the old gear
+       * on was the least bad of two bad answers.
+       *
+       * A RACE change keeps it. Gear is not a race's, and re-rolling someone's
+       * slots because they switched Orc to Troll would be the annoying kind of
+       * helpful.
+       */
+      ...(classChanged
+        ? {
+            equipment: startingEquipmentFor(
+              next.characterClass,
+              resolveCombatStyle(next.characterClass, profile.character.combatStyle),
+              // Which of two Paladin shield builds is meant. See StartingSetOptions.
+              { targetAttacks: profile.encounter.targetAttacks },
+            ),
+          }
+        : {}),
       character: {
         ...profile.character,
         race: next.race,
