@@ -1,7 +1,7 @@
 {
  "class": "shaman",
  "source": "https://talentsforever.com/spelldesc.js",
- "build": "1.60.1.69876",
+ "build": "1.60.1.70009",
  "note": "Max rank only. The simulator runs at level 60, and a talent tooltip shows rank 1 of the ability it grants -- see docs/class-implementation.md.",
  "spells": [
   {
@@ -39,7 +39,7 @@
    "school": "Fire, Nature, Frost",
    "cast": "3 sec cast",
    "description": "Simultaneously places up to 4 totems specified in the Totem Bar. Can call different totems than Call of the Elements.",
-   "versusClassic": "note"
+   "versusClassic": "new"
   },
   {
    "id": 66842,
@@ -50,7 +50,7 @@
    "school": "Fire, Nature, Frost",
    "cast": "3 sec cast",
    "description": "Simultaneously places up to 4 totems specified in the Totem Bar.",
-   "versusClassic": "note"
+   "versusClassic": "new"
   },
   {
    "id": 66844,
@@ -438,7 +438,7 @@
    "name": "Nature's Swiftness",
    "rank": null,
    "tab": "Restoration",
-   "level": "Learned at level 1",
+   "level": "Learned at level 30",
    "school": "Physical",
    "cast": "Instant",
    "cooldown": "3 min cooldown",
@@ -475,11 +475,11 @@
    "name": "Rage of the Farseer",
    "rank": null,
    "tab": "Enhancement",
-   "level": "Learned at level 1",
+   "level": "Learned at level 40",
    "school": "Physical",
    "cast": "Instant",
    "cooldown": "3 min cooldown",
-   "description": "Increases your melee attack speed and spell casting speed by 30% for 25 sec.",
+   "description": "Increases your attack speed by 30% for 25 sec.",
    "versusClassic": "new"
   },
   {
@@ -530,7 +530,7 @@
    "cost": "170 Mana",
    "cast": "Instant",
    "description": "Summons a Searing Totem with 5 health at your feet for 55 sec that repeatedly attacks an enemy within 20 yards for 40 to 54 Fire damage.",
-   "versusClassic": "same"
+   "versusClassic": "changed"
   },
   {
    "id": 6495,
@@ -618,7 +618,7 @@
    "school": "Nature",
    "cast": "Instant",
    "description": "Returns your totems to the earth, giving you 25% of the mana required to cast each totem destroyed by Totemic Recall.",
-   "versusClassic": "note"
+   "versusClassic": "new"
   },
   {
    "id": 8143,
@@ -679,7 +679,7 @@
    "school": "Nature",
    "cost": "250 Mana",
    "cast": "Instant",
-   "description": "Summons a Windfury Totem with 5 health at the feet of the caster. The totem enhances the melee attacks of all party members nearby. Each main hand hit has a 20% chance of granting the attacker 1 extra attack with 246 extra melee attack power. Lasts 5 min.",
+   "description": "Summons a Windfury Totem with 5 health at the feet of the caster. The totem enhances the melee attacks of all party members within 30 yards. Each main hand hit has a 20% chance of granting the attacker 1 extra attack with 246 extra melee attack power. Lasts 5 min.",
    "versusClassic": "changed"
   },
   {

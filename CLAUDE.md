@@ -546,6 +546,21 @@ against a class is cheap.
   Shot's bonus went 600 → 166, Raptor Strike's 140 → 70, Serpent Sting's total
   490 → 555, and Arcane Shot GAINED a ranged attack power coefficient while
   LOSING its spell power one. Four numbers, four directions.
+- **THE RANK-1 RULE IS ABOUT THE WEBSITE, NOT ABOUT THE CAPTURE.**
+  `import_forever_spells.mjs` writes MAX RANK by construction and each entry
+  states its `rank`, so "the spellbook opens on rank 1" is a fact about the page
+  and says nothing about the JSON. Sniper Shot was transcribed at 160 with a
+  comment applying the rule to a capture whose own entry reads `rank: 3` and
+  295 — the rule is real and it was applied to the wrong artifact. **Read the
+  capture's `rank` field rather than reasoning about what the page shows.**
+- **A CAPTURE GOES STALE, AND A CORRECT NUMBER BECOMES A WRONG ONE WITHOUT
+  ANYONE TOUCHING IT.** Between builds 1.60.1.69876 and 1.60.1.70009 Forever
+  buffed Wrath 62–68 to 92–102, took Holy Strike from 40% weapon damage on a
+  12-second cooldown to 50% on a 10-second one, doubled Life Tap, and renamed
+  Mangle to Primal Bite. Every one of those was transcribed correctly and went
+  wrong on its own. **Refresh the captures before trusting a figure, and do it
+  for all nine classes at once** — `--write` per class, then read the diff, which
+  is where the change announces itself.
 - **`foreverchanges.pro` OPENS ON A RANK THAT IS NOT ALWAYS THE MAX.** Forever
   shifts ranks down and sometimes adds one, so reading the page as it loads can
   give a real Forever number for the wrong rank. It also separates "Forever

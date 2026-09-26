@@ -77,7 +77,10 @@ export const SEAL_ATTACK_POWER_COEFFICIENT = 0.022;
 export const SEAL_SPELL_POWER_COEFFICIENT = 0.044;
 
 /** The low end of "21 to 75", read as the pre-speed base. See above. */
-export const SEAL_OF_RIGHTEOUSNESS_BASE = 21;
+// 20.5, the low end of foreverchanges.pro's "20.5 to 71.4", against our
+// capture's "21 to 75" at the same build. WHICH END IS THE BASE IS STILL THE
+// SAME INTERPRETATION as before -- only the number moved.
+export const SEAL_OF_RIGHTEOUSNESS_BASE = 20.5;
 
 /** The owner's formula, in one place, for every seal that uses it. */
 export function sealDamage(
@@ -128,7 +131,8 @@ export const SEAL_OF_COMMAND: AuraDefinition = {
  * the haste and the attack power apply and the penalty does not -- which makes
  * this seal GENEROUS, and the ability says so where a person can see it.
  */
-export const SEAL_OF_THE_CRUSADER_ATTACK_POWER = 325;
+// 306 from foreverchanges.pro against our capture's 325, same build, same rank 6.
+export const SEAL_OF_THE_CRUSADER_ATTACK_POWER = 306;
 export const SEAL_OF_THE_CRUSADER_HASTE_PERCENT = 40;
 
 export const SEAL_OF_THE_CRUSADER: AuraDefinition = {

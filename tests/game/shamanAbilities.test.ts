@@ -61,11 +61,15 @@ const presetPlayer = (preset: string) => {
 
 describe('the numbers', () => {
   it('takes the midpoint of each stated range, at MAX RANK', () => {
-    // "189 to 211", "119 to 133", "293 to 309", "278 to 294", "192 to 248".
-    expect(LIGHTNING_BOLT_DAMAGE).toBe(200);
-    expect(CHAIN_LIGHTNING_DAMAGE).toBe(126);
+    // "185 to 207", "116 to 130", "293 to 309", "275 to 291", "192 to 248".
+    // Figures that follow foreverchanges.pro where it and our own capture
+    // disagree, by the ruleset owner's standing rule. Written out by hand
+    // from the source and carrying the ruling, not only the number. See
+    // docs/source-cross-checks.md.
+    expect(LIGHTNING_BOLT_DAMAGE).toBe(196);
+    expect(CHAIN_LIGHTNING_DAMAGE).toBe(123);
     expect(EARTH_SHOCK_DAMAGE).toBe(301);
-    expect(FROST_SHOCK_DAMAGE).toBe(286);
+    expect(FROST_SHOCK_DAMAGE).toBe(283);
     expect(LAVA_BURST_DAMAGE).toBe(220);
   });
 

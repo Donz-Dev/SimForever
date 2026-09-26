@@ -1,7 +1,7 @@
 {
  "class": "druid",
  "source": "https://talentsforever.com/spelldesc.js",
- "build": "1.60.1.69876",
+ "build": "1.60.1.70009",
  "note": "Max rank only. The simulator runs at level 60, and a talent tooltip shows rank 1 of the ability it grants -- see docs/class-implementation.md.",
  "spells": [
   {
@@ -78,7 +78,7 @@
    "cast": "Instant",
    "cooldown": "3 min cooldown",
    "requires": "Requires Cat Form, Bear Form, Dire Bear Form",
-   "description": "Causes your Mangle ability to strike up to 3 targets, removes its cooldown, and increases the critical strike chance of your Combo Point-generating abilities by 100%. Clears and grants immunity to Fear effects for the duration. Lasts 15 sec.",
+   "description": "Causes your Primal Bite ability to strike up to 3 targets, removes its cooldown, and increases the critical strike chance of your Combo Point-generating abilities by 100%. Clears and grants immunity to Fear effects for the duration. Lasts 15 sec.",
    "versusClassic": "new"
   },
   {
@@ -388,21 +388,6 @@
    "versusClassic": "new"
   },
   {
-   "id": 1238073,
-   "name": "Mangle",
-   "rank": 4,
-   "tab": "Feral Combat",
-   "level": "Learned at level 60",
-   "school": "Physical",
-   "cost": "20 Rage",
-   "range": "Melee Range",
-   "cast": "Instant",
-   "cooldown": "6 sec cooldown",
-   "requires": "Requires Bear Form, Dire Bear Form",
-   "description": "Mangle the target for 100% normal damage plus 77.",
-   "versusClassic": "new"
-  },
-  {
    "id": 9885,
    "name": "Mark of the Wild",
    "rank": 7,
@@ -471,7 +456,7 @@
    "name": "Nature's Swiftness",
    "rank": null,
    "tab": "Restoration",
-   "level": "Learned at level 1",
+   "level": "Learned at level 30",
    "school": "Physical",
    "cast": "Instant",
    "cooldown": "3 min cooldown",
@@ -501,6 +486,21 @@
    "requires": "Requires Cat Form",
    "description": "Pounce, stunning the target for 2 sec and causing 150 damage over 18 sec. Must be prowling and behind the target. Awards 1 combo point.",
    "versusClassic": "same"
+  },
+  {
+   "id": 1238073,
+   "name": "Primal Bite",
+   "rank": 4,
+   "tab": "Feral Combat",
+   "level": "Learned at level 60",
+   "school": "Physical",
+   "cost": "20 Rage",
+   "range": "Melee Range",
+   "cast": "Instant",
+   "cooldown": "6 sec cooldown",
+   "requires": "Requires Bear Form, Dire Bear Form",
+   "description": "Bite the target for 100% normal damage plus 77.",
+   "versusClassic": "new"
   },
   {
    "id": 9913,
@@ -668,7 +668,7 @@
    "name": "Swiftmend",
    "rank": null,
    "tab": "Restoration",
-   "level": "Learned at level 1",
+   "level": "Learned at level 25",
    "school": "Nature",
    "cost": "20% of base mana",
    "range": "40 yd range",
@@ -790,7 +790,7 @@
    "cost": "120 Mana",
    "range": "30 yd range",
    "cast": "2 sec cast",
-   "description": "Causes 62 to 68 Nature damage to the target.",
+   "description": "Causes 92 to 102 Nature damage to the target.",
    "versusClassic": "changed"
   }
  ]

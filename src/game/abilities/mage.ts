@@ -92,7 +92,9 @@ export const FIREBALL: Ability = {
   },
 };
 
-export const SCORCH_DAMAGE = midpoint(166, 196);
+// 163 to 193 from foreverchanges.pro; our capture says 166 to 196 at the same
+// rank 7 and build. Same for Fire Blast and Ice Lance below.
+export const SCORCH_DAMAGE = midpoint(163, 193);
 export const SCORCH_CAST_MS = seconds(1.5);
 export const SCORCH_COEFFICIENT = directSpellCoefficient(SCORCH_CAST_MS);
 
@@ -146,7 +148,7 @@ export const PYROBLAST: Ability = {
   },
 };
 
-export const FIRE_BLAST_DAMAGE = midpoint(417, 489);
+export const FIRE_BLAST_DAMAGE = midpoint(402, 474);
 /** Instant, so 1.5 / 3.5 by the owner's own wording. */
 export const FIRE_BLAST_COEFFICIENT = directSpellCoefficient(0);
 
@@ -302,7 +304,7 @@ export const FROSTFIRE_BOLT: Ability = {
  * and nothing freezes a raid boss -- so what is left is a 148-damage instant
  * for 160 mana, which is a poor spell and correctly so.
  */
-export const ICE_LANCE_DAMAGE = midpoint(136, 160);
+export const ICE_LANCE_DAMAGE = midpoint(133, 157);
 export const ICE_LANCE_FROZEN_MULTIPLIER = 4;
 export const ICE_LANCE_COEFFICIENT = directSpellCoefficient(0);
 

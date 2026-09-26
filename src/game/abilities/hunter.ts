@@ -238,18 +238,44 @@ export const SERPENT_STING_ABILITY: Ability = {
 /**
  * Sniper Shot, granted by the Marksmanship talent.
  *
- * "A steady snipe that increases ranged damage by 160" -- rank 1, which is the
- * one the talent grants. The wiki gives 225 and 295 for ranks 2 and 3, learned
- * from the trainer; the spellbook opens on rank 1, and the rank-1 rule says
- * a talent shows the rank it grants.
+ * ----------------------------------------------------------------------------
+ * THIS WAS WRONG IN FOUR WAYS AND ITS OWN CAPTURE HELD EVERY ANSWER, at both
+ * builds. `forever-hunter-spellbook.json` has said
+ * `"rank": 3, "cost": "365 Mana", "cast": "4 sec cast",
+ *  "cooldown": "15 sec cooldown", "A steady snipe that increases ranged damage
+ *  by 295."` since it was first captured.
+ *
+ * | | was | is |
+ * | damage  | 160        | **295** |
+ * | cost    | 200, a PLACEHOLDER | **365 mana**, stated |
+ * | cast    | instant    | **4 seconds** |
+ * | cooldown| 6 seconds  | **15 seconds** |
+ *
+ * THE RANK-1 RULE WAS APPLIED TO A CAPTURE THAT IS ALREADY MAX RANK. The old
+ * comment reasoned that "the spellbook opens on rank 1, and a talent shows the
+ * rank it grants" -- true of the WEBSITE, and irrelevant here, because
+ * `import_forever_spells.mjs` captures max rank by construction and this entry
+ * says `rank: 3`. The rule is real and it was applied to the wrong artifact.
+ *
+ * AND THE PLACEHOLDER CAVEAT WAS FALSE. It said "the spellbook gives the
+ * ability no cost line at all"; the capture's own `cost` field says 365 Mana.
+ * That is one of the 19 placeholders gone, and it was never needed.
+ *
+ * A FOUR-SECOND CAST IS THE PART THAT MATTERS MOST. A cast resets the ranged
+ * swing timer, and auto-shot is 42% of a Marksmanship Hunter's damage on a
+ * 3.2-second cycle -- so the LW Ranged priority list was measured against an
+ * instant and needs measuring again. See `docs/source-cross-checks.md`.
+ * ----------------------------------------------------------------------------
  */
-export const SNIPER_SHOT_BONUS = 160;
+export const SNIPER_SHOT_BONUS = 295;
+export const SNIPER_SHOT_CAST_MS = seconds(4);
 
 export const SNIPER_SHOT: Ability = {
   id: 'sniper_shot',
   name: 'Sniper Shot',
-  cost: { resource: 'mana', amount: 200 },
-  cooldownMs: seconds(6),
+  cost: { resource: 'mana', amount: 365 },
+  castTimeMs: SNIPER_SHOT_CAST_MS,
+  cooldownMs: seconds(15),
   attackTable: 'ranged-special',
   onCast: ({ simulation, caster, target, ability }) => {
     if (!target) return;
@@ -265,9 +291,6 @@ export const SNIPER_SHOT: Ability = {
       weaponSlot: RANGED,
     });
   },
-  unmodelled:
-    'Its mana cost is not stated anywhere -- the spellbook gives the ability ' +
-    'no cost line at all -- so 200 is assumed, and it is a placeholder.',
 };
 
 // ---------------------------------------------------------------------------
