@@ -92,10 +92,16 @@ const presetPlayer = (preset: string) => {
 
 describe('the numbers', () => {
   it('takes the midpoint of each judgement, at MAX RANK', () => {
-    expect(JUDGEMENT_OF_RIGHTEOUSNESS).toBe(178);
+    // Figures that follow foreverchanges.pro where it and our own capture
+    // disagree, by the ruleset owner's standing rule. Written out by hand
+    // from the source and carrying the ruling, not only the number. See
+    // docs/source-cross-checks.md.
+    expect(JUDGEMENT_OF_RIGHTEOUSNESS).toBe(170);
     expect(JUDGEMENT_OF_COMMAND).toBe(178);
-    expect(HOLY_STRIKE_HOLY_DAMAGE).toBe(37);
-    expect(HOLY_STRIKE_WEAPON_FRACTION).toBe(0.4);
+    // Holy Strike changed in the client AND the sources then disagreed: the
+    // 50% fraction is the newer build, the 81-105 is foreverchanges.
+    expect(HOLY_STRIKE_HOLY_DAMAGE).toBe(93);
+    expect(HOLY_STRIKE_WEAPON_FRACTION).toBe(0.5);
     expect(SEAL_OF_FURY_DAMAGE).toBe(35);
   });
 

@@ -158,9 +158,156 @@ verification still holds — it is the base that moved, not the formula.
 | --- | --- | --- | --- |
 | Shadow Priest | 510.9 | **509.4** | −0.3% |
 
+## Mage, Shaman — checked 2026-09-25, small and uniform
+
+Both came out the same way: every DoT total, cadence, cost, cast time, cooldown
+and mechanic matched, and a handful of direct-damage ranges sat a few points
+apart.
+
+| | ours | `foreverchanges.pro` |
+| --- | --- | --- |
+| Mage Scorch r7 | 166–196 | **163–193** |
+| Mage Fire Blast r7 | 417–489 | **402–474** |
+| Mage Ice Lance r6 | 136–160 | **133–157** |
+| Shaman Lightning Bolt r10 | 189–211 | **185–207** |
+| Shaman Chain Lightning r4 | 119–133 | **116–130** |
+| Shaman Frost Shock r4 | 278–294 | **275–291** |
+
+Agreed: Fireball, Pyroblast and Frostfire Bolt with all three hybrid DoTs,
+Frostbolt, Blast Wave, Arcane Missiles' 209 a tick, Arcane Blast's +10% and +175%,
+Arcane Power, Combustion, Earth Shock, Flame Shock, Lava Burst, Stormstrike's
++20%, Rage of the Farseer. Fire −0.4%, Frostfire −0.5%, Elemental −0.5%, Moonkin
+−0.1%, Arcane unmoved.
+
+## Paladin — checked 2026-09-25, and it moved three profiles
+
+The largest mover of the five, and **Holy Strike is wrong in two different ways at
+once**, which is why it needs reading carefully.
+
+| | ours | `foreverchanges.pro` | why |
+| --- | --- | --- | --- |
+| **Holy Strike** weapon | 0.4 | **0.5** | **build drift** — our own capture moved 40%→50% and 12s→10s cooldown between builds, so both sources now agree and we were stale |
+| **Holy Strike** holy | 32–42 | **81–105** | **source disagreement** — our capture says 40–53 at the new build; this is a doubling |
+| Judgement of Righteousness | 170–186 | **162–178** | source disagreement |
+| Judgement of Fury | 153–167 | **146–160** | source disagreement |
+| Seal of the Crusader | 325 AP | **306** | source disagreement |
+| Seal of Righteousness base | 21 | **20.5** | source disagreement; "21 to 75" against "20.5 to 71.4" |
+
+Judgement of Command, Judgement of the Crusader's 161, Seal of Command's 70%, Seal
+of Fury, Holy Shock, Consecration and Holy Shield all agreed.
+
+| | was | now | |
+| --- | --- | --- | --- |
+| Seal Twist Ret | 391.9 | **431.0** | **+10.0%**, now sixth |
+| Prot Pally | 139.3 | **158.1** | **+13.5%** |
+| Shockadin | 324.5 | **334.5** | +3.1% |
+
+## Druid — checked 2026-09-25, and Wrath had gone stale under us
+
+| | ours | `foreverchanges.pro` | why |
+| --- | --- | --- | --- |
+| **Wrath** r8 | 62–68 | **86–96** | **build drift AND disagreement** — our refreshed capture reads 92–102, so both sources agree it gained ~40% and differ on the figure |
+| Moonfire direct r10 | 128–150 | **124–146** | source disagreement |
+| Claw r5 | 126 | **115** | source disagreement |
+
+**WRATH IS THE CASE FOR REFRESHING CAPTURES RATHER THAN ONLY CROSS-CHECKING
+THEM.** 62–68 was correct at build 69876. Nobody mistyped it; the client changed
+and the number went wrong on its own.
+
+**AND FOREVER RENAMED MANGLE TO PRIMAL BITE** at the same build — same damage,
+cost, cooldown and form requirement, and the Feral talent that names it changed
+too. The display name follows the client and the id does not: `BatchTotals`
+aggregates by **name**, with no ability id on a reported row, so a rename in
+content is a rename in the damage table and in anything matching on it.
+
+Agreed: Starfire, Insect Swarm, Shred's 155%+180, Rake, Ferocious Bite's five
+ranges, Rip's five, Swipe, Lacerate, Tiger's Fury. Moonkin −0.1%; **Cat and Bear
+unmoved**, because no Cat list casts Claw and Primal Bite's damage did not change.
+
+## Hunter — checked 2026-09-25, and this one was ours
+
+**Nine of eleven agreed** — Arcane Shot, Aimed Shot's 166, Multi-Shot, Serpent
+Sting's 555, Raptor Strike, Mongoose Bite, Hunter's Mark's 71, both Aspects, Rapid
+Fire, Bestial Wrath.
+
+**SNIPER SHOT WAS WRONG IN FOUR WAYS AND ITS OWN CAPTURE HELD EVERY ANSWER, at
+both builds.** Not a source disagreement at all — `foreverchanges.pro` and
+`forever-hunter-spellbook.json` agree with each other and the code agreed with
+neither.
+
+| | was | is |
+| --- | --- | --- |
+| damage | 160 | **295** |
+| cost | 200, a `PLACEHOLDER` | **365 mana**, stated in the capture's own `cost` field |
+| cast | instant | **4 seconds** |
+| cooldown | 6 seconds | **15 seconds** |
+
+Two separate failures produced it:
+
+- **The rank-1 rule was applied to the wrong artifact.** The old comment reasoned
+  that "the spellbook opens on rank 1, and a talent shows the rank it grants" —
+  true of the website, irrelevant to a capture that says `rank: 3` because the
+  importer writes max rank by construction.
+- **The placeholder's own justification was false.** It said "the spellbook gives
+  the ability no cost line at all". The capture says `"cost": "365 Mana"`, and did
+  at build 69876 too. **And it was never a named `PLACEHOLDER_` constant** — a bare
+  200 with a caveat, so the count of 19 does not change. An invented number that
+  is not named cannot be audited, which is the whole point of the naming rule.
+
+| | was | now | |
+| --- | --- | --- | --- |
+| LW Ranged | 342.1 | **304.0** | **−11.1%** |
+
+**A FOUR-SECOND CAST IS WHY, AND THE APL NOW NEEDS RE-MEASURING.** A cast resets
+the ranged swing timer and auto-shot is 42% of a Marksmanship Hunter's damage on a
+3.2-second cycle — the same rule that took Aimed Shot out of this list at *two*
+seconds. Dropping Sniper Shot measures **+7.9** on one 300-iteration run, so the
+list is probably wrong now; it wants the full 30-batch method before it changes,
+and it is not changed here. The profile is genuinely weaker either way: it had
+been casting a 295-damage shot at a 160-damage instant's price.
+
+**THE HAWK'S 32 PER STRIKE IS IN NEITHER SOURCE.** Both state one figure and it is
+not that one — our capture says the hawk dive-bombs for **108** and "continu[es]
+its assault for 18 sec", `foreverchanges.pro` says **110**, and neither quantifies
+the continuing assault, which is exactly what the constant models. Reading 108 as
+the per-strike rate would more than triple the hawk; reading it as an opening hit
+would add a damage source. That is a modelling decision for the owner, so it is
+recorded and left alone.
+
+## Every class is now checked
+
+| Class | Agreed | Moved | Largest |
+| --- | --- | --- | --- |
+| Warrior | — | 5 | Slam, Thunder Clap, Bloodthirst, Demo Shout, Battle Shout |
+| Warlock | 7 of 10 | 3 + a cost | **Life Tap 424→840**, +12.1% Firelock |
+| Rogue | 10 of 12 | 2 | Backstab 225→150, worth nothing (nothing casts it) |
+| Priest | 5 of 7 | 2 | Mind Blast 490→485 |
+| Mage | 10 of 13 | 3 | Fire Blast 453→438 |
+| Shaman | 6 of 9 | 3 | Lightning Bolt 200→196 |
+| Paladin | 7 of 12 | 5 | **Holy Strike 37→93**, +10% Ret, +13.5% Prot |
+| Druid | 10 of 13 | 3 + a rename | **Wrath 65→91** |
+| Hunter | 9 of 11 | 1, four fields | **Sniper Shot**, −11.1% LW Ranged |
+
+**NOT ONE CLASS CAME BACK CLEAN.** Twenty-seven figures moved across nine classes,
+and the exercise found three distinct kinds of error, which is the part worth
+carrying:
+
+1. **Source disagreement at the same build** — most of them, usually a few points,
+   settled by the standing rule.
+2. **Build drift**: a figure that was right when written and is not now. Wrath,
+   Holy Strike, Life Tap, the Mangle rename. **No amount of cross-checking finds
+   these; only refreshing the captures does.**
+3. **Our own transcription** — Sniper Shot, four fields, with the answers sitting
+   in the file the whole time and a plausible comment explaining the wrong one.
+
+The third kind is the one to fear. It survived because the figure looked reasonable
+and the comment cited a real rule.
+
 ## Still unchecked
 
-Mage, Paladin, Druid, Shaman, Hunter.
+Nothing, for abilities. What has NOT been cross-checked is **talent values**
+(`src/data/talents/values/*.json`), which come from `talentsforever.com` alone and
+have no second source at all.
 
 **Three of the three classes checked so far needed corrections** — five figures on
 the Warrior, three on the Warlock, four on the Rogue and Priest between them — so

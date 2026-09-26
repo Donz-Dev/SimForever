@@ -62,7 +62,18 @@ export const ECLIPSE_REDUCTION_BONUS = 'eclipseReductionSeconds';
 // Balance
 // ---------------------------------------------------------------------------
 
-export const WRATH_DAMAGE = midpoint(62, 68);
+/*
+ * WRATH WAS BUFFED IN THE CLIENT AND WE HAD MISSED IT ENTIRELY.
+ *
+ * 62 to 68 was correct at build 1.60.1.69876 and is not what the client says
+ * now: our own refreshed capture reads 92 to 102 at build 1.60.1.70009 and
+ * foreverchanges.pro reads 86 to 96. So both current sources agree Wrath gained
+ * about 40%, and they disagree on the figure -- the standing rule takes 86-96.
+ *
+ * THIS IS THE CASE FOR REFRESHING THE CAPTURES, not just for cross-checking
+ * them: nothing here was wrong when it was written and it had quietly gone stale.
+ */
+export const WRATH_DAMAGE = midpoint(86, 96);
 export const WRATH_CAST_MS = seconds(2);
 /*
  * FROM THE BASE CAST TIME, not `ability.castTimeMs`. Improved Wrath reduces
@@ -136,7 +147,9 @@ export const STARFIRE: Ability = {
   },
 };
 
-export const MOONFIRE_DIRECT = midpoint(128, 150);
+// 124 to 146 from foreverchanges.pro against our capture's 128 to 150. Its
+// 240-over-12-seconds bleed agrees on both sides.
+export const MOONFIRE_DIRECT = midpoint(124, 146);
 
 export const MOONFIRE: Ability = {
   id: 'moonfire',
@@ -212,7 +225,9 @@ export const SHRED: Ability = {
 };
 
 /** "110% normal damage plus 126." */
-export const CLAW_BASE_DAMAGE = 126;
+// 115 from foreverchanges.pro against our capture's 126, same rank 5, same
+// build. Its 110% weapon fraction agrees on both sides.
+export const CLAW_BASE_DAMAGE = 115;
 export const CLAW_WEAPON_FRACTION = 1.1;
 
 export const CLAW: Ability = {
@@ -349,12 +364,24 @@ export const TIGERS_FURY_ABILITY: Ability = {
 // Feral: Bear
 // ---------------------------------------------------------------------------
 
-/** "Mangle the target for 100% normal damage plus 77." */
+/*
+ * "Bite the target for 100% normal damage plus 77."
+ *
+ * FOREVER RENAMED THIS ABILITY. It was Mangle at build 1.60.1.69876 and is
+ * **Primal Bite** at 1.60.1.70009 -- the damage, cost, cooldown and form
+ * requirement are all unchanged, and the Feral talent that names it changed with
+ * it ("Causes your Primal Bite ability to strike up to 3 targets").
+ *
+ * THE DISPLAY NAME FOLLOWS THE CLIENT AND THE ID DOES NOT. `mangle` is an
+ * internal key that rotations, talents and tests all reference; renaming it
+ * would be churn with no reader, while the NAME is what a person sees in the
+ * damage breakdown and has to match what Forever calls it.
+ */
 export const MANGLE_BASE_DAMAGE = 77;
 
 export const MANGLE: Ability = {
   id: 'mangle',
-  name: 'Mangle',
+  name: 'Primal Bite',
   cost: { resource: 'rage', amount: 20 },
   cooldownMs: seconds(6),
   attackTable: 'melee-special',

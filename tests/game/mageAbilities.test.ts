@@ -73,12 +73,16 @@ const bareMage = (preset: string) => {
 
 describe('the numbers', () => {
   it('takes the midpoint of each stated range, at MAX RANK', () => {
+    // Figures that follow foreverchanges.pro where it and our own capture
+    // disagree, by the ruleset owner's standing rule. Written out by hand
+    // from the source and carrying the ruling, not only the number. See
+    // docs/source-cross-checks.md.
     expect(FIREBALL_DAMAGE).toBe(483);
     expect(FROSTBOLT_DAMAGE).toBe(475);
-    expect(SCORCH_DAMAGE).toBe(181);
+    expect(SCORCH_DAMAGE).toBe(178);
     expect(PYROBLAST_DAMAGE).toBe(583);
     expect(ARCANE_BLAST_DAMAGE).toBe(394);
-    expect(ICE_LANCE_DAMAGE).toBe(148);
+    expect(ICE_LANCE_DAMAGE).toBe(145);
   });
 
   it('reads Pyroblast at rank 8, not the rank 1 its talent tooltip shows', () => {

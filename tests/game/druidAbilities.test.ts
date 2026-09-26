@@ -86,11 +86,15 @@ describe('three forms, three resources, and all of them already existed', () => 
 
 describe('the numbers', () => {
   it('takes the midpoint of each stated range', () => {
-    // "62 to 68", "350 to 412", "128 to 150". The combat table supplies the
+    // "86 to 96", "350 to 412", "124 to 146". The combat table supplies the
     // spread a real cast shows.
-    expect(WRATH_DAMAGE).toBe(65);
+    //
+    // WRATH IS THE ONE THAT MOVED MOST, and not because anyone mistyped it:
+    // 62 to 68 was right at build 1.60.1.69876 and the client buffed it. Both
+    // current sources agree it gained about 40% and disagree on the figure.
+    expect(WRATH_DAMAGE).toBe(91);
     expect(STARFIRE_DAMAGE).toBe(381);
-    expect(MOONFIRE_DIRECT).toBe(139);
+    expect(MOONFIRE_DIRECT).toBe(135);
   });
 
   it('divides each bleed evenly by its cadence', () => {
@@ -142,7 +146,15 @@ describe('the three builds run', () => {
     const batch = batchOf('druid_bear', 40, 5);
     const sources = batch.rage.gained.map((row) => row.sourceId);
     expect(sources).toContain('damage_taken');
-    expect(batch.abilities.find((a) => a.abilityName === 'Mangle')?.uses ?? 0).toBeGreaterThan(3);
+    /*
+     * PRIMAL BITE, which Forever renamed from Mangle at build 1.60.1.70009.
+     * The lookup is by DISPLAY NAME because that is what `BatchTotals`
+     * aggregates by -- there is no ability id on a reported row -- so a rename
+     * in content is a rename here too.
+     */
+    expect(
+      batch.abilities.find((a) => a.abilityName === 'Primal Bite')?.uses ?? 0,
+    ).toBeGreaterThan(3);
   });
 
   it('Moonkin casts, and its damage NOW SCALES with gear', () => {

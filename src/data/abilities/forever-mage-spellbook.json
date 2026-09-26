@@ -1,7 +1,7 @@
 {
  "class": "mage",
  "source": "https://talentsforever.com/spelldesc.js",
- "build": "1.60.1.69876",
+ "build": "1.60.1.70009",
  "note": "Max rank only. The simulator runs at level 60, and a talent tooltip shows rank 1 of the ability it grants -- see docs/class-implementation.md.",
  "spells": [
   {
@@ -33,7 +33,7 @@
   {
    "id": 23028,
    "name": "Arcane Brilliance",
-   "rank": 1,
+   "rank": null,
    "tab": "Arcane",
    "level": "Learned at level 56",
    "school": "Arcane",
@@ -86,7 +86,7 @@
    "name": "Arcane Power",
    "rank": null,
    "tab": "Arcane",
-   "level": "Learned at level 1",
+   "level": "Learned at level 40",
    "school": "Arcane",
    "cast": "Instant",
    "cooldown": "3 min cooldown",
@@ -137,7 +137,7 @@
    "name": "Cold Snap",
    "rank": null,
    "tab": "Frost",
-   "level": "Learned at level 1",
+   "level": "Learned at level 30",
    "school": "Physical",
    "cast": "Instant",
    "cooldown": "10 min cooldown",
@@ -427,7 +427,7 @@
    "name": "Ice Block",
    "rank": null,
    "tab": "Frost",
-   "level": "Learned at level 4",
+   "level": "Learned at level 25",
    "school": "Frost",
    "cost": "15 Mana",
    "cast": "Instant",
@@ -574,7 +574,7 @@
    "name": "Presence of Mind",
    "rank": null,
    "tab": "Arcane",
-   "level": "Learned at level 1",
+   "level": "Learned at level 30",
    "school": "Physical",
    "cast": "Instant",
    "cooldown": "3 min cooldown",

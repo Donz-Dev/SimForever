@@ -181,9 +181,17 @@ export const SEAL_OF_FURY_ABILITY = sealAbility(
  * cooldown.
  * ----------------------------------------------------------------------------
  */
-export const JUDGEMENT_OF_RIGHTEOUSNESS = midpoint(170, 186);
+/*
+ * TWO JUDGEMENTS AND HOLY STRIKE MOVED, and Holy Strike moved for two reasons
+ * at once -- read `docs/source-cross-checks.md` before changing any of these.
+ *
+ * Judgement of Righteousness is 162 to 178 and Judgement of Fury 146 to 160 on
+ * foreverchanges.pro, against our capture's 170-186 and 153-167 at the same
+ * build. Judgement of Command agrees on both sides.
+ */
+export const JUDGEMENT_OF_RIGHTEOUSNESS = midpoint(162, 178);
 export const JUDGEMENT_OF_COMMAND = midpoint(169, 187);
-export const JUDGEMENT_OF_FURY = midpoint(153, 167);
+export const JUDGEMENT_OF_FURY = midpoint(146, 160);
 
 /*
  * AN INSTANT HOLY SPELL, so 1.5 / 3.5 -- and it reads HOLY-scoped spell power,
@@ -278,14 +286,24 @@ export const SWIFT_JUDGEMENT: Ability = {
  * strike, so it is added to the weapon-scaled amount rather than rolled
  * separately -- a second roll would give it its own chance to miss.
  */
-export const HOLY_STRIKE_WEAPON_FRACTION = 0.4;
-export const HOLY_STRIKE_HOLY_DAMAGE = midpoint(32, 42);
+/*
+ * HOLY STRIKE CHANGED IN THE CLIENT AND THE TWO SOURCES THEN DISAGREED.
+ *
+ * Our own capture moved between builds 69876 and 70009 -- 40% weapon damage on
+ * a 12-second cooldown became 50% on a 10-second one -- so the fraction and the
+ * cooldown here were STALE rather than wrong, and both sources now agree on
+ * them. They disagree on the Holy damage: 40 to 53 in our capture, 81 to 105 on
+ * foreverchanges.pro, which the standing rule prefers. That is a doubling, and
+ * it is the largest single correction of the five-class cross-check.
+ */
+export const HOLY_STRIKE_WEAPON_FRACTION = 0.5;
+export const HOLY_STRIKE_HOLY_DAMAGE = midpoint(81, 105);
 
 export const HOLY_STRIKE: Ability = {
   id: 'holy_strike',
   name: 'Holy Strike',
   cost: { resource: 'mana', amount: 20 },
-  cooldownMs: seconds(12),
+  cooldownMs: seconds(10),
   attackTable: 'melee-special',
   onCast: ({ simulation, caster, target, ability }) => {
     if (!target) return;

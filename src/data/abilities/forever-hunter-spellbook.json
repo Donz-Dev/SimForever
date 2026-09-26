@@ -1,7 +1,7 @@
 {
  "class": "hunter",
  "source": "https://talentsforever.com/spelldesc.js",
- "build": "1.60.1.69876",
+ "build": "1.60.1.70009",
  "note": "Max rank only. The simulator runs at level 60, and a talent tooltip shows rank 1 of the ability it grants -- see docs/class-implementation.md.",
  "spells": [
   {
@@ -653,7 +653,7 @@
   {
    "id": 2643,
    "name": "Multi-Shot",
-   "rank": 1,
+   "rank": null,
    "tab": "Marksmanship",
    "level": "Learned at level 18",
    "school": "Physical",
@@ -808,7 +808,7 @@
   {
    "id": 3043,
    "name": "Scorpid Sting",
-   "rank": 1,
+   "rank": null,
    "tab": "Marksmanship",
    "level": "Learned at level 22",
    "school": "Nature",
@@ -879,7 +879,7 @@
    "range": "Melee Range",
    "cast": "Instant",
    "cooldown": "8 sec cooldown",
-   "description": "A powerful kick that deals 100% melee weapon damage.",
+   "description": "A powerful kick that deals 100% melee weapon damage and increases movement speed by 30% for 3 sec.",
    "versusClassic": "new"
   },
   {

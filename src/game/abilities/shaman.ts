@@ -79,7 +79,10 @@ function spendStormstrike(simulation: SimulationContext, target: Combatant): num
 // Elemental
 // ---------------------------------------------------------------------------
 
-export const LIGHTNING_BOLT_DAMAGE = midpoint(189, 211);
+// Three figures from foreverchanges.pro against our capture at the same build:
+// Lightning Bolt 185-207 (ours 189-211), Chain Lightning 116-130 (119-133) and
+// Frost Shock 275-291 (278-294).
+export const LIGHTNING_BOLT_DAMAGE = midpoint(185, 207);
 export const LIGHTNING_BOLT_CAST_MS = seconds(2.5);
 export const LIGHTNING_BOLT_COEFFICIENT = directSpellCoefficient(LIGHTNING_BOLT_CAST_MS);
 
@@ -116,7 +119,7 @@ export const LIGHTNING_BOLT: Ability = {
  * a single-target fight and is what makes this spell a poor one here relative
  * to what it is worth in a pull of three.
  */
-export const CHAIN_LIGHTNING_DAMAGE = midpoint(119, 133);
+export const CHAIN_LIGHTNING_DAMAGE = midpoint(116, 130);
 export const CHAIN_LIGHTNING_TARGETS = 3;
 export const CHAIN_LIGHTNING_CAST_MS = seconds(2);
 export const CHAIN_LIGHTNING_COEFFICIENT = directSpellCoefficient(CHAIN_LIGHTNING_CAST_MS);
@@ -199,7 +202,7 @@ export const FLAME_SHOCK: Ability = {
   },
 };
 
-export const FROST_SHOCK_DAMAGE = midpoint(278, 294);
+export const FROST_SHOCK_DAMAGE = midpoint(275, 291);
 export const FROST_SHOCK_COEFFICIENT = directSpellCoefficient(0);
 
 export const FROST_SHOCK: Ability = {

@@ -238,6 +238,22 @@ export const BESTIAL_WRATH: AuraDefinition = {
  * adds nothing. That is the one part of this that understates and it says so.
  * ----------------------------------------------------------------------------
  */
+/*
+ * 32 IS NOT IN EITHER SOURCE, AND THAT IS AN OPEN QUESTION RATHER THAN A FIX.
+ *
+ * Both sources state one figure for this ability and it is not this one: our
+ * capture says the hawk "dive-bomb[s] your targeted enemy, dealing 108 Physical
+ * damage and continuing its assault for 18 sec", and foreverchanges.pro says
+ * 110. Neither quantifies the CONTINUING assault, which is what this constant
+ * models -- so the stated number is the opening hit and the per-strike rate is
+ * unstated in both.
+ *
+ * Left alone deliberately. Reading 108 as the per-strike figure would more than
+ * triple the hawk, reading it as an opening hit on top of the ticks would add a
+ * damage source, and choosing between those is a modelling decision for the
+ * ruleset owner rather than a transcription. Recorded in
+ * `docs/source-cross-checks.md` and in HANDOVER's open questions.
+ */
 export const HAWK_DAMAGE_PER_STRIKE = 32;
 export const HAWK_DURATION_MS = seconds(18);
 export const HAWK_STRIKE_INTERVAL_MS = seconds(2);
