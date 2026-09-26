@@ -124,8 +124,26 @@ export const SIPHON_LIFE_ABILITY: Ability = {
  *
  * ITS SPIRIT CLAUSE IS NOT MODELLED. "Mana gained is increased by your Spirit"
  * states no rate, so the flat conversion is used and the ability says so.
+ *
+ * ----------------------------------------------------------------------------
+ * 840 AND NOT 424, ON THE RULESET OWNER'S RULING, AND THE TWO SOURCES DISAGREE
+ * AT THE SAME CLIENT BUILD.
+ *
+ * `talentsforever.com/spelldesc.js` says 424 at rank 6 and
+ * `foreverchanges.pro/spellbook/warlock` says 840, both read at build
+ * 1.60.1.70009 -- so this is not our capture being stale, and refreshing it
+ * does not settle it. The owner's ruling is 840, and the standing rule that
+ * came with it is that **foreverchanges.pro wins a disagreement**. See
+ * `docs/source-cross-checks.md`.
+ *
+ * IT IS WORTH 13.5% TO FIRELOCK AND NOTHING TO SM/DS. Destruction is mana-bound
+ * and Affliction is not, so the same number moves one Warlock profile a long way
+ * and leaves the other inside noise. The checked-in capture still says 424,
+ * because it is scraped data and is never hand-edited; this constant deliberately
+ * disagrees with it and says why.
+ * ----------------------------------------------------------------------------
  */
-export const LIFE_TAP_AMOUNT = 424;
+export const LIFE_TAP_AMOUNT = 840;
 
 export const LIFE_TAP: Ability = {
   id: 'life_tap',
@@ -257,8 +275,32 @@ export const CONFLAGRATE: Ability = {
  * A SOUL SHARD, AND SHADOW AND FLAME REFUNDS IT. "Shadowburn has a 100% chance
  * to instantly refund a Soul Shard" at 5/5, which is the only reason a build
  * with no shard income can cast it more than once.
+ *
+ * ----------------------------------------------------------------------------
+ * IT COSTS BOTH A SHARD AND 365 MANA, AND THAT IS THE ONE PLACE THE OWNER'S
+ * "PREFER foreverchanges.pro" RULE IS NOT APPLIED LITERALLY.
+ *
+ * The two sources do not contradict each other here; each carries the half its
+ * own data model holds. `talentsforever` lists `Reagents: Soul Shard` and no
+ * mana line. `foreverchanges.pro` lists `365 Mana` and **carries no reagent
+ * field at all, for any spell in the payload** -- so its silence on the shard is
+ * structural rather than a statement that there is none. Classic charges both.
+ *
+ * Taking the rule literally would DELETE a cost that one source states and the
+ * other cannot express, which is the opposite of what a tie-break is for. Both
+ * are charged, and this comment is the flag: one line reverts it if the owner
+ * means mana alone.
+ *
+ * `cost` is singular, so the shard stays the declared cost -- a rotation's
+ * affordability check is the reason it exists, and shards are the scarce pool --
+ * and the mana is taken in `onCast`, the same shape Execute uses for the rage it
+ * drains beyond its declared 15.
+ * ----------------------------------------------------------------------------
  */
-export const SHADOWBURN_DAMAGE = midpoint(258, 288);
+export const SHADOWBURN_MANA = 365;
+// 251 to 281 from foreverchanges.pro, which the owner's ruling prefers over
+// talentsforever's 258 to 288. Same rank 6, same level 56, same build.
+export const SHADOWBURN_DAMAGE = midpoint(251, 281);
 export const SHADOWBURN_REFUNDS_SHARD = 'refundsShard';
 export const SHADOWBURN_COEFFICIENT = directSpellCoefficient(0);
 
@@ -268,8 +310,16 @@ export const SHADOWBURN: Ability = {
   cost: { resource: 'soulShards', amount: 1 },
   cooldownMs: seconds(15),
   attackTable: 'spell',
+  // The mana half of the cost, so a caster that cannot afford it does not cast
+  // it -- `checkCast` only knows about the declared shard.
+  canCast: ({ caster }) => (caster.resources.get('mana')?.current ?? 0) >= SHADOWBURN_MANA,
   onCast: ({ simulation, caster, target, ability }) => {
     if (!target) return;
+
+    // The engine has taken the shard; the mana is the half no single `cost` can
+    // carry. See the note above on why both are charged.
+    caster.resources.get('mana')?.spend(SHADOWBURN_MANA);
+
     dealDamage(simulation, {
       source: caster,
       target,
@@ -290,7 +340,9 @@ export const SHADOWBURN: Ability = {
   },
 };
 
-export const SEARING_PAIN_DAMAGE = midpoint(107, 125);
+// 105 to 123 from foreverchanges.pro, over talentsforever's 107 to 125, by the
+// same ruling. Same rank 6, same level 58, same build.
+export const SEARING_PAIN_DAMAGE = midpoint(105, 123);
 export const SEARING_PAIN_CAST_MS = seconds(1.5);
 export const SEARING_PAIN_COEFFICIENT = directSpellCoefficient(SEARING_PAIN_CAST_MS);
 

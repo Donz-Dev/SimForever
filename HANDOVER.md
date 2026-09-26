@@ -26,8 +26,8 @@ the former and the two are different fights even at one iteration.
 | DW Fury | Warrior | 18/33/0 | 643.2 | | Fire Mage | Mage | 10/39/2 | 355.9 |
 | 2H Arms | Warrior | 38/13/0 | 585.5 | | Moonkin | Druid | 38/0/13 | 353.1 |
 | LW Melee | Hunter | 7/13/31 | 556.2 | | LW Ranged | Hunter | 7/39/5 | 342.1 |
-| Shadow Priest | Priest | 16/3/32 | 510.9 | | SM/DS | Warlock | 40/11/0 | 331.7 |
-| Firelock | Warlock | 5/11/35 | 479.1 | | Shockadin | Paladin | 23/0/28 | 324.5 |
+| Shadow Priest | Priest | 16/3/32 | 510.9 | | SM/DS | Warlock | 40/11/0 | 333.8 |
+| Firelock | Warlock | 5/11/35 | 537.2 | | Shockadin | Paladin | 23/0/28 | 324.5 |
 | BM Hunter | Hunter | 31/20/0 | 421.0 | | Rupture Rogue | Rogue | 12/8/31 | 315.2 |
 | Enh Shaman | Shaman | 19/32/0 | 410.9 | | Venom Rogue | Rogue | 37/12/2 | 314.4 |
 | Arcane Mage | Mage | 47/4/0 | 405.1 | | Frostfire Mage | Mage | 0/29/22 | 305.6 |
@@ -73,13 +73,26 @@ It is the only class with an owner spreadsheet, the only one documented in
 `docs/` at all, and it carries 2,025 comment lines against 268–529 for every
 other class.
 
-**AND IT IS THE ONLY CLASS WHOSE NUMBERS WERE EVER CROSS-CHECKED.** Four sources
-agreed or were adjudicated for the Warrior and **eight of its figures turned out
-wrong**. The other eight classes rest on `talentsforever.com` alone. That is not
-a reason to distrust them, and it is the largest standing accuracy risk here:
-the one class that got a second opinion needed eight corrections.
-`foreverchanges.pro/spellbook/<class>` is the available second opinion, nothing
-imports from it, and running it against a class is cheap.
+**AND IT WAS THE ONLY CLASS WHOSE NUMBERS HAD EVER BEEN CROSS-CHECKED.** Four
+sources agreed or were adjudicated for the Warrior and **eight of its figures
+turned out wrong**. `foreverchanges.pro/spellbook/<class>` is the available second
+opinion and nothing imports from it.
+
+**THE WARLOCK IS NOW CHECKED TOO: seven of ten agreed exactly, four disagreed,
+and all four are settled.** Full record and method in
+[docs/source-cross-checks.md](docs/source-cross-checks.md). The owner ruled Life
+Tap at 840 and gave the standing rule with it — **where the two sources disagree,
+`foreverchanges.pro` wins** — which moved Firelock **+12.1%**, from 479.1 to
+537.2, past the Shadow Priest into fourth.
+
+**Two client-derived sources can disagree at the same build**, which this project
+had not seen before: both were read at 1.60.1.70009, so refreshing a capture does
+not settle anything. That is what makes the standing rule necessary.
+
+**SEVEN CLASSES ARE STILL UNCHECKED, and the rule now makes that a backlog rather
+than an open question.** The Rogue and the Priest are the highest value — largest
+live talent gaps, so an error there is least likely to be noticed. Two of the two
+classes checked so far needed corrections.
 
 ### The talent census
 
@@ -177,6 +190,14 @@ Fireball's burn is 11% of its damage and takes 35% of its scaling.
 6. **Seal of the Crusader's "deals less damage with each attack"** states no
    figure, so the seal is currently generous.
 7. **Berserker Rage's magnitude** — Forever's tooltip names none.
+
+**The four from the Warlock cross-check are ANSWERED**, and the answer came with a
+standing rule that closes the same question for every class: **where our capture
+and `foreverchanges.pro` disagree, foreverchanges wins.** Life Tap is 840,
+Shadowburn 251–281, Searing Pain 105–123. Shadowburn is charged both a shard and
+365 mana, because there the preferred source is silent rather than different — it
+carries no reagent field for any spell. See
+[docs/source-cross-checks.md](docs/source-cross-checks.md).
 
 Answered already, for reference: seal damage is **not** a weapon use; a hawk is
 modelled **without** a real combatant; pet family is a **profile field**; Shield
