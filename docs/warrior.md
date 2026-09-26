@@ -21,7 +21,7 @@ Four sources, and all four were needed.
 | | |
 | --- | --- |
 | `WoWForeverWarriorAbilities.xlsx` | the ruleset owner's own sheet, outside the repo. Highest authority **except** where a capture overruled it below |
-| `src/data/abilities/forever-warrior.json` | 32 spells captured from Forever's own client data. `node tools/import_spell.mjs --verify` re-fetches and exits 1 on drift |
+| `src/data/abilities/forever-warrior-tooltips.json` | 32 spells captured from Forever's own client data. `node tools/import_spell.mjs --verify` re-fetches and exits 1 on drift |
 | `foreverchanges.pro/spellbook/warrior` | the beta client diffed against Classic Era, per rank |
 | `talentsforever.com/warrior` | the talent tree. Audited 2026-09-23: **53 of 53 talents and 154 of 154 rank values match** — the one audit in this project that found nothing wrong |
 
@@ -178,10 +178,12 @@ it is inert**, 30 rage for no damage, and absent from every list.
 ## Talents
 
 **43 of 53 are fully modelled, 3 partly and 7 inert**, and the tree is closer to
-finished than that reads: **all seven inert ones are permanently out of scope by
-ruling** — Improved Hamstring and Piercing Howl (movement), Booming Voice
-(radius), Iron Will (stun and fear), Defiance (threat), Improved Disarm and
-Improved Shield Bash (the ability is not implemented).
+finished than that reads: **six of the seven inert ones are permanently out of
+scope by ruling** — Improved Hamstring (movement), Booming Voice (radius), Iron
+Will (stun and fear), Improved Disarm and Improved Shield Bash (both control
+effects, which is why neither ability exists here), and Defiance (threat). Each
+carries a `scope` on its `unmodelled` entry, so it is counted as a decision
+rather than as work.
 
 **Only three talents on this class are blocked on anything that could ever
 change:**
@@ -234,5 +236,16 @@ node tools/import_spell.mjs --verify     # re-fetch all 32, diff, exit 1 on drif
 node tools/import_spell.mjs --refresh    # re-capture
 ```
 
-`src/data/abilities/forever-warrior.json` is named unlike the other eight
-(`forever-<class>-spellbook.json`) because it came from a different importer.
+**The Warrior is the one class with no spellbook capture**, and the file name now
+says so. It was `forever-warrior.json`, which read as the odd one out among eight
+`forever-<class>-spellbook.json` files; it is not a spellbook and never was. It is
+a capture of Forever's rendered TOOLTIPS and effect rows, from a different source
+and a different importer, made before `import_forever_spells.mjs` existed and kept
+because it is the only place several Warrior magnitudes were ever recovered from.
+
+Renaming it *to match* the other eight would have been worse than leaving it: it
+would put a differently-shaped file under a convention it does not follow, which
+is exactly the trap that makes a loader special-case one class. Nothing globs
+these files today — every reader names one literally — and a Warrior spellbook can
+be captured with `node tools/import_forever_spells.mjs warrior --write` if the
+eight-class shape is ever wanted.

@@ -1,6 +1,6 @@
 # Warrior ability effect magnitudes
 
-`forever-warrior.json` holds Forever's own data for **all 32 Warrior spells the
+`forever-warrior-tooltips.json` holds Forever's own data for **all 32 Warrior spells the
 simulator cares about** — the 26 from the ability spreadsheet, the three stances,
 and the five that talents grant and the spreadsheet omits entirely.
 

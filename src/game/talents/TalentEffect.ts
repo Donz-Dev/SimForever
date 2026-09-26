@@ -487,7 +487,55 @@ export type TalentEffect =
       readonly valueIndex?: number;
     }
 
-  | { readonly kind: 'unmodelled'; readonly reason: string };
+  /**
+   * The talent, or a clause of it, does nothing. `reason` says why, in terms
+   * specific enough to re-read.
+   *
+   * ----------------------------------------------------------------------
+   * `scope` IS THE PERMANENCE, AND IT IS THE DIFFERENCE BETWEEN A GAP AND A
+   * DECISION.
+   *
+   * ABSENT means a live gap. It is a claim about the engine on the day it was
+   * written, it expires when something is built, and clearing a blocker is not
+   * finished until every reason naming it has been re-read.
+   *
+   * PRESENT means the project owner has RULED the effect out. It is not a gap,
+   * it does not expire, and it must not be counted against the milestone. Six
+   * such reasons once read as pending work and inflated the queue by a third.
+   *
+   * Recording it as DATA rather than only in prose is what lets the milestone
+   * be measured: "every talent resolves to an effect or to a permanent ruling"
+   * is a question a test can answer, and `outOfScope.test.ts` asks it. Prose
+   * alone could not, because "the engine has no positions" and "nothing
+   * attacks the player" read identically and only one of them expires.
+   * ----------------------------------------------------------------------
+   */
+  | {
+      readonly kind: 'unmodelled';
+      readonly reason: string;
+      readonly scope?: OutOfScope;
+    };
+
+/**
+ * The things this simulator deliberately does not model, by the project
+ * owner's ruling. See CLAUDE.md, "Scope".
+ *
+ * Adding a member here is a scope DECISION and needs the owner, not a
+ * judgement call while writing a class.
+ */
+export type OutOfScope =
+  /** Positions, range, facing, movement. There is no position model. */
+  | 'positioning'
+  /** Stuns, fears, roots, snares, silences, incapacitates, disorients. */
+  | 'crowdControl'
+  /** Threat, which is not tracked anywhere. */
+  | 'threat'
+  /**
+   * Healing THROUGHPUT. Mana RETURN is NOT out of scope — it changes a damage
+   * profile's sustain, so a talent returning mana is a live gap and gets no
+   * `scope`.
+   */
+  | 'healing';
 
 /**
  * What a character must BE or be HOLDING for a conditional effect to apply.
@@ -553,6 +601,13 @@ export interface UnmodelledTalent {
   /** The source's own words for what it should do. */
   readonly text: string;
   readonly reason: string;
+  /**
+   * Set when the effect is out of scope by ruling rather than missing.
+   *
+   * Carried through from the effect so a caller can tell a DECISION from a
+   * GAP without parsing prose — which is what makes the milestone countable.
+   */
+  readonly scope?: OutOfScope;
 }
 
 /**

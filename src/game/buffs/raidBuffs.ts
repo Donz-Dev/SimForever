@@ -119,7 +119,7 @@ function critChanceEverywhere(points: number): readonly StatModifierSpec[] {
  * 139, the ability spreadsheet said 140, and asked which won the owner chose
  * the spreadsheet. The client-derived spellbook then agreed with the raid
  * figure, and the owner asked for the spellbook to be matched -- so it is 139
- * and the question is closed. `forever-warrior.json` still says 140 and is
+ * and the question is closed. `forever-warrior-tooltips.json` still says 140 and is
  * now the only source that does.
  *
  * Because it is one aura, that one point moved the warrior's own cast too.
