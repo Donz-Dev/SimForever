@@ -73,13 +73,19 @@ It is the only class with an owner spreadsheet, the only one documented in
 `docs/` at all, and it carries 2,025 comment lines against 268–529 for every
 other class.
 
-**AND IT IS THE ONLY CLASS WHOSE NUMBERS WERE EVER CROSS-CHECKED.** Four sources
-agreed or were adjudicated for the Warrior and **eight of its figures turned out
-wrong**. The other eight classes rest on `talentsforever.com` alone. That is not
-a reason to distrust them, and it is the largest standing accuracy risk here:
-the one class that got a second opinion needed eight corrections.
-`foreverchanges.pro/spellbook/<class>` is the available second opinion, nothing
-imports from it, and running it against a class is cheap.
+**AND IT WAS THE ONLY CLASS WHOSE NUMBERS HAD EVER BEEN CROSS-CHECKED.** Four
+sources agreed or were adjudicated for the Warrior and **eight of its figures
+turned out wrong**. `foreverchanges.pro/spellbook/<class>` is the available second
+opinion and nothing imports from it.
+
+**THE WARLOCK IS NOW CHECKED TOO: seven of ten agreed exactly, and four
+disagreements are open.** Full record and method in
+[docs/source-cross-checks.md](docs/source-cross-checks.md). The one that matters
+is **Life Tap, 424 against 840 — worth +13.5% on Firelock, measured**, and it is
+not staleness: both sources are at build 1.60.1.70009 and they disagree on the
+number. **Two client-derived sources can disagree at the same build**, which this
+project had not seen before. Seven classes are still unchecked; the Rogue and the
+Priest are the highest value.
 
 ### The talent census
 
@@ -177,6 +183,18 @@ Fireball's burn is 11% of its damage and takes 35% of its scaling.
 6. **Seal of the Crusader's "deals less damage with each attack"** states no
    figure, so the seal is currently generous.
 7. **Berserker Rage's magnitude** — Forever's tooltip names none.
+
+**Four more from the Warlock cross-check**, where our source and
+`foreverchanges.pro` disagree at the same client build and neither can win on its
+own. See [docs/source-cross-checks.md](docs/source-cross-checks.md).
+
+8. **Life Tap: 424 or 840?** The big one — **+13.5% on Firelock**, measured.
+   talentsforever says 424, foreverchanges says 840, both at build 1.60.1.70009.
+9. **Shadowburn: 258–288 or 251–281?** Small either way.
+10. **Searing Pain: 107–125 or 105–123?** Small either way.
+11. **Does Shadowburn cost a Soul Shard, 365 mana, or both?** One source says each.
+    Classic charges both. The simulator charges the shard alone, which gates it on
+    a placeholder pool with no in-fight income.
 
 Answered already, for reference: seal damage is **not** a weapon use; a hawk is
 modelled **without** a real combatant; pet family is a **profile field**; Shield

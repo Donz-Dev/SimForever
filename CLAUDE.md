@@ -567,9 +567,15 @@ anyway — one said 210 above a row saying −195, and the 210 was transcribed f
 months. [docs/warrior.md](docs/warrior.md) has the full reading rules and the
 per-ability figures; they are class-independent.
 
-**Two sources can disagree.** Where they agree, confidence rises. Where they do
-not, say so and pick the one the owner supplied directly — do not average them or
-quietly prefer the newer.
+**Two sources can disagree, INCLUDING TWO READS OF THE SAME CLIENT BUILD.** Where
+they agree, confidence rises. Where they do not, say so and pick the one the owner
+supplied directly — do not average them or quietly prefer the newer, and for eight
+of the nine classes there is no owner source, so the disagreement is a QUESTION and
+not a judgement call. The Warlock check found `talentsforever` and
+`foreverchanges.pro` disagreeing on Life Tap by a factor of two at the same build
+1.60.1.70009, which is worth 13.5% on a profile. Record each check in
+[docs/source-cross-checks.md](docs/source-cross-checks.md); that file also holds
+the two traps, one of which manufactures a disagreement that is not there.
 
 ## Never invent game data
 

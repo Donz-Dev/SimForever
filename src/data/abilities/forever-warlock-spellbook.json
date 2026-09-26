@@ -1,7 +1,7 @@
 {
  "class": "warlock",
  "source": "https://talentsforever.com/spelldesc.js",
- "build": "1.60.1.69876",
+ "build": "1.60.1.70009",
  "note": "Max rank only. The simulator runs at level 60, and a talent tooltip shows rank 1 of the ability it grants -- see docs/class-implementation.md.",
  "spells": [
   {
@@ -9,7 +9,7 @@
    "name": "Amplify Curse",
    "rank": null,
    "tab": "Affliction",
-   "level": "",
+   "level": "Learned at level 20",
    "school": "Shadow",
    "cast": "Instant",
    "cooldown": "3 min cooldown",
@@ -48,7 +48,7 @@
    "name": "Bane of Havoc",
    "rank": null,
    "tab": "Destruction",
-   "level": "Learned at level 1",
+   "level": "Learned at level 30",
    "school": "Physical",
    "cost": "5% of base mana",
    "range": "30 yd range",
@@ -130,7 +130,7 @@
    "school": "Fire",
    "cost": "Reagents: Soul Shard",
    "cast": "3 sec cast",
-   "description": "Creates a Major Firestone which can be used to enchant your weapon with Fire, increasing your spell critical strike chance by 2% and the damage done by your Fire spells by up to 21.",
+   "description": "Creates a Major Firestone which can be used to enchant your weapon with Fire, increasing your spell critical strike chance by 2% and the damage done by your Fire spells by up to 21.\n\nConjured items disappear if logged out for more than 15 minutes.",
    "versusClassic": "changed"
   },
   {
@@ -174,7 +174,7 @@
    "name": "Curse of Exhaustion",
    "rank": null,
    "tab": "Affliction",
-   "level": "",
+   "level": "Learned at level 25",
    "school": "Shadow",
    "cost": "8% of base mana",
    "range": "30 yd range",
@@ -277,7 +277,7 @@
    "name": "Demonic Sacrifice",
    "rank": null,
    "tab": "Demonology",
-   "level": "",
+   "level": "Learned at level 20",
    "school": "Shadow",
    "range": "100 yd range",
    "cast": "Instant",
@@ -381,7 +381,7 @@
    "name": "Fel Domination",
    "rank": null,
    "tab": "Demonology",
-   "level": "",
+   "level": "Learned at level 25",
    "school": "Shadow",
    "cast": "Instant",
    "cooldown": "5 min cooldown",
@@ -525,7 +525,7 @@
    "level": "Learned at level 56",
    "school": "Shadow",
    "cast": "Instant",
-   "description": "Converts 424 health into 424 Mana for you. Spirit increases the amount of Mana converted. Mana gained is increased by your Spirit.",
+   "description": "Converts 424 Health into 424 Mana for you. Spirit increases the amount converted.",
    "versusClassic": "changed"
   },
   {
