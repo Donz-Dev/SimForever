@@ -69,6 +69,17 @@ Measured at `d2718b0`, and the numbers say it is not close:
 
 **The Warrior was built first and built properly, and it is not the norm.** Read
 any claim about this project's depth as a claim about the Warrior until checked.
+It is the only class with an owner spreadsheet, the only one documented in
+`docs/` at all, and it carries 2,025 comment lines against 268–529 for every
+other class.
+
+**AND IT IS THE ONLY CLASS WHOSE NUMBERS WERE EVER CROSS-CHECKED.** Four sources
+agreed or were adjudicated for the Warrior and **eight of its figures turned out
+wrong**. The other eight classes rest on `talentsforever.com` alone. That is not
+a reason to distrust them, and it is the largest standing accuracy risk here:
+the one class that got a second opinion needed eight corrections.
+`foreverchanges.pro/spellbook/<class>` is the available second opinion, nothing
+imports from it, and running it against a class is cheap.
 
 ### The talent census
 

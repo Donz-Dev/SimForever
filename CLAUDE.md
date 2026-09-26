@@ -507,9 +507,9 @@ Five sources. **All nine classes were built from the two client-derived ones.**
 
 | Source | Answers |
 | --- | --- |
-| `C:\Users\Donz\Documents\WoWForever*` | the owner's own files, **highest authority**: base stats, the combat table, stat conversions, resources, one ability spreadsheet per class. `WoWForeverSimGuidance.docx` is NOT data — it is screenshots of an architecture discussion |
-| `talentsforever.com` | the beta client's own files, four static JS assignments a plain `fetch` reaches. **The source of record for talents**, and the build URLs the profiles are specified by |
-| `foreverchanges.pro/spellbook/<class>` | **every ability number in the project**, read from the beta client and diffed against Classic Era, per rank, with cost, cast time and cooldown. Its data is in the page's RSC flight script, not the DOM |
+| `C:\Users\Donz\Documents\WoWForever*` | the owner's own files, **highest authority**: base stats, the combat table, stat conversions, resources, and **one ability spreadsheet — the Warrior's**. There is no spreadsheet for the other eight classes. `WoWForeverSimGuidance.docx` is NOT data — it is screenshots of an architecture discussion |
+| `talentsforever.com` | the beta client's own files, four static JS assignments a plain `fetch` reaches. **The source of record for talents AND for every ability number in the project**, and the build URLs the profiles are specified by |
+| `foreverchanges.pro/spellbook/<class>` | the beta client diffed against Classic Era, per rank, with cost, cast time and cooldown. A **second opinion**, not the importer's source: it settled five Warrior numbers when read by hand and has never been run against the other eight. Its data is in the page's RSC flight script, not the DOM |
 | `nether.wowhead.com/classic/tooltip/item/<id>` | Classic item and spell tooltips as JSON, no browser. The current items are Classic stand-ins, not Forever data |
 | `github.com/classic-hunter/forever-hunter/wiki` | the ONLY source for pet stat scaling and pet focus regeneration, plus a full Forever-vs-Classic diff for the Hunter. Community-maintained, so it ranks below the two above where they overlap — they have not yet disagreed |
 
@@ -517,7 +517,18 @@ Five sources. **All nine classes were built from the two client-derived ones.**
 prerequisites, each granted ability's cost line), `/spellbooks.js` (every trainer
 spell to 60), `/spelldesc.js` (descriptions with cast, range, cooldown) and
 `/racials.js`. Imported by `tools/import_forever_talents.mjs`; spells by
-`tools/import_forever_spells.mjs`, at MAX RANK.
+`tools/import_forever_spells.mjs`, at MAX RANK, which reads `/spellbooks.js` and
+`/spelldesc.js` — each capture states that source in its own header.
+
+**THE WARRIOR HAD FOUR SOURCES AND THE OTHER EIGHT HAVE ONE.** The Warrior's
+numbers were cross-checked against an owner spreadsheet, a Wowhead tooltip
+capture and `foreverchanges.pro`, and **eight of them turned out wrong** —
+Slam, Thunder Clap, Bloodthirst, Demoralizing Shout, Battle Shout, Shield
+Wall, Revenge and Shield Slam. Every other class rests on `talentsforever.com`
+alone, uncorroborated, and that is the honest state of them: not suspected
+wrong, but never checked the way the one class that WAS checked needed eight
+fixes. `foreverchanges.pro` is the available second opinion and running it
+against a class is cheap.
 
 - **Decode a build before writing anything.** `tools/decode_talent_build.mjs`. A
   build coming back at other than 51 points, or throwing "X given N of M ranks",

@@ -22,10 +22,17 @@ walk, no clipboard.
 | `talentsforever.com/spelldesc.js` | 768 KB | Spell descriptions with cast, range and cooldown |
 | `talentsforever.com/racials.js` | 18 KB | Racials, by faction and race |
 
+`tools/import_forever_spells.mjs` reads `spellbooks.js` and `spelldesc.js` from
+that list, at max rank, and every capture in `src/data/abilities` names it as its
+source.
+
 `foreverchanges.pro/spellbook/<class>` covers the same spells with a **Classic
-diff** beside each one, which is what tells "Forever changed this" from
-"Forever inherited this". Its data is in the page's RSC payload rather than the
-DOM; `tools/import_forever_spells.mjs` does the extraction.
+diff** beside each one, which is what tells "Forever changed this" from "Forever
+inherited this". **It is a second opinion and nothing imports from it** — its data
+is in the page's RSC payload rather than the DOM, and it has only ever been read
+by hand, for the Warrior, where it moved five numbers. **No other class has had
+that cross-check**, which is the largest standing accuracy risk in the project
+and is cheap to close one class at a time.
 
 ## Before starting a class: does the engine already do it?
 
