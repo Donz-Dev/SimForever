@@ -46,10 +46,10 @@ wearing a citation.
 
 ## The audit
 
-[`docs/warrior-ability-audit.md`](../../../docs/warrior-ability-audit.md) is the
-reading of this file: stance gating for all 32, what the three stances do, where
-Forever agrees with the ruleset owner's spreadsheet and the four places it does
-not. **Read that rather than re-deriving it from the JSON.**
+[`docs/warrior.md`](../../../docs/warrior.md) is the reading of this file:
+stance gating for all 32, what the three stances do, and every place Forever and
+the ruleset owner's spreadsheet disagree — with which one won.
+**Read that rather than re-deriving it from the JSON.**
 
 ## Where the numbers go
 

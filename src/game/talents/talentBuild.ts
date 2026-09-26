@@ -50,7 +50,14 @@ import { HUNTER_TALENT_EFFECTS } from './hunterEffects';
 import { WARLOCK_TALENT_EFFECTS } from './warlockEffects';
 import { PRIEST_TALENT_EFFECTS } from './priestEffects';
 
-/** Effect tables per class. Only the Warrior has one. */
+/**
+ * Effect tables per class. All nine have one.
+ *
+ * **This is one of the four places a class must be registered**, and it is the
+ * quietest to miss: nothing reports unmodelled, the tree simply produces no
+ * effects, and talent-granted abilities go missing from the spellbook without
+ * complaint. `classRegistration.test.ts` fails when a class is absent.
+ */
 const EFFECTS: Partial<Record<ClassId, Readonly<Record<string, TalentEffects>>>> = {
   warrior: WARRIOR_TALENT_EFFECTS,
   rogue: ROGUE_TALENT_EFFECTS,

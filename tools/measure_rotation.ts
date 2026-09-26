@@ -112,7 +112,8 @@ export function report(label: string, m: Measurement): Measurement {
 }
 
 // ---------------------------------------------------------------------------
-// The baselines docs/warrior-completion.md publishes.
+// The Warrior builds this harness measures. HANDOVER.md publishes the profile
+// baselines; these are talent builds, not profiles.
 // ---------------------------------------------------------------------------
 
 /*

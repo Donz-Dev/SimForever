@@ -52,7 +52,7 @@ import { seconds } from '../../engine';
  *
  * STANCE DANCING IS NAIVE, AND IT COSTS REAL DAMAGE.
  *
- * Abilities are stance-gated now (see docs/warrior-ability-audit.md) and
+ * Abilities are stance-gated now (see docs/warrior.md) and
  * `PriorityRotation` swaps stance for the highest-priority ability that is
  * blocked only by its stance. That is enough to make Revenge, Whirlwind and
  * Recklessness reachable at all, and it is not a good rotation.

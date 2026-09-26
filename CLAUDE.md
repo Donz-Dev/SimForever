@@ -3,8 +3,10 @@
 An event-driven combat simulator for **World of Warcraft: Forever**, a custom
 ruleset heavily based on Classic. TypeScript + React + Vite + Vitest.
 
-This file holds things that stay true between sessions. For what is currently
-in progress, read [HANDOVER.md](HANDOVER.md).
+This file is a **reference**: the rules, and what breaks if you get one wrong.
+Every line is here because the alternative produced, or would have produced, a
+plausible wrong number. Status is [HANDOVER.md](HANDOVER.md); detail is behind
+each link.
 
 ## Commands
 
@@ -15,9 +17,9 @@ npm run typecheck    # tsc --noEmit
 npm run build        # typecheck + production build
 ```
 
-Always run `npm run typecheck` **and** `npm test` before opening a PR. The
-typechecker catches things the tests do not — it has caught a mutation of a
-shared readonly array and a stat rename that silently invalidated a test.
+Run `npm run typecheck` **and** `npm test` before opening a PR. The typechecker
+catches what the tests do not — a mutation of a shared readonly array, a stat
+rename that silently invalidated a test.
 
 ## The one architectural rule
 
@@ -25,10 +27,8 @@ shared readonly array and a stat rename that silently invalidated a test.
 
 `src/engine` imports no React, touches no DOM, holds no module-level mutable
 state. Everything a running simulation needs arrives through a
-`SimulationContext`.
-
-Dependencies point one way. If you want an arrow pointing back up, something is
-in the wrong layer.
+`SimulationContext`. An arrow pointing back up means something is in the wrong
+layer.
 
 ```
 ui  ──▶  simulator  ──▶  engine
@@ -37,1097 +37,643 @@ ui  ──▶  simulator  ──▶  engine
                    └──▶  profiles  ──▶  engine, game/character, game/talents
 ```
 
-- **`engine`** — the rules. How combat works. Knows nothing about warriors or fireballs.
-- **`game`** — the content. Races, classes, abilities, talents, items, the Forever numbers.
-- **`data`** — bulk content from external sources, as JSON. A script writes it; nothing hand-edits it.
-- **`analysis`** — turns telemetry into statistics. Never touches a live simulation.
-- **`simulator`** — the only place engine + game + analysis are wired together. The UI imports from here.
-- **`profiles`** — versioned JSON character configuration.
+| | |
+| --- | --- |
+| `engine` | the rules. How combat works. Knows nothing about warriors or fireballs |
+| `game` | the content. Races, classes, abilities, talents, items, the Forever numbers |
+| `data` | bulk content from external sources, as JSON. A script writes it; nothing hand-edits it |
+| `analysis` | telemetry → statistics. Never touches a live simulation |
+| `simulator` | the only place engine + game + analysis meet. The UI imports from here |
+| `profiles` | versioned JSON character configuration |
 
 **Rules go in `engine`, numbers go in `game`.** When the engine needs a ruleset
-number, it takes it as an injected function or value — see
-`SimulationConfig.attackChances` and `StatBlock`'s derivation parameter.
+number it takes it as an injected function or value — `SimulationConfig.attackChances`,
+`StatBlock`'s derivation parameter. See [docs/architecture.md](docs/architecture.md).
+
+## Scope: what is deliberately not modelled
+
+Rulings by the project owner. **Permanent classifications, not a work queue** — a
+talent blocked on one of these is not an engine gap, and writing it up as pending
+inflates the queue and hides the real items.
+
+| | |
+| --- | --- |
+| **Positions, range, facing, movement, crowd control** | No position model, and not getting one. Snares, roots, stuns, fears, daze, shout radius, "nearby", minimum range. ~44 talents |
+| **Threat** | Not tracked. Defensive Stance's +30% and Defiance are dropped, not deferred. ~15 talents |
+| **Healing throughput** | No healing profile and nothing to heal. Raw healing output is out; **mana RETURN is in**, because it changes a damage profile's sustain. ~16 talents, to be read one by one and split |
 
 ## Conventions that prevent real bugs
 
-Each of these exists because the alternative produced, or would produce, wrong
-numbers that look plausible.
-
-**Time is integer milliseconds** everywhere below the UI. Seconds appear only in
-profiles and formatted output. `seconds()` and `toSeconds()` are the only
-conversions.
-
-**Combat rolls are integers 1–10000**, and percentages are **truncated** into
-that space (`toRollUnits`). 25.7891% becomes 2578, never 2579. Floats would make
-an outcome depend on summation order.
-
-**Telemetry is the single source of truth.** The engine keeps no running totals.
-The combat log is a pure formatter over the same stream the analyzers read, so
-they cannot disagree. Adding a statistic means adding an analyzer, never
-threading a counter through combat code.
-
-**Stats are base + modifiers, never mutated in place.** Derived stats
-(attack power, crit, armor) are produced by a *function* on the stat block, so
-they re-derive when a buff moves a primary stat. Computing them once at creation
-would leave attack power stuck at its unbuffed value.
-
-**`attempts` and `hits` are different numbers.** Avoided attacks emit a damage
-event with `amount: 0`. Averaging over attempts folds every miss in as a zero.
-
-**Events at the same timestamp** sort by `(timestamp, priority, insertion
-order)`. `Periodic` sorts before `AuraExpiration` so a DoT's final tick, due at
-the moment it falls off, still lands.
-
-**At most one pending swing per weapon slot.** `scheduleSwing` cancels whatever
-that slot was waiting on before scheduling. Without it an extra attack forks the
-chain: it fires from inside a swing, which has not yet scheduled its successor,
-so the extra attack schedules one and the original schedules another — two
-independent timers on one weapon, doubling again with every proc. Four Hand of
-Justice procs turned 115 main-hand swings into 211, which reads as a very good
-trinket rather than as a bug.
-
-**A dual-wielder has two combat tables, not one shown twice.** Miss and enemy
-dodge both derive from the WIELDING WEAPON's skill, so a sword in one hand and a
-mace in the other diverge the moment anything grants skill with one and not the
-other. Anything reporting them must ask per slot. The dual-wield penalty lands on
-both hands, so it is skill and not the penalty that separates them.
-
-**Which combat table resolves an attack depends on who is being HIT**, not on
-who is swinging. `melee-received` is the attacks-received table: the one with
-crushing blows and with the DEFENDER's dodge, parry and block. Auto-attacks once
-hardcoded `melee-auto`, which would have resolved a boss swing on the player's
-own table.
-
-**A block LANDS, and is reduced by a flat amount.** It is deliberately not in
-`AVOIDED_OUTCOMES`, and its reduction happens in the damage pipeline rather than
-as a table multiplier. That flatness is the whole character of the stat: 30
-block value takes half of a 60-damage hit and a tenth of a 300 one.
-
-**Every damage-over-time effect can crit, and none of them are reduced by
-armor.** This is a Forever rule, given by the ruleset owner as a correction to
-the original combat table guidance, and it is not WoW Classic's behaviour. A
-tick does not re-roll the combat table — whether the effect landed was settled
-when it was applied — but it *does* roll for a crit, at the crit chance of **the
-kind of event that applied it**: Rend and Deep Wounds are applied by melee
-attacks, so they crit at melee crit chance. `DamageRequest.critFrom` names that
-table. A DoT with no `critFrom` cannot crit and consumes no random number, so
-adding the field never shifts a seeded run that does not use it. Bleeds are
-physical and still ignore armor: set `appliesArmor: false` on every one.
-
-**The global cooldown is 1.5 seconds, 1.0 for a Rogue and a Cat-Form Druid,
-and it belongs to the CLASS rather than to the ability.** It arrives on the
-combatant as `baseGcdMs`, because the same ability costs a Rogue one second
-and a Warrior one and a half. Being off it means ONE thing: the ability does not
-START a global cooldown. It is still BLOCKED by one already running, and what
-being off it buys is that the action AFTER it is free. Haste does not affect
-the global cooldown at all, only cast time. On-next-swing abilities are off it
-by DERIVATION,
-`triggersGcd ?? onNextSwing === undefined`, so a new one gets the rule without
-anyone remembering it; the failure mode of declaring it per ability is silent,
-because an ability that wrongly takes a global cooldown still costs the right
-rage and deals the right damage. Full rules, exceptions and provenance in
-[docs/global-cooldown.md](docs/global-cooldown.md).
-
-**An encounter that hits back RAMPS, and the character can die.** Turning on
-`targetAttacks` brings three mechanisms at once, none of them Forever ruleset
-data: the target's damage grows 10% a swing compounding, an assumed healer
-restores a random 500-1500 a second, and the character dies at zero health and
-is stood back up at full. Survival is modelled as a COUNT OF DEATHS rather than
-as an immunity, which is the whole difference: the character used to carry
-`survivesLethalDamage` and could not die, so "how close was that" had no answer
-at all. A revive does not mark the character dead even for an instant --
-marking them would cancel their own swing timers and skip the reactions the
-killing blow was meant to trigger -- and it does not reset the target's ramp,
-because a ramp that reset would hand a character an easier fight for dying.
-Full rules and provenance in [docs/incoming-damage.md](docs/incoming-damage.md).
-
-**A BUILD IS FIVE SETTINGS THAT HAVE TO AGREE, and `profiles/presets.ts` is
-where that is written down.** A Protection warrior is a shield AND Defensive
-Stance AND a target that swings back AND a particular tree AND particular gear;
-choosing three of the five produces a character nobody meant, and half the
-Protection tree silently does nothing. Almost every instruction about this
-simulator has been phrased as "if 1H and shield is selected", "if Battle Stance
-is chosen", "if the target attacks back is checked" -- a preset is that whole
-answer, named, and `isTankBuild` is the same idea inferred from two fields. A
-preset sets EVERY field rather than inheriting any, or it would behave
-differently depending on what was on screen when it was pressed.
-
-**Raid buffs are SELECTED, never assumed, and a pool has to be sized from
-them.** The catalogue is `game/buffs/raidBuffs.ts`, the profile stores chosen
-ids, and nothing is on by default -- a buff that applied itself would move every
-figure ever recorded, which is exactly what `BATTLE_FURY` did. Health and mana
-are resource maximums computed ONCE from a stats snapshot, so a stamina buff
-applied as an aura grants no health at all: the encounter passes `poolStats`, a
-transform from the character's own stats to their buffed ones, and the pools are
-sized from that. A proc's reaction is built PER CHARACTER, because an internal
-cooldown is per-character state and one shared closure silently stopped Windfury
-proccing after the first iteration of a batch. Full rules in
-[docs/raid-buffs.md](docs/raid-buffs.md).
-
-**A revive keeps auras, except the ones spent to prevent it.** An aura declares
-`removedOnDeath`, and Last Stand and Shield Wall are the two that do: a
-survival cooldown that visibly failed does not carry through the death it
-failed to stop, and Last Stand would otherwise drag its borrowed maximum health
-into a pool that was just refilled. Everything ELSE stays up, which is the
-point of `revivesOnDeath` — dropping the lot would switch off the assumed
-healer at the moment it is needed most. Which effects survive dying is a
-property of the effect, so the flag is on the aura and not on the character.
-
-**RAGE IS A FLAT RATE PER SWING, NOT A SHARE OF THE DAMAGE.** Forever's rule is
-`rage = R x S`, R being 3.46 for a one-hander or a bear's paws and 4.5 for a
-two-hander, S the weapon's BASE speed before any modifier. `R x S` every `S`
-seconds is `R` per second, so the speed cancels: a two-hander earns 4.5 a
-second and a dual-wielder 6.92, and haste raises neither. EXTRA ATTACKS BREAK
-THAT CANCELLATION -- a Windfury or Hand of Justice proc pays a full `R x S` for
-a swing that cost no time, so a slow two-hander earns 16.2 a proc against a
-dual-wielder's 9.0, and the 2H Arms preset runs at 6.2 rage a second against a
-4.5 floor. **Rage income no
-longer scales with gear, buffs or damage**, which moved every measured figure
-in this project in both directions at once -- unbuffed builds gained, the
-raid-buffed presets lost. A miss still earns nothing, because it is rage from
-damage DEALT, and that is `ResourceGeneration.requiresDamage` rather than a
-consequence of the arithmetic. Taking damage is `D x 10 / H` off the PRE-ARMOR
-figure MINUS THE BLOCK: Defensive Stance reduces the rage earned, armor does
-not, and a block does -- "blocked hits give the rage of the unblocked amount".
-Armor and a block are one pipeline step, so `DamageResolution` carries
-`blocked` separately to tell them apart. The old
-damage-proportional formulas are commented out rather than deleted, on the
-owner's instruction. Full rules in [docs/resources.md](docs/resources.md).
-
-**A ROTATION WILL CHANGE STANCE TO REACH AN ABILITY, and that is not always
-wanted.** `PriorityRotation` treats a wrong stance as "not yet, and here is
-how" -- which is why Revenge, Whirlwind and Recklessness are reachable at all.
-An entry that must NOT provoke a swap says so in its `condition`, which is
-checked BEFORE the swap is considered: Charge lists Battle Stance, and adding
-it to the Protection list sent the tank out of Defensive at the pull until its
-condition required a stance the ability already allows. That same condition is
-how Vanguard gates it, without naming the talent -- the talent adds Defensive
-Stance to the character's copy of Charge, and the rule reads the ability rather
-than the build.
-
-**Charge is used ONCE, as the first action.** "Cannot be used in combat", and
-every fight here opens in combat, so the only legal moment is timestamp zero.
-The rule is on the ability, not on each list that includes it.
-
-**A REACTION FIRES ON DAMAGE; A CAST REACTION FIRES ON A CAST, and the second
-exists because four Rogue talents needed it.** Relentless Strikes, Ruthlessness
-and Improved Expose Armor all pay out when a FINISHER IS USED, and a finisher
-spends its combo points inside its own `onCast` -- so neither the cost system
-nor a damage reaction can see what happened. `AbilityCastEvent` carries what
-the cast SPENT, MEASURED BY SNAPSHOTTING every pool around it, which covers the
-declared cost and anything the ability drained itself. Measuring rather than
-asking each ability to declare is the point: the ability that forgot would be
-silently inert. Seal Fate needed no new hook, only a new FACT --
-`Ability.comboPointsAwarded`, because a reaction sees an ability id and nothing
-about what the ability does.
-
-**RESISTANCE ON AN ENEMY TARGET HAS NO EFFECT ON DAMAGE**, by the ruleset
-owner's ruling. So a spell lands for full against a raid boss, and
-`resistancesFromItems` being computed and never read is CORRECT rather than a
-gap. The engine gap survey had it the other way round and was wrong to.
-
-**THE WRONG ROTATION IS WORSE THAN NO ROTATION, because nothing about it
-looks wrong.** The Mage's list is chosen by points spent -- three `caster`
-builds with no stance, no form, and a 0/29/22 Frostfire build with no capstone
-for the Rogue's test to find -- and the first version compared two trees and
-never looked at Fire. The owner's 10/39/2 FIRE build came back as ARCANE, ran
-a list built around a spell it had one point in, and produced a perfectly
-ordinary 143.9 DPS without casting Fireball once. Nothing errored and nothing
-was missing.
-
-**TWO CLASSES IN A ROW BRING NO PET, AND BOTH SAY SO IN A TALENT.** Lone Wolf
-is "+20% damage while you do not have an active pet" and Demonic Sacrifice
-kills the demon for a two-hour buff -- so four of the five profiles that the
-gap survey listed as blocked on pets turned out not to want one. The pet work
-the Beast Mastery hunter needed is not wasted; it is simply not what the other
-four do, and that is a property of the BUILDS rather than of the engine.
-
-**A PERCENTAGE MANA REDUCTION IS `CastModifier.costFraction`, AND A TALENT
-GRANTS ONE WITH `grantCastModifier`.** "Reduces the mana cost by 50%" is a
-FRACTION OF THE COST, which is what that field always was; `abilityCost`
-subtracts a flat amount, which is right for a 20-rage Mortal Strike and wrong
-for a 380-mana Immolate. That mismatch was the single most common `unmodelled`
-reason in the project -- eleven talents across SEVEN classes saying it in
-almost identical words -- and it was a missing DECLARATION rather than a
-missing rule: the modifier, its resolution and its consumption all already
-existed.
-
-**TWO OF THEM ON THE SAME ABILITY STACK ADDITIVELY.** Improved Wrath's 50% and
-Moonglow's 25% make 75%, not the 62.5% two multiplicative reductions would
-give, because `resolveCast` subtracts each from the BASE rather than from the
-running total. Both readings produce a plausible number, which is why there is
-a test on it.
-
-**IT ONLY MOVES A MANA-BOUND PROFILE, and that is the point.** A cost
-reduction is worth nothing to a build that never runs dry: the Moonkin gained
-48% and the Elemental shaman 32%, while Retribution -- which genuinely has
-Benediction applying -- did not move at all. A talent working and a talent
-mattering are different questions.
-
-**AN `unmodelled` REASON MATCHED BY WORDING IS A TEST.**
-`grantCastModifier.test.ts` fails if any talent still claims a percentage cost
-cannot be expressed, matching the SENTENCE rather than a list of ids -- so a
-new class writing the same complaint is caught. It found one on the way in:
-the Shaman's Tidal Focus, which is inert for want of a healing profile and had
-been given the percentage-cost reason by mistake.
-
-**A STAT CAN BE WORTH A PERCENTAGE OF ANOTHER STAT, and that is
-`statFromStat` FOLDED INTO THE DERIVATION rather than a number computed once.**
-Six talents across five classes said this could not be expressed -- Careful
-Aim, Mental Dexterity, Mental Quickness, Arcane Resilience, Champion of the
-Light and Spiritual Guidance -- and like `grantCastModifier` it was a missing
-DECLARATION and not a missing rule. `StatBlock` already resolves in two passes
-so a derived stat sees FULLY BUFFED primaries, and it already takes the
-derivation as an injected function because which primary makes which secondary
-is game content; a conversion is one more term in that function. So Careful
-Aim follows a buffed intellect exactly as attack power already follows a
-buffed strength, and resolving it once at build time would freeze it at the
-unbuffed figure while still reading as a perfectly plausible attack power. It
-converts FROM a primary only, because the derivation is handed resolved
-primaries and all six talents read one.
-
-**IT MOVED FOUR PROFILES AND WAS WORTH EXACTLY ZERO TO TWO**, which is the
-Eclipse lesson again. Arcane Resilience is ARMOR on a Mage nothing attacks.
-Champion of the Light is spell power on a Seal Twist Ret whose seals are
-Command and Crusader -- and **Seal of Command is 70% of WEAPON damage with no
-spell power term**, so the one profile the gap survey named as "the first
-where it bites" is the one it does not bite at all. Shockadin, which casts
-Seal of Righteousness, gained 2.2%. The mechanism was right and the build was
-wrong, which is why the test asserts THE STAT ARRIVING and not a DPS delta.
-
-**CAREFUL AIM FEEDS BOTH ATTACK POWER POOLS, and the wording pointed the
-other way.** The ruleset owner's ruling: "Careful Aim contributes to attack
-power and ranged attack power". The talent says only "Attack Power", and
-Forever names the ranged pool EXPLICITLY everywhere else it means it -- Aspect
-of the Hawk and Trueshot Aura both read "ranged attack power" -- so reading
-the melee half alone was the defensible reading and it was wrong. This is the
-standing "if it is in question, ASK" instruction paying for itself a second
-time: a Hunter with only the melee half looks entirely ordinary, exactly the
-way Windfury refusing every ability did.
-
-**A TALENT'S OWN RANK DOES NOT ALWAYS OPEN ITS OWN GATE.** Careful Aim is tier
-5, so `{ careful_aim: 5 }` alone is legal and `{ careful_aim: 1 }` is not --
-`createPlayer` strips the illegal one SILENTLY, and a rank-scaling test read
-that as "worth nothing at rank 1" rather than as "not allocated". Pad a
-single-talent allocation with tier-0 filler, the way `tests/helpers/legalise`
-does for the Warrior.
-
-**A TALENT REACHES THE OWNER; A PET NEEDS `petStat` AND `petReaction`.** Six
-Hunter talents were inert for one reason -- a talent effect lands on the
-character carrying it, and a pet is a separate combatant built afterwards --
-and they are most of what Beast Mastery spends its points on. Collected into
-`TalentBuild.pet` and handed to `createPet`, which applies what it is given
-and does no arithmetic on a rank. The HAWK halves of Unleashed Fury and
-Ferocity needed nothing new: a periodic tick carries its aura's id, so
-`abilityDamage` and `abilityCrit` on `summon_hawk` reach it, the same route
-Improved Rend takes.
-
-**EVERY `unmodelled` REASON ON THOSE SIX NAMED THE SAME CAUSE, WHICH IS HOW
-THEY WERE FOUND.** They expired together the moment pets existed. That is the
-third time reasons written specifically enough to re-read have paid for
-themselves.
-
-**A PET RECEIVES NO RAID BUFFS**, which is a Forever rule and not Classic's:
-"Pets can no longer receive external buffs." `isPlayerControlled` counts a pet
--- right for deciding who the raid is FIGHTING, wrong for deciding who it
-BUFFS -- so using it handed a Hunter's pet the whole raid AND printed every
-buff twice on the results page. The duplication is how it was noticed;
-`kind === 'player'` is the narrower test.
-
-**REPORTING READS EVERY FRIENDLY ACTOR, NOT THE PLAYER.** Damage and buff
-uptime both: a talent the Hunter spent points on can put a buff on its pet,
-and reading the player alone made Frenzy invisible -- so a working pet talent
-looked exactly like an inert one. Rage and survival stay the player's, which
-they genuinely are.
-
-**A PET IS A SECOND FRIENDLY COMBATANT, AND ALMOST ALL OF THAT ALREADY
-WORKED.** `dps` has summed every friendly actor since batching was written,
-`CombatantKind` has had `pet`, `ownerId` has been on `Combatant`, and a
-`Combatant` carries its own rotation. The ONE thing missing was reporting:
-`abilityBreakdown` read a single actor, so a Beast Mastery hunter would have
-shown a DPS figure its own damage table could not account for. Pet stats come
-from the owner at Forever's rates -- 2 health a stamina, 30% of armor, 10% of
-the HIGHEST attack power source, and 100% of crit, which makes a Forever pet
-far more gear-sensitive than a Classic one. A pet's own base damage and swing
-speed are stated nowhere and are placeholders.
-
-**A CONDITION NOBODY DECLARED IS NOT AN OMISSION, IT IS A BONUS BEING PAID.**
-Focused Fire is "+2% while your pet is active" and was declared with
-`requires: {}` -- no requirement -- so both Lone Wolf builds, which take the
-talent that means "NO pet", collected the 2% anyway. An unexpressible
-condition that silently evaluates TRUE is worse than an inert talent, because
-an inert talent is reported and this was not. **`BuildRequirement` was
-`WeaponRequirement`** until `shield` and then `hasPet` made the name false.
-
-**ONE FUNCTION ANSWERS "WILL THERE BE A PET".** `bringsPet` is used by the
-encounter to decide whether to BUILD one and by `talentBuild` to decide
-whether a pet-gated talent APPLIES, and those two answers have to be the same
-answer. Keeping the rule privately in the encounter while the talent side
-re-derived it is exactly how `isWeaponUse` went wrong.
-
-**A STAT PROBE IS NOT AN ABILITY PROBE.** Hunter's Mark is +71 ranged attack
-power, and injecting 71 ranged attack power said it was worth +1.9 to the
-melee Hunter. Casting the actual ABILITY -- which also spends 60 mana and a
-global cooldown at the pull -- measured **-10.1**. It is in two of the three
-lists for that reason. When deciding whether something belongs in a priority
-list, measure the CAST and not the effect.
-
-**A PET'S BASE IS A DPS AND NOT A PER-SWING DAMAGE, which makes ITS SWING
-SPEED DAMAGE-NEUTRAL.** The Forever Hunter wiki gives auto attack as
-`((PetBaseDPS + AP / 14) x mods) x PetSwingSpeed`, and `powerCoefficient` is
-already `speed / 14`, so a base DPS multiplied by the swing reproduces the
-whole line. The model before it carried a flat 100 per swing, which meant a
-one-second pet dealt twice a two-second pet's damage -- and both sources say
-the opposite outright: the wiki that "faster attack speed does not inherently
-increase the pet's base DPS", Petopia that "faster pets may attack more
-frequently but they do proportionally less damage per hit". **A placeholder in
-the wrong UNIT is worse than a placeholder with the wrong value**, because the
-value is only wrong once and the unit is wrong every time something else moves.
-
-**PET FAMILY MODIFIERS ARE REAL DATA AND THE CAT ROW PROVES THE TABLE.**
-Petopia Classic states damage, health and armor per family -- Cat 1.10 / 0.98 /
-1.00 -- and the Forever wiki's own "Notable Family Modifiers" gives the same
-three for the Cat, which is what makes the other four trustworthy from the same
-source. **Forever's changes page does not list pet base damage, scaling or
-attack speed**, so Classic's are Forever's here, by the same derivation this
-project already used for Claw and Bite. Happiness is 125 / 100 / 75 and a fed
-pet is Happy -- an assumption about the player, like Improved Tracking's,
-stated on the constant.
-
-**A TEMPORARY SUMMON IS MODELLED WITHOUT A COMBATANT**, on the ruleset owner's
-call: the engine cannot add one mid-fight, so a Hunter's hawk is a periodic
-effect on the Hunter that deals the hawk's damage. The damage lands and is
-credited; what is lost is that the hawk is not separately targetable. Adding
-combatants mid-fight remains the last item on the gap survey, wanted only by
-the Warlock's Infernal and the Mage's elemental.
-
-**`github.com/classic-hunter/forever-hunter/wiki` IS A FIFTH SOURCE**, named
-by the ruleset owner for pet scaling and carrying a full Forever-versus-Classic
-diff for the whole class. It is the only source for pet stat scaling and focus
-regeneration, and it states Forever ability numbers that differ sharply from
-Classic's -- Aimed Shot's bonus went 600 to 166, Raptor Strike's 140 to 70,
-Arcane Shot gained a 10% ranged attack power coefficient and lost its spell
-power one. Where it and the spellbook overlap they agree.
-
-**A SEAL SCALES WITH SPELL POWER, AND IT IS THE ONLY THING THAT DOES.** The
-ruleset owner supplied the formula directly: `base + baseWeaponSpeed x (0.022
-x attackPower + 0.044 x spellPower)`, which makes a point of spell power worth
-exactly twice a point of attack power and makes a slow weapon hit harder --
-the tooltip's "slower weapons cause more Holy damage per swing" falls out of
-it rather than needing a rule. Which half of a stated range like "21 to 75" is
-the BASE is an interpretation, and the low end is read as the base because the
-range is described as the effect of speed; it is one named constant so it is
-cheap to flip.
-
-**SEAL DAMAGE IS NOT A WEAPON USE**, by the ruleset owner's ruling, and the
-swing that carried it still is. So a Seal of Righteousness hit triggers
-nothing -- not Windfury, not Crusader, not Hand of Justice, and not another
-seal -- while the auto-attack underneath it triggers everything as usual. It
-is enforced by dealing every seal hit with NO `weaponSlot`, which is the whole
-of `isWeaponUse`.
-
-**A BLOCK IS NOT AN ATTACK OUTCOME A REACTION CAN SEE.** Forever's block lands
-and is reduced by a flat amount inside the damage pipeline rather than being
-rolled as a table result, so `AttackOutcome` has no `block` for
-`melee-received` to produce. An aura can be SPENT by a block
-(`consumedByBlock`) and a reaction cannot FIRE on one -- which costs the
-Paladin two clauses, Reckoning's extra attack after blocking and Holy Shield's
-221 damage per block, and both say so.
-
-**A SPELL'S COEFFICIENT IS `castTime / 3.5`, AND IT IS A RULE RATHER THAN
-DATA.** The ruleset owner supplied it directly:
-`damage = castTime / 3.5 x (spellPower + schoolSpellPower) + baseDamage`, with
-an instant priced at 1.5 seconds. That second term is exactly
-`spellPowerFor(source, school)`, and `scaleByPower` has computed
-`baseAmount + coefficient x power` since before any caster existed -- so this
-needed NO engine work at all. **The spell DATA has not changed and still states
-flat damage with no coefficient**; what was missing was a universal RULE, which
-never needed stating per spell. Full rules and provenance in
-[docs/spell-coefficients.md](docs/spell-coefficients.md).
-
-**"A CASTER FIGURE IS A FLOOR" IS FINALLY DEAD, AND IT TOOK THREE GOES.** The
-caveat had two halves and each expired separately: first "no caster gear
-exists", when every caster got its own set; then "Forever's spell data states
-flat damage and no coefficient", which was TRUE OF THE DATA AND IRRELEVANT --
-the coefficient was a rule nobody had asked for yet. Five class file headers
-said it in almost identical words and all five expired at once. **Check whether
-a missing number is missing DATA or a missing RULE before recording it as a
-gap**; this one was written down three times as the former.
-
-**THREE OF THE FOUR CASES ARE CLASSIC'S, ON THE OWNER'S RULING, AND ONLY THE
-DIRECT ONE IS CLAMPED.** A channel is `duration / 3.5` split across its ticks,
-a DoT is `duration / 15`, a hybrid gives each half its own share of their sum
--- and a direct cast clamps to `[1.5, 3.5]` seconds while the other two do
-not. That is Classic being self-consistent rather than an oversight: a
-five-second channel is worth 1.429 and a 24-second DoT 1.6, while a six-second
-Pyroblast is worth 1.0, because a channel and a DoT already pay for their
-coefficient in TIME. **The hybrid formula reproduces Classic's published pairs
-exactly** -- Moonfire at 0.1495 and 0.5209 against a stated 0.15 and 0.52 --
-which is what distinguishes the right transcription from one of the several
-that land NEAR it.
-
-**THE CAST TIME IS THE BASE ONE, AND `ability.castTimeMs` IS NOT IT.**
-`abilitiesForClass` overwrites that field with the TALENT-REDUCED figure, so
-reading it inside `onCast` makes Improved Fireball quietly REDUCE Fireball's
-scaling with gear -- a cast-time talent making a spell worse with gear, at a
-number nobody would question. Every spell declares a named `*_CAST_MS` and uses
-it for both its `castTimeMs` and its coefficient, so the two cannot drift.
-
-**AN EFFECT WHOSE SIZE COMES FROM ANOTHER HIT TAKES NO COEFFICIENT**, because
-that hit was already scaled. Ignite is "an additional N% of your spell's
-damage" and gets zero; giving it one applies spell power twice to the same
-damage.
-
-**A STRUCTURAL TEST THAT FILTERS ON `attackTable` MISSES EVERY PURE DoT.**
-`everySpellScales.test.ts` casts each spell twice at two spell powers and
-demands the damage move -- BEHAVIOURAL, so no declaration can satisfy it -- and
-its first version filtered on `attackTable === 'spell'`, which silently skipped
-Shadow Word: Pain, Corruption, Bane of Agony, Siphon Life, Devouring Plague and
-Consecration. A spell that only applies an aura declares no table, and those
-six are exactly what the periodic rule is for: the check covered everything
-except the part most likely to be wrong. The list is DISCOVERED from the event
-stream instead.
-
-**INTELLECT AND SPELL CRIT MATTERED BEFORE THE COEFFICIENT DID.** When caster
-gear arrived and multiplied nothing, the four cloth profiles still gained 4.6%
-to 93.1% -- from intellect buying casts before the mana ran out, and from spell
-crit, which caster gear grants and plate does not. A stat can matter through a
-resource rather than through a coefficient.
-
-**SPELL POWER CAN BE SCOPED TO A SCHOOL, AND IT IS NOT A STAT.** Seventeen item
-lines say "Increases damage done by SHADOW spells and effects by up to N" --
-nine Priest pieces and eight Lawbringer ones naming Holy -- and one number read
-by every non-physical school cannot hold that: applying it would make the same
-character's Holy spells hit harder. `STAT_NAMES` is a closed flat set and
-deliberately cannot key by school, so it is a FOURTH FIELD on `SchoolModifier`,
-beside the crit, crit damage and damage multiplier already keyed the same way,
-and `spellPowerFor` adds it to the school-blind pool AT THE POINT OF USE so a
-buff still moves it. **The field is on the school scope and not on the shared
-`AbilityModifier`**, which is the guard: hung off an ability or an attack table
-nothing would read it, and it would do nothing without saying so.
-
-**GEAR IS THE FIRST CALLER OF A SCOPE TALENTS BUILT**, so `createPlayer` folds
-the equipped set's entries into the build's -- into a NEW `SchoolModifiers`
-rather than into `build.schoolModifiers`, because a `TalentBuild` is a value a
-caller may hold across several characters and mutating it works exactly once.
-
-**IT WAS WORTH ZERO TO THE PROFILE THAT FOUND IT**, which is the Eclipse lesson
-a fourth time. The Shadow Priest's full 497 now arrives and its DPS did not move
-by a tenth, because Forever's Priest spells state flat damage and no
-coefficient. **Shockadin is the one profile it moved**, +9.5, because Seal of
-Righteousness is the project's only spell power coefficient -- and Retribution
-carries a real 79 Holy for nothing, since **Seal of Command is 70% of WEAPON
-damage with no spell power term**. Assert the stat arriving, scoped to the right
-school; a DPS test would have passed before the feature existed.
-
-**AN AURA CAN CHANGE THE NEXT CAST OF AN ABILITY IT NAMES**, which is
-`CastModifier` on `AuraDefinition` and the rule four classes asked for.
-`abilityCastTime` is a STANDING talent reduction fixed when the character is
-built, an ordinary aura reaches every ability or none, and content cannot
-reach cast time at all because the engine resolves it BEFORE `onCast` runs --
-which is exactly why Stormstrike's +20% could be done in content and Eclipse
-could not.
-
-**RESOLVING AND CONSUMING ARE TWO STEPS, and that is the whole design.**
-`checkCast` has to be side-effect free, because a rotation calls it on every
-candidate before committing to any -- so `resolveCast` is pure and
-`consumeCastCharges` is called once, by the cast that happens. Both halves
-must see the same cost or a priority list refuses a spell the character can
-afford, and does it SILENTLY: the list moves to the next entry and nothing
-reports a spell it declined to consider.
-
-**`consumedByCast` IS AN ENUM AND NOT A BOOLEAN.** Eclipse spends a `stack`
--- "your next 2 Starfire spells" is two casts each getting the full half
-second -- and Maelstrom Weapon spends `all`, because "your NEXT Lightning
-Bolt" is ONE cast that every stack paid for. Spending a stack where the effect
-spends all of them leaves four behind for the next cast, which reads as a
-working talent and is worth several times what it should be.
-
-**A CORRECT TALENT CAN BE WORTH ZERO, and Eclipse is.** It saves cast time and
-the Moonkin is MANA-bound, spending ~3,400 from a ~2,800 pool over sixty
-seconds: time it was not using is worth nothing, and the DPS figure did not
-move. That is why the tests assert the MECHANISM and not a damage delta --
-a test measuring DPS would have passed identically before the rule existed.
-
-**A `percentAdd` STAT EFFECT WITHOUT `scale: 0.01` IS A THOUSAND PERCENT.**
-`StatBlock` computes `(base + flat) * (1 + sum(percentAdd))`, so the modifier
-wants a FRACTION and a talent states a PERCENTAGE. The Warrior's one entry
-scales it and says why; the Druid, the Shaman and the Mage all forgot, which
-multiplied intellect by ELEVEN -- an Arcane mage read 1,529 intellect against
-a base of 139 and 28.9% spell crit against a true 5.8%. It survived two class
-PRs because a caster with a very large mana pool looks exactly like a caster
-with a very large mana pool. `classRegistration.test.ts` now fails for any
-unscaled percentage operation, which is structural and gets a new class for
-free.
-
-**A CLASS HAS TO BE REGISTERED IN FOUR PLACES AND MISSING ANY ONE IS SILENT.**
-`talentValues.ts`'s `FILES`, `talentBuild.ts`'s `EFFECTS` **and** its
-`REACTIONS`, and `abilitiesForClass`. Two of the four have now been missed, and
-the two failures do not even look alike. Missing the VALUES file makes every
-rank resolve to nothing so every talent reports itself `unmodelled` -- which is
-exactly what an unfinished class is supposed to look like, so twenty dead Rogue
-talents read as progress for a day. Missing `talentBuild`'s EFFECTS table is
-quieter still: nothing reports unmodelled at all, the tree simply produces no
-effects, and three talent-GRANTED abilities went missing from the Shaman's
-spellbook with no complaint -- 37% of an Elemental shaman's damage and 44% of
-an Enhancement one's, at figures that looked perfectly ordinary. A prose rule
-naming one file caught the first and missed the second, so the rule is now
-`tests/game/classRegistration.test.ts` instead: it fails when a class with
-abilities is absent from any registry. **Check a new class's talents actually
-change a number rather than trusting the build to complain**, because it will
-not.
-
-**A WEAPON PROC FIRES ON A USE, AND A USE IS A SWING OR AN ABILITY.** Anything
-that goes through a combat table and needs that weapon counts -- Bloodthirst,
-Mortal Strike, Rend and Heroic Strike are all main-hand uses, which is the
-ruleset owner's own wording. Thunder Clap is not, because it needs no melee
-weapon; it and Intercept and Charge resolve on the ranged table, which is how
-`isWeaponUse` tells them apart. A WEAPON-BOUND effect fires only from a use of
-its own weapon, so a main-hand Crusader and an off-hand Crusader are two
-effects with two rolls and Windfury is main-hand only; a GLOBAL one, Hand of
-Justice, fires from either hand. Whirlwind with Raging Blows strikes with both
-hands as two attacks, so one cast can trigger both Crusaders and Windfury, and
-Windfury only from the main-hand half. Shield Slam triggers MAIN HAND effects,
-settled by the owner because the rule alone did not answer it -- it strikes
-with the shield, but the effects it feeds are the main hand's.
-The rule lived as a private one-liner in
-one file while the procs in two others re-derived it and got it wrong: Windfury
-refused every ability and was worth a third of what it should have been, and
-Hand of Justice procced off Thunder Clap. It is `isWeaponUse` in the engine
-now. Full rules in [docs/extra-attacks.md](docs/extra-attacks.md).
-
-**A PRIORITY LIST ORDERED BY DAMAGE PER CAST IS ORDERED BY THE WRONG THING
-WHEN THE BUILD RUNS OUT OF RESOURCE.** A geared Hunter empties its mana by the
-30-second mark of a 60-second fight and spends the REST OF IT on auto-shot
-alone, so what binds is damage per MANA. Aimed Shot is the heaviest shot in the
-book and was in the list for that reason; dropping it is worth +23 DPS.
-**Check whether a build is resource-bound or global-cooldown-bound before
-reading its list**, because the two want opposite orders -- the melee Hunter
-ends fights with 44% of its mana unspent, and adding one instant shot to it was
-worth +55.
-
-**A CAST TIME IS A HIDDEN COST A PRIORITY LIST CANNOT SEE**, because the swing
-it resets belongs to a different line of the damage table. `resetSwingTimers`
-covers the RANGED slot, so a two-second Aimed Shot throws away most of a
-3.2-second bow cycle -- and auto-shot is 42% of a Marksmanship Hunter's damage.
-The same rule keeps every cast out of the MELEE Hunter's list, whose
-auto-attack is its largest share. **An instant ability and a cast ability are
-not comparable by their damage**, and per-use damage is exactly what a list
-tends to get sorted by.
-
-**MEASURE A LIST, DO NOT REASON ABOUT IT.** The Hunter's Summon Hawk sat above
-Arcane Shot on a shared cooldown because a comment said "a hawk is 32 damage
-every two seconds for eighteen seconds against Arcane Shot's one hit -- the
-hawk wins on paper". It counted the hawk's ticks and not its price, and Arcane
-Shot above it is worth +20. The comment was specific, plausible, and had been
-believed for as long as it had existed. Patch one entry, run 30 batches of 10,
-and treat a difference inside the interval as no difference.
-
-**THE SAME ABILITY CAN BE RIGHT IN ONE LIST AND WRONG IN ANOTHER.** Aimed Shot
-is worth -23 to Marksmanship and +4 to Beast Mastery: Beast Mastery has no
-Sniper Shot to spend the mana on, and its pet carries enough damage that the
-interrupted auto-shot is a smaller share. Check a finding against the other
-builds of the same class before generalising it.
-
-**A cast interrupts the swing in progress, and the swing timer resets.** That is
-what makes a cast a real cost to a melee character rather than free damage
-between swings. `Ability.swingTimer: 'hold'` is the exception — the timer runs on
-behind the cast and a swing that comes due *during* it waits for the cast to
-finish rather than being lost. The Warrior's Improved Slam is exactly that, and
-it is worth far more than the quarter second of cast time the same talent
-removes.
-
-**AND TO AN ATTACK TABLE, which is the OTHER axis.** `AttackTableModifiers`
-is the same three fields keyed by `AttackTableKind`: a school separates fire
-from frost, this separates MELEE from RANGED and a SWING from a SPECIAL. **It
-keys on the TABLE and not on a `'melee' | 'ranged'` enum, and that is the
-whole reason it works** -- the four Hunter talents that wanted it divide on
-two axes at once, so a two-value enum could express none of them without a
-second flag. Savage Strikes is "all your melee ABILITIES" and stops at
-`melee-special`; Predator's Edge is "your MELEE critical strike damage",
-says nothing about abilities, and therefore reaches the swing -- which on a
-two-hander is worth more than the two previously inert talents together.
-**READ WHETHER THE TOOLTIP SAYS "ABILITIES" OR "WEAPONS"**, because both
-readings produce a plausible number.
-
-**A DoT TICK IS REACHED FOR CRIT AND NOT FOR DAMAGE.** `critFrom` declares
-one thing -- which table's CRIT a tick borrows -- so the crit fields read
-`attackTable ?? critFrom` and the damage multiplier reads `attackTable`
-alone. Serpent Sting ticks NATURE damage with `critFrom: 'ranged-special'`:
-Mortal Shots' crit damage belongs to it, and "the damage you deal with ranged
-WEAPONS" does not, because a sting's poison is not weapon damage.
-
-**THE OVERLOADED TABLE IS THE TRAP.** Thunder Clap, Intercept and Charge are
-MELEE Warrior abilities that declare `ranged-special`, because that table has
-no dodge or parry and because it is how `isWeaponUse` excludes them. Nothing
-is wrong today -- these modifiers are per character and no Warrior carries a
-Hunter talent -- but a class whose own melee ability sits on a ranged table
-would be selected wrongly. **Check the class's abilities, not just the table
-name**, before scoping a new talent this way.
-
-**A MODIFIER CAN BE SCOPED TO A SCHOOL, and that is the missing middle
-between one ability and the whole character.** `SchoolModifiers` carries the
-same three fields as `AbilityModifiers` -- crit chance, crit damage bonus,
-damage multiplier -- keyed by `DamageSchool`, and `dealDamage` consults both.
-Before it existed a talent reading "your Fire spells" had two bad options and
-BOTH WERE TAKEN: the Druid's Moonfury and Vengeance were left inert because
-listing every Balance spell by id was unmaintainable, and the Shaman's
-Elemental Fury was applied whole-character with a caveat admitting it also
-raised physical crits. Fixing the second moved TWO things, because it was
-wrong twice: it reached physical, and it used the MELEE crit multiplier for a
-spell. A crit damage bonus raises the bonus HALF, and that half is 1.0 for a
-2x melee crit and 0.5 for a 1.5x spell crit -- so "+100%" takes a spell crit
-to 2.0x and not to 2.5x. Getting it right cost the Elemental shaman 9.9% and
-the Enhancement one 3.0%, and gained the Moonkin 14.6%.
-
-**A CHANNEL IS A CAST THAT TICKS, and nothing else about it is new.**
-`Ability.channelTicks` runs `onCast` that many times, evenly spaced inside
-`castTimeMs`, with the LAST tick where an ordinary cast's single effect
-already lands -- so a one-tick channel and a plain cast are the same thing,
-which is the check that the two paths have not drifted. The caster stays
-locked for the whole channel: a tick that freed them would let a rotation cast
-over its own channel every second. Haste shortens the channel, so the ticks
-come faster and there are still the same number of them.
-
-**Per-ability crit and damage go through `AbilityModifiers` on the combatant**,
-not through the ability's own `onCast`. `dealDamage` consults them, so an
-ability respects them without knowing they exist — otherwise every ability would
-have to remember to look, and the one that forgot would be quietly wrong. Auto
-attacks carry no `abilityId`, so nothing there touches them, including the
-`ALL_ABILITIES` entry. A crit *multiplier* bonus raises the bonus half: a x2
-melee crit with "+10% crit damage" is 1 + (2-1) x 1.1 = x2.1, never x2.2.
-
-**A stat that only applies sometimes is a bug waiting to happen.** Equipment
-resolution strips the slots a combat style cannot fill, and stripping one slot
-too many silently discarded a bow's attack power from every melee character.
-Only genuine conflicts are exclusive: a two-hander against a one-hander, and an
-off-hand the style cannot hold. A ranged weapon coexists with a sword and simply
-does not swing. **IT HAPPENED A SECOND TIME, IN THE MIRROR.** `mainHand:
-'stat-stick'` -- the Ranged and Caster styles, which say in as many words that
-melee weapons may be equipped and never swing -- was read as "not two-hand,
-therefore one-hand", so a held TWO-hander was deleted. A Hunter using Dreadforge
-Retaliator the way its own gear set does lost 12 agility and 30 attack power,
-and a caster holding a STAFF would lose everything on it.
-
-**AND THEN IT OVERSHOT.** Letting the two-hander through handed it over as a
-WEAPON, and `createPlayer` merges equipped weapons OVER the style's own -- so a
-Druid in Cat form swung an Obsidian Edged Blade, base 234 every 3.6 seconds
-instead of a paw's 50 every 1.0. That read as a 62% damage increase and as a
-working feature, and it is why the test pins the WEAPON NAME rather than a DPS
-figure. A stat-stick hand contributes STATS and never a weapon: held, never
-swung, which is what the style always said.
-
-**A STAT-STICK STYLE IS TWO SEPARATE QUESTIONS** -- is the item kept, and does
-it swing -- and the same commit got one wrong in each direction.
-
-**A RANGED WEAPON SCALES WITH RANGED ATTACK POWER**, and `weaponDamageFor`
-read `attackPower` for every slot, so a bow swung with the melee pool. The
-owner-named Hunter wiki gives Auto Shot as `RAP / 14 x WeaponSpeed + ...`, and
-`powerCoefficient` is `speed / 14`, so reading the matching pool reproduces it
-exactly. **IT KEYS ON `weaponScaling.slot` AND NEVER ON `weaponSlot`**: the
-latter says whose PROCS an attack triggers, and Thunder Clap and Intercept both
-declare `'ranged'` there so `isWeaponUse` excludes them, while being melee
-Warrior abilities that use the ranged TABLE for its lack of dodge and parry.
-
-**THE PREDICTION ABOUT IT WAS WRONG IN DIRECTION, and the reason is worth
-keeping.** It said the ranged Hunters were overstated; they went UP. At the
-pull a geared Hunter has more melee attack power than ranged, 1160 against
-1092 -- but the rotation opens with Aspect of the Hawk, +120 RANGED and
-nothing to melee, so the ranged pool leads at 1212 once the fight is running.
-**`characterAtCombatStart` processes no events**, so it shows the character a
-moment before its own opener lands; do not reason about in-fight scaling from
-it alone.
-
-**1,548 TESTS PASSED WITH THAT BUG IN**, because a Hunter with a plausible
-attack power produces a plausible number. When a fix moves nothing in the
-suite, that is a statement about the suite.
-
-**THE THREE HUNTERS WORE THE WARRIOR SET FOR THE WHOLE PROJECT**, and no test
-could have caught it because a profile in the wrong gear runs perfectly. 370
-strength and 245 agility on a class that gets NO ranged attack power from
-strength; their own set is 58 and 334, and moving to it was worth up to 34%.
-**ALL TWENTY-THREE PROFILES ARE IN THEIR OWN CLASS'S GEAR NOW**, from twelve
-sixtyupgrades sets the owner supplied, and seventeen figures moved -- in BOTH
-directions, because the Warrior set was never a neutral stand-in. It is a very
-strength-heavy plate set, so every melee hybrid that moved to its own class's
-gear LOST attack power: Retribution 5.7%, Bear 20.8%, Protection Paladin 29.5%.
-The old numbers were flattering.
-**Check whose gear a profile is in before quoting its number.**
-
-**THE SIX PROFILES WHOSE GEAR DID NOT CHANGE DID NOT MOVE BY A DECIMAL**, and
-that is the check that matters in a gear commit. Seventeen sets landing at once
-touches `liveEquipment`, the effect rules, the slot map and the enchant list --
-shared code every profile reads. Three Warriors and three Hunters coming back
-at exactly their old figures is what says the change stayed inside the sets.
-
-**A STAT-STICK OFF HAND HAD ITS STATS DELETED, which is the main hand's bug in
-the mirror.** `liveEquipment` was fixed for `mainHand: 'stat-stick'` when a
-Hunter lost a two-hander's stats, and the identical line two rows down went on
-deleting both off-hand slots for all five stat-stick styles -- so an Elemental
-shaman holding Earth and Fire, a CASTER shield worth 26 spell power, got
-nothing from it at all. **When a rule is fixed for one slot, check its
-siblings**: `offHand` and `shield` are both off-hand slots and both needed it.
-
-**"WITH ALL SPELLS AND ATTACKS" IS TWO STATS.** `critChance` and
-`spellCritChance` are separate and are read by separate tables -- the melee
-tables take the first, `kind === 'spell'` the second -- so an item line saying
-both has to grant both, which is what the raid buffs saying it already did.
-Sixty-two item lines say it, and granting only the melee half was invisible for
-exactly as long as no caster owned any gear.
-
-**`Increased Defense +7` WAS BEING EATEN BY THE WEAPON-SKILL PATTERN.**
-`^Increased (.+) \+(\d+)$` matches it, and a weapon's `bonusSkill` on a
-breastplate is dropped on the floor because only a weapon carries one -- so
-seventeen lines of defense skill, which moves five separate numbers on the
-attacks-received table, went nowhere. The named rules are tried BEFORE the
-weapon-skill pattern now, and "Increased Two-handed Swords +3" still falls
-through to the skill it is.
-
-**A SET BONUS WAS BEING DROPPED, WHICH IS THE ONE THING THIS PARSER MAY NOT
-DO.** It reads `(4) Set : ...` and starts with a bracket, so it matched neither
-the prefix list nor the bare-number fallback and went nowhere at all -- not
-unmodelled, dropped. It survived because the only set on file was the Warrior's,
-whose three bonuses are stance mechanics nobody was looking for; twenty profiles
-are in Tier 1 now and the Priest's four-piece is a flat +2% spell crit that
-would have read as simply missing. The full tooltip was always stored, so
-nothing was lost from the SOURCE -- only from the list of what the simulator
-does not do.
-
-**AN ITEM'S PROC IS KEYED BY ID, AND AN ITEM CAN HAVE TWO.** Five of the
-owner's sets name the Season of Discovery Hand of Justice, id 228722, while the
-proc was keyed to the Classic 11815. Its tooltip matches `MODELLED_AS_PROCS`, so
-the trinket would have read as fully SIMULATED -- not even listed as missing --
-while firing never once. The SoD tooltip also states a 2-second internal
-cooldown where the code carries the owner's 1.5; the disagreement is recorded
-rather than averaged.
-
-**GEAR BELONGS TO A CLASS, so changing class replaces it.** `applyChange` in
-the Character panel already re-resolved the combat style and dropped the stance
-for exactly this reason -- "a profile should not quietly carry bear around", "a
-Mage should not quietly carry defensive around" -- and gear was not on that list,
-so a Paladin switched over from a Mage kept ARCANIST CLOTH. A RACE change keeps
-it: gear is not a race's, and re-rolling someone's slots because they switched
-Orc to Troll is the annoying kind of helpful.
-
-**THE TWO PALADIN SHIELD BUILDS ARE TOLD APART BY `encounter.targetAttacks`.**
-Protection and Shockadin both hold a one-hander and a shield -- the second only
-because Earth and Fire is a caster shield -- so the STYLE cannot separate them,
-and `isTankBuild` cannot either, because it reads a stance and stances belong to
-the Warrior. The ruleset owner's answer is the encounter: the target swings back
-at a tank and stands still for a Shockadin. Same shape as `isTankBuild`, one
-field further out.
-
-**THE SETS LIVE IN `game/items/gearSets.ts`, NOT IN `presets.ts` WHERE THEY WERE
-WRITTEN.** Two layers need them -- a preset, and the starting set a from-scratch
-character is given -- `game` may not import from `profiles`, and duplicating
-three hundred lines of item ids guarantees they drift. A preset naming one of
-those consts is still a stated build; what it deliberately does not do is call
-`startingEquipmentFor`, which is a LOOKUP whose answer changes with the class and
-style on screen.
-
-**A GEAR SET CAN FORCE A BUILD SETTING, and Shockadin's did.** Its set is a
-one-hander and a caster shield where the preset said `two_hander` -- under which
-`liveEquipment` deletes the main hand and both off-hand slots, leaving a Paladin
-holding nothing. Five settings have to agree, and when the owner supplies the
-gear it is the gear that says which one was wrong.
-
-**VALIDATE THE GEAR, NOT THE CHARACTER, AGAINST THE PLANNER.** The planner shows
-BASE + GEAR and nothing else, so comparing a preset's primaries to it flags every
-build that spends a talent point on a stat -- eleven of them, on the first run.
-Build the same character with no items and no talents, and check that
-`panel - base` is what the items supply. All twelve sets passed that; the
-differences that remained were all BASE, which is Forever's data and not to be
-"fixed", and one item where the two SOURCES disagree (sixtyupgrades has Cenarion
-Trousers at +20/+16, Wowhead at +18/+11; Wowhead's is kept because it is this
-project's item source and the one `--verify` reproduces).
-
-**VALIDATE AN IMPORTED GEAR SET AGAINST THE PLANNER'S OWN STAT PANEL.** Every
-primary matched exactly -- 58 strength, 334 agility, 225 stamina, 118
-intellect, 73 spirit -- which is what turns "the ids parsed" into "the set is
-really on the character". The first attempt was 12 agility short and that was
-the one item not equipped, so the check located the gap rather than merely
-reporting one. Crit differing is CORRECT: base stats here are Forever's and a
-Classic planner's are not.
+### Time, numbers, telemetry
+
+- **Time is integer milliseconds** below the UI. Seconds appear only in profiles
+  and formatted output; `seconds()` / `toSeconds()` are the only conversions.
+- **Combat rolls are integers 1–10000** and percentages are **truncated** into
+  that space (`toRollUnits`): 25.7891% → 2578, never 2579. Floats would make an
+  outcome depend on summation order.
+- **Telemetry is the single source of truth.** No running totals in the engine.
+  The combat log is a pure formatter over the same stream the analyzers read, so
+  they cannot disagree. A new statistic is a new analyzer, never a counter
+  threaded through combat code. [docs/telemetry.md](docs/telemetry.md)
+- **`attempts` and `hits` are different numbers.** Avoided attacks emit a damage
+  event with `amount: 0`; averaging over attempts folds every miss in as a zero.
+- **Same-timestamp events** sort by `(timestamp, priority, insertion order)`.
+  `Periodic` sorts before `AuraExpiration`, so a DoT's final tick — due at the
+  moment it falls off — still lands.
+- **Stats are base + modifiers, never mutated in place.** Derived stats are
+  produced by a *function* on the stat block so they re-derive when a buff moves
+  a primary. Computing them at creation leaves attack power stuck unbuffed.
+
+### Swings and the combat tables
+
+See [docs/combat-tables.md](docs/combat-tables.md).
+
+- **At most one pending swing per weapon slot.** `scheduleSwing` cancels whatever
+  the slot was waiting on. Without it an extra attack forks the chain — it fires
+  from inside a swing that has not yet scheduled its successor, so both schedule
+  one, and the fork doubles with every proc.
+- **A dual-wielder has two combat tables, not one shown twice.** Miss and enemy
+  dodge derive from the WIELDING weapon's skill, so anything granting skill with
+  one hand diverges them. Anything reporting them must ask per slot. The
+  dual-wield penalty lands on both hands, so skill is what separates them.
+- **Which table resolves an attack depends on who is being HIT**, not who swings.
+  `melee-received` is the attacks-received table: crushing blows, and the
+  DEFENDER's dodge, parry and block.
+- **A block LANDS and is reduced by a flat amount.** Deliberately not in
+  `AVOIDED_OUTCOMES`, and reduced in the damage pipeline rather than as a table
+  multiplier — that flatness is the whole character of the stat. So **a block is
+  not an outcome a reaction can see**: an aura can be spent by one
+  (`consumedByBlock`), a reaction cannot fire on one, and the two Paladin clauses
+  that wanted it say so.
+- **THE OVERLOADED TABLE IS THE TRAP.** Thunder Clap, Intercept and Charge are
+  melee Warrior abilities declaring `ranged-special`, because that table has no
+  dodge or parry and because it is how `isWeaponUse` excludes them. Check a
+  class's own abilities, not a table name, before scoping anything to a table.
+
+### What triggers what
+
+- **A WEAPON PROC FIRES ON A USE, AND A USE IS A SWING OR AN ABILITY** — anything
+  going through a combat table that needs that weapon. A WEAPON-BOUND effect
+  fires only from a use of its own weapon (so main-hand and off-hand Crusader are
+  two effects with two rolls, and Windfury is main-hand only); a GLOBAL one, Hand
+  of Justice, fires from either. Shield Slam triggers MAIN HAND effects, settled
+  by the owner because the rule alone did not answer it. It is `isWeaponUse` in
+  the engine — it lived as a private one-liner while two other files re-derived
+  it and got it wrong. [docs/extra-attacks.md](docs/extra-attacks.md)
+- **SEAL DAMAGE IS NOT A WEAPON USE**, by the owner's ruling, and the swing
+  carrying it still is. Enforced by dealing every seal hit with no `weaponSlot`.
+- **A reaction fires on damage; a CAST reaction fires on a cast.** A finisher
+  spends its combo points inside its own `onCast`, where neither the cost system
+  nor a damage reaction can see it. `AbilityCastEvent` carries what the cast
+  SPENT, **measured by snapshotting every pool around it** — measuring rather
+  than asking each ability to declare is the point, because the ability that
+  forgot would be silently inert.
+- **IF WHETHER AN ABILITY CAN PROC SOMETHING IS IN QUESTION, ASK.** The owner's
+  standing instruction. A wrong answer does not look wrong: Windfury spent its
+  whole life refusing abilities and every figure was self-consistent and too low.
+  A proc that never fires leaves nothing behind to notice.
+
+### Damage scaling
+
+- **Weapon damage**, universal across classes: `base + baseSpeed / 14 ×
+  attackPower`, using the weapon's **actual** base speed, not a normalised one.
+  An ability's flat damage adds on top, and **the off-hand penalty applies once
+  to the final total** — `(weapon + power + 160) × 0.5`, never
+  `(weapon + power) × 0.5 + 160`.
+- **A ranged weapon scales with RANGED attack power**, keyed on
+  `weaponScaling.slot` and never on `weaponSlot` — the latter says whose procs an
+  attack triggers. This was wrong for the whole project and 1,548 tests passed
+  with it in, because a Hunter with a plausible attack power produces a plausible
+  number.
+- **A spell's coefficient is `castTime / 3.5`**, an instant priced at 1.5s,
+  applied to `spellPower + schoolSpellPower`. A RULE the owner supplied, not
+  per-spell data. [docs/spell-coefficients.md](docs/spell-coefficients.md)
+- **A seal is the exception**: `base + baseWeaponSpeed × (0.022 × AP + 0.044 ×
+  SP)`, supplied directly, which makes a point of spell power worth twice a point
+  of attack power. A Hunter shot is the other — Forever REMOVED Arcane Shot's
+  spell power coefficient, so applying the general rule would reinstate something
+  Forever took out.
+- **Every DoT can crit, and none is reduced by armor.** A Forever rule, not
+  Classic's. A tick does not re-roll the table — whether the effect landed was
+  settled on application — but it rolls for a crit at the crit chance of **the
+  kind of event that applied it**, named by `DamageRequest.critFrom`. No
+  `critFrom` means no crit and no random number consumed, so adding the field
+  never shifts a seeded run. Bleeds are physical and still ignore armor:
+  `appliesArmor: false` on every one.
+- **A tick is reached for CRIT and not for DAMAGE.** The crit fields read
+  `attackTable ?? critFrom`; the damage multiplier reads `attackTable` alone. So
+  Mortal Shots' crit damage reaches Serpent Sting's ticks and "damage you deal
+  with ranged WEAPONS" correctly does not.
+
+### The three modifier scopes
+
+Per-ability crit and damage go through modifiers **on the combatant**, never
+through an ability's own `onCast`: `dealDamage` consults them, so an ability
+respects them without knowing they exist, and the one that forgot to look would
+be quietly wrong. Auto attacks carry no `abilityId`, so nothing there touches
+them, including `ALL_ABILITIES`.
+
+| Scope | Keyed by | For |
+| --- | --- | --- |
+| `AbilityModifiers` | ability id | "your Fireball" |
+| `SchoolModifiers` | `DamageSchool` | "your Fire spells", **and** school-scoped spell power |
+| `AttackTableModifiers` | `AttackTableKind` | melee vs ranged, **and** swing vs special |
+
+- **`SchoolModifiers` is the missing middle** between one ability and the whole
+  character. Without it both bad options were taken: one talent left inert
+  because listing every spell by id was unmaintainable, another applied
+  whole-character with a caveat admitting it also raised physical crits.
+- **`AttackTableModifiers` keys on the TABLE, not a `'melee' | 'ranged'` enum**,
+  and that is why it works: the talents wanting it divide on two axes at once.
+  **Read whether the tooltip says "abilities" or "weapons"** — "melee ABILITIES"
+  stops at `melee-special`, while "melee critical strike damage" says nothing
+  about abilities and therefore reaches the swing. Both readings produce a
+  plausible number.
+- **A crit damage bonus raises the bonus HALF** — 1.0 for a 2x melee crit, 0.5
+  for a 1.5x spell crit. "+100%" takes a spell crit to 2.0x, not 2.5x; a melee
+  crit with "+10% crit damage" is 2.1x, never 2.2x.
+- **A school-blind `spellPower` cannot hold "damage done by SHADOW spells"**, and
+  seventeen item lines say exactly that. It is a fourth field on
+  `SchoolModifier`, not a stat (`STAT_NAMES` is a closed flat set), and
+  `spellPowerFor` adds it to the school-blind pool **at the point of use** so a
+  buff still moves it. On the school scope and not the shared `AbilityModifier`,
+  which is the guard: hung off an ability nothing would read it, and it would do
+  nothing without saying so.
+
+### Casts, auras and the global cooldown
+
+- **The GCD is 1.5s, 1.0 for a Rogue and a Cat-Form Druid, and it belongs to the
+  CLASS** — it arrives as `baseGcdMs`. Being off it means ONE thing: the ability
+  does not START one. It is still BLOCKED by one running, and what it buys is
+  that the action AFTER it is free. Haste does not affect it, only cast time.
+  On-next-swing abilities are off it by DERIVATION,
+  `triggersGcd ?? onNextSwing === undefined`, so a new one gets the rule for
+  free — declaring it per ability fails silently, because an ability wrongly
+  taking a GCD still costs the right resource and deals the right damage.
+  [docs/global-cooldown.md](docs/global-cooldown.md)
+- **A cast interrupts the swing in progress and the swing timer resets**, which
+  is what makes a cast a real cost to a melee character rather than free damage
+  between swings. `Ability.swingTimer: 'hold'` is the exception: the timer runs
+  on behind the cast and a swing due during it waits rather than being lost.
+- **A channel is a cast that ticks, and nothing else about it is new.**
+  `channelTicks` runs `onCast` that many times inside `castTimeMs`, the LAST tick
+  where a plain cast's single effect already lands — so a one-tick channel and a
+  plain cast are the same thing, which is the check that the paths have not
+  drifted. The caster stays locked for the whole channel; freeing them per tick
+  would let a rotation cast over its own channel. Haste shortens the channel, so
+  ticks come faster and there are still the same number.
+- **An aura can change the next cast of an ability it names** — `CastModifier` on
+  `AuraDefinition`. `abilityCastTime` is a standing talent reduction fixed at
+  build time, an ordinary aura reaches every ability or none, and content cannot
+  reach cast time at all because the engine resolves it BEFORE `onCast` runs.
+- **Resolving and consuming are two steps, and that is the whole design.**
+  `checkCast` must be side-effect free because a rotation calls it on every
+  candidate before committing, so `resolveCast` is pure and `consumeCastCharges`
+  is called once by the cast that happens. Both halves must see the same cost, or
+  a list refuses a spell the character can afford and does it SILENTLY.
+- **`consumedByCast` is an enum, not a boolean.** "Your next 2 Starfires" spends
+  a `stack`; "your NEXT Lightning Bolt" spends `all`, being one cast that every
+  stack paid for. Spending a stack where the effect spends all of them leaves the
+  rest behind, which reads as a working talent worth several times its value.
+- **A percentage mana reduction is `CastModifier.costFraction`**, granted by
+  `grantCastModifier`. `abilityCost` subtracts a FLAT amount, right for a 20-rage
+  strike and wrong for a 380-mana spell. **Two on the same ability stack
+  ADDITIVELY** — 50% and 25% make 75%, not 62.5%, because `resolveCast` subtracts
+  each from the BASE. Both readings produce a plausible number, so there is a
+  test.
+- **A stat can be worth a percentage of another stat** — `statFromStat`, folded
+  into the derivation rather than computed once, so it follows a buffed primary
+  the way attack power follows strength. Resolving it at build time freezes it at
+  the unbuffed figure while reading as plausible. It converts FROM a primary
+  only. **Careful Aim feeds BOTH attack power pools** by the owner's ruling,
+  though the talent says only "Attack Power" — Forever names the ranged pool
+  explicitly everywhere else it means it, so the melee-only reading was
+  defensible and wrong.
+
+### Resources
+
+See [docs/resources.md](docs/resources.md).
+
+- **RAGE IS A FLAT RATE PER SWING, NOT A SHARE OF THE DAMAGE.** `rage = R × S`,
+  R being 3.46 for a one-hander or a bear's paws and 4.5 for a two-hander, S the
+  weapon's BASE speed before any modifier. `R × S` every `S` seconds is `R` per
+  second, so speed cancels and haste raises nothing. **Extra attacks break that
+  cancellation** — a proc pays a full `R × S` for a swing that cost no time. Rage
+  income does not scale with gear, buffs or damage. A miss earns nothing, which
+  is `ResourceGeneration.requiresDamage` and not a consequence of the arithmetic.
+- **Taking damage is `D × 10 / H` off the PRE-ARMOR figure MINUS THE BLOCK.**
+  Defensive Stance reduces the rage earned, armor does not, and a block does.
+  Armor and a block are one pipeline step, so `DamageResolution` carries
+  `blocked` separately to tell them apart.
+- **Health and mana are maximums computed ONCE from a stats snapshot**, so a
+  stamina buff applied as an aura grants no health. The encounter passes
+  `poolStats`, a transform from the character's stats to their buffed ones.
+
+### Builds, encounters and buffs
+
+- **A BUILD IS FIVE SETTINGS THAT HAVE TO AGREE** — class, playstyle, stance or
+  form, gear, and whether the target swings back — and `profiles/presets.ts` is
+  where that is written down. Choosing three of the five produces a character
+  nobody meant, and half a tree silently does nothing. A preset sets EVERY field
+  rather than inheriting any, or it behaves differently depending on what was on
+  screen when it was pressed. `isTankBuild` is the same idea inferred from two
+  fields, and `encounter.targetAttacks` is what tells the two Paladin shield
+  builds apart, because the style cannot and stances belong to the Warrior.
+- **Gear belongs to a class, so changing class replaces it.** A race change keeps
+  it. The sets live in `game/items/gearSets.ts`, not `presets.ts`: two layers
+  need them, `game` may not import from `profiles`, and duplicated item ids
+  drift.
+- **An encounter that hits back RAMPS, and the character can die.**
+  `targetAttacks` brings three mechanisms, none of them Forever data: the
+  target's damage grows 10% a swing compounding, an assumed healer restores a
+  random 500–1500 a second, and the character dies at zero and is stood back up
+  at full. Survival is a COUNT OF DEATHS rather than an immunity — with an
+  immunity, "how close was that" has no answer at all. A revive does not mark
+  them dead even for an instant (that would cancel their own swing timers and
+  skip the reactions the killing blow should trigger) and does not reset the
+  ramp, which would hand a character an easier fight for dying.
+  [docs/incoming-damage.md](docs/incoming-damage.md)
+- **A revive keeps auras, except the ones spent to prevent it** —
+  `removedOnDeath`, which Last Stand and Shield Wall declare. Dropping them all
+  would switch off the assumed healer when it is needed most. Which effects
+  survive dying is a property of the effect, so the flag is on the aura.
+- **Raid buffs are SELECTED, never assumed.** Nothing is on by default; a buff
+  that applied itself would move every figure ever recorded. **A proc's reaction
+  is built PER CHARACTER**, because an internal cooldown is per-character state
+  and one shared closure silently stopped Windfury proccing after the first
+  iteration of a batch. [docs/raid-buffs.md](docs/raid-buffs.md)
+
+### Pets
+
+- **A pet is a second friendly combatant, and almost all of that already
+  worked.** The one thing missing was reporting, so **reporting reads every
+  friendly actor, not the player** — damage and buff uptime both, or a working
+  pet talent looks exactly like an inert one. Rage and survival stay the
+  player's, which they genuinely are.
+- **A talent reaches the owner; a pet needs `petStat` and `petReaction`**,
+  collected into `TalentBuild.pet` and handed to `createPet`, which applies what
+  it is given and does no arithmetic on a rank.
+- **A pet receives no raid buffs**, a Forever rule. `isPlayerControlled` counts a
+  pet — right for who the raid is FIGHTING, wrong for who it BUFFS.
+  `kind === 'player'` is the narrower test.
+- **Pet stats come from the owner**: 2 health a stamina, 30% of armor, 10% of the
+  HIGHEST attack power source, 100% of crit — far more gear-sensitive than a
+  Classic pet. **A pet's base is a DPS, not a per-swing damage**, which makes its
+  swing speed damage-neutral, and **a placeholder in the wrong UNIT is worse than
+  one with the wrong value**, because the value is wrong once and the unit is
+  wrong every time something else moves.
+- **One function answers "will there be a pet".** `bringsPet` decides whether the
+  encounter BUILDS one and whether a pet-gated talent APPLIES, and those have to
+  be the same answer. **A condition nobody declared is not an omission, it is a
+  bonus being paid**: `requires: {}` on "while your pet is active" paid both
+  no-pet builds. An unexpressible condition that silently evaluates TRUE is worse
+  than an inert talent, because an inert talent is reported.
+- **A temporary summon is modelled without a combatant**, on the owner's call:
+  the engine cannot add one mid-fight, so the damage lands and is credited and
+  what is lost is that the summon is not separately targetable.
+
+### Rotations
+
+- **A rotation will change stance to reach an ability, and that is not always
+  wanted.** `PriorityRotation` treats a wrong stance as "not yet, and here is
+  how". An entry that must NOT provoke a swap says so in its `condition`, checked
+  BEFORE the swap is considered — which is also how Vanguard gates Charge without
+  naming the talent: the talent adds a stance to the character's copy of the
+  ability, and the rule reads the ability rather than the build.
+- **Charge is used ONCE, as the first action.** "Cannot be used in combat", and
+  every fight here opens in combat. The rule is on the ability, not on each list.
+- **AN ABILITY A LIST ASKS FOR AND THE BUILD DOES NOT HAVE IS SILENT**, which is
+  what lets one list serve several builds. It has happened twice and both times
+  it was invisible — a list asked for a capstone that build does not take, so no
+  seal was ever cast and Judgement then refused every time. **When a list entry
+  shows zero uses, check the book before the list.**
+- **THE WRONG ROTATION IS WORSE THAN NO ROTATION, because nothing about it looks
+  wrong.** A list is chosen by points spent, and the first Mage version compared
+  two trees and never looked at Fire: a Fire build ran an Arcane list and
+  produced a perfectly ordinary figure without casting Fireball once.
+- **MEASURE A LIST, DO NOT REASON ABOUT IT.** Patch one entry, run 30 batches of
+  10, treat a difference inside the interval as no difference. The comment that
+  put Summon Hawk above Arcane Shot counted the hawk's ticks and not its price,
+  and was specific, plausible and believed for as long as it existed.
+
+Three things decide a list and none is visible in per-use damage:
+
+1. **Resource-bound or global-cooldown-bound?** They want opposite orders. A
+   geared Hunter empties its mana by the 30-second mark and spends the rest of
+   the fight on auto-shot, so what binds is damage per MANA; the melee Hunter
+   ends with 44% unspent.
+2. **Does anything have a CAST TIME?** A cast resets the swing timer, and the
+   swing it throws away belongs to a different line of the damage table.
+   `resetSwingTimers` covers the RANGED slot, so a two-second shot throws away
+   most of a 3.2-second bow cycle. **An instant and a cast ability are not
+   comparable by their damage**, which is exactly what a list gets sorted by.
+3. **Does the finding hold for the other builds of the same class?** The same
+   ability was worth −23 to one and +4 to another.
+
+**A STAT PROBE IS NOT AN ABILITY PROBE.** Injecting Hunter's Mark's 71 ranged
+attack power said +1.9 to the melee Hunter; casting the ABILITY — which also
+spends 60 mana and a GCD at the pull — measured −10.1. Measure the CAST.
+
+### Gear and items
+
+- **A stat that only applies sometimes is a bug waiting to happen.** Equipment
+  resolution strips the slots a style cannot fill, and only genuine conflicts are
+  exclusive: a two-hander against a one-hander, and an off-hand the style cannot
+  hold. A ranged weapon coexists with a sword and simply does not swing.
+- **A STAT-STICK STYLE IS TWO SEPARATE QUESTIONS** — is the item kept, and does
+  it swing — and one commit got one wrong in each direction. Reading
+  `mainHand: 'stat-stick'` as "not two-hand, therefore one-hand" DELETED a held
+  two-hander; letting it through then handed it over as a WEAPON, and
+  `createPlayer` merges equipped weapons OVER the style's own, so a Druid in Cat
+  form swung a real sword instead of a paw — which read as a working feature.
+  **When a rule is fixed for one slot, check its siblings**: `offHand` and
+  `shield` are both off-hand slots.
+- **"With all spells and attacks" is TWO STATS.** `critChance` and
+  `spellCritChance` are read by separate tables, so an item line saying both has
+  to grant both. Sixty-two lines say it, and granting only the melee half was
+  invisible for exactly as long as no caster owned any gear.
+- **The named item rules are tried BEFORE the weapon-skill pattern.**
+  `^Increased (.+) \+(\d+)$` matches `Increased Defense +7`, and a weapon's
+  `bonusSkill` on a breastplate is dropped on the floor.
+- **A set bonus being DROPPED is the one thing this parser may not do.**
+  `(4) Set : ...` starts with a bracket and matched neither the prefix list nor
+  the bare-number fallback — not unmodelled, dropped. The full tooltip is always
+  stored, so nothing is lost from the SOURCE, only from the list of what the
+  simulator does not do.
+- **An item's proc is keyed by id, and an item can have two.** Five sets name the
+  Season of Discovery Hand of Justice where the proc was keyed to the Classic id
+  — and its tooltip matches `MODELLED_AS_PROCS`, so it would have read as fully
+  SIMULATED while firing never once.
+- **A gear set can force a build setting.** When the owner supplies the gear, it
+  is the gear that says which of the five settings was wrong.
+- **VALIDATE THE GEAR, NOT THE CHARACTER, AGAINST THE PLANNER.** The planner
+  shows BASE + GEAR and nothing else, so comparing a preset's primaries to it
+  flags every build that spends a talent point on a stat. Build the same
+  character with no items and no talents and check `panel - base` is what the
+  items supply. Remaining differences in BASE are Forever's data and are not to
+  be "fixed"; crit differing is CORRECT, because base stats here are Forever's.
+- **Check whose gear a profile is in before quoting its number.** All three
+  Hunters wore the Warrior set for the whole project and no test could have
+  caught it, because a profile in the wrong gear runs perfectly. **The profiles
+  whose gear did not change must not move by a decimal** — that is the check that
+  a gear commit stayed inside the sets it touched.
+
+### Talents
+
+- **A CLASS IS REGISTERED IN FOUR PLACES AND MISSING ANY ONE IS SILENT:**
+  `talentValues.ts`'s `FILES`, `talentBuild.ts`'s `EFFECTS` **and** its
+  `REACTIONS`, and `abilitiesForClass`. Two have been missed and the failures do
+  not look alike. Missing the VALUES file makes every rank resolve to nothing, so
+  every talent reports itself `unmodelled` — which is what an unfinished class is
+  supposed to look like. Missing the EFFECTS table is quieter: nothing reports
+  unmodelled at all, the tree simply produces no effects, and talent-GRANTED
+  abilities go missing from the spellbook with no complaint.
+  `tests/game/classRegistration.test.ts` fails when a class with abilities is
+  absent from any registry. **Check a new class's talents actually change a
+  number rather than trusting the build to complain**, because it will not.
+- **A `percentAdd` stat effect without `scale: 0.01` is a thousand percent.**
+  `StatBlock` computes `(base + flat) × (1 + sum(percentAdd))`, so the modifier
+  wants a FRACTION and a talent states a PERCENTAGE. It survived two class PRs,
+  because a caster with a very large mana pool looks exactly like a caster with a
+  very large mana pool.
+- **An effect that reads no value is DROPPED, not reported.** `talentBuild` asks
+  `talentNumber` and `continue`s when it is undefined, so a single-rank talent
+  whose values file says `null` produces nothing and reads as unmodelled without
+  having said so. **A talent whose effect does nothing is usually this**, not the
+  effect table.
+- **A talent's own rank does not always open its own gate.** `{ careful_aim: 5 }`
+  is legal and `{ careful_aim: 1 }` is not; `createPlayer` strips the illegal one
+  SILENTLY, and a rank-scaling test read that as "worth nothing at rank 1". Pad a
+  single-talent allocation with tier-0 filler, as `tests/helpers/legalise` does.
+
+See [docs/talent-effects.md](docs/talent-effects.md) for how an effect is
+expressed.
+
+## Three causes of inert, and they expire differently
+
+Say which. Only the first is an engine gap.
+
+| | |
+| --- | --- |
+| **the engine** | no declaration exists. Expires when one is built, and has six times — so write the reason specifically enough to re-read |
+| **the target** | a raid boss is never frozen, never below 20% health, never killed, is not Undead. Expires only if the encounter changes |
+| **the build** | the profile did not take it, or took a talent switching it off. Lone Wolf and Demonic Sacrifice both mean "no pet", so nineteen talents are correctly dead |
+
+Plus the permanent rulings under **Scope**.
+
+- **An `unmodelled` reason is a claim about the engine ON THE DAY IT WAS WRITTEN,
+  and it expires.** Clearing a blocker is not finished until every reason naming
+  it has been re-read — missed at least four times, and twice a talent was fully
+  working while printing a caveat saying it could not fire. Write it specifically
+  enough to re-read: a whole family expires at once and is then findable by its
+  wording, which has paid for itself six times. **A reason matched by wording is
+  a test** — `grantCastModifier.test.ts` fails if any talent still claims a
+  percentage cost cannot be expressed, matching the SENTENCE rather than ids.
+- **When a reason blames the SOURCE, check it is not really a question for the
+  owner.** Twenty-nine said Forever states no spell coefficient, which was true
+  and still is; the conclusion was wrong, because a coefficient is a RULE and
+  asking got one in a single message. **Check whether a missing number is missing
+  DATA or a missing RULE before recording it as a gap.**
+- **A profile's DPS moving is not the test that a talent works.** A cost
+  reduction is worth nothing to a build that never runs dry; armor is worth
+  nothing on a character nothing attacks. **Assert the MECHANISM** — the resolved
+  cost, the stack count, the stat arriving, the aura present. A talent working and
+  a talent mattering are different questions.
+- **Read the owner's own words for what a talent selects.** Hot Streak names four
+  spells and Pyroblast is not one, which is what stops it feeding itself. Shadow
+  Weaving is on the CASTER in Forever and on the target in Classic. Twin
+  Disciplines selects "instant cast spells", which no declaration expresses, so
+  it names them one by one.
 
 ## Where the Forever data comes from
 
-Five sources, and knowing which answers what saves a lot of asking. **All nine
-classes were built from the two client-derived ones**, so the paragraphs on
-`talentsforever.com` and `foreverchanges.pro` below are the ones to read first.
+Five sources. **All nine classes were built from the two client-derived ones.**
+[docs/class-implementation.md](docs/class-implementation.md) is the process.
 
-**`C:\Users\Donz\Documents\WoWForever*`** — the ruleset owner's own files, and
-the highest authority. Base stats (`.xlsx`), the combat table, stat conversions,
-resources, expected stats, and one ability spreadsheet per class as they are
-written. `WoWForeverSimGuidance.docx` is NOT data; it is screenshots of an
-architecture discussion.
-
-**`wowhead.com/forever/talent-calc/<class>`** — the talent trees, and a useful
-cross-check on ability numbers because its tooltips restate them. Client-side
-rendered, so a plain fetch gets a page with no talents in it; the data is in the
-DOM. `src/data/talents/README.md` has the selectors.
-
-**`talentsforever.com`** — the beta client's own files, served as four static
-JavaScript assignments that plain `fetch` reaches. **This is the source of
-record for talents**, imported by `tools/import_forever_talents.mjs`.
-
-| | |
+| Source | Answers |
 | --- | --- |
-| `/talents.js` | all nine classes' trees, every rank's text, prerequisites, and each granted ability's cost line |
-| `/spellbooks.js` | every trainer spell to 60, every rank |
-| `/spelldesc.js` | spell descriptions with cast, range and cooldown |
-| `/racials.js` | racials by faction and race |
+| `C:\Users\Donz\Documents\WoWForever*` | the owner's own files, **highest authority**: base stats, the combat table, stat conversions, resources, one ability spreadsheet per class. `WoWForeverSimGuidance.docx` is NOT data — it is screenshots of an architecture discussion |
+| `talentsforever.com` | the beta client's own files, four static JS assignments a plain `fetch` reaches. **The source of record for talents**, and the build URLs the profiles are specified by |
+| `foreverchanges.pro/spellbook/<class>` | **every ability number in the project**, read from the beta client and diffed against Classic Era, per rank, with cost, cast time and cooldown. Its data is in the page's RSC flight script, not the DOM |
+| `nether.wowhead.com/classic/tooltip/item/<id>` | Classic item and spell tooltips as JSON, no browser. The current items are Classic stand-ins, not Forever data |
+| `github.com/classic-hunter/forever-hunter/wiki` | the ONLY source for pet stat scaling and pet focus regeneration, plus a full Forever-vs-Classic diff for the Hunter. Community-maintained, so it ranks below the two above where they overlap — they have not yet disagreed |
 
-It replaced the Wowhead talent scrape, which had three wrong talents in 468 and
-was still not good enough: a build URL encodes one digit per talent IN TREE ORDER,
-so a tree of the wrong length decodes a profile into different talents without
-failing. See [docs/class-implementation.md](docs/class-implementation.md), which
-is the process every class was built by.
+`talentsforever.com` serves `/talents.js` (all nine trees, every rank's text,
+prerequisites, each granted ability's cost line), `/spellbooks.js` (every trainer
+spell to 60), `/spelldesc.js` (descriptions with cast, range, cooldown) and
+`/racials.js`. Imported by `tools/import_forever_talents.mjs`; spells by
+`tools/import_forever_spells.mjs`, at MAX RANK.
 
-**IT ALSO SERVES THE BUILD URLS THE OWNER SPECIFIES PROFILES WITH.** Every one
-of the 21 profiles is a `talentsforever.com/<class>/60/<digits>` link, decoded
-by `tools/decode_talent_build.mjs`. Decode before writing anything: a build
-that comes back at other than 51 points, or that throws "X given N of M
-ranks", means the tree on disk disagrees with the tree the URL was written
-against. **A wrong tree does not always fail** -- with the old Druid data the
-Moonkin build threw and the CAT BUILD DECODED CLEANLY TO 51 POINTS WITH THE
-WRONG TALENTS, because its Balance segment stopped before the divergence.
+- **Decode a build before writing anything.** `tools/decode_talent_build.mjs`. A
+  build coming back at other than 51 points, or throwing "X given N of M ranks",
+  means the tree on disk disagrees with the tree the URL was written against.
+  **A wrong tree does not always fail** — with the old Druid data one build threw
+  and another DECODED CLEANLY TO 51 POINTS WITH THE WRONG TALENTS, because its
+  first tree's segment stopped before the divergence.
+- **THE RANK VALUES ARE THE TRAP, NOT THE TREE.** `values/<class>.json` is
+  generated by matching `{0}` placeholders against each rank's text, and a
+  single-rank talent has no variable to identify, so its values come back `null`.
+  Eight are hand-filled, each with a `note`. `--check` prints the count per
+  class, and the importer MERGES rather than overwrites.
+- **NEVER READ AN ABILITY NUMBER FROM CLASSIC.** Forever changes them heavily and
+  in both directions, so a Classic value is not even a safe approximation. Aimed
+  Shot's bonus went 600 → 166, Raptor Strike's 140 → 70, Serpent Sting's total
+  490 → 555, and Arcane Shot GAINED a ranged attack power coefficient while
+  LOSING its spell power one. Four numbers, four directions.
+- **`foreverchanges.pro` OPENS ON A RANK THAT IS NOT ALWAYS THE MAX.** Forever
+  shifts ranks down and sometimes adds one, so reading the page as it loads can
+  give a real Forever number for the wrong rank. It also separates "Forever
+  changed this" from "Forever inherited this", which is how Thunder Clap's
+  cooldown was settled: 6 in Forever, 4 in Classic, and our sheet's 4 had gone
+  unquestioned because it agreed with Classic.
 
-**THE RANK VALUES ARE THE TRAP, NOT THE TREE.** `values/<class>.json` is
-generated by matching `{0}`-style placeholders against each rank's text, and a
-SINGLE-RANK talent has no variable to identify -- so its values come back
-`null` and every effect reading it is silently dropped. Eight talents are
-hand-filled for this reason and each carries a `note` saying which number and
-why. **A talent whose effect does nothing is usually this**, not the effect
-table. `node tools/import_forever_talents.mjs --check` prints the hand-filled
-count per class and the importer MERGES rather than overwrites, so they
-survive a refresh.
+**A TALENT TOOLTIP SHOWS RANK 1 OF THE ABILITY IT GRANTS**, not the rank a level
+60 has — Mortal Strike reads 85 and is 160. That explains every "disagreement"
+this project had between a calculator and an ability sheet, one per class with a
+damage-granting capstone, and none was a disagreement. The owner's spreadsheets
+mix the two conventions, so a sheet cannot settle it. **Check `max_rank` before
+comparing two sources.**
 
-**`nether.wowhead.com/classic/tooltip/item/<id>`** — Classic item and spell
-tooltips, as plain JSON. No browser needed. Used for the current items, which are
-Classic stand-ins rather than Forever data. `src/data/items/README.md` has the
-markers to parse.
+**A CAPTURED TOOLTIP CAN DISAGREE WITH ITSELF, so read the effect rows and not
+only the description.** Base points run consistently ONE higher than the stated
+figure. The trap is the readable description that disagrees with its own row
+anyway — one said 210 above a row saying −195, and the 210 was transcribed for
+months. [docs/warrior.md](docs/warrior.md) has the full reading rules and the
+per-ability figures; they are class-independent.
 
-**`foreverchanges.pro/spellbook/<class>`** — every spell of a class read from
-the **beta client** and diffed against the Classic Era client, per rank, with
-cost, cast time, cooldown, training level and tooltip. The closest thing to the
-client itself that does not require the client. Its structured data is in the
-page's RSC flight script, not the DOM.
-
-**EVERY ABILITY NUMBER IN THE PROJECT COMES FROM HERE**, imported at MAX RANK
-by `tools/import_forever_spells.mjs` into
-`src/data/abilities/forever-<class>-spellbook.json`. All nine are captured.
-
-Two things it is uniquely good at, both of which have already caught a bug:
-
-- **Ranks.** It states which rank is the max and at what level, and it OPENS on
-  a rank that is not always the max. Forever shifts ranks down and sometimes
-  adds one, so reading the page as it loads can give a real Forever number for
-  the wrong rank. That is how Slam became 68 instead of 87.
-- **Deliberate changes.** It separates "Forever changed this" from "Forever
-  inherited this", so a value that matches Classic can be confirmed as intended
-  rather than assumed. Thunder Clap's cooldown is 6 in Forever and 4 in Classic,
-  and our spreadsheet's 4 had gone unquestioned because it agreed with Classic.
-
-**NEVER READ AN ABILITY NUMBER FROM CLASSIC.** Forever changes them heavily and
-in both directions, so a Classic value is not even a safe approximation. The
-Hunter is the clearest: Aimed Shot's bonus went 600 to 166, Raptor Strike's 140
-to 70, Serpent Sting's total 490 to 555, and Arcane Shot GAINED a ranged attack
-power coefficient while LOSING its spell power one. Four numbers, four
-directions.
-
-**`github.com/classic-hunter/forever-hunter/wiki`** -- a fifth source, named by
-the ruleset owner for pet scaling and carrying a full Forever-versus-Classic
-diff for the whole Hunter class. It is the ONLY source for pet stat scaling and
-pet focus regeneration. Community-maintained rather than client-derived, so it
-ranks below the two above where they overlap -- they have not yet disagreed.
-
-When a number is missing, check whether one of these answers it before asking.
-
-**IF AN ABILITY BEING ABLE TO PROC EFFECTS IS IN QUESTION, ASK.** The ruleset
-owner's standing instruction. It is cheap to follow and the alternative is
-expensive, because a wrong answer here does not look wrong: Windfury spent its
-whole life refusing abilities and every figure the simulator produced was
-self-consistent and too low. A proc that never fires leaves nothing behind to
-notice. The weapon-use rule above decides most abilities on its own; bring the
-ones it does not, as Shield Slam had to be brought.
-
-## Reading a class accurately
-
-Nine classes were built this way. These are the mistakes that were actually
-made, in the order they tend to happen.
-
-**AN ABILITY A PRIORITY LIST ASKS FOR AND THE BUILD DOES NOT HAVE IS SILENT.**
-`PriorityRotation` skips an entry whose ability is not in the book, which is
-what lets one list serve several builds -- and it means a list naming a talent
-ability the build never took simply does nothing. It has happened twice and
-both times it was invisible: the Shockadin list asked for Seal of Command, a
-21-point Retribution talent that build does not take, so NO seal was ever cast
-and Judgement then refused every time because it needs one -- 276.9 DPS against
-a true 366.7. The Warlock's Shadowburn was never cast because the class had no
-soul shard pool to pay from. **When a list entry shows zero uses, check the
-book before the list.**
-
-**AN EFFECT THAT READS NO VALUE IS DROPPED, NOT REPORTED.** `talentBuild` asks
-`talentNumber` for the rank's value and `continue`s when it is undefined. A
-single-rank talent whose values file says `null` therefore produces nothing,
-and the talent reads as unmodelled without having said so. Hand-fill the value
--- eight talents are -- and check the `--check` output.
-
-**"INERT" HAS THREE DIFFERENT CAUSES AND THEY EXPIRE DIFFERENTLY.** Say which:
-
-| | |
-| --- | --- |
-| **the engine** | no declaration exists. Expires when one is built, and has three times -- so write the reason specifically enough to re-read. |
-| **the target** | a raid boss is never frozen, never below 20% health, never killed, and is not Undead. Expires only if the encounter changes. |
-| **the build** | the profile did not take it, or took a talent that switches it off. Lone Wolf and Demonic Sacrifice both mean "no pet", so eleven Warlock and eight Hunter talents are correctly dead. |
-
-The second and third are NOT engine gaps and should not be written as though
-they were. The survey called five profiles pet-blocked; four of them take a
-talent saying they bring no pet.
-
-**A PROFILE'S DPS MOVING IS NOT THE TEST THAT A TALENT WORKS.** Eclipse is
-correct and worth zero, because the Moonkin is mana-bound and Eclipse saves
-cast time. Benediction is correct and worth zero to Retribution, which never
-runs dry. Assert the MECHANISM -- the resolved cost, the stack count, the aura
-being present -- because a DPS test would have passed before the feature
-existed.
-
-**READ THE OWNER'S OWN WORDS FOR WHAT A TALENT SELECTS.** Hot Streak names four
-spells and Pyroblast is not one of them, which is what stops it feeding itself.
-Mortal Shots says "ranged abilities" and `critDamageBonus` has no table, so it
-over-applies to a melee Hunter and says so. Shadow Weaving is on the CASTER in
-Forever and on the target in Classic. Twin Disciplines selects "instant cast
-spells", which no declaration expresses -- so it names them one by one.
+**Two sources can disagree.** Where they agree, confidence rises. Where they do
+not, say so and pick the one the owner supplied directly — do not average them or
+quietly prefer the newer.
 
 ## Never invent game data
 
-This is the most important working rule.
+The most important working rule.
 
-When a formula or value is missing, **say so and flag it loudly** — a named
+When a formula or value is missing, **say so and flag it loudly**: a named
 `PLACEHOLDER_*` constant, a comment, a docs entry. Do not substitute a plausible
 number. A simulator built on invented data produces results that look entirely
 reasonable and mean nothing, and nobody finds out for months.
 
 When the source is ambiguous, **pick the reading that reproduces a known value**,
 state the interpretation in a comment, and isolate it in one place so it is cheap
-to flip. Example: the source names an expression `Armor_Reduction` but it
-computes the damage *multiplier* — resolved by checking it against the known
-~40% figure for a 3731-armor raid boss.
-
-**An `unmodelled` reason is a claim about the engine ON THE DAY IT WAS WRITTEN,
-and it expires.** Clearing a blocker is not finished until every reason naming
-it has been re-read. This has now been missed twice: five talents still said
-nothing attacked the player three commits after something did, and Crusader's
-heal said "nothing damages the player, so a heal would restore nothing" for as
-long as that was true and for a while after it was not. The reasons are written
-specifically enough to check quickly, which is the point of writing them that
-way.
+to flip — the way `Armor_Reduction`, which is named as a reduction and computes a
+*multiplier*, was settled against the known ~40% figure for a 3731-armor boss.
 
 **When an effect cannot be modelled, keep its own words and surface them.** Items
-carry an `unmodelled` list holding the source's exact text and one line on why it
+carry an `unmodelled` list with the source's exact text and one line on why it
 does nothing, and the Gear panel prints every one under "Equipped but not
-simulated". An effect that matches no rule is never guessed at — which is what
-kept Crusader granting nothing until its proc rate arrived, rather than quietly
-inheriting a plausible one. The same applies to `PLACEHOLDER_*` constants: a
-visibly inert buff is the honest failure mode.
+simulated". An effect matching no rule is never guessed at — which is what kept
+Crusader granting nothing until its proc rate arrived, rather than quietly
+inheriting a plausible one. A visibly inert buff is the honest failure mode.
 
-**Two sources can disagree.** The ability spreadsheets, the Forever talent
-calculator and the spellbook all describe the same abilities, and where they
-agree confidence rises. Where they disagree, say so in the docs and pick the one
-the ruleset owner supplied directly — do not average them or quietly prefer the
-newer.
+**Resistance on an enemy target has no effect on damage**, by the owner's ruling.
+So a spell lands for full against a raid boss, and `resistancesFromItems` being
+computed and never read is CORRECT rather than a gap.
 
-**A TALENT TOOLTIP SHOWS RANK 1 OF THE ABILITY IT GRANTS, not the rank a level
-60 character has.** This explains every "disagreement" the project ever had
-between a talent calculator and an ability sheet, and they were never
-disagreements at all:
-
-| Ability | Talent tooltip (rank 1) | Level 60 (max rank) |
-| --- | --- | --- |
-| Mortal Strike | 85 | **160** |
-| Bloodthirst | 30 | **48** |
-| Shield Slam | 421 to 439 | **640 to 670** |
-
-Three separate arguments, one rule. The ruleset owner's spreadsheet mixes the
-two — Mortal Strike is max rank, Bloodthirst and Shield Slam are rank 1 — so
-the sheet cannot settle this by itself. **Check the rank before comparing two
-sources**, and prefer the spellbook, which states `max_rank` outright.
-
-**A CAPTURED TOOLTIP CAN DISAGREE WITH ITSELF, so read the effect rows and not
-only the description.** Base points in this data set run consistently ONE higher
-than the stated figure, so an effect row of 49 is a 48. Revenge and Shield Slam
-were read that way from the start because their descriptions were unreadable —
-Forever renders "(100% of Spell Power)" where the number should be. The trap is
-the tooltip whose description is perfectly readable and disagrees with its own
-row anyway: Demoralizing Shout said 210 above a row saying −195, and the 210 was
-transcribed for months because nothing prompted anyone to look down one line.
-Four of the five corrections on 2026-09-23 were already sitting in a file we had
-captured; only the reading was wrong.
-
-**Borrowing a Classic value is allowed, and only when it stays visible.** The
-project owner's standing decision: where Forever has not supplied a number,
-prefer a WoW Classic one over leaving a system unreachable — on three
-conditions, all of which must hold.
+**Borrowing a Classic value is allowed, and only when it stays visible.** Where
+Forever has not supplied a number, prefer a Classic one over leaving a system
+unreachable — on three conditions, all of which must hold.
 
 1. It keeps a `PLACEHOLDER_` name, so nothing can read it without seeing that.
-2. A comment says it is Classic and unverified, and what it would take to
-   confirm it.
+2. A comment says it is Classic and unverified, and what would confirm it.
 3. Where a person can see the result, the app says so — the way the Encounter
    panel prints the caveat beside the "target attacks back" switch.
 
 A visibly borrowed number beats an inert system. A *silently* borrowed one is
 worse than either, because it produces a confident figure nobody can audit. If
-any of the three conditions cannot be met, leave it inert instead.
+any of the three cannot be met, leave it inert. **A placeholder nobody is told
+about is the failure mode the rule exists to prevent** — one was written,
+exported and referenced by nothing for as long as pets existed, while its own
+comment claimed it was printed in the app.
 
 ## Generated and scraped data
 
-`src/game/character/baseStats.ts` is **generated** by
-`tools/import_base_stats.py` from the base stats spreadsheet. Never edit it by
-hand; re-run the generator.
+`src/game/character/baseStats.ts` is **generated** by `tools/import_base_stats.py`
+from the base stats spreadsheet. Never edit it by hand; re-run the generator.
 
-`src/data/talents/*.json` (468 talents, nine classes) and
-`src/data/items/*.json` (151 items in nine files, one per gear set) were
-**scraped** and are checked in. Each directory has a README recording exactly
-where the data came from and how to refresh it. Never hand-edit either.
+`src/data/talents/*.json` (468 talents) and `src/data/items/*.json` (151 items in
+nine files, one per gear set) were **scraped** and are checked in. Each directory
+has a README recording where the data came from and how to refresh it. Never
+hand-edit either — `src/data/talents/values/*.json` is the one exception, for the
+single-rank talents above.
 
 **THE ITEM FILES ARE REBUILT BY ONE COMMAND**, `node tools/import_item.mjs
---build`, off the ordered spec in `tools/item-sets.json`. That spec is also
-what `--verify` reads, so a new set added to one is covered by the other -- they
-used to be two lists and a file was once added to only one, which turns "re-parse
-everything on file" into a false promise. **Twenty-two items are worn by more than
-one set**, `itemData` throws on a duplicate id, and the spec order is what
-decides which file owns each shared piece.
+--build`, off the ordered spec in `tools/item-sets.json` — which is also what
+`--verify` reads, so a set added to one is covered by the other. They used to be
+two lists and a file was once added to only one, which turns "re-parse everything
+on file" into a false promise. **Twenty-two items are worn by more than one set**,
+`itemData` throws on a duplicate id, and the spec order decides which file owns
+each shared piece.
 
-**Prove a transfer rather than trusting it.** Both data sets came out of a
-browser, and both were hashed with SHA-256 there and re-hashed on disk before
-being accepted. For 113KB of talents that is the difference between confidence
-and hope. The clipboard is a working channel for this on Windows
-(`document.execCommand('copy')` after a real click, then `Get-Clipboard -Raw`),
-and it overwrites the user's clipboard, so say so.
+**The item database is FROZEN**, pending further Forever item changes. Do not add
+sets or go looking for gear. The sets in scope are the ones the owner supplied;
+they are Season of Discovery stand-ins, not Forever data, and the README says so.
+**Keep saying so.** The Immovable Object is the one real Forever item.
+
+**Prove a transfer rather than trusting it.** Anything out of a browser is hashed
+with SHA-256 there and re-hashed on disk before being accepted. The clipboard is a
+working channel on Windows (`document.execCommand('copy')` after a real click,
+then `Get-Clipboard -Raw`) and it overwrites the user's clipboard, so say so.
 
 **Validate scraped data at load and throw.** `talentData.ts` checks tier against
 row, prerequisites resolving inside their own tree, and duplicate ids; the item
-loader recomputes each weapon's dps from its damage and speed and throws if the
-three disagree. A page that changes shape should fail loudly, not render a tree
-with a broken arrow.
-
-Tests check this data against values transcribed **independently by hand**. A
-test that derived its expectations from the file under test would prove nothing.
-Where the volume makes that impractical — 468 talents — transcribe the shape
-(tree names, sizes, capstones) and assert the invariants that must hold for all
-of them at once.
+loader recomputes each weapon's dps from its damage and speed. A page that changes
+shape should fail loudly, not render a tree with a broken arrow.
 
 ## Testing
 
 - **Write the spec out independently in the test.** The race/class table, the
   per-class resource table and the combat table constants are all duplicated by
-  hand in tests on purpose. A test that reads the source data passes no matter
-  what the source data says.
+  hand on purpose: a test that reads the source data passes no matter what the
+  source data says. Where volume makes that impractical — 468 talents —
+  transcribe the shape and assert the invariants that hold for all of them.
+- **Two independent checks on a captured number**: the expected value written out
+  by hand from the tooltip, AND the stored tooltip asserted to contain that same
+  number. A typo fails the second; upstream drift fails `--verify`.
+- **Assert what should stay true, not what happens to be true today.** A test
+  pinned to a temporary limitation outlives the limitation — one was named "still
+  says it cannot fire, because nothing attacks the player" and enforced the stale
+  caveat instead of catching it.
+- **Assert the MECHANISM, not a DPS delta.** A correct talent can be worth zero.
 - **Combat table boundaries use scripted rolls, not sampling.** An off-by-one at
-  a boundary shifts every damage number a fraction of a percent; averaging would
-  never catch it.
-- Use `toBeCloseTo` for anything that passed through a percentage modifier —
-  `100 * 1.1` is `110.00000000000001`.
+  a boundary shifts every damage number a fraction of a percent.
+- **Verify a probabilistic mechanic against its rate, over many seeds.** A 6.5%
+  dodge chance is absent from an entire 100-second fight about once in two
+  hundred runs. Naming a specific ability in a training-dummy assertion pins a
+  rotation decision rather than the behaviour under test.
+- **A structural test that filters can silently skip the part most likely to be
+  wrong.** `everySpellScales.test.ts` filtered on `attackTable === 'spell'` and
+  skipped every pure DoT, because a spell that only applies an aura declares no
+  table. Discover the list from the event stream instead.
+- Use `toBeCloseTo` for anything through a percentage modifier — `100 * 1.1` is
+  `110.00000000000001`.
+
+## Verifying work
+
+Tests passing is not the same as the app working. Run the real thing and check
+actual numbers against hand-computed expectations.
+
+**First check the two numbers are even supposed to match.** The UI runs
+`runProfileBatch` and renders `batch.representative`, *not* `runProfile(profile)`.
+Even at one iteration the batch derives its own seed, so the browser is showing a
+different fight — the log's `Combat begins (seed ...)` line gives the derived
+seed, not the profile's.
+
+**Then, if they should match and do not, suspect a stale Vite cache** before
+suspecting the code. The dev server once served modules from before an engine
+change, and the browser showed a level-60 combat table while the tests showed the
+correct level-63 one. Restart with `npm run dev -- --force`.
+
+Those two are in that order for a reason: the cache warning is the memorable one,
+so a mismatch reads as a cache bug on sight, and that cost a long detour before
+`runProfileBatch` turned out to reproduce the browser's numbers exactly outside
+the browser.
+
+**`characterAtCombatStart` processes no events**, so it shows the character a
+moment before its own opener lands. Do not reason about in-fight scaling from it
+alone.
+
+**When a fix moves nothing in the suite, that is a statement about the suite.**
 
 ## Git workflow
 
@@ -1135,49 +681,24 @@ of them at once.
 pushes, and that applies to admins. Work on a branch, open a PR, merge with
 `--squash --delete-branch`.
 
-**Do not add `Co-Authored-By` trailers** to commits. The user asked for these
-removed and the history was rewritten to strip them.
+**Other Claude sessions edit this same checkout concurrently.** Measure and test
+in a throwaway `git worktree` at a named commit, never in the shared working
+tree: a measurement there once came back a clean −2.0% on two profiles, which
+read exactly like a real regression and was another session's uncommitted work.
+Never commit files you find modified there.
 
-Commit messages: explain *why*, not just what. Flag behaviour changes and
-missing data explicitly.
-
-## Verifying work
-
-Tests passing is not the same as the app working. Run the real thing in the
-browser and check actual numbers against hand-computed expectations.
-
-**First check the two numbers are even supposed to match.** The UI runs
-`runProfileBatch` and renders `batch.representative`, *not*
-`runProfile(profile)`. Even at one iteration the batch derives its own seed, so
-the browser is showing a different fight from a direct `runProfile` call with
-the same profile — the log's `Combat begins (seed ...)` line gives the derived
-seed, not the profile's. To reproduce what the browser shows, call
-`runProfileBatch` and read `.representative`.
-
-**Then, if they should match and do not, suspect a stale Vite cache** before
-suspecting the code. This has happened: the dev server served transformed
-modules from before an engine change, and the browser showed a level-60 combat
-table while the tests and a direct `vite-node` probe showed the correct level-63
-one. Restart with `npm run dev -- --force`.
-
-Those two are in that order for a reason. The cache warning is the memorable
-one, so a mismatch reads as a cache bug on sight — and that cost a long detour
-of server restarts and cache clearing before `runProfileBatch` turned out to
-reproduce the browser's numbers exactly, outside the browser.
-
-**Verify a probabilistic mechanic against its rate, over many seeds, not
-against whether it showed up in one fight.** A 6.5% dodge chance is absent from
-an entire 100-second fight about once in every two hundred runs, which is often
-enough to happen on the seed you are looking at. Loop over a few dozen seeds and
-compare the observed rate with the one the combat table specifies. The same goes
-for asserting on it in a test: naming a specific ability in a training-dummy
-assertion pins a rotation decision rather than the behaviour under test, and
-breaks as soon as the rage economy shifts.
+Commit messages explain *why*, not just what, and flag behaviour changes and
+missing data explicitly. **Do not add `Co-Authored-By` trailers** — the user asked
+for these removed and the history was rewritten to strip them.
 
 ## Environment
 
 - Windows. `npm`/`npx` may not be on the Bash tool's PATH; PowerShell with a
   refreshed `$env:Path` works reliably.
 - Heredocs in the Bash tool are unreliable for large multi-line content. Write a
-  script to a file and run it, or use the Write/Edit tools.
+  script to a file and run it, or use Write/Edit.
+- `gh` is at `/c/Program Files/GitHub CLI/gh.exe`, not on PATH. `jq` is
+  unavailable — use `gh --jq`.
 - `.gitattributes` forces LF. CRLF warnings on commit are expected and harmless.
+- The app is live at <https://donz-dev.github.io/SimForever/>, republished by
+  `.github/workflows/deploy.yml` on every push to `main` that passes.

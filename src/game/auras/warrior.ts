@@ -4,9 +4,8 @@ import { RATING_PER_PERCENT, dealDamage, flat, seconds } from '../../engine';
 /**
  * Warrior auras, from WoWForeverWarriorAbilities.xlsx.
  *
- * Read `docs/warrior-abilities.md` before changing anything here: it holds the
- * spreadsheet transcribed verbatim, and the list of what the spreadsheet does
- * not say.
+ * Read `docs/warrior.md` before changing anything here: it holds every figure
+ * the simulator implements, and the list of what the spreadsheet does not say.
  *
  * ----------------------------------------------------------------------------
  * WHERE THE MAGNITUDES COME FROM

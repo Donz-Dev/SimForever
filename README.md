@@ -67,8 +67,8 @@ DOM, or WoW specifically — it is the rules, and the game content is data hande
 to it. [`docs/architecture.md`](docs/architecture.md) explains why, and the rest
 of [`docs/`](docs/) covers the engine, combat tables, character creation,
 resources, telemetry, profiles, talent effects and the Warrior's abilities.
-[`docs/warrior-completion.md`](docs/warrior-completion.md) is the action list for
-finishing the Warrior.
+[`docs/warrior.md`](docs/warrior.md) is the Warrior's own numbers, stance gating
+and provenance.
 
 Two files at the root are for anyone picking the project up:
 

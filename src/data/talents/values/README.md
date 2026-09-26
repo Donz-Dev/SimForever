@@ -111,7 +111,7 @@ are not all present.
 Where the ruleset owner has given a number directly, **that number wins** and the
 calculator's is wrong. Mortal Strike is the worked example: the calculator's
 tooltip says weapon damage "plus 85", the owner confirmed **160**, and
-`docs/warrior-abilities.md` records the decision. Nothing here should quietly
+`docs/warrior.md` records the decision. Nothing here should quietly
 overwrite a value the owner supplied.
 
 That is also why `fill` never overwrites an existing value without

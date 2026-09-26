@@ -632,7 +632,7 @@ describe('the Protection priority list', () => {
      * is `rend_cast`, so `PriorityRotation` skipped it in silence at any
      * position and any rage. Asserting the zero made the bug permanent.
      *
-     * The lesson is the one `docs/talent-audit-method.md` already records:
+     * The lesson is the one `CLAUDE.md` already records under Testing:
      * assert what should stay true, not what happens to be true today.
      */
     expect(WARRIOR_SHIELD_DEFENSIVE_ROTATION.name).toBe('Warrior (Shield, Defensive)');

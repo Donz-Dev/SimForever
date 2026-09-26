@@ -4,7 +4,7 @@ The Warrior took months. The other eight did not, and this is the process that
 made the difference: **every number comes from the beta client, fetched by a
 tool, before any of it is written by hand.**
 
-**All nine classes and 21 profiles are now built this way.** The steps below
+**All nine classes and 23 profiles are now built this way.** The steps below
 are kept because they are also the process for CORRECTING one, and because a
 tenth class or a new profile would follow them unchanged. See
 [HANDOVER.md](../HANDOVER.md) for what each class actually has.
@@ -24,16 +24,16 @@ walk, no clipboard.
 
 `foreverchanges.pro/spellbook/<class>` covers the same spells with a **Classic
 diff** beside each one, which is what tells "Forever changed this" from
-"Forever inherited this". Its data is in the page's RSC payload; see
-[warrior-ability-audit.md](warrior-ability-audit.md) for the extraction.
+"Forever inherited this". Its data is in the page's RSC payload rather than the
+DOM; `tools/import_forever_spells.mjs` does the extraction.
 
 ## Before starting a class: does the engine already do it?
 
-[engine-gap-survey.md](engine-gap-survey.md) answers that for all twenty
-profiles, checked against the code rather than assumed. **Every feature it
-named has since been built** — combo points (which turned out to be content,
-not engine), channelled casts, and pets — so it now reads as a record of what
-each class needed rather than as a plan.
+[HANDOVER.md](../HANDOVER.md) carries the open engine gaps, with the talents
+each one would retire. **Every feature the original survey named has since been
+built** — combo points (which turned out to be content, not engine), channelled
+casts, and pets — so the question is now which of the few remaining gaps a class
+needs, not whether the big ones exist.
 
 **Sequence by shared mechanism, not by class.** Ordering alphabetically would
 have built Druid's forms — which already existed — before combo points, which
@@ -94,10 +94,8 @@ It does NOT carry the effect rows that a spell page has, because it does not
 need to: those existed to recover numbers Forever's own tooltip hid behind
 "(100% of Spell Power)", and this source renders the real figures instead.
 
-Read [warrior-abilities.md](warrior-abilities.md) and
-[warrior-ability-audit.md](warrior-ability-audit.md) first — between them they
-hold every trap this project has hit reading Forever's spell data, and all of
-them are class-independent:
+Read [warrior.md](warrior.md) first — it holds every trap this project has hit
+reading Forever's spell data, and all of them are class-independent:
 
 - **A talent tooltip shows rank 1** of the ability it grants, not the rank a
   level 60 has. FIVE separate arguments were the same misreading — Mortal
@@ -126,6 +124,41 @@ wanted it.
 `src/profiles/presets.ts`. A preset sets **every** field, never inheriting any,
 or it behaves differently depending on what was on screen when it was pressed.
 See the note in that file on why a build is five settings that have to agree.
+
+## Auditing a tree once it is written
+
+Ordered. Step 2 is wasted before step 1.
+
+1. **Re-read every `unmodelled` reason before trusting one.** A reason is a
+   claim about the engine on the day it was written and it does not re-check
+   itself. This has been wrong eight times, and twice a talent was fully working
+   while telling the user on screen that it could not fire.
+2. **Make the effect observable before judging it.** Three Arms talents were
+   "unclear" only because nothing on screen could show them: Deflection grants
+   parry, which appears only on attacks RECEIVED, and Improved Heroic Strike
+   reduces a cost, so the ability hits for exactly the same amount and a damage
+   table cannot show it at all. If an effect has nowhere to appear, build the
+   telemetry first — an audit without it produces "seems fine", which is not a
+   finding.
+3. **Check the build is legal.** `talentRules.isLegal` is enforced in
+   `createPlayer` and `abilitiesForClass` — the two places a character is built
+   — and deliberately NOT in `talentBuild`, so a unit test spending five points
+   on one talent does not have to spend twenty-five more.
+   `tests/helpers/legalise` pads an allocation with tier-0 filler. A talent's
+   own rank does not always open its own gate: `{ careful_aim: 5 }` is legal and
+   `{ careful_aim: 1 }` is not, and `createPlayer` strips the illegal one
+   SILENTLY.
+4. **Test each talent against the SOURCE, twice, independently.** The expected
+   value written out by hand from the tooltip, AND the stored tooltip asserted
+   to contain that same number. A test that read the constant would pass
+   whatever the constant said. A typo fails the second check; upstream drift
+   fails `--verify`. Writing these is what finds the bugs — testing Impale's
+   wording is what exposed `AbilityModifiers.for(ALL_ABILITIES)` returning
+   double.
+5. **Measure by ablation, not by addition.** Remove the talent from a real build
+   and re-run; the figure that matters is what dropping it costs. A difference
+   smaller than the combined 95% intervals is not a difference — say that rather
+   than reporting it.
 
 ## What to ask about rather than guess
 

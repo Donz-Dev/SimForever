@@ -69,9 +69,8 @@ describe('the captured spell data', () => {
   });
 
   /*
-   * Stance gating, which docs/warrior-completion.md recorded as blocked on the
-   * ruleset owner. Transcribed by hand from the audit, not read back out of the
-   * file under test.
+   * Stance gating, which docs/warrior.md records. Transcribed by hand from
+   * Forever's own `Forms` rows, not read back out of the file under test.
    *
    * An empty list means ANY STANCE, which is an answer. Several abilities allow
    * TWO stances -- reading only the first halves the answer, which an earlier

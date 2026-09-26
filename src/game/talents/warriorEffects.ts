@@ -9,10 +9,19 @@ import type { TalentEffects } from './TalentEffect';
  * test asserts the coverage both ways, which is how three entries lost to a
  * careless edit were caught.
  *
- * 29 are fully modelled and 6 more are PARTLY modelled — something real plus an
- * `unmodelled` entry naming the part that is missing. 18 do nothing at all.
- * Those three numbers must sum to 53; the previous count said 21 inert and
- * summed to 54, which is how the drift below went unnoticed.
+ * 43 are fully modelled and 3 more are PARTLY modelled — something real plus an
+ * `unmodelled` entry naming the part that is missing (Sweeping Strikes,
+ * Weaponmaster, Piercing Howl). 7 do nothing at all.
+ *
+ * Those three numbers must sum to 53. An earlier count said 21 inert and summed
+ * to 54, which is how the drift below went unnoticed, and the count after it
+ * (29/6/18) went stale as the talents were filled in.
+ *
+ * ALL SEVEN INERT ONES ARE PERMANENTLY OUT OF SCOPE BY RULING — movement, crowd
+ * control, threat, or an ability that is not implemented. Only three talents on
+ * this class are blocked on anything that could ever change: Improved Berserker
+ * Rage (no priority list casts Berserker Rage), Sweeping Strikes (needs a second
+ * target) and Weaponmaster's mace clause (armor ignore). See CLAUDE.md, "Scope".
  *
  * NINE GRANT AN ABILITY, and those are where being wrong costs most: an ability
  * handed to a character who never took its talent is free damage that nothing
