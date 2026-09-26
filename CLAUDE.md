@@ -509,7 +509,7 @@ Five sources. **All nine classes were built from the two client-derived ones.**
 | --- | --- |
 | `C:\Users\Donz\Documents\WoWForever*` | the owner's own files, **highest authority**: base stats, the combat table, stat conversions, resources, and **one ability spreadsheet — the Warrior's**. There is no spreadsheet for the other eight classes. `WoWForeverSimGuidance.docx` is NOT data — it is screenshots of an architecture discussion |
 | `talentsforever.com` | the beta client's own files, four static JS assignments a plain `fetch` reaches. **The source of record for talents AND for every ability number in the project**, and the build URLs the profiles are specified by |
-| `foreverchanges.pro/spellbook/<class>` | the beta client diffed against Classic Era, per rank, with cost, cast time and cooldown. A **second opinion**, not the importer's source: it settled five Warrior numbers when read by hand and has never been run against the other eight. Its data is in the page's RSC flight script, not the DOM |
+| `foreverchanges.pro/spellbook/<class>` | the beta client diffed against Classic Era, per rank, with cost, cast time and cooldown. **The tie-break: where it and our capture disagree, it wins, by the owner's standing rule.** Nothing imports from it — it is read by hand, and its data is in the page's RSC flight script, not the DOM. Checked so far: the Warrior (five numbers moved) and the Warlock (three moved). Seven classes to go |
 | `nether.wowhead.com/classic/tooltip/item/<id>` | Classic item and spell tooltips as JSON, no browser. The current items are Classic stand-ins, not Forever data |
 | `github.com/classic-hunter/forever-hunter/wiki` | the ONLY source for pet stat scaling and pet focus regeneration, plus a full Forever-vs-Classic diff for the Hunter. Community-maintained, so it ranks below the two above where they overlap — they have not yet disagreed |
 
@@ -567,15 +567,30 @@ anyway — one said 210 above a row saying −195, and the 210 was transcribed f
 months. [docs/warrior.md](docs/warrior.md) has the full reading rules and the
 per-ability figures; they are class-independent.
 
-**Two sources can disagree, INCLUDING TWO READS OF THE SAME CLIENT BUILD.** Where
-they agree, confidence rises. Where they do not, say so and pick the one the owner
-supplied directly — do not average them or quietly prefer the newer, and for eight
-of the nine classes there is no owner source, so the disagreement is a QUESTION and
-not a judgement call. The Warlock check found `talentsforever` and
-`foreverchanges.pro` disagreeing on Life Tap by a factor of two at the same build
-1.60.1.70009, which is worth 13.5% on a profile. Record each check in
-[docs/source-cross-checks.md](docs/source-cross-checks.md); that file also holds
-the two traps, one of which manufactures a disagreement that is not there.
+**WHERE TWO SOURCES DISAGREE, `foreverchanges.pro` WINS.** The ruleset owner's
+standing rule — "when in doubt use foreverchanges.pro" — given when it settled Life
+Tap at 840 against our own capture's 424. It outranks the older instruction to
+prefer the newer read or to ask, and it applies to every class, because eight of
+the nine have no owner spreadsheet to appeal to. Still say so in the docs and in
+the constant: a number that disagrees with the checked-in capture must carry the
+ruling beside it, or the next person reads it as drift.
+
+**Two sources can disagree, INCLUDING TWO READS OF THE SAME CLIENT BUILD**, which
+is what makes that rule necessary rather than tidy. Life Tap is 424 on
+`talentsforever` and 840 on `foreverchanges.pro`, both at build 1.60.1.70009 — so
+refreshing a capture does not settle it, and the disagreement is not staleness. It
+was worth **+12.1% to Firelock**. Where they agree, confidence rises: seven of the
+Warlock's ten matched exactly.
+
+**THE RULE DOES NOT APPLY WHEN THE PREFERRED SOURCE IS SILENT RATHER THAN
+DIFFERENT.** `foreverchanges.pro` carries no reagent field for any spell, so its
+365-mana cost for Shadowburn does not contradict the Soul Shard the other source
+states — it cannot express one. Both are charged. Taking a tie-break literally
+where there is no tie deletes a real cost.
+
+Record every check in [docs/source-cross-checks.md](docs/source-cross-checks.md),
+which also holds the two traps — one of them manufactures a disagreement that is
+not there.
 
 ## Never invent game data
 

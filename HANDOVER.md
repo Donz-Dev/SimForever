@@ -26,8 +26,8 @@ the former and the two are different fights even at one iteration.
 | DW Fury | Warrior | 18/33/0 | 643.2 | | Fire Mage | Mage | 10/39/2 | 355.9 |
 | 2H Arms | Warrior | 38/13/0 | 585.5 | | Moonkin | Druid | 38/0/13 | 353.1 |
 | LW Melee | Hunter | 7/13/31 | 556.2 | | LW Ranged | Hunter | 7/39/5 | 342.1 |
-| Shadow Priest | Priest | 16/3/32 | 510.9 | | SM/DS | Warlock | 40/11/0 | 331.7 |
-| Firelock | Warlock | 5/11/35 | 479.1 | | Shockadin | Paladin | 23/0/28 | 324.5 |
+| Shadow Priest | Priest | 16/3/32 | 510.9 | | SM/DS | Warlock | 40/11/0 | 333.8 |
+| Firelock | Warlock | 5/11/35 | 537.2 | | Shockadin | Paladin | 23/0/28 | 324.5 |
 | BM Hunter | Hunter | 31/20/0 | 421.0 | | Rupture Rogue | Rogue | 12/8/31 | 315.2 |
 | Enh Shaman | Shaman | 19/32/0 | 410.9 | | Venom Rogue | Rogue | 37/12/2 | 314.4 |
 | Arcane Mage | Mage | 47/4/0 | 405.1 | | Frostfire Mage | Mage | 0/29/22 | 305.6 |
@@ -78,14 +78,21 @@ sources agreed or were adjudicated for the Warrior and **eight of its figures
 turned out wrong**. `foreverchanges.pro/spellbook/<class>` is the available second
 opinion and nothing imports from it.
 
-**THE WARLOCK IS NOW CHECKED TOO: seven of ten agreed exactly, and four
-disagreements are open.** Full record and method in
-[docs/source-cross-checks.md](docs/source-cross-checks.md). The one that matters
-is **Life Tap, 424 against 840 — worth +13.5% on Firelock, measured**, and it is
-not staleness: both sources are at build 1.60.1.70009 and they disagree on the
-number. **Two client-derived sources can disagree at the same build**, which this
-project had not seen before. Seven classes are still unchecked; the Rogue and the
-Priest are the highest value.
+**THE WARLOCK IS NOW CHECKED TOO: seven of ten agreed exactly, four disagreed,
+and all four are settled.** Full record and method in
+[docs/source-cross-checks.md](docs/source-cross-checks.md). The owner ruled Life
+Tap at 840 and gave the standing rule with it — **where the two sources disagree,
+`foreverchanges.pro` wins** — which moved Firelock **+12.1%**, from 479.1 to
+537.2, past the Shadow Priest into fourth.
+
+**Two client-derived sources can disagree at the same build**, which this project
+had not seen before: both were read at 1.60.1.70009, so refreshing a capture does
+not settle anything. That is what makes the standing rule necessary.
+
+**SEVEN CLASSES ARE STILL UNCHECKED, and the rule now makes that a backlog rather
+than an open question.** The Rogue and the Priest are the highest value — largest
+live talent gaps, so an error there is least likely to be noticed. Two of the two
+classes checked so far needed corrections.
 
 ### The talent census
 
@@ -184,17 +191,13 @@ Fireball's burn is 11% of its damage and takes 35% of its scaling.
    figure, so the seal is currently generous.
 7. **Berserker Rage's magnitude** — Forever's tooltip names none.
 
-**Four more from the Warlock cross-check**, where our source and
-`foreverchanges.pro` disagree at the same client build and neither can win on its
-own. See [docs/source-cross-checks.md](docs/source-cross-checks.md).
-
-8. **Life Tap: 424 or 840?** The big one — **+13.5% on Firelock**, measured.
-   talentsforever says 424, foreverchanges says 840, both at build 1.60.1.70009.
-9. **Shadowburn: 258–288 or 251–281?** Small either way.
-10. **Searing Pain: 107–125 or 105–123?** Small either way.
-11. **Does Shadowburn cost a Soul Shard, 365 mana, or both?** One source says each.
-    Classic charges both. The simulator charges the shard alone, which gates it on
-    a placeholder pool with no in-fight income.
+**The four from the Warlock cross-check are ANSWERED**, and the answer came with a
+standing rule that closes the same question for every class: **where our capture
+and `foreverchanges.pro` disagree, foreverchanges wins.** Life Tap is 840,
+Shadowburn 251–281, Searing Pain 105–123. Shadowburn is charged both a shard and
+365 mana, because there the preferred source is silent rather than different — it
+carries no reagent field for any spell. See
+[docs/source-cross-checks.md](docs/source-cross-checks.md).
 
 Answered already, for reference: seal damage is **not** a weapon use; a hawk is
 modelled **without** a real combatant; pet family is a **profile field**; Shield

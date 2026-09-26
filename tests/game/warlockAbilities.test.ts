@@ -9,6 +9,10 @@ import {
   INCINERATE_DAMAGE,
   INCINERATE_IMMOLATE_BONUS,
   LIFE_TAP_AMOUNT,
+  SEARING_PAIN_DAMAGE,
+  SHADOWBURN,
+  SHADOWBURN_DAMAGE,
+  SHADOWBURN_MANA,
   SHADOWBURN_REFUNDS_SHARD,
   SHADOW_BOLT_DAMAGE,
 } from '../../src/game/abilities/warlock';
@@ -48,10 +52,44 @@ const presetPlayer = (preset: string) => {
 
 describe('the numbers', () => {
   it('takes the midpoint of each stated range, at MAX RANK', () => {
+    // Both sources agree on these three, at rank 10, 3 and 6 respectively.
     expect(SHADOW_BOLT_DAMAGE).toBe(268);
     expect(INCINERATE_DAMAGE).toBe(217);
     expect(CONFLAGRATE_DAMAGE).toBe(282);
-    expect(LIFE_TAP_AMOUNT).toBe(424);
+  });
+
+  /*
+   * THREE FIGURES THE TWO SOURCES DISAGREE ON, AT THE SAME CLIENT BUILD.
+   *
+   * `talentsforever.com` and `foreverchanges.pro` were both read at build
+   * 1.60.1.70009 and disagree on Life Tap (424 against 840), Shadowburn
+   * (258-288 against 251-281) and Searing Pain (107-125 against 105-123). The
+   * ruleset owner ruled 840 and gave the standing rule that goes with it:
+   * **prefer foreverchanges.pro**. See `docs/source-cross-checks.md`.
+   *
+   * These expectations carry the ruling rather than only the number, which is
+   * the same shape as the Shield Wall override in `warriorAbilities.test.ts`:
+   * an override without its reason turns a check on the source into a place to
+   * file whatever the code happens to do.
+   *
+   * THE CHECKED-IN CAPTURE STILL SAYS 424, deliberately -- it is scraped data
+   * and is never hand-edited, so the constant disagreeing with it is the honest
+   * state and not drift.
+   */
+  it('follows foreverchanges.pro where the two sources disagree', () => {
+    expect(LIFE_TAP_AMOUNT).toBe(840);
+    expect(SHADOWBURN_DAMAGE).toBe(266);
+    expect(SEARING_PAIN_DAMAGE).toBe(114);
+  });
+
+  /*
+   * Its mana half. The sources do not contradict each other here -- one states
+   * a Soul Shard reagent, the other 365 mana and no reagent field for ANY spell
+   * -- so both are charged. See the note on SHADOWBURN in `abilities/warlock.ts`.
+   */
+  it('charges Shadowburn a shard AND its mana', () => {
+    expect(SHADOWBURN.cost).toEqual({ resource: 'soulShards', amount: 1 });
+    expect(SHADOWBURN_MANA).toBe(365);
   });
 
   it('divides each damage-over-time effect evenly by its cadence', () => {
