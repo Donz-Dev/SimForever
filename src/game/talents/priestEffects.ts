@@ -55,7 +55,7 @@ export const PRIEST_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
     { kind: 'abilityDamage', abilityId: 'shadow_word_death' },
   ],
 
-  silent_resolve: [{ kind: 'unmodelled', reason: `${NO_THREAT} Its stun and fear clauses reach nothing.` }],
+  silent_resolve: [{ kind: 'unmodelled', scope: 'threat', reason: `${NO_THREAT} Its stun and fear clauses reach nothing.` }],
 
   holy_precision: [
     {
@@ -111,9 +111,9 @@ export const PRIEST_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
 
   soul_warding: [{ kind: 'unmodelled', reason: NOT_ATTACKED }],
   improved_mana_burn: [{ kind: 'unmodelled', reason: 'Mana Burn, which no damage list casts.' }],
-  penance: [{ kind: 'unmodelled', reason: NO_HEALING }],
-  renewed_hope: [{ kind: 'unmodelled', reason: NO_HEALING }],
-  divine_aegis: [{ kind: 'unmodelled', reason: NO_HEALING }],
+  penance: [{ kind: 'unmodelled', scope: 'healing', reason: NO_HEALING }],
+  renewed_hope: [{ kind: 'unmodelled', scope: 'healing', reason: NO_HEALING }],
+  divine_aegis: [{ kind: 'unmodelled', scope: 'healing', reason: NO_HEALING }],
 
   power_infusion: [
     {
@@ -131,7 +131,7 @@ export const PRIEST_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
     { kind: 'unmodelled', reason: 'Avoiding interruption, and nothing interrupts a cast here.' },
   ],
 
-  improved_renew: [{ kind: 'unmodelled', reason: NO_HEALING }],
+  improved_renew: [{ kind: 'unmodelled', scope: 'healing', reason: NO_HEALING }],
 
   holy_specialization: [{ kind: 'schoolCrit', schools: ['holy'] }],
 
@@ -144,14 +144,14 @@ export const PRIEST_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
 
   holy_nova: [{ kind: 'unmodelled', reason: 'An area spell, and there is one target.' }],
   blessed_recovery: [{ kind: 'unmodelled', reason: NOT_ATTACKED }],
-  inspiration: [{ kind: 'unmodelled', reason: NO_HEALING }],
-  holy_reach: [{ kind: 'unmodelled', reason: 'Range, and nothing here has a position.' }],
-  improved_healing: [{ kind: 'unmodelled', reason: NO_HEALING }],
+  inspiration: [{ kind: 'unmodelled', scope: 'healing', reason: NO_HEALING }],
+  holy_reach: [{ kind: 'unmodelled', scope: 'positioning', reason: 'Range, and nothing here has a position.' }],
+  improved_healing: [{ kind: 'unmodelled', scope: 'healing', reason: NO_HEALING }],
 
   searing_light: [{ kind: 'schoolDamage', schools: ['holy'] }],
 
-  binding_heal: [{ kind: 'unmodelled', reason: NO_HEALING }],
-  litany_of_light: [{ kind: 'unmodelled', reason: NO_HEALING }],
+  binding_heal: [{ kind: 'unmodelled', scope: 'healing', reason: NO_HEALING }],
+  litany_of_light: [{ kind: 'unmodelled', scope: 'healing', reason: NO_HEALING }],
 
   spirit_of_redemption: [
     { kind: 'unmodelled', reason: 'It triggers on the Priest dying, which a damage profile does not.' },
@@ -170,8 +170,8 @@ export const PRIEST_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
     { kind: 'statFromStat', from: 'spirit', to: 'spellPower', valueIndex: 1 },
   ],
 
-  spiritual_healing: [{ kind: 'unmodelled', reason: NO_HEALING }],
-  prayer_of_mending: [{ kind: 'unmodelled', reason: NO_HEALING }],
+  spiritual_healing: [{ kind: 'unmodelled', scope: 'healing', reason: NO_HEALING }],
+  prayer_of_mending: [{ kind: 'unmodelled', scope: 'healing', reason: NO_HEALING }],
 
   // --- Shadow --------------------------------------------------------------
 
@@ -185,13 +185,13 @@ export const PRIEST_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
     },
   ],
 
-  blackout: [{ kind: 'unmodelled', reason: 'A stun, which is out of scope as every stun is.' }],
+  blackout: [{ kind: 'unmodelled', scope: 'crowdControl', reason: 'A stun, which is out of scope as every stun is.' }],
 
   spirit_tap: [
     { kind: 'unmodelled', reason: 'It needs a KILL, and the target survives every fight.' },
   ],
 
-  shadow_affinity: [{ kind: 'unmodelled', reason: NO_THREAT }],
+  shadow_affinity: [{ kind: 'unmodelled', scope: 'threat', reason: NO_THREAT }],
 
   improved_shadow_word_pain: [
     /*
@@ -203,23 +203,23 @@ export const PRIEST_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
     { kind: 'abilityBonus', abilityId: 'shadow_word_pain', key: SWP_EXTRA_SECONDS_BONUS },
   ],
 
-  shadow_reach: [{ kind: 'unmodelled', reason: 'Range, and nothing here has a position.' }],
+  shadow_reach: [{ kind: 'unmodelled', scope: 'positioning', reason: 'Range, and nothing here has a position.' }],
 
   improved_mind_blast: [{ kind: 'abilityCooldown', abilityId: 'mind_blast', unit: 'seconds' }],
 
-  improved_psychic_scream: [{ kind: 'unmodelled', reason: 'A fear, which is out of scope.' }],
+  improved_psychic_scream: [{ kind: 'unmodelled', scope: 'crowdControl', reason: 'A fear, which is out of scope.' }],
 
   mind_flay: [{ kind: 'grantAbility', abilityId: 'mind_flay' }],
 
   improved_mind_flay: [{ kind: 'abilityDamage', abilityId: 'mind_flay', valueIndex: 1 }],
 
-  improved_fade: [{ kind: 'unmodelled', reason: `Fade is a threat drop. ${NO_THREAT}` }],
+  improved_fade: [{ kind: 'unmodelled', scope: 'threat', reason: `Fade is a threat drop. ${NO_THREAT}` }],
 
   vampiric_embrace: [{ kind: 'grantAbility', abilityId: 'vampiric_embrace' }],
 
   shadow_weaving: [{ kind: 'reaction', reactionId: 'shadow_weaving' }],
 
-  silence: [{ kind: 'unmodelled', reason: 'A silence, and nothing the target does is a cast.' }],
+  silence: [{ kind: 'unmodelled', scope: 'crowdControl', reason: 'A silence, and nothing the target does is a cast.' }],
 
   devouring_contagion: [
     { kind: 'grantCastModifier', abilityIds: ['devouring_plague'], property: 'costFraction' },

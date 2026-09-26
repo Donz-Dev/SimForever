@@ -34,6 +34,7 @@ import { armorFromItems, liveEquipment } from '../items/equipment';
 import type { TalentAllocation } from './Talent';
 import type {
   IllegalTalent,
+  OutOfScope,
   TalentEffects,
   UnmodelledTalent,
   BuildRequirement,
@@ -472,7 +473,7 @@ export function talentBuild(
   let damageMultiplier = 1;
   const unmodelled: UnmodelledTalent[] = [];
 
-  const report = (talentId: string, rank: number, reason: string) => {
+  const report = (talentId: string, rank: number, reason: string, scope?: OutOfScope) => {
     const talent = talents.byId.get(talentId);
     unmodelled.push({
       talentId,
@@ -480,6 +481,7 @@ export function talentBuild(
       rank,
       text: talentDescription(characterClass, talentId, rank) ?? talent?.description ?? '',
       reason,
+      ...(scope ? { scope } : {}),
     });
   };
 
@@ -497,7 +499,7 @@ export function talentBuild(
 
     for (const effect of declared) {
       if (effect.kind === 'unmodelled') {
-        report(talentId, rank, effect.reason);
+        report(talentId, rank, effect.reason, effect.scope);
         continue;
       }
 

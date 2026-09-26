@@ -61,7 +61,7 @@ Measured at `d2718b0`, and the numbers say it is not close:
 
 | | |
 | --- | --- |
-| **263 of 468 talents carry `kind: 'unmodelled'`** | 56% of the trees are inert or partial, and it is wildly uneven: Warrior 10, Hunter 26, Mage 29, Paladin 30, Druid/Rogue/Warlock 32 each, Shaman 33, Priest 38 |
+| **140 of 468 talents are a live gap** | down from a raw count of 262 unmodelled reasons, because 89 are permanently out of scope by ruling and 33 more are PARTLY modelled. See the census below — the raw total is not a work queue |
 | **113 abilities declared against 478 captured** | the data is on disk; the declarations are not. Druid 15, Hunter 14, Mage 13, Rogue 12, Warlock 10, Shaman 9, Priest 7, Paladin 6, plus the Warrior's 27 |
 | **`powerCoefficient` per class file** | Mage 10, Warlock 6, Shaman 6, Warrior 3, Priest 3, Druid 3, Paladin 2, Hunter 1, **Rogue 0**. The RULE exists; per-ability application is what is missing |
 | **19 `PLACEHOLDER_*` constants** | each a real number nobody has supplied |
@@ -70,25 +70,52 @@ Measured at `d2718b0`, and the numbers say it is not close:
 **The Warrior was built first and built properly, and it is not the norm.** Read
 any claim about this project's depth as a claim about the Warrior until checked.
 
-### Scope, now ruled
+### The talent census
 
-The owner's rulings, recorded in CLAUDE.md under **Scope**. These are permanent
-and stop counting against the milestone:
+Every talent, classified from the DATA rather than from prose: an `unmodelled`
+entry carries a `scope` when the owner has ruled the effect out, so a decision
+and a gap can be told apart mechanically. `tests/game/outOfScope.test.ts`
+enforces it, and a new class writing "nothing here moves" without the ruling
+fails.
 
-- **Positions, range, facing, movement, crowd control — out.** ~44 talents.
-- **Threat — out**, as it already was. ~15 talents.
-- **Healing throughput — out. Mana RETURN is in**, because it changes a damage
-  profile's sustain. ~16 talents, which still have to be read one by one to split
-  them; that split is not yet done.
-- **The spell exclusion list is to be proposed and approved.** 478 captured
-  against 113 declared, and a stated exclusion list is what turns a vague
-  "incomplete" into a finite work list. Not yet written.
+| Class | Talents | Fully | Partly | Ruled out | Live gap |
+| --- | --- | --- | --- | --- | --- |
+| Warrior | 53 | 43 | 3 | 6 | **1** |
+| Paladin | 52 | 22 | 7 | 13 | **10** |
+| Hunter | 50 | 24 | 5 | 8 | **13** |
+| Druid | 51 | 19 | 5 | 14 | **13** |
+| Shaman | 50 | 17 | 4 | 12 | **17** |
+| Mage | 54 | 25 | 2 | 9 | **18** |
+| Priest | 53 | 15 | 2 | 18 | **18** |
+| Rogue | 53 | 21 | 2 | 6 | **24** |
+| Warlock | 52 | 20 | 3 | 3 | **26** |
+| **Total** | **468** | **206** | **33** | **89** | **140** |
 
-Of ~184 reasons that parse cleanly, the remainder after those rulings clusters as:
-8 a pet or summon the build does not bring, 7 a missing DECLARATION (a rule that
-exists with nothing hooked to it), 6 an ability nothing casts, 3 the target, and
-**91 uncategorised, many of which say "reachable and simply not written yet"**.
-Categorising those 91 is the first task of the per-class work.
+**239 of 468 talents do something**, 89 never will, and **140 are the actual
+remaining work** — not the 262 a raw count of unmodelled reasons suggests. The 96
+scoped entries break down as 32 crowd control, 33 healing, 17 positioning and 14
+threat.
+
+The rulings, recorded in CLAUDE.md under **Scope**: positions, range, facing and
+movement; crowd control; threat; and healing THROUGHPUT — but **mana RETURN is in
+scope**, because it changes a damage profile's sustain, so a talent returning mana
+is a live gap and gets no `scope`.
+
+Two questions the census raises that the rulings do not answer:
+
+- **Stealth and openers.** Eleven Rogue talents are inert because every fight
+  opens in combat — Premeditation, Initiative, Improved Ambush, Cutthroat, Dirty
+  Deeds, Camouflage, Opportunity and more. That is an encounter property, not one
+  of the four rulings, and it is most of why the Rogue has the second-largest live
+  count. **Worth asking whether an opener is in scope at all.**
+- **Totems as entities.** Five Shaman talents need a totem to exist as something
+  that acts on its own. That is the mid-fight-summon engine gap wearing different
+  clothes, and it lands on an Elemental profile whose figure is short by whatever
+  they are worth.
+
+**The spell exclusion list is still to be proposed and approved** — 478 captured
+against 113 declared. A stated exclusion list is what turns a vague "incomplete"
+into a finite work list.
 
 ### Open engine gaps
 
@@ -149,16 +176,25 @@ Slam triggers **main-hand** effects; Careful Aim contributes to attack power
 
 The refactor is phased; the milestone follows it.
 
-1. **Phase 1 — documentation.** In progress. Five Warrior-only docs and the engine
+1. ~~**Phase 1 — documentation.**~~ **Done.** Five Warrior-only docs and the engine
    gap survey folded into [docs/warrior.md](docs/warrior.md) and this file;
-   CLAUDE.md restructured as a reference.
-2. **Phase 2 — code, conservatively.** Reduce the 19 placeholders by asking for
-   each number. Re-word the ~44 movement and CC reasons to the permanent ruling
-   rather than a pending gap. Split the 16 healing reasons into mana-return (in
-   scope) and healing output (out). Rename `forever-warrior.json` to match the
-   other eight. Find genuinely dead code — including the 7 talents whose rule
-   already exists with nothing hooked to it. **Do not restructure the engine, the
-   panels or the profile schema**; volume is the problem, not shape.
+   CLAUDE.md restructured as a reference; five expired claims cleared.
+2. **Phase 2 — code, conservatively.** In progress. **Done:** the rulings are data
+   (`OutOfScope`, 96 entries tagged, a test that a new class cannot slip past), the
+   Talent panel shows a decision separately from a gap, the healing split is made,
+   and the odd-one-out Warrior capture is named for what it is. **Left:**
+   - **Ask the owner for each placeholder number** — 19 of them, listed above.
+     Every one answered is a placeholder deleted.
+   - **The seven talents whose rule already exists with nothing hooked to it.**
+     Shaman Elemental Focus is the clearest: a one-shot cost modifier is exactly
+     `CastModifier.costFraction` with `consumedByCast`, which Maelstrom Weapon
+     already uses, and its reason still says it has no declaration. Rogue
+     Lethality and Warlock Pandemic want `critMultiplierBonus`, which exists and
+     nothing reaches. **These will move DPS, so they want their own PR and a
+     re-measured baseline.**
+   - **Dead code**: exports nothing imports.
+   **Do not restructure the engine, the panels or the profile schema**; volume is
+   the problem, not shape.
 3. **Phase 3 — the milestone, per class.** Every talent resolves to an effect or
    to a permanent out-of-scope reason, with no "not written yet". Every spell on
    the approved list declared, with its cooldown. Every damaging ability carrying

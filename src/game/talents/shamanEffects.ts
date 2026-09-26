@@ -144,7 +144,7 @@ export const SHAMAN_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
     { kind: 'abilityCrit', abilityId: 'chain_lightning' },
   ],
 
-  elemental_reach: [{ kind: 'unmodelled', reason: 'Range, and nothing here has a position.' }],
+  elemental_reach: [{ kind: 'unmodelled', scope: 'positioning', reason: 'Range, and nothing here has a position.' }],
 
   lightning_overload: [
     {
@@ -156,7 +156,7 @@ export const SHAMAN_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
     },
   ],
 
-  earthbound: [{ kind: 'unmodelled', reason: 'Earthbind Totem, and an immobilise.' }],
+  earthbound: [{ kind: 'unmodelled', scope: 'crowdControl', reason: 'Earthbind Totem, and an immobilise.' }],
 
   elemental_alacrity: [
     { kind: 'abilityCastTime', abilityId: 'lightning_bolt' },
@@ -193,7 +193,11 @@ export const SHAMAN_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
   ],
 
   improved_ghost_wolf: [
-    { kind: 'unmodelled', reason: 'A travel form, and nothing here moves.' },
+    {
+      kind: 'unmodelled',
+      scope: 'positioning',
+      reason: 'A travel form, and nothing here moves.',
+    },
   ],
 
   improved_lightning_shield: [
@@ -244,6 +248,7 @@ export const SHAMAN_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
   spirit_weapons: [
     {
       kind: 'unmodelled',
+      scope: 'threat',
       reason:
         'A parry chance the tooltip does not quantify, plus two threat ' +
         'clauses. The engine does not track threat, and a number that is not ' +
@@ -286,10 +291,10 @@ export const SHAMAN_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
 
   // --- Restoration ---------------------------------------------------------
 
-  improved_healing_wave: [{ kind: 'unmodelled', reason: NO_PROFILE_HEALS }],
+  improved_healing_wave: [{ kind: 'unmodelled', scope: 'healing', reason: NO_PROFILE_HEALS }],
   totemic_focus: [{ kind: 'unmodelled', reason: TOTEMS_NOT_MODELLED }],
-  mindfulness: [{ kind: 'unmodelled', reason: 'Threat, which the engine does not track.' }],
-  natural_grace: [{ kind: 'unmodelled', reason: NO_PROFILE_HEALS }],
+  mindfulness: [{ kind: 'unmodelled', scope: 'threat', reason: 'Threat, which the engine does not track.' }],
+  natural_grace: [{ kind: 'unmodelled', scope: 'healing', reason: NO_PROFILE_HEALS }],
   tidal_focus: [
     /*
      * ITS HIT HALF IS REAL AND ITS MANA HALF REACHES NOTHING. "Reduces the
@@ -302,12 +307,12 @@ export const SHAMAN_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
      * the wording caught it when that claim stopped being true elsewhere.
      */
     { kind: 'stat', stat: 'hitChance', operation: 'flat', valueIndex: 1 },
-    { kind: 'unmodelled', reason: `Its mana half is healing only. ${NO_PROFILE_HEALS}` },
+    { kind: 'unmodelled', scope: 'healing', reason: `Its mana half is healing only. ${NO_PROFILE_HEALS}` },
   ],
   improved_reincarnation: [
     { kind: 'unmodelled', reason: 'A self-resurrection out of combat.' },
   ],
-  ancestral_healing: [{ kind: 'unmodelled', reason: NO_PROFILE_HEALS }],
+  ancestral_healing: [{ kind: 'unmodelled', scope: 'healing', reason: NO_PROFILE_HEALS }],
   healing_focus: [
     { kind: 'unmodelled', reason: 'Avoiding interruption, and nothing interrupts a cast here.' },
   ],
@@ -319,10 +324,10 @@ export const SHAMAN_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
         'profile is attacked and neither heals.',
     },
   ],
-  tidal_mastery: [{ kind: 'unmodelled', reason: NO_PROFILE_HEALS }],
+  tidal_mastery: [{ kind: 'unmodelled', scope: 'healing', reason: NO_PROFILE_HEALS }],
   restorative_totems: [{ kind: 'unmodelled', reason: TOTEMS_NOT_MODELLED }],
   mana_tide_totem: [{ kind: 'unmodelled', reason: TOTEMS_NOT_MODELLED }],
-  healing_way: [{ kind: 'unmodelled', reason: NO_PROFILE_HEALS }],
+  healing_way: [{ kind: 'unmodelled', scope: 'healing', reason: NO_PROFILE_HEALS }],
 
   nature_s_swiftness: [
     {
@@ -333,6 +338,6 @@ export const SHAMAN_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
     },
   ],
 
-  purification: [{ kind: 'unmodelled', reason: NO_PROFILE_HEALS }],
-  riptide: [{ kind: 'unmodelled', reason: NO_PROFILE_HEALS }],
+  purification: [{ kind: 'unmodelled', scope: 'healing', reason: NO_PROFILE_HEALS }],
+  riptide: [{ kind: 'unmodelled', scope: 'healing', reason: NO_PROFILE_HEALS }],
 };

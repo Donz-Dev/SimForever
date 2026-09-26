@@ -56,11 +56,26 @@ Rulings by the project owner. **Permanent classifications, not a work queue** �
 talent blocked on one of these is not an engine gap, and writing it up as pending
 inflates the queue and hides the real items.
 
-| | |
-| --- | --- |
-| **Positions, range, facing, movement, crowd control** | No position model, and not getting one. Snares, roots, stuns, fears, daze, shout radius, "nearby", minimum range. ~44 talents |
-| **Threat** | Not tracked. Defensive Stance's +30% and Defiance are dropped, not deferred. ~15 talents |
-| **Healing throughput** | No healing profile and nothing to heal. Raw healing output is out; **mana RETURN is in**, because it changes a damage profile's sustain. ~16 talents, to be read one by one and split |
+**A RULING IS DATA, NOT PROSE.** An `unmodelled` effect carries a `scope` from the
+`OutOfScope` union when the owner has ruled its effect out, and nothing otherwise.
+That is the whole difference between a decision and a gap, and prose could not
+carry it: "the engine has no positions" and "nothing attacks the player" read
+identically and only one of them expires. `tests/game/outOfScope.test.ts` matches
+the WORDING, so a class nobody has written yet cannot file a ruled-out concept as
+outstanding work, and the Talent panel lists the two separately — showing them
+together told someone their build was missing features that were never coming.
+
+| `scope` | Covers | Entries |
+| --- | --- | --- |
+| `positioning` | positions, range, facing, movement, "nearby", radius, travel forms | 17 |
+| `crowdControl` | stuns, fears, roots, snares, silences, incapacitates, disorients, disarms | 32 |
+| `threat` | threat, which is not tracked. Defensive Stance's +30% and Defiance are dropped, not deferred | 14 |
+| `healing` | healing THROUGHPUT. **Mana RETURN is NOT out of scope** — it changes a damage profile's sustain, so it is a live gap and gets no `scope` | 33 |
+
+Adding a member to that union is a scope DECISION and needs the owner, not a
+judgement call while writing a class. Two things the rulings do NOT cover and that
+are still open questions: **stealth openers** (eleven Rogue talents, inert because
+every fight opens in combat) and **totems as entities** (five Shaman talents).
 
 ## Conventions that prevent real bugs
 

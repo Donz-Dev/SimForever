@@ -17,7 +17,7 @@ import { RATING_PER_PERCENT, dealDamage, flat, seconds } from '../../engine';
  *
  * They are not placeholders any more. `nether.wowhead.com/forever/tooltip/spell/`
  * serves Forever's own spell data, the same way the item endpoint already
- * served Forever items, and `src/data/abilities/forever-warrior.json` holds the
+ * served Forever items, and `src/data/abilities/forever-warrior-tooltips.json` holds the
  * captured tooltip for all eleven. Each constant below names the spell id it
  * was read from, and `tests/game/warriorAbilityValues.test.ts` asserts every one
  * against the stored text so a transcription typo fails.
@@ -150,7 +150,7 @@ export const SUNDER_ARMOR: AuraDefinition = {
  *
  *   - The ruleset owner's raid buff list     139
  *   - The spellbook, beta client             139
- *   - `forever-warrior.json`, spell 25289    140, in BOTH the description and
+ *   - `forever-warrior-tooltips.json`, spell 25289    140, in BOTH the description and
  *                                            the effect row
  *
  * The capture is self-consistent, so this is not the base-points artifact that

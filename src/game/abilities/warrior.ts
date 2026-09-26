@@ -186,7 +186,7 @@ export const BLOODTHIRST: Ability = {
  * spellbook opens Slam on rank 4 -- the rank whose level matches Classic's
  * max. Reading the page as it opens gives 68. The ruleset owner read it that
  * way and ruled 68; the number is real, it is simply not the one a level 60
- * warrior has. `forever-warrior.json` holds spell 11605, which is rank 5 at
+ * warrior has. `forever-warrior-tooltips.json` holds spell 11605, which is rank 5 at
  * level 54, and says 87 with an effect row of 88.
  *
  * THE SIMULATOR RUNS AT LEVEL 60, so rank 5 is the only rank that can apply --
@@ -503,7 +503,7 @@ export const HAMSTRING: Ability = {
  *
  *   - `WoWForeverWarriorAbilities.xlsx`        4 seconds
  *   - WoW Classic                              4 seconds
- *   - `forever-warrior.json`, spell 11581      "Instant 6 sec cooldown"
+ *   - `forever-warrior-tooltips.json`, spell 11581      "Instant 6 sec cooldown"
  *   - The spellbook, beta client               6, listed as a deliberate change
  *
  * We had four, and our OWN capture said six. The sheet's row was taken over a
