@@ -1,7 +1,7 @@
 {
  "class": "priest",
  "source": "https://talentsforever.com/spelldesc.js",
- "build": "1.60.1.69876",
+ "build": "1.60.1.70009",
  "note": "Max rank only. The simulator runs at level 60, and a talent tooltip shows rank 1 of the ability it grants -- see docs/class-implementation.md.",
  "spells": [
   {
@@ -92,7 +92,7 @@
    "school": "Shadow",
    "cast": "Instant",
    "cooldown": "10 min cooldown",
-   "description": "Cannibalize 1,600 of your own Health over 15 sec to gain 1,600 Mana.",
+   "description": "Cannibalize 1,600 of your own Health over 15 sec to gain 1,600 Mana, plus your Spirit.",
    "versusClassic": "new"
   },
   {
@@ -307,7 +307,7 @@
    "name": "Inner Focus",
    "rank": null,
    "tab": "Discipline",
-   "level": "",
+   "level": "Learned at level 20",
    "school": "Physical",
    "cast": "Instant",
    "cooldown": "3 min cooldown",
@@ -529,7 +529,7 @@
   {
    "id": 27683,
    "name": "Prayer of Shadow Protection",
-   "rank": 1,
+   "rank": null,
    "tab": "Shadow",
    "level": "Learned at level 56",
    "school": "Holy",
@@ -649,7 +649,7 @@
    "name": "Shadowform",
    "rank": null,
    "tab": "Shadow",
-   "level": "",
+   "level": "Learned at level 40",
    "school": "Shadow",
    "cost": "40% of base mana",
    "cast": "Instant",
@@ -674,7 +674,7 @@
    "name": "Silence",
    "rank": null,
    "tab": "Shadow",
-   "level": "",
+   "level": "Learned at level 30",
    "school": "Shadow",
    "cost": "225 Mana",
    "range": "20 yd range",

@@ -55,7 +55,16 @@ export const SWP_EXTRA_SECONDS_BONUS = 'extraDurationSeconds';
 
 export const MIND_BLAST_CAST_MS = seconds(1.5);
 export const MIND_BLAST_COEFFICIENT = directSpellCoefficient(MIND_BLAST_CAST_MS);
-export const MIND_BLAST_DAMAGE = midpoint(477, 503);
+/*
+ * 472 to 498, from foreverchanges.pro, by the owner's standing rule. Our capture
+ * says 477 to 503 at the same rank 9 and the same build 1.60.1.70009 -- five
+ * lower on both ends, so the midpoint goes 490 to 485.
+ *
+ * THIS WAS THE PROJECT'S ONE HAND-VERIFIED COEFFICIENT EXAMPLE, so the worked
+ * figure in HANDOVER moved with it: 485 base, a 1.5-second cast for 0.4286, and
+ * 497 Shadow spell power gives 698.00 where it used to give 703.00.
+ */
+export const MIND_BLAST_DAMAGE = midpoint(472, 498);
 
 export const MIND_BLAST: Ability = {
   id: 'mind_blast',
@@ -177,7 +186,10 @@ export const DEVOURING_PLAGUE_ABILITY: Ability = {
  * look free.
  * ----------------------------------------------------------------------------
  */
-export const SHADOW_WORD_DEATH_DAMAGE = midpoint(444, 472);
+// 434 to 462, from foreverchanges.pro by the same rule, against our capture's
+// 444 to 472 at the same rank 4 and build. The 10% backlash is unchanged and both
+// sources state it.
+export const SHADOW_WORD_DEATH_DAMAGE = midpoint(434, 462);
 export const SHADOW_WORD_DEATH_BACKLASH_FRACTION = 0.1;
 export const SHADOW_WORD_DEATH_COEFFICIENT = directSpellCoefficient(0);
 

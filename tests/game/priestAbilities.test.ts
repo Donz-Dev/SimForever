@@ -49,9 +49,19 @@ const barePriest = () =>
   });
 
 describe('the numbers', () => {
+  /*
+   * TWO OF THESE THREE FOLLOW foreverchanges.pro AGAINST OUR OWN CAPTURE, by the
+   * ruleset owner's standing rule that it wins a disagreement. Both sources were
+   * read at build 1.60.1.70009 and disagree by five on Mind Blast (472-498
+   * against 477-503) and by ten on Shadow Word: Death (434-462 against 444-472).
+   * Shadow Word: Pain's 762 they agree on. See docs/source-cross-checks.md.
+   *
+   * Written out by hand from the source, as every number here is, and carrying
+   * the ruling rather than only the figure.
+   */
   it('takes the midpoint of each stated range, at MAX RANK', () => {
-    expect(MIND_BLAST_DAMAGE).toBe(490);
-    expect(SHADOW_WORD_DEATH_DAMAGE).toBe(458);
+    expect(MIND_BLAST_DAMAGE).toBe(485);
+    expect(SHADOW_WORD_DEATH_DAMAGE).toBe(448);
     expect(SHADOW_WORD_PAIN_TOTAL).toBe(762);
   });
 
