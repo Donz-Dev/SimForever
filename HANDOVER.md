@@ -26,10 +26,10 @@ the former and the two are different fights even at one iteration.
 | DW Fury | Warrior | 18/33/0 | 643.2 | | Fire Mage | Mage | 10/39/2 | 355.9 |
 | 2H Arms | Warrior | 38/13/0 | 585.5 | | Moonkin | Druid | 38/0/13 | 353.1 |
 | LW Melee | Hunter | 7/13/31 | 556.2 | | LW Ranged | Hunter | 7/39/5 | 342.1 |
-| Shadow Priest | Priest | 16/3/32 | 510.9 | | SM/DS | Warlock | 40/11/0 | 333.8 |
+| Shadow Priest | Priest | 16/3/32 | 509.4 | | SM/DS | Warlock | 40/11/0 | 333.8 |
 | Firelock | Warlock | 5/11/35 | 537.2 | | Shockadin | Paladin | 23/0/28 | 324.5 |
-| BM Hunter | Hunter | 31/20/0 | 421.0 | | Rupture Rogue | Rogue | 12/8/31 | 315.2 |
-| Enh Shaman | Shaman | 19/32/0 | 410.9 | | Venom Rogue | Rogue | 37/12/2 | 314.4 |
+| BM Hunter | Hunter | 31/20/0 | 421.0 | | Venom Rogue | Rogue | 37/12/2 | 316.3 |
+| Enh Shaman | Shaman | 19/32/0 | 410.9 | | Rupture Rogue | Rogue | 12/8/31 | 315.2 |
 | Arcane Mage | Mage | 47/4/0 | 405.1 | | Frostfire Mage | Mage | 0/29/22 | 305.6 |
 | Seal Twist Ret | Paladin | 13/0/38 | 391.9 | | Ele Shaman | Shaman | 38/13/0 | 279.0 |
 | Combat Rogue | Rogue | 18/33/0 | 376.9 | | Cat Druid | Druid | 9/35/7 | 272.0 |
@@ -89,10 +89,17 @@ Tap at 840 and gave the standing rule with it — **where the two sources disagr
 had not seen before: both were read at 1.60.1.70009, so refreshing a capture does
 not settle anything. That is what makes the standing rule necessary.
 
-**SEVEN CLASSES ARE STILL UNCHECKED, and the rule now makes that a backlog rather
-than an open question.** The Rogue and the Priest are the highest value — largest
-live talent gaps, so an error there is least likely to be noticed. Two of the two
-classes checked so far needed corrections.
+**THE ROGUE AND THE PRIEST ARE CHECKED TOO.** Ten of twelve agreed on the Rogue —
+including every finisher's whole per-combo-point table — and five of seven on the
+Priest. Four figures moved: Backstab 225 to 150, Mutilate 38 to 50, Mind Blast to
+485 and Shadow Word: Death to 448. Venom +0.6%, Shadow Priest −0.3%, and **Backstab
+is worth nothing because no priority list casts it** — an APL question rather than
+a data one.
+
+**FIVE CLASSES ARE STILL UNCHECKED**: Mage, Paladin, Druid, Shaman, Hunter. Every
+class checked so far has needed corrections, so treat it as a backlog. The
+disagreements are small except when they are not — nine of the ten found move a
+profile under 1%, and the tenth was Life Tap at double, worth 13.5%.
 
 ### The talent census
 

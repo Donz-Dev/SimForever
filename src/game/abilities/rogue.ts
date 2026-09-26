@@ -119,7 +119,18 @@ export const SINISTER_STRIKE: Ability = {
  * "behind the target" cannot be checked and is not pretended to be; the weapon
  * is knowable, so it is enforced.
  */
-export const BACKSTAB_BASE_DAMAGE = 225;
+/*
+ * 150 AND NOT 225, from foreverchanges.pro, by the owner's standing rule that it
+ * wins a disagreement. Both sources were read at build 1.60.1.70009 and the
+ * tooltips are otherwise identical -- "150% weapon damage plus 150" against
+ * "...plus 225". The checked-in capture still says 225 and is not hand-edited.
+ *
+ * 225 IS 150 x 1.5, WHICH IS WHY THIS ONE IS WORTH A SECOND LOOK IF IT EVER
+ * COMES BACK: the losing figure is exactly the flat damage times the weapon
+ * fraction beside it, so one of the two sources may be rendering the tooltip
+ * with the coefficient already applied. Neither states which.
+ */
+export const BACKSTAB_BASE_DAMAGE = 150;
 export const BACKSTAB_WEAPON_FRACTION = 1.5;
 
 export const BACKSTAB: Ability = {
@@ -162,7 +173,9 @@ export const BACKSTAB: Ability = {
  *
  * The poison clause does nothing: poisons are not implemented.
  */
-export const MUTILATE_BASE_DAMAGE = 38;
+// 50 and not 38, from foreverchanges.pro by the same rule -- "an additional 50
+// with each weapon" against our capture's 38, same rank 4, same build.
+export const MUTILATE_BASE_DAMAGE = 50;
 export const MUTILATE_WEAPON_FRACTION = 0.75;
 export const MUTILATE_COMBO_POINTS = 2;
 

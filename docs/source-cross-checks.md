@@ -103,15 +103,73 @@ confirm a number or be stale. It can do neither. So a second source is worth
 running on every class, and 7-of-10 agreement is a real result rather than a
 formality.
 
+## Rogue — checked 2026-09-25, both sources at build 1.60.1.70009
+
+**Ten of twelve agreed exactly**, including every finisher's whole per-combo-point
+table: Eviscerate's five ranges, Rupture's five damage-and-duration pairs, Expose
+Armor's 450 a point, Slice and Dice's 30% and its five durations, plus Sinister
+Strike, Hemorrhage's 100%/145%, Ghostly Strike's 125%/180%, Adrenaline Rush, Blade
+Flurry and Cold Blood. Those tables are the most error-prone data in the class and
+they match figure for figure.
+
+| | ours | `foreverchanges.pro` | applied |
+| --- | --- | --- | --- |
+| **Backstab** r9 | 225 flat | **150** | **150** |
+| **Mutilate** r4 | 38 an weapon | **50** | **50** |
+
+**225 IS EXACTLY 150 x 1.5, AND THAT IS WORTH REMEMBERING.** Backstab is "150%
+weapon damage plus N", and the losing figure is the winning one times the weapon
+fraction printed beside it — so one of the two sources may be rendering the
+tooltip with the coefficient already folded in. Neither states which, the rule
+settles it, and the comment on the constant says so in case it comes back.
+
+**THE BACKSTAB CORRECTION IS WORTH NOTHING TODAY, BECAUSE NO PRIORITY LIST CASTS
+BACKSTAB.** The Venom list opens with Mutilate, Combat uses Sinister Strike and
+Rupture uses Hemorrhage. That is a finding in its own right: an Assassination
+rogue holding daggers and never pressing Backstab is an APL question, not a data
+one, and it belongs with the seven unmeasured class lists.
+
+So the whole measured effect is Mutilate, +12 a weapon on a two-weapon strike:
+
+| | was | now | |
+| --- | --- | --- | --- |
+| Venom Rogue | 314.4 | **316.3** | +0.6%, and it passes Rupture |
+| Rupture Rogue | 315.2 | 315.2 | Hemorrhage, which agreed |
+| Combat Rogue | 376.9 | 376.9 | Sinister Strike, which agreed |
+
+## Priest — checked 2026-09-25, both sources at build 1.60.1.70009
+
+**Five of seven agreed exactly**: Shadow Word: Pain's 762 over 18s, Devouring
+Plague's 848 over 24s, Mind Flay's 390 over a 3-second channel, Shadowform's three
+clauses and Vampiric Embrace's 20% over 30s. Every mana cost and cooldown matched
+too.
+
+| | ours | `foreverchanges.pro` | applied |
+| --- | --- | --- | --- |
+| **Mind Blast** r9 | 477 to 503 | **472 to 498** | **485** midpoint |
+| **Shadow Word: Death** r4 | 444 to 472 | **434 to 462** | **448** midpoint |
+
+**MIND BLAST WAS THE PROJECT'S ONE HAND-VERIFIED COEFFICIENT EXAMPLE**, so the
+worked figure moved with it: 485 base, a 1.5-second cast for 0.4286, and 497 Shadow
+spell power now gives **698.00** where the same arithmetic gave 703.00. The
+verification still holds — it is the base that moved, not the formula.
+
+| | was | now | |
+| --- | --- | --- | --- |
+| Shadow Priest | 510.9 | **509.4** | −0.3% |
+
 ## Still unchecked
 
-Rogue, Priest, Mage, Paladin, Druid, Shaman, Hunter. The Rogue and the Priest are
-the highest value: the Rogue has the second-largest live talent gap and the Priest
-the largest, so an error there is least likely to be noticed.
+Mage, Paladin, Druid, Shaman, Hunter.
 
-**Two of the two classes checked so far needed corrections** — five figures on the
-Warrior, three on the Warlock — so treat the remaining seven as a backlog rather
-than a formality. Each is about twenty minutes.
+**Three of the three classes checked so far needed corrections** — five figures on
+the Warrior, three on the Warlock, four on the Rogue and Priest between them — so
+treat the rest as a backlog rather than a formality. Each is about twenty minutes.
+
+**THE DISAGREEMENTS ARE SMALL EXCEPT WHEN THEY ARE NOT.** Nine of the nine found so
+far are within a few percent of each other and move a profile by under 1%; the
+tenth was Life Tap at double, worth 13.5%. There is no way to tell which kind a
+class holds without looking.
 
 **ONE TENSION TO SETTLE EVENTUALLY:** the importer reads `talentsforever.com` and
 the tie-break is `foreverchanges.pro`, so every class will keep producing
