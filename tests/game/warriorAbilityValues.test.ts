@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import spellData from '../../src/data/abilities/forever-warrior.json';
+import spellData from '../../src/data/abilities/forever-warrior-tooltips.json';
 import talentValues from '../../src/data/talents/values/warrior.json';
 import {
   BLOODTHIRST_BASE_DAMAGE,
@@ -51,7 +51,7 @@ import {
 /** The spell whose tooltip a constant was read from. */
 function spell(id: number) {
   const found = spellData.spells.find((s) => s.id === id);
-  if (!found) throw new Error(`spell ${id} is not in forever-warrior.json`);
+  if (!found) throw new Error(`spell ${id} is not in forever-warrior-tooltips.json`);
   return found;
 }
 

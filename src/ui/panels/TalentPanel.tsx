@@ -102,6 +102,13 @@ export function TalentPanel({
     }),
   );
 
+  /*
+   * Split by PERMANENCE. A `scope` means the owner ruled the effect out, so it
+   * is a decision rather than work outstanding -- see `OutOfScope`.
+   */
+  const gaps = unmodelled.filter((entry) => entry.scope === undefined);
+  const ruled = unmodelled.filter((entry) => entry.scope !== undefined);
+
   return (
     <section className="panel talent-panel">
       <header className="panel-header">
@@ -127,7 +134,7 @@ export function TalentPanel({
 
       {collapsed ? null : (
         <div className="panel-body talent-body">
-          {unmodelled.length > 0 ? (
+          {gaps.length > 0 ? (
             <>
               <p className="muted warn talent-warning">
                 Chosen but not fully simulated. Each of these does less than it says —
@@ -135,7 +142,34 @@ export function TalentPanel({
                 game by whatever the gap is worth.
               </p>
               <ul className="issues">
-                {unmodelled.map((entry: UnmodelledTalent) => (
+                {gaps.map((entry: UnmodelledTalent) => (
+                  <li key={entry.talentId}>
+                    <strong>
+                      {entry.name} ({entry.rank}/{talents.byId.get(entry.talentId)?.ranks ?? entry.rank})
+                    </strong>{' '}
+                    — {entry.text}
+                    <span className="muted"> {entry.reason}</span>
+                  </li>
+                ))}
+              </ul>
+            </>
+          ) : null}
+          {/*
+           * A RULING IS NOT A GAP, and showing the two in one list told someone
+           * their build was missing features when the simulator had simply been
+           * told not to model them. Movement, crowd control, threat and healing
+           * throughput are out of scope by the project owner's decision; they do
+           * not expire and no amount of work will clear them.
+           */}
+          {ruled.length > 0 ? (
+            <>
+              <p className="muted talent-warning">
+                Out of scope by ruling — not missing work. This simulator models no
+                positions, no crowd control, no threat and no healing throughput, so
+                these talents cannot do anything here and never will.
+              </p>
+              <ul className="issues">
+                {ruled.map((entry: UnmodelledTalent) => (
                   <li key={entry.talentId}>
                     <strong>
                       {entry.name} ({entry.rank}/{talents.byId.get(entry.talentId)?.ranks ?? entry.rank})

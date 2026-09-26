@@ -63,6 +63,7 @@ export const MAGE_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
   arcane_subtlety: [
     {
       kind: 'unmodelled',
+      scope: 'threat',
       reason: `Target spell resistance, which has no effect here by ruling, and ${NO_THREAT}`,
     },
   ],
@@ -90,7 +91,7 @@ export const MAGE_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
     { kind: 'statFromStat', from: 'intellect', to: 'armor' },
   ],
 
-  arcane_geometry: [{ kind: 'unmodelled', reason: NO_POSITION }],
+  arcane_geometry: [{ kind: 'unmodelled', scope: 'positioning', reason: NO_POSITION }],
 
   arcane_impact: [{ kind: 'schoolCrit', schools: ['arcane'] }],
 
@@ -101,7 +102,7 @@ export const MAGE_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
   ],
 
   improved_counterspell: [
-    { kind: 'unmodelled', reason: 'A silence, and nothing the target does is a cast.' },
+    { kind: 'unmodelled', scope: 'crowdControl', reason: 'A silence, and nothing the target does is a cast.' },
   ],
 
   arcane_meditation: [{ kind: 'stat', stat: 'manaRegenBypass', operation: 'flat' }],
@@ -153,11 +154,11 @@ export const MAGE_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
 
   ignite: [{ kind: 'reaction', reactionId: 'ignite' }],
 
-  flame_throwing: [{ kind: 'unmodelled', reason: NO_POSITION }],
+  flame_throwing: [{ kind: 'unmodelled', scope: 'positioning', reason: NO_POSITION }],
 
-  impact: [{ kind: 'unmodelled', reason: 'A stun, which is out of scope as every stun is.' }],
+  impact: [{ kind: 'unmodelled', scope: 'crowdControl', reason: 'A stun, which is out of scope as every stun is.' }],
 
-  burning_soul: [{ kind: 'unmodelled', reason: `${NO_PUSHBACK} ${NO_THREAT}` }],
+  burning_soul: [{ kind: 'unmodelled', scope: 'threat', reason: `${NO_PUSHBACK} ${NO_THREAT}` }],
 
   improved_flamestrike: [
     { kind: 'unmodelled', reason: 'Flamestrike is an area spell and is not in the book.' },
@@ -202,10 +203,10 @@ export const MAGE_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
 
   ice_shards: [{ kind: 'schoolCritDamage', schools: ['frost'] }],
 
-  permafrost: [{ kind: 'unmodelled', reason: 'Chill duration and movement speed.' }],
+  permafrost: [{ kind: 'unmodelled', scope: 'crowdControl', reason: 'Chill duration and movement speed.' }],
 
   improved_frost_nova: [
-    { kind: 'unmodelled', reason: 'Frost Nova is a root and is not in the book.' },
+    { kind: 'unmodelled', scope: 'crowdControl', reason: 'Frost Nova is a root and is not in the book.' },
   ],
 
   frostbite: [{ kind: 'unmodelled', reason: FROZEN_UNMODELLED }],
@@ -214,7 +215,7 @@ export const MAGE_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
 
   frost_channeling: [
     { kind: 'grantCastModifier', abilityIds: ['frostbolt', 'ice_lance'], property: 'costFraction' },
-    { kind: 'unmodelled', reason: `Its mana reduction applies. ${NO_THREAT}` },
+    { kind: 'unmodelled', scope: 'threat', reason: `Its mana reduction applies. ${NO_THREAT}` },
   ],
 
   ice_lance: [{ kind: 'grantAbility', abilityId: 'ice_lance' }],
@@ -223,7 +224,7 @@ export const MAGE_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
     { kind: 'unmodelled', reason: 'Blizzard is an area spell and is not in the book.' },
   ],
 
-  arctic_reach: [{ kind: 'unmodelled', reason: NO_POSITION }],
+  arctic_reach: [{ kind: 'unmodelled', scope: 'positioning', reason: NO_POSITION }],
 
   ice_block: [{ kind: 'unmodelled', reason: 'A survival cooldown, and no Mage profile is hit.' }],
 

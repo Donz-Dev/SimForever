@@ -17,11 +17,13 @@ import type { TalentEffects } from './TalentEffect';
  * to 54, which is how the drift below went unnoticed, and the count after it
  * (29/6/18) went stale as the talents were filled in.
  *
- * ALL SEVEN INERT ONES ARE PERMANENTLY OUT OF SCOPE BY RULING — movement, crowd
- * control, threat, or an ability that is not implemented. Only three talents on
- * this class are blocked on anything that could ever change: Improved Berserker
- * Rage (no priority list casts Berserker Rage), Sweeping Strikes (needs a second
- * target) and Weaponmaster's mace clause (armor ignore). See CLAUDE.md, "Scope".
+ * SIX OF THE SEVEN INERT ONES ARE PERMANENTLY OUT OF SCOPE BY RULING — movement,
+ * crowd control or threat — and each says so with a `scope` on its `unmodelled`
+ * entry rather than only in prose, so the milestone counts it as a decision and
+ * not as work. Only three talents on this class are blocked on anything that
+ * could ever change: Improved Berserker Rage (no priority list casts Berserker
+ * Rage), Sweeping Strikes (needs a second target) and Weaponmaster's mace clause
+ * (armor ignore). See CLAUDE.md, "Scope".
  *
  * NINE GRANT AN ABILITY, and those are where being wrong costs most: an ability
  * handed to a character who never took its talent is free damage that nothing
@@ -205,7 +207,7 @@ export const WARRIOR_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
   ],
 
   improved_hamstring: [
-    { kind: 'unmodelled', reason: 'Immobilises the target. There is no movement to prevent.' },
+    { kind: 'unmodelled', scope: 'crowdControl', reason: 'Immobilises the target. There is no movement to prevent.' },
   ],
 
   mortal_strike: [{ kind: 'grantAbility', abilityId: 'mortal_strike' }],
@@ -214,14 +216,14 @@ export const WARRIOR_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
   // Fury
   // ---------------------------------------------------------------------
   booming_voice: [
-    { kind: 'unmodelled', reason: 'Shout radius. The encounter has no positions.' },
+    { kind: 'unmodelled', scope: 'positioning', reason: 'Shout radius. The encounter has no positions.' },
   ],
 
   // Crit is held in percentage POINTS, so "+1%" is a flat +1 and needs no scale.
   cruelty: [{ kind: 'stat', stat: 'critChance', operation: 'flat' }],
 
   iron_will: [
-    { kind: 'unmodelled', reason: 'Stun and fear duration. Nothing stuns or fears the player.' },
+    { kind: 'unmodelled', scope: 'crowdControl', reason: 'Stun and fear duration. Nothing stuns or fears the player.' },
   ],
 
   unbridled_wrath: [{ kind: 'reaction', reactionId: 'unbridled_wrath' }],
@@ -232,6 +234,7 @@ export const WARRIOR_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
     { kind: 'grantAbility', abilityId: 'piercing_howl' },
     {
       kind: 'unmodelled',
+      scope: 'crowdControl',
       reason:
         'Dazes nearby enemies, -50% movement for 6 sec. NOT TO BE IMPLEMENTED: the ' +
         'project owner classes snares as non-combat, so this is out of scope ' +
@@ -448,11 +451,19 @@ export const WARRIOR_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
   improved_revenge: [{ kind: 'abilityDamage', abilityId: 'revenge' }],
 
 
-  defiance: [{ kind: 'unmodelled', reason: 'Threat, which the engine does not track.' }],
+  defiance: [{ kind: 'unmodelled', scope: 'threat', reason: 'Threat, which the engine does not track.' }],
 
   improved_sunder_armor: [{ kind: 'abilityCost', abilityId: 'sunder_armor_cast' }],
 
-  improved_disarm: [{ kind: 'unmodelled', reason: 'Disarm is not an implemented ability.' }],
+  // Disarm is a control effect and a raid boss cannot be disarmed, so the
+  // ability is absent by ruling rather than pending.
+  improved_disarm: [
+    {
+      kind: 'unmodelled',
+      scope: 'crowdControl',
+      reason: 'Disarm is a control effect, and control is not modelled. The ability is absent for that reason.',
+    },
+  ],
 
   /*
    * FULLY MODELLED, and it took three steps to get here.
@@ -507,7 +518,13 @@ export const WARRIOR_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
   concussion_blow: [{ kind: 'grantAbility', abilityId: 'concussion_blow' }],
 
   improved_shield_bash: [
-    { kind: 'unmodelled', reason: 'Shield Bash is not an implemented ability.' },
+    {
+      kind: 'unmodelled',
+      scope: 'crowdControl',
+      reason:
+        'Its whole effect is a silence on Shield Bash, and control is not ' +
+        'modelled. The ability is absent for that reason.',
+    },
   ],
 
   // Two stats at once. `percentAdd` wants a fraction, so 2% is scaled to 0.02.

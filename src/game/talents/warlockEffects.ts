@@ -43,7 +43,7 @@ export const WARLOCK_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
 
   suppression: [
     { kind: 'stat', stat: 'hitChance', operation: 'flat' },
-    { kind: 'unmodelled', reason: `The hit applies. ${NO_THREAT}` },
+    { kind: 'unmodelled', scope: 'threat', reason: `The hit applies. ${NO_THREAT}` },
   ],
 
   improved_corruption: [
@@ -107,7 +107,7 @@ export const WARLOCK_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
 
   nightfall: [{ kind: 'reaction', reactionId: 'nightfall' }],
 
-  curse_of_exhaustion: [{ kind: 'unmodelled', reason: 'Movement speed, and nothing here moves.' }],
+  curse_of_exhaustion: [{ kind: 'unmodelled', scope: 'positioning', reason: 'Movement speed, and nothing here moves.' }],
 
   siphon_life: [{ kind: 'grantAbility', abilityId: 'siphon_life' }],
 
@@ -195,7 +195,7 @@ export const WARLOCK_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
 
   // --- Destruction ---------------------------------------------------------
 
-  destructive_reach: [{ kind: 'unmodelled', reason: 'Range, and nothing here has a position.' }],
+  destructive_reach: [{ kind: 'unmodelled', scope: 'positioning', reason: 'Range, and nothing here has a position.' }],
 
   improved_shadow_bolt: [{ kind: 'reaction', reactionId: 'improved_shadow_bolt' }],
 
@@ -248,7 +248,7 @@ export const WARLOCK_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
 
   conflagrate: [{ kind: 'grantAbility', abilityId: 'conflagrate' }],
 
-  pyroclasm: [{ kind: 'unmodelled', reason: 'A stun, which is out of scope as every stun is.' }],
+  pyroclasm: [{ kind: 'unmodelled', scope: 'crowdControl', reason: 'A stun, which is out of scope as every stun is.' }],
 
   bane_of_havoc: [
     {

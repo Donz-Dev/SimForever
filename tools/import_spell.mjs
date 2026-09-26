@@ -50,7 +50,7 @@
 
 const TOOLTIP = (game, id) => `https://nether.wowhead.com/${game}/tooltip/spell/${id}`;
 const PAGE = (game, id) => `https://www.wowhead.com/${game}/spell=${id}`;
-const DATA_FILE = 'src/data/abilities/forever-warrior.json';
+const DATA_FILE = 'src/data/abilities/forever-warrior-tooltips.json';
 const SOURCE_LIST = 'https://www.wowhead.com/forever/class=1/warrior';
 
 /*

@@ -38,7 +38,7 @@ export const ROGUE_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
   // --- Assassination -------------------------------------------------------
 
   improved_gouge: [
-    { kind: 'unmodelled', reason: 'Lengthens Gouge, which is an incapacitate and out of scope.' },
+    { kind: 'unmodelled', scope: 'crowdControl', reason: 'Lengthens Gouge, which is an incapacitate and out of scope.' },
   ],
 
   remorseless_attacks: [
@@ -100,7 +100,7 @@ export const ROGUE_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
   mutilate: [{ kind: 'grantAbility', abilityId: 'mutilate' }],
 
   improved_kidney_shot: [
-    { kind: 'unmodelled', reason: 'Keyed to a stun, which the project owner classes as out of scope.' },
+    { kind: 'unmodelled', scope: 'crowdControl', reason: 'Keyed to a stun, which the project owner classes as out of scope.' },
   ],
 
   seal_fate: [{ kind: 'reaction', reactionId: 'seal_fate' }],
@@ -154,9 +154,9 @@ export const ROGUE_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
     },
   ],
 
-  improved_sprint: [{ kind: 'unmodelled', reason: 'Movement, which is not modelled.' }],
+  improved_sprint: [{ kind: 'unmodelled', scope: 'positioning', reason: 'Movement, which is not modelled.' }],
 
-  improved_kick: [{ kind: 'unmodelled', reason: 'Silences, and nothing here casts.' }],
+  improved_kick: [{ kind: 'unmodelled', scope: 'crowdControl', reason: 'Silences, and nothing here casts.' }],
 
   flawless_execution: [{ kind: 'abilityCost', abilityId: 'eviscerate' }],
 
@@ -213,9 +213,9 @@ export const ROGUE_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
     },
   ],
 
-  elusiveness: [{ kind: 'unmodelled', reason: 'Shortens Vanish and Blind, neither implemented.' }],
+  elusiveness: [{ kind: 'unmodelled', scope: 'crowdControl', reason: 'Shortens Vanish and Blind, neither implemented.' }],
 
-  dirty_tricks: [{ kind: 'unmodelled', reason: 'Sap and Blind are not implemented.' }],
+  dirty_tricks: [{ kind: 'unmodelled', scope: 'crowdControl', reason: 'Sap and Blind are not implemented.' }],
 
   improved_ambush: [{ kind: 'unmodelled', reason: 'Ambush requires stealth and is absent.' }],
 

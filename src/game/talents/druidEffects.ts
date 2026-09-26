@@ -65,11 +65,11 @@ export const DRUID_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
   ],
 
   nature_s_reach: [
-    { kind: 'unmodelled', reason: 'Range, and nothing here has a position.' },
+    { kind: 'unmodelled', scope: 'positioning', reason: 'Range, and nothing here has a position.' },
   ],
 
   improved_entangling_roots: [
-    { kind: 'unmodelled', reason: 'Entangling Roots is a root and is not implemented.' },
+    { kind: 'unmodelled', scope: 'crowdControl', reason: 'Entangling Roots is a root and is not implemented.' },
   ],
 
   nature_s_splendor: [
@@ -95,10 +95,10 @@ export const DRUID_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
 
   improved_starfire: [
     { kind: 'abilityCastTime', abilityId: 'starfire' },
-    { kind: 'unmodelled', reason: 'Its 15% stun is out of scope, as every stun is.' },
+    { kind: 'unmodelled', scope: 'crowdControl', reason: 'Its 15% stun is out of scope, as every stun is.' },
   ],
 
-  overgrowth: [{ kind: 'unmodelled', reason: 'Entangling Roots targets.' }],
+  overgrowth: [{ kind: 'unmodelled', scope: 'crowdControl', reason: 'Entangling Roots targets.' }],
 
   nature_s_grace: [
     /*
@@ -169,7 +169,7 @@ export const DRUID_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
 
   feral_instinct: [{ kind: 'abilityDamage', abilityId: 'swipe' }],
 
-  brutal_impact: [{ kind: 'unmodelled', reason: 'Stun duration, which is out of scope.' }],
+  brutal_impact: [{ kind: 'unmodelled', scope: 'crowdControl', reason: 'Stun duration, which is out of scope.' }],
 
   thick_hide: [{ kind: 'itemArmorPercent' }],
 
@@ -184,6 +184,7 @@ export const DRUID_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
   feral_charge: [
     {
       kind: 'unmodelled',
+      scope: 'positioning',
       reason: 'A charge that immobilises and interrupts, and every fight opens in combat.',
     },
   ],
@@ -278,10 +279,10 @@ export const DRUID_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
      * reaches `damageMultiplier`.
      */
     { kind: 'conditionalDamage', requires: {} },
-    { kind: 'unmodelled', reason: 'The damage applies. Its Healing Touch cast time does not.' },
+    { kind: 'unmodelled', scope: 'healing', reason: 'The damage applies. Its Healing Touch cast time does not.' },
   ],
 
-  subtlety: [{ kind: 'unmodelled', reason: 'Threat, which the engine does not track.' }],
+  subtlety: [{ kind: 'unmodelled', scope: 'threat', reason: 'Threat, which the engine does not track.' }],
 
   natural_shapeshifter: [
     { kind: 'unmodelled', reason: 'The cost of shifting, and a form is fixed at creation.' },
@@ -289,11 +290,11 @@ export const DRUID_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
 
   reflection: [{ kind: 'stat', stat: 'manaRegenBypass', operation: 'flat' }],
 
-  gift_of_nature: [{ kind: 'unmodelled', reason: 'Healing, and no profile here heals.' }],
-  gift_of_the_earthmother: [{ kind: 'unmodelled', reason: 'Healing spells only.' }],
-  tranquil_spirit: [{ kind: 'unmodelled', reason: 'Healing spells only.' }],
-  improved_rejuvenation: [{ kind: 'unmodelled', reason: 'Healing, and no profile here heals.' }],
-  swiftmend: [{ kind: 'unmodelled', reason: 'A heal, and no profile here heals.' }],
+  gift_of_nature: [{ kind: 'unmodelled', scope: 'healing', reason: 'Healing, and no profile here heals.' }],
+  gift_of_the_earthmother: [{ kind: 'unmodelled', scope: 'healing', reason: 'Healing spells only.' }],
+  tranquil_spirit: [{ kind: 'unmodelled', scope: 'healing', reason: 'Healing spells only.' }],
+  improved_rejuvenation: [{ kind: 'unmodelled', scope: 'healing', reason: 'Healing, and no profile here heals.' }],
+  swiftmend: [{ kind: 'unmodelled', scope: 'healing', reason: 'A heal, and no profile here heals.' }],
 
   nature_s_swiftness: [
     {
@@ -305,7 +306,7 @@ export const DRUID_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
   ],
 
   living_spirit: [{ kind: 'stat', stat: 'spirit', operation: 'percentAdd', scale: 0.01 }],
-  improved_tranquility: [{ kind: 'unmodelled', reason: 'Threat and a healing cooldown.' }],
-  improved_regrowth: [{ kind: 'unmodelled', reason: 'Healing, and no profile here heals.' }],
-  wild_growth: [{ kind: 'unmodelled', reason: 'A heal, and no profile here heals.' }],
+  improved_tranquility: [{ kind: 'unmodelled', scope: 'healing', reason: 'Threat and a healing cooldown.' }],
+  improved_regrowth: [{ kind: 'unmodelled', scope: 'healing', reason: 'Healing, and no profile here heals.' }],
+  wild_growth: [{ kind: 'unmodelled', scope: 'healing', reason: 'A heal, and no profile here heals.' }],
 };

@@ -49,11 +49,12 @@ export const PALADIN_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
 
   divine_intellect: [{ kind: 'stat', stat: 'intellect', operation: 'percentAdd', scale: 0.01 }],
 
-  healing_light: [{ kind: 'unmodelled', reason: NO_PROFILE_HEALS }],
+  healing_light: [{ kind: 'unmodelled', scope: 'healing', reason: NO_PROFILE_HEALS }],
 
   spiritual_focus: [
     {
       kind: 'unmodelled',
+      scope: 'healing',
       reason: 'Pushback while casting heals. No Paladin profile heals or is interrupted.',
     },
   ],
@@ -75,12 +76,13 @@ export const PALADIN_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
   ],
 
   unyielding_faith: [
-    { kind: 'unmodelled', reason: 'Fear and Disorient duration, and nothing applies either.' },
+    { kind: 'unmodelled', scope: 'crowdControl', reason: 'Fear and Disorient duration, and nothing applies either.' },
   ],
 
   voice_of_truth: [
     {
       kind: 'unmodelled',
+      scope: 'crowdControl',
       reason: 'Silence and interrupt immunity, and nothing interrupts a cast here.',
     },
   ],
@@ -91,9 +93,9 @@ export const PALADIN_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
     { kind: 'unmodelled', reason: `Cleanse and Purify costs, plus Exorcism and Holy Wrath. ${NOT_UNDEAD}` },
   ],
 
-  infusion_of_light: [{ kind: 'unmodelled', reason: NO_PROFILE_HEALS }],
+  infusion_of_light: [{ kind: 'unmodelled', scope: 'healing', reason: NO_PROFILE_HEALS }],
 
-  illumination: [{ kind: 'unmodelled', reason: NO_PROFILE_HEALS }],
+  illumination: [{ kind: 'unmodelled', scope: 'healing', reason: NO_PROFILE_HEALS }],
 
   divine_favor: [
     {
@@ -133,7 +135,7 @@ export const PALADIN_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
     { kind: 'stat', stat: 'spellCritChance', operation: 'flat', valueIndex: 1 },
   ],
 
-  light_s_vigil: [{ kind: 'unmodelled', reason: NO_PROFILE_HEALS }],
+  light_s_vigil: [{ kind: 'unmodelled', scope: 'healing', reason: NO_PROFILE_HEALS }],
 
   // --- Protection ----------------------------------------------------------
 
@@ -169,6 +171,7 @@ export const PALADIN_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
   improved_righteous_fury: [
     {
       kind: 'unmodelled',
+      scope: 'threat',
       reason:
         'Damage reduction WHILE RIGHTEOUS FURY IS ACTIVE. Righteous Fury is a ' +
         'threat buff and nothing here tracks threat, so no profile casts it ' +
@@ -200,7 +203,7 @@ export const PALADIN_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
   ],
 
   improved_hammer_of_justice: [
-    { kind: 'unmodelled', reason: 'A stun, which is out of scope as every stun is.' },
+    { kind: 'unmodelled', scope: 'crowdControl', reason: 'A stun, which is out of scope as every stun is.' },
   ],
 
   templar_s_bulwark: [
@@ -222,6 +225,7 @@ export const PALADIN_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
   iron_creed: [
     {
       kind: 'unmodelled',
+      scope: 'threat',
       reason: `${NO_THREAT} Its damage-reduction half needs Righteous Fury, which no profile casts.`,
     },
   ],
@@ -299,7 +303,7 @@ export const PALADIN_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
 
   seal_of_command: [{ kind: 'grantAbility', abilityId: 'seal_of_command' }],
 
-  pursuit_of_justice: [{ kind: 'unmodelled', reason: 'Movement speed, and nothing here moves.' }],
+  pursuit_of_justice: [{ kind: 'unmodelled', scope: 'positioning', reason: 'Movement speed, and nothing here moves.' }],
 
   eye_for_an_eye: [
     {
@@ -331,7 +335,7 @@ export const PALADIN_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
   vengeance: [{ kind: 'reaction', reactionId: 'vengeance' }],
 
   repentance: [
-    { kind: 'unmodelled', reason: 'An incapacitate, and only against Humanoids.' },
+    { kind: 'unmodelled', scope: 'crowdControl', reason: 'An incapacitate, and only against Humanoids.' },
   ],
 
   champion_of_the_light: [
@@ -351,6 +355,7 @@ export const PALADIN_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
   instrument_of_law: [
     {
       kind: 'unmodelled',
+      scope: 'threat',
       reason: `Hammer of Wrath cast time, which is never usable here, and ${NO_THREAT}`,
     },
   ],

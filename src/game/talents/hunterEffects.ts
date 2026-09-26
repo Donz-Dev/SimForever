@@ -71,13 +71,13 @@ export const HUNTER_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
     { kind: 'unmodelled', reason: 'Dodge from an Aspect no damage profile uses.' },
   ],
 
-  pathfinding: [{ kind: 'unmodelled', reason: NO_MOVEMENT }],
+  pathfinding: [{ kind: 'unmodelled', scope: 'positioning', reason: NO_MOVEMENT }],
 
   improved_revive_pet: [
     { kind: 'unmodelled', reason: 'Reviving a pet, and no pet dies in these fights.' },
   ],
 
-  bestial_swiftness: [{ kind: 'unmodelled', reason: NO_MOVEMENT }],
+  bestial_swiftness: [{ kind: 'unmodelled', scope: 'positioning', reason: NO_MOVEMENT }],
 
   unleashed_fury: [
     { kind: 'petStat', property: 'damage' },
@@ -90,7 +90,7 @@ export const HUNTER_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
     { kind: 'abilityDamage', abilityId: 'summon_hawk' },
   ],
 
-  improved_mend_pet: [{ kind: 'unmodelled', reason: 'Healing a pet, and nothing damages it here.' }],
+  improved_mend_pet: [{ kind: 'unmodelled', scope: 'healing', reason: 'Healing a pet, and nothing damages it here.' }],
 
   ferocity: [
     // ON TOP of the 100% of the Hunter's crit a pet already inherits, which
@@ -105,7 +105,7 @@ export const HUNTER_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
     { kind: 'unmodelled', reason: 'Health regeneration, and no damage profile is attacked.' },
   ],
 
-  intimidation: [{ kind: 'unmodelled', reason: 'A stun, which is out of scope as every stun is.' }],
+  intimidation: [{ kind: 'unmodelled', scope: 'crowdControl', reason: 'A stun, which is out of scope as every stun is.' }],
 
   bestial_discipline: [
     { kind: 'petStat', property: 'focusRegen' },
@@ -124,10 +124,10 @@ export const HUNTER_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
 
   // --- Marksmanship --------------------------------------------------------
 
-  hawk_eye: [{ kind: 'unmodelled', reason: 'Range, and nothing here has a position.' }],
+  hawk_eye: [{ kind: 'unmodelled', scope: 'positioning', reason: 'Range, and nothing here has a position.' }],
 
   improved_concussive_shot: [
-    { kind: 'unmodelled', reason: 'A stun on a shot no damage list casts.' },
+    { kind: 'unmodelled', scope: 'crowdControl', reason: 'A stun on a shot no damage list casts.' },
   ],
 
   lethal_attacks: [
@@ -241,7 +241,7 @@ export const HUNTER_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
   ],
 
   scatter_shot: [
-    { kind: 'unmodelled', reason: 'A disorient that also turns off auto-attack.' },
+    { kind: 'unmodelled', scope: 'crowdControl', reason: 'A disorient that also turns off auto-attack.' },
   ],
 
   ranged_weapon_specialization: [
@@ -300,13 +300,13 @@ export const HUNTER_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
 
   survivalist: [{ kind: 'stat', stat: 'stamina', operation: 'percentAdd', scale: 0.01 }],
 
-  improved_wing_clip: [{ kind: 'unmodelled', reason: NO_MOVEMENT }],
+  improved_wing_clip: [{ kind: 'unmodelled', scope: 'crowdControl', reason: NO_MOVEMENT }],
 
   clever_traps: [{ kind: 'unmodelled', reason: NO_TRAPS }],
 
   surefooted: [
     { kind: 'stat', stat: 'hitChance', operation: 'flat' },
-    { kind: 'unmodelled', reason: `The hit applies. ${NO_MOVEMENT}` },
+    { kind: 'unmodelled', scope: 'crowdControl', reason: `The hit applies. ${NO_MOVEMENT}` },
   ],
 
   deterrence: [
