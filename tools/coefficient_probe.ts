@@ -211,6 +211,31 @@ interface Reading {
    * the stat block says instead, and the reading is exact on every build.
    */
   readonly effectiveDelta: Readonly<Record<Axis, number>>;
+  /*
+   * WHERE THE ATTACK POWER RESPONSE COMES FROM, measured by halving every
+   * weapon's speed and asking again.
+   *
+   *   'weapon'  the coefficient halved with the weapon, so the damage IS weapon
+   *             damage and the attack power arrives through it at speed / 14
+   *   'own'     the coefficient did not move, so the ability carries its own --
+   *             Bloodthirst's "35% of your Attack Power" is the same on any
+   *             weapon
+   *   'none'    no attack power response at all
+   *
+   * Mortal Strike and Bloodthirst are indistinguishable without this: both just
+   * read "AP".
+   */
+  /**
+   * Non-periodic damage events this ability causes with the AUTO-ATTACK OFF:
+   * what ONE cast does by itself.
+   *
+   * Zero alongside a positive `instantEvents` means the damage is SWING-DRIVEN
+   * -- a seal, which strikes once per swing for the whole fight. Its figures
+   * are then per strike rather than per cast.
+   */
+  readonly castOnlyEvents: number;
+  readonly apSource: 'weapon' | 'own' | 'none';
+  readonly rapSource: 'weapon' | 'own' | 'none';
 }
 
 /**
@@ -222,7 +247,34 @@ interface Reading {
  * is why the axis is pushed here rather than written onto a finished stat
  * block.
  */
-function probePlayer(profile: CharacterProfile, axis: Axis | undefined, amount: number): Combatant {
+/*
+ * ----------------------------------------------------------------------------
+ * HALVING EVERY WEAPON'S SPEED IS HOW "SCALES THROUGH THE WEAPON" IS MEASURED.
+ *
+ * Two abilities can respond identically to attack power for completely
+ * different reasons. Mortal Strike deals WEAPON DAMAGE, so its attack power
+ * comes through the weapon at `speed / 14` and moves when the weapon does.
+ * Bloodthirst deals "35% of your Attack Power", which is its own coefficient and
+ * is the same on any weapon. Both just read as "AP" without this.
+ *
+ * So each ability is measured twice, once on a weapon of half the speed. A
+ * coefficient that HALVES came through the weapon; one that does not is the
+ * ability's own. Behavioural, like everything else here -- the alternative is
+ * checking whether the measured figure happens to land near `speed / 14`, which
+ * is a guess dressed as a test.
+ * ----------------------------------------------------------------------------
+ */
+const WEAPON_SPEED_PROBE = 0.5;
+
+function probePlayer(
+  profile: CharacterProfile,
+  axis: Axis | undefined,
+  amount: number,
+  {
+    weaponSpeedScale = 1,
+    autoAttack,
+  }: { weaponSpeedScale?: number; autoAttack?: 'none' } = {},
+): Combatant {
   const player = createPlayer({
     name: profile.character.name,
     race: profile.character.race,
@@ -250,6 +302,45 @@ function probePlayer(profile: CharacterProfile, axis: Axis | undefined, amount: 
    * everything an ability causes carries one. The control run proves it.
    */
   (player as { rotation?: Rotation }).rotation = undefined;
+  /*
+   * SWITCHING THE AUTO-ATTACK OFF ISOLATES WHAT ONE CAST DOES, which is how a
+   * seal is told apart from an ability that strikes twice.
+   *
+   * Whirlwind's two hits are one cast and happen with or without a swing. A
+   * seal's nine are nine SWINGS, and counting them as one cast's output states
+   * a per-fight total where the table promises a coefficient -- Seal of
+   * Righteousness read 71% / 143% where its per-strike figures are 8% / 16%.
+   */
+  if (autoAttack) (player as { autoAttack: string }).autoAttack = autoAttack;
+
+  if (weaponSpeedScale !== 1) {
+    // Written onto the finished weapons rather than passed in, because the
+    // weapons come from the equipped items and nothing lets a caller override
+    // one. The same technique as the rotation above.
+    const weapons = player.weapons as Record<
+      string,
+      { swingTimerMs: number; powerCoefficient?: number } | undefined
+    >;
+    for (const slot of Object.keys(weapons)) {
+      const weapon = weapons[slot];
+      if (!weapon) continue;
+      /*
+       * BOTH FIELDS, and the first attempt moved only the timer -- which
+       * changed nothing, because a weapon carries its attack power scaling as a
+       * PRECOMPUTED `powerCoefficient` (`attackPowerCoefficientFor`, which is
+       * `speed / 14`) rather than deriving it from the timer at each hit. Every
+       * ability then read "own", including Mortal Strike.
+       */
+      weapons[slot] = {
+        ...weapon,
+        swingTimerMs: weapon.swingTimerMs * weaponSpeedScale,
+        powerCoefficient:
+          weapon.powerCoefficient === undefined
+            ? undefined
+            : weapon.powerCoefficient * weaponSpeedScale,
+      };
+    }
+  }
   return player;
 }
 
@@ -288,10 +379,14 @@ function measure(
   abilityId: string,
   axis: Axis | undefined,
   amount: number,
-  { cast = true }: { cast?: boolean } = {},
+  {
+    cast = true,
+    weaponSpeedScale = 1,
+    autoAttack,
+  }: { cast?: boolean; weaponSpeedScale?: number; autoAttack?: 'none' } = {},
 ): Outcome {
   const events: TelemetryEvent[] = [];
-  const player = probePlayer(profile, axis, amount);
+  const player = probePlayer(profile, axis, amount, { weaponSpeedScale, autoAttack });
   const target = createTrainingDummy({
     name: 'Probe',
     health: 1_000_000_000,
@@ -402,6 +497,69 @@ function probe(profile: CharacterProfile, abilityId: string, preset: string, nam
   const biggest = AXES.reduce((a, b) => (byAxis[b] > byAxis[a] ? b : a));
   const doubled = byAxis[biggest] > base ? net(biggest, PROBE * 2) : undefined;
 
+  /*
+   * The same net measurement on a weapon of half the speed. Only the two
+   * attack power axes need it -- a spell has no weapon to scale with.
+   */
+  /*
+   * The same net measurement on a weapon of half the speed, with the number of
+   * hits it produced -- because the comparison has to be PER HIT.
+   */
+  const slowNet = (axis: Axis) => {
+    const withCast = measure(profile, abilityId, axis, PROBE, {
+      weaponSpeedScale: WEAPON_SPEED_PROBE,
+    });
+    const control = measure(profile, abilityId, axis, PROBE, {
+      cast: false,
+      weaponSpeedScale: WEAPON_SPEED_PROBE,
+    });
+    const slowBase = measure(profile, abilityId, undefined, 0, {
+      weaponSpeedScale: WEAPON_SPEED_PROBE,
+    });
+    const slowControl = measure(profile, abilityId, undefined, 0, {
+      cast: false,
+      weaponSpeedScale: WEAPON_SPEED_PROBE,
+    });
+    const sum = (outcome: Outcome, against: Outcome) => {
+      let total = 0;
+      for (const [id, dealt] of outcome.byId) if (!against.byId.has(id)) total += dealt;
+      return total;
+    };
+    return {
+      amount: sum(withCast, control) - sum(slowBase, slowControl),
+      events: Math.max(1, withCast.instantEvents),
+    };
+  };
+
+  /*
+   * ----------------------------------------------------------------------------
+   * PER HIT, AND THAT IS THE WHOLE TRICK.
+   *
+   * Halving the weapon's speed halves what one hit scales by AND changes how
+   * many hits land in ninety seconds. Comparing TOTALS therefore cancels itself
+   * for anything that fires once per swing: a seal's strikes double while each
+   * one halves, so Seal of Command -- which is literally 70% of another hit --
+   * read as carrying its own coefficient. Comparing per hit is right for every
+   * case at once, including an on-next-swing ability that lands exactly once
+   * either way.
+   * ----------------------------------------------------------------------------
+   */
+  const sourceOf = (axis: Axis): 'weapon' | 'own' | 'none' => {
+    const full = byAxis[axis] - base;
+    if (Math.abs(full) < 1e-6) return 'none';
+    const perHitFull = full / Math.max(1, cast.instantEvents);
+    const slow = slowNet(axis);
+    const perHitSlow = slow.amount / slow.events;
+    // Halved the weapon, halved the response per hit: it came through the weapon.
+    return Math.abs(perHitSlow / perHitFull - 0.5) < 0.02 ? 'weapon' : 'own';
+  };
+
+  const castOnlyEvents = measure(profile, abilityId, undefined, 0, { autoAttack: 'none' })
+    .instantEvents;
+
+  const apSource = sourceOf('attackPower');
+  const rapSource = sourceOf('rangedAttackPower');
+
   const reference = probePlayer(profile, undefined, 0);
   const effectiveDelta = {} as Record<Axis, number>;
   for (const axis of AXES) {
@@ -412,10 +570,20 @@ function probe(profile: CharacterProfile, abilityId: string, preset: string, nam
   const school = (cast.school || 'physical') as Parameters<
     typeof reference.schoolModifiers.for
   >[0];
+  /*
+   * ALL FOUR SCOPES `dealDamage` CONSULTS, and the fourth was missed first
+   * time. Ranged Weapon Specialization is an ATTACK TABLE modifier -- "the
+   * damage you deal with ranged weapons", which is neither one ability nor one
+   * school nor the whole character -- so leaving it out made every Hunter shot
+   * report "105% ranged weapon damage" where it deals exactly 100%. A
+   * coefficient inflated by a talent is not a coefficient.
+   */
   const damageMultiplier =
     reference.damageDoneMultiplier *
     (reference.abilityModifiers.for(abilityId).damageMultiplier ?? 1) *
-    (reference.schoolModifiers.for(school).damageMultiplier ?? 1);
+    (reference.schoolModifiers.for(school).damageMultiplier ?? 1) *
+    (reference.attackTableModifiers.for(reference.abilities.get(abilityId)?.attackTable)
+      .damageMultiplier ?? 1);
 
   return {
     preset,
@@ -435,6 +603,9 @@ function probe(profile: CharacterProfile, abilityId: string, preset: string, nam
     instantBase,
     instantEvents: cast.instantEvents,
     effectiveDelta,
+    castOnlyEvents,
+    apSource,
+    rapSource,
   };
 }
 
