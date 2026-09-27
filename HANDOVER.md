@@ -67,7 +67,7 @@ Measured at `d2718b0`, and the numbers say it is not close:
 | --- | --- |
 | **140 of 468 talents are a live gap** | down from a raw count of 262 unmodelled reasons, because 89 are permanently out of scope by ruling and 33 more are PARTLY modelled. See the census below — the raw total is not a work queue |
 | **113 abilities declared against 478 captured** | the data is on disk; the declarations are not. Druid 15, Hunter 14, Mage 13, Rogue 12, Warlock 10, Shaman 9, Priest 7, Paladin 6, plus the Warrior's 27 |
-| **`powerCoefficient` per class file** | Mage 10, Warlock 6, Shaman 6, Warrior 3, Priest 3, Druid 3, Paladin 2, Hunter 1, **Rogue 0**. The RULE exists; per-ability application is what is missing |
+| ~~**`powerCoefficient` per class file**~~ | **AUDITED**, and counting declarations was the wrong measure. 82 of 120 reachable abilities deal damage, 52 scale at a rate a rule predicts and every one agrees; the Rogue's zero declarations are mostly CORRECT, because a Rogue ability scales through weapon damage. **Four abilities disagree with their own tooltip** and want a ruling. [docs/coefficient-audit.md](docs/coefficient-audit.md) |
 | **19 `PLACEHOLDER_*` constants** | each a real number nobody has supplied. Sniper Shot's invented 200-mana cost is gone, but it was never one of these: it was a bare literal with a false caveat, which is worse — an invented number that is not named cannot be audited |
 | **Rotations are thin and unmeasured** | Warrior has 12 priority lists and came from the owner; every other class has 2–5, and **only the three Hunter APLs have ever been measured entry by entry** |
 
@@ -195,6 +195,19 @@ halves sharing one coefficient by DURATION rather than by damage. The last is wh
 Fireball's burn is 11% of its damage and takes 35% of its scaling.
 
 ## Open questions for the ruleset owner
+
+**NEW, and the biggest of them: a coefficient for a FINISHER.** Eviscerate,
+Rupture, Rip and Ferocious Bite each state in the client's own words that their
+damage is increased by attack power, and not one states a figure. All four
+measure completely FLAT. Is there one rule for a finisher, the way
+`castTime / 3.5` is one rule for a spell — a coefficient per combo point, or a
+flat fraction of attack power — or does each carry its own number? It moves
+Venom Rogue, Rupture Rogue and Cat Druid. Two smaller ones came with it: whether
+the seal formula applies to **Seal of Fury**, whose tooltip states a flat 35 with
+no weapon-speed term, and **Lacerate**'s "10% weapon damage per existing
+application", which is a stated number waiting on a stack-dependent term rather
+than on a ruling. Full evidence in
+[docs/coefficient-audit.md](docs/coefficient-audit.md).
 
 1. **Seal of Command's PPM.** You chose procs-per-minute; the figure did not come
    with it.
