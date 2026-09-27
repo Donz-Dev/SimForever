@@ -20,11 +20,14 @@
  * difference smaller than that interval is not a difference.
  */
 import { runProfileBatch } from '../src/simulator';
-import {
-  createDefaultProfile,
-  type CharacterProfile,
-  type TalentAllocation,
-} from '../src/profiles';
+import { createDefaultProfile, type CharacterProfile } from '../src/profiles';
+/*
+ * `TalentAllocation` lives in `game/talents`, not in `profiles`, and importing
+ * it from there stopped compiling at some point without anyone noticing --
+ * because `tools` was outside the typechecker's `include` until the coefficient
+ * probe was added to it.
+ */
+import type { TalentAllocation } from '../src/game/talents/Talent';
 import { startingEquipmentFor } from '../src/game/items/startingSets';
 import type { CombatStyleId } from '../src/game/character';
 

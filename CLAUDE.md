@@ -175,6 +175,21 @@ See [docs/combat-tables.md](docs/combat-tables.md).
   `critFrom` means no crit and no random number consumed, so adding the field
   never shifts a seeded run. Bleeds are physical and still ignore armor:
   `appliesArmor: false` on every one.
+- **A COEFFICIENT IS MEASURED, NEVER COUNTED.** It is passed per `dealDamage`
+  call, so `powerCoefficient` written in the wrong place is silent and grepping
+  gives 77 damage sites and no ability names. `tools/coefficient_probe.ts` casts
+  every ability every preset can reach, pushes one stat axis, and derives the
+  coefficient from damage that landed; `tools/coefficient_report.mjs` sets it
+  beside the source's own words. Counting declarations was the wrong measure and
+  said the Rogue had none, when a Rogue ability correctly scales through weapon
+  damage. [docs/coefficient-audit.md](docs/coefficient-audit.md)
+- **`NO_CHANCES` DOES NOT STOP A CRIT.** `applyAbilityModifiers` ADDS a talent's
+  `abilityCrit` to whatever the provider returned, so an ability a talent grants
+  crit chance to still crits at a base of zero — and the crit multiplier scales
+  the coefficient's contribution as well as the base. Conflagrate read 0.7071
+  against a declared 0.4286, which is not a coefficient error but 1.5x of one.
+  A large NEGATIVE chance is what holds; zero is the number that looks right and
+  is not.
 - **A tick is reached for CRIT and not for DAMAGE.** The crit fields read
   `attackTable ?? critFrom`; the damage multiplier reads `attackTable` alone. So
   Mortal Shots' crit damage reaches Serpent Sting's ticks and "damage you deal
