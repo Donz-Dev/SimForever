@@ -11,7 +11,11 @@ again while implementing the owner's lists.
 
 Read [CLAUDE.md](../CLAUDE.md) first — it is the rules, and about a fifth of it
 is rotation lessons paid for in wrong numbers. This file is the state of the
-lists, the tools, what each one was worth, and what is still open.
+lists, the tools, and what each one was worth.
+
+**CONTINUING THE WORK STARTS AT [docs/handoff-apl.md](handoff-apl.md)**, which
+is the forward brief: what is open, what is blocked on the ruleset owner, and
+the order to use the tools in. This file is the record it refers back to.
 
 ---
 
