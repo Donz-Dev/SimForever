@@ -17,6 +17,20 @@ npm run typecheck    # tsc --noEmit
 npm run build        # typecheck + production build
 ```
 
+Two measurement harnesses, neither of them tests:
+
+```bash
+npx vite-node tools/measure_profiles.ts          # the 23 profiles, 30 batches of 10
+USES=1 SEEDS=1 PROFILES=druid_cat npx vite-node tools/measure_profiles.ts
+npx vite-node tools/measure_rotation.ts          # Warrior TALENT builds, not profiles
+```
+
+`measure_profiles.ts` is the one that reproduces a published baseline, because a
+preset carries its own gear, raid buffs and 51 points that a hand-assembled
+character does not; `SAVE=` and `BASELINE=` turn it into a before-and-after with
+a REAL/noise verdict, and `USES=1` prints a list in priority order with what
+each entry actually did. See [docs/handoff-rotations.md](docs/handoff-rotations.md).
+
 Run `npm run typecheck` **and** `npm test` before opening a PR. The typechecker
 catches what the tests do not — a mutation of a shared readonly array, a stat
 rename that silently invalidated a test.
@@ -161,10 +175,30 @@ See [docs/combat-tables.md](docs/combat-tables.md).
 ### Damage scaling
 
 - **Weapon damage**, universal across classes: `base + baseSpeed / 14 ×
-  attackPower`, using the weapon's **actual** base speed, not a normalised one.
-  An ability's flat damage adds on top, and **the off-hand penalty applies once
-  to the final total** — `(weapon + power + 160) × 0.5`, never
+  attackPower`. An ability's flat damage adds on top, and **the off-hand penalty
+  applies once to the final total** — `(weapon + power + 160) × 0.5`, never
   `(weapon + power) × 0.5 + 160`.
+- **SEVENTEEN ABILITIES NORMALISE THAT SPEED**, replacing the weapon's own with
+  a fixed one — 3.3 two-handed, 2.8 ranged, 2.4 one-handed, 1.7 dagger — **in
+  the ATTACK POWER half only**. The damage roll is untouched, so a slow weapon
+  still hits harder; what it loses is the second advantage it got on an INSTANT,
+  where the attack power term should not depend on a swing that never happened.
+  The speeds are content (`normalizedPowerCoefficient` on the weapon) and the
+  rule is engine (`weaponScaling.normalized`). **It is OPT-IN and falls back to
+  the weapon's own coefficient rather than to zero** — a paw or a placeholder is
+  un-normalised, not powerless. Slam, Heroic Strike, Cleave, Raptor Strike and
+  Ghostly Strike are the owner's five exceptions.
+- **RANGED IS CHECKED BEFORE TWO-HANDED, because a bow is both.** Reading
+  `twoHanded` first normalises every bow to 3.3 instead of 2.8 and inflates
+  every Hunter shot by 18%.
+- **A DRUID'S PAW IS BUILT FROM THE WEAPON BEING HELD**, and Druids are exempt
+  from normalisation because a paw is already one shape: `BasePaw + weaponDPS ×
+  formSwing + AP × formSwing / 14`, times `rand(0.8, 1.2)`, with the form's
+  swing being 1.0 for a cat and 2.5 for a bear. A stat stick never SWINGS and
+  still feeds the paw's damage through its DPS — but **NOT through its speed**.
+  The other reading of the owner's formula, where the held weapon's speed is the
+  multiplier, put Cat at 988.8 and Bear at 909.2 and made paw damage
+  proportional to how SLOW the held weapon was; it was rejected on measurement.
 - **A ranged weapon scales with RANGED attack power**, keyed on
   `weaponScaling.slot` and never on `weaponSlot` — the latter says whose procs an
   attack triggers. This was wrong for the whole project and 1,548 tests passed
@@ -316,6 +350,30 @@ them, including `ALL_ABILITIES`.
 
 ### Resources
 
+- **AN ABILITY THAT DOES NOT CONNECT REFUNDS 80% OF ITS COST**, for RAGE AND
+  ENERGY only. The rule is the engine's and the numbers the ruleset's, so both
+  arrive on the COMBATANT like `baseGcdMs`. **Derived, not declared**: an
+  ability opts OUT with `refundsCostOnMiss: false` and never in, so a new one
+  gets the rule for free — Ferocious Bite and Execute are the two exceptions.
+  It reduces to `AVOIDED_OUTCOMES`, because `melee-special` has **no block
+  outcome at all** and an auto-attack that is blocked costs nothing. **A
+  multi-hit ability is judged on its FIRST hit**, so Whirlwind's off hand
+  missing after its main hand connected refunds nothing.
+- **ENERGY, MANA AND FOCUS TICK TWENTY TIMES A SECOND** — "smooth"
+  regeneration, at 50ms, because no event-driven engine is continuous. All
+  three keep the RATE they had; the cadence is what changed. **A rate and a
+  cadence are separate decisions and an instruction can change one while
+  looking like it changed both**: energy specified as "1 energy 20 times a
+  second" is twenty a second against the old ten, which measured at +35% to
+  +53% on every energy build before the owner confirmed smoothing was the
+  intent.
+- **COMBO POINTS BELONG TO A TARGET.** `comboPointTargetId` records whose they
+  are; building on another enemy discards them. It cannot fire with one enemy,
+  which is the point — the old model would have carried points across targets
+  SILENTLY. **Anything that banks points by writing the pool must set the
+  target too**, or every finisher refuses to spend and reads as an ability that
+  lost its flat damage.
+
 See [docs/resources.md](docs/resources.md).
 
 - **RAGE IS A FLAT RATE PER SWING, NOT A SHARE OF THE DAMAGE.** `rage = R × S`,
@@ -418,7 +476,19 @@ See [docs/resources.md](docs/resources.md).
 - **MEASURE A LIST, DO NOT REASON ABOUT IT.** Patch one entry, run 30 batches of
   10, treat a difference inside the interval as no difference. The comment that
   put Summon Hawk above Arcane Shot counted the hawk's ticks and not its price,
-  and was specific, plausible and believed for as long as it existed.
+  and was specific, plausible and believed for as long as it existed. **It
+  happened again with Venom**, whose first comment said it belonged above the
+  damage finishers "by measurement" before anything had been measured — three
+  placements later it was −15 to −20 DPS at every one.
+- **A CORRECTLY IMPLEMENTED ABILITY CAN BE WORTH CASTING NEVER.** Venom's +30%
+  to poisons loses to the Eviscerate its combo points would have bought,
+  because poisons are about a fifth of the build's damage. It is built, tested
+  on its MECHANISM, and in no list — so one line re-measures it the day a
+  coefficient moves.
+- **THE RESOURCE PANEL IS AN APL TOOL.** Its timeline shows the shape a total
+  cannot: a Rogue flat at zero is starved, a Warrior flat at 100 is capping and
+  wasting income, and a caster whose mana never recovers has hit the five
+  second rule harder than it regenerates. Read it before reordering a list.
 
 Three things decide a list and none is visible in per-use damage:
 
@@ -437,6 +507,47 @@ Three things decide a list and none is visible in per-use damage:
 **A STAT PROBE IS NOT AN ABILITY PROBE.** Injecting Hunter's Mark's 71 ranged
 attack power said +1.9 to the melee Hunter; casting the ABILITY — which also
 spends 60 mana and a GCD at the pull — measured −10.1. Measure the CAST.
+
+**AN ENTRY THAT NEVER FIRES HAS FOUR CAUSES AND THREE OF THEM ARE INVISIBLE.**
+The id names no ability; the build never learned it; the entry above never
+yields; or the ENCOUNTER already supplies it. Only the first is caught by a
+test. **Twelve entries across eight of the 23 profiles fire zero times**, and
+every one of them produced an ordinary DPS figure and an ordinary results page
+-- an entry that never fired is simply a row that is not there.
+`tools/measure_profiles.ts` with `USES=1` prints the list in priority order with
+what each entry actually did, and reading the built character's own ability book
+is what tells the BUILD cause apart from the POSITION cause rather than guessing.
+
+**AN UNCONDITIONAL ENTRY IS A FLOOR UNDER EVERYTHING BELOW IT.** The Rupture
+Rogue's Hemorrhage is 35 energy and ungated, with Ghostly Strike at 40 and
+Sinister Strike at 45 beneath it: nothing below an ungated, cheaper ability can
+ever be the first castable entry, so a six-entry list is really a three-entry
+one. **A DUPLICATE ID IS ONLY A BUG IN THAT SAME SHAPE** -- the Mage's Arcane
+Missiles and the Warlock's Shadow Bolt are each in their list twice on purpose,
+gated on a proc above and ungated as the filler below, and a test that said "no
+ability twice" failed both correct lists the moment it was pointed at a class
+other than the Warrior.
+
+**A MEASUREMENT IN A COMMENT EXPIRES THE SAME WAY AN `unmodelled` REASON
+DOES.** Battle Shout sits in four Warrior lists carrying "+11.83 DPS", measured
+before raid buffs were SELECTED rather than assumed -- and `battle_shout` is in
+the preset raid buff list, so the entry's own condition refuses it for the whole
+fight in every one of them. The figure was right on the day. When a change moves
+what a list can reach, re-read the comments on the entries around it.
+
+**A TEST THAT ENUMERATES ITS SUBJECTS BY HAND DECAYS, AND SILENTLY.**
+`rotationIds.test.ts` was written the day a Protection entry was found asking
+for `rend` when the ability is `rend_cast`, and it listed the lists to check.
+By the time nine classes existed it was checking FOUR OF TWENTY-SIX -- not the
+Warrior's own two-handed list, and not one entry belonging to any other class.
+The enumeration is `src/game/rotations/allLists.ts` now and the test reads the
+source files and fails if a list exists that the registry does not carry, which
+is the same structural argument `classRegistration.test.ts` makes.
+
+**WHICH LIST A PROFILE RUNS IS A CLAIM, AND IT IS WORTH A TEST.** `rotationFor`
+dispatches on style, stance and talents in five different patterns across nine
+classes, and the Shockadin ran a list built around a talent it does not take for
+its whole life without erroring. All 23 mappings are pinned now.
 
 ### Gear and items
 
@@ -786,6 +897,23 @@ moment before its own opener lands. Do not reason about in-fight scaling from it
 alone.
 
 **When a fix moves nothing in the suite, that is a statement about the suite.**
+
+**A REPORT CAN BE INTERNALLY CONSISTENT AND STILL BE ABOUT THE WRONG THING.**
+`resourceFlow` took a `resource` argument and discarded it with `void resource`,
+so every pool a character owned was summed under a heading that said "Rage" — a
+Rogue's energy and combo points added together, shares totalling a tidy 100%,
+nothing on the page contradicting it. **Two tests depended on it**: one looked
+for Relentless Strikes (which restores ENERGY) in `batch.rage`, and one asserted
+a MOONKIN spent more "rage" than its mana pool. Check that a number is about
+what its label says before trusting that it adds up.
+
+**AND A NUMBER THAT IS NEVER EMITTED READS AS A ZERO, NOT AS A GAP.** Combo
+points reported 23 gained and none spent, because a finisher drained the pool
+with `Resource.drain` rather than through the context — which looks exactly like
+a rotation that never casts one. Energy showed more spent than gained, because
+the 100 a Rogue opens with was never an event and the "unspent" figure clamped
+the negative away. **If the books do not balance, the missing side is usually
+something real that nothing reports.**
 
 ## Git workflow
 

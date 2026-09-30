@@ -286,7 +286,7 @@ timers. Timers stop when a combatant dies.
 
 | | |
 | --- | --- |
+| ~~**Only RAGE is reported**~~ | **DONE.** `batch.resources` carries one flow per pool, DISCOVERED FROM THE EVENT STREAM rather than from the class, and the results page gives each one a spent-by-source donut, a gained-by-source donut, a uses table and a timeline of the level over the representative iteration. The old single `rage` field was worse than incomplete: its totals were never keyed by resource, so a Rogue's energy and combo points were summed together under a heading that said "Rage" |
 | **Soul shards have no income** | and their pool is a placeholder. The only resource here with no source at all |
 | **Focus's rate is a 10-vs-4.9 judgement** | from one source that contradicts itself |
-| **Only RAGE is reported** | `batch.rage` carries a resource flow with waste; energy, mana, combo points and focus have none, so mana downtime and energy capping are not visible on the results page even though the telemetry records them |
 | **Energy and mana triggers from talents or set bonuses** | the hook exists; nothing uses it |

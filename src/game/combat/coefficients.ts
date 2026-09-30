@@ -171,11 +171,14 @@ export const RUPTURE_TICK_AP_COEFFICIENT = 0.03;
 /**
  * Instant Poison (0.5%) and Deadly Poison (0.45% per tick).
  *
- * TRANSCRIBED AND NOT APPLIED: poisons are not implemented at all. They are
- * weapon-bound procs needing the poison items and an application model, and
- * five Rogue talents are already inert waiting for the same system. A missing
- * SYSTEM, not a missing number -- so these sit here rather than being quietly
- * dropped from the owner's sheet.
+ * APPLIED. This comment said "TRANSCRIBED AND NOT APPLIED: poisons are not
+ * implemented at all" until the poison system landed, which is exactly the shape
+ * of expired claim this project keeps finding: a reason that was true on the day
+ * it was written and stayed on the page afterwards. `poisons.ts` reads the first
+ * and `auras/rogue.ts` the second.
+ *
+ * The owner's own wording for the tick is "115 damage + 0.45% of attack power",
+ * which is the sheet's row said twice -- so the two sources agree here.
  */
 export const INSTANT_POISON_AP_COEFFICIENT = 0.005;
 export const DEADLY_POISON_TICK_AP_COEFFICIENT = 0.0045;

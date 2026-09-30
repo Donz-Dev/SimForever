@@ -104,14 +104,15 @@ sheet would otherwise read the new numbers as transcription errors.
 
 ## What the sheet does not reach
 
-Two rows were transcribed and **not applied**, because each lands on something
-that does not exist. Both are in `coefficients.ts` rather than dropped, so the
-transcription covers every row.
+**ONE ROW IS LEFT**, down from two. Both were transcribed and not applied
+because each landed on something that did not exist; the poison system was
+then built, so that row is live. Everything stays in `coefficients.ts` rather
+than being dropped, so the transcription covers every row.
 
 | Row | Why not |
 | --- | --- |
-| Instant Poison 0.5%, Deadly Poison 0.45% per tick | **Poisons are not implemented at all.** They are weapon-bound procs needing the poison items and an application model, and five Rogue talents are already inert waiting for the same system. A missing SYSTEM, not a missing number |
 | Hammer of Wrath 42.857% | The ability is not declared. The capture has it — "474 to 522 Holy damage. Only usable on enemies that have 20% or less health" — so adding it is a new ability and a target-health gate |
+| ~~Instant Poison 0.5%, Deadly Poison 0.45% per tick~~ | **APPLIED.** `reactions/poisons.ts` reads the first and `auras/rogue.ts` the second. The reason here said "poisons are not implemented at all" for a while after they were, which is the failure mode an `unmodelled` reason has: it is a claim with a date on it |
 
 ## What it moved
 
