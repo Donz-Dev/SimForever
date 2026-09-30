@@ -2,6 +2,10 @@ import type { TalentEffects } from './TalentEffect';
 import {
   CONFLAGRATE_KEEPS_IMMOLATE,
   SHADOWBURN_REFUNDS_SHARD,
+  WARLOCK_AFFLICTION_PERIODICS,
+  WARLOCK_DESTRUCTION_SPELLS,
+  WRACK_SOUL_SIPHON_CAP,
+  WRACK_SOUL_SIPHON_PER_EFFECT,
 } from '../abilities/warlock';
 
 /**
@@ -29,9 +33,19 @@ const NO_DEMON =
   'which kills the demon for a two-hour buff. Inert because of the BUILD ' +
   'rather than because of the engine, and neither profile spends a point here.';
 
-/** Said once; four talents say it. */
+/**
+ * Said once; two talents say it.
+ *
+ * THE ENCOUNTER, NOT THE ENGINE. `targetAttacks` is a profile field and both
+ * Warlock presets set it false, so nothing ever interrupts one. A Warlock
+ * profile that took damage would make these live -- which is the same shape as
+ * the pet talents below and is not an engine gap.
+ */
 const NO_PUSHBACK =
-  'Avoiding interruption while casting, and no Warlock profile is attacked.';
+  'Avoiding interruption from damage while casting. Nothing attacks either ' +
+  'Warlock profile -- `encounter.targetAttacks` is false for both -- so there ' +
+  'is no interruption to avoid. The ENCOUNTER rather than the engine: a ' +
+  'Warlock profile fighting a target that swings back would make this live.';
 
 /** Said once; three talents say it. */
 const NO_THREAT = 'Threat, which the engine does not track.';
@@ -71,7 +85,21 @@ export const WARLOCK_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
   ],
 
   improved_drains: [
-    { kind: 'unmodelled', reason: 'Drain Life and Drain Soul are channels no list casts; Wrack is declared.' },
+    /*
+     * "DRAIN LIFE, DRAIN SOUL, AND WRACK", and Wrack is the one of the three
+     * this project declares -- which the old `unmodelled` reason SAID, in those
+     * words, and had not been acted on. SM/DS spends three points here.
+     *
+     * WORTH EXACTLY ZERO AND WORKING, because no list casts Wrack. A talent
+     * working and a talent mattering are different questions, and the test for
+     * this asserts the resolved multiplier rather than a DPS delta.
+     *
+     * Drain Life and Drain Soul are in the spellbook capture and declared
+     * nowhere; `WoWSimWorksheet.xlsx` has no coefficient row for either, so a
+     * declaration needs the ruleset owner and belongs to the SPELL list rather
+     * than to this talent.
+     */
+    { kind: 'abilityDamage', abilityId: 'wrack' },
   ],
 
   improved_bane_of_agony: [{ kind: 'abilityDamage', abilityId: 'bane_of_agony' }],
@@ -79,28 +107,64 @@ export const WARLOCK_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
   fel_concentration: [{ kind: 'unmodelled', reason: NO_PUSHBACK }],
 
   amplify_curse: [
+    /*
+     * A ONE-SHOT PER-ABILITY DAMAGE MODIFIER, and it is the THIRD talent to
+     * want one field on `CastModifier` that is not there. Two Paladin and
+     * Priest talents want a one-shot CRIT; this one wants damage. Neither
+     * profile spends a point here, so building it moves nothing -- which makes
+     * it the cheap one to build alongside whichever of the other two goes
+     * first.
+     */
     {
       kind: 'unmodelled',
       reason:
-        'Raises the effect of the NEXT Curse or Bane. A one-shot per-ability ' +
-        'DAMAGE modifier, and `CastModifier` carries cast time and cost rather ' +
-        'than damage.',
+        'Raises the effect of the NEXT Curse of Weakness or Bane of Agony by ' +
+        '50%. `CastModifier` carries cast time and cost and not damage, so a ' +
+        'one-shot per-ability DAMAGE modifier is the missing field -- the same ' +
+        'shape as the one-shot CRIT modifier two other classes want. Neither ' +
+        'Warlock profile takes it, and of the spells it names only Bane of ' +
+        'Agony is declared.',
     },
   ],
 
   pandemic: [
+    /*
+     * ------------------------------------------------------------------------
+     * "THE CRITICAL STRIKE DAMAGE BONUS OF YOUR CORRUPTION, BANE OF AGONY, BANE
+     * OF DOOM, DRAIN SOUL, DRAIN LIFE, SIPHON LIFE, AND WRACK SPELLS BY 100%."
+     *
+     * A NAMED LIST, WHICH IS THE FOURTH SCOPE AND THE ONE THAT DID NOT EXIST.
+     * Its old reason said exactly that and named the field --
+     * `critMultiplierBonus` on `AbilityModifiers`, which has existed since
+     * Impale with nothing reaching it. `abilityCritDamage` is the declaration
+     * that reaches it, and the Rogue's Lethality wanted the identical one.
+     *
+     * AN AURA ID IS AN ABILITY ID HERE, which is why this works at all: a
+     * periodic tick carries its AURA's id, and `rollPeriodicCrit` applies the
+     * same modifier a cast gets. Malediction takes the same route for periodic
+     * DAMAGE two entries above.
+     *
+     * `table: 'spell'` BECAUSE THE HALF DEPENDS ON IT. A spell crit multiplies
+     * by 1.5, so +100% takes it to 2.0x; reading the melee figure would take it
+     * to 3.0x, which is a plausible number and twice the talent.
+     *
+     * SM/DS SPENDS THREE POINTS HERE and 48% of its damage is these effects.
+     *
+     * FOUR OF THE SEVEN SPELLS IT NAMES EXIST, and it reaches every one that is
+     * in the profile's own book -- which is the standard Twin Disciplines set on
+     * the Priest: a talent naming spells one by one is fully modelled when it
+     * reaches the build's, and the ones missing belong to the SPELL list rather
+     * than to this talent. Bane of Doom, Drain Soul and Drain Life are in the
+     * spellbook capture, are declared nowhere in this project, and
+     * `WoWSimWorksheet.xlsx` has no coefficient row for any of them.
+     * ------------------------------------------------------------------------
+     */
     {
-      kind: 'unmodelled',
-      reason:
-        'Raises crit DAMAGE for seven NAMED periodic spells, and none of the ' +
-        'three scopes selects a list: `critDamageBonus` is whole-character, ' +
-        '`schoolCritDamage` is per school, `attackTableCritDamage` is per ' +
-        'attack table. The field it wants -- `critMultiplierBonus` on ' +
-        '`AbilityModifiers` -- already exists and has no talent effect that ' +
-        'reaches it, the way `abilityCrit` reaches crit CHANCE. So this is a ' +
-        'missing declaration rather than a missing rule, and it is real ' +
-        'damage the build is not getting.',
+      kind: 'abilityCritDamage',
+      abilityIds: WARLOCK_AFFLICTION_PERIODICS,
+      table: 'spell',
     },
+    { kind: 'abilityCritDamage', abilityIds: ['wrack'], table: 'spell' },
   ],
 
   malevolence: [{ kind: 'schoolCrit', schools: ['shadow'] }],
@@ -112,7 +176,24 @@ export const WARLOCK_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
   siphon_life: [{ kind: 'grantAbility', abilityId: 'siphon_life' }],
 
   soul_siphon: [
-    { kind: 'unmodelled', reason: 'Drain Life and Drain Soul are channels no list casts; Wrack is declared.' },
+    /*
+     * "+{0}% PER EACH OF YOUR OTHER AFFLICTION EFFECTS ACTIVE ON THE TARGET, UP
+     * TO {1}%", so its size is read at cast time rather than being a standing
+     * modifier -- which is what `abilityBonus` is for. Wrack's `onCast` counts
+     * `WARLOCK_AFFLICTION_PERIODICS` and applies the smaller of the two.
+     *
+     * WHICH EFFECTS COUNT IS AN INTERPRETATION AND IT IS BOUNDED BY THE BOOK:
+     * the three declared Affliction periodics are Corruption, Bane of Agony and
+     * Siphon Life, so a fully-loaded target counts three and reaches the 36%
+     * cap exactly. Bane of Doom, Drain Life and Drain Soul would each add
+     * another 12% and none is declared, so the bonus is UNDERSTATED rather than
+     * absent -- which, at the cap, it currently is not.
+     *
+     * Same as Improved Drains above, this reaches only Wrack and no list casts
+     * Wrack, so it is worth zero and working.
+     */
+    { kind: 'abilityBonus', abilityId: 'wrack', key: WRACK_SOUL_SIPHON_PER_EFFECT },
+    { kind: 'abilityBonus', abilityId: 'wrack', key: WRACK_SOUL_SIPHON_CAP, valueIndex: 1 },
   ],
 
   shadow_mastery: [{ kind: 'schoolDamage', schools: ['shadow'] }],
@@ -137,7 +218,23 @@ export const WARLOCK_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
   unholy_power: [{ kind: 'unmodelled', reason: NO_DEMON }],
 
   demonic_aegis: [
-    { kind: 'unmodelled', reason: 'Demon Skin and Demon Armor, neither of which is cast.' },
+    /*
+     * BOTH PROFILES SPEND TWO POINTS HERE and it is worth nothing to either,
+     * for two independent reasons -- which is why it stays inert even after the
+     * first one is cleared. Worth saying both, because clearing one and
+     * expecting a number to move is how an afternoon goes missing.
+     */
+    {
+      kind: 'unmodelled',
+      reason:
+        'Demon Skin and Demon Armor are not declared abilities here, and ' +
+        'neither would be worth a cast if they were: between them they give ' +
+        'armor, Shadow resistance and health per 5 sec, and nothing attacks ' +
+        'either Warlock profile -- `encounter.targetAttacks` is false for ' +
+        'both. Two independent reasons, so declaring the spells alone would ' +
+        'move nothing. Both profiles spend two points here as a route to the ' +
+        'tier that holds Demonic Sacrifice.',
+    },
   ],
 
   improved_voidwalker: [{ kind: 'unmodelled', reason: NO_DEMON }],
@@ -168,16 +265,33 @@ export const WARLOCK_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
   ],
 
   decimation: [
+    /*
+     * ------------------------------------------------------------------------
+     * ITS REASON BLAMED THE TARGET AND WAS WRONG TO, which is the mistake this
+     * project has documented FOUR times now. "Below 35% health" is the CLOCK by
+     * the owner's ruling -- `combat/executePhase.ts`, the rule Execute runs on
+     * at 20% and the Rogue's Quietus at exactly this 35% -- so the health gate
+     * is not what blocks it and never was.
+     *
+     * WHAT ACTUALLY BLOCKS IT IS SOUL FIRE, which three of its four clauses are
+     * about and which this project does not declare. The fourth clause, the
+     * +6% damage inside the window, is the same conditional-on-the-clock
+     * per-ability modifier Quietus and Early Demise want -- so this is the
+     * THIRD caller for that one mechanism.
+     *
+     * Neither profile takes it.
+     * ------------------------------------------------------------------------
+     */
     {
       kind: 'unmodelled',
       reason:
-        'Blocked TWICE, and the shard clause is the one that needs saying. ' +
-        'Every clause needs the target BELOW 35% HEALTH, which never happens ' +
-        'against a target that survives by design -- and its "costs no Soul ' +
-        'Shards" applies to SOUL FIRE, which is not a declared ability here. ' +
-        'So the shard half would still do nothing the day the health gate ' +
-        'was reachable. Shadowburn’s refund, from Shadow and Flame, IS ' +
-        'applied and is the only shard refund this project can express.',
+        'Three of its four clauses are about SOUL FIRE -- its cooldown, its ' +
+        'cast time and its Soul Shard -- and Soul Fire is not a declared ' +
+        'ability here. The fourth, +6% damage while the target is below 35% ' +
+        'health, is a per-ability damage modifier conditional on the final ' +
+        'fraction of the fight: 35% is the CLOCK by the owner ruling, the ' +
+        'same one the Rogue Quietus runs on, so the threshold is reachable ' +
+        'and the modifier is what is missing. Neither profile takes it.',
     },
   ],
 
@@ -210,7 +324,16 @@ export const WARLOCK_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
   ],
 
   molten_skin: [
-    { kind: 'unmodelled', reason: 'Damage taken, and no Warlock profile is attacked.' },
+    {
+      kind: 'unmodelled',
+      reason:
+        'Reduces all damage taken, and nothing attacks either Warlock ' +
+        'profile -- `encounter.targetAttacks` is false for both. The ' +
+        'ENCOUNTER rather than the engine: `damageTakenMultiplier` on an aura ' +
+        'expresses this exactly, and a Warlock fighting a target that swings ' +
+        'back would make it live with no new capability. Neither profile ' +
+        'spends a point here.',
+    },
   ],
 
   cataclysm: [
@@ -237,7 +360,32 @@ export const WARLOCK_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
     },
   ],
 
-  ruin: [{ kind: 'schoolCritDamage', schools: ['fire', 'shadow'] }],
+  ruin: [
+    /*
+     * ------------------------------------------------------------------------
+     * "THE CRITICAL STRIKE DAMAGE BONUS OF YOUR DESTRUCTION SPELLS BY 100%",
+     * and a TREE is not a school. This was `schoolCritDamage` over Fire and
+     * Shadow -- the two schools a Warlock has, which is every spell it owns --
+     * so it also doubled the crit damage of Corruption, Bane of Agony, Siphon
+     * Life and Wrack. Corruption is 13.5% of the Firelock profile's damage and
+     * Firelock takes this 5/5.
+     *
+     * `WARLOCK_DESTRUCTION_SPELLS` IS THE SOURCE'S OWN TAB, which matters most
+     * for SHADOW BOLT: it is a Destruction spell in the spellbook capture, and
+     * it is the entry a reader would get wrong from the school alone.
+     *
+     * IT REACHES EVERY DESTRUCTION SPELL THIS PROJECT DECLARES. Soul Fire, Rain
+     * of Fire, Hellfire and Bane of Havoc are in the tab and declared nowhere --
+     * the three area effects need a second target to be worth declaring at all.
+     * That is the SPELL list's business, not this talent's.
+     * ------------------------------------------------------------------------
+     */
+    {
+      kind: 'abilityCritDamage',
+      abilityIds: WARLOCK_DESTRUCTION_SPELLS,
+      table: 'spell',
+    },
+  ],
 
   shadowburn: [{ kind: 'grantAbility', abilityId: 'shadowburn' }],
 
@@ -245,9 +393,22 @@ export const WARLOCK_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
 
   agonizing_flames: [
     { kind: 'abilityCrit', abilityId: 'searing_pain' },
-    // "and the damage done by all your Destruction spells by {1}%", which for
-    // this class is Fire and Shadow -- the two schools it has.
-    { kind: 'schoolDamage', schools: ['fire', 'shadow'], valueIndex: 1 },
+    /*
+     * "AND THE DAMAGE DONE BY ALL YOUR DESTRUCTION SPELLS BY {1}%". The same
+     * correction Ruin above needed, for the same reason and in the same words:
+     * this read "which for this class is Fire and Shadow -- the two schools it
+     * has", and those two schools are also every Affliction spell it owns.
+     *
+     * ONE ENTRY PER ABILITY, and they MULTIPLY with each other exactly as the
+     * school modifier they replace did -- `combineAbilityModifiers` multiplies
+     * damage and adds chances, which is the same rule `SchoolModifiers` uses.
+     * So a spell under this and Aftermath is under both, unchanged.
+     */
+    ...WARLOCK_DESTRUCTION_SPELLS.map((abilityId) => ({
+      kind: 'abilityDamage' as const,
+      abilityId,
+      valueIndex: 1,
+    })),
   ],
 
   conflagrate: [{ kind: 'grantAbility', abilityId: 'conflagrate' }],

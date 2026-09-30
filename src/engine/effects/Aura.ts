@@ -149,6 +149,32 @@ export interface AuraDefinition {
   readonly modifiersScaleWithStacks?: boolean;
   /** Multiplies damage the carrier deals. 1.1 is +10%. */
   readonly damageDoneMultiplier?: number;
+  /**
+   * Multiplies damage the carrier deals OF PARTICULAR SCHOOLS.
+   *
+   * ----------------------------------------------------------------------------
+   * THE ATTACKER'S MIRROR OF `damageTakenBySchool`, and the two sit beside each
+   * other for the reason Fire Power and Curse of the Elements do: one raises the
+   * fire damage a caster DEALS and the other the fire damage a target TAKES.
+   * They are different effects and both apply.
+   *
+   * WHY IT IS ON THE AURA RATHER THAN ON `SchoolModifiers`. That collection is
+   * built once, when the character is, so it can hold a talent's standing
+   * "+10% Fire" and cannot hold an effect that comes and goes. Two Warlock
+   * effects do exactly that and both were applied WHOLE-CHARACTER with a
+   * written caveat admitting it -- `game/auras/warrior.ts` predicted this field
+   * by name for Death Wish's "Physical" qualifier, which for a Warrior costs
+   * nothing because every point of its damage is physical.
+   *
+   * THE CAVEAT WAS NOT A ROUNDING ERROR FOR A HYBRID. Demonic Sacrifice names
+   * ONE school out of four demons; Shadow and Flame's two halves name OPPOSITE
+   * schools on purpose, so Firelock carried x1.10 on every school twice where
+   * it should carry x1.10 once per school.
+   *
+   * Schools not listed are untouched, exactly as on the target side.
+   * ----------------------------------------------------------------------------
+   */
+  readonly damageDoneBySchool?: Partial<Record<DamageSchool, number>>;
   /** Multiplies damage the carrier takes, whatever school it is. */
   readonly damageTakenMultiplier?: number;
   /**
@@ -164,6 +190,27 @@ export interface AuraDefinition {
    * fire damage" are different effects on the same target.
    */
   readonly damageTakenBySchool?: Partial<Record<DamageSchool, number>>;
+  /**
+   * The same again, but reaching PERIODIC damage only.
+   *
+   * ----------------------------------------------------------------------------
+   * "INCREASING THE DAMAGE THEY TAKE FROM YOUR OTHER SHADOW DAMAGE OVER TIME
+   * EFFECTS BY 10%" -- Wrack, and that clause is the whole reason to cast it.
+   *
+   * A SEPARATE FIELD AND NOT A FLAG ON THE ONE ABOVE, because an aura may want
+   * both and a flag would force a choice. It is not folded into
+   * `damageTakenBySchool` for the reason the clause went unmodelled for as long
+   * as it did: a plain Shadow vulnerability would also raise Shadow Bolt, which
+   * is over half of the SM/DS profile's damage. That is a much bigger number
+   * wearing the right label rather than an approximation.
+   *
+   * "OVER TIME" IS `DamageRequest.periodic`, which every damage-over-time tick
+   * here sets and no cast does -- INCLUDING A CHANNEL'S TICKS, which are casts.
+   * So Wrack's own ticks are correctly not amplified by Wrack's own debuff,
+   * which is what the word "other" asks for and what nothing else would give.
+   * ----------------------------------------------------------------------------
+   */
+  readonly periodicDamageTakenBySchool?: Partial<Record<DamageSchool, number>>;
   /**
    * Per-ability modifiers that hold only while this aura is up, keyed by
    * ability id.

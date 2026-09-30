@@ -7,7 +7,7 @@ gets built is [docs/class-implementation.md](docs/class-implementation.md).
 
 All nine classes and all 23 profiles are implemented, every number traced to a
 source rather than invented, and **all 23 priority lists are the ruleset owner's
-own** -- specified entry by entry and measured after. **1,965 tests**, CI green on Node 20 and 22. Profile
+own** -- specified entry by entry and measured after. **1,991 tests**, CI green on Node 20 and 22. Profile
 format **v10**. Live at <https://donz-dev.github.io/SimForever/>, republished by
 `.github/workflows/deploy.yml` on every push to `main` that passes.
 
@@ -35,7 +35,31 @@ method and 607.2 under this one on identical code. Do not read those as changes.
 decimal -- which is what a talent change scoped to one build should look like.
 It makes Frostfire the top Mage, above Fire's 401.2 and Arcane's 392.6, and the
 build that existed for the Fire/Frost overlap now has a third reason to. The
-mean across 23 is 411.7. See [docs/handoff-apl.md](docs/handoff-apl.md).
+mean across 23 is 409.8, down from 411.7 because the Firelock correction is
+larger than everything the Warlock and Rogue work added. See [docs/handoff-apl.md](docs/handoff-apl.md).
+
+**THE WARLOCK DEEP DIVE MOVED FIVE PROFILES AND ONE OF THEM A LONG WAY DOWN.**
+**Firelock 535.5 to 468.4, -67.1, REAL** -- a CORRECTION, and the four causes were
+each carrying a comment admitting what they did:
+
+| | |
+| --- | --- |
+| **-42.2** | **Shadow and Flame**, whose two halves name OPPOSITE schools on purpose. Both were whole-character multipliers, so a hybrid held x1.10 TWICE ON EVERY SCHOOL where the talent gives x1.10 once per school. Its comment read "generous for a hybrid, which Firelock is" |
+| **-13.1** | **Demonic Sacrifice**, whose Succubus option is "+15% FIRE damage". Whole-character too, so the 22% of Firelock that is Shadow collected a fire bonus. Its comment read "exact for either profile" -- true of SM/DS, not of this one |
+| **-4.8 / -3.3** | **Agonizing Flames and Ruin**, both "your DESTRUCTION spells" read as Fire and Shadow -- the two schools a Warlock HAS, which is every spell it owns. So both also raised Corruption, 13.5% of the profile |
+
+**AND THE OTHER DIRECTION: SM/DS 349.1 to 363.9, +14.8, REAL**, all of it Pandemic,
+plus **+2.6 to +3.2 on all three Rogues** from Lethality. Those two talents wanted
+the IDENTICAL missing declaration and both said so in almost identical words; one
+`abilityCritDamage` effect reached both. **The other eighteen profiles are
+identical to the decimal.**
+
+**TWO LESSONS, AND THE FIRST IS THE EXPENSIVE ONE.** A clause that cannot be
+expressed per school is not therefore worth applying whole-character with a
+caveat -- "generous for a hybrid" was 42 DPS. And **a TREE is not a SCHOOL**:
+Shadow Bolt is a Destruction spell in the source's own spellbook tab, which is the
+entry the school reading gets wrong. See
+[docs/handoff/warlock.md](docs/handoff/warlock.md).
 
 **RE-MEASURED ON THE RULESET OWNER'S OWN PRIORITY LISTS.** All 23 are theirs now,
 specified entry by entry; what was here before was this project's guess and said
@@ -43,18 +67,18 @@ so. Fourteen profiles moved.
 
 | Profile | Class | Talents | DPS | | Profile | Class | Talents | DPS |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| DW Fury | Warrior | 18/33/0 | 652.0 | | Fire Mage | Mage | 10/39/2 | 401.2 |
-| 2H Arms | Warrior | 38/13/0 | 607.2 | | Venom Rogue | Rogue | 37/12/2 | 392.7 |
-| Firelock | Warlock | 5/11/35 | 535.5 | | Arcane Mage | Mage | 47/4/0 | 392.6 |
+| DW Fury | Warrior | 18/33/0 | 652.0 | | Venom Rogue | Rogue | 37/12/2 | 395.9 |
+| 2H Arms | Warrior | 38/13/0 | 607.2 | | Arcane Mage | Mage | 47/4/0 | 392.6 |
 | Cat Druid | Druid | 9/35/7 | 488.0 | | Moonkin | Druid | 38/0/13 | 384.3 |
-| Seal Twist Ret | Paladin | 13/0/38 | 471.0 | | Shockadin | Paladin | 23/0/28 | 379.0 |
-| Prot Warr | Warrior | 17/0/34 | 454.6 | | Rupture Rogue | Rogue | 12/8/31 | 377.1 |
-| Enh Shaman | Shaman | 19/32/0 | 451.1 | | Bear Druid | Druid | 9/42/0 | 376.2 |
-| Shadow Priest | Priest | 16/3/32 | 437.3 | | SM/DS | Warlock | 40/11/0 | 349.1 |
-| Combat Rogue | Rogue | 18/33/0 | 419.8 | | LW Melee | Hunter | 7/13/31 | 321.5 |
-| Frostfire Mage | Mage | 0/29/22 | 412.5 | | LW Ranged | Hunter | 7/39/5 | 311.7 |
-| BM Hunter | Hunter | 31/20/0 | 405.8 | | Ele Shaman | Shaman | 38/13/0 | 295.4 |
-| | | | | | Prot Pally | Paladin | 8/36/7 | 153.2 |
+| Seal Twist Ret | Paladin | 13/0/38 | 471.0 | | Rupture Rogue | Rogue | 12/8/31 | 379.7 |
+| Firelock | Warlock | 5/11/35 | 468.4 | | Shockadin | Paladin | 23/0/28 | 379.0 |
+| Prot Warr | Warrior | 17/0/34 | 454.6 | | Bear Druid | Druid | 9/42/0 | 376.2 |
+| Enh Shaman | Shaman | 19/32/0 | 451.1 | | SM/DS | Warlock | 40/11/0 | 363.9 |
+| Shadow Priest | Priest | 16/3/32 | 437.3 | | LW Melee | Hunter | 7/13/31 | 321.5 |
+| Combat Rogue | Rogue | 18/33/0 | 422.5 | | LW Ranged | Hunter | 7/39/5 | 311.7 |
+| Frostfire Mage | Mage | 0/29/22 | 412.5 | | Ele Shaman | Shaman | 38/13/0 | 295.4 |
+| BM Hunter | Hunter | 31/20/0 | 405.8 | | Prot Pally | Paladin | 8/36/7 | 153.2 |
+| Fire Mage | Mage | 10/39/2 | 401.2 | | | | | |
 
 **WHAT THE OWNER'S LISTS WERE WORTH, against the last figures measured on this
 project's own shells:**
@@ -146,7 +170,7 @@ structure, and throws if its four buckets do not account for every talent.
 | [mage.md](docs/handoff/mage.md) | Frostfire, Arcane, Fire | **16** |
 | [shaman.md](docs/handoff/shaman.md) | Ele Shaman, Enh Shaman | **17** |
 | [priest.md](docs/handoff/priest.md) | Shadow | **18** |
-| [warlock.md](docs/handoff/warlock.md) | SM/DS, Firelock | **25** |
+| [warlock.md](docs/handoff/warlock.md) | SM/DS, Firelock | **22** |
 
 **THE WARRIOR'S 1 AGAINST THE WARLOCK'S 25 IS NOT A DIFFERENCE IN DIFFICULTY.**
 The Warrior had four sources and eight of its numbers turned out wrong; the other
@@ -164,7 +188,7 @@ Measured at `d2718b0`, and the numbers say it is not close:
 
 | | |
 | --- | --- |
-| **140 of 468 talents are a live gap** | down from a raw count of 262 unmodelled reasons, because 89 are permanently out of scope by ruling and 33 more are PARTLY modelled. See the census below — the raw total is not a work queue |
+| **123 of 468 talents are a live gap** | well down from a raw count of unmodelled reasons, because 95 are permanently out of scope by ruling and 33 more are PARTLY modelled. See the census below, and re-sum it rather than adjusting it — the raw total is not a work queue |
 | **113 abilities declared against 478 captured** | the data is on disk; the declarations are not. Druid 15, Hunter 14, Mage 13, Rogue 12, Warlock 10, Shaman 9, Priest 7, Paladin 6, plus the Warrior's 27 |
 | ~~**Coefficients**~~ | **DONE, AND NOW EVERY ROW IS APPLIED.** `WoWSimWorksheet.xlsx`, the owner's authoritative coefficient document, is transcribed in `src/game/combat/coefficients.ts` and applied across all nine classes. Every derived rule is deleted. The last unapplied row was Hammer of Wrath, which was not a declared ability until the owner put it in two Paladin priority lists; the two poison rows went the same way when the poison system landed. [docs/spell-coefficients.md](docs/spell-coefficients.md) |
 | **19 `PLACEHOLDER_*` constants** | each a real number nobody has supplied. Sniper Shot's invented 200-mana cost is gone, but it was never one of these: it was a bare literal with a false caveat, which is worse — an invented number that is not named cannot be audited |
@@ -229,8 +253,8 @@ fails.
 | Mage | 54 | 27 | 2 | 9 | **16** |
 | Priest | 53 | 15 | 2 | 18 | **18** |
 | Rogue | 53 | 25 | 2 | 12 | **14** |
-| Warlock | 52 | 21 | 3 | 3 | **25** |
-| **Total** | **468** | **214** | **33** | **95** | **126** |
+| Warlock | 52 | 24 | 3 | 3 | **22** |
+| **Total** | **468** | **217** | **33** | **95** | **123** |
 
 **SIX TALENTS LEFT THE GAP COLUMN WITH THE PRIORITY LISTS**, and four of them
 were never really in it. Cutthroat and Premeditation were counted among the
@@ -241,8 +265,12 @@ reason was a statement about the engine ("nothing can reset a cooldown from
 content") and the engine now can. Fingers of Frost carried `FROZEN_UNMODELLED`,
 which is a claim about the TARGET, and that talent does not freeze anything.
 
-**247 of 468 talents do something**, 95 never will, and **126 are the actual
-remaining work** — not the 262 a raw count of unmodelled reasons suggests. The 103
+**250 of 468 talents do something**, 95 never will, and **123 are the actual
+remaining work** — not the raw count of unmodelled reasons, which is larger.
+**Every figure in this paragraph is re-summed from the table above rather than
+adjusted**, which is the rule: two branches each moving a total by one from the
+same base both write the same number, git merges them without a conflict, and the
+total is short by one. The 103
 scoped entries break down as 33 healing, 32 crowd control, 17 positioning, 14
 threat and **7 stealth**.
 
@@ -296,7 +324,9 @@ into a finite work list.
 | Gap | Talents | Classes |
 | --- | --- | --- |
 | **Spell hit per school** — the attack table decides hit before any per-school modifier is consulted | 5 | Mage ×2, Priest ×2, Paladin |
-| **Crit damage for a LIST of NAMED abilities** — `critMultiplierBonus` exists on `AbilityModifiers` and no talent effect reaches it, the way `abilityCrit` reaches crit CHANCE | 2 | Warlock, Rogue |
+| ~~**Crit damage for a LIST of NAMED abilities**~~ **BUILT.** `abilityCritDamage` is the declaration `critMultiplierBonus` had been waiting for since Impale. Pandemic and Lethality both named the field in almost identical words, so it was built once: **+14.8 to SM/DS and +2.6 to +3.2 across the three Rogues** | ~~2~~ 0 | — |
+| ~~**A per-school damage multiplier from an AURA**~~ **BUILT.** `damageDoneBySchool`, predicted by name in `game/auras/warrior.ts` before it existed. Demonic Sacrifice and Shadow and Flame were both whole-character with a caveat, and the caveat was **−55.3 DPS of Firelock** | ~~2~~ 0 | — |
+| ~~**A periodic-only school vulnerability**~~ **BUILT.** `periodicDamageTakenBySchool`, which Wrack's own `unmodelled` reason named. A plain Shadow vulnerability would also have raised Shadow Bolt at half the SM/DS profile | ~~1~~ 0 | — |
 | **A one-shot per-ability CRIT modifier** — `CastModifier` carries cast time and cost, not crit | 2 | Paladin, Priest |
 | **A style-scoped item stat** — `statsForStyle` knows the combat style; the item rule does not | 1 item line | both feral Druids, 172 attack power |
 | **A flat per-school damage bonus** — `damageTakenBySchool` multiplies | 1 | Paladin |
@@ -408,10 +438,12 @@ The refactor is phased; the milestone follows it.
    - **The seven talents whose rule already exists with nothing hooked to it.**
      Shaman Elemental Focus is the clearest: a one-shot cost modifier is exactly
      `CastModifier.costFraction` with `consumedByCast`, which Maelstrom Weapon
-     already uses, and its reason still says it has no declaration. Rogue
-     Lethality and Warlock Pandemic want `critMultiplierBonus`, which exists and
-     nothing reaches. **These will move DPS, so they want their own PR and a
-     re-measured baseline.**
+     already uses, and its reason still says it has no declaration.
+     ~~Rogue Lethality and Warlock Pandemic want `critMultiplierBonus`, which
+     exists and nothing reaches.~~ **Both DONE** -- `abilityCritDamage`, one
+     declaration for both, and it did move DPS: +14.8 to SM/DS and +2.6 to +3.2
+     across the three Rogues. **These will move DPS, so they want their own PR
+     and a re-measured baseline**, which is how that one was done.
    - **Dead code**: exports nothing imports.
    **Do not restructure the engine, the panels or the profile schema**; volume is
    the problem, not shape.

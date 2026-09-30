@@ -10,6 +10,7 @@ import {
   IMMOLATE_COEFFICIENTS,
   IMMOLATE_DIRECT,
   SIPHON_LIFE,
+  WRACK_AMPLIFICATION,
 } from '../auras/warlock';
 import {
   CONFLAGRATE_SP_COEFFICIENT,
@@ -383,39 +384,61 @@ export const SEARING_PAIN: Ability = {
  * six-second CHANNEL, new in Forever and rank 1 IS max.
  *
  * ----------------------------------------------------------------------------
- * TWO HALVES, AND THE ONE STILL MISSING IS THE REASON ANYBODY WOULD CAST IT.
+ * BOTH HALVES NOW APPLY, AND THE SECOND ONE IS THE REASON TO CAST IT.
  *
  * ITS COEFFICIENT IS 14.3% OF SPELL POWER PER TICK, supplied by the ruleset
  * owner directly rather than by `WoWSimWorksheet.xlsx`, which has no Wrack row.
- * That closed the gap this ability was PAUSED on. The provenance is recorded at
- * `WRACK_TICK_SP_COEFFICIENT`, because it is the one row in that file which a
- * refresh of the sheet will not contain.
+ * The provenance is recorded at `WRACK_TICK_SP_COEFFICIENT`, because it is the
+ * one row in that file which a refresh of the sheet will not contain.
  *
- * ITS +10% TO YOUR OTHER SHADOW DoTs IS STILL NOT MODELLED. The engine has
- * damage-taken multipliers per SCHOOL, and a school multiplier would also raise
- * Shadow Bolt, which is 58.9% of the SM/DS profile's damage. That is not an
- * approximation, it is a much bigger number wearing the right label -- so the
- * clause keeps its own words instead. A periodic-only school vulnerability is
- * the field it wants.
+ * ITS +10% TO YOUR OTHER SHADOW DoTs IS APPLIED NOW, through
+ * `periodicDamageTakenBySchool` on `WRACK_AMPLIFICATION`. The old reason for
+ * its absence was specific enough to re-read and named the field it wanted: a
+ * plain Shadow vulnerability would also raise Shadow Bolt, at over half of the
+ * SM/DS profile's damage, so the clause waited for a PERIODIC-only one. It is
+ * the fourth time in this project a reason written that way has expired
+ * usefully.
  *
- * THE COEFFICIENT DID NOT MAKE IT WORTH CASTING, and that is worth saying
- * plainly so nobody reads the number as a buff and goes looking for a list to
- * put it in. Six ticks at 14.3% is 0.858 over the channel -- Shadow Bolt's
- * 0.857 delivered in twice the time -- so six seconds of Wrack is 216 + 0.858
- * against two Shadow Bolts at 536 + 1.714 in the same six. It is about half the
- * damage either way, before and after.
- *
- * SO IT IS IN NO LIST, and the owner has said so outright: "it's unimportant
+ * IT IS STILL IN NO LIST, AND THAT IS STILL THE OWNER'S CALL: "it's unimportant
  * for the rest of the simulator for now, there isn't a profile that uses it."
- * Built, coefficient applied, mechanism tested, and its value waits on the
- * amplification clause rather than on a measurement.
+ * The arithmetic has not changed either -- six ticks at 14.3% is 0.858 over the
+ * channel, which is Shadow Bolt's 0.857 delivered in twice the time -- and the
+ * amplification is worth 10% of the SM/DS profile's periodic damage for six
+ * seconds in every twelve it would occupy, against two Shadow Bolts in the
+ * same six. THE MEASUREMENT IS THE ONLY THING THAT SETTLES IT, and this comment
+ * deliberately does not guess: `WARLOCK_AFFLICTION` is one line away from
+ * carrying it the day somebody runs the thirty batches.
  * ----------------------------------------------------------------------------
  */
 export const WRACK_TICK_DAMAGE = 36;
 export const WRACK_TICKS = 6;
 export const WRACK_CHANNEL_MS = seconds(WRACK_TICKS);
-/** "your other Shadow damage over time effects", and it is not applied. */
-export const WRACK_DOT_AMPLIFICATION_PERCENT = 10;
+
+/**
+ * Soul Siphon and Improved Drains both reach Wrack, and nothing else here.
+ *
+ * ----------------------------------------------------------------------------
+ * BOTH TALENTS NAME "DRAIN LIFE, DRAIN SOUL AND WRACK", and Wrack is the only
+ * one of the three this project declares -- so both were `unmodelled` with a
+ * reason that already said Wrack was declared and had not been acted on. SM/DS
+ * spends SIX of its fifty-one points across the pair.
+ *
+ * SOUL SIPHON IS READ AT CAST TIME rather than being a standing modifier,
+ * because its size depends on what is on the target: "+{0}% per each of your
+ * other Affliction effects active on the target, up to {1}%". That is what
+ * `abilityBonus` is for -- a named number handed to one ability and read by its
+ * own `onCast`.
+ *
+ * WHICH EFFECTS COUNT IS AN INTERPRETATION AND IT IS NAMED.
+ * `WARLOCK_AFFLICTION_PERIODICS` is the declared subset of the Affliction tab;
+ * Bane of Doom, Drain Life and Drain Soul are in the source's spellbook and not
+ * in this project, so a fully-loaded target counts three here where the ruleset
+ * would allow more. The talent's own `unmodelled` clause says so, rather than
+ * this constant pretending to be the whole tab.
+ * ----------------------------------------------------------------------------
+ */
+export const WRACK_SOUL_SIPHON_PER_EFFECT = 'soulSiphonPerEffect';
+export const WRACK_SOUL_SIPHON_CAP = 'soulSiphonCap';
 
 export const WRACK: Ability = {
   id: 'wrack',
@@ -426,30 +449,70 @@ export const WRACK: Ability = {
   attackTable: 'spell',
   onCast: ({ simulation, caster, target, ability }) => {
     if (!target) return;
+
+    /*
+     * THE DEBUFF FIRST, and it refuses to refresh -- so the six seconds run
+     * from the first tick of the channel and not from the last. See
+     * `WRACK_AMPLIFICATION`.
+     */
+    simulation.applyAura(target, WRACK_AMPLIFICATION, caster.id);
+
+    /*
+     * SOUL SIPHON, COUNTED PER TICK rather than once for the channel, because
+     * a bleed the rotation refreshed halfway through should raise the ticks
+     * after it and not the ones before. Capped by the talent's own second
+     * number; a build without the talent reads 0 for both and multiplies by 1.
+     */
+    const perEffect = ability.bonuses?.[WRACK_SOUL_SIPHON_PER_EFFECT] ?? 0;
+    const cap = ability.bonuses?.[WRACK_SOUL_SIPHON_CAP] ?? 0;
+    const active = WARLOCK_AFFLICTION_PERIODICS.filter((id) => target.auras.has(id)).length;
+    const siphon = 1 + Math.min(active * perEffect, cap) / 100;
+
     dealDamage(simulation, {
       source: caster,
       target,
       abilityId: ability.id,
       abilityName: ability.name,
       school: 'shadow',
-      baseAmount: WRACK_TICK_DAMAGE,
       /*
        * PER TICK, and `onCast` runs once per channel tick, so this is the
-       * per-tick figure and not the total. Added to the flat 36 rather than
-       * replacing it -- the owner's standing instruction with the sheet was to
-       * make sure flat ability damage does not get lost.
+       * per-tick figure and not the total. The coefficient is ADDED to the flat
+       * 36 rather than replacing it -- the owner's standing instruction with the
+       * sheet was to make sure flat ability damage does not get lost.
+       *
+       * SOUL SIPHON SCALES BOTH TERMS, which is what "increases the damage done"
+       * means: scaling the flat half alone would make the talent worth less the
+       * better the gear, which is the opposite of every other damage talent here.
        */
-      powerCoefficient: WRACK_TICK_SP_COEFFICIENT,
+      baseAmount: WRACK_TICK_DAMAGE * siphon,
+      powerCoefficient: WRACK_TICK_SP_COEFFICIENT * siphon,
       attackTable: ability.attackTable,
     });
   },
-  unmodelled:
-    `Its "+${WRACK_DOT_AMPLIFICATION_PERCENT}% damage from your other Shadow ` +
-    'damage over time effects" does nothing. Damage-taken multipliers here are ' +
-    'per SCHOOL, and a Shadow multiplier would also raise Shadow Bolt -- 58.9% ' +
-    "of this profile's damage -- which is a bigger number rather than an " +
-    'approximation. A periodic-only school vulnerability is the field it wants.',
 };
+
+export const WARLOCK_DESTRUCTION_SPELLS: readonly string[] = [
+  'shadow_bolt',
+  'immolate',
+  'incinerate',
+  'conflagrate',
+  'shadowburn',
+  'searing_pain',
+];
+
+/**
+ * The periodic Affliction effects Pandemic and Soul Siphon both count.
+ *
+ * DECLARED ONES ONLY, and the two talents name more than this between them --
+ * Bane of Doom, Drain Life and Drain Soul are in the spellbook capture and not
+ * in this project. Each talent carries its own `unmodelled` clause saying so,
+ * rather than this list pretending to be complete.
+ */
+export const WARLOCK_AFFLICTION_PERIODICS: readonly string[] = [
+  'corruption',
+  'bane_of_agony',
+  'siphon_life',
+];
 
 export const WARLOCK_ABILITIES: readonly Ability[] = [
   SHADOW_BOLT,

@@ -97,23 +97,23 @@ sharing, and **all 23 are the ruleset owner's**. DPS is the baseline in
 | --- | --- | --- | --- | --- |
 | DW Fury | 652.0 | `WARRIOR_DUAL_WIELD_BERSERKER` | 10 | 6 |
 | 2H Arms | 607.2 | `WARRIOR_TWO_HAND_BATTLE` | 12 | 8 |
-| Firelock | 535.5 | `WARLOCK_DESTRUCTION` | 6 | 2 |
 | Cat | 488.0 | `DRUID_CAT` | 5 | 3 |
 | Seal Twist Ret | 471.0 | `PALADIN_RETRIBUTION` | 7 | 3 |
+| Firelock | 468.4 | `WARLOCK_DESTRUCTION` | 6 | 2 |
 | Prot Warr | 454.6 | `WARRIOR_SHIELD_DEFENSIVE` | 14 | 10 |
 | Enh Shaman | 451.1 | `SHAMAN_ENHANCEMENT` | 7 | 5 |
 | Shadow | 437.3 | `PRIEST_SHADOW` | 6 | 4 |
-| Combat | 419.8 | `ROGUE_COMBAT` | 5 | 2 |
+| Combat | 422.5 | `ROGUE_COMBAT` | 5 | 2 |
 | Frostfire | 412.5 | `MAGE_FROSTFIRE` | 5 | 4 |
 | BM Hunter | 405.8 | `HUNTER_BEAST_MASTERY` | 7 | 5 |
 | Fire | 401.2 | `MAGE_FIRE` | 5 | 4 |
-| Venom | 392.7 | `ROGUE_VENOM` | 5 | 4 |
+| Venom | 395.9 | `ROGUE_VENOM` | 5 | 4 |
 | Arcane | 392.6 | `MAGE_ARCANE` | 5 | 4 |
 | Moonkin | 384.3 | `DRUID_MOONKIN` | 5 | 4 |
+| Rupture | 379.7 | `ROGUE_RUPTURE` | 8 | 5 |
 | Shockadin | 379.0 | `PALADIN_SHOCKADIN` | 7 | 2 |
-| Rupture | 377.1 | `ROGUE_RUPTURE` | 8 | 5 |
 | Bear | 376.2 | `DRUID_BEAR` | 8 | 4 |
-| SM/DS | 349.1 | `WARLOCK_AFFLICTION` | 5 | 4 |
+| SM/DS | 363.9 | `WARLOCK_AFFLICTION` | 5 | 4 |
 | LW Melee | 321.5 | `HUNTER_LONE_WOLF_MELEE` | 5 | 2 |
 | LW Ranged | 311.7 | `HUNTER_LONE_WOLF_RANGED` | 7 | 5 |
 | Ele Shaman | 295.4 | `SHAMAN_ELEMENTAL` | 3 | 1 |

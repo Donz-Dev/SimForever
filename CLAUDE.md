@@ -252,6 +252,14 @@ See [docs/combat-tables.md](docs/combat-tables.md).
   giving it a ranged attack power one instead, so reading spell power would
   reinstate something Forever took out. The sheet confirms it — the Hunter is
   the one class it left entirely unchanged.
+- **"DAMAGE FROM YOUR DAMAGE OVER TIME EFFECTS" IS ITS OWN FIELD**,
+  `periodicDamageTakenBySchool`, and folding it into `damageTakenBySchool` is the
+  mistake it exists to prevent: Wrack's +10% to Shadow DoTs would also raise
+  Shadow Bolt, which is half of the SM/DS profile's damage. **A bigger number
+  wearing the right label is not an approximation.** "Over time" is
+  `DamageRequest.periodic`, which a real tick sets and a CHANNEL's ticks do not --
+  so Wrack cannot amplify its own six ticks, which is what its own word "other"
+  asks for and nothing has to special-case.
 - **Every DoT can crit, and none is reduced by armor.** A Forever rule, not
   Classic's. A tick does not re-roll the table — whether the effect landed was
   settled on application — but it rolls for a crit at the crit chance of **the
@@ -306,6 +314,40 @@ them, including `ALL_ABILITIES`.
 - **A crit damage bonus raises the bonus HALF** — 1.0 for a 2x melee crit, 0.5
   for a 1.5x spell crit. "+100%" takes a spell crit to 2.0x, not 2.5x; a melee
   crit with "+10% crit damage" is 2.1x, never 2.2x.
+- **A TOOLTIP THAT LISTS SPELLS BY NAME IS A FOURTH SCOPE**, `abilityCritDamage`,
+  and the three above could not reach it: whole-character, per school and per
+  table all select something a NAMED LIST is not. `critMultiplierBonus` had
+  existed since Impale with no talent effect reaching it, and two talents in two
+  classes said so in almost identical words -- the Warlock's Pandemic over seven
+  periodic spells and the Rogue's Lethality over six strikes. **It DECLARES its
+  table rather than deriving one**, because `AbilityModifiers` is keyed by ability
+  and nothing in it knows which table an ability rolls on; reading the melee half
+  for Pandemic would have been worth twice the talent. **An aura id is an ability
+  id here**, which is what makes a talent naming seven DoTs expressible at all.
+- **A TREE IS NOT A SCHOOL, and for a Warlock the wrong reading is the tempting
+  one.** "Your DESTRUCTION spells" was `schoolDamage` / `schoolCritDamage` over
+  Fire and Shadow -- the two schools a Warlock HAS, so it selected every spell it
+  owns, Affliction included. Two talents did it, both for the whole project, and
+  Corruption collected +100% crit damage and +10% damage it was never entitled to.
+  **Read what the tooltip SELECTS, not what the class happens to cast**; the tree
+  is in the spellbook capture's own `tab` field, and **Shadow Bolt is a Destruction
+  spell** -- the entry a reader gets wrong from the school alone.
+- **A PER-SCHOOL EFFECT THAT COMES AND GOES BELONGS ON THE AURA, not in
+  `SchoolModifiers`** -- `AuraDefinition.damageDoneBySchool`, the attacker's
+  mirror of `damageTakenBySchool`. `SchoolModifiers` is built once when the
+  character is. **BOTH WARLOCK EFFECTS THAT WANTED IT WERE APPLIED
+  WHOLE-CHARACTER WITH A CAVEAT ADMITTING IT, AND BOTH CAVEATS UNDERSTATED THE
+  COST**: Demonic Sacrifice names one school out of four demons and Shadow and
+  Flame's two halves name OPPOSITE schools on purpose, so a hybrid collected
+  x1.10 twice on every school where the talent gives x1.10 once per school.
+  **"Generous for a hybrid" was −55.3 DPS of Firelock, 10% of the profile.**
+  `game/auras/warrior.ts` had predicted the field by name years of commits
+  earlier: "the day an aura needs to scale one school and not another".
+- **A CAVEAT IS NOT A SUBSTITUTE FOR THE FIELD, and its price is not a rounding
+  error.** Applying a per-school effect whole-character "because the profile is
+  almost all one school" is a claim about a PROFILE, and it silently becomes false
+  for the next build — which is exactly what happened: the same sentence was exact
+  for SM/DS and 10% wrong for Firelock, and it said "exact for either profile".
 - **`ALL_ABILITIES` COUNTS ON AN AURA TOO, and did not until Shatter needed it.**
   `AuraCollection.abilityModifierFor` looked the ability id up EXACTLY, so an aura
   declaring `{ '*': ... }` compiled, applied, reported its uptime and changed

@@ -456,3 +456,59 @@ describe('Cutthroat, Ambush and Premeditation, none of which needed stealth', ()
     }
   });
 });
+
+describe('Lethality, which named six abilities and could not reach them', () => {
+  /*
+   * ============================================================================
+   * "INCREASES THE CRITICAL STRIKE DAMAGE BONUS OF YOUR SINISTER STRIKE, GOUGE,
+   * BACKSTAB, MUTILATE, GHOSTLY STRIKE, AND HEMORRHAGE ABILITIES BY {0}%."
+   *
+   * ITS `unmodelled` REASON WAS EXACT AND NAMED THE FIELD: none of the three
+   * scopes selects a LIST, and `critMultiplierBonus` on `AbilityModifiers`
+   * existed with no talent effect reaching it. `abilityCritDamage` is that
+   * declaration, built for the Warlock's Pandemic, which wanted the identical
+   * mechanism -- one build, two classes.
+   *
+   * THE MELEE HALF IS 1.0, so 5/5's +20% takes a crit from 2.0x to 2.2x. The
+   * SPELL half would give 2.1x, which is plausible and half the talent -- which
+   * is why `abilityCritDamage` declares its table rather than deriving it.
+   *
+   * ALL THREE ROGUE PROFILES TAKE IT, at 5, 4 and 2 points.
+   * ============================================================================
+   */
+  const rogue = (preset: string) => {
+    const built = PRESETS_BY_ID.get(preset)!.build();
+    return createPlayer({
+      race: 'orc',
+      characterClass: 'rogue',
+      combatStyle: 'dual_wield',
+      talents: built.talents,
+      equipment: built.equipment,
+    });
+  };
+
+  it('scales with rank, on the MELEE crit half', () => {
+    // Venom 5/5 is 20%, Combat 4/5 is 16%, Rupture 2/5 is 8%.
+    expect(rogue('rogue_venom').abilityModifiers.for('sinister_strike').critMultiplierBonus)
+      .toBeCloseTo(0.2, 6);
+    expect(rogue('rogue_combat').abilityModifiers.for('sinister_strike').critMultiplierBonus)
+      .toBeCloseTo(0.16, 6);
+    expect(rogue('rogue_rupture').abilityModifiers.for('sinister_strike').critMultiplierBonus)
+      .toBeCloseTo(0.08, 6);
+  });
+
+  it('reaches the five abilities it names that exist, and nothing else', () => {
+    const venom = rogue('rogue_venom');
+    for (const id of ['sinister_strike', 'backstab', 'mutilate', 'ghostly_strike', 'hemorrhage']) {
+      expect(venom.abilityModifiers.for(id).critMultiplierBonus, id).toBeCloseTo(0.2, 6);
+    }
+    /*
+     * THE CONTAINMENT CHECK. Eviscerate is the ability a Rogue list spends most
+     * of its combo points on and the talent does not name it -- a
+     * whole-character or per-table reading would have swept it up and produced a
+     * larger, entirely plausible figure.
+     */
+    expect(venom.abilityModifiers.for('eviscerate').critMultiplierBonus ?? 0).toBe(0);
+    expect(venom.attackTableModifiers.for('melee-special').critMultiplierBonus ?? 0).toBe(0);
+  });
+});
