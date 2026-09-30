@@ -1,4 +1,5 @@
 import type { AbilityModifier } from '../combat/abilityModifiers';
+import type { Combatant } from '../actors/Combatant';
 import type { DamageSchool } from '../combat/DamageSchool';
 import type { Milliseconds } from '../time';
 import type { StatModifierSpec } from '../stats';
@@ -202,6 +203,25 @@ export interface AuraDefinition {
    * ----------------------------------------------------------------------------
    */
   readonly suppressesCooldownOf?: readonly string[];
+  /**
+   * An ABSORB SHIELD: how much damage this aura soaks before health is touched.
+   *
+   * ----------------------------------------------------------------------------
+   * A FUNCTION OF THE TARGET, EVALUATED ONCE WHEN THE AURA IS APPLIED, because
+   * every absorb in this ruleset is a share of something -- Templar's Bulwark
+   * is "100% of your maximum health". Evaluating it per hit would let the
+   * shield grow with a buff that landed after it, which is the same failure
+   * pattern as a maximum health computed from live stats instead of a snapshot.
+   *
+   * The remaining pool lives on the INSTANCE, not here: two characters can
+   * carry the same shield with different amounts left.
+   *
+   * `DamageResolution.absorbed` has existed and been hard-coded to zero since
+   * the pipeline was written, with a comment saying the field was there so
+   * adding absorbs later would not change its shape. This is that.
+   * ----------------------------------------------------------------------------
+   */
+  readonly absorb?: (target: Combatant) => number;
   /** Multiplies healing the carrier does. */
   readonly healingDoneMultiplier?: number;
   readonly periodic?: PeriodicEffect;
@@ -287,6 +307,15 @@ export class AuraInstance {
   stacks: number;
   appliedAt: Milliseconds;
   expiresAt: Milliseconds;
+
+  /**
+   * Damage this aura will still soak, for an absorb shield.
+   *
+   * Set from `definition.absorb` when the aura is applied and drawn down by
+   * the damage pipeline. Zero for every aura that is not a shield, so the
+   * common case costs one number comparison.
+   */
+  absorbRemaining = 0;
 
   /** Queue handle for the expiry event, so early removal can cancel it. */
   expirationHandle: ScheduledEvent | null = null;

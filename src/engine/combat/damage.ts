@@ -571,9 +571,17 @@ export function resolveDamage(
   const mitigated = afterTarget * reduction + blocked;
   const afterMitigation = Math.max(0, afterTarget - mitigated);
 
-  // Absorb shields are not implemented yet; the field exists so that adding
-  // them later does not change this function's shape or its telemetry.
-  const absorbed = 0;
+  /*
+   * ABSORBS COME LAST, after armor and after a block, which is the order the
+   * pipeline comment at the top of this file has always stated.
+   *
+   * READ, NOT SPENT. This function applies nothing -- an ability can resolve a
+   * hit without the hit happening -- so it asks how much WOULD be soaked and
+   * `dealDamage` spends it afterwards. Exactly the arrangement a block charge
+   * has, and said twice because getting it wrong here would drain a shield for
+   * damage that never landed.
+   */
+  const absorbed = Math.min(afterMitigation, target.auras.absorbAvailable());
 
   const amount = Math.max(0, afterMitigation - absorbed);
 
@@ -672,6 +680,16 @@ export function dealDamage(
    */
   if (attack.outcome === 'block') {
     target.auras.consumeBlockCharges(context);
+  }
+
+  /*
+   * AND THE ABSORB IS SPENT HERE for the same reason the block charge is:
+   * `resolveDamage` worked out how much would be soaked and applied nothing.
+   * A shield drawn down inside that function would lose the amount every time
+   * an ability resolved a hit it did not deal.
+   */
+  if (resolution.absorbed > 0) {
+    target.auras.consumeAbsorb(context, resolution.absorbed);
   }
 
   const healthBefore = target.health.current;
