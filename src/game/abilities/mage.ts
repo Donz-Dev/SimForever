@@ -15,6 +15,8 @@ import {
   FROSTFIRE_COEFFICIENTS,
   FROSTFIRE_DOT,
   FROZEN_UNMODELLED,
+  MAGE_ARMOR,
+  MAGE_ARMOR_MAGIC_RESISTANCE,
   PRESENCE_OF_MIND,
   PYROBLAST_CAST_MS,
   PYROBLAST_COEFFICIENTS,
@@ -465,6 +467,27 @@ export const PRESENCE_OF_MIND_ABILITY: Ability = {
   },
 };
 
+/**
+ * Mage Armor. One instant at the pull, and it lasts the fight.
+ *
+ * Its worth is entirely the five second rule -- see `MAGE_ARMOR` for why the
+ * mana half is the half that matters here and the resistance half is not.
+ */
+export const MAGE_ARMOR_ABILITY: Ability = {
+  id: 'mage_armor',
+  name: 'Mage Armor',
+  cost: { resource: 'mana', amount: 490 },
+  requiresTarget: false,
+  canCast: ({ caster }) => !caster.auras.has('mage_armor'),
+  onCast: ({ simulation, caster }) => {
+    simulation.applyAura(caster, MAGE_ARMOR, caster.id);
+  },
+  unmodelled:
+    `Its +${MAGE_ARMOR_MAGIC_RESISTANCE} resistance to all magic does nothing: ` +
+    'no Mage profile is attacked, so there is no incoming spell for it to ' +
+    'reduce. The mana half is modelled in full.',
+};
+
 export const MAGE_ABILITIES: readonly Ability[] = [
   FIREBALL,
   SCORCH,
@@ -479,4 +502,5 @@ export const MAGE_ABILITIES: readonly Ability[] = [
   ARCANE_BLAST_ABILITY,
   ARCANE_POWER_ABILITY,
   PRESENCE_OF_MIND_ABILITY,
+  MAGE_ARMOR_ABILITY,
 ];
