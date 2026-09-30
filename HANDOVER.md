@@ -6,7 +6,8 @@ gets built is [docs/class-implementation.md](docs/class-implementation.md).
 ## Where the project is
 
 All nine classes and all 23 profiles are implemented, every number traced to a
-source rather than invented. **1,892 tests**, CI green on Node 20 and 22. Profile
+source rather than invented, and **all 23 priority lists are the ruleset owner's
+own** -- specified entry by entry and measured after. **1,892 tests**, CI green on Node 20 and 22. Profile
 format **v10**. Live at <https://donz-dev.github.io/SimForever/>, republished by
 `.github/workflows/deploy.yml` on every push to `main` that passes.
 
@@ -347,6 +348,11 @@ lists are the owner's, every entry in every one of them fires, and the baseline
 above is measured on them. [docs/handoff-rotations.md](docs/handoff-rotations.md)
 carries what each list turned out to be worth and the three findings that came
 out of building them.
+
+**PICKING IT UP AGAIN HAS ITS OWN BRIEF**: [docs/handoff-apl.md](docs/handoff-apl.md),
+which carries the state, the six open items below in full, the tools in the order
+to use them, and the two things about this codebase a list author needs before
+writing an entry.
 
 **WHAT THE APL WORK LEFT BEHIND, in order of how much it costs:**
 

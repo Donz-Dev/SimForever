@@ -511,18 +511,39 @@ spends 60 mana and a GCD at the pull — measured −10.1. Measure the CAST.
 **AN ENTRY THAT NEVER FIRES HAS FOUR CAUSES AND THREE OF THEM ARE INVISIBLE.**
 The id names no ability; the build never learned it; the entry above never
 yields; or the ENCOUNTER already supplies it. Only the first is caught by a
-test. **Twelve entries across eight of the 23 profiles fire zero times**, and
+test. Twelve entries across eight of the 23 profiles once fired zero times, and
 every one of them produced an ordinary DPS figure and an ordinary results page
 -- an entry that never fired is simply a row that is not there.
 `tools/measure_profiles.ts` with `USES=1` prints the list in priority order with
 what each entry actually did, and reading the built character's own ability book
 is what tells the BUILD cause apart from the POSITION cause rather than guessing.
 
+**AND A FIFTH CAUSE, WHICH IS THE ENGINE SIDE OF THE SAME COIN: THE CONDITION
+READS SOMETHING NOTHING SETS.** `Combatant.recordSwing` was added so the Hunter
+lists could ask "has a ranged auto-attack fired in the last 0.5 seconds", and it
+landed in `extraAttack` instead of `scheduleSwing` -- two functions carrying the
+SAME TWO LINES, so the edit matched the wrong one. The window never opened,
+Aimed Shot and Sniper Shot fired zero times in three lists, nothing errored, and
+the comment beside the mistake asserted the opposite of what the code did. **When
+a new condition primitive is added, the `USES=1` pass IS the test that it
+fires** -- the suite passed with it broken.
+
 **AN UNCONDITIONAL ENTRY IS A FLOOR UNDER EVERYTHING BELOW IT.** The Rupture
 Rogue's Hemorrhage is 35 energy and ungated, with Ghostly Strike at 40 and
 Sinister Strike at 45 beneath it: nothing below an ungated, cheaper ability can
 ever be the first castable entry, so a six-entry list is really a three-entry
-one. **A DUPLICATE ID IS ONLY A BUG IN THAT SAME SHAPE** -- the Mage's Arcane
+one.
+
+**AND THE COST THAT DECIDES IT IS THE BUILT ONE, NOT THE TOOLTIP'S.** The Cat
+Druid's Claw fired zero times at ANY energy, and its own comment explained why it
+should fire: "falls back when Shred is unaffordable, which at 60 energy it often
+is". Both halves were wrong. Improved Shred takes Shred from 60 to 42 and
+Ferocity takes Claw from 45 to 42, so the two cost the SAME and the harder-hitting
+one is above it. Read costs off the character `characterAtCombatStart` builds, not
+off the ability declaration -- a talent cost reduction is exactly the thing that
+turns a sensible fallback into an unreachable one.
+
+**A DUPLICATE ID IS ONLY A BUG IN THAT SAME SHAPE** -- the Mage's Arcane
 Missiles and the Warlock's Shadow Bolt are each in their list twice on purpose,
 gated on a proc above and ungated as the filler below, and a test that said "no
 ability twice" failed both correct lists the moment it was pointed at a class
@@ -548,6 +569,53 @@ is the same structural argument `classRegistration.test.ts` makes.
 dispatches on style, stance and talents in five different patterns across nine
 classes, and the Shockadin ran a list built around a talent it does not take for
 its whole life without erroring. All 23 mappings are pinned now.
+
+**A REFRESH WINDOW CLIPS, AND A BUFF IS WHAT EXPOSES IT.** Every list this
+project wrote for itself refreshed a debuff at two seconds remaining, and a
+refresh RESETS the aura -- so whatever is left is thrown away, and the faster the
+character acts the sooner it reaches the entry inside that window. Nature's Grace
+cost the Moonkin 14.9 DPS doing nothing but speeding it up: casts went 26.3 a
+fight to 27.4 while Moonfire ticks fell 25.1 to 22.5. **A haste buff that
+measures as a loss is this, not a bug.** The ruleset owner's lists say "if not
+active" instead, and the Elemental Shaman's entire +16.4 is that one word on
+Flame Shock with nothing else in its list changed.
+
+**ISOLATE A LOSS, DO NOT BLAME THE OBVIOUS SUSPECT.** The owner's Venom list
+measured -24.3 and the suspect was its Venom entry, which THREE earlier
+placements had each measured as a loss. It was not: removing the entry dropped
+the list to 375.0, so it is worth +17.7 there. The whole -24.3 is the two
+aura-duration floors on Eviscerate -- gating it on five combo points alone gives
+413.1, inside the interval -- because the floors suppress it to 0.2 casts a fight
+and the points overflow instead. **A prior measurement is true of the list it was
+taken in**, and "a point spent on Venom is a point not spent on Eviscerate" stops
+holding when Eviscerate cannot fire.
+
+**A SPECIFICATION READ LITERALLY CAN DISABLE ITSELF, AND BOTH TIMES IT LOOKED
+FINE.** "Scorch if scorch debuff <= 5" is always true, because Fire Vulnerability
+caps at five -- so Scorch becomes unconditional and every entry below it in two
+Mage lists is unreachable. And the Seal Twist cycle had NO ENTRY POINT: each seal
+was gated on the other being up, so after the opening Seal of the Crusader
+neither could ever fire and the profile named "Seal Twist" ran a whole fight on
+one seal. Nothing errored either time. **Implement the reading that leaves every
+clause doing work, name the constant, and say which reading was chosen** -- and
+where the fix changes the owner's design rather than interpreting it, ask.
+
+**THE OWNER'S LIST OUTRANKS A MEASURED DECISION OF OURS, AND THE MEASUREMENT
+STAYS.** `petsAndHunter.test.ts` asserted Hunter's Mark OUT of the melee list on
+40 batches saying -10.1 there. The owner's list names it, so it is in, and -10.1
+became the price of that choice rather than an argument against it. The test now
+asserts what is not a rotation decision -- the ability is cast once -- and keeps
+the figure. **A test that pins a rotation decision has to give way when the
+decision changes owner; a test that pins an invariant does not.** Two Paladin
+tests asserting "every build keeps a seal up and judges it" are the second kind,
+and they are what caught the seal deadlock.
+
+**A LIST CAN CHANGE COMPLETELY AND BE WORTH NOTHING.** Combat's Eviscerate went
+from 1.1 casts a fight to 9.0 for +0.6 DPS, and the Rupture list went from three
+live entries to seven for +0.1. "Hold for five combo points" is a claim about
+damage per POINT and spending as they come is a claim about the whole cycle, and
+the measurement says they are the same cycle. **The uses column is what says
+whether a list changed at all; the DPS says whether it mattered.**
 
 ### Gear and items
 
