@@ -55,6 +55,7 @@ import {
   autoAttackModeForStyle,
   weaponsForStyle,
 } from './weapons';
+import { poisonReactions, type PoisonLoadout } from '../reactions/poisons';
 
 export interface PlayerOptions {
   readonly id?: string;
@@ -131,6 +132,14 @@ export interface PlayerOptions {
    * none of these standing alone.
    */
   readonly extraReactions?: readonly Reaction[];
+  /**
+   * Which poison coats which weapon. A Rogue's, and ignored by everyone else.
+   *
+   * Absent means NO POISONS AT ALL rather than the default pair, so a test or
+   * a caller that has not opted in is unaffected -- the encounter passes the
+   * profile's loadout, which is where the default lives.
+   */
+  readonly poisons?: PoisonLoadout;
   /**
    * Stats to size the HEALTH AND MANA POOLS from, when they are not the
    * character's own starting stats.
@@ -417,6 +426,19 @@ export function createPlayer(options: PlayerOptions): Combatant {
       // from the rank taken, so they carry that character's numbers.
       ...build.reactions,
       // Whoever else is in the raid. Windfury Totem is the only one today.
+      /*
+       * POISONS, one reaction per hand, built HERE so each character in a
+       * batch gets its own -- the same per-character requirement Windfury has,
+       * where a shared closure silently stopped it proccing after the first
+       * iteration.
+       *
+       * Only a Rogue is given them, because only a Rogue has them: handing a
+       * Warrior a poison reaction would be harmless (it never applies one) but
+       * would put a dead entry in every other character's reaction list.
+       */
+      ...(options.poisons && characterClass === 'rogue'
+        ? poisonReactions(options.poisons, legal.allocation)
+        : []),
       ...(options.extraReactions ?? []),
     ],
     /*

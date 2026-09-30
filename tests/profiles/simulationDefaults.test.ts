@@ -31,11 +31,16 @@ describe('a new profile', () => {
     expect(simulation.iterations).toBe(3000);
   });
 
-  it('is format 9', () => {
+  it('is format 10, which added a Rogue’s poisons', () => {
     // Version 9 added `raidBuffs`. Written out rather than read from the
     // constant, so a bump has to be deliberate.
-    expect(CURRENT_PROFILE_VERSION).toBe(9);
-    expect(createDefaultProfile().version).toBe(9);
+    expect(CURRENT_PROFILE_VERSION).toBe(10);
+    expect(createDefaultProfile().version).toBe(10);
+    // And the owner's stated default pairing comes with it.
+    expect(createDefaultProfile().poisons).toEqual({
+      mainHand: 'instant_poison',
+      offHand: 'deadly_poison',
+    });
   });
 
   it('has no variance field at all', () => {

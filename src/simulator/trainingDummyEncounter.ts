@@ -223,6 +223,8 @@ function createPlayerFor(
      * `raidBuffPoolStats`.
      */
     poolStats: raidBuffPoolStats(profile.raidBuffs),
+    // Which poison is on which hand. A Rogue's choice; ignored by the rest.
+    poisons: profile.poisons,
   });
 }
 

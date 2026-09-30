@@ -2,6 +2,7 @@ import type { PartialStats } from '../engine';
 import type { ClassId, CombatStyleId, RaceId, StanceId } from '../game/character';
 import type { Equipment } from '../game/items/Item';
 import type { TalentAllocation } from '../game/talents/Talent';
+import { DEFAULT_POISON_LOADOUT, type PoisonLoadout } from '../game/reactions/poisons';
 
 /**
  * The profile format version.
@@ -12,7 +13,7 @@ import type { TalentAllocation } from '../game/talents/Talent';
  * moves on. Getting this in before anyone has saved anything is much cheaper
  * than retrofitting it later.
  */
-export const CURRENT_PROFILE_VERSION = 9;
+export const CURRENT_PROFILE_VERSION = 10;
 
 export interface CharacterSection {
   readonly name: string;
@@ -198,12 +199,29 @@ export interface CharacterProfile {
    * character fighting unbuffed -- which is exactly what they were.
    */
   readonly raidBuffs: readonly string[];
+  /**
+   * Which poison coats which weapon. A Rogue's, and nobody else's.
+   *
+   * ----------------------------------------------------------------------------
+   * A PROFILE FIELD RATHER THAN A CONSTANT, because it is a CHOICE a player
+   * makes and changes -- the same argument that put raid buffs and enchants
+   * here. The Gear panel shows it under the weapon enchants, for Rogues only.
+   *
+   * Added in format version 10, defaulting to Instant on the main hand and
+   * Deadly on the off hand, which is the ruleset owner's stated default.
+   * OLDER PROFILES GET THE SAME DEFAULT RATHER THAN NOTHING, and that is the
+   * one migration here that deliberately CHANGES old results: poisons did not
+   * exist before this version, so every saved Rogue was fighting without them
+   * and every Rogue figure ever recorded is a floor.
+   */
+  readonly poisons: PoisonLoadout;
 }
 
 /** A sensible starting profile, matching the first-milestone prototype. */
 export function createDefaultProfile(): CharacterProfile {
   return {
     version: CURRENT_PROFILE_VERSION,
+    poisons: { ...DEFAULT_POISON_LOADOUT },
     character: {
       name: 'Example',
       race: 'human',
@@ -260,6 +278,9 @@ export function cloneProfile(profile: CharacterProfile): CharacterProfile {
   return {
     version: profile.version,
     character: { ...profile.character },
+    // Its own object, or two profiles would share one loadout and swapping a
+    // poison on either would swap it on both.
+    poisons: { ...profile.poisons },
     stats: { ...profile.stats },
     // One level deeper than a spread: each slot is its own object, so copying
     // only the map would leave both profiles sharing the same slot entries.

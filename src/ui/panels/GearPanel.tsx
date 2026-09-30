@@ -6,6 +6,11 @@ import { enchantsForSlot, itemsForSlot } from '../../game/items/itemData';
 import { unmodelledEffects } from '../../game/items/equipment';
 import { hasStartingEquipment, startingEquipmentFor } from '../../game/items/startingSets';
 import { Panel } from '../components/Panel';
+import {
+  POISON_NAMES,
+  type PoisonId,
+  type PoisonLoadout,
+} from '../../game/reactions/poisons';
 
 /** A gear slot, as the panel lists it. */
 interface SlotRow {
@@ -191,6 +196,13 @@ export function GearPanel({ profile, onChange }: GearPanelProps) {
         ))}
       </div>
 
+      {profile.character.characterClass === 'rogue' ? (
+        <PoisonRow
+          poisons={profile.poisons}
+          onChange={(poisons) => onChange({ ...profile, poisons })}
+        />
+      ) : null}
+
       {missing.length > 0 ? (
         <>
           <h3>Equipped but not simulated</h3>
@@ -209,6 +221,63 @@ export function GearPanel({ profile, onChange }: GearPanelProps) {
         </>
       ) : null}
     </Panel>
+  );
+}
+
+/**
+ * Which poison coats which weapon. A Rogue's, and nobody else's.
+ *
+ * ----------------------------------------------------------------------------
+ * UNDER THE WEAPON ENCHANTS, because that is what a poison IS: a coating a
+ * player chooses per hand, sitting in the same place in the character sheet
+ * and answering the same question. It is rendered as its own row rather than a
+ * third dropdown on each weapon, because a poison is not tied to the ITEM the
+ * way an enchant is -- swapping the weapon keeps the poison.
+ *
+ * THE DEFAULT IS INSTANT ON THE MAIN HAND AND DEADLY ON THE OFF HAND, the
+ * ruleset owner's stated pairing, and the control exists because the owner
+ * asked for it to be swappable rather than fixed.
+ * ----------------------------------------------------------------------------
+ */
+function PoisonRow({
+  poisons,
+  onChange,
+}: {
+  readonly poisons: PoisonLoadout;
+  readonly onChange: (next: PoisonLoadout) => void;
+}) {
+  const options = Object.entries(POISON_NAMES) as Array<[PoisonId, string]>;
+
+  return (
+    <div className="gear-poisons">
+      <h3>Poisons</h3>
+      <p className="muted">
+        Each strike with a weapon has a chance to apply the poison coating it. Charges are
+        not modelled, so they never run out.
+      </p>
+      <div className="gear-grid">
+        {(['mainHand', 'offHand'] as const).map((hand) => (
+          <div className="gear-slot" key={hand}>
+            <span className="gear-slot-name">{hand === 'mainHand' ? 'Main Hand' : 'Off Hand'}</span>
+            <select
+              className="gear-select"
+              value={poisons[hand]}
+              aria-label={`${hand === 'mainHand' ? 'Main hand' : 'Off hand'} poison`}
+              onChange={(event) =>
+                onChange({ ...poisons, [hand]: event.target.value as PoisonId })
+              }
+            >
+              {options.map(([id, name]) => (
+                <option key={id} value={id}>
+                  {name}
+                </option>
+              ))}
+            </select>
+            <span className="gear-no-enchant">—</span>
+          </div>
+        ))}
+      </div>
+    </div>
   );
 }
 
