@@ -284,15 +284,17 @@ global cooldowns on threat and survival, neither of which is damage.
 
 **STILL OPEN:**
 
-1. **A coefficient for Wrack.** The sheet has no row for it, so it deals a flat
-   36 a tick and scales with nothing. It is out of the SM/DS list and its
-   implementation is paused.
-2. **LW Melee lost 237 DPS and went from the highest non-Warrior profile to
+1. **LW Melee lost 237 DPS and went from the highest non-Warrior profile to
    fourth from bottom.** −100.6 of that is Raptor Strike becoming on-next-swing,
    which its capture stated all along and is not a choice. The other −136.6 is
    the list dropping Serpent Sting, Arcane Shot and Rapid Fire while adding
    Hunter's Mark, which a 40-batch measurement put at −10.1 for this build
    specifically. Implemented as written; worth confirming it is intended.
-3. **"Scorch if scorch debuff <= 5"** is implemented as `< 5`, because Fire
-   Vulnerability caps at five and the literal reading makes Scorch
-   unconditional. `SCORCH_STACK_CAP` is the one-line flip.
+
+**ANSWERED SINCE, both by the ruleset owner.** Wrack's coefficient is **14.3% of
+spell power a tick**, six ticks a second apart, supplied directly because the
+sheet has no Wrack row. It is applied, and the ability stays out of every list --
+the coefficient did not make it worth casting, because the reason to cast it is
+the unmodelled +10% to other Shadow DoTs. And **"Scorch if scorch debuff <= 5"
+is confirmed as `< 5`**, which is what was implemented; flagging the reading is
+what got it asked.

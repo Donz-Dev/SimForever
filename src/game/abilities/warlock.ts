@@ -17,6 +17,7 @@ import {
   SEARING_PAIN_SP_COEFFICIENT,
   SHADOWBURN_SP_COEFFICIENT,
   SHADOW_BOLT_SP_COEFFICIENT,
+  WRACK_TICK_SP_COEFFICIENT,
 } from '../combat/coefficients';
 
 /**
@@ -382,28 +383,32 @@ export const SEARING_PAIN: Ability = {
  * six-second CHANNEL, new in Forever and rank 1 IS max.
  *
  * ----------------------------------------------------------------------------
- * TWO HALVES AND ONLY ONE OF THEM IS MODELLED, and the unmodelled one is the
- * reason anybody would cast it. Both are stated rather than folded away.
+ * TWO HALVES, AND THE ONE STILL MISSING IS THE REASON ANYBODY WOULD CAST IT.
  *
- * ITS DAMAGE HAS NO COEFFICIENT, because the sheet has no Wrack row.
- * `WoWSimWorksheet.xlsx` is the owner's authoritative coefficient document and
- * it lists nine of the Warlock's spells; this is not one. So Wrack deals a flat
- * 36 a tick and does not scale at all, which is what "never invent game data"
- * requires and is also very probably not what the ruleset intends -- an
- * Affliction capstone that ignores spell power is a strange thing.
+ * ITS COEFFICIENT IS 14.3% OF SPELL POWER PER TICK, supplied by the ruleset
+ * owner directly rather than by `WoWSimWorksheet.xlsx`, which has no Wrack row.
+ * That closed the gap this ability was PAUSED on. The provenance is recorded at
+ * `WRACK_TICK_SP_COEFFICIENT`, because it is the one row in that file which a
+ * refresh of the sheet will not contain.
  *
- * ITS +10% TO YOUR OTHER SHADOW DoTs IS NOT MODELLED EITHER. The engine has
+ * ITS +10% TO YOUR OTHER SHADOW DoTs IS STILL NOT MODELLED. The engine has
  * damage-taken multipliers per SCHOOL, and a school multiplier would also raise
  * Shadow Bolt, which is 58.9% of the SM/DS profile's damage. That is not an
  * approximation, it is a much bigger number wearing the right label -- so the
  * clause keeps its own words instead. A periodic-only school vulnerability is
  * the field it wants.
  *
- * THE CONSEQUENCE, SAID PLAINLY: as modelled, Wrack cannot be worth casting.
- * Six seconds of channel for a flat 216 against a Shadow Bolt worth 268 plus
- * 0.857 spell power in three. The ability is built, its mechanism is tested,
- * and whether it belongs in a list is a question for the two gaps above rather
- * than for a measurement.
+ * THE COEFFICIENT DID NOT MAKE IT WORTH CASTING, and that is worth saying
+ * plainly so nobody reads the number as a buff and goes looking for a list to
+ * put it in. Six ticks at 14.3% is 0.858 over the channel -- Shadow Bolt's
+ * 0.857 delivered in twice the time -- so six seconds of Wrack is 216 + 0.858
+ * against two Shadow Bolts at 536 + 1.714 in the same six. It is about half the
+ * damage either way, before and after.
+ *
+ * SO IT IS IN NO LIST, and the owner has said so outright: "it's unimportant
+ * for the rest of the simulator for now, there isn't a profile that uses it."
+ * Built, coefficient applied, mechanism tested, and its value waits on the
+ * amplification clause rather than on a measurement.
  * ----------------------------------------------------------------------------
  */
 export const WRACK_TICK_DAMAGE = 36;
@@ -429,10 +434,12 @@ export const WRACK: Ability = {
       school: 'shadow',
       baseAmount: WRACK_TICK_DAMAGE,
       /*
-       * NO COEFFICIENT, and deliberately absent rather than zero-by-omission:
-       * the sheet states none for this spell, and a plausible one invented
-       * here would be indistinguishable from a real one.
+       * PER TICK, and `onCast` runs once per channel tick, so this is the
+       * per-tick figure and not the total. Added to the flat 36 rather than
+       * replacing it -- the owner's standing instruction with the sheet was to
+       * make sure flat ability damage does not get lost.
        */
+      powerCoefficient: WRACK_TICK_SP_COEFFICIENT,
       attackTable: ability.attackTable,
     });
   },
@@ -441,8 +448,7 @@ export const WRACK: Ability = {
     'damage over time effects" does nothing. Damage-taken multipliers here are ' +
     'per SCHOOL, and a Shadow multiplier would also raise Shadow Bolt -- 58.9% ' +
     "of this profile's damage -- which is a bigger number rather than an " +
-    'approximation. It also carries NO spell power coefficient, because the ' +
-    "owner's coefficient sheet has no Wrack row.",
+    'approximation. A periodic-only school vulnerability is the field it wants.',
 };
 
 export const WARLOCK_ABILITIES: readonly Ability[] = [

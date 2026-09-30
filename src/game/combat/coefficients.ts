@@ -265,6 +265,31 @@ export const SEARING_PAIN_SP_COEFFICIENT = 0.429;
 export const IMMOLATE_SP_COEFFICIENT = 0.2;
 export const IMMOLATE_TICK_SP_COEFFICIENT = 0.13;
 
+/*
+ * WRACK: 14.3% of spell power PER TICK, six ticks one second apart.
+ *
+ * ----------------------------------------------------------------------------
+ * THE ONE ROW IN THIS FILE THAT IS NOT FROM THE SHEET. `WoWSimWorksheet.xlsx`
+ * lists nine Warlock spells and Wrack is not one of them, so this number was
+ * supplied by the ruleset owner directly, in the same message that confirmed
+ * the cadence: "14.3% of spell power each tick, ticks every second for 6
+ * seconds, 6 total ticks."
+ *
+ * SAID HERE RATHER THAN FOLDED IN, because everything around it is transcribed
+ * from one document and a reader who knows that would otherwise look for this
+ * row in the sheet and not find it. The authority is the same -- it is the
+ * owner either way -- but the PROVENANCE is different, and the next refresh of
+ * the sheet will not contain this line.
+ *
+ * SIX TICKS AT 14.3% IS 0.858 OVER THE CHANNEL, which is Shadow Bolt's 0.857
+ * delivered in twice the time. That is worth knowing before reading this as a
+ * buff: the coefficient closes the DATA gap and does NOT make Wrack worth
+ * casting, because the reason to cast it is still unmodelled. See `WRACK` in
+ * `abilities/warlock.ts`.
+ * ----------------------------------------------------------------------------
+ */
+export const WRACK_TICK_SP_COEFFICIENT = 0.143;
+
 // ---------------------------------------------------------------------------
 // Druid
 // ---------------------------------------------------------------------------
