@@ -350,7 +350,7 @@ carries what each list turned out to be worth and the three findings that came
 out of building them.
 
 **PICKING IT UP AGAIN HAS ITS OWN BRIEF**: [docs/handoff-apl.md](docs/handoff-apl.md),
-which carries the state, the six open items below in full, the tools in the order
+which carries the state, the five open items below in full, the tools in the order
 to use them, and the two things about this codebase a list author needs before
 writing an entry.
 
@@ -367,11 +367,7 @@ writing an entry.
    raid boss" stopped being the whole story: Fingers of Frost treats the next
    two spells as though one were, and the Frostfire build takes both talents.
    It needs `AuraDefinition.abilityModifiers` to honour the `ALL_ABILITIES` key.
-3. **`protectionTalents.test.ts` "Bastion raises DPS" is flaky.** It failed
-   twice under the full suite and passed in isolation on the same commit. It is
-   a SEEDED test, so isolated and full-suite runs should be identical -- that
-   non-determinism is worth finding.
-4. **Two of the owner's lists measure down and were shipped as written**, with
+3. **Two of the owner's lists measure down and were shipped as written**, with
    the cost isolated rather than acted on: Venom's Eviscerate floors at -20.4,
    and Shadow Word: Death leaving the Priest at -35.7. Both are the owner's
    design and both numbers are in the baseline notes above.

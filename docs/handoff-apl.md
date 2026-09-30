@@ -102,13 +102,6 @@ for "at cap", which is the evidence for `< 5`.
 `SCORCH_STACK_CAP` in `src/game/rotations/mage.ts` is the one-line flip if the
 literal reading was intended.
 
-### 6. `protectionTalents.test.ts` "Bastion raises DPS" is flaky
-
-It failed twice under the full suite and passed in isolation on the same commit.
-**It is a SEEDED test**, so isolated and full-suite runs should be identical —
-that non-determinism is real and is not the Bastion talent. Nothing in the APL
-work touches it.
-
 ---
 
 ## The one addition to the owner's orders
