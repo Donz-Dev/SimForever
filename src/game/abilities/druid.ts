@@ -10,7 +10,9 @@ import {
   MOONFIRE_COEFFICIENTS,
   MOONFIRE_DOT,
   RAKE_DOT,
+  BERSERK_COOLDOWN_MS,
   TIGERS_FURY,
+  berserkAura,
   ripAura,
 } from '../auras/druid';
 import { awardComboPoint, hasComboPoints, spendComboPoints } from '../combat/comboPoints';
@@ -504,6 +506,33 @@ export const DEMORALIZING_ROAR_ABILITY: Ability = {
     'Warrior Demoralizing Shout carries.',
 };
 
+/**
+ * Berserk, learned at 40 and usable in Cat, Bear and Dire Bear form.
+ *
+ * Free, instant, three minute cooldown. Every clause of it, what each one
+ * reaches and what "+100%" was ruled to mean are on `berserkAura`.
+ *
+ * THE GENERATORS ARE READ OFF THIS FILE'S OWN ABILITIES rather than named, so
+ * an ability that starts awarding a combo point is covered by Berserk on the
+ * same day. The list is computed once at module load, not per cast.
+ */
+export const COMBO_POINT_GENERATORS: readonly string[] = [SHRED, CLAW, RAKE]
+  .filter((ability) => (ability.comboPointsAwarded ?? 0) > 0)
+  .map((ability) => ability.id);
+
+export const BERSERK: Ability = {
+  id: 'berserk',
+  name: 'Berserk',
+  cooldownMs: BERSERK_COOLDOWN_MS,
+  requiresTarget: false,
+  onCast: ({ simulation, caster }) => {
+    simulation.applyAura(caster, berserkAura(COMBO_POINT_GENERATORS), caster.id);
+  },
+  unmodelled:
+    'Its "strike up to 3 targets" does nothing -- every encounter here has ' +
+    'one -- and its Fear immunity is crowd control, which is out of scope.',
+};
+
 export const DRUID_ABILITIES: readonly Ability[] = [
   WRATH,
   STARFIRE,
@@ -520,4 +549,5 @@ export const DRUID_ABILITIES: readonly Ability[] = [
   SWIPE,
   LACERATE_ABILITY,
   DEMORALIZING_ROAR_ABILITY,
+  BERSERK,
 ];

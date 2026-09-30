@@ -4,12 +4,16 @@ import { runProfileBatch } from '../../src/simulator';
 import { PRESETS_BY_ID } from '../../src/profiles/presets';
 import {
   CHAIN_LIGHTNING_DAMAGE,
+  EARTH_SHOCK,
   EARTH_SHOCK_DAMAGE,
+  FLAME_SHOCK,
   FLAME_SHOCK_DIRECT,
+  FROST_SHOCK,
   FROST_SHOCK_DAMAGE,
   LAVA_BURST_DAMAGE,
   LAVA_BURST_FLAME_SHOCK_BONUS,
   LIGHTNING_BOLT_DAMAGE,
+  SHOCK_COOLDOWN_GROUP,
 } from '../../src/game/abilities/shaman';
 import {
   FLAME_SHOCK_DOT_DURATION_MS,
@@ -24,7 +28,7 @@ import {
 } from '../../src/game/reactions/shaman';
 import { SHAMAN_TALENT_EFFECTS } from '../../src/game/talents/shamanEffects';
 import { abilitiesForClass } from '../../src/game/abilities/abilitiesForClass';
-import { castAbility, resolveCast } from '../../src/engine';
+import { castAbility, checkCast, resolveCast, seconds } from '../../src/engine';
 import { buildSimulation } from '../helpers/buildSimulation';
 import { makeAttacker, makeTarget } from '../helpers/actors';
 import { MAELSTROM_WEAPON_MAX_STACKS, maelstromWeaponAura } from '../../src/game/auras/shaman';
@@ -453,5 +457,71 @@ describe('Elemental Fury, corrected', () => {
     }
     // And not arcane, which the tooltip does not name.
     expect(actor.schoolModifiers.for('arcane').critMultiplierBonus ?? 0).toBe(0);
+  });
+});
+
+describe('the three shocks share one cooldown', () => {
+  /*
+   * --------------------------------------------------------------------------
+   * THE RULESET OWNER'S RULING, and the failure it corrects is a bigger number
+   * rather than an error: "these do share a cooldown, but Flame Shock's
+   * duration is long enough such that they can be alternated, therefore both
+   * deserve to be on the list."
+   *
+   * Three independent six-second cooldowns let the Enhancement list cast Flame
+   * Shock and Earth Shock in consecutive globals for a whole fight. Nothing
+   * about that looks wrong on a results page -- both abilities are declared
+   * correctly, both cost the right mana, and the rotation simply gets more out
+   * of them than the ruleset allows.
+   *
+   * ASSERTED BOTH WAYS. The declaration, because that is what a new shock has
+   * to remember; and the BEHAVIOUR, because a shared group is exactly the
+   * thing a per-ability `cooldownMs` looks identical to until two different
+   * abilities are involved.
+   * --------------------------------------------------------------------------
+   */
+  it('declares the group on every one of them', () => {
+    for (const shock of [EARTH_SHOCK, FLAME_SHOCK, FROST_SHOCK]) {
+      expect(shock.cooldownGroup, shock.name).toBe(SHOCK_COOLDOWN_GROUP);
+      // The group's length is the triggering ability's own cooldown, so all
+      // three agreeing is what makes the group need nothing else said.
+      expect(shock.cooldownMs, shock.name).toBe(seconds(6));
+    }
+  });
+
+  it('refuses the OTHER shock after one is cast, which a per-ability cooldown would not', () => {
+    const built = PRESETS_BY_ID.get('shaman_enhancement')!.build();
+    const actor = makeAttacker({
+      autoAttack: 'none',
+      abilities: abilitiesForClass('shaman', 'two_hander', built.talents),
+      resources: [{ type: 'mana', maximum: 50_000 }],
+    });
+    const target = makeTarget();
+    const simulation = buildSimulation([actor, target]);
+
+    expect(checkCast(simulation, actor, EARTH_SHOCK, target)).toEqual({ ok: true });
+
+    castAbility(simulation, actor, FLAME_SHOCK, target);
+
+    /*
+     * Past the global cooldown and well short of the six-second shock. Without
+     * this the refusal would read `on_gcd`, which every instant shares and
+     * which would pass whether the group existed or not.
+     */
+    simulation.advanceTo(seconds(2));
+
+    // Flame Shock is on its own cooldown, and so now is every other shock.
+    expect(checkCast(simulation, actor, FLAME_SHOCK, target)).toEqual({
+      ok: false,
+      reason: 'on_cooldown',
+    });
+    expect(checkCast(simulation, actor, EARTH_SHOCK, target)).toEqual({
+      ok: false,
+      reason: 'on_cooldown',
+    });
+    expect(checkCast(simulation, actor, FROST_SHOCK, target)).toEqual({
+      ok: false,
+      reason: 'on_cooldown',
+    });
   });
 });

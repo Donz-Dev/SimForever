@@ -1,5 +1,6 @@
 import type { Ability } from '../../engine';
 import { dealDamage, seconds } from '../../engine';
+import { EXECUTE_PHASE_FRACTION, inExecutePhase } from '../combat/executePhase';
 import {
   BATTLE_SHOUT,
   BATTLE_STANCE,
@@ -626,16 +627,14 @@ export const EXECUTE_BASE_COST = 15;
  * The last fraction of the fight in which Execute may be used.
  *
  * TWENTY PERCENT, confirmed by the ruleset owner, and it is a fraction of TIME
- * rather than of the target's health. That is not an approximation of the game
- * rule -- it is the rule for this simulator, because the encounter is a damage
- * sink running for a fixed duration rather than something with a health bar to
- * whittle down.
+ * rather than of the target's health.
  *
- * It was a health fraction, and could never fire: a hundred thousand health
- * taking fifteen thousand damage in a hundred seconds never reaches 20%, so
- * Execute was in every Warrior list and had never been cast.
+ * MOVED TO `combat/executePhase.ts` and re-exported here, because it stopped
+ * being the Warrior's the moment Hammer of Wrath needed the same answer. The
+ * reasoning lives with the rule; this stays so nothing that already imports it
+ * from the Warrior has to move.
  */
-export const EXECUTE_PHASE_FRACTION = 0.2;
+export { EXECUTE_PHASE_FRACTION };
 
 /**
  * "600 + 15 * each point of remaining rage after cost was taken out", costing
@@ -673,10 +672,7 @@ export const EXECUTE: Ability = {
    * appears only in fights nobody runs here, and two ways for the same
    * ability to become available that can never both be true. One rule.
    */
-  canCast: ({ simulation }) => {
-    const remaining = simulation.plannedDurationMs - simulation.clock.now();
-    return remaining <= simulation.plannedDurationMs * EXECUTE_PHASE_FRACTION;
-  },
+  canCast: ({ simulation }) => inExecutePhase(simulation),
   onCast: ({ simulation, caster, target, ability }) => {
     if (!target) return;
 
