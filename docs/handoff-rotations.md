@@ -104,6 +104,7 @@ sharing, and **all 23 are the ruleset owner's**. DPS is the baseline in
 | Enh Shaman | 451.1 | `SHAMAN_ENHANCEMENT` | 7 | 5 |
 | Shadow | 437.3 | `PRIEST_SHADOW` | 6 | 4 |
 | Combat | 419.8 | `ROGUE_COMBAT` | 5 | 2 |
+| Frostfire | 412.5 | `MAGE_FROSTFIRE` | 5 | 4 |
 | BM Hunter | 405.8 | `HUNTER_BEAST_MASTERY` | 7 | 5 |
 | Fire | 401.2 | `MAGE_FIRE` | 5 | 4 |
 | Venom | 392.7 | `ROGUE_VENOM` | 5 | 4 |
@@ -111,7 +112,6 @@ sharing, and **all 23 are the ruleset owner's**. DPS is the baseline in
 | Moonkin | 384.3 | `DRUID_MOONKIN` | 5 | 4 |
 | Shockadin | 379.0 | `PALADIN_SHOCKADIN` | 7 | 2 |
 | Rupture | 377.1 | `ROGUE_RUPTURE` | 8 | 5 |
-| Frostfire | 376.6 | `MAGE_FROSTFIRE` | 5 | 4 |
 | Bear | 376.2 | `DRUID_BEAR` | 8 | 4 |
 | SM/DS | 349.1 | `WARLOCK_AFFLICTION` | 5 | 4 |
 | LW Melee | 321.5 | `HUNTER_LONE_WOLF_MELEE` | 5 | 2 |

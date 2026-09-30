@@ -78,17 +78,6 @@ Gating the Venom one on five points alone measures 413.1 — noise against its
 baseline. **Shipped as specified**; the isolation is recorded so the owner can
 decide.
 
-### 3. Shatter is a live gap that Fingers of Frost opened
-
-"Nothing freezes a raid boss" stopped being the whole story the moment Fingers
-of Frost landed: it treats the caster's next two spells as though the target
-were frozen, and the Frostfire build takes **both** talents. Shatter's crit
-reaches those two casts in the ruleset and does not here.
-
-**What it needs:** `AuraDefinition.abilityModifiers` to honour the
-`ALL_ABILITIES` key. The field exists (added with Berserk) and
-`AuraCollection.abilityModifierFor` looks up the ability id exactly; it needs to
-fold in the `'*'` entry the way `AbilityModifiers.for` already does.
 
 ---
 
@@ -167,18 +156,37 @@ form-shifting is modelled mid-fight is the day that gate has to exist.
 
 ## What was built to get here
 
-Fourteen abilities, three talent mechanics and seven engine capabilities, all
+Fourteen abilities, four talent mechanics and eight engine capabilities, all
 merged. The engine ones are the reusable part:
 
 | Capability | Added for | Where |
 | --- | --- | --- |
 | `AuraDefinition.suppressesCooldownOf` | Berserk removing Primal Bite's cooldown | hides the CHECK, does not clear the timer |
-| `AuraDefinition.abilityModifiers` | Berserk's per-ability crit | combined with the standing one via `Combatant.abilityModifierFor` |
+| `AuraDefinition.abilityModifiers` | Berserk's per-ability crit | combined with the standing one via `Combatant.abilityModifierFor`. **Ignored `ALL_ABILITIES` until Shatter** — see below |
+| `AbilityModifiers.addWhileAura` / `forWhileAura` | Shatter | a standing modifier with a RUNTIME condition, keyed by aura id |
 | `AuraDefinition.absorb` | Templar's Bulwark | read in `resolveDamage`, spent in `dealDamage`, like a block charge |
 | `AuraDefinition.gcdFraction` | Nature's Grace | applied at the call site so `gcdLength` stays the rule |
 | `AuraCollection.consumeStack` | Fingers of Frost | for an aura whose charges are spent by casting but which carries no `CastModifier` |
 | `AbilityBook.resetCooldowns` | Preparation | takes an exception, because "your OTHER abilities" |
 | `Combatant.lastSwingAt` / `recordSwing` | the Hunters' shot window | **this is the one that shipped broken** — see below |
+
+**THE SECOND SILENT NO-OP IN THIS TABLE.** `AuraDefinition.abilityModifiers`
+looked its ability id up EXACTLY, so an aura declaring `{ '*': ... }` compiled,
+applied, reported its uptime and changed nothing about any cast. Berserk
+introduced the field with a NAMED ability and never exercised the catch-all,
+which is why it sat there. `pick` is the one shared implementation of that fold
+now, rather than the third hand-written copy of it.
+
+**AND WHY THAT FIX WAS NOT ENOUGH ON ITS OWN**, which is the part worth keeping:
+this file used to say Shatter needed only the `ALL_ABILITIES` key. It also needed
+somewhere to put the number, because SHATTER'S VALUE IS ON A DIFFERENT TALENT
+FROM THE AURA — Fingers of Frost builds its aura from its own rank, and Shatter's
+17/33/50 is not in scope there. Writing one talent's value onto another talent's
+aura is correct only while the two are visited in the right order during the
+build, and talent iteration order is not something to rest a crit chance on. So
+the condition is keyed by AURA ID on the standing registry instead: Shatter names
+the aura, Fingers of Frost applies it, and neither reads the other. **When a
+handoff names the mechanism, check it also answers where the number comes from.**
 
 **THE CAUTIONARY ONE.** `recordSwing` landed in `extraAttack` instead of
 `scheduleSwing`: the two functions carry the same two lines and the edit matched

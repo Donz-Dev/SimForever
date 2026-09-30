@@ -1,4 +1,5 @@
 import type { TalentEffects } from './TalentEffect';
+import { ALL_ABILITIES } from '../../engine';
 import { FROZEN_UNMODELLED } from '../auras/mage';
 
 /**
@@ -14,12 +15,17 @@ import { FROZEN_UNMODELLED } from '../auras/mage';
  *
  * WHAT CLUSTERS HERE:
  *
- *   FROZEN TARGETS   five talents, and the whole Frost tree's best ones.
- *                    Shatter, Frostbite, Fingers of Frost, Improved Blizzard
- *                    and Ice Lance's own 300% all need a frozen target, and
- *                    nothing freezes a raid boss. Inert because of the TARGET
- *                    rather than because of the engine, which is a different
- *                    claim and a more durable one.
+ *   FROZEN TARGETS   ONE talent, down from the five this used to claim, and
+ *                    the reduction is worth reading. Nothing freezes a raid
+ *                    boss, so Frostbite is inert because of the TARGET rather
+ *                    than because of the engine -- a different claim and a more
+ *                    durable one. But it never covered the other four:
+ *                    Fingers of Frost does not freeze anything, it puts a
+ *                    state on the MAGE, and Shatter now reads that state, so
+ *                    both are modelled. Improved Blizzard and Ice Lance are
+ *                    out for their own reasons, neither of them the target.
+ *                    THE CLUSTER WAS THE MISTAKE: one reason written across
+ *                    five talents outlived its truth on four of them.
  *   PERCENTAGE MANA  Frost Channeling, Burning Soul's cost half. Still the
  *   COSTS            most common unmodelled reason in the project.
  *   THREAT           four. The engine does not track it.
@@ -233,26 +239,30 @@ export const MAGE_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
    * failure this project has been caught by six times: nothing errors, the
    * caveat keeps printing, and it is now describing a different situation.
    *
-   * "Nothing freezes a raid boss" is no longer the whole story -- Fingers of
-   * Frost treats the next two spells as though one were, and this build takes
-   * both talents. So Shatter's crit reaches those two casts in the ruleset and
-   * does not here.
+   * "Nothing freezes a raid boss" was a claim about the TARGET, and those
+   * expire only if the encounter changes. This one expired for a different
+   * reason: Fingers of Frost does not freeze anything either, it treats the
+   * caster's next spells AS THOUGH the target were frozen, which is a state on
+   * the Mage. The Frostfire build takes both talents, so the window is real.
    *
-   * WHAT IT NEEDS is a crit bonus that holds only while an aura is up, across
-   * every spell rather than a named one. `AuraDefinition.abilityModifiers`
-   * (added with Berserk) is the shape, once it also honours the
-   * `ALL_ABILITIES` key.
+   * THE WINDOW IS THE FINGERS OF FROST AURA, and nothing else needs saying:
+   * while it is up the target counts as Frozen, and `critWhileAura` adds this
+   * talent's 17/33/50 to every spell cast inside it. The two talents never
+   * meet -- Shatter names the aura, Fingers of Frost applies it, and neither
+   * reads the other's rank.
+   *
+   * `ALL_ABILITIES` IS "ALL YOUR SPELLS" HERE because every ability in the
+   * Mage's book declares `attackTable: 'spell'`, and an auto attack carries no
+   * ability id so nothing keyed to one reaches it. The day a Mage gets a
+   * non-spell ability -- a wand shot as a declared ability would be one -- this
+   * has to name the spells instead.
+   *
+   * ITS PRICE IS PAID ON THE LAST CHARGE AND NOT BEFORE: `runCast` runs
+   * `onCast` BEFORE the cast reactions, so the spell that spends the final
+   * stack has already rolled its crit while the aura was still up. Reversing
+   * those two would silently rob every window of its last spell.
    */
-  shatter: [
-    {
-      kind: 'unmodelled',
-      reason:
-        'Its crit against Frozen targets is not read. Nothing freezes a raid ' +
-        'boss, but Fingers of Frost now treats the next two spells as though ' +
-        'one were -- and this build takes both talents, so this is a live gap ' +
-        'rather than a property of the target.',
-    },
-  ],
+  shatter: [{ kind: 'critWhileAura', auraId: 'fingers_of_frost', abilityId: ALL_ABILITIES }],
 
   improved_cone_of_cold: [
     { kind: 'unmodelled', reason: 'Cone of Cold is an area spell and is not in the book.' },
@@ -268,11 +278,17 @@ export const MAGE_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
   ],
 
   /*
-   * THE ONE FROZEN TALENT THAT IS NOT INERT, and it never should have carried
+   * THE FROZEN TALENT THAT WAS NEVER INERT, and it never should have carried
    * `FROZEN_UNMODELLED`. That reason is a claim about the TARGET -- nothing
    * freezes a raid boss -- and this talent does not freeze anything. It puts a
    * state on the MAGE that makes its next spells behave as though the target
    * were frozen, which is reachable exactly as written.
+   *
+   * SHATTER NOW READS THIS AURA BY ID, which is the one thing to know before
+   * touching it: `critWhileAura` names `'fingers_of_frost'` as a string, so
+   * renaming the aura would leave Shatter pointing at nothing and paying
+   * nothing, without a compile error. `mageAbilities.test.ts` asserts the link
+   * rather than the two ids separately, so that rename fails a test.
    *
    * TWO EFFECTS FOR ONE TALENT: the proc that applies the charges, and the
    * cast reaction that spends them. `valueIndex: 1` is the CHARGE COUNT, which

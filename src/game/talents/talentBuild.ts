@@ -707,6 +707,18 @@ export function talentBuild(
             report(talentId, rank, unmetReason(effect.requires));
           }
           break;
+        case 'critWhileAura':
+          /*
+           * NO BUILD REQUIREMENT TO CHECK, unlike `conditionalCrit` below: the
+           * condition is an aura, so it is read during the fight rather than
+           * here. What that costs is that this cannot report itself unmodelled
+           * for a character who can never get the aura -- a Mage with Shatter
+           * and no Fingers of Frost has a crit bonus that simply never applies.
+           * That is the honest outcome rather than a caveat, because the talent
+           * IS working and the build is what does not reach it.
+           */
+          abilityModifiers.addWhileAura(effect.auraId, effect.abilityId, { critBonus: value });
+          break;
         case 'conditionalCrit':
           /*
            * MAIN HAND ONLY, deliberately, and it is an interpretation.

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { AuraDefinition } from '../../src/engine';
-import { dealDamage, flat, percent, seconds } from '../../src/engine';
+import { ALL_ABILITIES, dealDamage, flat, percent, seconds } from '../../src/engine';
 import { buildSimulation } from '../helpers/buildSimulation';
 import { makeAttacker, makeTarget } from '../helpers/actors';
 
@@ -282,3 +282,77 @@ function countTicks(sim: ReturnType<typeof buildSimulation>): number {
     (event) => event.type === 'damage' && event.abilityId === 'bleed',
   ).length;
 }
+
+describe('an aura that carries per-ability modifiers', () => {
+  /*
+   * ----------------------------------------------------------------------------
+   * `ALL_ABILITIES` ON AN AURA WAS A SILENT NO-OP. `abilityModifierFor` looked
+   * the ability id up exactly, so an aura declaring `{ '*': ... }` compiled,
+   * applied, showed its uptime, and changed nothing about any cast. Berserk
+   * introduced the field with a NAMED ability and never exercised the catch-all,
+   * which is why it went unnoticed.
+   * ----------------------------------------------------------------------------
+   */
+  const EVERY_SPELL: AuraDefinition = {
+    id: 'every_spell',
+    name: 'Every Spell',
+    durationMs: seconds(10),
+    abilityModifiers: { [ALL_ABILITIES]: { critBonus: 50 } },
+  };
+
+  const ONE_SPELL: AuraDefinition = {
+    id: 'one_spell',
+    name: 'One Spell',
+    durationMs: seconds(10),
+    abilityModifiers: { frostbolt: { critBonus: 5 } },
+  };
+
+  const withAuras = (...definitions: readonly AuraDefinition[]) => {
+    const actor = makeAttacker({ autoAttack: 'none' });
+    const simulation = buildSimulation([actor, makeTarget()], { durationMs: seconds(60) });
+    simulation.begin();
+    for (const definition of definitions) simulation.applyAura(actor, definition, actor.id);
+    return actor;
+  };
+
+  it('applies a catch-all entry to an ability it does not name', () => {
+    expect(withAuras(EVERY_SPELL).abilityModifierFor('frostbolt').critBonus).toBe(50);
+  });
+
+  it('still applies a named entry', () => {
+    expect(withAuras(ONE_SPELL).abilityModifierFor('frostbolt').critBonus).toBe(5);
+  });
+
+  it('combines the catch-all with a named one from the same aura', () => {
+    const BOTH: AuraDefinition = {
+      id: 'both',
+      name: 'Both',
+      durationMs: seconds(10),
+      abilityModifiers: { [ALL_ABILITIES]: { critBonus: 50 }, frostbolt: { critBonus: 5 } },
+    };
+    expect(withAuras(BOTH).abilityModifierFor('frostbolt').critBonus).toBe(55);
+    expect(withAuras(BOTH).abilityModifierFor('fireball').critBonus).toBe(50);
+  });
+
+  it('combines across two auras', () => {
+    expect(withAuras(EVERY_SPELL, ONE_SPELL).abilityModifierFor('frostbolt').critBonus).toBe(55);
+  });
+
+  it('returns the catch-all ONCE when asked for the catch-all key', () => {
+    expect(withAuras(EVERY_SPELL).abilityModifierFor(ALL_ABILITIES).critBonus).toBe(50);
+  });
+
+  it('never reaches an auto attack, which has no ability id', () => {
+    expect(withAuras(EVERY_SPELL).abilityModifierFor(undefined).critBonus ?? 0).toBe(0);
+  });
+
+  it('stops when the aura does', () => {
+    const actor = makeAttacker({ autoAttack: 'none' });
+    const simulation = buildSimulation([actor, makeTarget()], { durationMs: seconds(60) });
+    simulation.begin();
+    simulation.applyAura(actor, EVERY_SPELL, actor.id);
+    expect(actor.abilityModifierFor('frostbolt').critBonus).toBe(50);
+    actor.auras.remove(simulation, EVERY_SPELL.id);
+    expect(actor.abilityModifierFor('frostbolt').critBonus ?? 0).toBe(0);
+  });
+});

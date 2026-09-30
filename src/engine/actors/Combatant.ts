@@ -580,7 +580,19 @@ export class Combatant {
   abilityModifierFor(abilityId: string | undefined): AbilityModifier {
     const standing = this.abilityModifiers.for(abilityId);
     const fromAuras = this.auras.abilityModifierFor(abilityId);
-    return fromAuras ? combineAbilityModifiers(standing, fromAuras) : standing;
+    /*
+     * THE THIRD SOURCE IS A STANDING MODIFIER WITH A RUNTIME CONDITION: it was
+     * registered before the pull like the first, and it counts only while the
+     * aura it names is up, like the second. Shatter is the first caller -- its
+     * crit belongs to the Mage and its window belongs to Fingers of Frost, and
+     * the two are separate talents. See `AbilityModifiers.addWhileAura`.
+     */
+    const whileAura = this.abilityModifiers.forWhileAura(abilityId, (auraId) =>
+      this.auras.has(auraId),
+    );
+    let combined = fromAuras ? combineAbilityModifiers(standing, fromAuras) : standing;
+    if (whileAura) combined = combineAbilityModifiers(combined, whileAura);
+    return combined;
   }
 
   /**

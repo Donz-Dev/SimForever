@@ -90,11 +90,75 @@ const NONE: SchoolModifier = {};
  */
 export class AbilityModifiers {
   private readonly byAbility = new Map<string, AbilityModifier>();
+  /**
+   * Modifiers that only apply while a named aura is on the character, keyed
+   * `auraId -> abilityId -> modifier`.
+   *
+   * ----------------------------------------------------------------------------
+   * THE REGISTRY IS STILL BUILT ONCE; IT IS THE CONDITION THAT IS READ LATE.
+   * Everything above is decided before the pull and this is no different -- the
+   * talent and its rank are fixed. What cannot be fixed at build time is
+   * whether the aura is up, so `forWhileAura` takes the test as an argument and
+   * the caller supplies it from the live combatant.
+   *
+   * WHY NOT ON THE AURA, which is where an effect with a lifecycle normally
+   * goes. Shatter is the first caller and its number lives on a DIFFERENT
+   * TALENT from the aura that switches it on: Fingers of Frost builds the aura
+   * from its own rank, and Shatter's 17/33/50 is not in scope there. Writing it
+   * onto the aura would mean one talent reaching another talent's value during
+   * the build, which is only correct as long as the two are visited in the
+   * right order -- and talent iteration order is not a guarantee this project
+   * wants a crit chance resting on. Keyed by aura id here, the two talents
+   * never have to meet: Shatter names the aura, Fingers of Frost applies it,
+   * and neither reads the other.
+   * ----------------------------------------------------------------------------
+   */
+  private readonly whileAura = new Map<string, Map<string, AbilityModifier>>();
 
   /** Add a modifier, combining with anything already registered for that id. */
   add(abilityId: string, modifier: AbilityModifier): void {
     const existing = this.byAbility.get(abilityId);
     this.byAbility.set(abilityId, existing ? combine(existing, modifier) : modifier);
+  }
+
+  /**
+   * Add a modifier that applies only while `auraId` is active.
+   *
+   * Kept out of `add` deliberately. Combining a conditional modifier into the
+   * unconditional bucket would lose the condition, and the result -- a talent
+   * that pays all the time instead of during its window -- is a bigger number
+   * and no error.
+   */
+  addWhileAura(auraId: string, abilityId: string, modifier: AbilityModifier): void {
+    let byAbility = this.whileAura.get(auraId);
+    if (!byAbility) {
+      byAbility = new Map<string, AbilityModifier>();
+      this.whileAura.set(auraId, byAbility);
+    }
+    const existing = byAbility.get(abilityId);
+    byAbility.set(abilityId, existing ? combine(existing, modifier) : modifier);
+  }
+
+  /**
+   * The modifiers whose aura is currently active, combined, or `undefined`.
+   *
+   * `undefined` rather than an empty object for the same reason
+   * `AuraCollection.abilityModifierFor` does it: this is asked on every damage
+   * event, and almost every character has nothing registered here at all.
+   */
+  forWhileAura(
+    abilityId: string | undefined,
+    isAuraActive: (auraId: string) => boolean,
+  ): AbilityModifier | undefined {
+    if (abilityId === undefined || this.whileAura.size === 0) return undefined;
+    let combined: AbilityModifier | undefined;
+    for (const [auraId, byAbility] of this.whileAura) {
+      if (!isAuraActive(auraId)) continue;
+      const contribution = pick(byAbility, abilityId);
+      if (!contribution) continue;
+      combined = combined ? combine(combined, contribution) : contribution;
+    }
+    return combined;
   }
 
   /**
@@ -104,27 +168,45 @@ export class AbilityModifiers {
    */
   for(abilityId: string | undefined): AbilityModifier {
     if (abilityId === undefined) return NONE;
-    const all = this.byAbility.get(ALL_ABILITIES);
-    /*
-     * ASKING FOR THE CATCH-ALL KEY RETURNS IT ONCE, not twice.
-     *
-     * Without this, `for(ALL_ABILITIES)` looked up the all-abilities entry as
-     * both `all` and `own` and combined it with itself, so a talent granting
-     * +20% crit damage to everything read back as +40%. Every per-ability
-     * lookup was correct, which is why it survived: nothing in the damage
-     * pipeline queries the catch-all key, and a test written to check Impale's
-     * "your abilities" wording was the first thing that did.
-     */
-    if (abilityId === ALL_ABILITIES) return all ?? NONE;
-    const own = this.byAbility.get(abilityId);
-    if (!all) return own ?? NONE;
-    if (!own) return all;
-    return combine(all, own);
+    return pick(this.byAbility, abilityId) ?? NONE;
   }
 
   get isEmpty(): boolean {
-    return this.byAbility.size === 0;
+    return this.byAbility.size === 0 && this.whileAura.size === 0;
   }
+}
+
+/**
+ * One ability's entry out of a keyed set, folding in the `ALL_ABILITIES` one.
+ *
+ * ------------------------------------------------------------------------------
+ * ASKING FOR THE CATCH-ALL KEY RETURNS IT ONCE, not twice.
+ *
+ * Without this, a lookup of `ALL_ABILITIES` found the all-abilities entry as
+ * both `all` and `own` and combined it with itself, so a talent granting +20%
+ * crit damage to everything read back as +40%. Every per-ability lookup was
+ * correct, which is why it survived: nothing in the damage pipeline queries the
+ * catch-all key, and a test written to check Impale's "your abilities" wording
+ * was the first thing that did.
+ *
+ * SHARED BY ALL THREE SETS THAT HAVE THIS SHAPE -- the standing registry above,
+ * the conditional one beside it, and the one an aura definition carries. It was
+ * written out per site before, which is how `AuraCollection` came to look up the
+ * ability id exactly and silently ignore `ALL_ABILITIES` altogether.
+ * ------------------------------------------------------------------------------
+ */
+export function pick(
+  byAbility: ReadonlyMap<string, AbilityModifier> | Readonly<Record<string, AbilityModifier>>,
+  abilityId: string,
+): AbilityModifier | undefined {
+  const get = (key: string): AbilityModifier | undefined =>
+    byAbility instanceof Map ? byAbility.get(key) : (byAbility as Record<string, AbilityModifier>)[key];
+  const all = get(ALL_ABILITIES);
+  if (abilityId === ALL_ABILITIES) return all;
+  const own = get(abilityId);
+  if (!all) return own;
+  if (!own) return all;
+  return combine(all, own);
 }
 
 /**
