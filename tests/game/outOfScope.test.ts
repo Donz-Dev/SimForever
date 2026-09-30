@@ -147,18 +147,40 @@ describe('the out-of-scope rulings are data, not prose', () => {
      * build was missing features that were never coming. So the split has to
      * survive `talentBuild`, not just exist in the effect table.
      *
-     * Iron Will is a ruling (stun and fear duration). Improved Berserker Rage is a
-     * live gap: no priority list casts the ability, which a rotation change could
-     * fix. One allocation, both kinds, and the panel's own filter applied here.
+     * Iron Will is a ruling (stun and fear duration). Sweeping Strikes is a gap
+     * with no scope: its effect is an additional target, and an encounter could
+     * one day have one. One allocation, both kinds, and the panel's own filter
+     * applied here.
+     *
+     * THE GAP HALF USED TO BE IMPROVED BERSERKER RAGE and had to move, which is
+     * the good kind of test failure. Its reason argued that no priority list
+     * casts Berserker Rage -- an argument about a LIST, filed as though it were
+     * an argument about the engine -- and its rage-on-activation number was
+     * stated in the values file all along. It is built now, and what is left of
+     * it is snare removal, which carries a `crowdControl` scope. So the talent
+     * is on the RULING side of this split and can no longer stand for the other.
      */
-    const build = talentBuild('warrior', { iron_will: 5, improved_berserker_rage: 2 });
+    const build = talentBuild('warrior', { iron_will: 5, sweeping_strikes: 1 });
 
     const ruled = build.unmodelled.filter((entry) => entry.scope !== undefined);
     const gaps = build.unmodelled.filter((entry) => entry.scope === undefined);
 
     expect(ruled.map((entry) => entry.talentId)).toEqual(['iron_will']);
     expect(ruled[0].scope).toBe('crowdControl');
-    expect(gaps.map((entry) => entry.talentId)).toEqual(['improved_berserker_rage']);
+    expect(gaps.map((entry) => entry.talentId)).toEqual(['sweeping_strikes']);
+  });
+
+  it('puts Improved Berserker Rage on the ruling side now that it is built', () => {
+    /*
+     * The talent this file used to hold up as the example of a live gap. Both
+     * halves are asserted because only having both makes the point: the rage
+     * ARRIVES as a bonus on the ability, and what is left unmodelled carries a
+     * scope, so nothing about it is outstanding work.
+     */
+    const build = talentBuild('warrior', { improved_berserker_rage: 2 });
+
+    expect(build.abilityBonuses.get('berserker_rage_cast')).toEqual({ rage: 10 });
+    expect(build.unmodelled.map((entry) => entry.scope)).toEqual(['crowdControl']);
   });
 
   it('reports how much of the gap is a decision rather than work', () => {

@@ -176,6 +176,20 @@ export function abilitiesForBuild(
     if (ability.id === 'shield_slam' && style !== 'one_hand_shield') return false;
 
     /*
+     * SPEARING STRIKE NEEDS A TWO-HANDED WEAPON, by the same rule and for the
+     * same reason: "Requires Two-Handed Axes, Two-Handed Maces, Polearms,
+     * Two-Handed Swords, Staves" in the spellbook capture, "Requires
+     * Two-Handed Melee Weapon" on foreverchanges.pro. Our older Wowhead
+     * tooltip states no requirement at all, which is silence rather than
+     * disagreement -- see `SPEARING_STRIKE`.
+     *
+     * Gated here rather than in `canCast` so that a dual-wielder does not
+     * carry it in the book: an ability listed and never cast reads as a
+     * rotation problem, and this one is a weapon problem.
+     */
+    if (ability.id === 'spearing_strike' && style !== 'two_hander') return false;
+
+    /*
      * A ROGUE'S DAGGER ABILITIES ARE GATED ON THE WEAPON, like Shield Slam:
      * Backstab and Mutilate say "Requires Daggers" and their own `canCast`
      * enforces it per cast. They stay in the book either way, so a character

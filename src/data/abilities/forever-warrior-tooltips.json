@@ -1,7 +1,7 @@
 {
  "class": "warrior",
  "game": "forever",
- "capturedOn": "2026-09-19",
+ "capturedOn": "2026-09-30",
  "spellList": "https://www.wowhead.com/forever/class=1/warrior",
  "tooltipEndpoint": "https://nether.wowhead.com/forever/tooltip/spell/<id>",
  "pageEndpoint": "https://www.wowhead.com/forever/spell=<id>",
@@ -36,7 +36,7 @@
    "icon": "spell_nature_bloodlust",
    "source": "https://www.wowhead.com/forever/spell=23894",
    "stances": [],
-   "description": "Instantly attack the target causing damage equal to 35% of your Attack Power plus (100% of Spell Power) and increasing your movement speed by 10% for 10 sec.",
+   "description": "Instantly attack the target causing damage equal to 35% of your Attack Power plus 48 and increasing your movement speed by 10% for 10 sec.",
    "effects": [
     {
      "index": 1,
@@ -54,7 +54,7 @@
      "value": 11
     }
    ],
-   "tooltip": "BloodthirstRank 4\n30 Rage Melee Range\nInstant 6 sec cooldown\nRequires WarriorRequires level 60\nInstantly attack the target causing damage equal to 35% of your Attack Power plus (100% of Spell Power) and increasing your movement speed by 10% for 10 sec.",
+   "tooltip": "BloodthirstRank 4\n30 Rage Melee Range\nInstant 6 sec cooldown\nRequires WarriorRequires level 60\nInstantly attack the target causing damage equal to 35% of your Attack Power plus 48 and increasing your movement speed by 10% for 10 sec.",
    "rank": 4,
    "ability": "bloodthirst"
   },
@@ -64,7 +64,7 @@
    "icon": "inv_shield_05",
    "source": "https://www.wowhead.com/forever/spell=23925",
    "stances": [],
-   "description": "Slam the target with your shield, causing (100% of Spell Power) damage, increased by your Block Value, and has a 50% chance of dispelling 1 magic effect on the target. Causes a very high amount of threat.",
+   "description": "Slam the target with your shield, causing 640 to 670 damage, increased by your Block Value, and has a 50% chance of dispelling 1 magic effect on the target. Causes a very high amount of threat.",
    "effects": [
     {
      "index": 1,
@@ -77,7 +77,7 @@
      "value": 656
     }
    ],
-   "tooltip": "Shield SlamRank 4\n20 Rage Melee Range\nInstant 6 sec cooldown\nRequires WarriorRequires level 60\nSlam the target with your shield, causing (100% of Spell Power) damage, increased by your Block Value, and has a 50% chance of dispelling 1 magic effect on the target. Causes a very high amount of threat.",
+   "tooltip": "Shield SlamRank 4\n20 Rage Melee Range\nInstant 6 sec cooldown\nRequires WarriorRequires level 60\nSlam the target with your shield, causing 640 to 670 damage, increased by your Block Value, and has a 50% chance of dispelling 1 magic effect on the target. Causes a very high amount of threat.",
    "rank": 4,
    "ability": "shield_slam"
   },
@@ -95,7 +95,7 @@
      "value": 88
     }
    ],
-   "tooltip": "SlamRank 5\n15 Rage Melee Range\n1.5 sec cast 15 sec cooldown\nRequires WarriorRequires level 54\nRequires Melee WeaponSlams the opponent, causing weapon damage plus 87.",
+   "tooltip": "SlamRank 5\n15 Rage Melee Range\n1.5 sec cast 18 sec cooldown\nRequires WarriorRequires level 54\nRequires Melee WeaponSlams the opponent, causing weapon damage plus 87.",
    "rank": 5,
    "ability": "slam"
   },
@@ -175,7 +175,7 @@
    "stances": [
     "defensive"
    ],
-   "description": "Requires Defensive StanceInstantly counterattack an enemy for (100% of Spell Power) damage and a high amount of threat. Revenge must follow a block, dodge or parry.",
+   "description": "Requires Defensive StanceInstantly counterattack an enemy for 138 to 168 damage and a high amount of threat. Revenge must follow a block, dodge or parry.",
    "effects": [
     {
      "index": 1,
@@ -183,7 +183,7 @@
      "value": 154
     }
    ],
-   "tooltip": "Revenge\n5 Rage Melee Range\nInstant 5 sec cooldown\nRequires WarriorRequires level 60\nRequires Melee Weapon\nRequires Defensive StanceInstantly counterattack an enemy for (100% of Spell Power) damage and a high amount of threat. Revenge must follow a block, dodge or parry.",
+   "tooltip": "Revenge\n5 Rage Melee Range\nInstant 5 sec cooldown\nRequires WarriorRequires level 60\nRequires Melee Weapon\nRequires Defensive StanceInstantly counterattack an enemy for 138 to 168 damage and a high amount of threat. Revenge must follow a block, dodge or parry.",
    "rank": 6,
    "ability": "revenge"
   },
@@ -274,7 +274,7 @@
     "battle",
     "berserker"
    ],
-   "description": "Requires Battle Stance, Berserker StanceMaims the enemy, causing (100% of Spell Power) damage and slowing the enemy's movement by 50% for 15 sec.",
+   "description": "Requires Battle Stance, Berserker StanceMaims the enemy, causing 45 damage and slowing the enemy's movement by 50% for 15 sec.",
    "effects": [
     {
      "index": 1,
@@ -287,7 +287,7 @@
      "value": -49
     }
    ],
-   "tooltip": "HamstringRank 3\n10 Rage Melee Range\nInstantRequires WarriorRequires level 54\nRequires Melee Weapon\nRequires Battle Stance, Berserker StanceMaims the enemy, causing (100% of Spell Power) damage and slowing the enemy's movement by 50% for 15 sec.",
+   "tooltip": "HamstringRank 3\n10 Rage Melee Range\nInstantRequires WarriorRequires level 54\nRequires Melee Weapon\nRequires Battle Stance, Berserker StanceMaims the enemy, causing 45 damage and slowing the enemy's movement by 50% for 15 sec.",
    "rank": 3,
    "ability": "hamstring"
   },
@@ -325,7 +325,7 @@
    "stances": [
     "berserker"
    ],
-   "description": "Requires Berserker StanceCharge an enemy, causing (100% of Spell Power) damage and stunning it for 3 sec.",
+   "description": "Requires Berserker StanceCharge an enemy, causing 65 damage and stunning it for 3 sec.",
    "effects": [
     {
      "index": 1,
@@ -333,7 +333,7 @@
      "value": 1
     }
    ],
-   "tooltip": "InterceptRank 3\n10 Rage 8 - 25 yd range\nInstant 30 sec cooldown\nRequires WarriorRequires level 52\nRequires Berserker StanceCharge an enemy, causing (100% of Spell Power) damage and stunning it for 3 sec.",
+   "tooltip": "InterceptRank 3\n10 Rage 8 - 25 yd range\nInstant 30 sec cooldown\nRequires WarriorRequires level 52\nRequires Berserker StanceCharge an enemy, causing 65 damage and stunning it for 3 sec.",
    "rank": 3,
    "ability": "intercept"
   },
@@ -414,7 +414,7 @@
     {
      "index": 2,
      "type": "Threat",
-     "value": 1014
+     "value": 207
     }
    ],
    "tooltip": "Sunder ArmorRank 5\n15 Rage Melee Range\nInstantRequires WarriorRequires level 58\nRequires Melee WeaponSunders the target's armor, reducing it by 450 per Sunder Armor and causes a high amount of threat. Can be applied up to 5 times. Lasts 30 sec.",
