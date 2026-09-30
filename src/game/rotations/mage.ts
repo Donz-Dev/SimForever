@@ -1,7 +1,7 @@
 import type { PriorityEntry, Rotation, SimulationContext, Combatant } from '../../engine';
 import { PriorityRotation } from '../../engine';
 import type { TalentAllocation } from '../talents/Talent';
-import { IMPROVED_SCORCH_MAX_STACKS } from '../auras/mage';
+import { HOT_STREAK_MAX_STACKS, IMPROVED_SCORCH_MAX_STACKS } from '../auras/mage';
 
 /**
  * Mage priority lists — APL SHELLS.
@@ -20,13 +20,93 @@ import { IMPROVED_SCORCH_MAX_STACKS } from '../auras/mage';
  * ----------------------------------------------------------------------------
  */
 
-const hasAura = (auraId: string) => (_context: SimulationContext, actor: Combatant): boolean =>
-  actor.auras.has(auraId);
 
-/** Below the cap, so the opener stacks it and the rest of the fight does not. */
-const belowStacks = (auraId: string, cap: number) =>
+/*
+ * ============================================================================
+ * THE RULESET OWNER'S CONDITIONS. All three lists below are theirs; what was
+ * here before was this file's own guess and said so.
+ * ============================================================================
+ */
+
+/** "<buff> is not active", on the Mage. */
+const selfExpired = (auraId: string) =>
+  (context: SimulationContext, actor: Combatant): boolean =>
+    actor.auras.remainingMs(auraId, context.clock.now()) <= 0;
+
+/** "<buff> stacks = N", on the Mage. */
+const selfStacksExactly = (auraId: string, count: number) =>
+  (_context: SimulationContext, actor: Combatant): boolean =>
+    actor.auras.stacksOf(auraId) === count;
+
+/** "<buff> stacks >= N", on the Mage. */
+const selfStacksAtLeast = (auraId: string, minimum: number) =>
+  (_context: SimulationContext, actor: Combatant): boolean =>
+    actor.auras.stacksOf(auraId) >= minimum;
+
+/** "<buff> stacks > 0", on the Mage. */
+const selfHasStack = (auraId: string) => selfStacksAtLeast(auraId, 1);
+
+/** "<debuff> stacks >= N", on the target. */
+const targetStacksAtLeast = (auraId: string, minimum: number) =>
+  (_context: SimulationContext, _actor: Combatant, target?: Combatant): boolean =>
+    target !== undefined && target.auras.stacksOf(auraId) >= minimum;
+
+/** "<debuff> duration <= N seconds", on the target. An absent debuff counts. */
+const targetAuraAtMost = (auraId: string, secondsLeft: number) =>
+  (context: SimulationContext, _actor: Combatant, target?: Combatant): boolean =>
+    target !== undefined &&
+    target.auras.remainingMs(auraId, context.clock.now()) <= secondsLeft * 1000;
+
+/** "<debuff> duration >= N seconds", on the target. */
+const targetAuraAtLeast = (auraId: string, secondsLeft: number) =>
+  (context: SimulationContext, _actor: Combatant, target?: Combatant): boolean =>
+    target !== undefined &&
+    target.auras.remainingMs(auraId, context.clock.now()) >= secondsLeft * 1000;
+
+/** "<debuff> stacks < N", on the target. */
+const targetStacksBelow = (auraId: string, cap: number) =>
   (_context: SimulationContext, _actor: Combatant, target?: Combatant): boolean =>
     target !== undefined && target.auras.stacksOf(auraId) < cap;
+
+type Condition = (
+  context: SimulationContext,
+  actor: Combatant,
+  target?: Combatant,
+) => boolean;
+
+const all =
+  (...conditions: readonly Condition[]): Condition =>
+  (context, actor, target) =>
+    conditions.every((condition) => condition(context, actor, target));
+
+const either =
+  (...conditions: readonly Condition[]): Condition =>
+  (context, actor, target) =>
+    conditions.some((condition) => condition(context, actor, target));
+
+/*
+ * ----------------------------------------------------------------------------
+ * "SCORCH IF SCORCH DEBUFF <= 5" IS READ AS "BELOW THE CAP", AND SAYING SO.
+ *
+ * Fire Vulnerability caps at five stacks, so a LITERAL `<= 5` is always true --
+ * Scorch would be unconditional and every entry below it in the Fire and
+ * Frostfire lists unreachable, which is the exact failure this project keeps
+ * finding. The owner's own Combustion entry uses `>= 5` to mean "at cap", and
+ * that is what makes `< 5` the reading under which both halves of the Scorch
+ * condition do work.
+ *
+ * FLAGGED RATHER THAN BURIED. If the literal reading was intended, this pair of
+ * constants is the whole change.
+ * ----------------------------------------------------------------------------
+ */
+const SCORCH_STACK_CAP = IMPROVED_SCORCH_MAX_STACKS;
+/** "or scorch duration <= 3 seconds", which refreshes it before it drops. */
+const SCORCH_REFRESH_SECONDS = 3;
+
+const scorchNeeded = either(
+  targetStacksBelow('fire_vulnerability', SCORCH_STACK_CAP),
+  targetAuraAtMost('fire_vulnerability', SCORCH_REFRESH_SECONDS),
+);
 
 // ---------------------------------------------------------------------------
 
@@ -47,14 +127,27 @@ const belowStacks = (auraId: string, cap: number) =>
  * a global cooldown.
  */
 export const MAGE_FIRE: readonly PriorityEntry[] = [
-  { abilityId: 'combustion' },
+  { abilityId: 'mage_armor', condition: selfExpired('mage_armor') },
+  { abilityId: 'scorch', condition: scorchNeeded },
+  /*
+   * AT THREE STACKS, WHICH IS THE CAP. Hot Streak takes a quarter off
+   * Pyroblast's cast per stack, so three turns a six-second cast into a second
+   * and a half -- the only point at which it beats two Fireballs.
+   */
+  { abilityId: 'pyroblast', condition: selfStacksExactly('hot_streak', HOT_STREAK_MAX_STACKS) },
+  /*
+   * COMBUSTION ONLY WITH THE DEBUFF CAPPED AND HOLDING. It is a crit cooldown,
+   * so it is worth most when every Fire spell under it is already taking the
+   * full Fire Vulnerability -- and the ten-second floor is what stops it being
+   * spent on a stack about to fall off.
+   */
   {
-    abilityId: 'scorch',
-    condition: belowStacks('fire_vulnerability', IMPROVED_SCORCH_MAX_STACKS),
+    abilityId: 'combustion',
+    condition: all(
+      targetStacksAtLeast('fire_vulnerability', IMPROVED_SCORCH_MAX_STACKS),
+      targetAuraAtLeast('fire_vulnerability', 10),
+    ),
   },
-  { abilityId: 'pyroblast', condition: hasAura('hot_streak') },
-  { abilityId: 'fire_blast' },
-  { abilityId: 'blast_wave' },
   { abilityId: 'fireball' },
 ];
 
@@ -72,12 +165,16 @@ export const MAGE_FIRE: readonly PriorityEntry[] = [
  * Left out deliberately rather than forgotten.
  */
 export const MAGE_FROSTFIRE: readonly PriorityEntry[] = [
-  {
-    abilityId: 'scorch',
-    condition: belowStacks('fire_vulnerability', IMPROVED_SCORCH_MAX_STACKS),
-  },
-  { abilityId: 'pyroblast', condition: hasAura('hot_streak') },
-  { abilityId: 'fire_blast' },
+  { abilityId: 'mage_armor', condition: selfExpired('mage_armor') },
+  { abilityId: 'scorch', condition: scorchNeeded },
+  { abilityId: 'pyroblast', condition: selfStacksExactly('hot_streak', HOT_STREAK_MAX_STACKS) },
+  /*
+   * ICE LANCE ENTERS A LIST FOR THE FIRST TIME. Its 300% clause was inert for
+   * as long as nothing could make the target count as Frozen; Fingers of Frost
+   * does not freeze anything, it makes the caster's next spells behave as
+   * though it were. With a charge in hand it is a times-four instant.
+   */
+  { abilityId: 'ice_lance', condition: selfHasStack('fingers_of_frost') },
   { abilityId: 'frostfire_bolt' },
 ];
 
@@ -102,16 +199,36 @@ export const MAGE_FROSTFIRE: readonly PriorityEntry[] = [
 export const ARCANE_BLAST_STACK_LIMIT = 2;
 
 export const MAGE_ARCANE: readonly PriorityEntry[] = [
-  { abilityId: 'arcane_power' },
-  { abilityId: 'presence_of_mind' },
-  { abilityId: 'arcane_missiles', condition: hasAura('missile_barrage') },
+  { abilityId: 'mage_armor', condition: selfExpired('mage_armor') },
+  /*
+   * ARCANE POWER SPENT INTO A PROC RATHER THAN ON COOLDOWN, which is the shape
+   * of the owner's whole list: it fires only when a free, half-length Arcane
+   * Missiles is already waiting AND Arcane Blast has stacked its damage bonus
+   * three deep. A three-minute cooldown held for the moment it is worth most,
+   * where this file's shell spent it the instant it came up.
+   */
   {
-    abilityId: 'arcane_blast',
-    condition: (_context, actor) =>
-      actor.auras.stacksOf('arcane_blast') < ARCANE_BLAST_STACK_LIMIT,
+    abilityId: 'arcane_power',
+    condition: all(selfHasStack('missile_barrage'), selfStacksAtLeast('arcane_blast', 3)),
   },
-  { abilityId: 'arcane_missiles' },
+  { abilityId: 'arcane_missiles', condition: selfHasStack('missile_barrage') },
+  /*
+   * AND AT FOUR ARCANE BLAST STACKS WITHOUT ONE. Four is the cap, where the
+   * next Blast costs 175% more for no further damage bonus -- so the list
+   * spends the stack on Missiles rather than paying that price.
+   *
+   * A repeated ability id is legal; what is not is a copy below an
+   * UNCONDITIONAL one. Both entries are gated and Arcane Blast is the filler.
+   */
+  { abilityId: 'arcane_missiles', condition: selfStacksExactly('arcane_blast', 4) },
+  { abilityId: 'arcane_blast' },
 ];
+
+/*
+ * PRESENCE OF MIND IS NOT IN THE OWNER'S LIST and is left out rather than kept.
+ * It makes the next cast instant, and the shell used it on cooldown; the
+ * owner's order does not name it at all.
+ */
 
 /**
  * How much Frost makes a mostly-Fire build a FROSTFIRE one.
