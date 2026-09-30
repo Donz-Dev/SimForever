@@ -16,8 +16,10 @@ import {
   ARCANE_MISSILES_TICKS,
   FIREBALL_DAMAGE,
   FROSTBOLT_DAMAGE,
+  ICE_LANCE,
   ICE_LANCE_DAMAGE,
   MAGE_ARMOR_ABILITY,
+  ICE_LANCE_FROZEN_MULTIPLIER,
   MAGE_BASE_MANA,
   PYROBLAST_DAMAGE,
   SCORCH_DAMAGE,
@@ -25,6 +27,8 @@ import {
 import {
   ARCANE_BLAST,
   ARCANE_BLAST_COST_INCREASE_PER_STACK,
+  FINGERS_OF_FROST_PROC_CHANCE,
+  fingersOfFrostAura,
   HOT_STREAK,
   HOT_STREAK_MAX_STACKS,
   HOT_STREAK_REDUCTION_PER_STACK,
@@ -36,6 +40,13 @@ import {
   fireVulnerabilityAura,
 } from '../../src/game/auras/mage';
 import { MAGE_TALENT_EFFECTS } from '../../src/game/talents/mageEffects';
+import {
+  CHILL_ABILITY_IDS,
+  fingersOfFrost,
+  fingersOfFrostSpender,
+} from '../../src/game/reactions/mageTalents';
+import { talentNumber } from '../../src/game/talents/talentValues';
+import { castAbility } from '../../src/engine';
 import { mageRotation } from '../../src/game/rotations/mage';
 import { baseManaFor } from '../../src/game/character/baseStatLookup';
 import { RACE_IDS } from '../../src/game/character/ids';
@@ -498,5 +509,137 @@ describe('Mage Armor, whose whole worth is the five second rule', () => {
     expect(MAGE_ARMOR_ABILITY.canCast?.(context)).toBe(true);
     simulation.applyAura(actor, MAGE_ARMOR, actor.id);
     expect(MAGE_ARMOR_ABILITY.canCast?.(context)).toBe(false);
+  });
+});
+
+describe('Fingers of Frost, the one Frozen talent that is not inert', () => {
+  /*
+   * --------------------------------------------------------------------------
+   * "Gives your Chill effects a 15% chance to grant you the Fingers of Frost
+   * effect, which treats your next 2 spells cast as if the target were Frozen.
+   * Lasts 15 sec."
+   *
+   * EVERY OTHER FROZEN EFFECT IN THIS CLASS IS INERT BECAUSE OF THE TARGET --
+   * nothing freezes a raid boss, which is a durable claim. This talent does
+   * not freeze anything: it puts a state on the MAGE, and that is reachable
+   * exactly as written.
+   * --------------------------------------------------------------------------
+   */
+  const frostMage = () =>
+    makeAttacker({
+      autoAttack: 'none',
+      abilities: [ICE_LANCE],
+      stats: { spellPower: 1000 },
+      resources: [{ type: 'mana', maximum: 50_000 }],
+    });
+
+  it('keeps the chance as a constant the values file still agrees with', () => {
+    /*
+     * ITS RANK SCALES THE CHARGES, NOT THE CHANCE, which is the opposite of
+     * nearly every other proc talent here. A constant standing in for a
+     * per-rank value is how a rank change goes unnoticed, so this asserts the
+     * constant against BOTH ranks rather than trusting it.
+     */
+    expect(talentNumber('mage', 'fingers_of_frost', 1, 0)).toBe(FINGERS_OF_FROST_PROC_CHANCE);
+    expect(talentNumber('mage', 'fingers_of_frost', 2, 0)).toBe(FINGERS_OF_FROST_PROC_CHANCE);
+    // And the charges DO scale.
+    expect(talentNumber('mage', 'fingers_of_frost', 1, 1)).toBe(1);
+    expect(talentNumber('mage', 'fingers_of_frost', 2, 1)).toBe(2);
+  });
+
+  it('procs only off a Chill effect, which has to be declared rather than detected', () => {
+    // Frostbolt and Frostfire Bolt both "slow movement speed by 40%", and
+    // nothing here has movement -- so the slow cannot be detected and the ids
+    // are named instead.
+    expect([...CHILL_ABILITY_IDS].sort()).toEqual(['frostbolt', 'frostfire_bolt']);
+
+    const reaction = fingersOfFrost(2);
+    const actor = frostMage();
+    const simulation = buildSimulation([actor, makeTarget()]);
+    simulation.begin();
+    const fires = (abilityId: string) =>
+      reaction.canTrigger?.(simulation, actor, { abilityId } as never) ?? true;
+    expect(fires('scorch')).toBe(false);
+    expect(fires('pyroblast')).toBe(false);
+  });
+
+  it('quadruples ALL of Ice Lance, the coefficient as well as the base', () => {
+    /*
+     * TIMES FOUR by the owner's ruling -- "increased BY 300%" is base plus
+     * three times itself, where "deals 300% damage" would be three and is also
+     * what Classic does.
+     *
+     * AND IT REACHES THE COEFFICIENT. Applying the multiplier to `baseAmount`
+     * alone would leave a spell-power-heavy Mage's Ice Lance barely improved
+     * and would look entirely reasonable, so the ratio is asserted at a
+     * thousand spell power where the coefficient dominates.
+     */
+    expect(ICE_LANCE_FROZEN_MULTIPLIER).toBe(4);
+
+    const actor = frostMage();
+    const target = makeTarget({ maxHealth: 1_000_000 });
+    const events: TelemetryEvent[] = [];
+    const simulation = buildSimulation([actor, target], { durationMs: seconds(60) }, {
+      emit: (event) => events.push(event),
+    });
+    simulation.begin();
+
+    const damageOf = () => {
+      const hit = events.filter((e) => e.type === 'damage' && e.abilityId === 'ice_lance').pop();
+      return hit && hit.type === 'damage' ? hit.amount : 0;
+    };
+
+    castAbility(simulation, actor, ICE_LANCE, target);
+    const plain = damageOf();
+    expect(plain).toBeGreaterThan(0);
+
+    simulation.advanceTo(seconds(5));
+    simulation.applyAura(actor, fingersOfFrostAura(2), actor.id);
+    simulation.advanceTo(seconds(6));
+    castAbility(simulation, actor, ICE_LANCE, target);
+    const frozen = damageOf();
+
+    // The combat table can crit either one, so this is a floor rather than an
+    // equality: four times the base must be well clear of an uncrit hit.
+    expect(frozen).toBeGreaterThan(plain * 2);
+  });
+
+  it('does not let the cast that procced it spend a charge', () => {
+    /*
+     * Cast reactions run AFTER `onCast`, so the Frostbolt whose damage applied
+     * the aura would otherwise immediately eat one of its own charges. "Your
+     * NEXT 2 spells" is what rules that out.
+     */
+    const actor = frostMage();
+    const simulation = buildSimulation([actor, makeTarget()], { durationMs: seconds(60) });
+    simulation.begin();
+
+    const spender = fingersOfFrostSpender();
+    simulation.applyAura(actor, fingersOfFrostAura(2), actor.id);
+    expect(spender.canTrigger?.(simulation, actor, {} as never)).toBe(false);
+
+    simulation.advanceTo(seconds(1));
+    expect(spender.canTrigger?.(simulation, actor, {} as never)).toBe(true);
+
+    // Two charges, two casts.
+    spender.onTrigger(simulation, actor, {} as never);
+    expect(actor.auras.stacksOf('fingers_of_frost')).toBe(1);
+    spender.onTrigger(simulation, actor, {} as never);
+    expect(actor.auras.has('fingers_of_frost')).toBe(false);
+  });
+
+  it('leaves Shatter a LIVE gap, and its reason says so', () => {
+    /*
+     * Shatter's crit against Frozen targets now reaches those two casts in the
+     * ruleset and does not here -- so its reason had to stop saying "nothing
+     * freezes a raid boss", which stopped being the whole story the moment
+     * this landed.
+     */
+    const shatter = MAGE_TALENT_EFFECTS.shatter;
+    for (const effect of shatter) {
+      if (effect.kind !== 'unmodelled') continue;
+      expect(effect.reason).toContain('Fingers of Frost');
+      expect(effect.reason).toContain('live gap');
+    }
   });
 });
