@@ -27,63 +27,6 @@ import { RUPTURE_BY_COMBO_POINT, VENOM_AURA_ID } from '../auras/rogue';
  * ----------------------------------------------------------------------------
  */
 
-/** Spend only at the cap, which is where a finisher is worth its energy. */
-const AT_FIVE = (_context: SimulationContext, actor: Combatant): boolean =>
-  comboPointsOn(actor) >= MAX_COMBO_POINTS;
-
-/**
- * Slice and Dice goes up whenever it is down, at ANY number of combo points.
- *
- * ----------------------------------------------------------------------------
- * NOT AT FIVE, AND THE ABILITY SAYS WHY. Its magnitude does not scale -- thirty
- * percent attack speed at one combo point is the same thirty percent as at
- * five -- and only its DURATION does. So a point spent here buys uptime, while
- * a point spent on Eviscerate buys damage that scales linearly with it.
- *
- * ----------------------------------------------------------------------------
- * THIS USED TO SAY EVISCERATE NEVER FIRED, and it was right about the
- * behaviour and wrong about why.
- *
- * Measured across every threshold, Eviscerate fired zero times and DPS moved
- * six points. The note blamed Relentless Strikes being unmodelled. That was
- * one of two causes and the smaller one: the Rogue was also MISSING FROM
- * `talentValues.ts`, so every rank value resolved to nothing and all twenty of
- * its talents were silently inert. Invisible, because a talent with no value
- * reports itself unmodelled -- which is what an unfinished class is meant to
- * say.
- *
- * Both fixed. Eviscerate fires about once a fight on the Combat build and the
- * three profiles gained 21, 55 and 88 DPS.
- *
- * TWO IS STILL THE THRESHOLD, and still by measurement rather than by taste:
- * Slice and Dice buys uptime with a point and Eviscerate buys damage, and the
- * point where those cross has not moved.
- * ----------------------------------------------------------------------------
- */
-const SLICE_AND_DICE_MINIMUM_POINTS = 2;
-function sliceAndDiceNeeded(context: SimulationContext, actor: Combatant): boolean {
-  if (comboPointsOn(actor) < SLICE_AND_DICE_MINIMUM_POINTS) return false;
-  return actor.auras.remainingMs('slice_and_dice', context.clock.now()) <= 0;
-}
-
-/**
- * Rupture is worth refreshing when it is about to fall off, not on cooldown.
- *
- * Its five-point duration is sixteen seconds, and re-applying early throws
- * away whatever was left: `refreshBehaviour: 'reset'` replaces rather than
- * extends.
- */
-const RUPTURE_REFRESH_WINDOW_MS = 2000;
-
-function ruptureNeeded(context: SimulationContext, actor: Combatant, target?: Combatant): boolean {
-  if (!target) return false;
-  // At five, unlike Slice and Dice: BOTH its damage and its duration scale, so
-  // a short Rupture is worse twice over.
-  if (comboPointsOn(actor) < MAX_COMBO_POINTS) return false;
-  return target.auras.remainingMs('rupture', context.clock.now()) < RUPTURE_REFRESH_WINDOW_MS;
-}
-
-
 /*
  * ============================================================================
  * THE RULESET OWNER'S CONDITIONS, spelled out as helpers because two lists use
@@ -128,6 +71,27 @@ const all =
   ) => boolean)[]) =>
   (context: SimulationContext, actor: Combatant, target?: Combatant): boolean =>
     conditions.every((condition) => condition(context, actor, target));
+
+/** "<buff> is active", on the Rogue. */
+const selfActive = (auraId: string) =>
+  (_context: SimulationContext, actor: Combatant): boolean => actor.auras.has(auraId);
+
+/** "<debuff> is not active", on the target. */
+const targetAuraDown = (auraId: string) =>
+  (context: SimulationContext, _actor: Combatant, target?: Combatant): boolean =>
+    target !== undefined && target.auras.remainingMs(auraId, context.clock.now()) <= 0;
+
+/** "<debuff> duration >= N seconds", on the target. */
+const targetAuraAtLeast = (auraId: string, secondsLeft: number) =>
+  (context: SimulationContext, _actor: Combatant, target?: Combatant): boolean =>
+    target !== undefined &&
+    target.auras.remainingMs(auraId, context.clock.now()) >= secondsLeft * 1000;
+
+/** "<debuff> duration <= N seconds", on the target. An absent debuff counts. */
+const targetAuraAtMost = (auraId: string, secondsLeft: number) =>
+  (context: SimulationContext, _actor: Combatant, target?: Combatant): boolean =>
+    target !== undefined &&
+    target.auras.remainingMs(auraId, context.clock.now()) <= secondsLeft * 1000;
 
 /** "energy >= N". */
 const atLeastEnergy = (minimum: number) =>
@@ -268,12 +232,58 @@ export const ROGUE_COMBAT: readonly PriorityEntry[] = [
  * results page says so.
  */
 export const ROGUE_RUPTURE: readonly PriorityEntry[] = [
-  { abilityId: 'slice_and_dice', condition: sliceAndDiceNeeded },
-  { abilityId: 'rupture', condition: ruptureNeeded },
-  { abilityId: 'eviscerate', condition: AT_FIVE },
-  { abilityId: 'hemorrhage' },
-  { abilityId: 'ghostly_strike' },
-  { abilityId: 'sinister_strike' },
+  /*
+   * PREMEDITATION FIRST, and it is two combo points for free on a two-minute
+   * cooldown. Its Forever tooltip has no stealth clause at all -- that was
+   * Classic's, and reading it into this talent is what kept it recorded as
+   * inert.
+   */
+  { abilityId: 'premeditation' },
+  {
+    abilityId: 'slice_and_dice',
+    condition: all(selfAuraDown('slice_and_dice'), atLeastPoints(3)),
+  },
+  {
+    abilityId: 'rupture',
+    condition: all(targetAuraDown('rupture'), exactlyPoints(MAX_COMBO_POINTS)),
+  },
+  /*
+   * THE SAME FLOOR THE VENOM LIST USES, with Rupture in place of Venom: spend
+   * five points on damage only while both maintenance effects have ten seconds
+   * left, so a finisher never lands just before one has to be rebuilt.
+   */
+  {
+    abilityId: 'eviscerate',
+    condition: all(
+      selfAuraAtLeast('slice_and_dice', 10),
+      targetAuraAtLeast('rupture', 10),
+      exactlyPoints(MAX_COMBO_POINTS),
+    ),
+  },
+  /*
+   * HEMORRHAGE BECOMES A MAINTENANCE STRIKE RATHER THAN THE FILLER. It was
+   * UNCONDITIONAL and the cheapest builder in the list, which made it a floor
+   * nothing below could reach -- Ghostly Strike and Sinister Strike both fired
+   * zero times, and a six-entry list was really a three-entry one. Gated on
+   * its own debuff having a second left, it maintains and Backstab builds.
+   */
+  { abilityId: 'hemorrhage', condition: targetAuraAtMost('hemorrhage', 1) },
+  /*
+   * AMBUSH ONLY ON A CUTTHROAT PROC, which is the whole of that talent: it
+   * causes the next Ambush within ten seconds not to require Stealth, and
+   * nothing here is ever stealthed. The ability's own `canCast` enforces the
+   * same thing, so this entry is the list agreeing with it rather than
+   * carrying the rule.
+   */
+  { abilityId: 'ambush', condition: selfActive('cutthroat') },
+  { abilityId: 'backstab' },
+  /*
+   * PREPARATION LAST, below every builder, which is the right place for an
+   * ability whose entire value is what it gives back: it fires only when
+   * nothing else can, and finishes the cooldown on Premeditation, Ghostly
+   * Strike and Cold Blood.
+   */
+  { abilityId: 'preparation' },
 ];
 
 export const ROGUE_VENOM_ROTATION: Rotation = new PriorityRotation(

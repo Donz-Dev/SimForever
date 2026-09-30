@@ -34,13 +34,20 @@ import { MAELSTROM_WEAPON_MAX_STACKS } from '../auras/shaman';
  * but speeding the character up: casts went 26.3 a fight to 27.4 while Moonfire
  * ticks fell 25.1 to 22.5. The buff was fine; the window was paying for it.
  *
- * `missing` is kept for the lists the owner has not replaced, so the two
- * readings sit side by side rather than one silently becoming the other.
+ * BOTH SHAMAN LISTS ARE THE OWNER'S NOW, so nothing in this file uses the
+ * window any more -- the reading is recorded here rather than kept alive in
+ * code that no longer needs it.
  * ----------------------------------------------------------------------------
  */
 const expired = (auraId: string) =>
   (context: SimulationContext, _actor: Combatant, target?: Combatant): boolean =>
     target !== undefined && target.auras.remainingMs(auraId, context.clock.now()) <= 0;
+
+/** "<debuff> duration > N seconds", on the target. */
+const targetAuraAtLeast = (auraId: string, secondsLeft: number) =>
+  (context: SimulationContext, _actor: Combatant, target?: Combatant): boolean =>
+    target !== undefined &&
+    target.auras.remainingMs(auraId, context.clock.now()) > secondsLeft * 1000;
 
 const withoutAura = (auraId: string) => (_context: SimulationContext, actor: Combatant): boolean =>
   !actor.auras.has(auraId);
@@ -95,8 +102,6 @@ export const SHAMAN_ELEMENTAL: readonly PriorityEntry[] = [
  */
 export const SHAMAN_ENHANCEMENT: readonly PriorityEntry[] = [
   { abilityId: 'windfury_weapon', condition: withoutAura('windfury_weapon') },
-  { abilityId: 'rage_of_the_farseer' },
-  { abilityId: 'stormstrike' },
   /*
    * LIGHTNING BOLT AT FIVE MAELSTROM STACKS, AND ONLY THERE.
    *
@@ -110,7 +115,24 @@ export const SHAMAN_ENHANCEMENT: readonly PriorityEntry[] = [
    * the threshold is the cap rather than anything lower.
    */
   { abilityId: 'lightning_bolt', condition: atStacks('maelstrom_weapon', MAELSTROM_WEAPON_MAX_STACKS) },
-  { abilityId: 'earth_shock' },
+  { abilityId: 'stormstrike' },
+  { abilityId: 'flame_shock', condition: expired('flame_shock') },
+  /*
+   * SEARING TOTEM HELD UP. It is a damage-over-time effect here rather than an
+   * entity, by the ruleset owner's ruling, so "if not active" is the same
+   * question every other bleed in this project answers -- and its 55 seconds
+   * mean one cast covers almost the whole fight.
+   */
+  { abilityId: 'searing_totem', condition: expired('searing_totem') },
+  { abilityId: 'rage_of_the_farseer' },
+  /*
+   * EARTH SHOCK ONLY WHILE FLAME SHOCK HAS TIME LEFT, which is the owner's
+   * condition and is the reason the two can share a cooldown without the
+   * second one clobbering the first. The shocks are one cooldown group now:
+   * spending it on Earth Shock while Flame Shock is about to drop would cost
+   * the burn as well as the hit.
+   */
+  { abilityId: 'earth_shock', condition: targetAuraAtLeast('flame_shock', 3) },
 ];
 
 export const SHAMAN_ELEMENTAL_ROTATION: Rotation = new PriorityRotation(
