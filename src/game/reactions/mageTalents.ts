@@ -1,6 +1,10 @@
+import type { CastReaction, Reaction } from '../../engine';
 import type { TalentReactionBuilder } from './warriorTalents';
 import {
   CLEARCASTING,
+  FINGERS_OF_FROST,
+  FINGERS_OF_FROST_PROC_CHANCE,
+  fingersOfFrostAura,
   HOT_STREAK,
   MISSILE_BARRAGE,
   fireVulnerabilityAura,
@@ -194,6 +198,61 @@ export const improvedScorchReaction: TalentReactionBuilder = (chancePercent) => 
   },
 });
 
+/*
+ * ============================================================================
+ * FINGERS OF FROST, IN TWO REACTIONS, because the talent has two verbs.
+ *
+ *   PROCS  off a Chill effect, and a Chill effect is a spell that slows --
+ *          Frostbolt and Frostfire Bolt both say "slowing movement speed by
+ *          40%". Named by ability id rather than by a slow the engine does not
+ *          model, which is the honest way round: nothing here has movement, so
+ *          "a Chill effect" cannot be detected and has to be declared.
+ *
+ *   SPENDS on every cast, because the tooltip says "your next 2 SPELLS" and
+ *          not "your next 2 Ice Lances". A charge that only Ice Lance could
+ *          spend would survive a Scorch and a Pyroblast cast above it in the
+ *          list -- which is generous, and generous in the direction nobody
+ *          would notice.
+ *
+ * AND THE CAST THAT PROCCED IT DOES NOT SPEND A CHARGE. Cast reactions run
+ * after `onCast`, so the Frostbolt whose damage applied the aura would
+ * otherwise immediately eat one of its own charges. "Your NEXT 2 spells" is
+ * what rules that out, and `appliedAt < now` is how it is checked.
+ * ============================================================================
+ */
+
+/** The ids that slow, which is what "a Chill effect" means here. */
+export const CHILL_ABILITY_IDS: readonly string[] = ['frostbolt', 'frostfire_bolt'];
+
+export const fingersOfFrost = (charges: number): Reaction => ({
+  id: 'fingers_of_frost',
+  on: 'dealt',
+  outcomes: ['hit', 'crit'],
+  canTrigger: (context, _actor, attack) =>
+    attack.abilityId !== undefined &&
+    CHILL_ABILITY_IDS.includes(attack.abilityId) &&
+    context.rng.rollChance(FINGERS_OF_FROST_PROC_CHANCE / 100),
+  onTrigger: (context, actor) => {
+    context.applyAura(actor, fingersOfFrostAura(charges), actor.id);
+  },
+});
+
+export const fingersOfFrostSpender = (): CastReaction => ({
+  id: 'fingers_of_frost_spend',
+  canTrigger: (context, actor) => {
+    const aura = actor.auras.get(FINGERS_OF_FROST.id);
+    return aura !== undefined && aura.appliedAt < context.clock.now();
+  },
+  onTrigger: (context, actor) => {
+    actor.auras.consumeStack(context, FINGERS_OF_FROST.id);
+  },
+});
+
+/** Procs that fire on a cast, by the talent that grants them. */
+export const MAGE_CAST_REACTIONS: Readonly<Record<string, (value: number) => CastReaction>> = {
+  fingers_of_frost: fingersOfFrostSpender,
+};
+
 export const MAGE_TALENT_REACTIONS: Readonly<Record<string, TalentReactionBuilder>> = {
   ignite,
   master_of_elements: masterOfElements,
@@ -201,4 +260,5 @@ export const MAGE_TALENT_REACTIONS: Readonly<Record<string, TalentReactionBuilde
   arcane_concentration: arcaneConcentration,
   missile_barrage: missileBarrage,
   improved_scorch: improvedScorchReaction,
+  fingers_of_frost: fingersOfFrost,
 };

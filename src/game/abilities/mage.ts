@@ -1,4 +1,4 @@
-import type { Ability } from '../../engine';
+import type { Ability, Combatant } from '../../engine';
 import { dealDamage, seconds } from '../../engine';
 import { baseManaFor } from '../character/baseStatLookup';
 import {
@@ -14,7 +14,7 @@ import {
   FROSTFIRE_CAST_MS,
   FROSTFIRE_COEFFICIENTS,
   FROSTFIRE_DOT,
-  FROZEN_UNMODELLED,
+  FINGERS_OF_FROST,
   MAGE_ARMOR,
   MAGE_ARMOR_MAGIC_RESISTANCE,
   PRESENCE_OF_MIND,
@@ -53,8 +53,12 @@ import {
  * spell's scaling between the hit and the DoT rather than taking both.
  *
  * NOTHING FREEZES A RAID BOSS, which costs the Frost half of the Frostfire
- * build four talents and most of Ice Lance. See `FROZEN_UNMODELLED` -- they are
- * inert because of the TARGET rather than because of the engine.
+ * build three talents. See `FROZEN_UNMODELLED` -- they are inert because of the
+ * TARGET rather than because of the engine.
+ *
+ * ICE LANCE IS NO LONGER ONE OF THEM. Fingers of Frost does not freeze the
+ * target; it makes the caster's next spells behave as though it were, which is
+ * a state on the MAGE and is reachable exactly as written.
  * ----------------------------------------------------------------------------
  */
 
@@ -307,16 +311,47 @@ export const FROSTFIRE_BOLT: Ability = {
     'therefore reads FIRE-scoped spell power and not Frost-scoped.',
 };
 
-/**
- * Ice Lance, granted by the Frost talent.
+/*
+ * ============================================================================
+ * ICE LANCE, AND ITS 300% CLAUSE NOW FIRES.
  *
- * ITS 300% CLAUSE NEVER FIRES. "Deals 300% increased damage to Frozen targets",
- * and nothing freezes a raid boss -- so what is left is a 148-damage instant
- * for 160 mana, which is a poor spell and correctly so.
+ * "Deals 300% increased damage to Frozen targets." It was recorded as
+ * permanently inert -- nothing freezes a raid boss -- and that is still true
+ * of every OTHER Frozen effect in this class. Fingers of Frost is the
+ * exception: it does not freeze the target, it makes the caster's next spells
+ * behave as though it were, which is a state on the Mage.
+ *
+ * TIMES FOUR, NOT THREE, by the ruleset owner's ruling. "Increased BY 300%" is
+ * base plus three times itself; "deals 300% damage" would be three, and that is
+ * also what Classic's Ice Lance does -- so the reading that agrees with Classic
+ * is the one that was rejected. Forever marks this spell `new`, so Classic is
+ * not authoritative about it in either direction.
+ *
+ * 133-157 AND NOT THE CAPTURE'S 136-160, by the standing rule that
+ * `foreverchanges.pro` wins a disagreement. Recorded in
+ * docs/source-cross-checks.md; said here too, because a number that disagrees
+ * with the checked-in capture reads as drift without the ruling beside it.
+ * ============================================================================
  */
 export const ICE_LANCE_DAMAGE = midpoint(133, 157);
 export const ICE_LANCE_FROZEN_MULTIPLIER = 4;
 export const ICE_LANCE_COEFFICIENT = ICE_LANCE_SP_COEFFICIENT;
+
+/**
+ * Four while Fingers of Frost is up, one otherwise.
+ *
+ * READ AT CAST TIME rather than being decided when the aura lands, because the
+ * charge can expire between the proc and the cast -- the aura is fifteen
+ * seconds and the rotation may have a Scorch and a Pyroblast to get through
+ * first.
+ *
+ * THE CHARGE IS NOT SPENT HERE. `fingersOfFrostSpender` takes one on every
+ * cast, which is what "your next 2 SPELLS" says: spending it in this ability
+ * would leave a charge surviving the Scorch above it in the list.
+ */
+function frozenMultiplier(caster: Combatant): number {
+  return caster.auras.has(FINGERS_OF_FROST.id) ? ICE_LANCE_FROZEN_MULTIPLIER : 1;
+}
 
 export const ICE_LANCE: Ability = {
   id: 'ice_lance',
@@ -331,12 +366,22 @@ export const ICE_LANCE: Ability = {
       abilityId: ability.id,
       abilityName: ability.name,
       school: 'frost',
-      baseAmount: ICE_LANCE_DAMAGE,
-      powerCoefficient: ICE_LANCE_COEFFICIENT,
+      /*
+       * THE MULTIPLIER IS ON THE BASE AND THE COEFFICIENT BOTH, which is what
+       * "deals 300% increased damage" says: all of the damage, not the flat
+       * half of it. Applying it to `baseAmount` alone would leave a
+       * spell-power-heavy Mage's Ice Lance barely improved and would look
+       * entirely reasonable.
+       */
+      baseAmount: ICE_LANCE_DAMAGE * frozenMultiplier(caster),
+      powerCoefficient: ICE_LANCE_COEFFICIENT * frozenMultiplier(caster),
       attackTable: ability.attackTable,
     });
   },
-  unmodelled: FROZEN_UNMODELLED,
+  unmodelled:
+    'Its 300% clause is reachable ONLY through Fingers of Frost. Nothing ' +
+    'freezes a raid boss, so a Mage without that talent deals the base ' +
+    'damage always -- which is the target being what it is, not a gap.',
 };
 
 // ---------------------------------------------------------------------------
