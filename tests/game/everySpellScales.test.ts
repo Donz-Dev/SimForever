@@ -75,6 +75,20 @@ const EXEMPT: Readonly<Record<string, string>> = {
    */
   arcane_shot: 'Forever replaced its spell power coefficient with a ranged AP one.',
   serpent_sting: 'A sting ticks NATURE but scales with ranged attack power.',
+  /*
+   * THE ONLY ENTRY HERE THAT IS A GAP RATHER THAN A RULE, and it is listed so
+   * that it is visible rather than so that it is settled.
+   *
+   * `WoWSimWorksheet.xlsx` is the ruleset owner's authoritative coefficient
+   * document and lists nine Warlock spells. Wrack is not one of them, so the
+   * ability deals a flat 36 a tick and scales with nothing -- which is what
+   * "never invent game data" requires and is very probably not what the
+   * ruleset intends for an Affliction capstone.
+   *
+   * WHAT WOULD CLEAR IT: one number from the owner. This line should be
+   * DELETED the day a Wrack row exists, not amended.
+   */
+  wrack: 'The coefficient sheet has no Wrack row. A missing NUMBER, not a rule.',
 };
 
 /*

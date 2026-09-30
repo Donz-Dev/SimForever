@@ -3,6 +3,7 @@ import { createPlayer } from '../../src/game/actors/createPlayer';
 import { runProfileBatch } from '../../src/simulator';
 import { PRESETS_BY_ID } from '../../src/profiles/presets';
 import { abilitiesForClass } from '../../src/game/abilities/abilitiesForClass';
+import { seconds } from '../../src/engine';
 import {
   CONFLAGRATE_DAMAGE,
   CONFLAGRATE_KEEPS_IMMOLATE,
@@ -15,6 +16,10 @@ import {
   SHADOWBURN_MANA,
   SHADOWBURN_REFUNDS_SHARD,
   SHADOW_BOLT_DAMAGE,
+  WRACK,
+  WRACK_DOT_AMPLIFICATION_PERCENT,
+  WRACK_TICKS,
+  WRACK_TICK_DAMAGE,
 } from '../../src/game/abilities/warlock';
 import {
   BANE_OF_AGONY_TOTAL,
@@ -234,5 +239,51 @@ describe('the two fights', () => {
     const batch = batchOf('warlock_smds', 30, 5);
     expect(batch.abilities.find((a) => a.abilityName === 'Life Tap')?.uses ?? 0)
       .toBeGreaterThan(3);
+  });
+});
+
+describe('Wrack, built and demonstrably not worth casting', () => {
+  /*
+   * --------------------------------------------------------------------------
+   * "Tears the target apart from within, dealing 36 Shadow damage every 1 sec
+   * and increasing the damage they take from your other Shadow damage over
+   * time effects by 10%. Lasts 6 sec." 200 mana, a six-second channel, new in
+   * Forever, and rank 1 IS max.
+   *
+   * TWO HALVES AND ONLY ONE IS MODELLED, and the unmodelled one is the reason
+   * anybody would cast it. Both are asserted here so neither can be quietly
+   * filled in with a plausible number later.
+   * --------------------------------------------------------------------------
+   */
+  it('ticks six times for a flat 36, and carries NO coefficient', () => {
+    /*
+     * `WoWSimWorksheet.xlsx` is the owner's authoritative coefficient document
+     * and lists nine Warlock spells. Wrack is not one of them, so it does not
+     * scale -- which "never invent game data" requires and is very probably
+     * not what the ruleset intends for an Affliction capstone.
+     */
+    expect(WRACK_TICK_DAMAGE).toBe(36);
+    expect(WRACK_TICKS).toBe(6);
+    expect(WRACK.castTimeMs).toBe(seconds(6));
+    expect(WRACK.channelTicks).toBe(6);
+    expect(WRACK.cost).toEqual({ resource: 'mana', amount: 200 });
+  });
+
+  it('says both gaps in its own words rather than approximating either', () => {
+    expect(WRACK.unmodelled).toContain('Shadow Bolt');
+    expect(WRACK.unmodelled).toContain('no Wrack row');
+    expect(WRACK_DOT_AMPLIFICATION_PERCENT).toBe(10);
+  });
+
+  it('is granted by the capstone, so only SM/DS carries one', () => {
+    const smds = PRESETS_BY_ID.get('warlock_smds')!.build();
+    expect(
+      abilitiesForClass('warlock', 'caster', smds.talents).map((a) => a.id),
+    ).toContain('wrack');
+
+    const firelock = PRESETS_BY_ID.get('warlock_firelock')!.build();
+    expect(
+      abilitiesForClass('warlock', 'caster', firelock.talents).map((a) => a.id),
+    ).not.toContain('wrack');
   });
 });

@@ -374,6 +374,77 @@ export const SEARING_PAIN: Ability = {
   unmodelled: 'Its "high amount of threat" does nothing; the engine does not track threat.',
 };
 
+/*
+ * ============================================================================
+ * WRACK, the Affliction capstone: "Tears the target apart from within, dealing
+ * 36 Shadow damage every 1 sec and increasing the damage they take from your
+ * other Shadow damage over time effects by 10%. Lasts 6 sec." 200 mana, a
+ * six-second CHANNEL, new in Forever and rank 1 IS max.
+ *
+ * ----------------------------------------------------------------------------
+ * TWO HALVES AND ONLY ONE OF THEM IS MODELLED, and the unmodelled one is the
+ * reason anybody would cast it. Both are stated rather than folded away.
+ *
+ * ITS DAMAGE HAS NO COEFFICIENT, because the sheet has no Wrack row.
+ * `WoWSimWorksheet.xlsx` is the owner's authoritative coefficient document and
+ * it lists nine of the Warlock's spells; this is not one. So Wrack deals a flat
+ * 36 a tick and does not scale at all, which is what "never invent game data"
+ * requires and is also very probably not what the ruleset intends -- an
+ * Affliction capstone that ignores spell power is a strange thing.
+ *
+ * ITS +10% TO YOUR OTHER SHADOW DoTs IS NOT MODELLED EITHER. The engine has
+ * damage-taken multipliers per SCHOOL, and a school multiplier would also raise
+ * Shadow Bolt, which is 58.9% of the SM/DS profile's damage. That is not an
+ * approximation, it is a much bigger number wearing the right label -- so the
+ * clause keeps its own words instead. A periodic-only school vulnerability is
+ * the field it wants.
+ *
+ * THE CONSEQUENCE, SAID PLAINLY: as modelled, Wrack cannot be worth casting.
+ * Six seconds of channel for a flat 216 against a Shadow Bolt worth 268 plus
+ * 0.857 spell power in three. The ability is built, its mechanism is tested,
+ * and whether it belongs in a list is a question for the two gaps above rather
+ * than for a measurement.
+ * ----------------------------------------------------------------------------
+ */
+export const WRACK_TICK_DAMAGE = 36;
+export const WRACK_TICKS = 6;
+export const WRACK_CHANNEL_MS = seconds(WRACK_TICKS);
+/** "your other Shadow damage over time effects", and it is not applied. */
+export const WRACK_DOT_AMPLIFICATION_PERCENT = 10;
+
+export const WRACK: Ability = {
+  id: 'wrack',
+  name: 'Wrack',
+  cost: { resource: 'mana', amount: 200 },
+  castTimeMs: WRACK_CHANNEL_MS,
+  channelTicks: WRACK_TICKS,
+  attackTable: 'spell',
+  onCast: ({ simulation, caster, target, ability }) => {
+    if (!target) return;
+    dealDamage(simulation, {
+      source: caster,
+      target,
+      abilityId: ability.id,
+      abilityName: ability.name,
+      school: 'shadow',
+      baseAmount: WRACK_TICK_DAMAGE,
+      /*
+       * NO COEFFICIENT, and deliberately absent rather than zero-by-omission:
+       * the sheet states none for this spell, and a plausible one invented
+       * here would be indistinguishable from a real one.
+       */
+      attackTable: ability.attackTable,
+    });
+  },
+  unmodelled:
+    `Its "+${WRACK_DOT_AMPLIFICATION_PERCENT}% damage from your other Shadow ` +
+    'damage over time effects" does nothing. Damage-taken multipliers here are ' +
+    'per SCHOOL, and a Shadow multiplier would also raise Shadow Bolt -- 58.9% ' +
+    "of this profile's damage -- which is a bigger number rather than an " +
+    'approximation. It also carries NO spell power coefficient, because the ' +
+    "owner's coefficient sheet has no Wrack row.",
+};
+
 export const WARLOCK_ABILITIES: readonly Ability[] = [
   SHADOW_BOLT,
   CORRUPTION_ABILITY,
@@ -385,4 +456,6 @@ export const WARLOCK_ABILITIES: readonly Ability[] = [
   CONFLAGRATE,
   SHADOWBURN,
   SEARING_PAIN,
+  // Granted by the Affliction capstone; `grantsByAbility` gates it.
+  WRACK,
 ];
