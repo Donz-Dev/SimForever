@@ -104,14 +104,15 @@ sheet would otherwise read the new numbers as transcription errors.
 
 ## What the sheet does not reach
 
-**ONE ROW IS LEFT**, down from two. Both were transcribed and not applied
-because each landed on something that did not exist; the poison system was
-then built, so that row is live. Everything stays in `coefficients.ts` rather
-than being dropped, so the transcription covers every row.
+**NO ROWS ARE LEFT.** Two were transcribed and not applied because each landed
+on something that did not exist, and both have since been built -- the poison
+system, and then Hammer of Wrath. Everything stays in `coefficients.ts` rather
+than being dropped, so the transcription covers every row and the table below
+is kept as the record of what was once outstanding and why.
 
 | Row | Why not |
 | --- | --- |
-| Hammer of Wrath 42.857% | The ability is not declared. The capture has it — "474 to 522 Holy damage. Only usable on enemies that have 20% or less health" — so adding it is a new ability and a target-health gate |
+| ~~Hammer of Wrath 42.857%~~ | **APPLIED.** The ability was not declared, and what changed was not the data but the ruleset owner putting it in two Paladin priority lists. Its "only usable on enemies that have 20% or less health" is the CLOCK here, by the same ruling Execute runs on -- `combat/executePhase.ts` |
 | ~~Instant Poison 0.5%, Deadly Poison 0.45% per tick~~ | **APPLIED.** `reactions/poisons.ts` reads the first and `auras/rogue.ts` the second. The reason here said "poisons are not implemented at all" for a while after they were, which is the failure mode an `unmodelled` reason has: it is a claim with a date on it |
 
 ## What it moved
