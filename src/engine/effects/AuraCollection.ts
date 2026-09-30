@@ -80,6 +80,44 @@ export class AuraCollection {
   }
 
   /**
+   * Damage every active absorb shield on this combatant could still soak.
+   *
+   * A READ, and deliberately so: `resolveDamage` applies nothing, so it asks
+   * how much WOULD be absorbed and `dealDamage` spends it afterwards. That is
+   * the arrangement a block charge already has, and for the same reason -- an
+   * ability can resolve a hit without the hit happening.
+   */
+  absorbAvailable(): number {
+    let total = 0;
+    for (const instance of this.auras.values()) total += instance.absorbRemaining;
+    return total;
+  }
+
+  /**
+   * Spend an absorbed amount across the shields, removing any that run out.
+   *
+   * IN INSERTION ORDER, which is the order they were applied. Nothing in this
+   * ruleset stacks two shields yet, so the order is a decision rather than a
+   * rule -- said here so that the day two do, somebody chooses on purpose.
+   */
+  consumeAbsorb(context: SimulationContext, amount: number): void {
+    let left = amount;
+    for (const instance of [...this.auras.values()]) {
+      if (left <= 0) break;
+      if (instance.absorbRemaining <= 0) continue;
+      const taken = Math.min(instance.absorbRemaining, left);
+      instance.absorbRemaining -= taken;
+      left -= taken;
+      /*
+       * A SPENT SHIELD ENDS, which is what every absorb in the game does and
+       * what stops an exhausted one sitting on the character reporting uptime
+       * it is not providing.
+       */
+      if (instance.absorbRemaining <= 0) this.remove(context, instance.id);
+    }
+  }
+
+  /**
    * Apply an aura, or refresh/stack it if already present.
    *
    * Returns the live instance either way.
@@ -102,6 +140,10 @@ export class AuraCollection {
       // A charge effect starts full rather than building to its cap.
       definition.chargesOnApply ?? 1,
     );
+    // Evaluated ONCE, here, for the reason on `AuraDefinition.absorb`: every
+    // absorb in this ruleset is a share of something, and a shield that grew
+    // with a buff landing after it would be the wrong number.
+    instance.absorbRemaining = definition.absorb?.(this.owner) ?? 0;
     this.auras.set(definition.id, instance);
 
     this.applyStatModifiers(instance);

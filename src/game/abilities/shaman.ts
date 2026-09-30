@@ -4,6 +4,7 @@ import {
   FLAME_SHOCK_COEFFICIENTS,
   FLAME_SHOCK_DOT,
   RAGE_OF_THE_FARSEER,
+  SEARING_TOTEM_DOT,
   STORMSTRIKE_DAMAGE_BONUS,
   STORMSTRIKE_DEBUFF,
   WINDFURY_WEAPON_IMBUE,
@@ -45,11 +46,12 @@ import {
  *
  * NOT HERE, AND EACH FOR A STATED REASON:
  *
- *   TOTEMS       Searing, Magma and Fire Nova are the Elemental shaman's own
- *                damage that this file cannot give it. A totem is a separate
- *                attacking entity and the engine has none; Searing Totem does
- *                not even state an attack interval, and Fire Nova REQUIRES an
- *                active fire totem to go off at all. See docs.
+ *   TOTEMS       Magma Totem and Fire Nova. SEARING TOTEM IS NOW HERE, as a
+ *                damage-over-time effect rather than an entity, by the ruleset
+ *                owner's ruling -- which also supplied the attack interval and
+ *                the coefficient this note used to say no source stated. Magma
+ *                Totem still states none, and Fire Nova REQUIRES an active
+ *                fire totem to go off at all. See docs.
  *   IMBUES       Windfury Weapon is here. Flametongue, Frostbrand and
  *                Rockbiter are not: Flametongue and Frostbrand scale their
  *                damage with weapon speed and state only a range, so the
@@ -383,6 +385,34 @@ export const RAGE_OF_THE_FARSEER_ABILITY: Ability = {
   },
 };
 
+/**
+ * Searing Totem: "Summons a Searing Totem with 5 health at your feet for 55 sec
+ * that repeatedly attacks an enemy within 20 yards for 40 to 54 Fire damage."
+ *
+ * Modelled as a damage-over-time effect by the ruleset owner's ruling rather
+ * than as an entity -- the reasoning, the cadence and the coefficient are all
+ * on `SEARING_TOTEM_DOT`, and the cadence and coefficient are the owner's
+ * because no source states either.
+ *
+ * NOT A WEAPON USE and not a spell hit: the totem's damage is applied by an
+ * aura, so the CAST rolls nothing and the ticks do their own rolling. That is
+ * why the ability declares no `attackTable`.
+ */
+export const SEARING_TOTEM: Ability = {
+  id: 'searing_totem',
+  name: 'Searing Totem',
+  cost: { resource: 'mana', amount: 170 },
+  requiresTarget: true,
+  onCast: ({ simulation, caster, target }) => {
+    if (!target) return;
+    simulation.applyAura(target, SEARING_TOTEM_DOT, caster.id);
+  },
+  unmodelled:
+    'The totem itself is not an entity: it has 5 health and can be killed in ' +
+    'game, and here it is a damage-over-time effect that cannot be targeted. ' +
+    'Its 20 yard range is dropped with every other distance.',
+};
+
 export const SHAMAN_ABILITIES: readonly Ability[] = [
   LIGHTNING_BOLT,
   CHAIN_LIGHTNING,
@@ -393,4 +423,5 @@ export const SHAMAN_ABILITIES: readonly Ability[] = [
   STORMSTRIKE,
   WINDFURY_WEAPON,
   RAGE_OF_THE_FARSEER_ABILITY,
+  SEARING_TOTEM,
 ];

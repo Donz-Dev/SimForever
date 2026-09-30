@@ -13,12 +13,18 @@ import {
   LAVA_BURST_DAMAGE,
   LAVA_BURST_FLAME_SHOCK_BONUS,
   LIGHTNING_BOLT_DAMAGE,
+  SEARING_TOTEM,
   SHOCK_COOLDOWN_GROUP,
 } from '../../src/game/abilities/shaman';
 import {
   FLAME_SHOCK_DOT_DURATION_MS,
   FLAME_SHOCK_DOT_TOTAL,
   FLAME_SHOCK_TICK_INTERVAL_MS,
+  SEARING_TOTEM_DOT,
+  SEARING_TOTEM_DURATION_MS,
+  SEARING_TOTEM_TICK_DAMAGE,
+  SEARING_TOTEM_TICK_INTERVAL_MS,
+  SEARING_TOTEM_TICK_SP_COEFFICIENT,
   STORMSTRIKE_DAMAGE_BONUS,
 } from '../../src/game/auras/shaman';
 import {
@@ -28,6 +34,7 @@ import {
 } from '../../src/game/reactions/shaman';
 import { SHAMAN_TALENT_EFFECTS } from '../../src/game/talents/shamanEffects';
 import { abilitiesForClass } from '../../src/game/abilities/abilitiesForClass';
+import type { TelemetryEvent } from '../../src/engine';
 import { castAbility, checkCast, resolveCast, seconds } from '../../src/engine';
 import { buildSimulation } from '../helpers/buildSimulation';
 import { makeAttacker, makeTarget } from '../helpers/actors';
@@ -457,6 +464,106 @@ describe('Elemental Fury, corrected', () => {
     }
     // And not arcane, which the tooltip does not name.
     expect(actor.schoolModifiers.for('arcane').critMultiplierBonus ?? 0).toBe(0);
+  });
+});
+
+describe('Searing Totem, a totem modelled without an entity', () => {
+  /*
+   * --------------------------------------------------------------------------
+   * THE RULESET OWNER'S RULING, quoted because most of it is in no source:
+   * "Searing totem can be treated like a DoT effect that lasts 55 seconds and
+   * ticks every 1.5 seconds for 40-54 fire damage +8% of spell damage per
+   * tick, but is considered a totem for the purposes of other talents."
+   *
+   * The capture gives 170 mana, instant, Fire, 55 sec and "40 to 54 Fire
+   * damage". It does NOT give the cadence or any coefficient, and this file's
+   * own header used to record that. Both are the owner's, which is the only
+   * reason they are data rather than an invention.
+   * --------------------------------------------------------------------------
+   */
+  it('takes the midpoint of its stated range and the owner\'s cadence', () => {
+    // "40 to 54", written out by hand from the capture.
+    expect(SEARING_TOTEM_TICK_DAMAGE).toBe(47);
+    expect(SEARING_TOTEM_DURATION_MS).toBe(seconds(55));
+    expect(SEARING_TOTEM_TICK_INTERVAL_MS).toBe(seconds(1.5));
+    expect(SEARING_TOTEM_TICK_SP_COEFFICIENT).toBe(0.08);
+    expect(SEARING_TOTEM.cost).toEqual({ resource: 'mana', amount: 170 });
+  });
+
+  it('lands 36 ticks, not 37, and does not divide evenly', () => {
+    /*
+     * 55 at 1.5 is 36.67. The last tick is at 54.0 and the totem expires at
+     * 55.0 with a second unspent. Unlike every other DoT here there is no
+     * total to divide and no cadence to infer -- both are stated -- so this
+     * asserts what the engine will DO rather than a reading that was chosen.
+     */
+    const exact = SEARING_TOTEM_DURATION_MS / SEARING_TOTEM_TICK_INTERVAL_MS;
+    expect(Number.isInteger(exact)).toBe(false);
+    expect(Math.floor(exact)).toBe(36);
+  });
+
+  it('ticks for its stated damage, and the ticks ignore armor', () => {
+    const actor = makeAttacker({
+      autoAttack: 'none',
+      abilities: [SEARING_TOTEM],
+      resources: [{ type: 'mana', maximum: 50_000 }],
+    });
+    const target = makeTarget({ stats: { armor: 3731 } });
+    const events: TelemetryEvent[] = [];
+    const simulation = buildSimulation([actor, target], { durationMs: seconds(60) }, {
+      emit: (event) => events.push(event),
+    });
+    simulation.begin();
+    castAbility(simulation, actor, SEARING_TOTEM, target);
+    simulation.advanceTo(seconds(55));
+
+    const ticks = events.filter(
+      (e) => e.type === 'damage' && e.abilityId === 'searing_totem',
+    );
+    expect(ticks).toHaveLength(36);
+    /*
+     * ARMOR DOES NOT APPLY, which is the Forever rule for every magical
+     * school. A 3731-armor target is the one this project checks against, so a
+     * tick landing for its full stated damage is the assertion that
+     * `appliesArmor: false` is really set.
+     */
+    const first = ticks[0];
+    if (first.type === 'damage') {
+      expect(first.amount).toBeGreaterThanOrEqual(SEARING_TOTEM_TICK_DAMAGE);
+    }
+  });
+
+  it('counts as a totem for the two talents that name one', () => {
+    /*
+     * "Considered a totem for the purposes of other talents" is the clause
+     * that is easy to drop, and it is why this test exists rather than a
+     * damage one.
+     *
+     *   Call of Flame     names Fire Totems, and now carries an
+     *                     `abilityDamage` effect keyed on the aura id.
+     *   Elemental Fury    names Searing Totem and is a SCHOOL effect, so it
+     *                     reached the ticks the moment they were Fire. Nothing
+     *                     was added for it; the reason saying it did nothing
+     *                     was what had to change.
+     */
+    const callOfFlame = SHAMAN_TALENT_EFFECTS.call_of_flame;
+    expect(
+      callOfFlame.some((e) => e.kind === 'abilityDamage' && e.abilityId === 'searing_totem'),
+    ).toBe(true);
+
+    const fury = SHAMAN_TALENT_EFFECTS.elemental_fury;
+    const schools = fury.find((e) => e.kind === 'schoolCritDamage');
+    expect(schools).toBeDefined();
+    expect(SEARING_TOTEM_DOT.periodic).toBeDefined();
+
+    // And neither reason still claims the Searing clause is inert.
+    for (const effects of [callOfFlame, fury]) {
+      for (const effect of effects) {
+        if (effect.kind !== 'unmodelled') continue;
+        expect(effect.reason).not.toContain('Searing Totem clauses do nothing');
+        expect(effect.reason).not.toContain('Fire Totem and Fire Nova clauses do nothing');
+      }
+    }
   });
 });
 
