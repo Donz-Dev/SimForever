@@ -5,25 +5,29 @@ import { MAX_COMBO_POINTS } from '../combat/comboPoints';
 import { RUPTURE_BY_COMBO_POINT, VENOM_AURA_ID } from '../auras/rogue';
 
 /**
- * Rogue priority lists — APL SHELLS.
+ * Rogue priority lists.
  *
  * ----------------------------------------------------------------------------
- * SHELLS, AND SAID TO BE. The ruleset owner asked for "an APL shell" per
- * profile; these are the standard shape of each build's rotation and are NOT
- * the owner's own lists, which have not been given. Every Warrior list in this
- * project came from the owner directly, and the difference matters: a number
- * measured off one of these describes this file's guess, not the ruleset.
+ * THE RULESET OWNER'S OWN LISTS. Every list in this file was specified by them,
+ * entry by entry, and measured after -- so a number taken off one describes the
+ * ruleset rather than this file's guess.
  *
- * THE SHAPE EVERY ROGUE LIST SHARES, which is why they look alike:
+ * IT SAID THE OPPOSITE FOR MOST OF THIS PROJECT'S LIFE, and the header that
+ * said so was doing real work: "these are the standard shape of each build and
+ * are NOT the ruleset owner's own lists, which have not been given." That is
+ * how a shell is supposed to read, and it is why the figures measured off one
+ * were never mistaken for the ruleset's. *
+ * THE SHELL'S OWN RULE DID NOT SURVIVE CONTACT WITH THE OWNER'S LISTS, and it
+ * is worth keeping the disagreement rather than the rule. This file used to
+ * say every Rogue list "spends the rest at five combo points, never at four",
+ * because a finisher at one point buys a fifth of the damage for the same 35
+ * energy and global cooldown.
  *
- *   1. keep Slice and Dice up, because it is a flat 30% attack speed and
- *      everything else is worth less than that
- *   2. spend the rest at five combo points, never at four
- *   3. otherwise build
- *
- * A damage finisher at one point is not wrong, it is wasteful: the same 35
- * energy and global cooldown buys a fifth of the damage. Holding for five is
- * what makes the class a queue rather than a reaction.
+ * The Combat list does not hold for five. Its Eviscerate is gated only on
+ * Slice and Dice having nine seconds left, and it went from 1.1 casts a fight
+ * to 9.0 -- for +0.6 DPS, inside the interval. "Hold for five" is a claim
+ * about damage per POINT and the owner's order is a claim about the whole
+ * cycle, and the measurement says they are the same cycle.
  * ----------------------------------------------------------------------------
  */
 

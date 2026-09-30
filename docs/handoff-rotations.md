@@ -1,12 +1,17 @@
-# Handoff — action priority lists
+# The action priority lists
 
-**The job: receive, tweak and optimise the priority list behind each of the 23
-profiles.** Everything else in this simulator is built. This is the last system
-that is thin, and it is thin in a way that does not look thin.
+**ALL 23 ARE THE RULESET OWNER'S OWN**, specified entry by entry and measured
+after. This was a handoff describing a system that was thin in a way that did
+not look thin; it is now the record of what replacing it was worth, and of the
+three things building it turned up.
+
+The rules an edit has to respect are unchanged and are at the bottom. So is the
+four-ways-a-list-fails table, because every one of those failures was found
+again while implementing the owner's lists.
 
 Read [CLAUDE.md](../CLAUDE.md) first — it is the rules, and about a fifth of it
 is rotation lessons paid for in wrong numbers. This file is the state of the
-lists, the tools, and what is already known to be wrong with them.
+lists, the tools, what each one was worth, and what is still open.
 
 ---
 
@@ -24,7 +29,10 @@ a perfectly ordinary DPS figure.**
 
 Three of the four are invisible to the test suite, to the results page and to
 the DPS number. `tools/measure_profiles.ts USES=1` is the only thing that shows
-them, which is why it was written before this handoff was.
+them, which is why it was written before this handoff was -- and it earned its
+keep again while the owner's lists were going in. Three of the four failures
+above were found in them, and a fourth was CREATED by the engine work one list
+needed: see the dead-entry section below.
 
 ---
 
@@ -78,46 +86,48 @@ Every list in the project, with the class that owns it, the display name, and
 ## The 23 profiles and their lists
 
 Every profile has exactly one list of its own — 23 profiles, 23 lists, no
-sharing. Baselines are 300 iterations at seed 12345 with the preset raid buffs,
-as published in [HANDOVER.md](../HANDOVER.md).
+sharing, and **all 23 are the ruleset owner's**. DPS is the baseline in
+[HANDOVER.md](../HANDOVER.md): 30 batches of 10 with the preset raid buffs.
 
 | Profile | DPS | List | Entries | Gated |
 | --- | --- | --- | --- | --- |
-| DW Fury | 652.2 | `WARRIOR_DUAL_WIELD_BERSERKER` | 9 | 5 |
-| 2H Arms | 596.6 | `WARRIOR_TWO_HAND_BATTLE` | 11 | 8 |
-| LW Melee | 550.1 | `HUNTER_LONE_WOLF_MELEE` | 7 | 2 |
-| Firelock | 537.6 | `WARLOCK_DESTRUCTION` | 6 | 2 |
-| Prot Warr | 457.1 | `WARRIOR_SHIELD_DEFENSIVE` | 14 | 10 |
-| Seal Twist Ret | 451.8 | `PALADIN_RETRIBUTION` | 4 | 2 |
-| Shadow Priest | 449.3 | `PRIEST_SHADOW` | 7 | 4 |
-| Cat | 441.2 | `DRUID_CAT` | 6 | 3 |
-| BM Hunter | 418.3 | `HUNTER_BEAST_MASTERY` | 8 | 1 |
-| Combat | 417.6 | `ROGUE_COMBAT` | 6 | 2 |
-| Venom | 410.3 | `ROGUE_VENOM` | 6 | 4 |
-| Arcane | 405.2 | `MAGE_ARCANE` | 5 | 2 |
-| Enh Shaman | 404.3 | `SHAMAN_ENHANCEMENT` | 5 | 2 |
-| Fire | 390.3 | `MAGE_FIRE` | 6 | 2 |
-| Rupture | 377.3 | `ROGUE_RUPTURE` | 6 | 3 |
-| Moonkin | 359.0 | `DRUID_MOONKIN` | 4 | 2 |
-| Bear | 353.1 | `DRUID_BEAR` | 5 | 2 |
-| Shockadin | 343.4 | `PALADIN_SHOCKADIN` | 4 | 1 |
-| Frostfire | 339.5 | `MAGE_FROSTFIRE` | 4 | 2 |
-| LW Ranged | 302.0 | `HUNTER_LONE_WOLF_RANGED` | 6 | 1 |
-| SM/DS | 292.6 | `WARLOCK_AFFLICTION` | 6 | 4 |
-| Ele Shaman | 277.7 | `SHAMAN_ELEMENTAL` | 3 | 1 |
-| Prot Pally | 161.8 | `PALADIN_PROTECTION` | 5 | 3 |
+| DW Fury | 652.0 | `WARRIOR_DUAL_WIELD_BERSERKER` | 10 | 6 |
+| 2H Arms | 607.2 | `WARRIOR_TWO_HAND_BATTLE` | 12 | 8 |
+| Firelock | 535.5 | `WARLOCK_DESTRUCTION` | 6 | 2 |
+| Cat | 488.0 | `DRUID_CAT` | 5 | 3 |
+| Seal Twist Ret | 471.0 | `PALADIN_RETRIBUTION` | 7 | 3 |
+| Prot Warr | 454.6 | `WARRIOR_SHIELD_DEFENSIVE` | 14 | 10 |
+| Enh Shaman | 451.1 | `SHAMAN_ENHANCEMENT` | 7 | 5 |
+| Shadow | 437.3 | `PRIEST_SHADOW` | 6 | 4 |
+| Combat | 419.8 | `ROGUE_COMBAT` | 5 | 2 |
+| BM Hunter | 405.8 | `HUNTER_BEAST_MASTERY` | 7 | 5 |
+| Fire | 401.2 | `MAGE_FIRE` | 5 | 4 |
+| Venom | 392.7 | `ROGUE_VENOM` | 5 | 4 |
+| Arcane | 392.6 | `MAGE_ARCANE` | 5 | 4 |
+| Moonkin | 384.3 | `DRUID_MOONKIN` | 5 | 4 |
+| Shockadin | 379.0 | `PALADIN_SHOCKADIN` | 7 | 2 |
+| Rupture | 377.1 | `ROGUE_RUPTURE` | 8 | 5 |
+| Frostfire | 376.6 | `MAGE_FROSTFIRE` | 5 | 4 |
+| Bear | 376.2 | `DRUID_BEAR` | 8 | 4 |
+| SM/DS | 349.1 | `WARLOCK_AFFLICTION` | 5 | 4 |
+| LW Melee | 321.5 | `HUNTER_LONE_WOLF_MELEE` | 5 | 2 |
+| LW Ranged | 311.7 | `HUNTER_LONE_WOLF_RANGED` | 7 | 5 |
+| Ele Shaman | 295.4 | `SHAMAN_ELEMENTAL` | 3 | 1 |
+| Prot Pally | 153.2 | `PALADIN_PROTECTION` | 9 | 6 |
 
 Plus `PET_PRIORITY` (2 entries), which runs on the BM Hunter's pet, and two
 Warrior lists **no preset reaches** — `WARRIOR_BATTLE` (14 entries) and
 `WARRIOR_SHIELD` (15), the fallbacks for a shield in Battle Stance or a
 dual-wielder outside Berserker. Both are pinned by a test so a third does not
-quietly join them.
+quietly join them. They are the only lists in this file that are still shells.
 
-**THE SIZES ARE THE STORY.** The three lists the owner shaped carry 9, 11 and 14
-entries; the Elemental shaman has three, and the Moonkin four. A four-entry list
-is not automatically wrong — a Moonkin genuinely casts two DoTs and a nuke — but
-it is where to look first, and none of them has ever been measured entry by
-entry.
+**THE SIZES WERE THE STORY AND ARE NOT ANY MORE.** This table used to note that
+the Elemental shaman had three entries and the Moonkin four, against 9, 11 and
+14 for the three the owner had shaped, and that a short list was where to look
+first. That held: the Moonkin is five now and gained 25.1, and SM/DS went from
+six entries to five and gained 55.9 -- **the count was never the thing, the
+conditions were.** The Elemental shaman is still three entries and still gained
+16.4, from one word in one condition.
 
 **How a profile reaches its list** is `rotationFor(class, style, stance,
 talents)`: the Warrior by style **and** stance, the Rogue, Paladin, Warlock and
@@ -128,76 +138,82 @@ without erroring.
 
 ---
 
-## What has already been measured, and what has not
+## What each list was worth
 
-**Four lists out of twenty-six have ever been measured entry by entry**: the
-three Hunter APLs, and one entry of the Venom Rogue's. Everything else is
-reasoned. The Warrior's came from the ruleset owner, which is the next best
-thing and is still not a measurement.
+Every figure is 30 batches of 10 against the profile's previous baseline, with
+the containment check that the profiles a change should not reach do not move by
+a decimal. **Every one held: a list edit moved exactly the profile that runs it.**
 
-The findings that came out of the Hunter work are in CLAUDE.md and are the
-closest thing to prior art:
-
-- **A list ordered by damage per cast is ordered by the wrong thing when the
-  build runs out of resource.** Check whether a build is resource-bound or
-  global-cooldown-bound before reading its list. Dropping Aimed Shot was worth
-  +23 to Marksmanship; adding an instant shot to the melee Hunter was worth +55.
-- **A cast time is a hidden cost the list cannot see**, because it resets the
-  swing timer of a slot whose damage is on a different row of the table.
-- **The same ability is right in one list and wrong in another** — Aimed Shot is
-  −23 to Marksmanship and +4 to Beast Mastery.
-- **Measure the cast, not the effect.** Injecting Hunter's Mark's 71 ranged
-  attack power said +1.9; casting the ability measured **−10.1**.
-- **Measure a list, do not reason about it.** Summon Hawk sat above Arcane Shot
-  because a comment counted the hawk's ticks and not its price. Arcane Shot
-  above it is worth +20, and the comment had been believed for as long as it had
-  existed.
-
----
-
-## Twelve entries that never fire, measured
-
-`SEEDS=1 ITERATIONS=10 USES=1`, every profile. **"Has it" is read from the
-built character's own ability book**, so the build cause and the position cause
-are told apart rather than guessed at.
-
-| Profile | Entry | Has it | Why it never fires |
+| Profile | before | after | |
 | --- | --- | --- | --- |
-| 2H Arms | `battle_stance_cast` | yes | the preset opens IN Battle Stance |
-| 2H Arms | `battle_shout_cast` | yes | `battle_shout` is a preset raid buff, up all fight |
-| DW Fury | `battle_shout_cast` | yes | same |
-| Prot Warr | `defensive_stance_cast` | yes | the preset opens IN Defensive Stance |
-| Prot Warr | `battle_shout_cast` | yes | same as above |
-| Combat | `ghostly_strike` | **no** | 18/33/0 does not take the talent |
-| Rupture | `ghostly_strike` | yes | 40 energy, below an **unconditional 35-energy Hemorrhage** |
-| Rupture | `sinister_strike` | yes | 45 energy, same position, same reason |
-| Rupture | `eviscerate` | yes | gated at 5 points; Slice and Dice and Rupture consume every cycle |
-| Cat | `ferocious_bite` | yes | gated at 5 points; Rip takes them first |
-| Cat | `claw` | yes | **its own comment says it should** — see below |
-| BM Hunter | `summon_hawk` | yes | below Arcane Shot, which shares its cooldown, deliberately |
+| SM/DS | 293.2 | 349.1 | **+55.9** |
+| Enh Shaman | 404.8 | 451.1 | **+46.2** |
+| Cat | 444.1 | 488.0 | **+43.9** |
+| Frostfire | 339.9 | 376.6 | **+36.7** |
+| Shockadin | 342.6 | 379.0 | **+36.4** |
+| Seal Twist Ret | 443.9 | 471.0 | **+27.2** |
+| Moonkin | 359.2 | 384.3 | **+25.1** |
+| Bear | 354.1 | 376.2 | **+22.1** |
+| Ele Shaman | 278.9 | 295.4 | **+16.4** |
+| LW Ranged | 304.6 | 311.7 | **+7.1** |
+| 2H Arms, DW Fury, Prot Warr, Combat, Rupture, Fire, Arcane, Firelock | | | noise |
+| Prot Pally | 158.8 | 153.2 | **−5.6** |
+| Shadow | 448.1 | 437.3 | **−10.8** |
+| BM Hunter | 417.3 | 405.8 | **−11.6** |
+| Venom | 417.0 | 392.7 | **−24.3** |
+| LW Melee | 458.1 | 321.5 | **−136.6** |
 
-**None of these is a crash, a warning or a visible zero.** On the results page
-an entry that never fired is simply a row that is not there.
+### The three findings worth keeping
 
-### The three worth opening first
+**A REFRESH WINDOW CLIPS, AND A BUFF CAN EXPOSE IT.** Every shell here refreshed
+a debuff at two seconds remaining, and a refresh RESETS the aura -- so whatever
+is left is thrown away, and the faster a character acts the more it loses.
+Nature's Grace cost the Moonkin 14.9 DPS doing nothing but speeding it up: casts
+26.3 a fight to 27.4, Moonfire ticks 25.1 to 22.5. The owner's "if not active"
+removes the clipping outright, and the Elemental Shaman's entire +16.4 is that
+one word on Flame Shock with nothing else in its list changed.
 
-**`claw` in the Cat list contradicts its own comment.** The entry reads "falls
-back when Shred is unaffordable, which at 60 energy it often is" — Claw is 45,
-Shred is 60, and Claw fires **zero** times in ten fights. Either the Cat never
-acts in the 45–59 energy window, or something above it is taking that window.
-This is the one finding here that looks like a bug rather than a judgement.
+**A LIST THAT LOSES IS WORTH ISOLATING, NOT ARGUING ABOUT.** The Venom list
+measured −24.3 and the obvious suspect was the Venom entry, which three earlier
+placements had measured as a loss. It was not: removing it dropped the list to
+375.0, so it is worth **+17.7** there. The whole loss is the two aura-duration
+floors on Eviscerate -- gating it on five points alone gives 413.1, noise --
+because the floors suppress it to 0.2 casts a fight and the combo points
+overflow. The same shape is in the Rupture list and its Eviscerate never fires.
 
-**Two entries in the Rupture Rogue's list are unreachable by construction.**
-Hemorrhage is unconditional and the cheapest builder it has, so nothing below it
-can ever be the first castable entry. The list is six entries and three of them
-are dead — it is really a three-entry list, and it is the lowest Rogue at 377.3.
+**THE MECHANISM AND THE DPS ARE DIFFERENT QUESTIONS, BOTH WAYS.** Combat's
+Eviscerate went from 1.1 casts a fight to 9.0 for +0.6 DPS, and the Rupture list
+went from three live entries to seven for +0.1. A list can change completely and
+be worth nothing; the uses column is what says whether it changed at all.
 
-**Battle Shout is in four Warrior lists and can never fire in any of them**,
-because the preset raid buff supplies it. The entry carries a comment measuring
-it at **+11.83 DPS**, which was true before raid buffs were selected rather than
-assumed. A measurement expires the same way an `unmodelled` reason does.
+## The twelve entries that never fired, and what happened to them
 
----
+`SEEDS=1 ITERATIONS=10 USES=1` found them; **every list now has every entry
+firing.** How each one went is worth more than the list of them was.
+
+| Cause | What became of it |
+| --- | --- |
+| the preset already opens in that stance | `battle_stance_cast` and `defensive_stance_cast` are still in their lists and still fire zero times, KEPT on purpose -- a character built by hand in another stance needs them, and they cost a build that does not exactly nothing. `berserker_stance_cast` joined them for the same reason |
+| the encounter already supplies it | `battle_shout_cast` in four Warrior lists. Still there, still refused all fight, and now a deliberate position rather than an accident |
+| the build never learned it | Combat's `ghostly_strike`. Gone -- the owner's list does not name it |
+| **the entry above never yields** | the interesting one, and it took four forms |
+
+**THE FOURTH CAUSE, IN FULL.** Rupture's Ghostly Strike and Sinister Strike sat
+below an UNCONDITIONAL 35-energy Hemorrhage and could never be the first castable
+entry; the owner's list gates Hemorrhage on its own debuff and Backstab builds
+instead. Cat's Claw could not fire at ANY energy, because Improved Shred and
+Ferocity put it and Shred at the same 42 -- the entry's own comment said "falls
+back when Shred is unaffordable, which at 60 energy it often is", and both
+halves of that were wrong. Cat's Ferocious Bite and Rupture's Eviscerate were
+starved of combo points by the finishers above them.
+
+**AND THE APL WORK CREATED ONE OF ITS OWN, WHICH IS THE WARNING.**
+`Combatant.recordSwing` was added for the Hunters' "only if a ranged auto-attack
+has fired in the last 0.5 seconds" and landed in `extraAttack` instead of
+`scheduleSwing` -- the two functions carry the same two lines. So the window
+never opened, Aimed Shot and Sniper Shot fired zero times in three lists, and
+nothing errored. The comment beside the mistake asserted the opposite of what
+the code did. A `USES=1` pass caught it; review had not.
 
 ## The rules an edit has to respect
 
@@ -252,13 +268,24 @@ one, which can never be reached — the test fails on that shape specifically.
 
 ## Open questions for the ruleset owner
 
-1. **Should an entry that the preset's own raid buffs make inert be deleted, or
-   kept for a character built without them?** Battle Shout, and the two stance
-   casts, are in four lists and fire in none.
-2. **Is Summon Hawk meant to stay in the Beast Mastery list at all**, given
-   Arcane Shot above it is worth +20 and shares its cooldown?
-3. **Are the three-and-four-entry caster lists complete?** The Elemental shaman
-   casts three things and the Moonkin four; both are near the bottom of the
-   table.
-4. **Prot Pally at 161.8 is 116 DPS below the next profile.** Whether that is
-   the list, the build or the class is not known, and nothing has looked.
+**ANSWERED, and the answers are in the lists:** the raid-buff-inert entries are
+KEPT; Summon Hawk stays in the Beast Mastery list; the three-and-four-entry
+caster lists were not complete and are now five to seven entries each; and Prot
+Pally's gap is the build and the scope rather than the list -- it went DOWN 5.6
+on the owner's own order, because Righteous Fury and Templar's Bulwark spend
+global cooldowns on threat and survival, neither of which is damage.
+
+**STILL OPEN:**
+
+1. **A coefficient for Wrack.** The sheet has no row for it, so it deals a flat
+   36 a tick and scales with nothing. It is out of the SM/DS list and its
+   implementation is paused.
+2. **LW Melee lost 237 DPS and went from the highest non-Warrior profile to
+   fourth from bottom.** −100.6 of that is Raptor Strike becoming on-next-swing,
+   which its capture stated all along and is not a choice. The other −136.6 is
+   the list dropping Serpent Sting, Arcane Shot and Rapid Fire while adding
+   Hunter's Mark, which a 40-batch measurement put at −10.1 for this build
+   specifically. Implemented as written; worth confirming it is intended.
+3. **"Scorch if scorch debuff <= 5"** is implemented as `< 5`, because Fire
+   Vulnerability caps at five and the literal reading makes Scorch
+   unconditional. `SCORCH_STACK_CAP` is the one-line flip.

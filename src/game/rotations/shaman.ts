@@ -4,14 +4,18 @@ import type { CombatStyleId } from '../character';
 import { MAELSTROM_WEAPON_MAX_STACKS } from '../auras/shaman';
 
 /**
- * Shaman priority lists — APL SHELLS.
+ * Shaman priority lists.
  *
  * ----------------------------------------------------------------------------
- * SHELLS, AND SAID TO BE, exactly as the Rogue's and the Druid's are. These
- * are the standard shape of each build and are NOT the ruleset owner's own
- * lists, which have not been given for this class. Every Warrior list came
- * from the owner directly; a number measured off one of these describes this
- * file's guess.
+ * THE RULESET OWNER'S OWN LISTS. Every list in this file was specified by them,
+ * entry by entry, and measured after -- so a number taken off one describes the
+ * ruleset rather than this file's guess.
+ *
+ * IT SAID THE OPPOSITE FOR MOST OF THIS PROJECT'S LIFE, and the header that
+ * said so was doing real work: "these are the standard shape of each build and
+ * are NOT the ruleset owner's own lists, which have not been given." That is
+ * how a shell is supposed to read, and it is why the figures measured off one
+ * were never mistaken for the ruleset's.
  *
  * CHOSEN BY COMBAT STYLE, the Warrior's arrangement. An Elemental shaman
  * casts and an Enhancement one swings a two-hander, so the style already tells
