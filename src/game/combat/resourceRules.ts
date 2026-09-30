@@ -1,4 +1,4 @@
-import type { Combatant, ResourceGeneration, ResourceRegen } from '../../engine';
+import type { Combatant, CostRefundRule, ResourceGeneration, ResourceRegen } from '../../engine';
 import { seconds } from '../../engine';
 
 /**
@@ -136,16 +136,49 @@ export function rageFromDamageTaken(maximumHealth: number): ResourceGeneration |
   };
 }
 
+/* --- Smooth regeneration --- */
+
+/*
+ * ============================================================================
+ * ENERGY, MANA AND FOCUS ALL TICK TWENTY TIMES A SECOND.
+ *
+ * The ruleset owner's change: "smooth" regeneration, which no event-driven
+ * engine can make genuinely continuous, modelled as a fine cadence instead.
+ * Fifty milliseconds is fine enough that a Rogue never waits a visible moment
+ * for the two energy that would let it act.
+ *
+ * IT IS A RESPONSIVENESS CHANGE AND NOT ONLY A COSMETIC ONE. Under a
+ * two-second batch a rotation could be idle for most of two seconds with 58 of
+ * a 60-energy cost banked; at twenty ticks a second it waits at most fifty
+ * milliseconds. The RATE is what decides income; the CADENCE decides how much
+ * of it is wasted waiting.
+ * ============================================================================
+ */
+export const SMOOTH_TICKS_PER_SECOND = 20;
+export const SMOOTH_TICK_INTERVAL_MS = seconds(1) / SMOOTH_TICKS_PER_SECOND;
+
 /* --- Energy --- */
 
-/** Energy arrives in fixed batches rather than scaling with anything. */
-export const ENERGY_PER_TICK = 20;
-export const ENERGY_TICK_INTERVAL_MS = seconds(2);
+/*
+ * HALF AN ENERGY, TWENTY TIMES A SECOND -- ten a second, which is exactly what
+ * the old 20-every-2-seconds delivered. The change is CADENCE, not rate.
+ *
+ * IT WAS BUILT AT ONE A TICK FIRST, because that is what the instruction said
+ * literally, and measuring it is what settled the question: twenty a second
+ * doubled every energy build -- Cat +52.6%, Combat +50.5%, Rupture +42.1%,
+ * Venom +35.3% -- and made a Cat Druid the highest damage in the project. The
+ * owner confirmed that smoothing, not a buff, was the intent. Recorded because
+ * "1 energy 20 times a second" reads as deliberate, and the only thing that
+ * distinguished it from a slip was the size of what it did.
+ */
+export const ENERGY_PER_SMOOTH_TICK = 0.5;
+export const ENERGY_PER_SECOND = ENERGY_PER_SMOOTH_TICK * SMOOTH_TICKS_PER_SECOND;
+export const ENERGY_TICK_INTERVAL_MS = SMOOTH_TICK_INTERVAL_MS;
 
 export const ENERGY_REGEN: ResourceRegen = {
   resource: 'energy',
   intervalMs: ENERGY_TICK_INTERVAL_MS,
-  amountPerTick: () => ENERGY_PER_TICK,
+  amountPerTick: () => ENERGY_PER_SMOOTH_TICK,
 };
 
 /* --- Focus --- */
@@ -170,26 +203,40 @@ export const ENERGY_REGEN: ResourceRegen = {
  * rate exactly.
  * ----------------------------------------------------------------------------
  */
-export const FOCUS_PER_SECOND = 10;
-export const FOCUS_TICK_INTERVAL_MS = seconds(1);
+export const FOCUS_PER_SMOOTH_TICK = 0.5;
+export const FOCUS_PER_SECOND = FOCUS_PER_SMOOTH_TICK * SMOOTH_TICKS_PER_SECOND;
+export const FOCUS_TICK_INTERVAL_MS = SMOOTH_TICK_INTERVAL_MS;
 
+/*
+ * SMOOTH, AND AT THE SAME RATE IT ALREADY HAD. Half a focus twenty times a
+ * second is ten a second, which is exactly what the one-second tick delivered
+ * -- so this change is cadence only and moves no Hunter's damage except
+ * through the pet acting sooner. Energy's figure was NOT rate-preserving; the
+ * two were given separately and differ on purpose.
+ */
 export const FOCUS_REGEN: ResourceRegen = {
   resource: 'focus',
   intervalMs: FOCUS_TICK_INTERVAL_MS,
-  amountPerTick: () => FOCUS_PER_SECOND,
+  amountPerTick: () => FOCUS_PER_SMOOTH_TICK,
 };
 
 /* --- Mana --- */
 
-/** Mana ticks on the same two-second cadence as energy. */
-export const MANA_TICK_INTERVAL_MS = seconds(2);
+/** Mana ticks on the same smooth cadence as energy and focus. */
+export const MANA_TICK_INTERVAL_MS = SMOOTH_TICK_INTERVAL_MS;
 
 /**
- * Fraction of the five-second mana figure that arrives on each two-second tick.
+ * Fraction of the five-second mana figure that arrives on each tick.
  *
- * 0.4 is exactly 2/5, so MP5 prorated to the tick interval. The two numbers
- * agree by construction rather than by coincidence, and a character regenerates
- * exactly its stated MP5 over any five seconds of uninterrupted ticking.
+ * DERIVED FROM THE INTERVAL rather than written down, so the rate cannot drift
+ * from the cadence: at fifty milliseconds it is 1/100, and a character still
+ * regenerates exactly its stated MP5 over any five quiet seconds. That was
+ * true of the old two-second tick at 2/5 and stays true here by construction.
+ *
+ * SMOOTHING MANA CHANGES WHEN THE FIVE SECOND RULE BITES, which is the only
+ * reason it is not purely cosmetic: regeneration now resumes within fifty
+ * milliseconds of the window clearing rather than waiting for the next
+ * two-second boundary, so a caster recovers a little more between casts.
  */
 export const MANA_TICK_FRACTION = MANA_TICK_INTERVAL_MS / seconds(5);
 
@@ -248,3 +295,34 @@ export function regenerationFor(resources: readonly string[]): ResourceRegen[] {
   if (resources.includes('mana')) regen.push(MANA_REGEN);
   return regen;
 }
+
+/* --- Refunds --- */
+
+/*
+ * ============================================================================
+ * AN ABILITY THAT DOES NOT CONNECT HANDS 80% OF ITS COST BACK.
+ *
+ * The ruleset owner's rule, and it applies to RAGE AND ENERGY only -- a mana
+ * spell that resists refunds nothing.
+ *
+ * "Miss or otherwise don't connect through a block/dodge/parry" is the owner's
+ * wording. For an ABILITY the block clause has no case to cover: this engine's
+ * `melee-special` table offers miss, dodge and parry and no block at all, and
+ * an auto-attack that IS blocked costs nothing to refund. So the rule reduces
+ * exactly to `AVOIDED_OUTCOMES`.
+ *
+ * TWO ABILITIES ARE EXEMPT AND ALWAYS DEPLETE THE POOL -- Ferocious Bite and
+ * Execute -- and they say so on themselves with `refundsCostOnMiss: false`.
+ * Everything else gets the rule by DERIVATION rather than declaration, so a
+ * new rage or energy ability cannot forget it.
+ * ============================================================================
+ */
+export const COST_REFUND_FRACTION = 0.8;
+
+/** Rage and energy refund; mana, focus, combo points and shards do not. */
+export const COST_REFUND_RESOURCES = ['rage', 'energy'] as const;
+
+export const COST_REFUND_ON_MISS: CostRefundRule = {
+  fraction: COST_REFUND_FRACTION,
+  resources: COST_REFUND_RESOURCES,
+};

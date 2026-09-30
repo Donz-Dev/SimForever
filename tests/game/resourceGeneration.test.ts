@@ -4,7 +4,8 @@ import { resolveDamage, seconds } from '../../src/engine';
 import { TelemetryRecorder } from '../../src/engine/logging';
 import { createPlayer } from '../../src/game/actors/createPlayer';
 import {
-  ENERGY_PER_TICK,
+  ENERGY_PER_SECOND,
+  ENERGY_PER_SMOOTH_TICK,
   ENERGY_TICK_INTERVAL_MS,
   MANA_REGEN_LOCKOUT_MS,
   MANA_TICK_FRACTION,
@@ -353,9 +354,18 @@ describe('rage', () => {
 });
 
 describe('energy', () => {
-  it('regenerates 20 every 2 seconds', () => {
-    expect(ENERGY_PER_TICK).toBe(20);
-    expect(ENERGY_TICK_INTERVAL_MS).toBe(seconds(2));
+  it('regenerates SMOOTHLY, at the same ten a second it always did', () => {
+    /*
+     * Half an energy twenty times a second. BOTH HALVES ARE ASSERTED, because
+     * a test that checked only the cadence would pass at any rate -- and the
+     * rate is the thing that nearly went wrong here. Built at one a tick
+     * first, it doubled every energy build before measurement caught it.
+     */
+    expect(ENERGY_PER_SMOOTH_TICK).toBe(0.5);
+    expect(ENERGY_TICK_INTERVAL_MS).toBe(50);
+    expect(ENERGY_PER_SECOND).toBe(10);
+    // The cadence changed and the rate did not.
+    expect(ENERGY_PER_SECOND * 2).toBe(20);
   });
 
   /*
@@ -375,11 +385,16 @@ describe('energy', () => {
     energy.spend(100);
     expect(energy.current).toBe(0);
 
-    sim.advanceTo(seconds(1));
-    expect(energy.current).toBe(0); // no tick yet
+    /*
+     * SMOOTH: a tick every fifty milliseconds rather than a batch every two
+     * seconds, so there is no longer a window in which nothing has arrived.
+     * At twenty a second the pool fills in five seconds rather than ten.
+     */
+    sim.advanceTo(50);
+    expect(energy.current).toBe(0.5);
 
-    sim.advanceTo(seconds(2));
-    expect(energy.current).toBe(20);
+    sim.advanceTo(seconds(1));
+    expect(energy.current).toBe(10);
 
     sim.advanceTo(seconds(6));
     expect(energy.current).toBe(60);
@@ -407,16 +422,24 @@ describe('energy', () => {
     energy.spend(100);
     player.recordResourceSpend('energy', 0);
 
-    sim.advanceTo(seconds(2));
-    expect(energy.current).toBe(20);
+    // A full second of smooth ticks, all of them paid despite the spend.
+    sim.advanceTo(seconds(1));
+    expect(energy.current).toBe(10);
   });
 });
 
 describe('mana', () => {
-  it('ticks 40% of the five-second value every two seconds', () => {
-    expect(MANA_TICK_INTERVAL_MS).toBe(seconds(2));
-    // 0.4 is exactly 2/5: the tick is MP5 prorated to its interval.
-    expect(MANA_TICK_FRACTION).toBeCloseTo(0.4, 10);
+  it('ticks a hundredth of the five-second value, twenty times a second', () => {
+    /*
+     * SMOOTH, and at exactly the rate it already had: 1/100 of MP5 every fifty
+     * milliseconds is MP5 over any five quiet seconds, as 2/5 every two
+     * seconds was. The cadence changed and the rate did not, which is the
+     * opposite of what happened to energy.
+     */
+    expect(MANA_TICK_INTERVAL_MS).toBe(50);
+    expect(MANA_TICK_FRACTION).toBeCloseTo(0.01, 10);
+    // The stated MP5 still arrives over five seconds, by construction.
+    expect(MANA_TICK_FRACTION * (seconds(5) / MANA_TICK_INTERVAL_MS)).toBeCloseTo(1, 10);
   });
 
   it('regenerates exactly the stated MP5 over five quiet seconds', () => {
@@ -424,8 +447,16 @@ describe('mana', () => {
     const mp5 = player.stats.get('manaPer5');
     expect(mp5).toBeGreaterThan(0);
 
-    // Two and a half ticks per five seconds, so check over ten seconds.
-    expect(manaPerTick(player, seconds(100)) * 5).toBeCloseTo(mp5 * 2, 6);
+    /*
+     * A HUNDRED TICKS PER FIVE SECONDS at the smooth cadence, so one tick is
+     * a hundredth of MP5 and the five-second total is MP5 exactly. The old
+     * two-second tick made the same statement with two and a half ticks; the
+     * arithmetic is written out here rather than read off the constant so
+     * that changing the cadence again cannot quietly change the rate.
+     */
+    const ticksPerFiveSeconds = seconds(5) / MANA_TICK_INTERVAL_MS;
+    expect(ticksPerFiveSeconds).toBe(100);
+    expect(manaPerTick(player, seconds(100)) * ticksPerFiveSeconds).toBeCloseTo(mp5, 6);
   });
 
   it('regenerates while it has not spent', () => {
@@ -600,10 +631,10 @@ describe('regeneration timers by class', () => {
     mana.spend(1000);
     druid.recordResourceSpend('mana', 0);
 
-    sim.advanceTo(seconds(2));
+    sim.advanceTo(seconds(1));
 
     // Energy ticked; mana is inside its lockout and did not.
-    expect(energy.current).toBe(20);
+    expect(energy.current).toBe(10);
     expect(mana.current).toBe(mana.maximum - 1000);
   });
 });

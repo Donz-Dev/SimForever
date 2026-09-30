@@ -222,7 +222,7 @@ export const SHRED: Ability = {
       attackTable: ability.attackTable,
       weaponSlot: MAIN_HAND,
     });
-    if (!result.avoided) awardComboPoint(simulation, caster, ability.id, ability.name);
+    if (!result.avoided) awardComboPoint(simulation, caster, target, ability.id, ability.name);
   },
   unmodelled:
     'Its "must be behind the target" is dropped: nothing here has a facing, ' +
@@ -254,7 +254,7 @@ export const CLAW: Ability = {
       attackTable: ability.attackTable,
       weaponSlot: MAIN_HAND,
     });
-    if (!result.avoided) awardComboPoint(simulation, caster, ability.id, ability.name);
+    if (!result.avoided) awardComboPoint(simulation, caster, target, ability.id, ability.name);
   },
 };
 
@@ -283,7 +283,7 @@ export const RAKE: Ability = {
     });
     if (!result.avoided) {
       simulation.applyAura(target, RAKE_DOT, caster.id);
-      awardComboPoint(simulation, caster, ability.id, ability.name);
+      awardComboPoint(simulation, caster, target, ability.id, ability.name);
     }
   },
 };
@@ -306,13 +306,20 @@ export const FEROCIOUS_BITE_DAMAGE_PER_ENERGY = 2.7;
 
 export const FEROCIOUS_BITE: Ability = {
   id: 'ferocious_bite',
+  /*
+   * ALWAYS DEPLETES THE POOL, by the ruleset owner's ruling -- one of exactly
+   * two abilities exempt from the 80% refund. It also drains every remaining
+   * point of energy into its own damage, so there would be little to hand
+   * back even if it did refund.
+   */
+  refundsCostOnMiss: false,
   name: 'Ferocious Bite',
   cost: { resource: 'energy', amount: 35 },
   attackTable: 'melee-special',
-  canCast: ({ caster }) => hasComboPoints(caster),
+  canCast: ({ caster, target }) => hasComboPoints(caster, target),
   onCast: ({ simulation, caster, target, ability }) => {
     if (!target) return;
-    const spent = spendComboPoints(caster);
+    const spent = spendComboPoints(caster, target);
     if (spent <= 0) return;
 
     // Everything still in the bar, converted at 2.7 a point.
@@ -346,10 +353,10 @@ export const RIP: Ability = {
   name: 'Rip',
   cost: { resource: 'energy', amount: 30 },
   attackTable: 'melee-special',
-  canCast: ({ caster }) => hasComboPoints(caster),
+  canCast: ({ caster, target }) => hasComboPoints(caster, target),
   onCast: ({ simulation, caster, target, ability }) => {
     if (!target || !ability.attackTable) return;
-    const spent = spendComboPoints(caster);
+    const spent = spendComboPoints(caster, target);
     if (spent <= 0) return;
 
     const roll = simulation.rollAttack(ability.attackTable, caster, target, { slot: MAIN_HAND });

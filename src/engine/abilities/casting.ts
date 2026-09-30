@@ -175,6 +175,32 @@ export function castAbility(
       source: ability.id,
       sourceName: ability.name,
     });
+
+    /*
+     * ARMED HERE, SPENT BY THE FIRST DAMAGE THIS ABILITY RESOLVES. An attack
+     * that misses, is dodged or is parried hands most of the cost back; one
+     * that lands keeps it. Both cases CLEAR it, so a multi-hit ability refunds
+     * only if its FIRST hit was avoided -- Whirlwind's off hand missing after
+     * its main hand connected is not a miss for this purpose.
+     *
+     * A cast that deals no damage at all leaves this armed until the next cast
+     * overwrites it, which is harmless: nothing reads it but a damage
+     * resolution carrying the same ability id.
+     */
+    const refund = caster.costRefundOnMiss;
+    if (
+      refund &&
+      ability.refundsCostOnMiss !== false &&
+      refund.resources.includes(ability.cost.resource)
+    ) {
+      caster.pendingCostRefund = {
+        abilityId: ability.id,
+        resource: ability.cost.resource,
+        amount: resolved.costAmount * refund.fraction,
+      };
+    } else {
+      caster.pendingCostRefund = undefined;
+    }
   }
 
   if (triggersGcd(ability)) {
