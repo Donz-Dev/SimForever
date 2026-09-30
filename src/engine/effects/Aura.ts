@@ -204,6 +204,26 @@ export interface AuraDefinition {
    */
   readonly suppressesCooldownOf?: readonly string[];
   /**
+   * A FRACTION off the carrier's global cooldown while this aura is up.
+   *
+   * ----------------------------------------------------------------------------
+   * `0.1` is "reducing your global cooldown by 10%", which is Nature's Grace
+   * and which nothing else could say: `baseGcdMs` is a property of the CLASS
+   * carried on the combatant, and no aura reached it.
+   *
+   * SEPARATE FROM HASTE ON PURPOSE. Haste shortens a CAST and deliberately
+   * does not touch the global cooldown in this engine -- a rule with its own
+   * long comment in `casting.ts`. Nature's Grace grants both in one sentence
+   * and they are two different effects, so folding the second into a haste
+   * rating would make every other haste source shorten the global cooldown
+   * too, which is a much bigger change wearing this talent's name.
+   *
+   * Floored by `MINIMUM_GCD_MS` at the point of use, which is the floor that
+   * already existed for the talent path.
+   * ----------------------------------------------------------------------------
+   */
+  readonly gcdFraction?: number;
+  /**
    * An ABSORB SHIELD: how much damage this aura soaks before health is touched.
    *
    * ----------------------------------------------------------------------------

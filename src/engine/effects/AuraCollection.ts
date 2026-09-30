@@ -232,6 +232,24 @@ export class AuraCollection {
   }
 
   /**
+   * The multiplier every active aura applies to this combatant's global
+   * cooldown, or 1 when none does.
+   *
+   * MULTIPLIED rather than added, which is the same reading two independent
+   * damage multipliers take: two 10% reductions leave 81%, not 80%. Nothing
+   * stacks two today, so this is a decision rather than an observation -- said
+   * here so the day something does, somebody chose on purpose.
+   */
+  gcdMultiplier(): number {
+    let multiplier = 1;
+    for (const instance of this.auras.values()) {
+      const fraction = instance.definition.gcdFraction;
+      if (fraction) multiplier *= 1 - fraction;
+    }
+    return multiplier;
+  }
+
+  /**
    * Spend one stack of an aura, removing it when the last one goes.
    *
    * ----------------------------------------------------------------------------

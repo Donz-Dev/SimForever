@@ -7,7 +7,7 @@ import { EventPriority, createEvent } from '../events';
 import type { SimulationContext } from '../simulation/SimulationContext';
 import type { Milliseconds } from '../time';
 import type { Ability, AbilityContext } from './Ability';
-import { DEFAULT_GCD_MS } from './Ability';
+import { DEFAULT_GCD_MS, MINIMUM_GCD_MS } from './Ability';
 import { castModifiersFor, resolveCast } from './castModifiers';
 
 /** Why an ability could not be used. Useful for debugging a stuck rotation. */
@@ -217,7 +217,18 @@ export function castAbility(
   }
 
   if (triggersGcd(ability)) {
-    caster.gcdReadyAt = now + gcdLength(ability, caster.baseGcdMs);
+    /*
+     * AND AN AURA MAY SHORTEN IT, which is Nature's Grace. Applied here rather
+     * than inside `gcdLength` so that function stays a statement of the RULE --
+     * the ability's own override, then the class's base -- with the temporary
+     * part kept where every other temporary effect lives.
+     *
+     * Floored at `MINIMUM_GCD_MS`, the floor that already existed for the
+     * talent path and had nothing to do while haste did not reach the global
+     * cooldown.
+     */
+    const length = gcdLength(ability, caster.baseGcdMs) * caster.auras.gcdMultiplier();
+    caster.gcdReadyAt = now + Math.max(MINIMUM_GCD_MS, length);
   }
 
   context.telemetry.emit({

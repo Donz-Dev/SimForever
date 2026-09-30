@@ -1,5 +1,5 @@
 import type { AuraDefinition } from '../../engine';
-import { dealDamage, flat, seconds } from '../../engine';
+import { RATING_PER_PERCENT, dealDamage, flat, seconds } from '../../engine';
 import {
   INSECT_SWARM_TICK_SP_COEFFICIENT,
   MOONFIRE_SP_COEFFICIENT,
@@ -363,8 +363,7 @@ export const MAUL_BONUS_DAMAGE = 128;
 // ---------------------------------------------------------------------------
 
 /*
- * ============================================================================
- * BERSERK: "Causes your Primal Bite ability to strike up to 3 targets, removes
+ * ===================================================================== * BERSERK: "Causes your Primal Bite ability to strike up to 3 targets, removes
  * its cooldown, and increases the critical strike chance of your Combo
  * Point-generating abilities by 100%. Clears and grants immunity to Fear
  * effects for the duration. Lasts 15 sec."
@@ -416,6 +415,49 @@ export function berserkAura(comboPointGenerators: readonly string[]): AuraDefini
     ),
   };
 }
+
+/*
+ * ============================================================================
+ * NATURE'S GRACE: "All non-periodic spell criticals grace you with a blessing
+ * of nature, increasing your spellcasting speed and reducing your global
+ * cooldown by 10% for 3 sec."
+ *
+ * ONE SENTENCE, TWO EFFECTS, and they are not the same effect said twice.
+ * Haste shortens a CAST here and deliberately does not touch the global
+ * cooldown -- a rule with its own long comment in `casting.ts`. So folding the
+ * second clause into the haste rating would make every other haste source
+ * shorten the global cooldown as well, which is a much larger change wearing
+ * this talent's name. `gcdFraction` is the field the second clause wanted and
+ * it did not exist.
+ *
+ * NOT CLASSIC'S TALENT, AND THIS FILE HAD IT WRONG ONCE. Classic's Nature's
+ * Grace shortens the NEXT cast by half a second and is a one-shot charge --
+ * the Eclipse shape. Forever's is a three-second window, which wants a
+ * reaction and an aura rather than a cast modifier. That was recorded in the
+ * talent's own `unmodelled` reason after the mistake was caught.
+ *
+ * HASTE AS A RATING rather than as a percentage, converted with the same
+ * constant `hasteMultiplierFrom` divides by, so the round trip is exact
+ * whatever that constant is set to. Copied in spirit from the Shaman's, which
+ * copied it from the Warrior's Flurry.
+ * ============================================================================
+ */
+export const NATURES_GRACE_DURATION_MS = seconds(3);
+export const NATURES_GRACE_PERCENT = 10;
+
+export function naturesGraceAura(percentValue: number): AuraDefinition {
+  return {
+    id: 'natures_grace',
+    name: "Nature's Grace",
+    durationMs: NATURES_GRACE_DURATION_MS,
+    refreshBehaviour: 'reset',
+    statModifiers: [flat('hasteRating', percentValue * RATING_PER_PERCENT.haste)],
+    gcdFraction: percentValue / 100,
+  };
+}
+
+/** The stated shape, for anything that only needs the id. */
+export const NATURES_GRACE: AuraDefinition = naturesGraceAura(NATURES_GRACE_PERCENT);
 
 // ---------------------------------------------------------------------------
 
