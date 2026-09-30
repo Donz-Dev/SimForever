@@ -7,7 +7,7 @@ gets built is [docs/class-implementation.md](docs/class-implementation.md).
 
 All nine classes and all 23 profiles are implemented, every number traced to a
 source rather than invented, and **all 23 priority lists are the ruleset owner's
-own** -- specified entry by entry and measured after. **1,892 tests**, CI green on Node 20 and 22. Profile
+own** -- specified entry by entry and measured after. **1,965 tests**, CI green on Node 20 and 22. Profile
 format **v10**. Live at <https://donz-dev.github.io/SimForever/>, republished by
 `.github/workflows/deploy.yml` on every push to `main` that passes.
 
@@ -30,23 +30,30 @@ and what gives each figure the interval a REAL/noise verdict needs. Most profile
 land inside the old interval and a few do not — 2H Arms read 596.6 under the old
 method and 607.2 under this one on identical code. Do not read those as changes.
 
+**SHATTER MOVED ONE PROFILE AND THE CONTAINMENT HELD EXACTLY.** Frostfire
+376.6 to **412.5, +36.0, REAL**, and the other twenty-two identical to the
+decimal -- which is what a talent change scoped to one build should look like.
+It makes Frostfire the top Mage, above Fire's 401.2 and Arcane's 392.6, and the
+build that existed for the Fire/Frost overlap now has a third reason to. The
+mean across 23 is 411.7. See [docs/handoff-apl.md](docs/handoff-apl.md).
+
 **RE-MEASURED ON THE RULESET OWNER'S OWN PRIORITY LISTS.** All 23 are theirs now,
 specified entry by entry; what was here before was this project's guess and said
 so. Fourteen profiles moved.
 
 | Profile | Class | Talents | DPS | | Profile | Class | Talents | DPS |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| DW Fury | Warrior | 18/33/0 | 652.0 | | Venom Rogue | Rogue | 37/12/2 | 392.7 |
-| 2H Arms | Warrior | 38/13/0 | 607.2 | | Arcane Mage | Mage | 47/4/0 | 392.6 |
-| Firelock | Warlock | 5/11/35 | 535.5 | | Moonkin | Druid | 38/0/13 | 384.3 |
-| Cat Druid | Druid | 9/35/7 | 488.0 | | Shockadin | Paladin | 23/0/28 | 379.0 |
-| Seal Twist Ret | Paladin | 13/0/38 | 471.0 | | Rupture Rogue | Rogue | 12/8/31 | 377.1 |
-| Prot Warr | Warrior | 17/0/34 | 454.6 | | Frostfire Mage | Mage | 0/29/22 | 376.6 |
+| DW Fury | Warrior | 18/33/0 | 652.0 | | Fire Mage | Mage | 10/39/2 | 401.2 |
+| 2H Arms | Warrior | 38/13/0 | 607.2 | | Venom Rogue | Rogue | 37/12/2 | 392.7 |
+| Firelock | Warlock | 5/11/35 | 535.5 | | Arcane Mage | Mage | 47/4/0 | 392.6 |
+| Cat Druid | Druid | 9/35/7 | 488.0 | | Moonkin | Druid | 38/0/13 | 384.3 |
+| Seal Twist Ret | Paladin | 13/0/38 | 471.0 | | Shockadin | Paladin | 23/0/28 | 379.0 |
+| Prot Warr | Warrior | 17/0/34 | 454.6 | | Rupture Rogue | Rogue | 12/8/31 | 377.1 |
 | Enh Shaman | Shaman | 19/32/0 | 451.1 | | Bear Druid | Druid | 9/42/0 | 376.2 |
 | Shadow Priest | Priest | 16/3/32 | 437.3 | | SM/DS | Warlock | 40/11/0 | 349.1 |
 | Combat Rogue | Rogue | 18/33/0 | 419.8 | | LW Melee | Hunter | 7/13/31 | 321.5 |
-| BM Hunter | Hunter | 31/20/0 | 405.8 | | LW Ranged | Hunter | 7/39/5 | 311.7 |
-| Fire Mage | Mage | 10/39/2 | 401.2 | | Ele Shaman | Shaman | 38/13/0 | 295.4 |
+| Frostfire Mage | Mage | 0/29/22 | 412.5 | | LW Ranged | Hunter | 7/39/5 | 311.7 |
+| BM Hunter | Hunter | 31/20/0 | 405.8 | | Ele Shaman | Shaman | 38/13/0 | 295.4 |
 | | | | | | Prot Pally | Paladin | 8/36/7 | 153.2 |
 
 **WHAT THE OWNER'S LISTS WERE WORTH, against the last figures measured on this
@@ -165,11 +172,11 @@ fails.
 | Druid | 51 | 20 | 5 | 14 | **12** |
 | Hunter | 50 | 24 | 5 | 8 | **13** |
 | Shaman | 50 | 17 | 4 | 12 | **17** |
-| Mage | 54 | 26 | 2 | 9 | **17** |
+| Mage | 54 | 27 | 2 | 9 | **16** |
 | Priest | 53 | 15 | 2 | 18 | **18** |
 | Rogue | 53 | 25 | 2 | 6 | **20** |
 | Warlock | 52 | 21 | 3 | 3 | **25** |
-| **Total** | **468** | **213** | **33** | **89** | **133** |
+| **Total** | **468** | **214** | **33** | **89** | **132** |
 
 **SIX TALENTS LEFT THE GAP COLUMN WITH THE PRIORITY LISTS**, and four of them
 were never really in it. Cutthroat and Premeditation were counted among the
@@ -180,7 +187,7 @@ reason was a statement about the engine ("nothing can reset a cooldown from
 content") and the engine now can. Fingers of Frost carried `FROZEN_UNMODELLED`,
 which is a claim about the TARGET, and that talent does not freeze anything.
 
-**246 of 468 talents do something**, 89 never will, and **133 are the actual
+**247 of 468 talents do something**, 89 never will, and **132 are the actual
 remaining work** — not the 262 a raw count of unmodelled reasons suggests. The 96
 scoped entries break down as 32 crowd control, 33 healing, 17 positioning and 14
 threat.
@@ -360,17 +367,13 @@ carries what each list turned out to be worth and the three findings that came
 out of building them.
 
 **PICKING IT UP AGAIN HAS ITS OWN BRIEF**: [docs/handoff-apl.md](docs/handoff-apl.md),
-which carries the state, the three open items below in full, the tools in the order
+which carries the state, the two open items below in full, the tools in the order
 to use them, and the two things about this codebase a list author needs before
 writing an entry.
 
 **WHAT THE APL WORK LEFT BEHIND, in order of how much it costs:**
 
-1. **Shatter is a live gap that Fingers of Frost opened.** "Nothing freezes a
-   raid boss" stopped being the whole story: Fingers of Frost treats the next
-   two spells as though one were, and the Frostfire build takes both talents.
-   It needs `AuraDefinition.abilityModifiers` to honour the `ALL_ABILITIES` key.
-2. **Two of the owner's lists measure down and were shipped as written**, with
+1. **Two of the owner's lists measure down and were shipped as written**, with
    the cost isolated rather than acted on: Venom's Eviscerate floors at -20.4,
    and Shadow Word: Death leaving the Priest at -35.7. Both are the owner's
    design and both numbers are in the baseline notes above.
