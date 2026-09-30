@@ -726,8 +726,8 @@
    "tree": "survival",
    "ranks": 1,
    "text": "Your Mongoose Bite also causes the target to Bleed for damage over 21 sec equal to 40% of the damage done by Mongoose Bite.",
-   "values": null,
-   "note": "single rank"
+   "values": [40],
+   "note": "single rank; the 40 filled in by hand per this directory's README. A single-rank talent has no variable the importer can match, and this text states its 40% literally rather than through a {0} placeholder, so there was nothing to match either way. WITHOUT THIS the reaction effect reads no value and talentBuild drops it in SILENCE, which reads as an unmodelled talent that never said so. Its 21 seconds is a constant beside the aura in game/auras/hunter.ts for the same reason."
   }
  }
 }

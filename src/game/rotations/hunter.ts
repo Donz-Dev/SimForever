@@ -3,27 +3,37 @@ import { PriorityRotation } from '../../engine';
 import type { TalentAllocation } from '../talents/Talent';
 
 /**
- * Hunter priority lists — MEASURED, though still not the ruleset owner's own.
+ * Hunter priority lists — THE RULESET OWNER'S OWN, entry by entry.
  *
  * ----------------------------------------------------------------------------
- * WHAT CHANGED IS THAT EVERY ENTRY IS NOW ARGUED FROM A NUMBER. Each variant
- * was measured over 30 batches of 10 fights, and a difference inside the
- * interval was treated as no difference. The three lists disagree with each
- * other on purpose, and each says why.
+ * THE HEADER USED TO SAY "still not the ruleset owner's own" AND THE COMMENTS
+ * BELOW IT DESCRIBED A DIFFERENT SET OF LISTS. They were replaced by the
+ * owner's, and the prose around them was not re-read: the Marksmanship note
+ * still argued "NO AIMED SHOT" beside a list containing Aimed Shot, and the
+ * melee note still priced Serpent Sting and Arcane Shot entries that are not in
+ * it. Every measurement quoted below is true of the list it was taken in, and
+ * says which. CLAUDE.md's rule about a measurement in a comment expiring was
+ * written for exactly this and it happened here anyway.
+ *
+ * EVERY ENTRY IS STILL ARGUED FROM A NUMBER. Each variant was measured over 30
+ * batches of 10 fights, and a difference inside the interval was treated as no
+ * difference. The three lists disagree with each other on purpose, and each
+ * says why.
  *
  * THE ONE RULE THAT DECIDED MOST OF IT: A CAST RESETS THE SWING TIMER.
  * `resetSwingTimers` runs for any ability with a cast time and covers the
  * RANGED slot, so a two-second Aimed Shot throws away most of a 3.2-second bow
  * cycle -- and auto-shot is 42% of a Marksmanship Hunter's damage. The per-use
- * damage of a shot says nothing about this, which is why the list that read as
- * obvious was worth 23 DPS less than the one that drops the heaviest shot in
- * the book.
+ * damage of a shot says nothing about this, which is why every cast in the
+ * owner's two ranged lists is gated on a shot having just landed and the melee
+ * list contains no cast at all.
  *
  * TWO OF THE THREE RUN OUT OF MANA, and that decides the rest. A geared Hunter
  * empties 3,651 mana by the 30-second mark and spends the REST OF THE FIGHT on
  * auto-shot alone, so what binds is damage per MANA rather than damage per
  * global cooldown. The melee build is the opposite -- it ends with 44% of its
- * mana unspent -- which is why an instant shot was worth 55 DPS to it.
+ * mana unspent -- which is why it can afford an entry the other two cannot, and
+ * why Immolation Trap goes at the bottom of it.
  *
  * CHOSEN BY TALENTS. All three builds could be `ranged`, and the Lone Wolf
  * melee one is not -- so style separates that one and the capstones separate
@@ -119,22 +129,22 @@ const missingOn = (auraId: string) =>
  * is a clear gain: this build has the fewest competing uses for 60 mana, and a
  * pet carrying a third of the damage makes the global cooldown cheap.
  *
- * THE HAWK LOSES TO ARCANE SHOT, and the note that used to sit here said the
- * opposite. They share a cooldown group, so every six seconds is one or the
- * other -- and "a hawk is 32 damage a tick for eighteen seconds against Arcane
- * Shot's one hit" counted the hawk's ticks and not its price. Measured, putting
- * Arcane Shot above it is worth +20 DPS, and once it is above, the hawk never
- * fires at all.
+ * THE HAWK IS IN AND ARCANE SHOT IS NOT, WHICH IS THE OWNER'S LIST AND NOT AN
+ * EARLIER MEASUREMENT OF OURS. Two notes have stood here saying opposite things
+ * about the two -- they share a cooldown group, so every six seconds is one or
+ * the other -- and both were about a 32-damage hawk. THE OWNER HAS SINCE RULED
+ * THE HAWK AT 108 A STRIKE, dive included, with both of the two it can have
+ * dealing damage. Whatever those measurements said, they were taken on a hawk
+ * worth under a third of this one and neither survives the ruling.
  *
- * IT IS KEPT, LAST, rather than deleted. It measures identical to removing it,
- * and a build with mana to spare would use it -- so this stays a priority
- * decision rather than a deletion.
+ * SO THIS ENTRY IS THE BIGGEST THING IN THE LIST NOW, and it is gated by the
+ * ability rather than by the entry: Summon Hawk refuses at two active hawks, so
+ * the list falls through to Aimed Shot instead of spending 190 mana to reset a
+ * timer.
  *
- * AIMED SHOT STAYS HERE THOUGH THE MARKSMANSHIP LIST DROPS IT, which is the
- * one place these lists genuinely disagree. Beast Mastery has no Sniper Shot
- * to spend mana on, so Aimed is its best remaining sink, and the pet carries
- * enough of the damage that the auto-shot the cast interrupts is a smaller
- * share. Worth +4 here against -23 there.
+ * AIMED SHOT IS GATED ON THE SHOT WINDOW, the same condition the Marksmanship
+ * list puts on it. Beast Mastery has no Sniper Shot to spend mana on, so Aimed
+ * is its best remaining sink.
  */
 export const HUNTER_BEAST_MASTERY: readonly PriorityEntry[] = [
   /*
@@ -161,19 +171,20 @@ export const HUNTER_BEAST_MASTERY: readonly PriorityEntry[] = [
  *
  * 7/39/5, the deep Marksmanship build.
  *
- * NO AIMED SHOT, AND IT IS THE HEAVIEST SHOT IN THE BOOK. 784 damage a cast
- * against Sniper Shot's 638, which is exactly why it used to be here -- and
- * dropping it is worth +23 DPS. Two seconds of cast time RESETS THE BOW, whose
- * cycle is 3.2 seconds and whose auto-shots are 42% of this build's damage,
- * and the 310 mana it spends is mana Sniper Shot does not get. This Hunter is
+ * AIMED SHOT IS IN, GATED. An earlier version of this file dropped it and the
+ * note explaining why survived the owner's list arriving with it kept: "784
+ * damage a cast against Sniper Shot's 638 ... two seconds of cast RESETS THE
+ * BOW, whose cycle is 3.2 seconds and whose auto-shots are 42% of this build's
+ * damage", measured at +23 DPS for removing it. That was true of a list with no
+ * shot-window condition. The owner's list keeps the ability and gates it on a
+ * shot having just landed, which is the same rule answered a better way.
+ *
+ * THE RANKING IS DAMAGE PER MANA AND NOT DAMAGE PER CAST -- Serpent Sting 4.13,
+ * Sniper Shot 3.19, Arcane Shot 2.57, Aimed Shot 2.53 -- because this Hunter is
  * dry by the 30-second mark and spends half the fight auto-shooting.
  *
- * So the ranking is damage per MANA and not damage per cast -- Serpent Sting
- * 4.13, Sniper Shot 3.19, Arcane Shot 2.57, Aimed Shot 2.53 -- and the one
- * with a cast time comes last on both counts.
- *
- * MULTI-SHOT IS OUT FOR THE SAME REASON, tested and worth -1: half a second of
- * cast still resets the same bow.
+ * MULTI-SHOT IS OUT, tested and worth -1: half a second of cast still resets
+ * the same bow, and it hits three targets where there is one.
  *
  * HUNTER'S MARK IS KEPT THOUGH IT MEASURES AS NOTHING, +0.8 inside a 3.3
  * interval. The 71 ranged attack power it buys is real and the 60 mana it
@@ -212,22 +223,25 @@ export const HUNTER_LONE_WOLF_RANGED: readonly PriorityEntry[] = [
  * here: the ability says "can only be performed after you dodge" and nothing
  * attacks this Hunter. Its entry reads the aura rather than hoping.
  *
- * SERPENT STING NEAR THE BOTTOM. It is a ranged special and this build stands
- * in melee with Aspect of the BEAST up, so its ranged attack power is the
- * unbuffed one and the sting's 15% coefficient reads that. Still worth a
- * global cooldown, which is why it is low rather than absent -- and moving it
- * to the top is worth nothing measurable.
+ * IT SHOOTS NOTHING, AND THE NOTES THAT SAID OTHERWISE WERE ABOUT A DIFFERENT
+ * LIST. This file used to price a Serpent Sting entry "near the bottom" and an
+ * Arcane Shot entry at "+55 DPS, the biggest single entry in any of these
+ * lists" -- both real measurements, both taken on this project's own shell, and
+ * neither ability is in the owner's list. Recorded because they are the reason
+ * to ask the owner about it rather than quietly adding an entry: this build
+ * ends a fight with 44% of its mana unspent, so a cheap instant has somewhere
+ * to go.
  *
- * ARCANE SHOT AT THE BOTTOM IS THE BIGGEST SINGLE ENTRY IN ANY OF THESE LISTS,
- * at +55 DPS. This is the build that does NOT run out of mana -- it ends a
- * fight with 44% unspent -- so the cooldowns on its melee abilities leave
- * global cooldowns with nothing to put in them. An instant shot fills them
- * with mana that was otherwise going to waste.
+ * IMMOLATION TRAP IS WHERE THAT SPARE MANA GOES NOW, and the owner placed it:
+ * "add it to the LW melee APL after strider kick". 245 mana for 690 fire damage
+ * over 15 seconds on a 30-second cooldown, and Resourcefulness takes 60% off
+ * the cost for this build -- so it is the cheapest entry in the list by a wide
+ * margin.
  *
- * AND ONLY AN INSTANT ONE. Adding Aimed Shot as well is -17 and Multi-Shot is
- * -7, because a cast resets the MELEE swing here and this build's auto-attack
- * is its single largest share. The same rule that removes Aimed Shot from the
- * Marksmanship list keeps it out of this one.
+ * NO CAST TIME ANYWHERE IN IT, which is the rule the whole list obeys. A cast
+ * resets the MELEE swing here and this build's auto-attack is its single
+ * largest share: Aimed Shot measured -17 and Multi-Shot -7 when they were
+ * tried.
  *
  * ASPECT OF THE BEAST IS CORRECT AND WAS WORTH CHECKING -- swapping it for
  * Aspect of the Hawk costs 35 DPS, because Forever's Beast grants MELEE attack
@@ -256,6 +270,17 @@ export const HUNTER_LONE_WOLF_MELEE: readonly PriorityEntry[] = [
    */
   { abilityId: 'mongoose_bite' },
   { abilityId: 'strider_kick' },
+  /*
+   * IMMOLATION TRAP LAST, WHERE THE OWNER PUT IT -- "after strider kick". It is
+   * unconditional, which makes it the FLOOR under this list: nothing can sit
+   * below an ungated entry and ever be reached, so its position is also a
+   * statement that this list is five entries and not six-and-a-spare.
+   *
+   * Its 30-second cooldown is what keeps it from crowding the abilities above
+   * it, and it is the only entry here that neither swings a weapon nor scales
+   * with attack power.
+   */
+  { abilityId: 'immolation_trap' },
 ];
 
 export const HUNTER_BEAST_MASTERY_ROTATION: Rotation = new PriorityRotation(
