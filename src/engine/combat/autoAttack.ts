@@ -102,6 +102,14 @@ export function extraAttack(
       if (ctx.defaultTargetFor(attacker)) {
         attacker.auras.consumeSwingCharges(ctx);
         swing(ctx, attacker, weapon, slot);
+        /*
+         * RECORDED AFTER THE SWING RESOLVES, so "a shot landed just now" is
+         * true of a swing that happened rather than one that was scheduled.
+         * An extra attack goes through `extraAttack` and does not set this:
+         * the Hunter entries that read it are weaving around the BOW's own
+         * rhythm, which a proc does not move.
+         */
+        attacker.recordSwing(slot, ctx.clock.now());
       }
 
       const haste = hasteMultiplierFrom(attacker.stats.effective);
