@@ -1,4 +1,6 @@
 import type { Reaction } from '../../engine';
+import { isWeaponUse } from '../../engine';
+import { naturesGraceAura } from '../auras/druid';
 import type { TalentReactionBuilder } from './warriorTalents';
 
 /**
@@ -32,6 +34,39 @@ export const primalFury = (chancePercent: number): Reaction => ({
   },
 });
 
+/**
+ * Nature's Grace: "All NON-PERIODIC spell criticals grace you with a blessing
+ * of nature, increasing your spellcasting speed and reducing your global
+ * cooldown by 10% for 3 sec."
+ *
+ * ----------------------------------------------------------------------------
+ * "NON-PERIODIC" IS ALREADY GUARANTEED, AND BY THE ENGINE RATHER THAN BY THIS
+ * CONDITION. `dealDamage` offers an attack to reactions only when
+ * `request.attackTable && !request.periodic`, so a damage-over-time tick is
+ * never shown to one at all.
+ *
+ * That is worth writing down rather than relying on: every DoT in Forever can
+ * crit, so a Moonkin holding Moonfire and Insect Swarm up produces a stream of
+ * periodic crits, and a reaction that DID see them would keep this buff up for
+ * most of a fight off an effect the tooltip explicitly excludes. A test pins
+ * the exclusion so the guarantee cannot quietly move.
+ *
+ * A SPELL CRIT, so weapon uses are out as well: the same shape Elemental
+ * Devastation has on the Shaman, which is the other spell-crit-grants-an-aura
+ * talent in the project.
+ * ----------------------------------------------------------------------------
+ */
+export const naturesGrace: TalentReactionBuilder = (percentValue) => ({
+  id: 'natures_grace',
+  on: 'dealt',
+  outcomes: ['crit'],
+  canTrigger: (_context, _actor, attack) => !isWeaponUse(attack),
+  onTrigger: (context, actor) => {
+    context.applyAura(actor, naturesGraceAura(percentValue), actor.id);
+  },
+});
+
 export const DRUID_TALENT_REACTIONS: Readonly<Record<string, TalentReactionBuilder>> = {
   primal_fury: primalFury,
+  nature_s_grace: naturesGrace,
 };

@@ -7,12 +7,17 @@ import {
   HOLY_SHIELD,
   JUDGEMENT_OF_THE_CRUSADER,
   JUDGEMENT_OF_THE_CRUSADER_UNMODELLED,
+  RIGHTEOUS_FURY,
+  RIGHTEOUS_FURY_THREAT_PERCENT,
   SEAL_AURA_IDS,
   SEAL_OF_COMMAND,
   SEAL_OF_FURY,
   SEAL_OF_RIGHTEOUSNESS,
   SEAL_OF_THE_CRUSADER,
   SEAL_OF_THE_CRUSADER_UNMODELLED,
+  TEMPLARS_BULWARK,
+  TEMPLARS_BULWARK_COOLDOWN_MS,
+  TEMPLARS_BULWARK_FORBEARANCE_MS,
   activeSeal,
   echoAura,
 } from '../auras/paladin';
@@ -480,6 +485,51 @@ export const HAMMER_OF_WRATH: Ability = {
   },
 };
 
+// ---------------------------------------------------------------------------
+// Protection
+// ---------------------------------------------------------------------------
+
+/**
+ * Templar's Bulwark. The first absorb shield in the project; everything about
+ * how it is modelled is on `TEMPLARS_BULWARK`.
+ */
+export const TEMPLARS_BULWARK_ABILITY: Ability = {
+  id: 'templars_bulwark',
+  name: "Templar's Bulwark",
+  cost: { resource: 'mana', amount: 110 },
+  cooldownMs: TEMPLARS_BULWARK_COOLDOWN_MS,
+  requiresTarget: false,
+  onCast: ({ simulation, caster }) => {
+    simulation.applyAura(caster, TEMPLARS_BULWARK, caster.id);
+  },
+  unmodelled:
+    `Its Forbearance -- ${TEMPLARS_BULWARK_FORBEARANCE_MS / 1000} seconds, and ` +
+    'it cannot be cast while that is up -- is not modelled. It exists to stop ' +
+    'this being chained with the Paladin immunities, none of which are ' +
+    'declared, and one minute sits well inside a five minute cooldown, so it ' +
+    'can never be the binding constraint here.',
+};
+
+/**
+ * Righteous Fury. Declared and cast, and it does NOTHING, which is the honest
+ * model rather than a generous one -- see `RIGHTEOUS_FURY`.
+ */
+export const RIGHTEOUS_FURY_ABILITY: Ability = {
+  id: 'righteous_fury',
+  name: 'Righteous Fury',
+  cost: { resource: 'mana', amount: shareOfBase(0.3) },
+  requiresTarget: false,
+  canCast: ({ caster }) => !caster.auras.has('righteous_fury'),
+  onCast: ({ simulation, caster }) => {
+    simulation.applyAura(caster, RIGHTEOUS_FURY, caster.id);
+  },
+  unmodelled:
+    `Its whole effect is threat -- +${RIGHTEOUS_FURY_THREAT_PERCENT}% from Holy ` +
+    'attacks -- and threat is not tracked here at all, by a permanent ruling. ' +
+    'It is cast because a Protection Paladin really does spend the mana and ' +
+    'the global cooldown on it, so the profile pays what it pays.',
+};
+
 export const PALADIN_ABILITIES: readonly Ability[] = [
   SEAL_OF_RIGHTEOUSNESS_ABILITY,
   SEAL_OF_COMMAND_ABILITY,
@@ -492,4 +542,6 @@ export const PALADIN_ABILITIES: readonly Ability[] = [
   CONSECRATION,
   HOLY_SHIELD_ABILITY,
   HAMMER_OF_WRATH,
+  TEMPLARS_BULWARK_ABILITY,
+  RIGHTEOUS_FURY_ABILITY,
 ];

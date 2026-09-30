@@ -1,7 +1,15 @@
 import { describe, expect, it } from 'vitest';
 import { createPlayer } from '../../src/game/actors/createPlayer';
 import { runProfileBatch, resourceFlowOf } from '../../src/simulator';
-import { castAbility, checkCast, resolveCast, seconds } from '../../src/engine';
+import type { TelemetryEvent } from '../../src/engine';
+import {
+  RATING_PER_PERCENT,
+  castAbility,
+  checkCast,
+  dealDamage,
+  resolveCast,
+  seconds,
+} from '../../src/engine';
 import { buildSimulation } from '../helpers/buildSimulation';
 import { makeAttacker, makeTarget } from '../helpers/actors';
 import { abilitiesForClass } from '../../src/game/abilities/abilitiesForClass';
@@ -9,9 +17,9 @@ import { PRESETS_BY_ID } from '../../src/profiles/presets';
 import {
   BARKSKIN_ABILITY,
   BERSERK,
-  COMBO_POINT_GENERATORS,
   ENRAGE_ABILITY,
   FRENZIED_REGENERATION_ABILITY,
+  COMBO_POINT_GENERATORS,
   ECLIPSE_REDUCTION_BONUS,
   FEROCIOUS_BITE_BY_COMBO_POINT,
   MANGLE,
@@ -22,16 +30,18 @@ import {
   WRATH_COEFFICIENT,
   WRATH_DAMAGE,
 } from '../../src/game/abilities/druid';
-import type { TelemetryEvent } from '../../src/engine';
 import {
   BARKSKIN,
   BERSERK_CRIT_BONUS,
-  berserkAura,
   ENRAGE_BEAR_ARMOR_REDUCTION,
   ENRAGE_INSTANT_RAGE,
   ENRAGE_RAGE_OVER_TIME,
   ENRAGE_RAGE_PER_TICK,
   FRENZIED_REGENERATION_HEALTH_PER_RAGE,
+  berserkAura,
+  NATURES_GRACE_DURATION_MS,
+  NATURES_GRACE_PERCENT,
+  naturesGraceAura,
   ECLIPSE_CHARGES_PER_WRATH,
   ECLIPSE_MAX_CHARGES,
   INSECT_SWARM_TOTAL,
@@ -43,6 +53,8 @@ import {
   ripAura,
 } from '../../src/game/auras/druid';
 import { DRUID_TALENT_EFFECTS } from '../../src/game/talents/druidEffects';
+import { naturesGrace } from '../../src/game/reactions/druidTalents';
+import { talentNumber } from '../../src/game/talents/talentValues';
 import { baseManaFor } from '../../src/game/character/baseStatLookup';
 import { conversionsFor } from '../../src/game/character/conversions';
 
@@ -584,6 +596,101 @@ describe('Berserk, one ability that gives each feral build a different half', ()
     expect(actor.abilityModifierFor('rip').critBonus ?? 0).toBe(0);
     // An auto attack carries no ability id and gets nothing at all.
     expect(actor.abilityModifierFor(undefined).critBonus ?? 0).toBe(0);
+  });
+});
+
+describe("Nature's Grace, whose two clauses are two effects", () => {
+  /*
+   * --------------------------------------------------------------------------
+   * "All non-periodic spell criticals grace you with a blessing of nature,
+   * increasing your spellcasting speed and reducing your global cooldown by
+   * 10% for 3 sec."
+   *
+   * FOREVER'S IS A THREE-SECOND WINDOW, NOT CLASSIC'S ONE-SHOT. Classic's
+   * shortens the NEXT cast by half a second and wants the Eclipse rule; this
+   * wants a reaction and an aura. The talent's own reason recorded that after
+   * the mistake was caught once.
+   *
+   * THE HASTE HALF WAS REACHABLE ALL ALONG. The global cooldown half was not:
+   * haste deliberately does not touch the global cooldown in this engine, and
+   * `baseGcdMs` had no aura path to it.
+   * --------------------------------------------------------------------------
+   */
+  it('has a value at all, which a single-rank talent does not get for free', () => {
+    /*
+     * ITS VALUES CAME BACK NULL from the importer, because the text states 10%
+     * literally rather than through a `{0}` placeholder. An effect that reads
+     * no value is DROPPED by `talentBuild` in silence -- the talent would have
+     * read as unmodelled without ever saying so.
+     */
+    expect(talentNumber('druid', 'nature_s_grace', 1)).toBe(NATURES_GRACE_PERCENT);
+    expect(NATURES_GRACE_PERCENT).toBe(10);
+    expect(NATURES_GRACE_DURATION_MS).toBe(seconds(3));
+  });
+
+  it('shortens the global cooldown, which haste deliberately does not', () => {
+    /*
+     * Two effects in one sentence, and folding the second into a haste rating
+     * would make EVERY haste source shorten the global cooldown -- a much
+     * larger change wearing this talent's name.
+     */
+    const actor = makeAttacker({ autoAttack: 'none' });
+    const simulation = buildSimulation([actor, makeTarget()]);
+    simulation.begin();
+
+    expect(actor.auras.gcdMultiplier()).toBe(1);
+    simulation.applyAura(actor, naturesGraceAura(NATURES_GRACE_PERCENT), actor.id);
+    expect(actor.auras.gcdMultiplier()).toBeCloseTo(0.9, 6);
+
+    // And the haste half is a RATING, converted with the same constant the
+    // haste multiplier divides by, so the round trip is exact.
+    expect(actor.stats.get('hasteRating')).toBeCloseTo(
+      NATURES_GRACE_PERCENT * RATING_PER_PERCENT.haste,
+      6,
+    );
+  });
+
+  it('cannot be procced by a damage-over-time tick, and the engine is why', () => {
+    /*
+     * "Non-periodic" is guaranteed by `dealDamage`, which offers an attack to
+     * reactions only when `attackTable && !periodic` -- so a tick is never
+     * shown to one. Worth pinning: every DoT in Forever can crit, so a Moonkin
+     * holding Moonfire and Insect Swarm up produces a stream of periodic
+     * crits, and a reaction that DID see them would keep this buff up for most
+     * of a fight off an effect the tooltip excludes.
+     */
+    const actor = makeAttacker({
+      autoAttack: 'none',
+      // A hundred percent, so the tick below DEFINITELY crits and this cannot
+      // pass by the tick simply not critting.
+      stats: { spellPower: 0, critChance: 100, spellCritChance: 100 },
+      reactions: [naturesGrace(NATURES_GRACE_PERCENT)],
+    });
+    const target = makeTarget({ maxHealth: 1_000_000 });
+    const events: TelemetryEvent[] = [];
+    const simulation = buildSimulation([actor, target], { durationMs: seconds(60) }, {
+      emit: (event) => events.push(event),
+    });
+    simulation.begin();
+
+    dealDamage(simulation, {
+      source: actor,
+      target,
+      abilityId: 'moonfire',
+      abilityName: 'Moonfire',
+      school: 'arcane',
+      baseAmount: 100,
+      periodic: true,
+      critFrom: 'spell',
+      appliesArmor: false,
+    });
+
+    // It really was a periodic CRIT...
+    const tick = events.find((e) => e.type === 'damage' && e.abilityId === 'moonfire');
+    expect(tick && tick.type === 'damage' && tick.periodic).toBe(true);
+    expect(tick && tick.type === 'damage' && tick.critical).toBe(true);
+    // ...and the reaction still never saw it.
+    expect(actor.auras.has('natures_grace')).toBe(false);
   });
 });
 
