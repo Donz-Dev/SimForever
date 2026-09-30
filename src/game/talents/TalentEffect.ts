@@ -404,6 +404,37 @@ export type TalentEffect =
     }
 
   /**
+   * Adds crit chance to an ability, but only while a named aura is on the
+   * character. The talent's value is the chance in percentage POINTS.
+   *
+   * ----------------------------------------------------------------------------
+   * `conditionalCrit` ABOVE IS THE BUILD-TIME TWIN, gated on the weapon in hand,
+   * which cannot change during a fight and so is settled when the character is
+   * built. This one is gated on something that comes and goes, and the condition
+   * is therefore read on every cast.
+   *
+   * SHATTER IS WHY IT EXISTS. "Increases the critical strike chance of all your
+   * spells against Frozen targets" was unmodelled on the grounds that nothing
+   * freezes a raid boss -- a claim about the TARGET, and it stopped being the
+   * whole story when Fingers of Frost landed, because that treats the caster's
+   * next spells as though the target were frozen. The Frostfire build takes
+   * BOTH, so the window is real and reachable.
+   *
+   * IT NAMES THE AURA AND NOT THE TALENT. Shatter does not need to know
+   * Fingers of Frost's rank, which is what keeps the two talents independent --
+   * the alternative was writing Shatter's number onto the aura that Fingers of
+   * Frost builds, which is only correct while the two are visited in the right
+   * order during the build.
+   * ----------------------------------------------------------------------------
+   */
+  | {
+      readonly kind: 'critWhileAura';
+      readonly auraId: string;
+      /** `ALL_ABILITIES` for a talent that names no single ability. */
+      readonly abilityId: string;
+    }
+
+  /**
    * The talent's effect cannot be modelled, and this says why.
    *
    * NOT a gap in this list waiting to be filled in — a first-class outcome, and

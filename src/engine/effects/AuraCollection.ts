@@ -1,6 +1,6 @@
 import type { Combatant } from '../actors/Combatant';
 import type { AbilityModifier } from '../combat/abilityModifiers';
-import { combineAbilityModifiers } from '../combat/abilityModifiers';
+import { combineAbilityModifiers, pick } from '../combat/abilityModifiers';
 import { EventPriority, createEvent } from '../events';
 import type { SimulationContext } from '../simulation/SimulationContext';
 import { bindModifiers } from '../stats';
@@ -59,12 +59,21 @@ export class AuraCollection {
    * `undefined` rather than an empty object so the damage path can skip the
    * combine entirely in the overwhelmingly common case -- this is asked on
    * every damage event of every fight.
+   *
+   * THE `ALL_ABILITIES` KEY COUNTS HERE TOO, which it did not until an aura
+   * wanted one. This looked up the ability id exactly, so an aura declaring
+   * `{ '*': ... }` was a silent no-op: it compiled, the aura applied, and
+   * nothing it said ever reached a cast. `pick` is the same fold the standing
+   * registry uses, shared rather than written out twice, which is what stops
+   * the two drifting apart again.
    */
   abilityModifierFor(abilityId: string | undefined): AbilityModifier | undefined {
     if (abilityId === undefined) return undefined;
     let combined: AbilityModifier | undefined;
     for (const instance of this.auras.values()) {
-      const own = instance.definition.abilityModifiers?.[abilityId];
+      const byAbility = instance.definition.abilityModifiers;
+      if (!byAbility) continue;
+      const own = pick(byAbility, abilityId);
       if (!own) continue;
       combined = combined ? combineAbilityModifiers(combined, own) : own;
     }

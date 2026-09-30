@@ -4,7 +4,7 @@ import { runProfileBatch } from '../../src/simulator';
 import { PRESETS_BY_ID } from '../../src/profiles/presets';
 import { abilitiesForClass } from '../../src/game/abilities/abilitiesForClass';
 import type { TelemetryEvent } from '../../src/engine';
-import { resolveCast, seconds } from '../../src/engine';
+import { ALL_ABILITIES, resolveCast, seconds } from '../../src/engine';
 import { manaPerTick } from '../../src/game/combat/resourceRules';
 import { buildSimulation } from '../helpers/buildSimulation';
 import { makeAttacker, makeTarget } from '../helpers/actors';
@@ -27,6 +27,7 @@ import {
 import {
   ARCANE_BLAST,
   ARCANE_BLAST_COST_INCREASE_PER_STACK,
+  FINGERS_OF_FROST,
   FINGERS_OF_FROST_PROC_CHANCE,
   fingersOfFrostAura,
   HOT_STREAK,
@@ -628,18 +629,88 @@ describe('Fingers of Frost, the one Frozen talent that is not inert', () => {
     expect(actor.auras.has('fingers_of_frost')).toBe(false);
   });
 
-  it('leaves Shatter a LIVE gap, and its reason says so', () => {
+  /*
+   * THIS REPLACES A TEST THAT PINNED THE GAP. It asserted Shatter was still
+   * unmodelled and that its reason named Fingers of Frost -- correct on the day
+   * and exactly the shape CLAUDE.md warns about, a test enforcing a temporary
+   * limitation instead of catching it. The limitation is gone, so the test
+   * asserts the MECHANISM instead.
+   */
+  it('gives Shatter the Fingers of Frost window, and names the aura it reads', () => {
     /*
-     * Shatter's crit against Frozen targets now reaches those two casts in the
-     * ruleset and does not here -- so its reason had to stop saying "nothing
-     * freezes a raid boss", which stopped being the whole story the moment
-     * this landed.
+     * THE ID IS A STRING AND NOTHING TYPECHECKS IT. Renaming the aura would
+     * leave Shatter pointing at nothing, paying nothing, with no compile error
+     * and no failing assertion anywhere else -- so this asserts the LINK rather
+     * than the two ids separately.
      */
     const shatter = MAGE_TALENT_EFFECTS.shatter;
-    for (const effect of shatter) {
-      if (effect.kind !== 'unmodelled') continue;
-      expect(effect.reason).toContain('Fingers of Frost');
-      expect(effect.reason).toContain('live gap');
-    }
+    expect(shatter).toHaveLength(1);
+    const effect = shatter[0]!;
+    expect(effect.kind).toBe('critWhileAura');
+    if (effect.kind !== 'critWhileAura') throw new Error('unreachable');
+    expect(effect.auraId).toBe(FINGERS_OF_FROST.id);
+    // "all your spells", and every ability in the Mage's book is one.
+    expect(effect.abilityId).toBe(ALL_ABILITIES);
+  });
+
+  it('is 17, 33 and 50 percent by rank, which is what the capture says', () => {
+    /*
+     * Written out by hand from `values/mage.json`, which states
+     * "Increases the critical strike chance of all your spells against Frozen
+     * targets by {0}%." at [17, 33, 50]. THREE RANKS, not Classic's five --
+     * reading a Classic 10/20/30/40/50 here would be wrong in both the count
+     * and every value.
+     */
+    expect(talentNumber('mage', 'shatter', 1, 0)).toBe(17);
+    expect(talentNumber('mage', 'shatter', 2, 0)).toBe(33);
+    expect(talentNumber('mage', 'shatter', 3, 0)).toBe(50);
+  });
+
+  it('pays only while the aura is up, and reaches every spell', () => {
+    /*
+     * THE MECHANISM, not a DPS delta: the resolved crit bonus on a named spell,
+     * read off the combatant's own funnel before and after the aura lands.
+     *
+     * A profile's DPS moving is not the test that a talent works -- and this
+     * one is a window worth about two casts per proc, which is small enough to
+     * sit inside the noise of any batch.
+     */
+    const mage = presetPlayer('mage_frostfire');
+    const simulation = buildSimulation([mage, makeTarget()], { durationMs: seconds(60) });
+    simulation.begin();
+
+    const critFor = (abilityId: string) => mage.abilityModifierFor(abilityId).critBonus ?? 0;
+
+    /*
+     * BASELINES FIRST, and per ability, because this build already has
+     * per-ability crit from other talents -- Incineration names four spells.
+     * The claim is the DIFFERENCE the window makes, not the absolute.
+     */
+    const frostboltBefore = critFor('frostbolt');
+    const fireballBefore = critFor('fireball');
+
+    simulation.applyAura(mage, fingersOfFrostAura(2), mage.id);
+    expect(critFor('frostbolt') - frostboltBefore).toBeCloseTo(50, 10);
+    // "ALL your spells", so a Fire spell in the same build gets the same 50.
+    expect(critFor('fireball') - fireballBefore).toBeCloseTo(50, 10);
+
+    mage.auras.remove(simulation, FINGERS_OF_FROST.id);
+    expect(critFor('frostbolt')).toBeCloseTo(frostboltBefore, 10);
+    expect(critFor('fireball')).toBeCloseTo(fireballBefore, 10);
+  });
+
+  it('does not reach an auto attack, which carries no ability id', () => {
+    /*
+     * "All your SPELLS". A swing has no `abilityId`, so nothing keyed to one
+     * touches it -- including `ALL_ABILITIES`. Asserted because the catch-all
+     * key is exactly the shape that would leak into swings if the funnel ever
+     * stopped short-circuiting on `undefined`.
+     */
+    const mage = presetPlayer('mage_frostfire');
+    const simulation = buildSimulation([mage, makeTarget()], { durationMs: seconds(60) });
+    simulation.begin();
+    simulation.applyAura(mage, fingersOfFrostAura(2), mage.id);
+
+    expect(mage.abilityModifierFor(undefined).critBonus ?? 0).toBe(0);
   });
 });
