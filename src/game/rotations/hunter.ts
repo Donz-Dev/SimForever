@@ -46,12 +46,62 @@ import type { TalentAllocation } from '../talents/Talent';
  * ----------------------------------------------------------------------------
  */
 
+/*
+ * ============================================================================
+ * THE RULESET OWNER'S CONDITIONS. All three lists below are theirs.
+ * ============================================================================
+ */
+
+/**
+ * "ONLY IF A RANGED AUTO-ATTACK HAS FIRED IN THE LAST 0.5 SECONDS", which all
+ * three of the owner's shot entries with a cast time carry.
+ *
+ * ----------------------------------------------------------------------------
+ * IT IS ABOUT THE SWING IT WOULD THROW AWAY. A cast interrupts the swing in
+ * progress and RESETS that slot's timer, and `resetSwingTimers` covers the
+ * RANGED slot -- so a two-second Aimed Shot started at the wrong moment
+ * discards most of a 3.2-second bow cycle, and the damage it loses is on a
+ * different row of the table from the damage it deals.
+ *
+ * Started just after a shot has landed, the cast fits inside the gap and costs
+ * almost nothing. "Just after" is a question `pendingSwing` cannot answer --
+ * that is the NEXT swing -- which is why `lastSwingAt` had to be added.
+ *
+ * THIS IS THE RULE THAT REMOVED AIMED SHOT FROM THE MARKSMANSHIP LIST once,
+ * worth +23 DPS, and the owner's lists keep the ability and gate it instead.
+ * ----------------------------------------------------------------------------
+ */
+const RANGED_WEAVE_WINDOW_MS = 500;
+const shotLandedRecently =
+  (windowMs: number) =>
+  (context: SimulationContext, actor: Combatant): boolean =>
+    actor.swungWithin('ranged', context.clock.now(), windowMs);
+
+/**
+ * "BESTIAL WRATH IF PET FRENZY IS ACTIVE", which reads across two combatants.
+ *
+ * A pet names its owner -- `ownerId` has been on `Combatant` since before pets
+ * existed -- so the Hunter finds it by looking for the friendly actor that
+ * points back. Frenzy is the pet's own proc, and Bestial Wrath is the owner's
+ * cooldown: the entry spends one on the other, which is the only condition in
+ * any list here that crosses actors.
+ */
+const petHasAura = (auraId: string) =>
+  (context: SimulationContext, actor: Combatant): boolean => {
+    const pet = context.combatants.find(
+      (combatant) => combatant.ownerId === actor.id && combatant.isAlive,
+    );
+    return pet !== undefined && pet.auras.has(auraId);
+  };
+
+/** "<buff> is not active", on the Hunter -- the owner's "if not active". */
+const selfExpired = (auraId: string) =>
+  (context: SimulationContext, actor: Combatant): boolean =>
+    actor.auras.remainingMs(auraId, context.clock.now()) <= 0;
+
 const missingOn = (auraId: string) =>
   (_context: SimulationContext, _actor: Combatant, target?: Combatant): boolean =>
     target !== undefined && !target.auras.has(auraId);
-
-const hasAura = (auraId: string) => (_context: SimulationContext, actor: Combatant): boolean =>
-  actor.auras.has(auraId);
 
 // ---------------------------------------------------------------------------
 
@@ -87,14 +137,23 @@ const hasAura = (auraId: string) => (_context: SimulationContext, actor: Combata
  * share. Worth +4 here against -23 there.
  */
 export const HUNTER_BEAST_MASTERY: readonly PriorityEntry[] = [
-  { abilityId: 'aspect_of_the_hawk' },
-  { abilityId: 'hunters_mark' },
-  { abilityId: 'bestial_wrath' },
+  /*
+   * THE OWNER'S LIST OPENS WITH "disable melee auto-attacks and start ranged
+   * auto-attack", AND IT IS ALREADY TRUE. A combatant's auto-attack mode comes
+   * from its COMBAT STYLE, and `ranged` returns the ranged slot alone -- so
+   * there is nothing for a list entry to do. Said here rather than left out
+   * silently, because the instruction is in the spec.
+   *
+   * The same line on the melee list is the same answer in the other direction:
+   * `two_hander` swings the main hand and nothing else.
+   */
+  { abilityId: 'aspect_of_the_hawk', condition: selfExpired('aspect_of_the_hawk') },
+  { abilityId: 'hunters_mark', condition: selfExpired('hunters_mark') },
   { abilityId: 'serpent_sting', condition: missingOn('serpent_sting') },
+  { abilityId: 'bestial_wrath', condition: petHasAura('frenzy') },
   { abilityId: 'rapid_fire' },
-  { abilityId: 'arcane_shot' },
-  { abilityId: 'aimed_shot' },
   { abilityId: 'summon_hawk' },
+  { abilityId: 'aimed_shot', condition: shotLandedRecently(RANGED_WEAVE_WINDOW_MS) },
 ];
 
 /**
@@ -127,11 +186,18 @@ export const HUNTER_BEAST_MASTERY: readonly PriorityEntry[] = [
  * that it hits harder and nothing argues otherwise.
  */
 export const HUNTER_LONE_WOLF_RANGED: readonly PriorityEntry[] = [
-  { abilityId: 'aspect_of_the_hawk' },
-  { abilityId: 'hunters_mark' },
+  { abilityId: 'aspect_of_the_hawk', condition: selfExpired('aspect_of_the_hawk') },
+  { abilityId: 'hunters_mark', condition: selfExpired('hunters_mark') },
   { abilityId: 'serpent_sting', condition: missingOn('serpent_sting') },
   { abilityId: 'rapid_fire' },
-  { abilityId: 'sniper_shot' },
+  /*
+   * BOTH CASTS GATED ON THE SHOT WINDOW. Sniper Shot is a FOUR-second cast --
+   * it was transcribed as an instant for months and the correction cost this
+   * profile 11.1% -- so it throws away more of a bow cycle than anything else
+   * in the class if it is started at the wrong moment.
+   */
+  { abilityId: 'aimed_shot', condition: shotLandedRecently(RANGED_WEAVE_WINDOW_MS) },
+  { abilityId: 'sniper_shot', condition: shotLandedRecently(RANGED_WEAVE_WINDOW_MS) },
   { abilityId: 'arcane_shot' },
 ];
 
@@ -175,13 +241,21 @@ export const HUNTER_LONE_WOLF_RANGED: readonly PriorityEntry[] = [
  * the damage list is measured.
  */
 export const HUNTER_LONE_WOLF_MELEE: readonly PriorityEntry[] = [
-  { abilityId: 'aspect_of_the_beast' },
-  { abilityId: 'mongoose_bite', condition: hasAura('expose_prey') },
+  { abilityId: 'aspect_of_the_beast', condition: selfExpired('aspect_of_the_beast') },
+  { abilityId: 'hunters_mark', condition: selfExpired('hunters_mark') },
+  /*
+   * "QUEUE RAPTOR STRIKE", and it is on-next-swing now, so `queue` is exactly
+   * what the list does with it: arming costs no global cooldown and the swing
+   * carries it. Its capture said "Next melee" all along.
+   */
   { abilityId: 'raptor_strike' },
+  /*
+   * MONGOOSE BITE NEEDS NO CONDITION HERE. "Activated from Expose Prey" is
+   * already the ability's own `canCast` -- it reads the aura that talent
+   * applies, which is its only route to being cast at all when nothing dodges.
+   */
+  { abilityId: 'mongoose_bite' },
   { abilityId: 'strider_kick' },
-  { abilityId: 'rapid_fire' },
-  { abilityId: 'serpent_sting', condition: missingOn('serpent_sting') },
-  { abilityId: 'arcane_shot' },
 ];
 
 export const HUNTER_BEAST_MASTERY_ROTATION: Rotation = new PriorityRotation(

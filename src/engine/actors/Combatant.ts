@@ -583,6 +583,39 @@ export class Combatant {
     return fromAuras ? combineAbilityModifiers(standing, fromAuras) : standing;
   }
 
+  /**
+   * When each weapon slot last completed a swing.
+   *
+   * ----------------------------------------------------------------------------
+   * `pendingSwing` IS THE NEXT ONE, NOT THE LAST, and three Hunter entries want
+   * the last: "only if a ranged auto-attack has fired in the last 0.5 seconds"
+   * is how the owner's lists weave a cast into a shot cycle without throwing
+   * the shot away.
+   *
+   * A cast RESETS the swing timer of the slot it interrupts, so a two-second
+   * Aimed Shot started at the wrong moment discards most of a 3.2-second bow
+   * cycle. Started just after a shot lands, it costs almost nothing -- and
+   * "just after" is a question only this can answer.
+   * ----------------------------------------------------------------------------
+   */
+  private readonly lastSwing = new Map<WeaponSlot, Milliseconds>();
+
+  /** Called by the engine when a swing resolves. */
+  recordSwing(slot: WeaponSlot, at: Milliseconds): void {
+    this.lastSwing.set(slot, at);
+  }
+
+  /** When this slot last swung, or undefined if it never has. */
+  lastSwingAt(slot: WeaponSlot): Milliseconds | undefined {
+    return this.lastSwing.get(slot);
+  }
+
+  /** Whether this slot swung within the last `windowMs`. */
+  swungWithin(slot: WeaponSlot, now: Milliseconds, windowMs: Milliseconds): boolean {
+    const last = this.lastSwing.get(slot);
+    return last !== undefined && now - last <= windowMs;
+  }
+
   /** Record that a resource was just spent. Called by the engine on payment. */
   recordResourceSpend(resource: ResourceType, at: Milliseconds): void {
     this.lastSpend.set(resource, at);

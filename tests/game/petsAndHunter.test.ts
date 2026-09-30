@@ -307,22 +307,34 @@ describe("Hunter's Mark", () => {
     );
   });
 
-  it('is cast once, and only by the lists it pays for', () => {
+  it('is cast once in every list, which is now all three', () => {
     /*
      * ------------------------------------------------------------------------
-     * IN TWO LISTS OF THE THREE, measured over 40 batches: +8.0 to Beast
-     * Mastery, +0.8 to Lone Wolf Ranged inside a 3.3 interval, and -10.1 to
-     * Lone Wolf Melee.
+     * THIS TEST USED TO ASSERT IT OUT OF THE MELEE LIST, on a measurement: over
+     * 40 batches Hunter's Mark was +8.0 to Beast Mastery, +0.8 to Lone Wolf
+     * Ranged inside a 3.3 interval, and -10.1 to Lone Wolf Melee. Ranged attack
+     * power buys a melee build almost nothing and the ability still costs a
+     * global cooldown at the pull.
      *
-     * Ranged attack power buys a melee build almost nothing and the ability
-     * still costs a global cooldown at the pull. Measuring the STAT alone said
-     * +1.9 for that build; measuring the ABILITY said the opposite, which is
-     * the whole reason list membership is decided by running it.
+     * THE MEASUREMENT STILL STANDS AND THE DECISION IS NO LONGER OURS. The
+     * ruleset owner's Lone Wolf Melee list names Hunter's Mark, so it is in it,
+     * and -10.1 is the price of that choice rather than an argument against it.
+     * What the assertion becomes is the part that is not a rotation decision:
+     * the ability is cast ONCE, because two minutes outlasts the fight.
+     *
+     * The stat-versus-ability lesson is what is worth keeping either way.
+     * Injecting the 71 ranged attack power said +1.9 for the melee build;
+     * casting the ABILITY said -10.1, which is why list membership is decided
+     * by running it and not by reasoning about the buff.
      * ------------------------------------------------------------------------
      */
-    expect(HUNTER_BEAST_MASTERY.map((e) => e.abilityId)).toContain('hunters_mark');
-    expect(HUNTER_LONE_WOLF_RANGED.map((e) => e.abilityId)).toContain('hunters_mark');
-    expect(HUNTER_LONE_WOLF_MELEE.map((e) => e.abilityId)).not.toContain('hunters_mark');
+    for (const list of [
+      HUNTER_BEAST_MASTERY,
+      HUNTER_LONE_WOLF_RANGED,
+      HUNTER_LONE_WOLF_MELEE,
+    ]) {
+      expect(list.map((e) => e.abilityId)).toContain('hunters_mark');
+    }
 
     // Two minutes outlasts the fight, so it is cast once and never refreshed.
     const batch = batchOf('bm_hunter', 30, 5);
