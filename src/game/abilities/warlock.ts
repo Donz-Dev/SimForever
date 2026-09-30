@@ -11,7 +11,13 @@ import {
   IMMOLATE_DIRECT,
   SIPHON_LIFE,
 } from '../auras/warlock';
-import { directSpellCoefficient } from '../combat/spellCoefficient';
+import {
+  CONFLAGRATE_SP_COEFFICIENT,
+  INCINERATE_SP_COEFFICIENT,
+  SEARING_PAIN_SP_COEFFICIENT,
+  SHADOWBURN_SP_COEFFICIENT,
+  SHADOW_BOLT_SP_COEFFICIENT,
+} from '../combat/coefficients';
 
 /**
  * Warlock abilities, from the WoW Forever beta client (build 1.60.1.69876).
@@ -50,7 +56,7 @@ const midpoint = (low: number, high: number) => (low + high) / 2;
 
 export const SHADOW_BOLT_DAMAGE = midpoint(253, 283);
 export const SHADOW_BOLT_CAST_MS = seconds(3);
-export const SHADOW_BOLT_COEFFICIENT = directSpellCoefficient(SHADOW_BOLT_CAST_MS);
+export const SHADOW_BOLT_COEFFICIENT = SHADOW_BOLT_SP_COEFFICIENT;
 
 export const SHADOW_BOLT: Ability = {
   id: 'shadow_bolt',
@@ -203,7 +209,7 @@ export const IMMOLATE_ABILITY: Ability = {
 export const INCINERATE_DAMAGE = midpoint(201, 233);
 export const INCINERATE_IMMOLATE_BONUS = 1.25;
 export const INCINERATE_CAST_MS = seconds(2.5);
-export const INCINERATE_COEFFICIENT = directSpellCoefficient(INCINERATE_CAST_MS);
+export const INCINERATE_COEFFICIENT = INCINERATE_SP_COEFFICIENT;
 
 export const INCINERATE: Ability = {
   id: 'incinerate',
@@ -241,7 +247,7 @@ export const INCINERATE: Ability = {
  */
 export const CONFLAGRATE_DAMAGE = midpoint(251, 313);
 export const CONFLAGRATE_KEEPS_IMMOLATE = 'keepsImmolate';
-export const CONFLAGRATE_COEFFICIENT = directSpellCoefficient(0);
+export const CONFLAGRATE_COEFFICIENT = CONFLAGRATE_SP_COEFFICIENT;
 
 export const CONFLAGRATE: Ability = {
   id: 'conflagrate',
@@ -302,7 +308,7 @@ export const SHADOWBURN_MANA = 365;
 // talentsforever's 258 to 288. Same rank 6, same level 56, same build.
 export const SHADOWBURN_DAMAGE = midpoint(251, 281);
 export const SHADOWBURN_REFUNDS_SHARD = 'refundsShard';
-export const SHADOWBURN_COEFFICIENT = directSpellCoefficient(0);
+export const SHADOWBURN_COEFFICIENT = SHADOWBURN_SP_COEFFICIENT;
 
 export const SHADOWBURN: Ability = {
   id: 'shadowburn',
@@ -344,7 +350,7 @@ export const SHADOWBURN: Ability = {
 // same ruling. Same rank 6, same level 58, same build.
 export const SEARING_PAIN_DAMAGE = midpoint(105, 123);
 export const SEARING_PAIN_CAST_MS = seconds(1.5);
-export const SEARING_PAIN_COEFFICIENT = directSpellCoefficient(SEARING_PAIN_CAST_MS);
+export const SEARING_PAIN_COEFFICIENT = SEARING_PAIN_SP_COEFFICIENT;
 
 export const SEARING_PAIN: Ability = {
   id: 'searing_pain',

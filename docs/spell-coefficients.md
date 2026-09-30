@@ -1,151 +1,149 @@
-# Spell coefficients
+# Coefficients
 
-How a spell's damage scales with spell power. One rule supplied by the ruleset
-owner, three borrowed from WoW Classic on the owner's ruling, and every one of
-them visible in `src/game/combat/spellCoefficient.ts`.
+How damage scales with gear. **The numbers are data, supplied by the ruleset
+owner, and they are not derived from anything.**
 
-Before this, **no spell in the project scaled with gear at all.** Every caster
-figure was a floor, and five classes said so in their own file headers.
+The source is `WoWSimWorksheet.xlsx`, handed over on 2026-09-29 as the
+authoritative document for attack power, weapon damage and spell power
+coefficients. It is transcribed row for row in
+[`src/game/combat/coefficients.ts`](../src/game/combat/coefficients.ts), which is
+the single place to diff against a refreshed sheet.
 
-## The rule, in the owner's words
+## The three shapes a row takes
 
-> A spell coefficient is the % amount of (total spell damage + matching-school
-> spell damage) and is then added to the base spell damage of the spell.
->
-> Base Cast Time (before reductions from talents or spell haste) / 3.5 = spell
-> coefficient
-
-```
-damage = castTime / 3.5 × (spellPower + schoolSpellPower) + baseDamage
-```
-
-The owner's worked example, which `spellCoefficient.test.ts` pins to two
-decimal places:
-
-> A spell has a 2.5 second cast time and has "deals 150 to 250 lightning
-> damage". The character has +100 spell damage and +80 nature damage.
->
-> `2.5 / 3.5 × 180 + 200 = 328.57`
-
-**"(total spell damage + matching-school spell damage)" is exactly
-`spellPowerFor(source, school)`**, which arrived one change earlier for the
-school-scoped item stat. The two halves it adds are the school-blind
-`spellPower` and the school-scoped `SchoolModifier.spellPower`. That is why
-this feature needed no engine work: `scaleByPower` has computed
-`baseAmount + coefficient × power` since before any caster existed.
-
-**An instant cast uses 1.5 / 3.5**, also the owner's. It is the global
-cooldown, so an instant is priced at the time it really consumes.
-
-## The four cases
-
-| | Rule | Clamped? |
-| --- | --- | --- |
-| **Direct cast** | `castTime / 3.5` | **Yes**, to `[1.5, 3.5]` seconds |
-| **Channel** | `channelDuration / 3.5`, split evenly across ticks | No |
-| **Periodic** | `baseDuration / 15`, split evenly across ticks | No |
-| **Hybrid** | both, each scaled by its own share of their sum | — |
-
-**Only the direct rule is clamped, and that is Classic being self-consistent
-rather than an oversight.** A five-second Arcane Missiles channel is worth
-1.429 and a 24-second Bane of Agony 1.6, while a six-second Pyroblast is worth
-1.0. A channel and a DoT already pay for their coefficient in TIME, which is
-precisely what the clamp stops a single cast from doing.
-
-### The hybrid split
-
-A spell that hits AND leaves a burn is one cast, and would otherwise scale
-about twice as hard as a nuke costing the same global cooldown. Each half is
-scaled by its own share:
-
-```
-directShare = direct / (direct + dot)
-dotShare    = dot    / (direct + dot)
-finalDirect = direct × directShare
-finalDot    = dot    × dotShare
-```
-
-**It reproduces Classic's published pairs exactly**, which is what makes it the
-right transcription of the rule rather than a plausible one — several
-normalisations land NEAR the correct answer. Moonfire, an instant with a
-12-second DoT, comes out at **0.1495 and 0.5209** against Classic's stated 0.15
-and 0.52. The test pins that pair.
-
-Note it is deliberately **not** "make the two sum to 1.0". The bigger half
-keeps more of what it had, so a long DoT on a short cast stays a DoT spell.
-
-## What is borrowed, and what would settle it
-
-Three of the four are WoW Classic's, chosen by the ruleset owner when asked,
-because Forever states none of them. Each is named so nothing can read it
-without seeing that.
-
-| Constant | What would confirm it |
+| The sheet says | It means |
 | --- | --- |
-| `PLACEHOLDER_SPELL_COEFFICIENT_DOT_DIVISOR` (15) | Any Forever source stating one DoT's coefficient outright — the durations are known, so a single figure settles the divisor. |
-| `PLACEHOLDER_MAX_COEFFICIENT_CAST_SECONDS` (3.5) | Pyroblast's coefficient. It is the only spell here that reaches the clamp. |
-| The hybrid share formula | Any Forever source giving both halves of one hybrid. |
+| a percentage | the ability carries its own coefficient, the same on any weapon. Bloodthirst's 35% of attack power |
+| `weapon damage`, or `40% weapon damage` | the damage IS the weapon's, so attack power reaches it through the weapon at `speed / 14` |
+| `N% per tick` | a damage-over-time effect, stated PER TICK rather than for the whole effect |
+| `N%*combo point spent` | multiplied by the points the finisher spent, so a five-point Eviscerate carries 20% |
 
-`SPELL_COEFFICIENT_CAST_DIVISOR` (3.5) and `INSTANT_CAST_SECONDS` (1.5) are the
-owner's own and carry no placeholder marking.
+**A COEFFICIENT IS ADDED TO THE BASE DAMAGE, NEVER INSTEAD OF IT.** The owner's
+instruction, given with the sheet: *"many spells have a base damage that needs to
+be added to this ... make sure that flat ability damage doesn't get lost."*
 
-## Two traps, both of which produce plausible numbers
+`scaleByPower` computes `baseAmount + coefficient × power`, so the pipeline
+already does this. What the instruction guards against is an EDIT that drops a
+flat term while setting a coefficient — which compiles, passes a coefficient
+test, and silently deletes half an ability.
+[`tests/game/ownerCoefficients.test.ts`](../tests/game/ownerCoefficients.test.ts)
+is the guard: it casts every damaging ability on a character with **no** attack
+power, ranged attack power or spell power, so every coefficient contributes
+exactly zero and what is left is the flat damage.
 
-**THE CAST TIME IS THE BASE ONE, AND `ability.castTimeMs` IS NOT.**
-`abilitiesForClass` overwrites `castTimeMs` with the talent-reduced figure, so
-reading it inside `onCast` would make Improved Fireball quietly **reduce**
-Fireball's scaling with gear — a cast-time talent making a spell worse, at a
-number nobody would question. Every spell declares a named `*_CAST_MS` constant
-and uses it for both its `castTimeMs` and its coefficient, so the two cannot
-drift.
+## What this replaced
 
-**AN EFFECT WHOSE SIZE IS DERIVED FROM ANOTHER HIT TAKES NO COEFFICIENT.**
-Ignite is "an additional N% of your spell's damage", and that spell's damage was
-already scaled — so a coefficient here would apply spell power twice. Its zero
-is asserted directly, because `everySpellScales.test.ts` cannot reach an aura
-with no ability behind it.
+Until the sheet arrived, every coefficient in the project was **derived**:
 
-## A known consequence worth reading
+```
+direct    castTime / 3.5, clamped to [1.5, 3.5] seconds
+channel   channelDuration / 3.5, split evenly across ticks
+periodic  baseDuration / 15, split evenly across ticks
+hybrid    both, each scaled by its own share of their sum
+```
 
-The hybrid shares are weighted by each half's **coefficient**, which is to say
-by **duration**, and not by how much **damage** each half actually deals. Those
-come apart when a big nuke leaves a token burn:
+The cast-time rule and the 1.5-second instant were the owner's. **The other
+three were WoW Classic's**, borrowed on the owner's ruling because Forever had
+stated none, and each carried a `PLACEHOLDER_` name saying so. All of it is
+gone — `src/game/combat/spellCoefficient.ts` was deleted, and with it:
 
-> Fireball — 483 direct plus 60 over 8 seconds — gets **0.652 direct** and
-> 0.186 over the DoT.
-
-The burn is 11% of the spell's damage and takes 35% of its scaling, so Fireball
-scales at 0.652 where a 3.5-second cast with no DoT gets the full 1.0. Classic
-sidesteps this by giving Fireball's DoT no coefficient at all and treating the
-spell as a pure nuke.
-
-**Left as the rule says rather than special-cased**, because the owner chose the
-split knowing it applied to these spells, and a per-spell exception is the kind
-of invented content this project refuses. If it should instead weight by damage
-share, or exempt a DoT below some fraction of the whole, that is a change to
-`hybridSpellCoefficients` and nothing else.
-
-## What does NOT take one
-
-| | Why |
+| Gone | Was |
 | --- | --- |
-| **A Paladin seal** | The owner supplied its own formula: `base + baseWeaponSpeed × (0.022 × AP + 0.044 × SP)`. A seal is not cast at a target and has no cast time to divide. It already reads Holy-scoped spell power through `spellPowerFor`. |
-| **A Hunter shot** | Forever **removed** Arcane Shot's spell power coefficient and gave it a ranged attack power one instead. Reading spell power would reinstate something Forever deliberately took out. Serpent Sting ticks Nature and scales with ranged AP for the same reason. |
-| **Ignite** | Its size is a share of an already-scaled hit. |
-| **Summon Hawk** | Its damage is the hawk's, and it is physical. |
-| **Every melee and ranged ability** | They scale with attack power, through `attackPowerCoefficientFor`. |
+| `PLACEHOLDER_SPELL_COEFFICIENT_DOT_DIVISOR` | 15, Classic's |
+| `PLACEHOLDER_MAX_COEFFICIENT_CAST_SECONDS` | 3.5, Classic's. Pyroblast was the only spell that reached it |
+| the hybrid share formula | Classic's, and the largest judgement call in the feature |
+
+**THE DERIVATION AND THE SHEET DISAGREE IN BOTH DIRECTIONS AND BY A LOT.** Blast
+Wave fell from 0.43 to 0.129. Devouring Plague's tick halved and Siphon Life's
+quartered. Fireball's burn lost its share entirely, and its hit went from 0.652
+to 0.84. Revenge, Rend and Thunder Clap gained attack power coefficients they
+never had. A derived number that looks reasonable is exactly what this project
+is built not to trust.
+
+**One agreement is worth recording as a coincidence rather than a confirmation.**
+Arcane Missiles' 28.6% a missile is exactly what `5 / 3.5 / 5` gave, and
+Starfire's 1.0 is exactly `3.5 / 3.5`. Those two spells alone would have made the
+replacement look like a no-op.
+
+## Two supersessions inside it
+
+Neither is a refinement. Both are the same owner stating something different
+later, and in both cases the later and more specific document wins.
+
+### Seal of Righteousness
+
+The owner supplied a formula earlier:
+
+```
+base + baseWeaponSpeed × (0.022 × attackPower + 0.044 × spellPower)
+```
+
+It read **attack power** as well as spell power, and scaled **continuously** with
+weapon speed — so "slower weapons cause more Holy damage per swing" fell out of
+the arithmetic rather than needing a rule.
+
+The sheet gives two flat spell power figures chosen by weapon **type** — 20% with
+a one-hander, 22% with a two-hander — and **no attack power term at all**. The
+direction survived and the magnitude did not: a 3.6-second weapon used to be
+worth twice a 1.8-second one and is now worth 10% more.
+
+The base survived too. "21 to 75" still supplies the flat term the coefficient is
+added to.
+
+### Rend, Revenge and Thunder Clap
+
+`WoWForeverWarriorAbilities.xlsx` — the per-class ability sheet, and for a long
+time the highest authority in this project — states a coefficient of **0** for
+every Warrior strike, and Rend's comment quoted that zero directly.
+`WoWSimWorksheet.xlsx` gives Revenge 22% of attack power, Thunder Clap 7%, and
+Rend 2% per tick, while leaving Execute, Shield Slam, Intercept and Hamstring at
+zero.
+
+Called out in the code at both sites, because a reader who knows the Warrior
+sheet would otherwise read the new numbers as transcription errors.
+
+## What the sheet does not reach
+
+Two rows were transcribed and **not applied**, because each lands on something
+that does not exist. Both are in `coefficients.ts` rather than dropped, so the
+transcription covers every row.
+
+| Row | Why not |
+| --- | --- |
+| Instant Poison 0.5%, Deadly Poison 0.45% per tick | **Poisons are not implemented at all.** They are weapon-bound procs needing the poison items and an application model, and five Rogue talents are already inert waiting for the same system. A missing SYSTEM, not a missing number |
+| Hammer of Wrath 42.857% | The ability is not declared. The capture has it — "474 to 522 Holy damage. Only usable on enemies that have 20% or less health" — so adding it is a new ability and a target-health gate |
+
+## What it moved
+
+300 iterations, seed 12345, preset raid buffs. **Nineteen of twenty-three
+profiles moved**, which is expected: this replaced every coefficient in the
+project at once.
+
+| Profile | Before | After | |
+| --- | --- | --- | --- |
+| Prot Warr | 357.5 | 454.2 | **+27.0%** — Revenge, a Protection staple, went from flat to 22% |
+| Cat | 272.0 | 351.7 | **+29.3%** — Rip, Ferocious Bite, Rake and Swipe all gained one |
+| Bear | 208.4 | 254.7 | +22.2% — Lacerate and Swipe |
+| Frostfire Mage | 304.1 | 340.0 | +11.8% — the burn's share returned to the hit |
+| Fire Mage | 354.3 | 390.5 | +10.2% — the same, on Fireball and Pyroblast |
+| Shadow Priest | 509.4 | 449.3 | **−11.8%** — Devouring Plague halved, Mind Flay reduced |
+| SM/DS | 333.8 | 292.6 | **−12.3%** — Siphon Life's tick quartered |
+
+**THE THREE HUNTERS DID NOT MOVE BY A DECIMAL**, and that is the check that
+matters. The Hunter is the one class whose every row the sheet left unchanged —
+Serpent Sting at 15%, Arcane Shot at 10%, the rest weapon damage — so all three
+profiles coming back at exactly their old figures says the change stayed inside
+the rows that moved. DW Fury did not move either, for the same reason: its list
+is weapon damage and Bloodthirst, whose 35% the sheet confirms.
 
 ## How it is kept honest
 
-`tests/game/everySpellScales.test.ts` is the structural guard, and it is
-**behavioural rather than declarative**: it casts every spell twice on two
-characters differing only in spell power and demands the damage differ. Nothing
-about it can be satisfied by writing `powerCoefficient` somewhere.
+| | |
+| --- | --- |
+| [`tests/game/ownerCoefficients.test.ts`](../tests/game/ownerCoefficients.test.ts) | the flat-damage guard above, one case per ability, discovered from the presets so a new ability is covered without anyone remembering |
+| [`tools/coefficient_probe.ts`](../tools/coefficient_probe.ts) | measures what every ability ACTUALLY scales with, by moving one stat and reading the damage. A declaration proves nothing; this is what caught the four flat finishers in the first place |
+| [`docs/coefficient-audit.md`](coefficient-audit.md) | the probe's output, per class, to read against the sheet |
 
-**The spell list is DISCOVERED from the event stream**, not filtered by
-`attackTable`. The first version of that test filtered on
-`attackTable === 'spell'` and silently skipped every pure DoT — Shadow Word:
-Pain, Corruption, Bane of Agony, Siphon Life, Devouring Plague and Consecration
-— because a spell that only applies an aura declares no table. Those six are
-exactly the spells the periodic rule exists for, so the check covered everything
-except the part most likely to be wrong.
+**A DAMAGE-OVER-TIME ROW IS PER TICK ON THE SHEET AND A TOTAL IN THE AUDIT**, so
+Devouring Plague reads 10% there and 80% here. Both are right and they answer
+different questions.

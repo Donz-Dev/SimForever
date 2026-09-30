@@ -6,7 +6,6 @@ import {
   eclipseAura,
   INSECT_SWARM,
   LACERATE,
-  LACERATE_UNMODELLED,
   MAUL_BONUS_DAMAGE,
   MOONFIRE_COEFFICIENTS,
   MOONFIRE_DOT,
@@ -15,7 +14,13 @@ import {
   ripAura,
 } from '../auras/druid';
 import { awardComboPoint, hasComboPoints, spendComboPoints } from '../combat/comboPoints';
-import { directSpellCoefficient } from '../combat/spellCoefficient';
+import {
+  FEROCIOUS_BITE_AP_COEFFICIENT_PER_COMBO_POINT,
+  RAKE_AP_COEFFICIENT,
+  STARFIRE_SP_COEFFICIENT,
+  SWIPE_AP_COEFFICIENT,
+  WRATH_SP_COEFFICIENT,
+} from '../combat/coefficients';
 
 /**
  * Druid abilities, from the WoW Forever beta client (build 1.60.1.69876).
@@ -82,7 +87,7 @@ export const WRATH_CAST_MS = seconds(2);
  * REDUCE the spell's scaling with gear, which is backwards and would read as
  * a perfectly ordinary number.
  */
-export const WRATH_COEFFICIENT = directSpellCoefficient(WRATH_CAST_MS);
+export const WRATH_COEFFICIENT = WRATH_SP_COEFFICIENT;
 
 export const WRATH: Ability = {
   id: 'wrath',
@@ -124,7 +129,7 @@ export const WRATH: Ability = {
 
 export const STARFIRE_DAMAGE = midpoint(350, 412);
 export const STARFIRE_CAST_MS = seconds(3.5);
-export const STARFIRE_COEFFICIENT = directSpellCoefficient(STARFIRE_CAST_MS);
+export const STARFIRE_COEFFICIENT = STARFIRE_SP_COEFFICIENT;
 
 export const STARFIRE: Ability = {
   id: 'starfire',
@@ -270,7 +275,9 @@ export const RAKE: Ability = {
       abilityId: ability.id,
       abilityName: ability.name,
       school: PHYSICAL,
+      // Flat, plus the sheet's 1% of attack power on the hit.
       baseAmount: RAKE_DIRECT_DAMAGE,
+      powerCoefficient: RAKE_AP_COEFFICIENT,
       attackTable: ability.attackTable,
       weaponSlot: MAIN_HAND,
     });
@@ -319,15 +326,19 @@ export const FEROCIOUS_BITE: Ability = {
       abilityId: ability.id,
       abilityName: ability.name,
       school: PHYSICAL,
+      // The flat figure plus its energy bonus, which the coefficient adds to.
       baseAmount:
         FEROCIOUS_BITE_BY_COMBO_POINT[spent - 1] + remaining * FEROCIOUS_BITE_DAMAGE_PER_ENERGY,
+      /*
+       * 3% OF ATTACK POWER PER COMBO POINT SPENT, so a five-point bite carries
+       * 15%. The tooltip's "Damage is increased by your Attack Power" finally
+       * has its figure, and the `unmodelled` note that stood here has expired.
+       */
+      powerCoefficient: FEROCIOUS_BITE_AP_COEFFICIENT_PER_COMBO_POINT * spent,
       attackTable: ability.attackTable,
       weaponSlot: MAIN_HAND,
     });
   },
-  unmodelled:
-    'Its "damage is increased by your Attack Power" does not apply: the source ' +
-    'states five flat ranges and no coefficient.',
 };
 
 export const RIP: Ability = {
@@ -441,7 +452,9 @@ export const SWIPE: Ability = {
         abilityId: ability.id,
         abilityName: ability.name,
         school: PHYSICAL,
+        // Flat, plus the sheet's 10% of attack power.
         baseAmount: SWIPE_DAMAGE,
+        powerCoefficient: SWIPE_AP_COEFFICIENT,
         attackTable: ability.attackTable,
         weaponSlot: MAIN_HAND,
       });
@@ -460,7 +473,6 @@ export const LACERATE_ABILITY: Ability = {
     if (roll.avoided) return;
     simulation.applyAura(target, LACERATE, caster.id);
   },
-  unmodelled: LACERATE_UNMODELLED,
 };
 
 export const DEMORALIZING_ROAR_ABILITY: Ability = {

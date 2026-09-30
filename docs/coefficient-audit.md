@@ -25,30 +25,30 @@ Figures are the **bare** coefficients: the build's damage multipliers are
 divided back out, so a Shadow Priest's spells state their coefficient and not
 their coefficient times Shadow Mastery.
 
-## 4 disagree with their own tooltip
+## Nothing disagrees with its own tooltip any more
 
-These say in the client's own words that they scale with attack power, and
-measure completely flat. **No source states by how much**, so this is a
-missing RULE rather than a missing transcription — the shape the spell
-coefficient and Careful Aim both had, each settled by one question. Nothing
-is changed until that is answered.
+Every damage source that claims to scale, scales. The four that did not --
+Eviscerate, Rupture, Rip and Ferocious Bite, each stating "increased by
+Attack Power" and measuring completely flat -- were the finding of the
+first version of this audit, and `WoWSimWorksheet.xlsx` answered all four.
 
-| Damage source | Class | The source's own words |
-| --- | --- | --- |
-| **Eviscerate** | rogue | Finishing move that causes damage per combo point, increased by Attack Power: |
-| **Rupture** | rogue | Finishing move that causes damage over time, increased by your Attack Power. |
-| **Ferocious Bite** | druid | Damage is increased by your Attack Power. |
-| **Rip** | druid | Damage increases per combo point and by your Attack Power: |
+Lacerate went with them: its "10% weapon damage per existing application"
+now applies, reading the stack count off the aura that a stale note said a
+periodic tick could not see.
 
-All four are finishers, and they are not small: Eviscerate at five combo
-points is the largest single hit either Rogue has, and Ferocious Bite is the
-largest the Cat Druid has.
+## Two things to know before comparing this with the sheet
 
-Two smaller ones, of different kinds. **Lacerate** states "10% weapon damage
-per existing application" — a stated number needing a stack-dependent term,
-not a ruling. **Seal of Fury** is the only seal that does not scale, its
-tooltip stating a flat "additional 35 Holy damage" with no weapon-speed term
-for the seal formula to use; worth confirming that is right.
+**A DAMAGE-OVER-TIME ROW IS A TOTAL HERE AND PER TICK ON THE SHEET.** The
+probe casts once and totals everything the cast causes, so Devouring Plague
+reads 80% against the sheet's 10% -- eight ticks of it. Siphon Life reads 50%
+for ten ticks of 5%, and Rip 120% for six ticks of 4% per combo point at five
+points. Neither figure is wrong; they answer different questions.
+
+**A FEW ROWS CARRY A MULTIPLIER THE PROBE CANNOT DIVIDE OUT.** It reads a
+build's modifiers off a character that has not entered combat, so an OPENING
+aura is missing from them -- a Warrior's stance most of all. Revenge reads 20%
+against the sheet's 22%, which is Defensive Stance's 0.9 and not a
+transcription error.
 
 ## Every damage source
 
@@ -60,15 +60,15 @@ for the seal formula to use; worth confirming that is right.
 | Shield Slam | 0% | 0% |
 | Mortal Strike | weapon damage | 0% |
 | Heroic Strike | weapon damage | 0% |
+| Revenge | 20% | 0% |
 | Slam | weapon damage | 0% |
 | Cleave | weapon damage | 0% |
 | Overpower | weapon damage | 0% |
 | Whirlwind | weapon damage (both hands) | 0% |
+| Rend | 19% | 0% |
 | Bloodthirst | 35% | 0% |
-| Revenge | 0% | 0% |
-| Rend | 0% | 0% |
 | Spearing Strike | 40% weapon damage | 0% |
-| Thunder Clap | 0% | 0% |
+| Thunder Clap | 7.0% | 0% |
 | Intercept | 0% | 0% |
 | Hamstring | 0% | 0% |
 
@@ -76,13 +76,13 @@ for the seal formula to use; worth confirming that is right.
 
 | Damage source | AP coeff | SP coeff |
 | --- | --- | --- |
-| Seal of Command *(per strike)* | 20% | 0% |
-| Seal of Righteousness *(per strike)* | 7.9% | 16% |
+| Seal of Command *(per strike)* | 20% | 20% |
+| Seal of Fury *(per strike)* | 0% | 10% |
 | Holy Shock | 0% | 43% |
-| Seal of Fury *(per strike)* | 0% | 0% |
-| Consecration | 0% | 53% |
-| Holy Strike | 50% weapon damage | 0% |
-| Judgement | 0% | 43% |
+| Seal of Righteousness *(per strike)* | 0% | 20% |
+| Consecration | 0% | 38% |
+| Holy Strike | 50% weapon damage | 21% |
+| Judgement | 0% | 50% |
 
 A seal strikes once per swing, so its figures are per strike. They come from
 the formula you supplied — `base + baseWeaponSpeed x (0.022 x AP + 0.044 x SP)`
@@ -108,9 +108,9 @@ swing that carried it, so it inherits that hit rather than scaling itself.
 
 | Damage source | AP coeff | SP coeff |
 | --- | --- | --- |
-| Eviscerate | 0% | 0% |
+| Eviscerate | 20% | 0% |
+| Rupture | 24% | 0% |
 | Backstab | 150% weapon damage | 0% |
-| Rupture | 0% | 0% |
 | Ghostly Strike | 180% weapon damage | 0% |
 | Sinister Strike | weapon damage | 0% |
 | Mutilate | weapon damage (both hands) | 0% |
@@ -121,8 +121,8 @@ swing that carried it, so it inherits that hit rather than scaling itself.
 | Damage source | AP coeff | SP coeff |
 | --- | --- | --- |
 | Shadow Word: Pain | 0% | 160% |
-| Devouring Plague | 0% | 160% |
-| Mind Flay | 0% | 87% |
+| Devouring Plague | 0% | 80% |
+| Mind Flay | 0% | 51% |
 | Mind Blast | 0% | 43% |
 | Shadow Word: Death | 0% | 43% |
 
@@ -132,10 +132,10 @@ swing that carried it, so it inherits that hit rather than scaling itself.
 | --- | --- | --- |
 | Lava Burst | 0% | 71% |
 | Lightning Bolt | 0% | 71% |
-| Earth Shock | 0% | 43% |
-| Frost Shock | 0% | 43% |
+| Earth Shock | 0% | 39% |
+| Frost Shock | 0% | 39% |
 | Stormstrike | weapon damage | 0% |
-| Flame Shock | 0% | 67% |
+| Flame Shock | 0% | 61% |
 | Chain Lightning | 0% | 57% |
 
 ### Mage
@@ -143,13 +143,13 @@ swing that carried it, so it inherits that hit rather than scaling itself.
 | Damage source | AP coeff | SP coeff |
 | --- | --- | --- |
 | Arcane Missiles | 0% | 143% |
-| Pyroblast | 0% | 91% |
+| Pyroblast | 0% | 151% |
 | Fireball | 0% | 84% |
-| Frostbolt | 0% | 86% |
-| Frostfire Bolt | 0% | 75% |
-| Blast Wave | 0% | 43% |
+| Frostbolt | 0% | 81% |
+| Frostfire Bolt | 0% | 81% |
 | Arcane Blast | 0% | 71% |
 | Fire Blast | 0% | 43% |
+| Blast Wave | 0% | 13% |
 | Scorch | 0% | 43% |
 | Ice Lance | 0% | 43% |
 
@@ -157,11 +157,11 @@ swing that carried it, so it inherits that hit rather than scaling itself.
 
 | Damage source | AP coeff | SP coeff |
 | --- | --- | --- |
-| Bane of Agony | 0% | 160% |
-| Siphon Life | 0% | 200% |
-| Immolate | 0% | 84% |
+| Immolate | 0% | 85% |
+| Bane of Agony | 0% | 106% |
 | Corruption | 0% | 120% |
 | Shadow Bolt | 0% | 86% |
+| Siphon Life | 0% | 50% |
 | Incinerate | 0% | 71% |
 | Conflagrate | 0% | 43% |
 | Shadowburn | 0% | 43% |
@@ -171,19 +171,19 @@ swing that carried it, so it inherits that hit rather than scaling itself.
 
 | Damage source | AP coeff | SP coeff |
 | --- | --- | --- |
-| Ferocious Bite | 0% | 0% |
+| Ferocious Bite | 15% | 0% |
+| Rip | 120% | 0% |
 | Starfire | 0% | 100% |
-| Rip | 0% | 0% |
 | Moonfire | 0% | 67% |
-| Insect Swarm | 0% | 80% |
+| Insect Swarm | 0% | 95% |
 | Shred | 155% weapon damage | 0% |
 | Wrath | 0% | 57% |
 | Claw | 110% weapon damage | 0% |
 | Maul | weapon damage | 0% |
 | Primal Bite | weapon damage | 0% |
-| Rake | 0% | 0% |
-| Swipe | 0% | 0% |
-| Lacerate | 0% | 0% |
+| Rake | 4.0% | 0% |
+| Swipe | 10.0% | 0% |
+| Lacerate | 50% weapon damage | 0% |
 
 ### Applied by a reaction, so no cast reaches them
 

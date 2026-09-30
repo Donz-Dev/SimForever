@@ -1,5 +1,5 @@
 import type { Ability, AuraDefinition, Combatant, SimulationContext } from '../../engine';
-import { dealDamage, seconds } from '../../engine';
+import { dealDamage, seconds, spellPowerFor } from '../../engine';
 import { baseManaFor } from '../character/baseStatLookup';
 import {
   CONSECRATION_GROUND,
@@ -15,7 +15,13 @@ import {
   activeSeal,
   echoAura,
 } from '../auras/paladin';
-import { directSpellCoefficient } from '../combat/spellCoefficient';
+import {
+  HOLY_SHOCK_SP_COEFFICIENT,
+  HOLY_STRIKE_SP_COEFFICIENT,
+  JUDGEMENT_OF_COMMAND_SP_COEFFICIENT,
+  JUDGEMENT_OF_FURY_SP_COEFFICIENT,
+  JUDGEMENT_OF_RIGHTEOUSNESS_SP_COEFFICIENT,
+} from '../combat/coefficients';
 
 /**
  * Paladin abilities, from the WoW Forever beta client (build 1.60.1.69876).
@@ -194,16 +200,24 @@ export const JUDGEMENT_OF_COMMAND = midpoint(169, 187);
 export const JUDGEMENT_OF_FURY = midpoint(146, 160);
 
 /*
- * AN INSTANT HOLY SPELL, so 1.5 / 3.5 -- and it reads HOLY-scoped spell power,
- * which eight pieces of Lawbringer grant.
+ * ----------------------------------------------------------------------------
+ * ONE ABILITY, THREE COEFFICIENTS, because Judgement "unleashes the energy of a
+ * Seal spell" and the seal decides what lands.
  *
- * THE SEALS ARE NOT THIS. A seal has the ruleset owner's own formula, `base +
- * baseWeaponSpeed x (0.022 x AP + 0.044 x SP)`, supplied directly and
- * unaffected by the universal cast-time rule -- a seal is not cast at the
- * target and has no cast time to divide. A judgement IS a cast, so it takes
- * the general rule like every other spell.
+ * The sheet gives Judgement of Command, of Fury and of Righteousness their own
+ * rows -- 0.43, 0.45 and 0.5 -- where this simulator has a single `judgement`
+ * that reads the active seal. It already chose its BASE DAMAGE that way; it now
+ * chooses its coefficient by the same lookup, so the two cannot drift apart.
+ *
+ * The Crusader's judgement is absent from the sheet and from this table because
+ * it deals no damage at all: it applies a debuff.
+ * ----------------------------------------------------------------------------
  */
-export const JUDGEMENT_COEFFICIENT = directSpellCoefficient(0);
+export const JUDGEMENT_COEFFICIENT_BY_SEAL: Readonly<Record<string, number>> = {
+  seal_of_command: JUDGEMENT_OF_COMMAND_SP_COEFFICIENT,
+  seal_of_fury: JUDGEMENT_OF_FURY_SP_COEFFICIENT,
+  seal_of_righteousness: JUDGEMENT_OF_RIGHTEOUSNESS_SP_COEFFICIENT,
+};
 
 export const JUDGEMENT: Ability = {
   id: 'judgement',
@@ -236,8 +250,11 @@ export const JUDGEMENT: Ability = {
       abilityId: ability.id,
       abilityName: ability.name,
       school: HOLY,
+      // The flat judgement damage, which the coefficient is added TO.
       baseAmount: amount,
-      powerCoefficient: JUDGEMENT_COEFFICIENT,
+      // ...and the coefficient of the SAME seal, from the same lookup.
+      powerCoefficient:
+        JUDGEMENT_COEFFICIENT_BY_SEAL[seal] ?? JUDGEMENT_OF_RIGHTEOUSNESS_SP_COEFFICIENT,
       attackTable: ability.attackTable,
     });
   },
@@ -313,7 +330,20 @@ export const HOLY_STRIKE: Ability = {
       abilityId: ability.id,
       abilityName: ability.name,
       school: PHYSICAL,
-      baseAmount: HOLY_STRIKE_HOLY_DAMAGE,
+      /*
+       * ITS FLAT HOLY DAMAGE, PLUS THE SHEET'S SPELL POWER TERM, and the flat
+       * figure is not replaced by it -- "many spells have a base damage that
+       * needs to be added to this".
+       *
+       * FOLDED INTO `baseAmount` RATHER THAN PASSED AS A COEFFICIENT, because
+       * this is ONE damage event and `scaleByPower` picks a single power pool
+       * from the school: physical reads attack power, which is what the weapon
+       * half needs. A spell power coefficient on a physical request would be
+       * read against attack power and silently scale with the wrong stat. The
+       * seals resolve the same problem the same way.
+       */
+      baseAmount:
+        HOLY_STRIKE_HOLY_DAMAGE + HOLY_STRIKE_SP_COEFFICIENT * spellPowerFor(caster, HOLY),
       weaponScaling: { slot: MAIN_HAND, fraction: HOLY_STRIKE_WEAPON_FRACTION },
       attackTable: ability.attackTable,
       weaponSlot: MAIN_HAND,
@@ -330,7 +360,7 @@ export const HOLY_STRIKE: Ability = {
  * The damage half only. Its heal is real and no Paladin profile here heals.
  */
 export const HOLY_SHOCK_DAMAGE = midpoint(334, 362);
-export const HOLY_SHOCK_COEFFICIENT = directSpellCoefficient(0);
+export const HOLY_SHOCK_COEFFICIENT = HOLY_SHOCK_SP_COEFFICIENT;
 
 export const HOLY_SHOCK: Ability = {
   id: 'holy_shock',

@@ -16,6 +16,7 @@ import {
   sliceAndDiceAura,
 } from '../auras/rogue';
 import { awardComboPoint, hasComboPoints, spendComboPoints } from '../combat/comboPoints';
+import { EVISCERATE_AP_COEFFICIENT_PER_COMBO_POINT } from '../combat/coefficients';
 
 /**
  * Rogue abilities, from the WoW Forever beta client (build 1.60.1.69876).
@@ -339,15 +340,23 @@ export const EVISCERATE: Ability = {
       abilityId: ability.id,
       abilityName: ability.name,
       school: PHYSICAL,
+      // The flat figure for the points spent, which the coefficient adds to.
       baseAmount: EVISCERATE_BY_COMBO_POINT[spent - 1],
+      /*
+       * 4% OF ATTACK POWER PER COMBO POINT SPENT, so a five-point Eviscerate
+       * carries 20%.
+       *
+       * THE TOOLTIP SAID THIS ALL ALONG -- "causes damage per combo point,
+       * increased by Attack Power" -- and the figure was the missing half. The
+       * coefficient audit found it flat, the owner supplied the rate, and the
+       * `unmodelled` note that used to sit here has expired with it.
+       */
+      powerCoefficient: EVISCERATE_AP_COEFFICIENT_PER_COMBO_POINT * spent,
       attackTable: ability.attackTable,
       weaponSlot: MAIN_HAND,
     });
     consumeColdBlood(simulation, caster, ability.id);
   },
-  unmodelled:
-    'Its "increased by Attack Power" does not apply: the source states five ' +
-    'flat figures and no coefficient, so none is invented.',
 };
 
 export const RUPTURE: Ability = {

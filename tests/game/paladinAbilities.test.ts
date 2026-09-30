@@ -14,14 +14,13 @@ import {
   TWIST_OF_LIGHT_FLAG,
 } from '../../src/game/abilities/paladin';
 import {
-  SEAL_ATTACK_POWER_COEFFICIENT,
   SEAL_AURA_IDS,
   SEAL_OF_COMMAND_WEAPON_FRACTION,
   SEAL_OF_FURY_DAMAGE,
   SEAL_OF_RIGHTEOUSNESS_BASE,
-  SEAL_SPELL_POWER_COEFFICIENT,
   activeSeal,
   sealDamage,
+  sealOfRighteousnessCoefficient,
 } from '../../src/game/auras/paladin';
 import { PLACEHOLDER_SEAL_OF_COMMAND_PPM } from '../../src/game/reactions/paladin';
 import { PALADIN_TALENT_EFFECTS } from '../../src/game/talents/paladinEffects';
@@ -108,28 +107,30 @@ describe('the numbers', () => {
   it("uses the ruleset owner's seal formula, coefficients and all", () => {
     /*
      * ------------------------------------------------------------------------
-     * THE FIRST SPELL POWER COEFFICIENT IN THE PROJECT, supplied directly:
+     * A FLAT SPELL POWER COEFFICIENT PER STRIKE, CHOSEN BY WHAT IS HELD: 20%
+     * with a one-hander, 22% with a two-hander, and NO attack power term.
+     * Hand-transcribed from WoWSimWorksheet.xlsx.
      *
-     *   damage = base + baseWeaponSpeed x (0.022 x AP + 0.044 x SP)
-     *
-     * Every caster before this -- Druid, Shaman, Mage -- states flat damage
-     * and NO coefficient, and each says so on its results page. This is the
-     * one place where gear reaches a Holy number, so it is asserted against
-     * the formula written out again here by hand rather than against a
-     * recorded figure.
+     * THIS REPLACED A FORMULA the owner had supplied earlier --
+     * `base + baseWeaponSpeed x (0.022 x AP + 0.044 x SP)` -- which read
+     * attack power too and scaled continuously with weapon speed. The two
+     * disagree about the SHAPE and not only the size, so both are written out
+     * here: the new rule is asserted, and the old one is asserted NOT to hold,
+     * because a half-applied replacement would still look plausible.
      * ------------------------------------------------------------------------
      */
-    expect(SEAL_ATTACK_POWER_COEFFICIENT).toBe(0.022);
-    expect(SEAL_SPELL_POWER_COEFFICIENT).toBe(0.044);
+    expect(sealOfRighteousnessCoefficient(false)).toBe(0.2);
+    expect(sealOfRighteousnessCoefficient(true)).toBe(0.22);
 
     const base = SEAL_OF_RIGHTEOUSNESS_BASE;
-    expect(sealDamage(base, 3.6, 1000, 0)).toBeCloseTo(base + 3.6 * 22, 6);
-    expect(sealDamage(base, 3.6, 0, 500)).toBeCloseTo(base + 3.6 * 22, 6);
-    // Spell power is worth exactly twice attack power, point for point.
-    expect(sealDamage(base, 2, 0, 100) - base).toBeCloseTo(
-      2 * (sealDamage(base, 2, 100, 0) - base),
-      6,
-    );
+    // The base is ADDED to the coefficient, never replaced by it.
+    expect(sealDamage(base, 500, 0.2)).toBeCloseTo(base + 100, 6);
+    expect(sealDamage(base, 500, 0.22)).toBeCloseTo(base + 110, 6);
+    expect(sealDamage(base, 0, 0.2)).toBeCloseTo(base, 6);
+
+    // ATTACK POWER NO LONGER REACHES IT AT ALL: the only other term is spell
+    // power, so a seal on a character with none is worth exactly its base.
+    expect(sealDamage(base, 0, 0.22)).toBe(base);
   });
 
   it('reads HOLY spell power, which eight pieces of Lawbringer grant', () => {
@@ -188,10 +189,21 @@ describe('the numbers', () => {
     expect(spellPowerFor(prot, 'holy')).toBe(prot.stats.get('spellPower'));
   });
 
-  it('makes a slow weapon hit harder, which is what the tooltip says', () => {
-    // "Slower weapons cause more Holy damage per swing" falls out of the
-    // formula rather than needing a rule of its own.
-    expect(sealDamage(21, 3.6, 1000, 200)).toBeGreaterThan(sealDamage(21, 1.8, 1000, 200));
+  it('makes a two-hander hit harder, in one step rather than continuously', () => {
+    /*
+     * "Slower weapons cause more Holy damage per swing" still holds, and it
+     * now holds in TWO STEPS rather than in proportion to speed: 22% with a
+     * two-hander against 20% with anything else.
+     *
+     * Under the old formula a 3.6-second weapon was worth exactly twice a
+     * 1.8-second one. Under the sheet it is worth 10% more. The direction
+     * survived the change and the magnitude did not, which is the sort of
+     * thing a test that only checked the direction would have missed.
+     */
+    const twoHand = sealDamage(21, 500, sealOfRighteousnessCoefficient(true));
+    const oneHand = sealDamage(21, 500, sealOfRighteousnessCoefficient(false));
+    expect(twoHand).toBeGreaterThan(oneHand);
+    expect(twoHand - 21).toBeCloseTo((oneHand - 21) * 1.1, 6);
   });
 
   it('declares an effect for every one of the 52 talents', () => {

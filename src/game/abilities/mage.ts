@@ -1,7 +1,6 @@
 import type { Ability } from '../../engine';
 import { dealDamage, seconds } from '../../engine';
 import { baseManaFor } from '../character/baseStatLookup';
-import { channelTickCoefficient, directSpellCoefficient } from '../combat/spellCoefficient';
 import {
   ARCANE_BLAST,
   ARCANE_BLAST_UNMODELLED,
@@ -21,6 +20,15 @@ import {
   PYROBLAST_COEFFICIENTS,
   PYROBLAST_DOT,
 } from '../auras/mage';
+import {
+  ARCANE_BLAST_SP_COEFFICIENT,
+  ARCANE_MISSILES_TICK_SP_COEFFICIENT,
+  BLAST_WAVE_SP_COEFFICIENT,
+  FIRE_BLAST_SP_COEFFICIENT,
+  FROSTBOLT_SP_COEFFICIENT,
+  ICE_LANCE_SP_COEFFICIENT,
+  SCORCH_SP_COEFFICIENT,
+} from '../combat/coefficients';
 
 /**
  * Mage abilities, from the WoW Forever beta client (build 1.60.1.69876).
@@ -96,7 +104,7 @@ export const FIREBALL: Ability = {
 // rank 7 and build. Same for Fire Blast and Ice Lance below.
 export const SCORCH_DAMAGE = midpoint(163, 193);
 export const SCORCH_CAST_MS = seconds(1.5);
-export const SCORCH_COEFFICIENT = directSpellCoefficient(SCORCH_CAST_MS);
+export const SCORCH_COEFFICIENT = SCORCH_SP_COEFFICIENT;
 
 export const SCORCH: Ability = {
   id: 'scorch',
@@ -150,7 +158,7 @@ export const PYROBLAST: Ability = {
 
 export const FIRE_BLAST_DAMAGE = midpoint(402, 474);
 /** Instant, so 1.5 / 3.5 by the owner's own wording. */
-export const FIRE_BLAST_COEFFICIENT = directSpellCoefficient(0);
+export const FIRE_BLAST_COEFFICIENT = FIRE_BLAST_SP_COEFFICIENT;
 
 export const FIRE_BLAST: Ability = {
   id: 'fire_blast',
@@ -182,7 +190,7 @@ export const FIRE_BLAST: Ability = {
  * 60 trains rank 5.
  */
 export const BLAST_WAVE_DAMAGE = midpoint(453, 533);
-export const BLAST_WAVE_COEFFICIENT = directSpellCoefficient(0);
+export const BLAST_WAVE_COEFFICIENT = BLAST_WAVE_SP_COEFFICIENT;
 
 export const BLAST_WAVE: Ability = {
   id: 'blast_wave',
@@ -233,7 +241,7 @@ export const COMBUSTION_ABILITY: Ability = {
 
 export const FROSTBOLT_DAMAGE = midpoint(457, 493);
 export const FROSTBOLT_CAST_MS = seconds(3);
-export const FROSTBOLT_COEFFICIENT = directSpellCoefficient(FROSTBOLT_CAST_MS);
+export const FROSTBOLT_COEFFICIENT = FROSTBOLT_SP_COEFFICIENT;
 
 export const FROSTBOLT: Ability = {
   id: 'frostbolt',
@@ -306,7 +314,7 @@ export const FROSTFIRE_BOLT: Ability = {
  */
 export const ICE_LANCE_DAMAGE = midpoint(133, 157);
 export const ICE_LANCE_FROZEN_MULTIPLIER = 4;
-export const ICE_LANCE_COEFFICIENT = directSpellCoefficient(0);
+export const ICE_LANCE_COEFFICIENT = ICE_LANCE_SP_COEFFICIENT;
 
 export const ICE_LANCE: Ability = {
   id: 'ice_lance',
@@ -364,10 +372,7 @@ export const ARCANE_MISSILES_CHANNEL_MS = seconds(ARCANE_MISSILES_TICKS);
  * would make that talent cut the spell's scaling in half while doubling its
  * rate, which nets out to nothing and would look like the talent working.
  */
-export const ARCANE_MISSILES_TICK_COEFFICIENT = channelTickCoefficient(
-  ARCANE_MISSILES_CHANNEL_MS,
-  ARCANE_MISSILES_TICKS,
-);
+export const ARCANE_MISSILES_TICK_COEFFICIENT = ARCANE_MISSILES_TICK_SP_COEFFICIENT;
 
 export const ARCANE_MISSILES: Ability = {
   id: 'arcane_missiles',
@@ -404,7 +409,7 @@ export const ARCANE_MISSILES: Ability = {
 export const ARCANE_BLAST_BASE_MANA_FRACTION = 0.15;
 export const ARCANE_BLAST_DAMAGE = midpoint(364, 424);
 export const ARCANE_BLAST_CAST_MS = seconds(2.5);
-export const ARCANE_BLAST_COEFFICIENT = directSpellCoefficient(ARCANE_BLAST_CAST_MS);
+export const ARCANE_BLAST_COEFFICIENT = ARCANE_BLAST_SP_COEFFICIENT;
 
 export const ARCANE_BLAST_ABILITY: Ability = {
   id: 'arcane_blast',

@@ -10,9 +10,10 @@ import {
   shadowWordPainAura,
 } from '../auras/priest';
 import {
-  channelTickCoefficient,
-  directSpellCoefficient,
-} from '../combat/spellCoefficient';
+  MIND_BLAST_SP_COEFFICIENT,
+  MIND_FLAY_TICK_SP_COEFFICIENT,
+  SHADOW_WORD_DEATH_SP_COEFFICIENT,
+} from '../combat/coefficients';
 
 /**
  * Priest abilities, from the WoW Forever beta client (build 1.60.1.69876).
@@ -54,7 +55,7 @@ export const SWP_EXTRA_SECONDS_BONUS = 'extraDurationSeconds';
 // ---------------------------------------------------------------------------
 
 export const MIND_BLAST_CAST_MS = seconds(1.5);
-export const MIND_BLAST_COEFFICIENT = directSpellCoefficient(MIND_BLAST_CAST_MS);
+export const MIND_BLAST_COEFFICIENT = MIND_BLAST_SP_COEFFICIENT;
 /*
  * 472 to 498, from foreverchanges.pro, by the owner's standing rule. Our capture
  * says 477 to 503 at the same rank 9 and the same build 1.60.1.70009 -- five
@@ -127,10 +128,7 @@ export const MIND_FLAY_CHANNEL_MS = seconds(MIND_FLAY_TICKS);
  * tick. Not `directSpellCoefficient(0)` per tick, which is what treating each
  * tick as its own instant would give and would be worth half as much again.
  */
-export const MIND_FLAY_TICK_COEFFICIENT = channelTickCoefficient(
-  MIND_FLAY_CHANNEL_MS,
-  MIND_FLAY_TICKS,
-);
+export const MIND_FLAY_TICK_COEFFICIENT = MIND_FLAY_TICK_SP_COEFFICIENT;
 
 export const MIND_FLAY: Ability = {
   id: 'mind_flay',
@@ -191,7 +189,7 @@ export const DEVOURING_PLAGUE_ABILITY: Ability = {
 // sources state it.
 export const SHADOW_WORD_DEATH_DAMAGE = midpoint(434, 462);
 export const SHADOW_WORD_DEATH_BACKLASH_FRACTION = 0.1;
-export const SHADOW_WORD_DEATH_COEFFICIENT = directSpellCoefficient(0);
+export const SHADOW_WORD_DEATH_COEFFICIENT = SHADOW_WORD_DEATH_SP_COEFFICIENT;
 
 export const SHADOW_WORD_DEATH: Ability = {
   id: 'shadow_word_death',

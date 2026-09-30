@@ -1,9 +1,12 @@
 import type { AuraDefinition } from '../../engine';
 import { dealDamage, seconds } from '../../engine';
 import {
-  hybridSpellCoefficients,
-  periodicTickCoefficient,
-} from '../combat/spellCoefficient';
+  BANE_OF_AGONY_TICK_SP_COEFFICIENT,
+  CORRUPTION_TICK_SP_COEFFICIENT,
+  IMMOLATE_SP_COEFFICIENT,
+  IMMOLATE_TICK_SP_COEFFICIENT,
+  SIPHON_LIFE_TICK_SP_COEFFICIENT,
+} from '../combat/coefficients';
 
 /**
  * Warlock auras, from the WoW Forever beta client (build 1.60.1.69876).
@@ -66,11 +69,8 @@ export const CORRUPTION_DURATION_MS = seconds(18);
 export const CORRUPTION_TICK_INTERVAL_MS = seconds(3);
 export const CORRUPTION_CAST_MS = seconds(2);
 
-/** A pure DoT: the cast deals no damage, so it takes the whole coefficient. */
-export const CORRUPTION_TICK_COEFFICIENT = periodicTickCoefficient(
-  CORRUPTION_DURATION_MS,
-  CORRUPTION_DURATION_MS / CORRUPTION_TICK_INTERVAL_MS,
-);
+/** A pure DoT: the cast deals no damage, and the sheet states the tick. */
+export const CORRUPTION_TICK_COEFFICIENT = CORRUPTION_TICK_SP_COEFFICIENT;
 
 export const CORRUPTION: AuraDefinition = {
   id: 'corruption',
@@ -121,15 +121,8 @@ export const BANE_OF_AGONY_UNMODELLED =
   'the source’s own and is exact; only its distribution inside the duration ' +
   'is flattened.';
 
-/**
- * A pure DoT, and the LONGEST in the project at 24 seconds -- so 1.6 in total,
- * which is the largest periodic coefficient here. Uncapped, by the same rule
- * that leaves a channel uncapped: it is paid for in time.
- */
-export const BANE_OF_AGONY_TICK_COEFFICIENT = periodicTickCoefficient(
-  BANE_OF_AGONY_DURATION_MS,
-  BANE_OF_AGONY_DURATION_MS / BANE_OF_AGONY_TICK_INTERVAL_MS,
-);
+/** A pure DoT, and the longest here at 24 seconds. 13.3% a tick. */
+export const BANE_OF_AGONY_TICK_COEFFICIENT = BANE_OF_AGONY_TICK_SP_COEFFICIENT;
 
 export const BANE_OF_AGONY: AuraDefinition = {
   id: 'bane_of_agony',
@@ -163,11 +156,15 @@ export const SIPHON_LIFE_PER_TICK = 41;
 export const SIPHON_LIFE_DURATION_MS = seconds(30);
 export const SIPHON_LIFE_TICK_INTERVAL_MS = seconds(3);
 
-/** A pure DoT, 30 seconds in ten ticks: 2.0 in total, the largest of all. */
-export const SIPHON_LIFE_TICK_COEFFICIENT = periodicTickCoefficient(
-  SIPHON_LIFE_DURATION_MS,
-  SIPHON_LIFE_DURATION_MS / SIPHON_LIFE_TICK_INTERVAL_MS,
-);
+/**
+ * A pure DoT, 30 seconds in ten ticks. 5% a tick.
+ *
+ * THE DERIVED FIGURE WAS FOUR TIMES THIS. `duration / 15` made it 2.0 in total
+ * and the largest coefficient in the project; the sheet makes it 0.5. A rule
+ * that rewards a long duration without limit is exactly the shape of thing the
+ * owner's own numbers were wanted for.
+ */
+export const SIPHON_LIFE_TICK_COEFFICIENT = SIPHON_LIFE_TICK_SP_COEFFICIENT;
 
 export const SIPHON_LIFE: AuraDefinition = {
   id: 'siphon_life',
@@ -238,15 +235,15 @@ export const IMMOLATE_DURATION_MS = seconds(15);
 export const IMMOLATE_TICK_INTERVAL_MS = seconds(3);
 export const IMMOLATE_CAST_MS = seconds(2);
 
-/**
- * Immolate is a HYBRID: a 2-second cast leaving a 15-second burn. The pair is
- * computed once, here, and the ability imports the direct half.
+/*
+ * BOTH HALVES ARE THE OWNER'S, one row of the sheet each, and they are no
+ * longer derived from one another. The hybrid SHARE rule that used to split a
+ * single cast's scaling by duration is gone: see src/game/combat/coefficients.ts.
  */
-export const IMMOLATE_COEFFICIENTS = hybridSpellCoefficients(
-  IMMOLATE_CAST_MS,
-  IMMOLATE_DURATION_MS,
-  IMMOLATE_DURATION_MS / IMMOLATE_TICK_INTERVAL_MS,
-);
+export const IMMOLATE_COEFFICIENTS = {
+  direct: IMMOLATE_SP_COEFFICIENT,
+  perTick: IMMOLATE_TICK_SP_COEFFICIENT,
+};
 
 export const IMMOLATE: AuraDefinition = {
   id: 'immolate',

@@ -1,6 +1,10 @@
 import type { AuraDefinition, Combatant } from '../../engine';
 import { RATING_PER_PERCENT, dealDamage, flat, seconds } from '../../engine';
-import { periodicTickCoefficient } from '../combat/spellCoefficient';
+import {
+  CONSECRATION_TICK_SP_COEFFICIENT,
+  SEAL_OF_RIGHTEOUSNESS_SP_COEFFICIENT_ONE_HAND,
+  SEAL_OF_RIGHTEOUSNESS_SP_COEFFICIENT_TWO_HAND,
+} from '../combat/coefficients';
 
 /**
  * Paladin auras, from the WoW Forever beta client (build 1.60.1.69876).
@@ -57,43 +61,59 @@ export function activeSeal(actor: Combatant): string | undefined {
  * Holy damage. Slower weapons cause more Holy damage per swing."
  *
  * ----------------------------------------------------------------------------
- * THE FIRST SPELL POWER COEFFICIENT IN THIS PROJECT, and it is the ruleset
- * owner's own formula rather than anything derived:
+ * A FLAT SPELL POWER COEFFICIENT PER STRIKE, CHOSEN BY WHAT IS HELD: 20% with a
+ * one-hander, 22% with a two-hander, and NO attack power term at all.
+ *
+ * THIS SUPERSEDED A FORMULA, and the difference is a change of shape rather
+ * than a refinement. The owner's earlier one was
  *
  *     damage = base + baseWeaponSpeed x (0.022 x attackPower + 0.044 x spellPower)
  *
- * Every caster so far -- Druid, Shaman, Mage -- states flat damage and no
- * coefficient at all, and each says so. The Paladin is the exception, and that
- * makes this the one place in the project where gear reaches a Holy number.
+ * which read attack power as well, and scaled CONTINUOUSLY with weapon speed --
+ * so "slower weapons cause more Holy damage per swing" fell out of the
+ * arithmetic. Under the sheet the weapon reaches the seal by TYPE instead, in
+ * two steps, and attack power does not reach it. `WoWSimWorksheet.xlsx` wins,
+ * being the document handed over as authoritative; what the old constants were
+ * is recorded in docs/spell-coefficients.md so that meeting `0.022` in this
+ * project's history leads somewhere.
  *
- * WHICH HALF OF "21 TO 75" IS THE BASE is an INTERPRETATION and is isolated
- * here so it is cheap to flip. The range is described as the effect of WEAPON
- * SPEED, so the low end is read as the base -- what the seal is worth before
- * any speed scaling -- and the rest comes from the formula. Reading the
- * midpoint instead would double-count the speed term.
+ * THE BASE SURVIVED THE CHANGE. "21 to 75" still supplies a flat term that the
+ * coefficient is added TO, and which half of the range is the base is still the
+ * same interpretation it always was -- see the constant below.
  * ----------------------------------------------------------------------------
  */
-export const SEAL_ATTACK_POWER_COEFFICIENT = 0.022;
-export const SEAL_SPELL_POWER_COEFFICIENT = 0.044;
 
-/** The low end of "21 to 75", read as the pre-speed base. See above. */
+/** The low end of "21 to 75", read as the base the coefficient adds to. */
 // 20.5, the low end of foreverchanges.pro's "20.5 to 71.4", against our
 // capture's "21 to 75" at the same build. WHICH END IS THE BASE IS STILL THE
 // SAME INTERPRETATION as before -- only the number moved.
 export const SEAL_OF_RIGHTEOUSNESS_BASE = 20.5;
 
-/** The owner's formula, in one place, for every seal that uses it. */
-export function sealDamage(
-  base: number,
-  baseWeaponSpeedSeconds: number,
-  attackPower: number,
-  spellPower: number,
-): number {
-  return (
-    base +
-    baseWeaponSpeedSeconds *
-      (SEAL_ATTACK_POWER_COEFFICIENT * attackPower + SEAL_SPELL_POWER_COEFFICIENT * spellPower)
-  );
+/**
+ * A seal's damage: its flat base, PLUS its spell power coefficient.
+ *
+ * THE BASE IS NOT PART OF THE COEFFICIENT and is added to it, which is the
+ * owner's instruction given with the sheet -- "many spells have a base damage
+ * that needs to be added to this". A seal with 20% of 450 spell power deals
+ * 20.5 + 90, never 90.
+ */
+export function sealDamage(base: number, spellPower: number, coefficient: number): number {
+  return base + coefficient * spellPower;
+}
+
+/**
+ * Seal of Righteousness scales by WHAT IS HELD: 22% with a two-hander, 20%
+ * otherwise.
+ *
+ * The sheet's two rows read "(1H + Shield)" and "(2H)", so the one-hander
+ * figure is the default and the two-hander is the exception -- which is also
+ * the safe way round, since a style holding no weapon at all falls to the
+ * commoner case rather than to the better one.
+ */
+export function sealOfRighteousnessCoefficient(twoHanded: boolean): number {
+  return twoHanded
+    ? SEAL_OF_RIGHTEOUSNESS_SP_COEFFICIENT_TWO_HAND
+    : SEAL_OF_RIGHTEOUSNESS_SP_COEFFICIENT_ONE_HAND;
 }
 
 export const SEAL_OF_RIGHTEOUSNESS: AuraDefinition = {
@@ -335,14 +355,8 @@ export const CONSECRATION_TOTAL = 96 + 216;
 export const CONSECRATION_DURATION_MS = seconds(8);
 export const CONSECRATION_TICK_INTERVAL_MS = seconds(2);
 
-/**
- * A PURE periodic effect -- the cast deals no damage of its own -- so it takes
- * the whole periodic coefficient rather than a share of a hybrid pair.
- */
-export const CONSECRATION_TICK_COEFFICIENT = periodicTickCoefficient(
-  CONSECRATION_DURATION_MS,
-  CONSECRATION_DURATION_MS / CONSECRATION_TICK_INTERVAL_MS,
-);
+/** A pure periodic effect: the cast deals nothing. 9.5% a tick. */
+export const CONSECRATION_TICK_COEFFICIENT = CONSECRATION_TICK_SP_COEFFICIENT;
 
 export const CONSECRATION_GROUND: AuraDefinition = {
   id: 'consecration',

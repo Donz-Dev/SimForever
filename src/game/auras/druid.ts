@@ -1,9 +1,15 @@
 import type { AuraDefinition } from '../../engine';
 import { dealDamage, flat, seconds } from '../../engine';
 import {
-  hybridSpellCoefficients,
-  periodicTickCoefficient,
-} from '../combat/spellCoefficient';
+  INSECT_SWARM_TICK_SP_COEFFICIENT,
+  MOONFIRE_SP_COEFFICIENT,
+  MOONFIRE_TICK_SP_COEFFICIENT,
+} from '../combat/coefficients';
+import {
+  LACERATE_TICK_WEAPON_FRACTION_PER_APPLICATION,
+  RAKE_TICK_AP_COEFFICIENT,
+  RIP_TICK_AP_COEFFICIENT_PER_COMBO_POINT,
+} from '../combat/coefficients';
 
 /**
  * Druid auras, from the WoW Forever beta client (build 1.60.1.69876).
@@ -46,17 +52,20 @@ export const MOONFIRE_DOT_TOTAL = 240;
 export const MOONFIRE_DOT_DURATION_MS = seconds(12);
 export const MOONFIRE_TICK_INTERVAL_MS = seconds(3);
 
-/**
- * Moonfire is a HYBRID: an instant hit plus a 12-second burn, sharing one
- * spell's scaling. Its pair is the cross-check for the whole normalisation --
- * it comes out at 0.15 and 0.52, which is exactly what Classic publishes for
- * this spell. See `hybridSpellCoefficients`.
+/*
+ * Moonfire hits AND burns, and the sheet gives each half its own row.
+ *
+ * ITS DIRECT HALF IS UNCHANGED AT 0.15 AND ITS BURN IS NOT. The old hybrid
+ * rule reproduced Classic's published 0.15 / 0.52 pair exactly, and that
+ * agreement was the cross-check that the rule had been transcribed correctly.
+ * Forever's own figures are 0.15 and 13% a tick, which is 1.56 over twelve
+ * ticks -- so the direct half was right for both rulesets and the burn was
+ * Classic's alone.
  */
-export const MOONFIRE_COEFFICIENTS = hybridSpellCoefficients(
-  0,
-  MOONFIRE_DOT_DURATION_MS,
-  MOONFIRE_DOT_DURATION_MS / MOONFIRE_TICK_INTERVAL_MS,
-);
+export const MOONFIRE_COEFFICIENTS = {
+  direct: MOONFIRE_SP_COEFFICIENT,
+  perTick: MOONFIRE_TICK_SP_COEFFICIENT,
+};
 
 export const MOONFIRE_DOT: AuraDefinition = {
   id: 'moonfire',
@@ -93,14 +102,8 @@ export const INSECT_SWARM_DURATION_MS = seconds(12);
 export const INSECT_SWARM_TICK_INTERVAL_MS = seconds(2);
 export const INSECT_SWARM_HIT_REDUCTION = 2;
 
-/**
- * Insect Swarm is a PURE DoT -- the cast deals no damage of its own -- so it
- * takes the whole periodic coefficient rather than a share of one.
- */
-export const INSECT_SWARM_TICK_COEFFICIENT = periodicTickCoefficient(
-  INSECT_SWARM_DURATION_MS,
-  INSECT_SWARM_DURATION_MS / INSECT_SWARM_TICK_INTERVAL_MS,
-);
+/** A pure DoT: the cast deals nothing, and the sheet states the tick. */
+export const INSECT_SWARM_TICK_COEFFICIENT = INSECT_SWARM_TICK_SP_COEFFICIENT;
 
 export const INSECT_SWARM: AuraDefinition = {
   id: 'insect_swarm',
@@ -208,6 +211,8 @@ export const RAKE_DOT: AuraDefinition = {
         RAKE_DOT_TOTAL / (RAKE_DOT_DURATION_MS / RAKE_TICK_INTERVAL_MS),
         PHYSICAL,
         'melee-special',
+        // 1% of attack power per tick, on top of the flat bleed.
+        RAKE_TICK_AP_COEFFICIENT,
       );
     },
   },
@@ -241,7 +246,23 @@ export function ripAura(comboPoints: number): AuraDefinition {
     refreshBehaviour: 'reset',
     periodic: {
       intervalMs: RIP_TICK_INTERVAL_MS,
-      onTick: (context, aura) => tick(context, aura, perTick, PHYSICAL, 'melee-special'),
+      onTick: (context, aura) =>
+        tick(
+          context,
+          aura,
+          perTick,
+          PHYSICAL,
+          'melee-special',
+          /*
+           * 4% OF ATTACK POWER PER COMBO POINT SPENT, PER TICK -- so a
+           * five-point Rip carries 20% on every one of its eight ticks.
+           *
+           * The points are read from the aura's OWN combo points rather than
+           * the character's, because the character has spent them: `ripAura`
+           * is built with what was spent and its ticks land long afterwards.
+           */
+          RIP_TICK_AP_COEFFICIENT_PER_COMBO_POINT * (clampIndex(comboPoints) + 1),
+        ),
     },
   };
 }
@@ -292,16 +313,27 @@ export const LACERATE: AuraDefinition = {
         LACERATE_TOTAL / (LACERATE_DURATION_MS / LACERATE_TICK_INTERVAL_MS),
         PHYSICAL,
         'melee-special',
+        0,
+        /*
+         * 10% OF A WEAPON SWING PER EXISTING APPLICATION, so five stacks put
+         * half a swing into every tick.
+         *
+         * THE REASON THIS WAS UNMODELLED HAS EXPIRED. It said a periodic tick
+         * "cannot read its own stack count"; `AuraInstance` carries `stacks`
+         * and the tick is handed the instance, so it always could. That is the
+         * fourth time a reason outlived the thing it described.
+         */
+        LACERATE_TICK_WEAPON_FRACTION_PER_APPLICATION * aura.stacks,
       );
     },
   },
 };
 
-export const LACERATE_UNMODELLED =
-  'Its flat bleed applies. The "plus 10% weapon damage per existing ' +
-  'application" does not: a periodic tick cannot read its own stack count, ' +
-  'which is the one thing `modifiersScaleWithStacks` does for a stat and has ' +
-  'no equivalent for.';
+/*
+ * NOTHING ABOUT LACERATE IS UNMODELLED ANY MORE. Its "plus 10% weapon damage
+ * per existing application" is applied from the sheet, reading `aura.stacks`
+ * -- which the old reason claimed a tick could not do.
+ */
 
 /** "Decreasing nearby enemies' melee attack power by 204. Lasts 30 sec." */
 export const DEMORALIZING_ROAR_ATTACK_POWER = 204;
@@ -334,6 +366,15 @@ function tick(
   school: typeof ARCANE | typeof NATURE | typeof PHYSICAL,
   critFrom: 'spell' | 'melee-special' = 'spell',
   powerCoefficient = 0,
+  /*
+   * A SHARE OF A WEAPON SWING, for the one bleed that states one.
+   *
+   * Lacerate is "10% weapon damage per existing application", which is a
+   * weapon fraction rather than an attack power coefficient -- so it goes
+   * through `weaponScaling` the way every weapon-damage ability does, and
+   * attack power reaches it through the weapon at `speed / 14`.
+   */
+  weaponFraction = 0,
 ): void {
   const source = context.combatant(aura.sourceId);
   const target = context.combatant(aura.targetId);
@@ -358,6 +399,9 @@ function tick(
      * passed one.
      */
     powerCoefficient,
+    ...(weaponFraction > 0
+      ? { weaponScaling: { slot: 'mainHand' as const, fraction: weaponFraction } }
+      : {}),
     periodic: true,
     critFrom,
     // A bleed is physical and still ignores armor; a magical tick is not

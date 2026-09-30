@@ -160,14 +160,38 @@ See [docs/combat-tables.md](docs/combat-tables.md).
   attack triggers. This was wrong for the whole project and 1,548 tests passed
   with it in, because a Hunter with a plausible attack power produces a plausible
   number.
-- **A spell's coefficient is `castTime / 3.5`**, an instant priced at 1.5s,
-  applied to `spellPower + schoolSpellPower`. A RULE the owner supplied, not
-  per-spell data. [docs/spell-coefficients.md](docs/spell-coefficients.md)
-- **A seal is the exception**: `base + baseWeaponSpeed × (0.022 × AP + 0.044 ×
-  SP)`, supplied directly, which makes a point of spell power worth twice a point
-  of attack power. A Hunter shot is the other — Forever REMOVED Arcane Shot's
-  spell power coefficient, so applying the general rule would reinstate something
-  Forever took out.
+- **EVERY COEFFICIENT IS DATA, AND `src/game/combat/coefficients.ts` IS IT.**
+  Transcribed row for row from `WoWSimWorksheet.xlsx`, the owner's authoritative
+  coefficient document. **Nothing is derived any more**: the old
+  `castTime / 3.5` rule, its two `PLACEHOLDER_` constants and the hybrid share
+  formula are deleted, because three of those four were Classic's and the owner
+  has now stated the numbers.
+  [docs/spell-coefficients.md](docs/spell-coefficients.md)
+- **A COEFFICIENT IS ADDED TO THE BASE DAMAGE, NEVER INSTEAD OF IT** — the
+  owner's instruction with the sheet, "make sure that flat ability damage
+  doesn't get lost". `scaleByPower` already adds, so the risk is not the
+  pipeline but an EDIT that overwrites a `baseAmount` while setting a
+  coefficient: it compiles, it passes a coefficient test, and it silently
+  deletes half an ability. `ownerCoefficients.test.ts` casts everything at ZERO
+  power, where every coefficient contributes nothing and what is left is the
+  flat damage.
+- **A SHEET ROW STATES ONE OF THREE THINGS**, and they are not interchangeable:
+  a percentage is the ability's OWN coefficient, `weapon damage` means attack
+  power arrives through the weapon at `speed / 14`, and `% per tick` is PER
+  TICK. `%*combo point spent` multiplies by what the finisher spent.
+- **THE SHEET SUPERSEDED TWO EARLIER RULINGS, both from the same owner.** Seal
+  of Righteousness was `base + baseWeaponSpeed × (0.022 × AP + 0.044 × SP)` and
+  is now a flat spell power figure chosen by weapon TYPE — 20% one-handed, 22%
+  two-handed, and no attack power term at all. And
+  `WoWForeverWarriorAbilities.xlsx` states a coefficient of 0 for every Warrior
+  strike, where the sheet gives Revenge 22%, Thunder Clap 7% and Rend 2% a tick.
+  **The later and more specific document wins, and both sites say so** — a
+  reader who knows the older source would otherwise read the new numbers as
+  transcription errors.
+- **A Hunter shot takes no spell coefficient**: Forever REMOVED Arcane Shot's,
+  giving it a ranged attack power one instead, so reading spell power would
+  reinstate something Forever took out. The sheet confirms it — the Hunter is
+  the one class it left entirely unchanged.
 - **Every DoT can crit, and none is reduced by armor.** A Forever rule, not
   Classic's. A tick does not re-roll the table — whether the effect landed was
   settled on application — but it rolls for a crit at the crit chance of **the
@@ -517,12 +541,13 @@ Plus the permanent rulings under **Scope**.
 
 ## Where the Forever data comes from
 
-Five sources. **All nine classes were built from the two client-derived ones.**
+Six sources. **All nine classes were built from the two client-derived ones.**
 [docs/class-implementation.md](docs/class-implementation.md) is the process.
 
 | Source | Answers |
 | --- | --- |
 | `C:\Users\Donz\Documents\WoWForever*` | the owner's own files, **highest authority**: base stats, the combat table, stat conversions, resources, and **one ability spreadsheet — the Warrior's**. There is no spreadsheet for the other eight classes. `WoWForeverSimGuidance.docx` is NOT data — it is screenshots of an architecture discussion |
+| `WoWSimWorksheet.xlsx` | the owner's **authoritative document for COEFFICIENTS**, all nine classes, supplied 2026-09-29 and transcribed in `src/game/combat/coefficients.ts`. It SUPERSEDES the Warrior ability sheet on Rend, Revenge and Thunder Clap, and the earlier seal formula on Seal of Righteousness -- where it and an older owner document disagree, the sheet wins and the disagreement is recorded at the call site |
 | `talentsforever.com` | the beta client's own files, four static JS assignments a plain `fetch` reaches. **The source of record for talents AND for every ability number in the project**, and the build URLs the profiles are specified by |
 | `foreverchanges.pro/spellbook/<class>` | the beta client diffed against Classic Era, per rank, with cost, cast time and cooldown. **The tie-break: where it and our capture disagree, it wins, by the owner's standing rule.** Nothing imports from it — it is read by hand, and its data is in the page's RSC flight script, not the DOM. Checked so far: the Warrior (five numbers moved) and the Warlock (three moved). Seven classes to go |
 | `nether.wowhead.com/classic/tooltip/item/<id>` | Classic item and spell tooltips as JSON, no browser. The current items are Classic stand-ins, not Forever data |
