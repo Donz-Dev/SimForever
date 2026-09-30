@@ -5,6 +5,7 @@ import { isTankBuild } from '../character';
 import {
   BATTLE_SHOUT,
   BATTLE_STANCE,
+  BERSERKER_STANCE,
   DEFENSIVE_STANCE,
   DEMORALIZING_SHOUT,
   LAST_STAND,
@@ -490,6 +491,29 @@ function remainingMs(context: SimulationContext): number {
  * coincidence rather than a decision.
  */
 export const WARRIOR_DUAL_WIELD_BERSERKER: readonly PriorityEntry[] = [
+  /*
+   * BLOODRAGE FIRST AND BERSERKER STANCE SECOND, on the ruleset owner's
+   * instruction: "move bloodrage up above battle shout" and "add berserker
+   * stance above battle shout." Both are free and off the global cooldown, so
+   * neither costs the entries below it anything; what the position buys is the
+   * rage arriving at the pull rather than a minute into the fight.
+   *
+   * BOTH ORDERS WERE GIVEN RELATIVE TO BATTLE SHOUT AND NOT TO EACH OTHER, so
+   * they are in the order they were written. Nothing turns on it: Bloodrage
+   * takes no global cooldown and the stance cast can never fire at all.
+   */
+  { abilityId: 'bloodrage_cast' },
+  /*
+   * THE PRESET ALREADY OPENS IN BERSERKER STANCE, so this fires zero times --
+   * the same shape as the Arms list's Battle Stance entry, and kept for the
+   * same reason: a character built by hand in another stance needs it, and the
+   * entry costs a build that does not exactly nothing.
+   */
+  {
+    abilityId: 'berserker_stance_cast',
+    condition: (context, actor) =>
+      actor.auras.remainingMs(BERSERKER_STANCE.id, context.clock.now()) <= 0,
+  },
   // Once, and it lasts three minutes.
   {
     abilityId: 'battle_shout_cast',
@@ -548,8 +572,6 @@ export const WARRIOR_DUAL_WIELD_BERSERKER: readonly PriorityEntry[] = [
    * it behind a rage floor as well would keep it in the same place it was.
    */
   { abilityId: 'spearing_strike' },
-  // Last, so it fills a gap rather than taking a global cooldown from a strike.
-  { abilityId: 'bloodrage_cast' },
 ];
 
 export const WARRIOR_DUAL_WIELD_BERSERKER_ROTATION: Rotation = new PriorityRotation(
@@ -819,6 +841,17 @@ export const WARRIOR_TWO_HAND_BATTLE: readonly PriorityEntry[] = [
    * global cooldown, so it costs the entries below it nothing.
    */
   chargeAtThePull,
+  /*
+   * BLOODRAGE SECOND, on the ruleset owner's instruction: "insert bloodrage in
+   * between charge and battle stance."
+   *
+   * It costs the entries below it nothing -- free, off the global cooldown,
+   * sixty second cooldown -- so the only thing its POSITION decides is which
+   * instant it takes, and at the pull the rage it opens with is worth more
+   * than the same rage a minute later. It moved from the bottom of the
+   * Berserker list for the same reason.
+   */
+  { abilityId: 'bloodrage_cast' },
   /*
    * The stance first, and only when it is not already up. A stance lasts until
    * another replaces it, so this fires once at the pull and then never again.

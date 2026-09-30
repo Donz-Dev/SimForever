@@ -249,9 +249,18 @@ describe('rage', () => {
     for (let i = 0; i < stream.length; i++) {
       const event = stream[i];
       if (event.type !== 'resource_gained' || event.resource !== 'rage') continue;
-      // Charge grants a flat 15 on cast, which is not damage converting to
-      // rage and does not sit behind an auto-attack. See the note above.
-      if (event.source === 'charge') continue;
+      /*
+       * FLAT GRANTS ARE NOT WHAT THIS TEST IS ABOUT, and there are two of
+       * them. Charge grants 15 on cast and Bloodrage grants 10 on cast plus a
+       * trickle over ten seconds -- neither is damage converting to rage, and
+       * neither sits behind an auto-attack.
+       *
+       * Named by SOURCE rather than by position, because position is a
+       * rotation decision: Bloodrage only started appearing here when the
+       * ruleset owner moved it to the top of the Arms list, and a test that
+       * asserted the old opener was pinning the list rather than the rule.
+       */
+      if (event.source === 'charge' || event.source === 'bloodrage') continue;
 
       const previous = stream[i - 1];
       expect(previous?.type).toBe('damage');
