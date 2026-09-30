@@ -2,7 +2,10 @@ import type { AutoAttackMode, WeaponProfile, WeaponSlot } from '../../engine';
 import type { CombatStyleId } from '../character';
 import { getCombatStyle } from '../character';
 import { RAGE_FROM_BEAR_PAW, rageFromSwing } from '../combat/resourceRules';
-import { attackPowerCoefficientFor } from '../combat/weaponDamage';
+import {
+  ATTACK_POWER_SECONDS_DIVISOR,
+  attackPowerCoefficientFor,
+} from '../combat/weaponDamage';
 
 /*
  * PLACEHOLDER WEAPONS.
@@ -120,38 +123,117 @@ export function makeOffHand(
 }
 
 /*
- * Bear and Cat attack with their own damage rather than an equipped weapon.
- * The source names these BaseBearPaw and BaseCatPaw.
+ * ============================================================================
+ * A PAW IS BUILT FROM THE WEAPON THE DRUID IS HOLDING, by the ruleset owner's
+ * formula:
  *
- * ASSUMED values: 100 for bear, 50 for cat. Everything else about the paws —
- * swing speed, attack power scaling, variance — is still placeholder, so a
- * druid's auto-attack damage is directionally right and not yet accurate.
+ *   Cat  = (BaseCatPaw  + weaponDPS x 1   + AP x 1   / 14) x rand(0.8, 1.2)
+ *   Bear = (BaseBearPaw + weaponDPS x 2.5 + AP x 2.5 / 14) x rand(0.8, 1.2)
+ *
+ * The 1 and the 2.5 are the FORM'S SWING TIME, which the formula's
+ * `BaseWeaponSwingTime` also names -- one number written twice, not two. Only
+ * the held weapon's DPS reaches the paw; its speed does not.
+ *
+ * ----------------------------------------------------------------------------
+ * THIS IS WHY DRUIDS ARE NOT NORMALISED. The owner's wording: "Normalization
+ * doesn't exist for druids because they're effectively already normalized to
+ * using their paw to attack." Every Druid ability that deals weapon damage --
+ * Shred, Claw, Maul, Primal Bite, Lacerate -- takes the paw, and the paw is
+ * one shape whatever is held.
+ *
+ * THE FORM STILL SWINGS ON ITS OWN TIMER. Cat every second, bear every 2.5,
+ * unchanged: the held weapon's speed feeds the DAMAGE and not the cadence.
+ * Reading it as the cadence too would make a slow weapon halve a cat's attack
+ * rate, which is the opposite of what a form is.
+ *
+ * NOTHING HELD MEANS NO WEAPON TERMS, and the paw falls back to its base
+ * damage and its form multiplier over 14. That is the honest reading of a
+ * formula whose weapon terms are all multiplied by a speed that does not
+ * exist -- not a reason to invent a default weapon.
+ * ============================================================================
  */
+
+/** BaseBearPaw and BaseCatPaw. ASSUMED values; the owner has not stated them. */
 export const BASE_BEAR_PAW_DAMAGE = 100;
 export const BASE_CAT_PAW_DAMAGE = 50;
 
-export const BEAR_PAW: WeaponProfile = {
-  name: 'Bear Paw',
-  swingTimerMs: 2500,
-  baseDamage: BASE_BEAR_PAW_DAMAGE,
-  damageVariance: 0.15,
-  powerCoefficient: attackPowerCoefficientFor(2500),
-  school: 'physical',
-  // Bears build rage by attacking, as warriors do -- at the one-hand constant
-  // and a stated 2.5 second speed, which is what `RAGE_FROM_BEAR_PAW` holds.
-  generates: RAGE_FROM_BEAR_PAW,
-};
+/*
+ * THE FORM'S SWING TIME IS THE MULTIPLIER, and they are one number rather than
+ * two.
+ *
+ * The owner's formula reads `weaponDPS x BaseWeaponSwingTime x 1` for a cat and
+ * `x 2.5` for a bear, and the 1 and the 2.5 ARE that swing time -- one second
+ * and two and a half. Written twice in the formula and multiplied once here.
+ *
+ * ----------------------------------------------------------------------------
+ * THE OTHER READING WAS TRIED FIRST AND REJECTED ON WHAT IT PRODUCED. Taking
+ * `BaseWeaponSwingTime` as the HELD weapon's speed put Cat at 988.8 DPS and
+ * Bear at 909.2 -- feral the highest damage in the project by half again, with
+ * a tank build second -- and, worse than the size, it made paw damage
+ * PROPORTIONAL TO HOW SLOW THE HELD WEAPON IS. At equal dps a 3.6-second
+ * weapon was worth 3.6x a one-second one, so the optimal feral play became
+ * "hold the slowest thing you can find and ignore its dps".
+ *
+ * Under this reading the held weapon's SPEED does not reach the paw at all.
+ * Only its dps does, which is why `HeldWeapon` carries nothing else.
+ * ----------------------------------------------------------------------------
+ */
 
-export const CAT_PAW: WeaponProfile = {
-  name: 'Cat Paw',
-  swingTimerMs: 1000,
-  baseDamage: BASE_CAT_PAW_DAMAGE,
-  damageVariance: 0.15,
-  powerCoefficient: attackPowerCoefficientFor(1000),
-  school: 'physical',
-  // Cats run on energy, which regenerates on a timer rather than per swing.
-  // Energy regeneration is not implemented, so a cat currently never refills.
-};
+/** `random(0.8, 1.2)`, which is +/-20% of the midpoint. */
+export const PAW_DAMAGE_VARIANCE = 0.2;
+
+/**
+ * What a Druid is holding while in form, if anything.
+ *
+ * ITS DPS AND NOT ITS SPEED. The paw's own cadence supplies every time term,
+ * so a fast weapon and a slow one of equal dps give a Druid the same paw --
+ * which is the property the rejected reading did not have.
+ */
+export interface HeldWeapon {
+  readonly dps: number;
+}
+
+/**
+ * Build a paw from its base damage, its form multiplier and what is held.
+ *
+ * The attack power term becomes the paw's `powerCoefficient`, because
+ * `multiplier / 14 x speed` is exactly the `speed / 14` shape the engine
+ * already multiplies attack power by -- so the formula needs no engine change
+ * at all, only the right coefficient on the weapon.
+ */
+function pawProfile(
+  name: string,
+  baseDamage: number,
+  swingTimerMs: number,
+  held: HeldWeapon | undefined,
+  extra: Partial<WeaponProfile> = {},
+): WeaponProfile {
+  // One second for a cat, two and a half for a bear: the form's own cadence,
+  // which is also the multiplier on both weapon terms.
+  const formSeconds = swingTimerMs / 1000;
+  return {
+    name,
+    swingTimerMs,
+    baseDamage: baseDamage + (held?.dps ?? 0) * formSeconds,
+    damageVariance: PAW_DAMAGE_VARIANCE,
+    powerCoefficient: formSeconds / ATTACK_POWER_SECONDS_DIVISOR,
+    school: 'physical',
+    ...extra,
+  };
+}
+
+/** The Bear's paw, given what the Druid is holding. */
+export function bearPaw(held?: HeldWeapon): WeaponProfile {
+  return pawProfile('Bear Paw', BASE_BEAR_PAW_DAMAGE, 2500, held, {
+    // Bears build rage by attacking, as warriors do.
+    generates: RAGE_FROM_BEAR_PAW,
+  });
+}
+
+/** The Cat's paw, given what the Druid is holding. Cats run on energy. */
+export function catPaw(held?: HeldWeapon): WeaponProfile {
+  return pawProfile('Cat Paw', BASE_CAT_PAW_DAMAGE, 1000, held);
+}
 
 /** True for styles whose damage comes from the form rather than from gear. */
 export function usesNaturalWeapon(style: CombatStyleId): boolean {
@@ -164,6 +246,13 @@ export interface WeaponOptions {
    * Defaults to OFF_HAND_DAMAGE_MULTIPLIER.
    */
   readonly offHandDamageMultiplier?: number;
+  /**
+   * What a shapeshifted Druid is holding, which feeds the paw formula.
+   *
+   * Absent for every other style, and absent for a Druid holding nothing --
+   * in which case the paw keeps its base damage and gains no weapon terms.
+   */
+  readonly heldWeapon?: HeldWeapon;
 }
 
 /**
@@ -190,9 +279,9 @@ export function weaponsForStyle(
     case 'ranged':
       return { ranged: PLACEHOLDER_RANGED };
     case 'bear':
-      return { mainHand: BEAR_PAW };
+      return { mainHand: bearPaw(options.heldWeapon) };
     case 'cat':
-      return { mainHand: CAT_PAW };
+      return { mainHand: catPaw(options.heldWeapon) };
     case 'caster':
     case 'moonkin':
     case 'tree':

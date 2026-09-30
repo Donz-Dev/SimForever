@@ -98,7 +98,7 @@ export const SINISTER_STRIKE: Ability = {
       abilityName: ability.name,
       school: PHYSICAL,
       baseAmount: SINISTER_STRIKE_BASE_DAMAGE,
-      weaponScaling: { slot: MAIN_HAND },
+      weaponScaling: { slot: MAIN_HAND, normalized: true },
       attackTable: ability.attackTable,
       weaponSlot: MAIN_HAND,
     });
@@ -151,7 +151,11 @@ export const BACKSTAB: Ability = {
       abilityName: ability.name,
       school: PHYSICAL,
       baseAmount: BACKSTAB_BASE_DAMAGE,
-      weaponScaling: { slot: MAIN_HAND, fraction: BACKSTAB_WEAPON_FRACTION },
+      weaponScaling: {
+        slot: MAIN_HAND,
+        fraction: BACKSTAB_WEAPON_FRACTION,
+        normalized: true,
+      },
       attackTable: ability.attackTable,
       weaponSlot: MAIN_HAND,
     });
@@ -202,7 +206,7 @@ export const MUTILATE: Ability = {
         abilityName: slot === OFF_HAND ? 'Mutilate (Off Hand)' : ability.name,
         school: PHYSICAL,
         baseAmount: MUTILATE_BASE_DAMAGE,
-        weaponScaling: { slot, fraction: MUTILATE_WEAPON_FRACTION },
+        weaponScaling: { slot, fraction: MUTILATE_WEAPON_FRACTION, normalized: true },
         attackTable: ability.attackTable,
         weaponSlot: slot,
       });
@@ -246,6 +250,7 @@ export const HEMORRHAGE: Ability = {
       school: PHYSICAL,
       baseAmount: 0,
       weaponScaling: {
+        normalized: true,
         slot: MAIN_HAND,
         fraction: dagger ? HEMORRHAGE_DAGGER_FRACTION : HEMORRHAGE_WEAPON_FRACTION,
       },

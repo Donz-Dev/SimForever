@@ -104,7 +104,7 @@ export const MORTAL_STRIKE: Ability = {
       abilityName: ability.name,
       school: PHYSICAL,
       baseAmount: MORTAL_STRIKE_BASE_DAMAGE,
-      weaponScaling: { slot: MAIN_HAND },
+      weaponScaling: { slot: MAIN_HAND, normalized: true },
       attackTable: ability.attackTable,
       weaponSlot: MAIN_HAND,
     });
@@ -272,7 +272,7 @@ export const WHIRLWIND: Ability = {
         abilityName: ability.name,
         school: PHYSICAL,
         baseAmount: 0,
-        weaponScaling: { slot: MAIN_HAND },
+        weaponScaling: { slot: MAIN_HAND, normalized: true },
         attackTable: ability.attackTable,
         weaponSlot: MAIN_HAND,
       });
@@ -303,7 +303,7 @@ export const WHIRLWIND: Ability = {
         abilityName: WHIRLWIND_OFF_HAND_NAME,
         school: PHYSICAL,
         baseAmount: 0,
-        weaponScaling: { slot: OFF_HAND },
+        weaponScaling: { slot: OFF_HAND, normalized: true },
         attackTable: ability.attackTable,
         weaponSlot: OFF_HAND,
       });
@@ -335,7 +335,11 @@ export const SPEARING_STRIKE: Ability = {
       abilityName: ability.name,
       school: PHYSICAL,
       baseAmount: 0,
-      weaponScaling: { slot: MAIN_HAND, fraction: SPEARING_STRIKE_WEAPON_FRACTION },
+      weaponScaling: {
+        slot: MAIN_HAND,
+        fraction: SPEARING_STRIKE_WEAPON_FRACTION,
+        normalized: true,
+      },
       attackTable: ability.attackTable,
       weaponSlot: MAIN_HAND,
     });
@@ -367,7 +371,7 @@ export const OVERPOWER: Ability = {
       abilityName: ability.name,
       school: PHYSICAL,
       baseAmount: 35,
-      weaponScaling: { slot: MAIN_HAND },
+      weaponScaling: { slot: MAIN_HAND, normalized: true },
       attackTable: ability.attackTable,
       weaponSlot: MAIN_HAND,
     });

@@ -311,7 +311,7 @@ export const STORMSTRIKE: Ability = {
       abilityName: ability.name,
       school: PHYSICAL,
       baseAmount: 0,
-      weaponScaling: { slot: MAIN_HAND },
+      weaponScaling: { slot: MAIN_HAND, normalized: true },
       attackTable: ability.attackTable,
       weaponSlot: MAIN_HAND,
     });

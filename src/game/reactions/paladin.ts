@@ -55,6 +55,16 @@ function sealHit(
   id: string,
   name: string,
   amount: number,
+  /*
+   * A SHARE OF NORMALISED WEAPON DAMAGE, for Seal of Command alone. Passed
+   * rather than assumed, because every other seal states a flat figure plus
+   * spell power and would be wrong to read a weapon at all.
+   */
+  weaponScaling?: {
+    readonly slot: 'mainHand';
+    readonly fraction: number;
+    readonly normalized: true;
+  },
 ): void {
   dealDamage(context, {
     source: actor,
@@ -63,6 +73,7 @@ function sealHit(
     abilityName: name,
     school: HOLY,
     baseAmount: amount,
+    ...(weaponScaling ? { weaponScaling } : {}),
     /*
      * NO `weaponSlot` AND NO `attackTable`. The swing already rolled the
      * table; this is the damage that rides on it having landed, so rolling
@@ -155,10 +166,22 @@ export function sealOfCommandProc(): Reaction {
     },
     onTrigger: (context, actor, attack) => {
       /*
-       * "70% OF NORMAL WEAPON DAMAGE", taken from the swing that triggered it
-       * rather than recomputed. `attack.amount` is what actually landed --
-       * after crit, after armor -- which is the honest reading of "normal
-       * weapon damage" for a proc that rides on a specific hit.
+       * ----------------------------------------------------------------------
+       * "70% OF NORMAL WEAPON DAMAGE", AND IT IS NORMALISED -- so it is
+       * RECOMPUTED from the weapon rather than taken from the swing.
+       *
+       * It used to be `attack.amount x 0.7`: 70% of what actually landed, after
+       * that swing's own crit and armor. That was a defensible reading of
+       * "normal weapon damage" while there was nothing better, and it cannot
+       * survive normalisation -- a normalised figure is by definition NOT the
+       * damage of the swing that happened, because it replaces the weapon's own
+       * speed with a fixed one.
+       *
+       * So it goes through `weaponScaling` like every other weapon-damage
+       * ability, and keeps NO `weaponSlot` -- `isWeaponUse` still refuses it and
+       * a seal still triggers nothing. The two fields are independent, which is
+       * the same distinction Thunder Clap relies on.
+       * ----------------------------------------------------------------------
        */
       sealHit(
         context,
@@ -166,11 +189,9 @@ export function sealOfCommandProc(): Reaction {
         attack,
         'seal_of_command',
         'Seal of Command',
-        // 70% of the swing it rode in on, PLUS the sheet's spell power term.
-        // The weapon half is inherited from an already-scaled hit; the spell
-        // power half is the seal's own and is added, never folded in.
-        attack.amount * SEAL_OF_COMMAND_WEAPON_FRACTION +
-          SEAL_OF_COMMAND_SP_COEFFICIENT * spellPowerFor(actor, HOLY),
+        // The spell power half is the seal's OWN, added to the weapon half.
+        SEAL_OF_COMMAND_SP_COEFFICIENT * spellPowerFor(actor, HOLY),
+        { slot: 'mainHand', fraction: SEAL_OF_COMMAND_WEAPON_FRACTION, normalized: true },
       );
     },
   };
@@ -288,11 +309,9 @@ export function echoProc(): Reaction {
           attack,
           'twist_of_light',
           'Echo (Seal of Command)',
-          // 70% of the swing it rode in on, PLUS the sheet's spell power term.
-        // The weapon half is inherited from an already-scaled hit; the spell
-        // power half is the seal's own and is added, never folded in.
-        attack.amount * SEAL_OF_COMMAND_WEAPON_FRACTION +
+          // The same normalised weapon share as the seal itself. See above.
           SEAL_OF_COMMAND_SP_COEFFICIENT * spellPowerFor(actor, HOLY),
+          { slot: 'mainHand', fraction: SEAL_OF_COMMAND_WEAPON_FRACTION, normalized: true },
         );
       }
       // Seal of the Crusader has no per-swing damage to echo: it is attack

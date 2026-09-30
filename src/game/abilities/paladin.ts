@@ -344,7 +344,11 @@ export const HOLY_STRIKE: Ability = {
        */
       baseAmount:
         HOLY_STRIKE_HOLY_DAMAGE + HOLY_STRIKE_SP_COEFFICIENT * spellPowerFor(caster, HOLY),
-      weaponScaling: { slot: MAIN_HAND, fraction: HOLY_STRIKE_WEAPON_FRACTION },
+      weaponScaling: {
+        slot: MAIN_HAND,
+        fraction: HOLY_STRIKE_WEAPON_FRACTION,
+        normalized: true,
+      },
       attackTable: ability.attackTable,
       weaponSlot: MAIN_HAND,
     });

@@ -88,6 +88,15 @@ export interface WeaponProfile {
   /** Attack power contribution per swing. */
   readonly powerCoefficient?: number;
   /**
+   * The same, at the ruleset's NORMALISED speed for this kind of weapon.
+   *
+   * Used only by abilities that declare `weaponScaling.normalized`, and
+   * computed by `game` because the speeds are ruleset content. A weapon
+   * without one falls back to `powerCoefficient`, so a paw or a placeholder
+   * is un-normalised rather than powerless.
+   */
+  readonly normalizedPowerCoefficient?: number;
+  /**
    * The wielder's skill with this weapon.
    *
    * Compared against the target's defense skill to derive miss, dodge and
