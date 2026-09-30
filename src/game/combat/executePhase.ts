@@ -32,6 +32,31 @@ import type { SimulationContext } from '../../engine';
 /** The last fifth of the fight. */
 export const EXECUTE_PHASE_FRACTION = 0.2;
 
+/*
+ * ----------------------------------------------------------------------------
+ * AND THE RULING IS NOT THE WARRIOR'S FRACTION, IT IS THE READING.
+ *
+ * Execute and Hammer of Wrath both say "20% or less health" and share the
+ * constant above. Two TALENTS state their own thresholds and do not: the
+ * Priest's Early Demise at 20% and the Rogue's Quietus at 35%, the second of
+ * which the ruleset owner set explicitly. So 0.2 is one ruleset number among
+ * several, and what is shared is that a stated low-health threshold is read as
+ * the final fraction of the fight.
+ *
+ * THOSE TWO TAKE THEIR FRACTION FROM THEIR OWN DATA rather than from a constant
+ * here -- `values/priest.json` states 20 and `values/rogue.json` states 35, in
+ * the same rows as the bonuses they go with, so a Forever change to either
+ * moves the talent without anybody editing TypeScript. `abilityCritInFinalFraction`
+ * in `TalentEffect.ts` is how they say which of their own numbers is the
+ * threshold.
+ *
+ * THREE ENTRIES IN THIS PROJECT EXPLAINED A SILENCE AS "the target never
+ * drops", and all three were wrong to. It is written here rather than in each
+ * of them because the next one will be written by somebody who has not read
+ * them.
+ * ----------------------------------------------------------------------------
+ */
+
 /**
  * Whether the fight has reached its execute phase.
  *
@@ -40,7 +65,11 @@ export const EXECUTE_PHASE_FRACTION = 0.2;
  * real length per iteration, so a fixed number of seconds would open the
  * window at a different fraction in every fight of a batch.
  */
-export function inExecutePhase(simulation: SimulationContext): boolean {
+export function inExecutePhase(
+  simulation: SimulationContext,
+  /** The last `fraction` of the fight. Defaults to Execute's own 20%. */
+  fraction: number = EXECUTE_PHASE_FRACTION,
+): boolean {
   const remaining = simulation.plannedDurationMs - simulation.clock.now();
-  return remaining <= simulation.plannedDurationMs * EXECUTE_PHASE_FRACTION;
+  return remaining <= simulation.plannedDurationMs * fraction;
 }

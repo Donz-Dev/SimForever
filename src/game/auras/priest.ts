@@ -1,5 +1,5 @@
 import type { AuraDefinition } from '../../engine';
-import { dealDamage, seconds } from '../../engine';
+import { ALL_ABILITIES, dealDamage, seconds } from '../../engine';
 import {
   DEVOURING_PLAGUE_TICK_SP_COEFFICIENT,
   SHADOW_WORD_PAIN_TICK_SP_COEFFICIENT,
@@ -233,3 +233,106 @@ export const VAMPIRIC_EMBRACE: AuraDefinition = {
   isDebuff: true,
   refreshBehaviour: 'reset',
 };
+
+/**
+ * Inner Focus: "reduces the Mana cost of your next spell by 100% and increases
+ * its critical effect chance by 25% if it is capable of a critical effect."
+ *
+ * ----------------------------------------------------------------------------
+ * TWO CLAUSES ON ONE AURA, AND THE ORDER THEY ARE SPENT IN IS THE WHOLE
+ * PROBLEM. Its reason used to say the crit half was "a one-shot per-ability
+ * crit modifier, which nothing carries", and that was right about
+ * `CastModifier` and wrong about the project: FINGERS OF FROST IS ALREADY THIS
+ * SHAPE. An aura that changes what the DAMAGE sees, whose charge is spent by a
+ * CAST, with the spend as a cast reaction rather than as `consumedByCast`.
+ *
+ * `consumedByCast` WOULD NOT HAVE WORKED, and the failure is silent.
+ * `consumeCastCharges` runs at cast START -- before `runCast`, and 1.5 seconds
+ * before a Mind Blast lands -- so the aura would be gone by the time anything
+ * rolled a crit. The cost would be right, the crit would be nothing, and the
+ * talent would read as fully modelled. So the cost rides a `castModifier` with
+ * no `consumedByCast` at all and `innerFocusSpender` removes the aura after
+ * the cast, which is the order Fingers of Frost already relies on:
+ * `runCast` runs `onCast` BEFORE the cast reactions.
+ *
+ * THE COST REACHES EVERY SPELL AND THE CRIT REACHES THREE, which is the
+ * tooltip's own "if it is capable of a critical effect". Shadow Word: Pain and
+ * Devouring Plague apply auras and roll no table, so they get the free cast
+ * and no crit -- and leaving them out of `abilityModifiers` is also what stops
+ * a TICK of one of them collecting 25% during the window, since a periodic
+ * tick carries its aura's id.
+ * ----------------------------------------------------------------------------
+ */
+export const INNER_FOCUS_CRIT_BONUS = 25;
+/**
+ * A minute, as a backstop only.
+ *
+ * FOREVER STATES NO DURATION -- the capture says "Instant, 3 min cooldown" and
+ * the tooltip says "your next spell", which is a charge and not a clock. This
+ * is not a `PLACEHOLDER_` because no figure is being invented for it to stand
+ * in for: the aura is spent by the next cast, and a priest who casts nothing
+ * for a minute does not exist in any fight here. It exists because an aura
+ * with no duration never expires and would sit on the character for the whole
+ * fight if the spender ever failed to fire.
+ */
+export const INNER_FOCUS_DURATION_MS = seconds(60);
+
+/** The spells a crit can happen to. The two damage-over-time casts cannot. */
+export const INNER_FOCUS_CRITTABLE = ['mind_blast', 'mind_flay', 'shadow_word_death'] as const;
+
+export const INNER_FOCUS: AuraDefinition = {
+  id: 'inner_focus',
+  name: 'Inner Focus',
+  durationMs: INNER_FOCUS_DURATION_MS,
+  refreshBehaviour: 'reset',
+  castModifier: {
+    // Every spell, because "your next spell" is every spell. The list is the
+    // Priest's own book, for the reason `CastModifier` says: it selects by id.
+    abilityIds: [...SHADOW_SPELLS, 'shadowform'],
+    costFraction: 1,
+  },
+  abilityModifiers: Object.fromEntries(
+    INNER_FOCUS_CRITTABLE.map((id) => [id, { critBonus: INNER_FOCUS_CRIT_BONUS }]),
+  ),
+};
+
+/**
+ * Power Infusion: "increasing their spell damage and healing done by 20% for
+ * 15 sec."
+ *
+ * ----------------------------------------------------------------------------
+ * ON A TARGET, WHICH FOR ONE CHARACTER IS ITSELF -- the encounter simulates one
+ * player, so the only friendly target a Priest has is the Priest. That is what
+ * its old reason meant by "expressible", and it is the whole of why this was
+ * written down rather than built.
+ *
+ * IT USES `abilityModifiers` RATHER THAN `damageDoneMultiplier`, which is the
+ * one decision here. A whole-character multiplier would also raise PHYSICAL
+ * damage, and "spell damage" does not. `ALL_ABILITIES` on an aura reaches every
+ * ability and no auto attack -- and since a Priest owns no physical ability,
+ * "every ability a Priest has" and "every spell a Priest casts" are the same
+ * set. Exact here, and it would not be on a hybrid, which is why the
+ * restriction is stated rather than assumed.
+ *
+ * ITS TICKS COUNT, correctly: a periodic tick carries its aura's id and `pick`
+ * folds in the catch-all, so a Shadow Word: Pain ticking inside the fifteen
+ * seconds is spell damage and is raised.
+ * ----------------------------------------------------------------------------
+ */
+export const POWER_INFUSION_DURATION_MS = seconds(15);
+export const POWER_INFUSION_DAMAGE = 1.2;
+
+export const POWER_INFUSION: AuraDefinition = {
+  id: 'power_infusion',
+  name: 'Power Infusion',
+  durationMs: POWER_INFUSION_DURATION_MS,
+  refreshBehaviour: 'reset',
+  abilityModifiers: { [ALL_ABILITIES]: { damageMultiplier: POWER_INFUSION_DAMAGE } },
+};
+
+export const POWER_INFUSION_UNMODELLED =
+  'Its 20% spell damage applies. Its "and healing done" does not, because ' +
+  'nothing in this project measures healing. It is cast on the Priest ' +
+  'itself, which is the only friendly target a one-character encounter has -- ' +
+  'the buff is real and the CHOICE of who to put it on is what is missing.';
+

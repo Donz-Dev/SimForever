@@ -671,6 +671,49 @@ export type TalentEffect =
     }
 
   /**
+   * Crit chance or damage for ONE ability, but only in the fight's final
+   * fraction -- which is how this project reads "against targets at or below
+   * N% health".
+   *
+   * ----------------------------------------------------------------------------
+   * THE THIRD CONDITION SHAPE, after `conditionalCrit` (the weapon in hand,
+   * settled when the character is built) and `critWhileAura` (an aura, read on
+   * every cast). This one is read on every cast too, and what it reads is the
+   * CLOCK.
+   *
+   * WHY A CLOCK AND NOT A HEALTH BAR. The target here is a damage sink running
+   * for a fixed duration, so a health gate could never fire against it -- a
+   * hundred thousand health taking fifteen thousand damage never reaches 20%.
+   * The ruleset owner ruled the threshold to be TIME, for Execute, and the
+   * ruling is deliberately shared. `game/combat/executePhase.ts` is where it is
+   * written down, and it has now been got wrong three times by somebody
+   * recording such a talent as "the target never drops".
+   *
+   * IT TAKES THE FRACTION FROM THE TALENT'S OWN NUMBERS, which is why there are
+   * two indices rather than one. Both callers state the threshold and the
+   * bonus in the same row:
+   *
+   *   Early Demise (Priest)  [[20, 15], [20, 30]]   fraction 0, value 1
+   *   Quietus      (Rogue)   [[2, 35], [4, 35], ..] value 0,    fraction 1
+   *
+   * Hardcoding 0.2 and 0.35 here would work today and would stop being true the
+   * first time Forever moved one, silently -- the same class of expiry an
+   * `unmodelled` reason has.
+   * ----------------------------------------------------------------------------
+   */
+  | {
+      readonly kind: 'abilityCritInFinalFraction' | 'abilityDamageInFinalFraction';
+      readonly abilityId: string;
+      /**
+       * Which of the talent's numbers is the stated health PERCENTAGE, read as
+       * the fraction of the fight. 20 becomes 0.2.
+       */
+      readonly fractionIndex: number;
+      /** Which is the bonus itself. Percentage points of crit, or of damage. */
+      readonly valueIndex: number;
+    }
+
+  /**
    * The talent's effect cannot be modelled, and this says why.
    *
    * NOT a gap in this list waiting to be filled in — a first-class outcome, and

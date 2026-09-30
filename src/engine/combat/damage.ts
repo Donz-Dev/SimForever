@@ -379,6 +379,24 @@ export function appliesArmor(request: DamageRequest): boolean {
 }
 
 /**
+ * What fraction of the fight's PLANNED duration is still to come.
+ *
+ * 1 at the pull, 0 at the planned end, and it can go NEGATIVE -- a fight runs
+ * on past `plannedDurationMs` until the simulation stops it, and a window that
+ * has opened must stay open. Comparing `remaining <= fraction` handles that;
+ * clamping at zero here would too, and would hide the fact that it happens.
+ *
+ * PLANNED rather than actual, because the actual length is only known once the
+ * fight is over. `FIGHT_DURATION_VARIANCE` moves it per iteration, so anything
+ * read off a fixed number of seconds would open its window at a different
+ * fraction in every fight of a batch.
+ */
+function remainingFractionOf(context: SimulationContext): number {
+  if (context.plannedDurationMs <= 0) return 0;
+  return (context.plannedDurationMs - context.clock.now()) / context.plannedDurationMs;
+}
+
+/**
  * The attack table result for a request, or a guaranteed hit when it has no
  * table.
  */
@@ -393,7 +411,7 @@ function rollTable(
    * whole-character one.
    */
   const modifier = combineModifiers(
-    request.source.abilityModifierFor(request.abilityId),
+    request.source.abilityModifierFor(request.abilityId, remainingFractionOf(context)),
     request.source.schoolModifiers.for(request.school),
     /*
      * AND THE TABLE'S. `attackTable` for anything that rolls; `critFrom` for
@@ -603,6 +621,15 @@ export function resolveDamage(
   request: DamageRequest,
   attack: AttackResolution,
   weaponDamage = 0,
+  /**
+   * The fight, for the per-ability modifiers conditional on its clock.
+   *
+   * Omitted by tests that hand an outcome in directly rather than rolling for
+   * one. That is safe and is not a silent skip: a character actually carrying
+   * one of those modifiers makes this a throw rather than a zero, which is what
+   * `AbilityModifiers.forWhileFinalFraction` is for.
+   */
+  context?: SimulationContext,
 ): DamageResolution {
   const { source, target } = request;
 
@@ -638,7 +665,10 @@ export function resolveDamage(
   // than replacing them: "+20% Revenge damage" and "+10% damage done" are
   // different effects and both apply.
   const abilityMultiplier =
-    source.abilityModifierFor(request.abilityId).damageMultiplier ?? 1;
+    source.abilityModifierFor(
+      request.abilityId,
+      context ? remainingFractionOf(context) : undefined,
+    ).damageMultiplier ?? 1;
   /*
    * PER SCHOOL, on the ATTACKER'S side. The mirror of
    * `damageTakenMultiplierFor` below: Fire Power raises the fire damage a Mage
@@ -831,7 +861,7 @@ export function dealDamage(
   // number and shift every roll after it.
   const weaponDamage = rollWeaponDamage(request, context);
   const attack = rollTable(request, context);
-  const resolution = resolveDamage(request, attack, weaponDamage);
+  const resolution = resolveDamage(request, attack, weaponDamage, context);
   const { target, source } = request;
 
   refundCostIfAvoided(context, request, resolution);

@@ -34,6 +34,16 @@ import type { TalentEffects } from './TalentEffect';
  *                    the Warrior's version of exactly this.
  * ----------------------------------------------------------------------------
  */
+/**
+ * The three abilities Quietus names, listed once.
+ *
+ * Its modifier is keyed by ABILITY, so the tooltip's three become three
+ * entries -- and writing them out three times is how the third one comes to be
+ * forgotten, or to disagree with its siblings about which index the threshold
+ * lives at.
+ */
+const QUIETUS_ABILITIES = ['sinister_strike', 'ghostly_strike', 'hemorrhage'] as const;
+
 export const ROGUE_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
   // --- Assassination -------------------------------------------------------
 
@@ -331,41 +341,29 @@ export const ROGUE_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
 
   /*
    * --------------------------------------------------------------------------
-   * THE OWNER HAS ANSWERED THE THRESHOLD: "quietus is 35%", meaning the last
-   * 35% of the fight by the same CLOCK Execute and Hammer of Wrath run on. So
-   * this is no longer a question about the ruling -- it is a missing
-   * declaration, and a specific one.
+   * BUILT, WITH THE PRIEST'S EARLY DEMISE, which is the same capability at 20%
+   * and for CRIT rather than damage. Two callers, two classes, one mechanism --
+   * `AbilityModifiers.addWhileFinalFraction`.
    *
-   * WHAT IT NEEDS: a per-ability DAMAGE modifier active only while the fight is
-   * in its final fraction. `inExecutePhase` is hardcoded to
-   * `EXECUTE_PHASE_FRACTION` and wants a fraction argument; the modifier itself
-   * is the shape `addWhileAura` has, conditioned on the clock rather than on an
-   * aura -- and `Combatant.abilityModifierFor` has no simulation to read a
-   * clock from, which is the actual work.
+   * THE OWNER ANSWERED THE THRESHOLD -- "quietus is 35%", the last 35% of the
+   * fight by the same CLOCK Execute and Hammer of Wrath run on -- and the
+   * talent's own data says 35 as well, at index 1 of every rank's row. So the
+   * effect reads the data rather than a constant, and the ruling and the
+   * capture corroborate each other rather than one of them being transcribed.
    *
-   * BUILD IT WITH THE PRIEST'S EARLY DEMISE, which is the same capability at
-   * 20% and for CRIT rather than damage. Two callers, two classes, one
-   * mechanism -- and the modifier must go through the combatant rather than an
-   * ability's `onCast`, by the standing rule that an ability which forgot to
-   * look would be quietly wrong.
-   *
-   * NO PROFILE TAKES IT, so building it moves nothing and carries no baseline
-   * risk. Its three abilities are Sinister Strike, Ghostly Strike and
-   * Hemorrhage, and only Hemorrhage is cast by any Rogue list.
+   * THREE ENTRIES RATHER THAN ONE, because the modifier is keyed by ability and
+   * the tooltip names three. Only Hemorrhage is cast by any Rogue list, and NO
+   * PROFILE TAKES THIS TALENT, so it moves no figure in the baseline -- it is
+   * tested on its MECHANISM, which is the whole distinction between a talent
+   * working and a talent mattering.
    * --------------------------------------------------------------------------
    */
-  quietus: [
-    {
-      kind: 'unmodelled',
-      reason:
-        'Its 2-10% bonus below 35% target health is not read. The threshold is ' +
-        'the CLOCK by the ruling of the project owner -- the last 35% of the ' +
-        'fight, the same rule Execute runs on at 20% -- so this is a missing ' +
-        'declaration rather than a property of the target: a per-ability damage ' +
-        'modifier conditional on the final fraction of the fight, which nothing ' +
-        'expresses yet. Early Demise on the Priest wants the same mechanism at 20%.',
-    },
-  ],
+  quietus: QUIETUS_ABILITIES.map((abilityId) => ({
+    kind: 'abilityDamageInFinalFraction' as const,
+    abilityId,
+    fractionIndex: 1,
+    valueIndex: 0,
+  })),
 
   /*
    * CUTTHROAT IS NOT A STEALTH TALENT, and its old reason -- "Makes Ambush

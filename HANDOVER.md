@@ -7,7 +7,7 @@ gets built is [docs/class-implementation.md](docs/class-implementation.md).
 
 All nine classes and all 23 profiles are implemented, every number traced to a
 source rather than invented, and **all 23 priority lists are the ruleset owner's
-own** -- specified entry by entry and measured after. **2,129 tests**, CI green on Node 20 and 22. Profile
+own** -- specified entry by entry and measured after. **2,182 tests**, CI green on Node 20 and 22. Profile
 format **v10**. Live at <https://donz-dev.github.io/SimForever/>, republished by
 `.github/workflows/deploy.yml` on every push to `main` that passes.
 
@@ -29,6 +29,30 @@ are thirty independent batches of ten, which is what `measure_profiles.ts` runs
 and what gives each figure the interval a REAL/noise verdict needs. Most profiles
 land inside the old interval and a few do not — 2H Arms read 596.6 under the old
 method and 607.2 under this one on identical code. Do not read those as changes.
+
+**THE PRIEST DEEP DIVE CLOSED THE LARGEST SHARED GAP IN THE CENSUS, AND IT
+REACHED FOUR CLASSES.** Spell hit per school was the stated reason five talents
+across three classes were inert, and **it was not true**: `rollTable` already
+folds the school's modifier in before the roll, so the school was in hand all
+along and what was missing was a FIELD. `AbilityModifier.hitBonus`, one line in
+`talentBuild`, five talents -- Arcane Focus and Elemental Precision on the Mage,
+Shadow Focus and Holy Precision on the Priest, Divine Precision on the Paladin.
+
+**IT ALSO BUILT THE CLOCK-CONDITIONED MODIFIER** that Early Demise and the
+Rogue's Quietus both wanted, which is `addWhileFinalFraction` -- and the Rogue
+branch built the same thing independently. See the note on that field.
+
+**ITS OWN FIGURES WERE MEASURED AT A BASE FOUR MERGES OLD** and are not repeated
+here for that reason: Arcane +34.1, Frostfire +25.2, Shadow +17.4 and Shockadin
++12.4 against a baseline where Arcane was 392.6 and Shockadin 379.0. **The
+published table below is re-measured once after all the dives land** rather than
+patched five times -- which is the only way the 23 figures stay comparable to
+each other, and comparability is the whole contract of that table.
+
+**AND SHADOW WORD: DEATH WAS RE-ISOLATED AT THE CURRENT BASELINE AND HAS NOT
+MOVED**: putting it back is +35.2 REAL, so spell hit and that ability are
+independent and the cost of the owner's choice is confirmed rather than assumed.
+See [docs/handoff/priest.md](docs/handoff/priest.md).
 
 **THE DRUID DEEP DIVE MOVED THREE PROFILES AND THE OTHER TWENTY DID NOT MOVE BY
 A DECIMAL.** Cat **488.0 to 656.1, +168.1**, Bear **376.2 to 444.7, +68.5**,
@@ -272,10 +296,10 @@ structure, and throws if its four buckets do not account for every talent.
 | [paladin.md](docs/handoff/paladin.md) | Seal Twist Ret, Shockadin, Prot Pally | **2** |
 | [druid.md](docs/handoff/druid.md) | Moonkin, Cat, Bear | **2** |
 | [shaman.md](docs/handoff/shaman.md) | Ele Shaman, Enh Shaman | **6** |
+| [mage.md](docs/handoff/mage.md) | Frostfire, Arcane, Fire | **11** |
+| [priest.md](docs/handoff/priest.md) | Shadow | **12** |
+| [rogue.md](docs/handoff/rogue.md) | Venom, Combat, Rupture | **12** |
 | [hunter.md](docs/handoff/hunter.md) | BM Hunter, LW Ranged, LW Melee | **13** |
-| [mage.md](docs/handoff/mage.md) | Frostfire, Arcane, Fire | **13** |
-| [rogue.md](docs/handoff/rogue.md) | Venom, Combat, Rupture | **13** |
-| [priest.md](docs/handoff/priest.md) | Shadow | **17** |
 | [warlock.md](docs/handoff/warlock.md) | SM/DS, Firelock | **20** |
 
 **THE WARRIOR'S 0 AGAINST THE WARLOCK'S 25 IS NOT A DIFFERENCE IN DIFFICULTY.**
@@ -294,7 +318,7 @@ Measured at `d2718b0`, and the numbers say it is not close:
 
 | | |
 | --- | --- |
-| **86 of 468 talents are a live gap** | well down from a raw count of 251 unmodelled reasons, because 95 are permanently out of scope by ruling and 35 more are PARTLY modelled. See the census below, and **re-sum it rather than adjusting it** — the raw total is not a work queue. **The Warrior is at zero**, the first class to get there |
+| **78 of 468 talents are a live gap** | well down from a raw count of 251 unmodelled reasons, because 95 are permanently out of scope by ruling and 35 more are PARTLY modelled. See the census below, and **re-sum it rather than adjusting it** — the raw total is not a work queue. **The Warrior is at zero**, the first class to get there |
 | **113 abilities declared against 478 captured** | the data is on disk; the declarations are not. Druid 15, Hunter 14, Mage 13, Rogue 12, Warlock 10, Shaman 9, Priest 7, Paladin 6, plus the Warrior's 27. **THE WARRIOR IS RECONCILED**, which is what the exclusion list below actually means: 42 captured against 30 declared counting its three stances, and each of the 12 that are not declared is named — 3 that Forever has and nothing here needs, 9 that are threat or crowd control by ruling. See [docs/warrior.md](docs/warrior.md). It is the only class where the subtraction balances |
 | ~~**Coefficients**~~ | **DONE, AND NOW EVERY ROW IS APPLIED.** `WoWSimWorksheet.xlsx`, the owner's authoritative coefficient document, is transcribed in `src/game/combat/coefficients.ts` and applied across all nine classes. Every derived rule is deleted. The last unapplied row was Hammer of Wrath, which was not a declared ability until the owner put it in two Paladin priority lists; the two poison rows went the same way when the poison system landed. [docs/spell-coefficients.md](docs/spell-coefficients.md) |
 | **15 `PLACEHOLDER_*` constants** | each a real number nobody has supplied. **COUNT THEM, DO NOT ADJUST THEM**: `grep -rhoE "PLACEHOLDER_[A-Z_]+" src/ \| sort -u \| wc -l`. The Warlock dive and the Warrior dive each removed one from 19 and each wrote 18, and git merged that without a conflict — this figure was wrong by one for exactly as long as it took to re-derive it, the Paladin dive removed a third, and the Shaman dive a fourth when Maelstrom Weapon's invented chance became 5 PPM. Sniper Shot's invented 200-mana cost is gone, but it was never one of these: it was a bare literal with a false caveat, which is worse — an invented number that is not named cannot be audited |
@@ -366,11 +390,11 @@ fails.
 | Druid | 51 | 29 | 5 | 15 | **2** |
 | Hunter | 50 | 24 | 5 | 8 | **13** |
 | Shaman | 50 | 22 | 4 | 18 | **6** |
-| Mage | 54 | 28 | 2 | 11 | **13** |
-| Priest | 53 | 15 | 2 | 19 | **17** |
-| Rogue | 53 | 25 | 3 | 12 | **13** |
+| Mage | 54 | 30 | 2 | 11 | **11** |
+| Priest | 53 | 20 | 2 | 19 | **12** |
+| Rogue | 53 | 26 | 3 | 12 | **12** |
 | Warlock | 52 | 24 | 3 | 5 | **20** |
-| **Total** | **468** | **242** | **33** | **107** | **86** |
+| **Total** | **468** | **250** | **33** | **107** | **78** |
 
 **THE WARRIOR LEFT THE GAP COLUMN ENTIRELY**, and its last entry is worth
 reading because of the shape rather than the size. Improved Berserker Rage's
@@ -400,7 +424,7 @@ reason was a statement about the engine ("nothing can reset a cooldown from
 content") and the engine now can. Fingers of Frost carried `FROZEN_UNMODELLED`,
 which is a claim about the TARGET, and that talent does not freeze anything.
 
-**275 of 468 talents do something**, 107 never will, and **86 are the
+**283 of 468 talents do something**, 107 never will, and **78 are the
 actual remaining work** — not the 251 a raw count of unmodelled reasons
 suggests. The 105 scoped entries break down as 34 healing, 33 crowd
 control, 17 positioning, 14 threat and 7 stealth.

@@ -90,15 +90,13 @@ export const MAGE_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
     },
   ],
 
-  arcane_focus: [
-    {
-      kind: 'unmodelled',
-      reason:
-        'Spell HIT for one school. `SchoolModifiers` covers crit, crit damage ' +
-        'and damage -- hit is decided by the attack table before any of them, ' +
-        'and reaching it would mean threading the school into the roll.',
-    },
-  ],
+  /*
+   * THE SCHOOL NEVER NEEDED THREADING INTO THE ROLL: `combineModifiers` has
+   * folded the school's modifier into the chances all along, and what was
+   * missing was a hit FIELD for it to carry. `AbilityModifier.hitBonus` is it.
+   * Arcane and Fire both take this 5/5.
+   */
+  arcane_focus: [{ kind: 'schoolHit', schools: ['arcane'] }],
 
   improved_channeling: [{ kind: 'unmodelled', scope: 'castPushback', reason: NO_PUSHBACK }],
 
@@ -286,14 +284,11 @@ export const MAGE_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
 
   improved_frostbolt: [{ kind: 'abilityCastTime', abilityId: 'frostbolt' }],
 
-  elemental_precision: [
-    {
-      kind: 'unmodelled',
-      reason:
-        'Spell HIT for two schools, which the attack table decides before any ' +
-        'per-school modifier is consulted. The same gap Arcane Focus has.',
-    },
-  ],
+  /*
+   * TWO SCHOOLS IN ONE ROW, which is what `schools` is a list for -- Frostfire
+   * takes it 5/5 and Fire takes it 2/5, and the same entry serves both.
+   */
+  elemental_precision: [{ kind: 'schoolHit', schools: ['frost', 'fire'] }],
 
   ice_shards: [{ kind: 'schoolCritDamage', schools: ['frost'] }],
 

@@ -3,6 +3,9 @@ import { dealDamage, seconds } from '../../engine';
 import { baseManaFor } from '../character/baseStatLookup';
 import {
   DEVOURING_PLAGUE,
+  INNER_FOCUS,
+  POWER_INFUSION,
+  POWER_INFUSION_UNMODELLED,
   SHADOWFORM,
   SHADOWFORM_UNMODELLED,
   VAMPIRIC_EMBRACE,
@@ -253,6 +256,57 @@ export const SHADOWFORM_ABILITY: Ability = {
   unmodelled: SHADOWFORM_UNMODELLED,
 };
 
+
+/**
+ * Inner Focus, granted by the Discipline talent of the same name.
+ *
+ * FREE, WHICH IS THE CAPTURE'S OWN WORD -- the spellbook entry carries no cost
+ * line at all, unlike Power Infusion below, which carries "20% of base mana".
+ * Two entries from the same file, one with a cost and one without, is what
+ * makes the absence a fact rather than a gap.
+ *
+ * IT REFUSES WHILE ITS OWN BUFF IS UP, the way Shadowform does. Recasting it
+ * would throw away an unspent charge for a global cooldown.
+ */
+export const INNER_FOCUS_COOLDOWN_MS = seconds(180);
+
+export const INNER_FOCUS_ABILITY: Ability = {
+  id: 'inner_focus',
+  name: 'Inner Focus',
+  cooldownMs: INNER_FOCUS_COOLDOWN_MS,
+  requiresTarget: false,
+  canCast: ({ caster }) => !caster.auras.has('inner_focus'),
+  onCast: ({ simulation, caster }) => {
+    simulation.applyAura(caster, INNER_FOCUS, caster.id);
+  },
+  unmodelled:
+    'Its free cast and its 25% crit both apply. What it cannot express is ' +
+    '"your next SPELL" as a category: `CastModifier` selects by id, so the ' +
+    'free cast names the Priest book one entry at a time and a spell added ' +
+    'later has to be added here too.',
+};
+
+/**
+ * Power Infusion, granted by the Discipline capstone.
+ *
+ * SELF-CAST, because the only friendly target a one-character encounter has is
+ * the character. `requiresTarget: false` says so rather than letting the
+ * rotation find the boss and buff it.
+ */
+export const POWER_INFUSION_COOLDOWN_MS = seconds(180);
+
+export const POWER_INFUSION_ABILITY: Ability = {
+  id: 'power_infusion',
+  name: 'Power Infusion',
+  cost: { resource: 'mana', amount: shareOfBase(0.2) },
+  cooldownMs: POWER_INFUSION_COOLDOWN_MS,
+  requiresTarget: false,
+  onCast: ({ simulation, caster }) => {
+    simulation.applyAura(caster, POWER_INFUSION, caster.id);
+  },
+  unmodelled: POWER_INFUSION_UNMODELLED,
+};
+
 export const PRIEST_ABILITIES: readonly Ability[] = [
   SHADOWFORM_ABILITY,
   MIND_BLAST,
@@ -261,4 +315,6 @@ export const PRIEST_ABILITIES: readonly Ability[] = [
   DEVOURING_PLAGUE_ABILITY,
   SHADOW_WORD_DEATH,
   VAMPIRIC_EMBRACE_ABILITY,
+  INNER_FOCUS_ABILITY,
+  POWER_INFUSION_ABILITY,
 ];

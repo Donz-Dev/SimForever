@@ -1,5 +1,5 @@
-import { talentsForClass } from '../../src/game/talents/talentData';
 import type { ClassId } from '../../src/game/character';
+import { talentsForClass } from '../../src/game/talents/talentData';
 
 /*
  * Pads an allocation with filler until it is LEGAL, and returns it.
@@ -23,6 +23,10 @@ import type { ClassId } from '../../src/game/character';
  * which sits at tier 10 of Elemental and resolves to NOTHING without ten points
  * of filler under it. `createPlayer` strips an illegal allocation silently, so
  * the test would have read "the talent is worth zero" rather than failing.
+ *
+ * The Priest needed it next, for Inner Focus at tier 10 of Discipline and Power
+ * Infusion at tier 30 behind Penance -- both of which came back as "the talent
+ * grants no ability" rather than as an illegal build.
  */
 export function legalise(
   talents: Record<string, number>,

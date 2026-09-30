@@ -59,7 +59,7 @@ order, different fight.
 
 | Talents | Fully | Partly | Ruled out | Live gap |
 | --- | --- | --- | --- | --- |
-| 54 | 28 | 2 | **11** | **13** |
+| 54 | 30 | 2 | **11** | **11** |
 
 Down from 16. **`arcane_focus` and `elemental_precision` are NOT counted as
 closed here** — spell hit per school is landing on the `priest-deep-dive`

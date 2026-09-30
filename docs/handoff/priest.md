@@ -65,7 +65,7 @@ now.
 
 | Talents | Fully | Partly | Ruled out | Live gap |
 | --- | --- | --- | --- | --- |
-| 53 | 15 | 2 | **19** | **17** |
+| 53 | 20 | 2 | **19** | **12** |
 
 ### The 18 live gaps, grouped by cause
 

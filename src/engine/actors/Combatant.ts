@@ -631,7 +631,20 @@ export class Combatant {
    * quietly half an effect.
    * ----------------------------------------------------------------------------
    */
-  abilityModifierFor(abilityId: string | undefined): AbilityModifier {
+  abilityModifierFor(
+    abilityId: string | undefined,
+    /**
+     * What fraction of the fight's PLANNED duration is still to come, for the
+     * modifiers conditional on the clock.
+     *
+     * Optional, and NOT optional in the way that quietly drops them: a
+     * character carrying one of those and a caller with no clock is a throw,
+     * not a zero. See `AbilityModifiers.forWhileFinalFraction`. Every caller
+     * that resolves real damage has a `SimulationContext` and passes it; the
+     * ones that omit it are tests handing an outcome in directly.
+     */
+    remainingFraction?: number,
+  ): AbilityModifier {
     const standing = this.abilityModifiers.for(abilityId);
     const fromAuras = this.auras.abilityModifierFor(abilityId);
     /*
@@ -644,8 +657,17 @@ export class Combatant {
     const whileAura = this.abilityModifiers.forWhileAura(abilityId, (auraId) =>
       this.auras.has(auraId),
     );
+    /*
+     * AND THE FOURTH IS CONDITIONED ON THE FIGHT RATHER THAN ON THE CHARACTER.
+     * Early Demise on the Priest and Quietus on the Rogue both read "against
+     * targets at or below N% health", which this project rules is the CLOCK --
+     * the last N of the planned duration. A combatant holds no clock, which is
+     * why the answer arrives as an argument.
+     */
+    const whileFinal = this.abilityModifiers.forWhileFinalFraction(abilityId, remainingFraction);
     let combined = fromAuras ? combineAbilityModifiers(standing, fromAuras) : standing;
     if (whileAura) combined = combineAbilityModifiers(combined, whileAura);
+    if (whileFinal) combined = combineAbilityModifiers(combined, whileFinal);
     return combined;
   }
 
