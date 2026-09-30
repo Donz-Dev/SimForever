@@ -1,4 +1,5 @@
 import type { AbilityModifier } from '../combat/abilityModifiers';
+import type { Combatant } from '../actors/Combatant';
 import type { DamageSchool } from '../combat/DamageSchool';
 import type { Milliseconds } from '../time';
 import type { StatModifierSpec } from '../stats';
@@ -202,6 +203,45 @@ export interface AuraDefinition {
    * ----------------------------------------------------------------------------
    */
   readonly suppressesCooldownOf?: readonly string[];
+  /**
+   * A FRACTION off the carrier's global cooldown while this aura is up.
+   *
+   * ----------------------------------------------------------------------------
+   * `0.1` is "reducing your global cooldown by 10%", which is Nature's Grace
+   * and which nothing else could say: `baseGcdMs` is a property of the CLASS
+   * carried on the combatant, and no aura reached it.
+   *
+   * SEPARATE FROM HASTE ON PURPOSE. Haste shortens a CAST and deliberately
+   * does not touch the global cooldown in this engine -- a rule with its own
+   * long comment in `casting.ts`. Nature's Grace grants both in one sentence
+   * and they are two different effects, so folding the second into a haste
+   * rating would make every other haste source shorten the global cooldown
+   * too, which is a much bigger change wearing this talent's name.
+   *
+   * Floored by `MINIMUM_GCD_MS` at the point of use, which is the floor that
+   * already existed for the talent path.
+   * ----------------------------------------------------------------------------
+   */
+  readonly gcdFraction?: number;
+  /**
+   * An ABSORB SHIELD: how much damage this aura soaks before health is touched.
+   *
+   * ----------------------------------------------------------------------------
+   * A FUNCTION OF THE TARGET, EVALUATED ONCE WHEN THE AURA IS APPLIED, because
+   * every absorb in this ruleset is a share of something -- Templar's Bulwark
+   * is "100% of your maximum health". Evaluating it per hit would let the
+   * shield grow with a buff that landed after it, which is the same failure
+   * pattern as a maximum health computed from live stats instead of a snapshot.
+   *
+   * The remaining pool lives on the INSTANCE, not here: two characters can
+   * carry the same shield with different amounts left.
+   *
+   * `DamageResolution.absorbed` has existed and been hard-coded to zero since
+   * the pipeline was written, with a comment saying the field was there so
+   * adding absorbs later would not change its shape. This is that.
+   * ----------------------------------------------------------------------------
+   */
+  readonly absorb?: (target: Combatant) => number;
   /** Multiplies healing the carrier does. */
   readonly healingDoneMultiplier?: number;
   readonly periodic?: PeriodicEffect;
@@ -287,6 +327,15 @@ export class AuraInstance {
   stacks: number;
   appliedAt: Milliseconds;
   expiresAt: Milliseconds;
+
+  /**
+   * Damage this aura will still soak, for an absorb shield.
+   *
+   * Set from `definition.absorb` when the aura is applied and drawn down by
+   * the damage pipeline. Zero for every aura that is not a shield, so the
+   * common case costs one number comparison.
+   */
+  absorbRemaining = 0;
 
   /** Queue handle for the expiry event, so early removal can cancel it. */
   expirationHandle: ScheduledEvent | null = null;

@@ -1,5 +1,12 @@
 import type { AuraDefinition } from '../../engine';
-import { dealDamage, flat, seconds } from '../../engine';
+import {
+  RATING_PER_PERCENT,
+  applyHealing,
+  dealDamage,
+  flat,
+  percent,
+  seconds,
+} from '../../engine';
 import {
   INSECT_SWARM_TICK_SP_COEFFICIENT,
   MOONFIRE_SP_COEFFICIENT,
@@ -358,13 +365,159 @@ export const DEMORALIZING_ROAR: AuraDefinition = {
 export const MAUL_BONUS_DAMAGE = 128;
 
 
+
+// ---------------------------------------------------------------------------
+// Feral: the Bear's three cooldowns
+// ---------------------------------------------------------------------------
+
+/**
+ * Barkskin: "Physical damage taken is reduced by 20%. While you are protected,
+ * damaging attacks will not cause spellcasting delays. Lasts 15 sec."
+ *
+ * Free, instant, one minute. PHYSICAL ONLY, which is what `damageTakenBySchool`
+ * is for -- a flat `damageTakenMultiplier` would reduce everything and this
+ * tooltip names one school.
+ *
+ * IT IS WORTH SOMETHING ONLY TO THE BEAR, and not because of the form: the
+ * Bear is the one Druid profile whose target attacks back. On the other two it
+ * is a correct effect worth exactly zero, which is a different thing from an
+ * inert one.
+ *
+ * Its spell-pushback clause is dropped: nothing here models pushback, so there
+ * is no delay for it to prevent.
+ */
+export const BARKSKIN_DURATION_MS = seconds(15);
+export const BARKSKIN_COOLDOWN_MS = seconds(60);
+export const BARKSKIN_PHYSICAL_REDUCTION = 0.2;
+
+export const BARKSKIN: AuraDefinition = {
+  id: 'barkskin',
+  name: 'Barkskin',
+  durationMs: BARKSKIN_DURATION_MS,
+  damageTakenBySchool: { physical: 1 - BARKSKIN_PHYSICAL_REDUCTION },
+  /*
+   * KEPT THROUGH A REVIVE would be wrong for the opposite reason to Last
+   * Stand's: this is not spent to prevent a death, so there is nothing to
+   * argue it should be consumed by one. It is left at the default.
+   */
+};
+
+/**
+ * Enrage: "Instantly generates 10 Rage and another 20 Rage over 10 sec, but
+ * reduces base armor by 27% in Bear Form and 16% in Dire Bear Form."
+ *
+ * Free, instant, one minute. THE INSTANT 10 IS THE ABILITY'S and the 20 over
+ * ten seconds is this aura's, at 2 a second -- the same split Bloodrage has,
+ * and the same reason: a grant that happens once is not periodic.
+ *
+ * TWENTY-SEVEN PERCENT, THE BEAR FORM FIGURE. The Dire Bear number is stated
+ * and not used, because `combatStyle` here is `bear` and there is no Dire Bear
+ * style to select the other with. Named rather than dropped, so the day a
+ * second form exists the figure is already on the page.
+ *
+ * ARMOR IS A REAL COST ON THE ONE PROFILE THAT TAKES DAMAGE, which is what
+ * makes this an interesting entry rather than free rage. It is the Bear, and
+ * its target attacks back.
+ */
+export const ENRAGE_DURATION_MS = seconds(10);
+export const ENRAGE_COOLDOWN_MS = seconds(60);
+export const ENRAGE_INSTANT_RAGE = 10;
+export const ENRAGE_RAGE_OVER_TIME = 20;
+export const ENRAGE_TICK_INTERVAL_MS = seconds(1);
+export const ENRAGE_BEAR_ARMOR_REDUCTION = 0.27;
+/** Stated by the source and unused: there is no Dire Bear combat style. */
+export const ENRAGE_DIRE_BEAR_ARMOR_REDUCTION = 0.16;
+
+export const ENRAGE_RAGE_PER_TICK =
+  ENRAGE_RAGE_OVER_TIME / (ENRAGE_DURATION_MS / ENRAGE_TICK_INTERVAL_MS);
+
+export const ENRAGE: AuraDefinition = {
+  id: 'enrage',
+  name: 'Enrage',
+  durationMs: ENRAGE_DURATION_MS,
+  statModifiers: [percent('armor', -ENRAGE_BEAR_ARMOR_REDUCTION)],
+  periodic: {
+    intervalMs: ENRAGE_TICK_INTERVAL_MS,
+    onTick: (context, aura) => {
+      const actor = context.combatant(aura.targetId);
+      if (!actor) return;
+      context.grantResource(actor, 'rage', ENRAGE_RAGE_PER_TICK, {
+        id: 'enrage',
+        name: 'Enrage',
+      });
+    },
+  },
+};
+
+/*
+ * ============================================================================
+ * FRENZIED REGENERATION: "Converts up to 10 Rage per second into health for 10
+ * sec. Each point of Rage is converted into 1% health."
+ *
+ * Free, instant, three minutes, Bear and Dire Bear only.
+ *
+ * IN SCOPE BY THE RULESET OWNER'S RULING, and healing THROUGHPUT is otherwise
+ * ruled out. The reason it is not that case: this is a RAGE SINK as much as a
+ * heal. Ten rage a second for ten seconds is a hundred rage, which is the whole
+ * bar and every Maul and Lacerate it would have bought -- so it costs the Bear
+ * damage, which is exactly the kind of effect a damage profile has to model.
+ * The owner's own words: "meant to work alongside a healer."
+ *
+ * "UP TO" IS LOAD-BEARING. It converts what is THERE, so a Bear at 30 rage
+ * converts 30 and no more, and the tick has to read the pool rather than
+ * assume it. A fixed ten a second would heal a starved Bear for rage it never
+ * had.
+ *
+ * THE DRAIN GOES THROUGH THE CONTEXT, not `Resource.drain`. Draining directly
+ * is invisible to the resource panel, and this project has been here before:
+ * combo points once reported 23 gained and none spent because a finisher
+ * drained the pool behind the telemetry's back, which looks exactly like a
+ * rotation that never casts one.
+ * ============================================================================
+ */
+export const FRENZIED_REGENERATION_DURATION_MS = seconds(10);
+export const FRENZIED_REGENERATION_COOLDOWN_MS = seconds(180);
+export const FRENZIED_REGENERATION_TICK_INTERVAL_MS = seconds(1);
+export const FRENZIED_REGENERATION_RAGE_PER_TICK = 10;
+/** "Each point of Rage is converted into 1% health." */
+export const FRENZIED_REGENERATION_HEALTH_PER_RAGE = 0.01;
+
+export const FRENZIED_REGENERATION: AuraDefinition = {
+  id: 'frenzied_regeneration',
+  name: 'Frenzied Regeneration',
+  durationMs: FRENZIED_REGENERATION_DURATION_MS,
+  periodic: {
+    intervalMs: FRENZIED_REGENERATION_TICK_INTERVAL_MS,
+    onTick: (context, aura) => {
+      const actor = context.combatant(aura.targetId);
+      if (!actor) return;
+
+      const rage = actor.resources.get('rage');
+      const available = Math.min(rage?.current ?? 0, FRENZIED_REGENERATION_RAGE_PER_TICK);
+      if (available <= 0) return;
+
+      context.spendResource(actor, 'rage', available, {
+        id: 'frenzied_regeneration',
+        name: 'Frenzied Regeneration',
+      });
+      applyHealing(context, {
+        source: actor,
+        target: actor,
+        abilityId: 'frenzied_regeneration',
+        abilityName: 'Frenzied Regeneration',
+        baseAmount: actor.health.maximum * FRENZIED_REGENERATION_HEALTH_PER_RAGE * available,
+        periodic: true,
+      });
+    },
+  },
+};
+
 // ---------------------------------------------------------------------------
 // Feral: Berserk, which belongs to both forms
 // ---------------------------------------------------------------------------
 
 /*
- * ============================================================================
- * BERSERK: "Causes your Primal Bite ability to strike up to 3 targets, removes
+ * ===================================================================== * BERSERK: "Causes your Primal Bite ability to strike up to 3 targets, removes
  * its cooldown, and increases the critical strike chance of your Combo
  * Point-generating abilities by 100%. Clears and grants immunity to Fear
  * effects for the duration. Lasts 15 sec."
@@ -416,6 +569,49 @@ export function berserkAura(comboPointGenerators: readonly string[]): AuraDefini
     ),
   };
 }
+
+/*
+ * ============================================================================
+ * NATURE'S GRACE: "All non-periodic spell criticals grace you with a blessing
+ * of nature, increasing your spellcasting speed and reducing your global
+ * cooldown by 10% for 3 sec."
+ *
+ * ONE SENTENCE, TWO EFFECTS, and they are not the same effect said twice.
+ * Haste shortens a CAST here and deliberately does not touch the global
+ * cooldown -- a rule with its own long comment in `casting.ts`. So folding the
+ * second clause into the haste rating would make every other haste source
+ * shorten the global cooldown as well, which is a much larger change wearing
+ * this talent's name. `gcdFraction` is the field the second clause wanted and
+ * it did not exist.
+ *
+ * NOT CLASSIC'S TALENT, AND THIS FILE HAD IT WRONG ONCE. Classic's Nature's
+ * Grace shortens the NEXT cast by half a second and is a one-shot charge --
+ * the Eclipse shape. Forever's is a three-second window, which wants a
+ * reaction and an aura rather than a cast modifier. That was recorded in the
+ * talent's own `unmodelled` reason after the mistake was caught.
+ *
+ * HASTE AS A RATING rather than as a percentage, converted with the same
+ * constant `hasteMultiplierFrom` divides by, so the round trip is exact
+ * whatever that constant is set to. Copied in spirit from the Shaman's, which
+ * copied it from the Warrior's Flurry.
+ * ============================================================================
+ */
+export const NATURES_GRACE_DURATION_MS = seconds(3);
+export const NATURES_GRACE_PERCENT = 10;
+
+export function naturesGraceAura(percentValue: number): AuraDefinition {
+  return {
+    id: 'natures_grace',
+    name: "Nature's Grace",
+    durationMs: NATURES_GRACE_DURATION_MS,
+    refreshBehaviour: 'reset',
+    statModifiers: [flat('hasteRating', percentValue * RATING_PER_PERCENT.haste)],
+    gcdFraction: percentValue / 100,
+  };
+}
+
+/** The stated shape, for anything that only needs the id. */
+export const NATURES_GRACE: AuraDefinition = naturesGraceAura(NATURES_GRACE_PERCENT);
 
 // ---------------------------------------------------------------------------
 

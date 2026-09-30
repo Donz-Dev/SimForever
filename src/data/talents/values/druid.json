@@ -188,8 +188,10 @@
    "tree": "balance",
    "ranks": 1,
    "text": "All non-periodic spell criticals grace you with a blessing of nature, increasing your spellcasting speed and reducing your global cooldown by 10% for 3 sec.",
-   "values": null,
-   "note": "single rank"
+   "values": [
+    10
+   ],
+   "note": "single rank; the value filled in by hand per this directory README. A single-rank talent has no variable the importer can match, so its values come back null -- and this text states its 10% literally rather than through a {0} placeholder, so there was nothing to match either way. WITHOUT THIS the reaction effect reads no value and talentBuild drops it in SILENCE, which reads as an unmodelled talent that never said so. Its 3 seconds is a constant beside the aura for the same reason."
   },
   "eclipse": {
    "name": "Eclipse",

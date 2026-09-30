@@ -80,6 +80,44 @@ export class AuraCollection {
   }
 
   /**
+   * Damage every active absorb shield on this combatant could still soak.
+   *
+   * A READ, and deliberately so: `resolveDamage` applies nothing, so it asks
+   * how much WOULD be absorbed and `dealDamage` spends it afterwards. That is
+   * the arrangement a block charge already has, and for the same reason -- an
+   * ability can resolve a hit without the hit happening.
+   */
+  absorbAvailable(): number {
+    let total = 0;
+    for (const instance of this.auras.values()) total += instance.absorbRemaining;
+    return total;
+  }
+
+  /**
+   * Spend an absorbed amount across the shields, removing any that run out.
+   *
+   * IN INSERTION ORDER, which is the order they were applied. Nothing in this
+   * ruleset stacks two shields yet, so the order is a decision rather than a
+   * rule -- said here so that the day two do, somebody chooses on purpose.
+   */
+  consumeAbsorb(context: SimulationContext, amount: number): void {
+    let left = amount;
+    for (const instance of [...this.auras.values()]) {
+      if (left <= 0) break;
+      if (instance.absorbRemaining <= 0) continue;
+      const taken = Math.min(instance.absorbRemaining, left);
+      instance.absorbRemaining -= taken;
+      left -= taken;
+      /*
+       * A SPENT SHIELD ENDS, which is what every absorb in the game does and
+       * what stops an exhausted one sitting on the character reporting uptime
+       * it is not providing.
+       */
+      if (instance.absorbRemaining <= 0) this.remove(context, instance.id);
+    }
+  }
+
+  /**
    * Apply an aura, or refresh/stack it if already present.
    *
    * Returns the live instance either way.
@@ -102,6 +140,10 @@ export class AuraCollection {
       // A charge effect starts full rather than building to its cap.
       definition.chargesOnApply ?? 1,
     );
+    // Evaluated ONCE, here, for the reason on `AuraDefinition.absorb`: every
+    // absorb in this ruleset is a share of something, and a shield that grew
+    // with a buff landing after it would be the wrong number.
+    instance.absorbRemaining = definition.absorb?.(this.owner) ?? 0;
     this.auras.set(definition.id, instance);
 
     this.applyStatModifiers(instance);
@@ -187,6 +229,49 @@ export class AuraCollection {
         this.remove(context, instance.id);
       }
     }
+  }
+
+  /**
+   * The multiplier every active aura applies to this combatant's global
+   * cooldown, or 1 when none does.
+   *
+   * MULTIPLIED rather than added, which is the same reading two independent
+   * damage multipliers take: two 10% reductions leave 81%, not 80%. Nothing
+   * stacks two today, so this is a decision rather than an observation -- said
+   * here so the day something does, somebody chose on purpose.
+   */
+  gcdMultiplier(): number {
+    let multiplier = 1;
+    for (const instance of this.auras.values()) {
+      const fraction = instance.definition.gcdFraction;
+      if (fraction) multiplier *= 1 - fraction;
+    }
+    return multiplier;
+  }
+
+  /**
+   * Spend one stack of an aura, removing it when the last one goes.
+   *
+   * ----------------------------------------------------------------------------
+   * `consumeCastCharges` does this for an aura whose charges are spent by the
+   * CAST MODIFIER it carries -- Eclipse, Maelstrom Weapon, Missile Barrage.
+   * Fingers of Frost has no cast modifier at all: it changes no cast time and
+   * no cost, it changes what the DAMAGE sees, and its charges are still spent
+   * by casting.
+   *
+   * So the mechanism is offered on its own rather than being reached by giving
+   * the aura a cast modifier that modifies nothing -- which would work, and
+   * would leave the next reader looking for the modification.
+   * ----------------------------------------------------------------------------
+   */
+  consumeStack(context: SimulationContext, auraId: string): void {
+    const instance = this.auras.get(auraId);
+    if (!instance) return;
+    if (instance.stacks > 1) {
+      instance.stacks -= 1;
+      return;
+    }
+    this.expire(context, instance);
   }
 
   remove(context: SimulationContext, auraId: string): void {
