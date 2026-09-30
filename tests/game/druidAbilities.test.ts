@@ -7,8 +7,11 @@ import { makeAttacker, makeTarget } from '../helpers/actors';
 import { abilitiesForClass } from '../../src/game/abilities/abilitiesForClass';
 import { PRESETS_BY_ID } from '../../src/profiles/presets';
 import {
+  BARKSKIN_ABILITY,
   BERSERK,
   COMBO_POINT_GENERATORS,
+  ENRAGE_ABILITY,
+  FRENZIED_REGENERATION_ABILITY,
   ECLIPSE_REDUCTION_BONUS,
   FEROCIOUS_BITE_BY_COMBO_POINT,
   MANGLE,
@@ -19,9 +22,16 @@ import {
   WRATH_COEFFICIENT,
   WRATH_DAMAGE,
 } from '../../src/game/abilities/druid';
+import type { TelemetryEvent } from '../../src/engine';
 import {
+  BARKSKIN,
   BERSERK_CRIT_BONUS,
   berserkAura,
+  ENRAGE_BEAR_ARMOR_REDUCTION,
+  ENRAGE_INSTANT_RAGE,
+  ENRAGE_RAGE_OVER_TIME,
+  ENRAGE_RAGE_PER_TICK,
+  FRENZIED_REGENERATION_HEALTH_PER_RAGE,
   ECLIPSE_CHARGES_PER_WRATH,
   ECLIPSE_MAX_CHARGES,
   INSECT_SWARM_TOTAL,
@@ -574,5 +584,102 @@ describe('Berserk, one ability that gives each feral build a different half', ()
     expect(actor.abilityModifierFor('rip').critBonus ?? 0).toBe(0);
     // An auto attack carries no ability id and gets nothing at all.
     expect(actor.abilityModifierFor(undefined).critBonus ?? 0).toBe(0);
+  });
+});
+
+describe("the Bear's three cooldowns", () => {
+  const bear = () =>
+    makeAttacker({
+      autoAttack: 'none',
+      maxHealth: 10_000,
+      stats: { armor: 5000 },
+      abilities: [BARKSKIN_ABILITY, ENRAGE_ABILITY, FRENZIED_REGENERATION_ABILITY],
+      resources: [{ type: 'rage', maximum: 100, initial: 0 }],
+    });
+
+  it('reduces PHYSICAL damage taken by 20%, and not every school', () => {
+    /*
+     * "Physical damage taken is reduced by 20%." A flat
+     * `damageTakenMultiplier` would reduce everything, and this tooltip names
+     * one school -- so the two are asserted apart rather than one standing in
+     * for the other.
+     */
+    expect(BARKSKIN.damageTakenBySchool).toEqual({ physical: 0.8 });
+    expect(BARKSKIN.damageTakenMultiplier).toBeUndefined();
+    expect(BARKSKIN_ABILITY.cost).toBeUndefined();
+    expect(BARKSKIN_ABILITY.cooldownMs).toBe(seconds(60));
+  });
+
+  it('gives Enrage 10 rage now and 20 over ten seconds, at a real armor cost', () => {
+    const actor = bear();
+    const simulation = buildSimulation([actor, makeTarget()], { durationMs: seconds(60) });
+    simulation.begin();
+
+    const armorBefore = actor.stats.get('armor');
+    castAbility(simulation, actor, ENRAGE_ABILITY, undefined);
+
+    // The instant ten is the ability's.
+    expect(actor.resources.require('rage').current).toBe(ENRAGE_INSTANT_RAGE);
+    // 27% off base armor, the Bear Form figure. `percentAdd`, so it is a
+    // fraction and not a percentage -- a 27 here would be 2700%.
+    expect(actor.stats.get('armor')).toBeCloseTo(
+      armorBefore * (1 - ENRAGE_BEAR_ARMOR_REDUCTION),
+      6,
+    );
+
+    // And the twenty arrives over ten seconds, two a tick.
+    expect(ENRAGE_RAGE_PER_TICK).toBe(2);
+    simulation.advanceTo(seconds(10));
+    expect(actor.resources.require('rage').current).toBe(
+      ENRAGE_INSTANT_RAGE + ENRAGE_RAGE_OVER_TIME,
+    );
+    // The armor comes back when it expires.
+    expect(actor.stats.get('armor')).toBeCloseTo(armorBefore, 6);
+  });
+
+  it('converts only the rage that is THERE, and reports the spend', () => {
+    /*
+     * "Converts UP TO 10 Rage per second." A Bear at 30 rage converts 30 and
+     * no more, so the tick reads the pool rather than assuming it -- a fixed
+     * ten a second would heal for rage the character never had.
+     *
+     * AND THE DRAIN GOES THROUGH THE CONTEXT. Draining directly is invisible
+     * to the resource panel, which this project has already been caught by:
+     * combo points once reported 23 gained and none spent, and that looks
+     * exactly like a rotation that never casts a finisher.
+     */
+    const actor = bear();
+    const events: TelemetryEvent[] = [];
+    const simulation = buildSimulation([actor, makeTarget()], { durationMs: seconds(60) }, {
+      emit: (event) => events.push(event),
+    });
+    simulation.begin();
+
+    actor.resources.require('rage').gain(30);
+    // Wounded, so the heal lands rather than being wasted at full health.
+    actor.health.spend(5000);
+    expect(actor.health.current).toBe(5000);
+    castAbility(simulation, actor, FRENZIED_REGENERATION_ABILITY, undefined);
+    simulation.advanceTo(seconds(10));
+
+    // Three full ticks of ten, then nothing left to convert.
+    const spends = events.filter(
+      (e) => e.type === 'resource_spent' && e.source === 'frenzied_regeneration',
+    );
+    expect(spends).toHaveLength(3);
+    expect(actor.resources.require('rage').current).toBe(0);
+
+    const heals = events.filter(
+      (e) => e.type === 'heal' && e.abilityId === 'frenzied_regeneration',
+    );
+    expect(heals).toHaveLength(3);
+    // 1% of maximum health per point of rage, ten points a tick.
+    const first = heals[0];
+    if (first.type === 'heal') {
+      expect(first.amount).toBeCloseTo(
+        actor.health.maximum * FRENZIED_REGENERATION_HEALTH_PER_RAGE * 10,
+        6,
+      );
+    }
   });
 });
