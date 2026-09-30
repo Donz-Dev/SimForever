@@ -399,24 +399,23 @@ export function unmodelledEffects(
  * A FORM'S PAW READS THE HELD WEAPON, which is new and is the ruleset owner's
  * formula:
  *
- *   Cat  = (BaseCatPaw  + weaponDPS x speed x 1   + AP x 1   / 14 x speed) x rand
- *   Bear = (BaseBearPaw + weaponDPS x speed x 2.5 + AP x 2.5 / 14 x speed) x rand
+ *   Cat  = (BaseCatPaw  + weaponDPS x 1   + AP x 1   / 14) x rand
+ *   Bear = (BaseBearPaw + weaponDPS x 2.5 + AP x 2.5 / 14) x rand
  *
  * So a stat stick is no longer only stats. It never SWINGS -- the paw does --
- * but its dps and its speed both feed what the paw hits for, which is what
- * `weaponsForEquipment` above deliberately refuses to let it do as a weapon.
+ * but its DPS feeds what the paw hits for, which is what `weaponsForEquipment`
+ * above deliberately refuses to let it do as a weapon. Its SPEED does not: the
+ * form's own cadence supplies every time term in the formula.
  * The two rules are not in conflict: the item is still not scheduled and still
  * triggers nothing. It is an input to the paw's damage, and this function is
  * the only place that reads it.
  *
- * IT IS THE BASE SPEED, not a hasted one, for the same reason every other
- * `speed / 14` term in this project is.
  * ----------------------------------------------------------------------------
  */
 export function heldWeaponForForm(
   equipment: Equipment,
   style: CombatStyleId,
-): { readonly dps: number; readonly speedSeconds: number } | undefined {
+): { readonly dps: number } | undefined {
   const live = liveEquipment(equipment, style);
   // A form holds one thing, in whichever hand slot survived resolution.
   const equipped = live.mainHand ?? live.twoHand ?? live.offHand;
@@ -424,5 +423,5 @@ export function heldWeaponForForm(
 
   const item = ITEMS_BY_ID.get(equipped.itemId);
   if (!item?.weapon) return undefined;
-  return { dps: item.weapon.dps, speedSeconds: item.weapon.speed };
+  return { dps: item.weapon.dps };
 }

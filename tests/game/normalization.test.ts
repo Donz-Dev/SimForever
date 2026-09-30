@@ -131,33 +131,43 @@ describe('a Druid paw, which is normalised by being a paw', () => {
   /*
    * The owner's formula, written out again:
    *
-   *   Cat  = (BaseCatPaw  + weaponDPS x speed x 1   + AP x 1   / 14 x speed) x rand
-   *   Bear = (BaseBearPaw + weaponDPS x speed x 2.5 + AP x 2.5 / 14 x speed) x rand
+   *   Cat  = (BaseCatPaw  + weaponDPS x 1   + AP x 1   / 14) x rand(0.8, 1.2)
+   *   Bear = (BaseBearPaw + weaponDPS x 2.5 + AP x 2.5 / 14) x rand(0.8, 1.2)
    *
-   * `speed` is the HELD weapon's base swing time and `weaponDPS` its dps, both
-   * confirmed by the owner. A paw's `baseDamage` carries the first two terms
-   * and its `powerCoefficient` carries the third.
+   * The 1 and the 2.5 are the FORM'S SWING TIME, which the formula also names
+   * `BaseWeaponSwingTime` -- one number written twice, not two. A paw's
+   * `baseDamage` carries the first two terms and its `powerCoefficient` the
+   * third.
    */
-  const held = { dps: 53, speedSeconds: 3.6 };
+  const held = { dps: 53 };
 
-  it('builds the Cat’s paw from what is held, at a multiplier of 1', () => {
+  it('builds the Cat’s paw from the held dps, at its own one-second swing', () => {
     const paw = catPaw(held);
-    expect(paw.baseDamage).toBeCloseTo(50 + 53 * 3.6 * 1, 6);
-    expect(paw.powerCoefficient).toBeCloseTo((1 * 3.6) / 14, 6);
+    expect(paw.baseDamage).toBeCloseTo(50 + 53 * 1, 6);
+    expect(paw.powerCoefficient).toBeCloseTo(1 / 14, 6);
   });
 
   it('builds the Bear’s at 2.5, on both weapon terms', () => {
     const paw = bearPaw(held);
-    expect(paw.baseDamage).toBeCloseTo(100 + 53 * 3.6 * 2.5, 6);
-    expect(paw.powerCoefficient).toBeCloseTo((2.5 * 3.6) / 14, 6);
+    expect(paw.baseDamage).toBeCloseTo(100 + 53 * 2.5, 6);
+    expect(paw.powerCoefficient).toBeCloseTo(2.5 / 14, 6);
   });
 
-  it('keeps the FORM’s swing time, not the held weapon’s', () => {
+  it('IGNORES THE HELD WEAPON’S SPEED, which is why this reading was chosen', () => {
     /*
-     * The held weapon's speed feeds the DAMAGE and never the cadence. Reading
-     * it as the cadence too would make a slow weapon a third of a cat's attack
-     * rate, which is the opposite of what a form is.
+     * The rejected reading took `BaseWeaponSwingTime` as the HELD weapon's
+     * speed, which made paw damage proportional to how SLOW that weapon was --
+     * at equal dps a 3.6-second weapon was worth 3.6x a one-second one, so the
+     * best feral play became "hold the slowest thing you can find". Two weapons
+     * of equal dps must give the same paw, and `HeldWeapon` carries no speed
+     * at all so that they cannot do otherwise.
      */
+    expect(catPaw({ dps: 53 }).baseDamage).toBe(catPaw({ dps: 53 }).baseDamage);
+    expect(catPaw({ dps: 100 }).baseDamage).toBeGreaterThan(catPaw({ dps: 53 }).baseDamage);
+  });
+
+  it('swings on the FORM’s cadence', () => {
+    // One second and two and a half, which is also the multiplier above.
     expect(catPaw(held).swingTimerMs).toBe(1000);
     expect(bearPaw(held).swingTimerMs).toBe(2500);
   });
@@ -167,15 +177,18 @@ describe('a Druid paw, which is normalised by being a paw', () => {
     expect(bearPaw(held).damageVariance).toBe(0.2);
   });
 
-  it('holding NOTHING leaves the base paw and no weapon terms', () => {
+  it('holding NOTHING drops the weapon term and KEEPS the attack power one', () => {
     /*
-     * Every weapon term is multiplied by a speed that does not exist, so all
-     * of them are zero. Asserted rather than left to chance, because inventing
-     * a default weapon here would be inventing game data.
+     * Only the `weaponDPS` term needs a weapon. The attack power term is
+     * `formSwing / 14` and the form is always there, so an unarmed Druid still
+     * scales with attack power -- which is the honest reading and also the
+     * safe one: a paw whose coefficient fell to zero would read as a character
+     * that gains nothing from gear at all.
      */
     expect(catPaw(undefined).baseDamage).toBe(50);
-    expect(catPaw(undefined).powerCoefficient).toBe(0);
+    expect(catPaw(undefined).powerCoefficient).toBeCloseTo(1 / 14, 6);
     expect(bearPaw(undefined).baseDamage).toBe(100);
+    expect(bearPaw(undefined).powerCoefficient).toBeCloseTo(2.5 / 14, 6);
   });
 
   it('CARRIES NO NORMALISED COEFFICIENT, which is why Druids are exempt', () => {
