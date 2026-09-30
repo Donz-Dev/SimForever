@@ -1,5 +1,6 @@
 import type { AbilityCastEvent, CastReaction, Reaction } from '../../engine';
 import type { TalentReactionBuilder } from './warriorTalents';
+import { CUTTHROAT } from '../auras/rogue';
 
 /**
  * Rogue talent procs.
@@ -129,7 +130,36 @@ export const ROGUE_CAST_REACTIONS: Readonly<Record<string, (value: number) => Ca
   improved_expose_armor: improvedExposeArmor,
 };
 
+/**
+ * Cutthroat: "Your Backstab has a {0}% chance to cause your next Ambush within
+ * 10 sec to not require Stealth."
+ *
+ * ----------------------------------------------------------------------------
+ * AN ORDINARY DAMAGE REACTION ON ONE ABILITY, which is all it ever needed. The
+ * talent was recorded as inert alongside the ten Rogue talents that genuinely
+ * are -- every fight here opens in combat, so nothing is ever stealthed -- and
+ * this one is the exception in the same list: it exists to remove the stealth
+ * requirement, so a fight that is never stealthed is the case it was written
+ * for rather than the case that kills it.
+ *
+ * ON A HIT OR A CRIT, and not on an avoided Backstab: the tooltip says "your
+ * Backstab has a chance", and a Backstab that was dodged is not one that
+ * happened. Same reading Improved Scorch takes.
+ * ----------------------------------------------------------------------------
+ */
+export const cutthroat = (chancePercent: number): Reaction => ({
+  id: 'cutthroat',
+  on: 'dealt',
+  outcomes: ['hit', 'crit'],
+  canTrigger: (context, _actor, attack) =>
+    attack.abilityId === 'backstab' && context.rng.rollChance(chancePercent / 100),
+  onTrigger: (context, actor) => {
+    context.applyAura(actor, CUTTHROAT, actor.id);
+  },
+});
+
 /** Procs that fire on an attack, by the talent that grants them. */
 export const ROGUE_TALENT_REACTIONS: Readonly<Record<string, TalentReactionBuilder>> = {
   seal_fate: sealFate,
+  cutthroat,
 };

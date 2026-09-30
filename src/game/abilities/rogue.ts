@@ -7,6 +7,7 @@ import {
   BLADE_FLURRY_UNMODELLED,
   COLD_BLOOD,
   COLD_BLOOD_ABILITIES,
+  CUTTHROAT,
   GHOSTLY_STRIKE_DODGE_AURA,
   HEMORRHAGE_DEBUFF,
   HEMORRHAGE_UNMODELLED,
@@ -560,6 +561,115 @@ export const PREPARATION: Ability = {
   },
 };
 
+/**
+ * Ambush: "causing 250% weapon damage plus 290 to the target. Must be stealthed
+ * and behind the target. Requires a dagger in the main hand. Awards 1 combo
+ * point." 60 energy.
+ *
+ * ----------------------------------------------------------------------------
+ * ITS STEALTH REQUIREMENT IS CUTTHROAT, by the ruleset owner's ruling: "because
+ * we're never in stealth Cutthroat can simply be modelled by allowing Ambush to
+ * be castable only when Cutthroat buff is active."
+ *
+ * So there is no stealth system and none is needed. The aura IS the gate, which
+ * is the shape Mongoose Bite already has with Expose Prey -- an ability whose
+ * only route to being cast is a proc, gated in `canCast` on the aura that proc
+ * applies.
+ *
+ * THE DAGGER REQUIREMENT IS ENFORCED and the positional is not, which is the
+ * same split Backstab and Shred make. Nothing here has a facing; every hand has
+ * a weapon type.
+ *
+ * THE AURA IS SPENT ON CAST, not on the hit. "Your NEXT Ambush" is one cast,
+ * and a dodged Ambush was still the next one -- consuming it only on a
+ * connection would hand back a free window for a miss the Rogue has already
+ * paid the energy for.
+ * ----------------------------------------------------------------------------
+ */
+export const AMBUSH_BASE_DAMAGE = 290;
+export const AMBUSH_WEAPON_FRACTION = 2.5;
+
+export const AMBUSH: Ability = {
+  id: 'ambush',
+  // Declared so Seal Fate can see it; the award itself is in `onCast`.
+  comboPointsAwarded: 1,
+  name: 'Ambush',
+  cost: { resource: 'energy', amount: 60 },
+  attackTable: 'melee-special',
+  canCast: ({ caster }) =>
+    caster.weapons.mainHand?.weaponType === 'dagger' && caster.auras.has(CUTTHROAT.id),
+  onCast: ({ simulation, caster, target, ability }) => {
+    if (!target) return;
+    caster.auras.remove(simulation, CUTTHROAT.id);
+    const result = dealDamage(simulation, {
+      source: caster,
+      target,
+      abilityId: ability.id,
+      abilityName: ability.name,
+      school: PHYSICAL,
+      baseAmount: AMBUSH_BASE_DAMAGE,
+      weaponScaling: {
+        slot: MAIN_HAND,
+        fraction: AMBUSH_WEAPON_FRACTION,
+        normalized: true,
+      },
+      attackTable: ability.attackTable,
+      weaponSlot: MAIN_HAND,
+    });
+    if (!result.avoided) awardComboPoint(simulation, caster, target, ability.id, ability.name);
+    consumeColdBlood(simulation, caster, ability.id);
+  },
+  unmodelled:
+    'Its "must be behind the target" is dropped: nothing here has a facing. ' +
+    'Its "must be stealthed" is satisfied by Cutthroat rather than modelled, ' +
+    "by the ruleset owner's ruling -- so a Rogue without that talent can " +
+    'never cast this at all, which is correct for an encounter that opens in ' +
+    'combat.',
+};
+
+/**
+ * Premeditation: "Adds 2 Combo Points to your target. You must add to or use
+ * those combo points within 20 sec or the combo points are lost." Free, two
+ * minute cooldown.
+ *
+ * ----------------------------------------------------------------------------
+ * IT BANKS POINTS BY WRITING THE POOL, WHICH IS THE TRAP. Combo points belong
+ * to a TARGET here, and anything that grants them without setting
+ * `comboPointTargetId` leaves the pool pointing at nobody -- every finisher
+ * then refuses to spend and reads as an ability that lost its flat damage.
+ * `awardComboPoint` is the helper that gets it right, so this goes through it
+ * rather than touching the resource.
+ *
+ * ITS TWENTY SECOND EXPIRY IS NOT MODELLED. A combo point pool here has no
+ * clock, and the list that casts this follows it immediately with a builder,
+ * so the window is never the binding constraint -- but it is generous and says
+ * so rather than being quietly dropped.
+ * ----------------------------------------------------------------------------
+ */
+export const PREMEDITATION_COMBO_POINTS = 2;
+
+export const PREMEDITATION: Ability = {
+  id: 'premeditation',
+  name: 'Premeditation',
+  cooldownMs: seconds(120),
+  requiresTarget: true,
+  onCast: ({ simulation, caster, target, ability }) => {
+    if (!target) return;
+    awardComboPoint(
+      simulation,
+      caster,
+      target,
+      ability.id,
+      ability.name,
+      PREMEDITATION_COMBO_POINTS,
+    );
+  },
+  unmodelled:
+    'Its "within 20 sec or the combo points are lost" is not modelled: a ' +
+    'combo point pool here has no clock. Generous, and never binding in a ' +
+    'list that follows it with a builder.',
+};
+
 export const ROGUE_ABILITIES: readonly Ability[] = [
   SINISTER_STRIKE,
   BACKSTAB,
@@ -577,4 +687,13 @@ export const ROGUE_ABILITIES: readonly Ability[] = [
   COLD_BLOOD_ABILITY,
   // Granted by the Subtlety talent; `grantsByAbility` gates it.
   PREPARATION,
+  /*
+   * AMBUSH IS A TRAINER ABILITY, not a talent, so every Rogue has it -- and
+   * only a Rogue with Cutthroat can ever cast one, which `canCast` enforces.
+   * A Venom or Combat Rogue carrying an Ambush it can never use is the honest
+   * state of the ability rather than a gap.
+   */
+  AMBUSH,
+  // Granted by the Subtlety talent; `grantsByAbility` gates it.
+  PREMEDITATION,
 ];

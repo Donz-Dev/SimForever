@@ -258,12 +258,18 @@ export const ROGUE_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
     { kind: 'unmodelled', reason: 'Stealth detection, and resistance to spells that are not cast.' },
   ],
 
-  premeditation: [
-    {
-      kind: 'unmodelled',
-      reason: 'Adds combo points out of stealth, and every fight opens in combat.',
-    },
-  ],
+  /*
+   * ITS OLD REASON READ CLASSIC'S REQUIREMENT INTO A FOREVER ABILITY. It said
+   * "adds combo points out of stealth, and every fight opens in combat" --
+   * and the Forever tooltip has no stealth clause at all: "Adds 2 Combo Points
+   * to your target. You must add to or use those combo points within 20 sec or
+   * the combo points are lost." The capture marks it `changed` against Classic,
+   * and that is the change.
+   *
+   * The second Rogue talent in this file to be counted among the eleven that
+   * stealth makes inert while not being one of them. Cutthroat is the other.
+   */
+  premeditation: [{ kind: 'grantAbility', abilityId: 'premeditation' }],
 
   serrated_blades: [
     {
@@ -298,7 +304,18 @@ export const ROGUE_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
     },
   ],
 
-  cutthroat: [{ kind: 'unmodelled', reason: 'Makes Ambush castable, and Ambush is absent.' }],
+  /*
+   * CUTTHROAT IS NOT A STEALTH TALENT, and its old reason -- "Makes Ambush
+   * castable, and Ambush is absent" -- was true of the second half and hid the
+   * first. It is an in-combat proc whose entire purpose is to let Ambush be
+   * used WITHOUT stealth, so a fight that opens in combat is the case it was
+   * written for rather than the case that kills it. It was nonetheless counted
+   * among the eleven Rogue talents inert for exactly that reason.
+   *
+   * The ruleset owner's ruling is what keeps it this small: Ambush is simply
+   * castable while the buff is up, and there is no stealth system at all.
+   */
+  cutthroat: [{ kind: 'reaction', reactionId: 'cutthroat' }],
 
   thousand_cuts: [
     {

@@ -5,10 +5,17 @@ import { PRESETS_BY_ID } from '../../src/profiles/presets';
 import {
   GHOSTLY_STRIKE,
   PREPARATION,
+  AMBUSH,
+  AMBUSH_BASE_DAMAGE,
+  AMBUSH_WEAPON_FRACTION,
   EVISCERATE_BY_COMBO_POINT,
+  PREMEDITATION,
+  PREMEDITATION_COMBO_POINTS,
   SINISTER_STRIKE_BASE_DAMAGE,
 } from '../../src/game/abilities/rogue';
 import {
+  CUTTHROAT,
+  CUTTHROAT_DURATION_MS,
   EXPOSE_ARMOR_PER_COMBO_POINT,
   RUPTURE_BY_COMBO_POINT,
   SLICE_AND_DICE_DURATIONS_MS,
@@ -17,10 +24,13 @@ import {
   sliceAndDiceAura,
 } from '../../src/game/auras/rogue';
 import { ROGUE_TALENT_EFFECTS } from '../../src/game/talents/rogueEffects';
+import { cutthroat } from '../../src/game/reactions/rogueTalents';
 import { abilitiesForClass } from '../../src/game/abilities/abilitiesForClass';
 import { buildSimulation } from '../helpers/buildSimulation';
 import { makeAttacker, makeTarget } from '../helpers/actors';
 import { castAbility, checkCast, seconds } from '../../src/engine';
+import { comboPointsOn } from '../../src/game/combat/comboPoints';
+import { talentNumber } from '../../src/game/talents/talentValues';
 
 /*
  * The Rogue's numbers, written out by hand from the beta client's spellbook
@@ -300,5 +310,149 @@ describe('Preparation, and cooldown reset as an engine capability', () => {
     expect(
       abilitiesForClass('rogue', 'dual_wield', venom.talents).map((a) => a.id),
     ).not.toContain('preparation');
+  });
+});
+
+describe('Cutthroat, Ambush and Premeditation, none of which needed stealth', () => {
+  /*
+   * --------------------------------------------------------------------------
+   * TWO OF THE ELEVEN "STEALTH MAKES THIS INERT" TALENTS WERE NEVER THAT.
+   *
+   * Cutthroat: "Your Backstab has a 15% chance to cause your next Ambush
+   * within 10 sec to not require Stealth." An in-combat proc whose entire
+   * purpose is to remove the stealth requirement -- so a fight that opens in
+   * combat is the case it was written for. Its reason said "Makes Ambush
+   * castable, and Ambush is absent", which was true of the second half and hid
+   * the first.
+   *
+   * Premeditation: the FOREVER tooltip is "Adds 2 Combo Points to your target.
+   * You must add to or use those combo points within 20 sec or the combo
+   * points are lost" -- no stealth clause at all, and the capture marks it
+   * `changed` against Classic. Its reason read Classic's requirement into a
+   * Forever ability.
+   * --------------------------------------------------------------------------
+   */
+  const subtletyRogue = () => {
+    const built = PRESETS_BY_ID.get('rogue_rupture')!.build();
+    return { built, book: abilitiesForClass('rogue', 'dual_wield', built.talents) };
+  };
+
+  it('reads Cutthroat at 15% and a ten second window from the values file', () => {
+    // Rank 5 of 5, which is what the Rupture build takes. Written out by hand.
+    expect(talentNumber('rogue', 'cutthroat', 5, 0)).toBe(15);
+    expect(talentNumber('rogue', 'cutthroat', 5, 1)).toBe(10);
+    expect(CUTTHROAT_DURATION_MS).toBe(seconds(10));
+    // A second proc starts a fresh window rather than extending the one running.
+    expect(CUTTHROAT.refreshBehaviour).toBe('reset');
+  });
+
+  it('procs only off Backstab, and only when it connected', () => {
+    const reaction = cutthroat(100);
+    expect(reaction.on).toBe('dealt');
+    // A Backstab that was dodged is not a Backstab that happened.
+    expect(reaction.outcomes).toEqual(['hit', 'crit']);
+
+    const actor = makeAttacker({ autoAttack: 'none' });
+    const simulation = buildSimulation([actor, makeTarget()]);
+    simulation.begin();
+
+    const attack = (abilityId: string) =>
+      reaction.canTrigger?.(simulation, actor, { abilityId } as never) ?? true;
+    expect(attack('backstab')).toBe(true);
+    expect(attack('sinister_strike')).toBe(false);
+    expect(attack('hemorrhage')).toBe(false);
+  });
+
+  it('makes Ambush castable ONLY while the buff is up, and spends it on cast', () => {
+    /*
+     * The ruleset owner's ruling in one assertion: there is no stealth system,
+     * the aura IS the gate, and it is spent by the CAST rather than the hit --
+     * a dodged Ambush was still the next one, and the Rogue has already paid
+     * the energy.
+     */
+    const actor = makeAttacker({
+      autoAttack: 'none',
+      abilities: [AMBUSH],
+      weapons: { mainHand: { name: 'Dagger', weaponType: 'dagger', baseDamage: 100, swingTimerMs: 1800 } },
+      resources: [{ type: 'energy', maximum: 100, initial: 100 }],
+    });
+    const target = makeTarget();
+    const simulation = buildSimulation([actor, target]);
+    simulation.begin();
+
+    expect(checkCast(simulation, actor, AMBUSH, target)).toEqual({
+      ok: false,
+      reason: 'condition_failed',
+    });
+
+    simulation.applyAura(actor, CUTTHROAT, actor.id);
+    expect(checkCast(simulation, actor, AMBUSH, target)).toEqual({ ok: true });
+
+    castAbility(simulation, actor, AMBUSH, target);
+    expect(actor.auras.has('cutthroat')).toBe(false);
+  });
+
+  it('is in every Rogue book and castable by one build, which is correct', () => {
+    /*
+     * Ambush is a TRAINER ability rather than a talent, so a Venom or Combat
+     * Rogue carries one it can never cast. That is the honest state of the
+     * ability: the thing that gates it is Cutthroat, and they do not take it.
+     */
+    for (const preset of ['rogue_venom', 'rogue_combat', 'rogue_rupture']) {
+      const built = PRESETS_BY_ID.get(preset)!.build();
+      const ids = abilitiesForClass('rogue', 'dual_wield', built.talents).map((a) => a.id);
+      expect(ids, preset).toContain('ambush');
+    }
+
+    // Premeditation IS a talent, and only the build that takes it has it.
+    const { built } = subtletyRogue();
+    expect(built.talents.premeditation).toBe(1);
+    const rupture = abilitiesForClass('rogue', 'dual_wield', built.talents).map((a) => a.id);
+    expect(rupture).toContain('premeditation');
+
+    const combat = PRESETS_BY_ID.get('rogue_combat')!.build();
+    expect(
+      abilitiesForClass('rogue', 'dual_wield', combat.talents).map((a) => a.id),
+    ).not.toContain('premeditation');
+  });
+
+  it('banks Premeditation\'s two points ON THE TARGET, which is the trap', () => {
+    /*
+     * Combo points belong to a target here. Anything granting them without
+     * setting `comboPointTargetId` leaves the pool pointing at nobody, and
+     * every finisher then refuses to spend -- which reads as an ability that
+     * lost its flat damage rather than as a bookkeeping error.
+     */
+    const actor = makeAttacker({
+      autoAttack: 'none',
+      abilities: [PREMEDITATION],
+      resources: [{ type: 'comboPoints', maximum: 5, initial: 0 }],
+    });
+    const target = makeTarget();
+    const simulation = buildSimulation([actor, target]);
+    simulation.begin();
+
+    castAbility(simulation, actor, PREMEDITATION, target);
+
+    expect(PREMEDITATION_COMBO_POINTS).toBe(2);
+    expect(actor.comboPointTargetId).toBe(target.id);
+    // Asked THROUGH the target, which returns zero when the pool belongs to
+    // someone else -- so this passing is the whole assertion.
+    expect(comboPointsOn(actor, target)).toBe(2);
+  });
+
+  it('states Ambush at 250% weapon damage plus 290', () => {
+    // Written out by hand from the capture, rank 6.
+    expect(AMBUSH_BASE_DAMAGE).toBe(290);
+    expect(AMBUSH_WEAPON_FRACTION).toBe(2.5);
+    expect(AMBUSH.cost).toEqual({ resource: 'energy', amount: 60 });
+  });
+
+  it('no longer reports either talent as stealth-blocked', () => {
+    for (const id of ['cutthroat', 'premeditation']) {
+      for (const effect of ROGUE_TALENT_EFFECTS[id]) {
+        expect(effect.kind, id).not.toBe('unmodelled');
+      }
+    }
   });
 });

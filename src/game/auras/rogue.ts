@@ -308,6 +308,41 @@ export const HEMORRHAGE_UNMODELLED =
   'engine has damage-taken multipliers per SCHOOL, and this is per ABILITY on ' +
   'the target, which has no form yet.';
 
+
+/*
+ * ============================================================================
+ * CUTTHROAT, AND WHY IT IS NOT A STEALTH TALENT.
+ *
+ * "Your Backstab has a 15% chance to cause your next Ambush within 10 sec to
+ * not require Stealth." Five ranks, 3/6/9/12/15 percent, a ten second window
+ * at every rank.
+ *
+ * IT WAS COUNTED AMONG THE ELEVEN ROGUE TALENTS INERT BECAUSE EVERY FIGHT
+ * OPENS IN COMBAT, and it is the opposite: an in-combat proc whose entire
+ * purpose is to let Ambush be used WITHOUT stealth. Its `unmodelled` reason
+ * said "Makes Ambush castable, and Ambush is absent", which was true of the
+ * second half and hid the first -- nothing about this talent ever needed a
+ * stealth system.
+ *
+ * THE RULESET OWNER'S RULING IS WHAT MAKES IT THIS SMALL: "because we're never
+ * in stealth Cutthroat can simply be modelled by allowing Ambush to be
+ * castable only when Cutthroat buff is active." So the aura IS the gate, and
+ * Ambush reads it in `canCast` the way Mongoose Bite reads Expose Prey.
+ * ============================================================================
+ */
+export const CUTTHROAT_DURATION_MS = seconds(10);
+
+export const CUTTHROAT: AuraDefinition = {
+  id: 'cutthroat',
+  name: 'Cutthroat',
+  durationMs: CUTTHROAT_DURATION_MS,
+  /*
+   * RESET, not extend. "Your NEXT Ambush within 10 sec" -- a second proc
+   * starts a fresh window rather than adding to the one running.
+   */
+  refreshBehaviour: 'reset',
+};
+
 // ---------------------------------------------------------------------------
 
 /** 1..5 combo points, clamped, as an index into a five-entry table. */
@@ -329,6 +364,7 @@ export const ROGUE_AURAS: readonly AuraDefinition[] = [
   COLD_BLOOD,
   GHOSTLY_STRIKE_DODGE_AURA,
   HEMORRHAGE_DEBUFF,
+  CUTTHROAT,
 ];
 
 // ---------------------------------------------------------------------------
