@@ -172,8 +172,13 @@ export const WARLOCK_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
     {
       kind: 'unmodelled',
       reason:
-        'Every clause needs the target BELOW 35% HEALTH, and the target never ' +
-        'drops -- it survives every fight by design.',
+        'Blocked TWICE, and the shard clause is the one that needs saying. ' +
+        'Every clause needs the target BELOW 35% HEALTH, which never happens ' +
+        'against a target that survives by design -- and its "costs no Soul ' +
+        'Shards" applies to SOUL FIRE, which is not a declared ability here. ' +
+        'So the shard half would still do nothing the day the health gate ' +
+        'was reachable. Shadowburn’s refund, from Shadow and Flame, IS ' +
+        'applied and is the only shard refund this project can express.',
     },
   ],
 

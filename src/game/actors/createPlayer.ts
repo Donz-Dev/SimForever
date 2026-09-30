@@ -56,6 +56,7 @@ import {
   weaponsForStyle,
 } from './weapons';
 import { poisonReactions, type PoisonLoadout } from '../reactions/poisons';
+import { COST_REFUND_ON_MISS } from '../combat/resourceRules';
 
 export interface PlayerOptions {
   readonly id?: string;
@@ -509,6 +510,8 @@ export function createPlayer(options: PlayerOptions): Combatant {
     autoAttack: autoAttackModeForStyle(style),
     // 1.5 seconds for everyone but a Rogue and a Cat-Form Druid, who get 1.0.
     baseGcdMs: globalCooldownFor(characterClass, style),
+    // 80% of a rage or energy cost back when the attack does not connect.
+    costRefundOnMiss: COST_REFUND_ON_MISS,
   });
 
   /*

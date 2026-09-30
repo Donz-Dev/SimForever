@@ -56,18 +56,42 @@ export const MAX_COMBO_POINTS = 5;
 export function awardComboPoint(
   context: SimulationContext,
   actor: Combatant,
+  target: Combatant,
   abilityId: string,
   abilityName: string,
   amount = 1,
 ): void {
+  /*
+   * BUILDING ON A DIFFERENT TARGET DISCARDS WHAT WAS THERE. Combo points live
+   * on the victim, not on the Rogue, so five points on one enemy are worth
+   * nothing the moment a builder lands on another.
+   *
+   * TODAY THIS CAN NEVER FIRE, because every encounter has exactly one enemy
+   * and it is always the main target. It is here so that the day an encounter
+   * has adds, the rule is already right rather than being remembered -- the
+   * previous model would have carried points across targets silently, which
+   * reads as a very generous Rogue and not as a bug.
+   */
+  if (actor.comboPointTargetId !== target.id) {
+    actor.resources.get('comboPoints')?.set(0);
+    actor.comboPointTargetId = target.id;
+  }
+
   context.grantResource(actor, 'comboPoints', amount, {
     id: abilityId,
     name: abilityName,
   });
 }
 
-/** How many combo points this character is holding. */
-export function comboPointsOn(actor: Combatant): number {
+/**
+ * How many combo points this character is holding, optionally on one target.
+ *
+ * With no target it is the raw pool, which is what a priority list wants when
+ * it is only asking "am I ready to spend". With one it is the pool only if the
+ * points are on that target.
+ */
+export function comboPointsOn(actor: Combatant, target?: Combatant): number {
+  if (target && actor.comboPointTargetId !== target.id) return 0;
   return actor.resources.get('comboPoints')?.current ?? 0;
 }
 
@@ -79,9 +103,16 @@ export function comboPointsOn(actor: Combatant): number {
  * finisher that deals its one-point damage at five points is not obviously
  * broken from the outside -- it just looks like a weak ability.
  */
-export function spendComboPoints(actor: Combatant): number {
+export function spendComboPoints(actor: Combatant, target?: Combatant): number {
   const pool = actor.resources.get('comboPoints');
   if (!pool) return 0;
+
+  /*
+   * A FINISHER SPENDS THE POINTS ON ITS OWN TARGET AND NOBODY ELSE'S. Passing
+   * the target is what makes that checkable; omitting it keeps the old
+   * behaviour for the callers that have no target to speak of.
+   */
+  if (target && actor.comboPointTargetId !== target.id) return 0;
 
   const held = pool.current;
   if (held <= 0) return 0;
@@ -97,6 +128,6 @@ export function spendComboPoints(actor: Combatant): number {
  * global cooldown, so every one of them gates on this rather than each
  * repeating the comparison.
  */
-export function hasComboPoints(actor: Combatant): boolean {
-  return comboPointsOn(actor) > 0;
+export function hasComboPoints(actor: Combatant, target?: Combatant): boolean {
+  return comboPointsOn(actor, target) > 0;
 }

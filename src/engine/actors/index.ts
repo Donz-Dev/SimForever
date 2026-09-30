@@ -2,6 +2,7 @@ export type {
   AutoAttackMode,
   CombatantKind,
   CombatantOptions,
+  CostRefundRule,
   Faction,
   ResourceGeneration,
   WeaponProfile,

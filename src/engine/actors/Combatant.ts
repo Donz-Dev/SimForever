@@ -147,6 +147,13 @@ export interface ResourceGeneration {
   readonly requiresDamage?: boolean;
 }
 
+/** The refund an avoided ability gets, and which resources it applies to. */
+export interface CostRefundRule {
+  /** 0.8 is "80% of the cost back". */
+  readonly fraction: number;
+  readonly resources: readonly ResourceType[];
+}
+
 export interface CombatantOptions {
   readonly id: string;
   readonly name: string;
@@ -194,6 +201,23 @@ export interface CombatantOptions {
    * different one still overrides it with `gcdMs`.
    */
   readonly baseGcdMs?: Milliseconds;
+  /**
+   * What an ability gets back when its attack does not connect.
+   *
+   * ----------------------------------------------------------------------------
+   * ON THE COMBATANT, NOT THE ABILITY, for the same reason `baseGcdMs` is: the
+   * fraction and the resources it applies to are RULESET content, and the same
+   * Sinister Strike refunds or does not depending on the ruleset rather than on
+   * anything about the ability.
+   *
+   * An ability opts OUT with `refundsCostOnMiss: false`; it never opts in. A
+   * new rage or energy ability therefore gets the rule for free, which is the
+   * same derivation argument the global cooldown uses -- the failure mode of
+   * declaring it per ability is silent, because an ability that wrongly keeps
+   * its cost still deals the right damage.
+   * ----------------------------------------------------------------------------
+   */
+  readonly costRefundOnMiss?: CostRefundRule;
   /** Defaults to `none`: a combatant with no declared mode does not swing. */
   readonly autoAttack?: AutoAttackMode;
   /** Resources that refill on a timer. */
@@ -309,6 +333,23 @@ export class Combatant {
   readonly hitBonusBySlot: Partial<Record<WeaponSlot, number>>;
   readonly baseGcdMs: Milliseconds;
   readonly autoAttack: AutoAttackMode;
+  readonly costRefundOnMiss?: CostRefundRule;
+  /*
+   * WHAT THE CAST IN FLIGHT PAID, so an avoided attack can hand most of it
+   * back. Cleared by the first damage this ability resolves, whether that
+   * damage landed or not -- so Whirlwind's off hand missing after its main
+   * hand connected refunds nothing, which is right: the ability connected.
+   */
+  pendingCostRefund?: { abilityId: string; resource: ResourceType; amount: number };
+  /**
+   * WHICH TARGET this combatant's combo points are on.
+   *
+   * Combo points live on the victim rather than on the Rogue, so they are lost
+   * when a builder lands on someone else. One enemy today makes that
+   * unobservable; the field exists so the rule is right rather than remembered
+   * the day an encounter has adds.
+   */
+  comboPointTargetId?: string;
   readonly regeneration: readonly ResourceRegen[];
   readonly resourceOnDamageTaken: ResourceGeneration | undefined;
   readonly reactions: readonly Reaction[];
@@ -418,6 +459,7 @@ export class Combatant {
     this.hitBonusBySlot = options.hitBonusBySlot ?? {};
     this.baseGcdMs = options.baseGcdMs ?? DEFAULT_GCD_MS;
     this.autoAttack = options.autoAttack ?? 'none';
+    this.costRefundOnMiss = options.costRefundOnMiss;
     this.regeneration = options.regeneration ?? [];
     this.resourceOnDamageTaken = options.resourceOnDamageTaken;
     this.reactions = options.reactions ?? [];

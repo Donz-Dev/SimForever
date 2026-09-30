@@ -408,7 +408,13 @@ function measure(
   // Every pool full, and a finisher's combo points banked, so nothing is
   // refused for want of resource.
   for (const resource of player.resources.all) {
+    /*
+     * AND WHOSE THEY ARE. Combo points live on a target, so setting the pool
+     * without also naming the target leaves a finisher unable to spend them --
+     * which reads exactly like an ability that lost its flat damage.
+     */
     if (resource.type === 'comboPoints') resource.set(COMBO_POINTS);
+    if (resource.type === 'comboPoints') player.comboPointTargetId = target.id;
     else resource.fill();
   }
 

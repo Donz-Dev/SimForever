@@ -649,6 +649,12 @@ export const EXECUTE_PHASE_FRACTION = 0.2;
  */
 export const EXECUTE: Ability = {
   id: 'execute',
+  /*
+   * ALWAYS DEPLETES THE POOL, the second of the two abilities the owner
+   * exempted from the 80% refund. Execute consumes the whole rage bar by
+   * design, and a missed one keeping none of it is the point.
+   */
+  refundsCostOnMiss: false,
   stances: ['battle_stance', 'berserker_stance'],
   name: 'Execute',
   cost: { resource: 'rage', amount: EXECUTE_BASE_COST },

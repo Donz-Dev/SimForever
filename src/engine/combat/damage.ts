@@ -595,6 +595,57 @@ export function resolveDamage(
  * This is the only function that reduces health from damage. Everything about
  * a hit, including the death that may follow, flows through here.
  */
+
+/**
+ * Hand most of an ability's cost back when its attack did not connect.
+ *
+ * ----------------------------------------------------------------------------
+ * THE RULE IS THE ENGINE'S AND THE NUMBERS ARE THE RULESET'S, which is why
+ * both the fraction and the resources it covers arrive on the combatant. A
+ * miss, a dodge and a parry all refund; nothing else does, and for an ABILITY
+ * nothing else can -- `melee-special` offers no block at all, so Forever's
+ * "doesn't connect through a block" has no case to cover here. A block on an
+ * auto-attack is not affected either, because an auto-attack costs nothing.
+ *
+ * CLEARED WHETHER OR NOT IT PAID OUT, so each cast refunds at most once and a
+ * multi-hit ability is judged on its first hit. Leaving it armed would let a
+ * later avoided hit refund a cast that had already connected.
+ * ----------------------------------------------------------------------------
+ */
+function refundCostIfAvoided(
+  context: SimulationContext,
+  request: DamageRequest,
+  resolution: DamageResolution,
+): void {
+  const source = request.source;
+  const pending = source.pendingCostRefund;
+  if (!pending || pending.abilityId !== request.abilityId) return;
+
+  source.pendingCostRefund = undefined;
+  if (!resolution.avoided || pending.amount <= 0) return;
+
+  const pool = source.resources.get(pending.resource);
+  if (!pool) return;
+
+  const before = pool.current;
+  pool.gain(pending.amount);
+  const gained = pool.current - before;
+
+  context.telemetry.emit({
+    type: 'resource_gained',
+    timestamp: context.clock.now(),
+    actorId: source.id,
+    resource: pending.resource,
+    amount: gained,
+    // What the cap threw away, so a refund into a full pool is visible rather
+    // than silently absent from the totals.
+    wasted: pending.amount - gained,
+    current: pool.current,
+    source: `${request.abilityId}_refund`,
+    sourceName: `${request.abilityName} (refund)`,
+  });
+}
+
 export function dealDamage(
   context: SimulationContext,
   request: DamageRequest,
@@ -607,6 +658,8 @@ export function dealDamage(
   const attack = rollTable(request, context);
   const resolution = resolveDamage(request, attack, weaponDamage);
   const { target, source } = request;
+
+  refundCostIfAvoided(context, request, resolution);
 
   /*
    * A BLOCK SPENDS A CHARGE, and it is spent here rather than inside

@@ -10,6 +10,14 @@ import {
 } from '../../src/game/combat/comboPoints';
 import { FIXED_RESOURCE_MAXIMUMS, resourceSpecsFor } from '../../src/game/character/resources';
 import { baseManaFor } from '../../src/game/character/baseStatLookup';
+import { makeTarget } from '../helpers/actors';
+
+/*
+ * COMBO POINTS LIVE ON A TARGET, so every award needs one. There is a single
+ * enemy in every encounter here and it is always the main target, which is
+ * what makes `dummy` a constant rather than something a test has to vary.
+ */
+const dummy = makeTarget();
 
 /*
  * ----------------------------------------------------------------------------
@@ -94,7 +102,7 @@ describe('building them', () => {
     const player = rogue();
 
     for (let i = 1; i <= MAX_COMBO_POINTS; i += 1) {
-      awardComboPoint(context, player, 'sinister_strike', 'Sinister Strike');
+      awardComboPoint(context, player, dummy, 'sinister_strike', 'Sinister Strike');
       expect(comboPointsOn(player)).toBe(i);
     }
   });
@@ -109,14 +117,14 @@ describe('building them', () => {
     const { context } = recordingContext();
     const player = rogue();
     for (let i = 0; i < 8; i += 1) {
-      awardComboPoint(context, player, 'sinister_strike', 'Sinister Strike');
+      awardComboPoint(context, player, dummy, 'sinister_strike', 'Sinister Strike');
     }
     expect(comboPointsOn(player)).toBe(MAX_COMBO_POINTS);
   });
 
   it('attributes the award to the ability that built it', () => {
     const { context, granted } = recordingContext();
-    awardComboPoint(context, rogue(), 'mangle_cat', 'Mangle (Cat)');
+    awardComboPoint(context, rogue(), dummy, 'mangle_cat', 'Mangle (Cat)');
     expect(granted).toEqual([{ resource: 'comboPoints', amount: 1, source: 'mangle_cat' }]);
   });
 });
@@ -125,7 +133,7 @@ describe('spending them', () => {
   it('returns how many there were, and leaves none', () => {
     const { context } = recordingContext();
     const player = rogue();
-    awardComboPoint(context, player, 'sinister_strike', 'Sinister Strike', 3);
+    awardComboPoint(context, player, dummy, 'sinister_strike', 'Sinister Strike', 3);
 
     expect(spendComboPoints(player)).toBe(3);
     expect(comboPointsOn(player)).toBe(0);
@@ -141,7 +149,7 @@ describe('spending them', () => {
     const { context } = recordingContext();
     for (const held of [1, 2, 5]) {
       const player = rogue();
-      awardComboPoint(context, player, 'builder', 'Builder', held);
+      awardComboPoint(context, player, dummy, 'builder', 'Builder', held);
       expect(spendComboPoints(player)).toBe(held);
     }
   });
@@ -159,7 +167,7 @@ describe('spending them', () => {
     // A finisher at zero points does nothing and still costs energy and a
     // global cooldown.
     expect(hasComboPoints(player)).toBe(false);
-    awardComboPoint(context, player, 'builder', 'Builder');
+    awardComboPoint(context, player, dummy, 'builder', 'Builder');
     expect(hasComboPoints(player)).toBe(true);
     spendComboPoints(player);
     expect(hasComboPoints(player)).toBe(false);
@@ -190,7 +198,7 @@ describe('scaling a finisher by what it spent', () => {
 
     for (const held of [1, 3, 5]) {
       const player = catDruid();
-      awardComboPoint(context, player, 'mangle_cat', 'Mangle (Cat)', held);
+      awardComboPoint(context, player, dummy, 'mangle_cat', 'Mangle (Cat)', held);
 
       const spent = spendComboPoints(player);
       const damage = perPoint * spent;

@@ -126,7 +126,13 @@ function flatDamageOf(profile: CharacterProfile, ability: Ability): number {
   );
 
   for (const resource of player.resources.all) {
+    /*
+     * AND WHOSE THEY ARE. Combo points live on a target, so setting the pool
+     * without also naming the target leaves a finisher unable to spend them --
+     * which reads exactly like an ability that lost its flat damage.
+     */
     if (resource.type === 'comboPoints') resource.set(5);
+    if (resource.type === 'comboPoints') player.comboPointTargetId = target.id;
     else resource.fill();
   }
 

@@ -107,7 +107,7 @@ export const SINISTER_STRIKE: Ability = {
     // A builder that missed builds nothing. Same rule as rage from damage
     // dealt, and for the same reason.
     if (!result.avoided) {
-      awardComboPoint(simulation, caster, ability.id, ability.name);
+      awardComboPoint(simulation, caster, target, ability.id, ability.name);
     }
     consumeColdBlood(simulation, caster, ability.id);
   },
@@ -160,7 +160,7 @@ export const BACKSTAB: Ability = {
       attackTable: ability.attackTable,
       weaponSlot: MAIN_HAND,
     });
-    if (!result.avoided) awardComboPoint(simulation, caster, ability.id, ability.name);
+    if (!result.avoided) awardComboPoint(simulation, caster, target, ability.id, ability.name);
     consumeColdBlood(simulation, caster, ability.id);
   },
   unmodelled:
@@ -217,7 +217,7 @@ export const MUTILATE: Ability = {
     // Two points for the ability, not one per hand: the source says "Awards 2
     // Combo Points", and a half-avoided Mutilate is still a Mutilate.
     if (landed) {
-      awardComboPoint(simulation, caster, ability.id, ability.name, MUTILATE_COMBO_POINTS);
+      awardComboPoint(simulation, caster, target, ability.id, ability.name, MUTILATE_COMBO_POINTS);
     }
     consumeColdBlood(simulation, caster, ability.id);
   },
@@ -260,7 +260,7 @@ export const HEMORRHAGE: Ability = {
     });
 
     if (!result.avoided) {
-      awardComboPoint(simulation, caster, ability.id, ability.name);
+      awardComboPoint(simulation, caster, target, ability.id, ability.name);
       simulation.applyAura(target, HEMORRHAGE_DEBUFF, caster.id);
     }
   },
@@ -303,7 +303,7 @@ export const GHOSTLY_STRIKE: Ability = {
     // The dodge goes up whether or not the strike landed: it is a state the
     // cast confers, not a rider on the hit.
     simulation.applyAura(caster, GHOSTLY_STRIKE_DODGE_AURA, caster.id);
-    if (!result.avoided) awardComboPoint(simulation, caster, ability.id, ability.name);
+    if (!result.avoided) awardComboPoint(simulation, caster, target, ability.id, ability.name);
   },
 };
 
@@ -331,13 +331,13 @@ export const EVISCERATE: Ability = {
   name: 'Eviscerate',
   cost: { resource: 'energy', amount: 35 },
   attackTable: 'melee-special',
-  canCast: ({ caster }) => hasComboPoints(caster),
+  canCast: ({ caster, target }) => hasComboPoints(caster, target),
   onCast: ({ simulation, caster, target, ability }) => {
     if (!target) return;
 
     // READ, DRAIN, THEN SCALE. `spendComboPoints` returns what it drained so
     // the order cannot be got wrong. See game/combat/comboPoints.ts.
-    const spent = spendComboPoints(caster);
+    const spent = spendComboPoints(caster, target);
     if (spent <= 0) return;
 
     dealDamage(simulation, {
@@ -370,11 +370,11 @@ export const RUPTURE: Ability = {
   name: 'Rupture',
   cost: { resource: 'energy', amount: 25 },
   attackTable: 'melee-special',
-  canCast: ({ caster }) => hasComboPoints(caster),
+  canCast: ({ caster, target }) => hasComboPoints(caster, target),
   onCast: ({ simulation, caster, target, ability }) => {
     if (!target || !ability.attackTable) return;
 
-    const spent = spendComboPoints(caster);
+    const spent = spendComboPoints(caster, target);
     if (spent <= 0) return;
 
     /*
@@ -400,6 +400,12 @@ export const SLICE_AND_DICE: Ability = {
   name: 'Slice and Dice',
   cost: { resource: 'energy', amount: 25 },
   requiresTarget: false,
+  /*
+   * A SELF-BUFF FINISHER, so it spends the pool WITHOUT naming a target.
+   * The points are on the enemy; the buff is on the Rogue. `requiresTarget`
+   * is false and there is no target to check them against, which is exactly
+   * the case `spendComboPoints` leaves the argument optional for.
+   */
   canCast: ({ caster }) => hasComboPoints(caster),
   onCast: ({ simulation, caster, ability }) => {
     const spent = spendComboPoints(caster);
@@ -428,6 +434,12 @@ export const VENOM: Ability = {
   name: 'Venom',
   cost: { resource: 'energy', amount: 25 },
   requiresTarget: false,
+  /*
+   * A SELF-BUFF FINISHER, so it spends the pool WITHOUT naming a target.
+   * The points are on the enemy; the buff is on the Rogue. `requiresTarget`
+   * is false and there is no target to check them against, which is exactly
+   * the case `spendComboPoints` leaves the argument optional for.
+   */
   canCast: ({ caster }) => hasComboPoints(caster),
   onCast: ({ simulation, caster }) => {
     const spent = spendComboPoints(caster);
@@ -440,10 +452,10 @@ export const EXPOSE_ARMOR: Ability = {
   id: 'expose_armor',
   name: 'Expose Armor',
   cost: { resource: 'energy', amount: 25 },
-  canCast: ({ caster }) => hasComboPoints(caster),
+  canCast: ({ caster, target }) => hasComboPoints(caster, target),
   onCast: ({ simulation, caster, target }) => {
     if (!target) return;
-    const spent = spendComboPoints(caster);
+    const spent = spendComboPoints(caster, target);
     if (spent <= 0) return;
     simulation.applyAura(target, exposeArmorAura(spent), caster.id);
   },

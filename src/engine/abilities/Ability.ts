@@ -136,6 +136,14 @@ export interface Ability {
    * be up", and the Warrior's three stances happen to be auras.
    */
   readonly stances?: readonly string[];
+  /**
+   * Whether an avoided attack hands most of this ability's cost back.
+   *
+   * DEFAULTS TO TRUE for any ability costing a refundable resource, so a new
+   * one gets the rule without anyone remembering. Set `false` for the ruleset's
+   * exceptions -- Ferocious Bite and Execute always deplete the pool.
+   */
+  readonly refundsCostOnMiss?: boolean;
 
   /**
    * The stance aura id this ability PUTS the caster in, if it is a stance

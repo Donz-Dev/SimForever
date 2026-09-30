@@ -1,216 +1,267 @@
 # Resources
 
-Every pool has a **current** and a **maximum**. `Resource` owns both, along with
-the clamping rules, so there is one implementation for all of them — including
-health, which is a resource like any other.
+Rage, energy, mana, combo points, focus and soul shards — what each one is
+capped at, where it comes from, and what is still a placeholder.
 
-```typescript
-const rage = player.resources.require('rage');
-rage.current;   // 37.42
-rage.maximum;   // 100
-```
+**Every number here is read off the code as it stands**, not from memory. The
+previous version of this file dated from before combo points, focus and soul
+shards existed, and three of its "not implemented" entries had expired.
+
+## Who owns what
+
+| Class | Pools | Regenerates on a timer |
+| --- | --- | --- |
+| Warrior | rage | — |
+| Rogue | energy, combo points | energy |
+| Druid | mana, rage, energy, combo points | energy, mana |
+| Warlock | mana, soul shards | mana |
+| Paladin, Hunter, Priest, Shaman, Mage | mana | mana |
+| **Pet** | focus | focus |
+
+**A Druid owns all four pools in every form**, so switching to bear does not
+have to create a rage pool that did not exist a moment earlier. Which one
+*drives* play is the form's: `caster`, `moonkin` and `tree` run on mana, `bear`
+on rage, `cat` on energy.
+
+**Focus is the PET's and never the Hunter's.** A Hunter runs on mana like any
+other caster; the pet is a separate combatant with its own hundred focus.
+
+---
 
 ## Rage
 
 | | |
 | --- | --- |
-| Starts at | **0** |
-| Cap | 100, raisable by talents |
-| Regenerates on a timer | **no** |
+| Cap | 100, raisable by talent |
+| Starts at | **0** — the only pool that does |
+| Timer | none. Rage is earned, not regenerated |
 
-Rage is earned by fighting, never granted by the clock.
+### From dealing damage
 
-### Dealing damage
+**A FLAT RATE PER SWING, NOT A SHARE OF THE DAMAGE.**
 
 ```
-rage gained = R x S
-
-  R   3.46 for one-handed weapons and for druid (Bear) paw attacks
-      4.5  for two-handed weapons
-  S   the BASE speed of the weapon, before any modifier
+rage = R × S
 ```
 
-`S` is the item's own speed — 2.5 for a bear's paws, which are not an item.
+`R` is 3.46 for a one-hander or a bear's paws, 4.5 for a two-hander. `S` is the
+weapon's **base** speed, before any modifier.
 
-**It does not depend on the damage at all.** A swing is worth the same rage
-whether it crits for eight hundred or glances for ninety. What it depends on is
-how long the character waited for it.
+`R × S` every `S` seconds is `R` per second, **so the speed cancels**:
 
-**Which makes it a rate, for swings the timer produces.** `R × S` rage every
-`S` seconds is `R` rage per second, so the speed cancels and the handedness
-constant is the *floor*:
-
-| | Rage per second, unaided |
+| | rage per second |
 | --- | --- |
-| Two-handed | **4.5** |
-| One-handed | **3.46** |
-| Dual-wield | **6.92** — 3.46 per hand, each on its own timer |
-| Bear | **3.46** |
+| Two-hander | 4.50 |
+| One-hander | 3.46 |
+| Dual-wield | **6.92** — each hand pays its own `R × S` |
+| Bear paws | 3.46, at a stated 2.5s speed |
 
-- **A fast weapon is no longer better for rage.** Speed is exactly cancelled.
-- **Haste does not raise it.** "Base speed before any modifiers" is the item's
-  number, so a hasted warrior swings more often for proportionally less each
-  time. Under the old rule haste raised damage and damage *was* rage.
-- **Rage income no longer scales with gear or buffs.** It is the same 4.5 a
-  second in a full raid as it is naked. This is the single largest behavioural
-  change: see [the measurements below](#what-the-change-was-worth).
+**Haste raises none of it.** `S` is the item's number, so a hasted warrior
+swings more often for proportionally less each time.
 
-### Extra attacks break the cancellation, and that is the interesting part
+**A miss earns nothing** — it is rage from damage *dealt*, expressed as
+`ResourceGeneration.requiresDamage` rather than falling out of the arithmetic.
 
-An extra attack from Windfury, Hand of Justice or Weaponmaster pays a **full
-`R × S`** for a swing that consumed no time at all. The speed only cancels
-against the swing *timer*; a proc has no timer to cancel against.
+**EXTRA ATTACKS BREAK THE CANCELLATION, and that is where it gets interesting.**
+A Windfury or Hand of Justice proc pays a full `R × S` for a swing that cost no
+time, so a slow two-hander earns 16.2 a proc against a dual-wielder's 9.0.
 
-**So a slow weapon is worth more per proc, not less.** The 2H Arms preset
-carries a 3.6 second two-hander:
+### From taking damage
 
 ```
-4.5 x 3.6 = 16.2 rage per swing, procced or not
+rage = D × 10 / H
 ```
 
-against a dual-wielder's `3.46 × 2.6 = 9.0`. Measured, that preset draws
-**370 rage a minute from main-hand swings — 6.2 a second against a 4.5 floor**,
-because roughly six of its twenty-three swings a fight are procs.
+`D` is the **pre-armor** damage minus the block; `H` is maximum health. Ten
+percent of your health taken is ten rage, on any character at any gear level.
 
-This is the one place the new rule rewards a gear choice, and it does it
-backwards from the old one: slow weapons used to be good for rage because they
-hit hard, and are now good for rage because each proc is worth a whole slow
-swing.
+Three rulings pull against each other on one pipeline step:
 
-**A miss still earns nothing.** The rule is rage from damage *dealt*, so the
-award is flat but conditional — `ResourceGeneration.requiresDamage` is what
-expresses that. Without it a flat award would pay out on a swing that never
-landed.
+| | Reduces the rage? |
+| --- | --- |
+| Defensive Stance −10% | **yes** — it reduces `D` before any of this |
+| Armor | **no** — that is what "pre-armor" means |
+| A block | **yes**, by its flat value |
 
-**Only auto-attacks generate rage from damage dealt.** Ability damage grants
-none unless an ability says otherwise.
+Armor and a block are one step in this engine, so `DamageResolution` carries
+`blocked` separately to tell them apart. **A block is therefore worth less than
+it looks** to a Protection warrior: it removes damage *and* the rage that damage
+would have paid.
 
-### Taking damage
+Only fires when `encounter.targetAttacks` is on.
 
-```
-rage gained = D x 10 / H
+### From abilities
 
-  D   pre-armor damage to be dealt
-  H   maximum hit points
-```
+Bloodrage (10 instant, then 10 over time) and Anger Management (1 every 3
+seconds). The `ResourceGeneration` hook is on any event, not just swings.
 
-**Taking your entire health bar is worth ten rage.** A tenth of it is worth
-one. The figure is easy to misread: ten sounds small until you notice that a
-ramping boss deals a tank many times their health over a fight, which is why
-damage taken is still most of a tank's income.
-
-**It is a fraction of the character rather than a fixed rate.** The old rule
-paid the same rage for the same damage however large the character was, so
-stamina quietly cost rage. This one does not.
-
-**A blocked hit gives the rage of the unblocked amount.** So `D` is
-`resolution.raw` *minus the block* — and armor, block and Defensive Stance all
-behave differently:
-
-| | Reduces the rage? | |
-| --- | :-: | --- |
-| Defensive Stance's −10% | **yes** | it reduces the damage to be dealt, before any of this |
-| Armor | **no** | that is what "pre-armor" means |
-| A block | **yes** | by its flat block value |
-
-**Armor and a block are one step in this engine**, so they had to be told
-apart: `DamageResolution` carries `blocked` beside `mitigated`, which is their
-sum. Reading `mitigated` would take armor off too and leave a tank earning a
-fraction of what it should.
-
-**Which makes block value worth less to a tank than it looks.** A block removes
-damage *and* the rage that damage would have paid, so it trades throughput for
-survival rather than being free mitigation.
-
-### The old formulas
-
-Kept, commented out, in `game/combat/resourceRules.ts`, in case Forever changes
-back:
-
-```
-rage from dealing damage = damage / 230.6 * 7.5
-rage from taking damage  = damage / 230.6 * 2.5
-```
-
-Both sides were proportional to damage, scaled by a level-dependent constant.
-
-### What the change was worth
-
-Measured on identical seeds, 500 iterations for the presets and 400 fights a
-row for the baselines.
-
-**Raid-buffed presets all fell**, because their rage no longer scales with the
-damage the raid buffs let them deal:
-
-| Preset | Before | After | Rage a fight |
-| --- | --- | --- | --- |
-| 2H Arms | 619.3 | **583.1** | 546 → 459 |
-| DW Fury | 689.2 | **641.7** | 784 → 666 |
-| Prot Warr | 375.5 | **356.8** | 779 → 704 |
-
-**Unbuffed baselines all rose**, for the same reason read the other way — a
-character dealing little damage used to earn little rage and now earns the same
-flat income as anyone else:
-
-| Build | Before | After |
-| --- | --- | --- |
-| Dual-wield / Berserker | 163.71 | **189.44** |
-| Two-hander / Battle | 162.44 | **183.66** |
-| Dual-wield, 31-pt Arms | 185.84 | **213.43** |
-| 1H & Shield, 31-pt Protection | 66.40 | **72.77** |
-| Prot, target swings back | 151.49 | **151.12** |
-
-The tank barely moves when the target attacks back, because most of its income
-is damage taken and that side stayed proportional.
-
-Rage is **stored as a decimal** and displayed as an integer, so a fraction of a
-point is never lost to truncation on the way in.
+---
 
 ## Energy
 
 | | |
 | --- | --- |
-| Starts at | **maximum** |
-| Cap | 100, raisable by talents |
-| Regenerates | **20 every 2 seconds** |
+| Cap | 100; Vigor raises it by 5 or 10 |
+| Starts at | maximum |
+| Regenerates | **0.5 every 50ms** — a flat 10 a second |
 
-A flat batch, unaffected by stats and unaffected by spending. There is no
-equivalent of mana's five second rule.
+Unaffected by stats and unaffected by spending. **There is no equivalent of
+mana's five second rule.**
+
+**SMOOTH, AND AT THE RATE IT ALWAYS HAD.** Twenty ticks a second rather than one
+batch every two seconds. The rate is unchanged; what changes is that a rotation
+waits at most 50ms for the last energy it needs instead of up to two seconds.
+
+A Rogue and a Cat-Form Druid also have a **1.0 second global cooldown** rather
+than 1.5, which is a property of the class and not of energy.
+
+---
 
 ## Mana
 
 | | |
 | --- | --- |
-| Starts at | **maximum** |
-| Cap | base mana by class plus 15 per intellect |
-| Regenerates | **40% of MP5, every 2 seconds** |
+| Cap | class/race base mana **+ 15 per intellect** |
+| Starts at | maximum |
+| Regenerates | **MP5 ÷ 100, every 50ms** |
 
-The 40% is exactly 2/5 — MP5 prorated to the tick interval — so a character
-regenerates precisely its stated MP5 over any five seconds of uninterrupted
-ticking. The two numbers agree by construction rather than by coincidence.
+The fraction is **derived from the interval** rather than written down, so the
+rate cannot drift from the cadence: a character still regenerates precisely its
+stated MP5 over any five quiet seconds, exactly as the old 2/5-every-two-seconds
+did.
+
+**SMOOTHING MANA CHANGES WHEN THE FIVE SECOND RULE BITES**, which is the only
+way it is not purely cosmetic — regeneration resumes within 50ms of the window
+clearing rather than waiting for the next two-second boundary.
+
+**MP5 comes from spirit**, at 0.5 a point for most classes and 5/8 for the
+Druid's caster forms.
 
 ### The five second rule
 
-After spending mana, regeneration **stops** until five quiet seconds have
-passed.
-
-`manaRegenBypass` is the stat that reads *"allows X% of your mana regeneration
-to continue while casting"*. While inside the lockout, a character regenerates
-that fraction of the normal tick:
+After spending mana, regeneration **stops** for five seconds. Inside the
+lockout a character gets only what `manaRegenBypass` allows:
 
 ```
-inside lockout:  MP5 * 0.4 * (manaRegenBypass / 100)
-outside:         MP5 * 0.4
+inside:   (MP5 ÷ 100) × (manaRegenBypass / 100)
+outside:  (MP5 ÷ 100)
 ```
 
-With no such stat the answer is zero, and the tick does nothing.
+With no such stat that is zero. The tick still **fires** during the lockout
+rather than being cancelled, so regeneration resumes by itself.
 
-The tick still **fires** during the lockout rather than being cancelled, so
-regeneration resumes by itself the moment the window clears. Nothing has to
-restart it.
+**Spend times are tracked per resource**, so a Druid spending rage in bear form
+does not suppress its own mana regeneration.
 
-Spend times are tracked **per resource**, so a druid spending rage in bear form
-does not suppress its mana regeneration.
+---
+
+## Combo points
+
+| | |
+| --- | --- |
+| Cap | **5** |
+| Starts at | 0 |
+| Timer | none — built by landing attacks |
+
+**Only a builder that CONNECTED awards one**, the same rule rage follows and for
+the same reason.
+
+**At the cap a point is WASTED, not refused.** The overflow is reported, which
+is what makes "how much of my Sinister Strike was thrown away" a number rather
+than a guess. Refusing the award would hide it.
+
+**TRACKED PER TARGET.** Combo points live on the victim, not on the Rogue, so
+building on a different enemy discards whatever was there. `comboPointTargetId`
+records whose they are.
+
+**It can never fire today**, because every encounter has exactly one enemy and
+it is always the main target — which is the point: the rule is right in advance
+rather than remembered the day an encounter has adds. The previous model carried
+points across targets silently, which would have read as a very generous Rogue
+and not as a bug.
+
+A SELF-BUFF FINISHER spends the pool **without naming a target** — Slice and
+Dice and Venom put their buff on the Rogue while the points sit on the enemy.
+
+---
+
+## Focus
+
+The **pet's**, and nobody else's.
+
+| | |
+| --- | --- |
+| Cap | 100 |
+| Starts at | maximum |
+| Regenerates | **0.5 every 50ms** — 10 a second |
+
+Spent by Claw (25), Bite (35) and Growl (15). Bestial Discipline scales the
+regeneration rate.
+
+**THE SOURCE STATES TWO RATES AND THEY DISAGREE.** The Forever Hunter wiki says
+"about 25.5 Focus every 5.2 sec" — which is 4.9 a second — and then "100 Focus
+over 10 sec, or 10 Focus per second", followed by "this is roughly double the
+Classic Focus regeneration rate". Classic's ~5 a second makes that true of 10
+and false of 4.9, so **10 is used**. One constant; flipping it is one edit.
+
+**SMOOTH, at the rate it already had.** The wiki calls the behaviour
+"continuous", which no event-driven engine can be; twenty ticks a second is the
+nearest thing and delivers the stated rate exactly.
+
+---
+
+## Refunds
+
+**An ability that does not connect hands 80% of its cost back**, for **rage and
+energy only**. A mana spell that resists refunds nothing.
+
+"Miss or otherwise don't connect through a block/dodge/parry" is the owner's
+wording, and for an ability the block clause has no case to cover: this engine's
+`melee-special` table offers miss, dodge and parry and **no block at all**, while
+an auto-attack that is blocked costs nothing to refund. So the rule reduces
+exactly to `AVOIDED_OUTCOMES`.
+
+| | |
+| --- | --- |
+| **Ferocious Bite** | exempt — always depletes the pool |
+| **Execute** | exempt — always depletes the pool |
+
+Both say so on themselves with `refundsCostOnMiss: false`. Everything else gets
+the rule by **derivation**, so a new rage or energy ability cannot forget it —
+the same argument the global cooldown uses, and for the same reason: an ability
+that wrongly kept its cost would still deal the right damage.
+
+**A multi-hit ability is judged on its first hit.** The refund is armed when the
+cost is paid and cleared by the first damage the ability resolves, whether that
+damage landed or not — so Whirlwind's off hand missing after its main hand
+connected refunds nothing.
+
+## Soul shards
+
+| | |
+| --- | --- |
+| Cap | **10 — `PLACEHOLDER_SOUL_SHARDS`** |
+| Starts at | maximum |
+| Income | **none at all** |
+
+A Warlock earns shards from Drain Soul **killing** something, which never
+happens against a target that survives every fight. So what a Warlock has is
+whatever it banked before the pull, and nothing states that number.
+
+Ten is a visibly round placeholder, chosen high enough that a sixty-second fight
+never runs dry — which keeps the absence of income from silently becoming the
+thing being measured. **Shadowburn is the only spender.**
+
+**One refund exists and works**: Shadow and Flame gives Shadowburn a 100% chance
+to refund its shard, applied as an `abilityFlag`.
+
+**Decimation's shard clause is blocked twice** and neither blocker is the one
+its old reason named. Every clause needs the target **below 35% health**, which
+never happens against a target that survives by design — *and* its "costs no
+Soul Shards" applies to **Soul Fire**, which is not a declared ability here. So
+the shard half would still do nothing the day the health gate became reachable.
+
+---
 
 ## How it fits together
 
@@ -225,37 +276,17 @@ interface ResourceRegen {
 ```
 
 `amountPerTick` is a **function**, not a number, because how much arrives can
-depend on state that changes mid-fight: the five second rule, and a stat a buff
-can move. Evaluating it per tick means neither needs special handling, and
-returning 0 is normal and cheap.
+depend on state that changes mid-fight — the five second rule, and a stat a buff
+can move. Returning 0 is normal and cheap.
 
 Each resource ticks on its **own independent schedule**, exactly like swing
-timers. A druid's energy and mana do not share a clock.
+timers. Timers stop when a combatant dies.
 
-Timers stop when a combatant dies, so the event queue does not carry regeneration
-for corpses.
+## Still open
 
-## Which classes get what
-
-| Class | Pools | Timers |
-| --- | --- | --- |
-| Warrior | rage | none |
-| Rogue | energy | energy |
-| Druid | mana, rage, energy | energy, mana |
-| Everyone else | mana | mana |
-
-A Druid owns all three pools in every form, so its rage and energy regenerate
-according to their own rules regardless of which form it is in.
-
-## Not implemented
-
-- **Ability-driven rage generation.** The hook exists (`ResourceGeneration` on
-  any event), but no ability uses it.
-- **Energy and mana triggers from talents or set bonuses**, described in the
-  source as rare.
-- **Damage taken** happens only when `encounter.targetAttacks` is on, which is
-  off by default because a damage warrior is not the one being hit. Rage
-  from being hit is implemented and wired; it simply never fires.
-- **Resource analysis.** Telemetry records every gain with the amount wasted to
-  the cap, so rage capping and mana downtime are measurable, but no analyzer
-  reports them yet.
+| | |
+| --- | --- |
+| **Soul shards have no income** | and their pool is a placeholder. The only resource here with no source at all |
+| **Focus's rate is a 10-vs-4.9 judgement** | from one source that contradicts itself |
+| **Only RAGE is reported** | `batch.rage` carries a resource flow with waste; energy, mana, combo points and focus have none, so mana downtime and energy capping are not visible on the results page even though the telemetry records them |
+| **Energy and mana triggers from talents or set bonuses** | the hook exists; nothing uses it |
