@@ -523,6 +523,49 @@ export const CLEARCASTING: AuraDefinition = {
   },
 };
 
+
+/*
+ * ============================================================================
+ * FINGERS OF FROST: "Gives your Chill effects a 15% chance to grant you the
+ * Fingers of Frost effect, which treats your next 2 spells cast as if the
+ * target were Frozen. Lasts 15 sec."
+ *
+ * WHAT MAKES IT REACHABLE IS THAT IT DOES NOT FREEZE ANYTHING. Every other
+ * Frozen-target effect in this file carries `FROZEN_UNMODELLED` and is inert
+ * because a raid boss is never frozen -- a claim about the TARGET, and a
+ * durable one. This talent does not freeze the target; it makes the caster's
+ * next spells BEHAVE as though it were, which is a state on the Mage and is
+ * reachable exactly as written.
+ *
+ * ITS RANK SCALES THE CHARGES, NOT THE CHANCE, which is the opposite of nearly
+ * every other proc talent here: the values file gives [15, 1, 15] and
+ * [15, 2, 15]. So the chance is a constant and the charges come from the rank,
+ * and a test asserts the constant still matches the file at BOTH ranks -- the
+ * day a rank changes the chance, that fails rather than drifting.
+ * ============================================================================
+ */
+export const FINGERS_OF_FROST_DURATION_MS = seconds(15);
+/**
+ * 15% at rank 1 AND rank 2. Read from `values/mage.json` by hand and checked
+ * against it by `mageAbilities.test.ts`, because a constant standing in for a
+ * per-rank value is exactly how a rank change goes unnoticed.
+ */
+export const FINGERS_OF_FROST_PROC_CHANCE = 15;
+
+export function fingersOfFrostAura(charges: number): AuraDefinition {
+  return {
+    id: 'fingers_of_frost',
+    name: 'Fingers of Frost',
+    durationMs: FINGERS_OF_FROST_DURATION_MS,
+    maxStacks: charges,
+    chargesOnApply: charges,
+    refreshBehaviour: 'reset',
+  };
+}
+
+/** The untalented shape, for anything that only needs the id and duration. */
+export const FINGERS_OF_FROST: AuraDefinition = fingersOfFrostAura(2);
+
 /**
  * Missile Barrage: "reduce the channeled duration of your next Arcane Missiles
  * spell by 50%, reduce the Mana cost by 100%, and missiles fire every 0.5 sec."

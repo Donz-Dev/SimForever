@@ -189,6 +189,31 @@ export class AuraCollection {
     }
   }
 
+  /**
+   * Spend one stack of an aura, removing it when the last one goes.
+   *
+   * ----------------------------------------------------------------------------
+   * `consumeCastCharges` does this for an aura whose charges are spent by the
+   * CAST MODIFIER it carries -- Eclipse, Maelstrom Weapon, Missile Barrage.
+   * Fingers of Frost has no cast modifier at all: it changes no cast time and
+   * no cost, it changes what the DAMAGE sees, and its charges are still spent
+   * by casting.
+   *
+   * So the mechanism is offered on its own rather than being reached by giving
+   * the aura a cast modifier that modifies nothing -- which would work, and
+   * would leave the next reader looking for the modification.
+   * ----------------------------------------------------------------------------
+   */
+  consumeStack(context: SimulationContext, auraId: string): void {
+    const instance = this.auras.get(auraId);
+    if (!instance) return;
+    if (instance.stacks > 1) {
+      instance.stacks -= 1;
+      return;
+    }
+    this.expire(context, instance);
+  }
+
   remove(context: SimulationContext, auraId: string): void {
     const instance = this.auras.get(auraId);
     if (!instance) return;

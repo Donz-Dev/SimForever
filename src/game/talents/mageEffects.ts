@@ -228,7 +228,31 @@ export const MAGE_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
 
   ice_block: [{ kind: 'unmodelled', reason: 'A survival cooldown, and no Mage profile is hit.' }],
 
-  shatter: [{ kind: 'unmodelled', reason: FROZEN_UNMODELLED }],
+  /*
+   * ITS REASON CHANGED THE MOMENT FINGERS OF FROST LANDED, which is the
+   * failure this project has been caught by six times: nothing errors, the
+   * caveat keeps printing, and it is now describing a different situation.
+   *
+   * "Nothing freezes a raid boss" is no longer the whole story -- Fingers of
+   * Frost treats the next two spells as though one were, and this build takes
+   * both talents. So Shatter's crit reaches those two casts in the ruleset and
+   * does not here.
+   *
+   * WHAT IT NEEDS is a crit bonus that holds only while an aura is up, across
+   * every spell rather than a named one. `AuraDefinition.abilityModifiers`
+   * (added with Berserk) is the shape, once it also honours the
+   * `ALL_ABILITIES` key.
+   */
+  shatter: [
+    {
+      kind: 'unmodelled',
+      reason:
+        'Its crit against Frozen targets is not read. Nothing freezes a raid ' +
+        'boss, but Fingers of Frost now treats the next two spells as though ' +
+        'one were -- and this build takes both talents, so this is a live gap ' +
+        'rather than a property of the target.',
+    },
+  ],
 
   improved_cone_of_cold: [
     { kind: 'unmodelled', reason: 'Cone of Cold is an area spell and is not in the book.' },
@@ -243,7 +267,22 @@ export const MAGE_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
     },
   ],
 
-  fingers_of_frost: [{ kind: 'unmodelled', reason: FROZEN_UNMODELLED }],
+  /*
+   * THE ONE FROZEN TALENT THAT IS NOT INERT, and it never should have carried
+   * `FROZEN_UNMODELLED`. That reason is a claim about the TARGET -- nothing
+   * freezes a raid boss -- and this talent does not freeze anything. It puts a
+   * state on the MAGE that makes its next spells behave as though the target
+   * were frozen, which is reachable exactly as written.
+   *
+   * TWO EFFECTS FOR ONE TALENT: the proc that applies the charges, and the
+   * cast reaction that spends them. `valueIndex: 1` is the CHARGE COUNT, which
+   * is the number the rank scales -- the chance is 15 at both ranks and lives
+   * as a checked constant beside the aura.
+   */
+  fingers_of_frost: [
+    { kind: 'reaction', reactionId: 'fingers_of_frost', valueIndex: 1 },
+    { kind: 'castReaction', reactionId: 'fingers_of_frost', valueIndex: 1 },
+  ],
 
   winter_s_chill: [
     {
