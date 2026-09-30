@@ -100,6 +100,60 @@ results page.
 Obsidian Fury, whose "+172 Attack Power in Cat, Bear, and Dire Bear forms only"
 cannot be expressed, because an item stat is not conditional on the combat style.
 
+### The macro audit
+
+**Every ability and damage source, across all 23 profiles, checked for whether it
+is CONNECTED rather than whether its number is right.**
+[docs/ability-audit.md](docs/ability-audit.md), `npx vite-node tools/ability_audit.ts`.
+
+| | |
+| --- | --- |
+| **134** | abilities in at least one profile's book |
+| **109** | exercised by at least one profile |
+| **25** | cast by none of the 23, **each with a stated reason and none of them a broken declaration** |
+| **8** | priority list entries that never fire, six of them deliberate |
+| **23 of 23** | damage tables summing to **100%** |
+| **0** | abilities that deal damage without responding to a stat (the coefficient probe's result) |
+
+**THOSE LAST TWO TOGETHER ARE THE BILL OF HEALTH**: everything that deals damage
+scales with something, and everything that deals damage is counted. The share
+total is the one that is easy to overlook and hard to fake -- a source nobody
+reports reads as a zero rather than as a gap.
+
+**AND IT CORRECTED A DOCUMENTED INVARIANT.** Both handoff files claimed every
+entry in every list fires; eight do not, and the claim was contradicted two
+paragraphs below in the same file by the stance and shout entries kept on purpose.
+
+## Per-class deep dives
+
+**Nine documents in [docs/handoff/](docs/handoff/), one per class**, each the
+starting point for that class's own context window. Every one carries its
+profiles and their baseline DPS, its talent census row, its live gaps with
+reasons, its never-fired entries, its damage sources, the state of its SOURCES,
+and the traps specific to it.
+
+Their figures are re-derivable rather than asserted: `npx vite-node
+tools/class_audit.ts <class>` prints the census, the gaps and the per-profile
+structure, and throws if its four buckets do not account for every talent.
+
+| Document | Profiles | Live gaps |
+| --- | --- | --- |
+| [warrior.md](docs/handoff/warrior.md) | 2H Arms, DW Fury, Prot Warr | **1** |
+| [paladin.md](docs/handoff/paladin.md) | Seal Twist Ret, Shockadin, Prot Pally | **10** |
+| [druid.md](docs/handoff/druid.md) | Moonkin, Cat, Bear | **12** |
+| [hunter.md](docs/handoff/hunter.md) | BM Hunter, LW Ranged, LW Melee | **13** |
+| [mage.md](docs/handoff/mage.md) | Frostfire, Arcane, Fire | **16** |
+| [shaman.md](docs/handoff/shaman.md) | Ele Shaman, Enh Shaman | **17** |
+| [priest.md](docs/handoff/priest.md) | Shadow | **18** |
+| [rogue.md](docs/handoff/rogue.md) | Venom, Combat, Rupture | **20** |
+| [warlock.md](docs/handoff/warlock.md) | SM/DS, Firelock | **25** |
+
+**THE WARRIOR'S 1 AGAINST THE WARLOCK'S 25 IS NOT A DIFFERENCE IN DIFFICULTY.**
+The Warrior had four sources and eight of its numbers turned out wrong; the other
+eight classes rest on `talentsforever.com` plus one `foreverchanges.pro`
+cross-check. Read the Warrior's column as what a class looks like after the work,
+not as a class that needed less.
+
 ## The milestone
 
 **A full engine for WoW: Forever with all 23 profiles fully implemented — every
