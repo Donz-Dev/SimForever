@@ -19,7 +19,7 @@ Read in this order:
 | | |
 | --- | --- |
 | **23 of 23 lists** | the owner's, specified entry by entry, measured after |
-| **Every entry fires** | the twelve that never did are gone; a `USES=1` sweep is clean |
+| **Every entry fires** | the twelve that never did are gone -- but the sweep is NOT clean: **eight entries still never fire**, six of them deliberately. Listed with reasons in [ability-audit.md](ability-audit.md) |
 | **Baseline** | republished in [HANDOVER.md](../HANDOVER.md) at 30 batches of 10 |
 | **Still shells** | `WARRIOR_BATTLE` and `WARRIOR_SHIELD` only, which **no preset reaches**, plus `PET_PRIORITY` |
 | **Optimisation** | NOT started. The owner's instruction was "implement the provided APLs as best as possible, don't try to optimize the lists I provided any further for now" |
@@ -135,6 +135,21 @@ BASELINE=before.json npx vite-node tools/measure_profiles.ts
 produces an ordinary DPS figure, so a measurement of a list with a dead entry in
 it measures something other than what was written. It caught a broken engine
 primitive that the full test suite passed straight over.
+
+**AND `ability_audit.ts` IS THE THIRD AUDIT, for the macro question rather than
+a list one.** `USES=1` shows what the LIST did; the audit adds the category
+neither it nor the coefficient probe can see -- an ability in the character's own
+book that is in no list and deals no damage, which is declared, learnable, never
+cast, and reported nowhere. It also checks each profile's damage shares sum to
+100%, which is what says the table is complete rather than merely consistent.
+
+```bash
+npx vite-node tools/ability_audit.ts
+```
+
+See [ability-audit.md](ability-audit.md) for what it found: 134 abilities in a
+book somewhere, 109 exercised by at least one profile, and 25 cast by none of the
+23 -- with each of the 25 grouped by why, because most of them are correct.
 
 **MEASURE IN A THROWAWAY WORKTREE AT A NAMED COMMIT.** Other sessions edit this
 checkout live; a measurement taken in it once came back a clean −2.0% on two
