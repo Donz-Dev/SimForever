@@ -92,17 +92,20 @@ const either =
 
 /*
  * ----------------------------------------------------------------------------
- * "SCORCH IF SCORCH DEBUFF <= 5" IS READ AS "BELOW THE CAP", AND SAYING SO.
+ * "SCORCH IF SCORCH DEBUFF < 5", CONFIRMED BY THE RULESET OWNER.
  *
- * Fire Vulnerability caps at five stacks, so a LITERAL `<= 5` is always true --
- * Scorch would be unconditional and every entry below it in the Fire and
- * Frostfire lists unreachable, which is the exact failure this project keeps
- * finding. The owner's own Combustion entry uses `>= 5` to mean "at cap", and
- * that is what makes `< 5` the reading under which both halves of the Scorch
- * condition do work.
+ * The spec said `<= 5` and it was implemented as `< 5`, flagged as an
+ * interpretation, and the owner has since settled it in those words: "scorch
+ * should be cast if there are <5 stacks of it, not <=5". So the reading that
+ * was chosen is the one intended, and this is no longer a question.
  *
- * FLAGGED RATHER THAN BURIED. If the literal reading was intended, this pair of
- * constants is the whole change.
+ * WHY IT COULD NOT BE TAKEN LITERALLY. Fire Vulnerability caps at five stacks,
+ * so `<= 5` is always true -- Scorch would be unconditional and every entry
+ * below it in the Fire and Frostfire lists unreachable. The evidence for `< 5`
+ * was the owner's own Combustion entry using `>= 5` to mean "at cap", and the
+ * rule this project follows: implement the reading that leaves every clause
+ * doing work, name the constant, and say which reading was chosen. Both halves
+ * of that worked -- the reading was right and the flag is what got it asked.
  * ----------------------------------------------------------------------------
  */
 const SCORCH_STACK_CAP = IMPROVED_SCORCH_MAX_STACKS;

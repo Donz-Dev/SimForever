@@ -3,6 +3,12 @@ import { createPlayer } from '../../src/game/actors/createPlayer';
 import { runProfileBatch } from '../../src/simulator';
 import { PRESETS_BY_ID } from '../../src/profiles/presets';
 import { abilitiesForClass } from '../../src/game/abilities/abilitiesForClass';
+import type { Ability, TelemetryEvent } from '../../src/engine';
+import { NO_CHANCES, castAbility, seconds } from '../../src/engine';
+import { buildSimulation } from '../helpers/buildSimulation';
+import { makeAttacker, makeTarget } from '../helpers/actors';
+import { WRACK_TICK_SP_COEFFICIENT } from '../../src/game/combat/coefficients';
+import { WARLOCK_AFFLICTION } from '../../src/game/rotations/warlock';
 import {
   CONFLAGRATE_DAMAGE,
   CONFLAGRATE_KEEPS_IMMOLATE,
@@ -15,6 +21,10 @@ import {
   SHADOWBURN_MANA,
   SHADOWBURN_REFUNDS_SHARD,
   SHADOW_BOLT_DAMAGE,
+  WRACK,
+  WRACK_DOT_AMPLIFICATION_PERCENT,
+  WRACK_TICKS,
+  WRACK_TICK_DAMAGE,
 } from '../../src/game/abilities/warlock';
 import {
   BANE_OF_AGONY_TOTAL,
@@ -49,6 +59,49 @@ const presetPlayer = (preset: string) => {
     equipment: built.equipment,
   });
 };
+
+/**
+ * Every point of damage one ability causes at a given spell power, ticks
+ * included.
+ *
+ * ----------------------------------------------------------------------------
+ * SCRIPTED, NOT SAMPLED. `NO_CHANCES` with a large NEGATIVE crit is what makes
+ * this exact: every attack is a clean hit and nothing crits, so the figure is
+ * the coefficient arithmetic and not a seed. A zero crit chance would NOT do --
+ * `applyAbilityModifiers` ADDS a talent's crit to whatever the provider
+ * returned, so zero is the number that looks right and is not.
+ *
+ * The clock runs past the whole six-second channel, because a channel deals
+ * nothing at the instant it is cast.
+ * ----------------------------------------------------------------------------
+ */
+function damageFrom(ability: Ability, spellPower: number): number {
+  const events: TelemetryEvent[] = [];
+  const actor = makeAttacker({
+    autoAttack: 'none',
+    abilities: [ability],
+    stats: { spellPower },
+    resources: [{ type: 'mana', maximum: 1_000_000 }],
+  });
+  const target = makeTarget({ maxHealth: 100_000_000 });
+  const simulation = buildSimulation(
+    [actor, target],
+    {
+      durationMs: seconds(30),
+      attackChances: () => ({ ...NO_CHANCES, crit: -1_000_000, critMultiplier: 1 }),
+    },
+    { emit: (event) => events.push(event) },
+  );
+
+  castAbility(simulation, actor, actor.abilities.get(ability.id)!, target);
+  simulation.advanceTo(seconds(20));
+
+  let total = 0;
+  for (const event of events) {
+    if (event.type === 'damage' && event.sourceId === actor.id) total += event.amount;
+  }
+  return total;
+}
 
 describe('the numbers', () => {
   it('takes the midpoint of each stated range, at MAX RANK', () => {
@@ -234,5 +287,97 @@ describe('the two fights', () => {
     const batch = batchOf('warlock_smds', 30, 5);
     expect(batch.abilities.find((a) => a.abilityName === 'Life Tap')?.uses ?? 0)
       .toBeGreaterThan(3);
+  });
+});
+
+describe('Wrack, scaling now, and still not worth casting', () => {
+  /*
+   * --------------------------------------------------------------------------
+   * "Tears the target apart from within, dealing 36 Shadow damage every 1 sec
+   * and increasing the damage they take from your other Shadow damage over
+   * time effects by 10%. Lasts 6 sec." 200 mana, a six-second channel, new in
+   * Forever, and rank 1 IS max.
+   *
+   * ONE HALF IS MODELLED NOW. The coefficient arrived from the ruleset owner
+   * directly -- 14.3% of spell power a tick -- and the amplification clause did
+   * not, so that one keeps its own words and is asserted to still say so.
+   * --------------------------------------------------------------------------
+   */
+  it('ticks six times a second for a flat 36 plus 14.3% spell power each', () => {
+    /*
+     * WRITTEN OUT BY HAND from the owner's own message: "14.3% of spell power
+     * each tick, ticks every second for 6 seconds, 6 total ticks."
+     *
+     * NOT FROM THE SHEET, which has no Wrack row -- so unlike every other
+     * coefficient in the project this one cannot be re-checked against
+     * `WoWSimWorksheet.xlsx`, and the provenance is recorded beside the
+     * constant rather than only here.
+     */
+    expect(WRACK_TICK_DAMAGE).toBe(36);
+    expect(WRACK_TICKS).toBe(6);
+    expect(WRACK_TICK_SP_COEFFICIENT).toBe(0.143);
+    expect(WRACK.castTimeMs).toBe(seconds(6));
+    expect(WRACK.channelTicks).toBe(6);
+    expect(WRACK.cost).toEqual({ resource: 'mana', amount: 200 });
+    // Six ticks one second apart, which is what makes the tick figure per-tick.
+    expect(WRACK.castTimeMs! / WRACK.channelTicks!).toBe(seconds(1));
+  });
+
+  it('adds the coefficient to the flat damage rather than replacing it', () => {
+    /*
+     * THE OWNER'S STANDING INSTRUCTION WITH THE SHEET -- "make sure that flat
+     * ability damage doesn't get lost" -- and the risk is not the pipeline but
+     * an edit that overwrites a `baseAmount` while setting a coefficient. So
+     * this casts at ZERO spell power, where the coefficient contributes nothing
+     * and what is left is the flat 36 a tick.
+     */
+    expect(damageFrom(WRACK, 0)).toBeCloseTo(WRACK_TICK_DAMAGE * WRACK_TICKS, 6);
+
+    /*
+     * AND AT REAL SPELL POWER the six ticks carry 0.858 between them, which is
+     * Shadow Bolt's 0.857 delivered in twice the time. Asserted as the TOTAL
+     * across the channel, because per-tick is what the constant states and the
+     * total is what a reader compares against another spell.
+     */
+    const withPower = damageFrom(WRACK, 1000);
+    const expected = WRACK_TICK_DAMAGE * WRACK_TICKS + 1000 * WRACK_TICK_SP_COEFFICIENT * WRACK_TICKS;
+    expect(withPower).toBeCloseTo(expected, 6);
+  });
+
+  it('still says its ONE remaining gap in its own words', () => {
+    /*
+     * The amplification clause is what would make it worth casting and it is
+     * not modelled. This asserts the reason no longer claims the COEFFICIENT is
+     * missing -- an expired reason printing a caveat that has been fixed is a
+     * failure this project has met six times.
+     */
+    expect(WRACK.unmodelled).toContain('Shadow Bolt');
+    expect(WRACK.unmodelled).not.toContain('no Wrack row');
+    expect(WRACK.unmodelled).not.toContain('NO spell power coefficient');
+    expect(WRACK_DOT_AMPLIFICATION_PERCENT).toBe(10);
+  });
+
+  it('is in no list, which the owner asked for outright', () => {
+    /*
+     * "It's unimportant for the rest of the simulator for now, there isn't a
+     * profile that uses it." The coefficient did not change that: six seconds
+     * of Wrack is about half what two Shadow Bolts deal in the same six, and
+     * the reason to cast it is the unmodelled clause above.
+     *
+     * ONE LINE RE-MEASURES IT the day the amplification is expressible.
+     */
+    expect(WARLOCK_AFFLICTION.map((entry) => entry.abilityId)).not.toContain('wrack');
+  });
+
+  it('is granted by the capstone, so only SM/DS carries one', () => {
+    const smds = PRESETS_BY_ID.get('warlock_smds')!.build();
+    expect(
+      abilitiesForClass('warlock', 'caster', smds.talents).map((a) => a.id),
+    ).toContain('wrack');
+
+    const firelock = PRESETS_BY_ID.get('warlock_firelock')!.build();
+    expect(
+      abilitiesForClass('warlock', 'caster', firelock.talents).map((a) => a.id),
+    ).not.toContain('wrack');
   });
 });

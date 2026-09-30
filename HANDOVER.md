@@ -168,8 +168,8 @@ fails.
 | Mage | 54 | 26 | 2 | 9 | **17** |
 | Priest | 53 | 15 | 2 | 18 | **18** |
 | Rogue | 53 | 25 | 2 | 6 | **20** |
-| Warlock | 52 | 20 | 3 | 3 | **26** |
-| **Total** | **468** | **212** | **33** | **89** | **134** |
+| Warlock | 52 | 21 | 3 | 3 | **25** |
+| **Total** | **468** | **213** | **33** | **89** | **133** |
 
 **SIX TALENTS LEFT THE GAP COLUMN WITH THE PRIORITY LISTS**, and four of them
 were never really in it. Cutthroat and Premeditation were counted among the
@@ -180,7 +180,7 @@ reason was a statement about the engine ("nothing can reset a cooldown from
 content") and the engine now can. Fingers of Frost carried `FROZEN_UNMODELLED`,
 which is a claim about the TARGET, and that talent does not freeze anything.
 
-**245 of 468 talents do something**, 89 never will, and **134 are the actual
+**246 of 468 talents do something**, 89 never will, and **133 are the actual
 remaining work** — not the 262 a raw count of unmodelled reasons suggests. The 96
 scoped entries break down as 32 crowd control, 33 healing, 17 positioning and 14
 threat.
@@ -263,6 +263,16 @@ point per tick, and Rupture at a flat 3% a tick. Lacerate's "10% weapon damage
 per existing application" applies too — its `unmodelled` reason claimed a
 periodic tick could not read its own stack count, and `AuraInstance` has carried
 `stacks` all along.
+
+**AND ONE COEFFICIENT NOW EXISTS THAT THE SHEET DOES NOT CONTAIN.** Wrack is
+**14.3% of spell power per tick**, six ticks one second apart, supplied by the
+owner directly -- `WoWSimWorksheet.xlsx` lists nine Warlock spells and Wrack is
+not one of them. It is the only row in `coefficients.ts` that a refresh of the
+sheet will not carry, and the provenance is recorded beside the constant for
+exactly that reason. **It did not make the ability worth casting:** 0.858 over a
+six-second channel is Shadow Bolt's 0.857 in twice the time, so Wrack stays out
+of every list, which is what the owner asked for. Its +10% to your other Shadow
+DoTs is still unmodelled and is the reason anybody would cast it.
 
 ~~**ONE ROW OF THE SHEET STILL CANNOT BE APPLIED.**~~ **Every row is applied.**
 The last one was:
@@ -350,24 +360,17 @@ carries what each list turned out to be worth and the three findings that came
 out of building them.
 
 **PICKING IT UP AGAIN HAS ITS OWN BRIEF**: [docs/handoff-apl.md](docs/handoff-apl.md),
-which carries the state, the five open items below in full, the tools in the order
+which carries the state, the three open items below in full, the tools in the order
 to use them, and the two things about this codebase a list author needs before
 writing an entry.
 
 **WHAT THE APL WORK LEFT BEHIND, in order of how much it costs:**
 
-1. **Wrack has no coefficient.** `WoWSimWorksheet.xlsx` lists nine Warlock
-   spells and Wrack is not one, so it deals a flat 36 a tick and scales with
-   nothing. As modelled it cannot be worth casting -- 216 over a six-second
-   channel against a Shadow Bolt worth 268 plus 0.857 spell power in three --
-   and the ruleset owner has PAUSED its implementation. Its `everySpellScales`
-   exemption is the only entry in that list which is a GAP rather than a RULE,
-   and the line says to DELETE it the day a Wrack row exists.
-2. **Shatter is a live gap that Fingers of Frost opened.** "Nothing freezes a
+1. **Shatter is a live gap that Fingers of Frost opened.** "Nothing freezes a
    raid boss" stopped being the whole story: Fingers of Frost treats the next
    two spells as though one were, and the Frostfire build takes both talents.
    It needs `AuraDefinition.abilityModifiers` to honour the `ALL_ABILITIES` key.
-3. **Two of the owner's lists measure down and were shipped as written**, with
+2. **Two of the owner's lists measure down and were shipped as written**, with
    the cost isolated rather than acted on: Venom's Eviscerate floors at -20.4,
    and Shadow Word: Death leaving the Priest at -35.7. Both are the owner's
    design and both numbers are in the baseline notes above.

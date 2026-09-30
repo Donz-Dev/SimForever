@@ -17,6 +17,7 @@ import {
   SEARING_PAIN_SP_COEFFICIENT,
   SHADOWBURN_SP_COEFFICIENT,
   SHADOW_BOLT_SP_COEFFICIENT,
+  WRACK_TICK_SP_COEFFICIENT,
 } from '../combat/coefficients';
 
 /**
@@ -374,6 +375,82 @@ export const SEARING_PAIN: Ability = {
   unmodelled: 'Its "high amount of threat" does nothing; the engine does not track threat.',
 };
 
+/*
+ * ============================================================================
+ * WRACK, the Affliction capstone: "Tears the target apart from within, dealing
+ * 36 Shadow damage every 1 sec and increasing the damage they take from your
+ * other Shadow damage over time effects by 10%. Lasts 6 sec." 200 mana, a
+ * six-second CHANNEL, new in Forever and rank 1 IS max.
+ *
+ * ----------------------------------------------------------------------------
+ * TWO HALVES, AND THE ONE STILL MISSING IS THE REASON ANYBODY WOULD CAST IT.
+ *
+ * ITS COEFFICIENT IS 14.3% OF SPELL POWER PER TICK, supplied by the ruleset
+ * owner directly rather than by `WoWSimWorksheet.xlsx`, which has no Wrack row.
+ * That closed the gap this ability was PAUSED on. The provenance is recorded at
+ * `WRACK_TICK_SP_COEFFICIENT`, because it is the one row in that file which a
+ * refresh of the sheet will not contain.
+ *
+ * ITS +10% TO YOUR OTHER SHADOW DoTs IS STILL NOT MODELLED. The engine has
+ * damage-taken multipliers per SCHOOL, and a school multiplier would also raise
+ * Shadow Bolt, which is 58.9% of the SM/DS profile's damage. That is not an
+ * approximation, it is a much bigger number wearing the right label -- so the
+ * clause keeps its own words instead. A periodic-only school vulnerability is
+ * the field it wants.
+ *
+ * THE COEFFICIENT DID NOT MAKE IT WORTH CASTING, and that is worth saying
+ * plainly so nobody reads the number as a buff and goes looking for a list to
+ * put it in. Six ticks at 14.3% is 0.858 over the channel -- Shadow Bolt's
+ * 0.857 delivered in twice the time -- so six seconds of Wrack is 216 + 0.858
+ * against two Shadow Bolts at 536 + 1.714 in the same six. It is about half the
+ * damage either way, before and after.
+ *
+ * SO IT IS IN NO LIST, and the owner has said so outright: "it's unimportant
+ * for the rest of the simulator for now, there isn't a profile that uses it."
+ * Built, coefficient applied, mechanism tested, and its value waits on the
+ * amplification clause rather than on a measurement.
+ * ----------------------------------------------------------------------------
+ */
+export const WRACK_TICK_DAMAGE = 36;
+export const WRACK_TICKS = 6;
+export const WRACK_CHANNEL_MS = seconds(WRACK_TICKS);
+/** "your other Shadow damage over time effects", and it is not applied. */
+export const WRACK_DOT_AMPLIFICATION_PERCENT = 10;
+
+export const WRACK: Ability = {
+  id: 'wrack',
+  name: 'Wrack',
+  cost: { resource: 'mana', amount: 200 },
+  castTimeMs: WRACK_CHANNEL_MS,
+  channelTicks: WRACK_TICKS,
+  attackTable: 'spell',
+  onCast: ({ simulation, caster, target, ability }) => {
+    if (!target) return;
+    dealDamage(simulation, {
+      source: caster,
+      target,
+      abilityId: ability.id,
+      abilityName: ability.name,
+      school: 'shadow',
+      baseAmount: WRACK_TICK_DAMAGE,
+      /*
+       * PER TICK, and `onCast` runs once per channel tick, so this is the
+       * per-tick figure and not the total. Added to the flat 36 rather than
+       * replacing it -- the owner's standing instruction with the sheet was to
+       * make sure flat ability damage does not get lost.
+       */
+      powerCoefficient: WRACK_TICK_SP_COEFFICIENT,
+      attackTable: ability.attackTable,
+    });
+  },
+  unmodelled:
+    `Its "+${WRACK_DOT_AMPLIFICATION_PERCENT}% damage from your other Shadow ` +
+    'damage over time effects" does nothing. Damage-taken multipliers here are ' +
+    'per SCHOOL, and a Shadow multiplier would also raise Shadow Bolt -- 58.9% ' +
+    "of this profile's damage -- which is a bigger number rather than an " +
+    'approximation. A periodic-only school vulnerability is the field it wants.',
+};
+
 export const WARLOCK_ABILITIES: readonly Ability[] = [
   SHADOW_BOLT,
   CORRUPTION_ABILITY,
@@ -385,4 +462,6 @@ export const WARLOCK_ABILITIES: readonly Ability[] = [
   CONFLAGRATE,
   SHADOWBURN,
   SEARING_PAIN,
+  // Granted by the Affliction capstone; `grantsByAbility` gates it.
+  WRACK,
 ];

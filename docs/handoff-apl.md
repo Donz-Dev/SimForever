@@ -33,23 +33,21 @@ the owner's, and the numbers below are the price they have already been told.
 
 ## Open, in the order they cost the most
 
-### 1. Wrack has no coefficient, and the ability is paused
+**TWO ANSWERS FROM THE RULESET OWNER CLEARED TWO ITEMS.** Wrack's coefficient is
+**14.3% of spell power a tick**, six ticks a second apart -- supplied directly,
+because `WoWSimWorksheet.xlsx` has no Wrack row -- and it is applied. Scorch's
+`< 5` was **confirmed as intended**, which is what was already implemented. Both
+entries are deleted rather than marked done.
 
-`WoWSimWorksheet.xlsx` — the owner's authoritative coefficient document — lists
-nine Warlock spells, and Wrack is not one. So it deals a flat 36 a tick and
-scales with nothing: 216 over a six-second channel against a Shadow Bolt worth
-268 plus 0.857 spell power in three. **As modelled it cannot be worth casting.**
+**WRACK IS STILL IN NO LIST, AND THE COEFFICIENT IS WHY THAT DID NOT CHANGE.**
+Six ticks at 14.3% is 0.858 over the channel -- Shadow Bolt's 0.857 delivered in
+twice the time -- so six seconds of Wrack is about half what two Shadow Bolts
+deal in the same six. The reason to cast it is the +10% to your other Shadow
+DoTs, which is still unmodelled. The owner said so outright: "it's unimportant
+for the rest of the simulator for now, there isn't a profile that uses it."
 
-The owner paused its implementation. The PR is open and unmerged; the SM/DS list
-carries a comment where the entry belongs, saying why it is absent.
 
-Its exemption in `everySpellScales.test.ts` is **the only entry in that list
-which is a GAP rather than a RULE**, and the comment says to DELETE the line the
-day a Wrack row exists rather than amend it.
-
-**What unblocks it:** one number from the ruleset owner.
-
-### 2. LW Melee lost 237 DPS and nobody has confirmed the second half
+### 1. LW Melee lost 237 DPS and nobody has confirmed the second half
 
 It went from the highest non-Warrior profile (558.7) to fourth from bottom
 (321.5), and it is two separate things:
@@ -65,7 +63,7 @@ It went from the highest non-Warrior profile (558.7) to fourth from bottom
 
 **What unblocks it:** the owner confirming the list is intended as written.
 
-### 3. Two Eviscerate gates suppress the ability they gate
+### 2. Two Eviscerate gates suppress the ability they gate
 
 Both Rogue lists that carry one are affected, and the shape is identical:
 three conditions that must hold at once, one of which is a floor on a
@@ -80,7 +78,7 @@ Gating the Venom one on five points alone measures 413.1 — noise against its
 baseline. **Shipped as specified**; the isolation is recorded so the owner can
 decide.
 
-### 4. Shatter is a live gap that Fingers of Frost opened
+### 3. Shatter is a live gap that Fingers of Frost opened
 
 "Nothing freezes a raid boss" stopped being the whole story the moment Fingers
 of Frost landed: it treats the caster's next two spells as though the target
@@ -91,16 +89,6 @@ reaches those two casts in the ruleset and does not here.
 `ALL_ABILITIES` key. The field exists (added with Berserk) and
 `AuraCollection.abilityModifierFor` looks up the ability id exactly; it needs to
 fold in the `'*'` entry the way `AbilityModifiers.for` already does.
-
-### 5. "Scorch if scorch debuff <= 5" is implemented as `< 5`
-
-Fire Vulnerability caps at five stacks, so the literal reading is always true and
-makes Scorch unconditional — which would put every entry below it in the Fire
-and Frostfire lists out of reach. The owner's own Combustion entry uses `>= 5`
-for "at cap", which is the evidence for `< 5`.
-
-`SCORCH_STACK_CAP` in `src/game/rotations/mage.ts` is the one-line flip if the
-literal reading was intended.
 
 ---
 

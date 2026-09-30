@@ -71,7 +71,7 @@ export const WARLOCK_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
   ],
 
   improved_drains: [
-    { kind: 'unmodelled', reason: 'Drain Life, Drain Soul and Wrack are channels no list casts.' },
+    { kind: 'unmodelled', reason: 'Drain Life and Drain Soul are channels no list casts; Wrack is declared.' },
   ],
 
   improved_bane_of_agony: [{ kind: 'abilityDamage', abilityId: 'bane_of_agony' }],
@@ -112,21 +112,20 @@ export const WARLOCK_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
   siphon_life: [{ kind: 'grantAbility', abilityId: 'siphon_life' }],
 
   soul_siphon: [
-    { kind: 'unmodelled', reason: 'Drain Life, Drain Soul and Wrack are channels no list casts.' },
+    { kind: 'unmodelled', reason: 'Drain Life and Drain Soul are channels no list casts; Wrack is declared.' },
   ],
 
   shadow_mastery: [{ kind: 'schoolDamage', schools: ['shadow'] }],
 
-  wrack: [
-    {
-      kind: 'unmodelled',
-      reason:
-        'A six-second CHANNEL. The engine has channels now, and this one is ' +
-        'worth 216 damage over six seconds against a Shadow Bolt worth 268 in ' +
-        'three -- so no list casts it, which is a rotation decision rather ' +
-        'than a gap.',
-    },
-  ],
+  /*
+   * DECLARED NOW, because the ruleset owner put it in the SM/DS list -- and
+   * the arithmetic the old reason gave is unchanged and still says it cannot
+   * be worth casting. Both of the reasons why are on the ability: it carries
+   * no spell power coefficient because the sheet has no Wrack row, and its
+   * +10% to other Shadow DoTs has no form the engine can express without also
+   * raising Shadow Bolt. Neither is a rotation decision.
+   */
+  wrack: [{ kind: 'grantAbility', abilityId: 'wrack' }],
 
   // --- Demonology ----------------------------------------------------------
 
