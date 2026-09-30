@@ -62,11 +62,48 @@ contradicted its own body. Corrected, and the list is here instead.
 | `berserker_stance_cast` | DW Fury | as above |
 | `defensive_stance_cast` | Prot Warr | as above |
 | `eviscerate` | Rupture | the gate's two aura-duration floors never coincide with five combo points. **Ruled fine by the owner** — "zero is fine" |
-| `hammer_of_wrath` | Seal Twist Ret | **needs the target below 20% health, which never happens.** The `executePhase` clock, and the encounter never reaches it |
+| `hammer_of_wrath` | Seal Twist Ret | **out of mana, not out of window.** See below -- this row said the wrong thing for a day |
 
-Six causes, four of them deliberate, one ruled on, and one an encounter
-property. **None is a broken declaration**, which is the point of listing them
-with reasons rather than counting them.
+Six causes, four of them deliberate, one ruled on, and one a RESOURCE. **None is
+a broken declaration**, which is the point of listing them with reasons rather
+than counting them.
+
+### Hammer of Wrath: the audit found it, and then named the wrong cause
+
+**This row first read "needs the target below 20% health, which never happens".
+That was wrong, and it is a good example of why a never-fired entry needs its
+cause MEASURED rather than inferred** -- the plausible explanation was sitting
+right there and it was not the true one.
+
+Its "20% or less health" is already the CLOCK, not health: `inExecutePhase` in
+`combat/executePhase.ts`, the same rule Execute runs on, shared rather than
+duplicated. `paladinAbilities.test.ts` pins it -- refused for the first four
+fifths of the fight, allowed in the last, and the target's health untouched
+throughout. **The window opens.**
+
+What refuses it is MANA. Sampling `checkCast` every half second through the
+execute phase of the Retribution profile:
+
+| outcome | samples |
+| --- | --- |
+| `not_enough_resource` | 22 |
+| `on_gcd` | 3 |
+
+**The Retribution Paladin spends 3425 of the 3449 mana it gains in a fight.** It
+is completely resource-bound, and a 425-mana ability that only becomes legal in
+the last fifth arrives when there is nothing left to pay with. Its cost is not a
+transcription error: 425 mana, a 1-second cast and a 6-second cooldown are all
+confirmed against `forever-paladin-spellbook.json`, at rank 3, which is max.
+
+**THE CROSS-CHECK THAT IT IS MANA AND NOT THE GATE IS THE SHOCKADIN**, which
+carries the same entry and casts it **0.3 times a fight** on 4129 mana gained
+against Retribution's 3449. Same ability, same clock, more mana, and it fires.
+
+So this is a resource question and a list question, not an engine one, and it is
+**not fixed here** -- reordering the entry does not conjure mana, and whether
+Hammer of Wrath is worth more per mana than the Judgement or Holy Strike it would
+displace is a measurement nobody has taken. Recorded so that the next person
+starts from the real cause.
 
 ## The 25 that no profile casts
 
@@ -105,9 +142,10 @@ limits.
   wrong figure passes here. That is `ownerCoefficients.test.ts` and the probe.
 - **It is one batch of ten, not the 30-batch method**, because the question is
   "did this fire at all" and one batch settles it. Do not read its DPS.
-- **It cannot reach what the harness cannot set up.** `ambush` needs stealth and
-  `hammer_of_wrath` needs the execute phase; both appear as never-cast and
-  neither is broken.
+- **It cannot reach what the harness cannot set up, and a never-fired entry does
+  not announce its cause.**   `ambush` needs stealth. `hammer_of_wrath` is the other shape and the more
+  interesting one: the harness CAN reach its window, and the profile still cannot
+  afford it -- which is why the cause has to be measured rather than guessed.
 - **There is no test pinning this.** The 25 and the 8 are explained here and
   nothing fails if a 26th appears. An exception list with a reason each — the
   shape `everySpellScales.test.ts` already uses — would fix that, at the cost of

@@ -99,6 +99,20 @@ const not =
  * So the entry needs no condition of its own. Stated rather than left blank,
  * because an entry with no condition in a list whose spec gave it one reads as
  * a dropped clause.
+ *
+ * AND IT STILL NEVER FIRES IN RETRIBUTION, FOR A REASON THAT IS NOT THE GATE.
+ * The window opens on schedule -- `paladinAbilities.test.ts` pins that, and the
+ * Shockadin list casts the same entry 0.3 times a fight. What refuses it here is
+ * MANA: sampling `checkCast` every half second through the execute phase gives
+ * 22 refusals for `not_enough_resource` against 3 for `on_gcd`, because this
+ * build spends 3425 of the 3449 mana it gains and a 425-mana ability that only
+ * becomes legal in the last fifth arrives with nothing left to pay with. The
+ * Shockadin affords it on 4129 gained.
+ *
+ * LEFT AS IS. Reordering does not conjure mana, and whether Hammer of Wrath is
+ * worth more per mana than the Judgement or Holy Strike it would displace is a
+ * measurement nobody has taken. Written down so the next reader does not spend
+ * the afternoon on the gate, which is where this one was first looked for.
  * ----------------------------------------------------------------------------
  */
 
