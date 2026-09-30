@@ -17,29 +17,53 @@ nine files. The item database is **frozen**.
 
 ### The regression baseline
 
-300 iterations, seed 12345, preset raid buffs. Comparable to **each other** and to
+**30 batches of 10**, preset raid buffs, reproduced by
+`npx vite-node tools/measure_profiles.ts`. Comparable to **each other** and to
 nothing else. **Measure with `runProfileBatch`, not `runProfile`** — the app runs
 the former and the two are different fights even at one iteration.
 
-**RE-MEASURED on the owner's coefficient sheet.** Nineteen of twenty-three moved,
-which is what replacing every coefficient in the project at once should do.
+**THE METHOD CHANGED WITH THIS TABLE, AND THAT IS WHY SOME FIGURES MOVED WITHOUT
+A CAUSE.** Every earlier baseline here was ONE batch of 300 at seed 12345; these
+are thirty independent batches of ten, which is what `measure_profiles.ts` runs
+and what gives each figure the interval a REAL/noise verdict needs. Most profiles
+land inside the old interval and a few do not — 2H Arms read 596.6 under the old
+method and 607.2 under this one on identical code. Do not read those as changes.
+
+**RE-MEASURED ON THE RULESET OWNER'S OWN PRIORITY LISTS.** All 23 are theirs now,
+specified entry by entry; what was here before was this project's guess and said
+so. Fourteen profiles moved.
 
 | Profile | Class | Talents | DPS | | Profile | Class | Talents | DPS |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| DW Fury | Warrior | 18/33/0 | 652.2 | | Enh Shaman | Shaman | 19/32/0 | 404.3 |
-| 2H Arms | Warrior | 38/13/0 | 596.6 | | Fire Mage | Mage | 10/39/2 | 390.3 |
-| LW Melee | Hunter | 7/13/31 | 550.1 | | Rupture Rogue | Rogue | 12/8/31 | 377.3 |
-| Firelock | Warlock | 5/11/35 | 537.6 | | Moonkin | Druid | 38/0/13 | 359.0 |
-| Prot Warr | Warrior | 17/0/34 | 457.1 | | Bear Druid | Druid | 9/42/0 | 353.1 |
-| Seal Twist Ret | Paladin | 13/0/38 | 451.8 | | Shockadin | Paladin | 23/0/28 | 343.4 |
-| Shadow Priest | Priest | 16/3/32 | 449.3 | | Frostfire Mage | Mage | 0/29/22 | 339.5 |
-| Cat Druid | Druid | 9/35/7 | 441.2 | | LW Ranged | Hunter | 7/39/5 | 302.0 |
-| BM Hunter | Hunter | 31/20/0 | 418.3 | | SM/DS | Warlock | 40/11/0 | 292.6 |
-| Combat Rogue | Rogue | 18/33/0 | 417.6 | | Ele Shaman | Shaman | 38/13/0 | 277.7 |
-| Venom Rogue | Rogue | 37/12/2 | 410.3 | | Prot Pally | Paladin | 8/36/7 | 161.8 |
-| Arcane Mage | Mage | 47/4/0 | 405.2 | | | | | |
+| DW Fury | Warrior | 18/33/0 | 652.0 | | Venom Rogue | Rogue | 37/12/2 | 392.7 |
+| 2H Arms | Warrior | 38/13/0 | 607.2 | | Arcane Mage | Mage | 47/4/0 | 392.6 |
+| Firelock | Warlock | 5/11/35 | 535.5 | | Moonkin | Druid | 38/0/13 | 384.3 |
+| Cat Druid | Druid | 9/35/7 | 488.0 | | Shockadin | Paladin | 23/0/28 | 379.0 |
+| Seal Twist Ret | Paladin | 13/0/38 | 471.0 | | Rupture Rogue | Rogue | 12/8/31 | 377.1 |
+| Prot Warr | Warrior | 17/0/34 | 454.6 | | Frostfire Mage | Mage | 0/29/22 | 376.6 |
+| Enh Shaman | Shaman | 19/32/0 | 451.1 | | Bear Druid | Druid | 9/42/0 | 376.2 |
+| Shadow Priest | Priest | 16/3/32 | 437.3 | | SM/DS | Warlock | 40/11/0 | 349.1 |
+| Combat Rogue | Rogue | 18/33/0 | 419.8 | | LW Melee | Hunter | 7/13/31 | 321.5 |
+| BM Hunter | Hunter | 31/20/0 | 405.8 | | LW Ranged | Hunter | 7/39/5 | 311.7 |
+| Fire Mage | Mage | 10/39/2 | 401.2 | | Ele Shaman | Shaman | 38/13/0 | 295.4 |
+| | | | | | Prot Pally | Paladin | 8/36/7 | 153.2 |
 
-**POISONS WERE THE LAST THING TO MOVE THESE, AND ONLY THE ROGUES MOVED.**
+**WHAT THE OWNER'S LISTS WERE WORTH, against the last figures measured on this
+project's own shells:**
+
+| | |
+| --- | --- |
+| SM/DS +55.9, Enh Shaman +46.2, Cat +43.9 | the three largest, and the first two are the two weakest casters |
+| Frostfire +36.7, Shockadin +36.4, Ret +27.2, Moonkin +25.1, Bear +22.1, Ele Shaman +16.4 | |
+| Venom −24.3 | its Eviscerate's two aura-duration floors, isolated at −20.4. The Venom entry itself is +17.7 |
+| BM Hunter −11.6, Shadow −10.8, Prot Pally −5.6 | Shadow is Shadow Word: Death coming out, isolated at −35.7 against +24.9 for the rest of the list. Prot Pally is Righteous Fury and Templar's Bulwark costing global cooldowns for nothing modelled |
+| **LW Melee −237.1** | two separate things. −100.6 from Raptor Strike becoming on-next-swing, which its capture stated all along, and −136.6 from the list dropping Serpent Sting, Arcane Shot and Rapid Fire while adding Hunter's Mark |
+
+**THE SPREAD NARROWED AND THE MEAN DID NOT.** 408.5 to 410.1 across 23 profiles,
+because LW Melee absorbed most of what the other twenty-two gained.
+
+**BEFORE THE LISTS, POISONS WERE THE LAST THING TO MOVE THESE, AND ONLY THE
+ROGUES MOVED.**
 Venom +25.5%, Rupture +16.2%, Combat +8.4%, and all twenty other profiles
 identical to the decimal -- which is the containment check for a change that
 adds a whole system rather than touching a shared rule.
@@ -82,7 +106,7 @@ Measured at `d2718b0`, and the numbers say it is not close:
 | **113 abilities declared against 478 captured** | the data is on disk; the declarations are not. Druid 15, Hunter 14, Mage 13, Rogue 12, Warlock 10, Shaman 9, Priest 7, Paladin 6, plus the Warrior's 27 |
 | ~~**Coefficients**~~ | **DONE, AND NOW EVERY ROW IS APPLIED.** `WoWSimWorksheet.xlsx`, the owner's authoritative coefficient document, is transcribed in `src/game/combat/coefficients.ts` and applied across all nine classes. Every derived rule is deleted. The last unapplied row was Hammer of Wrath, which was not a declared ability until the owner put it in two Paladin priority lists; the two poison rows went the same way when the poison system landed. [docs/spell-coefficients.md](docs/spell-coefficients.md) |
 | **19 `PLACEHOLDER_*` constants** | each a real number nobody has supplied. Sniper Shot's invented 200-mana cost is gone, but it was never one of these: it was a bare literal with a false caveat, which is worse — an invented number that is not named cannot be audited |
-| **Rotations are thin and unmeasured** | **THE NEXT PIECE OF WORK, and it has its own handoff: [docs/handoff-rotations.md](docs/handoff-rotations.md).** 26 lists — one per profile, two Warrior fallbacks no preset reaches, and the pet's. The Warrior's five came from the owner; **only the three Hunter APLs and one Venom entry have ever been measured entry by entry**, and **twelve entries across eight profiles never fire at all** |
+| ~~**Rotations are thin and unmeasured**~~ | **DONE.** All 23 priority lists are the ruleset owner's own, specified entry by entry, and every one is measured — see the baseline above and [docs/handoff-rotations.md](docs/handoff-rotations.md). The twelve dead entries are gone: every entry in every list fires. Fourteen abilities and three talent mechanics were declared to reach them, and six engine capabilities built |
 
 **The Warrior was built first and built properly, and it is not the norm.** Read
 any claim about this project's depth as a claim about the Warrior until checked.
@@ -137,16 +161,25 @@ fails.
 | --- | --- | --- | --- | --- | --- |
 | Warrior | 53 | 43 | 3 | 6 | **1** |
 | Paladin | 52 | 22 | 7 | 13 | **10** |
+| Druid | 51 | 20 | 5 | 14 | **12** |
 | Hunter | 50 | 24 | 5 | 8 | **13** |
-| Druid | 51 | 19 | 5 | 14 | **13** |
 | Shaman | 50 | 17 | 4 | 12 | **17** |
-| Mage | 54 | 25 | 2 | 9 | **18** |
+| Mage | 54 | 26 | 2 | 9 | **17** |
 | Priest | 53 | 15 | 2 | 18 | **18** |
-| Rogue | 53 | 21 | 2 | 6 | **24** |
+| Rogue | 53 | 25 | 2 | 6 | **20** |
 | Warlock | 52 | 20 | 3 | 3 | **26** |
-| **Total** | **468** | **206** | **33** | **89** | **140** |
+| **Total** | **468** | **212** | **33** | **89** | **134** |
 
-**239 of 468 talents do something**, 89 never will, and **140 are the actual
+**SIX TALENTS LEFT THE GAP COLUMN WITH THE PRIORITY LISTS**, and four of them
+were never really in it. Cutthroat and Premeditation were counted among the
+eleven Rogue talents that stealth makes inert and are neither -- Cutthroat is an
+in-combat proc whose whole purpose is to REMOVE a stealth requirement, and
+Premeditation's Forever tooltip has no stealth clause at all. Preparation's
+reason was a statement about the engine ("nothing can reset a cooldown from
+content") and the engine now can. Fingers of Frost carried `FROZEN_UNMODELLED`,
+which is a claim about the TARGET, and that talent does not freeze anything.
+
+**245 of 468 talents do something**, 89 never will, and **134 are the actual
 remaining work** — not the 262 a raw count of unmodelled reasons suggests. The 96
 scoped entries break down as 32 crowd control, 33 healing, 17 positioning and 14
 threat.
@@ -309,12 +342,33 @@ The refactor is phased; the milestone follows it.
    Hunter review is the worked method and moved those three profiles +20 to +55
    DPS each.
 
-**THE APL HALF OF PHASE 3 IS THE NEXT PIECE OF WORK AND HAS ITS OWN HANDOFF**:
-[docs/handoff-rotations.md](docs/handoff-rotations.md). It carries the 23
-profiles against the lists they run, the twelve entries measured never to fire,
-and `tools/measure_profiles.ts` -- the first committed harness that can measure
-a PROFILE rather than a hand-assembled Warrior, so a published baseline is
-reproducible by the person who published it.
+~~**THE APL HALF OF PHASE 3 IS THE NEXT PIECE OF WORK**~~ **and is done.** All 23
+lists are the owner's, every entry in every one of them fires, and the baseline
+above is measured on them. [docs/handoff-rotations.md](docs/handoff-rotations.md)
+carries what each list turned out to be worth and the three findings that came
+out of building them.
+
+**WHAT THE APL WORK LEFT BEHIND, in order of how much it costs:**
+
+1. **Wrack has no coefficient.** `WoWSimWorksheet.xlsx` lists nine Warlock
+   spells and Wrack is not one, so it deals a flat 36 a tick and scales with
+   nothing. As modelled it cannot be worth casting -- 216 over a six-second
+   channel against a Shadow Bolt worth 268 plus 0.857 spell power in three --
+   and the ruleset owner has PAUSED its implementation. Its `everySpellScales`
+   exemption is the only entry in that list which is a GAP rather than a RULE,
+   and the line says to DELETE it the day a Wrack row exists.
+2. **Shatter is a live gap that Fingers of Frost opened.** "Nothing freezes a
+   raid boss" stopped being the whole story: Fingers of Frost treats the next
+   two spells as though one were, and the Frostfire build takes both talents.
+   It needs `AuraDefinition.abilityModifiers` to honour the `ALL_ABILITIES` key.
+3. **`protectionTalents.test.ts` "Bastion raises DPS" is flaky.** It failed
+   twice under the full suite and passed in isolation on the same commit. It is
+   a SEEDED test, so isolated and full-suite runs should be identical -- that
+   non-determinism is worth finding.
+4. **Two of the owner's lists measure down and were shipped as written**, with
+   the cost isolated rather than acted on: Venom's Eviscerate floors at -20.4,
+   and Shadow Word: Death leaving the Priest at -35.7. Both are the owner's
+   design and both numbers are in the baseline notes above.
 
 A profile has **no `faction` field**; faction is derived from race. The milestone
 asks for faction as a default, so either say that derivation is the answer or

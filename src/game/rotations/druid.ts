@@ -4,13 +4,18 @@ import type { CombatStyleId } from '../character';
 import { MAX_COMBO_POINTS, comboPointsOn } from '../combat/comboPoints';
 
 /**
- * Druid priority lists — APL SHELLS.
+ * Druid priority lists.
  *
  * ----------------------------------------------------------------------------
- * SHELLS, AND SAID TO BE, exactly as the Rogue's are. These are the standard
- * shape of each build and are NOT the ruleset owner's own lists, which have not
- * been given. Every Warrior list came from the owner directly, and a number
- * measured off one of these describes this file's guess.
+ * THE RULESET OWNER'S OWN LISTS. Every list in this file was specified by them,
+ * entry by entry, and measured after -- so a number taken off one describes the
+ * ruleset rather than this file's guess.
+ *
+ * IT SAID THE OPPOSITE FOR MOST OF THIS PROJECT'S LIFE, and the header that
+ * said so was doing real work: "these are the standard shape of each build and
+ * are NOT the ruleset owner's own lists, which have not been given." That is
+ * how a shell is supposed to read, and it is why the figures measured off one
+ * were never mistaken for the ruleset's.
  *
  * CHOSEN BY FORM, not by talents. A Druid's form IS its combat style, and a
  * style is a field on the character -- so unlike the Rogue, whose three specs

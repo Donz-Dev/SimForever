@@ -3,10 +3,13 @@ import { PriorityRotation } from '../../engine';
 import type { TalentAllocation } from '../talents/Talent';
 
 /**
- * Warlock priority lists — APL SHELLS.
+ * Warlock priority lists.
  *
  * ----------------------------------------------------------------------------
- * SHELLS, AND SAID TO BE. Not the ruleset owner's own lists.
+ * THE RULESET OWNER'S OWN LISTS, specified entry by entry and measured after.
+ * This header said the opposite -- "SHELLS, AND SAID TO BE. Not the ruleset
+ * owner's own lists" -- for most of the project's life, which is exactly how a
+ * shell should read while it is one.
  *
  * CHOSEN BY CAPSTONE, the Rogue's test: Wrack is 31 points into Affliction and
  * Incinerate is 31 into Destruction, and no build reaches both.
