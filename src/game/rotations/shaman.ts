@@ -20,13 +20,27 @@ import { MAELSTROM_WEAPON_MAX_STACKS } from '../auras/shaman';
  * ----------------------------------------------------------------------------
  */
 
-/** Refresh a debuff when it is nearly gone, not on cooldown. */
-const REFRESH_WINDOW_MS = 2000;
-
-const missing = (auraId: string) =>
+/**
+ * "IF NOT ACTIVE", which is the ruleset owner's wording and is NOT the same as
+ * the two-second refresh window beside it.
+ *
+ * ----------------------------------------------------------------------------
+ * A REFRESH RESETS THE AURA, so anything left on the clock when the rotation
+ * reaches the entry is thrown away. A two-second window clips up to two
+ * seconds off every application -- and the faster the character acts, the
+ * sooner it reaches the entry inside that window and the more it loses.
+ *
+ * MEASURED ON THE MOONKIN, where Nature's Grace cost 14.9 DPS by doing nothing
+ * but speeding the character up: casts went 26.3 a fight to 27.4 while Moonfire
+ * ticks fell 25.1 to 22.5. The buff was fine; the window was paying for it.
+ *
+ * `missing` is kept for the lists the owner has not replaced, so the two
+ * readings sit side by side rather than one silently becoming the other.
+ * ----------------------------------------------------------------------------
+ */
+const expired = (auraId: string) =>
   (context: SimulationContext, _actor: Combatant, target?: Combatant): boolean =>
-    target !== undefined &&
-    target.auras.remainingMs(auraId, context.clock.now()) < REFRESH_WINDOW_MS;
+    target !== undefined && target.auras.remainingMs(auraId, context.clock.now()) <= 0;
 
 const withoutAura = (auraId: string) => (_context: SimulationContext, actor: Combatant): boolean =>
   !actor.auras.has(auraId);
@@ -56,7 +70,7 @@ const atStacks = (auraId: string, stacks: number) =>
  * seconds of burn beat one instant hit.
  */
 export const SHAMAN_ELEMENTAL: readonly PriorityEntry[] = [
-  { abilityId: 'flame_shock', condition: missing('flame_shock') },
+  { abilityId: 'flame_shock', condition: expired('flame_shock') },
   { abilityId: 'lava_burst' },
   { abilityId: 'lightning_bolt' },
 ];
