@@ -365,7 +365,7 @@ function rollTable(
    * whole-character one.
    */
   const modifier = combineModifiers(
-    request.source.abilityModifiers.for(request.abilityId),
+    request.source.abilityModifierFor(request.abilityId),
     request.source.schoolModifiers.for(request.school),
     /*
      * AND THE TABLE'S. `attackTable` for anything that rolls; `critFrom` for
@@ -526,7 +526,7 @@ export function resolveDamage(
   // than replacing them: "+20% Revenge damage" and "+10% damage done" are
   // different effects and both apply.
   const abilityMultiplier =
-    source.abilityModifiers.for(request.abilityId).damageMultiplier ?? 1;
+    source.abilityModifierFor(request.abilityId).damageMultiplier ?? 1;
   /*
    * PER SCHOOL, on the ATTACKER'S side. The mirror of
    * `damageTakenMultiplierFor` below: Fire Power raises the fire damage a Mage

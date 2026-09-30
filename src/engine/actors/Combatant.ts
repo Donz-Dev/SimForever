@@ -1,7 +1,9 @@
+import type { AbilityModifier } from '../combat/abilityModifiers';
 import {
   AbilityModifiers,
   AttackTableModifiers,
   SchoolModifiers,
+  combineAbilityModifiers,
 } from '../combat/abilityModifiers';
 import type { AuraDefinition } from '../effects/Aura';
 import type { Ability } from '../abilities/Ability';
@@ -557,6 +559,28 @@ export class Combatant {
    */
   get defenseSkill(): number {
     return this.baseDefenseSkill + this.stats.get('defenseSkill');
+  }
+
+  /**
+   * The per-ability modifier in force right now: the STANDING one plus
+   * whatever active auras contribute.
+   *
+   * ----------------------------------------------------------------------------
+   * `abilityModifiers` is built once and is not mutated during a fight, which
+   * is right -- a talent or a set bonus is decided before the pull. An effect
+   * that comes and goes belongs in an aura, and this is where the two meet.
+   *
+   * EVERY READER MUST COME THROUGH HERE, or an aura-granted modifier applies in
+   * one half of the damage pipeline and not the other: the crit chance is read
+   * in `rollTable` and the damage multiplier in `resolveDamage`, and a Berserk
+   * that raised the crit chance without the multiplier following would be
+   * quietly half an effect.
+   * ----------------------------------------------------------------------------
+   */
+  abilityModifierFor(abilityId: string | undefined): AbilityModifier {
+    const standing = this.abilityModifiers.for(abilityId);
+    const fromAuras = this.auras.abilityModifierFor(abilityId);
+    return fromAuras ? combineAbilityModifiers(standing, fromAuras) : standing;
   }
 
   /** Record that a resource was just spent. Called by the engine on payment. */

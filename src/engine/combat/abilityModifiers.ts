@@ -138,6 +138,18 @@ export class AbilityModifiers {
  * pieces of Lawbringer each saying "up to N Holy" are one pool of Holy power,
  * exactly as eight pieces each saying "+N Strength" are one pool of strength.
  */
+/**
+ * Combine two modifiers for the same ability.
+ *
+ * Exported because an aura carries these too now, and the aura layer must
+ * combine them by the SAME rule -- chances add, damage multiplies. Two copies
+ * of that rule would be one too many: the failure of them disagreeing is a
+ * number that is plausible either way.
+ */
+export function combineAbilityModifiers(a: SchoolModifier, b: SchoolModifier): SchoolModifier {
+  return combine(a, b);
+}
+
 function combine(a: SchoolModifier, b: SchoolModifier): SchoolModifier {
   return {
     critBonus: (a.critBonus ?? 0) + (b.critBonus ?? 0),

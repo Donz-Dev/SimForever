@@ -1,14 +1,17 @@
 import { describe, expect, it } from 'vitest';
 import { createPlayer } from '../../src/game/actors/createPlayer';
 import { runProfileBatch, resourceFlowOf } from '../../src/simulator';
-import { castAbility, resolveCast, seconds } from '../../src/engine';
+import { castAbility, checkCast, resolveCast, seconds } from '../../src/engine';
 import { buildSimulation } from '../helpers/buildSimulation';
 import { makeAttacker, makeTarget } from '../helpers/actors';
 import { abilitiesForClass } from '../../src/game/abilities/abilitiesForClass';
 import { PRESETS_BY_ID } from '../../src/profiles/presets';
 import {
+  BERSERK,
+  COMBO_POINT_GENERATORS,
   ECLIPSE_REDUCTION_BONUS,
   FEROCIOUS_BITE_BY_COMBO_POINT,
+  MANGLE,
   MOONFIRE_DIRECT,
   STARFIRE_CAST_MS,
   STARFIRE_COEFFICIENT,
@@ -17,6 +20,8 @@ import {
   WRATH_DAMAGE,
 } from '../../src/game/abilities/druid';
 import {
+  BERSERK_CRIT_BONUS,
+  berserkAura,
   ECLIPSE_CHARGES_PER_WRATH,
   ECLIPSE_MAX_CHARGES,
   INSECT_SWARM_TOTAL,
@@ -462,5 +467,112 @@ describe('Moonfury and Vengeance, which were unmodelled for want of a school', (
       });
       expect(actor.schoolModifiers.isEmpty, preset).toBe(true);
     }
+  });
+});
+
+describe('Berserk, one ability that gives each feral build a different half', () => {
+  /*
+   * --------------------------------------------------------------------------
+   * "Causes your Primal Bite ability to strike up to 3 targets, removes its
+   * cooldown, and increases the critical strike chance of your Combo
+   * Point-generating abilities by 100%. Clears and grants immunity to Fear
+   * effects for the duration. Lasts 15 sec."
+   *
+   * FOUR CLAUSES IN FOUR PLACES. The 3 targets are unmodelled; the cooldown
+   * removal is the BEAR's half, because Primal Bite is a rage ability a Cat
+   * never casts; the crit is the CAT's half, because a Bear has no combo point
+   * generators at all; and the Fear immunity is crowd control and out of scope.
+   *
+   * +100 PERCENTAGE POINTS rather than a doubling, by the ruleset owner's
+   * ruling. Both readings produce a plausible number and the wording carries
+   * neither.
+   * --------------------------------------------------------------------------
+   */
+  it('reads its generators off the abilities rather than naming them', () => {
+    /*
+     * `comboPointsAwarded` is already declared on every ability that awards
+     * one, so a fourth generator is covered on the day it lands. Listing ids
+     * by hand is how one gets missed, and a missed one looks exactly like an
+     * ability that did not happen to crit.
+     */
+    expect([...COMBO_POINT_GENERATORS].sort()).toEqual(['claw', 'rake', 'shred']);
+
+    const aura = berserkAura(COMBO_POINT_GENERATORS);
+    for (const id of COMBO_POINT_GENERATORS) {
+      expect(aura.abilityModifiers?.[id], id).toEqual({ critBonus: BERSERK_CRIT_BONUS });
+    }
+    expect(BERSERK_CRIT_BONUS).toBe(100);
+
+    // And nothing that SPENDS points is in it.
+    expect(aura.abilityModifiers?.ferocious_bite).toBeUndefined();
+    expect(aura.abilityModifiers?.rip).toBeUndefined();
+  });
+
+  it('suppresses Primal Bite\'s cooldown while it is up, and not after', () => {
+    /*
+     * ASSERTED THROUGH `checkCast`, which is where the suppression lives, and
+     * not on the aura field -- a field nothing reads is exactly the failure
+     * this is guarding against.
+     *
+     * THE TIMER KEEPS RUNNING UNDERNEATH. Suppression hides the check; it does
+     * not clear the cooldown. So when the aura drops the ability is on
+     * whatever remains of its own six seconds rather than being handed a free
+     * cast at the moment the buff ends.
+     */
+    const actor = makeAttacker({
+      autoAttack: 'none',
+      abilities: [MANGLE, BERSERK],
+      resources: [{ type: 'rage', maximum: 100, initial: 100 }],
+    });
+    const target = makeTarget();
+    const simulation = buildSimulation([actor, target], { durationMs: seconds(60) });
+    simulation.begin();
+
+    castAbility(simulation, actor, MANGLE, target);
+    simulation.advanceTo(seconds(2));
+    // Six second cooldown, two seconds in.
+    expect(checkCast(simulation, actor, MANGLE, target)).toEqual({
+      ok: false,
+      reason: 'on_cooldown',
+    });
+
+    simulation.applyAura(actor, berserkAura(COMBO_POINT_GENERATORS), actor.id);
+    expect(checkCast(simulation, actor, MANGLE, target)).toEqual({ ok: true });
+
+    // The aura is 15 seconds; step past it and the ability is off cooldown by
+    // its own timer, which is the point -- it was never given a free one.
+    actor.auras.remove(simulation, 'berserk');
+    expect(actor.auras.has('berserk')).toBe(false);
+    simulation.advanceTo(seconds(3));
+    expect(checkCast(simulation, actor, MANGLE, target)).toEqual({
+      ok: false,
+      reason: 'on_cooldown',
+    });
+  });
+
+  it('raises the crit chance of a generator through the damage pipeline', () => {
+    /*
+     * THE MECHANISM, NOT A DPS FIGURE. An aura-granted ability modifier has to
+     * be read at BOTH points the standing one is -- the crit chance in
+     * `rollTable` and the damage multiplier in `resolveDamage` -- or it is
+     * quietly half an effect. `abilityModifierFor` is the single reader both
+     * go through, so this asserts that it combines rather than replaces.
+     */
+    const actor = makeAttacker({ autoAttack: 'none' });
+    actor.abilityModifiers.add('shred', { critBonus: 5 });
+
+    expect(actor.abilityModifierFor('shred').critBonus).toBe(5);
+
+    const simulation = buildSimulation([actor, makeTarget()]);
+    simulation.begin();
+    simulation.applyAura(actor, berserkAura(COMBO_POINT_GENERATORS), actor.id);
+
+    // ADDITIVE with the standing modifier, which is the rule two standing
+    // modifiers already follow.
+    expect(actor.abilityModifierFor('shred').critBonus).toBe(105);
+    // And an ability it does not name is untouched.
+    expect(actor.abilityModifierFor('rip').critBonus ?? 0).toBe(0);
+    // An auto attack carries no ability id and gets nothing at all.
+    expect(actor.abilityModifierFor(undefined).critBonus ?? 0).toBe(0);
   });
 });

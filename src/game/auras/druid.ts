@@ -357,6 +357,66 @@ export const DEMORALIZING_ROAR: AuraDefinition = {
  */
 export const MAUL_BONUS_DAMAGE = 128;
 
+
+// ---------------------------------------------------------------------------
+// Feral: Berserk, which belongs to both forms
+// ---------------------------------------------------------------------------
+
+/*
+ * ============================================================================
+ * BERSERK: "Causes your Primal Bite ability to strike up to 3 targets, removes
+ * its cooldown, and increases the critical strike chance of your Combo
+ * Point-generating abilities by 100%. Clears and grants immunity to Fear
+ * effects for the duration. Lasts 15 sec."
+ *
+ * FOUR CLAUSES AND THEY LAND IN FOUR DIFFERENT PLACES, which is why this is a
+ * long comment for a short aura.
+ *
+ *   3 TARGETS      unmodelled. Every encounter here has one.
+ *   NO COOLDOWN    `suppressesCooldownOf`, an aura field that did not exist:
+ *                  `CastModifier` carries cast time and cost, and an ability's
+ *                  cooldown lives in the `AbilityBook` where no aura reached.
+ *                  This is the BEAR's half -- Primal Bite is `mangle`, a rage
+ *                  ability, and a Cat never casts it.
+ *   +100% CRIT     `abilityModifiers`, the other aura field that did not
+ *                  exist. This is the CAT's half: a Bear has no combo point
+ *                  generators at all. One ability, two builds, and each gets
+ *                  one half of it.
+ *   FEAR IMMUNITY  crowd control, and permanently out of scope by ruling.
+ *
+ * +100 PERCENTAGE POINTS, NOT A DOUBLING, by the ruleset owner's ruling. So
+ * Shred, Claw and Rake crit every time for fifteen seconds rather than going
+ * from thirty percent to sixty. Both readings produce a plausible number and
+ * the wording carries neither, which is why it was asked rather than chosen.
+ *
+ * THE GENERATORS ARE DERIVED, NOT LISTED. `comboPointsAwarded` is already
+ * declared on every ability that awards one, so a new generator is covered on
+ * the day it lands -- the same argument `triggersGcd` makes about
+ * `onNextSwing`. Listing three ids by hand is how a fourth gets missed
+ * silently, and a missed one looks exactly like an ability that simply did not
+ * crit this time.
+ * ============================================================================
+ */
+export const BERSERK_DURATION_MS = seconds(15);
+export const BERSERK_COOLDOWN_MS = seconds(180);
+/** Percentage POINTS, matching `critChance` on the stat block. */
+export const BERSERK_CRIT_BONUS = 100;
+
+/** The ability Berserk frees, by the id it carries here. */
+export const BERSERK_FREED_ABILITY = 'mangle';
+
+export function berserkAura(comboPointGenerators: readonly string[]): AuraDefinition {
+  return {
+    id: 'berserk',
+    name: 'Berserk',
+    durationMs: BERSERK_DURATION_MS,
+    suppressesCooldownOf: [BERSERK_FREED_ABILITY],
+    abilityModifiers: Object.fromEntries(
+      comboPointGenerators.map((id) => [id, { critBonus: BERSERK_CRIT_BONUS }]),
+    ),
+  };
+}
+
 // ---------------------------------------------------------------------------
 
 function tick(

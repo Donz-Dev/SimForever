@@ -3,6 +3,8 @@ import { createPlayer } from '../../src/game/actors/createPlayer';
 import { runProfileBatch, resourceFlowOf } from '../../src/simulator';
 import { PRESETS_BY_ID } from '../../src/profiles/presets';
 import {
+  GHOSTLY_STRIKE,
+  PREPARATION,
   EVISCERATE_BY_COMBO_POINT,
   SINISTER_STRIKE_BASE_DAMAGE,
 } from '../../src/game/abilities/rogue';
@@ -15,6 +17,10 @@ import {
   sliceAndDiceAura,
 } from '../../src/game/auras/rogue';
 import { ROGUE_TALENT_EFFECTS } from '../../src/game/talents/rogueEffects';
+import { abilitiesForClass } from '../../src/game/abilities/abilitiesForClass';
+import { buildSimulation } from '../helpers/buildSimulation';
+import { makeAttacker, makeTarget } from '../helpers/actors';
+import { castAbility, checkCast, seconds } from '../../src/engine';
 
 /*
  * The Rogue's numbers, written out by hand from the beta client's spellbook
@@ -218,5 +224,81 @@ describe('the finishers it can now afford', () => {
     );
     expect(named).toContain('Adrenaline Rush');
     expect(named).toContain('Blade Flurry');
+  });
+});
+
+describe('Preparation, and cooldown reset as an engine capability', () => {
+  /*
+   * --------------------------------------------------------------------------
+   * "When activated, this ability immediately finishes the cooldown on your
+   * other Rogue abilities." Free, instant, ten minutes.
+   *
+   * Its `unmodelled` reason was a statement about the ENGINE, and the right
+   * one: "nothing can reset a cooldown from content -- the engine owns them."
+   * `AbilityBook.resetCooldowns` is the engine saying so, and this is its only
+   * caller.
+   * --------------------------------------------------------------------------
+   */
+  const withCooldowns = () => {
+    const actor = makeAttacker({
+      autoAttack: 'none',
+      abilities: [GHOSTLY_STRIKE, PREPARATION],
+      resources: [{ type: 'energy', maximum: 100, initial: 100 }],
+    });
+    const target = makeTarget();
+    const simulation = buildSimulation([actor, target], { durationMs: seconds(60) });
+    simulation.begin();
+    return { actor, target, simulation };
+  };
+
+  it('finishes another ability\'s cooldown', () => {
+    const { actor, target, simulation } = withCooldowns();
+
+    castAbility(simulation, actor, GHOSTLY_STRIKE, target);
+    simulation.advanceTo(seconds(2));
+    // Twenty second cooldown, two seconds in.
+    expect(checkCast(simulation, actor, GHOSTLY_STRIKE, target)).toEqual({
+      ok: false,
+      reason: 'on_cooldown',
+    });
+
+    castAbility(simulation, actor, PREPARATION, undefined);
+    // Past Preparation's own global cooldown, and well short of the eighteen
+    // seconds Ghostly Strike had left -- so `on_gcd` cannot stand in for the
+    // answer this is asking for.
+    simulation.advanceTo(seconds(4));
+    expect(checkCast(simulation, actor, GHOSTLY_STRIKE, target)).toEqual({ ok: true });
+  });
+
+  it('does NOT reset itself, which would make it unlimited', () => {
+    /*
+     * "Your OTHER Rogue abilities." A reset including itself would put a ten
+     * minute cooldown back up instantly and hand the Rogue an unlimited
+     * supply -- which is not visible as an error, only as a suspiciously good
+     * Rogue.
+     */
+    const { actor, simulation } = withCooldowns();
+
+    castAbility(simulation, actor, PREPARATION, undefined);
+    simulation.advanceTo(seconds(4));
+    expect(checkCast(simulation, actor, PREPARATION, undefined)).toEqual({
+      ok: false,
+      reason: 'on_cooldown',
+    });
+
+    expect(PREPARATION.cooldownMs).toBe(seconds(600));
+  });
+
+  it('is granted by the talent, so only the build that takes it has one', () => {
+    const rupture = PRESETS_BY_ID.get('rogue_rupture')!.build();
+    expect(rupture.talents.preparation).toBe(1);
+    expect(
+      abilitiesForClass('rogue', 'dual_wield', rupture.talents).map((a) => a.id),
+    ).toContain('preparation');
+
+    const venom = PRESETS_BY_ID.get('rogue_venom')!.build();
+    expect(
+      abilitiesForClass('rogue', 'dual_wield', venom.talents).map((a) => a.id),
+    ).not.toContain('preparation');
   });
 });

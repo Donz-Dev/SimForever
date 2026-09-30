@@ -7,6 +7,9 @@ import { buildSimulation } from '../helpers/buildSimulation';
 import { makeAttacker, makeTarget } from '../helpers/actors';
 import { castAbility, isWeaponUse, seconds, spellPowerFor } from '../../src/engine';
 import {
+  HAMMER_OF_WRATH,
+  HAMMER_OF_WRATH_COEFFICIENT,
+  HAMMER_OF_WRATH_DAMAGE,
   HOLY_STRIKE_HOLY_DAMAGE,
   HOLY_STRIKE_WEAPON_FRACTION,
   JUDGEMENT_OF_COMMAND,
@@ -25,6 +28,8 @@ import {
 import { PLACEHOLDER_SEAL_OF_COMMAND_PPM } from '../../src/game/reactions/paladin';
 import { PALADIN_TALENT_EFFECTS } from '../../src/game/talents/paladinEffects';
 import { paladinRotation } from '../../src/game/rotations/paladin';
+import { EXECUTE_PHASE_FRACTION } from '../../src/game/combat/executePhase';
+import { HAMMER_OF_WRATH_SP_COEFFICIENT } from '../../src/game/combat/coefficients';
 
 /*
  * The Paladin's numbers, written out by hand from the beta client's spellbook.
@@ -411,5 +416,74 @@ describe('the three builds', () => {
 
     expect(ids('prot_pally')).not.toContain('seal_of_command');
     expect(ids('pally_ret')).not.toContain('holy_shield');
+  });
+});
+
+describe('Hammer of Wrath, the sheet\'s last unapplied row', () => {
+  /*
+   * --------------------------------------------------------------------------
+   * "Hurls a hammer that strikes an enemy for 474 to 522 Holy damage. Only
+   * usable on enemies that have 20% or less health." 425 mana, a 1 second
+   * cast, a 6 second cooldown, rank 3, learned at 60.
+   *
+   * `HAMMER_OF_WRATH_SP_COEFFICIENT` sat transcribed and unapplied in
+   * `coefficients.ts` from the day the sheet arrived, because the ability did
+   * not exist. Nothing about the DATA changed -- what changed is that the
+   * ruleset owner put it in two priority lists.
+   *
+   * THE HEALTH GATE IS THE CLOCK, which is Execute's ruling and not a new one.
+   * A 20%-health condition could never fire against a damage sink with a
+   * hundred thousand health taking fifteen thousand in a fight, which is
+   * exactly how Execute came to sit in every Warrior list uncast.
+   * --------------------------------------------------------------------------
+   */
+  it('takes the midpoint of its stated range and the sheet\'s coefficient', () => {
+    // "474 to 522", written out by hand from the capture.
+    expect(HAMMER_OF_WRATH_DAMAGE).toBe(498);
+    expect(HAMMER_OF_WRATH_COEFFICIENT).toBe(HAMMER_OF_WRATH_SP_COEFFICIENT);
+    expect(HAMMER_OF_WRATH_COEFFICIENT).toBeCloseTo(0.428571, 6);
+
+    expect(HAMMER_OF_WRATH.cost).toEqual({ resource: 'mana', amount: 425 });
+    expect(HAMMER_OF_WRATH.castTimeMs).toBe(seconds(1));
+    expect(HAMMER_OF_WRATH.cooldownMs).toBe(seconds(6));
+  });
+
+  it('is refused for the first four fifths of the fight and allowed in the last', () => {
+    const actor = makeAttacker({
+      autoAttack: 'none',
+      resources: [{ type: 'mana', maximum: 10_000 }],
+    });
+    const target = makeTarget();
+    const simulation = buildSimulation([actor, target], { durationMs: seconds(100) });
+    simulation.begin();
+
+    const context = { simulation, caster: actor, target, ability: HAMMER_OF_WRATH };
+    expect(HAMMER_OF_WRATH.canCast?.(context)).toBe(false);
+
+    // One second short of the window, and then inside it.
+    simulation.advanceTo(seconds(100) * (1 - EXECUTE_PHASE_FRACTION) - seconds(1));
+    expect(HAMMER_OF_WRATH.canCast?.(context)).toBe(false);
+
+    simulation.advanceTo(seconds(100) * (1 - EXECUTE_PHASE_FRACTION));
+    expect(HAMMER_OF_WRATH.canCast?.(context)).toBe(true);
+
+    /*
+     * AND THE TARGET'S HEALTH IS UNTOUCHED THROUGHOUT, which is the point. A
+     * full-health dummy is exactly the case the tooltip's own condition would
+     * refuse forever.
+     */
+    expect(target.health.current).toBe(target.health.maximum);
+  });
+
+  it('is in every Paladin build, needing no talent', () => {
+    for (const preset of ['pally_ret', 'pally_shockadin', 'prot_pally']) {
+      const built = PRESETS_BY_ID.get(preset)!.build();
+      const book = abilitiesForClass(
+        'paladin',
+        built.character.combatStyle as never,
+        built.talents,
+      ).map((a) => a.id);
+      expect(book, preset).toContain('hammer_of_wrath');
+    }
   });
 });

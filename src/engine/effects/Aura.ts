@@ -1,3 +1,4 @@
+import type { AbilityModifier } from '../combat/abilityModifiers';
 import type { DamageSchool } from '../combat/DamageSchool';
 import type { Milliseconds } from '../time';
 import type { StatModifierSpec } from '../stats';
@@ -162,6 +163,45 @@ export interface AuraDefinition {
    * fire damage" are different effects on the same target.
    */
   readonly damageTakenBySchool?: Partial<Record<DamageSchool, number>>;
+  /**
+   * Per-ability modifiers that hold only while this aura is up, keyed by
+   * ability id.
+   *
+   * ----------------------------------------------------------------------------
+   * `AbilityModifiers` ON THE COMBATANT IS BUILT ONCE AND SAYS SO: "an effect
+   * that comes and goes during combat belongs in an aura, which has the
+   * lifecycle for it." This is that field, and it carries the same shape --
+   * crit chance in percentage POINTS, a crit multiplier bonus on the bonus
+   * half, and a damage multiplier.
+   *
+   * COMBINED WITH THE STATIC ONE RATHER THAN REPLACING IT, by the same rule
+   * two static modifiers follow: chances add and damage multiplies. A talent
+   * granting +5% crit to Shred and an aura granting +100 are two effects on
+   * one cast and both apply.
+   *
+   * Read at the two points `abilityModifiers` already is, so an ability
+   * respects it without knowing it exists -- which is the guard the three
+   * modifier scopes were built around.
+   * ----------------------------------------------------------------------------
+   */
+  readonly abilityModifiers?: Readonly<Record<string, AbilityModifier>>;
+  /**
+   * Ability ids whose COOLDOWN does not apply while this aura is up.
+   *
+   * ----------------------------------------------------------------------------
+   * "Removes its cooldown", which Berserk says of Primal Bite and which
+   * nothing else in the engine could express: `CastModifier` carries cast time
+   * and cost, and an ability's cooldown lives in the `AbilityBook` where no
+   * aura reaches.
+   *
+   * IT SUPPRESSES THE CHECK, IT DOES NOT CLEAR THE TIMER. The cooldown keeps
+   * running underneath, so when the aura drops the ability is on whatever
+   * remains of the cooldown from its last use -- which is what "removes its
+   * cooldown FOR THE DURATION" means. Clearing it instead would hand back a
+   * free cast at the moment the buff ended.
+   * ----------------------------------------------------------------------------
+   */
+  readonly suppressesCooldownOf?: readonly string[];
   /** Multiplies healing the carrier does. */
   readonly healingDoneMultiplier?: number;
   readonly periodic?: PeriodicEffect;
