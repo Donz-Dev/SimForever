@@ -160,6 +160,26 @@ Mage spell. The list exists now (`MAGE_COSTED_SPELL_IDS`) and **a test derives
 the same set from `MAGE_ABILITIES` and fails if the two disagree**, which is
 what keeps a hand-maintained list in step. Worth **−6.2**.
 
+### And what the two branches are worth together
+
+**MEASURED ON A TRIAL MERGE OF `priest-deep-dive` INTO THIS BRANCH**, which
+composes cleanly -- one conflict, in `combineModifiers`, where both branches add
+a field. 2,042 tests pass and the typechecker is clean.
+
+| Profile | Baseline | This branch | Plus spell hit |
+| --- | --- | --- | --- |
+| Arcane | 392.6 | 450.9 | **492.2** |
+| Fire | 401.2 | 440.1 | **449.4** |
+| Frostfire | 412.5 | 412.5 | **437.8** |
+
+**THESE ARE NOT A BASELINE.** They are a projection taken on a merge that has
+not happened, recorded so that whoever merges second can tell a surprise from
+an expectation. Re-measure after the real merge.
+
+**FROSTFIRE'S WHOLE +25.3 IS SPELL HIT**, which is what a 5/5 Elemental
+Precision against a flat 17% spell miss should be worth: roughly a thirtieth
+more casts landing, on a profile with nothing else in this branch's way.
+
 ### Fire Blast, measured once
 
 An instant no list asks for. Added above the Fireball filler, 30 batches of 10:
