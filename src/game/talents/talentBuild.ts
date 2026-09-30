@@ -7,7 +7,7 @@ import type {
   StatName,
   WeaponProfile,
 } from '../../engine';
-import type { AuraDefinition, WeaponSlot } from '../../engine';
+import type { AttackTableKind, AuraDefinition, WeaponSlot } from '../../engine';
 import {
   ALL_ABILITIES,
   AbilityModifiers,
@@ -358,6 +358,25 @@ function meets(
 }
 
 /**
+ * The BONUS half of a crit multiplier for one attack table.
+ *
+ * A melee or ranged crit multiplies by 2 and a spell crit by 1.5, so "+10%
+ * critical strike damage" is worth 0.1 on the first and 0.05 on the second --
+ * and a talent stating +100% takes a spell crit to 2.0x, never to 2.5x.
+ *
+ * ONE COPY, because three effect kinds need it and the third is where a
+ * written-out rule drifts. Taken from `COMBAT_CONSTANTS` rather than assumed,
+ * so a ruleset that separates ranged from melee only changes the constant.
+ */
+function critBonusHalfFor(table: AttackTableKind): number {
+  if (table === 'spell') return COMBAT_CONSTANTS.spellCritMultiplier - 1;
+  if (table === 'ranged-auto' || table === 'ranged-special') {
+    return COMBAT_CONSTANTS.rangedCritMultiplier - 1;
+  }
+  return COMBAT_CONSTANTS.meleeCritMultiplier - 1;
+}
+
+/**
  * Why a conditional effect did not apply, in the character's own terms.
  *
  * NAMES THE CLAUSE THAT FAILED, because "applies only with a particular
@@ -400,6 +419,7 @@ function unmetReason(requires: BuildRequirement): string {
  * A panel that describes a build has to build it the same way the fight does.
  * ----------------------------------------------------------------------------
  */
+
 export function talentContextFor(
   equipment: Equipment,
   style: CombatStyleId,
@@ -800,14 +820,8 @@ export function talentBuild(
              * taken from the table rather than assumed, so a ruleset that
              * separates them later only has to change the constant.
              */
-            const base =
-              table === 'spell'
-                ? COMBAT_CONSTANTS.spellCritMultiplier
-                : table === 'ranged-auto' || table === 'ranged-special'
-                  ? COMBAT_CONSTANTS.rangedCritMultiplier
-                  : COMBAT_CONSTANTS.meleeCritMultiplier;
             attackTableModifiers.add(table, {
-              critMultiplierBonus: (base - 1) * (value / 100),
+              critMultiplierBonus: critBonusHalfFor(table) * (value / 100),
             });
           }
           break;
@@ -848,6 +862,21 @@ export function talentBuild(
           petReactions.push(buildPetReaction(value));
           break;
         }
+        case 'abilityCritDamage':
+          /*
+           * THE BONUS HALF, AND THE TABLE DECIDES THE HALF -- the same rule
+           * `schoolCritDamage` and `attackTableCritDamage` follow, and the
+           * reason `table` is declared rather than derived. Pandemic's "+100%"
+           * takes a spell crit from 1.5x to 2.0x; Lethality's "+20%" takes a
+           * melee crit from 2.0x to 2.2x. Reading the melee figure for the
+           * Warlock would be worth twice what the talent says.
+           */
+          for (const abilityId of effect.abilityIds) {
+            abilityModifiers.add(abilityId, {
+              critMultiplierBonus: critBonusHalfFor(effect.table) * (value / 100),
+            });
+          }
+          break;
         case 'critDamageBonus':
           /*
            * The talent raises the BONUS half of the multiplier, not the whole

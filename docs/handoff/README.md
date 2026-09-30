@@ -17,7 +17,7 @@ for project status. These files are the CLASS.
 | [mage.md](mage.md) | Frostfire, Arcane, Fire | **16** |
 | [shaman.md](shaman.md) | Ele Shaman, Enh Shaman | **17** |
 | [priest.md](priest.md) | Shadow | **18** |
-| [warlock.md](warlock.md) | SM/DS, Firelock | **25** |
+| [warlock.md](warlock.md) | SM/DS, Firelock | **22** |
 
 ## Every one of these numbers is re-derivable
 

@@ -210,6 +210,51 @@ export type TalentEffect =
   | { readonly kind: 'critDamageBonus' }
 
   /**
+   * The same, for a NAMED LIST OF ABILITIES rather than for everything.
+   *
+   * ----------------------------------------------------------------------
+   * THE FOURTH SCOPE, AND THE ONE THE OTHER THREE COULD NOT REACH.
+   * `critDamageBonus` is whole-character, `schoolCritDamage` is per school and
+   * `attackTableCritDamage` is per table; `abilityCrit` names one ability and
+   * sets crit CHANCE. A tooltip that lists six or seven spells by name matched
+   * none of them.
+   *
+   * IT WAS A MISSING DECLARATION AND NOT A MISSING RULE.
+   * `AbilityModifiers.critMultiplierBonus` has existed since Impale, and no
+   * talent effect reached it -- so two talents in two classes said so in almost
+   * identical words and both were counted as live gaps:
+   *
+   *   Warlock  Pandemic, "the critical strike damage bonus of your Corruption,
+   *            Bane of Agony, Bane of Doom, Drain Soul, Drain Life, Siphon Life
+   *            and Wrack spells", +100% at 3/3. SM/DS spends three points on it
+   *            and 48% of its damage is those effects.
+   *   Rogue    Lethality, the same sentence over Sinister Strike, Gouge,
+   *            Backstab, Mutilate, Ghostly Strike and Hemorrhage, +20% at 5/5.
+   *            All three Rogue profiles take it.
+   *
+   * AN ABILITY ID MAY BE AN AURA'S, which is what makes Pandemic expressible at
+   * all: a periodic tick carries its AURA's id, and `rollPeriodicCrit` applies
+   * the same modifier a cast gets. That is the route Malediction and Improved
+   * Rend already take for periodic DAMAGE.
+   *
+   * `table` NAMES WHICH CRIT MULTIPLIER THE BONUS IS A FRACTION OF, and it has
+   * to be declared rather than derived. A spell crit multiplies by 1.5 and a
+   * melee one by 2, so the bonus half is 0.5 or 1.0 -- "+100%" takes a spell
+   * crit to 2.0x and a melee crit to 3.0x. `AbilityModifiers` is keyed by
+   * ability and nothing in it knows which table an ability rolls on, which is
+   * exactly why `schoolCritDamage` and `attackTableCritDamage` can derive the
+   * half and this cannot.
+   * ----------------------------------------------------------------------
+   */
+  | {
+      readonly kind: 'abilityCritDamage';
+      readonly abilityIds: readonly string[];
+      /** Which table's crit multiplier the bonus is a fraction of. */
+      readonly table: AttackTableKind;
+      readonly valueIndex?: number;
+    }
+
+  /**
    * Damage, crit chance or crit damage for a SCHOOL rather than an ability.
    *
    * ----------------------------------------------------------------------
