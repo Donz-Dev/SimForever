@@ -100,28 +100,26 @@ export const DRUID_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
 
   overgrowth: [{ kind: 'unmodelled', scope: 'crowdControl', reason: 'Entangling Roots targets.' }],
 
-  nature_s_grace: [
-    /*
-     * NOT A ONE-SHOT, AND I HAD THIS WRONG. Forever's wording is "increasing
-     * your spellcasting speed and reducing your global cooldown by 10% for 3
-     * sec" -- a three-second HASTE window off a spell crit, not Classic's
-     * shorten-the-next-cast. It was recorded here and in CLAUDE.md as wanting
-     * the Eclipse rule, and it wants a reaction and an aura the engine has had
-     * all along.
-     *
-     * Reachable and simply not written yet, which is a different claim from
-     * "the engine cannot": see Elemental Devastation on the Shaman, which is
-     * the same spell-crit-grants-an-aura shape.
-     */
-    {
-      kind: 'unmodelled',
-      reason:
-        'A 3-second haste window from a non-periodic spell crit. Reachable -- ' +
-        'a cast-crit reaction plus a haste aura, both of which exist -- and ' +
-        'not written yet. Its global cooldown clause is separate: haste does ' +
-        'not affect the global cooldown in this engine.',
-    },
-  ],
+  /*
+   * FOREVER'S IS A THREE-SECOND WINDOW, NOT CLASSIC'S ONE-SHOT, and this file
+   * had it the other way round once: "increasing your spellcasting speed and
+   * reducing your global cooldown by 10% for 3 sec" wants a reaction and an
+   * aura, where Classic's shorten-the-next-cast wants the Eclipse rule.
+   *
+   * ITS TWO CLAUSES ARE TWO EFFECTS. The haste half was reachable all along;
+   * the global cooldown half was not, because haste deliberately does not
+   * touch the global cooldown in this engine and `baseGcdMs` had no aura path
+   * to it. `AuraDefinition.gcdFraction` is that path, added here.
+   *
+   * IT COSTS THE MOONKIN 14.9 DPS, AND THE TALENT IS NOT WHAT IS WRONG. The
+   * buff does what it says -- casts go from 26.3 a fight to 27.4 -- and the
+   * DoTs lose ticks, Moonfire 25.1 to 22.5 and Insect Swarm 27.9 to 25.5,
+   * because the list refreshes them on a two-second window and a refresh
+   * RESETS the aura. Acting faster reaches that window earlier and clips more.
+   * See `REFRESH_WINDOW_MS` in `rotations/druid.ts`; the owner's replacement
+   * list refreshes on "not active" and removes the clipping.
+   */
+  nature_s_grace: [{ kind: 'reaction', reactionId: 'nature_s_grace' }],
 
   eclipse: [
     /*

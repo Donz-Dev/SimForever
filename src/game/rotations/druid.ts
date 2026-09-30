@@ -19,7 +19,28 @@ import { MAX_COMBO_POINTS, comboPointsOn } from '../combat/comboPoints';
  * ----------------------------------------------------------------------------
  */
 
-/** Refresh a debuff when it is nearly gone, not on cooldown. */
+/**
+ * Refresh a debuff when it is nearly gone, not on cooldown.
+ *
+ * ----------------------------------------------------------------------------
+ * THIS WINDOW CLIPS, AND MAKING THE MOONKIN FASTER IS WHAT REVEALED IT.
+ *
+ * A refresh resets the aura, so anything left on the clock when the rotation
+ * gets round to it is thrown away. At a two-second window the Moonkin loses up
+ * to two seconds of Moonfire and Insect Swarm every cycle -- and the faster it
+ * acts, the sooner it reaches the entry inside that window and the more it
+ * clips.
+ *
+ * MEASURED, when Nature's Grace landed and cost the Moonkin 14.9 DPS. The buff
+ * works: casts went 26.3 to 27.4 a fight. What fell was TICKS -- Moonfire 25.1
+ * to 22.5, Insect Swarm 27.9 to 25.5 -- so a haste and global cooldown buff
+ * read as a straight loss, and nothing about the result looked wrong.
+ *
+ * The ruleset owner's replacement list refreshes on "not active" rather than
+ * on a window, which removes the clipping outright. Left as it is until that
+ * list lands, because changing both at once cannot be attributed.
+ * ----------------------------------------------------------------------------
+ */
 const REFRESH_WINDOW_MS = 2000;
 
 const missing = (auraId: string) =>
