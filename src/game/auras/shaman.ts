@@ -27,6 +27,9 @@ import {
 
 const FIRE = 'fire' as const;
 
+/** The midpoint of a stated range. The combat table supplies the spread. */
+const midpoint = (low: number, high: number) => (low + high) / 2;
+
 /**
  * A flat percentage as the engine's own haste rating.
  *
@@ -89,6 +92,91 @@ export const FLAME_SHOCK_DOT: AuraDefinition = {
         // periodic effect in this project carries.
         powerCoefficient: FLAME_SHOCK_COEFFICIENTS.perTick,
         periodic: true,
+        critFrom: 'spell',
+        appliesArmor: false,
+      });
+    },
+  },
+};
+
+
+/*
+ * ============================================================================
+ * SEARING TOTEM, MODELLED AS A DAMAGE-OVER-TIME EFFECT AND NOT AS AN ENTITY.
+ *
+ * THE RULESET OWNER'S RULING, given in full because no source states most of
+ * it: "Searing totem can be treated like a DoT effect that lasts 55 seconds and
+ * ticks every 1.5 seconds for 40-54 fire damage +8% of spell damage per tick,
+ * but is considered a totem for the purposes of other talents."
+ *
+ * The capture supplies the rest -- 170 mana, instant, Fire, "Summons a Searing
+ * Totem with 5 health at your feet for 55 sec that repeatedly attacks an enemy
+ * within 20 yards for 40 to 54 Fire damage." What it does NOT state is how
+ * often "repeatedly" is, or whether the totem scales at all, and this file used
+ * to say so: the shaman ability header recorded that Searing Totem "does not
+ * even state an attack interval". The owner supplied the cadence and the
+ * coefficient, which is the only reason this is data rather than an invention.
+ *
+ * IT WAS BLOCKED ON AN ENGINE GAP AND IS NOT ANY MORE, because the ruling
+ * removed the need for the gap rather than the gap being closed. The engine
+ * cannot add a combatant mid-fight, so a totem that acts on its own is
+ * unreachable; a debuff on the target that ticks is reachable and, against one
+ * enemy standing still, deals exactly the same damage. Same shape as the
+ * Hunter's hawk, modelled without a combatant by an earlier ruling of the
+ * owner's. WHAT IS LOST is that the totem is not separately targetable and
+ * cannot be killed.
+ *
+ * "CONSIDERED A TOTEM FOR THE PURPOSES OF OTHER TALENTS" IS THE CLAUSE THAT IS
+ * EASY TO DROP, and two Elemental talents read it:
+ *
+ *   Call of Flame     "damage done by your Fire Totems" -- now an
+ *                     `abilityDamage` effect keyed on this aura's id.
+ *   Elemental Fury    "critical strike damage bonus of your Searing and Magma
+ *                     Totems and your Fire, Frost, and Nature spells" -- which
+ *                     already reaches it, because the ticks are FIRE and that
+ *                     talent is a school effect. Nothing had to be added; what
+ *                     had to change is the reason saying it did nothing.
+ *
+ * THIRTY-SIX TICKS, NOT THIRTY-SEVEN. 55 seconds at 1.5 is 36.67, so the last
+ * tick lands at 54.0 and the totem expires at 55.0 with 1.0 second unspent.
+ * That falls out of the engine rather than being chosen -- the duration and the
+ * cadence are both stated, so unlike every other DoT here there is no total to
+ * divide and no cadence to infer.
+ * ============================================================================
+ */
+export const SEARING_TOTEM_TICK_DAMAGE = midpoint(40, 54);
+export const SEARING_TOTEM_DURATION_MS = seconds(55);
+export const SEARING_TOTEM_TICK_INTERVAL_MS = seconds(1.5);
+/** "+8% of spell damage per tick", the owner's figure. In no capture. */
+export const SEARING_TOTEM_TICK_SP_COEFFICIENT = 0.08;
+
+export const SEARING_TOTEM_DOT: AuraDefinition = {
+  id: 'searing_totem',
+  name: 'Searing Totem',
+  durationMs: SEARING_TOTEM_DURATION_MS,
+  isDebuff: true,
+  refreshBehaviour: 'reset',
+  periodic: {
+    intervalMs: SEARING_TOTEM_TICK_INTERVAL_MS,
+    onTick: (context, aura) => {
+      const source = context.combatant(aura.sourceId);
+      const target = context.combatant(aura.targetId);
+      if (!source || !target || !target.isAlive) return;
+
+      dealDamage(context, {
+        source,
+        target,
+        abilityId: aura.id,
+        abilityName: aura.name,
+        school: FIRE,
+        baseAmount: SEARING_TOTEM_TICK_DAMAGE,
+        powerCoefficient: SEARING_TOTEM_TICK_SP_COEFFICIENT,
+        periodic: true,
+        /*
+         * IT CRITS, and Elemental Fury is the reason that has to be true: a
+         * talent raising "the critical strike damage bonus of your Searing
+         * Totem" is meaningless against something that cannot crit.
+         */
         critFrom: 'spell',
         appliesArmor: false,
       });
