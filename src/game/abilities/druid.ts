@@ -10,7 +10,14 @@ import {
   MOONFIRE_COEFFICIENTS,
   MOONFIRE_DOT,
   RAKE_DOT,
+  BARKSKIN,
+  BARKSKIN_COOLDOWN_MS,
   BERSERK_COOLDOWN_MS,
+  ENRAGE,
+  ENRAGE_COOLDOWN_MS,
+  ENRAGE_INSTANT_RAGE,
+  FRENZIED_REGENERATION,
+  FRENZIED_REGENERATION_COOLDOWN_MS,
   TIGERS_FURY,
   berserkAura,
   ripAura,
@@ -506,6 +513,65 @@ export const DEMORALIZING_ROAR_ABILITY: Ability = {
     'Warrior Demoralizing Shout carries.',
 };
 
+
+// ---------------------------------------------------------------------------
+// Feral: the Bear's three cooldowns
+// ---------------------------------------------------------------------------
+
+/**
+ * Barkskin. Free, instant, one minute, and worth nothing to a Druid nothing
+ * attacks -- see `BARKSKIN` for why that is not the same as inert.
+ */
+export const BARKSKIN_ABILITY: Ability = {
+  id: 'barkskin',
+  name: 'Barkskin',
+  cooldownMs: BARKSKIN_COOLDOWN_MS,
+  requiresTarget: false,
+  onCast: ({ simulation, caster }) => {
+    simulation.applyAura(caster, BARKSKIN, caster.id);
+  },
+  unmodelled:
+    'Its "damaging attacks will not cause spellcasting delays" does nothing: ' +
+    'spell pushback is not modelled, so there is no delay to prevent.',
+};
+
+/**
+ * Enrage. The INSTANT ten rage is here and the twenty over ten seconds is the
+ * aura's, which is the same split Bloodrage has for the same reason: a grant
+ * that happens once is not periodic.
+ */
+export const ENRAGE_ABILITY: Ability = {
+  id: 'enrage',
+  name: 'Enrage',
+  cooldownMs: ENRAGE_COOLDOWN_MS,
+  requiresTarget: false,
+  onCast: ({ simulation, caster }) => {
+    simulation.grantResource(caster, 'rage', ENRAGE_INSTANT_RAGE, {
+      id: 'enrage',
+      name: 'Enrage',
+    });
+    simulation.applyAura(caster, ENRAGE, caster.id);
+  },
+  unmodelled:
+    'Its "considered in combat for the duration" does nothing: every fight ' +
+    'here opens in combat and never leaves it.',
+};
+
+/**
+ * Frenzied Regeneration. In scope by the ruleset owner's ruling, and the
+ * reason it is not the healing-throughput case is on `FRENZIED_REGENERATION`:
+ * it is a rage sink as much as a heal.
+ */
+export const FRENZIED_REGENERATION_ABILITY: Ability = {
+  id: 'frenzied_regeneration',
+  name: 'Frenzied Regeneration',
+  cooldownMs: FRENZIED_REGENERATION_COOLDOWN_MS,
+  requiresTarget: false,
+  onCast: ({ simulation, caster }) => {
+    simulation.applyAura(caster, FRENZIED_REGENERATION, caster.id);
+  },
+};
+
 /**
  * Berserk, learned at 40 and usable in Cat, Bear and Dire Bear form.
  *
@@ -550,4 +616,7 @@ export const DRUID_ABILITIES: readonly Ability[] = [
   LACERATE_ABILITY,
   DEMORALIZING_ROAR_ABILITY,
   BERSERK,
+  BARKSKIN_ABILITY,
+  ENRAGE_ABILITY,
+  FRENZIED_REGENERATION_ABILITY,
 ];
