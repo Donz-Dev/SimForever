@@ -142,10 +142,10 @@ structure, and throws if its four buckets do not account for every talent.
 | [paladin.md](docs/handoff/paladin.md) | Seal Twist Ret, Shockadin, Prot Pally | **10** |
 | [druid.md](docs/handoff/druid.md) | Moonkin, Cat, Bear | **12** |
 | [hunter.md](docs/handoff/hunter.md) | BM Hunter, LW Ranged, LW Melee | **13** |
+| [rogue.md](docs/handoff/rogue.md) | Venom, Combat, Rupture | **14** |
 | [mage.md](docs/handoff/mage.md) | Frostfire, Arcane, Fire | **16** |
 | [shaman.md](docs/handoff/shaman.md) | Ele Shaman, Enh Shaman | **17** |
 | [priest.md](docs/handoff/priest.md) | Shadow | **18** |
-| [rogue.md](docs/handoff/rogue.md) | Venom, Combat, Rupture | **20** |
 | [warlock.md](docs/handoff/warlock.md) | SM/DS, Firelock | **25** |
 
 **THE WARRIOR'S 1 AGAINST THE WARLOCK'S 25 IS NOT A DIFFERENCE IN DIFFICULTY.**
@@ -228,9 +228,9 @@ fails.
 | Shaman | 50 | 17 | 4 | 12 | **17** |
 | Mage | 54 | 27 | 2 | 9 | **16** |
 | Priest | 53 | 15 | 2 | 18 | **18** |
-| Rogue | 53 | 25 | 2 | 6 | **20** |
+| Rogue | 53 | 25 | 2 | 12 | **14** |
 | Warlock | 52 | 21 | 3 | 3 | **25** |
-| **Total** | **468** | **214** | **33** | **89** | **132** |
+| **Total** | **468** | **214** | **33** | **95** | **126** |
 
 **SIX TALENTS LEFT THE GAP COLUMN WITH THE PRIORITY LISTS**, and four of them
 were never really in it. Cutthroat and Premeditation were counted among the
@@ -241,10 +241,19 @@ reason was a statement about the engine ("nothing can reset a cooldown from
 content") and the engine now can. Fingers of Frost carried `FROZEN_UNMODELLED`,
 which is a claim about the TARGET, and that talent does not freeze anything.
 
-**247 of 468 talents do something**, 89 never will, and **132 are the actual
-remaining work** — not the 262 a raw count of unmodelled reasons suggests. The 96
-scoped entries break down as 32 crowd control, 33 healing, 17 positioning and 14
-threat.
+**247 of 468 talents do something**, 95 never will, and **126 are the actual
+remaining work** — not the 262 a raw count of unmodelled reasons suggests. The 103
+scoped entries break down as 33 healing, 32 crowd control, 17 positioning, 14
+threat and **7 stealth**.
+
+**STEALTH IS THE NEWEST RULING AND IT CLOSED THE LARGEST OPEN QUESTION.** Every
+fight opens in combat, so nothing is ever stealthed — and until the owner ruled,
+that was an ENCOUNTER property rather than one of the rulings, which left six
+Rogue talents counted as work nothing would ever reach. **The Rogue goes from 20
+live gaps to 14 and stops being the second-largest queue in the project.** It
+covers being stealthed, detecting it, and the openers that require it; it does NOT
+cover an in-combat proc that REMOVES a stealth requirement, which is what
+Cutthroat is and why Cutthroat is modelled.
 
 The rulings, recorded in CLAUDE.md under **Scope**: positions, range, facing and
 movement; crowd control; threat; and healing THROUGHPUT — but **mana RETURN is in

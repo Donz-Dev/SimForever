@@ -10,20 +10,23 @@ directory for what the census columns mean and how to reprint every figure below
 
 ## The one thing to understand first
 
-**MOST OF THE ROGUE'S 20 LIVE GAPS ARE STEALTH, AND STEALTH IS NOT ONE OF THE
-OWNER'S FOUR RULINGS.** Eleven talents are inert because **every fight opens in
-combat** — Camouflage, Master of Deception, Initiative, Improved Ambush, Dirty
-Deeds, Heightened Senses and more. That is an ENCOUNTER property, and it is
-neither an engine gap nor a permanent scope decision.
+**STEALTH IS OUT OF SCOPE BY THE OWNER'S RULING, AND THAT WAS THE LARGEST OPEN
+QUESTION IN THIS PROJECT.** It is the fifth `OutOfScope` member — `stealth` — and
+ruling it took this class **from 20 live gaps to 14**, because six talents were
+being counted as remaining work that nothing was ever going to reach: Camouflage,
+Master of Deception, Improved Ambush, Initiative, Heightened Senses and Dirty
+Deeds. Opportunity's Garrote-and-Ambush half went with them.
 
-**It is an open question for the ruleset owner: is an opener in scope at all?** A
-yes turns a third of this class's queue into real work; a no turns it into a fifth
-`OutOfScope` member and the queue drops from 20 to about 9. **Nothing else about
-this class should be planned before that is asked**, because it changes what the
-work is.
+**It covers being stealthed, detecting it, and the openers that require it.** It
+does **not** cover an in-combat proc that REMOVES a stealth requirement — Cutthroat
+is exactly that and is modelled, and Premeditation's Forever tooltip has no stealth
+clause at all. Both were once counted among the stealth casualties and neither
+belonged there, **which is why the scope is about the REQUIREMENT and not about the
+word appearing in a tooltip.**
 
-Two more gaps need the target to attack back (`riposte`, `setup`), which no Rogue
-profile does.
+So this class is no longer the second-largest queue in the project; it is the
+middle of the pack. Two of the remaining gaps need the target to attack back
+(`riposte`, `setup`), which no Rogue profile does.
 
 ---
 
@@ -60,13 +63,13 @@ quarter of Venom** and about a tenth of the other two.
 
 | Talents | Fully | Partly | Ruled out | Live gap |
 | --- | --- | --- | --- | --- |
-| 53 | 25 | 2 | 6 | **20** |
+| 53 | 25 | 2 | **12** | **14** |
 
-### The 20 live gaps, grouped by cause
+**Six of the twelve ruled out are the stealth ruling.** `improved_distract` is NOT
+one of them — Distract is simply not implemented, which is an engine claim and
+still a live gap.
 
-**Stealth and openers (the big block, and the open question above):**
-`camouflage`, `master_of_deception`, `improved_ambush`, `initiative`,
-`dirty_deeds`, `heightened_senses`, `improved_distract`
+### The 14 live gaps, grouped by cause
 
 **Needs the target to act:** `riposte` (after parrying, and it disarms),
 `setup` (a combo point after dodging)
@@ -90,13 +93,28 @@ damage and apply-chance bonuses are read by `poisonReactions`. Only the "resist
 dispel" and "chance to not consume a charge" halves do not. **Their reasons are
 worth re-reading; they read as more broken than they are.**
 
-### `quietus` is the honest version of a trap
+### `quietus` IS ANSWERED, AND IT IS NOW A SPECIFIC PIECE OF WORK
 
-Its reason says the target is never below 35% health **and names the Execute
-ruling**, correctly, rather than assuming the fraction. `inExecutePhase` is
-hardcoded to 20%. **So this is an owner question, not a gap:** is a 35% health
-threshold also a clock, and at what fraction of the fight? Compare with the
-Priest's Early Demise, which is at 20% and is therefore expressible today.
+**The owner has ruled: "quietus is 35%"** — the last 35% of the fight, by the same
+CLOCK Execute and Hammer of Wrath run on. So it is a missing DECLARATION, not a
+question and not a property of the target.
+
+It is "your Sinister Strike, Ghostly Strike and Hemorrhage cause 2/4/6/8/10% more
+damage against targets below 35% health".
+
+**What it needs:** a per-ability DAMAGE modifier active only while the fight is in
+its final fraction. `inExecutePhase` is hardcoded to `EXECUTE_PHASE_FRACTION` and
+wants a fraction argument; the modifier is the shape `addWhileAura` has, but
+conditioned on the clock — and **`Combatant.abilityModifierFor` has no simulation
+to read a clock from, which is the actual work.** It must go through the combatant
+rather than an ability's `onCast`, by the standing rule.
+
+**BUILD IT WITH THE PRIEST'S EARLY DEMISE**, which is the identical capability at
+20% and for CRIT rather than damage. Two callers, two classes, one mechanism —
+otherwise two contexts will each design it.
+
+**No profile takes Quietus**, so building it moves nothing and carries no baseline
+risk. Only Hemorrhage of its three abilities is cast by any Rogue list.
 
 ---
 
@@ -165,15 +183,14 @@ promising item in this document.**
 
 ## What "done" looks like
 
-1. **The stealth question asked and answered.** It decides whether this class's
-   queue is 20 or about 9. Nothing else should be planned first.
-2. **Mutilate's Poisoned bonus applied** — a live 20% on the Venom build's
+1. **Mutilate's Poisoned bonus applied** — a live 20% on the Venom build's
    signature ability, with a re-measured baseline.
-3. **Rupture's 1.3 applications a fight investigated**, since the owner has said
+2. **Rupture's 1.3 applications a fight investigated**, since the owner has said
    it is too low. Isolate the duration floor rather than reordering the list.
-4. **`lethality` reached**, since `critMultiplierBonus` exists and nothing uses it.
+3. **`lethality` reached**, since `critMultiplierBonus` exists and nothing uses it.
    The Warlock's Pandemic wants the same mechanism — **build it once.**
-5. **`vile_poisons` and `improved_poisons` reasons rewritten** to say what applies,
+4. **`vile_poisons` and `improved_poisons` reasons rewritten** to say what applies,
    since both currently read as gaps and both mostly work.
-6. **`quietus` put to the owner** with the Priest's Early Demise, as one question
-   about health thresholds rather than two.
+5. **`quietus` built, with the Priest's Early Demise, as ONE clock-conditioned
+   per-ability modifier.** The ruling is in; the mechanism is not. Moves no number
+   here, which makes it a safe place to build it.

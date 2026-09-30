@@ -566,7 +566,29 @@ export type OutOfScope =
    * profile's sustain, so a talent returning mana is a live gap and gets no
    * `scope`.
    */
-  | 'healing';
+  | 'healing'
+  /**
+   * STEALTH AND OPENERS. The owner's ruling, and the newest member.
+   *
+   * ------------------------------------------------------------------------
+   * IT WAS THE LARGEST OPEN QUESTION IN THE PROJECT RATHER THAN A GAP. Every
+   * fight here opens in combat, so nothing is ever stealthed — and until the
+   * owner ruled, that was an ENCOUNTER property and not one of the rulings,
+   * which left six Rogue talents counted as remaining work that nothing was
+   * ever going to reach. The census read 20 live gaps for the Rogue and the
+   * honest figure was 14.
+   *
+   * WHAT IT COVERS: being stealthed, detecting stealth, and the openers that
+   * require it — Ambush, Garrote, Cheap Shot, and the talents keyed to them.
+   *
+   * WHAT IT DOES NOT COVER: an in-combat proc that REMOVES a stealth
+   * requirement. Cutthroat is exactly that and is modelled; Premeditation's
+   * Forever tooltip has no stealth clause at all. Both were once counted among
+   * the stealth casualties and neither belongs there — which is why this scope
+   * is about the REQUIREMENT and not about the word appearing in a tooltip.
+   * ------------------------------------------------------------------------
+   */
+  | 'stealth';
 
 /**
  * What a character must BE or be HOLDING for a conditional effect to apply.
