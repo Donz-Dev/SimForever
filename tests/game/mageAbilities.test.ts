@@ -3,7 +3,6 @@ import { createPlayer } from '../../src/game/actors/createPlayer';
 import { runProfileBatch } from '../../src/simulator';
 import { PRESETS_BY_ID } from '../../src/profiles/presets';
 import { abilitiesForClass } from '../../src/game/abilities/abilitiesForClass';
-import { directSpellCoefficient } from '../../src/game/combat/spellCoefficient';
 import type { TelemetryEvent } from '../../src/engine';
 import { resolveCast, seconds } from '../../src/engine';
 import { buildSimulation } from '../helpers/buildSimulation';
@@ -333,22 +332,21 @@ describe('the three fights', () => {
     expect(named).not.toContain('Fireball');
   });
 
-  it('CLAMPS PYROBLAST, which is the only spell here that reaches the cap', () => {
+  it('takes both of Pyroblast’s halves from the sheet, not from its cast time', () => {
     /*
-     * Six seconds over 3.5 is 1.714, and Classic clamps the cast at 3.5 so it
-     * is 1.0 instead -- the ruleset owner's ruling when asked, and the single
-     * largest judgement call in this feature. On a Mage's 452 spell power it
-     * is the difference between +775 and +452 on the direct half.
+     * 0.91 on the hit and 15% a tick, transcribed by hand from
+     * WoWSimWorksheet.xlsx rather than read back out of the table under test.
      *
-     * Pyroblast is also a HYBRID, so the 1.0 is then shared with its burn.
-     * Both steps are asserted, because either alone would look reasonable.
+     * PYROBLAST USED TO BE THE ONE SPELL THAT REACHED THE CAST CLAMP. Six
+     * seconds over 3.5 is 1.714, clamped to 1.0, then shared with its burn --
+     * three derivation steps and a borrowed Classic rule, replaced by two
+     * stated numbers. There is no clamp left for anything to reach.
      */
-    expect(directSpellCoefficient(seconds(6))).toBeCloseTo(1, 10);
-    expect(directSpellCoefficient(seconds(6))).not.toBeCloseTo(6 / 3.5, 3);
+    expect(PYROBLAST_COEFFICIENTS.direct).toBeCloseTo(0.91, 10);
+    expect(PYROBLAST_COEFFICIENTS.perTick).toBeCloseTo(0.15, 10);
 
-    // The pair, after the clamp: 1.0 direct against 0.8 for a 12-second DoT.
-    expect(PYROBLAST_COEFFICIENTS.direct).toBeCloseTo(1 / (1 + 0.8), 6);
-    expect(PYROBLAST_COEFFICIENTS.perTick * 4).toBeCloseTo(0.8 * (0.8 / 1.8), 6);
+    // And it is NOT what the old derivation gave, which is the point.
+    expect(PYROBLAST_COEFFICIENTS.direct).not.toBeCloseTo(1 / 1.8, 3);
   });
 
   it('gives IGNITE no coefficient, because its size is already scaled', () => {
@@ -392,19 +390,18 @@ describe('the three fights', () => {
     expect(total).toBeCloseTo(IGNITED, 6);
   });
 
-  it('gives Arcane Missiles the CHANNEL rule, not five instants', () => {
+  it('gives Arcane Missiles 28.6% a missile, from the sheet', () => {
     /*
-     * The whole five-second channel is the cast: 1.429 shared across five
-     * missiles, 0.286 each. Treating each missile as its own instant would
-     * give 0.4286 each and 2.143 in total -- half as much again, on the
-     * Arcane build's core spender.
+     * 28.6% PER TICK, hand-transcribed from WoWSimWorksheet.xlsx. Five
+     * missiles make 1.43 in total, which is still the largest coefficient in
+     * the project.
      *
-     * AND IT IS NOT CLAMPED, unlike a six-second Pyroblast. A channel pays
-     * for its scaling in time, which is what the clamp on a single cast
-     * exists to prevent.
+     * The derived channel rule happened to give the same figure -- five
+     * seconds over 3.5, shared five ways -- so this one number did not move.
+     * It is asserted against the SHEET rather than against that arithmetic,
+     * because the agreement is a coincidence of this spell and not a rule.
      */
-    expect(ARCANE_MISSILES_TICK_COEFFICIENT).toBeCloseTo(5 / 3.5 / 5, 10);
+    expect(ARCANE_MISSILES_TICK_COEFFICIENT).toBeCloseTo(0.286, 10);
     expect(ARCANE_MISSILES_TICK_COEFFICIENT * ARCANE_MISSILES_TICKS).toBeGreaterThan(1);
-    expect(ARCANE_MISSILES_TICK_COEFFICIENT).not.toBeCloseTo(1.5 / 3.5, 3);
   });
 });

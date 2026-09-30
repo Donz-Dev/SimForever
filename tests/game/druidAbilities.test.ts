@@ -203,21 +203,27 @@ describe('the three builds run', () => {
     expect(named).not.toContain('Wrath');
   });
 
-  it('gives Starfire its 3.5-second coefficient, from the BASE cast time', () => {
+  it('takes Starfire and Wrath from the sheet, not from their cast times', () => {
     /*
-     * --------------------------------------------------------------------------
-     * THE TRAP THIS RULE CARRIES. `ability.castTimeMs` on a BUILT ability is
-     * the TALENT-REDUCED figure -- Improved Starfire and Eclipse both shorten
-     * it -- so reading it inside `onCast` would make a cast-time talent
-     * quietly REDUCE the spell's scaling with gear.
+     * 1.0 and 0.57, hand-transcribed from WoWSimWorksheet.xlsx.
      *
-     * That is backwards, and it would look entirely ordinary: a Moonkin with
-     * more talent points would simply gain slightly less from spell power.
-     * The coefficient comes from `STARFIRE_CAST_MS`, which no talent touches.
+     * --------------------------------------------------------------------------
+     * THE TRAP THE OLD RULE CARRIED IS GONE WITH IT, and is worth remembering
+     * because the shape recurs. `ability.castTimeMs` on a BUILT ability is the
+     * TALENT-REDUCED figure -- Improved Starfire and Eclipse both shorten it --
+     * so a coefficient derived from it would have made a cast-time talent
+     * quietly REDUCE the spell's scaling with gear. Backwards, and it would
+     * have looked entirely ordinary.
+     *
+     * A STATED COEFFICIENT CANNOT DRIFT THAT WAY AT ALL, which is a quiet
+     * argument for data over derivation. Starfire's 1.0 is also exactly what
+     * `3.5 / 3.5` gave, so this spell alone would not have caught the bug --
+     * Wrath's 0.57 against the old 0.571 is the one that says which source is
+     * being read.
      * --------------------------------------------------------------------------
      */
-    expect(STARFIRE_COEFFICIENT).toBeCloseTo(3.5 / 3.5, 10);
-    expect(WRATH_COEFFICIENT).toBeCloseTo(2 / 3.5, 10);
+    expect(STARFIRE_COEFFICIENT).toBeCloseTo(1, 10);
+    expect(WRATH_COEFFICIENT).toBeCloseTo(0.57, 10);
 
     // The talented book really does carry a shorter cast, which is what makes
     // the distinction above load-bearing rather than theoretical.

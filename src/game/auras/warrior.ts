@@ -1,5 +1,6 @@
 import type { AuraDefinition, SimulationContext } from '../../engine';
 import { RATING_PER_PERCENT, dealDamage, flat, seconds } from '../../engine';
+import { REND_TICK_AP_COEFFICIENT } from '../combat/coefficients';
 
 /**
  * Warrior auras, from WoWForeverWarriorAbilities.xlsx.
@@ -87,9 +88,21 @@ export const REND: AuraDefinition = {
         abilityName: aura.name,
         school: 'physical',
         baseAmount: REND_DAMAGE_PER_TICK,
-        // The sheet states "0% per tick": Rend does not scale with attack
-        // power at all.
-        powerCoefficient: 0,
+        /*
+         * 2% OF ATTACK POWER PER TICK, and this is a place where the owner's
+         * two spreadsheets DISAGREE.
+         *
+         * `WoWForeverWarriorAbilities.xlsx` -- the per-class ability sheet, and
+         * for a long time the highest authority here -- states "0% per tick"
+         * for Rend outright, and that zero used to be quoted in this comment.
+         * `WoWSimWorksheet.xlsx`, handed over later and specifically as the
+         * authoritative document for coefficients, states 2%.
+         *
+         * The later and more specific document wins. It is called out because a
+         * reader who knows the Warrior sheet will otherwise read this as a
+         * transcription error. See docs/spell-coefficients.md.
+         */
+        powerCoefficient: REND_TICK_AP_COEFFICIENT,
         // No attack table. Whether Rend landed was decided when it was
         // applied, so its ticks do not roll the table again.
         periodic: true,

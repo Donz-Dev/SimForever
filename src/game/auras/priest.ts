@@ -1,6 +1,9 @@
 import type { AuraDefinition } from '../../engine';
 import { dealDamage, seconds } from '../../engine';
-import { periodicTickCoefficient } from '../combat/spellCoefficient';
+import {
+  DEVOURING_PLAGUE_TICK_SP_COEFFICIENT,
+  SHADOW_WORD_PAIN_TICK_SP_COEFFICIENT,
+} from '../combat/coefficients';
 
 /**
  * Priest auras, from the WoW Forever beta client (build 1.60.1.69876).
@@ -68,10 +71,7 @@ export const SHADOW_WORD_PAIN_TICK_INTERVAL_MS = seconds(3);
  * ticks it is adding to do. It comes to the tick interval over 15, which means
  * base and talented give the same answer; see `periodicTickCoefficient`.
  */
-export const SHADOW_WORD_PAIN_TICK_COEFFICIENT = periodicTickCoefficient(
-  SHADOW_WORD_PAIN_DURATION_MS,
-  SHADOW_WORD_PAIN_DURATION_MS / SHADOW_WORD_PAIN_TICK_INTERVAL_MS,
-);
+export const SHADOW_WORD_PAIN_TICK_COEFFICIENT = SHADOW_WORD_PAIN_TICK_SP_COEFFICIENT;
 
 export function shadowWordPainAura(extraSeconds = 0): AuraDefinition {
   const duration = SHADOW_WORD_PAIN_DURATION_MS + seconds(extraSeconds);
@@ -99,10 +99,7 @@ export const DEVOURING_PLAGUE_DURATION_MS = seconds(24);
 export const DEVOURING_PLAGUE_TICK_INTERVAL_MS = seconds(3);
 
 /** A pure DoT, 24 seconds in eight ticks: 1.6 in total. */
-export const DEVOURING_PLAGUE_TICK_COEFFICIENT = periodicTickCoefficient(
-  DEVOURING_PLAGUE_DURATION_MS,
-  DEVOURING_PLAGUE_DURATION_MS / DEVOURING_PLAGUE_TICK_INTERVAL_MS,
-);
+export const DEVOURING_PLAGUE_TICK_COEFFICIENT = DEVOURING_PLAGUE_TICK_SP_COEFFICIENT;
 
 export const DEVOURING_PLAGUE: AuraDefinition = {
   id: 'devouring_plague',

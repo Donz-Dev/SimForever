@@ -1,5 +1,6 @@
 import type { AuraDefinition } from '../../engine';
 import { RATING_PER_PERCENT, dealDamage, flat, seconds } from '../../engine';
+import { RUPTURE_TICK_AP_COEFFICIENT } from '../combat/coefficients';
 
 /**
  * Rogue auras, from the WoW Forever beta client (build 1.60.1.69876).
@@ -126,13 +127,22 @@ export function ruptureAura(comboPoints: number): AuraDefinition {
           abilityId: aura.id,
           abilityName: aura.name,
           school: 'physical',
+          // The flat per-tick figure, which the coefficient adds to.
           baseAmount: perTick,
           /*
            * "Increased by your Attack Power" WITH NO STATED COEFFICIENT, so
            * none is invented. The flat total is real and the scaling is not
            * modelled; `RUPTURE_UNMODELLED` says so where it is cast.
            */
-          powerCoefficient: 0,
+          /*
+           * 3% OF ATTACK POWER PER TICK, flat across combo points.
+           *
+           * NOT PER COMBO POINT, unlike Eviscerate and Rip -- the sheet states
+           * Rupture as a plain "3% per tick" where the other two read
+           * "%*combo point spent". More points still buy more, by buying more
+           * TICKS: the duration steps from eight seconds to sixteen.
+           */
+          powerCoefficient: RUPTURE_TICK_AP_COEFFICIENT,
           periodic: true,
           critFrom: 'melee-special',
           appliesArmor: false,

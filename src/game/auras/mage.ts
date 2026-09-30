@@ -1,6 +1,13 @@
 import type { AuraDefinition } from '../../engine';
 import { dealDamage, flat, seconds } from '../../engine';
-import { hybridSpellCoefficients } from '../combat/spellCoefficient';
+import {
+  FIREBALL_SP_COEFFICIENT,
+  FIREBALL_TICK_SP_COEFFICIENT,
+  FROSTFIRE_BOLT_SP_COEFFICIENT,
+  FROSTFIRE_BOLT_TICK_SP_COEFFICIENT,
+  PYROBLAST_SP_COEFFICIENT,
+  PYROBLAST_TICK_SP_COEFFICIENT,
+} from '../combat/coefficients';
 
 /**
  * Mage auras, from the WoW Forever beta client (build 1.60.1.69876).
@@ -109,11 +116,18 @@ export const FIREBALL_TICK_INTERVAL_MS = seconds(2);
 
 /** Fireball: a 3.5-second cast leaving an 8-second burn in four ticks. */
 export const FIREBALL_CAST_MS = seconds(3.5);
-export const FIREBALL_COEFFICIENTS = hybridSpellCoefficients(
-  FIREBALL_CAST_MS,
-  FIREBALL_DOT_DURATION_MS,
-  FIREBALL_DOT_DURATION_MS / FIREBALL_TICK_INTERVAL_MS,
-);
+/*
+ * THE BURN TAKES NOTHING, by the sheet, and the hit takes the lot.
+ *
+ * The old hybrid rule gave the burn 35% of the spell's scaling for 11% of its
+ * damage -- a consequence this project documented and left alone because the
+ * rule came from the owner. The sheet settles it the other way, and the way
+ * Classic does: 0.84 on the hit and zero on the burn.
+ */
+export const FIREBALL_COEFFICIENTS = {
+  direct: FIREBALL_SP_COEFFICIENT,
+  perTick: FIREBALL_TICK_SP_COEFFICIENT,
+};
 
 export const FIREBALL_DOT: AuraDefinition = {
   id: 'fireball',
@@ -142,16 +156,16 @@ export const PYROBLAST_TICK_INTERVAL_MS = seconds(3);
 /**
  * Pyroblast: a SIX-second cast leaving a 12-second burn in four ticks.
  *
- * THE ONE SPELL IN THE PROJECT THAT REACHES THE CAST CLAMP. Six seconds is
- * treated as 3.5, so its direct half is computed from a coefficient of 1.0
- * rather than 1.714 -- see `PLACEHOLDER_MAX_COEFFICIENT_CAST_SECONDS`.
+ * IT USED TO BE THE ONLY SPELL THAT REACHED THE CAST CLAMP, and with the
+ * sheet there is no clamp to reach: 0.91 on the hit and 15% a tick are stated
+ * outright. `PLACEHOLDER_MAX_COEFFICIENT_CAST_SECONDS` existed because this
+ * one spell needed it, and it is gone with it.
  */
 export const PYROBLAST_CAST_MS = seconds(6);
-export const PYROBLAST_COEFFICIENTS = hybridSpellCoefficients(
-  PYROBLAST_CAST_MS,
-  PYROBLAST_DOT_DURATION_MS,
-  PYROBLAST_DOT_DURATION_MS / PYROBLAST_TICK_INTERVAL_MS,
-);
+export const PYROBLAST_COEFFICIENTS = {
+  direct: PYROBLAST_SP_COEFFICIENT,
+  perTick: PYROBLAST_TICK_SP_COEFFICIENT,
+};
 
 export const PYROBLAST_DOT: AuraDefinition = {
   id: 'pyroblast',
@@ -188,11 +202,11 @@ export const FROSTFIRE_TICK_INTERVAL_MS = seconds(3);
 
 /** Frostfire Bolt: a 3-second cast leaving a 9-second burn in three ticks. */
 export const FROSTFIRE_CAST_MS = seconds(3);
-export const FROSTFIRE_COEFFICIENTS = hybridSpellCoefficients(
-  FROSTFIRE_CAST_MS,
-  FROSTFIRE_DOT_DURATION_MS,
-  FROSTFIRE_DOT_DURATION_MS / FROSTFIRE_TICK_INTERVAL_MS,
-);
+/** Like Fireball: the hit takes it all and the burn takes nothing. */
+export const FROSTFIRE_COEFFICIENTS = {
+  direct: FROSTFIRE_BOLT_SP_COEFFICIENT,
+  perTick: FROSTFIRE_BOLT_TICK_SP_COEFFICIENT,
+};
 
 export const FROSTFIRE_DOT: AuraDefinition = {
   id: 'frostfire_bolt',

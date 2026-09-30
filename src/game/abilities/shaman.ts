@@ -9,7 +9,13 @@ import {
   WINDFURY_WEAPON_IMBUE,
 } from '../auras/shaman';
 import { MAELSTROM_WEAPON_UNMODELLED } from '../reactions/shamanTalents';
-import { directSpellCoefficient } from '../combat/spellCoefficient';
+import {
+  CHAIN_LIGHTNING_SP_COEFFICIENT,
+  EARTH_SHOCK_SP_COEFFICIENT,
+  FROST_SHOCK_SP_COEFFICIENT,
+  LAVA_BURST_SP_COEFFICIENT,
+  LIGHTNING_BOLT_SP_COEFFICIENT,
+} from '../combat/coefficients';
 
 /**
  * Shaman abilities, from the WoW Forever beta client (build 1.60.1.69876).
@@ -84,7 +90,7 @@ function spendStormstrike(simulation: SimulationContext, target: Combatant): num
 // Frost Shock 275-291 (278-294).
 export const LIGHTNING_BOLT_DAMAGE = midpoint(185, 207);
 export const LIGHTNING_BOLT_CAST_MS = seconds(2.5);
-export const LIGHTNING_BOLT_COEFFICIENT = directSpellCoefficient(LIGHTNING_BOLT_CAST_MS);
+export const LIGHTNING_BOLT_COEFFICIENT = LIGHTNING_BOLT_SP_COEFFICIENT;
 
 export const LIGHTNING_BOLT: Ability = {
   id: 'lightning_bolt',
@@ -122,7 +128,7 @@ export const LIGHTNING_BOLT: Ability = {
 export const CHAIN_LIGHTNING_DAMAGE = midpoint(116, 130);
 export const CHAIN_LIGHTNING_TARGETS = 3;
 export const CHAIN_LIGHTNING_CAST_MS = seconds(2);
-export const CHAIN_LIGHTNING_COEFFICIENT = directSpellCoefficient(CHAIN_LIGHTNING_CAST_MS);
+export const CHAIN_LIGHTNING_COEFFICIENT = CHAIN_LIGHTNING_SP_COEFFICIENT;
 
 export const CHAIN_LIGHTNING: Ability = {
   id: 'chain_lightning',
@@ -150,7 +156,7 @@ export const CHAIN_LIGHTNING: Ability = {
 };
 
 export const EARTH_SHOCK_DAMAGE = midpoint(293, 309);
-export const EARTH_SHOCK_COEFFICIENT = directSpellCoefficient(0);
+export const EARTH_SHOCK_COEFFICIENT = EARTH_SHOCK_SP_COEFFICIENT;
 
 export const EARTH_SHOCK: Ability = {
   id: 'earth_shock',
@@ -203,7 +209,7 @@ export const FLAME_SHOCK: Ability = {
 };
 
 export const FROST_SHOCK_DAMAGE = midpoint(275, 291);
-export const FROST_SHOCK_COEFFICIENT = directSpellCoefficient(0);
+export const FROST_SHOCK_COEFFICIENT = FROST_SHOCK_SP_COEFFICIENT;
 
 export const FROST_SHOCK: Ability = {
   id: 'frost_shock',
@@ -241,7 +247,7 @@ export const FROST_SHOCK: Ability = {
 export const LAVA_BURST_DAMAGE = midpoint(192, 248);
 export const LAVA_BURST_FLAME_SHOCK_BONUS = 1.2;
 export const LAVA_BURST_CAST_MS = seconds(2.5);
-export const LAVA_BURST_COEFFICIENT = directSpellCoefficient(LAVA_BURST_CAST_MS);
+export const LAVA_BURST_COEFFICIENT = LAVA_BURST_SP_COEFFICIENT;
 
 export const LAVA_BURST: Ability = {
   id: 'lava_burst',

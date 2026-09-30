@@ -25,6 +25,10 @@ import {
   LAST_STAND,
   SWEEPING_STRIKES,
 } from '../auras/warrior';
+import {
+  REVENGE_AP_COEFFICIENT,
+  THUNDER_CLAP_AP_COEFFICIENT,
+} from '../combat/coefficients';
 
 /**
  * Warrior abilities, from WoWForeverWarriorAbilities.xlsx.
@@ -372,8 +376,19 @@ export const OVERPOWER: Ability = {
 };
 
 // ---------------------------------------------------------------------------
-// Flat damage strikes — the sheet states a coefficient of 0 for all of these
+// Strikes whose damage is stated flat rather than as a share of a swing
 // ---------------------------------------------------------------------------
+/*
+ * THEY ARE NO LONGER ALL COEFFICIENT-ZERO, and the heading used to say they
+ * were. `WoWForeverWarriorAbilities.xlsx` gives every one of these a
+ * coefficient of 0; `WoWSimWorksheet.xlsx`, handed over later as the
+ * authoritative coefficient document, gives Revenge 22% of attack power and
+ * Thunder Clap 7%, while leaving Execute, Shield Slam, Intercept and Hamstring
+ * at zero. The later document wins and the disagreement is recorded rather
+ * than smoothed over -- see docs/spell-coefficients.md.
+ *
+ * The flat damage below is unchanged and is what the coefficient is added TO.
+ */
 
 /**
  * Revenge and Shield Slam damage, FROM FOREVER rather than the spreadsheet.
@@ -422,7 +437,11 @@ export const REVENGE: Ability = {
       abilityId: ability.id,
       abilityName: ability.name,
       school: PHYSICAL,
+      // Its flat damage, PLUS the sheet's 22% of attack power. The flat figure
+      // is added to, never replaced -- Revenge was one of the abilities the
+      // audit found completely flat.
       baseAmount: REVENGE_DAMAGE,
+      powerCoefficient: REVENGE_AP_COEFFICIENT,
       attackTable: ability.attackTable,
       weaponSlot: MAIN_HAND,
     });
@@ -544,7 +563,9 @@ export const THUNDER_CLAP: Ability = {
       abilityId: ability.id,
       abilityName: ability.name,
       school: PHYSICAL,
+      // Flat, PLUS the sheet's 7% of attack power.
       baseAmount: 103,
+      powerCoefficient: THUNDER_CLAP_AP_COEFFICIENT,
       attackTable: ability.attackTable,
       weaponSlot: 'ranged',
     });

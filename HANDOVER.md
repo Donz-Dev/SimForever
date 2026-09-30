@@ -6,7 +6,7 @@ gets built is [docs/class-implementation.md](docs/class-implementation.md).
 ## Where the project is
 
 All nine classes and all 23 profiles are implemented, every number traced to a
-source rather than invented. **1,648 tests**, CI green on Node 20 and 22. Profile
+source rather than invented. **1,760 tests**, CI green on Node 20 and 22. Profile
 format **v9**. Live at <https://donz-dev.github.io/SimForever/>, republished by
 `.github/workflows/deploy.yml` on every push to `main` that passes.
 
@@ -21,20 +21,35 @@ nine files. The item database is **frozen**.
 nothing else. **Measure with `runProfileBatch`, not `runProfile`** — the app runs
 the former and the two are different fights even at one iteration.
 
+**RE-MEASURED on the owner's coefficient sheet.** Nineteen of twenty-three moved,
+which is what replacing every coefficient in the project at once should do.
+
 | Profile | Class | Talents | DPS | | Profile | Class | Talents | DPS |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| DW Fury | Warrior | 18/33/0 | 643.2 | | Fire Mage | Mage | 10/39/2 | 354.3 |
-| 2H Arms | Warrior | 38/13/0 | 585.5 | | Moonkin | Druid | 38/0/13 | 352.7 |
-| LW Melee | Hunter | 7/13/31 | 556.2 | | LW Ranged | Hunter | 7/39/5 | 304.0 |
-| Shadow Priest | Priest | 16/3/32 | 509.4 | | SM/DS | Warlock | 40/11/0 | 333.8 |
-| Firelock | Warlock | 5/11/35 | 537.2 | | Shockadin | Paladin | 23/0/28 | 334.5 |
-| BM Hunter | Hunter | 31/20/0 | 421.0 | | Venom Rogue | Rogue | 37/12/2 | 316.3 |
-| Enh Shaman | Shaman | 19/32/0 | 410.9 | | Rupture Rogue | Rogue | 12/8/31 | 315.2 |
-| Arcane Mage | Mage | 47/4/0 | 405.1 | | Frostfire Mage | Mage | 0/29/22 | 304.1 |
-| Seal Twist Ret | Paladin | 13/0/38 | 431.0 | | Ele Shaman | Shaman | 38/13/0 | 277.6 |
-| Combat Rogue | Rogue | 18/33/0 | 376.9 | | Cat Druid | Druid | 9/35/7 | 272.0 |
-| Prot Warr | Warrior | 17/0/34 | 357.5 | | Bear Druid | Druid | 9/42/0 | 208.4 |
-| | | | | | Prot Pally | Paladin | 8/36/7 | 158.1 |
+| DW Fury | Warrior | 18/33/0 | 643.2 | | Shockadin | Paladin | 23/0/28 | 343.4 |
+| 2H Arms | Warrior | 38/13/0 | 604.5 | | Frostfire Mage | Mage | 0/29/22 | 340.0 |
+| LW Melee | Hunter | 7/13/31 | 556.2 | | Venom Rogue | Rogue | 37/12/2 | 328.8 |
+| Firelock | Warlock | 5/11/35 | 537.6 | | Rupture Rogue | Rogue | 12/8/31 | 321.2 |
+| Prot Warr | Warrior | 17/0/34 | 454.2 | | LW Ranged | Hunter | 7/39/5 | 304.0 |
+| Seal Twist Ret | Paladin | 13/0/38 | 452.3 | | SM/DS | Warlock | 40/11/0 | 292.6 |
+| Shadow Priest | Priest | 16/3/32 | 449.3 | | Ele Shaman | Shaman | 38/13/0 | 277.7 |
+| BM Hunter | Hunter | 31/20/0 | 421.0 | | Bear Druid | Druid | 9/42/0 | 254.7 |
+| Enh Shaman | Shaman | 19/32/0 | 410.3 | | Prot Pally | Paladin | 8/36/7 | 162.7 |
+| Arcane Mage | Mage | 47/4/0 | 405.2 | | | | | |
+| Fire Mage | Mage | 10/39/2 | 390.5 | | | | | |
+| Combat Rogue | Rogue | 18/33/0 | 381.6 | | | | | |
+| Moonkin | Druid | 38/0/13 | 359.1 | | | | | |
+| Cat Druid | Druid | 9/35/7 | 351.7 | | | | | |
+
+**THE FOUR THAT DID NOT MOVE ARE THE CHECK.** All three Hunters and DW Fury came
+back at EXACTLY their old figures, and that is not luck: the Hunter is the one
+class whose every row the sheet left unchanged, and DW Fury's list is weapon
+damage plus Bloodthirst, whose 35% the sheet confirms.
+
+What moved most: **Cat +29.3%** and **Prot Warr +27.0%**, both from abilities
+that had no coefficient at all before — Rip, Ferocious Bite, Rake and Swipe for
+one, Revenge for the other. Down: **SM/DS −12.3%** on Siphon Life's tick going
+from 20% to 5%, and **Shadow Priest −11.8%** on Devouring Plague's halving.
 
 **THE CHECK IS THAT THE PROFILES A CHANGE SHOULD NOT REACH DO NOT MOVE BY A
 DECIMAL**, and it wants naming per change rather than a fixed list. For anything
@@ -67,7 +82,7 @@ Measured at `d2718b0`, and the numbers say it is not close:
 | --- | --- |
 | **140 of 468 talents are a live gap** | down from a raw count of 262 unmodelled reasons, because 89 are permanently out of scope by ruling and 33 more are PARTLY modelled. See the census below — the raw total is not a work queue |
 | **113 abilities declared against 478 captured** | the data is on disk; the declarations are not. Druid 15, Hunter 14, Mage 13, Rogue 12, Warlock 10, Shaman 9, Priest 7, Paladin 6, plus the Warrior's 27 |
-| ~~**`powerCoefficient` per class file**~~ | **AUDITED**, and counting declarations was the wrong measure. 82 of 120 reachable abilities deal damage, 52 scale at a rate a rule predicts and every one agrees; the Rogue's zero declarations are mostly CORRECT, because a Rogue ability scales through weapon damage. **Four abilities disagree with their own tooltip** and want a ruling. [docs/coefficient-audit.md](docs/coefficient-audit.md) |
+| ~~**Coefficients**~~ | **DONE.** `WoWSimWorksheet.xlsx`, the owner's authoritative coefficient document, is transcribed in `src/game/combat/coefficients.ts` and applied across all nine classes. Every derived rule is deleted. Two rows could not be applied: the poisons and Hammer of Wrath, both needing something unbuilt. [docs/spell-coefficients.md](docs/spell-coefficients.md) |
 | **19 `PLACEHOLDER_*` constants** | each a real number nobody has supplied. Sniper Shot's invented 200-mana cost is gone, but it was never one of these: it was a bare literal with a false caveat, which is worse — an invented number that is not named cannot be audited |
 | **Rotations are thin and unmeasured** | Warrior has 12 priority lists and came from the owner; every other class has 2–5, and **only the three Hunter APLs have ever been measured entry by entry** |
 
@@ -175,8 +190,6 @@ into a finite work list.
 | Constant | Value | What would settle it |
 | --- | --- | --- |
 | `PLACEHOLDER_SEAL_OF_COMMAND_PPM` | 7 | the owner chose PPM and the figure has not arrived. Largest number in Seal Twist Ret |
-| `PLACEHOLDER_SPELL_COEFFICIENT_DOT_DIVISOR` | 15 | any Forever source stating one DoT's coefficient outright. Decides most of the Shadow Priest and both Warlocks |
-| `PLACEHOLDER_MAX_COEFFICIENT_CAST_SECONDS` | 3.5 | Pyroblast's coefficient — the only spell that reaches the clamp |
 | `PLACEHOLDER_PET_BASE_DPS` | 50 | one stated pet DPS or damage range at 60. Every source gives family modifiers RELATIVE to a base and none states the base |
 | `PLACEHOLDER_MAELSTROM_WEAPON_PROC_CHANCE` | 20 | the tooltip says only "a chance" |
 | `PLACEHOLDER_SOUL_SHARDS` | 10 | what a Warlock banks before a pull. No in-fight income |
@@ -196,18 +209,23 @@ Fireball's burn is 11% of its damage and takes 35% of its scaling.
 
 ## Open questions for the ruleset owner
 
-**NEW, and the biggest of them: a coefficient for a FINISHER.** Eviscerate,
-Rupture, Rip and Ferocious Bite each state in the client's own words that their
-damage is increased by attack power, and not one states a figure. All four
-measure completely FLAT. Is there one rule for a finisher, the way
-`castTime / 3.5` is one rule for a spell — a coefficient per combo point, or a
-flat fraction of attack power — or does each carry its own number? It moves
-Venom Rogue, Rupture Rogue and Cat Druid. Two smaller ones came with it: whether
-the seal formula applies to **Seal of Fury**, whose tooltip states a flat 35 with
-no weapon-speed term, and **Lacerate**'s "10% weapon damage per existing
-application", which is a stated number waiting on a stack-dependent term rather
-than on a ruling. Full evidence in
-[docs/coefficient-audit.md](docs/coefficient-audit.md).
+**THE FOUR FLAT FINISHERS ARE ANSWERED**, and so is everything else the
+coefficient audit raised. `WoWSimWorksheet.xlsx` supplies Eviscerate at 4% of
+attack power per combo point spent, Ferocious Bite at 3%, Rip at 4% per combo
+point per tick, and Rupture at a flat 3% a tick. Lacerate's "10% weapon damage
+per existing application" applies too — its `unmodelled` reason claimed a
+periodic tick could not read its own stack count, and `AuraInstance` has carried
+`stacks` all along.
+
+**TWO ROWS OF THE SHEET COULD NOT BE APPLIED**, and both are transcribed in
+`coefficients.ts` rather than dropped, so the record covers every row:
+
+- **Instant Poison and Deadly Poison.** Poisons are not implemented at all — a
+  missing SYSTEM rather than a missing number, and five Rogue talents are
+  already inert waiting for the same one.
+- **Hammer of Wrath.** The ability is not declared. The capture has it, so this
+  is a new ability plus a target-health gate the encounter deliberately does not
+  have — Execute is gated on the CLOCK here, by an earlier ruling of yours.
 
 1. **Seal of Command's PPM.** You chose procs-per-minute; the figure did not come
    with it.

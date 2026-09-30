@@ -2,11 +2,16 @@ import type { AttackEvent, Combatant, Reaction, SimulationContext } from '../../
 import { dealDamage, isWeaponUse, spellPowerFor } from '../../engine';
 import { ppmChance } from '../items/procs';
 import {
+  SEAL_OF_COMMAND_SP_COEFFICIENT,
+  SEAL_OF_FURY_SP_COEFFICIENT,
+} from '../combat/coefficients';
+import {
   ECHO_AURA_IDS,
   SEAL_OF_COMMAND_WEAPON_FRACTION,
   SEAL_OF_FURY_DAMAGE,
   SEAL_OF_RIGHTEOUSNESS_BASE,
   sealDamage,
+  sealOfRighteousnessCoefficient,
 } from '../auras/paladin';
 
 /**
@@ -88,7 +93,6 @@ export function sealOfRighteousnessProc(): Reaction {
     canTrigger: (_context, actor, attack) =>
       isWeaponUse(attack) && actor.auras.has('seal_of_righteousness'),
     onTrigger: (context, actor, attack) => {
-      const stats = actor.stats.effective;
       sealHit(
         context,
         actor,
@@ -97,17 +101,17 @@ export function sealOfRighteousnessProc(): Reaction {
         'Seal of Righteousness',
         sealDamage(
           SEAL_OF_RIGHTEOUSNESS_BASE,
-          baseSpeedSeconds(actor, attack),
-          stats.attackPower,
           /*
            * HOLY SPELL POWER, not the school-blind pool alone. Eight pieces
            * of Lawbringer say "Increases damage done by Holy spells and
            * effects by up to N" and the seal is Holy, so `spellPowerFor`
-           * adds them -- the same function `scaleByPower` uses, so the one
-           * ability in the project with a spell power coefficient cannot
-           * disagree with the pipeline about what a Holy point is worth.
+           * adds them -- the same function `scaleByPower` uses, so a seal
+           * cannot disagree with the pipeline about what a Holy point is
+           * worth.
            */
           spellPowerFor(actor, HOLY),
+          // By weapon TYPE, which is what the sheet keys it on.
+          sealOfRighteousnessCoefficient(actor.weapons.mainHand?.twoHanded === true),
         ),
       );
     },
@@ -162,7 +166,11 @@ export function sealOfCommandProc(): Reaction {
         attack,
         'seal_of_command',
         'Seal of Command',
-        attack.amount * SEAL_OF_COMMAND_WEAPON_FRACTION,
+        // 70% of the swing it rode in on, PLUS the sheet's spell power term.
+        // The weapon half is inherited from an already-scaled hit; the spell
+        // power half is the seal's own and is added, never folded in.
+        attack.amount * SEAL_OF_COMMAND_WEAPON_FRACTION +
+          SEAL_OF_COMMAND_SP_COEFFICIENT * spellPowerFor(actor, HOLY),
       );
     },
   };
@@ -189,7 +197,16 @@ export function sealOfFuryProc(): Reaction {
     canTrigger: (_context, actor, attack) =>
       isWeaponUse(attack) && actor.auras.has('seal_of_fury'),
     onTrigger: (context, actor, attack) => {
-      sealHit(context, actor, attack, 'seal_of_fury', 'Seal of Fury', SEAL_OF_FURY_DAMAGE);
+      sealHit(
+        context,
+        actor,
+        attack,
+        'seal_of_fury',
+        'Seal of Fury',
+        // Its flat 35 PLUS the sheet's 10% spell power. The 35 is not part of
+        // the coefficient and must not be replaced by it.
+        sealDamage(SEAL_OF_FURY_DAMAGE, spellPowerFor(actor, HOLY), SEAL_OF_FURY_SP_COEFFICIENT),
+      );
     },
   };
 }
@@ -227,7 +244,6 @@ export function echoProc(): Reaction {
       actor.auras.remove(context, echoId);
 
       const sealId = echoId.replace(/^echo_/, '');
-      const stats = actor.stats.effective;
 
       if (sealId === 'seal_of_righteousness') {
         sealHit(
@@ -238,17 +254,23 @@ export function echoProc(): Reaction {
           'Echo (Seal of Righteousness)',
           sealDamage(
             SEAL_OF_RIGHTEOUSNESS_BASE,
-            baseSpeedSeconds(actor, attack),
-            stats.attackPower,
             // Holy-scoped gear included, exactly as the seal itself reads it.
             spellPowerFor(actor, HOLY),
+            sealOfRighteousnessCoefficient(actor.weapons.mainHand?.twoHanded === true),
           ),
         );
         return;
       }
 
       if (sealId === 'seal_of_fury') {
-        sealHit(context, actor, attack, 'twist_of_light', 'Echo (Seal of Fury)', SEAL_OF_FURY_DAMAGE);
+        sealHit(
+          context,
+          actor,
+          attack,
+          'twist_of_light',
+          'Echo (Seal of Fury)',
+          sealDamage(SEAL_OF_FURY_DAMAGE, spellPowerFor(actor, HOLY), SEAL_OF_FURY_SP_COEFFICIENT),
+        );
         return;
       }
 
@@ -266,7 +288,11 @@ export function echoProc(): Reaction {
           attack,
           'twist_of_light',
           'Echo (Seal of Command)',
-          attack.amount * SEAL_OF_COMMAND_WEAPON_FRACTION,
+          // 70% of the swing it rode in on, PLUS the sheet's spell power term.
+        // The weapon half is inherited from an already-scaled hit; the spell
+        // power half is the seal's own and is added, never folded in.
+        attack.amount * SEAL_OF_COMMAND_WEAPON_FRACTION +
+          SEAL_OF_COMMAND_SP_COEFFICIENT * spellPowerFor(actor, HOLY),
         );
       }
       // Seal of the Crusader has no per-swing damage to echo: it is attack
