@@ -61,6 +61,39 @@ export class AbilityBook {
     return [...this.abilities.values()];
   }
 
+  /**
+   * Put every ability back on full charges, optionally sparing one.
+   *
+   * ----------------------------------------------------------------------------
+   * "IMMEDIATELY FINISHES THE COOLDOWN ON YOUR OTHER ROGUE ABILITIES", which is
+   * Preparation and which nothing could express: a cooldown lives here and
+   * content reaches it through nothing at all. Its `unmodelled` reason said
+   * exactly that -- "nothing can reset a cooldown from content; the engine owns
+   * them" -- and this is the engine saying so.
+   *
+   * `exceptId` IS THE WHOLE POINT OF THE ARGUMENT. Preparation is not one of
+   * "your OTHER abilities", and a reset that included itself would put a ten
+   * minute cooldown back up instantly and hand the character an infinite
+   * supply of them. That failure is not visible in a DPS figure; it is visible
+   * as a suspiciously good Rogue.
+   *
+   * SHARED GROUPS ARE CLEARED TOO, and only the groups the reset abilities
+   * belong to. Clearing every group would reach a group whose other member was
+   * spared, which is a rule nobody stated.
+   * ----------------------------------------------------------------------------
+   */
+  resetCooldowns(exceptId?: string): void {
+    for (const [id, ability] of this.abilities) {
+      if (id === exceptId) continue;
+      const state = this.states.get(id);
+      if (state) {
+        state.available = ability.charges ?? 1;
+        state.rechargeStartedAt = null;
+      }
+      if (ability.cooldownGroup) this.groupReadyAt.delete(ability.cooldownGroup);
+    }
+  }
+
   /** Charges available right now, after accounting for elapsed recharge time. */
   chargesAvailable(abilityId: string, now: Milliseconds): number {
     const ability = this.abilities.get(abilityId);

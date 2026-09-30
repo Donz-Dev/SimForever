@@ -2,7 +2,7 @@ import type { PriorityEntry, Rotation, SimulationContext, Combatant } from '../.
 import { PriorityRotation } from '../../engine';
 import { comboPointsOn } from '../combat/comboPoints';
 import { MAX_COMBO_POINTS } from '../combat/comboPoints';
-import { RUPTURE_BY_COMBO_POINT } from '../auras/rogue';
+import { RUPTURE_BY_COMBO_POINT, VENOM_AURA_ID } from '../auras/rogue';
 
 /**
  * Rogue priority lists — APL SHELLS.
@@ -83,6 +83,59 @@ function ruptureNeeded(context: SimulationContext, actor: Combatant, target?: Co
   return target.auras.remainingMs('rupture', context.clock.now()) < RUPTURE_REFRESH_WINDOW_MS;
 }
 
+
+/*
+ * ============================================================================
+ * THE RULESET OWNER'S CONDITIONS, spelled out as helpers because two lists use
+ * the same shapes and a duplicated threshold is a duplicated decision.
+ * ============================================================================
+ */
+
+/** "combo points >= N", read through the TARGET so a stale pool reads zero. */
+const atLeastPoints = (minimum: number) =>
+  (_context: SimulationContext, actor: Combatant, target?: Combatant): boolean =>
+    comboPointsOn(actor, target) >= minimum;
+
+/** "exactly N", which for the cap is the same question `AT_FIVE` asks. */
+const exactlyPoints = (count: number) =>
+  (_context: SimulationContext, actor: Combatant, target?: Combatant): boolean =>
+    comboPointsOn(actor, target) === count;
+
+/** "<buff> is not active", on the Rogue. */
+const selfAuraDown = (auraId: string) =>
+  (context: SimulationContext, actor: Combatant): boolean =>
+    actor.auras.remainingMs(auraId, context.clock.now()) <= 0;
+
+/**
+ * "<buff> duration >= N seconds", on the Rogue.
+ *
+ * THE OWNER'S GATE ON EVISCERATE IS A FLOOR, NOT A WINDOW, and that is the
+ * whole point of it: spend on damage only while the maintenance buffs have
+ * plenty of time left, so a finisher never lands with Slice and Dice about to
+ * drop. It is the opposite polarity to a refresh condition and reads almost
+ * the same, so it is named rather than written inline twice.
+ */
+const selfAuraAtLeast = (auraId: string, seconds: number) =>
+  (context: SimulationContext, actor: Combatant): boolean =>
+    actor.auras.remainingMs(auraId, context.clock.now()) >= seconds * 1000;
+
+/** Every condition in a list must hold. */
+const all =
+  (...conditions: readonly ((
+    context: SimulationContext,
+    actor: Combatant,
+    target?: Combatant,
+  ) => boolean)[]) =>
+  (context: SimulationContext, actor: Combatant, target?: Combatant): boolean =>
+    conditions.every((condition) => condition(context, actor, target));
+
+/** "energy >= N". */
+const atLeastEnergy = (minimum: number) =>
+  (_context: SimulationContext, actor: Combatant): boolean =>
+    (actor.resources.get('energy')?.current ?? 0) >= minimum;
+
+// ---------------------------------------------------------------------------
+
 /*
  * ============================================================================
  * VENOM IS IMPLEMENTED AND IS NOT IN ANY LIST, because it MEASURES AS A LOSS.
@@ -124,13 +177,53 @@ function ruptureNeeded(context: SimulationContext, actor: Combatant, target?: Co
  * Venom finisher does nothing else at all.
  */
 export const ROGUE_VENOM: readonly PriorityEntry[] = [
-  { abilityId: 'slice_and_dice', condition: sliceAndDiceNeeded },
-  { abilityId: 'cold_blood', condition: AT_FIVE },
-  { abilityId: 'rupture', condition: ruptureNeeded },
-  { abilityId: 'eviscerate', condition: AT_FIVE },
+  /*
+   * THREE POINTS, NOT TWO, and the owner's number rather than this file's.
+   * Mutilate awards two at a time, so a Venom Rogue passes through three on
+   * its way to five in a single cast and the threshold is cheaper to hit here
+   * than anywhere.
+   */
+  {
+    abilityId: 'slice_and_dice',
+    condition: all(selfAuraDown('slice_and_dice'), atLeastPoints(3)),
+  },
+  /*
+   * VENOM IS BACK IN A LIST, AND IT WAS MEASURED OUT OF ONE. Three placements
+   * were tried and every one was a loss -- 415.2 without it against 395.7,
+   * 398.0 and 400.1. None of those three was this one: at four points and
+   * gated on the buff being DOWN, so it is cast once and held rather than
+   * re-spent, which is the arrangement that makes a maintenance finisher pay.
+   * The measurement below says what this version is worth.
+   */
+  {
+    abilityId: 'venom',
+    condition: all(selfAuraDown(VENOM_AURA_ID), atLeastPoints(4)),
+  },
+  /*
+   * DAMAGE ONLY WHILE BOTH MAINTENANCE BUFFS HAVE TIME LEFT. A floor rather
+   * than a window: spending five points on Eviscerate is wasted if Slice and
+   * Dice drops two seconds later and has to be rebuilt from nothing.
+   */
+  {
+    abilityId: 'eviscerate',
+    condition: all(
+      selfAuraAtLeast('slice_and_dice', 10),
+      selfAuraAtLeast(VENOM_AURA_ID, 10),
+      exactlyPoints(MAX_COMBO_POINTS),
+    ),
+  },
+  /*
+   * COLD BLOOD AT ZERO POINTS, which reads backwards until the ability is
+   * read: it guarantees a crit on the NEXT ability, and for this build that is
+   * the Mutilate below. Cast while the pool is empty and the energy is full,
+   * it costs nothing a finisher wanted and lands on the builder that is about
+   * to go out anyway.
+   */
+  {
+    abilityId: 'cold_blood',
+    condition: all(exactlyPoints(0), atLeastEnergy(60)),
+  },
   { abilityId: 'mutilate' },
-  // Falls back when no dagger is held, so the list is never empty.
-  { abilityId: 'sinister_strike' },
 ];
 
 /**
@@ -140,11 +233,29 @@ export const ROGUE_VENOM: readonly PriorityEntry[] = [
  * Sinister Strike needs no dagger, no position and no stealth.
  */
 export const ROGUE_COMBAT: readonly PriorityEntry[] = [
-  { abilityId: 'slice_and_dice', condition: sliceAndDiceNeeded },
+  {
+    abilityId: 'slice_and_dice',
+    condition: all(selfAuraDown('slice_and_dice'), atLeastPoints(3)),
+  },
+  /*
+   * EVISCERATE ABOVE THE TWO COOLDOWNS AND WITH NO POINT GATE, which is the
+   * owner's order and is a departure from every other list here.
+   *
+   * ITS ONLY CONDITION IS SLICE AND DICE HAVING NINE SECONDS LEFT -- so it
+   * spends whatever is on the bar rather than holding for five. The ability's
+   * own `canCast` still requires at least one point, so it cannot fire empty;
+   * what it can do is spend two or three, which this project's earlier shells
+   * called wasteful. That reading is a claim about damage per point and the
+   * owner's order is a claim about the whole cycle, and only a measurement
+   * separates them. This one is theirs.
+   *
+   * NINE SECONDS RATHER THAN THE VENOM LIST'S TEN, and given as two separate
+   * numbers rather than one shared constant, so neither is quietly moved by an
+   * edit to the other.
+   */
+  { abilityId: 'eviscerate', condition: selfAuraAtLeast('slice_and_dice', 9) },
   { abilityId: 'adrenaline_rush' },
   { abilityId: 'blade_flurry' },
-  { abilityId: 'eviscerate', condition: AT_FIVE },
-  { abilityId: 'ghostly_strike' },
   { abilityId: 'sinister_strike' },
 ];
 

@@ -548,3 +548,43 @@ export const MISSILE_BARRAGE: AuraDefinition = {
     requiresCastTime: true,
   },
 };
+
+// ---------------------------------------------------------------------------
+// Armor
+// ---------------------------------------------------------------------------
+
+/**
+ * Mage Armor: "Increases your resistance to all magic by 15 and allows 50% of
+ * your mana regeneration to continue while casting."
+ *
+ * ----------------------------------------------------------------------------
+ * THE HALF THAT MATTERS IS THE FIVE SECOND RULE, and the engine already has it.
+ *
+ * `manaPerTick` suppresses regeneration for five seconds after mana is spent
+ * and lets through whatever fraction `manaRegenBypass` names -- the stat
+ * written for exactly this sentence, and already fed by Arcane Meditation,
+ * Reverence, Meditation and two others. Mage Armor is a flat 50 into the same
+ * pool, so it STACKS ADDITIVELY with a talent granting the same thing and the
+ * total is clamped at 100 by the rule rather than by the aura.
+ *
+ * A Mage casting continuously never leaves the lockout, so this is the whole
+ * difference between regenerating half its mana and none of it.
+ *
+ * NO DURATION, because thirty minutes outlasts every fight here by a factor of
+ * thirty. Cast once and it is up, which is what the priority lists assume.
+ *
+ * "Only one type of Armor spell can be active" is real and is not expressed:
+ * Frost Armor and Ice Armor are not declared, both being pure armor and a
+ * melee slow on a Mage nothing attacks. A second armor would have to remove
+ * this one, the way an aspect and a seal already do.
+ * ----------------------------------------------------------------------------
+ */
+export const MAGE_ARMOR_REGEN_BYPASS = 50;
+export const MAGE_ARMOR_MAGIC_RESISTANCE = 15;
+
+export const MAGE_ARMOR: AuraDefinition = {
+  id: 'mage_armor',
+  name: 'Mage Armor',
+  durationMs: 0,
+  statModifiers: [flat('manaRegenBypass', MAGE_ARMOR_REGEN_BYPASS)],
+};

@@ -155,6 +155,24 @@ export const CHAIN_LIGHTNING: Ability = {
     'damage each, and every encounter here has one target.',
 };
 
+/*
+ * ============================================================================
+ * THE THREE SHOCKS SHARE ONE COOLDOWN, and each having its own did not say so.
+ *
+ * The ruleset owner's ruling: "these do share a cooldown, but Flame Shock's
+ * duration is long enough such that they can be alternated, therefore both
+ * deserve to be on the list." Three independent six-second cooldowns let the
+ * Enhancement list cast Flame Shock and Earth Shock in consecutive globals all
+ * fight, which is a bigger number and looks exactly like a working rotation.
+ *
+ * The group's length is `cooldownMs` of whichever shock triggered it, and all
+ * three are six seconds, so nothing else has to be said. This is the same
+ * arrangement the Warrior's stances have and the same failure it was written
+ * for: a per-ability cooldown does not stop the OTHER ability.
+ * ============================================================================
+ */
+export const SHOCK_COOLDOWN_GROUP = 'shaman_shock';
+
 export const EARTH_SHOCK_DAMAGE = midpoint(293, 309);
 export const EARTH_SHOCK_COEFFICIENT = EARTH_SHOCK_SP_COEFFICIENT;
 
@@ -163,6 +181,7 @@ export const EARTH_SHOCK: Ability = {
   name: 'Earth Shock',
   cost: { resource: 'mana', amount: 450 },
   cooldownMs: seconds(6),
+  cooldownGroup: SHOCK_COOLDOWN_GROUP,
   attackTable: 'spell',
   onCast: ({ simulation, caster, target, ability }) => {
     if (!target) return;
@@ -189,6 +208,7 @@ export const FLAME_SHOCK: Ability = {
   name: 'Flame Shock',
   cost: { resource: 'mana', amount: 410 },
   cooldownMs: seconds(6),
+  cooldownGroup: SHOCK_COOLDOWN_GROUP,
   attackTable: 'spell',
   onCast: ({ simulation, caster, target, ability }) => {
     if (!target) return;
@@ -216,6 +236,7 @@ export const FROST_SHOCK: Ability = {
   name: 'Frost Shock',
   cost: { resource: 'mana', amount: 430 },
   cooldownMs: seconds(6),
+  cooldownGroup: SHOCK_COOLDOWN_GROUP,
   attackTable: 'spell',
   onCast: ({ simulation, caster, target, ability }) => {
     if (!target) return;

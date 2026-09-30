@@ -277,14 +277,13 @@ export const ROGUE_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
 
   dirty_deeds: [{ kind: 'unmodelled', reason: 'Cheap Shot and Garrote require stealth.' }],
 
-  preparation: [
-    {
-      kind: 'unmodelled',
-      reason:
-        'Resets the cooldown of every other Rogue ability. Nothing can reset ' +
-        'a cooldown from content -- the engine owns them.',
-    },
-  ],
+  /*
+   * ITS REASON WAS A STATEMENT ABOUT THE ENGINE and it has been answered:
+   * "nothing can reset a cooldown from content -- the engine owns them."
+   * `AbilityBook.resetCooldowns` is the engine saying so, and Preparation is
+   * its only caller.
+   */
+  preparation: [{ kind: 'grantAbility', abilityId: 'preparation' }],
 
   hemorrhage: [{ kind: 'grantAbility', abilityId: 'hemorrhage' }],
 

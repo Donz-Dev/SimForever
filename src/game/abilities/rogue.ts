@@ -527,6 +527,39 @@ export const COLD_BLOOD_ABILITY: Ability = {
   },
 };
 
+/**
+ * Preparation: "When activated, this ability immediately finishes the cooldown
+ * on your other Rogue abilities." Free, instant, ten minute cooldown.
+ *
+ * ----------------------------------------------------------------------------
+ * ITS `unmodelled` REASON WAS A STATEMENT ABOUT THE ENGINE, and the right one:
+ * "nothing can reset a cooldown from content -- the engine owns them." So the
+ * engine now offers `AbilityBook.resetCooldowns`, and this is its only caller.
+ *
+ * "YOUR OTHER ROGUE ABILITIES" -- Preparation is not one of them, and that is
+ * why the reset takes an exception rather than clearing everything. A reset
+ * including itself would put a ten minute cooldown back up instantly and hand
+ * the Rogue an unlimited supply, which shows up as a suspiciously good Rogue
+ * rather than as an error.
+ *
+ * WHAT IT IS ACTUALLY WORTH HERE IS SMALL AND THAT IS FINE. A sixty second
+ * fight sees one cast, and the Subtlety build's resettable cooldowns are
+ * Premeditation at two minutes, Ghostly Strike at twenty seconds and Cold
+ * Blood. The list the owner wrote puts it LAST, below every builder, so it
+ * fires only when nothing else can -- which is the correct place for an
+ * ability whose value is entirely in what it gives back.
+ * ----------------------------------------------------------------------------
+ */
+export const PREPARATION: Ability = {
+  id: 'preparation',
+  name: 'Preparation',
+  cooldownMs: seconds(600),
+  requiresTarget: false,
+  onCast: ({ caster, ability }) => {
+    caster.abilities.resetCooldowns(ability.id);
+  },
+};
+
 export const ROGUE_ABILITIES: readonly Ability[] = [
   SINISTER_STRIKE,
   BACKSTAB,
@@ -542,4 +575,6 @@ export const ROGUE_ABILITIES: readonly Ability[] = [
   ADRENALINE_RUSH_ABILITY,
   BLADE_FLURRY_ABILITY,
   COLD_BLOOD_ABILITY,
+  // Granted by the Subtlety talent; `grantsByAbility` gates it.
+  PREPARATION,
 ];
