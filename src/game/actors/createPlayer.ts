@@ -46,6 +46,7 @@ import {
   liveEquipment,
   schoolPowerForStyle,
   statsForStyle,
+  heldWeaponForForm,
   weaponsForEquipment,
 } from '../items/equipment';
 import { reactionsForEquipment } from '../items/procs';
@@ -553,7 +554,15 @@ export function weaponsFor(
   style: CombatStyleId,
   offHandDamageMultiplier?: number,
 ): Partial<Record<WeaponSlot, WeaponProfile>> {
-  const placeholders = weaponsForStyle(style, { offHandDamageMultiplier });
+  /*
+   * A DRUID'S PAW IS BUILT FROM WHAT IS HELD, so the equipment has to reach
+   * the style's own weapons rather than only being merged over them. For every
+   * other style `heldWeaponForForm` returns nothing and this is inert.
+   */
+  const placeholders = weaponsForStyle(style, {
+    offHandDamageMultiplier,
+    heldWeapon: heldWeaponForForm(equipment, style),
+  });
   const equipped = weaponsForEquipment(equipment, style, { offHandDamageMultiplier });
   return { ...placeholders, ...equipped };
 }

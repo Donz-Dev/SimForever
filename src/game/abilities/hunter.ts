@@ -180,7 +180,7 @@ export const AIMED_SHOT: Ability = {
       abilityName: ability.name,
       school: PHYSICAL,
       baseAmount: AIMED_SHOT_BONUS,
-      weaponScaling: { slot: RANGED },
+      weaponScaling: { slot: RANGED, normalized: true },
       attackTable: ability.attackTable,
       weaponSlot: RANGED,
     });
@@ -214,7 +214,7 @@ export const MULTI_SHOT: Ability = {
       abilityName: ability.name,
       school: PHYSICAL,
       baseAmount: 0,
-      weaponScaling: { slot: RANGED },
+      weaponScaling: { slot: RANGED, normalized: true },
       attackTable: ability.attackTable,
       weaponSlot: RANGED,
     });
@@ -286,7 +286,7 @@ export const SNIPER_SHOT: Ability = {
       abilityName: ability.name,
       school: PHYSICAL,
       baseAmount: SNIPER_SHOT_BONUS,
-      weaponScaling: { slot: RANGED },
+      weaponScaling: { slot: RANGED, normalized: true },
       attackTable: ability.attackTable,
       weaponSlot: RANGED,
     });
@@ -352,7 +352,7 @@ export const MONGOOSE_BITE: Ability = {
       abilityName: ability.name,
       school: PHYSICAL,
       baseAmount: MONGOOSE_BITE_BONUS,
-      weaponScaling: { slot: MAIN_HAND },
+      weaponScaling: { slot: MAIN_HAND, normalized: true },
       attackTable: ability.attackTable,
       weaponSlot: MAIN_HAND,
     });
@@ -374,7 +374,7 @@ export const STRIDER_KICK: Ability = {
       abilityName: ability.name,
       school: PHYSICAL,
       baseAmount: 0,
-      weaponScaling: { slot: MAIN_HAND },
+      weaponScaling: { slot: MAIN_HAND, normalized: true },
       attackTable: ability.attackTable,
       weaponSlot: MAIN_HAND,
     });

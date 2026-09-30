@@ -7,7 +7,7 @@ import type {
 } from '../../engine';
 import type { CombatStyleId } from '../character';
 import { getCombatStyle } from '../character';
-import { attackPowerCoefficientFor } from '../combat/weaponDamage';
+import { attackPowerCoefficientFor, normalizedPowerCoefficientFor } from '../combat/weaponDamage';
 import { rageFromSwing } from '../combat/resourceRules';
 import { OFF_HAND_DAMAGE_MULTIPLIER } from '../actors/weapons';
 import type { Equipment, EquipmentSlot, Item, UnmodelledEffect } from './Item';
@@ -242,7 +242,7 @@ export function weaponsForEquipment(
    * rule and has to be enforced HERE rather than by not equipping it.
    *
    * `createPlayer` merges these over the style's own weapons -- for a Cat that
-   * is `{ mainHand: CAT_PAW }` -- so anything returned for a stat-stick hand
+   * is `{ mainHand: catPaw(held) }` -- so anything returned for a stat-stick hand
    * REPLACES the form's natural weapon. A Druid in Cat form was swinging an
    * Obsidian Edged Blade: base 234 every 3.6 seconds instead of a paw's 50
    * every 1.0, which read as a 62% damage increase and as a working feature.
@@ -320,14 +320,22 @@ function toWeaponProfile(
   // +/-30.3%, which the engine rolls uniformly to reproduce the same range.
   const variance = midpoint > 0 ? (weapon.maxDamage - midpoint) / midpoint : 0;
 
+  const weaponType = weaponTypeFor(weapon.subclass);
+
   return {
     name: item.name,
-    weaponType: weaponTypeFor(weapon.subclass),
+    weaponType,
     twoHanded,
     swingTimerMs,
     baseDamage: midpoint,
     damageVariance: variance,
     powerCoefficient: attackPowerCoefficientFor(swingTimerMs),
+    /*
+     * What a NORMALISED ability's attack power term uses instead. Computed
+     * from the weapon's KIND rather than its speed, which is the whole point:
+     * every one-handed sword normalises to 2.4 whatever it actually swings at.
+     */
+    normalizedPowerCoefficient: normalizedPowerCoefficientFor({ weaponType, twoHanded }),
     school: 'physical',
     skill: BASE_WEAPON_SKILL + weapon.bonusSkill,
     // The dual-wield penalty DEFAULTS rather than only applying when a caller
@@ -382,4 +390,39 @@ export function unmodelledEffects(
   }
 
   return out;
+}
+
+/**
+ * The weapon a shapeshifted Druid is HOLDING, for the paw formula.
+ *
+ * ----------------------------------------------------------------------------
+ * A FORM'S PAW READS THE HELD WEAPON, which is new and is the ruleset owner's
+ * formula:
+ *
+ *   Cat  = (BaseCatPaw  + weaponDPS x speed x 1   + AP x 1   / 14 x speed) x rand
+ *   Bear = (BaseBearPaw + weaponDPS x speed x 2.5 + AP x 2.5 / 14 x speed) x rand
+ *
+ * So a stat stick is no longer only stats. It never SWINGS -- the paw does --
+ * but its dps and its speed both feed what the paw hits for, which is what
+ * `weaponsForEquipment` above deliberately refuses to let it do as a weapon.
+ * The two rules are not in conflict: the item is still not scheduled and still
+ * triggers nothing. It is an input to the paw's damage, and this function is
+ * the only place that reads it.
+ *
+ * IT IS THE BASE SPEED, not a hasted one, for the same reason every other
+ * `speed / 14` term in this project is.
+ * ----------------------------------------------------------------------------
+ */
+export function heldWeaponForForm(
+  equipment: Equipment,
+  style: CombatStyleId,
+): { readonly dps: number; readonly speedSeconds: number } | undefined {
+  const live = liveEquipment(equipment, style);
+  // A form holds one thing, in whichever hand slot survived resolution.
+  const equipped = live.mainHand ?? live.twoHand ?? live.offHand;
+  if (!equipped) return undefined;
+
+  const item = ITEMS_BY_ID.get(equipped.itemId);
+  if (!item?.weapon) return undefined;
+  return { dps: item.weapon.dps, speedSeconds: item.weapon.speed };
 }

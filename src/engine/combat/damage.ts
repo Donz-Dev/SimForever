@@ -44,6 +44,30 @@ export interface WeaponScaling {
    * Forever's Spearing Strike is 0.4.
    */
   readonly fraction?: number;
+  /**
+   * Whether this ability's ATTACK POWER term uses a normalised weapon speed
+   * instead of the weapon's own.
+   *
+   * ----------------------------------------------------------------------------
+   * IT REPLACES THE SPEED, NOT THE WEAPON DAMAGE. A normalised ability still
+   * rolls the weapon's real damage; what changes is that the attack power it
+   * adds is `normalisedSpeed / 14` rather than `actualSpeed / 14`. That is the
+   * whole point of normalisation -- it stops a slow weapon being worth more on
+   * an instant strike than a fast one, WITHOUT flattening the weapon itself.
+   *
+   * THE SPEEDS ARE RULESET CONTENT AND ARE NOT HERE. The weapon arrives
+   * carrying `normalizedPowerCoefficient`, computed by `game` from the ruleset
+   * table, so the engine applies the rule and knows none of the numbers --
+   * the same split `attackChances` and the stat derivation already use.
+   *
+   * SEVENTEEN ABILITIES SET IT AND FIVE DELIBERATELY DO NOT. Slam, Heroic
+   * Strike, Cleave, Raptor Strike and Ghostly Strike keep the weapon's own
+   * speed, by the ruleset owner's list. It is opt-in for that reason: a new
+   * ability that forgets is un-normalised, which is the commoner case and the
+   * one the owner listed as the exception.
+   * ----------------------------------------------------------------------------
+   */
+  readonly normalized?: boolean;
 }
 
 /**
@@ -174,7 +198,19 @@ export function weaponDamageFor(request: DamageRequest, roll: number): number {
   if (!weapon) return 0;
 
   const base = weapon.baseDamage * roll;
-  const power = (weapon.powerCoefficient ?? 0) * attackPowerFor(request);
+  /*
+   * THE WEAPON'S OWN SPEED, OR THE NORMALISED ONE, and only for the ATTACK
+   * POWER half -- `base` above is the weapon's real damage either way.
+   *
+   * Falling back to the un-normalised coefficient rather than to zero matters:
+   * a weapon built without a normalised figure (a paw, a placeholder) would
+   * otherwise contribute NO attack power at all to a normalised ability, which
+   * reads as a very bad weapon rather than as a missing field.
+   */
+  const coefficient = scaling.normalized
+    ? (weapon.normalizedPowerCoefficient ?? weapon.powerCoefficient ?? 0)
+    : (weapon.powerCoefficient ?? 0);
+  const power = coefficient * attackPowerFor(request);
 
   return (base + power) * (scaling.fraction ?? 1);
 }
