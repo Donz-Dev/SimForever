@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { createPlayer } from '../../src/game/actors/createPlayer';
 import { characterAtCombatStart, runProfileBatch } from '../../src/simulator';
-import { seconds } from '../../src/engine';
+import { seconds, triggersGcd } from '../../src/engine';
 import { buildSimulation } from '../helpers/buildSimulation';
 import { makeTarget } from '../helpers/actors';
 import { PRESETS_BY_ID } from '../../src/profiles/presets';
@@ -24,6 +24,7 @@ import {
   ARCANE_SHOT_DAMAGE,
   ARCANE_SHOT_RAP_COEFFICIENT,
   AIMED_SHOT_BONUS,
+  RAPTOR_STRIKE,
   RAPTOR_STRIKE_BONUS,
 } from '../../src/game/abilities/hunter';
 import {
@@ -407,6 +408,32 @@ describe('the Hunter, whose numbers are Forever numbers', () => {
     expect(RAPTOR_STRIKE_BONUS).toBeLessThan(140);
 
     expect(SERPENT_STING_TOTAL).toBe(555);
+  });
+
+  it('arms Raptor Strike on the next swing, and therefore takes no GCD', () => {
+    /*
+     * `forever-hunter-spellbook.json` gives Raptor Strike rank 8 a `range` of
+     * "Next melee" where every instant in that capture gives a distance. It
+     * was declared as an ordinary instant `melee-special` for the whole life
+     * of the class and the ruleset owner settled it in the same words the
+     * capture uses: "an on-next-hit ability very similar to Heroic Strike,
+     * therefore the APL queues it like Heroic Strike".
+     *
+     * ASSERTED ON THE MECHANISM, because the DPS said nothing. An instant
+     * Raptor Strike cost the right mana and dealt the right damage while
+     * spending a global cooldown it should never have taken, and 1,892 tests
+     * passed with it in.
+     *
+     * `triggersGcd` is left UNDECLARED on purpose: the rule is derived from
+     * `onNextSwing`, so an ability that declares the flag by hand has opted
+     * out of getting the rule right for free.
+     */
+    expect(RAPTOR_STRIKE.onNextSwing).toBe('mainHand');
+    expect(RAPTOR_STRIKE.triggersGcd).toBeUndefined();
+    expect(triggersGcd(RAPTOR_STRIKE)).toBe(false);
+
+    // The cooldown is the capture's and did not move with the arming.
+    expect(RAPTOR_STRIKE.cooldownMs).toBe(seconds(6));
   });
 
   it('scales Serpent Sting at 3% a tick, which is 15% over the duration', () => {
