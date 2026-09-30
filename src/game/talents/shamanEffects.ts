@@ -15,11 +15,14 @@ import type { TalentEffects } from './TalentEffect';
  *                      `grantCastModifier`, which is worth 10% off everything
  *                      an Elemental shaman casts and 45% off its Shocks --
  *                      about a third of the profile's damage.
- *   TOTEMS             six. A totem is a separate attacking or buffing entity
- *                      and the engine has none, so anything scaling one is
- *                      inert -- including Call of Flame's fire-totem clause
- *                      and the whole of Fire Nova, which needs an active fire
- *                      totem to go off at all.
+ *   TOTEMS             six, and two of them are now PARTLY live. A totem is a
+ *                      separate attacking or buffing entity and the engine has
+ *                      none -- but Searing Totem is modelled as a
+ *                      damage-over-time effect by the ruleset owner's ruling
+ *                      and counts as a totem for talents, so Call of Flame's
+ *                      fire-totem clause and Elemental Fury's Searing clause
+ *                      both reach it. Magma Totem and Fire Nova do not; Fire
+ *                      Nova needs an active fire totem to go off at all.
  *   HEALING            fourteen, the whole Restoration tree bar three.
  *                      Neither profile heals.
  *   ONE-SHOT CAST      Maelstrom Weapon. The third class to want it, after
@@ -31,7 +34,14 @@ import type { TalentEffects } from './TalentEffect';
  * ----------------------------------------------------------------------------
  */
 
-/** Said once; six talents say it. */
+/**
+ * Said once; six talents say it.
+ *
+ * SEARING TOTEM IS THE EXCEPTION and is not covered by this sentence: the
+ * owner ruled it a damage-over-time effect that counts as a totem, so the two
+ * talents naming it reach it and say so individually. The sentence is still
+ * true of every totem that acts or buffs on its own.
+ */
 const TOTEMS_NOT_MODELLED =
   'A totem is a separate entity that attacks or buffs on its own, and the ' +
   'engine has none. Nothing scaling one can do anything.';
@@ -84,9 +94,19 @@ export const SHAMAN_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
     // The aura id is the DoT's, which is how a periodic tick is reached: a
     // tick carries the aura's id rather than the cast's.
     { kind: 'abilityDamage', abilityId: 'lava_burst' },
+    /*
+     * ITS FIRE TOTEM CLAUSE NOW REACHES SOMETHING. Searing Totem is modelled
+     * as a damage-over-time effect by the owner's ruling, and "considered a
+     * totem for the purposes of other talents" is part of that ruling -- so
+     * this is the talent it was written for. Keyed on the AURA's id, because a
+     * tick carries the aura's id and not the cast's.
+     */
+    { kind: 'abilityDamage', abilityId: 'searing_totem' },
     {
       kind: 'unmodelled',
-      reason: `Its Fire Totem and Fire Nova clauses do nothing. ${TOTEMS_NOT_MODELLED}`,
+      reason:
+        'Its Magma Totem and Fire Nova clauses do nothing; its Searing Totem ' +
+        `half is modelled. ${TOTEMS_NOT_MODELLED}`,
     },
   ],
 
@@ -117,9 +137,16 @@ export const SHAMAN_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
      * and lands most of its damage with a two-hander.
      */
     { kind: 'schoolCritDamage', schools: ['fire', 'frost', 'nature'] },
+    /*
+     * ITS SEARING TOTEM CLAUSE NEEDED NO CODE AND STILL NEEDED THIS REASON
+     * NARROWED. The totem's ticks are FIRE and this is a school effect, so the
+     * moment Searing Totem existed the talent reached it -- which is exactly
+     * the case an expired `unmodelled` reason hides, because nothing fails and
+     * the caveat keeps printing.
+     */
     {
       kind: 'unmodelled',
-      reason: `Its Searing and Magma Totem clauses do nothing. ${TOTEMS_NOT_MODELLED}`,
+      reason: `Its Magma Totem clause does nothing. ${TOTEMS_NOT_MODELLED}`,
     },
   ],
 
