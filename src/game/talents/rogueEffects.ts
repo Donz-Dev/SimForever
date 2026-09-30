@@ -222,15 +222,18 @@ export const ROGUE_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
 
   // --- Subtlety ------------------------------------------------------------
 
-  camouflage: [{ kind: 'unmodelled', reason: 'Stealth, and every fight opens in combat.' }],
+  camouflage: [
+    { kind: 'unmodelled', scope: 'stealth', reason: 'Stealth, and every fight opens in combat.' },
+  ],
 
-  master_of_deception: [{ kind: 'unmodelled', reason: 'Stealth detection.' }],
+  master_of_deception: [{ kind: 'unmodelled', scope: 'stealth', reason: 'Stealth detection.' }],
 
   opportunity: [
     { kind: 'abilityDamage', abilityId: 'backstab' },
     { kind: 'abilityDamage', abilityId: 'mutilate' },
     {
       kind: 'unmodelled',
+      scope: 'stealth',
       reason: 'It also covers Garrote and Ambush, which require stealth and are absent.',
     },
   ],
@@ -246,16 +249,24 @@ export const ROGUE_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
 
   dirty_tricks: [{ kind: 'unmodelled', scope: 'crowdControl', reason: 'Sap and Blind are not implemented.' }],
 
-  improved_ambush: [{ kind: 'unmodelled', reason: 'Ambush requires stealth and is absent.' }],
+  improved_ambush: [
+    { kind: 'unmodelled', scope: 'stealth', reason: 'Ambush requires stealth and is absent.' },
+  ],
 
-  initiative: [{ kind: 'unmodelled', reason: 'Keyed to the stealth openers, which are absent.' }],
+  initiative: [
+    { kind: 'unmodelled', scope: 'stealth', reason: 'Keyed to the stealth openers, which are absent.' },
+  ],
 
   ghostly_strike: [{ kind: 'grantAbility', abilityId: 'ghostly_strike' }],
 
   improved_distract: [{ kind: 'unmodelled', reason: 'Distract is not implemented.' }],
 
   heightened_senses: [
-    { kind: 'unmodelled', reason: 'Stealth detection, and resistance to spells that are not cast.' },
+    {
+      kind: 'unmodelled',
+      scope: 'stealth',
+      reason: 'Stealth detection, and resistance to spells that are not cast.',
+    },
   ],
 
   /*
@@ -281,7 +292,9 @@ export const ROGUE_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
     },
   ],
 
-  dirty_deeds: [{ kind: 'unmodelled', reason: 'Cheap Shot and Garrote require stealth.' }],
+  dirty_deeds: [
+    { kind: 'unmodelled', scope: 'stealth', reason: 'Cheap Shot and Garrote require stealth.' },
+  ],
 
   /*
    * ITS REASON WAS A STATEMENT ABOUT THE ENGINE and it has been answered:
@@ -293,14 +306,41 @@ export const ROGUE_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
 
   hemorrhage: [{ kind: 'grantAbility', abilityId: 'hemorrhage' }],
 
+  /*
+   * --------------------------------------------------------------------------
+   * THE OWNER HAS ANSWERED THE THRESHOLD: "quietus is 35%", meaning the last
+   * 35% of the fight by the same CLOCK Execute and Hammer of Wrath run on. So
+   * this is no longer a question about the ruling -- it is a missing
+   * declaration, and a specific one.
+   *
+   * WHAT IT NEEDS: a per-ability DAMAGE modifier active only while the fight is
+   * in its final fraction. `inExecutePhase` is hardcoded to
+   * `EXECUTE_PHASE_FRACTION` and wants a fraction argument; the modifier itself
+   * is the shape `addWhileAura` has, conditioned on the clock rather than on an
+   * aura -- and `Combatant.abilityModifierFor` has no simulation to read a
+   * clock from, which is the actual work.
+   *
+   * BUILD IT WITH THE PRIEST'S EARLY DEMISE, which is the same capability at
+   * 20% and for CRIT rather than damage. Two callers, two classes, one
+   * mechanism -- and the modifier must go through the combatant rather than an
+   * ability's `onCast`, by the standing rule that an ability which forgot to
+   * look would be quietly wrong.
+   *
+   * NO PROFILE TAKES IT, so building it moves nothing and carries no baseline
+   * risk. Its three abilities are Sinister Strike, Ghostly Strike and
+   * Hemorrhage, and only Hemorrhage is cast by any Rogue list.
+   * --------------------------------------------------------------------------
+   */
   quietus: [
     {
       kind: 'unmodelled',
       reason:
-        'Conditional on the target being below 35% health. The training dummy ' +
-        'has a hundred thousand health and takes a fraction of it, so the ' +
-        'condition could never fire -- the same reason Execute is gated on ' +
-        'TIME rather than health here.',
+        'Its 2-10% bonus below 35% target health is not read. The threshold is ' +
+        'the CLOCK by the ruling of the project owner -- the last 35% of the ' +
+        'fight, the same rule Execute runs on at 20% -- so this is a missing ' +
+        'declaration rather than a property of the target: a per-ability damage ' +
+        'modifier conditional on the final fraction of the fight, which nothing ' +
+        'expresses yet. Early Demise on the Priest wants the same mechanism at 20%.',
     },
   ],
 

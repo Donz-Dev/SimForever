@@ -96,7 +96,8 @@ Priest dying, which a damage profile does not)
 | --- | --- |
 | `early_demise` | "It needs the target at or below 20% health, and the target never drops." |
 
-**THAT REASON IS WRONG, AND IT IS THE EXACT MISTAKE HAMMER OF WRATH'S DOCS MADE.**
+**THAT REASON WAS WRONG AND IS NOW CORRECTED IN THE SOURCE.** It was the exact
+mistake Hammer of Wrath's docs made, for the third time.
 A low-health requirement in this project is **the CLOCK**: `inExecutePhase` in
 `combat/executePhase.ts` reads remaining combat TIME against 20% of the planned
 duration, by the owner's ruling, made for Execute and deliberately shared.
@@ -110,6 +111,12 @@ new engine capability.**
 the ability it modifies is the one the owner's list removed. Fixing the condition
 alone changes nothing until Shadow Word: Death is cast — so **this is one item with
 two halves, and they should be decided together.**
+
+**THE MECHANISM IS SHARED WITH THE ROGUE'S QUIETUS**, which the owner has now ruled
+at 35%: a per-ability modifier conditional on the fight's final fraction, crit here
+and damage there. `Combatant.abilityModifierFor` has no simulation to read a clock
+from, and that is the actual work in both. **Build it once** — Quietus is the safer
+place to do it, because no profile takes it and it moves no number.
 
 ### Partly modelled
 

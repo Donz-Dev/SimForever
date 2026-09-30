@@ -231,10 +231,43 @@ export const PRIEST_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
     },
   ],
 
+  /*
+   * --------------------------------------------------------------------------
+   * ITS OLD REASON WAS WRONG ABOUT THE ENGINE, NOT MERELY STALE. It said "the
+   * target never drops", which reads as the TARGET cause of inert -- and a
+   * low-health requirement is not one. `inExecutePhase` in
+   * `combat/executePhase.ts` reads remaining combat TIME against 20% of the
+   * planned duration, by the ruling made for Execute and deliberately shared, so
+   * the window this talent wants OPENS in every fight. Hammer of Wrath already
+   * uses it. This is the third time that reasoning has been got wrong.
+   *
+   * SO IT IS A MISSING DECLARATION AT A THRESHOLD THE PROJECT ALREADY HAS:
+   * "+15%/30% critical strike chance on targets at or below 20% health", and
+   * 20% is exactly `EXECUTE_PHASE_FRACTION`. Both rank values are in
+   * `values/priest.json`. No new data is needed.
+   *
+   * WHAT IT NEEDS is a per-ability CRIT modifier conditional on the clock --
+   * the same capability Quietus wants for DAMAGE at 35%. Build the two
+   * together; `Combatant.abilityModifierFor` having no simulation to read a
+   * clock from is the actual work in both.
+   *
+   * AND IT IS DOUBLY DEAD, WHICH IS WHY NOBODY NOTICED. The ability it modifies
+   * is Shadow Word: Death, which the priority list of the owner removed --
+   * isolated at -35.7. Fixing the condition alone changes no number until that
+   * ability is cast again, so the two halves are one decision.
+   * --------------------------------------------------------------------------
+   */
   early_demise: [
     {
       kind: 'unmodelled',
-      reason: 'It needs the target at or below 20% health, and the target never drops.',
+      reason:
+        'Its crit bonus on targets at or below 20% health is not read. The ' +
+        'threshold is the CLOCK -- `inExecutePhase`, the same rule Execute and ' +
+        'Hammer of Wrath run on -- so the window DOES open and this is a missing ' +
+        'declaration rather than a property of the target: a per-ability crit ' +
+        'modifier conditional on the final fraction of the fight. Quietus on the ' +
+        'Rogue wants the same mechanism for damage at 35%. It also modifies ' +
+        'Shadow Word: Death, which no list casts.',
     },
   ],
 

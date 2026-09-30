@@ -95,11 +95,17 @@ together told someone their build was missing features that were never coming.
 | `crowdControl` | stuns, fears, roots, snares, silences, incapacitates, disorients, disarms | 32 |
 | `threat` | threat, which is not tracked. Defensive Stance's +30% and Defiance are dropped, not deferred | 14 |
 | `healing` | healing THROUGHPUT. **Mana RETURN is NOT out of scope** — it changes a damage profile's sustain, so it is a live gap and gets no `scope` | 33 |
+| `stealth` | being stealthed, detecting it, and the openers requiring it — Ambush, Garrote, Cheap Shot. **NOT an in-combat proc that REMOVES a stealth requirement**, which is what Cutthroat is | 7 |
 
 Adding a member to that union is a scope DECISION and needs the owner, not a
-judgement call while writing a class. Two things the rulings do NOT cover and that
-are still open questions: **stealth openers** (eleven Rogue talents, inert because
-every fight opens in combat) and **totems as entities** (five Shaman talents).
+judgement call while writing a class. **`stealth` is the newest member and shows
+what one is worth**: it was the largest open question in the project, and ruling it
+took the Rogue from 20 live gaps to 14 — six talents that were counted as remaining
+work and that nothing was ever going to reach.
+
+**ONE OPEN QUESTION IS LEFT: totems as entities** (five Shaman talents), and it is
+not really a scope question — it is the mid-fight-summon engine gap, shared with the
+Warlock's Infernal and the Mage's elemental.
 
 ## Conventions that prevent real bugs
 

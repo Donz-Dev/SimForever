@@ -13,10 +13,10 @@ for project status. These files are the CLASS.
 | [paladin.md](paladin.md) | Seal Twist Ret, Shockadin, Prot Pally | **10** |
 | [druid.md](druid.md) | Moonkin, Cat, Bear | **12** |
 | [hunter.md](hunter.md) | BM Hunter, LW Ranged, LW Melee | **13** |
+| [rogue.md](rogue.md) | Venom, Combat, Rupture | **14** |
 | [mage.md](mage.md) | Frostfire, Arcane, Fire | **16** |
 | [shaman.md](shaman.md) | Ele Shaman, Enh Shaman | **17** |
 | [priest.md](priest.md) | Shadow | **18** |
-| [rogue.md](rogue.md) | Venom, Combat, Rupture | **20** |
 | [warlock.md](warlock.md) | SM/DS, Firelock | **25** |
 
 ## Every one of these numbers is re-derivable
@@ -65,6 +65,12 @@ Say which. Only the first is an engine gap.
 | **the build** | the profile did not take it, or took a talent switching it off |
 
 **A LOW-HEALTH REQUIREMENT IS NOT THE SECOND ONE.** `inExecutePhase` reads
-remaining combat TIME against 20% of the planned duration, by the owner's ruling.
-Two entries in this project explained a silence as "the target never drops below
-20%" and both were wrong to. Check that before writing it a third time.
+remaining combat TIME against the last fraction of the planned duration, by the
+owner's ruling — 20% for Execute and Hammer of Wrath, and **35% for the Rogue's
+Quietus**, which the owner has now set. Three entries in this project explained a
+silence as "the target never drops" and all three were wrong to.
+
+**Two talents are waiting on one mechanism because of it:** the Rogue's Quietus
+(damage, 35%) and the Priest's Early Demise (crit, 20%). Both are missing
+declarations rather than gaps in the ruling, and **whichever context builds it
+should build it for both.**

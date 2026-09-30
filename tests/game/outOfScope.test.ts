@@ -64,9 +64,15 @@ function everyReason(): { id: string; reason: string; scope?: string }[] {
  * Wording that names something ruled out. `\bheals?\b` rather than `heal`,
  * because "health" is not healing -- several live gaps are conditional on target
  * health and must not be swept in.
+ *
+ * THE STEALTH ENTRY IS THE NEWEST AND THE POINT OF ADDING IT. That ruling arrived
+ * after six Rogue talents had spent the project counted as live gaps, and without
+ * a word here the NEXT talent written with a stealth reason and no `scope` would
+ * pass this test in silence -- which is the decay this file exists to prevent.
+ * Unprefixed, so it catches "stealthed" too.
  */
 const RULED_OUT_WORDING =
-  /\bmovement\b|\bimmobilis|\bsnare|\bdaze|\bstun|\bfear\b|\bsilence|\bincapacitat|\bdisorient|\bdisarm|\bthreat\b|\btaunt\b|\bheals?\b|\bhealing\b|has a position|nothing (?:here )?moves|\btravel form\b|\bradius\b/i;
+  /\bmovement\b|\bimmobilis|\bsnare|\bdaze|\bstun|\bfear\b|\bsilence|\bincapacitat|\bdisorient|\bdisarm|\bthreat\b|\btaunt\b|\bheals?\b|\bhealing\b|has a position|nothing (?:here )?moves|\btravel form\b|\bradius\b|\bstealth/i;
 
 /**
  * Reasons that name a ruled-out concept IN PASSING while being inert for some
