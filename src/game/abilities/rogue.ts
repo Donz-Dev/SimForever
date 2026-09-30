@@ -14,6 +14,7 @@ import {
   exposeArmorAura,
   ruptureAura,
   sliceAndDiceAura,
+  venomAura,
 } from '../auras/rogue';
 import { awardComboPoint, hasComboPoints, spendComboPoints } from '../combat/comboPoints';
 import { EVISCERATE_AP_COEFFICIENT_PER_COMBO_POINT } from '../combat/coefficients';
@@ -415,6 +416,26 @@ export const SLICE_AND_DICE: Ability = {
   },
 };
 
+/**
+ * Venom, granted by the Assassination talent.
+ *
+ * A finisher that buffs POISONS and deals no damage of its own, which makes it
+ * the only Rogue finisher whose worth depends entirely on another system. It
+ * was `unmodelled` for exactly as long as poisons were.
+ */
+export const VENOM: Ability = {
+  id: 'venom',
+  name: 'Venom',
+  cost: { resource: 'energy', amount: 25 },
+  requiresTarget: false,
+  canCast: ({ caster }) => hasComboPoints(caster),
+  onCast: ({ simulation, caster }) => {
+    const spent = spendComboPoints(caster);
+    if (spent <= 0) return;
+    simulation.applyAura(caster, venomAura(spent), caster.id);
+  },
+};
+
 export const EXPOSE_ARMOR: Ability = {
   id: 'expose_armor',
   name: 'Expose Armor',
@@ -477,6 +498,8 @@ export const ROGUE_ABILITIES: readonly Ability[] = [
   EVISCERATE,
   RUPTURE,
   SLICE_AND_DICE,
+  // Granted by the Assassination talent; `grantsByAbility` gates it.
+  VENOM,
   EXPOSE_ARMOR,
   ADRENALINE_RUSH_ABILITY,
   BLADE_FLURRY_ABILITY,

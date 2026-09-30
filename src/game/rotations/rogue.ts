@@ -83,6 +83,36 @@ function ruptureNeeded(context: SimulationContext, actor: Combatant, target?: Co
   return target.auras.remainingMs('rupture', context.clock.now()) < RUPTURE_REFRESH_WINDOW_MS;
 }
 
+/*
+ * ============================================================================
+ * VENOM IS IMPLEMENTED AND IS NOT IN ANY LIST, because it MEASURES AS A LOSS.
+ *
+ * The finisher works: the talent grants it, its aura runs nine to twenty-one
+ * seconds by combo points, and it adds its +30% to poison damage and +10% to
+ * apply chance exactly as the owner ruled. It is simply not worth the combo
+ * points, and three placements were measured before that was believed --
+ * 30 batches of 10 each, which is this project's own method:
+ *
+ *   not cast at all                415.2  +/- 4.1
+ *   above the damage finishers     395.7  +/- 4.6   -19.5
+ *   below Eviscerate               398.0  +/- 4.7   -17.2
+ *   only at five combo points      400.1  +/- 3.8   -15.1
+ *
+ * Every one is outside the interval and every one is worse. A point spent on
+ * Venom is a point not spent on Eviscerate or Rupture, and the poison damage
+ * it multiplies is about a fifth of the build's total -- so a 30% bonus on a
+ * fifth is worth less than a whole finisher.
+ *
+ * THE COMMENT THAT WAS HERE FIRST CLAIMED THE OPPOSITE, and claimed it "by
+ * measurement", before anything had been measured. That is the exact mistake
+ * the Summon Hawk note made -- specific, plausible, and believed for as long
+ * as it existed.
+ *
+ * IT IS STILL WORTH HAVING BUILT: the mechanism is tested, so the day a poison
+ * coefficient or a talent moves, adding one line to this list re-measures it.
+ * ============================================================================
+ */
+
 // ---------------------------------------------------------------------------
 
 /**
@@ -90,7 +120,8 @@ function ruptureNeeded(context: SimulationContext, actor: Combatant, target?: Co
  *
  * Mutilate awards two combo points, so this build reaches five in three casts
  * rather than five and spends far more of its time on finishers. It is also
- * the build most hurt by poisons being absent: the spec is named for them.
+ * the build the poisons matter most to: the spec is named for them, and its
+ * Venom finisher does nothing else at all.
  */
 export const ROGUE_VENOM: readonly PriorityEntry[] = [
   { abilityId: 'slice_and_dice', condition: sliceAndDiceNeeded },

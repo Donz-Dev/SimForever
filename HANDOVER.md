@@ -6,7 +6,7 @@ gets built is [docs/class-implementation.md](docs/class-implementation.md).
 ## Where the project is
 
 All nine classes and all 23 profiles are implemented, every number traced to a
-source rather than invented. **1,785 tests**, CI green on Node 20 and 22. Profile
+source rather than invented. **1,790 tests**, CI green on Node 20 and 22. Profile
 format **v9**. Live at <https://donz-dev.github.io/SimForever/>, republished by
 `.github/workflows/deploy.yml` on every push to `main` that passes.
 
@@ -158,10 +158,14 @@ is a live gap and gets no `scope`.
 
 Two questions the census raises that the rulings do not answer:
 
-- **Poisons now exist**, so the Rogue's live gap is smaller than the census
-  says: Vile Poisons and Improved Poisons both apply. **Venom does not** -- it
-  is a Forever-NEW finisher this project does not declare, and its +30% would
-  need a ruling on whether it stacks with Vile Poisons' +20% additively.
+- **Poisons and Venom both exist now**, so three of the Rogue's census gaps are
+  closed: Vile Poisons, Improved Poisons and Venom all apply, the last stacking
+  ADDITIVELY with the first by the owner's ruling.
+  **VENOM IS IN NO PRIORITY LIST, BECAUSE IT MEASURES AS A LOSS** -- 415.2
+  without it against 395.7, 398.0 and 400.1 at three placements, each outside
+  its interval. A combo point is worth more on Eviscerate than a 30% bonus on
+  the fifth of the build's damage that poisons supply. The mechanism is tested,
+  so one line re-measures it the day a coefficient moves.
 - **Stealth and openers.** Eleven Rogue talents are inert because every fight
   opens in combat — Premeditation, Initiative, Improved Ambush, Cutthroat, Dirty
   Deeds, Camouflage, Opportunity and more. That is an encounter property, not one

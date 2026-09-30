@@ -418,3 +418,45 @@ export function deadlyPoisonAura(damageMultiplier = 1): AuraDefinition {
     },
   };
 }
+
+/*
+ * ============================================================================
+ * VENOM: a finisher whose whole effect is on poisons.
+ *
+ * "Finishing move that increases the damage of your Poisons by 30% and your
+ * chance to apply Poisons by 10%." 25 energy, instant, 9 to 21 seconds by
+ * combo points -- the SAME five durations Slice and Dice uses, which is why
+ * `SLICE_AND_DICE_DURATIONS_MS` is shared rather than transcribed twice.
+ *
+ * A FOREVER ADDITION. The capture marks it `versusClassic: "new"`, so there is
+ * no Classic behaviour to fall back on and nothing to cross-check it against.
+ *
+ * ----------------------------------------------------------------------------
+ * IT STACKS ADDITIVELY WITH THE POISON TALENTS, on the ruleset owner's ruling.
+ * With Vile Poisons at 5/5 a poison deals 1 + 0.20 + 0.30 = 1.5x, NOT
+ * 1.2 x 1.3 = 1.56x; and with Improved Poisons the apply chance gains twenty
+ * percentage points rather than ten of each applied in turn.
+ *
+ * Both readings produce a plausible number four points apart, which is exactly
+ * the shape this project writes a test for -- and it is the same additive rule
+ * `resolveCast` already uses for two cost reductions on one ability.
+ * ----------------------------------------------------------------------------
+ */
+
+/** Added to the poison multiplier, not multiplied into it. */
+export const VENOM_POISON_DAMAGE_BONUS = 0.3;
+
+/** Added to the apply chance in percentage POINTS: 20% becomes 30%. */
+export const VENOM_POISON_CHANCE_BONUS = 0.1;
+
+export const VENOM_AURA_ID = 'venom';
+
+export function venomAura(comboPoints: number): AuraDefinition {
+  return {
+    id: VENOM_AURA_ID,
+    name: 'Venom',
+    durationMs: durationFor(SLICE_AND_DICE_DURATIONS_MS, comboPoints),
+    // Recasting replaces rather than extends, as every finisher buff here does.
+    refreshBehaviour: 'reset',
+  };
+}
