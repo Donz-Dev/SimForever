@@ -71,8 +71,18 @@ function talentsOf(className: string): TalentRow[] {
       kind: 'unmodelled';
       reason: string;
       scope?: string;
+      appliedElsewhere?: string;
     }>;
-    const others = effects.length - unmodelled.length;
+    /*
+     * AN EFFECT APPLIED SOMEWHERE ELSE COUNTS AS AN EFFECT, which is what
+     * `appliedElsewhere` was added to say. Two Rogue poison talents have no
+     * non-unmodelled entry at all -- `poisonReactions` reads their ranks off the
+     * allocation directly -- so counting rows alone called two working talents
+     * live gaps for the whole project, and their reasons saying "APPLIES in
+     * full" in capitals could not reach a census that counts effects.
+     */
+    const elsewhere = unmodelled.filter((entry) => entry.appliedElsewhere !== undefined).length;
+    const others = effects.length - unmodelled.length + elsewhere;
     const scopes = unmodelled.map((entry) => entry.scope).filter((s): s is string => s !== undefined);
     /*
      * THE FOUR-WAY CLASSIFICATION, and it has to match the census in
@@ -82,6 +92,15 @@ function talentsOf(className: string): TalentRow[] {
      * unmodelled reason is PARTLY modelled.
      */
     const allScoped = unmodelled.length > 0 && scopes.length === unmodelled.length;
+    /*
+     * `appliedElsewhere` COUNTS AS A WORKING EFFECT, because it says the talent
+     * IS applied -- just by a module this table cannot express, which is what
+     * Vile Poisons and Improved Poisons are. Before the field existed both were
+     * counted as live gaps while working perfectly, and their reasons said
+     * "APPLIES in full" in capitals: this tool counts effects, not adjectives.
+     */
+    const appliedElsewhere = unmodelled.some((entry) => entry.appliedElsewhere !== undefined);
+    const working = others > 0 || appliedElsewhere;
     /*
      * EXHAUSTIVE AND DISJOINT, and the first version was neither -- a talent
      * with an effect AND only-scoped reasons matched none of the four, so the
@@ -93,9 +112,9 @@ function talentsOf(className: string): TalentRow[] {
     return {
       id,
       fully: unmodelled.length === 0,
-      partly: others > 0 && unmodelled.length > 0,
-      ruledOut: others === 0 && allScoped,
-      liveGap: others === 0 && !allScoped && unmodelled.length > 0,
+      partly: working && unmodelled.length > 0,
+      ruledOut: !working && allScoped,
+      liveGap: !working && !allScoped && unmodelled.length > 0,
       reasons: unmodelled.map((entry) => entry.reason),
       scopes,
     };

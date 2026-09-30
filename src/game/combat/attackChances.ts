@@ -135,6 +135,26 @@ export function dodgeFromSkill(skill: number, defenseSkill: number): RollUnits {
 }
 
 /**
+ * What the ATTACKER takes off the defender's dodge and parry.
+ *
+ * ----------------------------------------------------------------------------
+ * THE ONLY ATTACKER-SIDE TERM IN TWO DEFENDER-SIDE SLICES. Dodge comes from the
+ * skill gap and enemy parry is a flat ruleset figure, so Weapon Expertise's
+ * "reduces the chance for your attacks to be Dodged or Parried by 2%" had
+ * nowhere to land -- and granting it as `hitChance` instead would have taken it
+ * off the MISS slice, which is a different size and moves differently with the
+ * level gap.
+ *
+ * SUBTRACTED FROM BOTH, not split between them: the tooltip states one figure
+ * and names both outcomes, so 2% is two points off each rather than one each.
+ * Clamped at zero by the callers, which every slice already is.
+ * ----------------------------------------------------------------------------
+ */
+export function dodgeParryReduction(source: Combatant): RollUnits {
+  return toRollUnits(source.stats.get('dodgeParryReduction'));
+}
+
+/**
  * Glancing blow chance.
  *
  * Depends on the defender's level alone, not on the attacker's skill: at
@@ -230,11 +250,18 @@ function buildChances(
           : 0;
       const glance = glanceMultiplierRange(skill, defense);
 
+      /*
+       * TAKEN OFF BOTH SLICES, AND OFF THE SWING AS WELL AS THE SPECIAL.
+       * "Reduces the chance for your attacks to be Dodged or Parried" names
+       * attacks rather than abilities, so an auto attack is one of them.
+       */
+      const avoidanceOff = dodgeParryReduction(source);
+
       return {
         ...NO_CHANCES,
         miss: missFromSkill(skill, defense, hit, dualWield),
-        dodge: dodgeFromSkill(skill, defense),
-        parry: parryChance(source, styleOf),
+        dodge: clampChance(dodgeFromSkill(skill, defense) - avoidanceOff),
+        parry: clampChance(parryChance(source, styleOf) - avoidanceOff),
         glance: glanceChance(defense),
         crit,
         glanceMultiplierMin: glance.min,
@@ -249,8 +276,8 @@ function buildChances(
         // Specials never carry the dual-wield penalty: one strike, not one
         // per hand. They also never glance.
         miss: missFromSkill(skill, defense, hit, 0),
-        dodge: dodgeFromSkill(skill, defense),
-        parry: parryChance(source, styleOf),
+        dodge: clampChance(dodgeFromSkill(skill, defense) - dodgeParryReduction(source)),
+        parry: clampChance(parryChance(source, styleOf) - dodgeParryReduction(source)),
         crit,
         critMultiplier: COMBAT_CONSTANTS.meleeCritMultiplier,
       };

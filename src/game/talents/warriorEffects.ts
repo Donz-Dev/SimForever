@@ -195,18 +195,37 @@ export const WARRIOR_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
    * and they expire separately -- the gap when the pipeline changes, the
    * irrelevance when the gear does.
    */
+  /*
+   * --------------------------------------------------------------------------
+   * ITS ARMOR CLAUSE WAS CLOSED BY THE ROGUE DIVE, not by this class. The reason
+   * here said "the damage pipeline has no attacker-side armor term at any step
+   * -- re-checked 2026-09-30", which was true on the day and stopped being true
+   * when `armorPenetration` became a stat for Hack and Slash and Serrated
+   * Blades. **The expiry crossed a class boundary**, which is the kind this
+   * project keeps missing: nothing in the Warrior's own files changed.
+   *
+   * `armorPenetration.test.ts` asserts BOTH callers on purpose, so neither can
+   * be quietly dropped by an edit to the other -- and it is what caught this.
+   * --------------------------------------------------------------------------
+   */
   weaponmaster: [
     { kind: 'conditionalCrit', requires: { weaponTypes: ['axe', 'polearm'] } },
+    {
+      kind: 'stat',
+      stat: 'armorPenetration',
+      operation: 'flat',
+      valueIndex: 1,
+      requires: { weaponTypes: ['mace', 'staff'] },
+    },
     { kind: 'reaction', reactionId: 'weaponmaster', valueIndex: 2 },
     {
       kind: 'unmodelled',
       reason:
-        'The mace and staff clause ignores a percentage of the target armor, ' +
-        'and the damage pipeline has no attacker-side armor term at any step ' +
-        '-- re-checked 2026-09-30. The axe/polearm crit and the sword extra ' +
-        'attack both work; the crit reads the MAIN HAND only, because crit ' +
-        'chance has no per-slot form in this engine. No Warrior gear set ' +
-        'holds a mace or staff, so no profile can reach this clause anyway.',
+        'All three clauses apply. Two of them read the MAIN HAND only -- the ' +
+        'axe/polearm crit because crit chance has no per-slot form, and the ' +
+        'mace/staff armor penetration because it is a whole-character stat -- ' +
+        'so an off-hand axe earns neither. The sword extra attack is gated on ' +
+        'the weapon that actually swung and does reach the off hand.',
     },
   ],
 

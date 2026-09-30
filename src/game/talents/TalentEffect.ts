@@ -250,7 +250,14 @@ export type TalentEffect =
    * Distinct from a `stat` effect on `critChance`, which would raise crit for
    * everything the character does.
    */
-  | { readonly kind: 'abilityCrit'; readonly abilityId: string }
+  /*
+   * `valueIndex` ADDED BY THE ROGUE DIVE, and it fixes a real misreading.
+   * Puncturing Wounds is "+15% Backstab crit and +30% Mutilate crit" -- two
+   * numbers for two abilities in one talent -- and without an index both
+   * entries read value 0, so Mutilate silently got Backstab's 15%. A smaller
+   * number and no error.
+   */
+  | { readonly kind: 'abilityCrit'; readonly abilityId: string; readonly valueIndex?: number }
 
   /**
    * Multiplies ONE ability's damage. The talent's value is a PERCENTAGE, so 12
@@ -823,6 +830,26 @@ export type TalentEffect =
   | {
       readonly kind: 'unmodelled';
       readonly reason: string;
+      /**
+       * Names the module that DOES apply this effect, for a talent whose work is
+       * done somewhere the effect table cannot express.
+       *
+       * --------------------------------------------------------------------------
+       * ADDED BY THE ROGUE DIVE, and it fixes a real miscount. Vile Poisons and
+       * Improved Poisons are both applied -- by the poison reactions, reading the
+       * rank directly -- so neither has a non-unmodelled entry here, and every
+       * census in the project counted both as LIVE GAPS. Two of the Rogue's
+       * fourteen were talents that already worked.
+       *
+       * PROSE COULD NOT FIX IT. Their reasons said "APPLIES in full" in capitals
+       * and `class_audit.ts` counts effects, not adjectives. So it is DATA, exactly
+       * as `scope` is: a talent carrying this counts PARTLY modelled.
+       *
+       * IT NAMES A FILE ON PURPOSE, which is what keeps it honest -- a claim naming
+       * a module can be checked and "it works somewhere" cannot.
+       * --------------------------------------------------------------------------
+       */
+      readonly appliedElsewhere?: string;
       readonly scope?: OutOfScope;
     };
 
@@ -1011,6 +1038,14 @@ export interface UnmodelledTalent {
    * GAP without parsing prose — which is what makes the milestone countable.
    */
   readonly scope?: OutOfScope;
+  /**
+   * Set when the effect IS applied, just not by an entry in this table.
+   *
+   * Carried through from the effect for the same reason `scope` is: a caller has
+   * to tell "nothing does this" from "something else does this" without parsing
+   * prose. `class_audit.ts` counts a talent carrying it as PARTLY modelled.
+   */
+  readonly appliedElsewhere?: string;
 }
 
 /**

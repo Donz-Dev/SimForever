@@ -10,8 +10,7 @@ import {
   CUTTHROAT,
   GHOSTLY_STRIKE_DODGE_AURA,
   HEMORRHAGE_DEBUFF,
-  HEMORRHAGE_UNMODELLED,
-  RUPTURE_UNMODELLED,
+  THOUSAND_CUTS_BONUS,
   exposeArmorAura,
   ruptureAura,
   sliceAndDiceAura,
@@ -40,19 +39,23 @@ import { EVISCERATE_AP_COEFFICIENT_PER_COMBO_POINT } from '../combat/coefficient
  * also never rewarded for a good one. The whole rotation is a queue against a
  * clock.
  *
- * WHAT IS NOT HERE AND WHY:
+ * WHAT IS NOT HERE AND WHY -- and two of the three entries this list used to
+ * carry have been answered since it was written:
  *
- *   - POISONS. Weapon-bound procs, which the engine can already express --
- *     see docs/extra-attacks.md -- but they need the poison ITEMS and an
- *     application mechanic, and neither is captured yet.
- *   - STEALTH OPENERS. Ambush, Garrote, Cheap Shot and Premeditation all say
- *     "Requires Stealth", and every fight here opens IN COMBAT. Charge has the
- *     same problem and the ruleset owner settled it by making it castable once
- *     at timestamp zero; the same ruling would fit here and has not been
- *     given, so they are absent rather than guessed at.
- *   - POSITIONAL REQUIREMENTS. Backstab "must be behind the target". Nothing
- *     in this simulator has a facing, so the requirement is dropped and said
- *     to be dropped rather than silently met.
+ *   - ~~POISONS~~ BUILT. `reactions/poisons.ts` and the two poison auras. A
+ *     poison is NOT a weapon use but IS triggered by one, and its chance is
+ *     flat per strike rather than procs per minute -- the opposite of every
+ *     weapon enchant here, and both are the owner's rulings.
+ *   - ~~STEALTH OPENERS~~ RULED. Stealth is out of scope, so Garrote and Cheap
+ *     Shot are absent for good. AMBUSH IS THE EXCEPTION and is declared: the
+ *     owner ruled that Cutthroat's proc IS its stealth requirement, so the
+ *     aura is the gate and there is no stealth system to build. Premeditation
+ *     never had a stealth clause in Forever at all.
+ *   - POSITIONAL REQUIREMENTS, still dropped. Backstab and Ambush "must be
+ *     behind the target". Nothing in this simulator has a facing, so the
+ *     requirement is dropped and SAID to be dropped rather than silently met.
+ *     The dagger half of the same sentence is enforced, because a weapon type
+ *     is knowable.
  * ----------------------------------------------------------------------------
  */
 
@@ -178,12 +181,18 @@ export const BACKSTAB: Ability = {
  * class that can take a Rogue from four points to over the cap. The overflow
  * is wasted and reported, rather than refused -- see `comboPoints.ts`.
  *
- * ITS POISON CLAUSE IS NOW REACHABLE AND STILL NOT APPLIED, which is a change
- * of kind rather than a change of wording. It read "does nothing: poisons are
- * not implemented" for as long as that was true; the Venom Rogue keeps Deadly
- * Poison on the target for most of a fight, so the +20% is a live 20% on the
- * signature ability of the build that takes it. Deliberately left for its own
- * PR: it moves a profile's DPS and wants a re-measured baseline.
+ * ITS POISON CLAUSE IS APPLIED, AND NOT FROM HERE. "Damage increased by 20%
+ * against Poisoned targets" is a property of the TARGET's state, so it is
+ * carried by Deadly Poison's own debuff as an `abilityDamageTaken` entry and
+ * read by the damage pipeline -- `MUTILATE_POISONED_BONUS` in `auras/rogue.ts`
+ * has the reasoning. Putting it in this `onCast` would have broken the
+ * standing rule that per-ability damage goes through a modifier the pipeline
+ * consults, and nothing here would look wrong if it had.
+ *
+ * IT WAS REACHABLE AND UNREAD FOR A WHOLE RELEASE. The clause said "does
+ * nothing: poisons are not implemented" for as long as that was true, and the
+ * poison system landing turned it into a live 20% on the signature ability of
+ * the build that takes it without anybody touching this file.
  */
 // 50 and not 38, from foreverchanges.pro by the same rule -- "an additional 50
 // with each weapon" against our capture's 38, same rank 4, same build.
@@ -227,10 +236,6 @@ export const MUTILATE: Ability = {
     }
     consumeColdBlood(simulation, caster, ability.id);
   },
-  unmodelled:
-    'Its "+20% against Poisoned targets" is not applied. The reason used to be ' +
-    'that no target was ever poisoned; poisons exist now and the Venom build ' +
-    'keeps Deadly Poison up, so this is a real 20% that is simply not read.',
 };
 
 /**
@@ -271,7 +276,6 @@ export const HEMORRHAGE: Ability = {
       simulation.applyAura(target, HEMORRHAGE_DEBUFF, caster.id);
     }
   },
-  unmodelled: HEMORRHAGE_UNMODELLED,
 };
 
 /**
@@ -393,6 +397,15 @@ export const RUPTURE: Ability = {
     if (spent <= 0) return;
 
     /*
+     * THOUSAND CUTS TRAVELS WITH THE BLEED. The talent fires off a Rupture
+     * TICK, and a tick runs no reactions -- so the aura it applies has to be
+     * built here, where the talent's value is reachable as a named bonus, and
+     * carried into the aura. Zero for a Rogue without the talent, which
+     * `ruptureAura` reads as "apply nothing".
+     */
+    const thousandCuts = ability.bonuses?.[THOUSAND_CUTS_BONUS] ?? 0;
+
+    /*
      * Rolled ONCE here rather than per tick, exactly as Rend is: whether the
      * bleed landed is settled when it is applied, and then it ticks for its
      * whole duration.
@@ -402,9 +415,8 @@ export const RUPTURE: Ability = {
     });
     if (roll.avoided) return;
 
-    simulation.applyAura(target, ruptureAura(spent), caster.id);
+    simulation.applyAura(target, ruptureAura(spent, thousandCuts), caster.id);
   },
-  unmodelled: RUPTURE_UNMODELLED,
 };
 
 /** The key Improved Slice and Dice hands its percentage over on. */

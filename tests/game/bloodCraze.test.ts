@@ -296,6 +296,14 @@ describe('Blood Craze in a real fight', () => {
     expect(uptime?.applications ?? 0).toBeGreaterThan(10);
   });
 
+  /*
+   * TWENTY SECONDS, AND THE DEFAULT FIVE WAS NOT ENOUGH. This test runs
+   * batches and measures 4.7 to 5.4 seconds on this machine -- so against
+   * vitest's 5000ms default it fails or passes depending on what else is using
+   * the CPU, and `main` itself fails it under the full suite while passing it
+   * in isolation. Measured three times, both ways round, with the
+   * sibling slow test in `protectionTalents.test.ts` swapping places with it.
+   */
   it('does no damage of its own, and barely moves DPS', () => {
     /*
      * TWO ASSERTIONS, and the first is the one that means something. Blood
@@ -317,7 +325,7 @@ describe('Blood Craze in a real fight', () => {
     const withIt = dps({ ...PAD, blood_craze: 3 });
     const without = dps(PAD);
     expect(Math.abs(withIt - without) / without).toBeLessThan(0.02);
-  });
+  }, 20_000);
 
   it('fires for a warrior nothing is attacking, off Bloodthirst alone', () => {
     /*
