@@ -19,37 +19,99 @@ import { MAX_COMBO_POINTS, comboPointsOn } from '../combat/comboPoints';
  * ----------------------------------------------------------------------------
  */
 
+
+
+/*
+ * ============================================================================
+ * THE RULESET OWNER'S CONDITIONS. These three lists are theirs; what was here
+ * before was this file's own guess and said so.
+ * ============================================================================
+ */
+
 /**
- * Refresh a debuff when it is nearly gone, not on cooldown.
+ * "IF NOT ACTIVE", which is the owner's wording and NOT the two-second refresh
+ * window that `missing` implements.
  *
+ * A refresh RESETS an aura, so a window throws away whatever is left -- and the
+ * faster the character acts, the sooner it reaches the entry inside the window
+ * and the more it clips.
+ *
+ * MEASURED ON THIS CLASS. Nature's Grace cost the Moonkin 14.9 DPS doing
+ * nothing but speeding it up: casts went 26.3 a fight to 27.4 while Moonfire
+ * ticks fell 25.1 to 22.5 and Insect Swarm's 27.9 to 25.5. The buff was fine;
+ * the two-second window was paying for it. `missing` and `REFRESH_WINDOW_MS`
+ * are gone from this file with the lists that used them.
+ */
+const expired = (auraId: string) =>
+  (context: SimulationContext, _actor: Combatant, target?: Combatant): boolean =>
+    target !== undefined && target.auras.remainingMs(auraId, context.clock.now()) <= 0;
+
+/** "<buff> duration > 0", on the Druid. */
+const selfActive = (auraId: string) =>
+  (_context: SimulationContext, actor: Combatant): boolean => actor.auras.has(auraId);
+
+/** "<buff> stacks >= N", on the Druid. */
+const selfStacksAtLeast = (auraId: string, minimum: number) =>
+  (_context: SimulationContext, actor: Combatant): boolean =>
+    actor.auras.stacksOf(auraId) >= minimum;
+
+/** "energy <= N". */
+const energyAtMost = (maximum: number) =>
+  (_context: SimulationContext, actor: Combatant): boolean =>
+    (actor.resources.get('energy')?.current ?? 0) <= maximum;
+
+/** "rage >= N". */
+const rageAtLeast = (minimum: number) =>
+  (_context: SimulationContext, actor: Combatant): boolean =>
+    (actor.resources.get('rage')?.current ?? 0) >= minimum;
+
+/** "hit points <= N% of maximum". */
+const healthAtMostFraction = (fraction: number) =>
+  (_context: SimulationContext, actor: Combatant): boolean =>
+    actor.health.maximum > 0 && actor.health.current / actor.health.maximum <= fraction;
+
+/** "combo points = N", read THROUGH the target so a stale pool reads zero. */
+const exactlyPoints = (count: number) =>
+  (_context: SimulationContext, actor: Combatant, target?: Combatant): boolean =>
+    comboPointsOn(actor, target) === count;
+
+/** "<debuff> is on the target". */
+const hasDebuff = (auraId: string) =>
+  (_context: SimulationContext, _actor: Combatant, target?: Combatant): boolean =>
+    target !== undefined && target.auras.has(auraId);
+
+/** Every condition must hold. */
+const all =
+  (...conditions: readonly ((
+    context: SimulationContext,
+    actor: Combatant,
+    target?: Combatant,
+  ) => boolean)[]) =>
+  (context: SimulationContext, actor: Combatant, target?: Combatant): boolean =>
+    conditions.every((condition) => condition(context, actor, target));
+
+/** The condition must NOT hold. */
+const not =
+  (condition: (context: SimulationContext, actor: Combatant, target?: Combatant) => boolean) =>
+  (context: SimulationContext, actor: Combatant, target?: Combatant): boolean =>
+    !condition(context, actor, target);
+
+/*
  * ----------------------------------------------------------------------------
- * THIS WINDOW CLIPS, AND MAKING THE MOONKIN FASTER IS WHAT REVEALED IT.
+ * A FORM IS NOT AN ABILITY HERE, so "moonkin form if not active", "cat form if
+ * not active" and "bear form if not active" are absent from the three lists
+ * below rather than unimplemented.
  *
- * A refresh resets the aura, so anything left on the clock when the rotation
- * gets round to it is thrown away. At a two-second window the Moonkin loses up
- * to two seconds of Moonfire and Insect Swarm every cycle -- and the faster it
- * acts, the sooner it reaches the entry inside that window and the more it
- * clips.
+ * A Druid's form is its COMBAT STYLE -- a field the preset sets and the
+ * character is built with -- not an aura and not something in the spellbook.
+ * Every profile starts in the right form and cannot leave it, so the entry
+ * would be a no-op even if it existed.
  *
- * MEASURED, when Nature's Grace landed and cost the Moonkin 14.9 DPS. The buff
- * works: casts went 26.3 to 27.4 a fight. What fell was TICKS -- Moonfire 25.1
- * to 22.5, Insect Swarm 27.9 to 25.5 -- so a haste and global cooldown buff
- * read as a straight loss, and nothing about the result looked wrong.
- *
- * The ruleset owner's replacement list refreshes on "not active" rather than
- * on a window, which removes the clipping outright. Left as it is until that
- * list lands, because changing both at once cannot be attributed.
+ * IT WOULD BECOME REAL WORK the day form-shifting is modelled mid-fight, and
+ * that same day would have to answer why nothing currently stops a Cat casting
+ * Starfire: the engine gates on WARRIOR STANCES and on nothing else.
  * ----------------------------------------------------------------------------
  */
-const REFRESH_WINDOW_MS = 2000;
-
-const missing = (auraId: string) =>
-  (context: SimulationContext, _actor: Combatant, target?: Combatant): boolean =>
-    target !== undefined &&
-    target.auras.remainingMs(auraId, context.clock.now()) < REFRESH_WINDOW_MS;
-
-const atFive = (_context: SimulationContext, actor: Combatant): boolean =>
-  comboPointsOn(actor) >= MAX_COMBO_POINTS;
 
 // ---------------------------------------------------------------------------
 
@@ -62,9 +124,27 @@ const atFive = (_context: SimulationContext, actor: Combatant): boolean =>
  * stacks and does nothing, and says so.
  */
 export const DRUID_MOONKIN: readonly PriorityEntry[] = [
-  { abilityId: 'moonfire', condition: missing('moonfire') },
-  { abilityId: 'insect_swarm', condition: missing('insect_swarm') },
-  { abilityId: 'starfire' },
+  { abilityId: 'moonfire', condition: expired('moonfire') },
+  { abilityId: 'insect_swarm', condition: expired('insect_swarm') },
+  /*
+   * TWO STARFIRE ENTRIES, and the second is not a duplicate. Eclipse charges
+   * shorten Starfire's cast and Nature's Grace shortens every cast AND the
+   * global cooldown -- so the owner's first entry spends charges freely when
+   * there are two or more, and the second spends the LAST one only while
+   * Nature's Grace is up, which is the window where it is worth most.
+   *
+   * A repeated ability id is legal and is checked for the shape that is not:
+   * a copy below an UNCONDITIONAL one, which can never be reached. Both of
+   * these are gated, and the ungated filler below is Wrath.
+   */
+  {
+    abilityId: 'starfire',
+    condition: selfStacksAtLeast('eclipse', 2),
+  },
+  {
+    abilityId: 'starfire',
+    condition: all(selfStacksAtLeast('eclipse', 1), selfActive('natures_grace')),
+  },
   { abilityId: 'wrath' },
 ];
 
@@ -81,14 +161,17 @@ export const DRUID_MOONKIN: readonly PriorityEntry[] = [
  * resource the rest of the list runs on.
  */
 export const DRUID_CAT: readonly PriorityEntry[] = [
-  { abilityId: 'tigers_fury' },
-  { abilityId: 'rake', condition: missing('rake') },
-  { abilityId: 'rip', condition: (context, actor, target) =>
-      atFive(context, actor) && missing('rip')(context, actor, target) },
-  { abilityId: 'ferocious_bite', condition: atFive },
+  /*
+   * TIGER'S FURY ON A LOW ENERGY BAR, which is the owner's condition and reads
+   * backwards until the ability is read: it is a damage buff on a thirty
+   * second cooldown and costs no energy, so casting it while the bar is empty
+   * spends a global cooldown that had nothing else to do with it.
+   */
+  { abilityId: 'tigers_fury', condition: energyAtMost(30) },
+  { abilityId: 'berserk' },
+  { abilityId: 'rip', condition: exactlyPoints(MAX_COMBO_POINTS) },
+  { abilityId: 'rake', condition: expired('rake') },
   { abilityId: 'shred' },
-  // Falls back when Shred is unaffordable, which at 60 energy it often is.
-  { abilityId: 'claw' },
 ];
 
 /**
@@ -99,11 +182,33 @@ export const DRUID_CAT: readonly PriorityEntry[] = [
  * it at the bottom costs the entries above it nothing.
  */
 export const DRUID_BEAR: readonly PriorityEntry[] = [
-  { abilityId: 'demoralizing_roar', condition: missing('demoralizing_roar') },
+  /*
+   * NOT IF THE WARRIOR'S SHOUT IS ALREADY ON THE TARGET. The two do not stack
+   * -- both are an attack power reduction -- so the owner's condition checks
+   * for the other before spending a global cooldown on this one.
+   *
+   * IT CANNOT FIRE TODAY and is correct anyway: `demoralizing_shout` is not in
+   * any preset's raid buff list, so nothing applies it to this encounter's
+   * target. The clause costs nothing and is right the day a raid does.
+   */
+  {
+    abilityId: 'demoralizing_roar',
+    condition: all(expired('demoralizing_roar'), not(hasDebuff('demoralizing_shout'))),
+  },
+  { abilityId: 'barkskin', condition: healthAtMostFraction(0.5) },
+  { abilityId: 'frenzied_regeneration', condition: healthAtMostFraction(0.35) },
+  { abilityId: 'enrage' },
+  { abilityId: 'berserk' },
+  /*
+   * "QUEUE MAUL IF RAGE >= 42". Maul is on-next-swing, so `queue` is exactly
+   * what the list does with it: arming costs no global cooldown and the swing
+   * carries it. The rage floor is what stops it eating the rage Primal Bite
+   * and Lacerate below it need.
+   */
+  { abilityId: 'maul', condition: rageAtLeast(42) },
+  // Primal Bite is `mangle`: the id kept the old name, the display name did not.
   { abilityId: 'mangle' },
-  { abilityId: 'lacerate', condition: missing('lacerate') },
-  { abilityId: 'swipe' },
-  { abilityId: 'maul' },
+  { abilityId: 'lacerate' },
 ];
 
 export const DRUID_MOONKIN_ROTATION: Rotation = new PriorityRotation(
