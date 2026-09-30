@@ -6,7 +6,7 @@ import {
   createDefaultProfile,
   migrateProfile,
 } from '../../src/profiles';
-import { runProfileBatch } from '../../src/simulator';
+import { runProfileBatch, resourceFlowOf } from '../../src/simulator';
 import { startingEquipmentFor } from '../../src/game/items/startingSets';
 
 /*
@@ -111,7 +111,7 @@ describe('the tank list stays in Defensive Stance', () => {
       simulation: { ...base.simulation, iterations: 40, seed: 12 },
       encounter: { ...base.encounter, targetAttacks: true },
     } as never);
-    return batch.rage.spent.find((row) => row.sourceId === 'stance_change')?.count ?? 0;
+    return resourceFlowOf(batch, 'rage').spent.find((row) => row.sourceId === 'stance_change')?.count ?? 0;
   }
 
   it('never changes stance at all', () => {

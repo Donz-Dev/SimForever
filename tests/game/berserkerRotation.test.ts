@@ -4,7 +4,7 @@ import { createTrainingDummy } from '../../src/game/actors/createTrainingDummy';
 import { buildSimulation } from '../helpers/buildSimulation';
 import { legalise } from '../helpers/legalTalents';
 import { createDefaultProfile } from '../../src/profiles';
-import { runProfile, runProfileBatch } from '../../src/simulator';
+import { runProfile, runProfileBatch, resourceFlowOf } from '../../src/simulator';
 import { startingEquipmentFor } from '../../src/game/items/startingSets';
 import { warriorRotation } from '../../src/game/rotations/warrior';
 import {
@@ -113,7 +113,7 @@ describe('Bloodrage', () => {
       simulation: { ...base.simulation, iterations: 40, seed: 9, durationSeconds: 60 },
     } as never);
 
-    const bloodrage = batch.rage.gained.find((row) => row.sourceId === 'bloodrage');
+    const bloodrage = resourceFlowOf(batch, 'rage').gained.find((row) => row.sourceId === 'bloodrage');
     expect(bloodrage).toBeDefined();
     /*
      * One cast in a sixty second fight -- it has a sixty second cooldown and
@@ -224,10 +224,10 @@ describe('dual-wield in Berserker Stance uses its own list', () => {
       equipment: startingEquipmentFor('warrior', 'dual_wield'),
       simulation: { ...base.simulation, iterations: 60, seed: 9 },
     } as never);
-    const heroic = batch.rage.spent.find((row) => row.sourceId === 'heroic_strike');
+    const heroic = resourceFlowOf(batch, 'rage').spent.find((row) => row.sourceId === 'heroic_strike');
     expect(heroic?.count ?? 0).toBeGreaterThan(0);
     // Nothing was spent changing stance, because nothing changed stance.
-    expect(batch.rage.spent.some((row) => row.sourceId === 'stance_change')).toBe(false);
+    expect(resourceFlowOf(batch, 'rage').spent.some((row) => row.sourceId === 'stance_change')).toBe(false);
   });
 });
 

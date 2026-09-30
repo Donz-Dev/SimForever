@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { createPlayer } from '../../src/game/actors/createPlayer';
-import { runProfileBatch } from '../../src/simulator';
+import { runProfileBatch, resourceFlowOf } from '../../src/simulator';
 import { castAbility, resolveCast, seconds } from '../../src/engine';
 import { buildSimulation } from '../helpers/buildSimulation';
 import { makeAttacker, makeTarget } from '../helpers/actors';
@@ -144,7 +144,7 @@ describe('the three builds run', () => {
      * and Bear Form is the one build that does both.
      */
     const batch = batchOf('druid_bear', 40, 5);
-    const sources = batch.rage.gained.map((row) => row.sourceId);
+    const sources = resourceFlowOf(batch, 'rage').gained.map((row) => row.sourceId);
     expect(sources).toContain('damage_taken');
     /*
      * PRIMAL BITE, which Forever renamed from Mangle at build 1.60.1.70009.
@@ -399,7 +399,13 @@ describe('Eclipse, which was the first talent to ask for the engine rule', () =>
       simulation: { ...built.simulation, iterations: 20, seed: 5 },
     } as never);
 
-    const spent = batch.rage.totalSpent;
+    /*
+     * MANA, which is what this always meant. It read `batch.rage` and passed,
+     * because the totals behind that field were never keyed by resource -- a
+     * Moonkin has no rage at all, so the number it was checking was its mana
+     * arriving under the wrong name.
+     */
+    const spent = resourceFlowOf(batch, 'mana').totalSpent;
     const pool = moonkin().resources.require('mana').maximum;
     expect(spent).toBeGreaterThan(pool);
   });

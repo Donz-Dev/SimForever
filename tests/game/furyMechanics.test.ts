@@ -10,7 +10,7 @@ import { CLEAVE, WHIRLWIND_OFF_HAND_NAME } from '../../src/game/abilities/warrio
 import { talentBuild } from '../../src/game/talents/talentBuild';
 import { WARRIOR_TALENT_EFFECTS } from '../../src/game/talents/warriorEffects';
 import { createDefaultProfile } from '../../src/profiles';
-import { characterAtCombatStart, runProfile, runProfileBatch } from '../../src/simulator';
+import { characterAtCombatStart, runProfile, runProfileBatch, resourceFlowOf } from '../../src/simulator';
 import { startingEquipmentFor } from '../../src/game/items/startingSets';
 import { legalise } from '../helpers/legalTalents';
 
@@ -74,7 +74,10 @@ describe('Anger Management', () => {
 
   it('delivers about twenty rage over a sixty second fight', () => {
     // 60 / 3 is twenty ticks of one rage, give or take where the first landed.
-    const gained = runProfileBatch(profile(legalise({ anger_management: 1 }))).rage.gained;
+    const gained = resourceFlowOf(
+      runProfileBatch(profile(legalise({ anger_management: 1 }))),
+      'rage',
+    ).gained;
     const anger = gained.find((row) => row.sourceId === 'anger_management');
 
     expect(anger).toBeDefined();
@@ -83,7 +86,7 @@ describe('Anger Management', () => {
   });
 
   it('grants nothing without the talent', () => {
-    const gained = runProfileBatch(profile()).rage.gained;
+    const gained = resourceFlowOf(runProfileBatch(profile()), 'rage').gained;
     expect(gained.some((row) => row.sourceId === 'anger_management')).toBe(false);
   });
 });

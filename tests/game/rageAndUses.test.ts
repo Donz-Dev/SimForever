@@ -10,7 +10,7 @@ import {
 } from '../../src/game/auras/warrior';
 import { WARRIOR_TALENT_EFFECTS } from '../../src/game/talents/warriorEffects';
 import { createDefaultProfile } from '../../src/profiles';
-import { runProfileBatch } from '../../src/simulator';
+import { runProfileBatch, resourceFlowOf } from '../../src/simulator';
 import { startingEquipmentFor } from '../../src/game/items/startingSets';
 import { legalise } from '../helpers/legalTalents';
 
@@ -49,7 +49,7 @@ describe('Bloodrage', () => {
      * a build whose list contains it: one cast in a sixty second fight, on a
      * sixty second cooldown, for twenty rage across eleven events.
      */
-    const rage = berserker().rage.gained.find((row) => row.sourceId === 'bloodrage');
+    const rage = resourceFlowOf(berserker(), 'rage').gained.find((row) => row.sourceId === 'bloodrage');
     expect(rage).toBeDefined();
     // Twenty per cast; a little over one cast fits in a sixty second fight
     // because fight length varies.
@@ -73,8 +73,8 @@ describe('Improved Bloodrage', () => {
      * so at 2/2 the ten on cast becomes fifteen AND the ten over ten seconds
      * becomes fifteen -- both halves, which is what "all" means.
      */
-    const plain = berserker().rage.gained.find((r) => r.sourceId === 'bloodrage')!;
-    const talented = berserker(legalise({ improved_bloodrage: 2 })).rage.gained.find(
+    const plain = resourceFlowOf(berserker(), 'rage').gained.find((r) => r.sourceId === 'bloodrage')!;
+    const talented = resourceFlowOf(berserker(legalise({ improved_bloodrage: 2 })), 'rage').gained.find(
       (r) => r.sourceId === 'bloodrage',
     )!;
 
@@ -84,8 +84,8 @@ describe('Improved Bloodrage', () => {
   });
 
   it('raises it by a quarter at 1/2', () => {
-    const plain = berserker().rage.gained.find((r) => r.sourceId === 'bloodrage')!;
-    const one = berserker(legalise({ improved_bloodrage: 1 })).rage.gained.find(
+    const plain = resourceFlowOf(berserker(), 'rage').gained.find((r) => r.sourceId === 'bloodrage')!;
+    const one = resourceFlowOf(berserker(legalise({ improved_bloodrage: 1 })), 'rage').gained.find(
       (r) => r.sourceId === 'bloodrage',
     )!;
     expect(one.amount / plain.amount).toBeCloseTo(1.25, 1);
@@ -238,7 +238,7 @@ describe('the Uses column', () => {
      */
     const result = berserker();
     const row = result.abilities.find((r) => r.abilityName === 'Heroic Strike')!;
-    const spent = result.rage.spent.find((r) => r.sourceId === 'heroic_strike')!;
+    const spent = resourceFlowOf(result, 'rage').spent.find((r) => r.sourceId === 'heroic_strike')!;
     expect(row.uses).toBeCloseTo(spent.count, 1);
   });
 });

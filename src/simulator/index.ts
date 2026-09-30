@@ -12,7 +12,7 @@
  */
 export type { BatchOptions, BatchResult } from './runBatch';
 export type { BatchAuraUptime } from '../analysis';
-export { runBatch, runProfileBatch } from './runBatch';
+export { runBatch, runProfileBatch, resourceFlowOf } from './runBatch';
 export { runProfile, runSimulation } from './runSimulation';
 export { FIGHT_DURATION_VARIANCE } from './trainingDummyEncounter';
 export { characterAtCombatStart } from './characterAtCombatStart';

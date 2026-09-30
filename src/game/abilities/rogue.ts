@@ -337,7 +337,11 @@ export const EVISCERATE: Ability = {
 
     // READ, DRAIN, THEN SCALE. `spendComboPoints` returns what it drained so
     // the order cannot be got wrong. See game/combat/comboPoints.ts.
-    const spent = spendComboPoints(caster, target);
+    const spent = spendComboPoints(caster, target, {
+      context: simulation,
+      abilityId: ability.id,
+      abilityName: ability.name,
+    });
     if (spent <= 0) return;
 
     dealDamage(simulation, {
@@ -374,7 +378,11 @@ export const RUPTURE: Ability = {
   onCast: ({ simulation, caster, target, ability }) => {
     if (!target || !ability.attackTable) return;
 
-    const spent = spendComboPoints(caster, target);
+    const spent = spendComboPoints(caster, target, {
+      context: simulation,
+      abilityId: ability.id,
+      abilityName: ability.name,
+    });
     if (spent <= 0) return;
 
     /*
@@ -408,7 +416,11 @@ export const SLICE_AND_DICE: Ability = {
    */
   canCast: ({ caster }) => hasComboPoints(caster),
   onCast: ({ simulation, caster, ability }) => {
-    const spent = spendComboPoints(caster);
+    const spent = spendComboPoints(caster, undefined, {
+      context: simulation,
+      abilityId: ability.id,
+      abilityName: ability.name,
+    });
     if (spent <= 0) return;
 
     /*
@@ -441,8 +453,12 @@ export const VENOM: Ability = {
    * the case `spendComboPoints` leaves the argument optional for.
    */
   canCast: ({ caster }) => hasComboPoints(caster),
-  onCast: ({ simulation, caster }) => {
-    const spent = spendComboPoints(caster);
+  onCast: ({ simulation, caster, ability }) => {
+    const spent = spendComboPoints(caster, undefined, {
+      context: simulation,
+      abilityId: ability.id,
+      abilityName: ability.name,
+    });
     if (spent <= 0) return;
     simulation.applyAura(caster, venomAura(spent), caster.id);
   },
@@ -453,9 +469,13 @@ export const EXPOSE_ARMOR: Ability = {
   name: 'Expose Armor',
   cost: { resource: 'energy', amount: 25 },
   canCast: ({ caster, target }) => hasComboPoints(caster, target),
-  onCast: ({ simulation, caster, target }) => {
+  onCast: ({ simulation, caster, target, ability }) => {
     if (!target) return;
-    const spent = spendComboPoints(caster, target);
+    const spent = spendComboPoints(caster, target, {
+      context: simulation,
+      abilityId: ability.id,
+      abilityName: ability.name,
+    });
     if (spent <= 0) return;
     simulation.applyAura(target, exposeArmorAura(spent), caster.id);
   },

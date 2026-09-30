@@ -115,6 +115,20 @@ export interface SimulationContext {
   ): void;
 
   /**
+   * Drain a resource, recording WHAT spent it.
+   *
+   * For the second pool an ability drains inside its own `onCast` -- the case
+   * `Ability.cost` cannot express, because the amount is "whatever is there".
+   * A finisher that drains silently reports zero spent on the results page.
+   */
+  spendResource(
+    actor: Combatant,
+    resource: ResourceType,
+    amount: number,
+    source?: ResourceSource,
+  ): void;
+
+  /**
    * The chances for an attack, from the ruleset's provider.
    *
    * The table structure is engine mechanics; these numbers are content.

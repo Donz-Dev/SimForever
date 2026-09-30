@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { characterAtCombatStart, runProfileBatch } from '../../src/simulator';
+import { characterAtCombatStart, runProfileBatch, resourceFlowOf } from '../../src/simulator';
 import { startingEquipmentFor } from '../../src/game/items/startingSets';
 import { createDefaultProfile } from '../../src/profiles';
 import {
@@ -377,6 +377,6 @@ describe('the list in a fight', () => {
     // Every entry is castable in Defensive, including the three new ones, so
     // the only stance change the list makes is the one that puts it right.
     const batch = runProfileBatch(tank(legalise(PROTECTION_31)));
-    expect(batch.rage.spent.some((row) => row.sourceId === 'stance_change')).toBe(false);
+    expect(resourceFlowOf(batch, 'rage').spent.some((row) => row.sourceId === 'stance_change')).toBe(false);
   });
 });

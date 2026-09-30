@@ -264,6 +264,46 @@ export class Simulation implements SimulationContext {
     });
   }
 
+  /**
+   * Drain a pool and SAY SO, which `Resource.drain` on its own does not.
+   *
+   * ----------------------------------------------------------------------------
+   * A FINISHER SPENT COMBO POINTS SILENTLY BEFORE THIS. `spendComboPoints`
+   * called `pool.drain` directly, so the results page reported combo points
+   * GAINED and none spent -- 23 built, 0 used, 22.5 "unspent" -- which reads as
+   * a rotation that never casts a finisher rather than as missing telemetry.
+   * Nothing else on the page contradicted it.
+   *
+   * `Ability.cost` already emits its own spend, so this is for the SECOND pool
+   * a finisher drains inside `onCast` -- the case `Ability.cost` cannot
+   * express because the amount is "whatever is there".
+   * ----------------------------------------------------------------------------
+   */
+  spendResource(
+    actor: Combatant,
+    resource: ResourceType,
+    amount: number,
+    source?: ResourceSource,
+  ): void {
+    const pool = actor.resources.get(resource);
+    if (!pool || amount <= 0) return;
+
+    const spent = pool.drain(amount);
+    if (spent <= 0) return;
+    actor.recordResourceSpend(resource, this.clock.now());
+    this.telemetry.emit({
+      type: 'resource_spent',
+      timestamp: this.clock.now(),
+      actorId: actor.id,
+      resource,
+      amount: spent,
+      wasted: 0,
+      current: pool.current,
+      source: source?.id,
+      sourceName: source?.name,
+    });
+  }
+
   attackChances(
     kind: AttackTableKind,
     source: Combatant,
@@ -370,6 +410,39 @@ export class Simulation implements SimulationContext {
         ctx.end('duration_expired');
       }),
     );
+
+    /*
+     * ----------------------------------------------------------------------
+     * WHAT EACH POOL ARRIVED WITH, RECORDED AS A GAIN, so the resource books
+     * balance: gained minus wasted minus spent is what is left.
+     *
+     * Without it they did not. A Rogue opens at 100 energy and that hundred
+     * was never an event, so the results page showed 736.90 gained against
+     * 813.93 SPENT -- more out than in -- and the "unspent" figure clamped a
+     * negative to zero and hid it. The energy was real and its arrival was
+     * simply not in the stream.
+     *
+     * A Warrior's rage starts at zero and produces no event, which is why
+     * nothing about this was visible for as long as rage was the only pool
+     * anybody looked at.
+     * ----------------------------------------------------------------------
+     */
+    for (const combatant of this.combatants) {
+      for (const pool of combatant.resources.all) {
+        if (pool.current <= 0) continue;
+        this.telemetry.emit({
+          type: 'resource_gained',
+          timestamp: 0,
+          actorId: combatant.id,
+          resource: pool.type,
+          amount: pool.current,
+          wasted: 0,
+          current: pool.current,
+          source: 'starting_pool',
+          sourceName: 'Started the fight with',
+        });
+      }
+    }
 
     this.config.onCombatStart?.(this);
 

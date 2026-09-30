@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { AUTO_ATTACK_NAMES, AUTO_ATTACK_RESOURCE_SOURCES } from '../../src/engine';
 import { createDefaultProfile } from '../../src/profiles';
-import { characterAtCombatStart, runProfile, runProfileBatch } from '../../src/simulator';
+import { characterAtCombatStart, runProfile, runProfileBatch, resourceFlowOf } from '../../src/simulator';
 import { startingEquipmentFor } from '../../src/game/items/startingSets';
 import { critSuppression } from '../../src/game/combat/attackChances';
 
@@ -65,7 +65,7 @@ describe('rage is attributed per hand', () => {
      * Specialization auditable -- it doubles off-hand rage generation, which
      * is invisible in a total that mixes both hands.
      */
-    const gained = runProfileBatch(geared()).rage.gained;
+    const gained = resourceFlowOf(runProfileBatch(geared()), 'rage').gained;
     const main = gained.find((row) => row.sourceId === 'auto_attack_main_hand');
     const off = gained.find((row) => row.sourceId === 'auto_attack_off_hand');
 
@@ -78,7 +78,7 @@ describe('rage is attributed per hand', () => {
   });
 
   it('gives a two-hander a main hand source and no off hand one', () => {
-    const gained = runProfileBatch(
+    const batch = runProfileBatch(
       geared({
         character: {
           ...createDefaultProfile().character,
@@ -87,7 +87,8 @@ describe('rage is attributed per hand', () => {
         },
         equipment: startingEquipmentFor('warrior', 'two_hander'),
       }),
-    ).rage.gained;
+    );
+    const gained = resourceFlowOf(batch, 'rage').gained;
 
     expect(gained.some((row) => row.sourceId === 'auto_attack_main_hand')).toBe(true);
     expect(gained.some((row) => row.sourceId === 'auto_attack_off_hand')).toBe(false);
@@ -95,7 +96,7 @@ describe('rage is attributed per hand', () => {
 
   it('keeps the ledger balanced', () => {
     // Splitting a source must not lose or duplicate a point of rage.
-    const rage = runProfileBatch(geared()).rage;
+    const rage = resourceFlowOf(runProfileBatch(geared()), 'rage');
     const sum = rage.gained.reduce((total, row) => total + row.amount, 0);
     expect(sum).toBeCloseTo(rage.totalGained, 5);
   });

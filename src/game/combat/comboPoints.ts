@@ -103,7 +103,17 @@ export function comboPointsOn(actor: Combatant, target?: Combatant): number {
  * finisher that deals its one-point damage at five points is not obviously
  * broken from the outside -- it just looks like a weak ability.
  */
-export function spendComboPoints(actor: Combatant, target?: Combatant): number {
+export function spendComboPoints(
+  actor: Combatant,
+  target?: Combatant,
+  /*
+   * OPTIONAL ONLY SO EXISTING CALLERS COMPILE. Without it the spend is
+   * invisible: the results page showed 23 combo points gained and NONE spent,
+   * which reads as a rotation that never casts a finisher. Every caller in
+   * this repository passes it.
+   */
+  spend?: { context: SimulationContext; abilityId: string; abilityName: string },
+): number {
   const pool = actor.resources.get('comboPoints');
   if (!pool) return 0;
 
@@ -117,7 +127,14 @@ export function spendComboPoints(actor: Combatant, target?: Combatant): number {
   const held = pool.current;
   if (held <= 0) return 0;
 
-  pool.drain(held);
+  if (spend) {
+    spend.context.spendResource(actor, 'comboPoints', held, {
+      id: spend.abilityId,
+      name: spend.abilityName,
+    });
+  } else {
+    pool.drain(held);
+  }
   return held;
 }
 

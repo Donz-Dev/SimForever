@@ -29,7 +29,7 @@ import {
 import { WARRIOR_TALENT_EFFECTS } from '../../src/game/talents/warriorEffects';
 import { talentBuild } from '../../src/game/talents/talentBuild';
 import { createDefaultProfile } from '../../src/profiles';
-import { characterAtCombatStart, runProfileBatch } from '../../src/simulator';
+import { characterAtCombatStart, runProfileBatch, resourceFlowOf } from '../../src/simulator';
 import { legalise } from '../helpers/legalTalents';
 
 /*
@@ -545,7 +545,7 @@ describe('the Protection priority list', () => {
      * has some.
      */
     const result = runProfileBatch(tank());
-    const rage = result.rage.gained.find((row) => row.sourceId === 'bloodrage');
+    const rage = resourceFlowOf(result, 'rage').gained.find((row) => row.sourceId === 'bloodrage');
     expect(rage).toBeDefined();
     expect(rage!.amount).toBeGreaterThan(15);
 
@@ -583,7 +583,7 @@ describe('the Protection priority list', () => {
 
   it('never leaves Defensive Stance', () => {
     const result = runProfileBatch(tank());
-    expect(result.rage.spent.some((row) => row.sourceId === 'stance_change')).toBe(false);
+    expect(resourceFlowOf(result, 'rage').spent.some((row) => row.sourceId === 'stance_change')).toBe(false);
   });
 
   it('keeps Battle Shout and Sunder Armor up', () => {
@@ -605,7 +605,7 @@ describe('the Protection priority list', () => {
 
   it('spends surplus rage on Heroic Strike at 26', () => {
     expect(DEFENSIVE_HEROIC_STRIKE_RAGE).toBe(26);
-    const spent = runProfileBatch(tank()).rage.spent;
+    const spent = resourceFlowOf(runProfileBatch(tank()), 'rage').spent;
     expect(spent.some((row) => row.sourceId === 'heroic_strike')).toBe(true);
   });
 

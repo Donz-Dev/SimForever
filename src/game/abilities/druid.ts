@@ -319,7 +319,11 @@ export const FEROCIOUS_BITE: Ability = {
   canCast: ({ caster, target }) => hasComboPoints(caster, target),
   onCast: ({ simulation, caster, target, ability }) => {
     if (!target) return;
-    const spent = spendComboPoints(caster, target);
+    const spent = spendComboPoints(caster, target, {
+      context: simulation,
+      abilityId: ability.id,
+      abilityName: ability.name,
+    });
     if (spent <= 0) return;
 
     // Everything still in the bar, converted at 2.7 a point.
@@ -356,7 +360,11 @@ export const RIP: Ability = {
   canCast: ({ caster, target }) => hasComboPoints(caster, target),
   onCast: ({ simulation, caster, target, ability }) => {
     if (!target || !ability.attackTable) return;
-    const spent = spendComboPoints(caster, target);
+    const spent = spendComboPoints(caster, target, {
+      context: simulation,
+      abilityId: ability.id,
+      abilityName: ability.name,
+    });
     if (spent <= 0) return;
 
     const roll = simulation.rollAttack(ability.attackTable, caster, target, { slot: MAIN_HAND });

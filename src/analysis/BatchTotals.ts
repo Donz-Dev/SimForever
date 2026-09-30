@@ -70,6 +70,8 @@ export interface BatchResourceTotals {
 }
 
 export interface BatchResourceFlow {
+  /** Which pool this is. Carried so a panel cannot mislabel it. */
+  readonly resource: string;
   readonly gained: readonly BatchResourceTotals[];
   readonly spent: readonly BatchResourceTotals[];
   readonly totalGained: number;
@@ -212,8 +214,26 @@ const AVOIDED: ReadonlySet<AttackOutcome> = new Set(['miss', 'dodge', 'parry'] a
 export class BatchTotals implements TelemetrySink {
   private readonly damageBySource = new Map<string, number>();
   private readonly abilities = new Map<string, Map<string, AbilityAccumulator>>();
+  /*
+   * ----------------------------------------------------------------------------
+   * KEYED BY ACTOR **AND RESOURCE**, and the second half was missing.
+   *
+   * `resourceFlow` took a `resource` argument and discarded it with
+   * `void resource`, so every pool a character owned was pooled into one set of
+   * totals and rendered under a heading that said "Rage". A Rogue's panel added
+   * ENERGY AND COMBO POINTS TOGETHER -- 544 spent on Sinister Strike, which is
+   * energy, beside 10 gained from it, which is combo points -- and presented
+   * the sum as a rage economy.
+   *
+   * Nothing about the page looked wrong. The numbers were internally
+   * consistent, the shares added to 100%, and only a Warrior's were about the
+   * resource the heading named.
+   * ----------------------------------------------------------------------------
+   */
   private readonly gained = new Map<string, Map<string, ResourceAccumulator>>();
   private readonly spent = new Map<string, Map<string, ResourceAccumulator>>();
+  /** Every resource any actor actually moved, so the UI can ask for each. */
+  private readonly resourcesSeen = new Map<string, Set<string>>();
   private readonly taken = new Map<string, Map<string, TakenAccumulator>>();
   private readonly uptime = new Map<string, Map<string, UptimeAccumulator>>();
   private readonly deathsByActor = new Map<string, number>();
@@ -304,7 +324,11 @@ export class BatchTotals implements TelemetrySink {
 
     if (event.type === 'resource_gained' || event.type === 'resource_spent') {
       const into = event.type === 'resource_gained' ? this.gained : this.spent;
-      const perActor = mapFor(into, event.actorId);
+      // Actor AND resource: see the note on the maps.
+      const perActor = mapFor(into, `${event.actorId}::${event.resource}`);
+      const seen = this.resourcesSeen.get(event.actorId) ?? new Set<string>();
+      seen.add(event.resource);
+      this.resourcesSeen.set(event.actorId, seen);
       /*
        * An event with no source is kept and LABELLED, not dropped. A rage
        * breakdown whose parts do not add up to the total is worse than one with
@@ -534,11 +558,17 @@ export class BatchTotals implements TelemetrySink {
     };
   }
 
+  /** Which resources this actor gained or spent at all, in a stable order. */
+  resourcesFor(actorId: string): readonly string[] {
+    return [...(this.resourcesSeen.get(actorId) ?? [])].sort();
+  }
+
   resourceFlow(actorId: string, resource: string): BatchResourceFlow {
-    const gained = this.flowSide(this.gained.get(actorId));
-    const spent = this.flowSide(this.spent.get(actorId));
-    void resource;
+    const key = `${actorId}::${resource}`;
+    const gained = this.flowSide(this.gained.get(key));
+    const spent = this.flowSide(this.spent.get(key));
     return {
+      resource,
       gained,
       spent,
       totalGained: gained.reduce((n, e) => n + e.amount, 0),
