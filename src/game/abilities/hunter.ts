@@ -300,12 +300,37 @@ export const SNIPER_SHOT: Ability = {
 /** Raptor Strike: "melee weapon damage plus 70". Forever cut it from 140. */
 export const RAPTOR_STRIKE_BONUS = 70;
 
+/**
+ * Raptor Strike, and it is ON THE NEXT SWING rather than an instant.
+ *
+ * ----------------------------------------------------------------------------
+ * ITS CAPTURE SAID SO ALL ALONG, in the field nothing was reading.
+ * `forever-hunter-spellbook.json` gives it `"range": "Next melee"` where every
+ * instant in the book gives a distance, and it was declared as an ordinary
+ * `melee-special` for the whole life of the class. The ruleset owner settled it
+ * in the same words: "an on-next-hit ability very similar to Heroic Strike,
+ * therefore the APL queues it like Heroic Strike".
+ *
+ * TWO THINGS CHANGE AND ONLY ONE OF THEM IS THE DAMAGE. It now replaces a swing
+ * instead of landing beside one, and it stops taking a global cooldown --
+ * `triggersGcd ?? onNextSwing === undefined` derives that, so the rule arrives
+ * with the field and is not declared twice. Neither was visible in a DPS figure
+ * that looked entirely ordinary: an instant Raptor Strike cost the right mana,
+ * dealt the right damage, and quietly spent a global cooldown the melee Hunter
+ * did not have to give.
+ *
+ * The 6-second cooldown is the capture's and is unchanged. It runs from the
+ * QUEUE, not from the swing that spends it, which is the same arrangement
+ * Heroic Strike has with no cooldown at all to make the difference visible.
+ * ----------------------------------------------------------------------------
+ */
 export const RAPTOR_STRIKE: Ability = {
   id: 'raptor_strike',
   name: 'Raptor Strike',
   cost: { resource: 'mana', amount: 100 },
   cooldownMs: seconds(6),
   attackTable: 'melee-special',
+  onNextSwing: MAIN_HAND,
   onCast: ({ simulation, caster, target, ability }) => {
     if (!target) return;
     dealDamage(simulation, {
