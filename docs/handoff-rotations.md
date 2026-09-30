@@ -192,8 +192,11 @@ be worth nothing; the uses column is what says whether it changed at all.
 
 ## The twelve entries that never fired, and what happened to them
 
-`SEEDS=1 ITERATIONS=10 USES=1` found them; **every list now has every entry
-firing.** How each one went is worth more than the list of them was.
+`SEEDS=1 ITERATIONS=10 USES=1` found them. **Eight entries still never fire and
+six of those are deliberate** -- the claim here used to be that every entry in
+every list fires, which was never true and is contradicted two paragraphs below
+by the stance and shout entries that are kept on purpose. The eight are listed
+with a reason each in [ability-audit.md](ability-audit.md). How each one went is worth more than the list of them was.
 
 | Cause | What became of it |
 | --- | --- |
