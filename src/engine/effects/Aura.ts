@@ -278,6 +278,38 @@ export interface AuraDefinition {
    * ----------------------------------------------------------------------------
    */
   readonly damageDoneByTable?: Partial<Record<AttackTableKind, number>>;
+
+  /**
+   * Per-ability modifiers that apply to attacks made AGAINST the carrier.
+   *
+   * ----------------------------------------------------------------------------
+   * THE MIRROR OF `abilityModifiers`, on the other side of the attack, and it
+   * sits beside it for the same reason `damageTakenBySchool` sits beside
+   * `damageDoneBySchool`: "your Ice Lance crits more" and "Ice Lance crits this
+   * target more" are different effects and a debuff says the second.
+   *
+   * WINTER'S CHILL IS WHY. "Increases the chance your Ice Lance and Frostbolt
+   * spells will critically hit the target by 2%, stacking up to 5 times" is a
+   * crit bonus for two NAMED abilities carried by the TARGET, and neither
+   * existing field could say it: `abilityCrit` is registered on the caster, and
+   * an ordinary aura's `damageTakenBySchool` reaches a whole school with no way
+   * to name an ability. It was the Mage's last talent with no declaration at
+   * all.
+   *
+   * `critWhileAura` IS THE CASTER-SIDE ANSWER TO THE SAME SHAPE, built for
+   * Shatter one PR earlier: a crit bonus that only counts inside a window. The
+   * difference is whose window it is, and that is exactly the difference a
+   * reader gets wrong -- Shatter reads a buff on the Mage, this reads a debuff
+   * on the boss.
+   *
+   * READ AT THE TWO POINTS THE ATTACKER'S OWN MODIFIERS ARE, through
+   * `Combatant.abilityModifierAgainst`, so an ability respects it without
+   * knowing it exists. Reading it in only one of the two is how an effect
+   * becomes quietly half of itself.
+   *
+   * `modifiersScaleWithStacks` REACHES IT, the way it reaches everything else.
+   */
+  readonly attackerAbilityModifiers?: Readonly<Record<string, AbilityModifier>>;
   /**
    * Ability ids whose COOLDOWN does not apply while this aura is up.
    *

@@ -330,6 +330,16 @@ them, including `ALL_ABILITIES`.
 | `SchoolModifiers` | `DamageSchool` | "your Fire spells", **and** school-scoped spell power |
 | `AttackTableModifiers` | `AttackTableKind` | melee vs ranged, **and** swing vs special |
 
+**AND A FOURTH THAT BELONGS TO THE OTHER SIDE OF THE ATTACK.**
+`AuraDefinition.attackerAbilityModifiers` is keyed by ability id like the first
+and is carried by the DEFENDER, read through `Combatant.abilityModifierAgainst`.
+Winter's Chill is "increases the chance your Ice Lance and Frostbolt spells will
+critically hit THE TARGET" -- a per-ability crit the boss holds, which
+`abilityCrit` could not say because it is registered on the caster, and which an
+ordinary aura could not say because it reaches every ability or none. **Only
+auras, with no build-time registry behind it**: a debuff is by definition
+something that comes and goes.
+
 - **`SchoolModifiers` is the missing middle** between one ability and the whole
   character. Without it both bad options were taken: one talent left inert
   because listing every spell by id was unmaintainable, another applied
@@ -385,6 +395,20 @@ them, including `ALL_ABILITIES`.
   fold now, because it was written out per site and the third copy is where it
   drifted. It also carries the double-count guard: asking for `'*'` must return
   the catch-all once, or a talent granting +20% reads back as +40%.
+- **`modifiersScaleWithStacks` HAS TO REACH EVERY COLLECTION THAT READS IT, AND
+  IT REACHED TWO OF THREE FOR A LONG TIME.** `statModifiers` honoured it and
+  `damageTakenBySchool` honoured it and `abilityModifiers` silently ignored it,
+  so an aura declaring both stacked visibly, REPORTED its stack count and PAID
+  one stack's worth. `scaleByStacks` is the one place the rule lives now:
+  **chances multiply by the count and damage goes to the POWER of it**, which is
+  what every other reader of that flag already did -- a five-stack 1.03 is 1.159
+  and not 1.150.
+- **WRITING `instance.stacks` DIRECTLY DOES NOT RE-APPLY STAT MODIFIERS**, and
+  the failure is an aura that reports N stacks and pays one. `applyStatModifiers`
+  runs inside `apply` at ONE stack and only `refresh` re-applies. Combustion did
+  it and was worth a tenth of itself while its own caveat called it generous;
+  Flurry does it and is unharmed, because its haste does not scale with stacks.
+  **`chargesOnApply` is the field for an effect that starts full.**
 - **A MODIFIER CAN BE REGISTERED AT BUILD TIME AND CONDITIONED AT READ TIME** --
   `AbilityModifiers.addWhileAura` / `forWhileAura`, keyed by aura id, with
   `Combatant.abilityModifierFor` as the third source in the one funnel every
@@ -450,6 +474,16 @@ them, including `ALL_ABILITIES`.
   is what makes a cast a real cost to a melee character rather than free damage
   between swings. `Ability.swingTimer: 'hold'` is the exception: the timer runs
   on behind the cast and a swing due during it waits rather than being lost.
+- **A CAST REACTION FIRES ONCE PER CHANNEL TICK, and `AbilityCastEvent.final`
+  is how one that ENDS something tells the last tick apart.** `runCast` runs per
+  tick, so a reaction removing an aura would remove it on the first of five
+  missiles and leave the other four outside the window -- a smaller number and
+  no error. Arcane Blast is why: its stacks last "until any other damage spell
+  is cast", and the only reading where its damage clause pays anything is that
+  the other spell BENEFITS and the stacks then go. **Not `castEndsAt === 0`**,
+  though that is true at the same moments: resting a ruleset reading on a field
+  the engine happens to clear one line earlier survives until somebody reorders
+  two statements.
 - **A channel is a cast that ticks, and nothing else about it is new.**
   `channelTicks` runs `onCast` that many times inside `castTimeMs`, the LAST tick
   where a plain cast's single effect already lands — so a one-tick channel and a
@@ -893,6 +927,14 @@ Plus the permanent rulings under **Scope**.
   compiles. **When an ability joins a file, read that file's own list of what it
   does not have.**
 
+- **AND A REASON CAN NAME THE WRONG CAUSE WHILE THE TALENT IS CORRECTLY
+  INERT**, which reads as work outstanding forever. Improved Blizzard said
+  "Blizzard is an area spell and is not in the book", so it looked like a
+  declaration away from working. It is not: its only effect is a movement-speed
+  Chill, a Chill is a snare, and Permafrost is the same clause on the same tree
+  already scoped `crowdControl`. **Ask what the talent would do if the thing its
+  reason blames were fixed** -- if the answer is "still nothing", the reason is
+  the wrong one and the entry is probably a ruling.
 - **An `unmodelled` reason is a claim about the engine ON THE DAY IT WAS WRITTEN,
   and it expires.** Clearing a blocker is not finished until every reason naming
   it has been re-read — missed at least four times, and twice a talent was fully

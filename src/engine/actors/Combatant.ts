@@ -616,6 +616,30 @@ export class Combatant {
   }
 
   /**
+   * The per-ability modifier an attack AGAINST this combatant picks up, from
+   * the debuffs it is carrying.
+   *
+   * ----------------------------------------------------------------------------
+   * THE OTHER SIDE OF `abilityModifierFor`, and the same rule about readers
+   * applies: every one comes through here, or a debuff that raised the crit
+   * chance without the damage multiplier following would be quietly half an
+   * effect.
+   *
+   * ONLY AURAS, with no standing registry behind it. A debuff is by definition
+   * something that comes and goes, so there is nothing for a build-time
+   * collection to hold -- unlike the attacker's side, where a talent's
+   * permanent bonus and an aura's temporary one meet.
+   *
+   * WINTER'S CHILL IS THE FIRST CALLER: "increases the chance your Ice Lance
+   * and Frostbolt spells will critically hit the target", which is a crit
+   * bonus for two named abilities held by the boss.
+   * ----------------------------------------------------------------------------
+   */
+  abilityModifierAgainst(abilityId: string | undefined): AbilityModifier {
+    return this.auras.attackerAbilityModifierFor(abilityId) ?? {};
+  }
+
+  /**
    * When each weapon slot last completed a swing.
    *
    * ----------------------------------------------------------------------------

@@ -21,7 +21,7 @@ engine that were about the wrong thing.
 | [druid.md](druid.md) | Moonkin, Cat, Bear | **11** |
 | [hunter.md](hunter.md) | BM Hunter, LW Ranged, LW Melee | **13** |
 | [rogue.md](rogue.md) | Venom, Combat, Rupture | **13** |
-| [mage.md](mage.md) | Frostfire, Arcane, Fire | **15** |
+| [mage.md](mage.md) | Frostfire, Arcane, Fire | **13** |
 | [priest.md](priest.md) | Shadow | **17** |
 | [warlock.md](warlock.md) | SM/DS, Firelock | **20** |
 

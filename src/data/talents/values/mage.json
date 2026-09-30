@@ -152,8 +152,10 @@
    "tree": "arcane",
    "ranks": 1,
    "text": "Blasts the target with energy, dealing 57 to 65 Arcane damage. Each time you cast Arcane Blast, the damage of all your other spells is increased by 10% and the mana cost of Arcane Blast is increased by 175%. Effect stacks up to 4 times and lasts 8 sec or until any other damage spell is cast.",
-   "values": null,
-   "note": "single rank"
+   "values": [
+    10
+   ],
+   "note": "single rank; the 10 filled in by hand per this directory's README -- it is the +10% a stack to all your OTHER spells, and a single-rank talent has no variable the calculator can identify. The 175% cost escalation is the other number in the same sentence and is a constant beside the aura"
   },
   "arcane_shielding": {
    "name": "Arcane Shielding",
@@ -499,8 +501,10 @@
    "tree": "fire",
    "ranks": 1,
    "text": "When activated, this spell causes each of your Fire damage spell hits to increase your critical strike chance with Fire damage spells by 10%. This effect lasts until you have caused 4 non-periodic critical strikes with Fire spells.",
-   "values": null,
-   "note": "single rank"
+   "values": [
+    10
+   ],
+   "note": "single rank; the 10 filled in by hand per this directory's README -- the text states 10% crit per Fire spell hit and a single-rank talent has no variable the calculator can identify. The four-crit end is the OTHER number in the same sentence and is a constant beside the aura, the way Improved Scorch's per-stack 3 is"
   },
   "frost_warding": {
    "name": "Frost Warding",

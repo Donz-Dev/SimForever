@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { createPlayer } from '../../src/game/actors/createPlayer';
-import { runProfileBatch } from '../../src/simulator';
+import { runProfile, runProfileBatch } from '../../src/simulator';
 import { PRESETS_BY_ID } from '../../src/profiles/presets';
 import { abilitiesForClass } from '../../src/game/abilities/abilitiesForClass';
 import type { TelemetryEvent } from '../../src/engine';
@@ -20,6 +20,7 @@ import {
   ICE_LANCE_DAMAGE,
   MAGE_ARMOR_ABILITY,
   ICE_LANCE_FROZEN_MULTIPLIER,
+  MAGE_ABILITIES,
   MAGE_BASE_MANA,
   PYROBLAST_DAMAGE,
   SCORCH_DAMAGE,
@@ -27,6 +28,19 @@ import {
 import {
   ARCANE_BLAST,
   ARCANE_BLAST_COST_INCREASE_PER_STACK,
+  ARCANE_BLAST_DAMAGE_PER_STACK,
+  ARCANE_BLAST_MAX_STACKS,
+  ARCANE_POWER,
+  ARCANE_POWER_COST_INCREASE,
+  MAGE_COSTED_SPELL_IDS,
+  WINTERS_CHILL_CRIT_PER_STACK,
+  WINTERS_CHILL_DURATION_MS,
+  wintersChillAura,
+  COMBUSTION,
+  COMBUSTION_CRITS_TO_END,
+  COMBUSTION_CRIT_PER_STACK,
+  COMBUSTION_STACK_CAP,
+  FIRE_SPELL_IDS,
   FINGERS_OF_FROST,
   FINGERS_OF_FROST_PROC_CHANCE,
   fingersOfFrostAura,
@@ -43,10 +57,12 @@ import {
 import { MAGE_TALENT_EFFECTS } from '../../src/game/talents/mageEffects';
 import {
   CHILL_ABILITY_IDS,
+  MAGE_TALENT_REACTIONS,
+  arcaneBlastSpender,
   fingersOfFrost,
   fingersOfFrostSpender,
 } from '../../src/game/reactions/mageTalents';
-import { talentNumber } from '../../src/game/talents/talentValues';
+import { talentNumber, talentNumbers } from '../../src/game/talents/talentValues';
 import { castAbility } from '../../src/engine';
 import { mageRotation } from '../../src/game/rotations/mage';
 import { baseManaFor } from '../../src/game/character/baseStatLookup';
@@ -712,5 +728,417 @@ describe('Fingers of Frost, the one Frozen talent that is not inert', () => {
     simulation.applyAura(mage, fingersOfFrostAura(2), mage.id);
 
     expect(mage.abilityModifierFor(undefined).critBonus ?? 0).toBe(0);
+  });
+});
+
+describe('Combustion, whose end condition is four crits rather than a clock', () => {
+  /*
+   * --------------------------------------------------------------------------
+   * "When activated, this spell causes each of your Fire damage spell hits to
+   * increase your critical strike chance with Fire damage spells by 10%. This
+   * effect lasts until you have caused 4 non-periodic critical strikes with
+   * Fire spells."
+   *
+   * IT HAD NO TEST AT ALL BEFORE THIS, which is how three separate errors
+   * survived in one aura: the ability applied ten stacks by writing
+   * `instance.stacks` directly, the crit was `spellCritChance` -- every school
+   * rather than Fire -- and the window was a placeholder thirty seconds.
+   *
+   * AND THE FIRST OF THOSE CANCELLED THE OTHER TWO. `applyStatModifiers` runs
+   * inside `apply` at ONE stack, and only `refresh` re-applies -- so writing
+   * the field afterwards left the aura REPORTING ten stacks and PAYING one.
+   * The caveat beside it said the effect was generous; it was worth +10% crit
+   * for thirty seconds, and the profile was understated by 38.9 DPS.
+   *
+   * Every assertion below is on the MECHANISM, because a talent working and a
+   * talent mattering are different questions.
+   * --------------------------------------------------------------------------
+   */
+  const fireMage = () => {
+    const built = PRESETS_BY_ID.get('mage_fire')!.build();
+    return makeAttacker({
+      autoAttack: 'none',
+      abilities: abilitiesForClass('mage', 'caster', built.talents),
+      reactions: [MAGE_TALENT_REACTIONS.combustion(talentNumber('mage', 'combustion', 1, 0)!)],
+      resources: [{ type: 'mana', maximum: 100_000 }],
+    });
+  };
+
+  it('reads its 10 from the values file rather than from a constant', () => {
+    // Hand-filled per `src/data/talents/values/README.md`: a single-rank talent
+    // has no `{0}` for the importer to identify, and an effect that reads no
+    // value is DROPPED rather than reported.
+    expect(talentNumber('mage', 'combustion', 1, 0)).toBe(COMBUSTION_CRIT_PER_STACK);
+  });
+
+  it('raises Fire spells only, and by a stack at a time', () => {
+    const mage = fireMage();
+    const simulation = buildSimulation([mage, makeTarget()], { durationMs: seconds(120) });
+    simulation.begin();
+
+    const critOf = (abilityId: string) => mage.abilityModifierFor(abilityId).critBonus ?? 0;
+    expect(critOf('fireball')).toBe(0);
+
+    simulation.applyAura(mage, COMBUSTION, mage.id);
+    expect(critOf('fireball')).toBe(COMBUSTION_CRIT_PER_STACK);
+    // An Arcane spell in the same book gets nothing: the old shape moved
+    // `spellCritChance`, which is every school at once.
+    expect(critOf('arcane_missiles')).toBe(0);
+    expect(critOf('frostbolt')).toBe(0);
+
+    simulation.applyAura(mage, COMBUSTION, mage.id);
+    simulation.applyAura(mage, COMBUSTION, mage.id);
+    expect(mage.auras.stacksOf('combustion')).toBe(3);
+    // THREE stacks is three times the bonus. `modifiersScaleWithStacks` did not
+    // reach `abilityModifiers` until this aura wanted it.
+    expect(critOf('fireball')).toBe(3 * COMBUSTION_CRIT_PER_STACK);
+  });
+
+  it('covers every Fire spell in the Mage book and nothing else', () => {
+    /*
+     * THE SCHOOL IS WRITTEN OUT AS IDS, so a new Fire spell has to be added to
+     * `FIRE_SPELL_IDS` by hand. This is the test that says so the day one is
+     * not -- the same argument `PRESENCE_OF_MIND_SPELLS` rests on, which is
+     * also a list standing in for a property of the ability.
+     */
+    const fire = MAGE_ABILITIES.filter((ability) =>
+      // Every Mage ability that deals Fire damage, found from its own source.
+      ['fireball', 'scorch', 'pyroblast', 'fire_blast', 'blast_wave', 'frostfire_bolt'].includes(
+        ability.id,
+      ),
+    ).map((ability) => ability.id);
+    expect([...FIRE_SPELL_IDS].sort()).toEqual([...fire].sort());
+  });
+
+  it('ends on the fourth non-periodic Fire crit, not on a timer', () => {
+    /*
+     * THE AURA IS PERMANENT -- `durationMs: 0` -- because the source states no
+     * duration. `PLACEHOLDER_COMBUSTION_DURATION_MS` is deleted with this, and
+     * a run that reached `COMBUSTION_STACK_CAP` would mean the counter below
+     * had stopped working rather than that the cap is a ruleset figure.
+     */
+    expect(COMBUSTION.durationMs).toBe(0);
+    expect(COMBUSTION.maxStacks).toBe(COMBUSTION_STACK_CAP);
+
+    const mage = fireMage();
+    const target = makeTarget({ maxHealth: 10_000_000 });
+    const simulation = buildSimulation([mage, target], { durationMs: seconds(120) });
+    simulation.begin();
+    simulation.applyAura(mage, COMBUSTION, mage.id);
+
+    const reaction = mage.reactions.find((r) => r.id === 'combustion')!;
+    const fire = (outcome: 'hit' | 'crit') => {
+      const attack = { attacker: mage, defender: target, outcome, abilityId: 'fireball',
+        abilityName: 'Fireball', amount: 100, weaponSlot: undefined, critical: outcome === 'crit' };
+      if (reaction.canTrigger?.(simulation, mage, attack as never) === false) return;
+      reaction.onTrigger(simulation, mage, attack as never);
+    };
+
+    // Three hits: three more stacks, and the aura still up.
+    fire('hit');
+    fire('hit');
+    fire('hit');
+    expect(mage.auras.stacksOf('combustion')).toBe(4);
+
+    fire('crit');
+    fire('crit');
+    fire('crit');
+    expect(mage.auras.has('combustion')).toBe(true);
+    fire('crit');
+    expect(mage.auras.has('combustion')).toBe(false);
+  });
+
+  it('starts a second window from zero crits', () => {
+    /*
+     * THE COUNTER IS A CLOSURE, per character, keyed on the aura's `appliedAt`.
+     * Without the key a second Combustion would inherit the first's count and
+     * end on its first crit -- which is a shorter window and no error.
+     */
+    const mage = fireMage();
+    const target = makeTarget({ maxHealth: 10_000_000 });
+    const simulation = buildSimulation([mage, target], { durationMs: seconds(400) });
+    simulation.begin();
+
+    const reaction = mage.reactions.find((r) => r.id === 'combustion')!;
+    const crit = () =>
+      reaction.onTrigger(simulation, mage, { attacker: mage, defender: target, outcome: 'crit',
+        abilityId: 'fireball', abilityName: 'Fireball', amount: 100, weaponSlot: undefined,
+        critical: true } as never);
+
+    simulation.applyAura(mage, COMBUSTION, mage.id);
+    for (let i = 0; i < COMBUSTION_CRITS_TO_END; i += 1) crit();
+    expect(mage.auras.has('combustion')).toBe(false);
+
+    simulation.advanceTo(seconds(200));
+    simulation.applyAura(mage, COMBUSTION, mage.id);
+    for (let i = 0; i < COMBUSTION_CRITS_TO_END - 1; i += 1) crit();
+    expect(mage.auras.has('combustion')).toBe(true);
+    crit();
+    expect(mage.auras.has('combustion')).toBe(false);
+  });
+});
+
+describe('Arcane Blast, whose damage half is the Arcane rotation', () => {
+  /*
+   * --------------------------------------------------------------------------
+   * "Each time you cast Arcane Blast, the damage of all your other spells is
+   * increased by 10% and the mana cost of Arcane Blast is increased by 175%.
+   * Effect stacks up to 4 times and lasts 8 sec or until any other damage
+   * spell is cast."
+   *
+   * THE DAMAGE HALF WAS UNMODELLED AND IT IS 60% OF THIS PROFILE. The caveat
+   * said `damageDoneMultiplier` is every spell INCLUDING Arcane Blast and
+   * there is no "everything except this one" -- true of that field, and not of
+   * `abilityModifiers`, where "everything except this one" is a list with one
+   * name left out.
+   *
+   * WHEN IT ENDS IS AN INTERPRETATION. Read literally, the bonus is destroyed
+   * by the only thing that could ever collect it. The reading taken is that
+   * the other spell TAKES the bonus and the stacks then go, which is the rule
+   * for a specification that would otherwise disable itself -- and it is the
+   * shape of the owner's own Arcane list.
+   * --------------------------------------------------------------------------
+   */
+  it('reads its 10 from the values file rather than from a constant', () => {
+    expect(talentNumber('mage', 'arcane_blast', 1, 0)).toBe(ARCANE_BLAST_DAMAGE_PER_STACK);
+  });
+
+  it('raises every other damage spell and never itself', () => {
+    const mage = bareMage('mage_arcane');
+    const simulation = buildSimulation([mage, makeTarget()], { durationMs: seconds(60) });
+    simulation.begin();
+    simulation.applyAura(mage, ARCANE_BLAST, mage.id);
+
+    const damageOf = (abilityId: string) =>
+      mage.abilityModifierFor(abilityId).damageMultiplier ?? 1;
+
+    expect(damageOf('arcane_missiles')).toBeCloseTo(1.1, 10);
+    expect(damageOf('fireball')).toBeCloseTo(1.1, 10);
+    // "All your OTHER spells". The one name left out of the list.
+    expect(damageOf('arcane_blast')).toBeCloseTo(1, 10);
+  });
+
+  it('compounds its stacks, which is the convention every other stacking multiplier uses', () => {
+    /*
+     * 1.1 CUBED, NOT 1.3. `modifiersScaleWithStacks` raises a damage
+     * multiplier to the POWER of the stack count everywhere else it is read --
+     * `damageTakenMultiplierFor` says so in its own comment about Improved
+     * Scorch. A second convention for one flag would be worth more trouble
+     * than the six percent it buys at four stacks.
+     */
+    const mage = bareMage('mage_arcane');
+    const simulation = buildSimulation([mage, makeTarget()], { durationMs: seconds(60) });
+    simulation.begin();
+    simulation.applyAura(mage, ARCANE_BLAST, mage.id);
+    simulation.applyAura(mage, ARCANE_BLAST, mage.id);
+    simulation.applyAura(mage, ARCANE_BLAST, mage.id);
+
+    expect(mage.auras.stacksOf('arcane_blast')).toBe(3);
+    expect(mage.abilityModifierFor('arcane_missiles').damageMultiplier).toBeCloseTo(1.1 ** 3, 10);
+  });
+
+  it('survives every missile of a channel and goes on the last one', () => {
+    /*
+     * `cast.final` IS WHAT THIS ASSERTS. A cast reaction fires once per
+     * `channelTicks`, so without it the first of five missiles would end the
+     * window and the other four would fire unbuffed -- a smaller number, no
+     * error, and the opposite of what the owner's Arcane list is built to do.
+     */
+    const spender = arcaneBlastSpender();
+    const mage = bareMage('mage_arcane');
+    const simulation = buildSimulation([mage, makeTarget()], { durationMs: seconds(60) });
+    simulation.begin();
+    simulation.applyAura(mage, ARCANE_BLAST, mage.id);
+
+    const missiles = mage.abilities.get('arcane_missiles')!;
+    const cast = (ability: typeof missiles, final: boolean) =>
+      spender.canTrigger?.(simulation, mage, { ability, final, spent: {} } as never) ?? true;
+
+    expect(cast(missiles, false)).toBe(false);
+    expect(cast(missiles, true)).toBe(true);
+    // And the spell that BUILT the stacks never spends them.
+    expect(cast(mage.abilities.get('arcane_blast')!, true)).toBe(false);
+  });
+
+  it('is built to four stacks and spent by the Arcane list, in a real fight', () => {
+    /*
+     * THE MECHANISM IN A REAL FIGHT, because the two halves above could both
+     * be right while the list never reached four stacks -- which is the shape
+     * the owner's Arcane list is written around and the reason its Arcane
+     * Power entry waits for three.
+     *
+     * READ OFF THE EVENT STREAM, not off a DPS delta: what is asserted is that
+     * the window builds to the cap and that something takes it away, which is
+     * the mechanism. Whether it is worth anything is a different question.
+     */
+    const built = PRESETS_BY_ID.get('mage_arcane')!.build();
+    const run = runProfile(built, 4242);
+
+    const rows = run.timeline.filter(
+      (event) => 'auraId' in event && event.auraId === 'arcane_blast',
+    );
+    const highest = Math.max(...rows.map((event) => ('stacks' in event ? event.stacks : 0)));
+    expect(highest).toBe(ARCANE_BLAST_MAX_STACKS);
+    // And it goes away for a reason other than its own eight seconds.
+    expect(rows.some((event) => event.type === 'aura_removed')).toBe(true);
+  });
+});
+
+describe('Arcane Power, whose cost half is no longer dropped', () => {
+  it('charges 30% more for every spell that costs mana', () => {
+    const mage = bareMage('mage_arcane');
+    const simulation = buildSimulation([mage, makeTarget()], { durationMs: seconds(60) });
+    simulation.begin();
+
+    const missiles = mage.abilities.get('arcane_missiles')!;
+    const before = resolveCast(mage, missiles).costAmount;
+    expect(before).toBeGreaterThan(0);
+
+    simulation.applyAura(mage, ARCANE_POWER, mage.id);
+    expect(resolveCast(mage, missiles).costAmount).toBeCloseTo(
+      before * (1 + ARCANE_POWER_COST_INCREASE),
+      6,
+    );
+  });
+
+  it('names every costed spell in the book, and a test is what keeps it in step', () => {
+    /*
+     * THE LIST IS THE THING THAT ROTS. `MAGE_COSTED_SPELL_IDS` stands in for a
+     * property of the ability -- "does it cost mana" -- and a new spell added
+     * to the book without being added here would quietly escape Arcane Power's
+     * cost clause. Derived from `MAGE_ABILITIES` here so that is a failure
+     * rather than a silence.
+     */
+    const costed = MAGE_ABILITIES.filter((ability) => (ability.cost?.amount ?? 0) > 0)
+      .map((ability) => ability.id)
+      .sort();
+    expect([...MAGE_COSTED_SPELL_IDS].sort()).toEqual(costed);
+  });
+});
+
+describe("Winter's Chill, a crit debuff the TARGET carries", () => {
+  /*
+   * --------------------------------------------------------------------------
+   * "Gives your Frost damage spells a {0}% chance to apply the Winter's Chill
+   * effect, which increases the chance your Ice Lance and Frostbolt spells
+   * will critically hit the target by 2% for 15 sec. Stacks up to {3} times."
+   *
+   * THE ONE SHAPE THIS ENGINE DID NOT HAVE, and its `unmodelled` reason named
+   * both halves: `abilityCrit` is registered on the CASTER, and an ordinary
+   * aura reaches every ability or none. `attackerAbilityModifiers` names
+   * abilities and is read off the DEFENDER.
+   *
+   * IT IS THE MIRROR OF `critWhileAura`, built for Shatter one PR earlier.
+   * Same shape, other side of the attack.
+   *
+   * NO MAGE PROFILE TAKES IT -- the Frostfire build is 0/29/22 and this sits
+   * deeper than that in Frost -- so the baseline does not move and these
+   * assertions are on the MECHANISM, which is the only thing that would tell
+   * a working talent from an inert one here.
+   * --------------------------------------------------------------------------
+   */
+  const buildFor = (rank: number) =>
+    MAGE_TALENT_REACTIONS.winter_s_chill(
+      talentNumber('mage', 'winter_s_chill', rank, 0)!,
+      talentNumbers('mage', 'winter_s_chill', rank),
+    );
+
+  it('keeps its per-stack 2 and its 15 seconds as constants the file still agrees with', () => {
+    for (let rank = 1; rank <= 5; rank += 1) {
+      expect(talentNumber('mage', 'winter_s_chill', rank, 1)).toBe(WINTERS_CHILL_CRIT_PER_STACK);
+      expect(talentNumber('mage', 'winter_s_chill', rank, 2)).toBe(
+        WINTERS_CHILL_DURATION_MS / 1000,
+      );
+    }
+  });
+
+  it('scales its stack cap by rank, which is a SECOND number the rank moves', () => {
+    /*
+     * NOTHING ELSE IN THIS TREE DOES. `valueIndex` picks one number, so the
+     * builder takes the whole row -- and this is the test that the row is read
+     * at the right index. A cap silently stuck at 1 is a fifth of the talent
+     * and no error.
+     */
+    for (const [rank, cap] of [[1, 1], [2, 2], [3, 3], [4, 4], [5, 5]] as const) {
+      const actor = makeAttacker({ autoAttack: 'none' });
+      const target = makeTarget();
+      const simulation = buildSimulation([actor, target], { durationMs: seconds(60) });
+      simulation.begin();
+
+      buildFor(rank).onTrigger(simulation, actor, {
+        attacker: actor, defender: target, outcome: 'hit', abilityId: 'frostbolt',
+        abilityName: 'Frostbolt', amount: 100, weaponSlot: undefined, critical: false,
+      } as never);
+      expect(target.auras.get('winters_chill')!.maxStacks, `rank ${rank}`).toBe(cap);
+    }
+  });
+
+  it('is applied by any Frost spell and benefits only the two it names', () => {
+    /*
+     * TWO DIFFERENT SETS, and the tooltip says so. Frostfire Bolt applies it,
+     * because it "counts as both Frost and Fire damage", and does NOT crit
+     * more for it -- the sentence names Ice Lance and Frostbolt and stops.
+     * That asymmetry is the kind a reader assumes away.
+     */
+    const actor = makeAttacker({ autoAttack: 'none' });
+    const target = makeTarget();
+    const simulation = buildSimulation([actor, target], { durationMs: seconds(60) });
+    simulation.begin();
+
+    const reaction = buildFor(5);
+    const applies = (abilityId: string) =>
+      reaction.canTrigger?.(simulation, actor, { abilityId } as never) ?? true;
+    expect(applies('frostbolt')).toBe(true);
+    expect(applies('ice_lance')).toBe(true);
+    // Frost by its own spellbook entry, even though it is DEALT as Fire.
+    expect(applies('frostfire_bolt')).toBe(true);
+    expect(applies('pyroblast')).toBe(false);
+    expect(applies('arcane_missiles')).toBe(false);
+
+    simulation.applyAura(target, wintersChillAura(5), actor.id);
+    const critAgainst = (abilityId: string) =>
+      target.abilityModifierAgainst(abilityId).critBonus ?? 0;
+    expect(critAgainst('ice_lance')).toBe(WINTERS_CHILL_CRIT_PER_STACK);
+    expect(critAgainst('frostbolt')).toBe(WINTERS_CHILL_CRIT_PER_STACK);
+    expect(critAgainst('frostfire_bolt')).toBe(0);
+  });
+
+  it('stacks its crit bonus, and belongs to the target rather than the caster', () => {
+    const actor = makeAttacker({ autoAttack: 'none' });
+    const target = makeTarget();
+    const simulation = buildSimulation([actor, target], { durationMs: seconds(60) });
+    simulation.begin();
+
+    for (let i = 0; i < 5; i += 1) simulation.applyAura(target, wintersChillAura(5), actor.id);
+    expect(target.auras.stacksOf('winters_chill')).toBe(5);
+    expect(target.abilityModifierAgainst('ice_lance').critBonus).toBe(
+      5 * WINTERS_CHILL_CRIT_PER_STACK,
+    );
+
+    // ON THE TARGET. The caster's own funnel knows nothing about it, which is
+    // the whole reason a new field was needed.
+    expect(actor.abilityModifierFor('ice_lance').critBonus ?? 0).toBe(0);
+    expect(actor.abilityModifierAgainst('ice_lance').critBonus ?? 0).toBe(0);
+  });
+
+  it('raises the crit chance an Ice Lance actually rolls against', () => {
+    /*
+     * THE END OF THE WIRE, not the registry. A modifier that is registered and
+     * never reaches `rollTable` is the failure `AuraCollection.abilityModifierFor`
+     * had for as long as `ALL_ABILITIES` was looked up exactly -- it compiled,
+     * it applied, and nothing it said changed a cast.
+     */
+    const actor = makeAttacker({ autoAttack: 'none', stats: { spellCritChance: 10 } });
+    const target = makeTarget();
+    const simulation = buildSimulation([actor, target], { durationMs: seconds(60) });
+    simulation.begin();
+
+    const critOf = () =>
+      simulation.attackChances('spell', actor, target).crit / 100 +
+      (target.abilityModifierAgainst('ice_lance').critBonus ?? 0);
+
+    const before = critOf();
+    for (let i = 0; i < 5; i += 1) simulation.applyAura(target, wintersChillAura(5), actor.id);
+    expect(critOf() - before).toBeCloseTo(5 * WINTERS_CHILL_CRIT_PER_STACK, 10);
   });
 });

@@ -32,23 +32,40 @@ const ARCANE = 'arcane' as const;
 const FIRE = 'fire' as const;
 
 /**
- * Nothing freezes a raid boss, and four Frost talents depend on one.
+ * Nothing freezes a raid boss, and ONE Frost talent depends on one.
  *
- * Shatter ("against Frozen targets"), Fingers of Frost ("treats your next 2
- * spells as if the target were Frozen"), Frostbite ("chance to Freeze") and
- * Ice Lance's own 300% bonus all key on the same state. A boss is immune to
- * every root and freeze in the game, and this project models one target which
- * is a raid boss.
+ * ----------------------------------------------------------------------------
+ * THIS COMMENT SAID FOUR UNTIL THE TALENTS WERE RE-READ, and it named Shatter,
+ * Fingers of Frost, Frostbite and Ice Lance's 300% clause. Three of the four
+ * were wrong and had been for as long as Fingers of Frost existed:
  *
- * So they are inert, and they are inert because of the ENCOUNTER rather than
- * because of the engine -- which is a different claim and a more durable one.
- * The day an encounter has a freezable target, these become reachable without
- * anything else changing.
+ *   Fingers of Frost  does not freeze anything. It puts a state on the MAGE
+ *                     that makes its next spells behave as though the target
+ *                     were frozen, which is reachable exactly as written.
+ *   Shatter           reads that state, through `critWhileAura`.
+ *   Ice Lance         takes its times-four inside that same window.
+ *
+ * FROSTBITE IS THE ONLY ONE LEFT: "gives your Chill effects a chance to Freeze
+ * the target". A boss is immune to every root and freeze in the game, and this
+ * project models one target which is a raid boss.
+ *
+ * SO IT IS INERT BECAUSE OF THE TARGET rather than because of the engine --
+ * a different claim and a more durable one. The day an encounter has a
+ * freezable target it becomes reachable with nothing else changing.
+ *
+ * AND NO MAGE PROFILE TAKES IT, which is a second and independent reason it
+ * costs the baseline nothing: the Frostfire build is 0/29/22 and spends none
+ * of its Frost points here. The old header in `abilities/mage.ts` claimed
+ * this cluster cost that build three talents; it costs it none.
+ * ----------------------------------------------------------------------------
  */
 export const FROZEN_UNMODELLED =
   'It applies only to a FROZEN target. Nothing freezes a raid boss, and every ' +
   'encounter here is one, so this is inert because of the target rather than ' +
-  'because of the engine.';
+  'because of the engine. Whether a talent whose whole effect is a ROOT is ' +
+  'covered by the crowd-control ruling instead is a question for the ruleset ' +
+  'owner: the root itself is out of scope, and what a Mage buys with it is ' +
+  'damage.';
 
 /**
  * One periodic tick of a magical damage-over-time effect.
@@ -336,48 +353,119 @@ export const HOT_STREAK: AuraDefinition = {
 };
 
 /**
+ * "Fire damage spells", named one by one.
+ *
+ * ----------------------------------------------------------------------------
+ * THE SAME LIST `reactions/mageTalents.ts` KEEPS FOR IGNITE, and it lives here
+ * because the aura needs it too: Combustion's crit bonus is per SCHOOL and an
+ * aura's `abilityModifiers` are per ABILITY, so the school has to be spelled
+ * out as the spells that are it.
+ *
+ * FROSTFIRE BOLT IS ONE OF THEM. It "counts as both Frost and Fire damage" and
+ * is dealt as Fire here, which is the reading `FROSTFIRE_BOLT` states and the
+ * one Improved Fireball and Fire Power already take.
+ *
+ * LISTING IS THE ESTABLISHED WAY ROUND IN THIS FILE -- Presence of Mind and
+ * Clearcasting both name the spells rather than a school, for the reason given
+ * there: a `school` field on every `Ability` is silent when forgotten, and one
+ * class's spellbook is a maintainable list. The cost is that a new Fire spell
+ * must be added here; `mageAbilities.test.ts` checks this list against the
+ * Mage's own book so that the day one is not, a test says so.
+ * ----------------------------------------------------------------------------
+ */
+export const FIRE_SPELL_IDS: readonly string[] = [
+  'fireball',
+  'scorch',
+  'pyroblast',
+  'fire_blast',
+  'blast_wave',
+  'frostfire_bolt',
+];
+
+/**
+ * Every damage spell in the Mage's book, which is what "any damage spell"
+ * means -- and, minus one of them, what "all your other spells" means.
+ *
+ * THREE EFFECTS READ IT and they would otherwise keep three copies: Arcane
+ * Concentration's "after any damage spell hits", Arcane Blast's "+10% to all
+ * your OTHER spells", and the same aura's "until any other damage spell is
+ * cast". The last two have to select the SAME set or a spell could take the
+ * bonus without ending the window, which is a bigger number and no error.
+ */
+export const MAGE_DAMAGE_SPELL_IDS: readonly string[] = [
+  ...FIRE_SPELL_IDS,
+  'frostbolt',
+  'ice_lance',
+  'arcane_missiles',
+  'arcane_blast',
+];
+
+/**
  * Combustion: "each of your Fire damage spell hits increases your critical
  * strike chance with Fire damage spells by 10%. Lasts until you have caused 4
  * non-periodic critical strikes with Fire spells."
  *
  * ----------------------------------------------------------------------------
- * A STACKING CRIT BUFF WITH A CRIT-COUNTED END, and only half of it fits.
+ * BOTH HALVES FIT NOW, AND THE OLD SHAPE WAS THE MOST GENEROUS THING IN THIS
+ * FILE: ten stacks applied at once, worth +100% crit TO EVERY SCHOOL, for a
+ * placeholder thirty seconds. Every one of those three was wrong in the same
+ * direction, and the ability said so where a person could see it -- which is
+ * the only reason it was allowed to stand.
  *
- * The stacking crit is `SchoolModifiers` territory and `SchoolModifiers` is
- * built once when the character is, not during a fight -- so a per-school crit
- * bonus that comes and goes has nowhere to live. `statModifiers` on an aura
- * reaches `spellCritChance`, which is EVERY school rather than Fire, and a
- * Fire mage casting only Fire spells makes that exact for this build and wrong
- * in principle.
+ * THE CRIT IS PER FIRE SPELL, keyed by ability id. `SchoolModifiers` is built
+ * once when the character is and cannot hold something that comes and goes,
+ * which is what the old caveat said; what it missed is that an aura's
+ * `abilityModifiers` reach the same roll and select by id. `FIRE_SPELL_IDS` is
+ * the school written out.
  *
- * Taken, because the alternative is a three-minute cooldown reading as inert
- * for the build that takes it, and the overreach is stated on the ability.
+ * ONE STACK PER FIRE SPELL HIT, applied by `reactions/mageTalents.ts`. The hit
+ * that adds a stack has already rolled its own crit, which is what "each of
+ * your Fire damage spell HITS increases" says -- the bonus is for the spells
+ * after it.
  *
- * THE FOUR-CRIT END IS NOT MODELLED. `chargesOnApply` counts down on swings or
- * blocks, not on the carrier's own critical strikes, so this runs its full
- * duration instead. That is GENEROUS, and it is the honest direction to be
- * wrong in only because it is written down.
+ * `modifiersScaleWithStacks` IS WHAT MAKES THE STACKS COUNT, and it did not
+ * reach `abilityModifiers` until this aura wanted it: the flag was read by
+ * `statModifiers` and by `damageTakenBySchool` and ignored by the third
+ * collection, so this would have stacked to ten and paid ten percent.
+ *
+ * IT HAS NO DURATION, because the source states none: `durationMs: 0` is
+ * "until explicitly removed", and what removes it is the four crits.
+ * `PLACEHOLDER_COMBUSTION_DURATION_MS` is deleted with it -- the placeholder
+ * existed only because nothing counted crits.
  * ----------------------------------------------------------------------------
  */
 export const COMBUSTION_CRIT_PER_STACK = 10;
-export const COMBUSTION_MAX_STACKS = 10;
-export const PLACEHOLDER_COMBUSTION_DURATION_MS = seconds(30);
-
-export const COMBUSTION_UNMODELLED =
-  'Its crit bonus applies to EVERY school rather than only to Fire: a ' +
-  'per-school crit bonus that comes and goes during a fight has no ' +
-  'declaration. Its "until you have caused 4 critical strikes" ending is not ' +
-  'modelled either -- nothing counts the carrier’s own crits -- so it runs ' +
-  'a placeholder 30 seconds instead, which is generous.';
+/** "4 non-periodic critical strikes with Fire spells", and then it ends. */
+export const COMBUSTION_CRITS_TO_END = 4;
+/**
+ * A cap the source does not state, set where it cannot bind.
+ *
+ * `maxStacks` has to be a number and the real end is the four crits, not a
+ * stack count. Twenty is past anything reachable: ten stacks is already +100%
+ * Fire crit, so every spell after that one crits and the fourth arrives within
+ * four more casts. It is here to satisfy the field, NOT as a ruleset figure --
+ * a run that reached it would mean the crit counter had stopped working, which
+ * is why a test asserts the aura ends on crits rather than on stacks.
+ */
+export const COMBUSTION_STACK_CAP = 20;
 
 export const COMBUSTION: AuraDefinition = {
   id: 'combustion',
   name: 'Combustion',
-  durationMs: PLACEHOLDER_COMBUSTION_DURATION_MS,
-  maxStacks: COMBUSTION_MAX_STACKS,
-  refreshBehaviour: 'ignore',
+  // No duration: the four crits are what end it. See above.
+  durationMs: 0,
+  maxStacks: COMBUSTION_STACK_CAP,
+  /*
+   * NO `refreshBehaviour`, and it would do nothing if there were one: `refresh`
+   * skips the expiry half entirely for a permanent aura. What it does NOT skip
+   * is the stack, which is the half this wants -- a re-application is another
+   * Fire spell hit. It also leaves `appliedAt` alone, which is what the crit
+   * counter keys on to tell one Combustion window from the next.
+   */
   modifiersScaleWithStacks: true,
-  statModifiers: [flat('spellCritChance', COMBUSTION_CRIT_PER_STACK)],
+  abilityModifiers: Object.fromEntries(
+    FIRE_SPELL_IDS.map((id) => [id, { critBonus: COMBUSTION_CRIT_PER_STACK }]),
+  ),
 };
 
 // ---------------------------------------------------------------------------
@@ -403,26 +491,45 @@ export const COMBUSTION: AuraDefinition = {
  * for the same reason: the tooltip states one percentage and then says "stacks
  * up to 4 times", which is only meaningful if the stacks multiply it.
  *
- * "ALL YOUR OTHER SPELLS" HAS NO DECLARATION. `damageDoneMultiplier` is every
- * spell INCLUDING Arcane Blast, and there is no "everything except this one".
- * Left out rather than approximated, so the build understates.
+ * ============================================================================
+ * "ALL YOUR OTHER SPELLS" IS MODELLED NOW, AND IT IS THE HALF THE ARCANE
+ * PROFILE IS BUILT AROUND. It was left out with a written caveat saying
+ * `damageDoneMultiplier` is every spell INCLUDING Arcane Blast and there is no
+ * "everything except this one" -- which was true of that field and not of
+ * `abilityModifiers`, where "everything except this one" is a list with one
+ * name missing. `MAGE_DAMAGE_SPELL_IDS` minus `arcane_blast` is that list.
  *
- * "OR UNTIL ANY OTHER DAMAGE SPELL IS CAST" is not modelled either: nothing
- * drops an aura because a DIFFERENT ability was used. The eight seconds still
- * apply, so it falls off on its own.
- * ----------------------------------------------------------------------------
+ * WHEN IT ENDS IS AN INTERPRETATION, AND IT IS THE ONLY ONE THAT LEAVES THE
+ * CLAUSE DOING WORK. "Lasts 8 sec or until any other damage spell is cast"
+ * read literally against "the damage of all your OTHER spells is increased"
+ * says the bonus is removed by the only thing that could ever collect it, so
+ * the talent would be worth exactly nothing. The reading taken is that the
+ * other spell BENEFITS and the stacks then go -- which is also the shape of
+ * the ruleset owner's own Arcane list, where four Arcane Blasts are spent into
+ * one Arcane Missiles channel. `arcaneBlastSpender` in
+ * `reactions/mageTalents.ts` is that rule, and it fires on the LAST tick of a
+ * channel so all five missiles are inside the window.
+ *
+ * SAID OUT LOUD BECAUSE IT MOVES A PROFILE. This is a reading of an ambiguous
+ * sentence, not a transcription, and it is worth asking the owner about --
+ * HANDOVER.md carries the question.
+ * ============================================================================
  */
 export const ARCANE_BLAST_MAX_STACKS = 4;
 export const ARCANE_BLAST_DURATION_MS = seconds(8);
 export const ARCANE_BLAST_COST_INCREASE_PER_STACK = 1.75;
 export const ARCANE_BLAST_DAMAGE_PER_STACK = 10;
 
+/** "All your OTHER spells": the damage book with this spell taken out. */
+export const ARCANE_BLAST_BOOSTED_SPELL_IDS: readonly string[] =
+  MAGE_DAMAGE_SPELL_IDS.filter((id) => id !== 'arcane_blast');
+
 export const ARCANE_BLAST_UNMODELLED =
-  'Its "+10% damage to all your OTHER spells" is not modelled: a multiplier ' +
-  'covering every spell except one has no declaration, so this understates. ' +
-  'Its mana escalation IS modelled and is 175% a stack. It also does not fall ' +
-  'off early when another damage spell is cast -- nothing drops an aura ' +
-  'because a different ability was used -- so it runs its full 8 seconds.';
+  'Its "8 sec or until any other damage spell is cast" is read as: the other ' +
+  'spell TAKES the bonus and the stacks then go. Read the other way the ' +
+  'damage clause could never pay out at all, so this is the reading that ' +
+  'leaves every clause doing work -- and it is an interpretation of an ' +
+  'ambiguous sentence rather than a transcription.';
 
 export const ARCANE_BLAST: AuraDefinition = {
   id: 'arcane_blast',
@@ -430,6 +537,19 @@ export const ARCANE_BLAST: AuraDefinition = {
   durationMs: ARCANE_BLAST_DURATION_MS,
   maxStacks: ARCANE_BLAST_MAX_STACKS,
   refreshBehaviour: 'reset',
+  /*
+   * BOTH HALVES SCALE, and this flag reaches both: `abilityModifiers` below
+   * for the damage, `castModifier.scalesWithStacks` for the cost. They are
+   * separate flags because a cast modifier is read by `resolveCast` and not by
+   * the damage pipeline, and the two were written at different times.
+   */
+  modifiersScaleWithStacks: true,
+  abilityModifiers: Object.fromEntries(
+    ARCANE_BLAST_BOOSTED_SPELL_IDS.map((id) => [
+      id,
+      { damageMultiplier: 1 + ARCANE_BLAST_DAMAGE_PER_STACK / 100 },
+    ]),
+  ),
   castModifier: {
     abilityIds: ['arcane_blast'],
     // NEGATIVE, which is an increase. The one place in the project where a
@@ -444,26 +564,47 @@ export const ARCANE_BLAST: AuraDefinition = {
  * Arcane Power: "For the next 15 sec, your spells deal 30% more damage while
  * costing 30% more mana to cast."
  *
- * THE DAMAGE HALF APPLIES AND THE COST HALF DOES NOT. `damageDoneMultiplier`
- * is exactly right -- "your spells" with no school is the whole character, and
- * a Mage has no physical damage to over-reach into. The cost clause would need
- * a cast modifier naming every Mage spell, which is a list this aura would
- * have to keep in step with the spellbook; it is left out and said so, and it
- * makes the ability GENEROUS.
+ * ----------------------------------------------------------------------------
+ * BOTH HALVES APPLY NOW. `damageDoneMultiplier` was always exactly right --
+ * "your spells" with no school is the whole character, and a Mage has no
+ * physical damage to over-reach into. The cost clause was left out with a
+ * caveat saying it would need a cast modifier naming every Mage spell in a
+ * list that has to be kept in step with the spellbook.
+ *
+ * THE LIST EXISTS AND THE TEST IS WHAT KEEPS IT IN STEP. `MAGE_COSTED_SPELL_IDS`
+ * is every Mage ability that costs mana, and `mageAbilities.test.ts` derives
+ * the same set from `MAGE_ABILITIES` and fails if the two disagree -- so a new
+ * spell is caught by a test rather than by nobody. That is the same argument
+ * `PRESENCE_OF_MIND_SPELLS` already rested on, made checkable.
+ *
+ * NO `consumedByCast`, because this is a DURATION effect: every spell inside
+ * the fifteen seconds pays more, not just the next one.
+ *
+ * A NEGATIVE FRACTION IS AN INCREASE, as it is on Arcane Blast, and two cast
+ * modifiers on one ability stack ADDITIVELY against the base -- so a
+ * Clearcasting spell cast under Arcane Power is 100% - 30% = 70% off rather
+ * than free. That is the engine's stated rule and not a special case here.
+ * ----------------------------------------------------------------------------
  */
 export const ARCANE_POWER_DAMAGE = 1.3;
+export const ARCANE_POWER_COST_INCREASE = 0.3;
 export const ARCANE_POWER_DURATION_MS = seconds(15);
 
-export const ARCANE_POWER_UNMODELLED =
-  'Its +30% damage applies. Its "+30% mana cost" does not, which makes this ' +
-  'generous: expressing it would mean naming every Mage spell in a list that ' +
-  'has to be kept in step with the spellbook.';
+/** Every Mage ability that costs mana. Checked against the book by a test. */
+export const MAGE_COSTED_SPELL_IDS: readonly string[] = [
+  ...MAGE_DAMAGE_SPELL_IDS,
+  'mage_armor',
+];
 
 export const ARCANE_POWER: AuraDefinition = {
   id: 'arcane_power',
   name: 'Arcane Power',
   durationMs: ARCANE_POWER_DURATION_MS,
   damageDoneMultiplier: ARCANE_POWER_DAMAGE,
+  castModifier: {
+    abilityIds: [...MAGE_COSTED_SPELL_IDS],
+    costFraction: -ARCANE_POWER_COST_INCREASE,
+  },
 };
 
 /**
@@ -565,6 +706,76 @@ export function fingersOfFrostAura(charges: number): AuraDefinition {
 
 /** The untalented shape, for anything that only needs the id and duration. */
 export const FINGERS_OF_FROST: AuraDefinition = fingersOfFrostAura(2);
+
+/*
+ * ============================================================================
+ * WINTER'S CHILL: "Gives your Frost damage spells a 20% chance to apply the
+ * Winter's Chill effect, which increases the chance your Ice Lance and
+ * Frostbolt spells will critically hit the target by 2% for 15 sec. Stacks up
+ * to 1 times." (Rank 5: 100%, and five stacks.)
+ *
+ * A CRIT DEBUFF THE TARGET CARRIES, WHICH IS THE ONE SHAPE THIS ENGINE DID NOT
+ * HAVE. Its `unmodelled` reason said so exactly: "`abilityCrit` is on the
+ * caster and an aura reaches every ability or none". Both halves were true and
+ * both are gone -- `attackerAbilityModifiers` names abilities and is read off
+ * the DEFENDER.
+ *
+ * IT IS THE MIRROR OF `critWhileAura`, built for Shatter one PR earlier, and
+ * the two are worth reading together: a crit bonus that only counts inside a
+ * window, differing in whose window it is. Shatter reads a buff on the Mage;
+ * this reads a debuff on the boss.
+ *
+ * THE RANK SCALES TWO NUMBERS, WHICH NO OTHER PROC IN THIS FILE DOES. The
+ * values row is `[chance, critPerStack, duration, maxStacks]` and the chance
+ * goes 20..100 while the cap goes 1..5, so the reaction takes the whole row
+ * rather than one index. The 2% and the 15 seconds are the same at every rank
+ * and are constants here, checked against the file by a test -- the discipline
+ * `FINGERS_OF_FROST_PROC_CHANCE` already follows.
+ *
+ * TWO NAMED SPELLS AND NOT A SCHOOL. Frostfire Bolt APPLIES it, because it
+ * counts as Frost damage, and is not one of the two that CRIT more for it --
+ * the tooltip names Ice Lance and Frostbolt and stops. That asymmetry is the
+ * kind a reader assumes away, so it is written here and asserted in the test.
+ *
+ * NO MAGE PROFILE TAKES IT. The Frostfire build is 0/29/22 and this sits below
+ * that in the Frost tree, so nothing in the baseline moves -- which is the
+ * expected result for a talent nobody spends a point on, and not evidence that
+ * it does not work. The test asserts the MECHANISM.
+ * ============================================================================
+ */
+export const WINTERS_CHILL_DURATION_MS = seconds(15);
+/** 2% a stack at every rank. Checked against the values file by a test. */
+export const WINTERS_CHILL_CRIT_PER_STACK = 2;
+/** The two spells the crit bonus names. Frostfire Bolt APPLIES it and is not one. */
+export const WINTERS_CHILL_SPELL_IDS: readonly string[] = ['ice_lance', 'frostbolt'];
+
+export function wintersChillAura(maxStacks: number): AuraDefinition {
+  return {
+    id: 'winters_chill',
+    name: "Winter's Chill",
+    durationMs: WINTERS_CHILL_DURATION_MS,
+    maxStacks,
+    isDebuff: true,
+    refreshBehaviour: 'reset',
+    modifiersScaleWithStacks: true,
+    attackerAbilityModifiers: Object.fromEntries(
+      WINTERS_CHILL_SPELL_IDS.map((id) => [id, { critBonus: WINTERS_CHILL_CRIT_PER_STACK }]),
+    ),
+  };
+}
+
+/** The untalented shape, for anything that only needs the id and duration. */
+export const WINTERS_CHILL: AuraDefinition = wintersChillAura(5);
+
+/**
+ * "Your Frost damage spells", which is what applies it.
+ *
+ * FROSTFIRE BOLT IS ONE, and it is also in `FIRE_SPELL_IDS`. Its own spellbook
+ * entry says it "counts as both Frost and Fire damage", so it belongs to both
+ * lists -- it is dealt as Fire because a `DamageRequest` carries one school,
+ * and that is a modelling choice rather than a claim that it is not Frost.
+ */
+export const FROST_SPELL_IDS: readonly string[] = ['frostbolt', 'ice_lance', 'frostfire_bolt'];
 
 /**
  * Missile Barrage: "reduce the channeled duration of your next Arcane Missiles

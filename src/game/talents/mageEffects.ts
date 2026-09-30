@@ -36,13 +36,38 @@ import { FROZEN_UNMODELLED } from '../auras/mage';
  * ----------------------------------------------------------------------------
  */
 
-/** Said once; four talents say it. */
+/**
+ * Said once; four talents say it.
+ *
+ * TWO CAUSES AND NOT ONE, which the old wording gave only half of. There is no
+ * pushback mechanic in this engine AT ALL -- nothing shortens, delays or
+ * interrupts a cast in progress, for any class -- and separately no Mage
+ * profile is attacked, because all three set `encounter.targetAttacks: false`.
+ * Either alone would make these inert, so clearing one clears nothing.
+ */
 const NO_PUSHBACK =
-  'Avoiding pushback from damage taken while casting. No Mage profile is ' +
-  'attacked, so nothing interrupts or delays a cast.';
+  'Avoiding pushback from damage taken while casting. The engine has no ' +
+  'pushback at all -- nothing delays or interrupts a cast in progress -- and ' +
+  'no Mage profile is attacked either, so both halves would have to change.';
 
 /** Said once; three talents say it. */
 const NO_POSITION = 'Range, and nothing here has a position.';
+
+/**
+ * Said once; five talents say it.
+ *
+ * IT IS THE PROFILE, NOT THE ENGINE, and the difference is worth the sentence:
+ * `encounter.targetAttacks` exists and brings real incoming damage, a ramp and
+ * deaths -- the two Paladin shield builds are told apart by it. All three Mage
+ * profiles set it false, because a Mage is not the one being hit. So these
+ * expire the day a Mage profile is written that is attacked, which is not a
+ * change to anything here.
+ */
+const NOT_ATTACKED =
+  'Nothing attacks the Mage: all three profiles set ' +
+  '`encounter.targetAttacks: false`, so there is no incoming damage for this ' +
+  'to reduce, absorb or reflect. The encounter CAN hit back -- two Paladin ' +
+  'builds use it -- so this is the profile rather than the engine.';
 
 /** Said once; four talents say it. */
 const NO_THREAT = 'Threat, which the engine does not track.';
@@ -51,7 +76,18 @@ export const MAGE_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
   // --- Arcane --------------------------------------------------------------
 
   wand_specialization: [
-    { kind: 'unmodelled', reason: 'Wands are not modelled; no Mage profile swings or shoots.' },
+    {
+      kind: 'unmodelled',
+      reason:
+        'Wand damage. The Mage gear set DOES equip one -- Crimson Shocker, in ' +
+        'the ranged slot -- and it never fires: a `caster` combat style has no ' +
+        'auto attack at all, so there is no wand shot for this to raise. ' +
+        'Reaching it means giving that style a ranged attack, which is a ' +
+        'change to every caster in the project rather than to this talent. ' +
+        'The Arcane build takes it 2/2 and spends 83% of the mana it gains, ' +
+        'so what it would be worth is a real question rather than a rounding ' +
+        'error.',
+    },
   ],
 
   arcane_focus: [
@@ -78,8 +114,11 @@ export const MAGE_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
     {
       kind: 'unmodelled',
       reason:
-        'Resistances, and mana back on a FULL resist. Resistance has no effect ' +
-        'on an enemy target by ruling, and nothing casts at the Mage.',
+        'Resistances, and mana back on a FULL resist. ' +
+        NOT_ATTACKED +
+        ' The resistance ruling does not cover this and is easy to reach for: ' +
+        'it says resistance on an ENEMY target does not reduce damage, which ' +
+        'is about what the Mage DEALS rather than what it takes.',
     },
   ],
 
@@ -101,10 +140,27 @@ export const MAGE_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
 
   arcane_impact: [{ kind: 'schoolCrit', schools: ['arcane'] }],
 
-  arcane_blast: [{ kind: 'grantAbility', abilityId: 'arcane_blast' }],
+  /*
+   * TWO EFFECTS AGAIN. The ability brings its own escalating aura; the cast
+   * reaction is what ends the window, on the last tick of the spell that
+   * collected the bonus. See `arcaneBlastSpender` for why that reading and not
+   * the literal one.
+   */
+  arcane_blast: [
+    { kind: 'grantAbility', abilityId: 'arcane_blast' },
+    { kind: 'castReaction', reactionId: 'arcane_blast' },
+  ],
 
   arcane_shielding: [
-    { kind: 'unmodelled', reason: 'Mana Shield and Mage Armor, neither of which is cast here.' },
+    {
+      kind: 'unmodelled',
+      reason:
+        'Mana lost per point of damage taken under Mana Shield, and the ' +
+        'resistances Mage Armor grants. MAGE ARMOR IS CAST -- it is the first ' +
+        'entry of all three lists -- so the second clause is not missing a ' +
+        'spell, it is resistance with nothing to resist. ' +
+        NOT_ATTACKED,
+    },
   ],
 
   improved_counterspell: [
@@ -167,7 +223,15 @@ export const MAGE_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
   burning_soul: [{ kind: 'unmodelled', scope: 'threat', reason: `${NO_PUSHBACK} ${NO_THREAT}` }],
 
   improved_flamestrike: [
-    { kind: 'unmodelled', reason: 'Flamestrike is an area spell and is not in the book.' },
+    {
+      kind: 'unmodelled',
+      reason:
+        'The critical strike chance of Flamestrike, which IS captured in the ' +
+        'spellbook and is not declared. Which spells get a declaration is an ' +
+        'open question for the ruleset owner -- 478 captured against 113 ' +
+        'declared -- and this class three area spells are named in that ' +
+        'proposal. No Mage profile takes this talent.',
+    },
   ],
 
   pyroblast: [{ kind: 'grantAbility', abilityId: 'pyroblast' }],
@@ -175,7 +239,13 @@ export const MAGE_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
   improved_scorch: [{ kind: 'reaction', reactionId: 'improved_scorch' }],
 
   improved_fire_ward: [
-    { kind: 'unmodelled', reason: 'Fire Ward, and nothing casts Fire at the Mage.' },
+    {
+      kind: 'unmodelled',
+      reason:
+        'A chance for Fire Ward to REFLECT Fire spells. Fire Ward is not ' +
+        'declared, and it would absorb nothing if it were. ' +
+        NOT_ATTACKED,
+    },
   ],
 
   hot_streak: [{ kind: 'reaction', reactionId: 'hot_streak' }],
@@ -188,12 +258,30 @@ export const MAGE_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
 
   fire_power: [{ kind: 'schoolDamage', schools: ['fire'] }],
 
-  combustion: [{ kind: 'grantAbility', abilityId: 'combustion' }],
+  /*
+   * TWO EFFECTS, because the ability only switches the aura on. The reaction is
+   * what makes it a ramp with an end: a stack per Fire spell hit, and the aura
+   * gone after four non-periodic Fire crits. Its value is the 10, hand-filled
+   * in the values file per that directory's README -- a single-rank talent has
+   * no variable the calculator can identify, and an effect that reads no value
+   * is DROPPED rather than reported.
+   */
+  combustion: [
+    { kind: 'grantAbility', abilityId: 'combustion' },
+    { kind: 'reaction', reactionId: 'combustion' },
+  ],
 
   // --- Frost ---------------------------------------------------------------
 
   frost_warding: [
-    { kind: 'unmodelled', reason: 'Frost Armor and Frost Ward, neither of which is cast here.' },
+    {
+      kind: 'unmodelled',
+      reason:
+        'Armor and resistance on Frost Armor and Ice Armor, and a reflect ' +
+        'chance on Frost Ward. None of the three is declared -- a Mage here ' +
+        'casts Mage Armor, and only one Armor spell may be active at a time. ' +
+        NOT_ATTACKED,
+    },
   ],
 
   improved_frostbolt: [{ kind: 'abilityCastTime', abilityId: 'frostbolt' }],
@@ -226,13 +314,37 @@ export const MAGE_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
 
   ice_lance: [{ kind: 'grantAbility', abilityId: 'ice_lance' }],
 
+  /*
+   * ITS REASON NAMED THE WRONG CAUSE, and the right one is permanent.
+   *
+   * "Blizzard is an area spell and is not in the book" says this would work
+   * the day Blizzard is declared. It would not: the talent's ONLY effect is
+   * "adds a Chill effect to your Blizzard spell. This effect lowers the
+   * target's movement speed by 40% for 1.5 sec", and a movement-speed slow is
+   * a snare. Permafrost is the same clause on the same tree and is already
+   * scoped `crowdControl`; this is that talent's twin and was filed as
+   * outstanding work instead.
+   *
+   * WHAT A CHILL IS WORTH TO A MAGE ELSEWHERE does not reach here. Fingers of
+   * Frost procs off a Chill, but it names the spells that chill by id --
+   * nothing in this project has movement to slow -- so a Blizzard that existed
+   * would have to be added to `CHILL_ABILITY_IDS` by hand. That is a property
+   * of the SPELL and not of this talent.
+   */
   improved_blizzard: [
-    { kind: 'unmodelled', reason: 'Blizzard is an area spell and is not in the book.' },
+    {
+      kind: 'unmodelled',
+      scope: 'crowdControl',
+      reason:
+        'A Chill: it lowers the target movement speed and does nothing else. ' +
+        'Declaring Blizzard would not reach it, which is what the old reason ' +
+        'implied. The same clause as Permafrost, scoped the same way.',
+    },
   ],
 
   arctic_reach: [{ kind: 'unmodelled', scope: 'positioning', reason: NO_POSITION }],
 
-  ice_block: [{ kind: 'unmodelled', reason: 'A survival cooldown, and no Mage profile is hit.' }],
+  ice_block: [{ kind: 'unmodelled', reason: `A survival cooldown. ${NOT_ATTACKED}` }],
 
   /*
    * ITS REASON CHANGED THE MOMENT FINGERS OF FROST LANDED, which is the
@@ -265,15 +377,33 @@ export const MAGE_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
   shatter: [{ kind: 'critWhileAura', auraId: 'fingers_of_frost', abilityId: ALL_ABILITIES }],
 
   improved_cone_of_cold: [
-    { kind: 'unmodelled', reason: 'Cone of Cold is an area spell and is not in the book.' },
+    {
+      kind: 'unmodelled',
+      reason:
+        'The damage of Cone of Cold, which IS captured -- 328 to 358 Frost, ' +
+        '555 mana, instant, 10 second cooldown -- and is not declared. It is ' +
+        'the one Mage area spell that would also be a real single-target ' +
+        'instant, so it is the strongest candidate in the spell exclusion ' +
+        'proposal. No Mage profile takes this talent.',
+    },
   ],
 
+  /*
+   * ITS OLD REASON CONTRADICTED ITSELF IN ONE SENTENCE -- "the only Frost
+   * spell here with one is Ice Lance, which has none" -- which is what a
+   * reason looks like after it is edited rather than re-read. The fact behind
+   * it was right: no declared Frost spell has a cooldown.
+   */
   cold_snap: [
     {
       kind: 'unmodelled',
       reason:
-        'Resets Frost cooldowns. The only Frost spell here with one is Ice ' +
-        'Lance, which has none, so there is nothing to reset.',
+        'Finishes the cooldown on your other Frost spells, and no declared ' +
+        'Frost spell has one -- Frostbolt, Frostfire Bolt and Ice Lance are ' +
+        'off cooldown always. The captured Frost spells that DO have one, ' +
+        'Cone of Cold at 10s, Frost Nova at 25s, Ice Barrier and Frost Ward ' +
+        'at 30s, are not declared; and even with them this is a ten-MINUTE ' +
+        'cooldown resetting seconds. No Mage profile takes it.',
     },
   ],
 
@@ -300,15 +430,26 @@ export const MAGE_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
     { kind: 'castReaction', reactionId: 'fingers_of_frost', valueIndex: 1 },
   ],
 
-  winter_s_chill: [
-    {
-      kind: 'unmodelled',
-      reason:
-        'A stacking crit debuff ON THE TARGET for two named spells. Crit from ' +
-        'a debuff the target carries has no declaration: `abilityCrit` is on ' +
-        'the caster and an aura reaches every ability or none.',
-    },
-  ],
+  /*
+   * THE LAST MAGE TALENT WITH NO DECLARATION AT ALL, and its reason named the
+   * two things that were missing rather than describing the effect: crit from
+   * a debuff the TARGET carries, for two NAMED spells. `abilityCrit` is
+   * registered on the caster and an ordinary aura reaches every ability or
+   * none, so both halves were true.
+   *
+   * `attackerAbilityModifiers` IS THE FIELD, and it is the mirror of the
+   * `critWhileAura` that Shatter needed one PR earlier -- the same shape on
+   * the other side of the attack. Read through
+   * `Combatant.abilityModifierAgainst`, at both of the two points the
+   * attacker's own modifiers are read.
+   *
+   * ITS CHANCE IS INDEX 0 and its STACK CAP IS INDEX 3, and the rank moves
+   * both, which nothing else in this tree does. The reaction takes the whole
+   * row for that reason.
+   */
+  winter_s_chill: [{ kind: 'reaction', reactionId: 'winter_s_chill' }],
 
-  ice_barrier: [{ kind: 'unmodelled', reason: `An absorb, and ${NO_PUSHBACK}` }],
+  ice_barrier: [
+    { kind: 'unmodelled', reason: `An absorb -- ${NOT_ATTACKED} And ${NO_PUSHBACK}` },
+  ],
 };
