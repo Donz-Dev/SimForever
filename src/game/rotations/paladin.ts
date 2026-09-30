@@ -15,12 +15,84 @@ import type { TalentAllocation } from '../talents/Talent';
  * ----------------------------------------------------------------------------
  */
 
-const withoutAura = (auraId: string) => (_context: SimulationContext, actor: Combatant): boolean =>
-  !actor.auras.has(auraId);
 
-const missingOn = (auraId: string) =>
-  (_context: SimulationContext, _actor: Combatant, target?: Combatant): boolean =>
-    target !== undefined && !target.auras.has(auraId);
+/*
+ * ============================================================================
+ * THE RULESET OWNER'S CONDITIONS. All three lists below are theirs; what was
+ * here before was this file's own guess and said so.
+ * ============================================================================
+ */
+
+type Condition = (
+  context: SimulationContext,
+  actor: Combatant,
+  target?: Combatant,
+) => boolean;
+
+/**
+ * "FIRST EVENT ONLY", which all three of the owner's lists open with.
+ *
+ * ----------------------------------------------------------------------------
+ * THE SAME RULE CHARGE ALREADY RUNS ON, and reached the same way: the opening
+ * instant is the one moment nothing else has taken yet, and an ability gated on
+ * it fires once and never again. Charge states it as
+ * `now() === CHARGE_OPENING_TIMESTAMP_MS` in its own `canCast`.
+ *
+ * Here it is a LIST condition rather than an ability one, because Seal of the
+ * Crusader is a perfectly ordinary seal that these lists happen to want exactly
+ * once -- to put its Judgement debuff up -- and gating the ability itself would
+ * be wrong for anything else that ever wants to cast it.
+ * ----------------------------------------------------------------------------
+ */
+const OPENING_TIMESTAMP_MS = 0;
+const firstEventOnly: Condition = (context) => context.clock.now() === OPENING_TIMESTAMP_MS;
+
+/** "<buff> is not active", on the Paladin. */
+const selfExpired = (auraId: string): Condition =>
+  (context, actor) => actor.auras.remainingMs(auraId, context.clock.now()) <= 0;
+
+/** "<buff> is active", on the Paladin. */
+const selfActive = (auraId: string): Condition => (_context, actor) => actor.auras.has(auraId);
+
+/** "hit points <= N% of maximum". */
+const healthAtMostFraction = (fraction: number): Condition =>
+  (_context, actor) =>
+    actor.health.maximum > 0 && actor.health.current / actor.health.maximum <= fraction;
+
+/**
+ * "<ability> is on cooldown", which the Protection list gates Swift Judgement
+ * on -- it is the fallback for the window where the real Judgement cannot go.
+ */
+const abilityOnCooldown = (abilityId: string): Condition =>
+  (context, actor) => !actor.abilities.isReady(abilityId, context.clock.now());
+
+const all =
+  (...conditions: readonly Condition[]): Condition =>
+  (context, actor, target) =>
+    conditions.every((condition) => condition(context, actor, target));
+
+const either =
+  (...conditions: readonly Condition[]): Condition =>
+  (context, actor, target) =>
+    conditions.some((condition) => condition(context, actor, target));
+
+const not =
+  (condition: Condition): Condition =>
+  (context, actor, target) =>
+    !condition(context, actor, target);
+
+/*
+ * ----------------------------------------------------------------------------
+ * "HAMMER OF WRATH IF COMBAT DURATION <= 20%" IS THE EXECUTE PHASE, and the
+ * ability already enforces it: its "only usable on enemies that have 20% or
+ * less health" is modelled as the CLOCK by the ruleset owner's earlier ruling,
+ * the same one Execute runs on. `inExecutePhase` is the shared rule.
+ *
+ * So the entry needs no condition of its own. Stated rather than left blank,
+ * because an entry with no condition in a list whose spec gave it one reads as
+ * a dropped clause.
+ * ----------------------------------------------------------------------------
+ */
 
 // ---------------------------------------------------------------------------
 
@@ -47,17 +119,49 @@ const missingOn = (auraId: string) =>
  * ----------------------------------------------------------------------------
  */
 export const PALADIN_RETRIBUTION: readonly PriorityEntry[] = [
-  // The Crusader's judgement is a 40-second debuff; putting it up costs one
-  // seal swap and leaves an Echo of Command behind on the way through.
-  {
-    abilityId: 'seal_of_the_crusader',
-    condition: (context, actor, target) =>
-      missingOn('judgement_of_the_crusader')(context, actor, target) &&
-      actor.auras.has('seal_of_command'),
-  },
+  { abilityId: 'seal_of_the_crusader', condition: firstEventOnly },
   { abilityId: 'judgement' },
-  { abilityId: 'seal_of_command', condition: withoutAura('seal_of_command') },
   { abilityId: 'holy_strike' },
+  { abilityId: 'hammer_of_wrath' },
+  { abilityId: 'consecration' },
+  /*
+   * THE TWIST, AND IT IS THE LAST TWO ENTRIES RATHER THAN THE FIRST. Each seal
+   * is cast only while the OTHER one is up and its own echo is not -- so the
+   * pair alternates, and neither can fire twice in a row or overwrite an echo
+   * that has not been spent.
+   *
+   * `echo_<sealId>` is what replacing a seal leaves behind, and the next melee
+   * attack applies the REPLACED seal's effects on top of the new one's. That is
+   * why a Paladin with the capstone wants to keep swapping rather than settle,
+   * and why these two entries are a cycle rather than a preference.
+   */
+  {
+    abilityId: 'seal_of_command',
+    condition: either(
+      /*
+       * THE SEED, and without it the cycle below can never start. The owner's
+       * two conditions are mutually dependent -- Command wants Righteousness
+       * up, Righteousness wants Command up -- and after the opening Seal of
+       * the Crusader NEITHER is, so both entries fired zero times and the
+       * profile named "Seal Twist" ran a whole fight on one seal.
+       *
+       * Nothing errored. Two tests caught it only because they assert the
+       * invariant that every Paladin build keeps a seal up and judges it.
+       *
+       * The ruleset owner chose Command to start the cycle. This clause is the
+       * only addition to their order.
+       */
+      all(not(selfActive('seal_of_command')), not(selfActive('seal_of_righteousness'))),
+      all(
+        selfActive('seal_of_righteousness'),
+        not(selfActive('echo_seal_of_righteousness')),
+      ),
+    ),
+  },
+  {
+    abilityId: 'seal_of_righteousness',
+    condition: all(selfActive('seal_of_command'), not(selfActive('echo_seal_of_command'))),
+  },
 ];
 
 /**
@@ -76,7 +180,7 @@ export const PALADIN_RETRIBUTION: readonly PriorityEntry[] = [
  * is a trainer ability.
  */
 export const PALADIN_SHOCKADIN: readonly PriorityEntry[] = [
-  { abilityId: 'holy_shock' },
+  { abilityId: 'seal_of_the_crusader', condition: firstEventOnly },
   { abilityId: 'judgement' },
   /*
    * SEAL OF RIGHTEOUSNESS, NOT COMMAND, AND NOT BY PREFERENCE. Seal of
@@ -89,8 +193,11 @@ export const PALADIN_SHOCKADIN: readonly PriorityEntry[] = [
    * -- so the build silently lost both its seal damage and its Judgement.
    * Nothing errored; the DPS was simply lower than it should have been.
    */
-  { abilityId: 'seal_of_righteousness', condition: withoutAura('seal_of_righteousness') },
+  { abilityId: 'seal_of_righteousness', condition: selfExpired('seal_of_righteousness') },
+  { abilityId: 'holy_shock' },
   { abilityId: 'holy_strike' },
+  { abilityId: 'hammer_of_wrath' },
+  { abilityId: 'consecration' },
 ];
 
 /**
@@ -106,11 +213,31 @@ export const PALADIN_SHOCKADIN: readonly PriorityEntry[] = [
  * build takes Improved Seal of Fury, which says which one it means to use.
  */
 export const PALADIN_PROTECTION: readonly PriorityEntry[] = [
-  { abilityId: 'holy_shield', condition: withoutAura('holy_shield') },
-  { abilityId: 'seal_of_fury', condition: withoutAura('seal_of_fury') },
+  { abilityId: 'seal_of_the_crusader', condition: firstEventOnly },
+  /*
+   * RIGHTEOUS FURY DOES NOTHING HERE AND IS CAST ANYWAY, on the owner's
+   * ruling. Its whole effect is "+60% threat from your Holy attacks" and
+   * threat is permanently out of scope -- so the Protection Paladin spends
+   * 30% of its base mana and a global cooldown on it at the pull exactly as it
+   * would in game, and gets nothing modelled back. Dropping the entry would
+   * hand the build a cast it does not get to keep.
+   */
+  { abilityId: 'righteous_fury', condition: selfExpired('righteous_fury') },
+  { abilityId: 'holy_shield', condition: selfExpired('holy_shield') },
+  { abilityId: 'templars_bulwark', condition: healthAtMostFraction(0.35) },
   { abilityId: 'judgement' },
-  { abilityId: 'consecration', condition: missingOn('consecration') },
+  /*
+   * SWIFT JUDGEMENT FILLS THE WINDOW THE REAL ONE CANNOT, which is what its
+   * two conditions say together: Judgement on cooldown, and a seal up for it
+   * to unleash.
+   */
+  {
+    abilityId: 'swift_judgement',
+    condition: all(abilityOnCooldown('judgement'), selfActive('seal_of_fury')),
+  },
+  { abilityId: 'seal_of_fury', condition: selfExpired('seal_of_fury') },
   { abilityId: 'holy_strike' },
+  { abilityId: 'consecration' },
 ];
 
 export const PALADIN_RETRIBUTION_ROTATION: Rotation = new PriorityRotation(
