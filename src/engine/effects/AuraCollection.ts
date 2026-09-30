@@ -1,4 +1,6 @@
 import type { Combatant } from '../actors/Combatant';
+import type { AbilityModifier } from '../combat/abilityModifiers';
+import { combineAbilityModifiers } from '../combat/abilityModifiers';
 import { EventPriority, createEvent } from '../events';
 import type { SimulationContext } from '../simulation/SimulationContext';
 import { bindModifiers } from '../stats';
@@ -48,6 +50,33 @@ export class AuraCollection {
   /** Time left on an aura, 0 if absent, Infinity if permanent. */
   remainingMs(auraId: string, now: Milliseconds): Milliseconds {
     return this.auras.get(auraId)?.remainingMs(now) ?? 0;
+  }
+
+  /**
+   * The per-ability modifier every active aura contributes to one ability,
+   * or `undefined` when none does.
+   *
+   * `undefined` rather than an empty object so the damage path can skip the
+   * combine entirely in the overwhelmingly common case -- this is asked on
+   * every damage event of every fight.
+   */
+  abilityModifierFor(abilityId: string | undefined): AbilityModifier | undefined {
+    if (abilityId === undefined) return undefined;
+    let combined: AbilityModifier | undefined;
+    for (const instance of this.auras.values()) {
+      const own = instance.definition.abilityModifiers?.[abilityId];
+      if (!own) continue;
+      combined = combined ? combineAbilityModifiers(combined, own) : own;
+    }
+    return combined;
+  }
+
+  /** Whether any active aura suppresses this ability's cooldown. */
+  suppressesCooldownOf(abilityId: string): boolean {
+    for (const instance of this.auras.values()) {
+      if (instance.definition.suppressesCooldownOf?.includes(abilityId)) return true;
+    }
+    return false;
   }
 
   /**

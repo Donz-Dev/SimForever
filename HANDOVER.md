@@ -80,7 +80,7 @@ Measured at `d2718b0`, and the numbers say it is not close:
 | --- | --- |
 | **140 of 468 talents are a live gap** | down from a raw count of 262 unmodelled reasons, because 89 are permanently out of scope by ruling and 33 more are PARTLY modelled. See the census below — the raw total is not a work queue |
 | **113 abilities declared against 478 captured** | the data is on disk; the declarations are not. Druid 15, Hunter 14, Mage 13, Rogue 12, Warlock 10, Shaman 9, Priest 7, Paladin 6, plus the Warrior's 27 |
-| ~~**Coefficients**~~ | **DONE.** `WoWSimWorksheet.xlsx`, the owner's authoritative coefficient document, is transcribed in `src/game/combat/coefficients.ts` and applied across all nine classes. Every derived rule is deleted. ONE row still cannot be applied -- Hammer of Wrath, which is not a declared ability; the two poison rows have since been applied by the poison system. [docs/spell-coefficients.md](docs/spell-coefficients.md) |
+| ~~**Coefficients**~~ | **DONE, AND NOW EVERY ROW IS APPLIED.** `WoWSimWorksheet.xlsx`, the owner's authoritative coefficient document, is transcribed in `src/game/combat/coefficients.ts` and applied across all nine classes. Every derived rule is deleted. The last unapplied row was Hammer of Wrath, which was not a declared ability until the owner put it in two Paladin priority lists; the two poison rows went the same way when the poison system landed. [docs/spell-coefficients.md](docs/spell-coefficients.md) |
 | **19 `PLACEHOLDER_*` constants** | each a real number nobody has supplied. Sniper Shot's invented 200-mana cost is gone, but it was never one of these: it was a bare literal with a false caveat, which is worse — an invented number that is not named cannot be audited |
 | **Rotations are thin and unmeasured** | **THE NEXT PIECE OF WORK, and it has its own handoff: [docs/handoff-rotations.md](docs/handoff-rotations.md).** 26 lists — one per profile, two Warrior fallbacks no preset reaches, and the pet's. The Warrior's five came from the owner; **only the three Hunter APLs and one Venom entry have ever been measured entry by entry**, and **twelve entries across eight profiles never fire at all** |
 
@@ -230,12 +230,14 @@ per existing application" applies too — its `unmodelled` reason claimed a
 periodic tick could not read its own stack count, and `AuraInstance` has carried
 `stacks` all along.
 
-**ONE ROW OF THE SHEET STILL CANNOT BE APPLIED**, and it is transcribed in
-`coefficients.ts` rather than dropped, so the record covers every row:
+~~**ONE ROW OF THE SHEET STILL CANNOT BE APPLIED.**~~ **Every row is applied.**
+The last one was:
 
-- **Hammer of Wrath.** The ability is not declared. The capture has it, so this
-  is a new ability plus a target-health gate the encounter deliberately does not
-  have — Execute is gated on the CLOCK here, by an earlier ruling of yours.
+- ~~**Hammer of Wrath.**~~ **Declared.** Its "20% or less health" is the CLOCK,
+  by the same ruling Execute runs on — `combat/executePhase.ts`, which is where
+  that rule moved when it stopped being the Warrior's alone. The row had sat
+  transcribed-and-unapplied since the sheet arrived, and what cleared it was not
+  new data but the owner putting the ability in two priority lists.
 
 ~~**Instant Poison and Deadly Poison.**~~ **Applied.** They were listed here as
 a missing SYSTEM rather than a missing number, and the system was built: both
