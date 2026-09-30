@@ -56,7 +56,20 @@ export function checkCast(
     return { ok: false, reason: 'on_gcd' };
   }
 
-  if (!caster.abilities.isReady(ability.id, now)) {
+  /*
+   * AN AURA CAN SUPPRESS A COOLDOWN, which is Berserk's "removes its cooldown"
+   * and nothing else in the engine could say.
+   *
+   * Checked HERE rather than inside `AbilityBook`, so the book keeps knowing
+   * nothing about auras -- the same separation that puts stance gating in this
+   * function and not in the ability. The timer keeps running underneath: the
+   * suppression hides the check, so when the aura drops the ability is on
+   * whatever remains of its own cooldown rather than being handed a free cast.
+   */
+  if (
+    !caster.auras.suppressesCooldownOf(ability.id) &&
+    !caster.abilities.isReady(ability.id, now)
+  ) {
     return { ok: false, reason: 'on_cooldown' };
   }
 
