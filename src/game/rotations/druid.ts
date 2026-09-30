@@ -115,6 +115,13 @@ const not =
  * IT WOULD BECOME REAL WORK the day form-shifting is modelled mid-fight, and
  * that same day would have to answer why nothing currently stops a Cat casting
  * Starfire: the engine gates on WARRIOR STANCES and on nothing else.
+ *
+ * WHAT THAT DOES *NOT* BLOCK, and this file helped spread the confusion. The
+ * form being fixed is why nothing can pay out ON A SHIFT; it is not a reason a
+ * talent cannot read WHICH FORM IS HELD. Three Druid talents were written up as
+ * blocked on shapeshifting and were only ever blocked on a declaration --
+ * `BuildRequirement.styles` -- because the style is knowable before the pull.
+ * Two remain, Furor and Natural Shapeshifter, and both genuinely need the shift.
  * ----------------------------------------------------------------------------
  */
 
@@ -123,10 +130,20 @@ const not =
 /**
  * MOONKIN — two damage-over-time effects held up, then Starfire.
  *
- * Starfire is 350-412 for 340 mana on a 3.5 second cast; Wrath is 62-68 for 120
+ * Starfire is 350-412 for 340 mana on a 3.5 second cast; Wrath is 86-96 for 120
  * on a 2 second one. Starfire is far better per cast AND per mana, so Wrath
- * appears only as the filler that keeps Eclipse stacking -- which currently
- * stacks and does nothing, and says so.
+ * appears only as the filler that keeps Eclipse stacking.
+ *
+ * TWO FIGURES IN THAT SENTENCE HAVE EXPIRED SINCE IT WAS WRITTEN, which is why
+ * they are corrected rather than left: Wrath was 62-68 at client build
+ * 1.60.1.69876 and is 86-96 now, and Eclipse "currently stacks and does
+ * nothing" stopped being true when the one-shot cast rule landed. Both were
+ * right on the day.
+ *
+ * AND THE TWO DoT ENTRIES ARE WORTH MORE THAN THEY WERE. Nature's Splendor
+ * lengthens Moonfire by three seconds and Insect Swarm by two, which is a fifth
+ * tick and a seventh -- so "if not active" holds each one up for longer and the
+ * list reaches Starfire more often.
  */
 export const DRUID_MOONKIN: readonly PriorityEntry[] = [
   { abilityId: 'moonfire', condition: expired('moonfire') },
@@ -185,6 +202,13 @@ export const DRUID_CAT: readonly PriorityEntry[] = [
  * MAUL IS LAST AND IS NOT A GLOBAL COOLDOWN. It replaces the next swing rather
  * than taking a cast, exactly as the Warrior's Heroic Strike does, so putting
  * it at the bottom costs the entries above it nothing.
+ *
+ * THE RAGE FLOOR ON MAUL IS WORTH RE-READING NOW THAT NATURAL REACTION PAYS.
+ * The Bear is the one Druid profile the target swings at, and its dodge proc
+ * grants five rage a dodge at a 100% chance -- so the bar fills faster than it
+ * did when this list was measured. The owner's "queue Maul if rage >= 42" is
+ * unchanged and the entry above it is not: `rageAtLeast(42)` is a claim about a
+ * rage economy that has moved.
  */
 export const DRUID_BEAR: readonly PriorityEntry[] = [
   /*

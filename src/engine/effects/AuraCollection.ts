@@ -30,6 +30,20 @@ export class AuraCollection {
     return this.auras.has(auraId);
   }
 
+  /**
+   * Whether ANY aura on this combatant is tagged a bleed.
+   *
+   * Asked on every hit by a character carrying a "while the target is
+   * bleeding" modifier, and by nobody else -- `bleedingTargetModifiers.isEmpty`
+   * is checked first, so a character without one never walks this at all.
+   */
+  get isBleeding(): boolean {
+    for (const instance of this.auras.values()) {
+      if (instance.definition.isBleed) return true;
+    }
+    return false;
+  }
+
   get(auraId: string): AuraInstance | undefined {
     return this.auras.get(auraId);
   }

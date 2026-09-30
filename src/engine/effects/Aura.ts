@@ -369,6 +369,28 @@ export interface AuraDefinition {
   /** Multiplies healing the carrier does. */
   readonly healingDoneMultiplier?: number;
   readonly periodic?: PeriodicEffect;
+  /**
+   * The ruleset counts this aura as a BLEED.
+   *
+   * ----------------------------------------------------------------------------
+   * A TAG, NOT A MECHANIC. The engine attaches no behaviour to it at all: a
+   * bleed already says what it DOES through `periodic`, `appliesArmor: false`
+   * and its school. What this adds is the ability for something else to SELECT
+   * on it, which is what "on Bleeding targets" wants and what nothing could ask.
+   *
+   * WHY IT IS A FLAG ON THE AURA AND NOT A LIST SOMEWHERE ELSE. The alternative
+   * is a talent naming Rip, Rake and Lacerate by id, and this codebase has
+   * written down twice what happens then: a fourth bleed is added, nobody
+   * remembers the list, and the talent goes quietly weaker with nothing to
+   * notice. Declared here, a new bleed is covered on the day it lands.
+   *
+   * IT IS NOT DERIVED FROM "physical, periodic and ignoring armor", which is a
+   * true description of every bleed here, because the school and the armor rule
+   * are decided inside `onTick` and are not visible on the definition. A
+   * derivation that has to run the effect to answer is not a derivation.
+   * ----------------------------------------------------------------------------
+   */
+  readonly isBleed?: boolean;
   /** Defaults to `reset`. */
   readonly refreshBehaviour?: AuraRefreshBehaviour;
   /**

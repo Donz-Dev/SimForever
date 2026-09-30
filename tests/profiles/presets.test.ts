@@ -129,14 +129,22 @@ describe('the preset catalogue', () => {
      * the raid is part of what it states.
      */
     /*
-     * ONE EXCEPTION, AND THE SPELL ITSELF IS WHY. An Enhancement shaman imbues
-     * its own main hand, and Windfury Weapon's tooltip says it "disables any
-     * benefit you personally receive from Windfury Totem" -- so that preset
-     * drops the totem and nothing else. Every other difference here would be
-     * a bug; this one is the ruleset.
+     * TWO EXCEPTIONS, AND IN BOTH CASES THE CHARACTER PROVIDES THE BUFF ITSELF.
+     *
+     * An Enhancement shaman imbues its own main hand, and Windfury Weapon's
+     * tooltip says it "disables any benefit you personally receive from
+     * Windfury Totem" -- so that preset drops the totem and nothing else.
+     *
+     * The Moonkin takes the Moonkin Form talent, which grants Moonkin Aura, and
+     * both tooltips say each is "exclusive with" the other -- so its raid
+     * cannot also be running Leader of the Pack. Its crit is +3% either way,
+     * which is why dropping the buff moved no figure.
+     *
+     * Every other difference here would be a bug; these two are the ruleset.
      */
     const SELF_PROVIDED: Readonly<Record<string, readonly string[]>> = {
       shaman_enhancement: ['windfury_totem'],
+      druid_moonkin: ['leader_of_the_pack'],
     };
     const expected = (id: string, buffs: readonly string[]) =>
       buffs.filter((buff) => !(SELF_PROVIDED[id] ?? []).includes(buff));
@@ -148,6 +156,9 @@ describe('the preset catalogue', () => {
     expect(first[1].length).toBeGreaterThan(0);
     for (const [id, buffs] of rest) expect(buffs, id).toEqual(expected(id, first[1]));
     expect(expected('shaman_enhancement', first[1])).toHaveLength(first[1].length - 1);
+    expect(expected('druid_moonkin', first[1])).toHaveLength(first[1].length - 1);
+    // And the exception list is EXHAUSTIVE: nobody else may differ.
+    expect(Object.keys(SELF_PROVIDED).sort()).toEqual(['druid_moonkin', 'shaman_enhancement']);
     expect(createDefaultProfile().raidBuffs).toEqual([]);
   });
 

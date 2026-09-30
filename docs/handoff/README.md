@@ -17,8 +17,8 @@ engine that were about the wrong thing.
 | --- | --- | --- |
 | [warrior.md](warrior.md) | 2H Arms, DW Fury, Prot Warr | **0** |
 | [paladin.md](paladin.md) | Seal Twist Ret, Shockadin, Prot Pally | **2** |
+| [druid.md](druid.md) | Moonkin, Cat, Bear | **2** |
 | [shaman.md](shaman.md) | Ele Shaman, Enh Shaman | **6** |
-| [druid.md](druid.md) | Moonkin, Cat, Bear | **11** |
 | [hunter.md](hunter.md) | BM Hunter, LW Ranged, LW Melee | **13** |
 | [rogue.md](rogue.md) | Venom, Combat, Rupture | **13** |
 | [mage.md](mage.md) | Frostfire, Arcane, Fire | **13** |

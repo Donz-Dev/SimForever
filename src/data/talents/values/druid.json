@@ -116,8 +116,15 @@
    "tree": "balance",
    "ranks": 1,
    "text": "Increases the duration of your Moonfire and Rejuvenation spells by 3 sec, your Regrowth spell by 6 sec, and your Insect Swarm spell by 2 sec.",
-   "values": null,
-   "note": "single rank"
+   "values": [
+    [
+     3,
+     3,
+     6,
+     2
+    ]
+   ],
+   "note": "single rank; the four figures filled in by hand per this directory README. A single-rank talent has no variable the importer can match, and this text states every number literally rather than through a {0} placeholder, so there was nothing to match either way. In the order the sentence gives them: Moonfire +3 sec, Rejuvenation +3, Regrowth +6, Insect Swarm +2. The two HEALING entries are carried anyway -- dropping them would renumber the two that are read, and the next person to add a heal would have to rediscover the order."
   },
   "insect_swarm": {
    "name": "Insect Swarm",
@@ -237,8 +244,13 @@
    "tree": "balance",
    "ranks": 1,
    "text": "Transforms the Druid into Moonkin Form. While in this form, the armor contribution from items is increased by 360%, Omen of Clarity gains 100% increased chance to trigger, and all party members within 45 yards have their critical strike chance increased by 3%, exclusive with Leader of the Pack. The Moonkin cannot cast healing spells while shapeshifted.\n\nThe act of shapeshifting frees the caster of Polymorph and Movement Impairing effects.",
-   "values": null,
-   "note": "single rank"
+   "values": [
+    [
+     360,
+     3
+    ]
+   ],
+   "note": "single rank; the two figures filled in by hand per this directory README. A single-rank talent has no variable the importer can match, and this text states its numbers literally rather than through a {0} placeholder. Index 0 is the 360% armor from items, which is the only one an effect READS -- index 1 is the 3% party crit, which is carried for completeness and lives as PARTY_CRIT_AURA_PERCENT beside the aura in game/auras/druid.ts because the raid buff of the same name needs the same number."
   },
   "ferocity": {
    "name": "Ferocity",

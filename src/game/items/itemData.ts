@@ -1,4 +1,5 @@
 import type { DamageSchool, PartialStats } from '../../engine';
+import type { CombatStyleId } from '../character/ids';
 import { DAMAGE_SCHOOLS } from '../../engine';
 import type { Enchant, EquipmentSlot, Item, ItemWeapon, UnmodelledEffect } from './Item';
 import warriorItems from '../../data/items/classic-warrior.json';
@@ -318,6 +319,55 @@ const SCHOOL_SPELL_POWER_PATTERN =
   /^Increases damage done by (\w+) spells and effects by up to (\d+)\.?$/;
 
 /**
+ * "+172 Attack Power in Cat, Bear, and Dire Bear forms only."
+ *
+ * ----------------------------------------------------------------------------
+ * A STAT SCOPED TO A COMBAT STYLE, handled here for the same reason the two
+ * patterns above are: it does not land in `stats`, because `stats` is
+ * unconditional. It goes on `Item.styleStats`, which `statsForStyle` reads --
+ * the one function that already knows which style the character is in.
+ *
+ * ONE ITEM LINE IN THE WHOLE DATA SAYS IT, the Glaive of Obsidian Fury, worn by
+ * both feral Druid profiles. HANDOVER.md has listed those two figures as
+ * understated by a known amount ever since, and this is that amount.
+ *
+ * THE FORM LIST IS MAPPED IN FULL OR NOT AT ALL. `FORM_STYLES` translates the
+ * form names Forever uses into the styles the engine has -- Dire Bear is Bear,
+ * because there is one bear style -- and a list containing anything unmapped
+ * falls through to `unmodelled` rather than applying the part that matched. A
+ * line naming Travel Form is reported, not half-credited.
+ * ----------------------------------------------------------------------------
+ */
+const FORM_ATTACK_POWER_PATTERN = /^\+(\d+) Attack Power in ([\w, ]+?) forms? only\.?$/;
+
+/** The form names Forever writes, and the combat style each one is. */
+const FORM_STYLES: Readonly<Record<string, CombatStyleId>> = {
+  cat: 'cat',
+  bear: 'bear',
+  'dire bear': 'bear',
+  moonkin: 'moonkin',
+};
+
+/**
+ * Every style a form list names, or `undefined` if any name is unmapped.
+ *
+ * "Cat, Bear, and Dire Bear" -- split on commas with a leading `and` dropped,
+ * because the tooltip writes an Oxford list. Two names mapping to one style is
+ * fine and happens: Bear and Dire Bear are both `bear`, and the set folds them.
+ */
+function stylesFromFormList(list: string): readonly CombatStyleId[] | undefined {
+  const styles = new Set<CombatStyleId>();
+  for (const part of list.split(',')) {
+    const name = part.trim().replace(/^and /i, '').toLowerCase();
+    if (name === '') continue;
+    const style = FORM_STYLES[name];
+    if (!style) return undefined;
+    styles.add(style);
+  }
+  return styles.size > 0 ? [...styles] : undefined;
+}
+
+/**
  * Effects implemented as reactions in `procs.ts` rather than as stats.
  *
  * They are neither a stat nor unmodelled: a proc is behaviour, so it lives with
@@ -350,8 +400,18 @@ function reasonFor(kind: string, text: string): string {
   if (/^Increases damage done by \w+ spells and effects by up to \d+/.test(text)) {
     return 'The school named is not one the engine has, so there is nowhere to put it.';
   }
-  if (/forms only\.?$/.test(text)) {
-    return 'An item stat cannot be conditional on the combat style, so this is listed rather than applied.';
+  /*
+   * REACHED ONLY BY A FORM LIST `FORM_STYLES` CANNOT MAP, now that
+   * `FORM_ATTACK_POWER_PATTERN` applies the ones it can. The old reason said
+   * "an item stat cannot be conditional on the combat style", which was true
+   * and is not -- `Item.styleStats` is that condition -- so this says what is
+   * actually missing instead.
+   */
+  if (/forms? only\.?$/.test(text)) {
+    return (
+      'Names a form the engine has no combat style for, or a stat other than ' +
+      'attack power, so the whole line is listed rather than half-applied.'
+    );
   }
   return 'No engine mechanic for this yet.';
 }
@@ -359,11 +419,13 @@ function reasonFor(kind: string, text: string): string {
 function buildStats(item: RawItem): {
   stats: PartialStats;
   schoolPower: Partial<Record<DamageSchool, number>>;
+  styleStats: Partial<Record<CombatStyleId, PartialStats>>;
   unmodelled: UnmodelledEffect[];
   bonusSkill: number;
 } {
   const stats: Record<string, number> = {};
   const schoolPower: Partial<Record<DamageSchool, number>> = {};
+  const styleStats: Partial<Record<CombatStyleId, Record<string, number>>> = {};
   const unmodelled: UnmodelledEffect[] = [];
   let bonusSkill = 0;
 
@@ -423,6 +485,22 @@ function buildStats(item: RawItem): {
       }
     }
 
+    /*
+     * Attack power that only one FORM reads. Tried with the two above and for
+     * the same reason: it is a real stat, and what is unusual is the condition.
+     */
+    const scopedToForm = effect.text.match(FORM_ATTACK_POWER_PATTERN);
+    if (scopedToForm) {
+      const styles = stylesFromFormList(scopedToForm[2]);
+      if (styles) {
+        for (const style of styles) {
+          const into = (styleStats[style] ??= {});
+          into.attackPower = (into.attackPower ?? 0) + Number(scopedToForm[1]);
+        }
+        continue;
+      }
+    }
+
     unmodelled.push({
       kind: effect.kind,
       text: effect.text,
@@ -430,7 +508,13 @@ function buildStats(item: RawItem): {
     });
   }
 
-  return { stats: stats as PartialStats, schoolPower, unmodelled, bonusSkill };
+  return {
+    stats: stats as PartialStats,
+    schoolPower,
+    styleStats: styleStats as Partial<Record<CombatStyleId, PartialStats>>,
+    unmodelled,
+    bonusSkill,
+  };
 }
 
 function buildItem(item: RawItem): Item {
@@ -450,7 +534,7 @@ function buildItem(item: RawItem): Item {
     throw new Error(`${item.name}: no slot mapping for inventory type "${item.inventoryType}"`);
   }
 
-  const { stats, schoolPower, unmodelled, bonusSkill } = buildStats(item);
+  const { stats, schoolPower, styleStats, unmodelled, bonusSkill } = buildStats(item);
   // Carried through for display. Still in `unmodelled` too: the sheet shows
   // the total and the Gear panel says it does nothing, and both are true.
   const resistances = { ...item.resistances };
@@ -480,6 +564,7 @@ function buildItem(item: RawItem): Item {
     slots,
     stats,
     schoolPower,
+    styleStats,
     ...(weapon ? { weapon } : {}),
     unmodelled,
     resistances,

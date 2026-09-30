@@ -27,6 +27,7 @@ npx vite-node tools/ability_audit.ts             # is every ability connected at
 npx vite-node tools/class_audit.ts warrior       # one class's gaps, lists and sources
 npx vite-node tools/coefficient_probe.ts         # does every ability's damage scale
 PROFILE=pally_ret npx vite-node tools/probe_resources.ts   # where one pool went
+npx vite-node tools/druid_attribution.ts         # what one talent is worth, with its CASCADE named
 ```
 
 The three audits in the middle are AUDITS rather than measurements and none of
@@ -316,7 +317,7 @@ See [docs/combat-tables.md](docs/combat-tables.md).
   Mortal Shots' crit damage reaches Serpent Sting's ticks and "damage you deal
   with ranged WEAPONS" correctly does not.
 
-### The three modifier scopes
+### The modifier scopes — three keyed, two conditional
 
 Per-ability crit and damage go through modifiers **on the combatant**, never
 through an ability's own `onCast`: `dealDamage` consults them, so an ability
@@ -329,6 +330,36 @@ them, including `ALL_ABILITIES`.
 | `AbilityModifiers` | ability id | "your Fireball" |
 | `SchoolModifiers` | `DamageSchool` | "your Fire spells", **and** school-scoped spell power |
 | `AttackTableModifiers` | `AttackTableKind` | melee vs ranged, **and** swing vs special |
+| `Combatant.periodicDamageMultiplier` | nothing — a scalar | "PERIODIC damage only", which crosses all three of the above |
+| `Combatant.bleedingTargetModifiers` | `AttackTableKind`, read only while the TARGET bleeds | "your melee abilities on BLEEDING targets" |
+
+- **`periodicDamageMultiplier` IS A FOURTH AXIS AND IT CROSSES THE OTHER THREE.**
+  Genesis is "the periodic damage and healing done by your spells AND abilities",
+  which is every school, every table and every ability at once — so it is not one
+  of the keyed scopes and a list of ids would be unmaintainable. What separates it
+  is the one thing none of them can see: whether the damage is a TICK.
+  `DamageRequest.periodic` has carried that since the first DoT, so it is a new
+  READER of an existing fact rather than a new fact.
+- **`bleedingTargetModifiers` IS THE SAME CLASS, A SECOND INSTANCE**, not a new
+  shape: "on Bleeding targets" is `AttackTableModifiers` in every respect except
+  that whether it counts is a question about somebody ELSE, answered per hit. Kept
+  APART from the unconditional one for the reason `addWhileAura` is kept apart
+  from `add` — combining loses the condition, and a talent that pays all fight
+  instead of during its window is a bigger number and no error.
+- **THE BLEED IS ASKED OF THE AURAS, NOT OF A LIST OF IDS.**
+  `AuraDefinition.isBleed` is a ruleset TAG the engine attaches no behaviour to,
+  so a new bleed is covered the day it lands. It is NOT derived from "physical,
+  periodic and ignoring armor" — a true description of every bleed here — because
+  the school and the armor rule are decided inside `onTick` and are not visible on
+  the definition. **A derivation that has to run the effect to answer is not a
+  derivation.**
+- **A TICK IS REACHED FOR CRIT AND NOT FOR DAMAGE, and the bleeding scope obeys
+  that too.** `bleedingTargetModifier` takes the table as an ARGUMENT for exactly
+  that reason: the crit fold passes `attackTable ?? critFrom` and the damage fold
+  passes `attackTable` alone. Hard-coding either would break half of a convention
+  that is written down. **It is also what stops Rip amplifying Rip** — a bleed's
+  own ticks being raised by the bleed being up is self-referential, and the looser
+  reading measured the Cat Druid a third higher.
 
 **AND A FOURTH THAT BELONGS TO THE OTHER SIDE OF THE ATTACK.**
 `AuraDefinition.attackerAbilityModifiers` is keyed by ability id like the first
@@ -451,6 +482,18 @@ something that comes and goes.
   shortens a swing and a cast and nothing else — a whole-character
   `damageDoneMultiplier` would take the penalty to Judgement and Consecration,
   which the haste never accelerated.
+- **A CONDITION THE CHARACTER *IS*, RATHER THAN CARRIES, GOES IN
+  `BuildRequirement`** — weapon type, two-handed, shield, pet, and now `styles`.
+  **A DRUID'S FORM IS ITS COMBAT STYLE**, a field the preset sets, so "in Cat
+  Form, Bear Form, and Dire Bear Form" is as knowable before the pull as the
+  weapon in its hand. `stat`, `statFromLevel`, `grantAura`, `conditionalDamage`,
+  `conditionalCrit` and `reaction` all take one.
+- **"THE FORM IS FIXED" IS A REASON A SHIFT CANNOT PAY OUT, NOT A REASON A TALENT
+  CANNOT READ THE FORM**, and conflating the two inflated the Druid's queue by
+  three. Five talents were written up as ONE engine gap — mid-fight shifting —
+  and only two of them ask whether a shift happened; the other three ask which
+  form is HELD. **When a family of talents is written up as one gap, check they
+  are all asking the same question.**
 - **A school-blind `spellPower` cannot hold "damage done by SHADOW spells"**, and
   seventeen item lines say exactly that. It is a fourth field on
   `SchoolModifier`, not a stat (`STAT_NAMES` is a closed flat set), and
@@ -511,7 +554,11 @@ something that comes and goes.
   rest behind, which reads as a working talent worth several times its value.
 - **A percentage mana reduction is `CastModifier.costFraction`**, granted by
   `grantCastModifier`. `abilityCost` subtracts a FLAT amount, right for a 20-rage
-  strike and wrong for a 380-mana spell. **Two on the same ability stack
+  strike and wrong for a 380-mana spell. **AND `abilityCost` TAKES A
+  `valueIndex`, because one talent can cut two abilities by two different
+  amounts** — Shredding Attacks is 18 energy off Shred and 3 rage off Lacerate,
+  and a second entry reading the first number would have taken 18 rage off a
+  15-rage ability, which is not a small error but the ability made free. **Two on the same ability stack
   ADDITIVELY** — 50% and 25% make 75%, not 62.5%, because `resolveCast` subtracts
   each from the BASE. Both readings produce a plausible number, so there is a
   test.
@@ -523,6 +570,15 @@ something that comes and goes.
   though the talent says only "Attack Power" — Forever names the ranged pool
   explicitly everywhere else it means it, so the melee-only reading was
   defensible and wrong.
+- **A STAT CAN BE A PERCENTAGE OF THE *LEVEL*, AND THAT ONE IS RESOLVED ONCE** —
+  `statFromLevel`, for Predatory Strikes' "150% of your level". Level cannot be
+  buffed and never moves during a fight, so folding it into the derivation would
+  add a term that can never change; resolving it at build time is CORRECT here for
+  exactly the reason it is wrong for `statFromStat`. **A caller that supplies no
+  level gets an inert talent that SAYS it is inert** rather than a plausible 60
+  nobody chose, and both callers pass `MAX_CHARACTER_LEVEL` — the level the fight
+  builds at, not one off the profile, because a panel has to describe the
+  character the fight will run.
 
 ### Resources
 
@@ -600,6 +656,17 @@ See [docs/resources.md](docs/resources.md).
   is built PER CHARACTER**, because an internal cooldown is per-character state
   and one shared closure silently stopped Windfury proccing after the first
   iteration of a batch. [docs/raid-buffs.md](docs/raid-buffs.md)
+- **A BUFF THE CHARACTER PROVIDES ITSELF IS THE SAME AURA REACHED TWO WAYS, AND
+  THE ID IS WHAT KEEPS IT SAFE.** Leader of the Pack and Moonkin Form are raid
+  buffs AND Druid talents, so the aura is declared ONCE in `auras/druid.ts` and
+  `raidBuffs.ts` imports it — the arrangement Thunder Clap already had.
+  `AuraCollection.apply` refreshes a matching id instead of stacking, so a Cat
+  that takes the talent in a raid that also ticked the buff has 3% and not 6%.
+  **The owner's "they don't stack, handle it on the GUI" ruling is about the two
+  DIFFERENT auras**, which do add — which is why the Moonkin preset is the second
+  profile to depart from `PRESET_RAID_BUFFS`, dropping the one it excludes. The
+  first is the Enhancement Shaman and its own Windfury; the exception list is in
+  `presets.test.ts` and is asserted EXHAUSTIVE.
 
 ### Pets
 
@@ -806,6 +873,15 @@ whether a list changed at all; the DPS says whether it mattered.**
   resolution strips the slots a style cannot fill, and only genuine conflicts are
   exclusive: a two-hander against a one-hander, and an off-hand the style cannot
   hold. A ranged weapon coexists with a sword and simply does not swing.
+- **AND THE ONE STAT THAT GENUINELY DOES ONLY APPLY SOMETIMES IS
+  `Item.styleStats`.** "+172 Attack Power in Cat, Bear, and Dire Bear forms only"
+  is the single line in the data that says it, and it was listed as unmodelled for
+  as long as the item existed on the grounds that "an item stat is not conditional
+  on the combat style". `statsForStyle` TAKES THE STYLE — it is how the slots are
+  stripped in the first place — so the answer was one argument away the whole
+  time. **THE FORM LIST IS MAPPED IN FULL OR NOT AT ALL**: a name `FORM_STYLES`
+  cannot translate sends the whole line to `unmodelled` rather than applying the
+  part that matched, because half a stat is worse than a reported one.
 - **A STAT-STICK STYLE IS TWO SEPARATE QUESTIONS** — is the item kept, and does
   it swing — and one commit got one wrong in each direction. Reading
   `mainHand: 'stat-stick'` as "not two-hand, therefore one-hand" DELETED a held
@@ -830,6 +906,10 @@ whether a list changed at all; the DPS says whether it mattered.**
   Season of Discovery Hand of Justice where the proc was keyed to the Classic id
   — and its tooltip matches `MODELLED_AS_PROCS`, so it would have read as fully
   SIMULATED while firing never once.
+- **A CONDITIONAL ITEM LINE IS A CANDIDATE FOR EVERY OTHER SLOT IT NAMES.** The
+  Glaive's clause lists three forms, two of which are one engine style, and the
+  parser folds them — so a line naming Moonkin or a stat other than attack power
+  is reported rather than guessed at. `reasonFor` says which of the two it is.
 - **A gear set can force a build setting.** When the owner supplies the gear, it
   is the gear that says which of the five settings was wrong.
 - **VALIDATE THE GEAR, NOT THE CHARACTER, AGAINST THE PLANNER.** The planner
@@ -857,6 +937,19 @@ whether a list changed at all; the DPS says whether it mattered.**
   `tests/game/classRegistration.test.ts` fails when a class with abilities is
   absent from any registry. **Check a new class's talents actually change a
   number rather than trusting the build to complain**, because it will not.
+  Two more registries are OPTIONAL and silent in the same way: `CAST_REACTIONS`
+  in `talentBuild.ts` (three classes have one) and `TALENT_AURAS` in
+  `auras/talentAuras.ts`. **A `grantAura` naming an aura that registry does not
+  carry is DROPPED rather than throwing**, which is right for a typo and reads as
+  a talent that reports itself modelled and does nothing — so a class that adds
+  one wants a test that the registry reaches every aura its effects name.
+- **A TALENT-GRANTED SPELL IS IN THE CAPTURED SPELLBOOK WITH A LEVEL BESIDE IT.**
+  `forever-druid-spellbook.json` gives Berserk "Learned at level 40", and gives
+  Insect Swarm, Swiftmend, Feral Charge, Moonkin Form and Nature's Swiftness the
+  same line. **All five are talents.** The level says where the client shows the
+  spell, not how it is obtained — and reading it as a trainer spell put Berserk in
+  the BASE ability list, so every Druid carried an ability it had spent no point
+  on while its talent claimed the engine could not reach any of its clauses.
 - **A `percentAdd` stat effect without `scale: 0.01` is a thousand percent.**
   `StatBlock` computes `(base + flat) × (1 + sum(percentAdd))`, so the modifier
   wants a FRACTION and a talent states a PERCENTAGE. It survived two class PRs,
@@ -881,6 +974,16 @@ whether a list changed at all; the DPS says whether it mattered.**
   is legal and `{ careful_aim: 1 }` is not; `createPlayer` strips the illegal one
   SILENTLY, and a rank-scaling test read that as "worth nothing at rank 1". Pad a
   single-talent allocation with tier-0 filler, as `tests/helpers/legalise` does.
+  **AND PAD IT AT RANKS THAT EXIST**: Subtlety has three, so five points in it is
+  dropped, which takes the tree total under the next tier and drops the capstone
+  with it — a test that reads "the talent grants nothing" for two reasons at once.
+- **REMOVING A TALENT TO PRICE IT CAN STRIP A DEEPER ONE, SILENTLY, AND THAT IS
+  THE SAME RULE POINTING THE OTHER WAY.** Taking three points out of Feral Combat
+  put Rend and Tear under its tier gate and Berserk after it, so "Predatory
+  Strikes is worth +62.9" was really three talents. **An isolation probe has to
+  print `legalAllocation(...).dropped` beside every figure** —
+  `tools/druid_attribution.ts` does, and its first run did not. A figure without
+  its cascade named is a rumour.
 
 See [docs/talent-effects.md](docs/talent-effects.md) for how an effect is
 expressed.

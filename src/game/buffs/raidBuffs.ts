@@ -1,4 +1,4 @@
-import type { AuraDefinition, Reaction, StatModifierSpec, Stats } from '../../engine';
+import type { AuraDefinition, Reaction, Stats } from '../../engine';
 import { flat, percentMultiplicative, seconds } from '../../engine';
 import {
   BATTLE_SHOUT,
@@ -6,6 +6,13 @@ import {
   SUNDER_ARMOR_MAX_STACKS,
   THUNDER_CLAP_SLOW,
 } from '../auras/warrior';
+/*
+ * REUSED, NOT REDECLARED, for the same reason Thunder Clap's debuff below is:
+ * the Cat, Bear and Moonkin profiles PROVIDE these two themselves, through the
+ * talents that grant them, so the raid buff and the talent have to be the same
+ * aura or they will eventually disagree about the number.
+ */
+import { LEADER_OF_THE_PACK, MOONKIN_AURA, PARTY_CRIT_AURA_PERCENT } from '../auras/druid';
 import { windfuryTotemReaction } from './windfury';
 
 /**
@@ -96,15 +103,6 @@ const FIVE_MINUTES = seconds(300);
 
 /** The five primary stats Blessing of Kings and Mark of the Wild both cover. */
 const PRIMARIES = ['strength', 'agility', 'stamina', 'intellect', 'spirit'] as const;
-
-/**
- * Crit in this engine is percentage POINTS, and melee and spells are separate
- * stats. "+3% crit chance for melee, spells and ranged" is therefore two
- * modifiers, not one -- ranged reads `critChance`, the same stat melee does.
- */
-function critChanceEverywhere(points: number): readonly StatModifierSpec[] {
-  return [flat('critChance', points), flat('spellCritChance', points)];
-}
 
 // ---------------------------------------------------------------------------
 // Player buffs
@@ -335,30 +333,20 @@ const trueshotAura: RaidBuff = {
 const leaderOfThePack: RaidBuff = {
   id: 'leader_of_the_pack',
   name: 'Leader of the Pack',
-  detail: '+3% critical strike chance, melee and ranged and spell',
+  detail: `+${PARTY_CRIT_AURA_PERCENT}% critical strike chance, melee and ranged and spell`,
   source: 'Druid',
   appliesTo: 'player',
-  aura: {
-    id: 'leader_of_the_pack',
-    name: 'Leader of the Pack',
-    durationMs: 0,
-    statModifiers: critChanceEverywhere(3),
-  },
+  aura: LEADER_OF_THE_PACK,
   exclusiveWith: 'moonkin_form',
 };
 
 const moonkinForm: RaidBuff = {
   id: 'moonkin_form',
   name: 'Moonkin Form',
-  detail: '+3% critical strike chance, melee and ranged and spell',
+  detail: `+${PARTY_CRIT_AURA_PERCENT}% critical strike chance, melee and ranged and spell`,
   source: 'Druid',
   appliesTo: 'player',
-  aura: {
-    id: 'moonkin_form',
-    name: 'Moonkin Form',
-    durationMs: 0,
-    statModifiers: critChanceEverywhere(3),
-  },
+  aura: MOONKIN_AURA,
   exclusiveWith: 'leader_of_the_pack',
 };
 

@@ -163,11 +163,29 @@ these are correct.**
 - **`ferocious_bite`** is a Cat finisher that no profile casts. The owner's
   `DRUID_CAT` list is five entries and its finisher is `rip`; Ferocious Bite is
   in the book and in no list. It is one of the twelve entries that once fired
-  zero times, and removal is how it was resolved.
+  zero times, and removal is how it was resolved. **The intent is an open
+  question for the owner**, and the Cat's energy budget is why it is defensible:
+  about 690 energy for a whole fight, and Bite empties the bar.
 - **`frostbolt`** is cast by no Mage including Frostfire, which sounds wrong for
   a Frost build and is not: that list casts `frostfire_bolt`, which is also a
   Chill effect, so **Fingers of Frost still procs** and Shatter's window still
   opens.
+
+## A third bucket: declared and in NOBODY's book
+
+**THE SAME BLIND SPOT THIS AUDIT WAS WRITTEN TO CLOSE, one step further out.**
+An ability in the book, in no list, dealing no damage was invisible to everything
+until this audit existed. An ability in NO BOOK AT ALL was invisible to the audit
+too: it appeared in neither the "in a book somewhere" total nor the 25, so it read
+as an ability that does not exist.
+
+| Class | Ability | Why |
+| --- | --- | --- |
+| Druid | `natures_swiftness` | granted by a talent no Druid profile takes. Built as the second caller of the one-shot cast-time rule, tested on its mechanism, and worth nothing to the three builds |
+
+**ONE TODAY, and the bucket matters more than the entry.** A declaration nothing
+can reach is exactly what an unfinished ability looks like, and the difference
+between the two is a sentence somebody has to write.
 
 ## What this does NOT check
 

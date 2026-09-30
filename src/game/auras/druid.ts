@@ -44,6 +44,61 @@ const ARCANE = 'arcane' as const;
 const NATURE = 'nature' as const;
 const PHYSICAL = 'physical' as const;
 
+/*
+ * ============================================================================
+ * THE TWO PARTY AURAS, WHICH ARE ALSO TWO RAID BUFFS.
+ *
+ * Leader of the Pack and Moonkin Form each put +3% critical strike chance on
+ * everyone within 45 yards, and each tooltip says it is "exclusive with" the
+ * other. They have existed in `buffs/raidBuffs.ts` since raid buffs did,
+ * because a raid normally receives one of them from somebody ELSE.
+ *
+ * DECLARED HERE AND IMPORTED THERE, rather than written out twice. The Cat,
+ * the Bear and the Moonkin each PROVIDE their own -- they are the druid the
+ * raid buff represents -- so the talent and the raid buff are the same effect
+ * reached two ways, and two declarations of it would eventually disagree about
+ * the number. The same argument `raidBuffs.ts` already makes for Thunder Clap,
+ * which it reuses from the Warrior rather than redeclaring.
+ *
+ * THE SHARED ID IS WHAT MAKES IT SAFE. `AuraCollection.apply` refreshes an
+ * aura of the same id instead of stacking a second one, so a Cat that takes
+ * the talent AND sits in a raid that selected the buff has 3% and not 6%. The
+ * two entries EXCLUDE EACH OTHER on the GUI by the ruleset owner's ruling --
+ * "Leader of the Pack and Moonkin Form don't stack, but that can be handled on
+ * the GUI" -- and that ruling is about the two DIFFERENT auras, which do add
+ * if both are chosen.
+ *
+ * WHICH IS WHY THE MOONKIN PRESET NO LONGER SELECTS LEADER OF THE PACK. It
+ * brings Moonkin Form itself; a raid running both is the one combination the
+ * ruling forbids. Its crit is unchanged at +3% and the preset says so.
+ * ============================================================================
+ */
+
+/** Percentage POINTS, stated by both tooltips. */
+export const PARTY_CRIT_AURA_PERCENT = 3;
+
+/**
+ * Crit in this engine is percentage POINTS, and melee and spells are separate
+ * stats. "+3% crit chance" is therefore TWO modifiers, not one -- ranged reads
+ * `critChance`, the same stat melee does. Moved here with the auras from
+ * `raidBuffs.ts`, which had this as `critChanceEverywhere` and no other caller.
+ */
+function partyCritAura(id: string, name: string): AuraDefinition {
+  return {
+    id,
+    name,
+    // As long as the druid is there, which is the whole fight.
+    durationMs: 0,
+    statModifiers: [
+      flat('critChance', PARTY_CRIT_AURA_PERCENT),
+      flat('spellCritChance', PARTY_CRIT_AURA_PERCENT),
+    ],
+  };
+}
+
+export const LEADER_OF_THE_PACK = partyCritAura('leader_of_the_pack', 'Leader of the Pack');
+export const MOONKIN_AURA = partyCritAura('moonkin_form', 'Moonkin Form');
+
 // ---------------------------------------------------------------------------
 // Balance
 // ---------------------------------------------------------------------------
@@ -208,6 +263,7 @@ export const RAKE_DOT: AuraDefinition = {
   name: 'Rake',
   durationMs: RAKE_DOT_DURATION_MS,
   isDebuff: true,
+  isBleed: true,
   refreshBehaviour: 'reset',
   periodic: {
     intervalMs: RAKE_TICK_INTERVAL_MS,
@@ -250,6 +306,7 @@ export function ripAura(comboPoints: number): AuraDefinition {
     name: 'Rip',
     durationMs: RIP_DURATION_MS,
     isDebuff: true,
+    isBleed: true,
     refreshBehaviour: 'reset',
     periodic: {
       intervalMs: RIP_TICK_INTERVAL_MS,
@@ -309,6 +366,7 @@ export const LACERATE: AuraDefinition = {
   name: 'Lacerate',
   durationMs: LACERATE_DURATION_MS,
   isDebuff: true,
+  isBleed: true,
   maxStacks: LACERATE_MAX_STACKS,
   refreshBehaviour: 'reset',
   periodic: {
@@ -665,6 +723,88 @@ function tick(
     appliesArmor: false,
   });
 }
+
+/**
+ * The same aura, lasting longer -- Nature's Splendor's whole effect.
+ *
+ * ----------------------------------------------------------------------------
+ * IT ADDS TICKS AT THE SAME RATE, WHICH IS THE WHOLE POINT. Every DoT here
+ * computes its per-tick figure inside `onTick` from its own CONSTANTS, not
+ * from the instance -- so lengthening a Moonfire from 12 seconds to 15 gives a
+ * fifth tick of the same size rather than spreading the same total thinner.
+ * That is what "increases the duration" means, and the other reading would
+ * make the talent worth exactly nothing.
+ *
+ * A NEW DEFINITION RATHER THAN A MUTATION. `MOONFIRE_DOT` is a module-level
+ * constant shared by every Druid in a batch, and a talent that edited it would
+ * lengthen Moonfire for the untalented character in the next iteration -- the
+ * same shape as the shared-closure bug that stopped Windfury proccing after
+ * the first fight of a batch.
+ *
+ * THE ID IS UNCHANGED, deliberately: the priority lists ask `expired('moonfire')`
+ * and the damage breakdown groups by it. A lengthened Moonfire is a Moonfire.
+ * ----------------------------------------------------------------------------
+ */
+export function lengthened(aura: AuraDefinition, extraSeconds: number): AuraDefinition {
+  if (extraSeconds <= 0) return aura;
+  return { ...aura, durationMs: aura.durationMs + seconds(extraSeconds) };
+}
+
+/*
+ * ============================================================================
+ * NATURE'S SWIFTNESS: "When activated, your next Nature spell becomes an
+ * instant cast spell."
+ *
+ * A ONE-SHOT CAST-TIME MODIFIER, and this was the gap Eclipse named when it
+ * arrived -- "the first such gap in the project", said twice in
+ * `druidEffects.ts` and once on the Shaman's talent of the same name. The rule
+ * was built for Eclipse and this is its second caller, so nothing new is
+ * needed: an aura with a `castModifier` naming the abilities, consumed by the
+ * cast that uses it.
+ *
+ * `castTimeFraction: 1` IS THE WHOLE CAST, not a reduction. `resolveCast`
+ * multiplies the base cast time by `1 - fraction`, so one is instant.
+ *
+ * WHICH SPELLS ARE NATURE. Wrath and Insect Swarm, off their own `school`
+ * declarations; Starfire and Moonfire are ARCANE and are correctly not here,
+ * which is what stops this shortening the Moonkin's main nuke. The healing
+ * Nature spells the tooltip also covers are out of scope like every heal.
+ *
+ * NO DRUID PROFILE TAKES IT. That is a statement about the three builds and not
+ * about this: the talent is real, tested on its mechanism, and worth nothing to
+ * a Moonkin that spent its thirteen Restoration points elsewhere.
+ * ============================================================================
+ */
+export const NATURES_SWIFTNESS_COOLDOWN_MS = seconds(180);
+
+/** The Druid's damaging NATURE spells, which is what the talent selects. */
+export const NATURE_SPELLS: readonly string[] = ['wrath', 'insect_swarm'];
+
+export const NATURES_SWIFTNESS: AuraDefinition = {
+  id: 'natures_swiftness',
+  name: "Nature's Swiftness",
+  // Until it is spent. No duration is stated and none would mean anything.
+  durationMs: 0,
+  castModifier: {
+    abilityIds: NATURE_SPELLS,
+    castTimeFraction: 1,
+    /*
+     * ONLY A SPELL THAT HAS A CAST TIME SPENDS IT. Forever's wording drops
+     * Classic's "with a casting time less than 10 sec", but the reading is the
+     * same and the field exists: without it the charge is eaten by the next
+     * Insect Swarm, which is instant already -- an aura spent for nothing,
+     * which looks exactly like one that worked.
+     */
+    requiresCastTime: true,
+    /*
+     * `'all'` AND NOT `'stack'`: the tooltip is "your NEXT Nature spell", one
+     * cast, and there is only ever one charge. Spending a stack where the
+     * effect spends all of them is the mistake this field exists to make
+     * expressible -- it reads as a working talent worth several times its value.
+     */
+    consumedByCast: 'all',
+  },
+};
 
 function clampIndex(comboPoints: number): number {
   return Math.max(1, Math.min(5, Math.floor(comboPoints))) - 1;

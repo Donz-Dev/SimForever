@@ -37,7 +37,8 @@ import { reactionsForClass } from '../reactions/reactionsForClass';
 import { rotationFor } from '../rotations/rotationFor';
 import type { Equipment } from '../items/Item';
 import type { TalentAllocation } from '../talents/Talent';
-import { TALENT_AURAS, WARRIOR_STANCES } from '../auras/warrior';
+import { WARRIOR_STANCES } from '../auras/warrior';
+import { TALENT_AURAS } from '../auras/talentAuras';
 import { EXTERNAL_HEALER } from '../encounters/externalHealer';
 import { talentBuild, talentContextFor } from '../talents/talentBuild';
 import { legalAllocation } from '../talents/talentRules';
@@ -235,6 +236,13 @@ export function createPlayer(options: PlayerOptions): Combatant {
     talentContextFor(equipmentForWeapons, style, weapons, {
       characterClass,
       talents: declaredTalents,
+      /*
+       * Predatory Strikes is a percentage OF THE LEVEL, which nothing else
+       * about a talent has ever needed. The same constant the Combatant is
+       * built with below rather than anything off the profile: this simulator
+       * runs at 60, and the talent must read the level the FIGHT uses.
+       */
+      level: MAX_CHARACTER_LEVEL,
     }),
   );
 
@@ -408,6 +416,12 @@ export function createPlayer(options: PlayerOptions): Combatant {
     // And the same three scoped to MELEE or RANGED -- "all your melee
     // abilities", which is neither one ability nor one school.
     attackTableModifiers: build.attackTableModifiers,
+    // The same again, counted only while the TARGET bleeds. Rend and Tear is
+    // the only caller, and the one modifier here that is about the victim.
+    bleedingTargetModifiers: build.bleedingTargetModifiers,
+    // Genesis: every tick and nothing else. It is neither a school, a table
+    // nor an ability, and `DamageRequest.periodic` is what separates it.
+    periodicDamageMultiplier: build.periodicDamageMultiplier,
     // A talent conditional on the weapon held -- Two-Handed Weapon
     // Specialization -- multiplies everything including auto attacks, so it
     // cannot ride on `abilityModifiers`, which deliberately skips swings.

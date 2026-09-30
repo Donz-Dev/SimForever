@@ -10,6 +10,7 @@ import type {
 } from './attackTable';
 import { ROLL_MAX, resolveAttackTable, toRollUnits } from './attackTable';
 import type { AbilityModifier } from './abilityModifiers';
+import { combineAbilityModifiers } from './abilityModifiers';
 import { armorConstantForLevel, versatilityMultiplierFrom } from './ratings';
 import type { AttackEvent } from './reactions';
 import { runReactions } from './reactions';
@@ -402,12 +403,22 @@ function rollTable(
      */
     request.source.attackTableModifiers.for(request.attackTable ?? request.critFrom),
     /*
-     * AND THE TARGET'S OWN, which is the only one of the four that belongs to
-     * the other side of the attack. Winter's Chill is "increases the chance
-     * your Ice Lance and Frostbolt spells will critically hit THE TARGET" --
-     * a per-ability crit the boss carries, not the Mage.
+     * AND THE TARGET'S OWN, WHICH IS TWO EFFECTS SHARING ONE SLOT. Both belong
+     * to the other side of the attack and they arrived from different dives, so
+     * they are combined here rather than widening this call to five arguments.
+     *
+     * Winter's Chill is "increases the chance your Ice Lance and Frostbolt
+     * spells will critically hit THE TARGET" -- a per-ability crit the boss
+     * carries, not the Mage. Rend and Tear is "on Bleeding targets", read fresh
+     * per hit rather than settled when the character was built.
+     *
+     * `?? critFrom` ON BOTH, exactly as the line above: a tick borrows the crit
+     * of whatever applied it.
      */
-    request.target.abilityModifierAgainst(request.abilityId),
+    combineAbilityModifiers(
+      request.target.abilityModifierAgainst(request.abilityId),
+      bleedingTargetModifier(request, request.attackTable ?? request.critFrom),
+    ),
   );
 
   if (!request.attackTable) {
@@ -488,6 +499,38 @@ function combineModifiers(
     damageMultiplier: ability.damageMultiplier,
   };
 }
+
+/**
+ * The table-scoped modifier that counts only while the TARGET is bleeding.
+ *
+ * ----------------------------------------------------------------------------
+ * ONE FUNCTION, TWO READERS, which is the point. The crit chance is read in
+ * `rollTable` and the damage multiplier in `resolveDamage`, and a conditional
+ * that reached one and not the other would be half an effect with nothing to
+ * say so -- the same trap `Combatant.abilityModifierFor` exists to close.
+ *
+ * `table` IS PASSED IN, BECAUSE THE TWO READERS WANT DIFFERENT ONES, and that is
+ * the rule `attackTableModifiers` already follows: the crit fields read
+ * `attackTable ?? critFrom` so a tick can borrow the crit of whatever applied
+ * it, and the damage multiplier reads `attackTable` ALONE so a tick is not
+ * treated as an attack on that table. Hard-coding either one here would break
+ * half of a convention that is written down in CLAUDE.md.
+ *
+ * THE EMPTY CHECK IS NOT AN OPTIMISATION, IT IS THE COMMON CASE. Almost no
+ * character carries one of these, and walking the target's auras on every tick
+ * of every fight for all of them would be work done for nobody.
+ * ----------------------------------------------------------------------------
+ */
+function bleedingTargetModifier(
+  request: DamageRequest,
+  table: AttackTableKind | undefined,
+): AbilityModifier {
+  const modifiers = request.source.bleedingTargetModifiers;
+  if (modifiers.isEmpty || !request.target.auras.isBleeding) return NO_MODIFIER;
+  return modifiers.for(table);
+}
+
+const NO_MODIFIER: AbilityModifier = {};
 
 function withModifier(chances: AttackChances, modifier: AbilityModifier): AttackChances {
   if (!modifier.critBonus && !modifier.critMultiplierBonus && !modifier.hitBonus) return chances;
@@ -624,8 +667,38 @@ export function resolveDamage(
      * leaves with the seal, so it cannot live there. Both apply.
      */
     source.damageDoneMultiplierForTable(request.attackTable);
+  /*
+   * THE SAME TABLE SCOPE AGAIN, conditional on the target bleeding.
+   *
+   * `attackTable` ALONE, deliberately, for the reason spelled out on
+   * `tableMultiplier` above: a tick has no table, so it is not damage on one.
+   *
+   * WHAT THAT MEANS FOR REND AND TEAR, and it is an INTERPRETATION worth
+   * naming. "Increases damage done by your melee abilities on Bleeding targets"
+   * reaches Shred, Maul, Primal Bite and the moment Lacerate lands; it does NOT
+   * reach the ticks of Rip, Rake or Lacerate. Two things decide it that way.
+   * The convention is one -- a damage multiplier keyed on a table reads
+   * `attackTable` everywhere else in this pipeline. The other is that a bleed's
+   * own ticks would otherwise be amplified BY THE BLEED BEING UP, which is
+   * self-referential: Rip would raise Rip. Both readings produce a plausible
+   * number, and the looser one measured the Cat a third higher.
+   */
+  const bleedingMultiplier =
+    bleedingTargetModifier(request, request.attackTable).damageMultiplier ?? 1;
+  /*
+   * PERIODIC ONLY, and it is the one multiplier that selects on the KIND of
+   * damage rather than on who deals it, what school it is or which table it
+   * rolled. Genesis is the only caller; a character without it carries 1.
+   */
+  const periodicMultiplier = request.periodic ? source.periodicDamageMultiplier : 1;
   const afterAttacker =
-    afterCrit * attackerMultiplier * abilityMultiplier * schoolMultiplier * tableMultiplier;
+    afterCrit *
+    attackerMultiplier *
+    abilityMultiplier *
+    schoolMultiplier *
+    tableMultiplier *
+    bleedingMultiplier *
+    periodicMultiplier;
 
   // Per SCHOOL, which folds in the blanket multiplier as well. Curse of the
   // Elements raises magic and leaves physical alone, so the school has to

@@ -1,6 +1,7 @@
 import type { AttackTableKind, DamageSchool } from '../../engine';
 import type { PrimaryStatName, StatModifierOperation, StatName } from '../../engine';
 import type { ResourceType, WeaponType } from '../../engine';
+import type { CombatStyleId } from '../character/ids';
 
 /**
  * What a talent does.
@@ -49,6 +50,40 @@ export type TalentEffect =
       readonly operation: StatModifierOperation;
       readonly scale?: number;
       readonly valueIndex?: number;
+      /**
+       * What the character must BE for this stat to apply at all.
+       *
+       * Heart of the Wild is "+10% Intellect, and while in Bear Form your
+       * Stamina is increased by 20%, and while in Cat Form your Strength is
+       * increased by 10%" -- one talent, three stats, and two of them gated on
+       * the form. Without a requirement here the clauses could only be listed
+       * as `unmodelled`, which is what they were.
+       */
+      readonly requires?: BuildRequirement;
+    }
+
+  /**
+   * A stat worth a PERCENTAGE OF THE CHARACTER'S LEVEL.
+   *
+   * ----------------------------------------------------------------------
+   * NOT `statFromStat`, WHICH READS A PRIMARY AND RE-DERIVES. Level is not a
+   * stat, cannot be buffed and never moves during a fight, so this resolves
+   * to a flat number once at build time -- and resolving it once is CORRECT
+   * here for the same reason it is wrong there. Routing it through the
+   * derivation would add a term that can never change.
+   *
+   * Predatory Strikes is the only caller: "increases your melee Attack Power
+   * in Cat Form, Bear Form, and Dire Bear Form by 150% of your level", which
+   * is 90 attack power at 60. Its `requires` is what carries the form clause.
+   *
+   * The value is a PERCENTAGE, so 150 means one and a half times the level.
+   * ----------------------------------------------------------------------
+   */
+  | {
+      readonly kind: 'statFromLevel';
+      readonly to: StatName;
+      readonly valueIndex?: number;
+      readonly requires?: BuildRequirement;
     }
 
   /**
@@ -84,8 +119,17 @@ export type TalentEffect =
       readonly valueIndex?: number;
     }
 
-  /** Reduces an ability's resource cost by the talent's value. */
-  | { readonly kind: 'abilityCost'; readonly abilityId: string }
+  /**
+   * Reduces an ability's resource cost by the talent's value.
+   *
+   * `valueIndex` because ONE TALENT CAN CUT TWO ABILITIES BY DIFFERENT
+   * AMOUNTS. Shredding Attacks is "reduces the Energy cost of your Shred
+   * ability by 18 and reduces the Rage cost of your Lacerate ability by 3",
+   * and its Lacerate clause was carried as `unmodelled` for exactly this --
+   * the effect could reach the second ability and not the second NUMBER, so a
+   * second entry would have taken 18 rage off a 15-rage ability.
+   */
+  | { readonly kind: 'abilityCost'; readonly abilityId: string; readonly valueIndex?: number }
   /**
    * Resource cost to SUBTRACT from every ability that rolls a combat table.
    *
@@ -145,7 +189,20 @@ export type TalentEffect =
    * it. The aura already has a periodic; this is the wiring that puts one on
    * a character because a talent point was spent.
    */
-  | { readonly kind: 'grantAura'; readonly auraId: string }
+  | {
+      readonly kind: 'grantAura';
+      readonly auraId: string;
+      /**
+       * What the character must BE for the aura to be granted at all.
+       *
+       * Leader of the Pack is "while in Cat Form, Bear Form, or Dire Bear
+       * Form" and Moonkin Form is the Moonkin's own, so both are form-gated.
+       * Without this a Moonkin who spent a point in the feral capstone would
+       * carry the feral aura as well, which is the one combination the
+       * exclusivity ruling forbids.
+       */
+      readonly requires?: BuildRequirement;
+    }
   /**
    * A PERCENTAGE of the armor equipped items supply, added on top.
    *
@@ -333,6 +390,57 @@ export type TalentEffect =
    */
   | {
       readonly kind: 'attackTableDamage' | 'attackTableCrit' | 'attackTableCritDamage';
+      readonly tables: readonly AttackTableKind[];
+      readonly valueIndex?: number;
+    }
+
+  /**
+   * Multiplies PERIODIC damage only -- every tick and nothing else.
+   *
+   * ----------------------------------------------------------------------
+   * A FOURTH AXIS, AND IT CROSSES ALL THREE OF THE OTHERS. Genesis is
+   * "increases the periodic damage and healing done by your spells AND
+   * abilities", which is every school, every table and every ability at once
+   * -- so it is not `schoolDamage`, not `attackTableDamage` and not a list of
+   * ids. What separates it is the one thing none of those can see: whether
+   * the damage is a TICK.
+   *
+   * `DamageRequest.periodic` has carried that distinction since the first DoT
+   * -- it is how telemetry tells a bleed from a strike -- so this is a new
+   * READER of an existing fact rather than a new fact. The alternative taken
+   * before it was `unmodelled`, on the honest grounds that `abilityDamage` is
+   * per ability and `damageMultiplier` is everything.
+   *
+   * THE HEALING HALF IS OUT OF SCOPE like every healing clause, and the
+   * talent says so alongside rather than pretending the multiplier covers it.
+   * ----------------------------------------------------------------------
+   */
+  | { readonly kind: 'periodicDamage'; readonly valueIndex?: number }
+
+  /**
+   * Damage scoped to an attack TABLE, but only while the target is BLEEDING.
+   *
+   * ----------------------------------------------------------------------
+   * TWO CONDITIONS AT ONCE, and neither existing declaration carries both.
+   * Rend and Tear is "increases damage done by your melee ABILITIES on
+   * BLEEDING targets" -- the first half is `attackTableDamage` with
+   * `melee-special`, and the second half is a property of somebody else,
+   * read fresh on every hit.
+   *
+   * IT ASKS THE AURAS, NOT A LIST OF IDS. `AuraDefinition.isBleed` is a
+   * ruleset tag the engine attaches no behaviour to, so a new bleed is
+   * covered on the day it lands -- the same argument `comboPointsAwarded`
+   * makes for Berserk's generators. A hand-kept list of three ids is how a
+   * fourth goes missing, and a missed one looks exactly like an ability that
+   * happened not to crit.
+   *
+   * `critWhileAura` IS THE CASTER-SIDE TWIN and deliberately not reused:
+   * that one names an aura on the character CARRYING the talent, and this
+   * one is about the victim.
+   * ----------------------------------------------------------------------
+   */
+  | {
+      readonly kind: 'bleedingTargetDamage';
       readonly tables: readonly AttackTableKind[];
       readonly valueIndex?: number;
     }
@@ -810,6 +918,28 @@ export interface BuildRequirement {
    * --------------------------------------------------------------------------
    */
   readonly hasPet?: boolean;
+  /**
+   * Which COMBAT STYLES the effect applies in. Any one of them satisfies it.
+   *
+   * --------------------------------------------------------------------------
+   * A DRUID'S FORM IS ITS COMBAT STYLE, and a style is a field the preset sets
+   * and the character is built with -- exactly as fixed at build time as the
+   * weapon in its hand. So "in Cat Form, Bear Form, and Dire Bear Form" is the
+   * same KIND of condition the three clauses above are, and it belongs here
+   * rather than needing anything read during the fight.
+   *
+   * THAT IS NOT THE SAME AS MODELLING SHAPESHIFTING, and the difference is
+   * worth stating because four Druid talents sit on the other side of it.
+   * Predatory Strikes and Heart of the Wild ask WHICH FORM IS HELD, which is
+   * knowable; Furor and Natural Shapeshifter pay out ON THE SHIFT, which needs
+   * a form to be something a fight can change. The first pair are expressible
+   * today and the second pair are not.
+   *
+   * `styles` names forms and every other style alike, because the selector is
+   * the same field -- a talent reading "while dual-wielding" would use it too.
+   * --------------------------------------------------------------------------
+   */
+  readonly styles?: readonly CombatStyleId[];
 }
 
 /**

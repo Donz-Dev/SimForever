@@ -41,6 +41,43 @@ import { PROFILE_PRESETS } from '../src/profiles/presets';
 import type { CharacterProfile } from '../src/profiles/CharacterProfile';
 import { characterAtCombatStart, runProfileBatch } from '../src/simulator';
 import { ALL_PRIORITY_LISTS } from '../src/game/rotations/allLists';
+import { DRUID_ABILITIES } from '../src/game/abilities/druid';
+import { HUNTER_ABILITIES } from '../src/game/abilities/hunter';
+import { MAGE_ABILITIES } from '../src/game/abilities/mage';
+import { PALADIN_ABILITIES } from '../src/game/abilities/paladin';
+import { PRIEST_ABILITIES } from '../src/game/abilities/priest';
+import { ROGUE_ABILITIES } from '../src/game/abilities/rogue';
+import { SHAMAN_ABILITIES } from '../src/game/abilities/shaman';
+import { WARLOCK_ABILITIES } from '../src/game/abilities/warlock';
+import { WARRIOR_ABILITIES } from '../src/game/abilities/warrior';
+
+/**
+ * Every ability DECLARED, class by class, against which "in a book somewhere" is
+ * checked.
+ *
+ * ----------------------------------------------------------------------------
+ * THE THIRD BLIND SPOT, AND IT IS THE SAME SHAPE AS THE FIRST TWO. This audit
+ * exists because an ability in the book, in no list, dealing no damage was
+ * invisible to everything. An ability in NO BOOK AT ALL was invisible to this
+ * audit as well: it appears in neither the "in a book somewhere" total nor the
+ * "cast by none of the 23" list, so it reads as an ability that does not exist.
+ *
+ * Nature's Swiftness is the first one -- declared, granted by a talent no Druid
+ * profile takes, and therefore learnable by nobody here. That is a fact about
+ * the three builds rather than a bug, and it has to be REPORTED to be that.
+ * ----------------------------------------------------------------------------
+ */
+const DECLARED_BY_CLASS = {
+  warrior: WARRIOR_ABILITIES,
+  rogue: ROGUE_ABILITIES,
+  druid: DRUID_ABILITIES,
+  shaman: SHAMAN_ABILITIES,
+  mage: MAGE_ABILITIES,
+  paladin: PALADIN_ABILITIES,
+  hunter: HUNTER_ABILITIES,
+  warlock: WARLOCK_ABILITIES,
+  priest: PRIEST_ABILITIES,
+} as const;
 
 const AS_JSON = process.argv.includes('--json');
 const ITERATIONS = Number(process.env.ITERATIONS ?? 10);
@@ -214,6 +251,18 @@ if (AS_JSON) {
   }
   const neverAnywhere = [...seenSomewhere.entries()].filter(([id]) => !firedSomewhere.has(id));
 
+  /*
+   * DECLARED AND IN NOBODY'S BOOK. Counted apart from the two buckets above,
+   * because "never cast" and "never even learnable" are different claims and
+   * only one of them is about a priority list.
+   */
+  const unlearnable: [string, string][] = [];
+  for (const [className, abilities] of Object.entries(DECLARED_BY_CLASS)) {
+    for (const ability of abilities) {
+      if (!seenSomewhere.has(ability.id)) unlearnable.push([ability.id, className]);
+    }
+  }
+
   console.log(`\n${'='.repeat(74)}`);
   console.log(
     `IN A BOOK SOMEWHERE: ${seenSomewhere.size}   ` +
@@ -230,6 +279,16 @@ if (AS_JSON) {
     }
     for (const [className, ids] of [...byClass].sort()) {
       console.log(`  ${pad(className, 9)} ${ids.sort().join(', ')}`);
+    }
+  }
+  if (unlearnable.length > 0) {
+    console.log(
+      `
+DECLARED AND IN NO PROFILE'S BOOK -- ${unlearnable.length}, each one a talent no profile takes:
+`,
+    );
+    for (const [id, className] of unlearnable.sort()) {
+      console.log(`  ${pad(className, 9)} ${id}`);
     }
   }
 }

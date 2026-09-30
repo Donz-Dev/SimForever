@@ -1,4 +1,5 @@
 import type { DamageSchool, PartialStats, WeaponSlot } from '../../engine';
+import type { CombatStyleId } from '../character/ids';
 
 /**
  * Where an item goes.
@@ -102,6 +103,27 @@ export interface Item {
    * Empty for every item that grants none, which is most of them.
    */
   readonly schoolPower: Readonly<Partial<Record<DamageSchool, number>>>;
+  /**
+   * Stats that apply only in a given COMBAT STYLE.
+   *
+   * ----------------------------------------------------------------------------
+   * "+172 Attack Power in Cat, Bear, and Dire Bear forms only." The Glaive of
+   * Obsidian Fury is the one item line in the data that says this, both feral
+   * Druid profiles hold it, and it was recorded in HANDOVER.md as a known
+   * understatement of those two figures for as long as the item has existed --
+   * "an item stat is not conditional on the combat style".
+   *
+   * IT WAS ALWAYS KNOWABLE. `statsForStyle` takes the style already -- that is
+   * how it strips the slots a style cannot fill -- so the condition is decided
+   * in the one function that has the answer, at the same moment it decides
+   * whether the item's ordinary stats count at all.
+   *
+   * EMPTY FOR EVERY OTHER ITEM, and the parser is the guard: a form list it
+   * cannot map ENTIRELY onto styles falls through to `unmodelled`, so a line
+   * naming Travel Form is reported rather than half-credited.
+   * ----------------------------------------------------------------------------
+   */
+  readonly styleStats: Readonly<Partial<Record<CombatStyleId, PartialStats>>>;
   readonly weapon?: ItemWeapon;
   readonly unmodelled: readonly UnmodelledEffect[];
   /**
