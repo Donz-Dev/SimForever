@@ -17,6 +17,7 @@ import type { TalentAllocation } from '../game/talents/Talent';
 import { talentsForClass } from '../game/talents/talentData';
 import { isLegal } from '../game/talents/talentRules';
 import type { CharacterProfile } from './CharacterProfile';
+import { DEFAULT_POISON_LOADOUT } from '../game/reactions/poisons';
 
 /** Every slot a profile may name. */
 const EQUIPMENT_SLOT_SET: ReadonlySet<string> = new Set<EquipmentSlot>([
@@ -276,6 +277,14 @@ export function validateProfile(value: unknown): ValidationResult {
     ok: true,
     profile: {
       version: validated.version,
+      /*
+       * REBUILT WITH A FALLBACK, because validation runs on anything a user
+       * can paste. A profile that reached here without the field -- hand-
+       * edited JSON, or a migration that has not run -- gets the default
+       * loadout rather than an undefined one that would crash the reaction
+       * builder.
+       */
+      poisons: { ...DEFAULT_POISON_LOADOUT, ...(validated.poisons ?? {}) },
       character: {
         name: validated.character.name,
         race: validated.character.race,

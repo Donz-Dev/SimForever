@@ -137,6 +137,16 @@ See [docs/combat-tables.md](docs/combat-tables.md).
   it and got it wrong. [docs/extra-attacks.md](docs/extra-attacks.md)
 - **SEAL DAMAGE IS NOT A WEAPON USE**, by the owner's ruling, and the swing
   carrying it still is. Enforced by dealing every seal hit with no `weaponSlot`.
+- **A POISON IS THE SAME SHAPE: NOT A USE, BUT TRIGGERED BY ONE.** Also the
+  owner's ruling. `isWeaponUseOf(attack, slot)` is what fires it -- a swing,
+  a Windfury extra attack, or an ability needing that weapon -- and the poison
+  hit itself carries no `weaponSlot`, so it cannot proc a second poison, a
+  Crusader or Hand of Justice. Getting that backwards does not look wrong:
+  poisons chaining off poisons is a bigger number and no error.
+- **A POISON'S CHANCE IS FLAT PER STRIKE, NOT PROCS PER MINUTE**, which is the
+  opposite of every weapon enchant here. "Each strike has a 20% chance" means a
+  fast off hand really does poison more often, where PPM exists to stop exactly
+  that. The two live side by side and must not be made to match.
 - **A reaction fires on damage; a CAST reaction fires on a cast.** A finisher
   spends its combo points inside its own `onCast`, where neither the cost system
   nor a damage reaction can see it. `AbilityCastEvent` carries what the cast

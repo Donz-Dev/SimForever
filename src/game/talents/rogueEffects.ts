@@ -89,11 +89,37 @@ export const ROGUE_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
     },
   ],
 
-  vile_poisons: [{ kind: 'unmodelled', reason: 'Poisons are not implemented.' }],
+  /*
+   * APPLIED, and not through this table. Both poison talents are read by
+   * `poisonReactions` off the allocation directly, for the same reason
+   * Windfury Weapon is a class reaction that reads one talent number: a Rogue
+   * who spent no points still applies poisons, and a talent-GRANTED proc would
+   * delete them for that Rogue while a second registration would double them.
+   *
+   * Their REASONS HAVE EXPIRED -- both said "Poisons are not implemented", and
+   * they are now. The dispel-resistance half of Vile Poisons is all that is
+   * left unmodelled, and nothing here dispels.
+   */
+  vile_poisons: [
+    {
+      kind: 'unmodelled',
+      reason:
+        'Its damage bonus APPLIES, read by `poisonReactions`. Only the "resist ' +
+        'dispel effects" half does nothing: nothing here dispels.',
+    },
+  ],
 
   cold_blood: [{ kind: 'grantAbility', abilityId: 'cold_blood' }],
 
-  improved_poisons: [{ kind: 'unmodelled', reason: 'Poisons are not implemented.' }],
+  improved_poisons: [
+    {
+      kind: 'unmodelled',
+      reason:
+        'Its apply-chance bonus APPLIES, read by `poisonReactions`. Only the ' +
+        '"chance to not consume a charge" half does nothing: charges are ' +
+        'infinite here, on the ruleset owner’s instruction.',
+    },
+  ],
 
   vigor: [{ kind: 'resourceMax', resource: 'energy' }],
 
@@ -105,8 +131,21 @@ export const ROGUE_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
 
   seal_fate: [{ kind: 'reaction', reactionId: 'seal_fate' }],
 
+  /*
+   * STILL UNMODELLED, AND NO LONGER FOR WANT OF POISONS. Venom is a Forever
+   * ADDITION -- the capture marks it `versusClassic: "new"` -- and it is a
+   * castable finisher this project does not declare, not a modifier on one
+   * that it does. Its +30% would also have to settle whether it stacks with
+   * Vile Poisons' +20% additively or multiplicatively, which no source states.
+   */
   venom: [
-    { kind: 'unmodelled', reason: 'A finisher whose whole effect is on poisons.' },
+    {
+      kind: 'unmodelled',
+      reason:
+        'Poisons now exist, but Venom itself is an undeclared finisher rather ' +
+        'than a modifier: it needs an ability, and a ruling on whether its ' +
+        '+30% stacks with Vile Poisons additively.',
+    },
   ],
 
   improved_eviscerate: [{ kind: 'abilityDamage', abilityId: 'eviscerate' }],

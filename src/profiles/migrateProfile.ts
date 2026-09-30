@@ -1,4 +1,5 @@
 import { CURRENT_PROFILE_VERSION } from './CharacterProfile';
+import { DEFAULT_POISON_LOADOUT } from '../game/reactions/poisons';
 
 /** Transforms a profile one version forward. */
 type Migration = (profile: Record<string, unknown>) => Record<string, unknown>;
@@ -11,6 +12,23 @@ type Migration = (profile: Record<string, unknown>) => Record<string, unknown>;
  * files to the new shape.
  */
 const migrations: Record<number, Migration> = {
+  /**
+   * Version 10 added `poisons`, which poison a Rogue coats each weapon with.
+   *
+   * Older profiles get the ruleset owner's stated default -- Instant on the
+   * main hand, Deadly on the off hand -- rather than nothing, and THAT CHANGES
+   * THEIR RESULTS. It is the opposite decision from version 9's empty raid
+   * buffs, and for the opposite reason: a saved profile with no raid buffs was
+   * genuinely fighting unbuffed, while a saved ROGUE was not choosing to fight
+   * without poisons. Poisons did not exist, so every Rogue figure recorded
+   * before this version is a floor.
+   *
+   * It reaches every class and costs nothing to the eight that cannot use it:
+   * the reactions only ever fire for a character with the poisons applied, and
+   * only a Rogue gets them.
+   */
+  9: (profile) => ({ poisons: { ...DEFAULT_POISON_LOADOUT }, ...profile }),
+
   /**
    * Version 9 added `raidBuffs`, the ids of the buffs assumed to be up.
    *

@@ -6,7 +6,7 @@ gets built is [docs/class-implementation.md](docs/class-implementation.md).
 ## Where the project is
 
 All nine classes and all 23 profiles are implemented, every number traced to a
-source rather than invented. **1,760 tests**, CI green on Node 20 and 22. Profile
+source rather than invented. **1,785 tests**, CI green on Node 20 and 22. Profile
 format **v9**. Live at <https://donz-dev.github.io/SimForever/>, republished by
 `.github/workflows/deploy.yml` on every push to `main` that passes.
 
@@ -26,30 +26,28 @@ which is what replacing every coefficient in the project at once should do.
 
 | Profile | Class | Talents | DPS | | Profile | Class | Talents | DPS |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| DW Fury | Warrior | 18/33/0 | 643.2 | | Shockadin | Paladin | 23/0/28 | 343.4 |
-| 2H Arms | Warrior | 38/13/0 | 604.5 | | Frostfire Mage | Mage | 0/29/22 | 340.0 |
-| LW Melee | Hunter | 7/13/31 | 556.2 | | Venom Rogue | Rogue | 37/12/2 | 328.8 |
-| Firelock | Warlock | 5/11/35 | 537.6 | | Rupture Rogue | Rogue | 12/8/31 | 321.2 |
-| Prot Warr | Warrior | 17/0/34 | 454.2 | | LW Ranged | Hunter | 7/39/5 | 304.0 |
-| Seal Twist Ret | Paladin | 13/0/38 | 452.3 | | SM/DS | Warlock | 40/11/0 | 292.6 |
-| Shadow Priest | Priest | 16/3/32 | 449.3 | | Ele Shaman | Shaman | 38/13/0 | 277.7 |
-| BM Hunter | Hunter | 31/20/0 | 421.0 | | Bear Druid | Druid | 9/42/0 | 254.7 |
-| Enh Shaman | Shaman | 19/32/0 | 410.3 | | Prot Pally | Paladin | 8/36/7 | 162.7 |
+| DW Fury | Warrior | 18/33/0 | 640.1 | | Enh Shaman | Shaman | 19/32/0 | 404.3 |
+| 2H Arms | Warrior | 38/13/0 | 594.9 | | Fire Mage | Mage | 10/39/2 | 390.5 |
+| LW Melee | Hunter | 7/13/31 | 550.8 | | Rupture Rogue | Rogue | 12/8/31 | 366.3 |
+| Firelock | Warlock | 5/11/35 | 537.6 | | Moonkin | Druid | 38/0/13 | 359.1 |
+| Prot Warr | Warrior | 17/0/34 | 454.2 | | Bear Druid | Druid | 9/42/0 | 350.9 |
+| Seal Twist Ret | Paladin | 13/0/38 | 451.8 | | Shockadin | Paladin | 23/0/28 | 343.4 |
+| Shadow Priest | Priest | 16/3/32 | 449.3 | | Frostfire Mage | Mage | 0/29/22 | 340.0 |
+| Cat Druid | Druid | 9/35/7 | 432.8 | | LW Ranged | Hunter | 7/39/5 | 302.0 |
+| BM Hunter | Hunter | 31/20/0 | 418.0 | | SM/DS | Warlock | 40/11/0 | 292.6 |
+| Venom Rogue | Rogue | 37/12/2 | 410.9 | | Ele Shaman | Shaman | 38/13/0 | 277.7 |
+| Combat Rogue | Rogue | 18/33/0 | 409.0 | | Prot Pally | Paladin | 8/36/7 | 162.7 |
 | Arcane Mage | Mage | 47/4/0 | 405.2 | | | | | |
-| Fire Mage | Mage | 10/39/2 | 390.5 | | | | | |
-| Combat Rogue | Rogue | 18/33/0 | 381.6 | | | | | |
-| Moonkin | Druid | 38/0/13 | 359.1 | | | | | |
-| Cat Druid | Druid | 9/35/7 | 351.7 | | | | | |
 
-**THE FOUR THAT DID NOT MOVE ARE THE CHECK.** All three Hunters and DW Fury came
-back at EXACTLY their old figures, and that is not luck: the Hunter is the one
-class whose every row the sheet left unchanged, and DW Fury's list is weapon
-damage plus Bloodthirst, whose 35% the sheet confirms.
+**POISONS WERE THE LAST THING TO MOVE THESE, AND ONLY THE ROGUES MOVED.**
+Venom +25.5%, Rupture +16.2%, Combat +8.4%, and all twenty other profiles
+identical to the decimal -- which is the containment check for a change that
+adds a whole system rather than touching a shared rule.
 
-What moved most: **Cat +29.3%** and **Prot Warr +27.0%**, both from abilities
-that had no coefficient at all before — Rip, Ferocious Bite, Rake and Swipe for
-one, Revenge for the other. Down: **SM/DS −12.3%** on Siphon Life's tick going
-from 20% to 5%, and **Shadow Priest −11.8%** on Devouring Plague's halving.
+Before that, normalisation and the Druid paw formula moved twelve, and the
+coefficient sheet before them moved nineteen. **Every Rogue figure recorded
+before poisons existed was a floor**, because the Venom build spends eleven of
+its fifty-one points on them.
 
 **THE CHECK IS THAT THE PROFILES A CHANGE SHOULD NOT REACH DO NOT MOVE BY A
 DECIMAL**, and it wants naming per change rather than a fixed list. For anything
@@ -160,6 +158,10 @@ is a live gap and gets no `scope`.
 
 Two questions the census raises that the rulings do not answer:
 
+- **Poisons now exist**, so the Rogue's live gap is smaller than the census
+  says: Vile Poisons and Improved Poisons both apply. **Venom does not** -- it
+  is a Forever-NEW finisher this project does not declare, and its +30% would
+  need a ruling on whether it stacks with Vile Poisons' +20% additively.
 - **Stealth and openers.** Eleven Rogue talents are inert because every fight
   opens in combat — Premeditation, Initiative, Improved Ambush, Cutthroat, Dirty
   Deeds, Camouflage, Opportunity and more. That is an encounter property, not one

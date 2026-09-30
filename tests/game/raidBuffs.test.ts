@@ -601,9 +601,10 @@ describe('Windfury Totem', () => {
 // The profile
 // ---------------------------------------------------------------------------
 
-describe('profile format 9', () => {
+describe('the raid buff selection on the profile', () => {
   it('stores the selection as ids', () => {
-    expect(CURRENT_PROFILE_VERSION).toBe(9);
+    // Version 10 now; raid buffs arrived at 9 and poisons at 10.
+    expect(CURRENT_PROFILE_VERSION).toBeGreaterThanOrEqual(9);
     expect(createDefaultProfile().raidBuffs).toEqual([]);
   });
 

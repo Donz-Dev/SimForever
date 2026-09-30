@@ -1,6 +1,9 @@
 import type { AuraDefinition } from '../../engine';
 import { RATING_PER_PERCENT, dealDamage, flat, seconds } from '../../engine';
-import { RUPTURE_TICK_AP_COEFFICIENT } from '../combat/coefficients';
+import {
+  DEADLY_POISON_TICK_AP_COEFFICIENT,
+  RUPTURE_TICK_AP_COEFFICIENT,
+} from '../combat/coefficients';
 
 /**
  * Rogue auras, from the WoW Forever beta client (build 1.60.1.69876).
@@ -327,3 +330,91 @@ export const ROGUE_AURAS: readonly AuraDefinition[] = [
   GHOSTLY_STRIKE_DODGE_AURA,
   HEMORRHAGE_DEBUFF,
 ];
+
+// ---------------------------------------------------------------------------
+// Poisons
+// ---------------------------------------------------------------------------
+
+/*
+ * ============================================================================
+ * DEADLY POISON, the stacking half of the poison system.
+ *
+ * "Each strike has a 30% chance of poisoning the enemy for 92 Nature damage
+ * over 12 sec. Stacks up to 5 times on a single target." -- rank 6, and the
+ * capture marks it `versusClassic: "changed"`, so Classic's figures would be
+ * the wrong ones.
+ *
+ * THE RULESET OWNER'S READING OF THE STACK, given when asked: 92 x 5 = 460
+ * damage over twelve seconds at full stacks, ticking every three seconds for
+ * 115 -- so a stack is 23 a tick and the tooltip's 92 is ONE stack's whole
+ * duration. The alternative reading, where 92 is the total and stacks only
+ * refresh it, is five times smaller and equally consistent with the wording.
+ * ============================================================================
+ */
+
+export const DEADLY_POISON_DAMAGE_PER_STACK = 92;
+export const DEADLY_POISON_MAX_STACKS = 5;
+export const DEADLY_POISON_DURATION_MS = seconds(12);
+export const DEADLY_POISON_TICK_INTERVAL_MS = seconds(3);
+
+/** Four ticks in twelve seconds, so one stack is 23 of the tooltip's 92. */
+export const DEADLY_POISON_TICKS =
+  DEADLY_POISON_DURATION_MS / DEADLY_POISON_TICK_INTERVAL_MS;
+
+/**
+ * Deadly Poison, at whatever damage bonus the character's talents give.
+ *
+ * `damageMultiplier` is Vile Poisons, which is a per-character number and
+ * therefore cannot live on a shared aura constant -- the same reason Rupture
+ * is a function of its combo points rather than five exported auras.
+ */
+export function deadlyPoisonAura(damageMultiplier = 1): AuraDefinition {
+  const perStackPerTick = (DEADLY_POISON_DAMAGE_PER_STACK / DEADLY_POISON_TICKS) * damageMultiplier;
+
+  return {
+    id: 'deadly_poison',
+    name: 'Deadly Poison',
+    durationMs: DEADLY_POISON_DURATION_MS,
+    isDebuff: true,
+    maxStacks: DEADLY_POISON_MAX_STACKS,
+    refreshBehaviour: 'reset',
+    periodic: {
+      intervalMs: DEADLY_POISON_TICK_INTERVAL_MS,
+      onTick: (context, aura) => {
+        const source = context.combatant(aura.sourceId);
+        const target = context.combatant(aura.targetId);
+        if (!source || !target || !target.isAlive) return;
+
+        dealDamage(context, {
+          source,
+          target,
+          abilityId: aura.id,
+          abilityName: aura.name,
+          school: 'nature',
+          /*
+           * PER STACK, read off the aura at tick time rather than baked in
+           * when it was applied -- a sixth strike lands while the first tick
+           * is still pending, and the tick must pay at the stack count it
+           * actually finds.
+           */
+          baseAmount: perStackPerTick * aura.stacks,
+          /*
+           * THE COEFFICIENT IS FLAT PER TICK AND NOT PER STACK, which is the
+           * owner's own phrasing: a full-stack tick is "115 damage + 0.45% of
+           * attack power". 115 is the five-stack figure and the 0.45% is
+           * stated beside it once.
+           */
+          powerCoefficient: DEADLY_POISON_TICK_AP_COEFFICIENT,
+          periodic: true,
+          /*
+           * MELEE CRIT, because a melee strike applied it. That is the
+           * standing `critFrom` rule, and Malice settles which table: "your
+           * critical strike chance with all attacks AND POISONS", granted as
+           * `critChance`, which is the melee stat.
+           */
+          critFrom: 'melee-special',
+        });
+      },
+    },
+  };
+}
