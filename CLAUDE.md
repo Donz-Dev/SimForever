@@ -1010,17 +1010,28 @@ Plus the permanent rulings under **Scope**.
   cause be a list cause.
 
 - **A LOW-HEALTH REQUIREMENT IS A CLOCK, NOT A TARGET PROPERTY, and writing it
-  off as one is now a documented mistake TWICE.** `inExecutePhase` in
-  `combat/executePhase.ts` reads remaining combat TIME against 20% of the
+  off as one was a documented mistake THREE TIMES.** `inExecutePhase` in
+  `combat/executePhase.ts` reads remaining combat TIME against a fraction of the
   planned duration -- the owner's ruling, made for Execute, and it lives outside
   `abilities/warrior.ts` so a second class is a CALLER rather than a borrower.
-  Hammer of Wrath already uses it and the ability-audit doc still explained its
-  silence as "needs the target below 20% health"; the Priest's **Early Demise**
-  is `unmodelled` for that reason right now, at the same 20%, and is expressible
-  today with no new data. **Before writing "the target never drops", check
-  whether the threshold is one this ruling already answers.** The Rogue's Quietus
-  is the honest version: 35% rather than 20%, so it names the ruling and asks
-  rather than assuming the fraction.
+  **Before writing "the target never drops", check whether the threshold is one
+  this ruling already answers.**
+- **AND THE FRACTION IS A NUMBER, NOT THE RULE.** `inExecutePhase` takes one and
+  defaults to `EXECUTE_PHASE_FRACTION`; Execute and Hammer of Wrath are 20% and
+  the Rogue's Quietus is 35% by the owner's word. **Two TALENTS take their
+  fraction from their own DATA instead** -- Early Demise states `[[20, 15],
+  [20, 30]]` and Quietus `[[2, 35], ...]`, threshold and bonus in one row, so a
+  Forever change to either moves the talent with nobody editing TypeScript.
+  Early Demise's 20 and `EXECUTE_PHASE_FRACTION` agree today and are DIFFERENT
+  FACTS, and a test pins that they still do.
+- **A per-ability modifier can be conditional on that clock** --
+  `AbilityModifiers.addWhileFinalFraction`, the third condition shape after the
+  weapon in hand and an aura, and the first one **a combatant cannot answer by
+  itself**: it holds no clock, so `abilityModifierFor` is HANDED the remaining
+  fraction by `dealDamage`. **It THROWS when a caller offers none and the
+  character carries one**, which is the whole design -- treating a missing clock
+  as "not in the window" gives a talent that is declared, reports itself
+  modelled and contributes nothing.
 
 - **AND A STALE ENTRY IN A "NOT HERE, AND EACH FOR A STATED REASON" LIST IS THE
   SAME MISTAKE WEARING A HEADER.** `abilities/paladin.ts` listed Hammer of Wrath
