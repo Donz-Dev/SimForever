@@ -132,21 +132,11 @@ export const ROGUE_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
   seal_fate: [{ kind: 'reaction', reactionId: 'seal_fate' }],
 
   /*
-   * STILL UNMODELLED, AND NO LONGER FOR WANT OF POISONS. Venom is a Forever
-   * ADDITION -- the capture marks it `versusClassic: "new"` -- and it is a
-   * castable finisher this project does not declare, not a modifier on one
-   * that it does. Its +30% would also have to settle whether it stacks with
-   * Vile Poisons' +20% additively or multiplicatively, which no source states.
+   * GRANTED, now that poisons exist and the owner has ruled on the stacking.
+   * Its +30% is ADDED to Vile Poisons' +20% rather than multiplied, so a
+   * fully talented poison deals 1.5x rather than 1.56x.
    */
-  venom: [
-    {
-      kind: 'unmodelled',
-      reason:
-        'Poisons now exist, but Venom itself is an undeclared finisher rather ' +
-        'than a modifier: it needs an ability, and a ruling on whether its ' +
-        '+30% stacks with Vile Poisons additively.',
-    },
-  ],
+  venom: [{ kind: 'grantAbility', abilityId: 'venom' }],
 
   improved_eviscerate: [{ kind: 'abilityDamage', abilityId: 'eviscerate' }],
 

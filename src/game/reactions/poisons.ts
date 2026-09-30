@@ -1,6 +1,11 @@
 import type { AttackEvent, Combatant, Reaction, WeaponSlot } from '../../engine';
 import { dealDamage, isWeaponUseOf } from '../../engine';
-import { deadlyPoisonAura } from '../auras/rogue';
+import {
+  deadlyPoisonAura,
+  VENOM_AURA_ID,
+  VENOM_POISON_CHANCE_BONUS,
+  VENOM_POISON_DAMAGE_BONUS,
+} from '../auras/rogue';
 import { INSTANT_POISON_AP_COEFFICIENT } from '../combat/coefficients';
 import type { TalentAllocation } from '../talents/Talent';
 import { talentNumber } from '../talents/talentValues';
@@ -150,21 +155,46 @@ function instantPoisonHit(
  * Windfury silently stopped proccing after the first iteration.
  */
 function poisonProc(slot: WeaponSlot, poison: PoisonId, talents: TalentAllocation | undefined): Reaction {
-  const { damageMultiplier, extraChance } = poisonTalentBonuses(talents);
-  const chance = POISON_CHANCES[poison] + extraChance;
+  const fromTalents = poisonTalentBonuses(talents);
+
+  /*
+   * ----------------------------------------------------------------------------
+   * VENOM IS READ AT TRIGGER TIME, not folded in when the reaction is built.
+   *
+   * The talents are fixed for the fight and can be resolved once; Venom is a
+   * finisher with a nine-to-twenty-one second aura, so whether it is up is a
+   * question only the moment of the proc can answer. Resolving it at build
+   * time would make it either permanently on or permanently off -- and
+   * permanently on is a number that looks entirely reasonable.
+   *
+   * BOTH BONUSES ARE ADDED, on the owner's ruling: with Vile Poisons at 5/5 a
+   * poison deals 1 + 0.20 + 0.30 = 1.5x rather than 1.2 x 1.3 = 1.56x.
+   * ----------------------------------------------------------------------------
+   */
+  const withVenom = (actor: Combatant) => {
+    const active = actor.auras.has(VENOM_AURA_ID);
+    return {
+      damageMultiplier: fromTalents.damageMultiplier + (active ? VENOM_POISON_DAMAGE_BONUS : 0),
+      chance:
+        POISON_CHANCES[poison] +
+        fromTalents.extraChance +
+        (active ? VENOM_POISON_CHANCE_BONUS : 0),
+    };
+  };
 
   return {
     id: `${poison}_${slot}`,
     on: 'dealt',
     // Every landed outcome, as the weapon enchants take.
     outcomes: ['hit', 'crit', 'glance', 'crush'],
-    canTrigger: (context, _actor, attack) => {
+    canTrigger: (context, actor, attack) => {
       // A use of THIS weapon: its swing, a Windfury extra attack with it, or
       // an ability that needed it.
       if (!isWeaponUseOf(attack, slot)) return false;
-      return context.rng.nextFloat(0, 1) < chance;
+      return context.rng.nextFloat(0, 1) < withVenom(actor).chance;
     },
     onTrigger: (context, actor, attack) => {
+      const { damageMultiplier } = withVenom(actor);
       if (poison === 'instant_poison') {
         instantPoisonHit(context, actor, attack, damageMultiplier);
         return;
@@ -174,6 +204,13 @@ function poisonProc(slot: WeaponSlot, poison: PoisonId, talents: TalentAllocatio
        * and resets the duration, which `maxStacks` and `refreshBehaviour`
        * between them already do -- so a sixth application on a full stack
        * refreshes and does not overflow.
+       *
+       * ITS DAMAGE IS SNAPSHOTTED AT APPLICATION, so a stack applied under
+       * Venom keeps the bonus for its whole twelve seconds even if Venom
+       * falls off first. That is how every other built-at-cast aura here
+       * behaves -- Rupture carries the combo points it was cast with -- and
+       * the alternative, re-reading the buff every tick, would need the aura
+       * to know who applied it and why.
        */
       context.applyAura(attack.defender, deadlyPoisonAura(damageMultiplier), actor.id);
     },
