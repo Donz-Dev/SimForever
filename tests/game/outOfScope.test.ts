@@ -83,8 +83,6 @@ const RULED_OUT_WORDING =
  * allowlist is a broken test.
  */
 const MENTIONS_BUT_IS_A_LIVE_GAP: Record<string, string> = {
-  'warrior.improved_berserker_rage':
-    'Inert because no priority list casts Berserker Rage -- a rotation decision, which can change. Its movement clause is incidental.',
   'shaman.water_shield':
     'MANA RETURN, which is explicitly in scope. Inert because neither profile is attacked and neither heals -- the target, not the ruling.',
   'paladin.divine_favor':
@@ -131,10 +129,33 @@ describe('the out-of-scope rulings are data, not prose', () => {
   });
 
   it('keeps the allowlist pointed at talents that really exist', () => {
-    const known = new Set(everyReason().map((entry) => entry.id));
-    const stale = Object.keys(MENTIONS_BUT_IS_A_LIVE_GAP).filter((id) => !known.has(id));
+    /*
+     * ----------------------------------------------------------------------
+     * AN ALLOWLIST ENTRY ONLY MEANS ANYTHING FOR AN UNSCOPED REASON, and
+     * checking that the talent merely EXISTS was not enough.
+     *
+     * The first test filters on `scope === undefined` BEFORE it consults this
+     * list, so the moment a reason gains a `scope` its entry here stops being
+     * consulted at all -- and the old check still passed, because the talent
+     * went on reporting itself unmodelled. Warrior Improved Berserker Rage is
+     * how that was found: it was built, its remaining clause took a
+     * `crowdControl` scope, and its entry sat here for a while afterwards
+     * saying "inert because no priority list casts Berserker Rage", which by
+     * then was the opposite of what the code did.
+     *
+     * So the requirement is UNSCOPED, not merely present. An entry that
+     * nothing can reach is a justification nobody will re-read, and this file
+     * exists to stop exactly that.
+     * ----------------------------------------------------------------------
+     */
+    const live = new Set(
+      everyReason()
+        .filter((entry) => entry.scope === undefined)
+        .map((entry) => entry.id),
+    );
+    const stale = Object.keys(MENTIONS_BUT_IS_A_LIVE_GAP).filter((id) => !live.has(id));
 
-    // An allowlist entry for a talent that no longer reports itself unmodelled
+    // An allowlist entry for a talent that no longer reports an UNSCOPED reason
     // is a claim that has expired, which is the failure mode this project keeps
     // hitting. Delete it rather than leaving it to rot.
     expect(stale).toEqual([]);
