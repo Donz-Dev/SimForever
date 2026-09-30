@@ -1235,3 +1235,54 @@ button:disabled {
   font-size: 11px;
   line-height: 1.3;
 }
+
+/* ---------------------------------------------------------------------------
+   Resource timeline: how much of a pool was available across one fight.
+
+   Inline SVG with no library, matching the donuts. The line is a STEP rather
+   than a slope, because a resource sits where it is until something moves it.
+   --------------------------------------------------------------------------- */
+.timeline {
+  margin: 4px 0 20px;
+}
+
+.timeline figcaption {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  margin-bottom: 6px;
+}
+
+.timeline svg {
+  width: 100%;
+  height: 120px;
+  display: block;
+}
+
+.timeline-line {
+  stroke: var(--accent);
+  stroke-width: 1.5;
+  vector-effect: non-scaling-stroke;
+}
+
+/* The cap, so a flat line along the top reads as capping and wasting income. */
+.timeline-limit {
+  stroke: var(--border);
+  stroke-width: 1;
+  stroke-dasharray: 3 3;
+  vector-effect: non-scaling-stroke;
+}
+
+.timeline-axis {
+  stroke: var(--border);
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+}
+
+.timeline-label {
+  fill: var(--text-muted);
+  font-size: 9px;
+}
+
+.timeline-end {
+  text-anchor: end;
+}

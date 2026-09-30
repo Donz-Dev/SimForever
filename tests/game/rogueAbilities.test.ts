@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { createPlayer } from '../../src/game/actors/createPlayer';
-import { runProfileBatch } from '../../src/simulator';
+import { runProfileBatch, resourceFlowOf } from '../../src/simulator';
 import { PRESETS_BY_ID } from '../../src/profiles/presets';
 import {
   EVISCERATE_BY_COMBO_POINT,
@@ -191,7 +191,9 @@ describe('the finishers it can now afford', () => {
      * measures the thing the rotation actually feels.
      */
     const batch = batchOf('rogue_combat', 60, 11);
-    const returned = batch.rage.gained.find((row) => row.sourceId === 'relentless_strikes');
+    // ENERGY, not rage: Relentless Strikes restores energy. This read the
+    // pooled totals before they were keyed by resource.
+    const returned = resourceFlowOf(batch, 'energy').gained.find((row) => row.sourceId === 'relentless_strikes');
     expect(returned?.amount ?? 0).toBeGreaterThan(0);
   });
 
@@ -203,7 +205,8 @@ describe('the finishers it can now afford', () => {
      * that spent combo points -- so a builder must never set it off.
      */
     const batch = batchOf('rogue_combat', 60, 11);
-    const refunded = batch.rage.gained.find((row) => row.sourceId === 'ruthlessness');
+    // COMBO POINTS, for the same reason.
+    const refunded = resourceFlowOf(batch, 'comboPoints').gained.find((row) => row.sourceId === 'ruthlessness');
     expect(refunded?.amount ?? 0).toBeGreaterThan(0);
   });
 

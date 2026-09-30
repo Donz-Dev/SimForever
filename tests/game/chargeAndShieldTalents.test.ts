@@ -5,7 +5,7 @@ import { WARRIOR_TALENT_EFFECTS } from '../../src/game/talents/warriorEffects';
 import { talentBuild, talentContextFor } from '../../src/game/talents/talentBuild';
 import { weaponsFor } from '../../src/game/actors/createPlayer';
 import { PRESETS_BY_ID } from '../../src/profiles/presets';
-import { runProfileBatch, characterAtCombatStart } from '../../src/simulator';
+import { runProfileBatch, characterAtCombatStart, resourceFlowOf } from '../../src/simulator';
 import { legalise } from '../helpers/legalTalents';
 
 /*
@@ -59,7 +59,7 @@ describe('Charge is used exactly once, as the first action', () => {
     expect(charge?.uses).toBe(1);
 
     // 15 base plus 3 from 1/2 Improved Charge, which the preset takes.
-    const rage = batch.rage.gained.find((row) => row.sourceId === 'charge');
+    const rage = resourceFlowOf(batch, 'rage').gained.find((row) => row.sourceId === 'charge');
     expect(rage?.amount).toBeCloseTo(CHARGE_RAGE_GENERATED + 3, 6);
   });
 });

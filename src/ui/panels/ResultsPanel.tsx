@@ -4,6 +4,9 @@ import { toSeconds } from '../../engine';
 import { Panel } from '../components/Panel';
 import { DonutChart } from '../charts/DonutChart';
 import { UptimeBars } from '../charts/UptimeBars';
+import { ResourceTimeline, resourceTimeline } from '../charts/ResourceTimeline';
+import type { BatchResourceFlow } from '../../analysis/BatchTotals';
+import type { TelemetryEvent } from '../../engine';
 
 interface ResultsPanelProps {
   readonly batch: BatchResult;
@@ -139,7 +142,7 @@ export function ResultsPanel({ batch }: ResultsPanelProps) {
         rows={batch.debuffUptime}
         empty="Nothing was on the target."
       />
-      <RageEconomy batch={batch} />
+      <ResourceEconomy batch={batch} />
 
       <p className="muted end-reason">
         Every figure above is a mean over {batch.iterations.toLocaleString()}{' '}
@@ -298,56 +301,151 @@ function DamageTaken({ batch }: ResultsPanelProps) {
 }
 
 /*
- * B3's answer. Two donuts and a table, because they answer different questions:
- * the donuts say where rage comes from and goes as a proportion, and the table
- * says how many times and how much each — which is what a cost-reduction talent
- * actually moves. Improved Heroic Strike shows up as the same number of uses at
- * a lower total, and neither donut alone would show that.
+ * ============================================================================
+ * ONE SECTION PER POOL THE CHARACTER ACTUALLY USED.
+ *
+ * Two donuts, a table and a timeline, because they answer four different
+ * questions: where it came from, where it went, how many times and how much
+ * each, and what was AVAILABLE moment to moment. A cost-reduction talent shows
+ * up in the table as the same number of uses at a lower total, and in neither
+ * donut; starvation shows up only in the timeline.
+ *
+ * IT USED TO BE ONE SECTION HEADED "RAGE" and the totals behind it were never
+ * keyed by resource -- so a Rogue's energy and combo points were added
+ * together and presented as a rage economy. Every share added to 100%.
+ * ============================================================================
  */
-function RageEconomy({ batch }: ResultsPanelProps) {
-  const { rage } = batch;
-  if (rage.totalGained <= 0 && rage.totalSpent <= 0) return null;
+function ResourceEconomy({ batch }: ResultsPanelProps) {
+  const flows = batch.resources.filter(
+    (flow) => flow.totalGained > 0 || flow.totalSpent > 0,
+  );
+  if (flows.length === 0) return null;
+
+  const player = batch.representative.actors.find((actor) => actor.kind === 'player');
 
   return (
     <>
-      <h3>Rage</h3>
+      {flows.map((flow) => (
+        <ResourceSection
+          key={flow.resource}
+          flow={flow}
+          timeline={batch.representative.timeline}
+          actorId={player?.id}
+          durationMs={batch.representative.durationMs}
+        />
+      ))}
+    </>
+  );
+}
+
+/** Display names, because `comboPoints` is not what a person calls them. */
+const RESOURCE_NAMES: Readonly<Record<string, string>> = {
+  rage: 'Rage',
+  energy: 'Energy',
+  mana: 'Mana',
+  comboPoints: 'Combo points',
+  focus: 'Focus',
+  soulShards: 'Soul shards',
+};
+
+function ResourceSection({
+  flow,
+  timeline,
+  actorId,
+  durationMs,
+}: {
+  readonly flow: BatchResourceFlow;
+  readonly timeline: readonly TelemetryEvent[];
+  readonly actorId: string | undefined;
+  readonly durationMs: number;
+}) {
+  const name = RESOURCE_NAMES[flow.resource] ?? flow.resource;
+  const unit = name.toLowerCase();
+  const points = actorId ? resourceTimeline(timeline, actorId, flow.resource) : [];
+
+  /*
+   * THE CAP COMES FROM THE FIGHT, not from a table of maximums: a talent can
+   * raise energy or rage, and a character's mana is its own. The highest level
+   * the pool actually reached is the honest ceiling to draw against, and it is
+   * what makes "flat at the top" mean capping.
+   */
+  const peak = points.reduce((highest, point) => Math.max(highest, point.value), 0);
+
+  return (
+    <>
+      <h3>{name}</h3>
       <div className="stat-grid">
-        <Stat label="Gained" value={fixed(rage.totalGained)} />
-        <Stat label="Spent" value={fixed(rage.totalSpent)} />
-        <Stat label="Wasted at cap" value={fixed(rage.totalWasted)} />
+        <Stat label="Gained" value={fixed(flow.totalGained)} />
+        <Stat label="Spent" value={fixed(flow.totalSpent)} />
+        <Stat label="Wasted at cap" value={fixed(flow.totalWasted)} />
         <Stat
           label="Unspent"
-          value={fixed(Math.max(0, rage.totalGained - rage.totalWasted - rage.totalSpent))}
+          value={fixed(Math.max(0, flow.totalGained - flow.totalWasted - flow.totalSpent))}
         />
       </div>
 
       <div className="donut-row">
-        <DonutChart title="Rage gained, by source" slices={toSlices(rage.gained)} unit="rage" />
-        <DonutChart title="Rage spent, by ability" slices={toSlices(rage.spent)} unit="rage" />
+        <DonutChart title={`${name} gained, by source`} slices={toSlices(flow.gained)} unit={unit} />
+        <DonutChart title={`${name} spent, by ability`} slices={toSlices(flow.spent)} unit={unit} />
       </div>
 
-      <table className="breakdown">
-        <thead>
-          <tr>
-            <th>Ability</th>
-            <th className="numeric">Uses</th>
-            <th className="numeric">Rage spent</th>
-            <th className="numeric">Per use</th>
-            <th className="numeric">Share</th>
-          </tr>
-        </thead>
-        <tbody>
-          {rage.spent.map((row) => (
-            <tr key={row.sourceId}>
-              <td>{row.sourceName}</td>
-              <td className="numeric">{fixed(row.count)}</td>
-              <td className="numeric">{fixed(row.amount)}</td>
-              <td className="numeric">{row.count > 0 ? fixed(row.amount / row.count) : '-'}</td>
-              <td className="numeric">{pct(row.share)}</td>
+      <ResourceTimeline
+        title={`${name} available — one representative fight`}
+        points={points}
+        maximum={peak}
+        durationMs={durationMs}
+      />
+
+      {flow.spent.length > 0 ? (
+        <table className="breakdown">
+          <thead>
+            <tr>
+              <th>Ability</th>
+              <th className="numeric">Uses</th>
+              <th className="numeric">{name} spent</th>
+              <th className="numeric">Per use</th>
+              <th className="numeric">Share</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {flow.spent.map((row) => (
+              <tr key={row.sourceId}>
+                <td>{row.sourceName}</td>
+                <td className="numeric">{fixed(row.count)}</td>
+                <td className="numeric">{fixed(row.amount)}</td>
+                <td className="numeric">{row.count > 0 ? fixed(row.amount / row.count) : '-'}</td>
+                <td className="numeric">{pct(row.share)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      ) : null}
+
+      {/* Where it CAME from, which for a regenerating pool is most of it. */}
+      {flow.gained.length > 0 ? (
+        <table className="breakdown">
+          <thead>
+            <tr>
+              <th>Source</th>
+              <th className="numeric">Times</th>
+              <th className="numeric">{name} gained</th>
+              <th className="numeric">Wasted</th>
+              <th className="numeric">Share</th>
+            </tr>
+          </thead>
+          <tbody>
+            {flow.gained.map((row) => (
+              <tr key={row.sourceId}>
+                <td>{row.sourceName}</td>
+                <td className="numeric">{fixed(row.count)}</td>
+                <td className="numeric">{fixed(row.amount)}</td>
+                <td className="numeric">{fixed(row.wasted)}</td>
+                <td className="numeric">{pct(row.share)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      ) : null}
     </>
   );
 }
@@ -365,9 +463,16 @@ function Stat({ label, value }: { readonly label: string; readonly value: string
   );
 }
 
-/** Two decimals, always, so a column of numbers lines up. */
+/**
+ * Two decimals, always, so a column of numbers lines up.
+ *
+ * NEGATIVE ZERO IS CLAMPED. Totals are summed from per-source floats, so a
+ * figure that is exactly nothing can arrive as -1e-15 and print as "-0.00" --
+ * which reads as a real negative quantity of wasted mana.
+ */
 function fixed(value: number): string {
-  return value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const safe = Object.is(value, -0) || (value < 0 && value > -0.005) ? 0 : value;
+  return safe.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
 function pct(fraction: number): string {

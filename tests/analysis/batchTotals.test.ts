@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { runProfileBatch } from '../../src/simulator';
+import { runProfileBatch, resourceFlowOf } from '../../src/simulator';
 import { createDefaultProfile } from '../../src/profiles';
 import { startingEquipmentFor } from '../../src/game/items/startingSets';
 
@@ -85,21 +85,25 @@ describe('a batch averages every iteration', () => {
   });
 });
 
+/** The one pool a Warrior has; `resources` carries one entry per pool now. */
+const rageOf = (b: ReturnType<typeof batch>) =>
+  b.resources.find((flow) => flow.resource === 'rage')!;
+
 describe('rage is attributed to a source', () => {
   it('accounts for every point gained and spent', () => {
     const b = batch();
     // Nothing unattributed: every grantResource call in the repo names itself.
-    expect(b.rage.gained.some((r) => r.sourceId === 'unattributed')).toBe(false);
-    expect(b.rage.spent.some((r) => r.sourceId === 'unattributed')).toBe(false);
-    expect(b.rage.totalGained).toBeGreaterThan(0);
-    expect(b.rage.totalSpent).toBeGreaterThan(0);
+    expect(rageOf(b).gained.some((r) => r.sourceId === 'unattributed')).toBe(false);
+    expect(rageOf(b).spent.some((r) => r.sourceId === 'unattributed')).toBe(false);
+    expect(rageOf(b).totalGained).toBeGreaterThan(0);
+    expect(rageOf(b).totalSpent).toBeGreaterThan(0);
   });
 
   it('names auto attack as the source of a standing warrior rage', () => {
     // Nothing is hitting back, so damage taken cannot contribute.
     const b = batch();
-    expect(b.rage.gained.map((r) => r.sourceId)).toContain('auto_attack_main_hand');
-    expect(b.rage.gained.map((r) => r.sourceId)).not.toContain('damage_taken');
+    expect(rageOf(b).gained.map((r) => r.sourceId)).toContain('auto_attack_main_hand');
+    expect(rageOf(b).gained.map((r) => r.sourceId)).not.toContain('damage_taken');
   });
 
   /*
@@ -110,7 +114,7 @@ describe('rage is attributed to a source', () => {
    */
   it('shows a cost-reduction talent as a lower price per use', () => {
     const perUse = (talents: Record<string, number>) => {
-      const hs = batch(talents).rage.spent.find((r) => r.sourceId === 'heroic_strike');
+      const hs = resourceFlowOf(batch(talents), 'rage').spent.find((r) => r.sourceId === 'heroic_strike');
       return hs && hs.count > 0 ? hs.amount / hs.count : NaN;
     };
     // Heroic Strike costs 15; the talent takes a rage a rank.

@@ -32,6 +32,29 @@ export interface BatchOptions {
   readonly onProgress?: (fraction: number) => void;
 }
 
+/**
+ * One pool's flow out of a batch, by name.
+ *
+ * A lookup rather than a field per resource, because which pools exist depends
+ * on the class -- and because the field this replaced, `rage`, was returning
+ * every pool added together under one name.
+ */
+export function resourceFlowOf(
+  batch: Pick<BatchResult, 'resources'>,
+  resource: string,
+): BatchResourceFlow {
+  return (
+    batch.resources.find((flow) => flow.resource === resource) ?? {
+      resource,
+      gained: [],
+      spent: [],
+      totalGained: 0,
+      totalSpent: 0,
+      totalWasted: 0,
+    }
+  );
+}
+
 export interface BatchResult {
   readonly iterations: number;
   readonly baseSeed: number;
@@ -70,8 +93,20 @@ export interface BatchResult {
    * All zero in a fight the target does not swing in, which is the default.
    */
   readonly survival: BatchSurvival;
-  /** Where the player's rage came from and went, across every iteration. */
-  readonly rage: BatchResourceFlow;
+  /**
+   * Where EVERY pool the player used came from and went, one entry each.
+   *
+   * ----------------------------------------------------------------------------
+   * EVERY POOL, NOT JUST RAGE, and the old single `rage` field was worse than
+   * incomplete: the totals behind it were never keyed by resource, so a Rogue's
+   * energy and combo points were added together and rendered under a heading
+   * that said "Rage". Only a Warrior's were about the resource named.
+   *
+   * Discovered from the event stream rather than from the class, so a character
+   * that gains a pool it was not built with still gets a section.
+   * ----------------------------------------------------------------------------
+   */
+  readonly resources: readonly BatchResourceFlow[];
   /** Aura uptime on the player, longest first. */
   readonly buffUptime: readonly BatchAuraUptime[];
   /** Aura uptime on the target, longest first. */
@@ -229,7 +264,9 @@ export function runBatch(config: SimulationConfig, options: BatchOptions): Batch
     abilities,
     damageTaken: totals.damageTaken(playerId),
     survival: totals.survival(playerId),
-    rage: totals.resourceFlow(playerId, 'rage'),
+    resources: totals
+      .resourcesFor(playerId)
+      .map((resource) => totals.resourceFlow(playerId, resource)),
     /*
      * EVERY FRIENDLY ACTOR, for the same reason the damage breakdown covers
      * them: a talent the HUNTER spent points on can put a buff on its PET.
