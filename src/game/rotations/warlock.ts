@@ -25,8 +25,35 @@ const missing = (auraId: string) =>
     target !== undefined &&
     target.auras.remainingMs(auraId, context.clock.now()) < REFRESH_WINDOW_MS;
 
-const hasAura = (auraId: string) => (_context: SimulationContext, actor: Combatant): boolean =>
-  actor.auras.has(auraId);
+/**
+ * "IF NOT ACTIVE", which is the ruleset owner's wording and is NOT the same as
+ * the two-second refresh window beside it.
+ *
+ * ----------------------------------------------------------------------------
+ * A REFRESH RESETS THE AURA, so anything left on the clock when the rotation
+ * reaches the entry is thrown away. A two-second window clips up to two
+ * seconds off every application -- and the faster the character acts, the
+ * sooner it reaches the entry inside that window and the more it loses.
+ *
+ * MEASURED ON THE MOONKIN, where Nature's Grace cost 14.9 DPS by doing nothing
+ * but speeding the character up: casts went 26.3 a fight to 27.4 while Moonfire
+ * ticks fell 25.1 to 22.5. The buff was fine; the window was paying for it.
+ *
+ * `missing` is kept for the lists the owner has not replaced, so the two
+ * readings sit side by side rather than one silently becoming the other.
+ * ----------------------------------------------------------------------------
+ */
+const expired = (auraId: string) =>
+  (context: SimulationContext, _actor: Combatant, target?: Combatant): boolean =>
+    target !== undefined && target.auras.remainingMs(auraId, context.clock.now()) <= 0;
+
+/** "current mana is below N% of maximum". */
+const manaBelowFraction = (fraction: number) =>
+  (_context: SimulationContext, actor: Combatant): boolean => {
+    const mana = actor.resources.get('mana');
+    if (!mana || mana.maximum <= 0) return false;
+    return mana.current / mana.maximum < fraction;
+  };
 
 // ---------------------------------------------------------------------------
 
@@ -49,11 +76,29 @@ const hasAura = (auraId: string) => (_context: SimulationContext, actor: Combata
  * costing a global cooldown for nothing.
  */
 export const WARLOCK_AFFLICTION: readonly PriorityEntry[] = [
-  { abilityId: 'shadow_bolt', condition: hasAura('shadow_trance') },
-  { abilityId: 'corruption', condition: missing('corruption') },
-  { abilityId: 'siphon_life', condition: missing('siphon_life') },
-  { abilityId: 'bane_of_agony', condition: missing('bane_of_agony') },
-  { abilityId: 'life_tap' },
+  /*
+   * THE THREE DOTS FIRST, IN THE OWNER'S ORDER, and the Shadow Trance-gated
+   * Shadow Bolt that used to head this list is gone. That entry existed to
+   * spend a proc the moment it landed; the owner's order holds the bleeds up
+   * first and lets the filler at the bottom take the proc when it comes.
+   */
+  { abilityId: 'bane_of_agony', condition: expired('bane_of_agony') },
+  { abilityId: 'corruption', condition: expired('corruption') },
+  { abilityId: 'siphon_life', condition: expired('siphon_life') },
+  /*
+   * LIFE TAP ON A MANA THRESHOLD rather than ungated. It was unconditional and
+   * fired five times a fight, each one a global cooldown that dealt nothing --
+   * at 15% it fires only when the bar actually needs it.
+   */
+  { abilityId: 'life_tap', condition: manaBelowFraction(0.15) },
+  /*
+   * WRACK BELONGS HERE, between Life Tap and Shadow Bolt, gated on all three
+   * bleeds having six seconds left. It is DELIBERATELY ABSENT: the ruleset
+   * owner paused its implementation, and as modelled it could not be worth
+   * casting anyway -- a flat 216 over a six-second channel, with no
+   * coefficient because the sheet has no Wrack row, and its +10% to other
+   * Shadow damage-over-time effects unmodelled. See `WRACK`.
+   */
   { abilityId: 'shadow_bolt' },
 ];
 
