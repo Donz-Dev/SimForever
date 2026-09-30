@@ -5,6 +5,7 @@ import { PRESETS_BY_ID } from '../../src/profiles/presets';
 import { abilitiesForClass } from '../../src/game/abilities/abilitiesForClass';
 import type { TelemetryEvent } from '../../src/engine';
 import { resolveCast, seconds } from '../../src/engine';
+import { manaPerTick } from '../../src/game/combat/resourceRules';
 import { buildSimulation } from '../helpers/buildSimulation';
 import { makeAttacker, makeTarget } from '../helpers/actors';
 import {
@@ -16,6 +17,7 @@ import {
   FIREBALL_DAMAGE,
   FROSTBOLT_DAMAGE,
   ICE_LANCE_DAMAGE,
+  MAGE_ARMOR_ABILITY,
   MAGE_BASE_MANA,
   PYROBLAST_DAMAGE,
   SCORCH_DAMAGE,
@@ -27,6 +29,8 @@ import {
   HOT_STREAK_MAX_STACKS,
   HOT_STREAK_REDUCTION_PER_STACK,
   IMPROVED_SCORCH_MAX_STACKS,
+  MAGE_ARMOR,
+  MAGE_ARMOR_REGEN_BYPASS,
   PYROBLAST_COEFFICIENTS,
   igniteAura,
   fireVulnerabilityAura,
@@ -403,5 +407,96 @@ describe('the three fights', () => {
      */
     expect(ARCANE_MISSILES_TICK_COEFFICIENT).toBeCloseTo(0.286, 10);
     expect(ARCANE_MISSILES_TICK_COEFFICIENT * ARCANE_MISSILES_TICKS).toBeGreaterThan(1);
+  });
+});
+
+describe('Mage Armor, whose whole worth is the five second rule', () => {
+  /*
+   * --------------------------------------------------------------------------
+   * "Increases your resistance to all magic by 15 and allows 50% of your mana
+   * regeneration to continue while casting."
+   *
+   * The second clause is the one that pays, and the engine already had the
+   * rule waiting for it: `manaPerTick` suppresses regeneration for five
+   * seconds after mana is spent and lets through whatever fraction
+   * `manaRegenBypass` names. A Mage casting continuously never leaves that
+   * lockout, so this is the difference between half its regeneration and none.
+   *
+   * ASSERTED ON THE MECHANISM rather than on a profile's DPS, because a mana
+   * effect is worth nothing to a build that never runs dry -- and two of the
+   * three Mage builds might not. What has to be true is that the stat arrives
+   * and that the rule reads it.
+   * --------------------------------------------------------------------------
+   */
+  const caster = (bypassFromTalents = 0) =>
+    makeAttacker({
+      autoAttack: 'none',
+      stats: { manaPer5: 100, manaRegenBypass: bypassFromTalents },
+      resources: [{ type: 'mana', maximum: 10_000 }],
+    });
+
+  it('grants a flat 50 into the same pool a talent feeds', () => {
+    expect(MAGE_ARMOR_REGEN_BYPASS).toBe(50);
+    expect(MAGE_ARMOR.statModifiers).toEqual([
+      { stat: 'manaRegenBypass', operation: 'flat', value: 50 },
+    ]);
+    // No duration: thirty minutes outlasts every fight here thirty times over.
+    expect(MAGE_ARMOR.durationMs).toBe(0);
+  });
+
+  it('lets half the regeneration through while the lockout is running', () => {
+    const actor = caster();
+    const simulation = buildSimulation([actor, makeTarget()]);
+    simulation.begin();
+
+    const full = manaPerTick(actor, 0);
+    expect(full).toBeGreaterThan(0);
+
+    // Spend, so the five second rule is biting.
+    actor.recordResourceSpend('mana', 0);
+    const during = manaPerTick(actor, seconds(1));
+
+    simulation.applyAura(actor, MAGE_ARMOR, actor.id);
+    const withArmor = manaPerTick(actor, seconds(1));
+
+    expect(during).toBeLessThan(full);
+    expect(withArmor).toBeCloseTo(full * 0.5, 6);
+    expect(withArmor).toBeGreaterThan(during);
+  });
+
+  it('stacks ADDITIVELY with a talent granting the same thing, clamped at 100', () => {
+    /*
+     * Arcane Meditation grants the same stat, so a Mage that takes it and
+     * casts this is not getting 50% of 50% -- it is getting the sum. The clamp
+     * lives in the rule rather than in the aura, so neither source has to know
+     * about the other.
+     */
+    const actor = caster(60);
+    const simulation = buildSimulation([actor, makeTarget()]);
+    simulation.begin();
+    simulation.applyAura(actor, MAGE_ARMOR, actor.id);
+
+    actor.recordResourceSpend('mana', 0);
+
+    // 60 + 50 is 110, clamped to 100: the whole tick comes through.
+    expect(manaPerTick(actor, seconds(1))).toBeCloseTo(manaPerTick(actor, seconds(10)), 6);
+  });
+
+  it('is in every Mage build, and is cast once', () => {
+    for (const preset of ['mage_fire', 'mage_frostfire', 'mage_arcane']) {
+      const built = PRESETS_BY_ID.get(preset)!.build();
+      const book = abilitiesForClass('mage', 'caster', built.talents).map((a) => a.id);
+      expect(book, preset).toContain('mage_armor');
+    }
+
+    // `canCast` refuses it once the aura is up, so an ungated entry at the top
+    // of a list costs one global cooldown for the whole fight and no more.
+    const actor = caster();
+    const simulation = buildSimulation([actor, makeTarget()]);
+    simulation.begin();
+    const context = { simulation, caster: actor, target: undefined, ability: MAGE_ARMOR_ABILITY };
+    expect(MAGE_ARMOR_ABILITY.canCast?.(context)).toBe(true);
+    simulation.applyAura(actor, MAGE_ARMOR, actor.id);
+    expect(MAGE_ARMOR_ABILITY.canCast?.(context)).toBe(false);
   });
 });
