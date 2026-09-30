@@ -106,9 +106,21 @@ describe('what a miss gives back', () => {
       const { player, target, simulation } = fight(chances, warrior);
       const rage = player.resources.require('rage');
       simulation.advanceTo(seconds(55));
+      /*
+       * THE ROTATION HAS BEEN RUNNING FOR FIFTY-FIVE SECONDS and is very
+       * likely mid-global-cooldown, which would refuse this cast and report a
+       * spend of zero -- indistinguishable from a full refund.
+       *
+       * Cleared explicitly rather than by picking a timestamp that happens to
+       * be free: the subject here is what a MISS gives back, and a test that
+       * depended on the Arms list's timing was pinning the list. It broke the
+       * day the ruleset owner moved Bloodrage to the top of it.
+       */
+      player.gcdReadyAt = 0;
       rage.set(rage.maximum);
       const before = rage.current;
-      castAbility(simulation, player, player.abilities.get('execute')!, target);
+      const result = castAbility(simulation, player, player.abilities.get('execute')!, target);
+      expect(result, JSON.stringify(result)).toEqual({ ok: true });
       return before - rage.current;
     };
 
