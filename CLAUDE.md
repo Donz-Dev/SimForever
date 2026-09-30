@@ -17,19 +17,29 @@ npm run typecheck    # tsc --noEmit
 npm run build        # typecheck + production build
 ```
 
-Two measurement harnesses, neither of them tests:
+Measurement harnesses and audits, none of them tests:
 
 ```bash
 npx vite-node tools/measure_profiles.ts          # the 23 profiles, 30 batches of 10
 USES=1 SEEDS=1 PROFILES=druid_cat npx vite-node tools/measure_profiles.ts
 npx vite-node tools/measure_rotation.ts          # Warrior TALENT builds, not profiles
+npx vite-node tools/ability_audit.ts             # is every ability connected at all
+npx vite-node tools/class_audit.ts warrior       # one class's gaps, lists and sources
+npx vite-node tools/coefficient_probe.ts         # does every ability's damage scale
 ```
+
+The last three are AUDITS rather than measurements and none of their DPS figures
+is the baseline — see **Verifying work** for which one answers what.
 
 `measure_profiles.ts` is the one that reproduces a published baseline, because a
 preset carries its own gear, raid buffs and 51 points that a hand-assembled
 character does not; `SAVE=` and `BASELINE=` turn it into a before-and-after with
 a REAL/noise verdict, and `USES=1` prints a list in priority order with what
 each entry actually did. See [docs/handoff-rotations.md](docs/handoff-rotations.md).
+
+Per-class state is [docs/handoff/](docs/handoff/) — one document per class,
+each the starting point for that class's deep dive, with its profiles, its live
+gaps and its own traps.
 
 Run `npm run typecheck` **and** `npm test` before opening a PR. The typechecker
 catches what the tests do not — a mutation of a shared readonly array, a stat
@@ -290,6 +300,24 @@ them, including `ALL_ABILITIES`.
 - **A crit damage bonus raises the bonus HALF** — 1.0 for a 2x melee crit, 0.5
   for a 1.5x spell crit. "+100%" takes a spell crit to 2.0x, not 2.5x; a melee
   crit with "+10% crit damage" is 2.1x, never 2.2x.
+- **`ALL_ABILITIES` COUNTS ON AN AURA TOO, and did not until Shatter needed it.**
+  `AuraCollection.abilityModifierFor` looked the ability id up EXACTLY, so an aura
+  declaring `{ '*': ... }` compiled, applied, reported its uptime and changed
+  nothing about any cast -- Berserk introduced the field with a NAMED ability and
+  never exercised the catch-all. `pick` is the ONE shared implementation of that
+  fold now, because it was written out per site and the third copy is where it
+  drifted. It also carries the double-count guard: asking for `'*'` must return
+  the catch-all once, or a talent granting +20% reads back as +40%.
+- **A MODIFIER CAN BE REGISTERED AT BUILD TIME AND CONDITIONED AT READ TIME** --
+  `AbilityModifiers.addWhileAura` / `forWhileAura`, keyed by aura id, with
+  `Combatant.abilityModifierFor` as the third source in the one funnel every
+  reader comes through. Shatter is why: its crit is on the Mage and its window is
+  a DIFFERENT talent's aura, so writing the number onto the aura would mean one
+  talent reading another's rank mid-build -- correct only while the two are
+  visited in the right order, and **talent iteration order is not something to
+  rest a crit chance on**. Conditional entries are stored APART from unconditional
+  ones, because combining loses the condition and a talent that pays all fight
+  instead of during its window is a bigger number and no error.
 - **A school-blind `spellPower` cannot hold "damage done by SHADOW spells"**, and
   seventeen item lines say exactly that. It is a fourth field on
   `SchoolModifier`, not a stat (`STAT_NAMES` is a closed flat set), and
@@ -324,6 +352,11 @@ them, including `ALL_ABILITIES`.
   `AuraDefinition`. `abilityCastTime` is a standing talent reduction fixed at
   build time, an ordinary aura reaches every ability or none, and content cannot
   reach cast time at all because the engine resolves it BEFORE `onCast` runs.
+- **`runCast` RUNS `onCast` BEFORE THE CAST REACTIONS**, and that ordering is
+  load-bearing rather than incidental: the spell that spends an aura's FINAL
+  charge has already rolled its crit while the aura was still up. Reversing the
+  two would silently rob every Fingers of Frost window of its last spell, and
+  nothing would error.
 - **Resolving and consuming are two steps, and that is the whole design.**
   `checkCast` must be side-effect free because a rotation calls it on every
   candidate before committing, so `resolveCast` is pure and `consumeCastCharges`
@@ -699,10 +732,23 @@ Say which. Only the first is an engine gap.
 | | |
 | --- | --- |
 | **the engine** | no declaration exists. Expires when one is built, and has six times — so write the reason specifically enough to re-read |
-| **the target** | a raid boss is never frozen, never below 20% health, never killed, is not Undead. Expires only if the encounter changes |
+| **the target** | a raid boss is never frozen, never killed, is not Undead. Expires only if the encounter changes -- **but "never below 20% health" is NOT one of these**, see below |
 | **the build** | the profile did not take it, or took a talent switching it off. Lone Wolf and Demonic Sacrifice both mean "no pet", so nineteen talents are correctly dead |
 
 Plus the permanent rulings under **Scope**.
+
+- **A LOW-HEALTH REQUIREMENT IS A CLOCK, NOT A TARGET PROPERTY, and writing it
+  off as one is now a documented mistake TWICE.** `inExecutePhase` in
+  `combat/executePhase.ts` reads remaining combat TIME against 20% of the
+  planned duration -- the owner's ruling, made for Execute, and it lives outside
+  `abilities/warrior.ts` so a second class is a CALLER rather than a borrower.
+  Hammer of Wrath already uses it and the ability-audit doc still explained its
+  silence as "needs the target below 20% health"; the Priest's **Early Demise**
+  is `unmodelled` for that reason right now, at the same 20%, and is expressible
+  today with no new data. **Before writing "the target never drops", check
+  whether the threshold is one this ruling already answers.** The Rogue's Quietus
+  is the honest version: 35% rather than 20%, so it names the ruling and asks
+  rather than assuming the fraction.
 
 - **An `unmodelled` reason is a claim about the engine ON THE DAY IT WAS WRITTEN,
   and it expires.** Clearing a blocker is not finished until every reason naming
@@ -938,6 +984,24 @@ shape should fail loudly, not render a tree with a broken arrow.
   table. Discover the list from the event stream instead.
 - Use `toBeCloseTo` for anything through a percentage modifier — `100 * 1.1` is
   `110.00000000000001`.
+- **A SEEDED TEST THAT "FAILS UNDER THE FULL SUITE AND PASSES IN ISOLATION ON THE
+  SAME COMMIT" IS THE SHARED CHECKOUT, NOT NON-DETERMINISM.** That sentence is
+  what you get when the difference was never IN the commit — another session's
+  uncommitted work, or your own. Chasing it as non-determinism cost an afternoon:
+  the ratio in question was bit-identical across processes, six full-suite runs
+  passed, and the code at the recorded commit was byte-identical to the code that
+  passed. **Check the tree before the engine.**
+- **A SYNCHRONOUS TEST CANNOT TIME OUT.** The body blocks the event loop, so
+  vitest's timer never fires — `bloodCraze.test.ts` has a test that takes 5491ms
+  and passes against a 5000ms default. So a slow test is not a flaky one, and a
+  CPU-contention slowdown (1487ms alone against 4721ms under the suite) is not a
+  near-miss against anything. Rule the timeout out by finding a longer test that
+  passes, not by arithmetic.
+- **A DPS-RATIO TEST IS TESTING THE ROTATION, whatever its name says.** Bastion's
+  exact 1.1 is asserted next door on `baseDamageMultiplier` to ten decimal
+  places; the ratio test beside it measures the tank's RAGE LOOP, which is why it
+  moves with the Prot priority list and has read anywhere from 1.089 to 1.16 on
+  code that never touched the talent. Two tests, two subjects, one name.
 
 ## Verifying work
 
@@ -963,6 +1027,31 @@ the browser.
 **`characterAtCombatStart` processes no events**, so it shows the character a
 moment before its own opener lands. Do not reason about in-fight scaling from it
 alone.
+
+**THREE AUDITS EXIST AND EACH IS BLIND TO WHAT THE OTHERS SEE.** Reach for the
+right one rather than the familiar one.
+
+| | Answers | Blind to |
+| --- | --- | --- |
+| `coefficient_probe.ts` | does the damage respond to a stat, casting each ability in ISOLATION | whether any profile ever casts it |
+| `measure_profiles.ts USES=1` | what each LIST ENTRY did, plus damage sources not in the list | an ability that is in neither |
+| `ability_audit.ts` | every ability in the BUILT character's book, and whether the damage shares sum to 100% | whether a number is RIGHT |
+
+**AN ABILITY IN THE BOOK, IN NO LIST, DEALING NO DAMAGE WAS INVISIBLE TO
+EVERYTHING** until the third one existed — declared, learnable, castable, never
+cast, reported nowhere. And **the share total is the completeness check**: a
+damage source nobody reports reads as a ZERO rather than as a gap, which is
+exactly how `resourceFlow` summed every pool under a heading saying "Rage" and
+produced a tidy 100%.
+
+**AN AUDIT FINDS A NEVER-FIRED ENTRY AND SAYS NOTHING ABOUT WHY. MEASURE THE
+CAUSE.** Hammer of Wrath is the worked example: the plausible explanation — "needs
+the target below 20% health" — was written into the docs and was wrong, with the
+code disproving it one file away. Sampling `checkCast` through the window gave 22
+refusals for `not_enough_resource` against 3 for `on_gcd`, because the Retribution
+Paladin spends 3425 of the 3449 mana it gains. **And the cross-check that
+separates "cannot afford it" from "broken" is another build firing the same
+ability** — the Shockadin casts it 0.3 times a fight on more mana.
 
 **When a fix moves nothing in the suite, that is a statement about the suite.**
 
@@ -994,6 +1083,14 @@ in a throwaway `git worktree` at a named commit, never in the shared working
 tree: a measurement there once came back a clean −2.0% on two profiles, which
 read exactly like a real regression and was another session's uncommitted work.
 Never commit files you find modified there.
+
+**A CLEAN MERGE CAN BE ARITHMETICALLY WRONG, and a count is where it happens.**
+Two branches each moved the talent census total by one from the same base, so
+both wrote the same number, git merged them without a conflict and the total was
+short by one. **Re-sum a total from its rows rather than adjusting it**, and the
+same for any prose figure derived from it — "X of 468 talents do something" went
+wrong the same way. `tools/class_audit.ts` now derives the whole census
+independently and throws if its four buckets do not account for every talent.
 
 Commit messages explain *why*, not just what, and flag behaviour changes and
 missing data explicitly. **Do not add `Co-Authored-By` trailers** — the user asked
