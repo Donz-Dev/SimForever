@@ -134,11 +134,13 @@ export const JUDGEMENT_OF_RIGHTEOUSNESS_SP_COEFFICIENT = 0.5;
 /**
  * Hammer of Wrath: 42.857% spell power.
  *
- * TRANSCRIBED AND NOT APPLIED, because the ability does not exist here. The
- * capture has it -- "474 to 522 Holy damage. Only usable on enemies that have
- * 20% or less health" -- so adding it is a new ability and a target-health
- * gate, not a coefficient change. See HANDOVER.md; it is one of two rows on the
- * sheet that landed on something unbuilt.
+ * APPLIED. It was transcribed and unapplied for as long as the ability did not
+ * exist, which was the sheet's last such row -- the two poison rows were
+ * cleared when the poison system landed and this one when the ruleset owner
+ * put Hammer of Wrath in two Paladin priority lists.
+ *
+ * Its "only usable on enemies that have 20% or less health" is the CLOCK here,
+ * by the same ruling Execute runs on; see `combat/executePhase.ts`.
  */
 export const HAMMER_OF_WRATH_SP_COEFFICIENT = 0.4285714285714286;
 

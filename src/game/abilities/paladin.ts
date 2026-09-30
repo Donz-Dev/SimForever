@@ -1,6 +1,7 @@
 import type { Ability, AuraDefinition, Combatant, SimulationContext } from '../../engine';
 import { dealDamage, seconds, spellPowerFor } from '../../engine';
 import { baseManaFor } from '../character/baseStatLookup';
+import { inExecutePhase } from '../combat/executePhase';
 import {
   CONSECRATION_GROUND,
   HOLY_SHIELD,
@@ -16,6 +17,7 @@ import {
   echoAura,
 } from '../auras/paladin';
 import {
+  HAMMER_OF_WRATH_SP_COEFFICIENT,
   HOLY_SHOCK_SP_COEFFICIENT,
   HOLY_STRIKE_SP_COEFFICIENT,
   JUDGEMENT_OF_COMMAND_SP_COEFFICIENT,
@@ -427,6 +429,57 @@ export const HOLY_SHIELD_ABILITY: Ability = {
   },
 };
 
+/**
+ * Hammer of Wrath: "strikes an enemy for 474 to 522 Holy damage. Only usable
+ * on enemies that have 20% or less health."
+ *
+ * ----------------------------------------------------------------------------
+ * THE LAST ROW OF THE COEFFICIENT SHEET THAT COULD NOT BE APPLIED.
+ *
+ * `HAMMER_OF_WRATH_SP_COEFFICIENT` has been transcribed in
+ * `combat/coefficients.ts` since the sheet arrived, carrying a comment saying
+ * the ability did not exist. It does now, and the comment is corrected there.
+ *
+ * ITS HEALTH GATE IS THE CLOCK, the same ruling Execute runs on and for the
+ * same reason: this encounter is a damage sink running for a fixed duration,
+ * not something with a health bar to whittle down, so a 20%-health condition
+ * could never once fire. `inExecutePhase` is the shared rule -- see
+ * `combat/executePhase.ts`, which is where it moved when it stopped being the
+ * Warrior's alone.
+ *
+ * A ONE SECOND CAST ON A MELEE CLASS IS A REAL COST. A cast interrupts the
+ * swing in progress and resets the swing timer, so the Retribution and
+ * Shockadin lists are trading part of an auto attack for it. That is not a
+ * reason to leave it out; it is a reason the entry has to be MEASURED rather
+ * than ranked by damage per cast alongside the instants around it.
+ * ----------------------------------------------------------------------------
+ */
+export const HAMMER_OF_WRATH_DAMAGE = midpoint(474, 522);
+export const HAMMER_OF_WRATH_COEFFICIENT = HAMMER_OF_WRATH_SP_COEFFICIENT;
+
+export const HAMMER_OF_WRATH: Ability = {
+  id: 'hammer_of_wrath',
+  name: 'Hammer of Wrath',
+  cost: { resource: 'mana', amount: 425 },
+  castTimeMs: seconds(1),
+  cooldownMs: seconds(6),
+  attackTable: 'spell',
+  canCast: ({ simulation }) => inExecutePhase(simulation),
+  onCast: ({ simulation, caster, target, ability }) => {
+    if (!target) return;
+    dealDamage(simulation, {
+      source: caster,
+      target,
+      abilityId: ability.id,
+      abilityName: ability.name,
+      school: HOLY,
+      baseAmount: HAMMER_OF_WRATH_DAMAGE,
+      powerCoefficient: HAMMER_OF_WRATH_COEFFICIENT,
+      attackTable: ability.attackTable,
+    });
+  },
+};
+
 export const PALADIN_ABILITIES: readonly Ability[] = [
   SEAL_OF_RIGHTEOUSNESS_ABILITY,
   SEAL_OF_COMMAND_ABILITY,
@@ -438,4 +491,5 @@ export const PALADIN_ABILITIES: readonly Ability[] = [
   HOLY_SHOCK,
   CONSECRATION,
   HOLY_SHIELD_ABILITY,
+  HAMMER_OF_WRATH,
 ];
