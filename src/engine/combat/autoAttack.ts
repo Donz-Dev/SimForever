@@ -102,14 +102,6 @@ export function extraAttack(
       if (ctx.defaultTargetFor(attacker)) {
         attacker.auras.consumeSwingCharges(ctx);
         swing(ctx, attacker, weapon, slot);
-        /*
-         * RECORDED AFTER THE SWING RESOLVES, so "a shot landed just now" is
-         * true of a swing that happened rather than one that was scheduled.
-         * An extra attack goes through `extraAttack` and does not set this:
-         * the Hunter entries that read it are weaving around the BOW's own
-         * rhythm, which a proc does not move.
-         */
-        attacker.recordSwing(slot, ctx.clock.now());
       }
 
       const haste = hasteMultiplierFrom(attacker.stats.effective);
@@ -177,6 +169,16 @@ function scheduleSwing(
         // own critical strike is not immediately eaten by it.
         attacker.auras.consumeSwingCharges(ctx);
         swing(ctx, attacker, weapon, slot);
+        /*
+         * RECORDED AFTER THE SWING RESOLVES, so "a shot landed just now" is
+         * true of a swing that HAPPENED rather than one that was scheduled.
+         *
+         * IN THIS HANDLER AND NOT IN `extraAttack`, which carries the same two
+         * lines and is where this first landed by mistake: a Hunter entry
+         * gated on the shot window is weaving around the BOW'S OWN rhythm, and
+         * a Windfury or Hand of Justice proc does not move that rhythm.
+         */
+        attacker.recordSwing(slot, ctx.clock.now());
       }
 
       // The timer keeps running even with no valid target, so that switching
