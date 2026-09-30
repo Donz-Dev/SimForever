@@ -177,7 +177,12 @@ export const BACKSTAB: Ability = {
  * class that can take a Rogue from four points to over the cap. The overflow
  * is wasted and reported, rather than refused -- see `comboPoints.ts`.
  *
- * The poison clause does nothing: poisons are not implemented.
+ * ITS POISON CLAUSE IS NOW REACHABLE AND STILL NOT APPLIED, which is a change
+ * of kind rather than a change of wording. It read "does nothing: poisons are
+ * not implemented" for as long as that was true; the Venom Rogue keeps Deadly
+ * Poison on the target for most of a fight, so the +20% is a live 20% on the
+ * signature ability of the build that takes it. Deliberately left for its own
+ * PR: it moves a profile's DPS and wants a re-measured baseline.
  */
 // 50 and not 38, from foreverchanges.pro by the same rule -- "an additional 50
 // with each weapon" against our capture's 38, same rank 4, same build.
@@ -222,8 +227,9 @@ export const MUTILATE: Ability = {
     consumeColdBlood(simulation, caster, ability.id);
   },
   unmodelled:
-    'Its "+20% against Poisoned targets" does nothing: poisons are not ' +
-    'implemented, so no target here is ever poisoned.',
+    'Its "+20% against Poisoned targets" is not applied. The reason used to be ' +
+    'that no target was ever poisoned; poisons exist now and the Venom build ' +
+    'keeps Deadly Poison up, so this is a real 20% that is simply not read.',
 };
 
 /**

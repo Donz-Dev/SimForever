@@ -6,8 +6,8 @@ gets built is [docs/class-implementation.md](docs/class-implementation.md).
 ## Where the project is
 
 All nine classes and all 23 profiles are implemented, every number traced to a
-source rather than invented. **1,790 tests**, CI green on Node 20 and 22. Profile
-format **v9**. Live at <https://donz-dev.github.io/SimForever/>, republished by
+source rather than invented. **1,892 tests**, CI green on Node 20 and 22. Profile
+format **v10**. Live at <https://donz-dev.github.io/SimForever/>, republished by
 `.github/workflows/deploy.yml` on every push to `main` that passes.
 
 The profiles were specified by the ruleset owner as `talentsforever.com` build
@@ -26,17 +26,17 @@ which is what replacing every coefficient in the project at once should do.
 
 | Profile | Class | Talents | DPS | | Profile | Class | Talents | DPS |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| DW Fury | Warrior | 18/33/0 | 640.1 | | Enh Shaman | Shaman | 19/32/0 | 404.3 |
-| 2H Arms | Warrior | 38/13/0 | 594.9 | | Fire Mage | Mage | 10/39/2 | 390.5 |
-| LW Melee | Hunter | 7/13/31 | 550.8 | | Rupture Rogue | Rogue | 12/8/31 | 366.3 |
-| Firelock | Warlock | 5/11/35 | 537.6 | | Moonkin | Druid | 38/0/13 | 359.1 |
-| Prot Warr | Warrior | 17/0/34 | 454.2 | | Bear Druid | Druid | 9/42/0 | 350.9 |
+| DW Fury | Warrior | 18/33/0 | 652.2 | | Enh Shaman | Shaman | 19/32/0 | 404.3 |
+| 2H Arms | Warrior | 38/13/0 | 596.6 | | Fire Mage | Mage | 10/39/2 | 390.3 |
+| LW Melee | Hunter | 7/13/31 | 550.1 | | Rupture Rogue | Rogue | 12/8/31 | 377.3 |
+| Firelock | Warlock | 5/11/35 | 537.6 | | Moonkin | Druid | 38/0/13 | 359.0 |
+| Prot Warr | Warrior | 17/0/34 | 457.1 | | Bear Druid | Druid | 9/42/0 | 353.1 |
 | Seal Twist Ret | Paladin | 13/0/38 | 451.8 | | Shockadin | Paladin | 23/0/28 | 343.4 |
-| Shadow Priest | Priest | 16/3/32 | 449.3 | | Frostfire Mage | Mage | 0/29/22 | 340.0 |
-| Cat Druid | Druid | 9/35/7 | 432.8 | | LW Ranged | Hunter | 7/39/5 | 302.0 |
-| BM Hunter | Hunter | 31/20/0 | 418.0 | | SM/DS | Warlock | 40/11/0 | 292.6 |
-| Venom Rogue | Rogue | 37/12/2 | 410.9 | | Ele Shaman | Shaman | 38/13/0 | 277.7 |
-| Combat Rogue | Rogue | 18/33/0 | 409.0 | | Prot Pally | Paladin | 8/36/7 | 162.7 |
+| Shadow Priest | Priest | 16/3/32 | 449.3 | | Frostfire Mage | Mage | 0/29/22 | 339.5 |
+| Cat Druid | Druid | 9/35/7 | 441.2 | | LW Ranged | Hunter | 7/39/5 | 302.0 |
+| BM Hunter | Hunter | 31/20/0 | 418.3 | | SM/DS | Warlock | 40/11/0 | 292.6 |
+| Combat Rogue | Rogue | 18/33/0 | 417.6 | | Ele Shaman | Shaman | 38/13/0 | 277.7 |
+| Venom Rogue | Rogue | 37/12/2 | 410.3 | | Prot Pally | Paladin | 8/36/7 | 161.8 |
 | Arcane Mage | Mage | 47/4/0 | 405.2 | | | | | |
 
 **POISONS WERE THE LAST THING TO MOVE THESE, AND ONLY THE ROGUES MOVED.**
@@ -80,9 +80,9 @@ Measured at `d2718b0`, and the numbers say it is not close:
 | --- | --- |
 | **140 of 468 talents are a live gap** | down from a raw count of 262 unmodelled reasons, because 89 are permanently out of scope by ruling and 33 more are PARTLY modelled. See the census below — the raw total is not a work queue |
 | **113 abilities declared against 478 captured** | the data is on disk; the declarations are not. Druid 15, Hunter 14, Mage 13, Rogue 12, Warlock 10, Shaman 9, Priest 7, Paladin 6, plus the Warrior's 27 |
-| ~~**Coefficients**~~ | **DONE.** `WoWSimWorksheet.xlsx`, the owner's authoritative coefficient document, is transcribed in `src/game/combat/coefficients.ts` and applied across all nine classes. Every derived rule is deleted. Two rows could not be applied: the poisons and Hammer of Wrath, both needing something unbuilt. [docs/spell-coefficients.md](docs/spell-coefficients.md) |
+| ~~**Coefficients**~~ | **DONE.** `WoWSimWorksheet.xlsx`, the owner's authoritative coefficient document, is transcribed in `src/game/combat/coefficients.ts` and applied across all nine classes. Every derived rule is deleted. ONE row still cannot be applied -- Hammer of Wrath, which is not a declared ability; the two poison rows have since been applied by the poison system. [docs/spell-coefficients.md](docs/spell-coefficients.md) |
 | **19 `PLACEHOLDER_*` constants** | each a real number nobody has supplied. Sniper Shot's invented 200-mana cost is gone, but it was never one of these: it was a bare literal with a false caveat, which is worse — an invented number that is not named cannot be audited |
-| **Rotations are thin and unmeasured** | Warrior has 12 priority lists and came from the owner; every other class has 2–5, and **only the three Hunter APLs have ever been measured entry by entry** |
+| **Rotations are thin and unmeasured** | **THE NEXT PIECE OF WORK, and it has its own handoff: [docs/handoff-rotations.md](docs/handoff-rotations.md).** 26 lists — one per profile, two Warrior fallbacks no preset reaches, and the pet's. The Warrior's five came from the owner; **only the three Hunter APLs and one Venom entry have ever been measured entry by entry**, and **twelve entries across eight profiles never fire at all** |
 
 **The Warrior was built first and built properly, and it is not the norm.** Read
 any claim about this project's depth as a claim about the Warrior until checked.
@@ -166,6 +166,13 @@ Two questions the census raises that the rulings do not answer:
   its interval. A combo point is worth more on Eviscerate than a 30% bonus on
   the fifth of the build's damage that poisons supply. The mechanism is tested,
   so one line re-measures it the day a coefficient moves.
+  **AND POISONS EXISTING OPENED A GAP THAT WAS CLOSED BY IMPOSSIBILITY.**
+  Mutilate is "+20% against Poisoned targets" and its `unmodelled` reason used
+  to be that no target here is ever poisoned. The Venom build now keeps Deadly
+  Poison up for most of a fight, so that is a live 20% on the signature ability
+  of the build that takes it, and it is not read. Left for its own PR because it
+  moves a profile and wants a re-measured baseline. **A reason can expire
+  without anybody touching the thing it is written on.**
 - **Stealth and openers.** Eleven Rogue talents are inert because every fight
   opens in combat — Premeditation, Initiative, Improved Ambush, Cutthroat, Dirty
   Deeds, Camouflage, Opportunity and more. That is an encounter property, not one
@@ -223,15 +230,18 @@ per existing application" applies too — its `unmodelled` reason claimed a
 periodic tick could not read its own stack count, and `AuraInstance` has carried
 `stacks` all along.
 
-**TWO ROWS OF THE SHEET COULD NOT BE APPLIED**, and both are transcribed in
+**ONE ROW OF THE SHEET STILL CANNOT BE APPLIED**, and it is transcribed in
 `coefficients.ts` rather than dropped, so the record covers every row:
 
-- **Instant Poison and Deadly Poison.** Poisons are not implemented at all — a
-  missing SYSTEM rather than a missing number, and five Rogue talents are
-  already inert waiting for the same one.
 - **Hammer of Wrath.** The ability is not declared. The capture has it, so this
   is a new ability plus a target-health gate the encounter deliberately does not
   have — Execute is gated on the CLOCK here, by an earlier ruling of yours.
+
+~~**Instant Poison and Deadly Poison.**~~ **Applied.** They were listed here as
+a missing SYSTEM rather than a missing number, and the system was built: both
+coefficients are read by `reactions/poisons.ts` and `auras/rogue.ts`. The
+comment on the constants said "not applied" for a while after it stopped being
+true, which is the third time an expired reason has been caught in this file.
 
 1. **Seal of Command's PPM.** You chose procs-per-minute; the figure did not come
    with it.
@@ -297,6 +307,13 @@ The refactor is phased; the milestone follows it.
    Hunter review is the worked method and moved those three profiles +20 to +55
    DPS each.
 
+**THE APL HALF OF PHASE 3 IS THE NEXT PIECE OF WORK AND HAS ITS OWN HANDOFF**:
+[docs/handoff-rotations.md](docs/handoff-rotations.md). It carries the 23
+profiles against the lists they run, the twelve entries measured never to fire,
+and `tools/measure_profiles.ts` -- the first committed harness that can measure
+a PROFILE rather than a hand-assembled Warrior, so a published baseline is
+reproducible by the person who published it.
+
 A profile has **no `faction` field**; faction is derived from race. The milestone
 asks for faction as a default, so either say that derivation is the answer or
-store it and bump v9.
+store it and bump v10.
