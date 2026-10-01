@@ -216,6 +216,18 @@ export const PALADIN_SHOCKADIN: readonly PriorityEntry[] = [
    * Nothing errored; the DPS was simply lower than it should have been.
    */
   { abilityId: 'seal_of_righteousness', condition: selfExpired('seal_of_righteousness') },
+  /*
+   * DIVINE FAVOR ABOVE HOLY SHOCK, on the ruleset owner's choice, and the order
+   * is the whole of the entry: the buff is "your NEXT Holy Shock", so a Divine
+   * Favor cast below Holy Shock would spend its global cooldown arming a spell
+   * that had already gone. Its own `canCast` refuses a second one while the first
+   * is unspent, so the two-minute cooldown is what paces it rather than the list.
+   *
+   * IT COSTS A GLOBAL COOLDOWN FOR NO DAMAGE OF ITS OWN, which is why it is
+   * measured rather than argued about -- the same reason Hunter's Mark is in the
+   * melee Hunter's list at a known price.
+   */
+  { abilityId: 'divine_favor' },
   { abilityId: 'holy_shock' },
   { abilityId: 'holy_strike' },
   { abilityId: 'hammer_of_wrath' },

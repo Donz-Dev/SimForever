@@ -1,4 +1,5 @@
 import type { AbilityModifier } from '../combat/abilityModifiers';
+import type { AttackTableKind } from '../combat/attackTable';
 import type { Combatant } from '../actors/Combatant';
 import type { DamageSchool } from '../combat/DamageSchool';
 import type { Milliseconds } from '../time';
@@ -233,6 +234,50 @@ export interface AuraDefinition {
    * ----------------------------------------------------------------------------
    */
   readonly abilityModifiers?: Readonly<Record<string, AbilityModifier>>;
+  /**
+   * SPELL POWER THAT WHOEVER ATTACKS THIS COMBATANT READS, per school.
+   *
+   * ----------------------------------------------------------------------------
+   * THE OTHER SIDE OF `SchoolModifier.spellPower`, AND THE DIFFERENCE IS WHOSE
+   * GEAR IT IS. That one is "+161 to damage done by YOUR Holy spells" and lives
+   * on the attacker; this is "Holy damage TAKEN increased by up to 161" and lives
+   * on the target, so every attacker reads it and none of them owns it.
+   *
+   * `damageTakenBySchool` IS NOT IT, which is the mistake this field exists to
+   * stop being made again. That one MULTIPLIES, and the Paladin's Judgement of
+   * the Crusader was left inert for a year with a comment saying a flat
+   * per-school bonus had no declaration -- reading its 161 as a multiplier would
+   * have been absurd, so nothing was applied at all.
+   *
+   * "UP TO" IS THE WORD THAT DECIDES THE ARITHMETIC, on the ruleset owner's
+   * ruling. It is spell POWER, not flat damage: each ability scales it by its own
+   * coefficient, so a seal at 20% gains a fifth of it and Consecration gains 9.5%
+   * of it a tick. A flat 161 added to every Holy hit would roughly treble a
+   * seal, and "increasing Holy damage taken by 161" is how the source would have
+   * had to word that.
+   *
+   * ADDED, NEVER MULTIPLIED, across auras -- two debuffs granting Holy power are
+   * one pool, the same rule `SchoolModifier.spellPower` combines by.
+   * ----------------------------------------------------------------------------
+   */
+  readonly spellPowerTakenBySchool?: Partial<Record<DamageSchool, number>>;
+  /**
+   * Multiplies the damage this combatant DEALS through one attack table.
+   *
+   * ----------------------------------------------------------------------------
+   * THE AURA-SHAPED SIBLING OF `AttackTableModifiers`, which is built once when
+   * the character is and cannot come and go. Seal of the Crusader is the first
+   * caller: it "attacks 40% faster, but deals less damage with each attack", and
+   * the penalty has to arrive and leave with the seal.
+   *
+   * WHY NOT `damageDoneMultiplier`, which an aura already carries. That one is
+   * whole-character, and would take the penalty to Judgement, Holy Shock and
+   * Consecration as well -- none of which the haste it compensates for
+   * accelerates. Keying it on the table lets the seal reduce exactly what it sped
+   * up, which is the reading that leaves the clause doing its stated work.
+   * ----------------------------------------------------------------------------
+   */
+  readonly damageDoneByTable?: Partial<Record<AttackTableKind, number>>;
   /**
    * Ability ids whose COOLDOWN does not apply while this aura is up.
    *

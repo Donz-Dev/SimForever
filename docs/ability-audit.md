@@ -32,8 +32,8 @@ At `d93f167`, 23 profiles, 10 iterations each:
 
 | | |
 | --- | --- |
-| **134** | abilities in at least one profile's book |
-| **109** | exercised by at least one profile |
+| **135** | abilities in at least one profile's book |
+| **110** | exercised by at least one profile |
 | **25** | never cast by any of the 23 |
 | **9** | priority list entries that never fire — 8 at the time of this table, plus Spearing Strike, see below |
 | **23 of 23** | damage tables summing to 100% — **nothing unaccounted, anywhere** |
@@ -62,7 +62,7 @@ contradicted its own body. Corrected, and the list is here instead.
 | `berserker_stance_cast` | DW Fury | as above |
 | `defensive_stance_cast` | Prot Warr | as above |
 | `eviscerate` | Rupture | the gate's two aura-duration floors never coincide with five combo points. **Ruled fine by the owner** — "zero is fine" |
-| `hammer_of_wrath` | Seal Twist Ret | **out of mana, not out of window.** See below -- this row said the wrong thing for a day |
+| `hammer_of_wrath` | Seal Twist Ret | **out of mana, not out of window, and still out of mana after 863 mana a fight was added to the build.** See below -- this row said the wrong thing for a day |
 | `spearing_strike` | DW Fury | **the build does not have the ability**, because Spearing Strike requires a two-handed weapon and that list is only reached by a dual-wielder. Added 2026-09-30; the entry is the owner's and is left as written |
 
 Seven causes, four of them deliberate, one ruled on, one a RESOURCE and one a
@@ -105,14 +105,41 @@ transcription error: 425 mana, a 1-second cast and a 6-second cooldown are all
 confirmed against `forever-paladin-spellbook.json`, at rank 3, which is max.
 
 **THE CROSS-CHECK THAT IT IS MANA AND NOT THE GATE IS THE SHOCKADIN**, which
-carries the same entry and casts it **0.3 times a fight** on 4129 mana gained
-against Retribution's 3449. Same ability, same clock, more mana, and it fires.
+carries the same entry and casts it **2.0 times a fight** on more mana than
+Retribution has. Same ability, same clock, more mana, and it fires.
 
 So this is a resource question and a list question, not an engine one, and it is
 **not fixed here** -- reordering the entry does not conjure mana, and whether
-Hammer of Wrath is worth more per mana than the Judgement or Holy Strike it would
-displace is a measurement nobody has taken. Recorded so that the next person
-starts from the real cause.
+Hammer of Wrath is worth more per mana than the Consecration it would displace is
+a measurement nobody has taken. Recorded so that the next person starts from the
+real cause.
+
+### AND IT SURVIVED TWO THINGS THAT SHOULD HAVE FIXED IT
+
+The Paladin deep dive gave the Retribution build **170 mana a cast off this very
+ability** -- Holy Conduit's 40% reduction, whose `unmodelled` reason had been
+written before Hammer of Wrath was a declared ability and listed it among the
+clauses that could not apply -- and **693 mana a fight** from Sanctified
+Judgement, which went from inert to the largest single source of mana either
+Retribution build has. It still never fires.
+
+`npx vite-node tools/probe_resources.ts` is the tool that says why, and it
+exists because this question gets asked while reading a priority list:
+
+```
+Seal Twist Ret  526.7 DPS
+mana: gained 4101  spent 4023  wasted 0  headroom 78
+  GAINED   Started the fight with 3344   Sanctified Judgement 693   Regeneration 64
+  SPENT    Consecration 1196   Seal of Command 1090   Seal of Righteousness 1038
+           Judgement 428   Seal of the Crusader 144   Holy Strike 127
+```
+
+**78 mana of headroom in a whole fight, against a 255-mana ability.** The two
+twisted seals take 2128 between them, which is the capstone's own price: a
+Paladin that swaps seals every few seconds pays for every swap. **A build this
+resource-bound absorbs any amount of extra mana into the entries above the one
+that is starving**, which is worth knowing before adding sustain to fix a
+never-fired entry.
 
 ## The 25 that no profile casts
 

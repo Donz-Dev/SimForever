@@ -44,6 +44,32 @@ export interface AbilityModifier {
   readonly critMultiplierBonus?: number;
   /** Multiplies the ability's final damage. 1.2 is +20%. */
   readonly damageMultiplier?: number;
+  /**
+   * Taken off the MISS chance, in percentage POINTS. 5 is "+5% chance to hit".
+   *
+   * ----------------------------------------------------------------------------
+   * "THE TABLE DECIDES HIT BEFORE ANY PER-SCHOOL MODIFIER IS CONSULTED" WAS THE
+   * REASON FIVE TALENTS ACROSS THREE CLASSES WERE INERT, and it was not true.
+   * `rollTable` folds the ability's modifier, the school's and the table's into
+   * one and hands the result to `resolveAttackTable` -- so the school was in hand
+   * at the roll all along. What was missing was a FIELD, not a route to one.
+   * Arcane Focus and Elemental Precision on the Mage, Shadow Focus and Holy
+   * Precision on the Priest, and Divine Precision on the Paladin all read
+   * "improves your chance to hit with <school> spells".
+   *
+   * SUBTRACTED FROM MISS RATHER THAN ADDED TO HIT, because no table carries a hit
+   * chance: `hit` is the remainder after the walk falls past every other slice.
+   * Shrinking miss grows that remainder, which is what "more of your casts land"
+   * means on a cumulative table. Floored at zero -- a negative miss chance would
+   * shift every band below it and silently hand out dodges.
+   *
+   * ON THE SHARED INTERFACE, unlike `spellPower` below, and for the opposite
+   * reason: all three scopes reach the same roll, so a hit bonus does something
+   * wherever it is hung. "Improves your chance to hit with your Fireball" and
+   * "with your melee abilities" are both real wordings and both would work.
+   * ----------------------------------------------------------------------------
+   */
+  readonly hitBonus?: number;
 }
 
 /**
@@ -238,6 +264,14 @@ function combine(a: SchoolModifier, b: SchoolModifier): SchoolModifier {
     critMultiplierBonus: (a.critMultiplierBonus ?? 0) + (b.critMultiplierBonus ?? 0),
     damageMultiplier: (a.damageMultiplier ?? 1) * (b.damageMultiplier ?? 1),
     spellPower: (a.spellPower ?? 0) + (b.spellPower ?? 0),
+    /*
+     * HIT ADDS, like every other chance here. Left out when the field was
+     * introduced, and a test of TWO sources is what found it -- one source
+     * worked perfectly, because  only combines when something is already
+     * registered for the key. Two talents raising the same school's hit would
+     * have ended up with neither, which is a smaller number and no error.
+     */
+    hitBonus: (a.hitBonus ?? 0) + (b.hitBonus ?? 0),
   };
 }
 

@@ -4,7 +4,7 @@ import type { TalentAllocation } from '../talents/Talent';
 import { talentNumber } from '../talents/talentValues';
 import { WARRIOR_REACTIONS } from './warrior';
 import { windfuryWeaponReaction } from './shaman';
-import { PALADIN_REACTIONS } from './paladin';
+import { PALADIN_REACTIONS, PALADIN_SHIELD_REACTIONS } from './paladin';
 
 /**
  * Reactive procs a class has.
@@ -31,7 +31,7 @@ import { PALADIN_REACTIONS } from './paladin';
  */
 export function reactionsForClass(
   characterClass: ClassId,
-  _style?: CombatStyleId,
+  style?: CombatStyleId,
   talents?: TalentAllocation,
 ): readonly Reaction[] {
   if (characterClass === 'warrior') return WARRIOR_REACTIONS;
@@ -41,7 +41,20 @@ export function reactionsForClass(
    * around doing exactly that -- so binding the reaction to the seal at build
    * time would make swapping do nothing.
    */
-  if (characterClass === 'paladin') return PALADIN_REACTIONS;
+  if (characterClass === 'paladin') {
+    /*
+     * AND SEAL OF FURY'S SHIELD NEEDS A SHIELD, which is a BUILD fact rather than
+     * something an `AttackEvent` could answer: a `WeaponProfile` says nothing
+     * about what is in the off hand, so "while a shield is equipped" is knowable
+     * exactly once, here, where the style is in scope.
+     *
+     * The same place Shield Slam's gate lives, and the same reasoning the
+     * Warrior's Master of Defense was fixed by after its rage proc fired for a
+     * Protection warrior carrying two weapons.
+     */
+    if (style === 'one_hand_shield') return [...PALADIN_REACTIONS, ...PALADIN_SHIELD_REACTIONS];
+    return PALADIN_REACTIONS;
+  }
 
   if (characterClass === 'shaman') {
     /*

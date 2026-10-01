@@ -85,8 +85,8 @@ const RULED_OUT_WORDING =
 const MENTIONS_BUT_IS_A_LIVE_GAP: Record<string, string> = {
   'shaman.water_shield':
     'MANA RETURN, which is explicitly in scope. Inert because neither profile is attacked and neither heals -- the target, not the ruling.',
-  'paladin.divine_favor':
-    'Two of its three spells are heals, but the Holy Shock clause needs a one-shot per-ability CRIT modifier, which is a live engine gap.',
+  'paladin.guardian_s_favor':
+    'Names movement impairment, but that is one of two clauses and the blocker is that NEITHER blessing is declared -- and whether a physical immunity that also stops you attacking is in scope has not been ruled on.',
   'druid.nature_s_splendor':
     'Names healing spells, but the blocker is a per-ability aura DURATION bonus having no declaration. Moonfire is not a heal.',
   'priest.divine_fury':

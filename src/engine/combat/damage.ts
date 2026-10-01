@@ -278,6 +278,31 @@ export function spellPowerFor(source: Combatant, school: DamageSchool): number {
 }
 
 /**
+ * The same pool, PLUS whatever a debuff on the target adds to it.
+ *
+ * ----------------------------------------------------------------------------
+ * ONE FUNCTION FOR BOTH SIDES, because the two are one number by the time an
+ * ability scales by its coefficient and nothing should have to remember to add
+ * the second. "Increases damage done by your Holy spells by up to 161" is the
+ * attacker's gear; "increasing Holy damage taken by up to 161" is Judgement of
+ * the Crusader on the target. Same school, same arithmetic, different owner.
+ *
+ * WHY IT IS EXPORTED. `scaleByPower` reaches it for every request with a
+ * coefficient, but a Paladin's seals compute their own damage in `game` and pass
+ * it as a `baseAmount` with `powerCoefficient: 0` -- so a seal has to ask for
+ * this explicitly or the debuff its own Judgement applied would not reach the
+ * half of the class that carries it.
+ * ----------------------------------------------------------------------------
+ */
+export function spellPowerAgainst(
+  source: Combatant,
+  target: Combatant | undefined,
+  school: DamageSchool,
+): number {
+  return spellPowerFor(source, school) + (target?.spellPowerTakenFor(school) ?? 0);
+}
+
+/**
  * The multiplier for the hand this ability swings with, or 1 when it does not
  * use a weapon at all.
  *
@@ -315,7 +340,9 @@ export function scaleByPower(request: DamageRequest, weaponDamage = 0): number {
      */
     const power = isPhysical(request.school)
       ? attackPowerFor(request)
-      : spellPowerFor(request.source, request.school);
+      : // AND THE TARGET'S OWN CONTRIBUTION, which is what makes Judgement of
+        // the Crusader do anything. See `spellPowerAgainst`.
+        spellPowerAgainst(request.source, request.target, request.school);
     total += coefficient * power;
   }
 
@@ -404,9 +431,13 @@ function rollTable(
 /**
  * Merge an ability's modifier with its school's.
  *
- * ONLY THE TWO CRIT FIELDS, because only they are wanted here: this feeds the
- * attack TABLE, and the table decides crit chance and crit magnitude. Both
+ * ONLY THE FIELDS THE TABLE READS -- the two crit ones and `hitBonus`. All three
  * add, which is the rule `AbilityModifiers` already combines entries by.
+ *
+ * `hitBonus` JOINED THEM LAST, and it is the reason five talents stopped being
+ * inert. Their `unmodelled` reasons all said the table decided hit before a
+ * per-school modifier could be consulted; this function is the proof it does not,
+ * because the school's modifier is one of its three arguments.
  *
  * THE DAMAGE MULTIPLIER IS DELIBERATELY NOT MERGED. The ability's is passed
  * through untouched and the school's is applied on its own line further down,
@@ -425,6 +456,7 @@ function combineModifiers(
       (ability.critMultiplierBonus ?? 0) +
       (school.critMultiplierBonus ?? 0) +
       (table.critMultiplierBonus ?? 0),
+    hitBonus: (ability.hitBonus ?? 0) + (school.hitBonus ?? 0) + (table.hitBonus ?? 0),
     // Applied separately, by `schoolMultiplier` and `tableMultiplier` in
     // `resolveDamage`, for the same reason the school's is.
     damageMultiplier: ability.damageMultiplier,
@@ -432,9 +464,13 @@ function combineModifiers(
 }
 
 function withModifier(chances: AttackChances, modifier: AbilityModifier): AttackChances {
-  if (!modifier.critBonus && !modifier.critMultiplierBonus) return chances;
+  if (!modifier.critBonus && !modifier.critMultiplierBonus && !modifier.hitBonus) return chances;
   return {
     ...chances,
+    // FLOORED AT ZERO. Every other band is read as an offset from this one, so a
+    // negative miss would push dodge and parry into the space below the die and
+    // hand out avoidance that was never rolled for.
+    miss: Math.max(0, chances.miss - toRollUnits(modifier.hitBonus ?? 0)),
     crit: chances.crit + toRollUnits(modifier.critBonus ?? 0),
     critMultiplier: chances.critMultiplier + (modifier.critMultiplierBonus ?? 0),
   };
@@ -555,7 +591,13 @@ export function resolveDamage(
    * sting's poison is not weapon damage.
    */
   const tableMultiplier =
-    source.attackTableModifiers.for(request.attackTable).damageMultiplier ?? 1;
+    (source.attackTableModifiers.for(request.attackTable).damageMultiplier ?? 1) *
+    /*
+     * AND THE AURA-SHAPED HALF OF THE SAME THING. `attackTableModifiers` is built
+     * once with the character; Seal of the Crusader's damage penalty arrives and
+     * leaves with the seal, so it cannot live there. Both apply.
+     */
+    source.damageDoneMultiplierForTable(request.attackTable);
   const afterAttacker =
     afterCrit * attackerMultiplier * abilityMultiplier * schoolMultiplier * tableMultiplier;
 
@@ -678,19 +720,6 @@ export function dealDamage(
   refundCostIfAvoided(context, request, resolution);
 
   /*
-   * A BLOCK SPENDS A CHARGE, and it is spent here rather than inside
-   * `resolveDamage` because that function deliberately applies nothing -- an
-   * ability can resolve a hit without it happening.
-   *
-   * After the damage is worked out, so the block that pays is the block that
-   * benefits. Shield Block is "two blocks", and consuming the charge first
-   * would make the second one land unblocked.
-   */
-  if (attack.outcome === 'block') {
-    target.auras.consumeBlockCharges(context);
-  }
-
-  /*
    * AND THE ABSORB IS SPENT HERE for the same reason the block charge is:
    * `resolveDamage` worked out how much would be soaked and applied nothing.
    * A shield drawn down inside that function would lose the amount every time
@@ -801,6 +830,31 @@ export function dealDamage(
     };
     runReactions(context, source, 'dealt', event);
     runReactions(context, target, 'taken', event);
+  }
+
+  /*
+   * A BLOCK SPENDS A CHARGE, and it is spent LAST -- after the damage was worked
+   * out, and after the reactions have seen the block.
+   *
+   * ----------------------------------------------------------------------------
+   * NOT INSIDE `resolveDamage`, because that function deliberately applies
+   * nothing: an ability can resolve a hit without the hit happening. And after
+   * the damage, so the block that pays is the block that benefits -- Shield Block
+   * is "two blocks", and consuming the charge first would make the second land
+   * unblocked.
+   *
+   * AND AFTER THE REACTIONS, which is the half that was wrong. Holy Shield
+   * "deals 221 Holy damage for each attack blocked while active" with four
+   * charges, and its reaction asks whether the aura is up: spending the charge
+   * first drops the aura on the FOURTH block, so the last of the four dealt
+   * nothing and the ability was quietly worth three quarters of itself. The same
+   * reasoning `runCast` runs `onCast` before the cast reactions by -- the effect
+   * that spends the final charge has already resolved while the aura was still
+   * there.
+   * ----------------------------------------------------------------------------
+   */
+  if (attack.outcome === 'block') {
+    target.auras.consumeBlockCharges(context);
   }
 
   return resolution;

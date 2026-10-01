@@ -1,5 +1,5 @@
 import type { AttackEvent, Combatant, Reaction, SimulationContext } from '../../engine';
-import { dealDamage, isWeaponUse, spellPowerFor } from '../../engine';
+import { dealDamage, isWeaponUse, spellPowerAgainst } from '../../engine';
 import { ppmChance } from '../items/procs';
 import {
   SEAL_OF_COMMAND_SP_COEFFICIENT,
@@ -7,10 +7,14 @@ import {
 } from '../combat/coefficients';
 import {
   ECHO_AURA_IDS,
+  IMPROVED_SEAL_OF_FURY_FLAG,
+  JUDGEMENT_OF_THE_CRUSADER,
   SEAL_OF_COMMAND_WEAPON_FRACTION,
   SEAL_OF_FURY_DAMAGE,
   SEAL_OF_RIGHTEOUSNESS_BASE,
+  improvedSealOfFuryMana,
   sealDamage,
+  sealOfFuryShield,
   sealOfRighteousnessCoefficient,
 } from '../auras/paladin';
 
@@ -115,12 +119,19 @@ export function sealOfRighteousnessProc(): Reaction {
           /*
            * HOLY SPELL POWER, not the school-blind pool alone. Eight pieces
            * of Lawbringer say "Increases damage done by Holy spells and
-           * effects by up to N" and the seal is Holy, so `spellPowerFor`
+           * effects by up to N" and the seal is Holy, so `spellPowerAgainst`
            * adds them -- the same function `scaleByPower` uses, so a seal
            * cannot disagree with the pipeline about what a Holy point is
            * worth.
+           *
+           * AND THE TARGET'S SIDE OF THE SAME POOL, which is Judgement of the
+           * Crusader's "+ up to 161 Holy damage taken". A seal computes its own
+           * damage here and hands it over as a `baseAmount` with no
+           * coefficient, so it has to ASK for that -- `scaleByPower` would
+           * never see a coefficient to apply it to. This is the half of the
+           * class the debuff is worth the most to: it lands on every swing.
            */
-          spellPowerFor(actor, HOLY),
+          spellPowerAgainst(actor, attack.defender, HOLY),
           // By weapon TYPE, which is what the sheet keys it on.
           sealOfRighteousnessCoefficient(actor.weapons.mainHand?.twoHanded === true),
         ),
@@ -137,20 +148,22 @@ export function sealOfRighteousnessProc(): Reaction {
  * Crusader and Vis'kag use, so a fast weapon and a slow one proc the same
  * number of times a minute and the seal is not quietly worth more on a dagger.
  *
- * THE RATE ITSELF IS STILL MISSING. The owner chose PPM and the figure has not
- * arrived, so `PLACEHOLDER_SEAL_OF_COMMAND_PPM` stands in, is named, and is
- * printed on the results page. It is the single largest number in the Seal
- * Twist Retribution build, so this is the one caveat on that profile worth
- * reading before quoting its DPS.
+ * AND THE RATE IS 7 PPM, WHICH IS THE RULESET OWNER'S OWN FIGURE.
+ *
+ * IT WAS A NAMED PLACEHOLDER CONSTANT FOR MOST OF THIS PROJECT, and the
+ * largest invented number in the fifth-highest profile -- Seal of Command plus
+ * its Echo is 26.5% of Seal Twist Retribution's damage, so the caveat on that
+ * profile was load-bearing. The owner has now confirmed 7 is the real value, so
+ * the placeholder is deleted rather than renamed and the profile loses its one
+ * big asterisk. The VALUE does not move; what moves is whether it can be quoted.
+ *
+ * ITS OLD NAME IS DELIBERATELY NOT WRITTEN OUT ANYWHERE IN `src`, because the
+ * project counts placeholders by grepping for the `PLACEHOLDER_` prefix -- so a
+ * prose mention of a deleted one inflates the count, which is exactly the kind
+ * of un-auditable figure the naming convention exists to prevent.
  * ------------------------------------------------------------------------------
  */
-export const PLACEHOLDER_SEAL_OF_COMMAND_PPM = 7;
-
-export const SEAL_OF_COMMAND_UNMODELLED =
-  'Its proc RATE is a placeholder. The tooltip says only "a chance" and no ' +
-  'figure exists in the client data; the ruleset owner chose procs-per-minute ' +
-  `and ${PLACEHOLDER_SEAL_OF_COMMAND_PPM} PPM is assumed and unverified. The ` +
-  '70% of weapon damage is the source’s own.';
+export const SEAL_OF_COMMAND_PPM = 7;
 
 export function sealOfCommandProc(): Reaction {
   return {
@@ -162,7 +175,7 @@ export function sealOfCommandProc(): Reaction {
       if (!actor.auras.has('seal_of_command')) return false;
       const speed = baseSpeedSeconds(actor, attack);
       if (speed <= 0) return false;
-      return context.rng.nextFloat(0, 1) < ppmChance(speed, PLACEHOLDER_SEAL_OF_COMMAND_PPM);
+      return context.rng.nextFloat(0, 1) < ppmChance(speed, SEAL_OF_COMMAND_PPM);
     },
     onTrigger: (context, actor, attack) => {
       /*
@@ -189,8 +202,9 @@ export function sealOfCommandProc(): Reaction {
         attack,
         'seal_of_command',
         'Seal of Command',
-        // The spell power half is the seal's OWN, added to the weapon half.
-        SEAL_OF_COMMAND_SP_COEFFICIENT * spellPowerFor(actor, HOLY),
+        // The spell power half is the seal's OWN, added to the weapon half --
+        // plus whatever the target's own Judgement debuff contributes.
+        SEAL_OF_COMMAND_SP_COEFFICIENT * spellPowerAgainst(actor, attack.defender, HOLY),
         { slot: 'mainHand', fraction: SEAL_OF_COMMAND_WEAPON_FRACTION, normalized: true },
       );
     },
@@ -226,8 +240,90 @@ export function sealOfFuryProc(): Reaction {
         'Seal of Fury',
         // Its flat 35 PLUS the sheet's 10% spell power. The 35 is not part of
         // the coefficient and must not be replaced by it.
-        sealDamage(SEAL_OF_FURY_DAMAGE, spellPowerFor(actor, HOLY), SEAL_OF_FURY_SP_COEFFICIENT),
+        sealDamage(
+          SEAL_OF_FURY_DAMAGE,
+          spellPowerAgainst(actor, attack.defender, HOLY),
+          SEAL_OF_FURY_SP_COEFFICIENT,
+        ),
       );
+    },
+  };
+}
+
+/*
+ * ============================================================================
+ * SEAL OF FURY'S SHIELD: a separate reaction from its damage, for the same
+ * swing.
+ *
+ * WHY IT IS NOT PART OF `sealOfFuryProc`. "While a shield is equipped" is a
+ * BUILD fact and cannot be checked when the reaction fires -- an `AttackEvent`
+ * carries the weapon slot and a `WeaponProfile` says nothing about what is in the
+ * off hand. `reactionsForClass` takes the combat STYLE, which is where the
+ * question is answerable, so the shield half is registered only for a Paladin
+ * holding one and the damage half is registered for all of them.
+ *
+ * That is the same place Shield Slam's gate lives, and the same reasoning the
+ * Warrior's Master of Defense was fixed by after its rage proc fired for a
+ * Protection warrior carrying two weapons.
+ * ============================================================================
+ */
+export function sealOfFuryShieldProc(): Reaction {
+  return {
+    id: 'seal_of_fury_shield',
+    on: 'dealt',
+    outcomes: [...LANDED],
+    canTrigger: (_context, actor, attack) =>
+      isWeaponUse(attack) && actor.auras.has('seal_of_fury'),
+    onTrigger: (context, actor, attack) => {
+      /*
+       * IMPROVED SEAL OF FURY ARRIVES AS A NUMBER, NOT AS A LOOKUP INSIDE THE
+       * AURA. The talent sets a flag on the seal ABILITY -- the Twist of Light
+       * pattern, and per character by construction because `applyTalentChanges`
+       * hands each character its own copy -- and this reads it once here. Zero
+       * without the talent, and the shield then simply returns nothing.
+       *
+       * THE LEVEL DIFFERENCE IS THE ATTACKER'S, and the enemy being hit is the
+       * enemy hitting back in this encounter. Read from the two combatants
+       * rather than assumed to be three, so a change of target level follows.
+       */
+      const hasTalent =
+        (actor.abilities.get('seal_of_fury')?.bonuses?.[IMPROVED_SEAL_OF_FURY_FLAG] ?? 0) > 0;
+      const mana = hasTalent
+        ? improvedSealOfFuryMana(attack.defender.level - actor.level)
+        : 0;
+      context.applyAura(actor, sealOfFuryShield(mana), actor.id);
+    },
+  };
+}
+
+/**
+ * Judgement of the Crusader: "your melee strikes will refresh the spell's
+ * duration."
+ *
+ * ----------------------------------------------------------------------------
+ * WHAT TURNS ONE OPENING CAST INTO A WHOLE FIGHT'S DEBUFF. All three Paladin
+ * lists judge the Crusader once, at the pull, and then never cast that seal
+ * again -- so without this the +161 Holy power would run out forty seconds in
+ * and the lists would look badly written rather than correct.
+ *
+ * REFRESHING IS RE-APPLYING, which `refreshBehaviour: 'reset'` already means.
+ * Nothing new: the aura is put back on the target at full duration, exactly as a
+ * second Judgement would.
+ *
+ * IT IS NOT GATED ON A TALENT, because the clause is the SPELL'S. Sacred
+ * Arbiter's "causes Holy Strike to refresh all Judgement effects" is therefore
+ * already satisfied for free -- Holy Strike is a melee strike.
+ * ----------------------------------------------------------------------------
+ */
+export function judgementOfTheCrusaderRefresh(): Reaction {
+  return {
+    id: 'judgement_of_the_crusader_refresh',
+    on: 'dealt',
+    outcomes: [...LANDED],
+    canTrigger: (_context, _actor, attack) =>
+      isWeaponUse(attack) && attack.defender.auras.has('judgement_of_the_crusader'),
+    onTrigger: (context, actor, attack) => {
+      context.applyAura(attack.defender, JUDGEMENT_OF_THE_CRUSADER, actor.id);
     },
   };
 }
@@ -276,7 +372,7 @@ export function echoProc(): Reaction {
           sealDamage(
             SEAL_OF_RIGHTEOUSNESS_BASE,
             // Holy-scoped gear included, exactly as the seal itself reads it.
-            spellPowerFor(actor, HOLY),
+            spellPowerAgainst(actor, attack.defender, HOLY),
             sealOfRighteousnessCoefficient(actor.weapons.mainHand?.twoHanded === true),
           ),
         );
@@ -290,7 +386,7 @@ export function echoProc(): Reaction {
           attack,
           'twist_of_light',
           'Echo (Seal of Fury)',
-          sealDamage(SEAL_OF_FURY_DAMAGE, spellPowerFor(actor, HOLY), SEAL_OF_FURY_SP_COEFFICIENT),
+          sealDamage(SEAL_OF_FURY_DAMAGE, spellPowerAgainst(actor, attack.defender, HOLY), SEAL_OF_FURY_SP_COEFFICIENT),
         );
         return;
       }
@@ -310,7 +406,7 @@ export function echoProc(): Reaction {
           'twist_of_light',
           'Echo (Seal of Command)',
           // The same normalised weapon share as the seal itself. See above.
-          SEAL_OF_COMMAND_SP_COEFFICIENT * spellPowerFor(actor, HOLY),
+          SEAL_OF_COMMAND_SP_COEFFICIENT * spellPowerAgainst(actor, attack.defender, HOLY),
           { slot: 'mainHand', fraction: SEAL_OF_COMMAND_WEAPON_FRACTION, normalized: true },
         );
       }
@@ -326,4 +422,14 @@ export const PALADIN_REACTIONS: readonly Reaction[] = [
   sealOfCommandProc(),
   sealOfFuryProc(),
   echoProc(),
+  judgementOfTheCrusaderRefresh(),
 ];
+
+/**
+ * The ones that need a shield, which is a question only the build can answer.
+ *
+ * One entry today. Kept as a list rather than a single reaction so that the next
+ * shield-gated seal clause is an addition here instead of a change of shape at
+ * the call site.
+ */
+export const PALADIN_SHIELD_REACTIONS: readonly Reaction[] = [sealOfFuryShieldProc()];

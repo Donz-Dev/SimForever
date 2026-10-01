@@ -32,6 +32,7 @@ export {
   resolveDamage,
   scaleByPower,
   spellPowerFor,
+  spellPowerAgainst,
   weaponDamageFor,
 } from './damage';
 export type { AttackEvent, AbilityCastEvent, CastReaction, Reaction, ReactionTrigger } from './reactions';

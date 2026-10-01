@@ -26,10 +26,14 @@ npx vite-node tools/measure_rotation.ts          # Warrior TALENT builds, not pr
 npx vite-node tools/ability_audit.ts             # is every ability connected at all
 npx vite-node tools/class_audit.ts warrior       # one class's gaps, lists and sources
 npx vite-node tools/coefficient_probe.ts         # does every ability's damage scale
+PROFILE=pally_ret npx vite-node tools/probe_resources.ts   # where one pool went
 ```
 
-The last three are AUDITS rather than measurements and none of their DPS figures
-is the baseline — see **Verifying work** for which one answers what.
+The three audits in the middle are AUDITS rather than measurements and none of
+their DPS figures is the baseline — see **Verifying work** for which one
+answers what. `probe_resources.ts` is a DIAGNOSTIC, one batch, and answers the
+question a never-fired entry raises: did the build simply run out. It is what
+settled Hammer of Wrath — gained 4101, spent 4023, 78 to spare.
 
 `measure_profiles.ts` is the one that reproduces a published baseline, because a
 preset carries its own gear, raid buffs and 51 points that a hand-assembled
@@ -146,10 +150,25 @@ See [docs/combat-tables.md](docs/combat-tables.md).
   DEFENDER's dodge, parry and block.
 - **A block LANDS and is reduced by a flat amount.** Deliberately not in
   `AVOIDED_OUTCOMES`, and reduced in the damage pipeline rather than as a table
-  multiplier — that flatness is the whole character of the stat. So **a block is
-  not an outcome a reaction can see**: an aura can be spent by one
+  multiplier — that flatness is the whole character of the stat.
+- **AND A REACTION CAN FIRE ON ONE. THIS ENTRY USED TO SAY IT COULD NOT.** It
+  read "a block is not an outcome a reaction can see: an aura can be spent by one
   (`consumedByBlock`), a reaction cannot fire on one, and the two Paladin clauses
-  that wanted it say so.
+  that wanted it say so" — and `melee-received` has rolled `block` since the table
+  was written, `runReactions` filters on nothing but the outcome list, and the
+  WARRIOR'S OWN Shield Specialization, Revenge, Enrage and Blood Craze all name
+  `block` and all fire. The sentence was inferred from the true half above rather
+  than from the code, it spread to the `Reaction.outcomes` doc comment, to
+  `reactions/paladinTalents.ts` and to the Paladin brief, and it cost that class
+  three talents and the tank profile a damage source worth 14.9% of it. **A claim
+  about the engine expires; this one was never true.**
+  `tests/engine/blockReactions.test.ts` is what stops it returning.
+- **A BLOCK'S CHARGE IS SPENT AFTER THE REACTIONS RUN**, and that ordering is
+  load-bearing the way `runCast` running `onCast` before the cast reactions is.
+  Holy Shield is "221 Holy damage for each attack blocked" with four charges, and
+  its reaction asks whether the aura is up: spending the charge first drops the
+  aura on the FOURTH block, so the last of the four dealt nothing and the ability
+  was quietly worth three quarters of itself.
 - **THE OVERLOADED TABLE IS THE TRAP.** Thunder Clap, Intercept and Charge are
   melee Warrior abilities declaring `ranged-special`, because that table has no
   dodge or parry and because it is how `isWeaponUse` excludes them. Check a
@@ -366,6 +385,38 @@ them, including `ALL_ABILITIES`.
   rest a crit chance on**. Conditional entries are stored APART from unconditional
   ones, because combining loses the condition and a talent that pays all fight
   instead of during its window is a bigger number and no error.
+- **A MODIFIER CAN ALSO CARRY HIT, AND FIVE TALENTS ACROSS THREE CLASSES SAID IT
+  COULD NOT.** `AbilityModifier.hitBonus` is **taken off MISS**, because no table
+  carries a hit chance — `hit` is the remainder after the walk falls past every
+  other slice. Arcane Focus and Elemental Precision, Shadow Focus and Holy
+  Precision, and Divine Precision all read "improves your chance to hit with
+  <school> spells" and all carried the same reason: that the attack table decides
+  hit before any per-school modifier is consulted. **It does not** —
+  `combineModifiers` takes the school's modifier as one of its three arguments and
+  hands the result to the roll. What was missing was a FIELD, not a route to one.
+  **And `combine` has to fold it**: it did not at first, so one source worked and
+  TWO silently cancelled, which is how Divine Precision stayed inert for a build
+  whose gear already had a Holy entry to combine with. Worth 19 DPS when fixed.
+- **THE TARGET CAN CARRY SPELL POWER TOO** — `AuraDefinition.spellPowerTakenBySchool`,
+  read through `spellPowerAgainst`. "Increases damage done by your Holy spells by
+  up to 161" is the attacker's gear and "increasing Holy damage taken by up to
+  161" is Judgement of the Crusader on the target: same school, same arithmetic,
+  different owner. **"UP TO" IS THE WORD THAT DECIDES IT**, on the owner's ruling
+  — it is POWER and each ability scales it by its own coefficient, so a seal at 20%
+  gains a fifth of it. A flat 161 on every Holy hit would roughly treble a seal.
+  Its reason said a flat per-school bonus had no declaration and had correctly
+  ruled out `damageTakenBySchool`, which multiplies; what it got wrong was reading
+  the number as flat at all. **An ability that computes its own damage in `game`
+  must ASK**, because `scaleByPower` needs a coefficient to apply it to — every
+  Paladin seal calls `spellPowerAgainst` for exactly that reason.
+- **AN AURA CAN SCOPE ITS DAMAGE TO A TABLE** — `damageDoneByTable`, the
+  aura-shaped sibling of `AttackTableModifiers`, which is built once with the
+  character and cannot come and go. Seal of the Crusader is the first caller:
+  "attacks 40% faster, but deals less damage with each attack", and the penalty has
+  to arrive and leave with the seal. **On `melee-auto` alone**, because haste here
+  shortens a swing and a cast and nothing else — a whole-character
+  `damageDoneMultiplier` would take the penalty to Judgement and Consecration,
+  which the haste never accelerated.
 - **A school-blind `spellPower` cannot hold "damage done by SHADOW spells"**, and
   seventeen item lines say exactly that. It is a fourth field on
   `SchoolModifier`, not a stat (`STAT_NAMES` is a closed flat set), and
@@ -772,6 +823,16 @@ whether a list changed at all; the DPS says whether it mattered.**
   whose values file says `null` produces nothing and reads as unmodelled without
   having said so. **A talent whose effect does nothing is usually this**, not the
   effect table.
+- **AND FOR A PROC IT IS WORSE THAN UNREPORTED, BECAUSE THE CENSUS READS THE
+  TABLE.** Holy Shield is single-rank, so its values entry is `null`, so its
+  `reaction` effect was discarded — while the talent granted its ability and
+  `class_audit` called it FULLY MODELLED, because the census is derived from what
+  the effect table declares rather than from what the build produced. The profile
+  simply had one damage source fewer than its own audit claimed. **A `reaction` or
+  `castReaction` whose magnitude lives on the ability or the aura must declare
+  `valueless: true`**, which routes it past the lookup the way `grantAbility`
+  already is. Declared rather than inferred: passing 0 to any builder whose value
+  happened to be missing would hide a real data gap behind a working-looking proc.
 - **A talent's own rank does not always open its own gate.** `{ careful_aim: 5 }`
   is legal and `{ careful_aim: 1 }` is not; `createPlayer` strips the illegal one
   SILENTLY, and a rank-scaling test read that as "worth nothing at rank 1". Pad a
@@ -813,6 +874,14 @@ Plus the permanent rulings under **Scope**.
   whether the threshold is one this ruling already answers.** The Rogue's Quietus
   is the honest version: 35% rather than 20%, so it names the ruling and asks
   rather than assuming the fraction.
+
+- **AND A STALE ENTRY IN A "NOT HERE, AND EACH FOR A STATED REASON" LIST IS THE
+  SAME MISTAKE WEARING A HEADER.** `abilities/paladin.ts` listed Hammer of Wrath
+  among the spells it does not declare, reason "the target never drops below full"
+  — forty lines above the declaration of Hammer of Wrath. Nothing contradicted it
+  and nothing could: a list of what is absent is not checked by anything that
+  compiles. **When an ability joins a file, read that file's own list of what it
+  does not have.**
 
 - **An `unmodelled` reason is a claim about the engine ON THE DAY IT WAS WRITTEN,
   and it expires.** Clearing a blocker is not finished until every reason naming

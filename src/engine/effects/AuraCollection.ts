@@ -322,6 +322,20 @@ export class AuraCollection {
       }
     }
 
+    /*
+     * A REFRESHED SHIELD IS A NEW SHIELD, re-evaluated exactly as it was on the
+     * first application.
+     *
+     * Seal of Fury is why: "each attack also grants an absorb shield equal to 50%
+     * of the Holy damage dealt" is granted every swing, and a refresh that left
+     * the old pool alone would cap the shield at one swing's worth for the whole
+     * thirty seconds. Skipped for `ignore`, which is the behaviour that says this
+     * application does not count.
+     */
+    if (behaviour !== 'ignore' && definition.absorb) {
+      instance.absorbRemaining = definition.absorb(this.owner);
+    }
+
     if (behaviour !== 'ignore' && !instance.isPermanent) {
       const remaining = instance.remainingMs(now);
       instance.expiresAt =

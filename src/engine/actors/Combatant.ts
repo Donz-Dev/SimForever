@@ -10,6 +10,7 @@ import type { Ability } from '../abilities/Ability';
 import { DEFAULT_GCD_MS } from '../abilities/Ability';
 import { AbilityBook } from '../abilities/AbilityBook';
 import type { DamageSchool } from '../combat/DamageSchool';
+import type { AttackTableKind } from '../combat/attackTable';
 import type { CastReaction, Reaction } from '../combat/reactions';
 import type { ScheduledEvent } from '../events';
 import { AuraCollection } from '../effects';
@@ -717,6 +718,45 @@ export class Combatant {
       if (!periodic) continue;
       const overTime = aura.definition.periodicDamageTakenBySchool?.[school];
       if (overTime !== undefined) product *= overTime ** exponent;
+    }
+    return product;
+  }
+
+  /**
+   * Spell power of one school that an attacker hitting this combatant reads.
+   *
+   * ADDED across auras rather than multiplied, unlike every other per-school
+   * figure here -- see `AuraDefinition.spellPowerTakenBySchool`. Two debuffs each
+   * granting Holy power are one pool of Holy power, exactly as two rings each
+   * granting strength are one pool of strength.
+   */
+  spellPowerTakenFor(school: DamageSchool): number {
+    let total = 0;
+    for (const aura of this.auras.active) {
+      const bySchool = aura.definition.spellPowerTakenBySchool;
+      const value = bySchool?.[school];
+      if (value === undefined) continue;
+      total += value * (aura.definition.modifiersScaleWithStacks ? aura.stacks : 1);
+    }
+    return total;
+  }
+
+  /**
+   * How much more (or less) damage this combatant deals through one table,
+   * from auras alone.
+   *
+   * The aura-shaped half of `attackTableModifiers`, which is fixed at build
+   * time. Both apply: a standing talent bonus and a seal's temporary penalty are
+   * different effects on the same swing.
+   */
+  damageDoneMultiplierForTable(table: AttackTableKind | undefined): number {
+    if (table === undefined) return 1;
+    let product = 1;
+    for (const aura of this.auras.active) {
+      const byTable = aura.definition.damageDoneByTable;
+      const value = byTable?.[table];
+      if (value === undefined) continue;
+      product *= value ** (aura.definition.modifiersScaleWithStacks ? aura.stacks : 1);
     }
     return product;
   }

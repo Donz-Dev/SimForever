@@ -29,7 +29,7 @@ import {
   TEMPLARS_BULWARK_HEALTH_SHARE,
   sealOfRighteousnessCoefficient,
 } from '../../src/game/auras/paladin';
-import { PLACEHOLDER_SEAL_OF_COMMAND_PPM } from '../../src/game/reactions/paladin';
+import { SEAL_OF_COMMAND_PPM } from '../../src/game/reactions/paladin';
 import { PALADIN_TALENT_EFFECTS } from '../../src/game/talents/paladinEffects';
 import { paladinRotation } from '../../src/game/rotations/paladin';
 import { EXECUTE_PHASE_FRACTION } from '../../src/game/combat/executePhase';
@@ -331,14 +331,15 @@ describe('seal damage is not a weapon use', () => {
     expect(isWeaponUse(swing)).toBe(true);
   });
 
-  it('states Seal of Command as a PPM effect with a placeholder rate', () => {
+  it('states Seal of Command as a 7 PPM effect worth 70% of a swing', () => {
     /*
-     * The owner chose procs-per-minute; the figure has not arrived. It is the
-     * single largest number in the Seal Twist build, so it is named, printed
-     * on the results page, and asserted here as a placeholder rather than as
-     * a value -- this test should keep passing when the real rate lands.
+     * BOTH NUMBERS ARE THE RULESET OWNER'S NOW. The rate was
+     *  and this test asserted only that it was
+     * positive, deliberately, so that it would keep passing when the real figure
+     * arrived. It has -- 7 -- so the assertion becomes the value, which is what a
+     * test of real data is allowed to do and a test of a placeholder is not.
      */
-    expect(PLACEHOLDER_SEAL_OF_COMMAND_PPM).toBeGreaterThan(0);
+    expect(SEAL_OF_COMMAND_PPM).toBe(7);
     expect(SEAL_OF_COMMAND_WEAPON_FRACTION).toBe(0.7);
   });
 });
