@@ -86,6 +86,18 @@ export interface ProfilePreset {
  *
  * In catalogue order, so the file matches what `withRaidBuff` writes back and
  * a preset can be compared to a hand-edited profile without a diff.
+ *
+ * ----------------------------------------------------------------------------
+ * ONE PRESET DEPARTS FROM THIS LIST, AND ONLY ONE. The Moonkin now GRANTS
+ * Moonkin Form itself, from the talent, and the two tooltips say each is
+ * "exclusive with" the other -- so a Moonkin whose raid also ran Leader of the
+ * Pack would carry both, which is the single combination the ruleset owner's
+ * ruling forbids. `MOONKIN_RAID_BUFFS` below is this list minus that entry, and
+ * the Moonkin's crit is +3% either way.
+ *
+ * THAT IS STILL "one raid", read properly: the raid supplies whichever of the
+ * two auras it has a druid for, and for this profile that druid is the
+ * character. Nothing else about who turned up changes.
  * ----------------------------------------------------------------------------
  */
 const PRESET_RAID_BUFFS: readonly string[] = [
@@ -102,6 +114,17 @@ const PRESET_RAID_BUFFS: readonly string[] = [
   'windfury_totem',
   'leader_of_the_pack',
 ];
+
+/**
+ * The same raid, for the one character that brings the other half of it.
+ *
+ * Derived rather than written out, so a buff added to the list above reaches
+ * this one too -- a second hand-kept copy is how the Moonkin would silently
+ * stop receiving something every other profile got.
+ */
+const MOONKIN_RAID_BUFFS: readonly string[] = PRESET_RAID_BUFFS.filter(
+  (id) => id !== 'leader_of_the_pack',
+);
 
 /**
  * Everything that is not a weapon, shared by all three builds.
@@ -897,7 +920,15 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = [
         stance: 'battle',
       },
       talents: { ...DRUID_MOONKIN_TALENTS },
-      raidBuffs: [...PRESET_RAID_BUFFS],
+      /*
+       * THE ONE PRESET THAT IS NOT ON `PRESET_RAID_BUFFS`. It takes the Moonkin
+       * Form talent, which grants Moonkin Aura, and that is "exclusive with"
+       * Leader of the Pack by both tooltips and by the owner's ruling. Its crit
+       * is +3% from its own talent instead of +3% from the raid, so the figure
+       * does not move -- which is the check that this is a correctness change
+       * and not a buff.
+       */
+      raidBuffs: [...MOONKIN_RAID_BUFFS],
       equipment: { ...DRUID_MOONKIN_GEAR },
       encounter: { ...createDefaultProfile().encounter, targetAttacks: false },
     }),

@@ -22,7 +22,7 @@ import { WARRIOR_TALENT_REACTIONS } from '../reactions/warriorTalents';
 import { ROGUE_TALENT_REACTIONS, ROGUE_CAST_REACTIONS } from '../reactions/rogueTalents';
 import { MAGE_CAST_REACTIONS } from '../reactions/mageTalents';
 import { PALADIN_CAST_REACTIONS } from '../reactions/paladinCasts';
-import { DRUID_TALENT_REACTIONS } from '../reactions/druidTalents';
+import { DRUID_CAST_REACTIONS, DRUID_TALENT_REACTIONS } from '../reactions/druidTalents';
 import { SHAMAN_CAST_REACTIONS, SHAMAN_TALENT_REACTIONS } from '../reactions/shamanTalents';
 import { MAGE_TALENT_REACTIONS } from '../reactions/mageTalents';
 import { PALADIN_TALENT_REACTIONS } from '../reactions/paladinTalents';
@@ -82,6 +82,7 @@ const CAST_REACTIONS: Partial<
   mage: MAGE_CAST_REACTIONS,
   paladin: PALADIN_CAST_REACTIONS,
   shaman: SHAMAN_CAST_REACTIONS,
+  druid: DRUID_CAST_REACTIONS,
 };
 
 const REACTIONS: Partial<Record<ClassId, Readonly<Record<string, TalentReactionBuilder>>>> = {
@@ -205,6 +206,21 @@ export interface TalentBuild {
    * whole character. See `AttackTableModifiers`.
    */
   readonly attackTableModifiers: AttackTableModifiers;
+  /**
+   * The same again, counted only while the TARGET is bleeding.
+   *
+   * Rend and Tear is the only caller. A second instance of the same class
+   * rather than a new shape -- see `Combatant.bleedingTargetModifiers`.
+   */
+  readonly bleedingTargetModifiers: AttackTableModifiers;
+  /**
+   * A multiplier on PERIODIC damage only, from Genesis and its relatives.
+   *
+   * Separate from `damageMultiplier` because it selects on the kind of damage
+   * rather than on the character, and 1 means "no talent" so a caller can
+   * apply it unconditionally.
+   */
+  readonly periodicDamageMultiplier: number;
   /** Reactions the talents grant, added to the ones every character has. */
   readonly reactions: readonly Reaction[];
   /** Procs that fire when an ability is USED. See `castReaction`. */
@@ -272,6 +288,8 @@ const EMPTY: TalentBuild = {
   abilityModifiers: new AbilityModifiers(),
   schoolModifiers: new SchoolModifiers(),
   attackTableModifiers: new AttackTableModifiers(),
+  bleedingTargetModifiers: new AttackTableModifiers(),
+  periodicDamageMultiplier: 1,
   pet: NO_PET_MODIFIERS,
   reactions: [],
   damageMultiplier: 1,
@@ -327,6 +345,23 @@ export interface TalentBuildContext {
    * hand's clause.
    */
   readonly offHand?: WeaponProfile;
+  /**
+   * The COMBAT STYLE the character is built with, for talents that ask.
+   *
+   * A Druid's form is its style, so "in Cat Form, Bear Form, and Dire Bear
+   * Form" is answered here. Absent means no style clause is satisfied, which
+   * makes a form-gated talent visibly inert rather than silently applied --
+   * the same rule the missing weapon and the missing pet already follow.
+   */
+  readonly style?: CombatStyleId;
+  /**
+   * The character's LEVEL, for `statFromLevel`.
+   *
+   * Predatory Strikes is a percentage of it. Defaults to nothing, and a talent
+   * that needs it reports itself unmodelled rather than reading a plausible 60
+   * -- a level a caller did not supply is not a level.
+   */
+  readonly level?: number;
 }
 
 /** Whether the held weapon satisfies a conditional effect. */
@@ -335,7 +370,17 @@ function meets(
   weapon: WeaponProfile | undefined,
   hasShield = false,
   hasPet = false,
+  style?: CombatStyleId,
 ): boolean {
+  /*
+   * THE STYLE CLAUSE FIRST, with the pet and the shield, because like them it
+   * is about what the character IS rather than about what is in a hand. A
+   * Druid in Cat Form holds a stat stick, and asking the weapon about its form
+   * would answer the wrong question.
+   */
+  if (requires.styles !== undefined && (style === undefined || !requires.styles.includes(style))) {
+    return false;
+  }
   /*
    * THE PET CLAUSE FIRST, and like the shield it is about the CHARACTER rather
    * than about a hand. Focused Fire is "+2% while your pet is active" and had
@@ -388,6 +433,13 @@ function critBonusHalfFor(table: AttackTableKind): number {
  * missing, not a sword.
  */
 function unmetReason(requires: BuildRequirement): string {
+  if (requires.styles) {
+    return (
+      'Applies only in a particular form, and this character is in another ' +
+      'one. Not an error -- a Druid talent that names Cat and Bear Form is ' +
+      'correctly inert on a Moonkin, and the points are a route to the tier above.'
+    );
+  }
   if (requires.hasPet) {
     return (
       'Applies only while a pet is active, and this build has none -- Lone ' +
@@ -434,11 +486,20 @@ export function talentContextFor(
    * them gets `false`, which makes a pet-gated talent visibly inert rather
    * than silently applied.
    */
-  build?: { readonly characterClass: ClassId; readonly talents: TalentAllocation },
+  build?: {
+    readonly characterClass: ClassId;
+    readonly talents: TalentAllocation;
+    /** For `statFromLevel`. Omitted leaves the talents that read it inert. */
+    readonly level?: number;
+  },
 ): TalentBuildContext {
   return {
     mainHand: weapons.mainHand,
     offHand: weapons.offHand,
+    // The form a Druid is in, which is the same field every other class picks
+    // a weapon configuration with.
+    style,
+    level: build?.level,
     // A shield is not a weapon and does not appear in `weapons`, so it is
     // asked about separately. Bastion needs it and swings with nothing.
     hasShield: liveEquipment(equipment, style).shield !== undefined,
@@ -478,6 +539,8 @@ export function talentBuild(
   const abilityModifiers = new AbilityModifiers();
   const schoolModifiers = new SchoolModifiers();
   const attackTableModifiers = new AttackTableModifiers();
+  const bleedingTargetModifiers = new AttackTableModifiers();
+  let periodicDamageBonusPct = 0;
 
   // What the talents do to a PET. Percentages while they accumulate; turned
   // into multipliers once, at the end, so two ranks of the same talent add
@@ -538,6 +601,13 @@ export function talentBuild(
        * carries its magnitude, the way a granted ability carries its damage.
        */
       if (effect.kind === 'grantAura') {
+        if (
+          effect.requires &&
+          !meets(effect.requires, context.mainHand, context.hasShield, context.hasPet, context.style)
+        ) {
+          report(talentId, rank, unmetReason(effect.requires));
+          continue;
+        }
         grantedAuras.add(effect.auraId);
         continue;
       }
@@ -640,6 +710,15 @@ export function talentBuild(
           break;
         }
         case 'stat': {
+          /*
+           * THE REQUIREMENT IS CHECKED BEFORE THE STAT LANDS, not after. Heart
+           * of the Wild's stamina clause is Bear Form only, and a Cat that
+           * collected it would read as a working talent worth more than it is.
+           */
+          if (effect.requires && !meets(effect.requires, context.mainHand, context.hasShield, context.hasPet, context.style)) {
+            report(talentId, rank, unmetReason(effect.requires));
+            break;
+          }
           const amount = value * (effect.scale ?? 1);
           if (effect.operation === 'flat') {
             stats[effect.stat] = (stats[effect.stat] ?? 0) + amount;
@@ -648,6 +727,48 @@ export function talentBuild(
           }
           break;
         }
+        /*
+         * A PERCENTAGE OF THE LEVEL, resolved to a flat number here.
+         *
+         * Level never moves during a fight and cannot be buffed, so unlike
+         * `statFromStat` there is nothing for the derivation to re-run. A
+         * caller that did not supply one gets an inert talent that SAYS it is
+         * inert, rather than a plausible 60 nobody chose.
+         */
+        case 'statFromLevel': {
+          if (effect.requires && !meets(effect.requires, context.mainHand, context.hasShield, context.hasPet, context.style)) {
+            report(talentId, rank, unmetReason(effect.requires));
+            break;
+          }
+          if (context.level === undefined) {
+            report(
+              talentId,
+              rank,
+              'Scales with the character LEVEL, and this caller supplied none. ' +
+                'Not an error -- a character built for a fight always has one.',
+            );
+            break;
+          }
+          stats[effect.to] = (stats[effect.to] ?? 0) + (context.level * value) / 100;
+          break;
+        }
+        /*
+         * PERIODIC DAMAGE ONLY. Summed as a percentage across ranks and turned
+         * into a multiplier once, at the end, like every other percentage here.
+         */
+        case 'periodicDamage':
+          periodicDamageBonusPct += value;
+          break;
+        /*
+         * TABLE-SCOPED AND CONDITIONAL ON THE VICTIM. Registered apart from
+         * `attackTableModifiers` so the condition cannot be lost -- see
+         * `Combatant.bleedingTargetModifiers`.
+         */
+        case 'bleedingTargetDamage':
+          for (const table of effect.tables) {
+            bleedingTargetModifiers.add(table, { damageMultiplier: 1 + value / 100 });
+          }
+          break;
         /*
          * A PERCENTAGE of another stat, kept as a conversion rather than
          * resolved to a number here. `createPlayer` folds it into the
@@ -703,7 +824,7 @@ export function talentBuild(
            * where the equipment is in scope. Not registering it at all is the
            * accurate outcome: the proc does not exist for this character.
            */
-          if (effect.requires && !meets(effect.requires, context.mainHand, context.hasShield, context.hasPet)) {
+          if (effect.requires && !meets(effect.requires, context.mainHand, context.hasShield, context.hasPet, context.style)) {
             report(
               talentId,
               rank,
@@ -746,7 +867,7 @@ export function talentBuild(
           break;
         }
         case 'conditionalDamage':
-          if (meets(effect.requires, context.mainHand, context.hasShield, context.hasPet)) {
+          if (meets(effect.requires, context.mainHand, context.hasShield, context.hasPet, context.style)) {
             damageMultiplier *= 1 + value / 100;
           } else {
             report(talentId, rank, unmetReason(effect.requires));
@@ -776,7 +897,7 @@ export function talentBuild(
            *
            * The Gear and Talent panels say which weapon it is reading.
            */
-          if (meets(effect.requires, context.mainHand, context.hasShield, context.hasPet)) {
+          if (meets(effect.requires, context.mainHand, context.hasShield, context.hasPet, context.style)) {
             abilityModifiers.add(ALL_ABILITIES, { critBonus: value });
           } else {
             report(
@@ -946,6 +1067,8 @@ export function talentBuild(
     abilityModifiers,
     schoolModifiers,
     attackTableModifiers,
+    bleedingTargetModifiers,
+    periodicDamageMultiplier: 1 + periodicDamageBonusPct / 100,
     pet: {
       damageMultiplier: 1 + petDamagePct / 100,
       critBonus: petCritBonus,

@@ -1,4 +1,5 @@
 import type { ClassId, CombatStyleId } from '../../game/character';
+import { MAX_CHARACTER_LEVEL } from '../../game/character';
 import type { ClassTalents, Talent, TalentAllocation, TalentTree } from '../../game/talents/Talent';
 import { TOTAL_TALENT_POINTS } from '../../game/talents/Talent';
 import type { OutOfScope, UnmodelledTalent } from '../../game/talents/TalentEffect';
@@ -138,6 +139,10 @@ export function TalentPanel({
     talentContextFor(equipment, combatStyle, weaponsFor(equipment, combatStyle), {
       characterClass,
       talents: allocation,
+      // The level the FIGHT builds at, not one off the profile: `createPlayer`
+      // makes every character 60, and a panel that described a build at any
+      // other level would be describing a character nobody can run.
+      level: MAX_CHARACTER_LEVEL,
     }),
   );
 

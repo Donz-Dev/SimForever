@@ -82,6 +82,7 @@ export const REND: AuraDefinition = {
   name: 'Rend',
   durationMs: REND_DURATION_MS,
   isDebuff: true,
+  isBleed: true,
   refreshBehaviour: 'reset',
   periodic: {
     intervalMs: REND_TICK_INTERVAL_MS,
@@ -651,18 +652,13 @@ export const STANCE_RAGE_FLOOR = 10;
 /** The bonus key Improved Tactical Mastery adds to that floor. */
 export const STANCE_RAGE_RETAINED_BONUS = 'rageRetained';
 
-/** Every stance, so that applying one can clear the others. */
-/**
- * Auras a TALENT puts on a character, by the id its effect names.
- *
- * Kept as a lookup rather than imported directly by `createPlayer`, so the
- * talent tables stay data: a talent says `{ kind: 'grantAura', auraId }` and
- * never imports an aura.
+/*
+ * `TALENT_AURAS` MOVED TO `auras/talentAuras.ts` when the Druid gained two
+ * entries. It was never Warrior-specific; it only lived here because Anger
+ * Management was the only thing in it.
  */
-export const TALENT_AURAS: Readonly<Record<string, AuraDefinition>> = {
-  anger_management: ANGER_MANAGEMENT,
-};
 
+/** Every stance, so that applying one can clear the others. */
 export const WARRIOR_STANCES: readonly AuraDefinition[] = [
   BATTLE_STANCE,
   DEFENSIVE_STANCE,

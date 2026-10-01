@@ -54,6 +54,7 @@ export function deepWoundsAura(percentOfWeaponDamage: number): AuraDefinition {
     name: 'Deep Wounds',
     durationMs: DEEP_WOUNDS_DURATION_MS,
     isDebuff: true,
+    isBleed: true,
     refreshBehaviour: 'reset',
     periodic: {
       intervalMs: DEEP_WOUNDS_TICK_INTERVAL_MS,

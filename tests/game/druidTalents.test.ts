@@ -1,0 +1,820 @@
+import { describe, expect, it } from 'vitest';
+import type { Combatant } from '../../src/engine';
+import {
+  AttackTableModifiers,
+  castAbility,
+  dealDamage,
+  resolveCast,
+  seconds,
+} from '../../src/engine';
+import { buildSimulation } from '../helpers/buildSimulation';
+import { makeAttacker, makeTarget } from '../helpers/actors';
+import { createPlayer } from '../../src/game/actors/createPlayer';
+import { abilitiesForClass } from '../../src/game/abilities/abilitiesForClass';
+import { PRESETS_BY_ID } from '../../src/profiles/presets';
+import {
+  AURA_DURATION_BONUS,
+  INSECT_SWARM_ABILITY,
+  MOONFIRE,
+  NATURES_SWIFTNESS_ABILITY,
+  WRATH,
+} from '../../src/game/abilities/druid';
+import {
+  INSECT_SWARM,
+  INSECT_SWARM_DURATION_MS,
+  LACERATE,
+  MOONFIRE_DOT,
+  MOONFIRE_DOT_DURATION_MS,
+  NATURES_SWIFTNESS,
+  NATURE_SPELLS,
+  PARTY_CRIT_AURA_PERCENT,
+  RAKE_DOT,
+  lengthened,
+  ripAura,
+} from '../../src/game/auras/druid';
+import { TALENT_AURAS } from '../../src/game/auras/talentAuras';
+import { DRUID_TALENT_EFFECTS } from '../../src/game/talents/druidEffects';
+import { NATURAL_REACTION_RAGE } from '../../src/game/reactions/druidTalents';
+import { talentBuild, talentContextFor } from '../../src/game/talents/talentBuild';
+import { talentNumber } from '../../src/game/talents/talentValues';
+import { ITEMS_BY_ID } from '../../src/game/items/itemData';
+import { armorFromItems, statsForStyle } from '../../src/game/items/equipment';
+import { MAX_CHARACTER_LEVEL } from '../../src/game/character';
+import { weaponsFor } from '../../src/game/actors/createPlayer';
+
+/*
+ * ============================================================================
+ * THE DRUID'S TALENTS, AND THE NINE THAT CAME OFF THE QUEUE.
+ *
+ * The census went from twelve live gaps to three, and the three that are left
+ * are the two shapeshifting talents -- one engine gap wearing two hats -- and
+ * spell pushback, which nothing in this engine models.
+ *
+ * EVERY TEST HERE ASSERTS A MECHANISM. A cost, a stat arriving, a stack count,
+ * an aura present, a multiplier applied. None asserts a DPS delta, because a
+ * correct talent can be worth zero -- Shredding Attacks' Lacerate clause is
+ * worth exactly nothing to all three profiles and is still the difference
+ * between a talent that is expressed and one that is not.
+ * ============================================================================
+ */
+
+/**
+ * Twenty-one Restoration points, which is what Nature's Swiftness costs to
+ * reach: tier 20, requiring Naturalist.
+ *
+ * SPELLED OUT AT THE RANKS THAT EXIST. Subtlety and Natural Shapeshifter have
+ * THREE ranks, and an over-allocation is dropped SILENTLY -- which takes the
+ * tree total under twenty and drops the capstone with it, so the test reads
+ * "the talent grants nothing". `tests/helpers/legalise` exists for exactly this
+ * on the Warrior.
+ */
+const RESTO_20: Record<string, number> = {
+  nature_s_focus: 5,
+  furor: 5,
+  naturalist: 5,
+  subtlety: 3,
+  natural_shapeshifter: 3,
+  nature_s_swiftness: 1,
+};
+
+/** A Druid built from a preset's own allocation and gear, in a given form. */
+function druid(preset: string, style: 'cat' | 'bear' | 'moonkin'): Combatant {
+  const built = PRESETS_BY_ID.get(preset)!.build();
+  return createPlayer({
+    race: 'tauren',
+    characterClass: 'druid',
+    combatStyle: style,
+    talents: built.talents,
+    equipment: built.equipment,
+  });
+}
+
+/** The same, with no talents at all, so a difference is the talents'. */
+function untalented(preset: string, style: 'cat' | 'bear' | 'moonkin'): Combatant {
+  const built = PRESETS_BY_ID.get(preset)!.build();
+  return createPlayer({
+    race: 'tauren',
+    characterClass: 'druid',
+    combatStyle: style,
+    equipment: built.equipment,
+  });
+}
+
+/** What a preset's talents resolve to, in a named form. */
+function buildIn(preset: string, style: 'cat' | 'bear' | 'moonkin') {
+  const built = PRESETS_BY_ID.get(preset)!.build();
+  return talentBuild(
+    'druid',
+    built.talents,
+    talentContextFor(built.equipment, style, weaponsFor(built.equipment, style), {
+      characterClass: 'druid',
+      talents: built.talents,
+      level: MAX_CHARACTER_LEVEL,
+    }),
+  );
+}
+
+describe('a form is a combat style, so three talents can read it', () => {
+  /*
+   * --------------------------------------------------------------------------
+   * THE COUNT WAS WRONG AND THAT IS WHY IT MATTERED. `docs/handoff/druid.md`
+   * wrote five talents up as ONE engine gap -- mid-fight form shifting -- and
+   * only two of them ask about the shift. The other three ask WHICH FORM IS
+   * HELD, which is a field the preset sets.
+   * --------------------------------------------------------------------------
+   */
+  it('gives Predatory Strikes 150% of the level as attack power, in cat and bear only', () => {
+    const rank = 3;
+    const percent = talentNumber('druid', 'predatory_strikes', rank, 0);
+    expect(percent).toBe(150);
+    const expected = (MAX_CHARACTER_LEVEL * percent!) / 100;
+    expect(expected).toBe(90);
+
+    // Both feral profiles take it at rank 3 and both get it.
+    for (const [preset, style] of [
+      ['druid_cat', 'cat'],
+      ['druid_bear', 'bear'],
+    ] as const) {
+      expect(buildIn(preset, style).stats.attackPower, preset).toBe(expected);
+    }
+
+    /*
+     * AND A MOONKIN ALLOCATION DOES NOT, which is the half that has to be
+     * checked separately: an effect with a requirement nothing enforces is a
+     * bonus being paid, and reads as a working talent.
+     */
+    const moonkin = buildIn('druid_cat', 'moonkin');
+    expect(moonkin.stats.attackPower ?? 0).toBe(0);
+    expect(moonkin.unmodelled.map((entry) => entry.talentId)).toContain('predatory_strikes');
+  });
+
+  it('gives Heart of the Wild stamina to a bear and strength to a cat, never both', () => {
+    /*
+     * "Increases your Intellect by 10%. In addition, while in Bear Form or Dire
+     * Bear Form your Stamina is increased by 20% and while in Cat Form your
+     * Strength is increased by 10%."
+     *
+     * FOREVER'S CAT CLAUSE IS STRENGTH, where Classic gives attack power. Both
+     * raise attack power in the end, and only one of them follows a buff.
+     */
+    const [intellect, stamina, strength] = [0, 1, 2].map((index) =>
+      talentNumber('druid', 'heart_of_the_wild', 5, index),
+    );
+    expect([intellect, stamina, strength]).toEqual([10, 20, 10]);
+
+    const cat = buildIn('druid_cat', 'cat').statModifiers;
+    expect(cat).toContainEqual({ stat: 'intellect', operation: 'percentAdd', value: 0.1 });
+    expect(cat).toContainEqual({ stat: 'strength', operation: 'percentAdd', value: 0.1 });
+    expect(cat.map((m) => m.stat)).not.toContain('stamina');
+
+    const bear = buildIn('druid_bear', 'bear').statModifiers;
+    expect(bear).toContainEqual({ stat: 'stamina', operation: 'percentAdd', value: 0.2 });
+    expect(bear.filter((m) => m.stat === 'strength')).toEqual([]);
+
+    // And the intellect half is unconditional, so it lands in every form.
+    expect(buildIn('druid_cat', 'moonkin').statModifiers).toContainEqual({
+      stat: 'intellect',
+      operation: 'percentAdd',
+      value: 0.1,
+    });
+  });
+
+  it('gives a Moonkin its own aura and the feral builds theirs, and never the other', () => {
+    expect(buildIn('druid_moonkin', 'moonkin').grantedAuras.has('moonkin_form')).toBe(true);
+    expect(buildIn('druid_cat', 'cat').grantedAuras.has('leader_of_the_pack')).toBe(true);
+    expect(buildIn('druid_bear', 'bear').grantedAuras.has('leader_of_the_pack')).toBe(true);
+
+    // A feral allocation read in Moonkin form grants nothing and says why.
+    const wrongForm = buildIn('druid_cat', 'moonkin');
+    expect(wrongForm.grantedAuras.has('leader_of_the_pack')).toBe(false);
+    expect(wrongForm.unmodelled.map((e) => e.talentId)).toContain('leader_of_the_pack');
+  });
+
+  it('leaves exactly two talents on the shapeshifting gap, with the same wording', () => {
+    /*
+     * A whole family expires at once and is then findable by its wording,
+     * which is why both say the same sentence. This test is what makes the
+     * wording load-bearing rather than tidy -- the same shape
+     * `grantCastModifier.test.ts` uses for its own retired reason.
+     */
+    const SHIFTING = 'a form is fixed at creation like a stance';
+    const shifting = Object.entries(DRUID_TALENT_EFFECTS)
+      .filter(([, effects]) =>
+        effects.some((e) => e.kind === 'unmodelled' && e.reason.includes(SHIFTING)),
+      )
+      .map(([id]) => id)
+      .sort();
+    expect(shifting).toEqual(['furor', 'natural_shapeshifter']);
+  });
+});
+
+describe('the Glaive of Obsidian Fury finally pays its 172', () => {
+  const GLAIVE = 227833;
+  const FORM_ATTACK_POWER = 172;
+
+  it('reads the form clause off the tooltip instead of listing it as unmodelled', () => {
+    const glaive = ITEMS_BY_ID.get(GLAIVE)!;
+    expect(glaive.name).toBe('Glaive of Obsidian Fury');
+    // The line itself, from the capture, so a re-scrape that reworded it fails.
+    expect(glaive.tooltip).toContain(
+      '+172 Attack Power in Cat, Bear, and Dire Bear forms only.',
+    );
+    // Cat and Bear, and Dire Bear folds into Bear because there is one bear style.
+    expect(glaive.styleStats).toEqual({
+      cat: { attackPower: FORM_ATTACK_POWER },
+      bear: { attackPower: FORM_ATTACK_POWER },
+    });
+    // It is NOT in the unconditional stats, which would pay every style.
+    expect(glaive.stats.attackPower ?? 0).toBe(0);
+    // And it is no longer reported as something the simulator cannot do.
+    expect(glaive.unmodelled.map((u) => u.text)).not.toContain(
+      '+172 Attack Power in Cat, Bear, and Dire Bear forms only.',
+    );
+  });
+
+  it('pays it in cat and bear form and nowhere else', () => {
+    const equipment = { twoHand: { itemId: GLAIVE } };
+    const ap = (style: 'cat' | 'bear' | 'moonkin' | 'caster') =>
+      statsForStyle(equipment, style).attackPower ?? 0;
+    expect(ap('cat')).toBe(FORM_ATTACK_POWER);
+    expect(ap('bear')).toBe(FORM_ATTACK_POWER);
+    expect(ap('moonkin')).toBe(0);
+    expect(ap('caster')).toBe(0);
+  });
+});
+
+describe('Genesis, which is periodic damage and nothing else', () => {
+  /** An attacker whose ticks are worth 50% more and whose strikes are not. */
+  function withGenesis(percent: number): { source: Combatant; target: Combatant } {
+    return {
+      source: makeAttacker({ periodicDamageMultiplier: 1 + percent / 100, stats: {} }),
+      target: makeTarget({ stats: { armor: 0 } }),
+    };
+  }
+
+  it('multiplies a tick and leaves a direct hit alone', () => {
+    const { source, target } = withGenesis(50);
+    const simulation = buildSimulation([source, target]);
+
+    const tick = dealDamage(simulation, {
+      source,
+      target,
+      abilityName: 'Tick',
+      school: 'physical',
+      baseAmount: 100,
+      periodic: true,
+      appliesArmor: false,
+    });
+    const direct = dealDamage(simulation, {
+      source,
+      target,
+      abilityName: 'Direct',
+      school: 'physical',
+      baseAmount: 100,
+      appliesArmor: false,
+    });
+
+    expect(tick.amount).toBeCloseTo(150, 6);
+    expect(direct.amount).toBeCloseTo(100, 6);
+  });
+
+  it('is 1 for a character without it, so every other profile is untouched', () => {
+    expect(makeAttacker().periodicDamageMultiplier).toBe(1);
+    // All three Druid profiles take it; the five ranks are 1% to 5%.
+    expect([1, 2, 3, 4, 5].map((r) => talentNumber('druid', 'genesis', r, 0))).toEqual([
+      1, 2, 3, 4, 5,
+    ]);
+    expect(buildIn('druid_cat', 'cat').periodicDamageMultiplier).toBeCloseTo(1.05, 10);
+    expect(buildIn('druid_bear', 'bear').periodicDamageMultiplier).toBeCloseTo(1.05, 10);
+    // The Moonkin spends two points, not five.
+    expect(buildIn('druid_moonkin', 'moonkin').periodicDamageMultiplier).toBeCloseTo(1.02, 10);
+  });
+});
+
+describe('Rend and Tear, which asks about the TARGET', () => {
+  /** An attacker with +10% melee-ability damage against a bleeding target. */
+  function feral(): { source: Combatant; target: Combatant } {
+    const bleeding = new AttackTableModifiers();
+    bleeding.add('melee-special', { damageMultiplier: 1.1 });
+    return {
+      source: makeAttacker({ bleedingTargetModifiers: bleeding }),
+      target: makeTarget({ stats: { armor: 0 } }),
+    };
+  }
+
+  /**
+   * One `melee-special` strike, reported as the RAW figure.
+   *
+   * `raw` rather than `amount` because the table can miss, and it is computed
+   * whether or not the roll landed -- so the multiplier is observable without
+   * scripting a roll or sampling a hundred of them.
+   */
+  const shred = (
+    simulation: ReturnType<typeof buildSimulation>,
+    source: Combatant,
+    target: Combatant,
+  ) =>
+    dealDamage(simulation, {
+      source,
+      target,
+      abilityName: 'Shred',
+      school: 'physical',
+      baseAmount: 100,
+      attackTable: 'melee-special',
+      appliesArmor: false,
+    });
+
+  it('pays only while a bleed is on the target', () => {
+    const { source, target } = feral();
+    const simulation = buildSimulation([source, target]);
+
+    /*
+     * NOT BLEEDING: the raw figure is the base, or twice it on a crit. What it
+     * can never be is 110 or 220, which is the whole assertion -- and checking
+     * the SET of legal values rather than one of them is what lets this be
+     * exact instead of sampled.
+     */
+    const dry = shred(simulation, source, target);
+    if (!dry.avoided) expect([100, 200]).toContain(Math.round(dry.raw));
+
+    simulation.applyAura(target, RAKE_DOT, source.id);
+    expect(target.auras.isBleeding).toBe(true);
+
+    const wet = shred(simulation, source, target);
+    if (!wet.avoided) expect([110, 220]).toContain(Math.round(wet.raw));
+  });
+
+  it('stops paying when the bleed falls off', () => {
+    const { source, target } = feral();
+    const simulation = buildSimulation([source, target], { durationMs: seconds(60) });
+    simulation.begin();
+    simulation.applyAura(target, RAKE_DOT, source.id);
+
+    // Rake is nine seconds. Read fresh per hit, so this is not settled at build
+    // time -- which is the difference between this scope and `conditionalDamage`.
+    simulation.advanceTo(seconds(20));
+    expect(target.auras.isBleeding).toBe(false);
+    const after = shred(simulation, source, target);
+    if (!after.avoided) expect([100, 200]).toContain(Math.round(after.raw));
+  });
+
+  it('reaches a melee-special strike and not a bleed TICK', () => {
+    /*
+     * ----------------------------------------------------------------------
+     * THE INTERPRETATION, AND IT IS WORTH A TEST BECAUSE BOTH READINGS ARE
+     * PLAUSIBLE. A damage multiplier keyed on a table reads `attackTable`
+     * everywhere in this pipeline and never `critFrom`, which is the rule
+     * CLAUDE.md states as "a tick is reached for CRIT and not for DAMAGE".
+     *
+     * The second reason is the stronger one: a bleed's own ticks would
+     * otherwise be amplified BY THE BLEED BEING UP, so Rip would raise Rip.
+     * The looser reading measured the Cat a third higher than this one.
+     * ----------------------------------------------------------------------
+     */
+    const { source, target } = feral();
+    const simulation = buildSimulation([source, target]);
+    simulation.applyAura(target, RAKE_DOT, source.id);
+
+    const hit = dealDamage(simulation, {
+      source,
+      target,
+      abilityName: 'Shred',
+      school: 'physical',
+      baseAmount: 100,
+      attackTable: 'melee-special',
+      appliesArmor: false,
+    });
+    // The table can miss, so the bonus is checked on the RAW figure, which is
+    // computed whether or not the roll landed.
+    if (!hit.avoided) expect(hit.raw).toBeGreaterThan(100);
+
+    const tick = dealDamage(simulation, {
+      source,
+      target,
+      abilityName: 'Rip',
+      school: 'physical',
+      baseAmount: 100,
+      periodic: true,
+      critFrom: 'melee-special',
+      appliesArmor: false,
+    });
+    // Ticks crit, so `raw` can be doubled -- but never multiplied by 1.1.
+    expect([100, 200]).toContain(Math.round(tick.raw));
+  });
+
+  it('tags exactly the three Druid bleeds, so a fourth is covered when it lands', () => {
+    expect(RAKE_DOT.isBleed).toBe(true);
+    expect(LACERATE.isBleed).toBe(true);
+    expect(ripAura(5).isBleed).toBe(true);
+    // And the Moonkin's arcane burn is not a bleed, whatever else it is.
+    expect(MOONFIRE_DOT.isBleed).toBeUndefined();
+    expect(INSECT_SWARM.isBleed).toBeUndefined();
+  });
+
+  it('is empty for a character without the talent', () => {
+    expect(makeAttacker().bleedingTargetModifiers.isEmpty).toBe(true);
+    expect(buildIn('druid_moonkin', 'moonkin').bleedingTargetModifiers.isEmpty).toBe(true);
+    expect(buildIn('druid_cat', 'cat').bleedingTargetModifiers.isEmpty).toBe(false);
+  });
+});
+
+describe("King of the Jungle, on Tiger's Fury being USED", () => {
+  it("grants the energy when Tiger's Fury is cast and not otherwise", () => {
+    const cat = druid('druid_cat', 'cat');
+    const target = makeTarget();
+    const simulation = buildSimulation([cat, target]);
+    simulation.begin();
+
+    const energy = cat.resources.require('energy');
+    energy.spend(energy.current);
+    expect(energy.current).toBe(0);
+
+    const tigersFury = cat.abilities.get('tigers_fury')!;
+    castAbility(simulation, cat, tigersFury, target);
+
+    // 60 at rank 3, stated by the talent.
+    expect(talentNumber('druid', 'king_of_the_jungle', 3, 0)).toBe(60);
+    expect(energy.current).toBe(60);
+  });
+
+  it('is registered as a CAST reaction on the Druid, naming that one ability', () => {
+    const build = buildIn('druid_cat', 'cat');
+    expect(build.castReactions.map((r) => r.id)).toContain('king_of_the_jungle');
+    const reaction = build.castReactions.find((r) => r.id === 'king_of_the_jungle')!;
+    // Named on the reaction rather than checked inside it, so nothing else runs it.
+    expect(reaction.abilityId).toBe('tigers_fury');
+  });
+});
+
+describe('Natural Reaction, on the one Druid profile that is hit back', () => {
+  it('grants rage on a dodge, at the rank the talent states', () => {
+    const bear = druid('druid_bear', 'bear');
+    const enemy = makeTarget({ faction: 'hostile' });
+    const simulation = buildSimulation([bear, enemy]);
+    simulation.begin();
+
+    const rage = bear.resources.require('rage');
+    rage.spend(rage.current);
+
+    // A dodged attack, forced rather than sampled: at rank 5 the chance is 100%.
+    expect(talentNumber('druid', 'natural_reaction', 5, 1)).toBe(100);
+    dealDamage(simulation, {
+      source: enemy,
+      target: bear,
+      abilityName: 'Boss Swing',
+      school: 'physical',
+      baseAmount: 500,
+      attackTable: 'melee-received',
+    });
+
+    // Whether that roll dodged is chance, so the reaction is driven directly:
+    // what is under test is that the proc EXISTS and pays the stated amount.
+    const build = buildIn('druid_bear', 'bear');
+    const reaction = build.reactions.find((r) => r.id === 'natural_reaction');
+    expect(reaction).toBeDefined();
+    expect(reaction!.on).toBe('taken');
+    expect(reaction!.outcomes).toEqual(['dodge']);
+
+    const before = rage.current;
+    reaction!.onTrigger(simulation, bear, {
+      attacker: enemy,
+      defender: bear,
+      outcome: 'dodge',
+      abilityId: undefined,
+      abilityName: 'Boss Swing',
+      amount: 0,
+      weaponSlot: undefined,
+      critical: false,
+    });
+    expect(rage.current - before).toBe(NATURAL_REACTION_RAGE);
+  });
+
+  it('is not registered for a Cat, which has no rage to earn', () => {
+    // The dodge half still applies to every form; only the proc is feral-rage.
+    const cat = buildIn('druid_cat', 'cat');
+    expect(cat.reactions.map((r) => r.id)).not.toContain('natural_reaction');
+  });
+});
+
+describe("Shredding Attacks' second clause", () => {
+  it('takes 18 energy off Shred and 3 rage off Lacerate, not 18 off both', () => {
+    /*
+     * THE TRAP THIS CLAUSE WAS UNMODELLED TO AVOID: 18 rage off a 15-rage
+     * Lacerate makes the ability FREE, which is a plausible-looking number and
+     * a big one. `abilityCost` gained a `valueIndex` rather than a second
+     * entry reading the first number.
+     */
+    expect([0, 1].map((i) => talentNumber('druid', 'shredding_attacks', 3, i))).toEqual([18, 3]);
+
+    const reduction = buildIn('druid_cat', 'cat').abilityCostReduction;
+    expect(reduction.get('shred')).toBe(18);
+    expect(reduction.get('lacerate')).toBe(3);
+
+    // And the built book carries the reduced figures, which is what a rotation
+    // reads -- Ferocity takes Claw to 42 and Improved Shred takes Shred there too.
+    const book = abilitiesForClass('druid', 'cat', PRESETS_BY_ID.get('druid_cat')!.build().talents);
+    expect(book.find((a) => a.id === 'shred')!.cost!.amount).toBe(60 - 18);
+    expect(book.find((a) => a.id === 'lacerate')!.cost!.amount).toBe(15 - 3);
+  });
+});
+
+describe("Nature's Splendor, which lengthens a DoT rather than thickening it", () => {
+  it('adds the stated seconds to Moonfire and Insect Swarm, and nothing else', () => {
+    const [moonfire, rejuvenation, regrowth, insectSwarm] = [0, 1, 2, 3].map((i) =>
+      talentNumber('druid', 'nature_s_splendor', 1, i),
+    );
+    // The sentence's own order. The two healing figures are carried so the two
+    // that are read keep their indices.
+    expect([moonfire, rejuvenation, regrowth, insectSwarm]).toEqual([3, 3, 6, 2]);
+
+    const bonuses = buildIn('druid_moonkin', 'moonkin').abilityBonuses;
+    expect(bonuses.get('moonfire')?.[AURA_DURATION_BONUS]).toBe(3);
+    expect(bonuses.get('insect_swarm')?.[AURA_DURATION_BONUS]).toBe(2);
+  });
+
+  it('names the same bonus key the abilities read', () => {
+    // A key only one side spells correctly is silently zero. Eclipse's is
+    // pinned the same way, and for the same reason.
+    const keys = Object.values(DRUID_TALENT_EFFECTS)
+      .flat()
+      .filter((effect) => effect.kind === 'abilityBonus')
+      .map((effect) => (effect as { key: string }).key);
+    expect(keys).toContain(AURA_DURATION_BONUS);
+  });
+
+  it('adds a TICK rather than spreading the same total thinner', () => {
+    /*
+     * Moonfire is 240 over 12 seconds at 3, so four ticks; at 15 seconds it is
+     * five ticks of the same size. The other reading -- same total, longer --
+     * would make the talent worth exactly nothing, and both are plausible.
+     */
+    const longer = lengthened(MOONFIRE_DOT, 3);
+    expect(longer.durationMs).toBe(MOONFIRE_DOT_DURATION_MS + seconds(3));
+    expect(longer.id).toBe(MOONFIRE_DOT.id);
+    expect(lengthened(INSECT_SWARM, 2).durationMs).toBe(INSECT_SWARM_DURATION_MS + seconds(2));
+
+    // A NEW definition, not a mutation: the constant is shared by every Druid
+    // in a batch, and editing it would lengthen the next character's Moonfire.
+    expect(MOONFIRE_DOT.durationMs).toBe(MOONFIRE_DOT_DURATION_MS);
+    expect(lengthened(MOONFIRE_DOT, 0)).toBe(MOONFIRE_DOT);
+  });
+
+  it('lengthens the aura a Moonkin actually applies', () => {
+    const moonkin = druid('druid_moonkin', 'moonkin');
+    const target = makeTarget({ stats: { armor: 0 } });
+    const simulation = buildSimulation([moonkin, target]);
+    simulation.begin();
+
+    const cast = (ability: typeof MOONFIRE) => {
+      const own = moonkin.abilities.get(ability.id)!;
+      castAbility(simulation, moonkin, own, target);
+    };
+
+    cast(MOONFIRE);
+    cast(INSECT_SWARM_ABILITY);
+    const now = simulation.clock.now();
+
+    /*
+     * A spell can MISS, so the assertion is "either absent or lengthened" --
+     * never "the base duration", which is the outcome a broken bonus produces.
+     */
+    for (const [id, base, extra] of [
+      ['moonfire', MOONFIRE_DOT_DURATION_MS, seconds(3)],
+      ['insect_swarm', INSECT_SWARM_DURATION_MS, seconds(2)],
+    ] as const) {
+      const remaining = target.auras.remainingMs(id, now);
+      if (remaining > 0) expect(remaining, id).toBeGreaterThan(base);
+      if (remaining > 0) expect(remaining, id).toBeLessThanOrEqual(base + extra);
+    }
+  });
+});
+
+describe('Berserk is a talent, and was in every Druid book', () => {
+  it('reaches a feral build and no other', () => {
+    /*
+     * IT SAT IN THE BASE ABILITY LIST, so the Moonkin carried it: its own audit
+     * line read "in book, never cast: ... berserk", which is exactly what an
+     * ability nobody should have looks like. The capture's "Learned at level 40"
+     * is what misled it -- and Insect Swarm, Swiftmend, Feral Charge, Moonkin
+     * Form and Nature's Swiftness all carry the same line and are all talents.
+     */
+    const bookFor = (preset: string, style: 'cat' | 'bear' | 'moonkin') =>
+      abilitiesForClass('druid', style, PRESETS_BY_ID.get(preset)!.build().talents).map((a) => a.id);
+
+    expect(bookFor('druid_cat', 'cat')).toContain('berserk');
+    expect(bookFor('druid_bear', 'bear')).toContain('berserk');
+    expect(bookFor('druid_moonkin', 'moonkin')).not.toContain('berserk');
+    // And an untalented Druid has neither talent-granted ability.
+    expect(abilitiesForClass('druid', 'cat', {}).map((a) => a.id)).not.toContain('berserk');
+  });
+
+  it('keeps its two unreachable clauses on the ability, where they are printed', () => {
+    expect(DRUID_TALENT_EFFECTS.berserk).toEqual([
+      { kind: 'grantAbility', abilityId: 'berserk' },
+    ]);
+  });
+});
+
+describe("Nature's Swiftness, the second caller of the one-shot cast rule", () => {
+  it('is granted by the talent and taken by no Druid profile', () => {
+    expect(DRUID_TALENT_EFFECTS.nature_s_swiftness).toEqual([
+      { kind: 'grantAbility', abilityId: 'natures_swiftness' },
+    ]);
+    for (const [preset, style] of [
+      ['druid_cat', 'cat'],
+      ['druid_bear', 'bear'],
+      ['druid_moonkin', 'moonkin'],
+    ] as const) {
+      const book = abilitiesForClass(
+        'druid',
+        style,
+        PRESETS_BY_ID.get(preset)!.build().talents,
+      ).map((a) => a.id);
+      expect(book, preset).not.toContain('natures_swiftness');
+    }
+    /*
+     * So it is tested on its MECHANISM, below, and on nothing else. The
+     * allocation is PADDED, because `createPlayer` strips a talent whose tier
+     * gate is not met -- silently -- and an unpadded point would read as a
+     * talent that grants nothing. See `tests/helpers/legalise` for the Warrior
+     * version of the same trap.
+     */
+    expect(abilitiesForClass('druid', 'moonkin', RESTO_20).map((a) => a.id)).toContain(
+      'natures_swiftness',
+    );
+  });
+
+  it('makes the next Nature spell instant', () => {
+    const moonkin = druid('druid_moonkin', 'moonkin');
+    const target = makeTarget();
+    const simulation = buildSimulation([moonkin, target]);
+    simulation.begin();
+
+    const wrath = moonkin.abilities.get('wrath')!;
+    expect(resolveCast(moonkin, wrath).baseCastTimeMs).toBeGreaterThan(0);
+
+    simulation.applyAura(moonkin, NATURES_SWIFTNESS, moonkin.id);
+    expect(resolveCast(moonkin, wrath).baseCastTimeMs).toBe(0);
+    expect(resolveCast(moonkin, wrath).modified).toBe(true);
+  });
+
+  it('names Nature spells only, so Starfire and Moonfire are untouched', () => {
+    // Both are ARCANE. Reaching them would shorten the Moonkin's main nuke,
+    // which is a much bigger talent than this one.
+    expect(NATURE_SPELLS).toEqual(['wrath', 'insect_swarm']);
+    expect(WRATH.id).toBe('wrath');
+    const moonkin = druid('druid_moonkin', 'moonkin');
+    const simulation = buildSimulation([moonkin, makeTarget()]);
+    simulation.begin();
+    const starfire = moonkin.abilities.get('starfire')!;
+    const before = resolveCast(moonkin, starfire).baseCastTimeMs;
+    simulation.applyAura(moonkin, NATURES_SWIFTNESS, moonkin.id);
+    /*
+     * THE CAST TIME AND NOT `modified`. A Moonkin already carries Moonglow's
+     * cost modifier on Starfire, so `modified` is true whatever this aura does
+     * -- asserting it would pass with the talent reaching every spell.
+     */
+    expect(resolveCast(moonkin, starfire).baseCastTimeMs).toBe(before);
+    expect(before).toBeGreaterThan(0);
+  });
+
+  it('is spent by a CAST and not by an instant', () => {
+    /*
+     * `requiresCastTime`. Without it the charge is eaten by the next Insect
+     * Swarm, which is instant already -- an aura spent for nothing, which looks
+     * exactly like one that worked.
+     *
+     * NO ROTATION ON THIS ACTOR, deliberately. A preset Moonkin acts on its own
+     * during `advanceTo`, so it would spend the charge on whatever its list
+     * reached and the test would pass or fail for a reason it is not about.
+     */
+    const caster = makeAttacker({
+      autoAttack: 'none',
+      abilities: [WRATH, INSECT_SWARM_ABILITY, NATURES_SWIFTNESS_ABILITY],
+      resources: [{ type: 'mana', maximum: 10_000, initial: 10_000 }],
+      stats: { hitChance: 100 },
+    });
+    const target = makeTarget({ stats: { armor: 0 } });
+    const simulation = buildSimulation([caster, target]);
+    simulation.begin();
+
+    simulation.applyAura(caster, NATURES_SWIFTNESS, caster.id);
+    const first = castAbility(simulation, caster, INSECT_SWARM_ABILITY, target);
+    expect(first.ok, JSON.stringify(first)).toBe(true);
+    expect(caster.auras.has('natures_swiftness')).toBe(true);
+
+    // PAST THE GLOBAL COOLDOWN the instant just started, or the second cast is
+    // refused and the aura survives for the wrong reason.
+    simulation.advanceTo(simulation.clock.now() + seconds(2));
+    const second = castAbility(simulation, caster, WRATH, target);
+    expect(second.ok, JSON.stringify(second)).toBe(true);
+    expect(caster.auras.has('natures_swiftness')).toBe(false);
+  });
+
+  it('applies the aura when the ability is used', () => {
+    const caster = makeAttacker({
+      autoAttack: 'none',
+      abilities: [NATURES_SWIFTNESS_ABILITY],
+    });
+    const simulation = buildSimulation([caster, makeTarget()]);
+    simulation.begin();
+    expect(NATURES_SWIFTNESS_ABILITY.cost).toBeUndefined();
+    expect(NATURES_SWIFTNESS_ABILITY.cooldownMs).toBe(seconds(180));
+    const cast = castAbility(simulation, caster, NATURES_SWIFTNESS_ABILITY, undefined);
+    expect(cast.ok, JSON.stringify(cast)).toBe(true);
+    expect(caster.auras.has('natures_swiftness')).toBe(true);
+  });
+});
+
+describe('the two party auras are one aura each, not two', () => {
+  it('shares its id with the raid buff, so a build with both counts it once', () => {
+    /*
+     * "Leader of the Pack and Moonkin Form don't stack, but that can be handled
+     * on the GUI" -- the owner's ruling, about two DIFFERENT auras that WOULD
+     * add. The same aura twice refreshes instead, which is what makes granting
+     * it from the talent safe on a preset that also selects the raid buff.
+     */
+    expect(TALENT_AURAS.leader_of_the_pack.id).toBe('leader_of_the_pack');
+    expect(TALENT_AURAS.moonkin_form.id).toBe('moonkin_form');
+
+    const cat = druid('druid_cat', 'cat');
+    const simulation = buildSimulation([cat, makeTarget()]);
+    const before = cat.stats.get('critChance');
+    // The talent's, applied as an opening aura, plus the raid's -- same id.
+    simulation.applyAura(cat, TALENT_AURAS.leader_of_the_pack, cat.id);
+    simulation.applyAura(cat, TALENT_AURAS.leader_of_the_pack, cat.id);
+    expect(cat.stats.get('critChance') - before).toBeCloseTo(PARTY_CRIT_AURA_PERCENT, 6);
+  });
+
+  it('gives the Moonkin the same crit from its talent as the raid used to', () => {
+    /*
+     * THE CONTAINMENT CHECK FOR THIS WHOLE CHANGE. The Moonkin preset dropped
+     * Leader of the Pack from its raid buffs and gained Moonkin Aura from its
+     * talent, and 3% is 3%, so no figure should move.
+     */
+    const built = PRESETS_BY_ID.get('druid_moonkin')!.build();
+    expect(built.raidBuffs).not.toContain('leader_of_the_pack');
+    expect(buildIn('druid_moonkin', 'moonkin').grantedAuras.has('moonkin_form')).toBe(true);
+    expect(PARTY_CRIT_AURA_PERCENT).toBe(3);
+  });
+
+  it('gives Moonkin Form its 360% of item armor', () => {
+    expect(talentNumber('druid', 'moonkin_form', 1, 0)).toBe(360);
+    const built = PRESETS_BY_ID.get('druid_moonkin')!.build();
+    const talented = druid('druid_moonkin', 'moonkin');
+    const bare = untalented('druid_moonkin', 'moonkin');
+    /*
+     * 360% OF THE ITEM CONTRIBUTION, ADDED ON TOP -- not 460% of the total.
+     * That distinction is the whole reason `itemArmorPercent` exists rather
+     * than a percentage modifier on `armor`: the character's armor is items
+     * PLUS the class base, and scaling the total would overstate the talent.
+     * The Moonkin spends no other point on armor, so this is the difference.
+     */
+    const fromItems = armorFromItems(built.equipment, 'moonkin');
+    expect(fromItems).toBeGreaterThan(0);
+    expect(talented.stats.get('armor') - bare.stats.get('armor')).toBeCloseTo(
+      fromItems * 3.6,
+      6,
+    );
+  });
+});
+
+describe('what is left, and it is two talents', () => {
+  it('counts two live gaps and names them', () => {
+    /*
+     * Derived from the DATA, the same way `class_audit.ts` does it: a reason
+     * with no `scope` is a gap, and one with a scope is the owner's decision.
+     * Twelve before this work and TWO after, both on the same engine gap --
+     * mid-fight form shifting.
+     *
+     * IT WAS THREE WHEN THIS DIVE WROTE IT. Spell pushback was the third, and
+     * the Shaman dive's `castPushback` ruling absorbed it between the two
+     * branches: a scope added for one class reclassifies every class that
+     * shares the reason. `class_audit.ts` derives the same 2 independently.
+     */
+    const live = Object.entries(DRUID_TALENT_EFFECTS)
+      .filter(([, effects]) => {
+        const working = effects.some((e) => e.kind !== 'unmodelled');
+        const gap = effects.some((e) => e.kind === 'unmodelled' && e.scope === undefined);
+        return !working && gap;
+      })
+      .map(([id]) => id)
+      .sort();
+    expect(live).toEqual(['furor', 'natural_shapeshifter']);
+  });
+
+  it('declares an effect for all 51 and reaches every aura it names', () => {
+    expect(Object.keys(DRUID_TALENT_EFFECTS)).toHaveLength(51);
+    /*
+     * A granted aura with no entry in `TALENT_AURAS` is DROPPED rather than
+     * throwing, which is right for a typo and wrong to leave untested -- the
+     * talent would report itself modelled and do nothing.
+     */
+    for (const [id, effects] of Object.entries(DRUID_TALENT_EFFECTS)) {
+      for (const effect of effects) {
+        if (effect.kind !== 'grantAura') continue;
+        expect(TALENT_AURAS[effect.auraId], id).toBeDefined();
+      }
+    }
+  });
+});

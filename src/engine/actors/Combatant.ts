@@ -257,6 +257,33 @@ export interface CombatantOptions {
   readonly schoolModifiers?: SchoolModifiers;
   readonly attackTableModifiers?: AttackTableModifiers;
   /**
+   * The same table-scoped modifiers, counted ONLY while the target bleeds.
+   *
+   * ----------------------------------------------------------------------------
+   * THE SAME CLASS, A SECOND INSTANCE, rather than a new shape. "Increases
+   * damage done by your melee abilities on Bleeding targets" is
+   * `AttackTableModifiers` in every respect but one: whether it counts is a
+   * question about somebody ELSE, answered on each hit.
+   *
+   * Kept apart from `attackTableModifiers` for the reason
+   * `AbilityModifiers.addWhileAura` is kept apart from `add` -- combining a
+   * conditional modifier into the unconditional bucket loses the condition, and
+   * a talent that pays all fight instead of during its window is a bigger
+   * number and no error.
+   * ----------------------------------------------------------------------------
+   */
+  readonly bleedingTargetModifiers?: AttackTableModifiers;
+  /**
+   * A permanent multiplier on every PERIODIC point of damage, on top of
+   * `damageMultiplier`.
+   *
+   * Genesis is "increases the periodic damage and healing done by your spells
+   * and abilities", which selects on the one thing no other scope can see:
+   * whether the damage is a tick. `DamageRequest.periodic` has carried that
+   * since the first DoT, so this is a new reader of an old fact.
+   */
+  readonly periodicDamageMultiplier?: number;
+  /**
    * A permanent multiplier on every point of damage this combatant deals,
    * multiplied together with whatever auras contribute.
    *
@@ -362,7 +389,11 @@ export class Combatant {
   readonly schoolModifiers: SchoolModifiers;
   /** Crit, crit damage and damage scoped to MELEE or RANGED. See the class. */
   readonly attackTableModifiers: AttackTableModifiers;
+  /** The same, counted only while the target bleeds. See the option. */
+  readonly bleedingTargetModifiers: AttackTableModifiers;
   readonly baseDamageMultiplier: number;
+  /** Multiplies periodic damage only. See the option. */
+  readonly periodicDamageMultiplier: number;
   readonly survivesLethalDamage: boolean;
   readonly revivesOnDeath: boolean;
 
@@ -470,7 +501,10 @@ export class Combatant {
     this.abilityModifiers = options.abilityModifiers ?? new AbilityModifiers();
     this.schoolModifiers = options.schoolModifiers ?? new SchoolModifiers();
     this.attackTableModifiers = options.attackTableModifiers ?? new AttackTableModifiers();
+    this.bleedingTargetModifiers =
+      options.bleedingTargetModifiers ?? new AttackTableModifiers();
     this.baseDamageMultiplier = options.damageMultiplier ?? 1;
+    this.periodicDamageMultiplier = options.periodicDamageMultiplier ?? 1;
     this.survivesLethalDamage = options.survivesLethalDamage ?? false;
     this.revivesOnDeath = options.revivesOnDeath ?? false;
   }

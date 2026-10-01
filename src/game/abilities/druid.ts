@@ -19,7 +19,10 @@ import {
   FRENZIED_REGENERATION,
   FRENZIED_REGENERATION_COOLDOWN_MS,
   TIGERS_FURY,
+  NATURES_SWIFTNESS,
+  NATURES_SWIFTNESS_COOLDOWN_MS,
   berserkAura,
+  lengthened,
   ripAura,
 } from '../auras/druid';
 import { awardComboPoint, hasComboPoints, spendComboPoints } from '../combat/comboPoints';
@@ -71,6 +74,19 @@ const midpoint = (low: number, high: number) => (low + high) / 2;
  * a key that only one side spells correctly is silently zero.
  */
 export const ECLIPSE_REDUCTION_BONUS = 'eclipseReductionSeconds';
+
+/**
+ * Seconds Nature's Splendor adds to the aura an ability applies.
+ *
+ * ONE KEY, TWO ABILITIES. Moonfire gets three seconds and Insect Swarm two, so
+ * the talent hands each its own number under the same name -- `abilityBonuses`
+ * is keyed by ability id first, which is what makes that work.
+ *
+ * Named here and in `druidEffects.ts`, with a test that the two agree: a key
+ * only one side spells correctly is silently zero, which is why Eclipse's is
+ * pinned the same way.
+ */
+export const AURA_DURATION_BONUS = 'auraDurationBonusSeconds';
 
 // ---------------------------------------------------------------------------
 // Balance
@@ -183,7 +199,12 @@ export const MOONFIRE: Ability = {
       powerCoefficient: MOONFIRE_COEFFICIENTS.direct,
       attackTable: ability.attackTable,
     });
-    if (!result.avoided) simulation.applyAura(target, MOONFIRE_DOT, caster.id);
+    if (!result.avoided) {
+      // Nature's Splendor, or nothing. `lengthened` returns the aura unchanged
+      // at zero, so an untalented Moonfire is the same object it always was.
+      const extra = ability.bonuses?.[AURA_DURATION_BONUS] ?? 0;
+      simulation.applyAura(target, lengthened(MOONFIRE_DOT, extra), caster.id);
+    }
   },
 };
 
@@ -196,7 +217,8 @@ export const INSECT_SWARM_ABILITY: Ability = {
     if (!target || !ability.attackTable) return;
     const roll = simulation.rollAttack(ability.attackTable, caster, target);
     if (roll.avoided) return;
-    simulation.applyAura(target, INSECT_SWARM, caster.id);
+    const extra = ability.bonuses?.[AURA_DURATION_BONUS] ?? 0;
+    simulation.applyAura(target, lengthened(INSECT_SWARM, extra), caster.id);
   },
   unmodelled:
     'Its damage applies. The 2% hit reduction is a DEFENSIVE effect and does ' +
@@ -599,6 +621,51 @@ export const BERSERK: Ability = {
     'one -- and its Fear immunity is crowd control, which is out of scope.',
 };
 
+/**
+ * Nature's Swiftness: the next Nature spell is instant.
+ *
+ * Free, instant, three minute cooldown. Everything about the aura -- which
+ * spells it names, why it spends `all` rather than a stack, and why an instant
+ * must not eat the charge -- is on `NATURES_SWIFTNESS`.
+ *
+ * TALENT-GRANTED like Berserk below, and for the same reason: it is in the
+ * captured spellbook with a "Learned at level 30" line, and so are Insect
+ * Swarm, Swiftmend, Feral Charge and Moonkin Form, every one of which is a
+ * talent. `talentsforever.com` lists a talent-granted spell in the spellbook
+ * with a level attached, so that line is not evidence of a trainer spell.
+ */
+export const NATURES_SWIFTNESS_ABILITY: Ability = {
+  id: 'natures_swiftness',
+  name: "Nature's Swiftness",
+  cooldownMs: NATURES_SWIFTNESS_COOLDOWN_MS,
+  requiresTarget: false,
+  onCast: ({ simulation, caster }) => {
+    simulation.applyAura(caster, NATURES_SWIFTNESS, caster.id);
+  },
+};
+
+/**
+ * Every Druid ability, including the ones only a talent grants.
+ *
+ * ----------------------------------------------------------------------------
+ * THE LIST IS A CATALOGUE, NOT A SPELLBOOK. `abilitiesForClass` builds the
+ * book, and a talent-granted ability reaches it only through
+ * `TalentBuild.grantedAbilities` -- so what is in here and what a character
+ * can cast are different questions.
+ *
+ * BERSERK AND NATURE'S SWIFTNESS ARE TALENTS, and Berserk was not treated as
+ * one. It sat in the base list, so every Druid carried it: the Moonkin's own
+ * audit line read "in book, never cast: ... berserk ...", which is exactly what
+ * an ability nobody should have looks like. Insect Swarm was already granted
+ * properly and is the model.
+ *
+ * WHAT MISLED IT is worth recording, because it will mislead the next class:
+ * `forever-druid-spellbook.json` carries Berserk with "Learned at level 40",
+ * and it carries Insect Swarm, Swiftmend, Feral Charge, Moonkin Form and
+ * Nature's Swiftness the same way. All five are talents. The capture's level
+ * line says where the client would show the spell, not how it is obtained.
+ * ----------------------------------------------------------------------------
+ */
 export const DRUID_ABILITIES: readonly Ability[] = [
   WRATH,
   STARFIRE,
@@ -615,8 +682,11 @@ export const DRUID_ABILITIES: readonly Ability[] = [
   SWIPE,
   LACERATE_ABILITY,
   DEMORALIZING_ROAR_ABILITY,
-  BERSERK,
   BARKSKIN_ABILITY,
   ENRAGE_ABILITY,
   FRENZIED_REGENERATION_ABILITY,
+  // Talent-granted: in the catalogue so the book can find them, and in no
+  // character's book without the point spent.
+  BERSERK,
+  NATURES_SWIFTNESS_ABILITY,
 ];

@@ -61,7 +61,32 @@ export function statsFromEquipment(equipment: Equipment): PartialStats {
  */
 export function statsForStyle(equipment: Equipment, style: CombatStyleId): PartialStats {
   const live = liveEquipment(equipment, style);
-  return statsFromEquipment(live);
+  const total: Record<string, number> = { ...statsFromEquipment(live) };
+
+  /*
+   * AND THE STATS THAT ONLY THIS STYLE READS.
+   *
+   * "+172 Attack Power in Cat, Bear, and Dire Bear forms only" -- the Glaive of
+   * Obsidian Fury, held by both feral Druid profiles, and listed in HANDOVER.md
+   * as a known understatement of those two figures for as long as the item has
+   * existed. This is the one function that has both halves of the answer: which
+   * slots the style fills, and which style it is.
+   *
+   * OFF `live` LIKE EVERYTHING ELSE, so a two-hander's conditional stat cannot
+   * count on a build holding a one-hander any more than its strength can.
+   */
+  for (const equipped of Object.values(live)) {
+    if (!equipped) continue;
+    const item = ITEMS_BY_ID.get(equipped.itemId);
+    const scoped = item?.styleStats[style];
+    if (!scoped) continue;
+    for (const [name, value] of Object.entries(scoped)) {
+      if (typeof value !== 'number') continue;
+      total[name] = (total[name] ?? 0) + value;
+    }
+  }
+
+  return total as PartialStats;
 }
 
 /**

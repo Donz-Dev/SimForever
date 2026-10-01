@@ -116,6 +116,7 @@ export function ruptureAura(comboPoints: number): AuraDefinition {
     name: 'Rupture',
     durationMs: entry.durationMs,
     isDebuff: true,
+    isBleed: true,
     refreshBehaviour: 'reset',
     periodic: {
       intervalMs: RUPTURE_TICK_INTERVAL_MS,
