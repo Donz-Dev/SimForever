@@ -57,9 +57,12 @@ school's modifier in before the roll. `AbilityModifier.hitBonus` is the field.
 profiles are identical to the decimal — which is the containment check for a
 change that touches four shared engine files.
 
-Seal Twist Ret is now the **fourth** highest profile in the project, behind DW
-Fury, 2H Arms and Firelock. Prot Pally is still the lowest and is no longer an
-outlier: 238.1 against the Elemental Shaman's 295.4.
+Seal Twist Ret is now the **third** highest profile in the project, behind only
+the two Warriors, and the Shockadin is fifth. Prot Pally is still the lowest and
+is no longer an outlier: 238.1 against the Elemental Shaman's 295.4. (Measured
+against a main that had meanwhile taken the Warlock dive's corrections and the
+Warrior dive's two noise-sized moves; all 23 were re-run after merging and every
+figure reproduced.)
 
 ### What moved them, in order of size
 

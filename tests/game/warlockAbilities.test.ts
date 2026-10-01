@@ -22,7 +22,6 @@ import {
   SHADOWBURN_REFUNDS_SHARD,
   SHADOW_BOLT_DAMAGE,
   WRACK,
-  WRACK_DOT_AMPLIFICATION_PERCENT,
   WRACK_TICKS,
   WRACK_TICK_DAMAGE,
 } from '../../src/game/abilities/warlock';
@@ -30,6 +29,9 @@ import {
   BANE_OF_AGONY_TOTAL,
   CORRUPTION_TOTAL,
   DEMONIC_SACRIFICE_DAMAGE,
+  WRACK_AMPLIFICATION,
+  WRACK_DEBUFF_DURATION_MS,
+  WRACK_DOT_AMPLIFICATION_PERCENT,
   demonicSacrificeAura,
 } from '../../src/game/auras/warlock';
 import { WARLOCK_TALENT_EFFECTS } from '../../src/game/talents/warlockEffects';
@@ -186,13 +188,34 @@ describe('Demonic Sacrifice, which both builds take', () => {
     expect(sacrificedDemon({}, 'imp')).toBeUndefined();
   });
 
-  it('gives the two damage demons a buff and the other two none', () => {
+  it('gives each damage demon ONE school, and the other two nothing', () => {
+    /*
+     * ------------------------------------------------------------------------
+     * "IMP: INCREASES YOUR SHADOW DAMAGE BY 15%. SUCCUBUS: INCREASES YOUR FIRE
+     * DAMAGE BY 15%." Two demons, two schools, and this used to be one
+     * whole-character multiplier for both with a caveat admitting it.
+     *
+     * THE CAVEAT SAID "EXACT FOR EITHER PROFILE", AND IT WAS HALF RIGHT. SM/DS
+     * deals almost nothing but Shadow, so the Imp's reading cost nothing.
+     * FIRELOCK DEALS 22% OF ITS DAMAGE IN SHADOW -- Corruption and Shadowburn
+     * -- and was collecting a sacrificed Succubus's FIRE bonus on all of it.
+     *
+     * ASSERTING THE SCHOOL AND THE ABSENCE OF THE BLANKET FIELD, because the
+     * failure to catch is somebody restoring `damageDoneMultiplier` beside it,
+     * which would apply the bonus twice to the right school and once to every
+     * wrong one.
+     * ------------------------------------------------------------------------
+     */
+    expect(demonicSacrificeAura('imp')?.damageDoneBySchool).toEqual({
+      shadow: DEMONIC_SACRIFICE_DAMAGE,
+    });
+    expect(demonicSacrificeAura('imp')?.damageDoneMultiplier).toBeUndefined();
+    expect(demonicSacrificeAura('succubus')?.damageDoneBySchool).toEqual({
+      fire: DEMONIC_SACRIFICE_DAMAGE,
+    });
+    expect(demonicSacrificeAura('succubus')?.damageDoneMultiplier).toBeUndefined();
     // Voidwalker restores mana and Felhunter health, neither of which moves a
     // damage figure for a profile nothing attacks.
-    expect(demonicSacrificeAura('imp')?.damageDoneMultiplier).toBe(DEMONIC_SACRIFICE_DAMAGE);
-    expect(demonicSacrificeAura('succubus')?.damageDoneMultiplier).toBe(
-      DEMONIC_SACRIFICE_DAMAGE,
-    );
     expect(demonicSacrificeAura('voidwalker')).toBeUndefined();
     expect(demonicSacrificeAura('felhunter')).toBeUndefined();
   });
@@ -344,27 +367,47 @@ describe('Wrack, scaling now, and still not worth casting', () => {
     expect(withPower).toBeCloseTo(expected, 6);
   });
 
-  it('still says its ONE remaining gap in its own words', () => {
+  it('amplifies PERIODIC shadow damage only, which is what "other" buys', () => {
     /*
-     * The amplification clause is what would make it worth casting and it is
-     * not modelled. This asserts the reason no longer claims the COEFFICIENT is
-     * missing -- an expired reason printing a caveat that has been fixed is a
-     * failure this project has met six times.
+     * ----------------------------------------------------------------------
+     * THE CLAUSE THAT WAS THE WHOLE REASON TO CAST IT, and the reason it went
+     * unmodelled named the field it wanted: a plain Shadow vulnerability would
+     * also raise Shadow Bolt, at over half of the SM/DS profile's damage.
+     *
+     * THE TWO ASSERTIONS ARE THE SPEC. `periodicDamageTakenBySchool` is read
+     * only for a tick, and `damageTakenBySchool` -- which would reach every
+     * Shadow cast -- must stay absent. The second one is what fails if somebody
+     * "simplifies" this into the field beside it.
+     *
+     * WRACK'S OWN TICKS ARE CAST TICKS, because it is a channel, so they carry
+     * no `periodic` flag and cannot be amplified by their own debuff. That is
+     * what the tooltip's word "other" asks for and it falls out rather than
+     * being special-cased.
+     * ----------------------------------------------------------------------
      */
-    expect(WRACK.unmodelled).toContain('Shadow Bolt');
-    expect(WRACK.unmodelled).not.toContain('no Wrack row');
-    expect(WRACK.unmodelled).not.toContain('NO spell power coefficient');
     expect(WRACK_DOT_AMPLIFICATION_PERCENT).toBe(10);
+    expect(WRACK_AMPLIFICATION.periodicDamageTakenBySchool).toEqual({ shadow: 1.1 });
+    expect(WRACK_AMPLIFICATION.damageTakenBySchool).toBeUndefined();
+    // Six seconds from the FIRST tick, so `ignore` and not `reset`.
+    expect(WRACK_AMPLIFICATION.durationMs).toBe(WRACK_DEBUFF_DURATION_MS);
+    expect(WRACK_AMPLIFICATION.refreshBehaviour).toBe('ignore');
+    // Its coefficient reason is gone too, and stayed gone.
+    expect(WRACK.unmodelled).toBeUndefined();
   });
 
   it('is in no list, which the owner asked for outright', () => {
     /*
      * "It's unimportant for the rest of the simulator for now, there isn't a
-     * profile that uses it." The coefficient did not change that: six seconds
-     * of Wrack is about half what two Shadow Bolts deal in the same six, and
-     * the reason to cast it is the unmodelled clause above.
+     * profile that uses it." BOTH HALVES ARE BUILT NOW and it is still out,
+     * because that is the owner's instruction and not a measurement of ours --
+     * and this project has a documented rule that the owner's list outranks a
+     * measured decision of ours.
      *
-     * ONE LINE RE-MEASURES IT the day the amplification is expressible.
+     * ONE LINE PUTS IT IN, and what it is worth is now genuinely an open
+     * question rather than arithmetic: six ticks at 14.3% is Shadow Bolt's
+     * 0.857 in twice the time, and against that sits 10% of the profile's
+     * periodic damage for the six seconds the channel occupies. Thirty batches
+     * of ten is what answers it.
      */
     expect(WARLOCK_AFFLICTION.map((entry) => entry.abilityId)).not.toContain('wrack');
   });

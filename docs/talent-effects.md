@@ -125,10 +125,14 @@ Attack power is already inside "the weapon's average damage" by the universal
 formula. Scaling the result again would count it twice, so the tick sets
 `powerCoefficient: 0`.
 
-### Shield Slam needs a shield AND the talent
+### Shield Slam needs a shield AND the talent — and so does Spearing Strike
 
 The weapon check runs first, so a warrior who took Shield Slam and put the
-shield away still cannot use it.
+shield away still cannot use it. **Spearing Strike is the second case**, added
+2026-09-30: it requires a two-handed weapon, so the DW Fury profile's point in
+it buys nothing at all. Both gates are on `style` in `abilitiesForBuild`, which
+removes the ability from the BOOK rather than refusing it per cast — an ability
+listed and never cast reads as a rotation problem, and neither of these is one.
 
 ### An explicit resource override beats a talent
 

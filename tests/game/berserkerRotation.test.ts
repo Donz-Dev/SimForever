@@ -8,6 +8,8 @@ import { runProfile, runProfileBatch, resourceFlowOf } from '../../src/simulator
 import { startingEquipmentFor } from '../../src/game/items/startingSets';
 import { warriorRotation } from '../../src/game/rotations/warrior';
 import {
+  BERSERKER_RAGE,
+  BERSERKER_RAGE_DURATION_MS,
   BLOODRAGE_INSTANT_RAGE,
   BLOODRAGE_RAGE_OVER_TIME,
 } from '../../src/game/auras/warrior';
@@ -260,5 +262,77 @@ describe('the result says which priority list ran', () => {
 
   it('names the shield list', () => {
     expect(named('one_hand_shield', 'battle')).toBe('Warrior (Shield)');
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Improved Berserker Rage
+// ---------------------------------------------------------------------------
+
+describe('Improved Berserker Rage grants its rage on activation', () => {
+  /*
+   * ----------------------------------------------------------------------------
+   * THE LAST TALENT THIS CLASS COUNTED AS A LIVE GAP, and it was never one.
+   *
+   * Its `unmodelled` reason read "grants Rage when Berserker Rage is activated,
+   * and no priority list casts Berserker Rage" -- an argument about a LIST,
+   * recorded where the project keeps arguments about the ENGINE. The number was
+   * stated in `values/warrior.json` the whole time: 5 rage at one rank, 10 at
+   * two, beside the 50%/100% dispel chance that `valueIndex: 0` steps over.
+   *
+   * ASSERTED ON THE MECHANISM AND NOT ON A DPS FIGURE, because no priority list
+   * casts Berserker Rage and none of the three profiles spends a point here --
+   * so its worth to every published number is exactly zero, and that is a BUILD
+   * and LIST fact rather than a modelling one. A talent working and a talent
+   * mattering are different questions.
+   * ----------------------------------------------------------------------------
+   */
+  function warrior(talents: Record<string, number>) {
+    const player = createPlayer({
+      race: 'human',
+      characterClass: 'warrior',
+      combatStyle: 'dual_wield',
+      talents: legalise(talents),
+    });
+    const dummy = createTrainingDummy({ name: 'D', health: 100_000, armor: 0, level: 63 });
+    const sim = buildSimulation([player, dummy]);
+    sim.begin();
+    return { player, sim };
+  }
+
+  /** Cast Berserker Rage directly: no list asks for it, so nothing else will. */
+  function rageFromCasting(talents: Record<string, number>) {
+    const { player, sim } = warrior(talents);
+    const ability = player.abilities.get('berserker_rage_cast');
+    expect(ability, 'every warrior knows Berserker Rage').toBeDefined();
+
+    const before = player.resources.get('rage')?.current ?? 0;
+    ability!.onCast({ simulation: sim, caster: player, target: undefined, ability: ability! });
+    const after = player.resources.get('rage')?.current ?? 0;
+    return { gained: after - before, player, sim };
+  }
+
+  it('gives 10 rage at 2/2 and 5 at 1/2', () => {
+    // Written out by hand from the talent text -- "will instantly generate 10
+    // Rage" is the rank 2 wording, and the values file carries [5, 10].
+    expect(rageFromCasting({ improved_berserker_rage: 2 }).gained).toBeCloseTo(10, 6);
+    expect(rageFromCasting({ improved_berserker_rage: 1 }).gained).toBeCloseTo(5, 6);
+  });
+
+  it('gives nothing to a warrior who did not take it', () => {
+    expect(rageFromCasting({}).gained).toBe(0);
+  });
+
+  it('applies the aura either way, for ten seconds', () => {
+    /*
+     * The ability's own half. Ten seconds is a REAL Forever figure -- "Lasts 10
+     * sec", in all three sources -- and used to be a `PLACEHOLDER_` on the
+     * grounds that the owner's ability spreadsheet states no duration, which
+     * was true of the spreadsheet and irrelevant to the question.
+     */
+    const { player, sim } = rageFromCasting({});
+    expect(player.auras.remainingMs(BERSERKER_RAGE.id, sim.clock.now())).toBe(
+      BERSERKER_RAGE_DURATION_MS,
+    );
   });
 });

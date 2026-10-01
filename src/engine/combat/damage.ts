@@ -556,8 +556,15 @@ export function resolveDamage(
   const critical = attack.outcome === 'crit';
   const afterCrit = scaled * attack.damageMultiplier;
 
+  /*
+   * PER SCHOOL ON THE AURA SIDE, and `damageDoneMultiplierFor` folds the
+   * blanket multiplier in. Demonic Sacrifice names one school out of four
+   * demons and Shadow and Flame's two halves name opposite ones; both reached
+   * every school before this line read the request's.
+   */
   const attackerMultiplier =
-    source.damageDoneMultiplier * versatilityMultiplierFrom(source.stats.effective);
+    source.damageDoneMultiplierFor(request.school) *
+    versatilityMultiplierFrom(source.stats.effective);
   // Per-ability scaling sits alongside the whole-character multipliers rather
   // than replacing them: "+20% Revenge damage" and "+10% damage done" are
   // different effects and both apply.
@@ -597,7 +604,8 @@ export function resolveDamage(
   // Per SCHOOL, which folds in the blanket multiplier as well. Curse of the
   // Elements raises magic and leaves physical alone, so the school has to
   // reach this line rather than being decided before it.
-  const afterTarget = afterAttacker * target.damageTakenMultiplierFor(request.school);
+  const afterTarget =
+    afterAttacker * target.damageTakenMultiplierFor(request.school, request.periodic === true);
 
   const reduction = appliesArmor(request)
     ? armorReduction(target.stats.get('armor'), target.level)

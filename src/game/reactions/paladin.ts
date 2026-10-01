@@ -150,12 +150,17 @@ export function sealOfRighteousnessProc(): Reaction {
  *
  * AND THE RATE IS 7 PPM, WHICH IS THE RULESET OWNER'S OWN FIGURE.
  *
- * IT WAS `PLACEHOLDER_SEAL_OF_COMMAND_PPM` FOR MOST OF THIS PROJECT, and the
+ * IT WAS A NAMED PLACEHOLDER CONSTANT FOR MOST OF THIS PROJECT, and the
  * largest invented number in the fifth-highest profile -- Seal of Command plus
  * its Echo is 26.5% of Seal Twist Retribution's damage, so the caveat on that
  * profile was load-bearing. The owner has now confirmed 7 is the real value, so
  * the placeholder is deleted rather than renamed and the profile loses its one
  * big asterisk. The VALUE does not move; what moves is whether it can be quoted.
+ *
+ * ITS OLD NAME IS DELIBERATELY NOT WRITTEN OUT ANYWHERE IN `src`, because the
+ * project counts placeholders by grepping for the `PLACEHOLDER_` prefix -- so a
+ * prose mention of a deleted one inflates the count, which is exactly the kind
+ * of un-auditable figure the naming convention exists to prevent.
  * ------------------------------------------------------------------------------
  */
 export const SEAL_OF_COMMAND_PPM = 7;

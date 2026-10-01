@@ -16,14 +16,23 @@ The process for a class is [class-implementation.md](class-implementation.md).
 
 ## Where the numbers come from
 
-Four sources, and all four were needed.
+**Five** sources now, and all five were needed.
 
 | | |
 | --- | --- |
 | `WoWForeverWarriorAbilities.xlsx` | the ruleset owner's own sheet, outside the repo. Highest authority **except** where a capture overruled it below |
-| `src/data/abilities/forever-warrior-tooltips.json` | 32 spells captured from Forever's own client data. `node tools/import_spell.mjs --verify` re-fetches and exits 1 on drift |
-| `foreverchanges.pro/spellbook/warrior` | the beta client diffed against Classic Era, per rank |
+| `src/data/abilities/forever-warrior-tooltips.json` | 32 spells captured from Forever's own client data, with the **effect rows** and the stance list. `node tools/import_spell.mjs --verify` re-fetches and exits 1 on drift |
+| `src/data/abilities/forever-warrior-spellbook.json` | **new 2026-09-30**, and the ninth of nine. 42 spells from the beta client's own `spellbooks.js`, carrying the **build number** and the **requirement lines** — which is what the tooltips do not have |
+| `foreverchanges.pro/spellbook/warrior` | the beta client diffed against Classic Era, per rank. **The tie-break, by the owner's standing rule** |
 | `talentsforever.com/warrior` | the talent tree. Audited 2026-09-23: **53 of 53 talents and 154 of 154 rank values match** — the one audit in this project that found nothing wrong |
+
+**THE WARRIOR HAD NO SPELLBOOK CAPTURE FOR THE WHOLE PROJECT**, which made it
+the one class whose data carried no build number and could not be machine-diffed
+against the other eight. This file used to explain that as a deliberate
+non-decision — "a Warrior spellbook can be captured ... if the eight-class shape
+is ever wanted". It was wanted, and two corrections fell straight out of taking
+it: **Spearing Strike's two-handed requirement** and a second reading of Slam's
+cooldown. See [source-cross-checks.md](source-cross-checks.md).
 
 ### What the simulator implements, at max rank
 
@@ -33,12 +42,12 @@ disagreed, the ruleset owner chose Forever **every time**.
 | Ability | Implemented | Sheet said | Why the sheet lost |
 | --- | --- | --- | --- |
 | Mortal Strike | weapon +160 | 160 | agree |
-| Shield Slam | **655** + block value | 421–439 | rank 1 in the sheet; and see the rank rule below |
-| Revenge | **153** | 81–99 | effect row, tooltip hid it |
-| Slam | weapon **+87**, 15s cooldown | no bonus, no cooldown | three sources against it; rank 5, not rank 4 |
+| Shield Slam | **655** + block value | 421–439 | rank 1 in the sheet; and see the rank rule below. 655 is the exact midpoint of Forever's 640–670 |
+| Revenge | **153** | 81–99 | effect row, tooltip hid it. 153 is the exact midpoint of Forever's 138–168 |
+| Slam | weapon **+87**, **18s** cooldown | no bonus, no cooldown | three sources against it; rank 5, not rank 4. **The cooldown was 15 and Forever moved it** — see below |
 | Bloodthirst | **35% AP +48** | 30 + 0.35 AP | effect row 49; sheet gave rank 1 |
-| Thunder Clap | +103, **6s** cooldown | 4s | the sheet's 4 is also Classic's, so it looked right from two directions |
-| Demoralizing Shout | **−196** AP, 45s | no magnitude | description said 210, effect row −195 |
+| Thunder Clap | +103, **6s** cooldown, **4 targets** | 4s | the sheet's 4 is also Classic's, so it looked right from two directions. The target cap is the description's last sentence and was read as "all nearby" until 2026-09-30 |
+| Demoralizing Shout | **−196** AP, 45s | no magnitude | description said 210, effect row −195, spellbook capture says 204, `foreverchanges.pro` says 196 |
 | Battle Shout | **+139** AP, 3 min | no magnitude | capture says 140 in both places; spellbook and the owner's raid list say 139, and the owner asked for the spellbook |
 | Shield Wall | −60% taken, 12s, **15 min** | 30 min | 11 min off 15 leaves 4 exactly; off 30 it leaves 19, which nobody writes a talent for |
 | Sunder Armor | −450 armor a stack, 5 stacks, 30s | no magnitude | — |
@@ -48,21 +57,28 @@ disagreed, the ruleset owner chose Forever **every time**.
 | Hamstring / Intercept | +45 / +65 | agree | — |
 | Execute | 600 + 15 per extra rage | agree | — |
 | Rend | 147 over 21s | agree | — |
-| Spearing Strike | 40% weapon damage | agree | — |
+| Spearing Strike | 40% weapon damage, 20s, **two-handed weapons only** | agree | the weapon requirement is in the spellbook and on `foreverchanges.pro`, and in no Wowhead tooltip |
 | Death Wish | +20% physical, +5% taken, 30s | absent | a talent grants it; the sheet has no row |
 | Last Stand | +30% max health, 20s, lost on expiry | absent | as above |
 
 **Ranges are gone from Revenge and Shield Slam**, which is a change in shape as
 well as magnitude: both were a spread of ±9 and both are flat now, so any spread
-they show comes from the combat table alone. Forever's effect rows give a single
-base value and cannot say whether 655 is flat or a midpoint.
+they show comes from the combat table alone.
 
-**The three that are still inert have each named their own obstacle**:
+**AND THE READING IS NOW SOURCED RATHER THAN ASSUMED.** This paragraph used to
+end "Forever's effect rows give a single base value and cannot say whether 655 is
+flat or a midpoint." Since the 2026-09-30 refresh they can: Forever stopped
+rendering the `(100% of Spell Power)` artifact, and the descriptions read **640
+to 670** and **138 to 168**, whose midpoints are exactly 655 and 153. So both
+figures are right, the spread is ±15 rather than the old ±9, and implementing
+them flat understates only the VARIANCE and not the mean.
+
+**Two of the three that were inert have moved**:
 
 | | |
 | --- | --- |
-| **Berserker Rage** | Forever's tooltip names **no magnitude** — "generating extra rage when taking damage". A gap in the SOURCE, not in the capture. Its other half is fear and incapacitate immunity, which is out of scope |
-| **Shield Block** | +75% block for 7s limited to **2 attacks**. A per-attack charge cap is not expressible, and granting the 7 seconds without it would overstate it badly |
+| **Berserker Rage** | still inert, and the reason has narrowed. No source names a magnitude for "generating extra rage when taking damage" and **no effect row carries one** — the spell has two rows and both are immunities. Its **duration is not a gap**: "Lasts 10 sec", in all three sources, and it was a `PLACEHOLDER_` until 2026-09-30 on the strength of the owner's spreadsheet being silent. **Improved Berserker Rage's 10 rage on activation is stated and is applied** |
+| **Shield Block** | **no longer inert.** "Only 2 attacks" is `consumedByBlock`, and it is in the Protection list. This row said a per-attack charge cap "is not expressible" long after it had been expressed |
 | **Sweeping Strikes** | implemented and inert: its whole effect is an *additional* opponent. See Multi-target |
 
 ### Reading Forever's spell data — the traps, all class-independent
@@ -84,6 +100,17 @@ These cost this project eight corrections and they apply to every class.
   line and **scale with level**, so for those two the row is the spell's base
   and the tooltip is the value at 60. A blanket −1 was applied briefly and would
   have made Demoralizing Shout 7% too weak while looking rigorous.
+  **BUT DEMORALIZING SHOUT IS THE EXCEPTION TO ITS OWN RULE.** Read literally
+  that paragraph makes it 210, and the implementation is 196 — which is what
+  `foreverchanges.pro` states and what the effect row gives. Four sources, three
+  numbers (210, 196, 204), and the preferred source agrees with the row. Where a
+  reading rule and the tie-break disagree, the tie-break is a NUMBER and the rule
+  is an inference.
+- **A REQUIREMENT LINE IS DATA AND A MISSING ONE IS NOT.** Wowhead's Forever
+  tooltips carry no requirement line for Spearing Strike; the spellbook capture
+  and `foreverchanges.pro` both state a two-handed weapon. Silence is not
+  disagreement, so the tie-break rule never came into it — two sources spoke and
+  one did not. A dual-wielder had been casting it for the whole project.
 - **A talent tooltip shows rank 1** of the ability it grants. Mortal Strike
   85/160, Bloodthirst 30/48, Shield Slam 421/640 — three arguments, one rule,
   and the calculator was never wrong about any of them. The sheet **mixes the
@@ -133,6 +160,15 @@ stance is a different rotation and not a filtered one.
 never swaps. Before the lists were split per stance the rotation thrashed — 540
 rage a fight — and every build's figures carried that noise.
 
+**FIVE ENTRIES ACROSS THE THREE LISTS NEVER FIRE, AND ALL FIVE ARE DELIBERATE.**
+Each profile's own stance cast (the preset already opens in it), Battle Shout in
+all three (`battle_shout` is a preset raid buff, so the aura is up at the pull),
+and **Spearing Strike in the Berserker list**, which is the new one: it needs a
+two-handed weapon and that list is only reached by a dual-wielder. The first
+four cost a build that does not need them nothing and are what a hand-built
+character in another stance depends on. The fifth is the owner's entry, added on
+the belief that the ability was reachable, and taking it out is their call.
+
 **Slam's condition is the only one in any list that reads the swing timer.** It
 is the one ability with a cast time, and Improved Slam takes that to half a
 second and makes it HOLD the swing, so a Slam started with more than a second
@@ -145,10 +181,14 @@ one.** Both are the owner's, each given for its own list, and nothing says they
 should agree — so they are two constants rather than one quietly applied to a
 list nobody checked it against.
 
-**Demoralizing Shout is deliberately absent, though it works.** It lowers the
-target's attack power, which does nothing to a standing dummy and is actively
-negative when the target swings back: less damage taken is less rage. It is a
-survival cooldown, and survival is a death count here rather than an outcome.
+**Demoralizing Shout is IN the Protection list, at the owner's request, and it
+still does nothing.** This section said it was "deliberately absent, though it
+works" — a live claim about a list that had already changed. It lowers the
+target's attack power and `encounters/raidBoss.ts` gives the boss melee
+`powerCoefficient: 0`, so the swing damage IS the whole swing and there is no
+attack power term to reduce. It costs 10 rage and a global cooldown at about
+80% uptime and changes no incoming damage. It becomes real the day a target's
+damage is derived rather than stated.
 
 **A rotation measured on one build is not measured for another.** The opener
 priorities were measured on a dual-wielder and applied to the shield list too,
@@ -166,8 +206,14 @@ ever created a second.
 | --- | --- | --- |
 | Cleave | 2 targets | 1 |
 | Whirlwind | up to 4 | 1 |
-| Thunder Clap | all nearby | 1 |
+| Thunder Clap | **up to 4** | 1 |
 | Sweeping Strikes | next 5 attacks hit one extra | nothing at all |
+
+**THUNDER CLAP SAID "ALL NEARBY" HERE AND IN THE CODE**, where it declared
+`maxTargets: Infinity`. The description's last sentence is "Will affect up to 4
+targets", in every source including both captures — the cap was read past
+because the clause before it sounded complete. It changes nothing against one
+dummy, which is why it survived.
 
 Each declares what it *would* hit through `Ability.targets`, so the claim lives
 on the ability rather than in a comment nobody reads. Cleave, Whirlwind and
@@ -177,22 +223,31 @@ it is inert**, 30 rage for no damage, and absent from every list.
 
 ## Talents
 
-**43 of 53 are fully modelled, 3 partly and 7 inert**, and the tree is closer to
-finished than that reads: **six of the seven inert ones are permanently out of
-scope by ruling** — Improved Hamstring (movement), Booming Voice (radius), Iron
-Will (stun and fear), Improved Disarm and Improved Shield Bash (both control
-effects, which is why neither ability exists here), and Defiance (threat). Each
-carries a `scope` on its `unmodelled` entry, so it is counted as a decision
-rather than as work.
+**43 of 53 are fully modelled, 4 partly and 6 inert — and THE LIVE GAP COLUMN IS
+ZERO.** All six inert ones are permanently out of scope by ruling: Improved
+Hamstring (movement), Booming Voice (radius), Iron Will (stun and fear),
+Improved Disarm and Improved Shield Bash (both control effects, which is why
+neither ability exists here), and Defiance (threat). Each carries a `scope` on
+its `unmodelled` entry, so it is counted as a decision rather than as work.
+Reprint with `npx vite-node tools/class_audit.ts warrior`.
 
-**Only three talents on this class are blocked on anything that could ever
-change:**
+**THE LAST LIVE GAP WAS IMPROVED BERSERKER RAGE AND IT WAS NEVER AN ENGINE
+ONE.** Its reason read "grants rage on activation, and no priority list casts
+Berserker Rage" — an argument about a LIST, recorded where this project keeps
+arguments about the ENGINE — while its number, 5 and 10 by rank, sat in
+`values/warrior.json` the whole time. It is granted the way Improved Charge's
+rage is, and what is left of it is snare removal, which carries a `crowdControl`
+scope. It still moves no published figure: no list casts the ability and no
+profile spends a point there. **A talent working and a talent mattering are
+different questions**, and only the first was ever a gap.
+
+**Two CLAUSES are blocked on something that could change, both inside PARTLY
+modelled talents, and neither can reach a profile:**
 
 | | |
 | --- | --- |
-| Sweeping Strikes | needs a second target — see Multi-target |
-| Weaponmaster's mace clause | ignores a percentage of target armor, which the damage pipeline cannot express. Its axe/polearm crit and sword extra attack both work |
-| Improved Berserker Rage | grants rage on activation, and no priority list casts Berserker Rage |
+| Sweeping Strikes | needs a second target — see Multi-target. Every encounter has one enemy |
+| Weaponmaster's mace-and-staff clause | ignores a percentage of target armor, and the damage pipeline has **no attacker-side armor term at any step** — re-checked 2026-09-30. Its axe/polearm crit and sword extra attack both work, and **every weapon in every Warrior gear set is a sword**, so no profile can reach either of the other two clauses |
 
 **Weaponmaster's sword clause reads the weapon in the SLOT THAT SWUNG**, not
 the character's weapon: an off-hand sword procs beside a main-hand mace and an
@@ -223,29 +278,56 @@ Defense, Vanguard, Bastion, Focused Rage.
 
 ## Three abilities Forever has that the simulator does not
 
+All three re-confirmed against the new spellbook capture on 2026-09-30, and none
+of them is reachable by any of the three profiles.
+
 | | |
 | --- | --- |
-| **Victory Rush** | new in Forever, and needs a recent kill — genuinely inert against a single boss |
-| **Retaliation** | **15 min in Forever, down from 30.** A real Arms cooldown once the target swings back, and not modelled |
+| **Victory Rush** | new in Forever, and needs a recent kill — genuinely inert against a single boss. The two sources disagree on its damage (`talentsforever` "15% of Attack Power", `foreverchanges.pro` "1 damage"), which nothing needs to settle while it cannot be cast |
+| **Retaliation** | **15 min in Forever, down from 30.** Battle Stance, 15 seconds, at most 30 counterattacks. A real Arms cooldown once the target swings back — and the one profile in Battle Stance is the one whose target does not swing back, so it would be worth nothing to all three today |
 | **Tactical Mastery** | no longer a talent; trained at 14, 10 rage retained. Stance-change rage is not modelled |
+
+### The exclusion list, and it balances
+
+**42 captured, 30 declared, and every one of the 12 that are not is named.**
+This is the first class in the project with a reconciled account of its own
+spellbook rather than a count; HANDOVER.md's "478 captured against 113 declared"
+is the same arithmetic done nowhere else yet.
+
+| | |
+| --- | --- |
+| **30 declared** | everything in the table above, plus the three stances |
+| **3 above** | Victory Rush, Retaliation, Tactical Mastery |
+| **9 out of scope by ruling** | Challenging Shout, Mocking Blow and Taunt are **threat**; Concussion Blow, Disarm, Intimidating Shout, Piercing Howl, Pummel and Shield Bash are **crowd control** — stuns, fears, snares, disarms, silences. Piercing Howl is the one the owner ruled out by name, and the other eight fall under the same two entries in CLAUDE.md's Scope table |
+
+Nothing is declared that the spellbook does not have, which is the check in the
+other direction and the one that catches an invented ability.
 
 ## Refreshing the data
 
 ```bash
-node tools/import_spell.mjs --verify     # re-fetch all 32, diff, exit 1 on drift
-node tools/import_spell.mjs --refresh    # re-capture
+node tools/import_spell.mjs --verify                      # re-fetch all 32 TOOLTIPS, diff, exit 1 on drift
+node tools/import_spell.mjs --refresh                     # re-capture them
+node tools/import_forever_spells.mjs warrior --write      # re-capture the SPELLBOOK
 ```
 
-**The Warrior is the one class with no spellbook capture**, and the file name now
-says so. It was `forever-warrior.json`, which read as the odd one out among eight
-`forever-<class>-spellbook.json` files; it is not a spellbook and never was. It is
-a capture of Forever's rendered TOOLTIPS and effect rows, from a different source
-and a different importer, made before `import_forever_spells.mjs` existed and kept
-because it is the only place several Warrior magnitudes were ever recovered from.
+**THE WARRIOR NOW HAS BOTH**, and the two files are not interchangeable.
+`forever-warrior-tooltips.json` is a capture of Forever's rendered TOOLTIPS and
+effect rows, from a different source and a different importer, made before
+`import_forever_spells.mjs` existed. It is the only place several Warrior
+magnitudes were ever recovered from, because the effect rows carry numbers the
+description used to hide. `forever-warrior-spellbook.json` is the eight-class
+shape: the build number, the requirement lines, and Forever's own
+"changed / same / new" flag against Classic.
 
-Renaming it *to match* the other eight would have been worse than leaving it: it
-would put a differently-shaped file under a convention it does not follow, which
-is exactly the trap that makes a loader special-case one class. Nothing globs
-these files today — every reader names one literally — and a Warrior spellbook can
-be captured with `node tools/import_forever_spells.mjs warrior --write` if the
-eight-class shape is ever wanted.
+**The file names are the difference**, which is why the tooltip capture was
+renamed from `forever-warrior.json` rather than made to match the others.
+Putting a differently-shaped file under the `-spellbook` convention is exactly
+the trap that makes a loader special-case one class — and now that a real
+spellbook exists for this class, a reader who assumed the old name meant one
+would have been reading effect rows as requirement lines. Nothing globs these
+files; every reader names one literally.
+
+**RUN BOTH.** They fail differently and the 2026-09-30 check needed each:
+`--verify` is what caught Slam's cooldown moving, and only the spellbook carries
+Spearing Strike's weapon requirement.

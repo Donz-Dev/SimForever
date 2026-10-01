@@ -130,8 +130,10 @@ export const SEAL_OF_RIGHTEOUSNESS: AuraDefinition = {
  *
  * PROCS PER MINUTE, on the ruleset owner's ruling -- the same normalisation
  * Crusader and Vis'kag already use, so a slow weapon and a fast one proc the
- * same number of times a minute. The RATE itself is still a placeholder; see
- * `PLACEHOLDER_SEAL_OF_COMMAND_PPM` in `reactions/paladin.ts`.
+ * same number of times a minute. **AND THE RATE IS REAL NOW**: 7, confirmed by
+ * the owner, so `SEAL_OF_COMMAND_PPM` in `reactions/paladin.ts` is data rather
+ * than the named placeholder it used to be. This comment said it was still a
+ * placeholder for one commit after it stopped being one.
  */
 export const SEAL_OF_COMMAND_WEAPON_FRACTION = 0.7;
 

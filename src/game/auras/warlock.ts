@@ -224,6 +224,41 @@ export const SHADOW_TRANCE: AuraDefinition = {
   },
 };
 
+/**
+ * WRACK's second half: "increasing the damage they take from your other Shadow
+ * damage over time effects by 10%. Lasts 6 sec."
+ *
+ * ----------------------------------------------------------------------------
+ * THE CLAUSE THAT WAS THE REASON TO CAST THE ABILITY, and it was `unmodelled`
+ * for as long as Wrack existed. The reason given was true and specific: damage
+ * taken here was per SCHOOL, and a Shadow vulnerability would also raise Shadow
+ * Bolt -- over half of the SM/DS profile's damage -- which is a bigger number
+ * wearing the right label rather than an approximation. That reason named the
+ * field it wanted, and `periodicDamageTakenBySchool` is it.
+ *
+ * "OTHER" IS FREE, AND NOT BY ACCIDENT. Wrack is a CHANNEL, so its own six
+ * ticks are cast ticks and carry no `periodic` flag -- only a real
+ * damage-over-time tick does. So this debuff cannot amplify the ability that
+ * applied it, which is exactly what the word asks for.
+ *
+ * `ignore` ON REFRESH, so the six seconds run from the FIRST tick of the
+ * channel rather than from the last. The tooltip states one six-second effect
+ * and the channel is six seconds long; resetting on every tick would leave the
+ * debuff standing for five seconds after the channel ended.
+ * ----------------------------------------------------------------------------
+ */
+export const WRACK_DOT_AMPLIFICATION_PERCENT = 10;
+export const WRACK_DEBUFF_DURATION_MS = seconds(6);
+
+export const WRACK_AMPLIFICATION: AuraDefinition = {
+  id: 'wrack',
+  name: 'Wrack',
+  durationMs: WRACK_DEBUFF_DURATION_MS,
+  isDebuff: true,
+  refreshBehaviour: 'ignore',
+  periodicDamageTakenBySchool: { shadow: 1 + WRACK_DOT_AMPLIFICATION_PERCENT / 100 },
+};
+
 // ---------------------------------------------------------------------------
 // Destruction
 // ---------------------------------------------------------------------------
@@ -284,11 +319,19 @@ export function shadowAndFlameAura(school: 'shadow' | 'fire', percent: number): 
     name: school === 'shadow' ? 'Shadow and Flame (Shadow)' : 'Shadow and Flame (Fire)',
     durationMs: SHADOW_AND_FLAME_DURATION_MS,
     refreshBehaviour: 'reset',
-    // A whole-character multiplier rather than a per-school one, because
-    // `SchoolModifiers` is built once when the character is and cannot come
-    // and go. Exact for a build whose damage is all one school; generous for
-    // a hybrid, which Firelock is -- and it says so on the talent.
-    damageDoneMultiplier: 1 + percent / 100,
+    /*
+     * PER SCHOOL, WHICH IS THE WHOLE POINT OF THE TALENT. This was a
+     * whole-character `damageDoneMultiplier` with a caveat saying it was
+     * "generous for a hybrid, which Firelock is" -- and Firelock holds BOTH
+     * halves for most of a fight, so it collected x1.10 twice on every school
+     * where the talent gives x1.10 once per school.
+     *
+     * `SchoolModifiers` still cannot hold this: it is built once when the
+     * character is, and this comes and goes on a twenty-second timer.
+     * `damageDoneBySchool` on the AURA is the field that was missing, and
+     * `game/auras/warrior.ts` named it before it existed.
+     */
+    damageDoneBySchool: { [school]: 1 + percent / 100 },
   };
 }
 
@@ -325,9 +368,9 @@ export function demonicSacrificeAura(demon: string): AuraDefinition | undefined 
       id: 'demonic_sacrifice_imp',
       name: 'Demonic Sacrifice (Imp)',
       durationMs: 0,
-      // Shadow only, and a whole-character multiplier for the same reason
-      // Shadow and Flame uses one. SM/DS deals almost nothing but Shadow.
-      damageDoneMultiplier: DEMONIC_SACRIFICE_DAMAGE,
+      // "Increases your SHADOW damage by 15%", and it now says so. SM/DS deals
+      // almost nothing else, so this is where the change costs nothing.
+      damageDoneBySchool: { shadow: DEMONIC_SACRIFICE_DAMAGE },
     };
   }
   if (demon === 'succubus') {
@@ -335,7 +378,13 @@ export function demonicSacrificeAura(demon: string): AuraDefinition | undefined 
       id: 'demonic_sacrifice_succubus',
       name: 'Demonic Sacrifice (Succubus)',
       durationMs: 0,
-      damageDoneMultiplier: DEMONIC_SACRIFICE_DAMAGE,
+      /*
+       * "Increases your FIRE damage by 15%", and this is where the old
+       * whole-character reading actually cost something: Firelock deals 22% of
+       * its damage in Shadow -- Corruption and Shadowburn -- and a sacrificed
+       * Succubus was raising all of it.
+       */
+      damageDoneBySchool: { fire: DEMONIC_SACRIFICE_DAMAGE },
     };
   }
   // Voidwalker and Felhunter restore mana and health, neither of which moves a
@@ -343,9 +392,16 @@ export function demonicSacrificeAura(demon: string): AuraDefinition | undefined 
   return undefined;
 }
 
+/**
+ * The clause that is still not modelled, and it is no longer the school.
+ *
+ * THE SCHOOL HALF EXPIRED when `damageDoneBySchool` landed on `AuraDefinition`:
+ * the Imp's buff is Shadow and the Succubus's is Fire, and each now reaches its
+ * own school alone. What is left is the other two demons, whose buffs restore
+ * mana and health rather than raising damage.
+ */
 export const DEMONIC_SACRIFICE_UNMODELLED =
-  'Its damage bonus is applied to EVERY school rather than only to the one the ' +
-  'sacrificed demon names -- a damage multiplier that comes and goes cannot be ' +
-  'per-school, because `SchoolModifiers` is built once when the character is. ' +
-  'Exact for either profile, whose damage is almost entirely one school, and ' +
-  'generous for a hybrid.';
+  'Its Voidwalker and Felhunter options restore mana and health, and neither ' +
+  'moves a damage figure for a profile nothing attacks. The Imp and Succubus ' +
+  'options -- the two the ruleset owner takes -- are fully applied, each to ' +
+  'the one school it names.';

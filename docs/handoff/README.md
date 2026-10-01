@@ -7,9 +7,15 @@ context window.
 of it is lessons paid for in wrong numbers. Then [HANDOVER.md](../../HANDOVER.md)
 for project status. These files are the CLASS.
 
+**THE WARRIOR AND THE PALADIN ARE DONE.** Both deep dives have run; read their
+columns for what one looks like at the END rather than for how much work a class
+needs. The Paladin is the better lesson of the two: **six of the eight gaps it
+closed were never engine gaps at all**, and their reasons were claims about the
+engine that were about the wrong thing.
+
 | Document | Profiles | Live gaps |
 | --- | --- | --- |
-| [warrior.md](warrior.md) | 2H Arms, DW Fury, Prot Warr | **1** |
+| [warrior.md](warrior.md) | 2H Arms, DW Fury, Prot Warr | **0** |
 | [paladin.md](paladin.md) | Seal Twist Ret, Shockadin, Prot Pally | **2** |
 | [druid.md](druid.md) | Moonkin, Cat, Bear | **12** |
 | [hunter.md](hunter.md) | BM Hunter, LW Ranged, LW Melee | **13** |
@@ -17,7 +23,7 @@ for project status. These files are the CLASS.
 | [mage.md](mage.md) | Frostfire, Arcane, Fire | **16** |
 | [shaman.md](shaman.md) | Ele Shaman, Enh Shaman | **17** |
 | [priest.md](priest.md) | Shadow | **18** |
-| [warlock.md](warlock.md) | SM/DS, Firelock | **25** |
+| [warlock.md](warlock.md) | SM/DS, Firelock | **22** |
 
 ## Every one of these numbers is re-derivable
 

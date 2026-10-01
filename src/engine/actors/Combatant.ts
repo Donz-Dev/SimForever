@@ -517,6 +517,25 @@ export class Combatant {
     return this.baseDamageMultiplier * this.auraMultiplier('damageDoneMultiplier');
   }
 
+  /**
+   * How much more (or less) damage of one school this combatant DEALS.
+   *
+   * Folds the blanket multiplier in, exactly as `damageTakenMultiplierFor` does
+   * on the other side, so a caller reads one number rather than remembering to
+   * multiply two. Schools no active aura names are untouched.
+   */
+  damageDoneMultiplierFor(school: DamageSchool): number {
+    let product = this.damageDoneMultiplier;
+    for (const aura of this.auras.active) {
+      const bySchool = aura.definition.damageDoneBySchool;
+      if (bySchool?.[school] === undefined) continue;
+      // Compounds with stacks, matching `auraMultiplier` and the target side.
+      product *=
+        bySchool[school]! ** (aura.definition.modifiersScaleWithStacks ? aura.stacks : 1);
+    }
+    return product;
+  }
+
   /** Multiplies damage this combatant takes. */
   get damageTakenMultiplier(): number {
     return this.auraMultiplier('damageTakenMultiplier');
@@ -673,11 +692,9 @@ export class Combatant {
    * under Curse of the Elements and a blanket damage-taken debuff is under
    * both. Schools an aura does not name are untouched.
    */
-  damageTakenMultiplierFor(school: DamageSchool): number {
+  damageTakenMultiplierFor(school: DamageSchool, periodic = false): number {
     let product = this.damageTakenMultiplier;
     for (const aura of this.auras.active) {
-      const bySchool = aura.definition.damageTakenBySchool;
-      if (bySchool?.[school] === undefined) continue;
       /*
        * STACKS COMPOUND, matching `auraMultiplier` exactly rather than adding.
        *
@@ -688,8 +705,19 @@ export class Combatant {
        * and not 1.150. A one-percent difference, and a second convention for
        * the same flag would be worth far more trouble than it.
        */
-      product *=
-        bySchool[school]! ** (aura.definition.modifiersScaleWithStacks ? aura.stacks : 1);
+      const exponent = aura.definition.modifiersScaleWithStacks ? aura.stacks : 1;
+      const everyHit = aura.definition.damageTakenBySchool?.[school];
+      if (everyHit !== undefined) product *= everyHit ** exponent;
+      /*
+       * BOTH FIELDS REACH A TICK, and they are separate rather than one flag.
+       * `damageTakenBySchool` is every hit of that school;
+       * `periodicDamageTakenBySchool` is Wrack's "damage over time effects"
+       * clause and reaches a tick and nothing else. An aura declaring both puts
+       * the target under both, so this multiplies rather than choosing.
+       */
+      if (!periodic) continue;
+      const overTime = aura.definition.periodicDamageTakenBySchool?.[school];
+      if (overTime !== undefined) product *= overTime ** exponent;
     }
     return product;
   }

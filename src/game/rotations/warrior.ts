@@ -44,10 +44,15 @@ import { seconds } from '../../engine';
  *
  * Still out:
  *
- *   - BERSERKER RAGE is still inert. Forever's tooltip names no magnitude.
+ *   - BERSERKER RAGE, and the reason has NARROWED rather than gone. Its own
+ *     rage-on-damage magnitude is still unstated by every source, so the
+ *     ability is worth a global cooldown and nothing to a warrior without
+ *     Improved Berserker Rage -- which is all three profiles. WITH that
+ *     talent it is 10 rage on activation every 30 seconds, and that half is
+ *     now built; a build spending a point there would want this entry back.
  *   - DEMORALIZING SHOUT is IN the tank list at the ruleset owner's request
  *     and still does nothing, for a different reason than before: it removes
- *     210 attack power and the boss melee has `powerCoefficient: 0`, so there
+ *     196 attack power and the boss melee has `powerCoefficient: 0`, so there
  *     is no attack power term for it to reduce. It becomes real the day a
  *     target's damage is derived rather than stated.
  *
@@ -203,6 +208,13 @@ export const REND_REFRESH_WINDOW_MS = 2000;
  *   without Recklessness 142.87            -5.33
  *   no openers at all   119.88 +/- 1.71   -28.32
  *
+ * EVERY FIGURE HERE PREDATES RAID BUFFS BEING SELECTED, and the Battle Shout
+ * line is the one that has expired outright -- the preset buff list supplies
+ * the aura, so the entry refuses all fight and is worth zero in every profile.
+ * The other two still measure. Keep the table for the SHAPE of the argument
+ * and do not quote any of it as current; the 23-profile baseline is the
+ * figure of record.
+ *
  * Together they are worth +28.32 DPS, a quarter of the class's output, which is
  * the size of the hole that sat in the rotation while these were inert.
  *
@@ -216,7 +228,7 @@ export const REND_REFRESH_WINDOW_MS = 2000;
  */
 const OPENERS: readonly PriorityEntry[] = [
   /*
-   * Battle Shout, once: 140 attack power for three minutes at 10 rage. It
+   * Battle Shout, once: 139 attack power for three minutes at 10 rage. It
    * outlasts every fight this simulator runs, so the condition is simply
    * "not up".
    *
@@ -225,8 +237,20 @@ const OPENERS: readonly PriorityEntry[] = [
    * sampled fight it goes up at 7.5 seconds, behind the free Recklessness. The
    * list states a preference; the rage bar decides when it is honoured.
    *
-   * Worth +11.83 DPS -- attack power is in every swing and every weapon damage
-   * ability, so it compounds with everything.
+   * ----------------------------------------------------------------------------
+   * "+11.83 DPS" IS A REAL FIGURE FROM A WORLD THAT NO LONGER EXISTS, and the
+   * same caveat belongs on the three entries in the owner's lists.
+   *
+   * It was measured by `measure_rotation.ts` on a hand-built dual-wielder
+   * BEFORE raid buffs were selected rather than assumed. `battle_shout` is in
+   * `PRESET_RAID_BUFFS`, so in all 23 profiles the aura is already up at the
+   * pull and this condition refuses the cast for the whole fight: the entry
+   * fires ZERO times in every preset and is worth exactly nothing there.
+   *
+   * It is kept, like the stance casts, because a character built by hand
+   * without the raid buff needs it and it costs a build that has the buff
+   * nothing at all. Re-confirmed as deliberate 2026-09-30.
+   * ----------------------------------------------------------------------------
    */
   {
     abilityId: 'battle_shout_cast',
@@ -389,8 +413,16 @@ export const WARRIOR_MELEE_ROTATION: Rotation = new PriorityRotation(
 /**
  * With a shield, Shield Slam joins the list.
  *
- * Its "+ shield block value" component is missing from the engine entirely, so
- * it currently deals only its stated 421-439 and is undervalued here.
+ * THIS COMMENT USED TO SAY Shield Slam's "'+ shield block value' component is
+ * missing from the engine entirely, so it currently deals only its stated
+ * 421-439 and is undervalued here". Both halves are false and have been for a
+ * long time: `SHIELD_SLAM` adds `caster.stats.get('blockValue')` to its base,
+ * and the base is 655 rather than 421-439 -- 421 was rank 1 out of the owner's
+ * spreadsheet, and Forever states 640 to 670 whose midpoint is 655.
+ *
+ * Kept as a correction rather than deleted because the claim outlived its own
+ * fix by several changes, which is this project's most common documentation
+ * failure and is worth one visible instance per file.
  */
 export const WARRIOR_SHIELD: readonly PriorityEntry[] = [
   { abilityId: 'execute' },
@@ -563,13 +595,30 @@ export const WARRIOR_DUAL_WIELD_BERSERKER: readonly PriorityEntry[] = [
   { abilityId: 'bloodthirst' },
   { abilityId: 'whirlwind' },
   /*
-   * Below both, on the ruleset owner's instruction. It was in the DW Fury
-   * preset's talents and in no list that build could reach, so one point was
-   * doing nothing -- turned up by auditing each preset's choices against what
-   * the fight actually exercises.
+   * ----------------------------------------------------------------------------
+   * THIS ENTRY CAN NEVER FIRE, and the reason is a weapon rather than a
+   * rotation. IT IS LEFT AS THE OWNER WROTE IT.
+   *
+   * It was added on the ruleset owner's instruction, because Spearing Strike
+   * was in the DW Fury preset's talents and in no list that build could reach,
+   * so one point looked like it was doing nothing. The audit that found it was
+   * right that the point does nothing and wrong about why: SPEARING STRIKE
+   * REQUIRES A TWO-HANDED WEAPON -- stated by the spellbook capture and by
+   * `foreverchanges.pro`, and absent only from the older Wowhead tooltip we
+   * were reading. See `SPEARING_STRIKE`.
+   *
+   * This list is chosen by dual-wield AND Berserker Stance, so no character
+   * that reaches it can ever hold a two-hander. `abilitiesForBuild` keeps the
+   * ability out of the book, `PriorityRotation` skips an entry whose ability
+   * the actor does not know, and the entry costs the list nothing.
+   *
+   * TWO DECISIONS FOR THE OWNER AND NEITHER IS TAKEN HERE: whether this entry
+   * comes out, and whether DW Fury's point in Spearing Strike moves. Both are
+   * their list and their build.
    *
    * Not `pooled`: the two strikes above it already take priority, so rationing
    * it behind a rage floor as well would keep it in the same place it was.
+   * ----------------------------------------------------------------------------
    */
   { abilityId: 'spearing_strike' },
 ];
@@ -703,7 +752,7 @@ export const WARRIOR_SHIELD_DEFENSIVE: readonly PriorityEntry[] = [
    * Demoralizing Shout, kept up on the target.
    *
    * IT DOES NOTHING TO THIS TARGET, and that is worth saying plainly rather
-   * than leaving someone to find it in a result. It removes 210 attack power,
+   * than leaving someone to find it in a result. It removes 196 attack power,
    * and the boss melee in `encounters/raidBoss.ts` carries
    * `powerCoefficient: 0` -- the swing damage IS the whole swing, with no
    * attack power term for this to reduce. So the entry costs 10 rage and a
@@ -712,6 +761,11 @@ export const WARRIOR_SHIELD_DEFENSIVE: readonly PriorityEntry[] = [
    * It is in the list because the ruleset owner put it there. It becomes real
    * the moment a target's damage is derived from its attack power instead of
    * being stated outright, and nothing else about the entry would change.
+   *
+   * THE FIGURE IS 196, NOT THE 210 THIS COMMENT CARRIED. 210 is the tooltip's
+   * description, which its own effect row contradicts; 196 is what is
+   * applied and what `foreverchanges.pro` states. It changed nothing about
+   * the conclusion, which is exactly how a wrong number in a comment survives.
    */
   {
     abilityId: 'demoralizing_shout_cast',

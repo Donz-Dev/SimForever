@@ -76,16 +76,39 @@ export const ROGUE_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
   ],
 
   lethality: [
+    /*
+     * ------------------------------------------------------------------------
+     * "THE CRITICAL STRIKE DAMAGE BONUS OF YOUR SINISTER STRIKE, GOUGE,
+     * BACKSTAB, MUTILATE, GHOSTLY STRIKE, AND HEMORRHAGE ABILITIES BY 20%."
+     *
+     * DECLARED NOW, AND THE DECLARATION IS SHARED WITH THE WARLOCK'S PANDEMIC.
+     * Its old reason was exact -- none of the three scopes selects a LIST, and
+     * `critMultiplierBonus` on `AbilityModifiers` existed with nothing reaching
+     * it -- and `abilityCritDamage` is the missing declaration it named. Two
+     * talents in two classes wanted the identical mechanism, so it was built
+     * once rather than twice.
+     *
+     * `table: 'melee-special'` GIVES THE RIGHT HALF. A melee crit multiplies by
+     * 2, so the bonus half is 1.0 and +20% takes a crit to 2.2x. Reading the
+     * spell figure would give 2.1x -- plausible, and half the talent.
+     *
+     * ALL THREE ROGUE PROFILES TAKE IT: Venom 5/5, Combat 4/5, Rupture 2/5.
+     *
+     * GOUGE IS NOT DECLARED, which the clause below says. It is a crowd-control
+     * ability whose damage is incidental, and no list casts one.
+     * ------------------------------------------------------------------------
+     */
+    {
+      kind: 'abilityCritDamage',
+      abilityIds: ['sinister_strike', 'backstab', 'mutilate', 'ghostly_strike', 'hemorrhage'],
+      table: 'melee-special',
+    },
     {
       kind: 'unmodelled',
       reason:
-        'Raises crit DAMAGE for six NAMED abilities, and none of the three ' +
-        'scopes selects a list: `critDamageBonus` is whole-character, ' +
-        '`schoolCritDamage` is per school, `attackTableCritDamage` is per ' +
-        'attack table. `abilityCrit` names one ability but sets crit CHANCE. ' +
-        'The field it wants -- `critMultiplierBonus` on `AbilityModifiers` -- ' +
-        'already exists with no talent effect reaching it, so this is a ' +
-        'missing declaration rather than a missing rule.',
+        'Gouge is the one ability of the six it names that this project does ' +
+        'not declare -- crowd control, which is out of scope, with incidental ' +
+        'damage no list would cast it for. The other five carry it.',
     },
   ],
 

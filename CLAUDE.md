@@ -96,7 +96,7 @@ together told someone their build was missing features that were never coming.
 | `scope` | Covers | Entries |
 | --- | --- | --- |
 | `positioning` | positions, range, facing, movement, "nearby", radius, travel forms | 17 |
-| `crowdControl` | stuns, fears, roots, snares, silences, incapacitates, disorients, disarms | 32 |
+| `crowdControl` | stuns, fears, roots, snares, silences, incapacitates, disorients, disarms, **and removing any of them** | 33 |
 | `threat` | threat, which is not tracked. Defensive Stance's +30% and Defiance are dropped, not deferred | 14 |
 | `healing` | healing THROUGHPUT. **Mana RETURN is NOT out of scope** — it changes a damage profile's sustain, so it is a live gap and gets no `scope` | 33 |
 | `stealth` | being stealthed, detecting it, and the openers requiring it — Ambush, Garrote, Cheap Shot. **NOT an in-combat proc that REMOVES a stealth requirement**, which is what Cutthroat is | 7 |
@@ -271,6 +271,14 @@ See [docs/combat-tables.md](docs/combat-tables.md).
   giving it a ranged attack power one instead, so reading spell power would
   reinstate something Forever took out. The sheet confirms it — the Hunter is
   the one class it left entirely unchanged.
+- **"DAMAGE FROM YOUR DAMAGE OVER TIME EFFECTS" IS ITS OWN FIELD**,
+  `periodicDamageTakenBySchool`, and folding it into `damageTakenBySchool` is the
+  mistake it exists to prevent: Wrack's +10% to Shadow DoTs would also raise
+  Shadow Bolt, which is half of the SM/DS profile's damage. **A bigger number
+  wearing the right label is not an approximation.** "Over time" is
+  `DamageRequest.periodic`, which a real tick sets and a CHANNEL's ticks do not --
+  so Wrack cannot amplify its own six ticks, which is what its own word "other"
+  asks for and nothing has to special-case.
 - **Every DoT can crit, and none is reduced by armor.** A Forever rule, not
   Classic's. A tick does not re-roll the table — whether the effect landed was
   settled on application — but it rolls for a crit at the crit chance of **the
@@ -325,6 +333,40 @@ them, including `ALL_ABILITIES`.
 - **A crit damage bonus raises the bonus HALF** — 1.0 for a 2x melee crit, 0.5
   for a 1.5x spell crit. "+100%" takes a spell crit to 2.0x, not 2.5x; a melee
   crit with "+10% crit damage" is 2.1x, never 2.2x.
+- **A TOOLTIP THAT LISTS SPELLS BY NAME IS A FOURTH SCOPE**, `abilityCritDamage`,
+  and the three above could not reach it: whole-character, per school and per
+  table all select something a NAMED LIST is not. `critMultiplierBonus` had
+  existed since Impale with no talent effect reaching it, and two talents in two
+  classes said so in almost identical words -- the Warlock's Pandemic over seven
+  periodic spells and the Rogue's Lethality over six strikes. **It DECLARES its
+  table rather than deriving one**, because `AbilityModifiers` is keyed by ability
+  and nothing in it knows which table an ability rolls on; reading the melee half
+  for Pandemic would have been worth twice the talent. **An aura id is an ability
+  id here**, which is what makes a talent naming seven DoTs expressible at all.
+- **A TREE IS NOT A SCHOOL, and for a Warlock the wrong reading is the tempting
+  one.** "Your DESTRUCTION spells" was `schoolDamage` / `schoolCritDamage` over
+  Fire and Shadow -- the two schools a Warlock HAS, so it selected every spell it
+  owns, Affliction included. Two talents did it, both for the whole project, and
+  Corruption collected +100% crit damage and +10% damage it was never entitled to.
+  **Read what the tooltip SELECTS, not what the class happens to cast**; the tree
+  is in the spellbook capture's own `tab` field, and **Shadow Bolt is a Destruction
+  spell** -- the entry a reader gets wrong from the school alone.
+- **A PER-SCHOOL EFFECT THAT COMES AND GOES BELONGS ON THE AURA, not in
+  `SchoolModifiers`** -- `AuraDefinition.damageDoneBySchool`, the attacker's
+  mirror of `damageTakenBySchool`. `SchoolModifiers` is built once when the
+  character is. **BOTH WARLOCK EFFECTS THAT WANTED IT WERE APPLIED
+  WHOLE-CHARACTER WITH A CAVEAT ADMITTING IT, AND BOTH CAVEATS UNDERSTATED THE
+  COST**: Demonic Sacrifice names one school out of four demons and Shadow and
+  Flame's two halves name OPPOSITE schools on purpose, so a hybrid collected
+  x1.10 twice on every school where the talent gives x1.10 once per school.
+  **"Generous for a hybrid" was −55.3 DPS of Firelock, 10% of the profile.**
+  `game/auras/warrior.ts` had predicted the field by name years of commits
+  earlier: "the day an aura needs to scale one school and not another".
+- **A CAVEAT IS NOT A SUBSTITUTE FOR THE FIELD, and its price is not a rounding
+  error.** Applying a per-school effect whole-character "because the profile is
+  almost all one school" is a claim about a PROFILE, and it silently becomes false
+  for the next build — which is exactly what happened: the same sentence was exact
+  for SM/DS and 10% wrong for Firelock, and it said "exact for either profile".
 - **`ALL_ABILITIES` COUNTS ON AN AURA TOO, and did not until Shatter needed it.**
   `AuraCollection.abilityModifierFor` looked the ability id up EXACTLY, so an aura
   declaring `{ '*': ... }` compiled, applied, reported its uptime and changed
@@ -709,6 +751,13 @@ whether a list changed at all; the DPS says whether it mattered.**
 
 ### Gear and items
 
+- **AN ABILITY'S WEAPON REQUIREMENT IS GATED AT THE BOOK, NOT AT THE CAST.**
+  `abilitiesForBuild` takes `style` and refuses Shield Slam without a shield and
+  Spearing Strike without a two-hander, so the ability is simply ABSENT rather
+  than present and always refused. The difference is what a report says: an
+  ability in the book and never cast reads as a rotation problem, and this is a
+  weapon problem. A `canCast` gate is the Rogue's dagger shape and is right where
+  a weapon could change mid-fight; nothing here swaps weapons.
 - **A stat that only applies sometimes is a bug waiting to happen.** Equipment
   resolution strips the slots a style cannot fill, and only genuine conflicts are
   exclusive: a two-hander against a one-hander, and an off-hand the style cannot
@@ -804,6 +853,15 @@ Say which. Only the first is an engine gap.
 
 Plus the permanent rulings under **Scope**.
 
+- **A FOURTH CAUSE HIDES INSIDE THE FIRST: THE LIST.** "No priority list casts
+  Berserker Rage" is an argument about a ROTATION and it sat in the engine column
+  for the Warrior's whole life, as the class's last live gap. The number it was
+  supposedly waiting on -- 5 and 10 rage by rank -- was in `values/warrior.json`
+  the entire time. **A reason that names a list, a build or a profile is not an
+  engine gap**, and it reads exactly like one because the talent is equally
+  silent either way. Build the mechanism, test the MECHANISM, and let the list
+  cause be a list cause.
+
 - **A LOW-HEALTH REQUIREMENT IS A CLOCK, NOT A TARGET PROPERTY, and writing it
   off as one is now a documented mistake TWICE.** `inExecutePhase` in
   `combat/executePhase.ts` reads remaining combat TIME against 20% of the
@@ -880,6 +938,23 @@ wrong, but never checked the way the one class that WAS checked needed eight
 fixes. `foreverchanges.pro` is the available second opinion and running it
 against a class is cheap.
 
+**AND IT HAD FOUR SOURCES WITHOUT HAVING A SPELLBOOK CAPTURE, WHICH TURNED OUT
+TO MATTER.** It was the one class of the nine with no
+`forever-<class>-spellbook.json`, so it was also the only one whose data carried
+no BUILD NUMBER and could not be diffed by machine. Taking it in 2026-09-30 was
+one command and moved three more figures. **THE TWO CAPTURES ANSWER DIFFERENT
+QUESTIONS and a class wants both**: the Wowhead tooltips carry the EFFECT ROWS —
+which is where Revenge's 153 and Bloodthirst's 48 came from when the description
+rendered `(100% of Spell Power)` — and the spellbook carries the BUILD and the
+REQUIREMENT LINES, which the tooltips do not have at all.
+
+**A REQUIREMENT LINE IS DATA, AND READING ONLY THE DAMAGE MISSES IT.** Spearing
+Strike requires a two-handed weapon; the DW Fury profile had been casting it
+while dual-wielding two swords for the whole project, and a test asserted that it
+did. Nothing about the figure looked wrong, because the damage was right — it was
+the wrong CHARACTER casting it. Check cost, cast, cooldown AND requirement when
+two sources are put side by side.
+
 - **Decode a build before writing anything.** `tools/decode_talent_build.mjs`. A
   build coming back at other than 51 points, or throwing "X given N of M ranks",
   means the tree on disk disagrees with the tree the URL was written against.
@@ -952,6 +1027,23 @@ DIFFERENT.** `foreverchanges.pro` carries no reagent field for any spell, so its
 365-mana cost for Shadowburn does not contradict the Soul Shard the other source
 states — it cannot express one. Both are charged. Taking a tie-break literally
 where there is no tie deletes a real cost.
+
+**AND IT CUTS THE OTHER WAY TOO: A SOURCE THAT OMITS A CLAUSE HAS NOT DENIED
+IT.** Wowhead's Forever tooltip for Spearing Strike carries no requirement line;
+the spellbook capture and `foreverchanges.pro` both state a two-handed weapon.
+That is two sources speaking and one saying nothing, so the tie-break never comes
+up and the clause is simply true. **The silence was read as "no requirement" for
+the whole project**, which is the same mistake as Shadowburn's in the opposite
+direction — one deletes a real cost, the other grants a real ability to a
+character that cannot use it.
+
+**A REFRESH AND A CROSS-CHECK FIND DIFFERENT THINGS AND NEITHER SUBSTITUTES FOR
+THE OTHER.** Slam's cooldown went 15 to 18 in ELEVEN DAYS, on the class with the
+best sources in the project and against a figure the ruleset owner had confirmed
+personally. `--verify` re-fetched the SAME spell id from the SAME endpoint the 15
+came from and got 18, so it was not a source disagreement and no tie-break
+applies: the game changed. **Run the refresh first**, because a cross-check
+between two stale reads agrees perfectly.
 
 Record every check in [docs/source-cross-checks.md](docs/source-cross-checks.md),
 which also holds the two traps — one of them manufactures a disagreement that is
