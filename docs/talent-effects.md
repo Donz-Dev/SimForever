@@ -43,7 +43,15 @@ user is speculation, and would be removed.
 | `grantAbility` | Gives an ability the character otherwise lacks | Mortal Strike |
 | `abilityBonus` | A named number read by one ability's `onCast` | Improved Charge |
 | `reaction` | A proc keyed off an attack result | Deep Wounds, Flurry |
+| `schoolDamage` / `schoolCrit` / `schoolCritDamage` | The same three, for a SCHOOL | Fire Power, Darkness |
+| `schoolHit` | Chance to HIT, for a school. Taken off miss | Shadow Focus, Arcane Focus |
+| `critWhileAura` | Crit for one ability, while an aura is up | Shatter |
+| `abilityCritInFinalFraction` / `abilityDamageInFinalFraction` | Crit or damage for one ability, in the fight's last fraction. **The threshold is one of the talent's own numbers** | Early Demise, Quietus |
 | `unmodelled` | Says why it cannot work yet | Anticipation |
+
+The union in `src/game/talents/TalentEffect.ts` is the authority; this table is
+the Warrior's original set plus the kinds added for the other eight classes,
+and it has been behind before.
 
 ---
 

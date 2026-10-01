@@ -67,6 +67,16 @@ export interface AbilityModifier {
    * reason: all three scopes reach the same roll, so a hit bonus does something
    * wherever it is hung. "Improves your chance to hit with your Fireball" and
    * "with your melee abilities" are both real wordings and both would work.
+   *
+   * ON THE SHARED INTERFACE, unlike `spellPower` below. A school-scoped spell
+   * power hung off an ABILITY would be read by nothing; this is read wherever it
+   * is hung, because all three scopes reach the same roll.
+   *
+   * TWO DIVES WROTE THIS FIELD INDEPENDENTLY, the Mage/Paladin one and the
+   * Priest one, and they agreed on the semantics down to subtracting from miss.
+   * Reassuring rather than wasteful -- but it is the second time in this round
+   * that two contexts built the same capability, so check whether one exists
+   * before adding the next.
    * ----------------------------------------------------------------------------
    */
   readonly hitBonus?: number;
@@ -141,6 +151,31 @@ export class AbilityModifiers {
    */
   private readonly whileAura = new Map<string, Map<string, AbilityModifier>>();
 
+  /**
+   * Modifiers that only apply once the fight has reached its final fraction,
+   * keyed `fraction -> abilityId -> modifier`.
+   *
+   * ----------------------------------------------------------------------------
+   * THE THIRD CONDITION SHAPE, AND THE FIRST ONE THE COMBATANT CANNOT ANSWER BY
+   * ITSELF. `addWhileAura` above asks the character ("is this aura up"); this
+   * asks the FIGHT ("how much of it is left"), and a combatant holds no clock.
+   * So the reader is handed the answer rather than looking it up, exactly as
+   * `forWhileAura` is handed its predicate.
+   *
+   * A FRACTION OF THE PLANNED DURATION, NOT A TARGET'S HEALTH. That is the
+   * ruleset owner's ruling and it is not the engine's to make -- the engine
+   * knows only that some modifiers switch on late in a fight. What counts as
+   * late arrives as a number, and `game/combat/executePhase.ts` is where the
+   * project writes down why a stated health threshold is read this way.
+   *
+   * KEYED BY THE FRACTION so two talents with different windows never meet: the
+   * Priest's Early Demise opens at 0.2 and the Rogue's Quietus at 0.35, and a
+   * character carrying both would otherwise need one of them to know the
+   * other's number.
+   * ----------------------------------------------------------------------------
+   */
+  private readonly whileFinalFraction = new Map<number, Map<string, AbilityModifier>>();
+
   /** Add a modifier, combining with anything already registered for that id. */
   add(abilityId: string, modifier: AbilityModifier): void {
     const existing = this.byAbility.get(abilityId);
@@ -188,6 +223,66 @@ export class AbilityModifiers {
   }
 
   /**
+   * Add a modifier that applies only in the fight's final `fraction`.
+   *
+   * `fraction` is of the PLANNED duration: 0.2 is the last fifth. Kept out of
+   * `add` for the same reason `addWhileAura` is -- combining a conditional
+   * modifier into the unconditional bucket loses the condition, and a talent
+   * that pays all fight instead of during its window is a bigger number and no
+   * error.
+   */
+  addWhileFinalFraction(fraction: number, abilityId: string, modifier: AbilityModifier): void {
+    let byAbility = this.whileFinalFraction.get(fraction);
+    if (!byAbility) {
+      byAbility = new Map<string, AbilityModifier>();
+      this.whileFinalFraction.set(fraction, byAbility);
+    }
+    const existing = byAbility.get(abilityId);
+    byAbility.set(abilityId, existing ? combine(existing, modifier) : modifier);
+  }
+
+  /**
+   * The modifiers whose window the fight has reached, combined, or `undefined`.
+   *
+   * ----------------------------------------------------------------------------
+   * IT THROWS RATHER THAN SKIPPING when a caller has no clock to offer AND this
+   * character has one of these registered. That asymmetry is the whole point.
+   *
+   * The alternative -- treat a missing `remainingFraction` as "not in the
+   * window" -- is the failure this project keeps paying for: a talent that is
+   * declared, reports itself modelled, shows up in the Talent panel and
+   * contributes nothing, with every figure around it self-consistent and too
+   * low. A reader that forgot to thread the clock through would produce exactly
+   * that, and nothing would say so.
+   *
+   * It costs nothing for the characters that have none registered, which is all
+   * but two talents in the project -- the check is a `size === 0` on a map.
+   * ----------------------------------------------------------------------------
+   */
+  forWhileFinalFraction(
+    abilityId: string | undefined,
+    remainingFraction: number | undefined,
+  ): AbilityModifier | undefined {
+    if (this.whileFinalFraction.size === 0) return undefined;
+    if (remainingFraction === undefined) {
+      throw new Error(
+        'abilityModifierFor was asked for a character carrying modifiers conditional ' +
+          'on the fight clock, without being given one. Pass the simulation through: ' +
+          'silently dropping them would leave the talent inert and say nothing.',
+      );
+    }
+    if (abilityId === undefined) return undefined;
+    let combined: AbilityModifier | undefined;
+    for (const [fraction, byAbility] of this.whileFinalFraction) {
+      if (remainingFraction > fraction) continue;
+      const contribution = pick(byAbility, abilityId);
+      if (!contribution) continue;
+      combined = combined ? combine(combined, contribution) : contribution;
+    }
+    return combined;
+  }
+
+  /**
    * The modifier that applies to an ability, including the `ALL_ABILITIES` one.
    *
    * An absent `abilityId` — an auto attack — gets nothing at all.
@@ -198,7 +293,11 @@ export class AbilityModifiers {
   }
 
   get isEmpty(): boolean {
-    return this.byAbility.size === 0 && this.whileAura.size === 0;
+    return (
+      this.byAbility.size === 0 &&
+      this.whileAura.size === 0 &&
+      this.whileFinalFraction.size === 0
+    );
   }
 }
 

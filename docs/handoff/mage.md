@@ -59,18 +59,23 @@ order, different fight.
 
 | Talents | Fully | Partly | Ruled out | Live gap |
 | --- | --- | --- | --- | --- |
-| 54 | 28 | 2 | **11** | **13** |
+| 54 | 30 | 2 | **11** | **11** |
 
-Down from 16. **`arcane_focus` and `elemental_precision` are NOT counted as
-closed here** — spell hit per school is landing on the `priest-deep-dive`
-branch, which wires both. With that merged the Mage is at **12**.
+Down from 16. **`arcane_focus` and `elemental_precision` ARE closed now** — spell
+hit per school landed with the Priest dive and wires both, which is why this row
+reads 11 rather than the 12 this brief predicted: the Priest dive also closed one
+more than expected.
 
-### The 14 live gaps, grouped by cause
+### The 11 live gaps, grouped by cause
 
-**Spell hit per school — being built elsewhere:** `arcane_focus`,
-`elemental_precision`. The attack table decides hit before any per-school
-modifier is consulted, and `AbilityModifier.hitBonus` is the field it had
-nothing to carry. Both Mage talents are wired on that branch.
+**~~Spell hit per school~~ — DONE, and not by this class.** `arcane_focus` and
+`elemental_precision` read "improves your chance to hit with <school> spells" and
+were inert on the claim that the attack table decides hit before any per-school
+modifier is consulted. **That claim was false**: `rollTable` folds the school's
+modifier in before the roll and always did, so the route existed and
+`AbilityModifier` had no FIELD to carry hit along it. `hitBonus` is that field,
+and one line in `talentBuild` reaches it — five talents across three classes for
+the same line.
 
 **Nothing attacks the Mage — the PROFILE, not the engine:** `improved_channeling`,
 `magic_absorption`, `arcane_shielding`, `improved_fire_ward`, `frost_warding`,

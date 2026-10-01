@@ -7,6 +7,7 @@ import { resolveCast, spellPowerFor } from '../../src/engine';
 import { buildSimulation } from '../helpers/buildSimulation';
 import { makeAttacker, makeTarget } from '../helpers/actors';
 import {
+  PRIEST_BASE_MANA,
   MIND_BLAST_DAMAGE,
   MIND_FLAY_TICKS,
   MIND_FLAY_TOTAL,
@@ -15,6 +16,10 @@ import {
   SWP_EXTRA_SECONDS_BONUS,
 } from '../../src/game/abilities/priest';
 import {
+  INNER_FOCUS,
+  INNER_FOCUS_CRIT_BONUS,
+  POWER_INFUSION,
+  POWER_INFUSION_DAMAGE,
   SHADOWFORM,
   SHADOWFORM_MANA_REDUCTION,
   SHADOW_WEAVING_MAX_STACKS,
@@ -23,7 +28,9 @@ import {
   shadowWordPainAura,
 } from '../../src/game/auras/priest';
 import { PRIEST_TALENT_EFFECTS } from '../../src/game/talents/priestEffects';
+import { innerFocusSpender } from '../../src/game/reactions/priestTalents';
 import { talentBuild } from '../../src/game/talents/talentBuild';
+import { legalise } from '../helpers/legalTalents';
 
 /*
  * The Priest's numbers, written out by hand from the beta client's spellbook.
@@ -263,5 +270,164 @@ describe('the fight', () => {
     // be folded into the stat in the first place.
     expect(spellPowerFor(actor, 'holy')).toBe(204);
     expect(spellPowerFor(actor, 'arcane')).toBe(204);
+  });
+});
+
+
+/*
+ * ============================================================================
+ * THE TWO DISCIPLINE ACTIVES, neither of which the one Shadow profile takes.
+ *
+ * Both were live gaps and both were expressible, which is the whole reason
+ * they are here: "no build reaches it" is a fact about a BUILD and the census
+ * is a claim about the CLASS. Nothing below is a DPS assertion, because
+ * neither talent can move one -- the Shadow build spends 16 points in
+ * Discipline and these sit above that.
+ * ============================================================================
+ */
+describe('Inner Focus, whose two halves are spent at different moments', () => {
+  const withInnerFocus = () =>
+    makeAttacker({
+      autoAttack: 'none',
+      abilities: abilitiesForClass('priest', 'caster', legalise({ inner_focus: 1 }, 'priest')),
+      resources: [{ type: 'mana', maximum: 100_000 }],
+    });
+
+  it('is granted by the talent and by nothing else', () => {
+    expect(barePriest().abilities.get('inner_focus')).toBeUndefined();
+    expect(withInnerFocus().abilities.get('inner_focus')).toBeDefined();
+  });
+
+  it('makes the next spell free', () => {
+    const actor = withInnerFocus();
+    const simulation = buildSimulation([actor, makeTarget()]);
+    const blast = actor.abilities.get('mind_blast')!;
+
+    expect(resolveCast(actor, blast).costAmount).toBe(blast.cost!.amount);
+    simulation.applyAura(actor, INNER_FOCUS, actor.id);
+    expect(resolveCast(actor, blast).costAmount).toBe(0);
+  });
+
+  /*
+   * THE CRIT HALF, WHICH ITS REASON SAID NOTHING COULD CARRY. `CastModifier`
+   * carries cast time and cost and no crit -- and an AURA carries per-ability
+   * modifiers, which is where this lives.
+   */
+  it('adds 25% crit to the spells that can crit', () => {
+    const actor = withInnerFocus();
+    const simulation = buildSimulation([actor, makeTarget()]);
+
+    expect(actor.abilityModifierFor('mind_blast').critBonus ?? 0).toBe(0);
+    simulation.applyAura(actor, INNER_FOCUS, actor.id);
+    expect(actor.abilityModifierFor('mind_blast').critBonus).toBe(INNER_FOCUS_CRIT_BONUS);
+    expect(actor.abilityModifierFor('mind_flay').critBonus).toBe(INNER_FOCUS_CRIT_BONUS);
+  });
+
+  /*
+   * "IF IT IS CAPABLE OF A CRITICAL EFFECT" -- the tooltip's own clause, and
+   * the two damage-over-time casts are not. They roll no table when applied,
+   * and leaving them out is also what stops a TICK of one collecting the 25%
+   * during the window, since a periodic tick carries its aura's id.
+   */
+  it('gives no crit to the two spells that apply auras', () => {
+    const actor = withInnerFocus();
+    const simulation = buildSimulation([actor, makeTarget()]);
+    simulation.applyAura(actor, INNER_FOCUS, actor.id);
+
+    expect(actor.abilityModifierFor('shadow_word_pain').critBonus ?? 0).toBe(0);
+    expect(actor.abilityModifierFor('devouring_plague').critBonus ?? 0).toBe(0);
+  });
+
+  it('still makes those two free, because the COST half is every spell', () => {
+    const actor = withInnerFocus();
+    const simulation = buildSimulation([actor, makeTarget()]);
+    simulation.applyAura(actor, INNER_FOCUS, actor.id);
+
+    const pain = actor.abilities.get('shadow_word_pain')!;
+    expect(resolveCast(actor, pain).costAmount).toBe(0);
+  });
+
+  /*
+   * NOT `consumedByCast`, AND THIS IS THE TEST OF WHY. That field spends the
+   * aura at cast START -- before a 1.5-second Mind Blast has rolled anything
+   * -- so the crit would never be read and the talent would report itself
+   * fully modelled while being half of one.
+   */
+  it('is spent by a cast reaction rather than at cast start', () => {
+    expect(INNER_FOCUS.castModifier?.consumedByCast).toBeUndefined();
+
+    const actor = withInnerFocus();
+    const simulation = buildSimulation([actor, makeTarget()]);
+    simulation.applyAura(actor, INNER_FOCUS, actor.id);
+    const spender = innerFocusSpender();
+
+    // The cast that APPLIED it does not spend it: same timestamp.
+    expect(spender.canTrigger!(simulation, actor, undefined as never)).toBe(false);
+
+    simulation.clock.advanceTo(1);
+    expect(spender.canTrigger!(simulation, actor, undefined as never)).toBe(true);
+    spender.onTrigger(simulation, actor, undefined as never);
+    expect(actor.auras.has('inner_focus')).toBe(false);
+  });
+
+  it('refuses itself while its own charge is unspent', () => {
+    const actor = withInnerFocus();
+    const simulation = buildSimulation([actor, makeTarget()]);
+    const focus = actor.abilities.get('inner_focus')!;
+
+    const context = { simulation, caster: actor, target: undefined, ability: focus };
+    expect(focus.canCast!(context)).toBe(true);
+    simulation.applyAura(actor, INNER_FOCUS, actor.id);
+    expect(focus.canCast!(context)).toBe(false);
+  });
+});
+
+describe('Power Infusion, on a target that for one character is itself', () => {
+  const withPowerInfusion = () =>
+    makeAttacker({
+      autoAttack: 'none',
+      abilities: abilitiesForClass('priest', 'caster', legalise({ power_infusion: 1 }, 'priest')),
+      resources: [{ type: 'mana', maximum: 100_000 }],
+    });
+
+  /*
+   * `abilityModifiers` RATHER THAN `damageDoneMultiplier`, which is the one
+   * decision in it: a whole-character multiplier would raise PHYSICAL damage
+   * too, and "spell damage" does not. `ALL_ABILITIES` on an aura reaches every
+   * ability and no auto attack, and a Priest owns no physical ability -- so
+   * the two readings are the same set here and would not be on a hybrid.
+   */
+  it('raises every spell by 20% and no auto attack at all', () => {
+    const actor = withPowerInfusion();
+    const simulation = buildSimulation([actor, makeTarget()]);
+    simulation.applyAura(actor, POWER_INFUSION, actor.id);
+
+    expect(actor.abilityModifierFor('mind_blast').damageMultiplier).toBeCloseTo(
+      POWER_INFUSION_DAMAGE,
+      6,
+    );
+    // A swing carries no ability id, and nothing here reaches one.
+    expect(actor.abilityModifierFor(undefined).damageMultiplier ?? 1).toBe(1);
+    // And it is NOT a whole-character multiplier, which is the thing it would
+    // have been if the caveat had been accepted instead.
+    expect(actor.damageDoneMultiplier).toBe(1);
+  });
+
+  it('reaches a damage-over-time tick, which is also spell damage', () => {
+    const actor = withPowerInfusion();
+    const simulation = buildSimulation([actor, makeTarget()]);
+    simulation.applyAura(actor, POWER_INFUSION, actor.id);
+
+    // A tick carries its aura's id, and `pick` folds in the catch-all.
+    expect(actor.abilityModifierFor('shadow_word_pain').damageMultiplier).toBeCloseTo(
+      POWER_INFUSION_DAMAGE,
+      6,
+    );
+  });
+
+  it('costs 20% of base mana, which is the capture\'s own figure', () => {
+    const actor = withPowerInfusion();
+    const infusion = actor.abilities.get('power_infusion')!;
+    expect(infusion.cost!.amount).toBe(Math.round(PRIEST_BASE_MANA * 0.2));
   });
 });

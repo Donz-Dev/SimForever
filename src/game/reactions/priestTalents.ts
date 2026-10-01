@@ -1,5 +1,6 @@
+import type { CastReaction } from '../../engine';
 import type { TalentReactionBuilder } from './warriorTalents';
-import { SHADOW_WEAVING_MAX_STACKS, shadowWeavingAura } from '../auras/priest';
+import { INNER_FOCUS, SHADOW_WEAVING_MAX_STACKS, shadowWeavingAura } from '../auras/priest';
 
 /**
  * Priest talent procs. One, and it is the Shadow build's engine.
@@ -54,4 +55,35 @@ export const SHADOW_WEAVING_CAP = SHADOW_WEAVING_MAX_STACKS;
 
 export const PRIEST_TALENT_REACTIONS: Readonly<Record<string, TalentReactionBuilder>> = {
   shadow_weaving: shadowWeaving,
+};
+
+/**
+ * What spends Inner Focus: the next cast, AFTER it has happened.
+ *
+ * ----------------------------------------------------------------------------
+ * NOT `consumedByCast`, AND THE DIFFERENCE IS THE WHOLE TALENT. That field is
+ * spent at cast START, which is right for a cost and useless for a crit: a
+ * Mind Blast lands a second and a half later, by which time the aura carrying
+ * the 25% would be gone. The cost still comes off -- `resolveCast` reads the
+ * modifier before anything is spent -- so the failure would have been a free
+ * cast with no crit, reporting itself fully modelled.
+ *
+ * A CAST REACTION RUNS AFTER `onCast`, which is the ordering Fingers of Frost
+ * already rests on, and `appliedAt < now` is the same guard it uses: without
+ * it the cast of Inner Focus itself would eat the charge it just created.
+ * ----------------------------------------------------------------------------
+ */
+export const innerFocusSpender = (): CastReaction => ({
+  id: 'inner_focus_spend',
+  canTrigger: (context, actor) => {
+    const aura = actor.auras.get(INNER_FOCUS.id);
+    return aura !== undefined && aura.appliedAt < context.clock.now();
+  },
+  onTrigger: (context, actor) => {
+    actor.auras.remove(context, INNER_FOCUS.id);
+  },
+});
+
+export const PRIEST_CAST_REACTIONS: Readonly<Record<string, (value: number) => CastReaction>> = {
+  inner_focus: innerFocusSpender,
 };

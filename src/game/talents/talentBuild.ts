@@ -22,6 +22,7 @@ import { WARRIOR_TALENT_REACTIONS } from '../reactions/warriorTalents';
 import { ROGUE_TALENT_REACTIONS, ROGUE_CAST_REACTIONS } from '../reactions/rogueTalents';
 import { MAGE_CAST_REACTIONS } from '../reactions/mageTalents';
 import { PALADIN_CAST_REACTIONS } from '../reactions/paladinCasts';
+import { PRIEST_CAST_REACTIONS } from '../reactions/priestTalents';
 import { DRUID_CAST_REACTIONS, DRUID_TALENT_REACTIONS } from '../reactions/druidTalents';
 import { SHAMAN_CAST_REACTIONS, SHAMAN_TALENT_REACTIONS } from '../reactions/shamanTalents';
 import { MAGE_TALENT_REACTIONS } from '../reactions/mageTalents';
@@ -83,6 +84,7 @@ const CAST_REACTIONS: Partial<
   paladin: PALADIN_CAST_REACTIONS,
   shaman: SHAMAN_CAST_REACTIONS,
   druid: DRUID_CAST_REACTIONS,
+  priest: PRIEST_CAST_REACTIONS,
 };
 
 const REACTIONS: Partial<Record<ClassId, Readonly<Record<string, TalentReactionBuilder>>>> = {
@@ -885,6 +887,38 @@ export function talentBuild(
            */
           abilityModifiers.addWhileAura(effect.auraId, effect.abilityId, { critBonus: value });
           break;
+        /*
+         * THE SAME SHAPE, CONDITIONED ON THE FIGHT'S CLOCK RATHER THAN ON AN
+         * AURA -- "against targets at or below N% health", which this project
+         * rules is the last N of the planned duration. Two callers: Early
+         * Demise (crit, Priest) and Quietus (damage, Rogue).
+         *
+         * THE THRESHOLD IS ONE OF THE TALENT'S OWN NUMBERS, read out of the
+         * same row as the bonus and divided by a hundred. Nothing here knows
+         * 0.2 or 0.35, which is the point -- a Forever change to either moves
+         * the talent on its own.
+         */
+        case 'abilityCritInFinalFraction':
+        case 'abilityDamageInFinalFraction': {
+          const threshold = talentNumber(characterClass, talentId, rank, effect.fractionIndex);
+          if (threshold === undefined) {
+            report(
+              talentId,
+              rank,
+              `No health threshold is recorded at index ${effect.fractionIndex} for rank ` +
+                `${rank}. See src/data/talents/values/${characterClass}.json.`,
+            );
+            break;
+          }
+          abilityModifiers.addWhileFinalFraction(
+            threshold / 100,
+            effect.abilityId,
+            effect.kind === 'abilityCritInFinalFraction'
+              ? { critBonus: value }
+              : { damageMultiplier: 1 + value / 100 },
+          );
+          break;
+        }
         case 'conditionalCrit':
           /*
            * MAIN HAND ONLY, deliberately, and it is an interpretation.
@@ -926,6 +960,9 @@ export function talentBuild(
          * HIT, which comes off MISS rather than onto a hit chance no table
          * carries -- see `AbilityModifier.hitBonus`. The same one line as the
          * crit case above, which is the whole of what five inert talents needed.
+         *
+         * PERCENTAGE POINTS OFF MISS, not a fraction of it. "+5% chance to hit"
+         * against a 17% spell miss leaves 12%, never 16.15%.
          */
         case 'schoolHit':
           for (const school of effect.schools) {
