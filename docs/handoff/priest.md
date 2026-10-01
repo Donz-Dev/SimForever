@@ -88,8 +88,10 @@ worth 19 DPS to the Shockadin. **These talents are now a one-line effect each an
 a re-measured baseline**, left for the class that owns them because each moves a
 profile.
 
-**Spell hit per school (two):** `holy_precision`, `shadow_focus` — **shared with the
-Mage ×2 and the Paladin, eight talents for one engine capability**
+**Spell hit per school (two):** `holy_precision`, `shadow_focus` — shared with
+the Mage ×2. **The capability exists; what is left is one `schoolHit` effect each
+and a re-measured baseline**, which is a much smaller job than this line used to
+describe.
 
 **Needs a kill or a death:** `spirit_tap` (a kill), `spirit_of_redemption` (the
 Priest dying, which a damage profile does not)
@@ -186,12 +188,18 @@ in the project. It is out because the owner's list removed it, isolated at **−
    expressible today; the ability is out of the list by the owner's choice at a
    measured −35.7. **One item, two halves** — and the talent's current reason must be
    corrected either way, because it is wrong about the engine.
-2. **Spell hit per school scoped with the Mage and Paladin** — eight talents, one
-   capability, and two of them are here.
+2. ~~**Spell hit per school scoped with the Mage and Paladin.**~~ **The
+   capability exists** — the Paladin dive built `AbilityModifier.hitBonus` and the
+   `schoolHit` effect kind after finding the shared reason for it was false. Two
+   talents here, one `schoolHit` line each, plus a re-measured baseline.
 3. **`power_infusion` finished**, since its own reason says it is expressible.
 4. **`inner_focus` split into its two halves** — a one-shot cost modifier (which
-   `grantCastModifier` can nearly do) and a one-shot per-ability crit modifier (which
-   nothing can). The second is an engine gap shared with the Paladin.
+   `grantCastModifier` can nearly do) and a one-shot per-ability crit modifier.
+   **DIVINE FAVOR IS THE WORKED EXAMPLE OF THE SECOND**: an aura carrying
+   `abilityModifiers` with a `critBonus`, spent by a CAST REACTION rather than by
+   `consumedByCast` — because cast charges are spent before `runCast` and the aura
+   would be gone before the spell rolled its crit. This note used to say nothing
+   could express it, which was true of `CastModifier` and false of an aura.
 5. **A second Priest profile considered.** Not required, but this is the only class
    where every finding is uncorroborated by a sibling build, and the project has been
    caught by exactly that shape before.

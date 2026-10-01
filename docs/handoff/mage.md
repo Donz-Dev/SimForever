@@ -10,16 +10,27 @@ directory for what the census columns mean and how to reprint every figure below
 
 ## The one thing to understand first
 
-**FIVE OF THE SIXTEEN LIVE GAPS ARE ONE MISSING ENGINE CAPABILITY: SPELL HIT PER
-SCHOOL.** `arcane_focus`, `elemental_precision`, and their relatives all raise the
-chance to hit with one school — and **the attack table decides hit before any
-per-school modifier is consulted.** `SchoolModifiers` covers crit, crit damage and
-damage; hit is upstream of all three.
+**FIVE OF THE SIXTEEN LIVE GAPS ARE ONE CAPABILITY: SPELL HIT PER SCHOOL — AND
+IT IS BUILT NOW.** `arcane_focus`, `elemental_precision` and their relatives all
+raise the chance to hit with one school, and their shared reason was that **the
+attack table decides hit before any per-school modifier is consulted**.
 
-That gap is shared with the Priest (×2) and the Paladin, so **it is worth five
-Mage talents and eight across the project.** It is the single highest-leverage
-engine change for this class, and it is a real engine change rather than a missing
-number.
+**THAT WAS NOT TRUE, AND THE PALADIN DIVE FOUND IT.** `rollTable` folds the
+ability's modifier, the SCHOOL'S and the table's into one and hands the result to
+the roll, so the school was in hand at the roll all along. What was missing was a
+FIELD: `AbilityModifier.hitBonus`, taken off MISS because no table carries a hit
+chance, plus `schoolHit` as the talent effect kind. Divine Precision uses both and
+is worth 19 DPS to the Shockadin.
+
+**SO THIS IS NO LONGER AN ENGINE CHANGE — IT IS A ONE-LINE EFFECT PER TALENT AND
+A RE-MEASURED BASELINE.** Still the highest-leverage item for this class, and far
+cheaper than the brief used to say. The engine half is tested in
+`tests/engine/targetSideModifiers.test.ts`.
+
+**ONE WARNING FROM THE SAME WORK**: `combine` did not fold `hitBonus` when the
+field landed, so ONE source worked and TWO silently cancelled — and a character
+whose gear already carries a school entry is the case that hits. Check a Mage
+with Arcane-scoped spell power on its gear, not only a bare build.
 
 A second cluster is **area damage against one enemy**: `improved_flamestrike`,
 `improved_blizzard`, `improved_cone_of_cold`, and Blast Wave's area half. Those are
@@ -173,8 +184,11 @@ truth on four.**
 
 ## What "done" looks like
 
-1. **Spell hit per school scoped as an engine change**, with the Priest's two and
-   the Paladin's one counted in — eight talents for one capability.
+1. ~~**Spell hit per school scoped as an engine change.**~~ **The engine half is
+   done** — `AbilityModifier.hitBonus` and the `schoolHit` effect kind, built by
+   the Paladin dive, which found the shared reason for it was false. What is left
+   for this class is **one `schoolHit` effect per talent and a re-measured
+   baseline**; the Priest's two are the same one-line job.
 2. **`winter_s_chill` reached.** A crit debuff the TARGET carries is the mirror of
    `critWhileAura`, which was just built for the caster's side. The two belong
    together.
