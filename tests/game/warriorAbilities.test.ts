@@ -63,9 +63,17 @@ import { BATTLE_STANCE, DEFENSIVE_STANCE } from '../../src/game/auras/warrior';
  * eleven minutes off fifteen leaves four exactly, where off thirty it would
  * leave nineteen.
  *
- * SLAM. The sheet says no cooldown; the captured tooltip says "1.5 sec cast 15
- * sec cooldown", the owner confirms fifteen, and the spellbook carries it on
+ * SLAM. The sheet says no cooldown; the captured tooltip said "1.5 sec cast 15
+ * sec cooldown", the owner confirmed fifteen, and the spellbook carried it on
  * all five ranks. Three sources against the sheet, and the same resolution.
+ *
+ * AND THEN FOREVER MOVED IT TO EIGHTEEN. Re-checked 2026-09-30 and all three
+ * live sources now say 18 -- `import_spell.mjs --verify` on the same spell id,
+ * the machine spellbook capture at build 1.60.1.70009, and
+ * `foreverchanges.pro`. The two reads that disagree are of different BUILDS
+ * eleven days apart rather than of different sources, so the tie-break rule
+ * never comes into it. This is the one row in the table whose provenance is
+ * "the number changed", not "the sheet lost".
  *
  * THUNDER CLAP. The sheet says 4, which is also the Classic value -- a wrong
  * number that looked right from two directions. The captured tooltip says
@@ -102,8 +110,9 @@ const SHEET: readonly SheetRow[] = [
   { id: 'thunder_clap', name: 'Thunder Clap', rageCost: 20, cooldownSeconds: 6, castSeconds: 0, attackTable: 'ranged-special' },
   { id: 'sunder_armor_cast', name: 'Sunder Armor', rageCost: 15, cooldownSeconds: 0, castSeconds: 0, attackTable: 'melee-special' },
   { id: 'execute', name: 'Execute', rageCost: 15, cooldownSeconds: 0, castSeconds: 0, attackTable: 'melee-special' },
-  // OVERRIDDEN, see above: the sheet says 0 and the ruleset owner says 15.
-  { id: 'slam', name: 'Slam', rageCost: 15, cooldownSeconds: 15, castSeconds: 1.5, attackTable: 'melee-special' },
+  // OVERRIDDEN, see above: the sheet says 0, the owner said 15, and Forever
+  // has since moved it to 18.
+  { id: 'slam', name: 'Slam', rageCost: 15, cooldownSeconds: 18, castSeconds: 1.5, attackTable: 'melee-special' },
   { id: 'hamstring', name: 'Hamstring', rageCost: 10, cooldownSeconds: 0, castSeconds: 0, attackTable: 'melee-special' },
   { id: 'demoralizing_shout_cast', name: 'Demoralizing Shout', rageCost: 10, cooldownSeconds: 0, castSeconds: 0, attackTable: undefined },
   { id: 'intercept', name: 'Intercept', rageCost: 10, cooldownSeconds: 30, castSeconds: 0, attackTable: 'ranged-special' },

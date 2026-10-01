@@ -7,9 +7,12 @@ context window.
 of it is lessons paid for in wrong numbers. Then [HANDOVER.md](../../HANDOVER.md)
 for project status. These files are the CLASS.
 
+**THE WARRIOR IS AT ZERO.** Its deep dive is done; read it for what the column
+looks like at the end rather than for how much work a class needs.
+
 | Document | Profiles | Live gaps |
 | --- | --- | --- |
-| [warrior.md](warrior.md) | 2H Arms, DW Fury, Prot Warr | **1** |
+| [warrior.md](warrior.md) | 2H Arms, DW Fury, Prot Warr | **0** |
 | [paladin.md](paladin.md) | Seal Twist Ret, Shockadin, Prot Pally | **10** |
 | [druid.md](druid.md) | Moonkin, Cat, Bear | **12** |
 | [hunter.md](hunter.md) | BM Hunter, LW Ranged, LW Melee | **13** |

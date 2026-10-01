@@ -54,6 +54,24 @@ const ABILITY_GRANTING_TALENTS = [
 /** Abilities every Warrior has regardless of talents. A sample, by hand. */
 const ALWAYS_KNOWN = ['heroic_strike', 'rend_cast', 'overpower', 'execute', 'whirlwind'] as const;
 
+/*
+ * TWO ABILITIES NEED THE RIGHT WEAPON AS WELL AS THE TALENT, so the style a
+ * gating test runs under is not free. Written out rather than inferred: these
+ * are the two `abilitiesForBuild` gates on `style`, and a third added there
+ * without a line here would make that test pass by testing nothing.
+ *
+ *   shield_slam      "Requires Shields"
+ *   spearing_strike  "Requires Two-Handed Melee Weapon"
+ *
+ * Anything else is tested on a dual-wielder, which holds neither.
+ */
+const STYLE_FOR: Readonly<Record<string, 'one_hand_shield' | 'two_hander'>> = {
+  shield_slam: 'one_hand_shield',
+  spearing_strike: 'two_hander',
+};
+
+const styleFor = (ability: string) => STYLE_FOR[ability] ?? 'dual_wield';
+
 const idsFor = (
   style: 'dual_wield' | 'one_hand_shield' | 'two_hander',
   talents?: TalentAllocation,
@@ -81,8 +99,9 @@ describe('talent-gated abilities', () => {
 
   for (const { ability, talent } of TALENT_GRANTED) {
     it(`grants ${ability} only when ${talent} is legally taken`, () => {
-      // Shield Slam needs a shield as well, so it is the style to test under.
-      const style = ability === 'shield_slam' ? 'one_hand_shield' : 'dual_wield';
+      // Shield Slam needs a shield and Spearing Strike a two-hander, so the
+      // style is not free. See `STYLE_FOR`.
+      const style = styleFor(ability);
       expect(idsFor(style, legalise({ [talent]: 1 }))).toContain(ability);
       expect(idsFor(style, {})).not.toContain(ability);
       // And a single unearned point grants nothing, which is the rule that was
@@ -114,6 +133,29 @@ describe('talent-gated abilities', () => {
     expect(idsFor('dual_wield', legalise({ shield_slam: 1 }))).not.toContain('shield_slam');
     // Holding a shield, never took the talent.
     expect(idsFor('one_hand_shield', {})).not.toContain('shield_slam');
+  });
+
+  it('needs both a two-handed weapon and the talent for Spearing Strike', () => {
+    /*
+     * THE SAME SHAPE AS SHIELD SLAM, and found the same way -- by reading the
+     * requirement line rather than the damage. "Requires Two-Handed Melee
+     * Weapon" on `foreverchanges.pro`, and the five two-handed weapon types
+     * named out in `forever-warrior-spellbook.json`.
+     *
+     * It matters more than Shield Slam's did: the DW Fury preset spends a
+     * point here and the Berserker list asks for it, so the ability was being
+     * cast by a dual-wielder for the whole project.
+     */
+    expect(idsFor('two_hander', legalise({ spearing_strike: 1 }))).toContain('spearing_strike');
+    // Took the talent, holding two one-handers.
+    expect(idsFor('dual_wield', legalise({ spearing_strike: 1 }))).not.toContain(
+      'spearing_strike',
+    );
+    expect(idsFor('one_hand_shield', legalise({ spearing_strike: 1 }))).not.toContain(
+      'spearing_strike',
+    );
+    // Holding a two-hander, never took the talent.
+    expect(idsFor('two_hander', {})).not.toContain('spearing_strike');
   });
 
   it('reaches the combatant built by createPlayer', () => {
@@ -231,7 +273,7 @@ describe('every ability locked behind a talent is unreachable without it', () =>
          * 31-point capstone grants nothing -- which is the whole point of the
          * gating, and used not to be true.
          */
-        const style = ability === 'shield_slam' ? 'one_hand_shield' : 'dual_wield';
+        const style = styleFor(ability);
         expect(idsFor(style, legalise({ [talent]: 1 }))).toContain(ability);
       });
     } else {

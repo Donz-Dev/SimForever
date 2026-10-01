@@ -30,13 +30,28 @@ and what gives each figure the interval a REAL/noise verdict needs. Most profile
 land inside the old interval and a few do not — 2H Arms read 596.6 under the old
 method and 607.2 under this one on identical code. Do not read those as changes.
 
+**THE WARRIOR DEEP DIVE MOVED TWO PROFILES AND BOTH MOVES ARE NOISE.** 2H Arms
+607.2 to **603.3** (-3.9 against +/-9.1) on Slam's cooldown going 15 to 18, and
+DW Fury 652.0 to **651.2** (-0.8 against +/-8.9) on Spearing Strike turning out
+to require a two-handed weapon. The other twenty-one are identical to the
+decimal, Prot Warr included. **The uses column is where the change actually
+shows**: Slam 2.9 casts a fight to 2.5, and Spearing Strike 2.7 to ZERO, with
+its 15 rage going straight into Heroic Strike -- 9.0 casts to 11.0. **Losing an
+ability outright cost 0.8 DPS**, which is what a rage-bound build looks like --
+and it means the owner's Spearing Strike entry was worth about one DPS even
+while it worked.
+
+**THE SAME DIVE TOOK THE FIRST CLASS TO ZERO LIVE GAPS.** See
+[docs/handoff/warrior.md](docs/handoff/warrior.md) and
+[docs/source-cross-checks.md](docs/source-cross-checks.md).
+
 **SHATTER MOVED ONE PROFILE AND THE CONTAINMENT HELD EXACTLY.** Frostfire
 376.6 to **412.5, +36.0, REAL**, and the other twenty-two identical to the
 decimal -- which is what a talent change scoped to one build should look like.
 It makes Frostfire the top Mage, above Fire's 401.2 and Arcane's 392.6, and the
 build that existed for the Fire/Frost overlap now has a third reason to. The
-mean across 23 is 409.8, down from 411.7 because the Firelock correction is
-larger than everything the Warlock and Rogue work added. See [docs/handoff-apl.md](docs/handoff-apl.md).
+mean across 23 is 409.6, and the two dives that moved it are below. See
+[docs/handoff-apl.md](docs/handoff-apl.md).
 
 **THE WARLOCK DEEP DIVE MOVED FIVE PROFILES AND ONE OF THEM A LONG WAY DOWN.**
 **Firelock 535.5 to 468.4, -67.1, REAL** -- a CORRECTION, and the four causes were
@@ -67,8 +82,8 @@ so. Fourteen profiles moved.
 
 | Profile | Class | Talents | DPS | | Profile | Class | Talents | DPS |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| DW Fury | Warrior | 18/33/0 | 652.0 | | Venom Rogue | Rogue | 37/12/2 | 395.9 |
-| 2H Arms | Warrior | 38/13/0 | 607.2 | | Arcane Mage | Mage | 47/4/0 | 392.6 |
+| DW Fury | Warrior | 18/33/0 | 651.2 | | Venom Rogue | Rogue | 37/12/2 | 395.9 |
+| 2H Arms | Warrior | 38/13/0 | 603.3 | | Arcane Mage | Mage | 47/4/0 | 392.6 |
 | Cat Druid | Druid | 9/35/7 | 488.0 | | Moonkin | Druid | 38/0/13 | 384.3 |
 | Seal Twist Ret | Paladin | 13/0/38 | 471.0 | | Rupture Rogue | Rogue | 12/8/31 | 379.7 |
 | Firelock | Warlock | 5/11/35 | 468.4 | | Shockadin | Paladin | 23/0/28 | 379.0 |
@@ -135,7 +150,7 @@ is CONNECTED rather than whether its number is right.**
 | **134** | abilities in at least one profile's book |
 | **109** | exercised by at least one profile |
 | **25** | cast by none of the 23, **each with a stated reason and none of them a broken declaration** |
-| **8** | priority list entries that never fire, six of them deliberate |
+| **9** | priority list entries that never fire, six of them deliberate. The ninth is Spearing Strike in the Berserker list, added by the Warrior dive — and it is the one `ability_audit.ts` itself cannot see, because the build does not have the ability |
 | **23 of 23** | damage tables summing to **100%** |
 | **0** | abilities that deal damage without responding to a stat (the coefficient probe's result) |
 
@@ -145,8 +160,9 @@ total is the one that is easy to overlook and hard to fake -- a source nobody
 reports reads as a zero rather than as a gap.
 
 **AND IT CORRECTED A DOCUMENTED INVARIANT.** Both handoff files claimed every
-entry in every list fires; eight do not, and the claim was contradicted two
-paragraphs below in the same file by the stance and shout entries kept on purpose.
+entry in every list fires; eight did, nine do now, and the claim was
+contradicted two paragraphs below in the same file by the stance and shout
+entries kept on purpose.
 
 ## Per-class deep dives
 
@@ -162,7 +178,7 @@ structure, and throws if its four buckets do not account for every talent.
 
 | Document | Profiles | Live gaps |
 | --- | --- | --- |
-| [warrior.md](docs/handoff/warrior.md) | 2H Arms, DW Fury, Prot Warr | **1** |
+| [warrior.md](docs/handoff/warrior.md) | 2H Arms, DW Fury, Prot Warr | **0** |
 | [paladin.md](docs/handoff/paladin.md) | Seal Twist Ret, Shockadin, Prot Pally | **10** |
 | [druid.md](docs/handoff/druid.md) | Moonkin, Cat, Bear | **12** |
 | [hunter.md](docs/handoff/hunter.md) | BM Hunter, LW Ranged, LW Melee | **13** |
@@ -172,7 +188,7 @@ structure, and throws if its four buckets do not account for every talent.
 | [priest.md](docs/handoff/priest.md) | Shadow | **18** |
 | [warlock.md](docs/handoff/warlock.md) | SM/DS, Firelock | **22** |
 
-**THE WARRIOR'S 1 AGAINST THE WARLOCK'S 25 IS NOT A DIFFERENCE IN DIFFICULTY.**
+**THE WARRIOR'S 0 AGAINST THE WARLOCK'S 25 IS NOT A DIFFERENCE IN DIFFICULTY.**
 The Warrior had four sources and eight of its numbers turned out wrong; the other
 eight classes rest on `talentsforever.com` plus one `foreverchanges.pro`
 cross-check. Read the Warrior's column as what a class looks like after the work,
@@ -188,11 +204,11 @@ Measured at `d2718b0`, and the numbers say it is not close:
 
 | | |
 | --- | --- |
-| **123 of 468 talents are a live gap** | well down from a raw count of unmodelled reasons, because 95 are permanently out of scope by ruling and 33 more are PARTLY modelled. See the census below, and re-sum it rather than adjusting it — the raw total is not a work queue |
-| **113 abilities declared against 478 captured** | the data is on disk; the declarations are not. Druid 15, Hunter 14, Mage 13, Rogue 12, Warlock 10, Shaman 9, Priest 7, Paladin 6, plus the Warrior's 27 |
+| **121 of 468 talents are a live gap** | well down from a raw count of 251 unmodelled reasons, because 95 are permanently out of scope by ruling and 35 more are PARTLY modelled. See the census below, and **re-sum it rather than adjusting it** — the raw total is not a work queue. **The Warrior is at zero**, the first class to get there |
+| **113 abilities declared against 478 captured** | the data is on disk; the declarations are not. Druid 15, Hunter 14, Mage 13, Rogue 12, Warlock 10, Shaman 9, Priest 7, Paladin 6, plus the Warrior's 27. **THE WARRIOR IS RECONCILED**, which is what the exclusion list below actually means: 42 captured against 30 declared counting its three stances, and each of the 12 that are not declared is named — 3 that Forever has and nothing here needs, 9 that are threat or crowd control by ruling. See [docs/warrior.md](docs/warrior.md). It is the only class where the subtraction balances |
 | ~~**Coefficients**~~ | **DONE, AND NOW EVERY ROW IS APPLIED.** `WoWSimWorksheet.xlsx`, the owner's authoritative coefficient document, is transcribed in `src/game/combat/coefficients.ts` and applied across all nine classes. Every derived rule is deleted. The last unapplied row was Hammer of Wrath, which was not a declared ability until the owner put it in two Paladin priority lists; the two poison rows went the same way when the poison system landed. [docs/spell-coefficients.md](docs/spell-coefficients.md) |
-| **19 `PLACEHOLDER_*` constants** | each a real number nobody has supplied. Sniper Shot's invented 200-mana cost is gone, but it was never one of these: it was a bare literal with a false caveat, which is worse — an invented number that is not named cannot be audited |
-| ~~**Rotations are thin and unmeasured**~~ | **DONE.** All 23 priority lists are the ruleset owner's own, specified entry by entry, and every one is measured — see the baseline above and [docs/handoff-rotations.md](docs/handoff-rotations.md). The twelve dead entries are gone: every entry in every list fires. Fourteen abilities and three talent mechanics were declared to reach them, and six engine capabilities built |
+| **17 `PLACEHOLDER_*` constants** | each a real number nobody has supplied. **COUNT THEM, DO NOT ADJUST THEM**: `grep -rhoE "PLACEHOLDER_[A-Z_]+" src/ \| sort -u \| wc -l`. The Warlock dive and the Warrior dive each removed one from 19 and each wrote 18, and git merged that without a conflict — this figure was wrong by one for exactly as long as it took to re-derive it. Sniper Shot's invented 200-mana cost is gone, but it was never one of these: it was a bare literal with a false caveat, which is worse — an invented number that is not named cannot be audited |
+| ~~**Rotations are thin and unmeasured**~~ | **DONE.** All 23 priority lists are the ruleset owner's own, specified entry by entry, and every one is measured — see the baseline above and [docs/handoff-rotations.md](docs/handoff-rotations.md). The twelve dead entries of that round are gone; the nine that remain are listed in [docs/ability-audit.md](docs/ability-audit.md), each with a reason and none of them a broken declaration. Fourteen abilities and three talent mechanics were declared to reach them, and six engine capabilities built |
 
 **The Warrior was built first and built properly, and it is not the norm.** Read
 any claim about this project's depth as a claim about the Warrior until checked.
@@ -206,14 +222,16 @@ Against `foreverchanges.pro`, under the owner's standing rule that **where it an
 our own capture disagree, it wins**. Full record, method and its two traps in
 [docs/source-cross-checks.md](docs/source-cross-checks.md).
 
-**NOT ONE CLASS CAME BACK CLEAN. Twenty-seven figures moved**, and the exercise
-found three distinct kinds of error:
+**NOT ONE CLASS CAME BACK CLEAN. Twenty-seven figures moved**, and **three more
+on the Warrior's re-check** -- thirty. The exercise found three distinct kinds of
+error, and the Warrior re-check added a FOURTH:
 
 | | |
 | --- | --- |
 | **Source disagreement at the same build** | most of them, usually a few points. Both sources read 1.60.1.70009, so refreshing a capture settles nothing — which is why the standing rule was needed |
 | **Build drift** | a figure that was right when written and is not now: Wrath 62–68 → 92–102, Holy Strike 40%/12s → 50%/10s, Life Tap doubled, and Mangle **renamed to Primal Bite**. **No amount of cross-checking finds these; only refreshing the captures does** |
 | **Our own transcription** | Sniper Shot, wrong in four fields at once, with the answers in its own capture the whole time |
+| **A source that is SILENT rather than different** | Spearing Strike's two-handed requirement is stated by two sources and omitted by the third, which is the one we had. An omission is not a denial, so the tie-break rule never applies -- the sources that speak decide it. **The same shape as Shadowburn's Soul Shard**, where `foreverchanges.pro` carries no reagent field at all |
 
 The third kind is the one to fear. **Sniper Shot** read 160 damage, a 200-mana
 placeholder, instant cast and a 6-second cooldown; its capture says 295, 365 mana,
@@ -225,6 +243,14 @@ line at all") was simply false.
 **What moved most**: Prot Pally +13.5% and Seal Twist Ret +10.0% on Holy Strike's
 doubling, Firelock +12.1% on Life Tap, and **LW Ranged −11.1%** on Sniper Shot
 becoming a four-second cast.
+
+**AND EIGHT CLASSES ARE NOW ONE REFRESH OLD.** The Warrior's re-check found
+Slam's cooldown had gone 15 to 18 in ELEVEN DAYS, on the class with the best
+sources in the project and against a figure the owner had confirmed personally.
+Nothing in this repository moved; the game did. The other eight captures are all
+at build 1.60.1.70009 and have not been re-fetched since 2026-09-25.
+`node tools/import_forever_spells.mjs --all --write` is one command, and the
+diff is where the change announces itself.
 
 **THE LW RANGED PRIORITY LIST NOW NEEDS RE-MEASURING.** A cast resets the ranged
 swing timer, which is the rule that removed Aimed Shot from that list at *two*
@@ -245,16 +271,24 @@ fails.
 
 | Class | Talents | Fully | Partly | Ruled out | Live gap |
 | --- | --- | --- | --- | --- | --- |
-| Warrior | 53 | 43 | 3 | 6 | **1** |
+| Warrior | 53 | 43 | 4 | 6 | **0** |
 | Paladin | 52 | 22 | 7 | 13 | **10** |
 | Druid | 51 | 20 | 5 | 14 | **12** |
 | Hunter | 50 | 24 | 5 | 8 | **13** |
 | Shaman | 50 | 17 | 4 | 12 | **17** |
 | Mage | 54 | 27 | 2 | 9 | **16** |
 | Priest | 53 | 15 | 2 | 18 | **18** |
-| Rogue | 53 | 25 | 2 | 12 | **14** |
+| Rogue | 53 | 25 | 3 | 12 | **13** |
 | Warlock | 52 | 24 | 3 | 3 | **22** |
-| **Total** | **468** | **217** | **33** | **95** | **123** |
+| **Total** | **468** | **217** | **35** | **95** | **121** |
+
+**THE WARRIOR LEFT THE GAP COLUMN ENTIRELY**, and its last entry is worth
+reading because of the shape rather than the size. Improved Berserker Rage's
+reason was "grants rage when Berserker Rage is activated, and no priority list
+casts Berserker Rage" — an argument about a LIST, filed where this project keeps
+arguments about the ENGINE — while the number it needed, 5 and 10 by rank, sat in
+`values/warrior.json` the whole time. **A reason that argues from a rotation is
+not an engine gap**, and it read like one for as long as it existed.
 
 **SIX TALENTS LEFT THE GAP COLUMN WITH THE PRIORITY LISTS**, and four of them
 were never really in it. Cutthroat and Premeditation were counted among the
@@ -265,14 +299,19 @@ reason was a statement about the engine ("nothing can reset a cooldown from
 content") and the engine now can. Fingers of Frost carried `FROZEN_UNMODELLED`,
 which is a claim about the TARGET, and that talent does not freeze anything.
 
-**250 of 468 talents do something**, 95 never will, and **123 are the actual
-remaining work** — not the raw count of unmodelled reasons, which is larger.
-**Every figure in this paragraph is re-summed from the table above rather than
-adjusted**, which is the rule: two branches each moving a total by one from the
-same base both write the same number, git merges them without a conflict, and the
-total is short by one. The 103
-scoped entries break down as 33 healing, 32 crowd control, 17 positioning, 14
-threat and **7 stealth**.
+**252 of 468 talents do something**, 95 never will, and **121 are the
+actual remaining work** — not the 251 a raw count of unmodelled reasons
+suggests. The 104 scoped entries break down as 33 healing, 33 crowd
+control, 17 positioning, 14 threat and 7 stealth.
+
+**EVERY FIGURE IN THIS SECTION IS RE-SUMMED FROM THE TABLE ABOVE RATHER THAN
+ADJUSTED, AND THIS MERGE IS WHY.** The Warlock dive and the Warrior dive each
+moved the total from the same base and each wrote its own answer; both also wrote
+this warning, independently, which is how close the trap is to the surface. Two
+branches moving a count by one from the same base both write the same number, git
+merges them without a conflict, and the total is short by one.
+`tools/class_audit.ts` derives the whole census independently and throws if the
+buckets do not account for every talent — run it rather than trusting this.
 
 **STEALTH IS THE NEWEST RULING AND IT CLOSED THE LARGEST OPEN QUESTION.** Every
 fight opens in combat, so nothing is ever stealthed — and until the owner ruled,
@@ -319,6 +358,13 @@ Two questions the census raises that the rulings do not answer:
 against 113 declared. A stated exclusion list is what turns a vague "incomplete"
 into a finite work list.
 
+**THE WARRIOR NOW HAS ONE AND IT BALANCES**, which is the worked example for the
+other eight: 42 captured, 30 declared, and the 12 that are not are named
+individually — Victory Rush, Retaliation and Tactical Mastery, plus nine that are
+threat or crowd control by existing ruling. Nothing is declared that the capture
+does not have, which is the check in the other direction. Each class is one
+`node tools/import_forever_spells.mjs <class>` and an hour of reading.
+
 ### Open engine gaps
 
 | Gap | Talents | Classes |
@@ -342,7 +388,7 @@ into a finite work list.
 | `PLACEHOLDER_SOUL_SHARDS` | 10 | what a Warlock banks before a pull. No in-fight income |
 | `PLACEHOLDER_COMBUSTION_DURATION_MS` | 30s | its real end is "until 4 crits", which nothing counts. Generous |
 | `PLACEHOLDER_WINDFURY_WEAPON_DURATION_MS` / `_INTERNAL_COOLDOWN_MS` | 1.5s | borrowed from Windfury Totem, whose window the owner stated. The SoD trinket tooltip says 2s where the code carries 1.5 |
-| `PLACEHOLDER_FLURRY_DURATION_MS` / `_BERSERKER_RAGE_` / `_REVENGE_WINDOW_MS` | 12s / 10s / 5s | Warrior-era; charges end Flurry in practice |
+| `PLACEHOLDER_FLURRY_DURATION_MS` / `_REVENGE_WINDOW_MS` | 12s / 5s | Warrior-era; charges end Flurry in practice. **`_BERSERKER_RAGE_DURATION_MS` is gone**: all three sources say "Lasts 10 sec", and the placeholder's reason was a claim about the owner's spreadsheet being silent — true of the spreadsheet and irrelevant to the data |
 | `PLACEHOLDER_PET_SWING_SECONDS` | — | no longer affects damage, since a pet's base is a DPS |
 | `PLACEHOLDER_BOSS_*` | 5000 / 2s / 15% | the encounter, not a class. See [docs/incoming-damage.md](docs/incoming-damage.md) |
 | `PLACEHOLDER_ONE_HAND` / `_TWO_HANDER` / `_RANGED` | — | only used when nothing is equipped; every preset equips |
@@ -355,6 +401,28 @@ halves sharing one coefficient by DURATION rather than by damage. The last is wh
 Fireball's burn is 11% of its damage and takes 35% of its scaling.
 
 ## Open questions for the ruleset owner
+
+**THREE ARE NEW AND ALL THREE COME FROM THE WARRIOR DIVE.** Each is a decision
+rather than a missing number, and none of them blocks anything.
+
+- **DW Fury's point in Spearing Strike, and the Berserker list's entry for it.**
+  Spearing Strike requires a two-handed weapon -- stated by the spellbook capture
+  and by `foreverchanges.pro`, absent only from the Wowhead tooltip this project
+  had been reading. So the point buys nothing on a dual-wielder and the list entry
+  can never fire. The entry was added on your instruction precisely BECAUSE the
+  point looked wasted, so both halves are yours to move. It was worth about one
+  DPS even while it worked: removing it cost 0.8, because the 15 rage went
+  straight into Heroic Strike.
+- **Berserker Rage's magnitude**, which is the same question as before and now the
+  only unanswerable thing on the class. "Generating extra rage when taking damage"
+  -- no number in any source, and the spell carries exactly two effect rows, both
+  immunities. Improved Berserker Rage's 10 rage ON ACTIVATION is stated and is
+  applied; the ability's own half is not.
+- **Retaliation.** 15 minutes in Forever, down from 30. Battle Stance, 15 seconds,
+  at most 30 counterattacks. It is a real Arms cooldown once a target swings back
+  and it is not modelled -- worth nothing to all three profiles today, because the
+  one in Battle Stance is the one whose target stands still. Worth declaring only
+  if an attacking Arms encounter is wanted.
 
 **THE FOUR FLAT FINISHERS ARE ANSWERED**, and so is everything else the
 coefficient audit raised. `WoWSimWorksheet.xlsx` supplies Eviscerate at 4% of
@@ -433,8 +501,9 @@ The refactor is phased; the milestone follows it.
    (`OutOfScope`, 96 entries tagged, a test that a new class cannot slip past), the
    Talent panel shows a decision separately from a gap, the healing split is made,
    and the odd-one-out Warrior capture is named for what it is. **Left:**
-   - **Ask the owner for each placeholder number** — 19 of them, listed above.
-     Every one answered is a placeholder deleted.
+   - **Ask the owner for each placeholder number** — 17 of them, listed above.
+     Every one answered is a placeholder deleted. **One went without being
+     asked about**: Berserker Rage's duration was never missing data.
    - **The seven talents whose rule already exists with nothing hooked to it.**
      Shaman Elemental Focus is the clearest: a one-shot cost modifier is exactly
      `CastModifier.costFraction` with `consumedByCast`, which Maelstrom Weapon
@@ -456,8 +525,8 @@ The refactor is phased; the milestone follows it.
    DPS each.
 
 ~~**THE APL HALF OF PHASE 3 IS THE NEXT PIECE OF WORK**~~ **and is done.** All 23
-lists are the owner's, every entry in every one of them fires, and the baseline
-above is measured on them. [docs/handoff-rotations.md](docs/handoff-rotations.md)
+lists are the owner's, the nine entries that do not fire each have a reason,
+and the baseline above is measured on them. [docs/handoff-rotations.md](docs/handoff-rotations.md)
 carries what each list turned out to be worth and the three findings that came
 out of building them.
 

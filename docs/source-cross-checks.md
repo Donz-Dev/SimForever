@@ -42,6 +42,77 @@ the first attempt:
 Compare only at the same rank AND the same level. Compare cost, cast time and
 cooldown too — one of the Warlock's four findings is a cost, not a damage figure.
 
+**AND COMPARE THE REQUIREMENT LINE.** Added after the Warrior re-check, which
+found a two-handed weapon requirement nobody had been reading. A requirement is
+the one field where the three sources differ in KIND rather than in value:
+Wowhead's tooltip omits some outright, the spellbook capture names weapon
+classes one by one, and `foreverchanges.pro` states the family. An omission is
+not a disagreement, so the tie-break rule does not apply to it — see the Warrior
+section below.
+
+## Warrior — RE-CHECKED 2026-09-30, and it was the first machine check this class had
+
+**THE WARRIOR WAS THE LAST CLASS WITHOUT A SPELLBOOK CAPTURE**, so every earlier
+"check" of it was a hand read of a web page. `node
+tools/import_forever_spells.mjs warrior --write` closes that: 42 spells at build
+1.60.1.70009, the ninth of nine, and it is now diffable by machine like the rest.
+
+**Three sources were put side by side and three numbers moved.** Two of them
+were found only because the spellbook existed.
+
+| | ours, before | spellbook capture | `foreverchanges.pro` | applied |
+| --- | --- | --- | --- | --- |
+| **Slam** cooldown | 15 sec | **18 sec** | **18 sec** | **18** |
+| **Spearing Strike** | no weapon requirement | "Requires Two-Handed Axes, Two-Handed Maces, Polearms, Two-Handed Swords, Staves" | "Requires Two-Handed Melee Weapon" | **two-handed only** |
+| **Thunder Clap** targets | `Infinity` | "up to 4 targets" | "up to 4 targets" | **4** |
+| Demoralizing Shout | 196 | 204 | **196** | 196, unchanged |
+| Battle Shout | 139 | 139 | 139 | 139, unchanged |
+| Revenge | 153 flat | 138 to 168 | 138 to 168 | 153, the exact midpoint |
+| Shield Slam | 655 flat | 640 to 670 | 640 to 670 | 655, the exact midpoint |
+
+**SLAM IS BUILD DRIFT AND NOT A SOURCE DISAGREEMENT**, which matters because the
+two are fixed differently. `node tools/import_spell.mjs --verify` re-fetched the
+SAME spell id from the SAME endpoint the 15 came from and got 18. The 15 was
+right on 2026-09-19 — three sources including the ruleset owner's own word — and
+is wrong on 2026-09-30 without anybody touching this repository. **No amount of
+cross-checking finds this kind; only refreshing does**, and the Warrior had gone
+eleven days without a refresh because it was the class with the fewest reasons
+to doubt.
+
+**SPEARING STRIKE IS THE FINDING WORTH CARRYING**, and it is a new shape. The
+two sources that speak agree; the one that stays silent is the one we had. A
+missing clause is not a denial, so the tie-break rule never came into it — the
+same reasoning that keeps Shadowburn's Soul Shard when `foreverchanges.pro`
+cannot express a reagent. **DW Fury had been casting a two-handed-only ability
+while dual-wielding two swords for the whole project**, and a test asserted that
+it did.
+
+**THE REFRESH ALSO CONFIRMED FIVE TRANSCRIPTIONS**, which is the result this
+exercise mostly produces and mostly buries. Forever stopped rendering the
+`(100% of Spell Power)` artifact, so Bloodthirst, Shield Slam, Revenge,
+Hamstring and Intercept now print 48, 640–670, 138–168, 45 and 65 — every one
+of them a number this project had read out of an effect row when no description
+could state it. **And the two ranges settle a question `docs/warrior.md` had
+recorded as unanswerable**: 153 and 655 are exact midpoints, so flat-at-the-
+midpoint was right.
+
+**WHAT IT MEASURED**, 30 batches of 10 against the baseline:
+
+| | was | now | |
+| --- | --- | --- | --- |
+| 2H Arms | 607.2 | **603.3** | −3.9, inside ±9.1. Slam 2.9 casts a fight to 2.5 |
+| DW Fury | 652.0 | **651.2** | −0.8, inside ±8.9. Spearing Strike 2.7 casts to **0** |
+| the other 21 | — | — | identical to the decimal, Prot Warr included |
+
+**BOTH CORRECTIONS MEASURE AS NOISE, AND THAT IS THE INTERESTING PART FOR DW
+FURY.** Losing an ability outright cost 0.8 DPS because the 15 rage it was
+spending went straight into Heroic Strike: 9.0 casts a fight became 11.0, and
+its share went 15.8% to 19.5%. **The owner's Spearing Strike entry was worth
+about one DPS even when it worked** — so the point DW Fury spends on the talent
+was buying almost nothing before it started buying nothing at all. Whether the
+entry comes out of the list and whether the point moves are both the owner's
+calls and neither is taken here.
+
 ## Warlock — checked 2026-09-25, both sources at build 1.60.1.70009
 
 **Seven of ten agreed exactly**, on damage, mana cost, cast time and cooldown:
@@ -278,7 +349,8 @@ recorded and left alone.
 
 | Class | Agreed | Moved | Largest |
 | --- | --- | --- | --- |
-| Warrior | — | 5 | Slam, Thunder Clap, Bloodthirst, Demo Shout, Battle Shout |
+| Warrior, first pass | — | 5 | Slam, Thunder Clap, Bloodthirst, Demo Shout, Battle Shout |
+| **Warrior, re-checked 2026-09-30** | 4 of 7 | 3 | **Spearing Strike needs a two-hander**; Slam 15→18 |
 | Warlock | 7 of 10 | 3 + a cost | **Life Tap 424→840**, +12.1% Firelock |
 | Rogue | 10 of 12 | 2 | Backstab 225→150, worth nothing (nothing casts it) |
 | Priest | 5 of 7 | 2 | Mind Blast 490→485 |
@@ -304,6 +376,13 @@ The third kind is the one to fear. It survived because the figure looked reasona
 and the comment cited a real rule.
 
 ## Still unchecked
+
+**Eight classes are one refresh old.** The Warrior re-check found a figure that
+had gone stale in ELEVEN DAYS, on the class with the best sources in the project,
+and the mechanism was a live tuning change rather than anything anyone did wrong.
+The other eight captures are all at build 1.60.1.70009 and none has been
+re-fetched since 2026-09-25. `node tools/import_forever_spells.mjs --all --write`
+is one command and the diff is where a change announces itself.
 
 Nothing, for abilities. What has NOT been cross-checked is **talent values**
 (`src/data/talents/values/*.json`), which come from `talentsforever.com` alone and

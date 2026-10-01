@@ -1,4 +1,5 @@
 import type { TalentEffects } from './TalentEffect';
+import { BERSERKER_RAGE_ACTIVATION_BONUS } from '../abilities/warrior';
 
 /**
  * What every Warrior talent does, by talent id.
@@ -9,21 +10,27 @@ import type { TalentEffects } from './TalentEffect';
  * test asserts the coverage both ways, which is how three entries lost to a
  * careless edit were caught.
  *
- * 43 are fully modelled and 3 more are PARTLY modelled — something real plus an
+ * 43 are fully modelled and 4 more are PARTLY modelled — something real plus an
  * `unmodelled` entry naming the part that is missing (Sweeping Strikes,
- * Weaponmaster, Piercing Howl). 7 do nothing at all.
+ * Weaponmaster, Piercing Howl, Improved Berserker Rage). 6 do nothing at all.
  *
  * Those three numbers must sum to 53. An earlier count said 21 inert and summed
  * to 54, which is how the drift below went unnoticed, and the count after it
  * (29/6/18) went stale as the talents were filled in.
  *
- * SIX OF THE SEVEN INERT ONES ARE PERMANENTLY OUT OF SCOPE BY RULING — movement,
- * crowd control or threat — and each says so with a `scope` on its `unmodelled`
+ * ALL SIX INERT ONES ARE PERMANENTLY OUT OF SCOPE BY RULING — movement, crowd
+ * control or threat — and each says so with a `scope` on its `unmodelled`
  * entry rather than only in prose, so the milestone counts it as a decision and
- * not as work. Only three talents on this class are blocked on anything that
- * could ever change: Improved Berserker Rage (no priority list casts Berserker
- * Rage), Sweeping Strikes (needs a second target) and Weaponmaster's mace clause
- * (armor ignore). See CLAUDE.md, "Scope".
+ * not as work. **THE CLASS HAS NO LIVE GAP LEFT.** The last one was Improved
+ * Berserker Rage, whose reason argued from a priority LIST and was filed as an
+ * engine gap; its number was stated in the values file the whole time.
+ *
+ * TWO CLAUSES ARE STILL BLOCKED ON SOMETHING THAT COULD CHANGE, both inside
+ * PARTLY modelled talents: Sweeping Strikes (needs a second target) and
+ * Weaponmaster's mace-and-staff clause (armor ignore, which the damage
+ * pipeline cannot express). Neither can reach any of the three profiles --
+ * every encounter has one enemy, and every Warrior gear set is swords. See
+ * CLAUDE.md, "Scope".
  *
  * NINE GRANT AN ABILITY, and those are where being wrong costs most: an ability
  * handed to a character who never took its talent is free damage that nothing
@@ -39,7 +46,10 @@ import type { TalentEffects } from './TalentEffect';
  *   - a concept the engine does not have (threat, movement, stuns, multiple
  *     targets, defense skill)
  *   - the ability it modifies is itself inert, pending its numbers from the
- *     ruleset owner (Bloodrage, Berserker Rage, Shield Wall, Shield Block)
+ *     ruleset owner. THIS GROUP IS NOW EMPTY for the Warrior: Bloodrage,
+ *     Shield Wall and Shield Block were all filled in, and Berserker Rage's
+ *     own rage-on-damage is still unstated but its TALENT never depended on
+ *     that number
  *   - it needs a mechanism that exists but is not wired to talents yet
  *     (combat-start auras, a talent-granted reaction)
  *
@@ -131,33 +141,24 @@ export const WARRIOR_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
         'The ability is implemented and does nothing: its whole effect is that ' +
         'the next 5 melee attacks strike an ADDITIONAL opponent, and an ' +
         'encounter here has exactly one enemy. Not a missing number -- a ' +
-        'missing second target. See engine/combat/targeting.ts.',
+        'missing second target. Re-checked 2026-09-30: `trainingDummyEncounter` ' +
+        'still builds exactly one dummy and nothing creates a second. See ' +
+        'engine/combat/targeting.ts.',
     },
   ],
 
   /*
-   * Three clauses, one per weapon family, and only two of them can be modelled.
-   * The axe and polearm crit is expressible; the sword extra-attack chance
-   * needs a reaction that can trigger another swing, which `extraAttack`
-   * supports but nothing wires to a talent yet; the mace and staff armor
-   * ignore has no home in the damage pipeline at all.
-   *
-   * The crit clause applies on its own rather than the talent being written off
-   * whole: with an axe equipped it is exactly right, and with anything else it
-   * reports as not applying rather than silently contributing.
-   */
-  /*
-   * PARTLY MODELLED, and the sword clause is the part that is.
-   *
-   * Three clauses by weapon type: crit with an axe or polearm, armor
-   * penetration with a mace or staff, and a chance at an extra attack with a
-   * sword. The third is a reaction and is implemented, reading the talent's
-   * THIRD value through `valueIndex`.
-   *
-   * The other two are unmodelled for the same reason as each other: an ability
-   * cannot ask what weapon type it is holding. Nothing in the engine carries a
-   * weapon's type -- only its speed, damage and skill -- so all three clauses
-   * are ungated and the sword one fires whatever the warrior is wielding.
+   * ----------------------------------------------------------------------
+   * TWO STALE COMMENT BLOCKS WERE DELETED FROM HERE, and what they said is
+   * worth one line because both are the same failure. One claimed the sword
+   * extra attack "needs a reaction that ... nothing wires to a talent yet";
+   * the other claimed "nothing in the engine carries a weapon's type ... so
+   * all three clauses are ungated and the sword one fires whatever the
+   * warrior is wielding". Both sat directly above code doing the opposite,
+   * and the block BELOW them already said so. A comment asserting the
+   * opposite of its own code is worse than no comment, because it is read
+   * first.
+   * ----------------------------------------------------------------------
    */
   /*
    * Three clauses, one per weapon family, and two of the three are real.
@@ -181,6 +182,18 @@ export const WARRIOR_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
    * form, so a bonus earned by an off-hand axe would apply to main-hand swings
    * too. Main hand is the reading that is right for the hand doing most of the
    * damage and wrong for the other, which beats being wrong for both.
+   *
+   * THE ARMOR CLAUSE IS STILL A REAL ENGINE GAP, re-checked 2026-09-30 rather
+   * than assumed: `resolveDamage` computes its reduction from
+   * `armorReduction(target.stats.get('armor'), target.level)` and the pipeline
+   * has no attacker-side term at any step, so a percentage the ATTACKER
+   * ignores has nowhere to go.
+   *
+   * IT CANNOT REACH ANY OF THE THREE PROFILES EITHER WAY: every weapon in
+   * every Warrior gear set is a SWORD, so the only clause a Warrior profile
+   * can exercise is the one that is implemented. Both facts are worth keeping
+   * and they expire separately -- the gap when the pipeline changes, the
+   * irrelevance when the gear does.
    */
   weaponmaster: [
     { kind: 'conditionalCrit', requires: { weaponTypes: ['axe', 'polearm'] } },
@@ -189,9 +202,11 @@ export const WARRIOR_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
       kind: 'unmodelled',
       reason:
         'The mace and staff clause ignores a percentage of the target armor, ' +
-        'which the damage pipeline cannot express. The axe/polearm crit and ' +
-        'the sword extra attack both work; the crit reads the MAIN HAND only, ' +
-        'because crit chance has no per-slot form in this engine.',
+        'and the damage pipeline has no attacker-side armor term at any step ' +
+        '-- re-checked 2026-09-30. The axe/polearm crit and the sword extra ' +
+        'attack both work; the crit reads the MAIN HAND only, because crit ' +
+        'chance has no per-slot form in this engine. No Warrior gear set ' +
+        'holds a mace or staff, so no profile can reach this clause anyway.',
     },
   ],
 
@@ -341,13 +356,38 @@ export const WARRIOR_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
    * Rage, so an ability-cost or on-cast effect would never fire. That is a
    * smaller and much more checkable claim than the one it replaces.
    */
+  /*
+   * BUILT, and it was never an engine gap.
+   *
+   * "Your Berserker Rage ability will instantly generate 10 Rage and has a
+   * 100% chance to remove all movement impairing effects when activated" --
+   * two clauses, and the first states its number: 5 at one rank and 10 at two.
+   * The old entry wrote the whole talent off because "no priority list casts
+   * Berserker Rage", which is an argument about a LIST and was recorded as
+   * though it were an argument about the engine. A talent working and a talent
+   * mattering are different questions; this is the first.
+   *
+   * `valueIndex: 0` because the row carries the rage AND the 100% dispel
+   * chance, and taking the second would grant 100 rage on activation.
+   *
+   * Still worth nothing to any of the three profiles: none of them spends a
+   * point here, and no list casts the ability. That is a BUILD cause and a
+   * LIST cause, both of which expire differently from an engine one.
+   */
   improved_berserker_rage: [
     {
+      kind: 'abilityBonus',
+      abilityId: 'berserker_rage_cast',
+      key: BERSERKER_RAGE_ACTIVATION_BONUS,
+      valueIndex: 0,
+    },
+    {
       kind: 'unmodelled',
+      scope: 'crowdControl',
       reason:
-        'Grants Rage when Berserker Rage is activated, and no priority list ' +
-        'casts Berserker Rage. The movement-impairing clause has nothing to ' +
-        'remove.',
+        'The movement-impairing clause removes snares, which are out of ' +
+        'scope by the same ruling that covers Piercing Howl -- and nothing ' +
+        'in an encounter here applies one. The rage on activation is applied.',
     },
   ],
 

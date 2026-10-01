@@ -35,7 +35,7 @@ At `d93f167`, 23 profiles, 10 iterations each:
 | **134** | abilities in at least one profile's book |
 | **109** | exercised by at least one profile |
 | **25** | never cast by any of the 23 |
-| **8** | priority list entries that never fire |
+| **9** | priority list entries that never fire — 8 at the time of this table, plus Spearing Strike, see below |
 | **23 of 23** | damage tables summing to 100% — **nothing unaccounted, anywhere** |
 
 **THE SHARE TOTAL IS THE STRONGEST RESULT HERE and the easiest to overlook.**
@@ -48,7 +48,7 @@ every pool under a heading that said "Rage" and produced a tidy 100%.
 this one's, and the two together are the macro bill of health: everything that
 deals damage scales with something, and everything that deals damage is counted.
 
-## The eight list entries that never fire
+## The nine list entries that never fire
 
 **The state table in [handoff-apl.md](handoff-apl.md) used to claim a `USES=1`
 sweep was clean. It is not, and it never was** — the detail elsewhere in the same
@@ -63,10 +63,19 @@ contradicted its own body. Corrected, and the list is here instead.
 | `defensive_stance_cast` | Prot Warr | as above |
 | `eviscerate` | Rupture | the gate's two aura-duration floors never coincide with five combo points. **Ruled fine by the owner** — "zero is fine" |
 | `hammer_of_wrath` | Seal Twist Ret | **out of mana, not out of window.** See below -- this row said the wrong thing for a day |
+| `spearing_strike` | DW Fury | **the build does not have the ability**, because Spearing Strike requires a two-handed weapon and that list is only reached by a dual-wielder. Added 2026-09-30; the entry is the owner's and is left as written |
 
-Six causes, four of them deliberate, one ruled on, and one a RESOURCE. **None is
-a broken declaration**, which is the point of listing them with reasons rather
-than counting them.
+Seven causes, four of them deliberate, one ruled on, one a RESOURCE and one a
+WEAPON. **None is a broken declaration**, which is the point of listing them with
+reasons rather than counting them.
+
+**AND THE LAST ONE IS INVISIBLE TO THIS AUDIT**, which is worth saying in the
+document the audit produces. `ability_audit.ts` reports a listed entry only when
+the built character HAS the ability, so an entry naming an ability the build
+never learned does not appear here at all -- it shows up in
+`tools/class_audit.ts`, which reads the list against the book. That is the fourth
+of the five causes of a never-fired entry, and the tool most people reach for
+cannot see it.
 
 ### Hammer of Wrath: the audit found it, and then named the wrong cause
 

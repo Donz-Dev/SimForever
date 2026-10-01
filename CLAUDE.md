@@ -92,7 +92,7 @@ together told someone their build was missing features that were never coming.
 | `scope` | Covers | Entries |
 | --- | --- | --- |
 | `positioning` | positions, range, facing, movement, "nearby", radius, travel forms | 17 |
-| `crowdControl` | stuns, fears, roots, snares, silences, incapacitates, disorients, disarms | 32 |
+| `crowdControl` | stuns, fears, roots, snares, silences, incapacitates, disorients, disarms, **and removing any of them** | 33 |
 | `threat` | threat, which is not tracked. Defensive Stance's +30% and Defiance are dropped, not deferred | 14 |
 | `healing` | healing THROUGHPUT. **Mana RETURN is NOT out of scope** — it changes a damage profile's sustain, so it is a live gap and gets no `scope` | 33 |
 | `stealth` | being stealthed, detecting it, and the openers requiring it — Ambush, Garrote, Cheap Shot. **NOT an in-combat proc that REMOVES a stealth requirement**, which is what Cutthroat is | 7 |
@@ -700,6 +700,13 @@ whether a list changed at all; the DPS says whether it mattered.**
 
 ### Gear and items
 
+- **AN ABILITY'S WEAPON REQUIREMENT IS GATED AT THE BOOK, NOT AT THE CAST.**
+  `abilitiesForBuild` takes `style` and refuses Shield Slam without a shield and
+  Spearing Strike without a two-hander, so the ability is simply ABSENT rather
+  than present and always refused. The difference is what a report says: an
+  ability in the book and never cast reads as a rotation problem, and this is a
+  weapon problem. A `canCast` gate is the Rogue's dagger shape and is right where
+  a weapon could change mid-fight; nothing here swaps weapons.
 - **A stat that only applies sometimes is a bug waiting to happen.** Equipment
   resolution strips the slots a style cannot fill, and only genuine conflicts are
   exclusive: a two-hander against a one-hander, and an off-hand the style cannot
@@ -785,6 +792,15 @@ Say which. Only the first is an engine gap.
 
 Plus the permanent rulings under **Scope**.
 
+- **A FOURTH CAUSE HIDES INSIDE THE FIRST: THE LIST.** "No priority list casts
+  Berserker Rage" is an argument about a ROTATION and it sat in the engine column
+  for the Warrior's whole life, as the class's last live gap. The number it was
+  supposedly waiting on -- 5 and 10 rage by rank -- was in `values/warrior.json`
+  the entire time. **A reason that names a list, a build or a profile is not an
+  engine gap**, and it reads exactly like one because the talent is equally
+  silent either way. Build the mechanism, test the MECHANISM, and let the list
+  cause be a list cause.
+
 - **A LOW-HEALTH REQUIREMENT IS A CLOCK, NOT A TARGET PROPERTY, and writing it
   off as one is now a documented mistake TWICE.** `inExecutePhase` in
   `combat/executePhase.ts` reads remaining combat TIME against 20% of the
@@ -852,6 +868,23 @@ alone, uncorroborated, and that is the honest state of them: not suspected
 wrong, but never checked the way the one class that WAS checked needed eight
 fixes. `foreverchanges.pro` is the available second opinion and running it
 against a class is cheap.
+
+**AND IT HAD FOUR SOURCES WITHOUT HAVING A SPELLBOOK CAPTURE, WHICH TURNED OUT
+TO MATTER.** It was the one class of the nine with no
+`forever-<class>-spellbook.json`, so it was also the only one whose data carried
+no BUILD NUMBER and could not be diffed by machine. Taking it in 2026-09-30 was
+one command and moved three more figures. **THE TWO CAPTURES ANSWER DIFFERENT
+QUESTIONS and a class wants both**: the Wowhead tooltips carry the EFFECT ROWS —
+which is where Revenge's 153 and Bloodthirst's 48 came from when the description
+rendered `(100% of Spell Power)` — and the spellbook carries the BUILD and the
+REQUIREMENT LINES, which the tooltips do not have at all.
+
+**A REQUIREMENT LINE IS DATA, AND READING ONLY THE DAMAGE MISSES IT.** Spearing
+Strike requires a two-handed weapon; the DW Fury profile had been casting it
+while dual-wielding two swords for the whole project, and a test asserted that it
+did. Nothing about the figure looked wrong, because the damage was right — it was
+the wrong CHARACTER casting it. Check cost, cast, cooldown AND requirement when
+two sources are put side by side.
 
 - **Decode a build before writing anything.** `tools/decode_talent_build.mjs`. A
   build coming back at other than 51 points, or throwing "X given N of M ranks",
@@ -925,6 +958,23 @@ DIFFERENT.** `foreverchanges.pro` carries no reagent field for any spell, so its
 365-mana cost for Shadowburn does not contradict the Soul Shard the other source
 states — it cannot express one. Both are charged. Taking a tie-break literally
 where there is no tie deletes a real cost.
+
+**AND IT CUTS THE OTHER WAY TOO: A SOURCE THAT OMITS A CLAUSE HAS NOT DENIED
+IT.** Wowhead's Forever tooltip for Spearing Strike carries no requirement line;
+the spellbook capture and `foreverchanges.pro` both state a two-handed weapon.
+That is two sources speaking and one saying nothing, so the tie-break never comes
+up and the clause is simply true. **The silence was read as "no requirement" for
+the whole project**, which is the same mistake as Shadowburn's in the opposite
+direction — one deletes a real cost, the other grants a real ability to a
+character that cannot use it.
+
+**A REFRESH AND A CROSS-CHECK FIND DIFFERENT THINGS AND NEITHER SUBSTITUTES FOR
+THE OTHER.** Slam's cooldown went 15 to 18 in ELEVEN DAYS, on the class with the
+best sources in the project and against a figure the ruleset owner had confirmed
+personally. `--verify` re-fetched the SAME spell id from the SAME endpoint the 15
+came from and got 18, so it was not a source disagreement and no tie-break
+applies: the game changed. **Run the refresh first**, because a cross-check
+between two stale reads agrees perfectly.
 
 Record every check in [docs/source-cross-checks.md](docs/source-cross-checks.md),
 which also holds the two traps — one of them manufactures a disagreement that is

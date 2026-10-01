@@ -168,14 +168,32 @@ export const BLOODTHIRST: Ability = {
 };
 
 /**
- * Weapon damage plus 87, 1.5 second cast, 15 rage, FIFTEEN SECOND COOLDOWN.
+ * Weapon damage plus 87, 1.5 second cast, 15 rage, EIGHTEEN SECOND COOLDOWN.
  *
  * ----------------------------------------------------------------------------
- * THE COOLDOWN. The spreadsheet's row says 0 and this had none. Forever's
- * captured tooltip says "1.5 sec cast 15 sec cooldown", the ruleset owner
- * confirms fifteen, and the spellbook carries it on ALL FIVE ranks. Three
- * sources against the sheet, which is the same shape as Shield Wall's
- * cooldown and resolved the same way.
+ * THE COOLDOWN WAS FIFTEEN AND FOREVER MOVED IT TO EIGHTEEN, and this is the
+ * clearest case of BUILD DRIFT the project has: a figure that was right when
+ * it was written, checked against three sources at the time, and wrong now
+ * without anybody touching it.
+ *
+ * The spreadsheet's row said 0 and this had none. Forever's captured tooltip
+ * then said "1.5 sec cast 15 sec cooldown", the ruleset owner confirmed
+ * fifteen, and the spellbook carried it on all five ranks -- three sources
+ * against the sheet, resolved the way Shield Wall's cooldown was.
+ *
+ * Re-checked 2026-09-30 and ALL THREE LIVE SOURCES NOW SAY EIGHTEEN:
+ *
+ *     `import_spell.mjs --verify`           "1.5 sec cast 18 sec cooldown"
+ *     `forever-warrior-spellbook.json`      18 sec cooldown, build 1.60.1.70009
+ *     `foreverchanges.pro/spellbook/warrior` 18 sec cooldown
+ *
+ * So it is not a source disagreement and the tie-break rule is not what
+ * settles it -- the two reads that disagree are of DIFFERENT BUILDS, eleven
+ * days apart, and the newer one is unanimous. Only refreshing the captures
+ * finds this kind; no amount of cross-checking would have.
+ *
+ * Worth 22 seconds of the 2H Arms fight: four casts a minute became three and
+ * a third. See HANDOVER.md for what it measured.
  *
  * THE BASE DAMAGE WENT 87 -> 68 -> 87, and the round trip is worth keeping
  * because the trap is reusable.
@@ -198,9 +216,10 @@ export const BLOODTHIRST: Ability = {
  * the same argument that picks Battle Shout rank 7 over rank 1's twelve.
  *
  * WHAT THE COOLDOWN CHANGES. Slam was an on-demand filler, castable whenever
- * rage and the swing timer allowed; four casts a minute is now the ceiling. It
- * was the best damage per rage in the Arms list after Overpower, so a list
- * built around spamming it is a list that no longer exists.
+ * rage and the swing timer allowed; three and a third casts a minute is now
+ * the ceiling. It was the best damage per rage in the Arms list after
+ * Overpower, so a list built around spamming it is a list that no longer
+ * exists.
  *
  * UNSTATED: whether the cast pauses the swing timer, as it does in Classic. It
  * does not, unless Improved Slam is taken -- that talent grants
@@ -208,7 +227,7 @@ export const BLOODTHIRST: Ability = {
  * ----------------------------------------------------------------------------
  */
 export const SLAM_BASE_DAMAGE = 87;
-export const SLAM_COOLDOWN_MS = seconds(15);
+export const SLAM_COOLDOWN_MS = seconds(18);
 
 export const SLAM: Ability = {
   id: 'slam',
@@ -318,8 +337,35 @@ export const SPEARING_STRIKE_WEAPON_FRACTION = 0.4;
 /**
  * "40% Weapon Damage", 15 rage, 20 second cooldown. No base damage.
  *
+ * ----------------------------------------------------------------------------
+ * IT NEEDS A TWO-HANDED WEAPON, which nothing here knew until 2026-09-30.
+ *
+ * The Wowhead tooltip capture carries no requirement line for this spell at
+ * all -- "Requires Warrior / Requires level 1" and nothing else -- and that
+ * silence was read as "no requirement". Both of the OTHER two sources state
+ * one, in the same words the spellbook uses for a shield:
+ *
+ *     `forever-warrior-spellbook.json`       "Requires Two-Handed Axes,
+ *                                             Two-Handed Maces, Polearms,
+ *                                             Two-Handed Swords, Staves"
+ *     `foreverchanges.pro/spellbook/warrior` "Requires Two-Handed Melee Weapon"
+ *
+ * A SOURCE THAT OMITS A CLAUSE IS NOT A SOURCE THAT DENIES IT. The same
+ * reasoning that keeps Shadowburn's Soul Shard when the preferred source
+ * carries no reagent field: silence is not disagreement, so the two sources
+ * that speak decide it, and the tie-break rule never comes up.
+ *
+ * Enforced where Shield Slam's shield is -- `abilitiesForBuild` keeps it out
+ * of the BOOK rather than refusing it per cast, so a dual-wielder does not
+ * report it as an ability it owns and never uses.
+ *
+ * IT COST THE DW FURY PROFILE A TALENT POINT AND A LIST ENTRY, both of which
+ * are the ruleset owner's and neither of which is changed here. See
+ * docs/handoff/warrior.md.
+ * ----------------------------------------------------------------------------
+ *
  * A Forever original with no Classic counterpart, so there is nothing to check
- * it against beyond the sheet.
+ * its damage against beyond the sheet.
  */
 export const SPEARING_STRIKE: Ability = {
   id: 'spearing_strike',
@@ -558,8 +604,13 @@ export const THUNDER_CLAP: Ability = {
   cooldownMs: seconds(6),
   cost: { resource: 'rage', amount: 20 },
   attackTable: 'ranged-special',
-  // "all nearby enemies", with no stated cap. One, here.
-  targets: { maxTargets: Infinity },
+  /*
+   * FOUR, NOT "ALL NEARBY". This said `Infinity` with the comment "'all
+   * nearby enemies', with no stated cap" -- the description's first clause
+   * read without its last sentence. Every source ends it the same way: "Will
+   * affect up to 4 targets." One, here.
+   */
+  targets: { maxTargets: 4 },
   onCast: ({ simulation, caster, target, ability }) => {
     if (!target) return;
     dealDamage(simulation, {
@@ -872,13 +923,35 @@ export const RECKLESSNESS_ABILITY: Ability = {
   },
 };
 
+/** The key Improved Berserker Rage uses for the rage it grants on activation. */
+export const BERSERKER_RAGE_ACTIVATION_BONUS = 'rage';
+
 /**
- * Free, 30 second cooldown, and STILL INERT.
+ * Free, 30 second cooldown, 10 seconds, Berserker Stance.
  *
- * The one ability Forever's own spell data does not answer: its tooltip says it
- * generates "extra rage when taking damage" and names no number, and its other
- * half is immunity to Fear and Incapacitate, which the engine has no notion of.
- * Not a gap in the capture -- a gap in the source.
+ * ----------------------------------------------------------------------------
+ * TWO HALVES WITH DIFFERENT PROBLEMS, and only one of them is a gap.
+ *
+ * THE BASE ABILITY IS INERT AND THAT IS THE SOURCE'S DOING. "Generating extra
+ * rage when taking damage", with no number in the description and no effect
+ * row for it -- the spell carries exactly two rows, both immunities. Every
+ * source says the same thing, so it is not a transcription problem and not
+ * something a cross-check can settle. The duration IS stated and is real; see
+ * `BERSERKER_RAGE_DURATION_MS`.
+ *
+ * IMPROVED BERSERKER RAGE IS NOT INERT, and used to be recorded as though it
+ * were. "Your Berserker Rage ability will instantly generate 10 Rage ... when
+ * activated" -- a stated number, in the values file, at 5 and 10 for the two
+ * ranks. Nothing was missing but the two lines below: it arrives as a named
+ * bonus on this character's copy of the ability, exactly the way Improved
+ * Charge's rage reaches `CHARGE`.
+ *
+ * SO THE TALENT IS BUILT AND NO PROFILE CAN SHOW IT. None of the three
+ * Warrior profiles spends a point on it, and no priority list casts Berserker
+ * Rage -- which is a BUILD cause and a LIST cause, not an engine one. A talent
+ * working and a talent mattering are different questions, and the mechanism is
+ * what the test asserts.
+ * ----------------------------------------------------------------------------
  */
 export const BERSERKER_RAGE_ABILITY: Ability = {
   id: 'berserker_rage_cast',
@@ -887,11 +960,27 @@ export const BERSERKER_RAGE_ABILITY: Ability = {
   cooldownMs: seconds(30),
   requiresTarget: false,
   unmodelled:
-    'Forever names no number for the extra rage it generates, and its other ' +
-    'half is immunity to Fear and Incapacitate, which the engine has no ' +
-    'notion of. A gap in the source, not in the capture.',
-  onCast: ({ simulation, caster }) => {
+    'Forever names no number for the extra rage it generates while active, ' +
+    'and no effect row carries one -- the spell has two rows and both are ' +
+    'immunities. Its other half is immunity to Fear and Incapacitate, which ' +
+    'the engine has no notion of. A gap in the source, not in the capture. ' +
+    "Improved Berserker Rage's rage ON ACTIVATION is stated and is applied.",
+  onCast: ({ simulation, caster, ability }) => {
     simulation.applyAura(caster, BERSERKER_RAGE, caster.id);
+    /*
+     * Improved Berserker Rage, and nothing without it: a warrior who did not
+     * take the talent gets no bonus on their copy of this ability, so the
+     * grant is zero and `grantResource` is not called at all. Skipping the
+     * call rather than granting zero keeps the resource telemetry free of
+     * entries that moved nothing.
+     */
+    const onActivation = ability.bonuses?.[BERSERKER_RAGE_ACTIVATION_BONUS] ?? 0;
+    if (onActivation > 0) {
+      simulation.grantResource(caster, 'rage', onActivation, {
+        id: 'improved_berserker_rage',
+        name: 'Improved Berserker Rage',
+      });
+    }
   },
 };
 

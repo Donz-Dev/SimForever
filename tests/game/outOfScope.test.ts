@@ -83,8 +83,6 @@ const RULED_OUT_WORDING =
  * allowlist is a broken test.
  */
 const MENTIONS_BUT_IS_A_LIVE_GAP: Record<string, string> = {
-  'warrior.improved_berserker_rage':
-    'Inert because no priority list casts Berserker Rage -- a rotation decision, which can change. Its movement clause is incidental.',
   'shaman.water_shield':
     'MANA RETURN, which is explicitly in scope. Inert because neither profile is attacked and neither heals -- the target, not the ruling.',
   'paladin.divine_favor':
@@ -131,10 +129,33 @@ describe('the out-of-scope rulings are data, not prose', () => {
   });
 
   it('keeps the allowlist pointed at talents that really exist', () => {
-    const known = new Set(everyReason().map((entry) => entry.id));
-    const stale = Object.keys(MENTIONS_BUT_IS_A_LIVE_GAP).filter((id) => !known.has(id));
+    /*
+     * ----------------------------------------------------------------------
+     * AN ALLOWLIST ENTRY ONLY MEANS ANYTHING FOR AN UNSCOPED REASON, and
+     * checking that the talent merely EXISTS was not enough.
+     *
+     * The first test filters on `scope === undefined` BEFORE it consults this
+     * list, so the moment a reason gains a `scope` its entry here stops being
+     * consulted at all -- and the old check still passed, because the talent
+     * went on reporting itself unmodelled. Warrior Improved Berserker Rage is
+     * how that was found: it was built, its remaining clause took a
+     * `crowdControl` scope, and its entry sat here for a while afterwards
+     * saying "inert because no priority list casts Berserker Rage", which by
+     * then was the opposite of what the code did.
+     *
+     * So the requirement is UNSCOPED, not merely present. An entry that
+     * nothing can reach is a justification nobody will re-read, and this file
+     * exists to stop exactly that.
+     * ----------------------------------------------------------------------
+     */
+    const live = new Set(
+      everyReason()
+        .filter((entry) => entry.scope === undefined)
+        .map((entry) => entry.id),
+    );
+    const stale = Object.keys(MENTIONS_BUT_IS_A_LIVE_GAP).filter((id) => !live.has(id));
 
-    // An allowlist entry for a talent that no longer reports itself unmodelled
+    // An allowlist entry for a talent that no longer reports an UNSCOPED reason
     // is a claim that has expired, which is the failure mode this project keeps
     // hitting. Delete it rather than leaving it to rot.
     expect(stale).toEqual([]);
@@ -147,18 +168,40 @@ describe('the out-of-scope rulings are data, not prose', () => {
      * build was missing features that were never coming. So the split has to
      * survive `talentBuild`, not just exist in the effect table.
      *
-     * Iron Will is a ruling (stun and fear duration). Improved Berserker Rage is a
-     * live gap: no priority list casts the ability, which a rotation change could
-     * fix. One allocation, both kinds, and the panel's own filter applied here.
+     * Iron Will is a ruling (stun and fear duration). Sweeping Strikes is a gap
+     * with no scope: its effect is an additional target, and an encounter could
+     * one day have one. One allocation, both kinds, and the panel's own filter
+     * applied here.
+     *
+     * THE GAP HALF USED TO BE IMPROVED BERSERKER RAGE and had to move, which is
+     * the good kind of test failure. Its reason argued that no priority list
+     * casts Berserker Rage -- an argument about a LIST, filed as though it were
+     * an argument about the engine -- and its rage-on-activation number was
+     * stated in the values file all along. It is built now, and what is left of
+     * it is snare removal, which carries a `crowdControl` scope. So the talent
+     * is on the RULING side of this split and can no longer stand for the other.
      */
-    const build = talentBuild('warrior', { iron_will: 5, improved_berserker_rage: 2 });
+    const build = talentBuild('warrior', { iron_will: 5, sweeping_strikes: 1 });
 
     const ruled = build.unmodelled.filter((entry) => entry.scope !== undefined);
     const gaps = build.unmodelled.filter((entry) => entry.scope === undefined);
 
     expect(ruled.map((entry) => entry.talentId)).toEqual(['iron_will']);
     expect(ruled[0].scope).toBe('crowdControl');
-    expect(gaps.map((entry) => entry.talentId)).toEqual(['improved_berserker_rage']);
+    expect(gaps.map((entry) => entry.talentId)).toEqual(['sweeping_strikes']);
+  });
+
+  it('puts Improved Berserker Rage on the ruling side now that it is built', () => {
+    /*
+     * The talent this file used to hold up as the example of a live gap. Both
+     * halves are asserted because only having both makes the point: the rage
+     * ARRIVES as a bonus on the ability, and what is left unmodelled carries a
+     * scope, so nothing about it is outstanding work.
+     */
+    const build = talentBuild('warrior', { improved_berserker_rage: 2 });
+
+    expect(build.abilityBonuses.get('berserker_rage_cast')).toEqual({ rage: 10 });
+    expect(build.unmodelled.map((entry) => entry.scope)).toEqual(['crowdControl']);
   });
 
   it('reports how much of the gap is a decision rather than work', () => {

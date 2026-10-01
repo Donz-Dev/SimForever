@@ -11,6 +11,7 @@ import {
   SWEEPING_STRIKES_CHARGES,
 } from '../../src/game/auras/warrior';
 import { warriorAbility } from '../../src/game/abilities/warrior';
+import spellData from '../../src/data/abilities/forever-warrior-tooltips.json';
 import { legalise } from '../helpers/legalTalents';
 
 /*
@@ -106,10 +107,32 @@ describe('multi-target abilities declare what they would hit', () => {
    * has more than one enemy. Asserted so that the claim cannot quietly go
    * missing -- which is how Whirlwind and Cleave came to look single-target.
    */
-  it('Whirlwind says 4, Cleave says 2, Thunder Clap says everything', () => {
+  /*
+   * THUNDER CLAP SAID `Infinity` AND SAYS 4, which is the source's own last
+   * sentence: "Blasts nearby enemies ... Will affect up to 4 targets." The
+   * old value came from reading "all nearby enemies" and stopping there, and
+   * the test agreed with it because both were written from the same half of
+   * the description. Every source states the cap, including the two captured
+   * in this repository.
+   */
+  it('Whirlwind says 4, Cleave says 2, Thunder Clap says 4', () => {
     expect(warriorAbility('whirlwind')?.targets?.maxTargets).toBe(4);
     expect(warriorAbility('cleave')?.targets?.maxTargets).toBe(2);
-    expect(warriorAbility('thunder_clap')?.targets?.maxTargets).toBe(Infinity);
+    expect(warriorAbility('thunder_clap')?.targets?.maxTargets).toBe(4);
+  });
+
+  it('each cap is the number its own captured tooltip states', () => {
+    /*
+     * The second of the two checks this project puts on a captured number:
+     * the expectation above is written by hand, and this ties it to the
+     * source text so a typo in one of them fails.
+     */
+    const tooltip = (name: string) =>
+      spellData.spells.find((s) => s.name === name)?.tooltip ?? '';
+
+    expect(tooltip('Whirlwind')).toContain('up to 4 enemies');
+    expect(tooltip('Cleave')).toContain('a second nearby enemy');
+    expect(tooltip('Thunder Clap')).toContain('up to 4 targets');
   });
 
   it('single-target abilities declare nothing, which reads as one', () => {

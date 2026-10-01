@@ -29,18 +29,27 @@ import { REND_TICK_AP_COEFFICIENT } from '../combat/coefficients';
  * exercised, and would have been 40% wrong on that ability alone.
  *
  * READ THE EFFECT ROWS, NOT ONLY THE DESCRIPTION. Several of these tooltips
- * render Forever's "(100% of Spell Power)" artifact in place of the number,
+ * rendered Forever's "(100% of Spell Power)" artifact in place of the number,
  * and Demoralizing Shout's states a figure its own effect row contradicts.
  * The rows are authoritative, allowing for base points running one higher
  * than the stated value. `foreverchanges.pro/spellbook/warrior` renders the
  * same client data without the artifact and is the quickest cross-check.
  *
+ * THE ARTIFACT IS GONE UPSTREAM as of the 2026-09-30 refresh, and every figure
+ * it used to hide came back matching what the effect rows had already given:
+ * Bloodthirst 48, Shield Slam 640-670, Revenge 138-168, Hamstring 45,
+ * Intercept 65. Keep the rule anyway -- it is why those numbers are right, and
+ * the rendering could come back.
+ *
  * WHAT IS STILL PLACEHOLDER, and why each one is:
  *
- *   - `PLACEHOLDER_BERSERKER_RAGE_*` -- Forever's own tooltip gives no
- *     magnitude. "Generating extra rage when taking damage", no number.
  *   - the Overpower and Revenge windows -- reactive windows are not a spell and
- *     have no tooltip; the 5 second figure is still assumed.
+ *     have no tooltip; the 5 second figure is still assumed. The OVERPOWER one
+ *     is settled at six by the ruleset owner; only Revenge's is left.
+ *
+ * BERSERKER RAGE'S DURATION IS NO LONGER ONE OF THEM. All three sources say
+ * "Lasts 10 sec"; what is unstated is the rage magnitude, and that lives on
+ * the ability rather than here.
  *
  * Everything else below is sourced. Battle Stance carries no modifiers because
  * Forever says it has none ("A balanced combat stance"), which the engine had
@@ -175,6 +184,12 @@ export const SUNDER_ARMOR: AuraDefinition = {
  * the spellbook to be matched, and because the owner's own raid figure was
  * 139 to begin with -- two sources the owner supplied against one scrape.
  *
+ * THE 2026-09-30 CROSS-CHECK MADE IT THREE AGAINST ONE. Both machine captures
+ * now say 139 -- `forever-warrior-spellbook.json` and `foreverchanges.pro`,
+ * which is the standing tie-break -- against the Wowhead tooltip's 140. So
+ * the choice the owner made on two hand-read sources is the one two
+ * independent scrapes would have made anyway.
+ *
  * ONE ATTACK POWER, which is 0.07 of a point of damage per swing. The reason
  * to record it at all is that the next such gap might not be one.
  * ----------------------------------------------------------------------------
@@ -220,6 +235,26 @@ export const BATTLE_SHOUT: AuraDefinition = {
  * same way for Revenge and Shield Slam, where the description was unreadable
  * rather than merely wrong -- here it was readable AND wrong, which is worse,
  * because nothing prompted anyone to check the row beneath it.
+ *
+ * FOUR SOURCES AND THREE NUMBERS, after the 2026-09-30 cross-check, and 196
+ * still wins:
+ *
+ *     Wowhead tooltip description      210
+ *     Wowhead effect row               -195, which is 196
+ *     `forever-warrior-spellbook.json` 204
+ *     `foreverchanges.pro`             196
+ *
+ * The 204 is new and is the machine capture of the spellbook, which is not the
+ * hand read this comment used to cite -- so that sentence was already a claim
+ * about a source nobody could reproduce. `foreverchanges.pro` is the standing
+ * tie-break and it agrees with the effect row, which is two independent
+ * readings of the same client landing on the same figure. Nothing changes.
+ *
+ * IT IS ALSO WHY THE READING RULE IN docs/warrior.md HAS AN EXCEPTION. That
+ * rule says the tooltip wins for the two shouts because they carry a
+ * standalone `Level 60` line and scale with level -- which, read literally,
+ * would make this 210. It is right about Battle Shout and wrong here, and the
+ * preferred source is what says so.
  * ----------------------------------------------------------------------------
  *
  * Only useful when the target attacks back, since it lowers the TARGET's damage
@@ -270,16 +305,29 @@ export const RECKLESSNESS: AuraDefinition = {
 };
 
 /**
- * PLACEHOLDER. Berserker Rage has a 30 second cooldown and costs nothing. The
- * sheet states no effect and no duration.
+ * Ten seconds, and NO LONGER A PLACEHOLDER.
+ *
+ * It was one, on the grounds that "the sheet states no effect and no
+ * duration". True of the sheet and irrelevant: all three of Forever's own
+ * sources end the sentence with "Lasts 10 sec." -- the Wowhead tooltip
+ * capture, the spellbook capture and `foreverchanges.pro`. The placeholder was
+ * a claim about the SHEET wearing the shape of a claim about the data, and it
+ * outlived the capture that answered it.
+ *
+ * WHAT IS STILL UNSTATED IS THE MAGNITUDE, not the duration: "generating extra
+ * rage when taking damage", with no number anywhere and no effect row for it
+ * (the spell carries exactly two, both immunities). That is the gap, and
+ * `BERSERKER_RAGE_ABILITY` is where it is declared.
  */
-export const PLACEHOLDER_BERSERKER_RAGE_DURATION_MS = seconds(10);
+export const BERSERKER_RAGE_DURATION_MS = seconds(10);
 
 export const BERSERKER_RAGE: AuraDefinition = {
   id: 'berserker_rage',
   name: 'Berserker Rage',
-  durationMs: PLACEHOLDER_BERSERKER_RAGE_DURATION_MS,
-  // No modifiers at all: nothing is stated, so nothing is claimed.
+  durationMs: BERSERKER_RAGE_DURATION_MS,
+  // No modifiers at all: the rage-on-damage magnitude is unstated, so nothing
+  // is claimed. Improved Berserker Rage's grant is on the ABILITY, because it
+  // fires on activation rather than while the aura is up.
 };
 
 /**

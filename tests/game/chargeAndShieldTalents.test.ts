@@ -1,6 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import { CHARGE, CHARGE_RAGE_GENERATED } from '../../src/game/abilities/warrior';
-import { WARRIOR_SHIELD_DEFENSIVE, WARRIOR_TWO_HAND_BATTLE } from '../../src/game/rotations/warrior';
+import { abilitiesForClass } from '../../src/game/abilities/abilitiesForClass';
+import {
+  WARRIOR_DUAL_WIELD_BERSERKER,
+  WARRIOR_SHIELD_DEFENSIVE,
+  WARRIOR_TWO_HAND_BATTLE,
+} from '../../src/game/rotations/warrior';
 import { WARRIOR_TALENT_EFFECTS } from '../../src/game/talents/warriorEffects';
 import { talentBuild, talentContextFor } from '../../src/game/talents/talentBuild';
 import { weaponsFor } from '../../src/game/actors/createPlayer';
@@ -25,6 +30,10 @@ const casts = (id: string, name: string) => {
   const batch = runProfileBatch(preset(id));
   return batch.abilities.find((a) => a.abilityName === name)?.uses ?? 0;
 };
+
+/** What a warrior of this combat style and allocation actually knows. */
+const abilityIds = (style: 'two_hander' | 'dual_wield' | 'one_hand_shield', talents: object) =>
+  abilitiesForClass('warrior', style, talents as never).map((ability) => ability.id);
 
 // ---------------------------------------------------------------------------
 // Charge
@@ -205,12 +214,49 @@ describe('Concussion Blow is deliberately silent', () => {
 // Spearing Strike
 // ---------------------------------------------------------------------------
 
-describe('Spearing Strike reaches the Fury list', () => {
-  it('is cast by DW Fury now, below Bloodthirst and Whirlwind', () => {
+describe('Spearing Strike needs a two-handed weapon', () => {
+  /*
+   * ----------------------------------------------------------------------------
+   * THIS TEST USED TO ASSERT THE OPPOSITE, and it was pinning a fact that was
+   * wrong rather than a decision that changed.
+   *
+   * It read "is cast by DW Fury now, below Bloodthirst and Whirlwind", because
+   * Spearing Strike was in the DW Fury preset's talents and in no list that
+   * build could reach. The entry was added to the Berserker list on the
+   * ruleset owner's instruction and the point stopped looking wasted.
+   *
+   * It is wasted. "Requires Two-Handed Axes, Two-Handed Maces, Polearms,
+   * Two-Handed Swords, Staves" in `forever-warrior-spellbook.json`, and
+   * "Requires Two-Handed Melee Weapon" on `foreverchanges.pro`. Only the older
+   * Wowhead tooltip omits it, and an omission is not a denial -- so no
+   * tie-break is involved, just two sources against a silence.
+   *
+   * What is asserted now is the WEAPON RULE, which is an invariant, rather
+   * than a list position, which is the owner's. A dual-wielder does not have
+   * the ability at all; a two-hander does and casts it.
+   * ----------------------------------------------------------------------------
+   */
+  it('is not in a dual-wielder\'s book, however many points are spent', () => {
+    const ids = abilityIds('dual_wield', legalise({ spearing_strike: 1 }));
+    expect(ids).not.toContain('spearing_strike');
+  });
+
+  it('is in a two-hander\'s book, and 2H Arms casts it', () => {
+    const ids = abilityIds('two_hander', legalise({ spearing_strike: 1 }));
+    expect(ids).toContain('spearing_strike');
+    expect(casts('two_hand_arms', 'Spearing Strike')).toBeGreaterThan(1);
+  });
+
+  it('is still in the Berserker list, where it can never fire', () => {
     /*
-     * It was in the preset's talents and in no list this build could reach --
-     * one point doing nothing, which is what the coverage report turned up.
+     * The owner's entry, left as written. `PriorityRotation` skips an ability
+     * the actor does not know, so it costs the list nothing -- and removing it
+     * is the owner's call, not this test's. What must stay true is that it
+     * produces no casts rather than an error.
      */
-    expect(casts('dw_fury', 'Spearing Strike')).toBeGreaterThan(1);
+    expect(
+      WARRIOR_DUAL_WIELD_BERSERKER.some((entry) => entry.abilityId === 'spearing_strike'),
+    ).toBe(true);
+    expect(casts('dw_fury', 'Spearing Strike')).toBe(0);
   });
 });
