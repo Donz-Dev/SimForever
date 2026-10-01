@@ -1,9 +1,16 @@
 import type { CastReaction, Reaction } from '../../engine';
 import type { TalentReactionBuilder } from './warriorTalents';
 import {
+  ARCANE_BLAST,
   CLEARCASTING,
+  COMBUSTION,
+  COMBUSTION_CRITS_TO_END,
   FINGERS_OF_FROST,
   FINGERS_OF_FROST_PROC_CHANCE,
+  FIRE_SPELL_IDS,
+  FROST_SPELL_IDS,
+  MAGE_DAMAGE_SPELL_IDS,
+  wintersChillAura,
   fingersOfFrostAura,
   HOT_STREAK,
   MISSILE_BARRAGE,
@@ -27,27 +34,28 @@ import {
  * ----------------------------------------------------------------------------
  */
 
-/** "Fire damage spells" -- every Fire spell the Mage can cast. */
-const FIRE_SPELLS = new Set([
-  'fireball',
-  'scorch',
-  'pyroblast',
-  'fire_blast',
-  'blast_wave',
-  'frostfire_bolt',
-]);
+/**
+ * "Fire damage spells" -- every Fire spell the Mage can cast.
+ *
+ * THE LIST LIVES IN `auras/mage.ts` NOW, because Combustion's crit bonus needs
+ * the same school written out as ability ids and two copies of "which spells
+ * are Fire" is exactly one too many: the failure of them disagreeing is Ignite
+ * firing off a spell Combustion does not count, and both numbers plausible.
+ */
+const FIRE_SPELLS = new Set(FIRE_SPELL_IDS);
 
 /** Hot Streak names four, and Pyroblast is deliberately not one of them. */
 const HOT_STREAK_TRIGGERS = new Set(['fireball', 'frostfire_bolt', 'fire_blast', 'scorch']);
 
-/** Every damage spell, for the talents that say "any damage spell". */
-const DAMAGE_SPELLS = new Set([
-  ...FIRE_SPELLS,
-  'frostbolt',
-  'ice_lance',
-  'arcane_missiles',
-  'arcane_blast',
-]);
+/**
+ * Every damage spell, for the talents that say "any damage spell".
+ *
+ * ALSO IN `auras/mage.ts` NOW, for the same reason the Fire list is: Arcane
+ * Blast's "+10% to all your OTHER spells" and its "until any other damage
+ * spell is cast" have to select the SAME set, or a spell could take the bonus
+ * without ending the window.
+ */
+const DAMAGE_SPELLS = new Set(MAGE_DAMAGE_SPELL_IDS);
 
 /**
  * Ignite: a Fire crit burns for a share of the damage it just dealt.
@@ -74,6 +82,68 @@ export const ignite: TalentReactionBuilder = (percentOfDamage) => ({
     context.applyAura(target, igniteAura((attack.amount * percentOfDamage) / 100), actor.id);
   },
 });
+
+/*
+ * ============================================================================
+ * COMBUSTION'S RAMP AND ITS END, IN ONE REACTION, because they are one
+ * sentence: "each of your Fire damage spell hits increases your critical
+ * strike chance with Fire damage spells by 10%. This effect lasts until you
+ * have caused 4 non-periodic critical strikes with Fire spells."
+ *
+ * IT USED TO BE NEITHER. The ability applied ten stacks at once for a
+ * placeholder thirty seconds, and the stacks were `spellCritChance` -- every
+ * school, not Fire -- so a three-minute cooldown was worth +100% crit to
+ * everything the Mage cast. All three errors pointed the same way and all
+ * three were written down, which is the only reason it was allowed to stand.
+ *
+ * "NON-PERIODIC" NEEDS NO CHECK. A reaction only ever sees attacks that went
+ * through a combat table, and `dealDamage` dispatches none for a tick -- so
+ * Pyroblast's burn cannot spend one of the four crits. That is stated here
+ * because the tooltip says the word and a reader will look for it.
+ *
+ * THE COUNTER IS PER CHARACTER, held in this closure, which is the same reason
+ * an internal cooldown is: a batch that shared one closure between iterations
+ * would carry the first Mage's crit count into the second's window. It is
+ * keyed on the aura's `appliedAt` so a SECOND Combustion starts from zero --
+ * and `appliedAt` survives a stack, because `refresh` leaves it alone for a
+ * permanent aura.
+ * ============================================================================
+ */
+export const combustionCounter: TalentReactionBuilder = () => {
+  let countedWindow = -1;
+  let crits = 0;
+
+  return {
+    id: 'combustion',
+    on: 'dealt',
+    outcomes: ['hit', 'crit'],
+    canTrigger: (_context, actor, attack) =>
+      actor.auras.has(COMBUSTION.id) &&
+      attack.abilityId !== undefined &&
+      FIRE_SPELLS.has(attack.abilityId),
+    onTrigger: (context, actor, attack) => {
+      const aura = actor.auras.get(COMBUSTION.id);
+      if (!aura) return;
+      if (aura.appliedAt !== countedWindow) {
+        countedWindow = aura.appliedAt;
+        crits = 0;
+      }
+
+      /*
+       * THE STACK GOES ON FIRST AND THE END IS CHECKED SECOND, which is the
+       * order the tooltip reads and the order that costs nothing either way:
+       * the hit being reacted to has already rolled, so this stack is for the
+       * spells after it and the removal below takes it straight off again on
+       * the fourth crit.
+       */
+      context.applyAura(actor, COMBUSTION, actor.id);
+
+      if (attack.outcome !== 'crit') return;
+      crits += 1;
+      if (crits >= COMBUSTION_CRITS_TO_END) actor.auras.remove(context, COMBUSTION.id);
+    },
+  };
+};
 
 /**
  * Master of Elements: a Fire or Frost crit refunds part of the base mana cost.
@@ -200,6 +270,51 @@ export const improvedScorchReaction: TalentReactionBuilder = (chancePercent) => 
 
 /*
  * ============================================================================
+ * WINTER'S CHILL: a Frost damage spell may leave a stacking crit debuff.
+ *
+ * "Gives your Frost damage spells a {0}% chance to apply the Winter's Chill
+ * effect, which increases the chance your Ice Lance and Frostbolt spells will
+ * critically hit the target by 2% for 15 sec. Stacks up to {3} times."
+ *
+ * THE FIRST PROC HERE WHOSE RANK MOVES TWO NUMBERS, which is why it takes the
+ * whole values row: the chance is index 0 and the stack cap is index 3, and
+ * they scale together 20/1 .. 100/5. Deriving one from the other works today
+ * and is exactly the arithmetic that goes wrong the day a rank changes.
+ *
+ * WHAT APPLIES IT AND WHAT BENEFITS ARE DIFFERENT SETS, and the tooltip says
+ * so: any Frost damage spell applies it, and only Ice Lance and Frostbolt crit
+ * more for it. Frostfire Bolt is in the first and not the second.
+ *
+ * `WINTERS_CHILL_MAX_STACKS_INDEX` IS NAMED because an index into a values row
+ * read wrong is the failure this project keeps meeting -- Arcane Mind's crit
+ * clause at index 0 would have been a tenth of its value.
+ * ============================================================================
+ */
+const WINTERS_CHILL_MAX_STACKS_INDEX = 3;
+
+export const wintersChill: TalentReactionBuilder = (chancePercent, values) => {
+  /*
+   * NO FALLBACK IF THE ROW IS SHORT. A default of 1 would be a talent silently
+   * capped at one stack -- a fifth of its value, and no error -- so the aura
+   * is built with whatever the file states and a test pins all five ranks.
+   */
+  const maxStacks = values?.[WINTERS_CHILL_MAX_STACKS_INDEX] ?? 1;
+  return {
+    id: 'winter_s_chill',
+    on: 'dealt',
+    outcomes: ['hit', 'crit'],
+    canTrigger: (context, _actor, attack) =>
+      attack.abilityId !== undefined &&
+      FROST_SPELL_IDS.includes(attack.abilityId) &&
+      context.rng.rollChance(chancePercent / 100),
+    onTrigger: (context, actor, attack) => {
+      context.applyAura(attack.defender, wintersChillAura(maxStacks), actor.id);
+    },
+  };
+};
+
+/*
+ * ============================================================================
  * FINGERS OF FROST, IN TWO REACTIONS, because the talent has two verbs.
  *
  *   PROCS  off a Chill effect, and a Chill effect is a spell that slows --
@@ -237,6 +352,43 @@ export const fingersOfFrost = (charges: number): Reaction => ({
   },
 });
 
+/*
+ * ============================================================================
+ * ARCANE BLAST'S WINDOW, ENDED BY THE SPELL THAT COLLECTED IT.
+ *
+ * "Effect stacks up to 4 times and lasts 8 sec or until any other damage spell
+ * is cast." Read literally against the sentence before it -- "the damage of
+ * all your OTHER spells is increased by 10%" -- the bonus is destroyed by the
+ * only thing that could ever collect it, and the clause pays nothing. So the
+ * reading taken is that the other spell TAKES the bonus and the stacks then
+ * go, which is the project's standing rule for a specification that would
+ * otherwise disable itself.
+ *
+ * `cast.final` IS WHAT MAKES A CHANNEL WORK. `runCast` runs once per tick, so
+ * without it the first of five missiles would end the window and the other
+ * four would fire unbuffed -- a smaller number, no error, and the opposite of
+ * what the owner's own Arcane list is built to do.
+ *
+ * WIRED THROUGH THE TALENT THAT GRANTS THE SPELL, which is the only hook a
+ * cast reaction has: `MAGE_CAST_REACTIONS` is keyed by talent id, and a Mage
+ * without the Arcane Blast talent has neither the spell nor the aura. Its
+ * value -- the 10 -- is hand-filled in the values file and cross-checked
+ * against `ARCANE_BLAST_DAMAGE_PER_STACK` by a test, because an effect that
+ * reads no value is DROPPED rather than reported.
+ * ============================================================================
+ */
+export const arcaneBlastSpender = (): CastReaction => ({
+  id: 'arcane_blast_spend',
+  canTrigger: (_context, actor, cast) =>
+    cast.final &&
+    cast.ability.id !== 'arcane_blast' &&
+    DAMAGE_SPELLS.has(cast.ability.id) &&
+    actor.auras.has(ARCANE_BLAST.id),
+  onTrigger: (context, actor) => {
+    actor.auras.remove(context, ARCANE_BLAST.id);
+  },
+});
+
 export const fingersOfFrostSpender = (): CastReaction => ({
   id: 'fingers_of_frost_spend',
   canTrigger: (context, actor) => {
@@ -251,14 +403,17 @@ export const fingersOfFrostSpender = (): CastReaction => ({
 /** Procs that fire on a cast, by the talent that grants them. */
 export const MAGE_CAST_REACTIONS: Readonly<Record<string, (value: number) => CastReaction>> = {
   fingers_of_frost: fingersOfFrostSpender,
+  arcane_blast: arcaneBlastSpender,
 };
 
 export const MAGE_TALENT_REACTIONS: Readonly<Record<string, TalentReactionBuilder>> = {
   ignite,
+  combustion: combustionCounter,
   master_of_elements: masterOfElements,
   hot_streak: hotStreak,
   arcane_concentration: arcaneConcentration,
   missile_barrage: missileBarrage,
   improved_scorch: improvedScorchReaction,
   fingers_of_frost: fingersOfFrost,
+  winter_s_chill: wintersChill,
 };

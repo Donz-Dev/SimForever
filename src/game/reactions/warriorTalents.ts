@@ -18,8 +18,29 @@ import {
  * Each builder takes the talent's value at the character's rank. A talent with
  * no captured value never reaches here — `talentBuild` reports it as unmodelled
  * instead, so a missing number can never quietly become a zero-strength proc.
+ *
+ * ----------------------------------------------------------------------------
+ * AND EVERY NUMBER AT THAT RANK, as a second argument, for the proc whose
+ * tooltip varies more than one of them.
+ *
+ * MOST DO NOT NEED IT, which is why it is second and optional: a builder that
+ * ignores it is a one-argument function and TypeScript is happy. The talent
+ * effect's `valueIndex` picks which number arrives as `value`, and that is
+ * enough whenever the others are the same at every rank -- Improved Scorch's
+ * per-stack 3 and Fingers of Frost's 15% chance are both constants beside
+ * their auras, checked against the file by a test.
+ *
+ * WINTER'S CHILL IS THE FIRST WHERE TWO NUMBERS BOTH MOVE. Its values are
+ * `[chance, critPerStack, duration, maxStacks]` and the rank scales the chance
+ * 20..100 AND the stack cap 1..5. Deriving one from the other would work today
+ * and is exactly the kind of arithmetic that is right until a rank changes,
+ * so the whole row is handed over instead.
+ * ----------------------------------------------------------------------------
  */
-export type TalentReactionBuilder = (value: number) => Reaction;
+export type TalentReactionBuilder = (
+  value: number,
+  values?: readonly number[],
+) => Reaction;
 
 /** Only melee swings and melee specials carry a weapon slot. */
 /*

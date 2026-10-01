@@ -42,7 +42,7 @@ import type {
   BuildRequirement,
 } from './TalentEffect';
 import { talentsForClass } from './talentData';
-import { talentDescription, talentNumber } from './talentValues';
+import { talentDescription, talentNumber, talentNumbers } from './talentValues';
 import { WARRIOR_TALENT_EFFECTS } from './warriorEffects';
 import { ROGUE_TALENT_EFFECTS } from './rogueEffects';
 import { DRUID_TALENT_EFFECTS } from './druidEffects';
@@ -715,7 +715,7 @@ export function talentBuild(
             );
             break;
           }
-          reactions.push(build(value));
+          reactions.push(build(value, talentNumbers(characterClass, talentId, rank)));
           break;
         }
         case 'castReaction': {

@@ -1,6 +1,6 @@
 import type { Combatant } from '../actors/Combatant';
 import type { AbilityModifier } from '../combat/abilityModifiers';
-import { combineAbilityModifiers, pick } from '../combat/abilityModifiers';
+import { combineAbilityModifiers, pick, scaleByStacks } from '../combat/abilityModifiers';
 import { EventPriority, createEvent } from '../events';
 import type { SimulationContext } from '../simulation/SimulationContext';
 import { bindModifiers } from '../stats';
@@ -66,15 +66,51 @@ export class AuraCollection {
    * nothing it said ever reached a cast. `pick` is the same fold the standing
    * registry uses, shared rather than written out twice, which is what stops
    * the two drifting apart again.
+   *
+   * AND `modifiersScaleWithStacks` COUNTS HERE TOO, which it did not until
+   * Combustion wanted it. That flag was read by `statModifiers` and by
+   * `damageTakenBySchool` and silently ignored by this one collection -- so an
+   * aura declaring both stacked visibly, reported its stack count, and paid a
+   * single stack's worth. Combustion is "each of your Fire damage spell hits
+   * increases your critical strike chance with Fire spells by 10%", which is
+   * one entry per Fire spell and a stack per hit, and at ten stacks it was
+   * worth ten percent.
    */
   abilityModifierFor(abilityId: string | undefined): AbilityModifier | undefined {
+    return this.foldAbilityModifiers(abilityId, (definition) => definition.abilityModifiers);
+  }
+
+  /**
+   * The same fold, over the modifiers an aura applies to attacks made AGAINST
+   * its carrier.
+   *
+   * ONE IMPLEMENTATION AND TWO FIELD SELECTORS, because the two differ in
+   * nothing but which side of the attack carries them -- and the `pick` fold,
+   * the stack scaling and the double-count guard all have to behave the same
+   * on both. A second copy of this loop is how `AuraCollection` came to ignore
+   * `ALL_ABILITIES` while the standing registry honoured it.
+   */
+  attackerAbilityModifierFor(abilityId: string | undefined): AbilityModifier | undefined {
+    return this.foldAbilityModifiers(
+      abilityId,
+      (definition) => definition.attackerAbilityModifiers,
+    );
+  }
+
+  private foldAbilityModifiers(
+    abilityId: string | undefined,
+    select: (definition: AuraDefinition) => Readonly<Record<string, AbilityModifier>> | undefined,
+  ): AbilityModifier | undefined {
     if (abilityId === undefined) return undefined;
     let combined: AbilityModifier | undefined;
     for (const instance of this.auras.values()) {
-      const byAbility = instance.definition.abilityModifiers;
+      const byAbility = select(instance.definition);
       if (!byAbility) continue;
-      const own = pick(byAbility, abilityId);
-      if (!own) continue;
+      const found = pick(byAbility, abilityId);
+      if (!found) continue;
+      const own = instance.definition.modifiersScaleWithStacks
+        ? scaleByStacks(found, instance.stacks)
+        : found;
       combined = combined ? combineAbilityModifiers(combined, own) : own;
     }
     return combined;

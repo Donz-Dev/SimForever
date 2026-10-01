@@ -276,6 +276,31 @@ function combine(a: SchoolModifier, b: SchoolModifier): SchoolModifier {
 }
 
 /**
+ * One modifier at N stacks, for an aura whose `modifiersScaleWithStacks` is set.
+ *
+ * ------------------------------------------------------------------------------
+ * IT IS `combine` APPLIED TO ITSELF N TIMES, and it has to be, or a stacking
+ * aura's crit and its damage would follow two different conventions. Chances
+ * ADD, so they multiply by the count; damage MULTIPLIES, so it goes to the
+ * POWER of the count -- which is exactly what `damageTakenMultiplierFor`
+ * already does for `damageTakenBySchool` and what `bindModifiers` does for
+ * `statModifiers`. Writing "x stacks" for both would give a five-stack 1.03
+ * a 1.15 where every other reader of that flag gives 1.159.
+ *
+ * `spellPower` is left out on purpose: it is a SCHOOL field, and no aura
+ * carries a school modifier. The day one does, it adds like the chances.
+ * ------------------------------------------------------------------------------
+ */
+export function scaleByStacks(modifier: AbilityModifier, stacks: number): AbilityModifier {
+  if (stacks === 1) return modifier;
+  return {
+    critBonus: (modifier.critBonus ?? 0) * stacks,
+    critMultiplierBonus: (modifier.critMultiplierBonus ?? 0) * stacks,
+    damageMultiplier: (modifier.damageMultiplier ?? 1) ** stacks,
+  };
+}
+
+/**
  * The same three modifiers, keyed by SCHOOL rather than by ability.
  *
  * ------------------------------------------------------------------------------

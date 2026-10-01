@@ -257,7 +257,7 @@ export function castAbility(
   }
 
   if (castTime <= 0) {
-    runCast(context, abilityContext);
+    runCast(context, abilityContext, true);
     return { ok: true };
   }
 
@@ -292,7 +292,7 @@ export function castAbility(
       createEvent(`cast-complete:${ability.id}`, EventPriority.CastComplete, (ctx) => {
         if (last) caster.castEndsAt = 0;
         if (!caster.isAlive) return;
-        runCast(ctx, { simulation: ctx, caster, target, ability });
+        runCast(ctx, { simulation: ctx, caster, target, ability }, last);
       }),
     );
   }
@@ -320,7 +320,11 @@ export function castAbility(
  * should have to reason about.
  * ----------------------------------------------------------------------------
  */
-function runCast(context: SimulationContext, abilityContext: AbilityContext): void {
+function runCast(
+  context: SimulationContext,
+  abilityContext: AbilityContext,
+  final: boolean,
+): void {
   const { caster, ability, target } = abilityContext;
 
   if (caster.castReactions.length === 0) {
@@ -343,7 +347,7 @@ function runCast(context: SimulationContext, abilityContext: AbilityContext): vo
     if (difference > 0) spent[type] = difference;
   }
 
-  runCastReactions(context, caster, { caster, target, ability, spent });
+  runCastReactions(context, caster, { caster, target, ability, spent, final });
 }
 
 /** Hasted cast time, or 0 for an instant ability. */

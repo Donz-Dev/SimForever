@@ -182,6 +182,29 @@ export interface AbilityCastEvent {
   readonly ability: Ability;
   /** What the pools lost across the cast, by resource. Absent means nothing. */
   readonly spent: Readonly<Partial<Record<ResourceType, number>>>;
+  /**
+   * Whether this is the LAST effect this cast will produce.
+   *
+   * ----------------------------------------------------------------------------
+   * TRUE FOR EVERY CAST BUT THE EARLY TICKS OF A CHANNEL. `runCast` runs once
+   * per `channelTicks`, so a cast reaction on an Arcane Missiles channel fires
+   * five times -- and a reaction that ENDS something has to fire on the last
+   * one, or it ends it before the spell has finished happening.
+   *
+   * ARCANE BLAST IS WHY. Its stacks last "8 sec or until any other damage
+   * spell is cast", and the only reading where the damage clause does any work
+   * at all is that the other spell BENEFITS and then the stacks go. Removing
+   * them on the first missile would leave four of five unbuffed, which is a
+   * smaller number and no error -- and it would quietly contradict the owner's
+   * own Arcane list, which spends the stacks INTO a Missiles channel.
+   *
+   * IT IS NOT `castEndsAt === 0`, though that is true at the same moments.
+   * Resting a ruleset reading on a field the engine happens to clear one line
+   * earlier is the kind of coupling that survives until somebody reorders two
+   * statements, and then fails silently.
+   * ----------------------------------------------------------------------------
+   */
+  readonly final: boolean;
 }
 
 /** Something that happens in response to an ability being used. */

@@ -5,9 +5,7 @@ import {
   ARCANE_BLAST,
   ARCANE_BLAST_UNMODELLED,
   ARCANE_POWER,
-  ARCANE_POWER_UNMODELLED,
   COMBUSTION,
-  COMBUSTION_UNMODELLED,
   FIREBALL_CAST_MS,
   FIREBALL_COEFFICIENTS,
   FIREBALL_DOT,
@@ -52,13 +50,13 @@ import {
  * the burn each one leaves: Fireball, Pyroblast and Frostfire Bolt share one
  * spell's scaling between the hit and the DoT rather than taking both.
  *
- * NOTHING FREEZES A RAID BOSS, which costs the Frost half of the Frostfire
- * build three talents. See `FROZEN_UNMODELLED` -- they are inert because of the
- * TARGET rather than because of the engine.
- *
- * ICE LANCE IS NO LONGER ONE OF THEM. Fingers of Frost does not freeze the
- * target; it makes the caster's next spells behave as though it were, which is
- * a state on the MAGE and is reachable exactly as written.
+ * NOTHING FREEZES A RAID BOSS, AND IT COSTS THE FROSTFIRE BUILD NOTHING. This
+ * said "three talents" for a long time and the number was never re-read:
+ * `FROZEN_UNMODELLED` is carried by Frostbite alone now, and the 0/29/22 build
+ * does not take Frostbite. Ice Lance and Shatter both reach their Frozen
+ * clauses through Fingers of Frost, which does not freeze the target -- it
+ * makes the caster's next spells behave as though it were, which is a state on
+ * the MAGE and is reachable exactly as written.
  * ----------------------------------------------------------------------------
  */
 
@@ -222,23 +220,31 @@ export const BLAST_WAVE: Ability = {
     'its value in a pull of several is not shown.',
 };
 
-/** Combustion, granted by the Fire capstone. */
+/**
+ * Combustion, granted by the Fire capstone.
+ *
+ * ----------------------------------------------------------------------------
+ * APPLIED AT ONE STACK, WHICH IS THE RAMP STARTING. It used to be applied at
+ * FULL stacks -- ten at once, worth +100% crit to every school, for a
+ * placeholder thirty seconds -- because nothing counted Fire spell hits and
+ * nothing counted the four crits that end it. `combustionCounter` in
+ * `reactions/mageTalents.ts` counts both now, so the ability does the one thing
+ * the tooltip gives it: switch the effect on.
+ *
+ * THE FIRST STACK IS THE CAST'S OWN, and not a hit's. "When activated, this
+ * spell causes each of your Fire damage spell hits to increase..." describes an
+ * effect that exists before the first hit, and an aura cannot be applied at
+ * zero stacks. So the Fire spell cast immediately after Combustion already
+ * carries 10%, and each hit after it adds another.
+ * ----------------------------------------------------------------------------
+ */
 export const COMBUSTION_ABILITY: Ability = {
   id: 'combustion',
   name: 'Combustion',
   cooldownMs: seconds(180),
   onCast: ({ simulation, caster }) => {
-    /*
-     * APPLIED AT FULL STACKS, because the ramp it describes cannot be
-     * modelled: stacks are meant to build one per Fire spell HIT and to end
-     * after four crits, and nothing counts either. Ten stacks for a
-     * placeholder thirty seconds is the generous reading, and the ability says
-     * so where a person can see it.
-     */
-    const instance = simulation.applyAura(caster, COMBUSTION, caster.id);
-    instance.stacks = COMBUSTION.maxStacks ?? 1;
+    simulation.applyAura(caster, COMBUSTION, caster.id);
   },
-  unmodelled: COMBUSTION_UNMODELLED,
 };
 
 // ---------------------------------------------------------------------------
@@ -491,7 +497,13 @@ export const ARCANE_BLAST_ABILITY: Ability = {
   unmodelled: ARCANE_BLAST_UNMODELLED,
 };
 
-/** Arcane Power, granted by the Arcane capstone. */
+/**
+ * Arcane Power, granted by the Arcane capstone.
+ *
+ * NO CAVEAT ANY MORE. Both halves of "your spells deal 30% more damage while
+ * costing 30% more mana" are modelled -- see `ARCANE_POWER` for the list the
+ * cost half names and the test that keeps it in step with the book.
+ */
 export const ARCANE_POWER_ABILITY: Ability = {
   id: 'arcane_power',
   name: 'Arcane Power',
@@ -499,7 +511,6 @@ export const ARCANE_POWER_ABILITY: Ability = {
   onCast: ({ simulation, caster }) => {
     simulation.applyAura(caster, ARCANE_POWER, caster.id);
   },
-  unmodelled: ARCANE_POWER_UNMODELLED,
 };
 
 /** Presence of Mind, granted by the Arcane talent. */

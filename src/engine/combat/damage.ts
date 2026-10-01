@@ -401,6 +401,13 @@ function rollTable(
      * follows the rule that already decided whether the tick could crit.
      */
     request.source.attackTableModifiers.for(request.attackTable ?? request.critFrom),
+    /*
+     * AND THE TARGET'S OWN, which is the only one of the four that belongs to
+     * the other side of the attack. Winter's Chill is "increases the chance
+     * your Ice Lance and Frostbolt spells will critically hit THE TARGET" --
+     * a per-ability crit the boss carries, not the Mage.
+     */
+    request.target.abilityModifierAgainst(request.abilityId),
   );
 
   if (!request.attackTable) {
@@ -449,16 +456,35 @@ function combineModifiers(
   ability: AbilityModifier,
   school: AbilityModifier,
   table: AbilityModifier,
+  onTarget: AbilityModifier,
 ): AbilityModifier {
   return {
-    critBonus: (ability.critBonus ?? 0) + (school.critBonus ?? 0) + (table.critBonus ?? 0),
+    critBonus:
+      (ability.critBonus ?? 0) +
+      (school.critBonus ?? 0) +
+      (table.critBonus ?? 0) +
+      (onTarget.critBonus ?? 0),
     critMultiplierBonus:
       (ability.critMultiplierBonus ?? 0) +
       (school.critMultiplierBonus ?? 0) +
-      (table.critMultiplierBonus ?? 0),
-    hitBonus: (ability.hitBonus ?? 0) + (school.hitBonus ?? 0) + (table.hitBonus ?? 0),
-    // Applied separately, by `schoolMultiplier` and `tableMultiplier` in
-    // `resolveDamage`, for the same reason the school's is.
+      (table.critMultiplierBonus ?? 0) +
+      (onTarget.critMultiplierBonus ?? 0),
+    /*
+     * ALL FOUR SOURCES, INCLUDING THE TARGET'S, and the fourth arrived from a
+     * different dive than the `hitBonus` line below it. Every field here sums
+     * every source on purpose: leaving one out does not fail, it makes that
+     * source silently worth nothing, which is the failure mode this project
+     * keeps meeting. A debuff that makes the target easier to hit is as real as
+     * one that makes it crit more.
+     */
+    hitBonus:
+      (ability.hitBonus ?? 0) +
+      (school.hitBonus ?? 0) +
+      (table.hitBonus ?? 0) +
+      (onTarget.hitBonus ?? 0),
+    // Applied separately, by `schoolMultiplier`, `tableMultiplier` and
+    // `targetAbilityMultiplier` in `resolveDamage`, for the same reason the
+    // school's is.
     damageMultiplier: ability.damageMultiplier,
   };
 }
@@ -604,8 +630,26 @@ export function resolveDamage(
   // Per SCHOOL, which folds in the blanket multiplier as well. Curse of the
   // Elements raises magic and leaves physical alone, so the school has to
   // reach this line rather than being decided before it.
+  /*
+   * AND PER ABILITY, ON THE TARGET. A debuff naming ONE ability the target
+   * takes more from -- the mirror of `abilityMultiplier` above. Read here as
+   * well as in `rollTable` because every reader of a modifier has to come
+   * through the same funnel: a debuff whose crit chance applied and whose
+   * damage did not would be quietly half an effect, which is the rule
+   * `abilityModifierFor` already states for the attacker's side.
+   */
+  const targetAbilityMultiplier =
+    target.abilityModifierAgainst(request.abilityId).damageMultiplier ?? 1;
+  /*
+   * THE `periodic` FLAG AND THE PER-ABILITY MULTIPLIER ARRIVED FROM TWO
+   * DIFFERENT DIVES and both belong on this line. The flag is what lets a
+   * school vulnerability apply to TICKS only; dropping it would silently widen
+   * every such debuff to direct damage as well.
+   */
   const afterTarget =
-    afterAttacker * target.damageTakenMultiplierFor(request.school, request.periodic === true);
+    afterAttacker *
+    targetAbilityMultiplier *
+    target.damageTakenMultiplierFor(request.school, request.periodic === true);
 
   const reduction = appliesArmor(request)
     ? armorReduction(target.stats.get('armor'), target.level)

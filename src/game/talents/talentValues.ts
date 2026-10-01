@@ -117,6 +117,14 @@ export function talentValue(
 }
 
 /**
+ * EVERY number a talent's value carries at a rank, as a row.
+ *
+ * For the proc whose tooltip varies more than one of them -- Winter's Chill
+ * scales both its chance and its stack cap -- where `valueIndex` can only pick
+ * one. A single-number talent comes back as a row of one, so a caller never
+ * has to ask which shape the file used.
+ */
+/**
  * One number from a talent's value at a rank.
  *
  * `index` picks which, for a talent that varies several. Shield Specialization
@@ -127,6 +135,16 @@ export function talentValue(
  * reading the wrong number is worse than reading none, because none is
  * reported as unmodelled and the wrong one is not reported at all.
  */
+export function talentNumbers(
+  characterClass: ClassId,
+  talentId: string,
+  rank: number,
+): readonly number[] | undefined {
+  const value = talentValue(characterClass, talentId, rank);
+  if (value === undefined) return undefined;
+  return typeof value === 'number' ? [value] : value;
+}
+
 export function talentNumber(
   characterClass: ClassId,
   talentId: string,
