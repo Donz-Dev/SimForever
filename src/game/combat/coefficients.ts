@@ -218,6 +218,37 @@ export const CHAIN_LIGHTNING_SP_COEFFICIENT = 0.571;
 export const FLAME_SHOCK_SP_COEFFICIENT = 0.214;
 export const FLAME_SHOCK_TICK_SP_COEFFICIENT = 0.1;
 
+/*
+ * FIRE NOVA: 10% of spell power.
+ *
+ * ----------------------------------------------------------------------------
+ * THE SECOND ROW IN THIS FILE THAT IS NOT FROM THE SHEET, and it is the same
+ * shape as Wrack above. `WoWSimWorksheet.xlsx` gives the Shaman six rows --
+ * Lightning Bolt, Chain Lightning, Lava Burst, the two other Shocks and Flame
+ * Shock's two halves -- and Fire Nova is not one of them. It could not be: Fire
+ * Nova is `versusClassic: "new"`, a spell Forever added, so there is no Classic
+ * row to have carried over and nothing to transcribe.
+ *
+ * SUPPLIED BY THE RULESET OWNER DIRECTLY, on 2026-09-30, asked for with the
+ * alternatives beside it: "give it a 10% spell power coefficient for now".
+ * The "for now" is theirs and is recorded rather than smoothed away -- it is a
+ * ruling that may be revisited, which is different from a placeholder nobody
+ * has answered.
+ *
+ * SAID HERE RATHER THAN FOLDED IN, for Wrack's reason: everything around it is
+ * transcribed from one document, and the next refresh of that document will not
+ * contain this line. The authority is the same -- it is the owner either way --
+ * and the PROVENANCE is not.
+ *
+ * IT IS A SMALL COEFFICIENT ON A LARGE FLAT HIT, which is worth knowing before
+ * reading it as generous: 436 base against 10% of spell power, so an
+ * Enhancement shaman's 300-odd spell power adds about 7% to the spell. Fire
+ * Nova is a flat nuke here and the coefficient makes it scale rather than
+ * making it scale much.
+ * ----------------------------------------------------------------------------
+ */
+export const FIRE_NOVA_SP_COEFFICIENT = 0.1;
+
 // ---------------------------------------------------------------------------
 // Mage
 // ---------------------------------------------------------------------------

@@ -1,7 +1,7 @@
 import type { ClassId, CombatStyleId } from '../../game/character';
 import type { ClassTalents, Talent, TalentAllocation, TalentTree } from '../../game/talents/Talent';
 import { TOTAL_TALENT_POINTS } from '../../game/talents/Talent';
-import type { UnmodelledTalent } from '../../game/talents/TalentEffect';
+import type { OutOfScope, UnmodelledTalent } from '../../game/talents/TalentEffect';
 import { talentBuild, talentContextFor } from '../../game/talents/talentBuild';
 import { weaponsFor } from '../../game/actors/createPlayer';
 import type { Equipment } from '../../game/items/Item';
@@ -16,6 +16,45 @@ import {
   spend,
   unspend,
 } from '../../game/talents/talentRules';
+
+/**
+ * What each ruling means, in a sentence a player reads.
+ *
+ * ----------------------------------------------------------------------------
+ * `Record<OutOfScope, string>` IS THE POINT, NOT A TYPE ANNOTATION. The caption
+ * below used to enumerate the rulings by hand -- "no positions, no crowd control,
+ * no threat and no healing throughput" -- and it had already gone stale: STEALTH
+ * had been a ruling for a while and the sentence did not mention it, so a Rogue
+ * reading the panel was told its stealth talents were out of scope for reasons
+ * that did not include the one that applied.
+ *
+ * That is the same decay `rotationIds.test.ts` had when it listed the lists to
+ * check and ended up checking four of twenty-six. A hand-written enumeration of a
+ * union is a copy of the union, and the copy is what drifts. An exhaustive
+ * `Record` makes adding a member to `OutOfScope` without a label a COMPILE ERROR,
+ * which is the only version of this that cannot rot.
+ * ----------------------------------------------------------------------------
+ */
+export const SCOPE_LABELS: Record<OutOfScope, string> = {
+  positioning: 'no positions or movement',
+  crowdControl: 'no crowd control',
+  threat: 'no threat',
+  healing: 'no healing throughput',
+  stealth: 'no stealth and no openers',
+  castPushback: 'no cast pushback',
+  totemEntities: 'no totems as entities',
+};
+
+/** The rulings that actually apply to THIS build, in the union's own order. */
+export function rulingsInPlay(entries: readonly UnmodelledTalent[]): string {
+  const present = (Object.keys(SCOPE_LABELS) as OutOfScope[]).filter((scope) =>
+    entries.some((entry) => entry.scope === scope),
+  );
+  if (present.length === 0) return '';
+  const labels = present.map((scope) => SCOPE_LABELS[scope]);
+  if (labels.length === 1) return labels[0];
+  return `${labels.slice(0, -1).join(', ')} and ${labels[labels.length - 1]}`;
+}
 
 /** Talent icons come from the shared WoW icon CDN, as the source calculator's do. */
 const ICON_BASE = 'https://wow.zamimg.com/images/wow/icons/medium';
@@ -157,16 +196,20 @@ export function TalentPanel({
           {/*
            * A RULING IS NOT A GAP, and showing the two in one list told someone
            * their build was missing features when the simulator had simply been
-           * told not to model them. Movement, crowd control, threat and healing
-           * throughput are out of scope by the project owner's decision; they do
-           * not expire and no amount of work will clear them.
+           * told not to model them. They do not expire and no amount of work will
+           * clear them.
+           *
+           * THE SENTENCE NAMES ONLY THE RULINGS THIS BUILD ACTUALLY HITS, derived
+           * from the entries rather than written out, because the written-out
+           * version was both incomplete and wrong for every build it over-claimed
+           * against. See `SCOPE_LABELS`.
            */}
           {ruled.length > 0 ? (
             <>
               <p className="muted talent-warning">
-                Out of scope by ruling — not missing work. This simulator models no
-                positions, no crowd control, no threat and no healing throughput, so
-                these talents cannot do anything here and never will.
+                Out of scope by ruling — not missing work. This simulator models{' '}
+                {rulingsInPlay(ruled)}, so these talents cannot do anything here and
+                never will.
               </p>
               <ul className="issues">
                 {ruled.map((entry: UnmodelledTalent) => (

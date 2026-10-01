@@ -1,4 +1,5 @@
 import { talentsForClass } from '../../src/game/talents/talentData';
+import type { ClassId } from '../../src/game/character';
 
 /*
  * Pads an allocation with filler until it is LEGAL, and returns it.
@@ -14,9 +15,20 @@ import { talentsForClass } from '../../src/game/talents/talentData';
  * first row until the gate opens and adds any named prerequisite at its
  * required rank. Each test therefore measures a build a player could actually
  * have, which is a better test than the one it replaces.
+ *
+ * THE CLASS IS A TRAILING PARAMETER, defaulting to the Warrior, because this was
+ * Warrior-only for sixty-eight call sites and all of them are still right. The
+ * logic never was Warrior-specific -- only the one `talentsForClass` argument was
+ * -- and the first other class to need it was the Shaman's Improved Fire Nova,
+ * which sits at tier 10 of Elemental and resolves to NOTHING without ten points
+ * of filler under it. `createPlayer` strips an illegal allocation silently, so
+ * the test would have read "the talent is worth zero" rather than failing.
  */
-export function legalise(talents: Record<string, number>): Record<string, number> {
-  const tree = talentsForClass('warrior');
+export function legalise(
+  talents: Record<string, number>,
+  characterClass: ClassId = 'warrior',
+): Record<string, number> {
+  const tree = talentsForClass(characterClass);
   if (!tree) return talents;
   const out: Record<string, number> = { ...talents };
 

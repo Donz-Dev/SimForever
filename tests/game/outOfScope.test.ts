@@ -15,11 +15,17 @@ import { talentBuild } from '../../src/game/talents/talentBuild';
 /*
  * THE RULINGS ARE DATA, AND THIS IS WHAT MAKES THEM CHECKABLE.
  *
- * The project owner has ruled four things permanently out of scope: positions
- * and range, crowd control, threat, and healing throughput. A talent blocked on
- * one of those is a DECISION and not an engine gap, and the milestone -- "every
- * talent resolves to an effect or to a permanent ruling" -- can only be measured
- * if the two are told apart mechanically.
+ * The project owner has ruled SEVEN things permanently out of scope: positions
+ * and range, crowd control, threat, healing throughput, stealth and openers,
+ * cast pushback, and a totem as an entity. A talent blocked on one of those is a
+ * DECISION and not an engine gap, and the milestone -- "every talent resolves to
+ * an effect or to a permanent ruling" -- can only be measured if the two are
+ * told apart mechanically.
+ *
+ * THE LAST TWO ARRIVED TOGETHER AND CLOSED THE PROJECT'S LAST OPEN SCOPE
+ * QUESTION. Both were found the same way stealth was: a reason that had been
+ * counted as work for the whole project turned out to be blocked TWICE, so
+ * clearing either half left it inert and nothing was ever going to reach it.
  *
  * So this file asserts two things prose cannot:
  *
@@ -72,7 +78,7 @@ function everyReason(): { id: string; reason: string; scope?: string }[] {
  * Unprefixed, so it catches "stealthed" too.
  */
 const RULED_OUT_WORDING =
-  /\bmovement\b|\bimmobilis|\bsnare|\bdaze|\bstun|\bfear\b|\bsilence|\bincapacitat|\bdisorient|\bdisarm|\bthreat\b|\btaunt\b|\bheals?\b|\bhealing\b|has a position|nothing (?:here )?moves|\btravel form\b|\bradius\b|\bstealth/i;
+  /\bmovement\b|\bimmobilis|\bsnare|\bdaze|\bstun|\bfear\b|\bsilence|\bincapacitat|\bdisorient|\bdisarm|\bthreat\b|\btaunt\b|\bheals?\b|\bhealing\b|has a position|nothing (?:here )?moves|\btravel form\b|\bradius\b|\bstealth|\bpushback\b|avoid(?:ing)? interruption|resist interruption/i;
 
 /**
  * Reasons that name a ruled-out concept IN PASSING while being inert for some
@@ -97,6 +103,10 @@ const MENTIONS_BUT_IS_A_LIVE_GAP: Record<string, string> = {
     'Names threat, but it is inert because both profiles take Demonic Sacrifice and bring no demon -- the build, which another profile could change.',
   'rogue.riposte':
     'Names a disarm, but it becomes active after PARRYING, so what blocks it is a target that does not swing back -- and `targetAttacks` can change that.',
+  'mage.ice_barrier':
+    'Names pushback, but its FIRST clause is a 447-damage absorb, and what makes that inert is a target that does not swing back. Scoping it as pushback would file an absorb under a cast-time ruling.',
+  'shaman.improved_reincarnation':
+    'Its live clause is +4% MAXIMUM HEALTH, which no effect kind reaches -- the resurrection half is incidental and the word "health" is not "healing".',
 };
 
 /** Wording that says work is outstanding. A ruling must not read like this. */
@@ -218,5 +228,33 @@ describe('the out-of-scope rulings are data, not prose', () => {
     expect(reasons.length).toBeGreaterThan(200);
     expect(ruled.length).toBeGreaterThan(80);
     expect(ruled.length).toBeLessThan(reasons.length);
+  });
+
+  it('has a talent for every ruling, so a dead union member cannot linger', () => {
+    /*
+     * ------------------------------------------------------------------------
+     * THE OTHER DIRECTION, AND NOTHING CHECKED IT. Every test above asks whether
+     * a talent carries the right ruling; none asks whether a RULING still has a
+     * talent. A member of the union that nothing uses is a scope decision about
+     * nothing -- which is harmless until somebody reads the list as a statement
+     * of what this project deliberately leaves out, and two of the seven are
+     * one-class rulings that a refactor could orphan without failing anything.
+     *
+     * `totemEntities` is the case that motivated it: four Shaman talents, one
+     * class, and if a future Shaman pass expressed all four the member would sit
+     * there claiming a decision nobody had made since.
+     * ------------------------------------------------------------------------
+     */
+    const EVERY_RULING = [
+      'positioning',
+      'crowdControl',
+      'threat',
+      'healing',
+      'stealth',
+      'castPushback',
+      'totemEntities',
+    ];
+    const used = new Set(everyReason().map((entry) => entry.scope));
+    expect(EVERY_RULING.filter((scope) => !used.has(scope))).toEqual([]);
   });
 });

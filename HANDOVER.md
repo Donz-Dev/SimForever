@@ -7,7 +7,7 @@ gets built is [docs/class-implementation.md](docs/class-implementation.md).
 
 All nine classes and all 23 profiles are implemented, every number traced to a
 source rather than invented, and **all 23 priority lists are the ruleset owner's
-own** -- specified entry by entry and measured after. **2,049 tests**, CI green on Node 20 and 22. Profile
+own** -- specified entry by entry and measured after. **2,078 tests**, CI green on Node 20 and 22. Profile
 format **v10**. Live at <https://donz-dev.github.io/SimForever/>, republished by
 `.github/workflows/deploy.yml` on every push to `main` that passes.
 
@@ -29,6 +29,45 @@ are thirty independent batches of ten, which is what `measure_profiles.ts` runs
 and what gives each figure the interval a REAL/noise verdict needs. Most profiles
 land inside the old interval and a few do not — 2H Arms read 596.6 under the old
 method and 607.2 under this one on identical code. Do not read those as changes.
+
+**THE SHAMAN DEEP DIVE MOVED BOTH ITS PROFILES AND NOTHING ELSE.** Ele Shaman
+295.4 to **375.0, +79.6, REAL** — the largest single-profile gain in the project
+since the owner's priority lists landed — and Enh Shaman 451.1 to **462.0, +10.9,
+noise**, with the other twenty-one identical to the decimal.
+
+**AND IT WAS RE-BASELINED AGAINST `main` AFTER THE WARRIOR AND WARLOCK DIVES
+LANDED**, because both of those touched ENGINE files and a delta taken against the
+older base would have credited this one with their work. Both Shaman figures came
+back identical to the decimal, so nothing those two changed reaches this class —
+which is also the containment check for them.
+
+**THE ENHANCEMENT FIGURE IS A LIE BY NET AND THE DECOMPOSITION IS THE REPORT.**
+Four real changes offset inside one interval, and because the build is MANA-BOUND
+they do not sum to it either — removing Fire Nova's 520 mana a cast makes
+everything above it more affordable, so each isolated value overstates what it
+adds. Each measured on its own, 30 batches of 10:
+
+| Change | Profile | Worth |
+| --- | --- | --- |
+| Searing Totem in the Elemental list | Ele | **+59.5** |
+| Fire Nova, declared and in the Enhancement list | Enh | **+25.5** |
+| Elemental Focus (Clearcasting) | Ele | **+12.5** |
+| Lightning Overload | Ele | **+11.1** |
+| Maelstrom Weapon, flat 20% to **5 PPM** | Enh | **+6.6** |
+| Improved Stormstrike's mana regeneration | Enh | **+3.4** |
+| Windfury imbue internal cooldown, 1.5s to **3s** | Enh | **-10.0** |
+
+**THE LARGEST IS A TALENT POINT BUYING A CLAUSE THE ROTATION COULD NOT REACH.** The
+Elemental build spends 3/3 on CALL OF FLAME, whose first clause is "the damage done
+by your FIRE TOTEMS", and its list cast no totem for the whole project. The talent
+was correct, its effect was correct, and it was worth nothing — which reports
+identically to a talent that works. **When a talent names an ability, check a list
+casts it.** See [docs/handoff/shaman.md](docs/handoff/shaman.md).
+
+**AND IT PROPOSED TWO NEW SCOPE MEMBERS**, `castPushback` and `totemEntities`, on a
+"blocked twice" argument rather than on the owner's word — which moved FIVE classes'
+counts, not just its own. See CLAUDE.md under **Scope**; the owner has not ruled on
+them.
 
 **THE PALADIN DEEP DIVE MOVED ALL THREE OF ITS PROFILES AND NOTHING ELSE.**
 Seal Twist Ret 471.0 to **528.3 (+57.3)**, Shockadin 379.0 to **472.7 (+93.7)**,
@@ -64,7 +103,7 @@ while it worked.
 decimal -- which is what a talent change scoped to one build should look like.
 It makes Frostfire the top Mage, above Fire's 401.2 and Arcane's 392.6, and the
 build that existed for the Fire/Frost overlap now has a third reason to. The
-mean across 23 is 419.8, and the three dives that moved it are below. See
+mean across 23 is 423.8, and the three dives that moved it are below. See
 [docs/handoff-apl.md](docs/handoff-apl.md).
 
 **THE WARLOCK DEEP DIVE MOVED FIVE PROFILES AND ONE OF THEM A LONG WAY DOWN.**
@@ -102,10 +141,10 @@ so. Fourteen profiles moved.
 | Cat Druid | Druid | 9/35/7 | 488.0 | | Moonkin | Druid | 38/0/13 | 384.3 |
 | **Shockadin** | Paladin | 23/0/28 | **472.7** | | Rupture Rogue | Rogue | 12/8/31 | 379.7 |
 | Firelock | Warlock | 5/11/35 | 468.4 | | Bear Druid | Druid | 9/42/0 | 376.2 |
+| **Enh Shaman** | Shaman | 19/32/0 | **462.0** | | **Ele Shaman** | Shaman | 38/13/0 | **375.0** |
 | Prot Warr | Warrior | 17/0/34 | 454.6 | | SM/DS | Warlock | 40/11/0 | 363.9 |
-| Enh Shaman | Shaman | 19/32/0 | 451.1 | | LW Melee | Hunter | 7/13/31 | 321.5 |
-| Shadow Priest | Priest | 16/3/32 | 437.3 | | LW Ranged | Hunter | 7/39/5 | 311.7 |
-| Combat Rogue | Rogue | 18/33/0 | 422.5 | | Ele Shaman | Shaman | 38/13/0 | 295.4 |
+| Shadow Priest | Priest | 16/3/32 | 437.3 | | LW Melee | Hunter | 7/13/31 | 321.5 |
+| Combat Rogue | Rogue | 18/33/0 | 422.5 | | LW Ranged | Hunter | 7/39/5 | 311.7 |
 | Frostfire Mage | Mage | 0/29/22 | 412.5 | | **Prot Pally** | Paladin | 8/36/7 | **238.1** |
 | BM Hunter | Hunter | 31/20/0 | 405.8 | |  | | |  |
 
@@ -194,13 +233,13 @@ structure, and throws if its four buckets do not account for every talent.
 | --- | --- | --- |
 | [warrior.md](docs/handoff/warrior.md) | 2H Arms, DW Fury, Prot Warr | **0** |
 | [paladin.md](docs/handoff/paladin.md) | Seal Twist Ret, Shockadin, Prot Pally | **2** |
-| [druid.md](docs/handoff/druid.md) | Moonkin, Cat, Bear | **12** |
+| [shaman.md](docs/handoff/shaman.md) | Ele Shaman, Enh Shaman | **6** |
+| [druid.md](docs/handoff/druid.md) | Moonkin, Cat, Bear | **11** |
 | [hunter.md](docs/handoff/hunter.md) | BM Hunter, LW Ranged, LW Melee | **13** |
-| [rogue.md](docs/handoff/rogue.md) | Venom, Combat, Rupture | **14** |
-| [mage.md](docs/handoff/mage.md) | Frostfire, Arcane, Fire | **16** |
-| [shaman.md](docs/handoff/shaman.md) | Ele Shaman, Enh Shaman | **17** |
-| [priest.md](docs/handoff/priest.md) | Shadow | **18** |
-| [warlock.md](docs/handoff/warlock.md) | SM/DS, Firelock | **22** |
+| [rogue.md](docs/handoff/rogue.md) | Venom, Combat, Rupture | **13** |
+| [mage.md](docs/handoff/mage.md) | Frostfire, Arcane, Fire | **15** |
+| [priest.md](docs/handoff/priest.md) | Shadow | **17** |
+| [warlock.md](docs/handoff/warlock.md) | SM/DS, Firelock | **20** |
 
 **THE WARRIOR'S 0 AGAINST THE WARLOCK'S 25 IS NOT A DIFFERENCE IN DIFFICULTY.**
 The Warrior had four sources and eight of its numbers turned out wrong; the other
@@ -218,10 +257,10 @@ Measured at `d2718b0`, and the numbers say it is not close:
 
 | | |
 | --- | --- |
-| **121 of 468 talents are a live gap** | well down from a raw count of 251 unmodelled reasons, because 95 are permanently out of scope by ruling and 35 more are PARTLY modelled. See the census below, and **re-sum it rather than adjusting it** — the raw total is not a work queue. **The Warrior is at zero**, the first class to get there |
+| **97 of 468 talents are a live gap** | well down from a raw count of 251 unmodelled reasons, because 95 are permanently out of scope by ruling and 35 more are PARTLY modelled. See the census below, and **re-sum it rather than adjusting it** — the raw total is not a work queue. **The Warrior is at zero**, the first class to get there |
 | **113 abilities declared against 478 captured** | the data is on disk; the declarations are not. Druid 15, Hunter 14, Mage 13, Rogue 12, Warlock 10, Shaman 9, Priest 7, Paladin 6, plus the Warrior's 27. **THE WARRIOR IS RECONCILED**, which is what the exclusion list below actually means: 42 captured against 30 declared counting its three stances, and each of the 12 that are not declared is named — 3 that Forever has and nothing here needs, 9 that are threat or crowd control by ruling. See [docs/warrior.md](docs/warrior.md). It is the only class where the subtraction balances |
 | ~~**Coefficients**~~ | **DONE, AND NOW EVERY ROW IS APPLIED.** `WoWSimWorksheet.xlsx`, the owner's authoritative coefficient document, is transcribed in `src/game/combat/coefficients.ts` and applied across all nine classes. Every derived rule is deleted. The last unapplied row was Hammer of Wrath, which was not a declared ability until the owner put it in two Paladin priority lists; the two poison rows went the same way when the poison system landed. [docs/spell-coefficients.md](docs/spell-coefficients.md) |
-| **16 `PLACEHOLDER_*` constants** | each a real number nobody has supplied. **COUNT THEM, DO NOT ADJUST THEM**: `grep -rhoE "PLACEHOLDER_[A-Z_]+" src/ \| sort -u \| wc -l`. The Warlock dive and the Warrior dive each removed one from 19 and each wrote 18, and git merged that without a conflict — this figure was wrong by one for exactly as long as it took to re-derive it, and the Paladin dive removed a third. Sniper Shot's invented 200-mana cost is gone, but it was never one of these: it was a bare literal with a false caveat, which is worse — an invented number that is not named cannot be audited |
+| **15 `PLACEHOLDER_*` constants** | each a real number nobody has supplied. **COUNT THEM, DO NOT ADJUST THEM**: `grep -rhoE "PLACEHOLDER_[A-Z_]+" src/ \| sort -u \| wc -l`. The Warlock dive and the Warrior dive each removed one from 19 and each wrote 18, and git merged that without a conflict — this figure was wrong by one for exactly as long as it took to re-derive it, the Paladin dive removed a third, and the Shaman dive a fourth when Maelstrom Weapon's invented chance became 5 PPM. Sniper Shot's invented 200-mana cost is gone, but it was never one of these: it was a bare literal with a false caveat, which is worse — an invented number that is not named cannot be audited |
 | ~~**Rotations are thin and unmeasured**~~ | **DONE.** All 23 priority lists are the ruleset owner's own, specified entry by entry, and every one is measured — see the baseline above and [docs/handoff-rotations.md](docs/handoff-rotations.md). The twelve dead entries of that round are gone; the nine that remain are listed in [docs/ability-audit.md](docs/ability-audit.md), each with a reason and none of them a broken declaration. Fourteen abilities and three talent mechanics were declared to reach them, and six engine capabilities built |
 
 **The Warrior was built first and built properly, and it is not the norm.** Read
@@ -287,14 +326,14 @@ fails.
 | --- | --- | --- | --- | --- | --- |
 | Warrior | 53 | 43 | 4 | 6 | **0** |
 | Paladin | 52 | 32 | 5 | 13 | **2** |
-| Druid | 51 | 20 | 5 | 14 | **12** |
+| Druid | 51 | 20 | 5 | 15 | **11** |
 | Hunter | 50 | 24 | 5 | 8 | **13** |
-| Shaman | 50 | 17 | 4 | 12 | **17** |
-| Mage | 54 | 27 | 2 | 9 | **16** |
-| Priest | 53 | 15 | 2 | 18 | **18** |
+| Shaman | 50 | 22 | 4 | 18 | **6** |
+| Mage | 54 | 27 | 2 | 10 | **15** |
+| Priest | 53 | 15 | 2 | 19 | **17** |
 | Rogue | 53 | 25 | 3 | 12 | **13** |
-| Warlock | 52 | 24 | 3 | 3 | **22** |
-| **Total** | **468** | **227** | **33** | **95** | **113** |
+| Warlock | 52 | 24 | 3 | 5 | **20** |
+| **Total** | **468** | **232** | **33** | **106** | **97** |
 
 **THE WARRIOR LEFT THE GAP COLUMN ENTIRELY**, and its last entry is worth
 reading because of the shape rather than the size. Improved Berserker Rage's
@@ -324,7 +363,7 @@ reason was a statement about the engine ("nothing can reset a cooldown from
 content") and the engine now can. Fingers of Frost carried `FROZEN_UNMODELLED`,
 which is a claim about the TARGET, and that talent does not freeze anything.
 
-**260 of 468 talents do something**, 95 never will, and **113 are the
+**265 of 468 talents do something**, 106 never will, and **97 are the
 actual remaining work** — not the 251 a raw count of unmodelled reasons
 suggests. The 105 scoped entries break down as 34 healing, 33 crowd
 control, 17 positioning, 14 threat and 7 stealth.

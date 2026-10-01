@@ -58,7 +58,7 @@ half the Moonkin's damage.
 
 | Talents | Fully | Partly | Ruled out | Live gap |
 | --- | --- | --- | --- | --- |
-| 51 | 20 | 5 | 14 | **12** |
+| 51 | 20 | 5 | **15** | **11** |
 
 **Fourteen ruled out is the second-highest in the project** — the Druid's trees are
 full of healing, positioning and crowd control, all four rulings at once.

@@ -17,13 +17,13 @@ engine that were about the wrong thing.
 | --- | --- | --- |
 | [warrior.md](warrior.md) | 2H Arms, DW Fury, Prot Warr | **0** |
 | [paladin.md](paladin.md) | Seal Twist Ret, Shockadin, Prot Pally | **2** |
-| [druid.md](druid.md) | Moonkin, Cat, Bear | **12** |
+| [shaman.md](shaman.md) | Ele Shaman, Enh Shaman | **6** |
+| [druid.md](druid.md) | Moonkin, Cat, Bear | **11** |
 | [hunter.md](hunter.md) | BM Hunter, LW Ranged, LW Melee | **13** |
-| [rogue.md](rogue.md) | Venom, Combat, Rupture | **14** |
-| [mage.md](mage.md) | Frostfire, Arcane, Fire | **16** |
-| [shaman.md](shaman.md) | Ele Shaman, Enh Shaman | **17** |
-| [priest.md](priest.md) | Shadow | **18** |
-| [warlock.md](warlock.md) | SM/DS, Firelock | **22** |
+| [rogue.md](rogue.md) | Venom, Combat, Rupture | **13** |
+| [mage.md](mage.md) | Frostfire, Arcane, Fire | **15** |
+| [priest.md](priest.md) | Shadow | **17** |
+| [warlock.md](warlock.md) | SM/DS, Firelock | **20** |
 
 ## Every one of these numbers is re-derivable
 

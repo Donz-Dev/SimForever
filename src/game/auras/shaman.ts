@@ -102,6 +102,99 @@ export const FLAME_SHOCK_DOT: AuraDefinition = {
 
 /*
  * ============================================================================
+ * THE SHAMAN'S DAMAGE SPELLS, NAMED ONCE.
+ *
+ * "Any Fire, Frost, or Nature damage spell" is Elemental Focus's trigger and
+ * "your next damage spell" is what it discounts, and both are this list. There
+ * is no `school` on `Ability`, so a set of ids is how every class in this
+ * project expresses a tooltip that selects by school -- the Mage's
+ * `DAMAGE_SPELLS` and Hot Streak's four names are the same arrangement, and the
+ * field is deliberately absent because one that is silent when forgotten is the
+ * failure mode this project keeps meeting.
+ *
+ * WHAT IS IN: the six nukes and Fire Nova. Every one is Fire, Frost or Nature,
+ * every one deals damage, and every one costs mana.
+ *
+ * WHAT IS OUT, AND WHY EACH:
+ *
+ *   searing_totem      a totem SUMMON. Its school is Fire and its ticks deal
+ *                      damage, so "a Fire damage spell" is arguable -- and the
+ *                      cast itself rolls nothing and deals nothing, so the
+ *                      conservative reading is that summoning a totem is not
+ *                      casting a damage spell. Chosen because it is the reading
+ *                      that pays the talent LESS: excluding it costs the
+ *                      Enhancement shaman one trigger and one discount a fight,
+ *                      where including it would be inventing generosity.
+ *   windfury_weapon    an imbue. Nature school in the capture, no damage.
+ *   stormstrike        Physical, and a melee ability rather than a spell.
+ *   rage_of_the_farseer  a self-buff with no school and no damage.
+ *
+ * DECLARED HERE rather than in `abilities/shaman.ts` because the aura below
+ * needs it and `abilities` already imports this file -- putting it the other way
+ * round would be a cycle.
+ * ============================================================================
+ */
+export const SHAMAN_DAMAGE_SPELL_IDS: readonly string[] = [
+  'lightning_bolt',
+  'chain_lightning',
+  'earth_shock',
+  'flame_shock',
+  'frost_shock',
+  'lava_burst',
+  'fire_nova',
+];
+
+/**
+ * Clearcasting, from Elemental Focus: "reduces the mana cost of your next
+ * damage spell by 100%."
+ *
+ * ----------------------------------------------------------------------------
+ * THE MAGE'S ARCANE CONCENTRATION, WORD FOR WORD ON THE PAYOUT AND DIFFERENT ON
+ * THE TRIGGER, which is the only interesting thing about it.
+ *
+ *   Arcane Concentration   "after any damage spell HITS a target" -- so it is
+ *                          an attack reaction on `dealt`, and a resisted spell
+ *                          rolls nothing.
+ *   Elemental Focus        "after CASTING any Fire, Frost, or Nature damage
+ *                          spell" -- so it is a CAST reaction, and a spell that
+ *                          misses still rolls.
+ *
+ * Two tooltips, two mechanisms, and reading the second as the first would make
+ * this talent quietly worse by the Shaman's spell miss chance. See
+ * `elementalFocus` in `reactions/shamanTalents.ts`.
+ *
+ * `costFraction: 1` IS THE 100%, so no per-rank number is involved -- which is
+ * why the values file stores the CHANCE and says so.
+ *
+ * FIFTEEN SECONDS, borrowed from the Mage's Clearcasting because Forever's
+ * Shaman tooltip states no duration at all. It is a backstop rather than the
+ * mechanic: `consumedByCast: 'all'` is what ends it in practice, and an
+ * Elemental shaman casting every 1.5 to 2.5 seconds reaches a damage spell long
+ * before fifteen seconds pass. The one case it decides is a Windfury Weapon or
+ * Rage of the Farseer cast in between, which neither spends the charge nor
+ * resets the clock.
+ */
+export const ELEMENTAL_FOCUS_DURATION_MS = seconds(15);
+
+export const ELEMENTAL_FOCUS_CLEARCASTING: AuraDefinition = {
+  id: 'elemental_focus',
+  name: 'Clearcasting',
+  durationMs: ELEMENTAL_FOCUS_DURATION_MS,
+  castModifier: {
+    abilityIds: SHAMAN_DAMAGE_SPELL_IDS,
+    costFraction: 1,
+    /*
+     * `all`, not `stack`. "Your NEXT damage spell" is one cast, and the aura
+     * has no stacks to spend anyway -- but saying it explicitly is what stops
+     * a later edit adding `maxStacks` and quietly turning one free spell into
+     * several.
+     */
+    consumedByCast: 'all',
+  },
+};
+
+/*
+ * ============================================================================
  * SEARING TOTEM, MODELLED AS A DAMAGE-OVER-TIME EFFECT AND NOT AS AN ENTITY.
  *
  * THE RULESET OWNER'S RULING, given in full because no source states most of
@@ -217,6 +310,53 @@ export const STORMSTRIKE_DEBUFF: AuraDefinition = {
   isDebuff: true,
   refreshBehaviour: 'reset',
 };
+
+/**
+ * Improved Stormstrike's mana clause: "you have a 100% chance to gain 50% mana
+ * regeneration while casting spells for 15 sec."
+ *
+ * ----------------------------------------------------------------------------
+ * `manaRegenBypass` IS EXACTLY THIS STAT, and it has been in the engine since
+ * the first caster -- "percentage of mana regeneration that continues while
+ * casting". Five talents across five classes already grant it flat and
+ * permanently (the Mage's Arcane Meditation, the Priest's Meditation, the
+ * Paladin's Reverence, the Druid's Reflection, a Hunter tier-two talent); this
+ * is the first one that grants it for a WINDOW, which is an aura and nothing
+ * new.
+ *
+ * SO THE TALENT'S `unmodelled` REASON WAS WRONG ABOUT WHICH HALF WAS BLOCKED.
+ * It read "Mana regeneration while casting, and a Stormstrike cooldown reset on
+ * a DODGE OR PARRY. Neither profile is attacked, so neither ever dodges" --
+ * which is true of the SECOND clause and says nothing about the first. Both
+ * clauses were reported under the second clause's reason, and the mana half has
+ * been expressible the whole time. That is the failure mode CLAUDE.md names: a
+ * reason specific enough to re-read is one that can be checked, and a reason
+ * covering two clauses with one sentence hides whichever clause is not the
+ * subject.
+ *
+ * IT IS MANA RETURN, WHICH IS IN SCOPE. Healing throughput is ruled out and
+ * mana return explicitly is not, because it changes a damage profile's sustain
+ * -- and the Enhancement shaman is the one build in this project that spends
+ * mana on Stormstrike, its shocks and an imbue while swinging a two-hander.
+ *
+ * BOTH NUMBERS COME FROM THE TALENT: the bypass percentage at index 1 and the
+ * duration at index 2. Index 0 is the PROC CHANCE and index 3 is the
+ * dodge/parry reset chance, and reading index 0 would grant 100 percentage
+ * points of bypass at rank 2 -- full regeneration while casting, which is twice
+ * the talent.
+ */
+export function improvedStormstrikeAura(
+  bypassPercent: number,
+  durationMs: number,
+): AuraDefinition {
+  return {
+    id: 'improved_stormstrike',
+    name: 'Improved Stormstrike',
+    durationMs,
+    refreshBehaviour: 'reset',
+    statModifiers: [flat('manaRegenBypass', bypassPercent)],
+  };
+}
 
 /**
  * Windfury Weapon, the imbue itself.

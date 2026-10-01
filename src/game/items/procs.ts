@@ -37,8 +37,22 @@ export function ppmChance(weaponSpeedSeconds: number, ppm: number): number {
  * weapon's speed rather than from whichever hand happens to be faster. Returns
  * undefined when the attack came from no weapon at all, in which case a
  * weapon proc cannot fire.
+ *
+ * `swingTimerMs` IS THE BASE SPEED. Haste is applied when a swing is scheduled
+ * and never written back onto the weapon, so reading it here gives the item's
+ * own number -- which is what PPM wants, because a hasted character should proc
+ * more often per minute rather than the same amount.
+ *
+ * EXPORTED BECAUSE IT WAS ALREADY WRITTEN TWICE. `reactions/paladin.ts` carries
+ * its own `baseSpeedSeconds` for Seal of Command, and Maelstrom Weapon would
+ * have been the third copy. CLAUDE.md's rule about `isWeaponUse` is the same
+ * lesson: a one-liner that several files re-derive is a one-liner two of them
+ * get wrong.
  */
-function triggeringSpeedSeconds(actor: Combatant, slot: WeaponSlot | undefined): number | undefined {
+export function triggeringSpeedSeconds(
+  actor: Combatant,
+  slot: WeaponSlot | undefined,
+): number | undefined {
   if (!slot) return undefined;
   const weapon = actor.weapons[slot];
   if (!weapon) return undefined;

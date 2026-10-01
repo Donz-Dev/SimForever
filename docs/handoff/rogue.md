@@ -63,7 +63,7 @@ quarter of Venom** and about a tenth of the other two.
 
 | Talents | Fully | Partly | Ruled out | Live gap |
 | --- | --- | --- | --- | --- |
-| 53 | 25 | 2 | **12** | **14** |
+| 53 | 25 | 3 | **12** | **13** |
 
 **Six of the twelve ruled out are the stealth ruling.** `improved_distract` is NOT
 one of them — Distract is simply not implemented, which is an engine claim and

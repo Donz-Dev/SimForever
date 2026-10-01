@@ -101,7 +101,7 @@ sharing, and **all 23 are the ruleset owner's**. DPS is the baseline in
 | Seal Twist Ret | 471.0 | `PALADIN_RETRIBUTION` | 7 | 3 |
 | Firelock | 468.4 | `WARLOCK_DESTRUCTION` | 6 | 2 |
 | Prot Warr | 454.6 | `WARRIOR_SHIELD_DEFENSIVE` | 14 | 10 |
-| Enh Shaman | 451.1 | `SHAMAN_ENHANCEMENT` | 7 | 5 |
+| Enh Shaman | 462.0 | `SHAMAN_ENHANCEMENT` | 8 | 6 |
 | Shadow | 437.3 | `PRIEST_SHADOW` | 6 | 4 |
 | Combat | 422.5 | `ROGUE_COMBAT` | 5 | 2 |
 | Frostfire | 412.5 | `MAGE_FROSTFIRE` | 5 | 4 |
@@ -116,7 +116,7 @@ sharing, and **all 23 are the ruleset owner's**. DPS is the baseline in
 | SM/DS | 363.9 | `WARLOCK_AFFLICTION` | 5 | 4 |
 | LW Melee | 321.5 | `HUNTER_LONE_WOLF_MELEE` | 5 | 2 |
 | LW Ranged | 311.7 | `HUNTER_LONE_WOLF_RANGED` | 7 | 5 |
-| Ele Shaman | 295.4 | `SHAMAN_ELEMENTAL` | 3 | 1 |
+| Ele Shaman | 375.0 | `SHAMAN_ELEMENTAL` | 4 | 2 |
 | Prot Pally | 153.2 | `PALADIN_PROTECTION` | 9 | 6 |
 
 Plus `PET_PRIORITY` (2 entries), which runs on the BM Hunter's pet, and two
@@ -130,8 +130,15 @@ the Elemental shaman had three entries and the Moonkin four, against 9, 11 and
 14 for the three the owner had shaped, and that a short list was where to look
 first. That held: the Moonkin is five now and gained 25.1, and SM/DS went from
 six entries to five and gained 55.9 -- **the count was never the thing, the
-conditions were.** The Elemental shaman is still three entries and still gained
-16.4, from one word in one condition.
+conditions were.**
+
+**AND THEN THE ELEMENTAL SHAMAN'S FOURTH ENTRY WAS WORTH +59.5, which is the
+largest single entry in this file and does not make the count the thing either.**
+The list was three nukes and cast no totem, while the build spent 3/3 on CALL OF
+FLAME — "increases the damage done by your FIRE TOTEMS and by your Flame Shock,
+Fire Nova, and Lava Burst spells". Three talent points were buying a clause the
+rotation could never reach, and nothing reported it: **a working talent on an
+ability nobody casts looks exactly like a working talent.**
 
 **How a profile reaches its list** is `rotationFor(class, style, stance,
 talents)`: the Warrior by style **and** stance, the Rogue, Paladin, Warlock and

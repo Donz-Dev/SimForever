@@ -73,7 +73,7 @@ literally zero.
 
 | Talents | Fully | Partly | Ruled out | Live gap |
 | --- | --- | --- | --- | --- |
-| 54 | 27 | 2 | 9 | **16** |
+| 54 | 27 | 2 | **10** | **15** |
 
 **54 talents is the largest tree in the project**, and 27 fully modelled is second
 only to the Warrior's 43.

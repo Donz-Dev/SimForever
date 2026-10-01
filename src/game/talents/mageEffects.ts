@@ -64,7 +64,7 @@ export const MAGE_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
     },
   ],
 
-  improved_channeling: [{ kind: 'unmodelled', reason: NO_PUSHBACK }],
+  improved_channeling: [{ kind: 'unmodelled', scope: 'castPushback', reason: NO_PUSHBACK }],
 
   arcane_subtlety: [
     {

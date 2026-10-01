@@ -6,15 +6,20 @@ import {
   CHAIN_LIGHTNING_DAMAGE,
   EARTH_SHOCK,
   EARTH_SHOCK_DAMAGE,
+  FIRE_NOVA,
+  FIRE_NOVA_COOLDOWN_MS,
+  FIRE_NOVA_DAMAGE,
   FLAME_SHOCK,
   FLAME_SHOCK_DIRECT,
   FROST_SHOCK,
   FROST_SHOCK_DAMAGE,
   LAVA_BURST_DAMAGE,
   LAVA_BURST_FLAME_SHOCK_BONUS,
+  LIGHTNING_BOLT,
   LIGHTNING_BOLT_DAMAGE,
   SEARING_TOTEM,
   SHOCK_COOLDOWN_GROUP,
+  WINDFURY_WEAPON,
 } from '../../src/game/abilities/shaman';
 import {
   FLAME_SHOCK_DOT_DURATION_MS,
@@ -30,6 +35,7 @@ import {
 import {
   WINDFURY_WEAPON_ATTACK_POWER,
   WINDFURY_WEAPON_EXTRA_ATTACKS,
+  WINDFURY_WEAPON_INTERNAL_COOLDOWN_MS,
   WINDFURY_WEAPON_PROC_CHANCE,
 } from '../../src/game/reactions/shaman';
 import { SHAMAN_TALENT_EFFECTS } from '../../src/game/talents/shamanEffects';
@@ -38,13 +44,29 @@ import type { TelemetryEvent } from '../../src/engine';
 import { castAbility, checkCast, resolveCast, seconds } from '../../src/engine';
 import { buildSimulation } from '../helpers/buildSimulation';
 import { makeAttacker, makeTarget } from '../helpers/actors';
-import { MAELSTROM_WEAPON_MAX_STACKS, maelstromWeaponAura } from '../../src/game/auras/shaman';
 import {
-  MAELSTROM_WEAPON_UNMODELLED,
-  PLACEHOLDER_MAELSTROM_WEAPON_PROC_CHANCE,
+  ELEMENTAL_FOCUS_CLEARCASTING,
+  MAELSTROM_WEAPON_MAX_STACKS,
+  SHAMAN_DAMAGE_SPELL_IDS,
+  improvedStormstrikeAura,
+  maelstromWeaponAura,
+} from '../../src/game/auras/shaman';
+import {
+  IMPROVED_STORMSTRIKE_BYPASS_PERCENT,
+  IMPROVED_STORMSTRIKE_DURATION_MS,
+  LIGHTNING_OVERLOAD_FRACTION,
+  MAELSTROM_WEAPON_PPM,
+  elementalFocus,
+  improvedStormstrike,
+  lightningOverload,
 } from '../../src/game/reactions/shamanTalents';
-import { SHAMAN_ENHANCEMENT } from '../../src/game/rotations/shaman';
+import { SHAMAN_ELEMENTAL, SHAMAN_ENHANCEMENT } from '../../src/game/rotations/shaman';
 import { talentNumber } from '../../src/game/talents/talentValues';
+import { talentBuild } from '../../src/game/talents/talentBuild';
+import { legalise } from '../helpers/legalTalents';
+import { MANA_REGEN_LOCKOUT_MS, manaPerTick } from '../../src/game/combat/resourceRules';
+import { ppmChance } from '../../src/game/items/procs';
+import type { AbilityCastEvent, Combatant, SimulationContext } from '../../src/engine';
 
 /*
  * The Shaman's numbers, written out by hand from the beta client's spellbook.
@@ -270,20 +292,36 @@ describe('the fights', () => {
     expect(named).not.toContain('Lava Burst');
 
     /*
-     * LIGHTNING BOLT STAYS ON IT, and that is correct rather than a miss: it
-     * carries a SECOND caveat, about the placeholder proc chance Maelstrom
-     * Weapon rides on, which has nothing to do with scaling.
+     * AND LIGHTNING BOLT LEAVES THE LIST TOO, WHICH IT DID NOT USED TO.
      *
-     * Asserted on the REASON TEXT rather than on the ability name, because
-     * "is it listed" cannot tell two different caveats apart -- and only the
-     * coefficient one was supposed to go.
+     * --------------------------------------------------------------------------
+     * THIS TEST PREVIOUSLY ASSERTED THE OPPOSITE, AND WAS RIGHT TO ON THE DAY.
+     * Lightning Bolt carried a SECOND caveat -- Maelstrom Weapon's proc chance
+     * was a named placeholder, and the spell that talent discounts is where the
+     * caveat was surfaced -- so it stayed on `castButNotSimulated` after the
+     * coefficient one went, and the test checked the REASON TEXT rather than the
+     * name precisely so the two could be told apart.
+     *
+     * The ruleset owner supplied five procs per minute on 2026-09-30. There is
+     * no caveat left, so the spell has no entry at all, and what was a correct
+     * assertion became a stale one WITHOUT ANYBODY TOUCHING THE TEST. That is the
+     * documented failure mode -- "a test pinned to a temporary limitation
+     * outlives the limitation" -- and it is also the test doing its job: the
+     * suite failed the moment the placeholder was deleted.
+     *
+     * Both assertions are kept and both now read "absent", because the
+     * distinction the reason-text check bought is worth keeping until Lightning
+     * Bolt acquires a third caveat.
+     * --------------------------------------------------------------------------
      */
+    expect(named).not.toContain('Lightning Bolt');
+
     const reasons = batch.castButNotSimulated
       .filter((entry) => entry.abilityName === 'Lightning Bolt')
       .map((entry) => entry.reason)
       .join(' ');
     expect(reasons).not.toMatch(/spell power coefficient/i);
-    expect(reasons).toMatch(/PLACEHOLDER/i);
+    expect(reasons).not.toMatch(/PLACEHOLDER/i);
   });
 
   it('CLOSES MOST OF THE GAP to the Enhancement shaman, and that is the point', () => {
@@ -399,11 +437,11 @@ describe('Maelstrom Weapon, the capstone that was worth nothing twice over', () 
      * -- was being rolled as the proc chance. Twenty percent is a completely
      * ordinary proc rate, which is exactly why it looked fine.
      *
-     * The tooltip states no chance at all. So the rate is a named placeholder
-     * and the talent prints that caveat, and the reduction is read from the
-     * talent where it actually lives. Asserted as the two being DIFFERENT
-     * things rather than as a number, because the placeholder is expected to
-     * change the moment the ruleset owner supplies the real one.
+     * THE RATE IS THE OWNER'S NOW -- five procs per minute, given 2026-09-30 --
+     * so the placeholder this test used to assert the EXISTENCE of is gone. What
+     * is asserted instead is the thing that cannot go stale: the value the
+     * builder reads is the REDUCTION and not a chance, which is what the bug got
+     * backwards.
      * --------------------------------------------------------------------------
      */
     const built = PRESETS_BY_ID.get('shaman_enhancement')!.build();
@@ -412,9 +450,14 @@ describe('Maelstrom Weapon, the capstone that was worth nothing twice over', () 
     // The reduction at rank 5, from the values file.
     expect(talentNumber('shaman', 'maelstrom_weapon', 5, 0)).toBe(20);
 
-    // And the caveat is surfaced, not buried in a comment.
-    expect(MAELSTROM_WEAPON_UNMODELLED).toContain('PLACEHOLDER');
-    expect(PLACEHOLDER_MAELSTROM_WEAPON_PROC_CHANCE).toBeGreaterThan(0);
+    /*
+     * AND THE REDUCTION IS NOT THE RATE. The two are different numbers now, and
+     * a future edit that passes the talent value in as the chance again would
+     * make them equal. Written as an inequality because that is the invariant --
+     * asserting 5 and 20 by hand would pass for the wrong reason if both moved.
+     */
+    expect(MAELSTROM_WEAPON_PPM).not.toBe(talentNumber('shaman', 'maelstrom_weapon', 5, 0));
+    expect(MAELSTROM_WEAPON_PPM).toBeGreaterThan(0);
   });
 
   it('is in the Enhancement priority list at all, which it was not', () => {
@@ -630,5 +673,488 @@ describe('the three shocks share one cooldown', () => {
       ok: false,
       reason: 'on_cooldown',
     });
+  });
+});
+
+
+/*
+ * ============================================================================
+ * THE SIX GAPS THIS CLASS'S DEEP DIVE CLOSED, each asserted on its MECHANISM.
+ *
+ * A profile's DPS moving is not the test that a talent works -- a cost reduction
+ * is worth nothing to a build that never runs dry, and a correct talent can be
+ * worth zero. So each block below checks the resolved cost, the stack, the stat
+ * arriving or the event emitted, and the DPS figures live in the docs where they
+ * can carry their interval.
+ * ============================================================================
+ */
+
+/** A bare Shaman of one style, with its real spellbook and mana to spare. */
+const bareShamanOf = (preset: string, style: 'caster' | 'two_hander') => {
+  const built = PRESETS_BY_ID.get(preset)!.build();
+  return makeAttacker({
+    autoAttack: 'none',
+    abilities: abilitiesForClass('shaman', style, built.talents),
+    resources: [{ type: 'mana', maximum: 50_000 }],
+  });
+};
+
+const bareElemental = () => bareShamanOf('shaman_elemental', 'caster');
+const bareEnhancement = () => bareShamanOf('shaman_enhancement', 'two_hander');
+
+/** A context whose every roll succeeds, so only the gate can refuse. */
+const alwaysRolls = {
+  rng: { rollChance: () => true, nextFloat: () => 0, nextInt: () => 0 },
+  clock: { now: () => 10_000 },
+  applyAura: () => undefined,
+} as unknown as SimulationContext;
+
+/** A context whose every roll fails. */
+const neverRolls = {
+  rng: { rollChance: () => false, nextFloat: () => 1, nextInt: () => 0 },
+  clock: { now: () => 10_000 },
+  applyAura: () => undefined,
+} as unknown as SimulationContext;
+
+const castOf = (abilityId: string, withTarget = true): AbilityCastEvent =>
+  ({
+    caster: {} as Combatant,
+    target: withTarget ? ({} as Combatant) : undefined,
+    ability: { id: abilityId, name: abilityId },
+    spent: {},
+  }) as unknown as AbilityCastEvent;
+
+describe('Elemental Focus, the cheapest real gap in the project', () => {
+  /*
+   * ITS REASON SAID "A ONE-SHOT, CHARGE-CONSUMING COST MODIFIER, WHICH HAS NO
+   * DECLARATION" and the declaration was already in use by MAELSTROM WEAPON, in
+   * this same class, and by the Mage's identically-worded Clearcasting. The
+   * reason was a claim about the engine on the day it was written and it had
+   * expired twice over before anybody re-read it.
+   */
+  it('hand-fills the CHANCE and not the reduction, because the 100% is the aura', () => {
+    /*
+     * A single-rank talent has no `{0}` for the importer to match, so its values
+     * come back null and a null value makes the whole effect get DROPPED without
+     * reporting anything. The text states two numbers and only one of them needs
+     * a per-rank slot.
+     */
+    expect(talentNumber('shaman', 'elemental_focus', 1, 0)).toBe(10);
+    expect(ELEMENTAL_FOCUS_CLEARCASTING.castModifier!.costFraction).toBe(1);
+  });
+
+  it('makes the next damage spell free, and spends the whole aura doing it', () => {
+    const actor = bareElemental();
+    const simulation = buildSimulation([actor, makeTarget()]);
+    const bolt = actor.abilities.get('lightning_bolt')!;
+
+    expect(resolveCast(actor, bolt).costAmount).toBeGreaterThan(0);
+
+    simulation.applyAura(actor, ELEMENTAL_FOCUS_CLEARCASTING, actor.id);
+    expect(resolveCast(actor, bolt).costAmount).toBe(0);
+  });
+
+  it('is spent by ONE cast, not by one stack of several', () => {
+    // `consumedByCast: 'all'`. "Your NEXT damage spell" is one cast, and
+    // spending a stack instead would leave the aura up for the spell after it.
+    expect(ELEMENTAL_FOCUS_CLEARCASTING.castModifier!.consumedByCast).toBe('all');
+  });
+
+  it('rolls on a CAST and not on a hit, which the Mage version does not', () => {
+    /*
+     * "After CASTING any Fire, Frost, or Nature damage spell" against Arcane
+     * Concentration's "after any damage spell HITS a target". Built as a copy of
+     * the Mage's it would be quietly worse by the Shaman's spell miss chance,
+     * and nothing would have failed.
+     */
+    const reaction = elementalFocus(10);
+    expect(reaction.canTrigger!(alwaysRolls, {} as Combatant, castOf('lightning_bolt'))).toBe(true);
+    expect(reaction.canTrigger!(neverRolls, {} as Combatant, castOf('lightning_bolt'))).toBe(false);
+  });
+
+  it('is not triggered or spent by the imbue, the self-buff or the totem', () => {
+    /*
+     * THE CONSERVATIVE READING, STATED. Searing Totem's school is Fire and its
+     * ticks deal damage, so "a Fire damage spell" is arguable -- but the cast
+     * itself rolls nothing and deals nothing, so summoning a totem is not casting
+     * a damage spell. Chosen because it pays the talent LESS; including it would
+     * be inventing generosity.
+     */
+    const reaction = elementalFocus(10);
+    for (const id of ['windfury_weapon', 'rage_of_the_farseer', 'stormstrike', 'searing_totem']) {
+      expect(reaction.canTrigger!(alwaysRolls, {} as Combatant, castOf(id)), id).toBe(false);
+      expect(SHAMAN_DAMAGE_SPELL_IDS, id).not.toContain(id);
+    }
+
+    // And the discount cannot be spent on them either.
+    const actor = bareElemental();
+    const simulation = buildSimulation([actor, makeTarget()]);
+    simulation.applyAura(actor, ELEMENTAL_FOCUS_CLEARCASTING, actor.id);
+    expect(resolveCast(actor, WINDFURY_WEAPON).costAmount).toBe(WINDFURY_WEAPON.cost!.amount);
+  });
+});
+
+describe('Lightning Overload, the first cast reaction that deals damage', () => {
+  it('copies only the two spells the talent names', () => {
+    const reaction = lightningOverload(10);
+    for (const id of ['lightning_bolt', 'chain_lightning']) {
+      expect(reaction.canTrigger!(alwaysRolls, {} as Combatant, castOf(id)), id).toBe(true);
+    }
+    for (const id of ['lava_burst', 'earth_shock', 'flame_shock', 'frost_shock', 'fire_nova']) {
+      expect(reaction.canTrigger!(alwaysRolls, {} as Combatant, castOf(id)), id).toBe(false);
+    }
+  });
+
+  it('refuses when there is no target to copy the spell onto', () => {
+    expect(
+      lightningOverload(10).canTrigger!(alwaysRolls, {} as Combatant, castOf('lightning_bolt', false)),
+    ).toBe(false);
+  });
+
+  it('halves the base AND the coefficient, so half damage is half the SPELL', () => {
+    /*
+     * Halving only the base would leave an overload worth MORE than half at high
+     * spell power, which is the opposite of what a copy should do. Asserted
+     * through the event stream at zero spell power, where the coefficient
+     * contributes nothing and what is left is the flat half.
+     */
+    expect(LIGHTNING_OVERLOAD_FRACTION).toBe(0.5);
+
+    const actor = makeAttacker({
+      autoAttack: 'none',
+      abilities: [LIGHTNING_BOLT],
+      resources: [{ type: 'mana', maximum: 50_000 }],
+      /*
+       * ZERO SPELL POWER AND NO CRIT, so what lands is the flat half and nothing
+       * else. A large NEGATIVE crit chance is what holds it there -- zero is the
+       * number that looks right and is not, because a talent ADDS to whatever
+       * the provider returned.
+       */
+      stats: { spellPower: 0, spellCritChance: -10_000, hitChance: 100 },
+      castReactions: [lightningOverload(100)],
+    });
+    const target = makeTarget();
+    const bolt = actor.abilities.get('lightning_bolt')!;
+    const simulation = buildSimulation([actor, target]);
+    simulation.begin();
+    castAbility(simulation, actor, bolt, target);
+    // Lightning Bolt is a 2.5 second cast, so nothing has landed yet. The
+    // overload is a CAST reaction and fires after `onCast`, which is at the end.
+    simulation.advanceTo(bolt.castTimeMs! + 1000);
+
+    const damage = simulation.recordedTelemetry.filter((e) => e.type === 'damage') as Array<
+      Extract<TelemetryEvent, { type: 'damage' }>
+    >;
+    const original = damage.find((e) => e.abilityName === 'Lightning Bolt')!;
+    const copy = damage.find((e) => e.abilityName === 'Lightning Bolt (Overload)')!;
+
+    expect(original).toBeDefined();
+    expect(copy).toBeDefined();
+    expect(copy.amount).toBeCloseTo(original.amount / 2, 5);
+
+    /*
+     * AND THE COPY CARRIES THE SOURCE SPELL'S ID WHILE WEARING ITS OWN NAME,
+     * which is the whole trick and is silently reversible. The ID is what
+     * Concussion and Call of Thunder key off, so a copy with its own id would be
+     * stripped of every modifier the original gets; the NAME is what the damage
+     * analyzer groups by, so a copy sharing the name would be invisible in the
+     * breakdown. Neither failure would look wrong.
+     */
+    expect(copy.abilityId).toBe('lightning_bolt');
+    expect(copy.abilityName).not.toBe(original.abilityName);
+  });
+
+  it('reaches the Elemental profile, whose damage is 60% Lightning Bolt', () => {
+    const batch = batchOf('shaman_elemental', 40, 7);
+    const overload = batch.abilities.find((a) => a.abilityName === 'Lightning Bolt (Overload)');
+    expect(overload, 'the overload deals no damage in the build that takes 3/3 of it')
+      .toBeDefined();
+    expect(overload!.damage).toBeGreaterThan(0);
+  });
+});
+
+describe('Improved Stormstrike, whose reason explained the wrong clause', () => {
+  /*
+   * It read "Mana regeneration while casting, AND a Stormstrike cooldown reset on
+   * a DODGE OR PARRY. Neither profile is attacked, so neither ever dodges" --
+   * true of the second clause and silent about the first, which has been
+   * expressible since the first caster. A reason that names two clauses and
+   * explains one hides whichever clause is not the subject.
+   */
+  it('reads the bypass and the duration from the values file, not from a guess', () => {
+    /*
+     * THE TWO INDEPENDENT CHECKS, because a reaction builder takes ONE number and
+     * this talent has four. The chance at index 0 moves between ranks and the
+     * other two do not, so the two that do not are named in TypeScript -- and
+     * this is what stops a data change leaving them behind.
+     */
+    for (const rank of [1, 2]) {
+      expect(talentNumber('shaman', 'improved_stormstrike', rank, 1), `rank ${rank} bypass`)
+        .toBe(IMPROVED_STORMSTRIKE_BYPASS_PERCENT);
+      expect(talentNumber('shaman', 'improved_stormstrike', rank, 2), `rank ${rank} duration`)
+        .toBe(IMPROVED_STORMSTRIKE_DURATION_MS / 1000);
+    }
+    // And the chance is the one that varies, which is why the builder takes it.
+    expect(talentNumber('shaman', 'improved_stormstrike', 1, 0)).toBe(50);
+    expect(talentNumber('shaman', 'improved_stormstrike', 2, 0)).toBe(100);
+  });
+
+  it('lets half the mana regeneration through DURING the five second rule', () => {
+    /*
+     * ASSERTED THROUGH `manaPerTick`, which is the thing the talent actually
+     * changes -- not through a DPS delta, and not through the aura existing. The
+     * Enhancement shaman spends mana constantly, so it is inside the lockout for
+     * effectively the whole fight and this is where its sustain comes from.
+     */
+    const built = PRESETS_BY_ID.get('shaman_enhancement')!.build();
+    const actor = makeAttacker({
+      autoAttack: 'none',
+      abilities: abilitiesForClass('shaman', 'two_hander', built.talents),
+      resources: [{ type: 'mana', maximum: 50_000 }],
+      stats: { manaPer5: 100 },
+    });
+    const simulation = buildSimulation([actor, makeTarget()]);
+
+    const full = manaPerTick(actor, 0);
+    expect(full).toBeGreaterThan(0);
+
+    // Spend mana through the simulation, which is what records WHEN. Then look
+    // inside the five second window: nothing gets through.
+    simulation.spendResource(actor, 'mana', 1);
+    const now = MANA_REGEN_LOCKOUT_MS / 2;
+    expect(manaPerTick(actor, now)).toBe(0);
+
+    simulation.applyAura(
+      actor,
+      improvedStormstrikeAura(IMPROVED_STORMSTRIKE_BYPASS_PERCENT, IMPROVED_STORMSTRIKE_DURATION_MS),
+      actor.id,
+    );
+    expect(manaPerTick(actor, now)).toBeCloseTo(full * (IMPROVED_STORMSTRIKE_BYPASS_PERCENT / 100), 6);
+  });
+
+  it('fires on the Stormstrike CAST and on nothing else', () => {
+    // "When you Stormstrike", not "when Stormstrike hits": a dodged Stormstrike
+    // is still a cast. Keyed by `abilityId`, which `runCastReactions` filters on.
+    expect(improvedStormstrike(100).abilityId).toBe('stormstrike');
+  });
+});
+
+describe('Fire Nova, which was blocked on the wrong thing for the whole project', () => {
+  /*
+   * Improved Fire Nova's reason cited the totems-are-not-entities gap -- an
+   * engine change shared with the Warlock and the Mage -- and Searing Totem has
+   * been a modelled fire totem since the owner ruled it a DoT "considered a totem
+   * for the purposes of other talents". What actually blocked it was the spell
+   * power coefficient, which one question answered. Naming the expensive blocker
+   * instead of the cheap one parked the talent behind work it never needed.
+   */
+  it('takes the midpoint of 413 to 459, at max rank, from the spellbook', () => {
+    expect(FIRE_NOVA_DAMAGE).toBe(436);
+    expect(FIRE_NOVA.cost!.amount).toBe(520);
+    expect(FIRE_NOVA_COOLDOWN_MS).toBe(seconds(10));
+  });
+
+  it('refuses to cast without a fire totem, and allows it with one', () => {
+    /*
+     * "Within 10 yd of your ACTIVE FIRE TOTEM" is `canCast` rather than a comment,
+     * and it is asked of the TARGET because the totem is modelled as a debuff
+     * there. That is what makes the Searing Totem entry above it in the priority
+     * list load-bearing rather than independent.
+     */
+    const actor = bareEnhancement();
+    const target = makeTarget();
+    const simulation = buildSimulation([actor, target]);
+    const context = { simulation, caster: actor, target, ability: FIRE_NOVA };
+
+    expect(FIRE_NOVA.canCast!(context)).toBe(false);
+    simulation.applyAura(target, SEARING_TOTEM_DOT, actor.id);
+    expect(FIRE_NOVA.canCast!(context)).toBe(true);
+  });
+
+  it('is scaled by BOTH talents that name it, from the right value each time', () => {
+    /*
+     * Improved Fire Nova is "+20% damage AND -4 sec cooldown", one row with two
+     * numbers. Reading index 0 for the cooldown would remove TWENTY seconds from
+     * a ten-second cooldown and make the ability free to cast -- which does not
+     * error and does not read as wrong.
+     */
+    const build = talentBuild('shaman', legalise({ improved_fire_nova: 2 }, 'shaman'));
+    expect(build.abilityModifiers.for('fire_nova').damageMultiplier).toBeCloseTo(1.2, 6);
+    expect(build.abilityCooldownReductionMs.get('fire_nova')).toBe(seconds(4));
+
+    // Call of Flame names it too: "your Flame Shock, FIRE NOVA, and Lava Burst".
+    const flame = talentBuild('shaman', legalise({ call_of_flame: 3 }, 'shaman'));
+    expect(flame.abilityModifiers.for('fire_nova').damageMultiplier).toBeCloseTo(1.15, 6);
+  });
+
+  it('is in the Enhancement list at the bottom, where the owner put it', () => {
+    const ids = SHAMAN_ENHANCEMENT.map((entry) => entry.abilityId);
+    expect(ids[ids.length - 1]).toBe('fire_nova');
+
+    // And it fires, which is the only thing that says the totem gate opens.
+    const batch = batchOf('shaman_enhancement', 40, 11);
+    expect(batch.abilities.find((a) => a.abilityName === 'Fire Nova')?.uses ?? 0)
+      .toBeGreaterThan(0);
+  });
+
+  it('is NOT in the Elemental list, which was measured rather than reasoned', () => {
+    /*
+     * Below that list's unconditional Lightning Bolt it fired zero times and the
+     * figure was identical to the decimal; above it, 332.0 against 375.0. 520
+     * mana on a six-second cycle starves the filler. The floor rule: nothing
+     * below an ungated entry can ever be the first castable one.
+     */
+    expect(SHAMAN_ELEMENTAL.map((entry) => entry.abilityId)).not.toContain('fire_nova');
+  });
+});
+
+describe('the two owner rulings that replaced placeholders', () => {
+  it('normalises Maelstrom Weapon by weapon speed, which a flat chance does not', () => {
+    /*
+     * FIVE PROCS PER MINUTE, the owner's figure. The SHAPE changed and not only
+     * the number: a flat per-hit chance is worth more to a FAST weapon, and PPM
+     * removes exactly that. Asserted as the normalisation rather than as a
+     * percentage, because that is the property the two readings disagree about.
+     */
+    expect(MAELSTROM_WEAPON_PPM).toBe(5);
+
+    const slow = ppmChance(3.4, MAELSTROM_WEAPON_PPM);
+    const fast = ppmChance(1.7, MAELSTROM_WEAPON_PPM);
+    expect(slow).toBeCloseTo(fast * 2, 10);
+    // Procs per minute, so each is its rate times sixty over the speed.
+    expect((slow * 60) / 3.4).toBeCloseTo(MAELSTROM_WEAPON_PPM, 10);
+    expect((fast * 60) / 1.7).toBeCloseTo(MAELSTROM_WEAPON_PPM, 10);
+  });
+
+  it('gives the Windfury IMBUE a three second internal cooldown, not the totem’s', () => {
+    /*
+     * The 1.5 seconds it carried was borrowed from Windfury Totem, whose window
+     * the owner stated, and was twice too generous for the imbue -- the owner gave
+     * 3 seconds for the imbue on 2026-09-30. Asserted as being DIFFERENT from the
+     * totem's figure as well as as a number, because "borrowed from the totem" is
+     * the mistake and an equality is what would reinstate it.
+     */
+    expect(WINDFURY_WEAPON_INTERNAL_COOLDOWN_MS).toBe(seconds(3));
+    expect(WINDFURY_WEAPON_INTERNAL_COOLDOWN_MS).not.toBe(seconds(1.5));
+  });
+});
+
+describe('what is left, which is the claim this deep dive makes', () => {
+  it('leaves every talent either profile spends a point on doing something', () => {
+    /*
+     * ------------------------------------------------------------------------
+     * THE COMPLETENESS CLAIM, AS A TEST RATHER THAN AS PROSE IN A DOCUMENT.
+     *
+     * A census figure counts all 50 talents, most of which neither profile takes,
+     * so "17 live gaps" never said how much of the Shaman's own BUILDS were
+     * inert. This asks the narrower question the deep dive was for: of the points
+     * these two profiles actually spend, what reports itself unmodelled?
+     *
+     * A LIVE GAP, NOT MERELY AN UNMODELLED CLAUSE. A talent with a working effect
+     * AND an unmodelled clause is PARTLY modelled and is doing something -- Call
+     * of Flame raises four things and only its Magma Totem clause is dead -- so
+     * the filter here is the census's own: no non-unmodelled effect row at all.
+     *
+     * ONE ENTRY IS EXPECTED AND IT IS A CENSUS ARTEFACT. Elemental Weapons' own
+     * reason says "APPLIES" in capitals -- `reactionsForClass` reads its rank and
+     * builds the Windfury proc with it -- and the census cannot hear that, because
+     * it counts effect rows and this talent has none. The field for saying so,
+     * `appliedElsewhere`, is not on `main` yet; it arrives with the Rogue's two
+     * poison talents, which fell into the same hole.
+     *
+     * So this is written as an exact list. When that field lands, this fails and
+     * the fix is one line in `shamanEffects.ts` -- which is the point: a
+     * known-wrong classification that nothing enforces is one that stays wrong.
+     * ------------------------------------------------------------------------
+     */
+    const hasWorkingEffect = (talentId: string) =>
+      (SHAMAN_TALENT_EFFECTS[talentId] ?? []).some((effect) => effect.kind !== 'unmodelled');
+
+    for (const preset of ['shaman_elemental', 'shaman_enhancement']) {
+      const built = PRESETS_BY_ID.get(preset)!.build();
+      const build = talentBuild('shaman', built.talents);
+      const gaps = [
+        ...new Set(
+          build.unmodelled
+            .filter((entry) => entry.scope === undefined)
+            .map((entry) => entry.talentId)
+            .filter((id) => !hasWorkingEffect(id)),
+        ),
+      ].sort();
+
+      expect(gaps, preset).toEqual(preset === 'shaman_enhancement' ? ['elemental_weapons'] : []);
+    }
+  });
+
+  it('leaves exactly two partly-modelled clauses in either build, both Magma Totem', () => {
+    /*
+     * THE OTHER HALF OF THE CLAIM, because "does something" and "does everything"
+     * are different and the first one alone would hide a dead clause. Both builds
+     * take Call of Flame and Elemental Fury, and in both the only clause left is
+     * Magma Totem -- which is a missing COEFFICIENT rather than a missing engine,
+     * and is recorded as an open question rather than as work.
+     *
+     * Improved Stormstrike is the third partly-modelled talent and is Enhancement
+     * only: its mana half works and its dodge/parry half cannot, which is the
+     * encounter rather than the engine.
+     */
+    for (const preset of ['shaman_elemental', 'shaman_enhancement']) {
+      const built = PRESETS_BY_ID.get(preset)!.build();
+      const build = talentBuild('shaman', built.talents);
+      const partly = [
+        ...new Set(
+          build.unmodelled
+            .map((entry) => entry.talentId)
+            .filter((id) =>
+              (SHAMAN_TALENT_EFFECTS[id] ?? []).some((effect) => effect.kind !== 'unmodelled'),
+            ),
+        ),
+      ].sort();
+
+      expect(partly, preset).toEqual(
+        preset === 'shaman_enhancement'
+          ? ['call_of_flame', 'elemental_fury', 'improved_stormstrike']
+          : ['call_of_flame', 'elemental_fury'],
+      );
+    }
+  });
+
+  it('counts the two new rulings against the talents they were given for', () => {
+    // Cast pushback: Eye of the Storm, which the Elemental build takes 3/3 of,
+    // and Healing Focus. Totems as entities: the four that buff or heal.
+    const scopes = new Map<string, string[]>();
+    for (const [id, effects] of Object.entries(SHAMAN_TALENT_EFFECTS)) {
+      for (const effect of effects) {
+        if (effect.kind !== 'unmodelled' || effect.scope === undefined) continue;
+        scopes.set(effect.scope, [...(scopes.get(effect.scope) ?? []), id]);
+      }
+    }
+    expect(scopes.get('castPushback')?.sort()).toEqual(['eye_of_the_storm', 'healing_focus']);
+    expect(scopes.get('totemEntities')?.sort()).toEqual([
+      'earth_s_grasp',
+      'guardian_totems',
+      'mana_tide_totem',
+      'restorative_totems',
+    ]);
+  });
+
+  it('keeps Magma Totem OUT of the totem ruling, because it is a damage totem', () => {
+    /*
+     * The reading that reaches Searing Totem reaches Magma Totem too -- it deals
+     * damage, so a debuff that ticks expresses it. What it lacks is a spell power
+     * coefficient, the same thing Searing Totem and Fire Nova lacked until the
+     * owner supplied one. Filing it under the entity ruling would park a
+     * one-message question behind an engine change, which is exactly what
+     * Improved Fire Nova's reason did for the whole project.
+     */
+    for (const id of ['call_of_flame', 'elemental_fury']) {
+      const magma = SHAMAN_TALENT_EFFECTS[id]!.filter(
+        (effect) => effect.kind === 'unmodelled',
+      ) as Array<{ kind: 'unmodelled'; reason: string; scope?: string }>;
+      expect(magma, id).toHaveLength(1);
+      expect(magma[0].reason, id).toMatch(/Magma Totem/);
+      expect(magma[0].reason, id).toMatch(/coefficient/);
+      expect(magma[0].scope, id).toBeUndefined();
+    }
   });
 });

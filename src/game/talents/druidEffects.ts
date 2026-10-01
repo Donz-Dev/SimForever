@@ -259,7 +259,13 @@ export const DRUID_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
   // --- Restoration ---------------------------------------------------------
 
   nature_s_focus: [
-    { kind: 'unmodelled', reason: 'Avoiding interruption, and nothing interrupts a cast here.' },
+    {
+      kind: 'unmodelled',
+      scope: 'castPushback',
+      reason:
+        'Avoiding interruption from damage while casting, which is out of scope ' +
+        "by the ruleset owner's 2026-09-30 ruling.",
+    },
   ],
 
   furor: [
