@@ -268,6 +268,14 @@ describe('Toughness', () => {
 // ---------------------------------------------------------------------------
 
 describe('Bastion', () => {
+  /*
+   * TWENTY SECONDS, AND THE DEFAULT FIVE WAS NOT ENOUGH. This test runs
+   * batches and measures 4.7 to 5.4 seconds on this machine -- so against
+   * vitest's 5000ms default it fails or passes depending on what else is using
+   * the CPU, and `main` itself fails it under the full suite while passing it
+   * in isolation. Measured three times, both ways round, with the
+   * sibling slow test in `bloodCraze.test.ts` swapping places with it.
+   */
   it('raises DPS by about its ten percent, plus whatever the rage loop adds', () => {
     /*
      * A 1.1x damage multiplier does not move DPS by exactly 10%, because a
@@ -300,7 +308,7 @@ describe('Bastion', () => {
     const ratio = measure(legalise({ bastion: 5 })) / measure();
     expect(ratio).toBeGreaterThan(1.05);
     expect(ratio).toBeLessThan(1.2);
-  });
+  }, 20_000);
 
   it('is exactly 1.1, and reaches AUTO ATTACKS because it is not per-ability', () => {
     /*

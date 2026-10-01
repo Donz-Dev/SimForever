@@ -93,6 +93,11 @@ export function resolveCast(caster: Combatant, ability: Ability): ResolvedCast {
     if (modifier.castTimeFraction) {
       castMs -= baseCast * Math.min(1, modifier.castTimeFraction * scale);
     }
+    // Flat first, then the fraction -- the order the header states, and the
+    // same order the two cast-time terms above are applied in.
+    if (modifier.costReduction) {
+      cost -= modifier.costReduction * scale;
+    }
     if (modifier.costFraction) {
       cost -= baseCost * Math.min(1, modifier.costFraction * scale);
     }

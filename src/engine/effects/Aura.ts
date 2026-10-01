@@ -84,6 +84,21 @@ export interface CastModifier {
    */
   readonly castTimeFraction?: number;
   /** Fraction of the resource cost removed. 1 makes the cast free. */
+  /**
+   * A FLAT amount off the cost, applied before `costFraction`.
+   *
+   * --------------------------------------------------------------------------
+   * ADDED BY THE ROGUE DIVE, for Thousand Cuts -- energy off the next Hemorrhage
+   * or Backstab, per stack. Every earlier caller was a PERCENTAGE, which is why
+   * only `costFraction` existed.
+   *
+   * THE TWO ARE NOT INTERCHANGEABLE, and that is this project's standing warning
+   * about exactly this shape: a flat 15 off a 35-energy strike is not 15% of it.
+   * `abilityCost` carries the same note for talents, where a flat reduction is
+   * right for a 20-rage strike and wrong for a 380-mana spell.
+   * --------------------------------------------------------------------------
+   */
+  readonly costReduction?: number;
   readonly costFraction?: number;
   /**
    * Multiply both fractions and the flat reduction by the current stacks.

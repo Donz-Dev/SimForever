@@ -1,6 +1,8 @@
 import type { AbilityCastEvent, CastReaction, Reaction } from '../../engine';
+import { isWeaponUse } from '../../engine';
 import type { TalentReactionBuilder } from './warriorTalents';
 import { CUTTHROAT } from '../auras/rogue';
+import { awardComboPoint } from '../combat/comboPoints';
 
 /**
  * Rogue talent procs.
@@ -158,8 +160,83 @@ export const cutthroat = (chancePercent: number): Reaction => ({
   },
 });
 
+/**
+ * Puncturing Wounds' third clause: "gives Backstab a 45% chance to add an
+ * additional Combo Point."
+ *
+ * ----------------------------------------------------------------------------
+ * THE THIRD OF THREE CLAUSES ON ONE TALENT, and the two crit clauses beside it
+ * are `abilityCrit` entries reading different value slots. This one is a proc
+ * and cannot be, which is why the talent has three effects rather than one.
+ *
+ * AN ADDITIONAL POINT, so it stacks on top of the one Backstab already awarded
+ * in its own `onCast` -- a proc'd Backstab is worth two. It goes through
+ * `awardComboPoint` rather than `grantResource` so the target is set: a point
+ * written straight into the pool leaves `comboPointTargetId` pointing at
+ * nobody, and every finisher then refuses to spend.
+ *
+ * ON A HIT OR A CRIT ONLY. A dodged Backstab awards nothing through the
+ * ability's own path either, and "gives Backstab a chance" is a claim about a
+ * Backstab that happened.
+ * ----------------------------------------------------------------------------
+ */
+export const puncturingWounds = (chancePercent: number): Reaction => ({
+  id: 'puncturing_wounds',
+  on: 'dealt',
+  outcomes: ['hit', 'crit'],
+  canTrigger: (context, _actor, attack) =>
+    attack.abilityId === 'backstab' && context.rng.rollChance(chancePercent / 100),
+  onTrigger: (context, actor, attack) => {
+    awardComboPoint(context, actor, attack.defender, 'puncturing_wounds', 'Puncturing Wounds');
+  },
+});
+
+/**
+ * Hack and Slash's Axe/Sword clause: "your successful melee attacks have a 5%
+ * chance to trigger an extra attack on the target."
+ *
+ * ----------------------------------------------------------------------------
+ * THE WARRIOR'S SWORD SPECIALIZATION, WORD FOR WORD, and it is registered the
+ * same way for the same two reasons.
+ *
+ * GATED ON THE WEAPON THAT SWUNG, not on the main hand: a Rogue holding a sword
+ * and a dagger gets this from the sword hand only, and gets it from either
+ * hand. Reading `mainHand` would give a main-hand dagger the sword's proc and
+ * deny it to the sword entirely. That is why this clause does NOT use the
+ * talent effect's `requires` gate the other two clauses do -- that gate is
+ * main-hand-only by design, which is right for a whole-character stat and
+ * wrong for a per-swing proc.
+ *
+ * AND THE EXTRA ATTACK IS ALWAYS THE MAIN HAND, whichever hand procced it --
+ * the ruleset owner's ruling, already shared by Hand of Justice and Sword
+ * Specialization. An extra attack in this engine means a main-hand swing.
+ *
+ * `isWeaponUse` AND NOT ONLY A SWING: "your melee weapon attacks" covers an
+ * ability that needed the weapon as well as the swing itself, which is the
+ * standing reading of a weapon proc here.
+ * ----------------------------------------------------------------------------
+ */
+export const HACK_AND_SLASH_WEAPONS: ReadonlySet<string> = new Set(['sword', 'axe']);
+
+export const hackAndSlash = (chancePercent: number): Reaction => ({
+  id: 'hack_and_slash',
+  on: 'dealt',
+  outcomes: ['hit', 'crit', 'glance'],
+  canTrigger: (context, actor, attack) => {
+    if (!isWeaponUse(attack)) return false;
+    const weapon = attack.weaponSlot ? actor.weapons[attack.weaponSlot] : undefined;
+    if (!weapon || !HACK_AND_SLASH_WEAPONS.has(weapon.weaponType ?? '')) return false;
+    return context.rng.rollChance(chancePercent / 100);
+  },
+  onTrigger: (context, actor) => {
+    context.extraAttack(actor, 'mainHand');
+  },
+});
+
 /** Procs that fire on an attack, by the talent that grants them. */
 export const ROGUE_TALENT_REACTIONS: Readonly<Record<string, TalentReactionBuilder>> = {
   seal_fate: sealFate,
   cutthroat,
+  puncturing_wounds: puncturingWounds,
+  hack_and_slash: hackAndSlash,
 };

@@ -106,7 +106,58 @@ export const RUPTURE_BY_COMBO_POINT: readonly { damage: number; durationMs: numb
   { damage: 469, durationMs: seconds(16) },
 ];
 
-export function ruptureAura(comboPoints: number): AuraDefinition {
+/*
+ * ============================================================================
+ * THOUSAND CUTS, which a Rupture TICK applies.
+ *
+ * "When your Rupture ability deals periodic damage, the Energy cost of your
+ * next Hemorrhage or Backstab ability within 10 sec is reduced by 3, stacking
+ * up to 5 times."
+ *
+ * ----------------------------------------------------------------------------
+ * IT LIVES ON THE TICK BECAUSE A TICK RUNS NO REACTIONS. `dealDamage` excludes
+ * periodic damage from the reaction pass on purpose -- "a bleed ticking is not
+ * an attack anyone parries" -- so there is no proc hook here at all and the
+ * only thing that runs inside a tick is the tick.
+ *
+ * `consumedByCast: 'all'` AND NOT `'stack'`. "Your NEXT Hemorrhage or Backstab
+ * ... reduced by 3, stacking up to 5 times" is ONE cast that every stack paid
+ * for, which is Maelstrom Weapon's shape and not Eclipse's. Spending a single
+ * stack would leave four behind and make the talent worth several times what
+ * it is -- a bigger number and no error, which is why the enum exists.
+ * ============================================================================
+ */
+export const THOUSAND_CUTS_BONUS = 'nextStrikeEnergyReduction';
+export const THOUSAND_CUTS_MAX_STACKS = 5;
+export const THOUSAND_CUTS_DURATION_MS = seconds(10);
+export const THOUSAND_CUTS_ABILITIES: readonly string[] = ['hemorrhage', 'backstab'];
+
+export function thousandCutsAura(energyPerStack: number): AuraDefinition {
+  return {
+    id: 'thousand_cuts',
+    name: 'Thousand Cuts',
+    durationMs: THOUSAND_CUTS_DURATION_MS,
+    maxStacks: THOUSAND_CUTS_MAX_STACKS,
+    // A fresh tick restarts the ten seconds as well as adding a stack.
+    refreshBehaviour: 'reset',
+    castModifier: {
+      abilityIds: THOUSAND_CUTS_ABILITIES,
+      costReduction: energyPerStack,
+      scalesWithStacks: true,
+      consumedByCast: 'all',
+    },
+  };
+}
+
+/**
+ * Rupture's bleed.
+ *
+ * `thousandCutsEnergy` is the talent's per-stack energy reduction, handed down
+ * from `RUPTURE.onCast` as an `abilityBonus` -- an aura definition cannot read
+ * a talent allocation, and a Rogue without the talent passes nothing and
+ * applies nothing.
+ */
+export function ruptureAura(comboPoints: number, thousandCutsEnergy = 0): AuraDefinition {
   const entry = RUPTURE_BY_COMBO_POINT[clampIndex(comboPoints)];
   const ticks = entry.durationMs / RUPTURE_TICK_INTERVAL_MS;
   const perTick = entry.damage / ticks;
@@ -151,16 +202,39 @@ export function ruptureAura(comboPoints: number): AuraDefinition {
           critFrom: 'melee-special',
           appliesArmor: false,
         });
+
+        // Thousand Cuts, on the SOURCE. The tick is the trigger the talent
+        // names, and a tick runs no reactions -- see the block above.
+        if (thousandCutsEnergy > 0) {
+          context.applyAura(source, thousandCutsAura(thousandCutsEnergy), source.id);
+        }
       },
     },
   };
 }
 
-/** What Rupture does not do, printed beside it on the results page. */
-export const RUPTURE_UNMODELLED =
-  'The stated damage lands in full. Its "increased by your Attack Power" ' +
-  'clause does NOT: the source gives no coefficient, so none is invented and ' +
-  'a geared Rogue understates this bleed rather than guessing at it.';
+/*
+ * ----------------------------------------------------------------------------
+ * RUPTURE'S `unmodelled` REASON HAD EXPIRED, AND IT WAS THE LOUD KIND.
+ *
+ * It read: "Its 'increased by your Attack Power' clause does NOT [land]: the
+ * source gives no coefficient, so none is invented." That was true the day it
+ * was written and stopped being true when `WoWSimWorksheet.xlsx` arrived --
+ * the coefficient is `RUPTURE_TICK_AP_COEFFICIENT`, it is applied four lines
+ * above in this same file, and the comment beside it explains the 3% a tick at
+ * length. So the ability was fully scaling while printing a caveat on the
+ * results page saying it could not.
+ *
+ * The fourth time an expired reason has been caught this way, and the second
+ * where the code disproving it was in the same file.
+ *
+ * NOTHING IS LEFT OUTSTANDING, which is why the constant is gone rather than
+ * reworded. Hemorrhage's "+15% Rupture damage taken" now applies as well, so
+ * `RUPTURE` declares no `unmodelled` at all -- and an ability with nothing to
+ * disclose must say nothing rather than say something reassuring.
+ * ----------------------------------------------------------------------------
+ */
+
 
 // ---------------------------------------------------------------------------
 // Expose Armor
@@ -288,10 +362,22 @@ export const GHOSTLY_STRIKE_DODGE_AURA: AuraDefinition = {
  * Hemorrhage's debuff: "causes the target to take 15% increased Rupture damage
  * from the Rogue. Lasts 15 sec."
  *
- * NOT MODELLED. `damageTakenMultiplier` is per school and this is per ABILITY
- * on the target, which the engine has no form for -- `AbilityModifiers` lives
- * on the attacker. A target-side per-ability multiplier is the engine change
- * it would need, and it is wanted by more than this one debuff.
+ * ----------------------------------------------------------------------------
+ * APPLIED, AND IT IS THE WHOLE POINT OF THE SUBTLETY BUILD. Its old reason was
+ * an accurate statement about the engine -- "the engine has damage-taken
+ * multipliers per SCHOOL, and this is per ABILITY on the target" --
+ * and `AuraDefinition.abilityDamageTaken` is the form that was missing.
+ *
+ * NOT A SCHOOL MULTIPLIER, which was the available wrong answer. Rupture is
+ * physical, so a +15% physical debuff would raise every swing, every Backstab
+ * and every other bleed the Rogue lands -- several times the real effect, and
+ * plausible enough that no result would have shown it.
+ *
+ * "FROM THE ROGUE" IS NOT CHECKED. The pipeline reads the target's auras
+ * without asking who applied them, so with two Rogues on one target both would
+ * benefit from either's Hemorrhage. Every encounter here has one attacker, so
+ * the two readings are identical today.
+ * ----------------------------------------------------------------------------
  */
 export const HEMORRHAGE_RUPTURE_BONUS = 15;
 export const HEMORRHAGE_DURATION_MS = seconds(15);
@@ -302,12 +388,16 @@ export const HEMORRHAGE_DEBUFF: AuraDefinition = {
   durationMs: HEMORRHAGE_DURATION_MS,
   isDebuff: true,
   refreshBehaviour: 'reset',
+  // `attackerAbilityModifiers` is main's name for this: a debuff the TARGET
+
+  // carries that raises what ONE named ability does to it. Same concept,
+
+  // and the Mage dive landed it first for Winter's Chill.
+
+  attackerAbilityModifiers: { rupture: { damageMultiplier: 1 + HEMORRHAGE_RUPTURE_BONUS / 100 } },
 };
 
-export const HEMORRHAGE_UNMODELLED =
-  'The strike lands in full. Its "+15% Rupture damage taken" does not: the ' +
-  'engine has damage-taken multipliers per SCHOOL, and this is per ABILITY on ' +
-  'the target, which has no form yet.';
+
 
 
 /*
@@ -405,6 +495,33 @@ export const DEADLY_POISON_TICKS =
  * therefore cannot live on a shared aura constant -- the same reason Rupture
  * is a function of its combo points rather than five exported auras.
  */
+/*
+ * ============================================================================
+ * "POISONED" IS THIS AURA, AND MUTILATE'S 20% IS CARRIED BY IT.
+ *
+ * Mutilate reads "Damage increased by 20% against Poisoned targets", and the
+ * bonus lives on the debuff rather than in Mutilate's own `onCast` for the
+ * standing reason: per-ability damage goes through a modifier the pipeline
+ * consults, so the ability respects it without knowing it exists. It is a
+ * property of the TARGET's state, so it is the target-side field --
+ * `abilityDamageTaken` -- and not one of the three attacker-side scopes.
+ *
+ * DEADLY POISON IS THE ONLY THING THAT MAKES A TARGET POISONED HERE, and that
+ * is correct rather than a shortfall: Instant Poison deals its damage and
+ * leaves nothing behind, so it never poisons anybody in the sense the tooltip
+ * means. The three crowd-control poisons would also qualify and are not
+ * modelled, which costs nothing -- no Rogue profile would coat a weapon with
+ * one over Instant or Deadly.
+ *
+ * ITS REASON EXPIRED WITHOUT ANYBODY TOUCHING MUTILATE. The clause read "does
+ * nothing: poisons are not implemented" for as long as that was true, and the
+ * poison system landing made it a live 20% on the signature ability of the
+ * build that takes it -- unread for a whole release. That is the failure mode
+ * this project keeps meeting from the other direction.
+ * ============================================================================
+ */
+export const MUTILATE_POISONED_BONUS = 0.2;
+
 export function deadlyPoisonAura(damageMultiplier = 1): AuraDefinition {
   const perStackPerTick = (DEADLY_POISON_DAMAGE_PER_STACK / DEADLY_POISON_TICKS) * damageMultiplier;
 
@@ -415,6 +532,18 @@ export function deadlyPoisonAura(damageMultiplier = 1): AuraDefinition {
     isDebuff: true,
     maxStacks: DEADLY_POISON_MAX_STACKS,
     refreshBehaviour: 'reset',
+    /*
+     * FLAT, NOT PER STACK. `modifiersScaleWithStacks` is absent on this aura,
+     * so the 20% is the same at one stack and at five -- which is what
+     * "against Poisoned targets" says. A poisoned target is poisoned.
+     */
+    // `attackerAbilityModifiers` is main's name for this: a debuff the TARGET
+
+    // carries that raises what ONE named ability does to it. Same concept,
+
+    // and the Mage dive landed it first for Winter's Chill.
+
+    attackerAbilityModifiers: { mutilate: { damageMultiplier: 1 + MUTILATE_POISONED_BONUS } },
     periodic: {
       intervalMs: DEADLY_POISON_TICK_INTERVAL_MS,
       onTick: (context, aura) => {

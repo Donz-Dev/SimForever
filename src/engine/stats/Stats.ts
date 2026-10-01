@@ -74,6 +74,41 @@ export const STAT_NAMES = [
   'masteryRating',
   'versatilityRating',
 
+  /**
+   * Percentage of the TARGET's armor this character's attacks ignore.
+   *
+   * Percentage POINTS, like every other chance here: 9 means "ignores 9% of
+   * the target's armor". An OFFENSIVE stat despite reading like a defensive
+   * one -- it is the attacker who carries it, and `resolveDamage` shrinks the
+   * defender's armor by it before the reduction curve is applied.
+   *
+   * It is a percentage of the armor and NOT of the reduction, which are
+   * different numbers: a boss at 3731 armor takes 39.33% off, and ignoring 9%
+   * of that armor leaves 3395, which takes 37.11% off -- so nine points of
+   * penetration is worth 2.23 points of damage, not nine. Reading it the other
+   * way would make every armor-penetration talent about four times what it is.
+   */
+  'armorPenetration',
+  /**
+   * Percentage POINTS taken off the DEFENDER's chance to dodge or parry this
+   * character's attacks.
+   *
+   * ------------------------------------------------------------------------
+   * THE ONE ATTACKER-SIDE ENTRY IN A DEFENDER-SIDE TABLE, which is why it
+   * needs a stat of its own rather than being folded into `hitChance`. Dodge
+   * and parry are read off the defender -- `dodgeFromSkill` compares weapon
+   * skill to defense skill, and enemy parry is a flat ruleset figure -- so
+   * "reduces the chance for your attacks to be Dodged or Parried" had nowhere
+   * to land at all.
+   *
+   * NOT `hitChance`, although both make an attack likelier to connect. Hit
+   * comes off MISS only, and miss, dodge and parry are three separate slices
+   * of the same table: granting this as hit would take it from the wrong
+   * slice and be worth a different amount at every level difference.
+   * ------------------------------------------------------------------------
+   */
+  'dodgeParryReduction',
+
   // Defensive
   'armor',
   /**

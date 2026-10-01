@@ -563,7 +563,13 @@ export function talentBuild(
   let damageMultiplier = 1;
   const unmodelled: UnmodelledTalent[] = [];
 
-  const report = (talentId: string, rank: number, reason: string, scope?: OutOfScope) => {
+  const report = (
+    talentId: string,
+    rank: number,
+    reason: string,
+    scope?: OutOfScope,
+    appliedElsewhere?: string,
+  ) => {
     const talent = talents.byId.get(talentId);
     unmodelled.push({
       talentId,
@@ -572,6 +578,7 @@ export function talentBuild(
       text: talentDescription(characterClass, talentId, rank) ?? talent?.description ?? '',
       reason,
       ...(scope ? { scope } : {}),
+      ...(appliedElsewhere ? { appliedElsewhere } : {}),
     });
   };
 
@@ -589,7 +596,7 @@ export function talentBuild(
 
     for (const effect of declared) {
       if (effect.kind === 'unmodelled') {
-        report(talentId, rank, effect.reason, effect.scope);
+        report(talentId, rank, effect.reason, effect.scope, effect.appliedElsewhere);
         continue;
       }
 

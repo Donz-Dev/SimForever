@@ -58,6 +58,28 @@ export const EXECUTE_PHASE_FRACTION = 0.2;
  */
 
 /**
+ * The last 35% of the fight, which is Quietus' threshold.
+ *
+ * ----------------------------------------------------------------------------
+ * A SECOND FRACTION, AND IT IS NOT A SECOND RULE. The ruling above is that a
+ * "below N% health" clause means the last N% of the FIGHT; N is whatever the
+ * tooltip says, and the Rogue's Quietus says 35 where Execute and Hammer of
+ * Wrath say 20. The project owner gave it directly -- "quietus is 35%" -- and
+ * `values/rogue.json` carries the same 35 beside the percentage at every rank.
+ *
+ * IT LIVES BESIDE `EXECUTE_PHASE_FRACTION` RATHER THAN IN `rogueEffects.ts` so
+ * that the next reader meeting a low-health tooltip finds both fractions and
+ * the ruling in one place. Reusing the 20 would have been the silent failure:
+ * a plausible window, nearly twice too short, and nothing to read it against.
+ *
+ * `inExecutePhase` IS NOT THE READER. This one is consumed by
+ * `AbilityModifiers.addWhileFinalFraction`, which is for an ability that stays
+ * castable and hits harder; `inExecutePhase` answers a `canCast`.
+ * ----------------------------------------------------------------------------
+ */
+export const QUIETUS_HEALTH_FRACTION = 0.35;
+
+/**
  * Whether the fight has reached its execute phase.
  *
  * Read off the PLANNED duration rather than a fight that has already ended,

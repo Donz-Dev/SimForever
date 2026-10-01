@@ -18,10 +18,10 @@ engine that were about the wrong thing.
 | [warrior.md](warrior.md) | 2H Arms, DW Fury, Prot Warr | **0** |
 | [paladin.md](paladin.md) | Seal Twist Ret, Shockadin, Prot Pally | **2** |
 | [druid.md](druid.md) | Moonkin, Cat, Bear | **2** |
+| [rogue.md](rogue.md) | Venom, Combat, Rupture | **3** |
 | [shaman.md](shaman.md) | Ele Shaman, Enh Shaman | **6** |
 | [hunter.md](hunter.md) | BM Hunter, LW Ranged, LW Melee | **8** |
 | [mage.md](mage.md) | Frostfire, Arcane, Fire | **11** |
-| [rogue.md](rogue.md) | Venom, Combat, Rupture | **12** |
 | [priest.md](priest.md) | Shadow | **12** |
 | [warlock.md](warlock.md) | SM/DS, Firelock | **20** |
 
@@ -76,7 +76,11 @@ owner's ruling — 20% for Execute and Hammer of Wrath, and **35% for the Rogue'
 Quietus**, which the owner has now set. Three entries in this project explained a
 silence as "the target never drops" and all three were wrong to.
 
-**Two talents are waiting on one mechanism because of it:** the Rogue's Quietus
-(damage, 35%) and the Priest's Early Demise (crit, 20%). Both are missing
-declarations rather than gaps in the ruling, and **whichever context builds it
-should build it for both.**
+~~**Two talents are waiting on one mechanism because of it**~~ **and the
+mechanism is BUILT.** `AbilityModifiers.addWhileFinalFraction(fraction, ...)`,
+keyed by FRACTION rather than by one constant — the Rogue's Quietus is 35% and
+the Priest's Early Demise is 20%, and a shared `EXECUTE_PHASE_FRACTION` would
+have handed one of them the other's window. Quietus is wired, which was safe
+because no Rogue profile takes it. **Early Demise is one entry and is
+deliberately not wired**: it moves a Priest figure and belongs with that class's
+own re-measured baseline.

@@ -52,6 +52,18 @@ export class AuraCollection {
     return [...this.auras.values()];
   }
 
+  /**
+   * The same set, WITHOUT the copy.
+   *
+   * `active` allocates an array every call, which is fine for a panel and not
+   * fine on the damage path: `abilityDamageTakenMultiplierFor` is asked on
+   * every damage event of every fight, and almost always finds nothing. A
+   * caller that only iterates and never keeps the result takes this instead.
+   */
+  get activeIterable(): Iterable<AuraInstance> {
+    return this.auras.values();
+  }
+
   get size(): number {
     return this.auras.size;
   }

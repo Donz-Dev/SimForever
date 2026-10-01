@@ -702,8 +702,10 @@
    "tree": "subtlety",
    "ranks": 1,
    "text": "When your Rupture ability deals periodic damage, the Energy cost of your next Hemorrhage or Backstab ability within 10 sec is reduced by 3, stacking up to 5 times.",
-   "values": null,
-   "note": "single rank"
+   "values": [
+    3
+   ],
+   "note": "single rank; the 3 filled in by hand per this directory's README -- a single-rank talent has no variable the importer can identify from its own text, and this text states its numbers literally rather than through a {0} placeholder. The 3 is the ENERGY the next Hemorrhage or Backstab is cheaper by, which is the one an effect reads. Its other two -- the 10 second window and the 5 stack cap -- are named constants beside the aura in game/auras/rogue.ts, exactly as Nature's Grace keeps its 3 seconds there. WITHOUT THIS the abilityBonus reads no value and talentBuild drops it in SILENCE, which reads as a talent that never said it was inert."
   }
  }
 }
