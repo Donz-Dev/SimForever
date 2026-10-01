@@ -95,8 +95,8 @@ sharing, and **all 23 are the ruleset owner's**. DPS is the baseline in
 
 | Profile | DPS | List | Entries | Gated |
 | --- | --- | --- | --- | --- |
-| DW Fury | __FURY__ | `WARRIOR_DUAL_WIELD_BERSERKER` | 10 | 6 |
-| 2H Arms | __ARMS__ | `WARRIOR_TWO_HAND_BATTLE` | 12 | 8 |
+| DW Fury | 651.2 | `WARRIOR_DUAL_WIELD_BERSERKER` | 10 | 6 |
+| 2H Arms | 603.3 | `WARRIOR_TWO_HAND_BATTLE` | 12 | 8 |
 | Cat | 488.0 | `DRUID_CAT` | 5 | 3 |
 | Seal Twist Ret | 471.0 | `PALADIN_RETRIBUTION` | 7 | 3 |
 | Firelock | 468.4 | `WARLOCK_DESTRUCTION` | 6 | 2 |
