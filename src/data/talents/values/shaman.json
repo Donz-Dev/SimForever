@@ -89,8 +89,10 @@
    "tree": "elemental",
    "ranks": 1,
    "text": "Gives you a 10% chance to enter a Clearcasting state after casting any Fire, Frost, or Nature damage spell. The Clearcasting state reduces the mana cost of your next damage spell by 100%.",
-   "values": null,
-   "note": "single rank"
+   "values": [
+    10
+   ],
+   "note": "single rank; the 10 filled in by hand per this directory's README -- a single-rank talent has no {0} for the importer to match, so its values come back null. The text states TWO numbers, a 10 percent chance to enter Clearcasting and a 100 percent reduction on the next damage spell; the 100 is the aura's own costFraction of 1 and needs no per-rank number, so the CHANCE is what is stored -- the same shape as the Mage's Arcane Concentration, whose builder also takes the chance."
   },
   "elemental_fury": {
    "name": "Elemental Fury",

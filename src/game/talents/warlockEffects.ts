@@ -104,7 +104,7 @@ export const WARLOCK_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
 
   improved_bane_of_agony: [{ kind: 'abilityDamage', abilityId: 'bane_of_agony' }],
 
-  fel_concentration: [{ kind: 'unmodelled', reason: NO_PUSHBACK }],
+  fel_concentration: [{ kind: 'unmodelled', scope: 'castPushback', reason: NO_PUSHBACK }],
 
   amplify_curse: [
     /*
@@ -389,7 +389,7 @@ export const WARLOCK_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
 
   shadowburn: [{ kind: 'grantAbility', abilityId: 'shadowburn' }],
 
-  intensity: [{ kind: 'unmodelled', reason: NO_PUSHBACK }],
+  intensity: [{ kind: 'unmodelled', scope: 'castPushback', reason: NO_PUSHBACK }],
 
   agonizing_flames: [
     { kind: 'abilityCrit', abilityId: 'searing_pain' },

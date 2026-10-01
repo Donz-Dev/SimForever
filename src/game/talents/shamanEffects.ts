@@ -35,16 +35,66 @@ import type { TalentEffects } from './TalentEffect';
  */
 
 /**
- * Said once; six talents say it.
+ * Said once; FOUR talents say it, and it is a RULING now rather than a gap.
  *
- * SEARING TOTEM IS THE EXCEPTION and is not covered by this sentence: the
- * owner ruled it a damage-over-time effect that counts as a totem, so the two
- * talents naming it reach it and say so individually. The sentence is still
- * true of every totem that acts or buffs on its own.
+ * ----------------------------------------------------------------------------
+ * IT USED TO COVER SIX, AND TWO OF THE SIX WERE NEVER BLOCKED BY IT.
+ *
+ *   Improved Fire Nova   needed Fire Nova declared, which needed a spell power
+ *                        coefficient -- one question to the owner. The active
+ *                        fire totem it asks for has been Searing Totem all
+ *                        along.
+ *   Totemic Focus        is a percentage mana cost reduction on a totem SPELL.
+ *                        It needs a totem in the spellbook, not a totem in the
+ *                        world, and `grantCastModifier` expresses it.
+ *
+ * Both now do something, and the shared sentence was what hid them: one reason
+ * written across six talents outlived its truth on two of them. The Mage's file
+ * carries the same lesson about a five-talent cluster, in almost the same words.
+ *
+ * SEARING TOTEM IS THE EXCEPTION the sentence never covered: the owner ruled it
+ * a damage-over-time effect that counts as a totem, so the talents naming it
+ * reach it. What is left is a totem that BUFFS or HEALS, which has nothing to
+ * attach to -- and that is the owner's `totemEntities` ruling, given 2026-09-30.
+ * ----------------------------------------------------------------------------
  */
 const TOTEMS_NOT_MODELLED =
-  'A totem is a separate entity that attacks or buffs on its own, and the ' +
-  'engine has none. Nothing scaling one can do anything.';
+  'A totem that buffs or heals is a separate entity acting on its own, which is ' +
+  'out of scope by the ruleset owner\'s ruling. The damage reading that reaches ' +
+  'Searing Totem does not reach it: there is nothing to attach a group mana ' +
+  'return or a damage reduction to.';
+
+/**
+ * Said once; two talents say it, and it is NOT the totem ruling.
+ *
+ * ----------------------------------------------------------------------------
+ * MAGMA TOTEM IS A DAMAGE TOTEM, so the reading that reaches Searing Totem
+ * reaches it too -- it is not blocked on a totem being an entity and must not
+ * borrow that ruling. The capture states everything but one number: "Summons a
+ * Magma Totem with 5 health at the feet of the caster for 20 sec that causes 73
+ * Fire damage to creatures within 8 yards every 2 seconds", 650 mana, instant.
+ *
+ * WHAT IS MISSING IS THE SPELL POWER COEFFICIENT, exactly as it was for Searing
+ * Totem until the owner supplied 8% a tick, and for Fire Nova until the owner
+ * supplied 10%. `WoWSimWorksheet.xlsx` has no row for either. So this is a
+ * question one message would answer, and recording it as the entity ruling
+ * would park it behind an engine change it does not need -- which is the
+ * mistake Improved Fire Nova's reason made for the whole project.
+ *
+ * IT WOULD NOT BE CAST EITHER WAY, which is worth knowing before anyone spends
+ * the question: 73 every 2 seconds for 20 seconds is 36.5 damage a second for
+ * 650 mana, against Searing Totem's 31.3 a second for 55 seconds and 170 mana,
+ * and only one fire totem stands at a time. Single-target it loses on both
+ * sustain and mana. Recorded in HANDOVER.md as an open question rather than as
+ * work.
+ * ----------------------------------------------------------------------------
+ */
+const MAGMA_TOTEM_UNDECLARED =
+  'Magma Totem is not a declared ability. It is a DAMAGE totem, so the ' +
+  'damage-over-time reading that reaches Searing Totem reaches it too and the ' +
+  'entity ruling does not apply -- what it lacks is a spell power ' +
+  'coefficient, which the owner supplied for Searing Totem and Fire Nova and ' +
+  'which the coefficient sheet has no row for.';
 
 /** Said once; fourteen talents say it. */
 const NO_PROFILE_HEALS = 'Healing, and neither Shaman profile heals.';
@@ -102,25 +152,35 @@ export const SHAMAN_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
      * tick carries the aura's id and not the cast's.
      */
     { kind: 'abilityDamage', abilityId: 'searing_totem' },
+    /*
+     * AND ITS FIRE NOVA CLAUSE REACHES SOMETHING TOO, now that Fire Nova is a
+     * declared ability. The talent names four things -- Fire Totems, Flame
+     * Shock, Fire Nova and Lava Burst -- and three of the four are live; only
+     * Magma Totem is left.
+     */
+    { kind: 'abilityDamage', abilityId: 'fire_nova' },
     {
       kind: 'unmodelled',
-      reason:
-        'Its Magma Totem and Fire Nova clauses do nothing; its Searing Totem ' +
-        `half is modelled. ${TOTEMS_NOT_MODELLED}`,
+      reason: `Its Magma Totem clause does nothing; every other clause is modelled. ${MAGMA_TOTEM_UNDECLARED}`,
     },
   ],
 
   elemental_devastation: [{ kind: 'reaction', reactionId: 'elemental_devastation' }],
 
-  elemental_focus: [
-    {
-      kind: 'unmodelled',
-      reason:
-        'A 10% chance of a Clearcasting state that removes the NEXT damage ' +
-        "spell's mana cost entirely. A one-shot, charge-consuming cost " +
-        'modifier, which has no declaration.',
-    },
-  ],
+  /*
+   * ELEMENTAL FOCUS. Its reason claimed "a one-shot, charge-consuming cost
+   * modifier, which has no declaration" -- and `CastModifier.costFraction` with
+   * `consumedByCast` is exactly that, was built for Maelstrom Weapon IN THIS
+   * SAME CLASS, and has been carrying the Mage's identically-worded Clearcasting
+   * for as long as the Mage has existed. The reason was a claim about the engine
+   * on the day it was written and it had expired twice over.
+   *
+   * A CAST REACTION AND NOT A DAMAGE ONE, which is the one thing about it that
+   * is not a copy of the Mage's: "after CASTING any Fire, Frost, or Nature
+   * damage spell" against the Mage's "after any damage spell HITS a target".
+   * See `elementalFocus` in `reactions/shamanTalents.ts`.
+   */
+  elemental_focus: [{ kind: 'castReaction', reactionId: 'elemental_focus' }],
 
   elemental_fury: [
     /*
@@ -146,23 +206,63 @@ export const SHAMAN_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
      */
     {
       kind: 'unmodelled',
-      reason: `Its Magma Totem clause does nothing. ${TOTEMS_NOT_MODELLED}`,
+      reason: `Its Magma Totem clause does nothing. ${MAGMA_TOTEM_UNDECLARED}`,
     },
   ],
 
+  /*
+   * IMPROVED FIRE NOVA, AND ITS OLD REASON NAMED THE WRONG BLOCKER.
+   *
+   * It read "Fire Nova requires an active fire totem to go off at all, so it is
+   * not an ability here" and then cited the totems-are-not-entities sentence --
+   * an engine change shared with the Warlock's Infernal and the Mage's
+   * elemental. But Searing Totem has been a modelled fire totem since the owner
+   * ruled it a damage-over-time effect "considered a totem for the purposes of
+   * other talents", and the Enhancement list holds it up all fight. The active
+   * fire totem was already there.
+   *
+   * What actually blocked it was Fire Nova's spell power coefficient, which
+   * `WoWSimWorksheet.xlsx` has no row for because Forever ADDED the spell. One
+   * question to the owner settled it. CLAUDE.md's rule -- check whether a
+   * missing number is missing DATA or a missing RULE before recording it as a
+   * gap -- is this case exactly, and naming the expensive blocker instead of the
+   * cheap one parked the talent behind work it never needed.
+   *
+   * BOTH HALVES APPLY: +20% damage at index 0 and -4 seconds of cooldown at
+   * index 1. Reading index 0 for the cooldown would take 20 SECONDS off a
+   * 10-second cooldown and make Fire Nova free to cast.
+   */
   improved_fire_nova: [
-    {
-      kind: 'unmodelled',
-      reason:
-        'Fire Nova requires an active fire totem to go off at all, so it is ' +
-        `not an ability here. ${TOTEMS_NOT_MODELLED}`,
-    },
+    { kind: 'abilityDamage', abilityId: 'fire_nova' },
+    { kind: 'abilityCooldown', abilityId: 'fire_nova', unit: 'seconds', valueIndex: 1 },
   ],
 
+  /*
+   * EYE OF THE STORM IS THE ELEMENTAL BUILD'S ONE REMAINING LIVE GAP, and the
+   * reason is narrowed rather than repeated: it needs TWO things and the
+   * project has neither.
+   *
+   *   pushback          the engine has no notion of a cast being delayed by
+   *                     damage. `castTimeMs` is resolved once, before `onCast`
+   *                     runs, and nothing can lengthen it afterwards.
+   *   incoming damage   both Shaman profiles set `targetAttacks: false`, so
+   *                     even with pushback modelled there would be nothing to
+   *                     suffer it from.
+   *
+   * BLOCKED TWICE IS WHY IT IS A RULING. Clearing either half alone leaves it
+   * inert, so it is not the kind of reason that expires -- and the owner ruled
+   * cast pushback out of scope on 2026-09-30 when asked with exactly that
+   * argument. It was the last live gap either Shaman profile spent a point on.
+   */
   eye_of_the_storm: [
     {
       kind: 'unmodelled',
-      reason: 'Pushback from damage taken while casting, and nothing here interrupts a cast.',
+      scope: 'castPushback',
+      reason:
+        'Pushback on a cast from damage taken, which is out of scope. The ' +
+        'engine resolves a cast time once, before `onCast`, and nothing can ' +
+        'lengthen it afterwards; and neither Shaman profile is attacked, so ' +
+        'there is nothing to suffer pushback from either.',
     },
   ],
 
@@ -173,15 +273,18 @@ export const SHAMAN_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
 
   elemental_reach: [{ kind: 'unmodelled', scope: 'positioning', reason: 'Range, and nothing here has a position.' }],
 
-  lightning_overload: [
-    {
-      kind: 'unmodelled',
-      reason:
-        'A chance for Lightning Bolt or Chain Lightning to cast a SECOND copy ' +
-        'at half damage. A cast reaction could roll it, but nothing lets a ' +
-        'reaction re-cast an ability at a fraction of its damage.',
-    },
-  ],
+  /*
+   * LIGHTNING OVERLOAD. Its reason said "a cast reaction COULD roll it, but
+   * nothing lets a reaction re-cast an ability at a fraction of its damage" --
+   * which read as an engine gap and was really a missing content decision. A
+   * reaction does not need to re-CAST anything: it deals the damage itself,
+   * with the source spell's ability id so every per-ability modifier reaches it
+   * and its own name so the breakdown can show it.
+   *
+   * THE ELEMENTAL BUILD LANDS 60% OF ITS DAMAGE WITH LIGHTNING BOLT, so this is
+   * the largest single thing in this file for that profile.
+   */
+  lightning_overload: [{ kind: 'castReaction', reactionId: 'lightning_overload' }],
 
   earthbound: [{ kind: 'unmodelled', scope: 'crowdControl', reason: 'Earthbind Totem, and an immobilise.' }],
 
@@ -195,7 +298,7 @@ export const SHAMAN_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
 
   // --- Enhancement ---------------------------------------------------------
 
-  earth_s_grasp: [{ kind: 'unmodelled', reason: TOTEMS_NOT_MODELLED }],
+  earth_s_grasp: [{ kind: 'unmodelled', scope: 'totemEntities', reason: TOTEMS_NOT_MODELLED }],
 
   thundering_strikes: [
     // "all spells and attacks", so both tables.
@@ -207,7 +310,7 @@ export const SHAMAN_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
     { kind: 'stat', stat: 'intellect', operation: 'percentAdd', scale: 0.01 },
   ],
 
-  guardian_totems: [{ kind: 'unmodelled', reason: TOTEMS_NOT_MODELLED }],
+  guardian_totems: [{ kind: 'unmodelled', scope: 'totemEntities', reason: TOTEMS_NOT_MODELLED }],
 
   mental_dexterity: [
     /*
@@ -243,6 +346,25 @@ export const SHAMAN_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
      * not declared as a `reaction` here on purpose: that would make the proc
      * exist only for a Shaman who took the talent, and the imbue is a spell
      * anyone can cast.
+     */
+    /*
+     * THE CENSUS CALLS THIS A LIVE GAP AND IT IS NOT ONE, and the fix is
+     * deliberately NOT made here.
+     *
+     * The reason below has said "APPLIES" in capitals since the talent was
+     * written, and the census cannot hear it: it counts non-unmodelled EFFECT
+     * ROWS, this talent has none, and its working half lives in
+     * `reactionsForClass`, which reads the rank off the allocation and builds the
+     * Windfury proc with it. So one working talent is filed as remaining work.
+     *
+     * `appliedElsewhere` IS THE FIELD FOR EXACTLY THIS and it is not on `main`
+     * yet -- it arrives with the Rogue's two poison talents, which fell into the
+     * same hole. Adding a second copy of the field here would conflict with that
+     * PR over one shared type, so this class waits: the moment the Rogue's branch
+     * lands, one line here (`appliedElsewhere: 'game/reactions/reactionsForClass.ts'`)
+     * moves the Shaman from 10 live gaps to 9 and from 5 partly to 6, with no
+     * behaviour change at all. Recorded in docs/handoff/shaman.md so it is not
+     * found again from scratch.
      */
     {
       kind: 'unmodelled',
@@ -288,12 +410,32 @@ export const SHAMAN_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
     { kind: 'statFromStat', from: 'intellect', to: 'spellPower' },
   ],
 
+  /*
+   * IMPROVED STORMSTRIKE, AND ITS REASON COVERED TWO CLAUSES WITH ONE SENTENCE.
+   *
+   * It read "Mana regeneration while casting, and a Stormstrike cooldown reset
+   * on a DODGE OR PARRY. Neither profile is attacked, so neither ever dodges" --
+   * true of the SECOND clause and silent about the first. `manaRegenBypass` has
+   * been a stat since the first caster and five talents across five classes
+   * already grant it; this is the first to grant it for a window, which is an
+   * aura and nothing new.
+   *
+   * MANA RETURN IS IN SCOPE by the owner's ruling, explicitly, because it
+   * changes a damage profile's sustain -- and Enhancement is the one build here
+   * that pays mana for Stormstrike, its shocks and an imbue while swinging a
+   * two-hander.
+   *
+   * SO: a reason that names two clauses and explains one is a reason that hides
+   * the other. Worth writing one per clause when the clauses expire differently.
+   */
   improved_stormstrike: [
+    { kind: 'castReaction', reactionId: 'improved_stormstrike' },
     {
       kind: 'unmodelled',
       reason:
-        'Mana regeneration while casting, and a Stormstrike cooldown reset on ' +
-        'a DODGE OR PARRY. Neither profile is attacked, so neither ever dodges.',
+        "Its second clause alone: Stormstrike's cooldown resetting on a DODGE " +
+        'OR PARRY. Neither profile is attacked, so neither ever dodges or ' +
+        'parries. Its mana regeneration clause is modelled.',
     },
   ],
 
@@ -304,14 +446,14 @@ export const SHAMAN_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
      * state at all. The first version of this passed it in as the chance, and
      * a 20% proc rate looked completely ordinary.
      */
+    /*
+     * AND ITS CAVEAT IS GONE. The proc chance was the last `PLACEHOLDER_` in
+     * this class; the owner supplied five procs per minute on 2026-09-30, so
+     * every number the talent uses is now either the source's own or the
+     * owner's. The per-stack reading is an INTERPRETATION rather than a gap --
+     * recorded beside the aura, which is where this project keeps them.
+     */
     { kind: 'reaction', reactionId: 'maelstrom_weapon' },
-    {
-      kind: 'unmodelled',
-      reason:
-        'The cast time and mana reduction apply, per stack. Its PROC CHANCE ' +
-        'is a placeholder: the tooltip says only "a chance" and no value for ' +
-        'it exists in the client data.',
-    },
   ],
 
   rage_of_the_farseer: [{ kind: 'grantAbility', abilityId: 'rage_of_the_farseer' }],
@@ -319,7 +461,29 @@ export const SHAMAN_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
   // --- Restoration ---------------------------------------------------------
 
   improved_healing_wave: [{ kind: 'unmodelled', scope: 'healing', reason: NO_PROFILE_HEALS }],
-  totemic_focus: [{ kind: 'unmodelled', reason: TOTEMS_NOT_MODELLED }],
+  /*
+   * TOTEMIC FOCUS WAS NEVER BLOCKED BY THE TOTEM GAP AT ALL. "Reduces the Mana
+   * cost of your totems and any spells that summon or move them by 25%" is a
+   * percentage cost reduction on a spell the character casts -- exactly
+   * `grantCastModifier`, and it needs no totem to exist as an entity, only a
+   * totem SPELL to be in the book. Searing Totem is one.
+   *
+   * IT WAS COUNTED AS ONE OF THE SIX TOTEM GAPS AND IS NOT ONE. Neither Shaman
+   * profile spends a point on it -- both are 0 in Restoration -- so this moves
+   * no figure; it moves the QUEUE, which was reporting a talent as blocked on an
+   * engine change it does not need.
+   *
+   * The other totem spells are missing from the SPELLBOOK, not from this talent.
+   * A talent that fully applies to every totem the character has is not partly
+   * modelled, so this carries no `unmodelled` clause.
+   */
+  totemic_focus: [
+    {
+      kind: 'grantCastModifier',
+      abilityIds: ['searing_totem'],
+      property: 'costFraction',
+    },
+  ],
   mindfulness: [{ kind: 'unmodelled', scope: 'threat', reason: 'Threat, which the engine does not track.' }],
   natural_grace: [{ kind: 'unmodelled', scope: 'healing', reason: NO_PROFILE_HEALS }],
   tidal_focus: [
@@ -336,12 +500,48 @@ export const SHAMAN_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
     { kind: 'stat', stat: 'hitChance', operation: 'flat', valueIndex: 1 },
     { kind: 'unmodelled', scope: 'healing', reason: `Its mana half is healing only. ${NO_PROFILE_HEALS}` },
   ],
+  /*
+   * IMPROVED REINCARNATION, AND ITS REASON NAMED ONE CLAUSE OF THREE.
+   *
+   * "Reduces the cooldown of your Reincarnation spell by 20 min, INCREASES YOUR
+   * MAXIMUM HEALTH BY 4%, and increases the amount of health and Mana you
+   * reincarnate with by an additional 20%." The reason said only "a
+   * self-resurrection out of combat", which is true of two clauses and silent
+   * about the one that is neither out of combat nor a resurrection.
+   *
+   * THE 4% IS THE LIVE GAP and it is a real missing declaration: nothing reaches
+   * maximum health. `maxHealth` is computed once in `createPlayer` from a stats
+   * snapshot, so the only route a talent has today is stamina -- Toughness takes
+   * it -- and a flat percentage of the POOL has no effect kind. Third time in
+   * this file that a multi-clause reason explained the wrong clause, after
+   * Improved Stormstrike and Improved Fire Nova.
+   */
   improved_reincarnation: [
-    { kind: 'unmodelled', reason: 'A self-resurrection out of combat.' },
+    {
+      kind: 'unmodelled',
+      reason:
+        'Its 4% maximum health clause has no declaration: `maxHealth` is ' +
+        'computed once from a stats snapshot and no effect kind reaches the ' +
+        'pool as a percentage. Its other two clauses are a self-resurrection ' +
+        'out of combat.',
+    },
   ],
   ancestral_healing: [{ kind: 'unmodelled', scope: 'healing', reason: NO_PROFILE_HEALS }],
+  /*
+   * HEALING FOCUS is "a 70% chance to avoid interruption caused by damage while
+   * casting any HEALING spell" -- so it is doubly ruled out, by cast pushback and
+   * by healing throughput. `castPushback` is the one recorded, because that is
+   * the MECHANISM: the healing restriction only narrows which casts it would
+   * have applied to.
+   */
   healing_focus: [
-    { kind: 'unmodelled', reason: 'Avoiding interruption, and nothing interrupts a cast here.' },
+    {
+      kind: 'unmodelled',
+      scope: 'castPushback',
+      reason:
+        'Avoiding interruption from damage while casting a healing spell. Cast ' +
+        'pushback is out of scope, and so is healing throughput.',
+    },
   ],
   water_shield: [
     {
@@ -352,8 +552,8 @@ export const SHAMAN_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
     },
   ],
   tidal_mastery: [{ kind: 'unmodelled', scope: 'healing', reason: NO_PROFILE_HEALS }],
-  restorative_totems: [{ kind: 'unmodelled', reason: TOTEMS_NOT_MODELLED }],
-  mana_tide_totem: [{ kind: 'unmodelled', reason: TOTEMS_NOT_MODELLED }],
+  restorative_totems: [{ kind: 'unmodelled', scope: 'totemEntities', reason: TOTEMS_NOT_MODELLED }],
+  mana_tide_totem: [{ kind: 'unmodelled', scope: 'totemEntities', reason: TOTEMS_NOT_MODELLED }],
   healing_way: [{ kind: 'unmodelled', scope: 'healing', reason: NO_PROFILE_HEALS }],
 
   nature_s_swiftness: [

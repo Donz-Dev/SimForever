@@ -9,10 +9,10 @@ import {
   STORMSTRIKE_DEBUFF,
   WINDFURY_WEAPON_IMBUE,
 } from '../auras/shaman';
-import { MAELSTROM_WEAPON_UNMODELLED } from '../reactions/shamanTalents';
 import {
   CHAIN_LIGHTNING_SP_COEFFICIENT,
   EARTH_SHOCK_SP_COEFFICIENT,
+  FIRE_NOVA_SP_COEFFICIENT,
   FROST_SHOCK_SP_COEFFICIENT,
   LAVA_BURST_SP_COEFFICIENT,
   LIGHTNING_BOLT_SP_COEFFICIENT,
@@ -113,7 +113,18 @@ export const LIGHTNING_BOLT: Ability = {
       attackTable: ability.attackTable,
     });
   },
-  unmodelled: MAELSTROM_WEAPON_UNMODELLED,
+  /*
+   * ITS `unmodelled` CAVEAT IS GONE, AND THE TALENT IT BELONGED TO IS WHY.
+   * Lightning Bolt carried Maelstrom Weapon's "the proc chance is a
+   * PLACEHOLDER" note, because the talent that discounts this spell had no
+   * stated rate. The ruleset owner supplied five procs per minute on
+   * 2026-09-30, so there is nothing left to caveat -- see
+   * `MAELSTROM_WEAPON_PPM` in `reactions/shamanTalents.ts`.
+   *
+   * Removing it also broke a genuine import cycle: this file imported the
+   * caveat string from `reactions/shamanTalents.ts`, which now imports this
+   * file's damage constants for Lightning Overload.
+   */
 };
 
 /**
@@ -303,6 +314,90 @@ export const LAVA_BURST: Ability = {
   },
 };
 
+/*
+ * ============================================================================
+ * FIRE NOVA: "Instantly inflicts 413 to 459 fire damage to enemies within 10 yd
+ * of your active Fire totem."
+ *
+ * 520 mana, instant, a 10 second cooldown, and `versusClassic: "new"` -- a spell
+ * Forever added, which is why no Classic reading of it exists and why the
+ * coefficient sheet has no row for it.
+ *
+ * ----------------------------------------------------------------------------
+ * IT WAS BLOCKED ON THE WRONG THING FOR THE WHOLE PROJECT, and this is the
+ * lesson worth keeping. Improved Fire Nova's `unmodelled` reason read "Fire Nova
+ * requires an active fire totem to go off at all, so it is not an ability here"
+ * and then cited the totems-are-not-entities gap -- which had ALREADY EXPIRED.
+ * Searing Totem has been modelled since the owner ruled it a damage-over-time
+ * effect "considered a totem for the purposes of other talents", and the
+ * Enhancement priority list holds it up for 55 of every 60 seconds. The active
+ * fire totem the spell needs has been there all along.
+ *
+ * What actually blocked it was the COEFFICIENT, which nobody had asked for. The
+ * reason named the expensive blocker (an engine change shared with the Warlock
+ * and the Mage) instead of the cheap one (one line from the owner), so the
+ * talent sat in the queue behind work it did not need. CLAUDE.md's rule --
+ * "check whether a missing number is missing DATA or a missing RULE before
+ * recording it as a gap" -- is exactly this case, and it cost six talents'
+ * worth of apparent queue.
+ *
+ * ----------------------------------------------------------------------------
+ * THE FIRE TOTEM REQUIREMENT IS REAL AND IS `canCast`, NOT A COMMENT. Searing
+ * Totem is the only fire totem in the book, so the requirement reduces to "is
+ * the Searing Totem debuff on the target" -- and because the totem is modelled
+ * as a debuff rather than as an entity, the question is asked of the TARGET and
+ * not of the caster. A Shaman who has not cast Searing Totem cannot Fire Nova,
+ * which is the behaviour the tooltip describes and is what makes the two entries
+ * in the priority list ordered rather than independent.
+ *
+ * IT IS NOT A WEAPON USE AND ROLLS THE SPELL TABLE, so it can miss and it can
+ * crit -- and Elemental Fury reaches its crit damage, because the ticks are Fire
+ * and that talent is a school effect.
+ * ============================================================================
+ */
+export const FIRE_NOVA_DAMAGE = midpoint(413, 459);
+export const FIRE_NOVA_COOLDOWN_MS = seconds(10);
+export const FIRE_NOVA_COEFFICIENT = FIRE_NOVA_SP_COEFFICIENT;
+
+/** Every fire totem this class has, which is one. */
+export const FIRE_TOTEM_AURA_IDS: readonly string[] = [SEARING_TOTEM_DOT.id];
+
+/** Whether any fire totem of this caster's is up on the target. */
+function fireTotemActive(target: Combatant | undefined): boolean {
+  if (!target) return false;
+  return FIRE_TOTEM_AURA_IDS.some((id) => target.auras.has(id));
+}
+
+export const FIRE_NOVA: Ability = {
+  id: 'fire_nova',
+  name: 'Fire Nova',
+  cost: { resource: 'mana', amount: 520 },
+  cooldownMs: FIRE_NOVA_COOLDOWN_MS,
+  attackTable: 'spell',
+  requiresTarget: true,
+  canCast: ({ target }) => fireTotemActive(target),
+  onCast: ({ simulation, caster, target, ability }) => {
+    if (!target) return;
+    dealDamage(simulation, {
+      source: caster,
+      target,
+      abilityId: ability.id,
+      abilityName: ability.name,
+      school: 'fire',
+      baseAmount: FIRE_NOVA_DAMAGE,
+      powerCoefficient: FIRE_NOVA_COEFFICIENT,
+      attackTable: ability.attackTable,
+    });
+  },
+  unmodelled:
+    'It hits every enemy within 10 yards of the totem and every encounter here ' +
+    'has one target, so only that one is struck -- the same single-target ' +
+    'reading Chain Lightning and Blast Wave carry. Its 10 yard radius is ' +
+    'dropped with every other distance. Magma Totem is the other fire totem ' +
+    'that would satisfy its requirement and is not modelled, so here the ' +
+    'requirement means Searing Totem.',
+};
+
 // ---------------------------------------------------------------------------
 // Enhancement
 // ---------------------------------------------------------------------------
@@ -420,6 +515,7 @@ export const SHAMAN_ABILITIES: readonly Ability[] = [
   FLAME_SHOCK,
   FROST_SHOCK,
   LAVA_BURST,
+  FIRE_NOVA,
   STORMSTRIKE,
   WINDFURY_WEAPON,
   RAGE_OF_THE_FARSEER_ABILITY,

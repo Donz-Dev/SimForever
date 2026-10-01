@@ -50,6 +50,7 @@ import { PROFILE_PRESETS } from '../src/profiles/presets';
 import type { CharacterProfile } from '../src/profiles/CharacterProfile';
 import { SEAL_OF_RIGHTEOUSNESS } from '../src/game/auras/paladin';
 import { IMMOLATE } from '../src/game/auras/warlock';
+import { SEARING_TOTEM_DOT } from '../src/game/auras/shaman';
 import { OVERPOWER_READY, REVENGE_READY, WARRIOR_STANCES } from '../src/game/auras/warrior';
 import { EXPOSE_PREY } from '../src/game/reactions/hunterTalents';
 
@@ -115,6 +116,19 @@ const SETUP: Readonly<
   judgement: (simulation, actor) => simulation.applyAura(actor, SEAL_OF_RIGHTEOUSNESS, actor.id),
   // Conflagrate requires Immolate on the target and consumes it.
   conflagrate: (simulation, actor, target) => simulation.applyAura(target, IMMOLATE, actor.id),
+  /*
+   * FIRE NOVA NEEDS AN ACTIVE FIRE TOTEM, and the probe read `condition_failed`
+   * without this -- which is the one outcome this tool must not produce quietly,
+   * because an ability it could not cast is indistinguishable in the output from
+   * an ability that does not scale.
+   *
+   * The totem is Searing Totem, modelled as a debuff ON THE TARGET rather than as
+   * an entity, so the setup applies it there. The probe picks ONE profile per
+   * ability and picked the Elemental, whose list casts no totem; the Enhancement
+   * list does, so this is the probe's blindness rather than the ability's.
+   */
+  fire_nova: (simulation, actor, target) =>
+    simulation.applyAura(target, SEARING_TOTEM_DOT, actor.id),
   // Two windows a real fight opens by being dodged, and by blocking.
   overpower: (simulation, actor) => simulation.applyAura(actor, OVERPOWER_READY, actor.id),
   revenge: (simulation, actor) => simulation.applyAura(actor, REVENGE_READY, actor.id),

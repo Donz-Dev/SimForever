@@ -121,7 +121,7 @@ in either — a `caster` style has none.
 
 | Talents | Fully | Partly | Ruled out | Live gap |
 | --- | --- | --- | --- | --- |
-| 52 | **24** | **3** | **3** | **22** |
+| 52 | 24 | 3 | **5** | **20** |
 
 Previously 21 / 3 / 3 / **25**.
 

@@ -79,10 +79,39 @@ const atStacks = (auraId: string, stacks: number) =>
  * EARTH SHOCK IS NOT HERE EITHER, for the opposite reason: it shares a
  * cooldown with Flame Shock in the shock school, and Flame Shock's twelve
  * seconds of burn beat one instant hit.
+ *
+ * ----------------------------------------------------------------------------
+ * SEARING TOTEM IS THE FOURTH ENTRY AND IT IS WORTH +59.5, which is the largest
+ * single rotation finding in this class and one of the largest in the project.
+ *
+ * THE LIST RAN WITHOUT IT FOR ITS WHOLE LIFE. Three entries, all of them nukes,
+ * no totem at all -- and the build spends 3/3 on CALL OF FLAME, whose first
+ * clause is "increases the damage done by your FIRE TOTEMS". Three talent points
+ * were buying a clause the rotation could never reach, and nothing said so: a
+ * talent that works perfectly on an ability nobody casts is worth zero and
+ * reports nothing.
+ *
+ * MEASURED, THEN RULED ON. 315.5 to 375.0 on 30 batches of 10, and the ruleset
+ * owner added the entry on 2026-09-30 having been shown the figure. It is their
+ * list; the measurement only put a number beside the choice.
+ *
+ * ABOVE LIGHTNING BOLT, BELOW LAVA BURST. The bolt is this list's unconditional
+ * filler, so anything below it can never be the first castable entry -- the
+ * floor rule, which is what made Fire Nova inert when it was tried there. Above
+ * Lava Burst would cost a burst cast at the pull for a totem that lasts 55
+ * seconds either way.
+ *
+ * FIRE NOVA IS DELIBERATELY NOT HERE, and it was measured rather than reasoned
+ * about: below the bolt it fired ZERO times and the figure was 375.0 to the
+ * decimal, and above the bolt it measured 332.0 -- a 43-point loss, because 520
+ * mana on a six-second cycle starves the filler. Enhancement casts it and
+ * Elemental does not, which is a mana question rather than a damage one.
+ * ----------------------------------------------------------------------------
  */
 export const SHAMAN_ELEMENTAL: readonly PriorityEntry[] = [
   { abilityId: 'flame_shock', condition: expired('flame_shock') },
   { abilityId: 'lava_burst' },
+  { abilityId: 'searing_totem', condition: expired('searing_totem') },
   { abilityId: 'lightning_bolt' },
 ];
 
@@ -137,6 +166,24 @@ export const SHAMAN_ENHANCEMENT: readonly PriorityEntry[] = [
    * the burn as well as the hit.
    */
   { abilityId: 'earth_shock', condition: targetAuraAtLeast('flame_shock', 3) },
+  /*
+   * FIRE NOVA AT THE BOTTOM, which is where the ruleset owner put it when asked
+   * on 2026-09-30 -- the list was theirs and had seven entries, and this is the
+   * eighth.
+   *
+   * IT NEEDS NO CONDITION AND THAT IS NOT AN OVERSIGHT. Fire Nova's own
+   * `canCast` refuses unless a fire totem is up, so the Searing Totem entry
+   * three lines above is what gates it, and its ten-second cooldown (six with
+   * this build's 2/2 Improved Fire Nova) is what paces it. Writing the totem
+   * check into the entry as well would be two copies of one rule.
+   *
+   * BOTTOM MEANS IT ONLY FIRES WHEN NOTHING ELSE IS READY, and at 520 mana it is
+   * the most expensive thing this build casts -- so its real cost is the mana
+   * that Stormstrike and the shocks above it would otherwise spend. That is why
+   * a measurement and not an argument decides whether it pays: see the figures
+   * in docs/handoff/shaman.md.
+   */
+  { abilityId: 'fire_nova' },
 ];
 
 export const SHAMAN_ELEMENTAL_ROTATION: Rotation = new PriorityRotation(

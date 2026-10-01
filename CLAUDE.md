@@ -100,16 +100,26 @@ together told someone their build was missing features that were never coming.
 | `threat` | threat, which is not tracked. Defensive Stance's +30% and Defiance are dropped, not deferred | 14 |
 | `healing` | healing THROUGHPUT. **Mana RETURN is NOT out of scope** — it changes a damage profile's sustain, so it is a live gap and gets no `scope` | 33 |
 | `stealth` | being stealthed, detecting it, and the openers requiring it — Ambush, Garrote, Cheap Shot. **NOT an in-combat proc that REMOVES a stealth requirement**, which is what Cutthroat is | 7 |
+| `castPushback` | avoiding, resisting or reducing the interruption or DELAY of a cast or channel from damage taken. **NOT an interrupt the TARGET suffers** — Earth Shock's school lockout is about the enemy casting and is inert for a different reason | 7 |
+| `totemEntities` | a totem that BUFFS or HEALS on its own. **NOT a totem that deals DAMAGE**, which Searing Totem proved is expressible as a debuff that ticks | 4 |
 
 Adding a member to that union is a scope DECISION and needs the owner, not a
-judgement call while writing a class. **`stealth` is the newest member and shows
-what one is worth**: it was the largest open question in the project, and ruling it
-took the Rogue from 20 live gaps to 14 — six talents that were counted as remaining
-work and that nothing was ever going to reach.
+judgement call while writing a class.
 
-**ONE OPEN QUESTION IS LEFT: totems as entities** (five Shaman talents), and it is
-not really a scope question — it is the mid-fight-summon engine gap, shared with the
-Warlock's Infernal and the Mage's elemental.
+**"BLOCKED TWICE" IS THE TEST FOR RECOGNISING ONE, and it has found three of the
+seven.** When clearing either half of a reason alone would still leave the talent
+inert, nothing is ever going to reach it and it is a ruling rather than a gap.
+Stealth was that shape (every fight opens in combat AND no opener is declared);
+cast pushback is (the engine resolves a cast time once, before `onCast`, AND no
+caster profile is attacked); totems as entities is (no combatant can be added
+mid-fight AND there is nothing to attach a group mana return to). **Each had spent
+the project counted as work.**
+
+**THE LAST TWO WERE PROPOSED BY THE SHAMAN DIVE RATHER THAN GIVEN BY THE OWNER**,
+which is a thing to know before leaning on them: the rule above says a new member
+needs the owner, and these arrived with the "blocked twice" argument instead. The
+argument is recorded so the owner can refuse it; `totemEntities` in particular is
+narrower than it sounds, because a DAMAGE totem turned out to be expressible.
 
 ## Conventions that prevent real bugs
 

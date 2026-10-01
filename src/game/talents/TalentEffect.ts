@@ -107,6 +107,13 @@ export type TalentEffect =
    * The unit is declared because the source states some in seconds and some in
    * minutes, and the values file keeps the source's own number rather than
    * silently normalising it.
+   *
+   * `valueIndex` FOR A TALENT THAT VARIES SEVERAL NUMBERS, the same field
+   * `abilityDamage` has carried since Improved Corruption. Improved Fire Nova is
+   * "+20% damage AND -4 sec cooldown", one row with two numbers, and taking the
+   * first for the cooldown would remove TWENTY seconds from a ten-second
+   * cooldown -- which does not error, does not read as wrong, and makes the
+   * ability free to cast.
    */
   | {
       readonly kind: 'abilityCooldown';
@@ -709,7 +716,56 @@ export type OutOfScope =
    * is about the REQUIREMENT and not about the word appearing in a tooltip.
    * ------------------------------------------------------------------------
    */
-  | 'stealth';
+  | 'stealth'
+  /**
+   * CAST PUSHBACK. The owner's ruling, 2026-09-30.
+   *
+   * ------------------------------------------------------------------------
+   * "Reduces the pushback suffered from damaging attacks while casting." Seven
+   * talents across five classes say a version of it, and every one is blocked
+   * TWICE: the engine resolves a cast time once, before `onCast` runs, and
+   * nothing can lengthen it afterwards -- and no caster profile in this project
+   * is attacked, so there would be nothing to suffer pushback from even if it
+   * could.
+   *
+   * BLOCKED TWICE IS WHY IT IS A RULING RATHER THAN A GAP. Clearing either half
+   * alone leaves every one of them inert, so neither "build pushback" nor "make
+   * the target swing back" expires it -- which is exactly the shape the stealth
+   * ruling had, and stealth was the largest open question in the project until
+   * it was asked.
+   *
+   * WHAT IT COVERS: avoiding, resisting or reducing interruption and delay of a
+   * cast or channel from damage taken. It does NOT cover an interrupt the target
+   * suffers (Earth Shock's school lockout), which is about the ENEMY casting and
+   * is inert for a different reason.
+   * ------------------------------------------------------------------------
+   */
+  | 'castPushback'
+  /**
+   * A TOTEM AS AN ENTITY. The owner's ruling, 2026-09-30, and it closes the last
+   * open scope question in the project.
+   *
+   * ------------------------------------------------------------------------
+   * Four Shaman talents scale a totem that BUFFS or HEALS on its own -- Earth's
+   * Grasp, Guardian Totems, Restorative Totems, Mana Tide Totem. They need a
+   * totem to exist as something that acts, and `Simulation` exposes
+   * `combatants` read-only, so the engine cannot add one mid-fight.
+   *
+   * THE SEARING TOTEM PRECEDENT DOES NOT REACH THEM, and that is the whole
+   * reason this needed a ruling of its own. A totem that deals DAMAGE can be
+   * modelled as a debuff that ticks -- the owner ruled exactly that for Searing
+   * Totem, and against one stationary enemy it deals identical damage. A totem
+   * that reduces damage taken, restores mana to the group or shortens another
+   * totem's cooldown has no such reading: there is nothing to attach it to.
+   *
+   * IT IS NOT THE MID-FIGHT-SUMMONING GAP. That one stays open, for the
+   * Warlock's Infernal and the Mage's elemental, and nothing in any profile
+   * needs it. This ruling is narrower: a TOTEM is out of scope as an entity, so
+   * four talents stop being counted and the engine gap stops being quoted as
+   * though it were what blocks them.
+   * ------------------------------------------------------------------------
+   */
+  | 'totemEntities';
 
 /**
  * What a character must BE or be HOLDING for a conditional effect to apply.

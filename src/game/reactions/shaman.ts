@@ -45,15 +45,29 @@ export const WINDFURY_WEAPON_ATTACK_POWER = 333;
 export const WINDFURY_WEAPON_EXTRA_ATTACKS = 2;
 
 /**
- * The internal cooldown, borrowed from Windfury Totem and UNVERIFIED for the
- * imbue.
+ * THREE SECONDS, THE RULESET OWNER'S OWN FIGURE for the imbue: "Windfury Weapon
+ * imbue has a 3 second internal cooldown", given 2026-09-30.
  *
- * The owner stated 1.5 seconds for the totem. The spellbook says nothing about
- * one for the weapon, and an effect that can chain off its own extra attacks
- * needs some limit or it runs away -- so the totem's figure is used, named as
- * a placeholder, and surfaced here. Confirming it is one line from the owner.
+ * ----------------------------------------------------------------------------
+ * IT WAS 1.5, BORROWED FROM WINDFURY TOTEM, AND IT WAS TWICE TOO GENEROUS. The
+ * spellbook states the chance, the count and the attack power and says nothing
+ * about a limit, so the totem's figure stood in as a named placeholder while
+ * nobody had the real one. The totem and the imbue are the same effect at
+ * different strengths and they do NOT share this number -- which is exactly the
+ * risk a borrowed value carries, and the reason the borrow had to stay visible.
+ *
+ * HANDOVER.md CLAIMED A SEASON OF DISCOVERY TRINKET TOOLTIP READ 2 SECONDS. No
+ * such tooltip exists anywhere in this repository and the item database is
+ * frozen, so that was a live "discrepancy" with nothing on either side of it.
+ * It is neither 1.5 nor 2; the claim is removed rather than reconciled.
+ *
+ * AN EFFECT THAT CHAINS OFF ITS OWN EXTRA ATTACKS NEEDS SOME LIMIT or it runs
+ * away, which is why one had to be assumed in the first place. Doubling it
+ * roughly halves the proc rate an Enhancement shaman sees, and Windfury is the
+ * largest single thing in that build after its own swing.
+ * ----------------------------------------------------------------------------
  */
-export const PLACEHOLDER_WINDFURY_WEAPON_INTERNAL_COOLDOWN_MS = seconds(1.5);
+export const WINDFURY_WEAPON_INTERNAL_COOLDOWN_MS = seconds(3);
 
 /**
  * Built PER CHARACTER, because the internal cooldown is per-character state.
@@ -82,7 +96,7 @@ export function windfuryWeaponReaction(elementalWeaponsBonusPercent = 0): Reacti
       const now = context.clock.now();
       if (
         lastProcAt !== null &&
-        now - lastProcAt < PLACEHOLDER_WINDFURY_WEAPON_INTERNAL_COOLDOWN_MS
+        now - lastProcAt < WINDFURY_WEAPON_INTERNAL_COOLDOWN_MS
       ) {
         return false;
       }

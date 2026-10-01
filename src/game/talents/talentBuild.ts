@@ -23,7 +23,7 @@ import { ROGUE_TALENT_REACTIONS, ROGUE_CAST_REACTIONS } from '../reactions/rogue
 import { MAGE_CAST_REACTIONS } from '../reactions/mageTalents';
 import { PALADIN_CAST_REACTIONS } from '../reactions/paladinCasts';
 import { DRUID_TALENT_REACTIONS } from '../reactions/druidTalents';
-import { SHAMAN_TALENT_REACTIONS } from '../reactions/shamanTalents';
+import { SHAMAN_CAST_REACTIONS, SHAMAN_TALENT_REACTIONS } from '../reactions/shamanTalents';
 import { MAGE_TALENT_REACTIONS } from '../reactions/mageTalents';
 import { PALADIN_TALENT_REACTIONS } from '../reactions/paladinTalents';
 import { HUNTER_TALENT_REACTIONS } from '../reactions/hunterTalents';
@@ -81,6 +81,7 @@ const CAST_REACTIONS: Partial<
   rogue: ROGUE_CAST_REACTIONS,
   mage: MAGE_CAST_REACTIONS,
   paladin: PALADIN_CAST_REACTIONS,
+  shaman: SHAMAN_CAST_REACTIONS,
 };
 
 const REACTIONS: Partial<Record<ClassId, Readonly<Record<string, TalentReactionBuilder>>>> = {

@@ -115,6 +115,33 @@ is kept as the record of what was once outstanding and why.
 | ~~Hammer of Wrath 42.857%~~ | **APPLIED.** The ability was not declared, and what changed was not the data but the ruleset owner putting it in two Paladin priority lists. Its "only usable on enemies that have 20% or less health" is the CLOCK here, by the same ruling Execute runs on -- `combat/executePhase.ts` |
 | ~~Instant Poison 0.5%, Deadly Poison 0.45% per tick~~ | **APPLIED.** `reactions/poisons.ts` reads the first and `auras/rogue.ts` the second. The reason here said "poisons are not implemented at all" for a while after they were, which is the failure mode an `unmodelled` reason has: it is a claim with a date on it |
 
+### And THREE coefficients exist that the sheet does not contain
+
+**THE SHEET IS AUTHORITATIVE FOR WHAT IT COVERS AND IT DOES NOT COVER EVERYTHING.**
+Three damage sources in this project carry a coefficient supplied by the ruleset
+owner DIRECTLY, in answer to a question, and none of them is in
+`WoWSimWorksheet.xlsx`. Each says so beside the constant, because the provenance is
+different even though the authority is the same, and **a refresh of the sheet will
+not carry any of them.**
+
+| Source | Coefficient | Supplied |
+| --- | --- | --- |
+| Wrack | 14.3% of spell power **per tick**, six ticks | the sheet lists nine Warlock spells and Wrack is not one |
+| Searing Totem | 8% of spell power **per tick** | with the ruling that modelled the totem as a damage-over-time effect at all |
+| Fire Nova | 10% of spell power | 2026-09-30, asked for with the alternatives beside it. "Give it a 10% spell power coefficient for now" — and the "for now" is recorded rather than smoothed away |
+
+**ALL THREE ARE SPELLS FOREVER ADDED OR CHANGED, which is why the sheet has no
+row.** Fire Nova is `versusClassic: "new"`, so there was never a Classic row to
+carry over and nothing to transcribe. **A missing row is therefore not evidence
+that a spell does not scale** — it can simply mean the spell is newer than the
+document, and asking is one message.
+
+**AND A MISSING COEFFICIENT CAN BE WHAT BLOCKS A TALENT WHILE SOMETHING ELSE TAKES
+THE BLAME.** Improved Fire Nova spent the project `unmodelled` citing an engine gap
+shared with the Warlock and the Mage; what it needed was the row above.
+**Magma Totem is the same question still open**, and it is the only Shaman clause
+left: a damage totem, fully specified except for its coefficient.
+
 ## What it moved
 
 300 iterations, seed 12345, preset raid buffs. **Nineteen of twenty-three
