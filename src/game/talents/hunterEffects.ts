@@ -27,9 +27,6 @@ import type { TalentEffects } from './TalentEffect';
  * ----------------------------------------------------------------------------
  */
 
-/** Said once; five talents say it. */
-const NO_TRAPS = 'Traps, and no profile places one.';
-
 /** Said once; seven talents say it. */
 const NO_MOVEMENT = 'Movement or control, and the target neither moves nor can be controlled.';
 
@@ -109,13 +106,29 @@ export const HUNTER_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
 
   bestial_discipline: [
     { kind: 'petStat', property: 'focusRegen' },
-    {
-      kind: 'unmodelled',
-      reason:
-        'Its pet focus regeneration applies. Its "mana regeneration continues ' +
-        'while casting" half does not matter: a Hunter has no cast long enough ' +
-        'for it to reach.',
-    },
+    /*
+     * "...and allows {1}% of your Mana regeneration to continue while casting."
+     *
+     * THE REASON THIS REPLACES WAS WRONG TWICE OVER. It said the clause "does
+     * not matter: a Hunter has no cast long enough for it to reach", and both
+     * halves of that are false.
+     *
+     * First, `manaRegenBypass` is not about a CAST. `manaPerTick` reads it
+     * during the FIVE SECOND RULE -- the lockout after spending mana -- so what
+     * it needs is a Hunter that spends mana, not one standing still casting.
+     * Beast Mastery spends 190 a hawk and 310 an Aimed Shot and is inside that
+     * lockout for almost the whole fight.
+     *
+     * Second, the Hunter does have a long cast: Sniper Shot is FOUR seconds.
+     * That was true from the day the transcription was corrected and the reason
+     * was never re-read -- the same shape as the five expired caveats CLAUDE.md
+     * counts.
+     *
+     * Five talents across five classes already read this exact wording into
+     * this exact stat. This is the sixth, and the only new thing about it is
+     * `valueIndex`, because the talent's row states the pet's focus first.
+     */
+    { kind: 'stat', stat: 'manaRegenBypass', operation: 'flat', valueIndex: 1 },
   ],
 
   frenzy: [{ kind: 'petReaction', reactionId: 'frenzy' }],
@@ -190,11 +203,31 @@ export const HUNTER_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
   ],
 
   rapid_killing: [
+    /*
+     * "Reduces the cooldown on your Rapid Fire ability by 2 min."
+     *
+     * ITS OWN `unmodelled` REASON SAID THIS WAS "REAL" AND NOTHING APPLIED IT.
+     * The talent carried a single unmodelled entry whose first clause read
+     * "Its Rapid Fire cooldown reduction is real" -- and there was no effect in
+     * the list at all, so the cooldown stayed 5 minutes for both builds that
+     * take the talent at 2/2. A reason that describes a working half is a claim
+     * about the code, and this one was false the day it was written.
+     *
+     * WORTH NOTHING TO EITHER PROFILE TODAY, and declared anyway. 5 minutes and
+     * 3 minutes are both longer than a fight, so Rapid Fire is cast once either
+     * way -- which is exactly why nobody noticed. Assert the MECHANISM rather
+     * than a DPS delta: the resolved cooldown is what changed.
+     *
+     * MINUTES, because the values file keeps the source's own number: the text
+     * reads "by {0} min" and the rank-2 value is 2.
+     */
+    { kind: 'abilityCooldown', abilityId: 'rapid_fire', unit: 'minutes' },
     {
       kind: 'unmodelled',
       reason:
-        'Its Rapid Fire cooldown reduction is real and its damage bonus needs ' +
-        'a KILL, which never happens -- the target survives every fight.',
+        'Its Rapid Fire cooldown reduction applies. Its damage bonus needs a ' +
+        'KILL -- "when you kill a non-trivial enemy or it dies while afflicted ' +
+        'by your Serpent Sting" -- and the target survives every fight here.',
     },
   ],
 
@@ -284,7 +317,22 @@ export const HUNTER_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
 
   deflection: [{ kind: 'stat', stat: 'parryChance', operation: 'flat' }],
 
-  entrapment: [{ kind: 'unmodelled', reason: NO_TRAPS }],
+  /*
+   * "When your traps are triggered, all affected targets are Entrapped,
+   * PREVENTING THEM FROM MOVING for 5 sec."
+   *
+   * A ROOT, so it is crowd control and permanently out of scope -- which is a
+   * stronger statement than the "no profile places a trap" it used to carry.
+   * That reason expired the moment Immolation Trap was declared; this one
+   * cannot, because the whole effect is the root.
+   */
+  entrapment: [
+    {
+      kind: 'unmodelled',
+      scope: 'crowdControl',
+      reason: 'A root, which is out of scope as every root is.',
+    },
+  ],
 
   savage_strikes: [
     /*
@@ -302,7 +350,32 @@ export const HUNTER_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
 
   improved_wing_clip: [{ kind: 'unmodelled', scope: 'crowdControl', reason: NO_MOVEMENT }],
 
-  clever_traps: [{ kind: 'unmodelled', reason: NO_TRAPS }],
+  clever_traps: [
+    /*
+     * "Increases the duration of Freezing and Frost trap effects by 30% AND THE
+     * DAMAGE of Immolation and Explosive trap effects by 30%."
+     *
+     * THE DAMAGE HALF BECAME EXPRESSIBLE WHEN A TRAP DID. Immolation Trap is
+     * declared now, on the owner's ruling, so `abilityDamage` reaches its ticks
+     * through the aura id the way Improved Rend reaches a bleed. Explosive Trap
+     * is not declared -- the owner named one trap -- so the bonus lands on half
+     * of what the talent names.
+     *
+     * `valueIndex: 1` because the row is [duration, damage] and the first
+     * number belongs to the Freezing and Frost clause. Both are 30 at every
+     * rank, which is exactly the coincidence that hides an index mistake, so it
+     * is written out rather than left to default.
+     */
+    { kind: 'abilityDamage', abilityId: 'immolation_trap', valueIndex: 1 },
+    {
+      kind: 'unmodelled',
+      scope: 'crowdControl',
+      reason:
+        'Its Immolation Trap damage applies. Its Freezing and Frost trap ' +
+        'durations are crowd control, and Explosive Trap is not declared -- ' +
+        'the owner put one trap in scope and it is not that one.',
+    },
+  ],
 
   surefooted: [
     { kind: 'stat', stat: 'hitChance', operation: 'flat' },
@@ -313,7 +386,24 @@ export const HUNTER_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
     { kind: 'unmodelled', reason: 'Dodge and parry, and no Hunter profile is attacked.' },
   ],
 
-  survival_tactics: [{ kind: 'unmodelled', reason: NO_TRAPS }],
+  /*
+   * "Increases your chance to HIT with your Trap and Feign Death abilities."
+   *
+   * NOTHING FOR IT TO ACT ON, AND THE REASON CHANGED RATHER THAN EXPIRING.
+   * Immolation Trap exists now, and on the owner's ruling it triggers instantly
+   * when cast -- so it rolls no attack table and cannot miss. Feign Death is
+   * not a damage ability and is not declared. A hit chance needs something that
+   * can miss.
+   */
+  survival_tactics: [
+    {
+      kind: 'unmodelled',
+      reason:
+        'Hit chance for a trap that cannot miss. Immolation Trap triggers on ' +
+        'cast by the owner\u2019s ruling and rolls no attack table, and Feign ' +
+        'Death is not a damage ability.',
+    },
+  ],
 
   predator_s_edge: [
     /*
@@ -345,24 +435,91 @@ export const HUNTER_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
     },
   ],
 
-  resourcefulness: [{ kind: 'unmodelled', reason: `Percentage mana costs, and ${NO_TRAPS}` }],
+  /*
+   * "Reduces the mana cost of your Trap abilities and MELEE abilities by {0}%.
+   * In addition, your critical strikes have a {1}% chance to allow 50% of your
+   * Mana regeneration to continue while casting for 30 sec."
+   *
+   * --------------------------------------------------------------------------
+   * BOTH CLAUSES WORK NOW AND NEITHER NEEDED NEW MACHINERY. Its old reason read
+   * "Percentage mana costs, and Traps, and no profile places one", and both
+   * halves of that had expired:
+   *
+   *   A PERCENTAGE MANA COST IS `grantCastModifier`, which retired this exact
+   *   sentence for eleven talents across seven classes. Efficiency, two entries
+   *   up, already uses it on almost the same ability list. The reason survived
+   *   because it was worded around TRAPS as well, so the wording test in
+   *   `grantCastModifier.test.ts` -- which matches the sentence rather than an
+   *   id -- did not catch it.
+   *
+   *   AND A TRAP EXISTS. Immolation Trap is declared, so "your Trap abilities"
+   *   has one member and it belongs in the list.
+   *
+   * THE MELEE LIST IS THE ABILITIES THAT COST MANA. Strider Kick is omitted for
+   * the same reason Efficiency omits it: it is declared with no cost at all, so
+   * a fraction of nothing is nothing.
+   * --------------------------------------------------------------------------
+   */
+  resourcefulness: [
+    {
+      kind: 'grantCastModifier',
+      abilityIds: ['raptor_strike', 'mongoose_bite', 'immolation_trap'],
+      property: 'costFraction',
+    },
+    /*
+     * The second clause, as a proc. `valueIndex: 1` is the CHANCE; the 50% and
+     * the 30 seconds are constants beside the aura, because neither moves with
+     * rank -- see `RESOURCEFULNESS_REGEN`.
+     */
+    { kind: 'reaction', reactionId: 'resourcefulness', valueIndex: 1 },
+  ],
 
   expose_prey: [{ kind: 'reaction', reactionId: 'expose_prey' }],
 
-  survivalist_s_discipline: [{ kind: 'unmodelled', reason: NO_TRAPS }],
+  /*
+   * "Reduces the cooldown of your Trap and Deterrence abilities by 40%."
+   *
+   * A PERCENTAGE COOLDOWN REDUCTION, WHICH IS A REAL AND NAMED ENGINE GAP.
+   * `abilityCooldown` subtracts a FLAT amount in seconds or minutes, because
+   * every talent that has wanted one so far states one; there is no fractional
+   * form, and 40% of Immolation Trap's 30 seconds cannot be written without
+   * one. It is the same shape `grantCastModifier` was built for on the COST
+   * side, and it is the only talent in the project asking for it -- which is
+   * why the reason names the declaration rather than the concept.
+   *
+   * NO HUNTER PROFILE TAKES IT, so building the capability would move nothing.
+   */
+  survivalist_s_discipline: [
+    {
+      kind: 'unmodelled',
+      reason:
+        'A PERCENTAGE cooldown reduction, and `abilityCooldown` subtracts a ' +
+        'flat amount in seconds or minutes with no fractional form. Its ' +
+        'Deterrence half is a survival cooldown nothing here needs.',
+    },
+  ],
 
   strider_kick: [{ kind: 'grantAbility', abilityId: 'strider_kick' }],
 
   lightning_reflexes: [{ kind: 'stat', stat: 'agility', operation: 'percentAdd', scale: 0.01 }],
 
-  lacerating_strikes: [
-    {
-      kind: 'unmodelled',
-      reason:
-        'A bleed worth a share of the damage Mongoose Bite dealt. The bleed ' +
-        'itself is expressible; what is missing is that Mongoose Bite fires ' +
-        'only through Expose Prey here, so it would be a fraction of a ' +
-        'fraction -- written down rather than built.',
-    },
-  ],
+  /*
+   * "Your Mongoose Bite also causes the target to Bleed for damage over 21 sec
+   * equal to 40% of the damage done by Mongoose Bite."
+   *
+   * ITS REASON ARGUED ITSELF OUT OF BEING BUILT AND THE ARGUMENT WAS WRONG. It
+   * said the bleed was expressible but that "Mongoose Bite fires only through
+   * Expose Prey here, so it would be a fraction of a fraction -- written down
+   * rather than built". Mongoose Bite is 9.2% of the Lone Wolf melee profile,
+   * which is the build that takes this talent, so the fraction was never small
+   * and the conclusion was reasoned rather than measured.
+   *
+   * THE VALUE IS HAND-FILLED. A single-rank talent has no `{0}` for the importer
+   * to match, so `values` came back null -- and an effect that reads no value is
+   * DROPPED IN SILENCE, which would have read as an unmodelled talent that never
+   * said so. The 40 is written into `src/data/talents/values/hunter.json` with a
+   * note, per that directory's README, exactly as Nature's Grace's 10 and
+   * Shadowform's 100 are.
+   */
+  lacerating_strikes: [{ kind: 'reaction', reactionId: 'lacerating_strikes' }],
 };

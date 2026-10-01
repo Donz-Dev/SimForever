@@ -7,7 +7,10 @@ import {
   ASPECT_OF_THE_HAWK,
   HUNTERS_MARK,
   BESTIAL_WRATH,
+  HAWK_DAMAGE_PER_STRIKE,
+  HAWK_MAX_ACTIVE,
   HAWK_UNMODELLED,
+  IMMOLATION_TRAP,
   RAPID_FIRE,
   SERPENT_STING,
   SUMMON_HAWK_AURA,
@@ -444,7 +447,23 @@ export const BESTIAL_WRATH_ABILITY: Ability = {
     'build cannot take the talent that grants it in any case.',
 };
 
-/** Summon Hawk, granted by the Beast Mastery talent. */
+/**
+ * Summon Hawk, granted by the Beast Mastery talent.
+ *
+ * ----------------------------------------------------------------------------
+ * TWO CLAUSES, ONE EACH. "Command a hawk to dive-bomb your targeted enemy,
+ * dealing 108 Physical damage AND CONTINUING ITS ASSAULT for 18 sec" -- so the
+ * dive is this ability's own hit and the assault is `SUMMON_HAWK_AURA`'s
+ * periodic. The owner's ruling is that both are 108: "108 for initial and every
+ * other hit, once every 2 seconds."
+ *
+ * REFUSED AT TWO HAWKS, which is the ability's own sentence -- "Only 2 hawks
+ * can be active at once." Without the gate the Beast Mastery list casts it
+ * every six seconds for the whole fight and every cast past the second spends
+ * 190 mana to reset a timer, on a build that runs dry. The list falls through
+ * to Aimed Shot instead, which is what a priority list is for.
+ * ----------------------------------------------------------------------------
+ */
 export const SUMMON_HAWK: Ability = {
   id: 'summon_hawk',
   name: 'Summon Hawk',
@@ -452,10 +471,64 @@ export const SUMMON_HAWK: Ability = {
   cooldownMs: seconds(6),
   // "Shares cooldown with Arcane Shot", which the wiki states outright.
   cooldownGroup: 'arcane_shot',
-  onCast: ({ simulation, caster }) => {
+  canCast: ({ caster }) => caster.auras.stacksOf('summon_hawk') < HAWK_MAX_ACTIVE,
+  onCast: ({ simulation, caster, target }) => {
     simulation.applyAura(caster, SUMMON_HAWK_AURA, caster.id);
+    if (!target) return;
+    dealDamage(simulation, {
+      source: caster,
+      target,
+      // Credited to the AURA's id so the dive and the assault are one row in
+      // the damage table, which is what a reader means by "the hawk".
+      abilityId: SUMMON_HAWK_AURA.id,
+      abilityName: SUMMON_HAWK_AURA.name,
+      school: PHYSICAL,
+      baseAmount: HAWK_DAMAGE_PER_STRIKE,
+      // The owner's figure is flat. Neither half of the hawk takes a
+      // coefficient.
+      powerCoefficient: 0,
+      critFrom: 'ranged-special',
+      appliesArmor: false,
+    });
   },
   unmodelled: HAWK_UNMODELLED,
+};
+
+/**
+ * Immolation Trap, the one trap in scope.
+ *
+ * ----------------------------------------------------------------------------
+ * THE OWNER PUT IT IN AND RULED AWAY THE PART THE ENGINE CANNOT DO: "Let's add
+ * Immolation Trap. Assume it triggers instantly when cast." So the capture's
+ * "burn the FIRST ENEMY TO APPROACH" and its one-minute lifetime on the ground
+ * are both gone, and what is left is a 245-mana instant that applies a burn to
+ * the current target. `IMMOLATION_TRAP` carries the damage and the ruling that
+ * it takes no coefficient.
+ *
+ * IT IS THE ONLY TRAP DECLARED. Explosive Trap is the other damaging one and
+ * the owner named this one, so Explosive stays undeclared rather than being
+ * inferred from the same ruling.
+ *
+ * NO ATTACK TABLE. It rolls nothing: the trap does not miss, and "Only one Fire
+ * trap can be active at a time" is what the 30-second cooldown already
+ * enforces against a single target.
+ * ----------------------------------------------------------------------------
+ */
+export const IMMOLATION_TRAP_ABILITY: Ability = {
+  id: 'immolation_trap',
+  name: 'Immolation Trap',
+  cost: { resource: 'mana', amount: 245 },
+  cooldownMs: seconds(30),
+  onCast: ({ simulation, caster, target }) => {
+    if (!target) return;
+    simulation.applyAura(target, IMMOLATION_TRAP, caster.id);
+  },
+  unmodelled:
+    'It is placed on the ground and burns "the first enemy to approach", and ' +
+    'the engine has no positions -- so on the ruleset owner’s ruling it ' +
+    'triggers instantly when cast. Its one-minute life as an untriggered trap ' +
+    'and its 10-yard radius are the two clauses that go with that. By the same ' +
+    'ruling it scales with neither attack power nor spell power.',
 };
 
 export const HUNTER_ABILITIES: readonly Ability[] = [
@@ -473,4 +546,5 @@ export const HUNTER_ABILITIES: readonly Ability[] = [
   RAPID_FIRE_ABILITY,
   BESTIAL_WRATH_ABILITY,
   SUMMON_HAWK,
+  IMMOLATION_TRAP_ABILITY,
 ];

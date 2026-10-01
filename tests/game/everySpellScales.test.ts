@@ -75,6 +75,19 @@ const EXEMPT: Readonly<Record<string, string>> = {
    */
   arcane_shot: 'Forever replaced its spell power coefficient with a ranged AP one.',
   serpent_sting: 'A sting ticks NATURE but scales with ranged attack power.',
+  /*
+   * A TRAP SCALES WITH NOTHING, AND THAT IS A RULING RATHER THAN AN OVERSIGHT.
+   * The ruleset owner put Immolation Trap in scope and said so in the same
+   * breath: "Immolation trap doesn't scale with attack power or spell power
+   * currently." So it is the only damaging effect in the project that grows
+   * with no stat at all, and its share of a profile FALLS as the rest of the
+   * build gears up.
+   *
+   * "Currently" is the owner's word and is worth keeping: this exemption is the
+   * one in this list most likely to expire, and when it does the fix is a
+   * coefficient in `auras/hunter.ts` and the deletion of this entry.
+   */
+  immolation_trap: 'The owner ruled it scales with neither attack power nor spell power.',
 };
 
 /*

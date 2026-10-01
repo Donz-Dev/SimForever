@@ -47,10 +47,17 @@ DoTs, which is still unmodelled. The owner said so outright: "it's unimportant
 for the rest of the simulator for now, there isn't a profile that uses it."
 
 
-### 1. LW Melee lost 237 DPS and nobody has confirmed the second half
+### 1. LW Melee lost 237 DPS and the owner has now confirmed both halves
 
-It went from the highest non-Warrior profile (558.7) to fourth from bottom
-(321.5), and it is two separate things:
+**CLOSED.** It went from the highest non-Warrior profile (558.7) to fourth from
+bottom (321.5), and it is two separate things. The owner's answer: *"I'm fine
+with LW melee's −136.6 for now. It's explainable based on the changes that were
+made (to make it more accurate). We can revisit it once everything is
+working."*
+
+The profile is **362.7** now, after the Hunter dive added Immolation Trap and
+Lacerating Strikes; the two figures below are still what the list change was
+worth on the day.
 
 - **−100.6** from Raptor Strike becoming on-next-swing. Its capture said
   `"range": "Next melee"` all along and the owner confirmed it in the same
@@ -61,7 +68,7 @@ It went from the highest non-Warrior profile (558.7) to fourth from bottom
   specifically**, because ranged attack power buys a melee Hunter almost nothing
   and the cast still costs a global cooldown at the pull.
 
-**What unblocks it:** the owner confirming the list is intended as written.
+~~**What unblocks it:** the owner confirming the list is intended as written.~~ **Done.**
 
 ### 2. Two Eviscerate gates suppress the ability they gate
 

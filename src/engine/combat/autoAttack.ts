@@ -43,6 +43,38 @@ export const AUTO_ATTACK_NAMES: Readonly<Record<WeaponSlot, string>> = {
 };
 
 /**
+ * What to call one actor's swing, which is NOT always the hand that threw it.
+ *
+ * ----------------------------------------------------------------------------
+ * A PET'S SWING IS REPORTED AS THE PET'S, and it was not. The damage breakdown
+ * pools by ability NAME across every friendly actor -- deliberately, so that a
+ * reader sees "the Hunter's damage" and not two tables -- so a pet's main-hand
+ * swing landed in the row called "Main Hand Auto-Attack".
+ *
+ * THAT ROW WAS 38.1% OF THE BEAST MASTERY HUNTER AND NONE OF IT WAS THE
+ * HUNTER'S. That profile is `combatStyle: 'ranged'`; it never swings a melee
+ * weapon at all. So the largest line in its table named a weapon the character
+ * was not using, the shares still summed to 100%, and nothing contradicted it.
+ * `docs/handoff/hunter.md` read the row and concluded "BM Hunter is the only
+ * profile that swings BOTH melee and ranged", which is how a mislabelled number
+ * becomes a documented fact.
+ *
+ * It is the same failure as `resourceFlow` summing every pool under a heading
+ * that said "Rage": internally consistent, and about the wrong thing.
+ *
+ * WHY THE ENGINE AND NOT THE ANALYSIS LAYER. This is the one place a swing is
+ * named, and `kind` is an engine concept -- `isPlayerControlled` already reads
+ * it. Naming it twice is how two labels drift apart.
+ * ----------------------------------------------------------------------------
+ */
+export function autoAttackName(attacker: Combatant, slot: WeaponSlot): string {
+  if (attacker.kind === 'pet' || attacker.kind === 'summon') {
+    return `${attacker.name} Melee`;
+  }
+  return AUTO_ATTACK_NAMES[slot];
+}
+
+/**
  * Where the rage from a swing is attributed, by hand.
  *
  * One `auto_attack` bucket could not show the split, and the split is the
@@ -223,7 +255,7 @@ function swing(
   const result = dealDamage(context, {
     source: attacker,
     target,
-    abilityName: AUTO_ATTACK_NAMES[slot],
+    abilityName: autoAttackName(attacker, slot),
     school: weapon.school ?? 'physical',
     baseAmount: 0,
     weaponScaling: { slot },

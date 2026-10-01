@@ -21,6 +21,7 @@ import { RATING_PER_PERCENT, dealDamage, flat, seconds } from '../../engine';
  * ----------------------------------------------------------------------------
  */
 
+const FIRE = 'fire' as const;
 const NATURE = 'nature' as const;
 const PHYSICAL = 'physical' as const;
 
@@ -161,6 +162,148 @@ export const SERPENT_STING: AuraDefinition = {
 };
 
 // ---------------------------------------------------------------------------
+// Traps
+// ---------------------------------------------------------------------------
+
+/**
+ * Immolation Trap: "burn the first enemy to approach for 690 Fire damage over
+ * 15 sec."
+ *
+ * ----------------------------------------------------------------------------
+ * THE RULESET OWNER PUT A TRAP IN SCOPE, which no other trap is. Asked whether
+ * a trap belongs in this simulator at all -- it is placed on the ground and
+ * triggers when something walks onto it, and the engine has no positions --
+ * the answer was to build this one and this one only: "Let's add Immolation
+ * Trap. Assume it triggers INSTANTLY WHEN CAST. Immolation trap doesn't scale
+ * with attack power or spell power currently."
+ *
+ * So the "first enemy to approach" clause is the part that is ruled away, and
+ * the trap is a 245-mana instant that applies a burn. Explosive Trap is NOT
+ * covered by that ruling and stays undeclared: the owner named one trap.
+ *
+ * NO COEFFICIENT, BY THE SAME RULING, and that makes it the only damaging
+ * Hunter effect in the class with none -- so it does not grow with gear and its
+ * share of a profile falls as the rest of the build scales. Stated here because
+ * a reader who knows `everySpellScales.test.ts` will come looking for why this
+ * one is exempt, and the answer is the owner's sentence rather than an
+ * oversight.
+ *
+ * FIVE TICKS OF 138. Three seconds is the cadence every Hunter DoT here uses
+ * and 15 divides evenly by it, which is the same reading Serpent Sting's two
+ * wiki statements forced.
+ *
+ * IT CRITS AT RANGED CRIT, which is not an interpretation: "Hunter DoTs use
+ * ranged Crit" is the wiki's own sentence and Serpent Sting is already built on
+ * it. A trap rolls no attack table of its own, so `critFrom` is the whole of
+ * how it can crit at all.
+ * ----------------------------------------------------------------------------
+ */
+export const IMMOLATION_TRAP_TOTAL = 690;
+export const IMMOLATION_TRAP_DURATION_MS = seconds(15);
+export const IMMOLATION_TRAP_TICK_INTERVAL_MS = seconds(3);
+
+export const IMMOLATION_TRAP: AuraDefinition = {
+  id: 'immolation_trap',
+  name: 'Immolation Trap',
+  durationMs: IMMOLATION_TRAP_DURATION_MS,
+  isDebuff: true,
+  refreshBehaviour: 'reset',
+  periodic: {
+    intervalMs: IMMOLATION_TRAP_TICK_INTERVAL_MS,
+    onTick: (context, aura) => {
+      const source = context.combatant(aura.sourceId);
+      const target = context.combatant(aura.targetId);
+      if (!source || !target || !target.isAlive) return;
+
+      const ticks = IMMOLATION_TRAP_DURATION_MS / IMMOLATION_TRAP_TICK_INTERVAL_MS;
+
+      dealDamage(context, {
+        source,
+        target,
+        abilityId: aura.id,
+        abilityName: aura.name,
+        school: FIRE,
+        baseAmount: IMMOLATION_TRAP_TOTAL / ticks,
+        // The owner's ruling: no attack power and no spell power.
+        powerCoefficient: 0,
+        periodic: true,
+        critFrom: 'ranged-special',
+      });
+    },
+  },
+};
+
+// ---------------------------------------------------------------------------
+// Talent bleeds
+// ---------------------------------------------------------------------------
+
+/**
+ * Lacerating Strikes: "Your Mongoose Bite also causes the target to Bleed for
+ * damage over 21 sec equal to 40% of the damage done by Mongoose Bite."
+ *
+ * ----------------------------------------------------------------------------
+ * A SHARE OF WHAT THE STRIKE ACTUALLY DEALT, WHICH IS NOT DEEP WOUNDS' SHAPE.
+ * Deep Wounds is a percentage of the WEAPON'S AVERAGE damage, recomputed from
+ * the weapon held; this is a percentage of one resolved hit, crit included. So
+ * the total arrives as a number rather than as a rank, and the aura is built
+ * per application from `AttackEvent.amount` -- which is exactly what an attack
+ * reaction is handed.
+ *
+ * FIXED AT APPLICATION, for the same reason Deep Wounds fixes its own: the
+ * source keys the bleed to the strike that caused it, so a later Mongoose Bite
+ * REPLACES the bleed rather than retuning the ticks already scheduled.
+ *
+ * SEVEN TICKS OF THREE SECONDS. 21 seconds is stated and three is the cadence
+ * every other bleed in this ruleset uses, Serpent Sting and Rend included; 21
+ * divides evenly by it.
+ *
+ * NO SECOND COEFFICIENT. The 40% is taken of damage that has already been
+ * through weapon scaling, attack power, the crit multiplier and the target's
+ * armor, so scaling it again would count all of that twice.
+ *
+ * A BLEED IS PHYSICAL AND IGNORES ARMOR -- the Forever rule every bleed here
+ * follows -- and it crits at MELEE crit, because a melee special is what
+ * applied it. That is `critFrom` doing the one job it has.
+ * ----------------------------------------------------------------------------
+ */
+export const LACERATING_STRIKES_DURATION_MS = seconds(21);
+export const LACERATING_STRIKES_TICK_INTERVAL_MS = seconds(3);
+export const LACERATING_STRIKES_TICKS =
+  LACERATING_STRIKES_DURATION_MS / LACERATING_STRIKES_TICK_INTERVAL_MS;
+
+export function laceratingStrikesAura(totalDamage: number): AuraDefinition {
+  return {
+    id: 'lacerating_strikes',
+    name: 'Lacerating Strikes',
+    durationMs: LACERATING_STRIKES_DURATION_MS,
+    isDebuff: true,
+    refreshBehaviour: 'reset',
+    periodic: {
+      intervalMs: LACERATING_STRIKES_TICK_INTERVAL_MS,
+      onTick: (context, aura) => {
+        const source = context.combatant(aura.sourceId);
+        const target = context.combatant(aura.targetId);
+        if (!source || !target || !target.isAlive) return;
+
+        dealDamage(context, {
+          source,
+          target,
+          abilityId: aura.id,
+          abilityName: aura.name,
+          school: PHYSICAL,
+          baseAmount: totalDamage / LACERATING_STRIKES_TICKS,
+          // The share IS the scaling: everything is already inside the hit.
+          powerCoefficient: 0,
+          periodic: true,
+          critFrom: 'melee-special',
+          appliesArmor: false,
+        });
+      },
+    },
+  };
+}
+
+// ---------------------------------------------------------------------------
 // Cooldowns and procs
 // ---------------------------------------------------------------------------
 
@@ -239,22 +382,33 @@ export const BESTIAL_WRATH: AuraDefinition = {
  * ----------------------------------------------------------------------------
  */
 /*
- * 32 IS NOT IN EITHER SOURCE, AND THAT IS AN OPEN QUESTION RATHER THAN A FIX.
+ * 108 IS THE RULESET OWNER'S RULING, AND 32 WAS RANK 1 OF THE ABILITY.
  *
- * Both sources state one figure for this ability and it is not this one: our
- * capture says the hawk "dive-bomb[s] your targeted enemy, dealing 108 Physical
- * damage and continuing its assault for 18 sec", and foreverchanges.pro says
- * 110. Neither quantifies the CONTINUING assault, which is what this constant
- * models -- so the stated number is the opening hit and the per-strike rate is
- * unstated in both.
+ * THE OLD COMMENT HERE SAID "32 IS NOT IN EITHER SOURCE" AND THAT WAS WRONG.
+ * It is in a source -- the TALENT tooltip, whose text in
+ * `src/data/talents/values/hunter.json` reads "dealing 32 Physical damage and
+ * continuing its assault for 18 sec". That is the rank-1 trap CLAUDE.md names
+ * outright: A TALENT TOOLTIP SHOWS RANK 1 OF THE ABILITY IT GRANTS. The
+ * spellbook capture says `"rank": 4` and 108, and `foreverchanges.pro` says
+ * 110, so the two "disagreeing" sources were the same number at two ranks and
+ * there was never a disagreement to settle. The same mistake as Sniper Shot,
+ * one file over, and this is the second time it has been made in this class.
  *
- * Left alone deliberately. Reading 108 as the per-strike figure would more than
- * triple the hawk, reading it as an opening hit on top of the ticks would add a
- * damage source, and choosing between those is a modelling decision for the
- * ruleset owner rather than a transcription. Recorded in
- * `docs/source-cross-checks.md` and in HANDOVER's open questions.
+ * WHAT THE OWNER RULED, asked which of the two readings of the capture to take:
+ * "Assume it's 108 for initial and every other hit. Once every 2 seconds.
+ * Similar to a DoT effect except two of these can be active."
+ *
+ * So the dive-bomb is 108, dealt by the ability, and each active hawk strikes
+ * for 108 every two seconds. `SUMMON_HAWK` deals the dive and this deals the
+ * assault -- which is the capture's own two clauses, one each.
+ *
+ * AND THE SECOND HAWK NOW DEALS DAMAGE, which is the understatement the old
+ * comment admitted to. The periodic fires once per AURA and not once per
+ * stack, so the tick reads `aura.stacks` and multiplies -- the route Lacerate
+ * already takes on the Druid. At 32 a strike that understatement was worth
+ * little; at 108 it would have been half the ability.
  */
-export const HAWK_DAMAGE_PER_STRIKE = 32;
+export const HAWK_DAMAGE_PER_STRIKE = 108;
 export const HAWK_DURATION_MS = seconds(18);
 export const HAWK_STRIKE_INTERVAL_MS = seconds(2);
 export const HAWK_MAX_ACTIVE = 2;
@@ -262,9 +416,10 @@ export const HAWK_MAX_ACTIVE = 2;
 export const HAWK_UNMODELLED =
   'A hawk is modelled as a repeating strike rather than as a creature, on the ' +
   'ruleset owner’s call -- the engine cannot add a combatant mid-fight. Its ' +
-  'damage lands and is credited. What is missing is that only ONE hawk deals ' +
-  'damage, so the second of the two it can have adds nothing and this ' +
-  'understates.';
+  'damage lands and is credited, and BOTH hawks deal damage. What is left is ' +
+  'that the two share one 18-second clock: summoning the second resets the ' +
+  'first, so both expire together instead of 18 seconds after their own ' +
+  'summon. Over a fight that is worth a fraction of a hawk either way.';
 
 export const SUMMON_HAWK_AURA: AuraDefinition = {
   id: 'summon_hawk',
@@ -286,7 +441,13 @@ export const SUMMON_HAWK_AURA: AuraDefinition = {
         abilityId: aura.id,
         abilityName: aura.name,
         school: PHYSICAL,
-        baseAmount: HAWK_DAMAGE_PER_STRIKE,
+        /*
+         * ONE STRIKE PER ACTIVE HAWK. `maxStacks` is two and the periodic
+         * fires once per AURA, so the stack count is what makes the second
+         * hawk deal anything at all.
+         */
+        baseAmount: HAWK_DAMAGE_PER_STRIKE * aura.stacks,
+        // The owner's figure is a flat damage. It takes no coefficient.
         powerCoefficient: 0,
         periodic: true,
         critFrom: 'ranged-special',

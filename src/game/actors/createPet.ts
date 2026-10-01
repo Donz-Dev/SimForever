@@ -53,7 +53,7 @@ export const PET_CRIT_SHARE = 1;
 export const PET_FOCUS_MAXIMUM = 100;
 
 /**
- * THE PET'S OWN BASE DPS, and it is the ONE remaining invented number here.
+ * THE PET'S OWN BASE DPS, AND IT IS THE RULESET OWNER'S FIGURE NOW.
  *
  * ----------------------------------------------------------------------------
  * IT IS A DPS NOW AND NOT A PER-SWING DAMAGE, which is the shape both sources
@@ -72,18 +72,29 @@ export const PET_FOCUS_MAXIMUM = 100;
  * damage per hit". So the remaining speed placeholder is now damage-neutral
  * and only decides how the same total is cut up.
  *
- * THE VALUE IS UNCHANGED ON PURPOSE. 100 damage every 2 seconds was 50 DPS, so
- * 50 it stays: the restructure above moves no number by itself, which leaves
- * the family and happiness modifiers below as the only measured change. Every
- * source states these as RELATIVE figures -- Cat 1.10, Bear 0.91 -- and none
- * of them states the absolute they are relative TO.
+ * 150, SUPPLIED BY THE OWNER, and it was 50 for as long as pets existed. Asked
+ * for the one absolute that every source states family modifiers RELATIVE to
+ * and none of them states itself -- Cat 1.10, Bear 0.91, against what? -- the
+ * answer was: "Make the base placeholder DPS 150 (1 hit for ~300 every 2
+ * seconds)." That is the same figure stated twice and the two agree: 300 every
+ * two seconds is 150 a second.
  *
- * WHAT WOULD SETTLE IT: one stated pet DPS or one stated damage range at
- * level 60, from the client, the owner, or a combat log. Everything else in
- * this file is now sourced.
+ * STILL NAMED `PLACEHOLDER_`, ON THE OWNER'S OWN WORDING. They called it a
+ * placeholder, so it is a provisional figure rather than a client-derived one
+ * and the name is what says so -- exactly what the naming rule is for. What
+ * changed is that it is no longer INVENTED: a number nobody supplied became a
+ * number the ruleset owner supplied, which is the difference between an
+ * unauditable figure and a provisional one. It tripled, so every pet figure
+ * recorded before 2026-09-30 is understated.
+ *
+ * THE SAME MESSAGE CONFIRMED EVERYTHING AROUND IT, unchanged: 2 health a
+ * stamina, 30% of armor, 10% of the highest attack power source, 100% of crit,
+ * and racial crit bonuses applying. It also confirmed Bite at 81-99 for 35
+ * focus on a 10-second cooldown and Claw at 43-59 for 25 focus, which
+ * `abilities/pet.ts` already carried from the spellbook to the number.
  * ----------------------------------------------------------------------------
  */
-export const PLACEHOLDER_PET_BASE_DPS = 50;
+export const PLACEHOLDER_PET_BASE_DPS = 150;
 
 /**
  * The swing a pet takes, in seconds. STILL A PLACEHOLDER AND NO LONGER A
@@ -108,8 +119,9 @@ export const PLACEHOLDER_PET_SWING_SECONDS = 2;
 export const PET_HAPPY_DAMAGE_MULTIPLIER = 1.25;
 
 export const PET_UNMODELLED =
-  'The pet’s BASE DPS is a PLACEHOLDER -- ' +
-  `${PLACEHOLDER_PET_BASE_DPS} a second, assumed and unverified. Everything ` +
+  'The pet’s BASE DPS is a PROVISIONAL figure -- ' +
+  `${PLACEHOLDER_PET_BASE_DPS} a second, supplied by the ruleset owner and ` +
+  'not read from the client. Everything ' +
   'around it is sourced: the family modifiers are Petopia Classic’s and the ' +
   'Cat row matches the Forever Hunter wiki exactly, happiness is the wiki’s ' +
   '125% for a fed pet, and the scaling from the Hunter is 2 health a stamina, ' +

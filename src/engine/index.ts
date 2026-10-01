@@ -23,6 +23,7 @@ export * from './combat';
 export {
   AUTO_ATTACK_NAMES,
   AUTO_ATTACK_RESOURCE_SOURCES,
+  autoAttackName,
   extraAttack,
   startAutoAttack,
   swingingSlots,
