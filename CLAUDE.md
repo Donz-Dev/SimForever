@@ -97,15 +97,24 @@ together told someone their build was missing features that were never coming.
 | `scope` | Covers | Entries |
 | --- | --- | --- |
 | `positioning` | positions, range, facing, movement, "nearby", radius, travel forms | 17 |
-| `crowdControl` | stuns, fears, roots, snares, silences, incapacitates, disorients, disarms, **and removing any of them** | 33 |
+| `crowdControl` | stuns, fears, roots, snares, silences, incapacitates, disorients, disarms, **and removing any of them** | 36 |
 | `threat` | threat, which is not tracked. Defensive Stance's +30% and Defiance are dropped, not deferred | 14 |
-| `healing` | healing THROUGHPUT. **Mana RETURN is NOT out of scope** — it changes a damage profile's sustain, so it is a live gap and gets no `scope` | 33 |
+| `healing` | healing THROUGHPUT. **Mana RETURN is NOT out of scope** — it changes a damage profile's sustain, so it is a live gap and gets no `scope` | 36 |
 | `stealth` | being stealthed, detecting it, and the openers requiring it — Ambush, Garrote, Cheap Shot. **NOT an in-combat proc that REMOVES a stealth requirement**, which is what Cutthroat is | 7 |
 | `castPushback` | avoiding, resisting or reducing the interruption or DELAY of a cast or channel from damage taken. **NOT an interrupt the TARGET suffers** — Earth Shock's school lockout is about the enemy casting and is inert for a different reason | 7 |
 | `totemEntities` | a totem that BUFFS or HEALS on its own. **NOT a totem that deals DAMAGE**, which Searing Totem proved is expressible as a debuff that ticks | 4 |
 
 Adding a member to that union is a scope DECISION and needs the owner, not a
 judgement call while writing a class.
+
+**AND A SCOPE QUESTION CAN COME BACK AS AN ABILITY.** Asked whether TRAPS were
+out of scope — they need a position and a target that walks onto one, which is
+five Hunter talents and two abilities — the owner added no member and instead
+put **Immolation Trap** in, ruling away the only part the engine cannot do:
+"assume it triggers instantly when cast". So the answer to "is this out of
+scope" can be "no, and here is how to model it", and it closed three Hunter
+talents rather than one. **Explosive Trap is still undeclared, because the owner
+named one trap** — a ruling covers what it says and is not extended by analogy.
 
 **"BLOCKED TWICE" IS THE TEST FOR RECOGNISING ONE, and it has found three of the
 seven.** When clearing either half of a reason alone would still leave the talent
@@ -675,6 +684,17 @@ See [docs/resources.md](docs/resources.md).
   friendly actor, not the player** — damage and buff uptime both, or a working
   pet talent looks exactly like an inert one. Rage and survival stay the
   player's, which they genuinely are.
+- **AND READING EVERY ACTOR MEANS A ROW CAN BE ABOUT THE WRONG ONE.**
+  `abilityBreakdown` pools by ability NAME across friendly actors, on purpose —
+  one table, not two — so a pet's main-hand swing landed in the row called "Main
+  Hand Auto-Attack". That row was **38.1% of BM Hunter and none of it was the
+  Hunter's**: the profile is `combatStyle: 'ranged'` and never swings a melee
+  weapon. Shares still summed to 100%, nothing contradicted it, and
+  `docs/handoff/hunter.md` read the row and wrote down "BM Hunter is the only
+  profile that swings BOTH melee and ranged". **A mislabelled number becomes a
+  documented fact in one reading.** `autoAttackName` names a pet's swing after
+  the pet, in the engine beside `AUTO_ATTACK_NAMES` because `kind` is an engine
+  concept and naming it twice is how two labels drift.
 - **A talent reaches the owner; a pet needs `petStat` and `petReaction`**,
   collected into `TalentBuild.pet` and handed to `createPet`, which applies what
   it is given and does no arithmetic on a rank.
@@ -776,6 +796,13 @@ Rogue's Hemorrhage is 35 energy and ungated, with Ghostly Strike at 40 and
 Sinister Strike at 45 beneath it: nothing below an ungated, cheaper ability can
 ever be the first castable entry, so a six-entry list is really a three-entry
 one.
+
+**ONLY IF IT HAS NO COOLDOWN, THOUGH.** Sniper Shot moved BELOW an ungated
+Arcane Shot still fires twice a fight and measures 311.7 either way, to the
+decimal — because Arcane Shot's own six-second cooldown lets the list fall
+straight past it. **An entry is a floor when it is ungated AND always castable**,
+and a cooldown is the half that is easy to forget, because the condition is the
+thing written in the list and the cooldown is not.
 
 **AND THE COST THAT DECIDES IT IS THE BUILT ONE, NOT THE TOOLTIP'S.** The Cat
 Druid's Claw fired zero times at ANY energy, and its own comment explained why it
@@ -1049,6 +1076,14 @@ Plus the permanent rulings under **Scope**.
   already scoped `crowdControl`. **Ask what the talent would do if the thing its
   reason blames were fixed** -- if the answer is "still nothing", the reason is
   the wrong one and the entry is probably a ruling.
+- **A REASON THAT DESCRIBES A WORKING HALF IS A CLAIM ABOUT THE CODE, AND IT CAN
+  SIMPLY BE FALSE.** Rapid Killing's read "Its Rapid Fire cooldown reduction is
+  real and its damage bonus needs a KILL" — and the talent's effect list held
+  nothing but that one `unmodelled` entry, so the cooldown reduction was never
+  applied to anything. Invisible because 5 minutes and 3 minutes are both longer
+  than a fight, so no profile could have shown it. **When a partly-modelled
+  reason names the half that works, check that half exists**; the census counts
+  such a talent as a gap either way, which is what hides it.
 - **An `unmodelled` reason is a claim about the engine ON THE DAY IT WAS WRITTEN,
   and it expires.** Clearing a blocker is not finished until every reason naming
   it has been re-read — missed at least four times, and twice a talent was fully
@@ -1165,6 +1200,17 @@ this project had between a calculator and an ability sheet, one per class with a
 damage-granting capstone, and none was a disagreement. The owner's spreadsheets
 mix the two conventions, so a sheet cannot settle it. **Check `max_rank` before
 comparing two sources.**
+
+**IT HAS NOW CAUGHT THE SAME CLASS TWICE, AND THE SECOND TIME THE COMMENT SAID
+THE NUMBER CAME FROM NOWHERE.** Sniper Shot read 160 against a capture saying
+295. Summon Hawk read 32 against a capture saying 108 — and the comment on the
+constant asserted "32 IS NOT IN EITHER SOURCE", which was false: it is the
+TALENT tooltip's figure, sitting in `values/hunter.json` the whole time. The
+capture says `rank: 4`, `foreverchanges.pro` says 110, and the two "disagreeing"
+sources were one number at two ranks. **A figure you cannot place is more likely
+rank 1 of a granted ability than an invention**, so look there before writing
+that it came from nowhere — the hawk was recorded as an open question to the
+owner for as long as that comment stood. It was worth +144.4 DPS.
 
 **A CAPTURED TOOLTIP CAN DISAGREE WITH ITSELF, so read the effect rows and not
 only the description.** Base points run consistently ONE higher than the stated

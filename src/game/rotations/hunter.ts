@@ -206,6 +206,30 @@ export const HUNTER_LONE_WOLF_RANGED: readonly PriorityEntry[] = [
    * it was transcribed as an instant for months and the correction cost this
    * profile 11.1% -- so it throws away more of a bow cycle than anything else
    * in the class if it is started at the wrong moment.
+   *
+   * --------------------------------------------------------------------------
+   * SNIPER SHOT COSTS THIS LIST 12.1 DPS AND IS KEPT, WHICH IS THE OWNER'S
+   * CALL. Measured at the full 30 batches of 10: 311.7 with it against 323.8
+   * without, on a 2.4 interval, so REAL. An earlier single run said +7.9 and
+   * this is the number that replaces it.
+   *
+   * AND NO PLACEMENT HELPS. Moving it BELOW Arcane Shot measures 311.7 to the
+   * decimal and it still fires twice a fight -- because Arcane Shot has a
+   * six-second cooldown of its own, so it is not a floor under anything. The
+   * rule that an unconditional entry blocks everything below it holds only for
+   * an entry with no cooldown, which is worth knowing before reordering any
+   * list. The 12.1 is the price of the ability, not of its position.
+   *
+   * WHY IT LOSES: four seconds of cast resets the ranged swing timer, and this
+   * build's auto-shot is 49.7% of its damage on a 3.2-second cycle. 295 damage
+   * and 365 mana do not pay for a cycle and a quarter of bow.
+   *
+   * THE OWNER'S LIST OUTRANKS THE MEASUREMENT AND THE MEASUREMENT STAYS -- the
+   * same arrangement Hunter's Mark's -10.1 has on the melee list below. Asked
+   * directly, the owner chose to keep it. `petsAndHunter.test.ts` pins that the
+   * ability is CAST, which is an invariant, and not that it belongs in the
+   * list, which is a decision that can change owner.
+   * --------------------------------------------------------------------------
    */
   { abilityId: 'aimed_shot', condition: shotLandedRecently(RANGED_WEAVE_WINDOW_MS) },
   { abilityId: 'sniper_shot', condition: shotLandedRecently(RANGED_WEAVE_WINDOW_MS) },

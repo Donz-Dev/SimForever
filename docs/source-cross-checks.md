@@ -337,13 +337,35 @@ list is probably wrong now; it wants the full 30-batch method before it changes,
 and it is not changed here. The profile is genuinely weaker either way: it had
 been casting a 295-damage shot at a 160-damage instant's price.
 
-**THE HAWK'S 32 PER STRIKE IS IN NEITHER SOURCE.** Both state one figure and it is
-not that one — our capture says the hawk dive-bombs for **108** and "continu[es]
-its assault for 18 sec", `foreverchanges.pro` says **110**, and neither quantifies
-the continuing assault, which is exactly what the constant models. Reading 108 as
-the per-strike rate would more than triple the hawk; reading it as an opening hit
-would add a damage source. That is a modelling decision for the owner, so it is
-recorded and left alone.
+~~**THE HAWK'S 32 PER STRIKE IS IN NEITHER SOURCE.**~~ **IT WAS IN ONE OF THEM,
+AND THIS ENTRY WAS WRONG FOR AS LONG AS IT STOOD.** 32 is the TALENT tooltip's
+figure — `src/data/talents/values/hunter.json` reads "dealing 32 Physical damage
+and continuing its assault for 18 sec" — and **a talent tooltip shows rank 1 of
+the ability it grants.** The spellbook capture says `"rank": 4` and 108;
+`foreverchanges.pro` says 110. So the two sources were one number at two ranks
+and there was no disagreement to settle, only a rank to check.
+
+**SECOND TIME IN THIS CLASS, AFTER SNIPER SHOT**, and the more instructive of the
+two: Sniper Shot's comment applied a real rule to the wrong artifact, while this
+one asserted the figure came from NOWHERE. A number nobody can place is more
+likely rank 1 of a granted ability than an invention — look there before
+recording it as an open question, which is what happened here.
+
+**THE OWNER RULED IT 2026-09-30:** *"Assume it's 108 for initial and every other
+hit. Once every 2 seconds. Similar to a DoT effect except two of these can be
+active."* So the dive and each strike are both 108, and the second hawk deals
+damage for the first time. Worth **+144.4** to BM Hunter.
+
+| | ours | `foreverchanges.pro` | applied |
+| --- | --- | --- | --- |
+| **Summon Hawk** r4 | 32 (a rank-1 tooltip) | **110** | **108**, the capture's own max rank, by the owner's ruling |
+
+**AND ONE ABILITY LEAVES THE BOOK RATHER THAN CHANGING.** `Lacerate` is in the
+capture — Survival, level 60, marked `"new"`, 95 mana, *"bleed for 406 damage
+over 21 sec"* — and the owner's answer was **"Lacerate isn't a real ability as of
+now."** So it belongs on the spell exclusion list, not in the spellbook. **It is
+not the Lacerating Strikes TALENT**, which shares its 21-second duration, is
+real, and is built.
 
 ## Every class is now checked
 
@@ -358,7 +380,7 @@ recorded and left alone.
 | Shaman | 6 of 9 | 3 | Lightning Bolt 200→196 |
 | Paladin | 7 of 12 | 5 | **Holy Strike 37→93**, +10% Ret, +13.5% Prot |
 | Druid | 10 of 13 | 3 + a rename | **Wrath 65→91** |
-| Hunter | 9 of 11 | 1, four fields | **Sniper Shot**, −11.1% LW Ranged |
+| Hunter | 9 of 11 | 1, four fields + the hawk | **Sniper Shot** −11.1% LW Ranged; **the hawk's 32 → 108**, +144.4 BM Hunter |
 
 **NOT ONE CLASS CAME BACK CLEAN.** Twenty-seven figures moved across nine classes,
 and the exercise found three distinct kinds of error, which is the part worth

@@ -343,6 +343,34 @@ describe("Hunter's Mark", () => {
   });
 });
 
+describe('Sniper Shot is kept though it measures as a loss', () => {
+  it('is cast by the Lone Wolf Ranged build, which is the invariant', () => {
+    /*
+     * ------------------------------------------------------------------------
+     * THE SECOND TIME THIS CLASS HAS MADE THIS ARRANGEMENT, and it is the same
+     * one Hunter's Mark has above. Dropping Sniper Shot from this list measures
+     * 311.7 -> 323.8 over 30 batches of 10, on a 2.4 interval -- +12.1, REAL.
+     * An earlier single run said +7.9 and the full method replaces it.
+     *
+     * AND NO PLACEMENT ESCAPES IT. Below Arcane Shot it measures 311.7 to the
+     * decimal and still fires twice a fight, because Arcane Shot's own
+     * six-second cooldown means it never blocks the entry beneath it. The 12.1
+     * belongs to the ability and not to where it sits.
+     *
+     * THE OWNER WAS ASKED AND CHOSE TO KEEP IT, so 12.1 is the price of a
+     * design decision rather than an argument against one. What this asserts is
+     * what is NOT a rotation decision: a four-second cast on a fifteen-second
+     * cooldown gets used, so the entry is live rather than decorative.
+     * ------------------------------------------------------------------------
+     */
+    expect(HUNTER_LONE_WOLF_RANGED.map((e) => e.abilityId)).toContain('sniper_shot');
+
+    const batch = batchOf('lw_ranged', 30, 5);
+    const sniper = batch.abilities.find((a) => /Sniper/.test(a.abilityName));
+    expect(sniper?.uses ?? 0).toBeGreaterThan(1);
+  });
+});
+
 describe('a pet in a real fight', () => {
   it('has its damage counted in DPS and SHOWN in the breakdown', () => {
     /*

@@ -35,6 +35,12 @@ At `d93f167`, 23 profiles, 10 iterations each:
 | **135** | abilities in at least one profile's book |
 | **110** | exercised by at least one profile |
 | **25** | never cast by any of the 23 |
+
+**IMMOLATION TRAP IS THE 135th AND THE 110th AT ONCE.** It is a trainer spell
+every Hunter learns, so it entered all three books, and the owner placed it in
+one list — so it is cast by the melee Hunter and sits in the book, in no list,
+for the two ranged ones. **The never-cast count did not move**, which is the
+right outcome for an ability that arrived already in a list.
 | **9** | priority list entries that never fire — 8 at the time of this table, plus Spearing Strike, see below |
 | **23 of 23** | damage tables summing to 100% — **nothing unaccounted, anywhere** |
 

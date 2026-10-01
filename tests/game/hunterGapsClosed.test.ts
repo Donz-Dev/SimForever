@@ -88,7 +88,7 @@ describe('Lacerating Strikes bleeds for a share of the strike', () => {
 
     const { simulation, events } = recordingSimulation([
       makeAttacker({ stats: { attackPower: 0 } }),
-      makeTarget({ armor: 3731 }),
+      makeTarget({ stats: { armor: 3731 } }),
     ]);
     const [actor, target] = simulation.combatants;
     simulation.applyAura(target, laceratingStrikesAura(HIT * SHARE), actor.id);
@@ -289,8 +289,7 @@ describe('the hawk, at the owner’s 108', () => {
       [
         makeAttacker({
           stats: { attackPower: 0, critChance: -100 },
-          resources: ['mana'],
-          maxMana: 10_000,
+          resources: [{ type: 'mana', maximum: 10_000 }],
         }),
         makeTarget(),
       ],
@@ -321,8 +320,7 @@ describe('the hawk, at the owner’s 108', () => {
       [
         makeAttacker({
           stats: { attackPower: 0, critChance: -100 },
-          resources: ['mana'],
-          maxMana: 10_000,
+          resources: [{ type: 'mana', maximum: 10_000 }],
         }),
         makeTarget(),
       ],
@@ -345,7 +343,7 @@ describe('the hawk, at the owner’s 108', () => {
 
   it('refuses a third hawk, which is what the ability says', () => {
     const { simulation } = recordingSimulation([
-      makeAttacker({ resources: ['mana'], maxMana: 10_000 }),
+      makeAttacker({ resources: [{ type: 'mana', maximum: 10_000 }] }),
       makeTarget(),
     ]);
     const [actor, target] = simulation.combatants;

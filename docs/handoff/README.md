@@ -19,10 +19,10 @@ engine that were about the wrong thing.
 | [paladin.md](paladin.md) | Seal Twist Ret, Shockadin, Prot Pally | **2** |
 | [druid.md](druid.md) | Moonkin, Cat, Bear | **2** |
 | [shaman.md](shaman.md) | Ele Shaman, Enh Shaman | **6** |
+| [hunter.md](hunter.md) | BM Hunter, LW Ranged, LW Melee | **8** |
 | [mage.md](mage.md) | Frostfire, Arcane, Fire | **11** |
 | [rogue.md](rogue.md) | Venom, Combat, Rupture | **12** |
 | [priest.md](priest.md) | Shadow | **12** |
-| [hunter.md](hunter.md) | BM Hunter, LW Ranged, LW Melee | **13** |
 | [warlock.md](warlock.md) | SM/DS, Firelock | **20** |
 
 ## Every one of these numbers is re-derivable
