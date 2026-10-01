@@ -1,12 +1,12 @@
 import type { Ability, AuraDefinition, Combatant, SimulationContext } from '../../engine';
-import { dealDamage, seconds, spellPowerFor } from '../../engine';
+import { dealDamage, seconds, spellPowerAgainst } from '../../engine';
 import { baseManaFor } from '../character/baseStatLookup';
 import { inExecutePhase } from '../combat/executePhase';
 import {
-  CONSECRATION_GROUND,
+  CONSECRATED_GROUND_FLAG,
+  DIVINE_FAVOR,
   HOLY_SHIELD,
   JUDGEMENT_OF_THE_CRUSADER,
-  JUDGEMENT_OF_THE_CRUSADER_UNMODELLED,
   RIGHTEOUS_FURY,
   RIGHTEOUS_FURY_THREAT_PERCENT,
   SEAL_AURA_IDS,
@@ -14,11 +14,11 @@ import {
   SEAL_OF_FURY,
   SEAL_OF_RIGHTEOUSNESS,
   SEAL_OF_THE_CRUSADER,
-  SEAL_OF_THE_CRUSADER_UNMODELLED,
   TEMPLARS_BULWARK,
   TEMPLARS_BULWARK_COOLDOWN_MS,
   TEMPLARS_BULWARK_FORBEARANCE_MS,
   activeSeal,
+  consecrationGround,
   echoAura,
 } from '../auras/paladin';
 import {
@@ -56,10 +56,19 @@ import {
  *
  *   EXORCISM       "to an Undead or Demon target", and the training dummy is
  *   HOLY WRATH     neither. Two spells that do literally nothing here.
- *   HAMMER OF      "Only usable on enemies that have 20% or less health", and
- *   WRATH          the target never drops below full.
  *   EVERY HEAL     Holy Light, Flash of Light, Light's Vigil. No profile heals.
  *   BLESSINGS      Raid buffs, selected in the buff panel rather than cast.
+ *   AURAS          Devotion, Retribution, Concentration and the resistances.
+ *                  Retribution Aura is real damage for a Paladin that is struck
+ *                  and the owner has left it undeclared on purpose; the rest do
+ *                  nothing that is modelled.
+ *   CLEANSE        Dispels, and nothing here applies anything dispellable.
+ *   PURIFY
+ *
+ * HAMMER OF WRATH WAS ON THAT LIST WITH THE REASON "the target never drops below
+ * full", and it is declared below -- its health gate is the CLOCK, by the same
+ * ruling Execute runs on. The entry outlived the truth of it, which is the fourth
+ * time a stale caveat has been found in this project by re-reading one.
  * ----------------------------------------------------------------------------
  */
 
@@ -161,7 +170,6 @@ export const SEAL_OF_THE_CRUSADER_ABILITY = sealAbility(
   'Seal of the Crusader',
   160,
   SEAL_OF_THE_CRUSADER,
-  SEAL_OF_THE_CRUSADER_UNMODELLED,
 );
 
 export const SEAL_OF_FURY_ABILITY = sealAbility(
@@ -265,8 +273,12 @@ export const JUDGEMENT: Ability = {
       attackTable: ability.attackTable,
     });
   },
-  unmodelled:
-    `Its Crusader judgement is tracked and adds no damage. ${JUDGEMENT_OF_THE_CRUSADER_UNMODELLED}`,
+  /*
+   * NO `unmodelled` ANY MORE. It used to read "Its Crusader judgement is tracked
+   * and adds no damage", which was true and is the thing this change fixed: the
+   * debuff grants 161 Holy spell power to whoever hits the target, and every
+   * Paladin list opens by putting it up. See `JUDGEMENT_OF_THE_CRUSADER`.
+   */
 };
 
 /**
@@ -350,7 +362,8 @@ export const HOLY_STRIKE: Ability = {
        * seals resolve the same problem the same way.
        */
       baseAmount:
-        HOLY_STRIKE_HOLY_DAMAGE + HOLY_STRIKE_SP_COEFFICIENT * spellPowerFor(caster, HOLY),
+        HOLY_STRIKE_HOLY_DAMAGE +
+        HOLY_STRIKE_SP_COEFFICIENT * spellPowerAgainst(caster, target, HOLY),
       weaponScaling: {
         slot: MAIN_HAND,
         fraction: HOLY_STRIKE_WEAPON_FRACTION,
@@ -412,9 +425,18 @@ export const CONSECRATION: Ability = {
   name: 'Consecration',
   cost: { resource: 'mana', amount: 565 },
   cooldownMs: seconds(8),
-  onCast: ({ simulation, caster, target }) => {
+  onCast: ({ simulation, caster, target, ability }) => {
     if (!target) return;
-    simulation.applyAura(target, CONSECRATION_GROUND, caster.id);
+    /*
+     * CONSECRATED GROUND'S PERCENTAGE ARRIVES ON THE ABILITY, the Twist of Light
+     * pattern -- so reading it here is per character by construction and a
+     * Paladin without the talent lays the plain version.
+     */
+    simulation.applyAura(
+      target,
+      consecrationGround(ability.bonuses?.[CONSECRATED_GROUND_FLAG] ?? 0),
+      caster.id,
+    );
   },
   unmodelled:
     'It is a ground effect, modelled as a debuff on the one target -- which ' +
@@ -530,6 +552,38 @@ export const RIGHTEOUS_FURY_ABILITY: Ability = {
     'the global cooldown on it, so the profile pays what it pays.',
 };
 
+/**
+ * Divine Favor, granted by the Holy talent: "gives your next Flash of Light,
+ * Holy Light, or Holy Shock spell a 100% critical effect chance."
+ *
+ * ----------------------------------------------------------------------------
+ * 4% OF BASE MANA AND A TWO MINUTE COOLDOWN, both from the spellbook capture.
+ *
+ * ALL OF ITS WORK IS ON THE AURA, which carries a `critBonus` of 100 for Holy
+ * Shock alone and is spent by a cast reaction. The ability is only the button.
+ *
+ * IN THE SHOCKADIN LIST, ON THE RULESET OWNER'S CHOICE, sitting above Holy Shock
+ * so the guaranteed crit is never wasted on a Holy Shock that would have gone
+ * first. It is off the global cooldown for nothing -- it takes one like any
+ * instant -- so the entry is paid for, and what it is worth is measured.
+ * ----------------------------------------------------------------------------
+ */
+export const DIVINE_FAVOR_ABILITY: Ability = {
+  id: 'divine_favor',
+  name: 'Divine Favor',
+  cost: { resource: 'mana', amount: shareOfBase(0.04) },
+  cooldownMs: seconds(120),
+  requiresTarget: false,
+  // Nothing to gain from a second one while the first is unspent.
+  canCast: ({ caster }) => !caster.auras.has('divine_favor'),
+  onCast: ({ simulation, caster }) => {
+    simulation.applyAura(caster, DIVINE_FAVOR, caster.id);
+  },
+  unmodelled:
+    'Two of its three spells are heals -- Flash of Light and Holy Light -- and ' +
+    'no Paladin profile heals, so only its Holy Shock clause does anything.',
+};
+
 export const PALADIN_ABILITIES: readonly Ability[] = [
   SEAL_OF_RIGHTEOUSNESS_ABILITY,
   SEAL_OF_COMMAND_ABILITY,
@@ -539,6 +593,7 @@ export const PALADIN_ABILITIES: readonly Ability[] = [
   SWIFT_JUDGEMENT,
   HOLY_STRIKE,
   HOLY_SHOCK,
+  DIVINE_FAVOR_ABILITY,
   CONSECRATION,
   HOLY_SHIELD_ABILITY,
   HAMMER_OF_WRATH,

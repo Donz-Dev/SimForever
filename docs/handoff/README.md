@@ -10,7 +10,7 @@ for project status. These files are the CLASS.
 | Document | Profiles | Live gaps |
 | --- | --- | --- |
 | [warrior.md](warrior.md) | 2H Arms, DW Fury, Prot Warr | **1** |
-| [paladin.md](paladin.md) | Seal Twist Ret, Shockadin, Prot Pally | **10** |
+| [paladin.md](paladin.md) | Seal Twist Ret, Shockadin, Prot Pally | **2** |
 | [druid.md](druid.md) | Moonkin, Cat, Bear | **12** |
 | [hunter.md](hunter.md) | BM Hunter, LW Ranged, LW Melee | **13** |
 | [rogue.md](rogue.md) | Venom, Combat, Rupture | **14** |

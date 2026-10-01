@@ -7,7 +7,7 @@ gets built is [docs/class-implementation.md](docs/class-implementation.md).
 
 All nine classes and all 23 profiles are implemented, every number traced to a
 source rather than invented, and **all 23 priority lists are the ruleset owner's
-own** -- specified entry by entry and measured after. **1,965 tests**, CI green on Node 20 and 22. Profile
+own** -- specified entry by entry and measured after. **2,022 tests**, CI green on Node 20 and 22. Profile
 format **v10**. Live at <https://donz-dev.github.io/SimForever/>, republished by
 `.github/workflows/deploy.yml` on every push to `main` that passes.
 
@@ -30,12 +30,23 @@ and what gives each figure the interval a REAL/noise verdict needs. Most profile
 land inside the old interval and a few do not — 2H Arms read 596.6 under the old
 method and 607.2 under this one on identical code. Do not read those as changes.
 
+**THE PALADIN DEEP DIVE MOVED ALL THREE OF ITS PROFILES AND NOTHING ELSE.**
+Seal Twist Ret 471.0 to **528.3 (+57.3)**, Shockadin 379.0 to **472.7 (+93.7)**,
+Prot Pally 153.2 to **238.1 (+84.9)**, every one REAL -- and the twenty
+non-Paladin profiles identical to the decimal, which is the containment check for
+a change touching four shared engine files. **The mean across 23 goes 411.7 to
+421.9**, Seal Twist Ret becomes the project's fourth-highest profile, and Prot
+Pally stops being an outlier at the bottom: 238.1 against the Elemental Shaman's
+295.4. Nothing in it was a new number -- it is six talents and a judgement that
+were inert for reasons about the engine that were about the wrong thing. See
+[docs/handoff/paladin.md](docs/handoff/paladin.md).
+
 **SHATTER MOVED ONE PROFILE AND THE CONTAINMENT HELD EXACTLY.** Frostfire
 376.6 to **412.5, +36.0, REAL**, and the other twenty-two identical to the
 decimal -- which is what a talent change scoped to one build should look like.
 It makes Frostfire the top Mage, above Fire's 401.2 and Arcane's 392.6, and the
-build that existed for the Fire/Frost overlap now has a third reason to. The
-mean across 23 is 411.7. See [docs/handoff-apl.md](docs/handoff-apl.md).
+build that existed for the Fire/Frost overlap now has a third reason to. See
+[docs/handoff-apl.md](docs/handoff-apl.md).
 
 **RE-MEASURED ON THE RULESET OWNER'S OWN PRIORITY LISTS.** All 23 are theirs now,
 specified entry by entry; what was here before was this project's guess and said
@@ -46,15 +57,15 @@ so. Fourteen profiles moved.
 | DW Fury | Warrior | 18/33/0 | 652.0 | | Fire Mage | Mage | 10/39/2 | 401.2 |
 | 2H Arms | Warrior | 38/13/0 | 607.2 | | Venom Rogue | Rogue | 37/12/2 | 392.7 |
 | Firelock | Warlock | 5/11/35 | 535.5 | | Arcane Mage | Mage | 47/4/0 | 392.6 |
-| Cat Druid | Druid | 9/35/7 | 488.0 | | Moonkin | Druid | 38/0/13 | 384.3 |
-| Seal Twist Ret | Paladin | 13/0/38 | 471.0 | | Shockadin | Paladin | 23/0/28 | 379.0 |
-| Prot Warr | Warrior | 17/0/34 | 454.6 | | Rupture Rogue | Rogue | 12/8/31 | 377.1 |
-| Enh Shaman | Shaman | 19/32/0 | 451.1 | | Bear Druid | Druid | 9/42/0 | 376.2 |
-| Shadow Priest | Priest | 16/3/32 | 437.3 | | SM/DS | Warlock | 40/11/0 | 349.1 |
-| Combat Rogue | Rogue | 18/33/0 | 419.8 | | LW Melee | Hunter | 7/13/31 | 321.5 |
-| Frostfire Mage | Mage | 0/29/22 | 412.5 | | LW Ranged | Hunter | 7/39/5 | 311.7 |
-| BM Hunter | Hunter | 31/20/0 | 405.8 | | Ele Shaman | Shaman | 38/13/0 | 295.4 |
-| | | | | | Prot Pally | Paladin | 8/36/7 | 153.2 |
+| **Seal Twist Ret** | Paladin | 13/0/38 | **528.3** | | Moonkin | Druid | 38/0/13 | 384.3 |
+| Cat Druid | Druid | 9/35/7 | 488.0 | | Rupture Rogue | Rogue | 12/8/31 | 377.1 |
+| **Shockadin** | Paladin | 23/0/28 | **472.7** | | Bear Druid | Druid | 9/42/0 | 376.2 |
+| Prot Warr | Warrior | 17/0/34 | 454.6 | | SM/DS | Warlock | 40/11/0 | 349.1 |
+| Enh Shaman | Shaman | 19/32/0 | 451.1 | | LW Melee | Hunter | 7/13/31 | 321.5 |
+| Shadow Priest | Priest | 16/3/32 | 437.3 | | LW Ranged | Hunter | 7/39/5 | 311.7 |
+| Combat Rogue | Rogue | 18/33/0 | 419.8 | | Ele Shaman | Shaman | 38/13/0 | 295.4 |
+| Frostfire Mage | Mage | 0/29/22 | 412.5 | | **Prot Pally** | Paladin | 8/36/7 | **238.1** |
+| BM Hunter | Hunter | 31/20/0 | 405.8 | | | | | |
 
 **WHAT THE OWNER'S LISTS WERE WORTH, against the last figures measured on this
 project's own shells:**
@@ -108,8 +119,8 @@ is CONNECTED rather than whether its number is right.**
 
 | | |
 | --- | --- |
-| **134** | abilities in at least one profile's book |
-| **109** | exercised by at least one profile |
+| **135** | abilities in at least one profile's book |
+| **110** | exercised by at least one profile |
 | **25** | cast by none of the 23, **each with a stated reason and none of them a broken declaration** |
 | **8** | priority list entries that never fire, six of them deliberate |
 | **23 of 23** | damage tables summing to **100%** |
@@ -139,7 +150,7 @@ structure, and throws if its four buckets do not account for every talent.
 | Document | Profiles | Live gaps |
 | --- | --- | --- |
 | [warrior.md](docs/handoff/warrior.md) | 2H Arms, DW Fury, Prot Warr | **1** |
-| [paladin.md](docs/handoff/paladin.md) | Seal Twist Ret, Shockadin, Prot Pally | **10** |
+| [paladin.md](docs/handoff/paladin.md) | Seal Twist Ret, Shockadin, Prot Pally | **2** |
 | [druid.md](docs/handoff/druid.md) | Moonkin, Cat, Bear | **12** |
 | [hunter.md](docs/handoff/hunter.md) | BM Hunter, LW Ranged, LW Melee | **13** |
 | [rogue.md](docs/handoff/rogue.md) | Venom, Combat, Rupture | **14** |
@@ -167,7 +178,7 @@ Measured at `d2718b0`, and the numbers say it is not close:
 | **140 of 468 talents are a live gap** | down from a raw count of 262 unmodelled reasons, because 89 are permanently out of scope by ruling and 33 more are PARTLY modelled. See the census below — the raw total is not a work queue |
 | **113 abilities declared against 478 captured** | the data is on disk; the declarations are not. Druid 15, Hunter 14, Mage 13, Rogue 12, Warlock 10, Shaman 9, Priest 7, Paladin 6, plus the Warrior's 27 |
 | ~~**Coefficients**~~ | **DONE, AND NOW EVERY ROW IS APPLIED.** `WoWSimWorksheet.xlsx`, the owner's authoritative coefficient document, is transcribed in `src/game/combat/coefficients.ts` and applied across all nine classes. Every derived rule is deleted. The last unapplied row was Hammer of Wrath, which was not a declared ability until the owner put it in two Paladin priority lists; the two poison rows went the same way when the poison system landed. [docs/spell-coefficients.md](docs/spell-coefficients.md) |
-| **19 `PLACEHOLDER_*` constants** | each a real number nobody has supplied. Sniper Shot's invented 200-mana cost is gone, but it was never one of these: it was a bare literal with a false caveat, which is worse — an invented number that is not named cannot be audited |
+| **18 `PLACEHOLDER_*` constants** | each a real number nobody has supplied. Sniper Shot's invented 200-mana cost is gone, but it was never one of these: it was a bare literal with a false caveat, which is worse — an invented number that is not named cannot be audited |
 | ~~**Rotations are thin and unmeasured**~~ | **DONE.** All 23 priority lists are the ruleset owner's own, specified entry by entry, and every one is measured — see the baseline above and [docs/handoff-rotations.md](docs/handoff-rotations.md). The twelve dead entries are gone: every entry in every list fires. Fourteen abilities and three talent mechanics were declared to reach them, and six engine capabilities built |
 
 **The Warrior was built first and built properly, and it is not the norm.** Read
@@ -222,7 +233,7 @@ fails.
 | Class | Talents | Fully | Partly | Ruled out | Live gap |
 | --- | --- | --- | --- | --- | --- |
 | Warrior | 53 | 43 | 3 | 6 | **1** |
-| Paladin | 52 | 22 | 7 | 13 | **10** |
+| Paladin | 52 | 32 | 5 | 13 | **2** |
 | Druid | 51 | 20 | 5 | 14 | **12** |
 | Hunter | 50 | 24 | 5 | 8 | **13** |
 | Shaman | 50 | 17 | 4 | 12 | **17** |
@@ -230,7 +241,7 @@ fails.
 | Priest | 53 | 15 | 2 | 18 | **18** |
 | Rogue | 53 | 25 | 2 | 12 | **14** |
 | Warlock | 52 | 21 | 3 | 3 | **25** |
-| **Total** | **468** | **214** | **33** | **95** | **126** |
+| **Total** | **468** | **224** | **31** | **95** | **118** |
 
 **SIX TALENTS LEFT THE GAP COLUMN WITH THE PRIORITY LISTS**, and four of them
 were never really in it. Cutthroat and Premeditation were counted among the
@@ -241,10 +252,22 @@ reason was a statement about the engine ("nothing can reset a cooldown from
 content") and the engine now can. Fingers of Frost carried `FROZEN_UNMODELLED`,
 which is a claim about the TARGET, and that talent does not freeze anything.
 
-**247 of 468 talents do something**, 95 never will, and **126 are the actual
+**255 of 468 talents do something**, 95 never will, and **118 are the actual
 remaining work** — not the 262 a raw count of unmodelled reasons suggests. The 103
 scoped entries break down as 33 healing, 32 crowd control, 17 positioning, 14
-threat and **7 stealth**.
+threat and **7 stealth**. Every total above is re-summed from its rows rather
+than adjusted, which is the rule a clean merge once broke by one.
+
+**EIGHT TALENTS LEFT THE GAP COLUMN WITH THE PALADIN DEEP DIVE, AND SIX WERE
+NEVER REALLY IN IT.** Reckoning, Holy Shield and Shield Specialization were
+written off against a rule that a reaction cannot fire on a BLOCK — which the
+Warrior's own Shield Specialization, Revenge, Enrage and Blood Craze have
+disproved since the table was written. Divine Favor's reason was true of
+`CastModifier` and false of an aura's `abilityModifiers`; Sanctified Judgement's
+wanted a cast reaction that already existed; and Templar's Bulwark had been
+granted, cast and absorbing in full for as long as absorbs have existed, while
+its reason said it was not granted at all. **Only Divine Precision needed a new
+engine field**, and that one is shared with the Mage twice and the Priest twice.
 
 **STEALTH IS THE NEWEST RULING AND IT CLOSED THE LARGEST OPEN QUESTION.** Every
 fight opens in combat, so nothing is ever stealthed — and until the owner ruled,
@@ -295,18 +318,19 @@ into a finite work list.
 
 | Gap | Talents | Classes |
 | --- | --- | --- |
-| **Spell hit per school** — the attack table decides hit before any per-school modifier is consulted | 5 | Mage ×2, Priest ×2, Paladin |
+| ~~**Spell hit per school**~~ **DONE.** `AbilityModifier.hitBonus`, taken off MISS, folded by `combineModifiers` and by `combine`. The reason — that the table decides hit before any per-school modifier is consulted — was false: the school's modifier was already one of that function's three arguments. **Four talents left, none of them the Paladin's** | ~~5~~ 4 | Mage ×2, Priest ×2 |
 | **Crit damage for a LIST of NAMED abilities** — `critMultiplierBonus` exists on `AbilityModifiers` and no talent effect reaches it, the way `abilityCrit` reaches crit CHANCE | 2 | Warlock, Rogue |
-| **A one-shot per-ability CRIT modifier** — `CastModifier` carries cast time and cost, not crit | 2 | Paladin, Priest |
+| **A one-shot per-ability CRIT modifier** — and it is NOT `CastModifier`, which carries cast time and cost. An AURA's `abilityModifiers` carries a `critBonus`, spent by a CAST REACTION rather than by `consumedByCast`: cast charges are spent before `runCast`, so the aura would be gone before the spell rolled its crit. **Divine Favor does it now; the Priest's is the same shape** | ~~2~~ 1 | Priest |
 | **A style-scoped item stat** — `statsForStyle` knows the combat style; the item rule does not | 1 item line | both feral Druids, 172 attack power |
-| **A flat per-school damage bonus** — `damageTakenBySchool` multiplies | 1 | Paladin |
+| ~~**A flat per-school damage bonus**~~ **NOT A GAP, AND NOT FLAT.** Judgement of the Crusader's "up to 161" is spell POWER on the target, by the owner's ruling, so each ability scales it by its own coefficient. `AuraDefinition.spellPowerTakenBySchool`, read through `spellPowerAgainst`. The old reason had correctly ruled out `damageTakenBySchool` for multiplying and then read the number as flat anyway | 0 | — |
 | **Mid-fight summoning** — `Simulation` exposes `combatants` read-only | 2 | Warlock Infernal, Mage elemental. Nothing in any profile needs it |
+| **An aura scoped to an attack TABLE** — built, as `damageDoneByTable`. `AttackTableModifiers` is fixed when the character is and Seal of the Crusader's penalty has to come and go with the seal | 0 | — |
 
 ### Placeholders — every invented number, named
 
 | Constant | Value | What would settle it |
 | --- | --- | --- |
-| `PLACEHOLDER_SEAL_OF_COMMAND_PPM` | 7 | the owner chose PPM and the figure has not arrived. Largest number in Seal Twist Ret |
+| ~~`PLACEHOLDER_SEAL_OF_COMMAND_PPM`~~ | **7, and real** | **Answered.** The owner has confirmed 7 procs-per-minute, so the constant is `SEAL_OF_COMMAND_PPM` and the fourth-highest profile loses its one big asterisk. The value did not move; what moved is whether it can be quoted |
 | `PLACEHOLDER_PET_BASE_DPS` | 50 | one stated pet DPS or damage range at 60. Every source gives family modifiers RELATIVE to a base and none states the base |
 | `PLACEHOLDER_MAELSTROM_WEAPON_PROC_CHANCE` | 20 | the tooltip says only "a chance" |
 | `PLACEHOLDER_SOUL_SHARDS` | 10 | what a Warlock banks before a pull. No in-fight income |
@@ -359,17 +383,25 @@ coefficients are read by `reactions/poisons.ts` and `auras/rogue.ts`. The
 comment on the constants said "not applied" for a while after it stopped being
 true, which is the third time an expired reason has been caught in this file.
 
-1. **Seal of Command's PPM.** You chose procs-per-minute; the figure did not come
-   with it.
-2. **Seal of Righteousness' base** — is the low end of "21 to 75" the `base` term
-   in your formula, or the midpoint?
-3. **Maelstrom Weapon's proc chance.** Not in the client data at all.
-4. **One pet's base DPS, or one damage range, at 60.** The family modifiers are
+1. ~~**Seal of Command's PPM.**~~ **Answered: 7.** And so are Vindication's proc
+   chance (**10%**), Seal of the Crusader's damage penalty (**Classic's reading,
+   where it exactly cancels the haste**) and Judgement of the Crusader's "up to
+   161" (**spell power, not flat damage**). Four Paladin answers in one pass, and
+   three of them deleted an inert talent rather than a placeholder.
+2. **Seal of Righteousness' base** — is the low end of "20.5 to 71.4" the `base`
+   term, or the midpoint? Still open, and the last Paladin interpretation.
+3. **Is a dispel in scope, and is a self-disarming immunity?** The Paladin's last
+   two live gaps turn on these and nothing else. `purifying_power`'s Cleanse and
+   Purify half is inert because nothing here applies anything dispellable, which
+   is an ENCOUNTER property rather than one of the five rulings — the same shape
+   stealth had before you ruled on it. `guardian_s_favor`'s Blessing of
+   Protection, and `sacred_duty`'s Divine Shield and Divine Protection, all stop
+   the Paladin attacking for their duration.
+4. **Maelstrom Weapon's proc chance.** Not in the client data at all.
+5. **One pet's base DPS, or one damage range, at 60.** The family modifiers are
    real and happiness is the wiki's 125%; what no source states is the absolute
    those are relative to.
-5. **Bane of Agony's ramp** — did Forever keep Classic's 50/100/150 bands?
-6. **Seal of the Crusader's "deals less damage with each attack"** states no
-   figure, so the seal is currently generous.
+6. **Bane of Agony's ramp** — did Forever keep Classic's 50/100/150 bands?
 7. **Berserker Rage's magnitude** — Forever's tooltip names none.
 8. **The hawk's damage, and how to read it.** Both sources state ONE figure —
    our capture 108, `foreverchanges.pro` 110 — for a hawk that "dive-bomb[s] your
@@ -387,8 +419,12 @@ Shadowburn 251–281, Searing Pain 105–123. Shadowburn is charged both a shard
 carries no reagent field for any spell. See
 [docs/source-cross-checks.md](docs/source-cross-checks.md).
 
-Answered already, for reference: seal damage is **not** a weapon use; a hawk is
-modelled **without** a real combatant; pet family is a **profile field**; Shield
+Answered already, for reference: Seal of Command procs at **7 PPM**;
+Vindication procs at **10%**; Seal of the Crusader's damage penalty is
+**Classic's, exactly cancelling its haste**; Judgement of the Crusader's "up to
+161" is **spell power rather than flat damage**; Retribution Aura stays
+**undeclared**; Divine Favor is **in the Shockadin list**; seal damage is **not** a
+weapon use; a hawk is modelled **without** a real combatant; pet family is a **profile field**; Shield
 Slam triggers **main-hand** effects; Careful Aim contributes to attack power
 **and** ranged attack power; resistances on an enemy target do not affect damage.
 
@@ -403,15 +439,26 @@ The refactor is phased; the milestone follows it.
    (`OutOfScope`, 96 entries tagged, a test that a new class cannot slip past), the
    Talent panel shows a decision separately from a gap, the healing split is made,
    and the odd-one-out Warrior capture is named for what it is. **Left:**
-   - **Ask the owner for each placeholder number** — 19 of them, listed above.
-     Every one answered is a placeholder deleted.
-   - **The seven talents whose rule already exists with nothing hooked to it.**
+   - **Ask the owner for each placeholder number** — 18 of them, listed above,
+     and Seal of Command's is the proof the asking is worth it: one message turned
+     the largest invented number in a top-five profile into real data. **Four
+     Paladin questions were answered in one pass and only one of them was a
+     placeholder** — the other three were inert talents, which is the lesson the
+     coefficient sheet taught twenty-nine talents at once. **Check whether a
+     missing number is missing DATA or a missing RULING.**
+   - **The talents whose rule already exists with nothing hooked to it.**
      Shaman Elemental Focus is the clearest: a one-shot cost modifier is exactly
      `CastModifier.costFraction` with `consumedByCast`, which Maelstrom Weapon
      already uses, and its reason still says it has no declaration. Rogue
      Lethality and Warlock Pandemic want `critMultiplierBonus`, which exists and
      nothing reaches. **These will move DPS, so they want their own PR and a
      re-measured baseline.**
+     **THE PALADIN IS THE WORKED EXAMPLE OF HOW BIG THIS CATEGORY IS.** Six of its
+     ten live gaps were in it, worth +57, +94 and +85 DPS across its three
+     profiles, and not one of them needed a number nobody had. **Read every
+     `unmodelled` reason that names an engine limitation against the engine, not
+     against its own plausibility** — three of the Paladin's were contradicted by
+     code in the Warrior's own reaction file.
    - **Dead code**: exports nothing imports.
    **Do not restructure the engine, the panels or the profile schema**; volume is
    the problem, not shape.

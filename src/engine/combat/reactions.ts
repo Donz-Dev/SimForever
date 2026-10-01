@@ -107,9 +107,22 @@ export interface Reaction {
   /**
    * Outcomes that trigger it. An attack whose outcome is not listed is ignored.
    *
-   * Note which outcomes a table can actually produce: `melee-received` yields
-   * miss, dodge, parry, crush, crit and hit. There is no `block`, so a reaction
-   * that should key off blocking cannot express it yet.
+   * ----------------------------------------------------------------------------
+   * `melee-received` PRODUCES `block`, AND THIS COMMENT USED TO SAY IT DID NOT.
+   * It listed "miss, dodge, parry, crush, crit and hit" and concluded that a
+   * reaction keying off blocking "cannot express it yet" -- and `TABLES` in
+   * `attackTable.ts` has had `block` in that table's first roll since it was
+   * written, `runReactions` filters on nothing but this list, and the Warrior's
+   * own Shield Specialization, Revenge, Enrage and Blood Craze all name `block`
+   * and all fire.
+   *
+   * IT COST THE PALADIN TWO CLAUSES AND THE PROJECT A DOCUMENTED RULE. Holy
+   * Shield's "221 Holy damage for each attack blocked" and Reckoning's "extra
+   * attack after Blocking" were both written off against it, the reasons quoted
+   * this sentence, and CLAUDE.md carried it as design. A block IS a landed
+   * outcome a reaction can see; what it is NOT is an avoided one, which is the
+   * true half of the rule and the only half `AVOIDED_OUTCOMES` claims.
+   * ----------------------------------------------------------------------------
    */
   readonly outcomes: readonly AttackOutcome[];
   /** Extra conditions beyond the outcome. */

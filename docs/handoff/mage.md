@@ -69,6 +69,17 @@ only to the Warrior's 43.
 
 ### The 16 live gaps, grouped by cause
 
+
+**THE ENGINE HALF OF SPELL HIT PER SCHOOL IS BUILT.** The Paladin deep dive found
+that the shared reason — that the attack table decides hit before any per-school
+modifier is consulted — was simply false: `rollTable` folds the school's modifier
+in before the roll and always did. `AbilityModifier.hitBonus` is the field and
+`schoolHit` is the talent effect kind, both live and tested in
+`tests/engine/targetSideModifiers.test.ts`. Divine Precision uses them and is
+worth 19 DPS to the Shockadin. **These talents are now a one-line effect each and
+a re-measured baseline**, left for the class that owns them because each moves a
+profile.
+
 **Spell hit per school (the engine gap above):** `arcane_focus`,
 `elemental_precision`
 
