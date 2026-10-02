@@ -719,12 +719,34 @@ See [docs/resources.md](docs/resources.md).
 - **A pet receives no raid buffs**, a Forever rule. `isPlayerControlled` counts a
   pet — right for who the raid is FIGHTING, wrong for who it BUFFS.
   `kind === 'player'` is the narrower test.
-- **Pet stats come from the owner**: 2 health a stamina, 30% of armor, 10% of the
-  HIGHEST attack power source, 100% of crit — far more gear-sensitive than a
-  Classic pet. **A pet's base is a DPS, not a per-swing damage**, which makes its
-  swing speed damage-neutral, and **a placeholder in the wrong UNIT is worse than
-  one with the wrong value**, because the value is wrong once and the unit is
-  wrong every time something else moves.
+- **A PET HAS STATS OF ITS OWN AND INHERITS MORE ON TOP**, and for a long time
+  only the second half was modelled. Its own, from the owner: 136 strength, 100
+  agility, −20 attack power, with `AP = −20 + Str × 2 + 0.1 × max(melee, ranged)`
+  and `crit = agility / 20 + owner's crit` — so **252 attack power and 5 crit
+  before a point of the Hunter's**. Inherited: 2 health a stamina, 30% of armor,
+  10% of the HIGHEST attack power source, 100% of crit. The inherited share is
+  about a THIRD of a pet's attack power, so a pet is **less** gear-sensitive than
+  this used to say, not more.
+- **A PET'S SWING SCALES WITH ATTACK POWER AND CLAW AND BITE DO NOT**, which is
+  the owner's statement and is expressed by those two declaring no
+  `weaponScaling`. Their share of a pet's damage FALLS as the Hunter gears up.
+- **THE PET'S DAMAGE MULTIPLIER IS COMPOSED, NEVER DECLARED.** The owner's "Pet
+  Global Damage Multiplier = 1.375x" IS Petopia's 1.10 family modifier times the
+  wiki's 1.25 for a fed pet — the same thing, not a third number. **Declaring a
+  stated figure beside the factors that already produce it is the failure here**:
+  it takes a Cat to 1.89, which is a bigger number and no error. 1.375 appears
+  nowhere in the source, and the guard is an END-TO-END scripted swing rather
+  than a constant check, because a constant check cannot see a double
+  application.
+- ~~**A pet's base is a DPS, not a per-swing damage.**~~ **THE QUESTION DISSOLVED
+  RATHER THAN BEING SETTLED.** The wiki's `((PetBaseDPS + AP / 14) × mods) ×
+  PetSwingSpeed` multiplied out IS the owner's `(random(min, max) + swing / 14 ×
+  AP) × mods`. The unit was only ever ambiguous while the SWING was unknown, and
+  the owner states it. **A disagreement between two sources can be an artefact of
+  a third number neither of them gives.**
+- **A placeholder in the wrong UNIT is still worse than one with the wrong
+  value**, because the value is wrong once and the unit is wrong every time
+  something else moves. That lesson outlived the thing that taught it.
 - **One function answers "will there be a pet".** `bringsPet` decides whether the
   encounter BUILDS one and whether a pet-gated talent APPLIES, and those have to
   be the same answer. **A condition nobody declared is not an omission, it is a

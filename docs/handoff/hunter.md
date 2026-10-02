@@ -34,11 +34,27 @@ left, six are the encounter or the build, one is a consequence of a ruling, and
 
 | Profile | Talents | DPS | List | Notes |
 | --- | --- | --- | --- | --- |
-| BM Hunter | 31/20/0 | **731.8** | `HUNTER_BEAST_MASTERY` | **the only profile with a pet, and now the top profile in the project** |
+| BM Hunter | 31/20/0 | **595.1** | `HUNTER_BEAST_MASTERY` | **the only profile with a pet** |
 | LW Melee | 7/13/31 | **362.7** | `HUNTER_LONE_WOLF_MELEE` | |
 | LW Ranged | 7/39/5 | **311.7** | `HUNTER_LONE_WOLF_RANGED` | |
 
-**BM HUNTER WENT 405.8 → 731.8 ON TWO OWNER RULINGS, AND THEY ARE ISOLATED.**
+**BM HUNTER HAS HELD THREE DIFFERENT FIGURES IN TWO DAYS, AND THE SEQUENCE IS
+THE POINT RATHER THAN ANY ONE OF THEM.** 405.8, then 731.8, then **595.1** — and
+**the first two were both measured against an invented pet base damage**, 50 for
+the life of the project and 150 for a day. 595.1 is the first that was not. (The
+figures below were taken before `#149` raised the preset raid buffs from twelve
+to seventeen, which moved every profile; the deltas are still what each change
+was worth.)
+
+**THE PET MODEL IS −193.0**, measured against current main, with the other
+twenty-two profiles identical to the decimal:
+
+| | |
+| --- | --- |
+| **−230.8** | the base damage, 300 a swing → 36.34–55.32, with the pet's attack power and crit left alone |
+| **+37.5** | the pet's own 252 attack power and 5 crit, which did not exist |
+
+**AND THE HUNTER DIVE BEFORE IT WAS +326.0, ON TWO RULINGS, ALSO ISOLATED.**
 It is 80 DPS clear of DW Fury's 651.2 and the owner has published it as the
 baseline deliberately rather than by default.
 
@@ -87,7 +103,7 @@ One batch of ten, so read the shape and not the decimals:
 
 | Profile | Top sources |
 | --- | --- |
-| BM Hunter | **Cat Melee 38.1%**, **Hawk 19.9%**, Ranged Auto 19.5%, Serpent Sting 8.5%, Aimed Shot 8.1%, Claw 4.1%, Bite 1.8% |
+| BM Hunter | Ranged Auto 27.4%, **Hawk 24.7%**, **Cat Melee 15.0%**, Aimed Shot 13.4%, Serpent Sting 12.1%, Claw 5.2%, Bite 2.3% |
 | LW Ranged | Ranged Auto 49.7%, Arcane Shot 19.6%, Aimed Shot 13.0%, Serpent Sting 11.0%, Sniper Shot 6.6% |
 | LW Melee | Main Hand Auto 32.6%, Raptor Strike 28.2%, Strider Kick 19.8%, Mongoose Bite 8.6%, **Immolation Trap 8.1%**, **Lacerating Strikes 2.6%** |
 
@@ -153,24 +169,66 @@ Three things changed with it, and only the first is the ruling:
 3. **Summon Hawk refuses at two active hawks**, its own stated rule, so the list
    falls through to Aimed Shot instead of spending 190 mana to reset a timer.
 
-### The pet's base DPS is 150, supplied rather than invented
+### The pet model, supplied in full on 2026-10-01
 
-> *"Make the base placeholder DPS 150 (1 hit for ~300 every 2 seconds)."*
+The 150 of the day before was a placeholder too, and this replaced it entirely:
 
-The two halves of that sentence agree: 300 every two seconds is 150 a second. It
-was **50** for as long as pets existed, so **every pet figure recorded before
-2026-09-30 is a third of this.**
+```
+Base damage      random(36.34, 55.32) per swing, at a 2.0-second base swing
+Base stats       136 strength, 100 agility, -20 attack power
+Attack Power     -20 + Strength x 2 + 0.1 x max(HunterMeleeAP, HunterRangedAP)
+Crit Chance      Agility / 20 + HunterCritChance
+Damage           (random(min, max) + 2 / 14 x PetAP) x 1.375
+Claw / Bite      random(43, 59) and random(81, 99), x 1.375
+```
 
-**IT KEEPS ITS `PLACEHOLDER_` NAME, ON THE OWNER'S OWN WORDING** — they called it
-a placeholder, so it is provisional rather than client-derived and the name is
-what says so. What changed is that it is no longer *invented*: an unauditable
-number became a supplied one.
+**THERE IS NO PLACEHOLDER LEFT IN THE PET MODEL.** The base was 50, then 150, and
+both were invented — so **every pet figure this project ever recorded was
+measured against a guess**, including the 731.8 this document published for a day.
 
-The same message confirmed everything around it unchanged — 2 health a stamina,
-30% of armor, 10% of the highest attack power source, 100% of crit, racial crit
-bonuses applying — and confirmed **Bite at 81–99 for 35 focus on a 10-second
-cooldown and Claw at 43–59 for 25 focus**, which `abilities/pet.ts` already
-carried correctly from the spellbook.
+**A PET NOW HAS 252 ATTACK POWER AND 5 CRIT OF ITS OWN.** Neither term existed:
+attack power was 10% of the owner's and nothing else. The Hunter's share is about
+a third of the total now, which means a pet is **less** gear-sensitive than the
+old model implied, not more.
+
+**CLAW AND BITE TAKE NO ATTACK POWER**, stated outright, and already did — they
+declare no `weaponScaling`. So a geared Hunter raises the pet's SWING and leaves
+its two strikes alone, and their share of its damage falls as the Hunter gears
+up. Classic's scaled. This is a statement, not an omission.
+
+**THE RANGE IS EXACTLY SYMMETRIC, WHICH IS WHY IT NEEDED NO NEW MECHANISM.** 36.34
+and 55.32 are both 9.49 either side of 45.83, and `weapon.damageVariance` is
+already a fraction either side of `baseDamage` — so the engine reproduces
+`random(36.34, 55.32)` exactly rather than approximately. It is 20.7% against the
+engine's 15% default, so dropping the field would leave the mean right and the
+tails wrong.
+
+**AND THE TWO SOURCES NEVER DISAGREED ABOUT THE UNIT.** This project recorded that
+a pet's base "is a DPS, not a per-swing damage" as a FINDING. Multiply the wiki's
+`((PetBaseDPS + AP / 14) x mods) x PetSwingSpeed` out and it IS the owner's line.
+The unit was only ambiguous while the SWING was unknown, and the owner states it —
+so the question dissolved rather than being settled. **A disagreement between two
+sources can be an artefact of a third number neither of them gives.**
+
+**THE 1.375 WAS ALREADY THERE, AND THE RISK WAS IMPLEMENTING IT TWICE.** It is
+Petopia's 1.10 family modifier times the wiki's 1.25 for a fed pet, to the tenth
+decimal — confirmed by the owner: *"They're the same thing."* So **1.375 appears
+nowhere in the source**. The obvious way to implement a stated multiplier is to
+declare it beside the two factors that already produce it, which takes a Cat to
+**1.89** — a bigger number, no error, and a results page that reads as an ordinary
+pet. Both factors are read in exactly one place, the pet's weapon carries no
+`damageMultiplier` of its own, and `dealDamage` applies the composed figure once.
+Bestial Wrath's +50% rides on top as an *aura* multiplier, correctly separate.
+
+**THE GUARD IS END-TO-END, NOT A CONSTANT CHECK.** `petsAndHunter.test.ts` scripts
+a swing — damage roll at its midpoint, attack table at a plain hit — and asserts
+it against `(base + 2 / 14 × AP) × 1.375` built from the owner's own words. A
+second application fails it by 37.5% rather than hiding in a mean, **and the test
+was verified to fail by injecting one.**
+
+Health and armor are unchanged and still purely inherited — 2 a stamina, 30% of
+armor — with the family modifiers on top. **Happiness is the one assumption left
+in the pet**: nothing tracks feeding, so it is assumed fed.
 
 ### Lacerate is not a real ability; Trueshot Aura is the raid buff
 

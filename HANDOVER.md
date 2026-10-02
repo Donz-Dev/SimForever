@@ -107,18 +107,36 @@ stat for Hack and Slash. Nothing in the Warrior's own files changed.
 `armorPenetration.test.ts` asserts BOTH callers on purpose, which is what failed.
 See [docs/handoff/rogue.md](docs/handoff/rogue.md).
 
-**THE HUNTER DEEP DIVE MOVED TWO PROFILES AND THE CONTAINMENT HELD EXACTLY.**
+**THE PET MODEL MOVED ONE PROFILE AND NOTHING ELSE BY A DECIMAL.** BM Hunter
+**788.1 to 595.1, -193.0, REAL**, and the other twenty-two identical -- the two
+pet-less Hunters included, which is the containment check for a change confined
+to `createPet`. The ruleset owner supplied a complete pet model on 2026-10-01 and
+**it removed the last placeholder in the class**:
+
+| | |
+| --- | --- |
+| **-230.8** | the base damage, 300 a swing to **36.34-55.32**, measured with the pet's attack power and crit left as they were |
+| **+37.5** | the pet's own **252 attack power and 5 crit**, which did not exist at all before |
+
+**SO BM HUNTER'S 788.1 AND ITS 731.8 BEFORE THAT WERE BOTH MEASURED AGAINST AN
+INVENTED BASE DAMAGE** -- 50 for the life of the project and 150 for a day. 595.1
+is the first figure that was not, and it takes the profile from first to fourth.
+The two isolations above were measured on the pre-`#149` raid buffs, where the
+whole was -193.2; re-measured here it is -193.0, which is the same change seen
+through a different raid.
+
+**THE HUNTER DEEP DIVE CAME FIRST AND ITS CONTAINMENT HELD TOO.**
 BM Hunter **405.8 to 731.8, +326.0, REAL** and LW Melee **321.5 to 362.7, +41.1,
 REAL**; the other twenty-one identical to the decimal, **LW Ranged included** --
 which is the check for a change that touched pets, hawks, traps and a melee bleed
-at once. **BM Hunter is now the top profile in the project.**
+at once.
 
-**ALMOST ALL OF IT IS TWO OWNER ANSWERS, NOT ENGINE WORK.** Both figures were
+**ALMOST ALL OF IT WAS TWO OWNER ANSWERS, NOT ENGINE WORK.** Both figures were
 named `PLACEHOLDER_` and both were load-bearing:
 
 | | |
 | --- | --- |
-| BM Hunter **+223.2** | the pet's base DPS, **50 to 150**, measured with the hawk left at 32 |
+| BM Hunter **+223.2** | the pet's base DPS, **50 to 150** -- **superseded the next day by the owner's real model**, above |
 | BM Hunter **+144.4** | the hawk at **108**, with both of the two it can have dealing damage, measured with the pet left at 50 |
 | LW Melee **+30.4** | the Immolation Trap entry |
 | LW Melee **+12.4** | Lacerating Strikes' bleed |
@@ -264,7 +282,7 @@ while it worked.
 decimal -- which is what a talent change scoped to one build should look like.
 It makes Frostfire the top Mage, above Fire's 401.2 and Arcane's 392.6, and the
 build that existed for the Fire/Frost overlap now has a third reason to. The
-mean across 23 is 498.8, and the three dives that moved it are below. See
+mean across 23 is 490.4, and the dives that moved it are below. See
 [docs/handoff-apl.md](docs/handoff-apl.md).
 
 **THE WARLOCK DEEP DIVE MOVED FIVE PROFILES AND ONE OF THEM A LONG WAY DOWN.**
@@ -296,10 +314,10 @@ so. Fourteen profiles moved.
 
 | Profile | Class | Talents | DPS | | Profile | Class | Talents | DPS |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| BM Hunter | Hunter | 31/20/0 | 788.1 | | Combat Rogue | Rogue | 18/33/0 | 464.9 |
-| Cat Druid | Druid | 9/35/7 | 656.1 | | Prot Warr | Warrior | 17/0/34 | 454.6 |
-| DW Fury | Warrior | 18/33/0 | 651.2 | | Venom Rogue | Rogue | 37/12/2 | 448.4 |
-| 2H Arms | Warrior | 38/13/0 | 603.3 | | Bear Druid | Druid | 9/42/0 | 444.7 |
+| Cat Druid | Druid | 9/35/7 | 656.1 | | Combat Rogue | Rogue | 18/33/0 | 464.9 |
+| DW Fury | Warrior | 18/33/0 | 651.2 | | Prot Warr | Warrior | 17/0/34 | 454.6 |
+| 2H Arms | Warrior | 38/13/0 | 603.3 | | Venom Rogue | Rogue | 37/12/2 | 448.4 |
+| **BM Hunter** | Hunter | 31/20/0 | **595.1** | | Bear Druid | Druid | 9/42/0 | 444.7 |
 | Seal Twist Ret | Paladin | 13/0/38 | 585.5 | | Moonkin | Druid | 38/0/13 | 432.4 |
 | Fire Mage | Mage | 10/39/2 | 552.5 | | LW Ranged | Hunter | 7/39/5 | 413.2 |
 | Arcane Mage | Mage | 47/4/0 | 546.5 | | Ele Shaman | Shaman | 38/13/0 | 411.4 |
@@ -307,7 +325,7 @@ so. Fourteen profiles moved.
 | Shockadin | Paladin | 23/0/28 | 522.7 | | SM/DS | Warlock | 40/11/0 | 402.0 |
 | Enh Shaman | Shaman | 19/32/0 | 509.8 | | LW Melee | Hunter | 7/13/31 | 369.7 |
 | Firelock | Warlock | 5/11/35 | 507.9 | | Prot Pally | Paladin | 8/36/7 | 270.1 |
-| Shadow Priest | Priest | 16/3/32 | 493.9 | |  | | |  |
+| Shadow Priest | Priest | 16/3/32 | 493.9 | |  |  |  |  |
 
 **WHAT THE OWNER'S LISTS WERE WORTH, against the last figures measured on this
 project's own shells:**
@@ -421,7 +439,7 @@ Measured at `d2718b0`, and the numbers say it is not close:
 | **64 of 468 talents are a live gap** | well down from a raw count of 251 unmodelled reasons, because 95 are permanently out of scope by ruling and 35 more are PARTLY modelled. See the census below, and **re-sum it rather than adjusting it** — the raw total is not a work queue. **The Warrior is at zero**, the first class to get there |
 | **114 abilities declared against 478 captured** | the data is on disk; the declarations are not. Druid 15, Hunter 14, Mage 13, Rogue 12, Warlock 10, Shaman 9, Priest 7, Paladin 6, plus the Warrior's 27. **THE WARRIOR IS RECONCILED**, which is what the exclusion list below actually means: 42 captured against 30 declared counting its three stances, and each of the 12 that are not declared is named — 3 that Forever has and nothing here needs, 9 that are threat or crowd control by ruling. See [docs/warrior.md](docs/warrior.md). It is the only class where the subtraction balances |
 | ~~**Coefficients**~~ | **DONE, AND NOW EVERY ROW IS APPLIED.** `WoWSimWorksheet.xlsx`, the owner's authoritative coefficient document, is transcribed in `src/game/combat/coefficients.ts` and applied across all nine classes. Every derived rule is deleted. The last unapplied row was Hammer of Wrath, which was not a declared ability until the owner put it in two Paladin priority lists; the two poison rows went the same way when the poison system landed. [docs/spell-coefficients.md](docs/spell-coefficients.md) |
-| **15 `PLACEHOLDER_*` constants** | each a real number nobody has supplied. **COUNT THEM, DO NOT ADJUST THEM**: `grep -rhoE "PLACEHOLDER_[A-Z_]+" src/ \| sort -u \| wc -l`. The Warlock dive and the Warrior dive each removed one from 19 and each wrote 18, and git merged that without a conflict — this figure was wrong by one for exactly as long as it took to re-derive it, the Paladin dive removed a third, and the Shaman dive a fourth when Maelstrom Weapon's invented chance became 5 PPM. Sniper Shot's invented 200-mana cost is gone, but it was never one of these: it was a bare literal with a false caveat, which is worse — an invented number that is not named cannot be audited |
+| **13 `PLACEHOLDER_*` constants** | each a real number nobody has supplied. **COUNT THEM, DO NOT ADJUST THEM**: `grep -rhoE "PLACEHOLDER_[A-Z_]+" src/ \| sort -u \| wc -l`. The Warlock dive and the Warrior dive each removed one from 19 and each wrote 18, and git merged that without a conflict — this figure was wrong by one for exactly as long as it took to re-derive it, the Paladin dive removed a third, and the Shaman dive a fourth when Maelstrom Weapon's invented chance became 5 PPM. Sniper Shot's invented 200-mana cost is gone, but it was never one of these: it was a bare literal with a false caveat, which is worse — an invented number that is not named cannot be audited |
 | ~~**Rotations are thin and unmeasured**~~ | **DONE.** All 23 priority lists are the ruleset owner's own, specified entry by entry, and every one is measured — see the baseline above and [docs/handoff-rotations.md](docs/handoff-rotations.md). The twelve dead entries of that round are gone; the nine that remain are listed in [docs/ability-audit.md](docs/ability-audit.md), each with a reason and none of them a broken declaration. Fourteen abilities and three talent mechanics were declared to reach them, and six engine capabilities built |
 
 **The Warrior was built first and built properly, and it is not the norm.** Read
@@ -609,13 +627,13 @@ does not have, which is the check in the other direction. Each class is one
 | Constant | Value | What would settle it |
 | --- | --- | --- |
 | ~~`PLACEHOLDER_SEAL_OF_COMMAND_PPM`~~ | **7, and real** | **Answered.** The owner has confirmed 7 procs-per-minute, so the constant is `SEAL_OF_COMMAND_PPM` and the fourth-highest profile loses its one big asterisk. The value did not move; what moved is whether it can be quoted |
-| `PLACEHOLDER_PET_BASE_DPS` | 50 | one stated pet DPS or damage range at 60. Every source gives family modifiers RELATIVE to a base and none states the base |
+| ~~`PLACEHOLDER_PET_BASE_DPS`~~ | — | **DELETED 2026-10-01.** The owner supplied the whole pet model — 36.34–55.32 a swing at 2.0 seconds, from 136 strength and 100 agility, with attack power and crit formulas — so there is nothing left for a placeholder to hold. Worth **−193.0** to BM Hunter |
 | `PLACEHOLDER_MAELSTROM_WEAPON_PROC_CHANCE` | 20 | the tooltip says only "a chance" |
 | `PLACEHOLDER_SOUL_SHARDS` | 10 | what a Warlock banks before a pull. No in-fight income |
 | `PLACEHOLDER_COMBUSTION_DURATION_MS` | 30s | its real end is "until 4 crits", which nothing counts. Generous |
 | `PLACEHOLDER_WINDFURY_WEAPON_DURATION_MS` / `_INTERNAL_COOLDOWN_MS` | 1.5s | borrowed from Windfury Totem, whose window the owner stated. The SoD trinket tooltip says 2s where the code carries 1.5 |
 | `PLACEHOLDER_FLURRY_DURATION_MS` / `_REVENGE_WINDOW_MS` | 12s / 5s | Warrior-era; charges end Flurry in practice. **`_BERSERKER_RAGE_DURATION_MS` is gone**: all three sources say "Lasts 10 sec", and the placeholder's reason was a claim about the owner's spreadsheet being silent — true of the spreadsheet and irrelevant to the data |
-| `PLACEHOLDER_PET_SWING_SECONDS` | — | no longer affects damage, since a pet's base is a DPS |
+| ~~`PLACEHOLDER_PET_SWING_SECONDS`~~ | — | **DELETED 2026-10-01.** "Base Swing Time = 2.0 seconds", stated, and it is the speed the `2 / 14` in the owner's damage formula is the coefficient for — so the two halves cannot disagree |
 | `PLACEHOLDER_BOSS_*` | 5000 / 2s / 15% | the encounter, not a class. See [docs/incoming-damage.md](docs/incoming-damage.md) |
 | `PLACEHOLDER_ONE_HAND` / `_TWO_HANDER` / `_RANGED` | — | only used when nothing is equipped; every preset equips |
 
@@ -698,9 +716,22 @@ true, which is the third time an expired reason has been caught in this file.
    Protection, and `sacred_duty`'s Divine Shield and Divine Protection, all stop
    the Paladin attacking for their duration.
 4. **Maelstrom Weapon's proc chance.** Not in the client data at all.
-5. **One pet's base DPS, or one damage range, at 60.** The family modifiers are
-   real and happiness is the wiki's 125%; what no source states is the absolute
-   those are relative to.
+~~5. **One pet's base DPS, or one damage range, at 60.**~~ **ANSWERED IN FULL,
+   2026-10-01**, and the answer was the whole model rather than the one number:
+   base damage `random(36.34, 55.32)` a swing at 2.0 seconds, base stats of 136
+   strength / 100 agility / −20 attack power, and the two formulas
+   `AP = −20 + Str × 2 + 0.1 × max(melee, ranged)` and
+   `crit = agility / 20 + owner's crit`. Claw and Bite are confirmed as built and
+   **take no attack power at all**, which is a statement rather than an omission.
+
+   **AND THE 1.375 WAS ALREADY THERE.** The owner's "Pet Global Damage Multiplier
+   = 1.375x" is Petopia's 1.10 family modifier times the wiki's 1.25 for a fed
+   pet — *"They're the same thing"* — so no constant was added. **The danger was
+   implementing the stated figure a SECOND time**, which takes a Cat to 1.89 and
+   reads as an ordinary pet; `petsAndHunter.test.ts` guards it with a scripted
+   swing asserted against the owner's formula, and the guard was verified to fail
+   by injecting one.
+
 6. **Bane of Agony's ramp** — did Forever keep Classic's 50/100/150 bands?
 7. **Berserker Rage's magnitude** — Forever's tooltip names none.
 8. **The hawk's damage, and how to read it.** Both sources state ONE figure —
