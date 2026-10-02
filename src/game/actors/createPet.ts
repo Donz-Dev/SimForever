@@ -152,6 +152,30 @@ export const PET_SWING_SECONDS = 2;
  * tracks feeding -- and it is the same kind of assumption Improved Tracking
  * already makes, so it is stated rather than hidden. It is true of any real
  * raid pull and false of a pet nobody looks after.
+ *
+ * ----------------------------------------------------------------------------
+ * THIS TIMES THE FAMILY MODIFIER IS THE OWNER'S "Pet Global Damage Multiplier
+ * = 1.375x", AND THERE IS NO THIRD CONSTANT. Confirmed by the ruleset owner:
+ * "Petopia's 1.10 family modifier x the wiki's 1.25 for a fed pet IS the 1.375x
+ * multiplier. They're the same thing."
+ *
+ * SO 1.375 APPEARS NOWHERE IN THIS FILE, deliberately. The obvious way to
+ * "implement" a stated multiplier is to declare it beside the two factors that
+ * already produce it, which would take a Cat to 1.89 and still read as an
+ * ordinary pet on the results page -- a bigger number and no error. `createPet`
+ * composes the two factors once, into `damageMultiplier`, and `dealDamage`
+ * applies that once as `damageDoneMultiplier`.
+ *
+ * `petsAndHunter.test.ts` holds the guard, and it is an END-TO-END one: a
+ * scripted swing is asserted against `(base + 2 / 14 x AP) x 1.375` computed
+ * from the owner's own words, so a second application fails it by 37.5% rather
+ * than hiding in a mean.
+ *
+ * AND IT RESOLVED THE READING RATHER THAN CHOOSING ONE. The two were recorded
+ * as rival interpretations -- a flat constant for every family, or the Cat's
+ * own product -- which no measurement here could separate, because the only pet
+ * in the 23 profiles is a Cat. The answer is that they were never rivals.
+ * ----------------------------------------------------------------------------
  */
 export const PET_HAPPY_DAMAGE_MULTIPLIER = 1.25;
 
@@ -296,13 +320,19 @@ export function createPet(options: PetOptions): CombatantType {
     abilities: [...known, ...(options.extraAbilities ?? [])],
     rotation: PET_ROTATION,
     /*
-     * THE FAMILY AND HAPPINESS MODIFIERS, alongside the talents'.
+     * THE FAMILY AND HAPPINESS MODIFIERS, alongside the talents', COMPOSED ONCE.
      *
      * The wiki puts both INSIDE the bracket that the swing multiplies, and it
      * puts the same two on Claw and Bite -- so they belong on the pet's whole
      * damage rather than on its weapon, which is exactly what
-     * `damageMultiplier` is. A Cat is 1.10 and a fed pet is 1.25, so the Beast
-     * Mastery preset's pet deals 37.5% more than a neutral one.
+     * `damageMultiplier` is.
+     *
+     * A Cat is 1.10 and a fed pet is 1.25, and their product IS the owner's
+     * stated 1.375 -- the same thing, not two things. This is the only place
+     * either factor is read, the weapon above carries no `damageMultiplier` of
+     * its own, and `dealDamage` applies the result once. Bestial Wrath's +50%
+     * rides on top as an AURA multiplier, which is a different effect and
+     * correctly separate.
      */
     damageMultiplier:
       talents.damageMultiplier * definition.damageModifier * PET_HAPPY_DAMAGE_MULTIPLIER,

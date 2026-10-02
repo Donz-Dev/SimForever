@@ -221,19 +221,19 @@ describe('a pet is built from its owner', () => {
   it('multiplies a fed Cat’s damage by the 1.375 the owner states', () => {
     /*
      * ------------------------------------------------------------------------
-     * THE OWNER'S "Pet Global Damage Multiplier = 1.375x", AND THIS FILE
-     * ALREADY PRODUCED IT. A Cat is 1.10 by Petopia and a fed pet is 1.25 by
-     * the Forever Hunter wiki, and 1.10 x 1.25 is 1.375 exactly.
+     * THE OWNER'S "Pet Global Damage Multiplier = 1.375x" IS PETOPIA'S 1.10
+     * TIMES THE WIKI'S 1.25, AND THEY ARE THE SAME THING. Confirmed by the
+     * ruleset owner: "Petopia's 1.10 family modifier x the wiki's 1.25 for a
+     * fed pet IS the 1.375x multiplier. They're the same thing."
      *
-     * SO THE TWO READINGS ARE MEASUREMENT-NEUTRAL HERE and this pins the
-     * product rather than either factor. One profile in the project has a pet
-     * and it is a Cat, so whether 1.375 is a flat constant for every family or
-     * the Cat's own product cannot be told apart by any figure this simulator
-     * produces -- it is recorded as an open question rather than decided, and
-     * this test holds under either answer.
+     * SO THERE IS NO THIRD CONSTANT, and that is the whole point of this test
+     * and the one below it. The obvious way to "implement 1.375" is to add a
+     * `PET_GLOBAL_DAMAGE_MULTIPLIER` beside the two factors that already
+     * produce it, which would multiply the pet's damage by 1.89 and still look
+     * entirely reasonable on the page.
      *
      * A TALENT-FREE PET, because Unleashed Fury and Focused Fire multiply this
-     * and would hide the number under their own.
+     * and would hide a second application under their own.
      * ------------------------------------------------------------------------
      */
     const owner = hunterFor('bm_hunter');
@@ -241,6 +241,71 @@ describe('a pet is built from its owner', () => {
 
     expect(PET_FAMILIES.cat.damageModifier * PET_HAPPY_DAMAGE_MULTIPLIER).toBeCloseTo(1.375, 10);
     expect(pet.damageDoneMultiplier).toBeCloseTo(1.375, 10);
+
+    // And it is NOT folded into the weapon as well, which is the other way a
+    // second application gets in. `baseDamage` is the owner's raw midpoint.
+    expect(pet.weapons.mainHand?.baseDamage).toBeCloseTo(PET_BASE_DAMAGE, 10);
+    expect(pet.weapons.mainHand?.damageMultiplier).toBeUndefined();
+  });
+
+  it('swings for the owner’s formula EXACTLY, so 1.375 lands once', () => {
+    /*
+     * ------------------------------------------------------------------------
+     * THE END-TO-END CHECK THAT READING THE CODE CANNOT GIVE YOU.
+     *
+     *     Damage = (random(36.34, 55.32) + 2 / 14 x PetAttackPower) x 1.375
+     *
+     * Scripted rather than sampled: the damage roll is pinned to the MIDPOINT
+     * of its range and the attack table to a plain hit, so the number that
+     * comes out is arithmetic rather than a distribution. An off-by-one in the
+     * multiplier chain shifts it by 37.5% and a doubled multiplier by 89%,
+     * neither of which a mean over 300 fights would announce as anything but a
+     * different pet.
+     *
+     * THE EXPECTED VALUE IS BUILT FROM THE OWNER'S WORDS, not read back out of
+     * `createPet` -- `252` and `2 / 14` and `1.375` are written here as
+     * literals, so this fails if any of the three moves.
+     * ------------------------------------------------------------------------
+     */
+    const owner = hunterFor('bm_hunter');
+    const pet = createPet({ owner, family: 'cat' });
+    const target = makeTarget({ level: 63 });
+
+    const events: Array<{ type: string; abilityName?: string; amount?: number }> = [];
+    const simulation = buildSimulation([pet, target], { durationMs: seconds(10) }, {
+      emit: (event: { type: string }) => events.push(event as never),
+    } as never);
+
+    /*
+     * The damage roll at its midpoint gives exactly 1.0, and a maximal table
+     * roll lands past miss, dodge, parry, glance and crit in the last bucket,
+     * which is an ordinary hit.
+     */
+    const rng = (simulation as unknown as { rng: Record<string, unknown> }).rng;
+    rng.nextFloat = (min: number, max: number) => (min + max) / 2;
+    rng.nextInt = () => 10_000;
+    rng.rollChance = () => false;
+
+    simulation.run();
+
+    const swing = events.find(
+      (event) => event.type === 'damage' && event.abilityName === 'Cat Melee',
+    );
+    expect(swing).toBeDefined();
+
+    // -20 + 136 x 2 + 10% of the larger of the Hunter's two pools.
+    const petAttackPower = 252 + highestAttackPower(owner) * 0.1;
+    const expected = (PET_BASE_DAMAGE + (2 / 14) * petAttackPower) * 1.375;
+
+    expect(swing!.amount).toBeCloseTo(expected, 6);
+
+    /*
+     * AND THE TWO WAYS IT COULD BE WRONG, NAMED. A second application of the
+     * multiplier is 1.89x and dropping it entirely is 0.73x -- both land on a
+     * number that reads as a plausible pet.
+     */
+    expect(swing!.amount).not.toBeCloseTo(expected * 1.375, 1);
+    expect(swing!.amount).not.toBeCloseTo(expected / 1.375, 1);
   });
 
   it('reads the HIGHEST attack power source, not the ranged one', () => {
