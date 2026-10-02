@@ -25,6 +25,67 @@ engine that were about the wrong thing.
 | [priest.md](priest.md) | Shadow | **12** |
 | [warlock.md](warlock.md) | SM/DS, Firelock | **20** |
 
+## LAND THE SHARED ENGINE PIECES FIRST
+
+**The ruleset owner's instruction after the first round of nine, and it is about
+SEQUENCING rather than noticing.** These briefs already listed the shared items,
+under the heading "four items want building once, not nine times". Nine parallel
+contexts read that and **three of the four got built two and three times anyway.**
+
+| Capability | Built by | |
+| --- | --- | --- |
+| the clock-conditioned per-ability modifier | **Priest and Rogue**, independently | twice |
+| spell hit per school (`AbilityModifier.hitBonus`) | **Priest and the Mage/Paladin work**, independently — down to subtracting from miss | twice |
+| the target-side per-ability modifier | **Mage and Rogue**, independently | twice |
+| `abilityCritDamage`, reaching `critMultiplierBonus` | the **Warlock**, and the Rogue then REUSED it | **once** |
+
+**A "build once" NOTE IN NINE PARALLEL BRIEFS IS NOT A MECHANISM.** Only landing
+the thing on `main` before the dives start is. Identification was never the
+failure — the briefs were right about all four — so the fix is an ordering and not
+a louder warning.
+
+**AND THE FOURTH ROW IS THE PROOF, NOT AN EXCEPTION.** `critMultiplierBonus` had
+existed since Impale with nothing reaching it, and two classes wanted the same
+declaration: the Warlock's Pandemic and the Rogue's Lethality. It was built **once**
+— and the only thing that separates it from the three above is that **the Warlock
+merged first**, so by the time the Rogue needed it the API was on `main` to point
+at. Nothing about that capability was easier. The order was.
+
+### What it cost
+
+The duplicates were not wasted work so much as deferred reconciliation, and the
+bill arrived on whichever branch merged last. The **Rogue** branched before five
+other dives landed and came back carrying **seven** divergent APIs:
+`abilityBelowTargetHealth`, `FightProgress`, `clockConditionsUnreachable`,
+`abilityDamageTaken`, `abilityDamageTakenMultiplierFor`, `critMultiplier`, and a
+flat `costReduction`. Reconciling it was a longer job than any single dive, and
+every rename carried the risk this project exists to avoid: a plausible wrong
+number. `costReduction` against `costFraction` is exactly that shape — one is
+flat, one is a percentage, and reading either as the other compiles.
+
+**TWO OF THE SEVEN WERE GENUINELY NEW AND HAD TO BE RESTORED RATHER THAN
+TRANSLATED**, which is the part that makes a blanket "take main's side" wrong:
+`costReduction` and `abilityCrit`'s `valueIndex`, the second of which was fixing a
+real misreading where Puncturing Wounds gave Mutilate Backstab's number.
+
+### How to do it next time
+
+1. **Read the briefs for the shared items before dispatching anything.** They are
+   the ones a brief names together with another class.
+2. **Land those on `main` first, in one pass, with their own tests.** They do not
+   need the class work to be useful, and they are small next to it.
+3. **Then fan out**, with each brief pointing at the merged API by name rather
+   than at a capability to build.
+4. **And re-base a dive against `main` before it measures**, not after. Two dives
+   did this unprompted and both reported deltas that were still true at merge; the
+   ones that did not had figures taken against a base four merges old.
+
+**THE CHEAPEST VERSION OF THIS RULE IS THE TRIAL MERGE.** The Mage dive merged
+`priest-deep-dive` into itself before either landed, recorded the projected figures
+as "not a baseline", and **its projection was exact** — Arcane 492.2, Fire 449.4,
+Frostfire 437.8, all three confirmed by the republished baseline afterwards. That
+is twenty minutes of work that told the next merger a surprise from an expectation.
+
 ## Every one of these numbers is re-derivable
 
 **Do not trust a figure in these documents — reprint it.** A figure written by
