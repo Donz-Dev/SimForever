@@ -108,7 +108,7 @@ some way, and the first place to look for anything visual.
 | `panels/ResultsPanel.tsx` (480) | the biggest panel: DPS, distribution, the damage table, uptimes |
 | `panels/CharacterPanel.tsx` (367) | the 23 presets, Import and Load |
 | `panels/TalentPanel.tsx` (359) | the tree, and the gap/ruling split. **Both bugs above are here** |
-| `panels/GearPanel.tsx` (353) | 19 `<select>`s, plus "Equipped but not simulated" |
+| `panels/GearPanel.tsx` | 19 `<select>`s. Its "Equipped but not simulated" list is gone |
 | `panels/CharacterSheetPanel.tsx` (335) | the stat block |
 | `panels/RaidBuffsPanel.tsx` (168) | 21 checkboxes, 17 on by default |
 | `charts/` | `DonutChart`, `ResourceTimeline`, `UptimeBars` — hand-rolled SVG, no chart library |
@@ -147,9 +147,11 @@ are not rendered by any test, so **anything you change you have to look at.**
   combo points added together, shares totalling a tidy 100%, nothing on the page
   contradicting it. **Two tests depended on it.** The resource panel is keyed by
   resource now, but the lesson is the one to carry into any aggregate you add.
-- **A VISIBLY INERT THING IS THE HONEST FAILURE MODE.** Items carry an `unmodelled`
-  list with the source's exact wording and the Gear panel prints every one under
-  "Equipped but not simulated". Never guess a value to make a panel look complete.
+- **AN INERT THING THAT SAYS SO IS THE HONEST FAILURE MODE.** Items, talents and
+  raid buffs each carry an `unmodelled` entry with the source's exact wording.
+  **The panels no longer print them** -- all four lists were removed on the
+  owner's instruction. Keep writing the entries: `class_audit.ts` is the reader.
+  Never guess a value to make a panel look complete.
 
 ---
 
@@ -163,10 +165,12 @@ Not instructions — candidates, with what is known about each.
   → gear → raid buffs → results → combat log, all stacked. It works; whether it is
   the right shape for a tool people scroll repeatedly is open.
 - **The 23 presets as a flat list of buttons.** No grouping by class, no search.
-- **`PLACEHOLDER_` constants are not surfaced anywhere in the UI.** Ten remain, each
-  an invented number, and CLAUDE.md's rule is that a person must be able to see one.
-  The Encounter panel prints the caveat for the boss ones; the other seven are
-  invisible to a reader.
+- ~~**`PLACEHOLDER_` constants are not surfaced anywhere in the UI.**~~ **SETTLED,
+  AND THE OPPOSITE WAY.** The owner's instruction was that none of this reporting
+  belongs on screen, so the Encounter panel's caveat went the way of the talent,
+  gear and raid-buff lists. CLAUDE.md's placeholder rule is down to two conditions
+  and its third is written up as removed. Ten placeholders remain; their audience
+  is a reader of the code.
 - **Faction has no field.** It is derived from race, and the milestone asks for it
   as a default — so either say derivation is the answer or store it and bump the
   profile version to v11.

@@ -60,8 +60,8 @@ import { BERSERKER_RAGE_ACTIVATION_BONUS } from '../abilities/warrior';
  * encounter setting, not a modelling gap, so it is not a reason to file
  * anything as unmodelled.
  *
- * The Gear panel's "Equipped but not simulated" does the same job for items,
- * and the Talent panel prints these the same way.
+ * Items carry the same kind of reason, in their own `unmodelled` lists. Neither
+ * is printed in the app now -- `tools/class_audit.ts` is the reader.
  *
  * Edge cases, interpretations and the talents that are deliberately only PARTLY
  * modelled are all written up in `docs/talent-effects.md`. Read that before

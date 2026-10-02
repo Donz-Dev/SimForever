@@ -20,9 +20,14 @@ interface EncounterPanelProps {
  * Whether the target hits BACK is editable, and off by default. Turning it on
  * is what brings the attacks-received table, rage from damage taken, Revenge
  * and six Warrior talents to life -- and what makes every resulting number
- * depend on two borrowed Classic placeholders. CLAUDE.md requires a reader to
- * be able to SEE a placeholder, so each of the two fields says so in its hint;
- * that is the whole of the obligation and it is deliberately two words.
+ * depend on two borrowed Classic placeholders.
+ *
+ * IT NO LONGER SAYS SO ON SCREEN, and that is the owner's decision rather than
+ * an oversight. The third condition of CLAUDE.md's placeholder rule used to
+ * name this panel as its worked example; the rule is rewritten and this is
+ * where it points now. The two values are still `PLACEHOLDER_` constants, still
+ * commented as Classic and unverified, and still editable here -- which is the
+ * part that actually lets someone check them.
  *
  * It also turns on the ramp and the assumed healer, neither of which is
  * editable. Nobody asked to vary them, and a field for every modelling choice
@@ -64,7 +69,7 @@ export function EncounterPanel({ profile, onChange }: EncounterPanelProps) {
         <>
           <NumberField
             label="Swing damage"
-            hint="Classic placeholder · first swing, before armor"
+            hint="first swing, before armor"
             value={profile.encounter.targetSwingDamage}
             min={0}
             step={100}
@@ -72,7 +77,7 @@ export function EncounterPanel({ profile, onChange }: EncounterPanelProps) {
           />
           <NumberField
             label="Swing speed"
-            hint="Classic placeholder · seconds"
+            hint="seconds"
             value={profile.encounter.targetSwingSeconds}
             min={0.1}
             step={0.1}

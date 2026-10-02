@@ -234,8 +234,9 @@ Eight pieces of the Protection set carry it:
 Both halves are expressible NOW that the damage exists -- the charges are
 `chargesOnApply`, and 80% of `blockValue` is a stat the pipeline already reads.
 **What blocks it is the set bonus itself**: counting pieces across a whole set is
-not tracked, which is what the Gear panel's "Equipped but not simulated" line says
-and why every one of those eight items prints the same caveat. It would be worth
+not tracked, which is what each of those eight items' `unmodelled` entry says --
+all eight carry the same caveat, which is why the Gear panel's list printed it
+eight times before that list was removed. It would be worth
 real damage to the tank profile and it is NOT counted in the 238.1 above.
 
 Recorded here because the clause only became interesting when Holy Shield started

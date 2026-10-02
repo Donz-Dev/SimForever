@@ -1321,12 +1321,19 @@ state the interpretation in a comment, and isolate it in one place so it is chea
 to flip — the way `Armor_Reduction`, which is named as a reduction and computes a
 *multiplier*, was settled against the known ~40% figure for a 3731-armor boss.
 
-**When an effect cannot be modelled, keep its own words and surface them.** Items
+**When an effect cannot be modelled, keep its own words and RECORD them.** Items
 carry an `unmodelled` list with the source's exact text and one line on why it
-does nothing, and the Gear panel prints every one under "Equipped but not
-simulated". An effect matching no rule is never guessed at — which is what kept
-Crusader granting nothing until its proc rate arrived, rather than quietly
-inheriting a plausible one. A visibly inert buff is the honest failure mode.
+does nothing. An effect matching no rule is never guessed at — which is what
+kept Crusader granting nothing until its proc rate arrived, rather than quietly
+inheriting a plausible one. An inert effect that SAYS it is inert is the honest
+failure mode.
+
+**IT IS NO LONGER SURFACED IN THE APP, AND THAT IS THE OWNER'S DECISION.** The
+Gear panel printed every entry under "Equipped but not simulated", the Talent
+panel printed two lists, and the Raid buffs and Results panels printed their
+own; the GUI pass removed all four. The data is untouched and `class_audit.ts`
+still derives the whole census from it — what went is one READER. Keep filling
+the `unmodelled` lists exactly as before.
 
 **Resistance on an enemy target has no effect on damage**, by the owner's ruling.
 So a spell lands for full against a raid boss, and `resistancesFromItems` being
@@ -1334,19 +1341,30 @@ computed and never read is CORRECT rather than a gap.
 
 **Borrowing a Classic value is allowed, and only when it stays visible.** Where
 Forever has not supplied a number, prefer a Classic one over leaving a system
-unreachable — on three conditions, all of which must hold.
+unreachable — on two conditions, both of which must hold.
 
 1. It keeps a `PLACEHOLDER_` name, so nothing can read it without seeing that.
-2. A comment says it is Classic and unverified, and what would confirm it.
-3. Where a person can see the result, the app says so — the way the Encounter
-   panel prints the caveat beside the "target attacks back" switch.
+2. A comment says it is Classic and unverified, and what would confirm it, and
+   `docs/` records it where the system it belongs to is written up.
 
-A visibly borrowed number beats an inert system. A *silently* borrowed one is
-worse than either, because it produces a confident figure nobody can audit. If
-any of the three cannot be met, leave it inert. **A placeholder nobody is told
-about is the failure mode the rule exists to prevent** — one was written,
-exported and referenced by nothing for as long as pets existed, while its own
-comment claimed it was printed in the app.
+A silently borrowed number produces a confident figure nobody can audit, which
+is the failure mode this rule exists to prevent — one was written, exported and
+referenced by nothing for as long as pets existed, while its own comment claimed
+it was printed in the app.
+
+**THERE WAS A THIRD CONDITION AND THE OWNER REMOVED IT.** It read "where a
+person can see the result, the app says so", and the Encounter panel's caveat
+beside the "target attacks back" switch was its worked example. The GUI pass
+took every such caveat off the interface — the talent gap list, the gear and
+raid-buff caveats, and finally that one — on the instruction that this
+reporting is for the repository and not for someone running a sim. **So the
+audience for a placeholder is a READER OF THIS CODE, not a user of the app.**
+Condition 1 and the audit tools are what carry it now:
+`tools/class_audit.ts` derives the census from the `unmodelled` entries and
+throws if its four buckets do not account for every talent.
+
+Nothing about conditions 1 and 2 relaxed, and the rule they serve did not
+change: **never invent a number, and never let a borrowed one look sourced.**
 
 ## Generated and scraped data
 

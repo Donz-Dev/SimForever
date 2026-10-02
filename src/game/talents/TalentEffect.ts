@@ -725,12 +725,18 @@ export type TalentEffect =
    *
    * NOT a gap in this list waiting to be filled in — a first-class outcome, and
    * the most important variant here. Items already work this way: each carries
-   * the source's exact wording plus one line on why it does nothing, and the
-   * Gear panel prints every one under "Equipped but not simulated". That is
+   * the source's exact wording plus one line on why it does nothing. That is
    * what kept Crusader granting nothing until its real proc rate arrived,
    * rather than quietly inheriting a plausible one.
    *
-   * A talent listed here is visibly inert. A talent given a guessed effect
+   * NOTHING PRINTS THESE IN THE APP ANY MORE. The Talent panel's two lists and
+   * the Gear panel's "Equipped but not simulated" were removed in the GUI pass,
+   * on the owner's instruction that the reporting is for this repository rather
+   * than for someone running a sim. KEEP WRITING THEM: `class_audit.ts` derives
+   * the entire census from this field and throws if its four buckets do not
+   * account for every talent.
+   *
+   * A talent listed here is RECORDED as inert. A talent given a guessed effect
    * would be invisibly wrong, and this project would rather be the first.
    */
   /**
