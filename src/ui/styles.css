@@ -724,10 +724,6 @@ button:disabled {
   position: relative;
 }
 
-.end-reason {
-  margin-bottom: 0;
-}
-
 /* --- combat log --- */
 
 .combat-log {
@@ -805,10 +801,6 @@ button:disabled {
 .talent-toggle {
   min-width: 28px;
   line-height: 1;
-}
-
-.talent-warning {
-  margin: 0 0 12px;
 }
 
 .talent-trees {
@@ -1133,12 +1125,6 @@ button:disabled {
   .uptime-count {
     display: none;
   }
-}
-
-/* The one-line summary of what the chosen stance does, under its buttons. */
-.stance-note {
-  margin: -6px 0 4px;
-  font-size: 12px;
 }
 
 /* --- raid buffs --- */

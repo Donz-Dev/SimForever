@@ -206,15 +206,10 @@ export function GearPanel({ profile, onChange }: GearPanelProps) {
       {missing.length > 0 ? (
         <>
           <h3>Equipped but not simulated</h3>
-          <p className="muted warn">
-            These are on the character and do nothing. The results are lower than the real
-            game by whatever they are worth.
-          </p>
           <ul className="issues">
             {missing.map((effect, index) => (
               <li key={`${effect.itemName}-${index}`}>
                 <strong>{effect.itemName}</strong> — {effect.text}
-                <span className="muted"> {effect.reason}</span>
               </li>
             ))}
           </ul>
@@ -251,10 +246,6 @@ function PoisonRow({
   return (
     <div className="gear-poisons">
       <h3>Poisons</h3>
-      <p className="muted">
-        Each strike with a weapon has a chance to apply the poison coating it. Charges are
-        not modelled, so they never run out.
-      </p>
       <div className="gear-grid">
         {(['mainHand', 'offHand'] as const).map((hand) => (
           <div className="gear-slot" key={hand}>

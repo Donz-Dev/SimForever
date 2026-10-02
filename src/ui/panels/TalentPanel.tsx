@@ -2,7 +2,7 @@ import type { ClassId, CombatStyleId } from '../../game/character';
 import { MAX_CHARACTER_LEVEL } from '../../game/character';
 import type { ClassTalents, Talent, TalentAllocation, TalentTree } from '../../game/talents/Talent';
 import { TOTAL_TALENT_POINTS } from '../../game/talents/Talent';
-import type { OutOfScope, UnmodelledTalent } from '../../game/talents/TalentEffect';
+import type { UnmodelledTalent } from '../../game/talents/TalentEffect';
 import { talentBuild, talentContextFor } from '../../game/talents/talentBuild';
 import { weaponsFor } from '../../game/actors/createPlayer';
 import type { Equipment } from '../../game/items/Item';
@@ -19,42 +19,31 @@ import {
 } from '../../game/talents/talentRules';
 
 /**
- * What each ruling means, in a sentence a player reads.
+ * One row per talent, not one per unmodelled CLAUSE.
  *
  * ----------------------------------------------------------------------------
- * `Record<OutOfScope, string>` IS THE POINT, NOT A TYPE ANNOTATION. The caption
- * below used to enumerate the rulings by hand -- "no positions, no crowd control,
- * no threat and no healing throughput" -- and it had already gone stale: STEALTH
- * had been a ruling for a while and the sentence did not mention it, so a Rogue
- * reading the panel was told its stealth talents were out of scope for reasons
- * that did not include the one that applied.
+ * A talent can carry several `unmodelled` entries -- Weaponmaster has three,
+ * one for each weapon clause it cannot express. They share a `talentId`, and
+ * they used to be told apart on screen only by the per-entry REASON, which this
+ * panel no longer prints. Without that, the three rendered as the same sentence
+ * three times over, with no visible cause.
  *
- * That is the same decay `rotationIds.test.ts` had when it listed the lists to
- * check and ended up checking four of twenty-six. A hand-written enumeration of a
- * union is a copy of the union, and the copy is what drifts. An exhaustive
- * `Record` makes adding a member to `OutOfScope` without a label a COMPILE ERROR,
- * which is the only version of this that cannot rot.
+ * It was also a duplicate React key the whole time -- `key={entry.talentId}` on
+ * three siblings -- which React logs and which it is allowed to resolve by
+ * dropping rows. The reason text hid both problems rather than preventing them.
+ *
+ * Deduplicating HERE and not in `talentBuild` is deliberate: the clauses are
+ * genuinely separate to `class_audit.ts`, which counts them, and collapsing them
+ * at the source would change the census. This is a presentation choice.
  * ----------------------------------------------------------------------------
  */
-export const SCOPE_LABELS: Record<OutOfScope, string> = {
-  positioning: 'no positions or movement',
-  crowdControl: 'no crowd control',
-  threat: 'no threat',
-  healing: 'no healing throughput',
-  stealth: 'no stealth and no openers',
-  castPushback: 'no cast pushback',
-  totemEntities: 'no totems as entities',
-};
-
-/** The rulings that actually apply to THIS build, in the union's own order. */
-export function rulingsInPlay(entries: readonly UnmodelledTalent[]): string {
-  const present = (Object.keys(SCOPE_LABELS) as OutOfScope[]).filter((scope) =>
-    entries.some((entry) => entry.scope === scope),
-  );
-  if (present.length === 0) return '';
-  const labels = present.map((scope) => SCOPE_LABELS[scope]);
-  if (labels.length === 1) return labels[0];
-  return `${labels.slice(0, -1).join(', ')} and ${labels[labels.length - 1]}`;
+function oncePerTalent(entries: readonly UnmodelledTalent[]): UnmodelledTalent[] {
+  const seen = new Set<string>();
+  return entries.filter((entry) => {
+    if (seen.has(entry.talentId)) return false;
+    seen.add(entry.talentId);
+    return true;
+  });
 }
 
 /** Talent icons come from the shared WoW icon CDN, as the source calculator's do. */
@@ -92,9 +81,10 @@ interface TalentPanelProps {
  *
  * SOME OF THIS AFFECTS A SIMULATION AND SOME DOES NOT. A talent that grants an
  * ability, changes a stat, raises a resource cap or alters an ability's cost or
- * cooldown is real; anything with a gap is listed below it with the reason.
- * Said on screen, per talent, rather than left for someone to discover by
- * running two builds and comparing.
+ * cooldown is real; anything with a gap is NAMED in one of the two lists below.
+ * The per-talent REASON used to print beside each name and no longer does -- it
+ * was written for this repository, not for a reader, and the owner cut it. The
+ * reasons still exist on the effects and `class_audit.ts` still prints them.
  *
  * THE LIST IS NOT ONLY DEAD TALENTS, which is why it no longer says they "do
  * nothing". A talent can be mostly modelled and carry one caveat -- Blood
@@ -118,9 +108,9 @@ export function TalentPanel({
   if (!talents) return null;
 
   const remaining = pointsRemaining(allocation);
-  // Which of the spent talents are doing nothing, and why. The Gear panel
-  // prints the same list for items under "Equipped but not simulated"; a talent
-  // that silently did nothing would look exactly like one that worked.
+  // Which of the spent talents are doing nothing. The Gear panel prints the
+  // same list for items under "Equipped but not simulated"; a talent that
+  // silently did nothing would look exactly like one that worked.
   /*
    * BUILT AGAINST THE GEAR, which it was not before.
    *
@@ -150,8 +140,8 @@ export function TalentPanel({
    * Split by PERMANENCE. A `scope` means the owner ruled the effect out, so it
    * is a decision rather than work outstanding -- see `OutOfScope`.
    */
-  const gaps = unmodelled.filter((entry) => entry.scope === undefined);
-  const ruled = unmodelled.filter((entry) => entry.scope !== undefined);
+  const gaps = oncePerTalent(unmodelled.filter((entry) => entry.scope === undefined));
+  const ruled = oncePerTalent(unmodelled.filter((entry) => entry.scope !== undefined));
 
   return (
     <section className="panel talent-panel">
@@ -180,11 +170,7 @@ export function TalentPanel({
         <div className="panel-body talent-body">
           {gaps.length > 0 ? (
             <>
-              <p className="muted warn talent-warning">
-                Chosen but not fully simulated. Each of these does less than it says —
-                several of them nothing at all — so the results are lower than the real
-                game by whatever the gap is worth.
-              </p>
+              <h3>Chosen but not fully simulated</h3>
               <ul className="issues">
                 {gaps.map((entry: UnmodelledTalent) => (
                   <li key={entry.talentId}>
@@ -192,7 +178,6 @@ export function TalentPanel({
                       {entry.name} ({entry.rank}/{talents.byId.get(entry.talentId)?.ranks ?? entry.rank})
                     </strong>{' '}
                     — {entry.text}
-                    <span className="muted"> {entry.reason}</span>
                   </li>
                 ))}
               </ul>
@@ -202,20 +187,12 @@ export function TalentPanel({
            * A RULING IS NOT A GAP, and showing the two in one list told someone
            * their build was missing features when the simulator had simply been
            * told not to model them. They do not expire and no amount of work will
-           * clear them.
-           *
-           * THE SENTENCE NAMES ONLY THE RULINGS THIS BUILD ACTUALLY HITS, derived
-           * from the entries rather than written out, because the written-out
-           * version was both incomplete and wrong for every build it over-claimed
-           * against. See `SCOPE_LABELS`.
+           * clear them. The two headings are the whole of that distinction now --
+           * the explanatory captions were cut on the owner's instruction.
            */}
           {ruled.length > 0 ? (
             <>
-              <p className="muted talent-warning">
-                Out of scope by ruling — not missing work. This simulator models{' '}
-                {rulingsInPlay(ruled)}, so these talents cannot do anything here and
-                never will.
-              </p>
+              <h3>Out of scope by ruling</h3>
               <ul className="issues">
                 {ruled.map((entry: UnmodelledTalent) => (
                   <li key={entry.talentId}>
@@ -223,7 +200,6 @@ export function TalentPanel({
                       {entry.name} ({entry.rank}/{talents.byId.get(entry.talentId)?.ranks ?? entry.rank})
                     </strong>{' '}
                     — {entry.text}
-                    <span className="muted"> {entry.reason}</span>
                   </li>
                 ))}
               </ul>

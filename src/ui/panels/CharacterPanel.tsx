@@ -258,22 +258,19 @@ export function CharacterPanel({
       />
 
       {isWarrior ? (
-        <>
-          <OptionGroup
-            label="Stance"
-            options={STANCES}
-            value={stance}
-            onChange={(next) =>
-              onChange(
-                withTankEncounter(profile, {
-                  ...profile,
-                  character: { ...profile.character, stance: next },
-                }),
-              )
-            }
-          />
-          <p className="muted stance-note">{getStance(stance)?.effect}</p>
-        </>
+        <OptionGroup
+          label="Stance"
+          options={STANCES}
+          value={stance}
+          onChange={(next) =>
+            onChange(
+              withTankEncounter(profile, {
+                ...profile,
+                character: { ...profile.character, stance: next },
+              }),
+            )
+          }
+        />
       ) : null}
 
       {abilityCount === 0 ? (
