@@ -307,9 +307,23 @@ describe('the two fights', () => {
   });
 
   it('taps its own life for mana, which is free for a profile nothing attacks', () => {
+    /*
+     * ------------------------------------------------------------------------
+     * IT TAPS LESS THAN IT USED TO, AND THE RAID IS WHY. This asserted more than
+     * three taps a fight and the figure fell to about 2.6 when the preset raid
+     * buffs gained **Blessing of Wisdom and Mana Spring Totem** -- 40 mana per 5
+     * seconds and 10 per 2. A Warlock given mana by the raid spends less of its
+     * own health buying it, which is the mechanic working rather than failing.
+     *
+     * SO THE THRESHOLD IS LOOSENED AND THE SUBJECT IS KEPT. What matters is that
+     * the tap FIRES at all -- it is the only thing standing between this profile
+     * and running dry -- not how many times, which is a function of whoever
+     * turned up to the raid.
+     * ------------------------------------------------------------------------
+     */
     const batch = batchOf('warlock_smds', 30, 5);
     expect(batch.abilities.find((a) => a.abilityName === 'Life Tap')?.uses ?? 0)
-      .toBeGreaterThan(3);
+      .toBeGreaterThan(1);
   });
 });
 

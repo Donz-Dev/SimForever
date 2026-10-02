@@ -6,6 +6,7 @@ import { createPlayer } from '../../src/game/actors/createPlayer';
 import { weaponsForEquipment, statsForStyle } from '../../src/game/items/equipment';
 import { characterAtCombatStart } from '../../src/simulator';
 import { PRESETS_BY_ID } from '../../src/profiles/presets';
+import { ASPECT_OF_THE_HAWK } from '../../src/game/auras/hunter';
 
 /*
  * ------------------------------------------------------------------------------
@@ -138,17 +139,23 @@ describe('what the fix switched back on', () => {
   it('lets Aspect of the Hawk reach the bow', () => {
     /*
      * ------------------------------------------------------------------------
-     * THE FIGURE MOVED UP, NOT DOWN, and the prediction on file said otherwise.
+     * THE POINT OF THE FIX: three sources of ranged attack power -- the Aspect,
+     * agility's 2-per-point, and the Trueshot Aura raid buff -- were being paid
+     * for and reaching nothing.
      *
-     * At the pull a geared Hunter has MORE melee attack power than ranged --
-     * 1160 against 1092 -- so reading the correct pool looked like a nerf. But
-     * the rotation opens with Aspect of the Hawk, +120 ranged attack power and
-     * nothing to melee, which puts the ranged pool ahead once the fight is
-     * actually running.
+     * THIS USED TO ASSERT A CROSSOVER AND THE CROSSOVER IS GONE. The original
+     * reading was that a geared Hunter has MORE melee attack power than ranged
+     * at the pull -- 1160 against 1092 -- so reading the correct pool looked
+     * like a nerf until the Aspect's +120 put ranged ahead. **The raid buff
+     * defaults changed and the ordering flipped**: Grace of Air Totem gives this
+     * profile 89 agility, which is 2 ranged attack power a point against 1
+     * melee, and Trueshot Aura adds 50 more. Ranged now LEADS at the pull,
+     * 1372.3 against 1292.1, before the Aspect is cast at all.
      *
-     * That is the point of the whole fix: three sources of ranged attack power
-     * -- the Aspect, agility's 2-per-point, the Trueshot Aura raid buff -- were
-     * being paid for and reaching nothing.
+     * SO THE CROSSOVER WAS NEVER THE SUBJECT, and pinning it was pinning
+     * something that happened to be true. What the fix is actually about is that
+     * the Aspect reaches the RANGED pool and not the melee one, which is the
+     * same claim at any raid composition.
      * ------------------------------------------------------------------------
      */
     const profile = PRESETS_BY_ID.get('lw_ranged')!.build();
@@ -156,10 +163,26 @@ describe('what the fix switched back on', () => {
 
     expect(atPull.auras.has('aspect_of_the_hawk')).toBe(false);
     const rangedAtPull = atPull.stats.get('rangedAttackPower');
-    expect(atPull.stats.get('attackPower')).toBeGreaterThan(rangedAtPull);
+    const meleeAtPull = atPull.stats.get('attackPower');
 
-    // The aspect is worth 120, which is what takes the ranged pool past melee.
-    expect(rangedAtPull + 120).toBeGreaterThan(atPull.stats.get('attackPower'));
+    // Both pools are real and neither is zero -- the state before the fix was
+    // that the ranged one was computed and never read.
+    expect(rangedAtPull).toBeGreaterThan(0);
+    expect(meleeAtPull).toBeGreaterThan(0);
+
+    /*
+     * THE ASPECT IS WORTH 120 TO RANGED AND NOTHING TO MELEE, which is the
+     * invariant. Asserted by applying it rather than by arithmetic on a
+     * threshold, so no raid composition can make it stop being a test.
+     */
+    const withAspect = characterAtCombatStart(profile)!;
+    withAspect.auras.apply(
+      { clock: { now: () => 0 }, telemetry: { emit: () => {} } } as never,
+      ASPECT_OF_THE_HAWK,
+      withAspect.id,
+    );
+    expect(withAspect.stats.get('rangedAttackPower') - rangedAtPull).toBe(120);
+    expect(withAspect.stats.get('attackPower')).toBe(meleeAtPull);
   });
 });
 
