@@ -104,16 +104,46 @@ const PRESET_RAID_BUFFS: readonly string[] = [
   'battle_shout',
   'thunder_clap',
   'sunder_armor',
+  'arcane_intellect',
   'power_word_fortitude',
   'divine_spirit',
+  'curse_of_the_elements',
+  'blessing_of_wisdom',
   'blessing_of_kings',
   'blessing_of_might',
   'faerie_fire',
   'mark_of_the_wild',
   'strength_of_earth_totem',
+  'mana_spring_totem',
   'windfury_totem',
+  'trueshot_aura',
   'leader_of_the_pack',
 ];
+
+/**
+ * The same raid, for the two profiles whose main hand never swings.
+ *
+ * ----------------------------------------------------------------------------
+ * GRACE OF AIR INSTEAD OF WINDFURY, on the ruleset owner's instruction, and for
+ * the two RANGED Hunters only. Windfury Totem is "20% chance on each MAIN-HAND
+ * use", which a Hunter shooting a bow never has -- so for those two it is a
+ * checked box worth exactly nothing, and 89 agility is worth something.
+ *
+ * LW MELEE IS NOT ONE OF THEM, deliberately: it swings a main hand, so Windfury
+ * is real for it. The split is by what the profile DOES rather than by class,
+ * which is why it is two of the three Hunters and not all three.
+ *
+ * DERIVED BY SUBSTITUTION rather than written out, so a buff added above reaches
+ * these two as well -- a second hand-kept copy is exactly how they would quietly
+ * stop receiving something every other profile got. The substitution keeps
+ * Windfury's POSITION rather than re-sorting into catalogue order, which costs a
+ * one-line diff against a hand-edited profile and buys the guarantee that the
+ * two lists cannot drift apart.
+ * ----------------------------------------------------------------------------
+ */
+const RANGED_HUNTER_RAID_BUFFS: readonly string[] = PRESET_RAID_BUFFS.map((id) =>
+  id === 'windfury_totem' ? 'grace_of_air_totem' : id,
+);
 
 /**
  * The same raid, for the one character that brings the other half of it.
@@ -1171,7 +1201,9 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = [
         petFamily: 'cat',
       },
       talents: { ...HUNTER_BEAST_MASTERY_TALENTS },
-      raidBuffs: [...PRESET_RAID_BUFFS],
+      // Grace of Air rather than Windfury: a bow has no main-hand use.
+      // See `RANGED_HUNTER_RAID_BUFFS`.
+      raidBuffs: [...RANGED_HUNTER_RAID_BUFFS],
       equipment: { ...HUNTER_ARMOUR, ...HUNTER_STAT_STICK },
       encounter: { ...createDefaultProfile().encounter, targetAttacks: false },
     }),
@@ -1191,7 +1223,9 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = [
         stance: 'battle',
       },
       talents: { ...HUNTER_LONE_WOLF_RANGED_TALENTS },
-      raidBuffs: [...PRESET_RAID_BUFFS],
+      // Grace of Air rather than Windfury: a bow has no main-hand use.
+      // See `RANGED_HUNTER_RAID_BUFFS`.
+      raidBuffs: [...RANGED_HUNTER_RAID_BUFFS],
       equipment: { ...HUNTER_ARMOUR, ...HUNTER_STAT_STICK },
       encounter: { ...createDefaultProfile().encounter, targetAttacks: false },
     }),

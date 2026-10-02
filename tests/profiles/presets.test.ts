@@ -129,7 +129,7 @@ describe('the preset catalogue', () => {
      * the raid is part of what it states.
      */
     /*
-     * TWO EXCEPTIONS, AND IN BOTH CASES THE CHARACTER PROVIDES THE BUFF ITSELF.
+     * TWO PROFILES PROVIDE A BUFF THEMSELVES AND SO DROP IT.
      *
      * An Enhancement shaman imbues its own main hand, and Windfury Weapon's
      * tooltip says it "disables any benefit you personally receive from
@@ -140,14 +140,29 @@ describe('the preset catalogue', () => {
      * cannot also be running Leader of the Pack. Its crit is +3% either way,
      * which is why dropping the buff moved no figure.
      *
-     * Every other difference here would be a bug; these two are the ruleset.
+     * AND TWO SWAP A BUFF RATHER THAN DROPPING ONE, which is a different shape
+     * and is why this test can no longer be a single filter. On the ruleset
+     * owner's instruction the two RANGED Hunters take Grace of Air Totem where
+     * everyone else takes Windfury: "20% chance on each MAIN-HAND use" is worth
+     * nothing to a profile that only shoots. LW MELEE IS NOT ONE OF THEM -- it
+     * swings a main hand, so Windfury is real for it, and the split is by what
+     * the profile DOES rather than by class.
+     *
+     * Every other difference here would be a bug; these four are the ruleset.
      */
     const SELF_PROVIDED: Readonly<Record<string, readonly string[]>> = {
       shaman_enhancement: ['windfury_totem'],
       druid_moonkin: ['leader_of_the_pack'],
     };
-    const expected = (id: string, buffs: readonly string[]) =>
-      buffs.filter((buff) => !(SELF_PROVIDED[id] ?? []).includes(buff));
+    const SWAPPED: Readonly<Record<string, readonly [string, string]>> = {
+      bm_hunter: ['windfury_totem', 'grace_of_air_totem'],
+      lw_ranged: ['windfury_totem', 'grace_of_air_totem'],
+    };
+    const expected = (id: string, buffs: readonly string[]) => {
+      const swap = SWAPPED[id];
+      const swapped = swap ? buffs.map((b) => (b === swap[0] ? swap[1] : b)) : buffs;
+      return swapped.filter((buff) => !(SELF_PROVIDED[id] ?? []).includes(buff));
+    };
 
     const [first, ...rest] = PROFILE_PRESETS.map((preset) => [
       preset.id,
@@ -157,32 +172,55 @@ describe('the preset catalogue', () => {
     for (const [id, buffs] of rest) expect(buffs, id).toEqual(expected(id, first[1]));
     expect(expected('shaman_enhancement', first[1])).toHaveLength(first[1].length - 1);
     expect(expected('druid_moonkin', first[1])).toHaveLength(first[1].length - 1);
-    // And the exception list is EXHAUSTIVE: nobody else may differ.
+    // And both exception lists are EXHAUSTIVE: nobody else may differ.
     expect(Object.keys(SELF_PROVIDED).sort()).toEqual(['druid_moonkin', 'shaman_enhancement']);
+    expect(Object.keys(SWAPPED).sort()).toEqual(['bm_hunter', 'lw_ranged']);
+    // A swap keeps the COUNT, which is what tells it from a drop.
+    expect(PRESETS_BY_ID.get('bm_hunter')!.build().raidBuffs).toHaveLength(first[1].length);
+    expect(PRESETS_BY_ID.get('bm_hunter')!.build().raidBuffs).toContain('grace_of_air_totem');
+    expect(PRESETS_BY_ID.get('bm_hunter')!.build().raidBuffs).not.toContain('windfury_totem');
+    // And the melee Hunter keeps Windfury, because it has a main hand.
+    expect(PRESETS_BY_ID.get('lw_melee')!.build().raidBuffs).toContain('windfury_totem');
     expect(createDefaultProfile().raidBuffs).toEqual([]);
   });
 
-  it('takes the twelve the ruleset owner ticked, and no others', () => {
+  it('takes the seventeen the ruleset owner ticked, and no others', () => {
     /*
-     * Written out by hand from the owner's own screen. What is ABSENT is
-     * absent on purpose: no Arcane Intellect, Blessing of Wisdom or Mana
-     * Spring Totem, because a warrior has no mana; no Trueshot Aura, whose
-     * ranged attack power reaches a bow that never swings; no Grace of Air
-     * Totem; no Moonkin Form, which cannot sit beside Leader of the Pack; and
-     * neither curse.
+     * ------------------------------------------------------------------------
+     * Written out by hand from the owner's own screen, in catalogue order.
+     *
+     * IT WAS TWELVE AND THE FIVE THAT JOINED ARE WORTH NOTHING TO THIS PROFILE,
+     * which is the point of the change rather than an oversight in it. Arcane
+     * Intellect, Blessing of Wisdom and Mana Spring Totem give a warrior with no
+     * mana bar exactly nothing; Trueshot Aura's ranged attack power reaches a bow
+     * that never swings; Curse of the Elements raises magic damage and this
+     * profile deals none. **The list is one RAID, not one character's needs** --
+     * the other twenty-two include six casters and three Hunters, and a shared
+     * default that only served the warrior would understate every one of them.
+     *
+     * WHAT IS STILL ABSENT IS ABSENT ON PURPOSE: Grace of Air Totem, which only
+     * the two ranged Hunters take and which they take INSTEAD of Windfury;
+     * Moonkin Form, which cannot sit beside Leader of the Pack; and Curse of
+     * Recklessness, which the owner left unticked beside the curse they did pick.
+     * ------------------------------------------------------------------------
      */
     expect(PRESETS_BY_ID.get('dw_fury')!.build().raidBuffs).toEqual([
       'battle_shout',
       'thunder_clap',
       'sunder_armor',
+      'arcane_intellect',
       'power_word_fortitude',
       'divine_spirit',
+      'curse_of_the_elements',
+      'blessing_of_wisdom',
       'blessing_of_kings',
       'blessing_of_might',
       'faerie_fire',
       'mark_of_the_wild',
       'strength_of_earth_totem',
+      'mana_spring_totem',
       'windfury_totem',
+      'trueshot_aura',
       'leader_of_the_pack',
     ]);
   });

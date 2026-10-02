@@ -30,6 +30,41 @@ and what gives each figure the interval a REAL/noise verdict needs. Most profile
 land inside the old interval and a few do not — 2H Arms read 596.6 under the old
 method and 607.2 under this one on identical code. Do not read those as changes.
 
+**THE PRESET RAID BUFFS WENT FROM TWELVE TO SEVENTEEN, ON THE OWNER'S OWN SCREEN,
+AND IT MOVED EIGHTEEN PROFILES.** Added: **Arcane Intellect, Blessing of Wisdom,
+Mana Spring Totem, Trueshot Aura and Curse of the Elements.** Still absent on
+purpose: Grace of Air Totem except where it replaces Windfury, Moonkin Form, which
+cannot sit beside Leader of the Pack, and Curse of Recklessness.
+
+**AND THE TWO RANGED HUNTERS SWAP WINDFURY FOR GRACE OF AIR**, also the owner's
+instruction. Windfury Totem is "20% chance on each MAIN-HAND use", which a Hunter
+shooting a bow never has -- a ticked box worth exactly nothing. **LW Melee keeps
+Windfury**, because it swings a main hand: the split is by what the profile DOES
+rather than by class.
+
+**FIVE PROFILES DID NOT MOVE BY A DECIMAL, AND THEY ARE EXACTLY THE RIGHT FIVE.**
+2H Arms, DW Fury, Prot Warr, Cat and Bear -- every profile that deals pure physical
+damage, carries no mana bar and never fires a ranged weapon. All five new buffs are
+intellect, mana, ranged attack power or magic damage taken, so a containment check
+could not have come back cleaner if it had been designed.
+
+| | |
+| --- | --- |
+| **Fire +103.1, LW Ranged +101.5, Frostfire +99.8** | the three largest. LW Ranged is the Windfury swap on top of Trueshot and the curse |
+| Seal Twist Ret +57.2, BM Hunter +56.3, Arcane +54.3, Shockadin +50.0, Enh Shaman +47.8 | |
+| Firelock +39.5, Shadow +39.2, SM/DS +38.1, Ele Shaman +36.4, Moonkin +34.4, Prot Pally +32.0 | |
+| **Venom +8.2, LW Melee +7.0, Rupture +3.8, Combat +3.1** | the small ones, and they are small for a reason worth reading |
+| 2H Arms, DW Fury, Prot Warr, Cat, Bear | **+0.0** |
+
+**THE FOUR SMALL GAINS ARE CURSE OF THE ELEMENTS REACHING DAMAGE NOBODY THINKS OF
+AS MAGIC.** A Rogue's poisons tick NATURE and a Hunter's Immolation Trap burns
+FIRE, so three nominally physical profiles take a share of an 8% magic debuff --
+and the share is in the right order, Venom's poison-heavy build gaining most. That
+is the sort of thing a containment check is for: those four were not expected to
+move at all, and the reason they did is correct rather than a leak.
+
+**THE MEAN IS 498.8**, from 463.5.
+
 **THE ROGUE DEEP DIVE WAS THE LAST IN AND NEEDED A RECONCILIATION RATHER THAN A
 MERGE.** Venom 392.7 to **440.2**, Combat 419.8 to **461.8**, Rupture 377.1 to
 **402.5**. Its census went 14 live gaps to **3**, and nine of the eleven it closed
@@ -229,7 +264,7 @@ while it worked.
 decimal -- which is what a talent change scoped to one build should look like.
 It makes Frostfire the top Mage, above Fire's 401.2 and Arcane's 392.6, and the
 build that existed for the Fire/Frost overlap now has a third reason to. The
-mean across 23 is 463.5, and the three dives that moved it are below. See
+mean across 23 is 498.8, and the three dives that moved it are below. See
 [docs/handoff-apl.md](docs/handoff-apl.md).
 
 **THE WARLOCK DEEP DIVE MOVED FIVE PROFILES AND ONE OF THEM A LONG WAY DOWN.**
@@ -261,18 +296,18 @@ so. Fourteen profiles moved.
 
 | Profile | Class | Talents | DPS | | Profile | Class | Talents | DPS |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| BM Hunter | Hunter | 31/20/0 | 731.8 | | Fire Mage | Mage | 10/39/2 | 449.4 |
-| Cat Druid | Druid | 9/35/7 | 656.1 | | Bear Druid | Druid | 9/42/0 | 444.7 |
-| DW Fury | Warrior | 18/33/0 | 651.2 | | **Venom Rogue** | Rogue | 37/12/2 | **440.2** |
-| 2H Arms | Warrior | 38/13/0 | 603.3 | | Frostfire Mage | Mage | 0/29/22 | 437.8 |
-| Seal Twist Ret | Paladin | 13/0/38 | 528.3 | | **Rupture Rogue** | Rogue | 12/8/31 | **402.5** |
-| Arcane Mage | Mage | 47/4/0 | 492.2 | | Moonkin | Druid | 38/0/13 | 398.0 |
-| Shockadin | Paladin | 23/0/28 | 472.7 | | Ele Shaman | Shaman | 38/13/0 | 375.0 |
-| Firelock | Warlock | 5/11/35 | 468.4 | | SM/DS | Warlock | 40/11/0 | 363.9 |
-| Enh Shaman | Shaman | 19/32/0 | 462.0 | | LW Melee | Hunter | 7/13/31 | 362.7 |
-| **Combat Rogue** | Rogue | 18/33/0 | **461.8** | | LW Ranged | Hunter | 7/39/5 | 311.7 |
-| Shadow Priest | Priest | 16/3/32 | 454.7 | | Prot Pally | Paladin | 8/36/7 | 238.1 |
-| Prot Warr | Warrior | 17/0/34 | 454.6 | |  | | |  |
+| BM Hunter | Hunter | 31/20/0 | 788.1 | | Combat Rogue | Rogue | 18/33/0 | 464.9 |
+| Cat Druid | Druid | 9/35/7 | 656.1 | | Prot Warr | Warrior | 17/0/34 | 454.6 |
+| DW Fury | Warrior | 18/33/0 | 651.2 | | Venom Rogue | Rogue | 37/12/2 | 448.4 |
+| 2H Arms | Warrior | 38/13/0 | 603.3 | | Bear Druid | Druid | 9/42/0 | 444.7 |
+| Seal Twist Ret | Paladin | 13/0/38 | 585.5 | | Moonkin | Druid | 38/0/13 | 432.4 |
+| Fire Mage | Mage | 10/39/2 | 552.5 | | LW Ranged | Hunter | 7/39/5 | 413.2 |
+| Arcane Mage | Mage | 47/4/0 | 546.5 | | Ele Shaman | Shaman | 38/13/0 | 411.4 |
+| Frostfire Mage | Mage | 0/29/22 | 537.6 | | Rupture Rogue | Rogue | 12/8/31 | 406.3 |
+| Shockadin | Paladin | 23/0/28 | 522.7 | | SM/DS | Warlock | 40/11/0 | 402.0 |
+| Enh Shaman | Shaman | 19/32/0 | 509.8 | | LW Melee | Hunter | 7/13/31 | 369.7 |
+| Firelock | Warlock | 5/11/35 | 507.9 | | Prot Pally | Paladin | 8/36/7 | 270.1 |
+| Shadow Priest | Priest | 16/3/32 | 493.9 | |  | | |  |
 
 **WHAT THE OWNER'S LISTS WERE WORTH, against the last figures measured on this
 project's own shells:**
