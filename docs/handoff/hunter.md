@@ -34,13 +34,13 @@ left, six are the encounter or the build, one is a consequence of a ruling, and
 
 | Profile | Talents | DPS | List | Notes |
 | --- | --- | --- | --- | --- |
-| BM Hunter | 31/20/0 | **646.6** | `HUNTER_BEAST_MASTERY` | **the only profile with a pet** |
+| BM Hunter | 31/20/0 | **547.0** | `HUNTER_BEAST_MASTERY` | **the only profile with a pet** |
 | LW Melee | 7/13/31 | **362.7** | `HUNTER_LONE_WOLF_MELEE` | |
 | LW Ranged | 7/39/5 | **311.7** | `HUNTER_LONE_WOLF_RANGED` | |
 
 **BM HUNTER HAS HELD THREE DIFFERENT FIGURES IN TWO DAYS, AND THE SEQUENCE IS
 THE POINT RATHER THAN ANY ONE OF THEM.** 405.8, then 731.8, then 595.1, then
-**646.6** — and
+646.6, then **547.0** — and
 **the first two were both measured against an invented pet base damage**, 50 for
 the life of the project and 150 for a day. 595.1 is the first that was not. (The
 figures below were taken before `#149` raised the preset raid buffs from twelve
@@ -104,7 +104,7 @@ One batch of ten, so read the shape and not the decimals:
 
 | Profile | Top sources |
 | --- | --- |
-| BM Hunter | **Hawk 30.3%**, Ranged Auto 25.1%, **Cat Melee 13.7%**, Aimed Shot 11.9%, Serpent Sting 11.7%, Claw 5.0%, Bite 2.3% |
+| BM Hunter | Ranged Auto 30.0%, **Hawk 17.9%**, Cat Melee 17.2%, Serpent Sting 13.5%, Aimed Shot 13.1%, Claw 5.6%, Bite 2.7% |
 | LW Ranged | Ranged Auto 49.7%, Arcane Shot 19.6%, Aimed Shot 13.0%, Serpent Sting 11.0%, Sniper Shot 6.6% |
 | LW Melee | Main Hand Auto 32.6%, Raptor Strike 28.2%, Strider Kick 19.8%, Mongoose Bite 8.6%, **Immolation Trap 8.1%**, **Lacerating Strikes 2.6%** |
 
@@ -168,13 +168,39 @@ Shot. Both times a plausible comment explained the wrong number.
 > *"...there is a hawk_1 and hawk_2, so that casting one doesn't overwrite the
 > other."*
 
-**+51.4 TO BM HUNTER**, and the hawk becomes the profile's largest single source
-at **30.3%**, above auto-shot:
+**+51.4 TO BM HUNTER**, and the hawk became the profile's largest single source
+at 30.3%:
 
 | | |
 | --- | --- |
 | **+84.0** | the 5% ranged attack power coefficient, measured by zeroing it |
 | **−32.5** | the shape, together: ten hits at two seconds became seven at three, offset by each hawk getting its own clock |
+
+### And a third time, hours later
+
+> *"it's 108 + 5% ranged attack power (RAP) on the initial hit BUT (108 + 5% RAP)
+> / 4 every 2 seconds — instead of (108 + 5% RAP) every 3 seconds."*
+
+**−99.6 TO BM HUNTER**, 646.6 → **547.0**. The cadence returns to two seconds and
+every strike after the dive is a **quarter** of it, so the whole hawk is **3.25
+openers against the previous 7** — 46%, and the profile fell 15.4% with it. The
+hawk drops from the largest single source to **17.9%**, behind auto-shot and
+level with the pet's swings.
+
+**THE OPENER AND THE ASSAULT ARE DIFFERENT NUMBERS NOW**, which is the design
+change rather than the arithmetic one. The previous revision's whole shape was
+"one formula used twice" — the ability and the aura called the same function.
+`hawkTickDamage` is derived from `hawkStrikeDamage` rather than written out,
+because a quarter of a changing number must not become a second transcription of
+it.
+
+**AND THE HIT COUNT IS DERIVED THIS TIME, NOT STATED.** The previous revision
+came with "totalling 7 hits" and this project leaned on it as a cross-check on
+the cadence and duration. This one states no count, so the ten is arithmetic —
+`HAWK_TOTAL_AS_MULTIPLE_OF_OPENER` is the named cross-check instead, and the
+tests assert the total is **not** `opener × 10`, which is the mistake the new
+shape invites. **A cross-check and a source are not the same thing, and the
+comments say which each is.**
 
 **IT CLOSED A CAVEAT RATHER THAN A PLACEHOLDER.** `HAWK_UNMODELLED` said in
 writing that the two hawks "share one 18-second clock: summoning the second

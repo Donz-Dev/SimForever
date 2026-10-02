@@ -21,8 +21,11 @@ import {
   HAWK_RANGED_ATTACK_POWER_COEFFICIENT,
   HAWK_STRIKES,
   HAWK_STRIKE_INTERVAL_MS,
+  HAWK_TICK_DIVISOR,
+  HAWK_TOTAL_AS_MULTIPLE_OF_OPENER,
   activeHawks,
   hawkStrikeDamage,
+  hawkTickDamage,
   EXPLOSIVE_TRAP,
   EXPLOSIVE_TRAP_BURN_DURATION_MS,
   EXPLOSIVE_TRAP_BURN_TOTAL,
@@ -407,16 +410,17 @@ describe('Immolation Trap', () => {
 describe('the hawk: two of them, each on its own clock', () => {
   /*
    * ----------------------------------------------------------------------------
-   * THE RULESET OWNER'S MODEL, 2026-10-02, and the second revision in three days:
+   * THE RULESET OWNER'S MODEL, THIRD REVISION, 2026-10-02:
    *
-   *   "Summon Hawk does 108 physical damage + Hunter's Ranged Attack Power * 0.05
-   *    instantly. And then the same damage again every 3 seconds for 18 seconds.
-   *    Totalling 7 hits."
-   *   "implemented in such a way that there is a hawk_1 and hawk_2, so that
-   *    casting one doesn't overwrite the other."
+   *   "it's 108 + 5% ranged attack power (RAP) on the initial hit BUT
+   *    (108 + 5% RAP) / 4 every 2 seconds -- instead of (108 + 5% RAP) every 3
+   *    seconds."
+   *   "...there is a hawk_1 and hawk_2, so that casting one doesn't overwrite
+   *    the other."
    *
-   * The previous model was 108 flat every TWO seconds from one stacked aura --
-   * ten hits, no scaling, and one shared clock.
+   * THE OPENER AND THE ASSAULT ARE DIFFERENT NUMBERS NOW. The revision before
+   * this had every hit at the full figure every three seconds; the one before
+   * that had 108 flat every two seconds with no scaling at all.
    * ----------------------------------------------------------------------------
    */
   const hawkOwner = () =>
@@ -425,27 +429,33 @@ describe('the hawk: two of them, each on its own clock', () => {
       resources: [{ type: 'mana', maximum: 10_000 }],
     });
 
-  it('states seven hits, which is the check on the other three numbers', () => {
+  it('opens for the full figure and strikes for a quarter of it', () => {
     expect(HAWK_DAMAGE_PER_STRIKE).toBe(108);
     expect(HAWK_RANGED_ATTACK_POWER_COEFFICIENT).toBe(0.05);
-    expect(toSeconds(HAWK_STRIKE_INTERVAL_MS)).toBe(3);
+    expect(toSeconds(HAWK_STRIKE_INTERVAL_MS)).toBe(2);
     expect(toSeconds(HAWK_DURATION_MS)).toBe(18);
+    expect(HAWK_TICK_DIVISOR).toBe(4);
     expect(HAWK_MAX_ACTIVE).toBe(2);
 
-    /*
-     * ONE INSTANT HIT PLUS 18 / 3 TICKS. Asserted rather than derived because
-     * the owner stated it SEPARATELY from the cadence and the duration -- so a
-     * drift in either fails here instead of quietly changing the ability's
-     * total. That is what a redundant number in a spec is for.
-     */
-    expect(HAWK_STRIKES).toBe(7);
-
-    // 108 + 5% of ranged attack power, the same formula both halves use.
+    // 108 + 5% of ranged attack power on the dive...
     expect(hawkStrikeDamage(1000)).toBeCloseTo(108 + 50, 6);
     expect(hawkStrikeDamage(0)).toBe(108);
+    // ...and a quarter of that on every strike after it.
+    expect(hawkTickDamage(1000)).toBeCloseTo((108 + 50) / 4, 6);
+    expect(hawkTickDamage(0)).toBeCloseTo(27, 6);
+
+    /*
+     * TEN HITS, AND THIS ONE IS DERIVED RATHER THAN STATED. The owner gave a
+     * hit count with the PREVIOUS revision ("totalling 7 hits") and gave none
+     * with this one, so 1 + 18 / 2 is arithmetic rather than a source. Asserted
+     * anyway, as the cross-check on the cadence and the duration.
+     */
+    expect(HAWK_STRIKES).toBe(10);
+    // One full hit plus nine quarters.
+    expect(HAWK_TOTAL_AS_MULTIPLE_OF_OPENER).toBeCloseTo(3.25, 10);
   });
 
-  it('lands seven hits from one cast, each the owner\u2019s formula', () => {
+  it('lands ten hits from one cast, totalling 3.25 openers', () => {
     const { simulation, events } = recordingSimulation(
       [hawkOwner(), makeTarget()],
       // Past the last tick at t=18 without reaching a second cast.
@@ -459,7 +469,17 @@ describe('the hawk: two of them, each on its own clock', () => {
 
     const hawk = damageBy(events, actor.id).get('Hawk')!;
     expect(hawk.count).toBe(HAWK_STRIKES);
-    expect(hawk.total).toBeCloseTo(hawkStrikeDamage(1000) * HAWK_STRIKES, 6);
+    /*
+     * NOT `opener x 10`, which is the mistake this asserts against: the dive is
+     * full and the other nine are quarters, so the total is 3.25 openers and
+     * the row's AVERAGE is not any single hit.
+     */
+    expect(hawk.total).toBeCloseTo(
+      hawkStrikeDamage(1000) + hawkTickDamage(1000) * (HAWK_STRIKES - 1),
+      6,
+    );
+    expect(hawk.total).toBeCloseTo(hawkStrikeDamage(1000) * 3.25, 6);
+    expect(hawk.total).not.toBeCloseTo(hawkStrikeDamage(1000) * HAWK_STRIKES, 1);
   });
 
   it('scales every hit with ranged attack power, the instant one included', () => {
@@ -487,8 +507,10 @@ describe('the hawk: two of them, each on its own clock', () => {
       return damageBy(events, actor.id).get('Hawk')!.total;
     });
 
-    expect(totals[0]).toBeCloseTo(108 * HAWK_STRIKES, 6);
-    expect(totals[1]).toBeCloseTo((108 + 50) * HAWK_STRIKES, 6);
+    expect(totals[0]).toBeCloseTo(108 * HAWK_TOTAL_AS_MULTIPLE_OF_OPENER, 6);
+    expect(totals[1]).toBeCloseTo((108 + 50) * HAWK_TOTAL_AS_MULTIPLE_OF_OPENER, 6);
+    // The coefficient is worth 50 on the dive and 12.5 on each of nine strikes.
+    expect(totals[1] - totals[0]).toBeCloseTo(50 * 3.25, 6);
   });
 
   it('gives the second hawk its OWN clock, which is the point of the rewrite', () => {
