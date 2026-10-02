@@ -25,6 +25,17 @@ engine that were about the wrong thing.
 | [priest.md](priest.md) | Shadow | **12** |
 | [warlock.md](warlock.md) | SM/DS, Firelock | **20** |
 
+## And one that is not a class
+
+**[gui.md](gui.md) — the GUI and the miscellaneous tweaks around it.** The nine
+class dives finished the simulation and none of them touched the UI, so it is the
+first pass that part has had. It carries the project recap, how to run the app, the
+two known panel bugs, and what the UI is made of.
+
+**BOTH KNOWN BUGS ARE ENGINE WORK THAT OUTRAN ITS PANEL**, which is the shape to
+expect: `appliedElsewhere` landed in the census and in `class_audit.ts` and never
+reached the Talent panel, so two working Rogue talents are displayed as gaps.
+
 ## LAND THE SHARED ENGINE PIECES FIRST
 
 **The ruleset owner's instruction after the first round of nine, and it is about

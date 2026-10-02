@@ -7,9 +7,81 @@ gets built is [docs/class-implementation.md](docs/class-implementation.md).
 
 All nine classes and all 23 profiles are implemented, every number traced to a
 source rather than invented, and **all 23 priority lists are the ruleset owner's
-own** -- specified entry by entry and measured after. **2,270 tests**, CI green on Node 20 and 22. Profile
+own** -- specified entry by entry and measured after. **2,275 tests**, CI green on Node 20 and 22. Profile
 format **v10**. Live at <https://donz-dev.github.io/SimForever/>, republished by
 `.github/workflows/deploy.yml` on every push to `main` that passes.
+
+### The state in one table
+
+| | |
+| --- | --- |
+| **Talents** | 258 fully, 36 partly, 110 ruled out, **64 a live gap** -- from 132 before the class dives |
+| **Abilities** | 114 declared against 478 captured |
+| **Profiles** | 23, all measured, **mean 488.3** |
+| **Scope rulings** | 7 members, all the owner's |
+| **Placeholders** | **10 declared** -- see the milestone table, and count DECLARATIONS |
+| **Tests** | 2,275 on Node 20 and 22 |
+
+**FOUR CLASSES ARE ESSENTIALLY DONE** -- Warrior 0 live gaps, Paladin 2, Druid 2,
+Rogue 3 -- and the remaining 64 sit mostly in the Warlock (20), Priest (12) and
+Mage (11). **The Warlock's 20 overstates its own work**: thirteen of them are one
+build cause, Demonic Sacrifice killing the demon, so its real queue is about 11.
+
+### How it got here: the nine-class push
+
+**NINE PARALLEL DEEP DIVES, ONE PER CLASS, EACH IN ITS OWN CONTEXT**, briefed from
+[docs/handoff/](docs/handoff/) and merged one at a time with the census re-derived
+after every merge. What each was worth is recorded per class below and in its own
+brief. The headline is that the live-gap count halved and the mean rose about 80
+DPS, and that **almost none of it was new engine capability** -- most of what the
+dives closed were declarations that could have been written at any point, plus
+owner rulings that arrived when asked for.
+
+**AND THE MERGE ORDER COST MORE THAN ANY SINGLE DIVE.** Three capabilities were
+built two and three times by contexts working in parallel, and the bill landed on
+whichever branch merged last: the Rogue came back carrying seven divergent APIs
+and had to be translated rather than merged. That is written up as a rule in
+CLAUDE.md and in full in [docs/handoff/README.md](docs/handoff/README.md) --
+**land the shared engine pieces first**.
+
+### And then the Hunter moved twice more
+
+**THE HUNTER IS THE ONE CLASS THAT KEPT MOVING AFTER ITS DIVE**, and the second
+round was a CORRECTION rather than a gain:
+
+| | |
+| --- | --- |
+| the dive | BM Hunter 405.8 to **731.8**, almost all of it two owner answers -- the pet's base DPS 50 to 150, and the hawk at 108 |
+| the raid buffs | 731.8 to **788.1**, Trueshot Aura and the Grace of Air swap |
+| the pet damage model (#150) and Summon Hawk (#151) | 788.1 down to **646.6** |
+| Summon Hawk again (#153) | 646.6 down to **547.0** |
+
+**SO THE 788 WAS NEVER A REAL FIGURE, AND NEITHER WAS THE 731.8 OR THE 646.6.** A
+placeholder answered generously, measured, published, and then corrected twice as
+the real model arrived -- which is the cycle those named constants exist to make
+possible, and the reason a figure resting on one is published with its placeholder
+named rather than quietly. **Cat Druid is the top profile at 656.1**, and BM Hunter
+has fallen from first to sixth across the two corrections.
+
+**THIS PARAGRAPH WAS STALE WITHIN THE HOUR, WHICH IS THE POINT OF IT.** It was
+written at 646.6 and #153 landed before it merged. **Re-derive every figure in this
+file rather than reading it** -- `tools/class_audit.ts` for the census,
+`tools/measure_profiles.ts` for the baseline, and the mean from the table's own
+rows. A number written by hand into a document is a claim with a date on it, and
+this one is the shortest-lived example the project has.
+
+### Where the GUI stands
+
+**THE APP RUNS AND NOTHING ABOUT IT IS BROKEN**, which is worth saying because
+none of the class work touched it. `npm run dev`, pick a preset, Run Simulation,
+and a full results stack renders: DPS and distribution, a damage table with uses,
+share, crit and avoidance per ability, buff and debuff uptime, a resource timeline
+and a combat log. 2H Arms comes back at 606.6 against a published 603.3, which is
+the batch-versus-profile difference and not a bug.
+
+**WHAT IT HAS NOT HAD IS A PASS OF ITS OWN**, and two things are already known to
+be wrong -- both consequences of engine work landing without the panels following.
+See [docs/handoff/gui.md](docs/handoff/gui.md), which is the brief for that.
 
 The profiles were specified by the ruleset owner as `talentsforever.com` build
 URLs and every one decodes to exactly 51 points. Every profile is in its own
@@ -474,7 +546,7 @@ Measured at `d2718b0`, and the numbers say it is not close:
 | **64 of 468 talents are a live gap** | well down from a raw count of 251 unmodelled reasons, because 95 are permanently out of scope by ruling and 35 more are PARTLY modelled. See the census below, and **re-sum it rather than adjusting it** — the raw total is not a work queue. **The Warrior is at zero**, the first class to get there |
 | **114 abilities declared against 478 captured** | the data is on disk; the declarations are not. Druid 15, Hunter 14, Mage 13, Rogue 12, Warlock 10, Shaman 9, Priest 7, Paladin 6, plus the Warrior's 27. **THE WARRIOR IS RECONCILED**, which is what the exclusion list below actually means: 42 captured against 30 declared counting its three stances, and each of the 12 that are not declared is named — 3 that Forever has and nothing here needs, 9 that are threat or crowd control by ruling. See [docs/warrior.md](docs/warrior.md). It is the only class where the subtraction balances |
 | ~~**Coefficients**~~ | **DONE, AND NOW EVERY ROW IS APPLIED.** `WoWSimWorksheet.xlsx`, the owner's authoritative coefficient document, is transcribed in `src/game/combat/coefficients.ts` and applied across all nine classes. Every derived rule is deleted. The last unapplied row was Hammer of Wrath, which was not a declared ability until the owner put it in two Paladin priority lists; the two poison rows went the same way when the poison system landed. [docs/spell-coefficients.md](docs/spell-coefficients.md) |
-| **13 `PLACEHOLDER_*` constants** | each a real number nobody has supplied. **COUNT THEM, DO NOT ADJUST THEM**: `grep -rhoE "PLACEHOLDER_[A-Z_]+" src/ \| sort -u \| wc -l`. The Warlock dive and the Warrior dive each removed one from 19 and each wrote 18, and git merged that without a conflict — this figure was wrong by one for exactly as long as it took to re-derive it, the Paladin dive removed a third, and the Shaman dive a fourth when Maelstrom Weapon's invented chance became 5 PPM. Sniper Shot's invented 200-mana cost is gone, but it was never one of these: it was a bare literal with a false caveat, which is worse — an invented number that is not named cannot be audited |
+| **10 `PLACEHOLDER_*` constants** | each a real number nobody has supplied. **COUNT THE DECLARATIONS, DO NOT ADJUST THE NUMBER**: `grep -rhoE "(export )?const PLACEHOLDER_[A-Z_]+" src/ \| grep -oE "PLACEHOLDER_[A-Z_]+" \| sort -u \| wc -l`. **THE COMMAND THAT USED TO BE HERE COUNTED MENTIONS AND OVER-COUNTED BY FIVE** -- a deleted placeholder leaves its NAME behind in the comment explaining what it used to be, and Combustion's duration, Maelstrom Weapon's chance, the pet's base DPS, the pet's swing and the old coefficient cast cap are all epitaphs rather than placeholders now. That is why this figure has been wrong three times: the instruction was right and its command was not. Sniper Shot's invented 200-mana cost is gone, but it was never one of these -- it was a bare literal with a false caveat, which is worse, because an invented number that is not named cannot be audited |
 | ~~**Rotations are thin and unmeasured**~~ | **DONE.** All 23 priority lists are the ruleset owner's own, specified entry by entry, and every one is measured — see the baseline above and [docs/handoff-rotations.md](docs/handoff-rotations.md). The twelve dead entries of that round are gone; the nine that remain are listed in [docs/ability-audit.md](docs/ability-audit.md), each with a reason and none of them a broken declaration. Fourteen abilities and three talent mechanics were declared to reach them, and six engine capabilities built |
 
 **The Warrior was built first and built properly, and it is not the norm.** Read
