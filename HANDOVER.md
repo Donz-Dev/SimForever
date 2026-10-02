@@ -107,19 +107,30 @@ stat for Hack and Slash. Nothing in the Warrior's own files changed.
 `armorPenetration.test.ts` asserts BOTH callers on purpose, which is what failed.
 See [docs/handoff/rogue.md](docs/handoff/rogue.md).
 
-**THE HAWK WAS REDEFINED AGAIN AND IT MOVED ONE PROFILE.** BM Hunter **595.1
-to 646.6, +51.4, REAL**, the other twenty-two identical to the decimal. The
-ruleset owner restated the ability on 2026-10-02 -- 108 **plus 5% of ranged
-attack power**, instantly and then every three seconds for eighteen, **seven
-hits**, with **two independent hawks** rather than one aura stacked twice:
+**THE HAWK HAS BEEN REDEFINED THREE TIMES IN THREE DAYS, AND EACH TIME IT MOVED
+ONE PROFILE AND NOTHING ELSE.** The latest: **646.6 to 547.0, -99.6, REAL**, the
+other twenty-two identical to the decimal.
 
-| | |
-| --- | --- |
-| **+84.0** | the 5% ranged attack power coefficient, measured by zeroing it |
-| **-32.5** | the shape, together: ten hits at two seconds became seven at three, offset by each hawk getting its own clock |
+| Revision | What it said | BM Hunter |
+| --- | --- | --- |
+| 2026-09-30 | 108 flat every 2 seconds, one aura stacked twice | 731.8 |
+| 2026-10-02 | 108 + 5% RAP every 3 seconds, 7 hits, two independent hawks | 646.6 |
+| 2026-10-02 | **108 + 5% RAP on the dive, a QUARTER of it every 2 seconds** | **547.0** |
 
-**THE HAWK IS NOW THE LARGEST SINGLE SOURCE IN THE PROFILE AT 30.3%**, above
-auto-shot. **AND IT CLOSED A CAVEAT RATHER THAN A PLACEHOLDER**: the old model
+**THE THIRD IS 3.25 OPENERS AGAINST THE SECOND'S 7**, so the ability more than
+halved and the profile fell 15.4% with it. The hawk goes from the largest single
+source at 30.3% to **17.9%**, behind auto-shot again and level with the pet's
+swings.
+
+**THE SECOND REVISION'S ISOLATIONS, KEPT BECAUSE THEY STILL EXPLAIN THE SHAPE:**
+the 5% ranged attack power coefficient was worth **+84.0** measured by zeroing
+it, and the move from ten hits at two seconds to seven at three was **-32.5**
+including the gain from each hawk getting its own clock.
+
+**WHAT HAS SURVIVED ALL THREE REVISIONS** is the part that was never about the
+numbers: two independent auras with two clocks, the overwrite-the-oldest rule,
+the `summoned_hawks < 2` clause on the list, and the damage crediting
+`summon_hawk` so Unleashed Fury and Ferocity keep reaching it. **AND IT CLOSED A CAVEAT RATHER THAN A PLACEHOLDER**: the old model
 admitted in writing that the two hawks shared one eighteen-second clock, so
 summoning the second reset the first and both expired together. `hawk_1` and
 `hawk_2` are separate auras now.
@@ -306,7 +317,7 @@ while it worked.
 decimal -- which is what a talent change scoped to one build should look like.
 It makes Frostfire the top Mage, above Fire's 401.2 and Arcane's 392.6, and the
 build that existed for the Fire/Frost overlap now has a third reason to. The
-mean across 23 is 492.7, and the dives that moved it are below. See
+mean across 23 is 488.3, and the dives that moved it are below. See
 [docs/handoff-apl.md](docs/handoff-apl.md).
 
 **THE WARLOCK DEEP DIVE MOVED FIVE PROFILES AND ONE OF THEM A LONG WAY DOWN.**
@@ -340,10 +351,10 @@ so. Fourteen profiles moved.
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | Cat Druid | Druid | 9/35/7 | 656.1 | | Combat Rogue | Rogue | 18/33/0 | 464.9 |
 | DW Fury | Warrior | 18/33/0 | 651.2 | | Prot Warr | Warrior | 17/0/34 | 454.6 |
-| **BM Hunter** | Hunter | 31/20/0 | **646.6** | | Venom Rogue | Rogue | 37/12/2 | 448.4 |
-| 2H Arms | Warrior | 38/13/0 | 603.3 | | Bear Druid | Druid | 9/42/0 | 444.7 |
-| Seal Twist Ret | Paladin | 13/0/38 | 585.5 | | Moonkin | Druid | 38/0/13 | 432.4 |
-| Fire Mage | Mage | 10/39/2 | 552.5 | | LW Ranged | Hunter | 7/39/5 | 413.2 |
+| 2H Arms | Warrior | 38/13/0 | 603.3 | | Venom Rogue | Rogue | 37/12/2 | 448.4 |
+| Seal Twist Ret | Paladin | 13/0/38 | 585.5 | | Bear Druid | Druid | 9/42/0 | 444.7 |
+| Fire Mage | Mage | 10/39/2 | 552.5 | | Moonkin | Druid | 38/0/13 | 432.4 |
+| **BM Hunter** | Hunter | 31/20/0 | **547.0** | | LW Ranged | Hunter | 7/39/5 | 413.2 |
 | Arcane Mage | Mage | 47/4/0 | 546.5 | | Ele Shaman | Shaman | 38/13/0 | 411.4 |
 | Frostfire Mage | Mage | 0/29/22 | 537.6 | | Rupture Rogue | Rogue | 12/8/31 | 406.3 |
 | Shockadin | Paladin | 23/0/28 | 522.7 | | SM/DS | Warlock | 40/11/0 | 402.0 |

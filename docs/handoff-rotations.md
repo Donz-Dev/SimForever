@@ -106,7 +106,7 @@ leave behind**, because nothing about a list changes when a figure does.
 | Cat | 656.1 | `DRUID_CAT` | 5 | 3 |
 | DW Fury | 651.2 | `WARRIOR_DUAL_WIELD_BERSERKER` | 10 | 6 |
 | 2H Arms | 603.3 | `WARRIOR_TWO_HAND_BATTLE` | 12 | 8 |
-| BM Hunter | 646.6 | `HUNTER_BEAST_MASTERY` | 7 | 6 |
+| BM Hunter | 547.0 | `HUNTER_BEAST_MASTERY` | 7 | 6 |
 | Seal Twist Ret | 585.5 | `PALADIN_RETRIBUTION` | 7 | 3 |
 | Fire | 552.5 | `MAGE_FIRE` | 5 | 4 |
 | Arcane | 546.5 | `MAGE_ARCANE` | 5 | 4 |
