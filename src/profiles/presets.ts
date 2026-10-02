@@ -18,6 +18,7 @@ import {
   SHAMAN_ENHANCEMENT_GEAR,
   WARLOCK_GEAR,
 } from '../game/items/gearSets';
+import type { ClassId } from '../game/character';
 import type { Equipment } from '../game/items/Item';
 import type { TalentAllocation } from '../game/talents/Talent';
 import type { CharacterProfile } from './CharacterProfile';
@@ -61,6 +62,19 @@ export interface ProfilePreset {
   readonly label: string;
   /** One line under the button: what this character is. */
   readonly detail: string;
+  /**
+   * WHOSE CLASS THIS IS, stated rather than derived.
+   *
+   * The profile rail colours each pill by class, and the alternative was
+   * calling `build()` for all 23 just to read one field off the character it
+   * assembles -- a full profile, gear and talents included, thrown away. It is
+   * also the only part of a preset a reader could not already see at a glance:
+   * `detail` names the race and the weapon, never the class.
+   *
+   * `presetClassMatchesBuild` in the tests asserts this against what `build()`
+   * actually produces, so the two cannot drift.
+   */
+  readonly characterClass: ClassId;
   readonly build: () => CharacterProfile;
 }
 
@@ -782,6 +796,7 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = [
     id: 'two_hand_arms',
     label: '2H Arms',
     detail: 'Orc, two-hander, Battle Stance, standing target',
+    characterClass: 'warrior',
     build: () => ({
       ...createDefaultProfile(),
       character: {
@@ -811,6 +826,7 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = [
     id: 'dw_fury',
     label: 'DW Fury',
     detail: 'Orc, dual-wield, Berserker Stance, standing target',
+    characterClass: 'warrior',
     build: () => ({
       ...createDefaultProfile(),
       character: {
@@ -845,6 +861,7 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = [
     id: 'prot_warr',
     label: 'Prot Warr',
     detail: 'Tauren, shield, Defensive Stance, target swings back',
+    characterClass: 'warrior',
     build: () => ({
       ...createDefaultProfile(),
       character: {
@@ -879,6 +896,7 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = [
     id: 'rogue_venom',
     label: 'Venom',
     detail: 'Undead, dual-wield, standing target. 37 Assassination / 12 Combat',
+    characterClass: 'rogue',
     build: () => ({
       ...createDefaultProfile(),
       character: {
@@ -899,6 +917,7 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = [
     id: 'rogue_combat',
     label: 'Combat',
     detail: 'Orc, dual-wield, standing target. 18 Assassination / 33 Combat',
+    characterClass: 'rogue',
     build: () => ({
       ...createDefaultProfile(),
       character: {
@@ -919,6 +938,7 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = [
     id: 'rogue_rupture',
     label: 'Rupture',
     detail: 'Undead, dual-wield, standing target. 31 Subtlety',
+    characterClass: 'rogue',
     build: () => ({
       ...createDefaultProfile(),
       character: {
@@ -939,6 +959,7 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = [
     id: 'druid_moonkin',
     label: 'Moonkin',
     detail: 'Tauren, Moonkin Form, standing target. 38 Balance / 13 Restoration',
+    characterClass: 'druid',
     build: () => ({
       ...createDefaultProfile(),
       character: {
@@ -967,6 +988,7 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = [
     id: 'druid_cat',
     label: 'Cat',
     detail: 'Tauren, Cat Form, standing target. 35 Feral Combat',
+    characterClass: 'druid',
     build: () => ({
       ...createDefaultProfile(),
       character: {
@@ -987,6 +1009,7 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = [
     id: 'druid_bear',
     label: 'Bear',
     detail: 'Tauren, Bear Form, target swings back. 42 Feral Combat',
+    characterClass: 'druid',
     build: () => ({
       ...createDefaultProfile(),
       character: {
@@ -1013,6 +1036,7 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = [
     id: 'shaman_elemental',
     label: 'Ele Shaman',
     detail: 'Troll, caster, standing target. 38 Elemental / 13 Enhancement',
+    characterClass: 'shaman',
     build: () => ({
       ...createDefaultProfile(),
       character: {
@@ -1033,6 +1057,7 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = [
     id: 'shaman_enhancement',
     label: 'Enh Shaman',
     detail: 'Tauren, two-hander, standing target. 19 Elemental / 32 Enhancement',
+    characterClass: 'shaman',
     build: () => ({
       ...createDefaultProfile(),
       character: {
@@ -1060,6 +1085,7 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = [
     id: 'mage_frostfire',
     label: 'Frostfire',
     detail: 'Gnome, caster, standing target. 29 Fire / 22 Frost',
+    characterClass: 'mage',
     build: () => ({
       ...createDefaultProfile(),
       character: {
@@ -1080,6 +1106,7 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = [
     id: 'mage_arcane',
     label: 'Arcane',
     detail: 'Gnome, caster, standing target. 47 Arcane / 4 Fire',
+    characterClass: 'mage',
     build: () => ({
       ...createDefaultProfile(),
       character: {
@@ -1100,6 +1127,7 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = [
     id: 'mage_fire',
     label: 'Fire',
     detail: 'Gnome, caster, standing target. 39 Fire / 10 Arcane',
+    characterClass: 'mage',
     build: () => ({
       ...createDefaultProfile(),
       character: {
@@ -1120,6 +1148,7 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = [
     id: 'pally_ret',
     label: 'Seal Twist Ret',
     detail: 'Human, two-hander, standing target. 13 Holy / 38 Retribution',
+    characterClass: 'paladin',
     build: () => ({
       ...createDefaultProfile(),
       character: {
@@ -1140,6 +1169,7 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = [
     id: 'pally_shockadin',
     label: 'Shockadin',
     detail: 'Human, 1H and a caster shield, standing target. 23 Holy / 28 Retribution',
+    characterClass: 'paladin',
     build: () => ({
       ...createDefaultProfile(),
       character: {
@@ -1169,6 +1199,7 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = [
     id: 'prot_pally',
     label: 'Prot Pally',
     detail: 'Human, 1H and shield, target swings back. 36 Protection',
+    characterClass: 'paladin',
     build: () => ({
       ...createDefaultProfile(),
       character: {
@@ -1189,6 +1220,7 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = [
     id: 'bm_hunter',
     label: 'BM Hunter',
     detail: 'Orc, bow and a Cat, standing target. 31 Beast Mastery',
+    characterClass: 'hunter',
     build: () => ({
       ...createDefaultProfile(),
       character: {
@@ -1212,6 +1244,7 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = [
     id: 'lw_ranged',
     label: 'LW Ranged',
     detail: 'Orc, bow, no pet, standing target. 39 Marksmanship',
+    characterClass: 'hunter',
     build: () => ({
       ...createDefaultProfile(),
       character: {
@@ -1234,6 +1267,7 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = [
     id: 'lw_melee',
     label: 'LW Melee',
     detail: 'Orc, two-hander, no pet, standing target. 31 Survival',
+    characterClass: 'hunter',
     build: () => ({
       ...createDefaultProfile(),
       character: {
@@ -1254,6 +1288,7 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = [
     id: 'warlock_smds',
     label: 'SM/DS',
     detail: 'Undead, caster, Imp sacrificed, standing target. 40 Affliction',
+    characterClass: 'warlock',
     build: () => ({
       ...createDefaultProfile(),
       character: {
@@ -1276,6 +1311,7 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = [
     id: 'warlock_firelock',
     label: 'Firelock',
     detail: 'Undead, caster, Succubus sacrificed, standing target. 35 Destruction',
+    characterClass: 'warlock',
     build: () => ({
       ...createDefaultProfile(),
       character: {
@@ -1298,6 +1334,7 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = [
     id: 'shadow_priest',
     label: 'Shadow',
     detail: 'Troll, caster, Shadowform, standing target. 32 Shadow',
+    characterClass: 'priest',
     build: () => ({
       ...createDefaultProfile(),
       character: {

@@ -17,6 +17,7 @@ import { EncounterPanel } from './panels/EncounterPanel';
 import { GearPanel } from './panels/GearPanel';
 import { RaidBuffsPanel } from './panels/RaidBuffsPanel';
 import { ResultsPanel } from './panels/ResultsPanel';
+import { ProfileRail } from './panels/ProfileRail';
 import { SimulationPanel } from './panels/SimulationPanel';
 import { TalentPanel } from './panels/TalentPanel';
 
@@ -47,9 +48,19 @@ export function App() {
   // state for as long as they changed nothing; format version 5 is where that
   // stopped being true.
   const talents = profile.talents;
-  const setTalents = (update: TalentUpdate) =>
+  const setTalents = (update: TalentUpdate) => {
+    setActivePresetId(undefined);
     setProfile((previous) => ({ ...previous, talents: update(previous.talents) }));
+  };
   const [talentsCollapsed, setTalentsCollapsed] = useState(false);
+  /*
+   * WHICH PRESET IS ON SCREEN, for the rail's selected pill -- and cleared by
+   * the first edit, because a character that has been changed is no longer the
+   * preset it started as. Not derived from the profile: two presets can differ
+   * only in talents, and comparing whole profiles to find out which pill to
+   * light would be both slow and wrong the moment someone edits one.
+   */
+  const [activePresetId, setActivePresetId] = useState<string | undefined>(undefined);
 
   const { state, progress, run, reset } = useSimulation();
 
@@ -80,6 +91,7 @@ export function App() {
    */
   const applyPreset = (preset: ProfilePreset) => {
     setProfile(preset.build());
+    setActivePresetId(preset.id);
     setTalentsCollapsed(true);
     setConfirmed(true);
     reset();
@@ -130,7 +142,6 @@ export function App() {
             onEdit={editCharacter}
             onImport={() => undefined}
             onLoad={() => undefined}
-            onPreset={applyPreset}
           />
 
           {confirmed ? (
@@ -187,6 +198,10 @@ export function App() {
             ) : null}
           </div>
         ) : null}
+
+        <div className="column column-rail">
+          <ProfileRail onPreset={applyPreset} activeId={activePresetId} />
+        </div>
       </main>
     </div>
   );

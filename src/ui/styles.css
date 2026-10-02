@@ -223,11 +223,43 @@
   --tree-2: #a33b2a;
   --tree-3: #3a6f93;
 
+  /*
+   * Class colours, and fixed across themes for the same reason the series and
+   * tree colours are: the colour says WHICH CLASS, and a warrior should not
+   * change colour because the page did.
+   *
+   * ----------------------------------------------------------------------------
+   * TWO ARE NOT BLIZZARD'S, BECAUSE BLIZZARD'S ARE FOR A LIGHT PARCHMENT UI.
+   * Shaman is #0070DE upstream, which against this page's #0b1417 is close to
+   * invisible -- it was unreadable in every one of the four pill treatments
+   * these were chosen with. Priest is #FFFFFF, which on a solid-filled pill is
+   * the only one of the nine that glares. Both are moved the minimum distance
+   * that fixes them and no further, so they still read as the class.
+   *
+   * The other seven are upstream's values unchanged.
+   * ----------------------------------------------------------------------------
+   */
+  --class-warrior: #c79c6e;
+  --class-paladin: #f58cba;
+  --class-hunter: #abd473;
+  --class-rogue: #fff569;
+  --class-priest: #e8eef0;
+  --class-shaman: #3a8ee6;
+  --class-mage: #69ccf0;
+  --class-warlock: #9482c9;
+  --class-druid: #ff7d0a;
+
+  /* One ink for every filled pill. All nine class colours are light or mid, so
+     a single dark text colour clears 4.5:1 on all of them -- checked, not
+     assumed, and the shaman blue is the tightest at about 5.4:1. */
+  --class-ink: #11181a;
+
   --font-ui: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   --font-mono: ui-monospace, 'Cascadia Code', 'Consolas', monospace;
 
   /* One control geometry. Every input, select and button is built from these
      rather than from its own numbers. */
+  --rail-width: 132px;
   --radius: 4px;
   --radius-panel: 8px;
   --control-padding: 7px 10px;
@@ -287,9 +319,34 @@ body {
 
 .app-layout {
   display: grid;
-  grid-template-columns: minmax(280px, 340px) 1fr;
+  grid-template-columns: minmax(280px, 340px) 1fr var(--rail-width);
   gap: 20px;
   align-items: start;
+}
+
+@media (max-width: 1200px) {
+  .app-layout {
+    grid-template-columns: minmax(280px, 340px) 1fr;
+  }
+
+  /* The rail goes under the config column rather than wrapping to a third row
+     of its own, where it would sit below the combat log. */
+  .column-rail {
+    grid-column: 1 / -1;
+  }
+
+  /* auto-FILL at a FIXED width, not auto-fit at a minimum: a pill stretched
+     across a wide row stops reading as a pill, which is the whole shape. */
+  .profile-rail {
+    position: static;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, var(--rail-width));
+    justify-content: start;
+  }
+
+  .profile-rail .field-label {
+    grid-column: 1 / -1;
+  }
 }
 
 @media (max-width: 900px) {
@@ -311,7 +368,7 @@ body {
    beside it, so the layout collapses rather than leaving a gap where results
    will eventually be. */
 .app-layout.single {
-  grid-template-columns: minmax(280px, 460px);
+  grid-template-columns: minmax(280px, 460px) var(--rail-width);
   justify-content: center;
 }
 
@@ -1177,49 +1234,52 @@ button:disabled {
 
 /* --- profile presets --- */
 
-.presets {
-  margin-bottom: 14px;
-}
+/* ---------------------------------------------------------------------------
+   The profile rail: 23 ready-made characters as class-coloured pills.
 
-/* Wraps rather than scrolls: three or four of these have to fit a narrow
-   config column, and a row that scrolls sideways hides the last one. */
-.preset-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-top: 6px;
-}
+   A FIXED, NARROW COLUMN rather than a flexible one. The widest label is
+   "Seal Twist Ret" and the rail is sized to hold it with the text centred;
+   letting it flex would make the pills grow on a wide monitor, and a pill that
+   is mostly empty space stops reading as a pill.
 
-/* Accent-bordered rather than filled, so a preset reads as a shortcut and not
-   as the primary action -- Confirm below it is still the button that commits. */
-.preset {
+   Sticky, so the list is still reachable from the bottom of a results page --
+   it is the only control on screen that switches what the whole page is about.
+   --------------------------------------------------------------------------- */
+.profile-rail {
+  position: sticky;
+  top: 20px;
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
-  gap: 2px;
-  flex: 1 1 140px;
-  padding: 8px 10px;
-  text-align: left;
-  border: 1px solid var(--border-strong);
-  border-radius: var(--radius);
-  background: var(--surface-raised);
+  gap: 5px;
+}
+
+.profile-rail .field-label {
+  margin-bottom: 3px;
+}
+
+.profile-pill {
+  padding: 6px 12px;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  background: var(--class-colour);
+  color: var(--class-ink);
+  font-size: 12.5px;
+  font-weight: 600;
+  text-align: center;
   cursor: pointer;
 }
 
-.preset:hover {
-  border-color: var(--accent);
-  background: var(--accent-wash);
+.profile-pill:hover {
+  filter: brightness(1.12);
 }
 
-.preset-label {
-  color: var(--text);
-  font-weight: 600;
-}
-
-.preset-detail {
-  color: var(--text-muted);
-  font-size: 11px;
-  line-height: 1.3;
+/* Two rings rather than a border: a border would resize the pill and make the
+   list twitch as the selection moves. The inner ring is the page colour, so the
+   outer one reads as a gap rather than as a thicker pill. */
+.profile-pill.active {
+  box-shadow:
+    0 0 0 2px var(--bg),
+    0 0 0 3px var(--class-colour);
 }
 
 /* ---------------------------------------------------------------------------

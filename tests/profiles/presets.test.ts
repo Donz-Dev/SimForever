@@ -99,6 +99,54 @@ describe('the preset catalogue', () => {
     ]);
   });
 
+  it('states the class the rail colours it by, and it is the class it BUILDS', () => {
+    /*
+     * `ProfilePreset.characterClass` exists so the profile rail can colour a
+     * pill without calling `build()` for all 23 just to read one field. That
+     * makes it a COPY, and a copy is the thing that drifts -- a preset edited
+     * from Warrior to Paladin would keep its old colour and nothing would
+     * error, because no code path compares the two.
+     *
+     * Written out by hand rather than looped from the preset, for the reason
+     * at the top of this file: reading both sides off the same object passes
+     * whatever the object says.
+     */
+    const expected: Record<string, string> = {
+      two_hand_arms: 'warrior',
+      dw_fury: 'warrior',
+      prot_warr: 'warrior',
+      rogue_venom: 'rogue',
+      rogue_combat: 'rogue',
+      rogue_rupture: 'rogue',
+      druid_moonkin: 'druid',
+      druid_cat: 'druid',
+      druid_bear: 'druid',
+      shaman_elemental: 'shaman',
+      shaman_enhancement: 'shaman',
+      mage_frostfire: 'mage',
+      mage_arcane: 'mage',
+      mage_fire: 'mage',
+      pally_ret: 'paladin',
+      pally_shockadin: 'paladin',
+      prot_pally: 'paladin',
+      bm_hunter: 'hunter',
+      lw_ranged: 'hunter',
+      lw_melee: 'hunter',
+      warlock_smds: 'warlock',
+      warlock_firelock: 'warlock',
+      shadow_priest: 'priest',
+    };
+
+    expect(Object.keys(expected)).toHaveLength(PROFILE_PRESETS.length);
+
+    for (const preset of PROFILE_PRESETS) {
+      expect(preset.characterClass, preset.id).toBe(expected[preset.id]);
+      // And the half that catches the drift: what the preset SAYS against what
+      // it actually assembles.
+      expect(preset.build().character.characterClass, preset.id).toBe(expected[preset.id]);
+    }
+  });
+
   it('builds a profile that VALIDATES, field for field', () => {
     /*
      * Run through the real validator rather than eyeballed. A preset that set
