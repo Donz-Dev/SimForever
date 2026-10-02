@@ -21,7 +21,9 @@ import type { TalentEffects } from './TalentEffect';
  *                    `petStat` and `petReaction` answer. Both Lone Wolf builds
  *                    take the talent that says they have no pet, so the whole
  *                    cluster is still correctly inert for them.
- *   TRAPS            six. Nothing here places a trap.
+ *   TRAPS            four, down from six. Immolation and Explosive Trap are
+ *                    both DECLARED on the owner's rulings; what is left needs a
+ *                    trap to sit on the ground and be walked onto.
  *   MOVEMENT AND     seven. Roots, slows, disorients and speed, none of which
  *   CONTROL          a standing raid boss cares about.
  * ----------------------------------------------------------------------------
@@ -355,11 +357,15 @@ export const HUNTER_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
      * "Increases the duration of Freezing and Frost trap effects by 30% AND THE
      * DAMAGE of Immolation and Explosive trap effects by 30%."
      *
-     * THE DAMAGE HALF BECAME EXPRESSIBLE WHEN A TRAP DID. Immolation Trap is
-     * declared now, on the owner's ruling, so `abilityDamage` reaches its ticks
-     * through the aura id the way Improved Rend reaches a bleed. Explosive Trap
-     * is not declared -- the owner named one trap -- so the bonus lands on half
-     * of what the talent names.
+     * THE DAMAGE HALF BECAME EXPRESSIBLE WHEN A TRAP DID, and it is WHOLE now
+     * that both are declared. `abilityDamage` reaches each trap through its aura
+     * id the way Improved Rend reaches a bleed. **This entry was half-paid for
+     * exactly as long as Explosive Trap was undeclared**, which is what a
+     * partially expressible talent looks like when it is honest about it.
+     *
+     * TWO ENTRIES AND NOT ONE, because `abilityDamage` is keyed by a single
+     * ability id -- and Explosive Trap's INITIAL hit and its burn share the id
+     * `explosive_trap`, so one entry reaches both halves of it.
      *
      * `valueIndex: 1` because the row is [duration, damage] and the first
      * number belongs to the Freezing and Frost clause. Both are 30 at every
@@ -367,13 +373,13 @@ export const HUNTER_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
      * is written out rather than left to default.
      */
     { kind: 'abilityDamage', abilityId: 'immolation_trap', valueIndex: 1 },
+    { kind: 'abilityDamage', abilityId: 'explosive_trap', valueIndex: 1 },
     {
       kind: 'unmodelled',
       scope: 'crowdControl',
       reason:
-        'Its Immolation Trap damage applies. Its Freezing and Frost trap ' +
-        'durations are crowd control, and Explosive Trap is not declared -- ' +
-        'the owner put one trap in scope and it is not that one.',
+        'Both of its trap DAMAGE clauses apply, Immolation and Explosive. Its ' +
+        'Freezing and Frost trap durations are crowd control.',
     },
   ],
 

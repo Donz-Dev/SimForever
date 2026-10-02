@@ -88,6 +88,9 @@ const EXEMPT: Readonly<Record<string, string>> = {
    * coefficient in `auras/hunter.ts` and the deletion of this entry.
    */
   immolation_trap: 'The owner ruled it scales with neither attack power nor spell power.',
+  explosive_trap:
+    'The same ruling, in the owner’s words when they put it in: "there isn’t ' +
+    'an AP or SP scaler". Both its initial hit and its burn are flat.',
 };
 
 /*

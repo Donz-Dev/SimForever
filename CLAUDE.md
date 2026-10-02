@@ -113,8 +113,14 @@ five Hunter talents and two abilities — the owner added no member and instead
 put **Immolation Trap** in, ruling away the only part the engine cannot do:
 "assume it triggers instantly when cast". So the answer to "is this out of
 scope" can be "no, and here is how to model it", and it closed three Hunter
-talents rather than one. **Explosive Trap is still undeclared, because the owner
-named one trap** — a ruling covers what it says and is not extended by analogy.
+talents rather than one.
+
+**AND THE SECOND HALF OF THAT ARRIVED SEPARATELY, WHICH IS THE POINT.** Explosive
+Trap stayed undeclared while only Immolation Trap was named -- a ruling covers
+what it says and is not extended by analogy -- and the owner later named it too:
+"Explosive trap can be implemented, there isn't an AP or SP scaler." **Waiting was
+right and cost nothing**: when the ruling came it carried a second fact, the
+absence of a coefficient, that an analogy would have had to guess.
 
 **"BLOCKED TWICE" IS THE TEST FOR RECOGNISING ONE, and it has found three of the
 seven.** When clearing either half of a reason alone would still leave the talent
@@ -125,11 +131,14 @@ caster profile is attacked); totems as entities is (no combatant can be added
 mid-fight AND there is nothing to attach a group mana return to). **Each had spent
 the project counted as work.**
 
-**THE LAST TWO WERE PROPOSED BY THE SHAMAN DIVE RATHER THAN GIVEN BY THE OWNER**,
-which is a thing to know before leaning on them: the rule above says a new member
-needs the owner, and these arrived with the "blocked twice" argument instead. The
-argument is recorded so the owner can refuse it; `totemEntities` in particular is
-narrower than it sounds, because a DAMAGE totem turned out to be expressible.
+**THE LAST TWO WERE PROPOSED BY THE SHAMAN DIVE AND THE OWNER HAS SINCE RATIFIED
+THEM** -- "castPushback and totemEntities don't need to be implemented". So both
+are rulings in the full sense now, and the "blocked twice" argument that proposed
+them is a test worth reusing rather than a liberty that was taken. **Seven members,
+all of them the owner's.**
+
+`totemEntities` is still narrower than it sounds: a DAMAGE totem turned out to be
+expressible, and Searing Totem is modelled as a debuff that ticks.
 
 ## Conventions that prevent real bugs
 
