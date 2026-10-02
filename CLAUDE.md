@@ -44,7 +44,13 @@ each entry actually did. See [docs/handoff-rotations.md](docs/handoff-rotations.
 
 Per-class state is [docs/handoff/](docs/handoff/) — one document per class,
 each the starting point for that class's deep dive, with its profiles, its live
-gaps and its own traps.
+gaps and its own traps. **All nine have now been done**: the live-gap count went
+132 to 64, four classes are at 0–3, and what closed was mostly declarations and
+owner rulings rather than new engine capability. [HANDOVER.md](HANDOVER.md) has the
+recap.
+
+**THE UI HAS NOT HAD A PASS OF ITS OWN** and is the next piece of work:
+[docs/handoff/gui.md](docs/handoff/gui.md).
 
 > **LAND THE SHARED ENGINE PIECES FIRST, BEFORE DISPATCHING ANY CLASS WORK.** The
 > owner's instruction after the first round of nine parallel dives, and it is about
@@ -1502,6 +1508,15 @@ in a throwaway `git worktree` at a named commit, never in the shared working
 tree: a measurement there once came back a clean −2.0% on two profiles, which
 read exactly like a real regression and was another session's uncommitted work.
 Never commit files you find modified there.
+
+**AND A DERIVED COUNT IS ONLY AS GOOD AS THE COMMAND BESIDE IT.** The placeholder
+figure in HANDOVER carried its own re-derivation command and was still wrong three
+times, because the command counted MENTIONS: a deleted placeholder leaves its name
+behind in the comment explaining what it used to be, so five epitaphs were being
+counted as live invented numbers. **Count DECLARATIONS** --
+`grep -rhoE "(export )?const PLACEHOLDER_[A-Z_]+" src/`. The instruction to
+re-derive rather than adjust was right every time; the thing it told you to run
+was not.
 
 **A CLEAN MERGE CAN BE ARITHMETICALLY WRONG, and a count is where it happens.**
 Two branches each moved the talent census total by one from the same base, so
