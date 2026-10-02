@@ -46,6 +46,15 @@ Per-class state is [docs/handoff/](docs/handoff/) — one document per class,
 each the starting point for that class's deep dive, with its profiles, its live
 gaps and its own traps.
 
+> **LAND THE SHARED ENGINE PIECES FIRST, BEFORE DISPATCHING ANY CLASS WORK.** The
+> owner's instruction after the first round of nine parallel dives, and it is about
+> SEQUENCING rather than noticing: the briefs already named the four items that
+> wanted building once, and **three of them got built two and three times anyway.**
+> A "build once" note in nine parallel briefs is not a mechanism; only landing the
+> thing on `main` first is. The bill arrives on whichever branch merges last — the
+> Rogue came back carrying seven divergent APIs and cost more to reconcile than any
+> single dive. See [docs/handoff/README.md](docs/handoff/README.md).
+
 Run `npm run typecheck` **and** `npm test` before opening a PR. The typechecker
 catches what the tests do not — a mutation of a shared readonly array, a stat
 rename that silently invalidated a test.
