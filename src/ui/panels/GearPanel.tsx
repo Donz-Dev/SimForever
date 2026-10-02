@@ -170,6 +170,8 @@ export function GearPanel({ profile, onChange }: GearPanelProps) {
   return (
     <Panel
       title="Gear"
+      collapsible
+      badge={`${equipped} equipped`}
       actions={
         hasStartingEquipment(profile.character.characterClass) ? (
           <>

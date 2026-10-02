@@ -48,7 +48,7 @@ export function CharacterSheetPanel({ profile }: CharacterSheetPanelProps) {
     : genericRows(profile, style);
 
   return (
-    <Panel title="Character sheet">
+    <Panel title="Character sheet" collapsible>
       <table className="base-stats">
         <tbody>
           {rows.map((row) => (

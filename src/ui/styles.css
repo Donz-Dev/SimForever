@@ -432,8 +432,30 @@ body {
   color: var(--text-muted);
 }
 
+/* The title and whatever identifies the panel while it is SHUT, on one
+   baseline. A collapsed panel is a title and nothing else without this. */
+.panel-heading {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.panel-badge {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.panel-toggle {
+  min-width: 28px;
+  line-height: 1;
+}
+
+/* A flex item on the heading's baseline now, not a block under the title, so
+   it sits beside the name the way the badge does and stays readable shut. */
 .panel-subtitle {
-  margin: 2px 0 0;
+  margin: 0;
   font-size: 12px;
   color: var(--text-muted);
 }
@@ -444,8 +466,20 @@ body {
   flex-shrink: 0;
 }
 
+/*
+ * SCROLLS SIDEWAYS RATHER THAN CLIPPING.
+ *
+ * `.panel` is `overflow: hidden` so the rounded corners clip their content,
+ * which meant anything wider than the column was CUT OFF and unreachable --
+ * the damage breakdown is 660px of table, and on a 375px phone its crit,
+ * glance and avoided columns simply could not be read. Nothing looked broken;
+ * the table just stopped.
+ *
+ * `auto` and not `scroll`, so no bar appears at the widths where it fits.
+ */
 .panel-body {
   padding: 16px;
+  overflow-x: auto;
 }
 
 .panel-body h3 {
@@ -832,18 +866,6 @@ button:disabled {
 
 /* --- talents --- */
 
-.talent-header-left {
-  display: flex;
-  align-items: baseline;
-  gap: 10px;
-}
-
-.talent-distribution {
-  font-family: var(--font-mono);
-  font-size: 12px;
-  color: var(--text-muted);
-}
-
 .talent-remaining {
   align-self: center;
   font-size: 12px;
@@ -855,10 +877,6 @@ button:disabled {
   color: var(--text-muted);
 }
 
-.talent-toggle {
-  min-width: 28px;
-  line-height: 1;
-}
 
 .talent-trees {
   display: grid;
