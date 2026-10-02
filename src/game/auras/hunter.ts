@@ -233,6 +233,80 @@ export const IMMOLATION_TRAP: AuraDefinition = {
   },
 };
 
+/*
+ * ============================================================================
+ * EXPLOSIVE TRAP's burn. "Place a Fire trap that explodes when an enemy
+ * approaches, causing 208 to 264 Fire damage and 330 additional Fire damage over
+ * 20 sec to all within 10 yards." 520 mana, instant, 30-second cooldown, rank 3
+ * and rank 3 is max.
+ *
+ * ----------------------------------------------------------------------------
+ * THE OWNER NAMED IT SECOND AND SETTLED THE ONE QUESTION IT RAISED: "Explosive
+ * trap can be implemented -- there isn't an AP or SP scaler, all the information
+ * should be known already." So it takes the same two rulings Immolation Trap
+ * does -- it triggers instantly when cast, and it scales with neither pool --
+ * and nothing about it was inferred by analogy from the first trap. The earlier
+ * refusal to infer was right: a ruling covers what it says.
+ *
+ * IT IS A HYBRID WHERE IMMOLATION IS NOT. The initial 208-264 lands on the cast
+ * and lives on the ABILITY; this aura is only the 330 over 20 seconds. Both
+ * halves are Fire and neither takes a coefficient, so the split costs nothing
+ * here -- but it is the reason the ability carries damage at all, which no other
+ * trap in the project does.
+ *
+ * TEN TICKS OF 33, AND THE CADENCE IS AN INTERPRETATION. Every other Hunter
+ * damage-over-time effect here ticks every THREE seconds, and 20 does not divide
+ * by 3 -- so that convention cannot hold and something had to be chosen. Two
+ * seconds is the pick: it divides 20 exactly, 330 over 10 ticks is a whole 33 a
+ * tick, and it is a cadence the project already uses (the Rogue's Rupture).
+ * Four seconds would also divide evenly, at 66 a tick; the figures are
+ * identical over the duration and differ only in how the damage is bunched, so
+ * nothing measurable rests on it. **What would settle it is a stated tick
+ * interval from the owner or a source.**
+ *
+ * NO COEFFICIENT, by the owner's words, which makes it the second damaging
+ * Hunter effect with none. Its `everySpellScales` exemption says so.
+ *
+ * IT CRITS AT RANGED CRIT, like Immolation Trap and Serpent Sting -- "Hunter
+ * DoTs use ranged Crit" is the wiki's own sentence, and a trap rolls no attack
+ * table of its own, so `critFrom` is the whole of how it can crit.
+ * ============================================================================
+ */
+export const EXPLOSIVE_TRAP_BURN_TOTAL = 330;
+export const EXPLOSIVE_TRAP_BURN_DURATION_MS = seconds(20);
+export const EXPLOSIVE_TRAP_TICK_INTERVAL_MS = seconds(2);
+
+export const EXPLOSIVE_TRAP: AuraDefinition = {
+  id: 'explosive_trap',
+  name: 'Explosive Trap',
+  durationMs: EXPLOSIVE_TRAP_BURN_DURATION_MS,
+  isDebuff: true,
+  refreshBehaviour: 'reset',
+  periodic: {
+    intervalMs: EXPLOSIVE_TRAP_TICK_INTERVAL_MS,
+    onTick: (context, aura) => {
+      const source = context.combatant(aura.sourceId);
+      const target = context.combatant(aura.targetId);
+      if (!source || !target || !target.isAlive) return;
+
+      const ticks = EXPLOSIVE_TRAP_BURN_DURATION_MS / EXPLOSIVE_TRAP_TICK_INTERVAL_MS;
+
+      dealDamage(context, {
+        source,
+        target,
+        abilityId: aura.id,
+        abilityName: aura.name,
+        school: FIRE,
+        baseAmount: EXPLOSIVE_TRAP_BURN_TOTAL / ticks,
+        // The owner's ruling: no attack power and no spell power.
+        powerCoefficient: 0,
+        periodic: true,
+        critFrom: 'ranged-special',
+      });
+    },
+  },
+};
+
 // ---------------------------------------------------------------------------
 // Talent bleeds
 // ---------------------------------------------------------------------------

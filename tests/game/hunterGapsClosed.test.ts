@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { Simulation, resolveCast, seconds, toSeconds } from '../../src/engine';
+import { Simulation, castAbility, resolveCast, seconds, toSeconds } from '../../src/engine';
 import type { Combatant, TelemetryEvent } from '../../src/engine';
 import { buildSimulation } from '../helpers/buildSimulation';
 import { makeAttacker, makeTarget } from '../helpers/actors';
@@ -14,6 +14,10 @@ import {
   HAWK_DURATION_MS,
   HAWK_MAX_ACTIVE,
   HAWK_STRIKE_INTERVAL_MS,
+  EXPLOSIVE_TRAP,
+  EXPLOSIVE_TRAP_BURN_DURATION_MS,
+  EXPLOSIVE_TRAP_BURN_TOTAL,
+  EXPLOSIVE_TRAP_TICK_INTERVAL_MS,
   IMMOLATION_TRAP,
   IMMOLATION_TRAP_DURATION_MS,
   IMMOLATION_TRAP_TICK_INTERVAL_MS,
@@ -23,6 +27,8 @@ import {
   laceratingStrikesAura,
 } from '../../src/game/auras/hunter';
 import {
+  EXPLOSIVE_TRAP_ABILITY,
+  EXPLOSIVE_TRAP_INITIAL_DAMAGE,
   IMMOLATION_TRAP_ABILITY,
   MONGOOSE_BITE,
   SUMMON_HAWK,
@@ -173,6 +179,122 @@ describe('Lacerating Strikes bleeds for a share of the strike', () => {
 });
 
 // ---------------------------------------------------------------------------
+
+describe('Explosive Trap, the second trap the owner put in scope', () => {
+  /*
+   * --------------------------------------------------------------------------
+   * "Place a Fire trap that explodes when an enemy approaches, causing 208 to
+   * 264 Fire damage and 330 additional Fire damage over 20 sec to all within 10
+   * yards." 520 mana, instant, 30-second cooldown, rank 3 and rank 3 is max.
+   *
+   * EVERY FIGURE WRITTEN OUT BY HAND from the capture, which is the project's
+   * two-independent-checks rule: a typo here fails, and upstream drift fails
+   * `--verify`.
+   * --------------------------------------------------------------------------
+   */
+  it('costs and cools down what the capture states', () => {
+    expect(EXPLOSIVE_TRAP_ABILITY.cost).toEqual({ resource: 'mana', amount: 520 });
+    expect(toSeconds(EXPLOSIVE_TRAP_ABILITY.cooldownMs!)).toBe(30);
+    // Instant, so it never resets a swing timer -- the thing that matters most
+    // about a melee Hunter casting anything.
+    expect(EXPLOSIVE_TRAP_ABILITY.castTimeMs).toBeUndefined();
+  });
+
+  it('is a HYBRID where Immolation Trap is not: 236 on the cast plus 330 over 20s', () => {
+    /*
+     * THE MIDPOINT OF 208 TO 264, which the combat table would normally spread
+     * -- except this one rolls no table at all, so the midpoint IS the hit.
+     * Immolation Trap has no initial damage, which makes this the first trap in
+     * the project to deal any from its own `onCast`.
+     */
+    expect(EXPLOSIVE_TRAP_INITIAL_DAMAGE).toBe(236);
+    expect(EXPLOSIVE_TRAP_BURN_TOTAL).toBe(330);
+    expect(toSeconds(EXPLOSIVE_TRAP_BURN_DURATION_MS)).toBe(20);
+  });
+
+  it('ticks ten times for 33, which is the cadence choice stated at the aura', () => {
+    /*
+     * TWENTY DOES NOT DIVIDE BY THREE, and three seconds is what every other
+     * Hunter damage-over-time effect here uses -- so the class convention could
+     * not hold and two seconds was chosen: it divides 20 exactly, 330/10 is a
+     * whole 33, and the project already ticks at two seconds for Rupture.
+     *
+     * ASSERTED SO THE CHOICE CANNOT DRIFT SILENTLY. Four seconds would also
+     * divide evenly and deal the same total; nothing measurable rests on it, and
+     * a stated interval from the owner or a source is what would settle it.
+     */
+    expect(toSeconds(EXPLOSIVE_TRAP_TICK_INTERVAL_MS)).toBe(2);
+    expect(EXPLOSIVE_TRAP_BURN_DURATION_MS / EXPLOSIVE_TRAP_TICK_INTERVAL_MS).toBe(10);
+
+    const { simulation, events } = recordingSimulation([
+      // No crit, so the total is exactly the stated one.
+      makeAttacker({ stats: { attackPower: 0, critChance: -100, spellCritChance: -100 } }),
+      makeTarget(),
+    ]);
+    const [actor, target] = simulation.combatants;
+    simulation.applyAura(target, EXPLOSIVE_TRAP, actor.id);
+    simulation.run();
+
+    const burn = damageBy(events, actor.id).get('Explosive Trap');
+    expect(burn?.count).toBe(10);
+    expect(burn!.total).toBeCloseTo(EXPLOSIVE_TRAP_BURN_TOTAL, 6);
+  });
+
+  it('scales with neither attack power nor spell power, on BOTH halves', () => {
+    /*
+     * THE OWNER'S WORDS WHEN THEY PUT IT IN: "there isn't an AP or SP scaler."
+     * Both halves, which is what makes this worth its own assertion -- the
+     * initial hit is dealt from `onCast` and the burn from a tick, so a
+     * coefficient could be forgotten on one and present on the other.
+     *
+     * CAST AT TWO VERY DIFFERENT STAT LINES and demand the same number.
+     */
+    const totalAt = (attackPower: number, spellPower: number) => {
+      const { simulation, events } = recordingSimulation([
+        makeAttacker({
+          abilities: [EXPLOSIVE_TRAP_ABILITY],
+          autoAttack: 'none',
+          stats: {
+            attackPower,
+            rangedAttackPower: attackPower,
+            spellPower,
+            critChance: -100,
+            spellCritChance: -100,
+          },
+          resources: [{ type: 'mana', maximum: 10_000 }],
+        }),
+        makeTarget(),
+      ]);
+      const [actor, target] = simulation.combatants;
+      castAbility(simulation, actor, actor.abilities.get('explosive_trap')!, target);
+      simulation.run();
+      const row = damageBy(events, actor.id).get('Explosive Trap');
+      return row!.total;
+    };
+
+    const bare = totalAt(0, 0);
+    expect(bare).toBeCloseTo(EXPLOSIVE_TRAP_INITIAL_DAMAGE + EXPLOSIVE_TRAP_BURN_TOTAL, 6);
+    expect(totalAt(2000, 2000)).toBeCloseTo(bare, 6);
+  });
+
+  it('keeps its area clause in its own words rather than approximating it', () => {
+    // "to all within 10 yards", and there is one target. The same limit
+    // Multi-Shot and Blast Wave carry.
+    expect(EXPLOSIVE_TRAP_ABILITY.unmodelled).toContain('10 yards');
+    expect(EXPLOSIVE_TRAP_ABILITY.unmodelled).toContain('triggers');
+  });
+
+  it('is in the Hunter book, so Clever Traps can reach it', () => {
+    /*
+     * CLEVER TRAPS NAMES BOTH TRAPS and was half-paid for exactly as long as
+     * only one was declared. One `abilityDamage` entry per trap, and Explosive
+     * Trap's initial hit and burn share an ability id so one entry reaches both.
+     */
+    const built = talentBuild('hunter', { clever_traps: 2 });
+    expect(built.abilityModifiers.for('explosive_trap').damageMultiplier).toBeCloseTo(1.3, 6);
+    expect(built.abilityModifiers.for('immolation_trap').damageMultiplier).toBeCloseTo(1.3, 6);
+  });
+});
 
 describe('Immolation Trap', () => {
   /*

@@ -336,6 +336,28 @@ in neither ranged list is the correct state.
 
 ---
 
+## Explosive Trap: declared, and in no list on purpose
+
+**EXPLOSIVE TRAP IS DECLARED AND IN NO LIST, AND THE REASON IS MEASURED.** The
+owner named it after Immolation Trap -- "there isn't an AP or SP scaler, all the
+information should be known already" -- so it takes the same two rulings: it
+triggers instantly when cast, and neither pool scales it.
+
+| | Cost | Damage |
+| --- | --- | --- |
+| Immolation Trap | **245** mana | 690 over 15s |
+| Explosive Trap | **520** mana | 236 on the cast + 330 over 20s = **566** |
+
+Swapped into the Lone Wolf melee list in place of Immolation -- a swap and not an
+addition, because **only one Fire trap can be active at a time** and the two have
+separate cooldowns -- it measured **353.3 against 362.7** over 30 batches of 10.
+More than twice the cost for less damage, because what the extra buys is "to all
+within 10 yards" and there is one target.
+
+**IT IS THE CLEAREST CASE IN THE PROJECT OF A CORRECTLY IMPLEMENTED ABILITY WORTH
+CASTING NEVER.** Both halves are right, both are tested, and one line re-measures
+it the day the encounter grows a second target.
+
 ## What "done" looks like
 
 All six items from the previous version are closed.

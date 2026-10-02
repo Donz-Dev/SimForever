@@ -10,11 +10,18 @@ import {
   HAWK_DAMAGE_PER_STRIKE,
   HAWK_MAX_ACTIVE,
   HAWK_UNMODELLED,
+  EXPLOSIVE_TRAP,
   IMMOLATION_TRAP,
   RAPID_FIRE,
   SERPENT_STING,
   SUMMON_HAWK_AURA,
 } from '../auras/hunter';
+
+/** The midpoint of a stated range. The combat table supplies the spread. */
+const midpoint = (low: number, high: number) => (low + high) / 2;
+
+/** Both traps deal Fire. Declared here as it is in `auras/hunter.ts`. */
+const FIRE = 'fire' as const;
 
 /**
  * Hunter abilities, from the WoW Forever beta client and the Forever Hunter
@@ -531,6 +538,98 @@ export const IMMOLATION_TRAP_ABILITY: Ability = {
     'ruling it scales with neither attack power nor spell power.',
 };
 
+/**
+ * Explosive Trap, the second trap the owner put in scope.
+ *
+ * ----------------------------------------------------------------------------
+ * "Explosive trap can be implemented -- there isn't an AP or SP scaler, all the
+ * information should be known already." That settled both open questions at once:
+ * it is declared, and it takes no coefficient on either half.
+ *
+ * IT INHERITS IMMOLATION TRAP'S RULING RATHER THAN BEING INFERRED FROM IT. The
+ * first trap's "assume it triggers instantly when cast" could not be extended by
+ * analogy -- a ruling covers what it says -- so this one stayed undeclared until
+ * the owner named it. Now that both are named, both lose their placement, their
+ * one-minute life on the ground and their radius.
+ *
+ * THE ONE THING THAT MAKES IT DIFFERENT FROM THE FIRST TRAP is that it has an
+ * INITIAL HIT. 208 to 264 on the cast, midpointed to 236, plus 330 over 20
+ * seconds carried by `EXPLOSIVE_TRAP`. Immolation Trap is burn-only, so this is
+ * the first trap in the project that deals damage from its own `onCast`.
+ *
+ * NO ATTACK TABLE on either half, for the reason Immolation Trap states: the
+ * trap does not miss. The initial hit still CRITS, at ranged crit, which is the
+ * same `critFrom` its burn uses and the wiki's own rule for Hunter effects.
+ *
+ * "TO ALL WITHIN 10 YARDS" IS THE CLAUSE THAT GOES UNMODELLED, and it is the
+ * ordinary one-target limit rather than anything new -- the same reason Multi-Shot
+ * and Blast Wave carry.
+ *
+ * ----------------------------------------------------------------------------
+ * AND "ONLY ONE FIRE TRAP CAN BE ACTIVE AT A TIME" IS A CONSTRAINT THAT ONLY
+ * EXISTS NOW THAT THERE ARE TWO. Both traps say it, and while Immolation Trap was
+ * the only one declared its own 30-second cooldown enforced it for free against a
+ * single target -- which is what the comment on that ability says. That stopped
+ * being true the moment this one landed: the two have SEPARATE cooldowns, so a
+ * list casting both would run two Fire burns at once and the ruleset allows one.
+ *
+ * NOTHING EXPLOITS IT TODAY, because no priority list casts Explosive Trap and
+ * only the Lone Wolf melee list casts Immolation. **So this is a live hazard
+ * rather than a live bug**, and the honest fix if a list ever wants both is a
+ * shared cooldown group, which the engine has no form for. Said here because the
+ * next person to add a trap to a list is the one who needs to know.
+ *
+ * ----------------------------------------------------------------------------
+ * AND IT IS IN NO LIST BECAUSE IT MEASURED WORSE, not because nobody tried.
+ * Swapped for Immolation Trap in the Lone Wolf melee list -- the one list that
+ * casts a trap at all, and a swap rather than an addition because of the one-Fire-
+ * trap rule above -- it came back **353.3 against 362.7**, 30 batches of 10.
+ *
+ * THE ARITHMETIC SAYS WHY, which is what makes it a finding rather than a
+ * disappointment: Explosive is **520 mana for 236 + 330 = 566**, and Immolation is
+ * **245 mana for 690**. More than twice the cost for less damage. The difference
+ * is bought by "to all within 10 yards", and there is one target -- so on a single
+ * target the cheaper trap is simply the better one, and no measurement was going
+ * to say otherwise.
+ *
+ * A CORRECTLY IMPLEMENTED ABILITY CAN BE WORTH CASTING NEVER, and this is the
+ * clearest case of it in the project: both halves are right, both are tested, and
+ * one line re-measures it the day the encounter grows a second target.
+ * ----------------------------------------------------------------------------
+ */
+export const EXPLOSIVE_TRAP_INITIAL_DAMAGE = midpoint(208, 264);
+
+export const EXPLOSIVE_TRAP_ABILITY: Ability = {
+  id: 'explosive_trap',
+  name: 'Explosive Trap',
+  cost: { resource: 'mana', amount: 520 },
+  cooldownMs: seconds(30),
+  onCast: ({ simulation, caster, target, ability }) => {
+    if (!target) return;
+    dealDamage(simulation, {
+      source: caster,
+      target,
+      abilityId: ability.id,
+      abilityName: ability.name,
+      school: FIRE,
+      baseAmount: EXPLOSIVE_TRAP_INITIAL_DAMAGE,
+      // The owner's ruling, the same as the burn's: neither pool scales it.
+      powerCoefficient: 0,
+      critFrom: 'ranged-special',
+    });
+    simulation.applyAura(target, EXPLOSIVE_TRAP, caster.id);
+  },
+  unmodelled:
+    'It is placed on the ground and explodes when an enemy approaches, and the ' +
+    'engine has no positions -- so on the ruleset owner’s ruling it triggers ' +
+    'instantly when cast, the same ruling Immolation Trap runs on. Its ' +
+    'one-minute life as an untriggered trap goes with that, and so does "to all ' +
+    'within 10 yards": there is one target. By the same ruling it scales with ' +
+    'neither attack power nor spell power. "Only one Fire trap can be active at ' +
+    'a time" is not enforced between the two traps either -- they have separate ' +
+    'cooldowns and no list casts both.',
+};
+
 export const HUNTER_ABILITIES: readonly Ability[] = [
   HUNTERS_MARK_ABILITY,
   ASPECT_OF_THE_HAWK_ABILITY,
@@ -547,4 +646,5 @@ export const HUNTER_ABILITIES: readonly Ability[] = [
   BESTIAL_WRATH_ABILITY,
   SUMMON_HAWK,
   IMMOLATION_TRAP_ABILITY,
+  EXPLOSIVE_TRAP_ABILITY,
 ];
