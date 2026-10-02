@@ -22,7 +22,38 @@ import { dealDamage, seconds } from '../../engine';
  * ----------------------------------------------------------------------------
  */
 
-/** The midpoint of a stated range. The combat table supplies the spread. */
+/*
+ * ----------------------------------------------------------------------------
+ * THE OWNER'S MODEL CONFIRMS BOTH OF THESE EXACTLY, 2026-10-01:
+ *
+ *     Claw = random(43, 59) x PetGlobalDamageMultiplier
+ *     Bite = random(81, 99) x PetGlobalDamageMultiplier
+ *
+ * NEITHER TAKES ATTACK POWER, which is the part worth reading twice. A pet's
+ * SWING scales with its attack power and its two strikes do not -- so a geared
+ * Hunter raises the swing and leaves Claw and Bite where they are, and their
+ * share of the pet's damage FALLS as the Hunter gears up. Classic's scaled;
+ * this is stated and is not an omission. They declare no `weaponScaling`,
+ * which is the whole of how that is expressed.
+ *
+ * THE MULTIPLIER REACHES THEM WITHOUT BEING NAMED HERE. It is the pet's
+ * `damageDoneMultiplier`, built in `createPet` from family x happiness x
+ * talents, and `dealDamage` applies it to flat ability damage as readily as to
+ * a swing. For the Beast Mastery preset's Cat that product is 1.375, which is
+ * the figure the owner states.
+ * ----------------------------------------------------------------------------
+ */
+
+/**
+ * The midpoint of a stated range.
+ *
+ * THE OWNER STATES A `random(low, high)` AND THIS IS ITS MEAN, which is exact
+ * for a DPS figure and narrow in the tails. The engine rolls a range for a
+ * WEAPON -- `damageVariance`, which the pet's swing uses for exactly this
+ * reason -- and has no equivalent for flat ability damage, so building one for
+ * two abilities would be a new mechanism for every class to carry. Stated
+ * rather than hidden: the mean is right and the spread is missing.
+ */
 const midpoint = (low: number, high: number) => (low + high) / 2;
 
 const MAIN_HAND = 'mainHand' as const;

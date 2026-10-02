@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { createPlayer } from '../../src/game/actors/createPlayer';
 import { characterAtCombatStart, runProfileBatch } from '../../src/simulator';
-import { seconds, triggersGcd } from '../../src/engine';
+import { DEFAULT_DAMAGE_VARIANCE, seconds, triggersGcd } from '../../src/engine';
 import { buildSimulation } from '../helpers/buildSimulation';
 import { makeTarget } from '../helpers/actors';
 import { PRESETS_BY_ID } from '../../src/profiles/presets';
@@ -12,8 +12,16 @@ import {
   PET_FOCUS_MAXIMUM,
   PET_HAPPY_DAMAGE_MULTIPLIER,
   PET_HEALTH_PER_OWNER_STAMINA,
-  PLACEHOLDER_PET_BASE_DPS,
-  PLACEHOLDER_PET_SWING_SECONDS,
+  PET_AGILITY_PER_CRIT,
+  PET_ATTACK_POWER_PER_STRENGTH,
+  PET_BASE_AGILITY,
+  PET_BASE_ATTACK_POWER,
+  PET_BASE_DAMAGE,
+  PET_BASE_DAMAGE_MAX,
+  PET_BASE_DAMAGE_MIN,
+  PET_BASE_DAMAGE_VARIANCE,
+  PET_BASE_STRENGTH,
+  PET_SWING_SECONDS,
   createPet,
   highestAttackPower,
 } from '../../src/game/actors/createPet';
@@ -113,30 +121,62 @@ describe('a pet is built from its owner', () => {
     // Crit and attack power carry no family modifier: the source states three
     // -- damage, health, armor -- and inventing a fourth is how a table grows
     // a column nobody can cite.
-    expect(pet.stats.get('critChance')).toBeCloseTo(stats.critChance * PET_CRIT_SHARE, 6);
-    expect(pet.stats.get('attackPower')).toBeCloseTo(
-      highestAttackPower(owner) * PET_ATTACK_POWER_SHARE,
+    /*
+     * BOTH NOW HAVE A TERM OF THE PET'S OWN, which the inheritance is added TO
+     * rather than being the whole of. The owner's two formulas:
+     *
+     *   Pet Attack Power = -20 + PetStrength x 2 + 0.1 x max(Melee, Ranged)
+     *   Pet Crit Chance  = Agility / 20 + HunterCritChance
+     *
+     * Written out by hand here rather than read back, so a constant moving
+     * fails this.
+     */
+    expect(pet.stats.get('critChance')).toBeCloseTo(
+      100 / 20 + stats.critChance * PET_CRIT_SHARE,
       6,
     );
+    expect(pet.stats.get('attackPower')).toBeCloseTo(
+      -20 + 136 * 2 + highestAttackPower(owner) * PET_ATTACK_POWER_SHARE,
+      6,
+    );
+
+    /*
+     * 252 OF IT IS THE PET'S OWN, before a single point of the Hunter's. That
+     * is the term that did not exist before 2026-10-01, and it is most of a
+     * pet's attack power at any realistic gear level -- the Hunter's 10% share
+     * of ~1,160 is 116 against this 252.
+     */
+    expect(PET_BASE_ATTACK_POWER + PET_BASE_STRENGTH * PET_ATTACK_POWER_PER_STRENGTH).toBe(252);
+    expect(PET_BASE_AGILITY / PET_AGILITY_PER_CRIT).toBe(5);
+
+    // The inputs are carried on the pet, not only used to compute its answers.
+    expect(pet.stats.get('strength')).toBe(PET_BASE_STRENGTH);
+    expect(pet.stats.get('agility')).toBe(PET_BASE_AGILITY);
   });
 
-  it('makes SWING SPEED damage-neutral, because the base is a DPS', () => {
+  it('swings for the owner’s stated range at the owner’s stated speed', () => {
     /*
      * ------------------------------------------------------------------------
-     * THE RULE BOTH SOURCES STATE, and the one the old model got backwards.
+     * THE MODEL THE RULESET OWNER SUPPLIED, 2026-10-01:
      *
-     * The Forever Hunter wiki gives auto attack as
+     *     Base Swing Time = 2.0 seconds
+     *     Damage = (random(36.34, 55.32) + 2 / 14 x PetAttackPower) x 1.375
      *
-     *     ((PetBaseDPS + AP / 14) x mods) x PetSwingSpeed
+     * THIS REPLACED THE LAST PLACEHOLDER IN THE PET MODEL. The base was 50,
+     * then 150, and both were invented; the test that stood here asserted that
+     * swing speed was damage-NEUTRAL, which was a property of the base being a
+     * DPS rather than a fact about pets.
      *
-     * and says "faster attack speed does not inherently increase the pet's
-     * base DPS". Petopia says the same from the other side: "faster pets may
-     * attack more frequently but they do proportionally less damage per hit".
+     * AND THE TWO SOURCES NEVER DISAGREED. Multiply the wiki's
+     * `((PetBaseDPS + AP / 14) x mods) x PetSwingSpeed` out and it is the
+     * owner's line with the swing substituted in. What the owner added was the
+     * absolute and the speed, which is precisely what the wiki never stated.
      *
-     * The old model carried a flat 100 damage PER SWING, so a one-second pet
-     * would have dealt twice a two-second pet's damage. Asserted as a RATIO
-     * rather than a figure, because the base DPS is still a placeholder and
-     * this must keep holding when a real one arrives.
+     * THE RANGE IS EXACTLY SYMMETRIC, which is why no new mechanism was needed:
+     * 36.34 and 55.32 are both 9.49 either side of 45.83, and
+     * `weapon.damageVariance` is already a fraction either side of
+     * `baseDamage`. Asserted as the MIN AND MAX it reproduces, not as the two
+     * derived numbers, so the test says what the owner said.
      * ------------------------------------------------------------------------
      */
     const owner = hunterFor('bm_hunter');
@@ -146,19 +186,126 @@ describe('a pet is built from its owner', () => {
     if (!weapon) return;
 
     const swingSeconds = weapon.swingTimerMs / 1000;
-    expect(swingSeconds).toBe(PLACEHOLDER_PET_SWING_SECONDS);
+    expect(swingSeconds).toBe(2);
+    expect(swingSeconds).toBe(PET_SWING_SECONDS);
 
-    // Base damage per swing is the DPS times the swing...
-    expect(weapon.baseDamage).toBeCloseTo(PLACEHOLDER_PET_BASE_DPS * swingSeconds, 6);
-    // ...so dividing it back out gives the same DPS whatever the swing is.
-    expect(weapon.baseDamage / swingSeconds).toBeCloseTo(PLACEHOLDER_PET_BASE_DPS, 6);
+    // What the midpoint and the spread roll between IS the owner's range.
+    const low = PET_BASE_DAMAGE * (1 - PET_BASE_DAMAGE_VARIANCE);
+    const high = PET_BASE_DAMAGE * (1 + PET_BASE_DAMAGE_VARIANCE);
+    expect(low).toBeCloseTo(36.34, 6);
+    expect(high).toBeCloseTo(55.32, 6);
+    expect(low).toBeCloseTo(PET_BASE_DAMAGE_MIN, 6);
+    expect(high).toBeCloseTo(PET_BASE_DAMAGE_MAX, 6);
+
+    expect(weapon.baseDamage).toBeCloseTo(PET_BASE_DAMAGE, 6);
+    expect(weapon.damageVariance).toBeCloseTo(PET_BASE_DAMAGE_VARIANCE, 6);
 
     /*
-     * And the attack power term is the same shape: `powerCoefficient` is
-     * `speed / 14`, so `coefficient x AP` is `AP / 14 x speed` -- the wiki's
-     * term exactly, and also proportional to the swing.
+     * AND THE VARIANCE IS NOT THE ENGINE'S DEFAULT, which is the assertion that
+     * catches the field being dropped. 20.7% against `DEFAULT_DAMAGE_VARIANCE`'s
+     * 15%: a pet whose swing kept the default would have the right MEAN and the
+     * wrong tails, which a DPS figure hides and a 5th-percentile figure does
+     * not.
      */
+    expect(weapon.damageVariance).not.toBeCloseTo(DEFAULT_DAMAGE_VARIANCE, 3);
+
+    /*
+     * The attack power term is the owner's `2 / 14`, which is the universal
+     * weapon coefficient at this swing -- so the two halves of their formula
+     * cannot disagree about the speed.
+     */
+    expect(weapon.powerCoefficient).toBeCloseTo(2 / 14, 6);
     expect(weapon.powerCoefficient).toBeCloseTo(swingSeconds / 14, 6);
+  });
+
+  it('multiplies a fed Cat’s damage by the 1.375 the owner states', () => {
+    /*
+     * ------------------------------------------------------------------------
+     * THE OWNER'S "Pet Global Damage Multiplier = 1.375x" IS PETOPIA'S 1.10
+     * TIMES THE WIKI'S 1.25, AND THEY ARE THE SAME THING. Confirmed by the
+     * ruleset owner: "Petopia's 1.10 family modifier x the wiki's 1.25 for a
+     * fed pet IS the 1.375x multiplier. They're the same thing."
+     *
+     * SO THERE IS NO THIRD CONSTANT, and that is the whole point of this test
+     * and the one below it. The obvious way to "implement 1.375" is to add a
+     * `PET_GLOBAL_DAMAGE_MULTIPLIER` beside the two factors that already
+     * produce it, which would multiply the pet's damage by 1.89 and still look
+     * entirely reasonable on the page.
+     *
+     * A TALENT-FREE PET, because Unleashed Fury and Focused Fire multiply this
+     * and would hide a second application under their own.
+     * ------------------------------------------------------------------------
+     */
+    const owner = hunterFor('bm_hunter');
+    const pet = createPet({ owner, family: 'cat' });
+
+    expect(PET_FAMILIES.cat.damageModifier * PET_HAPPY_DAMAGE_MULTIPLIER).toBeCloseTo(1.375, 10);
+    expect(pet.damageDoneMultiplier).toBeCloseTo(1.375, 10);
+
+    // And it is NOT folded into the weapon as well, which is the other way a
+    // second application gets in. `baseDamage` is the owner's raw midpoint.
+    expect(pet.weapons.mainHand?.baseDamage).toBeCloseTo(PET_BASE_DAMAGE, 10);
+    expect(pet.weapons.mainHand?.damageMultiplier).toBeUndefined();
+  });
+
+  it('swings for the owner’s formula EXACTLY, so 1.375 lands once', () => {
+    /*
+     * ------------------------------------------------------------------------
+     * THE END-TO-END CHECK THAT READING THE CODE CANNOT GIVE YOU.
+     *
+     *     Damage = (random(36.34, 55.32) + 2 / 14 x PetAttackPower) x 1.375
+     *
+     * Scripted rather than sampled: the damage roll is pinned to the MIDPOINT
+     * of its range and the attack table to a plain hit, so the number that
+     * comes out is arithmetic rather than a distribution. An off-by-one in the
+     * multiplier chain shifts it by 37.5% and a doubled multiplier by 89%,
+     * neither of which a mean over 300 fights would announce as anything but a
+     * different pet.
+     *
+     * THE EXPECTED VALUE IS BUILT FROM THE OWNER'S WORDS, not read back out of
+     * `createPet` -- `252` and `2 / 14` and `1.375` are written here as
+     * literals, so this fails if any of the three moves.
+     * ------------------------------------------------------------------------
+     */
+    const owner = hunterFor('bm_hunter');
+    const pet = createPet({ owner, family: 'cat' });
+    const target = makeTarget({ level: 63 });
+
+    const events: Array<{ type: string; abilityName?: string; amount?: number }> = [];
+    const simulation = buildSimulation([pet, target], { durationMs: seconds(10) }, {
+      emit: (event: { type: string }) => events.push(event as never),
+    } as never);
+
+    /*
+     * The damage roll at its midpoint gives exactly 1.0, and a maximal table
+     * roll lands past miss, dodge, parry, glance and crit in the last bucket,
+     * which is an ordinary hit.
+     */
+    const rng = (simulation as unknown as { rng: Record<string, unknown> }).rng;
+    rng.nextFloat = (min: number, max: number) => (min + max) / 2;
+    rng.nextInt = () => 10_000;
+    rng.rollChance = () => false;
+
+    simulation.run();
+
+    const swing = events.find(
+      (event) => event.type === 'damage' && event.abilityName === 'Cat Melee',
+    );
+    expect(swing).toBeDefined();
+
+    // -20 + 136 x 2 + 10% of the larger of the Hunter's two pools.
+    const petAttackPower = 252 + highestAttackPower(owner) * 0.1;
+    const expected = (PET_BASE_DAMAGE + (2 / 14) * petAttackPower) * 1.375;
+
+    expect(swing!.amount).toBeCloseTo(expected, 6);
+
+    /*
+     * AND THE TWO WAYS IT COULD BE WRONG, NAMED. A second application of the
+     * multiplier is 1.89x and dropping it entirely is 0.73x -- both land on a
+     * number that reads as a plausible pet.
+     */
+    expect(swing!.amount).not.toBeCloseTo(expected * 1.375, 1);
+    expect(swing!.amount).not.toBeCloseTo(expected / 1.375, 1);
   });
 
   it('reads the HIGHEST attack power source, not the ranged one', () => {
@@ -576,7 +723,13 @@ describe("the owner's talents reach the pet", () => {
     expect(PET_FAMILIES.cat.damageModifier).toBe(1.1);
     expect(PET_HAPPY_DAMAGE_MULTIPLIER).toBe(1.25);
     expect(pet.damageDoneMultiplier).toBeCloseTo(1.17 * 1.1 * 1.25, 6);
-    expect(pet.stats.get('critChance')).toBeCloseTo(stats.critChance + 10, 6);
+    /*
+     * THE OWNER'S CRIT, FEROCITY'S 10, AND THE PET'S OWN 5 -- three terms, and
+     * the third arrived with the owner's pet model on 2026-10-01. "Pet Crit
+     * Chance = Agility / 20 + HunterCritChance", and a pet's base agility is
+     * 100.
+     */
+    expect(pet.stats.get('critChance')).toBeCloseTo(stats.critChance + 10 + 100 / 20, 6);
     // Endurance Training's 1.09, and the Cat's own 0.98 on top.
     expect(pet.health.maximum).toBe(
       Math.round(

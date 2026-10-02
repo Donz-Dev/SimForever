@@ -93,31 +93,39 @@ Every profile has exactly one list of its own — 23 profiles, 23 lists, no
 sharing, and **all 23 are the ruleset owner's**. DPS is the baseline in
 [HANDOVER.md](../HANDOVER.md): 30 batches of 10 with the preset raid buffs.
 
+**THE DPS COLUMN WAS RE-SYNCED WHOLESALE, because it had drifted from the
+baseline it says it carries** — Cat read 488.0 against a real 656.1, and eleven
+other rows were out by a dive or by `#149` raising the preset raid buffs from
+twelve to seventeen. Every figure here comes from one 30-batch run of all 23 at
+the same commit, so they are comparable to each other and to HANDOVER's table.
+**A DPS column in a structural table is the easiest thing in this project to
+leave behind**, because nothing about a list changes when a figure does.
+
 | Profile | DPS | List | Entries | Gated |
 | --- | --- | --- | --- | --- |
+| Cat | 656.1 | `DRUID_CAT` | 5 | 3 |
 | DW Fury | 651.2 | `WARRIOR_DUAL_WIELD_BERSERKER` | 10 | 6 |
 | 2H Arms | 603.3 | `WARRIOR_TWO_HAND_BATTLE` | 12 | 8 |
-| Cat | 488.0 | `DRUID_CAT` | 5 | 3 |
-| Seal Twist Ret | 471.0 | `PALADIN_RETRIBUTION` | 7 | 3 |
-| Firelock | 468.4 | `WARLOCK_DESTRUCTION` | 6 | 2 |
+| BM Hunter | 595.1 | `HUNTER_BEAST_MASTERY` | 7 | 5 |
+| Seal Twist Ret | 585.5 | `PALADIN_RETRIBUTION` | 7 | 3 |
+| Fire | 552.5 | `MAGE_FIRE` | 5 | 4 |
+| Arcane | 546.5 | `MAGE_ARCANE` | 5 | 4 |
+| Frostfire | 537.6 | `MAGE_FROSTFIRE` | 5 | 4 |
+| Shockadin | 522.7 | `PALADIN_SHOCKADIN` | 7 | 2 |
+| Enh Shaman | 509.8 | `SHAMAN_ENHANCEMENT` | 8 | 6 |
+| Firelock | 507.9 | `WARLOCK_DESTRUCTION` | 6 | 2 |
+| Shadow | 493.9 | `PRIEST_SHADOW` | 6 | 4 |
+| Combat | 464.9 | `ROGUE_COMBAT` | 5 | 2 |
 | Prot Warr | 454.6 | `WARRIOR_SHIELD_DEFENSIVE` | 14 | 10 |
-| Enh Shaman | 462.0 | `SHAMAN_ENHANCEMENT` | 8 | 6 |
-| Shadow | 437.3 | `PRIEST_SHADOW` | 6 | 4 |
-| Combat | 422.5 | `ROGUE_COMBAT` | 5 | 2 |
-| Frostfire | 412.5 | `MAGE_FROSTFIRE` | 5 | 4 |
-| BM Hunter | 405.8 | `HUNTER_BEAST_MASTERY` | 7 | 5 |
-| Fire | 401.2 | `MAGE_FIRE` | 5 | 4 |
-| Venom | 395.9 | `ROGUE_VENOM` | 5 | 4 |
-| Arcane | 392.6 | `MAGE_ARCANE` | 5 | 4 |
-| Moonkin | 384.3 | `DRUID_MOONKIN` | 5 | 4 |
-| Rupture | 379.7 | `ROGUE_RUPTURE` | 8 | 5 |
-| Shockadin | 379.0 | `PALADIN_SHOCKADIN` | 7 | 2 |
-| Bear | 376.2 | `DRUID_BEAR` | 8 | 4 |
-| SM/DS | 363.9 | `WARLOCK_AFFLICTION` | 5 | 4 |
-| LW Melee | 321.5 | `HUNTER_LONE_WOLF_MELEE` | 5 | 2 |
-| LW Ranged | 311.7 | `HUNTER_LONE_WOLF_RANGED` | 7 | 5 |
-| Ele Shaman | 375.0 | `SHAMAN_ELEMENTAL` | 4 | 2 |
-| Prot Pally | 153.2 | `PALADIN_PROTECTION` | 9 | 6 |
+| Venom | 448.4 | `ROGUE_VENOM` | 5 | 4 |
+| Bear | 444.7 | `DRUID_BEAR` | 8 | 4 |
+| Moonkin | 432.4 | `DRUID_MOONKIN` | 5 | 4 |
+| LW Ranged | 413.2 | `HUNTER_LONE_WOLF_RANGED` | 7 | 5 |
+| Ele Shaman | 411.4 | `SHAMAN_ELEMENTAL` | 4 | 2 |
+| Rupture | 406.3 | `ROGUE_RUPTURE` | 8 | 5 |
+| SM/DS | 402.0 | `WARLOCK_AFFLICTION` | 5 | 4 |
+| LW Melee | 369.7 | `HUNTER_LONE_WOLF_MELEE` | 6 | 2 |
+| Prot Pally | 270.1 | `PALADIN_PROTECTION` | 9 | 6 |
 
 Plus `PET_PRIORITY` (2 entries), which runs on the BM Hunter's pet, and two
 Warrior lists **no preset reaches** — `WARRIOR_BATTLE` (14 entries) and
