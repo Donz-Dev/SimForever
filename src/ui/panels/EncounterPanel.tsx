@@ -1,9 +1,4 @@
 import { TARGET_ARMOR_OPTIONS } from '../../game/actors/createTrainingDummy';
-import {
-  EXTERNAL_HEAL_MAXIMUM,
-  EXTERNAL_HEAL_MINIMUM,
-} from '../../game/encounters/externalHealer';
-import { BOSS_SWING_DAMAGE_RAMP } from '../../game/encounters/raidBoss';
 import type { CharacterProfile } from '../../profiles';
 import type { SelectOption } from '../components/Field';
 import { CheckboxField, NumberField, SelectField, TextField } from '../components/Field';
@@ -25,18 +20,15 @@ interface EncounterPanelProps {
  * Whether the target hits BACK is editable, and off by default. Turning it on
  * is what brings the attacks-received table, rage from damage taken, Revenge
  * and six Warrior talents to life -- and what makes every resulting number
- * depend on two borrowed Classic placeholders, which is why they are shown
- * beside the switch rather than buried in code.
+ * depend on two borrowed Classic placeholders. CLAUDE.md requires a reader to
+ * be able to SEE a placeholder, so each of the two fields says so in its hint;
+ * that is the whole of the obligation and it is deliberately two words.
  *
  * It also turns on the ramp and the assumed healer, neither of which is
  * editable. Nobody asked to vary them, and a field for every modelling choice
- * is how a panel becomes unreadable -- but they change every number on the
- * results page, so they are stated here in words.
+ * is how a panel becomes unreadable.
  */
 export function EncounterPanel({ profile, onChange }: EncounterPanelProps) {
-  // Read from the constant rather than written out, so the sentence cannot
-  // drift away from the mechanic the way a hardcoded "10%" eventually does.
-  const rampPercent = BOSS_SWING_DAMAGE_RAMP * 100;
   const setEncounter = (changes: Partial<CharacterProfile['encounter']>) => {
     onChange({ ...profile, encounter: { ...profile.encounter, ...changes } });
   };
@@ -72,7 +64,7 @@ export function EncounterPanel({ profile, onChange }: EncounterPanelProps) {
         <>
           <NumberField
             label="Swing damage"
-            hint="first swing, before armor"
+            hint="Classic placeholder · first swing, before armor"
             value={profile.encounter.targetSwingDamage}
             min={0}
             step={100}
@@ -80,25 +72,12 @@ export function EncounterPanel({ profile, onChange }: EncounterPanelProps) {
           />
           <NumberField
             label="Swing speed"
-            hint="seconds"
+            hint="Classic placeholder · seconds"
             value={profile.encounter.targetSwingSeconds}
             min={0.1}
             step={0.1}
             onChange={(targetSwingSeconds) => setEncounter({ targetSwingSeconds })}
           />
-          <p className="muted warn">
-            Those two numbers are <strong>WoW Classic placeholders</strong>, not Forever data.
-            Being hit is a large source of rage, so a fight with this on says as much about
-            the figures above as about the character.
-          </p>
-          <p className="muted">
-            Each swing hits <strong>{rampPercent}% harder than the one before</strong>, so the
-            fight gets away from the character on purpose. A healer is assumed but not
-            modelled: {EXTERNAL_HEAL_MINIMUM.toLocaleString()} to{' '}
-            {EXTERNAL_HEAL_MAXIMUM.toLocaleString()} every second, from nobody. The character
-            can die, is put straight back on their feet, and the ramp carries on regardless —
-            the results count the deaths.
-          </p>
         </>
       ) : null}
     </Panel>

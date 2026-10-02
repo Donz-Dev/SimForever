@@ -1,5 +1,4 @@
-import type { CharacterProfile, ProfilePreset } from '../../profiles';
-import { PROFILE_PRESETS } from '../../profiles';
+import type { CharacterProfile } from '../../profiles';
 import type { CharacterSelection, CombatStyleId } from '../../game/character';
 import { startingEquipmentFor } from '../../game/items/startingSets';
 import { abilitiesForClass } from '../../game/abilities/abilitiesForClass';
@@ -32,15 +31,6 @@ interface CharacterPanelProps {
   readonly onEdit: () => void;
   readonly onImport: () => void;
   readonly onLoad: () => void;
-  /**
-   * Replace the whole character with a ready-made one.
-   *
-   * Separate from `onChange` because it is not an edit: a preset sets every
-   * field at once, including gear and talents, and the caller confirms the
-   * character in the same step rather than leaving someone to press Confirm on
-   * a build they did not assemble.
-   */
-  readonly onPreset: (preset: ProfilePreset) => void;
 }
 
 /**
@@ -92,7 +82,6 @@ export function CharacterPanel({
   onEdit,
   onImport,
   onLoad,
-  onPreset,
 }: CharacterPanelProps) {
   const race = getRace(profile.character.race);
   const selection: CharacterSelection = {
@@ -198,7 +187,6 @@ export function CharacterPanel({
         * with a character nobody meant -- a shield without Defensive Stance,
         * or a tank against a target that never swings.
         */}
-      <PresetButtons onPreset={onPreset} />
 
       <TextField
         label="Name"
@@ -258,22 +246,19 @@ export function CharacterPanel({
       />
 
       {isWarrior ? (
-        <>
-          <OptionGroup
-            label="Stance"
-            options={STANCES}
-            value={stance}
-            onChange={(next) =>
-              onChange(
-                withTankEncounter(profile, {
-                  ...profile,
-                  character: { ...profile.character, stance: next },
-                }),
-              )
-            }
-          />
-          <p className="muted stance-note">{getStance(stance)?.effect}</p>
-        </>
+        <OptionGroup
+          label="Stance"
+          options={STANCES}
+          value={stance}
+          onChange={(next) =>
+            onChange(
+              withTankEncounter(profile, {
+                ...profile,
+                character: { ...profile.character, stance: next },
+              }),
+            )
+          }
+        />
       ) : null}
 
       {abilityCount === 0 ? (
@@ -337,31 +322,3 @@ function ConfirmedCharacter({
   );
 }
 
-/**
- * The ready-made characters.
- *
- * A preset is a whole answer rather than a starting point: name, race, class,
- * style, stance, tree, gear and whether the target swings back, all at once.
- * See `profiles/presets.ts` for why those belong together.
- */
-function PresetButtons({ onPreset }: { readonly onPreset: (preset: ProfilePreset) => void }) {
-  return (
-    <div className="presets">
-      <span className="field-label">Start from</span>
-      <div className="preset-row">
-        {PROFILE_PRESETS.map((preset) => (
-          <button
-            key={preset.id}
-            type="button"
-            className="preset"
-            onClick={() => onPreset(preset)}
-            title={preset.detail}
-          >
-            <span className="preset-label">{preset.label}</span>
-            <span className="preset-detail">{preset.detail}</span>
-          </button>
-        ))}
-      </div>
-    </div>
-  );
-}

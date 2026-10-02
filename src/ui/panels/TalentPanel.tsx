@@ -1,11 +1,6 @@
-import type { ClassId, CombatStyleId } from '../../game/character';
-import { MAX_CHARACTER_LEVEL } from '../../game/character';
+import type { ClassId } from '../../game/character';
 import type { ClassTalents, Talent, TalentAllocation, TalentTree } from '../../game/talents/Talent';
 import { TOTAL_TALENT_POINTS } from '../../game/talents/Talent';
-import type { OutOfScope, UnmodelledTalent } from '../../game/talents/TalentEffect';
-import { talentBuild, talentContextFor } from '../../game/talents/talentBuild';
-import { weaponsFor } from '../../game/actors/createPlayer';
-import type { Equipment } from '../../game/items/Item';
 import { accentFor, talentsForClass } from '../../game/talents/talentData';
 import {
   canSpend,
@@ -17,45 +12,6 @@ import {
   spend,
   unspend,
 } from '../../game/talents/talentRules';
-
-/**
- * What each ruling means, in a sentence a player reads.
- *
- * ----------------------------------------------------------------------------
- * `Record<OutOfScope, string>` IS THE POINT, NOT A TYPE ANNOTATION. The caption
- * below used to enumerate the rulings by hand -- "no positions, no crowd control,
- * no threat and no healing throughput" -- and it had already gone stale: STEALTH
- * had been a ruling for a while and the sentence did not mention it, so a Rogue
- * reading the panel was told its stealth talents were out of scope for reasons
- * that did not include the one that applied.
- *
- * That is the same decay `rotationIds.test.ts` had when it listed the lists to
- * check and ended up checking four of twenty-six. A hand-written enumeration of a
- * union is a copy of the union, and the copy is what drifts. An exhaustive
- * `Record` makes adding a member to `OutOfScope` without a label a COMPILE ERROR,
- * which is the only version of this that cannot rot.
- * ----------------------------------------------------------------------------
- */
-export const SCOPE_LABELS: Record<OutOfScope, string> = {
-  positioning: 'no positions or movement',
-  crowdControl: 'no crowd control',
-  threat: 'no threat',
-  healing: 'no healing throughput',
-  stealth: 'no stealth and no openers',
-  castPushback: 'no cast pushback',
-  totemEntities: 'no totems as entities',
-};
-
-/** The rulings that actually apply to THIS build, in the union's own order. */
-export function rulingsInPlay(entries: readonly UnmodelledTalent[]): string {
-  const present = (Object.keys(SCOPE_LABELS) as OutOfScope[]).filter((scope) =>
-    entries.some((entry) => entry.scope === scope),
-  );
-  if (present.length === 0) return '';
-  const labels = present.map((scope) => SCOPE_LABELS[scope]);
-  if (labels.length === 1) return labels[0];
-  return `${labels.slice(0, -1).join(', ')} and ${labels[labels.length - 1]}`;
-}
 
 /** Talent icons come from the shared WoW icon CDN, as the source calculator's do. */
 const ICON_BASE = 'https://wow.zamimg.com/images/wow/icons/medium';
@@ -75,9 +31,6 @@ type TalentUpdate = (previous: TalentAllocation) => TalentAllocation;
 
 interface TalentPanelProps {
   readonly characterClass: ClassId;
-  /** What the character is holding, so conditional talents can be judged. */
-  readonly equipment: Equipment;
-  readonly combatStyle: CombatStyleId;
   readonly allocation: TalentAllocation;
   readonly onChange: (update: TalentUpdate) => void;
   readonly collapsed: boolean;
@@ -90,25 +43,21 @@ interface TalentPanelProps {
  * Left click spends a point, right click takes one back -- the binding every
  * talent calculator has used for twenty years, so it needs no instructions.
  *
- * SOME OF THIS AFFECTS A SIMULATION AND SOME DOES NOT. A talent that grants an
- * ability, changes a stat, raises a resource cap or alters an ability's cost or
- * cooldown is real; anything with a gap is listed below it with the reason.
- * Said on screen, per talent, rather than left for someone to discover by
- * running two builds and comparing.
+ * SOME OF THIS AFFECTS A SIMULATION AND SOME DOES NOT, and this panel NO
+ * LONGER SAYS WHICH. It used to list every unmodelled talent with the reason
+ * off its effect -- see the note on `talentBuild` in the commit that removed
+ * it. The owner's call: that reporting is for this repository, not for a
+ * person running a sim, and `tools/class_audit.ts` is where it lives now.
  *
- * THE LIST IS NOT ONLY DEAD TALENTS, which is why it no longer says they "do
- * nothing". A talent can be mostly modelled and carry one caveat -- Blood
- * Craze regenerates exactly what it says and borrows only its tick cadence,
- * and Weaponmaster does the clause it can express and flags the two it
- * cannot. Calling those inert would be as wrong as saying nothing.
+ * It is why the panel takes no `equipment` any more. The only reason it ever
+ * knew what the character was holding was to judge conditional talents for
+ * that list.
  *
  * Collapsible because it is tall: three trees of seven rows push the results
  * off screen on a laptop, and the trees are set once and then watched rarely.
  */
 export function TalentPanel({
   characterClass,
-  equipment,
-  combatStyle,
   allocation,
   onChange,
   collapsed,
@@ -118,41 +67,6 @@ export function TalentPanel({
   if (!talents) return null;
 
   const remaining = pointsRemaining(allocation);
-  // Which of the spent talents are doing nothing, and why. The Gear panel
-  // prints the same list for items under "Equipped but not simulated"; a talent
-  // that silently did nothing would look exactly like one that worked.
-  /*
-   * BUILT AGAINST THE GEAR, which it was not before.
-   *
-   * This called `talentBuild` with no context, so every conditional talent
-   * reported "this character is not holding one" however the character was
-   * geared -- Toughness read "no armor from items" on a warrior in a full
-   * set. `talentContextFor` is the same function `createPlayer` uses, so the
-   * panel and the fight cannot disagree about what is equipped.
-   */
-  const { unmodelled } = talentBuild(
-    characterClass,
-    allocation,
-    // The class and allocation too, so a pet-gated talent reports the same
-    // thing here that the fight applies -- the panel and the fight cannot
-    // disagree, which is the whole point of sharing this function.
-    talentContextFor(equipment, combatStyle, weaponsFor(equipment, combatStyle), {
-      characterClass,
-      talents: allocation,
-      // The level the FIGHT builds at, not one off the profile: `createPlayer`
-      // makes every character 60, and a panel that described a build at any
-      // other level would be describing a character nobody can run.
-      level: MAX_CHARACTER_LEVEL,
-    }),
-  );
-
-  /*
-   * Split by PERMANENCE. A `scope` means the owner ruled the effect out, so it
-   * is a decision rather than work outstanding -- see `OutOfScope`.
-   */
-  const gaps = unmodelled.filter((entry) => entry.scope === undefined);
-  const ruled = unmodelled.filter((entry) => entry.scope !== undefined);
-
   return (
     <section className="panel talent-panel">
       <header className="panel-header">
@@ -178,57 +92,6 @@ export function TalentPanel({
 
       {collapsed ? null : (
         <div className="panel-body talent-body">
-          {gaps.length > 0 ? (
-            <>
-              <p className="muted warn talent-warning">
-                Chosen but not fully simulated. Each of these does less than it says —
-                several of them nothing at all — so the results are lower than the real
-                game by whatever the gap is worth.
-              </p>
-              <ul className="issues">
-                {gaps.map((entry: UnmodelledTalent) => (
-                  <li key={entry.talentId}>
-                    <strong>
-                      {entry.name} ({entry.rank}/{talents.byId.get(entry.talentId)?.ranks ?? entry.rank})
-                    </strong>{' '}
-                    — {entry.text}
-                    <span className="muted"> {entry.reason}</span>
-                  </li>
-                ))}
-              </ul>
-            </>
-          ) : null}
-          {/*
-           * A RULING IS NOT A GAP, and showing the two in one list told someone
-           * their build was missing features when the simulator had simply been
-           * told not to model them. They do not expire and no amount of work will
-           * clear them.
-           *
-           * THE SENTENCE NAMES ONLY THE RULINGS THIS BUILD ACTUALLY HITS, derived
-           * from the entries rather than written out, because the written-out
-           * version was both incomplete and wrong for every build it over-claimed
-           * against. See `SCOPE_LABELS`.
-           */}
-          {ruled.length > 0 ? (
-            <>
-              <p className="muted talent-warning">
-                Out of scope by ruling — not missing work. This simulator models{' '}
-                {rulingsInPlay(ruled)}, so these talents cannot do anything here and
-                never will.
-              </p>
-              <ul className="issues">
-                {ruled.map((entry: UnmodelledTalent) => (
-                  <li key={entry.talentId}>
-                    <strong>
-                      {entry.name} ({entry.rank}/{talents.byId.get(entry.talentId)?.ranks ?? entry.rank})
-                    </strong>{' '}
-                    — {entry.text}
-                    <span className="muted"> {entry.reason}</span>
-                  </li>
-                ))}
-              </ul>
-            </>
-          ) : null}
           <div className="talent-trees">
             {talents.trees.map((tree, index) => (
               <TalentTreeView
