@@ -3,7 +3,6 @@ import type { CombatStyleId } from '../../game/character';
 import { resolveCombatStyle } from '../../game/character';
 import type { Equipment, EquipmentSlot } from '../../game/items/Item';
 import { enchantsForSlot, itemsForSlot } from '../../game/items/itemData';
-import { unmodelledEffects } from '../../game/items/equipment';
 import { hasStartingEquipment, startingEquipmentFor } from '../../game/items/startingSets';
 import { Panel } from '../components/Panel';
 import {
@@ -148,7 +147,6 @@ export function GearPanel({ profile, onChange }: GearPanelProps) {
     onChange({ ...profile, equipment: equipment as Equipment });
   };
 
-  const missing = unmodelledEffects(profile.equipment, style);
   const slots = [...weaponSlotsFor(style), ...COMMON_SLOTS];
   const equipped = Object.keys(profile.equipment).length;
 
@@ -201,19 +199,6 @@ export function GearPanel({ profile, onChange }: GearPanelProps) {
           poisons={profile.poisons}
           onChange={(poisons) => onChange({ ...profile, poisons })}
         />
-      ) : null}
-
-      {missing.length > 0 ? (
-        <>
-          <h3>Equipped but not simulated</h3>
-          <ul className="issues">
-            {missing.map((effect, index) => (
-              <li key={`${effect.itemName}-${index}`}>
-                <strong>{effect.itemName}</strong> — {effect.text}
-              </li>
-            ))}
-          </ul>
-        </>
       ) : null}
     </Panel>
   );

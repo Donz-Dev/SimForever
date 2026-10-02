@@ -59,7 +59,6 @@ export function RaidBuffsPanel({ profile, onChange }: RaidBuffsPanelProps) {
   const onPlayer = RAID_BUFFS.filter((buff) => buff.appliesTo === 'player');
   const onTarget = RAID_BUFFS.filter((buff) => buff.appliesTo === 'enemy');
   const active = RAID_BUFFS.filter((buff) => chosen.has(buff.id));
-  const caveats = active.filter((buff) => buff.unmodelled !== undefined);
 
   return (
     <Panel
@@ -83,19 +82,6 @@ export function RaidBuffsPanel({ profile, onChange }: RaidBuffsPanelProps) {
     >
       <BuffGroup title="On the character" buffs={onPlayer} chosen={chosen} onToggle={toggle} />
       <BuffGroup title="On the target" buffs={onTarget} chosen={chosen} onToggle={toggle} />
-
-      {caveats.length > 0 ? (
-        <>
-          <h3>Selected but not fully simulated</h3>
-          <ul className="issues">
-            {caveats.map((buff) => (
-              <li key={buff.id}>
-                <strong>{buff.name}</strong>
-              </li>
-            ))}
-          </ul>
-        </>
-      ) : null}
     </Panel>
   );
 }

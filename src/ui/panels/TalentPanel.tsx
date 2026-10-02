@@ -1,11 +1,6 @@
-import type { ClassId, CombatStyleId } from '../../game/character';
-import { MAX_CHARACTER_LEVEL } from '../../game/character';
+import type { ClassId } from '../../game/character';
 import type { ClassTalents, Talent, TalentAllocation, TalentTree } from '../../game/talents/Talent';
 import { TOTAL_TALENT_POINTS } from '../../game/talents/Talent';
-import type { UnmodelledTalent } from '../../game/talents/TalentEffect';
-import { talentBuild, talentContextFor } from '../../game/talents/talentBuild';
-import { weaponsFor } from '../../game/actors/createPlayer';
-import type { Equipment } from '../../game/items/Item';
 import { accentFor, talentsForClass } from '../../game/talents/talentData';
 import {
   canSpend,
@@ -17,34 +12,6 @@ import {
   spend,
   unspend,
 } from '../../game/talents/talentRules';
-
-/**
- * One row per talent, not one per unmodelled CLAUSE.
- *
- * ----------------------------------------------------------------------------
- * A talent can carry several `unmodelled` entries -- Weaponmaster has three,
- * one for each weapon clause it cannot express. They share a `talentId`, and
- * they used to be told apart on screen only by the per-entry REASON, which this
- * panel no longer prints. Without that, the three rendered as the same sentence
- * three times over, with no visible cause.
- *
- * It was also a duplicate React key the whole time -- `key={entry.talentId}` on
- * three siblings -- which React logs and which it is allowed to resolve by
- * dropping rows. The reason text hid both problems rather than preventing them.
- *
- * Deduplicating HERE and not in `talentBuild` is deliberate: the clauses are
- * genuinely separate to `class_audit.ts`, which counts them, and collapsing them
- * at the source would change the census. This is a presentation choice.
- * ----------------------------------------------------------------------------
- */
-function oncePerTalent(entries: readonly UnmodelledTalent[]): UnmodelledTalent[] {
-  const seen = new Set<string>();
-  return entries.filter((entry) => {
-    if (seen.has(entry.talentId)) return false;
-    seen.add(entry.talentId);
-    return true;
-  });
-}
 
 /** Talent icons come from the shared WoW icon CDN, as the source calculator's do. */
 const ICON_BASE = 'https://wow.zamimg.com/images/wow/icons/medium';
@@ -64,9 +31,6 @@ type TalentUpdate = (previous: TalentAllocation) => TalentAllocation;
 
 interface TalentPanelProps {
   readonly characterClass: ClassId;
-  /** What the character is holding, so conditional talents can be judged. */
-  readonly equipment: Equipment;
-  readonly combatStyle: CombatStyleId;
   readonly allocation: TalentAllocation;
   readonly onChange: (update: TalentUpdate) => void;
   readonly collapsed: boolean;
@@ -79,26 +43,21 @@ interface TalentPanelProps {
  * Left click spends a point, right click takes one back -- the binding every
  * talent calculator has used for twenty years, so it needs no instructions.
  *
- * SOME OF THIS AFFECTS A SIMULATION AND SOME DOES NOT. A talent that grants an
- * ability, changes a stat, raises a resource cap or alters an ability's cost or
- * cooldown is real; anything with a gap is NAMED in one of the two lists below.
- * The per-talent REASON used to print beside each name and no longer does -- it
- * was written for this repository, not for a reader, and the owner cut it. The
- * reasons still exist on the effects and `class_audit.ts` still prints them.
+ * SOME OF THIS AFFECTS A SIMULATION AND SOME DOES NOT, and this panel NO
+ * LONGER SAYS WHICH. It used to list every unmodelled talent with the reason
+ * off its effect -- see the note on `talentBuild` in the commit that removed
+ * it. The owner's call: that reporting is for this repository, not for a
+ * person running a sim, and `tools/class_audit.ts` is where it lives now.
  *
- * THE LIST IS NOT ONLY DEAD TALENTS, which is why it no longer says they "do
- * nothing". A talent can be mostly modelled and carry one caveat -- Blood
- * Craze regenerates exactly what it says and borrows only its tick cadence,
- * and Weaponmaster does the clause it can express and flags the two it
- * cannot. Calling those inert would be as wrong as saying nothing.
+ * It is why the panel takes no `equipment` any more. The only reason it ever
+ * knew what the character was holding was to judge conditional talents for
+ * that list.
  *
  * Collapsible because it is tall: three trees of seven rows push the results
  * off screen on a laptop, and the trees are set once and then watched rarely.
  */
 export function TalentPanel({
   characterClass,
-  equipment,
-  combatStyle,
   allocation,
   onChange,
   collapsed,
@@ -108,41 +67,6 @@ export function TalentPanel({
   if (!talents) return null;
 
   const remaining = pointsRemaining(allocation);
-  // Which of the spent talents are doing nothing. The Gear panel prints the
-  // same list for items under "Equipped but not simulated"; a talent that
-  // silently did nothing would look exactly like one that worked.
-  /*
-   * BUILT AGAINST THE GEAR, which it was not before.
-   *
-   * This called `talentBuild` with no context, so every conditional talent
-   * reported "this character is not holding one" however the character was
-   * geared -- Toughness read "no armor from items" on a warrior in a full
-   * set. `talentContextFor` is the same function `createPlayer` uses, so the
-   * panel and the fight cannot disagree about what is equipped.
-   */
-  const { unmodelled } = talentBuild(
-    characterClass,
-    allocation,
-    // The class and allocation too, so a pet-gated talent reports the same
-    // thing here that the fight applies -- the panel and the fight cannot
-    // disagree, which is the whole point of sharing this function.
-    talentContextFor(equipment, combatStyle, weaponsFor(equipment, combatStyle), {
-      characterClass,
-      talents: allocation,
-      // The level the FIGHT builds at, not one off the profile: `createPlayer`
-      // makes every character 60, and a panel that described a build at any
-      // other level would be describing a character nobody can run.
-      level: MAX_CHARACTER_LEVEL,
-    }),
-  );
-
-  /*
-   * Split by PERMANENCE. A `scope` means the owner ruled the effect out, so it
-   * is a decision rather than work outstanding -- see `OutOfScope`.
-   */
-  const gaps = oncePerTalent(unmodelled.filter((entry) => entry.scope === undefined));
-  const ruled = oncePerTalent(unmodelled.filter((entry) => entry.scope !== undefined));
-
   return (
     <section className="panel talent-panel">
       <header className="panel-header">
@@ -168,43 +92,6 @@ export function TalentPanel({
 
       {collapsed ? null : (
         <div className="panel-body talent-body">
-          {gaps.length > 0 ? (
-            <>
-              <h3>Chosen but not fully simulated</h3>
-              <ul className="issues">
-                {gaps.map((entry: UnmodelledTalent) => (
-                  <li key={entry.talentId}>
-                    <strong>
-                      {entry.name} ({entry.rank}/{talents.byId.get(entry.talentId)?.ranks ?? entry.rank})
-                    </strong>{' '}
-                    — {entry.text}
-                  </li>
-                ))}
-              </ul>
-            </>
-          ) : null}
-          {/*
-           * A RULING IS NOT A GAP, and showing the two in one list told someone
-           * their build was missing features when the simulator had simply been
-           * told not to model them. They do not expire and no amount of work will
-           * clear them. The two headings are the whole of that distinction now --
-           * the explanatory captions were cut on the owner's instruction.
-           */}
-          {ruled.length > 0 ? (
-            <>
-              <h3>Out of scope by ruling</h3>
-              <ul className="issues">
-                {ruled.map((entry: UnmodelledTalent) => (
-                  <li key={entry.talentId}>
-                    <strong>
-                      {entry.name} ({entry.rank}/{talents.byId.get(entry.talentId)?.ranks ?? entry.rank})
-                    </strong>{' '}
-                    — {entry.text}
-                  </li>
-                ))}
-              </ul>
-            </>
-          ) : null}
           <div className="talent-trees">
             {talents.trees.map((tree, index) => (
               <TalentTreeView
