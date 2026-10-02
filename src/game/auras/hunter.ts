@@ -468,7 +468,9 @@ export const BESTIAL_WRATH: AuraDefinition = {
  *
  * ONE NAME IN THE DAMAGE TABLE. Both report as "Hawk" -- the breakdown keys on
  * `abilityName`, so the two merge into the row a reader means by "the hawk"
- * rather than splitting into "Hawk 1" and "Hawk 2".
+ * rather than splitting into "Hawk 1" and "Hawk 2". The dive and the strikes
+ * merge into it too, which is why the row's AVERAGE is not any single hit: it
+ * is one full hit and nine quarters pooled.
  * ----------------------------------------------------------------------------
  */
 /*
@@ -494,23 +496,71 @@ export const BESTIAL_WRATH: AuraDefinition = {
  *
  * NEITHER SOURCE QUANTIFIES THE "CONTINUING ASSAULT" AT ALL -- both state one
  * figure for a hawk that "continu[es] its assault for 18 sec" -- so the cadence,
- * the hit count and the coefficient are all the owner's and none of them is in
+ * the tick size and the coefficient are all the owner's and none of them is in
  * the client data.
+ *
+ * ----------------------------------------------------------------------------
+ * THE THIRD REVISION, 2026-10-02, AND IT SPLITS THE OPENER FROM THE ASSAULT:
+ *
+ *   "it's 108 + 5% ranged attack power (RAP) on the initial hit BUT
+ *    (108 + 5% RAP) / 4 every 2 seconds -- instead of (108 + 5% RAP) every 3
+ *    seconds."
+ *
+ * So the dive-bomb is the full figure and each strike after it is a QUARTER of
+ * it, at the two-second cadence the first revision used. The previous version
+ * had every hit at the full figure.
+ *
+ * WHICH IS WHY THERE ARE NOW TWO FUNCTIONS AND NOT ONE. The second revision's
+ * comment said "ONE FORMULA USED TWICE" and that was its whole shape -- the
+ * ability and the aura called the same function. They no longer deal the same
+ * damage, so `hawkTickDamage` exists and is DERIVED from
+ * `hawkStrikeDamage` rather than written out: a quarter of a changing number
+ * must not be a second transcription of it.
+ *
+ * TEN HITS, AND THAT FIGURE IS DERIVED RATHER THAN STATED. The owner gave a hit
+ * count last time ("totalling 7 hits") and did not this time, so 1 + 18 / 2 is
+ * this project's arithmetic and not the owner's sentence -- which is the
+ * difference between a cross-check and a source, and is worth saying because
+ * the comment it replaces leaned on the stated seven as "the check on the other
+ * three numbers".
+ *
+ * WHAT THE WHOLE HAWK IS WORTH IS 3.25 TIMES ITS OPENER: one full hit plus nine
+ * quarters. Against the previous revision's 7 it is 46%, so the ability more
+ * than halved.
+ * ----------------------------------------------------------------------------
  */
 export const HAWK_DAMAGE_PER_STRIKE = 108;
 export const HAWK_RANGED_ATTACK_POWER_COEFFICIENT = 0.05;
 export const HAWK_DURATION_MS = seconds(18);
-export const HAWK_STRIKE_INTERVAL_MS = seconds(3);
+export const HAWK_STRIKE_INTERVAL_MS = seconds(2);
 export const HAWK_MAX_ACTIVE = 2;
 
-/** One instant hit plus a tick every three seconds for eighteen. */
+/** Each strike after the dive is a QUARTER of it. */
+export const HAWK_TICK_DIVISOR = 4;
+
+/** One instant hit plus a tick every two seconds for eighteen. Derived. */
 export const HAWK_STRIKES = 1 + HAWK_DURATION_MS / HAWK_STRIKE_INTERVAL_MS;
 
-/** What the ability and each tick both deal. One formula, used twice. */
+/**
+ * The whole hawk, as a multiple of its opening hit: 1 + 9/4 = 3.25.
+ *
+ * A cross-check rather than a number anything reads -- the tests assert against
+ * it, so a cadence or a divisor that drifts changes it and fails there instead
+ * of quietly changing the ability's total.
+ */
+export const HAWK_TOTAL_AS_MULTIPLE_OF_OPENER =
+  1 + (HAWK_STRIKES - 1) / HAWK_TICK_DIVISOR;
+
+/** The DIVE-BOMB: the full figure, dealt once by the ability. */
 export function hawkStrikeDamage(rangedAttackPower: number): number {
   return (
     HAWK_DAMAGE_PER_STRIKE + rangedAttackPower * HAWK_RANGED_ATTACK_POWER_COEFFICIENT
   );
+}
+
+/** Each strike of the continuing assault: a quarter of the dive. */
+export function hawkTickDamage(rangedAttackPower: number): number {
+  return hawkStrikeDamage(rangedAttackPower) / HAWK_TICK_DIVISOR;
 }
 
 /**
@@ -556,7 +606,10 @@ function hawkAura(id: string): AuraDefinition {
            * applied" -- so a Rapid Fire or a Hunter's Mark landing mid-flight
            * raises the strikes after it.
            */
-          baseAmount: hawkStrikeDamage(source.stats.effective.rangedAttackPower),
+          // A QUARTER of the dive, which is what separates this from the
+          // ability's own hit. Derived from the same function, never a second
+          // copy of the expression.
+          baseAmount: hawkTickDamage(source.stats.effective.rangedAttackPower),
           /*
            * The ranged attack power is already inside `baseAmount`, at the
            * owner's 5%. A coefficient here would count it twice.

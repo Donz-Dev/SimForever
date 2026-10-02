@@ -459,12 +459,16 @@ export const BESTIAL_WRATH_ABILITY: Ability = {
  * Summon Hawk, granted by the Beast Mastery talent.
  *
  * ----------------------------------------------------------------------------
- * ONE FORMULA, SEVEN TIMES. "108 physical damage + Hunter's Ranged Attack Power
- * x 0.05 instantly. And then the same damage again every 3 seconds for 18
- * seconds. Totalling 7 hits." So this deals the instant hit and `HAWK_AURAS`
- * deals the other six, and both call `hawkStrikeDamage` -- the alternative is
- * the same expression written twice, which is how two halves of an ability
- * drift apart.
+ * THE DIVE IS THE FULL FIGURE AND THE ASSAULT IS A QUARTER OF IT. "108 + 5%
+ * ranged attack power (RAP) on the initial hit BUT (108 + 5% RAP) / 4 every 2
+ * seconds." So this deals `hawkStrikeDamage` once and `HAWK_AURAS` deals
+ * `hawkTickDamage` nine times.
+ *
+ * THE TWO ARE NOT THE SAME NUMBER ANY MORE, which is the change from the
+ * previous revision -- where both halves called one function and the comment
+ * here said so. `hawkTickDamage` is DERIVED from `hawkStrikeDamage` rather than
+ * written out, because a quarter of a changing number must not become a second
+ * transcription of it.
  *
  * IT FILLS THE FIRST FREE SLOT AND OVERWRITES THE OLDEST WHEN THERE IS NONE,
  * the owner's rule: "casting a third summon hawk while hawk_1 and hawk_2 are
