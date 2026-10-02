@@ -107,7 +107,31 @@ stat for Hack and Slash. Nothing in the Warrior's own files changed.
 `armorPenetration.test.ts` asserts BOTH callers on purpose, which is what failed.
 See [docs/handoff/rogue.md](docs/handoff/rogue.md).
 
-**THE PET MODEL MOVED ONE PROFILE AND NOTHING ELSE BY A DECIMAL.** BM Hunter
+**THE HAWK WAS REDEFINED AGAIN AND IT MOVED ONE PROFILE.** BM Hunter **595.1
+to 646.6, +51.4, REAL**, the other twenty-two identical to the decimal. The
+ruleset owner restated the ability on 2026-10-02 -- 108 **plus 5% of ranged
+attack power**, instantly and then every three seconds for eighteen, **seven
+hits**, with **two independent hawks** rather than one aura stacked twice:
+
+| | |
+| --- | --- |
+| **+84.0** | the 5% ranged attack power coefficient, measured by zeroing it |
+| **-32.5** | the shape, together: ten hits at two seconds became seven at three, offset by each hawk getting its own clock |
+
+**THE HAWK IS NOW THE LARGEST SINGLE SOURCE IN THE PROFILE AT 30.3%**, above
+auto-shot. **AND IT CLOSED A CAVEAT RATHER THAN A PLACEHOLDER**: the old model
+admitted in writing that the two hawks shared one eighteen-second clock, so
+summoning the second reset the first and both expired together. `hawk_1` and
+`hawk_2` are separate auras now.
+
+**THE SILENT BREAKAGE IT NEARLY CAUSED IS THE PART WORTH CARRYING.** Unleashed
+Fury and Ferocity both key on the ability id `summon_hawk`, and both reached the
+old hawk only because the AURA was called `summon_hawk` -- a periodic tick
+carries its aura's id. Renaming the auras would have stopped two talents
+applying to a quarter of a Beast Mastery build's damage with nothing erroring.
+The damage events pass `abilityId` explicitly and a test asserts it.
+
+**THE PET MODEL MOVED ONE PROFILE AND NOTHING ELSE BY A DECIMAL BEFORE THAT.** BM Hunter
 **788.1 to 595.1, -193.0, REAL**, and the other twenty-two identical -- the two
 pet-less Hunters included, which is the containment check for a change confined
 to `createPet`. The ruleset owner supplied a complete pet model on 2026-10-01 and
@@ -282,7 +306,7 @@ while it worked.
 decimal -- which is what a talent change scoped to one build should look like.
 It makes Frostfire the top Mage, above Fire's 401.2 and Arcane's 392.6, and the
 build that existed for the Fire/Frost overlap now has a third reason to. The
-mean across 23 is 490.4, and the dives that moved it are below. See
+mean across 23 is 492.7, and the dives that moved it are below. See
 [docs/handoff-apl.md](docs/handoff-apl.md).
 
 **THE WARLOCK DEEP DIVE MOVED FIVE PROFILES AND ONE OF THEM A LONG WAY DOWN.**
@@ -316,8 +340,8 @@ so. Fourteen profiles moved.
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | Cat Druid | Druid | 9/35/7 | 656.1 | | Combat Rogue | Rogue | 18/33/0 | 464.9 |
 | DW Fury | Warrior | 18/33/0 | 651.2 | | Prot Warr | Warrior | 17/0/34 | 454.6 |
-| 2H Arms | Warrior | 38/13/0 | 603.3 | | Venom Rogue | Rogue | 37/12/2 | 448.4 |
-| **BM Hunter** | Hunter | 31/20/0 | **595.1** | | Bear Druid | Druid | 9/42/0 | 444.7 |
+| **BM Hunter** | Hunter | 31/20/0 | **646.6** | | Venom Rogue | Rogue | 37/12/2 | 448.4 |
+| 2H Arms | Warrior | 38/13/0 | 603.3 | | Bear Druid | Druid | 9/42/0 | 444.7 |
 | Seal Twist Ret | Paladin | 13/0/38 | 585.5 | | Moonkin | Druid | 38/0/13 | 432.4 |
 | Fire Mage | Mage | 10/39/2 | 552.5 | | LW Ranged | Hunter | 7/39/5 | 413.2 |
 | Arcane Mage | Mage | 47/4/0 | 546.5 | | Ele Shaman | Shaman | 38/13/0 | 411.4 |

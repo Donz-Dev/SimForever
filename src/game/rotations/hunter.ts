@@ -1,6 +1,7 @@
 import type { PriorityEntry, Rotation, SimulationContext, Combatant } from '../../engine';
 import { PriorityRotation } from '../../engine';
 import type { TalentAllocation } from '../talents/Talent';
+import { HAWK_MAX_ACTIVE, activeHawks } from '../auras/hunter';
 
 /**
  * Hunter priority lists — THE RULESET OWNER'S OWN, entry by entry.
@@ -109,6 +110,30 @@ const selfExpired = (auraId: string) =>
   (context: SimulationContext, actor: Combatant): boolean =>
     actor.auras.remainingMs(auraId, context.clock.now()) <= 0;
 
+/**
+ * "CAST SUMMON HAWK IF summoned_hawks < 2", the ruleset owner's clause.
+ *
+ * ----------------------------------------------------------------------------
+ * THE GATE MOVED FROM THE ABILITY TO THE LIST, AND THAT IS A REAL DISTINCTION
+ * RATHER THAN A REFACTOR. Summon Hawk USED to refuse its own third cast, which
+ * made "only 2 hawks can be active" a rule of the game; the owner's model says
+ * a third cast is legal and overwrites, so the ability permits it and the list
+ * is what declines. An ability says what is LEGAL, a list says what is WISE.
+ *
+ * WHAT IT IS WORTH: without it this list casts Summon Hawk every six seconds
+ * for the whole fight, and every cast past the second spends 190 mana to
+ * restart a hawk that had twelve seconds left -- on a build that runs dry. With
+ * it, the entry falls through to Aimed Shot instead.
+ *
+ * `activeHawks` COUNTS THE TWO AURAS rather than reading a stack count, because
+ * there is no longer a stack count to read: `hawk_1` and `hawk_2` are separate
+ * auras with separate clocks, which is the whole point of the model.
+ * ----------------------------------------------------------------------------
+ */
+const hawksBelowCap =
+  (_context: SimulationContext, actor: Combatant): boolean =>
+    activeHawks(actor) < HAWK_MAX_ACTIVE;
+
 const missingOn = (auraId: string) =>
   (_context: SimulationContext, _actor: Combatant, target?: Combatant): boolean =>
     target !== undefined && !target.auras.has(auraId);
@@ -162,7 +187,7 @@ export const HUNTER_BEAST_MASTERY: readonly PriorityEntry[] = [
   { abilityId: 'serpent_sting', condition: missingOn('serpent_sting') },
   { abilityId: 'bestial_wrath', condition: petHasAura('frenzy') },
   { abilityId: 'rapid_fire' },
-  { abilityId: 'summon_hawk' },
+  { abilityId: 'summon_hawk', condition: hawksBelowCap },
   { abilityId: 'aimed_shot', condition: shotLandedRecently(RANGED_WEAVE_WINDOW_MS) },
 ];
 

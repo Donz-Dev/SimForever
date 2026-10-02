@@ -7,14 +7,15 @@ import {
   ASPECT_OF_THE_HAWK,
   HUNTERS_MARK,
   BESTIAL_WRATH,
-  HAWK_DAMAGE_PER_STRIKE,
-  HAWK_MAX_ACTIVE,
+  HAWK_ABILITY_ID,
+  HAWK_AURAS,
+  HAWK_DAMAGE_NAME,
   HAWK_UNMODELLED,
+  hawkStrikeDamage,
   EXPLOSIVE_TRAP,
   IMMOLATION_TRAP,
   RAPID_FIRE,
   SERPENT_STING,
-  SUMMON_HAWK_AURA,
 } from '../auras/hunter';
 
 /** The midpoint of a stated range. The combat table supplies the spread. */
@@ -458,17 +459,23 @@ export const BESTIAL_WRATH_ABILITY: Ability = {
  * Summon Hawk, granted by the Beast Mastery talent.
  *
  * ----------------------------------------------------------------------------
- * TWO CLAUSES, ONE EACH. "Command a hawk to dive-bomb your targeted enemy,
- * dealing 108 Physical damage AND CONTINUING ITS ASSAULT for 18 sec" -- so the
- * dive is this ability's own hit and the assault is `SUMMON_HAWK_AURA`'s
- * periodic. The owner's ruling is that both are 108: "108 for initial and every
- * other hit, once every 2 seconds."
+ * ONE FORMULA, SEVEN TIMES. "108 physical damage + Hunter's Ranged Attack Power
+ * x 0.05 instantly. And then the same damage again every 3 seconds for 18
+ * seconds. Totalling 7 hits." So this deals the instant hit and `HAWK_AURAS`
+ * deals the other six, and both call `hawkStrikeDamage` -- the alternative is
+ * the same expression written twice, which is how two halves of an ability
+ * drift apart.
  *
- * REFUSED AT TWO HAWKS, which is the ability's own sentence -- "Only 2 hawks
- * can be active at once." Without the gate the Beast Mastery list casts it
- * every six seconds for the whole fight and every cast past the second spends
- * 190 mana to reset a timer, on a build that runs dry. The list falls through
- * to Aimed Shot instead, which is what a priority list is for.
+ * IT FILLS THE FIRST FREE SLOT AND OVERWRITES THE OLDEST WHEN THERE IS NONE,
+ * the owner's rule: "casting a third summon hawk while hawk_1 and hawk_2 are
+ * active WOULD cause an overwrite / refresh". NO `canCast` GATE -- the previous
+ * version refused the third cast outright, which is the ability deciding
+ * something the list should decide. `HUNTER_BEAST_MASTERY` carries the
+ * `summoned_hawks < 2` clause instead.
+ *
+ * THE OLDEST IS THE ONE WITH LEAST TIME LEFT, which `remainingMs` answers
+ * directly. Overwriting the hawk about to expire anyway loses the least, and it
+ * is stated because "overwrite / refresh" does not say which of the two.
  * ----------------------------------------------------------------------------
  */
 export const SUMMON_HAWK: Ability = {
@@ -478,21 +485,30 @@ export const SUMMON_HAWK: Ability = {
   cooldownMs: seconds(6),
   // "Shares cooldown with Arcane Shot", which the wiki states outright.
   cooldownGroup: 'arcane_shot',
-  canCast: ({ caster }) => caster.auras.stacksOf('summon_hawk') < HAWK_MAX_ACTIVE,
   onCast: ({ simulation, caster, target }) => {
-    simulation.applyAura(caster, SUMMON_HAWK_AURA, caster.id);
+    const now = simulation.clock.now();
+    const free = HAWK_AURAS.find((aura) => !caster.auras.has(aura.id));
+    const slot =
+      free ??
+      [...HAWK_AURAS].sort(
+        (a, b) => caster.auras.remainingMs(a.id, now) - caster.auras.remainingMs(b.id, now),
+      )[0];
+    simulation.applyAura(caster, slot, caster.id);
+
     if (!target) return;
     dealDamage(simulation, {
       source: caster,
       target,
-      // Credited to the AURA's id so the dive and the assault are one row in
-      // the damage table, which is what a reader means by "the hawk".
-      abilityId: SUMMON_HAWK_AURA.id,
-      abilityName: SUMMON_HAWK_AURA.name,
+      /*
+       * Credited to `summon_hawk` so the instant hit and the six strikes are
+       * one row, and so Unleashed Fury and Ferocity reach both halves. The
+       * AURAS are `hawk_1` and `hawk_2`; the DAMAGE is the ability's.
+       */
+      abilityId: HAWK_ABILITY_ID,
+      abilityName: HAWK_DAMAGE_NAME,
       school: PHYSICAL,
-      baseAmount: HAWK_DAMAGE_PER_STRIKE,
-      // The owner's figure is flat. Neither half of the hawk takes a
-      // coefficient.
+      baseAmount: hawkStrikeDamage(caster.stats.effective.rangedAttackPower),
+      // The 5% is already inside `baseAmount`.
       powerCoefficient: 0,
       critFrom: 'ranged-special',
       appliesArmor: false,

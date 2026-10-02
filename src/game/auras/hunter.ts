@@ -436,100 +436,157 @@ export const BESTIAL_WRATH: AuraDefinition = {
 };
 
 /**
- * Summon Hawk, modelled as a repeating strike rather than as a creature.
+ * Summon Hawk: TWO INDEPENDENT HAWKS, each on its own eighteen-second clock.
  *
  * ----------------------------------------------------------------------------
- * THE RULESET OWNER'S CALL. A hawk is a TEMPORARY summon -- "continuing its
- * assault for 18 sec", up to two at once -- and the engine cannot add a
- * combatant mid-fight. Asked which way to go, the owner chose to model it
- * without a real combatant: a periodic effect on the Hunter that deals the
- * hawk's damage on its own timer.
+ * MODELLED WITHOUT A COMBATANT, on the ruleset owner's call -- the engine
+ * cannot add one mid-fight. The damage lands on the target and is credited to
+ * the Hunter; what is lost is that a hawk is not separately targetable and
+ * cannot be killed, neither of which any encounter here does.
  *
- * SO THE DAMAGE IS RIGHT AND THE ACTOR IS NOT THERE. It lands on the target,
- * it is credited to the Hunter, and it appears in the breakdown as its own
- * row. What is lost is that a hawk is not separately targetable and cannot be
- * killed, neither of which any encounter here does.
+ * TWO AURAS, NOT ONE AURA WITH TWO STACKS, AND THAT IS THE WHOLE POINT OF THIS
+ * VERSION. A stacked aura has ONE duration and ONE tick chain, so summoning the
+ * second hawk reset the first and both expired together -- the caveat the old
+ * `HAWK_UNMODELLED` admitted to and called "a fraction of a hawk either way".
+ * The owner's instruction is explicit that it should not work that way:
+ * "implemented in such a way that there is a hawk_1 and hawk_2, so that casting
+ * one doesn't overwrite the other."
  *
- * TWO AT ONCE IS TRACKED AND ONLY ONE DEALS DAMAGE. `maxStacks` is two and the
- * periodic fires once per AURA rather than once per stack, so the second hawk
- * adds nothing. That is the one part of this that understates and it says so.
+ * So `HAWK_AURAS` is two definitions that differ ONLY in their id. Each carries
+ * its own expiry and its own three-second chain, and a hawk summoned at t=6
+ * lives to t=24 while one summoned at t=0 dies at t=18.
+ *
+ * THE DAMAGE EVENTS STILL SAY `summon_hawk`, AND THAT IS LOAD-BEARING RATHER
+ * THAN COSMETIC. Unleashed Fury declares `abilityDamage` and Ferocity
+ * `abilityCrit` against the id `summon_hawk`, and both reached the old aura
+ * because the aura's id WAS `summon_hawk` -- a periodic tick carries the aura's
+ * id, which is the route Improved Rend takes on the Warrior. Renaming the auras
+ * to `hawk_1` and `hawk_2` breaks that silently: two talents a Beast Mastery
+ * build takes would stop applying to a quarter of its damage and nothing would
+ * error. `abilityId` is therefore passed EXPLICITLY, and
+ * `petsAndHunter.test.ts` asserts both talents still reach a tick.
+ *
+ * ONE NAME IN THE DAMAGE TABLE. Both report as "Hawk" -- the breakdown keys on
+ * `abilityName`, so the two merge into the row a reader means by "the hawk"
+ * rather than splitting into "Hawk 1" and "Hawk 2".
  * ----------------------------------------------------------------------------
  */
 /*
- * 108 IS THE RULESET OWNER'S RULING, AND 32 WAS RANK 1 OF THE ABILITY.
+ * 108 PLUS 5% OF RANGED ATTACK POWER, SEVEN TIMES. The ruleset owner's figures,
+ * 2026-10-02, and the second revision of this ability in three days:
  *
- * THE OLD COMMENT HERE SAID "32 IS NOT IN EITHER SOURCE" AND THAT WAS WRONG.
- * It is in a source -- the TALENT tooltip, whose text in
- * `src/data/talents/values/hunter.json` reads "dealing 32 Physical damage and
- * continuing its assault for 18 sec". That is the rank-1 trap CLAUDE.md names
- * outright: A TALENT TOOLTIP SHOWS RANK 1 OF THE ABILITY IT GRANTS. The
- * spellbook capture says `"rank": 4` and 108, and `foreverchanges.pro` says
- * 110, so the two "disagreeing" sources were the same number at two ranks and
- * there was never a disagreement to settle. The same mistake as Sniper Shot,
- * one file over, and this is the second time it has been made in this class.
+ *   "Summon Hawk does 108 physical damage + Hunter's Ranged Attack Power * 0.05
+ *    instantly. And then the same damage again every 3 seconds for 18 seconds.
+ *    Totalling 7 hits."
  *
- * WHAT THE OWNER RULED, asked which of the two readings of the capture to take:
- * "Assume it's 108 for initial and every other hit. Once every 2 seconds.
- * Similar to a DoT effect except two of these can be active."
+ * SEVEN IS THE CHECK ON THE OTHER THREE NUMBERS, which is why it is asserted
+ * rather than derived: one instant hit plus 18 / 3 ticks is 7, so a cadence or
+ * a duration that drifts fails `hawkStrikes()` instead of quietly changing the
+ * ability's total. The old reading was 108 flat every TWO seconds, which is ten
+ * hits and no scaling.
  *
- * So the dive-bomb is 108, dealt by the ability, and each active hawk strikes
- * for 108 every two seconds. `SUMMON_HAWK` deals the dive and this deals the
- * assault -- which is the capture's own two clauses, one each.
+ * AND 32 WAS RANK 1 OF THE ABILITY, which is worth keeping here because the
+ * comment this replaces got it wrong twice over. It claimed "32 is not in
+ * either source"; 32 is the TALENT tooltip's figure, and a talent tooltip shows
+ * rank 1 of the ability it grants. The spellbook capture says `"rank": 4` and
+ * 108 and `foreverchanges.pro` says 110, so the two "disagreeing" sources were
+ * one number at two ranks. Same trap as Sniper Shot, one file over.
  *
- * AND THE SECOND HAWK NOW DEALS DAMAGE, which is the understatement the old
- * comment admitted to. The periodic fires once per AURA and not once per
- * stack, so the tick reads `aura.stacks` and multiplies -- the route Lacerate
- * already takes on the Druid. At 32 a strike that understatement was worth
- * little; at 108 it would have been half the ability.
+ * NEITHER SOURCE QUANTIFIES THE "CONTINUING ASSAULT" AT ALL -- both state one
+ * figure for a hawk that "continu[es] its assault for 18 sec" -- so the cadence,
+ * the hit count and the coefficient are all the owner's and none of them is in
+ * the client data.
  */
 export const HAWK_DAMAGE_PER_STRIKE = 108;
+export const HAWK_RANGED_ATTACK_POWER_COEFFICIENT = 0.05;
 export const HAWK_DURATION_MS = seconds(18);
-export const HAWK_STRIKE_INTERVAL_MS = seconds(2);
+export const HAWK_STRIKE_INTERVAL_MS = seconds(3);
 export const HAWK_MAX_ACTIVE = 2;
+
+/** One instant hit plus a tick every three seconds for eighteen. */
+export const HAWK_STRIKES = 1 + HAWK_DURATION_MS / HAWK_STRIKE_INTERVAL_MS;
+
+/** What the ability and each tick both deal. One formula, used twice. */
+export function hawkStrikeDamage(rangedAttackPower: number): number {
+  return (
+    HAWK_DAMAGE_PER_STRIKE + rangedAttackPower * HAWK_RANGED_ATTACK_POWER_COEFFICIENT
+  );
+}
+
+/**
+ * The id the hawk's damage is CREDITED to, which is not the aura's.
+ *
+ * Unleashed Fury and Ferocity both name it. See the header above.
+ */
+export const HAWK_ABILITY_ID = 'summon_hawk';
+export const HAWK_DAMAGE_NAME = 'Hawk';
 
 export const HAWK_UNMODELLED =
   'A hawk is modelled as a repeating strike rather than as a creature, on the ' +
   'ruleset owner’s call -- the engine cannot add a combatant mid-fight. Its ' +
-  'damage lands and is credited, and BOTH hawks deal damage. What is left is ' +
-  'that the two share one 18-second clock: summoning the second resets the ' +
-  'first, so both expire together instead of 18 seconds after their own ' +
-  'summon. Over a fight that is worth a fraction of a hawk either way.';
+  'damage lands and is credited, both hawks deal damage, and each runs its own ' +
+  'eighteen-second clock. What is left is that a hawk is not separately ' +
+  'targetable and cannot be killed, neither of which any encounter here does.';
 
-export const SUMMON_HAWK_AURA: AuraDefinition = {
-  id: 'summon_hawk',
-  name: 'Hawk',
-  durationMs: HAWK_DURATION_MS,
-  maxStacks: HAWK_MAX_ACTIVE,
-  refreshBehaviour: 'reset',
-  periodic: {
-    intervalMs: HAWK_STRIKE_INTERVAL_MS,
-    onTick: (context, aura) => {
-      const source = context.combatant(aura.sourceId);
-      if (!source) return;
-      const target = context.defaultTargetFor(source);
-      if (!target || !target.isAlive) return;
+function hawkAura(id: string): AuraDefinition {
+  return {
+    id,
+    name: HAWK_DAMAGE_NAME,
+    durationMs: HAWK_DURATION_MS,
+    refreshBehaviour: 'reset',
+    periodic: {
+      intervalMs: HAWK_STRIKE_INTERVAL_MS,
+      onTick: (context, aura) => {
+        const source = context.combatant(aura.sourceId);
+        if (!source) return;
+        const target = context.defaultTargetFor(source);
+        if (!target || !target.isAlive) return;
 
-      dealDamage(context, {
-        source,
-        target,
-        abilityId: aura.id,
-        abilityName: aura.name,
-        school: PHYSICAL,
-        /*
-         * ONE STRIKE PER ACTIVE HAWK. `maxStacks` is two and the periodic
-         * fires once per AURA, so the stack count is what makes the second
-         * hawk deal anything at all.
-         */
-        baseAmount: HAWK_DAMAGE_PER_STRIKE * aura.stacks,
-        // The owner's figure is a flat damage. It takes no coefficient.
-        powerCoefficient: 0,
-        periodic: true,
-        critFrom: 'ranged-special',
-        appliesArmor: false,
-      });
+        dealDamage(context, {
+          source,
+          target,
+          // NOT `aura.id` -- see the header. Two talents key on this.
+          abilityId: HAWK_ABILITY_ID,
+          abilityName: aura.name,
+          school: PHYSICAL,
+          /*
+           * READ LIVE, NOT SNAPSHOT AT SUMMON. Every Hunter effect here reads
+           * the source's stats at tick time -- the wiki's "DoTs dynamically
+           * recalculate damage rather than snapshotting Attack Power when
+           * applied" -- so a Rapid Fire or a Hunter's Mark landing mid-flight
+           * raises the strikes after it.
+           */
+          baseAmount: hawkStrikeDamage(source.stats.effective.rangedAttackPower),
+          /*
+           * The ranged attack power is already inside `baseAmount`, at the
+           * owner's 5%. A coefficient here would count it twice.
+           */
+          powerCoefficient: 0,
+          periodic: true,
+          critFrom: 'ranged-special',
+          appliesArmor: false,
+        });
+      },
     },
-  },
-};
+  };
+}
+
+/**
+ * The two hawks, in the order they are summoned.
+ *
+ * A THIRD CAST OVERWRITES RATHER THAN BEING REFUSED, which is the owner's
+ * instruction -- "casting a third summon hawk while hawk_1 and hawk_2 are
+ * active WOULD cause an overwrite / refresh". The ability permits it and the
+ * PRIORITY LIST is what declines to, through its `summoned_hawks < 2` clause.
+ * Those are two different statements and this project keeps them apart: an
+ * ability says what is legal, a list says what is wise.
+ */
+export const HAWK_AURAS: readonly AuraDefinition[] = [hawkAura('hawk_1'), hawkAura('hawk_2')];
+
+/** How many hawks this Hunter has in the air. */
+export function activeHawks(actor: { auras: { has(id: string): boolean } }): number {
+  return HAWK_AURAS.filter((aura) => actor.auras.has(aura.id)).length;
+}
 
 /**
  * Lone Wolf: "You deal 20% increased damage with all attacks while you do not

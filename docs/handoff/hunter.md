@@ -34,12 +34,13 @@ left, six are the encounter or the build, one is a consequence of a ruling, and
 
 | Profile | Talents | DPS | List | Notes |
 | --- | --- | --- | --- | --- |
-| BM Hunter | 31/20/0 | **595.1** | `HUNTER_BEAST_MASTERY` | **the only profile with a pet** |
+| BM Hunter | 31/20/0 | **646.6** | `HUNTER_BEAST_MASTERY` | **the only profile with a pet** |
 | LW Melee | 7/13/31 | **362.7** | `HUNTER_LONE_WOLF_MELEE` | |
 | LW Ranged | 7/39/5 | **311.7** | `HUNTER_LONE_WOLF_RANGED` | |
 
 **BM HUNTER HAS HELD THREE DIFFERENT FIGURES IN TWO DAYS, AND THE SEQUENCE IS
-THE POINT RATHER THAN ANY ONE OF THEM.** 405.8, then 731.8, then **595.1** — and
+THE POINT RATHER THAN ANY ONE OF THEM.** 405.8, then 731.8, then 595.1, then
+**646.6** — and
 **the first two were both measured against an invented pet base damage**, 50 for
 the life of the project and 150 for a day. 595.1 is the first that was not. (The
 figures below were taken before `#149` raised the preset raid buffs from twelve
@@ -103,7 +104,7 @@ One batch of ten, so read the shape and not the decimals:
 
 | Profile | Top sources |
 | --- | --- |
-| BM Hunter | Ranged Auto 27.4%, **Hawk 24.7%**, **Cat Melee 15.0%**, Aimed Shot 13.4%, Serpent Sting 12.1%, Claw 5.2%, Bite 2.3% |
+| BM Hunter | **Hawk 30.3%**, Ranged Auto 25.1%, **Cat Melee 13.7%**, Aimed Shot 11.9%, Serpent Sting 11.7%, Claw 5.0%, Bite 2.3% |
 | LW Ranged | Ranged Auto 49.7%, Arcane Shot 19.6%, Aimed Shot 13.0%, Serpent Sting 11.0%, Sniper Shot 6.6% |
 | LW Melee | Main Hand Auto 32.6%, Raptor Strike 28.2%, Strider Kick 19.8%, Mongoose Bite 8.6%, **Immolation Trap 8.1%**, **Lacerating Strikes 2.6%** |
 
@@ -159,15 +160,48 @@ at two ranks and **there was never a disagreement to settle.**
 **THIS IS THE SECOND TIME THIS CLASS HAS FALLEN INTO THAT TRAP**, after Sniper
 Shot. Both times a plausible comment explained the wrong number.
 
-Three things changed with it, and only the first is the ruling:
+### And the owner restated it again on 2026-10-02
 
-1. The dive-bomb is dealt by the **ability** and the assault by the **aura** —
-   the capture's own two clauses, one each.
-2. **Both hawks deal damage.** The periodic fires once per aura, so the tick
-   reads `aura.stacks`. The old comment admitted this understated; at 32 a strike
-   it was small, at 108 it was half the ability.
-3. **Summon Hawk refuses at two active hawks**, its own stated rule, so the list
-   falls through to Aimed Shot instead of spending 190 mana to reset a timer.
+> *"Summon Hawk does 108 physical damage + Hunter's Ranged Attack Power \* 0.05
+> instantly. And then the same damage again every 3 seconds for 18 seconds.
+> Totalling 7 hits."*
+> *"...there is a hawk_1 and hawk_2, so that casting one doesn't overwrite the
+> other."*
+
+**+51.4 TO BM HUNTER**, and the hawk becomes the profile's largest single source
+at **30.3%**, above auto-shot:
+
+| | |
+| --- | --- |
+| **+84.0** | the 5% ranged attack power coefficient, measured by zeroing it |
+| **−32.5** | the shape, together: ten hits at two seconds became seven at three, offset by each hawk getting its own clock |
+
+**IT CLOSED A CAVEAT RATHER THAN A PLACEHOLDER.** `HAWK_UNMODELLED` said in
+writing that the two hawks "share one 18-second clock: summoning the second
+resets the first, so both expire together", and called it "a fraction of a hawk
+either way". A stacked aura has ONE duration and ONE tick chain, which is what
+forced that; `hawk_1` and `hawk_2` are separate definitions now, each with its
+own expiry.
+
+**SEVEN IS THE CHECK ON THE OTHER THREE NUMBERS.** One instant hit plus 18 / 3
+ticks is 7, so `HAWK_STRIKES` is asserted rather than derived — a cadence or a
+duration that drifts fails a test instead of quietly changing the total. **A
+redundant number in a spec is worth keeping for exactly this.**
+
+**THE GATE MOVED FROM THE ABILITY TO THE LIST.** A third cast is legal and
+overwrites the oldest, so the ability permits it and the list carries
+`summoned_hawks < 2`. **An ability says what is LEGAL, a list says what is
+WISE** — the previous version had the ability refusing its own third cast, which
+is the ability deciding something the list should decide.
+
+**AND IT NEARLY BROKE TWO TALENTS IN SILENCE.** Unleashed Fury declares
+`abilityDamage` and Ferocity `abilityCrit` against the id `summon_hawk`, and both
+reached the old hawk **only because the AURA was called `summon_hawk`** — a
+periodic tick carries its aura's id. With the auras renamed, keeping `aura.id`
+would have stopped both applying to a quarter of this build's damage, with
+nothing erroring and the profile reading as an ordinary hawk. `abilityId` is
+passed explicitly, and a test asserts every hawk damage event carries it **and**
+that both talents still name it.
 
 ### The pet model, supplied in full on 2026-10-01
 
