@@ -18,7 +18,11 @@ import {
   HAWK_DAMAGE_PER_STRIKE,
   HAWK_DURATION_MS,
   HAWK_MAX_ACTIVE,
+  HAWK_RANGED_ATTACK_POWER_COEFFICIENT,
+  HAWK_STRIKES,
   HAWK_STRIKE_INTERVAL_MS,
+  activeHawks,
+  hawkStrikeDamage,
   EXPLOSIVE_TRAP,
   EXPLOSIVE_TRAP_BURN_DURATION_MS,
   EXPLOSIVE_TRAP_BURN_TOTAL,
@@ -44,7 +48,11 @@ import {
   laceratingStrikes,
   resourcefulness,
 } from '../../src/game/reactions/hunterTalents';
-import { HUNTER_LONE_WOLF_MELEE } from '../../src/game/rotations/hunter';
+import {
+  HUNTER_BEAST_MASTERY,
+  HUNTER_LONE_WOLF_MELEE,
+} from '../../src/game/rotations/hunter';
+import { HUNTER_TALENT_EFFECTS } from '../../src/game/talents/hunterEffects';
 
 /*
  * ------------------------------------------------------------------------------
@@ -396,33 +404,52 @@ describe('Immolation Trap', () => {
 
 // ---------------------------------------------------------------------------
 
-describe('the hawk, at the owner’s 108', () => {
+describe('the hawk: two of them, each on its own clock', () => {
   /*
-   * "Assume it's 108 for initial and every other hit. Once every 2 seconds.
-   * Similar to a DoT effect except two of these can be active."
+   * ----------------------------------------------------------------------------
+   * THE RULESET OWNER'S MODEL, 2026-10-02, and the second revision in three days:
    *
-   * 108 is the spellbook's rank-4 figure. The 32 it replaces was the TALENT
-   * tooltip's, which shows rank 1 of the ability it grants.
+   *   "Summon Hawk does 108 physical damage + Hunter's Ranged Attack Power * 0.05
+   *    instantly. And then the same damage again every 3 seconds for 18 seconds.
+   *    Totalling 7 hits."
+   *   "implemented in such a way that there is a hawk_1 and hawk_2, so that
+   *    casting one doesn't overwrite the other."
+   *
+   * The previous model was 108 flat every TWO seconds from one stacked aura --
+   * ten hits, no scaling, and one shared clock.
+   * ----------------------------------------------------------------------------
    */
-  it('takes its damage from the max-rank capture, not the talent tooltip', () => {
+  const hawkOwner = () =>
+    makeAttacker({
+      stats: { rangedAttackPower: 1000, critChance: -100 },
+      resources: [{ type: 'mana', maximum: 10_000 }],
+    });
+
+  it('states seven hits, which is the check on the other three numbers', () => {
     expect(HAWK_DAMAGE_PER_STRIKE).toBe(108);
-    expect(toSeconds(HAWK_STRIKE_INTERVAL_MS)).toBe(2);
+    expect(HAWK_RANGED_ATTACK_POWER_COEFFICIENT).toBe(0.05);
+    expect(toSeconds(HAWK_STRIKE_INTERVAL_MS)).toBe(3);
     expect(toSeconds(HAWK_DURATION_MS)).toBe(18);
     expect(HAWK_MAX_ACTIVE).toBe(2);
+
+    /*
+     * ONE INSTANT HIT PLUS 18 / 3 TICKS. Asserted rather than derived because
+     * the owner stated it SEPARATELY from the cadence and the duration -- so a
+     * drift in either fails here instead of quietly changing the ability's
+     * total. That is what a redundant number in a spec is for.
+     */
+    expect(HAWK_STRIKES).toBe(7);
+
+    // 108 + 5% of ranged attack power, the same formula both halves use.
+    expect(hawkStrikeDamage(1000)).toBeCloseTo(108 + 50, 6);
+    expect(hawkStrikeDamage(0)).toBe(108);
   });
 
-  it('deals the dive on cast and then one strike per active hawk', () => {
+  it('lands seven hits from one cast, each the owner\u2019s formula', () => {
     const { simulation, events } = recordingSimulation(
-      [
-        makeAttacker({
-          stats: { attackPower: 0, critChance: -100 },
-          resources: [{ type: 'mana', maximum: 10_000 }],
-        }),
-        makeTarget(),
-      ],
-      // Two strikes' worth, and not ending ON one: an event due at the instant
-      // the fight ends does not run, so 4 seconds would drop the second strike.
-      seconds(5),
+      [hawkOwner(), makeTarget()],
+      // Past the last tick at t=18 without reaching a second cast.
+      seconds(20),
     );
     const [actor, target] = simulation.combatants;
     actor.abilities.add(SUMMON_HAWK);
@@ -431,64 +458,154 @@ describe('the hawk, at the owner’s 108', () => {
     simulation.run();
 
     const hawk = damageBy(events, actor.id).get('Hawk')!;
-    // The dive at t=0, then strikes at 2s and 4s. All three at one stack.
-    expect(hawk.count).toBe(3);
-    expect(hawk.total).toBeCloseTo(HAWK_DAMAGE_PER_STRIKE * 3, 6);
+    expect(hawk.count).toBe(HAWK_STRIKES);
+    expect(hawk.total).toBeCloseTo(hawkStrikeDamage(1000) * HAWK_STRIKES, 6);
   });
 
-  it('doubles the strike with a second hawk up', () => {
+  it('scales every hit with ranged attack power, the instant one included', () => {
     /*
-     * THE UNDERSTATEMENT THAT IS GONE. The periodic fires once per AURA rather
-     * than once per stack, so before this the second of the two hawks the
-     * ability can have added nothing at all -- which its own `unmodelled` note
-     * admitted. At 32 a strike that was small; at 108 it was half the ability.
+     * THE INSTANT HIT IS THE ABILITY'S AND THE SIX STRIKES ARE THE AURA'S, so
+     * this is the check that the coefficient reached BOTH -- a 5% applied to
+     * only the ticks is six sevenths right and reads as an ordinary hawk.
+     */
+    const totals = [0, 1000].map((rap) => {
+      const { simulation, events } = recordingSimulation(
+        [
+          makeAttacker({
+            stats: { rangedAttackPower: rap, critChance: -100 },
+            resources: [{ type: 'mana', maximum: 10_000 }],
+          }),
+          makeTarget(),
+        ],
+        seconds(20),
+      );
+      const [actor, target] = simulation.combatants;
+      actor.abilities.add(SUMMON_HAWK);
+      simulation.begin();
+      SUMMON_HAWK.onCast({ simulation, caster: actor, target, ability: SUMMON_HAWK });
+      simulation.run();
+      return damageBy(events, actor.id).get('Hawk')!.total;
+    });
+
+    expect(totals[0]).toBeCloseTo(108 * HAWK_STRIKES, 6);
+    expect(totals[1]).toBeCloseTo((108 + 50) * HAWK_STRIKES, 6);
+  });
+
+  it('gives the second hawk its OWN clock, which is the point of the rewrite', () => {
+    /*
+     * ------------------------------------------------------------------------
+     * THE CAVEAT THIS REPLACES, in its own words: "the two share one 18-second
+     * clock: summoning the second resets the first, so both expire together
+     * instead of 18 seconds after their own summon."
+     *
+     * Two auras rather than one with two stacks is the whole fix, and this is
+     * the assertion that says so: summon six seconds apart and the first still
+     * expires six seconds before the second.
+     * ------------------------------------------------------------------------
+     */
+    const { simulation } = recordingSimulation([hawkOwner(), makeTarget()], seconds(60));
+    const [actor, target] = simulation.combatants;
+    simulation.begin();
+
+    SUMMON_HAWK.onCast({ simulation, caster: actor, target, ability: SUMMON_HAWK });
+    const firstRemaining = actor.auras.remainingMs('hawk_1', simulation.clock.now());
+    expect(firstRemaining).toBe(HAWK_DURATION_MS);
+    expect(actor.auras.has('hawk_2')).toBe(false);
+
+    SUMMON_HAWK.onCast({ simulation, caster: actor, target, ability: SUMMON_HAWK });
+    const now = simulation.clock.now();
+    // The SECOND slot is filled, and the first is untouched rather than reset.
+    expect(actor.auras.has('hawk_1')).toBe(true);
+    expect(actor.auras.has('hawk_2')).toBe(true);
+    expect(actor.auras.remainingMs('hawk_1', now)).toBe(firstRemaining);
+    expect(activeHawks(actor)).toBe(2);
+  });
+
+  it('overwrites the oldest on a third cast rather than refusing it', () => {
+    /*
+     * "Casting a third summon hawk while hawk_1 and hawk_2 are active WOULD
+     * cause an overwrite / refresh." The ability permits it -- there is no
+     * `canCast` gate any more -- and the LIST is what declines, below.
+     */
+    const { simulation } = recordingSimulation([hawkOwner(), makeTarget()], seconds(60));
+    const [actor, target] = simulation.combatants;
+    simulation.begin();
+
+    SUMMON_HAWK.onCast({ simulation, caster: actor, target, ability: SUMMON_HAWK });
+    SUMMON_HAWK.onCast({ simulation, caster: actor, target, ability: SUMMON_HAWK });
+    expect(SUMMON_HAWK.canCast).toBeUndefined();
+
+    SUMMON_HAWK.onCast({ simulation, caster: actor, target, ability: SUMMON_HAWK });
+    // Still two, and both at full duration -- one was replaced, not added.
+    expect(activeHawks(actor)).toBe(2);
+    const now = simulation.clock.now();
+    expect(actor.auras.remainingMs('hawk_1', now)).toBe(HAWK_DURATION_MS);
+    expect(actor.auras.remainingMs('hawk_2', now)).toBe(HAWK_DURATION_MS);
+  });
+
+  it('credits its damage to summon_hawk, which two talents depend on', () => {
+    /*
+     * ------------------------------------------------------------------------
+     * THE SILENT BREAKAGE THIS REWRITE COULD HAVE CAUSED, AND THE REASON THIS
+     * TEST EXISTS. Unleashed Fury declares `abilityDamage` and Ferocity
+     * `abilityCrit` against the id `summon_hawk`, and both reached the old hawk
+     * because the AURA was called `summon_hawk` -- a periodic tick carries its
+     * aura's id.
+     *
+     * The auras are `hawk_1` and `hawk_2` now. Had the ticks kept using
+     * `aura.id`, two talents a Beast Mastery build takes would have stopped
+     * applying to a quarter of its damage, nothing would have errored, and the
+     * profile would have read as an ordinary hawk that was quietly 17% weaker.
+     * ------------------------------------------------------------------------
      */
     const { simulation, events } = recordingSimulation(
-      [
-        makeAttacker({
-          stats: { attackPower: 0, critChance: -100 },
-          resources: [{ type: 'mana', maximum: 10_000 }],
-        }),
-        makeTarget(),
-      ],
-      seconds(3),
+      [hawkOwner(), makeTarget()],
+      seconds(20),
     );
     const [actor, target] = simulation.combatants;
     actor.abilities.add(SUMMON_HAWK);
     simulation.begin();
-    // Two hawks up before the first strike lands at t=2s.
     SUMMON_HAWK.onCast({ simulation, caster: actor, target, ability: SUMMON_HAWK });
-    SUMMON_HAWK.onCast({ simulation, caster: actor, target, ability: SUMMON_HAWK });
-    expect(actor.auras.stacksOf('summon_hawk')).toBe(2);
     simulation.run();
 
-    const hawk = damageBy(events, actor.id).get('Hawk')!;
-    // Two dives plus one strike from each of the two hawks.
-    expect(hawk.count).toBe(3);
-    expect(hawk.total).toBeCloseTo(HAWK_DAMAGE_PER_STRIKE * 4, 6);
+    const ids = new Set(
+      events
+        .filter((event) => event.type === 'damage' && event.abilityName === 'Hawk')
+        .map((event) => (event as { abilityId?: string }).abilityId),
+    );
+    expect([...ids]).toEqual(['summon_hawk']);
+
+    // And the two talents still name that id.
+    expect(HUNTER_TALENT_EFFECTS.unleashed_fury).toContainEqual({
+      kind: 'abilityDamage',
+      abilityId: 'summon_hawk',
+    });
+    expect(HUNTER_TALENT_EFFECTS.ferocity).toContainEqual({
+      kind: 'abilityCrit',
+      abilityId: 'summon_hawk',
+    });
   });
 
-  it('refuses a third hawk, which is what the ability says', () => {
-    const { simulation } = recordingSimulation([
-      makeAttacker({ resources: [{ type: 'mana', maximum: 10_000 }] }),
-      makeTarget(),
-    ]);
+  it('is gated in the list at two hawks, not in the ability', () => {
+    /*
+     * The owner's clause: "cast summon hawk IF summoned_hawks < 2". Without it
+     * this list casts every six seconds for the whole fight, spending 190 mana
+     * to restart a hawk with twelve seconds left on a build that runs dry.
+     */
+    const entry = HUNTER_BEAST_MASTERY.find((e) => e.abilityId === 'summon_hawk');
+    expect(entry?.condition).toBeDefined();
+
+    const { simulation } = recordingSimulation([hawkOwner(), makeTarget()], seconds(60));
     const [actor, target] = simulation.combatants;
     simulation.begin();
 
-    const canCast = () =>
-      SUMMON_HAWK.canCast!({ simulation, caster: actor, target, ability: SUMMON_HAWK });
-
-    expect(canCast()).toBe(true);
+    expect(entry!.condition!(simulation, actor, target)).toBe(true);
     SUMMON_HAWK.onCast({ simulation, caster: actor, target, ability: SUMMON_HAWK });
-    expect(canCast()).toBe(true);
+    expect(entry!.condition!(simulation, actor, target)).toBe(true);
     SUMMON_HAWK.onCast({ simulation, caster: actor, target, ability: SUMMON_HAWK });
-    // "Only 2 hawks can be active at once."
-    expect(canCast()).toBe(false);
+    expect(entry!.condition!(simulation, actor, target)).toBe(false);
   });
 });
-
-// ---------------------------------------------------------------------------
 
 describe('the three talents whose reasons were wrong', () => {
   it('Rapid Killing takes two minutes off Rapid Fire', () => {
