@@ -6,7 +6,12 @@ import { makeAttacker, makeTarget } from '../helpers/actors';
 import { PRESETS_BY_ID } from '../../src/profiles/presets';
 import { characterAtCombatStart } from '../../src/simulator';
 import { talentBuild } from '../../src/game/talents/talentBuild';
-import { createPet, PLACEHOLDER_PET_BASE_DPS } from '../../src/game/actors/createPet';
+import {
+  PET_BASE_DAMAGE_MAX,
+  PET_BASE_DAMAGE_MIN,
+  PET_BASE_STRENGTH,
+  createPet,
+} from '../../src/game/actors/createPet';
 import { createPlayer } from '../../src/game/actors/createPlayer';
 import { AUTO_ATTACK_NAMES, autoAttackName } from '../../src/engine';
 import {
@@ -629,13 +634,16 @@ describe('a pet’s damage is reported as the pet’s', () => {
     expect(hunter.autoAttack).toBe('ranged');
   });
 
-  it('carries the owner’s base DPS rather than an invented one', () => {
+  it('carries the owner’s stated damage rather than an invented one', () => {
     /*
-     * 150, supplied by the ruleset owner: "Make the base placeholder DPS 150 (1
-     * hit for ~300 every 2 seconds)". The two halves of that sentence agree, and
-     * this pins the one they agree on -- it was 50 for as long as pets existed,
-     * so every pet figure recorded before 2026-09-30 is a third of this.
+     * THE LAST PLACEHOLDER IN THE PET MODEL IS GONE. It was 50, then 150 for a
+     * day, and is now 36.34 to 55.32 a swing from the owner's full model --
+     * base damage, base stats and the two formulas that turn them into attack
+     * power and crit. Pinned here as the two numbers the owner wrote;
+     * `petsAndHunter.test.ts` checks the engine reproduces the range.
      */
-    expect(PLACEHOLDER_PET_BASE_DPS).toBe(150);
+    expect(PET_BASE_DAMAGE_MIN).toBe(36.34);
+    expect(PET_BASE_DAMAGE_MAX).toBe(55.32);
+    expect(PET_BASE_STRENGTH).toBe(136);
   });
 });
