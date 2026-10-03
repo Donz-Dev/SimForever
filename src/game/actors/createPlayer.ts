@@ -1,5 +1,6 @@
 import type {
   AuraDefinition,
+  CastReaction,
   DamageSchool,
   PartialStats,
   Reaction,
@@ -134,6 +135,15 @@ export interface PlayerOptions {
    * none of these standing alone.
    */
   readonly extraReactions?: readonly Reaction[];
+  /**
+   * Cast procs the raid supplies, as `extraReactions` does for damage procs.
+   *
+   * Judgement of Wisdom is the first: a cast against the judged enemy can
+   * restore mana, and until this existed the only route to `castReactions` was
+   * the talent build -- so a raid buff could proc on damage and had no way to
+   * proc on a cast.
+   */
+  readonly extraCastReactions?: readonly CastReaction[];
   /**
    * Which poison coats which weapon. A Rogue's, and ignored by everyone else.
    *
@@ -461,7 +471,7 @@ export function createPlayer(options: PlayerOptions): Combatant {
      * A separate list because a cast event is not an attack event -- see
      * `AbilityCastEvent`. Four Rogue talents are why it exists.
      */
-    castReactions: build.castReactions,
+    castReactions: [...build.castReactions, ...(options.extraCastReactions ?? [])],
     // No abilities means nothing for a rotation to choose, so it is left off
     // rather than scheduling decision events that can never do anything.
     rotation: abilities.length > 0 ? rotation : undefined,

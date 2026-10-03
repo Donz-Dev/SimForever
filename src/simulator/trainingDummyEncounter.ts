@@ -87,7 +87,7 @@ export function trainingDummyEncounter(
      * ------------------------------------------------------------------------
      */
     createCombatants: () => {
-      const player = createPlayerFor(profile, onPlayer);
+      const player = createPlayerFor(profile, buffs);
       const pet = petFor(profile, player);
       return [player, ...(pet ? [pet] : []), createDummyFor(profile)];
     },
@@ -177,8 +177,15 @@ export function trainingDummyEncounter(
  */
 function createPlayerFor(
   profile: CharacterProfile,
-  onPlayer: readonly RaidBuff[],
+  buffs: readonly RaidBuff[],
 ): Combatant {
+  // ONE CALL PER ENTRY. Judgement of Wisdom's two halves share a closure, so
+  // building the damage and cast reactions separately would give it two
+  // independent rolls per spell -- see `RaidBuffReactions`.
+  const builtReactions = buffs.flatMap((buff) =>
+    buff.buildReactions ? [buff.buildReactions()] : [],
+  );
+
   return createPlayer({
     name: profile.character.name,
     race: profile.character.race,
@@ -206,16 +213,21 @@ function createPlayerFor(
      * alone has none of these, which is why they arrive from the encounter
      * rather than from the class or the gear.
      */
-    extraReactions: onPlayer.flatMap((buff) =>
-      /*
-       * BUILT HERE, inside the combatant factory, so every iteration gets
-       * its own. Windfury's internal cooldown is per-character state, and
-       * a reaction built once at module load shares that timer with every
-       * fight in the batch -- which silently stopped it proccing at all
-       * after the first iteration.
-       */
-      buff.buildReaction ? [buff.buildReaction()] : [],
-    ),
+    /*
+     * BUILT HERE, inside the combatant factory, so every iteration gets
+     * its own. Windfury's internal cooldown is per-character state, and
+     * a reaction built once at module load shares that timer with every
+     * fight in the batch -- which silently stopped it proccing at all
+     * after the first iteration.
+     *
+     * FROM EVERY SELECTED ENTRY, not only the ones that land on the player.
+     * Judgement of Wisdom is a judgement on the ENEMY whose proc belongs to
+     * the attacker, so whose reaction it is and where its aura lands are two
+     * different questions -- and reading `onPlayer` here answered the wrong
+     * one. Windfury is unaffected: it is a player buff either way.
+     */
+    extraReactions: builtReactions.flatMap((built) => (built.damage ? [built.damage] : [])),
+    extraCastReactions: builtReactions.flatMap((built) => (built.cast ? [built.cast] : [])),
     /*
      * THE POOLS HAVE TO KNOW ABOUT THE BUFFS, and nothing else does.
      * Health and mana are sized once from a stats snapshot, so Power Word:

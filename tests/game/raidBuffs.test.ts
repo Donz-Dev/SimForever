@@ -9,6 +9,10 @@ import {
   withRaidBuff,
 } from '../../src/game/buffs/raidBuffs';
 import {
+  JUDGEMENT_OF_WISDOM_MANA,
+  judgementOfWisdomReactions,
+} from '../../src/game/buffs/judgementOfWisdom';
+import {
   WINDFURY_ATTACK_POWER,
   WINDFURY_DURATION_MS,
   WINDFURY_INTERNAL_COOLDOWN_MS,
@@ -21,8 +25,13 @@ import {
   THUNDER_CLAP_SWING_TIME_MULTIPLIER,
 } from '../../src/game/auras/warrior';
 import { startingEquipmentFor } from '../../src/game/items/startingSets';
-import { CURRENT_PROFILE_VERSION, createDefaultProfile, migrateProfile } from '../../src/profiles';
-import { characterAtCombatStart, runProfileBatch } from '../../src/simulator';
+import {
+  CURRENT_PROFILE_VERSION,
+  PRESETS_BY_ID,
+  createDefaultProfile,
+  migrateProfile,
+} from '../../src/profiles';
+import { characterAtCombatStart, resourceFlowOf, runProfileBatch } from '../../src/simulator';
 import { trainingDummyEncounter } from '../../src/simulator/trainingDummyEncounter';
 
 /*
@@ -73,11 +82,13 @@ function opened(raidBuffs: readonly string[], attacks = false) {
 // ---------------------------------------------------------------------------
 
 describe('the catalogue', () => {
-  it('has the twenty entries the ruleset owner listed', () => {
+  it('has the entries the ruleset owner listed, and no others', () => {
     // Demoralizing Shout is deliberately absent -- "make it a comment, keep it
-    // inert for now" -- so twenty of the twenty-one named.
-    expect(RAID_BUFFS).toHaveLength(20);
+    // inert for now" -- so twenty of the twenty-one originally named, plus
+    // Judgement of Wisdom, which the owner added later.
+    expect(RAID_BUFFS).toHaveLength(21);
     expect(RAID_BUFFS_BY_ID.has('demoralizing_shout')).toBe(false);
+    expect(RAID_BUFFS_BY_ID.has('judgement_of_wisdom')).toBe(true);
   });
 
   it('gives every entry a unique id, a name and a description', () => {
@@ -92,8 +103,9 @@ describe('the catalogue', () => {
       expect(buff.name.length, buff.id).toBeGreaterThan(0);
       expect(buff.detail.length, buff.id).toBeGreaterThan(0);
       expect(buff.source.length, buff.id).toBeGreaterThan(0);
-      // Every entry is either a state or a proc, and Windfury is the only proc.
-      expect(Boolean(buff.aura) || Boolean(buff.buildReaction), buff.id).toBe(true);
+      // Every entry is either a state or a proc. Windfury Totem and Judgement
+      // of Wisdom are the two procs.
+      expect(Boolean(buff.aura) || Boolean(buff.buildReactions), buff.id).toBe(true);
     }
   });
 
@@ -450,7 +462,7 @@ describe('Windfury Totem', () => {
      */
     const entry = RAID_BUFFS_BY_ID.get('windfury_totem')!;
     expect(entry.aura).toBeUndefined();
-    expect(entry.buildReaction).toBeDefined();
+    expect(entry.buildReactions).toBeDefined();
 
     const plain = sheet([]);
     const totem = sheet(['windfury_totem']);
@@ -553,7 +565,11 @@ describe('Windfury Totem', () => {
      * Measured as one proc in a sixty second fight where three were expected.
      */
     expect(windfuryTotemReaction()).not.toBe(windfuryTotemReaction());
-    expect(RAID_BUFFS_BY_ID.get('windfury_totem')!.buildReaction).toBe(windfuryTotemReaction);
+    // Through `buildReactions` now, which returns both halves from one call so
+    // that Judgement of Wisdom's two cannot be built into separate closures.
+    const build = RAID_BUFFS_BY_ID.get('windfury_totem')!.buildReactions!;
+    expect(build().damage).not.toBe(build().damage);
+    expect(build().damage!.id).toBe('windfury_totem');
   });
 
   it('procs on about a fifth of the main-hand USES that land', () => {
@@ -623,5 +639,137 @@ describe('the raid buff selection on the profile', () => {
     const migrated = result.value as { version: number; raidBuffs: string[] };
     expect(migrated.version).toBe(CURRENT_PROFILE_VERSION);
     expect(migrated.raidBuffs).toEqual([]);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Judgement of Wisdom
+// ---------------------------------------------------------------------------
+
+describe('Judgement of Wisdom', () => {
+  const entry = () => RAID_BUFFS_BY_ID.get('judgement_of_wisdom')!;
+
+  /** A caster, so there is a mana bar for the proc to fill. */
+  function caster(raidBuffs: readonly string[], iterations = 1) {
+    const profile = PRESETS_BY_ID.get('shadow_priest')!.build();
+    return {
+      ...profile,
+      simulation: { ...profile.simulation, iterations, seed: 4242, durationSeconds: 60 },
+      raidBuffs: [...raidBuffs],
+    } as never;
+  }
+
+  it('is a Paladin entry on the TARGET, and a proc rather than a state', () => {
+    expect(entry().source).toBe('Paladin');
+    // It is a judgement placed on the enemy, so it belongs in the panel's "on
+    // the target" group -- even though the mana it restores goes to the
+    // attacker, whose reaction it builds.
+    expect(entry().appliesTo).toBe('enemy');
+    expect(entry().aura).toBeUndefined();
+    expect(entry().buildReactions).toBeDefined();
+  });
+
+  it('builds BOTH halves from one call, which is what keeps them to one roll', () => {
+    /*
+     * THE WHOLE MECHANISM. The damage and cast reactions share a closure so a
+     * damaging spell takes one roll rather than two; two separate factory
+     * fields would have produced two closures and silently doubled the proc
+     * rate -- the exact reading the owner rejected, arrived at by accident.
+     */
+    const built = entry().buildReactions!();
+    expect(built.damage).toBeDefined();
+    expect(built.cast).toBeDefined();
+
+    // And a fresh closure per character, as every proc here is.
+    expect(entry().buildReactions!().damage).not.toBe(built.damage);
+  });
+
+  it('restores mana, and reports it under its own name', () => {
+    const batch = runProfileBatch(caster(['judgement_of_wisdom'], 30));
+    const row = resourceFlowOf(batch, 'mana').gained.find(
+      (g) => g.sourceName === 'Judgement of Wisdom',
+    );
+
+    expect(row, 'Judgement of Wisdom should appear in mana gained by source').toBeDefined();
+    expect(row!.count).toBeGreaterThan(0);
+    // Every proc is the same flat amount, so the mean per proc is that amount.
+    expect(row!.amount / row!.count).toBeCloseTo(JUDGEMENT_OF_WISDOM_MANA, 6);
+  });
+
+  it('is worth nothing to a class with no mana, and consumes no randomness', () => {
+    /*
+     * "to classes that use mana". A Warrior has no mana bar, so the roll is
+     * refused BEFORE `rollChance` is reached -- which is why the two runs are
+     * identical to the decimal rather than merely close. A proc that rolled
+     * and then discarded the result would shift every later roll in the fight
+     * and this would fail.
+     */
+    const without = runProfileBatch(fury([], 20)).dps.mean;
+    const with_ = runProfileBatch(fury(['judgement_of_wisdom'], 20)).dps.mean;
+    expect(with_).toBe(without);
+  });
+
+  it('takes ONE roll for a cast that dealt direct damage', () => {
+    /*
+     * The damage half records the instant it rolled; the cast half refuses
+     * when a roll has already been taken at that instant. Driven directly
+     * rather than through a fight, because the thing under test is the
+     * ordering -- `runCast` runs `onCast` before the cast reactions, so a
+     * damaging spell has already been through the damage pipeline by the time
+     * the cast half is offered it.
+     */
+    const { damage, cast } = judgementOfWisdomReactions();
+
+    let now = 1000;
+    const granted: number[] = [];
+    const context = {
+      clock: { now: () => now },
+      // Always wins, so what is counted is ROLLS TAKEN rather than luck.
+      rng: { rollChance: () => true },
+      grantResource: (_a: unknown, _r: unknown, amount: number) => granted.push(amount),
+    } as never;
+
+    const actor = { resources: { get: () => ({}) } } as never;
+    const enemy = { isPlayerControlled: false } as never;
+    const attack = { defender: enemy } as never;
+    const spell = { target: enemy } as never;
+
+    const fire = (r: { canTrigger?: Function; onTrigger: Function }, event: unknown) => {
+      if (!r.canTrigger || r.canTrigger(context, actor, event)) r.onTrigger(context, actor, event);
+    };
+
+    // A damaging cast: the damage lands, then the cast reaction is offered it.
+    fire(damage as never, attack);
+    fire(cast as never, spell);
+    expect(granted, 'a damaging spell is one action and takes one roll').toHaveLength(1);
+
+    // A cast at a LATER instant that dealt no direct damage -- applying a DoT
+    // -- is an action of its own and does roll.
+    now = 2000;
+    fire(cast as never, spell);
+    expect(granted, 'a non-damaging cast is an action of its own').toHaveLength(2);
+
+    // And a second cast at that same instant has already had the roll.
+    fire(cast as never, spell);
+    expect(granted).toHaveLength(2);
+  });
+
+  it('ignores DoT ticks by construction rather than by a check', () => {
+    /*
+     * `dealDamage` dispatches reactions only when `request.attackTable &&
+     * !request.periodic`, so a tick never reaches a damage reaction at all.
+     * Asserted here because it is the ENGINE that enforces the owner's "not
+     * DoT ticks", and nothing in `judgementOfWisdom.ts` would catch it if that
+     * gate changed -- it would simply start paying out on every Shadow Word:
+     * Pain tick, which is a bigger number and no error.
+     */
+    const batch = runProfileBatch(caster(['judgement_of_wisdom'], 30));
+    const row = resourceFlowOf(batch, 'mana').gained.find(
+      (g) => g.sourceName === 'Judgement of Wisdom',
+    )!;
+
+    // One roll per action, so procs cannot outnumber the actions taken.
+    const casts = batch.abilities.reduce((sum, a) => sum + a.uses, 0);
+    expect(row.count).toBeLessThanOrEqual(casts);
   });
 });
