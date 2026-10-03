@@ -201,8 +201,12 @@ function DamageTaken({ batch }: ResultsPanelProps) {
             <th className="numeric">Avoided</th>
             <th className="numeric">Swings</th>
             <th className="numeric">Average</th>
+            {/* The outcome distribution is SEVEN columns of percentage on a
+                table that already has seven, and together they did not fit --
+                see `.outcome`. They are the half that compresses, because a
+                rate reads fine small and a damage total does not. */}
             {seen.map((outcome) => (
-              <th key={outcome} className="numeric">
+              <th key={outcome} className="numeric outcome">
                 {outcome}
               </th>
             ))}
@@ -226,7 +230,7 @@ function DamageTaken({ batch }: ResultsPanelProps) {
               <td className="numeric">{fixed(row.attempts)}</td>
               <td className="numeric">{fixed(row.average)}</td>
               {seen.map((outcome) => (
-                <td key={outcome} className="numeric">
+                <td key={outcome} className="numeric outcome">
                   {(row.rates[outcome] ?? 0) > 0 ? pct(row.rates[outcome]) : '-'}
                 </td>
               ))}
