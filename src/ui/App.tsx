@@ -52,7 +52,6 @@ export function App() {
     setActivePresetId(undefined);
     setProfile((previous) => ({ ...previous, talents: update(previous.talents) }));
   };
-  const [talentsCollapsed, setTalentsCollapsed] = useState(false);
   /*
    * WHICH PRESET IS ON SCREEN, for the rail's selected pill -- and cleared by
    * the first edit, because a character that has been changed is no longer the
@@ -92,7 +91,6 @@ export function App() {
   const applyPreset = (preset: ProfilePreset) => {
     setProfile(preset.build());
     setActivePresetId(preset.id);
-    setTalentsCollapsed(true);
     setConfirmed(true);
     reset();
   };
@@ -165,8 +163,6 @@ export function App() {
               characterClass={profile.character.characterClass}
               allocation={talents}
               onChange={setTalents}
-              collapsed={talentsCollapsed}
-              onToggleCollapsed={() => setTalentsCollapsed((was) => !was)}
             />
             <GearPanel profile={profile} onChange={setProfile} />
             {/* After the gear, because it is the same kind of decision: what

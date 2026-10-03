@@ -2,6 +2,7 @@ import type { ClassId } from '../../game/character';
 import type { ClassTalents, Talent, TalentAllocation, TalentTree } from '../../game/talents/Talent';
 import { TOTAL_TALENT_POINTS } from '../../game/talents/Talent';
 import { accentFor, talentsForClass } from '../../game/talents/talentData';
+import { Panel } from '../components/Panel';
 import {
   canSpend,
   canUnspend,
@@ -33,8 +34,6 @@ interface TalentPanelProps {
   readonly characterClass: ClassId;
   readonly allocation: TalentAllocation;
   readonly onChange: (update: TalentUpdate) => void;
-  readonly collapsed: boolean;
-  readonly onToggleCollapsed: () => void;
 }
 
 /**
@@ -56,57 +55,37 @@ interface TalentPanelProps {
  * Collapsible because it is tall: three trees of seven rows push the results
  * off screen on a laptop, and the trees are set once and then watched rarely.
  */
-export function TalentPanel({
-  characterClass,
-  allocation,
-  onChange,
-  collapsed,
-  onToggleCollapsed,
-}: TalentPanelProps) {
+export function TalentPanel({ characterClass, allocation, onChange }: TalentPanelProps) {
   const talents = talentsForClass(characterClass);
   if (!talents) return null;
 
   const remaining = pointsRemaining(allocation);
   return (
-    <section className="panel talent-panel">
-      <header className="panel-header">
-        <div className="talent-header-left">
-          <h2>Talents</h2>
-          <span className="talent-distribution">{distribution(talents, allocation)}</span>
-        </div>
-        <div className="panel-actions">
-          <span className={remaining === 0 ? 'talent-remaining spent' : 'talent-remaining'}>
-            {remaining} point{remaining === 1 ? '' : 's'} left
-          </span>
-          <button
-            type="button"
-            className="talent-toggle"
-            onClick={onToggleCollapsed}
-            aria-expanded={!collapsed}
-            title={collapsed ? 'Expand talents' : 'Collapse talents'}
-          >
-            {collapsed ? '▢' : '▁'}
-          </button>
-        </div>
-      </header>
-
-      {collapsed ? null : (
-        <div className="panel-body talent-body">
-          <div className="talent-trees">
-            {talents.trees.map((tree, index) => (
-              <TalentTreeView
-                key={tree.id}
-                talents={talents}
-                tree={tree}
-                accent={accentFor(index)}
-                allocation={allocation}
-                onChange={onChange}
-              />
-            ))}
-          </div>
-        </div>
-      )}
-    </section>
+    <Panel
+      title="Talents"
+      className="talent-panel"
+      bodyClassName="talent-body"
+      collapsible
+      badge={distribution(talents, allocation)}
+      actions={
+        <span className={remaining === 0 ? 'talent-remaining spent' : 'talent-remaining'}>
+          {remaining} point{remaining === 1 ? '' : 's'} left
+        </span>
+      }
+    >
+      <div className="talent-trees">
+        {talents.trees.map((tree, index) => (
+          <TalentTreeView
+            key={tree.id}
+            talents={talents}
+            tree={tree}
+            accent={accentFor(index)}
+            allocation={allocation}
+            onChange={onChange}
+          />
+        ))}
+      </div>
+    </Panel>
   );
 }
 
