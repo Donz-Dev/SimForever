@@ -18,6 +18,15 @@ export function CombatLogPanel({ result }: CombatLogPanelProps) {
   return (
     <Panel
       title="Combat Log"
+      collapsible
+      /*
+       * Its line count is already the subtitle, so it needs no `badge`: shut,
+       * it reads "COMBAT LOG 4,231 lines", which is the whole of what someone
+       * wants from it until they want the lines themselves.
+       *
+       * The Results panel above it deliberately stays open -- it is what the
+       * run was for -- and this is the one thing below it that is long.
+       */
       subtitle={`${result.combatLog.length.toLocaleString()} lines`}
       actions={
         hidden > 0 || showAll ? (
