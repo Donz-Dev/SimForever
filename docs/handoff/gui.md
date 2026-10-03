@@ -213,10 +213,12 @@ Not instructions — candidates, with what is known about each.
   CLASS-COLOURED PILLS**, on the right, in class order. No headings: the order
   groups them and the colour makes the grouping legible. Chosen from four
   treatments mocked up side by side. Still no search, and 23 does not need one.
-- **`PLACEHOLDER_` constants are not surfaced anywhere in the UI.** Ten remain, each
-  an invented number, and CLAUDE.md's rule is that a person must be able to see one.
-  The Encounter panel prints the caveat for the boss ones; the other seven are
-  invisible to a reader.
+- ~~**`PLACEHOLDER_` constants are not surfaced anywhere in the UI.**~~ **SETTLED,
+  AND THE OPPOSITE WAY.** The owner's instruction was that none of this reporting
+  belongs on screen, so the Encounter panel's caveat went the way of the talent,
+  gear and raid-buff lists. CLAUDE.md's placeholder rule is down to two conditions
+  and its third is written up as removed. Ten placeholders remain; their audience
+  is a reader of the code.
 - ~~**Faction has no field.**~~ **DERIVATION IS THE ANSWER**, the owner's call.
   The creation screen already has a faction selector that filters the race list,
   and race determines faction thereafter. Nothing stored, no v11 bump.

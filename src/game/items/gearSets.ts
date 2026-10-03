@@ -102,7 +102,9 @@ export const ROGUE_SWORDS: Equipment = {
  * ITS 172 ATTACK POWER IS LISTED AND NOT APPLIED. "+172 Attack Power in Cat,
  * Bear, and Dire Bear forms only" is conditional on the combat style, and an
  * item stat cannot be. It is the largest single unmodelled line in the whole
- * item set, and the Gear panel prints it.
+ * item set. It is RECORDED rather than shown: the Gear panel's "Equipped but
+ * not simulated" list was removed in the GUI pass, so `unmodelledEffects` and
+ * this comment are where it is read now.
  * ----------------------------------------------------------------------------
  */
 export const DRUID_MOONKIN_GEAR: Equipment = {

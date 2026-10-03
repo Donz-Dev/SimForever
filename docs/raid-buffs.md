@@ -182,11 +182,13 @@ outcome list is hit, crit, glance and crush, matching Hand of Justice. A
 dual-wielder avoids roughly a quarter of their swings, and the internal cooldown
 eats a few more.
 
-## What does nothing, and says so
+## What does nothing
 
-The panel prints a caveat beside any selected entry that does less than it says
-— the same discipline the Gear and Talent panels apply, in the place the choice
-is made.
+Each of these carries an `unmodelled` string saying so. **The panel used to
+print it beside the selected entry and no longer does** — the GUI pass took that
+reporting off the interface, along with the Gear and Talent panels' equivalents.
+The strings are still here and still maintained; this table is where they are
+read now.
 
 | Entry | Why |
 | --- | --- |
