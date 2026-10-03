@@ -20,8 +20,11 @@ import {
   windfuryTotemReaction,
 } from '../../src/game/buffs/windfury';
 import {
+  SUNDER_ARMOR,
+  SUNDER_ARMOR_DURATION_MS,
   SUNDER_ARMOR_MAX_STACKS,
   THUNDER_CLAP_SLOW,
+  THUNDER_CLAP_SLOW_DURATION_MS,
   THUNDER_CLAP_SWING_TIME_MULTIPLIER,
 } from '../../src/game/auras/warrior';
 import { startingEquipmentFor } from '../../src/game/items/startingSets';
@@ -771,5 +774,78 @@ describe('Judgement of Wisdom', () => {
     // One roll per action, so procs cannot outnumber the actions taken.
     const casts = batch.abilities.reduce((sum, a) => sum + a.uses, 0);
     expect(row.count).toBeLessThanOrEqual(casts);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Every selected entry lasts the fight
+// ---------------------------------------------------------------------------
+
+describe('a selected entry lasts the whole fight', () => {
+  /*
+   * THE RULESET OWNER'S RULE. Sunder Armor and Thunder Clap carry the durations
+   * the WARRIOR'S OWN abilities use -- thirty seconds, because a warrior
+   * recasts them -- and the raid buff reuses those auras rather than declaring
+   * a second copy. On anyone who cannot recast them the debuff fell off halfway
+   * through the fight.
+   */
+  const SHORT = ['sunder_armor', 'thunder_clap'] as const;
+
+  it('keeps the two short debuffs up for a fight twice their duration', () => {
+    /*
+     * A ROGUE, chosen because nothing in its book refreshes either one -- which
+     * is the case the rule exists for. Measured as UPTIME rather than as a
+     * duration, because uptime is what the thirty-second version got wrong.
+     */
+    const profile = PRESETS_BY_ID.get('rogue_combat')!.build();
+    const batch = runProfileBatch({
+      ...profile,
+      simulation: { ...profile.simulation, iterations: 20, seed: 99, durationSeconds: 120 },
+      raidBuffs: [...SHORT],
+    } as never);
+
+    for (const name of ['Sunder Armor', 'Thunder Clap']) {
+      const row = batch.debuffUptime.find((d) => d.auraName === name);
+      expect(row, `${name} should be on the target`).toBeDefined();
+      // A 120-second fight against a 30-second aura: anything below 1.0 means
+      // it expired, and the old behaviour read about a quarter of this.
+      expect(row!.uptime, name).toBeGreaterThan(0.99);
+      // And applied ONCE (five times for Sunder's stacks), not re-applied as it
+      // lapsed -- nothing in a Rogue's book could have re-applied it anyway.
+      expect(row!.applications, name).toBeLessThanOrEqual(SUNDER_ARMOR_MAX_STACKS);
+    }
+  });
+
+  it('does not lengthen the aura the Warrior own casts apply', () => {
+    /*
+     * THE OVERRIDE IS AT APPLICATION TIME, never on the definition. The two are
+     * the same shared objects the Warrior's abilities use, and lengthening them
+     * at the source would hand the Warrior a fight-long debuff and quietly
+     * delete the reason its rotation refreshes at all.
+     */
+    expect(SUNDER_ARMOR.durationMs).toBe(SUNDER_ARMOR_DURATION_MS);
+    expect(THUNDER_CLAP_SLOW.durationMs).toBe(THUNDER_CLAP_SLOW_DURATION_MS);
+    // Written out in milliseconds by hand rather than through `seconds()`, so
+    // the test does not pass by agreeing with the helper it is checking.
+    expect(SUNDER_ARMOR_DURATION_MS).toBe(30_000);
+    expect(THUNDER_CLAP_SLOW_DURATION_MS).toBe(30_000);
+  });
+
+  it('applies to every selected entry, not to a list of two', () => {
+    /*
+     * Uniform ON PURPOSE. The next short-duration entry someone adds gets this
+     * for free, where a pair of special cases is a list nobody updates. Checked
+     * through a buff that was ALREADY longer than the fight, so what is asserted
+     * is that the rule reaches it rather than that it happens to be up.
+     */
+    const profile = PRESETS_BY_ID.get('rogue_combat')!.build();
+    const batch = runProfileBatch({
+      ...profile,
+      simulation: { ...profile.simulation, iterations: 10, seed: 7, durationSeconds: 120 },
+      raidBuffs: ['mark_of_the_wild', 'faerie_fire'],
+    } as never);
+
+    const mark = batch.buffUptime.find((b) => b.auraName === 'Mark of the Wild');
+    expect(mark?.uptime ?? 0).toBeGreaterThan(0.99);
   });
 });

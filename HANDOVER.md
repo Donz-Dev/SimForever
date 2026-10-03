@@ -17,7 +17,7 @@ format **v10**. Live at <https://donz-dev.github.io/SimForever/>, republished by
 | --- | --- |
 | **Talents** | 258 fully, 36 partly, 110 ruled out, **64 a live gap** -- from 132 before the class dives |
 | **Abilities** | 114 declared against 478 captured |
-| **Profiles** | 23, all measured, **mean 496.8** |
+| **Profiles** | 23, all measured, **mean 520.8** |
 | **Scope rulings** | 7 members, all the owner's |
 | **Placeholders** | **10 declared** -- see the milestone table, and count DECLARATIONS |
 | **Tests** | 2,272 on Node 20 and 22 |
@@ -153,7 +153,56 @@ being a meaningful statement about them. Cat's own -5.2 is noise: a Druid HAS a
 mana bar, so the roll is taken and the seeded stream shifts even where the mana
 is worth nothing.
 
-**THE MEAN IS 496.8**, from 488.3.
+**THE MEAN WAS 496.8 AT THAT POINT**, from 488.3.
+
+---
+
+**AND THEN EVERY SELECTED ENTRY WAS MADE TO LAST THE WHOLE FIGHT, WHICH IS THE
+LARGEST SINGLE MOVE THE BASELINE HAS EVER MADE.** The owner's rule: a raid
+buff or debuff is applied for **twice the planned duration**, so it cannot
+expire mid-fight.
+
+**IT CHANGES EXACTLY TWO ENTRIES AND THAT IS THE WHOLE STORY.** Sunder Armor
+and Thunder Clap were declared with the durations the WARRIOR'S OWN abilities
+use -- thirty seconds, because a warrior recasts them -- and the raid buff
+REUSES those auras rather than declaring a second copy. Right for a warrior and
+wrong for everyone else: on a Rogue or a Hunter nothing refreshes them, so the
+raid's 2,250 armor reduction fell off at the half-way mark and the back half of
+every such fight was measured against a target it was never meant to face.
+Every other entry is already an hour, five minutes, or zero -- which means
+permanent -- so a uniform rule moves only those two.
+
+**FOURTEEN PROFILES MOVED REAL AND NINE DID NOT MOVE BY A DECIMAL, AND THE NINE
+ARE EVERY PURE CASTER.** Moonkin, Ele Shaman, all three Mages, both Warlocks and
+the Shadow Priest came back identical. That is the containment check and it
+could not be cleaner: Sunder Armor reduces ARMOR, which only physical damage
+pays, and Thunder Clap slows a target's SWING, which only matters when something
+is being swung at. A profile that deals pure spell damage should see nothing
+from either, and sees nothing.
+
+| | |
+| --- | --- |
+| **Combat +59.3, Cat +52.9, BM Hunter +49.7** | the three largest |
+| Bear +47.0, LW Melee +45.7, Venom +46.5, Rupture +43.9, Enh Shaman +43.3, LW Ranged +40.1 | |
+| Seal Twist Ret +37.5, 2H Arms +21.3, Shockadin +20.1, Prot Warr +14.5, Prot Pally +12.2 | |
+| Moonkin, Ele Shaman, Frostfire, Arcane, Fire, SM/DS, Firelock, Shadow | **+0.0** |
+
+**DW FURY'S +15.9 IS CALLED NOISE AND IS ALMOST CERTAINLY REAL.** The verdict
+compares a delta against this run's interval DOUBLED, which is deliberately
+conservative -- it calls a real change noise before it calls noise a change --
+and DW Fury's interval is the widest of the physical profiles. It is the one
+figure in the table where the label is the method talking rather than the
+mechanic.
+
+**AND THE TWO-HANDED WARRIOR STOPPED CASTING SUNDER ARMOR ENTIRELY.** The raid's
+five stacks now hold all fight, so the entry that refreshed them never becomes
+the first castable one and the rage and global cooldowns go elsewhere. That is
+the rule working rather than a list breaking, and it is asserted as ZERO in
+`presets.test.ts` rather than deleted -- an entry that silently stops firing is
+the failure this project has been caught by twelve times, so the one time it is
+deliberate it gets written down.
+
+**THE MEAN IS 520.8**, from 496.8. **Cat is back on top at 703.8.**
 
 **BEFORE THAT, THE PRESET RAID BUFFS WENT FROM TWELVE TO SEVENTEEN, ON THE OWNER'S OWN SCREEN,
 AND IT MOVED EIGHTEEN PROFILES.** Added: **Arcane Intellect, Blessing of Wisdom,
@@ -476,18 +525,18 @@ so. Fourteen profiles moved.
 
 | Profile | Class | Talents | DPS | | Profile | Class | Talents | DPS |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| DW Fury | Warrior | 18/33/0 | 651.2 | | Prot Warr | Warrior | 17/0/34 | 454.6 |
-| Cat Druid | Druid | 9/35/7 | 650.9 | | Venom Rogue | Rogue | 37/12/2 | 448.4 |
-| Seal Twist Ret | Paladin | 13/0/38 | 630.9 | | LW Ranged | Hunter | 7/39/5 | 442.0 |
-| 2H Arms | Warrior | 38/13/0 | 603.3 | | Bear Druid | Druid | 9/42/0 | 441.5 |
+| **Cat Druid** | Druid | 9/35/7 | **703.8** | | Venom Rogue | Rogue | 37/12/2 | 494.9 |
+| Seal Twist Ret | Paladin | 13/0/38 | 668.4 | | Shadow Priest | Priest | 16/3/32 | 492.3 |
+| DW Fury | Warrior | 18/33/0 | 667.2 | | Bear Druid | Druid | 9/42/0 | 488.5 |
+| 2H Arms | Warrior | 38/13/0 | 624.6 | | LW Ranged | Hunter | 7/39/5 | 482.1 |
+| BM Hunter | Hunter | 31/20/0 | 595.8 | | Prot Warr | Warrior | 17/0/34 | 469.0 |
+| Enh Shaman | Shaman | 19/32/0 | 593.5 | | Rupture Rogue | Rogue | 12/8/31 | 450.3 |
 | Fire Mage | Mage | 10/39/2 | 587.3 | | Moonkin | Druid | 38/0/13 | 436.9 |
-| Frostfire Mage | Mage | 0/29/22 | 580.8 | | Ele Shaman | Shaman | 38/13/0 | 408.4 |
-| Enh Shaman | Shaman | 19/32/0 | 550.3 | | Rupture Rogue | Rogue | 12/8/31 | 406.3 |
-| Arcane Mage | Mage | 47/4/0 | 549.6 | | SM/DS | Warlock | 40/11/0 | 404.7 |
-| BM Hunter | Hunter | 31/20/0 | 546.1 | | LW Melee | Hunter | 7/13/31 | 368.7 |
-| Shockadin | Paladin | 23/0/28 | 523.5 | | Prot Pally | Paladin | 8/36/7 | 275.6 |
+| Frostfire Mage | Mage | 0/29/22 | 580.8 | | LW Melee | Hunter | 7/13/31 | 414.5 |
+| Arcane Mage | Mage | 47/4/0 | 549.6 | | Ele Shaman | Shaman | 38/13/0 | 408.4 |
+| Shockadin | Paladin | 23/0/28 | 543.6 | | SM/DS | Warlock | 40/11/0 | 404.7 |
+| Combat Rogue | Rogue | 18/33/0 | 524.2 | | Prot Pally | Paladin | 8/36/7 | 287.8 |
 | Firelock | Warlock | 5/11/35 | 509.2 | |  |  |  |  |
-| Shadow Priest | Priest | 16/3/32 | 492.3 | | Combat Rogue | Rogue | 18/33/0 | 464.9 |
 
 **WHAT THE OWNER'S LISTS WERE WORTH, against the last figures measured on this
 project's own shells:**
