@@ -28,7 +28,8 @@ somebody chose it.
 | | |
 | --- | --- |
 | `game/buffs/raidBuffs.ts` | The catalogue: what each entry is and what it does |
-| `game/buffs/windfury.ts` | The one entry that is a proc rather than a state |
+| `game/buffs/windfury.ts` | A proc rather than a state |
+| `game/buffs/judgementOfWisdom.ts` | The other proc, and the only one with a CAST half |
 | `profiles` | `raidBuffs`, a list of ids. Format version 9 |
 | `simulator/trainingDummyEncounter.ts` | Applies them, via `onCombatStart` |
 | `ui/panels/RaidBuffsPanel.tsx` | The switches |
@@ -140,7 +141,56 @@ spellbook; the spreadsheet said 4, which is the Classic value). That costs the
 tank about half a cast a fight, **8.62 → 8.22**, and costs the debuff nothing:
 a 30 second slow covers a 6 second cooldown with room to spare.
 
-## Windfury is the only proc, and it has two traps in it
+## Judgement of Wisdom takes one roll per ACTION
+
+> Every direct damage source (not DoT ticks) or cast against an enemy has a 50%
+> chance to restore 59 mana to classes that use mana.
+
+The ruleset owner's wording, and it does not say what happens to a spell that is
+both. A Fireball is a direct damage source AND a cast against an enemy.
+
+**The owner settled it: one roll per action.** An action that dealt direct damage
+rolls on the damage; a cast that dealt none -- applying Corruption, or a spell
+that missed -- rolls on the cast. Each clause does work and nothing is counted
+twice. The rejected reading rolls on both, which is an effective 75% per Fireball
+rather than 50%, and **both readings produce a perfectly plausible number**.
+
+### The two halves share one closure
+
+That is the whole mechanism. The damage half records the instant it rolled and
+the cast half refuses at that instant. It rests on `runCast` running `onCast`
+BEFORE the cast reactions, so a damaging spell has already been through the
+damage pipeline by the time the cast half is offered it.
+
+**So `RaidBuff.buildReactions` returns both halves from one call**, where
+Windfury alone had needed only `buildReaction`. Two separate factory fields was
+the first attempt and it was a real bug: two calls, two closures, two
+independent rolls -- the rejected reading, reached by accident with nothing to
+catch it.
+
+### "Not DoT ticks" is the engine's, not this file's
+
+`dealDamage` dispatches reactions only when `request.attackTable &&
+!request.periodic`, so a tick never reaches a damage reaction at all. A test
+asserts it, because if that gate ever changes this starts paying out on every
+Shadow Word: Pain tick -- a bigger number and no error.
+
+### A class with no mana consumes no randomness
+
+The mana check runs BEFORE the roll. A Warrior fight is therefore
+**bit-identical** with the buff on and off, not merely close -- which is what
+makes the six physical profiles' +0.0 a containment check rather than a small
+number. A proc that rolled and then discarded the result would shift every later
+roll in the fight and read as noise.
+
+### Whose reaction it is, and where its aura lands, are different questions
+
+It applies to the ENEMY -- a judgement placed on the target -- and its proc
+belongs to the ATTACKER. The encounter collects reactions from every selected
+entry for that reason; reading the player-targeted ones answered the wrong
+question.
+
+## Windfury is a proc, and it has two traps in it
 
 > Each main-hand swing has a 20% chance of an extra attack, on the same rules as
 > Sword Specialization and Hand of Justice, with a 1.5 second internal cooldown

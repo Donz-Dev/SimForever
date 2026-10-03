@@ -232,7 +232,7 @@ describe('the preset catalogue', () => {
     expect(createDefaultProfile().raidBuffs).toEqual([]);
   });
 
-  it('takes the seventeen the ruleset owner ticked, and no others', () => {
+  it('takes the eighteen the ruleset owner ticked, and no others', () => {
     /*
      * ------------------------------------------------------------------------
      * Written out by hand from the owner's own screen, in catalogue order.
@@ -245,6 +245,12 @@ describe('the preset catalogue', () => {
      * profile deals none. **The list is one RAID, not one character's needs** --
      * the other twenty-two include six casters and three Hunters, and a shared
      * default that only served the warrior would understate every one of them.
+     *
+     * AND THE EIGHTEENTH IS JUDGEMENT OF WISDOM, added by the owner after the
+     * other seventeen. It is worth nothing to THIS profile for the same reason
+     * three of the others are -- a warrior has no mana bar, so its roll is
+     * refused before any randomness is consumed and a Fury fight is identical
+     * with it on and off.
      *
      * WHAT IS STILL ABSENT IS ABSENT ON PURPOSE: Grace of Air Totem, which only
      * the two ranged Hunters take and which they take INSTEAD of Windfury;
@@ -260,6 +266,7 @@ describe('the preset catalogue', () => {
       'power_word_fortitude',
       'divine_spirit',
       'curse_of_the_elements',
+      'judgement_of_wisdom',
       'blessing_of_wisdom',
       'blessing_of_kings',
       'blessing_of_might',
