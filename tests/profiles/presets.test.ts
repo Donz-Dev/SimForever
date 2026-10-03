@@ -634,18 +634,38 @@ describe('2H Arms', () => {
     const uses = (name: string) =>
       batch.abilities.find((row) => row.abilityName === name)?.uses ?? 0;
 
-    for (const name of [
-      'Sunder Armor',
-      'Rend',
-      'Mortal Strike',
-      'Execute',
-      'Spearing Strike',
-      'Slam',
-      'Overpower',
-    ]) {
+    for (const name of ['Rend', 'Mortal Strike', 'Execute', 'Spearing Strike', 'Slam', 'Overpower']) {
       expect(uses(name), name).toBeGreaterThan(0);
     }
     expect(batch.dps.mean).toBeGreaterThan(0);
+  });
+
+  it('no longer casts Sunder Armor at all, because the raid holds it', () => {
+    /*
+     * ------------------------------------------------------------------------
+     * THIS ASSERTED THE OPPOSITE UNTIL THE OWNER'S FIGHT-LONG RULE LANDED, and
+     * the change is the rule working rather than a regression.
+     *
+     * The raid applies five stacks at the pull and they now last twice the
+     * planned duration, so the entry that refreshed them never becomes the
+     * first castable one. The warrior keeps the armor reduction and spends the
+     * global cooldowns and rage on something else -- which is the whole point
+     * of the raid supplying it.
+     *
+     * Asserted as ZERO rather than deleted, because "the list stopped reaching
+     * an entry" is exactly the silent failure this project has been caught by
+     * twelve times: an entry that never fires produces an ordinary DPS figure
+     * and an ordinary results page. Here it is deliberate, so it is written
+     * down as deliberate.
+     * ------------------------------------------------------------------------
+     */
+    const p = profile();
+    const batch = runProfileBatch({ ...p, simulation: { ...p.simulation, iterations: 60 } });
+    expect(batch.abilities.find((row) => row.abilityName === 'Sunder Armor')?.uses ?? 0).toBe(0);
+
+    // And the debuff is still up, which is why not casting it is safe.
+    const sunder = batch.debuffUptime.find((d) => d.auraName === 'Sunder Armor');
+    expect(sunder?.uptime ?? 0).toBeGreaterThan(0.99);
   });
 
   it('does NOT cast Battle Shout, because the raid already did', () => {

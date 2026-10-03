@@ -1,4 +1,4 @@
-import type { Combatant, SimulationConfig } from '../engine';
+import type { AuraDefinition, Combatant, SimulationConfig } from '../engine';
 import { seconds } from '../engine';
 import type { CharacterProfile } from '../profiles';
 import { createPlayer } from '../game/actors/createPlayer';
@@ -52,6 +52,42 @@ export function trainingDummyEncounter(
   const buffs = selectedRaidBuffs(profile.raidBuffs);
   const onPlayer = buffs.filter((buff) => buff.appliesTo === 'player');
   const onTarget = buffs.filter((buff) => buff.appliesTo === 'enemy');
+
+  /*
+   * EVERY SELECTED ENTRY LASTS THE WHOLE FIGHT, at twice the planned duration.
+   *
+   * ----------------------------------------------------------------------------
+   * THE RULESET OWNER'S RULE, and the reason for it: Sunder Armor and Thunder
+   * Clap were declared with the durations the WARRIOR'S OWN ABILITIES use --
+   * thirty seconds each, because a warrior recasts them -- and the raid buff
+   * reused those auras rather than declaring a second copy. That is right for a
+   * warrior and wrong for everybody else: on a Mage or a Rogue nothing refreshes
+   * them, so the raid's debuff fell off halfway through a sixty-second fight and
+   * the last half of every such fight was measured against a target with 2,250
+   * less armor removed than the first.
+   *
+   * THEY ARE THE ONLY TWO IT CHANGES. Every other entry is already an hour, five
+   * minutes, or zero -- which means permanent here -- so this is a uniform rule
+   * that happens to move exactly the two the owner named. It is uniform ON
+   * PURPOSE rather than a pair of special cases: the next short-duration entry
+   * someone adds gets it for free, and the alternative is a list of exceptions
+   * that nobody updates.
+   *
+   * TWICE THE DURATION RATHER THAN THE DURATION, because a fight does not end at
+   * exactly `durationSeconds` -- `FIGHT_DURATION_VARIANCE` moves the end, and an
+   * aura expiring one tick before the last swing would be a silent, occasional
+   * version of the bug this fixes.
+   *
+   * APPLIED AS AN OVERRIDE AT APPLICATION TIME, never by editing the aura. The
+   * definitions are SHARED: `SUNDER_ARMOR` and `THUNDER_CLAP_SLOW` are the same
+   * objects the Warrior's own abilities apply, and lengthening them at the
+   * source would hand the Warrior a thirty-second debuff that lasts the fight
+   * and quietly delete the reason its rotation refreshes at all.
+   * ----------------------------------------------------------------------------
+   */
+  const raidBuffDurationMs = seconds(profile.simulation.durationSeconds) * 2;
+  const forTheFight = (aura: AuraDefinition): AuraDefinition =>
+    aura.durationMs === raidBuffDurationMs ? aura : { ...aura, durationMs: raidBuffDurationMs };
 
   return {
     durationMs: seconds(profile.simulation.durationSeconds),
@@ -159,8 +195,9 @@ export function trainingDummyEncounter(
            * it saw when it ran. Sunder read as one stack's worth of armor --
            * 450 instead of 2,250 -- until this went through the normal path.
            */
+          const aura = forTheFight(buff.aura);
           for (let i = 0; i < (buff.stacks ?? 1); i++) {
-            context.applyAura(actor, buff.aura, actor.id);
+            context.applyAura(actor, aura, actor.id);
           }
         }
       }

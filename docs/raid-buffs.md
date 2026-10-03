@@ -141,6 +141,50 @@ spellbook; the spreadsheet said 4, which is the Classic value). That costs the
 tank about half a cast a fight, **8.62 → 8.22**, and costs the debuff nothing:
 a 30 second slow covers a 6 second cooldown with room to spare.
 
+## Every selected entry lasts twice the fight
+
+> Make the raid buff/debuff application duration for all GUI selections equal to
+> 2x the simulation duration.
+
+The ruleset owner's rule, and it exists because of **reuse**. `SUNDER_ARMOR` and
+`THUNDER_CLAP_SLOW` are the same aura objects the Warrior's own abilities apply,
+and they carry the durations those abilities need: thirty seconds, because a
+warrior recasts them. The raid entry reuses them rather than declaring a second
+copy -- which is the right call, and which quietly meant that on anyone who
+could not recast them **the raid's debuff fell off at the half-way mark**.
+
+### It is an override at application time, never an edit
+
+`trainingDummyEncounter` copies the aura with a new `durationMs` as it applies
+it. Lengthening the definition would hand the Warrior a fight-long Sunder and
+delete the reason its own rotation refreshes at all.
+
+### Twice the duration rather than the duration
+
+A fight does not end at exactly `durationSeconds` -- `FIGHT_DURATION_VARIANCE`
+moves the end. An aura expiring one tick before the last swing would be a
+silent, occasional version of the bug this fixes.
+
+### Uniform on purpose, even though it moves only two
+
+Every other entry is already an hour, five minutes, or zero -- which means
+permanent here. The rule is written once so the next short-duration entry gets
+it for free; the alternative is a list of exceptions that nobody updates.
+
+### What it was worth
+
+**Fourteen profiles moved REAL and nine did not move by a decimal**, and the
+nine are every pure caster: Sunder Armor reduces ARMOR, which only physical
+damage pays, and Thunder Clap slows a SWING, which only matters when something
+is swinging. Combat Rogue was the largest at +59.3. The mean went 496.8 to
+520.8.
+
+**And the two-handed Warrior stopped casting Sunder Armor altogether**, because
+the raid's five stacks now hold all fight. `presets.test.ts` asserts that as
+zero rather than dropping the assertion -- a list entry that silently stops
+firing is this project's most repeated silent failure, so the one time it is
+deliberate it is written down.
+
 ## Judgement of Wisdom takes one roll per ACTION
 
 > Every direct damage source (not DoT ticks) or cast against an enemy has a 50%
