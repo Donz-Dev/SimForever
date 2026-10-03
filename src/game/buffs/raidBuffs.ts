@@ -1,4 +1,4 @@
-import type { AuraDefinition, Reaction, Stats } from '../../engine';
+import type { AuraDefinition, CastReaction, Reaction, Stats } from '../../engine';
 import { flat, percentMultiplicative, seconds } from '../../engine';
 import {
   BATTLE_SHOUT,
@@ -13,6 +13,11 @@ import {
  * aura or they will eventually disagree about the number.
  */
 import { LEADER_OF_THE_PACK, MOONKIN_AURA, PARTY_CRIT_AURA_PERCENT } from '../auras/druid';
+import {
+  JUDGEMENT_OF_WISDOM_CHANCE,
+  JUDGEMENT_OF_WISDOM_MANA,
+  judgementOfWisdomReactions,
+} from './judgementOfWisdom';
 import { windfuryTotemReaction } from './windfury';
 
 /**
@@ -38,6 +43,18 @@ import { windfuryTotemReaction } from './windfury';
 /** Who an entry lands on. */
 export type RaidBuffTarget = 'player' | 'enemy';
 
+/**
+ * The procs one entry contributes, from a single build.
+ *
+ * Both are optional and most entries have neither. Windfury Totem has a damage
+ * reaction; Judgement of Wisdom is the only entry with both, and the only
+ * reason this is a record rather than a reaction.
+ */
+export interface RaidBuffReactions {
+  readonly damage?: Reaction;
+  readonly cast?: CastReaction;
+}
+
 export interface RaidBuff {
   /** Stable id. Stored on the profile, so renaming one breaks saved profiles. */
   readonly id: string;
@@ -61,6 +78,12 @@ export interface RaidBuff {
   /**
    * Builds the proc, once per character.
    *
+   * ONE CALL RETURNS BOTH HALVES, and that is load-bearing rather than tidy.
+   * Judgement of Wisdom's damage and cast reactions share a closure so that a
+   * damaging spell takes ONE roll rather than two, and two separate factory
+   * fields would have been called separately -- two closures, two independent
+   * rolls, and the exact reading the owner rejected, arrived at by accident.
+   *
    * A FACTORY and not a reaction, for the reason Hand of Justice is built the
    * same way: an internal cooldown is per-character state, and one shared
    * closure is shared by every combatant in every iteration of a batch. Built
@@ -68,7 +91,7 @@ export interface RaidBuff {
    * next fight -- where the clock had restarted at zero, so the check read
    * negative and the proc never fired again for the life of the process.
    */
-  readonly buildReaction?: () => Reaction;
+  readonly buildReactions?: () => RaidBuffReactions;
   /**
    * Another entry this one cannot be selected alongside.
    *
@@ -311,7 +334,7 @@ const windfuryTotem: RaidBuff = {
    * attack is the mechanic. Listing it here would put it up at the pull for
    * free, and count it toward the health pool snapshot as well.
    */
-  buildReaction: windfuryTotemReaction,
+  buildReactions: () => ({ damage: windfuryTotemReaction() }),
 };
 
 const trueshotAura: RaidBuff = {
@@ -486,6 +509,32 @@ const curseOfTheElements: RaidBuff = {
     'will work for other classes. Also a curse, like Curse of Recklessness.',
 };
 
+/*
+ * JUDGEMENT OF WISDOM. The owner's mechanic, and the one roll per action it
+ * resolves to, are written up in `buffs/judgementOfWisdom.ts`.
+ *
+ * ON THE ENEMY, because it is a judgement placed on the target -- but the
+ * reaction it builds belongs to the ATTACKER, who is the one gaining the mana.
+ * That split is why the encounter collects reactions from every selected
+ * entry rather than only from the ones that land on the player.
+ *
+ * NO AURA, so it is a PROC entry like Windfury Totem rather than a STATE one.
+ */
+const judgementOfWisdom: RaidBuff = {
+  id: 'judgement_of_wisdom',
+  name: 'Judgement of Wisdom',
+  detail: `Attacks and spells against the target have a ${
+    JUDGEMENT_OF_WISDOM_CHANCE * 100
+  }% chance to restore ${JUDGEMENT_OF_WISDOM_MANA} mana to the attacker`,
+  source: 'Paladin',
+  appliesTo: 'enemy',
+  buildReactions: judgementOfWisdomReactions,
+  unmodelled:
+    'Its 40-second duration, the melee-strike refresh and the one-Judgement-' +
+    'per-Paladin limit are not modelled: a raid buff here is an assumption ' +
+    'that holds for the whole fight.',
+};
+
 // ---------------------------------------------------------------------------
 
 /** Every entry, in the order the ruleset owner gave them. */
@@ -498,6 +547,7 @@ export const RAID_BUFFS: readonly RaidBuff[] = [
   divineSpirit,
   curseOfRecklessness,
   curseOfTheElements,
+  judgementOfWisdom,
   blessingOfWisdom,
   blessingOfKings,
   blessingOfMight,
