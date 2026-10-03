@@ -92,6 +92,13 @@ export interface ProfilePreset {
  * of Air Totem; no Moonkin Form, which is Leader of the Pack's other half and
  * cannot be taken alongside it; and neither curse.
  *
+ * JUDGEMENT OF WISDOM JOINED LATER, on the owner's instruction, and it is the
+ * second entry after Sunder Armor to change a resource economy rather than a
+ * stat. It restores 59 mana on about half of the actions a character takes
+ * against the target, so it is worth most to a build that runs dry and nothing
+ * at all to one with no mana bar -- the five profiles that deal pure physical
+ * damage do not move by a decimal, which is the containment check.
+ *
  * SUNDER ARMOR IS THE INTERESTING ONE. The target starts at five stacks, so the
  * warrior's own list stops opening every fight by applying five of them and
  * only refreshes what the raid supplied. That was the ruleset owner's reason
@@ -122,6 +129,7 @@ const PRESET_RAID_BUFFS: readonly string[] = [
   'power_word_fortitude',
   'divine_spirit',
   'curse_of_the_elements',
+  'judgement_of_wisdom',
   'blessing_of_wisdom',
   'blessing_of_kings',
   'blessing_of_might',

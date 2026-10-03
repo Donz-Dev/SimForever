@@ -17,7 +17,7 @@ format **v10**. Live at <https://donz-dev.github.io/SimForever/>, republished by
 | --- | --- |
 | **Talents** | 258 fully, 36 partly, 110 ruled out, **64 a live gap** -- from 132 before the class dives |
 | **Abilities** | 114 declared against 478 captured |
-| **Profiles** | 23, all measured, **mean 488.3** |
+| **Profiles** | 23, all measured, **mean 496.8** |
 | **Scope rulings** | 7 members, all the owner's |
 | **Placeholders** | **10 declared** -- see the milestone table, and count DECLARATIONS |
 | **Tests** | 2,272 on Node 20 and 22 |
@@ -60,8 +60,8 @@ round was a CORRECTION rather than a gain:
 placeholder answered generously, measured, published, and then corrected twice as
 the real model arrived -- which is the cycle those named constants exist to make
 possible, and the reason a figure resting on one is published with its placeholder
-named rather than quietly. **Cat Druid is the top profile at 656.1**, and BM Hunter
-has fallen from first to sixth across the two corrections.
+named rather than quietly. BM Hunter fell from first to sixth across the two
+corrections, and is **546.1** now.
 
 **THIS PARAGRAPH WAS STALE WITHIN THE HOUR, WHICH IS THE POINT OF IT.** It was
 written at 646.6 and #153 landed before it merged. **Re-derive every figure in this
@@ -75,9 +75,10 @@ this one is the shortest-lived example the project has.
 **IT HAS HAD ITS PASS.** Pick a profile from the rail, Run Simulation, and the
 full results stack renders: DPS and distribution, a damage table with uses,
 share, crit and avoidance per ability, buff and debuff uptime, a resource
-timeline and a combat log. 2H Arms comes back at 603.40 against a published
-603.3 and Cat at 655.15 against 656.1 -- the batch-versus-profile difference,
-not a bug, and the check that no UI change reached past the simulator.
+timeline and a combat log. 2H Arms comes back at 602.23 against a published
+603.3 and Seal Twist Ret at 635.78 against 630.9 -- the batch-versus-profile
+difference, not a bug, and the check that no UI change reached past the
+simulator.
 
 **THE PASS WAS MOSTLY SUBTRACTION.** The owner's instruction was that the
 interface carries no notes: eleven explanatory paragraphs, five per-entry reason
@@ -124,7 +125,37 @@ and what gives each figure the interval a REAL/noise verdict needs. Most profile
 land inside the old interval and a few do not — 2H Arms read 596.6 under the old
 method and 607.2 under this one on identical code. Do not read those as changes.
 
-**THE PRESET RAID BUFFS WENT FROM TWELVE TO SEVENTEEN, ON THE OWNER'S OWN SCREEN,
+**AND THEN TO EIGHTEEN, WITH JUDGEMENT OF WISDOM.** The owner's instruction,
+after the mechanic landed: 50% of the actions a character takes against the
+target restore 59 mana. **Six profiles moved REAL and six did not move by a
+decimal**, and the six that did not are exactly the right six -- the three
+Warriors and the three Rogues, the only profiles with no mana bar at all. Their
+roll is refused before any randomness is consumed, so those fights are
+bit-identical rather than merely close.
+
+| | |
+| --- | --- |
+| **Seal Twist Ret +45.4, Frostfire +43.2, Enh Shaman +40.5** | the three largest |
+| Fire +34.7, LW Ranged +28.7, Prot Pally +5.5 | the rest of the REAL moves |
+| 2H Arms, DW Fury, Prot Warr, Venom, Combat, Rupture | **+0.0**, to the decimal |
+
+**IT IS WORTH MOST TO A BUILD THAT RUNS DRY, NOT TO ONE THAT GAINS MOST MANA.**
+Shadow Priest takes 1,516 mana from it and moves -1.6, inside its interval,
+because it was never mana-bound and the mana lands in "unspent". Seal Twist Ret
+takes a comparable 1,680 and gains 45.4, because it spends nearly everything it
+gets. **Arcane is the odd one of the three Mages** -- +3.1 against Fire's +34.7
+and Frostfire's +43.2.
+
+**AND IT MOVED THE TOP OF THE TABLE BY NOISE RATHER THAN BY WORK.** DW Fury is
+first at 651.2 with Cat at 650.9, a gap of 0.3 against intervals of +/-8.9 and
++/-6.2 -- so the two are indistinguishable and "the top profile" has stopped
+being a meaningful statement about them. Cat's own -5.2 is noise: a Druid HAS a
+mana bar, so the roll is taken and the seeded stream shifts even where the mana
+is worth nothing.
+
+**THE MEAN IS 496.8**, from 488.3.
+
+**BEFORE THAT, THE PRESET RAID BUFFS WENT FROM TWELVE TO SEVENTEEN, ON THE OWNER'S OWN SCREEN,
 AND IT MOVED EIGHTEEN PROFILES.** Added: **Arcane Intellect, Blessing of Wisdom,
 Mana Spring Totem, Trueshot Aura and Curse of the Elements.** Still absent on
 purpose: Grace of Air Totem except where it replaces Windfury, Moonkin Form, which
@@ -157,7 +188,8 @@ and the share is in the right order, Venom's poison-heavy build gaining most. Th
 is the sort of thing a containment check is for: those four were not expected to
 move at all, and the reason they did is correct rather than a leak.
 
-**THE MEAN IS 498.8**, from 463.5.
+**THE MEAN WAS 498.8 AT THAT POINT**, from 463.5. The dives and corrections
+below then took it to 488.3, and Judgement of Wisdom to 496.8.
 
 **THE ROGUE DEEP DIVE WAS THE LAST IN AND NEEDED A RECONCILIATION RATHER THAN A
 MERGE.** Venom 392.7 to **440.2**, Combat 419.8 to **461.8**, Rupture 377.1 to
@@ -411,7 +443,8 @@ while it worked.
 decimal -- which is what a talent change scoped to one build should look like.
 It makes Frostfire the top Mage, above Fire's 401.2 and Arcane's 392.6, and the
 build that existed for the Fire/Frost overlap now has a third reason to. The
-mean across 23 is 488.3, and the dives that moved it are below. See
+mean across 23 was 488.3 when this was written, and the dives that moved it are
+below. See
 [docs/handoff-apl.md](docs/handoff-apl.md).
 
 **THE WARLOCK DEEP DIVE MOVED FIVE PROFILES AND ONE OF THEM A LONG WAY DOWN.**
@@ -443,18 +476,18 @@ so. Fourteen profiles moved.
 
 | Profile | Class | Talents | DPS | | Profile | Class | Talents | DPS |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| Cat Druid | Druid | 9/35/7 | 656.1 | | Combat Rogue | Rogue | 18/33/0 | 464.9 |
 | DW Fury | Warrior | 18/33/0 | 651.2 | | Prot Warr | Warrior | 17/0/34 | 454.6 |
-| 2H Arms | Warrior | 38/13/0 | 603.3 | | Venom Rogue | Rogue | 37/12/2 | 448.4 |
-| Seal Twist Ret | Paladin | 13/0/38 | 585.5 | | Bear Druid | Druid | 9/42/0 | 444.7 |
-| Fire Mage | Mage | 10/39/2 | 552.5 | | Moonkin | Druid | 38/0/13 | 432.4 |
-| **BM Hunter** | Hunter | 31/20/0 | **547.0** | | LW Ranged | Hunter | 7/39/5 | 413.2 |
-| Arcane Mage | Mage | 47/4/0 | 546.5 | | Ele Shaman | Shaman | 38/13/0 | 411.4 |
-| Frostfire Mage | Mage | 0/29/22 | 537.6 | | Rupture Rogue | Rogue | 12/8/31 | 406.3 |
-| Shockadin | Paladin | 23/0/28 | 522.7 | | SM/DS | Warlock | 40/11/0 | 402.0 |
-| Enh Shaman | Shaman | 19/32/0 | 509.8 | | LW Melee | Hunter | 7/13/31 | 369.7 |
-| Firelock | Warlock | 5/11/35 | 507.9 | | Prot Pally | Paladin | 8/36/7 | 270.1 |
-| Shadow Priest | Priest | 16/3/32 | 493.9 | |  |  |  |  |
+| Cat Druid | Druid | 9/35/7 | 650.9 | | Venom Rogue | Rogue | 37/12/2 | 448.4 |
+| Seal Twist Ret | Paladin | 13/0/38 | 630.9 | | LW Ranged | Hunter | 7/39/5 | 442.0 |
+| 2H Arms | Warrior | 38/13/0 | 603.3 | | Bear Druid | Druid | 9/42/0 | 441.5 |
+| Fire Mage | Mage | 10/39/2 | 587.3 | | Moonkin | Druid | 38/0/13 | 436.9 |
+| Frostfire Mage | Mage | 0/29/22 | 580.8 | | Ele Shaman | Shaman | 38/13/0 | 408.4 |
+| Enh Shaman | Shaman | 19/32/0 | 550.3 | | Rupture Rogue | Rogue | 12/8/31 | 406.3 |
+| Arcane Mage | Mage | 47/4/0 | 549.6 | | SM/DS | Warlock | 40/11/0 | 404.7 |
+| BM Hunter | Hunter | 31/20/0 | 546.1 | | LW Melee | Hunter | 7/13/31 | 368.7 |
+| Shockadin | Paladin | 23/0/28 | 523.5 | | Prot Pally | Paladin | 8/36/7 | 275.6 |
+| Firelock | Warlock | 5/11/35 | 509.2 | |  |  |  |  |
+| Shadow Priest | Priest | 16/3/32 | 492.3 | | Combat Rogue | Rogue | 18/33/0 | 464.9 |
 
 **WHAT THE OWNER'S LISTS WERE WORTH, against the last figures measured on this
 project's own shells:**
