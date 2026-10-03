@@ -63,6 +63,7 @@ export function RaidBuffsPanel({ profile, onChange }: RaidBuffsPanelProps) {
   return (
     <Panel
       title="Raid buffs"
+      collapsible
       subtitle={
         active.length === 0
           ? 'None — fighting alone'

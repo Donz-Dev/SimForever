@@ -1,7 +1,11 @@
 # GUI DEEP DIVE
 
-**Purpose:** finalize the GUI and the miscellaneous tweaks around it. This is the
-first pass the UI has had of its own.
+**Purpose:** finalize the GUI and the miscellaneous tweaks around it.
+
+**THE FIRST PASS IS DONE, AND THIS DOCUMENT IS NOW ITS RECORD** rather than its
+brief. Everything below that reads as outstanding work is marked with what
+happened to it. Read it the way the per-class documents are read: for the state
+of the area and the traps in it, not for a queue.
 
 Read [CLAUDE.md](../../CLAUDE.md) first — it is the rules, and about a fifth of it
 is lessons paid for in wrong numbers. Then this file.
@@ -47,14 +51,22 @@ npm run typecheck
 **USE THE PREVIEW TOOL RATHER THAN BASH FOR THE DEV SERVER.** `.claude/launch.json`
 has `simforever-dev` configured. Two things will bite you:
 
-- **Other sessions hold ports.** 5173–5176 were all taken while this brief was
-  written. Read the actual port out of `preview_logs` rather than trusting the one
-  the tool reports — they can differ.
+- **Other sessions hold ports**, and **the log's port can be someone else's.**
+  5173-5176 were all taken while this brief was written. Reading the port out of
+  `preview_logs` is what this brief used to advise, and in the GUI pass that led
+  straight to another session's server: the fix is to check what the dev server
+  is actually SERVING. Fetch a module and read the `fileName` in its sourcemap
+  -- it is an absolute path, so it names the checkout.
 - **The dev server runs from the repo root**, which other sessions check out onto
   their own branches. If the app does not match `main`, check what branch the root
   is on before debugging the code. **This cost time already**: the raid-buffs panel
   showed 12 buffs where `main` has 17, and the panel was right — the checkout was
   stale.
+- **AND `preview_start` LAUNCHES IN THE REPO ROOT EVEN FROM A WORKTREE.** Entering
+  a worktree moves the session; it does not move the dev server, which went on
+  serving another branch while the edits landed somewhere else entirely. The
+  symptom is a change that will not appear however hard you reload. Run vite from
+  the worktree and point the browser at that port instead.
 
 ### It works today
 
@@ -66,60 +78,88 @@ difference and not a bug, and CLAUDE.md explains it under **Verifying work**.
 
 ---
 
-## The two known bugs, both engine work that outran its panel
+## The two known bugs, and what happened to them
 
-### 1. The Talent panel lists working talents as gaps
+**NEITHER WAS FIXED THE WAY THIS BRIEF EXPECTED, AND ONE WAS NOT FIXED AT ALL.**
 
-`appliedElsewhere` was added by the Rogue dive for talents whose effect is applied
-by another module — **Vile Poisons and Improved Poisons both work**, read by the
-poison reactions, and neither has an entry in the effects table because there is
-nothing for it to say.
+### 1. The Talent panel listed working talents as gaps — DISSOLVED, NOT FIXED
 
-`TalentPanel.tsx` splits `unmodelled` into gaps and rulings on `scope === undefined`
-alone, so a talent carrying `appliedElsewhere` and no `scope` **lands in the gaps
-list and is shown as missing work.** `class_audit.ts` already counts it correctly
-as partly modelled; the panel is the only reader that does not.
+`appliedElsewhere` names a talent whose effect is applied by another module --
+Vile Poisons and Improved Poisons both work, read by the poison reactions.
+`TalentPanel.tsx` split `unmodelled` on `scope === undefined` alone, so those
+landed in the gaps list and were shown as missing work.
 
-**The fix is small and the test is the point**: a Rogue build with Vile Poisons
-must not list it as unmodelled. Grep for `appliedElsewhere` — the panel has zero
-hits today.
+**The owner then removed the gap list entirely**, along with the Gear, Raid
+buffs and Results equivalents: that reporting is for this repository, not for
+someone running a sim. So there is no bucket left to land in and the bug cannot
+occur -- **but the classification was never corrected.** If any of those lists
+ever comes back, this comes back with it. `tools/class_audit.ts` counts
+`appliedElsewhere` correctly and always did.
 
-### 2. The Talent panel is collapsed by default
+### 2. The Talent panel was collapsed by default — SETTLED, AND GENERALISED
 
-It opens showing `38/13/0 · 0 points left` and a `▢`. Everything the nine dives
-produced — the gap list, the out-of-scope list, the per-talent reasons — is behind
-that toggle.
+Decided on purpose, and the opposite way to what this section suggested:
+**every configuration panel is collapsible now and every one starts shut.**
+Character sheet, Encounter, Talents, Gear, Raid buffs and the combat log. Only
+Simulation and Results cannot be shut -- one holds Run, the other is what the
+run was for.
 
-**That is a judgement call rather than a defect**, and it is worth re-making: the
-split between "not modelled yet" and "ruled out by the owner, never coming" is the
-single most informative thing this project can show a reader, and it is the one
-thing hidden by default. Whatever you decide, decide it on purpose.
+The state lives in `Panel`, not in `App`. It was in `App` for the Talents panel
+alone, which is why `applyPreset` had to remember to shut it; five panels doing
+that would have been five chances to forget.
+
+**A shut panel is a title and nothing else**, so `Panel` takes a `badge` and
+each says the thing you would have opened it to check -- Talents `17/0/34`,
+Gear `17 equipped`, Encounter `Training Dummy · level 63 · swings back`, the
+combat log `207 lines`.
+
+### And three bugs nobody had filed
+
+- **A DUPLICATE REACT KEY THE PROSE WAS HIDING.** Weaponmaster carries three
+  unmodelled clauses sharing one `talentId`, so the panel rendered three `<li>`s
+  with `key="weaponmaster"` and React logged it on every build that takes it.
+  Invisible while the three rows had differing reason text; obvious the moment
+  the reasons were cut. Retired with the list.
+- **`.panel` IS `overflow: hidden`, SO WIDE CONTENT WAS CLIPPED RATHER THAN
+  SCROLLABLE.** The damage-taken table is 14 columns, and its last ones were
+  unreachable **at full desktop width**, not just on a phone. Nothing looked
+  broken -- the table just stopped. `.panel-body` is `overflow-x: auto` now and
+  the table was compressed to fit.
+- **A MEDIA QUERY THAT NEVER APPLIED.** The profile rail's wrapped layout was
+  defined with the layout breakpoints, which is BEFORE the base `.profile-rail`
+  rule in the file -- equal specificity, later wins. At 1000px the pills
+  rendered 474px wide. It only shows between 900 and 1200px, which is why a
+  1500px check and a 375px check both missed it. **Check the band between your
+  breakpoints, not only the ends.**
 
 ---
 
 ## What the UI is made of
 
-4,731 lines, and **1,288 of them are `styles.css`** — the largest single file by
+4,653 lines, and **1,379 of them are `styles.css`** — the largest single file by
 some way, and the first place to look for anything visual.
 
 | | |
 | --- | --- |
-| `App.tsx` (193) | composition and layout. Every panel is wired here |
-| `panels/ResultsPanel.tsx` (480) | the biggest panel: DPS, distribution, the damage table, uptimes |
-| `panels/CharacterPanel.tsx` (367) | the 23 presets, Import and Load |
-| `panels/TalentPanel.tsx` (359) | the tree, and the gap/ruling split. **Both bugs above are here** |
-| `panels/GearPanel.tsx` | 19 `<select>`s. Its "Equipped but not simulated" list is gone |
+| `App.tsx` (199) | composition and layout. Every panel is wired here |
+| `panels/ResultsPanel.tsx` (422) | the biggest panel: DPS, distribution, the damage tables, uptimes |
 | `panels/CharacterSheetPanel.tsx` (335) | the stat block |
-| `panels/RaidBuffsPanel.tsx` (168) | 21 checkboxes, 17 on by default |
+| `panels/GearPanel.tsx` (331) | 19 `<select>`s |
+| `panels/CharacterPanel.tsx` (324) | creation, and the confirmed one-line summary |
+| `panels/TalentPanel.tsx` (201) | the three trees. **Was 359** before the lists came out |
+| `panels/RaidBuffsPanel.tsx` (145) | 21 checkboxes, 17 on by default |
+| `panels/EncounterPanel.tsx` (112) | the target, and whether it swings back |
+| `components/Panel.tsx` (85) | **the collapse lives here**, with `badge` |
+| `panels/ProfileRail.tsx` (72) | the 23 class-coloured pills |
+| `panels/ProfilePanel.tsx` (83) | **not mounted.** See below |
 | `charts/` | `DonutChart`, `ResourceTimeline`, `UptimeBars` — hand-rolled SVG, no chart library |
-| `components/` | `Field`, `Panel`, `OptionGroup`, `Logo` |
 | `hooks/useSimulation.ts` (68) | the only bridge to the simulator |
 
 **There are no TODOs or FIXMEs in `src/ui`.** Whatever is unfinished is unfinished
-silently, which is why this brief leads with the two bugs rather than a list.
+silently -- which is how two dead buttons survived this whole pass.
 
-**Two UI tests exist**, `tests/ui/talentScopeCaption.test.ts` and
-`tests/ui/themes.test.ts`, and that is the whole of the UI's coverage. The panels
+**ONE UI TEST EXISTS**, `tests/ui/themes.test.ts`. It was two;
+`talentScopeCaption.test.ts` was deleted with the caption it tested. The panels
 are not rendered by any test, so **anything you change you have to look at.**
 
 ---
@@ -150,7 +190,8 @@ are not rendered by any test, so **anything you change you have to look at.**
 - **AN INERT THING THAT SAYS SO IS THE HONEST FAILURE MODE.** Items, talents and
   raid buffs each carry an `unmodelled` entry with the source's exact wording.
   **The panels no longer print them** -- all four lists were removed on the
-  owner's instruction. Keep writing the entries: `class_audit.ts` is the reader.
+  owner's instruction. Keep writing the entries: `tools/class_audit.ts` is the
+  reader, and it throws if its four buckets do not account for every talent.
   Never guess a value to make a panel look complete.
 
 ---
@@ -159,32 +200,63 @@ are not rendered by any test, so **anything you change you have to look at.**
 
 Not instructions — candidates, with what is known about each.
 
-- **Responsiveness.** `styles.css` has four `@media` queries. Nobody has checked
-  the app at phone width.
-- **The single long column.** Character → sheet → encounter → simulation → talents
-  → gear → raid buffs → results → combat log, all stacked. It works; whether it is
-  the right shape for a tool people scroll repeatedly is open.
-- **The 23 presets as a flat list of buttons.** No grouping by class, no search.
+- ~~**Responsiveness.**~~ **CHECKED AT 375px, 1000px AND 1500px.** No horizontal
+  page overflow and nothing clipped at any of the three. The audit is what found
+  the `overflow: hidden` clipping above, which was never a phone problem.
+  **Check between the breakpoints too** -- the 474px pills lived in the band a
+  375/1500 check steps straight over.
+- ~~**The single long column.**~~ **ANSWERED BY COLLAPSE RATHER THAN BY LAYOUT.**
+  Every configuration panel is one line until opened, so the column the question
+  was about is now six bars and a Run button. The layout is three columns --
+  config, results, and the profile rail -- collapsing to one below 900px.
+- ~~**The 23 presets as a flat list of buttons.**~~ **A TWO-COLUMN RAIL OF
+  CLASS-COLOURED PILLS**, on the right, in class order. No headings: the order
+  groups them and the colour makes the grouping legible. Chosen from four
+  treatments mocked up side by side. Still no search, and 23 does not need one.
 - ~~**`PLACEHOLDER_` constants are not surfaced anywhere in the UI.**~~ **SETTLED,
   AND THE OPPOSITE WAY.** The owner's instruction was that none of this reporting
   belongs on screen, so the Encounter panel's caveat went the way of the talent,
   gear and raid-buff lists. CLAUDE.md's placeholder rule is down to two conditions
   and its third is written up as removed. Ten placeholders remain; their audience
   is a reader of the code.
-- **Faction has no field.** It is derived from race, and the milestone asks for it
-  as a default — so either say derivation is the answer or store it and bump the
-  profile version to v11.
+- ~~**Faction has no field.**~~ **DERIVATION IS THE ANSWER**, the owner's call.
+  The creation screen already has a faction selector that filters the race list,
+  and race determines faction thereafter. Nothing stored, no v11 bump.
 
 ---
 
-## What "done" looks like
+## What "done" looked like, and what it came to
 
-1. **The two Talent panel bugs fixed**, with a test for the first — a Rogue build
-   must not show Vile Poisons as a gap.
-2. **Every panel looked at in a running browser**, not just typechecked. There is
-   no render coverage, so the compiler cannot help you here.
-3. **No number computed in a panel** that could be an analyzer instead.
-4. **`npm run typecheck` and `npm test` both green**, and the baseline untouched —
-   a UI change that moves a DPS figure has reached past the simulator and is a bug
-   in itself. Re-measure with `npx vite-node tools/measure_profiles.ts` if you touch
-   anything outside `src/ui`.
+The original four, with what actually happened:
+
+1. ~~**The two Talent panel bugs fixed**, with a test for the first.~~ One
+   DISSOLVED when the list it lived in was removed, and **was never actually
+   corrected**; the other was settled the opposite way and generalised to six
+   panels. See the section above -- this is the one line in this document worth
+   re-reading before touching the talent panel.
+2. **Every panel looked at in a running browser.** Held. There is still no render
+   coverage, and the three unfiled bugs above were all found by looking rather
+   than by the compiler or the suite.
+3. **No number computed in a panel.** Held; nothing was added that could have been
+   an analyzer.
+4. **Typecheck and tests green, and the baseline untouched.** Held throughout.
+   2,272 tests, and the DPS figures were re-checked in the browser after every
+   change that could have reached past the UI: 2H Arms 603.40 and Cat 655.15
+   against a published 603.3 and 656.1.
+
+---
+
+## What is left
+
+Two things, and they are the same thing.
+
+- **IMPORT AND LOAD DO NOTHING.** `App.tsx` wires both to `() => undefined`. They
+  are two real-looking buttons at the top of the character panel that silently do
+  nothing when pressed -- no error, no feedback. The owner has parked this rather
+  than closed it.
+- **`panels/ProfilePanel.tsx` IS NOT MOUNTED.** 83 lines holding exactly the
+  `serializeProfile` / `parseProfile` round-trip those two buttons need, kept on
+  purpose. **Do not delete it** without building Import and Load first -- it is
+  dead today and it is the obvious implementation of the thing that is missing.
+
+Everything else in this document is done or settled.

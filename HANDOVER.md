@@ -7,7 +7,7 @@ gets built is [docs/class-implementation.md](docs/class-implementation.md).
 
 All nine classes and all 23 profiles are implemented, every number traced to a
 source rather than invented, and **all 23 priority lists are the ruleset owner's
-own** -- specified entry by entry and measured after. **2,275 tests**, CI green on Node 20 and 22. Profile
+own** -- specified entry by entry and measured after. **2,272 tests**, CI green on Node 20 and 22. Profile
 format **v10**. Live at <https://donz-dev.github.io/SimForever/>, republished by
 `.github/workflows/deploy.yml` on every push to `main` that passes.
 
@@ -20,7 +20,7 @@ format **v10**. Live at <https://donz-dev.github.io/SimForever/>, republished by
 | **Profiles** | 23, all measured, **mean 488.3** |
 | **Scope rulings** | 7 members, all the owner's |
 | **Placeholders** | **10 declared** -- see the milestone table, and count DECLARATIONS |
-| **Tests** | 2,275 on Node 20 and 22 |
+| **Tests** | 2,272 on Node 20 and 22 |
 
 **FOUR CLASSES ARE ESSENTIALLY DONE** -- Warrior 0 live gaps, Paladin 2, Druid 2,
 Rogue 3 -- and the remaining 64 sit mostly in the Warlock (20), Priest (12) and
@@ -72,16 +72,38 @@ this one is the shortest-lived example the project has.
 
 ### Where the GUI stands
 
-**THE APP RUNS AND NOTHING ABOUT IT IS BROKEN**, which is worth saying because
-none of the class work touched it. `npm run dev`, pick a preset, Run Simulation,
-and a full results stack renders: DPS and distribution, a damage table with uses,
-share, crit and avoidance per ability, buff and debuff uptime, a resource timeline
-and a combat log. 2H Arms comes back at 606.6 against a published 603.3, which is
-the batch-versus-profile difference and not a bug.
+**IT HAS HAD ITS PASS.** Pick a profile from the rail, Run Simulation, and the
+full results stack renders: DPS and distribution, a damage table with uses,
+share, crit and avoidance per ability, buff and debuff uptime, a resource
+timeline and a combat log. 2H Arms comes back at 603.40 against a published
+603.3 and Cat at 655.15 against 656.1 -- the batch-versus-profile difference,
+not a bug, and the check that no UI change reached past the simulator.
 
-**WHAT IT HAS NOT HAD IS A PASS OF ITS OWN**, and two things are already known to
-be wrong -- both consequences of engine work landing without the panels following.
-See [docs/handoff/gui.md](docs/handoff/gui.md), which is the brief for that.
+**THE PASS WAS MOSTLY SUBTRACTION.** The owner's instruction was that the
+interface carries no notes: eleven explanatory paragraphs, five per-entry reason
+strings and all four "not simulated" lists came off, and the 23 preset cards --
+each with a line of body text under it -- became a two-column rail of
+class-coloured pills. Every configuration panel is collapsible and starts shut,
+so the app opens on a character and a Run button.
+
+**NO DATA WAS REMOVED AND NOTHING STOPPED BEING TRACKED.** Every `unmodelled`
+entry still carries its reason and its `scope`, and `tools/class_audit.ts` still
+derives the whole census from them. What went is one READER -- which is why the
+`unmodelled` field's own documentation now says to keep writing them and names
+the audit as the consumer. **The risk after a change like this is that the next
+class quietly stops filling them in.**
+
+**THREE BUGS NOBODY HAD FILED CAME OUT OF IT**, and the useful one is this: every
+panel is `overflow: hidden`, so content wider than its column was CLIPPED rather
+than scrollable -- the damage-taken table's last columns were unreachable **at
+full desktop width**, not merely on a phone, and nothing looked broken because
+the table simply stopped. The other two are a duplicate React key that prose had
+been hiding and a media query that never applied.
+
+**WHAT IS LEFT IS IMPORT AND LOAD**, two buttons wired to `() => undefined`, and
+the unmounted `ProfilePanel.tsx` that holds the round-trip they need. Parked by
+the owner rather than closed. See
+[docs/handoff/gui.md](docs/handoff/gui.md), which is the record of the pass.
 
 The profiles were specified by the ruleset owner as `talentsforever.com` build
 URLs and every one decodes to exactly 51 points. Every profile is in its own
