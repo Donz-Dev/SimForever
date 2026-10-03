@@ -407,14 +407,43 @@ export const HUNTER_STAT_STICK: Equipment = {
 };
 
 /**
- * The melee build's two-hander, kept from before the Hunter set arrived.
+ * The two-hander, kept for a Hunter the player puts in that style by hand.
  *
- * Its own stated weapon rather than the set's -- see HUNTER_ARMOUR above for
- * why. It fills the same slot, so it replaces the stat stick rather than
- * stacking with it.
+ * NO LONGER WHAT THE LW MELEE PRESET HOLDS -- see `HUNTER_DUAL_WIELD_WEAPONS`
+ * below. It stays because `two_hander` is still a style the GUI offers and a
+ * style with no weapon set is a character holding nothing.
  */
 export const HUNTER_MELEE_WEAPONS: Equipment = {
   twoHand: { itemId: 228229, enchantId: CRUSADER },
+};
+
+/**
+ * THE MELEE HUNTER DUAL-WIELDS NOW, on the ruleset owner's instruction.
+ *
+ * ----------------------------------------------------------------------------
+ * "instead of a two-hander being the default weapon I want it to be dual wield.
+ * The main hand weapon should be: vis'kag with crusader enchant. The off hand
+ * weapon should be: core hound tooth with crusader enchant."
+ *
+ * BOTH ENCHANTED, and the second Crusader is a second hundred strength rather
+ * than a refresh of the first -- Forever stacks the two hands separately, which
+ * is the same reason the Fury warrior's set carries two.
+ *
+ * NEITHER ITEM IS NEW AND NEITHER LIVES IN A HUNTER FILE. Vis'kag is in
+ * `classic-warrior.json` and the Core Hound Tooth in `sod-rogue.json`; this set
+ * references them by id, which is what the Rogue's own sword set already does
+ * with Vis'kag. The item database is FROZEN and this adds nothing to it.
+ *
+ * A SWORD AND A DAGGER, which is worth noticing rather than smoothing over: the
+ * Core Hound Tooth is a 1.30-second dagger against Vis'kag's sword, so the off
+ * hand swings far more often than the main. No Hunter talent keys on weapon
+ * type, so the pairing costs nothing -- but the speed is what decides how much
+ * the off-hand penalty and Predator's Edge are worth.
+ * ----------------------------------------------------------------------------
+ */
+export const HUNTER_DUAL_WIELD_WEAPONS: Equipment = {
+  mainHand: { itemId: 17075, enchantId: CRUSADER }, // Vis'kag the Bloodletter
+  offHand: { itemId: 228277, enchantId: CRUSADER }, // Core Hound Tooth
 };
 
 /**

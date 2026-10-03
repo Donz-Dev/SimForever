@@ -4,6 +4,8 @@ import type { Combatant, TelemetryEvent } from '../../src/engine';
 import { buildSimulation } from '../helpers/buildSimulation';
 import { makeAttacker, makeTarget } from '../helpers/actors';
 import { PRESETS_BY_ID } from '../../src/profiles/presets';
+import { CRUSADER } from '../../src/game/items/gearSets';
+import { OFF_HAND_DAMAGE_MULTIPLIER } from '../../src/game/actors/weapons';
 import { characterAtCombatStart } from '../../src/simulator';
 import { talentBuild } from '../../src/game/talents/talentBuild';
 import {
@@ -45,9 +47,11 @@ import {
   MONGOOSE_BITE,
   SUMMON_HAWK,
 } from '../../src/game/abilities/hunter';
+import { ASPECT_OF_THE_BEAST } from '../../src/game/auras/hunter';
 import {
   RESOURCEFULNESS_REGEN,
   RESOURCEFULNESS_REGEN_BYPASS_PERCENT,
+  deadlyAspects,
   laceratingStrikes,
   resourcefulness,
 } from '../../src/game/reactions/hunterTalents';
@@ -784,5 +788,131 @@ describe('a pet’s damage is reported as the pet’s', () => {
     expect(PET_BASE_DAMAGE_MIN).toBe(36.34);
     expect(PET_BASE_DAMAGE_MAX).toBe(55.32);
     expect(PET_BASE_STRENGTH).toBe(136);
+  });
+});
+
+// ---------------------------------------------------------------------------
+
+describe('the melee Hunter dual-wields', () => {
+  /*
+   * ----------------------------------------------------------------------------
+   * THE RULESET OWNER'S CHANGE, 2026-10-03: "instead of a two-hander being the
+   * default weapon I want it to be dual wield. The main hand weapon should be:
+   * vis'kag with crusader enchant. The off hand weapon should be: core hound
+   * tooth with crusader enchant."
+   *
+   * IT IS A CHANGE TO FOUR OF THE FIVE SETTINGS A BUILD HAS TO AGREE ON -- the
+   * style, the gear, and through them what two talents are worth -- which is why
+   * these are asserted together rather than as a weapon swap.
+   * ----------------------------------------------------------------------------
+   */
+  const melee = () => PRESETS_BY_ID.get('lw_melee')!.build();
+
+  it('holds Vis\u2019kag and the Core Hound Tooth, both enchanted', () => {
+    const profile = melee();
+    expect(profile.character.combatStyle).toBe('dual_wield');
+    expect(profile.equipment.mainHand).toEqual({ itemId: 17075, enchantId: CRUSADER });
+    expect(profile.equipment.offHand).toEqual({ itemId: 228277, enchantId: CRUSADER });
+    // The two-hander is gone rather than carried alongside.
+    expect(profile.equipment.twoHand).toBeUndefined();
+  });
+
+  it('swings both hands, where it used to swing one', () => {
+    const hunter = characterAtCombatStart(melee())!;
+    expect(hunter.autoAttack).toBe('dual-wield');
+    expect(hunter.weapons.mainHand).toBeDefined();
+    expect(hunter.weapons.offHand).toBeDefined();
+    /*
+     * THE BOW IS STILL EQUIPPED AND HAS NO WEAPON PROFILE, which is the rule
+     * rather than a loss: `weaponsForEquipment` skips the ranged slot unless
+     * the style marks it `required`, while `statsForStyle` reads
+     * `liveEquipment` and so counts Rhok'delar's stats either way. A ranged
+     * weapon coexists with a one-hander and simply does not swing.
+     *
+     * Unchanged by this commit -- the two-hander build was the same -- and
+     * asserted because "the melee Hunter lost its bow" is the obvious wrong
+     * conclusion to draw from a dual-wield switch.
+     */
+    expect(melee().equipment.ranged).toBeDefined();
+    expect(hunter.weapons.ranged).toBeUndefined();
+  });
+
+  it('pays a 25% off-hand penalty, not 50%, because of Predator\u2019s Edge', () => {
+    /*
+     * ------------------------------------------------------------------------
+     * THE OWNER'S FIGURE: "it becomes a 25% penalty with rank 5 predator's
+     * edge." Written out here from the two numbers that produce it rather than
+     * as 0.75, because 0.75 is right at rank 5 and wrong at every other rank:
+     *
+     *     OFF_HAND_DAMAGE_MULTIPLIER x (1 + 50 / 100) = 0.5 x 1.5 = 0.75
+     *
+     * The talent MULTIPLIES the penalty; it does not replace it. Reading "the
+     * penalty becomes 25%" as an instruction to write 0.75 somewhere would
+     * agree with the owner today and silently stop scaling.
+     * ------------------------------------------------------------------------
+     */
+    const profile = melee();
+    expect(profile.talents.predator_s_edge).toBe(5);
+
+    const hunter = characterAtCombatStart(profile)!;
+    expect(hunter.weapons.offHand?.damageMultiplier).toBeCloseTo(
+      OFF_HAND_DAMAGE_MULTIPLIER * 1.5,
+      10,
+    );
+    expect(hunter.weapons.offHand?.damageMultiplier).toBeCloseTo(0.75, 10);
+
+    // And the main hand is untouched by any of it.
+    expect(hunter.weapons.mainHand?.damageMultiplier ?? 1).toBe(1);
+  });
+
+  it('builds the multiplier from the rank, so it is not pinned to 5/5', () => {
+    /*
+     * The row is [crit damage, off-hand damage] and the two differ at every rank
+     * -- 6/10 through 30/50 -- so this is also the check that `valueIndex: 1`
+     * reads the second number and not the first.
+     */
+    for (const [rank, offHandBonus] of [
+      [1, 10],
+      [3, 30],
+      [5, 50],
+    ] as const) {
+      const build = talentBuild('hunter', { predator_s_edge: rank });
+      expect(build.offHandDamageMultiplier).toBeCloseTo(1 + offHandBonus / 100, 10);
+    }
+  });
+
+  it('rolls Deadly Aspects off EITHER hand, which "all melee auto attacks" says', () => {
+    /*
+     * ------------------------------------------------------------------------
+     * EQUIVALENT BY ACCIDENT UNTIL THE BUILD CHANGED. The reaction checked
+     * `isWeaponUseOf(attack, 'mainHand')`, and while this Hunter held a
+     * two-hander that WAS "any melee swing" -- one slot swings. Dual wielding
+     * separated them, and the off hand is a 1.30-second dagger, so it swings
+     * MORE often than the main hand and every one of those was failing to roll.
+     *
+     * The tooltip is explicit: "all melee auto attacks".
+     * ------------------------------------------------------------------------
+     */
+    const reaction = deadlyAspects(100);
+    const { simulation } = recordingSimulation([makeAttacker(), makeTarget()]);
+    const [actor, target] = simulation.combatants;
+    simulation.begin();
+    simulation.applyAura(actor, ASPECT_OF_THE_BEAST, actor.id);
+
+    const swing = (weaponSlot: 'mainHand' | 'offHand' | 'ranged') => ({
+      attacker: actor,
+      defender: target,
+      outcome: 'hit' as const,
+      abilityId: undefined,
+      abilityName: 'Auto-Attack',
+      amount: 100,
+      weaponSlot,
+      critical: false,
+    });
+
+    expect(reaction.canTrigger!(simulation, actor, swing('mainHand'))).toBe(true);
+    expect(reaction.canTrigger!(simulation, actor, swing('offHand'))).toBe(true);
+    // The bow is not a melee auto attack, and Aspect of the Beast is what is up.
+    expect(reaction.canTrigger!(simulation, actor, swing('ranged'))).toBe(false);
   });
 });
