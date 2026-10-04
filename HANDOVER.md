@@ -151,7 +151,7 @@ Twist of Light applies "the replaced Seal's effects", so an echoed seal is the
 seal; it goes through `sealHit` and got the field for free. Seal of the Crusader
 is untouched because it has no per-swing damage to crit.
 
-**THE MEAN IS 527.0**, from 520.8, re-summed from the table's own rows.
+**THE MEAN IS 528.2**, from 527.0, re-summed from the table's own rows.
 
 ---
 
@@ -319,6 +319,21 @@ Weaponmaster said "the damage pipeline has no attacker-side armor term, re-check
 stat for Hack and Slash. Nothing in the Warrior's own files changed.
 `armorPenetration.test.ts` asserts BOTH callers on purpose, which is what failed.
 See [docs/handoff/rogue.md](docs/handoff/rogue.md).
+
+**RAPID FIRE WAS IN THE MELEE HUNTER'S BOOK AND IN NO LIST.** LW Melee **495.4
+to 523.8, +28.4, REAL**, the other twenty-two identical to the decimal.
+"Increases RANGED AND MELEE attack speed by 40% for 15 sec" -- the melee half is
+why it belongs, and the other two Hunter lists have carried it since they were
+written. **This one was the odd one out for as long as the build swung a
+two-hander, and nobody re-read the list against the ability book when it
+changed.**
+
+**WHERE IT GOES MEASURES AS NOTHING.** First 517.0, third 523.8, last 531.2, on
+intervals of 5.3, 7.3 and 7.1 -- all three overlap, so by this project's own rule
+that is no difference and the nominally-highest is noise. It sits third because
+that is where the owner's other two lists put it. **The entry is worth +28.4 and
+its position is worth zero**, which is a distinction worth keeping apart: one is
+a finding and the other is a coin.
 
 **THE MELEE HUNTER DUAL-WIELDS NOW, AND IT MOVED ONE PROFILE.** LW Melee
 **414.5 to 495.4, +80.9, REAL**, the other twenty-two identical to the decimal.
@@ -600,7 +615,7 @@ so. Fourteen profiles moved.
 
 | Profile | Class | Talents | DPS | | Profile | Class | Talents | DPS |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| **Seal Twist Ret** | Paladin | 13/0/38 | **709.0** | | LW Melee | Hunter | 7/13/31 | 495.4 |
+| Seal Twist Ret | Paladin | 13/0/38 | 709.0 | | Firelock | Warlock | 5/11/35 | 509.2 |
 | Cat Druid | Druid | 9/35/7 | 703.8 | | Venom Rogue | Rogue | 37/12/2 | 494.9 |
 | DW Fury | Warrior | 18/33/0 | 667.2 | | Shadow Priest | Priest | 16/3/32 | 492.3 |
 | 2H Arms | Warrior | 38/13/0 | 624.6 | | Bear Druid | Druid | 9/42/0 | 488.5 |
@@ -608,10 +623,10 @@ so. Fourteen profiles moved.
 | Enh Shaman | Shaman | 19/32/0 | 593.5 | | Prot Warr | Warrior | 17/0/34 | 469.0 |
 | Fire Mage | Mage | 10/39/2 | 587.3 | | Rupture Rogue | Rogue | 12/8/31 | 450.3 |
 | Frostfire Mage | Mage | 0/29/22 | 580.8 | | Moonkin | Druid | 38/0/13 | 436.9 |
-| **Shockadin** | Paladin | 23/0/28 | **560.6** | | Ele Shaman | Shaman | 38/13/0 | 408.4 |
+| Shockadin | Paladin | 23/0/28 | 560.6 | | Ele Shaman | Shaman | 38/13/0 | 408.4 |
 | Arcane Mage | Mage | 47/4/0 | 549.6 | | SM/DS | Warlock | 40/11/0 | 404.7 |
-| Combat Rogue | Rogue | 18/33/0 | 524.2 | | **Prot Pally** | Paladin | 8/36/7 | **293.0** |
-| Firelock | Warlock | 5/11/35 | 509.2 | |  |  |  |  |
+| Combat Rogue | Rogue | 18/33/0 | 524.2 | | Prot Pally | Paladin | 8/36/7 | 293.0 |
+| **LW Melee** | Hunter | 7/13/31 | **523.8** | |  |  |  |  |
 
 **THE TOP TWO ARE INDISTINGUISHABLE AND THE TABLE SHOULD NOT BE READ AS A
 RANKING THERE.** Seal Twist Ret 709.0 +/-9.4 against Cat 703.8 +/-6.4 is a gap of

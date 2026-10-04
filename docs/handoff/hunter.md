@@ -35,7 +35,7 @@ left, six are the encounter or the build, one is a consequence of a ruling, and
 | Profile | Talents | DPS | List | Notes |
 | --- | --- | --- | --- | --- |
 | BM Hunter | 31/20/0 | **547.0** | `HUNTER_BEAST_MASTERY` | **the only profile with a pet** |
-| LW Melee | 7/13/31 | **495.4** | `HUNTER_LONE_WOLF_MELEE` | **dual wield**, since 2026-10-03 |
+| LW Melee | 7/13/31 | **523.8** | `HUNTER_LONE_WOLF_MELEE` | **dual wield**, since 2026-10-03 |
 | LW Ranged | 7/39/5 | **311.7** | `HUNTER_LONE_WOLF_RANGED` | |
 
 **BM HUNTER HAS HELD THREE DIFFERENT FIGURES IN TWO DAYS, AND THE SEQUENCE IS
@@ -106,7 +106,7 @@ One batch of ten, so read the shape and not the decimals:
 | --- | --- |
 | BM Hunter | Ranged Auto 30.0%, **Hawk 17.9%**, Cat Melee 17.2%, Serpent Sting 13.5%, Aimed Shot 13.1%, Claw 5.6%, Bite 2.7% |
 | LW Ranged | Ranged Auto 49.7%, Arcane Shot 19.6%, Aimed Shot 13.0%, Serpent Sting 11.0%, Sniper Shot 6.6% |
-| LW Melee | Main Hand Auto 29.0%, **Off Hand Auto 23.5%**, Raptor Strike 16.9%, Strider Kick 11.5%, Mongoose Bite 9.2%, Immolation Trap 6.5%, Lacerating Strikes 1.9%, **Fatal Wound 1.4%** |
+| LW Melee | Main Hand Auto 30.0%, Off Hand Auto 24.4%, Raptor Strike 15.8%, Strider Kick 11.0%, Mongoose Bite 9.8%, Immolation Trap 6.2%, Lacerating Strikes 1.7%, Fatal Wound 1.1% |
 
 **"Cat Melee" USED TO READ "Main Hand Auto-Attack" AND THAT WAS A LIE THIS
 DOCUMENT REPEATED.** See **The row that was about the wrong thing** below.
@@ -426,6 +426,47 @@ is the obvious wrong conclusion to draw. `weaponsForEquipment` skips the ranged
 slot unless the style marks it `required`, while `statsForStyle` reads
 `liveEquipment` — so Rhok'delar's stats count either way.
 
+## Rapid Fire was in the melee build's book and in no list
+
+> *"does the LW melee profile for hunter cast rapid fire? if it doesn't then make
+> it cast rapid fire"*
+
+**It did not.** `rapid_fire` was declared, learnable, castable and never cast by
+that profile — the exact shape `ability_audit.ts` exists to surface — while
+**the other two Hunter lists have carried it since they were written.**
+
+**+28.4, 495.4 → 523.8**, with the other twenty-two profiles identical to the
+decimal.
+
+**WHY IT BELONGS: "Increases RANGED AND MELEE attack speed by 40% for 15 sec."**
+The melee half is the point, and it needs nothing extra to work — the engine has
+ONE haste rating and `hasteFromPercent` is a flat modifier on it, so the aura
+reaches both swing timers of a dual-wielder.
+
+**WHY IT WAS MISSED:** the build swung a two-hander when these lists were
+written, and nobody re-read the list against the ability book when it changed.
+**A list is not re-derived when a profile changes underneath it** — which is the
+same shape as Deadly Aspects checking only the main hand, one section up, and
+both were found by asking rather than by a test.
+
+### Its position is worth nothing, and that is measured
+
+| placement | DPS | interval |
+| --- | --- | --- |
+| first, above the Aspect | 517.0 | ±5.3 |
+| **third, where it sits** | **523.8** | ±7.3 |
+| last, below Immolation Trap | 531.2 | ±7.1 |
+
+All three overlap, so by this project's own rule that is **no difference** and
+the nominally-highest is noise. It sits third because that is where the owner's
+other two Hunter lists put it. **The entry is worth +28.4 and its position is
+worth zero** — a distinction worth keeping apart, because one of them is a
+finding and the other is a coin.
+
+**ONE CAST A FIGHT EITHER WAY.** Five minutes, or three with Rapid Killing 2/2
+which this build takes, and both outlast the encounter — so the position decides
+when the window opens, not how often.
+
 ## The census
 
 | Talents | Fully | Partly | Ruled out | Live gap |
@@ -476,9 +517,12 @@ only thing that confirms it.
 ## In the book, in no list, never cast
 
 `aspect_of_the_beast`, `aspect_of_the_hawk`, `arcane_shot`, `aimed_shot`,
-`multi_shot`, `raptor_strike`, `mongoose_bite`, `serpent_sting`, `rapid_fire`,
-`immolation_trap` — varying by profile, and mostly correct: the melee list does
-not shoot and the ranged lists do not strike.
+`multi_shot`, `raptor_strike`, `mongoose_bite`, `serpent_sting`,
+`immolation_trap`, `explosive_trap` — varying by profile, and mostly correct: the
+melee list does not shoot and the ranged lists do not strike.
+
+**`rapid_fire` CAME OFF THIS LIST ON 2026-10-04**, and it is the one entry here
+that was simply missed. See below.
 
 **`immolation_trap` IS IN ALL THREE BOOKS AND ONE LIST**, because it is a trainer
 spell every Hunter learns rather than a talent grant. In the two ranged books and

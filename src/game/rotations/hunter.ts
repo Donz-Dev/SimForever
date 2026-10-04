@@ -296,6 +296,11 @@ export const HUNTER_LONE_WOLF_RANGED: readonly PriorityEntry[] = [
  * Aspect of the Hawk costs 35 DPS, because Forever's Beast grants MELEE attack
  * power and this Hunter swings a two-hander.
  *
+ * RAPID FIRE IS IN IT NOW, and it should have been all along: "ranged AND
+ * MELEE attack speed by 40%". It was absent for as long as this build swung a
+ * two-hander and nobody re-read the list against the ability book -- the other
+ * two Hunter lists have always had it.
+ *
  * NO HUNTER'S MARK, WHICH IS THE ONE LIST IT DOES NOT BELONG IN. +71 RANGED
  * attack power is worth about 1.9 to a build whose damage is melee swings,
  * melee specials and a sting -- and the ability also costs a global cooldown
@@ -306,6 +311,27 @@ export const HUNTER_LONE_WOLF_RANGED: readonly PriorityEntry[] = [
 export const HUNTER_LONE_WOLF_MELEE: readonly PriorityEntry[] = [
   { abilityId: 'aspect_of_the_beast', condition: selfExpired('aspect_of_the_beast') },
   { abilityId: 'hunters_mark', condition: selfExpired('hunters_mark') },
+  /*
+   * RAPID FIRE, AND IT WAS IN THE BOOK AND IN NO LIST. "Increases RANGED AND
+   * MELEE attack speed by 40% for 15 sec" -- the melee half is why it belongs
+   * here, and `hasteFromPercent` is a flat haste rating, so the engine's one
+   * haste stat reaches both hands without anything extra.
+   *
+   * IT WENT UNCAST BECAUSE THE BUILD USED TO BE A TWO-HANDER AND NOBODY
+   * RE-READ THE LIST. The other two Hunter lists have carried it since they
+   * were written; this one is the odd one out, which is exactly the shape
+   * `ability_audit.ts` was built to surface -- declared, learnable, castable,
+   * never cast, reported nowhere.
+   *
+   * THIRD, WHERE THE OWNER'S OTHER TWO LISTS PUT IT: after the maintenance
+   * entries and above the damage. A fifteen-second window wants to open early
+   * and overlap as many swings as it can, and this build now has two of them.
+   *
+   * ONE CAST A FIGHT EITHER WAY. Five minutes, or three with Rapid Killing
+   * 2/2, which this build takes -- both longer than the encounter, so its
+   * position decides WHEN the window opens and not how often.
+   */
+  { abilityId: 'rapid_fire' },
   /*
    * "QUEUE RAPTOR STRIKE", and it is on-next-swing now, so `queue` is exactly
    * what the list does with it: arming costs no global cooldown and the swing
