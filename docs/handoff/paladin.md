@@ -47,19 +47,31 @@ school's modifier in before the roll. `AbilityModifier.hitBonus` is the field.
 
 ## The profiles
 
-| Profile | Talents | DPS | Was | List |
-| --- | --- | --- | --- | --- |
-| Seal Twist Ret | 13/0/38 | **528.3** ±6.8 | 471.0 | `PALADIN_RETRIBUTION` |
-| Shockadin | 23/0/28 | **472.7** ±3.8 | 379.0 | `PALADIN_SHOCKADIN` |
-| Prot Pally | 8/36/7 | **238.1** ±4.9 | 153.2 | `PALADIN_PROTECTION` |
+| Profile | Talents | DPS | List |
+| --- | --- | --- | --- |
+| Seal Twist Ret | 13/0/38 | **709.0** ±9.4 | `PALADIN_RETRIBUTION` |
+| Shockadin | 23/0/28 | **560.6** ±4.7 | `PALADIN_SHOCKADIN` |
+| Prot Pally | 8/36/7 | **293.0** ±2.9 | `PALADIN_PROTECTION` |
 
-**+57.3, +93.7 and +84.9, every one of them REAL**, and the twenty non-Paladin
-profiles are identical to the decimal — which is the containment check for a
-change that touches four shared engine files.
+**DO NOT READ THESE AS THE DEEP DIVE'S FIGURES.** The dive took them to 528.3,
+472.7 and 238.1; everything since — the raid buff list, Judgement of Wisdom,
+buffs lasting the fight, and the seal crit ruling below — has moved them again,
+and `npx vite-node tools/measure_profiles.ts` is the only thing that knows the
+current ones.
 
-Seal Twist Ret is now the **third** highest profile in the project, behind only
-the two Warriors, and the Shockadin is fifth. Prot Pally is still the lowest and
-is no longer an outlier: 238.1 against the Elemental Shaman's 295.4. (Measured
+**THE DEEP DIVE ITSELF WAS +57.3, +93.7 AND +84.9, every one of them REAL**, with
+the twenty non-Paladin profiles identical to the decimal — the containment check
+for a change touching four shared engine files.
+
+**AND THEN THE SEALS WERE RULED TO CRIT**, which moved them again: Seal Twist Ret
+**+40.6** and Shockadin **+17.0**, both REAL, with Prot Pally's +5.1 called noise
+against a doubled interval of 5.8. See the trap below for the two numbers that
+could each have gone the other way.
+
+Seal Twist Ret is now at the **top** of the table and should not be read as
+first: 709.0 ±9.4 against Cat's 703.8 ±6.4 is a gap of 5.2 inside both intervals,
+so the two are indistinguishable. Prot Pally is still the lowest and is no longer
+an outlier. (The deep dive's own figures were measured
 against a main that had meanwhile taken the Warlock dive's corrections and the
 Warrior dive's two noise-sized moves; all 23 were re-run after merging and every
 figure reproduced.)
@@ -172,6 +184,30 @@ had an entry for it, so no number ever moved and that is why it survived.
 
 - **A BLOCK IS AN OUTCOME A REACTION CAN SEE.** Four places in this project said
   otherwise. See the top of this file, and do not write the claim again.
+- **A SEAL CRITS OFF MELEE CRIT CHANCE, AND CRITS FOR 2x.** The owner's ruling,
+  covering Seal of Righteousness, Seal of Fury and Seal of Command. **Both halves
+  are counter-intuitive because the damage is HOLY**: `spellCritChance` and a
+  spell's 1.5x are the plausible answers and both are wrong. The multiplier
+  follows the TABLE `critFrom` names rather than the school, so getting it wrong
+  halves every seal crit — a smaller number, a plausible one, and no error.
+  `tests/game/sealCrits.test.ts` pins both by the SET of amounts a seal deals.
+- **IT COSTS ONE RANDOM NUMBER PER SEAL HIT**, so every seeded Paladin fight
+  shifted when it landed. That is why the three profiles moved by more than the
+  crits alone are worth, and why the twenty non-Paladin profiles coming back
+  **+0.0 to the decimal** was a stronger containment check than usual.
+- **THE CHEAPEST WAY TO CHECK IT IS THE DAMAGE TABLE'S CRIT COLUMN.** Run a
+  Paladin in the app and read the seal rows against Main Hand Auto-Attack: they
+  should match, and Judgement should NOT. Seal Twist Ret comes back with Seal of
+  Righteousness 21.52%, Seal of Command 21.85% and both Echoes at ~21.9% against a
+  main hand of 21.53%, while Judgement sits at 11.49% on spell crit; Prot Pally
+  shows Seal of Fury 6.29% against a main hand of 6.34%. **Two numbers in one
+  glance** -- that the seals moved to melee crit, and that nothing else did.
+- **A SEAL CRIT DOES NOT ARM VENGEANCE**, and that is the pipeline rather than a
+  decision: a seal hit carries no `attackTable`, so `dealDamage` offers it to no
+  reaction, and `sealHit` runs inside the seal's own reaction where the
+  re-entrancy guard would refuse a second one anyway. Worth knowing, because
+  "after landing a critical strike" now has a kind of critical strike it cannot
+  see.
 - **SEAL DAMAGE IS NOT A WEAPON USE**, by the owner's ruling, **and the swing
   carrying it still is.** Enforced by dealing every seal hit with **no
   `weaponSlot`** — so a seal hit cannot proc a Crusader or Hand of Justice, and

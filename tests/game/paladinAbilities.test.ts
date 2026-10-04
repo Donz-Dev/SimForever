@@ -333,10 +333,9 @@ describe('seal damage is not a weapon use', () => {
 
   it('states Seal of Command as a 7 PPM effect worth 70% of a swing', () => {
     /*
-     * BOTH NUMBERS ARE THE RULESET OWNER'S NOW. The rate was
-     *  and this test asserted only that it was
-     * positive, deliberately, so that it would keep passing when the real figure
-     * arrived. It has -- 7 -- so the assertion becomes the value, which is what a
+     * BOTH NUMBERS ARE THE RULESET OWNER'S NOW. The rate was a named placeholder
+     * constant and this test asserted only that it was positive, deliberately,
+     * so that it would keep passing when the real figure arrived. It has -- 7 -- so the assertion becomes the value, which is what a
      * test of real data is allowed to do and a test of a placeholder is not.
      */
     expect(SEAL_OF_COMMAND_PPM).toBe(7);

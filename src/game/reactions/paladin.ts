@@ -36,10 +36,34 @@ import {
  * registered, because a Paladin carries every seal's reaction and swaps the
  * aura. That is what makes seal-swapping mid-fight work at all, and it is what
  * the Retribution capstone is built around.
+ *
+ * AND A SEAL CRITS, AT THE PALADIN'S MELEE CRIT CHANCE -- the owner's ruling,
+ * covering Seal of Righteousness, Seal of Fury and Seal of Command. It is one
+ * field, `critFrom`, and the reasoning is on `sealHit`. **The Echo gets it for
+ * free and that is correct**: Twist of Light applies "the replaced Seal's
+ * effects", so an echoed seal is the seal, and it goes through the same
+ * function.
+ *
+ * SEAL OF THE CRUSADER IS NOT AFFECTED because it has no per-swing damage to
+ * crit -- it grants attack power and haste. Said so the absence reads as the
+ * seal rather than as an oversight.
  * ------------------------------------------------------------------------------
  */
 
 const HOLY = 'holy' as const;
+
+/**
+ * Which crit chance a seal's Holy damage rolls against.
+ *
+ * The ruleset owner's ruling: Seal of Righteousness, Seal of Fury and Seal of
+ * Command all crit, and they use the Paladin's MELEE attack crit chance rather
+ * than its spell crit -- so a seal crit is 2x like a swing, not 1.5x like a
+ * spell, even though the damage is Holy.
+ *
+ * Named once because all three seals and the Echo share it, and because the
+ * long version of why it is the swing table lives on `sealHit`.
+ */
+const SEAL_CRIT_TABLE = 'melee-auto' as const;
 
 /** The base speed of the weapon that landed this attack, for the formula. */
 function baseSpeedSeconds(actor: Combatant, attack: AttackEvent): number {
@@ -83,6 +107,42 @@ function sealHit(
      * table; this is the damage that rides on it having landed, so rolling
      * again would give it its own chance to miss on top of the swing's.
      */
+    /*
+     * ...BUT IT DOES ROLL FOR A CRIT, at the Paladin's MELEE crit chance, on
+     * the ruleset owner's ruling. `critFrom` is the field for exactly this: a
+     * hit whose LANDING was settled by something else and which still crits at
+     * the crit chance of the kind of event that carried it. A damage-over-time
+     * tick is the other caller and is the same shape.
+     *
+     * ------------------------------------------------------------------------
+     * `melee-auto` RATHER THAN `melee-special`, AND TODAY NOTHING RESTS ON IT.
+     * `attackChances` computes one `crit` and one `critMultiplier` for both
+     * melee tables, above the switch, so the two are interchangeable for a
+     * `critFrom` that reads nothing else. The swing is the plainer reading of
+     * "melee attack crit chance" and is what a seal rides on, so it is the one
+     * named -- and this is the line to revisit if the two tables ever diverge,
+     * because `attackTableModifiers` is consulted through `attackTable ??
+     * critFrom` and a talent scoped to one table would then reach seals or not.
+     *
+     * A MELEE CRIT IS 2x, NOT A SPELL'S 1.5x, which is the half of the ruling
+     * that is easy to lose. The seal deals HOLY damage, so `spellCritChance`
+     * and `spellCritMultiplier` are the plausible wrong answer on both counts;
+     * the owner named the melee chance, and the multiplier follows the table
+     * rather than the school.
+     *
+     * IT COSTS ONE RANDOM NUMBER PER SEAL HIT, so every seeded Paladin fight
+     * shifts. That is contained -- nothing but a Paladin has a seal -- and it is
+     * why the three profiles move by more than the crits alone are worth.
+     *
+     * IT DOES NOT ARM VENGEANCE, and that is not a decision made here: a seal
+     * hit carries no `attackTable`, so `dealDamage` offers it to no reaction at
+     * all, and `sealHit` is called from inside the seal's own reaction where the
+     * re-entrancy guard would refuse a second one anyway. Said rather than left
+     * to be rediscovered, because "after landing a critical strike" now has a
+     * kind of critical strike it does not see.
+     * ------------------------------------------------------------------------
+     */
+    critFrom: SEAL_CRIT_TABLE,
     powerCoefficient: 0,
     appliesArmor: false,
   });

@@ -230,6 +230,15 @@ See [docs/combat-tables.md](docs/combat-tables.md).
   it and got it wrong. [docs/extra-attacks.md](docs/extra-attacks.md)
 - **SEAL DAMAGE IS NOT A WEAPON USE**, by the owner's ruling, and the swing
   carrying it still is. Enforced by dealing every seal hit with no `weaponSlot`.
+- **AND A SEAL STILL CRITS, AT THE PALADIN'S MELEE CRIT CHANCE** — also the
+  owner's ruling, covering Seal of Righteousness, Seal of Fury and Seal of
+  Command. `critFrom` is the field, which is the same one a damage-over-time tick
+  uses and for the same reason: the LANDING was settled by something else and
+  only the crit is left to roll. **A SEAL DEALS HOLY DAMAGE AND CRITS FOR 2x
+  ANYWAY**, because the multiplier follows the TABLE and not the school — reading
+  the school gives a spell's 1.5x, which is half the bonus, entirely plausible
+  and no error. The Echo gets it for free and should: Twist of Light applies "the
+  replaced Seal's effects", so an echoed seal is the seal.
 - **A POISON IS THE SAME SHAPE: NOT A USE, BUT TRIGGERED BY ONE.** Also the
   owner's ruling. `isWeaponUseOf(attack, slot)` is what fires it -- a swing,
   a Windfury extra attack, or an ability needing that weapon -- and the poison

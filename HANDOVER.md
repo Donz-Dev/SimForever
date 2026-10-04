@@ -17,10 +17,10 @@ format **v10**. Live at <https://donz-dev.github.io/SimForever/>, republished by
 | --- | --- |
 | **Talents** | 258 fully, 36 partly, 110 ruled out, **64 a live gap** -- from 132 before the class dives |
 | **Abilities** | 114 declared against 478 captured |
-| **Profiles** | 23, all measured, **mean 520.8** |
+| **Profiles** | 23, all measured, **mean 527.0** |
 | **Scope rulings** | 7 members, all the owner's |
 | **Placeholders** | **10 declared** -- see the milestone table, and count DECLARATIONS |
-| **Tests** | 2,272 on Node 20 and 22 |
+| **Tests** | 2,293 on Node 20 and 22 |
 
 **FOUR CLASSES ARE ESSENTIALLY DONE** -- Warrior 0 live gaps, Paladin 2, Druid 2,
 Rogue 3 -- and the remaining 64 sit mostly in the Warlock (20), Priest (12) and
@@ -118,6 +118,43 @@ nine files. The item database is **frozen**.
 nothing else. **Measure with `runProfileBatch`, not `runProfile`** — the app runs
 the former and the two are different fights even at one iteration.
 
+**THE NEWEST MOVE IS THAT A SEAL CRITS**, on the owner's ruling: Seal of
+Righteousness, Seal of Fury and Seal of Command all roll against the Paladin's
+MELEE crit chance. Three profiles moved and the other twenty are **+0.0 to the
+decimal**, which is a stronger containment check than usual because the change
+CONSUMES A RANDOM NUMBER per seal hit -- any leak outside the class would have
+shifted a seeded stream and shown up as a difference rather than as a zero.
+
+| | |
+| --- | --- |
+| **Seal Twist Ret 668.4 to 709.0, +40.6, REAL** | and it goes to the top of the table |
+| **Shockadin 543.6 to 560.6, +17.0, REAL** | |
+| Prot Pally 287.8 to **293.0**, +5.1 | **noise under the conservative rule**, which judges a gap against this run's interval DOUBLED. 5.1 against 5.8, so it is called noise before it is called a change |
+| The other twenty | **+0.0** |
+
+**THE TANK GAINS LEAST AND THAT IS THE BUILD RATHER THAN THE RULING.** Protection
+carries Seal of Fury, a flat 35 Holy plus 10% of a spell power it barely has, and
+it does not take Conviction -- so it is the least seal damage at the lowest crit
+chance. Retribution gains most because Seal of Command and its Echo are a quarter
+of its damage before anything else is counted.
+
+**TWO NUMBERS COULD EACH HAVE GONE THE OTHER WAY AND ONE OF THEM IS NOT OBVIOUS.**
+A seal deals HOLY damage, so `spellCritChance` and a spell's 1.5x are the
+plausible answers; the owner named the MELEE chance, and the multiplier follows
+the TABLE rather than the school, so a seal crit is **2x**. Reading the school
+instead would have made every seal crit worth half what it should be -- a smaller
+number, a plausible one, and no error. `tests/game/sealCrits.test.ts` pins both by
+the SET of amounts a seal deals rather than by an average.
+
+**AND THE ECHO CRITS, WHICH IS THE SAME RULING RATHER THAN AN EXTENSION OF IT.**
+Twist of Light applies "the replaced Seal's effects", so an echoed seal is the
+seal; it goes through `sealHit` and got the field for free. Seal of the Crusader
+is untouched because it has no per-swing damage to crit.
+
+**THE MEAN IS 527.0**, from 520.8, re-summed from the table's own rows.
+
+---
+
 **THE METHOD CHANGED WITH THIS TABLE, AND THAT IS WHY SOME FIGURES MOVED WITHOUT
 A CAUSE.** Every earlier baseline here was ONE batch of 300 at seed 12345; these
 are thirty independent batches of ten, which is what `measure_profiles.ts` runs
@@ -202,7 +239,8 @@ the rule working rather than a list breaking, and it is asserted as ZERO in
 the failure this project has been caught by twelve times, so the one time it is
 deliberate it gets written down.
 
-**THE MEAN IS 520.8**, from 496.8. **Cat is back on top at 703.8.**
+**THE MEAN WAS 520.8 AT THAT POINT**, from 496.8, and Cat was on top at 703.8 —
+which the seal crit ruling above has since taken back off it.
 
 **BEFORE THAT, THE PRESET RAID BUFFS WENT FROM TWELVE TO SEVENTEEN, ON THE OWNER'S OWN SCREEN,
 AND IT MOVED EIGHTEEN PROFILES.** Added: **Arcane Intellect, Blessing of Wisdom,
@@ -562,18 +600,24 @@ so. Fourteen profiles moved.
 
 | Profile | Class | Talents | DPS | | Profile | Class | Talents | DPS |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| Cat Druid | Druid | 9/35/7 | 703.8 | | **LW Melee** | Hunter | 7/13/31 | **495.4** |
-| Seal Twist Ret | Paladin | 13/0/38 | 668.4 | | Venom Rogue | Rogue | 37/12/2 | 494.9 |
+| **Seal Twist Ret** | Paladin | 13/0/38 | **709.0** | | LW Melee | Hunter | 7/13/31 | 495.4 |
+| Cat Druid | Druid | 9/35/7 | 703.8 | | Venom Rogue | Rogue | 37/12/2 | 494.9 |
 | DW Fury | Warrior | 18/33/0 | 667.2 | | Shadow Priest | Priest | 16/3/32 | 492.3 |
 | 2H Arms | Warrior | 38/13/0 | 624.6 | | Bear Druid | Druid | 9/42/0 | 488.5 |
 | BM Hunter | Hunter | 31/20/0 | 595.8 | | LW Ranged | Hunter | 7/39/5 | 482.1 |
 | Enh Shaman | Shaman | 19/32/0 | 593.5 | | Prot Warr | Warrior | 17/0/34 | 469.0 |
 | Fire Mage | Mage | 10/39/2 | 587.3 | | Rupture Rogue | Rogue | 12/8/31 | 450.3 |
 | Frostfire Mage | Mage | 0/29/22 | 580.8 | | Moonkin | Druid | 38/0/13 | 436.9 |
-| Arcane Mage | Mage | 47/4/0 | 549.6 | | Ele Shaman | Shaman | 38/13/0 | 408.4 |
-| Shockadin | Paladin | 23/0/28 | 543.6 | | SM/DS | Warlock | 40/11/0 | 404.7 |
-| Combat Rogue | Rogue | 18/33/0 | 524.2 | | Prot Pally | Paladin | 8/36/7 | 287.8 |
+| **Shockadin** | Paladin | 23/0/28 | **560.6** | | Ele Shaman | Shaman | 38/13/0 | 408.4 |
+| Arcane Mage | Mage | 47/4/0 | 549.6 | | SM/DS | Warlock | 40/11/0 | 404.7 |
+| Combat Rogue | Rogue | 18/33/0 | 524.2 | | **Prot Pally** | Paladin | 8/36/7 | **293.0** |
 | Firelock | Warlock | 5/11/35 | 509.2 | |  |  |  |  |
+
+**THE TOP TWO ARE INDISTINGUISHABLE AND THE TABLE SHOULD NOT BE READ AS A
+RANKING THERE.** Seal Twist Ret 709.0 +/-9.4 against Cat 703.8 +/-6.4 is a gap of
+5.2 inside both intervals -- the same thing that was true of DW Fury and Cat one
+change ago, and the reason "the top profile" keeps changing hands without anybody
+measuring a difference.
 
 **WHAT THE OWNER'S LISTS WERE WORTH, against the last figures measured on this
 project's own shells:**
