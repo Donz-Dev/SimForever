@@ -1,7 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import { createPlayer } from '../../src/game/actors/createPlayer';
 import { characterAtCombatStart, runProfileBatch } from '../../src/simulator';
-import { DEFAULT_DAMAGE_VARIANCE, seconds, triggersGcd } from '../../src/engine';
+import {
+  DEFAULT_DAMAGE_VARIANCE,
+  applyHaste,
+  hasteMultiplierFrom,
+  seconds,
+  triggersGcd,
+} from '../../src/engine';
 import { buildSimulation } from '../helpers/buildSimulation';
 import { makeTarget } from '../helpers/actors';
 import { PRESETS_BY_ID } from '../../src/profiles/presets';
@@ -54,6 +60,7 @@ import { bringsPet } from '../../src/game/character/petFamilies';
 import {
   HUNTERS_MARK,
   HUNTERS_MARK_RANGED_ATTACK_POWER,
+  RAPID_FIRE,
 } from '../../src/game/auras/hunter';
 import { talentBuild } from '../../src/game/talents/talentBuild';
 
@@ -794,5 +801,64 @@ describe("the owner's talents reach the pet", () => {
     const names = batchOf('bm_hunter', 20, 5).buffUptime.map((b) => b.auraName);
     const battleShouts = names.filter((name) => name === 'Battle Shout');
     expect(battleShouts).toHaveLength(1);
+  });
+});
+
+describe('Rapid Fire reaches the melee Hunter too', () => {
+  it('is cast by all three builds, which it was not', () => {
+    /*
+     * ------------------------------------------------------------------------
+     * "Increases RANGED AND MELEE attack speed by 40% for 15 sec", and the
+     * melee half is why it belongs in a melee list. It was in the Lone Wolf
+     * melee build's BOOK and in no list -- declared, learnable, castable, never
+     * cast -- for as long as that build swung a two-hander, and nobody re-read
+     * the list against the book when it changed.
+     *
+     * THE OTHER TWO HUNTER LISTS HAVE ALWAYS CARRIED IT, which is what makes
+     * this the odd one out rather than a decision. Worth +28.4 DPS.
+     *
+     * ASSERTED AS PRESENCE AND AS A CAST, NOT AS A POSITION. Where it sits
+     * measures as nothing: first 517.0, third 523.8, last 531.2, on intervals
+     * of 5.3, 7.3 and 7.1 -- all three overlap, so by this project's own rule
+     * that is no difference and the nominally-highest is noise. It sits third
+     * because that is where the owner's other two lists put it.
+     * ------------------------------------------------------------------------
+     */
+    for (const list of [
+      HUNTER_BEAST_MASTERY,
+      HUNTER_LONE_WOLF_RANGED,
+      HUNTER_LONE_WOLF_MELEE,
+    ]) {
+      expect(list.map((entry) => entry.abilityId)).toContain('rapid_fire');
+    }
+
+    /*
+     * AND IT FIRES, which presence alone does not prove -- an entry a higher
+     * one never yields to is invisible, and three of the four causes of a dead
+     * entry are. One cast a fight: five minutes, or three with Rapid Killing
+     * 2/2 which this build takes, and both outlast the encounter.
+     */
+    const batch = batchOf('lw_melee', 30, 7);
+    const rapid = batch.abilities.find((ability) => /Rapid Fire/.test(ability.abilityName));
+    expect(rapid?.uses).toBeCloseTo(1, 1);
+  });
+
+  it('hastens the MELEE swing, which is the half that makes it worth casting', () => {
+    /*
+     * One haste rating, so "ranged and melee attack speed" needs no second
+     * stat -- but a melee build only benefits if the aura reaches its swing
+     * timer, and that is what this asserts rather than the stat's presence.
+     */
+    const hunter = characterAtCombatStart(PRESETS_BY_ID.get('lw_melee')!.build())!;
+    const before = hunter.weapons.mainHand!.swingTimerMs;
+
+    const simulation = buildSimulation([hunter, makeTarget()]);
+    simulation.begin();
+    simulation.applyAura(hunter, RAPID_FIRE, hunter.id);
+
+    const hasted = applyHaste(before, hasteMultiplierFrom(hunter.stats.effective));
+    expect(hasted).toBeLessThan(before);
+    // 40%, so the swing is 1 / 1.4 of what it was.
+    expect(hasted).toBeCloseTo(before / 1.4, 0);
   });
 });
