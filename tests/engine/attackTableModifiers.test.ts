@@ -189,20 +189,38 @@ describe('what it retired', () => {
     expect(stale).toEqual([]);
   });
 
-  it('still says the one thing that is genuinely missing', () => {
+  it('has no caveat left on Predator’s Edge, because the build dual-wields', () => {
     /*
-     * Pandemic and Lethality want crit damage for a LIST OF NAMED abilities,
-     * which is a different axis and still has no declaration -- the field
-     * exists on `AbilityModifiers` and nothing reaches it. Their reasons were
-     * re-read when this landed, so they name all three scopes rather than the
-     * two that existed when they were written.
+     * ------------------------------------------------------------------------
+     * THIS TEST USED TO ASSERT THE OPPOSITE, and it was right to. Predator's
+     * Edge carried one `unmodelled` reason -- "there is no off hand for the
+     * second number to raise" -- and this pinned it so that clearing the
+     * blocker had to come back here.
      *
-     * Asserted so that clearing THAT blocker has to come back here too.
+     * THE BLOCKER WAS NEVER THE ENGINE. The reason was a claim about the
+     * PROFILE: every Hunter held one melee weapon. The ruleset owner made the
+     * Lone Wolf melee build a dual-wielder and the reason expired without a
+     * line of engine code changing -- `offHandDamage` had existed since Dual
+     * Wield Specialization needed it.
+     *
+     * So the talent is FULLY modelled now, and the assertion flips rather than
+     * being deleted: a reason reappearing here is as much a regression as the
+     * old one failing to.
+     * ------------------------------------------------------------------------
      */
     const predators = HUNTER_TALENT_EFFECTS.predator_s_edge.filter(
       (e) => e.kind === 'unmodelled',
     );
-    expect(predators).toHaveLength(1);
-    expect(predators[0].kind === 'unmodelled' && predators[0].reason).toMatch(/OFF-HAND/);
+    expect(predators).toEqual([]);
+
+    // Both clauses, and the off-hand one reads the SECOND number in the row.
+    expect(HUNTER_TALENT_EFFECTS.predator_s_edge).toContainEqual({
+      kind: 'attackTableCritDamage',
+      tables: ['melee-auto', 'melee-special'],
+    });
+    expect(HUNTER_TALENT_EFFECTS.predator_s_edge).toContainEqual({
+      kind: 'offHandDamage',
+      valueIndex: 1,
+    });
   });
 });

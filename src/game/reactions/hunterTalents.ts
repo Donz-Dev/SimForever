@@ -1,5 +1,5 @@
 import type { AuraDefinition } from '../../engine';
-import { flat, isWeaponUseOf, seconds } from '../../engine';
+import { flat, isWeaponUse, isWeaponUseOf, seconds } from '../../engine';
 import type { TalentReactionBuilder } from './warriorTalents';
 import { DEADLY_ASPECTS, FRENZY, laceratingStrikesAura } from '../auras/hunter';
 
@@ -29,6 +29,24 @@ import { DEADLY_ASPECTS, FRENZY, laceratingStrikesAura } from '../auras/hunter';
  *
  * AN AUTO-ATTACK ONLY, which is what "Auto Shot" and "melee auto attacks" say.
  * An `abilityId` means an ability was used, so its absence is the test.
+ *
+ * ----------------------------------------------------------------------------
+ * "ALL MELEE AUTO ATTACKS" MEANS BOTH HANDS, AND THIS CHECKED ONLY THE MAIN
+ * ONE. That was invisible for as long as the melee Hunter held a two-hander --
+ * a two-hander swings one slot, so `isWeaponUseOf(attack, 'mainHand')` and
+ * "any melee swing" were the same test. The owner made that build a
+ * dual-wielder and they stopped being the same: the off hand swings a
+ * 1.30-second dagger, which is MORE swings than the main hand, and every one of
+ * them was failing to roll for this proc.
+ *
+ * `isWeaponUse` is the engine's name for "a melee swing from either hand", and
+ * it is what the tooltip says. The Hawk half stays slot-specific because "Auto
+ * Shot" is one weapon by definition.
+ *
+ * This is the "when a rule is fixed for one slot, check its siblings" lesson
+ * arriving from the other direction: nothing here was fixed, the CHARACTER
+ * changed underneath a test that had been equivalent by accident.
+ * ----------------------------------------------------------------------------
  */
 export const deadlyAspects: TalentReactionBuilder = (chancePercent) => ({
   id: 'deadly_aspects',
@@ -38,7 +56,8 @@ export const deadlyAspects: TalentReactionBuilder = (chancePercent) => ({
     if (attack.abilityId !== undefined) return false;
 
     const hawk = actor.auras.has('aspect_of_the_hawk') && isWeaponUseOf(attack, 'ranged');
-    const beast = actor.auras.has('aspect_of_the_beast') && isWeaponUseOf(attack, 'mainHand');
+    // EITHER HAND: "all melee auto attacks". See the header.
+    const beast = actor.auras.has('aspect_of_the_beast') && isWeaponUse(attack);
     if (!hawk && !beast) return false;
 
     return context.rng.rollChance(chancePercent / 100);

@@ -7,6 +7,7 @@ import {
   DRUID_CAT_GEAR,
   DRUID_MOONKIN_GEAR,
   HUNTER_ARMOUR,
+  HUNTER_DUAL_WIELD_WEAPONS,
   HUNTER_MELEE_WEAPONS,
   HUNTER_STAT_STICK,
   MAGE_GEAR,
@@ -158,11 +159,16 @@ const STARTING_SETS: Partial<
   },
 
   hunter: (style) => {
-    // The melee build's own two-hander, or the stat stick the two ranged builds
-    // hold and never swing. A dual-wielding Hunter gets neither: there is no
-    // Hunter one-hander on file.
+    /*
+     * THREE STYLES, THREE WEAPON SETS, AND THE DUAL-WIELD ONE IS NEW. The
+     * comment here used to read "a dual-wielding Hunter gets neither: there is
+     * no Hunter one-hander on file", and the owner has since named two --
+     * Vis'kag and the Core Hound Tooth, both enchanted. A style that returned
+     * armour alone was a Hunter punching the boss.
+     */
     if (style === 'two_hander') return { ...HUNTER_ARMOUR, ...HUNTER_MELEE_WEAPONS };
-    if (style === 'dual_wield') return HUNTER_ARMOUR;
+    if (style === 'dual_wield') return { ...HUNTER_ARMOUR, ...HUNTER_DUAL_WIELD_WEAPONS };
+    // The stat stick the two ranged builds hold and never swing.
     return { ...HUNTER_ARMOUR, ...HUNTER_STAT_STICK };
   },
 

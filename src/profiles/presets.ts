@@ -4,7 +4,7 @@ import {
   DRUID_CAT_GEAR,
   DRUID_MOONKIN_GEAR,
   HUNTER_ARMOUR,
-  HUNTER_MELEE_WEAPONS,
+  HUNTER_DUAL_WIELD_WEAPONS,
   HUNTER_STAT_STICK,
   MAGE_GEAR,
   PALADIN_PROT_GEAR,
@@ -1274,7 +1274,7 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = [
   {
     id: 'lw_melee',
     label: 'LW Melee',
-    detail: 'Orc, two-hander, no pet, standing target. 31 Survival',
+    detail: 'Orc, dual wield, no pet, standing target. 31 Survival',
     characterClass: 'hunter',
     build: () => ({
       ...createDefaultProfile(),
@@ -1283,12 +1283,18 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = [
         race: 'orc',
         characterClass: 'hunter',
         level: 60,
-        combatStyle: 'two_hander',
+        /*
+         * DUAL WIELD, on the ruleset owner's instruction, and it is the fifth
+         * of the five settings a build has to agree on. The style decides which
+         * slots auto-attack, which weapon set is legal, and -- through
+         * Predator's Edge -- what a talent this build already took is worth.
+         */
+        combatStyle: 'dual_wield',
         stance: 'battle',
       },
       talents: { ...HUNTER_LONE_WOLF_MELEE_TALENTS },
       raidBuffs: [...PRESET_RAID_BUFFS],
-      equipment: { ...HUNTER_ARMOUR, ...HUNTER_MELEE_WEAPONS },
+      equipment: { ...HUNTER_ARMOUR, ...HUNTER_DUAL_WIELD_WEAPONS },
       encounter: { ...createDefaultProfile().encounter, targetAttacks: false },
     }),
   },

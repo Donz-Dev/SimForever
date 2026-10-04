@@ -282,6 +282,43 @@ stat for Hack and Slash. Nothing in the Warrior's own files changed.
 `armorPenetration.test.ts` asserts BOTH callers on purpose, which is what failed.
 See [docs/handoff/rogue.md](docs/handoff/rogue.md).
 
+**THE MELEE HUNTER DUAL-WIELDS NOW, AND IT MOVED ONE PROFILE.** LW Melee
+**414.5 to 495.4, +80.9, REAL**, the other twenty-two identical to the decimal.
+The ruleset owner replaced its two-hander with Vis'kag and the Core Hound Tooth,
+both enchanted, and it is worth more than a weapon swap because it expired a
+talent's caveat and exposed a proc that had been right by accident:
+
+| | |
+| --- | --- |
+| **+38.8** | **Predator's Edge's off-hand clause**, which had no off hand to raise until now |
+| **+30.2** | **Deadly Aspects rolling off EITHER hand**, which its tooltip always said |
+| **~+11.9** | the switch itself: two weapons, two swing timers, and Vis'kag's Fatal Wound proc |
+
+They overlap, so the three do not sum exactly. **The off hand is 23.5% of the
+profile**, and Mongoose Bite nearly doubles its casts -- 3.3 a fight to 6.2 --
+because Expose Prey procs off both hands.
+
+**PREDATOR'S EDGE WAS HALF A TALENT AND THE OTHER HALF WAS NEVER AN ENGINE GAP.**
+Its `unmodelled` reason read "there is no off hand for the second number to
+raise", which is a claim about the PROFILE rather than about the engine --
+`offHandDamage` had existed since Dual Wield Specialization needed it. The owner
+changed the build and the reason expired with no engine code touched. **Hunter
+goes 27 fully modelled to 28, and partly 6 to 5.**
+
+**THE TALENT MULTIPLIES THE PENALTY RATHER THAN REPLACING IT**, which is the
+arithmetic worth writing down: `0.5 x (1 + 50 / 100) = 0.75`, the owner's stated
+25% penalty. Writing 0.75 directly would agree with them at rank 5 and silently
+stop scaling everywhere else.
+
+**THE PROC THAT HAD BEEN RIGHT BY ACCIDENT IS THE PART TO CARRY.** Deadly
+Aspects' melee half checked `isWeaponUseOf(attack, 'mainHand')`, and while this
+Hunter held a two-hander that WAS "any melee swing" -- one slot swings. Dual
+wielding separated them, and the off hand is the FASTER weapon, so most of the
+build's swings had stopped rolling for a proc whose tooltip says "all melee auto
+attacks". **A test can be equivalent by accident and stop being so because the
+CHARACTER changed, not the code** -- the "check its siblings" lesson arriving
+from the other direction, and worth more than the weapon swap itself.
+
 **THE HAWK HAS BEEN REDEFINED THREE TIMES IN THREE DAYS, AND EACH TIME IT MOVED
 ONE PROFILE AND NOTHING ELSE.** The latest: **646.6 to 547.0, -99.6, REAL**, the
 other twenty-two identical to the decimal.
@@ -525,14 +562,14 @@ so. Fourteen profiles moved.
 
 | Profile | Class | Talents | DPS | | Profile | Class | Talents | DPS |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| **Cat Druid** | Druid | 9/35/7 | **703.8** | | Venom Rogue | Rogue | 37/12/2 | 494.9 |
-| Seal Twist Ret | Paladin | 13/0/38 | 668.4 | | Shadow Priest | Priest | 16/3/32 | 492.3 |
-| DW Fury | Warrior | 18/33/0 | 667.2 | | Bear Druid | Druid | 9/42/0 | 488.5 |
-| 2H Arms | Warrior | 38/13/0 | 624.6 | | LW Ranged | Hunter | 7/39/5 | 482.1 |
-| BM Hunter | Hunter | 31/20/0 | 595.8 | | Prot Warr | Warrior | 17/0/34 | 469.0 |
-| Enh Shaman | Shaman | 19/32/0 | 593.5 | | Rupture Rogue | Rogue | 12/8/31 | 450.3 |
-| Fire Mage | Mage | 10/39/2 | 587.3 | | Moonkin | Druid | 38/0/13 | 436.9 |
-| Frostfire Mage | Mage | 0/29/22 | 580.8 | | LW Melee | Hunter | 7/13/31 | 414.5 |
+| Cat Druid | Druid | 9/35/7 | 703.8 | | **LW Melee** | Hunter | 7/13/31 | **495.4** |
+| Seal Twist Ret | Paladin | 13/0/38 | 668.4 | | Venom Rogue | Rogue | 37/12/2 | 494.9 |
+| DW Fury | Warrior | 18/33/0 | 667.2 | | Shadow Priest | Priest | 16/3/32 | 492.3 |
+| 2H Arms | Warrior | 38/13/0 | 624.6 | | Bear Druid | Druid | 9/42/0 | 488.5 |
+| BM Hunter | Hunter | 31/20/0 | 595.8 | | LW Ranged | Hunter | 7/39/5 | 482.1 |
+| Enh Shaman | Shaman | 19/32/0 | 593.5 | | Prot Warr | Warrior | 17/0/34 | 469.0 |
+| Fire Mage | Mage | 10/39/2 | 587.3 | | Rupture Rogue | Rogue | 12/8/31 | 450.3 |
+| Frostfire Mage | Mage | 0/29/22 | 580.8 | | Moonkin | Druid | 38/0/13 | 436.9 |
 | Arcane Mage | Mage | 47/4/0 | 549.6 | | Ele Shaman | Shaman | 38/13/0 | 408.4 |
 | Shockadin | Paladin | 23/0/28 | 543.6 | | SM/DS | Warlock | 40/11/0 | 404.7 |
 | Combat Rogue | Rogue | 18/33/0 | 524.2 | | Prot Pally | Paladin | 8/36/7 | 287.8 |
@@ -715,15 +752,15 @@ fails.
 | Class | Talents | Fully | Partly | Ruled out | Live gap |
 | --- | --- | --- | --- | --- | --- |
 | Warrior | 53 | 43 | 4 | 6 | **0** |
-| Paladin | 52 | 32 | 5 | 13 | **2** |
 | Druid | 51 | 29 | 5 | 15 | **2** |
-| Hunter | 50 | 27 | 6 | 9 | **8** |
+| Paladin | 52 | 32 | 5 | 13 | **2** |
+| Rogue | 53 | 31 | 5 | 14 | **3** |
 | Shaman | 50 | 22 | 4 | 18 | **6** |
+| Hunter | 50 | 28 | 5 | 9 | **8** |
 | Mage | 54 | 30 | 2 | 11 | **11** |
 | Priest | 53 | 20 | 2 | 19 | **12** |
-| Rogue | 53 | 31 | 5 | 14 | **3** |
 | Warlock | 52 | 24 | 3 | 5 | **20** |
-| **Total** | **468** | **258** | **36** | **110** | **64** |
+| **Total** | **468** | **259** | **35** | **110** | **64** |
 
 **THE WARRIOR LEFT THE GAP COLUMN ENTIRELY**, and its last entry is worth
 reading because of the shape rather than the size. Improved Berserker Rage's

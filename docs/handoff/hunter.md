@@ -35,7 +35,7 @@ left, six are the encounter or the build, one is a consequence of a ruling, and
 | Profile | Talents | DPS | List | Notes |
 | --- | --- | --- | --- | --- |
 | BM Hunter | 31/20/0 | **547.0** | `HUNTER_BEAST_MASTERY` | **the only profile with a pet** |
-| LW Melee | 7/13/31 | **362.7** | `HUNTER_LONE_WOLF_MELEE` | |
+| LW Melee | 7/13/31 | **495.4** | `HUNTER_LONE_WOLF_MELEE` | **dual wield**, since 2026-10-03 |
 | LW Ranged | 7/39/5 | **311.7** | `HUNTER_LONE_WOLF_RANGED` | |
 
 **BM HUNTER HAS HELD THREE DIFFERENT FIGURES IN TWO DAYS, AND THE SEQUENCE IS
@@ -106,7 +106,7 @@ One batch of ten, so read the shape and not the decimals:
 | --- | --- |
 | BM Hunter | Ranged Auto 30.0%, **Hawk 17.9%**, Cat Melee 17.2%, Serpent Sting 13.5%, Aimed Shot 13.1%, Claw 5.6%, Bite 2.7% |
 | LW Ranged | Ranged Auto 49.7%, Arcane Shot 19.6%, Aimed Shot 13.0%, Serpent Sting 11.0%, Sniper Shot 6.6% |
-| LW Melee | Main Hand Auto 32.6%, Raptor Strike 28.2%, Strider Kick 19.8%, Mongoose Bite 8.6%, **Immolation Trap 8.1%**, **Lacerating Strikes 2.6%** |
+| LW Melee | Main Hand Auto 29.0%, **Off Hand Auto 23.5%**, Raptor Strike 16.9%, Strider Kick 11.5%, Mongoose Bite 9.2%, Immolation Trap 6.5%, Lacerating Strikes 1.9%, **Fatal Wound 1.4%** |
 
 **"Cat Melee" USED TO READ "Main Hand Auto-Attack" AND THAT WAS A LIE THIS
 DOCUMENT REPEATED.** See **The row that was about the wrong thing** below.
@@ -327,11 +327,110 @@ how two labels drift). The row reads **"Cat Melee"**.
 
 ---
 
+## The melee Hunter dual-wields
+
+> *"instead of a two-hander being the default weapon I want it to be dual wield.
+> The main hand weapon should be: vis'kag with crusader enchant. The off hand
+> weapon should be: core hound tooth with crusader enchant."*
+>
+> *"...pay special attention to the predator's edge talent which mitigates the
+> impact of the dual wield damage penalty. it becomes a 25% penalty with rank 5
+> predator's edge."*
+
+**414.5 → 495.4, +80.9, REAL**, with the other twenty-two profiles identical to
+the decimal. Three things, and only the first is the weapon swap:
+
+| | |
+| --- | --- |
+| **+38.8** | **Predator's Edge's off-hand clause**, which had no off hand to raise until now |
+| **+30.2** | **Deadly Aspects rolling off EITHER hand**, which its tooltip always said |
+| **~+11.9** | the switch itself: two weapons, two swing timers, and Vis'kag's Fatal Wound proc |
+
+They overlap, so the three do not sum exactly. **The off hand is 23.5% of the
+profile**, and Mongoose Bite nearly doubles its casts — 3.3 a fight to 6.2 —
+because Expose Prey procs off both hands.
+
+**NEITHER ITEM IS NEW AND NEITHER LIVES IN A HUNTER FILE.** Vis'kag (17075) is in
+`classic-warrior.json` and the Core Hound Tooth (228277) in `sod-rogue.json`;
+`HUNTER_DUAL_WIELD_WEAPONS` references them by id, which is what the Rogue's own
+sword set already does with Vis'kag. **The item database is frozen and this added
+nothing to it.**
+
+**A SWORD AND A 1.30-SECOND DAGGER**, worth noticing rather than smoothing over:
+the off hand swings far more often than the main, so the speed is what decides
+what the penalty and Predator's Edge are worth. No Hunter talent keys on weapon
+type, so the pairing costs nothing else.
+
+### Predator's Edge was half a talent, and the other half was never an engine gap
+
+Its `unmodelled` reason read *"there is no off hand for the second number to
+raise"* — **a claim about the PROFILE, not about the engine.** `offHandDamage`
+has existed since Dual Wield Specialization needed it. The owner changed the
+build and the reason expired with no engine code touched. The talent is **fully
+modelled** now: the Hunter goes 27 fully to 28, partly 6 to 5.
+
+**THE TALENT MULTIPLIES THE PENALTY RATHER THAN REPLACING IT:**
+
+```
+OFF_HAND_DAMAGE_MULTIPLIER x (1 + 50 / 100) = 0.5 x 1.5 = 0.75
+```
+
+which is the owner's stated 25% penalty. **Writing 0.75 directly would agree with
+them at rank 5 and silently stop scaling at every other rank**, so the test builds
+it from the two numbers that produce it and checks ranks 1, 3 and 5.
+`valueIndex: 1` reads the second number in a row whose halves differ at every rank
+— 6/10 through 30/50 — so an index mistake is visible here, unlike Clever Traps'
+matching 30/30.
+
+### And a proc that had been right by accident
+
+**Deadly Aspects' melee half checked `isWeaponUseOf(attack, 'mainHand')`.** While
+this Hunter held a two-hander that WAS "any melee swing" — one slot swings. Dual
+wielding separated them, and **the off hand is the faster weapon**, so most of
+the build's swings had stopped rolling for a proc whose tooltip says *"all melee
+auto attacks"*. It reads `isWeaponUse` now.
+
+**A test can be equivalent by accident and stop being so because the CHARACTER
+changed rather than the code.** That is the "when a rule is fixed for one slot,
+check its siblings" lesson arriving from the other direction, and it is worth
++30.2 — more than the weapon swap itself.
+
+**MEASURED PER HAND RATHER THAN ASSERTED**, with `npx vite-node
+tools/probe_swing_procs.ts`, which attributes every application of a
+swing-triggered aura to the swing before it. Over 40 fights:
+
+| hand | landed | avoided | procs | rate |
+| --- | --- | --- | --- | --- |
+| main hand | 735 | 233 | 73 | **9.9%** |
+| off hand | 1,692 | 512 | 158 | **9.3%** |
+
+against the talent's stated 10%, and **the off hand supplies 2.3x the landed
+swings** because it is the faster weapon. A unit test saying `canTrigger`
+returns true proves the branch; this proves the rate.
+
+**AND THE DENOMINATOR IS THE TRAP.** The first run of that probe read 4.2% and
+3.6% and looked like a bug. It was counting DAMAGE EVENTS as swings, and an
+avoided attack emits one with `amount: 0` -- a dual-wielder misses about a
+quarter of the time, so every miss was sitting in the denominator. A reaction
+only rolls on the outcomes it lists, so a proc rate has to be taken over LANDED
+swings or every dual-wield build reads as under-proccing.
+
+`attackTableModifiers.test.ts` asserted the off-hand caveat was still there, and
+it was right to. **The assertion flips rather than being deleted**: a reason
+reappearing is as much a regression as the old one failing to.
+
+### The bow is still equipped and still does not swing
+
+Unchanged by any of this, and asserted because *"the melee Hunter lost its bow"*
+is the obvious wrong conclusion to draw. `weaponsForEquipment` skips the ranged
+slot unless the style marks it `required`, while `statsForStyle` reads
+`liveEquipment` — so Rhok'delar's stats count either way.
+
 ## The census
 
 | Talents | Fully | Partly | Ruled out | Live gap |
 | --- | --- | --- | --- | --- |
-| 50 | 27 | 6 | 9 | **8** |
+| 50 | 28 | 5 | 9 | **8** |
 
 ### The 8 live gaps, grouped by cause
 
@@ -365,7 +464,6 @@ ruling can close one gap and reshape another
 | `improved_tracking` | **applied as a flat damage bonus, which ASSUMES the Hunter is tracking the right creature type** — an interpretation still unratified, and the one item on the old "done" list the owner was not asked about |
 | `clever_traps` | its Immolation Trap damage applies; Freezing and Frost durations are crowd control and Explosive Trap is not declared |
 | `surefooted` | the hit applies; movement or control does not |
-| `predator_s_edge` | melee crit damage applies; its OFF-HAND clause does not, because every Hunter here holds one weapon |
 
 ---
 

@@ -425,13 +425,28 @@ export const HUNTER_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
      * note saying so is what expired here.
      */
     { kind: 'attackTableCritDamage', tables: ['melee-auto', 'melee-special'] },
-    {
-      kind: 'unmodelled',
-      reason:
-        'Its melee crit damage applies. Its OFF-HAND clause does not: every ' +
-        'Hunter profile here holds one melee weapon, so there is no off hand ' +
-        'for the second number to raise.',
-    },
+    /*
+     * "...and your offhand weapon damage by {1}%", WHICH IS LIVE NOW AND WAS
+     * THE TALENT'S LARGER HALF ALL ALONG.
+     *
+     * Its `unmodelled` reason read "there is no off hand for the second number
+     * to raise", and that was a claim about the PROFILE rather than about the
+     * engine -- the kind that expires without anybody touching it. The owner
+     * made the Lone Wolf melee build a dual-wielder and it expired.
+     *
+     * `offHandDamage` MULTIPLIES THE PENALTY RATHER THAN REPLACING IT.
+     * `createPlayer` composes `0.5 x (1 + value / 100)`, so 50% at rank 5 is
+     * 0.5 x 1.5 = 0.75 -- a TWENTY-FIVE percent penalty, which is the figure
+     * the owner stated when asking for this. Reading it as "the penalty becomes
+     * 25%" and writing 0.75 somewhere would produce the same number today and
+     * the wrong one at every other rank.
+     *
+     * `valueIndex: 1` because the row is [crit damage, off-hand damage] and the
+     * two differ at every rank -- 6/10 through 30/50 -- so an index mistake
+     * here is visible rather than hidden the way Clever Traps' matching pair
+     * would hide one.
+     */
+    { kind: 'offHandDamage', valueIndex: 1 },
   ],
 
   counterattack: [

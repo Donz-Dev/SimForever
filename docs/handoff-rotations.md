@@ -124,7 +124,7 @@ leave behind**, because nothing about a list changes when a figure does.
 | Ele Shaman | 411.4 | `SHAMAN_ELEMENTAL` | 4 | 2 |
 | Rupture | 406.3 | `ROGUE_RUPTURE` | 8 | 5 |
 | SM/DS | 402.0 | `WARLOCK_AFFLICTION` | 5 | 4 |
-| LW Melee | 369.7 | `HUNTER_LONE_WOLF_MELEE` | 6 | 2 |
+| LW Melee | 495.4 | `HUNTER_LONE_WOLF_MELEE` | 6 | 2 |
 | Prot Pally | 270.1 | `PALADIN_PROTECTION` | 9 | 6 |
 
 Plus `PET_PRIORITY` (2 entries), which runs on the BM Hunter's pet, and two

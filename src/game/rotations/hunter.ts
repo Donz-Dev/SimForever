@@ -180,7 +180,7 @@ export const HUNTER_BEAST_MASTERY: readonly PriorityEntry[] = [
    * silently, because the instruction is in the spec.
    *
    * The same line on the melee list is the same answer in the other direction:
-   * `two_hander` swings the main hand and nothing else.
+   * `dual_wield` swings both melee hands and never the bow.
    */
   { abilityId: 'aspect_of_the_hawk', condition: selfExpired('aspect_of_the_hawk') },
   { abilityId: 'hunters_mark', condition: selfExpired('hunters_mark') },
