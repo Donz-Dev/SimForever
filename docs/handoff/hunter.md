@@ -395,6 +395,26 @@ changed rather than the code.** That is the "when a rule is fixed for one slot,
 check its siblings" lesson arriving from the other direction, and it is worth
 +30.2 — more than the weapon swap itself.
 
+**MEASURED PER HAND RATHER THAN ASSERTED**, with `npx vite-node
+tools/probe_swing_procs.ts`, which attributes every application of a
+swing-triggered aura to the swing before it. Over 40 fights:
+
+| hand | landed | avoided | procs | rate |
+| --- | --- | --- | --- | --- |
+| main hand | 735 | 233 | 73 | **9.9%** |
+| off hand | 1,692 | 512 | 158 | **9.3%** |
+
+against the talent's stated 10%, and **the off hand supplies 2.3x the landed
+swings** because it is the faster weapon. A unit test saying `canTrigger`
+returns true proves the branch; this proves the rate.
+
+**AND THE DENOMINATOR IS THE TRAP.** The first run of that probe read 4.2% and
+3.6% and looked like a bug. It was counting DAMAGE EVENTS as swings, and an
+avoided attack emits one with `amount: 0` -- a dual-wielder misses about a
+quarter of the time, so every miss was sitting in the denominator. A reaction
+only rolls on the outcomes it lists, so a proc rate has to be taken over LANDED
+swings or every dual-wield build reads as under-proccing.
+
 `attackTableModifiers.test.ts` asserted the off-hand caveat was still there, and
 it was right to. **The assertion flips rather than being deleted**: a reason
 reappearing is as much a regression as the old one failing to.
