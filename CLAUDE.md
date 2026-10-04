@@ -1397,7 +1397,26 @@ each shared piece.
 **The item database is FROZEN**, pending further Forever item changes. Do not add
 sets or go looking for gear. The sets in scope are the ones the owner supplied;
 they are Season of Discovery stand-ins, not Forever data, and the README says so.
-**Keep saying so.** The Immovable Object is the one real Forever item.
+**Keep saying so.**
+
+**AND THE FIRST OF THOSE FURTHER CHANGES HAS ARRIVED, AS AN OVERRIDE RATHER THAN
+AN EDIT.** `FOREVER_SPELL_POWER_BUFFS` in `itemData.ts` carries the owner's +64
+spell power on four caster weapons -- Staff of Dominance, Sorcerous Dagger,
+Azuresong Mageblade and Anathema. The JSON is generated and `--verify`-checked,
+so a Forever value is layered OVER the scrape at build time and never written
+into it; `ENCHANT_RULES` beside it is the same shape for the same reason. The
+Immovable Object and those four are the real Forever item data.
+
+**A DELTA, NOT A TOTAL**, because the owner gave it as one and because two of
+their four stated bases disagreed with the scrape. A bonus survives a re-scrape
+meaning the same thing; a total silently reinstates whatever Classic says.
+
+**AND AN OVERRIDE KEYED BY ID IS SILENT WHEN THE ID IS WRONG.** Two of these
+were first written with the CLASSIC item ids where the sets are Season of
+Discovery -- 17103 and 18608 against 228269 and 228336. It typechecked, the
+suite passed, and the buff reached nothing for half the items it named.
+`items.test.ts` now asserts every id in the map resolves to an item of that
+name.
 
 **Prove a transfer rather than trusting it.** Anything out of a browser is hashed
 with SHA-256 there and re-hashed on disk before being accepted. The clipboard is a

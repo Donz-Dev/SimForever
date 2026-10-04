@@ -283,7 +283,9 @@ describe('the fights', () => {
      * shield in a stat-stick off hand used to be deleted outright.
      * --------------------------------------------------------------------------
      */
-    expect(presetPlayer('shaman_elemental').stats.get('spellPower')).toBe(453);
+    // 517 now: Forever's +64 on the Sorcerous Dagger. The shield's 26 below
+    // is unchanged, which is what keeps that assertion meaningful.
+    expect(presetPlayer('shaman_elemental').stats.get('spellPower')).toBe(453 + 64);
 
     const batch = batchOf('shaman_elemental', 40, 5);
     const named = batch.castButNotSimulated.map((entry) => entry.abilityName);

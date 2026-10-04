@@ -358,7 +358,9 @@ describe('the three fights', () => {
      * --------------------------------------------------------------------------
      */
     for (const preset of ['mage_fire', 'mage_frostfire', 'mage_arcane']) {
-      expect(presetPlayer(preset).stats.get('spellPower'), preset).toBe(452);
+      // 516 now: Forever's +64 on the Azuresong Mageblade, which all three
+      // Mage profiles hold. Arcanist itself is untouched.
+      expect(presetPlayer(preset).stats.get('spellPower'), preset).toBe(452 + 64);
     }
     const named = batchOf('mage_fire', 20, 5).castButNotSimulated.map((e) => e.abilityName);
     expect(named).not.toContain('Fireball');

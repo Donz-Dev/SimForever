@@ -263,8 +263,14 @@ describe('the fight', () => {
     // block -- a keyed stat deliberately cannot go there.
     expect(actor.stats.get('spellPower')).toBe(204);
 
-    // The scoped half, and the planner's own total once the two are added.
-    expect(spellPowerFor(actor, 'shadow')).toBe(497);
+    /*
+     * The scoped half, and the planner's own total once the two are added.
+     *
+     * 561 NOW: Anathema carries Forever's +64 and it is scoped to SHADOW, which
+     * the two assertions around this one prove between them -- the stat block
+     * above did not move off 204, and Holy and Arcane below did not either.
+     */
+    expect(spellPowerFor(actor, 'shadow')).toBe(497 + 64);
 
     // AND NO OTHER SCHOOL GAINED ANYTHING, which is the reason it could not
     // be folded into the stat in the first place.

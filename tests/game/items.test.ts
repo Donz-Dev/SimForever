@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import type { Equipment } from '../../src/game/items/Item';
 import {
   CRUSADER,
+  FOREVER_SPELL_POWER_BUFFS,
   ITEMS,
   ITEMS_BY_ID,
   SPELL_POWER_ENCHANT,
@@ -239,10 +240,19 @@ describe('the item data', () => {
      * transcribed by hand from the item's own tooltip.
      */
 
-    // Staff of Dominance: "Increases damage and healing done by magical spells
-    // and effects by up to 47", and 2% crit "with all spells and attacks".
+    /*
+     * Cenarion Wrists: "Increases damage and healing done by magical spells and
+     * effects by up to 15". An UNBUFFED item on purpose -- the parser is what
+     * this test is about, and the four caster weapons now carry Forever's +64
+     * on top of what their text says, so none of them can show the parse alone.
+     */
+    expect(ITEMS_BY_ID.get(226655)?.stats.spellPower).toBe(15);
+
+    // Staff of Dominance: "...by up to 47", plus Forever's +64 -- see
+    // `FOREVER_SPELL_POWER_BUFFS`. The 2% crit below is "with all spells and
+    // attacks" and is untouched by that.
     const staff = ITEMS_BY_ID.get(228271);
-    expect(staff?.stats.spellPower).toBe(47);
+    expect(staff?.stats.spellPower).toBe(111);
 
     /*
      * "WITH ALL SPELLS AND ATTACKS" IS TWO STATS. `critChance` and
@@ -291,7 +301,10 @@ describe('the item data', () => {
      */
     const anathema = ITEMS_BY_ID.get(228336);
     expect(anathema?.stats.spellPower).toBeUndefined();
-    expect(anathema?.schoolPower.shadow).toBe(75);
+    // 75 off the text plus Forever's +64, and the buff is scoped to the SAME
+    // school rather than widening it -- the owner's call. The blind pool above
+    // staying undefined is the half that proves it.
+    expect(anathema?.schoolPower.shadow).toBe(75 + 64);
     expect(anathema?.schoolPower.holy).toBeUndefined();
     expect(anathema?.unmodelled.map((effect) => effect.text)).not.toContain(
       'Increases damage done by Shadow spells and effects by up to 75.',
@@ -419,11 +432,15 @@ describe('what the items do that the simulator does not', () => {
      * 204 generic and 497 Shadow, and the ~293 difference was the largest
      * known shortfall in the item data.
      *
+     * 357 NOW, BECAUSE ANATHEMA CARRIES FOREVER'S +64 ON TOP. The other eight
+     * Shadow lines in the set are untouched, so the whole of the move from 293
+     * is that one weapon -- see `FOREVER_SPELL_POWER_BUFFS`.
+     *
      * Off `liveEquipment` like everything else, so a two-hander's Shadow power
      * cannot count on a build holding a one-hander.
      */
     const priest = PRESETS_BY_ID.get('shadow_priest')!.build();
-    expect(schoolPowerForStyle(priest.equipment, 'caster')).toEqual({ shadow: 293 });
+    expect(schoolPowerForStyle(priest.equipment, 'caster')).toEqual({ shadow: 293 + 64 });
 
     // Eight Lawbringer pieces, on a Paladin whose seal is the one thing in the
     // project that reads spell power.
@@ -495,8 +512,10 @@ describe('equipping', () => {
     expect(live.mainHand).toBeDefined();
     expect(live.shield).toBeDefined();
 
-    // 36 from the dagger and 26 from the shield, and neither swings.
-    expect(statsForStyle(caster, 'caster').spellPower).toBe(36 + 26);
+    // 36 from the dagger plus Forever's +64, and 26 from the shield. Neither
+    // swings, which is what this test is actually about -- the dagger's buff
+    // reaching a HELD hand is the incidental half, and correct.
+    expect(statsForStyle(caster, 'caster').spellPower).toBe(36 + 64 + 26);
     expect(weaponsForEquipment(caster, 'caster')).toEqual({});
 
     // A style that fills the off hand with a WEAPON still drops a shield, and a
@@ -671,5 +690,100 @@ describe('the dual-wield off-hand penalty', () => {
       { offHandDamageMultiplier: 0.75 },
     );
     expect(weapons.offHand?.damageMultiplier).toBe(0.75);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Forever's caster weapon buffs
+// ---------------------------------------------------------------------------
+
+describe("Forever's caster weapon buffs", () => {
+  /*
+   * The ruleset owner's: +64 spell power to each of four caster weapons, the
+   * first item numbers in this project that are Forever's rather than Classic's
+   * -- the Immovable Object aside.
+   *
+   * WRITTEN OUT BY HAND, name and total, rather than looped off the map. A test
+   * that read `FOREVER_SPELL_POWER_BUFFS` to check `FOREVER_SPELL_POWER_BUFFS`
+   * would pass whatever it said, which is the one thing a content test must not
+   * do.
+   */
+  const EXPECTED = [
+    { id: 228271, name: 'Staff of Dominance', was: 47, now: 111 },
+    { id: 228263, name: 'Sorcerous Dagger', was: 36, now: 100 },
+    { id: 228269, name: 'Azuresong Mageblade', was: 44, now: 108 },
+  ] as const;
+
+  it('grants the buffed total on the school-blind three', () => {
+    for (const { id, name, now } of EXPECTED) {
+      const item = ITEMS_BY_ID.get(id);
+      expect(item, `${name} (${id})`).toBeDefined();
+      expect(item!.name, String(id)).toBe(name);
+      expect(item!.stats.spellPower, name).toBe(now);
+    }
+  });
+
+  it('puts Anathema on SHADOW alone, and not in the blind pool', () => {
+    /*
+     * Its line reads "damage done by SHADOW spells", and the owner confirmed it
+     * stays that way. Widening it would also feed Holy -- the two pools must not
+     * be folded together in either direction.
+     */
+    const anathema = ITEMS_BY_ID.get(228336);
+    expect(anathema?.name).toBe('Anathema');
+    expect(anathema!.schoolPower.shadow).toBe(139);
+    expect(anathema!.stats.spellPower ?? 0).toBe(0);
+  });
+
+  it('names an id that EXISTS, for every entry', () => {
+    /*
+     * ------------------------------------------------------------------------
+     * THIS IS THE TEST THAT WOULD HAVE CAUGHT THE MISTAKE THAT WAS MADE.
+     *
+     * Two of these were first written with the CLASSIC item ids -- Azuresong
+     * 17103 and Anathema 18608 -- where the sets here are Season of Discovery
+     * and the ids are 228269 and 228336. It typechecked, every test passed, and
+     * the buff applied to NOTHING for half the items it names. An override
+     * keyed by an id that matches no item is silent by construction.
+     * ------------------------------------------------------------------------
+     */
+    for (const [id, buff] of Object.entries(FOREVER_SPELL_POWER_BUFFS)) {
+      const item = ITEMS_BY_ID.get(Number(id));
+      expect(item, `${buff.name}: no item has id ${id}`).toBeDefined();
+      expect(item!.name, `id ${id}`).toBe(buff.name);
+    }
+  });
+
+  it('states the Classic base each one was buffed FROM', () => {
+    /*
+     * `wasInClassic` is what makes a re-scrape visible. The source files are
+     * regenerated by `tools/import_item.mjs --build`, and if Blizzard or the
+     * capture ever moves one of these bases the total above changes silently --
+     * the buff is a delta, so it follows the base. This asserts the base the
+     * delta was agreed against, so that move fails here instead.
+     */
+    for (const { id, was, now } of EXPECTED) {
+      const buff = FOREVER_SPELL_POWER_BUFFS[id];
+      expect(buff.wasInClassic + buff.amount, buff.name).toBe(now);
+      expect(buff.wasInClassic, buff.name).toBe(was);
+    }
+    const anathema = FOREVER_SPELL_POWER_BUFFS[228336];
+    expect(anathema.wasInClassic + anathema.amount).toBe(139);
+  });
+
+  it('is +64 on every entry, which is the rule the owner gave', () => {
+    const amounts = Object.values(FOREVER_SPELL_POWER_BUFFS).map((b) => b.amount);
+    expect(amounts).toHaveLength(4);
+    expect(new Set(amounts)).toEqual(new Set([64]));
+  });
+
+  it('leaves the scraped tooltip saying what the source said', () => {
+    /*
+     * The buff is applied AFTER the parse, so the stored tooltip still carries
+     * the Classic wording. The Gear panel prints that tooltip, and it being
+     * honest about where the TEXT came from is worth more than it agreeing with
+     * a number the owner supplied separately.
+     */
+    expect(ITEMS_BY_ID.get(228271)!.tooltip).toContain('by up to 47');
   });
 });
