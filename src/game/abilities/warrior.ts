@@ -692,10 +692,15 @@ export { EXECUTE_PHASE_FRACTION };
  * "15 + all remaining rage".
  *
  * The variable cost cannot be expressed as an `AbilityCost`, which is a fixed
- * amount, so the ability declares the 15 and drains the remainder itself in
- * `onCast`. That is the one place in this file where an ability reaches for a
- * resource directly, and it is why: the engine's cost model has no "and then
- * everything else" case.
+ * amount, so the ability declares the 15 and spends the remainder itself in
+ * `onCast`. The engine's cost model has no "and then everything else" case.
+ *
+ * **IT SPENDS THE REMAINDER THROUGH `simulation.spendResource`.** This comment
+ * used to end "that is the one place in this file where an ability reaches for a
+ * resource directly, and it is why" -- which was a justification for a bare
+ * `Resource.drain` written before `Simulation.spendResource` existed, and it
+ * outlived it. A bare drain moves the pool and emits nothing, so the whole
+ * variable half of this ability's cost was missing from the rage breakdown.
  */
 export const EXECUTE: Ability = {
   id: 'execute',
@@ -727,11 +732,46 @@ export const EXECUTE: Ability = {
   onCast: ({ simulation, caster, target, ability }) => {
     if (!target) return;
 
-    // The engine has already taken the 15. Everything still in the bar is
-    // consumed and converted into damage.
-    const rage = caster.resources.get('rage');
-    const remaining = rage?.current ?? 0;
-    rage?.drain(remaining);
+    /*
+     * The engine has already taken the 15. Everything still in the bar is
+     * consumed and converted into damage.
+     *
+     * --------------------------------------------------------------------
+     * THROUGH `spendResource`, NOT `Resource.drain`, AND THAT IS THE WHOLE
+     * POINT OF THIS LINE.
+     *
+     * It drained the pool directly for its whole life. The rage LEFT and the
+     * damage was right -- so nothing about the figure looked wrong -- but a
+     * bare drain emits no telemetry, and the rage panel is a pure formatter
+     * over the event stream. Execute therefore reported exactly its declared
+     * 15 a cast and not one point of the bar it actually emptied: 52.65 rage
+     * a fight on 2H Arms against a real 90.54, and 92.55 against 161.16 on
+     * DW Fury. IT WAS UNDER-REPORTING ITS OWN COST BY 1.72x.
+     *
+     * The ledger had been saying so all along. Rage gained minus spent minus
+     * wasted left 47.8 unaccounted on Arms and 76.4 on Fury, and routing this
+     * one call through `spendResource` moved exactly that much into the
+     * breakdown -- 37.89 against a residual drop of 37.9, and 68.61 against
+     * 68.6. If the books do not balance, the missing side is usually
+     * something real that nothing reports.
+     *
+     * THE DAMAGE DOES NOT MOVE, because `remaining` is read before either
+     * call and `spendResource` drains the same amount. Average damage a cast
+     * is identical to the decimal across 300 fights, which is what makes this
+     * a telemetry fix rather than a balance change.
+     *
+     * `spendResource` exists for precisely this case and said so before this
+     * line was written -- see `Simulation.spendResource`, added when a
+     * finisher spent combo points with a bare drain and the results page
+     * reported 23 gained and none spent. Execute was the caller that never
+     * got migrated.
+     * --------------------------------------------------------------------
+     */
+    const remaining = caster.resources.get('rage')?.current ?? 0;
+    simulation.spendResource(caster, 'rage', remaining, {
+      id: ability.id,
+      name: ability.name,
+    });
 
     dealDamage(simulation, {
       source: caster,
@@ -1261,27 +1301,26 @@ function stanceAbility(id: string, aura: (typeof WARRIOR_STANCES)[number]): Abil
         const floor = STANCE_RAGE_FLOOR + (self.bonuses?.[STANCE_RAGE_RETAINED_BONUS] ?? 0);
         if (rage && rage.current > floor) {
           const lost = rage.current - floor;
-          rage.drain(lost);
           /*
-           * EMITTED, not just drained. Rage that leaves the bar without a
-           * telemetry event is rage the ledger cannot account for -- gained
-           * minus spent stops equalling what is left, and a test caught
-           * exactly that within a minute of the drain being added.
+           * SPENT, not drained. Rage that leaves the bar without a telemetry
+           * event is rage the ledger cannot account for -- gained minus spent
+           * stops equalling what is left, and a test caught exactly that
+           * within a minute of the drain being added.
            *
            * It also has to be visible for its own sake: the cost of stance
            * dancing is the thing this talent is about, and it belongs in the
            * rage breakdown beside the abilities that spent the rest.
+           *
+           * THIS SITE WAS ALREADY CORRECT AND HAND-ROLLED, which is the part
+           * worth changing. It drained the pool and then emitted the event
+           * itself -- the same two steps `spendResource` performs, written out
+           * a second time. Execute and Ferocious Bite did step one and forgot
+           * step two, which is exactly what a duplicated pair of steps
+           * eventually produces. One implementation, three callers.
            */
-          simulation.telemetry.emit({
-            type: 'resource_spent',
-            timestamp: simulation.clock.now(),
-            actorId: caster.id,
-            resource: 'rage',
-            amount: lost,
-            wasted: 0,
-            current: rage.current,
-            source: 'stance_change',
-            sourceName: 'Stance change',
+          simulation.spendResource(caster, 'rage', lost, {
+            id: 'stance_change',
+            name: 'Stance change',
           });
         }
       }
