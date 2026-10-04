@@ -328,9 +328,14 @@ export const RAKE: Ability = {
  *     3 points 493-553
  *
  * THE ENERGY CONVERSION IS EXECUTE'S SHAPE: a fixed cost, then everything left
- * in the bar drained inside `onCast` and turned into damage. The cast hook
+ * in the bar spent inside `onCast` and turned into damage. The cast hook
  * measures both spends by snapshot, so Ruthlessness sees the combo points
  * without this having to announce them.
+ *
+ * **IT WAS ALSO EXECUTE'S BUG**, and sharing a shape is how: both reached for
+ * `Resource.drain`, which moves the pool and emits nothing, so the variable
+ * half of the cost was absent from the resource breakdown. Both go through
+ * `simulation.spendResource` now.
  */
 export const FEROCIOUS_BITE_BY_COMBO_POINT: readonly number[] = [229, 376, 523, 670, 817];
 export const FEROCIOUS_BITE_DAMAGE_PER_ENERGY = 2.7;
@@ -357,10 +362,24 @@ export const FEROCIOUS_BITE: Ability = {
     });
     if (spent <= 0) return;
 
-    // Everything still in the bar, converted at 2.7 a point.
-    const energy = caster.resources.get('energy');
-    const remaining = energy?.current ?? 0;
-    energy?.drain(remaining);
+    /*
+     * Everything still in the bar, converted at 2.7 a point -- and spent
+     * through `spendResource` rather than drained, for the reason written out
+     * at length on `EXECUTE`.
+     *
+     * THIS ONE WAS LATENT AND THE WARRIOR'S WAS LIVE, which is the only
+     * difference between them. Execute is in both damage Warriors' lists and
+     * was under-reporting its cost by 1.72x; no Cat list casts Ferocious Bite,
+     * so the identical bare drain here had never had the chance to lose a
+     * number. **A silent bug in an ability nothing casts is still the bug**,
+     * and it would have surfaced as "the energy panel does not add up" on the
+     * day a list reached for it.
+     */
+    const remaining = caster.resources.get('energy')?.current ?? 0;
+    simulation.spendResource(caster, 'energy', remaining, {
+      id: ability.id,
+      name: ability.name,
+    });
 
     dealDamage(simulation, {
       source: caster,
