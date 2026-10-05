@@ -1,4 +1,4 @@
-import type { AttackEvent, Reaction } from '../../engine';
+import type { Reaction } from '../../engine';
 import { isWeaponUse } from '../../engine';
 import { ENRAGE_TRIGGER_CHANCE, OVERPOWER_READY, REND, enrageAura } from '../auras/warrior';
 import { bloodCrazeAura, deepWoundsAura, flurryAura } from '../auras/warriorTalents';
@@ -84,10 +84,22 @@ export const deepWounds: TalentReactionBuilder = (percentOfWeaponDamage) => ({
  * and the "non-DoT" half of the rule is enforced one layer down rather than
  * restated here where it could drift.
  *
- * IT MOVES NO PUBLISHED FIGURE. DW Fury is the only profile that takes Flurry
- * and its list casts nothing on the ranged table, so the abilities this now
- * reaches are ones that build never uses. It is correct for a Flurry build in
- * Battle or Defensive stance, which is what the narrow gate would have broken.
+ * IT MOVES NOTHING FOR THE WARRIOR AND +10.5 DPS FOR THE SHAMAN, which is the
+ * one thing to know before editing this. DW Fury is the only Warrior profile
+ * that takes Flurry and its list casts nothing on the ranged table, so for the
+ * Warrior the abilities this reaches are ones no profile uses -- it is correct
+ * for a Flurry build in Battle or Defensive stance and costs the current ones
+ * nothing.
+ *
+ * ENHANCEMENT SHAMAN HAS ITS OWN FLURRY AND SHARES THIS BUILDER, and there the
+ * breadth is worth real damage: a Shaman crits with Lightning Bolt, Flame Shock
+ * and Earth Shock, so Enh Shaman went 593.5 to 604.0. **Both tooltips say "after
+ * dealing a MELEE critical strike" and the ruleset owner has ruled the broad
+ * reading for BOTH classes**, so the wording is overridden deliberately and in
+ * two places at once. It shipped narrow for the Shaman for exactly one PR, on
+ * the grounds that the ruling had been given while reading a Warrior profile;
+ * the owner then ruled the Shaman too. A reader who finds the tooltip and this
+ * code disagreeing is looking at a decision, not a bug.
  *
  * APPLIED AT FULL CHARGES BY DECLARATION, not by hand. The aura carries
  * `chargesOnApply` and `refreshRestoresCharges`; this used to set
@@ -95,50 +107,14 @@ export const deepWounds: TalentReactionBuilder = (percentOfWeaponDamage) => ({
  * count, so the telemetry disagreed with the engine on every single proc.
  * ----------------------------------------------------------------------------
  */
-function flurryWindow(hastePercent: number, anyCrit: boolean): Reaction {
-  return {
-    id: 'flurry',
-    on: 'dealt',
-    outcomes: ['crit'],
-    /*
-     * UNDEFINED for the broad form rather than a condition that always passes:
-     * `outcomes` plus `dealDamage`'s non-periodic dispatch already say "any
-     * non-DoT crit", so there is nothing left to test.
-     */
-    canTrigger: anyCrit
-      ? undefined
-      : (_context, _actor, attack: AttackEvent) => isWeaponUse(attack),
-    onTrigger: (context, actor) => {
-      context.applyAura(actor, flurryAura(hastePercent), actor.id);
-    },
-  };
-}
-
-/** The Warrior's, on the ruleset owner's ruling: ANY non-DoT crit. */
-export const flurry: TalentReactionBuilder = (hastePercent) =>
-  flurryWindow(hastePercent, true);
-
-/**
- * The SHAMAN'S, deliberately still narrow, and this split is the whole reason
- * the function above is parameterised.
- *
- * ----------------------------------------------------------------------------
- * THE TWO CLASSES SHARE ONE BUILDER AND ONE TOOLTIP WORDING, and widening both
- * at once moved a published figure. The owner's ruling -- "any non-DoT critical
- * strike" -- was given while reading a WARRIOR profile. Applying it to the
- * Shaman as well is an inference, and an expensive one: an Enhancement Shaman
- * crits with Lightning Bolt, Flame Shock and Earth Shock, so the broad trigger
- * is worth **+10.5 DPS to Enh Shaman, 593.5 to 604.0**, measured over 30
- * batches of 10.
- *
- * Both tooltips say "after dealing a MELEE critical strike", so the narrow
- * reading is the one the source supports and the Warrior's is the one the owner
- * overrode. The Shaman keeps the source's wording until it is ruled on too --
- * see HANDOVER.md's open questions. Flipping it is this one argument.
- * ----------------------------------------------------------------------------
- */
-export const meleeCritFlurry: TalentReactionBuilder = (hastePercent) =>
-  flurryWindow(hastePercent, false);
+export const flurry: TalentReactionBuilder = (hastePercent) => ({
+  id: 'flurry',
+  on: 'dealt',
+  outcomes: ['crit'],
+  onTrigger: (context, actor) => {
+    context.applyAura(actor, flurryAura(hastePercent), actor.id);
+  },
+});
 
 /** Rage a proc of Unbridled Wrath grants, by whether the weapon is two-handed. */
 export const UNBRIDLED_WRATH_RAGE = { oneHanded: 1, twoHanded: 2 } as const;

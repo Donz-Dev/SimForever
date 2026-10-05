@@ -8,7 +8,7 @@ import { startingEquipmentFor } from '../../src/game/items/startingSets';
 import { FLURRY_SWINGS, flurryAura } from '../../src/game/auras/warriorTalents';
 import { HOLY_SHIELD, redoubtAura } from '../../src/game/auras/paladin';
 import { SHIELD_BLOCK } from '../../src/game/auras/warrior';
-import { flurry, meleeCritFlurry } from '../../src/game/reactions/warriorTalents';
+import { flurry } from '../../src/game/reactions/warriorTalents';
 import { WARRIOR_TALENT_REACTIONS } from '../../src/game/reactions/warriorTalents';
 import { SHAMAN_TALENT_REACTIONS } from '../../src/game/reactions/shamanTalents';
 import { legalise } from '../helpers/legalTalents';
@@ -246,42 +246,110 @@ describe('the other charge auras are untouched', () => {
   });
 });
 
-describe('the Shaman shares the aura and NOT the widened trigger', () => {
+describe('the Shaman shares the aura AND the widened trigger', () => {
   /*
    * ----------------------------------------------------------------------------
-   * THE CONTAINMENT CHECK THAT PROTECTS A PUBLISHED FIGURE, and the reason the
-   * builder is parameterised at all.
+   * THIS TEST USED TO ASSERT THE OPPOSITE, AND GIVING WAY IS CORRECT.
    *
-   * Enhancement Shaman has its own Flurry and reuses the Warrior's builder --
-   * deliberately, since both tooltips read "increases your attack speed by X%
-   * for your next 3 swings after dealing a melee critical strike". Widening the
-   * shared builder therefore widened the SHAMAN too, and an Enhancement Shaman
-   * crits with Lightning Bolt, Flame Shock and Earth Shock: it measured
-   * **+10.5 DPS, 593.5 to 604.0**, over 30 batches of 10.
+   * It read "keeps a weapon-use gate on the Shaman, and none on the Warrior",
+   * because the owner's "any non-DoT critical strike" ruling had been given while
+   * reading a WARRIOR profile and extending it to another class was an inference.
+   * The owner has now ruled the Shaman too, so the builder is shared again and
+   * the narrow variant is gone.
    *
-   * The owner's ruling was given while reading a WARRIOR profile, so applying it
-   * to the Shaman is an inference and this test refuses it. Both tooltips say
-   * MELEE, so the narrow reading is the sourced one. Flip it when it is ruled.
+   * A TEST THAT PINS A DECISION HAS TO GIVE WAY WHEN THE DECISION CHANGES OWNER;
+   * a test that pins an invariant does not. What stays is the MEASUREMENT, which
+   * is the price of the choice rather than an argument against it:
+   *
+   *     Enh Shaman 593.5 -> 604.0, +10.5 DPS, 30 batches of 10
+   *
+   * It is +10.5 here and nothing on the Warrior because a Shaman crits with
+   * Lightning Bolt, Flame Shock and Earth Shock, where DW Fury's list casts
+   * nothing that resolves off a weapon.
+   *
+   * BOTH TOOLTIPS STILL SAY "MELEE", so this is a deliberate override in two
+   * places at once -- which is exactly the thing a reader needs told.
    * ----------------------------------------------------------------------------
    */
-  it('keeps a weapon-use gate on the Shaman, and none on the Warrior', () => {
-    expect(flurry(25).canTrigger).toBeUndefined();
-    expect(meleeCritFlurry(25).canTrigger).toBeDefined();
-  });
-
-  it('is the builder the Shaman registry actually hands out', () => {
-    // Read from the registry rather than the import, because the bug would be
-    // registering the broad form under the Shaman's key.
-    expect(SHAMAN_TALENT_REACTIONS.flurry).toBe(meleeCritFlurry);
+  it('hands both classes the same builder, with no weapon gate', () => {
+    expect(SHAMAN_TALENT_REACTIONS.flurry).toBe(flurry);
     expect(WARRIOR_TALENT_REACTIONS.flurry).toBe(flurry);
+    expect(flurry(25).canTrigger).toBeUndefined();
   });
 
-  it('refuses a Shaman spell crit and accepts its melee crit', () => {
-    const narrow = meleeCritFlurry(25);
-    const spellCrit = { outcome: 'crit', abilityId: 'lightning_bolt' } as never;
-    const meleeCrit = { outcome: 'crit', weaponSlot: 'mainHand' } as never;
+  it('lets a Shaman SPELL crit refresh it, which is what the ruling bought', () => {
+    /*
+     * Through `dealDamage`, because a spell crit carrying no weapon slot is
+     * precisely the case the old gate refused. A Shaman is built here rather
+     * than a Warrior: the registry is per class, and the bug would be the
+     * Shaman's key pointing somewhere else.
+     */
+    const shaman = createPlayer({
+      race: 'orc',
+      characterClass: 'shaman',
+      combatStyle: 'two_hander',
+      // THE CLASS ARGUMENT IS NOT OPTIONAL HERE: `legalise` defaults to the
+      // WARRIOR tree, so padding a Shaman allocation against it produces a
+      // build `createPlayer` strips silently -- which reads as "the talent does
+      // nothing" rather than as a broken test.
+      talents: legalise({ flurry: 5 }, 'shaman'),
+    });
+    const dummy = createTrainingDummy({ name: 'D', health: 1e9, armor: 0, level: 63 });
+    const sim = new Simulation({
+      durationMs: seconds(60),
+      seed: 3,
+      createCombatants: () => [shaman, dummy],
+      attackChances: () => ALWAYS_CRIT,
+    });
+    sim.begin();
 
-    expect(narrow.canTrigger?.(undefined as never, undefined as never, spellCrit)).toBe(false);
-    expect(narrow.canTrigger?.(undefined as never, undefined as never, meleeCrit)).toBe(true);
+    dealDamage(sim, {
+      source: shaman,
+      target: dummy,
+      abilityId: 'lightning_bolt',
+      abilityName: 'Lightning Bolt',
+      school: 'nature',
+      baseAmount: 100,
+      attackTable: 'spell',
+    } as never);
+
+    expect(shaman.auras.stacksOf('flurry')).toBe(FLURRY_SWINGS);
+  });
+
+  it('still refuses a periodic tick for the Shaman too', () => {
+    // The one half of the rule that is NOT overridden, and it is enforced by
+    // `dealDamage`'s dispatch rather than by either class's reaction.
+    const shaman = createPlayer({
+      race: 'orc',
+      characterClass: 'shaman',
+      combatStyle: 'two_hander',
+      // THE CLASS ARGUMENT IS NOT OPTIONAL HERE: `legalise` defaults to the
+      // WARRIOR tree, so padding a Shaman allocation against it produces a
+      // build `createPlayer` strips silently -- which reads as "the talent does
+      // nothing" rather than as a broken test.
+      talents: legalise({ flurry: 5 }, 'shaman'),
+    });
+    const dummy = createTrainingDummy({ name: 'D', health: 1e9, armor: 0, level: 63 });
+    const sim = new Simulation({
+      durationMs: seconds(60),
+      seed: 3,
+      createCombatants: () => [shaman, dummy],
+      attackChances: () => ALWAYS_CRIT,
+    });
+    sim.begin();
+
+    dealDamage(sim, {
+      source: shaman,
+      target: dummy,
+      abilityId: 'flame_shock',
+      abilityName: 'Flame Shock',
+      school: 'fire',
+      baseAmount: 100,
+      attackTable: 'spell',
+      periodic: true,
+      critFrom: 'spell',
+    } as never);
+
+    expect(shaman.auras.stacksOf('flurry')).toBe(0);
   });
 });

@@ -1,7 +1,7 @@
 import type { CastReaction } from '../../engine';
 import { dealDamage, isWeaponUse, seconds } from '../../engine';
 import type { TalentReactionBuilder } from './warriorTalents';
-import { meleeCritFlurry } from './warriorTalents';
+import { flurry } from './warriorTalents';
 import {
   ELEMENTAL_FOCUS_CLEARCASTING,
   SHAMAN_DAMAGE_SPELL_IDS,
@@ -29,6 +29,13 @@ import { ppmChance, triggeringSpeedSeconds } from '../items/procs';
  *
  * The builder is per-class-registry-keyed, so the Shaman's five ranks reach
  * the same code with 25 where a Warrior's reach it with 30.
+ *
+ * AND SHARING IT MEANS SHARING A RULING. When the owner widened Flurry's trigger
+ * to any non-DoT critical strike, that reached the Shaman through this import and
+ * moved Enh Shaman by +10.5 DPS -- a figure with nothing to do with the Warrior.
+ * The reuse is still right; what it needs is that a change to the Warrior's copy
+ * is measured on the SHAMAN too. It was split in two for one PR while the owner
+ * ruled on this class, and is one builder again now that they have.
  * ----------------------------------------------------------------------------
  */
 
@@ -287,12 +294,20 @@ export const SHAMAN_CAST_REACTIONS: Readonly<Record<string, (value: number) => C
 
 export const SHAMAN_TALENT_REACTIONS: Readonly<Record<string, TalentReactionBuilder>> = {
   /*
-   * THE NARROW FORM, and the import name is the reminder. The Warrior's Flurry
-   * fires on ANY non-DoT crit by the owner's ruling; both tooltips say "melee
-   * critical strike", and widening the Shaman's too is worth +10.5 DPS to Enh
-   * Shaman -- a ruling nobody has given. See `meleeCritFlurry`.
+   * THE WARRIOR'S BUILDER, BROAD TRIGGER AND ALL, by the ruleset owner's ruling
+   * -- ANY non-DoT critical strike refreshes Flurry, for the Shaman as well.
+   *
+   * IT IS WORTH +10.5 DPS HERE AND NOTHING ON THE WARRIOR, because a Shaman
+   * crits with Lightning Bolt, Flame Shock and Earth Shock where DW Fury's list
+   * casts nothing off a weapon: Enh Shaman 593.5 to 604.0. The owner ruled the
+   * Warrior first and this second, and it shipped narrow for exactly one PR in
+   * between -- so the figure in the baseline moved on a ruling rather than on a
+   * fix, which is worth knowing when reading the history.
+   *
+   * Both tooltips say "after dealing a MELEE critical strike". The override is
+   * deliberate in both places; see `flurry`.
    */
-  flurry: meleeCritFlurry,
+  flurry,
   elemental_devastation: elementalDevastation,
   maelstrom_weapon: maelstromWeapon,
 };

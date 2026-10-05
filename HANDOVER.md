@@ -623,9 +623,33 @@ while it worked.
 decimal -- which is what a talent change scoped to one build should look like.
 It makes Frostfire the top Mage, above Fire's 401.2 and Arcane's 392.6, and the
 build that existed for the Fire/Frost overlap now has a third reason to. The
-mean across 23 was 488.3 when this was written, and the dives that moved it are
-below. See
+mean across 23 is **541.9**, RE-SUMMED FROM THE TABLE ABOVE rather than
+adjusted. It read 488.3 for a while, which was right when it was written and
+drifted as dive after dive moved a profile and left the average alone -- the same
+failure the census total keeps having, and the same fix: add the rows up. See
 [docs/handoff-apl.md](docs/handoff-apl.md).
+
+**FLURRY'S TRIGGER MOVED ONE PROFILE, AND IT IS A RULING RATHER THAN A FIX.**
+Enh Shaman 593.5 to **604.0, +10.5** -- inside the two runs' combined interval, so
+the harness calls it noise, but the direction and cause are certain because a
+mechanism was switched on rather than a number nudged, and 604.0 reproduced
+exactly across two independent worktrees.
+
+**THE CAUSE IS THAT TWO CLASSES SHARE ONE REACTION BUILDER.** Flurry gated on
+`isWeaponUse`, which refused crits carrying no weapon slot; the owner ruled it
+fires on ANY non-DoT critical strike. For the Warrior that reaches only Thunder
+Clap, Intercept and Charge -- none of which DW Fury's list casts, so all three
+Warriors are +0.0. **Enhancement Shaman takes its own Flurry and imports the
+Warrior's builder**, and a Shaman crits with Lightning Bolt, Flame Shock and
+Earth Shock, so there the same breadth is worth real damage.
+
+It shipped NARROW for the Shaman for exactly one PR, because the ruling had been
+given while reading a Warrior profile and extending it to another class was an
+inference. The owner then ruled this class too. **Both tooltips still say "after
+dealing a MELEE critical strike"** -- the override is deliberate and now in two
+places at once. The lesson is the sharing: a change to a reaction two classes
+import has to be MEASURED on both, and this one would have shipped as an
+unexplained +10.5 on a class nobody was looking at.
 
 **THE WARLOCK DEEP DIVE MOVED FIVE PROFILES AND ONE OF THEM A LONG WAY DOWN.**
 **Firelock 535.5 to 468.4, -67.1, REAL** -- a CORRECTION, and the four causes were
@@ -663,7 +687,7 @@ so. Fourteen profiles moved.
 | Fire Mage | Mage | 10/39/2 | 624.0 | | Venom Rogue | Rogue | 37/12/2 | 494.9 |
 | Frostfire Mage | Mage | 0/29/22 | 623.2 | | Bear Druid | Druid | 9/42/0 | 488.5 |
 | BM Hunter | Hunter | 31/20/0 | 595.8 | | LW Ranged | Hunter | 7/39/5 | 482.1 |
-| Enh Shaman | Shaman | 19/32/0 | 593.5 | | Moonkin | Druid | 38/0/13 | 472.8 |
+| Enh Shaman | Shaman | 19/32/0 | 604.0 | | Moonkin | Druid | 38/0/13 | 472.8 |
 | Shockadin | Paladin | 23/0/28 | 583.6 | | Prot Warr | Warrior | 17/0/34 | 469.0 |
 | Arcane Mage | Mage | 47/4/0 | 581.8 | | Rupture Rogue | Rogue | 12/8/31 | 450.3 |
 | | | | | | Ele Shaman | Shaman | 38/13/0 | 440.2 |
