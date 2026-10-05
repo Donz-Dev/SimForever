@@ -937,9 +937,40 @@ export function talentBuild(
            * other one, which beats being wrong for both.
            *
            * The Gear and Talent panels say which weapon it is reading.
+           *
+           * ----------------------------------------------------------------------
+           * THE MELEE TABLES, NOT `ALL_ABILITIES`, AND THE OLD SCOPE WAS WRONG IN
+           * BOTH DIRECTIONS AT ONCE.
+           *
+           * Weaponmaster is the only user of this effect, and its wording is
+           * "gives your melee WEAPON ATTACKS a benefit". `ALL_ABILITIES`:
+           *
+           *   - MISSED AUTO ATTACKS, because a swing carries no `abilityId` and
+           *     nothing keyed by ability id reaches one. Auto attacks are the
+           *     largest single damage source on every Warrior profile, and "your
+           *     melee weapon attacks" plainly includes them. The Rogue's
+           *     Dagger/Fist crit chose a plain `critChance` stat for exactly this
+           *     reason, and the comment in `rogueEffects.ts` says so.
+           *   - CAUGHT THUNDER CLAP, INTERCEPT AND CHARGE, which are melee
+           *     abilities that declare a non-melee table. `AttackTableModifiers`'
+           *     own doc comment warns about precisely this -- "a class whose own
+           *     melee ability sits on a ranged table WOULD be selected wrongly" --
+           *     and this is where it was happening.
+           *
+           * Keying on `melee-auto` and `melee-special` draws the line the tooltip
+           * draws, and the ruleset owner's Thunder Clap change is what exposed it:
+           * they asked for Thunder Clap NOT to take Weaponmaster's crit, and the
+           * honest fix is to scope the talent rather than to special-case the
+           * ability.
+           *
+           * IT MEASURES AS NOTHING TODAY, because the requirement is an axe or a
+           * polearm and every weapon in every Warrior gear set is a sword -- so
+           * `meets` is false and the branch below runs instead.
+           * ----------------------------------------------------------------------
            */
           if (meets(effect.requires, context.mainHand, context.hasShield, context.hasPet, context.style)) {
-            abilityModifiers.add(ALL_ABILITIES, { critBonus: value });
+            attackTableModifiers.add('melee-auto', { critBonus: value });
+            attackTableModifiers.add('melee-special', { critBonus: value });
           } else {
             report(
               talentId,

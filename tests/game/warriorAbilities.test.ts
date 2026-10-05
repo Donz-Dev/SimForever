@@ -75,8 +75,15 @@ import { BATTLE_STANCE, DEFENSIVE_STANCE } from '../../src/game/auras/warrior';
  * never comes into it. This is the one row in the table whose provenance is
  * "the number changed", not "the sheet lost".
  *
- * THUNDER CLAP. The sheet says 4, which is also the Classic value -- a wrong
- * number that looked right from two directions. The captured tooltip says
+ * THUNDER CLAP TAKES ITS CRIT FROM THE SPELL TABLE AND RESOLVES ON THE RANGED
+ * ONE, by the ruleset owner: "Thunder Clap uses the spell crit table, so global
+ * sources of critical strike chance apply, but not crit from agility, or the
+ * Cruelty talent or Weaponmaster talent." Every clause there is about crit, so
+ * only crit moves -- `critTable: 'spell'` on the damage request, and the table in
+ * this row is unchanged. See `THUNDER_CLAP`.
+ *
+ * THUNDER CLAP'S COOLDOWN. The sheet says 4, which is also the Classic value --
+ * a wrong number that looked right from two directions. The captured tooltip says
  * "Instant 6 sec cooldown" and the spellbook lists it as a deliberate Forever
  * change from Classic's 4. The sheet's row was taken over our own capture here,
  * which is the opposite of how Shield Wall and Slam were settled; the owner
@@ -94,7 +101,7 @@ interface SheetRow {
   readonly rageCost: number | undefined;
   readonly cooldownSeconds: number;
   readonly castSeconds: number;
-  readonly attackTable: 'melee-special' | 'ranged-special' | undefined;
+  readonly attackTable: 'melee-special' | 'ranged-special' | 'spell' | undefined;
 }
 
 const SHEET: readonly SheetRow[] = [
@@ -106,7 +113,9 @@ const SHEET: readonly SheetRow[] = [
   { id: 'cleave', name: 'Cleave', rageCost: 20, cooldownSeconds: 0, castSeconds: 0, attackTable: 'melee-special' },
   { id: 'bloodthirst', name: 'Bloodthirst', rageCost: 30, cooldownSeconds: 6, castSeconds: 0, attackTable: 'melee-special' },
   { id: 'battle_shout_cast', name: 'Battle Shout', rageCost: 10, cooldownSeconds: 0, castSeconds: 0, attackTable: undefined },
-  // OVERRIDDEN, see above: the sheet says 4 and the client says 6.
+  // OVERRIDDEN, see above: the sheet says a 4 second cooldown and the client
+  // says 6. The table stays `ranged-special`; only its CRIT comes from the
+  // spell table, through `critTable`.
   { id: 'thunder_clap', name: 'Thunder Clap', rageCost: 20, cooldownSeconds: 6, castSeconds: 0, attackTable: 'ranged-special' },
   { id: 'sunder_armor_cast', name: 'Sunder Armor', rageCost: 15, cooldownSeconds: 0, castSeconds: 0, attackTable: 'melee-special' },
   { id: 'execute', name: 'Execute', rageCost: 15, cooldownSeconds: 0, castSeconds: 0, attackTable: 'melee-special' },

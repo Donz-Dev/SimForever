@@ -124,6 +124,36 @@ export interface DamageRequest {
    */
   readonly critFrom?: AttackTableKind;
   /**
+   * Take the CRIT CHANCE AND MULTIPLIER from a different table than the one this
+   * attack resolves on.
+   *
+   * ----------------------------------------------------------------------------
+   * THUNDER CLAP IS WHY, and the ruleset owner's wording is the specification:
+   * "Thunder Clap uses the spell crit table, so global sources of critical strike
+   * chance apply, but not crit from agility, or the Cruelty talent or
+   * Weaponmaster talent."
+   *
+   * EVERY CLAUSE OF THAT IS ABOUT CRIT, which is why this exists rather than the
+   * ability declaring `attackTable: 'spell'`. Moving the whole table works and
+   * brings something nobody asked for: spell MISS is a flat figure where
+   * `missFromSkill` gave Thunder Clap almost none, and it measured at 0.9%
+   * avoided becoming 9.4% -- a melee ability missing ten times as often, off a
+   * sentence about critical strikes.
+   *
+   * THE CRIT MULTIPLIER COMES ACROSS TOO, deliberately: a crit TABLE is a chance
+   * and a multiplier together, so the spell 1.5x applies rather than the ranged
+   * 2x. That is the one part of this that is an interpretation, and it is what
+   * makes "uses the spell crit table" mean more than "uses the spell crit
+   * chance".
+   *
+   * THE SIBLING OF `critFrom`, NOT THE SAME FIELD. `critFrom` is for an attack
+   * with NO table of its own -- a periodic tick, whose landing was settled when
+   * the aura went on, borrowing a whole table to roll one crit against. This is
+   * for an attack that HAS a table and takes one slice of another.
+   * ----------------------------------------------------------------------------
+   */
+  readonly critTable?: AttackTableKind;
+  /**
    * Which weapon produced this, when it matters.
    *
    * A dual-wielder's hands are not equivalent: the off-hand has its own
@@ -454,7 +484,39 @@ function rollTable(
     request.target,
     { slot: request.weaponSlot },
   );
-  return resolveAttackTable(request.attackTable, withModifier(chances, modifier), context.rng);
+  return resolveAttackTable(
+    request.attackTable,
+    withModifier(withCritTable(chances, request, context), modifier),
+    context.rng,
+  );
+}
+
+/**
+ * Swap in another table's crit chance and multiplier, leaving the rest alone.
+ *
+ * ----------------------------------------------------------------------------
+ * TWO SLICES AND NOTHING ELSE -- see `DamageRequest.critTable`. Thunder Clap
+ * resolves on the ranged table, where it cannot be dodged or parried and barely
+ * misses, and takes its crit from the spell table because the ruleset owner
+ * says so.
+ *
+ * APPLIED BEFORE `withModifier`, which is the ordering that matters: an
+ * ability's own crit bonus is an ADDITION to whatever the table gave, so the
+ * table has to be settled first. Reversed, a talent's bonus would be added to
+ * the melee chance and then thrown away.
+ * ----------------------------------------------------------------------------
+ */
+function withCritTable(
+  chances: AttackChances,
+  request: DamageRequest,
+  context: SimulationContext,
+): AttackChances {
+  if (!request.critTable || request.critTable === request.attackTable) return chances;
+
+  const from = context.attackChances(request.critTable, request.source, request.target, {
+    slot: request.weaponSlot,
+  });
+  return { ...chances, crit: from.crit, critMultiplier: from.critMultiplier };
 }
 
 /**

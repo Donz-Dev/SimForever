@@ -603,6 +603,50 @@ export const THUNDER_CLAP: Ability = {
   name: 'Thunder Clap',
   cooldownMs: seconds(6),
   cost: { resource: 'rage', amount: 20 },
+  /*
+   * ----------------------------------------------------------------------------
+   * THE SPELL TABLE, by the ruleset owner: "Thunder Clap uses the spell crit
+   * table, so global sources of critical strike chance apply, but not crit from
+   * agility, or the Cruelty talent or Weaponmaster talent."
+   *
+   * IT WAS `ranged-special`, AND THAT WAS NEVER ABOUT RANGE. CLAUDE.md records
+   * why: that table has no dodge and no parry, and carrying no main- or off-hand
+   * slot is how `isWeaponUse` excludes Thunder Clap from weapon procs. The spell
+   * table keeps BOTH of those properties, so the move costs neither -- which is
+   * what makes a one-word change the whole of it.
+   *
+   * WHAT IT CHANGES, and the three exclusions fall out of two of them:
+   *
+   *   CRIT CHANCE comes from `spellCritChance` instead of `critChance`. That is
+   *   the owner's rule, and it excludes CRUELTY for free -- Cruelty is
+   *   `{ stat: 'critChance' }`, a different stat. "Global" item lines grant both
+   *   (CLAUDE.md: sixty-two of them say "all spells and attacks"), so those keep
+   *   applying, which is the other half of what the owner asked for.
+   *
+   *   CRIT MULTIPLIER comes across too, at the spell 1.5x rather than the ranged
+   *   2x, because a crit TABLE is a chance and a multiplier together. This is the
+   *   one interpretation in the change.
+   *
+   *   MISS, DODGE AND PARRY DO NOT MOVE, and that is why this is `critTable`
+   *   rather than `attackTable: 'spell'`. Moving the whole table was tried and
+   *   measured: spell miss is a flat figure where `missFromSkill` gave Thunder
+   *   Clap almost none, so **0.9% avoided became 9.4%** -- a melee ability
+   *   missing ten times as often, off a sentence about critical strikes. Every
+   *   clause the owner wrote is about crit, so only crit moves. One line in this
+   *   file switches to the whole table if they meant that.
+   *
+   * AGILITY IS A VACUOUS EXCLUSION TODAY, and that is worth knowing rather than
+   * discovering later: there IS no agility-to-crit conversion in this engine --
+   * `baseStatTypes.ts` says so outright. The exclusion will hold for free when
+   * one is built, because it would feed `critChance`.
+   *
+   * WEAPONMASTER IS THE ONE THAT NEEDED REAL WORK. Its axe/polearm crit was an
+   * `ALL_ABILITIES` ability modifier, which reaches any ability with an id
+   * whatever table it uses -- so moving Thunder Clap alone would not have
+   * excluded it. Fixed at the talent, by scoping it to the melee tables where it
+   * belongs; see `conditionalCrit` in `talentBuild.ts`.
+   * ----------------------------------------------------------------------------
+   */
   attackTable: 'ranged-special',
   /*
    * FOUR, NOT "ALL NEARBY". This said `Infinity` with the comment "'all
@@ -619,6 +663,9 @@ export const THUNDER_CLAP: Ability = {
       abilityId: ability.id,
       abilityName: ability.name,
       school: PHYSICAL,
+      // The owner's ruling: the crit comes from the spell table, the rest of the
+      // roll does not. See the block on `attackTable` above.
+      critTable: 'spell',
       // Flat, PLUS the sheet's 7% of attack power.
       baseAmount: 103,
       powerCoefficient: THUNDER_CLAP_AP_COEFFICIENT,

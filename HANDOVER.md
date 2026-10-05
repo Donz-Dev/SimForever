@@ -623,11 +623,39 @@ while it worked.
 decimal -- which is what a talent change scoped to one build should look like.
 It makes Frostfire the top Mage, above Fire's 401.2 and Arcane's 392.6, and the
 build that existed for the Fire/Frost overlap now has a third reason to. The
-mean across 23 is **547.0**, RE-SUMMED FROM THE TABLE ABOVE rather than
+mean across 23 is **546.8**, RE-SUMMED FROM THE TABLE ABOVE rather than
 adjusted. It read 488.3 for a while, which was right when it was written and
 drifted as dive after dive moved a profile and left the average alone -- the same
 failure the census total keeps having, and the same fix: add the rows up. See
 [docs/handoff-apl.md](docs/handoff-apl.md).
+
+**THUNDER CLAP TAKES ITS CRIT FROM THE SPELL TABLE**, by the ruleset owner, and
+it moved Prot Warr 480.4 to **475.7, -4.7** -- the only profile that casts it.
+Its crit rate goes 17.7% to 4.9%, because the warrior's spell crit is 10% against
+24.4% melee and both are suppressed against a level 63 target.
+
+**ONLY THE CRIT MOVED, AND THAT WAS A DECISION.** `attackTable: 'spell'` would
+have been a one-word change and brought something nobody asked for: spell miss is
+flat where `missFromSkill` gave Thunder Clap almost none, so **0.9% avoided became
+9.4%** -- a melee ability missing ten times as often off a sentence about critical
+strikes, for a net -5.4 rather than -4.7. Every clause of the ruling is about
+crit, so `DamageRequest.critTable` moves the crit chance and multiplier and
+leaves miss, dodge and parry where they were.
+
+**TWO OF THE THREE EXCLUSIONS WERE FREE AND ONE WAS NOT.** Cruelty is a
+`critChance` stat, so the spell table cannot see it. Crit from AGILITY is a
+vacuous exclusion -- there is no agility-to-crit conversion in this engine at
+all, which `baseStatTypes.ts` states outright. **Weaponmaster needed real work**:
+its axe/polearm crit was an `ALL_ABILITIES` ability modifier, which reaches any
+ability with an id whatever table it uses.
+
+**AND FIXING WEAPONMASTER FOUND IT WRONG IN BOTH DIRECTIONS.** `ALL_ABILITIES`
+reaches no AUTO ATTACK, because a swing carries no ability id -- and "gives your
+melee weapon attacks a benefit" plainly includes swings, which are the largest
+source on every Warrior profile. Scoped to `melee-auto` and `melee-special` now,
+which draws the line the tooltip draws and excludes Thunder Clap for the right
+reason. It measures as nothing today: the talent needs an axe or a polearm and
+every weapon in every Warrior gear set is a sword.
 
 **DEEP WOUNDS MOVED ALL THREE WARRIORS, AND IT IS THE LARGEST SINGLE CORRECTION
 SINCE THE PRIORITY LISTS.** 2H Arms 624.6 to **667.8 (+43.2, REAL)**, DW Fury
@@ -730,7 +758,7 @@ so. Fourteen profiles moved.
 | Frostfire Mage | Mage | 0/29/22 | 623.2 | | Bear Druid | Druid | 9/42/0 | 488.5 |
 | BM Hunter | Hunter | 31/20/0 | 595.8 | | LW Ranged | Hunter | 7/39/5 | 482.1 |
 | Enh Shaman | Shaman | 19/32/0 | 604.0 | | Moonkin | Druid | 38/0/13 | 472.8 |
-| Shockadin | Paladin | 23/0/28 | 583.6 | | Prot Warr | Warrior | 17/0/34 | 480.4 |
+| Shockadin | Paladin | 23/0/28 | 583.6 | | Prot Warr | Warrior | 17/0/34 | 475.7 |
 | Arcane Mage | Mage | 47/4/0 | 581.8 | | Rupture Rogue | Rogue | 12/8/31 | 450.3 |
 | | | | | | Ele Shaman | Shaman | 38/13/0 | 440.2 |
 | | | | | | SM/DS | Warlock | 40/11/0 | 435.9 |
