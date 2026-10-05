@@ -376,9 +376,24 @@ export class AuraCollection {
     const definition = instance.definition;
     const behaviour = definition.refreshBehaviour ?? 'reset';
 
-    const gainedStack = instance.stacks < instance.maxStacks;
+    /*
+     * RESTORED TO FULL, OR CLIMBING BY ONE. See
+     * `AuraDefinition.refreshRestoresCharges`: "your next 3 swings" is a window
+     * being re-opened rather than a stack being added, so a crit landing on a
+     * one-charge Flurry gives three.
+     *
+     * Both paths go through `instance.stacks` HERE rather than being done by the
+     * caller, which is the point of the field. Flurry used to write
+     * `instance.stacks = 3` from its reaction immediately after `applyAura`
+     * returned -- a bare mutation the telemetry below had already run past, so
+     * every event reported 1 or 2 while the engine held 3.
+     */
+    const full = definition.chargesOnApply ?? instance.maxStacks;
+    const gainedStack = definition.refreshRestoresCharges
+      ? instance.stacks < full
+      : instance.stacks < instance.maxStacks;
     if (gainedStack) {
-      instance.stacks++;
+      instance.stacks = definition.refreshRestoresCharges ? full : instance.stacks + 1;
       if (definition.modifiersScaleWithStacks) {
         this.reapplyStatModifiers(instance);
       }
