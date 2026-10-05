@@ -1,12 +1,7 @@
-import type { Reaction } from '../../engine';
+import type { AttackEvent, Reaction } from '../../engine';
 import { isWeaponUse } from '../../engine';
 import { ENRAGE_TRIGGER_CHANCE, OVERPOWER_READY, REND, enrageAura } from '../auras/warrior';
-import {
-  FLURRY_SWINGS,
-  bloodCrazeAura,
-  deepWoundsAura,
-  flurryAura,
-} from '../auras/warriorTalents';
+import { bloodCrazeAura, deepWoundsAura, flurryAura } from '../auras/warriorTalents';
 
 /**
  * Reactions a Warrior talent grants.
@@ -71,24 +66,79 @@ export const deepWounds: TalentReactionBuilder = (percentOfWeaponDamage) => ({
 });
 
 /**
- * Flurry: a melee critical strike hastens the next few swings.
+ * Flurry: ANY non-DoT critical strike hastens the next three swings.
  *
- * Applied at full stacks every time, because the source says "your next 3
- * swings" rather than "up to 3": a second crit refreshes the window rather than
- * extending a partly-spent one.
+ * ----------------------------------------------------------------------------
+ * NO `canTrigger`, AND THAT IS THE FIX RATHER THAN AN OMISSION.
+ *
+ * It read `isWeaponUse(attack)`, which requires a main- or off-hand weapon slot
+ * -- so Thunder Clap, Intercept and Charge crits refused to proc it. They are
+ * melee abilities that declare `ranged-special` (the overloaded table; see
+ * CLAUDE.md), which is exactly what `isWeaponUse` is built to exclude for
+ * WEAPON-BOUND effects like Crusader. Flurry is not weapon-bound: the ruleset
+ * owner's wording is any non-DoT critical strike.
+ *
+ * `outcomes: ['crit']` IS THE WHOLE CONDITION, because `dealDamage` dispatches
+ * reactions only for attacks that consulted a combat table and were NOT
+ * periodic. So a Deep Wounds or Rend tick cannot reach here however it rolls,
+ * and the "non-DoT" half of the rule is enforced one layer down rather than
+ * restated here where it could drift.
+ *
+ * IT MOVES NO PUBLISHED FIGURE. DW Fury is the only profile that takes Flurry
+ * and its list casts nothing on the ranged table, so the abilities this now
+ * reaches are ones that build never uses. It is correct for a Flurry build in
+ * Battle or Defensive stance, which is what the narrow gate would have broken.
+ *
+ * APPLIED AT FULL CHARGES BY DECLARATION, not by hand. The aura carries
+ * `chargesOnApply` and `refreshRestoresCharges`; this used to set
+ * `instance.stacks` directly after `applyAura` had already emitted a smaller
+ * count, so the telemetry disagreed with the engine on every single proc.
+ * ----------------------------------------------------------------------------
  */
-export const flurry: TalentReactionBuilder = (hastePercent) => ({
-  id: 'flurry',
-  on: 'dealt',
-  outcomes: ['crit'],
-  canTrigger: (_context, _actor, attack) => isWeaponUse(attack),
-  onTrigger: (context, actor) => {
-    // Applied at full charges every time: the source says "your next 3 swings",
-    // so a second crit refreshes the window rather than topping up a spent one.
-    const instance = context.applyAura(actor, flurryAura(hastePercent), actor.id);
-    instance.stacks = FLURRY_SWINGS;
-  },
-});
+function flurryWindow(hastePercent: number, anyCrit: boolean): Reaction {
+  return {
+    id: 'flurry',
+    on: 'dealt',
+    outcomes: ['crit'],
+    /*
+     * UNDEFINED for the broad form rather than a condition that always passes:
+     * `outcomes` plus `dealDamage`'s non-periodic dispatch already say "any
+     * non-DoT crit", so there is nothing left to test.
+     */
+    canTrigger: anyCrit
+      ? undefined
+      : (_context, _actor, attack: AttackEvent) => isWeaponUse(attack),
+    onTrigger: (context, actor) => {
+      context.applyAura(actor, flurryAura(hastePercent), actor.id);
+    },
+  };
+}
+
+/** The Warrior's, on the ruleset owner's ruling: ANY non-DoT crit. */
+export const flurry: TalentReactionBuilder = (hastePercent) =>
+  flurryWindow(hastePercent, true);
+
+/**
+ * The SHAMAN'S, deliberately still narrow, and this split is the whole reason
+ * the function above is parameterised.
+ *
+ * ----------------------------------------------------------------------------
+ * THE TWO CLASSES SHARE ONE BUILDER AND ONE TOOLTIP WORDING, and widening both
+ * at once moved a published figure. The owner's ruling -- "any non-DoT critical
+ * strike" -- was given while reading a WARRIOR profile. Applying it to the
+ * Shaman as well is an inference, and an expensive one: an Enhancement Shaman
+ * crits with Lightning Bolt, Flame Shock and Earth Shock, so the broad trigger
+ * is worth **+10.5 DPS to Enh Shaman, 593.5 to 604.0**, measured over 30
+ * batches of 10.
+ *
+ * Both tooltips say "after dealing a MELEE critical strike", so the narrow
+ * reading is the one the source supports and the Warrior's is the one the owner
+ * overrode. The Shaman keeps the source's wording until it is ruled on too --
+ * see HANDOVER.md's open questions. Flipping it is this one argument.
+ * ----------------------------------------------------------------------------
+ */
+export const meleeCritFlurry: TalentReactionBuilder = (hastePercent) =>
+  flurryWindow(hastePercent, false);
 
 /** Rage a proc of Unbridled Wrath grants, by whether the weapon is two-handed. */
 export const UNBRIDLED_WRATH_RAGE = { oneHanded: 1, twoHanded: 2 } as const;

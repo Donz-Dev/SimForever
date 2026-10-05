@@ -1,7 +1,7 @@
 import type { CastReaction } from '../../engine';
 import { dealDamage, isWeaponUse, seconds } from '../../engine';
 import type { TalentReactionBuilder } from './warriorTalents';
-import { flurry } from './warriorTalents';
+import { meleeCritFlurry } from './warriorTalents';
 import {
   ELEMENTAL_FOCUS_CLEARCASTING,
   SHAMAN_DAMAGE_SPELL_IDS,
@@ -286,7 +286,13 @@ export const SHAMAN_CAST_REACTIONS: Readonly<Record<string, (value: number) => C
 };
 
 export const SHAMAN_TALENT_REACTIONS: Readonly<Record<string, TalentReactionBuilder>> = {
-  flurry,
+  /*
+   * THE NARROW FORM, and the import name is the reminder. The Warrior's Flurry
+   * fires on ANY non-DoT crit by the owner's ruling; both tooltips say "melee
+   * critical strike", and widening the Shaman's too is worth +10.5 DPS to Enh
+   * Shaman -- a ruling nobody has given. See `meleeCritFlurry`.
+   */
+  flurry: meleeCritFlurry,
   elemental_devastation: elementalDevastation,
   maelstrom_weapon: maelstromWeapon,
 };

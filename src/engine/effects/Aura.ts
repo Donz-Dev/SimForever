@@ -445,6 +445,28 @@ export interface AuraDefinition {
    */
   readonly chargesOnApply?: number;
   /**
+   * A re-application restores the charges to FULL, rather than adding one.
+   *
+   * ----------------------------------------------------------------------------
+   * "YOUR NEXT 3 SWINGS" IS NOT "UP TO 3". Flurry is the case: the ruleset
+   * owner's wording is that any non-DoT critical strike restores it to three
+   * swings, so a crit landing on a one-charge window gives three and not two.
+   * `refresh` otherwise increments toward `maxStacks`, which is right for a
+   * stacking debuff and wrong for a window that is re-opened.
+   *
+   * SEPARATE FROM `chargesOnApply` ON PURPOSE, though it reads as its natural
+   * partner. Four auras declare that field -- Shield Block, Holy Shield,
+   * Redoubt and the Mage's -- and making it govern refreshes as well would have
+   * changed all four silently. Whether Holy Shield and Redoubt restore to full
+   * or climb by one is a ruleset question nobody has asked; this field lets
+   * Flurry answer it for itself without answering it for them.
+   *
+   * "Full" is `chargesOnApply` when it is set, and `maxStacks` otherwise, so an
+   * aura that declares neither cannot use this and get a surprise.
+   * ----------------------------------------------------------------------------
+   */
+  readonly refreshRestoresCharges?: boolean;
+  /**
    * Lost when the carrier dies, rather than surviving the revive.
    *
    * ----------------------------------------------------------------------------

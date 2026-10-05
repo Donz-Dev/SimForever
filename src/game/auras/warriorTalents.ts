@@ -89,7 +89,30 @@ export function deepWoundsAura(percentOfWeaponDamage: number): AuraDefinition {
 }
 
 /**
- * Flurry: melee haste for the next three swings after a melee crit.
+ * Flurry: melee haste for the next three swings after ANY non-DoT critical
+ * strike.
+ *
+ * ----------------------------------------------------------------------------
+ * THE RULESET OWNER'S WORDING, and all three clauses are theirs:
+ *
+ *   - ANY non-DoT critical strike restores it to three swings. Not just a
+ *     weapon crit -- the reaction gated on `isWeaponUse` and so refused Thunder
+ *     Clap, Intercept and Charge, which resolve on the ranged table and carry
+ *     no weapon slot. A reaction never sees a periodic tick at all
+ *     (`dealDamage` will not dispatch one), so `outcomes: ['crit']` IS "any
+ *     non-DoT crit" and no condition is needed.
+ *   - BOTH main-hand and off-hand auto-attacks spend a charge. They do:
+ *     `consumeSwingCharges` runs in the per-slot swing handler.
+ *   - AN EXTRA ATTACK SPENDS ONE TOO, because it finishes the main hand's swing
+ *     timer and therefore IS a main-hand swing. Confirmed by the owner rather
+ *     than assumed -- `extraAttack` has always consumed, and the question was
+ *     whether it should.
+ *
+ * A CRITTING SWING CONSUMES AND THEN RESTORES, which the swing handler's order
+ * already produces: it spends a charge, resolves the swing, and the crit
+ * re-applies at full. So an always-critting warrior sits at three and never
+ * shows a part-spent window.
+ * ----------------------------------------------------------------------------
  *
  * `consumedBySwing` is what makes "three swings" rather than "N seconds" work.
  * The duration is a long backstop so that a warrior who stops swinging does not
@@ -111,6 +134,18 @@ export function flurryAura(hastePercent: number): AuraDefinition {
     maxStacks: FLURRY_SWINGS,
     // Each swing eats one charge, and the aura falls off at zero.
     consumedBySwing: true,
+    /*
+     * STARTS FULL AND IS RESTORED TO FULL, declared rather than done by hand.
+     *
+     * The reaction used to write `instance.stacks = FLURRY_SWINGS` straight
+     * after `applyAura` returned, which worked and lied: `apply` had already
+     * emitted `stacks: 1` and `refresh` `stacks: 2`, so every Flurry event in
+     * the log and in any analyzer reported a count the engine did not hold.
+     * The same shape as a bare `Resource.drain` -- state moves, telemetry does
+     * not follow.
+     */
+    chargesOnApply: FLURRY_SWINGS,
+    refreshRestoresCharges: true,
     /*
      * The talent states a flat percentage; the engine derives its haste
      * multiplier from `hasteRating`. Converting with the SAME constant the
