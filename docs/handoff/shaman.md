@@ -47,6 +47,24 @@ second-lowest of 23; it is now fifth-lowest, above SM/DS and both Hunters, a
 decimal under Bear. The mean across 23 moved 411.7 to **415.6** and the twenty-one
 non-Shaman profiles are identical to the decimal.
 
+### Flurry's trigger, ruled 2026-10-05, and the figures above predate it
+
+**THIS CLASS IMPORTS THE WARRIOR'S FLURRY REACTION**, so a Warrior ruling reaches
+it. The owner widened Flurry from "a melee critical strike" to **ANY non-DoT
+critical strike**, and because an Enhancement Shaman crits with Lightning Bolt,
+Flame Shock and Earth Shock, that is worth **+10.5 DPS here: Enh Shaman 593.5 to
+604.0**. It is worth nothing to any Warrior profile.
+
+Both tooltips still read "after dealing a MELEE critical strike", so the override
+is deliberate in both classes. **The DPS table above is older than this and than
+several other dives** -- the baseline of record is HANDOVER.md, and these figures
+should be reprinted rather than quoted.
+
+**THE TRANSFERABLE PART: a reaction two classes import carries a ruling across the
+class boundary.** `SHAMAN_TALENT_REACTIONS.flurry` is the Warrior's builder, and a
+change to it must be measured on BOTH -- this one would otherwise have landed as
+an unexplained +10.5 on a class nobody was looking at.
+
 ### What each change was worth, measured one at a time
 
 Each row is that change REMOVED from the finished build, so the figure is what it
