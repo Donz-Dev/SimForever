@@ -623,11 +623,53 @@ while it worked.
 decimal -- which is what a talent change scoped to one build should look like.
 It makes Frostfire the top Mage, above Fire's 401.2 and Arcane's 392.6, and the
 build that existed for the Fire/Frost overlap now has a third reason to. The
-mean across 23 is **541.9**, RE-SUMMED FROM THE TABLE ABOVE rather than
+mean across 23 is **547.0**, RE-SUMMED FROM THE TABLE ABOVE rather than
 adjusted. It read 488.3 for a while, which was right when it was written and
 drifted as dive after dive moved a profile and left the average alone -- the same
 failure the census total keeps having, and the same fix: add the rows up. See
 [docs/handoff-apl.md](docs/handoff-apl.md).
+
+**DEEP WOUNDS MOVED ALL THREE WARRIORS, AND IT IS THE LARGEST SINGLE CORRECTION
+SINCE THE PRIORITY LISTS.** 2H Arms 624.6 to **667.8 (+43.2, REAL)**, DW Fury
+667.2 to **729.2 (+62.0, REAL)**, Prot Warr 469.0 to **480.4 (+11.4)**. The other
+twenty are identical to the decimal.
+
+**THE RULESET OWNER STATED THREE CLAUSES AND ALL THREE WERE WRONG**: it could
+crit, it ticked every three seconds rather than every two, and a re-application
+reset the clock and DISCARDED the undelivered damage instead of rolling it over.
+
+**THE ROLLOVER IS NEARLY THE WHOLE OF IT**, and the reason is a rate argument
+rather than a damage one. Deep Wounds refreshes on every melee crit, which for
+these builds is far more often than once every twelve seconds -- so under
+`refreshBehaviour: 'reset'` alone, most of each application's damage was thrown
+away before it could tick. Rolling the remainder forward means every crit's worth
+eventually lands, and in steady state the bleed delivers one application per crit
+instead of a fraction of one.
+
+| Clause REMOVED from the finished build | 2H Arms | DW Fury | Prot Warr |
+| --- | --- | --- | --- |
+| **the rollover** | **-43.9** | **-68.5** | **-12.8** |
+| **"it cannot crit"** (so: crit restored) | +18.8 | +30.9 | +10.5 |
+| the two-second cadence (back to three) | -2.4 | -3.1 | -1.3 |
+
+**THEY DO NOT SUM, AND THAT IS THE POINT OF MEASURING THEM THIS WAY.** Each row is
+that clause taken OUT of the finished build, so it is worth what it contributes
+in the presence of the others -- and the three interact hard, because the crit
+multiplier scales whatever the pool is delivering and the rollover decides how
+much that is. -43.9 + 18.8 - 2.4 is +27.5 against an actual +43.2; reading the
+rows as independent terms would be wrong by a third.
+
+**THE CADENCE IS ALMOST FREE**, which is worth knowing: six ticks of a sixth and
+four ticks of a quarter deliver the same pool over the same twelve seconds. What
+the faster cadence buys is only that the pool drains sooner, which matters a
+little once refreshes are topping it up.
+
+**AND "IT CANNOT CRIT" IS AN EXCEPTION TO A DOCUMENTED UNIVERSAL RULE.** CLAUDE.md
+states "Every DoT can crit, and none is reduced by armor. A Forever rule, not
+Classic's", and that still holds for every other DoT. Deep Wounds is the owner's
+named exception, and the reason is legible: the bleed is the PRODUCT of a critical
+strike, so critting again pays the same roll twice. It is the only clause here
+that costs damage, and it costs 19 to 31.
 
 **FLURRY'S TRIGGER MOVED ONE PROFILE, AND IT IS A RULING RATHER THAN A FIX.**
 Enh Shaman 593.5 to **604.0, +10.5** -- inside the two runs' combined interval, so
@@ -682,13 +724,13 @@ so. Fourteen profiles moved.
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | Seal Twist Ret | Paladin | 13/0/38 | 709.0 | | Firelock | Warlock | 5/11/35 | 544.7 |
 | Cat Druid | Druid | 9/35/7 | 703.8 | | Combat Rogue | Rogue | 18/33/0 | 524.2 |
-| DW Fury | Warrior | 18/33/0 | 667.2 | | LW Melee | Hunter | 7/13/31 | 523.8 |
-| 2H Arms | Warrior | 38/13/0 | 624.6 | | Shadow Priest | Priest | 16/3/32 | 516.4 |
+| DW Fury | Warrior | 18/33/0 | 729.2 | | LW Melee | Hunter | 7/13/31 | 523.8 |
+| 2H Arms | Warrior | 38/13/0 | 667.8 | | Shadow Priest | Priest | 16/3/32 | 516.4 |
 | Fire Mage | Mage | 10/39/2 | 624.0 | | Venom Rogue | Rogue | 37/12/2 | 494.9 |
 | Frostfire Mage | Mage | 0/29/22 | 623.2 | | Bear Druid | Druid | 9/42/0 | 488.5 |
 | BM Hunter | Hunter | 31/20/0 | 595.8 | | LW Ranged | Hunter | 7/39/5 | 482.1 |
 | Enh Shaman | Shaman | 19/32/0 | 604.0 | | Moonkin | Druid | 38/0/13 | 472.8 |
-| Shockadin | Paladin | 23/0/28 | 583.6 | | Prot Warr | Warrior | 17/0/34 | 469.0 |
+| Shockadin | Paladin | 23/0/28 | 583.6 | | Prot Warr | Warrior | 17/0/34 | 480.4 |
 | Arcane Mage | Mage | 47/4/0 | 581.8 | | Rupture Rogue | Rogue | 12/8/31 | 450.3 |
 | | | | | | Ele Shaman | Shaman | 38/13/0 | 440.2 |
 | | | | | | SM/DS | Warlock | 40/11/0 | 435.9 |

@@ -121,11 +121,37 @@ that benefits is the swing that pays.
 The source says "your next 3 swings", not "up to 3", so a second crit resets the
 window rather than topping up a partly spent one.
 
-### Deep Wounds is fixed when it is applied
+### Deep Wounds is fixed when it is applied — and now actually is
 
 Its damage is a percentage of the weapon's average damage at the moment of the
 crit, not recomputed per tick. The source keys it to the strike that caused it,
 and a weapon swap mid-bleed should not retune ticks already scheduled.
+
+**THIS ENTRY DESCRIBED A RULE THE CODE DID NOT IMPLEMENT.** The old `onTick`
+recomputed `weaponAverageDamage` on every tick, so a buff landing mid-bleed
+retuned ticks already scheduled — the exact thing the paragraph above says must
+not happen. `periodic.pool` evaluates it once per application, which is what the
+documentation had claimed all along.
+
+### Deep Wounds POOLS, and a re-application rolls the remainder forward
+
+The ruleset owner's wording: a sixth of its damage every two seconds, and if
+another crit lands inside the duration the clock restarts AND the undelivered
+remainder joins the new total, which the next sixth then draws from.
+
+No `refreshBehaviour` value can express that — `reset`, `extend` and `ignore` all
+discard the remainder — so it is `periodic.pool`, with the arithmetic in
+`AuraCollection.addToPool` and the number in `auras/warriorTalents.ts`. **It is
+worth +43.9 to 2H Arms and +68.5 to DW Fury**, because the bleed refreshes far
+more often than once every twelve seconds and almost all of each application used
+to be thrown away.
+
+### Deep Wounds cannot crit, against the universal DoT rule
+
+CLAUDE.md states that every DoT in Forever can crit. Deep Wounds is the ruleset
+owner's named exception, and the reason is legible: the bleed is the PRODUCT of a
+critical strike, so critting again would pay the same roll twice. Expressed by
+having no `critFrom`, which also means the tick draws no random number.
 
 ### Deep Wounds does not scale with attack power twice
 
@@ -187,8 +213,8 @@ Choices the source did not make for us. Each is isolated and cheap to flip.
 
 | Interpretation | Where | If wrong |
 | --- | --- | --- |
-| **Deep Wounds ticks every 3 seconds.** The interval is not stated; 3s is the cadence every other bleed in the ruleset uses, and 12 divides evenly by it. | `auras/warriorTalents.ts` | One constant. |
-| **Deep Wounds triggers on MELEE crits.** "Your critical strikes" is read as melee, checked on the weapon slot rather than the ability, so any melee source counts. | `reactions/warriorTalents.ts` | Change the `canTrigger`. |
+| ~~**Deep Wounds ticks every 3 seconds.**~~ **STATED: two seconds, six ticks.** The interpretation was flagged as one and was wrong — the owner's wording is "a portion (1/6th) of its damage every 2 seconds". No longer an interpretation. | `auras/warriorTalents.ts` | — |
+| **Deep Wounds triggers on MELEE crits.** "Your critical strikes" is read as melee, checked on the weapon slot rather than the ability, so any melee source counts. **Still an interpretation, and NOT the same question Flurry answered** — the owner widened FLURRY's trigger to any non-DoT crit and said nothing about this one, so the two reactions now differ deliberately. | `reactions/warriorTalents.ts` | Change the `canTrigger`. |
 | **Flurry's backstop duration is 12 seconds**, and is a `PLACEHOLDER_*`. The swing count is real; the duration is not stated and should never be reached, because charges run out first. | `PLACEHOLDER_FLURRY_DURATION_MS` | One constant. |
 | **Impale uses the melee crit multiplier**, because every Warrior ability is melee. A class with spell crits would need this per school. | `talents/talentBuild.ts` | Make the bonus per damage school. |
 | **Slam is worth casting only when it does not cost a swing.** A rotation heuristic, not ruleset data. The entry asks the ability whether it holds the swing, so the talent stays the thing that changed it. | `rotations/warrior.ts` | Change or remove the condition. |

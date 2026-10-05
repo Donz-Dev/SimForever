@@ -217,6 +217,10 @@ export class AuraCollection {
     instance.absorbRemaining = definition.absorb?.(this.owner) ?? 0;
     this.auras.set(definition.id, instance);
 
+    // BEFORE the first tick is scheduled below, so a pool can never be drawn
+    // from while it is still zero.
+    this.addToPool(context, instance);
+
     this.applyStatModifiers(instance);
     this.scheduleExpiration(context, instance);
     // `true`: this is the aura's FIRST tick, the only one a periodic effect
@@ -413,6 +417,20 @@ export class AuraCollection {
       instance.absorbRemaining = definition.absorb(this.owner);
     }
 
+    /*
+     * A REFRESHED POOL IS ROLLED FORWARD, WHICH IS THE OPPOSITE OF A SHIELD.
+     *
+     * The lines above REPLACE an absorb, because a new shield is a new shield;
+     * this ADDS, because the ruleset owner's Deep Wounds carries the undelivered
+     * remainder into the new total. Same shape, opposite rule, and they sit
+     * together so the difference is visible rather than inferred.
+     *
+     * `ignore` declines the application, so it contributes nothing either.
+     */
+    if (behaviour !== 'ignore') {
+      this.addToPool(context, instance);
+    }
+
     if (behaviour !== 'ignore' && !instance.isPermanent) {
       const remaining = instance.remainingMs(now);
       instance.expiresAt =
@@ -475,6 +493,44 @@ export class AuraCollection {
   private reapplyStatModifiers(instance: AuraInstance): void {
     this.owner.stats.removeModifiersFrom(instance.modifierSourceId);
     this.applyStatModifiers(instance);
+  }
+
+  /**
+   * Add one application's worth to a pooling periodic, and re-split the share.
+   *
+   * ----------------------------------------------------------------------------
+   * CALLED FROM BOTH `apply` AND `refresh`, which is what makes a first
+   * application and a roll-over the same arithmetic: `poolRemaining` starts at
+   * zero, so the first call is a roll-over onto nothing. Writing the two cases
+   * separately is how they come to disagree.
+   *
+   * THE SHARE IS RE-SPLIT OVER A WHOLE DURATION every time. A refresh resets the
+   * clock, so the pool as it now stands has a full `durationMs` to be delivered
+   * in -- the same number of ticks as a fresh application, each drawing a larger
+   * share. That is the ruleset owner's "the next 1/6th damage tick pulls from
+   * the new total pool".
+   * ----------------------------------------------------------------------------
+   */
+  private addToPool(context: SimulationContext, instance: AuraInstance): void {
+    const periodic = instance.definition.periodic;
+    if (!periodic?.pool) return;
+
+    instance.poolRemaining += periodic.pool(context, instance);
+
+    /*
+     * DERIVED, not declared -- see `PeriodicEffect.pool`. A permanent aura has
+     * no duration to divide, so it draws the whole pool on its first tick, which
+     * is the only reading that delivers it at all.
+     */
+    if (instance.definition.durationMs > 0) {
+      const ticks = Math.max(
+        1,
+        Math.round(instance.definition.durationMs / periodic.intervalMs),
+      );
+      instance.poolPerTick = instance.poolRemaining / ticks;
+    } else {
+      instance.poolPerTick = instance.poolRemaining;
+    }
   }
 
   private scheduleExpiration(context: SimulationContext, instance: AuraInstance): void {

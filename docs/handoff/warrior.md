@@ -54,9 +54,9 @@ Full record, with the method: [source-cross-checks.md](../source-cross-checks.md
 
 | Profile | Talents | DPS | List | Style / stance |
 | --- | --- | --- | --- | --- |
-| DW Fury | 18/33/0 | **651.2** | `WARRIOR_DUAL_WIELD_BERSERKER` | dual wield, Berserker |
-| 2H Arms | 38/13/0 | **603.3** | `WARRIOR_TWO_HAND_BATTLE` | two-hander, Battle |
-| Prot Warr | 17/0/34 | **454.6** | `WARRIOR_SHIELD_DEFENSIVE` | 1H & shield, Defensive, **target attacks back** |
+| DW Fury | 18/33/0 | **729.2** | `WARRIOR_DUAL_WIELD_BERSERKER` | dual wield, Berserker |
+| 2H Arms | 38/13/0 | **667.8** | `WARRIOR_TWO_HAND_BATTLE` | two-hander, Battle |
+| Prot Warr | 17/0/34 | **480.4** | `WARRIOR_SHIELD_DEFENSIVE` | 1H & shield, Defensive, **target attacks back** |
 
 **DW Fury and 2H Arms are the two highest profiles in the project.** Prot Warr is
 sixth. Anything that moves a shared melee rule shows up here first and largest.
@@ -68,6 +68,39 @@ changed a lot: Slam went 2.9 casts a fight to 2.5, and Spearing Strike went 2.7
 to **zero** — its 15 rage going straight into Heroic Strike, 9.0 casts to 11.0.
 **Losing an ability outright cost 0.8 DPS**, which is what a rage-bound build
 looks like: the bar is the constraint, not the ability list.
+
+### Deep Wounds, ruled and corrected 2026-10-05
+
+**THE LARGEST SINGLE CORRECTION ON THIS CLASS SINCE THE PRIORITY LISTS.** 2H Arms
+**+43.2**, DW Fury **+62.0**, Prot Warr **+11.4**, and nothing else in the project
+by a decimal. The ruleset owner stated three clauses and all three were wrong: it
+could crit, it ticked every three seconds rather than every two, and a
+re-application reset the clock while DISCARDING the undelivered damage.
+
+| Clause REMOVED from the finished build | 2H Arms | DW Fury | Prot Warr |
+| --- | --- | --- | --- |
+| **the rollover** | **-43.9** | **-68.5** | **-12.8** |
+| "it cannot crit" (crit restored) | +18.8 | +30.9 | +10.5 |
+| the two-second cadence (back to three) | -2.4 | -3.1 | -1.3 |
+
+**THE ROLLOVER IS NEARLY ALL OF IT, AND THE REASON IS A RATE ARGUMENT.** Deep
+Wounds refreshes on every melee crit, far more often than once per twelve seconds,
+so under `reset` alone most of each application never ticked. Rolling the
+remainder forward means every crit's worth eventually lands.
+
+**THE ROWS DO NOT SUM** -- they are each that clause taken out of the FINISHED
+build, and the three interact hard because the crit multiplier scales whatever the
+pool is delivering. Reading them as independent terms is wrong by a third.
+
+**THE CADENCE WAS ALMOST FREE**: six sixths and four quarters deliver the same
+pool over the same twelve seconds.
+
+**AND ONE INTERPRETATION IS LEFT.** Deep Wounds' TRIGGER is still gated on
+`isWeaponUse` -- the owner widened FLURRY's to any non-DoT crit and said nothing
+about this one, so the two reactions now differ deliberately. Its tooltip says
+"your critical strikes" with no melee qualifier, but its damage is explicitly "of
+your melee weapon's average damage", which is what makes the weapon gate
+defensible. Worth asking.
 
 ### Where the damage comes from
 

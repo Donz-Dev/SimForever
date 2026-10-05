@@ -22,6 +22,38 @@ export interface PeriodicEffect {
   /** Runs on every tick, including one at the moment the aura expires. */
   onTick(context: SimulationContext, aura: AuraInstance): void;
   /**
+   * A POOL OF DAMAGE THIS APPLICATION CONTRIBUTES, delivered a share per tick,
+   * with a re-application ROLLING the undelivered remainder into the new total.
+   *
+   * ----------------------------------------------------------------------------
+   * DEEP WOUNDS IS WHY, and the ruleset owner's wording is the specification:
+   * "it deals a portion (1/6th) of its damage every 2 seconds. If another crit
+   * happens during the duration the duration resets to 12 seconds, and any
+   * remaining damage from the previous application is rolled over into the new
+   * total pool from which the next 1/6th damage tick pulls."
+   *
+   * SO A REFRESH IS NOT A RESET HERE, AND NO EXISTING FIELD COULD SAY THAT.
+   * `refreshBehaviour` has three values and all three throw the old damage
+   * away: `reset` restarts the clock, `extend` adds to it, `ignore` declines.
+   * None carries the undelivered remainder forward, so a bleed re-applied at
+   * nine tenths spent silently lost nine tenths of a stack -- a smaller number
+   * and no error.
+   *
+   * THE ENGINE OWNS THE ARITHMETIC AND CONTENT OWNS THE NUMBER, which is the
+   * division this codebase draws everywhere else: this function answers "how
+   * much does THIS application add", the engine decides how a pool is split,
+   * rolled and drawn down, and `onTick` spends what `drawFromPool` hands back.
+   * A content effect doing its own pool arithmetic is how two of them end up
+   * disagreeing.
+   *
+   * THE SHARE PER TICK IS DERIVED, not declared: `durationMs / intervalMs`.
+   * Deep Wounds' "1/6th" is 12 seconds at 2-second ticks, so declaring the six
+   * as well would be a third copy of a number the other two already fix, and
+   * the copy is what goes stale when a cadence moves.
+   * ----------------------------------------------------------------------------
+   */
+  readonly pool?: (context: SimulationContext, aura: AuraInstance) => number;
+  /**
    * When the FIRST tick lands, if not one whole interval from now.
    *
    * Takes the context so it can roll, which is the reason it exists: a
@@ -519,6 +551,43 @@ export class AuraInstance {
    * common case costs one number comparison.
    */
   absorbRemaining = 0;
+
+  /**
+   * Damage this aura has still to DEAL, for a periodic effect that pools.
+   *
+   * The mirror of `absorbRemaining` and set the same way: from the definition
+   * when the aura is applied, drawn down as it is spent. Zero for every aura
+   * that does not declare `periodic.pool`, so the common case costs nothing.
+   *
+   * ROLLED FORWARD BY A RE-APPLICATION rather than replaced, which is the whole
+   * point -- see `PeriodicEffect.pool`.
+   */
+  poolRemaining = 0;
+
+  /**
+   * What one tick draws, fixed when the pool was last set.
+   *
+   * HELD RATHER THAN DERIVED FROM `poolRemaining`, and that is load-bearing: a
+   * tick taking a sixth of what is LEFT decays geometrically and never finishes
+   * -- 1/6th, then 1/6th of the remaining 5/6ths, and so on. The share is a
+   * sixth of the pool as it stood at application, so six ticks deliver it
+   * exactly.
+   */
+  poolPerTick = 0;
+
+  /**
+   * Take this tick's share out of the pool and hand it back.
+   *
+   * Clamped to what is left, so the last tick of a pool that does not divide
+   * evenly delivers the remainder rather than overdrawing. Returns zero for an
+   * aura with no pool, which is what makes it safe to call unconditionally.
+   */
+  drawFromPool(): number {
+    if (this.poolRemaining <= 0) return 0;
+    const drawn = Math.min(this.poolPerTick, this.poolRemaining);
+    this.poolRemaining -= drawn;
+    return drawn;
+  }
 
   /** Queue handle for the expiry event, so early removal can cancel it. */
   expirationHandle: ScheduledEvent | null = null;

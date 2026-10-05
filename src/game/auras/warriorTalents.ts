@@ -13,9 +13,20 @@ import { RATING_PER_PERCENT, applyHealing, dealDamage, seconds } from '../../eng
 
 /** Deep Wounds bleeds for this long, in every rank. */
 export const DEEP_WOUNDS_DURATION_MS = seconds(12);
-/** And ticks on the usual three-second bleed cadence. */
-export const DEEP_WOUNDS_TICK_INTERVAL_MS = seconds(3);
-const DEEP_WOUNDS_TICKS = DEEP_WOUNDS_DURATION_MS / DEEP_WOUNDS_TICK_INTERVAL_MS;
+/**
+ * TWO SECONDS, SIX TICKS, stated by the ruleset owner.
+ *
+ * It was THREE for a long time, on four ticks, and the comment beside it said
+ * exactly what it was: "the tick interval is not stated. Three seconds is the
+ * cadence every other bleed in the ruleset uses, including Rend, and 12 divides
+ * evenly by it." An honest interpretation, flagged as one, and wrong -- the
+ * owner's wording is "a portion (1/6th) of its damage every 2 seconds".
+ *
+ * The sixth is not a third constant: this derives it, and the engine derives its
+ * own per-tick share the same way from the duration and the interval.
+ */
+export const DEEP_WOUNDS_TICK_INTERVAL_MS = seconds(2);
+export const DEEP_WOUNDS_TICKS = DEEP_WOUNDS_DURATION_MS / DEEP_WOUNDS_TICK_INTERVAL_MS;
 
 /**
  * A weapon's AVERAGE damage, by the universal Forever formula.
@@ -35,18 +46,44 @@ export function weaponAverageDamage(actor: Combatant, slot: WeaponSlot = 'mainHa
 }
 
 /**
- * Deep Wounds: a bleed for a percentage of the weapon's average damage, spread
- * over 12 seconds.
+ * Deep Wounds: a bleed for a percentage of the weapon's average damage,
+ * delivered a sixth every two seconds, and POOLING when it is re-applied.
  *
- * Built per character because the total depends on the rank taken AND on the
- * weapon held at the moment it is applied. The damage is fixed when the aura
- * is created rather than recomputed per tick: the source's wording keys it to
- * the strike that caused it, and a weapon swap mid-bleed should not retune the
- * ticks already scheduled.
+ * ----------------------------------------------------------------------------
+ * THE RULESET OWNER'S THREE CLAUSES, and all three were wrong here.
  *
- * INTERPRETATION: the tick interval is not stated. Three seconds is the cadence
- * every other bleed in the ruleset uses, including Rend, and 12 divides evenly
- * by it. If the ruleset owner states otherwise this is one constant to change.
+ *   1. IT CANNOT CRIT. It declared `critFrom: 'melee-special'` and so crit at
+ *      the warrior's own melee crit chance.
+ *   2. A SIXTH EVERY TWO SECONDS. It ticked every three, four times, which the
+ *      comment beside it admitted was an interpretation.
+ *   3. A RE-APPLICATION ROLLS THE REMAINDER FORWARD. It declared
+ *      `refreshBehaviour: 'reset'` alone, which restarts the clock and throws
+ *      the undelivered damage away.
+ *
+ * "IT CANNOT CRIT" IS AN EXCEPTION TO A DOCUMENTED UNIVERSAL RULE, and that is
+ * worth saying loudly because CLAUDE.md states the opposite in general terms:
+ * "Every DoT can crit, and none is reduced by armor. A Forever rule, not
+ * Classic's." That still holds for every other DoT here. Deep Wounds is the
+ * owner's named exception, and the reason is legible -- the bleed is the
+ * PRODUCT of a critical strike, so critting again would pay the same roll
+ * twice. Expressed by having no `critFrom` at all, which also means the tick
+ * draws no random number.
+ *
+ * THE POOL IS THE INTERESTING ONE. "Any remaining damage from the previous
+ * application is rolled over into the new total pool from which the next 1/6th
+ * damage tick pulls." No `refreshBehaviour` value can say that -- all three
+ * discard the remainder -- so it is `periodic.pool`, an engine mechanic whose
+ * arithmetic lives in `AuraCollection.addToPool` and whose NUMBER lives here.
+ *
+ * THE POOL IS EVALUATED PER APPLICATION, NOT PER TICK, which is a behaviour
+ * change on its own. The old code recomputed the weapon's average damage inside
+ * `onTick`, so a stat buff landing mid-bleed retuned ticks already scheduled --
+ * while the comment directly above it claimed the opposite: "the damage is
+ * fixed when the aura is created rather than recomputed per tick". The comment
+ * described the right rule and the code did not implement it. It does now, for
+ * the comment's own stated reason: the source keys the bleed to the strike that
+ * caused it.
+ * ----------------------------------------------------------------------------
  */
 export function deepWoundsAura(percentOfWeaponDamage: number): AuraDefinition {
   return {
@@ -55,15 +92,32 @@ export function deepWoundsAura(percentOfWeaponDamage: number): AuraDefinition {
     durationMs: DEEP_WOUNDS_DURATION_MS,
     isDebuff: true,
     isBleed: true,
+    /*
+     * STILL `reset`, because the DURATION really does restart -- the owner says
+     * so in the same sentence. What changed is that the damage no longer goes
+     * with it: `periodic.pool` carries that, and the two are independent.
+     */
     refreshBehaviour: 'reset',
     periodic: {
       intervalMs: DEEP_WOUNDS_TICK_INTERVAL_MS,
+      /*
+       * What THIS application contributes. Read from the weapon held at the
+       * moment the crit landed, which is what "60% of your melee weapon's
+       * average damage" means.
+       */
+      pool: (context, aura) => {
+        const source = context.combatant(aura.sourceId);
+        if (!source) return 0;
+        return weaponAverageDamage(source) * (percentOfWeaponDamage / 100);
+      },
       onTick: (context: SimulationContext, aura) => {
         const source = context.combatant(aura.sourceId);
         const target = context.combatant(aura.targetId);
         if (!source || !target || !target.isAlive) return;
 
-        const total = weaponAverageDamage(source) * (percentOfWeaponDamage / 100);
+        // This tick's share, taken out of the pool by the engine.
+        const amount = aura.drawFromPool();
+        if (amount <= 0) return;
 
         dealDamage(context, {
           source,
@@ -71,15 +125,17 @@ export function deepWoundsAura(percentOfWeaponDamage: number): AuraDefinition {
           abilityId: aura.id,
           abilityName: aura.name,
           school: 'physical',
-          baseAmount: total / DEEP_WOUNDS_TICKS,
+          baseAmount: amount,
           // The percentage IS the scaling. Attack power is already inside the
           // weapon's average damage, so scaling again would count it twice.
           powerCoefficient: 0,
           periodic: true,
-          // Every damage-over-time effect in Forever can crit, at the crit
-          // chance of the event that applied it. Deep Wounds is applied by a
-          // melee critical strike, so it crits at melee crit chance.
-          critFrom: 'melee-special',
+          /*
+           * NO `critFrom`, DELIBERATELY -- the owner's ruling that Deep Wounds
+           * cannot crit, against the general Forever rule that every DoT can.
+           * Omitting the field is how that is said, and it also means the tick
+           * draws no random number, so it cannot shift a seeded run.
+           */
           // A bleed is physical and ignores armor.
           appliesArmor: false,
         });
