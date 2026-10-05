@@ -56,7 +56,7 @@ Full record, with the method: [source-cross-checks.md](../source-cross-checks.md
 | --- | --- | --- | --- | --- |
 | DW Fury | 18/33/0 | **729.2** | `WARRIOR_DUAL_WIELD_BERSERKER` | dual wield, Berserker |
 | 2H Arms | 38/13/0 | **667.8** | `WARRIOR_TWO_HAND_BATTLE` | two-hander, Battle |
-| Prot Warr | 17/0/34 | **480.4** | `WARRIOR_SHIELD_DEFENSIVE` | 1H & shield, Defensive, **target attacks back** |
+| Prot Warr | 17/0/34 | **475.7** | `WARRIOR_SHIELD_DEFENSIVE` | 1H & shield, Defensive, **target attacks back** |
 
 **DW Fury and 2H Arms are the two highest profiles in the project.** Prot Warr is
 sixth. Anything that moves a shared melee rule shows up here first and largest.
@@ -68,6 +68,37 @@ changed a lot: Slam went 2.9 casts a fight to 2.5, and Spearing Strike went 2.7
 to **zero** — its 15 rage going straight into Heroic Strike, 9.0 casts to 11.0.
 **Losing an ability outright cost 0.8 DPS**, which is what a rage-bound build
 looks like: the bar is the constraint, not the ability list.
+
+### Thunder Clap's crit comes from the SPELL table, ruled 2026-10-05
+
+The owner: "Thunder Clap uses the spell crit table, so global sources of critical
+strike chance apply, but not crit from agility, or the Cruelty talent or
+Weaponmaster talent."
+
+**Prot Warr 480.4 → 475.7, −4.7**, and it is the only profile affected: 2H Arms
+has Thunder Clap in its book and in no list, and a Berserker-stance Fury cannot
+cast it at all. Its crit rate goes **17.7% → 4.9%**.
+
+**ONLY THE CRIT MOVED.** `attackTable: 'spell'` would have been one word and
+would also have changed MISS — spell miss is flat where `missFromSkill` gave
+Thunder Clap almost none, measured at **0.9% avoided becoming 9.4%**, for a net
+−5.4. Every clause of the ruling is about crit, so `DamageRequest.critTable`
+takes the crit chance and multiplier and leaves the rest of the roll alone. One
+line switches to the whole table if that was meant.
+
+**THE THREE EXCLUSIONS, and only one needed work:**
+
+| | |
+| --- | --- |
+| **Cruelty** | free — it is a `critChance` stat and the spell table reads `spellCritChance` |
+| **agility** | **vacuous.** There is no agility-to-crit conversion in this engine at all; `baseStatTypes.ts` says so. It will hold for free when one is built, as long as it feeds `critChance` |
+| **Weaponmaster** | needed real work — its crit was an `ALL_ABILITIES` ability modifier, which reaches any ability with an id whatever table it uses |
+
+**AND WEAPONMASTER WAS WRONG IN BOTH DIRECTIONS.** `ALL_ABILITIES` reaches no
+AUTO ATTACK either, because a swing carries no ability id — and "gives your melee
+weapon attacks a benefit" includes swings, the largest source on every Warrior.
+Scoped to `melee-auto` and `melee-special` now. It measures as nothing today
+because every Warrior weapon is a sword and the talent wants an axe or polearm.
 
 ### Deep Wounds, ruled and corrected 2026-10-05
 

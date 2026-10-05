@@ -248,14 +248,40 @@ describe('Weaponmaster depends on which weapon swung', () => {
   const axe = { name: 'A', weaponType: 'axe' } as never;
   const mace = { name: 'M', weaponType: 'mace' } as never;
 
-  it('grants the axe and polearm crit with one in the main hand', () => {
+  it('grants the axe and polearm crit on the MELEE TABLES, not every ability', () => {
+    /*
+     * ------------------------------------------------------------------------
+     * THE SCOPE MOVED, AND THE OLD ONE WAS WRONG IN BOTH DIRECTIONS.
+     *
+     * It registered under `ALL_ABILITIES`, which reaches any ability carrying an
+     * id and no auto attack at all. Weaponmaster says "gives your melee WEAPON
+     * ATTACKS a benefit", so it was:
+     *
+     *   - missing auto attacks, the largest damage source on every Warrior;
+     *   - catching Thunder Clap, Intercept and Charge, which are melee abilities
+     *     that declare a non-melee table.
+     *
+     * The ruleset owner's Thunder Clap ruling is what exposed it -- they asked
+     * for Thunder Clap not to take this crit -- and scoping the TALENT is the
+     * honest fix rather than special-casing the ability.
+     * ------------------------------------------------------------------------
+     */
     const build = talentBuild('warrior', legalise({ weaponmaster: 5 }), { mainHand: axe });
-    expect(build.abilityModifiers.for(ALL_ABILITIES).critBonus).toBe(5);
+
+    expect(build.attackTableModifiers.for('melee-auto').critBonus).toBe(5);
+    expect(build.attackTableModifiers.for('melee-special').critBonus).toBe(5);
+
+    // And NOT on the tables the three odd-one-out abilities use.
+    expect(build.attackTableModifiers.for('ranged-special').critBonus ?? 0).toBe(0);
+    expect(build.attackTableModifiers.for('spell').critBonus ?? 0).toBe(0);
+    // Nor as a blanket per-ability bonus any more.
+    expect(build.abilityModifiers.for(ALL_ABILITIES).critBonus ?? 0).toBe(0);
   });
 
   it('grants no crit with a mace, and says why rather than going quiet', () => {
     const build = talentBuild('warrior', legalise({ weaponmaster: 5 }), { mainHand: mace });
-    expect(build.abilityModifiers.for(ALL_ABILITIES).critBonus ?? 0).toBe(0);
+    expect(build.attackTableModifiers.for('melee-auto').critBonus ?? 0).toBe(0);
+    expect(build.attackTableModifiers.for('melee-special').critBonus ?? 0).toBe(0);
     const reasons = build.unmodelled
       .filter((u) => u.talentId === 'weaponmaster')
       .map((u) => u.reason)

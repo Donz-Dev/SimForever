@@ -215,16 +215,34 @@ describe('which abilities the rule actually covers', () => {
     'rend_cast',
     'sunder_armor_cast',
   ];
-  const doesNot = ['thunder_clap', 'intercept', 'charge'];
+  /*
+   * ALL THREE STILL RESOLVE ON `ranged-special`, INCLUDING THUNDER CLAP.
+   *
+   * The ruleset owner ruled that "Thunder Clap uses the spell crit table", and
+   * that reaches it through `critTable` on the damage request rather than by
+   * moving the ability's own table -- every clause of the ruling is about crit,
+   * and moving the whole table also changed its MISS, from 0.9% avoided to 9.4%.
+   *
+   * Either way this file's subject is untouched: whether an attack is a WEAPON
+   * USE turns on the weapon slot, not the table, and none of the three carries a
+   * main- or off-hand one.
+   */
+  const doesNot: readonly [string, 'ranged-special' | 'spell'][] = [
+    ['thunder_clap', 'ranged-special'],
+    ['intercept', 'ranged-special'],
+    ['charge', 'ranged-special'],
+  ];
 
   it.each(needsAMeleeWeapon)('%s resolves on a melee table, so it is a use', (id) => {
     const ability = WARRIOR_ABILITIES.find((a) => a.id === id);
     expect(ability?.attackTable).toBe('melee-special');
   });
 
-  it.each(doesNot)('%s resolves on the ranged table, so it is not', (id) => {
+  it.each(doesNot)('%s resolves on the %s table, so it is not a weapon use', (id, table) => {
     const ability = WARRIOR_ABILITIES.find((a) => a.id === id);
-    expect(ability?.attackTable).toBe('ranged-special');
+    expect(ability?.attackTable).toBe(table);
+    // The part that actually decides it: no melee weapon slot.
+    expect(ability?.attackTable).not.toBe('melee-special');
   });
 
   it('SHIELD SLAM TRIGGERS MAIN HAND EFFECTS, by the ruleset owner', () => {
