@@ -54,9 +54,9 @@ Full record, with the method: [source-cross-checks.md](../source-cross-checks.md
 
 | Profile | Talents | DPS | List | Style / stance |
 | --- | --- | --- | --- | --- |
-| DW Fury | 18/33/0 | **729.2** | `WARRIOR_DUAL_WIELD_BERSERKER` | dual wield, Berserker |
-| 2H Arms | 38/13/0 | **667.8** | `WARRIOR_TWO_HAND_BATTLE` | two-hander, Battle |
-| Prot Warr | 17/0/34 | **475.7** | `WARRIOR_SHIELD_DEFENSIVE` | 1H & shield, Defensive, **target attacks back** |
+| DW Fury | 18/33/0 | **667.5** | `WARRIOR_DUAL_WIELD_BERSERKER` | dual wield, Berserker |
+| 2H Arms | 38/13/0 | **621.1** | `WARRIOR_TWO_HAND_BATTLE` | two-hander, Battle |
+| Prot Warr | 17/0/34 | **457.0** | `WARRIOR_SHIELD_DEFENSIVE` | 1H & shield, Defensive, **target attacks back** |
 
 **DW Fury and 2H Arms are the two highest profiles in the project.** Prot Warr is
 sixth. Anything that moves a shared melee rule shows up here first and largest.
@@ -68,6 +68,34 @@ changed a lot: Slam went 2.9 casts a fight to 2.5, and Spearing Strike went 2.7
 to **zero** — its 15 rage going straight into Heroic Strike, 9.0 casts to 11.0.
 **Losing an ability outright cost 0.8 DPS**, which is what a rage-bound build
 looks like: the bar is the constraint, not the ability list.
+
+### Deep Wounds again, from an official source, 2026-10-05
+
+Three bullets -- "Deep Wounds compared to Vanilla now" -- and **two were already
+right**: it rolls its damage over when refreshed (the pool, below), and it does
+not reset its tick timer on a refresh. The second was true BY ACCIDENT:
+`AuraCollection.refresh` reschedules the EXPIRY and never touches `tickHandle`.
+Nothing asserted it, so nothing would have caught the day that changed. Pinned
+now.
+
+**The third was wrong: it must not scale with Attack Power.** The pool read the
+universal weapon formula -- base + (speed / 14) x AP -- and now reads
+`WeaponProfile.baseDamage` alone, which the engine documents as "average damage
+per swing before attack power" and which is what the tooltip's "your melee
+weapon's average damage" means.
+
+**2H Arms −46.7, DW Fury −61.7, Prot Warr −18.7, all REAL.** It nearly cancels
+the pooling gain: across the whole Deep Wounds pass the net is **2H Arms −3.5,
+DW Fury +0.3, Prot Warr −12.0** (−4.7 of which is Thunder Clap). The bleed had
+been paid twice over -- once by rolling nothing over, once by scaling with attack
+power -- and **the two errors were hiding each other**.
+
+**TWO CLOCKS, AND ONLY ONE RESETS.** The duration restarts at twelve seconds; the
+tick timer does not. Both are stated, by different sources, and both hold.
+
+**A TEST HAD BEEN DEFENDING THE BUG.** `talentReactions.test.ts` built its
+expectation from the weapon formula WITH attack power, with a comment saying it
+existed "so the test would catch the aura scaling by attack power twice".
 
 ### Thunder Clap's crit comes from the SPELL table, ruled 2026-10-05
 

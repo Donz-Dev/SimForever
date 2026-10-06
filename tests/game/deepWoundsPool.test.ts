@@ -137,16 +137,22 @@ describe('a re-application rolls the remainder into the new pool', () => {
     expect(aura.poolRemaining).toBeCloseTo(one * (4 / 6), 4);
 
     /*
-     * THE SECOND APPLICATION'S POOL IS EVALUATED AT ITS OWN MOMENT, which is
-     * the point of `periodic.pool` and the reason this is read live rather than
-     * reusing `one`. The rotation has been running for four seconds and has cast
-     * Battle Shout, so attack power -- and therefore the weapon's average damage
-     * -- is higher than it was at the pull. Reusing `one` here failed by exactly
-     * that difference, which is the mechanic working rather than a fault.
+     * THE SECOND APPLICATION IS THE SAME SIZE AS THE FIRST, and this assertion
+     * has been inverted once already -- which is the useful part.
+     *
+     * It read `expect(second).toBeGreaterThan(one)`, because the pool used to
+     * include attack power and the rotation casts Battle Shout inside the first
+     * four seconds. An official source then stated that Deep Wounds "doesn't
+     * scale with Attack Power", so the pool is the WEAPON's average damage
+     * alone and a mid-fight buff cannot move it.
+     *
+     * Kept as an equality rather than deleted: it is now the cheapest possible
+     * check that no attack power has crept back in, and it fails the moment it
+     * does.
      */
     const left = aura.poolRemaining;
     const second = weaponAverageDamage(player) * (PERCENT / 100);
-    expect(second).toBeGreaterThan(one);
+    expect(second).toBeCloseTo(one, 6);
 
     // The crit that re-applies it.
     sim.applyAura(dummy, deepWoundsAura(PERCENT), player.id);
@@ -173,7 +179,7 @@ describe('a re-application rolls the remainder into the new pool', () => {
 
     sim.applyAura(dummy, deepWoundsAura(PERCENT), player.id);
     sim.advanceTo(DEEP_WOUNDS_TICK_INTERVAL_MS * 2 + 1);
-    // Read live: the rotation has buffed attack power since the first one.
+    // Read live anyway, so this still holds if the pool ever becomes buffable.
     const second = weaponAverageDamage(player) * (PERCENT / 100);
     sim.applyAura(dummy, deepWoundsAura(PERCENT), player.id);
     // Long enough for the rolled pool to drain completely.
@@ -195,5 +201,38 @@ describe('a re-application rolls the remainder into the new pool', () => {
 
     const total = ticks(events, player.id).reduce((n, d) => n + d.amount, 0);
     expect(total).toBeCloseTo(one, 3);
+  });
+});
+
+describe('a refresh does NOT reset the tick timer', () => {
+  /*
+   * ----------------------------------------------------------------------------
+   * AN OFFICIAL SOURCE, and it was already true BY ACCIDENT rather than by
+   * design: `AuraCollection.refresh` cancels and reschedules the EXPIRY and
+   * never touches `tickHandle`. Nothing asserted it, so nothing would have
+   * noticed the day a refresh started rescheduling ticks -- which is exactly the
+   * kind of change somebody makes while fixing something else.
+   *
+   * TWO CLOCKS, AND ONLY ONE RESETS. The ruleset owner states the DURATION
+   * restarts at twelve seconds; the official note states the TICK TIMER does
+   * not. Both hold at once: the window is re-opened while the ticks keep their
+   * own cadence, so a refresh one second after a tick still has its next tick
+   * one second later rather than two.
+   * ----------------------------------------------------------------------------
+   */
+  it('keeps the 2000/4000/6000 cadence across a refresh at 3000', () => {
+    const { player, dummy, sim, events } = fight();
+
+    sim.applyAura(dummy, deepWoundsAura(PERCENT), player.id);
+    // One second AFTER a tick: a reset timer would move the next tick to 5000.
+    sim.advanceTo(3000);
+    sim.applyAura(dummy, deepWoundsAura(PERCENT), player.id);
+    sim.advanceTo(13_000);
+
+    const at = ticks(events, player.id).map((t) => t.timestamp);
+    expect(at).toContain(4000);
+    expect(at).not.toContain(5000);
+    // The cadence is unbroken either side of the refresh.
+    expect(at.slice(0, 6)).toEqual([2000, 4000, 6000, 8000, 10_000, 12_000]);
   });
 });

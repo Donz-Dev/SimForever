@@ -29,20 +29,29 @@ export const DEEP_WOUNDS_TICK_INTERVAL_MS = seconds(2);
 export const DEEP_WOUNDS_TICKS = DEEP_WOUNDS_DURATION_MS / DEEP_WOUNDS_TICK_INTERVAL_MS;
 
 /**
- * A weapon's AVERAGE damage, by the universal Forever formula.
+ * The WEAPON'S OWN average damage, with NO attack power in it.
  *
- *     base damage + (speed in seconds / 14) x attack power
+ * ----------------------------------------------------------------------------
+ * `WeaponProfile.baseDamage` IS ALREADY THIS -- the engine documents it as
+ * "average damage per swing before attack power" -- so this is a one-line
+ * lookup with a name on it. The name is the point: it used to ADD
+ * `powerCoefficient x attackPower` and still be called "weapon average
+ * damage", which is a SWING'S average rather than a WEAPON'S.
  *
- * Average, so the variance roll is not taken: `baseDamage` is already the
- * middle of the weapon's range and `powerCoefficient` is the speed term the
- * formula produces. This is the same quantity a swing computes, without the
- * roll — which is what "your melee weapon's average damage" means.
+ * THE ATTACK POWER TERM WAS WRONG, by an official source: "Deep Wounds
+ * compared to Vanilla now: ... doesn't scale with Attack Power." The old
+ * version read the universal weapon formula -- base + (speed / 14) x AP -- and
+ * a test asserted the AP term on purpose, with a comment saying it existed so
+ * "the test would catch the aura scaling by attack power twice". It caught the
+ * wrong thing: scaling it ONCE was already one time too many.
+ *
+ * KEPT AS A FUNCTION rather than inlined, because "the weapon's average
+ * damage" is the phrase the tooltip uses and the next bleed that quotes it
+ * should reach for this rather than re-deriving it and picking up AP again.
+ * ----------------------------------------------------------------------------
  */
 export function weaponAverageDamage(actor: Combatant, slot: WeaponSlot = 'mainHand'): number {
-  const weapon = actor.weapons[slot];
-  if (!weapon) return 0;
-  const power = (weapon.powerCoefficient ?? 0) * actor.stats.effective.attackPower;
-  return weapon.baseDamage + power;
+  return actor.weapons[slot]?.baseDamage ?? 0;
 }
 
 /**
@@ -83,6 +92,31 @@ export function weaponAverageDamage(actor: Combatant, slot: WeaponSlot = 'mainHa
  * described the right rule and the code did not implement it. It does now, for
  * the comment's own stated reason: the source keys the bleed to the strike that
  * caused it.
+ *
+ * ----------------------------------------------------------------------------
+ * AND AN OFFICIAL SOURCE THEN GAVE THREE BULLETS, "Deep Wounds compared to
+ * Vanilla now". Two were already right and the third was not:
+ *
+ *   "Rolls over its damage when refreshed."           ALREADY DONE -- the pool.
+ *   "Doesn't reset its tick timer when it is          ALREADY TRUE, and by
+ *    refreshed."                                      accident rather than
+ *                                                     design: `refresh` cancels
+ *                                                     and reschedules the EXPIRY
+ *                                                     and never touches
+ *                                                     `tickHandle`. Measured, not
+ *                                                     assumed -- a refresh at
+ *                                                     3000ms leaves the ticks on
+ *                                                     2000/4000/6000. There is a
+ *                                                     test now, because nothing
+ *                                                     held that up before.
+ *   "Doesn't scale with Attack Power."                WRONG HERE. See
+ *                                                     `weaponAverageDamage`.
+ *
+ * THE DURATION STILL RESETS, and that is not a contradiction. The ruleset owner
+ * said "the duration resets to 12 seconds" and the official note says the TICK
+ * TIMER does not reset -- two different clocks. A refresh restarts the twelve
+ * seconds while the ticks keep their own cadence, so a refresh one second after
+ * a tick still has its next tick one second later.
  * ----------------------------------------------------------------------------
  */
 export function deepWoundsAura(percentOfWeaponDamage: number): AuraDefinition {

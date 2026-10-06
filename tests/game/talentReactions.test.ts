@@ -43,19 +43,32 @@ describe('Deep Wounds', () => {
   /*
    * "dealing X% of your melee weapon's average damage over 12 sec".
    *
-   * The expected total is computed here from the universal weapon formula --
-   * base damage + (speed / 14) x attack power -- rather than read back out of
-   * the aura, so the test would catch the aura scaling by attack power twice.
+   * ----------------------------------------------------------------------------
+   * NO ATTACK POWER, AND THIS TEST USED TO INSIST ON IT.
+   *
+   * It computed the expected total from the universal weapon formula -- base
+   * damage + (speed / 14) x attack power -- with a comment saying it did so "so
+   * the test would catch the aura scaling by attack power twice". It caught the
+   * wrong thing: an official source states that Deep Wounds "doesn't scale with
+   * Attack Power", so scaling it ONCE was already one time too many.
+   *
+   * `WeaponProfile.baseDamage` is "average damage per swing before attack
+   * power", which is exactly the quantity the tooltip means by "your melee
+   * weapon's average damage".
+   * ----------------------------------------------------------------------------
    */
-  it('bleeds for the stated fraction of weapon average damage', () => {
+  it('bleeds for a fraction of the WEAPON average damage, with no attack power', () => {
     const player = warrior({ deep_wounds: 3 }); // 60%
-    const average = weaponAverageDamage(player);
     const weapon = player.weapons.mainHand!;
-    const expected =
-      (weapon.baseDamage + (weapon.powerCoefficient ?? 0) * player.stats.effective.attackPower) *
-      0.6;
-    expect(average * 0.6).toBeCloseTo(expected, 6);
-    expect(expected).toBeGreaterThan(0);
+
+    expect(weaponAverageDamage(player)).toBeCloseTo(weapon.baseDamage, 6);
+    expect(weaponAverageDamage(player) * 0.6).toBeCloseTo(weapon.baseDamage * 0.6, 6);
+    expect(weapon.baseDamage).toBeGreaterThan(0);
+
+    // The term that must NOT be in there. A non-zero coefficient and a non-zero
+    // attack power is what makes this a real check rather than a tautology.
+    expect(weapon.powerCoefficient ?? 0).toBeGreaterThan(0);
+    expect(player.stats.effective.attackPower).toBeGreaterThan(0);
   });
 
   it('lasts twelve seconds', () => {
