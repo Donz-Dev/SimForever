@@ -151,10 +151,30 @@ export const ROGUE_VENOM: readonly PriorityEntry[] = [
    * its way to five in a single cast and the threshold is cheaper to hit here
    * than anywhere.
    *
-   * HELD TO FIVE IT MEASURES WORSE, 496.6 against 505.0, because Improved
-   * Slice and Dice is +45% and a three-point cast already runs 21.75 seconds.
-   * Waiting for five buys nine more seconds of buff and costs the Rupture
-   * those points would have paid for.
+   * THE WHOLE THRESHOLD GRID WAS MEASURED AND ONLY ONE ROW OF IT MATTERS.
+   * Slice and Dice at 2, 3, 4 and 5 against Venom at 2, 3, 4 and 5, sixteen
+   * lists, 30 batches of 10 each:
+   *
+   *              Venom>=2   Venom>=3   Venom>=4   Venom>=5
+   *     SnD>=2      504.8      504.5      504.6      505.4
+   *     SnD>=3      504.2      505.2      504.8      504.0   <- shipped
+   *     SnD>=4      503.2      505.2      505.1      504.6
+   *     SnD>=5      491.4      489.4      493.1      498.4
+   *
+   * TWELVE OF THE SIXTEEN ARE ONE LIST. The top three rows span 503.2 to
+   * 505.4 -- a range of 2.2 against intervals of +/- 4 to 5 -- so nothing in
+   * them is separable, and the best cell beats the shipped one by 0.6, which
+   * is not a number this method can report. The thresholds are not a lever.
+   *
+   * THE ONE REAL EDGE IS HOLDING SLICE AND DICE TO FIVE, which costs 8 to 15
+   * depending on the Venom threshold beside it. It is a MAINTENANCE buff, so
+   * what matters is uptime and not duration: Improved Slice and Dice is +45%
+   * and a three-point cast already runs 21.75 seconds, while waiting for five
+   * leaves the 30% attack speed DOWN while the pool refills. Buying nine more
+   * seconds of a buff that is already up is worth less than not dropping it.
+   *
+   * SO THE OWNER'S ORIGINAL NUMBERS STAY. A measurement that cannot separate
+   * twelve lists is not an argument for changing any of them.
    */
   {
     abilityId: 'slice_and_dice',

@@ -312,6 +312,26 @@ higher -- inside both intervals, so not a difference this method can call.
 Venom-the-finisher absorbs points tidily and produces no damage of its own, so
 tidiness is not the thing to optimise.
 
+**THE THRESHOLDS ARE NOT A LEVER, AND THE WHOLE GRID WAS MEASURED TO SAY SO.**
+Slice and Dice at 2/3/4/5 against Venom at 2/3/4/5 -- sixteen lists, 30 batches
+of 10 each:
+
+| | Venom ≥2 | ≥3 | ≥4 | ≥5 |
+| --- | --- | --- | --- | --- |
+| **SnD ≥2** | 504.8 | 504.5 | 504.6 | 505.4 |
+| **SnD ≥3** | 504.2 | 505.2 | **504.8** *(shipped)* | 504.0 |
+| **SnD ≥4** | 503.2 | 505.2 | 505.1 | 504.6 |
+| **SnD ≥5** | 491.4 | 489.4 | 493.1 | 498.4 |
+
+**Twelve of the sixteen are one list.** The top three rows span 503.2 to 505.4,
+a range of 2.2 against intervals of ±4 to 5, and the best cell beats the shipped
+one by 0.6. **The one real edge is holding Slice and Dice to five**, which costs
+8 to 15 — it is a MAINTENANCE buff, so uptime beats duration: a three-point cast
+already runs 21.75 seconds with Improved Slice and Dice, and waiting for five
+leaves the 30% attack speed DOWN while the pool refills. **The owner's original
+numbers stay**, because a measurement that cannot separate twelve lists is not
+an argument for changing any of them.
+
 **AND IT KILLED THE EVISCERATE ENTRY, WHICH WAS ALREADY DOING NOTHING.** It fired
 0.3 times a fight for 0.9% of damage before and 0.0 times after, because its gate
 wants Slice and Dice above ten seconds AND the Venom buff above ten seconds AND
@@ -322,12 +342,23 @@ exists. **The owner's instruction for the pass was explicitly not to reach a
 higher figure by casting Eviscerate more**, and the points it would have spent
 go to Rupture instead.
 
-**A SECONDARY FINDING, UNRESOLVED: the combo point books do not balance.** The
-report reads 28.50 gained, 7.21 wasted and 25.89 spent, which is 4.6 more spent
-than was ever recorded as arriving. Something grants points without reporting
-them. It does not change any ranking above -- every variant was measured the
-same way -- but it means the gained-against-used gap the rework started from is
-understated, and it wants its own look.
+**AND THE BOOKS THAT LOOKED UNBALANCED WERE A READER BUG, NOT AN ENGINE ONE.**
+The report read 28.50 gained, 7.21 wasted and 25.89 spent, which is 4.6 more
+spent than appeared to arrive. `grantResource` emits `amount: gained` -- what the
+pool ACTUALLY TOOK -- with `wasted` beside it as a separate quantity, so the two
+do not overlap and the Results panel's `gained - wasted - spent` subtracted the
+overflow twice. It went negative and a `Math.max(0, ...)` clamped it away.
+
+Replaying one fight settles it: 31 gained, 3 wasted, 30 spent, 1 left in the
+pool, and 30 + 1 = 31. Every event's own `current` agrees with the pool at every
+step. **The identity is `gained = spent + what is left`**, and it is asserted now
+rather than recomputed -- a test that recomputed `gained - spent` would pass
+against any definition of `gained`, which is the assumption that broke.
+
+**It also means the gap this rework started from was the wrong number.** The
+gained-against-used difference is points still IN THE POOL at the end, not points
+lost; the real loss was the larger figure in the column beside it, 7.21 wasted at
+the cap, and that is what Rupture took to 2.02.
 
 ## In the book, in no list, never cast
 
