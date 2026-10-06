@@ -403,6 +403,20 @@ export function armorReduction(armor: number, targetLevel: number): number {
   return 1 - armorDamageMultiplier(armor, targetLevel);
 }
 
+/**
+ * The defender's armor as the attacker sees it, after armor penetration.
+ *
+ * Percentage POINTS off the armor, clamped at nothing and at everything. An
+ * attacker with none sees the full figure and pays one stat read, which is the
+ * overwhelmingly common case.
+ */
+export function penetratedArmor(attacker: Combatant, defender: Combatant): number {
+  const armor = defender.stats.get('armor');
+  const penetration = attacker.stats.get('armorPenetration');
+  if (penetration <= 0) return armor;
+  return armor * Math.max(0, 1 - Math.min(100, penetration) / 100);
+}
+
 /** Whether armor applies to a request, defaulting to "yes if physical". */
 export function appliesArmor(request: DamageRequest): boolean {
   return request.appliesArmor ?? isPhysical(request.school);
@@ -816,8 +830,39 @@ export function resolveDamage(
     targetAbilityMultiplier *
     target.damageTakenMultiplierFor(request.school, request.periodic === true);
 
+  /*
+   * ARMOR PENETRATION SHRINKS THE ARMOR, NOT THE REDUCTION, and the two differ
+   * by a factor of four.
+   *
+   * "Your attacks ignore 9% of your target's Armor" is 9% off the 3731 a raid
+   * boss carries, leaving 3395 -- which the curve turns into 37.11% mitigation
+   * instead of 39.33%, so the talent is worth 2.23 points. Applying the 9% to
+   * the REDUCTION instead would take mitigation to 35.79% and make it worth
+   * 3.54, over half as much again. Both readings are plausible and only one is
+   * what the tooltip says, so it goes through `armorReduction` on a reduced
+   * armor figure rather than being subtracted afterwards.
+   *
+   * ON THE ATTACKER, read from the attacker's stats although it is the
+   * defender's armor being reduced. That is where every tooltip puts it.
+   *
+   * ----------------------------------------------------------------------------
+   * THIS LINE WAS MISSING AND THE STAT WAS INERT FOR A RELEASE.
+   * `armorPenetration` was declared in `STAT_NAMES`, granted by Serrated
+   * Blades, Hack and Slash and Weaponmaster, counted as fully modelled by the
+   * census, described by a comment as "read by `resolveDamage` off the
+   * ATTACKER" -- and read by nothing, so nine points of it were worth exactly
+   * nothing.
+   *
+   * `armorPenetration.test.ts` PASSED THROUGHOUT, and that is the part worth
+   * remembering. It asserted the ARITHMETIC (`armorReduction` on an
+   * already-reduced figure) and the REGISTRATION (`talentBuild` putting the
+   * number on the stat) and never the WIRING BETWEEN THEM. Two correct halves
+   * with nothing joining them is a shape neither half's test can fail on, so
+   * the test beside those two now resolves real damage twice and compares.
+   * ----------------------------------------------------------------------------
+   */
   const reduction = appliesArmor(request)
-    ? armorReduction(target.stats.get('armor'), target.level)
+    ? armorReduction(penetratedArmor(source, target), target.level)
     : 0;
   /*
    * A BLOCK removes a flat amount, not a fraction, and it is removed after

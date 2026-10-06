@@ -10,8 +10,9 @@ import { WARLOCK_TALENT_EFFECTS } from '../../src/game/talents/warlockEffects';
 import { WARRIOR_TALENT_EFFECTS } from '../../src/game/talents/warriorEffects';
 import type { TalentEffects } from '../../src/game/talents/TalentEffect';
 import { talentBuild } from '../../src/game/talents/talentBuild';
-import { armorReduction } from '../../src/engine';
+import { armorReduction, penetratedArmor, resolveDamage } from '../../src/engine';
 import type { WeaponProfile } from '../../src/engine';
+import { makeAttacker, makeTarget } from '../helpers/actors';
 
 /*
  * ==============================================================================
@@ -82,7 +83,7 @@ describe('the armor-penetration claim has expired everywhere', () => {
     expect(matching(/ignores? a percentage of the target[' ]?s? ?armor, which/i)).toEqual([]);
   });
 
-  it('really is a stat now, and it really reaches the pipeline', () => {
+  it('is granted by both of its callers', () => {
     const mace = {
       mainHand: {
         name: 'Test mace',
@@ -95,6 +96,69 @@ describe('the armor-penetration claim has expired everywhere', () => {
     // Both callers, so neither can be quietly dropped by an edit to the other.
     expect(talentBuild('rogue', { hack_and_slash: 5 }, mace).stats.armorPenetration).toBe(15);
     expect(talentBuild('warrior', { weaponmaster: 5 }, mace).stats.armorPenetration).toBe(15);
+  });
+
+  /*
+   * ----------------------------------------------------------------------------
+   * AND THE PIPELINE ACTUALLY READS IT, which is the half this file did not
+   * test and the half that broke.
+   *
+   * The test above is the REGISTRATION -- `talentBuild` puts a number on a stat
+   * -- and the one below is the ARITHMETIC -- `armorReduction` on an
+   * already-reduced figure. Both passed for a release while `resolveDamage`
+   * read `target.stats.get('armor')` raw, so the stat was granted, reported as
+   * fully modelled by the census, described by a comment as "read by
+   * `resolveDamage` off the ATTACKER", and worth exactly nothing.
+   *
+   * TWO CORRECT HALVES WITH NOTHING JOINING THEM is a shape that has to be
+   * tested for deliberately: neither half's test can fail when the join is
+   * missing. So this resolves REAL DAMAGE through the real pipeline, twice,
+   * and compares -- the one assertion that cannot pass unless the wiring is
+   * there.
+   * ----------------------------------------------------------------------------
+   */
+  it('makes a real hit land harder, through resolveDamage', () => {
+    const target = makeTarget({ level: 63, stats: { armor: 3731 } });
+    const landed = (penetration: number) => {
+      const attacker = makeAttacker({
+        id: `pen-${penetration}`,
+        stats: { attackPower: 0, armorPenetration: penetration },
+      });
+      return resolveDamage(
+        {
+          source: attacker,
+          target,
+          abilityName: 'Probe',
+          school: 'physical',
+          baseAmount: 1000,
+        },
+        { outcome: 'hit', avoided: false, damageMultiplier: 1, rolls: [] },
+      ).amount;
+    };
+
+    const plain = landed(0);
+    const pierced = landed(9);
+
+    // 1000 through 39.33% mitigation, and through 37.11% with nine points of
+    // penetration -- both written out from the formula at the top of this file.
+    expect(plain).toBeCloseTo(1000 * (1 - 0.3933), 1);
+    expect(pierced).toBeCloseTo(1000 * (1 - 0.3711), 1);
+
+    // The assertion that was missing: penetration has to CHANGE the number.
+    expect(pierced).toBeGreaterThan(plain);
+    expect(pierced - plain).toBeCloseTo(22.3, 0);
+  });
+
+  it('is clamped at none and at everything', () => {
+    const target = makeTarget({ level: 63, stats: { armor: 3731 } });
+    const attacker = (penetration: number) =>
+      makeAttacker({ id: `c-${penetration}`, stats: { armorPenetration: penetration } });
+
+    // Nothing to ignore, and nothing left to ignore.
+    expect(penetratedArmor(attacker(0), target)).toBe(3731);
+    expect(penetratedArmor(attacker(-50), target)).toBe(3731);
+    expect(penetratedArmor(attacker(100), target)).toBe(0);
+    expect(penetratedArmor(attacker(500), target)).toBe(0);
   });
 
   /*

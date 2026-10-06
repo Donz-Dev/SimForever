@@ -1152,6 +1152,17 @@ Plus the permanent rulings under **Scope**.
   and still is; the conclusion was wrong, because a coefficient is a RULE and
   asking got one in a single message. **Check whether a missing number is missing
   DATA or a missing RULE before recording it as a gap.**
+- **TWO CORRECT HALVES WITH NOTHING JOINING THEM IS A SHAPE NO HALF'S TEST CAN
+  CATCH.** `armorPenetration` shipped declared, granted by three talents,
+  counted as fully modelled and READ BY NOTHING -- `resolveDamage` took the
+  target's raw armor. Its test file passed throughout, because it asserted the
+  ARITHMETIC (`armorReduction` on an already-reduced figure) and the
+  REGISTRATION (`talentBuild` putting the number on the stat) and never the join
+  between them. **A stat is not modelled until something READS it**, and the
+  assertion that proves it is one that resolves real damage twice and compares:
+  that one fails by 22.2 damage with the wiring removed while both halves stay
+  green. **Check the reader, not just the writer** -- `git grep` for the stat
+  name outside the file that declares it.
 - **A profile's DPS moving is not the test that a talent works.** A cost
   reduction is worth nothing to a build that never runs dry; armor is worth
   nothing on a character nothing attacks. **Assert the MECHANISM** — the resolved

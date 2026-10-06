@@ -28,6 +28,7 @@ export {
   armorReduction,
   dealDamage,
   grantGeneratedResource,
+  penetratedArmor,
   handMultiplier,
   resolveDamage,
   scaleByPower,
