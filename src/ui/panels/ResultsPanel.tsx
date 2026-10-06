@@ -332,9 +332,19 @@ function ResourceSection({
         <Stat label="Gained" value={fixed(flow.totalGained)} />
         <Stat label="Spent" value={fixed(flow.totalSpent)} />
         <Stat label="Wasted at cap" value={fixed(flow.totalWasted)} />
+        {/*
+         * GAINED IS ALREADY NET OF THE CAP, so the waste must NOT be subtracted
+         * again. This read `gained - wasted - spent`, which went negative on any
+         * build that ever capped and was clamped to zero -- a Venom Rogue showed
+         * 0 unspent where the figure is 2.61, and the clamp is what stopped the
+         * missing 4.6 being visible. See `BatchResourceFlow.totalGained`.
+         *
+         * The identity the panel now prints is `gained = spent + unspent`, with
+         * "wasted at cap" beside them as the separate quantity it is.
+         */}
         <Stat
           label="Unspent"
-          value={fixed(Math.max(0, flow.totalGained - flow.totalWasted - flow.totalSpent))}
+          value={fixed(Math.max(0, flow.totalGained - flow.totalSpent))}
         />
       </div>
 
