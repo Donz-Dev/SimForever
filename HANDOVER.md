@@ -623,11 +623,40 @@ while it worked.
 decimal -- which is what a talent change scoped to one build should look like.
 It makes Frostfire the top Mage, above Fire's 401.2 and Arcane's 392.6, and the
 build that existed for the Fire/Frost overlap now has a third reason to. The
-mean across 23 is **546.8**, RE-SUMMED FROM THE TABLE ABOVE rather than
+mean across 23 is **541.3**, RE-SUMMED FROM THE TABLE ABOVE rather than
 adjusted. It read 488.3 for a while, which was right when it was written and
 drifted as dive after dive moved a profile and left the average alone -- the same
 failure the census total keeps having, and the same fix: add the rows up. See
 [docs/handoff-apl.md](docs/handoff-apl.md).
+
+**AND THEN AN OFFICIAL SOURCE REVISED DEEP WOUNDS AGAIN, THREE BULLETS, AND TWO
+OF THEM WERE ALREADY RIGHT.** "Deep Wounds compared to Vanilla now: rolls over
+its damage when refreshed; doesn't reset its tick timer when it is refreshed;
+doesn't scale with Attack Power."
+
+| Bullet | State |
+| --- | --- |
+| rolls over its damage | **already done** -- the pool, above |
+| doesn't reset its tick timer | **already true, BY ACCIDENT.** `refresh` cancels and reschedules the EXPIRY and never touches `tickHandle`. Nothing asserted it, so nothing would have caught the day it changed; measured and pinned now |
+| **doesn't scale with Attack Power** | **wrong here.** The pool read the universal weapon formula, base + (speed / 14) x AP |
+
+**IT IS A LARGE NERF: 2H Arms -46.7, DW Fury -61.7, Prot Warr -18.7, all REAL**,
+and it nearly cancels the pooling gain. Net across the whole Deep Wounds pass,
+against the figures before any of it: 2H Arms **-3.5**, DW Fury **+0.3**, Prot
+Warr **-12.0** (of which -4.7 is Thunder Clap). So the bleed was being paid twice
+over -- once by rolling nothing over, and once by scaling with attack power --
+and the two errors had been hiding each other.
+
+**TWO CLOCKS, AND ONLY ONE RESETS.** The owner says the DURATION restarts at
+twelve seconds; the official note says the TICK TIMER does not. Both hold: the
+window re-opens while the ticks keep their cadence, so a refresh one second after
+a tick still ticks one second later.
+
+**AND A TEST HAD BEEN INSISTING ON THE BUG.** `talentReactions.test.ts` computed
+its expectation from the weapon formula WITH attack power, and its comment said
+it did so "so the test would catch the aura scaling by attack power twice". It
+caught the wrong thing: scaling it once was already one time too many. A test
+that pins the wrong rule defends it.
 
 **THUNDER CLAP TAKES ITS CRIT FROM THE SPELL TABLE**, by the ruleset owner, and
 it moved Prot Warr 480.4 to **475.7, -4.7** -- the only profile that casts it.
@@ -752,13 +781,13 @@ so. Fourteen profiles moved.
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | Seal Twist Ret | Paladin | 13/0/38 | 709.0 | | Firelock | Warlock | 5/11/35 | 544.7 |
 | Cat Druid | Druid | 9/35/7 | 703.8 | | Combat Rogue | Rogue | 18/33/0 | 524.2 |
-| DW Fury | Warrior | 18/33/0 | 729.2 | | LW Melee | Hunter | 7/13/31 | 523.8 |
-| 2H Arms | Warrior | 38/13/0 | 667.8 | | Shadow Priest | Priest | 16/3/32 | 516.4 |
+| DW Fury | Warrior | 18/33/0 | 667.5 | | LW Melee | Hunter | 7/13/31 | 523.8 |
+| 2H Arms | Warrior | 38/13/0 | 621.1 | | Shadow Priest | Priest | 16/3/32 | 516.4 |
 | Fire Mage | Mage | 10/39/2 | 624.0 | | Venom Rogue | Rogue | 37/12/2 | 494.9 |
 | Frostfire Mage | Mage | 0/29/22 | 623.2 | | Bear Druid | Druid | 9/42/0 | 488.5 |
 | BM Hunter | Hunter | 31/20/0 | 595.8 | | LW Ranged | Hunter | 7/39/5 | 482.1 |
 | Enh Shaman | Shaman | 19/32/0 | 604.0 | | Moonkin | Druid | 38/0/13 | 472.8 |
-| Shockadin | Paladin | 23/0/28 | 583.6 | | Prot Warr | Warrior | 17/0/34 | 475.7 |
+| Shockadin | Paladin | 23/0/28 | 583.6 | | Prot Warr | Warrior | 17/0/34 | 457.0 |
 | Arcane Mage | Mage | 47/4/0 | 581.8 | | Rupture Rogue | Rogue | 12/8/31 | 450.3 |
 | | | | | | Ele Shaman | Shaman | 38/13/0 | 440.2 |
 | | | | | | SM/DS | Warlock | 40/11/0 | 435.9 |

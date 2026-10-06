@@ -153,11 +153,27 @@ owner's named exception, and the reason is legible: the bleed is the PRODUCT of 
 critical strike, so critting again would pay the same roll twice. Expressed by
 having no `critFrom`, which also means the tick draws no random number.
 
-### Deep Wounds does not scale with attack power twice
+### Deep Wounds does not scale with attack power AT ALL
 
-Attack power is already inside "the weapon's average damage" by the universal
-formula. Scaling the result again would count it twice, so the tick sets
-`powerCoefficient: 0`.
+An official source: "Deep Wounds compared to Vanilla now ... doesn't scale with
+Attack Power." The pool is `WeaponProfile.baseDamage`, which the engine documents
+as "average damage per swing **before** attack power" — exactly what the
+tooltip's "your melee weapon's average damage" means. The tick also sets
+`powerCoefficient: 0`, so neither end of the pipeline adds any.
+
+**THIS ENTRY USED TO SAY "not TWICE", AND THAT WAS THE BUG.** It read: "attack
+power is already inside the weapon's average damage by the universal formula.
+Scaling the result again would count it twice." True as far as it went, and it
+licensed scaling it ONCE — which was already one time too many. A test enforced
+the same mistake, with a comment saying it existed to catch double-scaling.
+**Worth more than 46 DPS on 2H Arms and 61 on DW Fury.**
+
+### Deep Wounds' tick timer does not reset on a refresh
+
+Also official, and it was already true — by accident. `AuraCollection.refresh`
+cancels and reschedules the EXPIRY and never touches `tickHandle`, so the ticks
+keep their own cadence while the duration restarts. **Two clocks, and only one
+resets.** Nothing asserted it until the source stated it.
 
 ### Shield Slam needs a shield AND the talent — and so does Spearing Strike
 
