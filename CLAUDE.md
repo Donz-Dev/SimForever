@@ -307,6 +307,22 @@ See [docs/combat-tables.md](docs/combat-tables.md).
   deletes half an ability. `ownerCoefficients.test.ts` casts everything at ZERO
   power, where every coefficient contributes nothing and what is left is the
   flat damage.
+- **AN ABILITY'S FLAT DAMAGE IS ADDED OUTSIDE ITS WEAPON PERCENTAGE**, and this
+  is the owner's ruling after the other reading was built and withdrawn. "75%
+  weapon damage plus an additional 50" is `weapon x 0.75 + 50`, never
+  `(weapon + 50) x 0.75`. **THE EPISODE IS WORTH MORE THAN THE RULE.** The other
+  reading was applied as a derived rule across seventeen abilities with an
+  opt-out, containment-checked, measured, shipped and reverted the next day — and
+  **the whole suite passed in both directions**, because nothing pinned the
+  damage of any ability whose weapon fraction is not 1. Twelve of the seventeen
+  are 100% weapon damage, so the two formulas are the same arithmetic for all
+  twelve and only five move: Mutilate 0.75, Claw 1.10, Backstab 1.50, Shred 1.55,
+  Ambush 2.50. **"The profiles did not move" is not evidence a damage formula is
+  right when it is invisible in twelve of the seventeen places it applies.**
+  `flatOutsideWeaponFraction.test.ts` pins it now, in both directions either side
+  of 1 — and it is the INVERSE of the test that went out with the revert, because
+  **a revert is exactly when a test-shaped hole reopens**: the test that closed it
+  was written for the rule being removed.
 - **A SHEET ROW STATES ONE OF THREE THINGS**, and they are not interchangeable:
   a percentage is the ability's OWN coefficient, `weapon damage` means attack
   power arrives through the weapon at `speed / 14`, and `% per tick` is PER
