@@ -3,6 +3,7 @@ import type { AttackTableKind } from '../combat/attackTable';
 import type { Combatant } from '../actors/Combatant';
 import type { DamageSchool } from '../combat/DamageSchool';
 import type { Milliseconds } from '../time';
+import type { ResourceType } from '../resources';
 import type { StatModifierSpec } from '../stats';
 import type { SimulationContext } from '../simulation/SimulationContext';
 import type { ScheduledEvent } from '../events';
@@ -415,6 +416,28 @@ export interface AuraDefinition {
   readonly absorb?: (target: Combatant) => number;
   /** Multiplies healing the carrier does. */
   readonly healingDoneMultiplier?: number;
+  /**
+   * Multiplies the carrier's REGENERATION of a resource while this is up.
+   * 2 is "double the rate".
+   *
+   * ----------------------------------------------------------------------------
+   * THE RATE, NOT THE CADENCE, AND THE DIFFERENCE IS LOAD-BEARING HERE. Energy
+   * arrives twenty times a second at half an energy a tick; this multiplies what
+   * each tick delivers and leaves the schedule alone, so "+100% energy
+   * regeneration" is ten more energy a second rather than forty ticks a second.
+   * The project has already been bitten once by reading a rate instruction as a
+   * cadence instruction -- see `SMOOTH_TICKS_PER_SECOND` -- and that is why this
+   * says which one it is in its name.
+   *
+   * ON THE AURA RATHER THAN IN THE REGEN RULE, so the shared energy rule does
+   * not have to name a Rogue ability. `ResourceRegen.amountPerTick` has always
+   * taken `(actor, context)` and `createPet` already multiplies focus through
+   * it, which is why Adrenaline Rush's old reason -- "the engine has no
+   * multiplier on it ... needs a rate multiplier on ResourceRegen" -- was a
+   * claim about a hook that existed.
+   * ----------------------------------------------------------------------------
+   */
+  readonly resourceRegenMultiplier?: Partial<Record<ResourceType, number>>;
   readonly periodic?: PeriodicEffect;
   /**
    * The ruleset counts this aura as a BLEED.

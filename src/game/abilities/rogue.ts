@@ -2,7 +2,6 @@ import type { Ability } from '../../engine';
 import { dealDamage, seconds } from '../../engine';
 import {
   ADRENALINE_RUSH,
-  ADRENALINE_RUSH_UNMODELLED,
   BLADE_FLURRY,
   BLADE_FLURRY_UNMODELLED,
   COLD_BLOOD,
@@ -512,7 +511,6 @@ export const ADRENALINE_RUSH_ABILITY: Ability = {
   onCast: ({ simulation, caster }) => {
     simulation.applyAura(caster, ADRENALINE_RUSH, caster.id);
   },
-  unmodelled: ADRENALINE_RUSH_UNMODELLED,
 };
 
 export const BLADE_FLURRY_ABILITY: Ability = {
