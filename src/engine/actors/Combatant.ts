@@ -19,6 +19,7 @@ import { Resource, ResourceCollection } from '../resources';
 import type { Rotation } from '../rotation/Rotation';
 import type { PartialStats, StatDerivation } from '../stats';
 import { StatBlock } from '../stats';
+import type { StatSampleValues } from '../logging/statSample';
 import type { Milliseconds } from '../time';
 
 /**
@@ -711,6 +712,17 @@ export class Combatant {
    * ----------------------------------------------------------------------------
    */
   private readonly lastSwing = new Map<WeaponSlot, Milliseconds>();
+
+  /**
+   * The last stat sample emitted for this combatant, so the sampler can skip
+   * an aura edge that moved none of them.
+   *
+   * Per-fight state on a per-fight object, like the swing timers above. Combat
+   * start always emits with `force`, which re-bases it -- a test that hands the
+   * same `Combatant` to two simulations would otherwise carry the first fight's
+   * last value into the second and swallow its opening sample.
+   */
+  lastStatSample: StatSampleValues | undefined;
 
   /** Called by the engine when a swing resolves. */
   recordSwing(slot: WeaponSlot, at: Milliseconds): void {

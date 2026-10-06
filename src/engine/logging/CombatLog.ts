@@ -98,6 +98,23 @@ export function formatCombatLogLine(event: TelemetryEvent, nameOf: NameResolver)
       const killer = event.killerId ? ` (killed by ${nameOf(event.killerId)})` : '';
       return `${time}  ${nameOf(event.actorId)} dies${killer}`;
     }
+
+    /*
+     * A STAT SAMPLE IS BOOKKEEPING AND IS RENDERED ANYWAY, because this
+     * formatter is total over the union on purpose -- a new event type has to
+     * be dealt with somewhere rather than silently vanishing. It is listed as
+     * VERBOSE below, so the concise log a person reads leaves it out while a
+     * full log can still answer "what was my attack power at 42 seconds".
+     */
+    case 'stat_sample': {
+      const parts = [`attack power ${Math.round(event.attackPower)}`];
+      if (event.rangedAttackPower !== 0) {
+        parts.push(`ranged ${Math.round(event.rangedAttackPower)}`);
+      }
+      if (event.spellPower !== 0) parts.push(`spell power ${Math.round(event.spellPower)}`);
+      parts.push(`haste ${event.hasteMultiplier.toFixed(3)}`);
+      return `${time}  ${nameOf(event.actorId)} stats: ${parts.join(', ')}`;
+    }
   }
 }
 
@@ -116,6 +133,10 @@ export function formatCombatLog(
 const VERBOSE_EVENT_TYPES = new Set<TelemetryEvent['type']>([
   'resource_gained',
   'resource_spent',
+  // One per buff edge rather than one per swing, so not high-volume -- but it
+  // is a measurement of the character rather than something that HAPPENED, and
+  // a log reads as a sequence of events.
+  'stat_sample',
 ]);
 
 /** Combat log lines with the high-volume bookkeeping events left out. */

@@ -7,7 +7,7 @@ import type {
   SimulationResult,
 } from '../analysis';
 import { BatchTotals, summarize } from '../analysis';
-import type { BatchAuraUptime } from '../analysis';
+import type { BatchAuraUptime, BatchStatAverages } from '../analysis';
 import type { SimulationConfig } from '../engine';
 import { Simulation, deriveSeed, toSeconds } from '../engine';
 import { trainingDummyEncounter } from './trainingDummyEncounter';
@@ -93,6 +93,24 @@ export interface BatchResult {
    * All zero in a fight the target does not swing in, which is the default.
    */
   readonly survival: BatchSurvival;
+  /**
+   * The character's stats, averaged over the fight and weighted by TIME.
+   *
+   * ----------------------------------------------------------------------------
+   * THE CHARACTER SHEET CANNOT ANSWER THIS. It shows the character at the pull,
+   * before a single one of its own buffs has landed -- so a Rogue's sheet reads
+   * its unhasted swing speed for a build whose whole cycle is Slice and Dice,
+   * and a Warrior's omits Flurry entirely. Averaged over the fight, haste is the
+   * number that actually multiplied the swing timer.
+   *
+   * THE PLAYER'S, not every friendly actor's, which is the same choice
+   * `survival` and `resources` make. A pet has its own attack power and
+   * averaging the two together would describe nobody.
+   *
+   * `undefined` only when nothing was sampled at all.
+   * ----------------------------------------------------------------------------
+   */
+  readonly stats: BatchStatAverages | undefined;
   /**
    * Where EVERY pool the player used came from and went, one entry each.
    *
@@ -264,6 +282,7 @@ export function runBatch(config: SimulationConfig, options: BatchOptions): Batch
     abilities,
     damageTaken: totals.damageTaken(playerId),
     survival: totals.survival(playerId),
+    stats: totals.statAverages(playerId),
     resources: totals
       .resourcesFor(playerId)
       .map((resource) => totals.resourceFlow(playerId, resource)),

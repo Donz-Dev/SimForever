@@ -749,6 +749,16 @@ button:disabled {
   color: var(--accent);
 }
 
+/* A second line under a value: the DPS spread, or "fight average". Muted and
+   monospaced so it reads as a qualifier on the figure above rather than as a
+   second figure. */
+.stat-note {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
 .breakdown {
   width: 100%;
   border-collapse: collapse;

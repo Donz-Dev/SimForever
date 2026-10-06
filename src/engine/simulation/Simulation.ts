@@ -1,4 +1,5 @@
 import type { Ability } from '../abilities/Ability';
+import { sampleStats } from '../logging/statSample';
 import type { CastCheck } from '../abilities/casting';
 import { castAbility, checkCast } from '../abilities/casting';
 import type { Combatant, WeaponSlot } from '../actors/Combatant';
@@ -386,6 +387,17 @@ export class Simulation implements SimulationContext {
   end(reason: CombatEndReason): void {
     if (this.endReason !== null) return;
     this.endReason = reason;
+    /*
+     * A CLOSING SAMPLE PER ACTOR, BEFORE the end event, so the last window a
+     * stat average integrates has a length. Without it the final stretch of
+     * the fight -- which for a buff applied at the pull and never removed is
+     * the WHOLE fight -- contributes nothing and the average reads as whatever
+     * the character opened with. Forced, because by definition nothing has
+     * changed since the previous sample.
+     */
+    for (const actor of this.actors) {
+      sampleStats(this, actor, true);
+    }
     this.telemetry.emit({
       type: 'combat_end',
       timestamp: this.clock.now(),
@@ -401,6 +413,12 @@ export class Simulation implements SimulationContext {
       timestamp: 0,
       seed: this.config.seed,
     });
+
+    // The opening values, forced: the first window has to start somewhere, and
+    // this is also what re-bases the sampler's memo for a reused combatant.
+    for (const actor of this.actors) {
+      sampleStats(this, actor, true);
+    }
 
     // The end-of-fight event is what guarantees termination: actors reschedule
     // themselves indefinitely, so something has to stop the clock.

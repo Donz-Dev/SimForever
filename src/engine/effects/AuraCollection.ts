@@ -2,6 +2,7 @@ import type { Combatant } from '../actors/Combatant';
 import type { AbilityModifier } from '../combat/abilityModifiers';
 import { combineAbilityModifiers, pick, scaleByStacks } from '../combat/abilityModifiers';
 import { EventPriority, createEvent } from '../events';
+import { sampleStats } from '../logging/statSample';
 import type { SimulationContext } from '../simulation/SimulationContext';
 import { bindModifiers } from '../stats';
 import type { Milliseconds } from '../time';
@@ -238,6 +239,14 @@ export class AuraCollection {
       isDebuff: instance.isDebuff,
     });
 
+    /*
+     * AND THE STATS THIS JUST MOVED. An aura carrying no stat modifiers emits
+     * nothing here -- `sampleStats` compares against the last sample and skips
+     * -- so this costs one comparison for the many auras that are a cooldown
+     * marker or a proc window, and one event for the few that are a buff.
+     */
+    sampleStats(context, this.owner);
+
     definition.onApply?.(context, instance);
     return instance;
   }
@@ -454,6 +463,14 @@ export class AuraCollection {
       isDebuff: instance.isDebuff,
     });
 
+    /*
+     * AND THE STATS THIS JUST MOVED. An aura carrying no stat modifiers emits
+     * nothing here -- `sampleStats` compares against the last sample and skips
+     * -- so this costs one comparison for the many auras that are a cooldown
+     * marker or a proc window, and one event for the few that are a buff.
+     */
+    sampleStats(context, this.owner);
+
     return instance;
   }
 
@@ -477,6 +494,14 @@ export class AuraCollection {
       stacks: instance.stacks,
       isDebuff: instance.isDebuff,
     });
+
+    /*
+     * AND THE STATS THIS JUST MOVED. An aura carrying no stat modifiers emits
+     * nothing here -- `sampleStats` compares against the last sample and skips
+     * -- so this costs one comparison for the many auras that are a cooldown
+     * marker or a proc window, and one event for the few that are a buff.
+     */
+    sampleStats(context, this.owner);
 
     instance.definition.onExpire?.(context, instance);
   }

@@ -11,7 +11,7 @@
  * server, replaces the inside of these functions and nothing else.
  */
 export type { BatchOptions, BatchResult } from './runBatch';
-export type { BatchAuraUptime } from '../analysis';
+export type { BatchAuraUptime, BatchStatAverages } from '../analysis';
 export { runBatch, runProfileBatch, resourceFlowOf } from './runBatch';
 export { runProfile, runSimulation } from './runSimulation';
 export { FIGHT_DURATION_VARIANCE } from './trainingDummyEncounter';

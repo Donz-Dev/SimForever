@@ -18,6 +18,7 @@ export type {
   BatchDamageTaken,
   BatchResourceFlow,
   BatchResourceTotals,
+  BatchStatAverages,
   BatchSurvival,
 } from './BatchTotals';
 export { BatchTotals } from './BatchTotals';
