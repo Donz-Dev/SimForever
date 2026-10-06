@@ -150,42 +150,97 @@ export const ROGUE_VENOM: readonly PriorityEntry[] = [
    * Mutilate awards two at a time, so a Venom Rogue passes through three on
    * its way to five in a single cast and the threshold is cheaper to hit here
    * than anywhere.
+   *
+   * HELD TO FIVE IT MEASURES WORSE, 496.6 against 505.0, because Improved
+   * Slice and Dice is +45% and a three-point cast already runs 21.75 seconds.
+   * Waiting for five buys nine more seconds of buff and costs the Rupture
+   * those points would have paid for.
    */
   {
     abilityId: 'slice_and_dice',
     condition: all(selfAuraDown('slice_and_dice'), atLeastPoints(3)),
   },
   /*
-   * VENOM IS BACK IN A LIST, AND IT WAS MEASURED OUT OF ONE. Three placements
-   * were tried and every one was a loss -- 415.2 without it against 395.7,
-   * 398.0 and 400.1. None of those three was this one: at four points and
-   * gated on the buff being DOWN, so it is cast once and held rather than
-   * re-spent, which is the arrangement that makes a maintenance finisher pay.
-   * The measurement below says what this version is worth.
+   * ============================================================================
+   * RUPTURE, AND IT IS THE WHOLE OF THIS LIST'S GAIN: 488.1 to 504.8, +16.7.
+   *
+   * EVERY OTHER FIGURE IN THIS COMMENT COMES FROM ONE SWEEP and is quoted
+   * against that sweep's 505.0 for this same list, so the comparisons below are
+   * internally consistent; 504.8 is the shipped commit measured on its own. The
+   * 0.2 between them is two runs of identical code.
+   *
+   * It was in the build's ability book and in no list, which is the state the
+   * ability audit exists to find -- declared, learnable, castable, never cast.
+   * Nothing was wrong with it; there was simply nowhere for the build's combo
+   * points to go.
+   *
+   * THE POINTS WERE OVERFLOWING, which is what made it worth this much. Seal
+   * Fate is 100% at 5/5 and MUTILATE CRITS TWICE, so one double-critting cast
+   * is four points -- two of its own and two from Seal Fate. The build gains
+   * about 28.5 a fight and, before this, wasted 7.21 of them at the cap.
+   * Rupture takes 3.3 casts a fight and 7.8% of the damage, and the waste
+   * falls to 2.02.
+   *
+   * ABOVE VENOM RATHER THAN BELOW IT, worth 4.8: 505.0 against 500.2. Below,
+   * Venom takes the points first and Rupture drops to 2.2 casts.
+   *
+   * AT FOUR POINTS AND NOT FIVE, worth 3.9 over `exactly 5`. Mutilate awards
+   * two, so a pool sitting at four goes to six and wastes one -- spending at
+   * four is what stops that, and it is the same reasoning the Slice and Dice
+   * threshold above rests on.
+   *
+   * "IF NOT ACTIVE" RATHER THAN A REFRESH WINDOW, which is the standing rule
+   * here: a refresh RESETS the aura, so whatever is left is thrown away, and
+   * the faster the character acts the sooner it reaches the entry inside that
+   * window.
+   * ============================================================================
+   */
+  {
+    abilityId: 'rupture',
+    condition: all(targetAuraDown('rupture'), atLeastPoints(4)),
+  },
+  /*
+   * VENOM SURVIVES THE REORDER, at 1.9 casts rather than 2.8. It was measured
+   * out of three earlier lists and back into this one by the owner, and with
+   * Rupture above it it is still worth keeping: dropping it entirely reads
+   * 507.4 against 505.0, which is inside both intervals and therefore not a
+   * difference this method can call.
+   *
+   * SO THE OWNER'S ENTRY STAYS, because a measurement that cannot separate two
+   * lists is not an argument for deleting one of them.
    */
   {
     abilityId: 'venom',
     condition: all(selfAuraDown(VENOM_AURA_ID), atLeastPoints(4)),
   },
   /*
-   * DAMAGE ONLY WHILE BOTH MAINTENANCE BUFFS HAVE TIME LEFT. A floor rather
-   * than a window: spending five points on Eviscerate is wasted if Slice and
-   * Dice drops two seconds later and has to be rebuilt from nothing.
+   * ----------------------------------------------------------------------------
+   * EVISCERATE IS GONE FROM THIS LIST, AND IT WAS ALREADY DOING NOTHING.
+   *
+   * It fired 0.3 times a fight for 0.9% of the damage before this change and
+   * 0.0 times after it, because its gate asked for three things at once --
+   * Slice and Dice above ten seconds, the Venom buff above ten seconds, AND
+   * exactly five combo points -- and Rupture now takes the pool at four before
+   * the third can be true.
+   *
+   * REMOVED RATHER THAN LEFT DEAD, on the owner's call. An entry that cannot
+   * fire is the single most common rotation bug in this project and the one
+   * that hides best: it produces an ordinary DPS figure and an ordinary
+   * results page, because a row that is not there looks like a row that is not
+   * there. Keeping it would have cost nothing in damage and cost the "every
+   * entry fires" invariant that makes `USES=1` worth running.
+   *
+   * THE POINTS IT WOULD HAVE SPENT ARE NOT LOST. They go to Rupture, which is
+   * why this list is faster without it: the owner's instruction for this pass
+   * was explicitly NOT to reach a higher figure by casting Eviscerate more.
+   * ----------------------------------------------------------------------------
    */
-  {
-    abilityId: 'eviscerate',
-    condition: all(
-      selfAuraAtLeast('slice_and_dice', 10),
-      selfAuraAtLeast(VENOM_AURA_ID, 10),
-      exactlyPoints(MAX_COMBO_POINTS),
-    ),
-  },
   /*
    * COLD BLOOD AT ZERO POINTS, which reads backwards until the ability is
    * read: it guarantees a crit on the NEXT ability, and for this build that is
    * the Mutilate below. Cast while the pool is empty and the energy is full,
    * it costs nothing a finisher wanted and lands on the builder that is about
-   * to go out anyway.
+   * to go out anyway. Worth 5.1 -- the list reads 502.3 without it.
    */
   {
     abilityId: 'cold_blood',

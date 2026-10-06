@@ -47,6 +47,13 @@ because it names a file.
 
 ## The profiles
 
+**THE DPS COLUMN BELOW IS THE DIVE'S OWN MEASUREMENT AND HAS SINCE MOVED.** Four
+later changes reached these profiles -- armor penetration being wired up, the
+flat-inside-the-weapon-fraction rule, Seal Fate's first cast, and the Venom
+list's own rework -- on top of everything other classes merged in between. Read
+the column as what the dive was worth, not as today's baseline, and reprint the
+current figures with `npx vite-node tools/measure_profiles.ts`.
+
 | Profile | Talents | DPS | was | | List |
 | --- | --- | --- | --- | --- | --- |
 | Combat | 18/33/0 | **461.8** | 419.8 | **+42.0** | `ROGUE_COMBAT` |
@@ -280,17 +287,62 @@ duration floors from the *Venom* entry took that list from 392.7 to 413.1 on the
 pre-dive baseline, which means the whole −24.3 the Venom list measured is those
 floors, not the Venom entry (worth +17.7 there).
 
+## THE VENOM LIST'S COMBO POINTS WERE OVERFLOWING, AND RUPTURE WAS THE SINK
+
+**488.1 to 504.8, +16.7**, by casting an ability that was already in the build's
+book and in no list. The other twenty-two profiles were identical to the decimal.
+
+**SEAL FATE IS 100% AT 5/5 AND MUTILATE CRITS TWICE**, so one double-critting
+cast is FOUR combo points -- two of its own and two from Seal Fate. The build
+gained about 28.5 a fight and wasted 7.21 of them at the cap, because the only
+damage finisher it could reach was gated on three conditions at once.
+
+**MINIMISING THE WASTE IS NOT THE SAME AS MAXIMISING THE DAMAGE**, which is the
+finding worth carrying. The lowest-waste list measured is not the strongest one:
+
+| | DPS | combo points wasted |
+| --- | --- | --- |
+| before | 488.1 | 7.21 |
+| Rupture BELOW Venom | 500.2 | 2.45 |
+| **Rupture ABOVE Venom (shipped)** | **504.8** | **2.02** |
+| Rupture, no Venom entry | 507.4 | 6.11 |
+
+The last row wastes three times what the shipped one does and measures 2.6
+higher -- inside both intervals, so not a difference this method can call.
+Venom-the-finisher absorbs points tidily and produces no damage of its own, so
+tidiness is not the thing to optimise.
+
+**AND IT KILLED THE EVISCERATE ENTRY, WHICH WAS ALREADY DOING NOTHING.** It fired
+0.3 times a fight for 0.9% of damage before and 0.0 times after, because its gate
+wants Slice and Dice above ten seconds AND the Venom buff above ten seconds AND
+exactly five points -- and Rupture now takes the pool at four. Removed rather
+than left dead, on the owner's call: an entry that cannot fire produces an
+ordinary figure and an ordinary results page, which is exactly why `USES=1`
+exists. **The owner's instruction for the pass was explicitly not to reach a
+higher figure by casting Eviscerate more**, and the points it would have spent
+go to Rupture instead.
+
+**A SECONDARY FINDING, UNRESOLVED: the combo point books do not balance.** The
+report reads 28.50 gained, 7.21 wasted and 25.89 spent, which is 4.6 more spent
+than was ever recorded as arriving. Something grants points without reporting
+them. It does not change any ranking above -- every variant was measured the
+same way -- but it means the gained-against-used gap the rework started from is
+understated, and it wants its own look.
+
 ## In the book, in no list, never cast
 
-`sinister_strike`, `backstab`, `rupture`, `expose_armor`, `ambush`,
-`ghostly_strike` — varying by profile.
+`sinister_strike`, `backstab`, `expose_armor`, `ambush`, `ghostly_strike` —
+varying by profile. **`rupture` left this list** when the Venom rework put it in
+one; the Combat build still carries it uncast.
 
 - `ambush` is castable only on a Cutthroat proc, which only the Rupture build
   takes, so the other two carry an Ambush they can never use. That is the
   honest state of the ability rather than a gap.
 - `expose_armor` and `ghostly_strike` are simply not in the owner's lists.
-- **VENOM IS IN NO LIST DELIBERATELY** and it is correctly implemented: +30% to
-  poisons loses to the Eviscerate its combo points would have bought. **A
-  correctly implemented ability can be worth casting never.** One line
-  re-measures it the day a coefficient moves — and three of them moved in this
-  dive, so it is now worth re-measuring.
+- ~~**VENOM IS IN NO LIST DELIBERATELY**~~ **It is in one, and it survived a
+  second challenge.** The owner put it back; the rework then measured the list
+  without it at 507.4 against 504.8 with it, which is inside both intervals --
+  so the entry stays. **A measurement that cannot separate two lists is not an
+  argument for deleting one of them**, and that is the rule this entry now
+  rests on rather than on the older "+30% to poisons loses to Eviscerate",
+  which was true of a list where Eviscerate still fired.
