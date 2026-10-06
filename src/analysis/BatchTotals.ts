@@ -90,6 +90,28 @@ export interface BatchResourceFlow {
   readonly resource: string;
   readonly gained: readonly BatchResourceTotals[];
   readonly spent: readonly BatchResourceTotals[];
+  /**
+   * Mean per iteration that ACTUALLY LANDED IN THE POOL, net of the cap.
+   *
+   * ----------------------------------------------------------------------------
+   * NET, NOT REQUESTED, AND THAT IS THE WHOLE TRAP. `grantResource` emits
+   * `amount: gained` -- what the pool took -- and `wasted` beside it as a
+   * SEPARATE quantity for what the cap refused. The two do not overlap, so
+   * `totalGained - totalWasted` subtracts the overflow a second time.
+   *
+   * The books that balance are
+   *
+   *     totalGained = totalSpent + what is left in the pool at the end
+   *
+   * and the Results panel used to print `gained - wasted - spent` as "Unspent",
+   * which went NEGATIVE on any build that ever capped and was clamped to zero
+   * by a `Math.max(0, ...)`. A Venom Rogue read 28.50 gained, 7.21 wasted and
+   * 25.89 spent, so the panel showed 0 unspent where the honest figure is 2.61
+   * -- and the clamp is what stopped anybody noticing that the sum was 4.6
+   * short. That is the second time a resource report has hidden a negative
+   * behind a clamp; the first was energy, and the note on it is in CLAUDE.md.
+   * ----------------------------------------------------------------------------
+   */
   readonly totalGained: number;
   readonly totalSpent: number;
   /** Gained but lost to the cap. Rage capping is a real rotation failure. */
