@@ -789,38 +789,41 @@ has a commit behind it.
 
 | Profile | Class | Talents | DPS | | Profile | Class | Talents | DPS |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| Cat Druid | Druid | 9/35/7 | 737.5 | | Firelock | Warlock | 5/11/35 | 544.7 |
-| Seal Twist Ret | Paladin | 13/0/38 | 709.0 | | LW Melee | Hunter | 7/13/31 | 523.8 |
+| Seal Twist Ret | Paladin | 13/0/38 | 709.0 | | Firelock | Warlock | 5/11/35 | 544.7 |
+| Cat Druid | Druid | 9/35/7 | 703.8 | | LW Melee | Hunter | 7/13/31 | 523.8 |
 | DW Fury | Warrior | 18/33/0 | 667.5 | | Shadow Priest | Priest | 16/3/32 | 516.4 |
-| Fire Mage | Mage | 10/39/2 | 624.0 | | Venom Rogue | Rogue | 37/12/2 | 504.8 |
+| Fire Mage | Mage | 10/39/2 | 624.0 | | Venom Rogue | Rogue | 37/12/2 | 510.6 |
 | Frostfire Mage | Mage | 0/29/22 | 623.2 | | Bear Druid | Druid | 9/42/0 | 488.5 |
 | 2H Arms | Warrior | 38/13/0 | 621.1 | | LW Ranged | Hunter | 7/39/5 | 482.1 |
 | Enh Shaman | Shaman | 19/32/0 | 604.0 | | Moonkin | Druid | 38/0/13 | 472.8 |
-| BM Hunter | Hunter | 31/20/0 | 595.8 | | Rupture Rogue | Rogue | 12/8/31 | 470.7 |
+| BM Hunter | Hunter | 31/20/0 | 595.8 | | Rupture Rogue | Rogue | 12/8/31 | 455.0 |
 | Combat Rogue | Rogue | 18/33/0 | 586.3 | | Prot Warr | Warrior | 17/0/34 | 457.0 |
 | Shockadin | Paladin | 23/0/28 | 583.6 | | Ele Shaman | Shaman | 38/13/0 | 440.2 |
 | Arcane Mage | Mage | 47/4/0 | 581.8 | | SM/DS | Warlock | 40/11/0 | 435.9 |
 | | | | | | Prot Pally | Paladin | 8/36/7 | 304.9 |
 
-**CAT IS CLEAR OF THE FIELD NOW, which it was not.** 737.5 +/-6.6 against Seal
-Twist Ret's 709.0 +/-9.4 is a gap of 28.5 outside both intervals -- the first time
-in this project that the top of the table has been a measurable difference rather
-than two profiles that cannot be told apart. The note that used to be here said
-the opposite about the same two profiles at 703.8 and 709.0, and it was right on
-the day; **"the top profile keeps changing hands without anybody measuring a
-difference" has stopped being true**, and the stale row is why it looked as though
-it still was.
+**THE TOP TWO ARE INDISTINGUISHABLE AND THE TABLE SHOULD NOT BE READ AS A
+RANKING THERE.** Seal Twist Ret 709.0 +/-9.4 against Cat 703.8 +/-6.4 is a gap of
+5.2 inside both intervals -- the same thing that was true of DW Fury and Cat one
+change ago, and the reason "the top profile" keeps changing hands without anybody
+measuring a difference.
 
-**VENOM'S 504.8 IS RE-MEASURED HERE AND NOT COPIED FROM THE BRANCH IT CAME FROM.**
-It arrived as its own pull request while this one was open, and the rebase of the
-two was CLEAN -- the Venom APL and the Combat work touch different entries in the
-same file, so git had nothing to complain about. **That is exactly the shape this
-project has been caught by before**: a clean merge of two branches that each moved
-the same table leaves the table arithmetically wrong and nothing errors. Running
-all 23 again on the merged tree is what settles it, and it also confirms the two
-changes are independent -- Combat is 586.3 either way and Venom is 504.8 either
-way, so neither the energy rule nor the Eviscerate gate reaches a build with no
-Adrenaline Rush in it.
+**AND IT CHANGED HANDS AND BACK IN ONE DAY, WHICH IS THE POINT.** Cat read 737.5
+for the length of one pull request, and a note here said the gap to Seal Twist Ret
+was "28.5 outside both intervals -- the first time the top of the table has been a
+measurable difference". That was true of the formula in the tree at the time, the
+owner then corrected the formula, and Cat went back to 703.8. **A note declaring
+that an ambiguity has finally been resolved is the one most worth dating**, and it
+survived exactly one commit.
+
+**EVERY FIGURE HERE IS RE-MEASURED IN ONE RUN RATHER THAN ADJUSTED, and that has
+now earned its keep twice in two days.** Once on a clean rebase of two branches
+that had each moved this table and each written a figure the other invalidated --
+git had nothing to complain about, because they touched different entries in the
+same file. And once on the flat-damage revert, where **the three profiles that
+moved back are exactly the three that had moved**, to the decimal in both
+directions: Cat 703.8, Rupture 455.0, and Venom up rather than down because its
+Mutilate is the one fraction below 1.
 
 **WHAT THE OWNER'S LISTS WERE WORTH, against the last figures measured on this
 project's own shells:**

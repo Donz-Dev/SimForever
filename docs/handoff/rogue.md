@@ -57,21 +57,25 @@ current figures with `npx vite-node tools/measure_profiles.ts`.
 | Profile | Talents | DPS | was | | List |
 | --- | --- | --- | --- | --- | --- |
 | Combat | 18/33/0 | **586.3** | 419.8 | **+166.5** | `ROGUE_COMBAT` |
-| Venom | 37/12/2 | **504.8** | 392.7 | **+112.1** | `ROGUE_VENOM` |
-| Rupture | 12/8/31 | **470.7** | 377.1 | **+93.6** | `ROGUE_RUPTURE` |
+| Venom | 37/12/2 | **510.6** | 392.7 | **+117.9** | `ROGUE_VENOM` |
+| Rupture | 12/8/31 | **455.0** | 377.1 | **+77.9** | `ROGUE_RUPTURE` |
 
 **THIS COLUMN IS KEPT CURRENT NOW, AND IT WAS NOT.** It stood at 461.8 / 440.2 /
 409.4 — the dive's own figures, correct on the day and moved four times since by
 later work. All three are re-read from one 23-profile run, on the tree that has
 both the Venom APL and the Combat work in it.
 
-**AND RE-READING IS WHY, RATHER THAN ADJUSTING.** The two changes arrived as
-separate pull requests off the same `main`, touching different entries in the same
-file, so the rebase was CLEAN and git had nothing to flag — while both branches had
-edited this table and each wrote a Venom figure the other invalidated. **A clean
-merge can be arithmetically wrong, and a table is where it happens.** The re-run
-also confirms the two are independent: Combat is 586.3 either way and Venom 504.8
-either way.
+**AND RE-READING IS WHY, RATHER THAN ADJUSTING.** It has earned its keep twice in
+two days. Once on a clean rebase of two pull requests off the same `main` that had
+each edited this table and each written a Venom figure the other invalidated — git
+had nothing to flag, because they touched different entries in the same file. And
+once on the **flat-damage revert**, which moved Venom and Rupture again.
+
+**TWO OF THESE THREE FIGURES MOVED TWICE IN TWO DAYS AND NEITHER MOVE WAS A ROGUE
+CHANGE.** Venom went 488.1 → 504.8 on its own APL work and then → 510.6 when the
+owner corrected where an ability's flat damage sits; Rupture went → 470.7 on that
+same formula and back to 455.0. **Combat is 586.3 throughout**, because Sinister
+Strike is 100% weapon damage and the formula question cannot touch it.
 
 **THE CONTAINMENT CHECK WAS EXACT: the other twenty profiles are identical to
 the decimal.** Five of the nine talents built are Rogue-only content and four
@@ -407,6 +411,18 @@ floors, not the Venom entry (worth +17.7 there).
 
 **488.1 to 504.8, +16.7**, by casting an ability that was already in the build's
 book and in no list. The other twenty-two profiles were identical to the decimal.
+
+> **EVERY FIGURE IN THIS SECTION WAS MEASURED ON A FORMULA THAT HAS SINCE BEEN
+> REVERTED.** An ability's flat damage sat INSIDE its weapon percentage while this
+> sweep ran, which changes Mutilate — 75% weapon damage plus 50 — and therefore
+> every number below. The shipped list now measures **510.6**.
+>
+> **THE RANKINGS ARE WHAT A SWEEP BUYS, AND THEY SURVIVE.** Mutilate's COMBO POINT
+> generation is untouched by the formula, and that is what every decision here
+> turns on: the pool overflowing, Rupture absorbing it, the threshold grid being
+> flat. The absolute numbers are stale and the orderings are not. Re-running the
+> sixteen-cell grid to refresh cells that were indistinguishable from each other
+> would buy nothing — **but do not quote a cell below as a current figure.**
 
 **SEAL FATE IS 100% AT 5/5 AND MUTILATE CRITS TWICE**, so one double-critting
 cast is FOUR combo points -- two of its own and two from Seal Fate. The build
