@@ -56,6 +56,22 @@ export interface BatchAbilityTotals {
   readonly avoidRate: number;
 }
 
+/**
+ * What the character's stats averaged over the fight, time-weighted.
+ *
+ * Every one of these is a MEAN OVER THE FIGHT and not the figure on the
+ * character sheet, which is the character at the pull with none of its own
+ * buffs up. For a Rogue the two differ by Slice and Dice alone.
+ */
+export interface BatchStatAverages {
+  readonly attackPower: number;
+  readonly rangedAttackPower: number;
+  /** School-blind spell power, matching the character sheet's own row. */
+  readonly spellPower: number;
+  /** The swing-speed multiplier: 1.3 is "30% faster". */
+  readonly hasteMultiplier: number;
+}
+
 /** Where a resource came from, or went. */
 export interface BatchResourceTotals {
   readonly sourceId: string;
@@ -194,6 +210,37 @@ interface UptimeAccumulator {
   openedAt?: number;
 }
 
+/**
+ * A stat's TIME-WEIGHTED total, which is the only honest way to average one.
+ *
+ * ------------------------------------------------------------------------------
+ * NOT THE MEAN OF THE SAMPLES. Samples arrive on buff edges, so they are not
+ * evenly spaced: a trinket proc that lasts ten seconds of a sixty-second fight
+ * contributes two samples, exactly as a raid buff up the whole time does.
+ * Averaging the samples would weight the ten seconds the same as the sixty and
+ * read far too high.
+ *
+ * So each window contributes `value x milliseconds`, and the divisor is the
+ * total fight time. That makes "average attack power" mean what a reader
+ * assumes: the figure that, held for the whole fight, would have done the same.
+ * ------------------------------------------------------------------------------
+ */
+interface StatAccumulator {
+  /** value x ms, summed over every window of every finished iteration. */
+  attackPowerMs: number;
+  rangedAttackPowerMs: number;
+  spellPowerMs: number;
+  hasteMs: number;
+  /** The window currently open: what was sampled, and when. */
+  openedAt: number;
+  attackPower: number;
+  rangedAttackPower: number;
+  spellPower: number;
+  hasteMultiplier: number;
+  /** False until the first sample, so an actor that emitted none reads empty. */
+  sampled: boolean;
+}
+
 interface HealingAccumulator {
   received: number;
   overhealing: number;
@@ -236,6 +283,7 @@ export class BatchTotals implements TelemetrySink {
   private readonly resourcesSeen = new Map<string, Set<string>>();
   private readonly taken = new Map<string, Map<string, TakenAccumulator>>();
   private readonly uptime = new Map<string, Map<string, UptimeAccumulator>>();
+  private readonly stats = new Map<string, StatAccumulator>();
   private readonly deathsByActor = new Map<string, number>();
   private readonly healingByTarget = new Map<string, HealingAccumulator>();
   private iterations = 0;
@@ -262,6 +310,33 @@ export class BatchTotals implements TelemetrySink {
         entry.openedAt = undefined;
       }
     }
+
+    /*
+     * THE SAME CLOSING PROBLEM THE AURAS HAVE, and it bites harder here. A
+     * stat only emits when it CHANGES, so a character whose buffs all land in
+     * the first second emits nothing for the remaining fifty-nine -- and
+     * without this the average would be built from one second of windows.
+     *
+     * `Simulation.end` forces a closing sample, so in practice the last window
+     * is already a moment long. This is the backstop for an iteration that
+     * ended some other way, and it costs nothing when the window is empty.
+     */
+    for (const entry of this.stats.values()) {
+      if (!entry.sampled) continue;
+      this.closeStatWindow(entry, durationMs);
+      entry.openedAt = 0;
+    }
+  }
+
+  /** Add the open window's contribution and leave it open at `until`. */
+  private closeStatWindow(entry: StatAccumulator, until: number): void {
+    const span = Math.max(0, until - entry.openedAt);
+    if (span === 0) return;
+    entry.attackPowerMs += entry.attackPower * span;
+    entry.rangedAttackPowerMs += entry.rangedAttackPower * span;
+    entry.spellPowerMs += entry.spellPower * span;
+    entry.hasteMs += entry.hasteMultiplier * span;
+    entry.openedAt = until;
   }
 
   emit(event: TelemetryEvent): void {
@@ -280,6 +355,33 @@ export class BatchTotals implements TelemetrySink {
      * this answers is "how often did the encounter kill this character", and
      * a death the target caused and a death a bleed caused are both deaths.
      */
+    if (event.type === 'stat_sample') {
+      const entry = this.stats.get(event.actorId) ?? {
+        attackPowerMs: 0,
+        rangedAttackPowerMs: 0,
+        spellPowerMs: 0,
+        hasteMs: 0,
+        openedAt: event.timestamp,
+        attackPower: 0,
+        rangedAttackPower: 0,
+        spellPower: 0,
+        hasteMultiplier: 1,
+        sampled: false,
+      };
+      // Close the window the PREVIOUS sample opened, then open a new one at
+      // the values this sample carries. The first sample of a fight closes a
+      // zero-length window and is therefore free.
+      if (entry.sampled) this.closeStatWindow(entry, event.timestamp);
+      entry.openedAt = event.timestamp;
+      entry.attackPower = event.attackPower;
+      entry.rangedAttackPower = event.rangedAttackPower;
+      entry.spellPower = event.spellPower;
+      entry.hasteMultiplier = event.hasteMultiplier;
+      entry.sampled = true;
+      this.stats.set(event.actorId, entry);
+      return;
+    }
+
     if (event.type === 'death') {
       this.deathsByActor.set(event.actorId, (this.deathsByActor.get(event.actorId) ?? 0) + 1);
       return;
@@ -526,6 +628,24 @@ export class BatchTotals implements TelemetrySink {
    * over 100% would be a bug in this accounting rather than a finding -- but
    * it should not be shown as one either.
    */
+  /**
+   * The time-weighted mean of each sampled stat, over the whole batch.
+   *
+   * `undefined` when the actor emitted no samples at all, so a caller can tell
+   * "nothing was recorded" from "it averaged zero" -- which for spell power on
+   * a Warrior are genuinely different statements.
+   */
+  statAverages(actorId: string): BatchStatAverages | undefined {
+    const entry = this.stats.get(actorId);
+    if (!entry || !entry.sampled || this.totalDurationMs <= 0) return undefined;
+    return {
+      attackPower: entry.attackPowerMs / this.totalDurationMs,
+      rangedAttackPower: entry.rangedAttackPowerMs / this.totalDurationMs,
+      spellPower: entry.spellPowerMs / this.totalDurationMs,
+      hasteMultiplier: entry.hasteMs / this.totalDurationMs,
+    };
+  }
+
   auraUptime(actorId: string, kind: 'buff' | 'debuff'): readonly BatchAuraUptime[] {
     const perActor = this.uptime.get(actorId);
     if (!perActor || this.totalDurationMs <= 0) return [];

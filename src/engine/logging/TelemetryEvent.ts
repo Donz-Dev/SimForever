@@ -117,6 +117,49 @@ export interface ResourceTelemetryEvent extends TelemetryBase {
   readonly sourceName?: string;
 }
 
+/**
+ * What the character's stats WERE at one instant.
+ *
+ * ------------------------------------------------------------------------------
+ * A STAT IS A STEP FUNCTION OVER A FIGHT, so an average over one needs the
+ * steps. Attack power, spell power and haste all move when a buff lands and
+ * move back when it drops -- Slice and Dice, Flurry, Rapid Fire, a trinket proc,
+ * a raid buff -- and the character sheet shows only the value at the pull,
+ * before the character's own opener has landed.
+ *
+ * EMITTED ON CHANGE, NOT ON A TIMER, which is what makes it exact and cheap.
+ * A fixed cadence would need to be fine enough to catch a short proc and would
+ * then cost thousands of events a fight; emitting only when a sampled value
+ * actually moves costs one event per buff edge, and the analyzer integrates
+ * value x duration between them. `BatchTotals` closes the final window at the
+ * end of the iteration, exactly as it already does for aura uptime -- a buff
+ * still up when the fight ends never emits a removal.
+ *
+ * EVERY IN-FIGHT STAT CHANGE COMES FROM AN AURA. Equipment and talents are
+ * settled before the pull and `statFromStat` conversions are re-derived from
+ * primaries that only an aura moves, so sampling at every aura edge is complete
+ * rather than approximate. A future effect that moves a stat by some other
+ * route must sample too, or it will be averaged as though it never happened.
+ * ------------------------------------------------------------------------------
+ */
+export interface StatSampleEvent extends TelemetryBase {
+  readonly type: 'stat_sample';
+  readonly actorId: string;
+  readonly attackPower: number;
+  readonly rangedAttackPower: number;
+  /** School-BLIND spell power, which is what the character sheet's row shows. */
+  readonly spellPower: number;
+  /**
+   * The swing-speed multiplier, not the rating: 1.3 is "30% faster".
+   *
+   * Derived through `hasteMultiplierFrom`, the one function the swing timer
+   * divides by -- so every attack-speed effect in the game layer is in here by
+   * construction, because they are all `hasteRating` modifiers. Reporting the
+   * rating instead would be a number nobody can read.
+   */
+  readonly hasteMultiplier: number;
+}
+
 export interface DeathTelemetryEvent extends TelemetryBase {
   readonly type: 'death';
   readonly actorId: string;
@@ -131,6 +174,7 @@ export type TelemetryEvent =
   | HealTelemetryEvent
   | AuraTelemetryEvent
   | ResourceTelemetryEvent
+  | StatSampleEvent
   | DeathTelemetryEvent;
 
 export type TelemetryEventType = TelemetryEvent['type'];

@@ -1,11 +1,10 @@
 import type { BatchResult } from '../../simulator';
 import type { AttackOutcome } from '../../engine';
-import { toSeconds } from '../../engine';
 import { Panel } from '../components/Panel';
 import { DonutChart } from '../charts/DonutChart';
 import { UptimeBars } from '../charts/UptimeBars';
 import { ResourceTimeline, resourceTimeline } from '../charts/ResourceTimeline';
-import type { BatchResourceFlow } from '../../analysis/BatchTotals';
+import type { BatchResourceFlow, BatchStatAverages } from '../../analysis/BatchTotals';
 import type { TelemetryEvent } from '../../engine';
 
 interface ResultsPanelProps {
@@ -27,7 +26,6 @@ interface ResultsPanelProps {
  */
 export function ResultsPanel({ batch }: ResultsPanelProps) {
   const isBatch = batch.iterations > 1;
-  const seconds = toSeconds(batch.meanDurationMs);
 
   return (
     <Panel
@@ -51,28 +49,42 @@ export function ResultsPanel({ batch }: ResultsPanelProps) {
           .join(' · ')
       }
     >
+      {/*
+       * ----------------------------------------------------------------------
+       * FOUR NUMBERS, AND THREE OF THEM ARE AVERAGES OVER THE FIGHT.
+       *
+       * This block used to carry DPS, damage, duration and iteration count,
+       * with a distribution table of eight more below it. Damage is DPS times
+       * duration and duration is an encounter setting, so neither said
+       * anything the top line did not; the iteration count is in the subtitle;
+       * and of the eight distribution figures the only one that changes a
+       * reading is the spread, which is now on the DPS tile itself.
+       *
+       * WHAT REPLACED THEM CANNOT BE READ ANYWHERE ELSE. The character sheet
+       * shows the character AT THE PULL, before one of its own buffs has
+       * landed -- so a Rogue's sheet reads its unhasted swing speed for a build
+       * whose entire cycle is Slice and Dice, and a Warrior's omits Flurry.
+       * These are time-weighted means over the whole fight, which is the
+       * figure that actually multiplied the swing timer and scaled the damage.
+       * ----------------------------------------------------------------------
+       */}
       <div className="stat-grid">
-        <Stat label="DPS" value={fixed(batch.dps.mean)} />
-        <Stat label="Damage" value={fixed(batch.meanDamage)} />
-        <Stat label="Duration" value={`${seconds.toFixed(2)} sec`} />
-        <Stat label="Iterations" value={batch.iterations.toLocaleString()} />
+        <Stat
+          label="DPS"
+          value={fixed(batch.dps.mean)}
+          /*
+           * ONE STANDARD DEVIATION, which is the spread of SINGLE FIGHTS and
+           * not the error on the mean. The two differ by a factor of the square
+           * root of the iteration count -- at 3,000 iterations the standard
+           * error is about 2% of this -- so they answer different questions:
+           * this one is "how much does a pull vary", and `relativeError` was
+           * "how sure is this average". A reader comparing two builds wants the
+           * second and a reader asking what a pull looks like wants this.
+           */
+          note={isBatch ? `± ${fixed(batch.dps.standardDeviation)}` : undefined}
+        />
+        <StatAverages stats={batch.stats} />
       </div>
-
-      {isBatch ? (
-        <>
-          <h3>Distribution</h3>
-          <div className="stat-grid">
-            <Stat label="Mean" value={fixed(batch.dps.mean)} />
-            <Stat label="Median" value={fixed(batch.dps.median)} />
-            <Stat label="Min" value={fixed(batch.dps.min)} />
-            <Stat label="Max" value={fixed(batch.dps.max)} />
-            <Stat label="Std Dev" value={fixed(batch.dps.standardDeviation)} />
-            <Stat label="Error" value={`${(batch.dps.relativeError * 100).toFixed(2)}%`} />
-            <Stat label="5th pct" value={fixed(batch.dps.percentiles.p5)} />
-            <Stat label="95th pct" value={fixed(batch.dps.percentiles.p95)} />
-          </div>
-        </>
-      ) : null}
 
       <h3>Damage done</h3>
       {batch.abilities.length > 0 ? (
@@ -396,12 +408,73 @@ function toSlices(rows: readonly { sourceName: string; amount: number }[]) {
   return rows.map((row) => ({ label: row.sourceName, value: row.amount }));
 }
 
-function Stat({ label, value }: { readonly label: string; readonly value: string }) {
+function Stat({
+  label,
+  value,
+  note,
+}: {
+  readonly label: string;
+  readonly value: string;
+  /** A smaller line under the value: a spread, a unit, a caveat. */
+  readonly note?: string;
+}) {
   return (
     <div className="stat">
       <span className="stat-label">{label}</span>
       <span className="stat-value">{value}</span>
+      {note ? <span className="stat-note">{note}</span> : null}
     </div>
+  );
+}
+
+/*
+ * ============================================================================
+ * THE THREE AVERAGES, plus ranged attack power for the classes it means
+ * something to.
+ *
+ * SPELL POWER HIDES AT ZERO, which a melee class genuinely has: a Warrior row
+ * reading "Spell Power 0.00" is one a reader learns to skip.
+ *
+ * RANGED ATTACK POWER HIDES ON A DIFFERENT RULE, and it has to. The character
+ * sheet uses `!== 0` and its comment says that keeps the row off "nine classes
+ * out of ten" -- which is not what it does, because EVERY class has a base 50
+ * and the sheet therefore shows the row for all of them. Fifty ranged attack
+ * power on a Rogue is noise by the same argument the comment makes.
+ *
+ * So this shows it only when it EXCEEDS the melee pool, which is exactly when
+ * it is the one the character's damage scales with: 1372 against 1292 for both
+ * Hunters, 50 against 1521 for an Arms Warrior. A rule about which number
+ * matters rather than a threshold nobody supplied.
+ *
+ * HASTE IS A PERCENTAGE ABOVE BASE, not the multiplier, because every effect
+ * feeding it states itself that way -- Slice and Dice is "+30% attack speed",
+ * Flurry and Rapid Fire likewise -- and 1.30 would have to be translated back
+ * by the reader. It is the one number here that is never zero, so it is always
+ * shown: a character with no haste at all reads 0.00%, which is a fact about
+ * the build rather than an empty row.
+ * ============================================================================
+ */
+function StatAverages({ stats }: { readonly stats: BatchStatAverages | undefined }) {
+  if (!stats) return null;
+  return (
+    <>
+      <Stat label="Attack Power" value={fixed(stats.attackPower)} note="fight average" />
+      {stats.rangedAttackPower > stats.attackPower ? (
+        <Stat
+          label="Ranged Attack Power"
+          value={fixed(stats.rangedAttackPower)}
+          note="fight average"
+        />
+      ) : null}
+      {stats.spellPower !== 0 ? (
+        <Stat label="Spell Power" value={fixed(stats.spellPower)} note="fight average" />
+      ) : null}
+      <Stat
+        label="Haste"
+        value={`${((stats.hasteMultiplier - 1) * 100).toFixed(2)}%`}
+        note="fight average"
+      />
+    </>
   );
 }
 
