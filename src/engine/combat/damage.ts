@@ -69,6 +69,23 @@ export interface WeaponScaling {
    * ----------------------------------------------------------------------------
    */
   readonly normalized?: boolean;
+  /**
+   * Whether the ability's FLAT damage is inside this percentage.
+   *
+   * ----------------------------------------------------------------------------
+   * DEFAULTS TO TRUE, AND AN ABILITY OPTS OUT RATHER THAN IN. That direction is
+   * the whole safety of it: the owner's rule covers every ability of the shape
+   * "N% weapon damage plus X", so a new one that declares nothing gets the rule,
+   * and only a genuine exception has to say so. Opting IN would mean the ability
+   * that forgot was silently on the other formula -- right-looking damage from
+   * the wrong arithmetic, which is this project's commonest failure.
+   *
+   * The same shape `refundsCostOnMiss: false` has, and for the same reason.
+   *
+   * HOLY STRIKE IS THE ONLY CALLER TODAY. See the note at its declaration.
+   * ----------------------------------------------------------------------------
+   */
+  readonly flatInsideFraction?: boolean;
 }
 
 /**
@@ -355,7 +372,70 @@ export function handMultiplier(request: DamageRequest): number {
 export function scaleByPower(request: DamageRequest, weaponDamage = 0): number {
   const coefficient = request.powerCoefficient ?? 0;
 
-  let total = request.baseAmount + weaponDamage;
+  /*
+   * ============================================================================
+   * AN ABILITY'S FLAT DAMAGE IS INSIDE ITS WEAPON PERCENTAGE, NOT ADDED AFTER.
+   *
+   * The ruleset owner's reading of their own tooltips: "75% weapon damage plus
+   * an additional 50 with each weapon" is
+   *
+   *     (weapon + attackPowerTerm + 50) x 0.75
+   *
+   * and NOT `(weapon + attackPowerTerm) x 0.75 + 50`. Given for Mutilate and
+   * stated to hold for every ability of that shape -- Heroic Strike, Overpower,
+   * Mortal Strike, Cleave, Slam, Sniper Shot, Aimed Shot, Raptor Strike,
+   * Mongoose Bite, Backstab, Ambush, Sinister Strike, Mutilate, Shred, Claw,
+   * Maul and Primal Bite. (Holy Strike was named with them and withdrawn.)
+   *
+   * A RULE RATHER THAN EIGHTEEN DECLARATIONS, because an ability that forgot to
+   * opt in would be silently on the old reading -- right-looking damage from the
+   * wrong formula, which is this project's commonest failure. Multiplying the
+   * flat by the fraction here is exactly `(base + weapon) x fraction` with the
+   * fraction already applied to the weapon half by `weaponDamageFor`.
+   *
+   * TWELVE OF THE SEVENTEEN DO NOT MOVE, and that is the useful part of the
+   * rule: they are 100% weapon damage, so their fraction is 1 and the two
+   * readings are the same arithmetic. Only a fraction OTHER than 1 changes
+   * anything -- Mutilate 0.75, Claw 1.1, Backstab 1.5, Shred 1.55, Ambush 2.5 --
+   * and it cuts both ways: below 1 the ability loses, above 1 it gains.
+   *
+   * THE POWER COEFFICIENT IS DELIBERATELY LEFT OUTSIDE. `powerCoefficient` is a
+   * third term and not the ability's flat damage, and no ability declares both
+   * it and a weapon fraction today. One that did would need this decision made
+   * for it rather than inherited.
+   *
+   * ----------------------------------------------------------------------------
+   * AND A PERIODIC TICK IS EXCLUDED, WHICH THE MEASUREMENT IS WHAT FOUND.
+   *
+   * Derived from "has a weapon fraction" alone, this rule also caught LACERATE
+   * -- and Lacerate is not an ability of this shape. Its fraction is "10% weapon
+   * damage PER EXISTING APPLICATION", a per-stack rider on a bleed, not a
+   * percentage the ability's own damage is quoted in. Scaling its flat tick by
+   * 0.1 took the Bear down 2.5 DPS, which is how it was noticed: every profile
+   * the rule should not reach was EXACTLY 0.0 and that one was not.
+   *
+   * ALL SEVENTEEN NAMED ABILITIES ARE DIRECT STRIKES, so `periodic` separates
+   * the two cases exactly, with no list to keep in step. A bleed that states a
+   * weapon share states it per tick and has no "plus a flat amount" to be
+   * inside of.
+   *
+   * AND TWO MORE OPT OUT EXPLICITLY, both for the same reason and neither on
+   * the owner's list: HOLY STRIKE and SEAL OF COMMAND. What those two pass as
+   * `baseAmount` is not flat damage at all -- it is the sheet's SPELL POWER
+   * coefficient, folded in because `scaleByPower` picks one power pool from the
+   * school and a spell coefficient on a physical request would read attack
+   * power. The rule reaching them would have halved a sheet coefficient as a
+   * side effect of that folding. Seal of Command is how the containment check
+   * earns its keep twice over: with Holy Strike exempt the Ret Paladin was
+   * still moving -10.2, and every profile the rule should not reach was
+   * otherwise EXACTLY 0.0.
+   * ----------------------------------------------------------------------------
+   */
+  const scaling = request.weaponScaling;
+  const flatIsInside = !request.periodic && (scaling?.flatInsideFraction ?? true);
+  const weaponFraction = flatIsInside ? (scaling?.fraction ?? 1) : 1;
+
+  let total = request.baseAmount * weaponFraction + weaponDamage;
   if (coefficient !== 0) {
     /*
      * THE SAME POOL `weaponDamageFor` USES, through the same function, so the

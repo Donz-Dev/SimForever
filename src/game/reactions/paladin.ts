@@ -1,4 +1,4 @@
-import type { AttackEvent, Combatant, Reaction, SimulationContext } from '../../engine';
+import type { AttackEvent, Combatant, Reaction, SimulationContext, WeaponScaling } from '../../engine';
 import { dealDamage, isWeaponUse, spellPowerAgainst } from '../../engine';
 import { ppmChance } from '../items/procs';
 import {
@@ -88,11 +88,7 @@ function sealHit(
    * rather than assumed, because every other seal states a flat figure plus
    * spell power and would be wrong to read a weapon at all.
    */
-  weaponScaling?: {
-    readonly slot: 'mainHand';
-    readonly fraction: number;
-    readonly normalized: true;
-  },
+  weaponScaling?: WeaponScaling,
 ): void {
   dealDamage(context, {
     source: actor,
@@ -265,7 +261,22 @@ export function sealOfCommandProc(): Reaction {
         // The spell power half is the seal's OWN, added to the weapon half --
         // plus whatever the target's own Judgement debuff contributes.
         SEAL_OF_COMMAND_SP_COEFFICIENT * spellPowerAgainst(actor, attack.defender, HOLY),
-        { slot: 'mainHand', fraction: SEAL_OF_COMMAND_WEAPON_FRACTION, normalized: true },
+        {
+          slot: 'mainHand',
+          fraction: SEAL_OF_COMMAND_WEAPON_FRACTION,
+          normalized: true,
+          /*
+           * NOT ONE OF THE EIGHTEEN. The owner's rule puts an ability's flat
+           * damage inside its weapon percentage; a seal is not an ability of
+           * that shape, and what this passes as `baseAmount` is not flat
+           * damage at all -- it is the sheet's SPELL POWER coefficient, folded
+           * in because `scaleByPower` picks one power pool from the school.
+           * Letting the rule reach it would have halved a sheet coefficient as
+           * a side effect of that folding. Same exemption, same reason, as
+           * Holy Strike.
+           */
+          flatInsideFraction: false,
+        },
       );
     },
   };
@@ -467,7 +478,22 @@ export function echoProc(): Reaction {
           'Echo (Seal of Command)',
           // The same normalised weapon share as the seal itself. See above.
           SEAL_OF_COMMAND_SP_COEFFICIENT * spellPowerAgainst(actor, attack.defender, HOLY),
-          { slot: 'mainHand', fraction: SEAL_OF_COMMAND_WEAPON_FRACTION, normalized: true },
+          {
+          slot: 'mainHand',
+          fraction: SEAL_OF_COMMAND_WEAPON_FRACTION,
+          normalized: true,
+          /*
+           * NOT ONE OF THE EIGHTEEN. The owner's rule puts an ability's flat
+           * damage inside its weapon percentage; a seal is not an ability of
+           * that shape, and what this passes as `baseAmount` is not flat
+           * damage at all -- it is the sheet's SPELL POWER coefficient, folded
+           * in because `scaleByPower` picks one power pool from the school.
+           * Letting the rule reach it would have halved a sheet coefficient as
+           * a side effect of that folding. Same exemption, same reason, as
+           * Holy Strike.
+           */
+          flatInsideFraction: false,
+        },
         );
       }
       // Seal of the Crusader has no per-swing damage to echo: it is attack
