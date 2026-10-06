@@ -792,8 +792,8 @@ has a commit behind it.
 | Cat Druid | Druid | 9/35/7 | 737.5 | | Firelock | Warlock | 5/11/35 | 544.7 |
 | Seal Twist Ret | Paladin | 13/0/38 | 709.0 | | LW Melee | Hunter | 7/13/31 | 523.8 |
 | DW Fury | Warrior | 18/33/0 | 667.5 | | Shadow Priest | Priest | 16/3/32 | 516.4 |
-| Fire Mage | Mage | 10/39/2 | 624.0 | | Bear Druid | Druid | 9/42/0 | 488.5 |
-| Frostfire Mage | Mage | 0/29/22 | 623.2 | | Venom Rogue | Rogue | 37/12/2 | 488.1 |
+| Fire Mage | Mage | 10/39/2 | 624.0 | | Venom Rogue | Rogue | 37/12/2 | 504.8 |
+| Frostfire Mage | Mage | 0/29/22 | 623.2 | | Bear Druid | Druid | 9/42/0 | 488.5 |
 | 2H Arms | Warrior | 38/13/0 | 621.1 | | LW Ranged | Hunter | 7/39/5 | 482.1 |
 | Enh Shaman | Shaman | 19/32/0 | 604.0 | | Moonkin | Druid | 38/0/13 | 472.8 |
 | BM Hunter | Hunter | 31/20/0 | 595.8 | | Rupture Rogue | Rogue | 12/8/31 | 470.7 |
@@ -811,10 +811,16 @@ the day; **"the top profile keeps changing hands without anybody measuring a
 difference" has stopped being true**, and the stale row is why it looked as though
 it still was.
 
-**VENOM WILL MOVE AGAIN, to 504.8, when the open Venom APL pull request merges.**
-That figure is not in this table because this table is one run on `main` and the
-change is not on `main` yet -- which is the discipline that would have caught the
-four stale rows above.
+**VENOM'S 504.8 IS RE-MEASURED HERE AND NOT COPIED FROM THE BRANCH IT CAME FROM.**
+It arrived as its own pull request while this one was open, and the rebase of the
+two was CLEAN -- the Venom APL and the Combat work touch different entries in the
+same file, so git had nothing to complain about. **That is exactly the shape this
+project has been caught by before**: a clean merge of two branches that each moved
+the same table leaves the table arithmetically wrong and nothing errors. Running
+all 23 again on the merged tree is what settles it, and it also confirms the two
+changes are independent -- Combat is 586.3 either way and Venom is 504.8 either
+way, so neither the energy rule nor the Eviscerate gate reaches a build with no
+Adrenaline Rush in it.
 
 **WHAT THE OWNER'S LISTS WERE WORTH, against the last figures measured on this
 project's own shells:**

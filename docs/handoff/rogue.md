@@ -57,14 +57,21 @@ current figures with `npx vite-node tools/measure_profiles.ts`.
 | Profile | Talents | DPS | was | | List |
 | --- | --- | --- | --- | --- | --- |
 | Combat | 18/33/0 | **586.3** | 419.8 | **+166.5** | `ROGUE_COMBAT` |
-| Venom | 37/12/2 | **488.1** | 392.7 | **+95.4** | `ROGUE_VENOM` |
+| Venom | 37/12/2 | **504.8** | 392.7 | **+112.1** | `ROGUE_VENOM` |
 | Rupture | 12/8/31 | **470.7** | 377.1 | **+93.6** | `ROGUE_RUPTURE` |
 
 **THIS COLUMN IS KEPT CURRENT NOW, AND IT WAS NOT.** It stood at 461.8 / 440.2 /
 409.4 — the dive's own figures, correct on the day and moved four times since by
-later work. All three are re-read from one 23-profile run on `main` on
-2026-10-06. **Venom goes to 504.8 when the open Venom APL pull request merges**,
-which is not written in above because it is not on `main` yet.
+later work. All three are re-read from one 23-profile run, on the tree that has
+both the Venom APL and the Combat work in it.
+
+**AND RE-READING IS WHY, RATHER THAN ADJUSTING.** The two changes arrived as
+separate pull requests off the same `main`, touching different entries in the same
+file, so the rebase was CLEAN and git had nothing to flag — while both branches had
+edited this table and each wrote a Venom figure the other invalidated. **A clean
+merge can be arithmetically wrong, and a table is where it happens.** The re-run
+also confirms the two are independent: Combat is 586.3 either way and Venom 504.8
+either way.
 
 **THE CONTAINMENT CHECK WAS EXACT: the other twenty profiles are identical to
 the decimal.** Five of the nine talents built are Rogue-only content and four
