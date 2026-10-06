@@ -779,25 +779,42 @@ so. Fourteen profiles moved.
 
 | Profile | Class | Talents | DPS | | Profile | Class | Talents | DPS |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| Seal Twist Ret | Paladin | 13/0/38 | 709.0 | | Firelock | Warlock | 5/11/35 | 544.7 |
-| Cat Druid | Druid | 9/35/7 | 703.8 | | Combat Rogue | Rogue | 18/33/0 | 524.2 |
-| DW Fury | Warrior | 18/33/0 | 667.5 | | LW Melee | Hunter | 7/13/31 | 523.8 |
-| 2H Arms | Warrior | 38/13/0 | 621.1 | | Shadow Priest | Priest | 16/3/32 | 516.4 |
-| Fire Mage | Mage | 10/39/2 | 624.0 | | Venom Rogue | Rogue | 37/12/2 | 494.9 |
-| Frostfire Mage | Mage | 0/29/22 | 623.2 | | Bear Druid | Druid | 9/42/0 | 488.5 |
-| BM Hunter | Hunter | 31/20/0 | 595.8 | | LW Ranged | Hunter | 7/39/5 | 482.1 |
+**ALL 23 RE-MEASURED IN ONE RUN ON `main` ON 2026-10-06**, so these are
+comparable with each other rather than each being the figure from the dive that
+last touched it. **FOUR ROWS WERE STALE AND NOBODY HAD TOUCHED THEM** -- Cat
+703.8, Combat 524.2, Venom 494.9 and Rupture 450.3 were each correct the day they
+were written and had been moved since by a dive on another branch. A table
+assembled a row at a time goes wrong silently, because every individual figure
+has a commit behind it.
+
+| Profile | Class | Talents | DPS | | Profile | Class | Talents | DPS |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| Cat Druid | Druid | 9/35/7 | 737.5 | | Firelock | Warlock | 5/11/35 | 544.7 |
+| Seal Twist Ret | Paladin | 13/0/38 | 709.0 | | LW Melee | Hunter | 7/13/31 | 523.8 |
+| DW Fury | Warrior | 18/33/0 | 667.5 | | Shadow Priest | Priest | 16/3/32 | 516.4 |
+| Fire Mage | Mage | 10/39/2 | 624.0 | | Bear Druid | Druid | 9/42/0 | 488.5 |
+| Frostfire Mage | Mage | 0/29/22 | 623.2 | | Venom Rogue | Rogue | 37/12/2 | 488.1 |
+| 2H Arms | Warrior | 38/13/0 | 621.1 | | LW Ranged | Hunter | 7/39/5 | 482.1 |
 | Enh Shaman | Shaman | 19/32/0 | 604.0 | | Moonkin | Druid | 38/0/13 | 472.8 |
-| Shockadin | Paladin | 23/0/28 | 583.6 | | Prot Warr | Warrior | 17/0/34 | 457.0 |
-| Arcane Mage | Mage | 47/4/0 | 581.8 | | Rupture Rogue | Rogue | 12/8/31 | 450.3 |
-| | | | | | Ele Shaman | Shaman | 38/13/0 | 440.2 |
-| | | | | | SM/DS | Warlock | 40/11/0 | 435.9 |
+| BM Hunter | Hunter | 31/20/0 | 595.8 | | Rupture Rogue | Rogue | 12/8/31 | 470.7 |
+| Combat Rogue | Rogue | 18/33/0 | 586.3 | | Prot Warr | Warrior | 17/0/34 | 457.0 |
+| Shockadin | Paladin | 23/0/28 | 583.6 | | Ele Shaman | Shaman | 38/13/0 | 440.2 |
+| Arcane Mage | Mage | 47/4/0 | 581.8 | | SM/DS | Warlock | 40/11/0 | 435.9 |
 | | | | | | Prot Pally | Paladin | 8/36/7 | 304.9 |
 
-**THE TOP TWO ARE INDISTINGUISHABLE AND THE TABLE SHOULD NOT BE READ AS A
-RANKING THERE.** Seal Twist Ret 709.0 +/-9.4 against Cat 703.8 +/-6.4 is a gap of
-5.2 inside both intervals -- the same thing that was true of DW Fury and Cat one
-change ago, and the reason "the top profile" keeps changing hands without anybody
-measuring a difference.
+**CAT IS CLEAR OF THE FIELD NOW, which it was not.** 737.5 +/-6.6 against Seal
+Twist Ret's 709.0 +/-9.4 is a gap of 28.5 outside both intervals -- the first time
+in this project that the top of the table has been a measurable difference rather
+than two profiles that cannot be told apart. The note that used to be here said
+the opposite about the same two profiles at 703.8 and 709.0, and it was right on
+the day; **"the top profile keeps changing hands without anybody measuring a
+difference" has stopped being true**, and the stale row is why it looked as though
+it still was.
+
+**VENOM WILL MOVE AGAIN, to 504.8, when the open Venom APL pull request merges.**
+That figure is not in this table because this table is one run on `main` and the
+change is not on `main` yet -- which is the discipline that would have caught the
+four stale rows above.
 
 **WHAT THE OWNER'S LISTS WERE WORTH, against the last figures measured on this
 project's own shells:**

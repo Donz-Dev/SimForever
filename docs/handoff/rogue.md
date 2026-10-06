@@ -56,9 +56,15 @@ current figures with `npx vite-node tools/measure_profiles.ts`.
 
 | Profile | Talents | DPS | was | | List |
 | --- | --- | --- | --- | --- | --- |
-| Combat | 18/33/0 | **461.8** | 419.8 | **+42.0** | `ROGUE_COMBAT` |
-| Venom | 37/12/2 | **440.2** | 392.7 | **+47.5** | `ROGUE_VENOM` |
-| Rupture | 12/8/31 | **409.4** | 377.1 | **+32.3** | `ROGUE_RUPTURE` |
+| Combat | 18/33/0 | **586.3** | 419.8 | **+166.5** | `ROGUE_COMBAT` |
+| Venom | 37/12/2 | **488.1** | 392.7 | **+95.4** | `ROGUE_VENOM` |
+| Rupture | 12/8/31 | **470.7** | 377.1 | **+93.6** | `ROGUE_RUPTURE` |
+
+**THIS COLUMN IS KEPT CURRENT NOW, AND IT WAS NOT.** It stood at 461.8 / 440.2 /
+409.4 — the dive's own figures, correct on the day and moved four times since by
+later work. All three are re-read from one 23-profile run on `main` on
+2026-10-06. **Venom goes to 504.8 when the open Venom APL pull request merges**,
+which is not written in above because it is not on `main` yet.
 
 **THE CONTAINMENT CHECK WAS EXACT: the other twenty profiles are identical to
 the decimal.** Five of the nine talents built are Rogue-only content and four
@@ -177,6 +183,109 @@ other twenty-two identical to the decimal. The tool calls +4.8 noise against a
 exactly 0.0 and one at +4.8 is not how noise distributes, and the mechanism test
 proves the damage changed. The +6.9 recorded above was measured on the
 pre-merge base, where the profile ran at 377 rather than 450.
+
+## ADRENALINE RUSH WAS INERT FOR THE WHOLE PROJECT, AND WORTH +53.0
+
+**Combat 524.2 → 577.2 from one field.** The biggest single figure the Rogue has
+produced, and it was never a missing engine capability.
+
+**ITS `unmodelled` REASON WAS WRONG ABOUT THE ENGINE RATHER THAN STALE.** It read
+*"energy arrives as a fixed batch on a timer … Needs a rate multiplier on
+ResourceRegen."* `ResourceRegen.amountPerTick` has been `(actor, context) =>
+number` since it was written, and `createPet` has multiplied a pet's focus through
+that exact signature for as long as pets have existed. **The hook was there and
+nothing was pointed at it** — so this is not the "expired reason" failure mode
+below, it is a reason that was false on the day it was written.
+
+**AND THE RESULTS PAGE SHOWED IT WORKING.** The ability was cast, spent its
+cooldown, applied its aura and reported **24.9% uptime** for the whole project
+while delivering no energy at all. An inert buff with visible uptime is the
+hardest kind to notice: there is no missing row, no zero and no caveat where a
+reader is looking. **The buff-uptime table is not evidence that a buff does
+anything** — it only says the aura was present.
+
+The multiplier is data on the aura (`AuraDefinition.resourceRegenMultiplier`) and
+the rule is on the combatant (`regenMultiplierFor`), so the shared energy rule a
+Cat Druid also uses does not have to name a Rogue cooldown.
+
+**BLADE FLURRY WAS CHECKED AT THE SAME TIME AND WORKS.** Fight-average haste of
+29.63% is exactly Slice and Dice 30% × 82.1% uptime plus Blade Flurry 20% × 24.9%
+— so its haste half is live and only its second target is missing, which is the
+`positioning` ruling and not a gap. **Two cooldowns that looked equally
+suspicious, and the arithmetic separated them in one reading.**
+
+---
+
+## THE COMBAT LIST SPENT EXACTLY ONE COMBO POINT ON EVERY EVISCERATE
+
+**+10.8 from a two-point gate**, 577.7 → 588.5 at 90 batches of 10.
+
+**IT WAS ARITHMETIC AND NOT A TENDENCY.** Sinister Strike is the only builder in
+the list and awards one point; Eviscerate sat ABOVE it with no point gate, so it
+was the first castable entry the moment a point existed and the bar went
+0 → 1 → 0 forever. **Ten casts a fight, ten points.** An ungated finisher above
+the only builder does not spend "whatever is on the bar" — it spends ONE, always,
+while the list reads as though it might spend five.
+
+**SO THE GATE IS THE POINT COUNT, NOT A FLOOR.** Every cast lands at exactly the
+gate, which makes the sweep a sweep over Eviscerate's combo point cost:
+
+| points spent | DPS (90 batches of 10) |
+| --- | --- |
+| 1 (ungated) | 577.7 ± 3.4 |
+| **2** | **588.5 ± 2.9** *(shipped)* |
+| 3 | 587.2 ± 3.4 |
+| 4 | 580.6 ± 4.9 |
+| 5 | 572.2 ± 4.2 |
+
+**FIVE LOSES, AND THE REASON IS IN THE DAMAGE TABLE.**
+`EVISCERATE_BY_COMBO_POINT` is 278, 448, 618, 788, 958 — **278 for the first
+point and 170 for each one after**. Damage per combo point therefore FALLS as the
+bar fills: 278, 224, 206, 197, 192. "Hold for five" is the right rule for a
+finisher whose table runs through the origin and Eviscerate's does not. One point
+still loses because the 35 energy and the global cooldown are paid per CAST, so
+278 for a whole cast is worse than the Sinister Strike it displaced.
+
+**THIS IS WHY THE EARLIER READING SAID THE QUESTION WAS FLAT.** CLAUDE.md records
+Combat's Eviscerate going "from 1.1 casts a fight to 9.0 for +0.6 DPS" — and both
+of those lists are the two WORST points on the curve, bad in opposite directions.
+**A two-point comparison cannot see a peak**, and "it does not matter" is the
+conclusion it hands you when the two ends happen to measure the same.
+
+### Slice and Dice: the uptime fix was the Eviscerate gate
+
+**86.7% → 88.3% with the Slice and Dice entry untouched.** The ungated Eviscerate
+was draining the bar on every single point, so there was never a point banked when
+Slice and Dice needed three. **The uptime problem was not in the Slice and Dice
+entry at all**, which is where it looked like it was.
+
+**A REFRESH WINDOW WAS MEASURED AND REJECTED**, recorded so it is not re-run:
+
+| | DPS (90 batches of 10) | SnD uptime |
+| --- | --- | --- |
+| **if not active** *(the owner's, shipped)* | **588.5 ± 2.9** | 88.3% |
+| ≤ 2s remaining | 590.2 ± 2.9 | 89.3% |
+| ≤ 4s remaining | 590.0 ± 3.3 | 89.4% |
+
++1.7 against ±2.9 is not a difference this method can report, and the standing
+warning about refresh windows applies in full — **a refresh RESETS the aura**.
+With no Improved Slice and Dice in this build (it is an Assassination talent) a
+three-point cast runs 15 seconds rather than 21.75, so four seconds clipped is a
+QUARTER of the buff. The point threshold is not a lever either: two points
+measures 580.0–583.7 and five measures 583.6, both worse than the owner's three.
+
+---
+
+## A TEST WAS PINNING THE STALE LIMITATION, AND THAT IS WHY IT SURVIVED
+
+`rogueAbilities.test.ts` had a test named *"says on the results page what it
+cannot do"* asserting Adrenaline Rush was listed under "cast but not simulated",
+with a comment repeating the false claim that the engine has no multiplier. **A
+test named for what the page SAYS was quietly enforcing that the page keep saying
+something untrue**, and fixing the ability is what finally failed it. It asserts
+Blade Flurry's caveat — which is real — and that Adrenaline Rush is *absent* now.
+
+---
 
 ## Two reasons that had expired, both printed while false
 

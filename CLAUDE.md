@@ -942,6 +942,32 @@ damage per POINT and spending as they come is a claim about the whole cycle, and
 the measurement says they are the same cycle. **The uses column is what says
 whether a list changed at all; the DPS says whether it mattered.**
 
+**AND A TWO-POINT COMPARISON CANNOT SEE A PEAK, WHICH IS HOW THAT FINDING WENT
+WRONG.** Sweeping Combat's Eviscerate gate over every point count gives 577.7,
+**588.5**, 587.2, 580.6, 572.2 — and the two lists compared above are the two
+WORST cells, bad in opposite directions, with **+10.8 sitting between them**.
+"It does not matter" is the conclusion two points hand you whenever they happen
+to measure the same, so **sweep the parameter rather than comparing the two
+readings somebody already wrote down**. It is cheap: a point gate, a threshold or
+a refresh window is one number, and the whole range costs the same measurement
+each.
+
+**AN UNGATED FINISHER ABOVE THE ONLY BUILDER SPENDS ONE RESOURCE UNIT, ALWAYS.**
+Not "whatever is on the bar", which is how the Combat list read and what its own
+comment claimed: Sinister Strike awards one combo point, Eviscerate sat above it
+with no gate, so the pool went 0 → 1 → 0 for the whole fight. **The gate is
+therefore the COUNT rather than a floor** — every cast lands at exactly the gate
+— and a list whose finisher could in principle spend five is a different list from
+one that ever does. **Read the histogram, not the average**: "10 casts, 10 points"
+says this instantly and a mean of 1.0 reads like a rounding artefact.
+
+**AND "HOLD FOR THE MAXIMUM" NEEDS THE FINISHER'S TABLE TO RUN THROUGH THE
+ORIGIN.** `EVISCERATE_BY_COMBO_POINT` is 278, 448, 618, 788, 958 — 278 for the
+first point and 170 for each one after — so damage per point FALLS as the pool
+fills, 278 down to 192. The rule this project applied everywhere is a rule about
+a PROPORTIONAL table, and three of the Rogue's finishers have a flat first step.
+Check the array before reasoning about damage per point.
+
 ### Gear and items
 
 - **AN ABILITY'S WEAPON REQUIREMENT IS GATED AT THE BOOK, NOT AT THE CAST.**
@@ -1536,6 +1562,34 @@ separates "cannot afford it" from "broken" is another build firing the same
 ability** — the Shockadin casts it 0.3 times a fight on more mana.
 
 **When a fix moves nothing in the suite, that is a statement about the suite.**
+
+**AN INERT BUFF WITH VISIBLE UPTIME IS THE HARDEST KIND TO FIND, BECAUSE THE
+RESULTS PAGE SHOWS IT WORKING.** Adrenaline Rush was cast, spent its cooldown,
+applied its aura and reported **24.9% uptime** for the whole project while
+delivering no energy whatsoever — and it was worth **+53.0** to the Combat Rogue,
+the largest single figure that class has produced. There was no missing row, no
+zero and no caveat anywhere a reader would be looking. **The buff-uptime table
+says the aura was PRESENT and nothing about what it did**, so an aura applied for
+visibility — which this project does deliberately, so a talent can find it — reads
+identically to one that works. Check what the buff is supposed to MOVE: the energy
+a fight did not change when the cooldown fired, and that is the whole detection.
+
+**AND ITS REASON NAMED A HOOK THAT EXISTED.** "Needs a rate multiplier on
+ResourceRegen" — `ResourceRegen.amountPerTick` has been `(actor, context) =>
+number` since it was written and `createPet` already multiplied a pet's focus
+through that exact signature. So this is not an expired reason, it is one that was
+FALSE ON THE DAY, and the difference matters: an expired reason is found by
+re-reading reasons after a change, and a false one is only found by checking the
+claim against the code. **When a reason says the engine needs a capability, grep
+for it before believing it** — twice now the capability was there with one caller.
+
+**A TEST CAN BE WHAT KEEPS A STALE CAVEAT ALIVE.** `rogueAbilities.test.ts` had a
+test called "says on the results page what it cannot do" asserting Adrenaline Rush
+appeared under "cast but not simulated", its comment repeating the false claim
+verbatim. **A test named for what the page SAYS enforces that the page keep saying
+it**, and fixing the ability is what finally failed it. A caveat's entry on that
+list is an assertion about a LIMITATION, so it has to be deleted with the
+limitation.
 
 **A REPORT CAN BE INTERNALLY CONSISTENT AND STILL BE ABOUT THE WRONG THING.**
 `resourceFlow` took a `resource` argument and discarded it with `void resource`,

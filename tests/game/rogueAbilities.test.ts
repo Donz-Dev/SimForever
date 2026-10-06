@@ -227,13 +227,25 @@ describe('the finishers it can now afford', () => {
   });
 
   it('says on the results page what it cannot do', () => {
-    // Adrenaline Rush doubles energy regeneration and the engine has no
-    // multiplier on it; Blade Flurry's second target does not exist here.
+    /*
+     * BLADE FLURRY ONLY, AND ADRENALINE RUSH IS NO LONGER ON THAT LIST. Blade
+     * Flurry's haste half works and its second target does not exist here, so
+     * the caveat is real and stays.
+     *
+     * THIS TEST PINNED A STALE LIMITATION AND IS WHY ONE SURVIVED SO LONG. Its
+     * own comment asserted "the engine has no multiplier on it", which was
+     * false when it was written -- `ResourceRegen.amountPerTick` has always
+     * taken the actor. So a test named for what the page SAYS was quietly
+     * enforcing that the page keep saying something untrue, and fixing the
+     * ability is what finally failed it. The entry for a WORKING ability is the
+     * thing to assert; the entry for a broken one should be removed WITH the
+     * breakage.
+     */
     const named = batchOf('rogue_combat', 20, 3).castButNotSimulated.map(
       (entry) => entry.abilityName,
     );
-    expect(named).toContain('Adrenaline Rush');
     expect(named).toContain('Blade Flurry');
+    expect(named).not.toContain('Adrenaline Rush');
   });
 });
 

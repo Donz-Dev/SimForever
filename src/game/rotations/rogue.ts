@@ -23,11 +23,18 @@ import { RUPTURE_BY_COMBO_POINT, VENOM_AURA_ID } from '../auras/rogue';
  * because a finisher at one point buys a fifth of the damage for the same 35
  * energy and global cooldown.
  *
- * The Combat list does not hold for five. Its Eviscerate is gated only on
- * Slice and Dice having nine seconds left, and it went from 1.1 casts a fight
- * to 9.0 -- for +0.6 DPS, inside the interval. "Hold for five" is a claim
- * about damage per POINT and the owner's order is a claim about the whole
- * cycle, and the measurement says they are the same cycle.
+ * The Combat list does not hold for five, and it does not spend at one either.
+ * It spends at TWO, and that was found by sweeping the gate rather than by
+ * arguing about it -- 577.7 at one point, 588.5 at two, 572.2 at five.
+ *
+ * THE EARLIER READING WAS TAKEN BETWEEN THE TWO WORST POINTS ON THAT CURVE, and
+ * it is worth keeping what it said: "its Eviscerate went from 1.1 casts a fight
+ * to 9.0 -- for +0.6 DPS, inside the interval", which was read as the whole
+ * question being flat. Both of those lists were bad in opposite directions, the
+ * ungated one spending exactly one point every cast and the gated one barely
+ * firing, and the +10.8 sitting between them was invisible from either end.
+ * A TWO-POINT COMPARISON CANNOT SEE A PEAK, and "it does not matter" is the
+ * conclusion it hands you when the two points happen to measure the same.
  * ----------------------------------------------------------------------------
  */
 
@@ -275,28 +282,107 @@ export const ROGUE_VENOM: readonly PriorityEntry[] = [
  * The simplest of the three and the one least affected by what is missing:
  * Sinister Strike needs no dagger, no position and no stealth.
  */
+/**
+ * What the Combat list spends on Eviscerate, measured rather than chosen.
+ *
+ * NAMED BECAUSE IT IS A MEASURED RESULT AND NOT A TOOLTIP NUMBER, so the sweep
+ * that produced it has somewhere to live and the next reader does not take it
+ * for the owner's figure. The sweep is on the entry.
+ */
+const EVISCERATE_COMBO_POINTS_COMBAT = 2;
+
 export const ROGUE_COMBAT: readonly PriorityEntry[] = [
+  /*
+   * THE OWNER'S "IF NOT ACTIVE" STAYS, AND A REFRESH WINDOW WAS MEASURED AND
+   * REJECTED. Recorded here so it is not re-run.
+   *
+   * Slice and Dice sat at 86.7% uptime, which looks like something to fix: the
+   * entry only fires once the buff is GONE, and rebuilding three points takes
+   * three Sinister Strikes, so every expiry costs a visible gap. Refreshing at
+   * two or four seconds remaining does close most of it -- and is worth nothing
+   * measurable, both at 90 batches of 10:
+   *
+   *     if not active        588.5  +/- 2.9    88.3% uptime   <- shipped
+   *     <= 2s remaining      590.2  +/- 2.9    89.3% uptime
+   *     <= 4s remaining      590.0  +/- 3.3    89.4% uptime
+   *
+   * +1.7 against an interval of +/- 2.9 is not a difference this method can
+   * report, and the project's standing warning about refresh windows applies in
+   * full -- a refresh RESETS the aura, so whatever is left is thrown away. With
+   * no Improved Slice and Dice in this build (it is an Assassination talent) a
+   * three-point cast runs 15 seconds, not 21.75, so four seconds clipped is a
+   * QUARTER of the buff rather than a fifth.
+   *
+   * WHAT ACTUALLY RAISED THE UPTIME WAS THE EVISCERATE GATE BELOW, 86.7% to
+   * 88.3% with this entry untouched: an ungated Eviscerate was draining the bar
+   * to zero on every single point, so there was never a point banked when Slice
+   * and Dice needed three. The uptime problem was not in the Slice and Dice
+   * entry at all.
+   *
+   * THE THRESHOLD IS NOT A LEVER EITHER. Dropping it to two points measures
+   * 580.0 to 583.7 and raising it to five measures 583.6, both worse than the
+   * owner's three.
+   */
   {
     abilityId: 'slice_and_dice',
     condition: all(selfAuraDown('slice_and_dice'), atLeastPoints(3)),
   },
   /*
-   * EVISCERATE ABOVE THE TWO COOLDOWNS AND WITH NO POINT GATE, which is the
-   * owner's order and is a departure from every other list here.
+   * EVISCERATE ABOVE THE TWO COOLDOWNS, WITH THE OWNER'S NINE-SECOND FLOOR AND
+   * A TWO-POINT GATE. The gate is new; everything else is the owner's order.
    *
-   * ITS ONLY CONDITION IS SLICE AND DICE HAVING NINE SECONDS LEFT -- so it
-   * spends whatever is on the bar rather than holding for five. The ability's
-   * own `canCast` still requires at least one point, so it cannot fire empty;
-   * what it can do is spend two or three, which this project's earlier shells
-   * called wasteful. That reading is a claim about damage per point and the
-   * owner's order is a claim about the whole cycle, and only a measurement
-   * separates them. This one is theirs.
+   * ==========================================================================
+   * WITHOUT A GATE IT SPENT EXACTLY ONE POINT, EVERY SINGLE CAST. Ten casts a
+   * fight, ten points. That is not a tendency, it is arithmetic: Sinister
+   * Strike is the only builder in this list and awards one point, Eviscerate
+   * sits ABOVE it and is the first castable entry the moment a point exists, so
+   * the bar went 0 -> 1 -> 0 and could never reach two. An ungated finisher
+   * above the only builder does not "spend whatever is on the bar" -- it spends
+   * ONE, always, and the list reads as though it might spend five.
+   *
+   * SO THE GATE IS NOT A FLOOR HERE, IT IS THE POINT COUNT. Every cast lands at
+   * exactly the gate -- the same mechanism, now choosing the number -- which is
+   * what makes the sweep below a sweep over Eviscerate's combo point cost
+   * rather than over a condition.
+   *
+   *     points spent    DPS (90 batches of 10)
+   *       1 (ungated)   577.7  +/- 3.4
+   *       2             588.5  +/- 2.9   <- shipped
+   *       3             587.2  +/- 3.4
+   *       4             580.6  +/- 4.9
+   *       5             572.2  +/- 4.2
+   *
+   * TWO POINTS IS WORTH +10.8 OVER ONE, and five is worth -5.5. Two and three
+   * cannot be separated, so the lower one ships: it is the one that reaches the
+   * finisher sooner and therefore depends least on the fight not ending.
+   *
+   * THE REASON FIVE LOSES IS IN THE DAMAGE TABLE, AND IT IS THE OPPOSITE OF
+   * THIS PROJECT'S USUAL INTUITION. `EVISCERATE_BY_COMBO_POINT` is 278, 448,
+   * 618, 788, 958 -- which is 278 for the FIRST point and 170 for each one
+   * after it. So damage per combo point FALLS as the bar fills: 278 at one
+   * point, 224 at two, 206 at three, 192 at five. Holding for five buys 170
+   * more damage per extra point while the Sinister Strike that bought that
+   * point costs 45 energy and a global cooldown of its own. "Hold for five"
+   * is the right rule for a finisher whose table runs through the origin, and
+   * Eviscerate's does not.
+   *
+   * AND ONE POINT STILL LOSES, because the 35 energy and the global cooldown
+   * are paid per CAST rather than per point: 278 damage for a full cast is
+   * worse than the Sinister Strike it displaced. The peak is where those two
+   * pressures meet, which is why it is measured and not reasoned.
+   * ==========================================================================
    *
    * NINE SECONDS RATHER THAN THE VENOM LIST'S TEN, and given as two separate
    * numbers rather than one shared constant, so neither is quietly moved by an
    * edit to the other.
    */
-  { abilityId: 'eviscerate', condition: selfAuraAtLeast('slice_and_dice', 9) },
+  {
+    abilityId: 'eviscerate',
+    condition: all(
+      selfAuraAtLeast('slice_and_dice', 9),
+      atLeastPoints(EVISCERATE_COMBO_POINTS_COMBAT),
+    ),
+  },
   { abilityId: 'adrenaline_rush' },
   { abilityId: 'blade_flurry' },
   { abilityId: 'sinister_strike' },
