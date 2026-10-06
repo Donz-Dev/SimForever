@@ -74,7 +74,7 @@ containment check per talent rather than per commit.
 | `puncturing_wounds` Backstab combo point | — | — | **+12.3** |
 | `thousand_cuts` | — | — | **+9.3** |
 | `serrated_blades` +30% Rupture | — | — | **+8.3** |
-| `serrated_blades` armor penetration | — | — | **+6.9** |
+| `serrated_blades` armor penetration | — | — | **+4.8** † |
 | Hemorrhage's +15% Rupture taken | — | — | +4.5 *(noise)* |
 | `lethality` crit damage | +5.7 *(noise)* | +2.7 *(noise)* | +2.6 *(noise)* |
 
@@ -121,7 +121,7 @@ Each is a missing DECLARATION rather than a missing rule, which is what the
 
 | | For | The trap |
 | --- | --- | --- |
-| `armorPenetration` (stat) | `hack_and_slash` mace, `serrated_blades`, **and the Warrior's Weaponmaster** | A percentage of the ARMOR, not of the reduction. 9% off a boss's 3731 armor is **2.23 points** of mitigation, not 9; the other reading is four times the talent |
+| `armorPenetration` (stat) | `hack_and_slash` mace, `serrated_blades`, **and the Warrior's Weaponmaster** | A percentage of the ARMOR, not of the reduction. 9% off a boss's 3731 armor is **2.23 points** of mitigation, not 9; the other reading is four times the talent. **† It reached `main` GRANTED AND UNREAD** -- see below |
 | `dodgeParryReduction` (stat) | `weapon_expertise` | NOT `hitChance`. Hit comes off MISS, and miss, dodge and parry are three different-sized slices that move differently with the level gap |
 | `CastModifier.costReduction` | `thousand_cuts` | FLAT. A fraction is right for a 380-mana spell and wrong for a 35-energy strike |
 | `AuraDefinition.abilityDamageTaken` | Hemorrhage's Rupture clause, Mutilate's Poisoned clause | NOT a school multiplier. Rupture is physical, so +15% physical would raise every swing on the target too |
@@ -137,6 +137,39 @@ weapon clauses be three entries instead of a paragraph of apology. An unmet
 clause is REPORTED by `talentBuild` rather than silently skipped.
 
 ---
+
+## † THE STAT WAS GRANTED AND READ BY NOTHING, FOR A RELEASE
+
+**The single most useful thing in this document, because the tests passed.**
+
+`armorPenetration` landed on `main` declared in `STAT_NAMES`, granted by
+Serrated Blades, Hack and Slash and Weaponmaster, counted by the census as
+fully modelled, and described by a comment in `rogueEffects.ts` as "read by
+`resolveDamage` off the ATTACKER". `resolveDamage` read
+`target.stats.get('armor')` raw. A Rogue with nine points of penetration took
+exactly the damage reduction of a Rogue with none.
+
+**IT WAS MY OWN TEST THAT MISSED IT, AND THE NAME SAID OTHERWISE.** The test was
+called *"really is a stat now, and it really reaches the pipeline"* and never
+touched the pipeline. What the file asserted was:
+
+| | |
+| --- | --- |
+| the ARITHMETIC | `armorReduction` on an already-reduced armor figure |
+| the REGISTRATION | `talentBuild` putting the number on the stat |
+
+Both correct. Both still passing with the feature dead, because **neither half's
+test can fail when the JOIN between them is missing.** A test for two correct
+halves has to resolve real damage and compare, which is the one assertion that
+cannot pass unless the wiring exists -- and with the fix reverted it fails by
+22.2 damage while all three originals stay green.
+
+**THE FIGURE IT WAS WORTH:** the Rupture Rogue 450.3 to **455.0, +4.8**, with the
+other twenty-two identical to the decimal. The tool calls +4.8 noise against a
+±3.4 interval and the containment is what settles it -- twenty-two profiles at
+exactly 0.0 and one at +4.8 is not how noise distributes, and the mechanism test
+proves the damage changed. The +6.9 recorded above was measured on the
+pre-merge base, where the profile ran at 377 rather than 450.
 
 ## Two reasons that had expired, both printed while false
 

@@ -40,8 +40,12 @@ const POISONS_MODULE = 'game/reactions/poisons.ts';
  *                    Seal Fate needed only one new fact, not a new hook:
  *                    `Ability.comboPointsAwarded`, so a crit reaction can ask
  *                    whether the ability that critted builds points.
- *   ~~ARMOR PENETRATION~~  DONE. `armorPenetration` is a stat now, read by
- *                    `resolveDamage` off the ATTACKER, and it cleared the
+ *   ~~ARMOR PENETRATION~~  DONE, and this comment was true before it was.
+ *                    `armorPenetration` is a stat, read by `resolveDamage`
+ *                    off the ATTACKER -- but for a release it was granted
+ *                    and read by NOTHING, while this line said otherwise
+ *                    and the census counted the talents as fully modelled.
+ *                    See the note at the reduction site. It cleared the
  *                    Warrior's Weaponmaster mace clause at the same time --
  *                    which is what the old note calling it "the Warrior's
  *                    version of exactly this" was for.
