@@ -360,6 +360,25 @@ export const HOLY_STRIKE: Ability = {
        * half needs. A spell power coefficient on a physical request would be
        * read against attack power and silently scale with the wrong stat. The
        * seals resolve the same problem the same way.
+       *
+       * ----------------------------------------------------------------------
+       * AND ITS HOLY HALF STAYS OUTSIDE THE 50%, BY THE OWNER'S CORRECTION.
+       *
+       * The rule that an ability's flat damage sits inside its weapon
+       * percentage covers eighteen abilities and NOT this one -- Holy Strike
+       * was named with them by mistake and is explicitly left alone for now.
+       * So `flatInsideFraction: false` below, which is the opt-out the rule
+       * leaves for exactly this.
+       *
+       * IT IS THE ONLY ABILITY IN THE PROJECT WITH A COMPOUND `baseAmount` --
+       * flat Holy damage plus the sheet's spell power coefficient, folded
+       * together for the reason above -- so had it stayed in the rule, a
+       * question nobody asked would have been answered by that folding: the
+       * 50% would have halved the SHEET'S COEFFICIENT as a side effect of an
+       * implementation detail. Worth knowing if this is ever revisited, which
+       * is what "for now" leaves open. Inside the 50% it was worth -22.4 DPS
+       * to Seal Twist Ret, -12.7 to Shockadin and -5.7 to Prot Pally.
+       * ----------------------------------------------------------------------
        */
       baseAmount:
         HOLY_STRIKE_HOLY_DAMAGE +
@@ -368,6 +387,8 @@ export const HOLY_STRIKE: Ability = {
         slot: MAIN_HAND,
         fraction: HOLY_STRIKE_WEAPON_FRACTION,
         normalized: true,
+        // The owner's rule does not cover this ability. See the note above.
+        flatInsideFraction: false,
       },
       attackTable: ability.attackTable,
       weaponSlot: MAIN_HAND,
