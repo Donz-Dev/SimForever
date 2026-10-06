@@ -273,23 +273,33 @@ export function exposeArmorAura(comboPoints: number): AuraDefinition {
 /**
  * "Increases your Energy regeneration rate by 100% for 15 sec."
  *
- * NOT MODELLED AS A STAT, because energy regeneration is a fixed batch on a
- * timer -- twenty every two seconds -- and nothing reads a multiplier on it.
- * The aura is applied so its uptime is visible and so a talent can find it;
- * what it does is nothing, and `ADRENALINE_RUSH_UNMODELLED` says so.
+ * ----------------------------------------------------------------------------
+ * IT DOES SOMETHING NOW, AND ITS OLD REASON WAS WRONG ABOUT THE ENGINE RATHER
+ * THAN MERELY STALE. It read: "energy arrives as a fixed batch on a timer ...
+ * Needs a rate multiplier on ResourceRegen." `ResourceRegen.amountPerTick` has
+ * been `(actor, context) => number` since it was written, and `createPet` has
+ * multiplied a pet's focus through that exact signature for as long as pets
+ * have existed. The hook was there; nothing was pointed at it.
+ *
+ * SO THE ABILITY WAS CAST, SPENT ITS COOLDOWN, APPLIED ITS AURA, REPORTED 24.9%
+ * UPTIME -- and delivered no energy. An inert buff with visible uptime is the
+ * hardest kind to notice, because the results page shows it working.
+ *
+ * +100% IS THE RATE AND NOT THE CADENCE. Ten more energy a second, not forty
+ * ticks a second. The project has already read a rate instruction as a cadence
+ * one once, which doubled every energy build before the owner confirmed what
+ * was meant -- see `SMOOTH_TICKS_PER_SECOND`.
+ * ----------------------------------------------------------------------------
  */
 export const ADRENALINE_RUSH_DURATION_MS = seconds(15);
+export const ADRENALINE_RUSH_ENERGY_MULTIPLIER = 2;
 
 export const ADRENALINE_RUSH: AuraDefinition = {
   id: 'adrenaline_rush',
   name: 'Adrenaline Rush',
   durationMs: ADRENALINE_RUSH_DURATION_MS,
+  resourceRegenMultiplier: { energy: ADRENALINE_RUSH_ENERGY_MULTIPLIER },
 };
-
-export const ADRENALINE_RUSH_UNMODELLED =
-  'Doubles energy regeneration, and the engine has no multiplier on it: ' +
-  'energy arrives as a fixed batch on a timer. Cast at full cost for no ' +
-  'extra energy. Needs a rate multiplier on ResourceRegen.';
 
 /**
  * "Increases your melee attack speed by 20% and your melee attacks strike an

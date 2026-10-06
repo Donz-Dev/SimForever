@@ -778,6 +778,23 @@ export class Combatant {
   }
 
   /**
+   * How much faster this combatant regenerates one resource right now.
+   *
+   * MULTIPLIED across auras, like every other multiplier here, so two sources
+   * of "+100%" would give four times rather than three. Nothing stacks them
+   * today; the rule is stated so the second one does not have to decide.
+   */
+  regenMultiplierFor(resource: ResourceType): number {
+    let product = 1;
+    for (const aura of this.auras.activeIterable) {
+      const multiplier = aura.definition.resourceRegenMultiplier?.[resource];
+      if (multiplier === undefined) continue;
+      product *= multiplier;
+    }
+    return product;
+  }
+
+  /**
    * How much more (or less) damage of one school this combatant takes.
    *
    * Multiplied on TOP of `damageTakenMultiplier`, not instead of it: a target

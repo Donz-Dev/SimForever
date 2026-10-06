@@ -175,10 +175,19 @@ export const ENERGY_PER_SMOOTH_TICK = 0.5;
 export const ENERGY_PER_SECOND = ENERGY_PER_SMOOTH_TICK * SMOOTH_TICKS_PER_SECOND;
 export const ENERGY_TICK_INTERVAL_MS = SMOOTH_TICK_INTERVAL_MS;
 
+/*
+ * THE TICK READS THE ACTOR NOW, for Adrenaline Rush and anything like it.
+ *
+ * `amountPerTick` has always been `(actor, context) => number` -- `createPet`
+ * multiplies a pet's focus through the same signature -- so this is a rule
+ * finding its hook rather than a new capability. The multiplier itself is data
+ * on the aura, which keeps a Rogue cooldown out of a rule that a Cat Druid also
+ * uses.
+ */
 export const ENERGY_REGEN: ResourceRegen = {
   resource: 'energy',
   intervalMs: ENERGY_TICK_INTERVAL_MS,
-  amountPerTick: () => ENERGY_PER_SMOOTH_TICK,
+  amountPerTick: (actor) => ENERGY_PER_SMOOTH_TICK * actor.regenMultiplierFor('energy'),
 };
 
 /* --- Focus --- */
