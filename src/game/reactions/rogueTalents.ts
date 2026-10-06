@@ -120,8 +120,8 @@ export const sealFate = (chancePercent: number): Reaction => ({
     if (!ability?.comboPointsAwarded) return false;
     return context.rng.rollChance(chancePercent / 100);
   },
-  onTrigger: (context, actor) => {
-    context.grantResource(actor, 'comboPoints', 1, { id: 'seal_fate', name: 'Seal Fate' });
+  onTrigger: (context, actor, attack) => {
+    awardComboPoint(context, actor, attack.defender, 'seal_fate', 'Seal Fate');
   },
 });
 
