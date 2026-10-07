@@ -836,16 +836,60 @@ while it worked.
 decimal -- which is what a talent change scoped to one build should look like.
 It makes Frostfire the top Mage, above Fire's 401.2 and Arcane's 392.6, and the
 build that existed for the Fire/Frost overlap now has a third reason to. The
-mean across **24** is **580.4**, RE-SUMMED FROM THE TABLE ABOVE rather than
-adjusted. **AND RE-SUMMING IT MOVED IT 21.5 ON A CHANGE WORTH 1.7 A
-PROFILE**, which is the drift the instruction exists to catch: 558.9 was stale
-before this edit and would have stayed stale if the figure had been adjusted by
-the delta instead. It read 488.3 for a while, then 541.3 **across 23 when there
+mean across **24** is **572.7**, RE-SUMMED FROM THE TABLE ABOVE rather than
+adjusted -- **by `tools/update_baseline_table.py`, which exists now**; the
+sentence above it had promised a script for several commits and there was none,
+so the mean and the ordering were still being maintained by hand.
+**AND RE-SUMMING IT ONCE MOVED IT 21.5 ON A CHANGE WORTH 1.7 A PROFILE** -- that
+was the Shatter edit, not this one -- which is the drift the instruction exists
+to catch: 558.9 was stale at that point and would have stayed stale if the
+figure had been adjusted by the delta instead. It read 488.3 for a while, then 541.3 **across 23 when there
 were already 24** -- each figure right when it was written and drifted as dive after
 dive moved a profile and left the average alone. **The COUNT drifted too, which
 is the same failure one level up**: Hemo made it twenty-four and the sentence
 kept saying twenty-three. Add the rows up and count them.
 See [docs/handoff-apl.md](docs/handoff-apl.md).
+
+**AND THEN THE BASE PAW DAMAGE TURNED OUT TO BE 1, FOR BOTH FORMS.** Stated by
+the ruleset owner, where `BASE_BEAR_PAW_DAMAGE` and `BASE_CAT_PAW_DAMAGE` had
+been **assumed at 100 and 50** with a comment saying so. They were about a fifth
+of every paw swing -- 50 of the Cat's 245.1 and 100 of the Bear's 511.1 -- so two
+profiles were carrying a sixth to a fifth of their damage on a number nobody had
+supplied.
+
+| Profile | was | now | |
+| --- | --- | --- | --- |
+| Cat | 937.7 | **843.0** | **-94.8, -10.1% REAL** |
+| Bear | 523.1 | **433.6** | **-89.5, -17.1% REAL** |
+| the other 22 | | | **+0.0** |
+
+**THE MOONKIN IS ONE OF THE TWENTY-TWO**, which is the containment check worth
+naming: it is the third Druid profile and it is a caster, so it holds a weapon
+rather than a paw and the constant cannot reach it.
+
+**THE TWO FORMS LOST DIFFERENT SHARES FROM THE SAME ~20% CUT, AND THE REASON IS
+`weaponScaling`.** The base paw damage is a flat term inside the paw, so it
+reaches the autos and the abilities that take weapon damage and nothing else:
+
+| | paw-based share | prediction | measured |
+| --- | --- | --- | --- |
+| Bear | **85.9%** -- Maul 31.5, autos 28.0, Primal Bite 26.4 | 19.4% x 85.9% = 16.7% | **17.1%** |
+| Cat | **54.6%** -- autos 31.5, Shred 23.1 | 20.0% x 54.6% = 10.9% | **10.1%** |
+
+Rip at 35.3% and Rake at 10.1% carry their own coefficients, and Lacerate's
+14.1% is a stacking DoT -- none of the three touches the paw.
+
+**AND THE COMMENT NAMING THE PAW ABILITIES WAS WRONG, WHICH IS THE OBVIOUS PLACE
+SOMEBODY WOULD GO FOR THAT ESTIMATE.** `weapons.ts` listed "Shred, Claw, Maul,
+Primal Bite, Lacerate"; Lacerate deals no weapon damage at all. Pricing this
+change off that list would have expected the Bear to lose its Lacerate share
+too, putting the estimate at 19.4% x 100%. **Read `weaponScaling` rather than a
+prose list of which abilities use the weapon.**
+
+**THE BEAR IS NOW THE SECOND-LOWEST PROFILE IN THE PROJECT**, 433.6 against Prot
+Pally's 303.9, having been mid-table. That is what the owner's number says and
+it is not a tuning decision -- but it is a large move on a tank build and worth
+knowing about.
 
 **AND NATURALIST WAS READING A NUMBER OF SECONDS AS A PERCENTAGE.** "Reduces the
 cast time of your Healing Touch spell by 0.5 sec and increases all damage you
@@ -1297,24 +1341,33 @@ Hemo moves five rows between the two columns, which is exactly that kind of edit
 
 | Profile | Class | Talents | DPS | | Profile | Class | Talents | DPS |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| Cat Druid | Druid | 9/35/7 | 937.7 | | Arcane Mage | Mage | 47/4/0 | 576.1 |
+| **Cat Druid** | Druid | 9/35/7 | **843.0** | | Arcane Mage | Mage | 47/4/0 | 576.1 |
 | Seal Twist Ret | Paladin | 13/0/38 | 748.3 | | Firelock | Warlock | 5/11/35 | 544.7 |
-| **LW Ranged** | Hunter | 7/39/5 | **681.1** | | Hemo Rogue | Rogue | 17/3/31 | 527.1 |
-| **LW Melee** | Hunter | 7/13/31 | **672.6** | | Bear Druid | Druid | 9/42/0 | 523.1 |
-| **BM Hunter** | Hunter | 31/20/0 | **668.6** | | Shadow Priest | Priest | 16/3/32 | 516.4 |
-| DW Fury | Warrior | 18/33/0 | 667.5 | | Moonkin | Druid | 38/0/13 | 513.4 |
-| Frostfire Mage | Mage | 0/29/22 | 661.3 | | Venom Rogue | Rogue | 37/12/2 | 510.6 |
-| Enh Shaman | Shaman | 19/32/0 | 625.8 | | Rupture Rogue | Rogue | 12/8/31 | 497.6 |
-| Fire Mage | Mage | 10/39/2 | 622.0 | | Prot Warr | Warrior | 17/0/34 | 457.0 |
-| 2H Arms | Warrior | 38/13/0 | 621.1 | | SM/DS | Warlock | 40/11/0 | 441.5 |
-| Combat Rogue | Rogue | 18/33/0 | 586.3 | | Ele Shaman | Shaman | 38/13/0 | 440.2 |
+| LW Ranged | Hunter | 7/39/5 | 681.1 | | Hemo Rogue | Rogue | 17/3/31 | 527.1 |
+| LW Melee | Hunter | 7/13/31 | 672.6 | | Shadow Priest | Priest | 16/3/32 | 516.4 |
+| BM Hunter | Hunter | 31/20/0 | 668.6 | | Moonkin | Druid | 38/0/13 | 513.4 |
+| DW Fury | Warrior | 18/33/0 | 667.5 | | Venom Rogue | Rogue | 37/12/2 | 510.6 |
+| Frostfire Mage | Mage | 0/29/22 | 661.3 | | Rupture Rogue | Rogue | 12/8/31 | 497.6 |
+| Enh Shaman | Shaman | 19/32/0 | 625.8 | | Prot Warr | Warrior | 17/0/34 | 457.0 |
+| Fire Mage | Mage | 10/39/2 | 622.0 | | SM/DS | Warlock | 40/11/0 | 441.5 |
+| 2H Arms | Warrior | 38/13/0 | 621.1 | | Ele Shaman | Shaman | 38/13/0 | 440.2 |
+| Combat Rogue | Rogue | 18/33/0 | 586.3 | | **Bear Druid** | Druid | 9/42/0 | **433.6** |
 | Shockadin | Paladin | 23/0/28 | 585.5 | | Prot Pally | Paladin | 8/36/7 | 303.9 |
 
-**THE TOP TWO ARE INDISTINGUISHABLE AND THE TABLE SHOULD NOT BE READ AS A
-RANKING THERE.** Seal Twist Ret 709.0 +/-9.4 against Cat 703.8 +/-6.4 is a gap of
-5.2 inside both intervals -- the same thing that was true of DW Fury and Cat one
-change ago, and the reason "the top profile" keeps changing hands without anybody
-measuring a difference.
+**THE TOP TWO ARE CLEARLY APART AGAIN, AND THEY HAVE NOT ALWAYS BEEN.** Cat
+**843.0 +/-6.5** against Seal Twist Ret **748.3 +/-9.6** is a gap of 94.7, far
+outside both intervals, even after the paw base cost the Cat 94.8.
+
+**THE PARAGRAPH HERE SAID THE OPPOSITE AND HAD BEEN STALE FOR SEVERAL
+COMMITS** -- "Seal Twist Ret 709.0 +/-9.4 against Cat 703.8 +/-6.4 is a gap of
+5.2 inside both intervals" -- while the table above it read 937.7 and 748.3. Both
+figures had been moved by dives on other branches and the prose was never
+re-read. **A CAVEAT ABOUT TWO NUMBERS GOES STALE WHEN EITHER MOVES**, and it is
+worse than a stale number because it tells a reader not to trust a ranking that
+is now real. The underlying warning is still worth keeping, which is why it is
+rewritten rather than deleted: the top of this table HAS changed hands twice
+without anybody measuring a difference, so check the intervals before calling
+anything the best profile.
 
 **AND IT CHANGED HANDS AND BACK IN ONE DAY, WHICH IS THE POINT.** Cat read 737.5
 for the length of one pull request, and a note here said the gap to Seal Twist Ret

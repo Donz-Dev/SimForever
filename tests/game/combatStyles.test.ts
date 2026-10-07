@@ -196,8 +196,17 @@ describe('weapon slots on the built combatant', () => {
   it('uses the stated paw damage values', () => {
     expect(build('druid', 'bear').weapons.mainHand?.baseDamage).toBe(BASE_BEAR_PAW_DAMAGE);
     expect(build('druid', 'cat').weapons.mainHand?.baseDamage).toBe(BASE_CAT_PAW_DAMAGE);
-    expect(BASE_BEAR_PAW_DAMAGE).toBe(100);
-    expect(BASE_CAT_PAW_DAMAGE).toBe(50);
+    /*
+     * ONE FOR BOTH FORMS, STATED BY THE RULESET OWNER, where these were
+     * assumed at 100 and 50. Written out by hand rather than read from the
+     * source, which is the whole point of this assertion: the constants were an
+     * assumption carrying about a fifth of two profiles' damage, and the number
+     * that replaced it is small enough that a reader will want to check it was
+     * meant. It was -- the paw is the held weapon's dps and the Druid's attack
+     * power, and the form supplies the cadence rather than damage of its own.
+     */
+    expect(BASE_BEAR_PAW_DAMAGE).toBe(1);
+    expect(BASE_CAT_PAW_DAMAGE).toBe(1);
   });
 
   it('never schedules a slot with no weapon in it', () => {
