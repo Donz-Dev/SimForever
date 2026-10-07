@@ -1447,6 +1447,17 @@ and a gap can be told apart mechanically. `tests/game/outOfScope.test.ts`
 enforces it, and a new class writing "nothing here moves" without the ruling
 fails.
 
+**AND THE HUNTER HAS NO UNRATIFIED READING LEFT.** Improved Tracking was the
+last one: "while tracking <seven creature types>, all damage you deal to the
+tracked creature type is increased" has always been applied as a flat bonus,
+with an `unmodelled` entry saying so -- the flat reading ASSUMED the Hunter was
+tracking what it was fighting. The owner ratified it on 2026-10-07 ("improved
+tracking is correct, applied as a flat 5% damage bonus"), so the assumption is
+a ruling and the caveat is gone. **No profile moves by a decimal**;
+`conditionalDamage` has applied the rank's percentage since the talent was
+written. What moves is the census, because **a caveat is the whole difference
+between PARTLY and FULLY** -- Hunter 28 fully to 29, partly 5 to 4.
+
 | Class | Talents | Fully | Partly | Ruled out | Live gap |
 | --- | --- | --- | --- | --- | --- |
 | Warrior | 53 | 43 | 4 | 6 | **0** |
@@ -1454,11 +1465,11 @@ fails.
 | Druid | 51 | 29 | 6 | 14 | **2** |
 | Rogue | 53 | 32 | 6 | 12 | **3** |
 | Shaman | 50 | 22 | 4 | 18 | **6** |
-| Hunter | 50 | 28 | 5 | 9 | **8** |
+| Hunter | 50 | 29 | 4 | 9 | **8** |
 | Mage | 54 | 30 | 2 | 12 | **10** |
 | Priest | 53 | 20 | 2 | 19 | **12** |
 | Warlock | 52 | 24 | 3 | 5 | **20** |
-| **Total** | **468** | **261** | **39** | **106** | **62** |
+| **Total** | **468** | **262** | **38** | **106** | **62** |
 
 **THE WARRIOR LEFT THE GAP COLUMN ENTIRELY**, and its last entry is worth
 reading because of the shape rather than the size. Improved Berserker Rage's

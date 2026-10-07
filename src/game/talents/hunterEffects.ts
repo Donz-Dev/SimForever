@@ -301,20 +301,28 @@ export const HUNTER_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
 
   improved_tracking: [
     /*
-     * "While tracking Beasts, Demons, ... all damage you deal to the tracked
-     * creature type is increased." A Hunter tracks what it is fighting, so for
-     * a single-target fight this is simply a damage bonus -- stated, because
-     * the reading is an assumption about the player rather than about the
-     * engine.
+     * "While tracking Beasts, Demons, Dragonkin, Elementals, Giants, Humanoids,
+     * or Undead, all damage you deal to the tracked creature type is increased
+     * by {0}%."
+     *
+     * ------------------------------------------------------------------------
+     * A FLAT DAMAGE BONUS, RATIFIED BY THE RULESET OWNER ON 2026-10-07 --
+     * "improved tracking is correct, applied as a flat 5% damage bonus". It
+     * carried an `unmodelled` entry saying the flat reading ASSUMED the Hunter
+     * was tracking the creature type it was fighting, which made the talent
+     * PARTLY modelled; that assumption is now the ruling and the entry is gone.
+     *
+     * NOTHING ABOUT THE NUMBER CHANGES. `conditionalDamage` with no
+     * requirements has applied the rank's percentage since the talent was
+     * written, so no profile moves by a decimal -- what moves is the census,
+     * because a caveat is what separates PARTLY from FULLY.
+     *
+     * IT WAS THE LAST UNRATIFIED READING IN THE CLASS. The Hunter now has no
+     * interpretation left standing: every talent either does what the source
+     * says, says why it cannot, or carries a scope the owner ruled.
+     * ------------------------------------------------------------------------
      */
     { kind: 'conditionalDamage', requires: {} },
-    {
-      kind: 'unmodelled',
-      reason:
-        'Applied as a flat damage bonus, which ASSUMES the Hunter is tracking ' +
-        'the creature type it is fighting. True for any real pull and not ' +
-        'something the engine checks.',
-    },
   ],
 
   deflection: [{ kind: 'stat', stat: 'parryChance', operation: 'flat' }],
