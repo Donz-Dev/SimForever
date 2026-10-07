@@ -1,3 +1,4 @@
+import { ALL_ABILITIES } from '../combat/abilityModifiers';
 import type { Combatant } from '../actors/Combatant';
 import type { AuraInstance } from '../effects/Aura';
 import type { Milliseconds } from '../time';
@@ -37,9 +38,29 @@ export interface ResolvedCast {
 function matches(instance: AuraInstance, ability: Ability): boolean {
   const modifier = instance.definition.castModifier;
   if (!modifier) return false;
-  if (!modifier.abilityIds.includes(ability.id)) return false;
+  /*
+   * NAMED, OR THE CATCH-ALL. Clearcasting names no spell -- "your next damage
+   * or healing spell or offensive ability" -- and narrows with the three
+   * clauses below instead. `'*'` is the key `AbilityModifiers` already uses.
+   */
+  if (
+    !modifier.abilityIds.includes(ALL_ABILITIES) &&
+    !modifier.abilityIds.includes(ability.id)
+  ) {
+    return false;
+  }
+  // "Not consumed by Wrath", which only an exclusion can say against a catch-all.
+  if (modifier.exceptAbilityIds?.includes(ability.id)) return false;
   // An instant must not eat a charge meant for a cast.
   if (modifier.requiresCastTime && (ability.castTimeMs ?? 0) <= 0) return false;
+  // Nor must a free ability eat one meant for something that costs.
+  if (modifier.requiresCost && (ability.cost?.amount ?? 0) <= 0) return false;
+  /*
+   * "OFFENSIVE" IS THE OWNER'S DEFINITION: processed through a combat table.
+   * A Druid's Demoralizing Roar costs ten rage and rolls nothing, which is the
+   * same reason Battle Shout is not offensive to Focused Rage.
+   */
+  if (modifier.requiresAttackTable && !ability.attackTable) return false;
   return true;
 }
 

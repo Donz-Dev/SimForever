@@ -1,5 +1,6 @@
 import type { AuraDefinition } from '../../engine';
 import {
+  ALL_ABILITIES,
   RATING_PER_PERCENT,
   applyHealing,
   dealDamage,
@@ -108,6 +109,90 @@ export const PARTY_CRIT_AURA_ID = 'party_crit_aura';
  * `critChance`, the same stat melee does. Moved here with the aura from
  * `raidBuffs.ts`, which had this as `critChanceEverywhere` and no other caller.
  */
+/*
+ * ============================================================================
+ * OMEN OF CLARITY, AND CLEARCASTING.
+ *
+ * "Your spells and attacks have a chance to grant you Clearcasting, reducing
+ * the Mana, Rage, or Energy cost of your next damage or healing spell or
+ * offensive ability by 100%. Clearcasting is not consumed by Wrath or by spells
+ * or abilities that cost no resources."
+ *
+ * A PASSIVE, NOT A CAST. The capture gives it a school and a level and nothing
+ * else -- no cost, no cooldown, no cast time, no duration -- so there is
+ * nothing to put in a priority list and nothing to keep up. Every Druid learns
+ * it at 20, so every Druid profile simply has it; the proc is registered by
+ * `reactionsForClass`, which is where Windfury Weapon lives for the same reason.
+ *
+ * THE THREE NUMBERS ARE THE RULESET OWNER'S, and none of them is in the
+ * tooltip: 4% to proc, DOUBLED in Moonkin form, with a ten second internal
+ * cooldown. The doubling is Moonkin Form's own clause -- "Omen of Clarity gains
+ * 100% increased chance to trigger" -- which that talent carried as
+ * `unmodelled` on the honest grounds that there was no proc here to double.
+ *
+ * CLEARCASTING LASTS UNTIL IT IS SPENT, because no duration is stated. Classic's
+ * is fifteen seconds and that figure is not borrowed: with a ten second internal
+ * cooldown the next offensive ability is almost always within a second or two,
+ * so the two readings are nearly indistinguishable and only one of them invents
+ * a number. The same decision Nature's Swiftness took, and for the same reason.
+ * ============================================================================
+ */
+
+/** Percentage chance per spell or attack, stated by the ruleset owner. */
+export const OMEN_OF_CLARITY_PROC_CHANCE = 4;
+/**
+ * Moonkin Form doubles it, which is that form's own tooltip clause stated as a
+ * multiplier rather than as the "+100% increased chance" the text uses.
+ */
+export const OMEN_OF_CLARITY_MOONKIN_MULTIPLIER = 2;
+/** And it cannot proc again inside this window. The owner's figure. */
+export const OMEN_OF_CLARITY_INTERNAL_COOLDOWN_MS = seconds(10);
+
+/**
+ * Clearcasting: the next offensive ability that costs something is free.
+ *
+ * ----------------------------------------------------------------------------
+ * THREE CLAUSES OF THE TOOLTIP ARE THREE FIELDS, and each one is a charge that
+ * would otherwise be thrown away on the wrong thing:
+ *
+ *   ALL_ABILITIES          "your next ... spell or offensive ability" names no
+ *                          spell and never could, so it is the catch-all
+ *   exceptAbilityIds       "not consumed by Wrath"
+ *   requiresCost           "nor by spells or abilities that cost no resources"
+ *   requiresAttackTable    "OFFENSIVE ability", which the owner defines as one
+ *                          processed through a combat table -- so the Druid's
+ *                          Demoralizing Roar, ten rage and no table, is its
+ *                          Battle Shout and does not consume this
+ *
+ * `consumedByCast: 'all'` because it is ONE cast: "your NEXT". A stack would
+ * leave the rest of the charge behind, which reads as a working effect worth
+ * several times its value.
+ *
+ * ITS HEALING HALF IS OUT OF SCOPE like every healing clause -- a heal has no
+ * attack table, so `requiresAttackTable` excludes one. No Druid profile heals,
+ * so nothing is lost today, and the day one does this is the line to revisit.
+ * ----------------------------------------------------------------------------
+ */
+export const CLEARCASTING: AuraDefinition = {
+  id: 'clearcasting',
+  name: 'Clearcasting',
+  // Until it is spent. No duration is stated and none would mean anything.
+  durationMs: 0,
+  castModifier: {
+    abilityIds: [ALL_ABILITIES],
+    exceptAbilityIds: ['wrath'],
+    requiresCost: true,
+    requiresAttackTable: true,
+    costFraction: 1,
+    /*
+     * ONE CAST, because the tooltip says "your NEXT". Spending a stack where
+     * the effect spends all of them leaves the rest behind, which reads as a
+     * working effect worth several times its value.
+     */
+    consumedByCast: 'all',
+  },
+};
+
 export const PARTY_CRIT_AURA: AuraDefinition = {
   id: PARTY_CRIT_AURA_ID,
   name: 'Moonkin Aura / Leader of the Pack',

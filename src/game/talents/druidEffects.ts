@@ -238,16 +238,24 @@ export const DRUID_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
    * exactly what "the armor contribution FROM ITEMS" means. Worth nothing to a
    * Moonkin nothing attacks, and right the day something does.
    */
+  /*
+   * ITS THIRD CLAUSE IS LIVE NOW, AND THE REASON IT CARRIED WAS TRUE WHEN IT
+   * WAS WRITTEN: "Omen of Clarity's trigger chance is doubled, and Omen of
+   * Clarity is not declared -- it is in the captured spellbook and no profile
+   * casts it, so there is no proc here for this to double." There is a proc
+   * now, and the doubling is applied by `omenOfClarityChanceFor` -- 8% in
+   * Moonkin form against 4% everywhere else.
+   *
+   * **A REASON SPECIFIC ENOUGH TO RE-READ IS WHAT MADE THIS FINDABLE** the day
+   * the proc landed. It named the blocker rather than the symptom, so clearing
+   * the blocker pointed straight back here.
+   *
+   * All three clauses of Moonkin Form are expressed and nothing is left
+   * unmodelled on it.
+   */
   moonkin_form: [
     { kind: 'grantAura', auraId: PARTY_CRIT_AURA_ID, requires: { styles: ['moonkin'] } },
     { kind: 'itemArmorPercent' },
-    {
-      kind: 'unmodelled',
-      reason:
-        "Omen of Clarity's trigger chance is doubled, and Omen of Clarity is " +
-        'not declared -- it is in the captured spellbook and no profile casts ' +
-        'it, so there is no proc here for this to double.',
-    },
   ],
 
   // --- Feral Combat --------------------------------------------------------

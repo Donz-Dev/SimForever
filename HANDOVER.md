@@ -623,7 +623,7 @@ while it worked.
 decimal -- which is what a talent change scoped to one build should look like.
 It makes Frostfire the top Mage, above Fire's 401.2 and Arcane's 392.6, and the
 build that existed for the Fire/Frost overlap now has a third reason to. The
-mean across **24** is **550.0**, RE-SUMMED FROM THE TABLE ABOVE rather than
+mean across **24** is **551.9**, RE-SUMMED FROM THE TABLE ABOVE rather than
 adjusted. It read 488.3 for a while, then 541.3 **across 23 when there were
 already 24** -- each figure right when it was written and drifted as dive after
 dive moved a profile and left the average alone. **The COUNT drifted too, which
@@ -727,6 +727,38 @@ seeded run -- so both figures are inside their intervals and the mechanism can
 only ever REDUCE the sting's damage. Measured directly rather than inferred: over
 twenty seeds it now lands 98.7% of casts on LW Ranged and 96.4% on BM Hunter,
 where before it landed 100%.
+
+**AND THEN OMEN OF CLARITY, WHICH IS WORTH EVERYTHING TO ONE DRUID AND NOTHING TO
+THE OTHER TWO.** Every Druid learns it at 20 and none spends a point on it, so it
+is registered by `reactionsForClass` beside Windfury Weapon rather than as a
+talent proc. The owner supplied all three numbers and the tooltip states none of
+them: **4% per spell or attack, doubled in Moonkin form, ten second internal
+cooldown.**
+
+| Profile | was | now | | procs a fight |
+| --- | --- | --- | --- | --- |
+| Cat | 749.7 | **795.3** | **+45.7 REAL** | 2.05, all spent |
+| Bear | 494.8 | **498.0** | +3.2, inside its interval | 1.45 |
+| Moonkin | 516.8 | **513.4** | -3.4, inside its interval | 1.50 (8%) |
+
+**ONLY THE CAT IS RESOURCE-BOUND, WHICH IS THE WHOLE EXPLANATION** -- and it is
+the same finding King of the Jungle produced on the same build. The Cat's entire
+fight budget is about 690 energy, so two free 42-energy Shreds are +12% of it.
+The Moonkin finishes with **29% of its mana income unspent** and the Bear is rage
+rich, so a free cast there saves a resource they already have spare. **A correct
+proc can be worth zero**, and the mechanism is what says it works: 1.50 and 1.45
+procs a fight, every one of them spent.
+
+**THE TWO SMALL FIGURES ARE RE-SEQUENCING, NOT EFFECT.** `canTrigger` rolls on
+every landed attack, which reshuffles every subsequent roll in a seeded fight --
+so for the Bear and the Moonkin the proc's own dice swamp what the proc is worth.
+Read the procs column, not the DPS column.
+
+**AND MOONKIN FORM HAS NO UNMODELLED CLAUSE LEFT.** Its last one read "Omen of
+Clarity's trigger chance is doubled, and Omen of Clarity is not declared ... so
+there is no proc here for this to double" -- true when written, and specific
+enough to point straight back here the day the proc landed. The Druid census is
+**30 fully / 5 partly / 14 ruled out / 2 live gaps**.
 
 **AND THEN AN OFFICIAL SOURCE REVISED DEEP WOUNDS AGAIN, THREE BULLETS, AND TWO
 OF THEM WERE ALREADY RIGHT.** "Deep Wounds compared to Vanilla now: rolls over
@@ -894,13 +926,13 @@ Hemo moves five rows between the two columns, which is exactly that kind of edit
 | Profile | Class | Talents | DPS | | Profile | Class | Talents | DPS |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | Seal Twist Ret | Paladin | 13/0/38 | 709.0 | | Hemo Rogue | Rogue | 17/3/31 | 527.1 |
-| Cat Druid | Druid | 9/35/7 | ****749.7**** | | LW Melee | Hunter | 7/13/31 | 523.8 |
+| Cat Druid | Druid | 9/35/7 | ****795.3**** | | LW Melee | Hunter | 7/13/31 | 523.8 |
 | DW Fury | Warrior | 18/33/0 | 667.5 | | Shadow Priest | Priest | 16/3/32 | 516.4 |
 | Fire Mage | Mage | 10/39/2 | 624.0 | | Venom Rogue | Rogue | 37/12/2 | 510.6 |
 | Frostfire Mage | Mage | 0/29/22 | 623.2 | | Rupture Rogue | Rogue | 12/8/31 | 497.6 |
-| 2H Arms | Warrior | 38/13/0 | 621.1 | | Bear Druid | Druid | 9/42/0 | **494.8** |
+| 2H Arms | Warrior | 38/13/0 | 621.1 | | Bear Druid | Druid | 9/42/0 | **498.0** |
 | Enh Shaman | Shaman | 19/32/0 | 604.0 | | LW Ranged | Hunter | 7/39/5 | **486.5** |
-| BM Hunter | Hunter | 31/20/0 | **595.7** | | Moonkin | Druid | 38/0/13 | ****516.8**** |
+| BM Hunter | Hunter | 31/20/0 | **595.7** | | Moonkin | Druid | 38/0/13 | ****513.4**** |
 | Combat Rogue | Rogue | 18/33/0 | 586.3 | | Prot Warr | Warrior | 17/0/34 | 457.0 |
 | Shockadin | Paladin | 23/0/28 | **581.2** | | Ele Shaman | Shaman | 38/13/0 | 440.2 |
 | Arcane Mage | Mage | 47/4/0 | 581.8 | | SM/DS | Warlock | 40/11/0 | 435.9 |
