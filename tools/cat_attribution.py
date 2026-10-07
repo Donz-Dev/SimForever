@@ -73,8 +73,13 @@ def main() -> int:
         for label, reverts in VARIANTS:
             for path, find, replace in reverts:
                 text = originals[path]
-                if find not in text:
-                    print(f'MISS in {path} for "{label}":\n{find[:120]}')
+                # COUNTS, AND REFUSES UNLESS THERE IS EXACTLY ONE. A presence
+                # check is what let this script patch the first of two identical
+                # call sites and measure the same build twice; the header has
+                # claimed it counts since that commit, and now it does.
+                found = text.count(find)
+                if found != 1:
+                    print(f'{found} matches in {path} for "{label}":\n{find[:160]}')
                     return 1
                 open(path, 'w', encoding='utf-8', newline='').write(text.replace(find, replace, 1))
             # Anything not reverted in this variant goes back to committed.

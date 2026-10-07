@@ -1,11 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import { createPlayer } from '../../src/game/actors/createPlayer';
-import { flat } from '../../src/engine';
+import { flat, makeStats } from '../../src/engine';
 import { PRESETS_BY_ID } from '../../src/profiles/presets';
 import { buildSimulation } from '../helpers/buildSimulation';
 import { makeTarget } from '../helpers/actors';
 import { talentBuild } from '../../src/game/talents/talentBuild';
 import { statDerivationFor, withStatConversions } from '../../src/game/character';
+import { CLASS_IDS } from '../../src/game/character/ids';
 import { WARRIOR_TALENT_EFFECTS } from '../../src/game/talents/warriorEffects';
 import { ROGUE_TALENT_EFFECTS } from '../../src/game/talents/rogueEffects';
 import { DRUID_TALENT_EFFECTS } from '../../src/game/talents/druidEffects';
@@ -313,20 +314,66 @@ describe('what it retired', () => {
     }
   });
 
-  it('only ever converts FROM a primary stat', () => {
+  it('never converts FROM a stat that any derivation PRODUCES', () => {
     /*
-     * The derivation is handed resolved PRIMARIES. A conversion reading a
-     * DERIVED stat would need a third pass, would silently read zero today,
-     * and nothing in the source asks for one. The type says so; this says so
-     * where a reader is looking at the talents.
+     * ------------------------------------------------------------------------
+     * THIS REPLACES "only ever converts FROM a primary stat", AND THE OLD TEST
+     * WAS A PROXY FOR THIS ONE RATHER THAN A WEAKER VERSION OF IT.
+     *
+     * Its reason said the derivation "is handed resolved PRIMARIES" and that
+     * reading a derived stat "would silently read zero today". Both were false
+     * about the code: `StatBlock.computeEffective` calls
+     * `this.derivation(firstPass)`, and the first pass is every stat resolved
+     * from base and modifiers. The parameter is named `primary` and typed
+     * `Readonly<Stats>`, so the name described the six callers and the type
+     * always allowed more.
+     *
+     * WHAT ACTUALLY HAS TO HOLD is the termination argument `StatBlock` makes
+     * in its own words -- "derivation never produces a primary stat, so the
+     * primaries are identical in both passes and this terminates". Generalised:
+     * a conversion may read any stat that no derivation WRITES. Read a written
+     * stat and the answer depends on how many passes ran, which is the one
+     * thing two fixed passes cannot promise.
+     *
+     * Thick Hide's `defenseSkill` is safe by that rule: it is a flat stat that
+     * items and two Anticipation talents grant and nothing derives.
+     *
+     * CHECKED AGAINST EVERY CLASS AND EVERY DRUID FORM rather than against a
+     * hand-written list, because the derivation table is content and a new
+     * conversion into `defenseSkill` is exactly the change that would break
+     * this silently.
+     * ------------------------------------------------------------------------
      */
-    const PRIMARY = ['strength', 'agility', 'stamina', 'intellect', 'spirit'];
+    const probe = makeStats({
+      strength: 100,
+      agility: 100,
+      stamina: 100,
+      intellect: 100,
+      spirit: 100,
+    });
 
+    const produced = new Set<string>();
+    for (const characterClass of CLASS_IDS) {
+      for (const form of [undefined, 'bear', 'cat', 'moonkin', 'caster'] as const) {
+        for (const stat of Object.keys(statDerivationFor(characterClass, form)(probe))) {
+          produced.add(stat);
+        }
+      }
+    }
+    // The table does derive things, or this test would pass by being empty.
+    expect(produced.has('attackPower')).toBe(true);
+    expect(produced.has('critChance')).toBe(true);
+
+    const read: string[] = [];
     for (const table of Object.values(TABLES)) {
       for (const effect of Object.values(table).flat()) {
         if (effect.kind !== 'statFromStat') continue;
-        expect(PRIMARY).toContain(effect.from);
+        read.push(effect.from);
+        expect(produced, `statFromStat reads ${effect.from}`).not.toContain(effect.from);
       }
     }
+
+    // And the one non-primary source is really in there, so this test has teeth.
+    expect(read).toContain('defenseSkill');
   });
 });
