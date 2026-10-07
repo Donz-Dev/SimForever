@@ -286,6 +286,23 @@ See [docs/combat-tables.md](docs/combat-tables.md).
   opposite of every weapon enchant here. "Each strike has a 20% chance" means a
   fast off hand really does poison more often, where PPM exists to stop exactly
   that. The two live side by side and must not be made to match.
+- **PPM IS THE OWNER'S EQUATION, AND `PPM` IS A VARIABLE IN IT RATHER THAN A
+  CEILING:**
+
+      % chance to proc = PPM * baseweaponspeed / 60
+
+  `ppmChance` is it, and `procs.test.ts` pins it in that form rather than in the
+  order the function computes. **BASE speed, so haste raises the delivered rate**
+  while leaving the per-use chance alone — the same reading `rageFromSwing` takes
+  of "base speed before any modifiers".
+
+  **THE VARIABLE-OR-CEILING QUESTION IS ANSWERED AND IS WORTH NOT RE-ASKING.**
+  The two readings agree while only auto-attacks roll and diverge the moment
+  anything else does: every weapon USE rolls, and only a swing costs swing time,
+  so specials and extra attacks are free rolls. An Enhancement shaman makes about
+  35 melee uses a minute and **5 PPM delivers about 11 procs a minute, which is
+  the intended consequence of the equation** rather than a figure to explain away.
+  Nothing in the engine throttles a rate, and nothing should.
 - **A reaction fires on damage; a CAST reaction fires on a cast.** A finisher
   spends its combo points inside its own `onCast`, where neither the cost system
   nor a damage reaction can see it. `AbilityCastEvent` carries what the cast

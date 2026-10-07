@@ -26,9 +26,53 @@ import { seconds, toSeconds } from '../../src/engine';
  */
 
 describe('the procs-per-minute formula', () => {
-  it('is weapon speed over sixty, times the rate', () => {
-    expect(ppmChance(2.6, 1)).toBeCloseTo(2.6 / 60, 10);
-    expect(ppmChance(2.5, 1.1)).toBeCloseTo((2.5 / 60) * 1.1, 10);
+  it("is the owner's equation: PPM * baseweaponspeed / 60", () => {
+    /*
+     * WRITTEN IN THE OWNER'S OWN ORDER, which is not how the function computes
+     * it: `ppmChance` returns `(speed / 60) * ppm` and the owner states
+     * `PPM * baseweaponspeed / 60`. They are the same number, and asserting the
+     * stated form rather than the implemented one is the point — a test that
+     * re-types the implementation passes whatever the implementation says.
+     */
+    for (const [ppm, speed] of [[1, 2.6], [1.1, 2.5], [5, 3.8], [7, 1.7]]) {
+      expect(ppmChance(speed, ppm)).toBeCloseTo((ppm * speed) / 60, 10);
+    }
+  });
+
+  it('treats PPM as an equation VARIABLE and not as a ceiling', () => {
+    /*
+     * ------------------------------------------------------------------------
+     * THE OWNER'S ANSWER, 2026-10-07, to exactly that question: "5 PPM refers to
+     * an equation variable not a ceiling."
+     *
+     * The two readings agree while only auto-attacks roll and diverge the moment
+     * anything else does. An Enhancement shaman makes about 35 melee uses a
+     * minute on a 3.8 second weapon -- swings, Stormstrike, and two Windfury
+     * attacks per proc -- and at 5 PPM that is about 11 procs a minute, not 5.
+     *
+     * A CEILING WOULD BE A DIFFERENT MECHANIC, and there is nothing in the
+     * engine that throttles a rate. So what this pins is that the chance depends
+     * on the WEAPON and on nothing else: not on how many times it is rolled, and
+     * not on how many procs have already happened.
+     * ------------------------------------------------------------------------
+     */
+    const speed = 3.8;
+    const ppm = 5;
+    const chance = ppmChance(speed, ppm);
+
+    // The per-use chance is the same however many uses there are.
+    expect(chance).toBeCloseTo((ppm * speed) / 60, 10);
+    expect(chance).toBeCloseTo(0.3167, 4);
+
+    // Auto-attacks ALONE deliver the nominal rate, which is where the two
+    // readings agree -- a weapon swinging on its own timer makes 60 / speed
+    // uses a minute.
+    expect((60 / speed) * chance).toBeCloseTo(ppm, 10);
+
+    // Every extra use beyond the swing is another roll at the same chance, so
+    // the delivered rate scales with the use count. 35 uses a minute is the
+    // Enhancement shaman's measured figure.
+    expect(35 * chance).toBeCloseTo(11.08, 2);
   });
 
   it("gives Vis'kag 4.33% on its own 2.6 second swing", () => {
