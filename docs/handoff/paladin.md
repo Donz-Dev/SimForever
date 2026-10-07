@@ -208,6 +208,15 @@ see a stat, a buff and a proc as three contributions instead of one number:
 plus 0.10 from crits taken. Measured by diffing against a run with `reckoning: 0`:
 **3.77**. So the talent is right and the EXPECTATION is small.
 
+**AND THE SWING TIMER RESET IS A RULING, NOT AN OVERSIGHT.** The owner, 2026-10-07: "an extra attack from Reckoning is exactly the same as the other
+extra attacks — like from Hand of Justice. It will trigger an auto-attack and
+reset the swing timer." So `extraAttack` restarting the timer is correct and
+**Reckoning is not a special case**, even though it is the only caller where the
+reset is visible — every other one fires from inside the attacker's own swing,
+where rescheduling to the same instant changes nothing. A change to preserve the
+pending swing was written here and reverted; `tests/engine/extraAttackSwingTimer.test.ts`
+pins the rule so the next reader does not find the same apparent bug.
+
 **SEEING 2 IN ONE FIGHT IS NOT A BUG, IT IS THE SAMPLE SIZE.** An expectation of
 3.6 events is a count, and a single fight returns 2 or 3 often. **An extra attack
 also emits no telemetry of its own** — it is an ordinary main-hand swing by the

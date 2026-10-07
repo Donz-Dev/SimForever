@@ -265,15 +265,26 @@ Seeing 2 in one fight is the sample size: 3.6 is a COUNT, and an extra attack
 emits no telemetry of its own, so the only honest form of the answer is a mean
 over many fights. `tools/probe_block.ts` is the tool that says so and is kept.
 
-**AND ONE ENGINE CHANGE WAS WRITTEN AND THEN REVERTED**, which is worth more
-than the ones that shipped. `extraAttack` ends by scheduling a FULL fresh swing
-timer, which cancels the pending one — so an extra attack triggered by damage
-TAKEN pushes the next normal swing out by up to a whole timer. That is almost
-certainly wrong, and it was written as the explanation for Reckoning. **The
-measurement said Reckoning was already at expectation**, so the justification
-collapsed and the change came out. It is a real question about a shared engine
-path that touches Windfury and Hand of Justice as well, and it wants its own PR
-and its own baseline rather than a ride on a class pass.
+**AND ONE ENGINE CHANGE WAS WRITTEN, REVERTED, AND THEN RULED ON** — which is
+worth more than the ones that shipped, and the ruling is the part to keep.
+
+`extraAttack` ends by scheduling a FULL fresh swing timer, which cancels the
+pending one, so an extra attack pushes the next normal swing out by up to a
+whole timer. A change to preserve the pending swing's due time was written as
+the explanation for Reckoning seeming short; **the measurement said Reckoning
+was already at expectation**, the justification collapsed, and it was reverted.
+
+**THE RULESET OWNER HAS SINCE RULED THAT THE EXISTING BEHAVIOUR IS CORRECT**:
+"an extra attack from Reckoning is exactly the same as the other extra attacks
+— like from Hand of Justice. It will trigger an auto-attack and reset the swing
+timer." So the reset is the RULE rather than an accident, Reckoning is not a
+special case, and `docs/extra-attacks.md` had the row right all along ("the
+swing timer: **restarted**") — the paragraph that used to sit here called it
+"almost certainly wrong" and was contradicting a document in this repository.
+
+**`tests/engine/extraAttackSwingTimer.test.ts` PINS IT NOW**, because nothing
+about `scheduleSwing` with a full fresh timer announces that it is deliberate:
+the next reader goes looking and finds a bug, exactly as this pass did.
 
 ---
 
