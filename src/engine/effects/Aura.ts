@@ -99,14 +99,55 @@ export interface CastModifier {
    * The abilities this changes. An ability not named here is untouched, and an
    * empty list matches nothing.
    *
-   * BY ID, AND ONLY BY ID FOR NOW. Nature's Swiftness and Presence of Mind
-   * select by school ("your next Nature spell") and by class, which would mean
-   * a `school` on every `Ability` -- a field that is silent when forgotten,
-   * which is the failure mode this project keeps meeting. It is worth adding
-   * when a whole class can be filled in at once rather than one talent at a
-   * time; until then those two stay `unmodelled` and say so.
+   * BY ID, OR `ALL_ABILITIES` FOR A MODIFIER THAT NAMES NO SPELL. Clearcasting
+   * is "your next damage or healing spell or offensive ability", which is not a
+   * list and never will be -- so it passes the catch-all key and narrows with
+   * the three clauses below. That is the same `'*'` convention
+   * `AbilityModifiers` already uses, so a reader meets one idea rather than two.
+   *
+   * SELECTING BY SCHOOL IS STILL NOT HERE. Presence of Mind is "your next
+   * spell", which would mean a `school` on every `Ability` -- a field that is
+   * silent when forgotten, which is the failure mode this project keeps
+   * meeting. The catch-all does not help it: "every ability" and "every SPELL"
+   * are different sets and only one of them is expressible.
    */
   readonly abilityIds: readonly string[];
+  /**
+   * Abilities this does NOT change, even though `abilityIds` matched them.
+   *
+   * Clearcasting's own wording: "not consumed by Wrath". An exclusion is the
+   * only way to say that against a catch-all, and naming it here keeps the
+   * exception where a reader of the modifier will find it.
+   */
+  readonly exceptAbilityIds?: readonly string[];
+  /**
+   * Only match an ability that actually COSTS something.
+   *
+   * Clearcasting is "not consumed by ... spells or abilities that cost no
+   * resources", and without this it would be spent on the next free ability --
+   * a charge thrown away, which looks exactly like one that worked. The same
+   * shape `requiresCastTime` has, and for the same reason.
+   */
+  readonly requiresCost?: boolean;
+  /**
+   * Only match an ability that ROLLS A COMBAT TABLE.
+   *
+   * ----------------------------------------------------------------------------
+   * THIS IS THE RULESET OWNER'S DEFINITION OF "OFFENSIVE", and it is already
+   * written down: asked which abilities Focused Rage reduces, they ruled that
+   * "an ability is offensive if it is PROCESSED THROUGH A COMBAT TABLE. Heroic
+   * Strike, Thunder Clap and Sunder Armor are; Battle Shout is not."
+   *
+   * So Clearcasting's "offensive ability" is this, and the Druid's Battle Shout
+   * -- Demoralizing Roar, ten rage and no table -- does not consume it.
+   *
+   * DERIVED RATHER THAN LISTED, which is the argument `attackAbilityCost` makes
+   * for the same rule: a list would need editing every time an ability was
+   * added, and the edit that was forgotten would silently spend the charge on
+   * the wrong thing.
+   * ----------------------------------------------------------------------------
+   */
+  readonly requiresAttackTable?: boolean;
   /** Milliseconds taken off the cast, before haste. */
   readonly castTimeReductionMs?: Milliseconds;
   /**

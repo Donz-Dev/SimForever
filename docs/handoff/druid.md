@@ -38,9 +38,9 @@ question** — the count was wrong for as long as nobody did.
 
 | Profile | Talents | DPS | List | Style |
 | --- | --- | --- | --- | --- |
-| Cat | 9/35/7 | **749.7** | `DRUID_CAT` | cat (paws) |
-| Moonkin | 38/0/13 | **516.8** | `DRUID_MOONKIN` | caster |
-| Bear | 9/42/0 | **494.8** | `DRUID_BEAR` | bear (paws) |
+| Cat | 9/35/7 | **795.3** | `DRUID_CAT` | cat (paws) |
+| Moonkin | 38/0/13 | **513.4** | `DRUID_MOONKIN` | caster |
+| Bear | 9/42/0 | **498.0** | `DRUID_BEAR` | bear (paws) |
 
 **THESE ARE CURRENT AND THE TABLE USED TO CARRY A "was" COLUMN**, which is gone
 because it had stopped being about this class: the figures moved 656.1 → 716.4,
@@ -110,18 +110,26 @@ half the Moonkin's damage.
 
 | Talents | Fully | Partly | Ruled out | Live gap |
 | --- | --- | --- | --- | --- |
-| 51 | 29 | 5 | **15** | **2** |
+| 51 | **30** | **5** | **14** | **2** |
 
-Was 20 / 5 / 14 / **12**. Nine talents moved into `Fully` and nothing changed
-about the fourteen the owner has ruled out.
+Was 20 / 5 / 14 / **12** when this document was written. **Ten talents have moved
+into `Fully` and the live-gap count has only fallen by ten of the twelve**, which
+is the honest shape of it: two of the clearances never showed in that column at
+all. Nature's Reach was counted as RULED OUT because a `scope` swallowed its hit
+clause, and Nature's Focus left the column when the owner ruled spell pushback
+out rather than when anything was built.
 
-### The 3 live gaps
+### The 2 live gaps
 
 | Talent | Why, and what would clear it |
 | --- | --- |
 | `furor` | pays out ON SHAPESHIFTING, and a form is fixed at creation like a stance |
 | `natural_shapeshifter` | the same sentence, deliberately: both are findable by that wording the day mid-fight shifting lands, and `druidTalents.test.ts` fails if a third talent joins them or either one stops saying it |
-| `nature_s_focus` | avoids spell pushback from damage taken, and **no cast in this engine is ever lengthened by being hit**. Recorded as an ENGINE gap rather than an encounter one, because "the Moonkin's target does not swing" is the weaker claim and would expire first |
+
+**AND `nature_s_focus` IS NO LONGER ONE.** It was listed here as an engine gap --
+spell pushback, which nothing in this engine models -- and the owner **ruled it
+out of scope on 2026-09-30**, adding `castPushback` to the `OutOfScope` union. It
+is a decision now rather than work, which is what that union is for.
 
 ### Partly modelled
 
@@ -131,10 +139,11 @@ about the fourteen the owner has ruled out.
 | `nature_s_splendor` | its Rejuvenation and Regrowth clauses — `healing`, ruled out |
 | `improved_starfire` | its 15% stun — `crowdControl`, ruled out |
 | `naturalist` | the Healing Touch cast time — `healing`, ruled out |
-| `moonkin_form` | Omen of Clarity's trigger chance is doubled, and **Omen of Clarity is not declared**. It is a real spell in the capture that no profile casts, so there is no proc here to double |
 
-**FOUR OF THE FIVE ARE HEALING OR CROWD CONTROL**, so the only remaining
-*content* item in this class is Omen of Clarity.
+**ALL FIVE ARE HEALING, CROWD CONTROL OR POSITIONING** -- every one of them is a
+clause the owner has ruled out, on a talent whose other clauses work. **There is
+no remaining content item in this class.** Moonkin Form was the last one, and its
+reason named Omen of Clarity, which is now built.
 
 ---
 
@@ -225,6 +234,26 @@ none of them. **Three are worth knowing, and one of them was a real bug:**
   180 armor against the ~33 the Bear gets. **Not fixed here** — it needs a new
   effect kind, and it moves the Bear's rage the counter-intuitive way, since more
   armor means less damage taken means less rage.
+- **OMEN OF CLARITY IS A PASSIVE, NOT A CAST, AND IT IS WHY `reactionsForClass`
+  TAKES A STYLE.** Every Druid learns it at 20 and none spends a point on it, so
+  it is registered by the class rather than by a talent -- the same reason
+  Windfury Weapon lives there. The capture gives it a school and a level and
+  **nothing else**: no cost, no cooldown, no cast time, no duration, so there is
+  nothing to put in a priority list and nothing to keep up.
+  **THE THREE NUMBERS ARE THE OWNER'S AND NONE IS IN THE TOOLTIP**: 4% per spell
+  or attack, **doubled in Moonkin form**, with a ten second internal cooldown.
+  The doubling is Moonkin Form's OWN clause, so that talent's last unmodelled
+  reason has expired -- it said "there is no proc here for this to double", which
+  was true when written and specific enough to find the day the proc landed.
+  **CLEARCASTING LASTS UNTIL IT IS SPENT**, because no duration is stated.
+  Classic's fifteen seconds is deliberately not borrowed: with a ten second
+  internal cooldown the next offensive ability is almost always within a second
+  or two, so the two readings are nearly indistinguishable and only one of them
+  invents a number.
+  **AND TWO THINGS MUST NOT SPEND IT.** Wrath, which the tooltip names, and
+  Demoralizing Roar -- which the tooltip does not name, and which the owner's own
+  definition of "offensive ability" excludes: processed through a combat table,
+  and the Roar rolls nothing. It is the Druid's Battle Shout.
 - **NATURE'S REACH IS 4% HIT AND WAS DOING NOTHING, AND A `scope` IS WHY.** Its
   tooltip is "increases the RANGE of your offensive Balance spells by 20% **and
   improves your chance to hit by 4%**", and it was declared as a single

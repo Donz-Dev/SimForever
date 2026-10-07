@@ -5,6 +5,7 @@ import { talentNumber } from '../talents/talentValues';
 import { WARRIOR_REACTIONS } from './warrior';
 import { windfuryWeaponReaction } from './shaman';
 import { PALADIN_REACTIONS, PALADIN_SHIELD_REACTIONS } from './paladin';
+import { omenOfClarityChanceFor, omenOfClarityReaction } from './druid';
 
 /**
  * Reactive procs a class has.
@@ -54,6 +55,21 @@ export function reactionsForClass(
      */
     if (style === 'one_hand_shield') return [...PALADIN_REACTIONS, ...PALADIN_SHIELD_REACTIONS];
     return PALADIN_REACTIONS;
+  }
+
+  /*
+   * OMEN OF CLARITY, which every Druid learns at 20 and no Druid spends a point
+   * on -- the same reason Windfury Weapon is here rather than among the talent
+   * procs. It is the second caller of this function's STYLE argument, and the
+   * reason that argument earns its keep: Moonkin Form doubles the proc chance,
+   * which is a property of the form and not of the allocation.
+   *
+   * BUILT HERE, PER CHARACTER, because the reaction carries its own internal
+   * cooldown timestamp -- the state that made a shared Windfury closure stop
+   * proccing after one iteration of a batch.
+   */
+  if (characterClass === 'druid') {
+    return [omenOfClarityReaction(omenOfClarityChanceFor(style))];
   }
 
   if (characterClass === 'shaman') {

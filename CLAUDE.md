@@ -654,6 +654,26 @@ something that comes and goes.
   `AuraDefinition`. `abilityCastTime` is a standing talent reduction fixed at
   build time, an ordinary aura reaches every ability or none, and content cannot
   reach cast time at all because the engine resolves it BEFORE `onCast` runs.
+- **OR OF AN ABILITY IT DOES *NOT* NAME: `abilityIds` TAKES `ALL_ABILITIES`, AND
+  THEN THREE CLAUSES NARROW IT.** Clearcasting is "your next damage or healing
+  spell or offensive ability", which is not a list and never will be, so it
+  passes the catch-all and narrows with `exceptAbilityIds` ("not consumed by
+  Wrath"), `requiresCost` ("nor by spells or abilities that cost no resources")
+  and `requiresAttackTable`. **Each one is a charge that would otherwise be
+  thrown away on the wrong thing** — and a charge spent on the wrong ability is
+  the invisible failure: the proc still fires, the aura still reports its uptime,
+  and the saving simply lands somewhere it should not.
+  **SELECTING BY SCHOOL IS STILL NOT THERE.** "Your next SPELL" is a different
+  set from "every ability" and only one of them is expressible; Presence of Mind
+  still says so.
+- **`requiresAttackTable` IS THE OWNER'S DEFINITION OF "OFFENSIVE", REUSED.**
+  Asked which abilities Focused Rage reduces, they ruled that "an ability is
+  offensive if it is PROCESSED THROUGH A COMBAT TABLE. Heroic Strike, Thunder
+  Clap and Sunder Armor are; Battle Shout is not." So Clearcasting reads the same
+  rule, and the Druid's Demoralizing Roar -- ten rage, no table, and the first
+  entry in the Bear's list -- does not consume it. **A ruling already on the
+  books is worth looking for before inventing a reading**, and this one answers
+  a tooltip written for a different class.
 - **`runCast` RUNS `onCast` BEFORE THE CAST REACTIONS**, and that ordering is
   load-bearing rather than incidental: the spell that spends an aura's FINAL
   charge has already rolled its crit while the aura was still up. Reversing the
