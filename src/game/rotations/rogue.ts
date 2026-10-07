@@ -89,12 +89,6 @@ const targetAuraDown = (auraId: string) =>
   (context: SimulationContext, _actor: Combatant, target?: Combatant): boolean =>
     target !== undefined && target.auras.remainingMs(auraId, context.clock.now()) <= 0;
 
-/** "<debuff> duration >= N seconds", on the target. */
-const targetAuraAtLeast = (auraId: string, secondsLeft: number) =>
-  (context: SimulationContext, _actor: Combatant, target?: Combatant): boolean =>
-    target !== undefined &&
-    target.auras.remainingMs(auraId, context.clock.now()) >= secondsLeft * 1000;
-
 /** "<debuff> duration <= N seconds", on the target. An absent debuff counts. */
 const targetAuraAtMost = (auraId: string, secondsLeft: number) =>
   (context: SimulationContext, _actor: Combatant, target?: Combatant): boolean =>
@@ -489,6 +483,15 @@ export const ROGUE_COMBAT: readonly PriorityEntry[] = [
  * later window are one mechanism.
  * ============================================================================
  */
+/**
+ * What the Rupture list spends on Rupture, measured rather than chosen.
+ *
+ * NAMED BECAUSE IT IS A MEASURED RESULT AND NOT A TOOLTIP NUMBER. The sweep that
+ * produced it, and why four beats five on a bleed whose damage per point falls,
+ * are on the entry itself.
+ */
+const RUPTURE_COMBO_POINTS = 4;
+
 export const ROGUE_RUPTURE: readonly PriorityEntry[] = [
   /*
    * PREMEDITATION FIRST, UNGATED, WHICH IS THE OWNER'S ENTRY UNCHANGED. Free,
@@ -575,23 +578,84 @@ export const ROGUE_RUPTURE: readonly PriorityEntry[] = [
     abilityId: 'slice_and_dice',
     condition: all(selfAuraDown('slice_and_dice'), atLeastPoints(3)),
   },
-  {
-    abilityId: 'rupture',
-    condition: all(targetAuraDown('rupture'), exactlyPoints(MAX_COMBO_POINTS)),
-  },
   /*
-   * THE SAME FLOOR THE VENOM LIST USES, with Rupture in place of Venom: spend
-   * five points on damage only while both maintenance effects have ten seconds
-   * left, so a finisher never lands just before one has to be rebuilt.
+   * RUPTURE AT FOUR POINTS RATHER THAN FIVE, worth +3.0.
+   *
+   * ==========================================================================
+   * ITS DAMAGE *AND* ITS DURATION PER COMBO POINT BOTH FALL AS THE POOL FILLS,
+   * which is the opposite of the intuition "hold for five" rests on.
+   * `RUPTURE_BY_COMBO_POINT` is 159/222/295/377/469 damage over 8/10/12/14/16
+   * seconds, so per point:
+   *
+   *     points    1      2      3      4      5
+   *     damage   159    111     98     94     94
+   *     seconds  8.0    5.0    4.0    3.5    3.2
+   *
+   * A FOUR-POINT RUPTURE IS 94 DAMAGE AND 3.5 SECONDS PER POINT AGAINST THE
+   * FIFTH POINT'S 92 AND 2.0. The fifth point buys 92 damage and two seconds;
+   * a fourth buys 82 and two. They are close, and what separates them is the
+   * WAIT: this build gains 21.5 combo points a fight and spends 19.7, so the
+   * binding constraint is time-to-threshold rather than points available, and
+   * the debuff was up only 43.7% of the fight.
+   *
+   * THE WHOLE GRID WAS MEASURED, 60 batches of 10 a cell, with the Slice and
+   * Dice threshold on the other axis:
+   *
+   *              Rupt>=3   Rupt>=4   Rupt=5
+   *     SnD>=2     494.8     495.2     492.3
+   *     SnD>=3     494.4     495.7     493.0   <- shipped row
+   *     SnD>=4     489.6     493.7     494.1
+   *     SnD>=5     477.4     476.7     489.2
+   *
+   * Confirmed at 150 batches: 493.6 at five points, 496.6 at four.
+   *
+   * SLICE AND DICE'S OWN THRESHOLD IS NOT A LEVER between two and four -- the
+   * top rows are inside each other's intervals -- and holding it to FIVE costs
+   * 4 to 18. Same finding as the Combat list: it is a MAINTENANCE buff, so
+   * uptime beats duration. The owner's three stands.
+   *
+   * AND RUPTURE MUST STAY *BELOW* SLICE AND DICE. Swapping the two entries
+   * measures 487.2, a loss of 8.5: the haste is on every auto-attack and the
+   * autos are half this profile's damage, so losing attack speed to keep a
+   * bleed up is the wrong trade in exactly the way the ordering already said.
+   * ==========================================================================
    */
   {
-    abilityId: 'eviscerate',
-    condition: all(
-      selfAuraAtLeast('slice_and_dice', 10),
-      targetAuraAtLeast('rupture', 10),
-      exactlyPoints(MAX_COMBO_POINTS),
-    ),
+    abilityId: 'rupture',
+    condition: all(targetAuraDown('rupture'), atLeastPoints(RUPTURE_COMBO_POINTS)),
   },
+  /*
+   * EVISCERATE'S TWO DURATION FLOORS ARE GONE, worth +1.5 ON TOP of Rupture's
+   * threshold -- and it is the SECOND list those floors have suppressed.
+   *
+   * ==========================================================================
+   * THEY SUPPRESSED IT TO ZERO CASTS A FIGHT, for the whole life of this list.
+   * "Spend five points on damage only while Slice and Dice AND Rupture both
+   * have ten seconds left" is three conditions at once, and the third is the
+   * only one doing useful work. CLAUDE.md already records the same pair costing
+   * the VENOM list 20 DPS; this is the same mistake in the same file, found by
+   * reading the `USES=1` column rather than by suspecting it.
+   *
+   * IT ONLY BECAME CASTABLE ONCE RUPTURE STOPPED HOARDING THE FIFTH POINT, so
+   * the two halves of this change are not independent: at Rupture-exactly-five
+   * dropping the floors is worth +0.6 and nothing fires, and at Rupture-four it
+   * is worth +1.5 and Eviscerate fires 0.2 times a fight for 1.2% of damage.
+   * A finisher with nothing left to spend reads identically to a suppressed one.
+   *
+   * FIVE POINTS AND NOT FOUR, which is the reverse of the Combat list's answer
+   * and for a reason: this profile has a BLEED to maintain, so a point taken by
+   * Eviscerate is a point Rupture needed. Letting it spend less is a real loss
+   * rather than a flat choice --
+   *
+   *     Eviscerate at 5   498.1      at >=4   497.7
+   *     Eviscerate at 3   489.3      at >=2   479.2
+   *
+   * -- and the two upper figures are inside each other's intervals, so the
+   * HIGHER gate ships: it keeps Eviscerate as an overflow valve for the points
+   * Rupture and Slice and Dice could not use, rather than a competitor for them.
+   * ==========================================================================
+   */
+  { abilityId: 'eviscerate', condition: exactlyPoints(MAX_COMBO_POINTS) },
   /*
    * HEMORRHAGE BECOMES A MAINTENANCE STRIKE RATHER THAN THE FILLER. It was
    * UNCONDITIONAL and the cheapest builder in the list, which made it a floor

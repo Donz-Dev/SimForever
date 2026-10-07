@@ -825,7 +825,17 @@ See [docs/resources.md](docs/resources.md).
   two trees and never looked at Fire: a Fire build ran an Arcane list and
   produced a perfectly ordinary figure without casting Fireball once.
 - **MEASURE A LIST, DO NOT REASON ABOUT IT.** Patch one entry, run 30 batches of
-  10, treat a difference inside the interval as no difference. The comment that
+  10, treat a difference inside the interval as no difference.
+
+**AND PATCH IT BY SLICING THE LIST, NOT BY `replace(old, new, 1)` -- THE ENTRIES
+ARE TEXTUALLY IDENTICAL ACROSS LISTS.** The Rogue's Slice and Dice entry is the
+same four lines in all three of its lists, so a one-shot string replace hit the
+VENOM list while the RUPTURE profile was being measured. Twelve cells of a sweep
+came back with the Slice and Dice axis **identical to the decimal**, which is the
+only reason it was caught: a dimension that does nothing looks exactly like a
+dimension that does not matter, and the conclusion "this threshold is not a lever"
+was sitting right there to be believed. Slice the file at the list's own
+`export const` and assert the entry appears **once** inside it. The comment that
   put Summon Hawk above Arcane Shot counted the hawk's ticks and not its price,
   and was specific, plausible and believed for as long as it existed. **It
   happened again with Venom**, whose first comment said it belonged above the
@@ -1038,6 +1048,27 @@ first point and 170 for each one after — so damage per point FALLS as the pool
 fills, 278 down to 192. The rule this project applied everywhere is a rule about
 a PROPORTIONAL table, and three of the Rogue's finishers have a flat first step.
 Check the array before reasoning about damage per point.
+
+**A BLEED HAS TWO TABLES AND BOTH CAN SLOPE THE SAME WAY.** Rupture is 159/222/
+295/377/469 damage over 8/10/12/14/16 seconds -- 159 damage and 8.0 seconds for
+one point against 94 and 3.2 for five -- so **damage per point AND seconds per
+point both fall**, and the fifth point buys only 92 damage and two seconds. Four
+measured +3.0 over five on the Rupture profile. **A duration table is a second
+place to look and it is easy to check only the damage one.**
+
+**THE SAME ABILITY WANTS A DIFFERENT THRESHOLD IN TWO LISTS, AND THE REASON IS
+WHAT ELSE IS COMPETING.** Eviscerate's peak is TWO points on the Combat Rogue and
+FIVE on the Rupture Rogue: Combat has no bleed, so Eviscerate is where its points
+are meant to go, while on Subtlety a point taken by Eviscerate is a point Rupture
+needed -- 489.3 at three points and 479.2 at two, against 498.1 at five. **Do not
+normalise a threshold across two lists of the same class**, and do not read one
+list's sweep as a fact about the ability.
+
+**A MAINTENANCE BUFF'S THRESHOLD IS NOT A LEVER, AND THAT NOW HOLDS FOR TWO
+PROFILES INDEPENDENTLY.** Slice and Dice at 2, 3 or 4 points is indistinguishable
+on both the Combat and Rupture lists, and holding it to FIVE costs 4 to 18 on both.
+Its duration table is proportional -- a flat three seconds a point -- so there is
+no per-point argument either way and what decides it is uptime.
 
 ### Gear and items
 
