@@ -523,6 +523,19 @@ export const WRACK: Ability = {
   cost: { resource: 'mana', amount: 200 },
   castTimeMs: WRACK_CHANNEL_MS,
   channelTicks: WRACK_TICKS,
+  /*
+   * CANCELLABLE MID-CHANNEL, by the ruleset owner's ruling, and it REPLACED a
+   * condition rather than adding to one. The list used to gate this on all
+   * three bleeds having six seconds left -- a conservative guess at "can I
+   * afford to stop acting for six seconds" -- and being able to stop acting
+   * part-way through answers that question properly: start the channel
+   * whenever, and leave it when something more urgent lands.
+   *
+   * WHICH THREE THINGS ARE URGENT IS IN `WARLOCK_AFFLICTION`, by the owner's
+   * list, and both halves have to agree before anything is cancelled. See
+   * `Ability.interruptibleChannel`.
+   */
+  interruptibleChannel: true,
   attackTable: 'spell',
   onCast: ({ simulation, caster, target, ability }) => {
     if (!target) return;

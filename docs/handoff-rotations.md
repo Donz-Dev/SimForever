@@ -144,7 +144,7 @@ stale one PR at a time.
 | Rupture | 497.6 | `ROGUE_RUPTURE` | 9 | 7 |
 | LW Ranged | 486.5 | `HUNTER_LONE_WOLF_RANGED` | 7 | 5 |
 | Prot Warr | 457.0 | `WARRIOR_SHIELD_DEFENSIVE` | 14 | 10 |
-| SM/DS | 476.5 | `WARLOCK_AFFLICTION` | 8 | 6 |
+| SM/DS | 479.7 | `WARLOCK_AFFLICTION` | 8 | 5 |
 | Ele Shaman | 440.2 | `SHAMAN_ELEMENTAL` | 4 | 2 |
 | Prot Pally | 304.9 | `PALADIN_PROTECTION` | 9 | 6 |
 
@@ -301,6 +301,23 @@ knowing about `condition`:
   reach an ability, which is what makes Revenge and Whirlwind reachable at all.
   An entry that must not provoke a swap says so in its condition — Charge does,
   and without it the tank left Defensive Stance at the pull.
+
+**AN ENTRY CAN CANCEL A CHANNEL, AND BOTH HALVES HAVE TO AGREE.**
+`PriorityEntry.interruptsChannel` marks an entry as worth interrupting for, and
+`Ability.interruptibleChannel` marks a channel as willing -- neither alone does
+anything. The SM/DS list is the only user: three entries interrupt and Wrack is
+the only interruptible channel.
+
+**`already_casting` IS WHAT MAKES IT SAFE.** `PriorityRotation.selectInterrupt`
+accepts a candidate only when that is the SOLE rejection reason, so the channel is
+never thrown away for a cast that then does not happen -- a Corruption that has
+expired while the Warlock is out of mana leaves the channel alone. It is the same
+shape the stance swap uses, where one rejection is actionable and the rest mean
+"not now".
+
+**AND AN INTERRUPTIBLE CHANNEL POLLS INSTEAD OF SLEEPING TO ITS END**, because
+the one moment a casting actor otherwise wakes is the moment the channel has
+already finished.
 
 **A repeated ability id is legal and sometimes correct.** The Mage's Arcane
 Missiles and the Warlock's Shadow Bolt each appear twice: gated on a proc above,

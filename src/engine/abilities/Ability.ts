@@ -84,6 +84,28 @@ export interface Ability {
    * ----------------------------------------------------------------------
    */
   readonly channelTicks?: number;
+  /**
+   * Whether a priority list may CANCEL this channel part-way through.
+   *
+   * ----------------------------------------------------------------------
+   * THE RULESET OWNER'S RULING, MADE FOR WRACK: a channel can be interrupted
+   * mid-cast to do something more urgent. The ticks already delivered stand
+   * and the rest are cancelled, which is what cancelling a channel does.
+   *
+   * OPT-IN, AND THAT IS CONTAINMENT RATHER THAN CAUTION. Every channel in a
+   * real client can be cancelled, so the general rule would be the truer one
+   * -- but this project has two other channels, Arcane Missiles and (when it
+   * is declared) Drain Soul, and turning it on for them would move the Mage
+   * profiles on a ruling that was about the Warlock. The owner named Wrack;
+   * the flag names Wrack. Widening it is a separate measurement.
+   *
+   * WHICH ENTRIES MAY DO THE INTERRUPTING IS THE LIST'S BUSINESS, not the
+   * channel's -- see `PriorityEntry.interruptsChannel`. The two halves have
+   * to agree before anything is cancelled, so an ability declaring this is
+   * not thereby at the mercy of every entry above it.
+   * ----------------------------------------------------------------------
+   */
+  readonly interruptibleChannel?: boolean;
   /** Time before it can be used again. 0 (the default) means no cooldown. */
   readonly cooldownMs?: Milliseconds;
   /** Number of independent charges. Defaults to 1. */

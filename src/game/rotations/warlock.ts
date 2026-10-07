@@ -1,7 +1,6 @@
 import type { PriorityEntry, Rotation, SimulationContext, Combatant } from '../../engine';
 import { PriorityRotation } from '../../engine';
 import type { TalentAllocation } from '../talents/Talent';
-import { WRACK_CHANNEL_MS } from '../abilities/warlock';
 
 /**
  * Warlock priority lists.
@@ -50,29 +49,6 @@ const missing = (auraId: string) =>
 const expired = (auraId: string) =>
   (context: SimulationContext, _actor: Combatant, target?: Combatant): boolean =>
     target !== undefined && target.auras.remainingMs(auraId, context.clock.now()) <= 0;
-
-/**
- * "every one of these debuffs has at least this long left".
- *
- * ----------------------------------------------------------------------------
- * WRACK IS WHY, AND THE WINDOW IS THE CHANNEL. A six-second channel is six
- * seconds in which the rotation does nothing else -- the caster is locked for
- * the whole of it -- so committing to one while a bleed is about to fall off
- * trades three ticks of Corruption for six of Wrack and loses.
- *
- * SO THE GATE IS `WRACK_CHANNEL_MS` AND NOT A LITERAL SIX SECONDS. The owner's
- * specification says "six seconds left", and six seconds is the channel: tying
- * the gate to the constant means a channel that changes length takes its own
- * gate with it, where a literal would quietly protect the wrong window.
- *
- * ALL of them, not any: the entry is asking "can I afford to stop acting", and
- * one bleed expiring mid-channel is enough to make the answer no.
- * ----------------------------------------------------------------------------
- */
-const allLastingAtLeast = (auraIds: readonly string[], ms: number) =>
-  (context: SimulationContext, _actor: Combatant, target?: Combatant): boolean =>
-    target !== undefined &&
-    auraIds.every((auraId) => target.auras.remainingMs(auraId, context.clock.now()) >= ms);
 
 /** "this aura is on the actor", for a proc the next action should spend. */
 const actorHas = (auraId: string) =>
@@ -144,9 +120,9 @@ export const WARLOCK_AFFLICTION: readonly PriorityEntry[] = [
    * above, ungated as the filler below. What is NOT legal is a copy below an
    * unconditional one, which could never be reached.
    */
-  { abilityId: 'shadow_bolt', condition: actorHas('shadow_trance') },
-  { abilityId: 'bane_of_agony', condition: expired('bane_of_agony') },
-  { abilityId: 'corruption', condition: expired('corruption') },
+  { abilityId: 'shadow_bolt', condition: actorHas('shadow_trance'), interruptsChannel: true },
+  { abilityId: 'bane_of_agony', condition: expired('bane_of_agony'), interruptsChannel: true },
+  { abilityId: 'corruption', condition: expired('corruption'), interruptsChannel: true },
   { abilityId: 'siphon_life', condition: expired('siphon_life') },
   /*
    * LIFE TAP ON A MANA THRESHOLD rather than ungated. It was unconditional and
@@ -173,33 +149,44 @@ export const WARLOCK_AFFLICTION: readonly PriorityEntry[] = [
    * the entry only fires when it can afford to stop acting.
    * --------------------------------------------------------------------------
    */
-  {
-    abilityId: 'wrack',
-    /*
-     * ------------------------------------------------------------------------
-     * THIS GATE NAMES SIPHON LIFE, SO WRACK DIES IF SIPHON LIFE LEAVES THE
-     * LIST. Measured, not predicted: asked whether Siphon Life was worth
-     * casting, removing its entry took Wrack from 5.7 casts a fight to ZERO,
-     * because `siphon_life` is never applied and so can never have six seconds
-     * left. The profile read 452.4 and looked like a clean answer; what it
-     * actually measured was the loss of BOTH abilities.
-     *
-     * IT IS THE SELF-DISABLING SPECIFICATION AGAIN, which this project has now
-     * met three times -- the Seal Twist cycle with no entry point, "Scorch if
-     * scorch debuff <= 5" being always true, and this. Each time the list ran a
-     * whole fight without erroring.
-     *
-     * LEFT AS THE OWNER WROTE IT, because Siphon Life stays: with the gate
-     * repaired to the two remaining bleeds it is worth +13.6 DPS, so the
-     * coupling is latent rather than live. **Anyone removing Siphon Life must
-     * repair this list too.**
-     * ------------------------------------------------------------------------
-     */
-    condition: allLastingAtLeast(
-      ['bane_of_agony', 'corruption', 'siphon_life'],
-      WRACK_CHANNEL_MS,
-    ),
-  },
+  /*
+   * WRACK, UNGATED, AND IT IS THE INTERRUPT RULE THAT MAKES THAT SAFE.
+   *
+   * --------------------------------------------------------------------------
+   * THE SIX-SECOND GATE IS GONE, at the ruleset owner's instruction, and the
+   * interrupt rule replaces it rather than merely removing it. The gate asked
+   * "can I afford to stop acting for six seconds" and answered conservatively,
+   * because a channel used to be a commitment; now it is not. Three things cut
+   * it short -- a Shadow Bolt because Nightfall procced, a Corruption because
+   * Corruption fell off, a Bane of Agony because the Bane fell off -- and each
+   * of those entries says `interruptsChannel` above.
+   *
+   * SIPHON LIFE AND LIFE TAP SIT ABOVE IT AND DO NOT INTERRUPT IT, which is why
+   * the flag is per ENTRY rather than "anything above the channel". Siphon Life
+   * lasts thirty seconds and loses little by waiting out a channel; Life Tap is
+   * not urgent by construction.
+   *
+   * UNGATED AND WITHOUT A COOLDOWN MAKES IT A FLOOR under everything below it,
+   * which here is the filler Shadow Bolt -- and that entry does now fire zero
+   * times. It is kept because it is the owner's and because the proc-gated copy
+   * above is what casts Shadow Bolt; see the note on the filler below.
+   * --------------------------------------------------------------------------
+   */
+  { abilityId: 'wrack' },
+  /*
+   * THE FILLER, AND IT NOW FIRES ZERO TIMES. Wrack above it is ungated and has
+   * no cooldown, so nothing below it is ever the first castable entry -- the
+   * documented shape of an unconditional entry being a floor.
+   *
+   * KEPT RATHER THAN DELETED, for two reasons. It is the owner's entry, and the
+   * owner's list outranks a measured decision of ours. And it costs nothing: an
+   * entry the walk never reaches spends no global cooldown, which the Life Tap
+   * entry above it has already demonstrated at 441.6 against 441.5.
+   *
+   * SHADOW BOLT IS STILL CAST -- 7.3 times a fight -- by the proc-gated copy at
+   * the top of this list. The id appearing twice is the documented legal shape,
+   * and this is the half that is now redundant rather than the half that works.
+   */
   { abilityId: 'shadow_bolt' },
 ];
 
