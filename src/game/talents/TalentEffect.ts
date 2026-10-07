@@ -634,16 +634,37 @@ export type TalentEffect =
   | {
       readonly kind: 'conditionalDamage';
       readonly requires: BuildRequirement;
+      /**
+       * Which of the talent's numbers is the damage percentage.
+       *
+       * ------------------------------------------------------------------
+       * NATURALIST IS WHY, AND IT WAS WRONG BY A FACTOR OF TEN. "Reduces the
+       * cast time of your Healing Touch spell by 0.5 sec and increases all
+       * damage you deal by 5%" is one row of two numbers, `[0.5, 5]`, and
+       * without this field the effect read index 0 -- so a rank-5 Moonkin
+       * carried x1.005 instead of x1.05, and the figure it was reading was a
+       * number of SECONDS.
+       *
+       * The same trap `abilityDamage.valueIndex` already documents on
+       * Improved Corruption, on an effect kind that never got the field. It
+       * was invisible because half a percent is a plausible multiplier: every
+       * profile ran, nothing errored, and the talent reported itself modelled.
+       * ------------------------------------------------------------------
+       */
+      readonly valueIndex?: number;
     }
 
   /**
    * Adds crit chance to every ability, but only with the right weapon.
    *
-   * Weaponmaster's axe and polearm clause.
+   * Weaponmaster's axe and polearm clause, whose row is `[crit, armor
+   * ignored, extra attack chance]` -- so index 0 is the one it wants, and it
+   * says so rather than relying on the default.
    */
   | {
       readonly kind: 'conditionalCrit';
       readonly requires: BuildRequirement;
+      readonly valueIndex?: number;
     }
 
   /**

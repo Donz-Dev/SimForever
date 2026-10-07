@@ -826,6 +826,14 @@ See [docs/resources.md](docs/resources.md).
   produced a perfectly ordinary figure without casting Fireball once.
 - **MEASURE A LIST, DO NOT REASON ABOUT IT.** Patch one entry, run 30 batches of
   10, treat a difference inside the interval as no difference.
+- **BUT A REAL/noise VERDICT IS A TEST ON THE OUTPUT, so a change with a known
+  EXACT mechanism can be real and be labelled noise.** Naturalist's fix took the
+  Cat from 703.8 to 716.4 and the harness printed `noise`, because 1.8% is inside
+  that profile's own run-to-run interval -- and the change is deterministic:
+  703.8 x 1.02 / 1.002 is 716.4 to the decimal, as is the Moonkin's
+  472.8 x 1.05 / 1.005 = 494.0. **Where the mechanism predicts an exact ratio,
+  check the ratio.** The verdict is the right default and it is a statement about
+  variance, not about whether anything happened.
 
 **AND PATCH IT BY SLICING THE LIST, NOT BY `replace(old, new, 1)` -- THE ENTRIES
 ARE TEXTUALLY IDENTICAL ACROSS LISTS.** The Rogue's Slice and Dice entry is the
@@ -1165,6 +1173,35 @@ no per-point argument either way and what decides it is uptime.
   wants a FRACTION and a talent states a PERCENTAGE. It survived two class PRs,
   because a caster with a very large mana pool looks exactly like a caster with a
   very large mana pool.
+- **AN EFFECT THAT READS THE *WRONG* VALUE IS NOT REPORTED EITHER, AND IT IS
+  WORSE.** `conditionalDamage` had no `valueIndex`, so the Druid's Naturalist
+  read index 0 of `[0.5, 5]` -- "reduces the cast time of your Healing Touch
+  spell by 0.5 sec AND increases all damage you deal by 5%" -- and a rank-5
+  Moonkin carried **x1.005 instead of x1.05** for the whole life of the talent.
+  The number it was reading was a quantity of SECONDS.
+  **THREE THINGS THAT USUALLY CATCH A BROKEN TALENT ALL PASSED IT.** The talent
+  reported itself FULLY modelled rather than unmodelled, so the census counted it
+  in the `Fully` column and no audit looks at a working talent's MAGNITUDE; half
+  a percent is a perfectly plausible blanket multiplier; and the only published
+  check on it was a profile DPS figure that had been measured with the bug
+  already in, so every Moonkin and Cat number in the repository was light and
+  self-consistent. **"Assert the MECHANISM" means the SIZE of the mechanism**,
+  not only that it is wired up.
+  `tests/game/talentValueIndex.test.ts` records all eleven blanket multipliers by
+  hand with what each one's index MEANS, so a twelfth fails until somebody says.
+- **A KIND HAVING `valueIndex` IS NOT THE SAME AS AN EFFECT SETTING IT**, which
+  is why that test asks whether the effect OBJECT carries the key. The first
+  draft listed the kinds that could not name an index and missed Weaponmaster,
+  Arcane Instability and Crusade -- three effects on multi-value rows whose kind
+  does have the field and which do not use it. All three want index 0 and all
+  three were right by inspection; none of them said so.
+- **AND THE SAME SWEEP FOUND A TALENT WITH THE WRONG RULE RATHER THAN THE WRONG
+  INDEX.** Thick Hide is "{0} additional base Armor per LEVEL and another {1}
+  base Armor for each point of DEFENSE SKILL beyond five times your level",
+  declared as `itemArmorPercent` -- a percentage of ITEM armor, which is exactly
+  what Toughness says and neither of what this says. **When a fix motivates a
+  sweep, run the sweep**: the index bug was one talent and the sweep found a
+  second, unrelated one beside it.
 - **An effect that reads no value is DROPPED, not reported.** `talentBuild` asks
   `talentNumber` and `continue`s when it is undefined, so a single-rank talent
   whose values file says `null` produces nothing and reads as unmodelled without

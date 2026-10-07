@@ -623,11 +623,38 @@ while it worked.
 decimal -- which is what a talent change scoped to one build should look like.
 It makes Frostfire the top Mage, above Fire's 401.2 and Arcane's 392.6, and the
 build that existed for the Fire/Frost overlap now has a third reason to. The
-mean across 23 is **541.3**, RE-SUMMED FROM THE TABLE ABOVE rather than
-adjusted. It read 488.3 for a while, which was right when it was written and
-drifted as dive after dive moved a profile and left the average alone -- the same
-failure the census total keeps having, and the same fix: add the rows up. See
-[docs/handoff-apl.md](docs/handoff-apl.md).
+mean across **24** is **547.3**, RE-SUMMED FROM THE TABLE ABOVE rather than
+adjusted. It read 488.3 for a while, then 541.3 **across 23 when there were
+already 24** -- each figure right when it was written and drifted as dive after
+dive moved a profile and left the average alone. **The COUNT drifted too, which
+is the same failure one level up**: Hemo made it twenty-four and the sentence
+kept saying twenty-three. Add the rows up and count them.
+See [docs/handoff-apl.md](docs/handoff-apl.md).
+
+**AND NATURALIST WAS READING A NUMBER OF SECONDS AS A PERCENTAGE.** "Reduces the
+cast time of your Healing Touch spell by 0.5 sec and increases all damage you
+deal by 5%" is one values row of two numbers, `[0.5, 5]`, and
+`conditionalDamage` had no `valueIndex` -- so it read index 0 and a rank-5
+Moonkin carried **x1.005 instead of x1.05** for the whole life of the talent.
+Moonkin **472.8 to 494.0, +21.2**, Cat **703.8 to 716.4, +12.6**, and the other
+twenty-two identical to the decimal.
+
+**BOTH LAND EXACTLY ON THE RATIO, WHICH IS A BETTER CHECK THAN THE VERDICT.**
+472.8 x 1.05 / 1.005 = 494.0 and 703.8 x 1.02 / 1.002 = 716.4, to the decimal in
+both cases -- so the Cat's +12.6 is a deterministic +1.8% even though the harness
+printed `noise` for it. **A REAL/noise verdict is a statistical test on the
+OUTPUT, and a change with a known exact mechanism can be real and be labelled
+noise**: the Cat is a high-variance profile and 1.8% is inside its own interval.
+Read the label, then check the mechanism.
+
+**NOTHING COULD HAVE CAUGHT IT, and that is the part worth keeping.** Half a
+percent is a plausible blanket multiplier; the talent reported itself FULLY
+MODELLED, so the census counted it in the `Fully` column and no audit looks at a
+working talent's magnitude; and the only published check on it was a profile DPS
+figure measured with the bug already in. Every Moonkin and Cat number in this
+repository was light and perfectly self-consistent.
+`tests/game/talentValueIndex.test.ts` now records all eleven blanket
+multipliers, by hand, with what each one's index MEANS.
 
 **AND THEN AN OFFICIAL SOURCE REVISED DEEP WOUNDS AGAIN, THREE BULLETS, AND TWO
 OF THEM WERE ALREADY RIGHT.** "Deep Wounds compared to Vanilla now: rolls over
@@ -795,13 +822,13 @@ Hemo moves five rows between the two columns, which is exactly that kind of edit
 | Profile | Class | Talents | DPS | | Profile | Class | Talents | DPS |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | Seal Twist Ret | Paladin | 13/0/38 | 709.0 | | Hemo Rogue | Rogue | 17/3/31 | 527.1 |
-| Cat Druid | Druid | 9/35/7 | 703.8 | | LW Melee | Hunter | 7/13/31 | 523.8 |
+| Cat Druid | Druid | 9/35/7 | **716.4** | | LW Melee | Hunter | 7/13/31 | 523.8 |
 | DW Fury | Warrior | 18/33/0 | 667.5 | | Shadow Priest | Priest | 16/3/32 | 516.4 |
 | Fire Mage | Mage | 10/39/2 | 624.0 | | Venom Rogue | Rogue | 37/12/2 | 510.6 |
 | Frostfire Mage | Mage | 0/29/22 | 623.2 | | Rupture Rogue | Rogue | 12/8/31 | 497.6 |
 | 2H Arms | Warrior | 38/13/0 | 621.1 | | Bear Druid | Druid | 9/42/0 | 488.5 |
 | Enh Shaman | Shaman | 19/32/0 | 604.0 | | LW Ranged | Hunter | 7/39/5 | 482.1 |
-| BM Hunter | Hunter | 31/20/0 | 595.8 | | Moonkin | Druid | 38/0/13 | 472.8 |
+| BM Hunter | Hunter | 31/20/0 | 595.8 | | Moonkin | Druid | 38/0/13 | **494.0** |
 | Combat Rogue | Rogue | 18/33/0 | 586.3 | | Prot Warr | Warrior | 17/0/34 | 457.0 |
 | Shockadin | Paladin | 23/0/28 | 583.6 | | Ele Shaman | Shaman | 38/13/0 | 440.2 |
 | Arcane Mage | Mage | 47/4/0 | 581.8 | | SM/DS | Warlock | 40/11/0 | 435.9 |
