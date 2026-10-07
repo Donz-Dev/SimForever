@@ -302,8 +302,20 @@ export const MAGE_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
 
   piercing_ice: [{ kind: 'schoolDamage', schools: ['frost'] }],
 
+  /*
+   * FROSTFIRE BOLT IS A FROST SPELL HERE TOO, and this is the one of the three
+   * that `countsAsSchools` could not reach: a cast modifier selects by ABILITY
+   * ID, because cost is resolved before any damage request exists. So the id
+   * goes in the list by hand -- and the Frostfire profile takes this 3/3 and
+   * casts Frostfire Bolt as its filler, so the 15% was missing from the
+   * cheapest place it could have been noticed.
+   */
   frost_channeling: [
-    { kind: 'grantCastModifier', abilityIds: ['frostbolt', 'ice_lance'], property: 'costFraction' },
+    {
+      kind: 'grantCastModifier',
+      abilityIds: ['frostbolt', 'frostfire_bolt', 'ice_lance'],
+      property: 'costFraction',
+    },
     { kind: 'unmodelled', scope: 'threat', reason: `Its mana reduction applies. ${NO_THREAT}` },
   ],
 

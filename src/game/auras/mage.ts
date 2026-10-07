@@ -1,4 +1,4 @@
-import type { AuraDefinition } from '../../engine';
+import type { AuraDefinition, DamageSchool } from '../../engine';
 import { dealDamage, flat, seconds } from '../../engine';
 import {
   FIREBALL_SP_COEFFICIENT,
@@ -81,6 +81,7 @@ function tick(
   amount: number,
   school: typeof ARCANE | typeof FIRE,
   powerCoefficient: number,
+  options: { readonly canCrit?: boolean; readonly countsAsSchools?: readonly DamageSchool[] } = {},
 ): void {
   const source = context.combatant(aura.sourceId);
   const target = context.combatant(aura.targetId);
@@ -95,7 +96,14 @@ function tick(
     baseAmount: amount,
     powerCoefficient,
     periodic: true,
-    critFrom: 'spell',
+    /*
+     * EVERY DoT IN THIS RULESET CAN CRIT, AND IGNITE IS THE EXCEPTION. The
+     * field is OMITTED rather than set to anything, which is how "cannot crit"
+     * is said here -- and it also means the tick draws no random number, so
+     * adding or removing it cannot shift a seeded run.
+     */
+    ...(options.canCrit === false ? {} : { critFrom: 'spell' as const }),
+    countsAsSchools: options.countsAsSchools,
     appliesArmor: false,
   });
 }
@@ -225,6 +233,31 @@ export const FROSTFIRE_COEFFICIENTS = {
   perTick: FROSTFIRE_BOLT_TICK_SP_COEFFICIENT,
 };
 
+/**
+ * The further school Frostfire Bolt counts as, for the caster's own talents.
+ *
+ * ----------------------------------------------------------------------------
+ * TEN MAGE TALENTS TREAT IT AS BOTH SCHOOLS, by the ruleset owner, and seven
+ * of them already did. The three that did not were the FROST-scoped ones, and
+ * they failed in two different ways:
+ *
+ *   Piercing Ice   `schoolDamage: ['frost']`      -- this field fixes it
+ *   Ice Shards     `schoolCritDamage: ['frost']`  -- this field fixes it
+ *   Frost Channeling  a cast modifier naming ability ids -- fixed by adding
+ *                     `frostfire_bolt` to that list, in `mageEffects.ts`
+ *
+ * The other seven select either by ABILITY ID -- Ignite, Improved Scorch,
+ * Master of Elements, Combustion -- or by the FIRE school, which it is dealt
+ * as: Critical Mass, Fire Power, Elemental Precision.
+ *
+ * IT IS STILL DEALT AS FIRE, and that is not a contradiction. `school` answers
+ * "which vulnerability, which resistance, what the log says" and needs one
+ * answer; `countsAsSchools` answers "which of the caster's school talents
+ * select it" and is the only question with two.
+ * ----------------------------------------------------------------------------
+ */
+export const FROSTFIRE_ALSO_COUNTS_AS = ['frost'] as const;
+
 export const FROSTFIRE_DOT: AuraDefinition = {
   id: 'frostfire_bolt',
   name: 'Frostfire Bolt',
@@ -240,6 +273,14 @@ export const FROSTFIRE_DOT: AuraDefinition = {
         FROSTFIRE_DOT_TOTAL / (FROSTFIRE_DOT_DURATION_MS / FROSTFIRE_TICK_INTERVAL_MS),
         FIRE,
         FROSTFIRE_COEFFICIENTS.perTick,
+        /*
+         * THE BURN IS THE SAME SPELL AND COUNTS THE SAME WAY. Piercing Ice is
+         * "damage done by your Frost spells" and the burn is part of the
+         * spell; Ice Shards is crit damage and this tick can crit, through
+         * `critFrom: 'spell'`. Leaving it off the tick would have made the
+         * fix cover 93% of the ability -- a smaller number and no error.
+         */
+        { countsAsSchools: FROSTFIRE_ALSO_COUNTS_AS },
       ),
   },
 };
@@ -267,31 +308,66 @@ export const FROSTFIRE_DOT: AuraDefinition = {
 export const IGNITE_DURATION_MS = seconds(4);
 export const IGNITE_TICK_INTERVAL_MS = seconds(2);
 
+/*
+ * ============================================================================
+ * IGNITE IS DEEP WOUNDS IN A DIFFERENT SCHOOL, and the ruleset owner has said
+ * so: both are DoTs applied BY a critical strike, and both carry the same two
+ * exceptions because of it.
+ *
+ *   IT CANNOT CRIT          against the general Forever rule that every DoT
+ *                           can. The crit is already in the magnitude -- the
+ *                           burn is a share of a hit that was multiplied by
+ *                           1.5 -- so letting the tick crit as well pays for
+ *                           the same crit twice.
+ *
+ *   IT ROLLS OVER           a second crit does not throw the undelivered
+ *                           remainder away. `periodic.pool` carries that and
+ *                           the engine owns the arithmetic; this function says
+ *                           only what THIS application contributes.
+ *
+ * THE OLD COMMENT ARGUED THE OPPOSITE AND ARGUED IT WELL: "Forever's tooltip
+ * describes one burn from one crit and says nothing about rolling them
+ * together, so the simpler reading is taken and stated. Classic's Ignite does
+ * combine, which is exactly the kind of inherited assumption this project has
+ * been caught by before." Every step of that is sound and the conclusion was
+ * wrong, because the tooltip was the wrong source to ask -- `periodic.pool`
+ * exists BECAUSE the owner specified this behaviour for Deep Wounds, and the
+ * two effects are one mechanic. **A reading flagged as an interpretation is
+ * still an interpretation after it has sat there for months.**
+ *
+ * THE DURATION STILL RESETS, which is not a contradiction and is the same
+ * split Deep Wounds documents: `refreshBehaviour: 'reset'` restarts the four
+ * seconds while the pool carries the damage, and the two are separate clocks.
+ * ============================================================================
+ */
 export function igniteAura(totalDamage: number): AuraDefinition {
-  const ticks = IGNITE_DURATION_MS / IGNITE_TICK_INTERVAL_MS;
   return {
     id: 'ignite',
     name: 'Ignite',
     durationMs: IGNITE_DURATION_MS,
     isDebuff: true,
-    /*
-     * RESET, NOT EXTEND, and a second crit REPLACES rather than adding to the
-     * remainder. Forever's tooltip describes one burn from one crit and says
-     * nothing about rolling them together, so the simpler reading is taken and
-     * stated. Classic's Ignite does combine, which is exactly the kind of
-     * inherited assumption this project has been caught by before.
-     */
     refreshBehaviour: 'reset',
     periodic: {
       intervalMs: IGNITE_TICK_INTERVAL_MS,
+      /*
+       * What THIS crit contributes, read off the hit that caused it. The share
+       * per tick is DERIVED by the engine from the duration and the interval,
+       * so the two-tick split is not a third constant here.
+       */
+      pool: () => totalDamage,
       /*
        * NO COEFFICIENT, AND THAT IS NOT AN OMISSION. Ignite's magnitude is a
        * percentage OF THE CRIT THAT CAUSED IT, and that hit was already
        * scaled by its own spell's coefficient -- so a coefficient here would
        * apply spell power twice to the same damage. The 0 is the rule for
-       * every effect whose size is derived from another hit.
+       * every effect whose size is derived from another hit, and `canCrit:
+       * false` is the second half of that same rule.
        */
-      onTick: (context, aura) => tick(context, aura, totalDamage / ticks, FIRE, 0),
+      onTick: (context, aura) => {
+        const amount = aura.drawFromPool();
+        if (amount <= 0) return;
+        tick(context, aura, amount, FIRE, 0, { canCrit: false });
+      },
     },
   };
 }
@@ -806,6 +882,57 @@ export const MISSILE_BARRAGE: AuraDefinition = {
 // ---------------------------------------------------------------------------
 // Armor
 // ---------------------------------------------------------------------------
+
+/*
+ * ============================================================================
+ * EVOCATION: "While channeling this spell, your mana regeneration is active
+ * and increased by 1,500%. Lasts 8 sec."
+ *
+ * THE CAPTURE AND THE OWNER AGREE TO THE DECIMAL, which is worth recording
+ * because almost nothing else in this project does. The spellbook says "+1,500%"
+ * and the owner says "multiplies it by 16x", and +1500% IS x16 -- so the
+ * multiplier is not an interpretation of either wording.
+ *
+ * BOTH CLAUSES ARE ONE SENTENCE AND TWO FIELDS, and neither is new:
+ *
+ *   "mana regeneration is ACTIVE"   `manaRegenBypass` at 100. That stat exists
+ *                                   for the five second rule and is already fed
+ *                                   by Mage Armor and Arcane Meditation; it is
+ *                                   clamped at 100 by the RULE rather than here,
+ *                                   so stacking on top of those is harmless.
+ *                                   This is the owner's "immediately starts your
+ *                                   OUT-OF-COMBAT rate" -- the out-of-combat
+ *                                   rate IS the unsuppressed one.
+ *   "increased by 1,500%"           `resourceRegenMultiplier`, which multiplies
+ *                                   the RATE and leaves the 50ms cadence alone.
+ *
+ * SO IT SCALES WITH THE CHARACTER'S OWN SPIRIT AND GEAR, which is the whole
+ * reason to express it as a rate rather than as a flat grant per tick: a Mage
+ * that gears into mana regeneration gets more out of Evocation, and a flat
+ * number would have frozen that at whatever today's gear gives.
+ *
+ * NO DURATION OF ITS OWN WORTH TRUSTING. The eight seconds here are a BACKSTOP;
+ * what really ends it is `EVOCATION`'s own `onCast`, which removes it when the
+ * channel completes. That is the only way to make the window track a HASTED
+ * channel -- haste shortens the channel, so a hasted Evocation delivers less
+ * total mana at the same rate, and a fixed eight-second aura would have paid
+ * out after the channel had already finished.
+ * ============================================================================
+ */
+export const EVOCATION_CHANNEL_MS = seconds(8);
+export const EVOCATION_REGEN_MULTIPLIER = 16;
+/** Full regeneration while casting, which is what "is active" means. */
+export const EVOCATION_REGEN_BYPASS = 100;
+
+export const EVOCATION_AURA: AuraDefinition = {
+  id: 'evocation',
+  name: 'Evocation',
+  // A backstop only. `EVOCATION.onCast` is what ends it, on the channel's own
+  // clock, so the window cannot outlive a hasted cast.
+  durationMs: EVOCATION_CHANNEL_MS,
+  statModifiers: [flat('manaRegenBypass', EVOCATION_REGEN_BYPASS)],
+  resourceRegenMultiplier: { mana: EVOCATION_REGEN_MULTIPLIER },
+};
 
 /**
  * Mage Armor: "Increases your resistance to all magic by 15 and allows 50% of

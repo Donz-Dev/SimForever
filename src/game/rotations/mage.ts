@@ -74,6 +74,39 @@ const targetStacksBelow = (auraId: string, cap: number) =>
   (_context: SimulationContext, _actor: Combatant, target?: Combatant): boolean =>
     target !== undefined && target.auras.stacksOf(auraId) < cap;
 
+/**
+ * "The character actually has <reaction>", which is how a list asks whether a
+ * TALENT was taken.
+ *
+ * ----------------------------------------------------------------------------
+ * IT READS THE BUILT CHARACTER AND NOT THE BUILD, which is the arrangement
+ * this codebase already uses to gate Charge behind Vanguard: the talent puts
+ * something on the character and the rule reads that, so no list has to name a
+ * talent id and no rank arithmetic happens here.
+ *
+ * A REACTION IS THE RIGHT THING TO READ FOR THIS ONE. Improved Scorch IS its
+ * reaction -- the Fire Vulnerability debuff is applied by it and by nothing
+ * else -- so "does this character have the reaction" and "is Scorch worth
+ * casting for the debuff" are the same question. Asking the ability book would
+ * not work: Scorch is a trainer spell every Mage owns.
+ * ----------------------------------------------------------------------------
+ */
+const hasReaction = (reactionId: string) =>
+  (_context: SimulationContext, actor: Combatant): boolean =>
+    actor.reactions.some((reaction) => reaction.id === reactionId);
+
+/** "Mana is at or below N% of maximum." */
+const selfResourceBelowPercent = (resource: 'mana', percent: number) =>
+  (_context: SimulationContext, actor: Combatant): boolean => {
+    const pool = actor.resources.get(resource);
+    if (!pool || pool.maximum <= 0) return false;
+    return (pool.current / pool.maximum) * 100 <= percent;
+  };
+
+/** "<buff> is not on the Mage at all." */
+const selfLacks = (auraId: string) =>
+  (_context: SimulationContext, actor: Combatant): boolean => !actor.auras.has(auraId);
+
 type Condition = (
   context: SimulationContext,
   actor: Combatant,
@@ -112,9 +145,48 @@ const SCORCH_STACK_CAP = IMPROVED_SCORCH_MAX_STACKS;
 /** "or scorch duration <= 3 seconds", which refreshes it before it drops. */
 const SCORCH_REFRESH_SECONDS = 3;
 
-const scorchNeeded = either(
-  targetStacksBelow('fire_vulnerability', SCORCH_STACK_CAP),
-  targetAuraAtMost('fire_vulnerability', SCORCH_REFRESH_SECONDS),
+/*
+ * ----------------------------------------------------------------------------
+ * AND ONLY IF THE BUILD HAS IMPROVED SCORCH AT ALL, which the ruleset owner
+ * has now added. Without the talent, Scorch applies no Fire Vulnerability --
+ * so the two clauses below are permanently true, Scorch becomes an
+ * unconditional entry near the top of two lists, and every entry beneath it is
+ * unreachable. That is the same failure the `<= 5` reading would have caused,
+ * arrived at from the other direction: there the cap made the test always
+ * true, here the absent debuff does.
+ *
+ * AND IT IS NOT HYPOTHETICAL FOR A LIST THAT SERVES SEVERAL BUILDS. All three
+ * of the owner's Mage profiles take Improved Scorch 3/3 today, so this changes
+ * none of them -- it is a guard on the LIST rather than a fix to a profile,
+ * and the reason to put it in now is that an untalented Fire mage running the
+ * Fire list would otherwise cast a 181-damage spell over a 483-damage one for
+ * a whole fight and look perfectly ordinary doing it.
+ * ----------------------------------------------------------------------------
+ */
+/*
+ * ============================================================================
+ * EVOCATION AT 10% MANA, IN ALL THREE LISTS, by the ruleset owner.
+ *
+ * ONCE A FIGHT EFFECTIVELY -- an eight-minute cooldown against a one-minute
+ * encounter -- so the only decision the list makes is WHEN, and the owner has
+ * set it at a tenth of the pool. That is late on purpose: the channel is eight
+ * seconds of casting nothing, so spending it early means paying the eight
+ * seconds for mana the Mage had not yet run out of.
+ *
+ * ABOVE EVERYTHING BUT THE ARMOR, because a conditional entry that is almost
+ * never true costs the entries below it nothing -- and when it IS true, a Mage
+ * at 10% mana is about to be unable to cast its filler anyway.
+ * ============================================================================
+ */
+const EVOCATION_MANA_PERCENT = 10;
+const evocationNeeded = selfResourceBelowPercent('mana', EVOCATION_MANA_PERCENT);
+
+const scorchNeeded = all(
+  hasReaction('improved_scorch'),
+  either(
+    targetStacksBelow('fire_vulnerability', SCORCH_STACK_CAP),
+    targetAuraAtMost('fire_vulnerability', SCORCH_REFRESH_SECONDS),
+  ),
 );
 
 // ---------------------------------------------------------------------------
@@ -137,6 +209,7 @@ const scorchNeeded = either(
  */
 export const MAGE_FIRE: readonly PriorityEntry[] = [
   { abilityId: 'mage_armor', condition: selfExpired('mage_armor') },
+  { abilityId: 'evocation', condition: evocationNeeded },
   { abilityId: 'scorch', condition: scorchNeeded },
   /*
    * AT THREE STACKS, WHICH IS THE CAP. Hot Streak takes a quarter off
@@ -175,6 +248,7 @@ export const MAGE_FIRE: readonly PriorityEntry[] = [
  */
 export const MAGE_FROSTFIRE: readonly PriorityEntry[] = [
   { abilityId: 'mage_armor', condition: selfExpired('mage_armor') },
+  { abilityId: 'evocation', condition: evocationNeeded },
   { abilityId: 'scorch', condition: scorchNeeded },
   { abilityId: 'pyroblast', condition: selfStacksExactly('hot_streak', HOT_STREAK_MAX_STACKS) },
   /*
@@ -209,6 +283,7 @@ export const ARCANE_BLAST_STACK_LIMIT = 2;
 
 export const MAGE_ARCANE: readonly PriorityEntry[] = [
   { abilityId: 'mage_armor', condition: selfExpired('mage_armor') },
+  { abilityId: 'evocation', condition: evocationNeeded },
   /*
    * ARCANE POWER SPENT INTO A PROC RATHER THAN ON COOLDOWN, which is the shape
    * of the owner's whole list: it fires only when a free, half-length Arcane
@@ -230,6 +305,34 @@ export const MAGE_ARCANE: readonly PriorityEntry[] = [
    * UNCONDITIONAL one. Both entries are gated and Arcane Blast is the filler.
    */
   { abilityId: 'arcane_missiles', condition: selfStacksExactly('arcane_blast', 4) },
+  /*
+   * PRESENCE OF MIND AT EXACTLY ONE ARCANE BLAST STACK, WITHOUT A BARRAGE, by
+   * the ruleset owner -- and it was in no list at all before, which the
+   * handoff recorded as deliberate: "it makes the next cast instant, and the
+   * shell used it on cooldown; the owner's order does not name it".
+   *
+   * WHAT THE CONDITION BUYS. The next cast after this one is Arcane Blast --
+   * the filler below, and nothing between here and there can fire, because
+   * Missile Barrage is excluded by this entry's own condition and the
+   * four-stack Missiles entry cannot be true at one stack. So the instant goes
+   * where the owner aimed it rather than wherever the list happened to be.
+   *
+   * ONE STACK AND NOT FOUR, which is the opposite of where a damage cooldown
+   * goes and is the point: the stacks raise the cost of Arcane Blast by 175%
+   * each, so the CHEAP Blast is the one worth making free of its cast time,
+   * and the expensive ones are what the Missiles entry above is for.
+   *
+   * `requiresCastTime` on its aura is what stops the charge being eaten by an
+   * instant, so this cannot be wasted on the Mage Armor or Evocation entries
+   * above it.
+   */
+  {
+    abilityId: 'presence_of_mind',
+    condition: all(
+      selfStacksExactly('arcane_blast', 1),
+      selfLacks('missile_barrage'),
+    ),
+  },
   { abilityId: 'arcane_blast' },
 ];
 

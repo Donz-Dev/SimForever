@@ -20,6 +20,7 @@ import {
   ICE_LANCE_DAMAGE,
   MAGE_ARMOR_ABILITY,
   ICE_LANCE_FROZEN_MULTIPLIER,
+  EVOCATION,
   MAGE_ABILITIES,
   MAGE_BASE_MANA,
   PYROBLAST_DAMAGE,
@@ -37,6 +38,13 @@ import {
   WINTERS_CHILL_DURATION_MS,
   wintersChillAura,
   COMBUSTION,
+  EVOCATION_AURA,
+  EVOCATION_CHANNEL_MS,
+  FROSTFIRE_ALSO_COUNTS_AS,
+  EVOCATION_REGEN_BYPASS,
+  EVOCATION_REGEN_MULTIPLIER,
+  IGNITE_DURATION_MS,
+  MISSILE_BARRAGE,
   COMBUSTION_CRITS_TO_END,
   COMBUSTION_CRIT_PER_STACK,
   COMBUSTION_STACK_CAP,
@@ -64,7 +72,12 @@ import {
 } from '../../src/game/reactions/mageTalents';
 import { talentNumber, talentNumbers } from '../../src/game/talents/talentValues';
 import { castAbility } from '../../src/engine';
-import { mageRotation } from '../../src/game/rotations/mage';
+import {
+  MAGE_ARCANE,
+  MAGE_FIRE,
+  MAGE_FROSTFIRE,
+  mageRotation,
+} from '../../src/game/rotations/mage';
 import { baseManaFor } from '../../src/game/character/baseStatLookup';
 import { RACE_IDS } from '../../src/game/character/ids';
 
@@ -1142,5 +1155,495 @@ describe("Winter's Chill, a crit debuff the TARGET carries", () => {
     const before = critOf();
     for (let i = 0; i < 5; i += 1) simulation.applyAura(target, wintersChillAura(5), actor.id);
     expect(critOf() - before).toBeCloseTo(5 * WINTERS_CHILL_CRIT_PER_STACK, 10);
+  });
+});
+
+describe('Ignite, which is Deep Wounds in a different school', () => {
+  /*
+   * --------------------------------------------------------------------------
+   * TWO EXCEPTIONS, BOTH BY THE RULESET OWNER, and both because Ignite is a
+   * DoT applied BY a critical strike:
+   *
+   *   IT CANNOT CRIT   against the general Forever rule that every DoT can.
+   *                    The crit is already in the magnitude, so a crit on the
+   *                    tick pays for the same crit twice.
+   *   IT ROLLS OVER    a second crit adds to the undelivered remainder rather
+   *                    than replacing it.
+   *
+   * THE OLD CODE DID NEITHER, and its comment argued the second one away well:
+   * "Forever's tooltip describes one burn from one crit and says nothing about
+   * rolling them together ... Classic's Ignite does combine, which is exactly
+   * the kind of inherited assumption this project has been caught by before."
+   * Every step sound, conclusion wrong -- the tooltip was the wrong source, and
+   * `periodic.pool` existed because the owner had already specified this for
+   * Deep Wounds.
+   * --------------------------------------------------------------------------
+   */
+  it('cannot crit, which is the field being ABSENT rather than false', () => {
+    /*
+     * ASSERTED ON THE EVENT STREAM rather than on the definition, because
+     * "cannot crit" is expressed by omitting `critFrom` and there is nothing on
+     * the aura to read. At 100% spell crit a single surviving crit roll would
+     * make every tick a crit, so this cannot pass by luck.
+     */
+    const mage = makeAttacker({ autoAttack: 'none', stats: { spellCritChance: 100 } });
+    const target = makeTarget({ maxHealth: 1_000_000_000 });
+    const events: TelemetryEvent[] = [];
+    const simulation = buildSimulation([mage, target], { durationMs: seconds(900) }, {
+      emit: (event) => events.push(event),
+    });
+    simulation.begin();
+
+    for (let i = 0; i < 100; i += 1) {
+      simulation.applyAura(target, igniteAura(400), mage.id);
+      simulation.advanceTo(seconds(5 * (i + 1)));
+    }
+
+    const ticks = events.filter((e) => e.type === 'damage' && e.abilityId === 'ignite');
+    expect(ticks.length).toBeGreaterThan(100);
+    expect(ticks.filter((e) => e.type === 'damage' && e.critical)).toHaveLength(0);
+  });
+
+  it('rolls the undelivered remainder into the new application', () => {
+    /*
+     * THE WHOLE POINT, and the numbers are what say it. One Ignite of 400 is
+     * two ticks of 200. Re-applied after ONE tick, the second application finds
+     * 200 still owed and adds its own 400, so the pool is 600 over two ticks of
+     * 300 -- total delivered 200 + 300 + 300 = 800, which is both crits paid in
+     * full. The old behaviour threw the 200 away and delivered 600.
+     */
+    const mage = makeAttacker({ autoAttack: 'none' });
+    const target = makeTarget({ maxHealth: 1_000_000_000 });
+    const events: TelemetryEvent[] = [];
+    const simulation = buildSimulation([mage, target], { durationMs: seconds(60) }, {
+      emit: (event) => events.push(event),
+    });
+    simulation.begin();
+
+    const amounts = () =>
+      events
+        .filter(
+          (e): e is Extract<TelemetryEvent, { type: 'damage' }> =>
+            e.type === 'damage' && e.abilityId === 'ignite',
+        )
+        .map((e) => e.amount);
+
+    simulation.applyAura(target, igniteAura(400), mage.id);
+    simulation.advanceTo(seconds(2));
+    expect(amounts()).toEqual([200]);
+
+    // A second crit, with 200 still owed.
+    simulation.applyAura(target, igniteAura(400), mage.id);
+    simulation.advanceTo(seconds(10));
+    const delivered = amounts();
+    expect(delivered).toHaveLength(3);
+    expect(delivered.reduce((a, b) => a + b, 0)).toBeCloseTo(800, 6);
+    expect(delivered[1]).toBeCloseTo(300, 6);
+    expect(delivered[2]).toBeCloseTo(300, 6);
+  });
+
+  it('still resets its DURATION, which is a separate clock from the pool', () => {
+    // The same split Deep Wounds documents: `refreshBehaviour: 'reset'`
+    // restarts the four seconds while `pool` carries the damage forward.
+    expect(igniteAura(100).refreshBehaviour).toBe('reset');
+    expect(igniteAura(100).durationMs).toBe(IGNITE_DURATION_MS);
+  });
+});
+
+describe('Frostfire Bolt, which counts as BOTH Frost and Fire', () => {
+  /*
+   * --------------------------------------------------------------------------
+   * "This spell ... counts as both Frost and Fire damage", from its own
+   * spellbook entry, and the ruleset owner has listed the ten talents it means:
+   * Ignite, Improved Scorch, Master of Elements, Critical Mass, Fire Power,
+   * Combustion, Elemental Precision, Ice Shards, Frost Channeling and Piercing
+   * Ice.
+   *
+   * SEVEN ALREADY WORKED and three did not, all three of them the FROST-scoped
+   * ones. The owner spotted Piercing Ice by eye; Ice Shards and Frost
+   * Channeling were the same bug wearing two different selectors.
+   *
+   * TEN POINTS OF FROST IN EVERY ALLOCATION HERE, because Piercing Ice and
+   * Frost Channeling both sit at tier 10 and `createPlayer` strips an illegal
+   * rank SILENTLY -- which reads as "the talent is worth nothing" and is how
+   * this test first appeared to fail.
+   * --------------------------------------------------------------------------
+   */
+  const FROST_TIER_10 = { elemental_precision: 5, ice_shards: 5 };
+
+  const frostMage = (talents: Record<string, number>) => {
+    const built = PRESETS_BY_ID.get('mage_frostfire')!.build();
+    return createPlayer({
+      race: 'gnome',
+      characterClass: 'mage',
+      combatStyle: 'caster',
+      talents,
+      equipment: built.equipment,
+    });
+  };
+
+  const meanDirectDamage = (talents: Record<string, number>, abilityId: string): number => {
+    const mage = frostMage(talents);
+    const target = makeTarget({ maxHealth: 1e9 });
+    const events: TelemetryEvent[] = [];
+    const simulation = buildSimulation([mage, target], { durationMs: seconds(2000) }, {
+      emit: (event) => events.push(event),
+    });
+    simulation.begin();
+    const ability = mage.abilities.get(abilityId)!;
+    let now = 0;
+    for (let i = 0; i < 300; i += 1) {
+      now += 4000;
+      simulation.advanceTo(now);
+      mage.resources.get('mana')!.set(100_000);
+      mage.gcdReadyAt = 0;
+      mage.castEndsAt = 0;
+      castAbility(simulation, mage, ability, target);
+    }
+    simulation.advanceTo(now + 20_000);
+    // DIRECT hits only. The burn is in the same row and would dilute the mean.
+    const hits = events.filter(
+      (e): e is Extract<TelemetryEvent, { type: 'damage' }> =>
+        e.type === 'damage' && e.abilityId === abilityId && !e.periodic && e.amount > 0,
+    );
+    expect(hits.length).toBeGreaterThan(150);
+    return hits.reduce((n, e) => n + e.amount, 0) / hits.length;
+  };
+
+  it('declares the second school rather than changing its school', () => {
+    /*
+     * IT IS STILL DEALT AS FIRE, and that is not a contradiction: `school`
+     * answers "which vulnerability, which resistance, what the log says" and
+     * needs ONE answer. `countsAsSchools` is the only question with two --
+     * which of the caster's own school talents select it.
+     */
+    expect([...FROSTFIRE_ALSO_COUNTS_AS]).toEqual(['frost']);
+  });
+
+  it('takes Piercing Ice, a FROST damage talent, at its stated 6%', () => {
+    /*
+     * THE ONE THE OWNER SPOTTED. `schoolDamage: ['frost']` could not reach a
+     * spell dealt as Fire, so 3/3 Piercing Ice was worth nothing to the
+     * Frostfire build's own filler.
+     */
+    const without = meanDirectDamage(FROST_TIER_10, 'frostfire_bolt');
+    const withIt = meanDirectDamage({ ...FROST_TIER_10, piercing_ice: 3 }, 'frostfire_bolt');
+    expect(withIt / without).toBeCloseTo(1.06, 2);
+  });
+
+  it('multiplies two DIFFERENT school damage talents together', () => {
+    // Fire Power 5/5 is +10% Fire and Piercing Ice 3/3 is +6% Frost, and a
+    // spell that is both takes both rather than the larger.
+    const fireOnly = meanDirectDamage({ ...FROST_TIER_10, fire_power: 5 }, 'frostfire_bolt');
+    const both = meanDirectDamage(
+      { ...FROST_TIER_10, fire_power: 5, piercing_ice: 3 },
+      'frostfire_bolt',
+    );
+    expect(both / fireOnly).toBeCloseTo(1.06, 2);
+  });
+
+  it('is paid ONCE by a talent that names both of its schools', () => {
+    /*
+     * THE DOUBLE-COUNT GUARD, and the first thing this field met. Elemental
+     * Precision is "+5% chance to hit with Frost AND Fire spells" -- ONE source
+     * -- so summing the two schools gave a Frostfire Bolt +10% and its measured
+     * miss rate fell to 5.26% against an expected 10%.
+     *
+     * ASSERTED AS "THE SAME AS SCORCH'S", which is the comparison that cannot
+     * drift with the table. Scorch is Fire alone and Frostfire Bolt is both, so
+     * one talent naming both schools must leave the two spells on the SAME miss
+     * rate -- and paid twice, Frostfire's would be about half of it.
+     */
+    const built = PRESETS_BY_ID.get('mage_frostfire')!.build();
+    expect(MAGE_TALENT_EFFECTS.elemental_precision).toEqual([
+      { kind: 'schoolHit', schools: ['frost', 'fire'] },
+    ]);
+
+    const batch = runProfileBatch({
+      ...built,
+      simulation: { ...built.simulation, iterations: 60 },
+    } as never);
+    const bolt = batch.abilities.find((row) => row.abilityName === 'Frostfire Bolt')!;
+    const scorch = batch.abilities.find((row) => row.abilityName === 'Scorch')!;
+
+    expect(scorch.avoidRate).toBeGreaterThan(0);
+    expect(bolt.avoidRate).toBeCloseTo(scorch.avoidRate, 1);
+  });
+});
+
+describe('what the Results panel divides its rates by', () => {
+  /*
+   * --------------------------------------------------------------------------
+   * THE OWNER READ ELEMENTAL PRECISION OFF THE MISS COLUMN AND SAW HALF OF IT.
+   * The talent was delivering its full 1% a point to the ROLL the whole time;
+   * the dilution was in the report. `recordDealt` counted every damage event
+   * into `attempts`, including DoT ticks, and the panel divided avoided and
+   * crits by that -- so a HYBRID, whose burn pools into its own row, reported a
+   * miss rate over a denominator those outcomes were never offered.
+   *
+   * Frostfire Bolt: 21.8 attempts a fight of which 12.0 are casts, reporting
+   * 2.83% miss on a spell whose casts miss 10% of the time. Arcane Blast and
+   * Arcane Missiles, which have no burn, read 9.71% and 10.30% against the same
+   * 10% expectation -- the two spells with nothing to dilute them were right
+   * all along, which is what pins the cause on the denominator.
+   * --------------------------------------------------------------------------
+   */
+  it('reports a hybrid miss rate over its CASTS, not over its ticks', () => {
+    const built = PRESETS_BY_ID.get('mage_frostfire')!.build();
+    const batch = runProfileBatch({
+      ...built,
+      simulation: { ...built.simulation, iterations: 40 },
+    } as never);
+
+    const bolt = batch.abilities.find((row) => row.abilityName === 'Frostfire Bolt')!;
+    // The burn really is in this row: more attempts than casts.
+    expect(bolt.attempts).toBeGreaterThan(bolt.uses);
+    // And the rate is about the casts. 5/5 Elemental Precision on a 15% table.
+    expect(100 * bolt.avoidRate).toBeGreaterThan(7);
+    expect(100 * bolt.avoidRate).toBeLessThan(13);
+  });
+
+  it('leaves a pure DoT at zero rather than dividing by nothing', () => {
+    /*
+     * THE FALLBACK. Ignite has no cast of its own, so nothing in its row ever
+     * rolled -- dividing by that would be `NaN` on the page. Its rates are all
+     * zero either way: a tick cannot be avoided and this one cannot crit.
+     */
+    const built = PRESETS_BY_ID.get('mage_fire')!.build();
+    const batch = runProfileBatch({
+      ...built,
+      simulation: { ...built.simulation, iterations: 10 },
+    } as never);
+
+    const ignite = batch.abilities.find((row) => row.abilityName === 'Ignite')!;
+    expect(ignite.attempts).toBeGreaterThan(0);
+    expect(ignite.uses).toBe(0);
+    expect(Number.isFinite(ignite.avoidRate)).toBe(true);
+    expect(ignite.avoidRate).toBe(0);
+    expect(ignite.critRate).toBe(0);
+  });
+});
+
+describe('Evocation, which pays out during its own channel', () => {
+  /*
+   * --------------------------------------------------------------------------
+   * "While channeling this spell, your mana regeneration is active and
+   * increased by 1,500%. Lasts 8 sec." The capture and the ruleset owner agree
+   * to the decimal -- +1500% IS x16 -- which is rare enough in this project to
+   * be worth saying.
+   *
+   * IT IS WHY `Ability.onCastStart` EXISTS. `onCast` runs at the END of a cast,
+   * so an effect that has to be in place FOR the cast had nowhere to go, and
+   * the aura's duration would otherwise have to guess a HASTED channel length.
+   * The pair is the design: `onCastStart` opens the window and `onCast` closes
+   * it, so the two end together whatever haste does.
+   * --------------------------------------------------------------------------
+   */
+  it('is a rate rather than a flat grant, so it scales with the character', () => {
+    expect(EVOCATION_REGEN_MULTIPLIER).toBe(16);
+    expect(EVOCATION_AURA.resourceRegenMultiplier?.mana).toBe(16);
+    // "Regeneration is ACTIVE" -- the five second rule fully bypassed.
+    expect(EVOCATION_REGEN_BYPASS).toBe(100);
+  });
+
+  it('opens the window at cast START and closes it when the channel ends', () => {
+    const mage = makeAttacker({
+      autoAttack: 'none',
+      abilities: [EVOCATION],
+      resources: [{ type: 'mana', maximum: 100_000 }],
+    });
+    const simulation = buildSimulation([mage, makeTarget()], { durationMs: seconds(60) });
+    simulation.begin();
+
+    expect(mage.auras.has('evocation')).toBe(false);
+    castAbility(simulation, mage, EVOCATION, undefined);
+    // Up immediately, which is the half `onCast` could not do.
+    expect(mage.auras.has('evocation')).toBe(true);
+
+    simulation.advanceTo(EVOCATION_CHANNEL_MS - 500);
+    expect(mage.auras.has('evocation')).toBe(true);
+
+    simulation.advanceTo(EVOCATION_CHANNEL_MS + 500);
+    // And gone when the channel completed, not when a duration said so.
+    expect(mage.auras.has('evocation')).toBe(false);
+  });
+
+  it('is sixteen times the rate, and beats the five second rule as well', () => {
+    /*
+     * MEASURED ON `manaPerTick`, which IS the rule, rather than on mana in a
+     * pool over time. The pool measurement is what this test did first and it
+     * was worse in two ways at once: eight seconds of sixteenfold regeneration
+     * CAPS a Mage's mana, so the ratio came back below 1 and read like a broken
+     * multiplier rather than a full bar.
+     *
+     * AND IT FOUND A REAL ONE ON THE WAY. `regenMultiplierFor` was read by the
+     * energy rule and by neither of the other two, so `{ mana: 16 }` compiled,
+     * applied and did nothing -- the ratio was exactly 1.0000. All three rules
+     * go through it now.
+     */
+    const built = PRESETS_BY_ID.get('mage_fire')!.build();
+    const mage = createPlayer({
+      race: 'gnome',
+      characterClass: 'mage',
+      combatStyle: 'caster',
+      talents: built.talents,
+      equipment: built.equipment,
+    });
+    const simulation = buildSimulation([mage, makeTarget()], { durationMs: seconds(60) });
+    simulation.begin();
+
+    // Out of the lockout: the plain out-of-combat rate.
+    const quiet = seconds(100);
+    const plain = manaPerTick(mage, quiet);
+    expect(plain).toBeGreaterThan(0);
+
+    simulation.applyAura(mage, EVOCATION_AURA, mage.id);
+    expect(manaPerTick(mage, quiet) / plain).toBeCloseTo(EVOCATION_REGEN_MULTIPLIER, 6);
+    mage.auras.remove(simulation, EVOCATION_AURA.id);
+
+    /*
+     * AND THE OTHER CLAUSE, AS THE STAT IT GRANTS. Staging the five-second
+     * lockout here needs mana spent THROUGH THE CONTEXT -- `Resource.spend`
+     * does not record when it happened, which is the same seam that once made
+     * a Rogue finisher's combo points invisible -- and the lockout itself is
+     * already covered by the Mage Armor block above. What is new is the number.
+     *
+     * A HUNDRED IS "YOUR OUT-OF-COMBAT RATE", which is what the owner's wording
+     * asks for: the out-of-combat rate is the unsuppressed one. It stacks into
+     * the same pool Mage Armor's 50 and Arcane Meditation's 50 feed, and the
+     * RULE clamps the total at 100 -- so it is worth nothing to a Mage that has
+     * kept its armor up, and everything to one that has not.
+     */
+    const bypass = EVOCATION_AURA.statModifiers?.find((m) => m.stat === 'manaRegenBypass');
+    expect(bypass?.operation).toBe('flat');
+    expect(bypass?.value).toBe(EVOCATION_REGEN_BYPASS);
+    expect(EVOCATION_REGEN_BYPASS).toBe(100);
+
+    const bare = createPlayer({
+      race: 'gnome',
+      characterClass: 'mage',
+      combatStyle: 'caster',
+      talents: {},
+      equipment: built.equipment,
+    });
+    const bareSim = buildSimulation([bare, makeTarget()], { durationMs: seconds(60) });
+    bareSim.begin();
+    const before = bare.stats.get('manaRegenBypass');
+    bareSim.applyAura(bare, EVOCATION_AURA, bare.id);
+    expect(bare.stats.get('manaRegenBypass') - before).toBe(EVOCATION_REGEN_BYPASS);
+  });
+
+  it('is cast once a fight by the Fire list, and fills the bar', () => {
+    /*
+     * THE MECHANISM IN A REAL FIGHT, because the two assertions above could
+     * both hold while no list ever reached the entry. The Fire profile is the
+     * one that runs low -- `USES=1` gives it 0.9 casts a fight against 0.0 for
+     * Arcane, which never drops to a tenth of its pool.
+     */
+    const built = PRESETS_BY_ID.get('mage_fire')!.build();
+    const run = runProfile(built, 12345);
+    const applied = run.timeline.filter(
+      (event) => 'auraId' in event && event.auraId === 'evocation' && event.type === 'aura_applied',
+    );
+    expect(applied.length).toBeGreaterThan(0);
+  });
+});
+
+describe('the three lists, after the owner tuned them', () => {
+  it('casts Scorch only if Improved Scorch is actually taken', () => {
+    /*
+     * WITHOUT THE TALENT SCORCH APPLIES NO DEBUFF, so both halves of
+     * `scorchNeeded` are permanently true and Scorch becomes an unconditional
+     * entry near the top of two lists -- putting every entry beneath it out of
+     * reach. The same failure the `<= 5` reading would have caused, arrived at
+     * from the other direction.
+     *
+     * READ OFF THE BUILT CHARACTER'S REACTIONS, which is what the talent
+     * leaves behind -- the arrangement Vanguard and Charge already use. Asking
+     * the ability book would not work: Scorch is a trainer spell every Mage
+     * owns.
+     */
+    const built = PRESETS_BY_ID.get('mage_fire')!.build();
+    const talented = createPlayer({
+      race: 'gnome', characterClass: 'mage', combatStyle: 'caster',
+      talents: built.talents, equipment: built.equipment,
+    });
+    const untalented = createPlayer({
+      race: 'gnome', characterClass: 'mage', combatStyle: 'caster',
+      talents: {}, equipment: built.equipment,
+    });
+
+    expect(talented.reactions.some((r) => r.id === 'improved_scorch')).toBe(true);
+    expect(untalented.reactions.some((r) => r.id === 'improved_scorch')).toBe(false);
+    // Both still KNOW Scorch, which is why the book cannot be the test.
+    expect(untalented.abilities.get('scorch')).toBeDefined();
+
+    const entry = MAGE_FIRE.find((row) => row.abilityId === 'scorch')!;
+    const simulation = buildSimulation([untalented, makeTarget()], { durationMs: seconds(60) });
+    simulation.begin();
+    expect(entry.condition?.(simulation, untalented, undefined)).toBe(false);
+  });
+
+  it('puts Evocation in all three lists and fires it only when mana is low', () => {
+    /*
+     * THE OWNER ASKED FOR ALL THREE, and the Arcane profile never reaches 10%
+     * -- `USES=1` shows 0.0 casts there against 0.9 for Fire. That is the
+     * ENTRY's condition, not a broken entry, and the owner's list outranks a
+     * measured decision of ours: it stays in all three as a floor for a longer
+     * fight.
+     */
+    for (const list of [MAGE_FIRE, MAGE_FROSTFIRE, MAGE_ARCANE]) {
+      expect(list.some((row) => row.abilityId === 'evocation')).toBe(true);
+    }
+
+    const built = PRESETS_BY_ID.get('mage_fire')!.build();
+    const mage = createPlayer({
+      race: 'gnome', characterClass: 'mage', combatStyle: 'caster',
+      talents: built.talents, equipment: built.equipment,
+    });
+    const simulation = buildSimulation([mage, makeTarget()], { durationMs: seconds(60) });
+    simulation.begin();
+    const entry = MAGE_FIRE.find((row) => row.abilityId === 'evocation')!;
+    const mana = mage.resources.get('mana')!;
+
+    mana.set(mana.maximum);
+    expect(entry.condition?.(simulation, mage, undefined)).toBe(false);
+    mana.set(mana.maximum * 0.5);
+    expect(entry.condition?.(simulation, mage, undefined)).toBe(false);
+    mana.set(mana.maximum * 0.09);
+    expect(entry.condition?.(simulation, mage, undefined)).toBe(true);
+  });
+
+  it('spends Presence of Mind on the CHEAP Arcane Blast, without a Barrage', () => {
+    /*
+     * ONE STACK AND NOT FOUR, which is the opposite of where a damage cooldown
+     * goes and is the point: each stack raises Arcane Blast's cost by 175%, so
+     * the cheap Blast is the one worth making instant.
+     */
+    const built = PRESETS_BY_ID.get('mage_arcane')!.build();
+    const mage = createPlayer({
+      race: 'gnome', characterClass: 'mage', combatStyle: 'caster',
+      talents: built.talents, equipment: built.equipment,
+    });
+    const simulation = buildSimulation([mage, makeTarget()], { durationMs: seconds(60) });
+    simulation.begin();
+    const entry = MAGE_ARCANE.find((row) => row.abilityId === 'presence_of_mind')!;
+    const fires = () => entry.condition?.(simulation, mage, undefined) ?? true;
+
+    expect(fires()).toBe(false);
+
+    simulation.applyAura(mage, ARCANE_BLAST, mage.id);
+    expect(mage.auras.stacksOf('arcane_blast')).toBe(1);
+    expect(fires()).toBe(true);
+
+    // Not while a free, half-length Arcane Missiles is already waiting.
+    simulation.applyAura(mage, MISSILE_BARRAGE, mage.id);
+    expect(fires()).toBe(false);
+    mage.auras.remove(simulation, 'missile_barrage');
+
+    // And not at two stacks: the owner said exactly one.
+    simulation.applyAura(mage, ARCANE_BLAST, mage.id);
+    expect(mage.auras.stacksOf('arcane_blast')).toBe(2);
+    expect(fires()).toBe(false);
   });
 });

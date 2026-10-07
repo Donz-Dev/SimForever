@@ -111,6 +111,42 @@ URLs and every one decodes to exactly 51 points. Every profile is in its own
 class's gear, from twelve sixtyupgrades sets the owner supplied — 151 items in
 nine files. The item database is **frozen**.
 
+### The Mage fine-tuning pass
+
+**SEVEN ITEMS FROM THE RULESET OWNER, AND ONE OF THEM TURNED OUT TO BE A
+REPORTING BUG RATHER THAN A SIMULATION ONE.** Frostfire **623.2 to 661.3,
++38.0, REAL**; Arcane and Fire inside their intervals; the other twenty-one
+profiles identical to the decimal.
+
+| | |
+| --- | --- |
+| **Frostfire Bolt counts as BOTH schools, +38.0** | ten talents treat it as Frost and Fire and SEVEN already did. The three that did not were the Frost-scoped ones: Piercing Ice and Ice Shards select by school, Frost Channeling by ability id. `DamageRequest.countsAsSchools` is the first two and a list entry is the third |
+| **Ignite cannot crit and ROLLS OVER, +13.2 to Fire** | the same two exceptions Deep Wounds carries, and for the same reason -- it is a DoT applied BY a crit. Losing the crit costs less than the roll-over gains, because a Fire list re-applies it before it has delivered. Isolated: Fire reads 608.8 with the old shape against 622.0 with this one |
+| **Evocation, in all three lists at 10% mana** | 8-second channel, haste-shortened, x16 out-of-combat mana regeneration. Fires 0.9 times a fight for Fire, 0.4 for Frostfire and **0.0 for Arcane**, which never drops that low -- the entry stays in all three because the owner asked for it |
+| **Presence of Mind on the CHEAP Arcane Blast** | at exactly one stack and no Missile Barrage, which is the opposite of where a damage cooldown goes and is the point: each stack raises the cost 175% |
+| **Scorch is gated on Improved Scorch** | without the talent nothing applies the debuff, so the condition is permanently true and Scorch becomes an unconditional entry with every list entry beneath it unreachable |
+| **Elemental Precision was never broken** | reported as "like 0.5% per point". It delivers the full 1% to the roll, and **the miss COLUMN was diluted** -- see below |
+
+**TWO BUGS FOUND BY BUILDING THESE, NEITHER IN THE MAGE.**
+
+**THE MISS RATE WAS DIVIDED BY THE WRONG DENOMINATOR, FOR EVERY HYBRID IN THE
+PROJECT.** `recordDealt` counted every damage event into `attempts`, so a spell
+whose burn pools into its own row reported avoided, crit and glance over
+attempts those outcomes were never offered: Frostfire Bolt is 21.8 attempts a
+fight of which 12.0 are casts, and it showed **2.83% miss on a spell whose casts
+miss 10%**. That is what the owner read Elemental Precision off. The two Arcane
+spells, which have no burn, read 9.71% and 10.30% against the same 10%
+expectation -- **the undiluted rows were right all along, which is what pins the
+cause on the denominator rather than on the talent.** Fixed in
+`BatchTotals.recordDealt`; the damage total still includes the burn, because a
+burn is part of the spell.
+
+**AND `resourceRegenMultiplier` REACHED ONE OF THE THREE REGENERATION RULES.**
+Written for Adrenaline Rush and wired into energy only, so Evocation's
+`{ mana: 16 }` compiled, applied, reported its uptime and measured a ratio of
+exactly 1.0000. Mana and focus go through `regenMultiplierFor` now. **A general
+field added for one caller is a silent no-op for the second one.**
+
 ### The regression baseline
 
 **30 batches of 10**, preset raid buffs, reproduced by
@@ -1084,8 +1120,8 @@ Hemo moves five rows between the two columns, which is exactly that kind of edit
 | Seal Twist Ret | Paladin | 13/0/38 | 709.0 | | Hemo Rogue | Rogue | 17/3/31 | 527.1 |
 | Cat Druid | Druid | 9/35/7 | ****937.7**** | | LW Melee | Hunter | 7/13/31 | 523.8 |
 | DW Fury | Warrior | 18/33/0 | 667.5 | | Shadow Priest | Priest | 16/3/32 | 516.4 |
-| Fire Mage | Mage | 10/39/2 | 624.0 | | Venom Rogue | Rogue | 37/12/2 | 510.6 |
-| Frostfire Mage | Mage | 0/29/22 | 623.2 | | Rupture Rogue | Rogue | 12/8/31 | 497.6 |
+| Fire Mage | Mage | 10/39/2 | 622.0 | | Venom Rogue | Rogue | 37/12/2 | 510.6 |
+| Frostfire Mage | Mage | 0/29/22 | 661.3 | | Rupture Rogue | Rogue | 12/8/31 | 497.6 |
 | 2H Arms | Warrior | 38/13/0 | 621.1 | | Bear Druid | Druid | 9/42/0 | **523.1** |
 | Enh Shaman | Shaman | 19/32/0 | **625.8** | | LW Ranged | Hunter | 7/39/5 | **486.5** |
 | BM Hunter | Hunter | 31/20/0 | **595.7** | | Moonkin | Druid | 38/0/13 | ****513.4**** |

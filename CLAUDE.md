@@ -621,6 +621,15 @@ something that comes and goes.
   fold now, because it was written out per site and the third copy is where it
   drifted. It also carries the double-count guard: asking for `'*'` must return
   the catch-all once, or a talent granting +20% reads back as +40%.
+- **A GENERAL FIELD READ BY ONLY SOME OF ITS RULES IS SILENT IN THE REST, AND
+  THIS HAS NOW HAPPENED TWICE.** `AuraDefinition.resourceRegenMultiplier` is
+  documented as multiplying "the carrier's REGENERATION of a resource" and was
+  wired into ONE of the three regeneration rules -- energy, for Adrenaline Rush
+  -- so an aura declaring `{ mana: 16 }` compiled, applied, reported its uptime
+  and changed nothing. Evocation measured a ratio of exactly 1.0000. All three
+  rules go through `regenMultiplierFor` now, focus included, which nothing
+  multiplies today. **When a field is added for one caller, wire every rule of
+  its kind or the second caller finds a silent no-op.**
 - **`modifiersScaleWithStacks` HAS TO REACH EVERY COLLECTION THAT READS IT, AND
   IT REACHED TWO OF THREE FOR A LONG TIME.** `statModifiers` honoured it and
   `damageTakenBySchool` honoured it and `abilityModifiers` silently ignored it,
@@ -689,6 +698,31 @@ something that comes and goes.
   and only two of them ask whether a shift happened; the other three ask which
   form is HELD. **When a family of talents is written up as one gap, check they
   are all asking the same question.**
+- **ONE SPELL CAN COUNT AS TWO SCHOOLS, AND SUMMING THEM DOUBLE-PAYS A TALENT
+  THAT NAMES BOTH.** `DamageRequest.countsAsSchools` is Frostfire Bolt's "counts
+  as both Frost and Fire damage", and it reaches the CASTER'S school talents
+  only -- `school` stays single because every other step wants one answer.
+  **The two kinds of field combine differently**: a damage multiplier
+  MULTIPLIES, because Fire Power and Piercing Ice are different talents and
+  both apply; crit, crit damage and hit take **the LARGER**, because an additive
+  bonus naming both schools is ONE source and the collection cannot tell it from
+  two. Elemental Precision is that source, and summing put a Frostfire Bolt's
+  measured miss at 5.26% against an expected 10%. School-scoped `spellPower` is
+  excluded on purpose: it is a POOL, and two pools for one cast is more than any
+  talent asked for.
+- **A DoT APPLIED BY A CRIT CANNOT CRIT, AND IT ROLLS OVER.** Deep Wounds and
+  Ignite, both by the owner, and they are one mechanic: the crit is already in
+  the magnitude, so a crit on the tick pays for it twice, and a second
+  application adds to the undelivered remainder rather than replacing it.
+  `periodic.pool` plus `drawFromPool` is the roll-over and OMITTING `critFrom`
+  is the no-crit -- the duration still resets, which is a separate clock.
+  **Ignite's old comment argued the opposite and argued it well** ("Forever's
+  tooltip ... says nothing about rolling them together ... Classic's Ignite does
+  combine, which is exactly the kind of inherited assumption this project has
+  been caught by before"): every step sound, conclusion wrong, because the
+  tooltip was the wrong source to ask when the owner had already specified the
+  same mechanic next door. **A reading flagged as an interpretation is still an
+  interpretation after it has sat there for months.**
 - **A school-blind `spellPower` cannot hold "damage done by SHADOW spells"**, and
   seventeen item lines say exactly that. It is a fourth field on
   `SchoolModifier`, not a stat (`STAT_NAMES` is a closed flat set), and
@@ -712,6 +746,15 @@ something that comes and goes.
   is what makes a cast a real cost to a melee character rather than free damage
   between swings. `Ability.swingTimer: 'hold'` is the exception: the timer runs
   on behind the cast and a swing due during it waits rather than being lost.
+- **AN EFFECT THAT HAS TO LAST THE CAST GOES IN `onCastStart`, NOT `onCast`.**
+  `onCast` runs at the END of a cast and once per tick of a channel, so
+  anything that must be in place FOR the cast had nowhere to go. Evocation is
+  the first caller -- "immediately starts your out-of-combat mana regeneration
+  and multiplies it by 16x" over an eight-second channel -- and the PAIR is the
+  design: `onCastStart` opens the window and `onCast` closes it, so the two end
+  together whatever haste does to the channel. Giving the aura a duration
+  instead means keeping a constant in step with a hasted cast time, and getting
+  that wrong is free mana after the channel with nothing to flag it.
 - **A CAST REACTION FIRES ONCE PER CHANNEL TICK, and `AbilityCastEvent.final`
   is how one that ENDS something tells the last tick apart.** `runCast` runs per
   tick, so a reaction removing an aura would remove it on the first of five
@@ -1219,6 +1262,16 @@ aura-duration floors on Eviscerate -- gating it on five combo points alone gives
 and the points overflow instead. **A prior measurement is true of the list it was
 taken in**, and "a point spent on Venom is a point not spent on Eviscerate" stops
 holding when Eviscerate cannot fire.
+
+**AND A CONDITION CAN BE ALWAYS-TRUE BECAUSE THE BUILD CANNOT REACH THE THING
+IT ASKS ABOUT.** "Scorch if the Fire Vulnerability debuff is below five stacks"
+is permanently true for a Mage WITHOUT Improved Scorch, because nothing applies
+the debuff -- so Scorch becomes an unconditional entry near the top of two
+lists and everything beneath it is unreachable. Same failure as the `<= 5`
+reading, from the other direction. The guard reads the built character's
+REACTIONS, which is what the talent leaves behind: `hasReaction` rather than a
+talent id, the arrangement Vanguard and Charge already use. **Asking the ability
+book would not work** -- Scorch is a trainer spell every Mage owns.
 
 **A SPECIFICATION READ LITERALLY CAN DISABLE ITSELF, AND BOTH TIMES IT LOOKED
 FINE.** "Scorch if scorch debuff <= 5" is always true, because Fire Vulnerability
@@ -2038,6 +2091,19 @@ invisible**, with the auto-attack row carrying 34 attempts a fight on a weapon
 that cannot swing more than about 20 times. Nothing contradicted it and the
 shares summed to 100%. **An attempts column that outruns the weapon's speed is
 the tell**, and it is the only one there was.
+
+**A RATE IS ONLY AS GOOD AS ITS DENOMINATOR, AND A HYBRID POISONS IT.**
+`recordDealt` counted every damage event into `attempts` and the Results panel
+divided avoided, crits and glances by that -- so a spell whose burn pools into
+its own row reported outcomes over attempts those outcomes were never offered.
+Frostfire Bolt is 21.8 attempts a fight of which 12.0 are casts, and it showed
+**2.83% miss on a spell whose casts miss 10% of the time**. The ruleset owner
+read Elemental Precision off that column and reported it as giving "like 0.5%
+per point"; the talent was delivering its full 1% to the ROLL the whole time.
+**The spells with nothing to dilute them are what settle it** -- Arcane Blast
+and Arcane Missiles read 9.71% and 10.30% against the same 10% expectation. The
+rates divide by non-periodic attempts now, the damage total still includes the
+burn, and a pure DoT falls back to every attempt so the page cannot show `NaN`.
 
 **AND A NUMBER THAT IS NEVER EMITTED READS AS A ZERO, NOT AS A GAP.** Combo
 points reported 23 gained and none spent, because a finisher drained the pool
