@@ -18,6 +18,29 @@ the single place to diff against a refreshed sheet.
 | `N% per tick` | a damage-over-time effect, stated PER TICK rather than for the whole effect |
 | `N%*combo point spent` | multiplied by the points the finisher spent, so a five-point Eviscerate carries 20% |
 
+**THE LAST TWO MARKERS ARE INDEPENDENT, AND READING ONE AS IMPLYING THE OTHER
+COST THE CAT 179.7 DPS.** Rip's row is `4%*combo point spent` with NO `per tick`,
+so the 4% a point is the whole duration's -- and it was implemented per tick on
+a six-tick effect, paying 120% of attack power at five points instead of 20%.
+**A DOT WITH A COMBO-POINT MARKER AND NO PER-TICK MARKER IS A DURATION TOTAL.**
+The ruleset owner settled it: *"rip should be 4% attack power coefficient per
+combo point spent over its duration NOT each tick; each tick should be 4%/6
+attack power coefficient per combo point spent."*
+
+**AND THE CONSTANT'S NAME IS WHERE THE WRONG READING SURVIVED.** It was
+`RIP_TICK_AP_COEFFICIENT_PER_COMBO_POINT`, with a comment saying "PER TICK --
+so a five-point Rip carries 20% on every one of its eight ticks" (there are six).
+Nothing in the source ever said per tick; the name and the comment did, and after
+that nobody re-read the row. **Name a coefficient for what the SHEET says, not
+for where the code happens to apply it.**
+
+**THE STRUCTURAL TELL WAS THE TWO HALVES OF ONE EFFECT DISAGREEING.** Rip's flat
+damage was a duration total divided by its tick count while its coefficient was
+per tick, so one effect ran on two conventions -- and a reader checking either
+half ALONE would have found it self-consistent. Both halves divide by one named
+`RIP_TICK_COUNT` now. **When a DoT carries flat damage AND a coefficient, check
+that the two are stated in the same unit before trusting either.**
+
 **A COEFFICIENT IS ADDED TO THE BASE DAMAGE, NEVER INSTEAD OF IT.** The owner's
 instruction, given with the sheet: *"many spells have a base damage that needs to
 be added to this ... make sure that flat ability damage doesn't get lost."*

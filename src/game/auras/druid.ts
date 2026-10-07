@@ -16,7 +16,7 @@ import {
 import {
   LACERATE_TICK_WEAPON_FRACTION_PER_APPLICATION,
   RAKE_TICK_AP_COEFFICIENT,
-  RIP_TICK_AP_COEFFICIENT_PER_COMBO_POINT,
+  RIP_AP_COEFFICIENT_PER_COMBO_POINT,
 } from '../combat/coefficients';
 
 /**
@@ -402,9 +402,21 @@ export const RIP_DURATION_MS = seconds(12);
 export const RIP_TICK_INTERVAL_MS = seconds(2);
 export const RIP_BY_COMBO_POINT: readonly number[] = [243, 396, 549, 702, 855];
 
+/**
+ * SIX. Twelve seconds at two, and the divisor for BOTH halves of a tick.
+ *
+ * Named because it is the number the two halves have to share. The flat damage
+ * was always a duration total divided by this; the attack power coefficient was
+ * applied per tick instead, which made it six times the stated figure. Deriving
+ * it rather than writing 6 also means a change to either constant moves both
+ * halves together.
+ */
+export const RIP_TICK_COUNT = RIP_DURATION_MS / RIP_TICK_INTERVAL_MS;
+
 export function ripAura(comboPoints: number): AuraDefinition {
+  const points = clampIndex(comboPoints) + 1;
   const total = RIP_BY_COMBO_POINT[clampIndex(comboPoints)];
-  const perTick = total / (RIP_DURATION_MS / RIP_TICK_INTERVAL_MS);
+  const perTick = total / RIP_TICK_COUNT;
 
   return {
     id: 'rip',
@@ -423,14 +435,22 @@ export function ripAura(comboPoints: number): AuraDefinition {
           PHYSICAL,
           'melee-special',
           /*
-           * 4% OF ATTACK POWER PER COMBO POINT SPENT, PER TICK -- so a
-           * five-point Rip carries 20% on every one of its eight ticks.
+           * 4% OF ATTACK POWER PER COMBO POINT SPENT, OVER THE WHOLE DURATION,
+           * so a five-point Rip carries 20% SPREAD ACROSS ITS SIX TICKS and
+           * each tick takes 4%/6 a point.
+           *
+           * DIVIDED THE SAME WAY `perTick` IS, one line above, which is the
+           * whole point: both halves of a tick come from one duration total
+           * over one tick count. This used to be applied per tick, making a
+           * five-point Rip 120% of attack power instead of 20%.
+           *
+           * The comment here also said "its EIGHT ticks" and there are six.
            *
            * The points are read from the aura's OWN combo points rather than
            * the character's, because the character has spent them: `ripAura`
            * is built with what was spent and its ticks land long afterwards.
            */
-          RIP_TICK_AP_COEFFICIENT_PER_COMBO_POINT * (clampIndex(comboPoints) + 1),
+          (RIP_AP_COEFFICIENT_PER_COMBO_POINT * points) / RIP_TICK_COUNT,
         ),
     },
   };

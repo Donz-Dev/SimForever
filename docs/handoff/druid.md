@@ -38,7 +38,7 @@ question** — the count was wrong for as long as nobody did.
 
 | Profile | Talents | DPS | List | Style |
 | --- | --- | --- | --- | --- |
-| Cat | 9/35/7 | **843.0** | `DRUID_CAT` | cat (paws) |
+| Cat | 9/35/7 | **663.3** | `DRUID_CAT` | cat (paws) |
 | Bear | 9/42/0 | **433.6** | `DRUID_BEAR` | bear (paws) |
 | Moonkin | 38/0/13 | **513.4** | `DRUID_MOONKIN` | caster |
 
@@ -49,7 +49,9 @@ Staff of Dominance, Sunder Armor — and a before-and-after column that mixes si
 causes tells nobody anything. HANDOVER.md's baseline table is the live figure;
 reprint it rather than trusting this one.
 
-**CAT IS THE HIGHEST PROFILE IN THE PROJECT**, above Seal Twist Ret's 748.3, and it got
+**CAT WAS THE HIGHEST PROFILE IN THE PROJECT AND IS SIXTH NOW**, at 663.3 against
+Seal Twist Ret's 748.3 -- the paw base and Rip's coefficient took 274.4 off it
+between them, both the owner's own figures. It got
 there from ninth. That is a claim worth distrusting, so it is attributed rather
 than asserted — `npx vite-node tools/druid_attribution.ts` reprints the table
 below. **MEASURED AT THE 656.1 BASELINE**, so read it as a RELATIVE attribution
@@ -300,9 +302,32 @@ none of them. **Three are worth knowing, and one of them was a real bug:**
   by its whole 14.1% Lacerate share. Read `weaponScaling`, not a prose list.
   **THE BEAR IS NOW THE SECOND-LOWEST PROFILE IN THE PROJECT** at 433.6, having
   been mid-table -- the owner's number, not a tuning decision.
-- **THE CAT IS 12.7% CLEAR OF THE NEXT PROFILE IN THE PROJECT**, 843.0 against
-  Seal Twist Ret's 748.3 and 94% above the Bear. It was 40% clear before the paw
-  base arrived. Four of the owner's own figures took it
+- **RIP'S COEFFICIENT WAS PER TICK AND IS PER DURATION**, by the owner's
+  statement: "4% attack power coefficient per combo point spent over its
+  duration NOT each tick; each tick should be 4%/6". Rip has SIX ticks, so a
+  five-point Rip was paying **120% of attack power instead of 20%**.
+  **Cat 843.0 -> 663.3, -21.3%**, and the Bear and the Moonkin do not move --
+  Rip is a Cat finisher and neither of the other two can reach it.
+  **THE ARITHMETIC RECONCILES**: a five-point Rip went from `855 + 2150.4` to
+  `855 + 358.4` at 1792 attack power, so it pays 40.4% of what it did, and
+  `297.6 x (1 - 0.404)` predicts -177.4 against a measured -179.7. Rip is
+  **17.9%** of the Cat now, down from 35.3%, and the top source is the
+  auto-attack at 40.0%.
+  **NOTHING IN THE SOURCE SAID PER TICK.** The sheet's notation key separates
+  `N% per tick` from `N%*combo point spent` and Rip's row carries only the
+  second, so the per-tick reading contradicted a table in the same document.
+  The constant's NAME said it, which is how a reading becomes a fact.
+  **THE TELL WAS THE TWO HALVES DISAGREEING**: the flat damage was always a
+  duration total over the tick count while the coefficient was per tick. Both
+  now divide by one named `RIP_TICK_COUNT`.
+- **THE CAT'S LIST IS BACK IN QUESTION AND THAT IS NOT SETTLED HERE.** Rip pays
+  40% of what it did, so "spend five points on Rip" is a weaker claim than when
+  the list was written, and **Ferocious Bite is the alternative no Cat list
+  uses** -- already an open question before this. Measure it; do not reason
+  about it. The 663.3 above is the list as it stands.
+- **THE CAT WAS 12.7% CLEAR OF THE NEXT PROFILE AND IS NOW 11.4% BELOW IT.** It
+  read 937.7 three commits ago. Every step was a figure the owner stated, which
+  is worth saying plainly: none of the 274.4 was a tuning decision. Four of the owner's own figures took it
   there in one commit, +142.4, and the marginal split is Rend and Tear's wider
   scope **+61.0**, Primal Fury's combo points **+45.1**, Rake's 5.5% tick
   **+43.7** and Clearcasting-on-Shred **+6.3**. Reprint with

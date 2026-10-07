@@ -328,8 +328,34 @@ export const WRACK_TICK_SP_COEFFICIENT = 0.143;
 /** Ferocious Bite: 3% of attack power per combo point spent. */
 export const FEROCIOUS_BITE_AP_COEFFICIENT_PER_COMBO_POINT = 0.03;
 
-/** Rip: 4% of attack power per combo point spent, PER TICK. */
-export const RIP_TICK_AP_COEFFICIENT_PER_COMBO_POINT = 0.04;
+/**
+ * Rip: 4% of attack power per combo point spent, OVER THE WHOLE DURATION.
+ *
+ * ----------------------------------------------------------------------------
+ * THE NAME USED TO SAY `RIP_TICK_...` AND THE COMMENT USED TO SAY "PER TICK",
+ * and nothing in the source ever did. The sheet's own notation key separates
+ * the two cases -- `N% per tick` for an effect stated per tick, and
+ * `N%*combo point spent` for one multiplied by what the finisher spent -- and
+ * Rip's row carries the SECOND marker and not the first. So the per-tick
+ * reading contradicted the notation documented one line above it in
+ * `docs/spell-coefficients.md`.
+ *
+ * Rip has SIX ticks (12 seconds at 2), so the per-tick reading was paying
+ * `0.04 x points x 6` -- 120% of attack power on a five-point Rip instead of
+ * 20%, six times the stated figure. The ruleset owner reported the Cat's damage
+ * as too high and named Rip: "rip should be 4% attack power coefficient per
+ * combo point spent over its duration NOT each tick; each tick should be
+ * 4%/6 attack power coefficient per combo point spent."
+ *
+ * `ripAura` divides this across the ticks THE SAME WAY it divides the flat
+ * damage, which is the structural point: both halves of a Rip tick now come
+ * from one duration total over one tick count, so they cannot drift apart
+ * again. The flat half was always a duration total -- `RIP_BY_COMBO_POINT`
+ * divided by the tick count -- and only the coefficient was per tick, and that
+ * inconsistency between the two halves of the same effect was the tell.
+ * ----------------------------------------------------------------------------
+ */
+export const RIP_AP_COEFFICIENT_PER_COMBO_POINT = 0.04;
 
 export const STARFIRE_SP_COEFFICIENT = 1;
 export const WRATH_SP_COEFFICIENT = 0.57;

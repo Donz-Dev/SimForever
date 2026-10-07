@@ -836,7 +836,7 @@ while it worked.
 decimal -- which is what a talent change scoped to one build should look like.
 It makes Frostfire the top Mage, above Fire's 401.2 and Arcane's 392.6, and the
 build that existed for the Fire/Frost overlap now has a third reason to. The
-mean across **24** is **572.7**, RE-SUMMED FROM THE TABLE ABOVE rather than
+mean across **24** is **565.2**, RE-SUMMED FROM THE TABLE ABOVE rather than
 adjusted -- **by `tools/update_baseline_table.py`, which exists now**; the
 sentence above it had promised a script for several commits and there was none,
 so the mean and the ordering were still being maintained by hand.
@@ -890,6 +890,53 @@ prose list of which abilities use the weapon.**
 Pally's 303.9, having been mid-table. That is what the owner's number says and
 it is not a tuning decision -- but it is a large move on a tank build and worth
 knowing about.
+
+**AND THEN RIP'S COEFFICIENT WAS PER TICK AND SHOULD HAVE BEEN PER DURATION.**
+The owner reported the Cat as still too high and named the ability: "rip should
+be 4% attack power coefficient per combo point spent over its duration NOT each
+tick; each tick should be 4%/6 attack power coefficient per combo point spent."
+
+Rip has SIX ticks -- twelve seconds at two -- so a five-point Rip was paying
+`0.04 x 5 x 6` = **120% of attack power instead of 20%**, six times the stated
+figure.
+
+| Profile | was | now | |
+| --- | --- | --- | --- |
+| Cat | 843.0 | **663.3** | **-179.7, -21.3% REAL** |
+| the other 23 | | | **+0.0** |
+
+**THE BEAR IS ONE OF THE TWENTY-THREE AND SO IS THE MOONKIN**, which is the
+containment worth naming: Rip is a Cat finisher, so neither of the other two
+Druid profiles can reach it.
+
+**THE ARITHMETIC RECONCILES, WHICH IS THE CHECK THAT THE FIX LANDED WHERE IT
+SHOULD.** At 1792 attack power a five-point Rip went from `855 + 2150.4` to
+`855 + 358.4`, so it pays 40.4% of what it did. Rip was 35.3% of 843.0 = 297.6,
+and `297.6 x (1 - 0.404)` predicts **-177.4** against a measured **-179.7**. Its
+share is **17.9%** now and the Cat's top source is its auto-attack at 40.0%.
+
+**NOTHING IN THE SOURCE EVER SAID PER TICK, AND THE SHEET'S OWN NOTATION SAYS
+SO.** `docs/spell-coefficients.md` records the key: `N% per tick` for an effect
+stated per tick, `N%*combo point spent` for one multiplied by what the finisher
+spent. Rip's row carries the second marker and NOT the first. **The per-tick
+reading contradicted a notation table in the same document** -- and the constant
+was named `RIP_TICK_AP_COEFFICIENT_PER_COMBO_POINT` with a comment repeating it,
+which is how a reading becomes a fact nobody re-checks.
+
+**THE TELL WAS THAT THE TWO HALVES OF ONE EFFECT USED DIFFERENT CONVENTIONS.**
+Rip's flat damage was always a duration total divided by the tick count
+(`RIP_BY_COMBO_POINT` over six) while its coefficient was applied per tick. Both
+halves now come from one duration total over one named `RIP_TICK_COUNT`, so they
+cannot drift apart again -- and a reader checking EITHER HALF ALONE would have
+found it self-consistent, which is why this needed the owner rather than an
+audit.
+
+**AND IT PUTS THE CAT'S LIST BACK IN QUESTION, WHICH IS NOT DONE HERE.** Rip now
+pays 40% of what it did, so "spend five points on Rip" is a weaker claim than it
+was and Ferocious Bite is the alternative the list does not use. That is an APL
+measurement rather than a coefficient fix, and this commit deliberately changes
+one thing: the Cat's priority list is untouched and its 663.3 is the figure for
+the list as it stands.
 
 **AND NATURALIST WAS READING A NUMBER OF SECONDS AS A PERCENTAGE.** "Reduces the
 cast time of your Healing Touch spell by 0.5 sec and increases all damage you
@@ -1341,22 +1388,23 @@ Hemo moves five rows between the two columns, which is exactly that kind of edit
 
 | Profile | Class | Talents | DPS | | Profile | Class | Talents | DPS |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| **Cat Druid** | Druid | 9/35/7 | **843.0** | | Arcane Mage | Mage | 47/4/0 | 576.1 |
-| Seal Twist Ret | Paladin | 13/0/38 | 748.3 | | Firelock | Warlock | 5/11/35 | 544.7 |
-| LW Ranged | Hunter | 7/39/5 | 681.1 | | Hemo Rogue | Rogue | 17/3/31 | 527.1 |
-| LW Melee | Hunter | 7/13/31 | 672.6 | | Shadow Priest | Priest | 16/3/32 | 516.4 |
-| BM Hunter | Hunter | 31/20/0 | 668.6 | | Moonkin | Druid | 38/0/13 | 513.4 |
-| DW Fury | Warrior | 18/33/0 | 667.5 | | Venom Rogue | Rogue | 37/12/2 | 510.6 |
+| Seal Twist Ret | Paladin | 13/0/38 | 748.3 | | Arcane Mage | Mage | 47/4/0 | 576.1 |
+| LW Ranged | Hunter | 7/39/5 | 681.1 | | Firelock | Warlock | 5/11/35 | 544.7 |
+| LW Melee | Hunter | 7/13/31 | 672.6 | | Hemo Rogue | Rogue | 17/3/31 | 527.1 |
+| BM Hunter | Hunter | 31/20/0 | 668.6 | | Shadow Priest | Priest | 16/3/32 | 516.4 |
+| DW Fury | Warrior | 18/33/0 | 667.5 | | Moonkin | Druid | 38/0/13 | 513.4 |
+| **Cat Druid** | Druid | 9/35/7 | **663.3** | | Venom Rogue | Rogue | 37/12/2 | 510.6 |
 | Frostfire Mage | Mage | 0/29/22 | 661.3 | | Rupture Rogue | Rogue | 12/8/31 | 497.6 |
 | Enh Shaman | Shaman | 19/32/0 | 625.8 | | Prot Warr | Warrior | 17/0/34 | 457.0 |
 | Fire Mage | Mage | 10/39/2 | 622.0 | | SM/DS | Warlock | 40/11/0 | 441.5 |
 | 2H Arms | Warrior | 38/13/0 | 621.1 | | Ele Shaman | Shaman | 38/13/0 | 440.2 |
-| Combat Rogue | Rogue | 18/33/0 | 586.3 | | **Bear Druid** | Druid | 9/42/0 | **433.6** |
+| Combat Rogue | Rogue | 18/33/0 | 586.3 | | Bear Druid | Druid | 9/42/0 | 433.6 |
 | Shockadin | Paladin | 23/0/28 | 585.5 | | Prot Pally | Paladin | 8/36/7 | 303.9 |
 
-**THE TOP TWO ARE CLEARLY APART AGAIN, AND THEY HAVE NOT ALWAYS BEEN.** Cat
-**843.0 +/-6.5** against Seal Twist Ret **748.3 +/-9.6** is a gap of 94.7, far
-outside both intervals, even after the paw base cost the Cat 94.8.
+**THE TOP IS SEAL TWIST RET AND THE GAP IS CLEAR.** **748.3 +/-9.6** against
+LW Ranged's **681.1 +/-4.7** is 67.2, far outside both intervals. The Cat held
+the top for three commits and is sixth now, at 663.3, after the paw base and
+Rip's coefficient took 274.4 off it between them.
 
 **THE PARAGRAPH HERE SAID THE OPPOSITE AND HAD BEEN STALE FOR SEVERAL
 COMMITS** -- "Seal Twist Ret 709.0 +/-9.4 against Cat 703.8 +/-6.4 is a gap of
