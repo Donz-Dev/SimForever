@@ -14,7 +14,7 @@ import {
 } from './paladin';
 import { PET_PRIORITY } from './pet';
 import { PRIEST_SHADOW } from './priest';
-import { ROGUE_COMBAT, ROGUE_RUPTURE, ROGUE_VENOM } from './rogue';
+import { ROGUE_COMBAT, ROGUE_HEMO, ROGUE_RUPTURE, ROGUE_VENOM } from './rogue';
 import { SHAMAN_ELEMENTAL, SHAMAN_ENHANCEMENT } from './shaman';
 import { WARLOCK_AFFLICTION, WARLOCK_DESTRUCTION } from './warlock';
 import {
@@ -81,7 +81,7 @@ export interface PriorityListRecord {
   readonly rotationName: string;
   readonly entries: readonly PriorityEntry[];
   /**
-   * Which of the 23 profiles runs it, by preset id, or `[]` for a list no
+   * Which of the 24 profiles runs it, by preset id, or `[]` for a list no
    * preset reaches.
    *
    * TWO LISTS ARE REACHED BY NO PROFILE, and they are not dead code: they are
@@ -153,6 +153,13 @@ export const ALL_PRIORITY_LISTS: readonly PriorityListRecord[] = [
     rotationName: 'Rogue (Subtlety, Rupture)',
     entries: ROGUE_RUPTURE,
     profiles: ['rogue_rupture'],
+  },
+  {
+    name: 'ROGUE_HEMO',
+    owner: 'rogue',
+    rotationName: 'Rogue (Subtlety, Hemo)',
+    entries: ROGUE_HEMO,
+    profiles: ['rogue_hemo'],
   },
 
   // Druid -- by form, which IS the combat style.

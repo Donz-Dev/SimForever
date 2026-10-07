@@ -105,7 +105,7 @@ competes with it again.
 ## The tools, and the order to use them in
 
 ```bash
-# The fast audit. About a minute for all 23, and the ONLY thing that shows
+# The fast audit. About a minute for all 24, and the ONLY thing that shows
 # three of the five ways a list fails.
 SEEDS=1 ITERATIONS=10 USES=1 npx vite-node tools/measure_profiles.ts
 

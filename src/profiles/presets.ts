@@ -398,6 +398,58 @@ const ROGUE_RUPTURE_TALENTS: TalentAllocation = {
   thousand_cuts: 1,
 };
 
+/**
+ * Hemo -- Assassination 17 / Combat 3 / Subtlety 31. Hemorrhage without Backstab.
+ *
+ * ----------------------------------------------------------------------------
+ * THE OWNER'S URL, decoded to 51 points:
+ * talentsforever.com/rogue/60/005303105-3-5320003301013211501-kjoCFD2I2Ri2pi1uti1wxirvy4GDIy0-6
+ *
+ * IT IS THE RUPTURE BUILD WITH THE BACKSTAB ENGINE TAKEN OUT, and that is what
+ * makes it a different list rather than a variant of the same one. Ten talents
+ * differ, and three of them are the point:
+ *
+ *   CUTTHROAT 5 -> 0. Backstab's proc is what let the Rupture list cast Ambush
+ *     at all outside a stealth window, so Ambush here has ONE route to its gate
+ *     -- the pull and Vanish -- rather than two.
+ *   PUNCTURING_WOUNDS 3 -> 0. Backstab's extra combo point and its crit.
+ *   GHOSTLY_STRIKE 1 -> 0, so the ability is absent from the book entirely.
+ *
+ * The rest is a shift of five points from Combat into Assassination: Lethality
+ * 2 -> 5, Ruthlessness 2 -> 3, Relentless Strikes 1, Quietus 5 and Dirty Deeds
+ * 2 arriving, Lightning Reflexes 2 going.
+ *
+ * QUIETUS IS FIVE POINTS AND ONLY ITS HEMORRHAGE CLAUSE IS LIVE HERE -- it also
+ * names Sinister Strike and Ghostly Strike, and this build takes neither in its
+ * list or its tree. That is the right clause for it to have: Hemorrhage is this
+ * profile's maintenance strike.
+ *
+ * DIRTY DEEDS' TWO POINTS DO NOTHING, and that is a RULING rather than a gap:
+ * both its abilities are stealth openers the owner has ruled out for good.
+ * ----------------------------------------------------------------------------
+ */
+const ROGUE_HEMO_TALENTS: TalentAllocation = {
+  malice: 5,
+  ruthlessness: 3,
+  improved_slice_and_dice: 3,
+  relentless_strikes: 1,
+  lethality: 5,
+  improved_eviscerate: 3,
+  camouflage: 5,
+  master_of_deception: 3,
+  opportunity: 2,
+  improved_ambush: 3,
+  initiative: 3,
+  improved_distract: 1,
+  premeditation: 1,
+  serrated_blades: 3,
+  dirty_deeds: 2,
+  preparation: 1,
+  hemorrhage: 1,
+  quietus: 5,
+  thousand_cuts: 1,
+};
+
 /** Venom and Rupture: two daggers, which is what those builds are written for. */
 /** Combat: two swords, the owner's own second set. */
 
@@ -958,6 +1010,34 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = [
         stance: 'battle',
       },
       talents: { ...ROGUE_RUPTURE_TALENTS },
+      raidBuffs: [...PRESET_RAID_BUFFS],
+      equipment: { ...ROGUE_ARMOUR, ...ROGUE_DAGGERS },
+      encounter: { ...createDefaultProfile().encounter, targetAttacks: false },
+    }),
+  },
+  {
+    id: 'rogue_hemo',
+    label: 'Hemo',
+    detail: 'Undead, dual-wield, standing target. 31 Subtlety, no Backstab',
+    characterClass: 'rogue',
+    /*
+     * EVERY FIELD IS THE RUPTURE PRESET'S EXCEPT THE TALENTS, which is the
+     * owner's specification -- same race, same style, same gear, same raid
+     * buffs, same standing target. SET OUT IN FULL RATHER THAN SPREAD FROM
+     * `rogue_rupture`: a preset that inherits behaves differently depending on
+     * what it inherited from, and all five build settings have to agree.
+     */
+    build: () => ({
+      ...createDefaultProfile(),
+      character: {
+        name: 'Hemo',
+        race: 'undead',
+        characterClass: 'rogue',
+        level: 60,
+        combatStyle: 'dual_wield',
+        stance: 'battle',
+      },
+      talents: { ...ROGUE_HEMO_TALENTS },
       raidBuffs: [...PRESET_RAID_BUFFS],
       equipment: { ...ROGUE_ARMOUR, ...ROGUE_DAGGERS },
       encounter: { ...createDefaultProfile().encounter, targetAttacks: false },

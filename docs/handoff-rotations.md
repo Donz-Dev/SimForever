@@ -87,10 +87,13 @@ Every list in the project, with the class that owns it, the display name, and
 
 ---
 
-## The 23 profiles and their lists
+## The 24 profiles and their lists
 
-Every profile has exactly one list of its own — 23 profiles, 23 lists, no
-sharing, and **all 23 are the ruleset owner's**. DPS is the baseline in
+Every profile has exactly one list of its own — 24 profiles, 24 lists, no
+sharing, and **all 24 are the ruleset owner's**. The newest, `ROGUE_HEMO`, is
+the first that is DERIVED from another rather than written out: it is the Rupture
+list with Backstab filtered out and Hemorrhage moved to the bottom ungated, so
+anything measured into the Rupture list reaches it for free. DPS is the baseline in
 [HANDOVER.md](../HANDOVER.md): 30 batches of 10 with the preset raid buffs.
 
 **THE DPS COLUMN WAS RE-SYNCED WHOLESALE, because it had drifted from the
@@ -242,7 +245,7 @@ the code did. A `USES=1` pass caught it; review had not.
 **Patch ONE entry, then measure.** 30 batches of 10, and a difference inside the
 interval is not a difference. Two changes at once cannot be attributed.
 
-**Run all 23 and say which ones were expected to move.** The containment check
+**Run all 24 and say which ones were expected to move.** The containment check
 in this project is that the profiles a change should not reach do not move by a
 decimal. A rotation edit should move exactly one profile; if it moves two, the
 list is shared by more builds than the edit assumed.

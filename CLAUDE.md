@@ -20,7 +20,7 @@ npm run build        # typecheck + production build
 Measurement harnesses and audits, none of them tests:
 
 ```bash
-npx vite-node tools/measure_profiles.ts          # the 23 profiles, 30 batches of 10
+npx vite-node tools/measure_profiles.ts          # the 24 profiles, 30 batches of 10
 USES=1 SEEDS=1 PROFILES=druid_cat npx vite-node tools/measure_profiles.ts
 npx vite-node tools/measure_rotation.ts          # Warrior TALENT builds, not profiles
 npx vite-node tools/ability_audit.ts             # is every ability connected at all

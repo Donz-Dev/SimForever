@@ -1,7 +1,7 @@
 # ROGUE DEEP DIVE
 
 **Class:** Rogue
-**Profiles to audit and prepare:** Venom, Combat, Rupture
+**Profiles to audit and prepare:** Venom, Combat, Rupture, **Hemo**
 
 Read [CLAUDE.md](../../CLAUDE.md) first, then [README.md](README.md) in this
 directory for what the census columns mean and how to reprint every figure below.
@@ -59,6 +59,7 @@ current figures with `npx vite-node tools/measure_profiles.ts`.
 | Combat | 18/33/0 | **586.3** | 419.8 | **+166.5** | `ROGUE_COMBAT` |
 | Venom | 37/12/2 | **510.6** | 392.7 | **+117.9** | `ROGUE_VENOM` |
 | Rupture | 12/8/31 | **497.6** | 377.1 | **+120.5** | `ROGUE_RUPTURE` |
+| **Hemo** | 17/3/31 | **527.1** | — | *new* | `ROGUE_HEMO` |
 
 **THIS COLUMN IS KEPT CURRENT NOW, AND IT WAS NOT.** It stood at 461.8 / 440.2 /
 409.4 — the dive's own figures, correct on the day and moved four times since by
@@ -598,6 +599,114 @@ Dice axis came back **identical to the decimal across all four thresholds**. Tha
 is indistinguishable from "this threshold does not matter", and the conclusion was
 there to be believed. Every edit is scoped by slicing the file at the list's own
 `export const` now, with an assertion that the entry appears once inside it.
+
+---
+
+## HEMO — A FOURTH PROFILE, AND THE FILLER IS THE WHOLE OF IT
+
+**527.1 DPS**, which makes it the second strongest Rogue behind Combat's 586.3 and
+the strongest Subtlety build by 30. From the owner's own talent URL, decoded to 51
+points: **17 / 3 / 31**.
+
+### It is the Rupture build with the Backstab engine removed
+
+Ten talents differ and three of them are the point:
+
+| | |
+| --- | --- |
+| `cutthroat` 5 → 0 | Backstab's proc, and the Rupture list's only **in-combat** route to Ambush |
+| `puncturing_wounds` 3 → 0 | Backstab's extra combo point and its crit |
+| `ghostly_strike` 1 → 0 | so the ability is absent from the book entirely |
+
+The rest is five points moving from Combat into Assassination: Lethality 2 → 5,
+Ruthlessness 2 → 3, Relentless Strikes 1, **Quietus 5** and Dirty Deeds 2 arriving,
+Lightning Reflexes 2 going.
+
+**SO REMOVING BACKSTAB FROM THE LIST IS NOT A ROTATION PREFERENCE — IT FOLLOWS THE
+TREE.** With Cutthroat and Puncturing Wounds gone, Backstab is a 60-energy strike
+with nothing attached, against Hemorrhage at 35 that also maintains a debuff. The
+owner's instruction to drop the entry removes the entry the talents stopped paying
+for.
+
+**AND AMBUSH BECOMES STEALTH-ONLY HERE**, with one route to its gate (the pull and
+Vanish) where the Rupture list has two. The energy-pooling condition on Hemorrhage
+reads the Cutthroat aura and therefore never holds in this build — correct rather
+than inert: there is no Cutthroat window to pool for, and Vanish is already gated on
+being able to afford the Ambush that follows it.
+
+**QUIETUS'S FIVE POINTS HAVE ONE LIVE CLAUSE**, which is the right one: it names
+Sinister Strike, Ghostly Strike and Hemorrhage, and this build takes neither of the
+first two in its tree or its list. Hemorrhage is this profile's maintenance strike
+and its filler. **Dirty Deeds' two points do nothing and that is a RULING**, not a
+gap — both its abilities are stealth openers ruled out for good.
+
+### The specification as given threw away a third of its energy
+
+**416.9 DPS, and 272.7 energy a fight wasted at the cap.** Removing Backstab removed
+the list's only **ungated** builder, and nothing above it is castable on demand:
+Premeditation and Vanish are on minute cooldowns, Ambush needs a stealth window, and
+the three finishers need combo points the list then had no way to earn.
+
+| | DPS | Slice and Dice | Rupture debuff | energy wasted |
+| --- | --- | --- | --- | --- |
+| Backstab out, nothing added | 416.9 | 69.9% | 25.3% | **272.7** |
+| **Hemorrhage ungated** *(shipped)* | **527.1** | — | — | — |
+
+**THE GATE'S OWN JUSTIFICATION WENT WITH BACKSTAB**, which is why ungating
+Hemorrhage is following the owner's design rather than second-guessing it. The
+Rupture list's note reads *"gated on its own debuff having a second left, it
+**maintains** and Backstab **builds**"* — the gate was correct because something
+else was doing the building, and it made Hemorrhage a floor that starved Ghostly
+Strike and Sinister Strike beneath it. **Here there is nothing beneath it**, so the
+floor costs nothing and the building has to come from somewhere. Hemorrhage goes
+from 4.6 casts a fight to **17.4**, and 21.0% of the profile's damage.
+
+**A 45-ENERGY FILLER IS STRICTLY WORSE, and the proof is a row that moves nothing:**
+
+| | DPS |
+| --- | --- |
+| as specified | 416.9 ± 2.8 |
+| **Hemorrhage ungated** | **525.8 ± 3.7** |
+| Sinister Strike at the bottom | 483.8 ± 3.5 |
+| **both of the above** | **525.8 ± 3.7** — identical, to the decimal |
+| *(reference)* Backstab left in | 506.9 ± 3.3 |
+
+**The "both" row is the floor rule confirming itself.** Sinister Strike at 45 energy
+below an ungated Hemorrhage at 35 can never be the first castable entry, so adding
+it changes nothing at all — the same arithmetic that made Hemorrhage a problem in
+the Rupture list, pointing the other way. And ungating it beats **leaving Backstab
+in** by 19, so the owner is right about this tree twice over.
+
+### The list is DERIVED from `ROGUE_RUPTURE`, not transcribed
+
+`ROGUE_HEMO` is `ROGUE_RUPTURE` with Backstab filtered out and Hemorrhage moved to
+the bottom ungated. **Two near-identical lists maintained by hand drift, and the
+drift is invisible** — an entry is four lines and a difference between two similar
+lists reads as deliberate. Anything measured into the Rupture list from here reaches
+this one for free, which is what the owner's "exactly the same except" asks for. A
+test compares the ORDER of every shared entry, so an insertion in the wrong place
+fails rather than being absorbed.
+
+**ITS EVISCERATE INHERITS THE FIVE-POINT GATE AND FIRES ZERO TIMES, AND THAT WAS
+MEASURED RATHER THAN ASSUMED** — the combo economy here is a different one, since
+Hemorrhage earns a point every 35 energy where the Rupture list's filler cost 60. The
+Rupture sweep's answer still holds:
+
+| Eviscerate at | 5 *(inherited)* | ≥4 | ≥3 | ≥2 | removed |
+| --- | --- | --- | --- | --- | --- |
+| DPS | **525.8** | 525.5 | 513.9 | 498.3 | 523.5 |
+
+Removing the entry measures *lower* and inside the interval, so it stays: the
+derivation is left clean, and it is a live entry the moment the economy shifts.
+
+### Which list a Subtlety Rogue runs
+
+**Hemorrhage no longer separates the two Subtlety builds** — both take it, because
+both are built around it. **Cutthroat is the discriminator**, and it is a functional
+one rather than an arbitrary tiebreak: a Hemorrhage build without Cutthroat cannot
+run the Rupture list's Backstab engine at all, so the talent that decides which list
+*works* is the talent the dispatch reads. Reading Quietus would work today and is
+weaker — it is a damage talent that says nothing about which list can function.
 
 ---
 
