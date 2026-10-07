@@ -134,7 +134,7 @@ stale one PR at a time.
 | Combat | 586.3 | `ROGUE_COMBAT` | 5 | 2 |
 | Arcane | 581.8 | `MAGE_ARCANE` | 5 | 4 |
 | Shockadin | 581.2 | `PALADIN_SHOCKADIN` | 8 | 2 |
-| Firelock | 544.7 | `WARLOCK_DESTRUCTION` | 6 | 2 |
+| Firelock | 544.3 | `WARLOCK_DESTRUCTION` | 5 | 1 |
 | Hemo | 527.1 | `ROGUE_HEMO` | 8 | 5 |
 | LW Melee | 523.8 | `HUNTER_LONE_WOLF_MELEE` | 7 | 2 |
 | Bear | 523.1 | `DRUID_BEAR` | 8 | 4 |
@@ -144,7 +144,7 @@ stale one PR at a time.
 | Rupture | 497.6 | `ROGUE_RUPTURE` | 9 | 7 |
 | LW Ranged | 486.5 | `HUNTER_LONE_WOLF_RANGED` | 7 | 5 |
 | Prot Warr | 457.0 | `WARRIOR_SHIELD_DEFENSIVE` | 14 | 10 |
-| SM/DS | 441.5 | `WARLOCK_AFFLICTION` | 6 | 5 |
+| SM/DS | 476.5 | `WARLOCK_AFFLICTION` | 8 | 6 |
 | Ele Shaman | 440.2 | `SHAMAN_ELEMENTAL` | 4 | 2 |
 | Prot Pally | 304.9 | `PALADIN_PROTECTION` | 9 | 6 |
 

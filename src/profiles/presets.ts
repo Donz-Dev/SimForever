@@ -803,8 +803,19 @@ const HUNTER_LONE_WOLF_MELEE_TALENTS: TalentAllocation = {
  * those profile names mean. That makes the Warlock the second class running
  * whose builds opt out of the pet system, after both Lone Wolf hunters.
  */
+/*
+ * ONE POINT MOVED OUT OF SUPPRESSION AND INTO AMPLIFY CURSE, at the ruleset
+ * owner's instruction. Suppression drops to 4/5, so the build keeps 4 points of
+ * spell hit rather than 5, and gains a 50% opener on the first Bane of Agony
+ * for free -- Amplify Curse is off the global cooldown, so the Bane it precedes
+ * pays nothing for it.
+ *
+ * STILL EXACTLY 51 POINTS. The allocation is checked by the profile tests,
+ * which is what catches a point going missing rather than moving.
+ */
 const WARLOCK_AFFLICTION_TALENTS: TalentAllocation = {
-  suppression: 5,
+  suppression: 4,
+  amplify_curse: 1,
   improved_corruption: 5,
   malediction: 5,
   improved_drains: 3,

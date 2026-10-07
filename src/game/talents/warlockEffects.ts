@@ -78,6 +78,21 @@ export const WARLOCK_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
     { kind: 'abilityDamage', abilityId: 'bane_of_agony' },
     { kind: 'abilityDamage', abilityId: 'siphon_life' },
     { kind: 'abilityDamage', abilityId: 'immolate' },
+    /*
+     * WRACK COUNTS AS PERIODIC DAMAGE HERE, by the ruleset owner's ruling, and
+     * it is the one entry in this list that is NOT an aura id.
+     *
+     * IT IS A CHANNEL, so its six ticks are CAST ticks and carry no `periodic`
+     * flag -- which is exactly what stops Wrack's own debuff amplifying its own
+     * ticks, and would equally have stopped a rule keyed on that flag from
+     * reaching them. The owner has ruled on the question the engine could not
+     * answer from the data: for Malediction, a Wrack tick is periodic damage.
+     *
+     * `abilityDamage` ON THE ABILITY ID reaches it regardless, because
+     * `abilityModifiers` is keyed by id and Wrack deals its damage under its
+     * own. So the ruling costs one line and no new rule.
+     */
+    { kind: 'abilityDamage', abilityId: 'wrack' },
   ],
 
   soul_harvesting: [
@@ -110,23 +125,28 @@ export const WARLOCK_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
 
   amplify_curse: [
     /*
-     * A ONE-SHOT PER-ABILITY DAMAGE MODIFIER, and it is the THIRD talent to
-     * want one field on `CastModifier` that is not there. Two Paladin and
-     * Priest talents want a one-shot CRIT; this one wants damage. Neither
-     * profile spends a point here, so building it moves nothing -- which makes
-     * it the cheap one to build alongside whichever of the other two goes
-     * first.
+     * ------------------------------------------------------------------------
+     * DECLARED NOW, AND IT NEVER NEEDED THE MECHANISM IT WAS WAITING FOR.
+     *
+     * Its reason said this wanted "a one-shot per-ability DAMAGE modifier",
+     * because `CastModifier` carries cast time and cost and not damage. That
+     * was the wrong shape: the 50% applies to Bane of Agony's TICKS, which land
+     * over twenty-four seconds, and a cast modifier is resolved and spent at
+     * the cast. So the amplification travels with the AURA instead -- two
+     * definitions sharing the id `bane_of_agony`, chosen at application. See
+     * `BANE_OF_AGONY_ABILITY`.
+     *
+     * A REASON THAT NAMES A MISSING MECHANISM CAN BE WRONG ABOUT WHICH ONE, and
+     * this one was. It was right that nothing expressed the effect and wrong
+     * about what would; the one-shot per-ability CRIT modifier two other
+     * classes want is still genuinely missing, and this talent is no longer a
+     * caller for its damage twin.
+     *
+     * THE SM/DS BUILD TAKES IT NOW, at the owner's instruction, with the point
+     * moved out of Suppression -- see `WARLOCK_AFFLICTION_TALENTS`.
+     * ------------------------------------------------------------------------
      */
-    {
-      kind: 'unmodelled',
-      reason:
-        'Raises the effect of the NEXT Curse of Weakness or Bane of Agony by ' +
-        '50%. `CastModifier` carries cast time and cost and not damage, so a ' +
-        'one-shot per-ability DAMAGE modifier is the missing field -- the same ' +
-        'shape as the one-shot CRIT modifier two other classes want. Neither ' +
-        'Warlock profile takes it, and of the spells it names only Bane of ' +
-        'Agony is declared.',
-    },
+    { kind: 'grantAbility', abilityId: 'amplify_curse' },
   ],
 
   pandemic: [
@@ -184,12 +204,16 @@ export const WARLOCK_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
      * modifier -- which is what `abilityBonus` is for. Wrack's `onCast` counts
      * `WARLOCK_AFFLICTION_PERIODICS` and applies the smaller of the two.
      *
-     * WHICH EFFECTS COUNT IS AN INTERPRETATION AND IT IS BOUNDED BY THE BOOK:
-     * the three declared Affliction periodics are Corruption, Bane of Agony and
-     * Siphon Life, so a fully-loaded target counts three and reaches the 36%
-     * cap exactly. Bane of Doom, Drain Life and Drain Soul would each add
-     * another 12% and none is declared, so the bonus is UNDERSTATED rather than
-     * absent -- which, at the cap, it currently is not.
+     * WHICH EFFECTS COUNT IS THE OWNER'S RULING NOW, AND IT INCLUDES A RAID
+     * DEBUFF: "corruption, curse of the elements, and bane of agony are the 3
+     * affliction effects needed to max out the 36% damage buff to wrack."
+     * Curse of the Elements arrives from the preset raid buffs and sits on the
+     * target for the hour, so in practice it is always one of the three.
+     *
+     * `WARLOCK_SOUL_SIPHON_EFFECTS` IS A SEPARATE LIST FROM PANDEMIC'S, and
+     * conflating them was the trap worth avoiding: Curse of the Elements is not
+     * periodic and Pandemic does not name it, so putting it in the shared list
+     * would have handed a crit damage bonus to a raid debuff.
      *
      * Same as Improved Drains above, this reaches only Wrack -- and the SM/DS
      * list casts Wrack now, so it is live rather than merely correct. The gate

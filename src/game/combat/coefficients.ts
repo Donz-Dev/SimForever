@@ -283,7 +283,35 @@ export const FROSTFIRE_BOLT_TICK_SP_COEFFICIENT = 0;
 // Warlock
 // ---------------------------------------------------------------------------
 
-export const BANE_OF_AGONY_TICK_SP_COEFFICIENT = 0.133;
+/**
+ * BANE OF AGONY: 160% of spell power across the WHOLE effect, not per tick.
+ *
+ * ----------------------------------------------------------------------------
+ * THE SECOND ROW IN THIS FILE THAT IS NOT FROM THE SHEET, AND THE FIRST THAT
+ * CONTRADICTS IT. `WoWSimWorksheet.xlsx` gives Bane of Agony 13.3% a tick,
+ * which over the eight ticks it then had is 1.064 in total. The ruleset owner
+ * has since stated the figure directly, with the cadence and the ramp in the
+ * same message: "ticks every 2 seconds, lasts 24 seconds, benefits from 160% of
+ * the character sheet spell power", worked through as "552 + 500 * 1.6 = 1352"
+ * for a caster with 500 spell power.
+ *
+ * SO IT SUPERSEDES THE SHEET, by the standing rule that the later and more
+ * specific statement from the owner wins -- the same way the sheet itself
+ * superseded `WoWForeverWarriorAbilities.xlsx` on Rend and Revenge. Both sites
+ * say so, because a reader who knows the sheet would otherwise read 1.6 as a
+ * transcription error.
+ *
+ * IT IS A TOTAL AND THE TICKS DIVIDE IT, which is why this constant is not
+ * named `_TICK_`. `BANE_OF_AGONY_TICK_SHARES` in `auras/warlock.ts` holds the
+ * ramp that splits it, and both the flat 552 and this coefficient are split by
+ * the SAME shares -- so a tick is `(552 + SP * 1.6) * share` however the ramp
+ * is read.
+ *
+ * WORTH ROUGHLY HALF AGAIN what the sheet gave it: 1.6 against 1.064, on an
+ * effect that is a fifth of the SM/DS profile's damage.
+ * ----------------------------------------------------------------------------
+ */
+export const BANE_OF_AGONY_SP_COEFFICIENT = 1.6;
 export const SIPHON_LIFE_TICK_SP_COEFFICIENT = 0.05;
 export const CORRUPTION_TICK_SP_COEFFICIENT = 0.2;
 export const SHADOW_BOLT_SP_COEFFICIENT = 0.857;

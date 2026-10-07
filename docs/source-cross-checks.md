@@ -165,6 +165,24 @@ the mana is taken in `onCast` — the shape Execute already uses for the rage it
 drains beyond its declared 15. One line in `abilities/warlock.ts` reverts it to
 mana alone if the owner means that.
 
+### 2026-10-07: Bane of Agony's coefficient SUPERSEDES the sheet
+
+**NOT A SOURCE DISAGREEMENT AND NOT STALENESS.** `WoWSimWorksheet.xlsx` gives
+Bane of Agony 13.3% of spell power a tick -- 1.064 in total over the eight ticks
+it then had. The ruleset owner has since stated the figure directly as **160% of
+spell power across the whole effect**, with the cadence and the ramp in the same
+message and a worked example: "552 + 500 * 1.6 = 1352".
+
+**THE LATER AND MORE SPECIFIC OWNER STATEMENT WINS**, which is the same rule that
+let the sheet supersede `WoWForeverWarriorAbilities.xlsx` on Rend, Revenge and
+Thunder Clap. No tie-break between the two captured sources is involved: neither
+`talentsforever.com` nor `foreverchanges.pro` carries a coefficient at all.
+
+**IT IS RECORDED IN THREE PLACES** -- beside the constant, in
+[spell-coefficients.md](spell-coefficients.md) and here -- because a figure that
+disagrees with a checked-in document reads as drift to the next person unless the
+ruling travels with it. Worth **+23.6 DPS** to SM/DS.
+
 ### What this check established beyond the Warlock
 
 **TWO CLIENT-DERIVED SOURCES CAN DISAGREE AT THE SAME BUILD.** Before this the

@@ -154,6 +154,29 @@ field added for one caller is a silent no-op for the second one.**
 nothing else. **Measure with `runProfileBatch`, not `runProfile`** — the app runs
 the former and the two are different fights even at one iteration.
 
+**SEVEN WARLOCK RULINGS FROM THE OWNER, AND SM/DS GAINED 34.9 ON THEM.** 441.5
+to **476.5, REAL**, with Firelock at -0.4 and the other twenty-two identical to
+the decimal. Each isolated by reverting it alone over thirty batches of ten:
+
+| | |
+| --- | --- |
+| **+23.6** | **Bane of Agony's coefficient is 160% of spell power across the whole effect**, against the sheet's 13.3% a tick -- 1.064 in total over the eight ticks it then had. The owner's worked example is `552 + 500 * 1.6 = 1352`, and the twelve ticks reproduce it exactly. **The second row in `coefficients.ts` that is not from the sheet, and the first that CONTRADICTS it** |
+| **+18.6** | **Amplify Curse**, one talent point moved out of Suppression, cast once before the first Bane and **off the global cooldown** -- which is what makes it free |
+| **+6.6** | **Wrack counts as periodic damage for Malediction**, by ruling. Its ticks are CAST ticks and carry no `periodic` flag, so this was a question the data could not answer |
+| **+1.7** | **a Nightfall proc is spent by the NEXT action.** Inside the interval on DPS, and the behaviour is not in doubt: Shadow Trance uptime falls from 0.082 to 0.049, so the proc is held 40% less time |
+| **+0.4** | **Curse of the Elements counts for Soul Siphon.** Noise, and correctly so -- the three bleeds already reach the 36% cap, so the fourth counted effect is redundant until one drops |
+| **-4.3** | **Siphon Life cannot crit.** The only damage-over-time effect here that cannot; every other one can, which is a Forever rule |
+| **-7.6** | **the RAMP**, against a flat distribution of the same total. Back-loading throws away the big late ticks every time the Bane is re-applied, and it is the owner's data either way |
+
+**THE RAMP IS CLASSIC'S SHAPE AT A DIFFERENT RESOLUTION**, which the old caveat
+guessed and had no authority to assert: 1/24 : 1/12 : 1/8 is 1 : 2 : 3, and the
+flat share over twelve ticks is 1/12 -- so the bands are 50%, 100% and 150% of
+the average exactly as Classic's are. The guess was right and is now sourced.
+
+**AND SIPHON LIFE IS WORTH CASTING, WHICH THE OWNER ASKED: +13.6.** The first
+answer was wrong by a factor of two and the reason is worth knowing -- see
+[docs/handoff/warlock.md](docs/handoff/warlock.md).
+
 **THE NEWEST MOVE IS THAT A SEAL CRITS**, on the owner's ruling: Seal of
 Righteousness, Seal of Fury and Seal of Command all roll against the Paladin's
 MELEE crit chance. Three profiles moved and the other twenty are **+0.0 to the
@@ -836,7 +859,7 @@ while it worked.
 decimal -- which is what a talent change scoped to one build should look like.
 It makes Frostfire the top Mage, above Fire's 401.2 and Arcane's 392.6, and the
 build that existed for the Fire/Frost overlap now has a third reason to. The
-mean across **24** is **565.2**, RE-SUMMED FROM THE TABLE ABOVE rather than
+mean across **24** is **566.7**, RE-SUMMED FROM THE TABLE ABOVE rather than
 adjusted -- **by `tools/update_baseline_table.py`, which exists now**; the
 sentence above it had promised a script for several commits and there was none,
 so the mean and the ordering were still being maintained by hand.
@@ -1389,14 +1412,14 @@ Hemo moves five rows between the two columns, which is exactly that kind of edit
 | Profile | Class | Talents | DPS | | Profile | Class | Talents | DPS |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | Seal Twist Ret | Paladin | 13/0/38 | 748.3 | | Arcane Mage | Mage | 47/4/0 | 576.1 |
-| LW Ranged | Hunter | 7/39/5 | 681.1 | | Firelock | Warlock | 5/11/35 | 544.7 |
+| LW Ranged | Hunter | 7/39/5 | 681.1 | | **Firelock** | Warlock | 5/11/35 | **544.3** |
 | LW Melee | Hunter | 7/13/31 | 672.6 | | Hemo Rogue | Rogue | 17/3/31 | 527.1 |
 | BM Hunter | Hunter | 31/20/0 | 668.6 | | Shadow Priest | Priest | 16/3/32 | 516.4 |
 | DW Fury | Warrior | 18/33/0 | 667.5 | | Moonkin | Druid | 38/0/13 | 513.4 |
-| **Cat Druid** | Druid | 9/35/7 | **663.3** | | Venom Rogue | Rogue | 37/12/2 | 510.6 |
+| Cat Druid | Druid | 9/35/7 | 663.3 | | Venom Rogue | Rogue | 37/12/2 | 510.6 |
 | Frostfire Mage | Mage | 0/29/22 | 661.3 | | Rupture Rogue | Rogue | 12/8/31 | 497.6 |
-| Enh Shaman | Shaman | 19/32/0 | 625.8 | | Prot Warr | Warrior | 17/0/34 | 457.0 |
-| Fire Mage | Mage | 10/39/2 | 622.0 | | SM/DS | Warlock | 40/11/0 | 441.5 |
+| Enh Shaman | Shaman | 19/32/0 | 625.8 | | **SM/DS** | Warlock | 40/11/0 | **476.5** |
+| Fire Mage | Mage | 10/39/2 | 622.0 | | Prot Warr | Warrior | 17/0/34 | 457.0 |
 | 2H Arms | Warrior | 38/13/0 | 621.1 | | Ele Shaman | Shaman | 38/13/0 | 440.2 |
 | Combat Rogue | Rogue | 18/33/0 | 586.3 | | Bear Druid | Druid | 9/42/0 | 433.6 |
 | Shockadin | Paladin | 23/0/28 | 585.5 | | Prot Pally | Paladin | 8/36/7 | 303.9 |
@@ -1525,7 +1548,7 @@ structure, and throws if its four buckets do not account for every talent.
 | [hunter.md](docs/handoff/hunter.md) | BM Hunter, LW Ranged, LW Melee | **8** |
 | [mage.md](docs/handoff/mage.md) | Frostfire, Arcane, Fire | **11** |
 | [priest.md](docs/handoff/priest.md) | Shadow | **12** |
-| [warlock.md](docs/handoff/warlock.md) | SM/DS, Firelock | **20** |
+| [warlock.md](docs/handoff/warlock.md) | SM/DS, Firelock | **19** |
 
 **THE WARRIOR'S 0 AGAINST THE WARLOCK'S 25 IS NOT A DIFFERENCE IN DIFFICULTY.**
 The Warrior had four sources and eight of its numbers turned out wrong; the other
@@ -1629,8 +1652,8 @@ between PARTLY and FULLY** -- Hunter 28 fully to 29, partly 5 to 4.
 | Hunter | 50 | 29 | 4 | 9 | **8** |
 | Mage | 54 | 30 | 2 | 12 | **10** |
 | Priest | 53 | 20 | 2 | 19 | **12** |
-| Warlock | 52 | 24 | 3 | 5 | **20** |
-| **Total** | **468** | **262** | **38** | **106** | **62** |
+| Warlock | 52 | 25 | 3 | 5 | **19** |
+| **Total** | **468** | **263** | **38** | **106** | **61** |
 
 **THE WARRIOR LEFT THE GAP COLUMN ENTIRELY**, and its last entry is worth
 reading because of the shape rather than the size. Improved Berserker Rage's

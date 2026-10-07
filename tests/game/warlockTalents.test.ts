@@ -8,6 +8,7 @@ import { makeTarget } from '../helpers/actors';
 import {
   WARLOCK_AFFLICTION_PERIODICS,
   WARLOCK_DESTRUCTION_SPELLS,
+  WARLOCK_SOUL_SIPHON_EFFECTS,
   WRACK,
   WRACK_SOUL_SIPHON_CAP,
   WRACK_SOUL_SIPHON_PER_EFFECT,
@@ -19,6 +20,8 @@ import {
   WRACK_AMPLIFICATION,
 } from '../../src/game/auras/warlock';
 import { COMBAT_CONSTANTS } from '../../src/game/combat/attackChances';
+import { WARLOCK_TALENT_EFFECTS } from '../../src/game/talents/warlockEffects';
+import type { TalentEffect } from '../../src/game/talents/TalentEffect';
 
 /*
  * ============================================================================
@@ -162,14 +165,33 @@ describe('Ruin and Agonizing Flames, which select a TREE and not a school', () =
 describe('Improved Drains and Soul Siphon, which reach Wrack and nothing else', () => {
   const smds = playerFor('warlock_smds');
 
-  it('Improved Drains raises Wrack by its full 20%', () => {
+  it('Improved Drains and Malediction BOTH reach Wrack, and they multiply', () => {
     /*
-     * "DRAIN LIFE, DRAIN SOUL, AND WRACK", and Wrack is the only one of the
-     * three this project declares. The old `unmodelled` reason already SAID
-     * Wrack was declared and had not been acted on -- an expired reason that
-     * had gone unread, which is the fourth time in this project.
+     * ------------------------------------------------------------------------
+     * 1.2 x 1.05 = 1.26, AND THE SECOND FACTOR IS A RULING.
+     *
+     * Improved Drains names "Drain Life, Drain Soul, and Wrack" and is the only
+     * one of those three this project declares. Malediction names "all periodic
+     * damage done by your Warlock spells" -- and whether a CHANNEL's ticks are
+     * periodic damage is a question the data could not answer, because Wrack's
+     * ticks are cast ticks and carry no `periodic` flag. The ruleset owner has
+     * ruled that for Malediction they are.
+     *
+     * THIS ASSERTED 1.2 AND WAS RIGHT UNTIL THAT RULING. It is the product now,
+     * written out with both factors named, so the next reader can see which
+     * talent contributes what rather than meeting a bare 1.26.
+     *
+     * THEY MULTIPLY RATHER THAN ADD, which is `combineAbilityModifiers`' rule
+     * for damage and the same one `SchoolModifiers` uses: two independent +10%
+     * effects are +21%.
+     * ------------------------------------------------------------------------
      */
-    expect(smds.abilityModifiers.for('wrack').damageMultiplier).toBeCloseTo(1.2, 6);
+    const improvedDrains = 1.2;
+    const malediction = 1.05;
+    expect(smds.abilityModifiers.for('wrack').damageMultiplier).toBeCloseTo(
+      improvedDrains * malediction,
+      6,
+    );
   });
 
   it('Soul Siphon hands Wrack its per-effect number and its cap', () => {
@@ -207,6 +229,14 @@ describe('Improved Drains and Soul Siphon, which reach Wrack and nothing else', 
       for (const aura of [CORRUPTION, BANE_OF_AGONY, SIPHON_LIFE].slice(0, dots)) {
         simulation.applyAura(target, aura, caster.id);
       }
+      /*
+       * NOTE WHAT IS *NOT* HERE: Curse of the Elements. The owner has ruled it
+       * counts for Soul Siphon, and in a real fight it arrives from the preset
+       * raid buffs and is up for the hour -- so a profile reaches the 36% cap on
+       * Corruption, Curse of the Elements and Bane of Agony alone. This test
+       * builds the target by hand precisely so the count is the three it
+       * applies and not whatever the raid turned up with.
+       */
 
       castAbility(simulation, caster, caster.abilities.get('wrack') as Ability, target);
       simulation.advanceTo(seconds(10));
@@ -284,5 +314,74 @@ describe('Wrack, whose debuff amplifies only damage OVER TIME', () => {
 
     expect(damageOf('corruption', true) / damageOf('corruption', false)).toBeCloseTo(1.1, 6);
     expect(damageOf('shadow_bolt', true) / damageOf('shadow_bolt', false)).toBeCloseTo(1, 6);
+  });
+});
+
+describe('Two lists, and conflating them would have been the bug', () => {
+  /*
+   * ============================================================================
+   * PANDEMIC SELECTS PERIODIC SPELLS BY NAME. SOUL SIPHON COUNTS "AFFLICTION
+   * EFFECTS". They overlap and they are not the same set, and the ruleset owner
+   * has ruled that Soul Siphon's includes CURSE OF THE ELEMENTS -- a raid
+   * debuff, which is neither periodic nor one of the seven spells Pandemic
+   * lists.
+   *
+   * SO ADDING IT TO ONE SHARED LIST WOULD HAVE HANDED A CRIT DAMAGE BONUS TO A
+   * RAID DEBUFF, which is the sort of thing that produces a slightly larger
+   * number and no error anywhere.
+   * ============================================================================
+   */
+  it('Soul Siphon counts Curse of the Elements and Pandemic does not', () => {
+    expect(WARLOCK_SOUL_SIPHON_EFFECTS).toContain('curse_of_the_elements');
+    expect(WARLOCK_AFFLICTION_PERIODICS).not.toContain('curse_of_the_elements');
+
+    // And the modifier really does stop at the spells Pandemic names.
+    const smds = playerFor('warlock_smds');
+    expect(
+      smds.abilityModifiers.for('curse_of_the_elements').critMultiplierBonus ?? 0,
+    ).toBe(0);
+  });
+
+  it('counts three effects to the cap, which the raid supplies for free', () => {
+    /*
+     * The owner's enumeration: "corruption, curse of the elements, and bane of
+     * agony are the 3 affliction effects needed to max out the 36% damage buff
+     * to wrack." Curse of the Elements comes from the preset raid buffs and
+     * sits on the target for the hour.
+     *
+     * WORTH +0.4 AND THAT IS NOT A FAILURE: with Siphon Life in the list the
+     * three bleeds already reach the 36% cap on their own, so the fourth
+     * counted effect is redundant while they are all up. It becomes
+     * load-bearing the moment one drops.
+     */
+    const smds = playerFor('warlock_smds');
+    const wrack = smds.abilities.get('wrack');
+    const perEffect = wrack?.bonuses?.[WRACK_SOUL_SIPHON_PER_EFFECT] ?? 0;
+    const cap = wrack?.bonuses?.[WRACK_SOUL_SIPHON_CAP] ?? 0;
+    expect(perEffect * 3).toBe(cap);
+  });
+
+  it('Malediction reaches Wrack, which is the owner calling a channel periodic', () => {
+    const malediction = WARLOCK_TALENT_EFFECTS.malediction;
+    const ids = malediction
+      .filter((e: TalentEffect) => e.kind === 'abilityDamage')
+      .map((e: TalentEffect) => (e as { abilityId: string }).abilityId);
+    expect(ids).toContain('wrack');
+    // The four aura ids it already had, so the ruling ADDED rather than moved.
+    expect(ids).toEqual(
+      expect.arrayContaining(['corruption', 'bane_of_agony', 'siphon_life', 'immolate']),
+    );
+  });
+
+  it('Amplify Curse grants its ability and reports only the curses it cannot reach', () => {
+    const effects = WARLOCK_TALENT_EFFECTS.amplify_curse;
+    expect(effects.some((e: TalentEffect) => e.kind === 'grantAbility')).toBe(true);
+    // Its old reason asked for a one-shot per-ability DAMAGE modifier and was
+    // wrong about the mechanism; nothing should still claim that.
+    for (const effect of effects) {
+      if (effect.kind === 'unmodelled') {
+        expect(effect.reason).not.toContain('CastModifier');
+      }
+    }
   });
 });

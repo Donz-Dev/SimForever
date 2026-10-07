@@ -152,9 +152,24 @@ not carry any of them.**
 | Wrack | 14.3% of spell power **per tick**, six ticks | the sheet lists nine Warlock spells and Wrack is not one |
 | Searing Totem | 8% of spell power **per tick** | with the ruling that modelled the totem as a damage-over-time effect at all |
 | Fire Nova | 10% of spell power | 2026-09-30, asked for with the alternatives beside it. "Give it a 10% spell power coefficient for now" — and the "for now" is recorded rather than smoothed away |
+| **Bane of Agony** | **160% of spell power across the WHOLE effect**, split by the tick ramp | 2026-10-07, with the cadence and the ramp in the same message and a worked example: `552 + 500 * 1.6 = 1352` |
 
-**ALL THREE ARE SPELLS FOREVER ADDED OR CHANGED, which is why the sheet has no
-row.** Fire Nova is `versusClassic: "new"`, so there was never a Classic row to
+**BANE OF AGONY IS THE ODD ONE OUT AND THE IMPORTANT ONE: THE SHEET DOES HAVE A
+ROW FOR IT, AND THIS CONTRADICTS IT.** The sheet gives 13.3% a tick, which over
+the eight ticks it then had is 1.064 in total, against 1.6 now. So this is not a
+gap being filled but a figure being SUPERSEDED, by the standing rule that the
+later and more specific statement from the owner wins -- the same way the sheet
+itself superseded `WoWForeverWarriorAbilities.xlsx` on Rend, Revenge and Thunder
+Clap. **Both sites say so**, because a reader who knows the sheet would otherwise
+read 1.6 as a transcription error.
+
+**IT IS ALSO THE FIRST COEFFICIENT HERE THAT IS A TOTAL RATHER THAN A PER-TICK
+OR PER-CAST FIGURE**, which is why its constant is not named `_TICK_`:
+`BANE_OF_AGONY_TICK_SHARES` splits it, and the flat base damage is split by the
+same shares, so a tick is `(552 + SP * 1.6) * share`.
+
+**THE OTHER THREE ARE SPELLS FOREVER ADDED OR CHANGED, which is why the sheet has
+no row.** Fire Nova is `versusClassic: "new"`, so there was never a Classic row to
 carry over and nothing to transcribe. **A missing row is therefore not evidence
 that a spell does not scale** — it can simply mean the spell is newer than the
 document, and asking is one message.
