@@ -919,7 +919,7 @@ while it worked.
 decimal -- which is what a talent change scoped to one build should look like.
 It makes Frostfire the top Mage, above Fire's 401.2 and Arcane's 392.6, and the
 build that existed for the Fire/Frost overlap now has a third reason to. The
-mean across **24** is **566.8**, RE-SUMMED FROM THE TABLE ABOVE rather than
+mean across **24** is **570.2**, RE-SUMMED FROM THE TABLE ABOVE rather than
 adjusted -- **by `tools/update_baseline_table.py`, which exists now**; the
 sentence above it had promised a script for several commits and there was none,
 so the mean and the ordering were still being maintained by hand.
@@ -1469,16 +1469,26 @@ by a dive on another branch. A row-at-a-time edit goes wrong silently, because e
 individual figure has a commit behind it and looks defensible on its own. Adding
 Hemo moves five rows between the two columns, which is exactly that kind of edit.
 
+**AND IT HAS NOW CAUGHT THE FOURTH, WHICH NO HUMAN WAS GOING TO SEE.** A rebase
+auto-merged two versions of this table -- one that had moved the Shadow Priest
+into the left column at 597.9, and one that still had it in the right at 516.4 --
+and git took BOTH rows cleanly, dropping Shockadin to keep the row count. The
+result was twenty-four rows carrying twenty-three profiles, one of them twice at
+two different figures, with no conflict marker and nothing misaligned. **The
+set assertion is what failed**: "in the map, not in the table: ['Shockadin']".
+A table where every row is individually plausible is precisely what a reader
+cannot audit, which is why the check is a SET comparison and not a row count.
+
 | Profile | Class | Talents | DPS | | Profile | Class | Talents | DPS |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| Seal Twist Ret | Paladin | 13/0/38 | 748.3 | | Arcane Mage | Mage | 47/4/0 | 576.1 |
-| LW Ranged | Hunter | 7/39/5 | 681.1 | | **Firelock** | Warlock | 5/11/35 | **544.3** |
-| LW Melee | Hunter | 7/13/31 | 672.6 | | Hemo Rogue | Rogue | 17/3/31 | 527.1 |
-| BM Hunter | Hunter | 31/20/0 | 668.6 | | Shadow Priest | Priest | 13/3/35 | 516.4 |
+| Seal Twist Ret | Paladin | 13/0/38 | 748.3 | | Shockadin | Paladin | 23/0/28 | 585.5 |
+| LW Ranged | Hunter | 7/39/5 | 681.1 | | Arcane Mage | Mage | 47/4/0 | 576.1 |
+| LW Melee | Hunter | 7/13/31 | 672.6 | | Firelock | Warlock | 5/11/35 | 544.3 |
+| BM Hunter | Hunter | 31/20/0 | 668.6 | | Hemo Rogue | Rogue | 17/3/31 | 527.1 |
 | DW Fury | Warrior | 18/33/0 | 667.5 | | Moonkin | Druid | 38/0/13 | 513.4 |
 | Cat Druid | Druid | 9/35/7 | 663.3 | | Venom Rogue | Rogue | 37/12/2 | 510.6 |
 | Frostfire Mage | Mage | 0/29/22 | 661.3 | | Rupture Rogue | Rogue | 12/8/31 | 497.6 |
-| Enh Shaman | Shaman | 19/32/0 | 625.8 | | **SM/DS** | Warlock | 40/11/0 | **479.7** |
+| Enh Shaman | Shaman | 19/32/0 | 625.8 | | SM/DS | Warlock | 40/11/0 | 479.7 |
 | Fire Mage | Mage | 10/39/2 | 622.0 | | Prot Warr | Warrior | 17/0/34 | 457.0 |
 | 2H Arms | Warrior | 38/13/0 | 621.1 | | Ele Shaman | Shaman | 38/13/0 | 440.2 |
 | **Shadow Priest** | Priest | 13/3/35 | **597.9** | | Bear Druid | Druid | 9/42/0 | 433.6 |
