@@ -41,6 +41,34 @@ export interface CastEvent extends TelemetryBase {
   readonly abilityName: string;
 }
 
+/**
+ * A channel cancelled part-way through, and what it was cancelled FOR.
+ *
+ * ----------------------------------------------------------------------------
+ * WITHOUT THIS THE COMBAT LOG LIES BY OMISSION. A six-second Wrack that ends
+ * after two seconds emits two ticks and then nothing, which reads identically
+ * to a channel that was never started -- and telemetry is the single source of
+ * truth here, so the thing that happened has to be in the stream rather than
+ * inferable from a gap in it.
+ *
+ * `interruptedFor` IS THE HALF WORTH HAVING. "A channel was cut short" is a
+ * curiosity; "a channel was cut short to cast Corruption" is what says the
+ * rotation rule did the thing it was asked to do, and it is how the three cases
+ * the ruleset owner named are counted rather than assumed.
+ * ----------------------------------------------------------------------------
+ */
+export interface ChannelInterruptedEvent extends TelemetryBase {
+  readonly type: 'channel_interrupted';
+  readonly sourceId: string;
+  readonly abilityId: string;
+  readonly abilityName: string;
+  /** The ability the rotation cancelled it for. */
+  readonly interruptedFor: string;
+  /** Ticks that had already landed, out of the channel's full count. */
+  readonly ticksDelivered: number;
+  readonly ticksTotal: number;
+}
+
 export interface DamageTelemetryEvent extends TelemetryBase {
   readonly type: 'damage';
   readonly sourceId: string;
@@ -170,6 +198,7 @@ export type TelemetryEvent =
   | CombatStartEvent
   | CombatEndEvent
   | CastEvent
+  | ChannelInterruptedEvent
   | DamageTelemetryEvent
   | HealTelemetryEvent
   | AuraTelemetryEvent

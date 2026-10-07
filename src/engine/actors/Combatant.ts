@@ -416,6 +416,58 @@ export class Combatant {
 
   /** When the current cast finishes, or 0 when not casting. */
   castEndsAt: Milliseconds = 0;
+  /**
+   * The ability currently being channelled, if any, and its pending ticks.
+   *
+   * ----------------------------------------------------------------------------
+   * HELD SO A CHANNEL CAN BE CANCELLED. The ticks are queue events scheduled
+   * when the channel starts; without the handles there is no way to stop the
+   * remainder, and `castEndsAt` alone would leave the caster free while its
+   * ticks kept landing.
+   *
+   * The same shape `AuraInstance` uses for its own expiry and tick handles,
+   * and for the same reason: an effect ended early has to clean up after
+   * itself rather than leave a ghost in the queue.
+   * ----------------------------------------------------------------------------
+   */
+  channelling: Ability | null = null;
+  private channelTicks: ScheduledEvent[] = [];
+  /** Ticks of the current channel that have already landed. */
+  channelTicksDelivered = 0;
+
+  /** Record a channel's pending tick events, replacing any previous set. */
+  beginChannel(ability: Ability, ticks: readonly ScheduledEvent[]): void {
+    this.channelling = ability;
+    this.channelTicks = [...ticks];
+    this.channelTicksDelivered = 0;
+  }
+
+  /** One tick of the current channel landed. */
+  recordChannelTick(): void {
+    this.channelTicksDelivered += 1;
+  }
+
+  /** Forget a channel that ran to completion. Cancels nothing. */
+  endChannel(): void {
+    this.channelling = null;
+    this.channelTicks = [];
+  }
+
+  /**
+   * Cancel the channel in progress: drop its remaining ticks and free the
+   * caster. The ticks already delivered stand.
+   *
+   * Returns the ability that was cancelled, or null if nothing was.
+   */
+  interruptChannel(context: { events: { cancel(event: ScheduledEvent | null): void } }): Ability | null {
+    const interrupted = this.channelling;
+    if (!interrupted) return null;
+    for (const tick of this.channelTicks) context.events.cancel(tick);
+    this.channelTicks = [];
+    this.channelling = null;
+    this.castEndsAt = 0;
+    return interrupted;
+  }
 
   /**
    * An ability armed to replace the next swing of a weapon, by slot.

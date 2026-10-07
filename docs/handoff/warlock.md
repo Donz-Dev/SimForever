@@ -10,8 +10,8 @@ directory for what the census columns mean and how to reprint every figure below
 
 ## The one thing to understand first
 
-**SEVEN RULINGS FROM THE OWNER LANDED AT ONCE AND SM/DS GAINED 34.9 ON THEM.**
-441.5 to **476.5, REAL**, Firelock −0.4, and the other twenty-two profiles
+**EIGHT RULINGS FROM THE OWNER AND SM/DS GAINED 38.1 ON THEM.**
+441.5 to **479.7, REAL**, Firelock −0.4, and the other twenty-two profiles
 identical to the decimal. Each isolated by reverting it alone over thirty
 batches of ten:
 
@@ -24,6 +24,7 @@ batches of ten:
 | **+0.4** | **Curse of the Elements counts for Soul Siphon.** Noise, and correctly so — see below |
 | **−4.3** | **Siphon Life cannot crit**, the only DoT here that cannot |
 | **−7.6** | **the RAMP**, against a flat distribution of the same total |
+| **+3.2** | **a channel can be cancelled mid-cast**, which REPLACED Wrack's six-second gate rather than adding to it |
 
 **THE RAMP COSTS DPS AND IS RIGHT ANYWAY.** Back-loading throws away the big
 late ticks every time the Bane is re-applied, so a flat distribution of the same
@@ -36,7 +37,42 @@ flat share over twelve ticks is 1/12 — so the bands are 50%, 100% and 150% of 
 average, exactly as Classic's are. **The guess was right and is now sourced**,
 which is the happier version of an expired caveat.
 
-### Two of the seven measure as noise, and both for good reasons
+### The interrupt rule, which is a new engine capability
+
+**`Ability.interruptibleChannel` + `PriorityEntry.interruptsChannel`, and BOTH
+HALVES HAVE TO AGREE** before anything is cut short. Measured off the telemetry
+stream over thirty fights: **4.6 interrupts a fight**, caused by exactly the three
+ids the owner named and nothing else.
+
+| cut short for | per fight |
+| --- | --- |
+| `corruption` (fell off) | 1.60 |
+| `bane_of_agony` (fell off) | 1.60 |
+| `shadow_bolt` (Nightfall procced) | 1.15 |
+
+**IT IS NOT "EVERY ENTRY ABOVE WRACK."** Siphon Life and Life Tap sit above it in
+the same list and are NOT interrupters — the positional rule would have been right
+about three entries and wrong about two, and the two would have cost channel time
+to refresh a bleed that was not about to drop.
+
+**`already_casting` IS WHAT MAKES IT SAFE.** `selectInterrupt` accepts a candidate
+only when that is the SOLE rejection reason, so the channel is never discarded for
+a cast that then cannot happen — a Corruption that has expired while the Warlock
+is out of mana leaves the channel alone.
+
+**A CANCELLED CHANNEL HAS STILL PAID.** 1 interrupt in 138 lands before the first
+tick, so its 200 mana buys nothing. That is what starting a channel costs, and the
+test says so rather than asserting it away — the assertion originally demanded at
+least one tick and failed, which is how the case was found.
+
+**WRACK IS 39.5% OF THE PROFILE NOW** and starts 10.5 channels a fight, averaging
+4.2 of 6 ticks. Shadow Bolt is down to 2.0 casts and 5.4% — it is a proc spender
+rather than a filler, and **the filler entry at the bottom of the list now fires
+zero times**, because an ungated Wrack with no cooldown is a floor under it. Kept,
+because it is the owner's and because an entry the walk never reaches costs
+nothing.
+
+### Two of the eight measure as noise, and both for good reasons
 
 - **Curse of the Elements, +0.4.** The three bleeds already reach Soul Siphon's
   36% cap, so a fourth counted effect is redundant *while all three are up*. The
@@ -46,22 +82,27 @@ which is the happier version of an expired caveat.
   spending it *sooner*, and the uptime figure is the witness rather than the DPS.
   **The owner asked for the behaviour, not for a number**, and it is in.
 
-### The answer to "is Siphon Life worth casting": yes, +13.6 — and the first answer was wrong
+### "Is Siphon Life worth casting": asked twice, answered twice, and the first answer was wrong
 
-**476.5 with its entry, 462.9 without.** So it earns its global cooldown even
-having lost its crits.
+**+15.7 on the re-measure** — 479.7 with its entry, 464.0 without — against +13.6
+before the interrupt rule. So it earns its global cooldown either way, even having
+lost its crits.
 
-**THE FIRST MEASUREMENT SAID −24.1 AND WAS MEASURING TWO THINGS.**
-`WARLOCK_AFFLICTION` gates Wrack on **all three bleeds** having six seconds left,
-and one of the three is Siphon Life — so removing Siphon Life's entry took **Wrack
-from 5.7 casts a fight to ZERO**, because an aura nothing applies can never have
-six seconds left. The honest figure repairs the gate first.
+**THE FIRST MEASUREMENT SAID −24.1 AND WAS MEASURING TWO THINGS.** Wrack was gated
+on **all three bleeds** having six seconds left and one of the three was Siphon
+Life, so removing Siphon Life's entry took **Wrack from 5.7 casts a fight to
+ZERO** — an aura nothing applies can never have six seconds left. The honest
+figure had to repair the gate first.
 
-**THAT IS THE SELF-DISABLING SPECIFICATION FOR THE THIRD TIME IN THIS PROJECT**,
+**THAT WAS THE SELF-DISABLING SPECIFICATION FOR THE THIRD TIME IN THIS PROJECT**,
 after the Seal Twist cycle with no entry point and "Scorch if scorch debuff <= 5"
 being always true — and the first time it disabled a DIFFERENT entry from the one
-being changed. **Anyone removing Siphon Life must repair Wrack's gate too**, and
-the comment on that entry says so.
+being changed.
+
+**AND THE COUPLING IS NOW GONE RATHER THAN DOCUMENTED.** The gate went with the
+interrupt rule, so Wrack fires 10.9 times a fight without Siphon Life and the
+question answers itself cleanly. **The best fix for a fragile condition turned out
+to be a capability that made it unnecessary.**
 
 ---
 
@@ -136,7 +177,7 @@ than code.
 | Profile | Talents | DPS | Was | List |
 | --- | --- | --- | --- | --- |
 | Firelock | 5/11/35 | **544.3** | 544.7, −0.4 noise (Corruption out) | `WARLOCK_DESTRUCTION` |
-| SM/DS | 40/11/0 | **476.5** | 441.5, **+34.9 REAL** (the seven rulings) | `WARLOCK_AFFLICTION` |
+| SM/DS | 40/11/0 | **479.7** | 441.5, **+38.1 REAL** (the eight rulings) | `WARLOCK_AFFLICTION` |
 
 **FIRELOCK IS NO LONGER THE THIRD-HIGHEST PROFILE IN THE PROJECT.** It sits
 between Prot Warr's 454.6 and Cat's 488.0 now. The drop is a CORRECTION and not a
@@ -163,7 +204,7 @@ One batch of ten, so read the shape and not the decimals:
 
 | Profile | Top sources |
 | --- | --- |
-| SM/DS | **Wrack 26.6%**, Bane of Agony 24.4%, Shadow Bolt 21.5%, Corruption 21.3%, Siphon Life 6.2% |
+| SM/DS | **Wrack 39.5%**, Bane of Agony 26.0%, Corruption 23.2%, Siphon Life 5.9%, Shadow Bolt 5.4% |
 | Firelock | **Incinerate 48.1%**, Immolate 26.1%, Conflagrate 18.6%, Shadowburn 7.3% |
 
 **CORRUPTION FELL FROM 13.5% TO 10.3% OF FIRELOCK**, which is the containment
@@ -233,18 +274,19 @@ the census: it counts whether a talent is EXPRESSED and not whether it is right.
 
 ## Never-fired entries
 
-**ONE, AND WRACK CAUSED IT: SM/DS's LIFE TAP.** Confirmed with `USES=1`:
+**TWO, AND WRACK CAUSED BOTH: SM/DS's LIFE TAP AND ITS FILLER SHADOW BOLT.**
+Confirmed with `USES=1`:
 
 | SM/DS | uses | | Firelock | uses |
 | --- | --- | --- | --- | --- |
 | amplify_curse | 1.0 | | immolate | 4.3 |
-| shadow_bolt (proc-gated) | 7.3 | | conflagrate | 6.0 |
+| shadow_bolt (proc-gated) | 2.0 | | conflagrate | 6.0 |
 | bane_of_agony | 3.0 | | shadowburn | 4.0 |
-| corruption | 3.9 | | life_tap | 5.0 |
+| corruption | 4.0 | | life_tap | 5.0 |
 | siphon_life | 2.0 | | incinerate | 16.4 |
 | **life_tap** | **0.0** | | | |
-| wrack | 5.0 | | | |
-| shadow_bolt (filler) | 7.3 | | | |
+| wrack | 10.5 | | | |
+| **shadow_bolt (filler)** | **0.0** | | | |
 
 **AMPLIFY CURSE FIRES EXACTLY ONCE**, which is the three-minute cooldown doing
 the work a condition would otherwise have to — and the two Shadow Bolt rows are
@@ -364,8 +406,15 @@ length takes its own gate with it.
   refresh restarts the ramp — which is what `refreshBehaviour: 'reset'` means
   everywhere else. A counter on the instance would need resetting by hand in the
   one place that is easy to forget.
-- **WRACK'S GATE NAMES SIPHON LIFE.** Removing Siphon Life from the list takes
-  Wrack with it, silently, and it cost a wrong measurement before it was caught.
+- ~~**WRACK'S GATE NAMES SIPHON LIFE.**~~ **GONE WITH THE GATE**, which the
+  interrupt rule replaced. It cost one wrong measurement while it existed, and the
+  lesson is in CLAUDE.md: when an entry's condition names an aura, grep for who
+  else applies it before measuring that aura's removal.
+- **A CHANNEL IS CANCELLABLE AND BOTH HALVES HAVE TO AGREE** --
+  `Ability.interruptibleChannel` and `PriorityEntry.interruptsChannel`. Only
+  Wrack declares the first, deliberately: every channel in a real client can be
+  cancelled, and turning it on for Arcane Missiles would move the Mage profiles
+  on a ruling that was about the Warlock.
 - **A temporary summon is modelled without a combatant** on the owner's call — the
   Infernal is the mid-fight-summon gap, shared with the Mage's elemental and the
   Shaman's totems. **Nothing in any profile needs it.**

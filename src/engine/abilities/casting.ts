@@ -4,6 +4,7 @@ import { runCastReactions } from '../combat/reactions';
 import type { ResourceType } from '../resources/Resource';
 import { resetSwingTimers } from '../combat/autoAttack';
 import { EventPriority, createEvent } from '../events';
+import type { ScheduledEvent } from '../events';
 import type { SimulationContext } from '../simulation/SimulationContext';
 import type { Milliseconds } from '../time';
 import type { Ability, AbilityContext } from './Ability';
@@ -296,17 +297,32 @@ export function castAbility(
    * the caster free would let a rotation act in the middle of its own channel.
    */
   const ticks = Math.max(1, ability.channelTicks ?? 1);
+  const handles: ScheduledEvent[] = [];
   for (let i = 1; i <= ticks; i += 1) {
     const last = i === ticks;
-    context.events.schedule(
-      now + Math.round((castTime * i) / ticks),
-      createEvent(`cast-complete:${ability.id}`, EventPriority.CastComplete, (ctx) => {
-        if (last) caster.castEndsAt = 0;
-        if (!caster.isAlive) return;
-        runCast(ctx, { simulation: ctx, caster, target, ability }, last);
-      }),
+    handles.push(
+      context.events.schedule(
+        now + Math.round((castTime * i) / ticks),
+        createEvent(`cast-complete:${ability.id}`, EventPriority.CastComplete, (ctx) => {
+          if (last) {
+            caster.castEndsAt = 0;
+            caster.endChannel();
+          }
+          if (!caster.isAlive) return;
+          caster.recordChannelTick();
+          runCast(ctx, { simulation: ctx, caster, target, ability }, last);
+        }),
+      ),
     );
   }
+  /*
+   * RECORDED AFTER SCHEDULING, so the handles exist to cancel. Every cast goes
+   * through here and not only a channel -- a one-tick "channel" is what an
+   * ordinary cast is -- which means a cast can be cancelled too, and only an
+   * ability declaring `interruptibleChannel` ever is. See
+   * `Ability.interruptibleChannel`.
+   */
+  caster.beginChannel(ability, handles);
 
   return { ok: true };
 }
