@@ -4,7 +4,7 @@ The Warrior took months. The other eight did not, and this is the process that
 made the difference: **every number comes from the beta client, fetched by a
 tool, before any of it is written by hand.**
 
-**All nine classes and 23 profiles are now built this way.** The steps below
+**All nine classes and 24 profiles are now built this way.** The steps below
 are kept because they are also the process for CORRECTING one, and because a
 tenth class or a new profile would follow them unchanged. See
 [HANDOVER.md](../HANDOVER.md) for what each class actually has.

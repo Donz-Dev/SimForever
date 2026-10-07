@@ -150,7 +150,7 @@ some way, and the first place to look for anything visual.
 | `panels/RaidBuffsPanel.tsx` (145) | 21 checkboxes, 17 on by default |
 | `panels/EncounterPanel.tsx` (112) | the target, and whether it swings back |
 | `components/Panel.tsx` (85) | **the collapse lives here**, with `badge` |
-| `panels/ProfileRail.tsx` (72) | the 23 class-coloured pills |
+| `panels/ProfileRail.tsx` (72) | the 24 class-coloured pills |
 | `panels/ProfilePanel.tsx` (83) | **not mounted.** See below |
 | `charts/` | `DonutChart`, `ResourceTimeline`, `UptimeBars` — hand-rolled SVG, no chart library |
 | `hooks/useSimulation.ts` (68) | the only bridge to the simulator |

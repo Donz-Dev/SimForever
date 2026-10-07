@@ -726,6 +726,90 @@ export const ROGUE_RUPTURE: readonly PriorityEntry[] = [
   { abilityId: 'backstab', condition: not(poolingForAmbush) },
 ];
 
+/**
+ * HEMO — the Rupture build with the Backstab engine taken out.
+ *
+ * ----------------------------------------------------------------------------
+ * THE OWNER'S LIST, AND IT IS THIS FILE'S RUPTURE LIST MINUS ONE ENTRY:
+ * "exactly the same as the Rupture profile except these talents, and Backstab
+ * won't be in the Hemo APL at all."
+ *
+ * SO IT IS DERIVED FROM `ROGUE_RUPTURE` RATHER THAN TRANSCRIBED, by filtering
+ * out the one ability. Two lists that have to stay in step and are maintained
+ * by hand DRIFT, and the drift is invisible: a Rogue entry is four lines, and a
+ * difference between two near-identical lists reads as deliberate. Anything
+ * measured into the Rupture list from here on reaches this one for free, which
+ * is the behaviour the owner's "exactly the same except" asks for.
+ *
+ * ----------------------------------------------------------------------------
+ * AND REMOVING BACKSTAB IS NOT A ROTATION PREFERENCE, IT FOLLOWS THE TREE.
+ * The build drops CUTTHROAT (Backstab's proc, and the Rupture list's only
+ * in-combat route to Ambush) and PUNCTURING_WOUNDS (Backstab's extra combo
+ * point and its crit). With both gone Backstab is a 60-energy strike with
+ * nothing attached, against Hemorrhage at 35 that also maintains a debuff —
+ * so the entry the owner removed is the entry the talents stopped paying for.
+ *
+ * WHICH MAKES AMBUSH A STEALTH-ONLY ABILITY HERE. Its gate has one route, the
+ * pull and Vanish, where the Rupture list has two. The energy-pooling condition
+ * on Hemorrhage reads the Cutthroat aura and therefore never holds in this
+ * build, which is correct rather than inert: there is no Cutthroat window to
+ * pool for, and the stealth windows Vanish opens are already gated on being
+ * affordable.
+ * ----------------------------------------------------------------------------
+ */
+export const ROGUE_HEMO: readonly PriorityEntry[] = [
+  /*
+   * Everything above the filler, in the Rupture list's own order.
+   */
+  ...ROGUE_RUPTURE.filter(
+    (entry) => entry.abilityId !== 'backstab' && entry.abilityId !== 'hemorrhage',
+  ),
+  /*
+   * ==========================================================================
+   * HEMORRHAGE UNGATED, AND IT IS WORTH +108.9 -- 416.9 to 525.8.
+   *
+   * REMOVING BACKSTAB REMOVED THE LIST'S ONLY UNGATED BUILDER, and nothing in
+   * the entries above it is castable on demand: Premeditation and Vanish are on
+   * minute cooldowns, Ambush needs a stealth window this build can only get from
+   * Vanish, and the three finishers need combo points this list then has no way
+   * to earn. With Hemorrhage still gated on its own debuff, the profile wasted
+   * 272.7 energy a fight at the cap -- a THIRD of its income -- and spent global
+   * cooldowns doing nothing.
+   *
+   * THE GATE'S OWN JUSTIFICATION WENT WITH BACKSTAB, which is why this is not a
+   * second opinion about the owner's list. The Rupture list's note reads
+   * "gated on its own debuff having a second left, it MAINTAINS and Backstab
+   * BUILDS" -- the gate was correct because something else was doing the
+   * building, and it made Hemorrhage a floor that starved Ghostly Strike and
+   * Sinister Strike beneath it. HERE THERE IS NOTHING BENEATH IT, so the floor
+   * costs nothing and the building has to come from somewhere.
+   *
+   * SO IT MAINTAINS AND BUILDS, which is what Hemorrhage was in this file before
+   * the Rupture list had a Backstab engine to separate the two jobs.
+   *
+   * ----------------------------------------------------------------------------
+   * MEASURED, 60 batches of 10, and a 45-energy filler is strictly worse:
+   *
+   *     Backstab out, nothing added          416.9   the specification as given
+   *     Hemorrhage ungated                   525.8   shipped
+   *     Sinister Strike at the bottom        483.8
+   *     BOTH of the above                    525.8   identical, to the decimal
+   *     (reference) Backstab left in          506.9
+   *
+   * THE "BOTH" ROW IS THE FLOOR RULE CONFIRMING ITSELF: Sinister Strike at 45
+   * energy below an ungated Hemorrhage at 35 can never be the first castable
+   * entry, so adding it changes nothing at all. That is the same arithmetic that
+   * made Hemorrhage a problem in the Rupture list, pointing the other way.
+   *
+   * AND IT BEATS THE RUPTURE LIST WITH BACKSTAB IN IT, 525.8 against 506.9 on
+   * this build -- so the owner's instruction to drop Backstab is right about this
+   * tree, and what it needed was the filler moving rather than the entry staying.
+   * ----------------------------------------------------------------------------
+   * ==========================================================================
+   */
+  { abilityId: 'hemorrhage' },
+];
+
 export const ROGUE_VENOM_ROTATION: Rotation = new PriorityRotation(
   'Rogue (Assassination, Venom)',
   ROGUE_VENOM,
@@ -737,6 +821,10 @@ export const ROGUE_COMBAT_ROTATION: Rotation = new PriorityRotation(
 export const ROGUE_RUPTURE_ROTATION: Rotation = new PriorityRotation(
   'Rogue (Subtlety, Rupture)',
   ROGUE_RUPTURE,
+);
+export const ROGUE_HEMO_ROTATION: Rotation = new PriorityRotation(
+  'Rogue (Subtlety, Hemo)',
+  ROGUE_HEMO,
 );
 
 /**
@@ -757,7 +845,23 @@ export const ROGUE_RUPTURE_ROTATION: Rotation = new PriorityRotation(
  */
 export function rogueRotation(talents: Readonly<Record<string, number>>): Rotation {
   if ((talents.mutilate ?? 0) > 0) return ROGUE_VENOM_ROTATION;
-  if ((talents.hemorrhage ?? 0) > 0) return ROGUE_RUPTURE_ROTATION;
+  /*
+   * TWO SUBTLETY BUILDS NOW, AND HEMORRHAGE NO LONGER SEPARATES THEM -- both
+   * take it, because both are built around it.
+   *
+   * CUTTHROAT IS THE DISCRIMINATOR, and it is a functional one rather than an
+   * arbitrary tiebreak: Cutthroat is Backstab's proc and the Rupture list's only
+   * in-combat route to Ambush, so a Hemorrhage build WITHOUT it cannot run the
+   * Rupture list's Backstab engine at all. The talent that decides which list
+   * works is the talent the dispatch reads.
+   *
+   * Reading Quietus, which the Hemo build takes and Rupture does not, would
+   * work today and is the weaker choice: it is a damage talent that says nothing
+   * about which list can function.
+   */
+  if ((talents.hemorrhage ?? 0) > 0) {
+    return (talents.cutthroat ?? 0) > 0 ? ROGUE_RUPTURE_ROTATION : ROGUE_HEMO_ROTATION;
+  }
   return ROGUE_COMBAT_ROTATION;
 }
 

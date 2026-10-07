@@ -1,6 +1,6 @@
 /*
  * ============================================================================
- * MEASURE THE 23 PROFILES, SO AN APL EDIT IS ARGUED FROM A NUMBER.
+ * MEASURE THE 24 PROFILES, SO AN APL EDIT IS ARGUED FROM A NUMBER.
  *
  *   npx vite-node tools/measure_profiles.ts
  *   PROFILES=cat,bear npx vite-node tools/measure_profiles.ts
@@ -13,7 +13,7 @@
  * WHY THIS EXISTS WHEN `measure_rotation.ts` ALREADY DID.
  *
  * That one measures WARRIOR TALENT BUILDS it assembles itself, from
- * `createDefaultProfile` and a starting set. It cannot measure a profile: the 23
+ * `createDefaultProfile` and a starting set. It cannot measure a profile: the 24
  * presets carry their own gear, their own raid buffs and their own 51-point
  * allocations, and a Warrior in the default set is not the `2H Arms` profile
  * whose figure HANDOVER.md publishes.
@@ -71,7 +71,7 @@ const BASELINE = process.env.BASELINE;
 
 /*
  * Which profiles to run, as comma-separated SUBSTRINGS of the preset id --
- * `PROFILES=rogue` is all three of them. Omitted means all 23, which is the
+ * `PROFILES=rogue` is all four of them. Omitted means all 24, which is the
  * default because the containment check is that the profiles a change should not
  * reach do not move by a decimal.
  */

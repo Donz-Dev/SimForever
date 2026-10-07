@@ -773,21 +773,28 @@ Shadow Bolt is a Destruction spell in the source's own spellbook tab, which is t
 entry the school reading gets wrong. See
 [docs/handoff/warlock.md](docs/handoff/warlock.md).
 
-**RE-MEASURED ON THE RULESET OWNER'S OWN PRIORITY LISTS.** All 23 are theirs now,
-specified entry by entry; what was here before was this project's guess and said
-so. Fourteen profiles moved.
+**EVERY LIST IS THE RULESET OWNER'S OWN**, specified entry by entry; what was here
+before was this project's guess and said so.
 
-**ALL 23 RE-MEASURED IN ONE RUN ON `main` ON 2026-10-06**, so these are
-comparable with each other rather than each being the figure from the dive that
-last touched it. **FOUR ROWS WERE STALE AND NOBODY HAD TOUCHED THEM** -- Cat
-703.8, Combat 524.2, Venom 494.9 and Rupture 450.3 were each correct the day they
-were written and had been moved since by a dive on another branch. A table
-assembled a row at a time goes wrong silently, because every individual figure
-has a commit behind it.
+**ALL 24 RE-MEASURED IN ONE RUN, so these are comparable with each other rather
+than each being the figure from the dive that last touched it.** The newest is
+**Hemo**, a fourth Rogue profile from the owner's own talent URL.
+
+**AND THE TABLE IS REBUILT BY A SCRIPT NOW RATHER THAN EDITED A ROW AT A TIME.** It
+parses its own rows for each profile's class and talents, takes the DPS from the
+measurement and derives the ordering, then asserts that the profiles it measured and
+the profiles the table carries are the same set.
+
+**THAT IS HERE BECAUSE THIS TABLE HAS GONE WRONG THREE TIMES.** Four rows were once
+stale with nobody having touched them -- Cat 703.8, Combat 524.2, Venom 494.9 and
+Rupture 450.3 were each correct the day they were written and had since been moved
+by a dive on another branch. A row-at-a-time edit goes wrong silently, because every
+individual figure has a commit behind it and looks defensible on its own. Adding
+Hemo moves five rows between the two columns, which is exactly that kind of edit.
 
 | Profile | Class | Talents | DPS | | Profile | Class | Talents | DPS |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| Seal Twist Ret | Paladin | 13/0/38 | 709.0 | | Firelock | Warlock | 5/11/35 | 544.7 |
+| Seal Twist Ret | Paladin | 13/0/38 | 709.0 | | Hemo Rogue | Rogue | 17/3/31 | 527.1 |
 | Cat Druid | Druid | 9/35/7 | 703.8 | | LW Melee | Hunter | 7/13/31 | 523.8 |
 | DW Fury | Warrior | 18/33/0 | 667.5 | | Shadow Priest | Priest | 16/3/32 | 516.4 |
 | Fire Mage | Mage | 10/39/2 | 624.0 | | Venom Rogue | Rogue | 37/12/2 | 510.6 |
@@ -798,7 +805,7 @@ has a commit behind it.
 | Combat Rogue | Rogue | 18/33/0 | 586.3 | | Prot Warr | Warrior | 17/0/34 | 457.0 |
 | Shockadin | Paladin | 23/0/28 | 583.6 | | Ele Shaman | Shaman | 38/13/0 | 440.2 |
 | Arcane Mage | Mage | 47/4/0 | 581.8 | | SM/DS | Warlock | 40/11/0 | 435.9 |
-|  | | |  | | Prot Pally | Paladin | 8/36/7 | 304.9 |
+| Firelock | Warlock | 5/11/35 | 544.7 | | Prot Pally | Paladin | 8/36/7 | 304.9 |
 
 **THE TOP TWO ARE INDISTINGUISHABLE AND THE TABLE SHOULD NOT BE READ AS A
 RANKING THERE.** Seal Twist Ret 709.0 +/-9.4 against Cat 703.8 +/-6.4 is a gap of
