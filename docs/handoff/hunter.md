@@ -35,7 +35,7 @@ left, six are the encounter or the build, one is a consequence of a ruling, and
 | Profile | Talents | DPS | List | Notes |
 | --- | --- | --- | --- | --- |
 | BM Hunter | 31/20/0 | **668.6** | `HUNTER_BEAST_MASTERY` | **the only profile with a pet** |
-| LW Melee | 7/13/31 | **631.4** | `HUNTER_LONE_WOLF_MELEE` | **dual wield**, since 2026-10-03 |
+| LW Melee | 7/13/31 | **672.6** | `HUNTER_LONE_WOLF_MELEE` | **dual wield**, since 2026-10-03 |
 | LW Ranged | 7/39/5 | **681.1** | `HUNTER_LONE_WOLF_RANGED` | |
 
 **BM HUNTER HAS HELD THREE DIFFERENT FIGURES IN TWO DAYS, AND THE SEQUENCE IS
@@ -106,12 +106,55 @@ One batch of ten, so read the shape and not the decimals:
 | --- | --- |
 | BM Hunter | Ranged Auto 30.0%, **Hawk 17.9%**, Cat Melee 17.2%, Serpent Sting 13.5%, Aimed Shot 13.1%, Claw 5.6%, Bite 2.7% |
 | LW Ranged | Ranged Auto 49.7%, Arcane Shot 19.6%, Aimed Shot 13.0%, Serpent Sting 11.0%, Sniper Shot 6.6% |
-| LW Melee | Main Hand Auto 30.0%, Off Hand Auto 24.4%, Raptor Strike 15.8%, Strider Kick 11.0%, Mongoose Bite 9.8%, Immolation Trap 6.2%, Lacerating Strikes 1.7%, Fatal Wound 1.1% |
+| LW Melee | Main Hand Auto 29.3%, Off Hand Auto 23.4%, Raptor Strike 14.4%, Mongoose Bite 10.5%, Strider Kick 9.1%, Immolation Trap 5.9%, Wing Clip 3.6%, Lacerating Strikes 2.0%, Fatal Wound 1.9% |
 
 **"Cat Melee" USED TO READ "Main Hand Auto-Attack" AND THAT WAS A LIE THIS
 DOCUMENT REPEATED.** See **The row that was about the wrong thing** below.
 
 ---
+
+## Wing Clip, and what a filler is actually for
+
+**+41.2 TO LW MELEE, AND LESS THAN A THIRD OF IT IS THE DAMAGE.** The ruleset
+owner added it on 2026-10-07 "as a filler/low priority ability if there is
+nothing else to press", and said why in the same breath:
+
+> *"even though it only deals 50 base damage and has no attack power coefficient
+> it can still count as a melee use in order to trigger things like hand of
+> justice, windfury, and expose prey."*
+
+| | LW Melee | against no Wing Clip |
+| --- | --- | --- |
+| as shipped | **672.6** | **+41.2** |
+| weapon use kept, damage patched to 1 | 648.1 | **+16.7**, the procs alone |
+| 50 damage kept, `weaponSlot` dropped | 644.2 | **+12.8**, the damage alone |
+| no Wing Clip | 631.4 | — |
+
+Both decompositions come to 41.2 -- 24.5 + 16.7 and 28.4 + 12.8 -- which is the
+check that the two patches isolate what they claim to. The leftover ~12 of
+synergy is inside the noise on four intervals of this size and is not claimed.
+
+**THE 1 RATHER THAN 0 IS LOAD-BEARING.** An attack dealing 0 is refused by every
+reaction that reads `amount`, so zeroing the damage would switch the procs off
+too and report them as worthless.
+
+**WHAT IT TRIGGERS, AND WHAT IT DOES NOT.** Hand of Justice (any melee use),
+main-hand Crusader and Windfury (main hand only), and Expose Prey -- which is
+the only route to Mongoose Bite in this build, since nothing attacks this Hunter
+and the ability requires a dodge. It does **not** trigger Deadly Aspects, whose
+melee half reads "all melee AUTO attacks": an absent `abilityId` is that test and
+Wing Clip is an ability. "It is a melee weapon use" is true and the wrong
+conclusion, so there is a test for the exclusion as well as for the inclusions.
+
+**THE KNOCK-ON IS THE INDEPENDENT CHECK.** Wing Clip is 3.6% of the profile at
+22 uses a fight, and two rows it never touches moved with it: Mongoose Bite 6.6
+uses to **7.0** and Fatal Wound 1.1% to **1.9%**. A filler whose damage landed
+correctly and whose `weaponSlot` was missing would have read as a working ability
+at the same 3.6% -- which is the shape of this whole dive's bugs.
+
+**AND 80 MANA IS WHAT LIMITS IT, NOT A COOLDOWN.** It has none, so it is a true
+floor and nothing could sit below it in the list and ever be reached. The 60%
+movement slow is the only part out of scope.
 
 ## What the owner ruled
 

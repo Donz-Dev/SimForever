@@ -1296,6 +1296,20 @@ measures as a loss is this, not a bug.** The ruleset owner's lists say "if not
 active" instead, and the Elemental Shaman's entire +16.4 is that one word on
 Flame Shock with nothing else in its list changed.
 
+**AN ABILITY CAN BE PRESSED FOR ITS PROCS AND NOT FOR ITS DAMAGE, AND THE TWO
+HALVES ISOLATE SEPARATELY.** Wing Clip is 50 flat damage with no coefficient and
+is worth +41.2 to the melee Hunter; patching the damage out leaves +16.7 and
+dropping its `weaponSlot` leaves +12.8, so **the triggering is the larger half**
+and a version whose damage was right and whose `weaponSlot` was missing would
+have reported the same 3.6% share and looked like a working ability. Both
+decompositions summing to the measured total is what says the patches isolated
+what they claimed to.
+
+**AND PATCH SUCH A DAMAGE TO ONE, NEVER TO ZERO.** An attack dealing 0 is refused
+by every reaction that reads `amount`, so zeroing it switches off the procs being
+measured and reports them as worthless. One damage costs 0.2 DPS and keeps every
+roll.
+
 **ISOLATE A LOSS, DO NOT BLAME THE OBVIOUS SUSPECT.** The owner's Venom list
 measured -24.3 and the suspect was its Venom entry, which THREE earlier
 placements had each measured as a loss. It was not: removing the entry dropped

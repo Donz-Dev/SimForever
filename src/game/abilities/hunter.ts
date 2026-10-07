@@ -677,6 +677,76 @@ export const EXPLOSIVE_TRAP_ABILITY: Ability = {
     'cooldowns and no list casts both.',
 };
 
+/**
+ * Wing Clip: 50 damage, and the reason to press it is not the 50.
+ *
+ * ----------------------------------------------------------------------------
+ * A FILLER THAT EXISTS TO BE A WEAPON USE. The ruleset owner: "even though it
+ * only deals 50 base damage and has no attack power coefficient it can still
+ * count as a melee use in order to trigger things like hand of justice,
+ * windfury, and expose prey."
+ *
+ * SO `weaponSlot` IS SET AND `weaponScaling` IS NOT, AND THAT PAIR IS THE WHOLE
+ * ABILITY. The two fields are different questions and this is the clearest case
+ * of it in the project: `weaponScaling.slot` says which attack power pool the
+ * damage reads, and `weaponSlot` says whose procs the attack triggers. Wing
+ * Clip answers the second and declines the first -- 50 flat, forever, and every
+ * main-hand effect rolls off it.
+ *
+ * WHAT IT ACTUALLY TRIGGERS, since that is the point: Hand of Justice (any
+ * melee use), main-hand Crusader and Windfury (main hand only), and Expose
+ * Prey, which is what opens Mongoose Bite for this build. It does NOT trigger
+ * Deadly Aspects, whose melee half requires an AUTO-attack -- `abilityId`
+ * being absent is that test, and this is an ability.
+ *
+ * `melee-special`, so it can miss, be dodged and be parried like any other
+ * strike -- and a Wing Clip that does not connect triggers nothing, which is
+ * the honest consequence of being a weapon use rather than a free proc.
+ *
+ * NO COOLDOWN AND 80 MANA, both from the capture. That makes it a true floor
+ * under the melee list: ungated AND always castable, so nothing could sit below
+ * it and ever be reached. It is last for exactly that reason.
+ *
+ * THE SLOW IS OUT OF SCOPE and the damage is not, which is why the ability is
+ * declared rather than skipped. `unmodelled` carries the clause.
+ * ----------------------------------------------------------------------------
+ */
+export const WING_CLIP_DAMAGE = 50;
+
+export const WING_CLIP: Ability = {
+  id: 'wing_clip',
+  name: 'Wing Clip',
+  cost: { resource: 'mana', amount: 80 },
+  attackTable: 'melee-special',
+  onCast: ({ simulation, caster, target, ability }) => {
+    if (!target) return;
+    dealDamage(simulation, {
+      source: caster,
+      target,
+      abilityId: ability.id,
+      abilityName: ability.name,
+      school: PHYSICAL,
+      baseAmount: WING_CLIP_DAMAGE,
+      /*
+       * NO `weaponScaling`, which is the owner's "no attack power
+       * coefficient" -- the 50 is the whole damage at any gear level, so Wing
+       * Clip's share of a profile falls as the Hunter gears up.
+       */
+      attackTable: ability.attackTable,
+      /*
+       * AND YET IT IS A MAIN-HAND WEAPON USE. `isWeaponUse` reads this field
+       * and nothing else, so Hand of Justice, Windfury, Crusader and Expose
+       * Prey all roll off it.
+       */
+      weaponSlot: MAIN_HAND,
+    });
+  },
+  unmodelled:
+    'Its 60% movement slow for 10 sec does nothing: the target neither moves ' +
+    'nor can be slowed. The DAMAGE and the main-hand weapon use are the ' +
+    'reasons it is pressed here, and both are modelled.',
+};
+
 export const HUNTER_ABILITIES: readonly Ability[] = [
   HUNTERS_MARK_ABILITY,
   ASPECT_OF_THE_HAWK_ABILITY,
@@ -693,5 +763,6 @@ export const HUNTER_ABILITIES: readonly Ability[] = [
   BESTIAL_WRATH_ABILITY,
   SUMMON_HAWK,
   IMMOLATION_TRAP_ABILITY,
+  WING_CLIP,
   EXPLOSIVE_TRAP_ABILITY,
 ];

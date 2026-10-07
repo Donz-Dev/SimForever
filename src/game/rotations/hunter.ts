@@ -379,6 +379,23 @@ export const HUNTER_LONE_WOLF_MELEE: readonly PriorityEntry[] = [
    * with attack power.
    */
   { abilityId: 'immolation_trap' },
+  /*
+   * WING CLIP LAST, AND IT IS A TRUE FLOOR. The owner asked for it "as a
+   * filler/low priority ability if there is nothing else to press", and it has
+   * NO COOLDOWN -- so unlike Immolation Trap above it, which the list falls
+   * past for 30 seconds at a time, nothing could ever sit below this and be
+   * reached. That is the half of the floor rule that is easy to forget: an
+   * entry is a floor when it is ungated AND always castable.
+   *
+   * IT IS PRESSED FOR THE PROCS RATHER THAN THE 50. "it can still count as a
+   * melee use in order to trigger things like hand of justice, windfury, and
+   * expose prey" -- and Expose Prey is what opens Mongoose Bite for this build,
+   * so a filler that rolls for it feeds an entry four rows above it.
+   *
+   * 80 MANA IS WHAT LIMITS IT, not a cooldown. This build used to finish with
+   * mana to spare; an ungated 80-mana filler is exactly what spends it.
+   */
+  { abilityId: 'wing_clip' },
 ];
 
 export const HUNTER_BEAST_MASTERY_ROTATION: Rotation = new PriorityRotation(
