@@ -221,11 +221,15 @@ unscoped pushback reason fails.
   auto-attacks 31.2%, Windfury attacks 32.6%, Stormstrike 30.7%, expected 31.67%.
   **The bolt count is arithmetic, not a bug**: ~35 melee uses a minute at 31.67%
   is ~11 procs a minute, five stacks buy one bolt, so 1.7 casts in a 58-second
-  fight is what 5 PPM means here. **PPM rolled on specials and extra attacks pays
-  roughly double the nominal rate** -- 11 a minute against a nominal 5 -- because
-  only auto-attacks cost swing time. That is the project's PPM convention, shared
-  with Crusader and Seal of Command, and it is the owner's to revisit if 5 PPM was
-  meant as a ceiling.
+  fight is what 5 PPM means here.
+- **AND `PPM` IS AN EQUATION VARIABLE, NOT A CEILING** — the owner's answer on
+  2026-10-07 to exactly that question: `% chance to proc = PPM * baseweaponspeed
+  / 60`. So **11 procs a minute at 5 PPM is the intended consequence** and not a
+  figure to be explained away: every weapon use rolls, and only auto-attacks cost
+  swing time, so Stormstrike and the two Windfury attacks per proc are free
+  rolls. **The question is closed; do not re-raise it from the 11.** The equation
+  is pinned in `procs.test.ts` in the owner's own form rather than described in a
+  comment.
 - **THE WINDFURY IMBUE'S INTERNAL COOLDOWN IS 3 SECONDS, THE OWNER'S, AND IT WAS
   1.5 BORROWED FROM THE TOTEM.** Twice too generous, worth −10.0 to fix, and the
   totem's 1.5 is still correct for the totem. A borrowed number can be wrong by a

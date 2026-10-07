@@ -12,19 +12,45 @@ import { ITEMS_BY_ID } from './itemData';
 /**
  * Procs per minute.
  *
- * A PPM effect fires with a chance proportional to the speed of the weapon that
- * triggered it:
+ * THE RULESET OWNER'S EQUATION, in their own notation:
  *
- *     chance = weapon speed in seconds / 60 * PPM
+ *     % chance to proc = PPM * baseweaponspeed / 60
  *
  * A 2.6 second weapon at 1 PPM is a 4.33% chance per attack; a 2.5 second
  * weapon at 1.1 PPM is 4.58%. The point of the system is that a slow weapon and
  * a fast weapon proc the same number of times per minute, so an effect is not
  * quietly worth more on a dagger.
  *
- * Stated by the ruleset owner, along with the rate for each effect below. The
- * item tooltips give none of this -- they say "Chance on hit" and "often" --
- * which is why these sat unmodelled until now.
+ * ----------------------------------------------------------------------------
+ * `PPM` IS AN EQUATION VARIABLE AND NOT A CEILING, confirmed by the owner on
+ * 2026-10-07 when exactly that was asked. The distinction has teeth, because the
+ * two readings diverge the moment anything other than an auto-attack rolls:
+ *
+ *   AS A VARIABLE   every weapon USE rolls `PPM * speed / 60`. An Enhancement
+ *                   shaman makes about 35 melee uses a minute -- swings,
+ *                   Stormstrike, and two Windfury attacks per proc -- so 5 PPM
+ *                   delivers about 11 procs a minute. Only auto-attacks cost
+ *                   swing time, so specials and extra attacks are free rolls.
+ *   AS A CEILING    the rate would have to be throttled to 5 a minute however
+ *                   many uses there were, which is a different mechanic and not
+ *                   what the formula describes.
+ *
+ * It is the FIRST, so 11 procs a minute at 5 PPM is the intended consequence of
+ * the equation rather than a number to be explained away. Recorded because the
+ * figure invites the question a second time: `tools/maelstrom_probe.ts` exists
+ * to answer it with the per-source rates, and `procs.test.ts` pins the equation
+ * in the owner's own form.
+ *
+ * BASE SPEED, NOT THE SWING TIMER. `baseweaponspeed` is the item's own number,
+ * so a hasted character swings more often at the same per-use chance and
+ * therefore procs MORE per minute. That is the same reading `rageFromSwing`
+ * takes of "base speed before any modifiers", and it is why `speed` here comes
+ * from `weapon.swingTimerMs` rather than from anything haste has touched.
+ * ----------------------------------------------------------------------------
+ *
+ * The item tooltips give none of this -- they say "Chance on hit" and "often" --
+ * which is why these sat unmodelled until the owner supplied both the equation
+ * and the rate for each effect below.
  */
 export function ppmChance(weaponSpeedSeconds: number, ppm: number): number {
   return (weaponSpeedSeconds / 60) * ppm;
