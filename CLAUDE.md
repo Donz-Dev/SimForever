@@ -413,6 +413,16 @@ See [docs/combat-tables.md](docs/combat-tables.md).
   `critFrom` means no crit and no random number consumed, so adding the field
   never shifts a seeded run. Bleeds are physical and still ignore armor:
   `appliesArmor: false` on every one.
+- **A LATER STATEMENT FROM THE OWNER OUTRANKS THE SHEET, and Rake is the second
+  one.** `WoWSimWorksheet.xlsx` gives Rake 1% of attack power on the hit and 1%
+  per tick; the owner has since given the TICK as **5.5%** directly. The same
+  shape as Wrack's 14.3%, which the sheet does not contain at all — and like
+  Wrack it is recorded beside the constant, because a refresh of the sheet will
+  not carry it and a reader who knows the sheet would read it as drift.
+  **ONE OF THE TWO NUMBERS MOVED.** The hit is still 1%, so reading "Rake is
+  5.5%" and setting both would quietly inflate the direct damage as well —
+  `RAKE_AP_COEFFICIENT` and `RAKE_TICK_AP_COEFFICIENT` are separate constants
+  for exactly this reason.
 - **A COEFFICIENT IS MEASURED, NEVER COUNTED.** It is passed per `dealDamage`
   call, so `powerCoefficient` written in the wrong place is silent and grepping
   gives 77 damage sites and no ability names. `tools/coefficient_probe.ts` casts
@@ -497,6 +507,19 @@ something that comes and goes.
   stops at `melee-special`, while "melee critical strike damage" says nothing
   about abilities and therefore reaches the swing. Both readings produce a
   plausible number.
+- **AND THAT RULE HAS A COUNTER-EXAMPLE NOW: THE OWNER'S FIGURE BEATS THE
+  WORDING.** Rend and Tear is "damage done by your melee ABILITIES on Bleeding
+  targets", which by the rule above stops at `melee-special` — and that is what
+  shipped. The owner reported expecting "around 1.09x" and seeing "more like
+  1.025x", and the three readings measure, at 89.3% bleed uptime on the Cat:
+  `melee-special` non-periodic **×1.0296**, plus the ticks **×1.0612**, plus the
+  AUTO-ATTACKS **×1.0948**. Only the last is 1.09 and the first is 1.025 to the
+  decimal, so the talent reaches every point of melee damage.
+  **A STATED EXPECTED VALUE SETTLES A WORDING QUESTION THAT THE WORDING CANNOT**
+  — so when a tooltip is ambiguous and a figure is available, compute what each
+  reading would give and let the figure choose. It also means Rip raises Rip,
+  which is the self-reference the narrow reading was partly chosen to avoid, and
+  that is the owner's call rather than an oversight.
 - **A crit damage bonus raises the bonus HALF** — 1.0 for a 2x melee crit, 0.5
   for a 1.5x spell crit. "+100%" takes a spell crit to 2.0x, not 2.5x; a melee
   crit with "+10% crit damage" is 2.1x, never 2.2x.
@@ -912,6 +935,18 @@ See [docs/resources.md](docs/resources.md).
   check the ratio.** The verdict is the right default and it is a statement about
   variance, not about whether anything happened.
 
+**A ONE-SHOT STRING REPLACE IS UNSAFE WHEREVER THE STRING IS NOT UNIQUE, AND
+THE TELL IS TWO VARIANTS AGREEING TO THE DECIMAL.** The Cat attribution probe
+reverted Rend and Tear's `critFrom` fold with `replace(find, replace, 1)`, and
+`bleedingTargetModifier(request, request.attackTable ?? request.critFrom)`
+appears TWICE in `damage.ts` -- the CRIT fold in `rollTable` and the DAMAGE fold
+in `resolveDamage`. It hit the first, which carries no crit for that talent, so
+the variant reverted something inert and measured the same build twice: 910.3 and
+910.3, identical, and the figures looked like a finding rather than a bug. **Two
+variants that agree exactly are a patch that did not apply**, not a change worth
+nothing -- a change worth nothing still shifts the RNG sequence. Count the
+matches and refuse unless there is exactly one.
+
 **AND PATCH IT BY SLICING THE LIST, NOT BY `replace(old, new, 1)` -- THE ENTRIES
 ARE TEXTUALLY IDENTICAL ACROSS LISTS.** The Rogue's Slice and Dice entry is the
 same four lines in all three of its lists, so a one-shot string replace hit the
@@ -1266,6 +1301,20 @@ no per-point argument either way and what decides it is uptime.
   not only that it is wired up.
   `tests/game/talentValueIndex.test.ts` records all eleven blanket multipliers by
   hand with what each one's index MEANS, so a twelfth fails until somebody says.
+- **AND IT HAS HAPPENED A SECOND TIME, ON A DIFFERENT EFFECT KIND.** Primal Fury
+  is "a {0}% chance to gain an additional {1} Rage ... while in Bear Form. **In
+  addition**, your non-periodic critical strikes from Cat Form abilities that
+  generate Combo Points have a {2}% chance to add an additional Combo Point" —
+  a row of THREE numbers, read at index 0 by a single `reaction` that granted
+  rage. **The whole second clause was absent and the talent reported itself
+  FULLY MODELLED**, so the census counted it in the `Fully` column and the Cat
+  silently had no Seal Fate. Two instances now, which is why the full
+  index audit is worth running rather than fixing these one at a time.
+- **A SECOND CLAUSE IS OFTEN A SECOND EFFECT, NOT A BIGGER ONE.** Primal Fury is
+  two `reaction` entries with different `reactionId`s, different `valueIndex`es
+  and different `requires` — rage gated on `styles: ['bear']`, the combo point on
+  `['cat']`. Trying to carry both in one reaction would have meant passing two
+  values into a builder that takes one.
 - **A KIND HAVING `valueIndex` IS NOT THE SAME AS AN EFFECT SETTING IT**, which
   is why that test asks whether the effect OBJECT carries the key. The first
   draft listed the kinds that could not name an index and missed Weaponmaster,
@@ -1301,6 +1350,20 @@ no per-point argument either way and what decides it is uptime.
   **AND PAD IT AT RANKS THAT EXIST**: Subtlety has three, so five points in it is
   dropped, which takes the tree total under the next tier and drops the capstone
   with it — a test that reads "the talent grants nothing" for two reasons at once.
+- **AN ISOLATION PROBE MUST REVERT EVERY FILE THE CHANGE TOUCHED.** Rend and
+  Tear's widening is two edits -- the `tables` list in `druidEffects.ts` and the
+  fold in `damage.ts` -- and a variant reverting one of them measures a state the
+  code was never in. The Cat probe did exactly that twice over: once by reverting
+  only the tables, and once by patching the wrong one of two identical call
+  sites. **The cross-check that caught both was arithmetic**: the Bear's total was
+  +16.4 and Rend and Tear is the only change that reaches it, so an isolated +9.5
+  left +6.9 unexplained.
+- **MARGINAL VALUES MEASURED AGAINST A FULL BUILD DO NOT SUM TO THE TOTAL, AND
+  CAN EXCEED IT.** The Cat's four changes price at +61.0, +45.1, +43.7 and +6.3
+  -- 156.1 against a measured +142.4 -- because each is "what removing this one
+  costs with the other three present" and they overlap: Rake's bigger ticks and
+  Rip's ticks both collect Rend and Tear, so removing either alone understates
+  what they share. Say MARGINAL rather than presenting addends.
 - **REMOVING A TALENT TO PRICE IT CAN STRIP A DEEPER ONE, SILENTLY, AND THAT IS
   THE SAME RULE POINTING THE OTHER WAY.** Taking three points out of Feral Combat
   put Rend and Tear under its tier gate and Berserk after it, so "Predatory

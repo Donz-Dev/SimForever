@@ -816,23 +816,36 @@ export function resolveDamage(
      */
     source.damageDoneMultiplierForTable(request.attackTable);
   /*
-   * THE SAME TABLE SCOPE AGAIN, conditional on the target bleeding.
+   * THE SAME TABLE SCOPE AGAIN, conditional on the target bleeding -- AND THE
+   * ONE MULTIPLIER HERE WHOSE DAMAGE FOLD READS `critFrom`.
    *
-   * `attackTable` ALONE, deliberately, for the reason spelled out on
-   * `tableMultiplier` above: a tick has no table, so it is not damage on one.
+   * ----------------------------------------------------------------------------
+   * EVERY OTHER TABLE-KEYED MULTIPLIER READS `attackTable` ALONE, for the reason
+   * spelled out on `tableMultiplier` above: a tick has no table, so it is not
+   * damage on one. This one deviates, and it is the RULESET OWNER'S FIGURE that
+   * decided it rather than a reading of the words.
    *
-   * WHAT THAT MEANS FOR REND AND TEAR, and it is an INTERPRETATION worth
-   * naming. "Increases damage done by your melee abilities on Bleeding targets"
-   * reaches Shred, Maul, Primal Bite and the moment Lacerate lands; it does NOT
-   * reach the ticks of Rip, Rake or Lacerate. Two things decide it that way.
-   * The convention is one -- a damage multiplier keyed on a table reads
-   * `attackTable` everywhere else in this pipeline. The other is that a bleed's
-   * own ticks would otherwise be amplified BY THE BLEED BEING UP, which is
-   * self-referential: Rip would raise Rip. Both readings produce a plausible
-   * number, and the looser one measured the Cat a third higher.
+   * Rend and Tear shipped scoped to `melee-special` and non-periodic, which is
+   * the reading "melee ABILITIES" invites. The owner reported expecting "around
+   * 1.09x" and seeing "more like 1.025x", and measured over 30 batches with the
+   * target bleeding 89.3% of the fight the three readings are:
+   *
+   *     melee-special, non-periodic     29.6% of damage     x1.0296
+   *     plus the bleed TICKS            61.2%               x1.0612
+   *     plus the AUTO-ATTACKS           94.8%               x1.0948
+   *
+   * Only the last gives 1.09, and the first gives 1.025 to the decimal. So the
+   * talent reaches every point of melee damage, and `melee-auto` is in its
+   * table list.
+   *
+   * RIP THEREFORE RAISES RIP. A bleed's own ticks are amplified by the bleed
+   * being up, which is self-referential and was the second reason the narrow
+   * reading was chosen first. The owner's figure includes it.
+   * ----------------------------------------------------------------------------
    */
   const bleedingMultiplier =
-    bleedingTargetModifier(request, request.attackTable).damageMultiplier ?? 1;
+    bleedingTargetModifier(request, request.attackTable ?? request.critFrom)
+      .damageMultiplier ?? 1;
   /*
    * PERIODIC ONLY, and it is the one multiplier that selects on the KIND of
    * damage rather than on who deals it, what school it is or which table it
