@@ -78,12 +78,23 @@ describe('a warrior opens combat in its chosen stance', () => {
   });
 
   it('gives a non-Warrior no stance at all', () => {
+    /*
+     * ASSERTING NO STANCE, WHICH IS WHAT THIS TEST IS ABOUT. It used to assert
+     * `openingAuras` was EMPTY, and that passed for as long as the Warrior was
+     * the only class with one -- so the Rogue gaining an opening stealth window
+     * failed a test whose name and subject have nothing to do with stealth.
+     *
+     * A test that pins a WHOLE COLLECTION to check one thing is absent from it
+     * fails on every unrelated addition, and the failure names the wrong
+     * culprit. The stance ids are what this is allowed to care about.
+     */
     const rogue = createPlayer({
       race: 'orc',
       characterClass: 'rogue',
       combatStyle: 'dual_wield',
     });
-    expect(rogue.openingAuras).toEqual([]);
+    const stances = rogue.openingAuras.filter((aura) => aura.id.endsWith('_stance'));
+    expect(stances).toEqual([]);
   });
 });
 

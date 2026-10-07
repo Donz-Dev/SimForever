@@ -3,6 +3,7 @@ import { PriorityRotation } from '../../engine';
 import { comboPointsOn } from '../combat/comboPoints';
 import { MAX_COMBO_POINTS } from '../combat/comboPoints';
 import { RUPTURE_BY_COMBO_POINT, VENOM_AURA_ID } from '../auras/rogue';
+import { AMBUSH_ENERGY_COST } from '../abilities/rogue';
 
 /**
  * Rogue priority lists.
@@ -83,10 +84,6 @@ const all =
   (context: SimulationContext, actor: Combatant, target?: Combatant): boolean =>
     conditions.every((condition) => condition(context, actor, target));
 
-/** "<buff> is active", on the Rogue. */
-const selfActive = (auraId: string) =>
-  (_context: SimulationContext, actor: Combatant): boolean => actor.auras.has(auraId);
-
 /** "<debuff> is not active", on the target. */
 const targetAuraDown = (auraId: string) =>
   (context: SimulationContext, _actor: Combatant, target?: Combatant): boolean =>
@@ -103,6 +100,30 @@ const targetAuraAtMost = (auraId: string, secondsLeft: number) =>
   (context: SimulationContext, _actor: Combatant, target?: Combatant): boolean =>
     target !== undefined &&
     target.auras.remainingMs(auraId, context.clock.now()) <= secondsLeft * 1000;
+
+/** "combo points <= N", read through the TARGET like `atLeastPoints`. */
+const atMostPoints = (maximum: number) =>
+  (_context: SimulationContext, actor: Combatant, target?: Combatant): boolean =>
+    comboPointsOn(actor, target) <= maximum;
+
+/**
+ * "<ability> is known AND its cooldown is running."
+ *
+ * ----------------------------------------------------------------------------
+ * `has` IS THE HALF THAT IS EASY TO LEAVE OUT, AND LEAVING IT OUT IS SILENT.
+ * `AbilityBook.isReady` returns false for an ability the character does not
+ * have -- there are no charges to count -- so a bare `!isReady` reads "on
+ * cooldown" for an ability the build never learned. That is the wrong answer in
+ * the dangerous direction: Preparation's gate below asks whether the cooldowns
+ * it would reset are DOWN, and a build with no Vanish has nothing to get back.
+ *
+ * It matters even though the only list using it requires both talents, because
+ * the next list to use this primitive will not necessarily.
+ * ----------------------------------------------------------------------------
+ */
+const abilityOnCooldown = (abilityId: string) =>
+  (context: SimulationContext, actor: Combatant): boolean =>
+    actor.abilities.has(abilityId) && !actor.abilities.isReady(abilityId, context.clock.now());
 
 /** "energy >= N". */
 const atLeastEnergy = (minimum: number) =>
@@ -396,14 +417,97 @@ export const ROGUE_COMBAT: readonly PriorityEntry[] = [
  * multiplier. Both abilities work; the synergy between them does not, and the
  * results page says so.
  */
+/*
+ * ============================================================================
+ * THE OWNER'S STEALTH CYCLE, AND WHAT A PRIORITY LIST CAN AND CANNOT SAY.
+ *
+ * The design, in their words:
+ *
+ *     Opener:                                    Stealth, Premeditation, Ambush
+ *     When <= 3 combo points:                    Vanish, Ambush
+ *     When Vanish + Premed on CD and CP <= 1:    Preparation
+ *     When Prep is on CD and the others are not: Vanish, Premeditation, Ambush
+ *
+ * FOUR SEQUENCES, AND THEY COLLAPSE INTO THREE ENTRIES. A priority list has no
+ * notion of a sequence: it is re-read from the top every global cooldown and the
+ * first castable entry wins, so a sequence is what EMERGES when each of its
+ * steps is the highest castable entry in turn. Premeditation, Ambush and Vanish
+ * at the top produce every one of the four above, including the last -- once
+ * Preparation has finished their cooldowns, Vanish and Premeditation are simply
+ * castable again and the list walks the same three entries.
+ *
+ * SO THE FOURTH SEQUENCE NEEDS NO ENTRY, and writing one would be the duplicate
+ * -id shape this project only wants deliberately. Said out loud because an
+ * absent entry for a named clause reads like an omission.
+ *
+ * AND THE OPENER'S "STEALTH" IS NOT AN ENTRY EITHER. There is no Stealth
+ * ability: the Rogue starts the fight with the `stealth` aura from
+ * `openingAuras`, which is the owner's "you start from stealth" expressed as the
+ * one thing it does. Vanish applies the same aura, so the opener and every
+ * later window are one mechanism.
+ * ============================================================================
+ */
 export const ROGUE_RUPTURE: readonly PriorityEntry[] = [
   /*
-   * PREMEDITATION FIRST, and it is two combo points for free on a two-minute
-   * cooldown. Its Forever tooltip has no stealth clause at all -- that was
-   * Classic's, and reading it into this talent is what kept it recorded as
-   * inert.
+   * PREMEDITATION FIRST, UNGATED, WHICH IS THE OWNER'S ENTRY UNCHANGED. Free,
+   * two minutes, +2 combo points. Its Forever tooltip has no stealth clause at
+   * all -- that was Classic's, and reading it into this talent is what kept it
+   * recorded as inert.
+   *
+   * A POINT GATE WAS TRIED AND MEASURES EXACTLY NOTHING, 482.8 either way to
+   * the decimal, so it is not here. `atMostPoints(3)` is the arithmetic the
+   * Slice and Dice threshold rests on -- it grants two, so a pool at four
+   * throws one away -- and the reason it buys nothing is the COOLDOWN: at two
+   * minutes this fires at the pull and once more after Preparation, and the
+   * pool is low at both. A guard against a case that cannot arise is still a
+   * decision somebody has to read, so the owner's simpler entry stands.
    */
   { abilityId: 'premeditation' },
+  /*
+   * AMBUSH SECOND AND UNCONDITIONAL, because its own `canCast` is the gate: a
+   * dagger in the main hand and EITHER the Cutthroat proc or a stealth window.
+   * The entry used to carry `selfActive('cutthroat')`, which was the list
+   * restating the ability's rule -- and once there were two routes to the gate
+   * it would have been the list restating HALF of it, which is worse than not
+   * restating it at all.
+   *
+   * IT IS NOT A FLOOR UNDER THE LIST despite being unconditional, because
+   * `checkCast` refuses it whenever neither aura is up. An ungated entry is only
+   * a floor when it is ALSO always castable.
+   *
+   * SECOND RATHER THAN FIRST so the opener spends Premeditation's global
+   * cooldown while still stealthed -- the window is ten seconds and one global
+   * cooldown is one. That is the owner's order.
+   */
+  { abilityId: 'ambush' },
+  /*
+   * VANISH, WHICH EXISTS TO BE AMBUSH'S SECOND AND THIRD USE. Five minutes is
+   * longer than any fight here, so on its own it is one extra Ambush; what makes
+   * it worth a list entry is Preparation finishing its cooldown.
+   *
+   * A POINT GATE, because Ambush awards TWO points with Initiative at 3/3: a
+   * pool at three goes to five and a pool at four wastes one. Gating Vanish
+   * rather than Ambush is the deliberate choice -- a Cutthroat proc is free and
+   * should be spent whatever the pool looks like, and a five-minute cooldown
+   * should not be.
+   *
+   * ------------------------------------------------------------------------
+   * AND AN ENERGY GATE, WORTH +5.7 AND THE ONLY REFINEMENT IN THIS LIST THAT
+   * MEASURED AS ONE: 488.5 against 482.8 at 60 batches of 10.
+   *
+   * SPENDING A GLOBAL COOLDOWN ON VANISH ONLY TO FIND AMBUSH UNAFFORDABLE IS
+   * THE FAILURE IT PREVENTS. Ambush costs 60 of a 100 energy pool, and the
+   * window is ten seconds -- long enough that it does not usually expire, but
+   * the Rogue spends those seconds on Backstab and Hemorrhage, each of which
+   * pushes the 60 further away. The waste is not a lost window so much as a
+   * stealth Ambush arriving several global cooldowns late, behind builders that
+   * refilled the pool it was waiting on.
+   *
+   * ON VANISH AND NOT ON AMBUSH, which is the same split as the point gate: the
+   * cost of being early is paid by the thing with the cooldown.
+   * ------------------------------------------------------------------------
+   */
+  { abilityId: 'vanish', condition: all(atMostPoints(3), atLeastEnergy(AMBUSH_ENERGY_COST)) },
   {
     abilityId: 'slice_and_dice',
     condition: all(selfAuraDown('slice_and_dice'), atLeastPoints(3)),
@@ -434,21 +538,47 @@ export const ROGUE_RUPTURE: readonly PriorityEntry[] = [
    */
   { abilityId: 'hemorrhage', condition: targetAuraAtMost('hemorrhage', 1) },
   /*
-   * AMBUSH ONLY ON A CUTTHROAT PROC, which is the whole of that talent: it
-   * causes the next Ambush within ten seconds not to require Stealth, and
-   * nothing here is ever stealthed. The ability's own `canCast` enforces the
-   * same thing, so this entry is the list agreeing with it rather than
-   * carrying the rule.
+   * PREPARATION, MOVED UP OUT OF LAST PLACE AND GIVEN THE OWNER'S CONDITION.
+   *
+   * --------------------------------------------------------------------------
+   * IT USED TO BE UNCONDITIONAL AND BOTTOM, below every builder, and the
+   * comment there argued that was the right place for "an ability whose entire
+   * value is what it gives back": it fires only when nothing else can. That
+   * reasoning was sound while the only things it reset were Premeditation,
+   * Ghostly Strike and Cold Blood -- none of which the list is ever waiting on.
+   *
+   * VANISH CHANGES WHAT IT IS FOR. The thing worth resetting is now a
+   * five-minute cooldown that buys an Ambush, so Preparation is the second half
+   * of the stealth cycle rather than a tidy-up at the end of the fight, and
+   * WHEN it fires decides whether that second Vanish happens inside the fight
+   * at all.
+   *
+   * THE OWNER'S CONDITION IS BOTH COOLDOWNS DOWN AND THE POOL NEARLY EMPTY:
+   * both, because resetting one while the other is up wastes the other; and a
+   * pool at one point or less, because the Vanish-Ambush-Premeditation sequence
+   * it unlocks is worth four points and wants somewhere to put them.
+   *
+   * STILL BELOW THE DAMAGE FINISHERS, so a Rupture or an Eviscerate that is
+   * ready is never displaced by a cooldown reset.
+   *
+   * IT MEASURES FLAT AND IT IS THE OWNER'S DESIGN, WHICH IS THE WHOLE NOTE.
+   * Unconditional and last, as it was, reads 481.6 against 482.8 -- inside the
+   * interval, so this method cannot separate the two placements. The condition
+   * is here because the owner specified it, and the measurement is recorded as
+   * its price rather than as an argument for it: the 1.0 cast a fight happens
+   * either way, and what the gate changes is WHEN, which a sixty-second fight
+   * is too short to reward.
+   * --------------------------------------------------------------------------
    */
-  { abilityId: 'ambush', condition: selfActive('cutthroat') },
+  {
+    abilityId: 'preparation',
+    condition: all(
+      abilityOnCooldown('vanish'),
+      abilityOnCooldown('premeditation'),
+      atMostPoints(1),
+    ),
+  },
   { abilityId: 'backstab' },
-  /*
-   * PREPARATION LAST, below every builder, which is the right place for an
-   * ability whose entire value is what it gives back: it fires only when
-   * nothing else can, and finishes the cooldown on Premeditation, Ghostly
-   * Strike and Cold Blood.
-   */
-  { abilityId: 'preparation' },
 ];
 
 export const ROGUE_VENOM_ROTATION: Rotation = new PriorityRotation(

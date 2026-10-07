@@ -375,13 +375,25 @@ export const ROGUE_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
 
   master_of_deception: [{ kind: 'unmodelled', scope: 'stealth', reason: 'Stealth detection.' }],
 
+  /*
+   * "Increases the damage dealt by your Backstab, Garrote, Ambush, and Mutilate
+   * abilities by 10%."
+   *
+   * THREE OF ITS FOUR ABILITIES APPLY NOW. The Ambush clause was dead on the
+   * same false premise as Improved Ambush and Initiative -- "Garrote and Ambush
+   * ... are absent" was half right, and the half that was wrong is the one the
+   * Rupture profile casts. Only Garrote is genuinely out of scope.
+   */
   opportunity: [
     { kind: 'abilityDamage', abilityId: 'backstab' },
     { kind: 'abilityDamage', abilityId: 'mutilate' },
+    { kind: 'abilityDamage', abilityId: 'ambush' },
     {
       kind: 'unmodelled',
       scope: 'stealth',
-      reason: 'It also covers Garrote and Ambush, which require stealth and are absent.',
+      reason:
+        'Its Backstab, Mutilate and Ambush clauses all APPLY. It also covers ' +
+        'Garrote, which is a stealth opener and out of scope for good.',
     },
   ],
 
@@ -400,12 +412,54 @@ export const ROGUE_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
 
   dirty_tricks: [{ kind: 'unmodelled', scope: 'crowdControl', reason: 'Sap and Blind are not implemented.' }],
 
-  improved_ambush: [
-    { kind: 'unmodelled', scope: 'stealth', reason: 'Ambush requires stealth and is absent.' },
-  ],
+  /*
+   * "Increases the critical strike chance of your Ambush ability by 45%."
+   *
+   * --------------------------------------------------------------------------
+   * ITS REASON WAS FALSE RATHER THAN STALE, and it is one of three that shared
+   * the same false premise. It read "Ambush requires stealth and is absent" --
+   * and Ambush has been DECLARED since the owner ruled that Cutthroat's proc is
+   * its stealth requirement. The ability was in the book, in the Rupture list
+   * and dealing 1.6% of that profile's damage while three talents pointing at
+   * it reported themselves out of scope.
+   *
+   * A `scope` TAG IS WHAT MADE IT INVISIBLE, which is worth stating plainly
+   * because the tag is a good mechanism being misapplied: a ruled-out effect is
+   * deliberately NOT a work queue item and is listed apart from live gaps, so
+   * tagging a live effect `stealth` removed it from the only list anybody
+   * re-reads. An ordinary `unmodelled` reason would have been counted.
+   *
+   * ORDINARY `abilityCrit`, 45% at 3/3, on the one ability it names.
+   * --------------------------------------------------------------------------
+   */
+  improved_ambush: [{ kind: 'abilityCrit', abilityId: 'ambush' }],
 
+  /*
+   * "Gives you a 100% chance to add an additional combo point to your target
+   * when using your Ambush, Garrote, or Cheap Shot ability." 33/67/100 by rank.
+   *
+   * --------------------------------------------------------------------------
+   * ONE OF ITS THREE ABILITIES EXISTS, SO IT IS PARTLY MODELLED RATHER THAN
+   * RULED OUT. The Ambush clause is live; Garrote and Cheap Shot are stealth
+   * openers the owner has ruled out for good, so that half keeps the `stealth`
+   * tag and will not expire. The old single entry claimed ALL THREE were absent.
+   *
+   * AT 3/3 IT IS 100%, so an Ambush is worth TWO combo points rather than one --
+   * not a chance at all at the rank every Subtlety build takes, which is the
+   * figure to check against: a rank-3 Ambush that awards one point is this
+   * talent doing nothing.
+   * --------------------------------------------------------------------------
+   */
   initiative: [
-    { kind: 'unmodelled', scope: 'stealth', reason: 'Keyed to the stealth openers, which are absent.' },
+    { kind: 'reaction', reactionId: 'initiative' },
+    {
+      kind: 'unmodelled',
+      scope: 'stealth',
+      reason:
+        'Its Ambush clause APPLIES, through the `initiative` reaction in ' +
+        'game/reactions/rogueTalents.ts. It also names Garrote and Cheap ' +
+        'Shot, which are stealth openers and are out of scope for good.',
+    },
   ],
 
   ghostly_strike: [{ kind: 'grantAbility', abilityId: 'ghostly_strike' }],
