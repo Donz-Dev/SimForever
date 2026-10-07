@@ -7,7 +7,7 @@ gets built is [docs/class-implementation.md](docs/class-implementation.md).
 
 All nine classes and all 23 profiles are implemented, every number traced to a
 source rather than invented, and **all 23 priority lists are the ruleset owner's
-own** -- specified entry by entry and measured after. **2,272 tests**, CI green on Node 20 and 22. Profile
+own** -- specified entry by entry and measured after. **2,571 tests**, CI green on Node 20 and 22. Profile
 format **v10**. Live at <https://donz-dev.github.io/SimForever/>, republished by
 `.github/workflows/deploy.yml` on every push to `main` that passes.
 
@@ -773,6 +773,42 @@ MOVED**: putting it back is +35.2 REAL, so spell hit and that ability are
 independent and the cost of the owner's choice is confirmed rather than assumed.
 See [docs/handoff/priest.md](docs/handoff/priest.md).
 
+**THE PRIEST WAS THEN TUNED BY THE OWNER AND IS 516.4 TO 597.9, +81.5 REAL**,
+with twenty-three of the twenty-four identical to the decimal. Shadow Word:
+Death's entry is **+37.7** -- the price recorded against it twice while it was
+absent, and the owner took it -- the new 13/3/35 build is **+18.7**, and the
+Improved Mind Flay fix is **+18.2**. **Marginal figures, each measured by
+removal from the finished configuration, and they do not sum to 81.5.**
+
+**ONE TALENT HAD BEEN APPLYING THE WRONG NUMBER, AND NO AUDIT HERE ASKS.**
+Improved Mind Flay declared `valueIndex: 1` against a row of
+`[damage%, yards, slow%]`, so it applied the RANGE as a damage multiplier for
+its whole life. **The census has four columns and none of them is "correct"**;
+`coefficient_probe` asks whether damage responds to a stat and `ability_audit`
+whether an ability is connected. The plausible wrong value was another rank's
+right one -- 10% where the talent grants 20% -- so the talent read as one rank
+behind itself and no figure looked odd. `tools/value_index_sweep.mjs` lists the
+other 47 sites and **found a second instance at once**: the Warlock's Aftermath,
+right only because at 5/5 its two candidate numbers coincide.
+
+**AND THE HOLD BAND THE OWNER PUT ON SHADOW WORD: DEATH MEASURES -4.9**, which
+was put to the owner with that figure and **ruled: "leave the hold band".** So it
+is a DECISION rather than an outstanding item, the same resolution Hunter's Mark
+got at -10.1 -- and saying which it is matters, because a settled choice written
+up as pending inflates the queue and hides the real work.
+
+It buys nothing because the Early Demise window (11.6s) is shorter than the
+ability's cooldown (15s), so at most one cast can land in it and an ungated entry
+already lands that one: 1.00 a fight either way, against 3.53 casts held and 4.00
+unheld. **What would reopen it is the arithmetic, not the DPS** -- a longer fight
+or a shorter cooldown makes the window hold two casts, and a test fails if that
+happens.
+
+**THE RATIONALE FIRST WRITTEN FOR THE BAND WAS FALSE** -- "one cooldown wide",
+from 15% of a hundred-second fight, when the fight is sixty -- **and a test had
+been written that asserted it and passed**, because `bandFraction * seconds(100)`
+really is 15000. A rationale is a claim and wants measuring like any other.
+
 **THE DRUID DEEP DIVE MOVED THREE PROFILES AND THE OTHER TWENTY DID NOT MOVE BY
 A DECIMAL.** Cat **488.0 to 656.1, +168.1**, Bear **376.2 to 444.7, +68.5**,
 Moonkin **384.3 to 398.0, +13.7**, and every other figure identical -- which is
@@ -883,7 +919,7 @@ while it worked.
 decimal -- which is what a talent change scoped to one build should look like.
 It makes Frostfire the top Mage, above Fire's 401.2 and Arcane's 392.6, and the
 build that existed for the Fire/Frost overlap now has a third reason to. The
-mean across **24** is **566.8**, RE-SUMMED FROM THE TABLE ABOVE rather than
+mean across **24** is **570.2**, RE-SUMMED FROM THE TABLE ABOVE rather than
 adjusted -- **by `tools/update_baseline_table.py`, which exists now**; the
 sentence above it had promised a script for several commits and there was none,
 so the mean and the ordering were still being maintained by hand.
@@ -1433,20 +1469,30 @@ by a dive on another branch. A row-at-a-time edit goes wrong silently, because e
 individual figure has a commit behind it and looks defensible on its own. Adding
 Hemo moves five rows between the two columns, which is exactly that kind of edit.
 
+**AND IT HAS NOW CAUGHT THE FOURTH, WHICH NO HUMAN WAS GOING TO SEE.** A rebase
+auto-merged two versions of this table -- one that had moved the Shadow Priest
+into the left column at 597.9, and one that still had it in the right at 516.4 --
+and git took BOTH rows cleanly, dropping Shockadin to keep the row count. The
+result was twenty-four rows carrying twenty-three profiles, one of them twice at
+two different figures, with no conflict marker and nothing misaligned. **The
+set assertion is what failed**: "in the map, not in the table: ['Shockadin']".
+A table where every row is individually plausible is precisely what a reader
+cannot audit, which is why the check is a SET comparison and not a row count.
+
 | Profile | Class | Talents | DPS | | Profile | Class | Talents | DPS |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| Seal Twist Ret | Paladin | 13/0/38 | 748.3 | | Arcane Mage | Mage | 47/4/0 | 576.1 |
-| LW Ranged | Hunter | 7/39/5 | 681.1 | | **Firelock** | Warlock | 5/11/35 | **544.3** |
-| LW Melee | Hunter | 7/13/31 | 672.6 | | Hemo Rogue | Rogue | 17/3/31 | 527.1 |
-| BM Hunter | Hunter | 31/20/0 | 668.6 | | Shadow Priest | Priest | 16/3/32 | 516.4 |
+| Seal Twist Ret | Paladin | 13/0/38 | 748.3 | | Shockadin | Paladin | 23/0/28 | 585.5 |
+| LW Ranged | Hunter | 7/39/5 | 681.1 | | Arcane Mage | Mage | 47/4/0 | 576.1 |
+| LW Melee | Hunter | 7/13/31 | 672.6 | | Firelock | Warlock | 5/11/35 | 544.3 |
+| BM Hunter | Hunter | 31/20/0 | 668.6 | | Hemo Rogue | Rogue | 17/3/31 | 527.1 |
 | DW Fury | Warrior | 18/33/0 | 667.5 | | Moonkin | Druid | 38/0/13 | 513.4 |
 | Cat Druid | Druid | 9/35/7 | 663.3 | | Venom Rogue | Rogue | 37/12/2 | 510.6 |
 | Frostfire Mage | Mage | 0/29/22 | 661.3 | | Rupture Rogue | Rogue | 12/8/31 | 497.6 |
-| Enh Shaman | Shaman | 19/32/0 | 625.8 | | **SM/DS** | Warlock | 40/11/0 | **479.7** |
+| Enh Shaman | Shaman | 19/32/0 | 625.8 | | SM/DS | Warlock | 40/11/0 | 479.7 |
 | Fire Mage | Mage | 10/39/2 | 622.0 | | Prot Warr | Warrior | 17/0/34 | 457.0 |
 | 2H Arms | Warrior | 38/13/0 | 621.1 | | Ele Shaman | Shaman | 38/13/0 | 440.2 |
-| Combat Rogue | Rogue | 18/33/0 | 586.3 | | Bear Druid | Druid | 9/42/0 | 433.6 |
-| Shockadin | Paladin | 23/0/28 | 585.5 | | Prot Pally | Paladin | 8/36/7 | 303.9 |
+| **Shadow Priest** | Priest | 13/3/35 | **597.9** | | Bear Druid | Druid | 9/42/0 | 433.6 |
+| Combat Rogue | Rogue | 18/33/0 | 586.3 | | Prot Pally | Paladin | 8/36/7 | 303.9 |
 
 **THE TOP IS SEAL TWIST RET AND THE GAP IS CLEAR.** **748.3 +/-9.6** against
 LW Ranged's **681.1 +/-4.7** is 67.2, far outside both intervals. The Cat held

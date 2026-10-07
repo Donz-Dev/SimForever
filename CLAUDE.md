@@ -26,6 +26,7 @@ npx vite-node tools/measure_rotation.ts          # Warrior TALENT builds, not pr
 npx vite-node tools/ability_audit.ts             # is every ability connected at all
 npx vite-node tools/class_audit.ts warrior       # one class's gaps, lists and sources
 npx vite-node tools/coefficient_probe.ts         # does every ability's damage scale
+node tools/value_index_sweep.mjs                 # which talents index a multi-number row
 PROFILE=pally_ret npx vite-node tools/probe_resources.ts   # where one pool went
 npx vite-node tools/probe_block.ts               # a tank's block chain, link by link
 npx vite-node tools/druid_attribution.ts         # what one talent is worth, with its CASCADE named
@@ -1653,6 +1654,21 @@ no per-point argument either way and what decides it is uptime.
   a half-done talent actually looks. **An undeclared ruling and an undeclared gap
   look identical from the census, and both of them hide whatever else is on the
   talent.**
+- **AND AN EFFECT THAT READS THE WRONG VALUE IS APPLIED, AND THE CENSUS CALLS IT
+  FULLY MODELLED.** The Priest's Improved Mind Flay declared `valueIndex: 1`
+  against a row of `[damage%, yards, slow%]`, so it applied the RANGE as a
+  damage multiplier for its whole life -- 10% where the talent grants 20%, on
+  the biggest damage source in the build, worth **+18.2 DPS** when corrected.
+  **NO AUDIT IN THIS PROJECT ASKS WHETHER A MULTIPLIER IS THE RIGHT
+  MULTIPLIER**: `coefficient_probe` asks whether damage responds to a stat,
+  `ability_audit` asks whether an ability is connected, and the census has four
+  columns of which none is "correct". **The plausible wrong value is usually
+  another rank's right one** -- 10 is exactly what rank 1 correctly grants, so
+  the talent read as one rank behind itself and no figure looked odd. The
+  Warlock's Aftermath has the same mistake and escapes it only because at 5/5
+  the two numbers coincide. `tools/value_index_sweep.mjs` lists all 48 sites;
+  **a multi-number row is where to look, and the tooltip's placeholder order IS
+  the index order.**
 - **An effect that reads no value is DROPPED, not reported.** `talentBuild` asks
   `talentNumber` and `continue`s when it is undefined, so a single-rank talent
   whose values file says `null` produces nothing and reads as unmodelled without

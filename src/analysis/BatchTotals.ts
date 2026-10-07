@@ -1,4 +1,4 @@
-import type { AttackOutcome, TelemetryEvent, TelemetrySink } from '../engine';
+import type { AttackOutcome, DamageSchool, TelemetryEvent, TelemetrySink } from '../engine';
 
 /**
  * A telemetry sink that accumulates EVERY iteration of a batch and keeps no
@@ -77,6 +77,24 @@ export interface BatchStatAverages {
   readonly rangedAttackPower: number;
   /** School-blind spell power, matching the character sheet's own row. */
   readonly spellPower: number;
+  /**
+   * Per school, for the schools that read MORE than the blind figure above.
+   * Already includes it, so this is the number the damage used.
+   *
+   * --------------------------------------------------------------------------
+   * THE BLIND ROW ON ITS OWN UNDERSTATES EVERY CASTER WITH SCHOOL-SCOPED
+   * GEAR, and it did so invisibly: a plausible figure, agreeing exactly with the
+   * character sheet's blind row, while the sheet listed the scoped pools in a
+   * different panel. The Shadow Priest's spells all read a Shadow-only pool on
+   * top of this.
+   *
+   * KEYED BY SCHOOL RATHER THAN FOLDED IN, because a hybrid has two and
+   * neither is "the" spell power -- there is no single number to fold them
+   * into without choosing one, and choosing one is how a row comes to be
+   * about something other than its label.
+   * --------------------------------------------------------------------------
+   */
+  readonly spellPowerBySchool: Readonly<Partial<Record<DamageSchool, number>>>;
   /** The swing-speed multiplier: 1.3 is "30% faster". */
   readonly hasteMultiplier: number;
 }
@@ -270,12 +288,15 @@ interface StatAccumulator {
   attackPowerMs: number;
   rangedAttackPowerMs: number;
   spellPowerMs: number;
+  /** The same product, per school, for the schools a sample carried. */
+  spellPowerBySchoolMs: Map<DamageSchool, number>;
   hasteMs: number;
   /** The window currently open: what was sampled, and when. */
   openedAt: number;
   attackPower: number;
   rangedAttackPower: number;
   spellPower: number;
+  spellPowerBySchool: Readonly<Partial<Record<DamageSchool, number>>>;
   hasteMultiplier: number;
   /** False until the first sample, so an actor that emitted none reads empty. */
   sampled: boolean;
@@ -375,6 +396,20 @@ export class BatchTotals implements TelemetrySink {
     entry.attackPowerMs += entry.attackPower * span;
     entry.rangedAttackPowerMs += entry.rangedAttackPower * span;
     entry.spellPowerMs += entry.spellPower * span;
+    /*
+     * A SCHOOL THE OPEN WINDOW DID NOT CARRY CONTRIBUTES NOTHING, which is
+     * right: the window's figure for that school WAS the blind pool, and a
+     * school that never differs from blind is never reported at all. A school
+     * that starts differing mid-fight gets its first contribution from the
+     * window that first carried it, not from the pull.
+     */
+    for (const [school, value] of Object.entries(entry.spellPowerBySchool)) {
+      const key = school as DamageSchool;
+      entry.spellPowerBySchoolMs.set(
+        key,
+        (entry.spellPowerBySchoolMs.get(key) ?? 0) + (value ?? 0) * span,
+      );
+    }
     entry.hasteMs += entry.hasteMultiplier * span;
     entry.openedAt = until;
   }
@@ -400,11 +435,13 @@ export class BatchTotals implements TelemetrySink {
         attackPowerMs: 0,
         rangedAttackPowerMs: 0,
         spellPowerMs: 0,
+        spellPowerBySchoolMs: new Map<DamageSchool, number>(),
         hasteMs: 0,
         openedAt: event.timestamp,
         attackPower: 0,
         rangedAttackPower: 0,
         spellPower: 0,
+        spellPowerBySchool: {},
         hasteMultiplier: 1,
         sampled: false,
       };
@@ -416,6 +453,7 @@ export class BatchTotals implements TelemetrySink {
       entry.attackPower = event.attackPower;
       entry.rangedAttackPower = event.rangedAttackPower;
       entry.spellPower = event.spellPower;
+      entry.spellPowerBySchool = event.spellPowerBySchool;
       entry.hasteMultiplier = event.hasteMultiplier;
       entry.sampled = true;
       this.stats.set(event.actorId, entry);
@@ -728,6 +766,12 @@ export class BatchTotals implements TelemetrySink {
       attackPower: entry.attackPowerMs / this.totalDurationMs,
       rangedAttackPower: entry.rangedAttackPowerMs / this.totalDurationMs,
       spellPower: entry.spellPowerMs / this.totalDurationMs,
+      spellPowerBySchool: Object.fromEntries(
+        [...entry.spellPowerBySchoolMs].map(([school, ms]) => [
+          school,
+          ms / this.totalDurationMs,
+        ]),
+      ),
       hasteMultiplier: entry.hasteMs / this.totalDurationMs,
     };
   }

@@ -178,6 +178,12 @@ export interface StatSampleEvent extends TelemetryBase {
   /** School-BLIND spell power, which is what the character sheet's row shows. */
   readonly spellPower: number;
   /**
+   * Per school, for the schools that read MORE than the blind pool: the figure
+   * `dealDamage` actually uses. Already includes the blind pool, and empty for
+   * a character with no school-scoped spell power at all.
+   */
+  readonly spellPowerBySchool: Readonly<Partial<Record<DamageSchool, number>>>;
+  /**
    * The swing-speed multiplier, not the rating: 1.3 is "30% faster".
    *
    * Derived through `hasteMultiplierFrom`, the one function the swing timer

@@ -30,6 +30,7 @@ const sample = (
   attackPower: 0,
   rangedAttackPower: 0,
   spellPower: 0,
+  spellPowerBySchool: {},
   hasteMultiplier: 1,
   ...values,
 });

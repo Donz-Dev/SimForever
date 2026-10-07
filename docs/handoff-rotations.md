@@ -138,7 +138,7 @@ stale one PR at a time.
 | Hemo | 527.1 | `ROGUE_HEMO` | 8 | 5 |
 | LW Melee | 523.8 | `HUNTER_LONE_WOLF_MELEE` | 7 | 2 |
 | Bear | 523.1 | `DRUID_BEAR` | 8 | 4 |
-| Shadow | 516.4 | `PRIEST_SHADOW` | 6 | 4 |
+| Shadow | 597.9 | `PRIEST_SHADOW` | 7 | 5 |
 | Moonkin | 513.4 | `DRUID_MOONKIN` | 5 | 4 |
 | Venom | 510.6 | `ROGUE_VENOM` | 5 | 4 |
 | Rupture | 497.6 | `ROGUE_RUPTURE` | 9 | 7 |
@@ -199,6 +199,7 @@ a decimal. **Every one held: a list edit moved exactly the profile that runs it.
 | 2H Arms, DW Fury, Prot Warr, Combat, Rupture, Fire, Arcane, Firelock | | | noise |
 | Prot Pally | 158.8 | 153.2 | **−5.6** |
 | Shadow | 448.1 | 437.3 | **−10.8** |
+| | | | **REVERSED.** The owner put Shadow Word: Death back in a later revision, with a hold band on it. The entry is **+37.7** and the hold is **−4.9** |
 | BM Hunter | 417.3 | 405.8 | **−11.6** |
 | Venom | 417.0 | 392.7 | **−24.3** |
 | LW Melee | 458.1 | 321.5 | **−136.6** |
