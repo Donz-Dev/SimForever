@@ -104,7 +104,7 @@ hit per school landed with the Priest dive and wires both, which is why this row
 reads 11 rather than the 12 this brief predicted: the Priest dive also closed one
 more than expected.
 
-### The 11 live gaps, grouped by cause
+### The 10 live gaps, grouped by cause
 
 **~~Spell hit per school~~ — DONE, and not by this class.** `arcane_focus` and
 `elemental_precision` read "improves your chance to hit with <school> spells" and
@@ -115,9 +115,16 @@ modifier in before the roll and always did, so the route existed and
 and one line in `talentBuild` reaches it — five talents across three classes for
 the same line.
 
+**~~`ice_block`~~ IS RULED OUT NOW, by a ruling that came from the Paladin.**
+The owner ruled on 2026-10-07 that an immunity which also stops you attacking is
+out of scope, and Forever's Ice Block says "you cannot attack, move, or cast
+spells" for its ten seconds — so a Mage that WAS attacked still could not afford
+to use it. **Blocked twice is what makes it a ruling rather than a gap**, which
+is the shape stealth and cast pushback already had.
+
 **Nothing attacks the Mage — the PROFILE, not the engine:** `improved_channeling`,
 `magic_absorption`, `arcane_shielding`, `improved_fire_ward`, `frost_warding`,
-`ice_block`, `ice_barrier`. All three profiles set
+`ice_barrier`. All three profiles set
 `encounter.targetAttacks: false`. **The encounter CAN hit back** — two Paladin
 builds use it — so this expires the day somebody writes a Mage profile that is
 attacked. `improved_channeling` and `ice_barrier` have a second cause on top:

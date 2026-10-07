@@ -1386,15 +1386,15 @@ fails.
 | Class | Talents | Fully | Partly | Ruled out | Live gap |
 | --- | --- | --- | --- | --- | --- |
 | Warrior | 53 | 43 | 4 | 6 | **0** |
-| Druid | 51 | 29 | 5 | 15 | **2** |
-| Paladin | 52 | 32 | 5 | 13 | **2** |
-| Rogue | 53 | 31 | 5 | 14 | **3** |
+| Paladin | 52 | 33 | 7 | 11 | **1** |
+| Druid | 51 | 29 | 6 | 14 | **2** |
+| Rogue | 53 | 32 | 6 | 12 | **3** |
 | Shaman | 50 | 22 | 4 | 18 | **6** |
 | Hunter | 50 | 28 | 5 | 9 | **8** |
-| Mage | 54 | 30 | 2 | 11 | **11** |
+| Mage | 54 | 30 | 2 | 12 | **10** |
 | Priest | 53 | 20 | 2 | 19 | **12** |
 | Warlock | 52 | 24 | 3 | 5 | **20** |
-| **Total** | **468** | **259** | **35** | **110** | **64** |
+| **Total** | **468** | **261** | **39** | **106** | **62** |
 
 **THE WARRIOR LEFT THE GAP COLUMN ENTIRELY**, and its last entry is worth
 reading because of the shape rather than the size. Improved Berserker Rage's
@@ -1424,10 +1424,31 @@ reason was a statement about the engine ("nothing can reset a cooldown from
 content") and the engine now can. Fingers of Frost carried `FROZEN_UNMODELLED`,
 which is a claim about the TARGET, and that talent does not freeze anything.
 
-**294 of 468 talents do something**, 110 never will, and **64 are the
-actual remaining work** — not the 251 a raw count of unmodelled reasons
-suggests. The 105 scoped entries break down as 34 healing, 33 crowd
-control, 17 positioning, 14 threat and 7 stealth.
+**300 of 468 talents do something**, 106 never will, and **62 are the actual
+remaining work** — not the raw count of unmodelled reasons. The 129 scoped
+entries break down as 37 crowd control, 36 healing, 21 positioning, 13 threat,
+7 cast pushback, 6 stealth, 4 totem entities, **3 immunity and 2 dispel**.
+
+**THE TWO NEWEST MEMBERS ARE THE OWNER'S, 2026-10-07**, and they came out of one
+question. `guardian_s_favor`'s reason ended "whether an immunity that disarms you
+belongs in scope is a question for the ruleset owner rather than a gap in the
+engine" — and asking returned both rulings at once: **a dispel is out of scope,
+and so is an immunity that also stops you attacking.** A reason that names the
+question it is waiting on is what makes it askable; that sentence is the only
+reason this was raised rather than sitting in the queue.
+
+**AND THE IMMUNITY RULING IS THE FIRST THAT A CLASSIC READING WOULD HAVE APPLIED
+TOO WIDELY.** Classic's Divine Shield stops you acting; **Forever's reduces all
+damage you deal by 50% and lets you keep swinging**, so it is a real tank
+cooldown and stays a live gap. Sweeping it in would have deleted a usable
+ability and called the deletion a decision. The same check moved Ice Block the
+other way: Forever's text says "you cannot attack, move, or cast spells", so it
+IS covered and the Mage drops a gap it was never going to reach.
+
+**THE TABLE ABOVE WAS ALSO STALE BY MORE THAN THIS CHANGE.** It read Rogue
+31/5/14 and Mage 30/2/11 against a derived 32/6/12 and 30/2/12, on code nobody
+touched for this PR — the same drift the Arcane row had. Every figure here is
+printed by `npx vite-node tools/census.ts` rather than adjusted.
 
 **EVERY FIGURE IN THIS SECTION IS RE-SUMMED FROM THE TABLE ABOVE RATHER THAN
 ADJUSTED, AND THIS MERGE IS WHY.** The Warlock dive and the Warrior dive each
@@ -1435,8 +1456,13 @@ moved the total from the same base and each wrote its own answer; both also wrot
 this warning, independently, which is how close the trap is to the surface. Two
 branches moving a count by one from the same base both write the same number, git
 merges them without a conflict, and the total is short by one.
-`tools/class_audit.ts` derives the whole census independently and throws if the
-buckets do not account for every talent — run it rather than trusting this.
+`tools/class_audit.ts` prints one class and `tools/census.ts` prints all nine,
+and **they share one classifier now** — `game/talents/talentCensus.ts`. They did
+not: census.ts carried its own copy of the four-way rule which left out
+`appliedElsewhere`, so the moment a clause of a working Rogue poison talent was
+scoped the two tools disagreed about that talent and the published figure would
+have been whichever was run last. Both throw if the buckets do not account for
+every talent. **Run one rather than trusting this.**
 
 **STEALTH IS THE NEWEST RULING AND IT CLOSED THE LARGEST OPEN QUESTION.** Every
 fight opens in combat, so nothing is ever stealthed — and until the owner ruled,

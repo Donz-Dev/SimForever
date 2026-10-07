@@ -961,6 +961,47 @@ export type OutOfScope =
    */
   | 'stealth'
   /**
+   * DISPELS. The ruleset owner's ruling, 2026-10-07.
+   *
+   * ------------------------------------------------------------------------
+   * WHAT IT COVERS: removing a poison, disease, curse or magic effect, and
+   * anything keyed to one -- including RESISTING a dispel, which is the same
+   * concept from the other side.
+   *
+   * BLOCKED TWICE, WHICH IS WHY IT IS A RULING AND NOT A GAP. Nothing in any
+   * encounter here applies anything dispellable, and nothing here dispels. So
+   * neither "declare Cleanse" nor "give the boss a debuff worth removing"
+   * expires it on its own -- the same shape stealth and cast pushback had.
+   *
+   * NOT THE SAME AS REMOVING CROWD CONTROL, which `crowdControl` already
+   * covers in its own words. A talent that breaks a stun is that one; a talent
+   * about a poison, a disease, a curse or a magic effect is this one.
+   * ------------------------------------------------------------------------
+   */
+  | 'dispel'
+  /**
+   * AN IMMUNITY THAT ALSO STOPS THE CHARACTER ATTACKING. The ruleset owner's
+   * ruling, 2026-10-07, and the wording is load-bearing.
+   *
+   * ------------------------------------------------------------------------
+   * WHAT IT COVERS: Blessing of Protection, Divine Protection and Ice Block,
+   * each of which says in its own Forever tooltip that you cannot attack while
+   * it is up. On a damage profile such a cooldown costs its own damage, so it
+   * can never be worth using and nothing is lost by not modelling it.
+   *
+   * WHAT IT DOES NOT COVER, AND THIS IS THE TRAP: an immunity that lets you
+   * KEEP attacking. **Forever's Divine Shield is one** -- "protects the paladin
+   * from all damage and spells for 12 sec, but reduces all damage you deal by
+   * 50%" -- where Classic's stops you acting. A survival cooldown you can
+   * attack through is a real, expressible effect and stays a live gap.
+   *
+   * SO THIS SCOPE IS ABOUT THE SELF-DISARM AND NOT ABOUT THE WORD "immune".
+   * Read the Forever tooltip before applying it; reading Classic would have
+   * swept Divine Shield in and silently deleted a cooldown that works.
+   * ------------------------------------------------------------------------
+   */
+  | 'immunity'
+  /**
    * CAST PUSHBACK. The owner's ruling, 2026-09-30.
    *
    * ------------------------------------------------------------------------

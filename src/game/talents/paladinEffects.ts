@@ -111,14 +111,25 @@ export const PALADIN_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
   reverence: [{ kind: 'stat', stat: 'manaRegenBypass', operation: 'flat' }],
 
   purifying_power: [
+    /*
+     * TWO CLAUSES, TWO CAUSES, AND THEY ARE NOW TWO ENTRIES. A single reason
+     * could carry only one `scope`, so the halves had to be split before either
+     * could be classified -- which is the same lesson three other Paladin talents
+     * taught in the shape of a reason whose first clause stayed true.
+     */
+    {
+      kind: 'unmodelled',
+      scope: 'dispel',
+      reason:
+        'Its Cleanse and Purify cost reduction. Both are dispels, and dispels ' +
+        'are out of scope by the owner’s ruling: nothing in any encounter here ' +
+        'applies anything dispellable and nothing here dispels.',
+    },
     {
       kind: 'unmodelled',
       reason:
-        'Two clauses and two different reasons, NEITHER of them the engine. Its ' +
-        'Cleanse and Purify cost reduction reaches two dispels, and nothing in ' +
-        'this encounter ever applies anything dispellable -- so they are not ' +
-        'declared and would be cast never. Its cooldown reduction reaches ' +
-        `Exorcism and Holy Wrath. ${NOT_UNDEAD}`,
+        'Its cooldown reduction reaches Exorcism and Holy Wrath, neither of ' +
+        `which is declared. ${NOT_UNDEAD}`,
     },
   ],
 
@@ -224,16 +235,29 @@ export const PALADIN_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
   precision: [{ kind: 'stat', stat: 'hitChance', operation: 'flat' }],
 
   guardian_s_favor: [
+    /*
+     * THE QUESTION THIS TALENT RAISED HAS BEEN ANSWERED. Its reason used to end
+     * "whether an immunity that disarms you belongs in scope is a question for
+     * the ruleset owner rather than a gap in the engine" -- and the owner has
+     * ruled that it does not. Both halves are scoped now, so the talent is a
+     * DECISION rather than work, and the Paladin's live-gap column drops to one.
+     */
     {
       kind: 'unmodelled',
+      scope: 'positioning',
       reason:
-        'Both halves reach a blessing no profile casts, and for two different ' +
-        'reasons. Blessing of Freedom is immunity to movement impairment, which ' +
-        'is positioning; Blessing of Protection stops all physical damage AND ' +
-        'all physical attacking for ten seconds, so on a damage profile it is a ' +
-        'survival cooldown that costs its own damage. Neither is declared, and ' +
-        'whether an immunity that disarms you belongs in scope is a question for ' +
-        'the ruleset owner rather than a gap in the engine.',
+        'Its Blessing of Freedom half. Immunity to movement impairment, and ' +
+        'nothing here moves.',
+    },
+    {
+      kind: 'unmodelled',
+      scope: 'immunity',
+      reason:
+        'Its Blessing of Protection half. "Protected from all physical attacks ' +
+        'for 10 sec, but during that time they cannot attack or use physical ' +
+        'abilities" -- an immunity that also stops you attacking, which is out ' +
+        'of scope by the owner’s ruling: on a damage profile it costs its own ' +
+        'damage and could never be worth using.',
     },
   ],
 
@@ -295,13 +319,31 @@ export const PALADIN_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
      * is the difference between one cast and two.
      */
     { kind: 'abilityCooldown', abilityId: 'templars_bulwark', unit: 'seconds', valueIndex: 1 },
+    /*
+     * AND THE OTHER TWO ABILITIES IT SHORTENS ARE NOT THE SAME AS EACH OTHER,
+     * which this reason used to get wrong by reading Classic. **Forever's Divine
+     * Shield does NOT stop you attacking** -- "protects the paladin from all
+     * damage and spells for 12 sec, but reduces all damage you deal by 50%" --
+     * where Divine Protection says "you cannot attack or use physical abilities
+     * yourself". One is covered by the immunity ruling and one is not.
+     */
+    {
+      kind: 'unmodelled',
+      scope: 'immunity',
+      reason:
+        'Its Divine Protection cooldown. "You are protected from all physical ' +
+        'attacks and spells for 8 sec, but during that time you cannot attack ' +
+        'or use physical abilities yourself" -- an immunity that also stops you ' +
+        'attacking, which the owner has ruled out of scope.',
+    },
     {
       kind: 'unmodelled',
       reason:
-        'The stamina and the Templar\'s Bulwark cooldown apply. Divine Shield and ' +
-        'Divine Protection are the other two abilities it shortens and neither is ' +
-        'declared: both are damage immunities that stop the Paladin attacking, ' +
-        'which is a survival cooldown on a damage profile.',
+        'Its Divine Shield cooldown. The stamina and the Templar\'s Bulwark ' +
+        'half apply. Divine Shield is NOT covered by the immunity ruling, ' +
+        'because Forever\'s version reduces the damage you deal by 50% rather ' +
+        'than stopping you attacking -- so it is a real survival cooldown a tank ' +
+        'could use, and it is simply not a declared ability here.',
     },
   ],
 
