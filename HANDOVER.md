@@ -17,7 +17,7 @@ format **v10**. Live at <https://donz-dev.github.io/SimForever/>, republished by
 | --- | --- |
 | **Talents** | 258 fully, 36 partly, 110 ruled out, **64 a live gap** -- from 132 before the class dives |
 | **Abilities** | 114 declared against 478 captured |
-| **Profiles** | 24, all measured, **mean 561.5** |
+| **Profiles** | 24, all measured, **mean 562.8** |
 | **Scope rulings** | 7 members, all the owner's |
 | **Placeholders** | **10 declared** -- see the milestone table, and count DECLARATIONS |
 | **Tests** | 2,293 on Node 20 and 22 |
@@ -1172,7 +1172,7 @@ Hemo moves five rows between the two columns, which is exactly that kind of edit
 | BM Hunter | Hunter | 31/20/0 | **595.7** | | Moonkin | Druid | 38/0/13 | ****513.4**** |
 | Combat Rogue | Rogue | 18/33/0 | 586.3 | | Prot Warr | Warrior | 17/0/34 | 457.0 |
 | **Shockadin** | Paladin | 23/0/28 | **585.5** | | Ele Shaman | Shaman | 38/13/0 | 440.2 |
-| Arcane Mage | Mage | 47/4/0 | 581.8 | | SM/DS | Warlock | 40/11/0 | 435.9 |
+| Arcane Mage | Mage | 47/4/0 | 576.1 | | SM/DS | Warlock | 40/11/0 | 435.9 |
 | Firelock | Warlock | 5/11/35 | 544.7 | | **Prot Pally** | Paladin | 8/36/7 | **303.9** |
 
 **THE TOP TWO ARE INDISTINGUISHABLE AND THE TABLE SHOULD NOT BE READ AS A
