@@ -7,7 +7,7 @@ gets built is [docs/class-implementation.md](docs/class-implementation.md).
 
 All nine classes and all 23 profiles are implemented, every number traced to a
 source rather than invented, and **all 23 priority lists are the ruleset owner's
-own** -- specified entry by entry and measured after. **2,272 tests**, CI green on Node 20 and 22. Profile
+own** -- specified entry by entry and measured after. **2,571 tests**, CI green on Node 20 and 22. Profile
 format **v10**. Live at <https://donz-dev.github.io/SimForever/>, republished by
 `.github/workflows/deploy.yml` on every push to `main` that passes.
 
@@ -1438,7 +1438,7 @@ Hemo moves five rows between the two columns, which is exactly that kind of edit
 | Seal Twist Ret | Paladin | 13/0/38 | 748.3 | | Arcane Mage | Mage | 47/4/0 | 576.1 |
 | LW Ranged | Hunter | 7/39/5 | 681.1 | | **Firelock** | Warlock | 5/11/35 | **544.3** |
 | LW Melee | Hunter | 7/13/31 | 672.6 | | Hemo Rogue | Rogue | 17/3/31 | 527.1 |
-| BM Hunter | Hunter | 31/20/0 | 668.6 | | Shadow Priest | Priest | 16/3/32 | 516.4 |
+| BM Hunter | Hunter | 31/20/0 | 668.6 | | Shadow Priest | Priest | 13/3/35 | 516.4 |
 | DW Fury | Warrior | 18/33/0 | 667.5 | | Moonkin | Druid | 38/0/13 | 513.4 |
 | Cat Druid | Druid | 9/35/7 | 663.3 | | Venom Rogue | Rogue | 37/12/2 | 510.6 |
 | Frostfire Mage | Mage | 0/29/22 | 661.3 | | Rupture Rogue | Rogue | 12/8/31 | 497.6 |

@@ -58,16 +58,28 @@ describe('the two fractions', () => {
   });
 
   /*
-   * THE BAND IS ONE COOLDOWN WIDE, which is why it is 35 and not some other
-   * number. A cast let through at 34% remaining would still be on cooldown when
-   * the window opened -- the exact thing the hold exists to prevent. The two
-   * numbers look independent and are not, so moving the cooldown fails here
-   * rather than silently putting the hold in the wrong place.
+   * ------------------------------------------------------------------------
+   * THE WINDOW IS SHORTER THAN THE COOLDOWN, which is the fact that decides
+   * what the hold can possibly be worth: at most ONE cast can land inside it,
+   * so an ungated entry on a 15-second cooldown already gets that cast.
+   *
+   * THIS ASSERTION REPLACES A FALSE ONE. The first version of this test read
+   * `bandFraction * seconds(100)` against the cooldown and passed -- 15% of a
+   * hundred seconds is fifteen seconds, which is the cooldown exactly. The
+   * fight is SIXTY seconds. The arithmetic was self-consistent and about a
+   * fight that does not exist, which is the whole hazard: it was written to
+   * confirm a rationale rather than to measure one.
+   * ------------------------------------------------------------------------
    */
-  it('is one Shadow Word: Death cooldown wide against a 100-second fight', () => {
-    const bandFraction = SHADOW_WORD_DEATH_HOLD_FRACTION - EARLY_DEMISE_FRACTION;
-    expect(bandFraction * seconds(100)).toBeCloseTo(SHADOW_WORD_DEATH.cooldownMs!, 6);
+  it('has a window too short to hold two casts, so the hold cannot add one', () => {
+    const planned = seconds(shadow().simulation.durationSeconds);
+    const window = EARLY_DEMISE_FRACTION * planned;
+    const band = (SHADOW_WORD_DEATH_HOLD_FRACTION - EARLY_DEMISE_FRACTION) * planned;
+
+    expect(window).toBeLessThan(SHADOW_WORD_DEATH.cooldownMs!);
+    expect(band).toBeLessThan(SHADOW_WORD_DEATH.cooldownMs!);
   });
+
 
   it('is in the list, ungated except for the hold', () => {
     const entry = PRIEST_SHADOW.find((e) => e.abilityId === 'shadow_word_death');
@@ -105,6 +117,23 @@ describe('where the casts actually land', () => {
   it('fires inside the window it was held for', () => {
     const inWindow = all.filter((remaining) => remaining <= EARLY_DEMISE_FRACTION);
     expect(inWindow.length).toBeGreaterThanOrEqual(SEEDS);
+  });
+
+  /*
+   * THE MEASURED CONSEQUENCE, pinned so it cannot drift silently: the hold
+   * changes HOW MANY casts there are and not where the important one lands.
+   * Exactly one a fight is inside the window, held or unheld -- which is why
+   * the hold measures at -4.9 rather than paying for itself. If this ever
+   * reads two, the window has grown past the cooldown and the argument in
+   * `rotations/priest.ts` is stale.
+   */
+  it('lands exactly one cast in the window, which is all the window holds', () => {
+    const perFight = all.length / SEEDS;
+    const inWindow =
+      all.filter((remaining) => remaining <= EARLY_DEMISE_FRACTION).length / SEEDS;
+
+    expect(inWindow).toBeCloseTo(1, 1);
+    expect(perFight).toBeGreaterThan(inWindow);
   });
 
   it('still fires freely before the band', () => {

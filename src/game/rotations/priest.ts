@@ -39,18 +39,35 @@ const withoutAura = (auraId: string) => (_context: SimulationContext, actor: Com
  * goes quiet through the band, and fires again from 20% -- which is exactly
  * when Early Demise's +30% critical strike chance starts applying.
  *
- * THE BAND IS ONE COOLDOWN WIDE AND THAT IS WHY IT IS 35. Shadow Word: Death
- * has a 15-second cooldown; 35% to 20% of a 100-second fight is 15 seconds. A
- * cast let through at 34% remaining would still be on cooldown when the window
- * opened, which is the whole thing being avoided. Written down because the two
- * numbers look independent and are not: **move the cooldown and this band is
- * wrong**, and nothing would say so -- the entry would still fire, just not
- * where it was meant to.
+ * MEASURED AT -4.9 DPS, AND SHIPPED AS WRITTEN. The owner's instruction stands
+ * -- a list of theirs outranks a measured decision of ours -- and the number is
+ * the price of the choice rather than an argument against it. What follows is
+ * why, because the reason is not the obvious one and the obvious one is wrong.
+ *
+ * THE HOLD BUYS NOTHING, BECAUSE THE WINDOW IS SHORTER THAN THE COOLDOWN. At
+ * this profile's 60-second fight the Early Demise window is 11.6 seconds and
+ * Shadow Word: Death's cooldown is 15, so AT MOST ONE CAST can ever land inside
+ * it -- and an ungated entry already lands that one cast there on its own:
+ *
+ *   held     3.53 casts a fight, 1.00 of them in the window
+ *   unheld   4.00 casts a fight, 1.00 of them in the window
+ *
+ * Identical where it matters, half a cast apart everywhere else, and that half
+ * cast is the whole -4.9. Early Demise is worth +5.2 held and +4.9 unheld, so
+ * the hold does not even move the talent it exists for.
+ *
+ * SO THE FIRST RATIONALE WRITTEN HERE WAS FALSE, and it is worth leaving the
+ * correction visible: it said the band was "one cooldown wide" because 15% of a
+ * 100-second fight is 15 seconds. The fight is SIXTY seconds. The band is 8.7
+ * seconds, which is shorter than the cooldown, not equal to it -- and the
+ * arithmetic was self-consistent, which is exactly why it read as an
+ * explanation. **A rationale is a claim and wants measuring like any other.**
+ * The 35 is the owner's number and no reading of any tooltip derives it.
  *
  * `EARLY_DEMISE_FRACTION` IS NOT `EXECUTE_PHASE_FRACTION`, and not Quietus's
  * 0.35 either, however much the arithmetic rhymes. Early Demise states its own
  * 20 at index 0 of every rank's row in `values/priest.json`, and
- * `priestAbilities.test.ts` pins that this constant still matches it -- so a
+ * `shadowWordDeathHold.test.ts` pins that this constant still matches it -- so a
  * Forever change to the talent fails a test instead of silently leaving the
  * hold in the wrong place.
  * ----------------------------------------------------------------------------
@@ -79,8 +96,9 @@ const outsideTheHoldBand = (context: SimulationContext): boolean =>
  * killed, so its backlash always lands — a tenth of the priest's health every
  * fifteen seconds with no healer. The owner's earlier list had it out, measured
  * at a cost of 35.2 DPS; the build now takes Early Demise 2/2, so it is in and
- * gated to come off cooldown inside that talent's window. See
- * `outsideTheHoldBand` above for why the band is 15 percentage points wide.
+ * gated to come off cooldown inside that talent's window. The entry is worth
+ * +37.7 and the gate on it is worth -4.9 -- see `outsideTheHoldBand` above for
+ * why the gate costs rather than pays.
  */
 export const PRIEST_SHADOW: readonly PriorityEntry[] = [
   { abilityId: 'shadowform', condition: withoutAura('shadowform') },
