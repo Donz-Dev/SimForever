@@ -905,6 +905,24 @@ Sinister Strike at 45 beneath it: nothing below an ungated, cheaper ability can
 ever be the first castable entry, so a six-entry list is really a three-entry
 one.
 
+**AND THE SAME RULE UPSIDE DOWN: A CHEAPER ENTRY STARVES AN EXPENSIVE ONE FROM
+BENEATH, HOWEVER HIGH THE EXPENSIVE ONE SITS.** Ambush is SECOND in that list and
+still could not be cast, because Hemorrhage at 35 energy is seventh and took the
+pool every time it passed 35. **Priority does not reserve a resource** -- an entry
+is checked, refused for cost, and the list walks straight past it to something
+affordable, which is the correct behaviour and is also how a 60-energy ability
+below a 35-energy one never fires. The fix is a condition on the CHEAP entry
+(`not(poolingForAmbush)`), not a reorder: position was never the problem.
+
+**THE MEASUREMENT IS WHAT MADE IT LEGIBLE, AND IT WAS NOT GUESSABLE.** Over 300
+fights: 207 Cutthroat windows, **30 ending in an Ambush**. Mean energy at the
+moment a window OPENED was **0.2** -- Cutthroat procs off Backstab, which costs
+the same 60, so the proc always lands on an empty pool -- and the mean PEAK over
+the ten seconds that followed was 45.2, with only 30 of 207 windows ever reaching
+60. The window was not too short; the regeneration was being spent before any of
+it could be banked. **Count the windows and their fates, not the casts**: "Ambush
+fired 2.74 times" says nothing about whether a gate opened and closed unused.
+
 **ONLY IF IT HAS NO COOLDOWN, THOUGH.** Sniper Shot moved BELOW an ungated
 Arcane Shot still fires twice a fight and measures 311.7 either way, to the
 decimal — because Arcane Shot's own six-second cooldown lets the list fall

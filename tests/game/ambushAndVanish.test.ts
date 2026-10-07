@@ -263,6 +263,99 @@ describe('the three talents that pointed at Ambush and did nothing', () => {
   });
 });
 
+describe('a Cutthroat window is pooled for, not spent through', () => {
+  /*
+   * ============================================================================
+   * THE FLOOR RULE, UPSIDE DOWN. An unconditional entry is a floor under
+   * everything BELOW it -- and a CHEAPER entry below an expensive one starves it
+   * from beneath. Ambush is SECOND in the Rupture list and still could not be
+   * cast: Hemorrhage at 35 energy is seventh, and took the pool every time it
+   * passed 35.
+   *
+   * MEASURED FIRST, BECAUSE THE SHAPE OF IT IS NOT GUESSABLE. Over 300 fights:
+   * 207 Cutthroat windows, 30 ending in an Ambush. Mean energy when the window
+   * OPENED was 0.2 -- Cutthroat procs off Backstab, which costs the same 60, so
+   * the proc always lands on an empty pool -- and the mean peak over the ten
+   * seconds that followed was 45.2. Only 30 of 207 windows ever reached 60.
+   *
+   * These assert the CONDITION on the real list entries rather than a DPS delta,
+   * because the gain is +4.5 and the 30-batch harness calls that noise.
+   * ============================================================================
+   */
+  const conditionFor = (abilityId: string) =>
+    ROGUE_RUPTURE.find((entry) => entry.abilityId === abilityId)?.condition;
+
+  const probe = (energy: number, auras: readonly (typeof STEALTH)[]) => {
+    const player = makeAttacker({
+      autoAttack: 'none',
+      abilities: [abilityOf('ambush')!],
+      weapons: {
+        mainHand: { name: 'Dagger', weaponType: 'dagger', baseDamage: 100, swingTimerMs: 1800 },
+      },
+      resources: [{ type: 'energy', maximum: 100, initial: 100 }],
+    });
+    const target = makeTarget();
+    const sim = buildSimulation([player, target], { durationMs: seconds(60) });
+    sim.begin();
+    player.resources.require('energy').spend(100 - energy);
+    for (const aura of auras) sim.applyAura(player, aura, player.id);
+    return { sim, player, target };
+  };
+
+  it('refuses Hemorrhage while the pool is short of Ambush', () => {
+    const { sim, player, target } = probe(40, [CUTTHROAT]);
+    // 40 energy pays for Hemorrhage's 35 and not for Ambush's 60.
+    expect(conditionFor('hemorrhage')?.(sim, player, target)).toBe(false);
+  });
+
+  it('allows Hemorrhage again once the pool can pay for Ambush', () => {
+    const { sim, player, target } = probe(60, [CUTTHROAT]);
+    expect(conditionFor('hemorrhage')?.(sim, player, target)).toBe(true);
+  });
+
+  it('does not hold anything when no window is open', () => {
+    /*
+     * THE HALF THAT WOULD BE A REAL REGRESSION. Holding the filler whenever the
+     * pool is below 60 would starve the whole list rather than one window, and it
+     * would read as a plausible small loss rather than as a bug.
+     */
+    const { sim, player, target } = probe(40, []);
+    expect(conditionFor('hemorrhage')?.(sim, player, target)).toBe(true);
+    expect(conditionFor('backstab')?.(sim, player, target)).toBe(true);
+  });
+
+  it('holds Backstab too, which costs exactly what Ambush does', () => {
+    const { sim, player, target } = probe(59, [CUTTHROAT]);
+    expect(conditionFor('backstab')?.(sim, player, target)).toBe(false);
+  });
+
+  it('does not hold for a stealth window, which is never wasted', () => {
+    /*
+     * 2.64 STEALTH WINDOWS OPENED AND 2.64 SPENT, none expiring, because Vanish
+     * carries its own energy gate and never opens one it cannot use. A condition
+     * for a case that does not arise is still a decision somebody has to read.
+     */
+    const { sim, player, target } = probe(40, [STEALTH]);
+    expect(conditionFor('hemorrhage')?.(sim, player, target)).toBe(true);
+  });
+
+  it('refuses Vanish while Cutthroat is already up', () => {
+    /*
+     * THE OWNER'S INSTRUCTION, AND IT MEASURES EXACTLY NOTHING -- 493.0 either
+     * way, and zero occurrences in 300 fights before the guard existed. It is
+     * asserted because the reason it cannot happen is an ORDERING rather than a
+     * rule: Ambush is above Vanish, so it wins whenever it is affordable, and
+     * when it is not, Vanish's own energy gate refuses too because the two share
+     * a cost. A later edit could move either of those accidents.
+     */
+    const open = probe(100, [CUTTHROAT]);
+    expect(conditionFor('vanish')?.(open.sim, open.player, open.target)).toBe(false);
+
+    const clear = probe(100, []);
+    expect(conditionFor('vanish')?.(clear.sim, clear.player, clear.target)).toBe(true);
+  });
+});
+
 describe('the Rupture list carries the owner’s stealth cycle', () => {
   const ids = ROGUE_RUPTURE.map((entry) => entry.abilityId);
 

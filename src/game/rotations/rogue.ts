@@ -125,6 +125,48 @@ const abilityOnCooldown = (abilityId: string) =>
   (context: SimulationContext, actor: Combatant): boolean =>
     actor.abilities.has(abilityId) && !actor.abilities.isReady(abilityId, context.clock.now());
 
+/** "<buff> is active", on the Rogue. */
+const selfActive = (auraId: string) =>
+  (_context: SimulationContext, actor: Combatant): boolean => actor.auras.has(auraId);
+
+/** Inverts a condition, so a cheap entry can be held rather than duplicated. */
+const not =
+  (condition: (c: SimulationContext, a: Combatant, t?: Combatant) => boolean) =>
+  (context: SimulationContext, actor: Combatant, target?: Combatant): boolean =>
+    !condition(context, actor, target);
+
+/**
+ * "a Cutthroat window is open and the pool cannot pay for Ambush yet."
+ *
+ * ----------------------------------------------------------------------------
+ * USED NEGATED, TO HOLD A CHEAPER ENTRY SO THE POOL CAN REACH AMBUSH'S COST.
+ * This is the inverse of the floor rule: an unconditional entry is a floor under
+ * everything BELOW it, and a CHEAPER entry below an expensive one starves it
+ * from beneath. Ambush sits second in the Rupture list and could still not be
+ * cast, because Hemorrhage at 35 energy is below it and took the pool every time
+ * it passed 35.
+ *
+ * MEASURED, AND THE SHAPE OF THE WASTE IS WHY IT NEEDED MEASURING. Over 300
+ * fights there were 207 Cutthroat windows and only 30 ended in an Ambush. Mean
+ * energy at the moment the window OPENED was 0.2 -- because Cutthroat procs off
+ * BACKSTAB, which costs 60, so the proc always lands on an empty pool -- and the
+ * mean PEAK during the ten seconds that followed was 45.2. Only 30 of the 207
+ * windows ever reached 60 at all. The window was not expiring because ten
+ * seconds is short; it was expiring because 100 energy of regeneration was being
+ * spent by 156 Hemorrhages, 47 Backstabs, 78 Ruptures and 62 Slice and Dices
+ * before any of it could be banked.
+ *
+ * CUTTHROAT ONLY, AND NOT THE STEALTH WINDOW. A stealth window is already spent
+ * every single time -- 2.64 opened, 2.64 spent, none expired -- because Vanish
+ * carries its own energy gate and therefore never opens one it cannot use. A
+ * condition for a case that does not arise is still a decision somebody has to
+ * read.
+ * ----------------------------------------------------------------------------
+ */
+const poolingForAmbush = (_context: SimulationContext, actor: Combatant): boolean =>
+  actor.auras.has('cutthroat') &&
+  (actor.resources.get('energy')?.current ?? 0) < AMBUSH_ENERGY_COST;
+
 /** "energy >= N". */
 const atLeastEnergy = (minimum: number) =>
   (_context: SimulationContext, actor: Combatant): boolean =>
@@ -507,7 +549,28 @@ export const ROGUE_RUPTURE: readonly PriorityEntry[] = [
    * cost of being early is paid by the thing with the cooldown.
    * ------------------------------------------------------------------------
    */
-  { abilityId: 'vanish', condition: all(atMostPoints(3), atLeastEnergy(AMBUSH_ENERGY_COST)) },
+  {
+    abilityId: 'vanish',
+    /*
+     * AND IT REFUSES WHILE CUTTHROAT IS UP, which is the owner's instruction and
+     * measures as EXACTLY NOTHING -- 493.0 either way, and zero occurrences in
+     * 300 fights before it existed. It is here because the reasoning is sound
+     * and the guard is free: spending a five-minute cooldown to open a gate that
+     * is already open would waste it outright.
+     *
+     * THE REASON IT CANNOT HAPPEN TODAY IS AN ORDERING, NOT A RULE, and that is
+     * the case for writing it down. Ambush sits ABOVE Vanish, so whenever
+     * Cutthroat is up and Ambush is affordable, Ambush is simply the first
+     * castable entry -- and when it is not affordable, Vanish's own energy gate
+     * refuses too, because the two share a cost. Both halves of that accident
+     * are things a later edit could move.
+     */
+    condition: all(
+      atMostPoints(3),
+      atLeastEnergy(AMBUSH_ENERGY_COST),
+      not(selfActive('cutthroat')),
+    ),
+  },
   {
     abilityId: 'slice_and_dice',
     condition: all(selfAuraDown('slice_and_dice'), atLeastPoints(3)),
@@ -536,7 +599,15 @@ export const ROGUE_RUPTURE: readonly PriorityEntry[] = [
    * zero times, and a six-entry list was really a three-entry one. Gated on
    * its own debuff having a second left, it maintains and Backstab builds.
    */
-  { abilityId: 'hemorrhage', condition: targetAuraAtMost('hemorrhage', 1) },
+  /*
+   * AND IT HOLDS FOR A CUTTHROAT WINDOW. At 35 energy it is the cheapest thing
+   * in the list, which made it the reason Ambush could not be cast: 156 of them
+   * fired inside the 177 windows that never produced an Ambush.
+   */
+  {
+    abilityId: 'hemorrhage',
+    condition: all(targetAuraAtMost('hemorrhage', 1), not(poolingForAmbush)),
+  },
   /*
    * PREPARATION, MOVED UP OUT OF LAST PLACE AND GIVEN THE OWNER'S CONDITION.
    *
@@ -578,7 +649,17 @@ export const ROGUE_RUPTURE: readonly PriorityEntry[] = [
       atMostPoints(1),
     ),
   },
-  { abilityId: 'backstab' },
+  /*
+   * BACKSTAB HOLDS FOR THE WINDOW TOO, and it is the same 60 energy as Ambush --
+   * so without this the filler and the thing it is meant to make room for race
+   * for the same pool, and the filler is below everything else that can also
+   * spend it.
+   *
+   * ONLY THESE TWO HOLD, AND HOLDING MORE MEASURED WORSE. Gating Slice and Dice
+   * and Rupture the same way reads 490.8 against 493.0 -- they are maintenance,
+   * and dropping a Rupture to buy an Ambush gives back more than it takes.
+   */
+  { abilityId: 'backstab', condition: not(poolingForAmbush) },
 ];
 
 export const ROGUE_VENOM_ROTATION: Rotation = new PriorityRotation(
