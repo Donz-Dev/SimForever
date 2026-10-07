@@ -39,10 +39,15 @@ const withoutAura = (auraId: string) => (_context: SimulationContext, actor: Com
  * goes quiet through the band, and fires again from 20% -- which is exactly
  * when Early Demise's +30% critical strike chance starts applying.
  *
- * MEASURED AT -4.9 DPS, AND SHIPPED AS WRITTEN. The owner's instruction stands
- * -- a list of theirs outranks a measured decision of ours -- and the number is
- * the price of the choice rather than an argument against it. What follows is
- * why, because the reason is not the obvious one and the obvious one is wrong.
+ * MEASURED AT -4.9 DPS, PUT TO THE OWNER WITH THAT NUMBER, AND RULED: "leave
+ * the hold band". So the -4.9 is the price of a decision and not a finding
+ * waiting to be acted on -- the same resolution Hunter's Mark got at -10.1.
+ * **DO NOT DELETE THIS CONDITION ON THE STRENGTH OF THE ARITHMETIC BELOW.**
+ *
+ * What follows is why it costs rather than pays, because the reason is not the
+ * obvious one and the obvious one is wrong. It is kept because the day the
+ * arithmetic changes -- a longer fight, or a shorter cooldown -- the band starts
+ * buying something, and then it wants re-measuring rather than re-deriving.
  *
  * THE HOLD BUYS NOTHING, BECAUSE THE WINDOW IS SHORTER THAN THE COOLDOWN. At
  * this profile's 60-second fight the Early Demise window is 11.6 seconds and

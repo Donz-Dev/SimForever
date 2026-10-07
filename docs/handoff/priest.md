@@ -186,9 +186,18 @@ cast is the whole −4.9. The 2×2 confirms it from the other side: **Early Demi
 is worth +5.2 held and +4.9 unheld**, so the hold does not move the talent it
 exists for.
 
-**THE OWNER'S LIST OUTRANKS A MEASURED DECISION OF OURS, so the band stays and
-the number is the price of the choice** — the same resolution Hunter's Mark got
-at −10.1. Removing one word restores 4.9 whenever the owner wants it.
+**THE OWNER WAS SHOWN THE −4.9 AND RULED: "leave the hold band".** So this is a
+DECISION and not an outstanding item, which is the distinction this project
+keeps paying for — a settled choice written up as pending inflates the queue and
+hides the real work. The band stays, and the 4.9 is the price of it rather than
+an argument against it, the same resolution Hunter's Mark got at −10.1.
+
+**DO NOT RE-RAISE IT ON THE STRENGTH OF THE MEASUREMENT**, which is what the
+numbers above invite: they were put to the owner in full, including that Early
+Demise is worth the same either way, and the answer was to keep it. What WOULD
+reopen it is the arithmetic changing — a longer fight, or a shorter cooldown,
+either of which makes the window able to hold two casts. The test below fails if
+that happens.
 
 **AND THE FIRST RATIONALE WRITTEN FOR THE BAND WAS FALSE, which is the lesson
 worth more than the 4.9.** It said the band was "one cooldown wide", because 15%
@@ -316,10 +325,10 @@ that no amount of engine work reaches, counted as a live gap because no
 
 ## What "done" looks like from here
 
-1. **The hold band on Shadow Word: Death is worth 4.9 to the owner, one word.**
-   It is shipped as instructed and it buys nothing, because the Early Demise
-   window is shorter than the ability's cooldown and an ungated entry already
-   lands its one cast inside it. **The owner's call, with the number next to it.**
+1. ~~**The hold band on Shadow Word: Death is worth 4.9 to the owner, one
+   word.**~~ **ASKED AND ANSWERED: "leave the hold band".** Shipped, measured at
+   −4.9, and now a ruling rather than an item. See the finding above for what
+   would legitimately reopen it, which is the arithmetic and not the DPS.
 2. **A second Priest profile, if one exists.** Still the only class where every
    finding is uncorroborated by a sibling build. It would not reach the six
    `NOT_ATTACKED` talents — a second Priest DAMAGE build is still not attacked —

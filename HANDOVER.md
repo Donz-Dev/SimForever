@@ -791,14 +791,23 @@ behind itself and no figure looked odd. `tools/value_index_sweep.mjs` lists the
 other 47 sites and **found a second instance at once**: the Warlock's Aftermath,
 right only because at 5/5 its two candidate numbers coincide.
 
-**AND THE HOLD BAND THE OWNER PUT ON SHADOW WORD: DEATH MEASURES -4.9**, shipped
-as written. It buys nothing because the Early Demise window (11.6s) is shorter
-than the ability's cooldown (15s), so at most one cast can land in it and an
-ungated entry already lands that one: 1.00 a fight either way, against 3.53
-casts held and 4.00 unheld. **The rationale first written for the band was
-false** -- "one cooldown wide", from 15% of a hundred-second fight, when the
-fight is sixty -- **and a test had been written that asserted it and passed.**
-A rationale is a claim and wants measuring like any other.
+**AND THE HOLD BAND THE OWNER PUT ON SHADOW WORD: DEATH MEASURES -4.9**, which
+was put to the owner with that figure and **ruled: "leave the hold band".** So it
+is a DECISION rather than an outstanding item, the same resolution Hunter's Mark
+got at -10.1 -- and saying which it is matters, because a settled choice written
+up as pending inflates the queue and hides the real work.
+
+It buys nothing because the Early Demise window (11.6s) is shorter than the
+ability's cooldown (15s), so at most one cast can land in it and an ungated entry
+already lands that one: 1.00 a fight either way, against 3.53 casts held and 4.00
+unheld. **What would reopen it is the arithmetic, not the DPS** -- a longer fight
+or a shorter cooldown makes the window hold two casts, and a test fails if that
+happens.
+
+**THE RATIONALE FIRST WRITTEN FOR THE BAND WAS FALSE** -- "one cooldown wide",
+from 15% of a hundred-second fight, when the fight is sixty -- **and a test had
+been written that asserted it and passed**, because `bandFraction * seconds(100)`
+really is 15000. A rationale is a claim and wants measuring like any other.
 
 **THE DRUID DEEP DIVE MOVED THREE PROFILES AND THE OTHER TWENTY DID NOT MOVE BY
 A DECIMAL.** Cat **488.0 to 656.1, +168.1**, Bear **376.2 to 444.7, +68.5**,
