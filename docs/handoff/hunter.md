@@ -523,13 +523,25 @@ profile unless the style marks it `required`.
 owner's own worked example settles it — `× 0.85` would be 2.72, a 2% faster bow
 and a plausible wrong number.
 
-**AMMO IS A DPS, SO IT NEEDS A SPEED, AND WHICH SPEED IS THE WHOLE QUESTION.**
+**AMMO IS A DPS, SO IT NEEDS A SPEED, AND WHICH SPEED WAS THE WHOLE QUESTION.**
 16.5 × the **base** 3.2 = 52.8 into `baseDamage`, before attack power and before
-any ability's flat damage. The base reading lets the quiver multiply ammo too
-(about 19 effective DPS); the quiver-shortened reading would pin it at exactly
-16.5 forever. **The wiki formula in `rangedAttackPower.test.ts`'s own header has
-said so since it was written** — `AmmoDPS × WeaponSpeed + (RAP / 14 × WeaponSpeed
-+ Scope + AvgWeaponDmg)`, one symbol for both terms — and nobody had read it.
+any ability's flat damage.
+
+**RATIFIED, 2026-10-07.** Asked which of the two speeds they meant, the owner's
+answer was *"base speed is correct"*. It shipped as an interpretation and is a
+ruling now — the comment on the constant says so, and says **not** to "fix" it by
+reading the shortened timer.
+
+Three things agreed before the owner did, which is why it was worth asking
+rather than guessing: they wrote "base"; this codebase already uses "base speed"
+to mean the un-modified figure, since `powerCoefficient` is `baseSpeed / 14`;
+and **the wiki formula in `rangedAttackPower.test.ts`'s own header has said so
+since it was written** — `AmmoDPS × WeaponSpeed + (RAP / 14 × WeaponSpeed + Scope
++ AvgWeaponDmg)`, one symbol for both terms — and nobody had read it.
+
+**SO AMMO IS WORTH ABOUT 19 DPS AND NOT 16.5**, because the quiver and Rapid
+Fire multiply it. That is intended rather than tolerated; the rejected reading
+pins it at exactly 16.5 forever and looks tidier.
 
 **NEITHER TOUCHES `powerCoefficient`**, which is base speed over fourteen.
 Recomputing it from the shortened timer would quietly cut every Hunter's attack
@@ -727,6 +739,8 @@ All six items from the previous version are closed.
 ### What is left for this class
 
 - **`improved_tracking`'s interpretation**, above. One sentence from the owner.
+  **It is the only unratified reading left in this class** — ammo's base speed
+  was the other and the owner settled it on 2026-10-07.
 - **A percentage cooldown reduction**, for `survivalist_s_discipline`. No profile
   takes it, so it moves nothing — build it when a second talent wants it.
 - **Talent VALUES have never been cross-checked** for any class. The Hunter's

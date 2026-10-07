@@ -152,6 +152,16 @@ describe('which attack power a weapon scales with', () => {
     expect(bow.baseDamage).toBeCloseTo(itemAverage + 16.5 * 3.2, 6);
     expect(bow.baseDamage - itemAverage).toBeCloseTo(52.8, 6);
 
+    /*
+     * AND NOT THE QUIVER-SHORTENED SPEED, which is the rejected reading and the
+     * tidier-looking one: it would pin ammo at exactly 16.5 DPS forever and stop
+     * the quiver and Rapid Fire multiplying it. RATIFIED by the ruleset owner on
+     * 2026-10-07 -- "base speed is correct" -- so this is a ruling rather than
+     * an interpretation, and the assertion is written to FAIL the alternative
+     * rather than merely to pass the choice.
+     */
+    expect(bow.baseDamage - itemAverage).not.toBeCloseTo(16.5 * (3.2 / 1.15), 1);
+
     // And the coefficient is untouched: base speed over fourteen.
     expect(bow.powerCoefficient).toBeCloseTo(3.2 / 14, 10);
   });
