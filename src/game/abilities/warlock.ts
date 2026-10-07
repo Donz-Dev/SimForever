@@ -399,15 +399,25 @@ export const SEARING_PAIN: Ability = {
  * the fourth time in this project a reason written that way has expired
  * usefully.
  *
- * IT IS STILL IN NO LIST, AND THAT IS STILL THE OWNER'S CALL: "it's unimportant
- * for the rest of the simulator for now, there isn't a profile that uses it."
- * The arithmetic has not changed either -- six ticks at 14.3% is 0.858 over the
- * channel, which is Shadow Bolt's 0.857 delivered in twice the time -- and the
- * amplification is worth 10% of the SM/DS profile's periodic damage for six
- * seconds in every twelve it would occupy, against two Shadow Bolts in the
- * same six. THE MEASUREMENT IS THE ONLY THING THAT SETTLES IT, and this comment
- * deliberately does not guess: `WARLOCK_AFFLICTION` is one line away from
- * carrying it the day somebody runs the thirty batches.
+ * AND IT IS IN THE SM/DS LIST NOW. The owner paused it -- "it's unimportant for
+ * the rest of the simulator for now, there isn't a profile that uses it" -- and
+ * has since un-paused it, at the position and on the condition the list's own
+ * comment had been carrying all along: between Life Tap and Shadow Bolt, gated
+ * on all three bleeds having six seconds left.
+ *
+ * WORTH +5.6 DPS, AND IT RESHAPES THE PROFILE OUT OF ALL PROPORTION TO THAT.
+ * 435.9 to 441.5 over thirty batches of ten, and in exchange Shadow Bolt falls
+ * from 14.8 casts a fight to 5.6 and from 51.1% of the damage to 20.2%, while
+ * Wrack takes 30.3%. **A list can change completely and be worth almost
+ * nothing**, which this project has now measured three times -- and the uses
+ * column is what says the list changed at all.
+ *
+ * THE ARITHMETIC THAT SAID IT COULD NOT BE WORTH CASTING WAS NEARLY RIGHT. Six
+ * ticks at 14.3% is 0.858 over the channel against Shadow Bolt's 0.857 in half
+ * the time, so the direct damage is roughly a wash per second; what pays for it
+ * is the amplification on the three bleeds plus the 200 mana against Shadow
+ * Bolt's 380. The margin is thin and REAL, which is why it took the full
+ * method -- one batch of ten read +12.9, more than twice the truth.
  * ----------------------------------------------------------------------------
  */
 export const WRACK_TICK_DAMAGE = 36;

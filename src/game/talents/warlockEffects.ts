@@ -90,9 +90,11 @@ export const WARLOCK_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
      * this project declares -- which the old `unmodelled` reason SAID, in those
      * words, and had not been acted on. SM/DS spends three points here.
      *
-     * WORTH EXACTLY ZERO AND WORKING, because no list casts Wrack. A talent
-     * working and a talent mattering are different questions, and the test for
-     * this asserts the resolved multiplier rather than a DPS delta.
+     * IT WAS WORTH EXACTLY ZERO AND IS NOT ANY MORE: Wrack entered the SM/DS
+     * list when the owner un-paused it, so this +20% now lands on about 30% of
+     * the profile's damage. The test still asserts the resolved MULTIPLIER
+     * rather than a DPS delta, because that is what pins the talent -- the
+     * whole entry's worth is +5.6 and Improved Drains is a fraction of it.
      *
      * Drain Life and Drain Soul are in the spellbook capture and declared
      * nowhere; `WoWSimWorksheet.xlsx` has no coefficient row for either, so a
@@ -189,8 +191,11 @@ export const WARLOCK_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
      * another 12% and none is declared, so the bonus is UNDERSTATED rather than
      * absent -- which, at the cap, it currently is not.
      *
-     * Same as Improved Drains above, this reaches only Wrack and no list casts
-     * Wrack, so it is worth zero and working.
+     * Same as Improved Drains above, this reaches only Wrack -- and the SM/DS
+     * list casts Wrack now, so it is live rather than merely correct. The gate
+     * the owner put on that entry is what keeps the cap reachable: Wrack only
+     * fires while all three bleeds have six seconds left, which is exactly the
+     * state in which all three are counted here.
      */
     { kind: 'abilityBonus', abilityId: 'wrack', key: WRACK_SOUL_SIPHON_PER_EFFECT },
     { kind: 'abilityBonus', abilityId: 'wrack', key: WRACK_SOUL_SIPHON_CAP, valueIndex: 1 },

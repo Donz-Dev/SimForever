@@ -1,6 +1,7 @@
 import type { PriorityEntry, Rotation, SimulationContext, Combatant } from '../../engine';
 import { PriorityRotation } from '../../engine';
 import type { TalentAllocation } from '../talents/Talent';
+import { WRACK_CHANNEL_MS } from '../abilities/warlock';
 
 /**
  * Warlock priority lists.
@@ -50,6 +51,29 @@ const expired = (auraId: string) =>
   (context: SimulationContext, _actor: Combatant, target?: Combatant): boolean =>
     target !== undefined && target.auras.remainingMs(auraId, context.clock.now()) <= 0;
 
+/**
+ * "every one of these debuffs has at least this long left".
+ *
+ * ----------------------------------------------------------------------------
+ * WRACK IS WHY, AND THE WINDOW IS THE CHANNEL. A six-second channel is six
+ * seconds in which the rotation does nothing else -- the caster is locked for
+ * the whole of it -- so committing to one while a bleed is about to fall off
+ * trades three ticks of Corruption for six of Wrack and loses.
+ *
+ * SO THE GATE IS `WRACK_CHANNEL_MS` AND NOT A LITERAL SIX SECONDS. The owner's
+ * specification says "six seconds left", and six seconds is the channel: tying
+ * the gate to the constant means a channel that changes length takes its own
+ * gate with it, where a literal would quietly protect the wrong window.
+ *
+ * ALL of them, not any: the entry is asking "can I afford to stop acting", and
+ * one bleed expiring mid-channel is enough to make the answer no.
+ * ----------------------------------------------------------------------------
+ */
+const allLastingAtLeast = (auraIds: readonly string[], ms: number) =>
+  (context: SimulationContext, _actor: Combatant, target?: Combatant): boolean =>
+    target !== undefined &&
+    auraIds.every((auraId) => target.auras.remainingMs(auraId, context.clock.now()) >= ms);
+
 /** "current mana is below N% of maximum". */
 const manaBelowFraction = (fraction: number) =>
   (_context: SimulationContext, actor: Combatant): boolean => {
@@ -95,13 +119,31 @@ export const WARLOCK_AFFLICTION: readonly PriorityEntry[] = [
    */
   { abilityId: 'life_tap', condition: manaBelowFraction(0.15) },
   /*
-   * WRACK BELONGS HERE, between Life Tap and Shadow Bolt, gated on all three
-   * bleeds having six seconds left. It is DELIBERATELY ABSENT: the ruleset
-   * owner paused its implementation, and as modelled it could not be worth
-   * casting anyway -- a flat 216 over a six-second channel, with no
-   * coefficient because the sheet has no Wrack row, and its +10% to other
-   * Shadow damage-over-time effects unmodelled. See `WRACK`.
+   * WRACK, BETWEEN LIFE TAP AND SHADOW BOLT, GATED ON ALL THREE BLEEDS HAVING
+   * SIX SECONDS LEFT. The ruleset owner's own position and own condition, which
+   * this comment carried for the whole time the entry was absent.
+   *
+   * --------------------------------------------------------------------------
+   * IT WAS PAUSED AND IS BACK, and the two reasons it was paused have both
+   * expired. The comment here said "a flat 216 over a six-second channel, with
+   * no coefficient because the sheet has no Wrack row, and its +10% to other
+   * Shadow damage-over-time effects unmodelled" -- and the owner has since
+   * supplied the coefficient directly at 14.3% of spell power a tick, and the
+   * amplification is applied through `periodicDamageTakenBySchool`. Neither
+   * half is missing now.
+   *
+   * THE SIX-SECOND GATE IS WHAT MAKES IT CASTABLE AT ALL rather than a
+   * throughput loss. See `allLastingAtLeast`: the channel locks the caster, so
+   * the entry only fires when it can afford to stop acting.
+   * --------------------------------------------------------------------------
    */
+  {
+    abilityId: 'wrack',
+    condition: allLastingAtLeast(
+      ['bane_of_agony', 'corruption', 'siphon_life'],
+      WRACK_CHANNEL_MS,
+    ),
+  },
   { abilityId: 'shadow_bolt' },
 ];
 

@@ -144,8 +144,8 @@ stale one PR at a time.
 | Rupture | 497.6 | `ROGUE_RUPTURE` | 9 | 7 |
 | LW Ranged | 486.5 | `HUNTER_LONE_WOLF_RANGED` | 7 | 5 |
 | Prot Warr | 457.0 | `WARRIOR_SHIELD_DEFENSIVE` | 14 | 10 |
+| SM/DS | 441.5 | `WARLOCK_AFFLICTION` | 6 | 5 |
 | Ele Shaman | 440.2 | `SHAMAN_ELEMENTAL` | 4 | 2 |
-| SM/DS | 435.9 | `WARLOCK_AFFLICTION` | 5 | 4 |
 | Prot Pally | 304.9 | `PALADIN_PROTECTION` | 9 | 6 |
 
 Plus `PET_PRIORITY` (2 entries), which runs on the BM Hunter's pet, and two

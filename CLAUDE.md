@@ -2015,6 +2015,24 @@ shape should fail loudly, not render a tree with a broken arrow.
   says it cannot fire, because nothing attacks the player" and enforced the stale
   caveat instead of catching it.
 - **Assert the MECHANISM, not a DPS delta.** A correct talent can be worth zero.
+- **A `createPlayer` COMBATANT CARRIES A ROTATION, SO A TEST THAT RUNS THE CLOCK
+  IS TESTING THE PRIORITY LIST TOO.** A Soul Siphon test cast Wrack once,
+  advanced ten seconds and summed every `wrack` damage event -- correct only
+  while Wrack was in no list, and nothing said so. The day it entered the SM/DS
+  list the ROTATION cast it a second time inside the window, and
+  **ASYMMETRICALLY**: the second cast is gated on three bleeds being up, so the
+  "three bleeds" arm got ten ticks and the "no bleeds" arm six. The ratio read
+  2.27 against an expected 1.36 and neither number was about the talent. Strip
+  the rotation (`soloPlayerFor`) or use `makeAttacker`, which has none -- and
+  note that this test PASSED at main and failed only with the list change, which
+  is the signature of a latent dependency rather than a broken mechanism.
+- **A CAST COUNT IS A ROTATION OUTCOME, however much it looks like a mechanism.**
+  SM/DS's Life Tap assertion wanted more than three casts a fight, was loosened
+  to "more than one" when the preset raid buffs gained Blessing of Wisdom and
+  Mana Spring Totem, and hit ZERO when Wrack entered the list and the profile
+  stopped running dry. Twice invalidated by changes that had nothing to do with
+  Life Tap. Assert the conversion -- health for mana, one for one -- which
+  neither a raid buff nor a list can move.
 - **A TEST THAT PINS CONSTANTS PINS NOTHING, and the way you find out is a rework
   passing untouched.** Windfury Weapon's tests asserted 20%, two attacks, 333
   attack power, a 3-second cooldown and that the reaction was registered. Every

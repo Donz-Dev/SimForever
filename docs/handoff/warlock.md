@@ -79,7 +79,7 @@ than code.
 | Profile | Talents | DPS | Was | List |
 | --- | --- | --- | --- | --- |
 | Firelock | 5/11/35 | **468.4** | 535.5, **−67.1 REAL** | `WARLOCK_DESTRUCTION` |
-| SM/DS | 40/11/0 | **363.9** | 349.1, **+14.8 REAL** | `WARLOCK_AFFLICTION` |
+| SM/DS | 40/11/0 | **441.5** | 435.9, **+5.6 REAL** (Wrack entering the list) | `WARLOCK_AFFLICTION` |
 
 **FIRELOCK IS NO LONGER THE THIRD-HIGHEST PROFILE IN THE PROJECT.** It sits
 between Prot Warr's 454.6 and Cat's 488.0 now. The drop is a CORRECTION and not a
@@ -106,7 +106,7 @@ One batch of ten, so read the shape and not the decimals:
 
 | Profile | Top sources |
 | --- | --- |
-| SM/DS | **Shadow Bolt 50.0%**, Corruption 23.0%, Bane of Agony 19.0%, Siphon Life 7.9% |
+| SM/DS | **Wrack 30.3%**, Corruption 23.0%, Shadow Bolt 20.2%, Bane of Agony 18.6%, Siphon Life 7.9% |
 | Firelock | Incinerate 38.5%, Immolate 25.4%, Conflagrate 17.8%, Corruption 10.3%, Shadowburn 8.0% |
 
 **CORRUPTION FELL FROM 13.5% TO 10.3% OF FIRELOCK**, which is the containment
@@ -139,7 +139,7 @@ absorbed by the scope rulings.
 | `soul_siphon` | the same, through `abilityBonus` read in Wrack's `onCast` | zero |
 
 **TWO OF THE THREE ARE WORTH EXACTLY ZERO AND ARE WORKING**, because the only
-ability they reach is Wrack and no list casts Wrack. Their tests assert the
+ability they reach is Wrack, which was in no list then. Their tests assert the
 resolved multiplier and the per-cast count, not a DPS delta. **A talent working
 and a talent mattering are different questions.**
 
@@ -176,25 +176,47 @@ the census: it counts whether a talent is EXPRESSED and not whether it is right.
 
 ## Never-fired entries
 
-**None.** Both Warlock lists have every entry firing, confirmed with `USES=1`:
+**ONE, AND WRACK CAUSED IT: SM/DS's LIFE TAP.** Confirmed with `USES=1`:
 
 | SM/DS | uses | | Firelock | uses |
 | --- | --- | --- | --- | --- |
 | bane_of_agony | 3.0 | | immolate | 4.5 |
 | corruption | 4.0 | | conflagrate | 6.0 |
 | siphon_life | 2.0 | | shadowburn | 4.0 |
-| life_tap | 3.7 | | corruption | 3.0 |
-| shadow_bolt | 14.5 | | life_tap | 5.0 |
-| | | | incinerate | 13.3 |
+| **life_tap** | **0.0** | | corruption | 3.0 |
+| wrack | 5.7 | | life_tap | 5.0 |
+| shadow_bolt | 5.6 | | incinerate | 13.3 |
+
+**WRACK IS 200 MANA AGAINST SHADOW BOLT'S 380, AND IT DISPLACED NINE SHADOW BOLT
+CASTS.** So the profile now gains 8,236 mana and spends 6,034, and
+`manaBelowFraction(0.15)` is never true. That is the fifth cause of a never-fired
+entry — **the condition reads a state the fight no longer enters** — and it is not
+a broken declaration.
+
+**THE ENTRY STAYS, AND IT COSTS NOTHING TO LEAVE IT.** It is the ruleset owner's,
+and the owner's list outranks a measured decision of ours. Removing it measures
+**441.6 against 441.5** — identical to the decimal, because a condition that is
+never true costs no global cooldown. So this is recorded rather than fixed, and a
+profile that spent more mana would reach it immediately.
+
+**ITS TEST HAD TO CHANGE, AND HAD BEEN WRONG ONCE BEFORE FOR THE SAME REASON.**
+`warlockAbilities.test.ts` asserted a Life Tap CAST COUNT; it wanted "more than
+three", was loosened to "more than one" when the preset raid buffs gained
+Blessing of Wisdom and Mana Spring Totem, and is now zero. A cast count is a
+ROTATION outcome and this one has been invalidated by a raid-buff change and a
+list change in turn, so the subject is the MECHANISM now — health for mana, one
+for one — which neither can move.
 
 ## In the book, in no list, never cast
 
-`immolate`, `searing_pain`, `wrack` for SM/DS; `shadow_bolt`, `bane_of_agony`,
-`searing_pain` for Firelock — **mostly the two lists dividing the same book, which
-is correct.**
+`immolate`, `searing_pain` for SM/DS; `shadow_bolt`, `bane_of_agony`,
+`searing_pain` for Firelock — **the two lists dividing the same book, which is
+correct.** Wrack has left this list.
 
-**WRACK IS COMPLETE NOW AND STILL IN NO LIST, AND THAT IS THE OWNER'S CALL.** Both
-halves are built:
+**WRACK IS IN THE SM/DS LIST, AT THE OWNER'S POSITION AND ON THE OWNER'S
+CONDITION:** between Life Tap and Shadow Bolt, gated on all three bleeds having
+six seconds left. The list's own comment had carried that specification for the
+whole time the entry was absent. Both halves of the ability were already built:
 
 - **14.3% of spell power per tick**, six ticks one second apart, supplied by the
   owner directly because `WoWSimWorksheet.xlsx` has no Wrack row — **the only row
@@ -212,13 +234,27 @@ damage-over-time tick does. So the debuff cannot amplify the ability that applie
 it, and the test asserts exactly that: a Corruption tick inside the window is 10%
 larger and a Shadow Bolt cast inside it is unchanged.
 
-**WHAT IT IS WORTH IS NOW GENUINELY OPEN.** Arithmetic used to settle it: six
-ticks at 14.3% is 0.858, which is Shadow Bolt's 0.857 in twice the time. Against
-that now sits 10% of the profile's periodic damage — half of SM/DS is Shadow Bolt
-and the other half is periodic — for the six seconds the channel occupies.
-**Thirty batches of ten is what answers it, and one line in `WARLOCK_AFFLICTION`
-runs the test.** The owner's words stand: *"it's unimportant for the rest of the
-simulator for now, there isn't a profile that uses it."*
+**WHAT IT IS WORTH IS ANSWERED: +5.6 DPS, REAL, AND IT RESHAPES THE PROFILE OUT
+OF ALL PROPORTION TO THAT.** 435.9 to 441.5 over thirty batches of ten, and in
+exchange Shadow Bolt falls from 14.8 casts a fight to 5.6 and from 51.1% of the
+damage to 20.2%, while Wrack takes 30.3%. **A list can change completely and be
+worth almost nothing** — the third time this project has measured that, and the
+uses column is the only thing that says the list changed at all.
+
+**THE ARITHMETIC THAT SAID IT COULD NOT BE WORTH CASTING WAS NEARLY RIGHT**, which
+is the interesting part. Six ticks at 14.3% is 0.858 against Shadow Bolt's 0.857
+in half the time, so per second the direct damage is roughly a wash; what pays for
+it is the amplification on the three bleeds plus the 180 mana saved per cast. The
+margin is thin and REAL.
+
+**AND ONE BATCH OF TEN READ +12.9, MORE THAN TWICE THE TRUTH.** The full method is
+what separated a 1.3% gain from a 3% one here.
+
+**THE SIX-SECOND GATE IS WHAT MAKES IT CASTABLE AT ALL.** A channel locks the
+caster for its whole duration, so committing to one while a bleed is about to drop
+trades that bleed's remaining ticks for Wrack's. `allLastingAtLeast` reads
+`WRACK_CHANNEL_MS` rather than a literal six seconds, so a channel that changes
+length takes its own gate with it.
 
 ---
 
@@ -271,15 +307,14 @@ simulator for now, there isn't a profile that uses it."*
 
 ## What "done" looks like
 
-Four of the six items this brief opened with are done, and two of the remaining
+Five of the six items this brief opened with are done, and two of the remaining
 four are questions rather than code.
 
 1. **Bane of Agony's ramp asked for.** 19% of SM/DS's damage ticks flat on an
    interpretation.
-2. **Wrack measured with its amplification live**, which is now a real question
-   rather than arithmetic, and one line away. **The owner has said it is out, so
-   this is a measurement to report and not a change to make** — the owner's list
-   outranks a measured decision of ours, and the measurement stays either way.
+2. **SM/DS's Life Tap entry is unreachable** and the owner may want the 15%
+   threshold re-tuned, or may not — it costs nothing to leave, and a profile that
+   spent more mana would reach it. Recorded, not fixed.
 3. **`amplify_curse`'s one-shot damage modifier** — cheapest of the code items,
    since no profile takes it and it therefore moves no baseline. Worth building
    alongside the one-shot CRIT modifier two other classes want.
@@ -297,4 +332,11 @@ Rogue side is +2.6 to +3.2 across its three profiles — inside every interval.
 `periodicDamageTakenBySchool`, and Wrack's own reason had named the field.
 
 ~~`improved_drains` and `soul_siphon` reasons re-read.~~ Done. Both were expired
-and both said so in their own words.
+and both said so in their own words. **And both are now LIVE rather than merely
+correct**, because the only ability they reach is Wrack and Wrack is in the list —
+without one assertion in their tests changing, which is what asserting the
+mechanism instead of a DPS delta buys.
+
+~~Wrack measured with its amplification live.~~ Done, and the owner has put it in
+the list: **+5.6 REAL**, with Shadow Bolt dropping from 51.1% of the profile to
+20.2%.

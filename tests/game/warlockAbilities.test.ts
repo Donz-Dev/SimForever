@@ -14,6 +14,7 @@ import {
   CONFLAGRATE_KEEPS_IMMOLATE,
   INCINERATE_DAMAGE,
   INCINERATE_IMMOLATE_BONUS,
+  LIFE_TAP,
   LIFE_TAP_AMOUNT,
   SEARING_PAIN_DAMAGE,
   SHADOWBURN,
@@ -22,12 +23,16 @@ import {
   SHADOWBURN_REFUNDS_SHARD,
   SHADOW_BOLT_DAMAGE,
   WRACK,
+  WRACK_CHANNEL_MS,
   WRACK_TICKS,
   WRACK_TICK_DAMAGE,
 } from '../../src/game/abilities/warlock';
 import {
+  BANE_OF_AGONY,
   BANE_OF_AGONY_TOTAL,
+  CORRUPTION,
   CORRUPTION_TOTAL,
+  SIPHON_LIFE,
   DEMONIC_SACRIFICE_DAMAGE,
   WRACK_AMPLIFICATION,
   WRACK_DEBUFF_DURATION_MS,
@@ -306,24 +311,55 @@ describe('the two fights', () => {
     expect(immolate?.uptime ?? 0).toBeGreaterThan(0.8);
   });
 
-  it('taps its own life for mana, which is free for a profile nothing attacks', () => {
+  it('taps its own life for mana, and the SM/DS entry no longer reaches it', () => {
     /*
      * ------------------------------------------------------------------------
-     * IT TAPS LESS THAN IT USED TO, AND THE RAID IS WHY. This asserted more than
-     * three taps a fight and the figure fell to about 2.6 when the preset raid
-     * buffs gained **Blessing of Wisdom and Mana Spring Totem** -- 40 mana per 5
-     * seconds and 10 per 2. A Warlock given mana by the raid spends less of its
-     * own health buying it, which is the mechanic working rather than failing.
+     * THIS ASSERTED A CAST COUNT TWICE AND HAS NOW BEEN WRONG TWICE. It wanted
+     * more than three taps a fight, fell to about 2.6 when the preset raid
+     * buffs gained Blessing of Wisdom and Mana Spring Totem, was loosened to
+     * "more than one", and is now **ZERO** -- because Wrack entered the list
+     * above it.
      *
-     * SO THE THRESHOLD IS LOOSENED AND THE SUBJECT IS KEPT. What matters is that
-     * the tap FIRES at all -- it is the only thing standing between this profile
-     * and running dry -- not how many times, which is a function of whoever
-     * turned up to the raid.
+     * WHY: Wrack is 200 mana against Shadow Bolt's 380, and it displaced nine
+     * Shadow Bolt casts a fight. Measured, this profile now GAINS 8,236 mana
+     * and SPENDS 6,034, so `manaBelowFraction(0.15)` is never true and the
+     * entry is unreachable. That is the entry's condition reading a state the
+     * fight no longer enters -- a documented cause of a never-fired entry, and
+     * not a broken declaration.
+     *
+     * SO THE SUBJECT CHANGES TO THE MECHANISM, which is what should have been
+     * asserted all along: a cast count is a ROTATION outcome and this one has
+     * now been invalidated by a raid-buff change and a list change in turn. The
+     * mechanism is Life Tap's alone and does not move when either does.
+     *
+     * THE ENTRY STAYS IN THE LIST. It is the ruleset owner's, and the owner's
+     * list outranks a measured decision of ours -- so the honest state is a
+     * live entry that this encounter cannot reach, recorded rather than
+     * removed. A profile that spent more mana would reach it immediately.
      * ------------------------------------------------------------------------
      */
-    const batch = batchOf('warlock_smds', 30, 5);
-    expect(batch.abilities.find((a) => a.abilityName === 'Life Tap')?.uses ?? 0)
-      .toBeGreaterThan(1);
+    const actor = makeAttacker({
+      autoAttack: 'none',
+      abilities: [LIFE_TAP],
+      maxHealth: 10_000,
+      resources: [{ type: 'mana', maximum: 10_000 }],
+    });
+    const target = makeTarget();
+    const simulation = buildSimulation([actor, target], { durationMs: seconds(30) });
+
+    // Drain the pool, or its own `canCast` refuses a tap into a full bar.
+    actor.resources.get('mana')!.spend(9_000);
+    const healthBefore = actor.health.current;
+    const manaBefore = actor.resources.get('mana')!.current;
+
+    castAbility(simulation, actor, actor.abilities.get('life_tap')!, target);
+
+    // Health for mana, one for one, at the figure foreverchanges.pro states.
+    expect(healthBefore - actor.health.current).toBe(LIFE_TAP_AMOUNT);
+    expect(actor.resources.get('mana')!.current - manaBefore).toBe(LIFE_TAP_AMOUNT);
+
+    // And it is still in the owner's list, unreached rather than removed.
+    expect(WARLOCK_AFFLICTION.map((e) => e.abilityId)).toContain('life_tap');
   });
 });
 
@@ -409,21 +445,72 @@ describe('Wrack, scaling now, and still not worth casting', () => {
     expect(WRACK.unmodelled).toBeUndefined();
   });
 
-  it('is in no list, which the owner asked for outright', () => {
+  it('is in the SM/DS list, between Life Tap and Shadow Bolt', () => {
     /*
+     * ------------------------------------------------------------------------
+     * THE OWNER'S OWN POSITION, AND THIS TEST USED TO ASSERT THE OPPOSITE.
      * "It's unimportant for the rest of the simulator for now, there isn't a
-     * profile that uses it." BOTH HALVES ARE BUILT NOW and it is still out,
-     * because that is the owner's instruction and not a measurement of ours --
-     * and this project has a documented rule that the owner's list outranks a
-     * measured decision of ours.
+     * profile that uses it" was the instruction, and the owner has withdrawn
+     * it -- so this is the documented case of a test that PINS A ROTATION
+     * DECISION giving way when the decision changes owner. The figure the old
+     * test carried was not a reason to keep it out; it was an open question,
+     * and it is answered now.
      *
-     * ONE LINE PUTS IT IN, and what it is worth is now genuinely an open
-     * question rather than arithmetic: six ticks at 14.3% is Shadow Bolt's
-     * 0.857 in twice the time, and against that sits 10% of the profile's
-     * periodic damage for the six seconds the channel occupies. Thirty batches
-     * of ten is what answers it.
+     * THE POSITION IS ASSERTED AND NOT JUST THE PRESENCE, because the position
+     * is the half the owner specified and the half that matters: above Shadow
+     * Bolt it displaces the filler, and below it would never be reached.
+     * ------------------------------------------------------------------------
      */
-    expect(WARLOCK_AFFLICTION.map((entry) => entry.abilityId)).not.toContain('wrack');
+    const ids = WARLOCK_AFFLICTION.map((entry) => entry.abilityId);
+    expect(ids).toContain('wrack');
+    expect(ids.indexOf('wrack')).toBe(ids.indexOf('life_tap') + 1);
+    expect(ids.indexOf('wrack')).toBe(ids.indexOf('shadow_bolt') - 1);
+  });
+
+  it('is gated on all three bleeds outlasting the channel', () => {
+    /*
+     * ------------------------------------------------------------------------
+     * THE OWNER'S CONDITION -- "all three bleeds having six seconds left" --
+     * and six seconds is exactly the channel, which is why the gate reads
+     * `WRACK_CHANNEL_MS` rather than a literal.
+     *
+     * WHY IT MATTERS: a channel LOCKS THE CASTER for its whole duration, so
+     * committing to one while Corruption is about to drop trades that bleed's
+     * remaining ticks for Wrack's. The entry is asking "can I afford to stop
+     * acting for six seconds", and ALL three have to answer yes.
+     *
+     * THE NEW CONDITION PRIMITIVE IS THE THING MOST LIKELY TO BE SILENTLY
+     * WRONG -- a window that never opens fires zero times and errors nothing,
+     * which has happened in this project before -- so each of the three bleeds
+     * is dropped below the line on its own.
+     * ------------------------------------------------------------------------
+     */
+    const entry = WARLOCK_AFFLICTION.find((e) => e.abilityId === 'wrack')!;
+    const bleeds = [CORRUPTION, BANE_OF_AGONY, SIPHON_LIFE];
+
+    const canCast = (shortOne?: string): boolean => {
+      const caster = makeAttacker({ autoAttack: 'none' });
+      const target = makeTarget({ maxHealth: 100_000_000 });
+      const simulation = buildSimulation([caster, target], { durationMs: seconds(60) });
+      for (const aura of bleeds) simulation.applyAura(target, aura, caster.id);
+      /*
+       * Advance until the named bleed has LESS than the channel left, which is
+       * the only way to make one short without inventing an aura -- and it is
+       * what the fight actually does to them.
+       */
+      if (shortOne) {
+        const def = bleeds.find((a) => a.id === shortOne)!;
+        simulation.advanceTo(def.durationMs - WRACK_CHANNEL_MS + 1);
+      }
+      return entry.condition!(simulation, caster, target);
+    };
+
+    // All three fresh, so all three outlast the channel.
+    expect(canCast()).toBe(true);
+    // Each one short on its own is enough to refuse it.
+    for (const aura of bleeds) {
+      expect(canCast(aura.id), aura.id).toBe(false);
+    }
   });
 
   it('is granted by the capstone, so only SM/DS carries one', () => {
