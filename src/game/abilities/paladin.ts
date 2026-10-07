@@ -5,9 +5,9 @@ import { inExecutePhase } from '../combat/executePhase';
 import {
   CONSECRATED_GROUND_FLAG,
   DIVINE_FAVOR,
+  IMPROVED_RIGHTEOUS_FURY_FLAG,
   HOLY_SHIELD,
   JUDGEMENT_OF_THE_CRUSADER,
-  RIGHTEOUS_FURY,
   RIGHTEOUS_FURY_THREAT_PERCENT,
   SEAL_AURA_IDS,
   SEAL_OF_COMMAND,
@@ -20,6 +20,7 @@ import {
   activeSeal,
   consecrationGround,
   echoAura,
+  righteousFury,
 } from '../auras/paladin';
 import {
   HAMMER_OF_WRATH_SP_COEFFICIENT,
@@ -484,11 +485,52 @@ export const HOLY_SHIELD_ABILITY: Ability = {
 export const HAMMER_OF_WRATH_DAMAGE = midpoint(474, 522);
 export const HAMMER_OF_WRATH_COEFFICIENT = HAMMER_OF_WRATH_SP_COEFFICIENT;
 
+/*
+ * ============================================================================
+ * AND AT 2/2 INSTRUMENT OF LAW MAKES IT AN INSTANT RANGED ATTACK.
+ *
+ * "Reduces the cast time of your Hammer of Wrath by 1 sec" at rank 2, against a
+ * one-second cast -- so the cast is gone entirely, and the ruleset owner has
+ * ruled what the ability then IS: an instant RANGED attack that scales with
+ * SPELL POWER. Three separate facts, and each is wrong in a different way if
+ * guessed:
+ *
+ *   INSTANT        no cast time AND therefore no swing timer reset. A cast
+ *                  interrupts the swing in progress, which on a melee Paladin
+ *                  is a real cost -- `castTimeMs: 0` removes both, because
+ *                  `resetSwingTimers` is only reached by a cast with a length.
+ *   RANGED TABLE   `ranged-special`, so it rolls against the ranged table:
+ *                  no dodge, no parry, no glance, and a RANGED crit, which is
+ *                  2x rather than a spell's 1.5x. It is no longer resisted the
+ *                  way a spell is either.
+ *   SPELL POWER    unchanged, and the thing most likely to be got wrong by
+ *                  moving it to a ranged table. The school stays `holy`, and
+ *                  `scaleByPower` picks its pool from the SCHOOL rather than
+ *                  from the table -- so a non-physical school reads spell power
+ *                  whatever table it rolls on. Stated in the owner's words
+ *                  because the plausible reading of "ranged attack" is ranged
+ *                  ATTACK POWER, and that is exactly what it is not.
+ *
+ * TWO ABILITIES OR ONE? One, and the talent moves it with `abilityCastTime` --
+ * its own wording, "reduces the cast time by 1 sec", against a one-second cast.
+ * **The table is then DERIVED from the cast time rather than declared beside
+ * it**, so there is one fact on disk instead of two that can disagree: rank 1
+ * takes half a second off and leaves a cast, rank 2 takes the whole second and
+ * the ability becomes the ranged instant. A flag would have had to be kept in
+ * step with the number by hand.
+ *
+ * THE RETRIBUTION LIST ASKS FOR THIS SPECIFICALLY. Its entry is gated on the
+ * talent, because a Hammer of Wrath with a one-second cast is a different
+ * ability with a different price and the owner wants the instant one.
+ * ============================================================================
+ */
+export const HAMMER_OF_WRATH_CAST_MS = seconds(1);
+
 export const HAMMER_OF_WRATH: Ability = {
   id: 'hammer_of_wrath',
   name: 'Hammer of Wrath',
   cost: { resource: 'mana', amount: 425 },
-  castTimeMs: seconds(1),
+  castTimeMs: HAMMER_OF_WRATH_CAST_MS,
   cooldownMs: seconds(6),
   attackTable: 'spell',
   canCast: ({ simulation }) => inExecutePhase(simulation),
@@ -499,13 +541,34 @@ export const HAMMER_OF_WRATH: Ability = {
       target,
       abilityId: ability.id,
       abilityName: ability.name,
+      /*
+       * HOLY, WHICHEVER TABLE IT ROLLS ON, and that is what keeps it on SPELL
+       * power: `scaleByPower` picks its pool from the school and not from the
+       * table. A ranged table does not make an ability read ranged attack power.
+       */
       school: HOLY,
       baseAmount: HAMMER_OF_WRATH_DAMAGE,
       powerCoefficient: HAMMER_OF_WRATH_COEFFICIENT,
-      attackTable: ability.attackTable,
+      attackTable: hammerOfWrathTable(ability),
     });
   },
 };
+
+/**
+ * Whether this character's copy has had its cast removed entirely.
+ *
+ * Read off the ability rather than off the talent, so it is per character by
+ * construction -- `applyTalentChanges` hands each build its own copy and has
+ * already subtracted the reduction. Rank 1 leaves half a second and is NOT this.
+ */
+export function isInstantHammerOfWrath(ability: Ability): boolean {
+  return (ability.castTimeMs ?? 0) <= 0;
+}
+
+/** `ranged-special` once Instrument of Law has made it instant, else `spell`. */
+export function hammerOfWrathTable(ability: Ability): 'spell' | 'ranged-special' {
+  return isInstantHammerOfWrath(ability) ? 'ranged-special' : 'spell';
+}
 
 // ---------------------------------------------------------------------------
 // Protection
@@ -542,14 +605,25 @@ export const RIGHTEOUS_FURY_ABILITY: Ability = {
   cost: { resource: 'mana', amount: shareOfBase(0.3) },
   requiresTarget: false,
   canCast: ({ caster }) => !caster.auras.has('righteous_fury'),
-  onCast: ({ simulation, caster }) => {
-    simulation.applyAura(caster, RIGHTEOUS_FURY, caster.id);
+  onCast: ({ simulation, caster, ability }) => {
+    /*
+     * IMPROVED RIGHTEOUS FURY'S PERCENTAGE ARRIVES ON THE ABILITY, so reading it
+     * here is per character by construction and a Paladin without the talent
+     * gets the plain buff. See `righteousFury`.
+     */
+    simulation.applyAura(
+      caster,
+      righteousFury(ability.bonuses?.[IMPROVED_RIGHTEOUS_FURY_FLAG] ?? 0),
+      caster.id,
+    );
   },
   unmodelled:
-    `Its whole effect is threat -- +${RIGHTEOUS_FURY_THREAT_PERCENT}% from Holy ` +
+    `Its OWN effect is threat -- +${RIGHTEOUS_FURY_THREAT_PERCENT}% from Holy ` +
     'attacks -- and threat is not tracked here at all, by a permanent ruling. ' +
     'It is cast because a Protection Paladin really does spend the mana and ' +
-    'the global cooldown on it, so the profile pays what it pays.',
+    'the global cooldown on it, so the profile pays what it pays. **What it ' +
+    'switches ON is not inert**: Improved Righteous Fury and Iron Creed both ' +
+    'read "while Righteous Fury is active" and both apply.',
 };
 
 /**

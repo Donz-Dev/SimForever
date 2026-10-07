@@ -27,6 +27,7 @@ npx vite-node tools/ability_audit.ts             # is every ability connected at
 npx vite-node tools/class_audit.ts warrior       # one class's gaps, lists and sources
 npx vite-node tools/coefficient_probe.ts         # does every ability's damage scale
 PROFILE=pally_ret npx vite-node tools/probe_resources.ts   # where one pool went
+npx vite-node tools/probe_block.ts               # a tank's block chain, link by link
 npx vite-node tools/druid_attribution.ts         # what one talent is worth, with its CASCADE named
 ```
 
@@ -1463,7 +1464,15 @@ no per-point argument either way and what decides it is uptime.
   `talentNumber` and `continue`s when it is undefined, so a single-rank talent
   whose values file says `null` produces nothing and reads as unmodelled without
   having said so. **A talent whose effect does nothing is usually this**, not the
-  effect table.
+  effect table. **IT HAS NOW HAPPENED THREE TIMES, ALL ON THE PALADIN** — Holy
+  Shield's damage reaction, Divine Favor's cast reaction and Sacred Arbiter's
+  +10% to Holy Strike, the last of which the ruleset owner found by reading a
+  damage table. **A SINGLE-RANK TALENT IS THE WHOLE RISK GROUP**, because that is
+  the only way an entry comes back `null`: no `{0}` for the importer to match.
+  Check every one of a class's single-rank talents against its effects before
+  calling the class done. A proc declares `valueless: true`; anything that
+  genuinely needs the number gets it hand-filled in the values file with a
+  `note`, which is the documented exception.
 - **AND FOR A PROC IT IS WORSE THAN UNREPORTED, BECAUSE THE CENSUS READS THE
   TABLE.** Holy Shield is single-rank, so its values entry is `null`, so its
   `reaction` effect was discarded — while the talent granted its ability and
@@ -1575,6 +1584,17 @@ Plus the permanent rulings under **Scope**.
   than a fight, so no profile could have shown it. **When a partly-modelled
   reason names the half that works, check that half exists**; the census counts
   such a talent as a gap either way, which is what hides it.
+- **A REASON WITH TWO CLAUSES EXPIRES WHEN EITHER ONE DOES, AND IT KEEPS READING
+  AS TRUE BECAUSE THE OTHER STILL IS.** Three Paladin talents carried the shape
+  at once: "threat is out of scope, AND no profile casts Righteous Fury", "threat,
+  AND its damage half needs Righteous Fury which no profile casts", "the Hammer of
+  Wrath cast time, which is never usable here, AND threat". The threat half is
+  permanent and correct in all three; the second half had expired in all three,
+  because the owner's Protection list casts Righteous Fury at the pull and the
+  owner's Retribution list casts Hammer of Wrath. **A reader checking the reason
+  reads the true clause and stops.** Worth 6% and 10% damage taken on the tank and
+  a never-fired entry on the fifth-highest profile. **Split a compound reason, or
+  put the expiring clause FIRST.**
 - **An `unmodelled` reason is a claim about the engine ON THE DAY IT WAS WRITTEN,
   and it expires.** Clearing a blocker is not finished until every reason naming
   it has been re-read — missed at least four times, and twice a talent was fully

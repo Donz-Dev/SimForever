@@ -1,6 +1,6 @@
 import type { CastReaction } from '../../engine';
 import { resolveCast } from '../../engine';
-import { activeSeal } from '../auras/paladin';
+import { activeSeal, ironCreedAura } from '../auras/paladin';
 
 /**
  * Paladin procs that fire on a CAST rather than on a hit.
@@ -89,8 +89,42 @@ export const divineFavorSpent = (): CastReaction => ({
   },
 });
 
+/**
+ * Iron Creed: "While Righteous Fury is active, Holy Strike also reduces your
+ * damage taken by 10% for 6 sec" at 5/5.
+ *
+ * ----------------------------------------------------------------------------
+ * A RIDER ON AN ABILITY THE BUILD ALREADY CASTS, which is why it is a cast
+ * reaction and not a button. There is no Iron Creed to press.
+ *
+ * ITS REASON WAS THREAT PLUS "needs Righteous Fury, which no profile casts" --
+ * two clauses, and only the first was still true. The Protection list casts
+ * Righteous Fury at the pull on the owner's own ruling, so the gate is open for
+ * the whole fight and the window was simply never opened. **A reason with two
+ * clauses expires when EITHER one does**, and this one kept reading as true
+ * because its threat half still did.
+ *
+ * SIX SECONDS EVERY TEN, because Holy Strike is on a ten-second cooldown that
+ * Improved Holy Strike takes to eight. So this is a window rather than a buff
+ * the tank keeps up, and the uptime is what it is worth.
+ *
+ * THE GATE IS CHECKED AT CAST, which is what "while Righteous Fury is active"
+ * says. It never refuses for the one build that takes the talent -- declared
+ * anyway, because a condition nobody declared is a bonus being paid.
+ * ----------------------------------------------------------------------------
+ */
+export const ironCreed = (damageTakenReductionPercent: number): CastReaction => ({
+  id: 'iron_creed',
+  abilityId: 'holy_strike',
+  canTrigger: (_context, actor) => actor.auras.has('righteous_fury'),
+  onTrigger: (context, actor) => {
+    context.applyAura(actor, ironCreedAura(damageTakenReductionPercent), actor.id);
+  },
+});
+
 /** Procs that fire on a cast, by the talent that grants them. */
 export const PALADIN_CAST_REACTIONS: Readonly<Record<string, (value: number) => CastReaction>> = {
   sanctified_judgement: sanctifiedJudgement,
   divine_favor: () => divineFavorSpent(),
+  iron_creed: ironCreed,
 };

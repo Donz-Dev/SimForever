@@ -639,8 +639,10 @@
    "tree": "retribution",
    "ranks": 1,
    "text": "Increases the damage of your Holy Strike ability by 10% and causes it to refresh all Judgement effects on the target.",
-   "values": null,
-   "note": "single rank"
+   "values": [
+    10
+   ],
+   "note": "single rank; the 10 filled in by hand per this directory's README. A single-rank talent has no variable the importer can match, and this text states its 10% literally rather than through a {0} placeholder, so there was nothing to match either way. WITHOUT THIS the `abilityDamage` effect reads no value and talentBuild drops it in SILENCE -- Holy Strike was 10% smaller for the one build that spends a point here, while the census read the talent as fully modelled. Its second clause, refreshing Judgement effects, needs no number: Holy Strike is a melee strike and Judgement of the Crusader is refreshed by those already."
   },
   "crusade": {
    "name": "Crusade",
