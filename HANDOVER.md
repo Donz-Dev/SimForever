@@ -773,6 +773,33 @@ MOVED**: putting it back is +35.2 REAL, so spell hit and that ability are
 independent and the cost of the owner's choice is confirmed rather than assumed.
 See [docs/handoff/priest.md](docs/handoff/priest.md).
 
+**THE PRIEST WAS THEN TUNED BY THE OWNER AND IS 516.4 TO 597.9, +81.5 REAL**,
+with twenty-three of the twenty-four identical to the decimal. Shadow Word:
+Death's entry is **+37.7** -- the price recorded against it twice while it was
+absent, and the owner took it -- the new 13/3/35 build is **+18.7**, and the
+Improved Mind Flay fix is **+18.2**. **Marginal figures, each measured by
+removal from the finished configuration, and they do not sum to 81.5.**
+
+**ONE TALENT HAD BEEN APPLYING THE WRONG NUMBER, AND NO AUDIT HERE ASKS.**
+Improved Mind Flay declared `valueIndex: 1` against a row of
+`[damage%, yards, slow%]`, so it applied the RANGE as a damage multiplier for
+its whole life. **The census has four columns and none of them is "correct"**;
+`coefficient_probe` asks whether damage responds to a stat and `ability_audit`
+whether an ability is connected. The plausible wrong value was another rank's
+right one -- 10% where the talent grants 20% -- so the talent read as one rank
+behind itself and no figure looked odd. `tools/value_index_sweep.mjs` lists the
+other 47 sites and **found a second instance at once**: the Warlock's Aftermath,
+right only because at 5/5 its two candidate numbers coincide.
+
+**AND THE HOLD BAND THE OWNER PUT ON SHADOW WORD: DEATH MEASURES -4.9**, shipped
+as written. It buys nothing because the Early Demise window (11.6s) is shorter
+than the ability's cooldown (15s), so at most one cast can land in it and an
+ungated entry already lands that one: 1.00 a fight either way, against 3.53
+casts held and 4.00 unheld. **The rationale first written for the band was
+false** -- "one cooldown wide", from 15% of a hundred-second fight, when the
+fight is sixty -- **and a test had been written that asserted it and passed.**
+A rationale is a claim and wants measuring like any other.
+
 **THE DRUID DEEP DIVE MOVED THREE PROFILES AND THE OTHER TWENTY DID NOT MOVE BY
 A DECIMAL.** Cat **488.0 to 656.1, +168.1**, Bear **376.2 to 444.7, +68.5**,
 Moonkin **384.3 to 398.0, +13.7**, and every other figure identical -- which is
@@ -1445,8 +1472,8 @@ Hemo moves five rows between the two columns, which is exactly that kind of edit
 | Enh Shaman | Shaman | 19/32/0 | 625.8 | | **SM/DS** | Warlock | 40/11/0 | **479.7** |
 | Fire Mage | Mage | 10/39/2 | 622.0 | | Prot Warr | Warrior | 17/0/34 | 457.0 |
 | 2H Arms | Warrior | 38/13/0 | 621.1 | | Ele Shaman | Shaman | 38/13/0 | 440.2 |
-| Combat Rogue | Rogue | 18/33/0 | 586.3 | | Bear Druid | Druid | 9/42/0 | 433.6 |
-| Shockadin | Paladin | 23/0/28 | 585.5 | | Prot Pally | Paladin | 8/36/7 | 303.9 |
+| **Shadow Priest** | Priest | 13/3/35 | **597.9** | | Bear Druid | Druid | 9/42/0 | 433.6 |
+| Combat Rogue | Rogue | 18/33/0 | 586.3 | | Prot Pally | Paladin | 8/36/7 | 303.9 |
 
 **THE TOP IS SEAL TWIST RET AND THE GAP IS CLEAR.** **748.3 +/-9.6** against
 LW Ranged's **681.1 +/-4.7** is 67.2, far outside both intervals. The Cat held
