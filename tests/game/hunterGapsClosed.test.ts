@@ -46,12 +46,15 @@ import {
   IMMOLATION_TRAP_ABILITY,
   MONGOOSE_BITE,
   SUMMON_HAWK,
+  WING_CLIP,
+  WING_CLIP_DAMAGE,
 } from '../../src/game/abilities/hunter';
 import { ASPECT_OF_THE_BEAST } from '../../src/game/auras/hunter';
 import {
   RESOURCEFULNESS_REGEN,
   RESOURCEFULNESS_REGEN_BYPASS_PERCENT,
   deadlyAspects,
+  exposePrey,
   laceratingStrikes,
   resourcefulness,
 } from '../../src/game/reactions/hunterTalents';
@@ -379,7 +382,14 @@ describe('Immolation Trap', () => {
      */
     const ids = HUNTER_LONE_WOLF_MELEE.map((entry) => entry.abilityId);
     expect(ids[ids.indexOf('strider_kick') + 1]).toBe('immolation_trap');
-    expect(ids[ids.length - 1]).toBe('immolation_trap');
+    /*
+     * IT IS NO LONGER LAST, AND THAT ASSERTION WAS MINE RATHER THAN THE
+     * OWNER'S. Their instruction was "add it to the LW melee APL AFTER STRIDER
+     * KICK", which is what the line above pins; "and last" was true on the day
+     * and stopped being true when Wing Clip arrived beneath it. The floor is
+     * Wing Clip's now -- no cooldown against the trap's 30 seconds.
+     */
+    expect(ids[ids.length - 1]).toBe('wing_clip');
   });
 
   it('is cast by the melee Hunter and by neither ranged one', () => {
@@ -914,5 +924,164 @@ describe('the melee Hunter dual-wields', () => {
     expect(reaction.canTrigger!(simulation, actor, swing('offHand'))).toBe(true);
     // The bow is not a melee auto attack, and Aspect of the Beast is what is up.
     expect(reaction.canTrigger!(simulation, actor, swing('ranged'))).toBe(false);
+  });
+});
+
+// ---------------------------------------------------------------------------
+
+describe('Wing Clip is pressed for the procs, not the 50', () => {
+  /*
+   * ----------------------------------------------------------------------------
+   * THE RULESET OWNER'S REASON FOR ADDING IT: "even though it only deals 50 base
+   * damage and has no attack power coefficient it can still count as a melee use
+   * in order to trigger things like hand of justice, windfury, and expose prey."
+   *
+   * So the assertions below are about the TRIGGER more than the damage. An
+   * ability whose 50 landed correctly and triggered nothing would pass a damage
+   * test and be worth a fraction of what this is.
+   * ----------------------------------------------------------------------------
+   */
+  it('costs and hits for what the capture states', () => {
+    expect(WING_CLIP.cost).toEqual({ resource: 'mana', amount: 80 });
+    expect(WING_CLIP_DAMAGE).toBe(50);
+    // No cooldown, which is what makes it a true floor under the list.
+    expect(WING_CLIP.cooldownMs).toBeUndefined();
+    expect(WING_CLIP.attackTable).toBe('melee-special');
+  });
+
+  it('is a MAIN-HAND weapon use, which is the whole point of it', () => {
+    /*
+     * `weaponSlot` and `weaponScaling` are different questions and this is the
+     * clearest case of it: the first says whose procs fire, the second says what
+     * the damage reads. Wing Clip answers the first and declines the second.
+     */
+    const { simulation, events } = recordingSimulation([
+      makeAttacker({
+        stats: { attackPower: 0, critChance: -100 },
+        resources: [{ type: 'mana', maximum: 10_000 }],
+        /*
+         * ASSERTED THROUGH A PROC ACTUALLY FIRING, because the damage telemetry
+         * carries no `weaponSlot` -- it has `abilityName` and not the slot. So
+         * the only honest way to show the pipeline treats this as a weapon use
+         * is to give the actor a reaction that fires on one and watch it go
+         * off, which is also what the owner actually asked for.
+         *
+         * BUILT IN RATHER THAN PUSHED: `reactions` is a readonly array, and the
+         * typechecker says so even though a push passes at runtime.
+         */
+        reactions: [exposePrey(100)],
+      }),
+      makeTarget(),
+    ]);
+    const [actor, target] = simulation.combatants;
+    simulation.begin();
+    expect(actor.auras.has('expose_prey')).toBe(false);
+
+    WING_CLIP.onCast({ simulation, caster: actor, target, ability: WING_CLIP });
+
+    expect(events.some((e) => e.type === 'damage' && e.abilityName === 'Wing Clip')).toBe(true);
+    expect(actor.auras.has('expose_prey')).toBe(true);
+  });
+
+  it('takes no attack power at all, at any gear level', () => {
+    const damageAt = (attackPower: number) => {
+      const { simulation, events } = recordingSimulation([
+        makeAttacker({
+          stats: { attackPower, critChance: -100 },
+          resources: [{ type: 'mana', maximum: 10_000 }],
+        }),
+        makeTarget({ stats: { armor: 0 } }),
+      ]);
+      const [actor, target] = simulation.combatants;
+      simulation.begin();
+      WING_CLIP.onCast({ simulation, caster: actor, target, ability: WING_CLIP });
+      return damageBy(events, actor.id).get('Wing Clip')?.total ?? 0;
+    };
+
+    /*
+     * EQUAL AT BOTH, which is the assertion `weaponScaling` being absent earns.
+     * A `weaponScaling: { slot: 'mainHand' }` added by someone "fixing" the
+     * missing field would make these diverge by hundreds.
+     */
+    expect(damageAt(2000)).toBeCloseTo(damageAt(0), 6);
+    expect(damageAt(0)).toBeCloseTo(WING_CLIP_DAMAGE, 6);
+  });
+
+  it('is the last entry, and a floor because it has no cooldown', () => {
+    const ids = HUNTER_LONE_WOLF_MELEE.map((entry) => entry.abilityId);
+    expect(ids[ids.length - 1]).toBe('wing_clip');
+
+    const entry = HUNTER_LONE_WOLF_MELEE[ids.length - 1];
+    expect(entry.condition).toBeUndefined();
+
+    /*
+     * AND THAT IS WHY IT IS LAST RATHER THAN MERELY LOW. Immolation Trap above
+     * it is ungated too, but has a 30-second cooldown, so the list falls past
+     * it; Wing Clip has none, so nothing below it could ever be reached.
+     */
+    const trap = HUNTER_LONE_WOLF_MELEE.find((e) => e.abilityId === 'immolation_trap')!;
+    expect(trap.condition).toBeUndefined();
+    expect(IMMOLATION_TRAP_ABILITY.cooldownMs).toBeGreaterThan(0);
+  });
+
+  it('feeds Expose Prey, which is what opens Mongoose Bite here', () => {
+    /*
+     * ------------------------------------------------------------------------
+     * THE PAYOFF, AND IT IS FOUR ROWS ABOVE IT IN THE LIST. Mongoose Bite's only
+     * route in this build is the Expose Prey aura -- the ability says "can only
+     * be performed after you dodge" and nothing attacks this Hunter -- and
+     * Expose Prey rolls off any landed attack. A filler that lands 22 times a
+     * fight is 22 more rolls for it.
+     *
+     * Asserted as the reaction ACCEPTING a Wing Clip, rather than as a use
+     * count, because the count is a rotation outcome and this is the mechanism.
+     * ------------------------------------------------------------------------
+     */
+    const reaction = exposePrey(100);
+    const { simulation } = recordingSimulation([makeAttacker(), makeTarget()]);
+    const [actor, target] = simulation.combatants;
+
+    const clip = {
+      attacker: actor,
+      defender: target,
+      outcome: 'hit' as const,
+      abilityId: 'wing_clip',
+      abilityName: 'Wing Clip',
+      amount: WING_CLIP_DAMAGE,
+      weaponSlot: 'mainHand' as const,
+      critical: false,
+    };
+
+    expect(reaction.canTrigger!(simulation, actor, clip)).toBe(true);
+    // A Wing Clip that was dodged triggers nothing, which is the honest cost of
+    // being a weapon use rather than a free proc.
+    expect(reaction.canTrigger!(simulation, actor, { ...clip, amount: 0 })).toBe(false);
+  });
+
+  it('does NOT feed Deadly Aspects, which wants an auto-attack', () => {
+    /*
+     * The melee half reads "all melee AUTO attacks", and an absent `abilityId`
+     * is that test. Wing Clip is an ability, so it is correctly excluded --
+     * asserted because "it is a melee weapon use" is true and would make the
+     * wrong conclusion easy.
+     */
+    const reaction = deadlyAspects(100);
+    const { simulation } = recordingSimulation([makeAttacker(), makeTarget()]);
+    const [actor, target] = simulation.combatants;
+    simulation.begin();
+    simulation.applyAura(actor, ASPECT_OF_THE_BEAST, actor.id);
+
+    expect(
+      reaction.canTrigger!(simulation, actor, {
+        attacker: actor,
+        defender: target,
+        outcome: 'hit',
+        abilityId: 'wing_clip',
+        abilityName: 'Wing Clip',
+        amount: WING_CLIP_DAMAGE,
+        weaponSlot: 'mainHand',
+        critical: false,
+      }),
+    ).toBe(false);
   });
 });

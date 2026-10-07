@@ -228,6 +228,63 @@ Elemental Shaman, and Anathema the Shadow Priest.
 pool is untouched -- the Priest's stat block still reads 204 and only its Shadow
 total moved, 497 to 561. Widening it would have fed Holy as well.
 
+**WING CLIP IS PRESSED FOR THE PROCS AND NOT FOR THE 50, AND THE MEASUREMENT
+SAYS SO.** LW Melee **631.4 to 672.6, +41.2, REAL**, the other twenty-three
+identical to the decimal. The ruleset owner asked for it "as a filler/low
+priority ability if there is nothing else to press", with the reason stated
+plainly: "even though it only deals 50 base damage and has no attack power
+coefficient it can still count as a melee use in order to trigger things like
+hand of justice, windfury, and expose prey."
+
+**SO IT WAS WORTH ISOLATING THE TWO HALVES, AND THE OWNER'S HALF IS THE BIGGER
+ONE.** Patching the damage to 1 leaves a weapon use that deals nothing; dropping
+`weaponSlot` leaves 50 damage that triggers nothing.
+
+| | LW Melee | against no Wing Clip |
+| --- | --- | --- |
+| as shipped | **672.6** | **+41.2** |
+| weapon use kept, damage patched to 1 | 648.1 | **+16.7**, the procs alone |
+| 50 damage kept, `weaponSlot` dropped | 644.2 | **+12.8**, the damage alone |
+| no Wing Clip | 631.4 | — |
+
+**THE TWO DECOMPOSITIONS AGREE TO A DECIMAL, WHICH IS WHAT SAYS THE ISOLATION IS
+SOUND**: 24.5 + 16.7 and 28.4 + 12.8 both come to 41.2, the measured total. The
+~12 of synergy left over is inside the noise on four intervals of that size, so
+it is not claimed as a mechanism. What IS claimed is the ordering, which holds on
+every reading: **the triggering is worth more than the hit.**
+
+**PATCHING THE DAMAGE TO 1 RATHER THAN 0 IS THE WHOLE ISOLATION.** An attack that
+deals nothing is refused by every reaction that reads `amount` -- Expose Prey
+included -- so zeroing it would have switched off the thing being measured and
+read as "the procs are worth nothing". A one-damage hit costs 0.2 DPS and keeps
+every roll.
+
+**AND THE KNOCK-ON IS VISIBLE IN THE SHARES, WHICH IS THE INDEPENDENT CHECK.**
+Wing Clip itself is 3.6% of the profile at 22 uses a fight, and two rows that it
+never touches directly moved with it: **Mongoose Bite 6.6 uses to 7.0**, because
+Expose Prey is its only route in this build and 22 more landed main-hand attacks
+is 22 more rolls for it, and **Fatal Wound 1.1% to 1.9%**, which is Vis'kag's
+main-hand proc. Neither is in the entry's own row. **A filler whose damage was
+right and whose `weaponSlot` was missing would have read as 3.6% and a working
+ability**, and been worth a third of this.
+
+**`weaponSlot` SET AND `weaponScaling` ABSENT IS THE CLEAREST CASE OF THAT PAIR
+IN THE PROJECT.** One says whose procs an attack triggers, the other says which
+attack power pool its damage reads, and Wing Clip answers the first and declines
+the second. Someone "fixing" the missing field would add hundreds of damage and
+break the owner's statement, so the test asserts the damage is EQUAL at 0 and
+2000 attack power.
+
+**IT IS LAST BECAUSE IT HAS NO COOLDOWN, NOT BECAUSE IT IS WEAK.** That is the
+half of the floor rule that is easy to forget: an entry is a floor when it is
+ungated AND always castable. Immolation Trap above it is ungated too and has a
+30-second cooldown, so the list falls straight past it; Wing Clip has none, so
+nothing below it could ever be reached. What limits it is 80 mana, and this
+build used to finish with mana unspent.
+
+**THE PROFILE IS FOURTH OF TWENTY-FOUR NOW, AND ALL THREE HUNTERS ARE IN THE TOP
+FIVE** -- it passed Frostfire, DW Fury and BM Hunter on this one entry.
+
 **ALL THREE HUNTERS MOVED AND NOTHING ELSE DID, ON FIVE THINGS THE RULESET
 OWNER REPORTED.** BM Hunter **595.7 to 668.6**, LW Ranged **486.5 to 681.1**, LW
 Melee **523.8 to 631.4**, all REAL; the other twenty-one identical to the
@@ -779,9 +836,12 @@ while it worked.
 decimal -- which is what a talent change scoped to one build should look like.
 It makes Frostfire the top Mage, above Fire's 401.2 and Arcane's 392.6, and the
 build that existed for the Fire/Frost overlap now has a third reason to. The
-mean across **24** is **558.9**, RE-SUMMED FROM THE TABLE ABOVE rather than
-adjusted. It read 488.3 for a while, then 541.3 **across 23 when there were
-already 24** -- each figure right when it was written and drifted as dive after
+mean across **24** is **580.4**, RE-SUMMED FROM THE TABLE ABOVE rather than
+adjusted. **AND RE-SUMMING IT MOVED IT 21.5 ON A CHANGE WORTH 1.7 A
+PROFILE**, which is the drift the instruction exists to catch: 558.9 was stale
+before this edit and would have stayed stale if the figure had been adjusted by
+the delta instead. It read 488.3 for a while, then 541.3 **across 23 when there
+were already 24** -- each figure right when it was written and drifted as dive after
 dive moved a profile and left the average alone. **The COUNT drifted too, which
 is the same failure one level up**: Hemo made it twenty-four and the sentence
 kept saying twenty-three. Add the rows up and count them.
@@ -1240,10 +1300,10 @@ Hemo moves five rows between the two columns, which is exactly that kind of edit
 | Cat Druid | Druid | 9/35/7 | 937.7 | | Arcane Mage | Mage | 47/4/0 | 576.1 |
 | Seal Twist Ret | Paladin | 13/0/38 | 748.3 | | Firelock | Warlock | 5/11/35 | 544.7 |
 | **LW Ranged** | Hunter | 7/39/5 | **681.1** | | Hemo Rogue | Rogue | 17/3/31 | 527.1 |
-| **BM Hunter** | Hunter | 31/20/0 | **668.6** | | Bear Druid | Druid | 9/42/0 | 523.1 |
-| DW Fury | Warrior | 18/33/0 | 667.5 | | Shadow Priest | Priest | 16/3/32 | 516.4 |
-| Frostfire Mage | Mage | 0/29/22 | 661.3 | | Moonkin | Druid | 38/0/13 | 513.4 |
-| **LW Melee** | Hunter | 7/13/31 | **631.4** | | Venom Rogue | Rogue | 37/12/2 | 510.6 |
+| **LW Melee** | Hunter | 7/13/31 | **672.6** | | Bear Druid | Druid | 9/42/0 | 523.1 |
+| **BM Hunter** | Hunter | 31/20/0 | **668.6** | | Shadow Priest | Priest | 16/3/32 | 516.4 |
+| DW Fury | Warrior | 18/33/0 | 667.5 | | Moonkin | Druid | 38/0/13 | 513.4 |
+| Frostfire Mage | Mage | 0/29/22 | 661.3 | | Venom Rogue | Rogue | 37/12/2 | 510.6 |
 | Enh Shaman | Shaman | 19/32/0 | 625.8 | | Rupture Rogue | Rogue | 12/8/31 | 497.6 |
 | Fire Mage | Mage | 10/39/2 | 622.0 | | Prot Warr | Warrior | 17/0/34 | 457.0 |
 | 2H Arms | Warrior | 38/13/0 | 621.1 | | SM/DS | Warlock | 40/11/0 | 441.5 |
