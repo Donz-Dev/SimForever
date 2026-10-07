@@ -26,6 +26,42 @@ A main-hand Crusader and an off-hand Crusader are two separate effects with
 separate rolls. Windfury is bound to the main hand, so an off-hand use never
 triggers it however the character is armed.
 
+## An extra SWING and an extra SPECIAL ATTACK are different effects
+
+Both are described as "extra attacks" and only one is a swing. The ruleset owner
+separated Windfury Weapon from Windfury Totem on 2026-10-07, and the imbue had
+been built on the totem's shape until then.
+
+| | an extra SWING | an extra SPECIAL ATTACK |
+| --- | --- | --- |
+| who | Windfury **Totem**, Hand of Justice, Weaponmaster's sword clause | Windfury **Weapon**, the imbue |
+| built with | `extraAttack` | content's own `dealDamage`, scheduled |
+| the swing timer | **restarted** — `scheduleSwing` keeps one pending swing per slot | **untouched** |
+| combat table | `melee-auto`: one roll, and a **glancing blow** | `melee-special`: two rolls, **no glance** |
+| extra attack power | a short **AURA**, so it also pays anything else landing inside it | `weaponScaling.bonusAttackPower`, **in the hits** |
+| reported as | "Main Hand Auto-Attack" | its own row |
+
+**EVERY ONE OF THOSE FOUR DIFFERENCES WAS WRONG IN THE SAME DIRECTION, and none
+was visible.** Measured on the Enhancement Shaman: the glancing blows cost 15.8
+DPS, the attack power arriving as a window instead of in the hits cost 18.8, the
+timer reset threw away about one real swing a fight, and 15.9% of the build's
+damage — its second-largest source — was hidden inside the auto-attack row with
+the shares still summing to 100%. Net **+21.8** once the window's incidental
+payments are netted off.
+
+**THE LOCK IS WHY THE SPECIAL ATTACKS ARE SCHEDULED RATHER THAN DEALT INLINE.**
+`runReactions` claims a per-actor re-entry lock, so `dealDamage` called from
+inside a reaction reaches no `dealt` reaction at all — Maelstrom Weapon would
+never see these, and the owner has said it must. One `events.schedule` at the
+current timestamp puts them back on the ordinary path, which is the same reason
+`extraAttack` schedules instead of running inline.
+
+**THE TOTEM IS DELIBERATELY NOT CHANGED.** `buffs/windfury.ts` still applies a
+1.5-second +246 attack power window and still asks for a real swing, because the
+owner stated that one directly. The two are the same effect at different
+strengths and **must not be made to match** — which is easy to get wrong in
+exactly one direction, by tidying the totem to look like the imbue.
+
 ## The table
 
 What each effect does with each kind of action, asserted in

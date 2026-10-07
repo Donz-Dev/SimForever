@@ -1,6 +1,6 @@
-import type { Reaction } from '../../engine';
-import { isWeaponUseOf, seconds } from '../../engine';
-import { WINDFURY_WEAPON_IMBUE, windfuryWeaponAura } from '../auras/shaman';
+import type { AttackEvent, Combatant, Reaction, SimulationContext } from '../../engine';
+import { EventPriority, createEvent, dealDamage, isWeaponUseOf, seconds } from '../../engine';
+import { WINDFURY_WEAPON_IMBUE } from '../auras/shaman';
 
 /**
  * Reactions a Shaman has from its own spells rather than from a talent.
@@ -48,26 +48,104 @@ export const WINDFURY_WEAPON_EXTRA_ATTACKS = 2;
  * THREE SECONDS, THE RULESET OWNER'S OWN FIGURE for the imbue: "Windfury Weapon
  * imbue has a 3 second internal cooldown", given 2026-09-30.
  *
- * ----------------------------------------------------------------------------
- * IT WAS 1.5, BORROWED FROM WINDFURY TOTEM, AND IT WAS TWICE TOO GENEROUS. The
- * spellbook states the chance, the count and the attack power and says nothing
- * about a limit, so the totem's figure stood in as a named placeholder while
- * nobody had the real one. The totem and the imbue are the same effect at
- * different strengths and they do NOT share this number -- which is exactly the
- * risk a borrowed value carries, and the reason the borrow had to stay visible.
+ * It was 1.5, borrowed from Windfury Totem, and it was twice too generous. The
+ * totem and the imbue are the same effect at different strengths and they do
+ * NOT share this number -- which is exactly the risk a borrowed value carries,
+ * and the reason the borrow had to stay visible.
  *
- * HANDOVER.md CLAIMED A SEASON OF DISCOVERY TRINKET TOOLTIP READ 2 SECONDS. No
- * such tooltip exists anywhere in this repository and the item database is
- * frozen, so that was a live "discrepancy" with nothing on either side of it.
- * It is neither 1.5 nor 2; the claim is removed rather than reconciled.
- *
- * AN EFFECT THAT CHAINS OFF ITS OWN EXTRA ATTACKS NEEDS SOME LIMIT or it runs
- * away, which is why one had to be assumed in the first place. Doubling it
- * roughly halves the proc rate an Enhancement shaman sees, and Windfury is the
- * largest single thing in that build after its own swing.
- * ----------------------------------------------------------------------------
+ * AN EFFECT THAT CAN CHAIN OFF ITS OWN EXTRA ATTACKS NEEDS SOME LIMIT or it
+ * runs away, which is why one had to be assumed in the first place. The two
+ * special attacks below are main-hand weapon uses, so they roll this again and
+ * this cooldown is what refuses them.
  */
 export const WINDFURY_WEAPON_INTERNAL_COOLDOWN_MS = seconds(3);
+
+/*
+ * ITS OWN DAMAGE ROW, AND THEREFORE ITS OWN NAME -- NOT "Windfury Weapon".
+ *
+ * ----------------------------------------------------------------------------
+ * `abilityBreakdown` KEYS ON THE NAME and builds one row per name, taking
+ * `uses` from CAST events and `attempts`, `hits` and `damage` from DAMAGE
+ * events. The imbue is an ability called "Windfury Weapon" that is cast exactly
+ * once and deals nothing, so naming these hits the same thing produces a single
+ * row reading ONE USE and nine ATTEMPTS -- internally consistent, adding to
+ * 100%, and nonsense.
+ *
+ * That is the failure this project has already met twice: `resourceFlow`
+ * summing every pool under a heading saying "Rage", and a pet's swing landing
+ * in the row called "Main Hand Auto-Attack" and becoming a documented fact
+ * about the BM Hunter in one reading. **A row is only "its own" if nothing else
+ * shares its key.**
+ *
+ * So the imbue keeps its name and its single cast, and the hits get this one.
+ * The precedent is Vis'kag, whose proc reports as "Fatal Wound" rather than as
+ * the sword.
+ * ----------------------------------------------------------------------------
+ */
+export const WINDFURY_WEAPON_ATTACK_ID = 'windfury_weapon_attack';
+export const WINDFURY_WEAPON_ATTACK_NAME = 'Windfury Attack';
+
+/**
+ * One of the two extra SPECIAL attacks, scheduled at this instant.
+ *
+ * ----------------------------------------------------------------------------
+ * SCHEDULED AND NOT DEALT INLINE, AND THE REASON IS THE RE-ENTRY GUARD.
+ * `runReactions` claims a per-actor lock before it calls anything, so damage
+ * dealt from inside a reaction reaches no `dealt` reaction at all -- Maelstrom
+ * Weapon would never see these, and the ruleset owner has said it must. One
+ * `schedule` at the current timestamp puts them back on the ordinary event
+ * path, which is the same trick `extraAttack` uses and for the same reason.
+ *
+ * IT IS NOT `extraAttack`, THOUGH, AND THE DIFFERENCE IS THE SWING TIMER. That
+ * function completes the weapon's swing now and RESTARTS the timer, so every
+ * Windfury proc pushed the next real swing out by a full cycle. The owner's
+ * ruling is that the imbue "does not reset the auto-attack swing timer", so
+ * nothing here touches `scheduleSwing` and the weapon's rhythm is untouched.
+ *
+ * `melee-special` IS WHAT MAKES IT A SPECIAL ATTACK: a two-roll table with
+ * miss, dodge and parry on the first roll and crit on the second, and NO
+ * GLANCING BLOW. That last is most of the change -- a glancing blow against a
+ * level 63 target is both frequent and reduced, and these cannot glance.
+ *
+ * A MAIN-HAND WEAPON USE, carrying `weaponSlot`, so Maelstrom Weapon, a
+ * main-hand Crusader and Hand of Justice all see it. That is what "extra
+ * attacks" has to mean, and it is the owner's standing instruction that whether
+ * an ability can proc something is asked rather than assumed.
+ */
+function scheduleWindfuryAttack(
+  context: SimulationContext,
+  actor: Combatant,
+  target: Combatant,
+  bonusAttackPower: number,
+  index: number,
+): void {
+  context.events.schedule(
+    context.clock.now(),
+    createEvent(
+      `windfury-weapon:${actor.id}:${index}`,
+      EventPriority.AutoAttack,
+      (ctx) => {
+        if (!actor.isAlive || !target.isAlive || ctx.hasEnded) return;
+        dealDamage(ctx, {
+          source: actor,
+          target,
+          abilityId: WINDFURY_WEAPON_ATTACK_ID,
+          abilityName: WINDFURY_WEAPON_ATTACK_NAME,
+          school: 'physical',
+          baseAmount: 0,
+          /*
+           * NOT NORMALISED. The imbue grants extra ATTACKS, so each one is the
+           * weapon's own damage at the weapon's own speed -- normalising would
+           * replace the speed of a swing that really did happen.
+           */
+          weaponScaling: { slot: 'mainHand', bonusAttackPower },
+          attackTable: 'melee-special',
+          weaponSlot: 'mainHand',
+        });
+      },
+    ),
+  );
+}
 
 /**
  * Built PER CHARACTER, because the internal cooldown is per-character state.
@@ -76,13 +154,14 @@ export const WINDFURY_WEAPON_INTERNAL_COOLDOWN_MS = seconds(3);
  * leaves nothing behind to notice.
  *
  * `elementalWeaponsBonus` is Elemental Weapons' "increases ... your Windfury
- * Weapon effect by {0}%", passed in rather than looked up so this file needs
- * no talent knowledge. It raises the ATTACK POWER, which is the only number
- * the effect has to raise.
+ * Weapon effect by {0}%", passed in rather than looked up so this file needs no
+ * talent knowledge. It raises the ATTACK POWER, which is the only number the
+ * effect has.
  */
 export function windfuryWeaponReaction(elementalWeaponsBonusPercent = 0): Reaction {
   let lastProcAt: number | null = null;
-  const attackPower = WINDFURY_WEAPON_ATTACK_POWER * (1 + elementalWeaponsBonusPercent / 100);
+  const bonusAttackPower =
+    WINDFURY_WEAPON_ATTACK_POWER * (1 + elementalWeaponsBonusPercent / 100);
 
   return {
     id: 'windfury_weapon',
@@ -94,20 +173,16 @@ export function windfuryWeaponReaction(elementalWeaponsBonusPercent = 0): Reacti
       if (!isWeaponUseOf(attack, 'mainHand')) return false;
 
       const now = context.clock.now();
-      if (
-        lastProcAt !== null &&
-        now - lastProcAt < WINDFURY_WEAPON_INTERNAL_COOLDOWN_MS
-      ) {
+      if (lastProcAt !== null && now - lastProcAt < WINDFURY_WEAPON_INTERNAL_COOLDOWN_MS) {
         return false;
       }
 
       return context.rng.rollChance(WINDFURY_WEAPON_PROC_CHANCE);
     },
-    onTrigger: (context, actor) => {
+    onTrigger: (context, actor, attack: AttackEvent) => {
       lastProcAt = context.clock.now();
-      context.applyAura(actor, windfuryWeaponAura(attackPower), actor.id);
       for (let i = 0; i < WINDFURY_WEAPON_EXTRA_ATTACKS; i += 1) {
-        context.extraAttack(actor, 'mainHand');
+        scheduleWindfuryAttack(context, actor, attack.defender, bonusAttackPower, i);
       }
     },
   };

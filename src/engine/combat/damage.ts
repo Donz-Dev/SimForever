@@ -46,6 +46,32 @@ export interface WeaponScaling {
    */
   readonly fraction?: number;
   /**
+   * Attack power added to THIS HIT ONLY, on top of the character's own.
+   *
+   * ----------------------------------------------------------------------------
+   * WINDFURY WEAPON IS WHY, and it is a genuinely different shape from every
+   * other attack power source here. "Each hit has a 20% chance of granting you
+   * 2 extra attacks with 333 extra melee attack power" -- the 333 belongs to
+   * the two extra attacks and to nothing else.
+   *
+   * THE ALTERNATIVE WAS A 1.5-SECOND BUFF AURA AND IT WAS A DIFFERENT EFFECT.
+   * That is how Windfury TOTEM works, by the ruleset owner's own statement, and
+   * it was borrowed for the imbue: apply +246 attack power for 1.5 seconds,
+   * then swing. The owner has since separated them -- the imbue "doesn't grant
+   * a temporary attack power buff but instead adds the rank's attack power into
+   * the hits themselves" -- and the two are not interchangeable. A window pays
+   * every attack that lands inside it, including a Stormstrike that happened to
+   * be cast in the same moment; this pays exactly the hits it belongs to.
+   *
+   * ADDED TO THE POOL AND SCALED BY `powerCoefficient` LIKE THE REST, so it
+   * goes through `speed / 14` exactly as the character's own attack power does.
+   * Anything else would make the bonus worth a different amount on a slow
+   * weapon than the attack power beside it, which is not what "extra attack
+   * power" says.
+   * ----------------------------------------------------------------------------
+   */
+  readonly bonusAttackPower?: number;
+  /**
    * Whether this ability's ATTACK POWER term uses a normalised weapon speed
    * instead of the weapon's own.
    *
@@ -281,7 +307,11 @@ export function weaponDamageFor(request: DamageRequest, roll: number): number {
  */
 export function attackPowerFor(request: DamageRequest): number {
   const stats = request.source.stats.effective;
-  return request.weaponScaling?.slot === 'ranged' ? stats.rangedAttackPower : stats.attackPower;
+  const own =
+    request.weaponScaling?.slot === 'ranged' ? stats.rangedAttackPower : stats.attackPower;
+  // Attack power this HIT carries, which no stat block holds. See
+  // `WeaponScaling.bonusAttackPower`.
+  return own + (request.weaponScaling?.bonusAttackPower ?? 0);
 }
 
 /**

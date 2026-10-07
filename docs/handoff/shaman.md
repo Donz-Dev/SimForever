@@ -34,7 +34,7 @@ were in a build; one is left, and it works.
 
 | Profile | Talents | DPS | was | List | Entries |
 | --- | --- | --- | --- | --- | --- |
-| Enh Shaman | 19/32/0 | **462.0** ±7.3 | 451.1 | `SHAMAN_ENHANCEMENT` | 8 |
+| Enh Shaman | 19/32/0 | **625.8** ±8.0 | 604.0 | `SHAMAN_ENHANCEMENT` | 8 |
 | Ele Shaman | 38/13/0 | **375.0** ±3.8 | 295.4 | `SHAMAN_ELEMENTAL` | 4 |
 
 **ELE SHAMAN +79.6, REAL. ENH SHAMAN +10.9, AND THAT ONE IS A LIE BY NET.** The
@@ -93,7 +93,7 @@ One batch of ten, so read the shape and not the decimals:
 | Profile | Top sources |
 | --- | --- |
 | Ele Shaman | Lightning Bolt 48.1%, Searing Totem 18.2%, Flame Shock 16.1%, Lava Burst 15.1%, Lightning Bolt (Overload) 2.5% |
-| Enh Shaman | Main Hand 56.2%, Stormstrike 12.4%, Fire Nova 10.7%, Searing Totem 8.5%, Flame Shock 5.9%, Earth Shock 4.4% |
+| Enh Shaman | Main Hand 36.4%, **Windfury Attack 15.9%**, Fire Nova 15.1%, Stormstrike 12.0%, Searing Totem 7.4%, Flame Shock 6.5%, Earth Shock 5.1%, Lightning Bolt 1.7% |
 
 **THE ELEMENTAL'S TABLE WENT FROM THREE SOURCES TO FIVE**, which was the narrowest
 in the project and is not any more. Lightning Bolt fell from 60.5% to 48.1%
@@ -198,9 +198,34 @@ unscoped pushback reason fails.
   project. The talent was correct, its effect was correct, and it was worth
   nothing — a working talent on an ability nobody casts reports exactly like a
   working talent. **Adding the totem was +59.5.**
+- **WINDFURY WEAPON IS NOT WINDFURY TOTEM, AND FOR MOST OF THIS PROJECT IT WAS
+  MODELLED AS THOUGH IT WERE.** The owner separated them on 2026-10-07. The imbue
+  grants two extra **SPECIAL** attacks (`melee-special`: two rolls, **no glancing
+  blow**) carrying the rank's attack power **in the hits**, it does **not** reset
+  the auto-attack swing timer, and it reports under **its own row**. The totem
+  still does the old thing -- a real extra SWING plus a 1.5-second attack power
+  window -- because the owner stated that one directly, and **the two must not be
+  made to match.** `buffs/windfury.ts` is a separate file for a separate effect.
+  Worth **+21.8** to Enh Shaman; the special table alone is +15.8 and the folded
+  attack power +18.8.
+- **A ROW IS ONLY "ITS OWN" IF NOTHING ELSE SHARES ITS KEY.** `abilityBreakdown`
+  builds one row per NAME and takes `uses` from cast events, so naming the hits
+  "Windfury Weapon" -- the imbue's name -- gave one row reading ONE USE and nine
+  ATTEMPTS. They are **"Windfury Attack"**, after Vis'kag's "Fatal Wound".
 - **WINDFURY IS MAIN-HAND ONLY** and WEAPON-BOUND, so it fires only from a use of
   its own weapon. It spent its whole life refusing abilities and every figure was
   self-consistent and too low.
+- **MAELSTROM WEAPON PROCS ON ALL THREE SOURCES AND THE RATE IS RIGHT**, which was
+  asked and is worth not re-asking. `tools/maelstrom_probe.ts` prints the observed
+  chance per source against the PPM chance the weapon's base speed implies:
+  auto-attacks 31.2%, Windfury attacks 32.6%, Stormstrike 30.7%, expected 31.67%.
+  **The bolt count is arithmetic, not a bug**: ~35 melee uses a minute at 31.67%
+  is ~11 procs a minute, five stacks buy one bolt, so 1.7 casts in a 58-second
+  fight is what 5 PPM means here. **PPM rolled on specials and extra attacks pays
+  roughly double the nominal rate** -- 11 a minute against a nominal 5 -- because
+  only auto-attacks cost swing time. That is the project's PPM convention, shared
+  with Crusader and Seal of Command, and it is the owner's to revisit if 5 PPM was
+  meant as a ceiling.
 - **THE WINDFURY IMBUE'S INTERNAL COOLDOWN IS 3 SECONDS, THE OWNER'S, AND IT WAS
   1.5 BORROWED FROM THE TOTEM.** Twice too generous, worth −10.0 to fix, and the
   totem's 1.5 is still correct for the totem. A borrowed number can be wrong by a

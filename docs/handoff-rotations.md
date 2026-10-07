@@ -99,36 +99,54 @@ anything measured into the Rupture list reaches it for free. DPS is the baseline
 **THE DPS COLUMN WAS RE-SYNCED WHOLESALE, because it had drifted from the
 baseline it says it carries** — Cat read 488.0 against a real 656.1, and eleven
 other rows were out by a dive or by `#149` raising the preset raid buffs from
-twelve to seventeen. Every figure here comes from one 30-batch run of all 23 at
-the same commit, so they are comparable to each other and to HANDOVER's table.
-**A DPS column in a structural table is the easiest thing in this project to
-leave behind**, because nothing about a list changes when a figure does.
+twelve to seventeen.
+
+**AND IT DECAYED AGAIN, WHICH IS WHY THAT PARAGRAPH IS NOW TWO.** By 2026-10-07
+twelve rows were out a second time -- Fire read 552.5 against a measured 624.0,
+Shadow 493.9 against 516.4, Enh Shaman 509.8 against 625.8 -- the Entries and
+Gated columns had drifted with them, the Hemo Rogue had no row at all, and the
+sentence standing here asserted that every figure came from one run at one
+commit. **A note saying a table was fixed is not a mechanism for keeping it
+fixed**, and the note aged worse than the table: a reader could see the figures
+were odd, and could not see that the claim about them was false.
+
+Every row below is DERIVED rather than typed: the list, its entry count and its
+gated count from `ALL_PRIORITY_LISTS` and `rotationFor`, and the DPS from one
+30-batch run of all 24 profiles at the same commit. **The cheapest way to check
+it is to re-derive it**, which is `npx vite-node tools/measure_profiles.ts` for
+the figures and a six-line script over the registry for the rest.
+
+**A DPS COLUMN IN A STRUCTURAL TABLE IS THE EASIEST THING IN THIS PROJECT TO
+LEAVE BEHIND**, because nothing about a list changes when a figure does -- so a
+dive that touches one class has no reason to look here, and twenty-three rows go
+stale one PR at a time.
 
 | Profile | DPS | List | Entries | Gated |
 | --- | --- | --- | --- | --- |
 | Cat | 937.7 | `DRUID_CAT` | 6 | 4 |
-| DW Fury | 651.2 | `WARRIOR_DUAL_WIELD_BERSERKER` | 10 | 6 |
-| 2H Arms | 603.3 | `WARRIOR_TWO_HAND_BATTLE` | 12 | 8 |
-| BM Hunter | 547.0 | `HUNTER_BEAST_MASTERY` | 7 | 6 |
-| Seal Twist Ret | 585.5 | `PALADIN_RETRIBUTION` | 7 | 3 |
-| Fire | 552.5 | `MAGE_FIRE` | 5 | 4 |
-| Arcane | 546.5 | `MAGE_ARCANE` | 5 | 4 |
-| Frostfire | 537.6 | `MAGE_FROSTFIRE` | 5 | 4 |
-| Shockadin | 522.7 | `PALADIN_SHOCKADIN` | 7 | 2 |
-| Enh Shaman | 509.8 | `SHAMAN_ENHANCEMENT` | 8 | 6 |
-| Firelock | 507.9 | `WARLOCK_DESTRUCTION` | 6 | 2 |
-| Shadow | 493.9 | `PRIEST_SHADOW` | 6 | 4 |
-| Combat | 464.9 | `ROGUE_COMBAT` | 5 | 2 |
-| Prot Warr | 454.6 | `WARRIOR_SHIELD_DEFENSIVE` | 14 | 10 |
-| Venom | 448.4 | `ROGUE_VENOM` | 5 | 4 |
-| Bear | 444.7 | `DRUID_BEAR` | 8 | 4 |
-| Moonkin | 432.4 | `DRUID_MOONKIN` | 5 | 4 |
-| LW Ranged | 413.2 | `HUNTER_LONE_WOLF_RANGED` | 7 | 5 |
-| Ele Shaman | 411.4 | `SHAMAN_ELEMENTAL` | 4 | 2 |
-| Rupture | 406.3 | `ROGUE_RUPTURE` | 8 | 5 |
-| SM/DS | 402.0 | `WARLOCK_AFFLICTION` | 5 | 4 |
+| Seal Twist Ret | 709.0 | `PALADIN_RETRIBUTION` | 7 | 3 |
+| DW Fury | 667.5 | `WARRIOR_DUAL_WIELD_BERSERKER` | 10 | 6 |
+| Enh Shaman | 625.8 | `SHAMAN_ENHANCEMENT` | 8 | 5 |
+| Fire | 624.0 | `MAGE_FIRE` | 5 | 4 |
+| Frostfire | 623.2 | `MAGE_FROSTFIRE` | 5 | 4 |
+| 2H Arms | 621.1 | `WARRIOR_TWO_HAND_BATTLE` | 12 | 8 |
+| BM Hunter | 595.7 | `HUNTER_BEAST_MASTERY` | 7 | 6 |
+| Combat | 586.3 | `ROGUE_COMBAT` | 5 | 2 |
+| Arcane | 581.8 | `MAGE_ARCANE` | 5 | 4 |
+| Shockadin | 581.2 | `PALADIN_SHOCKADIN` | 8 | 2 |
+| Firelock | 544.7 | `WARLOCK_DESTRUCTION` | 6 | 2 |
+| Hemo | 527.1 | `ROGUE_HEMO` | 8 | 5 |
 | LW Melee | 523.8 | `HUNTER_LONE_WOLF_MELEE` | 7 | 2 |
-| Prot Pally | 270.1 | `PALADIN_PROTECTION` | 9 | 6 |
+| Bear | 523.1 | `DRUID_BEAR` | 8 | 4 |
+| Shadow | 516.4 | `PRIEST_SHADOW` | 6 | 4 |
+| Moonkin | 513.4 | `DRUID_MOONKIN` | 5 | 4 |
+| Venom | 510.6 | `ROGUE_VENOM` | 5 | 4 |
+| Rupture | 497.6 | `ROGUE_RUPTURE` | 9 | 7 |
+| LW Ranged | 486.5 | `HUNTER_LONE_WOLF_RANGED` | 7 | 5 |
+| Prot Warr | 457.0 | `WARRIOR_SHIELD_DEFENSIVE` | 14 | 10 |
+| Ele Shaman | 440.2 | `SHAMAN_ELEMENTAL` | 4 | 2 |
+| SM/DS | 435.9 | `WARLOCK_AFFLICTION` | 5 | 4 |
+| Prot Pally | 304.9 | `PALADIN_PROTECTION` | 9 | 6 |
 
 Plus `PET_PRIORITY` (2 entries), which runs on the BM Hunter's pet, and two
 Warrior lists **no preset reaches** — `WARRIOR_BATTLE` (14 entries) and

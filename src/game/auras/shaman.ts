@@ -375,30 +375,44 @@ export const WINDFURY_WEAPON_IMBUE: AuraDefinition = {
   durationMs: WINDFURY_WEAPON_DURATION_MS,
 };
 
-/**
- * The attack power window a Windfury Weapon proc opens: "2 extra attacks with
- * 333 extra melee attack power".
+/*
+ * ============================================================================
+ * THE ATTACK POWER WINDOW IS GONE, AND THAT IS THE WHOLE DIFFERENCE BETWEEN THE
+ * IMBUE AND THE TOTEM.
  *
- * ONE AND A HALF SECONDS, AND AN INTERNAL COOLDOWN OF THE SAME LENGTH, both
- * borrowed from Windfury Totem -- whose window the ruleset owner stated
- * directly. The weapon imbue's own duration is NOT stated anywhere in the
- * spellbook, which gives only the chance, the count and the attack power.
+ * `windfuryWeaponAura` applied +333 attack power for 1.5 seconds and then asked
+ * for two extra SWINGS. It was Windfury Totem's shape, borrowed because the
+ * owner had stated the totem's mechanics and the spellbook states only the
+ * chance, the count and the attack power -- and the 1.5 seconds was a named
+ * `PLACEHOLDER_`, which is the only reason the borrow was visible enough to
+ * correct.
  *
- * So this is a `PLACEHOLDER_` and says so: it is the totem's figure, applied
- * to the imbue because the two are the same effect at different strengths, and
- * it is unverified. Confirming it means one line from the ruleset owner.
+ * THE OWNER HAS NOW SEPARATED THEM. The imbue "grants 2 extra SPECIAL attacks
+ * with the rank's added attack power", and it differs from the totem in four
+ * ways, every one of which the window got wrong:
+ *
+ *   SPECIAL, NOT A SWING   `melee-special` -- no glancing blow, and a two-roll
+ *                          table. A swing rolls one table where glancing is
+ *                          most of what a level 63 target produces.
+ *   THE POWER IS IN THE    `weaponScaling.bonusAttackPower`, so it pays exactly
+ *   HITS                   the two attacks. A 1.5-second window also paid a
+ *                          Stormstrike or an ordinary swing landing inside it.
+ *   NO SWING TIMER RESET   `extraAttack` reschedules the slot from now, so every
+ *                          proc pushed the next real swing out by a full timer.
+ *   ITS OWN DAMAGE ROW     a swing is reported as "Main Hand Auto-Attack", so
+ *                          8 extra attacks a fight were invisible inside the
+ *                          auto-attack line and the biggest thing in the build
+ *                          could not be read off the results page.
+ *
+ * SO THE AURA AND ITS PLACEHOLDER BOTH GO. `windfuryWeaponReaction` in
+ * `reactions/shaman.ts` carries the whole effect now, and the imbue below is
+ * the only aura left -- it grants nothing and exists to be READ.
+ *
+ * WINDFURY TOTEM IS UNCHANGED and still works the old way, because the owner
+ * stated that one directly. `buffs/windfury.ts` is a separate file for a
+ * separate effect, and the two must not be made to match.
+ * ============================================================================
  */
-export const PLACEHOLDER_WINDFURY_WEAPON_DURATION_MS = seconds(1.5);
-
-export function windfuryWeaponAura(attackPower: number): AuraDefinition {
-  return {
-    id: 'windfury_weapon_proc',
-    name: 'Windfury Weapon',
-    durationMs: PLACEHOLDER_WINDFURY_WEAPON_DURATION_MS,
-    refreshBehaviour: 'reset',
-    statModifiers: [flat('attackPower', attackPower)],
-  };
-}
 
 /**
  * Rage of the Farseer: "Increases your melee attack speed and spell casting

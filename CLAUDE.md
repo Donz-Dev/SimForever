@@ -292,6 +292,36 @@ See [docs/combat-tables.md](docs/combat-tables.md).
   SPENT, **measured by snapshotting every pool around it** — measuring rather
   than asking each ability to declare is the point, because the ability that
   forgot would be silently inert.
+- **AN EXTRA ATTACK COMES IN TWO SHAPES AND THEY ARE DIFFERENT EFFECTS.** Both
+  say "grants extra attacks" and only one is a SWING.
+
+  | | an extra SWING | an extra SPECIAL ATTACK |
+  | --- | --- | --- |
+  | who | Windfury TOTEM, Hand of Justice, Weaponmaster | Windfury WEAPON, the imbue |
+  | how | `extraAttack`, which completes the swing now and **restarts the slot's timer** | content schedules its own `dealDamage` |
+  | table | `melee-auto` — one roll, and a GLANCING BLOW | `melee-special` — two rolls, **no glance** |
+  | reported as | "Main Hand Auto-Attack" | its own row |
+
+  **THE TOTEM'S SHAPE WAS BORROWED FOR THE IMBUE AND WAS WRONG IN FOUR WAYS AT
+  ONCE**, every one of them in the generous-or-mistaken direction and none of them
+  visible: the glancing blows cost 15.8 DPS, the attack power arriving as a
+  1.5-second AURA instead of inside the hits cost 18.8 and also paid any swing or
+  Stormstrike landing in the window, the timer reset threw away about one real
+  swing a fight, and the damage was invisible inside the auto-attack line. The
+  owner separated them on 2026-10-07. **Two effects described with the same words
+  are not therefore the same mechanism** — and `buffs/windfury.ts` stays on the
+  old shape on purpose, because that one the owner stated directly.
+- **ATTACK POWER CAN BELONG TO ONE HIT RATHER THAN TO THE CHARACTER.**
+  `WeaponScaling.bonusAttackPower` is the imbue's 333: it goes through
+  `speed / 14` with the character's own power and reaches nothing else. **A buff
+  aura is the wrong shape for "with N extra attack power"**, because a window pays
+  whatever lands inside it and the phrase names the attacks.
+- **A REACTION'S OWN DAMAGE MUST BE SCHEDULED, NOT DEALT INLINE, IF ANYTHING IS
+  MEANT TO PROC OFF IT.** `runReactions` claims a per-actor lock, so `dealDamage`
+  called from inside a reaction reaches no `dealt` reaction at all. One
+  `events.schedule` at the current timestamp puts it back on the ordinary path —
+  which is why `extraAttack` schedules too. Windfury's special attacks have to
+  feed Maelstrom Weapon, and dealt inline they silently would not.
 - **IF WHETHER AN ABILITY CAN PROC SOMETHING IS IN QUESTION, ASK.** The owner's
   standing instruction. A wrong answer does not look wrong: Windfury spent its
   whole life refusing abilities and every figure was self-consistent and too low.
@@ -1843,6 +1873,16 @@ shape should fail loudly, not render a tree with a broken arrow.
   says it cannot fire, because nothing attacks the player" and enforced the stale
   caveat instead of catching it.
 - **Assert the MECHANISM, not a DPS delta.** A correct talent can be worth zero.
+- **A TEST THAT PINS CONSTANTS PINS NOTHING, and the way you find out is a rework
+  passing untouched.** Windfury Weapon's tests asserted 20%, two attacks, 333
+  attack power, a 3-second cooldown and that the reaction was registered. Every
+  one still passed after the effect was rebuilt from "apply an attack power aura,
+  then swing twice" into "deal two special attacks carrying that power" — a
+  change worth 21.8 DPS that moved which combat table resolved the hits, whether
+  they could glance, whether the swing timer reset and which row they reported in.
+  **The constants were never what could be wrong.** Ask what the effect DOES that
+  a reader could not see: the outcome it produces, the row it lands in, the timer
+  it leaves alone.
 - **Combat table boundaries use scripted rolls, not sampling.** An off-by-one at
   a boundary shifts every damage number a fraction of a percent.
 - **Verify a probabilistic mechanic against its rate, over many seeds.** A 6.5%
@@ -1962,6 +2002,25 @@ nothing on the page contradicting it. **Two tests depended on it**: one looked
 for Relentless Strikes (which restores ENERGY) in `batch.rage`, and one asserted
 a MOONKIN spent more "rage" than its mana pool. Check that a number is about
 what its label says before trusting that it adds up.
+
+**A ROW IS ONLY "ITS OWN" IF NOTHING ELSE SHARES ITS KEY.** `abilityBreakdown`
+builds one row per ability NAME, taking `uses` from CAST events and `attempts`,
+`hits` and `damage` from DAMAGE events. So naming a proc's damage after the
+ability that enables it merges the two: the Windfury imbue is cast once and deals
+nothing, and sharing its name gave a single row reading ONE USE and nine
+ATTEMPTS — consistent, summing to 100%, and nonsense. The precedent that gets it
+right is Vis'kag, whose proc reports as "Fatal Wound" rather than as the sword.
+**Pick the name before writing the `dealDamage` call**, because the id and the
+name do different jobs: the ID decides which modifiers reach the hit, the NAME
+decides which row it lands in, and they do not have to match.
+
+**AND THE SAME MISTAKE HIDES A DAMAGE SOURCE RATHER THAN MISLABELLING ONE.**
+Windfury Weapon's extra attacks were real SWINGS, so they reported as "Main Hand
+Auto-Attack" — **15.9% of the Enhancement build, the second-largest source,
+invisible**, with the auto-attack row carrying 34 attempts a fight on a weapon
+that cannot swing more than about 20 times. Nothing contradicted it and the
+shares summed to 100%. **An attempts column that outruns the weapon's speed is
+the tell**, and it is the only one there was.
 
 **AND A NUMBER THAT IS NEVER EMITTED READS AS A ZERO, NOT AS A GAP.** Combo
 points reported 23 gained and none spent, because a finisher drained the pool

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { createPlayer } from '../../src/game/actors/createPlayer';
-import { runProfileBatch } from '../../src/simulator';
+import { runProfile, runProfileBatch } from '../../src/simulator';
 import { PRESETS_BY_ID } from '../../src/profiles/presets';
 import {
   CHAIN_LIGHTNING_DAMAGE,
@@ -33,11 +33,15 @@ import {
   STORMSTRIKE_DAMAGE_BONUS,
 } from '../../src/game/auras/shaman';
 import {
+  WINDFURY_WEAPON_ATTACK_ID,
+  WINDFURY_WEAPON_ATTACK_NAME,
   WINDFURY_WEAPON_ATTACK_POWER,
   WINDFURY_WEAPON_EXTRA_ATTACKS,
   WINDFURY_WEAPON_INTERNAL_COOLDOWN_MS,
   WINDFURY_WEAPON_PROC_CHANCE,
+  windfuryWeaponReaction,
 } from '../../src/game/reactions/shaman';
+import { WINDFURY_ATTACK_POWER, WINDFURY_DURATION_MS } from '../../src/game/buffs/windfury';
 import { SHAMAN_TALENT_EFFECTS } from '../../src/game/talents/shamanEffects';
 import { abilitiesForClass } from '../../src/game/abilities/abilitiesForClass';
 import type { TelemetryEvent } from '../../src/engine';
@@ -46,6 +50,7 @@ import { buildSimulation } from '../helpers/buildSimulation';
 import { makeAttacker, makeTarget } from '../helpers/actors';
 import {
   ELEMENTAL_FOCUS_CLEARCASTING,
+  WINDFURY_WEAPON_IMBUE,
   MAELSTROM_WEAPON_MAX_STACKS,
   SHAMAN_DAMAGE_SPELL_IDS,
   improvedStormstrikeAura,
@@ -57,6 +62,7 @@ import {
   LIGHTNING_OVERLOAD_FRACTION,
   MAELSTROM_WEAPON_PPM,
   elementalFocus,
+  maelstromWeapon,
   improvedStormstrike,
   lightningOverload,
 } from '../../src/game/reactions/shamanTalents';
@@ -1158,5 +1164,353 @@ describe('what is left, which is the claim this deep dive makes', () => {
       expect(magma[0].reason, id).toMatch(/coefficient/);
       expect(magma[0].scope, id).toBeUndefined();
     }
+  });
+});
+
+
+/*
+ * ============================================================================
+ * WINDFURY WEAPON IS NOT WINDFURY TOTEM, and for most of this project it was
+ * modelled as though it were.
+ *
+ * ----------------------------------------------------------------------------
+ * THE WHOLE REWORK PASSED THE SUITE UNTOUCHED, which is the reason this block
+ * exists. The old tests pinned the CONSTANTS -- 20%, two attacks, 333 attack
+ * power, a 3 second cooldown -- and that the reaction was registered. Not one
+ * of them asked what SHAPE the extra attacks took, so replacing "apply +466
+ * attack power for 1.5 seconds, then swing twice" with "deal two special
+ * attacks carrying +466" changed 21.8 DPS and broke nothing.
+ *
+ * That is the documented rule not being followed: assert the MECHANISM, not the
+ * declaration. Every test below would have failed on the old implementation.
+ *
+ * THE RULESET OWNER'S FOUR DIFFERENCES, given 2026-10-07:
+ *   1. a 3 second internal cooldown              (already true)
+ *   2. SPECIAL attacks -- no glancing, two rolls
+ *   3. the rank's attack power added INTO the hits, not as a temporary buff
+ *   4. it does NOT reset the auto-attack swing timer
+ * plus: its own damage row rather than being counted as an auto-attack.
+ * ============================================================================
+ */
+describe('Windfury Weapon, as a self-contained special attack', () => {
+  const enhancementPlayer = () => presetPlayer('shaman_enhancement');
+
+  /** Run one fight of the real profile and return its damage events. */
+  const fightEvents = (seed: number) => {
+    const built = PRESETS_BY_ID.get('shaman_enhancement')!.build();
+    const result = runProfile({
+      ...built,
+      simulation: { ...built.simulation, seed },
+    } as never);
+    return (result.timeline as readonly TelemetryEvent[]).filter(
+      (event): event is Extract<TelemetryEvent, { type: 'damage' }> => event.type === 'damage',
+    );
+  };
+
+  it('deals its hits on the SPECIAL table, so they can never glance', () => {
+    /*
+     * THE BIGGEST HALF OF THE REWORK, worth +15.8 DPS on its own. A glancing
+     * blow is both frequent and reduced against a level 63 target, and a
+     * special attack cannot glance: `melee-special` rolls miss, dodge and parry
+     * on the first roll and crit on the second, with no glance in either.
+     *
+     * Asserted over many fights on the OUTCOME, which is the thing that would
+     * change if the table did -- a constant saying 'melee-special' would pass
+     * while the hits were dealt on another one.
+     */
+    const outcomes = new Set<string>();
+    let hits = 0;
+    for (let seed = 1; seed <= 25; seed += 1) {
+      for (const event of fightEvents(seed)) {
+        if (event.abilityName !== WINDFURY_WEAPON_ATTACK_NAME) continue;
+        outcomes.add(event.outcome);
+        hits += 1;
+      }
+    }
+
+    expect(hits, 'Windfury dealt nothing at all').toBeGreaterThan(100);
+    expect([...outcomes].sort()).not.toContain('glance');
+    // And the outcomes it DOES produce are the special table's.
+    for (const outcome of outcomes) {
+      expect(['hit', 'crit', 'miss', 'dodge', 'parry'], outcome).toContain(outcome);
+    }
+  });
+
+  it('gets its own damage row, and does not share the imbue’s', () => {
+    /*
+     * `abilityBreakdown` builds ONE ROW PER NAME, with `uses` from cast events
+     * and `attempts` from damage events. The imbue is an ability called
+     * "Windfury Weapon", cast once and dealing nothing, so a shared name reads
+     * ONE USE and nine ATTEMPTS in a single row -- consistent, summing to 100%,
+     * and nonsense. The same shape as a pet's swing landing in the row called
+     * "Main Hand Auto-Attack", which became a documented fact about the BM
+     * Hunter in one reading.
+     */
+    expect(WINDFURY_WEAPON_ATTACK_NAME).not.toBe(WINDFURY_WEAPON.name);
+
+    const batch = batchOf('shaman_enhancement', 30, 3);
+    const imbue = batch.abilities.find((row) => row.abilityName === WINDFURY_WEAPON.name);
+    const attack = batch.abilities.find(
+      (row) => row.abilityName === WINDFURY_WEAPON_ATTACK_NAME,
+    );
+
+    // The imbue: cast once, deals nothing.
+    expect(imbue?.uses ?? 0).toBeCloseTo(1, 1);
+    expect(imbue?.damage ?? 0).toBe(0);
+
+    // The attacks: never cast, deal plenty.
+    expect(attack, 'no Windfury Attack row').toBeDefined();
+    expect(attack!.uses).toBe(0);
+    expect(attack!.damage).toBeGreaterThan(0);
+    expect(attack!.attempts).toBeGreaterThan(1);
+  });
+
+  it('is NOT reported as an auto-attack, which is where it used to land', () => {
+    /*
+     * `extraAttack` schedules a real SWING, and a swing is reported as "Main
+     * Hand Auto-Attack" -- so eight extra attacks a fight were invisible inside
+     * the auto-attack line, and the largest thing in the build after its own
+     * swing could not be read off the results page at all.
+     *
+     * The check is the COUNT: a 3.8 second weapon cannot swing more than about
+     * 20 times in a 58 second fight even fully hasted, so an auto-attack row
+     * carrying 33 attempts is carrying something else.
+     */
+    const batch = batchOf('shaman_enhancement', 30, 4);
+    const autos = batch.abilities.find((row) => row.abilityName === 'Main Hand Auto-Attack');
+    const weapon = enhancementPlayer().weapons.mainHand!;
+    const swingsIfUnhasted =
+      batch.representative.durationMs / weapon.swingTimerMs;
+
+    expect(autos, 'no auto-attack row').toBeDefined();
+    // Haste makes it swing faster than its base speed, so allow generous room
+    // -- but not the 2x that folding Windfury in produced.
+    expect(autos!.attempts).toBeLessThan(swingsIfUnhasted * 1.6);
+  });
+
+  it('folds the rank’s attack power into the hits rather than buffing the shaman', () => {
+    /*
+     * Worth +18.8 DPS, and the difference from a 1.5-second window is WHAT ELSE
+     * GETS PAID: a window also pays an ordinary swing or a Stormstrike landing
+     * inside it, where this pays exactly the two attacks it belongs to.
+     *
+     * Asserted by driving the reaction directly at two attack power settings
+     * and comparing the hit it produces, because the bonus is invisible in any
+     * stat block -- there is no aura to look for any more, which is the point.
+     */
+    /*
+     * A FRESH SIMULATION PER MEASUREMENT, which the first version of this test
+     * got wrong by reusing one: the two extra attacks are scheduled under an
+     * event id built from the actor and the index, so the second round's events
+     * collided with the first round's and produced no damage at all. Two runs,
+     * one variable.
+     */
+    const damageOf = (bonusPercent: number) => {
+      const attacker = makeAttacker({
+        autoAttack: 'none',
+        // No attack power of its own and no crit, so the ONLY power in the hit
+        // is the bonus the imbue folds in -- which is the thing under test.
+        stats: { attackPower: 0, critChance: -10_000, hitChance: 100 },
+        weapons: {
+          mainHand: {
+            name: 'Test',
+            baseDamage: 100,
+            swingTimerMs: 2000,
+            powerCoefficient: 2 / 14,
+          } as never,
+        },
+      });
+      const target = makeTarget();
+      const simulation = buildSimulation([attacker, target]);
+      simulation.begin();
+      simulation.applyAura(attacker, WINDFURY_WEAPON_IMBUE, attacker.id);
+
+      windfuryWeaponReaction(bonusPercent).onTrigger(simulation, attacker, {
+        attacker,
+        defender: target,
+        outcome: 'hit',
+        abilityId: undefined,
+        abilityName: 'Main Hand Auto-Attack',
+        amount: 1,
+        weaponSlot: 'mainHand',
+        critical: false,
+      });
+      // The attacks are SCHEDULED at this instant, so the queue has to run.
+      simulation.advanceTo(simulation.clock.now() + 1);
+
+      const hits = (simulation.recordedTelemetry as readonly TelemetryEvent[]).filter(
+        (event): event is Extract<TelemetryEvent, { type: 'damage' }> =>
+          event.type === 'damage' && event.abilityName === WINDFURY_WEAPON_ATTACK_NAME,
+      );
+      // Two attacks, every time: the count is part of the mechanism.
+      expect(hits).toHaveLength(WINDFURY_WEAPON_EXTRA_ATTACKS);
+      return hits.reduce((total, event) => total + event.amount, 0);
+    };
+
+    const plain = damageOf(0);
+    const boosted = damageOf(40);
+
+    expect(plain).toBeGreaterThan(0);
+    /*
+     * ELEMENTAL WEAPONS RAISES THE ATTACK POWER AND NOTHING ELSE, so 40% more
+     * bonus power is strictly more damage. Asserted as an inequality rather than
+     * a ratio, because the weapon damage roll is random and only the power term
+     * moves.
+     */
+    expect(boosted).toBeGreaterThan(plain);
+  });
+
+  it('does not reset the auto-attack swing timer, which the totem does', () => {
+    /*
+     * `extraAttack` completes the swing now and RESTARTS the slot's timer, so
+     * every proc pushed the next real swing out by a full cycle -- a cost that
+     * partly paid for its own extra attacks. The owner's ruling is that the
+     * imbue does not do this.
+     *
+     * Asserted on the PENDING SWING surviving the proc untouched, which is the
+     * mechanism: a reset replaces the handle.
+     */
+    const attacker = makeAttacker({
+      stats: { hitChance: 100 },
+      weapons: { mainHand: { name: 'Test', baseDamage: 100, swingTimerMs: 3800, powerCoefficient: 3800 / 14 } as never },
+    });
+    const target = makeTarget();
+    const simulation = buildSimulation([attacker, target]);
+    simulation.begin();
+    simulation.applyAura(attacker, WINDFURY_WEAPON_IMBUE, attacker.id);
+
+    simulation.advanceTo(1000);
+    const pendingBefore = attacker.pendingSwing('mainHand');
+
+    windfuryWeaponReaction(0).onTrigger(simulation, attacker, {
+      attacker,
+      defender: target,
+      outcome: 'hit',
+      abilityId: undefined,
+      abilityName: 'Main Hand Auto-Attack',
+      amount: 1,
+      weaponSlot: 'mainHand',
+      critical: false,
+    });
+    simulation.advanceTo(1001);
+
+    expect(attacker.pendingSwing('mainHand')).toBe(pendingBefore);
+  });
+
+  it('keeps the totem on the OLD shape, because the owner stated that one', () => {
+    /*
+     * Windfury Totem still applies an attack power window and still asks for a
+     * real extra SWING, by the ruleset owner's own description of it. The two
+     * are the same effect at different strengths and they must NOT be made to
+     * match -- which is easy to get wrong in exactly one direction, by
+     * "tidying" the totem to look like the imbue.
+     */
+    expect(WINDFURY_ATTACK_POWER).toBe(246);
+    expect(WINDFURY_DURATION_MS).toBe(seconds(1.5));
+    expect(WINDFURY_ATTACK_POWER).not.toBe(WINDFURY_WEAPON_ATTACK_POWER);
+    expect(WINDFURY_DURATION_MS).not.toBe(WINDFURY_WEAPON_INTERNAL_COOLDOWN_MS);
+  });
+
+  it('uses an id of its own, so no talent reaches it by accident', () => {
+    expect(WINDFURY_WEAPON_ATTACK_ID).not.toBe(WINDFURY_WEAPON.id);
+  });
+});
+
+/*
+ * ============================================================================
+ * MAELSTROM WEAPON ROLLS ON ALL THREE THINGS THAT SHOULD ROLL IT.
+ *
+ * The ruleset owner's question: Lightning Bolt fires about 1.5 times a fight,
+ * which is about 7 procs at five stacks each, and that looked low. Three things
+ * should roll it -- auto-attacks, Stormstrike, and the extra attacks Windfury
+ * grants -- and a rate that is low because ONE OF THE THREE IS NOT ROLLING
+ * looks exactly like a rate that is simply low.
+ *
+ * It is all three, at the right rate. `tools/maelstrom_probe.ts` prints the
+ * per-source observed chance beside the PPM chance the weapon's base speed
+ * implies; this pins the part a test can pin.
+ * ============================================================================
+ */
+describe('Maelstrom Weapon rolls on every melee weapon use', () => {
+  const use = (abilityId: string | undefined, slot: 'mainHand' | 'offHand' | 'ranged') =>
+    ({
+      attacker: {} as Combatant,
+      defender: {} as Combatant,
+      outcome: 'hit',
+      abilityId,
+      abilityName: abilityId ?? 'Main Hand Auto-Attack',
+      amount: 1,
+      weaponSlot: slot,
+      critical: false,
+    }) as never;
+
+  /** A shaman holding the Enhancement profile's own weapon. */
+  const shaman = () => {
+    const weapon = presetPlayer('shaman_enhancement').weapons.mainHand!;
+    return { weapons: { mainHand: weapon } } as unknown as Combatant;
+  };
+
+  it('rolls on an auto-attack, on Stormstrike AND on a Windfury attack', () => {
+    /*
+     * ALL THREE ARE MAIN-HAND WEAPON USES, which is the whole test: `isWeaponUse`
+     * reduces to "did a melee slot swing", and the Windfury attacks carry
+     * `weaponSlot: 'mainHand'` for exactly this reason. A Windfury attack that
+     * forgot it would be dealt, reported, and silently stop feeding the capstone.
+     */
+    const reaction = maelstromWeapon(20);
+    for (const abilityId of [undefined, 'stormstrike', WINDFURY_WEAPON_ATTACK_ID]) {
+      expect(
+        reaction.canTrigger!(alwaysRolls, shaman(), use(abilityId, 'mainHand')),
+        String(abilityId),
+      ).toBe(true);
+    }
+  });
+
+  it('does not roll on a spell, which has no weapon slot', () => {
+    const reaction = maelstromWeapon(20);
+    expect(reaction.canTrigger!(alwaysRolls, shaman(), use('lightning_bolt', 'ranged'))).toBe(
+      false,
+    );
+  });
+
+  it('rolls the PPM chance the weapon’s own base speed implies', () => {
+    /*
+     * THE RATE, not the mechanism. `ppmChance` is `speed / 60 x PPM`, so the
+     * number the reaction rolls against is a property of the weapon rather than
+     * a constant -- which is the difference between PPM and the flat chance this
+     * used to carry, and is why a slow two-hander and a fast one hand proc the
+     * same number of times a minute.
+     */
+    const weapon = presetPlayer('shaman_enhancement').weapons.mainHand!;
+    const speed = weapon.swingTimerMs / 1000;
+    const chance = ppmChance(speed, MAELSTROM_WEAPON_PPM);
+
+    // Scripted either side of the boundary, so the threshold is exact rather
+    // than sampled.
+    const justUnder = {
+      rng: { nextFloat: () => chance - 1e-9, rollChance: () => true, nextInt: () => 0 },
+      clock: { now: () => 0 },
+    } as unknown as SimulationContext;
+    const justOver = {
+      rng: { nextFloat: () => chance + 1e-9, rollChance: () => true, nextInt: () => 0 },
+      clock: { now: () => 0 },
+    } as unknown as SimulationContext;
+
+    const reaction = maelstromWeapon(20);
+    expect(reaction.canTrigger!(justUnder, shaman(), use(undefined, 'mainHand'))).toBe(true);
+    expect(reaction.canTrigger!(justOver, shaman(), use(undefined, 'mainHand'))).toBe(false);
+  });
+
+  it('feeds the capstone: the bolt is cast and the stacks are spent', () => {
+    /*
+     * THE END-TO-END CHECK, and the figure the owner asked about. At 5 PPM a
+     * 3.8 second weapon and about 35 melee uses a minute give roughly 10.5 procs
+     * a minute, which is about two full five-stack bolts in a 58 second fight.
+     * Asserted as a floor rather than a figure, because it is a rate question
+     * and the exact number belongs in the docs where it can carry an interval.
+     */
+    const batch = batchOf('shaman_enhancement', 40, 9);
+    const bolts = batch.abilities.find((row) => row.abilityName === 'Lightning Bolt')?.uses ?? 0;
+    expect(bolts).toBeGreaterThan(1);
   });
 });
