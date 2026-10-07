@@ -60,18 +60,26 @@ export const QUIVER_RANGED_SPEED_DIVISOR = 1.15;
  * there means -- `weaponDamageFor` computes `baseDamage x roll + coefficient x
  * AP`, and the ammo is inside the first half.
  *
- * `baserangedattackspeed` IS THE WEAPON'S OWN SPEED, BEFORE THE QUIVER, and
- * that is a reading rather than a transcription. The owner wrote "base", the
- * codebase already uses "base speed" to mean the un-modified figure
- * (`powerCoefficient` is `baseSpeed / 14`), and it is how Classic behaves: ammo
- * raises the weapon's DPS as displayed at base speed, and then anything that
- * makes you shoot faster -- the quiver, Rapid Fire -- multiplies that too.
+ * `baserangedattackspeed` IS THE WEAPON'S OWN SPEED, BEFORE THE QUIVER.
+ * RATIFIED BY THE RULESET OWNER, 2026-10-07 -- asked directly which of the two
+ * speeds they meant, the answer was "base speed is correct". It was an
+ * interpretation when it was written and it is a ruling now, which is the
+ * difference between a comment that invites a change and one that forbids it.
  *
- * THE CONSEQUENCE IS THAT AMMO IS WORTH MORE THAN 16.5 DPS IN PRACTICE. At
- * Rhok'delar's 3.2-second base it adds 52.8 a shot, and the quiver fires those
- * shots every 2.78 seconds instead -- about 19 DPS. The other reading, where
- * the quiver-shortened speed is used, pins it at exactly 16.5 forever. If the
- * owner meant that one it is a one-line change here.
+ * THREE THINGS AGREED BEFORE THEY DID, and they are kept because they are why
+ * the question was worth asking rather than guessing: the owner wrote "base";
+ * this codebase already uses "base speed" to mean the un-modified figure, since
+ * `powerCoefficient` is `baseSpeed / 14`; and the Forever Hunter wiki's own
+ * formula puts ONE speed symbol in both terms --
+ * `AmmoDPS x WeaponSpeed + (RAP / 14 x WeaponSpeed + Scope + AvgWeaponDmg)`,
+ * quoted in `rangedAttackPower.test.ts`'s header since long before any of this.
+ *
+ * THE CONSEQUENCE IS THAT AMMO IS WORTH MORE THAN 16.5 DPS IN PRACTICE, and
+ * that is intended rather than tolerated. At Rhok'delar's 3.2-second base it
+ * adds 52.8 a shot, and the quiver fires those shots every 2.78 seconds
+ * instead -- about 19 DPS. **DO NOT "FIX" THIS BY READING THE SHORTENED
+ * TIMER.** That is the rejected reading: it pins ammo at exactly 16.5 forever,
+ * stops the quiver and Rapid Fire from multiplying it, and looks tidier.
  * ----------------------------------------------------------------------------
  */
 export const AMMO_DAMAGE_PER_SECOND = 16.5;
