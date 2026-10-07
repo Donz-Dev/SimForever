@@ -58,7 +58,7 @@ current figures with `npx vite-node tools/measure_profiles.ts`.
 | --- | --- | --- | --- | --- | --- |
 | Combat | 18/33/0 | **586.3** | 419.8 | **+166.5** | `ROGUE_COMBAT` |
 | Venom | 37/12/2 | **510.6** | 392.7 | **+117.9** | `ROGUE_VENOM` |
-| Rupture | 12/8/31 | **488.5** | 377.1 | **+111.4** | `ROGUE_RUPTURE` |
+| Rupture | 12/8/31 | **493.8** | 377.1 | **+116.7** | `ROGUE_RUPTURE` |
 
 **THIS COLUMN IS KEPT CURRENT NOW, AND IT WAS NOT.** It stood at 461.8 / 440.2 /
 409.4 — the dive's own figures, correct on the day and moved four times since by
@@ -412,6 +412,68 @@ a dagger and either aura. It used to restate half that rule as
 `selfActive('cutthroat')`, which was harmless with one route and would have been
 wrong with two. It is not a floor under the list despite being ungated, because
 `checkCast` refuses it whenever neither aura is up.
+
+### CUTTHROAT WORKS, AND ITS WINDOWS WERE EXPIRING ANYWAY
+
+**Ambush 2.74 → 3.5 casts a fight, and Rupture 488.5 → 493.8.** Two questions
+were asked and the answer to both was no — and measuring them found the real
+loss, which was neither.
+
+**Cutthroat is not broken.** 207 windows over 300 fights and 30 of them end in an
+Ambush, so the aura-as-gate mechanism does fire. **And the list was not spending a
+Vanish during a Cutthroat proc** — zero occurrences in 300 fights, and zero
+Ambushes cast with both auras up.
+
+**177 of the 207 windows expired unspent, and the cause is energy.**
+
+| | |
+| --- | --- |
+| mean energy when a window OPENED | **0.2** |
+| mean PEAK energy during the ten seconds | 45.2 |
+| windows that ever reached Ambush's 60 | **30 of 207** |
+
+**CUTTHROAT PROCS OFF BACKSTAB, WHICH COSTS THE SAME 60 ENERGY**, so the proc
+always lands on an empty pool. Ten seconds is 100 energy of regeneration — and
+inside those 177 windows the list cast **156 Hemorrhages, 78 Ruptures, 62 Slice
+and Dices and 47 Backstabs**, spending the regeneration before any of it could be
+banked. The window was not too short.
+
+### The floor rule, upside down
+
+Ambush is **second** in this list and was still unreachable. **Priority does not
+reserve a resource**: an entry is checked, refused for cost, and the list walks
+past it to something affordable. So a CHEAP entry starves an expensive one from
+beneath however high the expensive one sits — which is the same mechanism that
+makes an ungated cheap ability a floor, seen from the other side.
+
+**So the fix is a condition on the cheap entries, not a reorder.** Hemorrhage and
+Backstab both hold while a Cutthroat window is open and the pool is short of 60.
+
+| | DPS (150 batches of 10) | |
+| --- | --- | --- |
+| before | 489.1 ± 2.1 | |
+| **hold Hemorrhage + Backstab** | **493.6 ± 2.1** | **+4.5, shipped** |
+| hold everything below Ambush | 490.8 ± 3.2 | worse — see below |
+
+**HOLDING MORE MEASURES WORSE.** Gating Slice and Dice and Rupture the same way
+reads 490.8: they are maintenance, and dropping a Rupture to buy an Ambush gives
+back more than it takes.
+
+**IT ONLY POOLS FOR CUTTHROAT, NOT FOR A STEALTH WINDOW.** Stealth is already
+spent every single time — 2.64 opened, 2.64 spent, none expired — because Vanish
+carries its own energy gate and never opens a window it cannot use. A condition
+for a case that does not arise is still a decision somebody has to read.
+
+**AND VANISH NOW REFUSES WHILE CUTTHROAT IS UP**, which is the owner's
+instruction and measures exactly nothing: 493.0 either way. It ships because the
+reason it cannot happen today is an **ordering rather than a rule** — Ambush is
+above Vanish so it wins whenever affordable, and when it is not affordable
+Vanish's own energy gate refuses too, because the two share a cost. Both of those
+are accidents a later edit could move.
+
+**+4.5 IS BELOW WHAT THE 30-BATCH HARNESS CAN REPORT**, which is why the test
+asserts the CONDITION on the real list entries rather than a DPS delta. The
+containment run calls it noise; 150 batches separate it.
 
 ### Three refinements measured, one shipped
 
