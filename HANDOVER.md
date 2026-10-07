@@ -979,6 +979,42 @@ named exception, and the reason is legible: the bleed is the PRODUCT of a critic
 strike, so critting again pays the same roll twice. It is the only clause here
 that costs damage, and it costs 19 to 31.
 
+**WINDFURY WEAPON IS NOT WINDFURY TOTEM, AND IT WAS MODELLED AS THOUGH IT WERE.**
+Enh Shaman 604.0 to **625.8, +21.8, REAL**, and the other twenty-two profiles
+identical to the decimal. The ruleset owner separated the two effects on
+2026-10-07: the imbue "grants 2 extra SPECIAL attacks with the rank's added
+attack power", which differs from the totem in four ways, and the borrowed
+implementation got every one of them wrong.
+
+| | What the totem does, and the imbue was doing | The imbue's own rule | Worth |
+| --- | --- | --- | --- |
+| the attacks | an extra SWING, on `melee-auto` | **SPECIAL** attacks, `melee-special`: two rolls and **no glancing blow** | **+15.8** |
+| the attack power | +466 as a 1.5-second AURA | **folded into the hits themselves** | **+18.8** |
+| the swing timer | `extraAttack` restarts the slot | **not reset** | ~1 extra swing a fight |
+| the report | counted as "Main Hand Auto-Attack" | **its own row** | 15.9% of the build |
+
+**THE FIRST TWO COMPOUND: +31.6 TOGETHER against +34.6 apart**, because a
+glancing blow was reducing the bonus attack power as well as the weapon damage.
+The net is +21.8 rather than +31.6 because the old window also paid an ordinary
+swing or a Stormstrike that happened to land inside it, which partly compensated
+for everything else it got wrong.
+
+**AND THE ROW WAS 15.9% OF THE BUILD, HIDING INSIDE THE AUTO-ATTACK LINE.** A
+swing is reported as "Main Hand Auto-Attack", so the auto-attack row carried 34
+attempts a fight on a weapon that cannot swing more than about 20 times -- the
+second-largest damage source in the build, invisible, with the shares summing to
+a tidy 100%. **It is "Windfury Attack" now and the imbue keeps its own name**:
+`abilityBreakdown` builds one row per NAME and takes `uses` from casts, so
+sharing the name produced a single row reading ONE USE and nine ATTEMPTS.
+
+**MAELSTROM WEAPON WAS ASKED ABOUT IN THE SAME MESSAGE AND IS CORRECT.**
+`tools/maelstrom_probe.ts` counts the rolls per source against the chance the
+weapon's base speed implies: auto-attacks 31.2%, Windfury attacks 32.6%,
+Stormstrike 30.7%, against 31.67% for a 3.80-second weapon at 5 PPM. All three
+roll, none is missing. The bolt count is low because the ARITHMETIC says so --
+about 35 melee uses a minute at 31.67% is 11 procs a minute, and five stacks buy
+one bolt -- so 1.7 casts a fight is what 5 PPM means here, not a broken trigger.
+
 **FLURRY'S TRIGGER MOVED ONE PROFILE, AND IT IS A RULING RATHER THAN A FIX.**
 Enh Shaman 593.5 to **604.0, +10.5** -- inside the two runs' combined interval, so
 the harness calls it noise, but the direction and cause are certain because a
@@ -1051,7 +1087,7 @@ Hemo moves five rows between the two columns, which is exactly that kind of edit
 | Fire Mage | Mage | 10/39/2 | 624.0 | | Venom Rogue | Rogue | 37/12/2 | 510.6 |
 | Frostfire Mage | Mage | 0/29/22 | 623.2 | | Rupture Rogue | Rogue | 12/8/31 | 497.6 |
 | 2H Arms | Warrior | 38/13/0 | 621.1 | | Bear Druid | Druid | 9/42/0 | **523.1** |
-| Enh Shaman | Shaman | 19/32/0 | 604.0 | | LW Ranged | Hunter | 7/39/5 | **486.5** |
+| Enh Shaman | Shaman | 19/32/0 | **625.8** | | LW Ranged | Hunter | 7/39/5 | **486.5** |
 | BM Hunter | Hunter | 31/20/0 | **595.7** | | Moonkin | Druid | 38/0/13 | ****513.4**** |
 | Combat Rogue | Rogue | 18/33/0 | 586.3 | | Prot Warr | Warrior | 17/0/34 | 457.0 |
 | Shockadin | Paladin | 23/0/28 | **581.2** | | Ele Shaman | Shaman | 38/13/0 | 440.2 |
@@ -1193,7 +1229,7 @@ Measured at `d2718b0`, and the numbers say it is not close:
 | **64 of 468 talents are a live gap** | well down from a raw count of 251 unmodelled reasons, because 95 are permanently out of scope by ruling and 35 more are PARTLY modelled. See the census below, and **re-sum it rather than adjusting it** — the raw total is not a work queue. **The Warrior is at zero**, the first class to get there |
 | **114 abilities declared against 478 captured** | the data is on disk; the declarations are not. Druid 15, Hunter 14, Mage 13, Rogue 12, Warlock 10, Shaman 9, Priest 7, Paladin 6, plus the Warrior's 27. **THE WARRIOR IS RECONCILED**, which is what the exclusion list below actually means: 42 captured against 30 declared counting its three stances, and each of the 12 that are not declared is named — 3 that Forever has and nothing here needs, 9 that are threat or crowd control by ruling. See [docs/warrior.md](docs/warrior.md). It is the only class where the subtraction balances |
 | ~~**Coefficients**~~ | **DONE, AND NOW EVERY ROW IS APPLIED.** `WoWSimWorksheet.xlsx`, the owner's authoritative coefficient document, is transcribed in `src/game/combat/coefficients.ts` and applied across all nine classes. Every derived rule is deleted. The last unapplied row was Hammer of Wrath, which was not a declared ability until the owner put it in two Paladin priority lists; the two poison rows went the same way when the poison system landed. [docs/spell-coefficients.md](docs/spell-coefficients.md) |
-| **10 `PLACEHOLDER_*` constants** | each a real number nobody has supplied. **COUNT THE DECLARATIONS, DO NOT ADJUST THE NUMBER**: `grep -rhoE "(export )?const PLACEHOLDER_[A-Z_]+" src/ \| grep -oE "PLACEHOLDER_[A-Z_]+" \| sort -u \| wc -l`. **THE COMMAND THAT USED TO BE HERE COUNTED MENTIONS AND OVER-COUNTED BY FIVE** -- a deleted placeholder leaves its NAME behind in the comment explaining what it used to be, and Combustion's duration, Maelstrom Weapon's chance, the pet's base DPS, the pet's swing and the old coefficient cast cap are all epitaphs rather than placeholders now. That is why this figure has been wrong three times: the instruction was right and its command was not. Sniper Shot's invented 200-mana cost is gone, but it was never one of these -- it was a bare literal with a false caveat, which is worse, because an invented number that is not named cannot be audited |
+| **9 `PLACEHOLDER_*` constants** | each a real number nobody has supplied. **COUNT THE DECLARATIONS, DO NOT ADJUST THE NUMBER**: `grep -rhoE "(export )?const PLACEHOLDER_[A-Z_]+" src/ \| grep -oE "PLACEHOLDER_[A-Z_]+" \| sort -u \| wc -l`. **THE COMMAND THAT USED TO BE HERE COUNTED MENTIONS AND OVER-COUNTED BY FIVE** -- a deleted placeholder leaves its NAME behind in the comment explaining what it used to be, and Combustion's duration, Maelstrom Weapon's chance, the pet's base DPS, the pet's swing and the old coefficient cast cap are all epitaphs rather than placeholders now. That is why this figure has been wrong three times: the instruction was right and its command was not. Sniper Shot's invented 200-mana cost is gone, but it was never one of these -- it was a bare literal with a false caveat, which is worse, because an invented number that is not named cannot be audited |
 | ~~**Rotations are thin and unmeasured**~~ | **DONE.** All 23 priority lists are the ruleset owner's own, specified entry by entry, and every one is measured — see the baseline above and [docs/handoff-rotations.md](docs/handoff-rotations.md). The twelve dead entries of that round are gone; the nine that remain are listed in [docs/ability-audit.md](docs/ability-audit.md), each with a reason and none of them a broken declaration. Fourteen abilities and three talent mechanics were declared to reach them, and six engine capabilities built |
 
 **The Warrior was built first and built properly, and it is not the norm.** Read
@@ -1382,10 +1418,11 @@ does not have, which is the check in the other direction. Each class is one
 | --- | --- | --- |
 | ~~`PLACEHOLDER_SEAL_OF_COMMAND_PPM`~~ | **7, and real** | **Answered.** The owner has confirmed 7 procs-per-minute, so the constant is `SEAL_OF_COMMAND_PPM` and the fourth-highest profile loses its one big asterisk. The value did not move; what moved is whether it can be quoted |
 | ~~`PLACEHOLDER_PET_BASE_DPS`~~ | — | **DELETED 2026-10-01.** The owner supplied the whole pet model — 36.34–55.32 a swing at 2.0 seconds, from 136 strength and 100 agility, with attack power and crit formulas — so there is nothing left for a placeholder to hold. Worth **−193.0** to BM Hunter |
-| `PLACEHOLDER_MAELSTROM_WEAPON_PROC_CHANCE` | 20 | the tooltip says only "a chance" |
+| ~~`PLACEHOLDER_MAELSTROM_WEAPON_PROC_CHANCE`~~ | ~~20~~ | **DELETED 2026-09-30.** The owner gave **5 PPM**, which changed the SHAPE as well as the number. This row survived as an epitaph after the constant went, which is the over-counting the note above describes |
 | `PLACEHOLDER_SOUL_SHARDS` | 10 | what a Warlock banks before a pull. No in-fight income |
 | `PLACEHOLDER_COMBUSTION_DURATION_MS` | 30s | its real end is "until 4 crits", which nothing counts. Generous |
-| `PLACEHOLDER_WINDFURY_WEAPON_DURATION_MS` / `_INTERNAL_COOLDOWN_MS` | 1.5s | borrowed from Windfury Totem, whose window the owner stated. The SoD trinket tooltip says 2s where the code carries 1.5 |
+| ~~`PLACEHOLDER_WINDFURY_WEAPON_DURATION_MS`~~ | ~~1.5s~~ | **DELETED 2026-10-07, and not by being answered.** It held the imbue's attack power WINDOW, borrowed from Windfury Totem. The owner's ruling is that the imbue has no window at all -- the attack power is "added into the hits themselves" -- so there is nothing left for a placeholder to hold. **A placeholder can be retired by the QUESTION going away rather than by the number arriving**, and the borrow is what made that visible: an unnamed 1.5 would have survived the rework. The claimed SoD trinket tooltip reading 2s does not exist anywhere in this repository and the claim is withdrawn |
+| ~~`PLACEHOLDER_WINDFURY_WEAPON_INTERNAL_COOLDOWN_MS`~~ | ~~1.5s~~ | **DELETED 2026-09-30.** The owner gave **3 seconds for the imbue**; the totem's 1.5 is still right for the totem |
 | `PLACEHOLDER_FLURRY_DURATION_MS` / `_REVENGE_WINDOW_MS` | 12s / 5s | Warrior-era; charges end Flurry in practice. **`_BERSERKER_RAGE_DURATION_MS` is gone**: all three sources say "Lasts 10 sec", and the placeholder's reason was a claim about the owner's spreadsheet being silent — true of the spreadsheet and irrelevant to the data |
 | ~~`PLACEHOLDER_PET_SWING_SECONDS`~~ | — | **DELETED 2026-10-01.** "Base Swing Time = 2.0 seconds", stated, and it is the speed the `2 / 14` in the owner's damage formula is the coefficient for — so the two halves cannot disagree |
 | `PLACEHOLDER_BOSS_*` | 5000 / 2s / 15% | the encounter, not a class. See [docs/incoming-damage.md](docs/incoming-damage.md) |
