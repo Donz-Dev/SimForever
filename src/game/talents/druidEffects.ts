@@ -445,12 +445,27 @@ export const DRUID_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
 
   naturalist: [
     /*
-     * "Increases all damage you deal" with no condition, which is the one
-     * blanket multiplier in this tree that is genuinely blanket. Expressed as
-     * `conditionalDamage` with no requirement, the only declaration that
-     * reaches `damageMultiplier`.
+     * "Reduces the cast time of your Healing Touch spell by 0.5 sec and
+     * increases all damage you deal by 5%."
+     *
+     * THE SECOND NUMBER, AND READING THE FIRST COST A FACTOR OF TEN. The row
+     * is `[0.5, 5]` -- a number of SECONDS and then a percentage -- and
+     * `conditionalDamage` had no `valueIndex`, so it read 0.5 as a percentage
+     * and a rank-5 Moonkin carried x1.005 where it should carry x1.05.
+     *
+     * NOTHING COULD HAVE NOTICED. Half a percent is a perfectly plausible
+     * blanket multiplier, the talent reported itself fully modelled, and the
+     * only published check on it was a profile DPS figure that had been
+     * measured with the bug in. It is the trap `abilityDamage.valueIndex`
+     * already documents on Improved Corruption, on a sibling effect kind that
+     * never got the field.
+     *
+     * "Increases all damage you deal" with no condition is the one blanket
+     * multiplier in this tree that is genuinely blanket, which is why this is
+     * `conditionalDamage` with an empty requirement -- the only declaration
+     * that reaches `damageMultiplier` and therefore the auto-attacks too.
      */
-    { kind: 'conditionalDamage', requires: {} },
+    { kind: 'conditionalDamage', requires: {}, valueIndex: 1 },
     { kind: 'unmodelled', scope: 'healing', reason: 'The damage applies. Its Healing Touch cast time does not.' },
   ],
 

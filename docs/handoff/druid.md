@@ -36,17 +36,24 @@ question** — the count was wrong for as long as nobody did.
 
 ## The profiles
 
-| Profile | Talents | DPS | was | List | Style |
-| --- | --- | --- | --- | --- | --- |
-| Cat | 9/35/7 | **656.1** | 488.0 | `DRUID_CAT` | cat (paws) |
-| Bear | 9/42/0 | **444.7** | 376.2 | `DRUID_BEAR` | bear (paws) |
-| Moonkin | 38/0/13 | **398.0** | 384.3 | `DRUID_MOONKIN` | caster |
+| Profile | Talents | DPS | List | Style |
+| --- | --- | --- | --- | --- |
+| Cat | 9/35/7 | **716.4** | `DRUID_CAT` | cat (paws) |
+| Bear | 9/42/0 | **488.5** | `DRUID_BEAR` | bear (paws) |
+| Moonkin | 38/0/13 | **494.0** | `DRUID_MOONKIN` | caster |
 
-**CAT IS NOW THE HIGHEST PROFILE IN THE PROJECT**, above DW Fury's 652.0, and it
-got there from ninth. That is a claim worth distrusting, so it is attributed
-rather than asserted — `npx vite-node tools/druid_attribution.ts` reprints the
-table below, 30 batches of 10 per variant, each variant taking one talent back
-out of the build.
+**THESE ARE CURRENT AND THE TABLE USED TO CARRY A "was" COLUMN**, which is gone
+because it had stopped being about this class: the figures moved 656.1 → 716.4,
+444.7 → 488.5 and 398.0 → 494.0 mostly on work done elsewhere — caster gear, the
+Staff of Dominance, Sunder Armor — and a before-and-after column that mixes six
+causes tells nobody anything. HANDOVER.md's baseline table is the live figure;
+reprint it rather than trusting this one.
+
+**CAT IS THE HIGHEST PROFILE IN THE PROJECT**, above DW Fury's 667.5, and it got
+there from ninth. That is a claim worth distrusting, so it is attributed rather
+than asserted — `npx vite-node tools/druid_attribution.ts` reprints the table
+below. **MEASURED AT THE 656.1 BASELINE**, so read it as a RELATIVE attribution
+of where the deep dive's gain came from and not as a set of current figures.
 
 | | Cat | Bear | Moonkin |
 | --- | --- | --- | --- |
@@ -198,6 +205,26 @@ none of them. **Three are worth knowing, and one of them was a real bug:**
   `critFrom` everywhere else in the pipeline, and a bleed's own ticks would
   otherwise be amplified BY THE BLEED BEING UP — Rip would raise Rip. **The
   looser reading measured the Cat a third higher**, which is how plausible it is.
+- **NATURALIST WAS READING A NUMBER OF SECONDS AS A PERCENTAGE**, for the whole
+  life of the talent. Its row is `[0.5, 5]` — "reduces the cast time of your
+  Healing Touch spell by 0.5 sec AND increases all damage you deal by 5%" — and
+  `conditionalDamage` had no `valueIndex`, so a rank-5 Moonkin carried **x1.005
+  instead of x1.05**. Worth **+21.2 to the Moonkin and +12.6 to the Cat** when
+  fixed, and it is the one talent in these trees that reaches the paw swings as
+  well as the spells, because `damageMultiplier` is the only scope that does.
+  **Nothing could have caught it**: half a percent is a plausible multiplier, the
+  talent reported itself FULLY modelled so the census never questioned it, and
+  the only check on its magnitude was a DPS figure measured with the bug in.
+  `tests/game/talentValueIndex.test.ts` now records all eleven blanket
+  multipliers in the project with what each one's index means.
+- **AND THICK HIDE IS MODELLED WITH THE WRONG RULE, found by the same sweep.**
+  Forever's is "{0} additional base Armor per LEVEL and another {1} base Armor
+  for each point of DEFENSE SKILL beyond five times your level"; it is declared
+  as `itemArmorPercent`, which is a percentage of ITEM armor and is exactly right
+  for Toughness and expresses neither clause. At rank 3 the first clause alone is
+  180 armor against the ~33 the Bear gets. **Not fixed here** — it needs a new
+  effect kind, and it moves the Bear's rage the counter-intuitive way, since more
+  armor means less damage taken means less rage.
 - **Mangle was RENAMED to Primal Bite** between client builds. It is 27.0% of the
   Bear's damage under the new name. Build drift is found only by refreshing
   captures, never by cross-checking.
