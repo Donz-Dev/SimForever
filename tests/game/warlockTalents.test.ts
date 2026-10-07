@@ -25,11 +25,12 @@ import { COMBAT_CONSTANTS } from '../../src/game/combat/attackChances';
  * THE WARLOCK TALENTS THAT SELECT A LIST OF ABILITIES, and the two that select
  * a TREE and were reading a SCHOOL instead.
  *
- * ASSERTING THE MECHANISM AND NOT A DPS DELTA, by the standing rule. Three of
- * the five talents here are worth EXACTLY ZERO to the profile that takes them,
- * because the only ability they reach is Wrack and no list casts Wrack. A
- * talent working and a talent mattering are different questions, and a test
- * that measured the second would say the first was broken.
+ * ASSERTING THE MECHANISM AND NOT A DPS DELTA, by the standing rule -- and
+ * this file is the worked argument for that rule. Three of the five talents
+ * here reach only Wrack, which was in no list when they were written, so all
+ * three were worth EXACTLY ZERO and all three were correct. Wrack is in the
+ * SM/DS list now and they are live, and NOT ONE ASSERTION HERE CHANGED. A test
+ * written against a DPS delta would have had to be rewritten twice.
  *
  * THE BONUS HALF IS THE NUMBER TO GET RIGHT. A spell crit multiplies by 1.5, so
  * "+100% critical strike damage bonus" adds 0.5 and takes it to 2.0x. Reading
@@ -50,6 +51,30 @@ const playerFor = (preset: string): Combatant => {
     talents: built.talents,
     equipment: built.equipment,
   });
+};
+
+/**
+ * The same character with its PRIORITY LIST taken away.
+ *
+ * ----------------------------------------------------------------------------
+ * A `createPlayer` COMBATANT CARRIES A ROTATION, AND A TEST THAT RUNS THE CLOCK
+ * IS THEREFORE TESTING THE LIST TOO. That is how the Soul Siphon test below
+ * broke: it cast Wrack once, ran ten seconds, and summed every `wrack` damage
+ * event -- and when Wrack entered the SM/DS list the ROTATION cast it again
+ * inside the window. Worse, it did so ASYMMETRICALLY: the second cast is gated
+ * on the three bleeds being up, so the "three bleeds" arm got ten ticks and the
+ * "no bleeds" arm got six. The ratio read 2.27 against an expected 1.36 and
+ * neither number was about Soul Siphon.
+ *
+ * IT WAS A LATENT FLAW THAT A LIST CHANGE EXPOSED, not a mechanism breaking:
+ * the test was only ever correct while Wrack was in no list, and nothing said
+ * so. Any test that advances the clock on a built character wants this.
+ * ----------------------------------------------------------------------------
+ */
+const soloPlayerFor = (preset: string): Combatant => {
+  const actor = playerFor(preset);
+  (actor as { rotation?: unknown }).rotation = undefined;
+  return actor;
 };
 
 describe('Pandemic, the first talent to reach critMultiplierBonus', () => {
@@ -167,7 +192,9 @@ describe('Improved Drains and Soul Siphon, which reach Wrack and nothing else', 
      */
     const damageWith = (dots: number): number => {
       const events: TelemetryEvent[] = [];
-      const caster = playerFor('warlock_smds');
+      // NO ROTATION -- see `soloPlayerFor`. With one, the list casts Wrack a
+      // second time inside the window and only when the bleeds are up.
+      const caster = soloPlayerFor('warlock_smds');
       const target = makeTarget({ maxHealth: 100_000_000 });
       const simulation = buildSimulation(
         [caster, target],
@@ -232,7 +259,7 @@ describe('Wrack, whose debuff amplifies only damage OVER TIME', () => {
      */
     const damageOf = (abilityId: string, amplified: boolean): number => {
       const events: TelemetryEvent[] = [];
-      const caster = playerFor('warlock_smds');
+      const caster = soloPlayerFor('warlock_smds');
       const target = makeTarget({ maxHealth: 100_000_000 });
       const simulation = buildSimulation(
         [caster, target],

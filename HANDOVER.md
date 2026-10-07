@@ -1246,8 +1246,8 @@ Hemo moves five rows between the two columns, which is exactly that kind of edit
 | **LW Melee** | Hunter | 7/13/31 | **631.4** | | Venom Rogue | Rogue | 37/12/2 | 510.6 |
 | Enh Shaman | Shaman | 19/32/0 | 625.8 | | Rupture Rogue | Rogue | 12/8/31 | 497.6 |
 | Fire Mage | Mage | 10/39/2 | 622.0 | | Prot Warr | Warrior | 17/0/34 | 457.0 |
-| 2H Arms | Warrior | 38/13/0 | 621.1 | | Ele Shaman | Shaman | 38/13/0 | 440.2 |
-| Combat Rogue | Rogue | 18/33/0 | 586.3 | | SM/DS | Warlock | 40/11/0 | 435.9 |
+| 2H Arms | Warrior | 38/13/0 | 621.1 | | SM/DS | Warlock | 40/11/0 | 441.5 |
+| Combat Rogue | Rogue | 18/33/0 | 586.3 | | Ele Shaman | Shaman | 38/13/0 | 440.2 |
 | Shockadin | Paladin | 23/0/28 | 585.5 | | Prot Pally | Paladin | 8/36/7 | 303.9 |
 
 **THE TOP TWO ARE INDISTINGUISHABLE AND THE TABLE SHOULD NOT BE READ AS A
