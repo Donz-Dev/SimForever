@@ -38,9 +38,9 @@ question** — the count was wrong for as long as nobody did.
 
 | Profile | Talents | DPS | List | Style |
 | --- | --- | --- | --- | --- |
-| Cat | 9/35/7 | **716.4** | `DRUID_CAT` | cat (paws) |
-| Bear | 9/42/0 | **488.5** | `DRUID_BEAR` | bear (paws) |
-| Moonkin | 38/0/13 | **494.0** | `DRUID_MOONKIN` | caster |
+| Cat | 9/35/7 | **749.7** | `DRUID_CAT` | cat (paws) |
+| Moonkin | 38/0/13 | **516.8** | `DRUID_MOONKIN` | caster |
+| Bear | 9/42/0 | **494.8** | `DRUID_BEAR` | bear (paws) |
 
 **THESE ARE CURRENT AND THE TABLE USED TO CARRY A "was" COLUMN**, which is gone
 because it had stopped being about this class: the figures moved 656.1 → 716.4,
@@ -225,6 +225,23 @@ none of them. **Three are worth knowing, and one of them was a real bug:**
   180 armor against the ~33 the Bear gets. **Not fixed here** — it needs a new
   effect kind, and it moves the Bear's rage the counter-intuitive way, since more
   armor means less damage taken means less rage.
+- **NATURE'S REACH IS 4% HIT AND WAS DOING NOTHING, AND A `scope` IS WHY.** Its
+  tooltip is "increases the RANGE of your offensive Balance spells by 20% **and
+  improves your chance to hit by 4%**", and it was declared as a single
+  `positioning` entry reading "Range, and nothing here has a position" -- true of
+  the first clause and silent about the second. **All three profiles take it at
+  rank 2**, so all three were short 4% hit for the life of the talent.
+  **A `scope` IS THE WORST PLACE FOR A CLAUSE TO GO MISSING**, because it is
+  permanent by design: the talent was counted as RULED OUT rather than as a live
+  gap, so the Druid's live-gap count was 2 before the fix and 2 after it, and the
+  audit that exists to find unfinished work had nothing to say. Classic's
+  Nature's Reach is range and nothing else, which is why the name and the first
+  clause agreed with each other and with nothing else. **Read every clause before
+  writing a scope, and never write one from the name.**
+  Worth **+33.3 to the Cat, +22.8 to the Moonkin and +6.3 to the Bear**, and ONE
+  `hitChance` entry covers all three: the spell branch of `attackChances` reads
+  that stat directly and the melee branches read it through `missFromSkill`, so
+  no per-table split was needed.
 - **MOONKIN AURA AND LEADER OF THE PACK ARE ONE AURA, NOT TWO, and the id is
   the whole rule.** The owner: "these are all the same exclusive 3% global
   critical strike chance and do not stack." So `PARTY_CRIT_AURA` is one

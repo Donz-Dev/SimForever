@@ -101,7 +101,7 @@ which is more than an ungeared character has. A Warrior with 5.14% crit lands at
 | | |
 | --- | --- |
 | Dual-wield miss penalty | **+19%, in full on both weapons** |
-| Spell miss (resist) | 17%, unaffected by weapon skill |
+| Spell miss (resist) | 17%, unaffected by weapon skill, **flooring at 1%** |
 | Enemy parry | 14%, or 0% (see below) |
 | Melee / ranged crit | 2x |
 | Spell crit | 1.5x |
@@ -110,6 +110,39 @@ which is more than an ungeared character has. A Warrior with 5.14% crit lands at
 The dual-wield penalty is applied **in full to each weapon**, not halved and not
 applied to one hand. Special attacks never carry it: a special is one strike,
 not one per hand.
+
+**THE SPELL HIT CAP IS 16%, BECAUSE THE MISS FLOORS AT 1%.** The ruleset owner:
+17% base, "reduced to a minimum of 1% chance to miss. Effectively making the
+'hit cap' 16% for Spells." The seventeenth point of spell hit buys nothing.
+
+It is `AttackChances.missFloor`, carried **on the table** rather than applied
+where the table is built, and the reason is that hit arrives along **two**
+routes and only one of them goes through `attackChances`:
+
+| Route | Folded in by | Examples |
+| --- | --- | --- |
+| the character-wide `hitChance` stat | `attackChances` | gear, Nature's Reach |
+| a SCHOOL-scoped `hitBonus` | `withModifier`, later | Arcane Focus, Shadow Focus, three more |
+
+A floor applied at the first is a floor the second walks around — and **one
+profile was already walking around it**. The Shockadin takes Divine Precision
+for +12% Holy hit on top of 6% from gear, which is 18 points against a 17% miss:
+its Holy spells could not miss at all. It is the only profile of the
+twenty-four that the floor touches, and it is worth −2.4 DPS.
+
+**CHECKING ONE ROUTE SAID NOBODY WAS AT THE CAP.** No profile exceeds 16% on the
+`hitChance` stat, so a probe over that stat alone reported the floor as a guard
+for the future. It was already load-bearing.
+
+Carried on the table, both routes respect it. Melee and ranged state no floor
+and pass 0 — the owner stated this for spells, and `missFromSkill` is a
+different formula with a skill term in it.
+
+**A SPELL HAS NO HAND, either.** `attackChances` defaults an unnamed slot to
+`mainHand` and the melee term adds that hand's own hit bonus; the spell branch
+reads the character-wide stat alone. Nothing grants main-hand hit today, so it
+is worth zero — and the day something does, a spell quietly collecting it would
+look exactly like a correct number.
 
 **Ranged is an interpretation.** The source gives no ranged formula, so ranged
 attacks use the special-attack shape with the ranged weapon's skill: no
@@ -176,7 +209,31 @@ The ability declares its table once and reads it back through
 ## Effects that land but deal no direct damage
 
 A damage-over-time spell still rolls the **spell** table once, to see whether it
-was resisted. Its ticks then land unconditionally.
+was resisted. Its ticks then land unconditionally. The ruleset owner states both
+halves: a DoT **application** rolls to hit, and "once a DoT effect is applied to
+a target it no longer checks hit chance".
+
+**ONE ABILITY SKIPPED THE FIRST HALF FOR MOST OF ITS LIFE.** Serpent Sting
+declared `ranged-special` and applied its aura unconditionally, so it was the
+only damage-over-time effect in the project that could not miss. Every other one
+either gates the aura on `dealDamage`'s own outcome — Moonfire, Immolate, Flame
+Shock — or rolls explicitly, as Rip, Rend, Rupture and Lacerate do.
+
+It was invisible because **a missing miss is not an error**: the sting landed
+every cast, its ticks were the right size, and the damage table summed to 100%.
+The figure was simply high by the ranged miss chance.
+
+**A PURE DoT HAS NO DAMAGE EVENT TO CARRY THE ROLL**, which is the shape to
+check. An ability that deals damage AND applies an aura gets the roll for free
+from `dealDamage`; one that only applies an aura has to ask for it. Those are
+the ones to read.
+
+Three abilities apply an aura without rolling **on purpose**, and all three are
+non-DoT debuffs rather than damage over time: Thunder Clap's slow (with a comment
+saying the slow is a separate effect of the cast), Wrack's amplification, and the
+Seal of the Crusader branch of Judgement, which deals no damage at all. **Whether
+a debuff-only cast should be able to miss is a question for the owner**, not a
+bug — it is recorded as one.
 
 ```typescript
 const landed = simulation.rollAttack('spell', caster, target);

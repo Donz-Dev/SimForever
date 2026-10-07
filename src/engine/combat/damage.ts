@@ -659,10 +659,23 @@ function withModifier(chances: AttackChances, modifier: AbilityModifier): Attack
   if (!modifier.critBonus && !modifier.critMultiplierBonus && !modifier.hitBonus) return chances;
   return {
     ...chances,
-    // FLOORED AT ZERO. Every other band is read as an offset from this one, so a
-    // negative miss would push dodge and parry into the space below the die and
-    // hand out avoidance that was never rolled for.
-    miss: Math.max(0, chances.miss - toRollUnits(modifier.hitBonus ?? 0)),
+    /*
+     * FLOORED AT THE TABLE'S OWN FLOOR, and at zero where it states none. Every
+     * other band is read as an offset from this one, so a negative miss would
+     * push dodge and parry into the space below the die and hand out avoidance
+     * that was never rolled for -- that is why there was always a floor here.
+     *
+     * WHAT CHANGED IS WHOSE FLOOR IT IS. The spell table states 1%, which makes
+     * 16 points of spell hit the most a caster can use, and this is one of the
+     * TWO places spell miss is reduced: `attackChances` folds in the
+     * character-wide `hitChance` stat and this folds in a SCHOOL-scoped
+     * `hitBonus`. A floor in only one of them is a floor a build can walk
+     * around by stacking the other.
+     */
+    miss: Math.max(
+      chances.missFloor ?? 0,
+      chances.miss - toRollUnits(modifier.hitBonus ?? 0),
+    ),
     crit: chances.crit + toRollUnits(modifier.critBonus ?? 0),
     critMultiplier: chances.critMultiplier + (modifier.critMultiplierBonus ?? 0),
   };
