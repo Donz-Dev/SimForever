@@ -6,6 +6,8 @@ import { abilitiesForClass } from '../../src/game/abilities/abilitiesForClass';
 import type { Ability, TelemetryEvent } from '../../src/engine';
 import { NO_CHANCES, castAbility, seconds } from '../../src/engine';
 import { buildSimulation } from '../helpers/buildSimulation';
+import { Simulation } from '../../src/engine';
+import { trainingDummyEncounter } from '../../src/simulator/trainingDummyEncounter';
 import { makeAttacker, makeTarget } from '../helpers/actors';
 import {
   BANE_OF_AGONY_SP_COEFFICIENT,
@@ -28,7 +30,6 @@ import {
   SHADOWBURN_REFUNDS_SHARD,
   SHADOW_BOLT_DAMAGE,
   WRACK,
-  WRACK_CHANNEL_MS,
   WRACK_TICKS,
   WRACK_TICK_DAMAGE,
 } from '../../src/game/abilities/warlock';
@@ -307,7 +308,15 @@ describe('the two fights', () => {
     expect(used('Corruption')).toBeGreaterThan(1);
     expect(used('Bane of Agony')).toBeGreaterThan(1);
     expect(used('Siphon Life')).toBeGreaterThan(1);
-    expect(used('Shadow Bolt')).toBeGreaterThan(5);
+    /*
+     * SHADOW BOLT IS A PROC SPENDER NOW, NOT A FILLER. This asserted more than
+     * five casts a fight and reads about two: Wrack became ungated when the
+     * interrupt rule replaced its six-second gate, so it is the filler, and the
+     * only Shadow Bolts cast are the ones Nightfall pays for. The count is
+     * therefore a function of a 4% proc chance rather than of spare time.
+     */
+    expect(used('Shadow Bolt')).toBeGreaterThan(0);
+    expect(used('Wrack')).toBeGreaterThan(used('Shadow Bolt'));
   });
 
   it('keeps Immolate up for Incinerate, which reads it at cast time', () => {
@@ -488,49 +497,113 @@ describe('Wrack, scaling now, and still not worth casting', () => {
     expect(ids.filter((id) => id === 'shadow_bolt')).toHaveLength(2);
   });
 
-  it('is gated on all three bleeds outlasting the channel', () => {
+  it('is ungated, because the interrupt rule replaced its gate', () => {
     /*
      * ------------------------------------------------------------------------
-     * THE OWNER'S CONDITION -- "all three bleeds having six seconds left" --
-     * and six seconds is exactly the channel, which is why the gate reads
-     * `WRACK_CHANNEL_MS` rather than a literal.
+     * THE SIX-SECOND GATE IS GONE, at the owner's instruction, and what replaced
+     * it is not nothing. The gate asked "can I afford to stop acting for six
+     * seconds" and answered conservatively, because a channel used to be a
+     * commitment; `interruptibleChannel` means it is not, so the question stops
+     * needing a conservative answer.
      *
-     * WHY IT MATTERS: a channel LOCKS THE CASTER for its whole duration, so
-     * committing to one while Corruption is about to drop trades that bleed's
-     * remaining ticks for Wrack's. The entry is asking "can I afford to stop
-     * acting for six seconds", and ALL three have to answer yes.
-     *
-     * THE NEW CONDITION PRIMITIVE IS THE THING MOST LIKELY TO BE SILENTLY
-     * WRONG -- a window that never opens fires zero times and errors nothing,
-     * which has happened in this project before -- so each of the three bleeds
-     * is dropped below the line on its own.
+     * THE TWO HALVES ARE ASSERTED TOGETHER ON PURPOSE. An ungated Wrack with no
+     * interrupt rule would be a channel the rotation could never leave, which is
+     * strictly worse than the gate -- so a future edit that drops one of these
+     * should fail on the other.
      * ------------------------------------------------------------------------
      */
     const entry = WARLOCK_AFFLICTION.find((e) => e.abilityId === 'wrack')!;
-    const bleeds = [CORRUPTION, BANE_OF_AGONY, SIPHON_LIFE];
+    expect(entry.condition).toBeUndefined();
+    expect(WRACK.interruptibleChannel).toBe(true);
+  });
 
-    const canCast = (shortOne?: string): boolean => {
-      const caster = makeAttacker({ autoAttack: 'none' });
-      const target = makeTarget({ maxHealth: 100_000_000 });
-      const simulation = buildSimulation([caster, target], { durationMs: seconds(60) });
-      for (const aura of bleeds) simulation.applyAura(target, aura, caster.id);
-      /*
-       * Advance until the named bleed has LESS than the channel left, which is
-       * the only way to make one short without inventing an aura -- and it is
-       * what the fight actually does to them.
-       */
-      if (shortOne) {
-        const def = bleeds.find((a) => a.id === shortOne)!;
-        simulation.advanceTo(def.durationMs - WRACK_CHANNEL_MS + 1);
+  it('is cut short only by the three things the owner named', () => {
+    /*
+     * ------------------------------------------------------------------------
+     * "A shadow bolt cast because nightfall procced, a corruption cast because
+     * corruption fell off the target, a bane of agony cast because bane of agony
+     * fell off the target." Three cases, and the list marks exactly three
+     * entries `interruptsChannel`.
+     *
+     * NOT "EVERY ENTRY ABOVE WRACK", which was the tempting shortcut and would
+     * have been wrong about two: Siphon Life and Life Tap both sit above it and
+     * are NOT interrupters. Siphon Life lasts thirty seconds and loses little by
+     * waiting out a channel; Life Tap is not urgent by construction. This
+     * assertion is the difference between the owner's rule and the positional
+     * one that resembles it.
+     * ------------------------------------------------------------------------
+     */
+    const interrupters = WARLOCK_AFFLICTION.filter((e) => e.interruptsChannel).map(
+      (e) => e.abilityId,
+    );
+    expect(interrupters.sort()).toEqual(['bane_of_agony', 'corruption', 'shadow_bolt']);
+
+    // And the entries above Wrack that are NOT interrupters stay out of it.
+    const above = WARLOCK_AFFLICTION.slice(
+      0,
+      WARLOCK_AFFLICTION.findIndex((e) => e.abilityId === 'wrack'),
+    ).map((e) => e.abilityId);
+    expect(above).toContain('siphon_life');
+    expect(above).toContain('life_tap');
+    for (const id of ['siphon_life', 'life_tap', 'amplify_curse']) {
+      expect(
+        WARLOCK_AFFLICTION.find((e) => e.abilityId === id)?.interruptsChannel ?? false,
+        id,
+      ).toBe(false);
+    }
+  });
+
+  it('really is interrupted in a fight, and only for those three', () => {
+    /*
+     * THE MECHANISM RATHER THAN THE DECLARATION, off the telemetry stream --
+     * which is what says the rule fires rather than merely being written down.
+     * A new rotation primitive that never triggers is a documented failure mode
+     * here, and the declaration above would pass either way.
+     */
+    const interruptedFor = new Set<string>();
+    let interrupts = 0;
+    let fullChannels = 0;
+    let withTicks = 0;
+
+    for (let seed = 0; seed < 8; seed += 1) {
+      const events: TelemetryEvent[] = [];
+      const built = PRESETS_BY_ID.get('warlock_smds')!.build();
+      const simulation = new Simulation(
+        { ...trainingDummyEncounter(built as never), seed: 400 + seed },
+        { emit: (event) => events.push(event) },
+      );
+      simulation.advanceTo(seconds(70));
+      for (const event of events) {
+        if (event.type !== 'channel_interrupted') continue;
+        interrupts += 1;
+        interruptedFor.add(event.interruptedFor);
+        expect(event.abilityId).toBe('wrack');
+        /*
+         * NEVER THE WHOLE CHANNEL -- a channel that ran to its last tick was
+         * not interrupted, and counting one as such would mean the cancel had
+         * fired after the event it was meant to pre-empt.
+         *
+         * ZERO IS LEGAL, THOUGH, and this assertion originally said otherwise
+         * and failed. A proc or an expiry can land inside the first second,
+         * before tick one, so the channel is cancelled having dealt nothing
+         * and having paid its 200 mana. Measured at 1 interrupt in 138, so it
+         * is a real case rather than a rounding artefact -- and the 200 mana is
+         * genuinely spent, which is what starting a channel costs.
+         */
+        expect(event.ticksDelivered).toBeGreaterThanOrEqual(0);
+        expect(event.ticksDelivered).toBeLessThan(event.ticksTotal);
+        if (event.ticksDelivered === event.ticksTotal) fullChannels += 1;
+        if (event.ticksDelivered > 0) withTicks += 1;
       }
-      return entry.condition!(simulation, caster, target);
-    };
+    }
 
-    // All three fresh, so all three outlast the channel.
-    expect(canCast()).toBe(true);
-    // Each one short on its own is enough to refuse it.
-    for (const aura of bleeds) {
-      expect(canCast(aura.id), aura.id).toBe(false);
+    expect(interrupts).toBeGreaterThan(0);
+    expect(fullChannels).toBe(0);
+    // The overwhelming majority deliver something first; see the note above.
+    expect(withTicks / interrupts).toBeGreaterThan(0.8);
+    // Never anything but the owner's three.
+    for (const id of interruptedFor) {
+      expect(['shadow_bolt', 'corruption', 'bane_of_agony']).toContain(id);
     }
   });
 
@@ -774,24 +847,32 @@ describe('Siphon Life, the one damage-over-time effect that cannot crit', () => 
   it('is still worth casting, which is what the owner asked', () => {
     /*
      * ------------------------------------------------------------------------
-     * +13.6 DPS, measured over thirty batches of ten: 476.5 with its entry and
-     * 462.9 without. So the answer is yes, even having lost its crits -- which
-     * cost 4.3 on their own.
+     * +15.7 DPS, re-measured over thirty batches of ten after the interrupt
+     * rule landed: 479.7 with its entry and 464.0 without. So the answer is
+     * still yes, even having lost its crits -- which cost 4.3 on their own.
      *
-     * AND THE FIRST ANSWER WAS WRONG BY A FACTOR OF TWO. Simply removing the
-     * entry reads 452.4, which looks like -24.1 -- but `WARLOCK_AFFLICTION`
-     * gates Wrack on all three bleeds having six seconds left, and one of the
-     * three is Siphon Life. Without it the gate can never open, so that figure
-     * is the loss of Siphon Life AND Wrack together. The honest measurement
-     * repairs the gate first. See the comment on the Wrack entry.
+     * THE FIRST TIME THIS WAS ASKED THE ANSWER CAME BACK WRONG BY A FACTOR OF
+     * TWO, and the reason has since been designed away. Wrack was gated on all
+     * three bleeds having six seconds left and one of the three was Siphon
+     * Life, so removing Siphon Life took Wrack to ZERO casts and the figure
+     * (-24.1) was the loss of both. With the gate replaced by the interrupt
+     * rule there is no coupling left to trip over, which is a better outcome
+     * than remembering to work around it.
      * ------------------------------------------------------------------------
      */
     const ids = WARLOCK_AFFLICTION.map((entry) => entry.abilityId);
     expect(ids).toContain('siphon_life');
-    // The coupling itself, pinned: Wrack's gate names Siphon Life, so anyone
-    // removing the latter has to repair the former.
-    const wrack = WARLOCK_AFFLICTION.find((entry) => entry.abilityId === 'wrack');
-    expect(wrack?.condition).toBeDefined();
+    /*
+     * AND THE COUPLING THAT MADE THE FIRST ANSWER WRONG IS GONE WITH THE GATE.
+     * Wrack's entry named Siphon Life while it was gated on "all three bleeds
+     * have six seconds left", so removing Siphon Life silently took Wrack to
+     * zero casts and the measurement read -24.1 for two abilities. The entry is
+     * ungated now, so Wrack fires 10.9 times a fight without Siphon Life and
+     * the question answers itself cleanly: +15.7, re-measured after the
+     * interrupt rule landed.
+     */
+    expect(WARLOCK_AFFLICTION.find((entry) => entry.abilityId === 'wrack')?.condition)
+      .toBeUndefined();
   });
 });
 

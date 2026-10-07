@@ -1372,6 +1372,28 @@ REACTIONS, which is what the talent leaves behind: `hasReaction` rather than a
 talent id, the arrangement Vanguard and Charge already use. **Asking the ability
 book would not work** -- Scorch is a trainer spell every Mage owns.
 
+**A CHANNEL CAN BE CANCELLED MID-CAST, AND BOTH HALVES HAVE TO AGREE.**
+`Ability.interruptibleChannel` says a channel is willing and
+`PriorityEntry.interruptsChannel` says an entry is worth it; neither alone does
+anything, so adding an urgent entry does not silently start cutting channels
+short and marking a channel interruptible does not put it at the mercy of
+everything above it. **IT IS NOT "ANY ENTRY ABOVE THE CHANNEL"** -- that is the
+shortcut that resembles the rule, and for Wrack it would have been right about
+three entries and wrong about two, because Siphon Life and Life Tap sit above it
+and are not urgent. `selectInterrupt` accepts a candidate only when
+`already_casting` is the SOLE rejection reason, so the channel is never discarded
+for a cast that then cannot happen. **A cancelled channel has still PAID**: 1
+interrupt in 138 lands before the first tick, so 200 mana buys nothing, and that
+is what starting a channel costs rather than a bug.
+
+**AND AN INTERRUPT RULE CAN RETIRE A CONDITION RATHER THAN JOIN IT.** Wrack was
+gated on "all three bleeds have six seconds left" -- a conservative answer to
+"can I afford to stop acting", asked because a channel was a commitment. Being
+able to leave the channel made the question stop needing an answer, and deleting
+the gate deleted the coupling that had already produced one wrong measurement.
+**The best fix for a fragile condition is sometimes a capability that makes it
+unnecessary.**
+
 **AND THE THIRD TIME IT DISABLED A DIFFERENT ENTRY THAN THE ONE BEING CHANGED.**
 Wrack's gate is "all three bleeds have six seconds left" and one of the three
 is Siphon Life -- so asked whether Siphon Life was worth casting, removing its

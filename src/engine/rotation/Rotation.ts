@@ -19,6 +19,14 @@ export interface Rotation {
   readonly name: string;
   /** The next action, or null if the actor should wait. */
   selectAction(context: SimulationContext, actor: Combatant): RotationDecision | null;
+  /**
+   * The action worth CANCELLING an interruptible channel for, or null.
+   *
+   * Optional, so a rotation that does not express interrupts needs no change.
+   * Consulted only while the actor is channelling something that declares
+   * itself interruptible.
+   */
+  selectInterrupt?(context: SimulationContext, actor: Combatant): RotationDecision | null;
 }
 
 /** One line of a priority list. */
@@ -32,6 +40,27 @@ export interface PriorityEntry {
   readonly condition?: (context: SimulationContext, actor: Combatant, target: Combatant | undefined) => boolean;
   /** Overrides the actor's default target for this entry. */
   readonly selectTarget?: (context: SimulationContext, actor: Combatant) => Combatant | undefined;
+  /**
+   * Whether this entry may CANCEL an interruptible channel in progress.
+   *
+   * ----------------------------------------------------------------------------
+   * BOTH HALVES HAVE TO AGREE. The channel declares `interruptibleChannel` and
+   * the entry declares this, and nothing is cancelled unless both are true --
+   * so adding an urgent entry to a list does not silently start cutting
+   * channels short, and marking a channel interruptible does not put it at the
+   * mercy of every entry above it.
+   *
+   * IT IS NOT "EVERY ENTRY ABOVE THE CHANNEL", which was the tempting
+   * shortcut. The ruleset owner named three cases for Wrack -- a Shadow Bolt
+   * because Nightfall procced, a Corruption because Corruption fell off, a
+   * Bane of Agony because the Bane fell off -- and Siphon Life and Life Tap sit
+   * above Wrack in that same list and are NOT among them. A positional rule
+   * would have been right about three entries and wrong about two, and the two
+   * it was wrong about would have cost channel time to refresh a bleed that was
+   * not about to drop.
+   * ----------------------------------------------------------------------------
+   */
+  readonly interruptsChannel?: boolean;
 }
 
 /**
@@ -80,6 +109,46 @@ export class PriorityRotation implements Rotation {
         if (swap) return { ability: swap, target: undefined };
         continue;
       }
+
+      return { ability, target };
+    }
+    return null;
+  }
+
+  /**
+   * What is worth interrupting the current channel for.
+   *
+   * ----------------------------------------------------------------------------
+   * `already_casting` IS THE WHOLE TRICK. `checkCast` reports exactly one
+   * reason, in a fixed order, and the cast lock is checked second -- so an
+   * entry that comes back `already_casting` is one where NOTHING ELSE is in the
+   * way: it is affordable, off cooldown, in the right stance and its condition
+   * is satisfied. Cancelling the channel is therefore guaranteed to be followed
+   * by the cast that justified it.
+   *
+   * THAT MATTERS BECAUSE THE ALTERNATIVE SILENTLY WASTES THE CHANNEL. Cancelling
+   * first and asking afterwards would throw away the remaining ticks whenever
+   * the urgent ability turned out to be unaffordable -- a Corruption that has
+   * expired while the Warlock is out of mana would cut Wrack short and cast
+   * nothing. This is the same shape the stance swap below uses, for the same
+   * reason: one rejection reason is actionable and the rest mean "not now".
+   * ----------------------------------------------------------------------------
+   */
+  selectInterrupt(context: SimulationContext, actor: Combatant): RotationDecision | null {
+    for (const entry of this.entries) {
+      if (!entry.interruptsChannel) continue;
+
+      const ability = actor.abilities.get(entry.abilityId);
+      if (!ability) continue;
+
+      const target = entry.selectTarget
+        ? entry.selectTarget(context, actor)
+        : context.defaultTargetFor(actor);
+
+      if (entry.condition && !entry.condition(context, actor, target)) continue;
+
+      // Everything except the cast lock has to be satisfied already.
+      if (context.castRejection(actor, ability, target) !== 'already_casting') continue;
 
       return { ability, target };
     }

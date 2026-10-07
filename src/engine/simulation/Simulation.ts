@@ -505,6 +505,39 @@ export class Simulation implements SimulationContext {
       createEvent(`decision:${actor.id}`, EventPriority.Decision, (ctx) => {
         if (ctx.hasEnded || !actor.isAlive || !actor.rotation) return;
 
+        /*
+         * AN INTERRUPTIBLE CHANNEL IS RE-DECIDED WHILE IT RUNS. Normally a
+         * casting actor has nothing to decide -- every candidate comes back
+         * `already_casting` -- so this branch is the only way a channel ends
+         * early, and it needs BOTH the channel to allow it and an entry to ask.
+         *
+         * THE CANCEL HAPPENS AFTER THE DECISION, never before: `selectInterrupt`
+         * only returns an ability whose sole obstacle is the cast lock, so the
+         * channel is never thrown away for a cast that then does not happen.
+         */
+        if (actor.channelling?.interruptibleChannel && actor.isCasting(ctx.clock.now())) {
+          const urgent = actor.rotation.selectInterrupt?.(ctx, actor) ?? null;
+          if (urgent) {
+            const delivered = actor.channelTicksDelivered;
+            const channelled = actor.interruptChannel(ctx);
+            if (channelled) {
+              this.telemetry.emit({
+                type: 'channel_interrupted',
+                timestamp: ctx.clock.now(),
+                sourceId: actor.id,
+                abilityId: channelled.id,
+                abilityName: channelled.name,
+                interruptedFor: urgent.ability.id,
+                ticksDelivered: delivered,
+                ticksTotal: channelled.channelTicks ?? 1,
+              });
+            }
+            ctx.cast(actor, urgent.ability, urgent.target);
+          }
+          this.scheduleDecision(actor, this.nextDecisionTime(actor));
+          return;
+        }
+
         const decision = actor.rotation.selectAction(ctx, actor);
         if (decision) {
           ctx.cast(actor, decision.ability, decision.target);
@@ -523,6 +556,17 @@ export class Simulation implements SimulationContext {
    */
   private nextDecisionTime(actor: Combatant): Milliseconds {
     const now = this.clock.now();
+    /*
+     * AN INTERRUPTIBLE CHANNEL POLLS INSTEAD OF SLEEPING TO ITS END. Sleeping
+     * to `castEndsAt` is right for everything else and would make an interrupt
+     * unreachable: the one moment the actor wakes is the moment the channel has
+     * already finished. The poll is the same 100ms an idle actor uses, so a
+     * Nightfall proc landing mid-channel is acted on within a tenth of a second
+     * rather than at the end of six.
+     */
+    if (actor.channelling?.interruptibleChannel && actor.isCasting(now)) {
+      return Math.min(now + ROTATION_POLL_MS, Math.max(actor.gcdReadyAt, actor.castEndsAt));
+    }
     const busyUntil = Math.max(actor.gcdReadyAt, actor.castEndsAt);
     return busyUntil > now ? busyUntil : now + ROTATION_POLL_MS;
   }

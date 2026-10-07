@@ -154,8 +154,8 @@ field added for one caller is a silent no-op for the second one.**
 nothing else. **Measure with `runProfileBatch`, not `runProfile`** — the app runs
 the former and the two are different fights even at one iteration.
 
-**SEVEN WARLOCK RULINGS FROM THE OWNER, AND SM/DS GAINED 34.9 ON THEM.** 441.5
-to **476.5, REAL**, with Firelock at -0.4 and the other twenty-two identical to
+**EIGHT WARLOCK RULINGS FROM THE OWNER, AND SM/DS GAINED 38.1 ON THEM.** 441.5
+to **479.7, REAL**, with Firelock at -0.4 and the other twenty-two identical to
 the decimal. Each isolated by reverting it alone over thirty batches of ten:
 
 | | |
@@ -168,13 +168,37 @@ the decimal. Each isolated by reverting it alone over thirty batches of ten:
 | **-4.3** | **Siphon Life cannot crit.** The only damage-over-time effect here that cannot; every other one can, which is a Forever rule |
 | **-7.6** | **the RAMP**, against a flat distribution of the same total. Back-loading throws away the big late ticks every time the Bane is re-applied, and it is the owner's data either way |
 
+**AND A CHANNEL CAN NOW BE CANCELLED MID-CAST**, which is the eighth ruling and
+a new engine capability: `Ability.interruptibleChannel` plus
+`PriorityEntry.interruptsChannel`, and **both halves have to agree** before
+anything is cut short. Worth **+3.2** on its own, and it REPLACED Wrack's
+six-second gate rather than adding to it -- the gate asked "can I afford to stop
+acting for six seconds" and answered conservatively, because a channel used to be
+a commitment.
+
+**IT IS NOT "EVERY ENTRY ABOVE THE CHANNEL", WHICH WAS THE TEMPTING SHORTCUT.**
+The owner named three cases -- a Shadow Bolt because Nightfall procced, a
+Corruption or a Bane of Agony because it fell off -- and Siphon Life and Life Tap
+sit above Wrack in that same list and are NOT among them. A positional rule would
+have been right about three entries and wrong about two. Measured off the
+telemetry stream: 4.6 interrupts a fight, caused by **exactly those three ids and
+nothing else**.
+
+**THE CONTAINMENT CHECK IS THE INTERESTING ONE HERE**, because the change touches
+`casting.ts`, `Simulation.ts` and `Combatant.ts` on every cast in the project:
+**all 23 other profiles came back identical to the decimal.**
+
 **THE RAMP IS CLASSIC'S SHAPE AT A DIFFERENT RESOLUTION**, which the old caveat
 guessed and had no authority to assert: 1/24 : 1/12 : 1/8 is 1 : 2 : 3, and the
 flat share over twelve ticks is 1/12 -- so the bands are 50%, 100% and 150% of
 the average exactly as Classic's are. The guess was right and is now sourced.
 
-**AND SIPHON LIFE IS WORTH CASTING, WHICH THE OWNER ASKED: +13.6.** The first
-answer was wrong by a factor of two and the reason is worth knowing -- see
+**AND SIPHON LIFE IS WORTH CASTING, ASKED TWICE AND ANSWERED TWICE: +15.7** on
+the re-measure after the interrupt rule landed, against +13.6 before it. **The
+FIRST answer was wrong by a factor of two**, because Wrack's gate named Siphon
+Life -- so removing Siphon Life took Wrack to zero casts and the figure was the
+loss of both. **Removing the gate removed the coupling**, which is a better
+outcome than remembering to work around it. See
 [docs/handoff/warlock.md](docs/handoff/warlock.md).
 
 **THE NEWEST MOVE IS THAT A SEAL CRITS**, on the owner's ruling: Seal of
@@ -859,7 +883,7 @@ while it worked.
 decimal -- which is what a talent change scoped to one build should look like.
 It makes Frostfire the top Mage, above Fire's 401.2 and Arcane's 392.6, and the
 build that existed for the Fire/Frost overlap now has a third reason to. The
-mean across **24** is **566.7**, RE-SUMMED FROM THE TABLE ABOVE rather than
+mean across **24** is **566.8**, RE-SUMMED FROM THE TABLE ABOVE rather than
 adjusted -- **by `tools/update_baseline_table.py`, which exists now**; the
 sentence above it had promised a script for several commits and there was none,
 so the mean and the ordering were still being maintained by hand.
@@ -1418,7 +1442,7 @@ Hemo moves five rows between the two columns, which is exactly that kind of edit
 | DW Fury | Warrior | 18/33/0 | 667.5 | | Moonkin | Druid | 38/0/13 | 513.4 |
 | Cat Druid | Druid | 9/35/7 | 663.3 | | Venom Rogue | Rogue | 37/12/2 | 510.6 |
 | Frostfire Mage | Mage | 0/29/22 | 661.3 | | Rupture Rogue | Rogue | 12/8/31 | 497.6 |
-| Enh Shaman | Shaman | 19/32/0 | 625.8 | | **SM/DS** | Warlock | 40/11/0 | **476.5** |
+| Enh Shaman | Shaman | 19/32/0 | 625.8 | | **SM/DS** | Warlock | 40/11/0 | **479.7** |
 | Fire Mage | Mage | 10/39/2 | 622.0 | | Prot Warr | Warrior | 17/0/34 | 457.0 |
 | 2H Arms | Warrior | 38/13/0 | 621.1 | | Ele Shaman | Shaman | 38/13/0 | 440.2 |
 | Combat Rogue | Rogue | 18/33/0 | 586.3 | | Bear Druid | Druid | 9/42/0 | 433.6 |

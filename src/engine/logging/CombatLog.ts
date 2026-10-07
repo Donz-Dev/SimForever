@@ -36,6 +36,18 @@ export function formatCombatLogLine(event: TelemetryEvent, nameOf: NameResolver)
       return `${time}  ${nameOf(event.sourceId)} casts ${event.abilityName}${target}`;
     }
 
+    case 'channel_interrupted': {
+      /*
+       * BOTH HALVES OR IT IS NOT WORTH A LINE: how much of the channel landed,
+       * and what it was cut short for. "Wrack interrupted" on its own would
+       * leave a reader counting ticks to work out whether anything was lost.
+       */
+      return (
+        `${time}  ${nameOf(event.sourceId)} cuts ${event.abilityName} short after ` +
+        `${event.ticksDelivered} of ${event.ticksTotal} ticks, for ${event.interruptedFor}`
+      );
+    }
+
     case 'damage': {
       // An avoided attack has no damage to report, so it reads as what
       // happened instead of "for 0".
