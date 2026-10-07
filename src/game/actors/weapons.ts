@@ -138,7 +138,7 @@ export function makeOffHand(
  * THIS IS WHY DRUIDS ARE NOT NORMALISED. The owner's wording: "Normalization
  * doesn't exist for druids because they're effectively already normalized to
  * using their paw to attack." Every Druid ability that deals weapon damage --
- * Shred, Claw, Maul, Primal Bite, Lacerate -- takes the paw, and the paw is
+ * Shred, Claw, Maul and Primal Bite -- takes the paw, and the paw is
  * one shape whatever is held.
  *
  * THE FORM STILL SWINGS ON ITS OWN TIMER. Cat every second, bear every 2.5,
@@ -153,9 +153,32 @@ export function makeOffHand(
  * ============================================================================
  */
 
-/** BaseBearPaw and BaseCatPaw. ASSUMED values; the owner has not stated them. */
-export const BASE_BEAR_PAW_DAMAGE = 100;
-export const BASE_CAT_PAW_DAMAGE = 50;
+/*
+ * BaseBearPaw and BaseCatPaw. **BOTH ARE 1, STATED BY THE RULESET OWNER.**
+ *
+ * ----------------------------------------------------------------------------
+ * THESE WERE ASSUMED AT 100 AND 50 AND ARE NOW DATA. The old comment read
+ * "ASSUMED values; the owner has not stated them", and the assumed figures were
+ * about a FIFTH of every paw swing -- 50 of the Cat's 245.1 and 100 of the
+ * Bear's 511.1 -- so the formula's own base term was carrying a sixth to a
+ * fifth of two profiles' damage on a number nobody had supplied.
+ *
+ * ONE, FOR BOTH FORMS, so the base term is now negligible by design and the paw
+ * is almost entirely `heldDPS x formSeconds + AP x formSeconds / 14`. That is a
+ * statement about where a feral Druid's damage comes FROM, not just a smaller
+ * number: the held weapon's dps and the Druid's attack power are the whole paw,
+ * and the form contributes its CADENCE rather than any damage of its own.
+ *
+ * IT IS NOT A PLACEHOLDER ANY MORE, so it carries no caveat and the Gear panel
+ * has nothing to print. **The old assumption was never surfaced to a reader
+ * either** -- it appeared in this comment and in a docs table and nowhere a
+ * person running the app could see it, which is the failure mode CLAUDE.md
+ * names: a placeholder nobody is told about. It is moot now and worth knowing,
+ * because the next assumed constant should be visible while it is assumed.
+ * ----------------------------------------------------------------------------
+ */
+export const BASE_BEAR_PAW_DAMAGE = 1;
+export const BASE_CAT_PAW_DAMAGE = 1;
 
 /*
  * THE FORM'S SWING TIME IS THE MULTIPLIER, and they are one number rather than

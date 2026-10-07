@@ -228,13 +228,22 @@ Bear and Cat attack with their own damage rather than an equipped weapon:
 
 | | |
 | --- | --- |
-| `BASE_BEAR_PAW_DAMAGE` | 100 |
-| `BASE_CAT_PAW_DAMAGE` | 50 |
+| `BASE_BEAR_PAW_DAMAGE` | 1 |
+| `BASE_CAT_PAW_DAMAGE` | 1 |
 
-These are **assumed** values pending confirmation. Everything else about the
-paws — swing speed, attack power scaling, damage variance — is still
-placeholder, so a druid's auto-attack damage is directionally right rather than
-accurate.
+**Both are 1, stated by the ruleset owner**, where they were assumed at 100 and
+50. The rest of the paw is the owner's formula and not placeholder either:
+
+    Cat  = (1 + weaponDPS x 1   + AP x 1   / 14) x rand(0.8, 1.2)
+    Bear = (1 + weaponDPS x 2.5 + AP x 2.5 / 14) x rand(0.8, 1.2)
+
+so the swing (1s and 2.5s), the attack power scaling and the ±20% variance are
+all supplied. **A base of 1 says where a feral Druid's damage comes from**: the
+held weapon's dps and the Druid's attack power are the whole paw, and the form
+contributes its cadence rather than damage of its own. The paragraph here used to
+say the swing, the scaling and the variance were "still placeholder" — they had
+stopped being placeholder when the owner gave the formula, and the sentence
+outlived that by a release.
 
 ### Off-hand damage penalty
 

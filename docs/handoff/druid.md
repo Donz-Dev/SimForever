@@ -38,8 +38,8 @@ question** — the count was wrong for as long as nobody did.
 
 | Profile | Talents | DPS | List | Style |
 | --- | --- | --- | --- | --- |
-| Cat | 9/35/7 | **937.7** | `DRUID_CAT` | cat (paws) |
-| Bear | 9/42/0 | **523.1** | `DRUID_BEAR` | bear (paws) |
+| Cat | 9/35/7 | **843.0** | `DRUID_CAT` | cat (paws) |
+| Bear | 9/42/0 | **433.6** | `DRUID_BEAR` | bear (paws) |
 | Moonkin | 38/0/13 | **513.4** | `DRUID_MOONKIN` | caster |
 
 **THESE ARE CURRENT AND THE TABLE USED TO CARRY A "was" COLUMN**, which is gone
@@ -49,7 +49,7 @@ Staff of Dominance, Sunder Armor — and a before-and-after column that mixes si
 causes tells nobody anything. HANDOVER.md's baseline table is the live figure;
 reprint it rather than trusting this one.
 
-**CAT IS THE HIGHEST PROFILE IN THE PROJECT**, above DW Fury's 667.5, and it got
+**CAT IS THE HIGHEST PROFILE IN THE PROJECT**, above Seal Twist Ret's 748.3, and it got
 there from ninth. That is a claim worth distrusting, so it is attributed rather
 than asserted — `npx vite-node tools/druid_attribution.ts` reprints the table
 below. **MEASURED AT THE 656.1 BASELINE**, so read it as a RELATIVE attribution
@@ -284,8 +284,25 @@ none of them. **Three are worth knowing, and one of them was a real bug:**
   the interval both ways. Reprint the pair, with deaths and rage beside the DPS,
   with `python tools/thick_hide_attribution.py`. **A prediction in a comment is a
   measurement that has not happened.**
-- **THE CAT IS 40% CLEAR OF THE NEXT PROFILE IN THE PROJECT**, 937.7 against DW
-  Fury's 667.5 and 82% above the Bear. Four of the owner's own figures took it
+- **THE BASE PAW DAMAGE IS 1 FOR BOTH FORMS**, stated by the owner where it had
+  been **assumed at 100 and 50** -- about a fifth of every paw swing. **Cat
+  937.7 -> 843.0 (-10.1%) and Bear 523.1 -> 433.6 (-17.1%)**, with the Moonkin
+  and the other 21 unmoved to the decimal. So the paw is the held weapon's dps
+  and the Druid's attack power and essentially nothing else, and the form
+  contributes a CADENCE rather than damage of its own.
+  **THE TWO FORMS LOST DIFFERENT SHARES FROM THE SAME CUT**, because the term
+  only reaches what goes through `weaponScaling`: the Bear is **85.9% paw** (Maul,
+  autos, Primal Bite) and the Cat **54.6%** (autos, Shred), while Rip, Rake and
+  Lacerate carry their own coefficients. `19.4% x 85.9%` predicts 16.7% against a
+  measured 17.1%, and `20.0% x 54.6%` predicts 10.9% against 10.1%.
+  **AND `weapons.ts` LISTED LACERATE AS A PAW ABILITY AND IT IS A PURE DoT**, so
+  the obvious place to go for that estimate would have overstated the Bear's loss
+  by its whole 14.1% Lacerate share. Read `weaponScaling`, not a prose list.
+  **THE BEAR IS NOW THE SECOND-LOWEST PROFILE IN THE PROJECT** at 433.6, having
+  been mid-table -- the owner's number, not a tuning decision.
+- **THE CAT IS 12.7% CLEAR OF THE NEXT PROFILE IN THE PROJECT**, 843.0 against
+  Seal Twist Ret's 748.3 and 94% above the Bear. It was 40% clear before the paw
+  base arrived. Four of the owner's own figures took it
   there in one commit, +142.4, and the marginal split is Rend and Tear's wider
   scope **+61.0**, Primal Fury's combo points **+45.1**, Rake's 5.5% tick
   **+43.7** and Clearcasting-on-Shred **+6.3**. Reprint with

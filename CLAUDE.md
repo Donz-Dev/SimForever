@@ -414,6 +414,27 @@ See [docs/combat-tables.md](docs/combat-tables.md).
   The other reading of the owner's formula, where the held weapon's speed is the
   multiplier, put Cat at 988.8 and Bear at 909.2 and made paw damage
   proportional to how SLOW the held weapon was; it was rejected on measurement.
+- **`BasePaw` IS 1 FOR BOTH FORMS, STATED BY THE OWNER, AND IT HAD BEEN ASSUMED
+  AT 100 AND 50.** So the paw is the held weapon's dps and the Druid's attack
+  power and essentially nothing else — **the form contributes a CADENCE rather
+  than damage of its own**, which is a statement about where a feral Druid's
+  damage comes from and not just a smaller number. The assumed figures were
+  about a fifth of every paw swing (50 of the Cat's 245.1, 100 of the Bear's
+  511.1), so two profiles were carrying a sixth to a fifth of their damage on a
+  number nobody had supplied: **Cat 937.7 → 843.0 and Bear 523.1 → 433.6**.
+- **AND THE SHARE A PAW CHANGE MOVES IS THE SHARE THAT GOES THROUGH
+  `weaponScaling`, WHICH IS NOT THE SAME AS "the feral abilities".** The Bear
+  lost 17.1% and the Cat 10.1% from the same ~20% cut to the same term, because
+  **the Bear is 85.9% paw** (Maul, autos, Primal Bite) **and the Cat is 54.6%**
+  (autos, Shred) — Rip at 35.3% and Rake at 10.1% carry their own coefficients
+  and never touch it. `20.0% × 54.6%` predicts 10.9% against a measured 10.1%,
+  and `19.4% × 85.9%` predicts 16.7% against 17.1%.
+  **THE COMMENT NAMING THOSE ABILITIES WAS WRONG, AND IT WAS THE OBVIOUS PLACE
+  TO GO FOR THE ESTIMATE.** `weapons.ts` listed "Shred, Claw, Maul, Primal Bite,
+  Lacerate"; Lacerate is a pure stacking DoT with no weapon damage at all, so
+  anyone pricing a paw change off that list would have expected the Bear to lose
+  all of its 14.1% Lacerate share too. **Read `weaponScaling` rather than a
+  prose list of which abilities use the weapon.**
 - **A ranged weapon scales with RANGED attack power**, keyed on
   `weaponScaling.slot` and never on `weaponSlot` — the latter says whose procs an
   attack triggers. This was wrong for the whole project and 1,548 tests passed

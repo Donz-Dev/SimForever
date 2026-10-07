@@ -138,18 +138,25 @@ describe('a Druid paw, which is normalised by being a paw', () => {
    * `BaseWeaponSwingTime` -- one number written twice, not two. A paw's
    * `baseDamage` carries the first two terms and its `powerCoefficient` the
    * third.
+   *
+   * BOTH BASES ARE 1, STATED BY THE OWNER, where they were assumed at 100 and
+   * 50. Written out by hand below rather than imported, which is this project's
+   * rule -- a test that reads the constant passes whatever the constant says,
+   * and these three tests are exactly what caught the change reaching the paw.
    */
   const held = { dps: 53 };
+  const CAT_BASE = 1;
+  const BEAR_BASE = 1;
 
   it('builds the Cat’s paw from the held dps, at its own one-second swing', () => {
     const paw = catPaw(held);
-    expect(paw.baseDamage).toBeCloseTo(50 + 53 * 1, 6);
+    expect(paw.baseDamage).toBeCloseTo(CAT_BASE + 53 * 1, 6);
     expect(paw.powerCoefficient).toBeCloseTo(1 / 14, 6);
   });
 
   it('builds the Bear’s at 2.5, on both weapon terms', () => {
     const paw = bearPaw(held);
-    expect(paw.baseDamage).toBeCloseTo(100 + 53 * 2.5, 6);
+    expect(paw.baseDamage).toBeCloseTo(BEAR_BASE + 53 * 2.5, 6);
     expect(paw.powerCoefficient).toBeCloseTo(2.5 / 14, 6);
   });
 
@@ -184,10 +191,15 @@ describe('a Druid paw, which is normalised by being a paw', () => {
      * scales with attack power -- which is the honest reading and also the
      * safe one: a paw whose coefficient fell to zero would read as a character
      * that gains nothing from gear at all.
+     *
+     * AND AT A BASE OF 1 THAT IS THE WHOLE OF AN UNARMED PAW'S FLAT DAMAGE,
+     * which is worth stating rather than leaving as arithmetic: the form
+     * contributes a cadence and essentially no damage, so an unarmed Druid is
+     * its attack power and nothing else.
      */
-    expect(catPaw(undefined).baseDamage).toBe(50);
+    expect(catPaw(undefined).baseDamage).toBe(CAT_BASE);
     expect(catPaw(undefined).powerCoefficient).toBeCloseTo(1 / 14, 6);
-    expect(bearPaw(undefined).baseDamage).toBe(100);
+    expect(bearPaw(undefined).baseDamage).toBe(BEAR_BASE);
     expect(bearPaw(undefined).powerCoefficient).toBeCloseTo(2.5 / 14, 6);
   });
 
