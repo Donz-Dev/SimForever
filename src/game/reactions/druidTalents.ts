@@ -1,6 +1,7 @@
 import type { CastReaction, Reaction } from '../../engine';
 import { isWeaponUse } from '../../engine';
 import { naturesGraceAura } from '../auras/druid';
+import { awardComboPoint } from '../combat/comboPoints';
 import type { TalentReactionBuilder } from './warriorTalents';
 
 /**
@@ -24,12 +25,24 @@ import type { TalentReactionBuilder } from './warriorTalents';
  */
 
 /**
- * Primal Fury: "a 100% chance to gain an additional 5 Rage any time you get a
- * critical strike while in Bear Form or Dire Bear Form".
+ * Primal Fury's RAGE half: "a 100% chance to gain an additional 5 Rage any time
+ * you get a critical strike while in Bear Form or Dire Bear Form".
  *
- * THE FORM CONDITION IS NOT CHECKED HERE and does not need to be: rage is the
- * Bear's resource, and `grantResource` finds no pool on a Cat or a Moonkin and
- * ignores the grant. The condition enforces itself.
+ * ----------------------------------------------------------------------------
+ * THE FORM CONDITION IS GATED AT THE BUILD, and the comment that used to sit
+ * here said it did not need to be: "rage is the Bear's resource, and
+ * `grantResource` finds no pool on a Cat or a Moonkin and ignores the grant.
+ * The condition enforces itself."
+ *
+ * THAT WAS FALSE. Every Druid owns every pool in every form -- this project's
+ * own test says so, "owns every pool in every form, so shifting conjures
+ * nothing" -- so a Cat was gaining 100 rage a fight from this and wasting 62%
+ * of it. Harmless to its damage, because a Cat has nothing to spend rage on,
+ * and wrong on the resource panel, which is an APL tool somebody reads.
+ *
+ * The talent's effect entry carries `requires: { styles: ['bear'] }` now, which
+ * is where a form condition belongs: knowable once, at build time.
+ * ----------------------------------------------------------------------------
  */
 export const PRIMAL_FURY_RAGE = 5;
 
@@ -43,6 +56,47 @@ export const primalFury = (chancePercent: number): Reaction => ({
       id: 'primal_fury',
       name: 'Primal Fury',
     });
+  },
+});
+
+/**
+ * Primal Fury's COMBO POINT half: "your non-periodic critical strikes from Cat
+ * Form abilities that generate Combo Points have a 100% chance to add an
+ * additional Combo Point."
+ *
+ * ----------------------------------------------------------------------------
+ * THE ROGUE'S SEAL FATE WEARING A DRUID'S NAME, and deliberately the same
+ * shape: it reads `comboPointsAwarded` off the caster's OWN BOOK rather than
+ * carrying a list of ability ids that would drift from the abilities. Shred,
+ * Claw and Rake declare it; Rip and Ferocious Bite spend points rather than
+ * building them and are correctly untouched.
+ *
+ * "NON-PERIODIC" IS GUARANTEED BY THE ENGINE rather than by a condition here:
+ * `dealDamage` offers an attack to reactions only when
+ * `request.attackTable && !request.periodic`, so a Rake TICK is never shown to
+ * one. That matters for this talent specifically -- every DoT in Forever can
+ * crit, so a Cat holding Rake and Rip up produces a stream of periodic crits,
+ * and a reaction that saw them would print combo points for a bleed ticking.
+ * Rake's INITIAL hit is a `melee-special` crit and does count, which is what
+ * the owner asked for.
+ *
+ * THE CAT FORM CONDITION IS GATED AT THE BUILD, by the talent's own
+ * `requires: { styles: ['cat'] }` -- unlike the rage half above, nothing about
+ * a combo point pool would have enforced it, because a Bear owns one too.
+ * ----------------------------------------------------------------------------
+ */
+export const primalFuryComboPoint: TalentReactionBuilder = (chancePercent) => ({
+  id: 'primal_fury_combo_point',
+  on: 'dealt',
+  outcomes: ['crit'],
+  canTrigger: (context, actor, attack) => {
+    if (!attack.abilityId) return false;
+    const ability = actor.abilities.get(attack.abilityId);
+    if (!ability?.comboPointsAwarded) return false;
+    return context.rng.rollChance(chancePercent / 100);
+  },
+  onTrigger: (context, actor, attack) => {
+    awardComboPoint(context, actor, attack.defender, 'primal_fury', 'Primal Fury');
   },
 });
 
@@ -145,6 +199,7 @@ export const kingOfTheJungle = (energy: number): CastReaction => ({
 
 export const DRUID_TALENT_REACTIONS: Readonly<Record<string, TalentReactionBuilder>> = {
   primal_fury: primalFury,
+  primal_fury_combo_point: primalFuryComboPoint,
   nature_s_grace: naturesGrace,
   natural_reaction: naturalReaction,
 };

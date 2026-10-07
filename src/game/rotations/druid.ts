@@ -181,6 +181,12 @@ export const DRUID_MOONKIN: readonly PriorityEntry[] = [
  * 30 energy; Bite is 817 plus whatever the energy bar converts, for 35 and the
  * whole bar. Holding the bleed up is worth more than a burst that empties the
  * resource the rest of the list runs on.
+ *
+ * SHRED APPEARS TWICE, AND THE SECOND IS NOT A DUPLICATE: gated on Clearcasting
+ * above the finisher, and ungated as the filler at the bottom. That is the one
+ * legal shape for a repeated id -- what is not legal is a copy BELOW an
+ * unconditional one, which can never be reached. The Mage's Arcane Missiles and
+ * the Warlock's Shadow Bolt are each in their lists twice for the same reason.
  */
 export const DRUID_CAT: readonly PriorityEntry[] = [
   /*
@@ -191,6 +197,26 @@ export const DRUID_CAT: readonly PriorityEntry[] = [
    */
   { abilityId: 'tigers_fury', condition: energyAtMost(30) },
   { abilityId: 'berserk' },
+  /*
+   * EVERY CLEARCASTING PROC GOES ON SHRED, REGARDLESS OF COMBO POINTS -- the
+   * ruleset owner's instruction, and the reason it needs its own entry above
+   * the finisher rather than being left to fall out of the order below.
+   *
+   * WHAT IT WAS DOING INSTEAD: whichever entry the list reached next spent it.
+   * Measured over twenty seeds, the Cat's 2.05 procs a fight were landing on
+   * Shred, Rake and Rip in roughly 1.3 / 0.4 / 0.3 -- so about a third of them
+   * paid for the two cheapest abilities in the build. Shred is the dearest at
+   * 42 energy after Improved Shred, so it is the one worth making free.
+   *
+   * ABOVE `rip` AND NOT BELOW IT, which is what "regardless of existing Combo
+   * Points" means: at five points the list would otherwise reach Rip first and
+   * spend the charge on a 30-energy finisher.
+   *
+   * TIGER'S FURY AND BERSERK STAY ABOVE IT and cannot take the charge anyway --
+   * both are free, and Clearcasting is "not consumed by ... abilities that cost
+   * no resources". So their position costs this entry nothing.
+   */
+  { abilityId: 'shred', condition: selfActive('clearcasting') },
   { abilityId: 'rip', condition: exactlyPoints(MAX_COMBO_POINTS) },
   { abilityId: 'rake', condition: expired('rake') },
   { abilityId: 'shred' },

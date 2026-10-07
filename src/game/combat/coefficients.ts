@@ -339,9 +339,27 @@ export const INSECT_SWARM_TICK_SP_COEFFICIENT = 0.158;
 export const MOONFIRE_SP_COEFFICIENT = 0.15;
 export const MOONFIRE_TICK_SP_COEFFICIENT = 0.13;
 
-/** Rake: 1% of attack power on the hit, 1% per tick on the bleed. */
+/**
+ * Rake: 1% of attack power on the hit, and 5.5% PER TICK on the bleed.
+ *
+ * ----------------------------------------------------------------------------
+ * THE TICK DOES NOT COME FROM THE SHEET. `WoWSimWorksheet.xlsx` states 1% for
+ * both halves and that is what shipped; the ruleset owner has since given the
+ * tick directly as **5.5%**, and a later statement from the owner outranks the
+ * sheet exactly as the sheet outranked the Warrior ability spreadsheet on Rend,
+ * Revenge and Thunder Clap.
+ *
+ * THE HIT IS UNCHANGED AT 1%, which is the half to be careful about: the owner
+ * moved one of the two numbers, so reading "Rake is 5.5%" and setting both
+ * would quietly inflate the direct damage as well.
+ *
+ * RECORDED HERE BECAUSE A REFRESH OF THE SHEET WILL NOT CARRY IT -- the same
+ * reason Wrack's 14.3% says so beside its own constant. A reader who knows the
+ * sheet would otherwise read this as drift.
+ * ----------------------------------------------------------------------------
+ */
 export const RAKE_AP_COEFFICIENT = 0.01;
-export const RAKE_TICK_AP_COEFFICIENT = 0.01;
+export const RAKE_TICK_AP_COEFFICIENT = 0.055;
 
 /** Swipe: 10% of attack power. */
 export const SWIPE_AP_COEFFICIENT = 0.1;

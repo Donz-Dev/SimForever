@@ -305,7 +305,10 @@ describe('Rend and Tear, which asks about the TARGET', () => {
   /** An attacker with +10% melee-ability damage against a bleeding target. */
   function feral(): { source: Combatant; target: Combatant } {
     const bleeding = new AttackTableModifiers();
+    // BOTH MELEE TABLES, as the talent registers them -- see the note below on
+    // which reading the owner's figure settled.
     bleeding.add('melee-special', { damageMultiplier: 1.1 });
+    bleeding.add('melee-auto', { damageMultiplier: 1.1 });
     return {
       source: makeAttacker({ bleedingTargetModifiers: bleeding }),
       target: makeTarget({ stats: { armor: 0 } }),
@@ -368,17 +371,32 @@ describe('Rend and Tear, which asks about the TARGET', () => {
     if (!after.avoided) expect([100, 200]).toContain(Math.round(after.raw));
   });
 
-  it('reaches a melee-special strike and not a bleed TICK', () => {
+  it('reaches a strike AND a bleed tick, on the owner\'s figure', () => {
     /*
      * ----------------------------------------------------------------------
-     * THE INTERPRETATION, AND IT IS WORTH A TEST BECAUSE BOTH READINGS ARE
-     * PLAUSIBLE. A damage multiplier keyed on a table reads `attackTable`
-     * everywhere in this pipeline and never `critFrom`, which is the rule
-     * CLAUDE.md states as "a tick is reached for CRIT and not for DAMAGE".
+     * THIS TEST PINNED THE NARROW READING AND THE OWNER'S FIGURE OVERTURNED IT.
      *
-     * The second reason is the stronger one: a bleed's own ticks would
-     * otherwise be amplified BY THE BLEED BEING UP, so Rip would raise Rip.
-     * The looser reading measured the Cat a third higher than this one.
+     * It asserted that a tick is NOT reached, on two arguments: that a
+     * table-keyed damage multiplier reads `attackTable` and never `critFrom`
+     * everywhere else in this pipeline, and that a bleed's own ticks would
+     * otherwise be amplified by the bleed being up -- Rip raising Rip.
+     *
+     * Both arguments are still true and neither is decisive. The owner reported
+     * expecting "around 1.09x" from Rend and Tear and seeing "more like
+     * 1.025x", and measured over 30 batches with the target bleeding 89.3% of
+     * the fight the readings are:
+     *
+     *     melee-special, non-periodic     29.6% of damage     x1.0296
+     *     plus the bleed TICKS            61.2%               x1.0612
+     *     plus the AUTO-ATTACKS           94.8%               x1.0948
+     *
+     * Only the last produces 1.09 and the first produces 1.025 to the decimal.
+     * So the talent reaches every point of melee damage, and Rip does raise Rip.
+     *
+     * AND THE OLD COMMENT OVERSTATED ITS OWN EVIDENCE: it said the looser
+     * reading "measured the Cat a third higher", and the figures behind that
+     * were 651.7 against 632.2 -- about 3%, not a third. A measurement in a
+     * comment is worth checking even when it is arguing for the right thing.
      * ----------------------------------------------------------------------
      */
     const { source, target } = feral();
@@ -394,9 +412,9 @@ describe('Rend and Tear, which asks about the TARGET', () => {
       attackTable: 'melee-special',
       appliesArmor: false,
     });
-    // The table can miss, so the bonus is checked on the RAW figure, which is
+    // The table can miss, so the bonus is read off the RAW figure, which is
     // computed whether or not the roll landed.
-    if (!hit.avoided) expect(hit.raw).toBeGreaterThan(100);
+    if (!hit.avoided) expect([110, 220]).toContain(Math.round(hit.raw));
 
     const tick = dealDamage(simulation, {
       source,
@@ -408,8 +426,20 @@ describe('Rend and Tear, which asks about the TARGET', () => {
       critFrom: 'melee-special',
       appliesArmor: false,
     });
-    // Ticks crit, so `raw` can be doubled -- but never multiplied by 1.1.
-    expect([100, 200]).toContain(Math.round(tick.raw));
+    // Ticks crit, so `raw` is 110 or twice it -- and never the bare 100.
+    expect([110, 220]).toContain(Math.round(tick.raw));
+
+    // And the swing, which is the clause the owner's figure turned on.
+    const swing = dealDamage(simulation, {
+      source,
+      target,
+      abilityName: 'Main Hand',
+      school: 'physical',
+      baseAmount: 100,
+      attackTable: 'melee-auto',
+      appliesArmor: false,
+    });
+    if (!swing.avoided) expect(Math.round(swing.raw)).toBeGreaterThan(100);
   });
 
   it('tags exactly the three Druid bleeds, so a fourth is covered when it lands', () => {

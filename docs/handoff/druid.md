@@ -38,9 +38,9 @@ question** — the count was wrong for as long as nobody did.
 
 | Profile | Talents | DPS | List | Style |
 | --- | --- | --- | --- | --- |
-| Cat | 9/35/7 | **795.3** | `DRUID_CAT` | cat (paws) |
+| Cat | 9/35/7 | **937.7** | `DRUID_CAT` | cat (paws) |
+| Bear | 9/42/0 | **514.4** | `DRUID_BEAR` | bear (paws) |
 | Moonkin | 38/0/13 | **513.4** | `DRUID_MOONKIN` | caster |
-| Bear | 9/42/0 | **498.0** | `DRUID_BEAR` | bear (paws) |
 
 **THESE ARE CURRENT AND THE TABLE USED TO CARRY A "was" COLUMN**, which is gone
 because it had stopped being about this class: the figures moved 656.1 → 716.4,
@@ -234,6 +234,44 @@ none of them. **Three are worth knowing, and one of them was a real bug:**
   180 armor against the ~33 the Bear gets. **Not fixed here** — it needs a new
   effect kind, and it moves the Bear's rage the counter-intuitive way, since more
   armor means less damage taken means less rage.
+- **THE CAT IS 40% CLEAR OF THE NEXT PROFILE IN THE PROJECT**, 937.7 against DW
+  Fury's 667.5 and 82% above the Bear. Four of the owner's own figures took it
+  there in one commit, +142.4, and the marginal split is Rend and Tear's wider
+  scope **+61.0**, Primal Fury's combo points **+45.1**, Rake's 5.5% tick
+  **+43.7** and Clearcasting-on-Shred **+6.3**. Reprint with
+  `python tools/cat_attribution.py`. **A balance observation rather than a bug** --
+  every lever is stated data -- but the spread across the 24 is much wider than
+  it was.
+- **REND AND TEAR REACHES EVERY POINT OF MELEE DAMAGE, AND THE OWNER'S FIGURE IS
+  WHY.** It shipped scoped to `melee-special` and non-periodic, which is the
+  reading CLAUDE.md states for "melee ABILITIES" -- and at 89.3% bleed uptime the
+  three readings measure **x1.0296**, **x1.0612** and **x1.0948**, against a
+  reported symptom of 1.025 and expectation of 1.09. Both to the decimal.
+  **SO RIP RAISES RIP**: a bleed's own ticks are amplified by the bleed being up,
+  which is the self-reference the narrow reading was partly chosen to avoid.
+  It is the one scope in the pipeline whose DAMAGE fold reads `critFrom`, and
+  `damage.ts` says so where a reader of the general rule would trip over it.
+- **PRIMAL FURY HAS TWO CLAUSES AND A CAT GETS THE SECOND ONE.** Its row holds
+  THREE numbers -- `[100, 5, 100]` at rank 2 -- and a single `reaction` read index
+  0 and granted rage, so the Cat had no Seal Fate and the talent reported itself
+  FULLY MODELLED. It is two reactions now, gated `bear` and `cat`, worth about
+  ten extra combo points a fight.
+  **AND THE RAGE HALF WAS FIRING FOR THE CAT**, against a comment claiming it
+  could not: "rage is the Bear's resource, and `grantResource` finds no pool on a
+  Cat". Every Druid owns every pool in every form -- this file's own test asserts
+  it -- so the Cat gained 100 rage a fight and wasted 62%. Harmless to damage,
+  wrong on the resource panel.
+- **RAKE'S TICK IS 5.5% OF ATTACK POWER AND ITS HIT IS STILL 1%.**
+  `WoWSimWorksheet.xlsx` says 1% for both; the owner gave the tick directly, and
+  a later statement outranks the sheet. **Only one of the two numbers moved**,
+  which is why they are separate constants -- reading "Rake is 5.5%" and setting
+  both would quietly inflate the direct damage.
+- **EVERY CLEARCASTING PROC GOES ON SHRED**, by the owner's instruction, through a
+  gated entry ABOVE the finisher -- which is what "regardless of existing Combo
+  Points" requires, since at five points the list would otherwise reach Rip
+  first. Worth **+6.3, inside the interval**: it is a correctness fix, not a
+  damage lever, and the measurement that matters is that 2.10 of 2.10 procs land
+  on Shred where about a third used to go to Rake and Rip.
 - **OMEN OF CLARITY IS A PASSIVE, NOT A CAST, AND IT IS WHY `reactionsForClass`
   TAKES A STYLE.** Every Druid learns it at 20 and none spends a point on it, so
   it is registered by the class rather than by a talent -- the same reason

@@ -366,7 +366,48 @@ export const DRUID_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
     { kind: 'statFromLevel', to: 'attackPower', requires: { styles: ['cat', 'bear'] } },
   ],
 
-  primal_fury: [{ kind: 'reaction', reactionId: 'primal_fury' }],
+  /*
+   * "Gives you a 100% chance to gain an additional 5 Rage any time you get a
+   * critical strike while in Bear Form or Dire Bear Form. IN ADDITION, your
+   * non-periodic critical strikes from Cat Form abilities that generate Combo
+   * Points have a 100% chance to add an additional Combo Point."
+   *
+   * ------------------------------------------------------------------------
+   * TWO CLAUSES AND THE SECOND ONE WAS NEVER READ. This was a single `reaction`
+   * taking value index 0 -- the rage chance -- and granting rage. The row has
+   * THREE numbers, `[100, 5, 100]` at rank 2, and index 2 is the combo point
+   * clause: a Cat's crits from Shred, Claw and Rake should each be worth two
+   * points, which is the Rogue's Seal Fate wearing a Druid's name.
+   *
+   * IT REPORTED ITSELF FULLY MODELLED, which is why nothing found it: there was
+   * no `unmodelled` entry, so the census counted it in the `Fully` column and no
+   * audit looks at a working talent for a clause it never mentions. The same
+   * shape as Naturalist, on a different effect kind.
+   *
+   * AND THE RAGE CLAUSE WAS NOT BEAR-ONLY EITHER. Its reaction carried "the form
+   * condition is not checked here and does not need to be: rage is the Bear's
+   * resource, and `grantResource` finds no pool on a Cat". That is FALSE -- every
+   * Druid owns every pool in every form, which this project's own test asserts
+   * ("owns every pool in every form, so shifting conjures nothing") -- so the Cat
+   * was gaining 100 rage a fight and wasting 62% of it. Harmless to its damage,
+   * because a Cat has nothing to spend rage on, and wrong on the resource panel.
+   * Both clauses are form-gated now, as the tooltip states them.
+   * ------------------------------------------------------------------------
+   */
+  primal_fury: [
+    {
+      kind: 'reaction',
+      reactionId: 'primal_fury',
+      valueIndex: 0,
+      requires: { styles: ['bear'] },
+    },
+    {
+      kind: 'reaction',
+      reactionId: 'primal_fury_combo_point',
+      valueIndex: 2,
+      requires: { styles: ['cat'] },
+    },
+  ],
 
   predatory_instincts: [{ kind: 'critDamageBonus' }],
 
@@ -421,17 +462,47 @@ export const DRUID_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
   /*
    * "Increases damage done by your melee abilities on Bleeding targets by 10%."
    *
-   * MELEE ABILITIES, SO `melee-special` AND NOT THE SWING. "Abilities" is the
-   * word that decides it -- the reading Savage Strikes gets on the Hunter --
-   * and it costs this talent about half of what it would otherwise be worth to
-   * a Cat, whose main hand is 46% of its damage.
+   * ------------------------------------------------------------------------
+   * IT REACHES EVERY POINT OF MELEE DAMAGE -- the swings and the bleed TICKS as
+   * well as the strikes -- AND THE OWNER'S OWN FIGURE IS WHAT DECIDED IT.
+   *
+   * This shipped scoped to `melee-special` and non-periodic, on the reading
+   * CLAUDE.md states for `attackTableModifiers`: "melee ABILITIES stops at
+   * melee-special, while melee critical strike damage says nothing about
+   * abilities and therefore reaches the swing." That is a defensible reading of
+   * the words and it is not the one the ruleset uses.
+   *
+   * THE ARITHMETIC IS UNAMBIGUOUS. The owner reported expecting "something like
+   * 1.09x" and seeing "more like 1.025x". Measured over 30 batches, with the
+   * target bleeding 89.3% of the fight:
+   *
+   *     melee-special, non-periodic      29.6% of damage    x1.0296
+   *     plus the bleed TICKS             61.2%              x1.0612
+   *     plus the AUTO-ATTACKS            94.8%              x1.0948
+   *
+   * Only the last reading produces 1.09, and the first produces 1.025 to the
+   * decimal. **A stated expected VALUE settles a wording question that the
+   * wording cannot.**
+   *
+   * SO RIP DOES RAISE RIP, and that is worth naming rather than leaving to be
+   * discovered: a bleed's own ticks are amplified by the bleed being up, which
+   * is self-referential and was the second reason the narrow reading was chosen
+   * originally. The owner's figure includes it, so it is their call and not an
+   * oversight.
+   *
+   * IT IS THE ONE SCOPE IN THE PIPELINE WHOSE DAMAGE FOLD READS `critFrom`.
+   * Every other table-keyed multiplier reads `attackTable` alone -- see the note
+   * on `tableMultiplier` in `damage.ts` -- so this deviation is declared there
+   * too, because a reader who knows that rule would otherwise read this as a bug.
    *
    * THE BLEED IS ASKED OF THE AURAS, not of a list of ids: Rake, Rip and
    * Lacerate declare `isBleed`, so a fourth Druid bleed is covered the day it
-   * lands. Both feral profiles hold one up almost continuously -- Rip and Rake
-   * on the Cat, Lacerate on the Bear -- which is what makes this worth taking.
+   * lands. Both feral profiles hold one up almost continuously.
+   * ------------------------------------------------------------------------
    */
-  rend_and_tear: [{ kind: 'bleedingTargetDamage', tables: ['melee-special'] }],
+  rend_and_tear: [
+    { kind: 'bleedingTargetDamage', tables: ['melee-auto', 'melee-special'] },
+  ],
 
   /*
    * THE ABILITY WAS BUILT AND THE TALENT NEVER GRANTED IT.

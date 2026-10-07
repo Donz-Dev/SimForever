@@ -623,7 +623,7 @@ while it worked.
 decimal -- which is what a talent change scoped to one build should look like.
 It makes Frostfire the top Mage, above Fire's 401.2 and Arcane's 392.6, and the
 build that existed for the Fire/Frost overlap now has a third reason to. The
-mean across **24** is **551.9**, RE-SUMMED FROM THE TABLE ABOVE rather than
+mean across **24** is **558.5**, RE-SUMMED FROM THE TABLE ABOVE rather than
 adjusted. It read 488.3 for a while, then 541.3 **across 23 when there were
 already 24** -- each figure right when it was written and drifted as dive after
 dive moved a profile and left the average alone. **The COUNT drifted too, which
@@ -753,6 +753,62 @@ procs a fight, every one of them spent.
 every landed attack, which reshuffles every subsequent roll in a seeded fight --
 so for the Bear and the Moonkin the proc's own dice swamp what the proc is worth.
 Read the procs column, not the DPS column.
+
+**AND THEN FOUR THINGS ON THE CAT, TWO OF THEM A SECOND CLAUSE NOBODY READ.**
+The ruleset owner reported all four; what each turned out to be:
+
+| | |
+| --- | --- |
+| **Primal Fury gave a Cat nothing** | its row holds THREE numbers and a single `reaction` read index 0. The whole second clause -- "your non-periodic critical strikes from Cat Form abilities that generate Combo Points have a 100% chance to add an additional Combo Point" -- was absent, and the talent reported itself FULLY MODELLED |
+| **Rend and Tear read ~1.025x where ~1.09x was expected** | scoped to `melee-special` and non-periodic, on the reading "melee ABILITIES" invites |
+| **Rake's DoT tick scaled at 1%** | the owner has since given it as 5.5%; the HIT stays at 1% |
+| **Clearcasting went wherever the list reached** | about a third of the procs paid for Rake and Rip instead of Shred |
+
+**THE OWNER'S FIGURE SETTLED A WORDING QUESTION THE WORDING COULD NOT.** With the
+target bleeding 89.3% of the fight, the three readings of Rend and Tear measure
+**x1.0296**, **x1.0612** and **x1.0948** -- and the first and last are the 1.025
+reported as the symptom and the 1.09 reported as the expectation, to the decimal.
+So it reaches every point of melee damage, and **Rip raises Rip**: a bleed's own
+ticks are amplified by the bleed being up, which is the self-reference the narrow
+reading was partly chosen to avoid, and the owner's figure includes it.
+
+| Profile | was | now | |
+| --- | --- | --- | --- |
+| Cat | 795.3 | **937.7** | **+142.4 REAL** |
+| Bear | 498.0 | **514.4** | **+16.4 REAL** |
+| the other 22 | | | **+0.0** |
+
+**THE CAT'S SPLIT, AS MARGINAL VALUES against the full build** -- each is what
+removing that one change costs with the other three present:
+
+| | Cat | Bear |
+| --- | --- | --- |
+| Rend and Tear widened | **+61.0** (autos 27.4, ticks 33.6) | **+16.4** (autos 9.5, ticks 6.9) |
+| Primal Fury's combo points | **+45.1** | — |
+| Rake's 5.5% tick | **+43.7** | — |
+| Clearcasting always on Shred | +6.3, inside the interval | — |
+
+**THEY SUM TO MORE THAN THE TOTAL AND THAT IS NOT AN ERROR**: 156.1 against
++142.4, because the marginals overlap -- Rake's bigger ticks and Rip's ticks both
+collect Rend and Tear, so removing either alone understates what they share. The
+Rend and Tear halves ARE exactly additive within themselves, 27.4 + 33.6 = 61.0
+and 9.5 + 6.9 = 16.4, and the Bear's "as it shipped" variant reproduces its old
+498.0 to the decimal -- which is the cross-check that Rend and Tear is the only
+one of the four that reaches the Bear.
+
+**THE PROBE WAS WRONG TWICE BEFORE IT WAS RIGHT**, and both times the tell was
+arithmetic rather than a failure. It first reverted only the `tables` list and not
+the fold in `damage.ts`, leaving the tick half in its own baseline; then it
+reverted the fold with a one-shot string replace, and
+`bleedingTargetModifier(request, request.attackTable ?? request.critFrom)`
+appears TWICE in that file -- the crit fold and the damage fold -- so it patched
+the inert one and two variants came back identical to the decimal. **Two variants
+that agree exactly are a patch that did not apply.**
+
+**A BALANCE OBSERVATION RATHER THAN A BUG: the Cat is now 40% clear of the next
+profile**, 937.7 against DW Fury's 667.5, and 82% above the Bear. Every one of
+the four levers is a figure the owner stated, so nothing here is a guess -- but
+the spread across the 24 is much wider than it was and that is worth a look.
 
 **AND MOONKIN FORM HAS NO UNMODELLED CLAUSE LEFT.** Its last one read "Omen of
 Clarity's trigger chance is doubled, and Omen of Clarity is not declared ... so
@@ -926,11 +982,11 @@ Hemo moves five rows between the two columns, which is exactly that kind of edit
 | Profile | Class | Talents | DPS | | Profile | Class | Talents | DPS |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | Seal Twist Ret | Paladin | 13/0/38 | 709.0 | | Hemo Rogue | Rogue | 17/3/31 | 527.1 |
-| Cat Druid | Druid | 9/35/7 | ****795.3**** | | LW Melee | Hunter | 7/13/31 | 523.8 |
+| Cat Druid | Druid | 9/35/7 | ****937.7**** | | LW Melee | Hunter | 7/13/31 | 523.8 |
 | DW Fury | Warrior | 18/33/0 | 667.5 | | Shadow Priest | Priest | 16/3/32 | 516.4 |
 | Fire Mage | Mage | 10/39/2 | 624.0 | | Venom Rogue | Rogue | 37/12/2 | 510.6 |
 | Frostfire Mage | Mage | 0/29/22 | 623.2 | | Rupture Rogue | Rogue | 12/8/31 | 497.6 |
-| 2H Arms | Warrior | 38/13/0 | 621.1 | | Bear Druid | Druid | 9/42/0 | **498.0** |
+| 2H Arms | Warrior | 38/13/0 | 621.1 | | Bear Druid | Druid | 9/42/0 | **514.4** |
 | Enh Shaman | Shaman | 19/32/0 | 604.0 | | LW Ranged | Hunter | 7/39/5 | **486.5** |
 | BM Hunter | Hunter | 31/20/0 | **595.7** | | Moonkin | Druid | 38/0/13 | ****513.4**** |
 | Combat Rogue | Rogue | 18/33/0 | 586.3 | | Prot Warr | Warrior | 17/0/34 | 457.0 |

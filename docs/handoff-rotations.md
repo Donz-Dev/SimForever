@@ -106,7 +106,7 @@ leave behind**, because nothing about a list changes when a figure does.
 
 | Profile | DPS | List | Entries | Gated |
 | --- | --- | --- | --- | --- |
-| Cat | 656.1 | `DRUID_CAT` | 5 | 3 |
+| Cat | 937.7 | `DRUID_CAT` | 6 | 4 |
 | DW Fury | 651.2 | `WARRIOR_DUAL_WIELD_BERSERKER` | 10 | 6 |
 | 2H Arms | 603.3 | `WARRIOR_TWO_HAND_BATTLE` | 12 | 8 |
 | BM Hunter | 547.0 | `HUNTER_BEAST_MASTERY` | 7 | 6 |
