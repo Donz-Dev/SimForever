@@ -90,7 +90,8 @@ export interface ProfilePreset {
  * or Mana Spring Totem, because a warrior has no mana; no Trueshot Aura,
  * because the ranged attack power reaches a bow that does not swing; no Grace
  * of Air Totem; no Moonkin Form, which is Leader of the Pack's other half and
- * cannot be taken alongside it; and neither curse.
+ * cannot be taken alongside it -- except on the one profile that provides it,
+ * see below; and neither curse.
  *
  * JUDGEMENT OF WISDOM JOINED LATER, on the owner's instruction, and it is the
  * second entry after Sunder Armor to change a resource economy rather than a
@@ -109,12 +110,17 @@ export interface ProfilePreset {
  * a preset can be compared to a hand-edited profile without a diff.
  *
  * ----------------------------------------------------------------------------
- * ONE PRESET DEPARTS FROM THIS LIST, AND ONLY ONE. The Moonkin now GRANTS
- * Moonkin Form itself, from the talent, and the two tooltips say each is
- * "exclusive with" the other -- so a Moonkin whose raid also ran Leader of the
- * Pack would carry both, which is the single combination the ruleset owner's
- * ruling forbids. `MOONKIN_RAID_BUFFS` below is this list minus that entry, and
- * the Moonkin's crit is +3% either way.
+ * TWO PRESETS SUBSTITUTE ONE ENTRY EACH, and both swap rather than drop: the
+ * ranged Hunters take Grace of Air instead of Windfury, and the MOONKIN TAKES
+ * MOONKIN AURA INSTEAD OF LEADER OF THE PACK. The owner's instruction -- the
+ * Moonkin profile should have Moonkin Aura selected by default, because that is
+ * the one it brings.
+ *
+ * ITS CRIT IS +3% EITHER WAY, and that is the containment check rather than a
+ * coincidence: Moonkin Aura, Leader of the Pack and the two Druid talents that
+ * grant them are ONE aura with one id, so no combination of them is worth more
+ * than one. See `PARTY_CRIT_AURA` in `auras/druid.ts`, which carries the ruling
+ * and the 6% it used to be possible to hold.
  *
  * THAT IS STILL "one raid", read properly: the raid supplies whichever of the
  * two auras it has a druid for, and for this profile that druid is the
@@ -170,12 +176,22 @@ const RANGED_HUNTER_RAID_BUFFS: readonly string[] = PRESET_RAID_BUFFS.map((id) =
 /**
  * The same raid, for the one character that brings the other half of it.
  *
- * Derived rather than written out, so a buff added to the list above reaches
- * this one too -- a second hand-kept copy is how the Moonkin would silently
- * stop receiving something every other profile got.
+ * MOONKIN AURA IN LEADER OF THE PACK'S PLACE, on the ruleset owner's
+ * instruction. The Moonkin provides this half of the exclusive pair, so it is
+ * the half its raid is running.
+ *
+ * A SUBSTITUTION RATHER THAN A REMOVAL, which is both more accurate -- the raid
+ * is not short a buff, it has the other one -- and what makes the Raid Buffs
+ * panel show a ticked box where a person would look for it. Derived by mapping
+ * rather than written out, like `RANGED_HUNTER_RAID_BUFFS` above and for the
+ * same reason: a buff added to the list above reaches this one too, where a
+ * second hand-kept copy is how the Moonkin would quietly stop receiving
+ * something every other profile got. The position is kept rather than re-sorted
+ * into catalogue order, which costs a one-line diff against a hand-edited
+ * profile and buys the guarantee that the two lists cannot drift apart.
  */
-const MOONKIN_RAID_BUFFS: readonly string[] = PRESET_RAID_BUFFS.filter(
-  (id) => id !== 'leader_of_the_pack',
+const MOONKIN_RAID_BUFFS: readonly string[] = PRESET_RAID_BUFFS.map((id) =>
+  id === 'leader_of_the_pack' ? 'moonkin_form' : id,
 );
 
 /**

@@ -46,31 +46,46 @@ const PHYSICAL = 'physical' as const;
 
 /*
  * ============================================================================
- * THE TWO PARTY AURAS, WHICH ARE ALSO TWO RAID BUFFS.
+ * THE PARTY CRIT AURA: ONE AURA, THREE SOURCES, 3% ONCE.
  *
- * Leader of the Pack and Moonkin Form each put +3% critical strike chance on
+ * Moonkin Aura and Leader of the Pack each put +3% critical strike chance on
  * everyone within 45 yards, and each tooltip says it is "exclusive with" the
- * other. They have existed in `buffs/raidBuffs.ts` since raid buffs did,
- * because a raid normally receives one of them from somebody ELSE.
+ * other. A character can meet it three ways: the Moonkin Form talent, the
+ * Leader of the Pack talent, or either of the two raid buff entries.
  *
- * DECLARED HERE AND IMPORTED THERE, rather than written out twice. The Cat,
- * the Bear and the Moonkin each PROVIDE their own -- they are the druid the
- * raid buff represents -- so the talent and the raid buff are the same effect
- * reached two ways, and two declarations of it would eventually disagree about
- * the number. The same argument `raidBuffs.ts` already makes for Thunder Clap,
- * which it reuses from the Warrior rather than redeclaring.
+ * THE RULESET OWNER'S RULING IS THAT THEY ARE ONE THING. "These are all the
+ * same exclusive 3% global critical strike chance and do not stack." So this is
+ * ONE `AuraDefinition` with ONE id, and every source applies that one --
+ * `AuraCollection.apply` refreshes a matching id instead of stacking a second
+ * instance, so any combination of the three is 3% and no rule has to be
+ * remembered anywhere.
  *
- * THE SHARED ID IS WHAT MAKES IT SAFE. `AuraCollection.apply` refreshes an
- * aura of the same id instead of stacking a second one, so a Cat that takes
- * the talent AND sits in a raid that selected the buff has 3% and not 6%. The
- * two entries EXCLUDE EACH OTHER on the GUI by the ruleset owner's ruling --
- * "Leader of the Pack and Moonkin Form don't stack, but that can be handled on
- * the GUI" -- and that ruling is about the two DIFFERENT auras, which do add
- * if both are chosen.
+ * ----------------------------------------------------------------------------
+ * IT WAS TWO AURAS AND IT DOUBLE-DIPPED, which is why this is now structural
+ * rather than a selection rule. The earlier arrangement shared an id between
+ * each TALENT and the raid buff OF THE SAME NAME, which closed two of the three
+ * combinations and left the third wide open: a Moonkin carrying its own
+ * `moonkin_form` aura in a raid that selected `leader_of_the_pack` held two
+ * different ids and read **+6% crit**. Measured, not suspected -- 21.243%
+ * spell crit against 24.243%.
  *
- * WHICH IS WHY THE MOONKIN PRESET NO LONGER SELECTS LEADER OF THE PACK. It
- * brings Moonkin Form itself; a raid running both is the one combination the
- * ruling forbids. Its crit is unchanged at +3% and the preset says so.
+ * The older ruling was "they don't stack, but that can be handled on the GUI",
+ * and `withRaidBuff` does switch one off when the other goes on. That was only
+ * ever half the surface: it governs two raid buff entries and knows nothing
+ * about a TALENT, and nothing at all about a profile loaded from JSON with both
+ * ids in its list. A GUI rule cannot cover a source the GUI does not own.
+ *
+ * THE TWO RAID BUFF ENTRIES STILL EXIST SEPARATELY, and should: a raid is
+ * composed by choosing which druid turned up, and the panel names both. They
+ * keep `exclusiveWith` so the selection still reads correctly. What changed is
+ * that choosing wrongly can no longer be worth anything.
+ * ----------------------------------------------------------------------------
+ *
+ * THE NAME CARRIES BOTH, because one aura cannot be called after one source.
+ * It surfaces in the combat log's line at the pull and nowhere else: a
+ * permanent aura is never removed, so `auraUptime` filters it out -- it only
+ * totals a span when an `aura_removed` closes one. A reader of the log sees one
+ * line and the reason there is one line.
  * ============================================================================
  */
 
@@ -78,26 +93,31 @@ const PHYSICAL = 'physical' as const;
 export const PARTY_CRIT_AURA_PERCENT = 3;
 
 /**
+ * The id every source applies, and the whole of the no-double-dip rule.
+ *
+ * Named apart from the two RAID BUFF ids -- which are still `moonkin_form` and
+ * `leader_of_the_pack`, because those name a CHOICE in the panel rather than an
+ * effect on a character. Reusing either one here would have made the aura look
+ * like it belonged to one source.
+ */
+export const PARTY_CRIT_AURA_ID = 'party_crit_aura';
+
+/**
  * Crit in this engine is percentage POINTS, and melee and spells are separate
  * stats. "+3% crit chance" is therefore TWO modifiers, not one -- ranged reads
- * `critChance`, the same stat melee does. Moved here with the auras from
+ * `critChance`, the same stat melee does. Moved here with the aura from
  * `raidBuffs.ts`, which had this as `critChanceEverywhere` and no other caller.
  */
-function partyCritAura(id: string, name: string): AuraDefinition {
-  return {
-    id,
-    name,
-    // As long as the druid is there, which is the whole fight.
-    durationMs: 0,
-    statModifiers: [
-      flat('critChance', PARTY_CRIT_AURA_PERCENT),
-      flat('spellCritChance', PARTY_CRIT_AURA_PERCENT),
-    ],
-  };
-}
-
-export const LEADER_OF_THE_PACK = partyCritAura('leader_of_the_pack', 'Leader of the Pack');
-export const MOONKIN_AURA = partyCritAura('moonkin_form', 'Moonkin Form');
+export const PARTY_CRIT_AURA: AuraDefinition = {
+  id: PARTY_CRIT_AURA_ID,
+  name: 'Moonkin Aura / Leader of the Pack',
+  // As long as the druid is there, which is the whole fight.
+  durationMs: 0,
+  statModifiers: [
+    flat('critChance', PARTY_CRIT_AURA_PERCENT),
+    flat('spellCritChance', PARTY_CRIT_AURA_PERCENT),
+  ],
+};
 
 // ---------------------------------------------------------------------------
 // Balance

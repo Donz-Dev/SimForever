@@ -731,17 +731,33 @@ See [docs/resources.md](docs/resources.md).
   is built PER CHARACTER**, because an internal cooldown is per-character state
   and one shared closure silently stopped Windfury proccing after the first
   iteration of a batch. [docs/raid-buffs.md](docs/raid-buffs.md)
-- **A BUFF THE CHARACTER PROVIDES ITSELF IS THE SAME AURA REACHED TWO WAYS, AND
-  THE ID IS WHAT KEEPS IT SAFE.** Leader of the Pack and Moonkin Form are raid
-  buffs AND Druid talents, so the aura is declared ONCE in `auras/druid.ts` and
-  `raidBuffs.ts` imports it — the arrangement Thunder Clap already had.
-  `AuraCollection.apply` refreshes a matching id instead of stacking, so a Cat
-  that takes the talent in a raid that also ticked the buff has 3% and not 6%.
-  **The owner's "they don't stack, handle it on the GUI" ruling is about the two
-  DIFFERENT auras**, which do add — which is why the Moonkin preset is the second
-  profile to depart from `PRESET_RAID_BUFFS`, dropping the one it excludes. The
-  first is the Enhancement Shaman and its own Windfury; the exception list is in
-  `presets.test.ts` and is asserted EXHAUSTIVE.
+- **A BUFF THE CHARACTER PROVIDES ITSELF IS THE SAME AURA REACHED SEVERAL WAYS,
+  AND THE ID IS THE WHOLE RULE.** Moonkin Aura and Leader of the Pack are two
+  raid buff entries AND two Druid talents, and the owner has ruled that "these
+  are all the same exclusive 3% global critical strike chance and do not stack"
+  — so there is ONE `AuraDefinition` with one id, `PARTY_CRIT_AURA`, and all
+  four sources apply it. `AuraCollection.apply` refreshes a matching id instead
+  of stacking, so no combination is worth more than 3%. The arrangement Thunder
+  Clap already had, which `raidBuffs.ts` reuses from the Warrior.
+- **AND IT SUPERSEDES "HANDLE IT ON THE GUI", BECAUSE A GUI RULE CANNOT COVER A
+  SOURCE THE GUI DOES NOT OWN.** The earlier ruling made exclusivity a SELECTION
+  rule, and `withRaidBuff` does switch one entry off when the other goes on. It
+  governs the two RAID BUFF entries and knows nothing about a TALENT — so a
+  Moonkin carrying its own form talent in a raid with Leader of the Pack ticked
+  held two ids and read **+6% crit**, measured at 24.243% against 21.243%. A
+  profile loaded from JSON with both ids does the same, because nothing re-runs
+  `withRaidBuff` on load. **When a rule is enforced at a chooser, ask what else
+  can reach the thing being chosen.**
+- **THREE PRESETS SUBSTITUTE ONE RAID BUFF AND ONE DROPS ONE, and a SWAP is the
+  commoner shape.** The two ranged Hunters take Grace of Air for Windfury, the
+  Moonkin takes Moonkin Aura for Leader of the Pack — the half of the pair it
+  provides, on the owner's instruction — and only the Enhancement Shaman drops
+  one outright, because Windfury Weapon disables the totem for its own carrier.
+  Both lists are derived from `PRESET_RAID_BUFFS` by mapping rather than written
+  out, so a buff added there reaches them; the exception lists are in
+  `presets.test.ts` and are asserted EXHAUSTIVE. **A drop and a swap say
+  different things about the raid**: dropping says it is short a buff, which for
+  the Moonkin was wrong — it has the other one.
 
 ### Pets
 

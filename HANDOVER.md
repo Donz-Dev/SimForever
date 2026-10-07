@@ -656,6 +656,33 @@ repository was light and perfectly self-consistent.
 `tests/game/talentValueIndex.test.ts` now records all eleven blanket
 multipliers, by hand, with what each one's index MEANS.
 
+**AND MOONKIN AURA WAS WORTH 6% TO THE WRONG RAID.** The owner has ruled that
+Moonkin Aura and Leader of the Pack "are all the same exclusive 3% global
+critical strike chance and do not stack", which SUPERSEDES their earlier "they
+don't stack, but that can be handled on the GUI". The GUI half was never enough:
+`withRaidBuff` governs the two RAID BUFF entries and knows nothing about the two
+TALENTS, so a Moonkin carrying its own form talent in a raid with Leader of the
+Pack ticked held two different aura ids and read **+6% crit** -- 24.243% spell
+crit against 21.243%, measured. A profile loaded from JSON with both buff ids did
+the same, because nothing re-runs `withRaidBuff` on load.
+
+**ONE `AuraDefinition`, ONE id, FOUR SOURCES.** `PARTY_CRIT_AURA`, and both raid
+buff entries and both talents apply it, so `AuraCollection.apply` refreshes
+instead of stacking and no combination is worth more than 3%. Structural rather
+than remembered: a fifth source gets the rule for free. **A rule enforced at a
+chooser does not cover a source the chooser does not own.**
+
+**AND THE MOONKIN PRESET NOW SELECTS MOONKIN AURA BY DEFAULT**, on the owner's
+instruction -- a SUBSTITUTION for Leader of the Pack rather than the removal it
+used to be, because the raid is not short a buff, it has the other one. Three
+presets now substitute a raid buff and one drops one; the exception lists are
+derived from `PRESET_RAID_BUFFS` by mapping and asserted EXHAUSTIVE in
+`presets.test.ts`.
+
+**ALL 24 PROFILES ARE IDENTICAL TO THE DECIMAL**, which is the whole point: the
+fix removes a way to be wrong rather than changing a number, and the containment
+check is that nothing moved at all.
+
 **AND THEN AN OFFICIAL SOURCE REVISED DEEP WOUNDS AGAIN, THREE BULLETS, AND TWO
 OF THEM WERE ALREADY RIGHT.** "Deep Wounds compared to Vanilla now: rolls over
 its damage when refreshed; doesn't reset its tick timer when it is refreshed;

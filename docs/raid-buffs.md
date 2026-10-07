@@ -291,14 +291,53 @@ read now.
 
 ## Entries that cannot sit beside each other
 
-> Leader of the Pack and Moonkin Form don't stack, but that can be handled on
-> the GUI.
+> These are all the same exclusive 3% global critical strike chance and do not
+> stack.
 
-The ruleset owner's ruling, and their choice of where to enforce it — so it is
-a **selection** rule rather than a combat one. The engine is right to add two
-different +3% auras to +6%; what is wrong is choosing both. `exclusiveWith`
-declares the pair in one direction and is read in both, and the panel turns one
-off when the other goes on and says "replaces Moonkin Form" beside the switch.
+The ruleset owner on Moonkin Aura and Leader of the Pack, and **it supersedes an
+earlier ruling of theirs** — "they don't stack, but that can be handled on the
+GUI" — which made it a SELECTION rule rather than a combat one.
+
+### Why the GUI was the wrong place for it
+
+`exclusiveWith` works: it declares the pair in one direction, is read in both,
+and the panel turns one off when the other goes on and says "replaces Moonkin
+Form" beside the switch. What it governs is **two raid buff entries**, and the
+3% has **three** sources:
+
+| Source | Governed by `withRaidBuff`? |
+| --- | --- |
+| the `leader_of_the_pack` raid buff | yes |
+| the `moonkin_form` raid buff | yes |
+| the **Moonkin Form and Leader of the Pack TALENTS** | **no** |
+
+So a Moonkin that took its own form talent, in a raid whose panel had Leader of
+the Pack ticked, held two different aura ids and read **+6% crit** — 24.243%
+spell crit against 21.243%, measured. A profile loaded from JSON with both buff
+ids in its list did the same, because nothing re-runs `withRaidBuff` on load.
+
+**A GUI rule cannot cover a source the GUI does not own**, and the talent half
+arrived after the ruling did.
+
+### What it is now
+
+**One `AuraDefinition`, one id, three sources.** `PARTY_CRIT_AURA` in
+`game/auras/druid.ts`, id `party_crit_aura`, and both raid buff entries and both
+talents apply that one — so `AuraCollection.apply` refreshes a matching id
+instead of stacking a second instance and no combination of the three is worth
+more than 3%. It is structural rather than remembered: a fourth source would get
+the rule for free.
+
+**THE TWO ENTRIES STILL EXIST SEPARATELY, and should.** A raid is composed by
+choosing which druid turned up, the panel names both, and they keep
+`exclusiveWith` so the selection still reads correctly. What changed is that
+choosing wrongly can no longer be worth anything.
+
+**THE AURA'S NAME CARRIES BOTH** — "Moonkin Aura / Leader of the Pack" — because
+one aura cannot be named after one of three sources. It surfaces in the combat
+log's line at the pull and nowhere else: a permanent aura is never removed, and
+`auraUptime` only totals a span when an `aura_removed` closes one, so it is
+filtered out of the uptime table entirely.
 
 Nothing else in the catalogue is exclusive. The two curses are not, because
 nothing in the source says a target holds only one.

@@ -12,7 +12,7 @@ import {
  * talents that grant them, so the raid buff and the talent have to be the same
  * aura or they will eventually disagree about the number.
  */
-import { LEADER_OF_THE_PACK, MOONKIN_AURA, PARTY_CRIT_AURA_PERCENT } from '../auras/druid';
+import { PARTY_CRIT_AURA, PARTY_CRIT_AURA_PERCENT } from '../auras/druid';
 import {
   JUDGEMENT_OF_WISDOM_CHANCE,
   JUDGEMENT_OF_WISDOM_MANA,
@@ -359,7 +359,13 @@ const leaderOfThePack: RaidBuff = {
   detail: `+${PARTY_CRIT_AURA_PERCENT}% critical strike chance, melee and ranged and spell`,
   source: 'Druid',
   appliesTo: 'player',
-  aura: LEADER_OF_THE_PACK,
+  /*
+   * THE SAME AURA THE OTHER ENTRY APPLIES, and the same one both Druid talents
+   * grant. One id, so any combination of the three is 3% -- see
+   * `PARTY_CRIT_AURA`. `exclusiveWith` below still governs the CHOICE, which is
+   * what a raid composition is; it is no longer what makes the number right.
+   */
+  aura: PARTY_CRIT_AURA,
   exclusiveWith: 'moonkin_form',
 };
 
@@ -369,7 +375,7 @@ const moonkinForm: RaidBuff = {
   detail: `+${PARTY_CRIT_AURA_PERCENT}% critical strike chance, melee and ranged and spell`,
   source: 'Druid',
   appliesTo: 'player',
-  aura: MOONKIN_AURA,
+  aura: PARTY_CRIT_AURA,
   exclusiveWith: 'leader_of_the_pack',
 };
 
