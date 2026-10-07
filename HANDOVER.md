@@ -17,7 +17,7 @@ format **v10**. Live at <https://donz-dev.github.io/SimForever/>, republished by
 | --- | --- |
 | **Talents** | 258 fully, 36 partly, 110 ruled out, **64 a live gap** -- from 132 before the class dives |
 | **Abilities** | 114 declared against 478 captured |
-| **Profiles** | 23, all measured, **mean 541.5** |
+| **Profiles** | 24, all measured, **mean 562.8** |
 | **Scope rulings** | 7 members, all the owner's |
 | **Placeholders** | **10 declared** -- see the milestone table, and count DECLARATIONS |
 | **Tests** | 2,293 on Node 20 and 22 |
@@ -229,6 +229,62 @@ pool is untouched -- the Priest's stat block still reads 204 and only its Shadow
 total moved, 497 to 561. Widening it would have fed Holy as well.
 
 **THE MEAN IS 541.5**, from 528.2, re-summed from the table's own rows.
+
+---
+
+**THE NEWEST MOVE IS A SIX-ITEM PALADIN PASS THE OWNER FOUND BY READING THE
+APP**, and five of the six were a talent that reported itself modelled and did
+nothing. **The twenty-one non-Paladin profiles are +0.0 to the decimal.**
+
+| | |
+| --- | --- |
+| **Seal Twist Ret 709.0 to 748.3, +39.2, REAL** | Sacred Arbiter's missing 10% on Holy Strike, plus an instant Hammer of Wrath that **fires for the first time in the project** — 1.9 casts a fight, 4.5% of the profile |
+| Shockadin 581.2 to **585.5**, +4.3 | noise. Sacred Arbiter alone, on a build whose Holy Strike is 7.7% of its damage |
+| Prot Pally 304.9 to **303.9**, -1.0 | noise, **and the two talents it gained do not deal damage**: Improved Righteous Fury and Iron Creed are damage TAKEN. Deaths go 11.27 to 9.63 |
+
+**TWO FAILURE SHAPES, AND NEITHER IS VISIBLE FROM THE CENSUS.**
+
+**A NULL VALUES ENTRY.** Sacred Arbiter is single-rank, so the importer had no
+`{0}` to match and wrote `null` — and `talentBuild` discards every effect that
+asks for a number, while `class_audit` reads the effect TABLE and calls the
+talent complete. **Third time on this class**, after Holy Shield and Divine
+Favor. The whole risk group is a class's single-rank talents, and checking them
+is a five-minute job that has now been worth doing three times.
+
+**A TWO-CLAUSE REASON, WHICH KEEPS READING AS TRUE BECAUSE HALF OF IT IS.**
+Improved Righteous Fury, Iron Creed and Instrument of Law each said "threat is
+out of scope, AND <something that stopped being true>". The threat half is
+permanent and correct in all three; the second half expired when the owner's own
+priority lists started casting Righteous Fury and Hammer of Wrath. A reader
+checks the reason, reads the true clause, and stops.
+
+**ONE OF THE SIX WAS NOT A BUG.** Reckoning measures **3.77 extra swings a fight
+against an expectation of 3.62**, with all four links of the block chain verified
+separately — base 9.56%, +20 exactly from Holy Shield, +30 exactly from Redoubt.
+Seeing 2 in one fight is the sample size: 3.6 is a COUNT, and an extra attack
+emits no telemetry of its own, so the only honest form of the answer is a mean
+over many fights. `tools/probe_block.ts` is the tool that says so and is kept.
+
+**AND ONE ENGINE CHANGE WAS WRITTEN, REVERTED, AND THEN RULED ON** — which is
+worth more than the ones that shipped, and the ruling is the part to keep.
+
+`extraAttack` ends by scheduling a FULL fresh swing timer, which cancels the
+pending one, so an extra attack pushes the next normal swing out by up to a
+whole timer. A change to preserve the pending swing's due time was written as
+the explanation for Reckoning seeming short; **the measurement said Reckoning
+was already at expectation**, the justification collapsed, and it was reverted.
+
+**THE RULESET OWNER HAS SINCE RULED THAT THE EXISTING BEHAVIOUR IS CORRECT**:
+"an extra attack from Reckoning is exactly the same as the other extra attacks
+— like from Hand of Justice. It will trigger an auto-attack and reset the swing
+timer." So the reset is the RULE rather than an accident, Reckoning is not a
+special case, and `docs/extra-attacks.md` had the row right all along ("the
+swing timer: **restarted**") — the paragraph that used to sit here called it
+"almost certainly wrong" and was contradicting a document in this repository.
+
+**`tests/engine/extraAttackSwingTimer.test.ts` PINS IT NOW**, because nothing
+about `scheduleSwing` with a full fresh timer announces that it is deliberate:
+the next reader goes looking and finds a bug, exactly as this pass did.
 
 ---
 
@@ -1117,7 +1173,7 @@ Hemo moves five rows between the two columns, which is exactly that kind of edit
 
 | Profile | Class | Talents | DPS | | Profile | Class | Talents | DPS |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| Seal Twist Ret | Paladin | 13/0/38 | 709.0 | | Hemo Rogue | Rogue | 17/3/31 | 527.1 |
+| **Seal Twist Ret** | Paladin | 13/0/38 | **748.3** | | Hemo Rogue | Rogue | 17/3/31 | 527.1 |
 | Cat Druid | Druid | 9/35/7 | ****937.7**** | | LW Melee | Hunter | 7/13/31 | 523.8 |
 | DW Fury | Warrior | 18/33/0 | 667.5 | | Shadow Priest | Priest | 16/3/32 | 516.4 |
 | Fire Mage | Mage | 10/39/2 | 622.0 | | Venom Rogue | Rogue | 37/12/2 | 510.6 |
@@ -1126,9 +1182,9 @@ Hemo moves five rows between the two columns, which is exactly that kind of edit
 | Enh Shaman | Shaman | 19/32/0 | **625.8** | | LW Ranged | Hunter | 7/39/5 | **486.5** |
 | BM Hunter | Hunter | 31/20/0 | **595.7** | | Moonkin | Druid | 38/0/13 | ****513.4**** |
 | Combat Rogue | Rogue | 18/33/0 | 586.3 | | Prot Warr | Warrior | 17/0/34 | 457.0 |
-| Shockadin | Paladin | 23/0/28 | **581.2** | | Ele Shaman | Shaman | 38/13/0 | 440.2 |
-| Arcane Mage | Mage | 47/4/0 | 581.8 | | SM/DS | Warlock | 40/11/0 | 435.9 |
-| Firelock | Warlock | 5/11/35 | 544.7 | | Prot Pally | Paladin | 8/36/7 | 304.9 |
+| **Shockadin** | Paladin | 23/0/28 | **585.5** | | Ele Shaman | Shaman | 38/13/0 | 440.2 |
+| Arcane Mage | Mage | 47/4/0 | 576.1 | | SM/DS | Warlock | 40/11/0 | 435.9 |
+| Firelock | Warlock | 5/11/35 | 544.7 | | **Prot Pally** | Paladin | 8/36/7 | **303.9** |
 
 **THE TOP TWO ARE INDISTINGUISHABLE AND THE TABLE SHOULD NOT BE READ AS A
 RANKING THERE.** Seal Twist Ret 709.0 +/-9.4 against Cat 703.8 +/-6.4 is a gap of

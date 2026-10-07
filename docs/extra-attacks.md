@@ -36,7 +36,7 @@ been built on the totem's shape until then.
 | --- | --- | --- |
 | who | Windfury **Totem**, Hand of Justice, Weaponmaster's sword clause | Windfury **Weapon**, the imbue |
 | built with | `extraAttack` | content's own `dealDamage`, scheduled |
-| the swing timer | **restarted** — `scheduleSwing` keeps one pending swing per slot | **untouched** |
+| the swing timer | **restarted**, on the owner's ruling — see below | **untouched** |
 | combat table | `melee-auto`: one roll, and a **glancing blow** | `melee-special`: two rolls, **no glance** |
 | extra attack power | a short **AURA**, so it also pays anything else landing inside it | `weaponScaling.bonusAttackPower`, **in the hits** |
 | reported as | "Main Hand Auto-Attack" | its own row |
@@ -48,6 +48,30 @@ timer reset threw away about one real swing a fight, and 15.9% of the build's
 damage — its second-largest source — was hidden inside the auto-attack row with
 the shares still summing to 100%. Net **+21.8** once the window's incidental
 payments are netted off.
+
+## The restarted swing timer is a RULING, and it reads as a bug
+
+**The ruleset owner, 2026-10-07:** "an extra attack from Reckoning is exactly
+the same as the other extra attacks — like from Hand of Justice. It will trigger
+an auto-attack and reset the swing timer."
+
+So `extraAttack` ending with a full fresh `scheduleSwing` is correct, every
+caller is the same, and **there is no special case for a proc triggered by
+damage TAKEN** rather than by the attacker's own swing.
+
+**WHY IT KEEPS LOOKING WRONG.** For a proc that fires from inside the attacker's
+own swing — Hand of Justice, Windfury Totem — the reset is invisible: the original
+handler has already scheduled its successor one whole timer out, so rescheduling
+to the same instant changes nothing. The Paladin's **Reckoning** fires from a
+BLOCK or a CRIT TAKEN, at a moment with no relationship to the swing cadence, so
+there the reset is real and visible. That asymmetry is what makes the line look
+like an oversight, and a change to preserve the pending swing's due time was
+written and reverted on this ruling.
+
+**IT WAS MEASURED BEFORE IT WAS RULED ON, AND THE MEASUREMENT AGREED**:
+Reckoning delivers 3.77 extra swings a fight against an expectation of 3.62, so
+nothing was missing. `tests/engine/extraAttackSwingTimer.test.ts` pins the rule,
+because nothing about `scheduleSwing(full timer)` announces that it is meant.
 
 **THE LOCK IS WHY THE SPECIAL ATTACKS ARE SCHEDULED RATHER THAN DEALT INLINE.**
 `runReactions` claims a per-actor re-entry lock, so `dealDamage` called from

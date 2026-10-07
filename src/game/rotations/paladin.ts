@@ -1,6 +1,7 @@
 import type { PriorityEntry, Rotation, SimulationContext, Combatant } from '../../engine';
 import { PriorityRotation } from '../../engine';
 import type { TalentAllocation } from '../talents/Talent';
+import { activeSeal } from '../auras/paladin';
 
 /**
  * Paladin priority lists.
@@ -62,6 +63,15 @@ const selfExpired = (auraId: string): Condition =>
 /** "<buff> is active", on the Paladin. */
 const selfActive = (auraId: string): Condition => (_context, actor) => actor.auras.has(auraId);
 
+/**
+ * "A seal is up", whichever one.
+ *
+ * Judgement's own `canCast` is exactly this, so a list entry that depends on a
+ * Judgement being castable states the ability's rule rather than a narrower
+ * guess at it.
+ */
+const anySealUp: Condition = (_context, actor) => activeSeal(actor) !== undefined;
+
 /** "hit points <= N% of maximum". */
 const healthAtMostFraction = (fraction: number): Condition =>
   (_context, actor) =>
@@ -73,6 +83,26 @@ const healthAtMostFraction = (fraction: number): Condition =>
  */
 const abilityOnCooldown = (abilityId: string): Condition =>
   (context, actor) => !actor.abilities.isReady(abilityId, context.clock.now());
+
+/**
+ * "...and the build made this ability INSTANT", which only Instrument of Law
+ * at 2/2 does, and only to Hammer of Wrath.
+ *
+ * ----------------------------------------------------------------------------
+ * THE RULE READS THE ABILITY RATHER THAN THE BUILD, which is how Vanguard gates
+ * Charge: the talent changes the character's own copy of the ability, and the
+ * condition asks the copy. Naming the talent here would put a second copy of
+ * "which rank makes it instant" in a file that has no other business knowing.
+ *
+ * WHY THE ENTRY IS GATED AT ALL. The ruleset owner wants Hammer of Wrath in this
+ * list only as the instant ranged attack 2/2 turns it into. At 1/2 or 0/2 it
+ * still has a cast, and a cast on a melee Paladin throws away the swing in
+ * progress -- a different ability at a different price, which the owner has not
+ * asked for.
+ * ----------------------------------------------------------------------------
+ */
+const castsInstantly = (abilityId: string): Condition =>
+  (_context, actor) => (actor.abilities.get(abilityId)?.castTimeMs ?? 0) <= 0;
 
 const all =
   (...conditions: readonly Condition[]): Condition =>
@@ -144,7 +174,20 @@ export const PALADIN_RETRIBUTION: readonly PriorityEntry[] = [
   { abilityId: 'seal_of_the_crusader', condition: firstEventOnly },
   { abilityId: 'judgement' },
   { abilityId: 'holy_strike' },
-  { abilityId: 'hammer_of_wrath' },
+  /*
+   * HAMMER OF WRATH, AND ONLY THE INSTANT ONE. Instrument of Law at 2/2 takes
+   * the whole second off its cast, and the ruleset owner's ruling is that what
+   * is left is an instant RANGED attack scaling with SPELL POWER. This build
+   * takes the talent at 2/2.
+   *
+   * THE CONDITION IS FOR THE BUILD THAT DOES NOT. At 1/2 or 0/2 the ability
+   * still has a cast, and a cast on a melee Paladin throws away the swing in
+   * progress -- a different ability at a different price, which the owner has
+   * not asked this list to pay. **The Shockadin's entry is deliberately NOT
+   * gated**: that build takes no Instrument of Law, casts the one-second version
+   * about twice a fight, and the owner's instruction named this profile.
+   */
+  { abilityId: 'hammer_of_wrath', condition: castsInstantly('hammer_of_wrath') },
   { abilityId: 'consecration' },
   /*
    * THE TWIST, AND IT IS THE LAST TWO ENTRIES RATHER THAN THE FIRST. Each seal
@@ -261,13 +304,30 @@ export const PALADIN_PROTECTION: readonly PriorityEntry[] = [
   { abilityId: 'templars_bulwark', condition: healthAtMostFraction(0.35) },
   { abilityId: 'judgement' },
   /*
-   * SWIFT JUDGEMENT FILLS THE WINDOW THE REAL ONE CANNOT, which is what its
-   * two conditions say together: Judgement on cooldown, and a seal up for it
-   * to unleash.
+   * SWIFT JUDGEMENT IS A SECOND JUDGEMENT, BACK TO BACK, which is the whole
+   * point of it: Judgement, then this, then Judgement again.
+   *
+   * --------------------------------------------------------------------------
+   * ITS GATE USED TO NAME SEAL OF FURY, and that cost it the back-to-back. The
+   * Protection opener is Seal of the Crusader, judge, THEN Seal of Fury -- so at
+   * the first moment Judgement was on cooldown the named seal was not up yet,
+   * the entry fell through, and Swift Judgement went a global cooldown later
+   * than it had to. Judgement landed at 4.5s and 9.0s with a seal cast wedged
+   * between them instead of the two being consecutive.
+   *
+   * ANY SEAL, which is the real condition and is Judgement's own: `canCast`
+   * refuses without one, so resetting the cooldown for a Paladin carrying no
+   * seal would waste a one-minute cooldown rather than a global. Reading it off
+   * `activeSeal` means the list states the same rule the ability does instead of
+   * a narrower guess at it.
+   *
+   * IT FIRES ONCE A FIGHT AND THAT IS ITS COOLDOWN, not a bug: sixty seconds
+   * against a sixty-second encounter.
+   * --------------------------------------------------------------------------
    */
   {
     abilityId: 'swift_judgement',
-    condition: all(abilityOnCooldown('judgement'), selfActive('seal_of_fury')),
+    condition: all(abilityOnCooldown('judgement'), anySealUp),
   },
   { abilityId: 'seal_of_fury', condition: selfExpired('seal_of_fury') },
   { abilityId: 'holy_strike' },

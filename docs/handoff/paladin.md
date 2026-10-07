@@ -49,9 +49,9 @@ school's modifier in before the roll. `AbilityModifier.hitBonus` is the field.
 
 | Profile | Talents | DPS | List |
 | --- | --- | --- | --- |
-| Seal Twist Ret | 13/0/38 | **709.0** ±9.4 | `PALADIN_RETRIBUTION` |
-| Shockadin | 23/0/28 | **560.6** ±4.7 | `PALADIN_SHOCKADIN` |
-| Prot Pally | 8/36/7 | **293.0** ±2.9 | `PALADIN_PROTECTION` |
+| Seal Twist Ret | 13/0/38 | **748.3** ±9.6 | `PALADIN_RETRIBUTION` |
+| Shockadin | 23/0/28 | **585.5** ±4.9 | `PALADIN_SHOCKADIN` |
+| Prot Pally | 8/36/7 | **303.9** ±3.7 | `PALADIN_PROTECTION` |
 
 **DO NOT READ THESE AS THE DEEP DIVE'S FIGURES.** The dive took them to 528.3,
 472.7 and 238.1; everything since — the raid buff list, Judgement of Wisdom,
@@ -69,7 +69,7 @@ against a doubled interval of 5.8. See the trap below for the two numbers that
 could each have gone the other way.
 
 Seal Twist Ret is now at the **top** of the table and should not be read as
-first: 709.0 ±9.4 against Cat's 703.8 ±6.4 is a gap of 5.2 inside both intervals,
+first: 748.3 against a Cat that has since moved as well — check the table,
 so the two are indistinguishable. Prot Pally is still the lowest and is no longer
 an outlier. (The deep dive's own figures were measured
 against a main that had meanwhile taken the Warlock dive's corrections and the
@@ -147,7 +147,7 @@ at all. They are the last two rows in **What is left** below.
 
 | Entry | Profile | Why |
 | --- | --- | --- |
-| `hammer_of_wrath` | Seal Twist Ret | **OUT OF MANA, AND STILL OUT OF MANA** |
+| ~~`hammer_of_wrath`~~ | ~~Seal Twist Ret~~ | **IT FIRES NOW** — 1.9 times a fight for 4.5% of the profile's damage. See below |
 
 **THIS IS THE PROJECT'S WORKED EXAMPLE OF MEASURING A CAUSE RATHER THAN INFERRING
 ONE**, written up in [docs/ability-audit.md](../ability-audit.md). Its "20% or
@@ -180,10 +180,88 @@ had an entry for it, so no number ever moved and that is why it survived.
 
 ---
 
+## The owner's six-item pass, and what each turned out to be
+
+Read in the app, not in the code, which is how five of the six were found.
+
+| | |
+| --- | --- |
+| **Sacred Arbiter's +10% to Holy Strike** | **A NULL VALUES ENTRY.** Single-rank, so the importer had no `{0}` to match and wrote `null`, and `talentBuild` discards every effect that asks for a number. The talent reported itself fully modelled to a census that reads the effect TABLE. Third time on this class |
+| **Hammer of Wrath** | **INSTANT, RANGED, AND STILL SPELL POWER** at Instrument of Law 2/2, on the owner's ruling. The entry is gated on the talent. **It fires now** |
+| **Improved Righteous Fury** | **A TWO-CLAUSE REASON.** "Threat is out of scope AND no profile casts Righteous Fury" -- the first half permanent, the second expired when the owner's Protection list started casting it. 6% damage taken |
+| **Iron Creed** | the same shape, same half wrong. 10% for 6 sec on every Holy Strike while Righteous Fury is up |
+| **Swift Judgement** | **WORKING, AND A GLOBAL COOLDOWN LATE.** Its gate named Seal of Fury, which the Protection opener does not have up at the moment Judgement first goes on cooldown. Any seal now, which is Judgement's own rule |
+| **Reckoning** | **ALREADY CORRECT**, and the one item that was not a bug. Measured at 3.77 extra swings a fight against an expectation of 3.62 |
+
+### Reckoning: all four links verified, and the count is small
+
+`npx vite-node tools/probe_block.ts` prints the chain, which is the only way to
+see a stat, a buff and a proc as three contributions instead of one number:
+
+| | |
+| --- | --- |
+| base (5.0 stat, 114 defense) | **9.56%** |
+| + Holy Shield | **29.56%** — exactly +20 |
+| + Redoubt at 5/5 | **59.56%** — exactly +30 |
+
+8.80 blocks a fight, 40% of them an extra attack, is **3.52 expected from blocks**
+plus 0.10 from crits taken. Measured by diffing against a run with `reckoning: 0`:
+**3.77**. So the talent is right and the EXPECTATION is small.
+
+**AND THE SWING TIMER RESET IS A RULING, NOT AN OVERSIGHT.** The owner, 2026-10-07: "an extra attack from Reckoning is exactly the same as the other
+extra attacks — like from Hand of Justice. It will trigger an auto-attack and
+reset the swing timer." So `extraAttack` restarting the timer is correct and
+**Reckoning is not a special case**, even though it is the only caller where the
+reset is visible — every other one fires from inside the attacker's own swing,
+where rescheduling to the same instant changes nothing. A change to preserve the
+pending swing was written here and reverted; `tests/engine/extraAttackSwingTimer.test.ts`
+pins the rule so the next reader does not find the same apparent bug.
+
+**SEEING 2 IN ONE FIGHT IS NOT A BUG, IT IS THE SAMPLE SIZE.** An expectation of
+3.6 events is a count, and a single fight returns 2 or 3 often. **An extra attack
+also emits no telemetry of its own** — it is an ordinary main-hand swing by the
+time anything can see it — so the only way to count them is the diff, and the
+only honest form of the answer is a mean over many fights.
+
+### Where the two damage-reduction talents actually pay
+
+Not in DPS. 300 iterations, deaths and damage taken:
+
+| | deaths | damage taken |
+| --- | --- | --- |
+| both, as shipped | **9.63** | 146,400 |
+| without Improved Righteous Fury | 9.99 | 155,387 |
+| without Iron Creed | 9.99 | 155,443 |
+| without either | **11.27** | 174,190 |
+
+0.94 x 0.90 = 0.846, and removing both raises damage taken by 19.0% against the
+18.2% that predicts — so both are applying and they multiply, which is the rule
+every other damage-taken multiplier here follows. **Iron Creed alone is worth as
+much as Improved Righteous Fury alone**, because its 10% runs about 60% of the
+fight against the other's permanent 6%.
+
+---
+
 ## Traps specific to this class
 
 - **A BLOCK IS AN OUTCOME A REACTION CAN SEE.** Four places in this project said
   otherwise. See the top of this file, and do not write the claim again.
+- **CHECK EVERY SINGLE-RANK TALENT AGAINST ITS OWN EFFECTS.** Three of this
+  class's talents have been silently inert for this one reason — Holy Shield,
+  Divine Favor and Sacred Arbiter — and nothing reports it: a `null` values entry
+  makes `talentBuild` discard the effect, while the census reads the effect TABLE
+  and calls the talent complete. The Paladin's single-rank talents are
+  `divine_favor`, `improved_seal_of_fury`, `templar_s_bulwark`, `holy_shield`,
+  `swift_judgement` and `sacred_arbiter`.
+- **THREE TALENTS CARRIED A REASON WHOSE FIRST CLAUSE WAS PERMANENT AND WHOSE
+  SECOND HAD EXPIRED**, and all three read as correct because the first half was.
+  Threat is out of scope forever; "and no profile casts Righteous Fury" stopped
+  being true the day the owner's Protection list opened with it. **If a reason has
+  an AND in it, check both sides.**
+- **RIGHTEOUS FURY IS NOT INERT ANY MORE, AND ITS OWN EFFECT STILL IS.** The
+  spell does nothing but threat. What it does is switch two talents ON, so the
+  entry that casts it is paying for Improved Righteous Fury and Iron Creed rather
+  than for nothing. The ability's `unmodelled` says exactly that.
 - **A SEAL CRITS OFF MELEE CRIT CHANCE, AND CRITS FOR 2x.** The owner's ruling,
   covering Seal of Righteousness, Seal of Fury and Seal of Command. **Both halves
   are counter-intuitive because the damage is HOLY**: `spellCritChance` and a
