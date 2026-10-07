@@ -192,6 +192,46 @@ export const puncturingWounds = (chancePercent: number): Reaction => ({
 });
 
 /**
+ * Initiative: "Gives you a {0}% chance to add an additional combo point to your
+ * target when using your Ambush, Garrote, or Cheap Shot ability." 33/67/100.
+ *
+ * ----------------------------------------------------------------------------
+ * PUNCTURING WOUNDS' THIRD CLAUSE WITH A DIFFERENT ABILITY ID, which is the
+ * whole of it -- an additional point on one named ability, rolled per use. It
+ * had been `unmodelled` with a `stealth` scope since the class was written, on
+ * a reason that said its abilities were absent; Ambush has been declared and
+ * cast since the owner's Cutthroat ruling, so one of the three is present and
+ * this is the half that was never re-read.
+ *
+ * AT 3/3 IT IS 100% AND THEREFORE NOT A CHANCE AT ALL. Every Subtlety build
+ * takes three ranks, so an Ambush is worth TWO combo points there -- one from
+ * the ability's own `onCast` and one from here. `rollChance(1)` is still the
+ * path taken rather than special-cased, because ranks 1 and 2 are real and a
+ * branch would be two behaviours to keep in step.
+ *
+ * ON A HIT OR A CRIT, MATCHING AMBUSH'S OWN AWARD. Ambush awards its point only
+ * when the attack is not avoided, and a talent adding "an additional" point to
+ * the same use follows the same rule -- a dodged Ambush that awarded one point
+ * from a talent and none from itself would be a strange shape. `canTrigger`
+ * also consumes no random number on an avoided Ambush, so a seeded run is
+ * unaffected by whether the roll happens.
+ *
+ * GARROTE AND CHEAP SHOT ARE OUT OF SCOPE for good, so there is nothing here
+ * to extend to them; the talent carries that half as a scoped `unmodelled`.
+ * ----------------------------------------------------------------------------
+ */
+export const initiative = (chancePercent: number): Reaction => ({
+  id: 'initiative',
+  on: 'dealt',
+  outcomes: ['hit', 'crit'],
+  canTrigger: (context, _actor, attack) =>
+    attack.abilityId === 'ambush' && context.rng.rollChance(chancePercent / 100),
+  onTrigger: (context, actor, attack) => {
+    awardComboPoint(context, actor, attack.defender, 'initiative', 'Initiative');
+  },
+});
+
+/**
  * Hack and Slash's Axe/Sword clause: "your successful melee attacks have a 5%
  * chance to trigger an extra attack on the target."
  *
@@ -237,6 +277,7 @@ export const hackAndSlash = (chancePercent: number): Reaction => ({
 export const ROGUE_TALENT_REACTIONS: Readonly<Record<string, TalentReactionBuilder>> = {
   seal_fate: sealFate,
   cutthroat,
+  initiative,
   puncturing_wounds: puncturingWounds,
   hack_and_slash: hackAndSlash,
 };

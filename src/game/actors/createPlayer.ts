@@ -40,6 +40,8 @@ import type { Equipment } from '../items/Item';
 import type { TalentAllocation } from '../talents/Talent';
 import { WARRIOR_STANCES } from '../auras/warrior';
 import { TALENT_AURAS } from '../auras/talentAuras';
+// The Rogue's opening stealth window. See `openingAuras` below.
+import { STEALTH } from '../auras/rogue';
 import { EXTERNAL_HEALER } from '../encounters/externalHealer';
 import { talentBuild, talentContextFor } from '../talents/talentBuild';
 import { legalAllocation } from '../talents/talentRules';
@@ -496,6 +498,22 @@ export function createPlayer(options: PlayerOptions): Combatant {
       ...(characterClass === 'warrior'
         ? [stanceAuraFor(resolveStance(style, options.stance))]
         : []),
+      /*
+       * A ROGUE OPENS FROM STEALTH, which is the owner's design for the list
+       * and the one thing about stealth this project models: it makes Ambush
+       * castable and does nothing else.
+       *
+       * ON THE CLASS AND NOT ON A PROFILE, because opening stealthed is a fact
+       * about a Rogue rather than about a build. Only a list with an Ambush
+       * entry can spend it -- the Venom and Combat lists have none, so they are
+       * unchanged to the decimal, and the containment check says so. A talent
+       * cannot gate this: every Rogue has Stealth and Vanish from a trainer.
+       *
+       * IT IS NOT AN "OPENER ONLY" MECHANISM. Vanish applies the same aura
+       * mid-fight, so the opening window and a Vanish window are one code path
+       * and cannot drift. See `STEALTH` on why both carry Vanish's ten seconds.
+       */
+      ...(characterClass === 'rogue' ? [STEALTH] : []),
       /*
        * Auras a TALENT grants, for passives that do something on a timer
        * rather than adding a number. Anger Management ticks a rage every

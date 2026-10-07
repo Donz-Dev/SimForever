@@ -29,7 +29,7 @@ a build decision for the owner, not a modelling one.
 
 | Talents | Fully | Partly | Ruled out | Live gap |
 | --- | --- | --- | --- | --- |
-| 53 | **31** | **5** | **14** | **3** |
+| 53 | **32** | **6** | **12** | **3** |
 
 Reprint it with `npx vite-node tools/class_audit.ts rogue`, which derives the
 whole thing and throws if the four buckets do not account for every talent.
@@ -58,7 +58,7 @@ current figures with `npx vite-node tools/measure_profiles.ts`.
 | --- | --- | --- | --- | --- | --- |
 | Combat | 18/33/0 | **586.3** | 419.8 | **+166.5** | `ROGUE_COMBAT` |
 | Venom | 37/12/2 | **510.6** | 392.7 | **+117.9** | `ROGUE_VENOM` |
-| Rupture | 12/8/31 | **455.0** | 377.1 | **+77.9** | `ROGUE_RUPTURE` |
+| Rupture | 12/8/31 | **488.5** | 377.1 | **+111.4** | `ROGUE_RUPTURE` |
 
 **THIS COLUMN IS KEPT CURRENT NOW, AND IT WAS NOT.** It stood at 461.8 / 440.2 /
 409.4 — the dive's own figures, correct on the day and moved four times since by
@@ -295,6 +295,155 @@ with a comment repeating the false claim that the engine has no multiplier. **A
 test named for what the page SAYS was quietly enforcing that the page keep saying
 something untrue**, and fixing the ability is what finally failed it. It asserts
 Blade Flurry's caveat — which is real — and that Adrenaline Rush is *absent* now.
+
+---
+
+## AMBUSH HAD THREE TALENTS POINTING AT IT AND ALL THREE WERE SWITCHED OFF
+
+**Rupture 455.0 → 488.5, +33.5**, and the census went from 14 ruled out to 12.
+
+**ONE FALSE PREMISE, SHARED BY THREE TALENTS.** Improved Ambush (45% crit),
+Initiative (a second combo point at 3/3) and Opportunity's Ambush clause (+10%
+damage) each carried an `unmodelled` entry reading *"Ambush requires stealth and
+is absent"*. Ambush has been declared since the owner ruled that **Cutthroat's
+proc IS its stealth requirement** — it was in the book, in this list and dealing
+1.6% of the profile's damage while three talents aimed at it reported themselves
+out of scope. All three are 6 of the profile's 51 points.
+
+### The `scope` tag is why nobody looked again
+
+This is the failure mode worth carrying out of here, and it is a GOOD mechanism
+being misapplied. A `scope` tag means "the owner has ruled this out", so the
+effect is deliberately kept off the live-gap list and shown separately in the
+Talent panel — the whole point being that a ruled-out effect is not a work queue
+item. **Tagging a LIVE effect `stealth` therefore removed it from the only list
+anybody re-reads.** An ordinary `unmodelled` reason would have been counted as a
+gap and re-read when the blocker cleared.
+
+**When a ruling widens what is modelled, the scope tags are the first place to
+look** — and the last place a reader expects to have to.
+
+### What each was worth, isolated
+
+60 batches of 10 each, knocked out one at a time against the finished list.
+
+| | |
+| --- | --- |
+| Improved Ambush, 45% crit on Ambush | **+14.0** |
+| Opportunity's Ambush clause, +10% damage | **+4.8** |
+| Initiative, the second combo point | **+1.4**, inside the interval |
+
+**INITIATIVE IS THE ODD ONE AND THE REASON IS THE LIST, NOT THE TALENT.** At 3/3
+it is 100%, so every Ambush is worth two combo points rather than one — and this
+build's only damage finishers are Rupture at exactly five points and an Eviscerate
+that fires zero times. Extra points arrive into a list with nowhere to put them.
+**A correct talent can be worth nothing because of where the points go**, which
+is a rotation finding wearing a talent's clothes: the figure would move if the
+Eviscerate floors were revisited.
+
+---
+
+## VANISH, AND STEALTH THAT IS A GATE RATHER THAN A SYSTEM
+
+**Ambush went from 0.4 casts a fight to 2.8**, and from 1.6% of the profile's
+damage to **12.4%**.
+
+**THE OWNER'S RULING IS WHAT MAKES THIS SMALL:** *"It's a stealth ability, but we
+don't need stealth to properly function — it just needs to enable Ambush."* So
+there is still no stealth system. `STEALTH` is an aura Ambush reads in `canCast`,
+exactly the shape Cutthroat already had, and the two are alternatives rather than
+a new requirement.
+
+**TWO ROUTES, ONE AURA.** The Rogue carries it from `openingAuras` at the pull —
+the owner's "you start from stealth" — and Vanish applies the same definition
+mid-fight. One code path, so the opener and a Vanish window cannot drift apart.
+It is on the CLASS rather than a profile, because opening stealthed is a fact
+about a Rogue; the Venom and Combat lists have no Ambush entry, so both are
+unchanged to the decimal and the containment run says so.
+
+**CUTTHROAT IS SPENT FIRST WHEN BOTH ARE UP.** A real decision: Cutthroat comes
+off a Backstab proc several times a fight and a stealth window comes off a
+five-minute cooldown, so spending the renewable one first keeps the scarce one.
+
+### Vanish's numbers, and the one that is not stated
+
+Read from `forever-rogue-spellbook.json` at rank 2, which is max: `Instant`,
+`5 min cooldown`, `Reagents: Flash Powder` — so **no energy cost**, because a
+consumable is not a resource this engine tracks.
+
+**FIVE MINUTES IS LONGER THAN EVERY FIGHT HERE**, which is what makes PREPARATION
+the second half of the cycle rather than a tidy-up: it finishes the cooldown on
+every other Rogue ability and therefore on Vanish. The measurement shows **1.7
+Vanishes a fight** — one, a Preparation, and a second — which is the owner's
+design arriving exactly as specified.
+
+**THE DURATION OF PLAIN STEALTH IS NOT IN ANY SOURCE.** Only Vanish states one
+("improved stealth mode for 10 sec"), and the opener reuses it rather than being
+given an invented number or an unbounded one. **The choice is not load-bearing**:
+the list spends the opening window inside the first two global cooldowns, so ten
+seconds and forever behave identically. `STEALTH_DURATION_MS` is the single place
+to change it if the owner states a figure.
+
+**IT TAKES A GLOBAL COOLDOWN, which is the engine's default and not a stated
+fact.** Nothing in the source says otherwise, so the default stands rather than a
+guess being written down as data.
+
+---
+
+## THE RUPTURE LIST NOW CARRIES THE OWNER'S FOUR SEQUENCES IN THREE ENTRIES
+
+```
+Opener:                                    Stealth, Premeditation, Ambush
+When <= 3 combo points:                    Vanish, Ambush
+When Vanish + Premed on CD and CP <= 1:    Preparation
+When Prep is on CD and the others are not: Vanish, Premeditation, Ambush
+```
+
+**A PRIORITY LIST HAS NO SEQUENCES**, so these collapse. The list is re-read from
+the top every global cooldown and the first castable entry wins, which means a
+sequence is what EMERGES when each step is in turn the highest castable entry.
+Premeditation, Ambush and Vanish at the top produce all four — **including the
+last, which needs no entry at all**: once Preparation has reset their cooldowns,
+the same three are castable again and the list walks them. The opener's "Stealth"
+is not an entry either, because it is the aura the fight starts with.
+
+**AMBUSH'S ENTRY IS UNCONDITIONAL NOW**, because its own `canCast` is the gate —
+a dagger and either aura. It used to restate half that rule as
+`selfActive('cutthroat')`, which was harmless with one route and would have been
+wrong with two. It is not a floor under the list despite being ungated, because
+`checkCast` refuses it whenever neither aura is up.
+
+### Three refinements measured, one shipped
+
+60 batches of 10 each, against 482.8 for the list as first written.
+
+| | DPS | |
+| --- | --- | --- |
+| **Vanish also gated on 60 energy** | **488.5 ± 2.9** | **+5.7, shipped** |
+| Ambush above Premeditation | 484.9 ± 2.9 | +2.1, inside |
+| Premeditation gated at ≤3 points | 482.8 ± 3.4 | **+0.0 exactly** |
+| Preparation ungated and last, as it was | 481.6 ± 3.3 | −1.2, inside |
+
+**THE ENERGY GATE IS THE ONLY ONE THAT MEASURED.** Ambush costs 60 of a 100
+pool; spending a global cooldown on Vanish and then finding Ambush unaffordable
+does not usually lose the window, it makes the stealth Ambush arrive several
+global cooldowns late, behind the builders that refilled the pool it was waiting
+on. Gating Vanish rather than Ambush is deliberate — a free Cutthroat proc should
+be spent whatever the pool looks like, and a five-minute cooldown should not.
+
+**THE PREMEDITATION POINT GATE MEASURES EXACTLY NOTHING AND IS NOT SHIPPED**,
+which is worth recording because the arithmetic looks compelling: it grants two
+points, so a pool at four throws one away. The reason it buys nothing is the
+COOLDOWN — at two minutes it fires at the pull and once more after Preparation,
+and the pool is low at both. **A guard against a case that cannot arise is still
+a decision somebody has to read**, so the owner's simpler entry stands.
+
+**PREPARATION'S NEW PLACE AND GATE ARE THE OWNER'S AND MEASURE FLAT**, and both
+halves of that sentence are the note. It fires 1.0 times a fight either way; what
+the gate changes is WHEN, which a sixty-second fight is too short to reward. The
+old comment arguing for "last, below every builder" was sound while the only
+things Preparation reset were cooldowns the list never waited on — Vanish is what
+changes what it is for.
 
 ---
 

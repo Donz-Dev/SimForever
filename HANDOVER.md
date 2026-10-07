@@ -777,8 +777,6 @@ entry the school reading gets wrong. See
 specified entry by entry; what was here before was this project's guess and said
 so. Fourteen profiles moved.
 
-| Profile | Class | Talents | DPS | | Profile | Class | Talents | DPS |
-| --- | --- | --- | --- | --- | --- | --- | --- | --- |
 **ALL 23 RE-MEASURED IN ONE RUN ON `main` ON 2026-10-06**, so these are
 comparable with each other rather than each being the figure from the dive that
 last touched it. **FOUR ROWS WERE STALE AND NOBODY HAD TOUCHED THEM** -- Cat
@@ -794,13 +792,13 @@ has a commit behind it.
 | DW Fury | Warrior | 18/33/0 | 667.5 | | Shadow Priest | Priest | 16/3/32 | 516.4 |
 | Fire Mage | Mage | 10/39/2 | 624.0 | | Venom Rogue | Rogue | 37/12/2 | 510.6 |
 | Frostfire Mage | Mage | 0/29/22 | 623.2 | | Bear Druid | Druid | 9/42/0 | 488.5 |
-| 2H Arms | Warrior | 38/13/0 | 621.1 | | LW Ranged | Hunter | 7/39/5 | 482.1 |
-| Enh Shaman | Shaman | 19/32/0 | 604.0 | | Moonkin | Druid | 38/0/13 | 472.8 |
-| BM Hunter | Hunter | 31/20/0 | 595.8 | | Rupture Rogue | Rogue | 12/8/31 | 455.0 |
+| 2H Arms | Warrior | 38/13/0 | 621.1 | | Rupture Rogue | Rogue | 12/8/31 | 488.5 |
+| Enh Shaman | Shaman | 19/32/0 | 604.0 | | LW Ranged | Hunter | 7/39/5 | 482.1 |
+| BM Hunter | Hunter | 31/20/0 | 595.8 | | Moonkin | Druid | 38/0/13 | 472.8 |
 | Combat Rogue | Rogue | 18/33/0 | 586.3 | | Prot Warr | Warrior | 17/0/34 | 457.0 |
 | Shockadin | Paladin | 23/0/28 | 583.6 | | Ele Shaman | Shaman | 38/13/0 | 440.2 |
 | Arcane Mage | Mage | 47/4/0 | 581.8 | | SM/DS | Warlock | 40/11/0 | 435.9 |
-| | | | | | Prot Pally | Paladin | 8/36/7 | 304.9 |
+|  | | |  | | Prot Pally | Paladin | 8/36/7 | 304.9 |
 
 **THE TOP TWO ARE INDISTINGUISHABLE AND THE TABLE SHOULD NOT BE READ AS A
 RANKING THERE.** Seal Twist Ret 709.0 +/-9.4 against Cat 703.8 +/-6.4 is a gap of

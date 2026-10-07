@@ -122,6 +122,23 @@ together told someone their build was missing features that were never coming.
 Adding a member to that union is a scope DECISION and needs the owner, not a
 judgement call while writing a class.
 
+**AND A `scope` TAG ON A LIVE EFFECT IS THE QUIETEST MISTAKE AROUND THIS TABLE,
+BECAUSE THE TAG'S WHOLE PURPOSE IS TO STOP ANYBODY LOOKING AGAIN.** A ruled-out
+effect is deliberately kept out of the live-gap list and shown apart in the Talent
+panel -- so tagging something that DOES work, or that has since become
+expressible, deletes it from the one list that gets re-read. An ordinary
+`unmodelled` reason is counted and re-read; a scoped one is filed as answered.
+
+It has now cost three Rogue talents at once. **Improved Ambush, Initiative and
+Opportunity's Ambush clause** all carried `scope: 'stealth'` with a reason saying
+"Ambush requires stealth and is absent" -- true when written, and left there
+through the whole release in which the owner ruled that Cutthroat's proc IS
+Ambush's stealth requirement and the ability was declared, listed, and dealing
+damage in a profile. Wiring the three was worth **+19** to the Rupture profile and
+needed no engine work. **When a ruling WIDENS what is modelled, the `scope` tags
+are the first place to look**, and they are the one place a reader does not expect
+to have to.
+
 **AND A SCOPE QUESTION CAN COME BACK AS AN ABILITY.** Asked whether TRAPS were
 out of scope — they need a position and a target that walks onto one, which is
 five Hunter talents and two abilities — the owner added no member and instead
@@ -841,6 +858,26 @@ Three things decide a list and none is visible in per-use damage:
 **A STAT PROBE IS NOT AN ABILITY PROBE.** Injecting Hunter's Mark's 71 ranged
 attack power said +1.9 to the melee Hunter; casting the ABILITY — which also
 spends 60 mana and a GCD at the pull — measured −10.1. Measure the CAST.
+
+**A PRIORITY LIST CANNOT HOLD A SEQUENCE, AND IT DOES NOT NEED TO.** The owner's
+Rogue stealth design is four sequences -- an opener, a Vanish-Ambush pair, a
+Preparation clause, and the Vanish-Premeditation-Ambush that follows it -- and it
+is THREE ENTRIES. A list is re-read from the top every global cooldown and the
+first castable entry wins, so a sequence is what EMERGES when each of its steps is
+in turn the highest castable entry. The fourth sequence needs no entry at all:
+once Preparation has finished their cooldowns, the same three entries are castable
+again and the list walks them. **Say so where the entry is not**, because an
+absent entry for a clause the owner named reads exactly like an omission -- and a
+second entry per ability would be the duplicate-id shape this project only wants
+deliberately.
+
+**A GATE AN ABILITY'S OWN `canCast` ENFORCES BELONGS THERE AND NOT IN THE LIST.**
+Ambush's entry carried `selfActive('cutthroat')`, which was the list restating the
+ability's rule. Harmless while there was one route to the gate -- and the moment
+the owner added a second, it would have been the list restating HALF of it, which
+is worse than restating none. An unconditional entry is still refused by
+`checkCast`, so it is only a FLOOR under the entries below when it is also always
+castable.
 
 **AN ENTRY THAT NEVER FIRES HAS FOUR CAUSES AND THREE OF THEM ARE INVISIBLE.**
 The id names no ability; the build never learned it; the entry above never

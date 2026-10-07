@@ -7,6 +7,7 @@ import {
   COLD_BLOOD,
   COLD_BLOOD_ABILITIES,
   CUTTHROAT,
+  STEALTH,
   GHOSTLY_STRIKE_DODGE_AURA,
   HEMORRHAGE_DEBUFF,
   THOUSAND_CUTS_BONUS,
@@ -45,11 +46,20 @@ import { EVISCERATE_AP_COEFFICIENT_PER_COMBO_POINT } from '../combat/coefficient
  *     poison is NOT a weapon use but IS triggered by one, and its chance is
  *     flat per strike rather than procs per minute -- the opposite of every
  *     weapon enchant here, and both are the owner's rulings.
- *   - ~~STEALTH OPENERS~~ RULED. Stealth is out of scope, so Garrote and Cheap
- *     Shot are absent for good. AMBUSH IS THE EXCEPTION and is declared: the
- *     owner ruled that Cutthroat's proc IS its stealth requirement, so the
- *     aura is the gate and there is no stealth system to build. Premeditation
- *     never had a stealth clause in Forever at all.
+ *   - ~~STEALTH OPENERS~~ RULED, AND THE RULING HAS NOW WIDENED TWICE. Garrote
+ *     and Cheap Shot are absent for good. AMBUSH IS THE EXCEPTION: the owner
+ *     first ruled that Cutthroat's proc IS its stealth requirement, and has
+ *     since added Vanish and the pull as two more routes to the same gate --
+ *     "it just needs to enable Ambush". So there is STILL no stealth system,
+ *     and `STEALTH` is an aura Ambush reads rather than a state anything
+ *     tracks. Premeditation never had a stealth clause in Forever at all.
+ *
+ *     THE PART WORTH CARRYING FORWARD is that three talents stayed dead for a
+ *     release after the FIRST half of this ruling landed -- Improved Ambush,
+ *     Initiative and Opportunity's Ambush clause all read "Ambush requires
+ *     stealth and is absent", which stopped being true the day Ambush was
+ *     declared. Clearing a blocker is not finished until every reason naming
+ *     it has been re-read.
  *   - POSITIONAL REQUIREMENTS, still dropped. Backstab and Ambush "must be
  *     behind the target". Nothing in this simulator has a facing, so the
  *     requirement is dropped and SAID to be dropped rather than silently met.
@@ -572,6 +582,48 @@ export const PREPARATION: Ability = {
 };
 
 /**
+ * Vanish: "Allows the rogue to vanish from sight, entering an improved stealth
+ * mode for 10 sec." Instant, five minute cooldown, no energy.
+ *
+ * ----------------------------------------------------------------------------
+ * ITS WHOLE MODELLED EFFECT IS THAT AMBUSH BECOMES CASTABLE, by the ruleset
+ * owner's ruling -- "it's a stealth ability, but we don't need stealth to
+ * properly function, it just needs to enable Ambush." Everything else Vanish
+ * does needs systems that are out of scope, and they are listed in its
+ * `unmodelled` rather than quietly dropped.
+ *
+ * FIVE MINUTES IS LONGER THAN EVERY FIGHT, so this would be a one-use opener
+ * cooldown on its own. What makes it a rotational ability is PREPARATION, which
+ * finishes the cooldown on every other Rogue ability and therefore on this one:
+ * one Vanish, one Preparation, a second Vanish. That is the owner's design for
+ * the list and it is why Preparation's gate matters more than its own damage.
+ *
+ * READ FROM THE CAPTURE AT RANK 2, which is max: `cooldown: "5 min cooldown"`,
+ * `cast: "Instant"`, `cost: "Reagents: Flash Powder"`. There is no energy cost
+ * to charge -- the reagent is the cost, and a consumable is not a resource this
+ * engine tracks.
+ *
+ * IT TAKES A GLOBAL COOLDOWN, which is the engine's default and not a stated
+ * fact. Nothing in the source says it is off the GCD, and `triggersGcd` is
+ * derived rather than declared here precisely so a guess is never written down
+ * as data. If the owner states otherwise it is one field.
+ * ----------------------------------------------------------------------------
+ */
+export const VANISH: Ability = {
+  id: 'vanish',
+  name: 'Vanish',
+  cooldownMs: seconds(300),
+  requiresTarget: false,
+  onCast: ({ simulation, caster }) => {
+    simulation.applyAura(caster, STEALTH, caster.id);
+  },
+  unmodelled:
+    'Only its stealth-for-Ambush effect is modelled, by the ruleset owner: ' +
+    'it does not drop combat, remove threat (not tracked), break movement ' +
+    'impairing effects (out of scope), or cost its Flash Powder reagent.',
+};
+
+/**
  * Ambush: "causing 250% weapon damage plus 290 to the target. Must be stealthed
  * and behind the target. Requires a dagger in the main hand. Awards 1 combo
  * point." 60 energy.
@@ -594,8 +646,22 @@ export const PREPARATION: Ability = {
  * and a dodged Ambush was still the next one -- consuming it only on a
  * connection would hand back a free window for a miss the Rogue has already
  * paid the energy for.
+ *
+ * ----------------------------------------------------------------------------
+ * AND STEALTH IS A SECOND ROUTE TO THE SAME GATE, from the pull or from Vanish.
+ * The owner has extended the Cutthroat ruling: stealth itself is not modelled,
+ * and what it does is make Ambush castable. So the condition is EITHER aura
+ * rather than two separate requirements -- an Ambush does not need both.
+ *
+ * CUTTHROAT IS SPENT FIRST WHEN BOTH ARE UP, which is a real choice and not an
+ * arbitrary order. Cutthroat comes off a Backstab proc several times a fight; a
+ * stealth window comes from a five-minute cooldown. Spending the renewable one
+ * first keeps the scarce one available for the next Ambush, and spending both
+ * would throw one away for nothing.
  * ----------------------------------------------------------------------------
  */
+/** Named because the Rupture list gates Vanish on being able to afford it. */
+export const AMBUSH_ENERGY_COST = 60;
 export const AMBUSH_BASE_DAMAGE = 290;
 export const AMBUSH_WEAPON_FRACTION = 2.5;
 
@@ -604,13 +670,16 @@ export const AMBUSH: Ability = {
   // Declared so Seal Fate can see it; the award itself is in `onCast`.
   comboPointsAwarded: 1,
   name: 'Ambush',
-  cost: { resource: 'energy', amount: 60 },
+  cost: { resource: 'energy', amount: AMBUSH_ENERGY_COST },
   attackTable: 'melee-special',
   canCast: ({ caster }) =>
-    caster.weapons.mainHand?.weaponType === 'dagger' && caster.auras.has(CUTTHROAT.id),
+    caster.weapons.mainHand?.weaponType === 'dagger' &&
+    (caster.auras.has(CUTTHROAT.id) || caster.auras.has(STEALTH.id)),
   onCast: ({ simulation, caster, target, ability }) => {
     if (!target) return;
-    caster.auras.remove(simulation, CUTTHROAT.id);
+    // Cutthroat first; see the note above on why the order is a decision.
+    if (caster.auras.has(CUTTHROAT.id)) caster.auras.remove(simulation, CUTTHROAT.id);
+    else caster.auras.remove(simulation, STEALTH.id);
     const result = dealDamage(simulation, {
       source: caster,
       target,
@@ -697,6 +766,12 @@ export const ROGUE_ABILITIES: readonly Ability[] = [
   COLD_BLOOD_ABILITY,
   // Granted by the Subtlety talent; `grantsByAbility` gates it.
   PREPARATION,
+  /*
+   * VANISH IS A TRAINER ABILITY, not a talent -- the capture has it in the
+   * Subtlety TAB, "Learned at level 42" -- so every Rogue has it, the same way
+   * every Rogue has Ambush.
+   */
+  VANISH,
   /*
    * AMBUSH IS A TRAINER ABILITY, not a talent, so every Rogue has it -- and
    * only a Rogue with Cutthroat can ever cast one, which `canCast` enforces.

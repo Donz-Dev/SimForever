@@ -22,6 +22,48 @@ import {
 
 // ---------------------------------------------------------------------------
 // Slice and Dice
+/*
+ * ============================================================================
+ * STEALTH, AND IT IS A GATE ON AMBUSH AND NOTHING ELSE.
+ *
+ * Being stealthed is out of scope and stays out: there is no detection, no
+ * break-on-damage, no movement, and nothing in this engine has a position for
+ * any of it to matter to. What the ruleset owner has ruled IN is the one
+ * consequence that changes a damage profile -- "we don't need stealth to
+ * properly function, it just needs to enable Ambush."
+ *
+ * SO THIS IS THE SAME SHAPE CUTTHROAT ALREADY HAS, and deliberately the same
+ * id-as-gate pattern: an aura Ambush reads in `canCast`. Two routes to the same
+ * gate now, one from a Backstab proc and one from the pull or a Vanish, which is
+ * why Ambush checks for EITHER rather than being given a second condition.
+ *
+ * ----------------------------------------------------------------------------
+ * ONE DURATION FOR BOTH ROUTES, AND THE SOURCE ONLY STATES IT FOR VANISH.
+ * "Entering an improved stealth mode for 10 sec" is Vanish's own line. Plain
+ * Stealth at the pull has no stated duration at all -- it lasts until something
+ * breaks it, and nothing here models anything that would.
+ *
+ * The opener reuses Vanish's ten seconds rather than being given an invented
+ * number or an unbounded one, and THE CHOICE IS NOT LOAD-BEARING: the list
+ * spends the opening window inside the first two global cooldowns, so ten
+ * seconds and forever behave identically. It is named once so there is a single
+ * place to change if the owner states a figure for plain Stealth.
+ * ----------------------------------------------------------------------------
+ * ============================================================================
+ */
+export const STEALTH_DURATION_MS = seconds(10);
+
+export const STEALTH: AuraDefinition = {
+  id: 'stealth',
+  name: 'Stealth',
+  durationMs: STEALTH_DURATION_MS,
+  /*
+   * RESET, for the same reason Cutthroat resets: a Vanish during an unspent
+   * opening window starts a fresh ten seconds rather than stacking them.
+   */
+  refreshBehaviour: 'reset',
+};
+
 // ---------------------------------------------------------------------------
 
 /**
