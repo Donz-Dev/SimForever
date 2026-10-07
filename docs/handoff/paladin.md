@@ -113,18 +113,31 @@ the list, and it is expected.
 
 | Talents | Fully | Partly | Ruled out | Live gap |
 | --- | --- | --- | --- | --- |
-| 52 | 32 | 5 | 13 | **2** |
+| 52 | 33 | 7 | 11 | **1** |
 
 Was 22 / 7 / 13 / 10. Reprint it with `npx vite-node tools/class_audit.ts paladin`,
 which derives it from the effect table and throws if its four buckets do not
 account for every talent.
 
-### The 2 live gaps, and neither is an engine gap
+### The 1 live gap, and it is not an engine gap
 
 | Talent | Why |
 | --- | --- |
-| `purifying_power` | two clauses, two causes, **neither of them the engine**. Its Cleanse and Purify cost reduction reaches two dispels, and nothing in this encounter ever applies anything dispellable. Its cooldown reduction reaches Exorcism and Holy Wrath, which are Undead-and-Demon only |
-| `guardian_s_favor` | Blessing of Freedom is immunity to movement impairment, which is positioning; Blessing of Protection stops all physical damage AND all physical attacking, so on a damage profile it is a survival cooldown that costs its own damage. Neither blessing is declared |
+| `purifying_power` | **Its dispel half is RULED OUT now; what is left is the other half.** The cooldown reduction reaches Exorcism and Holy Wrath, which are undeclared and Undead-and-Demon only — the TARGET cause, which is not one of the rulings and expires only if the encounter changes |
+
+**`guardian_s_favor` LEFT THE COLUMN**, both halves scoped: Blessing of Freedom
+is `positioning` and Blessing of Protection is the new `immunity`. The talent's
+own reason had ended "whether an immunity that disarms you belongs in scope is a
+question for the ruleset owner rather than a gap in the engine", and that
+sentence is the only reason it got asked rather than sitting in the queue.
+
+**AND `sacred_duty` SPLIT IN TWO, WHICH CORRECTED SOMETHING THIS FILE GOT WRONG.**
+Its reason said Divine Shield and Divine Protection were "both damage immunities
+that stop the Paladin attacking" — read from Classic. **Forever's Divine Shield
+does not stop you attacking**: "protects the paladin from all damage and spells
+for 12 sec, but reduces all damage you deal by 50%". So Divine Protection is
+scoped `immunity` and **Divine Shield is a real tank cooldown nobody has
+declared**, which is the one piece of expressible Paladin content left.
 
 **BOTH ARE REALLY OWNER QUESTIONS RATHER THAN WORK.** Neither is taken by any of
 the three profiles, and both turn on a scope decision nobody has made — whether a
@@ -365,14 +378,14 @@ ruleset owner:
 
 1. **Seal of Righteousness' base** — is the low end of "20.5 to 71.4" the `base`
    term, or the midpoint? An interpretation either way, recorded in one place.
-2. **Is a dispel in scope?** `purifying_power`'s Cleanse and Purify half is inert
-   because nothing here applies anything dispellable, which is an ENCOUNTER
-   property and not one of the five rulings — the same shape stealth had before it
-   was ruled on.
-3. **Is a self-disarming immunity in scope?** `guardian_s_favor`'s Blessing of
-   Protection, and `sacred_duty`'s Divine Shield and Divine Protection. All three
-   stop the Paladin attacking for their duration, so on a damage profile they cost
-   their own damage.
+2. ~~**Is a dispel in scope?**~~ ~~**Is a self-disarming immunity in scope?**~~
+   **BOTH ANSWERED, 2026-10-07: yes, both are out of scope.** `dispel` and
+   `immunity` are members of `OutOfScope` now. They took the Paladin from two
+   live gaps to one and the Mage from eleven to ten.
+3. **Divine Shield, which the immunity ruling does NOT cover.** Forever's version
+   reduces the damage you deal by 50% rather than stopping you attacking, so it is
+   a usable twelve-second full immunity on a tank that measures deaths — and it is
+   not a declared ability. The only expressible Paladin content left.
 4. **Retribution Aura** — "30 Holy damage to any creature that strikes a party
    member", real damage for the tank profile, and the owner has chosen to leave it
    undeclared. Recorded so the choice is visible rather than looking like an

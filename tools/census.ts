@@ -1,11 +1,21 @@
 /*
  * The whole talent census, derived rather than adjusted.
  *
- * `class_audit.ts` prints one class and throws if its four buckets do not
+ *   npx vite-node tools/census.ts
+ *
+ * ----------------------------------------------------------------------------
+ * `class_audit.ts` prints ONE class and throws if its four buckets do not
  * account for every talent. This prints all nine and the totals, because
  * HANDOVER.md carries a table of them and **a count is exactly where a clean
- * merge goes arithmetically wrong** -- two branches moving a total by one from
- * the same base both write the same number and git merges it silently.
+ * merge goes arithmetically wrong**: two branches moving a total by one from the
+ * same base both write the same number, and git merges it without a conflict.
+ *
+ * BOTH TOOLS SHARE ONE CLASSIFIER NOW. This file used to carry its own copy of
+ * the four-way rule, and the copy left out `appliedElsewhere` -- so the moment a
+ * clause of a working Rogue poison talent was scoped, this tool called the
+ * talent RULED OUT and `class_audit.ts` called it PARTLY. Whichever was run last
+ * would have been published. See `game/talents/talentCensus.ts`.
+ * ----------------------------------------------------------------------------
  */
 import { WARRIOR_TALENT_EFFECTS } from '../src/game/talents/warriorEffects';
 import { PALADIN_TALENT_EFFECTS } from '../src/game/talents/paladinEffects';
@@ -17,6 +27,11 @@ import { PRIEST_TALENT_EFFECTS } from '../src/game/talents/priestEffects';
 import { ROGUE_TALENT_EFFECTS } from '../src/game/talents/rogueEffects';
 import { WARLOCK_TALENT_EFFECTS } from '../src/game/talents/warlockEffects';
 import type { TalentEffects } from '../src/game/talents/TalentEffect';
+import {
+  assertAccountsForEveryTalent,
+  censusOf,
+  scopesOf,
+} from '../src/game/talents/talentCensus';
 
 const TABLES: [string, Readonly<Record<string, TalentEffects>>][] = [
   ['Warrior', WARRIOR_TALENT_EFFECTS],
@@ -30,57 +45,42 @@ const TABLES: [string, Readonly<Record<string, TalentEffects>>][] = [
   ['Warlock', WARLOCK_TALENT_EFFECTS],
 ];
 
-const totals = { talents: 0, fully: 0, partly: 0, ruled: 0, gap: 0 };
+const totals = { talents: 0, fully: 0, partly: 0, ruledOut: 0, liveGap: 0 };
 const scopes = new Map<string, number>();
 
 console.log('| Class | Talents | Fully | Partly | Ruled out | Live gap |');
 console.log('| --- | --- | --- | --- | --- | --- |');
 
 for (const [name, table] of TABLES) {
-  let talents = 0;
-  let fully = 0;
-  let partly = 0;
-  let ruled = 0;
-  let gap = 0;
+  const counts = censusOf(table);
+  assertAccountsForEveryTalent(name, counts);
 
-  for (const effects of Object.values(table)) {
-    talents += 1;
-    const unmodelled = effects.filter((e) => e.kind === 'unmodelled');
-    const working = effects.length - unmodelled.length;
+  for (const scope of scopesOf(table)) scopes.set(scope, (scopes.get(scope) ?? 0) + 1);
 
-    for (const entry of unmodelled) {
-      const scope = (entry as { scope?: string }).scope;
-      if (scope) scopes.set(scope, (scopes.get(scope) ?? 0) + 1);
-    }
-
-    if (unmodelled.length === 0) fully += 1;
-    else if (working > 0) partly += 1;
-    else if (unmodelled.every((e) => (e as { scope?: string }).scope !== undefined)) ruled += 1;
-    else gap += 1;
-  }
-
-  if (fully + partly + ruled + gap !== talents) {
-    throw new Error(`${name}: buckets ${fully + partly + ruled + gap} != ${talents} talents`);
-  }
-
-  console.log(`| ${name} | ${talents} | ${fully} | ${partly} | ${ruled} | **${gap}** |`);
-  totals.talents += talents;
-  totals.fully += fully;
-  totals.partly += partly;
-  totals.ruled += ruled;
-  totals.gap += gap;
+  console.log(
+    `| ${name} | ${counts.talents} | ${counts.fully} | ${counts.partly} | ` +
+      `${counts.ruledOut} | **${counts.liveGap}** |`,
+  );
+  totals.talents += counts.talents;
+  totals.fully += counts.fully;
+  totals.partly += counts.partly;
+  totals.ruledOut += counts.ruledOut;
+  totals.liveGap += counts.liveGap;
 }
 
 console.log(
   `| **Total** | **${totals.talents}** | **${totals.fully}** | ` +
-    `**${totals.partly}** | **${totals.ruled}** | **${totals.gap}** |`,
+    `**${totals.partly}** | **${totals.ruledOut}** | **${totals.liveGap}** |`,
 );
 console.log(
   `\n${totals.fully + totals.partly} of ${totals.talents} talents do something, ` +
-    `${totals.ruled} never will, and ${totals.gap} are the actual remaining work.`,
+    `${totals.ruledOut} never will, and ${totals.liveGap} are the actual remaining work.`,
 );
 const scoped = [...scopes.values()].reduce((a, b) => a + b, 0);
 console.log(
   `${scoped} scoped entries: ` +
-    [...scopes].sort((a, b) => b[1] - a[1]).map(([k, v]) => `${v} ${k}`).join(', '),
+    [...scopes]
+      .sort((a, b) => b[1] - a[1])
+      .map(([name, n]) => `${n} ${name}`)
+      .join(', '),
 );

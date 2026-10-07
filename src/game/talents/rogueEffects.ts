@@ -181,6 +181,13 @@ export const ROGUE_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
     {
       kind: 'unmodelled',
       appliedElsewhere: POISONS_MODULE,
+      /*
+       * ITS DEAD HALF IS A DISPEL, which the owner ruled out of scope on
+       * 2026-10-07 -- so the clause is a DECISION now rather than work. The
+       * reason already said why in its own words: nothing here dispels
+       * anything, which is half of what makes the ruling a ruling.
+       */
+      scope: 'dispel',
       reason:
         'MOSTLY MODELLED. Its +20% poison damage APPLIES in full, read off the ' +
         'allocation by `poisonReactions` and worth about a fifth of the Venom ' +

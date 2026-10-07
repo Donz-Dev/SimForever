@@ -351,7 +351,28 @@ export const MAGE_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
 
   arctic_reach: [{ kind: 'unmodelled', scope: 'positioning', reason: NO_POSITION }],
 
-  ice_block: [{ kind: 'unmodelled', reason: `A survival cooldown. ${NOT_ATTACKED}` }],
+  /*
+   * BLOCKED TWICE, AND THE SECOND BLOCKER IS NOW A RULING. Its reason was
+   * that nothing attacks the Mage, which is the ENCOUNTER and expires if a
+   * profile ever sets `targetAttacks`. Forever's Ice Block also says "you
+   * cannot attack, move, or cast spells" for its ten seconds -- an immunity
+   * that stops you attacking, which the ruleset owner ruled out of scope on
+   * 2026-10-07. A Mage that WAS attacked still could not afford to use it.
+   *
+   * SO IT IS A DECISION RATHER THAN WORK, and both halves are said: the
+   * encounter reason is kept because it is true and specific, and the scope
+   * is what stops the talent being counted as a queue item forever.
+   */
+  ice_block: [
+    {
+      kind: 'unmodelled',
+      scope: 'immunity',
+      reason:
+        'A survival cooldown that also stops the Mage acting -- "you cannot ' +
+        'attack, move, or cast spells" for 10 sec -- so it costs more damage ' +
+        `than it could ever save on a damage profile. ${NOT_ATTACKED}`,
+    },
+  ],
 
   /*
    * ITS REASON CHANGED THE MOMENT FINGERS OF FROST LANDED, which is the

@@ -78,7 +78,7 @@ function everyReason(): { id: string; reason: string; scope?: string }[] {
  * Unprefixed, so it catches "stealthed" too.
  */
 const RULED_OUT_WORDING =
-  /\bmovement\b|\bimmobilis|\bsnare|\bdaze|\bstun|\bfear\b|\bsilence|\bincapacitat|\bdisorient|\bdisarm|\bthreat\b|\btaunt\b|\bheals?\b|\bhealing\b|has a position|nothing (?:here )?moves|\btravel form\b|\bradius\b|\bstealth|\bpushback\b|avoid(?:ing)? interruption|resist interruption/i;
+  /\bmovement\b|\bimmobilis|\bsnare|\bdaze|\bstun|\bfear\b|\bsilence|\bincapacitat|\bdisorient|\bdisarm|\bthreat\b|\btaunt\b|\bheals?\b|\bhealing\b|has a position|nothing (?:here )?moves|\btravel form\b|\bradius\b|\bstealth|\bpushback\b|avoid(?:ing)? interruption|resist interruption|\bdispel|\bcleans(?:e|ing)\b|\bpurif(?:y|ies)\b|cannot attack/i;
 
 /**
  * Reasons that name a ruled-out concept IN PASSING while being inert for some
@@ -89,10 +89,13 @@ const RULED_OUT_WORDING =
  * allowlist is a broken test.
  */
 const MENTIONS_BUT_IS_A_LIVE_GAP: Record<string, string> = {
+  'paladin.purifying_power':
+    'Its dispel half IS scoped and sits beside this one. What is left names Exorcism and Holy Wrath, which are undeclared and Undead-only -- the TARGET cause, which is not one of the rulings and expires if the encounter changes.',
+  'paladin.sacred_duty':
+    "Its Divine Protection half IS scoped. What is left is Divine Shield, which Forever does NOT disarm you with -- it reduces your damage by 50% -- so it is a real survival cooldown nobody has declared.",
+
   'shaman.water_shield':
     'MANA RETURN, which is explicitly in scope. Inert because neither profile is attacked and neither heals -- the target, not the ruling.',
-  'paladin.guardian_s_favor':
-    'Names movement impairment, but that is one of two clauses and the blocker is that NEITHER blessing is declared -- and whether a physical immunity that also stops you attacking is in scope has not been ruled on.',
   'priest.divine_fury':
     'Names heals, but it also reaches Smite; inert because no Shadow list casts either -- the build, not the ruling.',
   'shaman.elemental_weapons':

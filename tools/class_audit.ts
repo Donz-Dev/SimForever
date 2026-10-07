@@ -33,6 +33,7 @@ import type { TalentEffects } from '../src/game/talents/TalentEffect';
 import { PROFILE_PRESETS } from '../src/profiles/presets';
 import { ALL_PRIORITY_LISTS } from '../src/game/rotations/allLists';
 import { characterAtCombatStart, runProfileBatch } from '../src/simulator';
+import { classifyTalent } from '../src/game/talents/talentCensus';
 
 const TABLES: Readonly<Record<string, Readonly<Record<string, TalentEffects>>>> = {
   warrior: WARRIOR_TALENT_EFFECTS,
@@ -66,56 +67,22 @@ interface TalentRow {
 
 function talentsOf(className: string): TalentRow[] {
   const table = TABLES[className]!;
+  /*
+   * THE CLASSIFICATION IS SHARED WITH `tools/census.ts` NOW, in
+   * `game/talents/talentCensus.ts`. It used to live here and census.ts carried
+   * its own copy, which left out `appliedElsewhere` -- so a scoped clause on a
+   * working Rogue poison talent made the two tools disagree, and the published
+   * figure would have been whichever was run last. One rule, one place.
+   */
   return Object.entries(table).map(([id, effects]) => {
-    const unmodelled = effects.filter((effect) => effect.kind === 'unmodelled') as Array<{
-      kind: 'unmodelled';
-      reason: string;
-      scope?: string;
-      appliedElsewhere?: string;
-    }>;
-    /*
-     * AN EFFECT APPLIED SOMEWHERE ELSE COUNTS AS AN EFFECT, which is what
-     * `appliedElsewhere` was added to say. Two Rogue poison talents have no
-     * non-unmodelled entry at all -- `poisonReactions` reads their ranks off the
-     * allocation directly -- so counting rows alone called two working talents
-     * live gaps for the whole project, and their reasons saying "APPLIES in
-     * full" in capitals could not reach a census that counts effects.
-     */
-    const elsewhere = unmodelled.filter((entry) => entry.appliedElsewhere !== undefined).length;
-    const others = effects.length - unmodelled.length + elsewhere;
-    const scopes = unmodelled.map((entry) => entry.scope).filter((s): s is string => s !== undefined);
-    /*
-     * THE FOUR-WAY CLASSIFICATION, and it has to match the census in
-     * HANDOVER.md or one of the two is wrong. A talent with no unmodelled entry
-     * is FULLY modelled; one with only scoped reasons is RULED OUT; one with any
-     * unscoped reason is a LIVE GAP; and one that has both an effect and an
-     * unmodelled reason is PARTLY modelled.
-     */
-    const allScoped = unmodelled.length > 0 && scopes.length === unmodelled.length;
-    /*
-     * `appliedElsewhere` COUNTS AS A WORKING EFFECT, because it says the talent
-     * IS applied -- just by a module this table cannot express, which is what
-     * Vile Poisons and Improved Poisons are. Before the field existed both were
-     * counted as live gaps while working perfectly, and their reasons said
-     * "APPLIES in full" in capitals: this tool counts effects, not adjectives.
-     */
-    const appliedElsewhere = unmodelled.some((entry) => entry.appliedElsewhere !== undefined);
-    const working = others > 0 || appliedElsewhere;
-    /*
-     * EXHAUSTIVE AND DISJOINT, and the first version was neither -- a talent
-     * with an effect AND only-scoped reasons matched none of the four, so the
-     * rows did not sum to the talent count and `partly` read low for six
-     * classes. Scope decides RULED OUT versus LIVE GAP only once a talent has no
-     * working effect at all; a talent that does something and has a ruled-out
-     * clause is PARTLY modelled either way.
-     */
+    const { bucket, reasons, scopes } = classifyTalent(id, effects);
     return {
       id,
-      fully: unmodelled.length === 0,
-      partly: working && unmodelled.length > 0,
-      ruledOut: !working && allScoped,
-      liveGap: !working && !allScoped && unmodelled.length > 0,
-      reasons: unmodelled.map((entry) => entry.reason),
+      fully: bucket === 'fully',
+      partly: bucket === 'partly',
+      ruledOut: bucket === 'ruledOut',
+      liveGap: bucket === 'liveGap',
+      reasons,
       scopes,
     };
   });
