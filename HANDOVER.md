@@ -228,7 +228,71 @@ Elemental Shaman, and Anathema the Shadow Priest.
 pool is untouched -- the Priest's stat block still reads 204 and only its Shadow
 total moved, 497 to 561. Widening it would have fed Holy as well.
 
-**THE MEAN IS 541.5**, from 528.2, re-summed from the table's own rows.
+**ALL THREE HUNTERS MOVED AND NOTHING ELSE DID, ON FIVE THINGS THE RULESET
+OWNER REPORTED.** BM Hunter **595.7 to 668.6**, LW Ranged **486.5 to 681.1**, LW
+Melee **523.8 to 631.4**, all REAL; the other twenty-one identical to the
+decimal. **Three of the five had never worked at all** rather than working
+wrongly, and every one produced a plausible figure -- a Hunter without its 20%,
+without a haste proc and without a hawk is still a Hunter doing Hunter damage.
+
+| | BM | LW Ranged | LW Melee |
+| --- | --- | --- | --- |
+| **Lone Wolf's 20%**, which had never been applied | — | **+113.5** | **+107.6** |
+| **Ammunition**, 16.5 DPS x base bow speed into base damage | **+32.0** | **+43.1** | — |
+| **The quiver**, ranged swing timer / 1.15 | **+32.3** | **+39.0** | — |
+| **Deadly Aspects' Auto Shot half**, which could never fire | **+25.1** | **+30.2** | — |
+| **Summon Hawk in the ranged list** | 0 | 0 | — |
+| **together** | **+72.9** | **+194.7** | **+107.6** |
+
+They overlap, so the columns do not sum. **LW Melee's whole change is Lone Wolf
+alone**, to the decimal, and BM Hunter did not move from it at all -- it takes a
+pet instead. That is the containment check inside the class.
+
+**TWO OF THEM WERE SILENT FOR THE LIFE OF THE PROJECT, AND BOTH FOR THE SAME
+REASON: A LOOKUP THAT MISSES IS NOT AN ERROR.**
+
+**`grantAura` RESOLVES THROUGH A FIFTH REGISTRATION SITE AND NOBODY KNEW.**
+CLAUDE.md lists four places a class is registered; `TALENT_AURAS` is a fifth,
+and `createPlayer` DROPS an id it cannot find on purpose -- "a typo should show
+up as a talent that visibly does nothing". `lone_wolf` was never registered, so
+both profiles NAMED AFTER the talent went the whole project without its 20%.
+`hunterFiveFixes.test.ts` now fails if any `grantAura` id across all nine
+classes resolves to nothing, with the Warlock's one legitimate exemption
+written out.
+
+**AND A PREDICATE THAT IS ALWAYS FALSE READS EXACTLY LIKE ONE THAT IS SOMETIMES
+TRUE.** Deadly Aspects asked `isWeaponUseOf(attack, 'ranged')`, and
+`isWeaponUse` means "a use of a MELEE weapon" -- Thunder Clap and Charge declare
+`weaponSlot: 'ranged'` precisely so it excludes them. So the expression was
+`(mainHand || offHand) && ranged`: **403 ranged swings over twenty fights, zero
+procs of a stated 10%.** The parameter is `MeleeWeaponSlot` now, so the question
+is refused at compile time rather than answered wrongly -- and narrowing it
+found two more callers passing a wider type than they ever use.
+
+**THE QUIVER AND THE AMMUNITION ARE CLASS PROPERTIES, NOT EQUIPMENT.** "Hunters
+also passively have a quiver equipped -- which is not a normal equipment slot."
+Both live in `game/character/hunterRanged.ts`: the quiver DIVIDES the ranged
+swing timer by 1.15 (the owner's own example, 2.9 / 1.15 = 2.5217 -- not x 0.85,
+which is a 2% faster bow and a plausible wrong number), and ammunition adds
+`16.5 x BASE bow speed` to base damage. **Neither touches `powerCoefficient`**,
+which is base speed over fourteen: recomputing it from the shortened timer would
+quietly cut every Hunter's attack power scaling by 13%.
+
+**THE WIKI FORMULA ALREADY HAD THE AMMO TERM AND NOBODY HAD READ IT.**
+`rangedAttackPower.test.ts` has carried `AmmoDPS x WeaponSpeed + (RAP / 14 x
+WeaponSpeed + Scope + AvgWeaponDmg)` in its header since it was written -- the
+same speed symbol in both terms, which is what settles "base" over
+"quiver-shortened".
+
+**AND A LIST IS CHOSEN BY A DIFFERENT TALENT FROM THE ONE THAT GRANTS THE
+ABILITY.** `hunterRotation` dispatches on `bestial_wrath`, the 31-point
+capstone; `summon_hawk` is a 5-point talent five rows above it. A build taking
+the hawk without the capstone fell through to the ranged list, which had no hawk
+entry, and silently stopped casting an ability it had paid for. The entry is in
+both lists now and is SILENT for a build without the talent -- LW Ranged shows
+it at 0.0 uses, which is the ninth deliberate never-fired entry.
+
+**THE MEAN IS 578.4**, from 541.5, re-summed from the table's own rows.
 
 ---
 
@@ -1173,18 +1237,18 @@ Hemo moves five rows between the two columns, which is exactly that kind of edit
 
 | Profile | Class | Talents | DPS | | Profile | Class | Talents | DPS |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| **Seal Twist Ret** | Paladin | 13/0/38 | **748.3** | | Hemo Rogue | Rogue | 17/3/31 | 527.1 |
-| Cat Druid | Druid | 9/35/7 | ****937.7**** | | LW Melee | Hunter | 7/13/31 | 523.8 |
+| Cat Druid | Druid | 9/35/7 | 937.7 | | Arcane Mage | Mage | 47/4/0 | 576.1 |
+| Seal Twist Ret | Paladin | 13/0/38 | 748.3 | | Firelock | Warlock | 5/11/35 | 544.7 |
+| **LW Ranged** | Hunter | 7/39/5 | **681.1** | | Hemo Rogue | Rogue | 17/3/31 | 527.1 |
+| **BM Hunter** | Hunter | 31/20/0 | **668.6** | | Bear Druid | Druid | 9/42/0 | 523.1 |
 | DW Fury | Warrior | 18/33/0 | 667.5 | | Shadow Priest | Priest | 16/3/32 | 516.4 |
-| Fire Mage | Mage | 10/39/2 | 622.0 | | Venom Rogue | Rogue | 37/12/2 | 510.6 |
-| Frostfire Mage | Mage | 0/29/22 | 661.3 | | Rupture Rogue | Rogue | 12/8/31 | 497.6 |
-| 2H Arms | Warrior | 38/13/0 | 621.1 | | Bear Druid | Druid | 9/42/0 | **523.1** |
-| Enh Shaman | Shaman | 19/32/0 | **625.8** | | LW Ranged | Hunter | 7/39/5 | **486.5** |
-| BM Hunter | Hunter | 31/20/0 | **595.7** | | Moonkin | Druid | 38/0/13 | ****513.4**** |
-| Combat Rogue | Rogue | 18/33/0 | 586.3 | | Prot Warr | Warrior | 17/0/34 | 457.0 |
-| **Shockadin** | Paladin | 23/0/28 | **585.5** | | Ele Shaman | Shaman | 38/13/0 | 440.2 |
-| Arcane Mage | Mage | 47/4/0 | 576.1 | | SM/DS | Warlock | 40/11/0 | 435.9 |
-| Firelock | Warlock | 5/11/35 | 544.7 | | **Prot Pally** | Paladin | 8/36/7 | **303.9** |
+| Frostfire Mage | Mage | 0/29/22 | 661.3 | | Moonkin | Druid | 38/0/13 | 513.4 |
+| **LW Melee** | Hunter | 7/13/31 | **631.4** | | Venom Rogue | Rogue | 37/12/2 | 510.6 |
+| Enh Shaman | Shaman | 19/32/0 | 625.8 | | Rupture Rogue | Rogue | 12/8/31 | 497.6 |
+| Fire Mage | Mage | 10/39/2 | 622.0 | | Prot Warr | Warrior | 17/0/34 | 457.0 |
+| 2H Arms | Warrior | 38/13/0 | 621.1 | | Ele Shaman | Shaman | 38/13/0 | 440.2 |
+| Combat Rogue | Rogue | 18/33/0 | 586.3 | | SM/DS | Warlock | 40/11/0 | 435.9 |
+| Shockadin | Paladin | 23/0/28 | 585.5 | | Prot Pally | Paladin | 8/36/7 | 303.9 |
 
 **THE TOP TWO ARE INDISTINGUISHABLE AND THE TABLE SHOULD NOT BE READ AS A
 RANKING THERE.** Seal Twist Ret 709.0 +/-9.4 against Cat 703.8 +/-6.4 is a gap of

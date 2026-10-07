@@ -69,9 +69,29 @@ export function isWeaponUse(attack: AttackEvent): boolean {
  * use: it can trigger main-hand Crusader, off-hand Crusader and Windfury, and
  * Windfury only from the main-hand half.
  */
-export function isWeaponUseOf(attack: AttackEvent, slot: WeaponSlot): boolean {
+export function isWeaponUseOf(attack: AttackEvent, slot: MeleeWeaponSlot): boolean {
   return isWeaponUse(attack) && attack.weaponSlot === slot;
 }
+
+/**
+ * THE SLOTS `isWeaponUseOf` CAN HONESTLY ANSWER FOR, which is not every slot.
+ *
+ * ------------------------------------------------------------------------------
+ * `isWeaponUse` MEANS "A USE OF A MELEE WEAPON", so `isWeaponUseOf(attack,
+ * 'ranged')` was `(mainHand || offHand) && ranged` -- ALWAYS FALSE, for every
+ * attack, forever. It compiled, it read as the obvious thing to write, and the
+ * Hunter's Deadly Aspects asked it on every Auto Shot: 403 ranged swings over
+ * twenty fights produced ZERO procs of a talent whose stated chance is 10%.
+ *
+ * NARROWING THE PARAMETER IS THE FIX RATHER THAN WIDENING THE PREDICATE. The
+ * melee meaning is load-bearing -- Thunder Clap, Intercept and Charge declare
+ * `weaponSlot: 'ranged'` precisely so `isWeaponUse` excludes them, and a
+ * Warrior's weapon procs depend on it. So the type now refuses the question
+ * instead of answering it wrongly, and a caller that wants a ranged auto-attack
+ * tests the slot directly.
+ * ------------------------------------------------------------------------------
+ */
+export type MeleeWeaponSlot = 'mainHand' | 'offHand';
 
 /**
  * Which side of an attack a reaction watches.

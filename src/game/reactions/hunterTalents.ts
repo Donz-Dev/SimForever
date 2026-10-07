@@ -1,5 +1,5 @@
 import type { AuraDefinition } from '../../engine';
-import { flat, isWeaponUse, isWeaponUseOf, seconds } from '../../engine';
+import { flat, isWeaponUse, seconds } from '../../engine';
 import type { TalentReactionBuilder } from './warriorTalents';
 import { DEADLY_ASPECTS, FRENZY, laceratingStrikesAura } from '../auras/hunter';
 
@@ -55,7 +55,17 @@ export const deadlyAspects: TalentReactionBuilder = (chancePercent) => ({
   canTrigger: (context, actor, attack) => {
     if (attack.abilityId !== undefined) return false;
 
-    const hawk = actor.auras.has('aspect_of_the_hawk') && isWeaponUseOf(attack, 'ranged');
+    /*
+     * THE SLOT DIRECTLY, AND NOT `isWeaponUseOf`. That read
+     * `isWeaponUse(attack) && slot === 'ranged'`, and `isWeaponUse` means "a use
+     * of a MELEE weapon" -- so the whole expression was always false and this
+     * half of the talent had never fired once. `isWeaponUseOf` no longer accepts
+     * a ranged slot at all; see `MeleeWeaponSlot`.
+     *
+     * An auto-attack is already guaranteed by the `abilityId` check above, so
+     * the slot is the whole of what is left to ask.
+     */
+    const hawk = actor.auras.has('aspect_of_the_hawk') && attack.weaponSlot === 'ranged';
     // EITHER HAND: "all melee auto attacks". See the header.
     const beast = actor.auras.has('aspect_of_the_beast') && isWeaponUse(attack);
     if (!hawk && !beast) return false;

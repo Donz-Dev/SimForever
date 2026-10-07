@@ -1,4 +1,11 @@
-import type { AttackEvent, AuraDefinition, Combatant, Reaction, WeaponSlot } from '../../engine';
+import type {
+  AttackEvent,
+  AuraDefinition,
+  Combatant,
+  MeleeWeaponSlot,
+  Reaction,
+  WeaponSlot,
+} from '../../engine';
 import {
   applyHealing,
   dealDamage,
@@ -99,7 +106,13 @@ function canProc(attack: AttackEvent): boolean {
  */
 function weaponProc(options: {
   readonly id: string;
-  readonly slot: WeaponSlot;
+  /*
+   * MELEE ONLY, AND THE TABLE BELOW NEVER OFFERED ANYTHING ELSE: the equipment
+   * slots it walks are mainHand, twoHand and offHand. The type says so now
+   * because `isWeaponUseOf` can only honestly answer for a melee slot -- see
+   * `MeleeWeaponSlot`. A bow enchant would never have procced.
+   */
+  readonly slot: MeleeWeaponSlot;
   readonly ppm: number;
   readonly onProc: (context: Parameters<Reaction['onTrigger']>[0], actor: Combatant, attack: AttackEvent) => void;
 }): Reaction {
@@ -349,7 +362,7 @@ export function reactionsForEquipment(
 ): readonly Reaction[] {
   const reactions: Reaction[] = [];
 
-  const weaponSlots: readonly (readonly [string, WeaponSlot])[] = [
+  const weaponSlots: readonly (readonly [string, MeleeWeaponSlot])[] = [
     ['mainHand', 'mainHand'],
     ['twoHand', 'mainHand'],
     ['offHand', 'offHand'],

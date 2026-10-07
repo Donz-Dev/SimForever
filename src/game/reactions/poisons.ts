@@ -1,4 +1,4 @@
-import type { AttackEvent, Combatant, Reaction, WeaponSlot } from '../../engine';
+import type { AttackEvent, Combatant, MeleeWeaponSlot, Reaction } from '../../engine';
 import { dealDamage, isWeaponUseOf } from '../../engine';
 import {
   deadlyPoisonAura,
@@ -154,7 +154,7 @@ function instantPoisonHit(
  * module load would share state across a Monte Carlo batch, which is how
  * Windfury silently stopped proccing after the first iteration.
  */
-function poisonProc(slot: WeaponSlot, poison: PoisonId, talents: TalentAllocation | undefined): Reaction {
+function poisonProc(slot: MeleeWeaponSlot, poison: PoisonId, talents: TalentAllocation | undefined): Reaction {
   const fromTalents = poisonTalentBonuses(talents);
 
   /*

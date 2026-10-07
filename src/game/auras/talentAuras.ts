@@ -1,4 +1,5 @@
 import type { AuraDefinition } from '../../engine';
+import { LONE_WOLF } from './hunter';
 import { ANGER_MANAGEMENT } from './warrior';
 import { PARTY_CRIT_AURA, PARTY_CRIT_AURA_ID } from './druid';
 
@@ -37,4 +38,23 @@ export const TALENT_AURAS: Readonly<Record<string, AuraDefinition>> = {
    * same thing is exactly what this is.
    */
   [PARTY_CRIT_AURA_ID]: PARTY_CRIT_AURA,
+  /*
+   * LONE WOLF, AND ITS 20% HAD NEVER APPLIED TO ANYTHING.
+   *
+   * --------------------------------------------------------------------------
+   * `grantAura` resolves an id through THIS TABLE, and `createPlayer` drops an
+   * id it cannot find rather than throwing -- deliberately, so that "a typo
+   * should show up as a talent that visibly does nothing, not as a character
+   * that cannot be built". That is exactly what happened: `lone_wolf` was never
+   * registered, the aura was filtered out, and both Lone Wolf profiles went the
+   * whole project without the 20% damage the talent they are NAMED AFTER grants.
+   *
+   * IT IS A FIFTH REGISTRATION SITE, and CLAUDE.md lists four. A class is
+   * registered in `talentValues.ts`, `talentBuild.ts`'s EFFECTS and REACTIONS,
+   * and `abilitiesForClass` -- and a talent that grants an AURA needs this one
+   * too. `talentAuras.test.ts` now fails when a `grantAura` id resolves to
+   * nothing, which is the structural version of noticing.
+   * --------------------------------------------------------------------------
+   */
+  lone_wolf: LONE_WOLF,
 };
