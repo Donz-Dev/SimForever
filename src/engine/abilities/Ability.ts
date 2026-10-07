@@ -259,6 +259,34 @@ export interface Ability {
   readonly canCast?: (context: AbilityContext) => boolean;
 
   /**
+   * An effect that has to be in place FOR the cast rather than after it.
+   *
+   * ----------------------------------------------------------------------------
+   * EVOCATION IS WHY, AND IT IS THE FIRST THING HERE THAT PAYS OUT DURING ITS
+   * OWN CHANNEL. "It immediately starts your out-of-combat mana regeneration
+   * rate and multiplies it by 16x" over eight seconds, and the mana arrives
+   * through the regeneration timer -- so the aura has to be up while the
+   * channel runs. `onCast` could not do it: for a plain cast it runs at the
+   * END, and for a channel it runs per tick, so the first tick's worth of the
+   * window would be missing and the aura's own duration would have to guess
+   * the hasted channel length.
+   *
+   * RUNS ONCE PER CAST, after the cost is paid and the charges spent, and
+   * AFTER `castEndsAt` is set -- so an effect here can read how long the cast
+   * it belongs to will actually last, hasted. For an instant it runs
+   * immediately before `onCast`, because "start" and "end" are the same moment
+   * and an instant that declared both should get both.
+   *
+   * IT IS NOT A SECOND `onCast`. Anything that happens as a RESULT of the cast
+   * belongs in `onCast`, where the cast reactions can see what it spent. This
+   * is for the window, and the pairing is the point: Evocation opens it here
+   * and closes it in `onCast`, so the window ends exactly when the channel
+   * does rather than on a duration that has to be kept in step with it.
+   * ----------------------------------------------------------------------------
+   */
+  readonly onCastStart?: (context: AbilityContext) => void;
+
+  /**
    * What the ability actually does: deal damage, apply an aura, generate a
    * resource. Runs when the cast completes, which is immediately for an
    * instant ability.

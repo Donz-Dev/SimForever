@@ -9,7 +9,7 @@ import type {
   AttackTableKind,
 } from './attackTable';
 import { ROLL_MAX, resolveAttackTable, toRollUnits } from './attackTable';
-import type { AbilityModifier } from './abilityModifiers';
+import type { AbilityModifier, SchoolModifier } from './abilityModifiers';
 import { combineAbilityModifiers } from './abilityModifiers';
 import { armorConstantForLevel, versatilityMultiplierFrom } from './ratings';
 import type { AttackEvent } from './reactions';
@@ -188,6 +188,38 @@ export interface DamageRequest {
    */
   readonly weaponSlot?: WeaponSlot;
   /**
+   * FURTHER schools whose caster-side modifiers also apply to this damage.
+   *
+   * ----------------------------------------------------------------------------
+   * "THIS SPELL COUNTS AS BOTH FROST AND FIRE DAMAGE", which is Frostfire
+   * Bolt's own spellbook entry and the only wording of its kind in the ruleset.
+   * `school` stays single because every other step needs ONE answer -- which
+   * resistance, which vulnerability, what the log says -- and this adds the one
+   * question that genuinely has two: **which of the caster's own school talents
+   * select it.**
+   *
+   * TEN MAGE TALENTS NAME IT, and the dual membership only ever mattered to
+   * three. Ignite, Improved Scorch, Master of Elements and Combustion select by
+   * ABILITY ID and already listed it; Critical Mass, Fire Power and Elemental
+   * Precision are Fire-scoped and reached it because it is dealt as Fire. The
+   * three that did not were the Frost-scoped ones -- **Piercing Ice, Ice Shards
+   * and Frost Channeling** -- and the ruleset owner spotted the first by eye.
+   * Frost Channeling is a cast modifier and was fixed by adding an id to a
+   * list; the other two are school-scoped and are why this field exists.
+   *
+   * THE CASTER'S SIDE ONLY, AND SPELL POWER IS DELIBERATELY NOT INCLUDED.
+   * `spellPowerFor` still reads `school` alone, because a school-scoped spell
+   * power is a POOL -- "damage done by Frost spells by up to 39" -- and adding
+   * two pools to one cast is a bigger number than any talent asked for. The
+   * four fields that do apply are the ones the three talents use: crit chance,
+   * crit damage, the damage multiplier and hit. The target's own
+   * vulnerabilities are untouched for the same reason, and resistance has no
+   * effect on an enemy target by ruling, so the "lower of the two resists"
+   * clause has nothing to do either way.
+   * ----------------------------------------------------------------------------
+   */
+  readonly countsAsSchools?: readonly DamageSchool[];
+  /**
    * Whether armor reduces this damage.
    *
    * Defaults to true for physical damage and false otherwise. Set it
@@ -334,6 +366,75 @@ export function attackPowerFor(request: DamageRequest): number {
  * lesson: a rule living privately in one file while another re-derives it.
  * ----------------------------------------------------------------------------
  */
+/**
+ * The caster's school modifier for a request, folding in any further school it
+ * counts as.
+ *
+ * ------------------------------------------------------------------------------
+ * ONE FUNCTION AND TWO CALLERS, because the crit half is read in `rollTable`
+ * and the damage half in `resolveDamage` -- the rule this file already states
+ * for `abilityModifierFor`: every reader comes through the same funnel, or an
+ * effect applies in one half of the pipeline and not the other.
+ *
+ * IT DOES NOT USE `combineAbilityModifiers`, AND THAT IS THE WHOLE POINT.
+ * Combining two schools by the ordinary rule -- chances add, damage multiplies
+ * -- DOUBLE-PAYS ANY TALENT THAT NAMES BOTH OF THEM, and the first thing this
+ * field reached was exactly one of those: Elemental Precision is "+5% chance
+ * to hit with Frost AND Fire spells", so a Frostfire Bolt collected +10% and
+ * its miss rate measured 5.26% against an expected 10%. That is one source
+ * paid twice, which is the same failure `pick` carries a guard against for the
+ * `ALL_ABILITIES` key.
+ *
+ * SO THE TWO KINDS OF FIELD ARE COMBINED DIFFERENTLY, and the split follows
+ * what the effects mean rather than what is convenient:
+ *
+ *   damage multiplier   MULTIPLIED. Fire Power's +8% and Piercing Ice's +6%
+ *                       are different talents and a spell that is both schools
+ *                       takes both -- x1.1448, which is the behaviour that
+ *                       makes a dual-school spell worth building around.
+ *   crit, crit damage   THE LARGER, not the sum. An additive bonus that names
+ *   and hit             both schools is ONE source, and this collection cannot
+ *                       tell it from two sources naming one school each: a
+ *                       `SchoolModifiers` entry is already summed per school
+ *                       by the time it gets here.
+ *
+ * THE LIMITATION IS STATED AND IT UNDERSTATES. Two SEPARATE single-school
+ * talents granting additive crit -- a Fire crit talent and a Frost crit talent
+ * on one tree -- would be worth only the larger here. **No class has such a
+ * pair**: four talents in the project name more than one school (Elemental
+ * Precision, the Druid's Moonfury and Vengeance, the Shaman's Elemental Fury)
+ * and a test pins that, so the day a pair appears it fails rather than
+ * quietly paying once. Understating is the direction to be wrong in while the
+ * case does not exist.
+ *
+ * `spellPower` IS STRIPPED, not merely unused, because it is a POOL rather
+ * than a rate -- "damage done by Frost spells by up to 39". `spellPowerFor`
+ * reads the primary school on purpose, and a combined object carrying either
+ * the sum or the max of two pools would be a loaded gun for the day somebody
+ * routes it through here instead.
+ * ------------------------------------------------------------------------------
+ */
+function casterSchoolModifier(request: DamageRequest): SchoolModifier {
+  const primary = request.source.schoolModifiers.for(request.school);
+  if (!request.countsAsSchools?.length) return primary;
+
+  let critBonus = primary.critBonus ?? 0;
+  let critMultiplierBonus = primary.critMultiplierBonus ?? 0;
+  let hitBonus = primary.hitBonus ?? 0;
+  let damageMultiplier = primary.damageMultiplier ?? 1;
+
+  for (const extra of request.countsAsSchools) {
+    if (extra === request.school) continue;
+    const other = request.source.schoolModifiers.for(extra);
+    critBonus = Math.max(critBonus, other.critBonus ?? 0);
+    critMultiplierBonus = Math.max(critMultiplierBonus, other.critMultiplierBonus ?? 0);
+    hitBonus = Math.max(hitBonus, other.hitBonus ?? 0);
+    damageMultiplier *= other.damageMultiplier ?? 1;
+  }
+
+  return { critBonus, critMultiplierBonus, hitBonus, damageMultiplier };
+}
+
 export function spellPowerFor(source: Combatant, school: DamageSchool): number {
   return source.stats.effective.spellPower + (source.schoolModifiers.for(school).spellPower ?? 0);
 }
@@ -515,7 +616,7 @@ function rollTable(
    */
   const modifier = combineModifiers(
     request.source.abilityModifierFor(request.abilityId, remainingFractionOf(context)),
-    request.source.schoolModifiers.for(request.school),
+    casterSchoolModifier(request),
     /*
      * AND THE TABLE'S. `attackTable` for anything that rolls; `critFrom` for
      * a damage-over-time tick, which is the same table the tick already takes
@@ -823,7 +924,7 @@ export function resolveDamage(
    * deals, Curse of the Elements raises the fire damage a target takes, and
    * the two are different effects that both apply.
    */
-  const schoolMultiplier = source.schoolModifiers.for(request.school).damageMultiplier ?? 1;
+  const schoolMultiplier = casterSchoolModifier(request).damageMultiplier ?? 1;
   /*
    * PER TABLE, alongside the other three. Ranged Weapon Specialization is
    * "the damage you deal with ranged weapons", which is neither one ability

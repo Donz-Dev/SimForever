@@ -9,6 +9,9 @@ import {
   FIREBALL_CAST_MS,
   FIREBALL_COEFFICIENTS,
   FIREBALL_DOT,
+  EVOCATION_AURA,
+  EVOCATION_CHANNEL_MS,
+  FROSTFIRE_ALSO_COUNTS_AS,
   FROSTFIRE_CAST_MS,
   FROSTFIRE_COEFFICIENTS,
   FROSTFIRE_DOT,
@@ -305,6 +308,8 @@ export const FROSTFIRE_BOLT: Ability = {
       abilityId: ability.id,
       abilityName: ability.name,
       school: 'fire',
+      // AND FROST, for the caster's own Frost talents. See above.
+      countsAsSchools: FROSTFIRE_ALSO_COUNTS_AS,
       baseAmount: FROSTFIRE_BOLT_DAMAGE,
       powerCoefficient: FROSTFIRE_COEFFICIENTS.direct,
       attackTable: ability.attackTable,
@@ -312,9 +317,11 @@ export const FROSTFIRE_BOLT: Ability = {
     if (!result.avoided) simulation.applyAura(target, FROSTFIRE_DOT, caster.id);
   },
   unmodelled:
-    'It counts as both Frost and Fire; it is dealt as Fire, which is the ' +
-    'school both builds that cast it have talents for. Its coefficient ' +
-    'therefore reads FIRE-scoped spell power and not Frost-scoped.',
+    'It counts as both Frost and Fire and is DEALT as Fire, so its ' +
+    'school-scoped SPELL POWER is read as Fire only -- adding two pools to one ' +
+    'cast is more than any talent asks for. Its Frost TALENTS do reach it: ' +
+    'Piercing Ice, Ice Shards and Frost Channeling all select it now, which ' +
+    'is what `countsAsSchools` is for.',
 };
 
 /*
@@ -544,6 +551,50 @@ export const MAGE_ARMOR_ABILITY: Ability = {
     'reduce. The mana half is modelled in full.',
 };
 
+/**
+ * Evocation. An eight-second channel that buys mana and costs damage.
+ *
+ * ----------------------------------------------------------------------------
+ * THE FIRST ABILITY IN THE PROJECT THAT PAYS OUT DURING ITS OWN CAST, which is
+ * why `Ability.onCastStart` exists. The pair is the design: `onCastStart`
+ * opens the window and `onCast` closes it, so it ends exactly when the channel
+ * does. Giving the aura a duration instead would mean keeping an eight-second
+ * constant in step with a cast time haste shortens -- and getting that wrong is
+ * free mana after the channel, which nothing would flag.
+ *
+ * NO `channelTicks`, and it is still a channel. `castEndsAt` is what locks the
+ * caster out, and that is set for any cast with a cast time; ticks exist for an
+ * ability whose EFFECT repeats, and this one's effect is a rate rather than a
+ * series of events. A one-tick channel and a plain cast are the same thing in
+ * this engine, which is exactly what this wants.
+ *
+ * THE COST IS THE EIGHT SECONDS. It has no mana cost and a 480-second
+ * cooldown, so it fires once a fight and the question a list has to answer is
+ * whether the mana is worth more than the casts it displaces -- which is why
+ * the entry is gated at 10% mana rather than used on cooldown.
+ * ----------------------------------------------------------------------------
+ */
+export const EVOCATION_COOLDOWN_MS = seconds(480);
+
+export const EVOCATION: Ability = {
+  id: 'evocation',
+  name: 'Evocation',
+  castTimeMs: EVOCATION_CHANNEL_MS,
+  cooldownMs: EVOCATION_COOLDOWN_MS,
+  requiresTarget: false,
+  onCastStart: ({ simulation, caster }) => {
+    simulation.applyAura(caster, EVOCATION_AURA, caster.id);
+  },
+  /*
+   * THE CHANNEL ENDING IS THE EFFECT ENDING. Removing it here rather than
+   * letting the aura expire is what keeps the window and the cast the same
+   * length under haste.
+   */
+  onCast: ({ simulation, caster }) => {
+    caster.auras.remove(simulation, EVOCATION_AURA.id);
+  },
+};
+
 export const MAGE_ABILITIES: readonly Ability[] = [
   FIREBALL,
   SCORCH,
@@ -559,4 +610,5 @@ export const MAGE_ABILITIES: readonly Ability[] = [
   ARCANE_POWER_ABILITY,
   PRESENCE_OF_MIND_ABILITY,
   MAGE_ARMOR_ABILITY,
+  EVOCATION,
 ];

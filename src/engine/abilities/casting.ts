@@ -257,6 +257,8 @@ export function castAbility(
   }
 
   if (castTime <= 0) {
+    // An instant starts and ends at the same moment, so it gets both hooks.
+    ability.onCastStart?.(abilityContext);
     runCast(context, abilityContext, true);
     return { ok: true };
   }
@@ -271,6 +273,15 @@ export function castAbility(
   }
 
   caster.castEndsAt = now + castTime;
+
+  /*
+   * AFTER `castEndsAt`, deliberately: an effect that has to last the cast may
+   * need to know how long the cast is, and the hasted length is only knowable
+   * here. Evocation reads it to size nothing at all -- it closes its own
+   * window in `onCast` instead -- but the ordering is what makes that choice
+   * available rather than forced.
+   */
+  ability.onCastStart?.(abilityContext);
 
   /*
    * A CHANNEL IS A CAST THAT TICKS, and the ticks are scheduled INSIDE the

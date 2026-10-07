@@ -10,14 +10,19 @@ directory for what the census columns mean and how to reprint every figure below
 
 ## The one thing to understand first
 
-**TWO OF THE THREE PROFILES WERE WRONG ABOUT THEIR OWN SIGNATURE MECHANIC, AND
-BOTH ERRORS WERE WRITTEN DOWN.** Combustion applied ten stacks by writing
-`instance.stacks` directly and Arcane Blast's "+10% to all your other spells"
-was left out with a caveat. Fixing the two moved Fire **+38.9** and Arcane
-**+58.3**, and the other twenty-one profiles did not move by a decimal.
+**THIS CLASS HAS NOW BEEN WRONG IN THREE DIFFERENT PLACES AND ONLY ONE OF THEM
+WAS THE SIMULATION.**
 
-Neither was found by a test, because neither had one. **Combustion had no test
-at all** — and that is how three separate errors survived in one aura.
+| Where | What |
+| --- | --- |
+| the AURA | Combustion applied ten stacks by writing `instance.stacks` directly, of every school, for a placeholder 30 seconds. Arcane Blast's "+10% to all your other spells" was left out with a caveat. **+38.9 and +58.3** |
+| the SCHOOL | Frostfire Bolt "counts as both Frost and Fire" and three Frost talents could not select it. **+38.0** |
+| the REPORT | the miss column divided by every damage event including DoT ticks, so a hybrid's rate was diluted. **0.0 DPS and it still cost a day** — the ruleset owner read Elemental Precision off that column and reported a working talent as half-broken |
+
+**NONE OF THE THREE WAS FOUND BY A TEST, AND THE THIRD COULD NOT HAVE BEEN** by
+any test of the engine: the roll was always right. What finds a reporting bug is
+a figure that disagrees with an expectation somebody holds, which is what the
+owner supplied.
 
 ---
 
@@ -25,13 +30,43 @@ at all** — and that is how three separate errors survived in one aura.
 
 | Profile | Talents | DPS | List | Notes |
 | --- | --- | --- | --- | --- |
-| Arcane | 47/4/0 | **450.9** | `MAGE_ARCANE` | **now the top Mage**, on Arcane Blast's damage half |
-| Fire | 10/39/2 | **440.1** | `MAGE_FIRE` | Combustion is a real ramp now |
-| Frostfire | 0/29/22 | **412.5** | `MAGE_FROSTFIRE` | unchanged: takes none of the three |
+| Frostfire | 0/29/22 | **661.3** | `MAGE_FROSTFIRE` | **now the top Mage**, on the three Frost talents that reach its filler |
+| Fire | 10/39/2 | **622.0** | `MAGE_FIRE` | Combustion is a real ramp; Ignite rolls over |
+| Arcane | 47/4/0 | **576.1** | `MAGE_ARCANE` | two spells and one aura |
 
-**FROSTFIRE NOT MOVING IS THE CONTAINMENT CHECK, not an oversight.** It takes
-neither Combustion, Arcane Blast nor Arcane Power, so a change scoped to those
-three must leave it identical to the decimal — and it did.
+**EVERY FIGURE HERE IS STALE THE MOMENT ANOTHER CLASS MERGES.** These are from
+`4be5c09`; the Mage figures moved 412–450 to 576–661 between two deep dives
+without the Mage being touched, because spell hit, the 16% cap and the raid buff
+work all reached it. **Reprint rather than quote.**
+
+### What the fine-tuning pass changed
+
+The ruleset owner's seven items, with what each was worth:
+
+| Item | Worth |
+| --- | --- |
+| **Frostfire Bolt counts as both schools** | **+38.0 to Frostfire.** Ten talents treat it as Frost and Fire; seven already did. Piercing Ice and Ice Shards select by SCHOOL and Frost Channeling by ABILITY ID, so the first two needed `countsAsSchools` and the third needed an id in a list |
+| **Ignite cannot crit, and rolls over** | **+13.2 to Fire**, isolated: 608.8 with the old shape against 622.0 with this one. The two exceptions cut opposite ways and the roll-over is the larger |
+| **Evocation at 10% mana, all three lists** | 0.9 casts a fight for Fire, 0.4 for Frostfire, **0.0 for Arcane** |
+| **Presence of Mind at one Arcane Blast stack** | 1.0 casts a fight; Arcane −5.7, inside its interval |
+| **Scorch gated on Improved Scorch** | 0.0 for all three profiles, which take it 3/3. A guard on the LIST, not a fix to a profile |
+| **Elemental Precision "0.5% per point"** | **the talent was never broken.** See below |
+
+### Elemental Precision was right and the column was wrong
+
+**IT DELIVERS THE FULL 1% A POINT TO THE ROLL**, and the proof is the two spells
+with nothing to dilute them: Arcane Blast and Arcane Missiles read **9.71% and
+10.30% miss** against an expected 10.0% with `arcane_focus` 5/5 on a 15% table.
+
+What the owner was reading was `avoidRate`, which divided by `attempts` —
+**every damage event, DoT ticks included.** Frostfire Bolt is 21.8 attempts a
+fight of which 12.0 are casts, so it reported **2.83% miss on a spell whose
+casts miss 10%**, and toggling five points moved the displayed figure by about a
+point and a half rather than five. Every hybrid in the project had it: Fireball
+read 5.13% and reads 14.45% now.
+
+The rates divide by non-periodic attempts; the damage total still includes the
+burn, because a burn is part of the spell.
 
 ### Where the damage comes from
 
@@ -42,6 +77,9 @@ One batch of ten, so read the shape and not the decimals:
 | Arcane | **Arcane Missiles 55.7%, Arcane Blast 44.3%** |
 | Fire | Pyroblast 42.2%, Fireball 27.9%, Scorch 16.2%, Ignite 13.7% |
 | Frostfire | Frostfire Bolt 35.5%, Pyroblast 27.3%, Scorch 14.7%, Ice Lance 12.3%, Ignite 10.1% |
+
+**THE SHAPES BELOW ARE FROM THE PREVIOUS PASS AND HAVE MOVED.** Reprint with
+`npx vite-node tools/class_audit.ts mage`.
 
 **THE ARCANE MAGE HAS TWO DAMAGE SOURCES AND NOTHING ELSE.** Two spells account
 for 100% of its damage, so its whole figure is two coefficients and one aura. No
@@ -217,6 +255,33 @@ says whether it mattered.** It stays out.
 ---
 
 ## Traps specific to this class
+
+- **A HYBRID'S MISS AND CRIT COLUMNS USED TO BE ABOUT ITS TICKS AS WELL AS ITS
+  CASTS**, and that is how a working hit talent read as half-broken. The rates
+  divide by non-periodic attempts now; the damage total does not, because a burn
+  is part of the spell. **If a rate on the results page disagrees with the table
+  arithmetic, check the denominator before the roll.**
+- **FROSTFIRE BOLT IS DEALT AS FIRE AND COUNTS AS FROST**, through
+  `countsAsSchools`. Ten talents name it and they fail in two different ways
+  when it is missed: the SCHOOL-scoped ones silently select nothing, and the
+  ABILITY-ID ones need the id adding by hand. **A talent that names both of its
+  schools is paid ONCE** — additive fields take the larger and the damage
+  multiplier multiplies, which is `casterSchoolModifier`'s whole comment.
+  Elemental Precision is that talent and summing it put the bolt's miss at 5.26%.
+- **IGNITE IS DEEP WOUNDS IN A DIFFERENT SCHOOL.** It cannot crit and it rolls
+  over, both by the owner, because it is a DoT applied BY a crit. Its old
+  comment argued the roll-over away on the grounds that Forever's tooltip says
+  nothing about it and Classic's behaviour is not evidence — sound reasoning
+  from the wrong source, since `periodic.pool` existed precisely because the
+  owner had specified the same mechanic for Deep Wounds.
+- **THREE OF THE MAGE'S TIER-10 FROST TALENTS ARE STRIPPED SILENTLY IN A TEST**
+  unless the allocation spends ten points above them. Piercing Ice, Frost
+  Channeling, Ice Lance and Improved Blizzard all sit there, and a probe with
+  eight points read "Piercing Ice is worth exactly 1.0000" — which looks like a
+  broken fix and is the documented trap.
+- **`grantCastModifier` IS A PERMANENT AURA, so a cost has to be read inside a
+  BEGUN fight.** Frost Channeling's 15% is invisible on `ability.cost.amount`
+  and invisible to `resolveCast` on a character the encounter has not set up.
 
 - **`modifiersScaleWithStacks` DID NOT REACH `abilityModifiers` UNTIL COMBUSTION
   WANTED IT.** The flag was read by `statModifiers` and by `damageTakenBySchool`
