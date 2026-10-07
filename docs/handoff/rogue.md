@@ -58,7 +58,7 @@ current figures with `npx vite-node tools/measure_profiles.ts`.
 | --- | --- | --- | --- | --- | --- |
 | Combat | 18/33/0 | **586.3** | 419.8 | **+166.5** | `ROGUE_COMBAT` |
 | Venom | 37/12/2 | **510.6** | 392.7 | **+117.9** | `ROGUE_VENOM` |
-| Rupture | 12/8/31 | **493.8** | 377.1 | **+116.7** | `ROGUE_RUPTURE` |
+| Rupture | 12/8/31 | **497.6** | 377.1 | **+120.5** | `ROGUE_RUPTURE` |
 
 **THIS COLUMN IS KEPT CURRENT NOW, AND IT WAS NOT.** It stood at 461.8 / 440.2 /
 409.4 — the dive's own figures, correct on the day and moved four times since by
@@ -506,6 +506,98 @@ the gate changes is WHEN, which a sixty-second fight is too short to reward. The
 old comment arguing for "last, below every builder" was sound while the only
 things Preparation reset were cooldowns the list never waited on — Vanish is what
 changes what it is for.
+
+---
+
+## THE THREE FINISHERS SHARE 21.5 COMBO POINTS, AND TWO OF THEM WERE MISPRICED
+
+**493.8 → 497.6**, +4.5 at 150 batches of 10. Two changes, and they are not
+independent.
+
+### The economy first, because it decides what was available
+
+| | |
+| --- | --- |
+| combo points gained a fight | 21.50 |
+| spent | 19.70 |
+| **wasted at the cap** | **0.54** |
+| energy gained / spent / wasted | 717.9 / 693.9 / 10.5 |
+
+**THE POOL WAS NOT THE CONSTRAINT**, which is what made this a pricing question
+rather than a waste question — 0.54 points lost to the cap all fight. The two
+maintenance effects took 9.85 points each and Eviscerate took none. What *was*
+wrong is that **Rupture's debuff was up only 43.7% of the fight**.
+
+### Rupture spends four points now, not five: +3.0
+
+**Its damage AND its duration per combo point both fall as the pool fills**, which
+is the opposite of what "hold for five" assumes:
+
+| points | 1 | 2 | 3 | 4 | 5 |
+| --- | --- | --- | --- | --- | --- |
+| damage per point | 159 | 111 | 98 | 94 | 94 |
+| seconds per point | 8.0 | 5.0 | 4.0 | 3.5 | 3.2 |
+
+The fifth point buys **92 damage and two seconds**. With 21.5 points gained and
+19.7 spent, the binding constraint is *time to threshold*, not points available —
+so waiting for a fifth point costs uptime on a bleed that was already down more
+than half the fight. Rupture goes from 2.0 casts to 2.3, and 6.6% of damage to 8.5%.
+
+**The whole grid, 60 batches of 10 a cell:**
+
+| | Rupt ≥3 | Rupt ≥4 | Rupt =5 |
+| --- | --- | --- | --- |
+| **SnD ≥2** | 494.8 | 495.2 | 492.3 |
+| **SnD ≥3** | 494.4 | **495.7** | 493.0 *(was shipped)* |
+| **SnD ≥4** | 489.6 | 493.7 | 494.1 |
+| **SnD ≥5** | 477.4 | 476.7 | 489.2 |
+
+**SLICE AND DICE'S OWN THRESHOLD IS NOT A LEVER** between two and four, and
+holding it to five costs 4 to 18 — the same answer the Combat list gave
+independently. Its duration table is *proportional*, a flat three seconds a point,
+so there is no per-point argument either way and what decides it is uptime. **The
+owner's three stands.**
+
+**AND RUPTURE MUST STAY BELOW SLICE AND DICE.** Swapping the two entries measures
+**487.2, a loss of 8.5**: the haste is on every auto-attack and the autos are half
+this profile's damage. The original ordering was right; this is the record that it
+was checked rather than inherited.
+
+### Eviscerate's two duration floors are gone: +1.5 on top
+
+**The second list those floors have suppressed, in the same file.** "Spend five
+points only while Slice and Dice AND Rupture both have ten seconds left" held it
+to **zero casts a fight** for this list's whole life — and CLAUDE.md already
+records the same pair costing the Venom list 20 DPS. A finisher with nothing left
+to spend reads identically to a suppressed one, which is why this came out of the
+`USES=1` column rather than from suspecting it.
+
+**The two halves are not independent.** With Rupture still hoarding the fifth
+point, dropping the floors is worth +0.6 and *nothing fires*. With Rupture at four
+it is worth +1.5 and Eviscerate fires 0.2 times a fight for 1.2% of damage. The
+floors were not the only thing stopping it.
+
+**It still holds for five, which is the reverse of the Combat list's answer**, and
+the reason is the bleed: a point taken by Eviscerate is a point Rupture needed.
+
+| Eviscerate at | 5 | ≥4 | ≥3 | ≥2 |
+| --- | --- | --- | --- | --- |
+| DPS | **498.1** | 497.7 | 489.3 | 479.2 |
+
+The top two are inside each other's intervals, so the higher gate ships: it keeps
+Eviscerate an **overflow valve** for points the other two could not use, rather
+than a competitor for them. **Do not normalise this threshold against Combat's
+two** — the sweep is a fact about the list, not about the ability.
+
+### One methodology note, because it nearly produced a false finding
+
+The first version of this sweep edited the **Venom** list. The Slice and Dice
+entry is textually identical in all three Rogue lists, so a `replace(old, new, 1)`
+hit the first one while the Rupture profile was being measured — and the Slice and
+Dice axis came back **identical to the decimal across all four thresholds**. That
+is indistinguishable from "this threshold does not matter", and the conclusion was
+there to be believed. Every edit is scoped by slicing the file at the list's own
+`export const` now, with an assertion that the entry appears once inside it.
 
 ---
 
