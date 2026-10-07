@@ -39,7 +39,7 @@ question** — the count was wrong for as long as nobody did.
 | Profile | Talents | DPS | List | Style |
 | --- | --- | --- | --- | --- |
 | Cat | 9/35/7 | **937.7** | `DRUID_CAT` | cat (paws) |
-| Bear | 9/42/0 | **514.4** | `DRUID_BEAR` | bear (paws) |
+| Bear | 9/42/0 | **523.1** | `DRUID_BEAR` | bear (paws) |
 | Moonkin | 38/0/13 | **513.4** | `DRUID_MOONKIN` | caster |
 
 **THESE ARE CURRENT AND THE TABLE USED TO CARRY A "was" COLUMN**, which is gone
@@ -136,14 +136,23 @@ is a decision now rather than work, which is what that union is for.
 | Talent | What is missing |
 | --- | --- |
 | `genesis` | its periodic HEALING half — `healing`, ruled out |
+| `nature_s_reach` | its RANGE clause — `positioning`, ruled out. The hit applies |
 | `nature_s_splendor` | its Rejuvenation and Regrowth clauses — `healing`, ruled out |
 | `improved_starfire` | its 15% stun — `crowdControl`, ruled out |
+| `feral_swiftness` | movement speed in Cat Form — `positioning`, ruled out. The dodge applies |
 | `naturalist` | the Healing Touch cast time — `healing`, ruled out |
 
-**ALL FIVE ARE HEALING, CROWD CONTROL OR POSITIONING** -- every one of them is a
+**ALL SIX ARE HEALING, CROWD CONTROL OR POSITIONING** -- every one of them is a
 clause the owner has ruled out, on a talent whose other clauses work. **There is
 no remaining content item in this class.** Moonkin Form was the last one, and its
 reason named Omen of Clarity, which is now built.
+
+**THIS TABLE SAID "ALL FIVE" WHILE LISTING FOUR, AND BOTH NUMBERS WERE WRONG.**
+`nature_s_reach` had been partly modelled since its range clause was scoped and
+was never added here, and `feral_swiftness` joined when its movement speed was
+declared. **Re-count from `npx vite-node tools/class_audit.ts druid` rather than
+adding a row and incrementing the word** -- a prose total drifts exactly the way
+the census total does, and this one had drifted in both directions at once.
 
 ---
 
@@ -234,6 +243,47 @@ none of them. **Three are worth knowing, and one of them was a real bug:**
   180 armor against the ~33 the Bear gets. **Not fixed here** — it needs a new
   effect kind, and it moves the Bear's rage the counter-intuitive way, since more
   armor means less damage taken means less rage.
+- **FERAL SWIFTNESS READ A MOVEMENT SPEED AS A DODGE CHANCE, WHICH IS THE
+  FOURTH VALUE-INDEX BUG IN THIS CLASS.** "Increases your movement speed while in
+  Cat Form by {0}%, and increases your chance to Dodge by {1}%" -- `[30, 4]` at
+  rank 2, no `valueIndex`, so **both feral presets carried +30 dodge instead of
+  +4** for the life of the talent. The owner found it from the number alone.
+  **ONLY THE BEAR COULD EVER HAVE SHOWN IT**: the Cat is never attacked, so its
+  26 points of surplus avoidance were worth exactly nothing and its DPS does not
+  move by a decimal here. The Bear's does, and UPWARDS -- 26 fewer points of
+  avoidance is 52% more damage taken, 61% more deaths and 82 more rage, worth
+  **+10.4 isolated**. It is not an improvement to the talent; it is the Bear
+  paying the right price.
+- **THICK HIDE HAD THE WRONG RULE RATHER THAN THE WRONG INDEX, AND THAT IS
+  QUIETER.** It is "{0} additional base Armor per LEVEL and another {1} base
+  Armor for each point of defense skill beyond five times your level", declared
+  as `itemArmorPercent` -- which is `itemArmor x value / 100`, exactly right for
+  Toughness ("your Armor value FROM ITEMS") and an expression of neither clause
+  here. At rank 3 it paid 3% of 1793, about **54 armor against a correct 274**.
+  **A WRONG RULE IGNORES BOTH INDICES EQUALLY**, so the index sweep that found
+  the other four could not see it; what found it was reading the tooltip beside
+  the declaration.
+  It needed two UNITS rather than two rules: `statFromLevel` and `statFromStat`
+  both read their value as a PERCENTAGE by default -- Predatory Strikes is "150%
+  of your level" -- and now take `scale: 1` for a talent stating a MULTIPLE. The
+  defense clause goes through the DERIVATION so it follows a buffed defense
+  skill, and `defenseSkill` holds only the surplus above five per level, which is
+  precisely what the clause asks for.
+- **AND `statFromStat` READ MORE THAN IT SAID IT COULD.** It was documented and
+  tested as primaries-only, because "the derivation is handed resolved
+  primaries" -- and `StatBlock.computeEffective` hands it the whole FIRST PASS,
+  every stat resolved from base and modifiers. The parameter is NAMED `primary`
+  and typed `Readonly<Stats>`, so the name described its six callers. The real
+  constraint is the termination argument: nothing the derivation PRODUCES may be
+  read by it.
+- **ARMOR DOES NOT REDUCE RAGE, AND THREE COMMENTS AND A TEST SAID IT DID.** The
+  prediction was "220 more armor means less damage taken means less rage, so the
+  Bear's DPS falls". Measured, rage went **751 to 750** -- rage from a blow comes
+  off the PRE-ARMOR figure, which `resourceRules.ts` states in those words and
+  CLAUDE.md repeats. Thick Hide is **−1.7 marginal and +2.5 isolated**, inside
+  the interval both ways. Reprint the pair, with deaths and rage beside the DPS,
+  with `python tools/thick_hide_attribution.py`. **A prediction in a comment is a
+  measurement that has not happened.**
 - **THE CAT IS 40% CLEAR OF THE NEXT PROFILE IN THE PROJECT**, 937.7 against DW
   Fury's 667.5 and 82% above the Bear. Four of the owner's own figures took it
   there in one commit, +142.4, and the marginal split is Rend and Tear's wider

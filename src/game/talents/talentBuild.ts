@@ -737,12 +737,18 @@ export function talentBuild(
           break;
         }
         /*
-         * A PERCENTAGE OF THE LEVEL, resolved to a flat number here.
+         * A MULTIPLE OF THE LEVEL, resolved to a flat number here.
          *
          * Level never moves during a fight and cannot be buffed, so unlike
          * `statFromStat` there is nothing for the derivation to re-run. A
          * caller that did not supply one gets an inert talent that SAYS it is
          * inert, rather than a plausible 60 nobody chose.
+         *
+         * `scale` CARRIES THE UNIT and defaults to a percentage, because
+         * Predatory Strikes states one ("150% of your level") and Thick Hide
+         * states a multiple ("3 additional base Armor per level"). The two
+         * differ by a hundred times, so the default is the one five talents
+         * already relied on and the new reading is the one that has to ask.
          */
         case 'statFromLevel': {
           if (effect.requires && !meets(effect.requires, context.mainHand, context.hasShield, context.hasPet, context.style)) {
@@ -758,7 +764,8 @@ export function talentBuild(
             );
             break;
           }
-          stats[effect.to] = (stats[effect.to] ?? 0) + (context.level * value) / 100;
+          stats[effect.to] =
+            (stats[effect.to] ?? 0) + context.level * value * (effect.scale ?? 0.01);
           break;
         }
         /*
@@ -789,13 +796,27 @@ export function talentBuild(
          * read at ONE rank and two different talents converting into the same
          * stat must both land. `withStatConversions` adds them all.
          */
-        case 'statFromStat':
+        case 'statFromStat': {
+          /*
+           * THE GATE IS CHECKED HERE AND NOT IN THE DERIVATION. Thick Hide's
+           * defense-skill clause applies in four forms, and a style is fixed
+           * at build time -- so a Moonkin collects the conversion and a caster
+           * does not, decided once rather than re-asked on every stat read.
+           */
+          if (
+            effect.requires &&
+            !meets(effect.requires, context.mainHand, context.hasShield, context.hasPet, context.style)
+          ) {
+            report(talentId, rank, unmetReason(effect.requires));
+            break;
+          }
           statConversions.push({
             from: effect.from,
             to: effect.to,
-            fraction: value / 100,
+            fraction: value * (effect.scale ?? 0.01),
           });
           break;
+        }
         case 'abilityCost':
           abilityCostReduction.set(
             effect.abilityId,

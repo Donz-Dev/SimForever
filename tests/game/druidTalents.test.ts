@@ -8,6 +8,7 @@ import {
   resolveCast,
   seconds,
 } from '../../src/engine';
+import { flat } from '../../src/engine';
 import { buildSimulation } from '../helpers/buildSimulation';
 import { makeAttacker, makeTarget } from '../helpers/actors';
 import { createPlayer } from '../../src/game/actors/createPlayer';
@@ -859,6 +860,191 @@ describe('Moonkin Aura and Leader of the Pack are ONE aura, by ruling', () => {
       fromItems * 3.6,
       6,
     );
+  });
+});
+
+describe('Feral Swiftness grants four dodge, not thirty', () => {
+  /*
+   * --------------------------------------------------------------------------
+   * The index evidence is in `talentValueIndex.test.ts` beside the other four.
+   * This is what the built characters carry, which is the half that matters to
+   * a fight: both feral presets take it at rank 2, so both were carrying +30
+   * dodge instead of +4 for as long as the talent has existed.
+   *
+   * FIXING IT MAKES THE BEAR TAKE MORE DAMAGE, and rage is a share of the
+   * PRE-ARMOR damage taken, so its DPS goes UP while it dies more often:
+   * measured 514.4 -> 524.8 with deaths 8.6 -> 13.9. The Cat is never
+   * attacked, so for the Cat this is worth exactly nothing -- the ordinary
+   * case for a defensive talent and not a reason to doubt the fix.
+   * --------------------------------------------------------------------------
+   */
+  const FERAL_SWIFTNESS_DODGE = 4;
+
+  it('contributes four dodge to the Cat, whose only dodge talent it is', () => {
+    expect(PRESETS_BY_ID.get('druid_cat')!.build().talents.feral_swiftness).toBe(2);
+    expect(PRESETS_BY_ID.get('druid_cat')!.build().talents.natural_reaction).toBeUndefined();
+
+    expect(buildIn('druid_cat', 'cat').stats.dodgeChance).toBeCloseTo(
+      FERAL_SWIFTNESS_DODGE,
+      6,
+    );
+    expect(
+      druid('druid_cat', 'cat').stats.get('dodgeChance') -
+        untalented('druid_cat', 'cat').stats.get('dodgeChance'),
+    ).toBeCloseTo(FERAL_SWIFTNESS_DODGE, 6);
+  });
+
+  it('contributes four to the Bear, on top of Natural Reaction', () => {
+    /*
+     * THE BEAR HAS A SECOND DODGE TALENT, so the total is asserted as the SUM
+     * of two stated numbers rather than by removing one of them -- removing a
+     * talent to price it can strip a deeper one silently, and Natural Reaction
+     * is five points this build spends on purpose.
+     */
+    const built = PRESETS_BY_ID.get('druid_bear')!.build();
+    expect(built.talents.feral_swiftness).toBe(2);
+    expect(built.talents.natural_reaction).toBe(5);
+
+    const naturalReaction = talentNumber('druid', 'natural_reaction', 5, 0)!;
+    expect(buildIn('druid_bear', 'bear').stats.dodgeChance).toBeCloseTo(
+      FERAL_SWIFTNESS_DODGE + naturalReaction,
+      6,
+    );
+  });
+});
+
+describe('Thick Hide is armor per level and per excess defense point', () => {
+  /*
+   * --------------------------------------------------------------------------
+   * "While in Bear Form, Cat Form, Dire Bear Form, or Moonkin Form, you gain
+   * {0} additional base Armor per level and another {1} base Armor for each
+   * point of defense skill beyond five times your level."
+   *
+   * IT WAS `itemArmorPercent`, which computes `itemArmor x value / 100` --
+   * exactly right for Toughness, whose text says "your Armor value FROM
+   * ITEMS", and an expression of NEITHER clause here. At rank 3 it paid 3% of
+   * the Bear's 1793 item armor, about 54.
+   *
+   * NOT THE WRONG INDEX BUT THE WRONG RULE, which is why the sweep that found
+   * the four value-index bugs did not find this: both indices were ignored
+   * equally, so no index was readable as the wrong one.
+   *
+   * AND IT IS WORTH ALMOST NOTHING TO THE BEAR'S DAMAGE. The prediction before
+   * it was measured was "more armor means less damage taken means less rage,
+   * so the DPS falls", and **ARMOR DOES NOT REDUCE RAGE** -- the rage from a
+   * blow is taken off the PRE-ARMOR figure, which `resourceRules.ts` says in
+   * those words. 220 armor is -2.6% damage taken, 751 rage against 750, and
+   * -1.7 DPS inside a +/-5 interval. Asserted as armor arriving, which is the
+   * mechanism, rather than as a damage figure it does not move.
+   * --------------------------------------------------------------------------
+   */
+  it('gives the Bear 3 armor a level and 2 an excess defense point', () => {
+    const perLevel = talentNumber('druid', 'thick_hide', 3, 0)!;
+    const perDefense = talentNumber('druid', 'thick_hide', 3, 1)!;
+    expect(perLevel).toBe(3);
+    expect(perDefense).toBe(2);
+    expect(PRESETS_BY_ID.get('druid_bear')!.build().talents.thick_hide).toBe(3);
+
+    const bear = druid('druid_bear', 'bear');
+
+    /*
+     * THE STAT HOLDS THE SURPLUS AND THAT IS WHAT THE CLAUSE ASKS FOR. Every
+     * character has five defense skill a level for free; `defenseSkill` carries
+     * only what gear and talents added, which is exactly "beyond five times
+     * your level". `Combatant.defenseSkill` adds the baseline back, so reading
+     * that one instead would pay for all 300 points -- 600 armor too much.
+     */
+    const surplus = bear.stats.get('defenseSkill');
+    expect(surplus).toBeGreaterThan(0);
+    expect(bear.defenseSkill).toBe(MAX_CHARACTER_LEVEL * 5 + surplus);
+
+    const expected = perLevel * MAX_CHARACTER_LEVEL + perDefense * surplus;
+    expect(expected).toBe(274);
+
+    /*
+     * ASSERTED WHERE EACH CLAUSE LANDS, not only on the total: the level clause
+     * resolves to a flat stat at build time and the defense clause is a
+     * CONVERSION folded into the derivation, so a total alone could be right
+     * with one of the two in the wrong place.
+     */
+    const build = buildIn('druid_bear', 'bear');
+    expect(build.stats.armor).toBeCloseTo(perLevel * MAX_CHARACTER_LEVEL, 6);
+    expect(build.statConversions).toContainEqual({
+      from: 'defenseSkill',
+      to: 'armor',
+      fraction: perDefense,
+    });
+
+    expect(
+      bear.stats.get('armor') - untalented('druid_bear', 'bear').stats.get('armor'),
+    ).toBeCloseTo(expected, 6);
+  });
+
+  it('is not the 3% of item armor it used to be', () => {
+    /*
+     * THE OLD BEHAVIOUR WRITTEN OUT, because 54 and 274 are both plausible
+     * armor figures and a reader needs to see that the old one was WRONG
+     * rather than merely small. A fifth of the correct value.
+     */
+    const built = PRESETS_BY_ID.get('druid_bear')!.build();
+    const asItemPercent = (armorFromItems(built.equipment, 'bear') * 3) / 100;
+    expect(asItemPercent).toBeGreaterThan(40);
+    expect(asItemPercent).toBeLessThan(60);
+  });
+
+  it('FOLLOWS a buffed defense skill, which a build-time number would not', () => {
+    /*
+     * ------------------------------------------------------------------------
+     * WHY THE DEFENSE CLAUSE GOES THROUGH THE DERIVATION. `StatBlock` resolves
+     * in two passes so a derived stat sees fully-buffed sources; a flat amount
+     * computed once at build time would freeze at the unbuffed figure while
+     * reading as entirely plausible, which is the mistake `statFromStat`
+     * exists to prevent and says so in its own comment.
+     *
+     * Nothing in Forever buffs defense skill mid-fight today, so this asserts
+     * a mechanism rather than an observed number. The Warrior's and the
+     * Paladin's Anticipation grant it from a TALENT, though, so the hazard is
+     * one content change away rather than hypothetical.
+     * ------------------------------------------------------------------------
+     */
+    const bear = druid('druid_bear', 'bear');
+    const before = bear.stats.get('armor');
+    bear.stats.addModifier({ ...flat('defenseSkill', 10), sourceId: 'probe' });
+    expect(bear.stats.get('armor') - before).toBeCloseTo(
+      talentNumber('druid', 'thick_hide', 3, 1)! * 10,
+      6,
+    );
+  });
+
+  it('applies in the four forms the text names and in no other', () => {
+    /*
+     * Bear, Cat, Dire Bear and Moonkin. Dire Bear is not a separate style
+     * here, so `bear` covers both -- and `caster` is the one form a Druid can
+     * be in that gets nothing, which is what makes the gate worth asserting.
+     */
+    for (const effect of DRUID_TALENT_EFFECTS.thick_hide) {
+      expect('requires' in effect && effect.requires).toEqual({
+        styles: ['bear', 'cat', 'moonkin'],
+      });
+    }
+
+    const built = PRESETS_BY_ID.get('druid_bear')!.build();
+    const inCaster = talentBuild(
+      'druid',
+      built.talents,
+      talentContextFor(built.equipment, 'caster', weaponsFor(built.equipment, 'caster'), {
+        characterClass: 'druid',
+        talents: built.talents,
+        level: MAX_CHARACTER_LEVEL,
+      }),
+    );
+    expect(inCaster.statConversions).not.toContainEqual(
+      expect.objectContaining({ from: 'defenseSkill' }),
+    );
+    expect(inCaster.stats.armor ?? 0).toBe(0);
+
+    // And it SAYS it is inert there, rather than being silently dropped.
+    expect(inCaster.unmodelled.some((u) => u.talentId === 'thick_hide')).toBe(true);
   });
 });
 

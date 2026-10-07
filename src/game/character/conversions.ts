@@ -1,10 +1,4 @@
-import type {
-  PartialStats,
-  PrimaryStatName,
-  StatDerivation,
-  StatName,
-  Stats,
-} from '../../engine';
+import type { PartialStats, StatDerivation, StatName, Stats } from '../../engine';
 import type { ClassId, CombatStyleId } from './ids';
 
 /**
@@ -293,12 +287,19 @@ export function statDerivationFor(
  * raise attack power. A conversion added here inherits that for free.
  *
  * `fraction`, not a percentage: 1.0 is all of it. The talents state
- * percentages and `talentBuild` divides once, so nothing downstream has to
- * remember which it is holding.
+ * percentages and `talentBuild` scales once, so nothing downstream has to
+ * remember which it is holding -- and a fraction ABOVE one is ordinary, since
+ * Thick Hide is two armor per point of surplus defense skill.
+ *
+ * `from` IS ANY FLAT STAT. The derivation receives the whole first pass rather
+ * than the five primaries, so reading `defenseSkill` costs nothing; the real
+ * constraint is that **nothing the derivation produces may also be read by
+ * it**, or the result would depend on how many passes ran.
+ * `tests/game/statFromStat.test.ts` checks that for all nine classes.
  * ----------------------------------------------------------------------------
  */
 export interface StatFromStat {
-  readonly from: PrimaryStatName;
+  readonly from: StatName;
   readonly to: StatName;
   readonly fraction: number;
 }
@@ -320,11 +321,11 @@ export function withStatConversions(
 ): StatDerivation {
   if (conversions.length === 0) return base;
 
-  return (primary) => {
-    const derived: PartialStats = { ...base(primary) };
+  return (resolved) => {
+    const derived: PartialStats = { ...base(resolved) };
     for (const conversion of conversions) {
       derived[conversion.to] =
-        (derived[conversion.to] ?? 0) + primary[conversion.from] * conversion.fraction;
+        (derived[conversion.to] ?? 0) + resolved[conversion.from] * conversion.fraction;
     }
     return derived;
   };

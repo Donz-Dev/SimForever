@@ -232,8 +232,54 @@ describe('Naturalist is five percent, not half of one', () => {
   });
 });
 
-describe('Thick Hide is NOT a percentage of item armor, and is modelled as one', () => {
-  it('states armor per LEVEL and per DEFENSE SKILL, which itemArmorPercent cannot express', () => {
+describe('Feral Swiftness dodges 4, and index 0 is a movement speed', () => {
+  it('reads index 1, which is the only one of the two that is a dodge', () => {
+    /*
+     * ----------------------------------------------------------------------
+     * THE FOURTH OF THESE IN THE DRUID AND THE RULESET OWNER FOUND IT FROM THE
+     * NUMBER: "I think it's giving 30% chance to dodge instead of 4% chance to
+     * dodge."
+     *
+     * "Increases your movement speed while in Cat Form by {0}%, and increases
+     * your chance to Dodge by {1}%." Two numbers, `[30, 4]` at rank 2, and the
+     * dodge effect named no index -- so it read the MOVEMENT SPEED and granted
+     * +30 dodge. Both feral presets take it at rank 2.
+     *
+     * WHY NOTHING CAUGHT IT: the talent reported itself fully modelled, it
+     * granted a real stat to a real build, and 30 is not an absurd dodge for a
+     * bear -- the Cat read 45.95% and the Bear 45.45%. Only the Bear is ever
+     * attacked, so only one of the 24 profiles could have shown it at all.
+     * ----------------------------------------------------------------------
+     */
+    expect(druidValues.talents.feral_swiftness.text).toContain('movement speed');
+    expect(druidValues.talents.feral_swiftness.text).toContain('chance to Dodge');
+
+    // Both ranks, both numbers, in the order the text states them.
+    expect(talentNumber('druid', 'feral_swiftness', 1, 0)).toBe(15);
+    expect(talentNumber('druid', 'feral_swiftness', 1, 1)).toBe(2);
+    expect(talentNumber('druid', 'feral_swiftness', 2, 0)).toBe(30);
+    expect(talentNumber('druid', 'feral_swiftness', 2, 1)).toBe(4);
+
+    expect(DRUID_TALENT_EFFECTS.feral_swiftness).toContainEqual({
+      kind: 'stat',
+      stat: 'dodgeChance',
+      operation: 'flat',
+      valueIndex: 1,
+    });
+
+    /*
+     * AND THE MOVEMENT SPEED IS DECLARED OUT OF SCOPE RATHER THAN LEFT SILENT.
+     * A talent with one clause modelled and one ruled out that says nothing
+     * reads as FULLY MODELLED, which is exactly the state that hid this index.
+     */
+    expect(DRUID_TALENT_EFFECTS.feral_swiftness).toContainEqual(
+      expect.objectContaining({ kind: 'unmodelled', scope: 'positioning' }),
+    );
+  });
+});
+
+describe('Thick Hide is armor per LEVEL and per DEFENSE SKILL, not a share of item armor', () => {
+  it('states both clauses, and neither is a percentage of item armor', () => {
     /*
      * ----------------------------------------------------------------------
      * FOUND BY THE SWEEP THE NATURALIST FIX MOTIVATED, and it is a DIFFERENT
@@ -246,14 +292,14 @@ describe('Thick Hide is NOT a percentage of item armor, and is modelled as one',
      * which is exactly right for Toughness ("increases your armor value FROM
      * ITEMS by 10%") and expresses neither of Thick Hide's clauses.
      *
-     * At rank 3 the first clause alone is 180 armor; the Bear currently gets
-     * 3% of its item armor, about 33.
+     * At rank 3 the first clause alone is 180 armor, and the Bear's 47 points
+     * of surplus defense skill are worth another 94 -- 274 against the 54 it
+     * was getting from 3% of 1793 item armor.
      *
-     * RECORDED HERE RATHER THAN FIXED, because it needs a new effect kind and
-     * it moves the Bear's RAGE economy in the counter-intuitive direction --
-     * more armor means less damage taken means LESS rage -- so it wants its own
-     * PR and a re-measured baseline. This test pins the evidence and the
-     * current behaviour so the finding cannot be lost and the fix has a before.
+     * THIS TEST WAS WRITTEN BEFORE THE FIX AND PINNED THE WRONG DECLARATION ON
+     * PURPOSE, so the finding could not be lost and the fix would have a
+     * before. It now pins the two clauses and the two mechanisms, and
+     * `druidTalents.test.ts` checks the armor they actually produce.
      * ----------------------------------------------------------------------
      */
     expect(druidValues.talents.thick_hide.text).toContain('additional base Armor per level');
@@ -263,7 +309,43 @@ describe('Thick Hide is NOT a percentage of item armor, and is modelled as one',
     // Toughness, the same effect's correct caller, says the opposite.
     expect(paladinValues.talents.toughness.text).toContain('armor value from items');
 
-    // What it is modelled as TODAY. Change this when the effect kind arrives.
-    expect(DRUID_TALENT_EFFECTS.thick_hide).toEqual([{ kind: 'itemArmorPercent' }]);
+    /*
+     * TWO CLAUSES, TWO MECHANISMS, AND THE INDICES ARE THE POINT: index 0 is
+     * the armor per LEVEL and index 1 is the armor per DEFENSE POINT. Reading
+     * one index for both would pay 3 per defense point and 2 per level at rank
+     * 3, which is a plausible 321 armor and wrong by 47.
+     */
+    const [perLevel, perDefense] = DRUID_TALENT_EFFECTS.thick_hide;
+    expect(perLevel).toEqual({
+      kind: 'statFromLevel',
+      to: 'armor',
+      valueIndex: 0,
+      scale: 1,
+      requires: { styles: ['bear', 'cat', 'moonkin'] },
+    });
+    expect(perDefense).toEqual({
+      kind: 'statFromStat',
+      from: 'defenseSkill',
+      to: 'armor',
+      valueIndex: 1,
+      scale: 1,
+      requires: { styles: ['bear', 'cat', 'moonkin'] },
+    });
+
+    /*
+     * `scale: 1` IS THE UNIT AND IT IS THE EASIEST THING HERE TO GET WRONG.
+     * Both mechanisms default to reading their value as a PERCENTAGE, which is
+     * what Predatory Strikes and Careful Aim state; Thick Hide states a
+     * multiple. Without it rank 3 would be 1.8 armor from the level clause and
+     * 0.94 from the defense clause -- under three armor, which is the kind of
+     * number that reads as "the talent is doing something".
+     */
+    for (const effect of DRUID_TALENT_EFFECTS.thick_hide) {
+      expect('scale' in effect && effect.scale, effect.kind).toBe(1);
+    }
+
+    // Rank 3: 3 armor a level, 2 armor a defense point.
+    expect(talentNumber('druid', 'thick_hide', 3, 0)).toBe(3);
+    expect(talentNumber('druid', 'thick_hide', 3, 1)).toBe(2);
   });
 });

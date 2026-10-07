@@ -302,13 +302,115 @@ export const DRUID_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
     },
   ],
 
-  feral_swiftness: [{ kind: 'stat', stat: 'dodgeChance', operation: 'flat' }],
+  /*
+   * "Increases your movement speed while in Cat Form by {0}%, and increases
+   * your chance to Dodge by {1}%."
+   *
+   * --------------------------------------------------------------------------
+   * THE FOURTH VALUE-INDEX BUG IN THIS CLASS, and the one the ruleset owner
+   * spotted from the number alone: "I think it's giving 30% chance to dodge
+   * instead of 4%." Its row holds TWO numbers -- `[30, 4]` at rank 2 -- and the
+   * dodge effect declared no `valueIndex`, so it read index 0 and granted the
+   * MOVEMENT SPEED as dodge. Both feral presets take it at rank 2, so both
+   * carried +30 dodge instead of +4.
+   *
+   * WHY NOTHING CAUGHT IT: the talent reported itself FULLY MODELLED, it
+   * granted a real stat to a real build, and 30 is not an absurd dodge figure
+   * for a bear. The Cat read 45.95% and the Bear 45.45% -- high, and the Cat is
+   * never attacked, so only the Bear's fight could ever have shown it.
+   *
+   * FIXING IT MAKES THE BEAR TAKE MORE DAMAGE, and rage IS a share of damage
+   * taken -- the pre-armor figure, so avoidance reduces it where armor does
+   * not. Measured on the Bear: damage taken 185385 -> 282434, deaths 8.6 ->
+   * 13.9, rage 669 -> 751, DPS +10.4. **It is the larger half of this commit
+   * and it is not an improvement to the talent** -- the Bear is simply paying
+   * the right price for 26 points of dodge it never had.
+   *
+   * THE MOVEMENT SPEED IS INDEX 0 AND IS OUT OF SCOPE, declared so rather than
+   * left silent: a talent with one clause modelled and one ruled out that says
+   * nothing reads as fully modelled, which is exactly the state that hid the
+   * dodge index.
+   * --------------------------------------------------------------------------
+   */
+  feral_swiftness: [
+    { kind: 'stat', stat: 'dodgeChance', operation: 'flat', valueIndex: 1 },
+    {
+      kind: 'unmodelled',
+      scope: 'positioning',
+      reason: 'Movement speed in Cat Form, which is out of scope.',
+    },
+  ],
 
   feral_instinct: [{ kind: 'abilityDamage', abilityId: 'swipe' }],
 
   brutal_impact: [{ kind: 'unmodelled', scope: 'crowdControl', reason: 'Stun duration, which is out of scope.' }],
 
-  thick_hide: [{ kind: 'itemArmorPercent' }],
+  /*
+   * "While in Bear Form, Cat Form, Dire Bear Form, or Moonkin Form, you gain
+   * {0} additional base Armor per level and another {1} base Armor for each
+   * point of defense skill beyond five times your level. This amount can be
+   * further increased by multipliers from those forms."
+   *
+   * --------------------------------------------------------------------------
+   * NOT THE WRONG INDEX BUT THE WRONG RULE, which is why it survived the sweep
+   * that found the other four. It was `itemArmorPercent`, which computes
+   * `itemArmor x value / 100` -- exactly right for Toughness, whose text says
+   * "your Armor value FROM ITEMS", and an expression of NEITHER clause here.
+   * At rank 3 it paid 3% of the Bear's 1793 item armor, about 54, against a
+   * first clause worth 3 x 60 = 180 on its own.
+   *
+   * `tests/game/talentValueIndex.test.ts` recorded the finding and pinned the
+   * wrong declaration on purpose, so the fix would have a before. This is it.
+   *
+   * TWO CLAUSES, TWO MECHANISMS, BOTH NEW UNITS RATHER THAN NEW RULES:
+   *
+   *   - `statFromLevel` with `scale: 1` is "per level" instead of "% of
+   *     level", resolved once because level cannot be buffed.
+   *   - `statFromStat` from `defenseSkill` with `scale: 1` is "per point", and
+   *     it goes through the DERIVATION so it follows a buffed defense skill.
+   *     `defenseSkill` holds only the surplus above five per level, which is
+   *     precisely what the clause asks for -- `Combatant.defenseSkill` adds
+   *     the baseline back and this stat never carries it. The Bear's 47 points
+   *     of surplus are worth another 94 armor at rank 3.
+   *
+   * SO RANK 3 IS 274 ARMOR, not 54. The forms are the four the text names;
+   * Dire Bear is not a separate style here, so `bear` covers both.
+   *
+   * AND IT IS WORTH ALMOST NOTHING TO THE BEAR'S DAMAGE, which is not what
+   * was predicted here before it was measured. The prediction was "more armor
+   * means less damage taken means less rage, so the Bear's DPS falls" -- and
+   * **ARMOR DOES NOT REDUCE RAGE**: rage from damage taken is `D x 10 / H` off
+   * the PRE-ARMOR figure, which `resourceRules.ts` states in those words and
+   * CLAUDE.md repeats. A block reduces it and Defensive Stance reduces it;
+   * armor is the one that does not. Measured, the 220 armor takes damage taken
+   * from 282434 to 275129 (-2.6%) and rage from 751 to 750, so the DPS move is
+   * -1.7, well inside a +/-5 interval. **The rule that contradicted the guess
+   * was already written down in two places.**
+   *
+   * THE LAST SENTENCE IS ALREADY TRUE AND NEEDS NOTHING: Moonkin Form's own
+   * +360% is an `itemArmorPercent` on the ITEM contribution, so it does not
+   * multiply this and the text's "multipliers from those forms" refers to
+   * something the engine applies elsewhere or not at all. Recorded because a
+   * reader looking for the multiplier should not conclude it was missed.
+   * --------------------------------------------------------------------------
+   */
+  thick_hide: [
+    {
+      kind: 'statFromLevel',
+      to: 'armor',
+      valueIndex: 0,
+      scale: 1,
+      requires: { styles: ['bear', 'cat', 'moonkin'] },
+    },
+    {
+      kind: 'statFromStat',
+      from: 'defenseSkill',
+      to: 'armor',
+      valueIndex: 1,
+      scale: 1,
+      requires: { styles: ['bear', 'cat', 'moonkin'] },
+    },
+  ],
 
   savage_fury: [
     { kind: 'abilityDamage', abilityId: 'claw' },

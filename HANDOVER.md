@@ -623,7 +623,7 @@ while it worked.
 decimal -- which is what a talent change scoped to one build should look like.
 It makes Frostfire the top Mage, above Fire's 401.2 and Arcane's 392.6, and the
 build that existed for the Fire/Frost overlap now has a third reason to. The
-mean across **24** is **558.5**, RE-SUMMED FROM THE TABLE ABOVE rather than
+mean across **24** is **558.9**, RE-SUMMED FROM THE TABLE ABOVE rather than
 adjusted. It read 488.3 for a while, then 541.3 **across 23 when there were
 already 24** -- each figure right when it was written and drifted as dive after
 dive moved a profile and left the average alone. **The COUNT drifted too, which
@@ -754,6 +754,68 @@ every landed attack, which reshuffles every subsequent roll in a seeded fight --
 so for the Bear and the Moonkin the proc's own dice swamp what the proc is worth.
 Read the procs column, not the DPS column.
 
+**AND THEN TWO DEFENSIVE TALENTS, ONE WITH THE WRONG INDEX AND ONE WITH THE
+WRONG RULE.** Both reported by the ruleset owner, and both confirmed:
+
+| | |
+| --- | --- |
+| **Feral Swiftness gave 30 dodge, not 4** | "increases your movement speed while in Cat Form by {0}%, and increases your chance to Dodge by {1}%" -- `[30, 4]` at rank 2, no `valueIndex`, so it granted the MOVEMENT SPEED. The FOURTH value-index bug in this class |
+| **Thick Hide was 3% of item armor** | it is "{0} additional base Armor per LEVEL and another {1} base Armor for each point of defense skill beyond five times your level" -- 54 armor against a correct **274** |
+
+**ONE WAS THE WRONG INDEX AND THE OTHER THE WRONG RULE, AND THE SECOND IS
+QUIETER.** A wrong rule ignores both indices equally, so there is no wrong index
+for an index sweep to find; what found it was reading the tooltip beside the
+declaration. Thick Hide needed two UNITS rather than two rules -- `statFromLevel`
+and `statFromStat` both default to reading their value as a percentage, and now
+take `scale: 1` for a talent stating a multiple.
+
+**AND `statFromStat` TURNED OUT TO READ MORE THAN IT SAID.** It was documented
+and tested as primaries-only because "the derivation is handed resolved
+primaries" -- and `StatBlock` hands it the whole FIRST PASS, every stat resolved.
+The real constraint is that nothing the derivation PRODUCES may be read by it, so
+`defenseSkill` is safe and the test checks that property across all nine classes
+instead of listing five stat names.
+
+| Profile | was | now | |
+| --- | --- | --- | --- |
+| Bear | 514.4 | **523.1** | **+8.7** |
+| the other 23 | | | **+0.0** |
+
+**THE CAT DID NOT MOVE BY A DECIMAL AND TAKES FERAL SWIFTNESS AT RANK 2.** Its
+dodge fell 45.95% to 19.95% and nothing attacks it, so 26 points of avoidance are
+worth exactly zero -- which is the containment check that this commit reaches
+only what it should.
+
+**THE NET IS TWO MECHANISMS PULLING OPPOSITE WAYS, SO THE PAIR WAS MEASURED**
+(`python tools/thick_hide_attribution.py`), with the Bear's armor, dodge, deaths,
+damage taken and rage beside each figure:
+
+| variant | armor | dodge | deaths | taken | rage | DPS |
+| --- | --- | --- | --- | --- | --- | --- |
+| both, as committed | 2870 | 19.45% | 13.69 | 275129 | 750 | **523.1** |
+| without the dodge index | 2870 | 45.45% | 8.60 | 181443 | 671 | 516.9 |
+| without the armor rule | 2650 | 19.45% | 13.87 | 282434 | 751 | 524.8 |
+| neither | 2650 | 45.45% | 8.63 | 185385 | 669 | **514.4** |
+
+The last row reproduces the published 514.4 to the decimal, which is the
+cross-check the Cat probe learned the hard way. **Feral Swiftness is +10.4
+isolated** -- 26 fewer points of avoidance, 52% more damage taken, 61% more
+deaths, 82 more rage -- **and Thick Hide is −1.7 marginal and +2.5 isolated,
+inside the interval both ways.**
+
+**A PREDICTION IN THREE COMMENTS AND A TEST WAS WRONG, AND THE RULE THAT
+FALSIFIED IT WAS ALREADY WRITTEN DOWN.** They said "more armor means less damage
+taken means less rage, so the Bear's DPS falls". **Armor does not reduce rage** --
+it comes off the PRE-ARMOR figure, which `resourceRules.ts` states in those words
+and CLAUDE.md repeats. Measured: rage 751 to 750. All four have been corrected to
+what the measurement shows.
+
+**AND THE CENSUS MOVED WITHOUT THE LIVE-GAP COUNT MOVING.** Feral Swiftness's
+movement-speed clause is `positioning` and was simply not declared, so the talent
+sat in the `Fully` column -- the one column nothing re-reads -- while its only
+live clause had the wrong index. The Druid is **29 fully, 6 partly, 14 ruled out,
+2 live gaps**, the same two shapeshifting talents as before.
+
 **AND THEN FOUR THINGS ON THE CAT, TWO OF THEM A SECOND CLAUSE NOBODY READ.**
 The ruleset owner reported all four; what each turned out to be:
 
@@ -813,8 +875,10 @@ the spread across the 24 is much wider than it was and that is worth a look.
 **AND MOONKIN FORM HAS NO UNMODELLED CLAUSE LEFT.** Its last one read "Omen of
 Clarity's trigger chance is doubled, and Omen of Clarity is not declared ... so
 there is no proc here for this to double" -- true when written, and specific
-enough to point straight back here the day the proc landed. The Druid census is
-**30 fully / 5 partly / 14 ruled out / 2 live gaps**.
+enough to point straight back here the day the proc landed. The Druid census was
+**30 fully / 5 partly / 14 ruled out / 2 live gaps** at this point, and declaring
+Feral Swiftness's positioning clause later moved one talent from `fully` to
+`partly`.
 
 **AND THEN AN OFFICIAL SOURCE REVISED DEEP WOUNDS AGAIN, THREE BULLETS, AND TWO
 OF THEM WERE ALREADY RIGHT.** "Deep Wounds compared to Vanilla now: rolls over
@@ -986,7 +1050,7 @@ Hemo moves five rows between the two columns, which is exactly that kind of edit
 | DW Fury | Warrior | 18/33/0 | 667.5 | | Shadow Priest | Priest | 16/3/32 | 516.4 |
 | Fire Mage | Mage | 10/39/2 | 624.0 | | Venom Rogue | Rogue | 37/12/2 | 510.6 |
 | Frostfire Mage | Mage | 0/29/22 | 623.2 | | Rupture Rogue | Rogue | 12/8/31 | 497.6 |
-| 2H Arms | Warrior | 38/13/0 | 621.1 | | Bear Druid | Druid | 9/42/0 | **514.4** |
+| 2H Arms | Warrior | 38/13/0 | 621.1 | | Bear Druid | Druid | 9/42/0 | **523.1** |
 | Enh Shaman | Shaman | 19/32/0 | 604.0 | | LW Ranged | Hunter | 7/39/5 | **486.5** |
 | BM Hunter | Hunter | 31/20/0 | **595.7** | | Moonkin | Druid | 38/0/13 | ****513.4**** |
 | Combat Rogue | Rogue | 18/33/0 | 586.3 | | Prot Warr | Warrior | 17/0/34 | 457.0 |

@@ -10,3 +10,4 @@ coverage/
 
 # The coefficient probe's intermediate output; the audit doc is the artifact.
 probe.json
+__pycache__/

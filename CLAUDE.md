@@ -122,13 +122,22 @@ together told someone their build was missing features that were never coming.
 
 | `scope` | Covers | Entries |
 | --- | --- | --- |
-| `positioning` | positions, range, facing, movement, "nearby", radius, travel forms | 17 |
-| `crowdControl` | stuns, fears, roots, snares, silences, incapacitates, disorients, disarms, **and removing any of them** | 36 |
+| `positioning` | positions, range, facing, movement, "nearby", radius, travel forms | 20 |
+| `crowdControl` | stuns, fears, roots, snares, silences, incapacitates, disorients, disarms, **and removing any of them** | 37 |
 | `threat` | threat, which is not tracked. Defensive Stance's +30% and Defiance are dropped, not deferred | 14 |
 | `healing` | healing THROUGHPUT. **Mana RETURN is NOT out of scope** — it changes a damage profile's sustain, so it is a live gap and gets no `scope` | 36 |
-| `stealth` | being stealthed, detecting it, and the openers requiring it — Ambush, Garrote, Cheap Shot. **NOT an in-combat proc that REMOVES a stealth requirement**, which is what Cutthroat is | 7 |
+| `stealth` | being stealthed, detecting it, and the openers requiring it — Ambush, Garrote, Cheap Shot. **NOT an in-combat proc that REMOVES a stealth requirement**, which is what Cutthroat is | 6 |
 | `castPushback` | avoiding, resisting or reducing the interruption or DELAY of a cast or channel from damage taken. **NOT an interrupt the TARGET suffers** — Earth Shock's school lockout is about the enemy casting and is inert for a different reason | 7 |
 | `totemEntities` | a totem that BUFFS or HEALS on its own. **NOT a totem that deals DAMAGE**, which Searing Totem proved is expressible as a debuff that ticks | 4 |
+
+**EVERY FIGURE IN THAT LAST COLUMN IS COUNTED FROM THE DECLARATIONS, NOT
+ADJUSTED**, and three of them were wrong when this was written -- positioning by
+three, crowdControl by one, stealth by one. Each is the arithmetic failure this
+file already documents under **Git workflow**: two branches move a count by one
+from the same base, both write the same number, git merges them without a
+conflict and the total is short. **So re-count rather than increment**, the same
+rule the talent census follows, and the one-liner that does it is a loop over the
+nine `*_TALENT_EFFECTS` tables counting `unmodelled` effects that carry a `scope`.
 
 Adding a member to that union is a scope DECISION and needs the owner, not a
 judgement call while writing a class.
@@ -724,11 +733,30 @@ something that comes and goes.
 - **A stat can be worth a percentage of another stat** — `statFromStat`, folded
   into the derivation rather than computed once, so it follows a buffed primary
   the way attack power follows strength. Resolving it at build time freezes it at
-  the unbuffed figure while reading as plausible. It converts FROM a primary
-  only. **Careful Aim feeds BOTH attack power pools** by the owner's ruling,
-  though the talent says only "Attack Power" — Forever names the ranged pool
-  explicitly everywhere else it means it, so the melee-only reading was
-  defensible and wrong.
+  the unbuffed figure while reading as plausible. **Careful Aim feeds BOTH attack
+  power pools** by the owner's ruling, though the talent says only "Attack
+  Power" — Forever names the ranged pool explicitly everywhere else it means it,
+  so the melee-only reading was defensible and wrong.
+- **IT CONVERTS FROM ANY FLAT STAT, AND THE CONSTRAINT IS ON WHAT IS DERIVED
+  RATHER THAN ON WHAT IS READ.** It was documented and tested as primaries-only,
+  on the reason that "the derivation is handed resolved primaries" -- and it is
+  not: `StatBlock.computeEffective` calls `this.derivation(firstPass)`, every
+  stat resolved from base and modifiers. The parameter is named `primary` and
+  typed `Readonly<Stats>`, so **the name described its six callers and the type
+  always allowed more**. What actually makes two fixed passes terminate is the
+  argument `StatBlock` states for itself: nothing the derivation PRODUCES is also
+  read by it. So a conversion may read any stat no derivation writes, and
+  `statFromStat.test.ts` checks that against all nine classes and every Druid
+  form instead of against a hand-written list of five names. Thick Hide's
+  `defenseSkill` is the first non-primary source — a flat stat that gear and two
+  Anticipation talents grant and nothing derives.
+- **`scale` IS A UNIT ON BOTH DERIVATIONS, AND THE DEFAULT IS A PERCENTAGE.**
+  `statFromLevel` and `statFromStat` divide by 100, because Predatory Strikes is
+  "150% of your level" and Careful Aim is "100% of your Intellect". Thick Hide
+  states MULTIPLES -- 3 armor per level, 2 per defense point -- so it passes
+  `scale: 1`. The two readings differ by a hundred times, which is the one saving
+  grace: 180 armor against 1.8 is obvious, where a `percentAdd` missing its
+  `scale: 0.01` is a thousand percent and still renders.
 - **A STAT CAN BE A PERCENTAGE OF THE *LEVEL*, AND THAT ONE IS RESOLVED ONCE** —
   `statFromLevel`, for Predatory Strikes' "150% of your level". Level cannot be
   buffed and never moves during a fight, so folding it into the derivation would
@@ -778,6 +806,25 @@ See [docs/resources.md](docs/resources.md).
   Defensive Stance reduces the rage earned, armor does not, and a block does.
   Armor and a block are one pipeline step, so `DamageResolution` carries
   `blocked` separately to tell them apart.
+- **AND THE ARMOR HALF OF THAT WAS CONTRADICTED IN A COMMENT WRITTEN BY SOMEBODY
+  WHO HAD READ IT.** Fixing Thick Hide gives the Bear 220 more armor, and three
+  comments plus a test predicted the consequence as "more armor means less damage
+  taken means LESS rage, so the Bear's DPS falls". Measured: damage taken fell
+  2.6% and rage went **751 to 750**, because rage is taken off the PRE-ARMOR
+  figure and armor is the one mitigation that cannot touch it. Avoidance can --
+  the dodge fix next door moved rage 669 to 751.
+  **A PREDICTION IN A COMMENT IS A MEASUREMENT THAT HAS NOT HAPPENED**, and it is
+  worth less than a question mark: it is specific, mechanical and reads exactly
+  like a finding. The rule that falsified this one was two sections above it in
+  this file and in `resourceRules.ts` in the same words. **Check the rules file
+  before writing down a mechanism, especially when the mechanism sounds obvious.**
+- **AND A DPS FIGURE INSIDE THE INTERVAL CANNOT TELL YOU WHICH HALF MOVED.**
+  Thick Hide measured −1.7 DPS, which is "no difference" and is also what an
+  inert talent measures. `tools/bear_survival.ts` prints armor, dodge, deaths,
+  damage taken and rage beside the DPS, and those columns are what showed the
+  armor arriving and the rage not moving. **When a correctness fix is expected to
+  be worth nothing, measure the mechanism's own quantity** -- otherwise "inside
+  the interval" is indistinguishable from "did not apply".
 - **Health and mana are maximums computed ONCE from a stats snapshot**, so a
   stamina buff applied as an aura grants no health. The encounter passes
   `poolStats`, a transform from the character's stats to their buffed ones.
@@ -946,6 +993,16 @@ the variant reverted something inert and measured the same build twice: 910.3 an
 variants that agree exactly are a patch that did not apply**, not a change worth
 nothing -- a change worth nothing still shifts the RNG sequence. Count the
 matches and refuse unless there is exactly one.
+
+**AND THE SENTENCE THAT SAID SO WAS FALSE FOR A WHOLE RELEASE.** This file and
+the commit that merged it both stated that `cat_attribution.py` "counts its
+matches now", and it did not -- it tested `if find not in text`, which is
+presence. Nobody was lied to by the code; they were lied to by the note ABOVE
+the code, which is the pattern this file records under **Three causes of
+inert**: a reason that describes a working half is a claim about the code and
+can simply be false. **A lesson is not landed until the tool that learned it
+actually implements it**, and the cheapest way to check is to grep the tool for
+the thing the note says it does.
 
 **AND PATCH IT BY SLICING THE LIST, NOT BY `replace(old, new, 1)` -- THE ENTRIES
 ARE TEXTUALLY IDENTICAL ACROSS LISTS.** The Rogue's Slice and Dice entry is the
@@ -1308,8 +1365,20 @@ no per-point argument either way and what decides it is uptime.
   a row of THREE numbers, read at index 0 by a single `reaction` that granted
   rage. **The whole second clause was absent and the talent reported itself
   FULLY MODELLED**, so the census counted it in the `Fully` column and the Cat
-  silently had no Seal Fate. Two instances now, which is why the full
-  index audit is worth running rather than fixing these one at a time.
+  silently had no Seal Fate.
+- **AND A THIRD AND A FOURTH, SO THE PATTERN IS THE RULE AND NOT THE EXCEPTION.**
+  Nature's Reach's hit clause was swallowed by a `scope` tag, and **Feral
+  Swiftness read a MOVEMENT SPEED as a dodge chance** -- "increases your movement
+  speed while in Cat Form by {0}%, and increases your chance to Dodge by {1}%",
+  `[30, 4]` at rank 2, no `valueIndex`, so both feral presets carried **+30 dodge
+  instead of +4** for the life of the talent. The ruleset owner found it from the
+  number: "I think it's giving 30% chance to dodge instead of 4%."
+  **A WRONG INDEX IS PLAUSIBLE BY CONSTRUCTION, WHICH IS WHY FOUR OF THESE GOT
+  THROUGH.** The numbers on one talent's row are all numbers that talent states,
+  so the wrong one is always the right order of magnitude for something -- 0.5
+  seconds reads as 0.5%, and 30% movement speed reads as 30 dodge on a bear. Four
+  instances in one class is why the full index audit across all nine is worth
+  running rather than fixing these one at a time.
 - **A SECOND CLAUSE IS OFTEN A SECOND EFFECT, NOT A BIGGER ONE.** Primal Fury is
   two `reaction` entries with different `reactionId`s, different `valueIndex`es
   and different `requires` — rage gated on `styles: ['bear']`, the combo point on
@@ -1322,12 +1391,27 @@ no per-point argument either way and what decides it is uptime.
   does have the field and which do not use it. All three want index 0 and all
   three were right by inspection; none of them said so.
 - **AND THE SAME SWEEP FOUND A TALENT WITH THE WRONG RULE RATHER THAN THE WRONG
-  INDEX.** Thick Hide is "{0} additional base Armor per LEVEL and another {1}
-  base Armor for each point of DEFENSE SKILL beyond five times your level",
-  declared as `itemArmorPercent` -- a percentage of ITEM armor, which is exactly
-  what Toughness says and neither of what this says. **When a fix motivates a
-  sweep, run the sweep**: the index bug was one talent and the sweep found a
-  second, unrelated one beside it.
+  INDEX, WHICH IS QUIETER STILL.** Thick Hide is "{0} additional base Armor per
+  LEVEL and another {1} base Armor for each point of DEFENSE SKILL beyond five
+  times your level", declared as `itemArmorPercent` -- a percentage of ITEM
+  armor, which is exactly what Toughness says and neither of what this says. At
+  rank 3 it paid 3% of 1793, about **54 armor against a correct 274**.
+  **THE WRONG RULE IGNORES BOTH INDICES EQUALLY**, so there is no wrong index to
+  find and the index sweep cannot see it; what found it was reading the TOOLTIP
+  beside the declaration. It needed two units rather than two rules --
+  `statFromLevel` and `statFromStat` both read their value as a PERCENTAGE by
+  default and now take `scale: 1` for a talent stating a MULTIPLE, which is the
+  difference between 180 armor and 1.8. **When a fix motivates a sweep, run the
+  sweep**: the index bug was one talent and the sweep found a second, unrelated
+  one beside it.
+- **AND A TALENT WITH ONE CLAUSE MODELLED AND ONE RULED OUT THAT SAYS NOTHING
+  READS AS FULLY MODELLED.** Feral Swiftness's movement speed is `positioning`
+  and was simply absent, so the talent sat in the `Fully` column -- the one
+  column nothing re-reads -- while its only live clause had the wrong index.
+  Declaring the ruling moved it to `partly`, which is where a reader looking for
+  a half-done talent actually looks. **An undeclared ruling and an undeclared gap
+  look identical from the census, and both of them hide whatever else is on the
+  talent.**
 - **An effect that reads no value is DROPPED, not reported.** `talentBuild` asks
   `talentNumber` and `continue`s when it is undefined, so a single-rank talent
   whose values file says `null` produces nothing and reads as unmodelled without

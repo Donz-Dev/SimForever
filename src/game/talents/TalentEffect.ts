@@ -1,5 +1,5 @@
 import type { AttackTableKind, DamageSchool } from '../../engine';
-import type { PrimaryStatName, StatModifierOperation, StatName } from '../../engine';
+import type { StatModifierOperation, StatName } from '../../engine';
 import type { ResourceType, WeaponType } from '../../engine';
 import type { CombatStyleId } from '../character/ids';
 
@@ -72,17 +72,26 @@ export type TalentEffect =
    * here for the same reason it is wrong there. Routing it through the
    * derivation would add a term that can never change.
    *
-   * Predatory Strikes is the only caller: "increases your melee Attack Power
+   * Predatory Strikes is the first caller: "increases your melee Attack Power
    * in Cat Form, Bear Form, and Dire Bear Form by 150% of your level", which
    * is 90 attack power at 60. Its `requires` is what carries the form clause.
    *
-   * The value is a PERCENTAGE, so 150 means one and a half times the level.
+   * The value is a PERCENTAGE BY DEFAULT, so 150 means one and a half times
+   * the level -- and `scale` is how a talent stating a MULTIPLE says so.
+   * Thick Hide is "3 additional base Armor PER LEVEL", which is 3 x 60 and not
+   * 3% of 60, so it passes `scale: 1` and reads 180. **A UNIT, NOT A TUNING
+   * KNOB**: the default stays 0.01 so Predatory Strikes is untouched, and the
+   * two readings differ by a hundred times -- 180 armor against 1.8 -- which
+   * is large enough that the wrong one is obvious and small enough that the
+   * wrong one is still a plausible number on a character sheet.
    * ----------------------------------------------------------------------
    */
   | {
       readonly kind: 'statFromLevel';
       readonly to: StatName;
       readonly valueIndex?: number;
+      /** Multiplier on the talent's value. Default 0.01, i.e. a percentage. */
+      readonly scale?: number;
       readonly requires?: BuildRequirement;
     }
 
@@ -105,18 +114,47 @@ export type TalentEffect =
    * it in as a flat number at build time would freeze it at the unbuffed
    * value, which is the mistake the two-pass design exists to prevent.
    *
-   * `from` must be a PRIMARY stat: the derivation is handed resolved
-   * primaries, and all six talents read one. Reading a derived stat would
-   * need a third pass and nothing asks for it.
+   * `from` IS ANY FLAT STAT, AND THE CONSTRAINT IS ON WHAT IS DERIVED RATHER
+   * THAN ON WHAT IS READ. The derivation is handed the whole FIRST PASS --
+   * `StatBlock.computeEffective` calls `this.derivation(firstPass)`, every
+   * stat resolved from base and modifiers -- so the parameter being named
+   * `primary` described its six callers and never its type. What makes the two
+   * passes terminate is that nothing the derivation PRODUCES is also read by
+   * it: the primaries are identical in both passes because no conversion
+   * writes one. A conversion reading a stat that another conversion writes
+   * would depend on the pass count, so **`from` must name a stat no derivation
+   * produces** -- which `statFromStat.test.ts` checks for all nine classes
+   * rather than leaving to this comment.
    *
-   * The value is a PERCENTAGE, so 100 means all of it.
+   * Thick Hide is the seventh caller and the first non-primary one: "another 2
+   * base Armor for each point of defense skill beyond five times your level".
+   * `defenseSkill` holds exactly that surplus and nothing derives it, so the
+   * clause is `armor += defenseSkill x 2` and it follows a buffed defense
+   * skill for free -- which build-time resolution would not. The Warrior's and
+   * the Paladin's Anticipation grant defense skill FROM A TALENT, so the
+   * ordering hazard is real even though no Druid talent does it.
+   *
+   * The value is a PERCENTAGE BY DEFAULT, so 100 means all of it. `scale: 1`
+   * is for a talent stating a MULTIPLE instead -- Thick Hide's 2 is two armor
+   * a point, not 2% of one.
    * ----------------------------------------------------------------------
    */
   | {
       readonly kind: 'statFromStat';
-      readonly from: PrimaryStatName;
+      readonly from: StatName;
       readonly to: StatName;
       readonly valueIndex?: number;
+      /** Multiplier on the talent's value. Default 0.01, i.e. a percentage. */
+      readonly scale?: number;
+      /**
+       * What the character must BE for the conversion to be added at all.
+       *
+       * Thick Hide's clause is form-gated, and the gate is checked BEFORE the
+       * conversion is pushed rather than inside the derivation: a style is as
+       * fixed as the weapon in the character's hand, so a derivation re-testing
+       * it every pass would be asking a question whose answer cannot change.
+       */
+      readonly requires?: BuildRequirement;
     }
 
   /**
