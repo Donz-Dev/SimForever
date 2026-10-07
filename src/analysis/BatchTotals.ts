@@ -51,6 +51,15 @@ export interface BatchAbilityTotals {
   readonly average: number;
   /** Share of the actor's total damage. */
   readonly share: number;
+  /**
+   * Crit, glance and avoid as a fraction of the attempts that ROLLED.
+   *
+   * NOT of `attempts`, which includes periodic ticks. A tick's landing was
+   * settled when the effect was applied, so it can neither be avoided nor
+   * glance, and a hybrid that pools its burn into this row divided all three
+   * rates by a denominator those outcomes were never offered. See
+   * `recordDealt`.
+   */
   readonly critRate: number;
   readonly glanceRate: number;
   readonly avoidRate: number;
@@ -213,6 +222,15 @@ interface AbilityAccumulator {
   crits: number;
   glances: number;
   avoided: number;
+  /*
+   * The same four again, counting only attempts that ROLLED -- every damage
+   * event that was not a periodic tick. `recordDealt` says why the rates need
+   * their own denominator and the damage total does not.
+   */
+  rolled: number;
+  rolledCrits: number;
+  rolledGlances: number;
+  rolledAvoided: number;
 }
 
 interface ResourceAccumulator {
@@ -516,6 +534,40 @@ export class BatchTotals implements TelemetrySink {
     else entry.hits += 1;
     if (event.critical) entry.crits += 1;
     if (event.outcome === 'glance') entry.glances += 1;
+    /*
+     * ----------------------------------------------------------------------------
+     * AND A SECOND DENOMINATOR, FOR THE RATES ONLY.
+     *
+     * A HYBRID POOLS ITS BURN INTO ITS OWN ROW, which is right for the damage
+     * and wrong for every rate divided by it. Frostfire Bolt is one row of 21.8
+     * attempts a fight, and only 12.0 of those are casts -- the rest are DoT
+     * ticks, which cannot miss, because whether the effect landed was settled
+     * when it was applied. So `avoided / attempts` reported 2.83% miss on a
+     * spell whose casts miss 10% of the time.
+     *
+     * IT MADE A WORKING TALENT LOOK HALF-BROKEN. The ruleset owner read
+     * Elemental Precision off this column and saw it moving about 0.5 points
+     * per rank instead of 1 -- the talent was delivering the full 1% to the
+     * ROLL the whole time, and the dilution was in the report. The two spells
+     * with no burn behind them said so: Arcane Blast and Arcane Missiles sit at
+     * 9.71% and 10.30% against an expected 10.0%.
+     *
+     * THE DAMAGE TOTAL IS UNCHANGED AND MUST BE. A burn is part of the spell
+     * and belongs in its damage, its share and its average. What it is not is
+     * an attack that could have been avoided, so it is out of the denominator
+     * of the things that could.
+     *
+     * `glances` IS IN THE SAME POSITION and is rolled in here for the same
+     * reason -- a tick never glances either, so a bleed-heavy row understated
+     * its glance rate by exactly the share of it that was ticks.
+     * ----------------------------------------------------------------------------
+     */
+    if (!event.periodic) {
+      entry.rolled += 1;
+      if (AVOIDED.has(event.outcome)) entry.rolledAvoided += 1;
+      if (event.critical) entry.rolledCrits += 1;
+      if (event.outcome === 'glance') entry.rolledGlances += 1;
+    }
     perActor.set(event.abilityName, entry);
   }
 
@@ -604,9 +656,21 @@ export class BatchTotals implements TelemetrySink {
         // differ in length.
         average: e.hits > 0 ? e.damage / e.hits : 0,
         share: total > 0 ? e.damage / total : 0,
-        critRate: e.attempts > 0 ? e.crits / e.attempts : 0,
-        glanceRate: e.attempts > 0 ? e.glances / e.attempts : 0,
-        avoidRate: e.attempts > 0 ? e.avoided / e.attempts : 0,
+        /*
+         * OVER THE ATTEMPTS THAT ROLLED, not over every damage event. See
+         * `recordDealt`: a hybrid's burn is in the same row and cannot miss,
+         * crit on the table or glance, so including it divides each rate by a
+         * denominator those outcomes were never offered.
+         *
+         * FALLING BACK TO `attempts` WHEN NOTHING ROLLED is what keeps a pure
+         * DoT honest: Ignite and Deep Wounds have no cast of their own, so
+         * `rolled` is zero and the old denominator is the only one there is.
+         * Their rates are all zero anyway -- a tick cannot be avoided, and
+         * neither of those two can crit by ruling.
+         */
+        critRate: rateOver(e.rolledCrits, e.rolled, e.crits, e.attempts),
+        glanceRate: rateOver(e.rolledGlances, e.rolled, e.glances, e.attempts),
+        avoidRate: rateOver(e.rolledAvoided, e.rolled, e.avoided, e.attempts),
       }))
       .sort((a, b) => b.damage - a.damage);
   }
@@ -753,6 +817,36 @@ function mapFor<T>(outer: Map<string, Map<string, T>>, key: string): Map<string,
   return inner;
 }
 
+/**
+ * A rate over the attempts that rolled, falling back to every attempt.
+ *
+ * THE FALLBACK IS FOR A PURE DoT. Ignite and Deep Wounds have no cast of their
+ * own, so nothing in their row ever rolled and `rolled` is zero -- dividing by
+ * it would be `NaN` on the page. Their rates are all zero either way: a tick
+ * cannot be avoided, and neither of those two can crit by ruling.
+ */
+function rateOver(
+  rolledCount: number,
+  rolled: number,
+  allCount: number,
+  attempts: number,
+): number {
+  if (rolled > 0) return rolledCount / rolled;
+  return attempts > 0 ? allCount / attempts : 0;
+}
+
 function blankAbility(): AbilityAccumulator {
-  return { uses: 0, damage: 0, attempts: 0, hits: 0, crits: 0, glances: 0, avoided: 0 };
+  return {
+    uses: 0,
+    damage: 0,
+    attempts: 0,
+    hits: 0,
+    crits: 0,
+    glances: 0,
+    avoided: 0,
+    rolled: 0,
+    rolledCrits: 0,
+    rolledGlances: 0,
+    rolledAvoided: 0,
+  };
 }

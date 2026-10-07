@@ -226,7 +226,9 @@ export const FOCUS_TICK_INTERVAL_MS = SMOOTH_TICK_INTERVAL_MS;
 export const FOCUS_REGEN: ResourceRegen = {
   resource: 'focus',
   intervalMs: FOCUS_TICK_INTERVAL_MS,
-  amountPerTick: () => FOCUS_PER_SMOOTH_TICK,
+  // Through `regenMultiplierFor` like the other two, so the three rules agree.
+  // Nothing multiplies focus today and the product is 1 when nothing does.
+  amountPerTick: (actor) => FOCUS_PER_SMOOTH_TICK * actor.regenMultiplierFor('focus'),
 };
 
 /* --- Mana --- */
@@ -274,9 +276,32 @@ export const MANA_REGEN: ResourceRegen = {
   amountPerTick: (actor, context) => manaPerTick(actor, context.clock.now()),
 };
 
-/** Mana granted by one tick, given when mana was last spent. */
+/**
+ * Mana granted by one tick, given when mana was last spent.
+ *
+ * ----------------------------------------------------------------------------
+ * `regenMultiplierFor` REACHES MANA NOW, AND IT REACHED ONLY ENERGY BEFORE.
+ * The method was written for Adrenaline Rush, documented on the aura field as
+ * "multiplies the carrier's REGENERATION of a resource", and wired into one of
+ * the three rules -- so an aura declaring `{ mana: 16 }` compiled, applied,
+ * reported its uptime and changed nothing at all. Evocation is the first
+ * caller for mana and measured a ratio of exactly 1.0000.
+ *
+ * THAT IS THE SAME FAILURE `modifiersScaleWithStacks` HAD: a general field read
+ * by some of the collections that should read it, where the one that does not
+ * is silent rather than wrong. The three regeneration rules all go through it
+ * now, including focus, which nothing multiplies today.
+ *
+ * THE MULTIPLIER IS OUTSIDE THE BYPASS, deliberately. The five second rule
+ * decides what FRACTION of the rate gets through and this multiplies the rate
+ * itself, so Evocation's two clauses compose instead of fighting: it sets the
+ * bypass to 100 and multiplies by 16, which is "your out-of-combat rate, times
+ * sixteen" exactly as the owner stated it.
+ * ----------------------------------------------------------------------------
+ */
 export function manaPerTick(actor: Combatant, now: number): number {
-  const full = actor.stats.get('manaPer5') * MANA_TICK_FRACTION;
+  const full =
+    actor.stats.get('manaPer5') * MANA_TICK_FRACTION * actor.regenMultiplierFor('mana');
   if (full <= 0) return 0;
 
   const casting = actor.spentWithin('mana', now, MANA_REGEN_LOCKOUT_MS);
