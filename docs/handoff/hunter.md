@@ -553,7 +553,7 @@ been the same number until the quiver existed.
 
 | Talents | Fully | Partly | Ruled out | Live gap |
 | --- | --- | --- | --- | --- |
-| 50 | 28 | 5 | 9 | **8** |
+| 50 | 29 | 4 | 9 | **8** |
 
 ### The 8 live gaps, grouped by cause
 
@@ -584,7 +584,6 @@ ruling can close one gap and reshape another
 | --- | --- |
 | `improved_stings` | Serpent Sting damage applies; Viper and Scorpid reach neither. Viper drains the TARGET's mana and Scorpid reduces its hit — neither is damage and neither is declared |
 | `rapid_killing` | **its Rapid Fire cooldown reduction applies now**; its damage half needs a kill |
-| `improved_tracking` | **applied as a flat damage bonus, which ASSUMES the Hunter is tracking the right creature type** — an interpretation still unratified, and the one item on the old "done" list the owner was not asked about |
 | `clever_traps` | its Immolation Trap damage applies; Freezing and Frost durations are crowd control and Explosive Trap is not declared |
 | `surefooted` | the hit applies; movement or control does not |
 
@@ -729,18 +728,24 @@ All six items from the previous version are closed.
 3. ~~One pet base DPS asked for~~ — **150.**
 4. ~~`lacerating_strikes` re-read~~ — **built, +12.4 to LW Melee.** Its reason had
    argued itself out of being built on a premise that was never measured.
-5. **`improved_tracking`'s assumption is STILL unratified** — it is applied as a
-   flat damage bonus on the assumption the Hunter is tracking the creature type it
-   is fighting. True of any real pull, not something the engine checks, and the one
-   question from the old list that has not been put to the owner.
+5. ~~`improved_tracking`'s assumption confirmed~~ — **RATIFIED 2026-10-07**:
+   *"improved tracking is correct, applied as a flat 5% damage bonus"*. The flat
+   reading assumed the Hunter was tracking what it was fighting; the assumption
+   is a ruling now and the `unmodelled` entry is gone. **No profile moves by a
+   decimal** — `conditionalDamage` has applied the rank's percentage since the
+   talent was written. What moved is the census: **a caveat is the whole
+   difference between PARTLY and FULLY**, so the Hunter goes 28 fully to 29 and
+   5 partly to 4.
 6. ~~`rapid_killing`'s reason split~~ — **and the "working" half turned out not to
    be working at all.** Now declared.
 
 ### What is left for this class
 
-- **`improved_tracking`'s interpretation**, above. One sentence from the owner.
-  **It is the only unratified reading left in this class** — ammo's base speed
-  was the other and the owner settled it on 2026-10-07.
+**THE CLASS HAS NO UNRATIFIED READING LEFT.** Ammo's base speed and Improved
+Tracking's flat bonus were the last two and the owner settled both on
+2026-10-07. Every Hunter talent now either does what the source says, says why
+it cannot, or carries a scope the owner ruled.
+
 - **A percentage cooldown reduction**, for `survivalist_s_discipline`. No profile
   takes it, so it moves nothing — build it when a second talent wants it.
 - **Talent VALUES have never been cross-checked** for any class. The Hunter's
