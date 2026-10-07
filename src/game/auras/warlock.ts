@@ -1,7 +1,7 @@
 import type { AuraDefinition } from '../../engine';
 import { dealDamage, seconds } from '../../engine';
 import {
-  BANE_OF_AGONY_TICK_SP_COEFFICIENT,
+  BANE_OF_AGONY_SP_COEFFICIENT,
   CORRUPTION_TICK_SP_COEFFICIENT,
   IMMOLATE_SP_COEFFICIENT,
   IMMOLATE_TICK_SP_COEFFICIENT,
@@ -38,6 +38,22 @@ function tick(
   amount: number,
   school: typeof SHADOW | typeof FIRE,
   powerCoefficient = 0,
+  /**
+   * Whether this tick can crit at all.
+   *
+   * --------------------------------------------------------------------------
+   * SIPHON LIFE CANNOT, BY THE RULESET OWNER'S RULING, and it is the only DoT
+   * in the project that cannot -- every other one does, which is a Forever
+   * rule rather than Classic's. So this is an exception stated per effect
+   * rather than a default being changed.
+   *
+   * OMITTING `critFrom` CONSUMES NO RANDOM NUMBER, which is the engine's own
+   * documented property. Turning it off therefore SHIFTS a seeded run for any
+   * profile casting Siphon Life -- the opposite direction from the usual, where
+   * ADDING the field is the edit that cannot shift one.
+   * --------------------------------------------------------------------------
+   */
+  canCrit = true,
 ): void {
   const source = context.combatant(aura.sourceId);
   const target = context.combatant(aura.targetId);
@@ -54,7 +70,7 @@ function tick(
     // burn takes its share of a hybrid pair.
     powerCoefficient,
     periodic: true,
-    critFrom: 'spell',
+    ...(canCrit ? { critFrom: 'spell' as const } : {}),
     appliesArmor: false,
   });
 }
@@ -96,51 +112,147 @@ export const CORRUPTION: AuraDefinition = {
  * AT FIRST, and builds up as the Bane reaches its full duration."
  *
  * ----------------------------------------------------------------------------
- * THE RAMP IS DESCRIBED AND NOT QUANTIFIED. The tooltip says the shape without
- * giving it: Classic's is three bands of four ticks at 50%, 100% and 150% of
- * the average, and nothing in Forever's data says whether that survived.
+ * THE RAMP IS QUANTIFIED NOW, BY THE RULESET OWNER. This ticked FLAT for most
+ * of the project with a caveat saying so, because the tooltip describes the
+ * shape without giving it and Classic's bands could not be borrowed as
+ * precision. The owner has stated it:
  *
- * SO IT TICKS FLAT, at 552 over eight ticks. The TOTAL is the source's own and
- * is exactly right over the full duration; what is wrong is the distribution
- * inside it -- too much early, too little late. Over a sixty-second fight in
- * which the Bane is re-applied at most twice, that difference is small and the
- * total is what shows.
+ *   ticks 1-4     1/24th of the total each
+ *   ticks 5-8     1/12th of the total each
+ *   ticks 9-12    1/8th of the total each
  *
- * Borrowing Classic's three bands would be a guess dressed as precision, so
- * the flat reading is used and the caveat is printed on the ability.
+ * TWELVE TICKS, NOT EIGHT: the cadence is every 2 seconds over 24, also the
+ * owner's, where this file had 3 seconds. The shares sum to exactly 1 --
+ * 4/24 + 4/12 + 4/8 -- which is the check that the ramp redistributes the
+ * total rather than changing it.
+ *
+ * IT IS CLASSIC'S SHAPE AT A DIFFERENT RESOLUTION, worth noticing before
+ * reading these as arbitrary: 1/24 : 1/12 : 1/8 is 1 : 2 : 3, and the FLAT
+ * share over twelve ticks is 1/12. So the bands are 50%, 100% and 150% of the
+ * average, exactly as Classic's are. The old caveat guessed that ratio and had
+ * no authority to assert it; now there is authority and the guess was right.
+ *
+ * THE TOTAL IS `552 + SP * 1.6`, the coefficient also the owner's and
+ * superseding the sheet. Both halves are split by the SAME shares, so a tick
+ * is `(552 + SP * 1.6) * share` however the arithmetic is arranged. See
+ * `BANE_OF_AGONY_SP_COEFFICIENT`.
  * ----------------------------------------------------------------------------
  */
 export const BANE_OF_AGONY_TOTAL = 552;
 export const BANE_OF_AGONY_DURATION_MS = seconds(24);
-export const BANE_OF_AGONY_TICK_INTERVAL_MS = seconds(3);
+export const BANE_OF_AGONY_TICK_INTERVAL_MS = seconds(2);
+export const BANE_OF_AGONY_TICKS = BANE_OF_AGONY_DURATION_MS / BANE_OF_AGONY_TICK_INTERVAL_MS;
 
-export const BANE_OF_AGONY_UNMODELLED =
-  'It ticks FLAT. The tooltip says the damage "is dealt slowly at first, and ' +
-  'builds up", and states no figures for the ramp -- Classic uses three bands ' +
-  'of 50/100/150% and nothing says Forever kept them. The 24-second total is ' +
-  'the source’s own and is exact; only its distribution inside the duration ' +
-  'is flattened.';
+/**
+ * What each of the twelve ticks is worth, as a fraction of the total.
+ *
+ * WRITTEN OUT RATHER THAN COMPUTED from the bands, because the owner stated
+ * three bands and a formula would invite the next reader to re-derive them.
+ * Its test sums the array and asserts exactly 1.
+ */
+export const BANE_OF_AGONY_TICK_SHARES: readonly number[] = [
+  1 / 24,
+  1 / 24,
+  1 / 24,
+  1 / 24,
+  1 / 12,
+  1 / 12,
+  1 / 12,
+  1 / 12,
+  1 / 8,
+  1 / 8,
+  1 / 8,
+  1 / 8,
+];
 
-/** A pure DoT, and the longest here at 24 seconds. 13.3% a tick. */
-export const BANE_OF_AGONY_TICK_COEFFICIENT = BANE_OF_AGONY_TICK_SP_COEFFICIENT;
+/**
+ * Which share this tick draws, from the aura's own clock.
+ *
+ * ----------------------------------------------------------------------------
+ * READ FROM `appliedAt` RATHER THAN COUNTED ON THE INSTANCE, because a refresh
+ * sets `appliedAt = now` -- so the ramp restarts when the Bane is re-applied,
+ * which is what `refreshBehaviour: 'reset'` means everywhere else here. A
+ * counter held on the instance would have to be reset by hand in the one place
+ * that is easy to forget.
+ *
+ * CLAMPED INTO THE ARRAY, so the final tick -- due at the exact moment the
+ * aura falls off, and ordered before the expiry by the event queue -- reads the
+ * last band rather than running off the end.
+ * ----------------------------------------------------------------------------
+ */
+export function baneOfAgonyTickShare(elapsedMs: number): number {
+  const index = Math.round(elapsedMs / BANE_OF_AGONY_TICK_INTERVAL_MS) - 1;
+  const clamped = Math.min(Math.max(index, 0), BANE_OF_AGONY_TICK_SHARES.length - 1);
+  return BANE_OF_AGONY_TICK_SHARES[clamped]!;
+}
 
-export const BANE_OF_AGONY: AuraDefinition = {
-  id: 'bane_of_agony',
-  name: 'Bane of Agony',
-  durationMs: BANE_OF_AGONY_DURATION_MS,
-  isDebuff: true,
+/**
+ * Bane of Agony, optionally AMPLIFIED by Amplify Curse.
+ *
+ * ----------------------------------------------------------------------------
+ * TWO DEFINITIONS SHARING ONE ID, which is the whole trick. Amplify Curse
+ * raises "the effect of your next Curse of Weakness or Bane of Agony by 50%",
+ * and that damage lands over 24 seconds rather than at the cast -- so a
+ * `CastModifier`, which is resolved and spent AT cast time, has nothing to
+ * carry it to the ticks. This is why the talent was listed as wanting a
+ * one-shot per-ability DAMAGE modifier and why it does not need one.
+ *
+ * THE ID STAYS `bane_of_agony`, so Malediction, Pandemic and Improved Bane of
+ * Agony all still reach it and the priority list's `expired('bane_of_agony')`
+ * still sees it. Only the per-tick damage differs, and the factory is what
+ * keeps the ramp written once.
+ * ----------------------------------------------------------------------------
+ */
+export const AMPLIFY_CURSE_MULTIPLIER = 1.5;
+
+function baneOfAgonyAura(multiplier: number): AuraDefinition {
+  return {
+    id: 'bane_of_agony',
+    name: 'Bane of Agony',
+    durationMs: BANE_OF_AGONY_DURATION_MS,
+    isDebuff: true,
+    refreshBehaviour: 'reset',
+    periodic: {
+      intervalMs: BANE_OF_AGONY_TICK_INTERVAL_MS,
+      onTick: (context, aura) => {
+        const share = baneOfAgonyTickShare(context.clock.now() - aura.appliedAt) * multiplier;
+        tick(
+          context,
+          aura,
+          BANE_OF_AGONY_TOTAL * share,
+          SHADOW,
+          /*
+           * THE SAME SHARE ON BOTH HALVES. `scaleByPower` adds
+           * `baseAmount + SP * powerCoefficient`, so splitting each by this
+           * tick's share gives `(552 + SP * 1.6) * share` -- the owner's own
+           * arithmetic, and the reason the coefficient is a fraction of a
+           * TOTAL rather than a per-tick figure.
+           */
+          BANE_OF_AGONY_SP_COEFFICIENT * share,
+        );
+      },
+    },
+  };
+}
+
+export const BANE_OF_AGONY: AuraDefinition = baneOfAgonyAura(1);
+export const BANE_OF_AGONY_AMPLIFIED: AuraDefinition = baneOfAgonyAura(AMPLIFY_CURSE_MULTIPLIER);
+
+/**
+ * Amplify Curse: "Increases the effect of your next Curse of Weakness or Bane
+ * of Agony by 50%, or your next Curse of Exhaustion by 20%. Lasts 30 sec."
+ *
+ * A PLAIN MARKER AURA carrying no modifier of its own. Bane of Agony's `onCast`
+ * reads it, applies the amplified definition and removes it, which is what
+ * makes the 50% reach ticks landing half a minute later.
+ */
+export const AMPLIFY_CURSE_DURATION_MS = seconds(30);
+
+export const AMPLIFY_CURSE_AURA: AuraDefinition = {
+  id: 'amplify_curse',
+  name: 'Amplify Curse',
+  durationMs: AMPLIFY_CURSE_DURATION_MS,
   refreshBehaviour: 'reset',
-  periodic: {
-    intervalMs: BANE_OF_AGONY_TICK_INTERVAL_MS,
-    onTick: (context, aura) =>
-      tick(
-        context,
-        aura,
-        BANE_OF_AGONY_TOTAL / (BANE_OF_AGONY_DURATION_MS / BANE_OF_AGONY_TICK_INTERVAL_MS),
-        SHADOW,
-        BANE_OF_AGONY_TICK_COEFFICIENT,
-      ),
-  },
 };
 
 /**
@@ -175,7 +287,11 @@ export const SIPHON_LIFE: AuraDefinition = {
   periodic: {
     intervalMs: SIPHON_LIFE_TICK_INTERVAL_MS,
     onTick: (context, aura) =>
-      tick(context, aura, SIPHON_LIFE_PER_TICK, SHADOW, SIPHON_LIFE_TICK_COEFFICIENT),
+      /*
+       * `false` IS THE WHOLE RULING: Siphon Life cannot crit, by the owner's
+       * word, and it is the only damage-over-time effect here that cannot.
+       */
+      tick(context, aura, SIPHON_LIFE_PER_TICK, SHADOW, SIPHON_LIFE_TICK_COEFFICIENT, false),
   },
 };
 

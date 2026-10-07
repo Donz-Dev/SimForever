@@ -74,6 +74,10 @@ const allLastingAtLeast = (auraIds: readonly string[], ms: number) =>
     target !== undefined &&
     auraIds.every((auraId) => target.auras.remainingMs(auraId, context.clock.now()) >= ms);
 
+/** "this aura is on the actor", for a proc the next action should spend. */
+const actorHas = (auraId: string) =>
+  (_context: SimulationContext, actor: Combatant): boolean => actor.auras.has(auraId);
+
 /** "current mana is below N% of maximum". */
 const manaBelowFraction = (fraction: number) =>
   (_context: SimulationContext, actor: Combatant): boolean => {
@@ -109,6 +113,38 @@ export const WARLOCK_AFFLICTION: readonly PriorityEntry[] = [
    * spend a proc the moment it landed; the owner's order holds the bleeds up
    * first and lets the filler at the bottom take the proc when it comes.
    */
+  /*
+   * AMPLIFY CURSE FIRST, AND IT COSTS THE LIST NOTHING. "A cooldown that needs
+   * to be cast before applying the first Bane of Agony of the fight. It does
+   * not trigger a global cooldown" -- the owner's words, and both halves are
+   * load-bearing: off the global cooldown means the Bane below it lands in the
+   * same instant, and a three-minute cooldown in a sixty-second fight means it
+   * fires exactly once without needing a condition to say so.
+   *
+   * UNGATED ON PURPOSE. An entry that is ungated and always castable is a floor
+   * under everything below it -- but this one has a COOLDOWN, which is the half
+   * of that rule that is easy to forget, so the list falls straight past it for
+   * the rest of the fight.
+   */
+  { abilityId: 'amplify_curse' },
+  /*
+   * SHADOW TRANCE SPENT THE MOMENT IT LANDS. "Ensure that if a corruption tick
+   * or wrack tick triggers Nightfall, the next action is to cast an instant
+   * Shadow Bolt and consume the nightfall proc" -- the owner's instruction, and
+   * it puts back an entry that an earlier version of this list had and the
+   * owner's first ordering removed.
+   *
+   * ABOVE THE BLEEDS, which is what "the NEXT action" requires. Below them, a
+   * proc landing while two bleeds were due would wait two global cooldowns and
+   * could expire -- Shadow Trance lasts ten seconds and the bleeds cost 1.5
+   * each, so it would usually survive, which is exactly the kind of "usually"
+   * that hides a dropped proc.
+   *
+   * THE DUPLICATE ID IS LEGAL AND IS THE DOCUMENTED SHAPE: gated on a proc
+   * above, ungated as the filler below. What is NOT legal is a copy below an
+   * unconditional one, which could never be reached.
+   */
+  { abilityId: 'shadow_bolt', condition: actorHas('shadow_trance') },
   { abilityId: 'bane_of_agony', condition: expired('bane_of_agony') },
   { abilityId: 'corruption', condition: expired('corruption') },
   { abilityId: 'siphon_life', condition: expired('siphon_life') },
@@ -139,6 +175,26 @@ export const WARLOCK_AFFLICTION: readonly PriorityEntry[] = [
    */
   {
     abilityId: 'wrack',
+    /*
+     * ------------------------------------------------------------------------
+     * THIS GATE NAMES SIPHON LIFE, SO WRACK DIES IF SIPHON LIFE LEAVES THE
+     * LIST. Measured, not predicted: asked whether Siphon Life was worth
+     * casting, removing its entry took Wrack from 5.7 casts a fight to ZERO,
+     * because `siphon_life` is never applied and so can never have six seconds
+     * left. The profile read 452.4 and looked like a clean answer; what it
+     * actually measured was the loss of BOTH abilities.
+     *
+     * IT IS THE SELF-DISABLING SPECIFICATION AGAIN, which this project has now
+     * met three times -- the Seal Twist cycle with no entry point, "Scorch if
+     * scorch debuff <= 5" being always true, and this. Each time the list ran a
+     * whole fight without erroring.
+     *
+     * LEFT AS THE OWNER WROTE IT, because Siphon Life stays: with the gate
+     * repaired to the two remaining bleeds it is worth +13.6 DPS, so the
+     * coupling is latent rather than live. **Anyone removing Siphon Life must
+     * repair this list too.**
+     * ------------------------------------------------------------------------
+     */
     condition: allLastingAtLeast(
       ['bane_of_agony', 'corruption', 'siphon_life'],
       WRACK_CHANNEL_MS,
@@ -164,7 +220,15 @@ export const WARLOCK_DESTRUCTION: readonly PriorityEntry[] = [
   { abilityId: 'immolate', condition: missing('immolate') },
   { abilityId: 'conflagrate' },
   { abilityId: 'shadowburn' },
-  { abilityId: 'corruption', condition: missing('corruption') },
+  /*
+   * NO CORRUPTION, by the ruleset owner's instruction. It was 10.3% of this
+   * profile's damage and it is out: a 2-second cast and a global cooldown spent
+   * on a Shadow bleed that this build's talents barely touch -- Firelock takes
+   * no Malediction, no Improved Corruption and no Shadow Mastery, and since Ruin
+   * and Agonizing Flames were correctly scoped to the Destruction tree they do
+   * not reach it either. What the global cooldown buys instead is Incinerate,
+   * which is 25% larger against a burning target.
+   */
   { abilityId: 'life_tap' },
   { abilityId: 'incinerate' },
 ];

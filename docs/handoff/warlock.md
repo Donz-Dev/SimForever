@@ -10,6 +10,63 @@ directory for what the census columns mean and how to reprint every figure below
 
 ## The one thing to understand first
 
+**SEVEN RULINGS FROM THE OWNER LANDED AT ONCE AND SM/DS GAINED 34.9 ON THEM.**
+441.5 to **476.5, REAL**, Firelock −0.4, and the other twenty-two profiles
+identical to the decimal. Each isolated by reverting it alone over thirty
+batches of ten:
+
+| | |
+| --- | --- |
+| **+23.6** | **Bane of Agony's coefficient is 160% of spell power across the whole effect** — the owner's worked example is `552 + 500 * 1.6 = 1352`, and the twelve ticks reproduce it exactly. It replaces the sheet's 13.3% a tick, which was 1.064 in total |
+| **+18.6** | **Amplify Curse**, one point moved out of Suppression, cast once before the first Bane. **Off the global cooldown**, which is what makes it free rather than merely cheap |
+| **+6.6** | **Wrack counts as periodic damage for Malediction**, by ruling — a question the data could not answer, because a channel's ticks are CAST ticks and carry no `periodic` flag |
+| **+1.7** | **a Nightfall proc is spent by the NEXT action.** Inside the interval on DPS, and the behaviour is not in doubt: Shadow Trance uptime falls 0.082 → 0.049 |
+| **+0.4** | **Curse of the Elements counts for Soul Siphon.** Noise, and correctly so — see below |
+| **−4.3** | **Siphon Life cannot crit**, the only DoT here that cannot |
+| **−7.6** | **the RAMP**, against a flat distribution of the same total |
+
+**THE RAMP COSTS DPS AND IS RIGHT ANYWAY.** Back-loading throws away the big
+late ticks every time the Bane is re-applied, so a flat distribution of the same
+total measures 7.6 higher. It is the owner's data; the figure is the price of
+accuracy, not an argument.
+
+**AND IT IS CLASSIC'S SHAPE AT A DIFFERENT RESOLUTION**, which the old caveat
+guessed and had no authority to assert: 1/24 : 1/12 : 1/8 is 1 : 2 : 3, and the
+flat share over twelve ticks is 1/12 — so the bands are 50%, 100% and 150% of the
+average, exactly as Classic's are. **The guess was right and is now sourced**,
+which is the happier version of an expired caveat.
+
+### Two of the seven measure as noise, and both for good reasons
+
+- **Curse of the Elements, +0.4.** The three bleeds already reach Soul Siphon's
+  36% cap, so a fourth counted effect is redundant *while all three are up*. The
+  ruling is implemented and becomes load-bearing the moment one drops.
+- **The Nightfall entry, +1.7**, inside a ±2.6 interval. The bottom Shadow Bolt
+  was already spending the proc reasonably promptly; what the gated entry buys is
+  spending it *sooner*, and the uptime figure is the witness rather than the DPS.
+  **The owner asked for the behaviour, not for a number**, and it is in.
+
+### The answer to "is Siphon Life worth casting": yes, +13.6 — and the first answer was wrong
+
+**476.5 with its entry, 462.9 without.** So it earns its global cooldown even
+having lost its crits.
+
+**THE FIRST MEASUREMENT SAID −24.1 AND WAS MEASURING TWO THINGS.**
+`WARLOCK_AFFLICTION` gates Wrack on **all three bleeds** having six seconds left,
+and one of the three is Siphon Life — so removing Siphon Life's entry took **Wrack
+from 5.7 casts a fight to ZERO**, because an aura nothing applies can never have
+six seconds left. The honest figure repairs the gate first.
+
+**THAT IS THE SELF-DISABLING SPECIFICATION FOR THE THIRD TIME IN THIS PROJECT**,
+after the Seal Twist cycle with no entry point and "Scorch if scorch debuff <= 5"
+being always true — and the first time it disabled a DIFFERENT entry from the one
+being changed. **Anyone removing Siphon Life must repair Wrack's gate too**, and
+the comment on that entry says so.
+
+---
+
+## The previous deep dive, for context
+
 **FIRELOCK WAS OVERSTATED BY 12.5% AND NOTHING LOOKED WRONG. TWO OF ITS TALENTS
 SELECTED A SCHOOL WHERE THE TOOLTIP SELECTS A TREE, AND TWO OF ITS BUFFS RAISED
 EVERY SCHOOL WHERE THE TOOLTIP NAMES ONE.**
@@ -78,8 +135,8 @@ than code.
 
 | Profile | Talents | DPS | Was | List |
 | --- | --- | --- | --- | --- |
-| Firelock | 5/11/35 | **468.4** | 535.5, **−67.1 REAL** | `WARLOCK_DESTRUCTION` |
-| SM/DS | 40/11/0 | **441.5** | 435.9, **+5.6 REAL** (Wrack entering the list) | `WARLOCK_AFFLICTION` |
+| Firelock | 5/11/35 | **544.3** | 544.7, −0.4 noise (Corruption out) | `WARLOCK_DESTRUCTION` |
+| SM/DS | 40/11/0 | **476.5** | 441.5, **+34.9 REAL** (the seven rulings) | `WARLOCK_AFFLICTION` |
 
 **FIRELOCK IS NO LONGER THE THIRD-HIGHEST PROFILE IN THE PROJECT.** It sits
 between Prot Warr's 454.6 and Cat's 488.0 now. The drop is a CORRECTION and not a
@@ -106,8 +163,8 @@ One batch of ten, so read the shape and not the decimals:
 
 | Profile | Top sources |
 | --- | --- |
-| SM/DS | **Wrack 30.3%**, Corruption 23.0%, Shadow Bolt 20.2%, Bane of Agony 18.6%, Siphon Life 7.9% |
-| Firelock | Incinerate 38.5%, Immolate 25.4%, Conflagrate 17.8%, Corruption 10.3%, Shadowburn 8.0% |
+| SM/DS | **Wrack 26.6%**, Bane of Agony 24.4%, Shadow Bolt 21.5%, Corruption 21.3%, Siphon Life 6.2% |
+| Firelock | **Incinerate 48.1%**, Immolate 26.1%, Conflagrate 18.6%, Shadowburn 7.3% |
 
 **CORRUPTION FELL FROM 13.5% TO 10.3% OF FIRELOCK**, which is the containment
 check for the Ruin and Agonizing Flames corrections: it is the one Affliction
@@ -121,7 +178,7 @@ in either — a `caster` style has none.
 
 | Talents | Fully | Partly | Ruled out | Live gap |
 | --- | --- | --- | --- | --- |
-| 52 | 24 | 3 | **5** | **20** |
+| 52 | **25** | 3 | **5** | **19** |
 
 Previously 21 / 3 / 3 / **25**.
 
@@ -166,7 +223,7 @@ the census: it counts whether a talent is EXPRESSED and not whether it is right.
 
 | Talent | What it needs | Whose |
 | --- | --- | --- |
-| `amplify_curse` | a one-shot per-ability **damage** modifier. `CastModifier` carries cast time and cost; two other classes want a one-shot **crit**. Neither profile takes it, so building it moves nothing | code |
+| ~~`amplify_curse`~~ | **DECLARED, AND IT NEVER NEEDED THE MECHANISM ITS REASON ASKED FOR.** The reason wanted "a one-shot per-ability DAMAGE modifier" and was wrong about the shape: the 50% applies to ticks landing over 24 seconds, and a `CastModifier` is spent AT the cast. The amplification travels with the AURA instead — two definitions sharing one id, chosen at application — so this was one `grantAbility` away all along. **+18.6** | — |
 | `decimation` | Soul Fire declared, plus the clock-conditional modifier above | code + the spell list |
 | `demonic_aegis` | Demon Skin and Demon Armor declared **and** something attacking a Warlock. **Two independent reasons**, so clearing one moves nothing | the spell list + the encounter |
 | `soul_harvesting` | a KILL, which the target survives by design | the encounter |
@@ -180,12 +237,18 @@ the census: it counts whether a talent is EXPRESSED and not whether it is right.
 
 | SM/DS | uses | | Firelock | uses |
 | --- | --- | --- | --- | --- |
-| bane_of_agony | 3.0 | | immolate | 4.5 |
-| corruption | 4.0 | | conflagrate | 6.0 |
-| siphon_life | 2.0 | | shadowburn | 4.0 |
-| **life_tap** | **0.0** | | corruption | 3.0 |
-| wrack | 5.7 | | life_tap | 5.0 |
-| shadow_bolt | 5.6 | | incinerate | 13.3 |
+| amplify_curse | 1.0 | | immolate | 4.3 |
+| shadow_bolt (proc-gated) | 7.3 | | conflagrate | 6.0 |
+| bane_of_agony | 3.0 | | shadowburn | 4.0 |
+| corruption | 3.9 | | life_tap | 5.0 |
+| siphon_life | 2.0 | | incinerate | 16.4 |
+| **life_tap** | **0.0** | | | |
+| wrack | 5.0 | | | |
+| shadow_bolt (filler) | 7.3 | | | |
+
+**AMPLIFY CURSE FIRES EXACTLY ONCE**, which is the three-minute cooldown doing
+the work a condition would otherwise have to — and the two Shadow Bolt rows are
+one pooled figure, because the id is in the list twice on purpose.
 
 **WRACK IS 200 MANA AGAINST SHADOW BOLT'S 380, AND IT DISPLACED NINE SHADOW BOLT
 CASTS.** So the profile now gains 8,236 mana and spends 6,034, and
@@ -292,10 +355,17 @@ length takes its own gate with it.
   same shared id is what makes Pandemic and Ruin expressible at all**, because a
   periodic tick carries its aura's id and `rollPeriodicCrit` applies the same
   modifier a cast gets.
-- **Bane of Agony ticks FLAT**, an interpretation: **did Forever keep Classic's
-  50/100/150 bands?** It is **19.0%** of SM/DS's damage, so the answer matters.
-  The 24-second TOTAL is the source's own and is exact; only its distribution
-  inside the duration is flattened.
+- ~~**Bane of Agony ticks FLAT**~~ **ANSWERED, AND THE GUESS WAS RIGHT.** The
+  owner has quantified the ramp — three bands of four ticks at 1/24th, 1/12th and
+  1/8th of the total, twelve ticks two seconds apart — which is 50/100/150% of
+  the average and therefore Classic's shape after all. It is **24.4%** of SM/DS's
+  damage now, up from 19.0%, because the coefficient went 1.064 to 1.6.
+- **A RAMPED DoT READS ITS TICK NUMBER OFF `appliedAt`, NOT OFF A COUNTER**, so a
+  refresh restarts the ramp — which is what `refreshBehaviour: 'reset'` means
+  everywhere else. A counter on the instance would need resetting by hand in the
+  one place that is easy to forget.
+- **WRACK'S GATE NAMES SIPHON LIFE.** Removing Siphon Life from the list takes
+  Wrack with it, silently, and it cost a wrong measurement before it was caught.
 - **A temporary summon is modelled without a combatant** on the owner's call — the
   Infernal is the mid-fight-summon gap, shared with the Mage's elemental and the
   Shaman's totems. **Nothing in any profile needs it.**
@@ -310,14 +380,16 @@ length takes its own gate with it.
 Five of the six items this brief opened with are done, and two of the remaining
 four are questions rather than code.
 
-1. **Bane of Agony's ramp asked for.** 19% of SM/DS's damage ticks flat on an
-   interpretation.
+1. ~~**Bane of Agony's ramp asked for.**~~ **ANSWERED** — three bands, twelve
+   ticks, and a 160% coefficient that supersedes the sheet. Worth +23.6 on the
+   coefficient and −7.6 on the ramp itself.
 2. **SM/DS's Life Tap entry is unreachable** and the owner may want the 15%
    threshold re-tuned, or may not — it costs nothing to leave, and a profile that
    spent more mana would reach it. Recorded, not fixed.
-3. **`amplify_curse`'s one-shot damage modifier** — cheapest of the code items,
-   since no profile takes it and it therefore moves no baseline. Worth building
-   alongside the one-shot CRIT modifier two other classes want.
+3. ~~**`amplify_curse`'s one-shot damage modifier**~~ **DONE, and it needed no
+   such modifier** — see the census table above. The one-shot CRIT modifier two
+   other classes want is still genuinely missing; this talent is no longer a
+   caller for its damage twin.
 4. **Soul Fire declared**, which is the only thing standing between `decimation`
    and the clock mechanism Quietus and Early Demise also want.
 

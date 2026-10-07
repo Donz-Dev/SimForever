@@ -1,8 +1,10 @@
 import type { Ability } from '../../engine';
 import { dealDamage, seconds } from '../../engine';
 import {
+  AMPLIFY_CURSE_AURA,
+  AMPLIFY_CURSE_MULTIPLIER,
   BANE_OF_AGONY,
-  BANE_OF_AGONY_UNMODELLED,
+  BANE_OF_AGONY_AMPLIFIED,
   CORRUPTION,
   CORRUPTION_CAST_MS,
   IMMOLATE,
@@ -97,15 +99,80 @@ export const CORRUPTION_ABILITY: Ability = {
   },
 };
 
+/**
+ * Bane of Agony, and the one ability that reads Amplify Curse.
+ *
+ * ----------------------------------------------------------------------------
+ * THE AMPLIFIED DAMAGE IS CHOSEN AT APPLICATION, NOT AT THE CAST. Amplify Curse
+ * raises "the effect of your next ... Bane of Agony by 50%" and that effect is
+ * twenty-four seconds of ticks, so the 50% has to travel with the AURA rather
+ * than with the cast -- which is why there are two definitions sharing the id
+ * `bane_of_agony` and why this talent never needed the one-shot per-ability
+ * damage modifier it was recorded as waiting for.
+ *
+ * CONSUMED HERE AND NOWHERE ELSE. The marker is removed the moment it is read,
+ * so a second Bane later in the fight is unamplified -- "your NEXT" -- and the
+ * thirty-second duration is a backstop rather than the mechanism.
+ *
+ * ITS RAMP CAVEAT IS GONE. This carried `BANE_OF_AGONY_UNMODELLED` for most of
+ * the project, saying the damage ticked flat because the tooltip quantified no
+ * ramp. The owner has quantified it, so the reason expired and the constant is
+ * deleted rather than left to read as outstanding.
+ * ----------------------------------------------------------------------------
+ */
 export const BANE_OF_AGONY_ABILITY: Ability = {
   id: 'bane_of_agony',
   name: 'Bane of Agony',
   cost: { resource: 'mana', amount: 215 },
   onCast: ({ simulation, caster, target }) => {
     if (!target) return;
-    simulation.applyAura(target, BANE_OF_AGONY, caster.id);
+    const amplified = caster.auras.has(AMPLIFY_CURSE_AURA.id);
+    simulation.applyAura(target, amplified ? BANE_OF_AGONY_AMPLIFIED : BANE_OF_AGONY, caster.id);
+    if (amplified) caster.auras.remove(simulation, AMPLIFY_CURSE_AURA.id);
   },
-  unmodelled: BANE_OF_AGONY_UNMODELLED,
+};
+
+/**
+ * Amplify Curse, granted by the Affliction talent: "Increases the effect of
+ * your next Curse of Weakness or Bane of Agony by 50%, or your next Curse of
+ * Exhaustion by 20%. Lasts 30 sec." Instant, free, 3 minute cooldown.
+ *
+ * ----------------------------------------------------------------------------
+ * OFF THE GLOBAL COOLDOWN, BY THE RULESET OWNER'S RULING, which is what makes
+ * it worth a talent point in a sixty-second fight: it is pressed immediately
+ * before the first Bane of Agony and costs that Bane nothing. `triggersGcd`
+ * says so explicitly rather than relying on the `onNextSwing` derivation, which
+ * is for swing-timed melee abilities and not for this.
+ *
+ * NO COST LINE IN EITHER SOURCE, and that is a statement rather than a gap:
+ * `forever-warlock-spellbook.json` gives it a cooldown and a cast and no
+ * `cost`, exactly as it does for Demonic Sacrifice and Fel Domination. So it is
+ * declared free rather than given an invented mana figure.
+ *
+ * ITS CURSE OF WEAKNESS AND CURSE OF EXHAUSTION CLAUSES REACH NOTHING -- one is
+ * an attack-power debuff on a target nothing needs weakened, the other is
+ * movement speed, and neither is a declared ability here. The 50% on Bane of
+ * Agony is the whole of what this does, and the talent says so.
+ * ----------------------------------------------------------------------------
+ */
+export const AMPLIFY_CURSE_COOLDOWN_MS = seconds(180);
+
+export const AMPLIFY_CURSE: Ability = {
+  id: 'amplify_curse',
+  name: 'Amplify Curse',
+  requiresTarget: false,
+  cooldownMs: AMPLIFY_CURSE_COOLDOWN_MS,
+  // Off the GCD by the owner's ruling, so the Bane it precedes pays nothing.
+  triggersGcd: false,
+  onCast: ({ simulation, caster }) => {
+    simulation.applyAura(caster, AMPLIFY_CURSE_AURA, caster.id);
+  },
+  unmodelled:
+    `Its +${Math.round((AMPLIFY_CURSE_MULTIPLIER - 1) * 100)}% reaches Bane of ` +
+    'Agony, which is the only one of the three curses it names that this ' +
+    'project declares. Curse of Weakness is an attack-power debuff on a target ' +
+    'nothing needs weakened and Curse of Exhaustion is movement speed, which ' +
+    'is out of scope.',
 };
 
 /** Siphon Life, granted by the Affliction talent. */
@@ -475,7 +542,7 @@ export const WRACK: Ability = {
      */
     const perEffect = ability.bonuses?.[WRACK_SOUL_SIPHON_PER_EFFECT] ?? 0;
     const cap = ability.bonuses?.[WRACK_SOUL_SIPHON_CAP] ?? 0;
-    const active = WARLOCK_AFFLICTION_PERIODICS.filter((id) => target.auras.has(id)).length;
+    const active = WARLOCK_SOUL_SIPHON_EFFECTS.filter((id) => target.auras.has(id)).length;
     const siphon = 1 + Math.min(active * perEffect, cap) / 100;
 
     dealDamage(simulation, {
@@ -524,10 +591,45 @@ export const WARLOCK_AFFLICTION_PERIODICS: readonly string[] = [
   'siphon_life',
 ];
 
+/**
+ * What SOUL SIPHON counts, which is NOT the same list.
+ *
+ * ----------------------------------------------------------------------------
+ * "+{0}% PER EACH OF YOUR OTHER AFFLICTION EFFECTS ACTIVE ON THE TARGET", and
+ * the ruleset owner has ruled that CURSE OF THE ELEMENTS COUNTS -- cast from
+ * the raid buffs, which is where this profile gets it. The owner's own
+ * enumeration: "corruption, curse of the elements, and bane of agony are the 3
+ * affliction effects needed to max out the 36% damage buff to wrack."
+ *
+ * SO IT IS A SEPARATE LIST FROM PANDEMIC'S, and conflating them was the trap.
+ * `WARLOCK_AFFLICTION_PERIODICS` is the set of periodic spells PANDEMIC names
+ * by name, and Curse of the Elements is not one of them -- it is not periodic
+ * and Pandemic does not list it, so adding it there would have handed a crit
+ * damage bonus to a raid debuff. Two tooltips, two selections, two lists.
+ *
+ * SIPHON LIFE IS KEPT, and it is an INTERPRETATION. The owner named the three
+ * that reach the 36% cap and did not say whether Siphon Life also counts; it
+ * is an Affliction-tab effect, so it is counted. The reading is harmless
+ * either way -- three effects already reach the cap exactly, so a fourth
+ * changes nothing while all three are up, and it only matters in the window
+ * where one has dropped. **AND SIPHON LIFE MAY LEAVE THE LIST**, which is the
+ * other open question on this class; if it does, the owner's three are exactly
+ * what is up.
+ * ----------------------------------------------------------------------------
+ */
+export const WARLOCK_SOUL_SIPHON_EFFECTS: readonly string[] = [
+  'corruption',
+  'bane_of_agony',
+  'siphon_life',
+  'curse_of_the_elements',
+];
+
 export const WARLOCK_ABILITIES: readonly Ability[] = [
   SHADOW_BOLT,
   CORRUPTION_ABILITY,
   BANE_OF_AGONY_ABILITY,
+  // Granted by the Affliction talent; `grantsByAbility` gates it.
+  AMPLIFY_CURSE,
   SIPHON_LIFE_ABILITY,
   LIFE_TAP,
   IMMOLATE_ABILITY,

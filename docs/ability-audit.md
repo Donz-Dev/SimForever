@@ -160,7 +160,7 @@ these are correct.**
 | **Already in that stance** | `battle_stance_cast`, `berserker_stance_cast`, `defensive_stance_cast` |
 | **A cooldown no list asks for** | `recklessness_cast`, `berserker_rage_cast`, `sweeping_strikes`, `presence_of_mind` |
 | **The owner's list does not name it** | `ghostly_strike`, `expose_armor`, `searing_pain`, `shadow_word_death`, `ferocious_bite`. **`shadow_word_death` has a price on it**: putting it back in the Shadow list is 454.7 -> 489.9, **+35.2, REAL**, re-isolated at the current baseline against the -35.7 recorded when it came out. The largest cost of any list decision in the project, and the owner's design |
-| ~~**Declared, and deliberately in no list**~~ | ~~`wrack`~~ **IN THE SM/DS LIST NOW.** The owner paused it — "there isn't a profile that uses it" — and has un-paused it. Worth **+5.6 REAL**, and it takes Shadow Bolt from 51.1% of the profile to 20.2% doing it |
+| ~~**Declared, and deliberately in no list**~~ | ~~`wrack`~~ **IN THE SM/DS LIST, AND NOW THE PROFILE'S LARGEST SOURCE AT 26.6%.** The owner paused it, un-paused it, and has since ruled it periodic for Malediction. **Its gate names Siphon Life, so removing Siphon Life silently takes Wrack with it** — measured, and it cost a wrong answer before it was caught |
 | **Unreachable on cost** | `claw` — Improved Shred and Ferocity put it and Shred at the SAME 42 energy, so the harder-hitting one is always taken. A known finding |
 | **Superseded within its own class** | `fireball`, `frostbolt`, `fire_blast` — the three Mage lists cast `frostfire_bolt`, `scorch`, `arcane_missiles` and `arcane_blast` instead |
 

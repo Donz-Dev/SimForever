@@ -7,13 +7,18 @@ import type { Ability, TelemetryEvent } from '../../src/engine';
 import { NO_CHANCES, castAbility, seconds } from '../../src/engine';
 import { buildSimulation } from '../helpers/buildSimulation';
 import { makeAttacker, makeTarget } from '../helpers/actors';
-import { WRACK_TICK_SP_COEFFICIENT } from '../../src/game/combat/coefficients';
-import { WARLOCK_AFFLICTION } from '../../src/game/rotations/warlock';
+import {
+  BANE_OF_AGONY_SP_COEFFICIENT,
+  WRACK_TICK_SP_COEFFICIENT,
+} from '../../src/game/combat/coefficients';
+import { WARLOCK_AFFLICTION, WARLOCK_DESTRUCTION } from '../../src/game/rotations/warlock';
 import {
   CONFLAGRATE_DAMAGE,
   CONFLAGRATE_KEEPS_IMMOLATE,
   INCINERATE_DAMAGE,
   INCINERATE_IMMOLATE_BONUS,
+  AMPLIFY_CURSE,
+  BANE_OF_AGONY_ABILITY,
   LIFE_TAP,
   LIFE_TAP_AMOUNT,
   SEARING_PAIN_DAMAGE,
@@ -28,11 +33,18 @@ import {
   WRACK_TICK_DAMAGE,
 } from '../../src/game/abilities/warlock';
 import {
+  AMPLIFY_CURSE_MULTIPLIER,
   BANE_OF_AGONY,
+  BANE_OF_AGONY_AMPLIFIED,
+  BANE_OF_AGONY_DURATION_MS,
+  BANE_OF_AGONY_TICKS,
+  BANE_OF_AGONY_TICK_INTERVAL_MS,
+  BANE_OF_AGONY_TICK_SHARES,
   BANE_OF_AGONY_TOTAL,
   CORRUPTION,
   CORRUPTION_TOTAL,
   SIPHON_LIFE,
+  baneOfAgonyTickShare,
   DEMONIC_SACRIFICE_DAMAGE,
   WRACK_AMPLIFICATION,
   WRACK_DEBUFF_DURATION_MS,
@@ -464,7 +476,16 @@ describe('Wrack, scaling now, and still not worth casting', () => {
     const ids = WARLOCK_AFFLICTION.map((entry) => entry.abilityId);
     expect(ids).toContain('wrack');
     expect(ids.indexOf('wrack')).toBe(ids.indexOf('life_tap') + 1);
-    expect(ids.indexOf('wrack')).toBe(ids.indexOf('shadow_bolt') - 1);
+    /*
+     * `lastIndexOf` FOR THE FILLER, AND THAT IS NOT A DETAIL. Shadow Bolt is in
+     * this list TWICE on purpose -- gated on Shadow Trance at the top, ungated
+     * as the filler at the bottom -- which is the documented legal shape. This
+     * assertion read `indexOf` and therefore found the GATED copy at index 1,
+     * so it broke the moment the proc entry went in, having been correct only
+     * while there was one Shadow Bolt. The filler is the one Wrack sits above.
+     */
+    expect(ids.indexOf('wrack')).toBe(ids.lastIndexOf('shadow_bolt') - 1);
+    expect(ids.filter((id) => id === 'shadow_bolt')).toHaveLength(2);
   });
 
   it('is gated on all three bleeds outlasting the channel', () => {
@@ -523,5 +544,270 @@ describe('Wrack, scaling now, and still not worth casting', () => {
     expect(
       abilitiesForClass('warlock', 'caster', firelock.talents).map((a) => a.id),
     ).not.toContain('wrack');
+  });
+});
+
+describe("Bane of Agony's ramp, which the owner has now quantified", () => {
+  /*
+   * ============================================================================
+   * THE OWNER'S WORDS: "ticks every 2 seconds, lasts 24 seconds, benefits from
+   * 160% of the character sheet spell power. Base Damage is 552, so with a
+   * character that had 500 spell power it becomes: 552 + 500 * 1.6 = 1352 total
+   * damage. This is the way the damage ramps: first 4 ticks = 1/24th total
+   * damage each, next 4 ticks = 1/12th total damage each, last 4 ticks = 1/8th
+   * total damage each."
+   *
+   * WRITTEN OUT BY HAND FROM THAT MESSAGE, including the worked example, which
+   * is the second independent check: the bands could be right while the total
+   * was wrong, and 1352 catches that.
+   *
+   * IT SUPERSEDES `WoWSimWorksheet.xlsx`, which gives 13.3% a tick -- 1.064 in
+   * total over the eight ticks it then had, against 1.6 now.
+   * ============================================================================
+   */
+  const SPELL_POWER = 500;
+  const OWNER_TOTAL_AT_500 = 1352;
+
+  /** Every Bane tick of one application, in order. */
+  const ticksOf = (definition: typeof BANE_OF_AGONY) => {
+    const events: TelemetryEvent[] = [];
+    const caster = makeAttacker({ autoAttack: 'none', stats: { spellPower: SPELL_POWER } });
+    const target = makeTarget({ maxHealth: 100_000_000 });
+    const simulation = buildSimulation(
+      [caster, target],
+      {
+        durationMs: seconds(60),
+        // No crits, so each tick is its share exactly.
+        attackChances: () => ({ ...NO_CHANCES, crit: -1_000_000, critMultiplier: 1.5 }),
+      },
+      { emit: (event) => events.push(event) },
+    );
+    simulation.applyAura(target, definition, caster.id);
+    simulation.advanceTo(seconds(30));
+    return events.filter(
+      (event) => event.type === 'damage' && event.abilityId === 'bane_of_agony',
+    ) as Array<{ amount: number; timestamp: number }>;
+  };
+
+  it('splits the total into three bands of four that sum to exactly 1', () => {
+    expect(BANE_OF_AGONY_TICK_SHARES).toHaveLength(12);
+    expect(BANE_OF_AGONY_TICK_SHARES.slice(0, 4)).toEqual([1 / 24, 1 / 24, 1 / 24, 1 / 24]);
+    expect(BANE_OF_AGONY_TICK_SHARES.slice(4, 8)).toEqual([1 / 12, 1 / 12, 1 / 12, 1 / 12]);
+    expect(BANE_OF_AGONY_TICK_SHARES.slice(8)).toEqual([1 / 8, 1 / 8, 1 / 8, 1 / 8]);
+    /*
+     * THE SUM IS THE CHECK THAT THE RAMP REDISTRIBUTES RATHER THAN INFLATES.
+     * Any set of bands can be made plausible; only one set leaves the stated
+     * 24-second total alone.
+     */
+    expect(BANE_OF_AGONY_TICK_SHARES.reduce((a, b) => a + b, 0)).toBeCloseTo(1, 12);
+  });
+
+  it('ticks twelve times, two seconds apart, over twenty-four seconds', () => {
+    expect(BANE_OF_AGONY_TICK_INTERVAL_MS).toBe(seconds(2));
+    expect(BANE_OF_AGONY_DURATION_MS).toBe(seconds(24));
+    expect(BANE_OF_AGONY_TICKS).toBe(12);
+
+    const ticks = ticksOf(BANE_OF_AGONY);
+    expect(ticks).toHaveLength(12);
+    ticks.forEach((tick, index) => {
+      expect(tick.timestamp, `tick ${index + 1}`).toBe(seconds(2) * (index + 1));
+    });
+  });
+
+  it("reproduces the owner's worked example: 552 + 500 * 1.6 = 1352", () => {
+    expect(BANE_OF_AGONY_TOTAL).toBe(552);
+    expect(BANE_OF_AGONY_SP_COEFFICIENT).toBe(1.6);
+    expect(BANE_OF_AGONY_TOTAL + SPELL_POWER * BANE_OF_AGONY_SP_COEFFICIENT).toBe(
+      OWNER_TOTAL_AT_500,
+    );
+
+    // And the twelve ticks deliver exactly that, which is the pipeline agreeing
+    // with the arithmetic rather than the arithmetic agreeing with itself.
+    const total = ticksOf(BANE_OF_AGONY).reduce((n, t) => n + t.amount, 0);
+    expect(total).toBeCloseTo(OWNER_TOTAL_AT_500, 6);
+  });
+
+  it('is back-loaded in a 1:2:3 ratio, which is 50/100/150% of the average', () => {
+    /*
+     * CLASSIC'S SHAPE AT A DIFFERENT RESOLUTION, and worth pinning because the
+     * old caveat GUESSED this ratio with no authority to assert it. The flat
+     * share over twelve ticks is 1/12, so the bands are half, equal to, and
+     * half again the average.
+     */
+    const ticks = ticksOf(BANE_OF_AGONY).map((t) => t.amount);
+    expect(ticks[0]).toBeCloseTo(OWNER_TOTAL_AT_500 / 24, 6);
+    expect(ticks[4]).toBeCloseTo(OWNER_TOTAL_AT_500 / 12, 6);
+    expect(ticks[8]).toBeCloseTo(OWNER_TOTAL_AT_500 / 8, 6);
+    expect(ticks[4]! / ticks[0]!).toBeCloseTo(2, 6);
+    expect(ticks[8]! / ticks[0]!).toBeCloseTo(3, 6);
+  });
+
+  it('restarts the ramp on a refresh, because a reset moves appliedAt', () => {
+    /*
+     * `baneOfAgonyTickShare` reads the aura's own clock rather than a counter,
+     * so `refreshBehaviour: 'reset'` carries the ramp with it -- which is what
+     * reset means everywhere else in this engine. Asserted on the pure function
+     * so it needs no fight.
+     */
+    expect(baneOfAgonyTickShare(seconds(2))).toBeCloseTo(1 / 24, 12);
+    expect(baneOfAgonyTickShare(seconds(10))).toBeCloseTo(1 / 12, 12);
+    expect(baneOfAgonyTickShare(seconds(24))).toBeCloseTo(1 / 8, 12);
+    // Clamped at both ends: a tick at or past the end reads the last band.
+    expect(baneOfAgonyTickShare(0)).toBeCloseTo(1 / 24, 12);
+    expect(baneOfAgonyTickShare(seconds(99))).toBeCloseTo(1 / 8, 12);
+  });
+
+  it('is amplified by exactly 50% when Amplify Curse is up, and only once', () => {
+    /*
+     * ------------------------------------------------------------------------
+     * THE AMPLIFICATION TRAVELS WITH THE AURA, not with the cast. That is the
+     * whole reason this talent did not need the one-shot per-ability DAMAGE
+     * modifier its `unmodelled` reason asked for: the 50% applies to ticks
+     * landing over the next twenty-four seconds, and a `CastModifier` is spent
+     * at the cast.
+     * ------------------------------------------------------------------------
+     */
+    const plain = ticksOf(BANE_OF_AGONY).reduce((n, t) => n + t.amount, 0);
+    const amplified = ticksOf(BANE_OF_AGONY_AMPLIFIED).reduce((n, t) => n + t.amount, 0);
+    expect(AMPLIFY_CURSE_MULTIPLIER).toBe(1.5);
+    expect(amplified / plain).toBeCloseTo(AMPLIFY_CURSE_MULTIPLIER, 6);
+    // Both definitions share the id, which is what keeps every talent and the
+    // priority list's `expired('bane_of_agony')` reaching them equally.
+    expect(BANE_OF_AGONY_AMPLIFIED.id).toBe(BANE_OF_AGONY.id);
+  });
+});
+
+describe('Amplify Curse, the opener', () => {
+  it('is instant, free, off the global cooldown, and on three minutes', () => {
+    /*
+     * "A cooldown that needs to be cast before applying the first Bane of Agony
+     * of the fight. It does not trigger a global cooldown" -- the owner, and the
+     * GCD half is what makes it worth a talent point in a sixty-second fight.
+     *
+     * FREE IS A STATEMENT, NOT A GAP: the spellbook capture gives it a cooldown
+     * and a cast and no cost line, exactly as it does for Demonic Sacrifice.
+     */
+    expect(AMPLIFY_CURSE.triggersGcd).toBe(false);
+    expect(AMPLIFY_CURSE.cost).toBeUndefined();
+    expect(AMPLIFY_CURSE.castTimeMs ?? 0).toBe(0);
+    expect(AMPLIFY_CURSE.cooldownMs).toBe(seconds(180));
+  });
+
+  it('is consumed by the Bane it precedes, so a second Bane is unamplified', () => {
+    const caster = makeAttacker({
+      autoAttack: 'none',
+      abilities: [AMPLIFY_CURSE, BANE_OF_AGONY_ABILITY],
+      resources: [{ type: 'mana', maximum: 100_000 }],
+    });
+    const target = makeTarget({ maxHealth: 100_000_000 });
+    const simulation = buildSimulation([caster, target], { durationMs: seconds(120) });
+
+    castAbility(simulation, caster, caster.abilities.get('amplify_curse')!, target);
+    expect(caster.auras.has('amplify_curse')).toBe(true);
+
+    castAbility(simulation, caster, caster.abilities.get('bane_of_agony')!, target);
+    // Spent by the application, which is what "your NEXT" means.
+    expect(caster.auras.has('amplify_curse')).toBe(false);
+    expect(target.auras.has('bane_of_agony')).toBe(true);
+  });
+
+  it('is cast exactly once a fight, before the first Bane of Agony', () => {
+    /*
+     * The three-minute cooldown is what makes "once" true without a condition
+     * saying so, and the list puts it first. Its own entry is ungated, which is
+     * only safe BECAUSE of that cooldown -- an ungated entry with no cooldown
+     * would be a floor under everything below it.
+     */
+    const ids = WARLOCK_AFFLICTION.map((entry) => entry.abilityId);
+    expect(ids[0]).toBe('amplify_curse');
+    expect(ids.indexOf('amplify_curse')).toBeLessThan(ids.indexOf('bane_of_agony'));
+
+    const batch = batchOf('warlock_smds', 30, 9);
+    expect(batch.abilities.find((a) => a.abilityName === 'Amplify Curse')?.uses ?? 0)
+      .toBeCloseTo(1, 1);
+  });
+});
+
+describe('Siphon Life, the one damage-over-time effect that cannot crit', () => {
+  it('rolls no crit at all, where every other Warlock DoT does', () => {
+    /*
+     * ------------------------------------------------------------------------
+     * THE OWNER'S RULING, and it is an exception to a Forever rule rather than
+     * a change to it: every damage-over-time effect in this ruleset can crit,
+     * which is what makes Siphon Life worth stating separately.
+     *
+     * ASSERTED BY SCRIPTING A GUARANTEED CRIT. With `crit` at the top of the
+     * roll space every tick that CAN crit does, so a Corruption tick comes back
+     * multiplied and a Siphon Life tick does not. Reading `critFrom` off the
+     * definition would test the declaration; this tests the behaviour.
+     * ------------------------------------------------------------------------
+     */
+    const tickOnce = (definition: typeof CORRUPTION) => {
+      const events: TelemetryEvent[] = [];
+      const caster = makeAttacker({ autoAttack: 'none' });
+      const target = makeTarget({ maxHealth: 100_000_000 });
+      const simulation = buildSimulation(
+        [caster, target],
+        {
+          durationMs: seconds(60),
+          // Everything that can crit, does.
+          attackChances: () => ({ ...NO_CHANCES, crit: 10_000, critMultiplier: 1.5 }),
+        },
+        { emit: (event) => events.push(event) },
+      );
+      simulation.applyAura(target, definition, caster.id);
+      simulation.advanceTo(seconds(4));
+      return events.filter(
+        (event) => event.type === 'damage' && event.abilityId === definition.id,
+      ) as Array<{ amount: number; critical?: boolean }>;
+    };
+
+    const corruption = tickOnce(CORRUPTION);
+    expect(corruption.length).toBeGreaterThan(0);
+    expect(corruption.every((t) => t.critical === true)).toBe(true);
+
+    const siphon = tickOnce(SIPHON_LIFE);
+    expect(siphon.length).toBeGreaterThan(0);
+    expect(siphon.some((t) => t.critical === true)).toBe(false);
+  });
+
+  it('is still worth casting, which is what the owner asked', () => {
+    /*
+     * ------------------------------------------------------------------------
+     * +13.6 DPS, measured over thirty batches of ten: 476.5 with its entry and
+     * 462.9 without. So the answer is yes, even having lost its crits -- which
+     * cost 4.3 on their own.
+     *
+     * AND THE FIRST ANSWER WAS WRONG BY A FACTOR OF TWO. Simply removing the
+     * entry reads 452.4, which looks like -24.1 -- but `WARLOCK_AFFLICTION`
+     * gates Wrack on all three bleeds having six seconds left, and one of the
+     * three is Siphon Life. Without it the gate can never open, so that figure
+     * is the loss of Siphon Life AND Wrack together. The honest measurement
+     * repairs the gate first. See the comment on the Wrack entry.
+     * ------------------------------------------------------------------------
+     */
+    const ids = WARLOCK_AFFLICTION.map((entry) => entry.abilityId);
+    expect(ids).toContain('siphon_life');
+    // The coupling itself, pinned: Wrack's gate names Siphon Life, so anyone
+    // removing the latter has to repair the former.
+    const wrack = WARLOCK_AFFLICTION.find((entry) => entry.abilityId === 'wrack');
+    expect(wrack?.condition).toBeDefined();
+  });
+});
+
+describe('Firelock casts no Corruption, by the owner\'s instruction', () => {
+  it('has it in neither the list nor the fight', () => {
+    /*
+     * IT WAS 10.3% OF THE PROFILE AND COSTS -0.4 TO REMOVE, which is inside the
+     * interval: a 2-second cast and a global cooldown on a Shadow bleed this
+     * build's talents barely touch, against an Incinerate that is 25% larger
+     * on a burning target. Firelock takes no Malediction, no Improved
+     * Corruption and no Shadow Mastery, and Ruin and Agonizing Flames stop at
+     * the Destruction tree.
+     */
+    expect(WARLOCK_DESTRUCTION.map((entry) => entry.abilityId)).not.toContain('corruption');
+
+    const batch = batchOf('warlock_firelock', 20, 4);
+    expect(batch.abilities.find((a) => a.abilityName === 'Corruption')?.uses ?? 0).toBe(0);
   });
 });

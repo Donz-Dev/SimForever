@@ -1372,6 +1372,16 @@ REACTIONS, which is what the talent leaves behind: `hasReaction` rather than a
 talent id, the arrangement Vanguard and Charge already use. **Asking the ability
 book would not work** -- Scorch is a trainer spell every Mage owns.
 
+**AND THE THIRD TIME IT DISABLED A DIFFERENT ENTRY THAN THE ONE BEING CHANGED.**
+Wrack's gate is "all three bleeds have six seconds left" and one of the three
+is Siphon Life -- so asked whether Siphon Life was worth casting, removing its
+entry took WRACK from 5.7 casts a fight to ZERO, because an aura nothing
+applies can never have six seconds left. The profile read 452.4 and looked
+like a clean -24.1; the honest figure, with the gate repaired first, is -13.6.
+**A measurement that removes one entry can silently remove another**, so when
+an entry names an aura, grep for who else reads it before measuring its
+removal -- and read the `USES=1` column, which is where the zero shows.
+
 **A SPECIFICATION READ LITERALLY CAN DISABLE ITSELF, AND BOTH TIMES IT LOOKED
 FINE.** "Scorch if scorch debuff <= 5" is always true, because Fire Vulnerability
 caps at five -- so Scorch becomes unconditional and every entry below it in two
@@ -1764,6 +1774,17 @@ Plus the permanent rulings under **Scope**.
   wording, which has paid for itself six times. **A reason matched by wording is
   a test** — `grantCastModifier.test.ts` fails if any talent still claims a
   percentage cost cannot be expressed, matching the SENTENCE rather than ids.
+- **A REASON CAN NAME A MISSING MECHANISM AND BE WRONG ABOUT WHICH ONE.**
+  Amplify Curse's said it wanted "a one-shot per-ability DAMAGE modifier",
+  because `CastModifier` carries cast time and cost and not damage. It was
+  right that nothing expressed the effect and wrong about what would: the 50%
+  applies to Bane of Agony's TICKS, which land over twenty-four seconds, and a
+  cast modifier is resolved and spent AT the cast. The amplification travels
+  with the AURA instead -- two definitions sharing one id, chosen at
+  application -- so the talent was one `grantAbility` away the whole time and
+  was recorded as waiting on an engine gap it never needed. **A reason that
+  names a mechanism is a design claim, and it expires the same way a claim
+  about the engine does.**
 - **When a reason blames the SOURCE, check it is not really a question for the
   owner.** Twenty-nine said Forever states no spell coefficient, which was true
   and still is; the conclusion was wrong, because a coefficient is a RULE and
