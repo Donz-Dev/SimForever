@@ -100,6 +100,17 @@ Rulings by the project owner. **Permanent classifications, not a work queue** �
 talent blocked on one of these is not an engine gap, and writing it up as pending
 inflates the queue and hides the real items.
 
+**READ EVERY CLAUSE BEFORE WRITING A `scope`, AND NEVER WRITE ONE FROM THE
+NAME.** Nature's Reach is "increases the RANGE of your offensive Balance spells
+by 20% **and improves your chance to hit by 4%**", and it was a single
+`positioning` entry reading "Range, and nothing here has a position" -- true of
+the first clause and silent about the second. **A `scope` IS THE WORST PLACE FOR
+A CLAUSE TO GO MISSING**, because it is permanent by design: the talent was
+counted as RULED OUT rather than as a live gap, so the census that exists to find
+unfinished work had nothing to report, and 4% hit went missing on all three Druid
+profiles. Classic's Nature's Reach is range and nothing else, which is why the
+name and the first clause agreed with each other and with nothing else.
+
 **A RULING IS DATA, NOT PROSE.** An `unmodelled` effect carries a `scope` from the
 `OutOfScope` union when the owner has ruled its effect out, and nothing otherwise.
 That is the whole difference between a decision and a gap, and prose could not
@@ -365,6 +376,36 @@ See [docs/combat-tables.md](docs/combat-tables.md).
   `DamageRequest.periodic`, which a real tick sets and a CHANNEL's ticks do not --
   so Wrack cannot amplify its own six ticks, which is what its own word "other"
   asks for and nothing has to special-case.
+- **SPELLS MISS ON A FLAT 17% AND THE MISS FLOORS AT 1%, so the usable spell hit
+  cap is 16.** The owner's figures. `AttackChances.missFloor` carries it ON THE
+  TABLE rather than being applied where the table is built, because hit arrives
+  along TWO routes and only one goes through `attackChances`: the
+  character-wide `hitChance` stat is folded in there, and a SCHOOL-scoped
+  `hitBonus` -- five talents across three classes -- is folded in later by
+  `withModifier`. **A floor on one route is a floor the other walks around**, and
+  one profile was already walking around it: the Shockadin's Divine Precision
+  gives +12% HOLY hit on top of 6% from gear, so its Holy spells could not miss
+  at all. **CHECKING ONE ROUTE SAID NOBODY WAS AT THE CAP** -- no profile exceeds
+  16% on the `hitChance` stat, so a probe over that stat alone called the floor a
+  guard for the future when it was already load-bearing. Melee and ranged state
+  no floor and pass 0; the owner stated this for spells and `missFromSkill` is a
+  different formula.
+- **A SPELL HAS NO HAND.** `attackChances` defaults an unnamed slot to
+  `mainHand` and the melee term adds that hand's own hit bonus, which belongs to
+  Dual Wield Specialization's off hand. The spell branch reads the
+  character-wide stat alone. Worth zero today, because nothing grants main-hand
+  hit -- and wrong the day something does, in a way that reads as a correct
+  number.
+- **A DoT APPLICATION ROLLS TO HIT; A DoT TICK NEVER ASKS AGAIN.** Both halves
+  are the owner's. **A PURE DoT HAS NO DAMAGE EVENT TO CARRY THE ROLL**, which
+  is the shape to check: an ability that deals damage AND applies an aura gets
+  the roll from `dealDamage` for free, and one that only applies an aura has to
+  ask. Serpent Sting did not ask for most of its life and was the only DoT in
+  the project that could not miss -- invisible because **a missing miss is not
+  an error**, so the sting landed every cast, its ticks were the right size and
+  the damage table summed to 100%. Three abilities apply an aura without rolling
+  ON PURPOSE and all three are non-DoT debuffs: Thunder Clap's slow, Wrack's
+  amplification, and the damage-free Seal of the Crusader branch of Judgement.
 - **Every DoT can crit, and none is reduced by armor.** A Forever rule, not
   Classic's. A tick does not re-roll the table — whether the effect landed was
   settled on application — but it rolls for a crit at the crit chance of **the

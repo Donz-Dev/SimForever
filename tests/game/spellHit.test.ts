@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { AttackChances, DamageSchool, RNG } from '../../src/engine';
-import { ROLL_MAX, dealDamage } from '../../src/engine';
-import { COMBAT_CONSTANTS } from '../../src/game/combat/attackChances';
+import { ROLL_MAX, dealDamage, toRollUnits } from '../../src/engine';
+import { COMBAT_CONSTANTS, createForeverAttackChances } from '../../src/game/combat/attackChances';
 import { talentBuild } from '../../src/game/talents/talentBuild';
 import { MAGE_TALENT_EFFECTS } from '../../src/game/talents/mageEffects';
 import { PALADIN_TALENT_EFFECTS } from '../../src/game/talents/paladinEffects';
@@ -29,10 +29,21 @@ import { makeAttacker, makeTarget } from '../helpers/actors';
 
 /** Written out by hand. The ruleset's flat spell miss, in roll units. */
 const SPELL_MISS = 1700;
+/** And the floor it cannot go below, which makes the usable hit cap 16%. */
+const SPELL_MISS_FLOOR = 100;
 
-describe('the constant the whole thing is measured against', () => {
+describe('the constants the whole thing is measured against', () => {
   it('misses 17% of spells against a raid boss before any hit at all', () => {
     expect(COMBAT_CONSTANTS.spellMiss).toBe(SPELL_MISS);
+  });
+
+  it('never drops below 1%, so 16 points of hit is the most a caster can use', () => {
+    /*
+     * The ruleset owner: 17% base, "reduced to a minimum of 1% chance to miss.
+     * Effectively making the 'hit cap' 16% for Spells."
+     */
+    expect(COMBAT_CONSTANTS.spellMissFloor).toBe(SPELL_MISS_FLOOR);
+    expect((SPELL_MISS - SPELL_MISS_FLOOR) / 100).toBe(16);
   });
 });
 
@@ -175,9 +186,52 @@ describe('the boundary it moves', () => {
     expect(castAt(SPELL_MISS - 500 + 1, 5)).toBe(true);
   });
 
-  it('floors at zero rather than making the band negative', () => {
-    // 20 points against a 17% miss. The first roll on the die must land.
+  it("floors at the TABLE's floor, and at zero for a table that states none", () => {
+    /*
+     * ------------------------------------------------------------------------
+     * THIS TEST SAID "floors at zero" AND WAS NAMED FOR THE ENGINE'S DEFAULT,
+     * which is still what `SPELL_TABLE` above gets: it is a hand-built object
+     * with no `missFloor`, so `withModifier` reads 0 and 20 points of hit takes
+     * the band away entirely. That is a true statement about the ENGINE.
+     *
+     * It was never a true statement about a SPELL, and it passed unchanged when
+     * the owner's 1% floor landed -- because the synthetic table in this file
+     * does not carry one. A test on a table the game does not build cannot
+     * notice the game's rule changing. The real table is asserted below.
+     * ------------------------------------------------------------------------
+     */
     expect(castAt(1, 20)).toBe(true);
     expect(castAt(ROLL_MAX, 20)).toBe(true);
+  });
+
+  it('keeps 1% unreachable on the REAL spell table, by either route to hit', () => {
+    /*
+     * BOTH ROUTES, because there are two and a floor on one is no floor. The
+     * character-wide `hitChance` stat is folded in by `attackChances`; a
+     * SCHOOL-scoped `hitBonus` is folded in later by `withModifier`. A Mage
+     * with gear hit AND Arcane Focus walks down both at once.
+     */
+    const chancesFor = (hitChance: number, schoolHit: number): number => {
+      const caster = makeAttacker({ stats: { hitChance } });
+      if (schoolHit > 0) caster.schoolModifiers.add('shadow', { hitBonus: schoolHit });
+      const target = makeTarget();
+      // THE REAL PROVIDER, not the harness default: the floor is a ruleset
+      // number and only the ruleset's own table carries it.
+      const base = createForeverAttackChances()('spell', caster, target, {});
+      // The same fold `rollTable` performs before it rolls.
+      return Math.max(
+        base.missFloor ?? 0,
+        base.miss - toRollUnits(caster.schoolModifiers.for('shadow').hitBonus ?? 0),
+      );
+    };
+
+    expect(chancesFor(0, 0)).toBe(SPELL_MISS);
+    expect(chancesFor(16, 0)).toBe(SPELL_MISS_FLOOR);
+    // The seventeenth point buys nothing, and neither does the fiftieth.
+    expect(chancesFor(17, 0)).toBe(SPELL_MISS_FLOOR);
+    expect(chancesFor(50, 0)).toBe(SPELL_MISS_FLOOR);
+    // Nor does arriving at the cap along the school route, or along both.
+    expect(chancesFor(0, 16)).toBe(SPELL_MISS_FLOOR);
+    expect(chancesFor(10, 10)).toBe(SPELL_MISS_FLOOR);
   });
 });

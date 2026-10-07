@@ -88,8 +88,43 @@ export const DRUID_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
     { kind: 'stat', stat: 'critChance', operation: 'flat' },
   ],
 
+  /*
+   * "Increases the range of your offensive Balance spells by 20% and improves
+   * your chance to hit by 4%."
+   *
+   * TWO CLAUSES, AND THE `scope` SWALLOWED BOTH. This read as a single
+   * `positioning` entry -- "Range, and nothing here has a position" -- which is
+   * true of the FIRST clause and says nothing about the second. So the talent
+   * was counted as RULED OUT in the census rather than as a live gap, and 4% hit
+   * went missing on all three Druid profiles, every one of which takes it at
+   * rank 2.
+   *
+   * THAT IS THE WORST WAY FOR A CLAUSE TO GO MISSING. A `scope` is permanent by
+   * design -- it is the owner's ruling and it "does not expire, and must not be
+   * counted against the milestone" -- so a second clause hidden behind one is
+   * invisible to the audit that exists to find unfinished work.
+   *
+   * AND THE NAME IS WHY, which is worth saying because it will happen again:
+   * Classic's Nature's Reach is range and nothing else, so the name reads as a
+   * positioning talent and the first clause confirms it. Forever added the hit.
+   * **Read every clause before writing a scope**, and never from the name.
+   *
+   * ONE `hitChance` REACHES MELEE AND SPELLS BOTH, which is what the tooltip
+   * says and what this engine already does: `attackChances` reads the one
+   * character-wide stat for the spell table and through `missFromSkill` for the
+   * melee ones. So the Moonkin's spells and the Cat's and Bear's abilities are
+   * all covered by this single entry, with no per-table split needed.
+   *
+   * INDEX 1, because index 0 is the 20% RANGE -- the Naturalist shape, on a
+   * talent that had no value-reading effect at all to be caught by.
+   */
   nature_s_reach: [
-    { kind: 'unmodelled', scope: 'positioning', reason: 'Range, and nothing here has a position.' },
+    { kind: 'stat', stat: 'hitChance', operation: 'flat', valueIndex: 1 },
+    {
+      kind: 'unmodelled',
+      scope: 'positioning',
+      reason: 'Its RANGE clause only, and nothing here has a position. The hit applies.',
+    },
   ],
 
   improved_entangling_roots: [

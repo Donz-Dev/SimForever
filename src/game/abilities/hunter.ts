@@ -235,13 +235,40 @@ export const MULTI_SHOT: Ability = {
     'one is dealt damage -- which says nothing about its value in a pull.',
 };
 
+/**
+ * Serpent Sting: a pure damage-over-time effect on the ranged table.
+ *
+ * ----------------------------------------------------------------------------
+ * IT ROLLS ITS TABLE, AND FOR MOST OF ITS LIFE IT DID NOT. The ability declared
+ * `ranged-special` and applied its aura unconditionally, so the sting could
+ * never miss -- the only DoT in the project that could not. Every other one
+ * either gates the aura on `dealDamage`'s own outcome (Moonfire, Immolate,
+ * Flame Shock) or rolls explicitly (Rip, Rend, Rupture, Lacerate).
+ *
+ * THE RULESET OWNER'S RULE IS WHAT MAKES THE SHAPE RIGHT: a DoT APPLICATION
+ * rolls to hit, and once applied the effect never checks hit again. A pure DoT
+ * has no damage event to carry the roll, so it has to ask for one -- which is
+ * exactly what Insect Swarm and Rip already do.
+ *
+ * INVISIBLE BECAUSE A MISSING MISS IS NOT AN ERROR. The sting landed every
+ * cast, its ticks were the right size, the damage table summed to 100%, and the
+ * figure was simply high by the ranged miss chance -- about 10% of the ability
+ * for a profile at 7% hit.
+ *
+ * NOT A SPELL, so it rolls the RANGED table rather than the spell one: the
+ * ability declares `ranged-special` and keeps it, which is the table a Hunter's
+ * shots resolve on and has no dodge or parry.
+ * ----------------------------------------------------------------------------
+ */
 export const SERPENT_STING_ABILITY: Ability = {
   id: 'serpent_sting',
   name: 'Serpent Sting',
   cost: { resource: 'mana', amount: 250 },
   attackTable: 'ranged-special',
-  onCast: ({ simulation, caster, target }) => {
-    if (!target) return;
+  onCast: ({ simulation, caster, target, ability }) => {
+    if (!target || !ability.attackTable) return;
+    const roll = simulation.rollAttack(ability.attackTable, caster, target, { slot: RANGED });
+    if (roll.avoided) return;
     simulation.applyAura(target, SERPENT_STING, caster.id);
   },
 };

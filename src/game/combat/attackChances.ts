@@ -48,6 +48,34 @@ export const COMBAT_CONSTANTS = {
 
   /** Spells miss on their own flat chance, unaffected by weapon skill. */
   spellMiss: 1700,
+  /**
+   * The miss a spell can never go below, however much hit is stacked.
+   *
+   * ----------------------------------------------------------------------------
+   * THE RULESET OWNER: 17% base, "reduced to a minimum of 1% chance to miss.
+   * Effectively making the 'hit cap' 16% for Spells." So the useful range of
+   * spell hit is 0 to 16 and the seventeenth point buys nothing.
+   *
+   * IT WAS A FLOOR OF ZERO, which made the cap 17 and handed a caster at 17%
+   * hit a spell that could not miss.
+   *
+   * AND A PROFILE WAS ALREADY THERE, which this comment first claimed it was
+   * not. No profile exceeds 16% on the `hitChance` STAT -- Venom and Combat sit
+   * exactly on it -- and that is only one of the two routes to spell hit. The
+   * SHOCKADIN takes Divine Precision for +12% HOLY hit on top of 6% from gear,
+   * which is 18 against a 17% miss: its Holy spells could not miss at all, and
+   * now miss 1%. Worth -2.4 DPS.
+   *
+   * **A CAP NOBODY HAS REACHED YET IS STILL THE WRONG CAP** -- and checking only
+   * the stat said nobody had reached it. See `missFloor` on `AttackChances` for
+   * why the floor has to travel with the table rather than live here.
+   *
+   * MELEE AND RANGED KEEP THEIR FLOOR OF ZERO, deliberately: the owner stated
+   * this for SPELLS and `missFromSkill` is a different formula with a skill
+   * term in it. Giving them a floor by analogy would be inventing a rule.
+   * ----------------------------------------------------------------------------
+   */
+  spellMissFloor: 100,
 
   /**
    * Crit lost against a higher-level target: 180 plus 100 per level of
@@ -230,6 +258,18 @@ function buildChances(
    * the two hands separately for exactly this reason.
    */
   const hit = toRollUnits(stats.hitChance) + toRollUnits(source.hitBonusFor(slot));
+  /*
+   * A SPELL HAS NO HAND, so it reads the character-wide stat and nothing else.
+   *
+   * `hit` above adds the bonus belonging to the slot that swung, and `slot`
+   * defaults to `mainHand` for a request that names none -- which every spell
+   * is. Nothing grants main-hand hit today (`hitBonusBySlot` is only ever
+   * populated for the off hand, by Dual Wield Specialization), so the two terms
+   * are equal and this moves nothing. It is separated because the DAY something
+   * grants main-hand hit, a spell silently collecting it would be wrong and
+   * would look exactly like a correct number.
+   */
+  const spellHit = toRollUnits(stats.hitChance);
 
   const crit = Math.max(
     0,
@@ -297,8 +337,22 @@ function buildChances(
     case 'spell':
       return {
         ...NO_CHANCES,
-        // Spell miss is flat: weapon skill has nothing to do with it.
-        miss: Math.max(0, COMBAT_CONSTANTS.spellMiss - hit),
+        /*
+         * Spell miss is flat: weapon skill has nothing to do with it, and it
+         * FLOORS AT 1% rather than at zero -- the owner's cap, which makes 16
+         * points of hit the most a caster can use. See `spellMissFloor`.
+         */
+        miss: Math.max(
+          COMBAT_CONSTANTS.spellMissFloor,
+          COMBAT_CONSTANTS.spellMiss - spellHit,
+        ),
+        /*
+         * AND THE FLOOR TRAVELS WITH THE TABLE, so the school-scoped hit that
+         * `withModifier` applies later cannot push the miss below it either.
+         * Five talents across three classes grant that, and a floor applied
+         * only here would be a floor a Mage could stack its way around.
+         */
+        missFloor: COMBAT_CONSTANTS.spellMissFloor,
         crit: spellCrit,
         critMultiplier: COMBAT_CONSTANTS.spellCritMultiplier,
       };

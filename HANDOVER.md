@@ -623,7 +623,7 @@ while it worked.
 decimal -- which is what a talent change scoped to one build should look like.
 It makes Frostfire the top Mage, above Fire's 401.2 and Arcane's 392.6, and the
 build that existed for the Fire/Frost overlap now has a third reason to. The
-mean across **24** is **547.3**, RE-SUMMED FROM THE TABLE ABOVE rather than
+mean across **24** is **550.0**, RE-SUMMED FROM THE TABLE ABOVE rather than
 adjusted. It read 488.3 for a while, then 541.3 **across 23 when there were
 already 24** -- each figure right when it was written and drifted as dive after
 dive moved a profile and left the average alone. **The COUNT drifted too, which
@@ -682,6 +682,51 @@ derived from `PRESET_RAID_BUFFS` by mapping and asserted EXHAUSTIVE in
 **ALL 24 PROFILES ARE IDENTICAL TO THE DECIMAL**, which is the whole point: the
 fix removes a way to be wrong rather than changing a number, and the containment
 check is that nothing moved at all.
+
+**AND THEN SPELL HIT, WHICH WAS THREE SEPARATE THINGS.** The owner stated the
+numbers -- 17% flat spell miss, a 1% floor, so a 16% usable cap -- and that a DoT
+APPLICATION rolls to hit while its ticks never ask again.
+
+| | |
+| --- | --- |
+| **Nature's Reach was doing NEITHER of its clauses** | "Increases the range of your offensive Balance spells by 20% **and improves your chance to hit by 4%**", declared as one `positioning` entry reading "Range, and nothing here has a position". True of the first clause, silent about the second |
+| **The spell miss floored at 0, not 1%** | so the cap was 17 and the seventeenth point still bought something |
+| **Serpent Sting could not miss** | it declared `ranged-special` and applied its aura unconditionally -- the only DoT in the project that never rolled |
+
+**A `scope` IS THE WORST PLACE FOR A CLAUSE TO GO MISSING.** It is permanent by
+design, so Nature's Reach was counted as RULED OUT rather than as a live gap: the
+census that exists to find unfinished work had nothing to report, and 4% hit went
+missing on all three Druid profiles for the life of the talent. **The Druid's
+live-gap count did not change when this was fixed** -- 2 before, 2 after -- which
+is exactly the problem. Classic's Nature's Reach is range and nothing else, which
+is why the name and the first clause agreed with each other and with nothing else.
+
+| Profile | was | now | |
+| --- | --- | --- | --- |
+| Cat | 716.4 | **749.7** | +33.3 REAL -- 4% melee hit |
+| Moonkin | 494.0 | **516.8** | +22.8 REAL -- 4% spell hit |
+| Bear | 488.5 | **494.8** | +6.3, inside its own interval and mechanically real |
+| Shockadin | 583.6 | **581.2** | -2.4 -- the floor, see below |
+| LW Ranged | 482.1 | **486.5** | +4.4, and NOT a gain. See below |
+| BM Hunter | 595.8 | **595.7** | -0.1, the same |
+
+**THE FLOOR WAS ALREADY LOAD-BEARING AND A PROBE SAID IT WAS NOT.** Hit reaches a
+spell along TWO routes -- the character-wide `hitChance` stat, folded in by
+`attackChances`, and a SCHOOL-scoped `hitBonus` folded in later by
+`withModifier` -- so the floor is carried ON THE TABLE as
+`AttackChances.missFloor`, where both respect it. Checking the STAT alone said no
+profile was over 16% and the floor was a guard for the future; the SHOCKADIN
+takes Divine Precision for +12% Holy hit on top of 6% from gear, which is 18
+against a 17% miss, so its Holy spells could not miss at all. **A cap nobody has
+reached is still the wrong cap, and "nobody" depended on which route was
+measured.**
+
+**THE TWO HUNTERS MOVED AND NEITHER MOVE IS A GAIN.** Serpent Sting now draws a
+random number it did not draw before, which re-sequences every roll after it in a
+seeded run -- so both figures are inside their intervals and the mechanism can
+only ever REDUCE the sting's damage. Measured directly rather than inferred: over
+twenty seeds it now lands 98.7% of casts on LW Ranged and 96.4% on BM Hunter,
+where before it landed 100%.
 
 **AND THEN AN OFFICIAL SOURCE REVISED DEEP WOUNDS AGAIN, THREE BULLETS, AND TWO
 OF THEM WERE ALREADY RIGHT.** "Deep Wounds compared to Vanilla now: rolls over
@@ -849,15 +894,15 @@ Hemo moves five rows between the two columns, which is exactly that kind of edit
 | Profile | Class | Talents | DPS | | Profile | Class | Talents | DPS |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | Seal Twist Ret | Paladin | 13/0/38 | 709.0 | | Hemo Rogue | Rogue | 17/3/31 | 527.1 |
-| Cat Druid | Druid | 9/35/7 | **716.4** | | LW Melee | Hunter | 7/13/31 | 523.8 |
+| Cat Druid | Druid | 9/35/7 | ****749.7**** | | LW Melee | Hunter | 7/13/31 | 523.8 |
 | DW Fury | Warrior | 18/33/0 | 667.5 | | Shadow Priest | Priest | 16/3/32 | 516.4 |
 | Fire Mage | Mage | 10/39/2 | 624.0 | | Venom Rogue | Rogue | 37/12/2 | 510.6 |
 | Frostfire Mage | Mage | 0/29/22 | 623.2 | | Rupture Rogue | Rogue | 12/8/31 | 497.6 |
-| 2H Arms | Warrior | 38/13/0 | 621.1 | | Bear Druid | Druid | 9/42/0 | 488.5 |
-| Enh Shaman | Shaman | 19/32/0 | 604.0 | | LW Ranged | Hunter | 7/39/5 | 482.1 |
-| BM Hunter | Hunter | 31/20/0 | 595.8 | | Moonkin | Druid | 38/0/13 | **494.0** |
+| 2H Arms | Warrior | 38/13/0 | 621.1 | | Bear Druid | Druid | 9/42/0 | **494.8** |
+| Enh Shaman | Shaman | 19/32/0 | 604.0 | | LW Ranged | Hunter | 7/39/5 | **486.5** |
+| BM Hunter | Hunter | 31/20/0 | **595.7** | | Moonkin | Druid | 38/0/13 | ****516.8**** |
 | Combat Rogue | Rogue | 18/33/0 | 586.3 | | Prot Warr | Warrior | 17/0/34 | 457.0 |
-| Shockadin | Paladin | 23/0/28 | 583.6 | | Ele Shaman | Shaman | 38/13/0 | 440.2 |
+| Shockadin | Paladin | 23/0/28 | **581.2** | | Ele Shaman | Shaman | 38/13/0 | 440.2 |
 | Arcane Mage | Mage | 47/4/0 | 581.8 | | SM/DS | Warlock | 40/11/0 | 435.9 |
 | Firelock | Warlock | 5/11/35 | 544.7 | | Prot Pally | Paladin | 8/36/7 | 304.9 |
 

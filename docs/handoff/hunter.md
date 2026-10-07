@@ -534,6 +534,25 @@ in neither ranged list is the correct state.
 
 ## Traps specific to this class
 
+- **SERPENT STING COULD NOT MISS, AND WAS THE ONLY DoT IN THE PROJECT THAT
+  COULD NOT.** It declares `ranged-special` and applied its aura
+  unconditionally, where every other damage-over-time effect either gates the
+  aura on `dealDamage`'s own outcome -- Moonfire, Immolate, Flame Shock -- or
+  rolls explicitly, as Rip, Rend, Rupture and Lacerate do. The ruleset owner
+  states both halves of the rule: a DoT APPLICATION rolls to hit, and once
+  applied the effect never checks hit again.
+  **A PURE DoT HAS NO DAMAGE EVENT TO CARRY THE ROLL**, which is the shape to
+  check: an ability that deals damage AND applies an aura gets the roll for free,
+  and one that only applies an aura has to ask for it.
+  **INVISIBLE BECAUSE A MISSING MISS IS NOT AN ERROR.** The sting landed every
+  cast, its ticks were the right size, the damage table summed to 100%, and the
+  figure was simply high by the ranged miss chance. It now lands **98.7% of casts
+  on LW Ranged and 96.4% on BM Hunter** over twenty seeds.
+  **NEITHER PROFILE'S FIGURE FELL, AND THAT IS NOT A CONTRADICTION.** LW Ranged
+  read +4.4 and BM Hunter -0.1, both inside their intervals: the new roll draws a
+  random number that re-sequences every roll after it in a seeded run, and the
+  mechanism can only ever reduce the sting's damage. **Measure the mechanism when
+  the DPS cannot see it.**
 - **RANGED IS CHECKED BEFORE TWO-HANDED, BECAUSE A BOW IS BOTH.** Reading
   `twoHanded` first normalises every bow to 3.3 instead of 2.8 and **inflates every
   Hunter shot by 18%.**

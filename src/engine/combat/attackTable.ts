@@ -101,6 +101,29 @@ export interface AttackChances {
   readonly critMultiplier: number;
   /** Damage multiplier on a crushing blow. */
   readonly crushMultiplier: number;
+  /**
+   * The miss chance this table can never go below, however much hit is added.
+   *
+   * ----------------------------------------------------------------------------
+   * A RULESET NUMBER ON THE TABLE, because the rule is the engine's and the
+   * figure is the ruleset's -- the same split `miss`, `dodge` and every
+   * multiplier here already follow. The owner states a 1% floor for SPELLS,
+   * which makes 16 points of spell hit the most a caster can use; melee and
+   * ranged state none and pass 0.
+   *
+   * IT HAS TO LIVE HERE RATHER THAN WHERE THE TABLE IS BUILT, because hit
+   * arrives along TWO routes and only one of them goes through `attackChances`:
+   * the character-wide `hitChance` stat is folded in there, and a SCHOOL-scoped
+   * `hitBonus` -- Arcane Focus, Shadow Focus and three more -- is applied later
+   * by `withModifier`. A floor applied at the first would be bypassed by the
+   * second, so a Mage with gear hit AND Arcane Focus would reach a spell that
+   * cannot miss. Carried on the table, both routes respect it.
+   *
+   * Defaults to 0 where it is absent, so every table that states no floor
+   * behaves exactly as it did.
+   * ----------------------------------------------------------------------------
+   */
+  readonly missFloor?: RollUnits;
 }
 
 export const NO_CHANCES: AttackChances = {
