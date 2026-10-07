@@ -475,6 +475,27 @@ See [docs/combat-tables.md](docs/combat-tables.md).
   a percentage is the ability's OWN coefficient, `weapon damage` means attack
   power arrives through the weapon at `speed / 14`, and `% per tick` is PER
   TICK. `%*combo point spent` multiplies by what the finisher spent.
+- **AND THE LAST TWO ARE INDEPENDENT MARKERS: A COMBO-POINT ROW WITHOUT
+  `per tick` IS A DURATION TOTAL.** Rip's row is `4%*combo point spent` and
+  carries no per-tick marker, and it was implemented per tick on a SIX-tick
+  effect -- `0.04 x 5 x 6` is **120% of attack power at five points instead of
+  20%**, six times the stated figure, and it was **35.3% of the Cat's damage**.
+  Fixing it is **-179.7, -21.3%**, and it took the Cat from the highest profile
+  in the project to sixth. The owner settled it on sight: "per combo point spent
+  over its duration NOT each tick".
+  **THE WRONG READING SURVIVED IN THE CONSTANT'S NAME.**
+  `RIP_TICK_AP_COEFFICIENT_PER_COMBO_POINT`, with a comment restating it -- and
+  the comment also said "its EIGHT ticks" where there are six, so the figure
+  that would have exposed it was wrong in the same sentence that asserted it.
+  **Name a coefficient for what the SHEET says, not for where the code applies
+  it**, because the name is what the next reader checks instead of the row.
+- **AND THE STRUCTURAL TELL WAS ONE EFFECT RUNNING ON TWO CONVENTIONS.** Rip's
+  flat damage was a duration total divided by its tick count while its
+  coefficient was per tick -- so **a reader checking either half ALONE would
+  have found it self-consistent**, which is why an audit could not see it and the
+  owner could. Both halves divide by one named `RIP_TICK_COUNT` now, which is the
+  cheap structural guard: **when a DoT carries flat damage AND a coefficient,
+  check the two are stated in the same unit before trusting either.**
 - **THE SHEET SUPERSEDED TWO EARLIER RULINGS, both from the same owner.** Seal
   of Righteousness was `base + baseWeaponSpeed × (0.022 × AP + 0.044 × SP)` and
   is now a flat spell power figure chosen by weapon TYPE — 20% one-handed, 22%

@@ -51,7 +51,10 @@ import {
   RIP_DURATION_MS,
   eclipseAura,
   ripAura,
+  RIP_TICK_COUNT,
+  RIP_TICK_INTERVAL_MS,
 } from '../../src/game/auras/druid';
+import { RIP_AP_COEFFICIENT_PER_COMBO_POINT } from '../../src/game/combat/coefficients';
 import { DRUID_TALENT_EFFECTS } from '../../src/game/talents/druidEffects';
 import { naturesGrace } from '../../src/game/reactions/druidTalents';
 import { talentNumber } from '../../src/game/talents/talentValues';
@@ -154,6 +157,103 @@ describe('the numbers', () => {
     for (let i = 1; i < FEROCIOUS_BITE_BY_COMBO_POINT.length; i += 1) {
       expect(FEROCIOUS_BITE_BY_COMBO_POINT[i] - FEROCIOUS_BITE_BY_COMBO_POINT[i - 1]).toBe(147);
     }
+  });
+});
+
+describe('Rip pays 4% of attack power a point OVER ITS DURATION, not per tick', () => {
+  /*
+   * --------------------------------------------------------------------------
+   * THE RULESET OWNER REPORTED THE CAT AS TOO HIGH AND NAMED RIP: "rip should
+   * be 4% attack power coefficient per combo point spent over its duration NOT
+   * each tick; each tick should be 4%/6 attack power coefficient per combo
+   * point spent."
+   *
+   * It was applied PER TICK, and Rip has six ticks -- so a five-point Rip was
+   * carrying 120% of attack power instead of 20%, six times the stated figure.
+   *
+   * NOTHING IN THE SOURCE EVER SAID PER TICK. The sheet's notation key
+   * separates `N% per tick` from `N%*combo point spent`, and Rip's row carries
+   * the second and not the first, so the per-tick reading contradicted the
+   * notation recorded in `docs/spell-coefficients.md`. The CONSTANT'S NAME said
+   * it, though -- `RIP_TICK_AP_COEFFICIENT_PER_COMBO_POINT` -- and so did the
+   * comment beside it, which is how a reading becomes a fact nobody re-checks.
+   *
+   * ASSERTED ON THE MEASURED TOTAL off the event stream, not on the constant:
+   * the claim is what a whole Rip pays, and a test reading the coefficient back
+   * would pass whatever the division did. Zero crit and no armor, so the only
+   * two quantities are the flat total and the coefficient.
+   * --------------------------------------------------------------------------
+   */
+  const RIP_AP = 1400;
+
+  function ripDamage(points: number): readonly number[] {
+    const source = makeAttacker({ stats: { attackPower: RIP_AP, critChance: 0 } });
+    const target = makeTarget({ maxHealth: 1_000_000, stats: { armor: 0 } });
+    const events: TelemetryEvent[] = [];
+    const simulation = buildSimulation(
+      [source, target],
+      { durationMs: seconds(60) },
+      { emit: (event) => events.push(event) },
+    );
+    simulation.begin();
+    simulation.applyAura(target, ripAura(points), source.id);
+    simulation.advanceTo(RIP_DURATION_MS + seconds(1));
+
+    return events
+      .filter(
+        (event): event is TelemetryEvent & { amount: number } =>
+          event.type === 'damage' && 'abilityName' in event && event.abilityName === 'Rip',
+      )
+      .map((event) => event.amount);
+  }
+
+  it('is 20% of attack power across six ticks at five points, not 120%', () => {
+    const ticks = ripDamage(5);
+
+    /*
+     * SIX, and read off the stream rather than chosen here -- the tick count is
+     * the divisor the whole fix turns on.
+     */
+    expect(ticks).toHaveLength(6);
+    expect(RIP_TICK_COUNT).toBe(6);
+
+    /*
+     * 855 flat plus 20% of 1400 = 1135. The old behaviour paid 855 + 1680 =
+     * 2535, and Rip was 35.3% of the Cat's damage.
+     */
+    const fromAp = ticks.reduce((a, b) => a + b, 0) - RIP_BY_COMBO_POINT[4];
+    expect(fromAp).toBeCloseTo(RIP_AP * RIP_AP_COEFFICIENT_PER_COMBO_POINT * 5, 4);
+    expect(fromAp).toBeCloseTo(280, 4);
+  });
+
+  it('scales with the points SPENT, at 4% each, at every allocation', () => {
+    for (const points of [1, 2, 3, 4, 5]) {
+      const ticks = ripDamage(points);
+      expect(ticks, `${points} points`).toHaveLength(6);
+      const fromAp = ticks.reduce((a, b) => a + b, 0) - RIP_BY_COMBO_POINT[points - 1];
+      expect(fromAp, `${points} points`).toBeCloseTo(
+        RIP_AP * RIP_AP_COEFFICIENT_PER_COMBO_POINT * points,
+        4,
+      );
+    }
+  });
+
+  it('divides BOTH halves of a tick by the same tick count', () => {
+    /*
+     * THE STRUCTURAL POINT, and why the bug was possible at all: the flat
+     * damage was always a duration total divided by the tick count while the
+     * coefficient was applied per tick, so the two halves of one effect ran on
+     * different conventions. A reader checking either half ALONE would have
+     * found it self-consistent.
+     */
+    expect(RIP_TICK_COUNT).toBe(RIP_DURATION_MS / RIP_TICK_INTERVAL_MS);
+
+    const ticks = ripDamage(3);
+    const perTick = (RIP_BY_COMBO_POINT[2] + RIP_AP * RIP_AP_COEFFICIENT_PER_COMBO_POINT * 3) /
+      RIP_TICK_COUNT;
+    for (const amount of ticks) expect(amount).toBeCloseTo(perTick, 4);
+    // 549/6 = 91.5 flat and (4% x 3 x 1400)/6 = 28 from attack power.
+    expect(perTick).toBeCloseTo(119.5, 6);
   });
 });
 
