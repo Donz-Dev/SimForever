@@ -256,9 +256,32 @@ export const HUNTER_LONE_WOLF_RANGED: readonly PriorityEntry[] = [
    * list, which is a decision that can change owner.
    * --------------------------------------------------------------------------
    */
+  /*
+   * SUMMON HAWK IS HERE TOO, AND THE ABILITY IS GRANTED BY A DIFFERENT TALENT
+   * FROM THE ONE THIS LIST IS CHOSEN BY.
+   *
+   * --------------------------------------------------------------------------
+   * `hunterRotation` dispatches on `bestial_wrath`, the 31-point capstone, and
+   * `summon_hawk` is a 5-point talent five rows above it. So a build that took
+   * Summon Hawk and NOT Bestial Wrath got this list -- which had no hawk entry
+   * -- and silently stopped casting an ability it had paid for. The owner hit
+   * exactly that: "why does hawk stop casting if I remove the bestial wrath
+   * talent?"
+   *
+   * THE ENTRY IS SILENT FOR A BUILD WITHOUT THE TALENT, which is what lets one
+   * list serve several builds and is why this is the fix rather than a second
+   * dispatch rule. LW Ranged does not take Summon Hawk, so this fires zero
+   * times for it and the profile does not move by a decimal.
+   *
+   * LAST, because for a build that has it the hawk shares a cooldown group with
+   * Arcane Shot and this list is bound by MANA rather than by global cooldowns.
+   * Nothing measurable rests on that -- no profile reaches it.
+   * --------------------------------------------------------------------------
+   */
   { abilityId: 'aimed_shot', condition: shotLandedRecently(RANGED_WEAVE_WINDOW_MS) },
   { abilityId: 'sniper_shot', condition: shotLandedRecently(RANGED_WEAVE_WINDOW_MS) },
   { abilityId: 'arcane_shot' },
+  { abilityId: 'summon_hawk', condition: hawksBelowCap },
 ];
 
 /**

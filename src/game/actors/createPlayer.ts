@@ -11,6 +11,7 @@ import type {
 } from '../../engine';
 import { Combatant, SchoolModifiers, addStats, bindModifiers, makeStats } from '../../engine';
 import { abilitiesForBuild } from '../abilities/abilitiesForClass';
+import { withQuiverAndAmmo } from '../character/hunterRanged';
 import type {
   ClassId,
   CombatStyleId,
@@ -219,6 +220,23 @@ export function createPlayer(options: PlayerOptions): Combatant {
   // order is settled rather than circular.
   const equipmentForWeapons = options.equipment ?? {};
   const weapons = weaponsFor(equipmentForWeapons, style, options.offHandDamageMultiplier);
+
+  /*
+   * A HUNTER'S QUIVER AND AMMUNITION, neither of which is an equipment slot.
+   *
+   * The ruleset owner: "Hunters also passively have a quiver equipped -- which
+   * is not a normal equipment slot", and ammunition adds a DPS to the bow. Both
+   * are a property of the CLASS, so they are applied here rather than carried
+   * by a gear set -- there is no slot to put them in and no item id to
+   * reference.
+   *
+   * A MELEE HUNTER IS UNAFFECTED WITHOUT A CHECK: `weaponsForEquipment` gives
+   * the ranged slot no weapon profile unless the style marks it `required`, so
+   * there is nothing here for a dual-wielder. Its bow still contributes stats.
+   */
+  if (characterClass === 'hunter' && weapons.ranged) {
+    weapons.ranged = withQuiverAndAmmo(weapons.ranged);
+  }
 
   /*
    * Talents are settled before the fight and never change during it, so they

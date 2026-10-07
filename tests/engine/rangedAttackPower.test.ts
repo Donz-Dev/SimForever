@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { ITEMS_BY_ID } from '../../src/game/items/itemData';
 import { flat } from '../../src/engine';
 import { weaponDamageFor, attackPowerFor } from '../../src/engine/combat/damage';
 import type { DamageRequest } from '../../src/engine/combat/damage';
@@ -70,18 +71,102 @@ describe('which attack power a weapon scales with', () => {
     expect(bow).toBeDefined();
     if (!bow) return;
 
-    const speedSeconds = bow.swingTimerMs / 1000;
+    /*
+     * ------------------------------------------------------------------------
+     * THE SPEED HERE IS THE WEAPON'S BASE SPEED, NOT ITS SWING TIMER, AND THOSE
+     * STOPPED BEING THE SAME NUMBER WHEN THE QUIVER LANDED.
+     *
+     * This test read `bow.swingTimerMs / 1000` and was right to for as long as
+     * nothing shortened it. A Hunter's quiver divides the swing timer by 1.15
+     * and deliberately leaves `powerCoefficient` alone -- the universal weapon
+     * formula is `base + BASE SPEED / 14 x attack power`, so a faster bow fires
+     * more often for the same attack power per shot.
+     *
+     * Reading the shortened timer here made the expected figure 9.56 too low
+     * and would have been "fixed" by recomputing the coefficient, which is the
+     * wrong half: that would cut every Hunter's attack power scaling by 13%.
+     * ------------------------------------------------------------------------
+     */
+    const baseSpeedSeconds = (bow.powerCoefficient ?? 0) * 14;
+    // This is a BARE Hunter, so the bow is the placeholder rather than a real
+    // one -- the figure is read rather than written out, and what is asserted
+    // by hand is the RELATIONSHIP the quiver creates between the two.
+    /*
+     * TO THE MILLISECOND AND NOT BEYOND IT. Time is integer milliseconds below
+     * the UI, so the quiver's divisor is rounded when it lands on the timer --
+     * 2.9 / 1.15 is 2.5217391 and the weapon carries 2522. That is the owner's
+     * own worked example, to the resolution the engine keeps.
+     */
+    expect(bow.swingTimerMs).toBe(Math.round((baseSpeedSeconds * 1000) / 1.15));
+    expect(bow.swingTimerMs / 1000).toBeCloseTo(baseSpeedSeconds / 1.15, 3);
+
     const request = requestFor(actor, 'ranged');
 
     const rap = actor.stats.get('rangedAttackPower');
     // roll of 1 takes the weapon's midpoint, so this is base + power exactly.
-    expect(weaponDamageFor(request, 1)).toBeCloseTo(bow.baseDamage + (rap / 14) * speedSeconds, 4);
+    expect(weaponDamageFor(request, 1)).toBeCloseTo(
+      bow.baseDamage + (rap / 14) * baseSpeedSeconds,
+      4,
+    );
 
     // And it tracks the pool: +140 ranged attack power is +10 per second of speed.
     actor.stats.addModifier({ ...flat('rangedAttackPower', 140), sourceId: 'probe' });
     expect(weaponDamageFor(request, 1)).toBeCloseTo(
-      bow.baseDamage + ((rap + 140) / 14) * speedSeconds,
+      bow.baseDamage + ((rap + 140) / 14) * baseSpeedSeconds,
       4,
+    );
+  });
+
+  it('carries the quiver and the ammunition, neither of which is a slot', () => {
+    /*
+     * ------------------------------------------------------------------------
+     * THE RULESET OWNER'S TWO FIGURES, 2026-10-07:
+     *
+     *   "whatever the attack time is for a ranged weapon on a hunter, it can be
+     *    reduced by 15% (ex: 2.9 / 1.15 = 2.5217)"
+     *   "the damage formula for ranged attacks need 16.5 * baserangedattackspeed
+     *    added to the base hit damage of the weapon, before it's modified by
+     *    attack power or ability effects"
+     *
+     * A DIVISOR AND NOT A SUBTRACTION. 3.2 / 1.15 is 2.783; 3.2 x 0.85 is 2.72,
+     * which is a 2% faster bow and a plausible wrong number. The owner's own
+     * worked example is what settles it.
+     * ------------------------------------------------------------------------
+     */
+    // A REAL profile's bow, so the figures below are the ones a reader sees.
+    const bow = characterAtCombatStart(PRESETS_BY_ID.get('lw_ranged')!.build())!.weapons.ranged!;
+    const item = ITEMS_BY_ID.get(228334)!;
+
+    // Rhok'delar is a 3.2-second bow before the quiver.
+    expect(item.weapon!.speed).toBeCloseTo(3.2, 6);
+    expect(bow.swingTimerMs).toBe(Math.round(3200 / 1.15));
+    expect(bow.swingTimerMs).toBe(2783);
+
+    /*
+     * AMMO IS A DPS, so it becomes per-shot damage by multiplying a speed -- and
+     * the speed is the weapon's BASE one, before the quiver. 16.5 x 3.2 = 52.8.
+     * The other reading, the quiver-shortened 2.783, would pin ammo at exactly
+     * 16.5 DPS forever instead of letting the quiver multiply it.
+     */
+    const itemAverage = (item.weapon!.minDamage + item.weapon!.maxDamage) / 2;
+    expect(bow.baseDamage).toBeCloseTo(itemAverage + 16.5 * 3.2, 6);
+    expect(bow.baseDamage - itemAverage).toBeCloseTo(52.8, 6);
+
+    // And the coefficient is untouched: base speed over fourteen.
+    expect(bow.powerCoefficient).toBeCloseTo(3.2 / 14, 10);
+  });
+
+  it('gives a MELEE Hunter neither, because its bow has no weapon profile', () => {
+    /*
+     * Falls out rather than being checked: `weaponsForEquipment` skips the
+     * ranged slot unless the style marks it `required`. Asserted because "the
+     * quiver hastened a dual-wielder's daggers" is the obvious way to get this
+     * wrong, and the engine has only ONE haste rating.
+     */
+    const melee = characterAtCombatStart(PRESETS_BY_ID.get('lw_melee')!.build())!;
+    expect(melee.weapons.ranged).toBeUndefined();
+    expect(melee.weapons.mainHand!.swingTimerMs).toBe(
+      ITEMS_BY_ID.get(17075)!.weapon!.speed * 1000,
     );
   });
 

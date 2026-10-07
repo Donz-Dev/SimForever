@@ -34,9 +34,9 @@ left, six are the encounter or the build, one is a consequence of a ruling, and
 
 | Profile | Talents | DPS | List | Notes |
 | --- | --- | --- | --- | --- |
-| BM Hunter | 31/20/0 | **547.0** | `HUNTER_BEAST_MASTERY` | **the only profile with a pet** |
-| LW Melee | 7/13/31 | **523.8** | `HUNTER_LONE_WOLF_MELEE` | **dual wield**, since 2026-10-03 |
-| LW Ranged | 7/39/5 | **311.7** | `HUNTER_LONE_WOLF_RANGED` | |
+| BM Hunter | 31/20/0 | **668.6** | `HUNTER_BEAST_MASTERY` | **the only profile with a pet** |
+| LW Melee | 7/13/31 | **631.4** | `HUNTER_LONE_WOLF_MELEE` | **dual wield**, since 2026-10-03 |
+| LW Ranged | 7/39/5 | **681.1** | `HUNTER_LONE_WOLF_RANGED` | |
 
 **BM HUNTER HAS HELD THREE DIFFERENT FIGURES IN TWO DAYS, AND THE SEQUENCE IS
 THE POINT RATHER THAN ANY ONE OF THEM.** 405.8, then 731.8, then 595.1, then
@@ -466,6 +466,76 @@ finding and the other is a coin.
 **ONE CAST A FIGHT EITHER WAY.** Five minutes, or three with Rapid Killing 2/2
 which this build takes, and both outlast the encounter — so the position decides
 when the window opens, not how often.
+
+## Five things the owner reported, 2026-10-07
+
+**ALL THREE PROFILES MOVED AND NOTHING ELSE DID.** BM Hunter 595.7 → **668.6**,
+LW Ranged 486.5 → **681.1**, LW Melee 523.8 → **631.4**, all REAL.
+
+| | BM | LW Ranged | LW Melee |
+| --- | --- | --- | --- |
+| **Lone Wolf's 20%**, never applied | — | **+113.5** | **+107.6** |
+| **Ammunition**, 16.5 DPS × base bow speed | **+32.0** | **+43.1** | — |
+| **The quiver**, swing timer ÷ 1.15 | **+32.3** | **+39.0** | — |
+| **Deadly Aspects' Auto Shot half** | **+25.1** | **+30.2** | — |
+| **Summon Hawk in the ranged list** | 0 | 0 | — |
+| **together** | **+72.9** | **+194.7** | **+107.6** |
+
+They overlap, so the columns do not sum. **LW Melee's whole change is Lone Wolf
+alone**, to the decimal, and BM Hunter did not move from it at all — it takes a
+pet instead. That is the containment check inside the class.
+
+### Three of the five had never worked, and all three were silent
+
+**LONE WOLF'S AURA WAS DROPPED BY A LOOKUP THAT MISSES.** `grantAura` resolves
+its id through `TALENT_AURAS`, and `createPlayer` drops what it cannot find
+*deliberately* — "a typo should show up as a talent that visibly does nothing".
+`lone_wolf` was never registered. **Both profiles named after the talent spent
+the whole project without its 20%.** It is a **fifth registration site** and
+CLAUDE.md listed four.
+
+**DEADLY ASPECTS' AUTO SHOT HALF ASKED A QUESTION THAT IS ALWAYS FALSE.**
+`isWeaponUseOf(attack, 'ranged')` is `isWeaponUse(attack) && slot === 'ranged'`,
+and `isWeaponUse` means *a use of a MELEE weapon* — Thunder Clap and Charge
+declare `weaponSlot: 'ranged'` precisely so it excludes them. **403 ranged
+swings over twenty fights, zero procs of a stated 10%.** The parameter is
+`MeleeWeaponSlot` now, so the type refuses the question.
+
+**AND THE HAWK WAS A LIST PROBLEM WEARING AN ABILITY PROBLEM'S CLOTHES.**
+`hunterRotation` dispatches on `bestial_wrath`, the 31-point capstone;
+`summon_hawk` is a 5-point talent five rows above it. Drop the capstone and the
+build falls to the ranged list, which had no hawk entry — so it silently stopped
+casting an ability it had paid for. The entry is in both lists now and is
+**silent for a build without the talent**, which is what lets one list serve
+several builds. LW Ranged shows it at 0.0 uses: the ninth deliberate never-fired
+entry.
+
+### The quiver and the ammunition are class properties, not equipment
+
+> *"Hunters also passively have a quiver equipped — which is not a normal
+> equipment slot."*
+
+Both live in `game/character/hunterRanged.ts`. **A melee Hunter gets neither
+without a check**, because `weaponsForEquipment` gives the ranged slot no weapon
+profile unless the style marks it `required`.
+
+**THE QUIVER IS A DIVISOR.** `3.2 / 1.15 = 2.783`, rounded to 2783ms. The
+owner's own worked example settles it — `× 0.85` would be 2.72, a 2% faster bow
+and a plausible wrong number.
+
+**AMMO IS A DPS, SO IT NEEDS A SPEED, AND WHICH SPEED IS THE WHOLE QUESTION.**
+16.5 × the **base** 3.2 = 52.8 into `baseDamage`, before attack power and before
+any ability's flat damage. The base reading lets the quiver multiply ammo too
+(about 19 effective DPS); the quiver-shortened reading would pin it at exactly
+16.5 forever. **The wiki formula in `rangedAttackPower.test.ts`'s own header has
+said so since it was written** — `AmmoDPS × WeaponSpeed + (RAP / 14 × WeaponSpeed
++ Scope + AvgWeaponDmg)`, one symbol for both terms — and nobody had read it.
+
+**NEITHER TOUCHES `powerCoefficient`**, which is base speed over fourteen.
+Recomputing it from the shortened timer would quietly cut every Hunter's attack
+power scaling by 13%, and the existing RAP test caught exactly that: it read
+`swingTimerMs` for a figure that must come from the base speed, and the two had
+been the same number until the quiver existed.
 
 ## The census
 

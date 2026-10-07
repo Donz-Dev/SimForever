@@ -283,6 +283,17 @@ See [docs/combat-tables.md](docs/combat-tables.md).
   by the owner because the rule alone did not answer it. It is `isWeaponUse` in
   the engine — it lived as a private one-liner while two other files re-derived
   it and got it wrong. [docs/extra-attacks.md](docs/extra-attacks.md)
+- **`isWeaponUseOf(attack, 'ranged')` WAS ALWAYS FALSE, FOR EVERY ATTACK,
+  FOREVER.** `isWeaponUse` means "a use of a MELEE weapon" -- Thunder Clap,
+  Intercept and Charge declare `weaponSlot: 'ranged'` precisely so it excludes
+  them -- so the composed predicate read `(mainHand || offHand) && ranged`. It
+  compiled, it is the obvious thing to write, and the Hunter's Deadly Aspects
+  asked it on every Auto Shot: **403 ranged swings over twenty fights, zero
+  procs of a stated 10%.** The parameter is `MeleeWeaponSlot` now, so the type
+  refuses the question instead of answering it wrongly, and narrowing it found
+  two more callers passing a wider type than they ever use. **A predicate that
+  is always false reads exactly like one that is sometimes true**, which is why
+  a proc wants a measured RATE and not only a unit test on its branch.
 - **SEAL DAMAGE IS NOT A WEAPON USE**, by the owner's ruling, and the swing
   carrying it still is. Enforced by dealing every seal hit with no `weaponSlot`.
 - **AND A SEAL STILL CRITS, AT THE PALADIN'S MELEE CRIT CHANCE** — also the
@@ -381,6 +392,20 @@ See [docs/combat-tables.md](docs/combat-tables.md).
 - **RANGED IS CHECKED BEFORE TWO-HANDED, because a bow is both.** Reading
   `twoHanded` first normalises every bow to 3.3 instead of 2.8 and inflates
   every Hunter shot by 18%.
+- **A HUNTER CARRIES A QUIVER AND AMMUNITION, AND NEITHER IS AN EQUIPMENT
+  SLOT.** The owner's ruling, so both live in `game/character/hunterRanged.ts`
+  rather than in a gear set: the quiver DIVIDES the ranged swing timer by 1.15
+  -- their own example is `2.9 / 1.15 = 2.5217`, and `x 0.85` is a 2% faster bow
+  and a plausible wrong number -- and ammunition adds `16.5 x BASE bow speed` to
+  `baseDamage`, before attack power and before any ability's own flat damage.
+  **NEITHER TOUCHES `powerCoefficient`**, which is base speed over fourteen: a
+  faster bow fires more often for the same attack power per shot, and
+  recomputing the coefficient from the shortened timer would quietly cut every
+  Hunter's scaling by 13%. **Ammo is a DPS, so it needs a SPEED to become a
+  per-shot figure, and which speed is the whole question** -- the base one lets
+  the quiver multiply ammo too, which is what the wiki's own
+  `AmmoDPS x WeaponSpeed + (RAP / 14 x WeaponSpeed + ...)` says by using one
+  symbol for both terms.
 - **A DRUID'S PAW IS BUILT FROM THE WEAPON BEING HELD**, and Druids are exempt
   from normalisation because a paw is already one shape: `BasePaw + weaponDPS ×
   formSwing + AP × formSwing / 14`, times `rand(0.8, 1.2)`, with the form's
@@ -1431,6 +1456,16 @@ no per-point argument either way and what decides it is uptime.
 
 ### Talents
 
+- **AND A FIFTH SITE FOR A TALENT THAT GRANTS AN AURA: `TALENT_AURAS`.**
+  `grantAura` resolves its id through that table and `createPlayer` DROPS what
+  it cannot find -- deliberately, so "a typo should show up as a talent that
+  visibly does nothing, not as a character that cannot be built". `lone_wolf`
+  was never registered, so **both Hunter profiles NAMED AFTER the talent went
+  the whole project without its 20% damage** and nothing errored. The silent
+  drop is the right design and the missing check was the problem:
+  `hunterFiveFixes.test.ts` fails if any `grantAura` id across all nine classes
+  resolves to nothing. **A lookup that misses is not an error, so something has
+  to ask whether it missed.**
 - **A CLASS IS REGISTERED IN FOUR PLACES AND MISSING ANY ONE IS SILENT:**
   `talentValues.ts`'s `FILES`, `talentBuild.ts`'s `EFFECTS` **and** its
   `REACTIONS`, and `abilitiesForClass`. Two have been missed and the failures do
