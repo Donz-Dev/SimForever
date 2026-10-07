@@ -30,6 +30,7 @@ import {
 import { PRIEST_TALENT_EFFECTS } from '../../src/game/talents/priestEffects';
 import { innerFocusSpender } from '../../src/game/reactions/priestTalents';
 import { talentBuild } from '../../src/game/talents/talentBuild';
+import { talentNumber } from '../../src/game/talents/talentValues';
 import { legalise } from '../helpers/legalTalents';
 
 /*
@@ -141,6 +142,50 @@ describe('Shadowform, the capstone whose clauses land in three places', () => {
 
     const uptime = batch.buffUptime.find((b) => b.auraName === 'Shadowform');
     expect(uptime?.uptime ?? 0).toBeGreaterThan(0.9);
+  });
+});
+
+describe('Improved Mind Flay, which was reading the yards', () => {
+  /*
+   * ==========================================================================
+   * THREE NUMBERS IN ONE ROW AND THE EFFECT TOOK THE WRONG ONE. "Your Mind
+   * Flay now deals {0}% more damage, gains {1} yards increased range, but
+   * slows the target's movement speed by {2}%" -- and the effect declared
+   * `valueIndex: 1`, which is the RANGE.
+   *
+   * WHAT MADE IT INVISIBLE IS THE ROW ITSELF. At 2/2 the values are
+   * [20, 10, 20], so reading index 1 gave 10% where the talent grants 20% --
+   * and 10 is both a plausible damage percentage AND exactly what rank 1
+   * correctly grants. The talent read as one rank behind itself: Mind Flay
+   * still scaled, still crit, still took its share of the damage table, and no
+   * audit in the project asks whether a multiplier is the RIGHT multiplier.
+   *
+   * Written out by hand from the tooltip, then checked against the capture,
+   * which is the two independent checks a captured number gets here.
+   * ==========================================================================
+   */
+  it('reads the DAMAGE out of the row and not the range or the slow', () => {
+    expect(talentNumber('priest', 'improved_mind_flay', 2, 0)).toBe(20);
+    expect(talentNumber('priest', 'improved_mind_flay', 2, 1)).toBe(10);
+    expect(talentNumber('priest', 'improved_mind_flay', 2, 2)).toBe(20);
+
+    const build = talentBuild('priest', legalise({ improved_mind_flay: 2 }, 'priest'));
+    expect(build.abilityModifiers.for('mind_flay').damageMultiplier).toBeCloseTo(1.2, 6);
+  });
+
+  /*
+   * AND IT IS NOT THE RANK-1 FIGURE, which is the specific wrong answer the
+   * old index produced. Asserting 1.2 alone would also pass a build that had
+   * silently dropped to rank 1.
+   */
+  it('is worth half as much at one rank, so the two ranks differ', () => {
+    const one = talentBuild('priest', legalise({ improved_mind_flay: 1 }, 'priest'));
+    expect(one.abilityModifiers.for('mind_flay').damageMultiplier).toBeCloseTo(1.1, 6);
+  });
+
+  it('is 2/2 in the profile, so the profile gets the full 20%', () => {
+    const build = talentBuild('priest', shadowBuild().talents);
+    expect(build.abilityModifiers.for('mind_flay').damageMultiplier).toBeCloseTo(1.2, 6);
   });
 });
 

@@ -479,6 +479,22 @@ function StatAverages({ stats }: { readonly stats: BatchStatAverages | undefined
       {stats.spellPower !== 0 ? (
         <Stat label="Spell Power" value={fixed(stats.spellPower)} note="fight average" />
       ) : null}
+      {/*
+       * ONE ROW PER SCHOOL THAT READS MORE THAN THE BLIND POOL, which is the
+       * same shape the character sheet's `scopedSpellPowerRows` already uses --
+       * and the reason this had to be added here is that the sheet showing them
+       * is exactly what made their absence from the fight average invisible.
+       * The blind row above is a real number about a real pool; it is simply
+       * not the number a Shadow Priest's spells read.
+       */}
+      {Object.entries(stats.spellPowerBySchool).map(([school, value]) => (
+        <Stat
+          key={school}
+          label={`${school.charAt(0).toUpperCase() + school.slice(1)} Spell Power`}
+          value={fixed(value)}
+          note="fight average"
+        />
+      ))}
       <Stat
         label="Haste"
         value={`${((stats.hasteMultiplier - 1) * 100).toFixed(2)}%`}

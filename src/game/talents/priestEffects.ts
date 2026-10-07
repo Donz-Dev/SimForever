@@ -306,7 +306,30 @@ export const PRIEST_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
 
   mind_flay: [{ kind: 'grantAbility', abilityId: 'mind_flay' }],
 
-  improved_mind_flay: [{ kind: 'abilityDamage', abilityId: 'mind_flay', valueIndex: 1 }],
+  /*
+   * --------------------------------------------------------------------------
+   * IT WAS READING THE YARDS. "Your Mind Flay now deals {0}% more damage,
+   * gains {1} yards increased range, but slows the target's movement speed by
+   * {2}%" -- three numbers in one row, and `valueIndex: 1` is the RANGE.
+   *
+   * THE ROW IS WHAT MADE IT INVISIBLE. At 2/2 the values are [20, 10, 20], so
+   * reading index 1 gave 10% where the talent is 20% -- and 10 is both a
+   * plausible damage percentage AND exactly what rank 1 correctly grants. So
+   * the talent read as "one rank behind itself", which no results page could
+   * show and no coefficient probe could catch: Mind Flay still scaled, still
+   * crit, and still took 48% of the profile's damage.
+   *
+   * MIND FLAY IS NEARLY HALF THIS BUILD'S DAMAGE, so the missing 10% is the
+   * single largest number the Priest was giving away.
+   *
+   * `valueIndex: 0` IS WRITTEN OUT rather than left to the default, because
+   * the default is what the next edit will reach for and this row has three
+   * numbers in it. The range clause is positioning and the slow is crowd
+   * control; both are out of scope by ruling, so nothing else in the row is
+   * wanted.
+   * --------------------------------------------------------------------------
+   */
+  improved_mind_flay: [{ kind: 'abilityDamage', abilityId: 'mind_flay', valueIndex: 0 }],
 
   improved_fade: [{ kind: 'unmodelled', scope: 'threat', reason: `Fade is a threat drop. ${NO_THREAT}` }],
 

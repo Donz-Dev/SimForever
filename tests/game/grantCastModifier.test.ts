@@ -14,6 +14,8 @@ import { PALADIN_TALENT_EFFECTS } from '../../src/game/talents/paladinEffects';
 import { HUNTER_TALENT_EFFECTS } from '../../src/game/talents/hunterEffects';
 import { WARLOCK_TALENT_EFFECTS } from '../../src/game/talents/warlockEffects';
 import { PRIEST_TALENT_EFFECTS } from '../../src/game/talents/priestEffects';
+import { SHADOWFORM } from '../../src/game/auras/priest';
+import { legalise } from '../helpers/legalTalents';
 
 /*
  * ------------------------------------------------------------------------------
@@ -86,29 +88,41 @@ describe('a talent can grant a cast modifier', () => {
      * ------------------------------------------------------------------------
      * TWO ROUTES INTO THE SAME FIELD. Shadowform is -50% on Shadow spells and
      * arrives on an AURA the priest casts; Mental Agility is -10% on instants
-     * and arrives from a TALENT. Sixty percent together.
+     * and arrives from a TALENT. Sixty percent together, subtracted from the
+     * BASE -- 470 x 0.4 and not 470 x 0.5 x 0.9, which is the one thing here
+     * that could be quietly wrong because both readings are plausible.
      *
-     * The talent-only figure is taken from a build WITHOUT the capstone
-     * rather than by looking before the form goes up -- the priest casts
-     * Shadowform as its opening action, so there is no "before" to measure in
-     * a character that has it.
+     * THE ALLOCATION IS BUILT BY HAND AND NOT READ OFF THE PROFILE, which is
+     * the correction: it used to take `shadow_priest`'s talents, and the
+     * ruleset owner's next revision of that build dropped Mental Agility.
+     * The test then failed with 470 against 423 and was RIGHT to -- the
+     * character genuinely no longer had the talent. **This pins a mechanism,
+     * so it must not depend on which talents a profile happens to spend
+     * points on**; a test that pins a profile's choice is a different test and
+     * belongs with the profile.
      * ------------------------------------------------------------------------
      */
-    const built = PRESETS_BY_ID.get('shadow_priest')!.build();
-    const withoutForm = { ...built.talents, shadowform: 0 };
-
+    const withMentalAgility = legalise({ mental_agility: 3 }, 'priest');
     const plain = createPlayer({
       race: 'troll',
       characterClass: 'priest',
       combatStyle: 'caster',
-      talents: withoutForm,
+      talents: withMentalAgility,
     });
     const plainPain = plain.abilities.get('shadow_word_pain')!;
     buildSimulation([plain, makeTarget()]).advanceTo(0);
     expect(resolveCast(plain, plainPain).costAmount).toBeCloseTo(470 * 0.9, 6);
 
-    // And with the form, which the real build casts at the pull.
-    const full = characterFor('shadow_priest', 'priest');
+    // And with the form on top, which is the aura route into the same field.
+    const full = createPlayer({
+      race: 'troll',
+      characterClass: 'priest',
+      combatStyle: 'caster',
+      talents: legalise({ ...withMentalAgility, shadowform: 1 }, 'priest'),
+    });
+    const simulation = buildSimulation([full, makeTarget()]);
+    simulation.advanceTo(0);
+    simulation.applyAura(full, SHADOWFORM, full.id);
     expect(full.auras.has('shadowform')).toBe(true);
     const pain = full.abilities.get('shadow_word_pain')!;
     expect(resolveCast(full, pain).costAmount).toBeCloseTo(470 * 0.4, 6);
