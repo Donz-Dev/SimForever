@@ -180,34 +180,41 @@ describe('the preset catalogue', () => {
      * the raid is part of what it states.
      */
     /*
-     * TWO PROFILES PROVIDE A BUFF THEMSELVES AND SO DROP IT.
+     * ONE PROFILE PROVIDES A BUFF ITSELF AND SO DROPS IT.
      *
      * An Enhancement shaman imbues its own main hand, and Windfury Weapon's
      * tooltip says it "disables any benefit you personally receive from
      * Windfury Totem" -- so that preset drops the totem and nothing else.
      *
-     * The Moonkin takes the Moonkin Form talent, which grants Moonkin Aura, and
-     * both tooltips say each is "exclusive with" the other -- so its raid
-     * cannot also be running Leader of the Pack. Its crit is +3% either way,
-     * which is why dropping the buff moved no figure.
+     * AND THREE SWAP A BUFF RATHER THAN DROPPING ONE, which is a different
+     * shape and is why this test is not a single filter. On the ruleset owner's
+     * instruction the two RANGED Hunters take Grace of Air Totem where everyone
+     * else takes Windfury: "20% chance on each MAIN-HAND use" is worth nothing
+     * to a profile that only shoots. LW MELEE IS NOT ONE OF THEM -- it swings a
+     * main hand, so Windfury is real for it, and the split is by what the
+     * profile DOES rather than by class.
      *
-     * AND TWO SWAP A BUFF RATHER THAN DROPPING ONE, which is a different shape
-     * and is why this test can no longer be a single filter. On the ruleset
-     * owner's instruction the two RANGED Hunters take Grace of Air Totem where
-     * everyone else takes Windfury: "20% chance on each MAIN-HAND use" is worth
-     * nothing to a profile that only shoots. LW MELEE IS NOT ONE OF THEM -- it
-     * swings a main hand, so Windfury is real for it, and the split is by what
-     * the profile DOES rather than by class.
+     * THE MOONKIN IS THE THIRD SWAP, and it USED TO BE A DROP. It takes Moonkin
+     * Aura where everyone else takes Leader of the Pack, on the owner's
+     * instruction, because that is the half of the exclusive pair it provides.
+     * Dropping it was accurate about the number and wrong about the raid: the
+     * raid is not short a buff, it has the other one -- and a ticked box is
+     * where a person looks for it on the panel.
+     *
+     * ITS CRIT IS +3% EITHER WAY, and that no longer rests on this list being
+     * right. Moonkin Aura, Leader of the Pack and the two Druid talents that
+     * grant them are ONE aura with one id, so no combination of them is worth
+     * more than one -- see `PARTY_CRIT_AURA`.
      *
      * Every other difference here would be a bug; these four are the ruleset.
      */
     const SELF_PROVIDED: Readonly<Record<string, readonly string[]>> = {
       shaman_enhancement: ['windfury_totem'],
-      druid_moonkin: ['leader_of_the_pack'],
     };
     const SWAPPED: Readonly<Record<string, readonly [string, string]>> = {
       bm_hunter: ['windfury_totem', 'grace_of_air_totem'],
       lw_ranged: ['windfury_totem', 'grace_of_air_totem'],
+      druid_moonkin: ['leader_of_the_pack', 'moonkin_form'],
     };
     const expected = (id: string, buffs: readonly string[]) => {
       const swap = SWAPPED[id];
@@ -222,16 +229,28 @@ describe('the preset catalogue', () => {
     expect(first[1].length).toBeGreaterThan(0);
     for (const [id, buffs] of rest) expect(buffs, id).toEqual(expected(id, first[1]));
     expect(expected('shaman_enhancement', first[1])).toHaveLength(first[1].length - 1);
-    expect(expected('druid_moonkin', first[1])).toHaveLength(first[1].length - 1);
     // And both exception lists are EXHAUSTIVE: nobody else may differ.
-    expect(Object.keys(SELF_PROVIDED).sort()).toEqual(['druid_moonkin', 'shaman_enhancement']);
-    expect(Object.keys(SWAPPED).sort()).toEqual(['bm_hunter', 'lw_ranged']);
+    expect(Object.keys(SELF_PROVIDED).sort()).toEqual(['shaman_enhancement']);
+    expect(Object.keys(SWAPPED).sort()).toEqual(['bm_hunter', 'druid_moonkin', 'lw_ranged']);
     // A swap keeps the COUNT, which is what tells it from a drop.
     expect(PRESETS_BY_ID.get('bm_hunter')!.build().raidBuffs).toHaveLength(first[1].length);
     expect(PRESETS_BY_ID.get('bm_hunter')!.build().raidBuffs).toContain('grace_of_air_totem');
     expect(PRESETS_BY_ID.get('bm_hunter')!.build().raidBuffs).not.toContain('windfury_totem');
     // And the melee Hunter keeps Windfury, because it has a main hand.
     expect(PRESETS_BY_ID.get('lw_melee')!.build().raidBuffs).toContain('windfury_totem');
+    /*
+     * THE MOONKIN'S SWAP, asserted the same way: the count is unchanged, which
+     * is what tells a swap from a drop, and it is the only profile of the
+     * twenty-four that selects Moonkin Aura.
+     */
+    const moonkin = PRESETS_BY_ID.get('druid_moonkin')!.build().raidBuffs;
+    expect(moonkin).toHaveLength(first[1].length);
+    expect(moonkin).toContain('moonkin_form');
+    expect(moonkin).not.toContain('leader_of_the_pack');
+    for (const preset of PROFILE_PRESETS) {
+      if (preset.id === 'druid_moonkin') continue;
+      expect(preset.build().raidBuffs, preset.id).not.toContain('moonkin_form');
+    }
     expect(createDefaultProfile().raidBuffs).toEqual([]);
   });
 

@@ -1,4 +1,5 @@
 import type { TalentEffects } from './TalentEffect';
+import { PARTY_CRIT_AURA_ID } from '../auras/druid';
 
 /**
  * What each Druid talent does, as data.
@@ -203,7 +204,7 @@ export const DRUID_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
    * Moonkin nothing attacks, and right the day something does.
    */
   moonkin_form: [
-    { kind: 'grantAura', auraId: 'moonkin_form', requires: { styles: ['moonkin'] } },
+    { kind: 'grantAura', auraId: PARTY_CRIT_AURA_ID, requires: { styles: ['moonkin'] } },
     { kind: 'itemArmorPercent' },
     {
       kind: 'unmodelled',
@@ -343,7 +344,7 @@ export const DRUID_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
    * figure moving, which is the containment check for this kind of change.
    */
   leader_of_the_pack: [
-    { kind: 'grantAura', auraId: 'leader_of_the_pack', requires: { styles: ['cat', 'bear'] } },
+    { kind: 'grantAura', auraId: PARTY_CRIT_AURA_ID, requires: { styles: ['cat', 'bear'] } },
   ],
 
   /*

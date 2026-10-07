@@ -74,8 +74,8 @@ Berserk, and `-genesis` also drops Nature's Majesty and Nature's Reach. The
 probe names every cascade beside its figure; **a figure without the cascade named
 is a rumour**, and the first run of that probe produced two.
 
-‡ **NOT A GAIN FROM THIS WORK.** The Moonkin's crit is +3% either way — from its
-own talent now instead of from the raid buff — so removing the talent removes 3%
+‡ **NOT A GAIN FROM THIS WORK.** The Moonkin's crit is +3% however it arrives —
+from its own talent or from the raid buff — so removing the talent removes 3%
 crit outright, and 11.7 is what 3% crit is worth to a Moonkin.
 
 **KING OF THE JUNGLE IS THE BIGGEST SINGLE ITEM IN THE CLASS, and it is the
@@ -225,6 +225,21 @@ none of them. **Three are worth knowing, and one of them was a real bug:**
   180 armor against the ~33 the Bear gets. **Not fixed here** — it needs a new
   effect kind, and it moves the Bear's rage the counter-intuitive way, since more
   armor means less damage taken means less rage.
+- **MOONKIN AURA AND LEADER OF THE PACK ARE ONE AURA, NOT TWO, and the id is
+  the whole rule.** The owner: "these are all the same exclusive 3% global
+  critical strike chance and do not stack." So `PARTY_CRIT_AURA` is one
+  definition with one id, and both raid buff entries AND both Druid talents
+  apply it — `AuraCollection.apply` refreshes a matching id instead of stacking.
+  **It used to be two auras and it paid twice**: a Moonkin carrying its own
+  `moonkin_form` aura in a raid with Leader of the Pack ticked read **+6% crit**,
+  24.243% spell crit against 21.243%. The older ruling put exclusivity on the
+  GUI, and `withRaidBuff` governs two RAID BUFF entries and knows nothing about
+  a TALENT. **A rule enforced at a chooser does not cover a source the chooser
+  does not own.**
+- **THE MOONKIN PRESET SELECTS MOONKIN AURA**, on the owner's instruction, where
+  every other profile takes Leader of the Pack — a SUBSTITUTION rather than the
+  removal it used to be, because the raid is not short a buff, it has the other
+  one. Worth nothing either way, which is the containment check.
 - **Mangle was RENAMED to Primal Bite** between client builds. It is 27.0% of the
   Bear's damage under the new name. Build drift is found only by refreshing
   captures, never by cross-checking.

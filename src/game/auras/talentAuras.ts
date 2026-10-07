@@ -1,6 +1,6 @@
 import type { AuraDefinition } from '../../engine';
 import { ANGER_MANAGEMENT } from './warrior';
-import { LEADER_OF_THE_PACK, MOONKIN_AURA } from './druid';
+import { PARTY_CRIT_AURA, PARTY_CRIT_AURA_ID } from './druid';
 
 /**
  * Auras a TALENT puts on a character, by the id its effect names.
@@ -26,11 +26,15 @@ import { LEADER_OF_THE_PACK, MOONKIN_AURA } from './druid';
 export const TALENT_AURAS: Readonly<Record<string, AuraDefinition>> = {
   anger_management: ANGER_MANAGEMENT,
   /*
-   * THE TWO PARTY AURAS ARE ALSO RAID BUFFS, and the ids are deliberately the
-   * same ones `raidBuffs.ts` applies. A Cat that takes Leader of the Pack in a
-   * raid that also selected it gets 3% once, because `AuraCollection.apply`
-   * refreshes a matching id instead of stacking a second aura.
+   * MOONKIN AURA AND LEADER OF THE PACK ARE ONE AURA, and both talents grant
+   * it. The ruleset owner: "these are all the same exclusive 3% global critical
+   * strike chance and do not stack" -- so there is one `AuraDefinition`, one id,
+   * and `AuraCollection.apply` refreshes it rather than stacking a second
+   * instance however many of the three sources a character has.
+   *
+   * THE KEY HERE IS STILL THE TALENT'S `auraId`, which is why both point at the
+   * same value: a talent names what it grants, and two talents granting the
+   * same thing is exactly what this is.
    */
-  leader_of_the_pack: LEADER_OF_THE_PACK,
-  moonkin_form: MOONKIN_AURA,
+  [PARTY_CRIT_AURA_ID]: PARTY_CRIT_AURA,
 };
