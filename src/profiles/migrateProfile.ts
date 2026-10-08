@@ -14,6 +14,34 @@ type Migration = (profile: Record<string, unknown>) => Record<string, unknown>;
  */
 const migrations: Record<number, Migration> = {
   /**
+   * Version 12 added `consumables`, the chosen consumable per category.
+   *
+   * Older profiles get an EMPTY selection, so nothing about their results
+   * changes. That is the version 9 decision rather than the version 10 one, and
+   * it turns on the same question: a saved character with no raid buffs was
+   * genuinely fighting unbuffed and a saved character with no consumables was
+   * genuinely fighting without them, while a saved ROGUE was not choosing to
+   * fight without poisons -- those did not exist to choose.
+   *
+   * ----------------------------------------------------------------------------
+   * IT WAS WRITTEN AS VERSION 11 AND KEYED AT 10, AND SO WAS THE WARLOCK STONE
+   * BELOW. Two branches took the next version number from the same base, and
+   * **git merged the two migration tables without a conflict** -- leaving one
+   * object literal with the key `10` twice, where the second silently wins and
+   * the first migration simply never runs. That is the same shape as the talent
+   * census totals this project has had go wrong: two edits that each move a
+   * number by one from the same base, merged cleanly, and short by one.
+   *
+   * WHAT CAUGHT IT WAS THE TYPECHECKER, not the suite and not the merge:
+   * TS1117, an object literal with a duplicate property. Worth knowing because
+   * a `Record<number, Migration>` built any other way -- entries pushed into a
+   * map, say -- would have taken both and run only one, with nothing to say so.
+   * **Re-read the version number after a rebase rather than trusting it.**
+   * ----------------------------------------------------------------------------
+   */
+  11: (profile) => ({ consumables: {}, ...profile }),
+
+  /**
    * Version 10 added `poisons`, which poison a Rogue coats each weapon with.
    *
    * Older profiles get the ruleset owner's stated default -- Instant on the

@@ -276,6 +276,14 @@ function createPlayerFor(
     poisons: profile.poisons,
     // Which stone enchants the weapon. A Warlock's choice; ignored by the rest.
     warlockStone: profile.warlockStone,
+    /*
+     * WHAT THE CHARACTER DRANK. Flat stats rather than auras, so unlike the
+     * raid buffs above they need no `poolStats` pass -- they are a layer of the
+     * starting block and the pools are sized from it. The one exception is the
+     * flat HIT POINTS, which cannot be a stat at all and reaches the maximum
+     * directly; `createPlayer` is where both happen.
+     */
+    consumables: profile.consumables,
   });
 }
 

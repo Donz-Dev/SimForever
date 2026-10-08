@@ -63,6 +63,7 @@ import {
   weaponsForEquipment,
 } from '../items/equipment';
 import { reactionsForEquipment } from '../items/procs';
+import { consumableEffects, type ConsumableSelection } from '../buffs/consumables';
 import {
   BASE_BLOCK_CHANCE_WITH_SHIELD,
   autoAttackModeForStyle,
@@ -199,6 +200,28 @@ export interface PlayerOptions {
    * ----------------------------------------------------------------------------
    */
   readonly poolStats?: (own: Readonly<Stats>) => Readonly<Stats>;
+  /**
+   * What the character drank, by consumable CATEGORY.
+   *
+   * ----------------------------------------------------------------------------
+   * IDS RATHER THAN RESOLVED STATS, which is the arrangement `equipment` already
+   * has and for the same reason: what a consumable IS belongs to
+   * `buffs/consumables.ts`, and a caller passing its own numbers would drift the
+   * moment one was corrected.
+   *
+   * RESOLVED ONCE, INTO THREE PLACES. `consumableEffects` returns the stats, the
+   * school-scoped spell power and the flat hit points together, because they take
+   * three different routes into a character and wiring up two of the three is a
+   * failure this project has had twice -- `resourceRegenMultiplier` reached one
+   * of three regeneration rules, `modifiersScaleWithStacks` two of three
+   * collections, and both were silent.
+   *
+   * THEY ARE NOT AURAS. A raid buff is one because it has a lifecycle; a
+   * consumable is drunk before the pull and lasts the fight, so it is a layer of
+   * the starting stat block and the character sheet reads it for free.
+   * ----------------------------------------------------------------------------
+   */
+  readonly consumables?: ConsumableSelection;
 }
 
 /**
@@ -360,16 +383,33 @@ export function createPlayer(options: PlayerOptions): Combatant {
    * and only the panel is class-gated.
    */
   const stone = warlockStoneEffect(characterClass === 'warlock' ? options.warlockStone : 'none');
+  /*
+   * WHAT THE CHARACTER DRANK, resolved once and read in three places below:
+   * here as stats, in the school modifiers, and in the health maximum.
+   *
+   * A SECOND LAYER BESIDE THE STONE AND FOR THE SAME REASON IT IS NOT ONE WITH
+   * IT: the two are different sources that happen to produce the same kinds of
+   * number, and keeping them apart is what lets either be isolated. They stack,
+   * which nothing has to say because nothing combines them.
+   */
+  const consumables = consumableEffects(options.consumables);
+
   const startingStats = addStats(
     addStats(
       addStats(
         addStats(
-          addStats(makeStats(baseStatsToEngineStats(base)), statsForStyle(equipment, style)),
-          stone.stats,
+          addStats(
+            addStats(makeStats(baseStatsToEngineStats(base)), statsForStyle(equipment, style)),
+            stone.stats,
+          ),
+          shieldBlock,
         ),
-        shieldBlock,
+        options.bonusStats ?? {},
       ),
-      options.bonusStats ?? {},
+      // A LAYER OF THE STARTING BLOCK, before the conversions run -- so a
+      // consumable's agility reaches attack power and crit the way an item's
+      // does, and the pools below are sized with it in.
+      consumables.stats,
     ),
     build.stats,
   );
@@ -391,7 +431,22 @@ export function createPlayer(options: PlayerOptions): Combatant {
    * health pool, and the rage a point of damage taken is worth under Forever's
    * `D x 10 / H`.
    */
-  const maximumHealth = baseHitPointsFor(race, characterClass, style) + derived.hitPoints;
+  /*
+   * AND THE FLAT HIT POINTS, WHICH CANNOT BE A STAT.
+   *
+   * `STAT_NAMES` has no `hitPoints`: health is a maximum derived from stamina,
+   * and "+1200 Hit Points" is neither stamina nor a stated conversion of it.
+   * Turning it into stamina at some rate would be inventing a number.
+   *
+   * ADDED TO THE MAXIMUM, which means it also changes RAGE -- Forever's rule is
+   * `D x 10 / H`, so a bigger pool makes each point of damage taken worth less.
+   * That is the formula doing what it says, and it is why this is named once
+   * here rather than computed twice.
+   */
+  const maximumHealth =
+    baseHitPointsFor(race, characterClass, style) +
+    derived.hitPoints +
+    consumables.bonusHitPoints;
 
   const resources = resourceSpecsFor(
     characterClass,
@@ -434,6 +489,15 @@ export function createPlayer(options: PlayerOptions): Combatant {
   for (const [school, spellPower] of Object.entries(stone.schoolPower)) {
     schoolModifiers.add(school as DamageSchool, { spellPower });
   }
+  /*
+   * AND A FOURTH SOURCE: the six School Spell Power consumables. "+40 Fire
+   * Spell Power" is the same kind of number again and takes the same route, so
+   * `add` folds all four together -- a Fire Mage drinking one adds 40 to what
+   * Arcanist and its gear already gave.
+   */
+  for (const [school, spellPower] of Object.entries(consumables.schoolPower)) {
+    schoolModifiers.add(school as DamageSchool, { spellPower });
+  }
 
   /*
    * AND THE SAME TWO SOURCES KEYED BY ATTACK TABLE, where gear is again the
@@ -453,6 +517,14 @@ export function createPlayer(options: PlayerOptions): Combatant {
   const attackTableModifiers = new AttackTableModifiers();
   attackTableModifiers.merge(build.attackTableModifiers);
   attackTableModifiers.merge(attackTableModifiersForStyle(equipment, style));
+  /*
+   * AND A THIRD SOURCE: "+2% Melee Crit Chance", which is a consumable that
+   * names a KIND OF ATTACK rather than a stat. Merged like the other two, so a
+   * Hunter drinking it and wearing the bow enchant carries both -- the melee
+   * tables from one and the ranged tables from the other, with neither
+   * reaching the other's.
+   */
+  attackTableModifiers.merge(consumables.attackTableModifiers);
 
   const abilities = abilitiesForBuild(characterClass, style, build);
   const rotation = rotationFor(

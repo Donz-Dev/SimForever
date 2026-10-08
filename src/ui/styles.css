@@ -1086,6 +1086,27 @@ button:disabled {
   color: var(--text-muted);
 }
 
+ * A consumable row is a gear row with no third column: a category and a choice,
+ * where a gear slot has an item AND an enchant. It reuses `.gear-slot` so the
+ * two panels line up, and overrides the template rather than growing a second
+ * grid that would drift from it.
+ */
+.consumable-slot {
+  grid-template-columns: 150px 1fr;
+}
+
+/* What a chosen consumable does NOT do, printed where it was chosen. */
+.consumable-caveats {
+  margin: 12px 0 0;
+  padding-left: 18px;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.consumable-caveats li + li {
+  margin-top: 4px;
+}
+
 .gear-no-enchant {
   text-align: center;
   font-size: 12px;

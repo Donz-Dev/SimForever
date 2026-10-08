@@ -1534,19 +1534,40 @@ describe('Evocation, which pays out during its own channel', () => {
     expect(bare.stats.get('manaRegenBypass') - before).toBe(EVOCATION_REGEN_BYPASS);
   });
 
-  it('is cast once a fight by the Fire list, and fills the bar', () => {
+  it('is reached by the Fire list in a real fight, and fills the bar', () => {
     /*
      * THE MECHANISM IN A REAL FIGHT, because the two assertions above could
      * both hold while no list ever reached the entry. The Fire profile is the
-     * one that runs low -- `USES=1` gives it 0.9 casts a fight against 0.0 for
-     * Arcane, which never drops to a tenth of its pool.
+     * one that runs low -- `USES=1` gives it about 0.9 casts a fight against
+     * 0.0 for Arcane, which never drops to a tenth of its pool.
+     *
+     * --------------------------------------------------------------------------
+     * COUNTED OVER TWENTY SEEDS, AND IT USED TO BE ONE. "About 0.9 casts a
+     * fight" is a RATE, and the old version asserted it on seed 12345 alone --
+     * which passed for as long as that particular fight happened to run dry.
+     * Giving the Mage presets their consumable row moved it: +12 MP5 and +25
+     * intellect do not stop the Fire build needing Evocation, and the rate went
+     * 16 casts in 20 fights to 14, but seed 12345 fell the other side of the
+     * gate and the test failed on a mechanism that still works.
+     *
+     * A single seed is how this project tests a BOUNDARY, with a scripted roll;
+     * a rate is what it uses for anything probabilistic, because "a 6.5% dodge
+     * is absent from a whole fight about once in two hundred runs". A cast that
+     * depends on a mana pool draining is the second kind.
+     * --------------------------------------------------------------------------
      */
-    const built = PRESETS_BY_ID.get('mage_fire')!.build();
-    const run = runProfile(built, 12345);
-    const applied = run.timeline.filter(
-      (event) => 'auraId' in event && event.auraId === 'evocation' && event.type === 'aura_applied',
-    );
-    expect(applied.length).toBeGreaterThan(0);
+    let casts = 0;
+    for (let seed = 1; seed <= 20; seed += 1) {
+      const run = runProfile(PRESETS_BY_ID.get('mage_fire')!.build(), seed);
+      casts += run.timeline.filter(
+        (event) =>
+          'auraId' in event && event.auraId === 'evocation' && event.type === 'aura_applied',
+      ).length;
+    }
+    // 14 of 20 when this was written. Asserted loosely, because what is being
+    // tested is that the entry is REACHABLE -- the exact rate is a rotation
+    // outcome and moves with the mana the build walks in with.
+    expect(casts).toBeGreaterThan(5);
   });
 });
 

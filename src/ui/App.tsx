@@ -15,6 +15,7 @@ import { CharacterSheetPanel } from './panels/CharacterSheetPanel';
 import { CombatLogPanel } from './panels/CombatLogPanel';
 import { EncounterPanel } from './panels/EncounterPanel';
 import { GearPanel } from './panels/GearPanel';
+import { ConsumablesPanel } from './panels/ConsumablesPanel';
 import { RaidBuffsPanel } from './panels/RaidBuffsPanel';
 import { ResultsPanel } from './panels/ResultsPanel';
 import { ProfileRail } from './panels/ProfileRail';
@@ -168,6 +169,10 @@ export function App() {
             {/* After the gear, because it is the same kind of decision: what
                 the character walks in carrying. Set once and rarely touched. */}
             <RaidBuffsPanel profile={profile} onChange={setProfile} />
+            {/* And after those, for the same reason again: what the character
+                walks in carrying, chosen once. One dropdown per category,
+                because at most one consumable per category may be drunk. */}
+            <ConsumablesPanel profile={profile} onChange={setProfile} />
 
             {state.status === 'running' ? (
               <div className="placeholder">

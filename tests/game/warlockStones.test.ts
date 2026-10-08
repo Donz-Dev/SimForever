@@ -265,10 +265,24 @@ describe('the selection, which is what makes the control real', () => {
 });
 
 describe('the profile field', () => {
-  it('is format 11, which added the Warlock stone', () => {
-    // Written out rather than read from the constant, so a bump is deliberate.
-    expect(CURRENT_PROFILE_VERSION).toBe(11);
-    expect(createDefaultProfile().version).toBe(11);
+  it('arrived in format 11, and the format has moved past it', () => {
+    /*
+     * ------------------------------------------------------------------------
+     * THE STONE IS STILL A VERSION 11 FIELD; the FORMAT is 12 now, because the
+     * consumables landed on a branch written from the same base as this one.
+     * Both took 11 and both keyed their migration at 10, and **git merged the
+     * two tables with no conflict** -- one object literal with `10` twice,
+     * where the second silently wins and the first migration never runs.
+     *
+     * So this asserts the two things separately: the migration that introduced
+     * the stone is still keyed at 10 (which is what makes a version 10 file
+     * gain one), and the current format is whatever the latest field says.
+     * Written out rather than read from the constant, so a bump is deliberate.
+     * ------------------------------------------------------------------------
+     */
+    expect(CURRENT_PROFILE_VERSION).toBe(12);
+    expect(createDefaultProfile().version).toBe(12);
+    // And a version 10 file still gains a stone, which is the test below.
   });
 
   it('migrates a version 10 profile to none, changing no result', () => {

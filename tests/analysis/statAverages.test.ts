@@ -165,10 +165,24 @@ describe('the wiring, through a real fight', () => {
    * keeps the row off nine classes in ten. The Results panel shows it only when
    * it EXCEEDS the melee pool, which is the question a reader is really asking.
    */
-  it('has a base 50 ranged attack power on a class that never shoots', () => {
+  it('has a ranged attack power it will never use, on a class that never shoots', () => {
+    /*
+     * ------------------------------------------------------------------------
+     * 130, AND IT WAS 50. The base is still the shared 50 every class carries;
+     * the other 80 is the owner's ruling that a consumable's "+40 Attack Power"
+     * is "truly Melee Attack AND Ranged attack power", twice over -- the elixir
+     * and the Food of the same name, which this profile's row takes both of.
+     *
+     * NONE OF IT DOES ANYTHING HERE, which is the point of the row rather than
+     * a problem with it: an Arms Warrior swings no ranged weapon, so a pool it
+     * cannot read is 80 wasted points of a consumable it drinks for the melee
+     * half. The assertion that matters is unchanged and is the one below --
+     * `!== 0` would show the row and the panel's rule does not.
+     * ------------------------------------------------------------------------
+     */
     const warrior = batchOf('two_hand_arms', 6, 7).stats!;
     expect(warrior.spellPower).toBe(0);
-    expect(warrior.rangedAttackPower).toBeCloseTo(50, 0);
+    expect(warrior.rangedAttackPower).toBeCloseTo(50 + 40 + 40, 0);
     // So `!== 0` would show the row, and the panel's rule does not.
     expect(warrior.rangedAttackPower).not.toBe(0);
     expect(warrior.rangedAttackPower).toBeLessThan(warrior.attackPower);
