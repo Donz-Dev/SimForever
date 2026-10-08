@@ -2051,7 +2051,7 @@ cannot audit, which is why the check is a SET comparison and not a row count.
 | Seal Twist Ret | Paladin | 15/0/36 | 788.4 | | Hemo Rogue | Rogue | 17/3/31 | 622.4 |
 | 2H Arms | Warrior | 39/10/2 | 784.1 | | Ele Shaman | Shaman | 38/13/0 | 617.5 |
 | LW Melee | Hunter | 7/13/31 | 779.7 | | Shockadin | Paladin | 23/0/28 | 601.3 |
-| BM Hunter | Hunter | 31/20/0 | 771.7 | | Venom Rogue | Rogue | 37/12/2 | 600.8 |
+| BM Hunter | Hunter | 31/20/0 | 771.7 | | Venom Rogue | Rogue | 37/12/2 | 594.5 |
 | Arcane Mage | Mage | 47/4/0 | 769.4 | | Rupture Rogue | Rogue | 12/8/31 | 584.2 |
 | Frostfire Mage | Mage | 0/29/22 | 768.3 | | Prot Warr | Warrior | 17/0/34 | 504.9 |
 | Firelock | Warlock | 5/11/35 | 759.7 | | Bear Druid | Druid | 9/42/0 | 500.0 |

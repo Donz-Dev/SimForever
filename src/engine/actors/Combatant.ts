@@ -806,6 +806,37 @@ export class Combatant {
    */
   lastStatSample: StatSampleValues | undefined;
 
+  /**
+   * How many casts this combatant has started. Incremented by `runCast`.
+   *
+   * ----------------------------------------------------------------------------
+   * IT EXISTS SO A `dealt` REACTION CAN TELL WHICH *USE* IT IS SEEING, which no
+   * other fact answers. Reactions fire per DAMAGE EVENT, and Mutilate deals two
+   * -- so a rule phrased per ABILITY USE ("Seal Fate adds at most one point per
+   * Mutilate") has nothing to key on without this.
+   *
+   * NOT THE TIMESTAMP, which is the tempting discriminator and is incidental.
+   * Both of Mutilate's hits land in the same millisecond TODAY because they are
+   * dealt synchronously inside one `onCast`; nothing guarantees that, and a
+   * ruleset reading resting on it survives until somebody schedules the off hand.
+   * This project has already been bitten by resting a reading on a field the
+   * engine happened to clear one line earlier -- see `AbilityCastEvent.final`.
+   *
+   * A COUNTER AND NOT A BOOLEAN, because a latch would have to be cleared by
+   * somebody and the thing that cleared it would be the next bug. A reaction
+   * remembers the number it last fired on and compares.
+   *
+   * Per-fight state on a per-fight object, like the swing timers above.
+   * ----------------------------------------------------------------------------
+   */
+  castSequence = 0;
+
+  /** Called by the engine when a cast's effect is about to run. */
+  recordCast(): number {
+    this.castSequence += 1;
+    return this.castSequence;
+  }
+
   /** Called by the engine when a swing resolves. */
   recordSwing(slot: WeaponSlot, at: Milliseconds): void {
     this.lastSwing.set(slot, at);

@@ -109,21 +109,68 @@ export const improvedExposeArmor = (): CastReaction => ({
  * ability says it builds, and the reaction reads it from the caster's own book
  * rather than carrying a list of ability ids that would drift from the
  * abilities themselves.
+ *
+ * ============================================================================
+ * AT MOST ONE POINT PER ABILITY *USE*, NOT PER HIT -- the ruleset owner's
+ * ruling, given after Mutilate was changed: "with Seal Fate it can now NO
+ * LONGER give 4 combo points. If either hand crits, Mutilate gives 3."
+ *
+ * So a double-critting Mutilate is 2 of its own plus 1, and a single-critting
+ * one is the same 3. Every single-hit builder is unaffected, which is most of
+ * them: Mutilate is the only ability in the project that deals two damage
+ * events and awards combo points.
+ *
+ * THE OPPORTUNITY IS WHAT IS CAPPED, AND THE ROLL HAPPENS ONCE. The other
+ * reading -- roll per crit and cap the AWARD at one -- is indistinguishable at
+ * 5/5, where the chance is 100% and every Subtlety and Assassination build in
+ * the project sits. They diverge only at ranks 1 to 4: a both-hands-crit
+ * Mutilate would be 1 - (1 - p)^2 rather than p, so 84% instead of 60% at rank
+ * 3. "If EITHER hand crits, Mutilate gives 3" reads as one question asked of
+ * the use rather than two asked of the hits, so that is the reading taken, and
+ * it is isolated to the comparison below if the owner states otherwise.
+ *
+ * IT LATCHES ON THE CAST SEQUENCE RATHER THAN ON A TIMESTAMP. `recordCast`
+ * stamps every cast with a number, which is a real engine fact; two hits
+ * sharing a millisecond is an artefact of them being dealt synchronously, and
+ * resting the ruling on that survives until somebody schedules the off hand.
+ *
+ * THE CLOSURE IS SAFE BECAUSE A REACTION IS BUILT PER CHARACTER -- `talentBuild`
+ * calls this builder once per combatant, which is the same reason Windfury's
+ * internal cooldown can live in one. A module-level variable here would make
+ * one Rogue's Mutilate suppress another's, and silently: the second Rogue in a
+ * batch would simply get fewer points.
+ * ============================================================================
  */
-export const sealFate = (chancePercent: number): Reaction => ({
-  id: 'seal_fate',
-  on: 'dealt',
-  outcomes: ['crit'],
-  canTrigger: (context, actor, attack) => {
-    if (!attack.abilityId) return false;
-    const ability = actor.abilities.get(attack.abilityId);
-    if (!ability?.comboPointsAwarded) return false;
-    return context.rng.rollChance(chancePercent / 100);
-  },
-  onTrigger: (context, actor, attack) => {
-    awardComboPoint(context, actor, attack.defender, 'seal_fate', 'Seal Fate');
-  },
-});
+export const sealFate = (chancePercent: number): Reaction => {
+  let lastCast = 0;
+  return {
+    id: 'seal_fate',
+    on: 'dealt',
+    outcomes: ['crit'],
+    canTrigger: (context, actor, attack) => {
+      if (!attack.abilityId) return false;
+      const ability = actor.abilities.get(attack.abilityId);
+      if (!ability?.comboPointsAwarded) return false;
+      // The second hit of a use that has already had its opportunity.
+      if (actor.castSequence === lastCast) return false;
+      if (!context.rng.rollChance(chancePercent / 100)) {
+        /*
+         * THE OPPORTUNITY IS SPENT EVEN WHEN THE ROLL LOSES, which is the whole
+         * of the reading above: a failed roll on the main hand does not hand the
+         * off hand a second one. Latching only on success would be the
+         * roll-per-crit reading wearing a cap.
+         */
+        lastCast = actor.castSequence;
+        return false;
+      }
+      lastCast = actor.castSequence;
+      return true;
+    },
+    onTrigger: (context, actor, attack) => {
+      awardComboPoint(context, actor, attack.defender, 'seal_fate', 'Seal Fate');
+    },
+  };
+};
 
 /** Procs that fire on a cast, by the talent that grants them. */
 export const ROGUE_CAST_REACTIONS: Readonly<Record<string, (value: number) => CastReaction>> = {

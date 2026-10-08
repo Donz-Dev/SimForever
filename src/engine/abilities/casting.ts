@@ -354,6 +354,18 @@ function runCast(
 ): void {
   const { caster, ability, target } = abilityContext;
 
+  /*
+   * STAMPED BEFORE `onCast` RUNS, and before the early return below, because a
+   * reaction asking which use it is seeing fires from INSIDE `onCast` -- a
+   * `dealDamage` call in there runs its reactions before this function resumes.
+   * Stamping afterwards would hand every reaction the PREVIOUS cast's number.
+   *
+   * AND BEFORE THE EARLY RETURN, which is the half that is easy to miss: a
+   * character with no CAST reactions still has damage reactions, so skipping
+   * the stamp on that path would freeze the counter for most characters.
+   */
+  caster.recordCast();
+
   if (caster.castReactions.length === 0) {
     // Nothing is listening, so nothing needs measuring.
     ability.onCast(abilityContext);
