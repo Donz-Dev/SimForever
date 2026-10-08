@@ -27,6 +27,8 @@ npx vite-node tools/ability_audit.ts             # is every ability connected at
 npx vite-node tools/class_audit.ts warrior       # one class's gaps, lists and sources
 npx vite-node tools/coefficient_probe.ts         # does every ability's damage scale
 node tools/value_index_sweep.mjs                 # which talents index a multi-number row
+node tools/decode_talent_build.mjs --profiles    # does every profile's build URL still decode
+node tools/decode_talent_build.mjs --presets     # does each URL still MATCH its preset
 PROFILE=pally_ret npx vite-node tools/probe_resources.ts   # where one pool went
 npx vite-node tools/probe_block.ts               # a tank's block chain, link by link
 npx vite-node tools/druid_attribution.ts         # what one talent is worth, with its CASCADE named
@@ -52,6 +54,27 @@ gaps and its own traps. **All nine have now been done**: the live-gap count went
 132 to 62, four classes are at 1–3, and what closed was mostly declarations and
 owner rulings rather than new engine capability. [HANDOVER.md](HANDOVER.md) has the
 recap.
+
+**A PATCH ARRIVES IN WAVES, AND THE NOTES ARE ONLY THE FIRST ONE.** The
+1.60.1.70170 work took THREE rounds and the notes were round one:
+
+| | what it was | largest effect |
+| --- | --- | --- |
+| 1 | the notes, plus four silent tree changes the importers found | DW Fury **+101.6**, Seal Twist Ret **-98.5** |
+| 2 | four rulings on questions round one RAISED | Fire **-187.6** |
+| 3 | one more coefficient the owner gave afterwards | Frostfire **-159.3** |
+
+**ROUNDS TWO AND THREE WERE EACH LARGER THAN ANYTHING IN THE NOTES.** So "the
+patch notes are exhausted" is not "the patch is implemented": what the notes
+actually produce is a list of QUESTIONS, and the answers keep arriving. Plan for
+a patch to land in several commits and expect to re-measure after each.
+
+**EVERY ROUND'S FIGURES WERE PUBLISHED, AND THE TOP ROW CHANGED TWICE** --
+Frostfire to DW Fury, by way of Frostfire again. The baseline table was rebuilt
+three times by `tools/update_baseline_table.py` and no row drifted, which is the
+first time that script has been under real pressure; a row-at-a-time edit across
+three rounds is exactly the drift it was written for. **Re-run the FULL
+measurement after each round rather than patching the rows the round touched.**
 
 **AND FOREVER PATCHES, WHICH IS A WHOLE CLASS OF WORK THE NINE DIVES DID NOT
 COVER.** Client build 1.60.1.70170 removed four talents, added three, moved six
@@ -2003,6 +2026,15 @@ no per-point argument either way and what decides it is uptime.
   **AND PAD IT AT RANKS THAT EXIST**: Subtlety has three, so five points in it is
   dropped, which takes the tree total under the next tier and drops the capstone
   with it — a test that reads "the talent grants nothing" for two reasons at once.
+- **AND AFTER THE PROBES, RE-RUN THE FULL MEASUREMENT AND CHECK IT REPRODUCES TO
+  THE DECIMAL.** Five probes were run across the 1.60.1.70170 rounds -- Champion
+  of the Light, Vengeance's stack cap, the Warrior crit-rage multiplier,
+  Bloodthrill's two halves, and a four-cell Pyroblast gate sweep -- each one
+  reverted by hand. The 24-profile run afterwards came back identical to the
+  pre-probe figures on every row, which is the only thing that says no probe was
+  left in. **It costs one command and the alternative is a published baseline
+  measured on a tree nobody meant**, which is the same failure a shared checkout
+  produces and this file already documents twice.
 - **AN ISOLATION PROBE MUST REVERT EVERY FILE THE CHANGE TOUCHED.** Rend and
   Tear's widening is two edits -- the `tables` list in `druidEffects.ts` and the
   fold in `damage.ts` -- and a variant reverting one of them measures a state the
@@ -2745,6 +2777,14 @@ branch had to be taken again — the baseline is whatever `main` says on the day
 not whatever it said when the branch started. **Re-measure after the rebase and
 check the untouched rows moved by 0.0 to the decimal**, which is the same
 containment check a gear commit uses.
+
+**AND CHAIN THE BASELINES WHEN A PIECE OF WORK LANDS IN SEVERAL COMMITS.** The
+1.60.1.70170 patch went out in three, and each round's `SAVE=` file was the next
+round's `BASELINE=`: pre-patch → round one → round two → round three. That is
+what makes "the other twenty-three moved by 0.0" mean anything per round -- a
+round measured against the PRE-PATCH figures would have shown every row the
+previous round moved as moving again, and the containment check would have been
+unreadable.
 
 **A CLEAN MERGE CAN BE ARITHMETICALLY WRONG, and a count is where it happens.**
 Two branches each moved the talent census total by one from the same base, so
