@@ -19,6 +19,32 @@ Frostfire 947.2 → 936.9, Arcane unchanged to the decimal.
 | **Combustion** | 4 non-periodic Fire crits → **3**. The note calls them "charges", which here is the CRIT COUNT and not `maxStacks` -- this aura has both, and the stack cap is twenty for an unrelated reason |
 | Master of Elements | its kill window 20s → 30s |
 
+**AND THE OWNER HAS SINCE RULED ON THE MECHANIC, WHICH COST THIS CLASS MORE THAN
+THE WHOLE PATCH DID.** "Heating up's 3 stacks should be consumed after 1 pyroblast
+cast" -- so **Fire 877.7 → 690.1, -187.6 REAL**, and Frostfire -9.2 which is
+inside its interval.
+
+| | |
+| --- | --- |
+| Pyroblast casts a fight, Fire | **13.55 → 1.75** |
+| Times the Fire build reaches 3 stacks a fight | **2.00** -- 6.60 Fire crits over a hundred seconds |
+| Mana spent a fight, Fire | 9,751 → 7,854 |
+| Evocation casts, all three profiles, 20 seeds each | **18 → 0** |
+
+**THE GATE IS ALREADY OPTIMAL AND THE SWEEP IS WHAT SAYS SO.** Both Fire-ish
+lists cast Pyroblast at EXACTLY three stacks, and the whole range measures 690.1
+/ 686.9 / 652.5 / 452.6 for exactly-3 / at-least-2 / at-least-1 / ungated. An
+ungated six-second cast at the top of a list blocks everything beneath it, which
+is the last column. **Do not reorder this list on the strength of the -187.6** --
+the ruling moved what Pyroblast is worth, not where it belongs.
+
+**EVOCATION HAS STOPPED FIRING ON ALL THREE PROFILES**, because the Fire build no
+longer drops to the tenth of its pool its entry is gated on. A LIST cause: the
+ability is declared, granted, in every Mage list and fully modelled. Its test had
+been invalidated three times by changes that had nothing to do with it, every time
+because it asserted a CAST COUNT, and now asserts the condition on both sides of
+the threshold instead.
+
 **THE RENAME NEARLY DELETED THE TALENT, SILENTLY, AND THIS IS THE LESSON TO
 CARRY.** A single-rank talent's number is hand-filled in `values/mage.json` and
 keyed by TALENT ID -- so the importer wrote `heating_up`, found no hand-fill under

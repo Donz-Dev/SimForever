@@ -931,8 +931,27 @@ const WARLOCK_DESTRUCTION_TALENTS: TalentAllocation = {
 };
 
 /**
- * THE SHADOW PRIEST BUILD, decoded from the owner's URL. 16/3/32, exactly 51
- * points, and the twenty-first profile in the project.
+ * THE SHADOW PRIEST BUILD. 13/3/35, exactly 51 points, and the twenty-first
+ * profile in the project.
+ *
+ * ----------------------------------------------------------------------------
+ * THIS COMMENT SAID "decoded from the owner's URL. 16/3/32" AND BOTH HALVES WERE
+ * WRONG. The allocation below is 13/3/35, and the URL recorded for it in
+ * `tools/decode_talent_build.mjs` decoded to a DIFFERENT build: `spirit_tap: 5`
+ * and `mental_agility: 3` where this has `improved_mind_blast: 5`,
+ * `silence: 1` and `early_demise: 2`. Eleven points apart, both totalling 51.
+ *
+ * THE OWNER VERIFIED THIS ONE -- "I verified that it's using the correct
+ * talents" -- so the URL was the stale half and has been re-encoded from this
+ * allocation. The 16/3/32 in the old comment was the URL's spread, which is how
+ * the two drifted without either looking wrong on its own.
+ *
+ * IT WAS FOUND BY DECODING ALL TWENTY-THREE AT ONCE AND DIFFING THEM AGAINST
+ * THESE CONSTANTS, which nothing had done before the 1.60.1.70170 patch forced
+ * it. A preset that no longer matches its URL is invisible: both decode to 51
+ * points and both produce an ordinary DPS figure. **A number with a source named
+ * beside it is not the same as a number that still matches its source.**
+ * ----------------------------------------------------------------------------
  */
 const PRIEST_SHADOW_TALENTS: TalentAllocation = {
   twin_disciplines: 5,

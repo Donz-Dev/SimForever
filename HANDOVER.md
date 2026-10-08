@@ -1,3 +1,71 @@
+**FOUR OWNER RULINGS ON THE 1.60.1.70170 PATCH, AND ONE OF THEM COST THE FIRE
+MAGE A FIFTH OF ITSELF.** All four were questions raised in the patch PR rather
+than guesses taken in it.
+
+| Ruling | Effect |
+| --- | --- |
+| **Heating Up's 3 stacks are consumed by ONE Pyroblast** -- "This was an oversight by me" | **Fire 877.7 → 690.1, -187.6 REAL.** Frostfire -9.2, noise |
+| **Dual Wield Specialization: "the client tooltip was correct"** | 0.0 -- already implemented that way, now a ruling rather than a judgement |
+| **Gore Drinker can be considered inert** -- "a non-combat talent for DPS warriors" | 0.0 -- the four cast triggers are kept, the Enrage clause is a gap nobody is waiting on |
+| **The Shadow Priest preset's talents are correct** | 0.0 -- so its recorded build URL was the stale half, and is re-encoded |
+
+**THE OTHER TWENTY-TWO PROFILES ARE IDENTICAL TO THE DECIMAL**, which is the
+containment check: three of the four rulings were meant to move nothing and did
+not.
+
+**-187.6 IS WHAT "CONSUMED BY ONE CAST" MEANS, AND THE SIZE OF IT IS THE POINT.**
+Pyroblast went from **13.55 casts a fight to 1.75**, because the Fire build only
+reaches three stacks **2.00 times a fight** -- 6.60 non-periodic Fire crits over a
+hundred seconds, and a twenty-second window that resets on each one. Under the
+old reading the three stacks sat there and every Pyroblast in the window was
+75% faster; under the owner's they pay for one.
+
+**IT SHIPPED THE OTHER WAY FOR ONE REVIEW AND WAITING WAS RIGHT.** The rename
+note said only that the name had moved, so the mechanic was left alone and
+flagged as an open question -- and the two readings are 187 DPS apart on one
+profile. Guessing the generous one and saying nothing would have put that figure
+in the table on nobody's authority. **A flag is what gets a question asked**, which
+is the third time in this project that a recorded open question has been worth
+more than a decision.
+
+**THE OWNER'S GATE IS ALREADY THE BEST OF FOUR, WHICH IS WORTH KNOWING BEFORE
+ANYBODY REORDERS THE LIST.** The two Fire-ish lists cast Pyroblast at EXACTLY
+three stacks, and the whole range was swept rather than argued:
+
+| Pyroblast gate | Fire | Frostfire |
+| --- | --- | --- |
+| **exactly 3 (the owner's)** | **690.1** | **927.6** |
+| at least 2 | 686.9 | 895.4 |
+| at least 1 | 652.5 | 803.2 |
+| ungated | 452.6 | 443.8 |
+
+A six-second cast at the top of a list is catastrophic, which is what the last
+row is: an ungated Pyroblast blocks everything beneath it. **The sweep cost one
+command and it is the only thing that could have said the gate was already
+right** -- the alternative was an argument about whether 3s at two stacks beats
+1.5s at three.
+
+**AND EVOCATION HAS STOPPED FIRING ENTIRELY, ON ALL THREE MAGE PROFILES.** The
+Fire build spends 7,854 mana where it spent 9,751, so it never drops to the tenth
+of its pool the owner's entry is gated on. The ability is declared, granted, in
+every Mage list and fully modelled -- **a LIST cause, not an engine or a build
+one** -- and it is recorded rather than left to be discovered, because a
+never-fired entry is a row that is not there.
+
+**THAT TEST HAD BEEN INVALIDATED THREE TIMES BY CHANGES THAT HAD NOTHING TO DO
+WITH EVOCATION**, each time because it asserted a CAST COUNT: first on one seed,
+then as a rate over twenty when the consumables moved it, and now at zero. It
+asserts the CONDITION on both sides of the threshold instead. A cast that depends
+on a pool draining is a fact about every other entry in the list.
+
+**AND THE SHADOW PRIEST FINDING GOT A TOOL RATHER THAN A FIX.**
+`decode_talent_build.mjs --presets` diffs every recorded URL against the preset
+constant it is supposed to describe -- which is the pass that found the eleven
+point disagreement, done by hand, and had never been run before. It is **not a
+test**, deliberately: when the two disagree one of them is stale and which is the
+owner's call. The Warlock's documented one-point amendment is listed as expected,
+so a NEW divergence is the only thing that reports.
+
 **FOREVER PATCHED, AND SEVEN OF THE TWENTY RECORDED BUILD URLS STOPPED DECODING.**
 Client build **1.60.1.70170**: every talent tree, rank value and spellbook
 re-imported, **ten of the twenty-four profiles re-specified**, six of them moved
@@ -135,7 +203,7 @@ gets built is [docs/class-implementation.md](docs/class-implementation.md).
 
 All nine classes and all 24 profiles are implemented, every number traced to a
 source rather than invented, and **all 24 priority lists are the ruleset owner's
-own** -- specified entry by entry and measured after. **2,712 tests**, CI green
+own** -- specified entry by entry and measured after. **2,715 tests**, CI green
 on Node 20 and 22. Profile format **v12**. Live at
 <https://donz-dev.github.io/SimForever/>, republished by
 `.github/workflows/deploy.yml` on every push to `main` that passes.
@@ -152,10 +220,10 @@ demonstrated at the top. **Re-count rather than re-reading the sentence.**
 | --- | --- |
 | **Talents** | 260 fully, 39 partly, 105 ruled out, **62 a live gap**, out of **466** -- from 132 before the class dives |
 | **Abilities** | 114 declared against 478 captured |
-| **Profiles** | 24, all measured, **mean 704.3** -- the armour enchants are +27.0 of it and the consumables +105.9 |
+| **Profiles** | 24, all measured, **mean 696.1** -- the armour enchants are +27.0 of it and the consumables +105.9 |
 | **Scope rulings** | 7 members, all the owner's |
 | **Placeholders** | **10 declared** -- see the milestone table, and count DECLARATIONS |
-| **Tests** | 2,712 on Node 20 and 22 |
+| **Tests** | 2,715 on Node 20 and 22 |
 
 **FOUR CLASSES ARE ESSENTIALLY DONE** -- Warrior 1 live gap, Paladin 1, Druid 2,
 Rogue 3 -- and the remaining 62 sit mostly in the Warlock (19), Priest (12) and
@@ -1181,7 +1249,7 @@ while it worked.
 decimal -- which is what a talent change scoped to one build should look like.
 It makes Frostfire the top Mage, above Fire's 401.2 and Arcane's 392.6, and the
 build that existed for the Fire/Frost overlap now has a third reason to. The
-mean across **24** is **704.3**, RE-SUMMED FROM THE TABLE ABOVE rather than
+mean across **24** is **696.1**, RE-SUMMED FROM THE TABLE ABOVE rather than
 adjusted -- **by `tools/update_baseline_table.py`, which exists now**; the
 sentence above it had promised a script for several commits and there was none,
 so the mean and the ordering were still being maintained by hand.
@@ -1743,31 +1811,34 @@ cannot audit, which is why the check is a SET comparison and not a row count.
 
 | Profile | Class | Talents | DPS | | Profile | Class | Talents | DPS |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| Frostfire Mage | Mage | 0/29/22 | 936.9 | | Moonkin | Druid | 38/0/13 | 724.0 |
-| **DW Fury** | Warrior | 17/34/0 | **892.0** | | Enh Shaman | Shaman | 17/34/0 | 708.6 |
-| Fire Mage | Mage | 10/39/2 | 877.7 | | Combat Rogue | Rogue | 18/33/0 | 691.1 |
+| **Frostfire Mage** | Mage | 0/29/22 | **927.6** | | Enh Shaman | Shaman | 17/34/0 | 708.6 |
+| DW Fury | Warrior | 17/34/0 | 892.0 | | Combat Rogue | Rogue | 18/33/0 | 691.1 |
 | LW Ranged | Hunter | 7/39/5 | 805.9 | | SM/DS | Warlock | 40/11/0 | 690.4 |
-| **Cat Druid** | Druid | 9/34/8 | **794.0** | | Hemo Rogue | Rogue | 17/3/31 | 622.4 |
-| **Seal Twist Ret** | Paladin | 15/0/36 | **788.4** | | Ele Shaman | Shaman | 38/13/0 | 617.5 |
-| **2H Arms** | Warrior | 39/10/2 | **784.1** | | **Shockadin** | Paladin | 23/0/28 | **601.3** |
-| LW Melee | Hunter | 7/13/31 | 779.7 | | Venom Rogue | Rogue | 37/12/2 | 600.8 |
-| BM Hunter | Hunter | 31/20/0 | 771.7 | | Rupture Rogue | Rogue | 12/8/31 | 584.2 |
-| Arcane Mage | Mage | 47/4/0 | 769.4 | | Prot Warr | Warrior | 17/0/34 | 504.9 |
-| Firelock | Warlock | 5/11/35 | 759.7 | | Bear Druid | Druid | 9/42/0 | 496.1 |
-| Shadow Priest | Priest | 13/3/35 | 746.9 | | Prot Pally | Paladin | 8/34/9 | 355.2 |
+| Cat Druid | Druid | 9/34/8 | 794.0 | | **Fire Mage** | Mage | 10/39/2 | **690.1** |
+| Seal Twist Ret | Paladin | 15/0/36 | 788.4 | | Hemo Rogue | Rogue | 17/3/31 | 622.4 |
+| 2H Arms | Warrior | 39/10/2 | 784.1 | | Ele Shaman | Shaman | 38/13/0 | 617.5 |
+| LW Melee | Hunter | 7/13/31 | 779.7 | | Shockadin | Paladin | 23/0/28 | 601.3 |
+| BM Hunter | Hunter | 31/20/0 | 771.7 | | Venom Rogue | Rogue | 37/12/2 | 600.8 |
+| Arcane Mage | Mage | 47/4/0 | 769.4 | | Rupture Rogue | Rogue | 12/8/31 | 584.2 |
+| Firelock | Warlock | 5/11/35 | 759.7 | | Prot Warr | Warrior | 17/0/34 | 504.9 |
+| Shadow Priest | Priest | 13/3/35 | 746.9 | | Bear Druid | Druid | 9/42/0 | 496.1 |
+| Moonkin | Druid | 38/0/13 | 724.0 | | Prot Pally | Paladin | 8/34/9 | 355.2 |
 
-**THE TOP IS STILL THE FROSTFIRE MAGE AND THE SECOND PLACE CHANGED HANDS.**
-**936.9 +/-11.8** against DW Fury's **892.0 +/-11.5** is 44.9, outside both
-intervals. Seal Twist Ret was second at 886.9 and is now sixth: the Paladin lost
-98.5 to its own patch notes while the Warrior gained 101.6 to the same ones, which
-is a 200-DPS swing between two rows in one patch and the largest this table has
-seen.
+**THE TOP IS STILL THE FROSTFIRE MAGE AND ITS LEAD HAS NARROWED TO ONE
+INTERVAL.** **927.6 +/-20.3** against DW Fury's **892.0 +/-11.5** is 35.6, which
+is outside both but no longer comfortably: Frostfire's interval is the widest in
+the table, and a row whose own spread is twenty is not a secure first place. Read
+the intervals before reading the order.
 
-**THE CASTER RE-SORT THIS PARAGRAPH USED TO DESCRIBE HAS PARTLY UNWOUND.** It read
-"four of the top six are casters where none was in the top six a commit ago" --
-true of the consumables commit, and three of the top six are melee again after
-this one. The consumables are still what put the casters there; what changed is
-that two melee rows moved a hundred DPS past them.
+**THE FIRE MAGE FELL FURTHER THAN ANY ROW HAS IN ONE CHANGE** -- third to
+sixteenth, 877.7 to 690.1 -- on one owner ruling about when three stacks are
+spent. It is now below the Enhancement Shaman and two Rogues.
+
+**AND THE CASTER RE-SORT THIS PARAGRAPH USED TO DESCRIBE HAS UNWOUND FURTHER.** It
+read "four of the top six are casters where none was in the top six a commit ago",
+which was true of the consumables commit; it is now **one of the top six**. The
+consumables are still what put the casters there -- what moved them out is two
+melee rows gaining a hundred DPS and one caster row losing nearly two hundred.
 
 **TWO CHANGES MOVED EVERY ROW, ONE AFTER THE OTHER, AND NOTHING RECORDED BEFORE
 EITHER IS COMPARABLE.** The armour enchants were +2.4 to +53.7 on a mean of
