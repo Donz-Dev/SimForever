@@ -1664,8 +1664,12 @@ describe('Evocation, which pays out during its own channel', () => {
      * cast count was really standing in for.
      *
      * THE ZERO IS RECORDED RATHER THAN HIDDEN, because a never-fired entry is a
-     * row that is not there: `measure_profiles.ts USES=1` is where it shows, and
-     * whether the owner wants the threshold moved is their call.
+     * row that is not there: `measure_profiles.ts USES=1` is where it shows.
+     *
+     * AND THE OWNER HAS RULED THE ZERO INTENDED, 2026-10-08 -- reported with the
+     * threshold offered as the thing to move: "This is intended." So the entry
+     * stays at 10% and these assertions pin a DECISION rather than a state of
+     * affairs waiting to be resolved.
      * --------------------------------------------------------------------------
      */
     for (const list of [MAGE_FIRE, MAGE_FROSTFIRE, MAGE_ARCANE]) {
@@ -1703,6 +1707,12 @@ describe('Evocation, which pays out during its own channel', () => {
      * granted, in every Mage list and fully modelled; what changed is that the
      * Fire build stopped running dry when Pyroblast stopped being castable
      * thirteen times a fight. That expires the day a list or a mana cost moves.
+     *
+     * AND IT IS THE OWNER'S INTENT RATHER THAN AN OUTSTANDING ITEM. Ruled
+     * 2026-10-08: "This is intended." A never-fired entry is usually one of four
+     * causes worth chasing; this one is a fifth -- somebody meant it. So this
+     * asserts zero as a FACT ABOUT THE RULESET, and it fails if a change makes
+     * Evocation start firing, which is the right moment to go back to the owner.
      */
     let casts = 0;
     for (const preset of ['mage_fire', 'mage_frostfire', 'mage_arcane']) {

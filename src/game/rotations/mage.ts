@@ -176,6 +176,28 @@ const SCORCH_REFRESH_SECONDS = 3;
  * ABOVE EVERYTHING BUT THE ARMOR, because a conditional entry that is almost
  * never true costs the entries below it nothing -- and when it IS true, a Mage
  * at 10% mana is about to be unable to cast its filler anyway.
+ *
+ * ----------------------------------------------------------------------------
+ * IT FIRES ON NO PROFILE AT ALL, AND THE OWNER HAS RULED THAT INTENDED.
+ *
+ * None of the three Mage builds now drops to a tenth of its pool -- the Fire one
+ * stopped running dry when Heating Up became consumed by a single Pyroblast, so
+ * it spends 7,854 mana of 9,751 instead of emptying the bar. Measured at ZERO
+ * casts across three profiles and twenty seeds each.
+ *
+ * Reported to the owner with the threshold offered as the thing to move, and the
+ * answer was **"This is intended"** (2026-10-08). So the entry stays where it is
+ * at the threshold it has, and **a never-fired entry is not therefore a defect**
+ * -- the second time the owner's list has outranked a measurement of ours, after
+ * Hunter's Mark's -10.1. It is a safety net that costs nothing: it pays out only
+ * in a fight that goes differently from the ones measured, which is what a 10%
+ * gate is for.
+ *
+ * DO NOT "FIX" THE ZERO. `mageAbilities.test.ts` records it as a known fact and
+ * asserts the invariant -- the entry present in all three lists at the owner's
+ * threshold, with the condition answering correctly on both sides of it -- rather
+ * than a cast count, which three unrelated changes had already invalidated.
+ * ----------------------------------------------------------------------------
  * ============================================================================
  */
 const EVOCATION_MANA_PERCENT = 10;

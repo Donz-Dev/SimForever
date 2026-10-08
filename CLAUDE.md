@@ -1487,6 +1487,18 @@ every one of them produced an ordinary DPS figure and an ordinary results page
 what each entry actually did, and reading the built character's own ability book
 is what tells the BUILD cause apart from the POSITION cause rather than guessing.
 
+**AND A CAUSE THAT IS NOT A PROBLEM AT ALL: THE OWNER MEANT IT.** Evocation is
+in all three Mage lists at a 10% mana gate, by the owner's instruction, and fires
+**zero times on every one of them** -- no build drops that low since Heating Up
+changed. Reported with the threshold offered as the thing to move, the ruling was
+"This is intended". **So a never-fired entry is a question for the owner before
+it is a defect**, and the second time their list has outranked a measurement of
+ours after Hunter's Mark's -10.1. The honest reading is a safety net that costs
+nothing: a conditional entry that is almost never true costs the entries below it
+nothing, and it pays out in a fight that goes differently from the ones measured.
+**Pin the zero as a FACT** -- `mageAbilities.test.ts` fails if Evocation starts
+firing, which is the right moment to go back and ask again.
+
 **AND A FIFTH CAUSE, WHICH IS THE ENGINE SIDE OF THE SAME COIN: THE CONDITION
 READS SOMETHING NOTHING SETS.** `Combatant.recordSwing` was added so the Hunter
 lists could ask "has a ranged auto-attack fired in the last 0.5 seconds", and it
@@ -2214,6 +2226,18 @@ Plus the permanent rulings under **Scope**.
   and still is; the conclusion was wrong, because a coefficient is a RULE and
   asking got one in a single message. **Check whether a missing number is missing
   DATA or a missing RULE before recording it as a gap.**
+- **AN INTERPRETATION THAT IS RIGHT IS STILL AN INTERPRETATION, AND LABELLING IT
+  ONE IS WHAT GETS IT RULED ON.** Ice Lance's `1.5/3.5/4` left a real ambiguity:
+  a frozen cast multiplies the four back out and lands on exactly the old
+  unfrozen figure, so "the owner already divided by the frozen multiplier" and
+  "the owner gave a base coefficient" are SIXTEEN apart and both plausible. The
+  note chose the second, gave its argument, and said it was a choice -- and
+  asking got **"This is intended stop asking"** in one message. **The label is
+  what made it askable**, the same property `guardian_s_favor`'s reason had.
+  **AND IT HAS TO COME OFF ONCE THE ANSWER LANDS**, because a caveat outlives the
+  doubt it describes -- three sites were carrying this as a chosen reading, and a
+  reader who finds one of them next year cannot tell a live question from a
+  settled one.
 - **TWO CORRECT HALVES WITH NOTHING JOINING THEM IS A SHAPE NO HALF'S TEST CAN
   CATCH.** `armorPenetration` shipped declared, granted by three talents,
   counted as fully modelled and READ BY NOTHING -- `resolveDamage` took the

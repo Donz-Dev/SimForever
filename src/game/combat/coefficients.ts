@@ -284,6 +284,15 @@ export const SCORCH_SP_COEFFICIENT = 0.429;
  * coefficient as well as the base ("deals 300% increased damage" is all of the
  * damage), and a new statement of a VALUE does not overturn a ruling about which
  * terms a multiplier reaches. See `ICE_LANCE` for that ruling.
+ *
+ * AND THE OWNER HAS NOW CONFIRMED IT DIRECTLY AND CLOSED THE QUESTION, 2026-10-08:
+ * asked whether the `/4` was meant to have already done the frozen division, they
+ * answered **"This is intended stop asking."** So `1.5 / 3.5 / 4 * 4` on a frozen
+ * cast is the ruleset rather than an inference this project is carrying, and it is
+ * **NOT TO BE RE-RAISED.** The reasoning above is kept because it is what stops a
+ * reader re-deriving the other reading; what it is no longer is the AUTHORITY --
+ * an interpretation flagged as an interpretation stays one however long it sits
+ * there, and this is the second question on this constant the owner has settled.
  * ----------------------------------------------------------------------------
  */
 export const ICE_LANCE_SP_COEFFICIENT = 1.5 / 3.5 / 4;

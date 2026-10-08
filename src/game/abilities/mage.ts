@@ -375,6 +375,10 @@ export const ICE_LANCE_COEFFICIENT = ICE_LANCE_SP_COEFFICIENT;
  * THE GUARD IS A TEST THAT MULTIPLIES THEM OUT END TO END rather than a check
  * on either constant, which is the argument the pet's 1.375 damage multiplier
  * already makes: a constant check cannot see a double application.
+ *
+ * SETTLED BY THE OWNER, 2026-10-08, AND NOT TO BE RE-RAISED. Asked whether their
+ * `/4` had already done the frozen division: "This is intended stop asking." The
+ * familiar 0.4286 reappearing on a frozen cast is the ruleset.
  * ============================================================================
  */
 
