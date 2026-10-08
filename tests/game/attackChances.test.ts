@@ -48,9 +48,24 @@ describe('the skill gap that shapes everything', () => {
 });
 
 describe('miss from weapon skill', () => {
-  it('uses the steeper formula past a 10-point gap', () => {
-    // 600 + 15 * 20 = 900
-    expect(missFromSkill(300, 315, 0, 0)).toBe(900);
+  /*
+   * ==========================================================================
+   * EIGHT PERCENT AGAINST A LEVEL 63 TARGET, NOT NINE, by the ruleset owner:
+   * "The new melee and ranged attack miss chance against a level 63 target is
+   * now 8% not 9%."
+   *
+   * WRITTEN OUT FROM THE RULE RATHER THAN READ OFF THE CONSTANTS, which is this
+   * project's convention for a spec table and matters more than usual here --
+   * the figure these tests used to assert was produced by the code and agreed
+   * with nothing else. `BASE_CHANCES` originally carried `meleeMiss: 8` from the
+   * owner's own combat table, and the commit deriving the table from weapon
+   * skill raised it to 9% while recording in the docs that it had: "only miss
+   * moves, from 8% to 9%". A test reading the constants passes either way.
+   * ==========================================================================
+   */
+  it('is 8% at the 15-point gap every profile faces', () => {
+    // 5% base + 15 points x 0.2% = 8%. The owner's figure, stated directly.
+    expect(missFromSkill(300, 315, 0, 0)).toBe(800);
   });
 
   it('uses the shallower formula within 10 points', () => {
@@ -58,18 +73,35 @@ describe('miss from weapon skill', () => {
     expect(missFromSkill(300, 305, 0, 0)).toBe(550);
   });
 
-  it('switches regime exactly above a 10-point gap', () => {
-    // A 10-point gap is still the shallow formula; 11 is not.
+  it('changes only the PER-POINT rate at the regime boundary, not the base', () => {
+    /*
+     * THE BASE IS 5% ON BOTH SIDES and only the slope doubles, which is what
+     * produces the owner's 8% rather than the 9% a second, higher base did.
+     *
+     * IT IS ALSO MONOTONIC NOW. The old pair jumped 6% to 8.2% across the
+     * threshold; it goes 6% to 7.2%. Nothing in this project measures that --
+     * no item grants weapon skill, so every character sits at a 15-point gap --
+     * which is exactly why it is asserted here rather than left to a profile.
+     */
     expect(missFromSkill(300, 310, 0, 0)).toBe(600); // 500 + 10 * 10
-    expect(missFromSkill(300, 311, 0, 0)).toBe(820); // 600 + 11 * 20
+    expect(missFromSkill(300, 311, 0, 0)).toBe(720); // 500 + 11 * 20
+    expect(missFromSkill(300, 311, 0, 0)).toBeGreaterThan(missFromSkill(300, 310, 0, 0));
   });
 
   it('adds the full dual-wield penalty', () => {
-    expect(missFromSkill(300, 315, 0, 1900)).toBe(2800);
+    expect(missFromSkill(300, 315, 0, 1900)).toBe(2700);
   });
 
-  it('subtracts hit', () => {
-    expect(missFromSkill(300, 315, 300, 0)).toBe(600);
+  it('subtracts hit, and melee hit caps at 8 rather than 9', () => {
+    expect(missFromSkill(300, 315, 300, 0)).toBe(500);
+    /*
+     * THE CAP MOVED WITH THE BASE, which is the consequence a reader would not
+     * go looking for: melee and ranged have no miss FLOOR -- that is a spell
+     * rule the owner stated for spells alone -- so the eighth point of hit is
+     * the last one that buys anything and the ninth buys nothing.
+     */
+    expect(missFromSkill(300, 315, 800, 0)).toBe(0);
+    expect(missFromSkill(300, 315, 700, 0)).toBe(100);
   });
 
   it('floors at zero rather than going negative', () => {
@@ -158,7 +190,7 @@ describe('melee auto-attack chances', () => {
   it('derives the whole table from the skill gap', () => {
     const chances = providerFor('two_hander')('melee-auto', warrior('two_hander'), boss());
 
-    expect(chances.miss).toBe(900); // 9%
+    expect(chances.miss).toBe(800); // 8%
     expect(chances.dodge).toBe(650); // 6.5%
     expect(chances.glance).toBe(4000); // 40%
     expect(chances.glanceMultiplierMin).toBeCloseTo(0.55, 10);
@@ -170,14 +202,14 @@ describe('melee auto-attack chances', () => {
     const player = warrior('dual_wield');
     const provider = providerFor('dual_wield');
 
-    expect(provider('melee-auto', player, boss(), { slot: 'mainHand' }).miss).toBe(2800);
-    expect(provider('melee-auto', player, boss(), { slot: 'offHand' }).miss).toBe(2800);
+    expect(provider('melee-auto', player, boss(), { slot: 'mainHand' }).miss).toBe(2700);
+    expect(provider('melee-auto', player, boss(), { slot: 'offHand' }).miss).toBe(2700);
   });
 
   it('leaves a two-hander unpenalised', () => {
     const provider = providerFor('two_hander');
     expect(provider('melee-auto', warrior('two_hander'), boss(), { slot: 'mainHand' }).miss).toBe(
-      900,
+      800,
     );
   });
 });
@@ -186,7 +218,7 @@ describe('melee special attack chances', () => {
   it('never carries the dual-wield penalty', () => {
     // A special is one strike, not one per hand.
     const chances = providerFor('dual_wield')('melee-special', warrior('dual_wield'), boss());
-    expect(chances.miss).toBe(900);
+    expect(chances.miss).toBe(800);
   });
 
   it('keeps dodge but drops glancing', () => {

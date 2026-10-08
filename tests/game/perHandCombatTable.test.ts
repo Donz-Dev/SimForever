@@ -62,10 +62,19 @@ describe('a dual-wielder has two combat tables', () => {
     const mainHand = toPercent(table(player, 'mainHand').miss);
     const offHand = toPercent(table(player, 'offHand').miss);
 
-    // Five points of skill against a 15-point deficit: the gap narrows to 10,
-    // which is three percentage points of miss.
+    /*
+     * Five points of skill against a 15-point deficit narrows the gap to 10,
+     * which is TWO percentage points of miss.
+     *
+     * AND THE TWO HANDS ARE IN DIFFERENT REGIMES HERE, which is what makes this
+     * the clearest test of the owner's 8%: a 10-point gap is the shallow rule
+     * and 15 is the steep one. The main hand is unchanged by that note at 25%
+     * -- only the base of the STEEP regime moved -- and the off hand went 28%
+     * to 27%. A change that moved both equally would have been a change to
+     * something else.
+     */
     expect(mainHand).toBeCloseTo(25, 6);
-    expect(offHand).toBeCloseTo(28, 6);
+    expect(offHand).toBeCloseTo(27, 6);
     expect(offHand).toBeGreaterThan(mainHand);
   });
 
@@ -85,10 +94,10 @@ describe('a dual-wielder has two combat tables', () => {
     const mainHand = toPercent(table(even, 'mainHand').miss);
     const offHand = toPercent(table(even, 'offHand').miss);
 
-    // Equal skill, equal miss -- and both far above the 9% a two-hander sees,
+    // Equal skill, equal miss -- and both far above the 8% a two-hander sees,
     // because the penalty lands on each hand rather than only on the off hand.
     expect(mainHand).toBeCloseTo(offHand, 6);
-    expect(mainHand).toBeCloseTo(28, 6);
+    expect(mainHand).toBeCloseTo(27, 6);
   });
 
   it('leaves glancing alone, which depends on the defender and not on skill', () => {

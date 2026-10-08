@@ -1,4 +1,125 @@
-# FOREVER PATCH 1.60.1.70170 — FOUR rounds of change, read them as one
+# FOREVER PATCH 1.60.1.70170 — FIVE rounds of change, read them as one
+
+## Round five: melee and ranged miss 8% against a level 63 target, not 9%
+
+**AND THE DERIVATION HAD BEEN WRONG SINCE PR #10, WITH THIS REPOSITORY'S OWN
+DOCS RECORDING THE DISCREPANCY.** The owner's note -- "the new melee and ranged
+attack miss chance against a level 63 target is now 8% not 9%" -- restores a
+figure their combat table always stated.
+
+**IT IS THE WIDEST-REACHING CHANGE OF THE FIVE ROUNDS**: **fifteen of the 25
+profiles moved**, the mean went 695.3 to **698.8**, and the only rows at 0.0 are
+the ones that could not be touched.
+
+```
+Combat         702.9 DPS +/-  4.8   was  691.1  + 11.7  REAL
+DW Fury        901.8 DPS +/- 11.1   was  892.0  +  9.8  noise
+LW Ranged      814.5 DPS +/-  6.2   was  805.9  +  8.6  noise
+Seal Twist Ret 796.8 DPS +/-  7.9   was  788.4  +  8.5  noise
+2H Arms        791.6 DPS +/- 10.9   was  784.1  +  7.5  noise
+Enh Shaman     716.1 DPS +/- 10.5   was  708.6  +  7.5  noise
+Venom          601.5 DPS +/-  4.7   was  594.5  +  7.0  noise
+Shockadin      608.0 DPS +/-  5.0   was  601.3  +  6.7  noise
+BM Hunter      777.8 DPS +/-  4.5   was  771.7  +  6.2  noise
+Rupture        588.2 DPS +/-  4.6   was  584.2  +  4.0  noise
+LW Melee       783.2 DPS +/-  8.4   was  779.7  +  3.5  noise
+Prot Warr      507.5 DPS +/-  6.2   was  504.9  +  2.5  noise
+Hemo           624.3 DPS +/-  6.4   was  622.4  +  1.9  noise
+Prot Pally     357.0 DPS +/-  3.8   was  355.2  +  1.8  noise
+Hawk Melee     826.1 DPS +/-  7.1   was  824.4  +  1.7  noise
+```
+
+**ONE REAL AND FOURTEEN INSIDE THEIR INTERVALS, ALL POSITIVE, AND THE MECHANISM
+IS EXACT.** A point of miss is a point of miss; the per-profile size is just how
+much of its damage goes through a melee or ranged table. Thirteen same-signed
+"noise" verdicts is the shape this file describes under **MEASURE A LIST** --
+where the mechanism predicts the direction, the verdict is a statement about
+variance and not about whether anything happened.
+
+### What was wrong, and what wrote it down
+
+`BASE_CHANCES` in the first version of `attackChances.ts` carried `meleeMiss: 8`
+and `rangedMiss: 8`, from the owner's own combat table. The commit that derived
+the table from weapon skill (**#10**) gave the large-gap regime its own base of
+6% on top of the small-gap 5%, so a 15-point deficit came to `600 + 15 * 20` =
+**9%**.
+
+**`docs/combat-tables.md` SAID SO AND IT STOOD FOR A YEAR:** *"the formulas are
+consistent with the constants they replace; only miss moves, from 8% to 9%."*
+Dodge reproduced its 6.5% exactly and glance its 40% exactly; miss alone moved a
+point. **Two of three figures reproducing and the third moving is the shape of a
+bug**, and it read as a note about the formula instead. **A DIFFERENCE THAT GETS
+DOCUMENTED STILL NEEDS SOMEBODY TO CALL IT WRONG.**
+
+The fix deletes the second base rather than back-solving a coefficient: one base
+of 5%, with the per-point rate doubling past a 10-point gap, gives 8% at a
+15-point gap on the nose. It is also monotonic now -- the old pair jumped 6% to
+8.2% across the threshold and it goes 6% to 7.2%.
+
+### The ten rows that did not move, and why none of them is a failure to apply
+
+**EIGHT ARE PURE CASTERS** -- Moonkin, Ele Shaman, all three Mages, both
+Warlocks, Shadow Priest -- and spell miss is a flat 17% the owner states
+separately, untouched here.
+
+**AND TWO ARE MELEE, WHICH IS THE ONE THAT NEEDED CHECKING.** Cat and Bear Druid
+measured 0.0 to the decimal on a change to the melee miss table, which reads
+exactly like a change that failed to apply. They carry **9% and 11% hit** against
+a single paw with no dual-wield penalty, so their melee attacks **could not miss
+before the change either** -- measured at 0.00% miss over 975 and 435
+non-periodic attempts.
+
+| | melee attempts | miss% now |
+| --- | --- | --- |
+| 2H Arms, Prot Warr, Cat, Bear, Enh Shaman, Prot Pally | 399-975 | **0.00** |
+| DW Fury | 923 | 6.93 |
+| Rogues (Venom / Combat / Hemo / Rupture) | 1004-1331 | 9.02 / 9.46 / 12.53 / 13.89 |
+| LW Melee | 1352 | 11.76 |
+
+**SO THE HIT CAP IS 8 NOW AND SIX PROFILES ARE SITTING ON IT.** Melee and ranged
+have **no miss floor** -- the owner stated the 1% floor for spells and
+`missFromSkill` is a different formula -- so the ninth point of hit buys a
+non-dual-wielder nothing. **A DUAL-WIELDER IS WHAT KEEPS HIT VALUABLE**: the +19%
+penalty lands in full on both hands, which is why the Rogues still miss 9-14% and
+collected the whole point, and why Combat is the one REAL verdict.
+
+**MEASURE THE MISS RATE OFF THE EVENT STREAM, NOT FROM THE CONSTANTS.** The first
+probe here computed it per profile with a zero dual-wield penalty and said the
+four Rogues would gain nothing -- they gained the most. The event stream is the
+only reading that accounts for the penalty, per-hand skill and school-scoped hit
+at once.
+
+### And TWO peer branches landed mid-measurement, so every figure was taken three times
+
+**THE BASELINE IS WHATEVER `main` SAYS ON THE DAY, AND IT SAID THREE DIFFERENT
+THINGS.** Hawk Melee (#212) merged while this was being measured against a
+24-profile main, and Seal Fate's per-use cap (#215) merged while it was being
+re-measured against a 25-profile one. Each time the whole round was re-measured
+rather than having rows patched into it.
+
+| | what it changed | what it cost this round |
+| --- | --- | --- |
+| #212 | added a 25th profile, Hawk Melee 824.4 | a full re-measure; the 24 originals reproduced to the decimal and Hawk Melee came in at **+1.7** |
+| #215 | Seal Fate capped per ability USE, moving Venom 600.8 to **594.5** | a full re-measure; **only Venom's row differed**, and this round's figure for it went +9.7 to **+7.0** |
+
+**THE SECOND ONE IS WHY A ROW CANNOT JUST BE PATCHED.** Venom's +9.7 was measured
+against a baseline that no longer existed, and the honest figure against the
+Venom that ships is +7.0 -- a difference of 2.7 on a row that moved for reasons
+having nothing to do with this change. **A DELTA IS ONLY MEANINGFUL AGAINST THE
+BASELINE IT WAS TAKEN FROM**, and a peer merge to any profile this change touches
+invalidates that profile's delta even though the mechanism is untouched.
+
+**THE CONFLICT WAS THE BASELINE TABLE AND ITS MEAN BOTH TIMES**, resolved by
+taking `main`'s and regenerating. Hand-merging two versions of a 25-row table is
+the edit `tools/update_baseline_table.py` exists to prevent, and a mean that two
+branches each re-summed from the same base is the arithmetic failure this file
+documents under **Git workflow** -- neither branch could see the other.
+
+
+
+---
+
+# FOREVER PATCH 1.60.1.70170 — the first four rounds
 
 The entries below this one are a single patch. They are separate commits because
 the owner's answers arrived in batches, and **three of the four rounds were each
@@ -10,20 +131,34 @@ larger than anything in the patch notes.**
 | 2 | `0f71ad5` | four rulings on questions round one RAISED | Fire **-187.6** |
 | 3 | `58f505e` | one more coefficient the owner gave afterwards | Frostfire **-159.3** |
 | — | `2929ad8` | this file and CLAUDE.md, written up after round three | no code |
-| 4 | *the entry below* | a Bear multiplier, a Cat APL clause, a Paladin internal cooldown | Cat **+13.2** |
+| 4 | `9e4b4d0` | a Bear multiplier, a Cat APL clause, a Paladin internal cooldown | Cat **+13.2** |
+| — | `4672bde` | two owner rulings: Ice Lance's frozen case and Evocation's zero casts are both intended | no code |
+| 5 | *the entry above* | melee and ranged miss 8% not 9%, which the derivation had had wrong since #10 | **14 profiles**, Combat **+11.7** |
 
 **SO "THE PATCH NOTES ARE EXHAUSTED" WAS NOT "THE PATCH IS IMPLEMENTED", AND IT
-STILL IS NOT AFTER FOUR ROUNDS.** What the notes produced was a list of
-questions; the answers are still arriving, and round four landed AFTER the patch
-had been written up as finished in a commit of its own. Plan for the next one to
-land in several commits, and do not read the write-up as the end of it.
+STILL IS NOT AFTER FIVE ROUNDS.** What the notes produced was a list of
+questions; the answers are still arriving. **Round four landed after the patch
+had been written up as finished in a commit of its own, and round five landed
+after a commit that closed the last two open questions** -- and it was the
+widest-reaching of the five. Plan for the next one to land in several commits,
+and do not read a write-up, or an empty question list, as the end of it.
 
-**THE TOP ROW CHANGED TWICE AND THE MEAN FELL 14.6** -- 704.8 to **690.2**,
-re-summed from the table rather than carried forward: round four put 17.0 back
-across two Druid rows, so the figure this header carried for one commit (689.4)
-is a round-three number.
+**THE TOP ROW CHANGED TWICE AND THE MEAN FELL 10.9 ACROSS THE FIVE ROUNDS** --
+704.8 to **693.9** over the 24 profiles that existed throughout, re-summed from
+the table rather than carried forward each time. It read 689.4 after round three,
+690.2 after round four put 17.0 back across two Druid rows, and 693.9 after round
+five raised fifteen rows at once; **the first two are published figures that are
+no longer the mean**, which is why this sentence names the round each belongs to.
+
+**AND THE TABLE'S OWN MEAN IS 698.8, WHICH IS NOT THAT NUMBER AND MUST NOT BE
+COMPARED TO IT.** A 25th profile merged from another branch during round five --
+Hawk Melee at 826.1, well above the mean -- so the denominator changed in the
+same commit range as the figures. **A MEAN ACROSS A CHANGED PROFILE COUNT IS NOT
+A COMPARISON**: reading 704.8 against 698.8 says the project fell 6.0 when the
+builds that existed throughout fell 10.9 and a new row pulled the average up.
+Either state the count beside the mean or compare the rows.
 Frostfire took first place in round one, held it through round two and lost it in
-round three; **DW Fury is the top row now at 892.0**, and no caster is in the top
+round three; **DW Fury is the top row at 901.8**, and no caster is in the top
 six for the first time since the consumables landed. The Mage's two best profiles
 lost 347 DPS between them across rounds two and three, both on owner rulings
 rather than on anything this project had got wrong, and the class's best row is
@@ -120,7 +255,7 @@ OFF THE TABLE.** The ruleset owner, in their own form: "Ice lance now has a
 1.5/3.5/4 spell power coefficient instead of 1.5/3.5."
 
 **Frostfire 927.6 → 768.3, -159.3 REAL**, and the other twenty-three identical to
-the decimal. It was the top profile and is now **ninth**; **DW Fury is the top
+the decimal. It was the top profile and is now **ninth**; **DW Fury took the top
 row at 892.0.**
 
 | | before | after |
@@ -1482,7 +1617,7 @@ while it worked.
 decimal -- which is what a talent change scoped to one build should look like.
 It makes Frostfire the top Mage, above Fire's 401.2 and Arcane's 392.6, and the
 build that existed for the Fire/Frost overlap now has a third reason to. The
-mean across **25** is **695.5**, RE-SUMMED FROM THE TABLE ABOVE rather than
+mean across **25** is **698.8**, RE-SUMMED FROM THE TABLE ABOVE rather than
 adjusted -- **by `tools/update_baseline_table.py`, which exists now**; the
 sentence above it had promised a script for several commits and there was none,
 so the mean and the ordering were still being maintained by hand.
@@ -2044,25 +2179,29 @@ cannot audit, which is why the check is a SET comparison and not a row count.
 
 | Profile | Class | Talents | DPS | | Profile | Class | Talents | DPS |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| DW Fury | Warrior | 17/34/0 | 892.0 | | Enh Shaman | Shaman | 17/34/0 | 708.6 |
-| **Hawk Melee** | Hunter | 16/11/24 | **824.4** | | Combat Rogue | Rogue | 18/33/0 | 691.1 |
-| Cat Druid | Druid | 9/34/8 | 807.2 | | SM/DS | Warlock | 40/11/0 | 690.4 |
-| LW Ranged | Hunter | 7/39/5 | 805.9 | | Fire Mage | Mage | 10/39/2 | 690.1 |
-| Seal Twist Ret | Paladin | 15/0/36 | 788.4 | | Hemo Rogue | Rogue | 17/3/31 | 622.4 |
-| 2H Arms | Warrior | 39/10/2 | 784.1 | | Ele Shaman | Shaman | 38/13/0 | 617.5 |
-| LW Melee | Hunter | 7/13/31 | 779.7 | | Shockadin | Paladin | 23/0/28 | 601.3 |
-| BM Hunter | Hunter | 31/20/0 | 771.7 | | Venom Rogue | Rogue | 37/12/2 | 594.5 |
-| Arcane Mage | Mage | 47/4/0 | 769.4 | | Rupture Rogue | Rogue | 12/8/31 | 584.2 |
-| Frostfire Mage | Mage | 0/29/22 | 768.3 | | Prot Warr | Warrior | 17/0/34 | 504.9 |
+| **DW Fury** | Warrior | 17/34/0 | **901.8** | | **Enh Shaman** | Shaman | 17/34/0 | **716.1** |
+| **Hawk Melee** | Hunter | 16/11/24 | **826.1** | | **Combat Rogue** | Rogue | 18/33/0 | **702.9** |
+| **LW Ranged** | Hunter | 7/39/5 | **814.5** | | SM/DS | Warlock | 40/11/0 | 690.4 |
+| Cat Druid | Druid | 9/34/8 | 807.2 | | Fire Mage | Mage | 10/39/2 | 690.1 |
+| **Seal Twist Ret** | Paladin | 15/0/36 | **796.8** | | **Hemo Rogue** | Rogue | 17/3/31 | **624.3** |
+| **2H Arms** | Warrior | 39/10/2 | **791.6** | | Ele Shaman | Shaman | 38/13/0 | 617.5 |
+| **LW Melee** | Hunter | 7/13/31 | **783.2** | | **Shockadin** | Paladin | 23/0/28 | **608.0** |
+| **BM Hunter** | Hunter | 31/20/0 | **777.8** | | **Venom Rogue** | Rogue | 37/12/2 | **601.5** |
+| Arcane Mage | Mage | 47/4/0 | 769.4 | | **Rupture Rogue** | Rogue | 12/8/31 | **588.2** |
+| Frostfire Mage | Mage | 0/29/22 | 768.3 | | **Prot Warr** | Warrior | 17/0/34 | **507.5** |
 | Firelock | Warlock | 5/11/35 | 759.7 | | Bear Druid | Druid | 9/42/0 | 500.0 |
-| Shadow Priest | Priest | 13/3/35 | 746.9 | | Prot Pally | Paladin | 8/34/9 | 355.2 |
+| Shadow Priest | Priest | 13/3/35 | 746.9 | | **Prot Pally** | Paladin | 8/34/9 | **357.0** |
 | Moonkin | Druid | 38/0/13 | 724.0 | | | | | | |
 
 **THE TOP IS DW FURY, AND A CASTER HAS NOT HELD IT SINCE THE CONSUMABLES.**
-**892.0 +/-11.5** against LW Ranged's **805.9 +/-6.2** is 86.1, which is the
-widest first-place gap this table has had. The previous paragraph here said "the
-top is still the Frostfire Mage and its lead has narrowed to one interval",
-which was true for one commit.
+**901.8 +/-11.1** against Hawk Melee's **826.1 +/-7.1** is 75.7, still the widest
+first-place gap this table has had. **TWO COMMITS HAVE MOVED BOTH HALVES OF THAT
+SENTENCE SINCE IT WAS WRITTEN** -- the gap read 86.1 over LW Ranged on the day,
+and a new profile took second place while the miss change raised fourteen other
+rows. Before that the paragraph said "the top is still the Frostfire Mage and its
+lead has narrowed to one interval", which was true for one commit. **A SENTENCE
+NAMING THE SECOND-PLACE ROW EXPIRES WHENEVER ANY ROW MOVES**, which is most
+commits.
 
 **BOTH MAGE ROWS THAT FELL DID SO ON OWNER RULINGS ABOUT COEFFICIENTS AND
 CONSUMPTION, NOT ON ANYTHING THIS PROJECT GOT WRONG.** Frostfire went 927.6 to

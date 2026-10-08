@@ -72,7 +72,7 @@ A level 60 character caps weapon skill at **300**. A level 63 raid boss has
 
 | | Formula | At a 15-point gap |
 | --- | --- | --- |
-| Miss (gap > 10) | `600 - hit + 1900*dualWield + gap * 20` | 9% |
+| Miss (gap > 10) | `500 - hit + 1900*dualWield + gap * 20` | **8%** |
 | Miss (gap <= 10) | `500 - hit + 1900*dualWield + gap * 10` | - |
 | Dodge | `500 + gap * 10` | 6.5% |
 | Glance | `1000 + (defense - 300) * 200` | 40% |
@@ -81,13 +81,31 @@ A level 60 character caps weapon skill at **300**. A level 63 raid boss has
 
 Two things are worth noticing.
 
-**The miss formula has two regimes.** Past a 10-point gap both the base and the
-per-point penalty rise, which is why a level 63 target is disproportionately
-harder to hit than a level 62 one.
+**The miss formula has two regimes, and only the PER-POINT rate changes.** Past
+a 10-point gap each point of deficit costs 0.2% instead of 0.1%, off a base of 5%
+either way.
 
-**Dodge and glance reproduce the earlier flat values exactly** at a 15-point
-gap: 6.5% and 40%. The formulas are consistent with the constants they replace;
-only miss moves, from 8% to 9%.
+**All three derived values now reproduce the flat figures they replaced** at a
+15-point gap: miss 8%, dodge 6.5%, glance 40%.
+
+> **MISS DID NOT, FOR THE WHOLE PROJECT UNTIL 2026-10-08, AND THIS DOCUMENT SAID
+> SO.** The sentence here used to read "the formulas are consistent with the
+> constants they replace; only miss moves, from 8% to 9%" -- because the commit
+> that derived the table gave the large-gap regime its own, higher base of 6%.
+> `BASE_CHANCES` had carried `meleeMiss: 8` from the owner's own combat table, so
+> the derivation changed a stated number by a point and **the discrepancy was
+> written down rather than questioned.** The ruleset owner restored it directly:
+> "The new melee and ranged attack miss chance against a level 63 target is now
+> 8% not 9%."
+>
+> **A DIFFERENCE THAT GETS DOCUMENTED STILL NEEDS SOMEBODY TO CALL IT WRONG.** Two
+> of the three figures reproducing exactly and the third moving by a point is the
+> shape of a bug, and it read as a note about the formula for a year of commits.
+
+**The usable melee and ranged hit cap is therefore 8**, not 9 -- and unlike
+spells, **melee and ranged have no miss floor**, so the ninth point of hit buys a
+non-dual-wielder nothing at all. Six of the 25 profiles now sit at exactly 0.00%
+melee miss.
 
 **Glancing blows depend on the target, not the attacker.** Training weapon skill
 reduces miss and dodge but cannot reduce glancing at all.

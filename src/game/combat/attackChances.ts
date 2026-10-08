@@ -21,10 +21,55 @@ import type { CombatStyleId } from '../character';
  * units directly: `600` means 6%.
  */
 export const COMBAT_CONSTANTS = {
-  /** Base miss when the skill gap is small (10 points or less). */
-  missBaseSmallGap: 500,
-  /** Base miss when the skill gap is large (more than 10 points). */
-  missBaseLargeGap: 600,
+  /**
+   * Base miss, BOTH regimes -- only the per-point penalty changes past the
+   * threshold, not the base.
+   *
+   * ----------------------------------------------------------------------------
+   * 5% BASE PLUS 0.2% A POINT IS 8% AT A 15-POINT GAP, which is the ruleset
+   * owner's figure: "The new melee and ranged attack miss chance against a level
+   * 63 target is now 8% not 9%." A level 60 character caps weapon skill at 300
+   * and a level 63 target carries 315 defense, so that gap is the only one any
+   * profile in this project ever faces -- no item grants weapon skill.
+   *
+   * IT WAS TWO BASES, 500 AND 600, AND THE SECOND ONE IS WHAT MADE IT 9%. That
+   * was not a transcription of anything: `BASE_CHANCES` in this file's first
+   * version carried `meleeMiss: 8` and `rangedMiss: 8` from the owner's own
+   * combat table, and the commit that derived the table from weapon skill
+   * (#10) raised it to 9% as a SIDE EFFECT of giving the large-gap regime its
+   * own base.
+   *
+   * **THAT COMMIT SAID SO, IN THE DOCS, AND IT WAS LEFT STANDING FOR THE WHOLE
+   * PROJECT.** `docs/combat-tables.md` read "the formulas are consistent with
+   * the constants they replace; only miss moves, from 8% to 9%" -- dodge's 6.5%
+   * and glance's 40% reproduced exactly, and miss alone did not. A derivation
+   * that reproduces two of the three flat figures it replaces and changes the
+   * third by a point is a derivation with a bug in it, and the sentence
+   * recording the discrepancy was read as a note about the formula rather than
+   * as a defect. **A DIFFERENCE THAT GETS WRITTEN DOWN STILL NEEDS SOMEBODY TO
+   * CALL IT WRONG.**
+   *
+   * SO THE OWNER'S NOTE RESTORES THEIR OWN ORIGINAL FIGURE rather than changing
+   * the ruleset, and it is implemented by deleting the extra base rather than by
+   * back-solving a coefficient: one base of 5% with the per-point rate doubling
+   * past the threshold gives 8% at a 15-point gap on the nose.
+   *
+   * IT IS ALSO MONOTONIC NOW, WHICH THE OLD PAIR WAS NOT SMOOTHLY. At a 10-point
+   * gap miss was 6% and at 11 points it jumped to 8.2%; it now goes 6% to 7.2%.
+   * Nothing measures that -- every profile sits at the 15-point gap -- so it is
+   * evidence about the SHAPE of the rule rather than a figure that moved.
+   *
+   * THE ONE THING THIS CANNOT DISTINGUISH, recorded because no measurement here
+   * can: any rule giving 8% at a 15-point gap is observationally identical for
+   * every profile in the project, because nothing grants weapon skill and the
+   * only target is level 63. Reading it as "the base does not rise" is the
+   * choice; the alternatives are a lower per-point rate (0.1333, which is not a
+   * figure anybody states) or a flat 8% with no skill term at all (which would
+   * discard the gap formula that dodge and glance share). Isolated in this one
+   * constant so it is cheap to flip if the owner says otherwise.
+   * ----------------------------------------------------------------------------
+   */
+  missBase: 500,
   /** Miss added per point of skill deficit, on a small gap. */
   missPerSkillSmallGap: 10,
   /** Miss added per point of skill deficit, on a large gap. */
@@ -131,11 +176,17 @@ export type CombatStyleLookup = (combatantId: string) => CombatStyleId | undefin
 /**
  * Miss chance from a weapon skill deficit.
  *
- * Two regimes: past a 10-point gap the penalty per point doubles AND the base
- * rises, which is why a level 63 target (315 defense) is so much harder to hit
- * than a level 62 one for a character capped at 300 skill.
+ * Two regimes, and ONLY the per-point penalty changes between them: past a
+ * 10-point gap each point of deficit costs 0.2% instead of 0.1%, off a base of
+ * 5% either way. A level 63 target (315 defense) against a character capped at
+ * 300 skill is a 15-point gap, so **8%** -- the owner's figure.
  *
- * `hit` is subtracted, and the result floors at zero.
+ * THE BASE USED TO RISE TOO, which made it 9%, and see `missBase` for why that
+ * was a bug in the derivation rather than a ruleset number.
+ *
+ * `hit` is subtracted, and the result floors at zero. **Melee and ranged have no
+ * miss FLOOR**, unlike spells -- so the usable melee hit cap moved with this,
+ * from 9 to 8.
  */
 export function missFromSkill(
   skill: number,
@@ -146,12 +197,14 @@ export function missFromSkill(
   const gap = defenseSkill - skill;
   const large = defenseSkill > skill + COMBAT_CONSTANTS.largeGapThreshold;
 
-  const base = large ? COMBAT_CONSTANTS.missBaseLargeGap : COMBAT_CONSTANTS.missBaseSmallGap;
   const perPoint = large
     ? COMBAT_CONSTANTS.missPerSkillLargeGap
     : COMBAT_CONSTANTS.missPerSkillSmallGap;
 
-  return Math.max(0, base - hit + dualWieldPenalty + gap * perPoint);
+  return Math.max(
+    0,
+    COMBAT_CONSTANTS.missBase - hit + dualWieldPenalty + gap * perPoint,
+  );
 }
 
 /** Dodge chance from a weapon skill deficit. */
