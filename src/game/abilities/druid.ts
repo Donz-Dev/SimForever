@@ -58,6 +58,20 @@ import {
  * MOONFIRE IS A HYBRID and shares one coefficient between its hit and its
  * burn; Insect Swarm is a PURE DoT and takes the whole periodic one. The pairs
  * live in `auras/druid.ts`, beside the effect half.
+ *
+ * ----------------------------------------------------------------------------
+ * ONE 1.60.1.70170 PATCH ITEM LANDS NOWHERE IN THIS FILE, AND THAT IS THE
+ * ANSWER RATHER THAN AN OMISSION. "Faerie Fire no longer resets your swing
+ * timer when used" -- and no Druid casts Faerie Fire here. The armor debuff is
+ * modelled as a RAID BUFF (`buffs/raidBuffs.ts`), applied to the encounter's
+ * target by an assumed raid rather than by this character, so there is no cast
+ * to reset a swing timer and no `Ability.swingTimer: 'hold'` to set.
+ *
+ * IT IS WRITTEN DOWN BECAUSE A PATCH NOTE WITH NO DIFF BESIDE IT READS AS
+ * SOMETHING THAT WAS MISSED, which is the same argument the `unmodelled` lists
+ * make from the other direction: an inert effect that SAYS it is inert is the
+ * honest failure mode. It expires the day a Druid profile casts the ability --
+ * at which point the clause is one field.
  * ----------------------------------------------------------------------------
  */
 
