@@ -21,18 +21,27 @@ supplied the poison pairing, and a saved Warlock has simply never been asked.
 **ONE FIGURE IN AN EARLIER VERSION OF THIS ENTRY WAS WRONG**, and the tell was
 visible: SM/DS's two stones were reported at an IDENTICAL 484.6, which two
 different stat bundles do not do across thirty batches. See
-[docs/handoff/warlock.md](docs/handoff/warlock.md).# Handover
+[docs/handoff/warlock.md](docs/handoff/warlock.md).
+
+# Handover
 
 **Status only.** Rules and conventions are in [CLAUDE.md](CLAUDE.md); how a class
 gets built is [docs/class-implementation.md](docs/class-implementation.md).
 
 ## Where the project is
 
-All nine classes and all 23 profiles are implemented, every number traced to a
-source rather than invented, and **all 23 priority lists are the ruleset owner's
-own** -- specified entry by entry and measured after. **2,571 tests**, CI green on Node 20 and 22. Profile
-format **v11**. Live at <https://donz-dev.github.io/SimForever/>, republished by
+All nine classes and all 24 profiles are implemented, every number traced to a
+source rather than invented, and **all 24 priority lists are the ruleset owner's
+own** -- specified entry by entry and measured after. **2,662 tests**, CI green
+on Node 20 and 22. Profile format **v12**. Live at
+<https://donz-dev.github.io/SimForever/>, republished by
 `.github/workflows/deploy.yml` on every push to `main` that passes.
+
+**THE "23" IN THAT SENTENCE WAS STALE FOR MONTHS, AND THIS FILE ALREADY SAID
+SO** -- the mean's own entry records that "Hemo made it twenty-four and the
+sentence kept saying twenty-three". It was corrected one place and not the
+other, which is the drift this document warns about one level down and then
+demonstrated at the top. **Re-count rather than re-reading the sentence.**
 
 ### The state in one table
 
@@ -43,7 +52,7 @@ format **v11**. Live at <https://donz-dev.github.io/SimForever/>, republished by
 | **Profiles** | 24, all measured, **mean 704.8** -- the armour enchants are +27.0 of it and the consumables +105.9 |
 | **Scope rulings** | 7 members, all the owner's |
 | **Placeholders** | **10 declared** -- see the milestone table, and count DECLARATIONS |
-| **Tests** | 2,293 on Node 20 and 22 |
+| **Tests** | 2,662 on Node 20 and 22 |
 
 **FOUR CLASSES ARE ESSENTIALLY DONE** -- Warrior 0 live gaps, Paladin 2, Druid 2,
 Rogue 3 -- and the remaining 64 sit mostly in the Warlock (20), Priest (12) and
@@ -133,6 +142,103 @@ The profiles were specified by the ruleset owner as `talentsforever.com` build
 URLs and every one decodes to exactly 51 points. Every profile is in its own
 class's gear, from twelve sixtyupgrades sets the owner supplied — 151 items in
 nine files. The item database is **frozen**.
+
+### Gear customisation: enchants, then consumables
+
+**TWO OWNER TABLES LANDED BACK TO BACK AND BETWEEN THEM MOVED EVERY PROFILE IN
+THE PROJECT.** The armour enchants were +2.4 to +53.7 on a mean of **+27.0**;
+the consumables were +40.0 to +249.3 on a mean of **+105.9**. Nothing recorded
+before them is comparable with anything recorded after, which is the single most
+important thing to know when reading an older figure in this file.
+
+| | Enchants | Consumables |
+| --- | --- | --- |
+| shape | one per enchantable SLOT, ten slots | one per CATEGORY, twelve categories |
+| source | 28 entries, no spell behind any | 12 rows, no item behind any |
+| ids | simulator's own, from a 900,000 block | simulator's own, by name |
+| preloaded | the owner's own per-profile table | **chosen here**, to a stated rule |
+| worth | `tests/game/enchants.test.ts` | `tests/game/consumables.test.ts` |
+
+**NEITHER IS SCRAPED AND NEITHER COULD BE.** The two WEAPON enchants that
+predate both came out of Wowhead with a spell id, an icon and a tooltip; these
+are an effect and a slot, so there is nothing to `--verify` and no tooltip to
+store. Both are declared outright -- `game/items/foreverEnchants.ts` and
+`game/buffs/consumables.ts` -- and both carry simulator-allocated ids that **may
+not be reordered once a profile has been saved against them**.
+
+**THE EXCLUSIVITY IS WHERE THE TWO DIFFER MOST, AND IT IS A DESIGN POINT RATHER
+THAN A DETAIL.** A consumable selection is a map from CATEGORY to consumable, so
+two flasks is not representable and the panel enforces nothing. The alternative
+is in the repository and has already cost something: `RaidBuff.exclusiveWith` is
+a selection rule the raid buff panel honours, and a TALENT reached the same aura
+without passing through that panel, which is how a Moonkin read +6% crit.
+
+**THREE EFFECTS TURNED OUT NOT TO BE STATS**, and each is worth knowing because
+the stat was the obvious place to put it:
+
+| | |
+| --- | --- |
+| "+1200 Hit Points" | `STAT_NAMES` has no `hitPoints`; health is derived from stamina and the owner states no conversion. It reaches the maximum as its own term -- **and lowers rage**, because `D x 10 / H` |
+| the bow's "+2% Crit Chance" | `critChance` is every attack a character makes, and this one is RANGED only. `AttackTableModifiers` on the two ranged tables, so the pet never sees it either |
+| "+2% Melee Crit Chance" | the same scope pointing the other way, on the two MELEE tables -- because `critChanceFrom` is one function and a bow reads it too |
+
+**THE LAST TWO ARE THE SAME TABLE ON OPPOSITE SIDES, AND THE OWNER'S OWN PAIR OF
+LABELS IS WHAT SETTLED THEM.** Their enchant table writes "+2% Crit Chance" on a
+bow and their consumable table writes "+2% Melee Crit Chance", and asked which
+the unqualified one meant they said melee and ranged. Two labels for one stat
+would be one label.
+
+**AND AN ENCHANT'S ARMOR IS NOT "ARMOR FROM ITEMS"**, by the owner's ruling, so
+`armorFromItems` sums ITEM stats directly rather than going through
+`statsFromEquipment`. Toughness and Thick Hide scale the plate and not what was
+enchanted onto it. Worth nothing on the day it was written -- no enchant granted
+armor before the cloak's 60 -- and wrong the day one does.
+
+**THE CONSUMABLE ROWS ARE CHOSEN, NOT STATED, AND THAT IS THE FIRST THING TO
+REPLACE.** The owner supplied the catalogue and no per-profile table, and asked
+for a sensible row on each. They follow one written-down rule rather than taste
+-- take every category the build can read, choose within a category by what it
+scales with, leave empty only what is worth nothing -- and both halves of every
+row are derived from something re-checkable: the conversion table decides
+Blasted Lands, and the MEASURED damage school decides School Spell Power. Three
+of those schools are not guessable from the class: the Moonkin is 71% arcane,
+the Frostfire Mage **62% fire**, the Elemental Shaman 56% nature.
+
+**THE CASTERS MOVED FOUR TIMES AS FAR AS THE MELEE BUILDS AND THE OWNER HAS
+CONFIRMED THAT IS INTENDED** -- "casters *should* have moved more". A caster row
+reaches 254 school-blind spell power plus 40 on its own school, where the
+biggest single entry a melee build can take is 40 attack power. The table
+re-sorted around it: four of the top six are casters where none was before, and
+the Frostfire Mage took the top from Seal Twist Ret. **Recorded because it reads
+like a bug** -- a change moving one archetype +250 and another +40 is the shape
+somebody later "fixes".
+
+**ONE RULING CAME BACK THE OPPOSITE WAY FROM THE PRECEDENT, WHICH IS THE
+EPISODE WORTH KEEPING.** "+40 Attack Power" shipped as the melee pool alone,
+because every ITEM line in the data reads those words that way and because the
+owner's one ruling the other way -- Careful Aim -- is about a TALENT, and a
+ruling covers what it says. The owner then ruled the consumable feeds BOTH
+pools. **So an item's wording and a consumable's are now known to mean different
+things, and neither settles the other.** Waiting was still right: it cost one
+review, where guessing would have left two Hunter profiles carrying an elixir
+worth nothing with nobody to notice.
+
+**AND THE TWO CHANGES COLLIDED WITH A THIRD, CLEANLY AND WRONGLY.** The Warlock
+stone merged between them, and it and the consumables were written from the same
+base: **both took profile version 11 and both keyed their migration at 10**, and
+git merged the two migration tables with no conflict at all -- one object
+literal with the key `10` twice, where the second silently wins and the first
+migration never runs. The TYPECHECKER caught it, not the suite and not the
+merge. The consumables are v12 keyed at 11 now, and `consumables.test.ts`
+carries a regression test that a version 10 profile comes out the far end with
+BOTH fields. See **Git workflow** in CLAUDE.md.
+
+**THE GEAR PANEL NEEDED NO CODE FOR THE ENCHANTS**, because it already built its
+dropdown from `enchantsForSlot`; what it needed was CSS, since the enchant
+column was sized when the only two names were "Crusader" and "Spell Power". The
+consumables are a panel of their own, under the raid buffs, one dropdown per
+category. `tools/enchant_report.ts` and `tools/consumable_report.ts` print all
+24 rows of each in the shape of the owner's own spreadsheets.
 
 ### The Mage fine-tuning pass
 
