@@ -398,6 +398,35 @@ export const HUNTER_LONE_WOLF_MELEE: readonly PriorityEntry[] = [
   { abilityId: 'wing_clip' },
 ];
 
+/**
+ * HAWK MELEE -- Lone Wolf Melee's list with the hawk in it, and a pet behind it.
+ *
+ * ----------------------------------------------------------------------------
+ * THE OWNER'S INSTRUCTION WAS EXACTLY THAT: "the same as the LW melee hunter
+ * profile, except Summon Hawk will be used above Wing Clip." So this list is
+ * `HUNTER_LONE_WOLF_MELEE` with one entry inserted, and it is built by SPREADING
+ * that list rather than by copying its entries -- a copy would drift the moment
+ * either list changed, which is how four rows of the baseline table went stale.
+ *
+ * GATED ON THE CAP, like the other two lists that press it. Summon Hawk has a
+ * six-second cooldown and a hawk lasts eighteen, so an ungated entry would fire
+ * every six seconds and OVERWRITE the older of the two hawks -- the ability
+ * takes the oldest slot when both are full -- throwing away twelve seconds of a
+ * hawk to start a new one. `hawksBelowCap` is what both the Beast Mastery and
+ * the Lone Wolf Ranged lists use and there is no reason this one differs.
+ *
+ * ABOVE WING CLIP AND BELOW EVERYTHING ELSE, which is where the owner put it.
+ * That still leaves Wing Clip as the floor: Summon Hawk has a cooldown AND a
+ * condition, so the list falls past it, and an entry is only a floor when it is
+ * ungated and always castable.
+ * ----------------------------------------------------------------------------
+ */
+export const HUNTER_HAWK_MELEE: readonly PriorityEntry[] = [
+  ...HUNTER_LONE_WOLF_MELEE.filter((entry) => entry.abilityId !== 'wing_clip'),
+  { abilityId: 'summon_hawk', condition: hawksBelowCap },
+  { abilityId: 'wing_clip' },
+];
+
 export const HUNTER_BEAST_MASTERY_ROTATION: Rotation = new PriorityRotation(
   'Hunter (Beast Mastery)',
   HUNTER_BEAST_MASTERY,
@@ -409,6 +438,10 @@ export const HUNTER_LONE_WOLF_RANGED_ROTATION: Rotation = new PriorityRotation(
 export const HUNTER_LONE_WOLF_MELEE_ROTATION: Rotation = new PriorityRotation(
   'Hunter (Lone Wolf Melee)',
   HUNTER_LONE_WOLF_MELEE,
+);
+export const HUNTER_HAWK_MELEE_ROTATION: Rotation = new PriorityRotation(
+  'Hunter (Hawk Melee)',
+  HUNTER_HAWK_MELEE,
 );
 
 /**
@@ -422,13 +455,29 @@ export const HUNTER_LONE_WOLF_MELEE_ROTATION: Rotation = new PriorityRotation(
  * and both stop short of a capstone that separates them, so what tells them
  * apart is that one stands in melee and the other does not -- which is a
  * combat style and is exactly what a combat style is for.
+ *
+ * AND THE TWO MELEE BUILDS BY SUMMON HAWK, which is the talent the two lists
+ * actually differ by. Hawk Melee is Lone Wolf Melee's list plus that one entry,
+ * so the ability it grants is the honest key -- the same reasoning that gates
+ * Charge on the ability rather than on Vanguard. Keying on Lone Wolf instead
+ * would read as "does it have a pet", which is true of this build and is not
+ * what either list is about: a melee Hunter who took the hawk and Lone Wolf
+ * both would then get the list that never presses its hawk, silently.
+ *
+ * ORDER MATTERS HERE. Beast Mastery takes Summon Hawk too, so the capstone has
+ * to be asked first or a BM Hunter would fall into a melee list -- and it is
+ * `combatStyle: 'ranged'`, so it would stand there pressing Raptor Strike.
  */
 export function hunterRotation(
   style: string | undefined,
   talents: TalentAllocation,
 ): Rotation | undefined {
   if ((talents.bestial_wrath ?? 0) > 0) return HUNTER_BEAST_MASTERY_ROTATION;
-  if (style === 'two_hander' || style === 'dual_wield') return HUNTER_LONE_WOLF_MELEE_ROTATION;
+  if (style === 'two_hander' || style === 'dual_wield') {
+    return (talents.summon_hawk ?? 0) > 0
+      ? HUNTER_HAWK_MELEE_ROTATION
+      : HUNTER_LONE_WOLF_MELEE_ROTATION;
+  }
   return HUNTER_LONE_WOLF_RANGED_ROTATION;
 }
 

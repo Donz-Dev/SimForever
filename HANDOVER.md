@@ -782,6 +782,62 @@ Elemental Shaman, and Anathema the Shadow Priest.
 pool is untouched -- the Priest's stat block still reads 204 and only its Shadow
 total moved, 497 to 561. Widening it would have fed Holy as well.
 
+**A FOURTH HUNTER PROFILE, AND THE OWNER'S TWO ALLOCATIONS WERE MEASURED
+AGAINST EACH OTHER BEFORE IT LANDED.** Hawk Melee **824.4**, second of
+twenty-five and the top Hunter, with the other twenty-four identical to the
+decimal. Specified as "largely the same as LW melee" -- same race, class, combat
+style, gear, raid buffs and consumables -- with "the same APL except Summon Hawk
+will be used above Wing Clip".
+
+**TWO BUILDS WERE SUPPLIED AND THE QUESTION WAS WHICH.** They differ on one
+thing that matters: whether to keep Lone Wolf's 20% or drop it for a pet. Both
+readings were live until they were measured.
+
+| Build | DPS |
+| --- | --- |
+| **16/11/24, Lone Wolf AND the hawk** -- shipped | **824.4** |
+| 16/10/25, the pet instead of Lone Wolf | 803.8 |
+| LW Melee -- Lone Wolf, no hawk | 779.7 |
+| 16/10/25 with Summon Hawk out of the list -- the pet, no hawk | 733.5 |
+
+**THE PET LOSES AND THE HAWK WINS, AND THEY ARE INDEPENDENT.** The pet and its
+Claw and Bite were 13.2% of the 16/10/25 profile and did not cover the 20% they
+cost -- that build is **-46.2 against LW Melee** once its hawk entry is taken
+out, so trading Lone Wolf for a pet is a loss on its own. The hawk is worth
+having either way, and the build that takes both is the one that shipped.
+
+**FIVE OF ITS FIFTY-ONE POINTS DO NOTHING HERE AND IT STILL WINS BY 20.7.**
+Improved Aspect of the Monkey is "dodge from an Aspect no damage profile uses"
+and Pathfinding carries `scope: 'positioning'`, a permanent ruling rather than a
+gap. **The allocation is left exactly as the owner wrote it** -- a preset that
+quietly improved on it would stop being the build they specified -- and a test
+names the two talents and fails if either ever becomes modelled. The losing
+build wasted points too: Endurance Training's three are pet health and armor,
+worth nothing to a profile nothing attacks.
+
+**IT TAKES LONE WOLF *AND* SUMMON HAWK, WHICH IS WHAT MAKES THE LIST KEY
+LOAD-BEARING RATHER THAN MERELY DEFENSIBLE.** Both melee Hunters are dual-wield,
+below the Beast Mastery capstone, and now both take Lone Wolf -- so Summon Hawk
+is the only thing that separates them, and it is also the talent the two lists
+actually differ by. Keyed on Lone Wolf instead, this profile would run Lone Wolf
+Melee's list, **never press the hawk it spends sixteen points on**, and report an
+ordinary figure. The key was chosen for the 16/10/25 build, where it was one
+reasonable option of two; the build that shipped is the one that would have
+exposed the other choice. **The capstone stays first**, because Beast Mastery
+takes Summon Hawk too and is `combatStyle: 'ranged'`: fall it into a melee list
+and it stands there pressing Raptor Strike.
+
+**THE ENTRY IS GATED ON THE CAP, like both other lists that press it.** Summon
+Hawk has a six-second cooldown and a hawk lasts eighteen, so an ungated entry
+fires every six seconds and overwrites the older of the two -- throwing away
+twelve seconds of a hawk to start a new one. Wing Clip beneath it is still the
+floor, because this entry has both a cooldown and a condition.
+
+**AND THE PROFILE IS SEPARATED AT THE TOP, WHICH IS UNUSUAL.** 824.4 +/-8.5
+against Cat's 807.2 +/-5.1 is a gap of 17.2 that clears both intervals, so unlike
+the three-way tie it replaced this is a real second place. Only DW Fury's 892.0
+is above it.
+
 **WING CLIP IS PRESSED FOR THE PROCS AND NOT FOR THE 50, AND THE MEASUREMENT
 SAYS SO.** LW Melee **631.4 to 672.6, +41.2, REAL**, the other twenty-three
 identical to the decimal. The ruleset owner asked for it "as a filler/low
@@ -1426,7 +1482,7 @@ while it worked.
 decimal -- which is what a talent change scoped to one build should look like.
 It makes Frostfire the top Mage, above Fire's 401.2 and Arcane's 392.6, and the
 build that existed for the Fire/Frost overlap now has a third reason to. The
-mean across **24** is **690.2**, RE-SUMMED FROM THE TABLE ABOVE rather than
+mean across **25** is **695.5**, RE-SUMMED FROM THE TABLE ABOVE rather than
 adjusted -- **by `tools/update_baseline_table.py`, which exists now**; the
 sentence above it had promised a script for several commits and there was none,
 so the mean and the ordering were still being maintained by hand.
@@ -1989,17 +2045,18 @@ cannot audit, which is why the check is a SET comparison and not a row count.
 | Profile | Class | Talents | DPS | | Profile | Class | Talents | DPS |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | DW Fury | Warrior | 17/34/0 | 892.0 | | Enh Shaman | Shaman | 17/34/0 | 708.6 |
-| **Cat Druid** | Druid | 9/34/8 | **807.2** | | Combat Rogue | Rogue | 18/33/0 | 691.1 |
-| LW Ranged | Hunter | 7/39/5 | 805.9 | | SM/DS | Warlock | 40/11/0 | 690.4 |
-| Seal Twist Ret | Paladin | 15/0/36 | 788.4 | | Fire Mage | Mage | 10/39/2 | 690.1 |
-| 2H Arms | Warrior | 39/10/2 | 784.1 | | Hemo Rogue | Rogue | 17/3/31 | 622.4 |
-| LW Melee | Hunter | 7/13/31 | 779.7 | | Ele Shaman | Shaman | 38/13/0 | 617.5 |
-| BM Hunter | Hunter | 31/20/0 | 771.7 | | Shockadin | Paladin | 23/0/28 | 601.3 |
-| Arcane Mage | Mage | 47/4/0 | 769.4 | | Venom Rogue | Rogue | 37/12/2 | 600.8 |
-| Frostfire Mage | Mage | 0/29/22 | 768.3 | | Rupture Rogue | Rogue | 12/8/31 | 584.2 |
-| Firelock | Warlock | 5/11/35 | 759.7 | | Prot Warr | Warrior | 17/0/34 | 504.9 |
-| Shadow Priest | Priest | 13/3/35 | 746.9 | | **Bear Druid** | Druid | 9/42/0 | **500.0** |
-| Moonkin | Druid | 38/0/13 | 724.0 | | Prot Pally | Paladin | 8/34/9 | 355.2 |
+| **Hawk Melee** | Hunter | 16/11/24 | **824.4** | | Combat Rogue | Rogue | 18/33/0 | 691.1 |
+| Cat Druid | Druid | 9/34/8 | 807.2 | | SM/DS | Warlock | 40/11/0 | 690.4 |
+| LW Ranged | Hunter | 7/39/5 | 805.9 | | Fire Mage | Mage | 10/39/2 | 690.1 |
+| Seal Twist Ret | Paladin | 15/0/36 | 788.4 | | Hemo Rogue | Rogue | 17/3/31 | 622.4 |
+| 2H Arms | Warrior | 39/10/2 | 784.1 | | Ele Shaman | Shaman | 38/13/0 | 617.5 |
+| LW Melee | Hunter | 7/13/31 | 779.7 | | Shockadin | Paladin | 23/0/28 | 601.3 |
+| BM Hunter | Hunter | 31/20/0 | 771.7 | | Venom Rogue | Rogue | 37/12/2 | 600.8 |
+| Arcane Mage | Mage | 47/4/0 | 769.4 | | Rupture Rogue | Rogue | 12/8/31 | 584.2 |
+| Frostfire Mage | Mage | 0/29/22 | 768.3 | | Prot Warr | Warrior | 17/0/34 | 504.9 |
+| Firelock | Warlock | 5/11/35 | 759.7 | | Bear Druid | Druid | 9/42/0 | 500.0 |
+| Shadow Priest | Priest | 13/3/35 | 746.9 | | Prot Pally | Paladin | 8/34/9 | 355.2 |
+| Moonkin | Druid | 38/0/13 | 724.0 | | | | | | |
 
 **THE TOP IS DW FURY, AND A CASTER HAS NOT HELD IT SINCE THE CONSUMABLES.**
 **892.0 +/-11.5** against LW Ranged's **805.9 +/-6.2** is 86.1, which is the

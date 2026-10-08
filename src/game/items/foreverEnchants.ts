@@ -7,7 +7,7 @@ import type { Enchant, EquipmentSlot, UnmodelledEffect } from './Item';
  *
  * ----------------------------------------------------------------------------
  * A spreadsheet of ten columns -- one per enchantable slot -- listing every
- * enchant that slot may carry, plus the loadout each of the 24 profiles opens
+ * enchant that slot may carry, plus the loadout each of the 25 profiles opens
  * with. That table is the WHOLE source: it is the owner's own, it is Forever
  * data, and nothing here is derived from Classic, from Wowhead or from a
  * plausible reading of a name.

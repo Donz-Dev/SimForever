@@ -65,6 +65,7 @@ const PROFILES = [
   ['hunter', 'BM Hunter', 'https://talentsforever.com/hunter/60/5320001505101251-30502500005--ACBGHJMKNOPSVQUa-3'],
   ['hunter', 'LW Ranged', 'https://talentsforever.com/hunter/60/502-3050052511523151-5-ASQVYXZacefWgbdC-3'],
   ['hunter', 'LW Melee', 'https://talentsforever.com/hunter/60/502-005005201-500240031050220151-ACSVWYgjk3onkqtsvwx-3'],
+  ['hunter', 'Hawk Melee', 'https://talentsforever.com/hunter/60/50032005001-005005001-5002500300501201-gjk3nkqstvAHSVYEDK-6'],
   ['mage', 'Frostfire', 'https://talentsforever.com/mage/60/-0055103013013304-00550003310003002-3'],
   ['mage', 'Arcane', 'https://talentsforever.com/mage/60/255225223122311531-13--3'],
   ['mage', 'Fire', 'https://talentsforever.com/mage/60/050005-23552330130113151-002-3'],

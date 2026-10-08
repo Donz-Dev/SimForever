@@ -437,7 +437,7 @@ describe('the bow’s +2% crit reaches ranged attacks and nothing else', () => {
 });
 
 // ---------------------------------------------------------------------------
-// What each of the 24 profiles opens with
+// What each of the 25 profiles opens with
 // ---------------------------------------------------------------------------
 
 /**
@@ -534,6 +534,14 @@ const LOADOUTS: Readonly<Record<string, Readonly<Record<string, string>>>> = {
     head: '+8 Agility', neck: '+5 Agility', cloak: '+5 Agility', chest: '+4 Stats',
     wrists: '+9 Agility', gloves: '+15 Agility', legs: '+8 Agility', feet: '+7 Agility',
   },
+  // Hawk Melee wears LW Melee's gear exactly, on the owner's instruction, so
+  // the row is the same row. It is written out rather than aliased because
+  // this table exists to be an INDEPENDENT statement of what each profile
+  // opens with -- sharing the object would make it agree with itself.
+  hawk_melee: {
+    head: '+8 Agility', neck: '+5 Agility', cloak: '+5 Agility', chest: '+4 Stats',
+    wrists: '+9 Agility', gloves: '+15 Agility', legs: '+8 Agility', feet: '+7 Agility',
+  },
   warlock_smds: {
     head: '+1% Haste', neck: '+6 Spell Power', cloak: '-2% Threat', chest: '+4 Stats',
     wrists: '+16 Spell Power', gloves: '+20 Spell Power', legs: '+1% Haste', feet: 'Minor Speed',
@@ -562,7 +570,7 @@ const ARMOUR_SLOTS: readonly EquipmentSlot[] = [
   'ranged',
 ];
 
-describe('what each of the 24 profiles opens with', () => {
+describe('what each of the 25 profiles opens with', () => {
   it('covers every preset, so a new one cannot slip through unenchanted', () => {
     expect(PROFILE_PRESETS.map((preset) => preset.id).sort()).toEqual(
       Object.keys(LOADOUTS).sort(),

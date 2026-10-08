@@ -138,7 +138,7 @@ describe('Rend, specifically', () => {
  * exactly as much as a test on it.
  * ============================================================================
  */
-describe('the 24 profiles and their lists', () => {
+describe('the 25 profiles and their lists', () => {
   for (const list of ALL_PRIORITY_LISTS) {
     // The pet's list is not selected by `rotationFor`; `createPet` assigns it.
     if (list.owner === 'pet') continue;

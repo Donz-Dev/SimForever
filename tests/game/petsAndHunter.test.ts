@@ -44,6 +44,7 @@ import {
 import {
   ASPECT_OF_THE_BEAST_ATTACK_POWER,
   ASPECT_OF_THE_HAWK_ATTACK_POWER,
+  HAWK_DAMAGE_NAME,
   SERPENT_STING_RAP_PER_TICK,
   SERPENT_STING_TICK_INTERVAL_MS,
   SERPENT_STING_TOTAL,
@@ -52,9 +53,11 @@ import {
 import { HUNTER_TALENT_EFFECTS } from '../../src/game/talents/hunterEffects';
 import {
   HUNTER_BEAST_MASTERY,
+  HUNTER_HAWK_MELEE,
   HUNTER_LONE_WOLF_MELEE,
   HUNTER_LONE_WOLF_RANGED,
   hasPet,
+  hunterRotation,
 } from '../../src/game/rotations/hunter';
 import { bringsPet } from '../../src/game/character/petFamilies';
 import {
@@ -860,5 +863,204 @@ describe('Rapid Fire reaches the melee Hunter too', () => {
     expect(hasted).toBeLessThan(before);
     // 40%, so the swing is 1 / 1.4 of what it was.
     expect(hasted).toBeCloseTo(before / 1.4, 0);
+  });
+});
+
+// ---------------------------------------------------------------------------
+
+describe('Hawk Melee takes BOTH Lone Wolf and Summon Hawk', () => {
+  /*
+   * ----------------------------------------------------------------------------
+   * THE OWNER SPECIFIED IT AS "largely the same as LW melee" -- same race,
+   * class, combat style, gear, raid buffs and consumables -- then supplied two
+   * allocations and asked which was better. 16/11/24 WITH Lone Wolf measured
+   * 824.4 against 16/10/25 without it at 803.8, so the pet build lost by 20.7
+   * and this is the one that shipped.
+   *
+   * THE COMBINATION IS WHAT MATTERS HERE. Taking Lone Wolf AND Summon Hawk is
+   * what makes the rotation dispatch load-bearing: keyed on Lone Wolf, this
+   * build would run Lone Wolf Melee's list, never press the hawk it spends
+   * sixteen points on, and report an ordinary figure. There is a test for that
+   * below, and it is the reason the key is the ability rather than the build.
+   * ----------------------------------------------------------------------------
+   */
+  it('takes Lone Wolf, so it brings NO pet', () => {
+    const profile = PRESETS_BY_ID.get('hawk_melee')!.build();
+    expect(profile.talents?.lone_wolf).toBe(1);
+    expect(bringsPet('hunter', profile.talents ?? {})).toBe(false);
+    // And no family named, which would be inert and would read as a pet build.
+    expect(profile.character.petFamily).toBeUndefined();
+  });
+
+  it('fields no pet in a fight, and nothing is credited to one', () => {
+    /*
+     * `bringsPet` is a predicate and this is the consequence. Asserted on the
+     * DAMAGE TABLE because a pet's swing pools into a row named after the pet
+     * -- "Cat Melee" -- and that row being absent is the only evidence there
+     * is. A pet built and never swinging would look identical in a total.
+     */
+    const names = batchOf('hawk_melee', 5, 3).abilities.map((a) => a.abilityName);
+    expect(names).not.toContain('Cat Melee');
+    expect(names).not.toContain('Claw');
+    expect(names).not.toContain('Bite');
+  });
+
+  it('is 51 points and matches the decoded build exactly', () => {
+    /*
+     * Written out by hand from the owner's URL rather than read off the
+     * preset, for the usual reason: reading both sides off the same object
+     * passes whatever the object says. The URL decodes to 16/11/24.
+     */
+    const profile = PRESETS_BY_ID.get('hawk_melee')!.build();
+    expect(profile.talents).toEqual({
+      deadly_aspects: 5,
+      improved_aspect_of_the_monkey: 3,
+      pathfinding: 2,
+      unleashed_fury: 5,
+      summon_hawk: 1,
+      lethal_attacks: 5,
+      careful_aim: 5,
+      lone_wolf: 1,
+      improved_tracking: 5,
+      savage_strikes: 2,
+      survivalist: 5,
+      surefooted: 3,
+      predator_s_edge: 5,
+      resourcefulness: 1,
+      expose_prey: 2,
+      strider_kick: 1,
+    });
+    const points = Object.values(profile.talents!).reduce((a, b) => a + b, 0);
+    expect(points).toBe(51);
+  });
+
+  it('spends five points on two talents that do nothing here', () => {
+    /*
+     * RECORDED RATHER THAN QUIETLY RE-SPENT. The allocation is the owner's, and
+     * a preset that improved on it would stop being the build they specified --
+     * so the honest thing is a test saying which points are inert and why, that
+     * FAILS if either talent ever becomes modelled. `pathfinding` carries a
+     * `scope`, so it is a permanent ruling; Improved Aspect of the Monkey does
+     * not, so it is a live gap nothing is likely to reach.
+     */
+    const monkey = HUNTER_TALENT_EFFECTS.improved_aspect_of_the_monkey;
+    const pathfinding = HUNTER_TALENT_EFFECTS.pathfinding;
+    expect(monkey.every((e) => e.kind === 'unmodelled')).toBe(true);
+    expect(pathfinding.every((e) => e.kind === 'unmodelled')).toBe(true);
+    expect(pathfinding.some((e) => e.kind === 'unmodelled' && e.scope === 'positioning')).toBe(true);
+
+    const profile = PRESETS_BY_ID.get('hawk_melee')!.build();
+    expect(
+      (profile.talents?.improved_aspect_of_the_monkey ?? 0) + (profile.talents?.pathfinding ?? 0),
+    ).toBe(5);
+  });
+
+  it('shares every setting with LW Melee except the talents', () => {
+    /*
+     * THE OWNER'S INSTRUCTION, ASSERTED. "The race, class, combat style, gear,
+     * raid buffs, and consumables should be the same" -- and a profile that
+     * quietly differed in one would measure as a talent finding. Gear
+     * especially: all three Hunters wore the WARRIOR set for the whole project
+     * and no test could have caught it.
+     *
+     * THE TALENTS ARE NOW THE ONLY DIFFERENCE AT ALL, which was not true of the
+     * first version of this profile -- that one also had a pet.
+     */
+    const hawk = PRESETS_BY_ID.get('hawk_melee')!.build();
+    const lw = PRESETS_BY_ID.get('lw_melee')!.build();
+
+    expect(hawk.character.race).toBe(lw.character.race);
+    expect(hawk.character.characterClass).toBe(lw.character.characterClass);
+    expect(hawk.character.combatStyle).toBe(lw.character.combatStyle);
+    expect(hawk.character.stance).toBe(lw.character.stance);
+    expect(hawk.character.petFamily).toBe(lw.character.petFamily);
+    expect(hawk.equipment).toEqual(lw.equipment);
+    expect(hawk.raidBuffs).toEqual(lw.raidBuffs);
+    expect(hawk.consumables).toEqual(lw.consumables);
+    expect(hawk.encounter).toEqual(lw.encounter);
+
+    expect(hawk.talents).not.toEqual(lw.talents);
+    // Both are Lone Wolf builds now, which is what makes the list key matter.
+    expect(hawk.talents?.lone_wolf).toBe(1);
+    expect(lw.talents?.lone_wolf).toBe(1);
+  });
+
+  it('runs its own list, and LONE WOLF COULD NOT HAVE TOLD THEM APART', () => {
+    /*
+     * ------------------------------------------------------------------------
+     * THIS IS THE TEST THE PROFILE EXISTS TO MAKE POSSIBLE. Both melee Hunters
+     * are dual-wield, below the Beast Mastery capstone, AND BOTH TAKE LONE
+     * WOLF -- so the only thing separating them is Summon Hawk. Keyed the other
+     * way, this build would run Lone Wolf Melee's list, never press the hawk it
+     * spends sixteen points on, and produce a perfectly ordinary figure.
+     *
+     * Asserted on `hunterRotation` directly as well as through the preset, so
+     * the claim is about the RULE and not about today's allocations.
+     * ------------------------------------------------------------------------
+     */
+    expect(batchOf('hawk_melee', 1, 1).rotationName).toContain('Hawk Melee');
+    expect(batchOf('lw_melee', 1, 1).rotationName).toContain('Lone Wolf Melee');
+
+    const lw = { lone_wolf: 1 };
+    expect(hunterRotation('dual_wield', { ...lw, summon_hawk: 1 })?.name).toContain('Hawk Melee');
+    expect(hunterRotation('dual_wield', lw)?.name).toContain('Lone Wolf Melee');
+
+    // The capstone is asked FIRST, which is what keeps Beast Mastery -- who
+    // also takes Summon Hawk -- out of a melee list it would stand still in.
+    expect(hunterRotation('ranged', { bestial_wrath: 1, summon_hawk: 1 })?.name)
+      .toContain('Beast Mastery');
+    expect(hunterRotation('dual_wield', { bestial_wrath: 1, summon_hawk: 1 })?.name)
+      .toContain('Beast Mastery');
+  });
+
+  it("is LW Melee's list plus one entry, in the owner's position", () => {
+    /*
+     * SPREAD, NOT COPIED. The assertion is the relationship rather than the
+     * contents: a literal copy of the eight entries would pass this test on the
+     * day it was written and drift the moment either list changed, which is
+     * exactly how four rows of the baseline table went stale.
+     */
+    const hawk = HUNTER_HAWK_MELEE.map((e) => e.abilityId);
+    const lw = HUNTER_LONE_WOLF_MELEE.map((e) => e.abilityId);
+
+    expect(hawk).toHaveLength(lw.length + 1);
+    expect(hawk.filter((id) => id !== 'summon_hawk')).toEqual(lw);
+    expect(hawk[hawk.length - 2]).toBe('summon_hawk');
+    expect(hawk[hawk.length - 1]).toBe('wing_clip');
+  });
+
+  it('gates the hawk on the cap, so it never overwrites a live one', () => {
+    /*
+     * Six-second cooldown against an eighteen-second hawk: ungated, the entry
+     * would fire every six seconds and take the OLDEST of the two slots,
+     * throwing away twelve seconds of a hawk each time. The other two lists
+     * that press it both gate it the same way.
+     */
+    const entry = HUNTER_HAWK_MELEE.find((e) => e.abilityId === 'summon_hawk')!;
+    expect(entry.condition).toBeDefined();
+    // And Wing Clip beneath it is still the floor, because this one is gated.
+    expect(HUNTER_HAWK_MELEE[HUNTER_HAWK_MELEE.length - 1].condition).toBeUndefined();
+  });
+
+  it('summons hawks in a real fight, and they strike', () => {
+    /*
+     * TWO ROWS, AND THE CAST ONE CARRIES NO DAMAGE. `uses` is counted from the
+     * cast event and the hawk's damage arrives from an AURA tick named `Hawk`,
+     * so "Summon Hawk" is six uses and 0 damage by design. Asserting the cast
+     * row's damage would fail on a perfectly working hawk -- and asserting only
+     * the uses would pass on one that summoned and never struck.
+     *
+     * The entry firing at all is also the test that its condition is reachable:
+     * a condition reading something nothing sets is invisible, and it once cost
+     * three Hunter list entries their whole life.
+     */
+    const batch = batchOf('hawk_melee', 10, 3);
+
+    const cast = batch.abilities.find((a) => a.abilityName === 'Summon Hawk');
+    expect(cast?.uses ?? 0).toBeGreaterThan(0);
+
+    const damage = batch.abilities.find((a) => a.abilityName === HAWK_DAMAGE_NAME);
+    expect(damage, 'the hawk never struck').toBeDefined();
+    expect(damage!.damage).toBeGreaterThan(0);
   });
 });

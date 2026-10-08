@@ -3,6 +3,7 @@ import type { ClassId } from '../character';
 import { DRUID_BEAR, DRUID_CAT, DRUID_MOONKIN } from './druid';
 import {
   HUNTER_BEAST_MASTERY,
+  HUNTER_HAWK_MELEE,
   HUNTER_LONE_WOLF_MELEE,
   HUNTER_LONE_WOLF_RANGED,
 } from './hunter';
@@ -81,7 +82,7 @@ export interface PriorityListRecord {
   readonly rotationName: string;
   readonly entries: readonly PriorityEntry[];
   /**
-   * Which of the 24 profiles runs it, by preset id, or `[]` for a list no
+   * Which of the 25 profiles runs it, by preset id, or `[]` for a list no
    * preset reaches.
    *
    * TWO LISTS ARE REACHED BY NO PROFILE, and they are not dead code: they are
@@ -268,6 +269,13 @@ export const ALL_PRIORITY_LISTS: readonly PriorityListRecord[] = [
     rotationName: 'Hunter (Lone Wolf Melee)',
     entries: HUNTER_LONE_WOLF_MELEE,
     profiles: ['lw_melee'],
+  },
+  {
+    name: 'HUNTER_HAWK_MELEE',
+    owner: 'hunter',
+    rotationName: 'Hunter (Hawk Melee)',
+    entries: HUNTER_HAWK_MELEE,
+    profiles: ['hawk_melee'],
   },
 
   // Warlock -- by capstone. 51 points cannot reach both Wrack and Incinerate.
