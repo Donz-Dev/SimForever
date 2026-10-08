@@ -240,20 +240,22 @@ describe('the talents that needed a school', () => {
 });
 
 describe('the cast modifiers this class is full of', () => {
-  it('shortens Pyroblast by a quarter a Heating Up stack, and is NOT consumed', () => {
+  it('shortens Pyroblast by a quarter a Heating Up stack', () => {
     /*
      * ----------------------------------------------------------------------
      * CALLED HOT STREAK UNTIL CLIENT BUILD 1.60.1.70170: "Hot Streak has been
      * renamed to Heating Up, since it is no longer dependent on having a
      * 'streak'". The window also went 15 seconds to 20.
      *
-     * THE NEW WORDING MAKES THIS TEST LOOK WRONG AND IT IS NOT. The tooltip now
-     * reads "reduce the cast time of your NEXT Pyroblast cast within 20 sec",
-     * which is the Maelstrom Weapon shape -- and the patch note says the name
-     * moved and nothing about the mechanic, so the behaviour is left as it was.
-     * It matters: three stacks are worth 75% off ONE Pyroblast under the
-     * one-shot reading and 75% off every Pyroblast in the window under this one.
-     * Flagged on the aura as a real open question.
+     * THE TITLE USED TO END "and is NOT consumed", and that was the OPEN
+     * QUESTION this test carried rather than a fact. The new tooltip reads
+     * "reduce the cast time of your NEXT Pyroblast cast within 20 sec" -- the
+     * Maelstrom Weapon shape -- and the patch note said only that the name had
+     * moved, so the old behaviour was kept and flagged. The owner then called
+     * it: "This was an oversight by me ... Heating up's 3 stacks should be
+     * consumed after 1 pyroblast cast." The consumption is tested next door.
+     *
+     * WHAT IS LEFT HERE IS THE MAGNITUDE, which the ruling did not touch.
      * ----------------------------------------------------------------------
      */
     const actor = bareMage('mage_fire');
@@ -286,6 +288,67 @@ describe('the cast modifiers this class is full of', () => {
      */
     expect(talentNumber('mage', 'heating_up', 1, 0)).toBe(25);
     expect(HEATING_UP_REDUCTION_PER_STACK).toBe(0.25);
+  });
+
+  it('is spent in FULL by one Pyroblast, not a stack at a time', () => {
+    /*
+     * ----------------------------------------------------------------------
+     * THE OWNER'S RULING: "Heating up's 3 stacks should be consumed after 1
+     * pyroblast cast."
+     *
+     * `all` AND NOT `stack`, WHICH IS WHY THAT FIELD IS AN ENUM. Spending one
+     * charge would leave two behind for the next Pyroblast, which reads as a
+     * working talent and is worth several times what it should be -- and both
+     * readings produce a plausible number, so the test asserts the aura is GONE
+     * rather than that it shrank.
+     *
+     * AND THE THIRD ASSERTION IS THE ONE THAT WOULD HAVE CAUGHT THE OLD
+     * BEHAVIOUR: a SECOND Pyroblast inside the same window pays full cast time.
+     * That is the whole difference the ruling makes -- 75% off one Pyroblast
+     * against 75% off every Pyroblast in twenty seconds.
+     * ----------------------------------------------------------------------
+     */
+    expect(HEATING_UP.castModifier?.consumedByCast).toBe('all');
+
+    const actor = bareMage('mage_fire');
+    const target = makeTarget();
+    const simulation = buildSimulation([actor, target]);
+    simulation.begin();
+
+    const pyroblast = actor.abilities.get('pyroblast')!;
+    const base = pyroblast.castTimeMs!;
+
+    simulation.applyAura(actor, HEATING_UP, actor.id);
+    actor.auras.get('heating_up')!.stacks = HEATING_UP_MAX_STACKS;
+    expect(resolveCast(actor, pyroblast).baseCastTimeMs).toBe(seconds(1.5));
+
+    castAbility(simulation, actor, pyroblast, target);
+
+    // The whole aura, not two stacks of it.
+    expect(actor.auras.has('heating_up')).toBe(false);
+    expect(actor.auras.stacksOf('heating_up')).toBe(0);
+    // So the next Pyroblast inside the same window pays in full.
+    expect(resolveCast(actor, pyroblast).baseCastTimeMs).toBe(base);
+  });
+
+  it('is not spent by anything other than Pyroblast', () => {
+    /*
+     * `abilityIds: ['pyroblast']` is what scopes it, and a charge spent on the
+     * wrong ability is the invisible failure: the proc still fires, the aura
+     * still reports its uptime, and the saving simply lands nowhere. Fireball is
+     * the filler directly beneath Pyroblast in both lists and is a Heating Up
+     * TRIGGER, so it is the one that would collide.
+     */
+    const actor = bareMage('mage_fire');
+    const target = makeTarget();
+    const simulation = buildSimulation([actor, target]);
+    simulation.begin();
+
+    simulation.applyAura(actor, HEATING_UP, actor.id);
+    actor.auras.get('heating_up')!.stacks = HEATING_UP_MAX_STACKS;
+
+    castAbility(simulation, actor, actor.abilities.get('fireball')!, target);
+    expect(actor.auras.stacksOf('heating_up')).toBe(HEATING_UP_MAX_STACKS);
   });
 
   it('RAISES Arcane Blast’s cost per stack, which is a negative fraction', () => {
@@ -1570,41 +1633,89 @@ describe('Evocation, which pays out during its own channel', () => {
     expect(bare.stats.get('manaRegenBypass') - before).toBe(EVOCATION_REGEN_BYPASS);
   });
 
-  it('is reached by the Fire list in a real fight, and fills the bar', () => {
+  it('is in all three lists and gated on a tenth of the pool, which NO profile now reaches', () => {
     /*
-     * THE MECHANISM IN A REAL FIGHT, because the two assertions above could
-     * both hold while no list ever reached the entry. The Fire profile is the
-     * one that runs low -- `USES=1` gives it about 0.9 casts a fight against
-     * 0.0 for Arcane, which never drops to a tenth of its pool.
-     *
      * --------------------------------------------------------------------------
-     * COUNTED OVER TWENTY SEEDS, AND IT USED TO BE ONE. "About 0.9 casts a
-     * fight" is a RATE, and the old version asserted it on seed 12345 alone --
-     * which passed for as long as that particular fight happened to run dry.
-     * Giving the Mage presets their consumable row moved it: +12 MP5 and +25
-     * intellect do not stop the Fire build needing Evocation, and the rate went
-     * 16 casts in 20 fights to 14, but seed 12345 fell the other side of the
-     * gate and the test failed on a mechanism that still works.
+     * THIS TEST HAS BEEN INVALIDATED THREE TIMES BY CHANGES THAT HAD NOTHING TO
+     * DO WITH EVOCATION, and the third one is what finally moved it off a cast
+     * count. The sequence is worth keeping, because it is the same lesson three
+     * times at increasing cost:
      *
-     * A single seed is how this project tests a BOUNDARY, with a scripted roll;
-     * a rate is what it uses for anything probabilistic, because "a 6.5% dodge
-     * is absent from a whole fight about once in two hundred runs". A cast that
-     * depends on a mana pool draining is the second kind.
+     *   1. It asserted a cast on SEED 12345 alone, and passed for as long as
+     *      that one fight happened to run dry.
+     *   2. The Mage presets gained their consumable row -- +12 MP5 and +25
+     *      intellect -- and the rate went 16 casts in 20 fights to 14. Seed
+     *      12345 fell the other side of the gate and the test failed on a
+     *      mechanism that still worked. It became a count over twenty seeds.
+     *   3. Heating Up became consumed by one Pyroblast, so the Fire build casts
+     *      Pyroblast 1.75 times a fight instead of 13.55 and spends 7,854 mana
+     *      instead of 9,751. **It never drops to a tenth of its pool, so the
+     *      rate is now ZERO** -- and the count over twenty seeds failed too.
+     *
+     * A CAST COUNT IS A ROTATION OUTCOME, however much it looks like a
+     * mechanism, and this one depended on a mana pool draining -- which is a
+     * fact about every other entry in the list. The same trap Life Tap's
+     * assertion fell into twice.
+     *
+     * SO WHAT IS ASSERTED IS THE INVARIANT: the entry is in all three lists, at
+     * the owner's threshold, and the CONDITION answers correctly on both sides
+     * of it. That cannot be moved by a damage change elsewhere, and it still
+     * fails if the entry is dropped or the threshold edited -- which is what the
+     * cast count was really standing in for.
+     *
+     * THE ZERO IS RECORDED RATHER THAN HIDDEN, because a never-fired entry is a
+     * row that is not there: `measure_profiles.ts USES=1` is where it shows, and
+     * whether the owner wants the threshold moved is their call.
      * --------------------------------------------------------------------------
      */
-    let casts = 0;
-    for (let seed = 1; seed <= 20; seed += 1) {
-      const run = runProfile(PRESETS_BY_ID.get('mage_fire')!.build(), seed);
-      casts += run.timeline.filter(
-        (event) =>
-          'auraId' in event && event.auraId === 'evocation' && event.type === 'aura_applied',
-      ).length;
+    for (const list of [MAGE_FIRE, MAGE_FROSTFIRE, MAGE_ARCANE]) {
+      const entry = list.find((candidate) => candidate.abilityId === 'evocation');
+      expect(entry).toBeDefined();
+      expect(entry!.condition).toBeDefined();
     }
-    // 14 of 20 when this was written. Asserted loosely, because what is being
-    // tested is that the entry is REACHABLE -- the exact rate is a rotation
-    // outcome and moves with the mana the build walks in with.
-    expect(casts).toBeGreaterThan(5);
+
+    // The condition itself, on both sides of the owner's tenth. Driven rather
+    // than sampled: a resource level is not a probability.
+    const actor = bareMage('mage_fire');
+    const target = makeTarget();
+    const simulation = buildSimulation([actor, target]);
+    simulation.begin();
+
+    const mana = actor.resources.require('mana');
+    const entry = MAGE_FIRE.find((candidate) => candidate.abilityId === 'evocation')!;
+
+    mana.fill();
+    expect(entry.condition!(simulation, actor, target)).toBe(false);
+
+    mana.spend(mana.maximum * 0.95);
+    expect(mana.current / mana.maximum).toBeLessThan(0.1);
+    expect(entry.condition!(simulation, actor, target)).toBe(true);
   });
+
+  it('is reached by NO profile now, which is a LIST cause rather than a gap', () => {
+    /*
+     * The figure the test above refuses to assert, measured and recorded in one
+     * place so it is a known fact rather than a surprise. Three profiles, twenty
+     * seeds each, zero casts -- because none of them drops to a tenth of its
+     * pool any more.
+     *
+     * IT IS NOT AN ENGINE CAUSE AND NOT A BUILD CAUSE. The ability is declared,
+     * granted, in every Mage list and fully modelled; what changed is that the
+     * Fire build stopped running dry when Pyroblast stopped being castable
+     * thirteen times a fight. That expires the day a list or a mana cost moves.
+     */
+    let casts = 0;
+    for (const preset of ['mage_fire', 'mage_frostfire', 'mage_arcane']) {
+      for (let seed = 1; seed <= 20; seed += 1) {
+        const run = runProfile(PRESETS_BY_ID.get(preset)!.build(), seed);
+        casts += run.timeline.filter(
+          (event) =>
+            'auraId' in event && event.auraId === 'evocation' && event.type === 'aura_applied',
+        ).length;
+      }
+    }
+    expect(casts).toBe(0);
+  }, 20_000);
 });
 
 describe('the three lists, after the owner tuned them', () => {

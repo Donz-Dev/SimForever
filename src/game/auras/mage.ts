@@ -414,19 +414,33 @@ export function fireVulnerabilityAura(percentPerStack: number): AuraDefinition {
  * THE WINDOW ALSO WENT 15 SECONDS TO 20, which the rename notes do not mention
  * and the tooltip does.
  *
- * NOT CONSUMED BY THE CAST, and the new wording makes that look wrong. "Your
- * NEXT Pyroblast cast within 20 sec" reads like a one-shot, and `consumedByCast`
- * exists for exactly that -- but the aura has no charge to spend beyond its
- * stacks, and spending them per cast is a DIFFERENT effect: three stacks are
- * worth 75% off ONE Pyroblast under that reading and 75% off every Pyroblast in
- * the window under this one. The old tooltip said "reduces the cast time of
- * Pyroblast" with no "next", so the behaviour here is the OLD reading and is
- * left alone rather than changed on a rename note: the patch says the name moved
- * and says nothing about the mechanic. Flagged because it is a real question and
- * the generous answer is the one in place.
+ * CONSUMED BY ONE PYROBLAST, ALL THREE STACKS AT ONCE -- the ruleset owner's
+ * ruling, and it settles a question the rename raised rather than answered.
+ *
+ * ----------------------------------------------------------------------------
+ * IT SHIPPED THE OTHER WAY FOR ONE REVIEW AND THE REASONING WAS RECORDED. The
+ * tooltip went from "reduces the cast time of Pyroblast" to "reduce the cast time
+ * of your NEXT Pyroblast cast within 20 sec", and the patch notes said only that
+ * the name had moved -- so the behaviour was left as the OLD reading, flagged
+ * here as a real open question, on the principle that a rename note is not
+ * authority to change a mechanic. The owner then called it: "This was an
+ * oversight by me ... Heating up's 3 stacks should be consumed after 1 pyroblast
+ * cast."
+ *
+ * WAITING WAS STILL RIGHT, AND THE PRICE WAS ONE REVIEW. The two readings are
+ * not close -- 75% off ONE Pyroblast against 75% off every Pyroblast in a
+ * twenty-second window -- so guessing the generous one and saying nothing would
+ * have put two Mage figures in the baseline table on nobody's authority. The
+ * flag is what got it asked.
+ *
+ * `all` AND NOT `stack`, which is the whole reason that field is an enum. One
+ * cast that every stack paid for together is Maelstrom Weapon's shape; spending
+ * a single stack would leave two behind for the next Pyroblast and read as a
+ * working talent worth several times what it should be.
  *
  * THREE STACKS AT 25% EACH IS 75%, which takes a six-second Pyroblast to one
- * and a half. That is the whole reason a Fire mage casts Pyroblast at all.
+ * and a half. That is the whole reason a Fire mage casts Pyroblast at all --
+ * and now it is once per rebuilt stack of three rather than once per window.
  * ----------------------------------------------------------------------------
  */
 export const HEATING_UP_DURATION_MS = seconds(20);
@@ -444,6 +458,10 @@ export const HEATING_UP: AuraDefinition = {
     castTimeFraction: HEATING_UP_REDUCTION_PER_STACK,
     scalesWithStacks: true,
     requiresCastTime: true,
+    // One Pyroblast spends the whole aura, however many stacks it held. See
+    // above: the owner's ruling, and `all` rather than `stack` for the reason
+    // that field is an enum.
+    consumedByCast: 'all',
   },
 };
 

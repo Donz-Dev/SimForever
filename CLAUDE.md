@@ -928,6 +928,14 @@ something that comes and goes.
   a `stack`; "your NEXT Lightning Bolt" spends `all`, being one cast that every
   stack paid for. Spending a stack where the effect spends all of them leaves the
   rest behind, which reads as a working talent worth several times its value.
+  **AND THE THIRD READING IS NOT CONSUMING IT AT ALL, WHICH IS WORTH 187 DPS ON
+  ONE PROFILE.** Heating Up is "reduce the cast time of your next Pyroblast cast
+  within 20 sec by 25%, stacking up to 3 times", and it had no `consumedByCast`
+  -- so three stacks were 75% off EVERY Pyroblast in a twenty-second window
+  rather than off one. The owner ruled it `all`: Fire went **877.7 to 690.1**,
+  with Pyroblast falling from **13.55 casts a fight to 1.75** because the build
+  only reaches three stacks twice. **The field being absent is a reading too**,
+  and it is the most generous of the three.
 - **A percentage mana reduction is `CastModifier.costFraction`**, granted by
   `grantCastModifier`. `abilityCost` subtracts a FLAT amount, right for a 20-rage
   strike and wrong for a 380-mana spell. **AND `abilityCost` TAKES A
@@ -2280,6 +2288,14 @@ anyway — one said 210 above a row saying −195, and the 210 was transcribed f
 months. [docs/warrior.md](docs/warrior.md) has the full reading rules and the
 per-ability figures; they are class-independent.
 
+**AND WHERE A PATCH NOTE DISAGREES WITH THE CLIENT, THE CLIENT WINS.** The
+owner's ruling on Dual Wield Specialization: the note said it "no longer provides
+a 20/40/60/80/100% increase to your Off-Hand weapon's Rage generation" and the
+client's tooltip carried one at half that, and the answer was "the client tooltip
+was correct". **A note describes an intent; the client is what players run.** So
+the note is about THAT increase rather than about the clause existing -- which is
+the same shape as a source being SILENT rather than different, one level down.
+
 **WHERE TWO SOURCES DISAGREE, `foreverchanges.pro` WINS.** The ruleset owner's
 standing rule — "when in doubt use foreverchanges.pro" — given when it settled Life
 Tap at 840 against our own capture's 424. It outranks the older instruction to
@@ -2338,6 +2354,16 @@ When a formula or value is missing, **say so and flag it loudly**: a named
 `PLACEHOLDER_*` constant, a comment, a docs entry. Do not substitute a plausible
 number. A simulator built on invented data produces results that look entirely
 reasonable and mean nothing, and nobody finds out for months.
+
+**AND A FLAGGED OPEN QUESTION IS WORTH MORE THAN A DECISION, WHICH HAS NOW PAID
+THREE TIMES.** Heating Up's rename changed its tooltip from "reduces the cast time
+of Pyroblast" to "your NEXT Pyroblast cast within 20 sec" and said nothing about
+the mechanic. The old reading was kept, with the question written on the aura and
+in the PR -- and the owner answered it: "This was an oversight by me." The two
+readings were **187 DPS apart on the Fire Mage**, so guessing the generous one
+silently would have put that figure in the baseline table on nobody's authority.
+**A rename note is not authority to change a mechanic, and the thing that gets a
+question asked is writing it down where somebody reads it.**
 
 When the source is ambiguous, **pick the reading that reproduces a known value**,
 state the interpretation in a comment, and isolate it in one place so it is cheap
