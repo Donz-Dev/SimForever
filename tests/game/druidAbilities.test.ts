@@ -317,7 +317,12 @@ describe('the three builds run', () => {
     // 409 off the items plus 30 from Enchant Weapon - Spell Power on the staff.
     // 503 now: the Staff of Dominance carries Forever's +64. The rest of
     // Cenarion Raiment is untouched, so the whole move is that one weapon.
-    expect(player.stats.get('spellPower')).toBe(439 + 64);
+    /*
+     * AND THE ARMOUR ENCHANTS ADD 42 ON TOP: the owner's caster row puts
+     * +6 on the neck, +16 on the bracer and +20 on the gloves. Written as
+     * three terms rather than a total, so moving one slot moves one addend.
+     */
+    expect(player.stats.get('spellPower')).toBe(439 + 64 + 6 + 16 + 20);
 
     const batch = batchOf('druid_moonkin', 40, 5);
     expect(batch.abilities.find((a) => a.abilityName === 'Starfire')?.uses ?? 0).toBeGreaterThan(1);

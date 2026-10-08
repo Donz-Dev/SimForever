@@ -147,17 +147,22 @@ describe('buffs on the character', () => {
     /*
      * Hand-computed, from the ruleset owner's numbers.
      *
-     *   strength  344 base + 53 (Strength of Earth) + 16 (Mark of the Wild)
-     *             = 413, x 1.1 (Blessing of Kings) = 454.3
-     *   agility   170 + 89 (Grace of Air) + 16 = 275, x 1.1 = 302.5
+     *   strength  393 base + 53 (Strength of Earth) + 16 (Mark of the Wild)
+     *             = 462, x 1.1 (Blessing of Kings) = 508.2
+     *   agility   186 + 89 (Grace of Air) + 16 = 291, x 1.1 = 320.1
      *
      * MULTIPLICATIVE is the point: Kings is "+10% (1.1x)" in the owner's own
      * notation, so it multiplies what the flats already produced rather than
      * joining an additive pool with them.
+     *
+     * THE TWO BASES MOVED WITH THE ARMOUR ENCHANTS AND THE RULE DID NOT, which
+     * is why they are written as sums here. The Fury row is 8 + 5 + 9 + 15 + 8
+     * strength plus the chest's "+4 Stats", and 5 on the cloak + 4 from the
+     * same chest + 7 on the boots of agility.
      */
     const plain = sheet([]);
-    expect(plain.stats.get('strength')).toBe(344);
-    expect(plain.stats.get('agility')).toBe(170);
+    expect(plain.stats.get('strength')).toBe(344 + (8 + 5 + 9 + 15 + 8) + 4);
+    expect(plain.stats.get('agility')).toBe(170 + 5 + 4 + 7);
 
     const buffed = sheet([
       'strength_of_earth_totem',
@@ -165,15 +170,16 @@ describe('buffs on the character', () => {
       'mark_of_the_wild',
       'blessing_of_kings',
     ]);
-    expect(buffed.stats.get('strength')).toBeCloseTo(454.3, 6);
-    expect(buffed.stats.get('agility')).toBeCloseTo(302.5, 6);
+    expect(buffed.stats.get('strength')).toBeCloseTo(508.2, 6);
+    expect(buffed.stats.get('agility')).toBeCloseTo(320.1, 6);
   });
 
   it('give Blessing of Kings a MULTIPLICATIVE ten percent, not an additive one', () => {
-    // 344 + 16 = 360, x 1.1 = 396. An additive pool with anything else would
-    // land somewhere else, and nothing else here is a percentage.
+    // 393 + 16 = 409, x 1.1 = 449.9. An additive pool with anything else
+    // would land somewhere else, and nothing else here is a percentage -- the
+    // armour enchants are flat and are already in the 393.
     const both = sheet(['mark_of_the_wild', 'blessing_of_kings']);
-    expect(both.stats.get('strength')).toBeCloseTo(396, 6);
+    expect(both.stats.get('strength')).toBeCloseTo(449.9, 6);
   });
 
   it('GROW THE HEALTH POOL, which is the whole point of Fortitude', () => {

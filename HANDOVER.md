@@ -17,7 +17,7 @@ format **v10**. Live at <https://donz-dev.github.io/SimForever/>, republished by
 | --- | --- |
 | **Talents** | 258 fully, 36 partly, 110 ruled out, **64 a live gap** -- from 132 before the class dives |
 | **Abilities** | 114 declared against 478 captured |
-| **Profiles** | 24, all measured, **mean 562.8** |
+| **Profiles** | 24, all measured, **mean 597.2** -- the armour enchants are +27.0 of it |
 | **Scope rulings** | 7 members, all the owner's |
 | **Placeholders** | **10 declared** -- see the milestone table, and count DECLARATIONS |
 | **Tests** | 2,293 on Node 20 and 22 |
@@ -919,7 +919,7 @@ while it worked.
 decimal -- which is what a talent change scoped to one build should look like.
 It makes Frostfire the top Mage, above Fire's 401.2 and Arcane's 392.6, and the
 build that existed for the Fire/Frost overlap now has a third reason to. The
-mean across **24** is **570.2**, RE-SUMMED FROM THE TABLE ABOVE rather than
+mean across **24** is **597.2**, RE-SUMMED FROM THE TABLE ABOVE rather than
 adjusted -- **by `tools/update_baseline_table.py`, which exists now**; the
 sentence above it had promised a script for several commits and there was none,
 so the mean and the ordering were still being maintained by hand.
@@ -1481,23 +1481,39 @@ cannot audit, which is why the check is a SET comparison and not a row count.
 
 | Profile | Class | Talents | DPS | | Profile | Class | Talents | DPS |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| Seal Twist Ret | Paladin | 13/0/38 | 748.3 | | Shockadin | Paladin | 23/0/28 | 585.5 |
-| LW Ranged | Hunter | 7/39/5 | 681.1 | | Arcane Mage | Mage | 47/4/0 | 576.1 |
-| LW Melee | Hunter | 7/13/31 | 672.6 | | Firelock | Warlock | 5/11/35 | 544.3 |
-| BM Hunter | Hunter | 31/20/0 | 668.6 | | Hemo Rogue | Rogue | 17/3/31 | 527.1 |
-| DW Fury | Warrior | 18/33/0 | 667.5 | | Moonkin | Druid | 38/0/13 | 513.4 |
-| Cat Druid | Druid | 9/35/7 | 663.3 | | Venom Rogue | Rogue | 37/12/2 | 510.6 |
-| Frostfire Mage | Mage | 0/29/22 | 661.3 | | Rupture Rogue | Rogue | 12/8/31 | 497.6 |
-| Enh Shaman | Shaman | 19/32/0 | 625.8 | | SM/DS | Warlock | 40/11/0 | 479.7 |
-| Fire Mage | Mage | 10/39/2 | 622.0 | | Prot Warr | Warrior | 17/0/34 | 457.0 |
-| 2H Arms | Warrior | 38/13/0 | 621.1 | | Ele Shaman | Shaman | 38/13/0 | 440.2 |
-| **Shadow Priest** | Priest | 13/3/35 | **597.9** | | Bear Druid | Druid | 9/42/0 | 433.6 |
-| Combat Rogue | Rogue | 18/33/0 | 586.3 | | Prot Pally | Paladin | 8/36/7 | 303.9 |
+| Seal Twist Ret | Paladin | 13/0/38 | 776.4 | | Arcane Mage | Mage | 47/4/0 | 609.6 |
+| LW Ranged | Hunter | 7/39/5 | 734.9 | | Shockadin | Paladin | 23/0/28 | 608.8 |
+| LW Melee | Hunter | 7/13/31 | 712.2 | | Firelock | Warlock | 5/11/35 | 565.9 |
+| BM Hunter | Hunter | 31/20/0 | 711.7 | | Hemo Rogue | Rogue | 17/3/31 | 553.4 |
+| DW Fury | Warrior | 18/33/0 | 698.3 | | Moonkin | Druid | 38/0/13 | 542.1 |
+| Frostfire Mage | Mage | 0/29/22 | 697.9 | | Venom Rogue | Rogue | 37/12/2 | 538.0 |
+| Cat Druid | Druid | 9/35/7 | 694.3 | | Rupture Rogue | Rogue | 12/8/31 | 521.7 |
+| Fire Mage | Mage | 10/39/2 | 670.4 | | SM/DS | Warlock | 40/11/0 | 494.7 |
+| Enh Shaman | Shaman | 19/32/0 | 648.3 | | Ele Shaman | Shaman | 38/13/0 | 469.3 |
+| 2H Arms | Warrior | 38/13/0 | 644.8 | | Prot Warr | Warrior | 17/0/34 | 459.4 |
+| Combat Rogue | Rogue | 18/33/0 | 614.9 | | Bear Druid | Druid | 9/42/0 | 443.0 |
+| Shadow Priest | Priest | 13/3/35 | 613.9 | | Prot Pally | Paladin | 8/36/7 | 309.7 |
 
-**THE TOP IS SEAL TWIST RET AND THE GAP IS CLEAR.** **748.3 +/-9.6** against
-LW Ranged's **681.1 +/-4.7** is 67.2, far outside both intervals. The Cat held
-the top for three commits and is sixth now, at 663.3, after the paw base and
+**THE TOP IS SEAL TWIST RET AND THE GAP IS CLEAR.** **776.4 +/-7.8** against
+LW Ranged's **734.9 +/-5.2** is 41.5, outside both intervals. The Cat held the
+top for three commits and is seventh now, at 694.3, after the paw base and
 Rip's coefficient took 274.4 off it between them.
+
+**EVERY ROW MOVED AT ONCE WHEN THE ARMOUR ENCHANTS LANDED**, by +2.4 to +53.7
+and a mean of +27.0, so nothing here is comparable with a figure recorded before
+that commit. **The two SMALLEST moves are the ones worth reading**: Prot Warr
++2.4 and Bear +9.4, both of which the harness calls noise and both of which are
+correct. Their enchant rows are dodge, defense skill and threat -- a build
+spending every slot on not dying -- so a DPS figure is the wrong measure of
+them, and `tests/game/enchants.test.ts` pins the mechanism instead by resolving
+the attacks-received table with and without the row.
+
+**AND THE RANKING MOVED WHERE THE ARITHMETIC DID NOT.** Arcane went above
+Shockadin on a gap of 0.8 and Combat above the Shadow Priest on 1.0, both well
+inside either interval -- `update_baseline_table.py` sorts on the figure and the
+figure does not know that. A hand-written version of this table had them the
+other way round, which is the ordering a person expects from the previous one
+and is no more wrong. Read the intervals before reading the order.
 
 **THE PARAGRAPH HERE SAID THE OPPOSITE AND HAD BEEN STALE FOR SEVERAL
 COMMITS** -- "Seal Twist Ret 709.0 +/-9.4 against Cat 703.8 +/-6.4 is a gap of

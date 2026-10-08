@@ -1025,13 +1025,38 @@ button:disabled {
 
 .gear-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  /*
+   * 440 RATHER THAN 260, BECAUSE A SLOT NOW HAS TWO WIDE CONTROLS IN IT.
+   *
+   * 84 for the label, 175 for the item, 168 for the enchant and 12 of gaps. At
+   * 260 with the wider enchant column the two simply shared out the shortfall
+   * and the ITEM name truncated instead -- one unreadable control traded for
+   * another. This makes the grid drop to a single column before either does.
+   */
+  grid-template-columns: repeat(auto-fill, minmax(440px, 1fr));
   gap: 8px;
 }
 
+/*
+ * Slot name, item, enchant.
+ *
+ * THE ENCHANT COLUMN IS 168px BECAUSE THE ARMOUR ENCHANTS NEED IT. It was 96,
+ * which was right while the only two were "Crusader" and "Spell Power" after
+ * the "Enchant Weapon - " prefix came off. The owner's armour table is full of
+ * names twice that long, and a truncated enchant name is a control that cannot
+ * say what it is set to -- the one thing a dropdown has to do.
+ *
+ * MEASURED RATHER THAN GUESSED, against the select's own computed font: the
+ * longest entry in the table is "+16 Healing Power" at 164px including the
+ * padding and the arrow, and 168 is that with a little to spare.
+ *
+ * See `.gear-grid` above for why its minimum moved at the same time: widening
+ * this column alone took 72px off the ITEM name, which is one truncated
+ * control traded for another.
+ */
 .gear-slot {
   display: grid;
-  grid-template-columns: 84px 1fr 96px;
+  grid-template-columns: 84px 1fr 168px;
   align-items: center;
   gap: 6px;
 }

@@ -9,7 +9,14 @@ import type {
   WeaponProfile,
   WeaponSlot,
 } from '../../engine';
-import { Combatant, SchoolModifiers, addStats, bindModifiers, makeStats } from '../../engine';
+import {
+  AttackTableModifiers,
+  Combatant,
+  SchoolModifiers,
+  addStats,
+  bindModifiers,
+  makeStats,
+} from '../../engine';
 import { abilitiesForBuild } from '../abilities/abilitiesForClass';
 import { withQuiverAndAmmo } from '../character/hunterRanged';
 import type {
@@ -48,6 +55,7 @@ import { talentBuild, talentContextFor } from '../talents/talentBuild';
 import { legalAllocation } from '../talents/talentRules';
 import { talentsForClass } from '../talents/talentData';
 import {
+  attackTableModifiersForStyle,
   liveEquipment,
   schoolPowerForStyle,
   statsForStyle,
@@ -388,6 +396,25 @@ export function createPlayer(options: PlayerOptions): Combatant {
     schoolModifiers.add(school as DamageSchool, { spellPower });
   }
 
+  /*
+   * AND THE SAME TWO SOURCES KEYED BY ATTACK TABLE, where gear is again the
+   * second one.
+   *
+   * ------------------------------------------------------------------------
+   * The ranged weapon's "+2% Crit Chance" enchant, which the owner ruled
+   * reaches RANGED ATTACKS ONLY -- not melee, and not the pet. A stat would
+   * reach all three; this is the scope that draws the line.
+   *
+   * A NEW SET RATHER THAN ADDING TO `build.attackTableModifiers`, for exactly
+   * the reason given for the schools above: a `TalentBuild` is a VALUE, and a
+   * batch that reused one would hand the second character the first one's gear
+   * on top of its own.
+   * ------------------------------------------------------------------------
+   */
+  const attackTableModifiers = new AttackTableModifiers();
+  attackTableModifiers.merge(build.attackTableModifiers);
+  attackTableModifiers.merge(attackTableModifiersForStyle(equipment, style));
+
   const abilities = abilitiesForBuild(characterClass, style, build);
   const rotation = rotationFor(
     characterClass,
@@ -445,7 +472,7 @@ export function createPlayer(options: PlayerOptions): Combatant {
     schoolModifiers,
     // And the same three scoped to MELEE or RANGED -- "all your melee
     // abilities", which is neither one ability nor one school.
-    attackTableModifiers: build.attackTableModifiers,
+    attackTableModifiers,
     // The same again, counted only while the TARGET bleeds. Rend and Tear is
     // the only caller, and the one modifier here that is about the victim.
     bleedingTargetModifiers: build.bleedingTargetModifiers,

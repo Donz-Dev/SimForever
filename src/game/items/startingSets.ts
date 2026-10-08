@@ -2,6 +2,12 @@ import type { ClassId, CombatStyleId } from '../character';
 import type { Equipment, EquipmentSlot } from './Item';
 import { ITEMS_BY_ID } from './itemData';
 import {
+  withEnchants,
+  type EnchantLoadout,
+  PROTECTION_WARRIOR_ENCHANTS,
+  STRENGTH_ENCHANTS,
+  STRENGTH_ENCHANTS_WITH_AGILITY_BOOTS,
+  HUNTER_ARMOUR_RANGED_CRIT,
   CRUSADER as CRUSADER_ENCHANT,
   DRUID_BEAR_GEAR,
   DRUID_CAT_GEAR,
@@ -68,6 +74,28 @@ const WARRIOR_ARMOUR: Partial<Record<EquipmentSlot, number>> = {
 /** Crusader. Named here as well so the Warrior weapons below read as they did. */
 const CRUSADER = CRUSADER_ENCHANT;
 
+/**
+ * The armour enchants a new Warrior starts with, per style.
+ *
+ * ----------------------------------------------------------------------------
+ * THE WARRIOR IS THE ONE CLASS WHOSE STARTING SET HAS TO CHOOSE. Every other
+ * class's armour carries its loadout on the named set in `gearSets.ts`, because
+ * every profile sharing those items shares its enchants too. Three Warrior
+ * builds share one suit of plate and take three different rows, and the only
+ * thing that can tell them apart here is the style -- the same field that
+ * already decides which weapons they get.
+ *
+ * IT MATCHES THE PRESETS BY CONSTRUCTION, because both read the same named
+ * loadouts. A starting set is still not a preset: this answers "which enchants,
+ * given the style on screen" and a preset states the build.
+ * ----------------------------------------------------------------------------
+ */
+const WARRIOR_ENCHANTS: Partial<Record<CombatStyleId, EnchantLoadout>> = {
+  two_hander: STRENGTH_ENCHANTS,
+  dual_wield: STRENGTH_ENCHANTS_WITH_AGILITY_BOOTS,
+  one_hand_shield: PROTECTION_WARRIOR_ENCHANTS,
+};
+
 /** Weapons per style, with the enchant where the set carries one. */
 const WARRIOR_WEAPONS: Partial<Record<CombatStyleId, Equipment>> = {
   dual_wield: {
@@ -119,9 +147,14 @@ const STARTING_SETS: Partial<
   Record<ClassId, (style: CombatStyleId, options: StartingSetOptions) => Equipment>
 > = {
   warrior: (style) => ({
-    ...(Object.fromEntries(
-      Object.entries(WARRIOR_ARMOUR).map(([slot, itemId]) => [slot, { itemId }]),
-    ) as Equipment),
+    ...withEnchants(
+      Object.fromEntries(
+        Object.entries(WARRIOR_ARMOUR).map(([slot, itemId]) => [slot, { itemId }]),
+      ) as Equipment,
+      // A style with no set of its own -- there is none today -- would get the
+      // plate and no enchants rather than another build's row.
+      WARRIOR_ENCHANTS[style] ?? {},
+    ),
     ...(WARRIOR_WEAPONS[style] ?? {}),
   }),
 
@@ -168,8 +201,14 @@ const STARTING_SETS: Partial<
      */
     if (style === 'two_hander') return { ...HUNTER_ARMOUR, ...HUNTER_MELEE_WEAPONS };
     if (style === 'dual_wield') return { ...HUNTER_ARMOUR, ...HUNTER_DUAL_WIELD_WEAPONS };
-    // The stat stick the two ranged builds hold and never swing.
-    return { ...HUNTER_ARMOUR, ...HUNTER_STAT_STICK };
+    /*
+     * The stat stick the two ranged builds hold and never swing -- and the bow
+     * with its crit enchant, which is the one piece the melee styles above do
+     * NOT get. The owner's table gives "+2% Crit Chance" to the two ranged
+     * Hunters and None to the melee one, and the enchant reaches ranged attacks
+     * only, so a melee build would be carrying something inert.
+     */
+    return { ...HUNTER_ARMOUR_RANGED_CRIT, ...HUNTER_STAT_STICK };
   },
 
   mage: () => MAGE_GEAR,

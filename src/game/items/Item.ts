@@ -1,4 +1,10 @@
-import type { DamageSchool, PartialStats, WeaponSlot } from '../../engine';
+import type {
+  AbilityModifier,
+  AttackTableKind,
+  DamageSchool,
+  PartialStats,
+  WeaponSlot,
+} from '../../engine';
 import type { CombatStyleId } from '../character/ids';
 
 /**
@@ -148,6 +154,22 @@ export interface Enchant {
   readonly source: string;
   readonly slots: readonly EquipmentSlot[];
   readonly stats: PartialStats;
+  /**
+   * Crit, crit damage, hit or damage scoped to ONE ATTACK TABLE.
+   *
+   * --------------------------------------------------------------------------
+   * The ranged weapon's "+2% Crit Chance" is the only caller and it is the
+   * reason this is not a stat: `critChance` is every attack the character
+   * makes, and the ruleset owner's ruling is that this one reaches RANGED
+   * ATTACKS ONLY -- not melee, and not the pet. `AttackTableKind` is the one
+   * scope that draws that line, and it is carried by the PLAYER's combatant, so
+   * a Hunter's pet never sees it.
+   *
+   * EMPTY FOR EVERY OTHER ENCHANT. A flat stat belongs in `stats`, where a
+   * buff can move it; this is for the lines that name a kind of attack.
+   * --------------------------------------------------------------------------
+   */
+  readonly attackTableModifiers?: Readonly<Partial<Record<AttackTableKind, AbilityModifier>>>;
   readonly unmodelled: readonly UnmodelledEffect[];
   readonly tooltip: string;
 }
