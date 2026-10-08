@@ -257,7 +257,36 @@ export const ARCANE_MISSILES_TICK_SP_COEFFICIENT = 0.286;
 export const ARCANE_BLAST_SP_COEFFICIENT = 0.714;
 export const FIRE_BLAST_SP_COEFFICIENT = 0.429;
 export const SCORCH_SP_COEFFICIENT = 0.429;
-export const ICE_LANCE_SP_COEFFICIENT = 0.43;
+/**
+ * Ice Lance: `1.5 / 3.5 / 4`, which is 0.107.
+ *
+ * ----------------------------------------------------------------------------
+ * THE RULESET OWNER'S OWN EXPRESSION, GIVEN IN THAT FORM: "Ice lance now has a
+ * 1.5/3.5/4 spell power coefficient instead of 1.5/3.5." It was 0.43 here, which
+ * is `1.5 / 3.5` rounded -- so this is a QUARTER of what shipped.
+ *
+ * WRITTEN AS THE EXPRESSION RATHER THAN AS A DECIMAL, which is the one place in
+ * this file that does so, for two reasons. The owner stated it that way, and
+ * `1.5 / 3.5` does not terminate: 0.43 was already a rounding, and rounding a
+ * second division would compound it. `0.107` is 0.11% low against 0.1071428...
+ *
+ * AND THE FOUR IN IT IS NOT THE FROZEN MULTIPLIER, however much it looks like
+ * one. `ICE_LANCE_FROZEN_MULTIPLIER` is also 4 and is applied SEPARATELY, in the
+ * ability, to the base damage and this coefficient alike -- so a frozen Ice
+ * Lance now carries `1.5 / 3.5 / 4 * 4`, which is exactly `1.5 / 3.5`, the
+ * figure the spell used to have UNFROZEN.
+ *
+ * THAT COINCIDENCE IS THE TRAP THIS NOTE EXISTS FOR. The two readings -- "the
+ * owner divided by the frozen multiplier, so the ability should stop applying
+ * it" and "the owner gave a base coefficient and the multiplier still applies"
+ * -- differ by a factor of SIXTEEN on a frozen cast, and the second is the right
+ * one: the owner has already ruled separately that the multiplier reaches the
+ * coefficient as well as the base ("deals 300% increased damage" is all of the
+ * damage), and a new statement of a VALUE does not overturn a ruling about which
+ * terms a multiplier reaches. See `ICE_LANCE` for that ruling.
+ * ----------------------------------------------------------------------------
+ */
+export const ICE_LANCE_SP_COEFFICIENT = 1.5 / 3.5 / 4;
 export const BLAST_WAVE_SP_COEFFICIENT = 0.129;
 export const FROSTBOLT_SP_COEFFICIENT = 0.814;
 

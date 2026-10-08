@@ -19,7 +19,38 @@ Frostfire 947.2 → 936.9, Arcane unchanged to the decimal.
 | **Combustion** | 4 non-periodic Fire crits → **3**. The note calls them "charges", which here is the CRIT COUNT and not `maxStacks` -- this aura has both, and the stack cap is twenty for an unrelated reason |
 | Master of Elements | its kill window 20s → 30s |
 
-**AND THE OWNER HAS SINCE RULED ON THE MECHANIC, WHICH COST THIS CLASS MORE THAN
+**AND ICE LANCE'S COEFFICIENT WENT TO A QUARTER OF ITSELF, WHICH COST FROSTFIRE
+THE TOP ROW.** The owner, in their own form: "Ice lance now has a 1.5/3.5/4 spell
+power coefficient instead of 1.5/3.5." **Frostfire 927.6 → 768.3, -159.3 REAL**,
+first to ninth, with the other twenty-three identical to the decimal.
+
+| | before | after |
+| --- | --- | --- |
+| base coefficient | 0.43 (`1.5 / 3.5`) | **0.107** (`1.5 / 3.5 / 4`) |
+| frozen, times four | 1.714 | **0.4286** |
+| average hit | 3,892 | **1,827** |
+| share of the profile | **35.7%** | 20.6% |
+
+**A 160-MANA INSTANT AT 35.7% OF A PROFILE IS THE SHAPE THAT INVITES A LOOK.** Its
+flat damage is 133-157, so at an average hit of 3,892 the coefficient was doing
+96% of the work -- and a spell whose base is 4% of its own hit is one where only
+the coefficient is being measured.
+
+**TWO FOURS SIT NEXT TO EACH OTHER AND THEY ARE DIFFERENT FOURS.** The frozen
+multiplier is the ruleset's "300% increased damage"; the four inside the
+coefficient is part of the owner's expression. A frozen Ice Lance therefore
+carries `1.5 / 3.5 / 4 * 4` = `1.5 / 3.5` -- **exactly the coefficient the spell
+had unfrozen before the change**. The two wrong readings of that are SIXTEEN
+apart, and `tests/game/iceLance.test.ts` pins the product end to end rather than
+either constant.
+
+**THE WHOLE SUITE PASSED THE CHANGE UNTOUCHED.** Nothing pinned this spell's
+scaling, on a change worth 159 DPS -- and the first draft of the new measurement
+read 0.1136 against 0.1071, which is Piercing Ice at 3/3 and not a transcription
+error. **A slope is the coefficient times everything between it and the damage
+event**, so the test divides the school multiplier back out and names it.
+
+**AND THE OWNER HAS ALSO RULED ON HEATING UP, WHICH COST THIS CLASS MORE THAN
 THE WHOLE PATCH DID.** "Heating up's 3 stacks should be consumed after 1 pyroblast
 cast" -- so **Fire 877.7 → 690.1, -187.6 REAL**, and Frostfire -9.2 which is
 inside its interval.
