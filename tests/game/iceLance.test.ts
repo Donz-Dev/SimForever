@@ -29,6 +29,11 @@ import { PRESETS_BY_ID } from '../../src/profiles/presets';
  * it reappear on the frozen cast and reasonably suspect a four has been
  * cancelled somewhere.
  *
+ * SETTLED BY THE OWNER, 2026-10-08: asked whether the `/4` was meant to have
+ * already done the frozen division, "This is intended stop asking." These tests
+ * pin a RULING now rather than an interpretation, which is the difference between
+ * a figure that may be revisited and one that may not.
+ *
  * THE TWO WRONG READINGS ARE A FACTOR OF SIXTEEN APART. Treating the owner's /4
  * as having already done the frozen division makes a frozen Ice Lance a quarter
  * of its coefficient; applying the multiplier twice makes it four times. Both

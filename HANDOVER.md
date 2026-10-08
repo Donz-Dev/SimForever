@@ -146,7 +146,16 @@ expression. **So a frozen Ice Lance carries `1.5 / 3.5 / 4 * 4` -- exactly
 Reading the owner's `/4` as having already done the frozen division -- so the
 ability should stop applying the multiplier -- makes a frozen cast a quarter of
 its coefficient; applying the multiplier twice makes it four times. Both produce
-a plausible number. The right reading is that a statement of a VALUE does not
+a plausible number.
+
+**AND THE OWNER HAS SINCE CLOSED IT IN SO MANY WORDS, 2026-10-08.** Asked whether
+the `/4` was meant to have already done the frozen division: **"This is intended
+stop asking."** So the reasoning below is no longer the authority, only the
+explanation -- which is the distinction worth keeping, because an interpretation
+flagged as an interpretation stays one however long it sits there, and this
+project has twice found a months-old caveat still describing a settled fact.
+
+The right reading is that a statement of a VALUE does not
 overturn the separate owner ruling about which terms the multiplier reaches, and
 `tests/game/iceLance.test.ts` pins the product END TO END rather than either
 constant -- which is the argument the pet's 1.375 damage multiplier already makes
@@ -604,7 +613,7 @@ profiles identical to the decimal.
 | --- | --- |
 | **Frostfire Bolt counts as BOTH schools, +38.0** | ten talents treat it as Frost and Fire and SEVEN already did. The three that did not were the Frost-scoped ones: Piercing Ice and Ice Shards select by school, Frost Channeling by ability id. `DamageRequest.countsAsSchools` is the first two and a list entry is the third |
 | **Ignite cannot crit and ROLLS OVER, +13.2 to Fire** | the same two exceptions Deep Wounds carries, and for the same reason -- it is a DoT applied BY a crit. Losing the crit costs less than the roll-over gains, because a Fire list re-applies it before it has delivered. Isolated: Fire reads 608.8 with the old shape against 622.0 with this one |
-| **Evocation, in all three lists at 10% mana** | 8-second channel, haste-shortened, x16 out-of-combat mana regeneration. Fires 0.9 times a fight for Fire, 0.4 for Frostfire and **0.0 for Arcane**, which never drops that low -- the entry stays in all three because the owner asked for it |
+| **Evocation, in all three lists at 10% mana** | 8-second channel, haste-shortened, x16 out-of-combat mana regeneration. Fired 0.9 times a fight for Fire, 0.4 for Frostfire and 0.0 for Arcane when this landed, and **0.0 on all three** since Heating Up changed -- **ruled intended by the owner, 2026-10-08**, so the entry stays at the threshold it has |
 | **Presence of Mind on the CHEAP Arcane Blast** | at exactly one stack and no Missile Barrage, which is the opposite of where a damage cooldown goes and is the point: each stack raises the cost 175% |
 | **Scorch is gated on Improved Scorch** | without the talent nothing applies the debuff, so the condition is permanently true and Scorch becomes an unconditional entry with every list entry beneath it unreachable |
 | **Elemental Precision was never broken** | reported as "like 0.5% per point". It delivers the full 1% to the roll, and **the miss COLUMN was diluted** -- see below |
@@ -2535,6 +2544,24 @@ Shadowburn 251–281, Searing Pain 105–123. Shadowburn is charged both a shard
 365 mana, because there the preferred source is silent rather than different — it
 carries no reagent field for any spell. See
 [docs/source-cross-checks.md](docs/source-cross-checks.md).
+
+**TWO MORE ARE ANSWERED AND BOTH ANSWERS WERE "INTENDED", 2026-10-08.** Neither
+was a missing number and neither was a defect; both were things this project had
+measured, found surprising, and reported as questions.
+
+- **Ice Lance's frozen case.** Whether the owner's `1.5/3.5/4` had already done
+  the frozen division, given that a frozen cast then carries `* 4` back on top
+  and lands on exactly the old unfrozen `1.5/3.5` -- two readings sixteen apart.
+  **"This is intended stop asking."** The familiar 0.4286 on a frozen cast is the
+  ruleset. Recorded at the constant, at the ability, and in `iceLance.test.ts`,
+  all three of which had been carrying it as a chosen interpretation.
+- **Evocation firing on no Mage profile.** Zero casts across three profiles and
+  twenty seeds each, because no build drops to a tenth of its pool any more --
+  reported with the 10% threshold offered as the thing to move. **"This is
+  intended."** So a never-fired entry has a FIFTH cause: somebody meant it. The
+  second time the owner's list has outranked a measurement of ours, after
+  Hunter's Mark's -10.1, and the test asserts the zero as a fact about the
+  ruleset rather than as an item outstanding.
 
 Answered already, for reference: Seal of Command procs at **7 PPM**;
 Vindication procs at **10%**; Seal of the Crusader's damage penalty is
