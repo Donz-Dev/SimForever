@@ -276,12 +276,12 @@
    "values": [
     [
      1,
-     20,
+     30,
      25
     ],
     [
      2,
-     20,
+     30,
      50
     ]
    ]
@@ -443,15 +443,15 @@
     20
    ]
   },
-  "hot_streak": {
-   "name": "Hot Streak",
+  "heating_up": {
+   "name": "Heating Up",
    "tree": "fire",
    "ranks": 1,
-   "text": "Your non-periodic critical strikes with Fireball, Frostfire Bolt, Fire Blast, and Scorch grant Hot Streak for 15 sec. Hot Streak reduces the cast time of Pyroblast by 25%, stacking up to 3 times.",
+   "text": "Non-periodic critical strikes with Fireball, Frostfire Bolt, Fire Blast, and Scorch reduce the cast time of your next Pyroblast cast within 20 sec by 25%, stacking up to 3 times.",
    "values": [
     25
    ],
-   "note": "single rank; the 25 filled in by hand per this directory's README -- the text states \"reduces the cast time of Pyroblast by 25%, stacking up to 3 times\" and a single-rank talent has no variable the calculator can identify"
+   "note": "single rank; the 25 filled in by hand per this directory's README -- the text states \"reduce the cast time of your next Pyroblast cast within 20 sec by 25%, stacking up to 3 times\" and a single-rank talent has no variable the importer can identify. IT WAS FILLED IN ONCE BEFORE AND THE RENAME LOST IT: the talent was HOT STREAK until client build 1.60.1.70170, so the refresh wrote a new key, found no hand-filled entry under it, and left null. A renamed talent is the one case where the importer's MERGE does not protect a hand-filled value, and the failure is silent: the cast-time reduction simply stops being applied."
   },
   "master_of_elements": {
    "name": "Master of Elements",

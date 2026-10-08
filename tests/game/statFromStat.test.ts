@@ -215,7 +215,19 @@ describe('where it lands, and where it correctly does not', () => {
      * ------------------------------------------------------------------------
      */
     const shockadin = characterFor('pally_shockadin', 'paladin');
-    expect(shockadin.stats.get('spellPower')).toBeCloseTo(shockadin.stats.get('intellect'), 6);
+    /*
+     * SIXTY PERCENT OF INTELLECT, NOT ALL OF IT, since client build
+     * 1.60.1.70170: "Champion of the Light's Intellect to Spell Damage ratio
+     * changed to 20/40/60% (Was 33/66/100%)". Both damage builds take 3/3, so
+     * both lost 40% of their largest spell power source.
+     *
+     * THE FRACTION IS WRITTEN OUT HERE rather than read from the values file,
+     * which is what makes this a check on the ratio and not a tautology.
+     */
+    expect(shockadin.stats.get('spellPower')).toBeCloseTo(
+      shockadin.stats.get('intellect') * 0.6,
+      6,
+    );
     expect(shockadin.abilities.has('seal_of_righteousness')).toBe(true);
   });
 
@@ -236,7 +248,8 @@ describe('where it lands, and where it correctly does not', () => {
      * ------------------------------------------------------------------------
      */
     const ret = characterFor('pally_ret', 'paladin');
-    expect(ret.stats.get('spellPower')).toBeCloseTo(ret.stats.get('intellect'), 6);
+    // 60% at 3/3 since client build 1.60.1.70170; see the test above.
+    expect(ret.stats.get('spellPower')).toBeCloseTo(ret.stats.get('intellect') * 0.6, 6);
     expect(ret.abilities.has('seal_of_command')).toBe(true);
   });
 

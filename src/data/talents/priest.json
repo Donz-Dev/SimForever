@@ -103,7 +103,7 @@
      "tier": 10,
      "requires": null,
      "requiresRanks": null,
-     "description": "When activated, reduces the Mana cost of your next spell by 100% and increases its critical effect chance by 25% if it is capable of a critical effect."
+     "description": "When activated, reduces the Mana cost of your next spell by 100% and increases its critical effect chance by 25% if it is a non-periodic spell and capable of a critical effect."
     },
     {
      "row": 2,
@@ -158,7 +158,7 @@
      "tier": 15,
      "requires": null,
      "requiresRanks": null,
-     "description": "Reduces the casting time of your Mana Burn spell by 1 sec."
+     "description": "Reduces the casting time of your Mana Burn spell by 1.0 sec."
     },
     {
      "row": 4,
@@ -434,7 +434,7 @@
      "tier": 0,
      "requires": null,
      "requiresRanks": null,
-     "description": "Gives you a 100% chance to gain a 100% bonus to your Spirit for 15 sec after killing a non-trivial target. For the duration, your Mana will regenerate at a 50% of normal rate while casting."
+     "description": "Gives you a 100% chance to increase your Spirit by 100% for 15 sec after killing a non-trivial target or when an enemy afflicted by your Vampiric Embrace dies. For the duration, 50% of your Mana regeneration will continue while casting."
     },
     {
      "row": 1,
@@ -533,7 +533,7 @@
      "tier": 15,
      "requires": null,
      "requiresRanks": null,
-     "description": "Afflicts your target with Shadow energy that causes all party members to be healed for 20% of any Shadow spell damage you deal for 30 sec. Vampiric Embrace also grants a chance for your Spirit Tap talent to trigger when enemies afflicted by it die."
+     "description": "Afflicts your target with Shadow energy that causes all party members to be healed for 20% of any Shadow spell damage you deal for 30 sec."
     },
     {
      "row": 3,
@@ -566,7 +566,7 @@
      "tier": 20,
      "requires": null,
      "requiresRanks": null,
-     "description": "Reduces the mana cost of your Devouring Plague by 50%.\n\nTargets that die while Devouring Plague it is active spreads it, jumping to a nearby enemy within 10 yards for the remaining duration."
+     "description": "Reduces the mana cost of your Devouring Plague by 50%.\n\nTargets that die while Devouring Plague is active spreads it, jumping to a nearby enemy within 10 yds for the remaining duration."
     },
     {
      "row": 5,

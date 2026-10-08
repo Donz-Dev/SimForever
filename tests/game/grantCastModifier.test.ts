@@ -57,11 +57,27 @@ const costOf = (preset: string, characterClass: string, abilityId: string) => {
 
 describe('a talent can grant a cast modifier', () => {
   it('takes a percentage off the cost rather than a flat amount', () => {
-    // Benediction 5/5 is "-10% on all instant cast spells and abilities", and
-    // Seal of Command costs 210. A flat 10 would be the old, wrong reading.
+    /*
+     * Benediction 5/5 is "-10% on all instant cast spells and abilities", and
+     * Seal of Command costs 210. A flat 10 would be the old, wrong reading.
+     *
+     * TWIST OF LIGHT JOINED IT AT CLIENT BUILD 1.60.1.70170 and the test is
+     * better for it: the capstone gained "Reduces the Mana cost of your Seal
+     * spells by 20%" in front of its Echo clause, so a Seal Twist Ret now has
+     * TWO percentage reductions on the same ability and pays 147 rather than
+     * 189. Additively -- 30% off the base, not 0.9 x 0.8 = 28% -- which the test
+     * below asserts for the Druid and which this one now exercises for a second
+     * class without being written for it.
+     *
+     * AND THE 20% IS HAND-FILLED, because Twist of Light is single rank. Without
+     * a value in `values/paladin.json` the `grantCastModifier` effect reads
+     * nothing and is DROPPED in silence while the Echo half keeps working -- so
+     * this assertion is also the guard on that.
+     */
     const seal = costOf('pally_ret', 'paladin', 'seal_of_command');
     expect(seal.printed).toBe(210);
-    expect(seal.resolved).toBeCloseTo(210 * 0.9, 6);
+    expect(seal.resolved).toBeCloseTo(210 * 0.7, 6);
+    expect(seal.resolved).not.toBeCloseTo(210 * 0.9 * 0.8, 6);
   });
 
   it('STACKS ADDITIVELY when two talents name the same ability', () => {

@@ -52,9 +52,9 @@ import {
   FINGERS_OF_FROST,
   FINGERS_OF_FROST_PROC_CHANCE,
   fingersOfFrostAura,
-  HOT_STREAK,
-  HOT_STREAK_MAX_STACKS,
-  HOT_STREAK_REDUCTION_PER_STACK,
+  HEATING_UP,
+  HEATING_UP_MAX_STACKS,
+  HEATING_UP_REDUCTION_PER_STACK,
   IMPROVED_SCORCH_MAX_STACKS,
   MAGE_ARMOR,
   MAGE_ARMOR_REGEN_BYPASS,
@@ -240,11 +240,21 @@ describe('the talents that needed a school', () => {
 });
 
 describe('the cast modifiers this class is full of', () => {
-  it('shortens Pyroblast by a quarter a Hot Streak stack, and is NOT consumed', () => {
+  it('shortens Pyroblast by a quarter a Heating Up stack, and is NOT consumed', () => {
     /*
-     * The difference from Maelstrom Weapon. Hot Streak says "reduces the cast
-     * time of Pyroblast", not "of your NEXT Pyroblast" -- so it is a duration
-     * buff and every Pyroblast inside the fifteen seconds is faster.
+     * ----------------------------------------------------------------------
+     * CALLED HOT STREAK UNTIL CLIENT BUILD 1.60.1.70170: "Hot Streak has been
+     * renamed to Heating Up, since it is no longer dependent on having a
+     * 'streak'". The window also went 15 seconds to 20.
+     *
+     * THE NEW WORDING MAKES THIS TEST LOOK WRONG AND IT IS NOT. The tooltip now
+     * reads "reduce the cast time of your NEXT Pyroblast cast within 20 sec",
+     * which is the Maelstrom Weapon shape -- and the patch note says the name
+     * moved and nothing about the mechanic, so the behaviour is left as it was.
+     * It matters: three stacks are worth 75% off ONE Pyroblast under the
+     * one-shot reading and 75% off every Pyroblast in the window under this one.
+     * Flagged on the aura as a real open question.
+     * ----------------------------------------------------------------------
      */
     const actor = bareMage('mage_fire');
     const target = makeTarget();
@@ -252,14 +262,30 @@ describe('the cast modifiers this class is full of', () => {
     const pyroblast = actor.abilities.get('pyroblast')!;
     const base = pyroblast.castTimeMs!;
 
-    simulation.applyAura(actor, HOT_STREAK, actor.id);
-    actor.auras.get('hot_streak')!.stacks = HOT_STREAK_MAX_STACKS;
+    simulation.applyAura(actor, HEATING_UP, actor.id);
+    actor.auras.get('heating_up')!.stacks = HEATING_UP_MAX_STACKS;
 
-    const reduction = HOT_STREAK_REDUCTION_PER_STACK * HOT_STREAK_MAX_STACKS;
+    const reduction = HEATING_UP_REDUCTION_PER_STACK * HEATING_UP_MAX_STACKS;
     expect(resolveCast(actor, pyroblast).baseCastTimeMs).toBe(Math.round(base * (1 - reduction)));
 
     // Three stacks of 25% is exactly 75%, so six seconds becomes one and a half.
     expect(resolveCast(actor, pyroblast).baseCastTimeMs).toBe(seconds(1.5));
+  });
+
+  it('keeps its hand-filled 25%, which the rename nearly lost', () => {
+    /*
+     * A SINGLE-RANK TALENT'S VALUE IS HAND-FILLED AND KEYED BY TALENT ID, so the
+     * rename wrote a new key and the importer's merge found nothing under it:
+     * `values/mage.json` came back with `heating_up` at null.
+     *
+     * AN EFFECT THAT READS NO VALUE IS DROPPED IN SILENCE, so the cast-time
+     * reduction would simply have stopped applying while the talent reported
+     * itself fully modelled. Asserted here from the tooltip rather than from the
+     * constant, because the constant and the values file are two different
+     * things and only one of them can go missing this way.
+     */
+    expect(talentNumber('mage', 'heating_up', 1, 0)).toBe(25);
+    expect(HEATING_UP_REDUCTION_PER_STACK).toBe(0.25);
   });
 
   it('RAISES Arcane Blast’s cost per stack, which is a negative fraction', () => {
@@ -826,7 +852,7 @@ describe('Combustion, whose end condition is four crits rather than a clock', ()
     expect([...FIRE_SPELL_IDS].sort()).toEqual([...fire].sort());
   });
 
-  it('ends on the fourth non-periodic Fire crit, not on a timer', () => {
+  it('ends on the THIRD non-periodic Fire crit, not on a timer', () => {
     /*
      * THE AURA IS PERMANENT -- `durationMs: 0` -- because the source states no
      * duration. `PLACEHOLDER_COMBUSTION_DURATION_MS` is deleted with this, and
@@ -856,7 +882,17 @@ describe('Combustion, whose end condition is four crits rather than a clock', ()
     fire('hit');
     expect(mage.auras.stacksOf('combustion')).toBe(4);
 
-    fire('crit');
+    /*
+     * THREE CRITS, NOT FOUR, SINCE CLIENT BUILD 1.60.1.70170: "The number of
+     * charges of Combustion has returned to 3 (was 4)".
+     *
+     * "CHARGES" IN THAT NOTE IS THE CRIT COUNT AND NOT `maxStacks`, which is the
+     * confusion worth guarding against here -- this aura has a stack count too,
+     * capped at twenty for an unrelated reason. Reading the note as the stack cap
+     * would have left the window ending a crit late and capped the crit bonus at
+     * +30%, and both halves are asserted in this test so neither can drift.
+     */
+    expect(COMBUSTION_CRITS_TO_END).toBe(3);
     fire('crit');
     fire('crit');
     expect(mage.auras.has('combustion')).toBe(true);

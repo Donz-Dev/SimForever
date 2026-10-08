@@ -66,6 +66,11 @@ const BLANKET = ['conditionalDamage', 'conditionalCrit'];
  * MEANS -- so a reader can see the effect is asking for the right thing without
  * opening the data file. A test that read the index back off the effect would
  * pass whatever the effect said.
+ *
+ * TEN SINCE CLIENT BUILD 1.60.1.70170, down from eleven: the Paladin's Crusade
+ * was removed from the tree. The count is in the test name on purpose -- an
+ * unrecorded effect and a stale row are both worth failing on, and the second is
+ * what this patch produced.
  */
 const BLANKET_MULTIPLIERS: readonly {
   readonly cls: ClassId;
@@ -97,16 +102,18 @@ const BLANKET_MULTIPLIERS: readonly {
     // and the crit half reads index 1 through its own `stat` effect.
     wants: 'damage done by your spells',
   },
-  {
-    cls: 'paladin',
-    talentId: 'crusade',
-    index: 0,
-    atRankOne: 1,
-    // "Increases all damage dealt by 1%. Increased by an additional 1% against
-    // Demon and Undead targets." Index 0 is the unconditional half; index 1 is
-    // a target property and carries its own `unmodelled` reason.
-    wants: 'all damage dealt, unconditionally',
-  },
+  /*
+   * CRUSADE WAS THE THIRD OF THESE AND FOREVER REMOVED IT at client build
+   * 1.60.1.70170, unmentioned in the patch notes. Its entry read:
+   *
+   *   paladin/crusade, index 0, 1 at rank one, "all damage dealt,
+   *   unconditionally" -- "Increases all damage dealt by 1%. Increased by an
+   *   additional 1% against Demon and Undead targets." Index 0 is the
+   *   unconditional half; index 1 is a target property and carries its own
+   *   `unmodelled` reason.
+   *
+   * SO TWO OF THE MULTI-VALUE ROWS ARE LEFT and both still want index 0.
+   */
   {
     cls: 'warrior',
     talentId: 'weaponmaster',
@@ -148,7 +155,9 @@ const BLANKET_MULTIPLIERS: readonly {
     cls: 'paladin',
     talentId: 'two_handed_weapon_specialization',
     index: 0,
-    atRankOne: 3,
+    // 2/4/6% since client build 1.60.1.70170, down from 3/6/9%. Not in the
+    // patch notes; read off the client's own tooltip.
+    atRankOne: 2,
     wants: 'damage with two-handed melee weapons',
   },
   {
@@ -175,7 +184,7 @@ const BLANKET_MULTIPLIERS: readonly {
 ];
 
 describe('every blanket damage or crit multiplier reads a number somebody checked', () => {
-  it('has exactly these eleven, so a twelfth has to be recorded', () => {
+  it('has exactly these ten, so an eleventh has to be recorded', () => {
     /*
      * EQUAL SETS, not "every one found is recorded". A stale row and an
      * unrecorded effect are both worth failing on, and the second is the

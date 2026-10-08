@@ -575,18 +575,34 @@ export type TalentEffect =
    * A named bonus on an ability that is ON or OFF, with no magnitude.
    *
    * `abilityBonus` reads a per-rank number, and a single-rank talent whose
-   * effect is "also do this" has no number to read -- Raging Blows gives
-   * Whirlwind an off-hand strike, and there is no quantity involved. Routed
-   * past the value lookup for the same reason `grantAbility` is, rather than
-   * inventing a 1 for the values file to carry.
+   * effect is "also do this" has no number to read -- the Paladin's Improved
+   * Seal of Fury and Twist of Light both set one on a seal, and there is no
+   * quantity involved. Routed past the value lookup for the same reason
+   * `grantAbility` is, rather than inventing a 1 for the values file to carry.
+   *
+   * RAGING BLOWS WAS THE ORIGINAL CALLER AND NO LONGER NEEDS IT: it gave
+   * Whirlwind an off-hand strike until client build 1.60.1.70170, which made
+   * that unconditional. The kind outlived the talent it was built for, which is
+   * the usual way round.
    */
   | { readonly kind: 'abilityFlag'; readonly abilityId: string; readonly key: string }
 
-  /** Reduces an ability's cast time by the talent's value, in SECONDS. */
-  | { readonly kind: 'abilityCastTime'; readonly abilityId: string }
+  /**
+   * Reduces an ability's cast time by the talent's value, in SECONDS.
+   *
+   * `valueIndex` ARRIVED LATE AND IS WHY IT IS DOCUMENTED HERE. Both of these
+   * were index-free, which was correct for as long as every talent reading them
+   * stated one number -- and Improved Slam stopped doing that at client build
+   * 1.60.1.70170, when it gained "and Slam's cooldown is reduced by 3.0 sec" and
+   * its row became `[0.25, 3]`. A missing index reads 0, so the two kept working
+   * by accident. See CLAUDE.md: four Druid talents and one Priest talent have
+   * been found reading the wrong number off a multi-number row, every one of
+   * them reporting itself fully modelled while it did.
+   */
+  | { readonly kind: 'abilityCastTime'; readonly abilityId: string; readonly valueIndex?: number }
 
   /** Reduces an ability's global cooldown by the talent's value, in SECONDS. */
-  | { readonly kind: 'abilityGcd'; readonly abilityId: string }
+  | { readonly kind: 'abilityGcd'; readonly abilityId: string; readonly valueIndex?: number }
 
   /**
    * Stops an ability's cast from resetting the melee swing timer.

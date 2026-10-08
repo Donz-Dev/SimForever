@@ -8,6 +8,38 @@ directory for what the census columns mean and how to reprint every figure below
 
 ---
 
+## Client build 1.60.1.70170 — two renames and a charge count
+
+**NO BUILD CHANGED and no figure moved outside its interval.** Fire 874.1 → 877.7,
+Frostfire 947.2 → 936.9, Arcane unchanged to the decimal.
+
+| | |
+| --- | --- |
+| **Hot Streak → Heating Up** | "since it is no longer dependent on having a 'streak'". The window also went 15s → 20s, which the notes do not mention |
+| **Combustion** | 4 non-periodic Fire crits → **3**. The note calls them "charges", which here is the CRIT COUNT and not `maxStacks` -- this aura has both, and the stack cap is twenty for an unrelated reason |
+| Master of Elements | its kill window 20s → 30s |
+
+**THE RENAME NEARLY DELETED THE TALENT, SILENTLY, AND THIS IS THE LESSON TO
+CARRY.** A single-rank talent's number is hand-filled in `values/mage.json` and
+keyed by TALENT ID -- so the importer wrote `heating_up`, found no hand-fill under
+it and left `values: null`. **An effect that reads no value is DROPPED without
+saying so**, so Pyroblast's 25% cast-time reduction would simply have stopped
+applying while the talent reported itself fully modelled. A rename is the one case
+where the importer's merge cannot protect a hand-filled value.
+
+**AND THE NEW WORDING RAISES A REAL QUESTION THAT IS LEFT ALONE.** It now reads
+"reduce the cast time of your NEXT Pyroblast cast within 20 sec", which is the
+`consumedByCast` shape -- three stacks worth 75% off ONE Pyroblast rather than off
+every Pyroblast in the window. The patch says the name moved and nothing about the
+mechanic, so the old reading stands and is flagged on the aura. The two readings
+are not close in value.
+
+**THE LIVE GAP COUNT FELL TO 10** by deletion rather than by work: nothing was
+built, and the Mage's own count simply re-derived lower.
+
+---
+
+
 ## The one thing to understand first
 
 **THIS CLASS HAS NOW BEEN WRONG IN THREE DIFFERENT PLACES AND ONLY ONE OF THEM

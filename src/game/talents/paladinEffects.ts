@@ -62,9 +62,20 @@ const NOT_UNDEAD =
 export const PALADIN_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
   // --- Holy ----------------------------------------------------------------
 
-  improved_holy_strike: [
-    { kind: 'abilityCooldown', abilityId: 'holy_strike', unit: 'seconds' },
-  ],
+  /*
+   * IMPROVED HOLY STRIKE IS GONE, removed from the Holy tree at client build
+   * 1.60.1.70170 and named nowhere in the patch notes -- the tree is two talents
+   * shorter, 52 to 50, and Crusade in Retribution is the other one.
+   *
+   * ALL THREE PALADIN BUILDS SPENT TWO POINTS HERE, so all three had to be
+   * re-specified; the owner supplied new URLs when asked. It took one second off
+   * Holy Strike's cooldown per rank, so what the Retribution and Protection
+   * profiles lose is two seconds off a ten-second ability they both cast.
+   *
+   * HOLY STRIKE ITSELF GAINED ELSEWHERE in the same patch: Sacred Arbiter's
+   * damage bonus went 10% to 20%, and Holy Power now raises its crit chance by
+   * 15% rather than only Holy Shock's.
+   */
 
   divine_strength: [{ kind: 'stat', stat: 'strength', operation: 'percentAdd', scale: 0.01 }],
 
@@ -212,8 +223,24 @@ export const PALADIN_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
     },
   ],
 
+  /*
+   * "Increases the critical strike chance of your Holy Shock and Holy Strike
+   * spells by {0}%, and all other spells by {1}%" -- 15% and 5% at 5/5.
+   *
+   * HOLY STRIKE WAS ADDED TO THE FIRST CLAUSE at client build 1.60.1.70170,
+   * which the patch notes do not mention, and it is the one Paladin figure in
+   * this patch that moves a damage profile rather than a tank one: Holy Strike
+   * is in all three priority lists and Holy Shock is in one.
+   *
+   * TWO ENTRIES AND TWO INDICES, unchanged in shape. The named spells take
+   * `abilityCrit` at index 0; "all other spells" is the character-wide
+   * `spellCritChance` at index 1, which also reaches the two named ones -- so
+   * they collect 20% in total, which is what the tooltip's "and all other"
+   * arithmetic gives and is deliberate rather than a double count.
+   */
   holy_power: [
     { kind: 'abilityCrit', abilityId: 'holy_shock' },
+    { kind: 'abilityCrit', abilityId: 'holy_strike' },
     { kind: 'stat', stat: 'spellCritChance', operation: 'flat', valueIndex: 1 },
   ],
 
@@ -571,10 +598,18 @@ export const PALADIN_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
     { kind: 'abilityDamage', abilityId: 'holy_strike' },
   ],
 
-  crusade: [
-    { kind: 'conditionalDamage', requires: {} },
-    { kind: 'unmodelled', reason: `Its extra bonus against Demons and Undead does nothing. ${NOT_UNDEAD}` },
-  ],
+  /*
+   * CRUSADE IS GONE, removed from the Retribution tree at client build
+   * 1.60.1.70170 and named nowhere in the patch notes. It was +1/2% damage to
+   * everything, doubled against Demons and Undead -- a blanket multiplier the
+   * Retribution and Shockadin builds both spent two points on, and one of the
+   * three `conditionalDamage` effects CLAUDE.md lists as using `requires: {}`.
+   *
+   * IT WAS ALSO ONE OF THE THREE EFFECTS THE VALUE-INDEX AUDIT FLAGGED as
+   * sitting on a multi-number row without naming an index -- `[[1, 1], [2, 2]]`
+   * -- and right by inspection rather than by declaration. The audit's point
+   * stands for the other two.
+   */
 
   two_handed_weapon_specialization: [
     { kind: 'conditionalDamage', requires: { twoHanded: true } },
@@ -588,8 +623,19 @@ export const PALADIN_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
 
   champion_of_the_light: [
     /*
-     * "Increases your spell damage and healing by up to {0}% of your
-     * Intellect", 100% at 3/3.
+     * "Increases your spell damage by up to {0}% of your Intellect", 60% at 3/3.
+     *
+     * ----------------------------------------------------------------------
+     * IT WAS 33/66/100% UNTIL CLIENT BUILD 1.60.1.70170 -- "Champion of the
+     * Light's Intellect to Spell Damage ratio changed to 20/40/60% (Was
+     * 33/66/100%)" -- so a Paladin at 3/3 converts 60% of its intellect where it
+     * converted all of it. That is a 40% cut to the biggest single spell power
+     * source either damage build has.
+     *
+     * THE TOOLTIP ALSO DROPPED "AND HEALING", which changes nothing here and is
+     * worth not reading as a second change: no Paladin profile heals, and
+     * `spellPower` is one stat either way.
+     * ----------------------------------------------------------------------
      *
      * THE ONE PLACE IN THE PROJECT WHERE SPELL POWER REACHES A MELEE BUILD.
      * The ruleset owner's seal formula has a spell power term worth twice an
@@ -628,6 +674,29 @@ export const PALADIN_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
      * reaction that spends the Echo is carried by every Paladin and does
      * nothing without one.
      */
+    /*
+     * AND A SECOND CLAUSE ARRIVED AT CLIENT BUILD 1.60.1.70170, unmentioned in
+     * the patch notes: "Reduces the Mana cost of your Seal spells by 20%, and
+     * when you replace your Seal of Command, ...". A percentage, so
+     * `grantCastModifier` and not `abilityCost` -- a flat subtraction is right
+     * for a 20-rage strike and wrong for a 260-mana seal.
+     *
+     * IT IS WORTH MOST TO THE BUILD THAT CHANGES SEALS, which is the one that has
+     * this talent: Seal Twist Ret recasts a seal every few seconds, and seal mana
+     * is a real share of what that profile spends. The four ids are the same four
+     * the Echo clause names, listed once each.
+     */
+    {
+      kind: 'grantCastModifier',
+      abilityIds: [
+        'seal_of_righteousness',
+        'seal_of_command',
+        'seal_of_the_crusader',
+        'seal_of_fury',
+      ],
+      property: 'costFraction',
+      valueIndex: 0,
+    },
     { kind: 'abilityFlag', abilityId: 'seal_of_righteousness', key: TWIST_OF_LIGHT_FLAG },
     { kind: 'abilityFlag', abilityId: 'seal_of_command', key: TWIST_OF_LIGHT_FLAG },
     { kind: 'abilityFlag', abilityId: 'seal_of_the_crusader', key: TWIST_OF_LIGHT_FLAG },

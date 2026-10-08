@@ -135,27 +135,32 @@ describe('talent-gated abilities', () => {
     expect(idsFor('one_hand_shield', {})).not.toContain('shield_slam');
   });
 
-  it('needs both a two-handed weapon and the talent for Spearing Strike', () => {
+  it('needs only the talent for Spearing Strike, and a STANCE at the cast', () => {
     /*
-     * THE SAME SHAPE AS SHIELD SLAM, and found the same way -- by reading the
-     * requirement line rather than the damage. "Requires Two-Handed Melee
-     * Weapon" on `foreverchanges.pro`, and the five two-handed weapon types
-     * named out in `forever-warrior-spellbook.json`.
+     * ----------------------------------------------------------------------
+     * IT USED TO BE THE SAME SHAPE AS SHIELD SLAM and is not any more. The
+     * two-handed weapon requirement was found the way Shield Slam's shield was
+     * -- by reading the requirement line rather than the damage -- and client
+     * build 1.60.1.70170 replaced it: "Spearing Strike no longer requires a
+     * 2handed weapon. Spearing Strike requires Battle Stance."
      *
-     * It matters more than Shield Slam's did: the DW Fury preset spends a
-     * point here and the Berserker list asks for it, so the ability was being
-     * cast by a dual-wielder for the whole project.
+     * SO THE GATE MOVED FROM THE BOOK TO THE CAST, which is the distinction this
+     * file is about. A weapon cannot change mid-fight, so a weapon requirement
+     * belongs in `abilitiesForBuild` -- an ability in the book and never cast
+     * reads as a rotation problem. A STANCE changes freely, so it belongs on the
+     * ability, and `PriorityRotation` treats the wrong stance as "not yet, and
+     * here is how".
+     *
+     * WHAT IS LEFT HERE IS THE TALENT GATE, which is what this file tests.
+     * ----------------------------------------------------------------------
      */
-    expect(idsFor('two_hander', legalise({ spearing_strike: 1 }))).toContain('spearing_strike');
-    // Took the talent, holding two one-handers.
-    expect(idsFor('dual_wield', legalise({ spearing_strike: 1 }))).not.toContain(
-      'spearing_strike',
-    );
-    expect(idsFor('one_hand_shield', legalise({ spearing_strike: 1 }))).not.toContain(
-      'spearing_strike',
-    );
-    // Holding a two-hander, never took the talent.
-    expect(idsFor('two_hander', {})).not.toContain('spearing_strike');
+    for (const style of ['two_hander', 'dual_wield', 'one_hand_shield'] as const) {
+      expect(idsFor(style, legalise({ spearing_strike: 1 })), style).toContain(
+        'spearing_strike',
+      );
+      // Never took the talent, whatever is held.
+      expect(idsFor(style, {}), style).not.toContain('spearing_strike');
+    }
   });
 
   it('reaches the combatant built by createPlayer', () => {

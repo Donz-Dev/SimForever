@@ -10,6 +10,41 @@ directory for what the census columns mean and how to reprint every figure below
 
 ---
 
+## Client build 1.60.1.70170 — Tiger's Fury is gone and the Cat gained a talent
+
+**CAT AND BEAR WERE RE-SPECIFIED and the owner supplied both URLs with the patch
+notes.** Cat **770.0 → 794.0 (+24.0 REAL)**, Bear 490.5 → 496.1 (+5.7, noise),
+Moonkin unchanged to the decimal.
+
+| | |
+| --- | --- |
+| **removed** | Tiger's Fury (the ABILITY), King of the Jungle |
+| **added** | Shifting Power, Improved Shifting Power |
+| **renamed** | Primal Fury → **Blood Frenzy**; the talent id and the reaction ids followed the client, because the source name is what a reader sees on the resource panel |
+| **moved** | Shredding Attacks up a row; Predatory Instincts across |
+
+**SHIFTING POWER IS THE RESOURCE HALF OF KING OF THE JUNGLE, MOVED ONTO AN
+ABILITY AND PAID FOR IN MANA.** "Instantly convert 55% of base Mana into 40
+Energy" -- 530 mana, a sixteen second cooldown, eight with Improved Shifting
+Power which the Cat build takes 2/2 of. **It is the first entry in the Cat list**
+and unconditional, which is the owner's whole "as long as you have the mana":
+`checkCast` refuses what the character cannot afford and the list walks past it.
+
+**AND IT IS THE SECOND DRUID ABILITY THAT COSTS SOMETHING AND ROLLS NOTHING**,
+which `omenOfClarity.test.ts` had asserted was only Demoralizing Roar. That test
+caught it, which is what it was written for: without `requiresAttackTable` this
+ability would take most of the Clearcasting charges the owner's instruction says
+must all go on Shred -- and the aura would still report its uptime.
+
+**SWIPE'S COEFFICIENT WENT 10% TO 3%** on a patch note that calls it a fix. The
+sheet says 10 and the notes are later. It moves no figure: Swipe is in no list.
+
+**THE BEAR'S CRIT NOW PAYS RAGE**, at 1.75x the flat per-swing award. Worth +5.7,
+inside the interval -- a Bear is not short of rage.
+
+---
+
+
 ## The one thing to understand first
 
 **A DRUID'S FORM IS ITS COMBAT STYLE — A FIELD THE PRESET SETS — NOT AN AURA.**

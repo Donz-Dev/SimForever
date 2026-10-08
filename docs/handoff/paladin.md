@@ -2,12 +2,47 @@
 
 **Class:** Paladin
 **Profiles:** Seal Twist Ret, Shockadin, Prot Pally
-**State:** the deep dive is done. **2 live gaps, and neither is an engine gap.**
+**State:** the deep dive is done. **1 live gap, and it is not an engine gap** --
+it was 2, and client build 1.60.1.70170 removed the talent carrying the other.
 
 Read [CLAUDE.md](../../CLAUDE.md) first, then [README.md](README.md) in this
 directory for what the census columns mean and how to reprint every figure below.
 
 ---
+
+## Client build 1.60.1.70170 — the class this patch cost the most
+
+**ALL THREE BUILDS WERE RE-SPECIFIED and the owner supplied the URLs when asked**,
+because the client removed two talents the patch notes do not mention and every
+Paladin build had points in one of them.
+
+| Profile | was | now | |
+| --- | --- | --- | --- |
+| Seal Twist Ret | 886.9 | **788.4** | **-98.5 REAL** |
+| Shockadin | 682.0 | **601.3** | **-80.7 REAL** |
+| Prot Pally | 355.4 | 355.2 | -0.2, noise |
+
+**THE TWO LARGEST, MARGINAL:** Champion of the Light's 33/66/100% → 20/40/60% of
+Intellect is **-27.6** and **-31.9**, and Vengeance's five stacks → three is
+**-24.3** and **-22.5**. The rest is Crusade's removal, the Ret's Two-Handed
+Weapon Specialization 9% → 6%, and Improved Holy Strike's cooldown, offset by
+Holy Power now naming Holy Strike and Sacred Arbiter going 10% → 20%.
+
+**THE TWO SILENT REMOVALS:** **Improved Holy Strike** (Holy, 2 points in all
+three builds) and **Crusade** (Retribution, 2 points in two of them). Neither is
+in the notes. Their 4, 4 and 2 freed points were a decision rather than a
+transcription, which is why they were asked for.
+
+**THE TANK IS THE PROFILE THAT DID NOT MOVE, AND BOTH ITS BLOCK TALENTS DID.**
+Redoubt went 30% → 20% and Holy Shield 20% → 30%, in opposite directions in one
+patch -- which is the pair to be careful with, because reading one note and
+applying it to both numbers is a wash and looks deliberate.
+
+**AND THE LIVE GAP COUNT FELL TO ONE BY DELETION.** Crusade carried the second
+one; the talent is gone, so the gap is.
+
+---
+
 
 ## The one thing to understand first
 

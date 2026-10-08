@@ -7,6 +7,8 @@ import { buildSimulation } from '../helpers/buildSimulation';
 import { makeAttacker, makeTarget } from '../helpers/actors';
 import { castAbility, dealDamage, resolveCast, seconds, spellPowerAgainst } from '../../src/engine';
 import { runProfileBatch } from '../../src/simulator';
+import { Simulation } from '../../src/engine';
+import { trainingDummyEncounter } from '../../src/simulator/trainingDummyEncounter';
 import {
   CONSECRATED_GROUND_FLAG,
   DIVINE_FAVOR,
@@ -26,10 +28,20 @@ import {
 } from '../../src/game/auras/paladin';
 import { SANCTIFIED_JUDGEMENT_SHARE_PERCENT } from '../../src/game/reactions/paladinCasts';
 import {
+  HOLY_SHIELD,
+  HOLY_SHIELD_BLOCK_CHANCE,
+  VENGEANCE_MAX_STACKS,
+  vengeanceAura,
+} from '../../src/game/auras/paladin';
+import { flat } from '../../src/engine';
+import {
   EYE_FOR_AN_EYE_HEALTH_CAP_PERCENT,
   SHIELD_SPECIALIZATION_MANA_PERCENT,
 } from '../../src/game/reactions/paladinTalents';
 import { PALADIN_TALENT_EFFECTS } from '../../src/game/talents/paladinEffects';
+import { talentNumber } from '../../src/game/talents/talentValues';
+import { legalise } from '../helpers/legalTalents';
+import { armorFromItems } from '../../src/game/items/equipment';
 import { PALADIN_SHOCKADIN } from '../../src/game/rotations/paladin';
 
 /*
@@ -67,6 +79,22 @@ const presetPlayer = (preset: string) => {
     equipment: p.equipment,
   });
 };
+
+/**
+ * A shield Paladin in the Prot preset's gear, with exactly the talents given.
+ *
+ * NOT THE PRESET'S ALLOCATION, which is the point: this is for pricing one
+ * talent against nothing, so the gear is the only thing held constant. The Prot
+ * Pally's own build does not take Toughness.
+ */
+const shieldPaladin = (talents: Record<string, number> = {}) =>
+  createPlayer({
+    race: 'human',
+    characterClass: 'paladin',
+    combatStyle: 'one_hand_shield',
+    talents,
+    equipment: built('prot_pally').equipment,
+  });
 
 /** A Paladin with the real book and no rotation, so it only acts when told. */
 const bareBuild = (preset: string, mana = 100_000) => {
@@ -420,14 +448,100 @@ describe('Divine Favor', () => {
 
 /* -------------------------------------------------------------------------- */
 
+describe('Toughness, which is where itemArmorPercent now lives', () => {
+  /*
+   * ----------------------------------------------------------------------------
+   * MOVED HERE FROM `protectionTalents.test.ts` at client build 1.60.1.70170,
+   * which removed the WARRIOR's Toughness. The declaration is shared and had
+   * three callers; this is the one a preset takes 5/5 of.
+   *
+   * THE POINT OF THE SHAPE, which is what these two tests pin: ten percent of
+   * the armor FROM ITEMS, added flat -- strictly less than ten percent of the
+   * character TOTAL, because a character's armor is items plus the class base.
+   * The talent's old reason on the Warrior called that distinction unsolvable.
+   * ----------------------------------------------------------------------------
+   */
+  it('scales armor FROM ITEMS, not the character total', () => {
+    const items = armorFromItems(built('prot_pally').equipment, 'one_hand_shield');
+    expect(items).toBeGreaterThan(0);
+
+    const plain = shieldPaladin().stats.effective.armor;
+    const specced = shieldPaladin(legalise({ toughness: 5 }, 'paladin')).stats.effective.armor;
+
+    // Ten percent of the ITEM armor at 5/5, added flat...
+    expect(specced - plain).toBeCloseTo(items * 0.1, 6);
+    // ...and strictly less than ten percent of the total, which is the bug this
+    // shape avoids.
+    expect(specced - plain).toBeLessThan(plain * 0.1);
+  });
+
+  it('scales per rank, two percent at a time', () => {
+    const items = armorFromItems(built('prot_pally').equipment, 'one_hand_shield');
+    const plain = shieldPaladin().stats.effective.armor;
+    for (const [rank, percent] of [
+      [1, 2],
+      [3, 6],
+      [5, 10],
+    ] as const) {
+      // The tooltip's own figure, written out rather than read from the values
+      // file, and then the armor it actually produces.
+      expect(talentNumber('paladin', 'toughness', rank, 0), `rank ${rank}`).toBe(percent);
+      const armor = shieldPaladin(legalise({ toughness: rank }, 'paladin')).stats.effective.armor;
+      expect(armor - plain, `rank ${rank}`).toBeCloseTo((items * percent) / 100, 6);
+    }
+    expect(PALADIN_TALENT_EFFECTS.toughness.map((e) => e.kind)).toEqual(['itemArmorPercent']);
+  });
+
+  it('gives a Paladin in no armor nothing, and says so', () => {
+    /*
+     * "Equip something and it works" -- `talentBuild` REPORTS this rather than
+     * contributing zero in silence, which is the honest failure mode for a
+     * talent whose magnitude comes from the gear.
+     */
+    const naked = createPlayer({
+      race: 'human',
+      characterClass: 'paladin',
+      combatStyle: 'one_hand_shield',
+      talents: legalise({ toughness: 5 }, 'paladin'),
+    });
+    const plain = createPlayer({
+      race: 'human',
+      characterClass: 'paladin',
+      combatStyle: 'one_hand_shield',
+    });
+    expect(naked.stats.effective.armor).toBe(plain.stats.effective.armor);
+  });
+
+  it('is taken by no Paladin preset, which is a BUILD cause', () => {
+    /*
+     * The Prot Pally spends its 34 Protection points elsewhere, so this talent
+     * is correctly worth zero to every profile -- and that is why the tests
+     * above build their own character rather than reading one.
+     */
+    for (const preset of ['pally_ret', 'pally_shockadin', 'prot_pally']) {
+      expect(built(preset).talents.toughness, preset).toBeUndefined();
+    }
+  });
+});
+
 describe('Vindication', () => {
   it('uses the 10% the ruleset owner supplied, which no source states', () => {
     expect(VINDICATION_CHANCE).toBe(10);
   });
 
-  it('is registered on the build that takes it and on neither of the others', () => {
+  it('is registered on the two builds that take it and not on the tank', () => {
+    /*
+     * THE SHOCKADIN TOOK IT UP AT CLIENT BUILD 1.60.1.70170, which is a BUILD
+     * change rather than a talent one: Improved Holy Strike and Crusade were
+     * removed from the tree, and the owner's new Shockadin URL spends two of the
+     * four freed points here.
+     *
+     * The tank still does not, so the assertion still says something: this is
+     * about the TALENT being registered from the allocation rather than about
+     * every Paladin having it.
+     */
     expect(presetPlayer('pally_ret').reactions.map((r) => r.id)).toContain('vindication');
-    expect(presetPlayer('pally_shockadin').reactions.map((r) => r.id)).not.toContain('vindication');
+    expect(presetPlayer('pally_shockadin').reactions.map((r) => r.id)).toContain('vindication');
     expect(presetPlayer('prot_pally').reactions.map((r) => r.id)).not.toContain('vindication');
   });
 });
@@ -539,4 +653,106 @@ describe("Templar's Bulwark, whose reason had simply expired", () => {
     const prot = bareBuild('prot_pally');
     expect(prot.abilities.get('templars_bulwark')!.cooldownMs).toBe(seconds(240));
   });
+});
+
+// ---------------------------------------------------------------------------
+// The 1.60.1.70170 Paladin figures
+// ---------------------------------------------------------------------------
+
+describe('the two block talents moved in OPPOSITE directions', () => {
+  /*
+   * ----------------------------------------------------------------------------
+   * "Redoubt's chance to Block changed to 4/8/12/16/20% (was 6/12/18/24/30%)"
+   * and "Holy Shield's chance to Block changed to 30% (was 20%)".
+   *
+   * THAT IS THE SHAPE TO BE CAREFUL ABOUT: reading one note and applying it to
+   * both numbers is a wash and looks deliberate. Asserted together so the pair
+   * cannot drift apart, and from the tooltips rather than from the constants.
+   * ----------------------------------------------------------------------------
+   */
+  it('cuts Redoubt from 30% to 20% at 5/5, and keeps its chance at ten', () => {
+    // The row is [chance, block bonus, ...], and only the BONUS moves per rank --
+    // which is why the effect passes `valueIndex: 1`. Index 0 is ten at every
+    // rank, so a reader checking the resulting block chance alone cannot tell.
+    expect(talentNumber('paladin', 'redoubt', 5, 0)).toBe(10);
+    expect(talentNumber('paladin', 'redoubt', 5, 1)).toBe(20);
+    expect(talentNumber('paladin', 'redoubt', 1, 1)).toBe(4);
+  });
+
+  it('raises Holy Shield from 20% to 30%, which raises its DAMAGE too', () => {
+    /*
+     * The 221 is "for each attack BLOCKED", so more blocks spends the four
+     * charges sooner and more often -- that damage was 14.9% of the Protection
+     * profile when its reaction was first wired up. The charge count did not move.
+     */
+    expect(HOLY_SHIELD_BLOCK_CHANCE).toBe(30);
+    expect(HOLY_SHIELD_CHARGES).toBe(4);
+    expect(HOLY_SHIELD.statModifiers).toEqual([flat('blockChance', 30)]);
+  });
+
+  it('lands the new block chance on the tank that casts it', () => {
+    const actor = presetPlayer('prot_pally');
+    const simulation = buildSimulation([actor, makeTarget()]);
+    simulation.begin();
+
+    const before = actor.stats.effective.blockChance;
+    simulation.applyAura(actor, HOLY_SHIELD, actor.id);
+    expect(actor.stats.effective.blockChance - before).toBeCloseTo(30, 6);
+  });
+});
+
+describe('Vengeance stacks three times now, and says non-periodic', () => {
+  /*
+   * ----------------------------------------------------------------------------
+   * NEITHER CHANGE IS IN THE PATCH NOTES. The tooltip went from "after landing a
+   * critical strike. Stacks up to 5 times" to "after landing a NON-PERIODIC
+   * critical strike. Stacks up to 3 times".
+   *
+   * ONE OF THE TWO IS A NO-OP AND IT IS WORTH SAYING WHICH. `dealDamage` offers
+   * an attack to a reaction only when `request.attackTable && !request.periodic`,
+   * so a tick is never shown to one -- the "non-periodic" wording is a narrowing
+   * of the tooltip and not of the behaviour. The stack cap is where the figure
+   * moved: at 3% a stack the ceiling went from 1.15x to 1.09x.
+   * ----------------------------------------------------------------------------
+   */
+  it('caps at three stacks, so the ceiling is 1.09x rather than 1.15x', () => {
+    expect(VENGEANCE_MAX_STACKS).toBe(3);
+    expect(talentNumber('paladin', 'vengeance', 3, 0)).toBe(3);
+    expect(talentNumber('paladin', 'vengeance', 3, 2)).toBe(3);
+
+    const aura = vengeanceAura(3);
+    expect(aura.maxStacks).toBe(3);
+    expect(aura.modifiersScaleWithStacks).toBe(true);
+    // A three-stack 1.03 is 1.0927, not 1.09 -- `scaleByStacks` takes damage to
+    // the POWER of the count, which is what every other reader of that flag does.
+    expect(aura.damageDoneMultiplier! ** 3).toBeCloseTo(1.092727, 5);
+  });
+
+  it('reaches three stacks and no more in a real fight', () => {
+    /*
+     * THE MEASURED HALF. A stack cap written on the aura and not honoured by
+     * `AuraCollection` would read as a working buff with visible uptime, which is
+     * the hardest kind of mistake to see -- Adrenaline Rush reported 24.9% uptime
+     * while delivering no energy at all.
+     */
+    let peak = 0;
+    let seen = 0;
+    for (let seed = 1; seed <= 10; seed += 1) {
+      const simulation = new Simulation(
+        trainingDummyEncounter({ ...PRESETS_BY_ID.get('pally_ret')!.build() }, seed * 7919),
+        {
+          emit: (event) => {
+            if (!('auraId' in event) || event.auraId !== 'vengeance') return;
+            if (event.type === 'aura_removed') return;
+            seen += 1;
+            peak = Math.max(peak, event.stacks ?? 0);
+          },
+        },
+      );
+      simulation.begin();
+      simulation.run();
+    }
+    expect(seen).toBeGreaterThan(0);
+    expect(peak).toBe(3);
+  }, 20_000);
 });

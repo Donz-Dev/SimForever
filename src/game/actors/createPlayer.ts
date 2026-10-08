@@ -74,7 +74,7 @@ import {
   warlockStoneEffect,
   type WarlockStoneId,
 } from '../buffs/warlockStones';
-import { COST_REFUND_ON_MISS } from '../combat/resourceRules';
+import { COST_REFUND_ON_MISS, critRageMultiplierFor } from '../combat/resourceRules';
 
 export interface PlayerOptions {
   readonly id?: string;
@@ -710,6 +710,8 @@ export function createPlayer(options: PlayerOptions): Combatant {
     baseGcdMs: globalCooldownFor(characterClass, style),
     // 80% of a rage or energy cost back when the attack does not connect.
     costRefundOnMiss: COST_REFUND_ON_MISS,
+    // 2.0 for a Warrior, 1.75 for a Bear Druid, 1 for everyone else.
+    critResourceMultiplier: critRageMultiplierFor(characterClass, style),
   });
 
   /*

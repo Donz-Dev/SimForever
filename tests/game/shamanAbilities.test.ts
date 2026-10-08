@@ -484,7 +484,26 @@ describe('Maelstrom Weapon, the capstone that was worth nothing twice over', () 
 });
 
 describe('Elemental Fury, corrected', () => {
-  it('no longer raises an Enhancement shaman PHYSICAL crits', () => {
+  /*
+   * ----------------------------------------------------------------------------
+   * THE ENHANCEMENT BUILD NO LONGER TAKES IT, so this test builds the ELEMENTAL
+   * one instead. Client build 1.60.1.70170 swapped Elemental Fury (row 3, tier
+   * 10) with Elemental Alacrity (row 6, tier 25) and made Call of Thunder require
+   * Alacrity rather than Fury -- which put Elemental Fury out of reach of the
+   * nineteen points Enhancement had in that tree, and the owner's new build
+   * spends them elsewhere.
+   *
+   * THE TALENT IS WHAT IS UNDER TEST AND NOT THE BUILD, which is why switching
+   * presets is the right fix rather than a retreat: the two things this pins --
+   * that the bonus reaches three named schools and NOT physical, and that it uses
+   * the SPELL crit's 0.5 bonus rather than a melee crit's 1.0 -- are properties
+   * of the effect. The physical half mattered because an Enhancement shaman's
+   * damage is mostly physical; it is asserted here anyway, on a caster whose
+   * physical damage is small, because a whole-character `critDamageBonus` would
+   * still show up in it.
+   * ----------------------------------------------------------------------------
+   */
+  it('raises three named spell schools and NOT physical', () => {
     /*
      * ------------------------------------------------------------------------
      * THIS SHIPPED WRONG, WITH A WRITTEN CAVEAT SAYING SO. "Increases the
@@ -499,7 +518,8 @@ describe('Elemental Fury, corrected', () => {
      * 2.5x where it should be 2.0x.
      * ------------------------------------------------------------------------
      */
-    const built = PRESETS_BY_ID.get('shaman_enhancement')!.build();
+    const built = PRESETS_BY_ID.get('shaman_elemental')!.build();
+    expect(built.talents.elemental_fury).toBe(5);
     const actor = createPlayer({
       race: 'tauren',
       characterClass: 'shaman',
@@ -1091,11 +1111,27 @@ describe('what is left, which is the claim this deep dive makes', () => {
         ),
       ].sort();
 
-      expect(gaps, preset).toEqual(preset === 'shaman_enhancement' ? ['elemental_weapons'] : []);
+      /*
+       * ELEMENTAL WARDING JOINED THE ENHANCEMENT LIST at client build
+       * 1.60.1.70170, and it is a BUILD change rather than an engine one: the
+       * Elemental Fury/Alacrity swap put Elemental Fury out of reach of that
+       * build's nineteen Elemental points, and the owner's new URL spends three
+       * of them here.
+       *
+       * IT IS A GENUINE LIVE GAP AND NOT A CENSUS ARTEFACT, unlike Elemental
+       * Weapons beside it: "reduces Fire, Frost and Nature damage TAKEN", and
+       * neither Shaman profile faces a target that deals any. That is the
+       * ENCOUNTER cause -- it expires if the encounter changes, not if the engine
+       * does -- and `damageTakenBySchool` lives on an aura rather than on a
+       * talent effect, which is the declaration it would need.
+       */
+      expect(gaps, preset).toEqual(
+        preset === 'shaman_enhancement' ? ['elemental_warding', 'elemental_weapons'] : [],
+      );
     }
   });
 
-  it('leaves exactly two partly-modelled clauses in either build, both Magma Totem', () => {
+  it('leaves exactly two partly-modelled talents in either build', () => {
     /*
      * THE OTHER HALF OF THE CLAIM, because "does something" and "does everything"
      * are different and the first one alone would hide a dead clause. Both builds
@@ -1120,9 +1156,18 @@ describe('what is left, which is the claim this deep dive makes', () => {
         ),
       ].sort();
 
+      /*
+       * ELEMENTAL FURY LEFT THE ENHANCEMENT LIST at client build 1.60.1.70170 --
+       * the build cannot reach it any more -- so its Magma Totem clause is a
+       * dead clause on the Elemental build alone now.
+       *
+       * WHICH MAKES THE TEST NAME HALF TRUE: two partly-modelled clauses in the
+       * Elemental build and two in Enhancement, and only one of each pair is
+       * Magma Totem. Improved Stormstrike is still the Enhancement-only one.
+       */
       expect(partly, preset).toEqual(
         preset === 'shaman_enhancement'
-          ? ['call_of_flame', 'elemental_fury', 'improved_stormstrike']
+          ? ['call_of_flame', 'improved_stormstrike']
           : ['call_of_flame', 'elemental_fury'],
       );
     }

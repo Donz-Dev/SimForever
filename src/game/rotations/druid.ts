@@ -60,11 +60,6 @@ const selfStacksAtLeast = (auraId: string, minimum: number) =>
   (_context: SimulationContext, actor: Combatant): boolean =>
     actor.auras.stacksOf(auraId) >= minimum;
 
-/** "energy <= N". */
-const energyAtMost = (maximum: number) =>
-  (_context: SimulationContext, actor: Combatant): boolean =>
-    (actor.resources.get('energy')?.current ?? 0) <= maximum;
-
 /** "rage >= N". */
 const rageAtLeast = (minimum: number) =>
   (_context: SimulationContext, actor: Combatant): boolean =>
@@ -182,6 +177,10 @@ export const DRUID_MOONKIN: readonly PriorityEntry[] = [
  * whole bar. Holding the bleed up is worth more than a burst that empties the
  * resource the rest of the list runs on.
  *
+ * AND THE LIST NOW OPENS WITH AN ENERGY SOURCE RATHER THAN A DAMAGE BUFF, which
+ * is the 1.60.1.70170 change: Shifting Power buys 40 energy for 55% of base
+ * mana, where Tiger's Fury bought 15% physical damage for six seconds.
+ *
  * SHRED APPEARS TWICE, AND THE SECOND IS NOT A DUPLICATE: gated on Clearcasting
  * above the finisher, and ungated as the filler at the bottom. That is the one
  * legal shape for a repeated id -- what is not legal is a copy BELOW an
@@ -190,12 +189,29 @@ export const DRUID_MOONKIN: readonly PriorityEntry[] = [
  */
 export const DRUID_CAT: readonly PriorityEntry[] = [
   /*
-   * TIGER'S FURY ON A LOW ENERGY BAR, which is the owner's condition and reads
-   * backwards until the ability is read: it is a damage buff on a thirty
-   * second cooldown and costs no energy, so casting it while the bar is empty
-   * spends a global cooldown that had nothing else to do with it.
+   * SHIFTING POWER ON COOLDOWN, which is the owner's instruction with the
+   * 1.60.1.70170 notes: "It no longer uses Tiger's Fury and instead uses
+   * Shifting Power on cooldown as long as you have the mana to cast it."
+   *
+   * "AS LONG AS YOU HAVE THE MANA" NEEDS NO CONDITION, and writing one would be
+   * the list restating a rule the engine already enforces -- the shape the
+   * Rogue's Ambush entry was corrected for. `checkCast` refuses an ability the
+   * character cannot afford, and a refused entry is simply walked past, so an
+   * unconditional entry here already means "whenever it is off cooldown and
+   * affordable".
+   *
+   * AND IT IS NOT A FLOOR UNDER THE LIST, which an unconditional entry at the
+   * top otherwise would be. An entry blocks the ones below it only when it is
+   * ungated AND ALWAYS CASTABLE; this has a sixteen second cooldown -- eight
+   * with Improved Shifting Power, which the Cat build takes 2/2 of -- so the
+   * list falls straight past it the rest of the time. That is the half of the
+   * rule the Hunter's Sniper Shot measurement settled.
+   *
+   * WHAT IT REPLACED: Tiger's Fury, gated on "energy <= 30". Both the ability
+   * and King of the Jungle, the talent that refunded 60 energy on casting it,
+   * were removed in the same patch.
    */
-  { abilityId: 'tigers_fury', condition: energyAtMost(30) },
+  { abilityId: 'shifting_power' },
   { abilityId: 'berserk' },
   /*
    * EVERY CLEARCASTING PROC GOES ON SHRED, REGARDLESS OF COMBO POINTS -- the

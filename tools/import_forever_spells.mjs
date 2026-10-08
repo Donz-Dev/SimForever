@@ -63,6 +63,7 @@ function readLines(lines) {
   const cells = (lines ?? []).flat().map((cell) => String(cell).trim()).filter(Boolean);
   const out = {
     cost: undefined,
+    comboPoints: undefined,
     range: undefined,
     cast: undefined,
     cooldown: undefined,
@@ -76,12 +77,26 @@ function readLines(lines) {
      * without this it falls through to the cost, which is the last branch.
      * Mutilate then reported its cost as "Requires Daggers" and its real 60
      * Energy vanished: a free ability, silently.
+     *
+     * `comboPoints` HAS ITS OWN FIELD FOR THE SAME REASON, AND THE SAME
+     * ABILITY PAID FOR IT TWICE. A finisher's grid carries TWO cost-shaped
+     * cells -- `["30 Energy", "Melee Range"], ["1 to 5 Combo Points", ""]` --
+     * and the cost branch is the fall-through, so the SECOND one overwrote the
+     * first and Rip and Ferocious Bite came back costing no energy at all.
+     * Nothing reads this capture programmatically, so the loss was a wrong
+     * number sitting in a reference document that a reader would have believed.
+     * AND THE LAST BRANCH WINNING IS THE SHAPE, not these two cells: the
+     * `cost ??=` below keeps the FIRST cost-shaped cell, so a third kind of
+     * line arriving later cannot delete a real cost either -- it lands in
+     * `extraLines` where it is visible instead.
      */
     if (/^Requires /i.test(cell)) out.requires = cell;
+    else if (/combo point/i.test(cell)) out.comboPoints = cell;
     else if (/cooldown/i.test(cell)) out.cooldown = cell;
     else if (/^instant$|sec cast|min cast|channel/i.test(cell)) out.cast = cell;
     else if (/range|yd|melee/i.test(cell)) out.range = cell;
-    else out.cost = cell;
+    else if (out.cost === undefined) out.cost = cell;
+    else (out.extraLines ??= []).push(cell);
   }
   return out;
 }

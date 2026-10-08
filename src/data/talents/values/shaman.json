@@ -94,17 +94,15 @@
    ],
    "note": "single rank; the 10 filled in by hand per this directory's README -- a single-rank talent has no {0} for the importer to match, so its values come back null. The text states TWO numbers, a 10 percent chance to enter Clearcasting and a 100 percent reduction on the next damage spell; the 100 is the aura's own costFraction of 1 and needs no per-rank number, so the CHANCE is what is stored -- the same shape as the Mage's Arcane Concentration, whose builder also takes the chance."
   },
-  "elemental_fury": {
-   "name": "Elemental Fury",
+  "elemental_alacrity": {
+   "name": "Elemental Alacrity",
    "tree": "elemental",
-   "ranks": 5,
-   "text": "Increases the critical strike damage bonus of your Searing and Magma Totems and your Fire, Frost, and Nature spells by {0}%.",
+   "ranks": 3,
+   "text": "Reduces the cast time of your Lightning Bolt, Chain Lightning, and Lava Burst spells by {0} sec.",
    "values": [
-    20,
-    40,
-    60,
-    80,
-    100
+    0.17,
+    0.33,
+    0.5
    ]
   },
   "improved_fire_nova": {
@@ -179,22 +177,24 @@
    "values": null,
    "note": "single rank"
   },
-  "elemental_alacrity": {
-   "name": "Elemental Alacrity",
+  "elemental_fury": {
+   "name": "Elemental Fury",
    "tree": "elemental",
-   "ranks": 3,
-   "text": "Reduces the cast time of your Lightning Bolt, Chain Lightning, and Lava Burst spells by {0} sec.",
+   "ranks": 5,
+   "text": "Increases the critical strike damage bonus of your Searing and Magma Totems and your Fire, Frost, and Nature spells by {0}%.",
    "values": [
-    0.17,
-    0.33,
-    0.5
+    20,
+    40,
+    60,
+    80,
+    100
    ]
   },
   "lava_burst": {
    "name": "Lava Burst",
    "tree": "elemental",
    "ranks": 1,
-   "text": "You hurl molten lava at the target, dealing 106 to 134 Fire damage. If your Flame Shock is on the target, Lava Burst deals 20% increased damage.",
+   "text": "You hurl molten lava at the target, dealing 150 to 192 Fire damage. If your Flame Shock is on the target, Lava Burst deals 20% increased damage.",
    "values": null,
    "note": "single rank"
   },
@@ -456,7 +456,7 @@
    "name": "Rage of the Farseer",
    "tree": "enhancement",
    "ranks": 1,
-   "text": "Increases your melee attack speed and spell casting speed by 30% for 25 sec.",
+   "text": "Increases your attack speed by 30% for 25 sec.",
    "values": null,
    "note": "single rank"
   },

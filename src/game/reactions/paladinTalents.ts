@@ -53,11 +53,22 @@ import {
 const LANDED = ['hit', 'crit', 'glance', 'crush', 'block'] as const;
 
 /**
- * Vengeance: a critical strike raises Physical and Holy damage, stacking.
+ * Vengeance: a non-periodic critical strike raises Physical and Holy damage,
+ * stacking.
  *
  * ANY CRIT, not only a melee one. "After landing a critical strike" names no
  * school and no weapon, so a Judgement crit arms it exactly as a swing does --
  * which matters for a Retribution paladin judging every ten seconds.
+ *
+ * "NON-PERIODIC" ARRIVED AT CLIENT BUILD 1.60.1.70170 AND NEEDS NO CONDITION.
+ * `dealDamage` offers an attack to a reaction only when
+ * `request.attackTable && !request.periodic`, so a tick is never shown to one --
+ * the same guarantee Nature's Grace and Blood Frenzy's combo point clause rely
+ * on. The tooltip got narrower and the behaviour did not change, which is worth
+ * writing down: otherwise the next reader looks for the condition and adds one.
+ *
+ * ITS STACK CAP WENT 5 TO 3 IN THE SAME PATCH, which is where the figure moved.
+ * See `VENGEANCE_MAX_STACKS`.
  */
 export const vengeance: TalentReactionBuilder = (percentPerStack) => ({
   id: 'vengeance',

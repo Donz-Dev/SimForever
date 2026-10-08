@@ -234,30 +234,34 @@ const SHARED_ARMOUR: Equipment = {
 };
 
 /**
- * 2H Arms: 38 in Arms, 13 in Fury. Fifty-one exactly.
+ * 2H Arms: 39 in Arms, 10 in Fury, 2 in Protection. Fifty-one exactly.
  *
  * ----------------------------------------------------------------------------
- * THE LAST THREE WENT INTO IMPROVED CLEAVE, which the ruleset owner named when
- * the list as first given came to forty-eight. It was left three short rather
- * than filled in, because choosing where they went would have been inventing a
- * build.
+ * ALL THREE WARRIOR BUILDS WERE RE-SPECIFIED AT CLIENT BUILD 1.60.1.70170 and
+ * the owner supplied all three URLs with the patch notes. The class took the
+ * largest reshuffle in the patch: Improved Cleave, Boundless Rage, Precision and
+ * Toughness removed, Lingering Rage, Furious Precision and Gore Drinker added,
+ * Iron Will moved out of Fury into Protection, and six Protection rows moved.
  *
- * IT DOES NOTHING HERE, and that is worth saying rather than leaving to be
- * discovered. Improved Cleave reduces Cleave's rage cost by three, and CLEAVE
- * IS IN NO PRIORITY LIST -- it is an on-next-swing ability for hitting two
- * targets, and every encounter this simulator has is one target. Three points
- * of a real talent that changes no number in a result.
+ * SO THE THREE POINTS THAT USED TO SIT IN IMPROVED CLEAVE ARE GONE WITH IT, and
+ * the note they carried goes with them. It read: the owner named Improved Cleave
+ * when the list as first given came to forty-eight, and it did nothing, because
+ * Cleave is in no priority list and every encounter here is one target. Three
+ * points of a real talent that changed no number in a result. Kept here because
+ * "a talent the owner chose can be worth literally zero" is the lesson, and it
+ * now has a successor: Improved Tactical Mastery's five points retain rage
+ * through a stance change and this list never changes stance after the pull.
  *
- * It is not the only one: Improved Tactical Mastery's five points retain rage
- * through a stance change, and this list never changes stance after the pull.
- * Both are the owner's choices and both are honoured as given.
+ * THE REPLACEMENT IS NOT A STRAIGHT SWAP. A second point of Improved Charge and
+ * two of Improved Bloodrage, which puts a 2H Arms warrior in the PROTECTION tree
+ * for the first time -- and both are rage at the pull rather than throughput.
  * ----------------------------------------------------------------------------
  */
 const TWO_HAND_ARMS_TALENTS: TalentAllocation = {
-  // Arms, 38
+  // Arms, 39
   improved_heroic_strike: 3,
   improved_rend: 3,
-  improved_charge: 1,
+  improved_charge: 2,
   improved_tactical_mastery: 5,
   improved_overpower: 2,
   anger_management: 1,
@@ -270,37 +274,50 @@ const TWO_HAND_ARMS_TALENTS: TalentAllocation = {
   weaponmaster: 5,
   improved_slam: 2,
   mortal_strike: 1,
-  // Fury, 13
+  // Fury, 10
   cruelty: 5,
   unbridled_wrath: 5,
-  // Requires ten points in Fury, which the two above supply exactly.
-  improved_cleave: 3,
+  // Protection, 2
+  improved_bloodrage: 2,
 };
 
 /**
- * DW Fury: 18 in Arms, 33 in Fury. Fifty-one exactly.
+ * DW Fury: 17 in Arms, 34 in Fury. Fifty-one exactly.
  *
- * The ruleset owner's list, transcribed. It is a legal allocation as given --
- * every tier is reached and every prerequisite met -- which is checked by a
- * test rather than assumed.
+ * The ruleset owner's list, decoded from their URL. It is a legal allocation as
+ * given -- every tier is reached and every prerequisite met -- which is checked
+ * by a test rather than assumed.
+ *
+ * ----------------------------------------------------------------------------
+ * SPEARING STRIKE IS OUT, AND NOT BECAUSE THE BUILD GOT WORSE AT IT. The patch
+ * replaced its two-handed requirement with a Battle Stance one -- so a
+ * dual-wielding Fury warrior can now hold the weapons for it and cannot hold the
+ * stance, and the point went to Improved Execute instead. The old build spent
+ * that point on an ability the profile could never cast, which a test asserted;
+ * see `abilitiesForBuild`.
+ *
+ * ENRAGE DROPS TO 4/5 AND FLURRY IS STILL FULL, which the patch made possible:
+ * Flurry required Enrage 5 and now requires Death Wish 1. Gore Drinker, the new
+ * talent that DOES require Enrage 5, is not taken.
+ * ----------------------------------------------------------------------------
  */
 const DW_FURY_TALENTS: TalentAllocation = {
-  // Arms, 18
+  // Arms, 17
   improved_heroic_strike: 3,
   improved_rend: 3,
   improved_tactical_mastery: 5,
   anger_management: 1,
   deep_wounds: 3,
-  spearing_strike: 1,
   impale: 2,
-  // Fury, 33
+  // Fury, 34
   cruelty: 5,
+  lingering_rage: 2,
   unbridled_wrath: 5,
-  blood_craze: 3,
-  boundless_rage: 2,
+  furious_precision: 3,
   dual_wield_specialization: 5,
   raging_blows: 1,
-  enrage: 5,
+  enrage: 4,
+  improved_execute: 2,
   death_wish: 1,
   flurry: 5,
   bloodthirst: 1,
@@ -318,6 +335,13 @@ const DW_FURY_TALENTS: TalentAllocation = {
  * would have dropped this very talent on its own -- producing exactly the
  * right build by accident, with nobody aware that a point had been thrown
  * away or which one.
+ *
+ * RE-SPECIFIED AT CLIENT BUILD 1.60.1.70170 and still 17/0/34, which is why the
+ * paragraph above still reads true: Anger Management is still the point not
+ * taken. The Protection tree moved six rows under it and the one real swap is
+ * IMPROVED BLOODRAGE OUT, IMPROVED THUNDER CLAP IN -- the former moved to row 1
+ * where this build no longer reaches past it, and the latter is two points of
+ * Thunder Clap damage on the one profile whose rotation leans on the ability.
  * ----------------------------------------------------------------------------
  */
 const PROT_WARR_TALENTS: TalentAllocation = {
@@ -331,10 +355,10 @@ const PROT_WARR_TALENTS: TalentAllocation = {
   // Protection, 34
   shield_specialization: 5,
   anticipation: 5,
-  improved_bloodrage: 2,
+  improved_revenge: 3,
+  improved_thunder_clap: 2,
   last_stand: 1,
   master_of_defense: 2,
-  improved_revenge: 3,
   defiance: 3,
   vanguard: 1,
   improved_shield_wall: 2,
@@ -482,8 +506,20 @@ const ROGUE_HEMO_TALENTS: TalentAllocation = {
 /** Combat: two swords, the owner's own second set. */
 
 /**
- * THE THREE DRUID BUILDS, decoded from the owner's URLs. 38/0/13, 9/35/7 and
+ * THE THREE DRUID BUILDS, decoded from the owner's URLs. 38/0/13, 9/34/8 and
  * 9/42/0, each exactly 51 points.
+ *
+ * ----------------------------------------------------------------------------
+ * CAT AND BEAR WERE RE-SPECIFIED AT CLIENT BUILD 1.60.1.70170, Moonkin was not.
+ * The patch removed King of the Jungle and Tiger's Fury, added Shifting Power
+ * and Improved Shifting Power, moved Shredding Attacks up a row and renamed
+ * Primal Fury to Blood Frenzy -- so neither feral URL decoded any more, and the
+ * owner supplied both new ones with the notes.
+ *
+ * THE CAT LOST A TALENT IT WAS SPENDING FOUR POINTS ON and gained three: King
+ * of the Jungle's three points and Feral Charge's one pay for Shifting Power 1,
+ * Improved Shifting Power 2 and a third point of Naturalist.
+ * ----------------------------------------------------------------------------
  */
 const DRUID_MOONKIN_TALENTS: TalentAllocation = {
   improved_wrath: 5,
@@ -512,19 +548,19 @@ const DRUID_CAT_TALENTS: TalentAllocation = {
   ferocity: 3,
   heart_of_the_wild: 5,
   feral_swiftness: 2,
-  savage_fury: 2,
-  feral_charge: 1,
-  sharpened_claws: 2,
   shredding_attacks: 3,
+  savage_fury: 2,
+  sharpened_claws: 2,
+  shifting_power: 1,
   predatory_strikes: 3,
-  primal_fury: 2,
-  predatory_instincts: 2,
+  blood_frenzy: 2,
+  improved_shifting_power: 2,
   leader_of_the_pack: 1,
-  king_of_the_jungle: 3,
+  predatory_instincts: 2,
   rend_and_tear: 5,
   berserk: 1,
   furor: 5,
-  naturalist: 2,
+  naturalist: 3,
 };
 
 const DRUID_BEAR_TALENTS: TalentAllocation = {
@@ -539,9 +575,9 @@ const DRUID_BEAR_TALENTS: TalentAllocation = {
   savage_fury: 2,
   feral_charge: 1,
   sharpened_claws: 2,
-  mangle: 1,
+  primal_bite: 1,
   predatory_strikes: 3,
-  primal_fury: 2,
+  blood_frenzy: 2,
   predatory_instincts: 2,
   leader_of_the_pack: 1,
   natural_reaction: 5,
@@ -550,8 +586,23 @@ const DRUID_BEAR_TALENTS: TalentAllocation = {
 };
 
 /**
- * THE TWO SHAMAN BUILDS, decoded from the owner's URLs. 38/13/0 and 19/32/0,
+ * THE TWO SHAMAN BUILDS, decoded from the owner's URLs. 38/13/0 and 17/34/0,
  * each exactly 51 points.
+ *
+ * ----------------------------------------------------------------------------
+ * ELEMENTAL FURY AND ELEMENTAL ALACRITY SWAPPED TIERS at client build
+ * 1.60.1.70170 -- Fury from row 3 to row 6 (tier 10 to tier 25), Alacrity the
+ * other way -- and Call of Thunder now requires Alacrity 3 where it required
+ * Fury 5. The patch notes do not mention it.
+ *
+ * THAT BROKE ONE BUILD AND NOT THE OTHER, which is the whole reason the two are
+ * handled differently below. ELEMENTAL takes both talents, so the swap only
+ * moved its digits and the allocation is byte-for-byte what the owner's original
+ * URL decoded to; `tools/decode_talent_build.mjs` carries the re-encoded string
+ * and says so. ENHANCEMENT spent 19 points in Elemental and five of them were
+ * Elemental Fury, which is now unreachable below 25 -- so there is no re-encoding
+ * of it, and the owner supplied a new URL when asked.
+ * ----------------------------------------------------------------------------
  */
 const SHAMAN_ELEMENTAL_TALENTS: TalentAllocation = {
   convection: 5,
@@ -575,13 +626,13 @@ const SHAMAN_ELEMENTAL_TALENTS: TalentAllocation = {
 
 const SHAMAN_ENHANCEMENT_TALENTS: TalentAllocation = {
   concussion: 5,
+  elemental_warding: 3,
   call_of_flame: 3,
   elemental_devastation: 3,
-  elemental_fury: 5,
+  elemental_focus: 1,
   improved_fire_nova: 2,
-  call_of_thunder: 1,
   thundering_strikes: 5,
-  ancestral_knowledge: 2,
+  ancestral_knowledge: 4,
   mental_dexterity: 3,
   improved_ghost_wolf: 1,
   elemental_weapons: 3,
@@ -610,7 +661,7 @@ const MAGE_FROSTFIRE_TALENTS: TalentAllocation = {
   burning_soul: 3,
   pyroblast: 1,
   improved_scorch: 3,
-  hot_streak: 1,
+  heating_up: 1,
   master_of_elements: 3,
   critical_mass: 3,
   fire_power: 4,
@@ -658,7 +709,7 @@ const MAGE_FIRE_TALENTS: TalentAllocation = {
   burning_soul: 3,
   pyroblast: 1,
   improved_scorch: 3,
-  hot_streak: 1,
+  heating_up: 1,
   master_of_elements: 1,
   critical_mass: 3,
   blast_wave: 1,
@@ -668,18 +719,34 @@ const MAGE_FIRE_TALENTS: TalentAllocation = {
 };
 
 /**
- * THE THREE PALADIN BUILDS, decoded from the owner's URLs. 13/0/38, 23/0/28
- * and 8/36/7, each exactly 51 points.
+ * THE THREE PALADIN BUILDS, decoded from the owner's URLs. 15/0/36, 23/0/28
+ * and 8/34/9, each exactly 51 points.
  *
  * EACH HAS A DIFFERENT CAPSTONE, which is what lets the rotation tell them
  * apart: Twist of Light, Holy Shock and Holy Shield belong to exactly one
  * build each.
+ *
+ * ----------------------------------------------------------------------------
+ * ALL THREE WERE RE-SPECIFIED AT CLIENT BUILD 1.60.1.70170, AND THE PATCH NOTES
+ * NAME NEITHER TALENT THAT FORCED IT. The client dropped IMPROVED HOLY STRIKE
+ * from Holy and CRUSADE from Retribution; all three builds spent two points in
+ * the first and two of them spent two in the second, so none of the three URLs
+ * decoded any more -- 4, 4 and 2 points with nowhere to be.
+ *
+ * WHICH IS A DECISION AND NOT A TRANSCRIPTION, so it was asked rather than
+ * guessed: the owner supplied three new URLs. What they bought is recorded here
+ * because "where did these points go" is the first question a reader of the
+ * baseline table will have. Retribution took Divine Intellect to 5 and two of
+ * Unyielding Faith; the Shockadin took Divine Strength to 5 and two of
+ * Vindication; Protection took Divine Strength to 5 and two of Holy Conduit,
+ * paying for the second with a point each off Anticipation and Reckoning.
+ * ----------------------------------------------------------------------------
  */
 const PALADIN_RETRIBUTION_TALENTS: TalentAllocation = {
-  improved_holy_strike: 2,
   divine_strength: 5,
-  divine_intellect: 3,
+  divine_intellect: 5,
   improved_seals: 3,
+  unyielding_faith: 2,
   benediction: 5,
   improved_judgement: 2,
   holy_conduit: 2,
@@ -689,7 +756,6 @@ const PALADIN_RETRIBUTION_TALENTS: TalentAllocation = {
   seal_of_command: 1,
   pursuit_of_justice: 2,
   sacred_arbiter: 1,
-  crusade: 2,
   two_handed_weapon_specialization: 3,
   vengeance: 3,
   champion_of_the_light: 3,
@@ -698,8 +764,7 @@ const PALADIN_RETRIBUTION_TALENTS: TalentAllocation = {
 };
 
 const PALADIN_SHOCKADIN_TALENTS: TalentAllocation = {
-  improved_holy_strike: 2,
-  divine_strength: 3,
+  divine_strength: 5,
   divine_intellect: 5,
   healing_light: 3,
   improved_seals: 3,
@@ -711,21 +776,20 @@ const PALADIN_SHOCKADIN_TALENTS: TalentAllocation = {
   improved_judgement: 2,
   holy_conduit: 2,
   conviction: 5,
+  vindication: 2,
   sanctified_judgement: 3,
   pursuit_of_justice: 2,
   sacred_arbiter: 1,
-  crusade: 2,
   vengeance: 3,
   champion_of_the_light: 3,
 };
 
 const PALADIN_PROTECTION_TALENTS: TalentAllocation = {
-  improved_holy_strike: 2,
-  divine_strength: 3,
+  divine_strength: 5,
   improved_seals: 3,
   redoubt: 5,
   precision: 3,
-  anticipation: 3,
+  anticipation: 2,
   improved_seal_of_fury: 1,
   improved_righteous_fury: 3,
   shield_specialization: 3,
@@ -733,11 +797,12 @@ const PALADIN_PROTECTION_TALENTS: TalentAllocation = {
   swift_judgement: 1,
   one_handed_weapon_specialization: 3,
   templar_s_bulwark: 1,
-  reckoning: 5,
+  reckoning: 4,
   iron_creed: 5,
   holy_shield: 1,
   deflection: 5,
   improved_judgement: 2,
+  holy_conduit: 2,
 };
 
 /**

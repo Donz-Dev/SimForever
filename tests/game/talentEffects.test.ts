@@ -26,13 +26,24 @@ const warrior = (talents: Record<string, number> = {}) =>
 const HAND_TRANSCRIBED: Record<string, readonly number[]> = {
   improved_heroic_strike: [1, 2, 3],
   cruelty: [1, 2, 3, 4, 5],
-  precision: [1, 2, 3],
-  boundless_rage: [10, 20, 30],
   improved_execute: [3, 5],
   improved_intercept: [5, 10],
   improved_rend: [12, 23, 35],
   improved_disarm: [7, 13, 20],
   flurry: [5, 10, 15, 20, 25],
+  /*
+   * PRECISION AND BOUNDLESS RAGE WERE HERE AND FOREVER REMOVED BOTH at client
+   * build 1.60.1.70170 -- `precision: [1, 2, 3]` and
+   * `boundless_rage: [10, 20, 30]`. Only Boundless Rage is in the patch notes.
+   *
+   * LINGERING RAGE AND FURIOUS PRECISION REPLACE THEM, and the second is not the
+   * first renamed: Furious Precision gives off-hand hit at 4/7/10, where
+   * Precision gave whole-character hit at 1/2/3. Both are transcribed from the
+   * client's own tooltips, which is the point of this table -- reading them back
+   * out of the values file would pass whatever the values file said.
+   */
+  lingering_rage: [2, 4, 6, 8, 10],
+  furious_precision: [4, 7, 10],
 };
 
 describe('talent values', () => {
@@ -56,8 +67,18 @@ describe('talent values', () => {
   });
 
   it('keeps every varying number for a talent that varies several', () => {
-    // Dual Wield Specialization: off-hand damage, rage generation and hit.
-    expect(talentValue('warrior', 'dual_wield_specialization', 1)).toEqual([5, 20, 2]);
+    /*
+     * Dual Wield Specialization: off-hand damage and rage generation.
+     *
+     * IT WAS `[5, 20, 2]` -- damage, rage, HIT -- until client build
+     * 1.60.1.70170, which moved the hit clause out to Furious Precision and
+     * HALVED the rage one. So the row lost a number and changed another, which
+     * is the shape that makes an unindexed `valueIndex` dangerous: an effect
+     * reading index 2 now reads nothing at all, and an effect that reads no
+     * value is dropped in silence.
+     */
+    expect(talentValue('warrior', 'dual_wield_specialization', 1)).toEqual([5, 10]);
+    expect(talentValue('warrior', 'dual_wield_specialization', 5)).toEqual([25, 50]);
   });
 });
 
@@ -96,8 +117,22 @@ describe('stat effects', () => {
     expect(warrior({ cruelty: 2 }).stats.effective.critChance).toBeCloseTo(before + 2, 5);
   });
 
-  it('adds Precision to hit', () => {
-    expect(warrior({ precision: 3 }).stats.effective.hitChance).toBeCloseTo(3, 5);
+  /*
+   * PRECISION IS GONE from the Warrior, so the `hitChance` stat has no Warrior
+   * talent feeding it any more and this test asserts the OFF-HAND field instead.
+   *
+   * THEY ARE DIFFERENT FIELDS AND THAT IS THE WHOLE POINT. Furious Precision is
+   * `hitBonusBySlot.offHand`, not `hitChance`: a character-wide stat would hand
+   * the main hand ten free points, which is exactly why `offHandHit` exists.
+   * Precision's own coverage moves to the Paladin and the Rogue, both of which
+   * still have a talent of that name and both of which read `hitChance`.
+   */
+  it('adds Furious Precision to the OFF HAND only, never to hit', () => {
+    const before = warrior().stats.effective.hitChance;
+    const built = warrior({ furious_precision: 3 });
+    expect(built.stats.effective.hitChance).toBeCloseTo(before, 5);
+    expect(built.hitBonusBySlot.offHand).toBe(10);
+    expect(built.hitBonusBySlot.mainHand).toBeUndefined();
   });
 
   /*

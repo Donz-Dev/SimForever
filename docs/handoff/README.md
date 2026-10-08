@@ -9,21 +9,34 @@ for project status. These files are the CLASS.
 
 **THE WARRIOR AND THE PALADIN ARE DONE.** Both deep dives have run; read their
 columns for what one looks like at the END rather than for how much work a class
-needs. The Paladin is the better lesson of the two: **six of the eight gaps it
+needs. (The Warrior reached ZERO live gaps and sits at one again, which a patch
+did rather than a regression -- see the note under the table.) The Paladin is the better lesson of the two: **six of the eight gaps it
 closed were never engine gaps at all**, and their reasons were claims about the
 engine that were about the wrong thing.
 
 | Document | Profiles | Live gaps |
 | --- | --- | --- |
-| [warrior.md](warrior.md) | 2H Arms, DW Fury, Prot Warr | **0** |
-| [paladin.md](paladin.md) | Seal Twist Ret, Shockadin, Prot Pally | **2** |
+| [warrior.md](warrior.md) | 2H Arms, DW Fury, Prot Warr | **1** |
+| [paladin.md](paladin.md) | Seal Twist Ret, Shockadin, Prot Pally | **1** |
 | [druid.md](druid.md) | Moonkin, Cat, Bear | **2** |
 | [rogue.md](rogue.md) | Venom, Combat, Rupture | **3** |
 | [shaman.md](shaman.md) | Ele Shaman, Enh Shaman | **6** |
 | [hunter.md](hunter.md) | BM Hunter, LW Ranged, LW Melee | **8** |
-| [mage.md](mage.md) | Frostfire, Arcane, Fire | **11** |
+| [mage.md](mage.md) | Frostfire, Arcane, Fire | **10** |
 | [priest.md](priest.md) | Shadow | **12** |
-| [warlock.md](warlock.md) | SM/DS, Firelock | **20** |
+| [warlock.md](warlock.md) | SM/DS, Firelock | **19** |
+
+**FOUR OF THOSE COUNTS MOVED AT CLIENT BUILD 1.60.1.70170 AND THE WARRIOR'S WENT
+UP**, which is the thing to expect from a patch rather than from a dive: Forever
+added LINGERING RAGE, whose whole effect is the delay before rage decays after
+leaving combat, and nothing here leaves combat. **A patch can open a gap in a
+class somebody finished.** The Paladin, Mage and Warlock each lost one, every time
+because a talent that carried a live gap was removed from the tree rather than
+because anything was built.
+
+**SO THESE NUMBERS ARE RE-DERIVED, NEVER ADJUSTED** --
+`npx vite-node tools/class_audit.ts <class>` prints the four buckets and throws if
+they do not account for every talent. The total is 62 across 466 talents.
 
 ## And one that is not a class
 

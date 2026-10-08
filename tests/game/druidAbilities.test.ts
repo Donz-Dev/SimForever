@@ -109,8 +109,10 @@ describe('three forms, three resources, and all of them already existed', () => 
     expect(batchOf('druid_bear', 1, 1).rotationName).toContain('Bear');
   });
 
-  it('declares an effect for every one of the 51 talents', () => {
-    expect(Object.keys(DRUID_TALENT_EFFECTS)).toHaveLength(51);
+  it('declares an effect for every one of the 52 talents', () => {
+    // 52 since client build 1.60.1.70170: King of the Jungle out, Shifting
+    // Power and Improved Shifting Power in.
+    expect(Object.keys(DRUID_TALENT_EFFECTS)).toHaveLength(52);
   });
 });
 

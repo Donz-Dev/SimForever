@@ -14,7 +14,7 @@ import {
   SHIELD_BLOCK_CHARGES,
   SHIELD_BLOCK_DURATION_MS,
 } from '../../src/game/auras/warrior';
-import { armorFromItems, resistancesFromItems } from '../../src/game/items/equipment';
+import { resistancesFromItems } from '../../src/game/items/equipment';
 import { ITEMS_BY_ID } from '../../src/game/items/itemData';
 import { isTankBuild } from '../../src/game/character';
 import { startingEquipmentFor } from '../../src/game/items/startingSets';
@@ -211,65 +211,26 @@ describe('Anticipation', () => {
 // 2. Toughness
 // ---------------------------------------------------------------------------
 
-describe('Toughness', () => {
-  it('scales armor FROM ITEMS, not the character total', () => {
-    /*
-     * The distinction the old reason called unsolvable. A character's armor is
-     * items plus the class base, so ten percent of the TOTAL would overstate
-     * the talent -- and the overstatement grows with anything that ever adds
-     * armor without being worn.
-     */
-    const items = armorFromItems(
-      startingEquipmentFor('warrior', 'one_hand_shield'),
-      'one_hand_shield',
-    );
-    expect(items).toBeGreaterThan(0);
-
-    const plain = built().stats.effective.armor;
-    const specced = built(legalise({ toughness: 5 })).stats.effective.armor;
-
-    // Ten percent of the ITEM armor, added flat.
-    expect(specced - plain).toBeCloseTo(items * 0.1, 6);
-    // And strictly less than ten percent of the total, which is the bug this
-    // shape avoids.
-    expect(specced - plain).toBeLessThan(plain * 0.1);
-  });
-
-  it('scales per rank, two percent at a time', () => {
-    const items = armorFromItems(
-      startingEquipmentFor('warrior', 'one_hand_shield'),
-      'one_hand_shield',
-    );
-    const plain = built().stats.effective.armor;
-    for (const [rank, percent] of [
-      [1, 2],
-      [3, 6],
-      [5, 10],
-    ] as const) {
-      const armor = built(legalise({ toughness: rank })).stats.effective.armor;
-      expect(armor - plain).toBeCloseTo((items * percent) / 100, 6);
-    }
-  });
-
-  it('gives a character in no armor nothing', () => {
-    const naked = createPlayer({
-      race: 'tauren',
-      characterClass: 'warrior',
-      combatStyle: 'one_hand_shield',
-      talents: legalise({ toughness: 5 }),
-    });
-    const plain = createPlayer({
-      race: 'tauren',
-      characterClass: 'warrior',
-      combatStyle: 'one_hand_shield',
-    });
-    expect(naked.stats.effective.armor).toBe(plain.stats.effective.armor);
-  });
-
-  it('is no longer reported as unmodelled', () => {
-    expect(WARRIOR_TALENT_EFFECTS.toughness.map((e) => e.kind)).toEqual(['itemArmorPercent']);
-  });
-});
+/*
+ * ==============================================================================
+ * TOUGHNESS IS GONE FROM THE WARRIOR, removed at client build 1.60.1.70170 and
+ * named in the patch notes under Protection. Four tests stood here and they are
+ * not deleted silently, because `itemArmorPercent` is a general declaration with
+ * two other callers -- the PALADIN's Toughness, which the Prot Pally takes 5/5
+ * of, and the DRUID's Thick Hide.
+ *
+ * WHAT THEY ASSERTED, so it can be found again: ten percent of the ITEM armor
+ * added flat, which is strictly LESS than ten percent of the character total --
+ * the distinction the talent's old `unmodelled` reason called unsolvable, since
+ * a character's armor is items plus the class base. Per rank at two percent a
+ * step, and nothing at all to a character wearing no armor.
+ *
+ * THE MECHANISM IS STILL COVERED. `tests/game/paladinTalents.test.ts` has the
+ * Paladin's Toughness and `tests/game/druidTalents.test.ts` has Thick Hide,
+ * which is now the only remaining `itemArmorPercent` test that exercises the
+ * "less than ten percent of the total" half.
+ * ==============================================================================
+ */
 
 // ---------------------------------------------------------------------------
 // 3. Bastion
@@ -313,7 +274,30 @@ describe('Bastion', () => {
         }),
       ).dps.mean;
 
-    const ratio = measure(legalise({ bastion: 5 })) / measure();
+    /*
+     * ----------------------------------------------------------------------
+     * THE BASELINE IS THE SAME BUILD WITH BASTION TAKEN OUT, not an empty
+     * allocation -- and it had to become so at client build 1.60.1.70170, which
+     * moved Bastion from Protection row 4 to row 5.
+     *
+     * WHY THAT BROKE A COMPARISON THAT HAD NOTHING TO DO WITH BASTION: `legalise`
+     * pads with the tree's lowest rows until the tier gate opens, and the gate
+     * went from 20 points to 25. The five extra filler points landed in Improved
+     * Revenge and Shield Specialization -- +60% to an ability that is a quarter of
+     * this profile's damage, and a rage proc on every block -- so measuring the
+     * padded build against an EMPTY one read 1.27 and attributed all of it to a
+     * 1.1x multiplier. The talent was fine; the probe was measuring its filler.
+     *
+     * This is the isolation rule CLAUDE.md records for the Cat attribution probe,
+     * arriving from the other direction: a variant must differ from its baseline
+     * in exactly the thing being priced.
+     * ----------------------------------------------------------------------
+     */
+    const withBastion = legalise({ bastion: 5 });
+    const { bastion: _removed, ...withoutBastion } = withBastion;
+    expect(Object.keys(withoutBastion).length).toBeGreaterThan(0);
+
+    const ratio = measure(withBastion) / measure(withoutBastion);
     expect(ratio).toBeGreaterThan(1.05);
     expect(ratio).toBeLessThan(1.2);
   }, 20_000);

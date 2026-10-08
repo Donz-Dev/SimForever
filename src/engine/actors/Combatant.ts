@@ -222,6 +222,33 @@ export interface CombatantOptions {
    * ----------------------------------------------------------------------------
    */
   readonly costRefundOnMiss?: CostRefundRule;
+  /**
+   * What a CRITICAL swing multiplies a flat resource award by. Defaults to 1.
+   *
+   * ----------------------------------------------------------------------------
+   * ON THE COMBATANT FOR THE THIRD TIME, AND FOR THE THIRD TIME FOR THE SAME
+   * REASON `baseGcdMs` AND `costRefundOnMiss` ARE: the rule is the engine's and
+   * the number is the ruleset's. Forever states two of them at client build
+   * 1.60.1.70170 -- "Players now generate 100% increased Rage when landing a
+   * critical strike with a basic attack" for the Warrior, and "Bear Form and
+   * Dire Bear Form now generate 75% increased Rage when landing a Critical
+   * Strike" for the Druid -- so 2.0 and 1.75, and 1 for everything else.
+   *
+   * IT MULTIPLIES THE `flat` HALF ONLY, which is not a simplification: a
+   * `perDamage` award is already proportional to the damage, and a crit already
+   * doubles that damage, so multiplying it as well would pay the bonus twice.
+   * Forever's rage from DEALING damage is flat per swing and rage from TAKING it
+   * is per damage, which is exactly the split this needs.
+   *
+   * SWINGS ONLY, AND THAT FALLS OUT OF WHERE RAGE IS AWARDED rather than being
+   * enforced here. `grantGeneratedResource` is called from two places: the
+   * auto-attack path, which passes the swing's outcome, and the damage-taken
+   * path, which has no attacker-side crit to speak of. An ABILITY generates no
+   * rage at all in this engine, so "with a basic attack" needs no test -- there
+   * is nothing else that could have qualified.
+   * ----------------------------------------------------------------------------
+   */
+  readonly critResourceMultiplier?: number;
   /** Defaults to `none`: a combatant with no declared mode does not swing. */
   readonly autoAttack?: AutoAttackMode;
   /** Resources that refill on a timer. */
@@ -365,6 +392,8 @@ export class Combatant {
   readonly baseGcdMs: Milliseconds;
   readonly autoAttack: AutoAttackMode;
   readonly costRefundOnMiss?: CostRefundRule;
+  /** What a critical swing multiplies a flat resource award by. See the option. */
+  readonly critResourceMultiplier: number;
   /*
    * WHAT THE CAST IN FLIGHT PAID, so an avoided attack can hand most of it
    * back. Cleared by the first damage this ability resolves, whether that
@@ -547,6 +576,7 @@ export class Combatant {
     this.baseGcdMs = options.baseGcdMs ?? DEFAULT_GCD_MS;
     this.autoAttack = options.autoAttack ?? 'none';
     this.costRefundOnMiss = options.costRefundOnMiss;
+    this.critResourceMultiplier = options.critResourceMultiplier ?? 1;
     this.regeneration = options.regeneration ?? [];
     this.resourceOnDamageTaken = options.resourceOnDamageTaken;
     this.reactions = options.reactions ?? [];

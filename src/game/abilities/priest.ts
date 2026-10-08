@@ -155,6 +155,19 @@ export const MIND_FLAY: Ability = {
   },
 };
 
+/*
+ * "DEVOURING PLAGUE CAN NOW CORRECTLY CRITICALLY STRIKE", from the 1.60.1.70170
+ * notes, AND IT ALWAYS COULD HERE. Nothing changed for this patch item.
+ *
+ * Both Priest damage-over-time effects share one `tick` helper in
+ * `auras/priest.ts` and it has always passed `critFrom: 'spell'`, because
+ * "every DoT can crit" is a Forever RULE the owner gave for the whole ruleset
+ * rather than a per-spell property. So the client had a bug this simulator
+ * never reproduced, and the fix brings the game to where the model was.
+ *
+ * Recorded rather than left silent: a patch note with no diff beside it reads
+ * as something that was missed.
+ */
 export const DEVOURING_PLAGUE_ABILITY: Ability = {
   id: 'devouring_plague',
   name: 'Devouring Plague',

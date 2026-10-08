@@ -1,7 +1,13 @@
-import type { Reaction } from '../../engine';
-import { isWeaponUse } from '../../engine';
+import type { CastReaction, Reaction } from '../../engine';
+import { applyHealing, isWeaponUse, isWeaponUseOf } from '../../engine';
 import { ENRAGE_TRIGGER_CHANCE, OVERPOWER_READY, REND, enrageAura } from '../auras/warrior';
-import { bloodCrazeAura, deepWoundsAura, flurryAura } from '../auras/warriorTalents';
+import {
+  GORE_DRINKER_ID,
+  bloodCrazeAura,
+  deepWoundsAura,
+  flurryAura,
+  goreDrinkerAura,
+} from '../auras/warriorTalents';
 
 /**
  * Reactions a Warrior talent grants.
@@ -116,16 +122,32 @@ export const flurry: TalentReactionBuilder = (hastePercent) => ({
   },
 });
 
-/** Rage a proc of Unbridled Wrath grants, by whether the weapon is two-handed. */
-export const UNBRIDLED_WRATH_RAGE = { oneHanded: 1, twoHanded: 2 } as const;
+/**
+ * Rage a proc of Unbridled Wrath grants.
+ *
+ * ----------------------------------------------------------------------------
+ * ONE, WHATEVER IS HELD. This was `{ oneHanded: 1, twoHanded: 2 }` and the
+ * amount was read off the weapon that SWUNG; client build 1.60.1.70170 removed
+ * the second half -- "Unbridled Wrath no longer grants twice as much Rage to
+ * two-handed weapons" -- and the refreshed tooltip drops the sentence that said
+ * so. The values row went from `[chance, 1, 2]` to `[chance, 1]` with it.
+ *
+ * IT MATTERS MOST TO THE BUILD THAT IS NOT DUAL-WIELDING. A two-hander swings
+ * about half as often as two one-handers between them, so halving the per-proc
+ * rage on top of that is a real cut to 2H Arms' rage income and none at all to
+ * DW Fury's -- and both builds take 5/5.
+ * ----------------------------------------------------------------------------
+ */
+export const UNBRIDLED_WRATH_RAGE = 1;
 
 /**
  * Unbridled Wrath: a chance at extra rage when a melee weapon deals damage.
  *
- * "This effect is increased to 2 Rage for two-handed weapons", so the amount is
- * decided by the weapon that SWUNG rather than by the character -- a warrior
- * cannot hold a two-hander and an off-hand at once, but reading the slot keeps
- * it right whatever is equipped.
+ * `isWeaponUse` rather than "a swing", which is deliberate and is what the
+ * tooltip says: "when you deal melee damage with a weapon" covers an ability
+ * that needs the weapon as well as the auto-attack. A special attack costs no
+ * swing time, so this is one of the places a fast rotation earns more than the
+ * flat `R x S` income suggests.
  */
 export const unbridledWrath: TalentReactionBuilder = (chancePercent) => ({
   id: 'unbridled_wrath',
@@ -133,31 +155,47 @@ export const unbridledWrath: TalentReactionBuilder = (chancePercent) => ({
   outcomes: ['hit', 'crit', 'glance'],
   canTrigger: (context, _actor, attack) =>
     isWeaponUse(attack) && context.rng.rollChance(chancePercent / 100),
-  onTrigger: (context, actor, attack) => {
-    const weapon = attack.weaponSlot ? actor.weapons[attack.weaponSlot] : undefined;
-    context.grantResource(
-      actor,
-      'rage',
-      weapon?.twoHanded ? UNBRIDLED_WRATH_RAGE.twoHanded : UNBRIDLED_WRATH_RAGE.oneHanded,
-      { id: 'unbridled_wrath', name: 'Unbridled Wrath' },
-    );
+  onTrigger: (context, actor) => {
+    context.grantResource(actor, 'rage', UNBRIDLED_WRATH_RAGE, {
+      id: 'unbridled_wrath',
+      name: 'Unbridled Wrath',
+    });
   },
 });
 
 /**
- * Bloodthrill: melee attacks against a target bleeding from your Rend have a
- * chance to open the Overpower window.
+ * Bloodthrill: MAIN HAND melee attacks against a target bleeding from your Rend
+ * have a chance to open the Overpower window.
  *
  * Reuses OVERPOWER_READY, the same aura a dodge applies, so Overpower's
  * `canCast` needs no second condition and the window behaves identically
  * however it was opened.
+ *
+ * ----------------------------------------------------------------------------
+ * MAIN HAND ONLY, AND THE CHANCE DOUBLED, both at client build 1.60.1.70170 and
+ * neither in the patch notes. The tooltip went from "Your melee attacks ... have
+ * a 10% chance" to "Your Main Hand melee attacks ... have a 20% chance", and the
+ * values row from 2/4/6/8/10 to 4/8/12/16/20.
+ *
+ * SO THE TWO CHANGES PULL AGAINST EACH OTHER and the net depends on the build.
+ * For 2H Arms, which takes 5/5, every weapon use is already a main-hand use and
+ * the talent simply doubled. For a dual-wielder it would have halved the
+ * eligible attacks and doubled the chance, which is roughly a wash -- and no
+ * dual-wield build takes it.
+ *
+ * THE VALUE ROW ALSO LOST A NUMBER. It was `[chance, 1, 6]` -- the middle one
+ * being "for 1 attack", which the new wording drops -- and is `[chance, 6]` now.
+ * This effect reads index 0 either way, which is exactly the kind of accident
+ * worth not relying on: see `improved_slam`, where the same reshaping happened
+ * and every reader was given an explicit index.
+ * ----------------------------------------------------------------------------
  */
 export const bloodthrill: TalentReactionBuilder = (chancePercent) => ({
   id: 'bloodthrill',
   on: 'dealt',
   outcomes: ['hit', 'crit', 'glance'],
   canTrigger: (context, _actor, attack) =>
-    isWeaponUse(attack) &&
+    isWeaponUseOf(attack, 'mainHand') &&
     attack.defender.auras.has(REND.id) &&
     context.rng.rollChance(chancePercent / 100),
   onTrigger: (context, actor) => {
@@ -320,25 +358,104 @@ export const bloodCrazeWhenHurt: TalentReactionBuilder = (percentOfMaxHealth) =>
   },
 });
 
-/**
- * Blood Craze's third clause: "dealing damage with Bloodthirst".
+/*
+ * BLOOD CRAZE'S THIRD CLAUSE WAS A SECOND REACTION HERE AND IS GONE.
+ * "Blood Craze no longer activates off of Bloodthirst casts", client build
+ * 1.60.1.70170, and the refreshed tooltip drops the clause.
  *
- * A SEPARATE reaction because it watches the other side of the attack, and
- * `Reaction.on` names one side. It is also the only clause a warrior nothing
- * is hitting can ever meet, which is the whole reason Blood Craze is a Fury
- * talent rather than a Protection one.
+ * WHAT IT WAS: `on: 'dealt'`, gated on `attack.abilityId === 'bloodthirst' &&
+ * attack.amount > 0`, applying the same `bloodCrazeAura` the other clause does.
+ * A separate reaction because it watched the OTHER SIDE of the attack and
+ * `Reaction.on` names one side -- which is still the rule, and Gore Drinker
+ * below needs the same two-entry shape for the same reason.
  *
- * "Dealing damage" is read as LANDING it: a Bloodthirst the target dodged
- * dealt none.
+ * IT WAS THE ONLY CLAUSE A WARRIOR NOTHING IS HITTING COULD EVER MEET, which is
+ * what made Blood Craze a Fury talent rather than a Protection one. Without it
+ * the talent is a tank talent sitting in a damage tree, and the owner's new DW
+ * Fury build does not take it.
  */
-export const bloodCrazeOnBloodthirst: TalentReactionBuilder = (percentOfMaxHealth) => ({
-  id: 'blood_craze_bloodthirst',
+
+/**
+ * GORE DRINKER, the cast half: "Your Enrage, Berserker Rage, Bloodrage, Death
+ * Wish, and Bloodthirst abilities cause your next 3 melee attacks to restore
+ * 0.5/1% of your maximum Health."
+ *
+ * ----------------------------------------------------------------------------
+ * A SET OF IDS IN `canTrigger` RATHER THAN `CastReaction.abilityId`, which holds
+ * exactly one. Four ids, so the field cannot express it -- `runCastReactions`
+ * compares `reaction.abilityId` to the cast and skips on a mismatch, and a
+ * reaction with no `abilityId` is offered every cast, which is what this wants
+ * before narrowing.
+ *
+ * ENRAGE IS NOT IN THE SET AND IS IN THE TOOLTIP. It is a talent PROC in Forever
+ * and no ability a Warrior presses, so there is nothing to react to; the talent
+ * carries an `unmodelled` entry saying exactly that.
+ *
+ * `_cast` IS NOT INSPECTED BEYOND ITS ABILITY. A Bloodthirst that MISSED still
+ * opened the window, because the tooltip keys on the ability being used rather
+ * than on it connecting -- which is the opposite of the clause this replaced,
+ * where "dealing damage with Bloodthirst" was read as landing it.
+ * ----------------------------------------------------------------------------
+ */
+export const GORE_DRINKER_ABILITIES: readonly string[] = [
+  'berserker_rage_cast',
+  'bloodrage_cast',
+  'death_wish',
+  'bloodthirst',
+];
+
+export const goreDrinker = (percentOfMaxHealth: number): CastReaction => ({
+  id: 'gore_drinker',
+  canTrigger: (_context, _actor, cast) => GORE_DRINKER_ABILITIES.includes(cast.ability.id),
+  onTrigger: (context, actor) => {
+    context.applyAura(actor, goreDrinkerAura(percentOfMaxHealth), actor.id);
+  },
+});
+
+/**
+ * GORE DRINKER, the attack half: each of the next three melee attacks restores
+ * the health and spends a charge.
+ *
+ * ----------------------------------------------------------------------------
+ * IT SPENDS ITS OWN CHARGE, WHICH IS NOT WHAT THE OTHER CHARGE EFFECTS DO.
+ * Flurry declares `consumedBySwing` and Shield Block declares `consumedByBlock`,
+ * and in both cases the ENGINE spends the charge -- the auto-attack and the
+ * damage pipeline are the only things that know a swing or a block happened.
+ * There is no equivalent hook for "any melee attack landed", and adding one
+ * would be a general engine field with exactly one caller, which this project
+ * has twice found to be silent in the rules that did not get wired up.
+ *
+ * SO THE REACTION HEALS AND THEN CALLS `consumeStack`, in that order, and the
+ * order is load-bearing for the same reason Holy Shield's is: asking whether the
+ * aura is up AFTER spending the charge drops the THIRD attack's heal, and the
+ * talent would quietly be worth two thirds of itself. `runReactions` only
+ * offers an attack at all while the aura is up, so the heal always has its
+ * charge.
+ *
+ * "MELEE ATTACKS" IS `isWeaponUse`, the project's own definition of a use: a
+ * swing, an extra attack, or an ability that needs the weapon. A Thunder Clap
+ * declares a ranged slot precisely so it is excluded.
+ *
+ * NO CRIT AND NO SPELL POWER on the heal: it is a fraction of a pool, exactly
+ * as Blood Craze's ticks are, and nothing about the Warrior scales it.
+ * ----------------------------------------------------------------------------
+ */
+export const goreDrinkerHeal: TalentReactionBuilder = (percentOfMaxHealth) => ({
+  id: 'gore_drinker_heal',
   on: 'dealt',
   outcomes: ['hit', 'crit', 'glance', 'crush', 'block'],
-  canTrigger: (_context, _actor, attack) =>
-    attack.abilityId === 'bloodthirst' && attack.amount > 0,
+  canTrigger: (_context, actor, attack) =>
+    isWeaponUse(attack) && actor.auras.has(GORE_DRINKER_ID),
   onTrigger: (context, actor) => {
-    context.applyAura(actor, bloodCrazeAura(percentOfMaxHealth), actor.id);
+    applyHealing(context, {
+      source: actor,
+      target: actor,
+      abilityId: GORE_DRINKER_ID,
+      abilityName: 'Gore Drinker',
+      baseAmount: (actor.health.maximum * percentOfMaxHealth) / 100,
+      canCrit: false,
+    });
+    actor.auras.consumeStack(context, GORE_DRINKER_ID);
   },
 });
 
@@ -352,7 +469,13 @@ export const WARRIOR_TALENT_REACTIONS: Readonly<Record<string, TalentReactionBui
    * change to allow it.
    */
   blood_craze: bloodCrazeWhenHurt,
-  blood_craze_bloodthirst: bloodCrazeOnBloodthirst,
+  /*
+   * GORE DRINKER IS THE SECOND TALENT WITH TRIGGERS ON BOTH SIDES, and the
+   * registry needed no change for it either: a CAST opens the window and an
+   * ATTACK spends it, so the cast half is in `WARRIOR_CAST_REACTIONS` and this
+   * is the attack half.
+   */
+  gore_drinker_heal: goreDrinkerHeal,
   flurry,
   unbridled_wrath: unbridledWrath,
   bloodthrill,
@@ -360,4 +483,18 @@ export const WARRIOR_TALENT_REACTIONS: Readonly<Record<string, TalentReactionBui
   master_of_defense: masterOfDefense,
   enrage,
   weaponmaster: weaponmasterSword,
+};
+
+/**
+ * Every Warrior talent that grants a CAST reaction, by talent id.
+ *
+ * THE WARRIOR'S FIRST, which is why `talentBuild.ts` had no `warrior` entry in
+ * `CAST_REACTIONS` until Gore Drinker arrived. That registry is OPTIONAL and
+ * SILENT -- a class missing from it produces no cast reactions and no complaint
+ * -- so the table is exported even though it holds one entry, and
+ * `classRegistration.test.ts` is what notices if a class with cast reactions is
+ * absent from it.
+ */
+export const WARRIOR_CAST_REACTIONS: Readonly<Record<string, (value: number) => CastReaction>> = {
+  gore_drinker: goreDrinker,
 };

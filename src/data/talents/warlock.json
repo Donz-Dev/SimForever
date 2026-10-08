@@ -54,12 +54,12 @@
      "row": 1,
      "col": 1,
      "ranks": 2,
-     "name": "Soul Harvesting",
+     "name": "Soul Harvest",
      "icon": "inv_elemental_primal_shadow",
      "tier": 5,
      "requires": null,
      "requiresRanks": null,
-     "description": "You gain Soul Harvest for 10 sec if a victim is killed while afflicted with your Drain Soul. Soul Harvest allows your Mana to regenerate at 100% of normal speed while you are casting spells, and grants a 100% increase to your Mana regeneration."
+     "description": "Killing a non-trivial target afflicted by your Drain Soul increases your Mana regeneration by 100% for 10 sec and allows 100% of normal Mana regeneration to continue while casting."
     },
     {
      "row": 1,
@@ -191,7 +191,7 @@
      "tier": 30,
      "requires": "Siphon Life",
      "requiresRanks": 1,
-     "description": "Tears the target apart from within, dealing 36 Shadow damage every 1 sec and increasing the damage they take from your other Shadow damage over time effects by 10%. Lasts 6 sec."
+     "description": "Tears the target apart from within, inflicting 36 Shadow damage every 1 sec and increasing the damage they take from your other Shadow damage over time effects by 10% for 6 sec."
     }
    ]
   },

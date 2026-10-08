@@ -16,8 +16,8 @@ import {
  * every build; registering a second copy from a talent would double it, because
  * reactions are concatenated and both would fire.
  *
- * Talent procs -- Primal Fury, Nature's Grace, Natural Reaction and King of the
- * Jungle -- live in `druidTalents.ts`.
+ * Talent procs -- Blood Frenzy, Nature's Grace and Natural Reaction -- live in
+ * `druidTalents.ts`.
  * ----------------------------------------------------------------------------
  */
 

@@ -50,7 +50,7 @@ function replay(seeds = 20) {
   let up = false;
   let lastCast: string | undefined;
   const spentOn = new Map<string, number>();
-  let comboFromPrimalFury = 0;
+  let comboFromBloodFrenzy = 0;
   let rage = 0;
 
   for (let seed = 1; seed <= seeds; seed += 1) {
@@ -65,7 +65,8 @@ function replay(seeds = 20) {
          * THE CAST THAT SPENDS IT is the last one before the aura is removed.
          * A free ability cast while it is up does NOT consume it, and the first
          * draft of this attribution read the next cast of any kind -- which
-         * reported Tiger's Fury and Berserk taking charges they cannot take.
+         * reported Berserk, and the since-removed Tiger's Fury, taking charges
+         * they cannot take.
          */
         if (event.type === 'cast' && up) lastCast = event.abilityId;
         if (event.type === 'aura_removed' && event.auraId === CLEARCASTING.id) {
@@ -76,9 +77,9 @@ function replay(seeds = 20) {
         if (
           event.type === 'resource_gained' &&
           event.resource === 'comboPoints' &&
-          event.source === 'primal_fury'
+          event.source === 'blood_frenzy'
         ) {
-          comboFromPrimalFury += event.amount;
+          comboFromBloodFrenzy += event.amount;
         }
         if (event.type === 'resource_gained' && event.resource === 'rage') rage += event.amount;
       },
@@ -86,7 +87,7 @@ function replay(seeds = 20) {
     simulation.begin();
     simulation.run();
   }
-  return { procs: procs / seeds, spentOn, comboFromPrimalFury: comboFromPrimalFury / seeds, rage };
+  return { procs: procs / seeds, spentOn, comboFromBloodFrenzy: comboFromBloodFrenzy / seeds, rage };
 }
 
 describe('1. every Clearcasting proc goes on Shred', () => {
@@ -138,18 +139,38 @@ describe('2. Rend and Tear reaches every point of melee damage', () => {
   });
 });
 
-describe('3. Primal Fury has two clauses and both are form-gated', () => {
+/*
+ * ----------------------------------------------------------------------------
+ * PRIMAL FURY IS CALLED BLOOD FRENZY AT CLIENT BUILD 1.60.1.70170, and the
+ * rename is all that moved: same row, same two ranks, same tooltip word for
+ * word, same `[100, 5, 100]` at rank 2.
+ *
+ * THE TALENT ID FOLLOWED THE CLIENT AND SO DID THE REACTION IDS, which is the
+ * opposite of what Primal Bite did. A talent id is DERIVED from the client's
+ * name, so there was no choice about the first; the reaction ids and the
+ * resource-source names were a choice, and they moved because the source name
+ * is what a person reads on the resource panel beside the combo points it
+ * granted. Primal Bite's ABILITY id stayed `mangle` because rotations, profiles
+ * and the Berserk aura all key off it.
+ * ----------------------------------------------------------------------------
+ */
+describe('3. Blood Frenzy has two clauses and both are form-gated', () => {
   it('states a rage chance, the rage, and a combo point chance', () => {
     // "...{0}% chance to gain an additional {1} Rage ... while in Bear Form ...
     // In addition, your non-periodic critical strikes from Cat Form abilities
     // that generate Combo Points have a {2}% chance to add an additional
     // Combo Point."
-    expect([0, 1, 2].map((i) => talentNumber('druid', 'primal_fury', 2, i))).toEqual([100, 5, 100]);
+    expect([0, 1, 2].map((i) => talentNumber('druid', 'blood_frenzy', 2, i))).toEqual([
+      100, 5, 100,
+    ]);
+    // And nothing answers to the old name, which is what a stale talent id
+    // looks like: every effect silently dropped.
+    expect(talentNumber('druid', 'primal_fury', 2, 0)).toBeUndefined();
   });
 
   it('gives a Cat the combo point proc and a Bear the rage one, never both', () => {
-    expect(buildIn('cat').reactions.map((r) => r.id)).toEqual(['primal_fury_combo_point']);
-    expect(buildIn('bear').reactions.map((r) => r.id)).toEqual(['primal_fury']);
+    expect(buildIn('cat').reactions.map((r) => r.id)).toEqual(['blood_frenzy_combo_point']);
+    expect(buildIn('bear').reactions.map((r) => r.id)).toEqual(['blood_frenzy']);
   });
 
   it('reads index 2 for the combo point chance, not index 0', () => {
@@ -158,8 +179,8 @@ describe('3. Primal Fury has two clauses and both are form-gated', () => {
      * index is asserted rather than the resulting chance. At rank 1 they differ
      * only in the rage figure, so no rank distinguishes them by value alone.
      */
-    const combo = DRUID_TALENT_EFFECTS.primal_fury.find(
-      (effect) => effect.kind === 'reaction' && effect.reactionId === 'primal_fury_combo_point',
+    const combo = DRUID_TALENT_EFFECTS.blood_frenzy.find(
+      (effect) => effect.kind === 'reaction' && effect.reactionId === 'blood_frenzy_combo_point',
     );
     expect(combo).toMatchObject({ valueIndex: 2, requires: { styles: ['cat'] } });
   });
@@ -172,8 +193,8 @@ describe('3. Primal Fury has two clauses and both are form-gated', () => {
      * test next door asserts exactly that -- so the Cat was gaining 100 rage a
      * fight and wasting 62% of it.
      */
-    const { comboFromPrimalFury, rage } = replay();
-    expect(comboFromPrimalFury).toBeGreaterThan(3);
+    const { comboFromBloodFrenzy, rage } = replay();
+    expect(comboFromBloodFrenzy).toBeGreaterThan(3);
     expect(rage).toBe(0);
   });
 
@@ -215,7 +236,7 @@ describe("4. Rake's tick scales at 5.5% and its hit still at 1%", () => {
 describe('the Cat still spends its combo points', () => {
   it('reaches Rip, which is what the extra points are for', () => {
     /*
-     * THE CHECK THAT TWO OF THESE CHANGES DID NOT CANCEL. Primal Fury hands the
+     * THE CHECK THAT TWO OF THESE CHANGES DID NOT CANCEL. Blood Frenzy hands the
      * Cat about ten extra combo points a fight, and the Clearcasting entry sits
      * ABOVE Rip -- so a list that spent every charge on Shred and never reached
      * its finisher would read as a working change and a worse build.

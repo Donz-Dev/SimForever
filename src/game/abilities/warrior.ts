@@ -142,8 +142,16 @@ export const MORTAL_STRIKE: Ability = {
 /** "plus 48", spell 23894 rank 4, effect row 49. */
 export const BLOODTHIRST_BASE_DAMAGE = 48;
 
-/** "35% of your Attack Power", spell 23894 rank 4, effect row 36. */
-export const BLOODTHIRST_POWER_COEFFICIENT = 0.35;
+/**
+ * "45% of your Attack Power".
+ *
+ * THIRTY-FIVE PERCENT UNTIL CLIENT BUILD 1.60.1.70170, when Forever raised it:
+ * "Bloodthirst's Attack Power ratio has been increased to 45% (Was 35%)". The
+ * refreshed spellbook capture says the same in its own words -- "damage equal to
+ * 45% of your Attack Power plus 48" -- so the notes and the client agree and
+ * there is no tie-break to apply. The flat 48 did not move.
+ */
+export const BLOODTHIRST_POWER_COEFFICIENT = 0.45;
 
 export const BLOODTHIRST: Ability = {
   id: 'bloodthirst',
@@ -263,15 +271,21 @@ export const WHIRLWIND_MAX_TARGETS = 4;
  * when an encounter has adds.
  */
 /**
- * The bonus key Raging Blows sets on Whirlwind.
+ * What the off-hand half of a Whirlwind is called in the breakdown.
  *
- * Present and non-zero means "also strike with the off hand". A bonus rather
- * than a second ability, so the cooldown, the cost and every per-ability
- * modifier keep applying to one Whirlwind.
+ * ----------------------------------------------------------------------------
+ * IT NO LONGER TAKES A TALENT, and `WHIRLWIND_OFF_HAND_BONUS` is gone with the
+ * gate. Forever's 1.60.1.70170 notes: "Raging Blows no longer causes your
+ * Whirlwind to strike with your offhand. Whirlwind will now always strike with
+ * both weapons without requiring a talent point", and the spellbook capture
+ * agrees -- "causing weapon damage from both melee weapons to each enemy".
+ *
+ * SO THE CONDITION IS THE OFF HAND ITSELF, which is the honest test: a
+ * two-handed Arms warrior has no `offHand` weapon profile and strikes once,
+ * and a dual-wielder strikes twice. That was always the second half of the
+ * check; what went is the talent bonus in front of it.
+ * ----------------------------------------------------------------------------
  */
-export const WHIRLWIND_OFF_HAND_BONUS = 'offHandStrike';
-
-/** What the off-hand half of a Whirlwind is called in the breakdown. */
 export const WHIRLWIND_OFF_HAND_NAME = 'Whirlwind (Off Hand)';
 
 export const WHIRLWIND: Ability = {
@@ -299,8 +313,9 @@ export const WHIRLWIND: Ability = {
     }
 
     /*
-     * RAGING BLOWS: "Causes your Whirlwind to also strike with your off-hand
-     * weapon." Main hand first, off hand immediately after.
+     * BOTH WEAPONS, ALWAYS. Main hand first, off hand immediately after. Until
+     * client build 1.60.1.70170 this needed Raging Blows; now the ability does
+     * it outright, so the only question left is whether there IS an off hand.
      *
      * It carries the off-hand DAMAGE penalty and not the off-hand MISS
      * penalty. Both fall out of the model rather than being special-cased
@@ -312,8 +327,7 @@ export const WHIRLWIND: Ability = {
      * Named separately in the breakdown so the second strike is visible;
      * the ability id stays `whirlwind`, so talents keyed to it still apply.
      */
-    const strikesOffHand = (ability.bonuses?.[WHIRLWIND_OFF_HAND_BONUS] ?? 0) > 0;
-    if (!strikesOffHand || !caster.weapons.offHand) return;
+    if (!caster.weapons.offHand) return;
 
     for (const target of targets) {
       dealDamage(simulation, {
@@ -338,30 +352,28 @@ export const SPEARING_STRIKE_WEAPON_FRACTION = 0.4;
  * "40% Weapon Damage", 15 rage, 20 second cooldown. No base damage.
  *
  * ----------------------------------------------------------------------------
- * IT NEEDS A TWO-HANDED WEAPON, which nothing here knew until 2026-09-30.
+ * IT NEEDS BATTLE STANCE, AND IT USED TO NEED A TWO-HANDED WEAPON.
  *
- * The Wowhead tooltip capture carries no requirement line for this spell at
- * all -- "Requires Warrior / Requires level 1" and nothing else -- and that
- * silence was read as "no requirement". Both of the OTHER two sources state
- * one, in the same words the spellbook uses for a shield:
+ * Forever swapped the requirement at client build 1.60.1.70170 -- "Spearing
+ * Strike no longer requires a 2handed weapon. Spearing Strike requires Battle
+ * Stance" -- and the spellbook capture reads "Requires Battle Stance" where it
+ * read "Requires Two-Handed Axes, Two-Handed Maces, Polearms, Two-Handed
+ * Swords, Staves". So it is `stances` now, the same field Overpower uses, and
+ * `abilitiesForBuild` no longer gates it at all.
  *
- *     `forever-warrior-spellbook.json`       "Requires Two-Handed Axes,
- *                                             Two-Handed Maces, Polearms,
- *                                             Two-Handed Swords, Staves"
- *     `foreverchanges.pro/spellbook/warrior` "Requires Two-Handed Melee Weapon"
+ * HOW THE TWO-HANDED CLAUSE WAS FOUND IS STILL THE LESSON. The Wowhead tooltip
+ * capture carried no requirement line for this spell at all -- "Requires
+ * Warrior / Requires level 1" and nothing else -- and that silence had been
+ * read as "no requirement" for the whole project, so the DW Fury profile cast a
+ * two-handed ability while holding two swords and a test asserted that it did.
+ * A SOURCE THAT OMITS A CLAUSE IS NOT A SOURCE THAT DENIES IT, which is the same
+ * reasoning that keeps Shadowburn's Soul Shard when the preferred source carries
+ * no reagent field.
  *
- * A SOURCE THAT OMITS A CLAUSE IS NOT A SOURCE THAT DENIES IT. The same
- * reasoning that keeps Shadowburn's Soul Shard when the preferred source
- * carries no reagent field: silence is not disagreement, so the two sources
- * that speak decide it, and the tie-break rule never comes up.
- *
- * Enforced where Shield Slam's shield is -- `abilitiesForBuild` keeps it out
- * of the BOOK rather than refusing it per cast, so a dual-wielder does not
- * report it as an ability it owns and never uses.
- *
- * IT COST THE DW FURY PROFILE A TALENT POINT AND A LIST ENTRY, both of which
- * are the ruleset owner's and neither of which is changed here. See
- * docs/handoff/warrior.md.
+ * AND THE SWAP DID NOT HAND IT BACK TO DW FURY. That build is in Berserker
+ * Stance, so an ability it can now hold the weapons for is one it cannot hold
+ * the stance for -- the point the owner's old build spent here went to Improved
+ * Execute in the new one. See docs/handoff/warrior.md.
  * ----------------------------------------------------------------------------
  *
  * A Forever original with no Classic counterpart, so there is nothing to check
@@ -370,6 +382,7 @@ export const SPEARING_STRIKE_WEAPON_FRACTION = 0.4;
 export const SPEARING_STRIKE: Ability = {
   id: 'spearing_strike',
   name: 'Spearing Strike',
+  stances: ['battle_stance'],
   cooldownMs: seconds(20),
   cost: { resource: 'rage', amount: 15 },
   attackTable: 'melee-special',

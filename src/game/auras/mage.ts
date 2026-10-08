@@ -22,7 +22,7 @@ import {
  * Moonfury and the Shaman's Elemental Fury were fixed on the way past.
  *
  * WHAT IS HERE AND WHAT IS NOT. The Mage's damage is three nukes and a handful
- * of effects that ride on their crits: Ignite, Hot Streak and Combustion all
+ * of effects that ride on their crits: Ignite, Heating Up and Combustion all
  * fire off a critical strike and all three are here. What is NOT here is
  * everything keyed on a FROZEN target -- see `FROZEN_UNMODELLED`.
  * ----------------------------------------------------------------------------
@@ -399,30 +399,49 @@ export function fireVulnerabilityAura(percentPerStack: number): AuraDefinition {
 }
 
 /**
- * Hot Streak: "reduces the cast time of Pyroblast by 25%, stacking up to 3
- * times", for 15 seconds after a non-periodic Fire crit.
+ * Heating Up: "reduce the cast time of your next Pyroblast cast within 20 sec by
+ * 25%, stacking up to 3 times", after a non-periodic Fire crit.
  *
- * NOT CONSUMED BY THE CAST, and that is the difference from Maelstrom Weapon.
- * The tooltip says "reduces the cast time of Pyroblast", not "of your NEXT
- * Pyroblast" -- it is a duration buff, so it has no `consumedByCast` at all
- * and every Pyroblast inside the fifteen seconds is faster.
+ * ----------------------------------------------------------------------------
+ * IT WAS CALLED HOT STREAK UNTIL CLIENT BUILD 1.60.1.70170. Forever renamed it
+ * -- "Hot Streak has been renamed to Heating Up, since it is no longer dependent
+ * on having a 'streak'" -- and the aura's id, name and constants follow the
+ * client, because the NAME is what a person reads on the buff-uptime table. That
+ * is the opposite of the choice made for Primal Bite, whose ability id stayed
+ * `mangle`: this id is referenced by one reaction and one test, where that one
+ * is referenced by rotations, talents, profiles and the Berserk aura.
+ *
+ * THE WINDOW ALSO WENT 15 SECONDS TO 20, which the rename notes do not mention
+ * and the tooltip does.
+ *
+ * NOT CONSUMED BY THE CAST, and the new wording makes that look wrong. "Your
+ * NEXT Pyroblast cast within 20 sec" reads like a one-shot, and `consumedByCast`
+ * exists for exactly that -- but the aura has no charge to spend beyond its
+ * stacks, and spending them per cast is a DIFFERENT effect: three stacks are
+ * worth 75% off ONE Pyroblast under that reading and 75% off every Pyroblast in
+ * the window under this one. The old tooltip said "reduces the cast time of
+ * Pyroblast" with no "next", so the behaviour here is the OLD reading and is
+ * left alone rather than changed on a rename note: the patch says the name moved
+ * and says nothing about the mechanic. Flagged because it is a real question and
+ * the generous answer is the one in place.
  *
  * THREE STACKS AT 25% EACH IS 75%, which takes a six-second Pyroblast to one
  * and a half. That is the whole reason a Fire mage casts Pyroblast at all.
+ * ----------------------------------------------------------------------------
  */
-export const HOT_STREAK_DURATION_MS = seconds(15);
-export const HOT_STREAK_MAX_STACKS = 3;
-export const HOT_STREAK_REDUCTION_PER_STACK = 0.25;
+export const HEATING_UP_DURATION_MS = seconds(20);
+export const HEATING_UP_MAX_STACKS = 3;
+export const HEATING_UP_REDUCTION_PER_STACK = 0.25;
 
-export const HOT_STREAK: AuraDefinition = {
-  id: 'hot_streak',
-  name: 'Hot Streak',
-  durationMs: HOT_STREAK_DURATION_MS,
-  maxStacks: HOT_STREAK_MAX_STACKS,
+export const HEATING_UP: AuraDefinition = {
+  id: 'heating_up',
+  name: 'Heating Up',
+  durationMs: HEATING_UP_DURATION_MS,
+  maxStacks: HEATING_UP_MAX_STACKS,
   refreshBehaviour: 'reset',
   castModifier: {
     abilityIds: ['pyroblast'],
-    castTimeFraction: HOT_STREAK_REDUCTION_PER_STACK,
+    castTimeFraction: HEATING_UP_REDUCTION_PER_STACK,
     scalesWithStacks: true,
     requiresCastTime: true,
   },
@@ -478,7 +497,7 @@ export const MAGE_DAMAGE_SPELL_IDS: readonly string[] = [
 
 /**
  * Combustion: "each of your Fire damage spell hits increases your critical
- * strike chance with Fire damage spells by 10%. Lasts until you have caused 4
+ * strike chance with Fire damage spells by 10%. Lasts until you have caused 3
  * non-periodic critical strikes with Fire spells."
  *
  * ----------------------------------------------------------------------------
@@ -511,15 +530,26 @@ export const MAGE_DAMAGE_SPELL_IDS: readonly string[] = [
  * ----------------------------------------------------------------------------
  */
 export const COMBUSTION_CRIT_PER_STACK = 10;
-/** "4 non-periodic critical strikes with Fire spells", and then it ends. */
-export const COMBUSTION_CRITS_TO_END = 4;
+/**
+ * "3 non-periodic critical strikes with Fire spells", and then it ends.
+ *
+ * FOUR UNTIL CLIENT BUILD 1.60.1.70170, and Forever put it back to three: "The
+ * number of charges of Combustion has returned to 3 (was 4)". The word "charges"
+ * in that note is the CRIT COUNT and not `maxStacks` -- the tooltip reads "lasts
+ * until you have caused 3 non-periodic critical strikes with Fire spells" -- and
+ * the two are easy to confuse here, because this aura genuinely has a stack
+ * count as well and it is capped at twenty for an unrelated reason. Reading the
+ * note as the stack cap would have left the window ending a crit late and
+ * capped the crit bonus at +30%.
+ */
+export const COMBUSTION_CRITS_TO_END = 3;
 /**
  * A cap the source does not state, set where it cannot bind.
  *
- * `maxStacks` has to be a number and the real end is the four crits, not a
+ * `maxStacks` has to be a number and the real end is the three crits, not a
  * stack count. Twenty is past anything reachable: ten stacks is already +100%
- * Fire crit, so every spell after that one crits and the fourth arrives within
- * four more casts. It is here to satisfy the field, NOT as a ruleset figure --
+ * Fire crit, so every spell after that one crits and the third arrives within
+ * three more casts. It is here to satisfy the field, NOT as a ruleset figure --
  * a run that reached it would mean the crit counter had stopped working, which
  * is why a test asserts the aura ends on crits rather than on stacks.
  */
@@ -528,7 +558,7 @@ export const COMBUSTION_STACK_CAP = 20;
 export const COMBUSTION: AuraDefinition = {
   id: 'combustion',
   name: 'Combustion',
-  // No duration: the four crits are what end it. See above.
+  // No duration: the three crits are what end it. See above.
   durationMs: 0,
   maxStacks: COMBUSTION_STACK_CAP,
   /*

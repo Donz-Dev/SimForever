@@ -29,14 +29,38 @@
  */
 import { readFileSync } from 'node:fs';
 
-/** The profiles the ruleset owner specified, by class and name. */
+/**
+ * The profiles the ruleset owner specified, by class and name.
+ *
+ * ----------------------------------------------------------------------------
+ * NINE OF THESE MOVED AT CLIENT BUILD 1.60.1.70170, and the reason is worth
+ * more than the new strings: SEVEN OF THEM STOPPED DECODING AT ALL. Position is
+ * the only key this encoding has, so a talent added, removed or MOVED shifts
+ * every digit after it -- and the patch that moved them removed four talents
+ * nobody announced (the Paladin's Improved Holy Strike and Crusade, the
+ * Warrior's Precision and Toughness) and swapped two Shaman tiers.
+ *
+ * THE DRUID AND WARRIOR URLS CAME WITH THE PATCH NOTES; THE PALADIN AND SHAMAN
+ * ONES WERE ASKED FOR. The four freed-point builds are decisions rather than
+ * transcriptions -- Shaman Enhancement cannot reach Elemental Fury any more at
+ * 19 points in the tree -- and guessing them would have put a figure in the
+ * baseline table on nobody's authority.
+ *
+ * THE WARRIOR WAS ABSENT FROM THIS LIST FOR THE WHOLE PROJECT, which is why
+ * nothing noticed its tree had changed: the one class with four sources was the
+ * one class no build URL was checked against.
+ * ----------------------------------------------------------------------------
+ */
 const PROFILES = [
   ['druid', 'Moonkin', 'https://talentsforever.com/druid/60/5232220115501351--505003-BDEFHCJMNKOPjloAI-3'],
-  ['druid', 'Cat', 'https://talentsforever.com/druid/60/050022-3520002123032213051-052-BF1klRSQWXYcbZdefh4ihFE-3'],
-  ['druid', 'Bear', 'https://talentsforever.com/druid/60/050022-4523032120132210551--RVSTBFEXYcbWaehigdQ-3'],
-  ['paladin', 'Seal Twist Ret', 'https://talentsforever.com/paladin/60/253003--052253312012330321-jBFAkmnopqtsuvyxzCl-3'],
-  ['paladin', 'Shockadin', 'https://talentsforever.com/paladin/60/235303003000121--0522503020120303-ABFDIMC3ON1jlkm1qostm2vmxCN-3'],
-  ['paladin', 'Prot Pally', 'https://talentsforever.com/paladin/60/230003-0530313321301551-502-TUW2XYa1cbaeikf4ghABFfZW-3'],
+  ['druid', 'Cat', 'https://talentsforever.com/druid/60/050022-35200032021032212051-053-BEFRSQWXaZdefgcijlm-6'],
+  ['druid', 'Bear', 'https://talentsforever.com/druid/60/050022-45230302120132012551--RVSYZQ1XbcdgfhijBEFTQ-6'],
+  ['paladin', 'Seal Twist Ret', 'https://talentsforever.com/paladin/60/550032--05225331201330321-ABEijklmnoprtsvxwF-6'],
+  ['paladin', 'Shockadin', 'https://talentsforever.com/paladin/60/55303003000121--052252302010303-ilkjnprtmvABECHLNM-6'],
+  ['paladin', 'Prot Pally', 'https://talentsforever.com/paladin/60/50003-0530213321301451-5022-hjAESTVYZXWabdefgk-6'],
+  ['warrior', '2H Arms', 'https://talentsforever.com/warrior/60/30325213132515201-0505-2-CA2FAE2HE2KJIMNOLQSUEGiD-6'],
+  ['warrior', 'DW Fury', 'https://talentsforever.com/warrior/60/30305013002-05253005142010501--SUVTYZbdfha1ACE4HEGKa-6'],
+  ['warrior', 'Prot Warr', 'https://talentsforever.com/warrior/60/35310003002--050532120301021351-jlportmwvxyzABDCHKn-6'],
   ['hunter', 'BM Hunter', 'https://talentsforever.com/hunter/60/5320001505101251-30502500005--ACBGHJMKNOPSVQUa-3'],
   ['hunter', 'LW Ranged', 'https://talentsforever.com/hunter/60/502-3050052511523151-5-ASQVYXZacefWgbdC-3'],
   ['hunter', 'LW Melee', 'https://talentsforever.com/hunter/60/502-005005201-500240031050220151-ACSVWYgjk3onkqtsvwx-3'],
@@ -49,8 +73,16 @@ const PROFILES = [
   ['priest', 'Shadow', 'https://talentsforever.com/priest/60/0052030303-3-505322001201302051-jnom1rsmuv1l3xvl1z0SlCFDJH-3'],
   ['warlock', 'SM/DS', 'https://talentsforever.com/warlock/60/05550320035201351-0050203001--3'],
   ['warlock', 'Firelock', 'https://talentsforever.com/warlock/60/05-0050203001-2050355103101351-3'],
-  ['shaman', 'Enhance', 'https://talentsforever.com/shaman/60/05003305201-052031031005112251--BEFHIKRS1UVXYbcdefgSh-3'],
-  ['shaman', 'Ele', 'https://talentsforever.com/shaman/60/5505301503123131-055002001--3'],
+  ['shaman', 'Enhance', 'https://talentsforever.com/shaman/60/053033102-054031031005112251--RVUS1XS1bcfedghBEFCGISY-6'],
+  /*
+   * RE-ENCODED RATHER THAN RE-SPECIFIED, and it is the one URL here that is not
+   * a string somebody pasted. Elemental Fury and Elemental Alacrity swapped
+   * tiers at build 1.60.1.70170 and the Elemental build takes BOTH, at the same
+   * ranks and both still legal -- so the digits moved and the build did not.
+   * The owner's own `5505301503123131-055002001-` decoded to this exact
+   * allocation against the previous tree.
+   */
+  ['shaman', 'Ele', 'https://talentsforever.com/shaman/60/5505301303123151-055002001--6'],
 ];
 
 const TALENT_POINTS_AT_60 = 51;

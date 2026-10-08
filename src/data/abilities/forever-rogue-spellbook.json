@@ -1,7 +1,7 @@
 {
  "class": "rogue",
  "source": "https://talentsforever.com/spelldesc.js",
- "build": "1.60.1.70009",
+ "build": "1.60.1.70170",
  "note": "Max rank only. The simulator runs at level 60, and a talent tooltip shows rank 1 of the ability it grants -- see docs/class-implementation.md.",
  "spells": [
   {
@@ -26,7 +26,7 @@
    "cost": "60 Energy",
    "range": "Melee Range",
    "cast": "Instant",
-   "requires": "Requires Stealth",
+   "requires": "Requires Daggers",
    "description": "Ambush the target, causing 250% weapon damage plus 290 to the target. Must be stealthed and behind the target. Requires a dagger in the main hand. Awards 1 combo point.",
    "versusClassic": "same"
   },
@@ -40,6 +40,7 @@
    "cost": "60 Energy",
    "range": "Melee Range",
    "cast": "Instant",
+   "requires": "Requires Daggers",
    "description": "Backstab the target, causing 150% weapon damage plus 225 to the target. Must be behind the target. Requires a dagger in the main hand. Awards 1 combo point.",
    "versusClassic": "same"
   },
@@ -63,12 +64,15 @@
    "tab": "Subtlety",
    "level": "Learned at level 34",
    "school": "Nature",
-   "cost": "Reagents: Blinding Powder",
+   "cost": "30 Energy",
    "range": "10 yd range",
    "cast": "Instant",
    "cooldown": "5 min cooldown",
+   "extraLines": [
+    "Reagents: Blinding Powder"
+   ],
    "description": "Blinds the target, causing it to wander disoriented for up to 10 sec. Any damage caused will remove the effect.",
-   "versusClassic": "changed"
+   "versusClassic": "same"
   },
   {
    "id": 6510,
@@ -77,8 +81,11 @@
    "tab": "Poisons",
    "level": "Learned at level 34",
    "school": null,
-   "cost": "Makes: 3 Blinding Powder",
+   "cost": "Reagents: Fadeleaf",
    "cast": "3 sec cast",
+   "extraLines": [
+    "Makes: 3 Blinding Powder"
+   ],
    "description": "Create the reagent for the Blind ability.",
    "versusClassic": "same"
   },
@@ -115,8 +122,11 @@
    "tab": "Poisons",
    "level": "Learned at level 50",
    "school": null,
-   "cost": "Makes: Crippling Poison II",
+   "cost": "Reagents: Essence of Agony x3, Crystal Vial",
    "cast": "3 sec cast",
+   "extraLines": [
+    "Makes: Crippling Poison II"
+   ],
    "description": "Coats a weapon with poison that lasts for 30 minutes. Each strike has a 30% chance of poisoning the enemy, slowing their movement speed by 70% for 12 sec.",
    "versusClassic": "same"
   },
@@ -127,8 +137,11 @@
    "tab": "Poisons",
    "level": "Learned at level 60",
    "school": "Nature",
-   "cost": "Makes: Deadly Poison V",
+   "cost": "Reagents: Deathweed x7, Crystal Vial",
    "cast": "3 sec cast",
+   "extraLines": [
+    "Makes: Deadly Poison V"
+   ],
    "description": "Coats a weapon with poison that lasts for 30 minutes. Each strike has a 30% chance of poisoning the enemy for 92 Nature damage over 12 sec. Stacks up to 5 times on a single target. 180 charges.",
    "versusClassic": "changed"
   },
@@ -149,6 +162,7 @@
    "tab": "Subtlety",
    "level": "Learned at level 30",
    "school": "Physical",
+   "cost": "Tools: Thieves' Tools",
    "range": "5 yd range",
    "cast": "2 sec cast",
    "description": "Sneak up on the trap in order to disarm it. Don't get too close or the trap will go off.",
@@ -188,10 +202,11 @@
    "level": "Learned at level 60",
    "school": "Physical",
    "cost": "35 Energy",
+   "comboPoints": "1 to 5 Combo Points",
    "range": "Melee Range",
    "cast": "Instant",
    "description": "Finishing move that causes damage per combo point, increased by Attack Power:\n 1 point : 224-332 damage\n 2 points: 394-502 damage\n 3 points: 564-672 damage\n 4 points: 734-842 damage\n 5 points: 904-1,012 damage",
-   "versusClassic": "changed"
+   "versusClassic": "same"
   },
   {
    "id": 11198,
@@ -201,9 +216,10 @@
    "level": "Learned at level 56",
    "school": "Physical",
    "cost": "25 Energy",
+   "comboPoints": "1 to 5 Combo Points",
    "range": "Melee Range",
    "cast": "Instant",
-   "description": "Finishing move that exposes the target for 30 sec, reducing armor per combo point:\n 1 point : 450 armor\n 2 points: 900 armor\n 3 points: 1,350 armor\n 4 points: 1,800 armor\n 5 points: 2,250 armor",
+   "description": "Finishing move that exposes the target for 30 sec, reducing Armor per combo point:\n 1 point : 450 Armor\n 2 points: 900 Armor\n 3 points: 1,350 Armor\n 4 points: 1,800 Armor\n 5 points: 2,250 Armor",
    "versusClassic": "changed"
   },
   {
@@ -282,8 +298,11 @@
    "tab": "Poisons",
    "level": "Learned at level 60",
    "school": "Nature",
-   "cost": "Makes: Instant Poison VI",
+   "cost": "Reagents: Dust of Deterioration x4, Crystal Vial",
    "cast": "3 sec cast",
+   "extraLines": [
+    "Makes: Instant Poison VI"
+   ],
    "description": "Coats a weapon with poison that lasts for 30 minutes. Each strike has a 20% chance of poisoning the enemy which instantly inflicts 76 to 100 Nature damage. 175 charges.",
    "versusClassic": "changed"
   },
@@ -309,6 +328,7 @@
    "level": "Learned at level 50",
    "school": "Physical",
    "cost": "25 Energy",
+   "comboPoints": "1 to 5 Combo Points",
    "range": "Melee Range",
    "cast": "Instant",
    "cooldown": "20 sec cooldown",
@@ -322,8 +342,11 @@
    "tab": "Poisons",
    "level": "Learned at level 52",
    "school": null,
-   "cost": "Makes: Mind-numbing Poison III",
+   "cost": "Reagents: Dust of Deterioration x2, Essence of Agony x2, Crystal Vial",
    "cast": "3 sec cast",
+   "extraLines": [
+    "Makes: Mind-numbing Poison III"
+   ],
    "description": "Coats a weapon with poison that lasts for 30 minutes. Each strike has a 20% chance of poisoning the enemy, increasing their casting time by 60% for 14 sec. 150 charges.",
    "versusClassic": "changed"
   },
@@ -401,6 +424,7 @@
    "level": "Learned at level 60",
    "school": "Physical",
    "cost": "25 Energy",
+   "comboPoints": "1 to 5 Combo Points",
    "range": "Melee Range",
    "cast": "Instant",
    "description": "Finishing move that causes damage over time, increased by your Attack Power. Lasts longer per combo point:\n 1 point : 159 damage over 8 secs\n 2 points: 222 damage over 10 secs\n 3 points: 295 damage over 12 secs\n 4 points: 377 damage over 14 secs\n 5 points: 469 damage over 16 secs",
@@ -451,7 +475,7 @@
    "level": "Learned at level 42",
    "school": "Physical",
    "cost": "25 Energy",
-   "range": "100 yd range",
+   "comboPoints": "1 to 5 Combo Points",
    "cast": "Instant",
    "description": "Finishing move that increases melee attack speed by 30%. Lasts longer per combo point:\n 1 point : 9 seconds\n 2 points: 12 seconds\n 3 points: 15 seconds\n 4 points: 18 seconds\n 5 points: 21 seconds",
    "versusClassic": "same"
@@ -501,9 +525,9 @@
    "level": "Learned at level 40",
    "school": "Physical",
    "cost": "25 Energy",
-   "range": "100 yd range",
+   "comboPoints": "1 to 5 Combo Points",
    "cast": "Instant",
-   "description": "Finishing move that increases the damage of your Poisons by 30% and your chance to apply Poisons by 10%. Lasts longer per combo point:\n 1 point : 9 seconds\n 2 points: 12 seconds\n 3 points: 15 seconds\n 4 points: 18 seconds\n 5 points: 21 seconds",
+   "description": "Finishing move that increases the damage of your Poisons by 30% and your chance to apply Poisons by 10%. Lasts longer per combo point:\n 1 point : 9 sec\n 2 points: 12 sec\n 3 points: 15 sec\n 4 points: 18 sec\n 5 points: 21 sec",
    "versusClassic": "new"
   },
   {
@@ -513,8 +537,11 @@
    "tab": "Poisons",
    "level": "Learned at level 56",
    "school": null,
-   "cost": "Makes: Wound Poison IV",
+   "cost": "Reagents: Essence of Agony x2, Deathweed x2, Crystal Vial",
    "cast": "3 sec cast",
+   "extraLines": [
+    "Makes: Wound Poison IV"
+   ],
    "description": "Coats a weapon with poison that lasts for 30 minutes. Each strike has a 30% chance of poisoning the enemy, reducing all healing effects used on them by 165 for 15 sec. Stacks up to 5 times on a single target. 160 charges.",
    "versusClassic": "changed"
   }

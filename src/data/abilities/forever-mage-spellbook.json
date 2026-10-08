@@ -1,7 +1,7 @@
 {
  "class": "mage",
  "source": "https://talentsforever.com/spelldesc.js",
- "build": "1.60.1.70009",
+ "build": "1.60.1.70170",
  "note": "Max rank only. The simulator runs at level 60, and a talent tooltip shows rank 1 of the ability it grants -- see docs/class-implementation.md.",
  "spells": [
   {
@@ -28,7 +28,7 @@
    "range": "30 yd range",
    "cast": "2.5 sec cast",
    "description": "Blasts the target with energy, dealing 364 to 424 Arcane damage. Each time you cast Arcane Blast, the damage of all your other spells is increased by 10% and the mana cost of Arcane Blast is increased by 175%. Effect stacks up to 4 times and lasts 8 sec or until any other damage spell is cast.",
-   "versusClassic": "note"
+   "versusClassic": "new"
   },
   {
    "id": 23028,
@@ -37,9 +37,12 @@
    "tab": "Arcane",
    "level": "Learned at level 56",
    "school": "Arcane",
-   "cost": "Reagents: Arcane Powder",
+   "cost": "3,400 Mana",
    "range": "40 yd range",
    "cast": "Instant",
+   "extraLines": [
+    "Reagents: Arcane Powder"
+   ],
    "description": "Infuses the target's party and raid with brilliance, increasing their Intellect by 31 for 1 hour.",
    "versusClassic": "changed"
   },
@@ -153,7 +156,7 @@
    "school": "Fire",
    "cast": "Instant",
    "cooldown": "3 min cooldown",
-   "description": "When activated, this spell causes each of your Fire damage spell hits to increase your critical strike chance with Fire damage spells by 10%. This effect lasts until you have caused 4 non-periodic critical strikes with Fire spells.",
+   "description": "When activated, this spell causes each of your Fire damage spell hits to increase your critical strike chance with Fire damage spells by 10%. This effect lasts until you have caused 3 non-periodic critical strikes with Fire spells.",
    "versusClassic": "changed"
   },
   {
@@ -492,10 +495,13 @@
    "tab": "Arcane",
    "level": "Learned at level 50",
    "school": "Arcane",
-   "cost": "Reagents: Rune of Portals",
+   "cost": "850 Mana",
    "range": "10 yd range",
    "cast": "10 sec cast",
    "cooldown": "1 min cooldown",
+   "extraLines": [
+    "Reagents: Rune of Portals"
+   ],
    "description": "Creates a portal, teleporting group members that use it to Darnassus.",
    "versusClassic": "same"
   },
@@ -506,10 +512,13 @@
    "tab": "Arcane",
    "level": "Learned at level 40",
    "school": "Arcane",
-   "cost": "Reagents: Rune of Portals",
+   "cost": "850 Mana",
    "range": "10 yd range",
    "cast": "10 sec cast",
    "cooldown": "1 min cooldown",
+   "extraLines": [
+    "Reagents: Rune of Portals"
+   ],
    "description": "Creates a portal, teleporting group members that use it to Ironforge.",
    "versusClassic": "same"
   },
@@ -520,10 +529,13 @@
    "tab": "Arcane",
    "level": "Learned at level 40",
    "school": "Arcane",
-   "cost": "Reagents: Rune of Portals",
+   "cost": "850 Mana",
    "range": "10 yd range",
    "cast": "10 sec cast",
    "cooldown": "1 min cooldown",
+   "extraLines": [
+    "Reagents: Rune of Portals"
+   ],
    "description": "Creates a portal, teleporting group members that use it to Orgrimmar.",
    "versusClassic": "same"
   },
@@ -534,10 +546,13 @@
    "tab": "Arcane",
    "level": "Learned at level 40",
    "school": "Arcane",
-   "cost": "Reagents: Rune of Portals",
+   "cost": "850 Mana",
    "range": "10 yd range",
    "cast": "10 sec cast",
    "cooldown": "1 min cooldown",
+   "extraLines": [
+    "Reagents: Rune of Portals"
+   ],
    "description": "Creates a portal, teleporting group members that use it to Stormwind.",
    "versusClassic": "same"
   },
@@ -548,10 +563,13 @@
    "tab": "Arcane",
    "level": "Learned at level 50",
    "school": "Arcane",
-   "cost": "Reagents: Rune of Portals",
+   "cost": "850 Mana",
    "range": "10 yd range",
    "cast": "10 sec cast",
    "cooldown": "1 min cooldown",
+   "extraLines": [
+    "Reagents: Rune of Portals"
+   ],
    "description": "Creates a portal, teleporting group members that use it to Thunder Bluff.",
    "versusClassic": "same"
   },
@@ -562,10 +580,13 @@
    "tab": "Arcane",
    "level": "Learned at level 40",
    "school": "Arcane",
-   "cost": "Reagents: Rune of Portals",
+   "cost": "850 Mana",
    "range": "10 yd range",
    "cast": "10 sec cast",
    "cooldown": "1 min cooldown",
+   "extraLines": [
+    "Reagents: Rune of Portals"
+   ],
    "description": "Creates a portal, teleporting group members that use it to Undercity.",
    "versusClassic": "same"
   },
@@ -579,7 +600,7 @@
    "cast": "Instant",
    "cooldown": "3 min cooldown",
    "description": "When activated, your next Mage spell with a casting time less than 10 sec becomes an instant cast spell.",
-   "versusClassic": "note"
+   "versusClassic": "same"
   },
   {
    "id": 18809,
@@ -627,8 +648,11 @@
    "tab": "Arcane",
    "level": "Learned at level 12",
    "school": "Arcane",
-   "cost": "Reagents: Light Feather",
+   "cost": "40 Mana",
    "cast": "Instant",
+   "extraLines": [
+    "Reagents: Light Feather"
+   ],
    "description": "Slows falling speed for 30 sec.",
    "versusClassic": "same"
   },
@@ -639,8 +663,11 @@
    "tab": "Arcane",
    "level": "Learned at level 50",
    "school": "Arcane",
-   "cost": "Reagents: Rune of Teleportation",
+   "cost": "120 Mana",
    "cast": "10 sec cast",
+   "extraLines": [
+    "Reagents: Rune of Teleportation"
+   ],
    "description": "Teleports the caster to Dalaran.",
    "versusClassic": "new"
   },
@@ -651,8 +678,11 @@
    "tab": "Arcane",
    "level": "Learned at level 30",
    "school": "Arcane",
-   "cost": "Reagents: Rune of Teleportation",
+   "cost": "120 Mana",
    "cast": "10 sec cast",
+   "extraLines": [
+    "Reagents: Rune of Teleportation"
+   ],
    "description": "Teleports the caster to Darnassus.",
    "versusClassic": "same"
   },
@@ -663,8 +693,11 @@
    "tab": "Arcane",
    "level": "Learned at level 20",
    "school": "Arcane",
-   "cost": "Reagents: Rune of Teleportation",
+   "cost": "120 Mana",
    "cast": "10 sec cast",
+   "extraLines": [
+    "Reagents: Rune of Teleportation"
+   ],
    "description": "Teleports the caster to Ironforge.",
    "versusClassic": "same"
   },
@@ -675,8 +708,11 @@
    "tab": "Arcane",
    "level": "Learned at level 20",
    "school": "Arcane",
-   "cost": "Reagents: Rune of Teleportation",
+   "cost": "120 Mana",
    "cast": "10 sec cast",
+   "extraLines": [
+    "Reagents: Rune of Teleportation"
+   ],
    "description": "Teleports the caster to Orgrimmar.",
    "versusClassic": "same"
   },
@@ -687,8 +723,11 @@
    "tab": "Arcane",
    "level": "Learned at level 20",
    "school": "Arcane",
-   "cost": "Reagents: Rune of Teleportation",
+   "cost": "120 Mana",
    "cast": "10 sec cast",
+   "extraLines": [
+    "Reagents: Rune of Teleportation"
+   ],
    "description": "Teleports the caster to Stormwind.",
    "versusClassic": "same"
   },
@@ -699,8 +738,11 @@
    "tab": "Arcane",
    "level": "Learned at level 30",
    "school": "Arcane",
-   "cost": "Reagents: Rune of Teleportation",
+   "cost": "120 Mana",
    "cast": "10 sec cast",
+   "extraLines": [
+    "Reagents: Rune of Teleportation"
+   ],
    "description": "Teleports the caster to Thunder Bluff.",
    "versusClassic": "same"
   },
@@ -711,8 +753,11 @@
    "tab": "Arcane",
    "level": "Learned at level 20",
    "school": "Arcane",
-   "cost": "Reagents: Rune of Teleportation",
+   "cost": "120 Mana",
    "cast": "10 sec cast",
+   "extraLines": [
+    "Reagents: Rune of Teleportation"
+   ],
    "description": "Teleports the caster to Undercity.",
    "versusClassic": "same"
   }

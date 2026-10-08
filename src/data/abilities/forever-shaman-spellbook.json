@@ -1,7 +1,7 @@
 {
  "class": "shaman",
  "source": "https://talentsforever.com/spelldesc.js",
- "build": "1.60.1.70009",
+ "build": "1.60.1.70170",
  "note": "Max rank only. The simulator runs at level 60, and a talent tooltip shows rank 1 of the ability it grants -- see docs/class-implementation.md.",
  "spells": [
   {
@@ -125,7 +125,10 @@
    "school": "Nature",
    "cost": "10% of base mana",
    "cast": "Instant",
-   "description": "Summons a Disease Cleansing Totem with 5 health at the feet of the caster that attempts to remove 1 disease effect from party members within 30 yards every 5 seconds. Lasts 2 min.",
+   "extraLines": [
+    "Tools: Water Totem"
+   ],
+   "description": "Summons a Disease Cleansing Totem with 5 health at the feet of the caster that attempts to remove 1 disease effect from party members within 30 yards every 5 seconds. Lasts 5 min.",
    "versusClassic": "changed"
   },
   {
@@ -152,6 +155,9 @@
    "cost": "6% of base mana",
    "cast": "Instant",
    "cooldown": "15 sec cooldown",
+   "extraLines": [
+    "Tools: Earth Totem"
+   ],
    "description": "Summons an Earthbind Totem with 5 health at the feet of the caster for 45 sec that slows the movement speed of enemies within 10 yards.",
    "versusClassic": "same"
   },
@@ -164,7 +170,7 @@
    "school": "Nature",
    "cost": "80 Mana",
    "range": "Unlimited range",
-   "cast": "Channeled",
+   "cast": "2 sec cast",
    "description": "Changes the caster's viewpoint to the targeted location. Lasts 1 min. Only useable outdoors.",
    "versusClassic": "same"
   },
@@ -191,6 +197,9 @@
    "school": "Frost",
    "cost": "180 Mana",
    "cast": "Instant",
+   "extraLines": [
+    "Tools: Water Totem"
+   ],
    "description": "Summons a Fire Resistance Totem with 5 health at the feet of the caster for 5 min that increases the fire resistance of party and raid members within 30 yards by 60.",
    "versusClassic": "changed"
   },
@@ -217,6 +226,9 @@
    "school": "Fire",
    "cost": "275 Mana",
    "cast": "Instant",
+   "extraLines": [
+    "Tools: Fire Totem"
+   ],
    "description": "Summons a Flametongue Totem with 5 health at the feet of the caster. The totem enhances the melee attacks of all party members within 30 yards. Each main hand hit causes 17 to 55 additional Fire damage, based on the speed of the weapon. Slower weapons cause more fire damage per swing. Lasts 5 min.",
    "versusClassic": "changed"
   },
@@ -241,6 +253,9 @@
    "school": "Fire",
    "cost": "180 Mana",
    "cast": "Instant",
+   "extraLines": [
+    "Tools: Fire Totem"
+   ],
    "description": "Summons a Frost Resistance Totem with 5 health at the feet of the caster for 5 min. The totem increases party and raid members' frost resistance by 60, if within 30 yards.",
    "versusClassic": "changed"
   },
@@ -291,6 +306,9 @@
    "school": "Nature",
    "cost": "310 Mana",
    "cast": "Instant",
+   "extraLines": [
+    "Tools: Air Totem"
+   ],
    "description": "Summons a Grace of Air Totem with 5 health at the feet of the caster. The totem increases the agility of party members within 30 yards by 89. Lasts 5 min.",
    "versusClassic": "changed"
   },
@@ -304,6 +322,9 @@
    "cost": "6% of base mana",
    "cast": "Instant",
    "cooldown": "15 sec cooldown",
+   "extraLines": [
+    "Tools: Air Totem"
+   ],
    "description": "Summons a Grounding Totem with 5 health at the feet of the caster that will redirect one harmful spell cast on a nearby party member to itself every 10 seconds. Will not redirect area of effect spells. Lasts 45 sec.",
    "versusClassic": "same"
   },
@@ -316,6 +337,9 @@
    "school": "Frost",
    "cost": "80 Mana",
    "cast": "Instant",
+   "extraLines": [
+    "Tools: Water Totem"
+   ],
    "description": "Summons a Healing Stream Totem with 5 health at the feet of the caster for 5 min that heals group members within 30 yards for 11 every 2 seconds.",
    "versusClassic": "changed"
   },
@@ -393,6 +417,9 @@
    "school": "Fire",
    "cost": "650 Mana",
    "cast": "Instant",
+   "extraLines": [
+    "Tools: Fire Totem"
+   ],
    "description": "Summons a Magma Totem with 5 health at the feet of the caster for 20 sec that causes 73 Fire damage to creatures within 8 yards every 2 seconds.",
    "versusClassic": "changed"
   },
@@ -405,6 +432,9 @@
    "school": "Frost",
    "cost": "100 Mana",
    "cast": "Instant",
+   "extraLines": [
+    "Tools: Water Totem"
+   ],
    "description": "Summons a Mana Spring Totem with 5 health at the feet of the caster for 5 min that restores 10 mana every 2 seconds to group members within 30 yards.",
    "versusClassic": "changed"
   },
@@ -418,6 +448,9 @@
    "cost": "60 Mana",
    "cast": "Instant",
    "cooldown": "5 min cooldown",
+   "extraLines": [
+    "Tools: Water Totem"
+   ],
    "description": "Summons a Mana Tide Totem with 5 health at the feet of the caster for 12 sec that restores 290 mana every 3 seconds to group members within 30 yards.",
    "versusClassic": "changed"
   },
@@ -430,6 +463,9 @@
    "school": "Nature",
    "cost": "180 Mana",
    "cast": "Instant",
+   "extraLines": [
+    "Tools: Air Totem"
+   ],
    "description": "Summons a Nature Resistance Totem with 5 health at the feet of the caster for 5 min that increases the nature resistance of party and raid members within 30 yards by 60.",
    "versusClassic": "changed"
   },
@@ -454,6 +490,9 @@
    "school": "Nature",
    "cost": "10% of base mana",
    "cast": "Instant",
+   "extraLines": [
+    "Tools: Water Totem"
+   ],
    "description": "Summons a Poison Cleansing Totem with 5 health at the feet of the caster that attempts to remove 1 poison effect from party members within 30 yards every 5 seconds. Lasts 5 min.",
    "versusClassic": "changed"
   },
@@ -529,6 +568,9 @@
    "school": "Fire",
    "cost": "170 Mana",
    "cast": "Instant",
+   "extraLines": [
+    "Tools: Fire Totem"
+   ],
    "description": "Summons a Searing Totem with 5 health at your feet for 55 sec that repeatedly attacks an enemy within 20 yards for 40 to 54 Fire damage.",
    "versusClassic": "changed"
   },
@@ -541,6 +583,9 @@
    "school": "Nature",
    "cost": "65 Mana",
    "cast": "Instant",
+   "extraLines": [
+    "Tools: Air Totem"
+   ],
    "description": "Summons an immobile Sentry Totem with 100 health at your feet for 5 min that allows vision of nearby area and warns of enemies that attack it. Right-Click on buff to switch back and forth between totem sight and shaman sight.",
    "versusClassic": "same"
   },
@@ -554,6 +599,9 @@
    "cost": "140 Mana",
    "cast": "Instant",
    "cooldown": "30 sec cooldown",
+   "extraLines": [
+    "Tools: Earth Totem"
+   ],
    "description": "Summons a Stoneclaw Totem with 486 health at the feet of the caster for 15 sec that taunts creatures within 8 yards to attack it.",
    "versusClassic": "same"
   },
@@ -566,6 +614,9 @@
    "school": "Nature",
    "cost": "210 Mana",
    "cast": "Instant",
+   "extraLines": [
+    "Tools: Earth Totem"
+   ],
    "description": "Summons a Stoneskin Totem with 5 health at the feet of the caster. The totem protects party members within 30 yards, reducing Physical damage taken by 30. Lasts 5 min.",
    "versusClassic": "changed"
   },
@@ -574,7 +625,7 @@
    "name": "Stormstrike",
    "rank": null,
    "tab": "Enhancement",
-   "level": "Learned at level 40",
+   "level": "Learned at level 25",
    "school": "Physical",
    "cost": "125 Mana",
    "range": "Melee Range",
@@ -592,6 +643,9 @@
    "school": "Nature",
    "cost": "275 Mana",
    "cast": "Instant",
+   "extraLines": [
+    "Tools: Earth Totem"
+   ],
    "description": "Summons a Strength of Earth Totem with 5 health at the feet of the caster. The totem increases the strength of party members within 30 yards by 53. Lasts 5 min.",
    "versusClassic": "changed"
   },
@@ -629,6 +683,9 @@
    "school": "Nature",
    "cost": "60 Mana",
    "cast": "Instant",
+   "extraLines": [
+    "Tools: Earth Totem"
+   ],
    "description": "Summons a Tremor Totem with 5 health at the feet of the caster that shakes the ground around it, removing Fear, Charm and Sleep effects from party members within 30 yards. Lasts 5 min.",
    "versusClassic": "changed"
   },
@@ -639,9 +696,12 @@
    "tab": "Enhancement",
    "level": "Learned at level 22",
    "school": "Nature",
-   "cost": "Reagents: Shiny Fish Scales",
+   "cost": "50 Mana",
    "range": "30 yd range",
    "cast": "Instant",
+   "extraLines": [
+    "Reagents: Shiny Fish Scales"
+   ],
    "description": "Allows the target to breathe underwater for 10 min.",
    "versusClassic": "same"
   },
@@ -664,9 +724,12 @@
    "tab": "Enhancement",
    "level": "Learned at level 28",
    "school": "Nature",
-   "cost": "Reagents: Fish Oil",
+   "cost": "95 Mana",
    "range": "30 yd range",
    "cast": "Instant",
+   "extraLines": [
+    "Reagents: Fish Oil"
+   ],
    "description": "Allows the friendly target to walk across water for 10 min. Any damage will cancel the effect.",
    "versusClassic": "same"
   },
@@ -679,6 +742,9 @@
    "school": "Nature",
    "cost": "250 Mana",
    "cast": "Instant",
+   "extraLines": [
+    "Tools: Air Totem"
+   ],
    "description": "Summons a Windfury Totem with 5 health at the feet of the caster. The totem enhances the melee attacks of all party members within 30 yards. Each main hand hit has a 20% chance of granting the attacker 1 extra attack with 246 extra melee attack power. Lasts 5 min.",
    "versusClassic": "changed"
   },
@@ -703,6 +769,9 @@
    "school": "Nature",
    "cost": "225 Mana",
    "cast": "Instant",
+   "extraLines": [
+    "Tools: Air Totem"
+   ],
    "description": "Summons a Windwall Totem with 5 health at the feet of the caster. The totem protects party members within 30 yards, reducing ranged damage taken by 64. Lasts 5 min.",
    "versusClassic": "changed"
   }

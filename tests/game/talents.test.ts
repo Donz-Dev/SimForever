@@ -24,8 +24,31 @@ import {
  * said -- the same reason the base stats and the ability sheet are each written
  * out twice.
  *
- * The 468 individual talents are not transcribed; what is checked instead is
+ * The 466 individual talents are not transcribed; what is checked instead is
  * every structural invariant that must hold for all of them at once.
+ *
+ * ----------------------------------------------------------------------------
+ * THE COUNT WENT 468 TO 466 AT CLIENT BUILD 1.60.1.70170, and the arithmetic is
+ * worth writing out because SIX talents moved to get there and the patch notes
+ * name three of them:
+ *
+ *   druid/feral_combat   19 -> 20   -King of the Jungle, +Shifting Power,
+ *                                   +Improved Shifting Power
+ *   paladin/holy         18 -> 17   -Improved Holy Strike      (not in the notes)
+ *   paladin/retribution  18 -> 17   -Crusade                   (not in the notes)
+ *   warrior/fury         18 -> 17   -Improved Cleave, -Boundless Rage,
+ *                                   -Precision (not in the notes), -Iron Will
+ *                                   (moved to Protection), +Lingering Rage,
+ *                                   +Furious Precision, +Gore Drinker
+ *   warrior/protection   18 -> 18   -Toughness, +Iron Will
+ *
+ * SO FOUR OF THE REMOVALS WERE SILENT. Improved Holy Strike, Crusade and
+ * Precision are in no patch note at all, and all three were being spent on: the
+ * two Paladin ones by all three Paladin builds. That is what this test is for --
+ * a count is the cheapest thing that notices a tree has changed shape, and a
+ * tree of the wrong length decodes every build URL after it into the wrong
+ * talents.
+ * ----------------------------------------------------------------------------
  *
  * ----------------------------------------------------------------------------
  * THIS TEST EARNED ITS KEEP ON 2026-09-23, and it is worth saying how.
@@ -53,7 +76,9 @@ const SPEC: Readonly<Record<string, ClassSpec>> = {
   druid: {
     trees: [
       ['balance', 16, 'Moonkin Form'],
-      ['feral_combat', 19, 'Berserk'],
+      // 20: King of the Jungle out, Shifting Power and Improved Shifting
+      // Power in, at client build 1.60.1.70170.
+      ['feral_combat', 20, 'Berserk'],
       ['restoration', 16, 'Wild Growth'],
     ],
   },
@@ -73,9 +98,12 @@ const SPEC: Readonly<Record<string, ClassSpec>> = {
   },
   paladin: {
     trees: [
-      ['holy', 18, "Light's Vigil"],
+      // 17 and 17: Improved Holy Strike and Crusade were both removed at
+      // client build 1.60.1.70170, neither of them mentioned in the patch
+      // notes, and all three Paladin builds had points in the first.
+      ['holy', 17, "Light's Vigil"],
       ['protection', 16, 'Holy Shield'],
-      ['retribution', 18, 'Twist of Light'],
+      ['retribution', 17, 'Twist of Light'],
     ],
   },
   priest: {
@@ -109,10 +137,25 @@ const SPEC: Readonly<Record<string, ClassSpec>> = {
   warrior: {
     trees: [
       ['arms', 17, 'Mortal Strike'],
-      ['fury', 18, 'Bloodthirst'],
-      // 18, not 19: Forever REMOVED Bastion from this tree, and Focused Rage
-      // moved into the slot it vacated. Confirmed against the live calculator
-      // on 2026-09-17; see src/data/talents/values/README.md.
+      /*
+       * 17: the largest reshuffle in the 1.60.1.70170 patch. Improved Cleave,
+       * Boundless Rage and Precision removed -- only the first two are in the
+       * notes -- Iron Will moved out to Protection, and Lingering Rage, Furious
+       * Precision and Gore Drinker added. Four out, three in.
+       */
+      ['fury', 17, 'Bloodthirst'],
+      /*
+       * 18, and it stayed 18 through a patch that moved six of its rows:
+       * Toughness out, Iron Will in from Fury.
+       *
+       * THE COMMENT HERE USED TO SAY "18, not 19: Forever REMOVED Bastion from
+       * this tree, and Focused Rage moved into the slot it vacated", and it was
+       * stale before this patch touched it -- Bastion is in the client's tree,
+       * at row 5 where Focused Rage was said to be, and was in the data this
+       * comment sat beside. A note about why a count is what it is outlives the
+       * thing it was explaining, which is why the count is the assertion and the
+       * note is only a note.
+       */
       ['protection', 18, 'Shield Slam'],
     ],
   },
@@ -120,7 +163,7 @@ const SPEC: Readonly<Record<string, ClassSpec>> = {
 
 const CLASS_IDS = Object.keys(SPEC);
 
-/** The 468 above, summed, so the total is asserted rather than assumed. */
+/** The 466 above, summed, so the total is asserted rather than assumed. */
 const TOTAL_TALENTS = Object.values(SPEC)
   .flatMap((spec) => spec.trees)
   .reduce((sum, [, count]) => sum + count, 0);
@@ -143,8 +186,8 @@ describe('every class has its trees', () => {
     expect(classesWithTalents()).toEqual([...CLASS_IDS].sort());
   });
 
-  it('adds up to 468 talents', () => {
-    expect(TOTAL_TALENTS).toBe(468);
+  it('adds up to 466 talents', () => {
+    expect(TOTAL_TALENTS).toBe(466);
     const loaded = CLASS_IDS.reduce(
       (sum, id) => sum + talentsOf(id).trees.reduce((n, tree) => n + tree.talents.length, 0),
       0,
@@ -344,6 +387,22 @@ describe('spending points', () => {
     expect(canSpend(priest, alloc, 'improved_mind_flay')).toBe(true);
   });
 
+  /*
+   * FIFTY-ONE POINTS, SPREAD OVER ELEVEN TALENTS, and the list had to be rebuilt
+   * at client build 1.60.1.70170 because TOUGHNESS was removed from the Warrior.
+   * Its five points now go to Improved Revenge and Improved Bloodrage.
+   *
+   * IRON WILL IS STILL HERE AND IS IN A DIFFERENT TREE. It moved from Fury row 1
+   * to Protection row 0, which is why it is now one of the three talents paying
+   * for Anticipation's tier rather than one of the two paying for Unbridled
+   * Wrath's. The arithmetic a reader should be able to follow:
+   *
+   *   arms  11   improved_heroic_strike 3, deflection 5, improved_rend 3,
+   *              and improved_tactical_mastery 5 on top of them (tier 5)
+   *   fury  10   cruelty 5, booming_voice 5, with unbridled_wrath 5 at tier 5
+   *   prot  10   iron_will 5, shield_specialization 5 at tier 0, then
+   *              anticipation 5, improved_revenge 3 and improved_bloodrage 2
+   */
   it('refuses to spend past the total budget', () => {
     let alloc: Record<string, number> = {};
     for (const id of ['cruelty', 'booming_voice', 'iron_will', 'unbridled_wrath']) {
@@ -355,7 +414,8 @@ describe('spending points', () => {
     alloc = spendMany(warrior, alloc, 'shield_specialization', 5);
     alloc = spendMany(warrior, alloc, 'anticipation', 5);
     alloc = spendMany(warrior, alloc, 'improved_tactical_mastery', 5);
-    alloc = spendMany(warrior, alloc, 'toughness', 5);
+    alloc = spendMany(warrior, alloc, 'improved_revenge', 3);
+    alloc = spendMany(warrior, alloc, 'improved_bloodrage', 2);
 
     expect(pointsSpent(alloc)).toBe(51);
     expect(pointsRemaining(alloc)).toBe(0);
@@ -418,10 +478,19 @@ describe('taking points back', () => {
 describe('resetting', () => {
   const warrior = talentsOf('warrior');
 
+  /*
+   * SHIELD SPECIALIZATION RATHER THAN ANTICIPATION, because Anticipation moved
+   * from Protection row 0 to row 1 at client build 1.60.1.70170 and four points
+   * in it now needs five below it first -- which would have made the
+   * distribution 3/5/9 and tested nothing about resetting.
+   *
+   * The talent here only has to be a row-0 five-ranker in Protection, which is
+   * what a reader should check if this needs moving again.
+   */
   it('clears one tree and leaves the others', () => {
     let alloc = spendMany(warrior, {}, 'improved_heroic_strike', 3);
     alloc = spendMany(warrior, alloc, 'cruelty', 5);
-    alloc = spendMany(warrior, alloc, 'anticipation', 4);
+    alloc = spendMany(warrior, alloc, 'shield_specialization', 4);
     expect(distribution(warrior, alloc)).toBe('3/5/4');
 
     const after = resetTree(warrior, alloc, 'fury');
