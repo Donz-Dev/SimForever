@@ -31,6 +31,7 @@ PROFILE=pally_ret npx vite-node tools/probe_resources.ts   # where one pool went
 npx vite-node tools/probe_block.ts               # a tank's block chain, link by link
 npx vite-node tools/druid_attribution.ts         # what one talent is worth, with its CASCADE named
 npx vite-node tools/enchant_report.ts            # all 24 profiles' enchants, shaped like the owner's table
+npx vite-node tools/consumable_report.ts         # all 24 profiles' consumables, the same way
 ```
 
 The three audits in the middle are AUDITS rather than measurements and none of
@@ -1066,6 +1067,98 @@ See [docs/resources.md](docs/resources.md).
   `presets.test.ts` and are asserted EXHAUSTIVE. **A drop and a swap say
   different things about the raid**: dropping says it is short a buff, which for
   the Moonkin was wrong — it has the other one.
+
+### Consumables
+
+Twelve CATEGORIES from the ruleset owner's table, **at most one per category**.
+`game/buffs/consumables.ts`, and `tools/consumable_report.ts` prints all 24
+profiles' rows at once.
+
+- **THE EXCLUSIVITY IS STRUCTURAL, NOT CHECKED.** A selection is a map from
+  CATEGORY id to consumable id, so two from one category is not representable
+  and the second write replaces the first. `RaidBuff.exclusiveWith` is the other
+  design — a selection RULE the panel enforces — and this project has already
+  paid for it: the Moonkin's +3% crit read +6% because the rule lived in a
+  chooser and a TALENT reached the same aura without passing through it. **A
+  shape that cannot express the mistake needs no chooser to be honest**, which
+  is why the panel contains no exclusivity logic at all.
+- **THE ONE THING THE SHAPE CANNOT STOP is a consumable filed under a category
+  it does not belong to**, which is the only route to holding one twice.
+  `selectedConsumables` looks an id up WITHIN its category so a smuggled one
+  contributes nothing, and `validateProfile` reports it.
+- **THEY ARE STATS, NOT AURAS**, which is the difference from a raid buff. A
+  raid buff is an aura because it has a lifecycle — Windfury's window opens and
+  closes, Sunder Armor stacks. A consumable is drunk before the pull and lasts
+  the fight, so it is a layer of the STARTING stat block: it reaches the
+  conversions (thirty strength is also sixty attack power on a Warrior), the
+  pools are sized with it in, and the character sheet reads it for free. **No
+  `poolStats` pass and no uptime row.**
+- **"HIT POINTS" IS HEALTH**, confirmed by the owner, so "+1200 Hit Points" is
+  1200 off the maximum and not a pool of its own.
+- **"+1200 HIT POINTS" CANNOT BE A STAT AND IS THE ONE EFFECT WITH ITS OWN
+  ROUTE.** `STAT_NAMES` has no `hitPoints`; health is a maximum derived from
+  stamina, and the owner states no conversion, so turning it into stamina at
+  some rate would be inventing a number. It arrives at `createPlayer` as its own
+  term. **IT ALSO CHANGES RAGE**: Forever's `D x 10 / H` means a bigger pool
+  makes each point of damage taken worth less, which is the formula doing what
+  it says and not a side effect to correct.
+- **"+2% MELEE CRIT CHANCE" IS NOT `critChance`, AND THAT IS THE TRAP.**
+  `critChanceFrom` is the engine's ONE crit function and both the melee and the
+  ranged tables read it, so the stat would hand two points to every shot a
+  Hunter fires from a line whose first word is "Melee". It is
+  `AttackTableModifiers` on `melee-auto` and `melee-special` instead — the same
+  scope the bow enchant's ranged crit uses, pointing the other way.
+  **WHAT SETTLES IT IS THE OWNER'S OWN PAIR OF LABELS**: this row says "Melee"
+  and the Agility row says "+2% Crit Chance", and asked which the second meant
+  they said melee and ranged. Two labels for one stat would be one label. The
+  owner has since confirmed the narrow half directly — it "should not apply to
+  Hunter Ranged attacks" — so both ends of the pair are stated rather than read.
+- **"+40 ATTACK POWER" FEEDS BOTH POOLS, BY THE OWNER'S RULING** — "truly Melee
+  Attack AND Ranged attack power for this consumable". It reaches the Food of
+  the same name too, because the effect text is identical and treating two
+  identical lines differently would need a reason.
+  **IT SHIPPED THE OTHER WAY FOR ONE REVIEW AND THE REASONING WAS SOUND**: every
+  ITEM line in the data reads bare "Attack Power" as `attackPower` and has a
+  separate rule for "ranged Attack Power", and the owner's one existing ruling
+  the other way — Careful Aim — is about a TALENT, which a ruling covers what it
+  says and is not extended by analogy. **So an item's wording and a consumable's
+  are now known to mean different things, and neither settles the other.**
+  Waiting was still right: the price of asking was one review, and the price of
+  guessing would have been two Hunter profiles carrying an elixir worth nothing
+  with nobody to notice.
+- **AN ENCHANT'S ARMOR RULING COVERS A POTION WITH MORE FORCE, NOT LESS.** The
+  owner ruled the cloak enchant's +60 is not "armor from items"; a potion is not
+  a worn item by any reading, so Toughness and Thick Hide do not scale the +450
+  either. It needs no exclusion of its own — `armorFromItems` sums ITEM stats
+  directly, so a consumable is already outside it.
+- **THE 24 PRESET ROWS ARE CHOSEN, NOT STATED**, and an owner table arriving
+  later replaces them outright. They follow ONE written-down rule rather than
+  taste, because twenty-four separate opinions is not something a reader can
+  check: **take every category the build can actually read, choosing within a
+  category by what the build scales with, and leave empty only what is worth
+  literally nothing.** Nothing competes across categories — one choice each and
+  no budget between them — so the only real decisions are the three categories
+  offering a caster option against a melee one.
+- **THE ROWS ARE DERIVED FROM TWO MEASURED THINGS, SO EACH CAN BE RE-DERIVED.**
+  The conversion table decides Blasted Lands — and **a Cat Druid takes STRENGTH
+  where a Rogue takes agility**, which is the entry a reader assumes wrongly,
+  because a Druid is 2 attack power a strength against 1 an agility and a Rogue
+  is 1 and 1. The measured damage SCHOOL decides School Spell Power, and three
+  of them are not guessable from the class: the Moonkin is **71% arcane**, the
+  Frostfire Mage **62% fire**, the Elemental Shaman **56% nature**.
+- **THE CONSUMABLES MOVED THE CASTERS FOUR TIMES AS FAR AS THE MELEE BUILDS, AND
+  THE OWNER HAS CONFIRMED THAT IS INTENDED** — "casters *should* have moved
+  more". A caster row reaches 254 school-blind spell power plus 40 on its own
+  school; the biggest single entry a melee build can take is 40 attack power.
+  The table re-sorted around it — four of the top six are casters where none was
+  before. **Recorded because it reads like a bug**: a change that moves one
+  archetype by +250 and another by +40 is the shape somebody later "fixes", and
+  this one is the ruleset.
+- **PROFILE FORMAT 11**, and older profiles get an EMPTY selection so nothing
+  about their results changes. That is the version 9 decision rather than the
+  version 10 one, and it turns on the same question: a saved character with no
+  consumables was genuinely fighting without them, where a saved Rogue was not
+  choosing to fight without poisons — those did not exist to choose.
 
 ### Pets
 

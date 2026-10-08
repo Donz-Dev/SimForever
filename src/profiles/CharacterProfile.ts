@@ -7,6 +7,7 @@ import {
   DEFAULT_WARLOCK_STONE,
   type WarlockStoneId,
 } from '../game/buffs/warlockStones';
+import type { ConsumableSelection } from '../game/buffs/consumables';
 
 /**
  * The profile format version.
@@ -17,7 +18,7 @@ import {
  * moves on. Getting this in before anyone has saved anything is much cheaper
  * than retrofitting it later.
  */
-export const CURRENT_PROFILE_VERSION = 11;
+export const CURRENT_PROFILE_VERSION = 12;
 
 export interface CharacterSection {
   readonly name: string;
@@ -241,6 +242,37 @@ export interface CharacterProfile {
    * --------------------------------------------------------------------------
    */
   readonly warlockStone: WarlockStoneId;
+  /**
+   * What the character drank, as consumable ids keyed by CATEGORY.
+   *
+   * ----------------------------------------------------------------------------
+   * A MAP RATHER THAN A LIST, which is the opposite choice from `raidBuffs`
+   * above and is made for the reason that one gives. Raid buffs answer "which
+   * are on", and a map of id to boolean would answer it twice; consumables
+   * answer "which one from each category", and only a map answers that ONCE.
+   * A list of consumable ids could hold two flasks, and the exclusivity would
+   * then be a rule something has to enforce rather than a shape -- which is
+   * exactly how the Moonkin's 3% crit became 6%, with the rule living in a
+   * chooser that a talent did not pass through.
+   *
+   * IDS, not copies, for the reason equipment stores item ids: what a
+   * consumable IS belongs to `game/buffs/consumables.ts`.
+   *
+   * EMPTY BY DEFAULT, as raid buffs are: a consumable that applied itself would
+   * move every figure ever recorded. What the 24 PRESETS open with is a
+   * different question, answered in `presets.ts`.
+   *
+   * Added in format version 12. Older profiles get an empty selection, so
+   * nothing about their results changes -- the version 9 decision rather than
+   * the version 10 one, and for the version 9 reason: a saved character with no
+   * consumables was genuinely fighting without them.
+   *
+   * IT WAS WRITTEN AS 11 AND SO WAS THE WARLOCK STONE ABOVE, from the same
+   * base, and git merged the two migration tables with no conflict at all --
+   * one object literal with the key `10` twice, where the second wins and the
+   * first migration never runs. See `migrateProfile.ts`.
+   */
+  readonly consumables: ConsumableSelection;
 }
 
 /** A sensible starting profile, matching the first-milestone prototype. */
@@ -249,6 +281,7 @@ export function createDefaultProfile(): CharacterProfile {
     version: CURRENT_PROFILE_VERSION,
     poisons: { ...DEFAULT_POISON_LOADOUT },
     warlockStone: DEFAULT_WARLOCK_STONE,
+    consumables: {},
     character: {
       name: 'Example',
       race: 'human',
@@ -314,6 +347,9 @@ export function cloneProfile(profile: CharacterProfile): CharacterProfile {
      * rather than forgotten, which is the question `poisons` above raises.
      */
     warlockStone: profile.warlockStone,
+    // Its own object for the same reason, so changing one profile's flask does
+    // not change another's.
+    consumables: { ...profile.consumables },
     stats: { ...profile.stats },
     // One level deeper than a spread: each slot is its own object, so copying
     // only the map would leave both profiles sharing the same slot entries.

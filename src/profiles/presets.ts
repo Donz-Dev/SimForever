@@ -23,6 +23,13 @@ import {
   STRENGTH_ENCHANTS_WITH_AGILITY_BOOTS,
   HUNTER_ARMOUR_RANGED_CRIT,
 } from '../game/items/gearSets';
+import {
+  AGILITY_CONSUMABLES,
+  RANGED_HUNTER_CONSUMABLES,
+  STRENGTH_CONSUMABLES,
+  casterConsumables,
+  hybridConsumables,
+} from '../game/buffs/consumables';
 import type { ClassId } from '../game/character';
 import type { Equipment } from '../game/items/Item';
 import type { TalentAllocation } from '../game/talents/Talent';
@@ -908,6 +915,7 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = [
        * their enchants: Arms and Fury take strength and Protection takes dodge
        * and defense skill. The set is the items; the loadout is the build.
        */
+      consumables: STRENGTH_CONSUMABLES,
       equipment: {
         ...withEnchants(SHARED_ARMOUR, STRENGTH_ENCHANTS),
         // Obsidian Edged Blade, enchanted. A two-hander carries one weapon and
@@ -938,6 +946,7 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = [
       },
       talents: { ...DW_FURY_TALENTS },
       raidBuffs: [...PRESET_RAID_BUFFS],
+      consumables: STRENGTH_CONSUMABLES,
       equipment: {
         // Arms' row with AGILITY boots instead of Minor Speed, which is the
         // owner's one difference between the two damage warriors.
@@ -975,6 +984,7 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = [
       },
       talents: { ...PROT_WARR_TALENTS },
       raidBuffs: [...PRESET_RAID_BUFFS],
+      consumables: STRENGTH_CONSUMABLES,
       equipment: {
         // Dodge, defense skill and threat: the one Warrior row that spends
         // nothing on damage.
@@ -1012,6 +1022,7 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = [
       },
       talents: { ...ROGUE_VENOM_TALENTS },
       raidBuffs: [...PRESET_RAID_BUFFS],
+      consumables: AGILITY_CONSUMABLES,
       equipment: { ...ROGUE_ARMOUR, ...ROGUE_DAGGERS },
       encounter: { ...createDefaultProfile().encounter, targetAttacks: false },
     }),
@@ -1033,6 +1044,7 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = [
       },
       talents: { ...ROGUE_COMBAT_TALENTS },
       raidBuffs: [...PRESET_RAID_BUFFS],
+      consumables: AGILITY_CONSUMABLES,
       equipment: { ...ROGUE_ARMOUR, ...ROGUE_SWORDS },
       encounter: { ...createDefaultProfile().encounter, targetAttacks: false },
     }),
@@ -1054,6 +1066,7 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = [
       },
       talents: { ...ROGUE_RUPTURE_TALENTS },
       raidBuffs: [...PRESET_RAID_BUFFS],
+      consumables: AGILITY_CONSUMABLES,
       equipment: { ...ROGUE_ARMOUR, ...ROGUE_DAGGERS },
       encounter: { ...createDefaultProfile().encounter, targetAttacks: false },
     }),
@@ -1082,6 +1095,7 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = [
       },
       talents: { ...ROGUE_HEMO_TALENTS },
       raidBuffs: [...PRESET_RAID_BUFFS],
+      consumables: AGILITY_CONSUMABLES,
       equipment: { ...ROGUE_ARMOUR, ...ROGUE_DAGGERS },
       encounter: { ...createDefaultProfile().encounter, targetAttacks: false },
     }),
@@ -1111,6 +1125,7 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = [
        * and not a buff.
        */
       raidBuffs: [...MOONKIN_RAID_BUFFS],
+      consumables: casterConsumables('school_arcane'),
       equipment: { ...DRUID_MOONKIN_GEAR },
       encounter: { ...createDefaultProfile().encounter, targetAttacks: false },
     }),
@@ -1132,6 +1147,7 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = [
       },
       talents: { ...DRUID_CAT_TALENTS },
       raidBuffs: [...PRESET_RAID_BUFFS],
+      consumables: STRENGTH_CONSUMABLES,
       equipment: { ...DRUID_CAT_GEAR },
       encounter: { ...createDefaultProfile().encounter, targetAttacks: false },
     }),
@@ -1153,6 +1169,7 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = [
       },
       talents: { ...DRUID_BEAR_TALENTS },
       raidBuffs: [...PRESET_RAID_BUFFS],
+      consumables: STRENGTH_CONSUMABLES,
       equipment: { ...DRUID_BEAR_GEAR },
       /*
        * THE ONE DRUID PROFILE THAT IS HIT BACK, which is the whole point of
@@ -1180,6 +1197,7 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = [
       },
       talents: { ...SHAMAN_ELEMENTAL_TALENTS },
       raidBuffs: [...PRESET_RAID_BUFFS],
+      consumables: casterConsumables('school_nature'),
       equipment: { ...SHAMAN_ELEMENTAL_GEAR },
       encounter: { ...createDefaultProfile().encounter, targetAttacks: false },
     }),
@@ -1208,6 +1226,11 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = [
        * bigger of the two is the one it casts.
        */
       raidBuffs: PRESET_RAID_BUFFS.filter((id) => id !== 'windfury_totem'),
+      consumables: hybridConsumables({
+        school: 'school_fire',
+        meleeWeaponEffect: true,
+        blastedLands: 'blasted_strength',
+      }),
       equipment: { ...SHAMAN_ENHANCEMENT_GEAR },
       encounter: { ...createDefaultProfile().encounter, targetAttacks: false },
     }),
@@ -1229,6 +1252,7 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = [
       },
       talents: { ...MAGE_FROSTFIRE_TALENTS },
       raidBuffs: [...PRESET_RAID_BUFFS],
+      consumables: casterConsumables('school_fire'),
       equipment: { ...MAGE_GEAR },
       encounter: { ...createDefaultProfile().encounter, targetAttacks: false },
     }),
@@ -1250,6 +1274,7 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = [
       },
       talents: { ...MAGE_ARCANE_TALENTS },
       raidBuffs: [...PRESET_RAID_BUFFS],
+      consumables: casterConsumables('school_arcane'),
       equipment: { ...MAGE_GEAR },
       encounter: { ...createDefaultProfile().encounter, targetAttacks: false },
     }),
@@ -1271,6 +1296,7 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = [
       },
       talents: { ...MAGE_FIRE_TALENTS },
       raidBuffs: [...PRESET_RAID_BUFFS],
+      consumables: casterConsumables('school_fire'),
       equipment: { ...MAGE_GEAR },
       encounter: { ...createDefaultProfile().encounter, targetAttacks: false },
     }),
@@ -1292,6 +1318,11 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = [
       },
       talents: { ...PALADIN_RETRIBUTION_TALENTS },
       raidBuffs: [...PRESET_RAID_BUFFS],
+      consumables: hybridConsumables({
+        school: 'school_holy',
+        meleeWeaponEffect: true,
+        blastedLands: 'blasted_strength',
+      }),
       equipment: { ...PALADIN_RET_GEAR },
       encounter: { ...createDefaultProfile().encounter, targetAttacks: false },
     }),
@@ -1322,6 +1353,11 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = [
       },
       talents: { ...PALADIN_SHOCKADIN_TALENTS },
       raidBuffs: [...PRESET_RAID_BUFFS],
+      consumables: hybridConsumables({
+        school: 'school_holy',
+        meleeWeaponEffect: false,
+        blastedLands: 'blasted_strength',
+      }),
       equipment: { ...PALADIN_SHOCKADIN_GEAR },
       encounter: { ...createDefaultProfile().encounter, targetAttacks: false },
     }),
@@ -1343,6 +1379,11 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = [
       },
       talents: { ...PALADIN_PROTECTION_TALENTS },
       raidBuffs: [...PRESET_RAID_BUFFS],
+      consumables: hybridConsumables({
+        school: 'school_holy',
+        meleeWeaponEffect: false,
+        blastedLands: 'blasted_strength',
+      }),
       equipment: { ...PALADIN_PROT_GEAR },
       encounter: { ...createDefaultProfile().encounter, targetAttacks: true },
     }),
@@ -1367,6 +1408,7 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = [
       // Grace of Air rather than Windfury: a bow has no main-hand use.
       // See `RANGED_HUNTER_RAID_BUFFS`.
       raidBuffs: [...RANGED_HUNTER_RAID_BUFFS],
+      consumables: RANGED_HUNTER_CONSUMABLES,
       equipment: { ...HUNTER_ARMOUR_RANGED_CRIT, ...HUNTER_STAT_STICK },
       encounter: { ...createDefaultProfile().encounter, targetAttacks: false },
     }),
@@ -1390,6 +1432,7 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = [
       // Grace of Air rather than Windfury: a bow has no main-hand use.
       // See `RANGED_HUNTER_RAID_BUFFS`.
       raidBuffs: [...RANGED_HUNTER_RAID_BUFFS],
+      consumables: RANGED_HUNTER_CONSUMABLES,
       equipment: { ...HUNTER_ARMOUR_RANGED_CRIT, ...HUNTER_STAT_STICK },
       encounter: { ...createDefaultProfile().encounter, targetAttacks: false },
     }),
@@ -1417,6 +1460,7 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = [
       },
       talents: { ...HUNTER_LONE_WOLF_MELEE_TALENTS },
       raidBuffs: [...PRESET_RAID_BUFFS],
+      consumables: { ...AGILITY_CONSUMABLES, mana_regen: 'mana_regen_12' },
       equipment: { ...HUNTER_ARMOUR, ...HUNTER_DUAL_WIELD_WEAPONS },
       encounter: { ...createDefaultProfile().encounter, targetAttacks: false },
     }),
@@ -1452,6 +1496,7 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = [
        */
       warlockStone: 'spellstone',
       raidBuffs: [...PRESET_RAID_BUFFS],
+      consumables: casterConsumables('school_shadow'),
       equipment: { ...WARLOCK_GEAR },
       encounter: { ...createDefaultProfile().encounter, targetAttacks: false },
     }),
@@ -1486,6 +1531,7 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = [
        */
       warlockStone: 'firestone',
       raidBuffs: [...PRESET_RAID_BUFFS],
+      consumables: casterConsumables('school_fire'),
       equipment: { ...WARLOCK_GEAR },
       encounter: { ...createDefaultProfile().encounter, targetAttacks: false },
     }),
@@ -1507,6 +1553,7 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = [
       },
       talents: { ...PRIEST_SHADOW_TALENTS },
       raidBuffs: [...PRESET_RAID_BUFFS],
+      consumables: casterConsumables('school_shadow'),
       equipment: { ...PRIEST_GEAR },
       encounter: { ...createDefaultProfile().encounter, targetAttacks: false },
     }),

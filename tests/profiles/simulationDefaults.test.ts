@@ -31,15 +31,26 @@ describe('a new profile', () => {
     expect(simulation.iterations).toBe(3000);
   });
 
-  it('is format 11, which added the Warlock’s weapon stone', () => {
+  it('is format 12, which added the consumables', () => {
     /*
      * Version 9 added `raidBuffs`, 10 a Rogue's poisons, 11 the Warlock's
-     * stone. Written out rather than read from the constant, so a bump has to
-     * be deliberate -- which is this assertion doing its job: it failed on the
-     * bump and was meant to.
+     * stone, 12 the consumables. Written out rather than read from the
+     * constant, so a bump has to be deliberate -- which is this assertion
+     * doing its job: it failed on each bump and was meant to.
+     *
+     * IT ALSO CAUGHT A COLLISION, which is new. The stone and the consumables
+     * were written on two branches from the same base and BOTH took 11, and
+     * git merged the two migration tables without a conflict -- leaving the
+     * key `10` twice in one object literal, where the second silently wins.
+     * The typechecker found that one (TS1117); this is what says which version
+     * the surviving field belongs to.
      */
-    expect(CURRENT_PROFILE_VERSION).toBe(11);
-    expect(createDefaultProfile().version).toBe(11);
+    expect(CURRENT_PROFILE_VERSION).toBe(12);
+    expect(createDefaultProfile().version).toBe(12);
+    // Version 12's own field: a NEW profile has nothing chosen, which is the
+    // version 9 decision rather than the version 10 one -- a character with no
+    // consumables was genuinely fighting without them.
+    expect(createDefaultProfile().consumables).toEqual({});
     // The owner's stated poison pairing still comes with 10.
     expect(createDefaultProfile().poisons).toEqual({
       mainHand: 'instant_poison',

@@ -23,6 +23,10 @@ import {
   isWarlockStoneId,
   type WarlockStoneId,
 } from '../game/buffs/warlockStones';
+import {
+  CATEGORY_BY_CONSUMABLE_ID,
+  type ConsumableSelection,
+} from '../game/buffs/consumables';
 
 /** Every slot a profile may name. */
 const EQUIPMENT_SLOT_SET: ReadonlySet<string> = new Set<EquipmentSlot>([
@@ -268,6 +272,42 @@ export function validateProfile(value: unknown): ValidationResult {
     issues.push({ path: 'raidBuffs', message: 'Must be a list of buff ids.' });
   }
 
+  /*
+   * A MAP OF CATEGORY ID TO CONSUMABLE ID, and the shape is checked here while
+   * the ids are not.
+   *
+   * Which ids exist is `game/buffs/consumables.ts`'s business and a profile
+   * saved when one existed should still load after it is renamed --
+   * `selectedConsumables` drops what it does not recognise, so the failure mode
+   * is one missing consumable rather than a character that will not load. That
+   * is the `raidBuffs` rule above, applied to the same kind of field.
+   *
+   * WHAT *IS* AN ERROR IS A CONSUMABLE FILED UNDER THE WRONG CATEGORY, because
+   * that is the one thing the map's shape cannot make impossible: it stops two
+   * flasks and does not stop a flask stored under `food`, which would let a
+   * hand-edited profile hold the same consumable twice. `selectedConsumables`
+   * refuses it as well, so a profile that reaches the engine anyway is merely
+   * short of one consumable rather than double-counting it.
+   */
+  const consumables = value.consumables;
+  if (!isRecord(consumables)) {
+    issues.push({ path: 'consumables', message: 'Must be a map of category to consumable id.' });
+  } else {
+    for (const [category, id] of Object.entries(consumables)) {
+      if (typeof id !== 'string') {
+        issues.push({ path: `consumables.${category}`, message: 'Must be a consumable id.' });
+        continue;
+      }
+      const owner = CATEGORY_BY_CONSUMABLE_ID.get(id);
+      if (owner !== undefined && owner !== category) {
+        issues.push({
+          path: `consumables.${category}`,
+          message: `"${id}" belongs to the "${owner}" category.`,
+        });
+      }
+    }
+  }
+
   if (issues.length > 0) return { ok: false, issues };
 
   // Rebuild rather than casting, so unknown extra keys are dropped instead of
@@ -351,8 +391,22 @@ export function validateProfile(value: unknown): ValidationResult {
         targetSwingSeconds: validated.encounter.targetSwingSeconds,
       },
       raidBuffs: [...validated.raidBuffs],
+      // Rebuilt with a fallback for the same reason `poisons` is: validation
+      // runs on anything a person can paste, and a hand-edited file missing the
+      // field should load as a character with no consumables rather than
+      // reaching the engine as `undefined`.
+      consumables: cleanConsumables(validated.consumables),
     },
   };
+}
+
+/** Rebuild the selection, dropping anything that is not a category entry. */
+function cleanConsumables(selection: ConsumableSelection | undefined): ConsumableSelection {
+  const clean: Record<string, string> = {};
+  for (const [category, id] of Object.entries(selection ?? {})) {
+    if (typeof id === 'string' && id.length > 0) clean[category] = id;
+  }
+  return clean;
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
