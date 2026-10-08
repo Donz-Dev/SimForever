@@ -1154,11 +1154,13 @@ profiles' rows at once.
   before. **Recorded because it reads like a bug**: a change that moves one
   archetype by +250 and another by +40 is the shape somebody later "fixes", and
   this one is the ruleset.
-- **PROFILE FORMAT 11**, and older profiles get an EMPTY selection so nothing
+- **PROFILE FORMAT 12**, and older profiles get an EMPTY selection so nothing
   about their results changes. That is the version 9 decision rather than the
   version 10 one, and it turns on the same question: a saved character with no
   consumables was genuinely fighting without them, where a saved Rogue was not
   choosing to fight without poisons — those did not exist to choose.
+  **IT WAS WRITTEN AS 11 AND SO WAS THE WARLOCK STONE**, from the same base, and
+  the two merged without a conflict. See **Git workflow**.
 
 ### Pets
 
@@ -1273,6 +1275,17 @@ inert**: a reason that describes a working half is a claim about the code and
 can simply be false. **A lesson is not landed until the tool that learned it
 actually implements it**, and the cheapest way to check is to grep the tool for
 the thing the note says it does.
+
+**AND AN ANCHOR THAT IS NOT IN EVERY MEMBER OF THE SET SILENTLY LANDS IN THE
+NEXT ONE.** A script adding a line to all 24 presets anchored on each preset's
+`raidBuffs: [...PRESET_RAID_BUFFS],`, searching forward from its `id:`. Four
+presets do not carry that line verbatim -- **the two ranged Hunters and the
+Moonkin SWAP an entry and the Enhancement Shaman DROPS one**, which this file
+documents two sections up -- so the search ran past them and wrote four rows
+onto the WRONG PROFILES. It typechecked everywhere the duplicate keys did not
+collide. **Anchor on something every member has** (`equipment:` here), and the
+tell was the typechecker reporting a duplicate property in four object literals
+rather than none.
 
 **AND PATCH IT BY SLICING THE LIST, NOT BY `replace(old, new, 1)` -- THE ENTRIES
 ARE TEXTUALLY IDENTICAL ACROSS LISTS.** The Rogue's Slice and Dice entry is the
@@ -2361,6 +2374,15 @@ shape should fail loudly, not render a tree with a broken arrow.
   dodge chance is absent from an entire 100-second fight about once in two
   hundred runs. Naming a specific ability in a training-dummy assertion pins a
   rotation decision rather than the behaviour under test.
+- **AND A CAST COUNT IS A RATE, HOWEVER DETERMINISTIC THE SEED MAKES IT.**
+  Evocation's "the Fire list reaches it" was asserted on seed 12345 alone, and
+  passed for as long as that one fight happened to run dry. Giving the Mage
+  presets their consumable row moved the rate from 16 casts in 20 fights to 14
+  — the mechanism is as reachable as it ever was — and **seed 12345 fell the
+  other side of the gate**, so the test failed on something that still works. A
+  single seed is how this project tests a BOUNDARY, with a scripted roll; a cast
+  that depends on a pool draining is the other kind. Count over twenty and
+  assert loosely.
 - **A structural test that filters can silently skip the part most likely to be
   wrong.** `everySpellScales.test.ts` filtered on `attackTable === 'spell'` and
   skipped every pure DoT, because a spell that only applies an aura declares no
@@ -2536,6 +2558,29 @@ counted as live invented numbers. **Count DECLARATIONS** --
 re-derive rather than adjust was right every time; the thing it told you to run
 was not.
 
+**AND A VERSION NUMBER IS A COUNT WEARING A DIFFERENT HAT.** The Warlock's
+weapon stone and the consumables were written on two branches from the same base
+and **both took profile version 11 and both keyed their migration at 10** —
+there is only ever one "next" number, and neither branch could see the other
+take it. Git merged the two migration tables with no conflict at all: one object
+literal with the key `10` twice, where the **second silently wins and the first
+migration never runs**, so a saved profile would have quietly come out missing a
+field. **THE TYPECHECKER CAUGHT IT AND NOTHING ELSE DID** — TS1117, a duplicate
+property — which is luck rather than a guard: a table built any other way,
+entries pushed into a map say, would have taken both and run one with nothing to
+say so. `consumables.test.ts` has the real guard now, which is that a version 10
+profile comes out the far end carrying BOTH fields.
+**SO RE-READ `CURRENT_PROFILE_VERSION` AFTER A REBASE RATHER THAN TRUSTING IT**,
+and the same for anything else there is only one next value of.
+
+**AND A PEER BRANCH THAT MERGES FIRST INVALIDATES YOUR MEASUREMENTS, NOT JUST
+YOUR DIFF.** The stone moved two Warlock profiles while the consumables were
+being measured against a main that did not have it, so every figure in that
+branch had to be taken again — the baseline is whatever `main` says on the day,
+not whatever it said when the branch started. **Re-measure after the rebase and
+check the untouched rows moved by 0.0 to the decimal**, which is the same
+containment check a gear commit uses.
+
 **A CLEAN MERGE CAN BE ARITHMETICALLY WRONG, and a count is where it happens.**
 Two branches each moved the talent census total by one from the same base, so
 both wrote the same number, git merged them without a conflict and the total was
@@ -2554,6 +2599,16 @@ for these removed and the history was rewritten to strip them.
   refreshed `$env:Path` works reliably.
 - Heredocs in the Bash tool are unreliable for large multi-line content. Write a
   script to a file and run it, or use Write/Edit.
+- **A PYTHON PATCH SCRIPT REWRITES THE WHOLE FILE'S LINE ENDINGS UNLESS YOU SAY
+  OTHERWISE, AND ONE TEST READS A FILE AS TEXT.** `.gitattributes` forces LF, so
+  git normalises on commit and `git diff` shows nothing — the damage is in the
+  WORKING TREE only, which is exactly where vitest reads from.
+  `tests/ui/themes.test.ts` parses `styles.css` with `readFileSync` and looks for
+  a selector containing `\n`, so a file silently converted to CRLF fails it at
+  IMPORT time, with an error about a missing `:root` block and nothing pointing
+  at the real cause. Open with `io.open(path, 'w', newline='')` — Python's text
+  mode translates `\n` to `os.linesep` on write by default. The Edit and Write
+  tools preserve what is there and are unaffected.
 - `gh` is at `/c/Program Files/GitHub CLI/gh.exe`, not on PATH. `jq` is
   unavailable — use `gh --jq`.
 - `.gitattributes` forces LF. CRLF warnings on commit are expected and harmless.
