@@ -1,3 +1,43 @@
+# FOREVER PATCH 1.60.1.70170 — three rounds, three commits, read them as one
+
+The three entries below this one are a single patch. They are separate commits
+because the owner's answers arrived in three batches, and **rounds two and three
+were each larger than anything in the patch notes.**
+
+| | commit | what it was | largest effect |
+| --- | --- | --- | --- |
+| 1 | `13ff285` | the notes, plus four silent tree changes the importers found | DW Fury **+101.6**, Seal Twist Ret **-98.5** |
+| 2 | `0f71ad5` | four rulings on questions round one RAISED | Fire **-187.6** |
+| 3 | `58f505e` | one more coefficient the owner gave afterwards | Frostfire **-159.3** |
+
+**SO "THE PATCH NOTES ARE EXHAUSTED" WAS NOT "THE PATCH IS IMPLEMENTED".** What
+the notes produced was a list of questions; three of the four answers in round
+two moved nothing, and the fourth was the largest single change of the three
+rounds. Plan for the next one to land in several commits.
+
+**THE TOP ROW CHANGED TWICE AND THE MEAN FELL 15.4** -- 704.8 to **689.4**.
+Frostfire took first place in round one, held it through round two and lost it in
+round three; **DW Fury is the top row now at 892.0**, and no caster is in the top
+six for the first time since the consumables landed. The Mage's two best profiles
+lost 347 DPS between them across rounds two and three, both on owner rulings
+rather than on anything this project had got wrong, and the class's best row is
+now ARCANE at 769.4 -- which has not moved by a decimal through any of it.
+
+**THE BASELINE TABLE WAS REBUILT THREE TIMES AND NO ROW DRIFTED**, which is the
+first time `tools/update_baseline_table.py` has been under real pressure. Each
+round's `SAVE=` file was the next round's `BASELINE=`, so "the other twenty-three
+moved by 0.0" means something per round -- measured against the PRE-PATCH figures
+instead, every row a previous round moved would have shown as moving again and the
+containment check would have been unreadable.
+
+**WHAT THE PATCH COST IN DOCUMENTATION DRIFT IS WORTH READING TOO:** three derived
+counts in these two files turned out already wrong by one -- the `scope` table's
+`threat` row, the placeholder figure, and the hand-filled-values figure at 8
+against 18 -- each sitting under a sentence promising it was counted rather than
+adjusted. All three were found by running the one-liner the sentence describes.
+
+---
+
 **ICE LANCE'S COEFFICIENT IS A QUARTER OF WHAT IT WAS, AND IT TAKES THE TOP ROW
 OFF THE TABLE.** The ruleset owner, in their own form: "Ice lance now has a
 1.5/3.5/4 spell power coefficient instead of 1.5/3.5."
