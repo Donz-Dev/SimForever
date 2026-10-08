@@ -20,7 +20,7 @@ npm run build        # typecheck + production build
 Measurement harnesses and audits, none of them tests:
 
 ```bash
-npx vite-node tools/measure_profiles.ts          # the 24 profiles, 30 batches of 10
+npx vite-node tools/measure_profiles.ts          # the 25 profiles, 30 batches of 10
 USES=1 SEEDS=1 PROFILES=druid_cat npx vite-node tools/measure_profiles.ts
 npx vite-node tools/measure_rotation.ts          # Warrior TALENT builds, not profiles
 npx vite-node tools/ability_audit.ts             # is every ability connected at all
@@ -32,8 +32,8 @@ node tools/decode_talent_build.mjs --presets     # does each URL still MATCH its
 PROFILE=pally_ret npx vite-node tools/probe_resources.ts   # where one pool went
 npx vite-node tools/probe_block.ts               # a tank's block chain, link by link
 npx vite-node tools/druid_attribution.ts         # what one talent is worth, with its CASCADE named
-npx vite-node tools/enchant_report.ts            # all 24 profiles' enchants, shaped like the owner's table
-npx vite-node tools/consumable_report.ts         # all 24 profiles' consumables, the same way
+npx vite-node tools/enchant_report.ts            # all 25 profiles' enchants, shaped like the owner's table
+npx vite-node tools/consumable_report.ts         # all 25 profiles' consumables, the same way
 ```
 
 The three audits in the middle are AUDITS rather than measurements and none of
@@ -589,6 +589,38 @@ See [docs/combat-tables.md](docs/combat-tables.md).
   `DamageRequest.periodic`, which a real tick sets and a CHANNEL's ticks do not --
   so Wrack cannot amplify its own six ticks, which is what its own word "other"
   asks for and nothing has to special-case.
+- **MELEE AND RANGED MISS 8% AGAINST A LEVEL 63 TARGET, NOT 9%, AND THE
+  DERIVATION HAD IT WRONG FOR THE WHOLE PROJECT.** The owner's note -- "the new
+  melee and ranged attack miss chance against a level 63 target is now 8% not
+  9%" -- restores a figure their own combat table always stated:
+  `BASE_CHANCES.meleeMiss` was 8 before the table was derived from weapon skill,
+  and the commit that derived it gave the large-gap regime a SECOND, higher base
+  (6% against 5%) which made it 9%. One base of 5% with the per-point rate
+  doubling past a 10-point gap gives 8% at the 15-point gap every profile faces.
+  **So only the PER-POINT rate changes regime, not the base.**
+- **AND THAT COMMIT WROTE THE DISCREPANCY DOWN RATHER THAN QUESTIONING IT.**
+  `docs/combat-tables.md` read "the formulas are consistent with the constants
+  they replace; only miss moves, from 8% to 9%" -- dodge's 6.5% and glance's 40%
+  reproduced exactly and miss alone did not. **Two of three figures reproducing
+  and the third moving by a point is the shape of a bug**, and it sat as a note
+  about the formula for a year. **A DIFFERENCE THAT GETS DOCUMENTED STILL NEEDS
+  SOMEBODY TO CALL IT WRONG**, which is the same failure as a `PLACEHOLDER_` that
+  everybody reads and nobody asks about.
+- **THE USABLE MELEE AND RANGED HIT CAP IS THEREFORE 8**, and unlike spells
+  **melee and ranged have NO miss floor** -- the owner stated the 1% floor for
+  spells and `missFromSkill` is a different formula. So the ninth point of hit
+  buys a non-dual-wielder literally nothing, and **six of the 25 profiles sit at
+  exactly 0.00% melee miss**. A DUAL-WIELDER is the exception that keeps hit
+  valuable: the +19% penalty lands in full on both hands, so a Rogue still misses
+  9-14% and collected the whole point.
+- **SO "IT IS A MELEE PROFILE" DOES NOT PREDICT THAT A MISS CHANGE MOVES IT.**
+  Cat and Bear Druid measured **0.0 to the decimal** on a change to the melee
+  miss table, which reads exactly like a change that failed to apply -- they
+  carry 9% and 11% hit against a single paw with no dual-wield penalty, so their
+  melee attacks could not miss before the change either. **Check hit against the
+  cap before treating a zero as a bug**, and measure the MISS RATE off the event
+  stream rather than computing it: that is the only reading that accounts for the
+  dual-wield penalty, per-hand skill and school-scoped hit at once.
 - **SPELLS MISS ON A FLAT 17% AND THE MISS FLOORS AT 1%, so the usable spell hit
   cap is 16.** The owner's figures. `AttackChances.missFloor` carries it ON THE
   TABLE rather than being applied where the table is built, because hit arrives
