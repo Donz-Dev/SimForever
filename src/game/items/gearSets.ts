@@ -1,4 +1,5 @@
-import type { Equipment } from './Item';
+import type { Equipment, EquipmentSlot } from './Item';
+import { foreverEnchantId } from './foreverEnchants';
 
 /**
  * THE GEAR EACH CLASS ACTUALLY WEARS, item for item.
@@ -41,6 +42,209 @@ export const CRUSADER = 20034;
 export const SPELL_POWER = 22749;
 
 /**
+ * AN ARMOUR ENCHANT PER SLOT, NAMED THE WAY THE OWNER'S TABLE NAMES IT.
+ *
+ * ----------------------------------------------------------------------------
+ * The owner supplied two things: a column of the enchants each slot may carry,
+ * and a row per profile saying which one each of the 24 builds opens with. The
+ * first is `foreverEnchants.ts`; these are the second.
+ *
+ * KEYED BY THE ENCHANT'S OWN NAME RATHER THAN BY ITS ID, so a loadout can be
+ * read straight against the owner's spreadsheet row -- "+8 Strength" is what
+ * the cell says and what is written here. `foreverEnchantId` THROWS on a name
+ * the table does not contain, so a typo is a build failure rather than a slot
+ * that quietly ends up with no enchant.
+ *
+ * WHY THEY ARE SEPARATE FROM THE GEAR SETS. Three of the sets are shared by
+ * profiles whose enchants DIFFER: the Warrior's armour serves Arms, Fury and
+ * Protection, the Hunter's serves two ranged builds and a melee one, and only
+ * the enchants tell them apart. A loadout applied with `withEnchants` is how
+ * one set of items becomes three builds without writing the items out three
+ * times.
+ *
+ * WEAPON ENCHANTS ARE NOT IN HERE AND MUST NOT BE. Crusader and Weapon Spell
+ * Power belong to the weapon the set names, they predate all of this, and
+ * `withEnchants` only ever writes the slots a loadout mentions -- so a weapon
+ * slot it does not mention keeps whatever the set gave it.
+ * ----------------------------------------------------------------------------
+ */
+export type EnchantLoadout = Readonly<Partial<Record<EquipmentSlot, string>>>;
+
+/**
+ * A gear set with an enchant loadout applied over it.
+ *
+ * THROWS WHEN THE LOADOUT NAMES A SLOT THE SET DOES NOT FILL, which is the loud
+ * failure this wants rather than the quiet one. Every call here is on a
+ * module-level constant, so a mismatch fails the moment anything imports this
+ * file -- the typecheck, the suite and the build all run it. Skipping the slot
+ * instead would produce a profile silently missing a stat, which is the exact
+ * shape of bug that put all three Hunters in Warrior gear for a whole project.
+ */
+export function withEnchants(equipment: Equipment, loadout: EnchantLoadout): Equipment {
+  const next: Record<string, { itemId: number; enchantId?: number }> = {};
+  for (const [slot, equipped] of Object.entries(equipment)) {
+    if (equipped) next[slot] = { ...equipped };
+  }
+  for (const [slot, name] of Object.entries(loadout)) {
+    const equipped = next[slot];
+    if (!equipped) throw new Error(`Enchant loadout names "${slot}", which this set does not fill`);
+    equipped.enchantId = foreverEnchantId(name);
+  }
+  return next as Equipment;
+}
+
+/**
+ * Agility: the Rogues, the Cat, and all three Hunters' armour.
+ *
+ * The single commonest row in the owner's table -- six profiles take it
+ * unchanged and two more add the bow's crit on top.
+ */
+export const AGILITY_ENCHANTS: EnchantLoadout = {
+  head: '+8 Agility',
+  neck: '+5 Agility',
+  cloak: '+5 Agility',
+  chest: '+4 Stats',
+  wrists: '+9 Agility',
+  gloves: '+15 Agility',
+  legs: '+8 Agility',
+  feet: '+7 Agility',
+};
+
+/**
+ * The same, plus the bow.
+ *
+ * THE TWO RANGED HUNTERS AND NOT THE MELEE ONE. All three wear the same armour
+ * and hold the same Rhok'delar, and the owner's table gives "+2% Crit Chance"
+ * to BM Hunter and LW Ranged and "None" to LW Melee -- which is the only thing
+ * separating the melee build's armour from the other two.
+ */
+export const AGILITY_ENCHANTS_WITH_RANGED_CRIT: EnchantLoadout = {
+  ...AGILITY_ENCHANTS,
+  ranged: '+2% Crit Chance',
+};
+
+/** Strength, with Minor Speed boots: 2H Arms and the Enhancement Shaman. */
+export const STRENGTH_ENCHANTS: EnchantLoadout = {
+  head: '+8 Strength',
+  neck: '+5 Strength',
+  // AGILITY ON THE CLOAK, which every strength build in the table takes -- the
+  // back column offers no strength option at all.
+  cloak: '+5 Agility',
+  chest: '+4 Stats',
+  wrists: '+9 Strength',
+  gloves: '+15 Strength',
+  legs: '+8 Strength',
+  feet: 'Minor Speed',
+};
+
+/** The same with agility boots, which is the Fury warrior's one difference. */
+export const STRENGTH_ENCHANTS_WITH_AGILITY_BOOTS: EnchantLoadout = {
+  ...STRENGTH_ENCHANTS,
+  feet: '+7 Agility',
+};
+
+/**
+ * Spell power and haste: every caster in the table, all eight of them.
+ *
+ * Moonkin, Elemental, the three Mages, both Warlocks and the Shadow Priest take
+ * this row identically.
+ */
+export const CASTER_ENCHANTS: EnchantLoadout = {
+  head: '+1% Haste',
+  neck: '+6 Spell Power',
+  cloak: '-2% Threat',
+  chest: '+4 Stats',
+  wrists: '+16 Spell Power',
+  gloves: '+20 Spell Power',
+  legs: '+1% Haste',
+  feet: 'Minor Speed',
+};
+
+/** Protection Warrior: dodge, defense, and threat on the gloves. */
+export const PROTECTION_WARRIOR_ENCHANTS: EnchantLoadout = {
+  head: '+1% Dodge',
+  neck: '+5 Defense Skill',
+  cloak: '+1% Dodge',
+  chest: '+4 Stats',
+  wrists: '+4 Defense Skill',
+  gloves: '+2% Threat',
+  legs: '+1% Dodge',
+  feet: 'Minor Speed',
+};
+
+/**
+ * Bear: dodge where the Cat takes agility, agility everywhere else.
+ *
+ * Not the Protection warrior's row -- a Bear takes no defense skill at all and
+ * keeps the feral agility on neck, bracer and gloves.
+ */
+export const BEAR_ENCHANTS: EnchantLoadout = {
+  head: '+1% Dodge',
+  neck: '+5 Agility',
+  cloak: '+1% Dodge',
+  chest: '+4 Stats',
+  wrists: '+9 Agility',
+  gloves: '+15 Agility',
+  legs: '+1% Dodge',
+  feet: 'Minor Speed',
+};
+
+/**
+ * Protection Paladin: the warrior's defensive row with two deliberate changes.
+ *
+ * SPELL POWER ON THE GLOVES rather than threat, and STAMINA on the boots rather
+ * than Minor Speed. Both are the owner's, and the first is the one worth
+ * noticing: a Protection Paladin's damage is Holy, so twenty spell power is a
+ * live number on the slot where the warrior equivalent takes an inert one.
+ */
+export const PROTECTION_PALADIN_ENCHANTS: EnchantLoadout = {
+  head: '+1% Dodge',
+  neck: '+5 Defense Skill',
+  cloak: '+1% Dodge',
+  chest: '+4 Stats',
+  wrists: '+4 Defense Skill',
+  gloves: '+20 Spell Power',
+  legs: '+1% Dodge',
+  feet: '+7 Stamina',
+};
+
+/**
+ * Seal Twist Retribution: a strength row with haste in three slots.
+ *
+ * HASTE ON HEAD, GLOVES AND LEGS, which is every slot the table offers it in.
+ * The build twists two seals and a faster swing is what delivers both, so this
+ * is the one melee row spending its helmet and glove slots on speed rather than
+ * on strength.
+ */
+export const SEAL_TWIST_ENCHANTS: EnchantLoadout = {
+  head: '+1% Haste',
+  neck: '+5 Strength',
+  cloak: '+5 Agility',
+  chest: '+4 Stats',
+  wrists: '+9 Strength',
+  gloves: '+1% Haste',
+  legs: '+1% Haste',
+  feet: '+7 Agility',
+};
+
+/**
+ * Shockadin: strength on the plate slots, spell power on bracer and gloves.
+ *
+ * A hybrid row and the only one in the table, which is what the build is: it
+ * swings a one-hander and its damage is Holy.
+ */
+export const SHOCKADIN_ENCHANTS: EnchantLoadout = {
+  head: '+8 Strength',
+  neck: '+5 Strength',
+  cloak: '+5 Agility',
+  chest: '+4 Stats',
+  wrists: '+16 Spell Power',
+  gloves: '+20 Spell Power',
+  legs: '+8 Strength',
+  feet: '+7 Agility',
+};
+
+/**
  * A ROGUE'S OWN GEAR, and no longer a Warrior's: full Nightslayer.
  *
  * ----------------------------------------------------------------------------
@@ -55,7 +259,7 @@ export const SPELL_POWER = 22749;
  * runs.
  * ----------------------------------------------------------------------------
  */
-export const ROGUE_ARMOUR: Equipment = {
+export const ROGUE_ARMOUR: Equipment = withEnchants({
   ranged: { itemId: 228252 }, // Striker's Mark
   head: { itemId: 226446 }, // Nightslayer Cover
   neck: { itemId: 228685 }, // Onyxia Tooth Pendant
@@ -71,7 +275,7 @@ export const ROGUE_ARMOUR: Equipment = {
   ring2: { itemId: 19325 }, // Don Julio's Band
   trinket1: { itemId: 228722 }, // Hand of Justice
   trinket2: { itemId: 228464 }, // Royal Seal of Eldre'Thalas
-};
+}, AGILITY_ENCHANTS);
 
 export const ROGUE_DAGGERS: Equipment = {
   mainHand: { itemId: 228296, enchantId: CRUSADER }, // Perdition's Blade
@@ -107,7 +311,7 @@ export const ROGUE_SWORDS: Equipment = {
  * this comment are where it is read now.
  * ----------------------------------------------------------------------------
  */
-export const DRUID_MOONKIN_GEAR: Equipment = {
+export const DRUID_MOONKIN_GEAR: Equipment = withEnchants({
   twoHand: { itemId: 228271, enchantId: SPELL_POWER }, // Staff of Dominance
   head: { itemId: 226658 }, // Cenarion Antlers
   neck: { itemId: 228289 }, // Choker of the Fire Lord
@@ -124,9 +328,9 @@ export const DRUID_MOONKIN_GEAR: Equipment = {
   trinket1: { itemId: 12930 }, // Briarwood Reed
   trinket2: { itemId: 13968 }, // Eye of the Beast
   relic: { itemId: 23197 }, // Idol of the Moon
-};
+}, CASTER_ENCHANTS);
 
-export const DRUID_CAT_GEAR: Equipment = {
+export const DRUID_CAT_GEAR: Equipment = withEnchants({
   twoHand: { itemId: 227833 }, // Glaive of Obsidian Fury, held and never swung
   head: { itemId: 226659 }, // Cenarion Horns
   neck: { itemId: 19491 }, // Amulet of the Darkmoon
@@ -143,9 +347,9 @@ export const DRUID_CAT_GEAR: Equipment = {
   trinket1: { itemId: 228722 }, // Hand of Justice
   trinket2: { itemId: 13965 }, // Blackhand's Breadth
   relic: { itemId: 220606 }, // Idol of the Dream
-};
+}, AGILITY_ENCHANTS);
 
-export const DRUID_BEAR_GEAR: Equipment = {
+export const DRUID_BEAR_GEAR: Equipment = withEnchants({
   twoHand: { itemId: 227833 }, // Glaive of Obsidian Fury, held and never swung
   head: { itemId: 226670 }, // Cenarion Crown
   neck: { itemId: 228685 }, // Onyxia Tooth Pendant
@@ -162,7 +366,7 @@ export const DRUID_BEAR_GEAR: Equipment = {
   trinket1: { itemId: 228722 }, // Hand of Justice
   trinket2: { itemId: 228686 }, // Onyxia Blood Talisman
   relic: { itemId: 23198 }, // Idol of Brutality
-};
+}, BEAR_ENCHANTS);
 
 /**
  * A GEAR SHELL, and said to be one.
@@ -179,7 +383,7 @@ export const DRUID_BEAR_GEAR: Equipment = {
  * ENHANCEMENT IS A TWO-HANDER, which is what the owner's set gives it: The
  * Unstoppable Force, 3.8 seconds, exactly what Windfury Weapon wants.
  */
-export const SHAMAN_ELEMENTAL_GEAR: Equipment = {
+export const SHAMAN_ELEMENTAL_GEAR: Equipment = withEnchants({
   mainHand: { itemId: 228263, enchantId: SPELL_POWER }, // Sorcerous Dagger
   shield: { itemId: 228142 }, // Earth and Fire
   head: { itemId: 227002 }, // Coif of The Five Thunders
@@ -197,9 +401,9 @@ export const SHAMAN_ELEMENTAL_GEAR: Equipment = {
   trinket1: { itemId: 18471 }, // Royal Seal of Eldre'Thalas
   trinket2: { itemId: 12930 }, // Briarwood Reed
   relic: { itemId: 23199 }, // Totem of the Storm
-};
+}, CASTER_ENCHANTS);
 
-export const SHAMAN_ENHANCEMENT_GEAR: Equipment = {
+export const SHAMAN_ENHANCEMENT_GEAR: Equipment = withEnchants({
   twoHand: { itemId: 19323, enchantId: CRUSADER }, // The Unstoppable Force
   head: { itemId: 228291 }, // Crown of Destruction
   neck: { itemId: 228685 }, // Onyxia Tooth Pendant
@@ -222,7 +426,7 @@ export const SHAMAN_ENHANCEMENT_GEAR: Equipment = {
    * invented; it is worn, and it is empty.
    */
   relic: { itemId: 227977 },
-};
+}, STRENGTH_ENCHANTS);
 
 /**
  * A MAGE'S OWN GEAR: full Arcanist, and ONE set for all three builds.
@@ -242,7 +446,7 @@ export const SHAMAN_ENHANCEMENT_GEAR: Equipment = {
  * one. All 452 points multiply something now. See docs/spell-coefficients.md.
  * ----------------------------------------------------------------------------
  */
-export const MAGE_GEAR: Equipment = {
+export const MAGE_GEAR: Equipment = withEnchants({
   twoHand: { itemId: 228271, enchantId: SPELL_POWER }, // Staff of Dominance
   ranged: { itemId: 228262 }, // Crimson Shocker, a wand that never fires here
   head: { itemId: 226562 }, // Arcanist Crown
@@ -259,7 +463,7 @@ export const MAGE_GEAR: Equipment = {
   ring2: { itemId: 228243 }, // Ring of Spell Power
   trinket1: { itemId: 12930 }, // Briarwood Reed
   trinket2: { itemId: 13968 }, // Eye of the Beast
-};
+}, CASTER_ENCHANTS);
 
 /**
  * A PALADIN'S OWN GEAR, in the three sets the owner supplied separately.
@@ -294,7 +498,7 @@ export const MAGE_GEAR: Equipment = {
  * Holy Shock and Consecration rather than through a seal.
  * ----------------------------------------------------------------------------
  */
-export const PALADIN_RET_GEAR: Equipment = {
+export const PALADIN_RET_GEAR: Equipment = withEnchants({
   twoHand: { itemId: 228229, enchantId: CRUSADER }, // Obsidian Edged Blade
   head: { itemId: 226976 }, // Soulforge Greathelm
   neck: { itemId: 228685 }, // Onyxia Tooth Pendant
@@ -311,9 +515,9 @@ export const PALADIN_RET_GEAR: Equipment = {
   trinket1: { itemId: 228722 }, // Hand of Justice
   trinket2: { itemId: 13965 }, // Blackhand's Breadth
   relic: { itemId: 215435 }, // Libram of Benediction
-};
+}, SEAL_TWIST_ENCHANTS);
 
-export const PALADIN_SHOCKADIN_GEAR: Equipment = {
+export const PALADIN_SHOCKADIN_GEAR: Equipment = withEnchants({
   mainHand: { itemId: 228269, enchantId: CRUSADER }, // Azuresong Mageblade
   shield: { itemId: 228142 }, // Earth and Fire
   head: { itemId: 226599 }, // Lawbringer Crown
@@ -331,9 +535,9 @@ export const PALADIN_SHOCKADIN_GEAR: Equipment = {
   trinket1: { itemId: 12930 }, // Briarwood Reed
   trinket2: { itemId: 13965 }, // Blackhand's Breadth
   relic: { itemId: 22401 }, // Libram of Hope
-};
+}, SHOCKADIN_ENCHANTS);
 
-export const PALADIN_PROT_GEAR: Equipment = {
+export const PALADIN_PROT_GEAR: Equipment = withEnchants({
   mainHand: { itemId: 228269, enchantId: CRUSADER }, // Azuresong Mageblade
   shield: { itemId: 20688 }, // Earthen Guard
   head: { itemId: 226607 }, // Lawbringer Headguard
@@ -351,7 +555,7 @@ export const PALADIN_PROT_GEAR: Equipment = {
   trinket1: { itemId: 12930 }, // Briarwood Reed
   trinket2: { itemId: 228686 }, // Onyxia Blood Talisman
   relic: { itemId: 22401 }, // Libram of Hope
-};
+}, PROTECTION_PALADIN_ENCHANTS);
 
 /**
  * A HUNTER'S OWN GEAR, and no longer a Warrior's.
@@ -378,7 +582,7 @@ export const PALADIN_PROT_GEAR: Equipment = {
  * weapon.
  * ----------------------------------------------------------------------------
  */
-export const HUNTER_ARMOUR: Equipment = {
+export const HUNTER_ARMOUR: Equipment = withEnchants({
   ranged: { itemId: 228334 }, // Rhok'delar, Longbow of the Ancient Keepers
   head: { itemId: 228291 }, // Crown of Destruction
   neck: { itemId: 228685 }, // Onyxia Tooth Pendant
@@ -394,7 +598,29 @@ export const HUNTER_ARMOUR: Equipment = {
   ring2: { itemId: 19325 }, // Don Julio's Band
   trinket1: { itemId: 13965 }, // Blackhand's Breadth
   trinket2: { itemId: 18473 }, // Royal Seal of Eldre'Thalas
-};
+}, AGILITY_ENCHANTS);
+
+/**
+ * The same armour with the bow enchanted, which is what the two RANGED builds
+ * wear.
+ *
+ * ----------------------------------------------------------------------------
+ * THE ONE PIECE OF GEAR THAT SEPARATES THE THREE HUNTERS. BM Hunter and LW
+ * Ranged take "+2% Crit Chance" on Rhok'delar and LW Melee takes None, which is
+ * the owner's table and is also the only sensible reading: the enchant reaches
+ * ranged attacks ONLY, and the melee build makes none.
+ *
+ * SO IT WOULD BE INERT RATHER THAN WRONG on the melee build, and it is still
+ * not given to it. A loadout that silently includes something a profile was not
+ * specified with is the thing to avoid whether or not it changes a number
+ * today -- the day a Hunter talent reads the bow, the two would diverge with
+ * nothing having said so.
+ * ----------------------------------------------------------------------------
+ */
+export const HUNTER_ARMOUR_RANGED_CRIT: Equipment = withEnchants(
+  HUNTER_ARMOUR,
+  AGILITY_ENCHANTS_WITH_RANGED_CRIT,
+);
 
 /**
  * The set's melee slot, for the two builds that only stand there holding it.
@@ -452,7 +678,7 @@ export const HUNTER_DUAL_WIELD_WEAPONS: Equipment = {
  * One set for both builds, as the owner supplied it. 471 spell power by the
  * planner's count, against the Warrior shell's nothing.
  */
-export const WARLOCK_GEAR: Equipment = {
+export const WARLOCK_GEAR: Equipment = withEnchants({
   twoHand: { itemId: 228271, enchantId: SPELL_POWER }, // Staff of Dominance
   ranged: { itemId: 220604 }, // Nightmare Trophy, a wand that never fires here
   head: { itemId: 226909 }, // Deathmist Mask
@@ -469,7 +695,7 @@ export const WARLOCK_GEAR: Equipment = {
   ring2: { itemId: 228243 }, // Ring of Spell Power
   trinket1: { itemId: 12930 }, // Briarwood Reed
   trinket2: { itemId: 13968 }, // Eye of the Beast
-};
+}, CASTER_ENCHANTS);
 
 /**
  * A SHADOW PRIEST'S OWN GEAR: Vestments of Prophecy, with Anathema.
@@ -491,7 +717,7 @@ export const WARLOCK_GEAR: Equipment = {
  * `docs/spell-coefficients.md`.
  * ----------------------------------------------------------------------------
  */
-export const PRIEST_GEAR: Equipment = {
+export const PRIEST_GEAR: Equipment = withEnchants({
   twoHand: { itemId: 228336, enchantId: SPELL_POWER }, // Anathema
   ranged: { itemId: 13396 }, // Skul's Ghastly Touch, a wand that never fires here
   head: { itemId: 226584 }, // Crown of Prophecy
@@ -508,4 +734,4 @@ export const PRIEST_GEAR: Equipment = {
   ring2: { itemId: 228243 }, // Ring of Spell Power
   trinket1: { itemId: 12930 }, // Briarwood Reed
   trinket2: { itemId: 13968 }, // Eye of the Beast
-};
+}, CASTER_ENCHANTS);

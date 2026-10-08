@@ -105,9 +105,17 @@ describe('Anticipation', () => {
      * Written out by hand. The character sheet figure is the TOTAL -- 300 is
      * free at level 60 -- and the talent adds on top of it.
      */
-    expect(built().defenseSkill).toBe(300);
-    expect(built(legalise({ anticipation: 5 })).defenseSkill).toBe(320);
-    expect(built(legalise({ anticipation: 1 })).defenseSkill).toBe(304);
+    /*
+     * AND NINE OF IT IS THE ENCHANTS NOW. The owner's Protection row puts +5
+     * Defense Skill on the neck and +4 on the bracer, so a tank built from the
+     * preset stands at 309 before spending a point. Written as the two terms
+     * rather than as 309, because a change to either slot should move one of
+     * them and not a number nobody can place.
+     */
+    const fromEnchants = 5 + 4;
+    expect(built().defenseSkill).toBe(300 + fromEnchants);
+    expect(built(legalise({ anticipation: 5 })).defenseSkill).toBe(320 + fromEnchants);
+    expect(built(legalise({ anticipation: 1 })).defenseSkill).toBe(304 + fromEnchants);
   });
 
   it('is worth 0.04 percentage points a point, to five numbers at once', () => {
@@ -411,7 +419,16 @@ describe('a Warrior parries five percent before any talent', () => {
   it('reaches the table the boss actually rolls against', () => {
     const chances = createForeverAttackChances(() => 'one_hand_shield');
     const boss = createTrainingDummy({ attacks: true });
-    expect(chances('melee-received', boss, built(), {}).parry).toBe(500);
+    /*
+     * 536, NOT 500, AND THE 36 IS NOT A PARRY SOURCE. The tank's enchant row
+     * carries nine points of defense skill, and the owner's formula is 0.04
+     * percentage points a point to each of five numbers -- so nine points is
+     * 0.36%, or 36 roll units, on parry exactly as on block and miss. The
+     * class baseline it is added to is still the stated 5%.
+     */
+    expect(chances('melee-received', boss, built(), {}).parry).toBe(
+      500 + 9 * COMBAT_CONSTANTS.defensePerSkill,
+    );
   });
 });
 

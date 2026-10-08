@@ -381,14 +381,35 @@ describe('what the items do that the simulator does not', () => {
   });
 
   it('offers both weapon enchants on melee weapons only', () => {
-    // Crusader and Spell Power. Both are melee-weapon enchants; the caster sets
-    // put the second on a staff, which is one.
-    expect(enchantsForSlot('mainHand').map((e) => e.id)).toEqual([20034, 22749]);
-    expect(enchantsForSlot('offHand').map((e) => e.id)).toEqual([20034, 22749]);
-    expect(enchantsForSlot('twoHand').map((e) => e.id)).toEqual([20034, 22749]);
-    // Explicitly not the bow.
-    expect(enchantsForSlot('ranged')).toEqual([]);
-    expect(enchantsForSlot('head')).toEqual([]);
+    /*
+     * Crusader and Spell Power. Both are melee-weapon enchants; the caster sets
+     * put the second on a staff, which is one.
+     *
+     * AND THE ARMOUR ENCHANTS MUST NOT REACH A WEAPON SLOT. This used to assert
+     * the three hands against a hard-coded pair of ids, which would have passed
+     * just as happily with a helmet enchant appended -- so it asks the stronger
+     * question now: the two weapon ids EXACTLY, and nothing else offered there.
+     */
+    for (const slot of ['mainHand', 'offHand', 'twoHand'] as const) {
+      expect(enchantsForSlot(slot).map((e) => e.id), slot).toEqual([20034, 22749]);
+    }
+
+    /*
+     * THE BOW TAKES ONE ENCHANT AND IT IS NOT A WEAPON ONE. "+2% Crit Chance"
+     * is the owner's ranged entry; Crusader and Weapon Spell Power are still
+     * explicitly refused there, which is what the old `toEqual([])` was for.
+     */
+    expect(enchantsForSlot('ranged').map((e) => e.name)).toEqual(['+2% Crit Chance']);
+
+    /*
+     * AND THE SHOULDER IS THE SLOT WITH NOTHING. Its column in the owner's
+     * table reads "None" and nothing else, so this is the only armour slot that
+     * stays empty -- and it is what the head's old assertion is replaced by,
+     * because a head enchant now exists and an empty shoulder still proves that
+     * `enchantsForSlot` is filtering rather than returning everything.
+     */
+    expect(enchantsForSlot('shoulders')).toEqual([]);
+    expect(enchantsForSlot('head').length).toBeGreaterThan(0);
 
     // Crusader is a proc and carries no stat; Spell Power is a flat 30, which
     // the source states as "add up to 30 damage to spells".

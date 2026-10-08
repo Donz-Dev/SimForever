@@ -30,6 +30,7 @@ node tools/value_index_sweep.mjs                 # which talents index a multi-n
 PROFILE=pally_ret npx vite-node tools/probe_resources.ts   # where one pool went
 npx vite-node tools/probe_block.ts               # a tank's block chain, link by link
 npx vite-node tools/druid_attribution.ts         # what one talent is worth, with its CASCADE named
+npx vite-node tools/enchant_report.ts            # all 24 profiles' enchants, shaped like the owner's table
 ```
 
 The three audits in the middle are AUDITS rather than measurements and none of
@@ -1537,6 +1538,81 @@ no per-point argument either way and what decides it is uptime.
   character with no items and no talents and check `panel - base` is what the
   items supply. Remaining differences in BASE are Forever's data and are not to
   be "fixed"; crit differing is CORRECT, because base stats here are Forever's.
+- **AN ENCHANT COMES FROM ONE OF TWO SOURCES AND THEY ARE NOT THE SAME KIND OF
+  THING.** The two WEAPON enchants were SCRAPED — Crusader and Weapon Spell
+  Power have a Wowhead spell id, an icon and a tooltip, and `ENCHANT_RULES` in
+  `itemData.ts` says what the simulator does with the words. The 28 ARMOUR ones
+  are the ruleset owner's own table: an effect and a slot, **no spell behind
+  either**, so they are declared outright in `game/items/foreverEnchants.ts`.
+  There is nothing to scrape and nothing to `--verify`, and a JSON file
+  pretending otherwise would be invented provenance.
+- **THEIR IDS ARE THE SIMULATOR'S, NOT THE GAME'S.** `EquippedSlot.enchantId` is
+  a number a saved profile stores, so each needs a stable key; they are
+  allocated BY POSITION from a block at 900,000, which is far clear of every
+  item and spell id and is asserted so. **So an entry may not be reordered or
+  removed once a profile has been saved against it** — a new one goes on the
+  end, and `enchants.test.ts` pins the first and last to their ids so a reorder
+  fails loudly rather than moving somebody's helmet enchant onto their boots.
+  Reading one as a WoW spell id is reading a fabricated number as game data.
+- **ONE ENCHANT PER DISTINCT EFFECT, LISTING EVERY SLOT IT IS OFFERED ON.** "+8
+  Strength" is the helmet's entry and the legs', and it is ONE enchant with two
+  slots — the arrangement Crusader already uses for its three weapon slots.
+  Splitting per slot would be two ids for one thing and two places to drift.
+  **The SHOULDER column reads "None" and nothing else**, so no enchant lists it
+  and the Gear panel shows that slot a dash, which is the honest rendering of a
+  column with no options.
+- **A LOADOUT IS SEPARATE FROM THE GEAR SET, BECAUSE THREE SETS SERVE PROFILES
+  WHOSE ENCHANTS DIFFER.** The Warrior's plate serves Arms, Fury and Protection
+  and the Hunter's mail serves two ranged builds and a melee one; only the
+  enchants tell them apart. `withEnchants(set, loadout)` is how one set of items
+  becomes three builds, it writes **only the slots the loadout names** so a
+  weapon keeps its Crusader, and it **THROWS** when a loadout names a slot the
+  set does not fill — every call is on a module constant, so a mismatch fails
+  the typecheck, the suite and the build rather than producing a profile
+  silently missing a stat.
+- **A LOADOUT NAMES ITS ENCHANTS BY THE OWNER'S OWN WORDING**, not by id, so a
+  row reads straight against the spreadsheet. `foreverEnchantId` throws on a
+  name the table does not contain.
+- **"+4 Stats" IS ALL FIVE PRIMARIES**, four each — stamina, strength, agility,
+  intellect AND spirit. The owner's clarification, and the reading that is easy
+  to get wrong: a version granting the three a melee build reads would be right
+  about every melee profile and short on every caster.
+- **"+1% Haste" IS `hasteRating: 1 * RATING_PER_PERCENT.haste`**, the idiom Seal
+  of the Crusader, Nature's Grace, Flurry and Blade Flurry already share.
+  `hasteMultiplierFrom` divides by the same constant, so 1% in is 1.01 out
+  exactly and the placeholder conversion moving cannot change it. It reaches
+  **cast speed, melee auto-attack speed and ranged auto-attack speed** — the
+  owner's own statement, and all three go through `applyHaste` off that one
+  multiplier.
+- **AN ENCHANT'S ARMOR IS NOT "ARMOR FROM ITEMS", by the owner's ruling**, which
+  is why `armorFromItems` sums ITEM stats directly instead of going through
+  `statsFromEquipment`. Toughness and Thick Hide scale "your Armor value from
+  items"; the cloak's sixty points are not that, so they reach the character
+  once and flat. **Worth nothing on the day it was written** — no enchant
+  granted armor before that one — and wrong the day one does, in the direction
+  that reads as a slightly better tank rather than as an error.
+- **THE BOW'S "+2% CRIT CHANCE" IS NOT A STAT, AND THAT IS THE WHOLE POINT.**
+  `critChance` is every attack a character makes, and the owner ruled this one
+  reaches **ranged attacks only — not melee, and not the pet**. It is
+  `Enchant.attackTableModifiers` on `ranged-auto` and `ranged-special`, merged
+  into the build's in `createPlayer` the way `schoolPower` already is, and the
+  pet never sees it because `createPet` builds its own combatant and inherits
+  the owner's crit STAT, which this deliberately is not. **The melee Hunter
+  wears the same armour and holds the same Rhok'delar**, so a stat would have
+  raised its Raptor Strike — and the melee build is given no ranged enchant at
+  all even though one would be inert, because a loadout quietly carrying
+  something the owner did not specify diverges the day a talent reads the bow.
+- **FOUR ENCHANTS DO NOTHING AND ARE STILL SELECTABLE, which the owner asked
+  for.** Healing power, threat in both directions and Minor Speed each carry an
+  `unmodelled` entry with the source's own words — an inert effect that SAYS it
+  is inert is the honest failure mode, and the mirror assertion is the one that
+  expires: `enchants.test.ts` fails if any OTHER enchant claims anything, so one
+  that gains a stat has to lose its caveat in the same commit.
+- **EVERY PROFILE'S FIGURE MOVED WHEN THESE LANDED**, +2.4 to +53.7 on a mean of
+  +27.0, so no DPS recorded before that commit is comparable. **The two smallest
+  are the two tanks and both are correct**: their rows are dodge, defense skill
+  and threat, so a DPS figure is the wrong measure and the mechanism is pinned
+  on the attacks-received table instead. A correct enchant can be worth zero.
 - **Check whose gear a profile is in before quoting its number.** All three
   Hunters wore the Warrior set for the whole project and no test could have
   caught it, because a profile in the wrong gear runs perfectly. **The profiles

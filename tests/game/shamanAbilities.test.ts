@@ -291,7 +291,8 @@ describe('the fights', () => {
      */
     // 517 now: Forever's +64 on the Sorcerous Dagger. The shield's 26 below
     // is unchanged, which is what keeps that assertion meaningful.
-    expect(presetPlayer('shaman_elemental').stats.get('spellPower')).toBe(453 + 64);
+    // Plus the caster enchant row: +6 neck, +16 bracer, +20 gloves.
+    expect(presetPlayer('shaman_elemental').stats.get('spellPower')).toBe(453 + 64 + 6 + 16 + 20);
 
     const batch = batchOf('shaman_elemental', 40, 5);
     const named = batch.castButNotSimulated.map((entry) => entry.abilityName);

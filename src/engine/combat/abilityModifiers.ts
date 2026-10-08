@@ -521,6 +521,20 @@ export class AttackTableModifiers {
     return this.byTable.get(table) ?? NONE;
   }
 
+  /**
+   * Fold another set into this one, table by table, by the same `combine` two
+   * sources of one table already use.
+   *
+   * The twin of `SchoolModifiers.merge`, and it exists for the same reason and
+   * the same second caller: GEAR. A talent build is a VALUE and a batch may
+   * reuse one across characters, so adding the equipped set's entries to
+   * `build.attackTableModifiers` directly would work exactly once and then hand
+   * the second character the first one's gear on top of its own.
+   */
+  merge(other: AttackTableModifiers): void {
+    for (const [table, modifier] of other.byTable) this.add(table, modifier);
+  }
+
   get isEmpty(): boolean {
     return this.byTable.size === 0;
   }

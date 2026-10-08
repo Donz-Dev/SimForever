@@ -17,6 +17,11 @@ import {
   SHAMAN_ELEMENTAL_GEAR,
   SHAMAN_ENHANCEMENT_GEAR,
   WARLOCK_GEAR,
+  withEnchants,
+  PROTECTION_WARRIOR_ENCHANTS,
+  STRENGTH_ENCHANTS,
+  STRENGTH_ENCHANTS_WITH_AGILITY_BOOTS,
+  HUNTER_ARMOUR_RANGED_CRIT,
 } from '../game/items/gearSets';
 import type { ClassId } from '../game/character';
 import type { Equipment } from '../game/items/Item';
@@ -897,8 +902,14 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = [
       },
       talents: { ...TWO_HAND_ARMS_TALENTS },
       raidBuffs: [...PRESET_RAID_BUFFS],
+      /*
+       * THE ARMOUR ENCHANTS ARE APPLIED HERE RATHER THAN ON `SHARED_ARMOUR`,
+       * because the three Warrior builds share every item and share none of
+       * their enchants: Arms and Fury take strength and Protection takes dodge
+       * and defense skill. The set is the items; the loadout is the build.
+       */
       equipment: {
-        ...SHARED_ARMOUR,
+        ...withEnchants(SHARED_ARMOUR, STRENGTH_ENCHANTS),
         // Obsidian Edged Blade, enchanted. A two-hander carries one weapon and
         // therefore one Crusader.
         twoHand: { itemId: 228229, enchantId: CRUSADER },
@@ -928,7 +939,9 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = [
       talents: { ...DW_FURY_TALENTS },
       raidBuffs: [...PRESET_RAID_BUFFS],
       equipment: {
-        ...SHARED_ARMOUR,
+        // Arms' row with AGILITY boots instead of Minor Speed, which is the
+        // owner's one difference between the two damage warriors.
+        ...withEnchants(SHARED_ARMOUR, STRENGTH_ENCHANTS_WITH_AGILITY_BOOTS),
         /*
          * BOTH WEAPONS ENCHANTED, which the dual-wield starting set is not.
          * The ruleset owner asks for Crusader on each, and Forever stacks the
@@ -963,7 +976,9 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = [
       talents: { ...PROT_WARR_TALENTS },
       raidBuffs: [...PRESET_RAID_BUFFS],
       equipment: {
-        ...SHARED_ARMOUR,
+        // Dodge, defense skill and threat: the one Warrior row that spends
+        // nothing on damage.
+        ...withEnchants(SHARED_ARMOUR, PROTECTION_WARRIOR_ENCHANTS),
         mainHand: { itemId: 228265, enchantId: CRUSADER }, // Brutality Blade
         shield: { itemId: 19321 }, // The Immovable Object
       },
@@ -1352,7 +1367,7 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = [
       // Grace of Air rather than Windfury: a bow has no main-hand use.
       // See `RANGED_HUNTER_RAID_BUFFS`.
       raidBuffs: [...RANGED_HUNTER_RAID_BUFFS],
-      equipment: { ...HUNTER_ARMOUR, ...HUNTER_STAT_STICK },
+      equipment: { ...HUNTER_ARMOUR_RANGED_CRIT, ...HUNTER_STAT_STICK },
       encounter: { ...createDefaultProfile().encounter, targetAttacks: false },
     }),
   },
@@ -1375,7 +1390,7 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = [
       // Grace of Air rather than Windfury: a bow has no main-hand use.
       // See `RANGED_HUNTER_RAID_BUFFS`.
       raidBuffs: [...RANGED_HUNTER_RAID_BUFFS],
-      equipment: { ...HUNTER_ARMOUR, ...HUNTER_STAT_STICK },
+      equipment: { ...HUNTER_ARMOUR_RANGED_CRIT, ...HUNTER_STAT_STICK },
       encounter: { ...createDefaultProfile().encounter, targetAttacks: false },
     }),
   },

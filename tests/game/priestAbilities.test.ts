@@ -304,23 +304,36 @@ describe('the fight', () => {
       equipment: shadowBuild().equipment,
     });
 
-    // The school-blind half, unchanged and still the only thing on the stat
-    // block -- a keyed stat deliberately cannot go there.
-    expect(actor.stats.get('spellPower')).toBe(204);
+    /*
+     * The school-blind half, still the only thing on the stat block -- a keyed
+     * stat deliberately cannot go there.
+     *
+     * 246 NOW, because the owner's caster enchant row is SCHOOL-BLIND: +6 on
+     * the neck, +16 on the bracer, +20 on the gloves. It is named once and used
+     * by every assertion below, which is the point of this test -- a figure that
+     * reaches one school and not another has to be the one that MOVES between
+     * them, and the blind pool must move all three together or none.
+     */
+    const blindPool = 204 + 6 + 16 + 20;
+    expect(actor.stats.get('spellPower')).toBe(blindPool);
 
     /*
      * The scoped half, and the planner's own total once the two are added.
      *
-     * 561 NOW: Anathema carries Forever's +64 and it is scoped to SHADOW, which
-     * the two assertions around this one prove between them -- the stat block
-     * above did not move off 204, and Holy and Arcane below did not either.
+     * THE SHADOW-SCOPED 357 IS UNCHANGED BY THE ENCHANTS and the Shadow TOTAL
+     * is not, which is the distinction worth keeping straight: the enchant
+     * raises the pool every school draws on, so Shadow gains the same 42 that
+     * Holy and Arcane do and keeps its 357 -- the set's own lines plus
+     * Anathema's Forever +64 -- on top. Writing the total as `blindPool + 357`
+     * rather than as 603 is what says so.
      */
-    expect(spellPowerFor(actor, 'shadow')).toBe(497 + 64);
+    expect(spellPowerFor(actor, 'shadow')).toBe(blindPool + 357);
 
-    // AND NO OTHER SCHOOL GAINED ANYTHING, which is the reason it could not
-    // be folded into the stat in the first place.
-    expect(spellPowerFor(actor, 'holy')).toBe(204);
-    expect(spellPowerFor(actor, 'arcane')).toBe(204);
+    // AND NO OTHER SCHOOL GAINED THE SCOPED PART, which is the reason it could
+    // not be folded into the stat in the first place. Both read the blind pool
+    // and nothing more.
+    expect(spellPowerFor(actor, 'holy')).toBe(blindPool);
+    expect(spellPowerFor(actor, 'arcane')).toBe(blindPool);
   });
 });
 

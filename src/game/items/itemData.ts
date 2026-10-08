@@ -2,6 +2,7 @@ import type { DamageSchool, PartialStats } from '../../engine';
 import type { CombatStyleId } from '../character/ids';
 import { DAMAGE_SCHOOLS } from '../../engine';
 import type { Enchant, EquipmentSlot, Item, ItemWeapon, UnmodelledEffect } from './Item';
+import { FOREVER_ENCHANTS, FOREVER_ENCHANT_ID_BASE } from './foreverEnchants';
 import warriorItems from '../../data/items/classic-warrior.json';
 import hunterItems from '../../data/items/sod-hunter.json';
 import rogueItems from '../../data/items/sod-rogue.json';
@@ -715,7 +716,7 @@ const ENCHANT_RULES: Readonly<
   },
 };
 
-export const ENCHANTS: readonly Enchant[] = data.enchants.map((enchant) => {
+const SCRAPED_ENCHANTS: readonly Enchant[] = data.enchants.map((enchant) => {
   const rule = ENCHANT_RULES[enchant.id];
   if (!rule) throw new Error(`${enchant.name}: no enchant rule for spell ${enchant.id}`);
   return {
@@ -730,11 +731,59 @@ export const ENCHANTS: readonly Enchant[] = data.enchants.map((enchant) => {
   };
 });
 
+/**
+ * Every enchant: the two scraped WEAPON ones, then the owner's ARMOUR table.
+ *
+ * ----------------------------------------------------------------------------
+ * TWO SOURCES AND THEY ARE NOT THE SAME KIND OF THING, which is why they are
+ * built in two places and only joined here. Crusader and Weapon Spell Power
+ * came out of Wowhead with a spell id, an icon and a tooltip, and
+ * `ENCHANT_RULES` says what the simulator does with the words. The armour
+ * enchants are the ruleset owner's own table -- an effect and a slot, no spell
+ * behind either -- so they are declared outright in `foreverEnchants.ts` and
+ * carry simulator-allocated ids.
+ *
+ * THE WEAPON ENCHANTS COME FIRST AND ARE UNTOUCHED, on purpose: they are the
+ * ones every melee and caster gear set already names, and nothing about them
+ * changes because a second source now sits beside them.
+ * ----------------------------------------------------------------------------
+ */
+export const ENCHANTS: readonly Enchant[] = [...SCRAPED_ENCHANTS, ...FOREVER_ENCHANTS];
+
+/*
+ * THE TWO ID SPACES MUST NOT MEET.
+ *
+ * `enchantId` is a bare number in a saved profile and `ENCHANTS_BY_ID` is one
+ * map, so a Forever enchant landing on a scraped spell id would silently
+ * resolve to the wrong enchant. The block is chosen far clear of it; this is
+ * what makes that a check rather than an assumption.
+ *
+ * ITEM IDS ARE CHECKED TOO, and that one is belt-and-braces rather than live:
+ * an item and an enchant are looked up in different maps, so a shared number
+ * costs nothing today. It is still the cheapest guard against a future reader
+ * who sees one id space where there are two.
+ */
+{
+  const ids = new Set<number>();
+  for (const enchant of ENCHANTS) {
+    if (ids.has(enchant.id)) throw new Error(`Duplicate enchant id ${enchant.id}`);
+    ids.add(enchant.id);
+  }
+  for (const enchant of FOREVER_ENCHANTS) {
+    if (enchant.id <= FOREVER_ENCHANT_ID_BASE) {
+      throw new Error(`${enchant.name}: id ${enchant.id} is outside the Forever enchant block`);
+    }
+    if (ITEMS_BY_ID.has(enchant.id)) {
+      throw new Error(`${enchant.name}: id ${enchant.id} is also an item id`);
+    }
+  }
+}
+
 /** Enchant Weapon - Crusader, named because presets reference it directly. */
-export const CRUSADER: Enchant = ENCHANTS[0];
+export const CRUSADER: Enchant = SCRAPED_ENCHANTS[0];
 
 /** Enchant Weapon - Spell Power, the caster sets' weapon enchant. */
-export const SPELL_POWER_ENCHANT: Enchant = ENCHANTS[1];
+export const SPELL_POWER_ENCHANT: Enchant = SCRAPED_ENCHANTS[1];
 
 export const ENCHANTS_BY_ID: ReadonlyMap<number, Enchant> = new Map(
   ENCHANTS.map((enchant) => [enchant.id, enchant] as const),

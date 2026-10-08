@@ -1,10 +1,12 @@
 import type {
+  AttackTableKind,
   DamageSchool,
   PartialStats,
   WeaponProfile,
   WeaponSlot,
   WeaponType,
 } from '../../engine';
+import { AttackTableModifiers } from '../../engine';
 import type { CombatStyleId } from '../character';
 import { getCombatStyle } from '../character';
 import { attackPowerCoefficientFor, normalizedPowerCoefficientFor } from '../combat/weaponDamage';
@@ -169,7 +171,60 @@ export function resistancesFromItems(
 }
 
 export function armorFromItems(equipment: Equipment, style: CombatStyleId): number {
-  return statsFromEquipment(liveEquipment(equipment, style)).armor ?? 0;
+  /*
+   * ITEMS ONLY, WHICH IS WHY THIS NO LONGER GOES THROUGH `statsFromEquipment`.
+   *
+   * The ruleset owner's ruling on the cloak's "+60 Armor": an enchant's armor
+   * does NOT count as armor from items. So Toughness and Thick Hide scale what
+   * the plate supplies and not what was enchanted onto it, and the sixty points
+   * reach the character once, flat.
+   *
+   * Worth nothing on the day it was written -- no enchant granted armor before
+   * that one -- and wrong the day one does, in the direction that reads as a
+   * slightly better tank rather than as an error.
+   */
+  let total = 0;
+  for (const equipped of Object.values(liveEquipment(equipment, style))) {
+    if (!equipped) continue;
+    total += ITEMS_BY_ID.get(equipped.itemId)?.stats.armor ?? 0;
+  }
+  return total;
+}
+
+/**
+ * Crit, crit damage, hit and damage that the equipped ENCHANTS scope to one
+ * attack table.
+ *
+ * ----------------------------------------------------------------------------
+ * The third thing to come out of a set of equipment, after the stats and the
+ * weapons, and the ranged weapon's "+2% Crit Chance" is the only source. It
+ * cannot be a stat: `critChance` is every attack a character makes, and the
+ * owner's ruling is that this one reaches ranged attacks and nothing else.
+ *
+ * ENCHANTS ONLY. No ITEM line in the data says anything of this shape -- an
+ * item that raised ranged crit alone would belong here too, and `buildStats`
+ * would have to learn to parse one first.
+ *
+ * OFF THE SAME `liveEquipment` AS EVERYTHING ELSE, for the reason
+ * `schoolPowerForStyle` spells out: a slot the style cannot fill contributes
+ * nothing, and reading the equipment map directly is the mistake these
+ * functions exist to make impossible.
+ * ----------------------------------------------------------------------------
+ */
+export function attackTableModifiersForStyle(
+  equipment: Equipment,
+  style: CombatStyleId,
+): AttackTableModifiers {
+  const modifiers = new AttackTableModifiers();
+  for (const equipped of Object.values(liveEquipment(equipment, style))) {
+    if (!equipped?.enchantId) continue;
+    const enchant = ENCHANTS_BY_ID.get(equipped.enchantId);
+    if (!enchant?.attackTableModifiers) continue;
+    for (const [table, modifier] of Object.entries(enchant.attackTableModifiers)) {
+      modifiers.add(table as AttackTableKind, modifier);
+    }
+  }
+  return modifiers;
 }
 
 /**

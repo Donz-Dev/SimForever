@@ -128,10 +128,18 @@ both has to grant both, exactly as the raid buffs that say it already do. It use
 to grant only the melee half, which was invisible for as long as nothing in the
 item data was caster gear -- sixty-two lines across these files say it.
 
-**Two enchants, and one of them is a stat.** Crusader is a proc; Enchant Weapon -
-Spell Power is a flat 30 spell power, which the five caster sets put on a staff or
-a dagger. A stat enchant applies to a weapon that is only ever HELD, which is
-what a caster's main hand is.
+**Two enchants here, and one of them is a stat.** Crusader is a proc; Enchant
+Weapon - Spell Power is a flat 30 spell power, which the five caster sets put on
+a staff or a dagger. A stat enchant applies to a weapon that is only ever HELD,
+which is what a caster's main hand is.
+
+**THE ARMOUR ENCHANTS ARE NOT IN THESE FILES AND WILL NOT BE.** The ruleset
+owner supplied 28 of them as a table -- an effect and a slot per entry, with no
+spell behind any of them -- so there is nothing to scrape, nothing for
+`--verify` to re-fetch and no tooltip to store. They are declared outright in
+`src/game/items/foreverEnchants.ts` with simulator-allocated ids, which is also
+where the reasoning is written down. These two stay here because they came out
+of Wowhead, which is the whole difference.
 
 **SPELL POWER FOR ONE SCHOOL IS NOT THE SAME STAT, and it is not a stat at all.**
 "Increases damage done by Shadow spells and effects by up to 39" names a school;

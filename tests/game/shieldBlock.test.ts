@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { createPlayer } from '../../src/game/actors/createPlayer';
 import { createTrainingDummy } from '../../src/game/actors/createTrainingDummy';
-import { createForeverAttackChances } from '../../src/game/combat/attackChances';
+import { COMBAT_CONSTANTS, createForeverAttackChances } from '../../src/game/combat/attackChances';
 import { ITEMS_BY_ID } from '../../src/game/items/itemData';
 import { startingEquipmentFor } from '../../src/game/items/startingSets';
 import { WARRIOR_REACTIONS } from '../../src/game/reactions/warrior';
@@ -90,8 +90,16 @@ describe('a shield gives block chance and block value', () => {
       warrior,
       {},
     );
-    // 5% as roll units on the 1-10000 die.
-    expect(chances.block).toBe(500);
+    /*
+     * 5% as roll units on the 1-10000 die, PLUS the enchants' defense skill.
+     *
+     * The starting set for a shield Warrior now carries the owner's Protection
+     * enchant row, which is +5 Defense Skill on the neck and +4 on the bracer.
+     * Nine points at 0.04 percentage points each is 36 units on every one of
+     * the five numbers defense skill moves -- so the shield's own 5% is
+     * unchanged and this is what sits on top of it.
+     */
+    expect(chances.block).toBe(500 + 9 * COMBAT_CONSTANTS.defensePerSkill);
   });
 });
 
