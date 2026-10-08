@@ -10,6 +10,11 @@ import {
   type PoisonId,
   type PoisonLoadout,
 } from '../../game/reactions/poisons';
+import {
+  WARLOCK_STONE_NAMES,
+  WARLOCK_STONE_TOOLTIPS,
+  type WarlockStoneId,
+} from '../../game/buffs/warlockStones';
 
 /** A gear slot, as the panel lists it. */
 interface SlotRow {
@@ -202,6 +207,12 @@ export function GearPanel({ profile, onChange }: GearPanelProps) {
           onChange={(poisons) => onChange({ ...profile, poisons })}
         />
       ) : null}
+      {profile.character.characterClass === 'warlock' ? (
+        <StoneRow
+          stone={profile.warlockStone}
+          onChange={(warlockStone) => onChange({ ...profile, warlockStone })}
+        />
+      ) : null}
     </Panel>
   );
 }
@@ -221,6 +232,71 @@ export function GearPanel({ profile, onChange }: GearPanelProps) {
  * asked for it to be swappable rather than fixed.
  * ----------------------------------------------------------------------------
  */
+/**
+ * Which stone enchants a Warlock's weapon. A Warlock's, and nobody else's.
+ *
+ * ----------------------------------------------------------------------------
+ * BESIDE THE POISON ROW, BECAUSE IT IS THE SAME QUESTION: a consumable the
+ * player applies before the pull, sitting under the weapon enchants where a
+ * reader already looks for "what is on my weapon". The ruleset owner asked for
+ * it in exactly those terms.
+ *
+ * ONE SELECT, NOT TWO. A poison is per hand because a Rogue coats each weapon;
+ * a Warlock has one stone. So this is a single row with one control rather than
+ * the two-column grid above, and it does NOT reuse `gear-grid` -- a one-cell
+ * grid would leave the label stranded in the first column with the enchant
+ * spacer beside it, which looks like a missing value rather than a choice.
+ *
+ * IT STACKS WITH THE WEAPON'S ENCHANT, by the owner's ruling, which is why this
+ * sits apart from the enchant dropdowns instead of replacing one. The hint
+ * under the control says so, because "temporary" is the word that makes the
+ * stacking obvious and the panel is where somebody would wonder.
+ * ----------------------------------------------------------------------------
+ */
+/*
+ * EXPORTED FOR ITS TEST, which is the only reason -- `PoisonRow` beside it is
+ * private and untested, and that is the gap this does not copy.
+ *
+ * THE PANEL CANNOT BE RENDERED INSTEAD: `Panel` is `useState(true)`, so a
+ * collapsible panel starts SHUT and never renders its body in a static render.
+ * Going through `GearPanel` would therefore assert nothing about the control
+ * and would pass just as happily if it were deleted.
+ */
+export function StoneRow({
+  stone,
+  onChange,
+}: {
+  readonly stone: WarlockStoneId;
+  readonly onChange: (next: WarlockStoneId) => void;
+}) {
+  const options = Object.entries(WARLOCK_STONE_NAMES) as Array<[WarlockStoneId, string]>;
+
+  return (
+    <div className="gear-stone">
+      <h3>Weapon Stone</h3>
+      <div className="gear-slot">
+        <span className="gear-slot-name">Temporary Enchant</span>
+        <select
+          className="gear-select"
+          value={stone}
+          aria-label="Warlock weapon stone"
+          onChange={(event) => onChange(event.target.value as WarlockStoneId)}
+        >
+          {options.map(([id, name]) => (
+            <option key={id} value={id}>
+              {name}
+            </option>
+          ))}
+        </select>
+        <span className="gear-no-enchant">—</span>
+      </div>
+      {/* The source's own words, so the panel states what the choice buys
+          rather than leaving the player to remember two numbers. */}
+      <p className="gear-stone-hint">{WARLOCK_STONE_TOOLTIPS[stone]}</p>
+    </div>
+  );
+}
+
 function PoisonRow({
   poisons,
   onChange,

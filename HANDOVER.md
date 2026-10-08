@@ -8,7 +8,7 @@ gets built is [docs/class-implementation.md](docs/class-implementation.md).
 All nine classes and all 23 profiles are implemented, every number traced to a
 source rather than invented, and **all 23 priority lists are the ruleset owner's
 own** -- specified entry by entry and measured after. **2,571 tests**, CI green on Node 20 and 22. Profile
-format **v10**. Live at <https://donz-dev.github.io/SimForever/>, republished by
+format **v11**. Live at <https://donz-dev.github.io/SimForever/>, republished by
 `.github/workflows/deploy.yml` on every push to `main` that passes.
 
 ### The state in one table
@@ -199,6 +199,22 @@ FIRST answer was wrong by a factor of two**, because Wrack's gate named Siphon
 Life -- so removing Siphon Life took Wrack to zero casts and the figure was the
 loss of both. **Removing the gate removed the coupling**, which is a better
 outcome than remembering to work around it. See
+[docs/handoff/warlock.md](docs/handoff/warlock.md).
+
+**THE WARLOCK HAS A WEAPON STONE NOW, AND NO FIGURE IN THE TABLE MOVED.**
+`profile.warlockStone` -- a Firestone or a Spellstone, selected in the Gear panel
+beside a Rogue's poisons, and **profile format v11**. It defaults to `none` and
+both presets keep it, which is the OPPOSITE of v10's poison decision and for a
+stated reason: the owner supplied the poison pairing, and has not said which
+stone a Warlock carries. Choosing one here would invent a build decision and move
+a published baseline.
+
+**WHAT THEY ARE WORTH, 30 batches of 10 on their own seeds:** Firelock takes
+**+20.0 REAL** from a Firestone against +2.4 noise from a Spellstone; SM/DS takes
+**+7.3 REAL from either**, a dead heat by two different routes. **A Firestone is
+not a "Fire stone"** -- only its +21 is school-scoped, while its 2% spell crit is
+whole-character, which is what makes it the better stone for a Fire build and an
+equal one for a Shadow build. See
 [docs/handoff/warlock.md](docs/handoff/warlock.md).
 
 **THE NEWEST MOVE IS THAT A SEAL CRITS**, on the owner's ruling: Seal of

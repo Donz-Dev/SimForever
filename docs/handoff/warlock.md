@@ -363,6 +363,70 @@ length takes its own gate with it.
 
 ---
 
+## The weapon stone, and which one each profile wants
+
+**A WARLOCK CARRIES A TEMPORARY WEAPON ENCHANT, SELECTED IN THE GEAR PANEL** --
+the same shape as a Rogue's poisons, and the owner asked for it in those terms.
+`profile.warlockStone`, arrived in profile version 11.
+
+| | |
+| --- | --- |
+| **Firestone** | +2% spell critical strike chance, +21 damage done by your **Fire** spells |
+| **Spellstone** | +2% spell haste, +21 damage done by your **Shadow** spells |
+
+**BOTH SOURCES AGREE ON ALL FOUR NUMBERS** -- the owner's message and
+`forever-warlock-spellbook.json` -- which for this class is the confidence
+measure, since eight of the nine rest on one capture.
+
+### What each is worth: 30 batches of 10
+
+| Profile | none | Firestone | Spellstone |
+| --- | --- | --- | --- |
+| **Firelock** | 543.3 | **563.3, +20.0 REAL** | 545.7, +2.4 noise |
+| **SM/DS** | 477.3 | 484.6, **+7.3 REAL** | 484.6, **+7.3 REAL** |
+
+*(Measured on their own seeds, so they are comparable to each other and not to
+HANDOVER's table.)*
+
+**FIRELOCK WANTS THE FIRESTONE AND IT IS NOT CLOSE** -- +20.0 against +2.4. Both
+halves land: the crit is school-blind and the 21 Fire power reaches ~93% of its
+damage, while the Spellstone's 21 Shadow power reaches only Shadowburn.
+
+**SM/DS IS A DEAD HEAT, +7.3 EITHER WAY, AND THAT IS NOT A COINCIDENCE WORTH
+IGNORING.** The two stones get there by different routes: the Firestone's crit
+reaches all of its damage and its Fire power reaches none, while the
+Spellstone's haste reaches every cast and its Shadow power reaches everything.
+They happen to be worth the same.
+
+### THE TRAP: a Firestone is not a "Fire stone"
+
+**ONLY THE +21 IS SCHOOL-SCOPED.** `spellCritChance` is a whole-character stat
+read by the spell table for every school, so a Firestone's 2% crit helps a pure
+Shadow build exactly as much as a Fire one. The two stones are really "crit plus
+a little Fire power" and "haste plus a little Shadow power".
+
+**THIS COST A WRONG TEST ASSERTION.** I wrote "gives SM/DS more from the
+Spellstone than from the Firestone", reasoning from SM/DS dealing almost nothing
+but Shadow — and it failed at 486.7 against 478.4 on one batch, then came back a
+*tie* on thirty. Two lessons in one: the school reading, and that a single batch
+said Firestone won by 8 where the full method says neither wins. The test asserts
+the SCOPING now and leaves the ordering to this document.
+
+### Nothing is selected by default, deliberately
+
+**BOTH PRESETS CARRY `none` AND NO PUBLISHED FIGURE MOVED.** That is the opposite
+of version 10's poison decision, and the difference is authority: the owner
+STATED the poison pairing, so a saved Rogue carrying none was wrong and worth
+correcting. The owner has not said which stone a Warlock carries — the request
+was for a control to choose with — so choosing one here would invent a build
+decision and move a baseline on no authority.
+
+**SO THIS IS THE OWNER'S CALL, AND THE MEASUREMENT IS ABOVE.** Firelock's answer
+looks obvious; SM/DS's is a genuine toss-up. One dropdown, or one line in
+`presets.ts` if they should be baked in.
+
+---
+
 ## Traps specific to this class
 
 - **"YOUR DESTRUCTION SPELLS" IS A TREE, NOT A SCHOOL, AND SHADOW BOLT IS IN IT.**
@@ -410,6 +474,16 @@ length takes its own gate with it.
   interrupt rule replaced. It cost one wrong measurement while it existed, and the
   lesson is in CLAUDE.md: when an entry's condition names an aura, grep for who
   else applies it before measuring that aura's removal.
+- **A FIRESTONE'S CRIT IS SCHOOL-BLIND AND ITS +21 IS NOT**, so neither stone is
+  "the Fire one" or "the Shadow one". See the stone section above; it cost a
+  wrong test assertion.
+- **`hasteRating` IS SPELL HASTE FOR A WARLOCK, AND ONLY BECAUSE IT NEVER
+  SWINGS.** `STAT_NAMES` is closed and has one haste member driving both swing
+  speed and cast speed, where crit is split into `critChance` and
+  `spellCritChance`. A `caster` is `autoAttack: 'none'`, so the reading is exact
+  here and would be generous for a class that swings -- and no such class can
+  carry a Spellstone. **The day a melee class gets a spell-haste effect is the
+  day the stat has to be split**, and `warlockStones.ts` says so.
 - **A CHANNEL IS CANCELLABLE AND BOTH HALVES HAVE TO AGREE** --
   `Ability.interruptibleChannel` and `PriorityEntry.interruptsChannel`. Only
   Wrack declares the first, deliberately: every channel in a real client can be

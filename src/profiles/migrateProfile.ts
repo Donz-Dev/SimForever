@@ -1,5 +1,6 @@
 import { CURRENT_PROFILE_VERSION } from './CharacterProfile';
 import { DEFAULT_POISON_LOADOUT } from '../game/reactions/poisons';
+import { DEFAULT_WARLOCK_STONE } from '../game/buffs/warlockStones';
 
 /** Transforms a profile one version forward. */
 type Migration = (profile: Record<string, unknown>) => Record<string, unknown>;
@@ -28,6 +29,27 @@ const migrations: Record<number, Migration> = {
    * only a Rogue gets them.
    */
   9: (profile) => ({ poisons: { ...DEFAULT_POISON_LOADOUT }, ...profile }),
+
+  /**
+   * Version 11 added `warlockStone`, the temporary weapon enchant a Warlock
+   * carries -- a Firestone or a Spellstone.
+   *
+   * ----------------------------------------------------------------------------
+   * OLDER PROFILES GET `none`, AND THEIR RESULTS DO NOT MOVE. That is the
+   * opposite of version 10's decision one step above, and the reason is the
+   * authority behind each default: the ruleset owner STATED the poison pairing,
+   * so a saved Rogue carrying none was wrong and worth correcting. The owner has
+   * not stated which stone a Warlock carries -- the request was for a control to
+   * choose with -- so choosing one here would invent a build decision and move
+   * every saved Warlock figure on no authority.
+   *
+   * SO IT IS VERSION 9'S DECISION RATHER THAN VERSION 10'S: an empty default
+   * that changes nothing, because the field records a choice nobody has made
+   * yet. Both readings are defensible and the difference is only ever which one
+   * the owner asked for.
+   * ----------------------------------------------------------------------------
+   */
+  10: (profile) => ({ warlockStone: DEFAULT_WARLOCK_STONE, ...profile }),
 
   /**
    * Version 9 added `raidBuffs`, the ids of the buffs assumed to be up.

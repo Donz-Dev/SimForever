@@ -274,6 +274,8 @@ function createPlayerFor(
     poolStats: raidBuffPoolStats(profile.raidBuffs),
     // Which poison is on which hand. A Rogue's choice; ignored by the rest.
     poisons: profile.poisons,
+    // Which stone enchants the weapon. A Warlock's choice; ignored by the rest.
+    warlockStone: profile.warlockStone,
   });
 }
 

@@ -1510,6 +1510,24 @@ no per-point argument either way and what decides it is uptime.
   form swung a real sword instead of a paw — which read as a working feature.
   **When a rule is fixed for one slot, check its siblings**: `offHand` and
   `shield` are both off-hand slots.
+- **A TEMPORARY WEAPON ENCHANT IS A PROFILE FIELD, NOT AN ITEM.** A Rogue's
+  poisons and a Warlock's Firestone or Spellstone are both consumables applied
+  before the pull, so they are selected in the Gear panel and stored on the
+  profile -- and **they STACK with the weapon's enchant** by the owner's ruling,
+  which falls out of nothing in the path reading `equipment`. **The default is
+  the decision to get right**: version 10 gave every Rogue the owner's STATED
+  pairing and changed every saved Rogue's result, and version 11 gave every
+  Warlock `none` because the owner stated a control rather than a choice.
+  Inventing the choice would move a published baseline on no authority.
+- **A SCHOOL-SCOPED LINE AND A WHOLE-CHARACTER ONE CAN SIT IN THE SAME
+  SENTENCE.** The Firestone is "+2% spell critical strike chance AND +21 damage
+  done by your Fire spells": the second half is school-scoped spell power and
+  **the first half is not scoped at all**, because `spellCritChance` is one stat
+  the spell table reads for every school. So it is not "the Fire stone" -- it is
+  the better stone for a Fire build and an EQUALLY good one for a pure Shadow
+  build, measured at +20.0 and +7.3. Reading the whole line as Fire-only is the
+  mistake, and it cost a wrong test assertion that one batch appeared to
+  confirm and thirty batches called a tie.
 - **"With all spells and attacks" is TWO STATS.** `critChance` and
   `spellCritChance` are read by separate tables, so an item line saying both has
   to grant both. Sixty-two lines say it, and granting only the melee half was

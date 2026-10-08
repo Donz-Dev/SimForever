@@ -31,16 +31,27 @@ describe('a new profile', () => {
     expect(simulation.iterations).toBe(3000);
   });
 
-  it('is format 10, which added a Rogue’s poisons', () => {
-    // Version 9 added `raidBuffs`. Written out rather than read from the
-    // constant, so a bump has to be deliberate.
-    expect(CURRENT_PROFILE_VERSION).toBe(10);
-    expect(createDefaultProfile().version).toBe(10);
-    // And the owner's stated default pairing comes with it.
+  it('is format 11, which added the Warlock’s weapon stone', () => {
+    /*
+     * Version 9 added `raidBuffs`, 10 a Rogue's poisons, 11 the Warlock's
+     * stone. Written out rather than read from the constant, so a bump has to
+     * be deliberate -- which is this assertion doing its job: it failed on the
+     * bump and was meant to.
+     */
+    expect(CURRENT_PROFILE_VERSION).toBe(11);
+    expect(createDefaultProfile().version).toBe(11);
+    // The owner's stated poison pairing still comes with 10.
     expect(createDefaultProfile().poisons).toEqual({
       mainHand: 'instant_poison',
       offHand: 'deadly_poison',
     });
+    /*
+     * AND THE STONE DEFAULTS TO NONE, which is the opposite decision and is
+     * the point: the owner stated the poison pairing and has not stated a
+     * stone, so 11 changes no saved profile's result where 10 changed every
+     * Rogue's.
+     */
+    expect(createDefaultProfile().warlockStone).toBe('none');
   });
 
   it('has no variance field at all', () => {

@@ -18,6 +18,11 @@ import { talentsForClass } from '../game/talents/talentData';
 import { isLegal } from '../game/talents/talentRules';
 import type { CharacterProfile } from './CharacterProfile';
 import { DEFAULT_POISON_LOADOUT } from '../game/reactions/poisons';
+import {
+  DEFAULT_WARLOCK_STONE,
+  isWarlockStoneId,
+  type WarlockStoneId,
+} from '../game/buffs/warlockStones';
 
 /** Every slot a profile may name. */
 const EQUIPMENT_SLOT_SET: ReadonlySet<string> = new Set<EquipmentSlot>([
@@ -285,6 +290,30 @@ export function validateProfile(value: unknown): ValidationResult {
        * builder.
        */
       poisons: { ...DEFAULT_POISON_LOADOUT, ...(validated.poisons ?? {}) },
+      /*
+       * THE ID IS CHECKED, WHICH THE POISON LINE ABOVE DOES NOT DO.
+       *
+       * Validation runs on anything a user can paste, and `poisons` takes
+       * whatever it is given -- `{ mainHand: 'banana' }` reaches the reaction
+       * builder untouched. That is a real gap and it is not this field's to
+       * fix, but it is not a precedent to copy either: an unrecognised stone
+       * would reach `warlockStoneEffect`, fall through to `none`, and grant
+       * nothing while the panel displayed the nonsense id back.
+       *
+       * So an unknown value becomes the default AND pushes an issue, which is
+       * what every other closed set here does -- equipment slots, stat names
+       * and talent ids all validate rather than trust.
+       */
+      warlockStone: ((): WarlockStoneId => {
+        const stone = (validated as { warlockStone?: unknown }).warlockStone;
+        if (stone === undefined) return DEFAULT_WARLOCK_STONE;
+        if (isWarlockStoneId(stone)) return stone;
+        issues.push({
+          path: 'warlockStone',
+          message: `Unknown stone "${String(stone)}"; using none.`,
+        });
+        return DEFAULT_WARLOCK_STONE;
+      })(),
       character: {
         name: validated.character.name,
         race: validated.character.race,
