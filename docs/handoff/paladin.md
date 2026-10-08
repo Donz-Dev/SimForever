@@ -265,6 +265,37 @@ where rescheduling to the same instant changes nothing. A change to preserve the
 pending swing was written here and reverted; `tests/engine/extraAttackSwingTimer.test.ts`
 pins the rule so the next reader does not find the same apparent bug.
 
+### And it has an internal cooldown now, which is worth exactly nothing here
+
+"Reckoning: Now has a 1.5 second internal cooldown on how often it can be
+triggered." Implemented as `RECKONING_ICD_MS`, checked BEFORE the roll so a
+refused attack consumes no randomness, in a closure built **per character** --
+the Windfury idiom, because one shared closure stops proccing after the first
+iteration of a batch.
+
+**IT MEASURED 0.0 ON THE PROT PALLY, TO THE DECIMAL, AND THAT IS ARITHMETIC
+RATHER THAN LUCK.** The encounter has ONE attacker on a two-second swing timer,
+widened by the tank's own Thunder Clap slow:
+
+| | |
+| --- | --- |
+| attacks received a fight | **25** |
+| median gap / minimum gap | **2,400ms / 2,400ms** |
+| gaps under 1,500ms | **0** |
+| blocks / crits taken | 10.3 / **0.0** |
+
+Two triggerable events cannot fall inside the window, so the cooldown refuses
+nothing. **AN ENCOUNTER CAUSE, NOT A GAP** -- it starts binding the day the
+encounter swings faster or carries a second attacker, and it is written down
+because a change that measures nothing is otherwise indistinguishable from one
+that did not apply. `paladinTalents.test.ts` asserts the gap rather than leaving
+the claim in prose.
+
+**THE FIRST COMMENT ON THE CONSTANT PREDICTED THE OPPOSITE**, specifically: "a
+tank is ... critically struck several times a second against a target that
+ramps". Crits taken are 0.0 and attacks arrive every 2.4 seconds. A prediction in
+a comment is a measurement that has not happened.
+
 **SEEING 2 IN ONE FIGHT IS NOT A BUG, IT IS THE SAMPLE SIZE.** An expectation of
 3.6 events is a count, and a single fight returns 2 or 3 often. **An extra attack
 also emits no telemetry of its own** — it is an ordinary main-hand swing by the

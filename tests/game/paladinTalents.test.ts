@@ -6,7 +6,8 @@ import { reactionsForClass } from '../../src/game/reactions/reactionsForClass';
 import { buildSimulation } from '../helpers/buildSimulation';
 import { makeAttacker, makeTarget } from '../helpers/actors';
 import { castAbility, dealDamage, resolveCast, seconds, spellPowerAgainst } from '../../src/engine';
-import { runProfileBatch } from '../../src/simulator';
+import { runProfile, runProfileBatch } from '../../src/simulator';
+import { PLACEHOLDER_BOSS_SWING_SECONDS } from '../../src/game/encounters/raidBoss';
 import { Simulation } from '../../src/engine';
 import { trainingDummyEncounter } from '../../src/simulator/trainingDummyEncounter';
 import {
@@ -36,8 +37,10 @@ import {
 import { flat } from '../../src/engine';
 import {
   EYE_FOR_AN_EYE_HEALTH_CAP_PERCENT,
+  RECKONING_ICD_MS,
   SHIELD_SPECIALIZATION_MANA_PERCENT,
 } from '../../src/game/reactions/paladinTalents';
+import { HAND_OF_JUSTICE_ICD_MS } from '../../src/game/items/procs';
 import { PALADIN_TALENT_EFFECTS } from '../../src/game/talents/paladinEffects';
 import { talentNumber } from '../../src/game/talents/talentValues';
 import { legalise } from '../helpers/legalTalents';
@@ -194,6 +197,201 @@ describe('the three talents that were written off against blocks', () => {
     const player = presetPlayer('prot_pally');
     const reckoning = player.reactions.find((r) => r.id === 'reckoning')!;
     expect([...reckoning.outcomes].sort()).toEqual(['block', 'crit']);
+  });
+});
+
+/* -------------------------------------------------------------------------- */
+
+describe("Reckoning's internal cooldown", () => {
+  /*
+   * ============================================================================
+   * "Reckoning: Now has a 1.5 second internal cooldown on how often it can be
+   * triggered." The ruleset owner's figure, and it had none.
+   *
+   * IT MATTERS BECAUSE A TANK IS STRUCK CONSTANTLY. The Protection profile blocks
+   * and is critically hit several times a second against a target that ramps, and
+   * at 5/5 the talent is 40% on a block and 100% on a crit taken -- so before
+   * this, every one of those rolled and a run of extra attacks was possible.
+   *
+   * ADDING IT BROKE NO TEST, which is why this block exists: the only Reckoning
+   * coverage was that its reaction names both outcomes. "When a fix moves nothing
+   * in the suite, that is a statement about the suite."
+   * ============================================================================
+   */
+
+  /** A Prot Paladin, a hostile target, and a simulation whose clock we drive. */
+  const reckoningSetup = () => {
+    const player = presetPlayer('prot_pally');
+    const boss = makeTarget({ faction: 'hostile', maxHealth: 1_000_000 });
+    const simulation = buildSimulation([player, boss]);
+    simulation.begin();
+    const reaction = player.reactions.find((r) => r.id === 'reckoning')!;
+    return { player, boss, simulation, reaction };
+  };
+
+  /** An attack the Paladin RECEIVED, landing for real. */
+  const taken = (player: never, boss: never, outcome: 'crit' | 'block') => ({
+    attacker: boss,
+    defender: player,
+    outcome,
+    abilityId: undefined,
+    abilityName: 'Boss Swing',
+    amount: 2_000,
+    weaponSlot: 'mainHand' as const,
+    critical: outcome === 'crit',
+  });
+
+  it('is 1.5 seconds, the same figure Hand of Justice uses and a different fact', () => {
+    /*
+     * TWO EFFECTS AGREEING ON A NUMBER IS NOT A REASON TO SHARE A CONSTANT. The
+     * trinket's is recorded against an item tooltip that says TWO seconds and is
+     * overridden by the owner; this one is recorded against a patch note. A
+     * shared constant would make the next change to either move both.
+     */
+    expect(RECKONING_ICD_MS).toBe(1500);
+    expect(HAND_OF_JUSTICE_ICD_MS).toBe(1500);
+  });
+
+  it('refuses a second trigger inside the window and allows one after it', () => {
+    /*
+     * DRIVEN AT 100% CHANCE so the roll cannot mask the cooldown. A crit taken is
+     * 100% at 5/5, which the Protection build takes -- so every refusal below is
+     * the cooldown and nothing else.
+     */
+    const { player, boss, simulation, reaction } = reckoningSetup();
+    const attack = taken(player as never, boss as never, 'crit');
+
+    expect(reaction.canTrigger?.(simulation, player, attack as never)).toBe(true);
+    reaction.onTrigger(simulation, player, attack as never);
+
+    // Immediately after, and just inside the window.
+    expect(reaction.canTrigger?.(simulation, player, attack as never)).toBe(false);
+    simulation.advanceTo(RECKONING_ICD_MS - 1);
+    expect(reaction.canTrigger?.(simulation, player, attack as never)).toBe(false);
+
+    // And exactly at it, which is the boundary the owner's "1.5 second" states.
+    simulation.advanceTo(RECKONING_ICD_MS);
+    expect(reaction.canTrigger?.(simulation, player, attack as never)).toBe(true);
+  });
+
+  it('shares the window across BOTH halves, because it is one talent', () => {
+    /*
+     * A BLOCK AND A CRIT TAKEN ARE TWO CLAUSES OF ONE TALENT and one reaction, so
+     * a block cannot trigger it while a crit's cooldown is running. Two separate
+     * windows would be two effects, and would let a tank proc twice as often as
+     * the note allows -- a bigger number and no error.
+     */
+    const { player, boss, simulation, reaction } = reckoningSetup();
+
+    const crit = taken(player as never, boss as never, 'crit');
+    expect(reaction.canTrigger?.(simulation, player, crit as never)).toBe(true);
+    reaction.onTrigger(simulation, player, crit as never);
+
+    const block = taken(player as never, boss as never, 'block');
+    expect(reaction.canTrigger?.(simulation, player, block as never)).toBe(false);
+  });
+
+  it('is PER CHARACTER, which is what a shared closure would silently break', () => {
+    /*
+     * ------------------------------------------------------------------------
+     * THE FAILURE THIS GUARDS IS THE WINDFURY ONE, recorded in CLAUDE.md: a proc
+     * whose internal cooldown lived in a closure shared between characters
+     * stopped proccing after the first iteration of a batch, and nothing errored.
+     *
+     * IT IS SAFE HERE BECAUSE `talentBuild` RUNS INSIDE `createPlayer`, which the
+     * simulation calls once per iteration through `createCombatants` -- so each
+     * character gets its own `lastProcAt`. That is checked rather than assumed,
+     * because the comment on Shield Specialization next door says its own
+     * cooldown is an aura "so that a batch reusing one TalentBuild cannot share
+     * one timer across characters" -- a worry about something this does not do,
+     * and exactly the claim worth testing rather than reading.
+     * ------------------------------------------------------------------------
+     */
+    const first = reckoningSetup();
+    const second = reckoningSetup();
+
+    // Distinct closures, not one shared function.
+    expect(first.reaction).not.toBe(second.reaction);
+    expect(first.reaction.canTrigger).not.toBe(second.reaction.canTrigger);
+
+    // And putting one on cooldown leaves the other ready.
+    const attack = taken(first.player as never, first.boss as never, 'crit');
+    first.reaction.onTrigger(first.simulation, first.player, attack as never);
+    expect(first.reaction.canTrigger?.(first.simulation, first.player, attack as never)).toBe(
+      false,
+    );
+
+    const other = taken(second.player as never, second.boss as never, 'crit');
+    expect(
+      second.reaction.canTrigger?.(second.simulation, second.player, other as never),
+    ).toBe(true);
+  });
+
+  it('cannot bind in THIS encounter, because the one attacker swings slower than it', () => {
+    /*
+     * --------------------------------------------------------------------
+     * WHY THE CHANGE MEASURED 0.0 ON THE PROT PALLY, to the decimal, and it
+     * is arithmetic rather than luck.
+     *
+     * The encounter has ONE attacker on a two-second swing timer, widened by
+     * the tank's own Thunder Clap slow: 25 attacks received over a fight,
+     * median and minimum gap both 2,400ms, and NOT ONE gap under 1,500ms.
+     * Two triggerable events can therefore never fall inside the window, so
+     * the cooldown refuses nothing and the profile cannot move.
+     *
+     * AN ENCOUNTER CAUSE, NOT A GAP -- it expires the day the encounter swings
+     * faster or has a second attacker. The mechanism is tested above by
+     * driving the reaction directly; this records WHY it is worth nothing, so
+     * nobody reads the 0.0 as the change having failed to apply. A change that
+     * measures nothing is otherwise indistinguishable from one that did not
+     * land.
+     * --------------------------------------------------------------------
+     */
+    expect(seconds(PLACEHOLDER_BOSS_SWING_SECONDS)).toBeGreaterThan(RECKONING_ICD_MS);
+
+    const run = runProfile(built('prot_pally'), 1);
+    const playerId = run.actors.find((actor) => actor.kind === 'player')!.id;
+    const received = run.timeline
+      .filter((event) => event.type === 'damage' && event.targetId === playerId)
+      .map((event) => event.timestamp);
+
+    expect(received.length).toBeGreaterThan(10);
+    const gaps = received.slice(1).map((time, index) => time - received[index]);
+    expect(Math.min(...gaps)).toBeGreaterThanOrEqual(RECKONING_ICD_MS);
+  });
+
+  it('checks the cooldown BEFORE rolling, so a blocked proc consumes no randomness', () => {
+    /*
+     * ORDERING, AND IT IS NOT COSMETIC. Rolling first and discarding the result
+     * would consume a random number on an attack that could not proc, and every
+     * seeded figure in the project would shift -- the same argument `critFrom`
+     * makes by consuming nothing when it is absent.
+     *
+     * MEASURED BY WATCHING THE RNG rather than by reading the function: two
+     * refusals inside the window must draw nothing at all.
+     */
+    const { player, boss, simulation, reaction } = reckoningSetup();
+    const attack = taken(player as never, boss as never, 'crit');
+    reaction.onTrigger(simulation, player, attack as never);
+
+    let draws = 0;
+    const rng = simulation.rng as { rollChance: (c: number) => boolean };
+    const original = rng.rollChance.bind(rng);
+    rng.rollChance = (chance: number) => {
+      draws += 1;
+      return original(chance);
+    };
+
+    expect(reaction.canTrigger?.(simulation, player, attack as never)).toBe(false);
+    expect(reaction.canTrigger?.(simulation, player, attack as never)).toBe(false);
+    expect(draws).toBe(0);
+
+    // And once the window is open, it does roll.
+    simulation.advanceTo(RECKONING_ICD_MS);
+    expect(reaction.canTrigger?.(simulation, player, attack as never)).toBe(true);
+    expect(draws).toBe(1);
+
+    rng.rollChance = original;
   });
 });
 

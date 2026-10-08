@@ -60,6 +60,23 @@ const selfStacksAtLeast = (auraId: string, minimum: number) =>
   (_context: SimulationContext, actor: Combatant): boolean =>
     actor.auras.stacksOf(auraId) >= minimum;
 
+/**
+ * The energy ceiling Shifting Power is gated on, from the owner's condition.
+ *
+ * FIFTY IS THE OWNER'S FIGURE AND IS NOT THE ARITHMETIC BOUNDARY, which is the
+ * thing to not quietly "correct". They stated it -- "only uses Shifting Power if
+ * current energy is <= 50" -- and the point at which the ability's 40 energy
+ * starts overflowing a 100 cap is **60**, so 50 sits ten energy inside the
+ * no-waste region rather than on its edge. Both readings waste nothing and the
+ * owner's is the one implemented.
+ */
+export const SHIFTING_POWER_ENERGY_CEILING = 50;
+
+/** "energy <= N". */
+const energyAtMost = (maximum: number) =>
+  (_context: SimulationContext, actor: Combatant): boolean =>
+    (actor.resources.get('energy')?.current ?? 0) <= maximum;
+
 /** "rage >= N". */
 const rageAtLeast = (minimum: number) =>
   (_context: SimulationContext, actor: Combatant): boolean =>
@@ -189,29 +206,45 @@ export const DRUID_MOONKIN: readonly PriorityEntry[] = [
  */
 export const DRUID_CAT: readonly PriorityEntry[] = [
   /*
-   * SHIFTING POWER ON COOLDOWN, which is the owner's instruction with the
-   * 1.60.1.70170 notes: "It no longer uses Tiger's Fury and instead uses
-   * Shifting Power on cooldown as long as you have the mana to cast it."
+   * SHIFTING POWER ON A LOW ENERGY BAR, which is the owner's condition: "Make
+   * sure shifting power has a clause in the APL when it only uses Shifting
+   * Power if current energy is <= 50."
    *
-   * "AS LONG AS YOU HAVE THE MANA" NEEDS NO CONDITION, and writing one would be
-   * the list restating a rule the engine already enforces -- the shape the
-   * Rogue's Ambush entry was corrected for. `checkCast` refuses an ability the
-   * character cannot afford, and a refused entry is simply walked past, so an
-   * unconditional entry here already means "whenever it is off cooldown and
-   * affordable".
+   * IT GRANTS 40 ENERGY AGAINST A CAP OF 100, so a cast on a full bar throws the
+   * whole grant away, and the gate is worth **+13.2 DPS** -- a GATE THAT PAYS,
+   * which is not the usual direction. Measured over 20 fights, ungated against
+   * gated:
    *
-   * AND IT IS NOT A FLOOR UNDER THE LIST, which an unconditional entry at the
-   * top otherwise would be. An entry blocks the ones below it only when it is
-   * ungated AND ALWAYS CASTABLE; this has a sixteen second cooldown -- eight
-   * with Improved Shifting Power, which the Cat build takes 2/2 of -- so the
-   * list falls straight past it the rest of the time. That is the half of the
-   * rule the Hunter's Sniper Shot measurement settled.
+   *     ungated   8.00 casts a fight   280.0 energy gained   40.0 WASTED
+   *     gated     7.45 casts a fight   298.0 energy gained    0.0 wasted
+   *
+   * So the gated list casts it LESS and collects MORE, which is the whole
+   * mechanism: 12.5% of the ungated grant never lands, across 1.4 wasting casts
+   * a fight, the reliable one being the pull -- every fight opens at a full
+   * energy bar. `grantResource` reports the overflow rather than hiding it, so
+   * this shows on the resource panel; a DPS figure alone could not have said
+   * which half moved.
+   *
+   * "AS LONG AS YOU HAVE THE MANA" IS STILL NOT A CONDITION, and the owner's
+   * first instruction said that half: `checkCast` refuses an ability the
+   * character cannot afford and a refused entry is walked past, so writing a
+   * mana clause would be the list restating an engine rule -- the shape the
+   * Rogue's Ambush entry was corrected for. This gate is about the ENERGY the
+   * cast produces, which nothing else can know.
+   *
+   * IT WAS UNCONDITIONAL FOR ONE COMMIT, on the owner's "on cooldown as long as
+   * you have the mana", and that was not a floor under the list either: an entry
+   * blocks the ones below it only when it is ungated AND ALWAYS CASTABLE, and
+   * this has a sixteen second cooldown -- eight with Improved Shifting Power,
+   * which the Cat build takes 2/2 of. Now it is neither.
    *
    * WHAT IT REPLACED: Tiger's Fury, gated on "energy <= 30". Both the ability
    * and King of the Jungle, the talent that refunded 60 energy on casting it,
-   * were removed in the same patch.
+   * were removed in the same patch -- so this is the second entry in this list
+   * to be gated on a low bar, for a completely different reason. Tiger's Fury
+   * was free and cost a global cooldown; this one buys the resource back.
    */
-  { abilityId: 'shifting_power' },
+  { abilityId: 'shifting_power', condition: energyAtMost(SHIFTING_POWER_ENERGY_CEILING) },
   { abilityId: 'berserk' },
   /*
    * EVERY CLEARCASTING PROC GOES ON SHRED, REGARDLESS OF COMBO POINTS -- the

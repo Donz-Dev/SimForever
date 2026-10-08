@@ -27,9 +27,18 @@ import { makeAttacker, makeTarget } from '../helpers/actors';
  *   Druid    "Bear Form and Dire Bear Form now generate 75% increased Rage when
  *            landing a Critical Strike."
  *
- * TWO MULTIPLIERS AND NOT ONE WITH AN EXCEPTION, which the owner confirmed: 2.0
- * and 1.75, read independently, rather than 1.75 stacking on a class-wide 2.0
- * that the word "Players" invites.
+ * TWO MULTIPLIERS AND NOT ONE WITH AN EXCEPTION, which the owner confirmed: read
+ * independently, rather than the Bear's stacking on a class-wide figure that the
+ * word "Players" invites.
+ *
+ * AND THEY NOW AGREE, WHICH IS A COINCIDENCE. The Bear went 75% to 100% in a
+ * later patch -- "Additional Rage generated from landing Critical Strikes
+ * increased to 100% increased Rage (Was 75%)" -- so both are 2.0 and the
+ * dispatch function has two branches returning the same number. **The tests
+ * below assert each INDEPENDENTLY rather than asserting they are equal**, which
+ * is the arrangement Early Demise's 20 and `EXECUTE_PHASE_FRACTION` already have:
+ * a test on the equality would pass if a future patch moved both together and
+ * fail for the wrong reason if it moved one.
  *
  * ------------------------------------------------------------------------------
  * EVERY TEST HERE IS ON THE MECHANISM AND NOT ON A DPS DELTA, because this is a
@@ -118,13 +127,29 @@ describe('the two figures, which are the ruleset', () => {
     }
   });
 
-  it('is 1.75 for a Bear Druid and 1 for the other two forms', () => {
-    expect(BEAR_FORM_CRIT_RAGE_MULTIPLIER).toBe(1.75);
-    expect(critRageMultiplierFor('druid', 'bear')).toBe(1.75);
+  it('is 2.0 for a Bear Druid and 1 for the other two forms', () => {
+    // 1.75 until the owner raised it to "100% increased Rage".
+    expect(BEAR_FORM_CRIT_RAGE_MULTIPLIER).toBe(2);
+    expect(critRageMultiplierFor('druid', 'bear')).toBe(2);
     // A Cat and a Moonkin OWN a rage pool and have nothing that fills it from a
     // swing, and Forever states the increase for the bear forms only.
     expect(critRageMultiplierFor('druid', 'cat')).toBe(1);
     expect(critRageMultiplierFor('druid', 'moonkin')).toBe(1);
+  });
+
+  it('keeps the two as separate constants even though they now match', () => {
+    /*
+     * TWO OWNER STATEMENTS ABOUT TWO CLASSES, which is why there are two
+     * constants and two branches rather than one of each. Collapsing them would
+     * mean the next patch that moves either has to split them back apart, after
+     * somebody has worked out they were ever different.
+     *
+     * ASSERTED BY IDENTITY RATHER THAN BY EQUALITY: the dispatch must read the
+     * Warrior's constant for a Warrior and the Bear's for a Bear, which is still
+     * checkable while the two values coincide.
+     */
+    expect(critRageMultiplierFor('warrior', 'two_hander')).toBe(WARRIOR_CRIT_RAGE_MULTIPLIER);
+    expect(critRageMultiplierFor('druid', 'bear')).toBe(BEAR_FORM_CRIT_RAGE_MULTIPLIER);
   });
 
   it('is 1 for every other class, including the two that own a rage pool clause', () => {
@@ -150,7 +175,7 @@ describe('the two figures, which are the ruleset', () => {
     const mage = createPlayer({ race: 'gnome', characterClass: 'mage', combatStyle: 'caster' });
 
     expect(warrior.critResourceMultiplier).toBe(2);
-    expect(bear.critResourceMultiplier).toBe(1.75);
+    expect(bear.critResourceMultiplier).toBe(2);
     expect(cat.critResourceMultiplier).toBe(1);
     expect(mage.critResourceMultiplier).toBe(1);
   });

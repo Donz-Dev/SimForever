@@ -1,21 +1,27 @@
-# FOREVER PATCH 1.60.1.70170 — three rounds, three commits, read them as one
+# FOREVER PATCH 1.60.1.70170 — FOUR rounds of change, read them as one
 
-The three entries below this one are a single patch. They are separate commits
-because the owner's answers arrived in three batches, and **rounds two and three
-were each larger than anything in the patch notes.**
+The entries below this one are a single patch. They are separate commits because
+the owner's answers arrived in batches, and **three of the four rounds were each
+larger than anything in the patch notes.**
 
 | | commit | what it was | largest effect |
 | --- | --- | --- | --- |
 | 1 | `13ff285` | the notes, plus four silent tree changes the importers found | DW Fury **+101.6**, Seal Twist Ret **-98.5** |
 | 2 | `0f71ad5` | four rulings on questions round one RAISED | Fire **-187.6** |
 | 3 | `58f505e` | one more coefficient the owner gave afterwards | Frostfire **-159.3** |
+| — | `2929ad8` | this file and CLAUDE.md, written up after round three | no code |
+| 4 | *the entry below* | a Bear multiplier, a Cat APL clause, a Paladin internal cooldown | Cat **+13.2** |
 
-**SO "THE PATCH NOTES ARE EXHAUSTED" WAS NOT "THE PATCH IS IMPLEMENTED".** What
-the notes produced was a list of questions; three of the four answers in round
-two moved nothing, and the fourth was the largest single change of the three
-rounds. Plan for the next one to land in several commits.
+**SO "THE PATCH NOTES ARE EXHAUSTED" WAS NOT "THE PATCH IS IMPLEMENTED", AND IT
+STILL IS NOT AFTER FOUR ROUNDS.** What the notes produced was a list of
+questions; the answers are still arriving, and round four landed AFTER the patch
+had been written up as finished in a commit of its own. Plan for the next one to
+land in several commits, and do not read the write-up as the end of it.
 
-**THE TOP ROW CHANGED TWICE AND THE MEAN FELL 15.4** -- 704.8 to **689.4**.
+**THE TOP ROW CHANGED TWICE AND THE MEAN FELL 14.6** -- 704.8 to **690.2**,
+re-summed from the table rather than carried forward: round four put 17.0 back
+across two Druid rows, so the figure this header carried for one commit (689.4)
+is a round-three number.
 Frostfire took first place in round one, held it through round two and lost it in
 round three; **DW Fury is the top row now at 892.0**, and no caster is in the top
 six for the first time since the consumables landed. The Mage's two best profiles
@@ -35,6 +41,77 @@ counts in these two files turned out already wrong by one -- the `scope` table's
 `threat` row, the placeholder figure, and the hand-filled-values figure at 8
 against 18 -- each sitting under a sentence promising it was counted rather than
 adjusted. All three were found by running the one-liner the sentence describes.
+
+---
+
+**ROUND FOUR: A BEAR MULTIPLIER, A CAT APL CLAUSE, AND A COOLDOWN WORTH
+NOTHING.** Three owner changes, all small, and the interesting result is the one
+that measured zero.
+
+```
+Cat          807.2 DPS +/- 5.1   was 794.0  + 13.2  REAL
+Bear         500.0 DPS +/- 5.7   was 496.1  +  3.8  noise
+Prot Pally   355.2 DPS +/- 3.0   was 355.2  +  0.0  noise
+```
+
+The other 21 are 0.0 to the decimal, with round three's `SAVE=` file as this
+round's `BASELINE=` -- the chained-baseline discipline this file argues for.
+Measured against the PRE-patch figures instead, every row the first three rounds
+moved would have read as moving again.
+
+| | |
+| --- | --- |
+| **Bear crit rage 1.75x to 2.0x** | "Additional Rage generated from landing Critical Strikes increased to 100% increased Rage (Was 75%)". **+3.8, noise** -- a Bear is not short of rage, so the multiplier is close to free. It now EQUALS the Warrior's 2.0 and stays a separate constant |
+| **Shifting Power gated on `energy <= 50`** | the owner's APL clause. **+13.2, REAL -- a gate that PAYS**, which is not the usual direction |
+| **Reckoning's 1.5s internal cooldown** | **0.0 to the decimal, and arithmetically it could not have been anything else** |
+
+**THE GATE THAT PAID, AND WHY A GATE CAN.** Every other condition in this project
+costs something: it refuses a cast that would otherwise have happened. **An
+ability that GRANTS a resource is the exception.** Shifting Power gives 40 energy
+against a cap of 100, so over 20 fights:
+
+| | casts a fight | energy gained | wasted |
+| --- | --- | --- | --- |
+| ungated | 8.00 | 280.0 | **40.0** (12.5% of the grant) |
+| gated | 7.45 | **298.0** | **0.0** |
+
+The gated list casts it LESS and collects MORE. The reliable waster is the pull --
+every fight opens at a full energy bar. `wasted` on the `resource_gained` event is
+what shows this; the DPS figure alone could not say which half moved.
+
+**AND FIFTY IS THE OWNER'S FIGURE, NOT THE ARITHMETIC'S.** 40 into a cap of 100
+overflows above **60**, so the stated gate sits ten energy inside the no-waste
+region rather than on its edge. Both waste nothing -- so a reader who DERIVES the
+threshold from the grant gets a defensible, different, wrong number, and the test
+asserts the boundary is SAFE rather than tight.
+
+**THE COOLDOWN THAT MEASURED NOTHING, AND WHY THAT IS A FINDING.** An internal
+cooldown on a tank proc should bite, so 0.0 was worth a probe rather than a
+shrug:
+
+| | |
+| --- | --- |
+| attacks received a fight | **25** |
+| median gap / minimum gap | **2,400ms / 2,400ms** |
+| gaps under 1,500ms | **0** |
+| blocks / crits taken | 10.3 / **0.0** |
+
+The encounter has ONE attacker on a two-second swing timer
+(`PLACEHOLDER_BOSS_SWING_SECONDS`), widened further by the tank's own Thunder
+Clap slow. **Two triggerable events cannot fall inside a 1.5-second window**, so
+the cooldown refuses nothing. It is correctly implemented and correctly worth
+nothing HERE, and it starts binding the day the encounter swings faster or gains
+a second attacker. **An encounter cause** -- and the target row of the inert
+table now covers TIMING as well as properties, because that row reads as a list
+of things the boss IS.
+
+**THE COMMENT ALREADY ON THE CONSTANT PREDICTED THE OPPOSITE, SPECIFICALLY.** It
+said a tank "is critically struck several times a second against a target that
+ramps". Crits taken are **0.0** and attacks arrive every 2.4 seconds. It was
+written in the same commit that implemented the cooldown, by somebody who had
+just read this project's rule that a prediction in a comment is a measurement
+that has not happened. Both halves are corrected and `paladinTalents.test.ts`
+asserts the gap, so the claim is no longer prose.
 
 ---
 
@@ -1340,7 +1417,7 @@ while it worked.
 decimal -- which is what a talent change scoped to one build should look like.
 It makes Frostfire the top Mage, above Fire's 401.2 and Arcane's 392.6, and the
 build that existed for the Fire/Frost overlap now has a third reason to. The
-mean across **24** is **689.4**, RE-SUMMED FROM THE TABLE ABOVE rather than
+mean across **24** is **690.2**, RE-SUMMED FROM THE TABLE ABOVE rather than
 adjusted -- **by `tools/update_baseline_table.py`, which exists now**; the
 sentence above it had promised a script for several commits and there was none,
 so the mean and the ordering were still being maintained by hand.
@@ -1903,16 +1980,16 @@ cannot audit, which is why the check is a SET comparison and not a row count.
 | Profile | Class | Talents | DPS | | Profile | Class | Talents | DPS |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | DW Fury | Warrior | 17/34/0 | 892.0 | | Enh Shaman | Shaman | 17/34/0 | 708.6 |
-| LW Ranged | Hunter | 7/39/5 | 805.9 | | Combat Rogue | Rogue | 18/33/0 | 691.1 |
-| Cat Druid | Druid | 9/34/8 | 794.0 | | SM/DS | Warlock | 40/11/0 | 690.4 |
+| **Cat Druid** | Druid | 9/34/8 | **807.2** | | Combat Rogue | Rogue | 18/33/0 | 691.1 |
+| LW Ranged | Hunter | 7/39/5 | 805.9 | | SM/DS | Warlock | 40/11/0 | 690.4 |
 | Seal Twist Ret | Paladin | 15/0/36 | 788.4 | | Fire Mage | Mage | 10/39/2 | 690.1 |
 | 2H Arms | Warrior | 39/10/2 | 784.1 | | Hemo Rogue | Rogue | 17/3/31 | 622.4 |
 | LW Melee | Hunter | 7/13/31 | 779.7 | | Ele Shaman | Shaman | 38/13/0 | 617.5 |
 | BM Hunter | Hunter | 31/20/0 | 771.7 | | Shockadin | Paladin | 23/0/28 | 601.3 |
 | Arcane Mage | Mage | 47/4/0 | 769.4 | | Venom Rogue | Rogue | 37/12/2 | 600.8 |
-| **Frostfire Mage** | Mage | 0/29/22 | **768.3** | | Rupture Rogue | Rogue | 12/8/31 | 584.2 |
+| Frostfire Mage | Mage | 0/29/22 | 768.3 | | Rupture Rogue | Rogue | 12/8/31 | 584.2 |
 | Firelock | Warlock | 5/11/35 | 759.7 | | Prot Warr | Warrior | 17/0/34 | 504.9 |
-| Shadow Priest | Priest | 13/3/35 | 746.9 | | Bear Druid | Druid | 9/42/0 | 496.1 |
+| Shadow Priest | Priest | 13/3/35 | 746.9 | | **Bear Druid** | Druid | 9/42/0 | **500.0** |
 | Moonkin | Druid | 38/0/13 | 724.0 | | Prot Pally | Paladin | 8/34/9 | 355.2 |
 
 **THE TOP IS DW FURY, AND A CASTER HAS NOT HELD IT SINCE THE CONSUMABLES.**

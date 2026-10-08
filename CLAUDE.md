@@ -56,18 +56,25 @@ owner rulings rather than new engine capability. [HANDOVER.md](HANDOVER.md) has 
 recap.
 
 **A PATCH ARRIVES IN WAVES, AND THE NOTES ARE ONLY THE FIRST ONE.** The
-1.60.1.70170 work took THREE rounds and the notes were round one:
+1.60.1.70170 work took FOUR rounds and the notes were round one:
 
 | | what it was | largest effect |
 | --- | --- | --- |
 | 1 | the notes, plus four silent tree changes the importers found | DW Fury **+101.6**, Seal Twist Ret **-98.5** |
 | 2 | four rulings on questions round one RAISED | Fire **-187.6** |
 | 3 | one more coefficient the owner gave afterwards | Frostfire **-159.3** |
+| 4 | three more changes, arriving AFTER the write-up commit | Cat **+13.2** |
 
-**ROUNDS TWO AND THREE WERE EACH LARGER THAN ANYTHING IN THE NOTES.** So "the
+**THREE OF THE FOUR ROUNDS WERE EACH LARGER THAN ANYTHING IN THE NOTES.** So "the
 patch notes are exhausted" is not "the patch is implemented": what the notes
 actually produce is a list of QUESTIONS, and the answers keep arriving. Plan for
 a patch to land in several commits and expect to re-measure after each.
+
+**AND THE WRITE-UP IS NOT THE END EITHER.** Round four arrived after rounds one
+to three had been documented as a finished patch in a commit of its own, so the
+header summarising them had to be reopened and its mean re-summed -- 689.4 was a
+round-three figure that read as the patch's final one. **Write the recap so
+another round can be added to it**, rather than as a closing statement.
 
 **EVERY ROUND'S FIGURES WERE PUBLISHED, AND THE TOP ROW CHANGED TWICE** --
 Frostfire to DW Fury, by way of Frostfire again. The baseline table was rebuilt
@@ -1415,6 +1422,22 @@ was sitting right there to be believed. Slice the file at the list's own
   cannot: a Rogue flat at zero is starved, a Warrior flat at 100 is capping and
   wasting income, and a caster whose mana never recovers has hit the five
   second rule harder than it regenerates. Read it before reordering a list.
+- **AND A GATE CAN BE WORTH POSITIVE DPS, WHICH IS NOT THE USUAL DIRECTION.**
+  Every other condition in this file costs something -- it refuses a cast that
+  would otherwise have happened. An ability that GRANTS a resource is the
+  exception: the Cat's Shifting Power gives 40 energy against a cap of 100, so
+  gating it on `energy <= 50` made the list cast it **less** (8.00 to 7.45 a
+  fight) and collect **more** (280.0 to 298.0), worth **+13.2**. The ungated
+  version wasted 40.0 energy a fight, 12.5% of everything it granted, and the
+  reliable waster is THE PULL -- every fight opens at a full bar. **`wasted` on
+  the `resource_gained` event is what shows it**; a DPS figure alone cannot say
+  which half moved.
+- **AND THE GATE'S NUMBER IS THE OWNER'S, NOT THE ARITHMETIC'S.** 40 into a cap
+  of 100 overflows above **60**, and the owner stated **50** -- so the gate sits
+  ten energy inside the no-waste region rather than on its edge. Both waste
+  nothing, so a reader who DERIVES the threshold from the grant gets a
+  defensible, different, wrong number. Assert that a stated boundary is SAFE
+  rather than that it is tight.
 
 Three things decide a list and none is visible in per-use damage:
 
@@ -2072,6 +2095,25 @@ Say which. Only the first is an engine gap.
 
 Plus the permanent rulings under **Scope**.
 
+- **AND THE TARGET'S CAUSE INCLUDES ITS TIMING, NOT ONLY ITS PROPERTIES.** That
+  row reads as a list of things the boss IS; the encounter's CADENCE belongs in
+  it too, and it can make a change arithmetically unable to do anything.
+  Reckoning's new 1.5-second internal cooldown measured **0.0 on the Prot Pally,
+  to the decimal**: there is one attacker on a two-second swing timer, widened by
+  the tank's own Thunder Clap slow, so a fight is **25 attacks received with a
+  median and minimum gap of 2,400ms and NOT ONE gap under 1,500ms**, at 0.0 crits
+  taken. Two triggerable events cannot fall inside the window. **The cooldown is
+  correctly implemented and correctly worth nothing**, and it starts binding the
+  day the encounter swings faster or gains a second attacker.
+- **SO MEASURE THE ENCOUNTER'S OWN QUANTITY WHEN A CHANGE MEASURES ZERO**, the
+  way a correctness fix expected to be worth nothing is measured on its
+  mechanism. The gaps between attacks are what settled this in one probe; the
+  alternative was an unexplained 0.0, which is indistinguishable from a change
+  that did not apply. **And write it down beside the constant** -- the comment
+  already there predicted the opposite in specific terms ("critically struck
+  several times a second"), which is this file's own rule about a prediction in a
+  comment, pointing at a number nobody had taken yet.
+
 - **A FOURTH CAUSE HIDES INSIDE THE FIRST: THE LIST.** "No priority list casts
   Berserker Rage" is an argument about a ROTATION and it sat in the engine column
   for the Warrior's whole life, as the class's last live gap. The number it was
@@ -2096,6 +2138,14 @@ Plus the permanent rulings under **Scope**.
   Forever change to either moves the talent with nobody editing TypeScript.
   Early Demise's 20 and `EXECUTE_PHASE_FRACTION` agree today and are DIFFERENT
   FACTS, and a test pins that they still do.
+- **AND THAT SHAPE HAS A SECOND INSTANCE NOW, CREATED BY A PATCH RATHER THAN
+  FOUND.** The Bear's crit rage multiplier went 1.75 to 2.0 and the Warrior's
+  was already 2.0, so `critRageMultiplierFor` has two branches returning the
+  same number. **They stay separate**: two owner statements about two classes,
+  and folding them means the next patch moving either has to split them back
+  apart, after somebody works out they were ever different. **Pin each by
+  IDENTITY rather than asserting they are equal** -- an equality test turns the
+  next divergence into a failure in the constant that did not move.
 - **A per-ability modifier can be conditional on that clock** --
   `AbilityModifiers.addWhileFinalFraction`, the third condition shape after the
   weapon in hand and an aura, and the first one **a combatant cannot answer by

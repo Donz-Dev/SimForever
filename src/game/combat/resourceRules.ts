@@ -99,8 +99,23 @@ export const RAGE_FROM_BEAR_PAW: ResourceGeneration = rageFromSwing(
  *
  * SO TWO MULTIPLIERS AND NOT ONE WITH AN EXCEPTION. The Warrior's sits under
  * the Warrior heading and the Bear's names its own forms, and the owner has
- * confirmed reading them as 2.0 and 1.75 independently -- not 1.75 stacking on
- * top of a class-wide 2.0, which the word "Players" invites.
+ * confirmed reading them as independent figures -- not the Bear's stacking on
+ * top of a class-wide one, which the word "Players" invites.
+ *
+ * ----------------------------------------------------------------------------
+ * AND THE TWO NOW AGREE, WHICH IS A COINCIDENCE AND NOT A SIMPLIFICATION. The
+ * Bear went 75% to 100% in a later patch -- "Additional Rage generated from
+ * landing Critical Strikes increased to 100% increased Rage (Was 75%)" -- so
+ * both constants are 2.0 and the function below has two branches returning the
+ * same number.
+ *
+ * THEY STAY SEPARATE. They are two statements by the owner about two classes,
+ * and collapsing them into one constant would mean the next patch that moves
+ * either one has to split them back apart -- after somebody has worked out that
+ * they were ever different. This is the arrangement Early Demise's 20 and
+ * `EXECUTE_PHASE_FRACTION` already have for the same reason, and a test pins
+ * that each is independently right rather than that they are equal.
+ * ----------------------------------------------------------------------------
  *
  * IT IS THE FIRST THING IN THIS FILE THAT MAKES HASTE RAISE RAGE INCOME, and
  * only indirectly: `rageFromSwing` cancels speed exactly, so income is R per
@@ -116,7 +131,13 @@ export const RAGE_FROM_BEAR_PAW: ResourceGeneration = rageFromSwing(
  * ============================================================================
  */
 export const WARRIOR_CRIT_RAGE_MULTIPLIER = 2.0;
-export const BEAR_FORM_CRIT_RAGE_MULTIPLIER = 1.75;
+/**
+ * 1.75 until the owner raised it: "Additional Rage generated from landing
+ * Critical Strikes increased to 100% increased Rage (Was 75%)."
+ *
+ * The same figure as the Warrior's now, and a different fact -- see above.
+ */
+export const BEAR_FORM_CRIT_RAGE_MULTIPLIER = 2.0;
 
 /**
  * What a critical swing multiplies this character's flat rage award by.
@@ -129,6 +150,10 @@ export const BEAR_FORM_CRIT_RAGE_MULTIPLIER = 1.75;
  * covers both of the forms the note names. A Cat or a Moonkin gets 1 -- they
  * own a rage pool and have nothing that fills it from a swing, and Forever
  * states the increase for the bear forms only.
+ *
+ * THE TWO BRANCHES RETURN THE SAME NUMBER TODAY and are still two branches,
+ * because they answer to two separate owner statements. A reader tempted to
+ * fold them should read the note on the constants first.
  */
 export function critRageMultiplierFor(
   characterClass: ClassId,
