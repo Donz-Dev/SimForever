@@ -350,6 +350,34 @@ export const ICE_LANCE_DAMAGE = midpoint(133, 157);
 export const ICE_LANCE_FROZEN_MULTIPLIER = 4;
 export const ICE_LANCE_COEFFICIENT = ICE_LANCE_SP_COEFFICIENT;
 
+/*
+ * ============================================================================
+ * TWO FOURS SIT NEXT TO EACH OTHER HERE AND THEY ARE DIFFERENT FOURS.
+ *
+ * `ICE_LANCE_FROZEN_MULTIPLIER` is the ruleset's "300% increased damage against
+ * frozen targets", times four by the owner's ruling. The four INSIDE
+ * `ICE_LANCE_SP_COEFFICIENT` is part of the owner's own expression for the
+ * coefficient, `1.5 / 3.5 / 4`, and is not that multiplier.
+ *
+ * SO THEY MULTIPLY OUT, AND THE PRODUCT IS A FAMILIAR NUMBER: a frozen Ice
+ * Lance carries `1.5 / 3.5 / 4 * 4` = `1.5 / 3.5` = 0.4286, which is exactly the
+ * coefficient the spell had UNFROZEN before the change. A reader who remembers
+ * the old 0.43 will see it reappear on the frozen cast and reasonably suspect a
+ * four has been cancelled by accident. It has not.
+ *
+ * WHAT WOULD GO WRONG IF THE TWO WERE CONFLATED is worth stating because it is
+ * large in both directions. Dropping the frozen multiplier from the coefficient
+ * -- reading the owner's `/4` as having already done it -- makes a frozen Ice
+ * Lance a quarter of its intended coefficient. Applying the multiplier twice
+ * makes it four times. Sixteen between the two readings, on a spell that was
+ * 35.7% of the Frostfire profile.
+ *
+ * THE GUARD IS A TEST THAT MULTIPLIES THEM OUT END TO END rather than a check
+ * on either constant, which is the argument the pet's 1.375 damage multiplier
+ * already makes: a constant check cannot see a double application.
+ * ============================================================================
+ */
+
 /**
  * Four while Fingers of Frost is up, one otherwise.
  *

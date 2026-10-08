@@ -597,6 +597,28 @@ See [docs/combat-tables.md](docs/combat-tables.md).
   **IT MOVES NO PROFILE AND IS STILL WORTH DOING**: Swipe is in no priority list,
   because every encounter here has one target, so what changes is what the number
   MEANS the day a multi-target encounter exists.
+- **AND A MEASURED SLOPE IS NOT THE COEFFICIENT -- IT IS THE COEFFICIENT TIMES
+  EVERYTHING BETWEEN IT AND THE DAMAGE EVENT.** Measuring Ice Lance's over two
+  spell powers gave 0.1136 against a declared 0.1071, a clean 1.06x, and that 6%
+  is PIERCING ICE at 3/3 on the build being measured. **The obvious conclusion
+  was that the transcription was wrong, and what was wrong was the
+  measurement** -- so divide the school multiplier back out and NAME it rather
+  than widening a tolerance until it passes, which hides the one term in the way.
+  **A RATIO NEEDS NONE OF THAT**, because every such term appears on both sides
+  and cancels: Ice Lance's frozen-to-unfrozen ratio is exactly 4 whatever else
+  is applied, which makes it the assertion to trust most.
+- **A COEFFICIENT STATED AS AN EXPRESSION IS KEPT AS ONE, AND THE OWNER'S `/4`
+  IS NOT ALWAYS THE MULTIPLIER NEXT DOOR.** Ice Lance's is `1.5 / 3.5 / 4` in the
+  owner's own words, written out rather than rounded because `1.5 / 3.5` does not
+  terminate and the old 0.43 was already a rounding. **It sits beside
+  `ICE_LANCE_FROZEN_MULTIPLIER`, which is ALSO 4 and is a different four** -- so a
+  frozen cast carries `1.5 / 3.5 / 4 * 4`, exactly the figure the spell had
+  unfrozen before the change. Reading the owner's divisor as having already done
+  the frozen division, or applying the multiplier twice, are SIXTEEN apart and
+  both plausible. **A statement of a VALUE does not overturn a separate ruling
+  about which terms a multiplier reaches**, and the guard is a test that
+  multiplies them out end to end -- the same argument the pet's 1.375 makes,
+  because a constant check cannot see a double application.
 - **A COEFFICIENT IS MEASURED, NEVER COUNTED.** It is passed per `dealDamage`
   call, so `powerCoefficient` written in the wrong place is silent and grepping
   gives 77 damage sites and no ability names. `tools/coefficient_probe.ts` casts

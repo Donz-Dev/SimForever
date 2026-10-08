@@ -1,3 +1,54 @@
+**ICE LANCE'S COEFFICIENT IS A QUARTER OF WHAT IT WAS, AND IT TAKES THE TOP ROW
+OFF THE TABLE.** The ruleset owner, in their own form: "Ice lance now has a
+1.5/3.5/4 spell power coefficient instead of 1.5/3.5."
+
+**Frostfire 927.6 → 768.3, -159.3 REAL**, and the other twenty-three identical to
+the decimal. It was the top profile and is now **ninth**; **DW Fury is the top
+row at 892.0.**
+
+| | before | after |
+| --- | --- | --- |
+| base coefficient | 0.43 (`1.5 / 3.5`) | **0.107** (`1.5 / 3.5 / 4`) |
+| frozen coefficient, times four | 1.714 | **0.4286** |
+| Ice Lance's average hit | 3,892 | **1,827** |
+| its share of the profile | **35.7%** | 20.6% |
+
+**35.7% OF A PROFILE ON ONE INSTANT IS WHAT MADE IT WORTH CHECKING AT ALL.** Ice
+Lance is a 160-mana instant that was averaging 3,892 a hit -- on 133-157 base
+damage, so the coefficient was doing essentially all of it. A spell whose flat
+damage is 4% of its average hit is one whose coefficient is the only thing being
+measured.
+
+**TWO FOURS NOW SIT NEXT TO EACH OTHER AND THEY ARE DIFFERENT FOURS.**
+`ICE_LANCE_FROZEN_MULTIPLIER` is the ruleset's "300% increased damage against
+frozen targets"; the four inside the coefficient is part of the owner's
+expression. **So a frozen Ice Lance carries `1.5 / 3.5 / 4 * 4` -- exactly
+`1.5 / 3.5`, the figure the spell had UNFROZEN before the change.**
+
+**THAT COINCIDENCE IS THE TRAP, AND THE TWO WRONG READINGS ARE SIXTEEN APART.**
+Reading the owner's `/4` as having already done the frozen division -- so the
+ability should stop applying the multiplier -- makes a frozen cast a quarter of
+its coefficient; applying the multiplier twice makes it four times. Both produce
+a plausible number. The right reading is that a statement of a VALUE does not
+overturn the separate owner ruling about which terms the multiplier reaches, and
+`tests/game/iceLance.test.ts` pins the product END TO END rather than either
+constant -- which is the argument the pet's 1.375 damage multiplier already makes
+here: a constant check cannot see a double application.
+
+**THE WHOLE SUITE PASSED THE CHANGE UNTOUCHED, WHICH IS A STATEMENT ABOUT THE
+SUITE.** A 159-DPS move on a profile and nothing failed: nothing anywhere pinned
+this spell's scaling. The new file is eight tests and it measures the coefficient
+from damage that landed.
+
+**AND THE FIRST DRAFT OF THAT MEASUREMENT READ 0.1136 AGAINST A DECLARED 0.1071**
+-- a clean 1.06x, which is PIERCING ICE at 3/3 on the Frostfire build. The obvious
+move was to suspect the transcription; what was wrong was the measurement. **A
+SLOPE IS NOT A COEFFICIENT** -- it is the coefficient times everything between it
+and the damage event -- so the test divides the school multiplier back out and
+names it, rather than widening a tolerance until it passed. The frozen-to-unfrozen
+RATIO needs none of that, because every such term cancels, and it is the
+assertion to trust most.
+
 **FOUR OWNER RULINGS ON THE 1.60.1.70170 PATCH, AND ONE OF THEM COST THE FIRE
 MAGE A FIFTH OF ITSELF.** All four were questions raised in the patch PR rather
 than guesses taken in it.
@@ -203,7 +254,7 @@ gets built is [docs/class-implementation.md](docs/class-implementation.md).
 
 All nine classes and all 24 profiles are implemented, every number traced to a
 source rather than invented, and **all 24 priority lists are the ruleset owner's
-own** -- specified entry by entry and measured after. **2,715 tests**, CI green
+own** -- specified entry by entry and measured after. **2,723 tests**, CI green
 on Node 20 and 22. Profile format **v12**. Live at
 <https://donz-dev.github.io/SimForever/>, republished by
 `.github/workflows/deploy.yml` on every push to `main` that passes.
@@ -220,10 +271,10 @@ demonstrated at the top. **Re-count rather than re-reading the sentence.**
 | --- | --- |
 | **Talents** | 260 fully, 39 partly, 105 ruled out, **62 a live gap**, out of **466** -- from 132 before the class dives |
 | **Abilities** | 114 declared against 478 captured |
-| **Profiles** | 24, all measured, **mean 696.1** -- the armour enchants are +27.0 of it and the consumables +105.9 |
+| **Profiles** | 24, all measured, **mean 689.4** -- the armour enchants are +27.0 of it and the consumables +105.9 |
 | **Scope rulings** | 7 members, all the owner's |
 | **Placeholders** | **10 declared** -- see the milestone table, and count DECLARATIONS |
-| **Tests** | 2,715 on Node 20 and 22 |
+| **Tests** | 2,723 on Node 20 and 22 |
 
 **FOUR CLASSES ARE ESSENTIALLY DONE** -- Warrior 1 live gap, Paladin 1, Druid 2,
 Rogue 3 -- and the remaining 62 sit mostly in the Warlock (19), Priest (12) and
@@ -1249,7 +1300,7 @@ while it worked.
 decimal -- which is what a talent change scoped to one build should look like.
 It makes Frostfire the top Mage, above Fire's 401.2 and Arcane's 392.6, and the
 build that existed for the Fire/Frost overlap now has a third reason to. The
-mean across **24** is **696.1**, RE-SUMMED FROM THE TABLE ABOVE rather than
+mean across **24** is **689.4**, RE-SUMMED FROM THE TABLE ABOVE rather than
 adjusted -- **by `tools/update_baseline_table.py`, which exists now**; the
 sentence above it had promised a script for several commits and there was none,
 so the mean and the ordering were still being maintained by hand.
@@ -1811,34 +1862,38 @@ cannot audit, which is why the check is a SET comparison and not a row count.
 
 | Profile | Class | Talents | DPS | | Profile | Class | Talents | DPS |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| **Frostfire Mage** | Mage | 0/29/22 | **927.6** | | Enh Shaman | Shaman | 17/34/0 | 708.6 |
-| DW Fury | Warrior | 17/34/0 | 892.0 | | Combat Rogue | Rogue | 18/33/0 | 691.1 |
-| LW Ranged | Hunter | 7/39/5 | 805.9 | | SM/DS | Warlock | 40/11/0 | 690.4 |
-| Cat Druid | Druid | 9/34/8 | 794.0 | | **Fire Mage** | Mage | 10/39/2 | **690.1** |
-| Seal Twist Ret | Paladin | 15/0/36 | 788.4 | | Hemo Rogue | Rogue | 17/3/31 | 622.4 |
-| 2H Arms | Warrior | 39/10/2 | 784.1 | | Ele Shaman | Shaman | 38/13/0 | 617.5 |
-| LW Melee | Hunter | 7/13/31 | 779.7 | | Shockadin | Paladin | 23/0/28 | 601.3 |
-| BM Hunter | Hunter | 31/20/0 | 771.7 | | Venom Rogue | Rogue | 37/12/2 | 600.8 |
-| Arcane Mage | Mage | 47/4/0 | 769.4 | | Rupture Rogue | Rogue | 12/8/31 | 584.2 |
+| DW Fury | Warrior | 17/34/0 | 892.0 | | Enh Shaman | Shaman | 17/34/0 | 708.6 |
+| LW Ranged | Hunter | 7/39/5 | 805.9 | | Combat Rogue | Rogue | 18/33/0 | 691.1 |
+| Cat Druid | Druid | 9/34/8 | 794.0 | | SM/DS | Warlock | 40/11/0 | 690.4 |
+| Seal Twist Ret | Paladin | 15/0/36 | 788.4 | | Fire Mage | Mage | 10/39/2 | 690.1 |
+| 2H Arms | Warrior | 39/10/2 | 784.1 | | Hemo Rogue | Rogue | 17/3/31 | 622.4 |
+| LW Melee | Hunter | 7/13/31 | 779.7 | | Ele Shaman | Shaman | 38/13/0 | 617.5 |
+| BM Hunter | Hunter | 31/20/0 | 771.7 | | Shockadin | Paladin | 23/0/28 | 601.3 |
+| Arcane Mage | Mage | 47/4/0 | 769.4 | | Venom Rogue | Rogue | 37/12/2 | 600.8 |
+| **Frostfire Mage** | Mage | 0/29/22 | **768.3** | | Rupture Rogue | Rogue | 12/8/31 | 584.2 |
 | Firelock | Warlock | 5/11/35 | 759.7 | | Prot Warr | Warrior | 17/0/34 | 504.9 |
 | Shadow Priest | Priest | 13/3/35 | 746.9 | | Bear Druid | Druid | 9/42/0 | 496.1 |
 | Moonkin | Druid | 38/0/13 | 724.0 | | Prot Pally | Paladin | 8/34/9 | 355.2 |
 
-**THE TOP IS STILL THE FROSTFIRE MAGE AND ITS LEAD HAS NARROWED TO ONE
-INTERVAL.** **927.6 +/-20.3** against DW Fury's **892.0 +/-11.5** is 35.6, which
-is outside both but no longer comfortably: Frostfire's interval is the widest in
-the table, and a row whose own spread is twenty is not a secure first place. Read
-the intervals before reading the order.
+**THE TOP IS DW FURY, AND A CASTER HAS NOT HELD IT SINCE THE CONSUMABLES.**
+**892.0 +/-11.5** against LW Ranged's **805.9 +/-6.2** is 86.1, which is the
+widest first-place gap this table has had. The previous paragraph here said "the
+top is still the Frostfire Mage and its lead has narrowed to one interval",
+which was true for one commit.
 
-**THE FIRE MAGE FELL FURTHER THAN ANY ROW HAS IN ONE CHANGE** -- third to
-sixteenth, 877.7 to 690.1 -- on one owner ruling about when three stacks are
-spent. It is now below the Enhancement Shaman and two Rogues.
+**BOTH MAGE ROWS THAT FELL DID SO ON OWNER RULINGS ABOUT COEFFICIENTS AND
+CONSUMPTION, NOT ON ANYTHING THIS PROJECT GOT WRONG.** Frostfire went 927.6 to
+768.3 and Fire 877.7 to 690.1 -- **first to ninth and third to sixteenth** -- in
+two commits, which is 347 DPS off the Mage's two best rows. The class had been
+first and third; its best row is now ARCANE, at 769.4, which has not moved at
+all through either patch.
 
-**AND THE CASTER RE-SORT THIS PARAGRAPH USED TO DESCRIBE HAS UNWOUND FURTHER.** It
-read "four of the top six are casters where none was in the top six a commit ago",
-which was true of the consumables commit; it is now **one of the top six**. The
-consumables are still what put the casters there -- what moved them out is two
-melee rows gaining a hundred DPS and one caster row losing nearly two hundred.
+**AND THE CASTER RE-SORT THIS PARAGRAPH ONCE DESCRIBED HAS NOW FULLY UNWOUND.** It
+read "four of the top six are casters where none was in the top six a commit
+ago", which was true of the consumables commit. **None of the top six is a caster
+now.** The consumables are still what put them there and the rulings are what took
+them out -- which is worth separating, because the first was a change to the
+ruleset's generosity and the second two were corrections.
 
 **TWO CHANGES MOVED EVERY ROW, ONE AFTER THE OTHER, AND NOTHING RECORDED BEFORE
 EITHER IS COMPARABLE.** The armour enchants were +2.4 to +53.7 on a mean of
