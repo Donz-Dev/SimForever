@@ -56,10 +56,16 @@ current figures with `npx vite-node tools/measure_profiles.ts`.
 
 | Profile | Talents | DPS | was | | List |
 | --- | --- | --- | --- | --- | --- |
-| Combat | 18/33/0 | **586.3** | 419.8 | **+166.5** | `ROGUE_COMBAT` |
-| Venom | 37/12/2 | **510.6** | 392.7 | **+117.9** | `ROGUE_VENOM` |
-| Rupture | 12/8/31 | **497.6** | 377.1 | **+120.5** | `ROGUE_RUPTURE` |
-| **Hemo** | 17/3/31 | **527.1** | — | *new* | `ROGUE_HEMO` |
+| Combat | 18/33/0 | **691.1** | 419.8 | **+271.3** | `ROGUE_COMBAT` |
+| Hemo | 17/3/31 | **622.4** | — | *new in this dive* | `ROGUE_HEMO` |
+| Venom | 37/12/2 | **594.5** | 392.7 | **+201.8** | `ROGUE_VENOM` |
+| Rupture | 12/8/31 | **584.2** | 377.1 | **+207.1** | `ROGUE_RUPTURE` |
+
+**ALL FOUR RE-READ FROM ONE RUN ON `main`, AND ALL FOUR WERE STALE BY 60 TO 105.**
+They stood at 586.3 / 510.6 / 497.6 / 527.1, and **none of that was Rogue work**:
+the enchants, the consumables and a run of owner rulings moved every profile in
+the project while this class was untouched. **A per-class table drifts fastest
+when the class is finished**, because nothing is re-measuring it.
 
 **THIS COLUMN IS KEPT CURRENT NOW, AND IT WAS NOT.** It stood at 461.8 / 440.2 /
 409.4 — the dive's own figures, correct on the day and moved four times since by
@@ -707,6 +713,91 @@ one rather than an arbitrary tiebreak: a Hemorrhage build without Cutthroat cann
 run the Rupture list's Backstab engine at all, so the talent that decides which list
 *works* is the talent the dispatch reads. Reading Quietus would work today and is
 weaker — it is a damage talent that says nothing about which list can function.
+
+---
+
+## SEAL FATE IS CAPPED PER ABILITY USE, SO MUTILATE TOPS OUT AT THREE
+
+**Venom 600.8 → 594.5, −6.3.** The other twenty-four profiles are identical to
+the decimal — Venom is the only one that holds both Mutilate and Seal Fate.
+
+**THE OWNER'S RULING:** *"The Mutilate ability has been updated. With Seal Fate it
+can now NO LONGER give 4 combo points. If either hand crits, Mutilate gives 3."*
+
+So the opportunity belongs to the **use** rather than to the hit. Two of
+Mutilate's own plus at most one, whether one hand crits or both.
+
+### The mechanism, because −6.3 is inside the interval
+
+The DPS figure is borderline at ±5.7, so what settles it is the combo point
+ledger, over 400 fights:
+
+| | before | after |
+| --- | --- | --- |
+| points from Seal Fate | 10.65 | **8.00** |
+| points gained | 35.08 | 33.17 |
+| wasted at the cap | 2.63 | 1.92 |
+| spent | 32.83 | 30.79 |
+
+**2.65 fewer Seal Fate points a fight**, which is the double-crit second trigger
+and nothing else. The arithmetic checks: the suppressed amount is
+`casts × crit²` where the old total was `casts × 2 × crit`, so the ratio says
+Mutilate crits about half the time on this build — which is what Malice, Lethality
+and Puncturing Wounds' Mutilate clause add up to.
+
+### Why it keys on a cast counter
+
+A `dealt` reaction fires **per damage event**, and Mutilate deals two — so a rule
+phrased per USE had nothing to key on. `Combatant.castSequence` is the new engine
+fact: `recordCast` stamps every cast, and Seal Fate's own closure remembers the
+number it last fired on.
+
+**Mutilate's own award already worked this way** — its comment reads "two points
+for the ability, not one per hand, and a half-avoided Mutilate is still a
+Mutilate" — so the cap is that same reading applied to the proc rather than a new
+convention being invented beside it.
+
+**NOT THE TIMESTAMP**, which is the tempting discriminator: the two hits share a
+millisecond only because they are dealt synchronously inside one `onCast`, and
+nothing guarantees that. **NOT A BOOLEAN LATCH** either, because something would
+have to clear it — and a latch nobody cleared would make Seal Fate fire once a
+*fight*, which is a smaller number and no error.
+
+**THE CLOSURE IS ONLY SAFE BECAUSE A REACTION IS BUILT PER CHARACTER.**
+`talentBuild` calls the builder once per combatant, which is the same reason
+Windfury's internal cooldown can live in one; a module-level variable would make
+one Rogue's Mutilate suppress another's, silently, and only from the second
+character in a batch onwards. That was checked rather than assumed — two rogues
+built side by side hold different reaction objects and both get their point.
+
+### The reading that was chosen, and where it could be wrong
+
+**The OPPORTUNITY is capped and the roll happens once.** The other reading — roll
+per crit and cap the AWARD at one — is **indistinguishable at 5/5**, where the
+chance is 100% and every build in the project sits. They diverge only at ranks 1
+to 4: a double-critting Mutilate would be `1 − (1 − p)²` rather than `p`, so 84%
+instead of 60% at rank 3.
+
+*"If EITHER hand crits, Mutilate gives 3"* reads as one question asked of the use
+rather than two asked of the hits, so that is what shipped. It is one comparison
+in `sealFate` if the owner states otherwise.
+
+### What the test file had to become
+
+`sealFateFirstCast.test.ts` asserted **four** in three places. Its original
+subject — a builder's own points must not wipe the one Seal Fate just banked — is
+untouched and still load-bearing, so those cases stay at three rather than being
+deleted. What is new is the pair that the cap actually needs: **one hand critting
+and both hands critting give the same three**, because asserting only the double
+crit would pass against a rule that awarded per crit and capped the total
+somewhere else. The off-hand case is asserted separately since it resolves
+*second* — that is the one that fails if the latch is keyed on the hand.
+
+**Two of those tests failed on their own premises first**, which is worth
+recording: one named DW Fury as a character with no cast reactions and it has one,
+and one was refused by the **global cooldown** rather than by the latch — both
+casts happen at time 0. A test that fails for a reason that is not its subject
+reads exactly like the code being wrong.
 
 ---
 

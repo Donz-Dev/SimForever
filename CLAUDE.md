@@ -385,6 +385,25 @@ See [docs/combat-tables.md](docs/combat-tables.md).
   35 melee uses a minute and **5 PPM delivers about 11 procs a minute, which is
   the intended consequence of the equation** rather than a figure to explain away.
   Nothing in the engine throttles a rate, and nothing should.
+- **A `dealt` REACTION FIRES PER DAMAGE EVENT, SO A RULE PHRASED PER ABILITY
+  *USE* NEEDS SOMETHING TO KEY ON.** Mutilate deals two, and the owner has ruled
+  that Seal Fate "can now NO LONGER give 4 combo points -- if either hand crits,
+  Mutilate gives 3", so the opportunity belongs to the USE. `Combatant.castSequence`
+  is that fact: `recordCast` stamps every cast with a number and the reaction's own
+  closure remembers the one it last fired on. **Mutilate's own award already worked
+  this way** -- "two points for the ability, not one per hand" -- so the cap is the
+  same reading applied to the proc rather than a new convention.
+  **NOT THE TIMESTAMP**, which is the tempting discriminator and is incidental:
+  the two hits share a millisecond because they are dealt synchronously inside one
+  `onCast`, and nothing guarantees it. **AND NOT A BOOLEAN LATCH**, because
+  something would have to clear it and that something is the next bug -- a latch
+  nobody cleared would make Seal Fate fire once a FIGHT, which is a smaller number
+  and no error. **The closure is only safe because `talentBuild` builds a reaction
+  PER CHARACTER**, the same reason Windfury's internal cooldown can live in one;
+  a module-level variable would make one Rogue's Mutilate suppress another's.
+  **STAMP IT BEFORE `onCast` AND BEFORE `runCast`'S EARLY RETURN** -- a reaction
+  asking which use it is seeing fires from INSIDE `onCast`, and a character with
+  no CAST reactions takes a different path out of that function.
 - **A reaction fires on damage; a CAST reaction fires on a cast.** A finisher
   spends its combo points inside its own `onCast`, where neither the cost system
   nor a damage reaction can see it. `AbilityCastEvent` carries what the cast
