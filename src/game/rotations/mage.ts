@@ -1,7 +1,7 @@
 import type { PriorityEntry, Rotation, SimulationContext, Combatant } from '../../engine';
 import { PriorityRotation } from '../../engine';
 import type { TalentAllocation } from '../talents/Talent';
-import { HOT_STREAK_MAX_STACKS, IMPROVED_SCORCH_MAX_STACKS } from '../auras/mage';
+import { HEATING_UP_MAX_STACKS, IMPROVED_SCORCH_MAX_STACKS } from '../auras/mage';
 
 /**
  * Mage priority lists.
@@ -216,7 +216,7 @@ export const MAGE_FIRE: readonly PriorityEntry[] = [
    * Pyroblast's cast per stack, so three turns a six-second cast into a second
    * and a half -- the only point at which it beats two Fireballs.
    */
-  { abilityId: 'pyroblast', condition: selfStacksExactly('hot_streak', HOT_STREAK_MAX_STACKS) },
+  { abilityId: 'pyroblast', condition: selfStacksExactly('heating_up', HEATING_UP_MAX_STACKS) },
   /*
    * COMBUSTION ONLY WITH THE DEBUFF CAPPED AND HOLDING. It is a crit cooldown,
    * so it is worth most when every Fire spell under it is already taking the
@@ -250,7 +250,7 @@ export const MAGE_FROSTFIRE: readonly PriorityEntry[] = [
   { abilityId: 'mage_armor', condition: selfExpired('mage_armor') },
   { abilityId: 'evocation', condition: evocationNeeded },
   { abilityId: 'scorch', condition: scorchNeeded },
-  { abilityId: 'pyroblast', condition: selfStacksExactly('hot_streak', HOT_STREAK_MAX_STACKS) },
+  { abilityId: 'pyroblast', condition: selfStacksExactly('heating_up', HEATING_UP_MAX_STACKS) },
   /*
    * ICE LANCE ENTERS A LIST FOR THE FIRST TIME. Its 300% clause was inert for
    * as long as nothing could make the target count as Frozen; Fingers of Frost
@@ -412,7 +412,7 @@ export function mageRotation(talents: TalentAllocation): Rotation | undefined {
     'pyroblast',
     'improved_scorch',
     'improved_fire_ward',
-    'hot_streak',
+    'heating_up',
     'master_of_elements',
     'critical_mass',
     'blast_wave',

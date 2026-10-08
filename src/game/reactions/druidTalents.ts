@@ -25,7 +25,7 @@ import type { TalentReactionBuilder } from './warriorTalents';
  */
 
 /**
- * Primal Fury's RAGE half: "a 100% chance to gain an additional 5 Rage any time
+ * Blood Frenzy's RAGE half: "a 100% chance to gain an additional 5 Rage any time
  * you get a critical strike while in Bear Form or Dire Bear Form".
  *
  * ----------------------------------------------------------------------------
@@ -44,23 +44,23 @@ import type { TalentReactionBuilder } from './warriorTalents';
  * is where a form condition belongs: knowable once, at build time.
  * ----------------------------------------------------------------------------
  */
-export const PRIMAL_FURY_RAGE = 5;
+export const BLOOD_FRENZY_RAGE = 5;
 
-export const primalFury = (chancePercent: number): Reaction => ({
-  id: 'primal_fury',
+export const bloodFrenzy = (chancePercent: number): Reaction => ({
+  id: 'blood_frenzy',
   on: 'dealt',
   outcomes: ['crit'],
   canTrigger: (context) => context.rng.rollChance(chancePercent / 100),
   onTrigger: (context, actor) => {
-    context.grantResource(actor, 'rage', PRIMAL_FURY_RAGE, {
-      id: 'primal_fury',
-      name: 'Primal Fury',
+    context.grantResource(actor, 'rage', BLOOD_FRENZY_RAGE, {
+      id: 'blood_frenzy',
+      name: 'Blood Frenzy',
     });
   },
 });
 
 /**
- * Primal Fury's COMBO POINT half: "your non-periodic critical strikes from Cat
+ * Blood Frenzy's COMBO POINT half: "your non-periodic critical strikes from Cat
  * Form abilities that generate Combo Points have a 100% chance to add an
  * additional Combo Point."
  *
@@ -85,8 +85,8 @@ export const primalFury = (chancePercent: number): Reaction => ({
  * a combo point pool would have enforced it, because a Bear owns one too.
  * ----------------------------------------------------------------------------
  */
-export const primalFuryComboPoint: TalentReactionBuilder = (chancePercent) => ({
-  id: 'primal_fury_combo_point',
+export const bloodFrenzyComboPoint: TalentReactionBuilder = (chancePercent) => ({
+  id: 'blood_frenzy_combo_point',
   on: 'dealt',
   outcomes: ['crit'],
   canTrigger: (context, actor, attack) => {
@@ -96,7 +96,7 @@ export const primalFuryComboPoint: TalentReactionBuilder = (chancePercent) => ({
     return context.rng.rollChance(chancePercent / 100);
   },
   onTrigger: (context, actor, attack) => {
-    awardComboPoint(context, actor, attack.defender, 'primal_fury', 'Primal Fury');
+    awardComboPoint(context, actor, attack.defender, 'blood_frenzy', 'Blood Frenzy');
   },
 });
 
@@ -165,45 +165,32 @@ export const naturalReaction: TalentReactionBuilder = (chancePercent) => ({
   },
 });
 
-/**
- * King of the Jungle: "Tiger's Fury now instantly grants you 60 Energy."
+/*
+ * KING OF THE JUNGLE WAS A CAST REACTION HERE AND IS GONE, with Tiger's Fury,
+ * the one ability it named. Removed at client build 1.60.1.70170.
  *
- * ----------------------------------------------------------------------------
- * A CAST REACTION, AND THE ENGINE HAS HAD ONE SINCE THE ROGUE. Its `unmodelled`
- * reason said exactly that -- "it is a CAST reaction, which the engine now has
- * -- this is reachable and simply not written yet" -- which is what an
- * expired-but-honest reason looks like, and why reasons are written specifically
- * enough to re-read.
+ * ITS NOTE IS WORTH KEEPING EVEN THOUGH THE REACTION IS NOT, because the point
+ * it made outlived it: `runCastReactions` skips any reaction whose `abilityId`
+ * does not match, so a cast reaction NAMES its ability rather than checking for
+ * it in the body -- a condition inside would do the same work later and be one
+ * more thing to get wrong. The Mage and the Rogue both still rely on that.
  *
- * NAMED ON THE REACTION RATHER THAN CHECKED INSIDE IT. `runCastReactions` skips
- * any reaction whose `abilityId` does not match, so this never runs for
- * anything else; a condition in the body would do the same work later and be
- * one more thing to get wrong.
+ * SHIFTING POWER, WHICH REPLACED IT, NEEDS NO REACTION AT ALL: the energy is the
+ * ability's own effect rather than a talent's addition to somebody else's, so it
+ * lives in `SHIFTING_POWER.onCast`. A talent that ADDS to an existing ability is
+ * a cast reaction; a talent that GRANTS an ability is a grant.
  *
- * IT FIRES WHETHER OR NOT THE BAR HAS ROOM. `grantResource` reports what the cap
- * threw away, so a Tiger's Fury cast on a full bar shows its waste on the
- * results page instead of vanishing -- which is the whole reason the owner's
- * list gates the cast on "energy <= 30".
- * ----------------------------------------------------------------------------
+ * THE DRUID NOW HAS NO CAST REACTIONS, and `DRUID_CAST_REACTIONS` is kept as an
+ * empty table rather than deleted: `talentBuild.ts` registers it by class, and
+ * a class missing from that registry fails silently -- see CLAUDE.md, "A CLASS
+ * IS REGISTERED IN FOUR PLACES AND MISSING ANY ONE IS SILENT".
  */
-export const kingOfTheJungle = (energy: number): CastReaction => ({
-  id: 'king_of_the_jungle',
-  abilityId: 'tigers_fury',
-  onTrigger: (context, actor) => {
-    context.grantResource(actor, 'energy', energy, {
-      id: 'king_of_the_jungle',
-      name: 'King of the Jungle',
-    });
-  },
-});
 
 export const DRUID_TALENT_REACTIONS: Readonly<Record<string, TalentReactionBuilder>> = {
-  primal_fury: primalFury,
-  primal_fury_combo_point: primalFuryComboPoint,
+  blood_frenzy: bloodFrenzy,
+  blood_frenzy_combo_point: bloodFrenzyComboPoint,
   nature_s_grace: naturesGrace,
   natural_reaction: naturalReaction,
 };
 
-export const DRUID_CAST_REACTIONS: Readonly<Record<string, (value: number) => CastReaction>> = {
-  king_of_the_jungle: kingOfTheJungle,
-};
+export const DRUID_CAST_REACTIONS: Readonly<Record<string, (value: number) => CastReaction>> = {};

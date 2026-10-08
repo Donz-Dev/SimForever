@@ -60,8 +60,16 @@ import { seconds } from '../../engine';
  *
  * Abilities are stance-gated now (see docs/warrior.md) and
  * `PriorityRotation` swaps stance for the highest-priority ability that is
- * blocked only by its stance. That is enough to make Revenge, Whirlwind and
- * Recklessness reachable at all, and it is not a good rotation.
+ * blocked only by its stance. That is enough to make Revenge, Whirlwind,
+ * Recklessness and -- since client build 1.60.1.70170 -- Spearing Strike
+ * reachable at all, and it is not a good rotation.
+ *
+ * SPEARING STRIKE JOINED THAT LIST BY LOSING A DIFFERENT GATE. It required a
+ * two-handed weapon and now requires Battle Stance, so in the two GENERIC lists
+ * it is one more reason to dance. It moves none of the three profiles: the
+ * stance-specific lists exist precisely so that neither ever dances, and the
+ * only build that takes the talent is 2H Arms, which is in Battle Stance
+ * already.
  *
  * DEFENSIVE STANCE IS -10% DAMAGE DONE. The list swaps into it for Revenge and
  * then does everything else from there until something pulls it back, so a
@@ -596,25 +604,30 @@ export const WARRIOR_DUAL_WIELD_BERSERKER: readonly PriorityEntry[] = [
   { abilityId: 'whirlwind' },
   /*
    * ----------------------------------------------------------------------------
-   * THIS ENTRY CAN NEVER FIRE, and the reason is a weapon rather than a
-   * rotation. IT IS LEFT AS THE OWNER WROTE IT.
+   * THIS ENTRY STILL CANNOT FIRE, AND THE REASON HAS CHANGED TWICE. IT IS LEFT
+   * AS THE OWNER WROTE IT.
    *
-   * It was added on the ruleset owner's instruction, because Spearing Strike
-   * was in the DW Fury preset's talents and in no list that build could reach,
-   * so one point looked like it was doing nothing. The audit that found it was
-   * right that the point does nothing and wrong about why: SPEARING STRIKE
-   * REQUIRES A TWO-HANDED WEAPON -- stated by the spellbook capture and by
-   * `foreverchanges.pro`, and absent only from the older Wowhead tooltip we
-   * were reading. See `SPEARING_STRIKE`.
+   * It was added on the ruleset owner's instruction, because Spearing Strike was
+   * in the DW Fury preset's talents and in no list that build could reach, so
+   * one point looked like it was doing nothing. The audit that found it was right
+   * that the point does nothing and wrong about why: SPEARING STRIKE REQUIRED A
+   * TWO-HANDED WEAPON -- stated by the spellbook capture and by
+   * `foreverchanges.pro`, and absent only from the older Wowhead tooltip we were
+   * reading.
    *
-   * This list is chosen by dual-wield AND Berserker Stance, so no character
-   * that reaches it can ever hold a two-hander. `abilitiesForBuild` keeps the
-   * ability out of the book, `PriorityRotation` skips an entry whose ability
-   * the actor does not know, and the entry costs the list nothing.
+   * THE OWNER HAS NOW ANSWERED BOTH OF THE DECISIONS THIS NOTE USED TO NAME, and
+   * the answers point opposite ways. Client build 1.60.1.70170 took the
+   * two-handed requirement off the ability and put a BATTLE STANCE one on, which
+   * this list -- chosen by dual-wield AND Berserker Stance -- can no more satisfy
+   * than it could hold a two-hander. And the owner's new DW Fury build moves the
+   * talent point OUT, to Improved Execute. So the entry is dead for a third
+   * reason, which is now the first one the engine reaches: the build does not
+   * know the ability, `PriorityRotation` skips an entry whose ability the actor
+   * does not know, and the entry costs the list nothing.
    *
-   * TWO DECISIONS FOR THE OWNER AND NEITHER IS TAKEN HERE: whether this entry
-   * comes out, and whether DW Fury's point in Spearing Strike moves. Both are
-   * their list and their build.
+   * WHICH MAKES IT WORTH KEEPING AS A MARKER rather than a mistake: the owner put
+   * it here, and if a future build takes the talent again the question of whether
+   * a Berserker warrior should dance to Battle for it is theirs.
    *
    * Not `pooled`: the two strikes above it already take priority, so rationing
    * it behind a rage floor as well would keep it in the same place it was.

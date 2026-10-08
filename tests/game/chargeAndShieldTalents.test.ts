@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { CHARGE, CHARGE_RAGE_GENERATED } from '../../src/game/abilities/warrior';
+import { CHARGE, CHARGE_RAGE_GENERATED, SPEARING_STRIKE } from '../../src/game/abilities/warrior';
 import { abilitiesForClass } from '../../src/game/abilities/abilitiesForClass';
 import {
   WARRIOR_DUAL_WIELD_BERSERKER,
@@ -25,6 +25,10 @@ const preset = (id: string, iterations = 200) => {
   const built = PRESETS_BY_ID.get(id)!.build();
   return { ...built, simulation: { ...built.simulation, iterations, seed: 4242 } } as never;
 };
+
+/** The same preset's talent allocation, which `preset` casts away to `never`. */
+const presetTalents = (id: string): Record<string, number> =>
+  PRESETS_BY_ID.get(id)!.build().talents;
 
 const casts = (id: string, name: string) => {
   const batch = runProfileBatch(preset(id));
@@ -62,14 +66,23 @@ describe('Charge is used exactly once, as the first action', () => {
     expect(WARRIOR_SHIELD_DEFENSIVE[0].abilityId).toBe('charge');
   });
 
-  it('fires exactly once a fight for 2H Arms, and pays 18 rage', () => {
+  it('fires exactly once a fight for 2H Arms, and pays 21 rage', () => {
     const batch = runProfileBatch(preset('two_hand_arms'));
     const charge = batch.abilities.find((a) => a.abilityName === 'Charge');
     expect(charge?.uses).toBe(1);
 
-    // 15 base plus 3 from 1/2 Improved Charge, which the preset takes.
+    /*
+     * 15 base plus 6 from 2/2 Improved Charge, which the preset takes.
+     *
+     * IT WAS 1/2 AND 18 RAGE until client build 1.60.1.70170: Improved Cleave
+     * was removed from the Fury tree and the owner's new build put one of its
+     * three freed points here. So this figure moved because a BUILD changed, not
+     * because the ability or the talent did -- and the rank is read from the
+     * preset by the test above, which is why both halves are asserted.
+     */
+    expect(presetTalents('two_hand_arms').improved_charge).toBe(2);
     const rage = resourceFlowOf(batch, 'rage').gained.find((row) => row.sourceId === 'charge');
-    expect(rage?.amount).toBeCloseTo(CHARGE_RAGE_GENERATED + 3, 6);
+    expect(rage?.amount).toBeCloseTo(CHARGE_RAGE_GENERATED + 6, 6);
   });
 });
 
@@ -214,31 +227,41 @@ describe('Concussion Blow is deliberately silent', () => {
 // Spearing Strike
 // ---------------------------------------------------------------------------
 
-describe('Spearing Strike needs a two-handed weapon', () => {
+describe('Spearing Strike needs Battle Stance', () => {
   /*
    * ----------------------------------------------------------------------------
-   * THIS TEST USED TO ASSERT THE OPPOSITE, and it was pinning a fact that was
-   * wrong rather than a decision that changed.
+   * THIS TEST HAS NOW ASSERTED THREE DIFFERENT THINGS, AND EACH WAS TRUE WHEN
+   * WRITTEN. It is worth keeping the sequence, because the ability is this
+   * project's worked example of a requirement line being read wrongly.
    *
-   * It read "is cast by DW Fury now, below Bloodthirst and Whirlwind", because
+   * FIRST it read "is cast by DW Fury now, below Bloodthirst and Whirlwind".
    * Spearing Strike was in the DW Fury preset's talents and in no list that
-   * build could reach. The entry was added to the Berserker list on the
-   * ruleset owner's instruction and the point stopped looking wasted.
+   * build could reach, so the owner added the entry and the point stopped
+   * looking wasted.
    *
-   * It is wasted. "Requires Two-Handed Axes, Two-Handed Maces, Polearms,
-   * Two-Handed Swords, Staves" in `forever-warrior-spellbook.json`, and
-   * "Requires Two-Handed Melee Weapon" on `foreverchanges.pro`. Only the older
-   * Wowhead tooltip omits it, and an omission is not a denial -- so no
-   * tie-break is involved, just two sources against a silence.
+   * THEN it read "is not in a dual-wielder's book": the ability required a
+   * two-handed weapon, stated by `forever-warrior-spellbook.json` and by
+   * `foreverchanges.pro` and omitted only by the older Wowhead tooltip -- and an
+   * omission is not a denial, so two sources against a silence settled it with
+   * no tie-break involved.
    *
-   * What is asserted now is the WEAPON RULE, which is an invariant, rather
-   * than a list position, which is the owner's. A dual-wielder does not have
-   * the ability at all; a two-hander does and casts it.
+   * NOW the requirement is a STANCE. Client build 1.60.1.70170: "Spearing Strike
+   * no longer requires a 2handed weapon. Spearing Strike requires Battle
+   * Stance", and the refreshed capture says the same. So `abilitiesForBuild` has
+   * no opinion about it any more and `Ability.stances` carries the rule, which is
+   * where Overpower's has always lived.
+   *
+   * AND THE ANSWER FOR DW FURY DID NOT CHANGE. That build is in Berserker
+   * Stance, so an ability it can now hold the weapons for is one it cannot hold
+   * the stance for -- and the owner's new build moves the talent point out
+   * anyway. What is asserted is the stance rule, which is an invariant, rather
+   * than a list position, which is the owner's.
    * ----------------------------------------------------------------------------
    */
-  it('is not in a dual-wielder\'s book, however many points are spent', () => {
+  it('is in a dual-wielder\'s book now, and declares Battle Stance', () => {
     const ids = abilityIds('dual_wield', legalise({ spearing_strike: 1 }));
-    expect(ids).not.toContain('spearing_strike');
+    expect(ids).toContain('spearing_strike');
+    expect(SPEARING_STRIKE.stances).toEqual(['battle_stance']);
   });
 
   it('is in a two-hander\'s book, and 2H Arms casts it', () => {
@@ -249,14 +272,18 @@ describe('Spearing Strike needs a two-handed weapon', () => {
 
   it('is still in the Berserker list, where it can never fire', () => {
     /*
-     * The owner's entry, left as written. `PriorityRotation` skips an ability
-     * the actor does not know, so it costs the list nothing -- and removing it
-     * is the owner's call, not this test's. What must stay true is that it
-     * produces no casts rather than an error.
+     * The owner's entry, left as written. It cannot fire for TWO reasons now:
+     * the owner's new DW Fury build does not take the talent, so
+     * `PriorityRotation` skips an ability the actor does not know -- and even
+     * with the talent, this list is Berserker Stance and the ability is Battle.
+     *
+     * What must stay true is that it produces no casts rather than an error, and
+     * that the build has not quietly regained the talent.
      */
     expect(
       WARRIOR_DUAL_WIELD_BERSERKER.some((entry) => entry.abilityId === 'spearing_strike'),
     ).toBe(true);
+    expect(presetTalents('dw_fury').spearing_strike).toBeUndefined();
     expect(casts('dw_fury', 'Spearing Strike')).toBe(0);
   });
 });

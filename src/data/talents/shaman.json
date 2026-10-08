@@ -48,7 +48,7 @@
      "tier": 5,
      "requires": null,
      "requiresRanks": null,
-     "description": "Reduces the cooldown of your Shock spells by 1 sec."
+     "description": "Reduces the cooldown of your Shock spells by 1.0 sec."
     },
     {
      "row": 1,
@@ -86,13 +86,13 @@
     {
      "row": 2,
      "col": 2,
-     "ranks": 5,
-     "name": "Elemental Fury",
-     "icon": "spell_fire_volcano",
+     "ranks": 3,
+     "name": "Elemental Alacrity",
+     "icon": "spell_lightning_lightningbolt01",
      "tier": 10,
      "requires": null,
      "requiresRanks": null,
-     "description": "Increases the critical strike damage bonus of your Searing and Magma Totems and your Fire, Frost, and Nature spells by 100%."
+     "description": "Reduces the cast time of your Lightning Bolt, Chain Lightning, and Lava Burst spells by 0.50 sec."
     },
     {
      "row": 3,
@@ -123,8 +123,8 @@
      "name": "Call of Thunder",
      "icon": "spell_nature_callstorm",
      "tier": 15,
-     "requires": "Elemental Fury",
-     "requiresRanks": 5,
+     "requires": "Elemental Alacrity",
+     "requiresRanks": 3,
      "description": "Increases the critical strike chance of your Lightning Bolt and Chain Lightning spells by 3%."
     },
     {
@@ -163,13 +163,13 @@
     {
      "row": 5,
      "col": 2,
-     "ranks": 3,
-     "name": "Elemental Alacrity",
-     "icon": "spell_lightning_lightningbolt01",
+     "ranks": 5,
+     "name": "Elemental Fury",
+     "icon": "spell_fire_volcano",
      "tier": 25,
      "requires": "Call of Thunder",
      "requiresRanks": 1,
-     "description": "Reduces the cast time of your Lightning Bolt, Chain Lightning, and Lava Burst spells by 0.50 sec."
+     "description": "Increases the critical strike damage bonus of your Searing and Magma Totems and your Fire, Frost, and Nature spells by 100%."
     },
     {
      "row": 6,
@@ -180,7 +180,7 @@
      "tier": 30,
      "requires": "Lightning Overload",
      "requiresRanks": 3,
-     "description": "You hurl molten lava at the target, dealing 106 to 134 Fire damage. If your Flame Shock is on the target, Lava Burst deals 20% increased damage."
+     "description": "You hurl molten lava at the target, dealing 150 to 192 Fire damage. If your Flame Shock is on the target, Lava Burst deals 20% increased damage."
     }
    ]
   },
@@ -252,7 +252,7 @@
      "tier": 5,
      "requires": null,
      "requiresRanks": null,
-     "description": "Reduces the cast time of your Ghost Wolf spell by 3 sec, and Ghost Wolf may be used indoors."
+     "description": "Reduces the cast time of your Ghost Wolf spell by 3.0 sec, and Ghost Wolf may be used indoors."
     },
     {
      "row": 1,
@@ -384,7 +384,7 @@
      "tier": 30,
      "requires": "Mental Quickness",
      "requiresRanks": 2,
-     "description": "Increases your melee attack speed and spell casting speed by 30% for 25 sec."
+     "description": "Increases your attack speed by 30% for 25 sec."
     }
    ]
   },

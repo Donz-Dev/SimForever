@@ -180,7 +180,7 @@
      "tier": 30,
      "requires": null,
      "requiresRanks": null,
-     "description": "Transforms the Druid into Moonkin Form. While in this form, the armor contribution from items is increased by 360%, Omen of Clarity gains 100% increased chance to trigger, and all party members within 45 yards have their critical strike chance increased by 3%, exclusive with Leader of the Pack. The Moonkin cannot cast healing spells while shapeshifted.\n\nThe act of shapeshifting frees the caster of Polymorph and Movement Impairing effects."
+     "description": "Shapeshift into Moonkin Form, increasing Omen of Clarity's chance to trigger by 100%, Armor contribution from items by 360%, and all party members within 45 yards have their Critical Strike chance increased by 3%, exclusive with Leader of the Pack. Also protects the caster from Polymorph effects and prevents the use of healing spells.\n\nThe act of shapeshifting frees the caster of Polymorph and Movement Impairing effects."
     }
    ]
   },
@@ -197,7 +197,7 @@
      "tier": 0,
      "requires": null,
      "requiresRanks": null,
-     "description": "Reduces the cost of your Maul, Mangle, Swipe, Claw, and Rake abilities by 5 Rage or Energy."
+     "description": "Reduces the cost of your Maul, Primal Bite, Swipe, Claw, and Rake abilities by 5 Rage or Energy."
     },
     {
      "row": 0,
@@ -256,6 +256,17 @@
     },
     {
      "row": 2,
+     "col": 0,
+     "ranks": 3,
+     "name": "Shredding Attacks",
+     "icon": "spell_shadow_vampiricaura",
+     "tier": 10,
+     "requires": null,
+     "requiresRanks": null,
+     "description": "Reduces the Energy cost of your Shred ability by 18 and reduces the Rage cost of your Lacerate ability by 3."
+    },
+    {
+     "row": 2,
      "col": 1,
      "ranks": 2,
      "name": "Savage Fury",
@@ -274,7 +285,7 @@
      "tier": 10,
      "requires": null,
      "requiresRanks": null,
-     "description": "Charge an enemy, immobilizing them and interrupting any spell they are casting for 4 sec.\n\nLeap behind an enemy."
+     "description": "Charge an enemy, immobilizing them and interrupting any spell they are casting for 4 sec.\n\nFeral Charge (Cat): 8-25 yd range, Instant, 30 sec cooldown, Requires Cat Form. Leap behind an enemy."
     },
     {
      "row": 2,
@@ -290,24 +301,24 @@
     {
      "row": 3,
      "col": 0,
-     "ranks": 3,
-     "name": "Shredding Attacks",
-     "icon": "spell_shadow_vampiricaura",
+     "ranks": 1,
+     "name": "Shifting Power",
+     "icon": "spell_druid_displacement",
      "tier": 15,
-     "requires": null,
-     "requiresRanks": null,
-     "description": "Reduces the Energy cost of your Shred ability by 18 and reduces the Rage cost of your Lacerate ability by 3."
+     "requires": "Shredding Attacks",
+     "requiresRanks": 3,
+     "description": "Instantly convert 55% of base Mana into 40 Energy. Shifting Power's cost is reduced by effects that reduce the cost of Shapeshifting."
     },
     {
      "row": 3,
      "col": 1,
      "ranks": 1,
-     "name": "Mangle",
-     "icon": "ability_druid_mangle2",
+     "name": "Primal Bite",
+     "icon": "ability_racial_cannibalize",
      "tier": 15,
      "requires": "Savage Fury",
      "requiresRanks": 2,
-     "description": "Mangle the target for 100% normal damage plus 26."
+     "description": "Bite the target, dealing 100% normal damage plus 26 and generating a high amount of threat."
     },
     {
      "row": 3,
@@ -324,8 +335,8 @@
      "row": 3,
      "col": 3,
      "ranks": 2,
-     "name": "Primal Fury",
-     "icon": "ability_racial_cannibalize",
+     "name": "Blood Frenzy",
+     "icon": "ability_ghoulfrenzy",
      "tier": 15,
      "requires": "Sharpened Claws",
      "requiresRanks": 2,
@@ -335,12 +346,12 @@
      "row": 4,
      "col": 0,
      "ranks": 2,
-     "name": "Predatory Instincts",
-     "icon": "ability_druid_predatoryinstincts",
+     "name": "Improved Shifting Power",
+     "icon": "ability_hunter_aspectmastery",
      "tier": 20,
-     "requires": null,
-     "requiresRanks": null,
-     "description": "Increases the critical strike damage bonus of your melee abilities by 20%."
+     "requires": "Shifting Power",
+     "requiresRanks": 1,
+     "description": "Reduces the cooldown of your Shifting Power spell by 8 sec."
     },
     {
      "row": 4,
@@ -356,13 +367,13 @@
     {
      "row": 4,
      "col": 3,
-     "ranks": 3,
-     "name": "King of the Jungle",
-     "icon": "ability_druid_kingofthejungle",
+     "ranks": 2,
+     "name": "Predatory Instincts",
+     "icon": "ability_druid_predatoryinstincts",
      "tier": 20,
      "requires": null,
      "requiresRanks": null,
-     "description": "Tiger's Fury now instantly grants you 60 Energy."
+     "description": "Increases the critical strike damage bonus of your melee abilities by 20%."
     },
     {
      "row": 5,
@@ -395,7 +406,7 @@
      "tier": 30,
      "requires": "Leader of the Pack",
      "requiresRanks": 1,
-     "description": "Causes your Mangle ability to strike up to 3 targets, removes its cooldown, and increases the critical strike chance of your Combo Point-generating abilities by 100%. Clears and grants immunity to Fear effects for the duration. Lasts 15 sec."
+     "description": "Causes your Primal Bite ability to strike up to 3 targets, removes its cooldown, and increases the critical strike chance of your Combo Point-generating abilities by 100%. Clears and grants immunity to Fear effects for the duration. Lasts 15 sec."
     }
    ]
   },

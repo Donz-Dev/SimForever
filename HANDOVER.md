@@ -1,3 +1,106 @@
+**FOREVER PATCHED, AND SEVEN OF THE TWENTY RECORDED BUILD URLS STOPPED DECODING.**
+Client build **1.60.1.70170**: every talent tree, rank value and spellbook
+re-imported, **ten of the twenty-four profiles re-specified**, six of them moved
+in DPS, and **four talents removed that the patch notes do not mention at all**.
+
+| Profile | was | now | | |
+| --- | --- | --- | --- | --- |
+| DW Fury | 790.4 | **892.0** | **+101.6 REAL** | crit rage is +75.5 of it |
+| 2H Arms | 721.5 | **784.1** | **+62.6 REAL** | Bloodthrill +33.5, crit rage +18.0 |
+| Cat Druid | 770.0 | **794.0** | **+24.0 REAL** | Shifting Power for Tiger's Fury |
+| Seal Twist Ret | 886.9 | **788.4** | **-98.5 REAL** | Champion of the Light -27.6, Vengeance -24.3 |
+| Shockadin | 682.0 | **601.3** | **-80.7 REAL** | the same two, -31.9 and -22.5 |
+| Enh Shaman | 727.2 | 708.6 | -18.6 noise | lost Elemental Fury to a tier swap |
+
+**THE OTHER EIGHTEEN MOVED BY 0.0 TO THE DECIMAL** -- all four Rogues, the
+Moonkin, both Warlocks, the Shadow Priest, Arcane, the BM and ranged Hunters and
+the Elemental Shaman -- which is the containment check saying the patch reached
+what it should and nothing else. Prot Warr +5.6, Bear +5.7, Fire +3.6, Frostfire
+-10.4, LW Melee -8.0 and Prot Pally -0.2 are all inside their own intervals.
+
+**THE FIGURES NAMED ABOVE ARE MARGINAL AND DO NOT SUM TO THE TOTAL.** Each is
+"what reverting this one costs with the rest of the patch present", measured by
+reverting EVERY file the change touched -- Bloodthrill's needed two, the
+predicate and the values row, which is the isolation rule this project learned on
+the Cat attribution probe.
+
+**FOUR REMOVALS ARE IN NO PATCH NOTE**, and all four were being spent on:
+
+| | |
+| --- | --- |
+| **Improved Holy Strike** | Paladin Holy. **All three** Paladin builds spent 2 points |
+| **Crusade** | Paladin Retribution. Two builds spent 2, +2% to everything |
+| **Precision** | Warrior Fury, +3% hit. No Warrior build took it |
+| **Toughness** | Warrior Protection, named in the notes. No Warrior build took it |
+
+So three of the four were silent, and the two Paladin ones forced all three
+Paladin builds to be re-specified. **A SILENT TREE CHANGE IS NOT A SILENT
+FAILURE HERE, AND THAT IS THE ONE PIECE OF LUCK IN IT**: the encoding is one
+digit per talent IN TREE ORDER, so a removal shifts every digit after it and
+`tools/decode_talent_build.mjs` throws rather than producing a legal-looking
+build nobody chose. Seven of the twenty URLs it carried stopped decoding at once,
+and the three Warrior builds were not in that list to stop.
+
+**THE OWNER SUPPLIED FIVE NEW BUILDS WITH THE NOTES AND FOUR MORE WHEN ASKED.**
+Druid Cat and Bear and all three Warriors came with the patch; the three Paladins
+and Enhancement Shaman were decisions rather than transcriptions -- 4, 4 and 2
+freed points, and an Enhancement build that can no longer reach Elemental Fury at
+19 points in the tree -- so they were asked for rather than guessed. **The
+Elemental Shaman is the one re-encoding**: it takes both of the swapped talents at
+the same ranks, so its digits moved and its build did not.
+
+**THE WARRIOR WAS ABSENT FROM THE DECODER'S LIST FOR THE WHOLE PROJECT**, which
+is why nothing noticed its tree had changed shape. The one class with four
+sources was the one class no build URL was checked against. All three are in it
+now.
+
+**ONE NEW ENGINE RULE, AND IT IS A RESOURCE RULE RATHER THAN A DAMAGE ONE.**
+`Combatant.critResourceMultiplier` -- 2.0 for a Warrior, 1.75 for a Bear Druid,
+1 for everything else -- multiplies the FLAT half of a resource award on a
+critical swing. The flat half only: a `perDamage` award is already proportional
+to damage and a crit has already doubled the damage, so multiplying it too pays
+the bonus twice, which is a bigger number and no error. Forever's two rage rules
+split exactly along that line.
+
+**IT MAKES CRIT A RAGE STAT, WHICH IS WHY DW FURY MOVED MOST.** Two hands, high
+crit and a rage-starved list: +75.5 of its +101.6. A tank gets +6.8 from the same
+rule, because a Protection warrior is already capping and wasting income.
+
+**AND SWIPE'S COEFFICIENT WENT 10% TO 3% ON A PATCH NOTE THAT CALLS IT A FIX.**
+`WoWSimWorksheet.xlsx` says 10 and the notes say 3, and the notes are later --
+the rule Rake's tick already runs on. It moves no figure in the table: Swipe is
+in no priority list, because every encounter here has one target.
+
+**TWO PATCH ITEMS NEEDED NO CHANGE AND BOTH ARE RECORDED RATHER THAN LEFT
+SILENT.** "Devouring Plague can now correctly critically strike" always could
+here -- every DoT in Forever can crit, and that is a RULE the owner gave for the
+whole ruleset rather than a per-spell property, so the client had a bug this
+simulator never reproduced. And Faerie Fire's swing timer is not applicable: the
+ability is modelled only as a raid-buff debuff and no Druid profile casts it. **A
+patch note with no diff beside it reads as something that was missed.**
+
+**THE SPELLBOOK IMPORTER HAD A PARSER BUG THAT HAD BEEN EATING REAL COSTS**, and
+a finisher is what exposed it. The cost grid carries a THIRD cost-shaped cell for
+some spells -- `["30 Energy", "Melee Range"], ["1 to 5 Combo Points", ""]` -- and
+the cost branch was the fall-through, so the second overwrote the first and Rip
+and Ferocious Bite came back costing no energy at all. The same shape had been
+replacing mana costs with reagent lines, pet-family lines and totem tools for
+about a hundred spells across seven classes: **Shadowburn read "Reagents: Soul
+Shard" where its cost is 365 mana**, and every Hunter pet ability read its family
+instead of its focus. `extraLines` carries them now and the first cost-shaped
+cell wins, so a fourth kind of line cannot delete a cost either.
+
+**NOTHING READS THAT CAPTURE PROGRAMMATICALLY**, which is exactly why it went
+unnoticed: the wrong number sat in a reference document that a reader would have
+believed. See [docs/source-cross-checks.md](docs/source-cross-checks.md).
+
+**TWO DERIVED COUNTS IN THIS FILE WERE ALREADY WRONG BY ONE, AND RE-COUNTING
+FOUND BOTH.** The `scope` table's `threat` row said 14 against 13 declarations,
+and the placeholder figure said 10 against 9 -- each the arithmetic failure
+CLAUDE.md documents under **Git workflow**, and each in a column whose own
+instruction says to re-count rather than adjust. The placeholder count is 10 now
+because this patch adds one, which is the coincidence worth naming.
+
 **THE WARLOCK HAS A WEAPON STONE, AND BOTH PRESETS NOW CARRY ONE.**
 `profile.warlockStone` -- a Firestone or a Spellstone, selected in the Gear panel
 beside a Rogue's poisons, and **profile format v11**. The owner's choice:
@@ -32,7 +135,7 @@ gets built is [docs/class-implementation.md](docs/class-implementation.md).
 
 All nine classes and all 24 profiles are implemented, every number traced to a
 source rather than invented, and **all 24 priority lists are the ruleset owner's
-own** -- specified entry by entry and measured after. **2,662 tests**, CI green
+own** -- specified entry by entry and measured after. **2,712 tests**, CI green
 on Node 20 and 22. Profile format **v12**. Live at
 <https://donz-dev.github.io/SimForever/>, republished by
 `.github/workflows/deploy.yml` on every push to `main` that passes.
@@ -47,17 +150,31 @@ demonstrated at the top. **Re-count rather than re-reading the sentence.**
 
 | | |
 | --- | --- |
-| **Talents** | 258 fully, 36 partly, 110 ruled out, **64 a live gap** -- from 132 before the class dives |
+| **Talents** | 260 fully, 39 partly, 105 ruled out, **62 a live gap**, out of **466** -- from 132 before the class dives |
 | **Abilities** | 114 declared against 478 captured |
-| **Profiles** | 24, all measured, **mean 704.8** -- the armour enchants are +27.0 of it and the consumables +105.9 |
+| **Profiles** | 24, all measured, **mean 704.3** -- the armour enchants are +27.0 of it and the consumables +105.9 |
 | **Scope rulings** | 7 members, all the owner's |
 | **Placeholders** | **10 declared** -- see the milestone table, and count DECLARATIONS |
-| **Tests** | 2,662 on Node 20 and 22 |
+| **Tests** | 2,712 on Node 20 and 22 |
 
-**FOUR CLASSES ARE ESSENTIALLY DONE** -- Warrior 0 live gaps, Paladin 2, Druid 2,
-Rogue 3 -- and the remaining 64 sit mostly in the Warlock (20), Priest (12) and
-Mage (11). **The Warlock's 20 overstates its own work**: thirteen of them are one
+**FOUR CLASSES ARE ESSENTIALLY DONE** -- Warrior 1 live gap, Paladin 1, Druid 2,
+Rogue 3 -- and the remaining 62 sit mostly in the Warlock (19), Priest (12) and
+Mage (10). **The Warlock's 19 overstates its own work**: thirteen of them are one
 build cause, Demonic Sacrifice killing the demon, so its real queue is about 11.
+
+**THE TALENT TOTAL IS 466 AND WAS 468**, which is client build 1.60.1.70170
+removing four talents and adding three. Every figure in that row is re-counted
+from the declarations by `tools/class_audit.ts`, which throws if its four buckets
+do not account for every talent -- and the `scope` and placeholder figures beside
+it had each drifted by one before this re-count found them.
+
+**THE WARRIOR IS NO LONGER AT ZERO**, and its one gap is new: Lingering Rage,
+which lengthens the delay before rage decays after leaving combat. Nothing here
+leaves combat, so it is inert -- and it carries no `scope` tag, because whether an
+out-of-combat state belongs in scope is the owner's decision and a scoped entry is
+filed as answered. Anger Management's second clause is the same question and is
+carried in a comment rather than a declaration, which is why the census counts
+that talent as fully modelled.
 
 ### How it got here: the nine-class push
 
@@ -1064,7 +1181,7 @@ while it worked.
 decimal -- which is what a talent change scoped to one build should look like.
 It makes Frostfire the top Mage, above Fire's 401.2 and Arcane's 392.6, and the
 build that existed for the Fire/Frost overlap now has a third reason to. The
-mean across **24** is **704.8**, RE-SUMMED FROM THE TABLE ABOVE rather than
+mean across **24** is **704.3**, RE-SUMMED FROM THE TABLE ABOVE rather than
 adjusted -- **by `tools/update_baseline_table.py`, which exists now**; the
 sentence above it had promised a script for several commits and there was none,
 so the mean and the ordering were still being maintained by hand.
@@ -1626,23 +1743,31 @@ cannot audit, which is why the check is a SET comparison and not a row count.
 
 | Profile | Class | Talents | DPS | | Profile | Class | Talents | DPS |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| Frostfire Mage | Mage | 0/29/22 | 947.2 | | Moonkin | Druid | 38/0/13 | 724.0 |
-| Seal Twist Ret | Paladin | 13/0/38 | 886.9 | | 2H Arms | Warrior | 38/13/0 | 721.5 |
-| Fire Mage | Mage | 10/39/2 | 874.1 | | Combat Rogue | Rogue | 18/33/0 | 691.1 |
+| Frostfire Mage | Mage | 0/29/22 | 936.9 | | Moonkin | Druid | 38/0/13 | 724.0 |
+| **DW Fury** | Warrior | 17/34/0 | **892.0** | | Enh Shaman | Shaman | 17/34/0 | 708.6 |
+| Fire Mage | Mage | 10/39/2 | 877.7 | | Combat Rogue | Rogue | 18/33/0 | 691.1 |
 | LW Ranged | Hunter | 7/39/5 | 805.9 | | SM/DS | Warlock | 40/11/0 | 690.4 |
-| DW Fury | Warrior | 18/33/0 | 790.4 | | Shockadin | Paladin | 23/0/28 | 682.0 |
-| LW Melee | Hunter | 7/13/31 | 787.7 | | Hemo Rogue | Rogue | 17/3/31 | 622.4 |
-| BM Hunter | Hunter | 31/20/0 | 771.7 | | Ele Shaman | Shaman | 38/13/0 | 617.5 |
-| Cat Druid | Druid | 9/35/7 | 770.0 | | Venom Rogue | Rogue | 37/12/2 | 600.8 |
-| Arcane Mage | Mage | 47/4/0 | 769.4 | | Rupture Rogue | Rogue | 12/8/31 | 584.2 |
-| Firelock | Warlock | 5/11/35 | 759.7 | | Prot Warr | Warrior | 17/0/34 | 499.3 |
-| Shadow Priest | Priest | 13/3/35 | 746.9 | | Bear Druid | Druid | 9/42/0 | 490.5 |
-| Enh Shaman | Shaman | 19/32/0 | 727.2 | | Prot Pally | Paladin | 8/36/7 | 355.4 |
+| **Cat Druid** | Druid | 9/34/8 | **794.0** | | Hemo Rogue | Rogue | 17/3/31 | 622.4 |
+| **Seal Twist Ret** | Paladin | 15/0/36 | **788.4** | | Ele Shaman | Shaman | 38/13/0 | 617.5 |
+| **2H Arms** | Warrior | 39/10/2 | **784.1** | | **Shockadin** | Paladin | 23/0/28 | **601.3** |
+| LW Melee | Hunter | 7/13/31 | 779.7 | | Venom Rogue | Rogue | 37/12/2 | 600.8 |
+| BM Hunter | Hunter | 31/20/0 | 771.7 | | Rupture Rogue | Rogue | 12/8/31 | 584.2 |
+| Arcane Mage | Mage | 47/4/0 | 769.4 | | Prot Warr | Warrior | 17/0/34 | 504.9 |
+| Firelock | Warlock | 5/11/35 | 759.7 | | Bear Druid | Druid | 9/42/0 | 496.1 |
+| Shadow Priest | Priest | 13/3/35 | 746.9 | | Prot Pally | Paladin | 8/34/9 | 355.2 |
 
-**THE TOP IS THE FROSTFIRE MAGE NOW, AND THE TABLE RE-SORTED AROUND THE
-CASTERS.** **947.2 +/-15.6** against Seal Twist Ret's **886.9 +/-8.8** is 60.3,
-outside both intervals -- and Seal Twist Ret had held the top since the Cat lost
-it. Four of the top six are casters where none was in the top six a commit ago.
+**THE TOP IS STILL THE FROSTFIRE MAGE AND THE SECOND PLACE CHANGED HANDS.**
+**936.9 +/-11.8** against DW Fury's **892.0 +/-11.5** is 44.9, outside both
+intervals. Seal Twist Ret was second at 886.9 and is now sixth: the Paladin lost
+98.5 to its own patch notes while the Warrior gained 101.6 to the same ones, which
+is a 200-DPS swing between two rows in one patch and the largest this table has
+seen.
+
+**THE CASTER RE-SORT THIS PARAGRAPH USED TO DESCRIBE HAS PARTLY UNWOUND.** It read
+"four of the top six are casters where none was in the top six a commit ago" --
+true of the consumables commit, and three of the top six are melee again after
+this one. The consumables are still what put the casters there; what changed is
+that two melee rows moved a hundred DPS past them.
 
 **TWO CHANGES MOVED EVERY ROW, ONE AFTER THE OTHER, AND NOTHING RECORDED BEFORE
 EITHER IS COMPARABLE.** The armour enchants were +2.4 to +53.7 on a mean of

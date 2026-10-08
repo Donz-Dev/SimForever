@@ -8,6 +8,40 @@ directory for what the census columns mean and how to reprint every figure below
 
 ---
 
+## Client build 1.60.1.70170 — a tier swap the patch notes do not mention
+
+**ENHANCEMENT WAS RE-SPECIFIED and the owner supplied the URL when asked.**
+Enh Shaman 727.2 → **708.6 (-18.6, noise)**, Ele Shaman unchanged to the decimal.
+
+**ELEMENTAL FURY AND ELEMENTAL ALACRITY SWAPPED TIERS** -- Fury from row 3 (tier
+10) to row 6 (tier 25), Alacrity the other way -- and Call of Thunder now requires
+Alacrity 3 where it required Fury 5. **None of that is in the notes.**
+
+**WHICH BROKE ONE BUILD AND NOT THE OTHER, AND THAT IS THE WHOLE STORY.**
+ELEMENTAL takes both talents at the same ranks, so only its digits moved: its
+allocation is byte-for-byte what the owner's original URL decoded to, re-encoded,
+and `decode_talent_build.mjs` says so on the entry. ENHANCEMENT had five points in
+Elemental Fury and nineteen in the tree, which cannot reach tier 25 -- so there was
+no re-encoding to do and the owner chose where the points went.
+
+**IT COST THE BUILD ELEMENTAL FURY'S +100% CRIT DAMAGE on Fire, Frost and Nature**,
+which an Enhancement shaman reaches through Maelstrom Weapon's Lightning Bolts and
+its Flametongue. **-18.6 is inside the interval and the mechanism is not**, which
+is the shape CLAUDE.md records under Naturalist: a `noise` verdict is a statement
+about variance, not about whether anything happened.
+
+**AND IT PUT A LIVE GAP INTO THE BUILD** -- Elemental Warding, three of the freed
+points, which reduces Fire, Frost and Nature damage TAKEN and neither profile
+faces a target that deals any. The ENCOUNTER cause, not the engine's.
+
+**LAVA BURST'S RANK 1 MOVED AND ITS MAX RANK DID NOT**, 106-134 → 150-192 against
+an unchanged 192-248. So the talent tooltip and the spellbook now look CLOSER
+together than they used to, and a reader who remembers the old gap could take the
+spellbook's figure for the talent's new one.
+
+---
+
+
 ## The one thing to understand first
 
 **THE DEEP DIVE IS DONE, AND WHAT IT FOUND WAS NOT A MISSING ENGINE.** The

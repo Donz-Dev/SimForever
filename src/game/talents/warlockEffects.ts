@@ -95,7 +95,16 @@ export const WARLOCK_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
     { kind: 'abilityDamage', abilityId: 'wrack' },
   ],
 
-  soul_harvesting: [
+  /*
+   * RENAMED FROM SOUL HARVESTING at client build 1.60.1.70170, which the patch
+   * notes do not mention. The tooltip was reworded with it and its value row
+   * REORDERED -- `[10, 50, 50]` became `[50, 10, 50]`, duration and regeneration
+   * swapping places -- which is harmless here only because this entry reads no
+   * value at all. An effect with a `valueIndex` would have started reading
+   * seconds as a percentage, which is the failure CLAUDE.md records four times
+   * over on the Druid and once on the Priest.
+   */
+  soul_harvest: [
     { kind: 'unmodelled', reason: 'Needs a KILL, and the target survives every fight.' },
   ],
 

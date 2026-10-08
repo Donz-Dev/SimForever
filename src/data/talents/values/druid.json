@@ -256,7 +256,7 @@
    "name": "Ferocity",
    "tree": "feral_combat",
    "ranks": 5,
-   "text": "Reduces the cost of your Maul, Mangle, Swipe, Claw, and Rake abilities by {0} Rage or Energy.",
+   "text": "Reduces the cost of your Maul, Primal Bite, Swipe, Claw, and Rake abilities by {0} Rage or Energy.",
    "values": [
     1,
     2,
@@ -370,34 +370,6 @@
     ]
    ]
   },
-  "savage_fury": {
-   "name": "Savage Fury",
-   "tree": "feral_combat",
-   "ranks": 2,
-   "text": "Increases the damage caused by your Claw, Rake, Shred, Maul, and Swipe abilities by {0}%.",
-   "values": [
-    5,
-    10
-   ]
-  },
-  "feral_charge": {
-   "name": "Feral Charge",
-   "tree": "feral_combat",
-   "ranks": 1,
-   "text": "Charge an enemy, immobilizing them and interrupting any spell they are casting for 4 sec.\n\nLeap behind an enemy.",
-   "values": null,
-   "note": "single rank"
-  },
-  "sharpened_claws": {
-   "name": "Sharpened Claws",
-   "tree": "feral_combat",
-   "ranks": 2,
-   "text": "Increases your critical strike chance while in Bear Form, Dire Bear Form, or Cat Form by {0}%.",
-   "values": [
-    3,
-    6
-   ]
-  },
   "shredding_attacks": {
    "name": "Shredding Attacks",
    "tree": "feral_combat",
@@ -418,11 +390,47 @@
     ]
    ]
   },
-  "mangle": {
-   "name": "Mangle",
+  "savage_fury": {
+   "name": "Savage Fury",
+   "tree": "feral_combat",
+   "ranks": 2,
+   "text": "Increases the damage caused by your Claw, Rake, Shred, Maul, and Swipe abilities by {0}%.",
+   "values": [
+    5,
+    10
+   ]
+  },
+  "feral_charge": {
+   "name": "Feral Charge",
    "tree": "feral_combat",
    "ranks": 1,
-   "text": "Mangle the target for 100% normal damage plus 26.",
+   "text": "Charge an enemy, immobilizing them and interrupting any spell they are casting for 4 sec.\n\nFeral Charge (Cat): 8-25 yd range, Instant, 30 sec cooldown, Requires Cat Form. Leap behind an enemy.",
+   "values": null,
+   "note": "single rank"
+  },
+  "sharpened_claws": {
+   "name": "Sharpened Claws",
+   "tree": "feral_combat",
+   "ranks": 2,
+   "text": "Increases your critical strike chance while in Bear Form, Dire Bear Form, or Cat Form by {0}%.",
+   "values": [
+    3,
+    6
+   ]
+  },
+  "shifting_power": {
+   "name": "Shifting Power",
+   "tree": "feral_combat",
+   "ranks": 1,
+   "text": "Instantly convert 55% of base Mana into 40 Energy. Shifting Power's cost is reduced by effects that reduce the cost of Shapeshifting.",
+   "values": null,
+   "note": "single rank"
+  },
+  "primal_bite": {
+   "name": "Primal Bite",
+   "tree": "feral_combat",
+   "ranks": 1,
+   "text": "Bite the target, dealing 100% normal damage plus 26 and generating a high amount of threat.",
    "values": null,
    "note": "single rank"
   },
@@ -437,8 +445,8 @@
     150
    ]
   },
-  "primal_fury": {
-   "name": "Primal Fury",
+  "blood_frenzy": {
+   "name": "Blood Frenzy",
    "tree": "feral_combat",
    "ranks": 2,
    "text": "Gives you a {0}% chance to gain an additional {1} Rage any time you get a critical strike while in Bear Form or Dire Bear Form. In addition, your non-periodic critical strikes from Cat Form abilities that generate Combo Points have a {2}% chance to add an additional Combo Point.",
@@ -455,14 +463,14 @@
     ]
    ]
   },
-  "predatory_instincts": {
-   "name": "Predatory Instincts",
+  "improved_shifting_power": {
+   "name": "Improved Shifting Power",
    "tree": "feral_combat",
    "ranks": 2,
-   "text": "Increases the critical strike damage bonus of your melee abilities by {0}%.",
+   "text": "Reduces the cooldown of your Shifting Power spell by {0} sec.",
    "values": [
-    10,
-    20
+    4,
+    8
    ]
   },
   "leader_of_the_pack": {
@@ -473,15 +481,14 @@
    "values": null,
    "note": "single rank"
   },
-  "king_of_the_jungle": {
-   "name": "King of the Jungle",
+  "predatory_instincts": {
+   "name": "Predatory Instincts",
    "tree": "feral_combat",
-   "ranks": 3,
-   "text": "Tiger's Fury now instantly grants you {0} Energy.",
+   "ranks": 2,
+   "text": "Increases the critical strike damage bonus of your melee abilities by {0}%.",
    "values": [
-    20,
-    40,
-    60
+    10,
+    20
    ]
   },
   "natural_reaction": {
@@ -534,7 +541,7 @@
    "name": "Berserk",
    "tree": "feral_combat",
    "ranks": 1,
-   "text": "Causes your Mangle ability to strike up to 3 targets, removes its cooldown, and increases the critical strike chance of your Combo Point-generating abilities by 100%. Clears and grants immunity to Fear effects for the duration. Lasts 15 sec.",
+   "text": "Causes your Primal Bite ability to strike up to 3 targets, removes its cooldown, and increases the critical strike chance of your Combo Point-generating abilities by 100%. Clears and grants immunity to Fear effects for the duration. Lasts 15 sec.",
    "values": null,
    "note": "single rank"
   },

@@ -215,8 +215,10 @@ describe('the numbers', () => {
     expect(twoHand - 21).toBeCloseTo((oneHand - 21) * 1.1, 6);
   });
 
-  it('declares an effect for every one of the 52 talents', () => {
-    expect(Object.keys(PALADIN_TALENT_EFFECTS)).toHaveLength(52);
+  it('declares an effect for every one of the 50 talents', () => {
+    // 50 since client build 1.60.1.70170: Improved Holy Strike and Crusade were
+    // both removed, and the patch notes mention neither.
+    expect(Object.keys(PALADIN_TALENT_EFFECTS)).toHaveLength(50);
   });
 });
 

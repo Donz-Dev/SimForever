@@ -9,9 +9,12 @@ import { ALL_ABILITIES } from '../../src/engine';
 import {
   OVERPOWER_READY,
   OVERPOWER_WINDOW_MS,
+  REND,
   STANCE_RAGE_FLOOR,
 } from '../../src/game/auras/warrior';
 import { WARRIOR_TALENT_REACTIONS } from '../../src/game/reactions/warriorTalents';
+import { WARRIOR_TALENT_EFFECTS } from '../../src/game/talents/warriorEffects';
+import { talentValue } from '../../src/game/talents/talentValues';
 
 /*
  * The Arms talent audit, item by item.
@@ -387,5 +390,181 @@ describe('Weaponmaster depends on which weapon swung', () => {
       {} as never,
     );
     expect(calls).toEqual(['mainHand']);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// The 1.60.1.70170 Arms changes
+// ---------------------------------------------------------------------------
+
+describe('Bloodthrill is MAIN HAND only now, at twice the chance', () => {
+  /*
+   * ----------------------------------------------------------------------------
+   * NEITHER CHANGE IS IN THE PATCH NOTES. The tooltip went from "Your melee
+   * attacks against targets afflicted by your Rend have a 10% chance" to "Your
+   * Main Hand melee attacks against enemies afflicted by your Rend have a 20%
+   * chance", and the values row from 2/4/6/8/10 to 4/8/12/16/20.
+   *
+   * THE TWO PULL AGAINST EACH OTHER AND THE NET DEPENDS ON THE BUILD. For 2H
+   * Arms, which takes 5/5, every weapon use is already a main-hand use and the
+   * talent simply doubled. For a dual-wielder it halves the eligible attacks and
+   * doubles the chance, which is roughly a wash -- and no dual-wield build takes
+   * it, which is why this is asserted on the predicate rather than measured.
+   *
+   * THE VALUE ROW ALSO LOST A NUMBER: `[chance, 1, 6]` became `[chance, 6]`, the
+   * middle one being "for 1 attack" which the new wording drops. This effect
+   * reads index 0 either way, which is the kind of accident worth not resting on.
+   * ----------------------------------------------------------------------------
+   */
+  const rendedTarget = () => {
+    const actor = createPlayer({
+      race: 'orc',
+      characterClass: 'warrior',
+      combatStyle: 'dual_wield',
+      stance: 'berserker',
+      talents: legalise({ bloodthrill: 5 }),
+    });
+    const target = createTrainingDummy();
+    const simulation = buildSimulation([actor, target]);
+    simulation.begin();
+    simulation.applyAura(target, REND, actor.id);
+    return { actor, target, simulation };
+  };
+
+  const attack = (
+    actor: ReturnType<typeof rendedTarget>['actor'],
+    target: ReturnType<typeof rendedTarget>['target'],
+    weaponSlot: 'mainHand' | 'offHand' | 'ranged' | undefined,
+  ) => ({
+    attacker: actor,
+    defender: target,
+    outcome: 'hit' as const,
+    abilityId: undefined,
+    abilityName: 'Auto-Attack',
+    amount: 300,
+    weaponSlot,
+    critical: false,
+  });
+
+  it('states 4/8/12/16/20, and the "for 1 attack" number is gone from the row', () => {
+    expect(talentValue('warrior', 'bloodthrill', 1)).toEqual([4, 6]);
+    expect(talentValue('warrior', 'bloodthrill', 5)).toEqual([20, 6]);
+  });
+
+  it('accepts a main-hand use and refuses the off hand', () => {
+    const { actor, target, simulation } = rendedTarget();
+    const reaction = actor.reactions.find((r) => r.id === 'bloodthrill')!;
+
+    // The chance is rolled AFTER the slot test, so a refusal here is the slot.
+    expect(reaction.canTrigger?.(simulation, actor, attack(actor, target, 'offHand') as never)).toBe(
+      false,
+    );
+    expect(reaction.canTrigger?.(simulation, actor, attack(actor, target, 'ranged') as never)).toBe(
+      false,
+    );
+    expect(
+      reaction.canTrigger?.(simulation, actor, attack(actor, target, undefined) as never),
+    ).toBe(false);
+
+    // And a main-hand use gets as far as the roll: over many attempts at 20% it
+    // cannot be always false, which is the only honest assertion on a chance.
+    let accepted = 0;
+    for (let i = 0; i < 200; i += 1) {
+      if (reaction.canTrigger?.(simulation, actor, attack(actor, target, 'mainHand') as never)) {
+        accepted += 1;
+      }
+    }
+    expect(accepted).toBeGreaterThan(0);
+  });
+
+  it('still refuses a main-hand use on a target that is not bleeding from Rend', () => {
+    const actor = createPlayer({
+      race: 'orc',
+      characterClass: 'warrior',
+      combatStyle: 'dual_wield',
+      stance: 'berserker',
+      talents: legalise({ bloodthrill: 5 }),
+    });
+    const target = createTrainingDummy();
+    const simulation = buildSimulation([actor, target]);
+    simulation.begin();
+    const reaction = actor.reactions.find((r) => r.id === 'bloodthrill')!;
+
+    for (let i = 0; i < 200; i += 1) {
+      expect(reaction.canTrigger?.(simulation, actor, attack(actor, target, 'mainHand') as never)).toBe(
+        false,
+      );
+    }
+  });
+});
+
+describe('Improved Slam gained a cooldown clause', () => {
+  /*
+   * ----------------------------------------------------------------------------
+   * "Reduces the global cooldown and cast time of your Slam ability by 0.50 sec.
+   * In addition, Slam no longer interrupts or delays your melee swing and Slam's
+   * cooldown is reduced by 3.0 sec."
+   *
+   * THE ROW WENT FROM ONE NUMBER TO TWO, which is why all four of the talent's
+   * effects now name an index. Three of them want the cast time at index 0 and
+   * were reading it by default -- correct by accident, and wrong the moment a
+   * fourth effect wanted something else.
+   *
+   * THE THREE SECONDS DO NOT SCALE: both ranks state 3, which is what the values
+   * file records and what breaks the "one varying number" assumption.
+   * ----------------------------------------------------------------------------
+   */
+  it('states a half second and a flat three seconds, at both ranks', () => {
+    expect(talentValue('warrior', 'improved_slam', 1)).toEqual([0.25, 3]);
+    expect(talentValue('warrior', 'improved_slam', 2)).toEqual([0.5, 3]);
+  });
+
+  it('names an index on every effect, including the three that want zero', () => {
+    for (const effect of WARRIOR_TALENT_EFFECTS.improved_slam) {
+      if (effect.kind === 'abilityHoldsSwing') continue;
+      expect('valueIndex' in effect, effect.kind).toBe(true);
+    }
+  });
+
+  it('takes three seconds off an eighteen-second cooldown and a half off the cast', () => {
+    const base = createPlayer({
+      race: 'orc',
+      characterClass: 'warrior',
+      combatStyle: 'two_hander',
+      stance: 'battle',
+    }).abilities.get('slam')!;
+    const talented = createPlayer({
+      race: 'orc',
+      characterClass: 'warrior',
+      combatStyle: 'two_hander',
+      stance: 'battle',
+      talents: legalise({ improved_slam: 2 }),
+    }).abilities.get('slam')!;
+
+    // Written out from the tooltip: 1.5s cast and an 18s cooldown become 1.0 and
+    // 15, and the swing runs on behind the cast.
+    expect(base.castTimeMs).toBe(1_500);
+    expect(base.cooldownMs).toBe(18_000);
+    expect(talented.castTimeMs).toBe(1_000);
+    expect(talented.cooldownMs).toBe(15_000);
+    expect(talented.swingTimer).toBe('hold');
+  });
+
+  it('scales the cast time per rank and does NOT scale the cooldown', () => {
+    const slam = (rank: number) =>
+      createPlayer({
+        race: 'orc',
+        characterClass: 'warrior',
+        combatStyle: 'two_hander',
+        stance: 'battle',
+        talents: legalise({ improved_slam: rank }),
+      }).abilities.get('slam')!;
+
+    expect(slam(1).castTimeMs).toBe(1_250);
+    expect(slam(2).castTimeMs).toBe(1_000);
+    // Three seconds at BOTH ranks, which is the half a per-rank reading gets
+    // wrong -- and reading index 0 would have taken a quarter second off instead.
+    expect(slam(1).cooldownMs).toBe(15_000);
+    expect(slam(2).cooldownMs).toBe(15_000);
   });
 });

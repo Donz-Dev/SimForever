@@ -246,7 +246,22 @@ export const MAGE_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
     },
   ],
 
-  hot_streak: [{ kind: 'reaction', reactionId: 'hot_streak' }],
+  /*
+   * RENAMED FROM HOT STREAK at client build 1.60.1.70170 -- "since it is no
+   * longer dependent on having a 'streak'" -- and the rename cost its value.
+   *
+   * A SINGLE-RANK TALENT'S NUMBER IS HAND-FILLED, keyed by talent id, so a
+   * rename writes a NEW key and the importer's merge finds nothing under it.
+   * `values/mage.json` came back with `heating_up` at `null`, and an effect that
+   * reads no value is DROPPED in silence -- so the 25% cast-time reduction would
+   * simply have stopped applying, on a talent that reports itself fully
+   * modelled. Refilled by hand with the whole story on the entry.
+   *
+   * THE RENAME IS THE ONE CASE WHERE A REFRESH CAN LOSE A HAND-FILLED VALUE, and
+   * it is worth checking for whenever a talent's name moves: eight entries
+   * across the nine classes are hand-filled, and any of them could go this way.
+   */
+  heating_up: [{ kind: 'reaction', reactionId: 'heating_up' }],
 
   master_of_elements: [{ kind: 'reaction', reactionId: 'master_of_elements' }],
 

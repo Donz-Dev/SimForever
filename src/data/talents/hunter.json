@@ -125,7 +125,7 @@
      "tier": 15,
      "requires": null,
      "requiresRanks": null,
-     "description": "Command a hawk to dive-bomb your targeted enemy, dealing 32 Physical damage and continuing its assault for 18 sec. Only 2 hawks can be active at once. Summon Hawk shares its cooldown with Arcane Shot."
+     "description": "Command a hawk to dive-bomb your targeted enemy, dealing 32 plus 5% of your Ranged Attack Power Physical damage and continuing its assault for 18 sec. Only 2 hawks can be active at once. Summon Hawk shares its cooldown with Arcane Shot."
     },
     {
      "row": 4,
@@ -226,11 +226,11 @@
      "col": 0,
      "ranks": 3,
      "name": "Improved Stings",
-     "icon": "hunter_pvp_spidersting",
+     "icon": "ability_hunter_quickshot",
      "tier": 5,
      "requires": null,
      "requiresRanks": null,
-     "description": "Increased the damage of your Serpent Sting ability by 20%, reduces the cooldown of your Viper Sting ability by 6 sec, and increases the duration of your Scorpid Sting ability by 45 sec."
+     "description": "Increases the damage of your Serpent Sting ability by 20%, reduces the cooldown of your Viper Sting ability by 6 sec, and increases the duration of your Scorpid Sting ability by 45 sec."
     },
     {
      "row": 1,
@@ -296,7 +296,7 @@
      "tier": 15,
      "requires": null,
      "requiresRanks": null,
-     "description": "Increases the Ranged Attack Power of party members within 45 yards by 30. Lasts 30 min."
+     "description": "Increases the Ranged Attack Power of party members within 45 yds by 30."
     },
     {
      "row": 3,
@@ -362,7 +362,7 @@
      "tier": 30,
      "requires": "Trueshot Aura",
      "requiresRanks": 1,
-     "description": "A steady snipe that increases ranged damage by 160."
+     "description": "A long-range shot that deals ranged damage plus 160 and increases the range of your next 3 Shots by 10 yards for 10 sec."
     }
    ]
   },
@@ -390,7 +390,7 @@
      "tier": 0,
      "requires": null,
      "requiresRanks": null,
-     "description": "Increases your Parry chance by 10%."
+     "description": "Increases your Parry chance by 5%."
     },
     {
      "row": 1,
@@ -485,11 +485,11 @@
      "col": 1,
      "ranks": 5,
      "name": "Predator's Edge",
-     "icon": "ability_hunter_hatchettoss",
+     "icon": "ability_dualwield",
      "tier": 15,
      "requires": null,
      "requiresRanks": null,
-     "description": "Increases your melee critical strike damage by 30% and your offhand weapon damage by 50%."
+     "description": "Increases your melee critical strike damage by 30% and your Off Hand weapon damage by 50%."
     },
     {
      "row": 3,
@@ -544,7 +544,7 @@
      "tier": 20,
      "requires": null,
      "requiresRanks": null,
-     "description": "A powerful kick that deals 100% melee weapon damage."
+     "description": "A powerful kick that deals 100% melee weapon damage and increases movement speed by 30% for 3 sec."
     },
     {
      "row": 5,
@@ -555,7 +555,7 @@
      "tier": 25,
      "requires": null,
      "requiresRanks": null,
-     "description": "Increases your Agility by 15%."
+     "description": "Increases your Agility by 10%."
     },
     {
      "row": 6,
@@ -566,7 +566,7 @@
      "tier": 30,
      "requires": "Expose Prey",
      "requiresRanks": 2,
-     "description": "Your Mongoose Bite also causes the target to Bleed for damage over 21 sec equal to 40% of the damage done by Mongoose Bite."
+     "description": "Your Mongoose Bite also causes the target to Bleed for damage equal to 40% of the damage done by Mongoose Bite over 21 sec"
     }
    ]
   }

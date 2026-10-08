@@ -219,7 +219,7 @@
      "tier": 0,
      "requires": null,
      "requiresRanks": null,
-     "description": "Reduces the cooldown of your Fire Blast spell by 2 sec. Killing a non-trivial target increases the critical strike chance of your next Fire Blast cast within 20 sec by 50%."
+     "description": "Reduces the cooldown of your Fire Blast spell by 2 sec. Killing a non-trivial target increases the critical strike chance of your next Fire Blast cast within 30 sec by 50%."
     },
     {
      "row": 0,
@@ -335,12 +335,12 @@
      "row": 3,
      "col": 2,
      "ranks": 1,
-     "name": "Hot Streak",
-     "icon": "ability_mage_hotstreak",
+     "name": "Heating Up",
+     "icon": "spell_fire_firebolt",
      "tier": 15,
      "requires": "Pyroblast",
      "requiresRanks": 1,
-     "description": "Your non-periodic critical strikes with Fireball, Frostfire Bolt, Fire Blast, and Scorch grant Hot Streak for 15 sec. Hot Streak reduces the cast time of Pyroblast by 25%, stacking up to 3 times."
+     "description": "Non-periodic critical strikes with Fireball, Frostfire Bolt, Fire Blast, and Scorch reduce the cast time of your next Pyroblast cast within 20 sec by 25%, stacking up to 3 times."
     },
     {
      "row": 3,
@@ -395,7 +395,7 @@
      "tier": 30,
      "requires": "Critical Mass",
      "requiresRanks": 3,
-     "description": "When activated, this spell causes each of your Fire damage spell hits to increase your critical strike chance with Fire damage spells by 10%. This effect lasts until you have caused 4 non-periodic critical strikes with Fire spells."
+     "description": "When activated, this spell causes each of your Fire damage spell hits to increase your critical strike chance with Fire damage spells by 10%. This effect lasts until you have caused 3 non-periodic critical strikes with Fire spells."
     }
    ]
   },

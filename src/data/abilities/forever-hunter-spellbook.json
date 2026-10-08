@@ -1,7 +1,7 @@
 {
  "class": "hunter",
  "source": "https://talentsforever.com/spelldesc.js",
- "build": "1.60.1.70009",
+ "build": "1.60.1.70170",
  "note": "Max rank only. The simulator runs at level 60, and a talent tooltip shows rank 1 of the ability it grants -- see docs/class-implementation.md.",
  "spells": [
   {
@@ -161,10 +161,13 @@
    "tab": "Pets",
    "level": "Learned at level 56",
    "school": "Physical",
-   "cost": "Pet: every family",
+   "cost": "35 Focus",
    "range": "Melee Range",
    "cast": "Instant",
    "cooldown": "10 sec cooldown",
+   "extraLines": [
+    "Pet: every family but Bird of Prey, Crab and Scorpid"
+   ],
    "description": "Bite the enemy, causing 81 to 99 damage.",
    "versusClassic": "same"
   },
@@ -186,10 +189,13 @@
    "tab": "Pets",
    "level": "Learned at level 60",
    "school": "Physical",
-   "cost": "Pet: Boar",
+   "cost": "35 Focus",
    "range": "8-25 yd range",
    "cast": "Instant",
    "cooldown": "25 sec cooldown",
+   "extraLines": [
+    "Pet: Boar"
+   ],
    "description": "Charges an enemy, immobilizes it for 1 sec, and adds 490 melee attack power to the boar's next attack.",
    "versusClassic": "changed"
   },
@@ -200,11 +206,14 @@
    "tab": "Pets",
    "level": "Learned at level 56",
    "school": "Physical",
-   "cost": "Pet: Bear, Bird of Prey, Carrion Bird, Cat, Crab, Raptor, Scorpid",
+   "cost": "25 Focus",
    "range": "Melee Range",
    "cast": "Instant",
+   "extraLines": [
+    "Pet: Bear, Bird of Prey, Carrion Bird, Cat, Crab, Raptor, Scorpid"
+   ],
    "description": "Claw the enemy, causing 43 to 59 damage.",
-   "versusClassic": "changed"
+   "versusClassic": "same"
   },
   {
    "id": 5116,
@@ -255,9 +264,12 @@
    "tab": "Pets",
    "level": "Learned at level 50",
    "school": "Physical",
-   "cost": "Pet: every family",
+   "cost": "20 Focus",
    "cast": "Instant",
    "cooldown": "30 sec cooldown",
+   "extraLines": [
+    "Pet: every family but Bat, Bird of Prey, Carrion Bird, Core Hound and Wind Serpent"
+   ],
    "description": "Increases movement speed by 80% for 15 sec.",
    "versusClassic": "changed"
   },
@@ -268,10 +280,13 @@
    "tab": "Pets",
    "level": "Learned at level 56",
    "school": "Physical",
-   "cost": "Pet: Carrion Bird",
+   "cost": "20 Focus",
    "range": "Melee Range",
    "cast": "Instant",
    "cooldown": "10 sec cooldown",
+   "extraLines": [
+    "Pet: Carrion Bird"
+   ],
    "description": "Blasts a single enemy for 24 to 42 damage and lowers the melee attack power of all enemies in melee range by 204 for 30 sec.",
    "versusClassic": "changed"
   },
@@ -308,10 +323,13 @@
    "tab": "Pets",
    "level": "Learned at level 60",
    "school": "Physical",
-   "cost": "Pet: Crocilisk",
+   "cost": "35 Focus",
    "range": "Melee Range",
    "cast": "Instant",
    "cooldown": "6 sec cooldown",
+   "extraLines": [
+    "Pet: Crocilisk"
+   ],
    "description": "Viciously bites enemy appendages for 50 to 58 damage and reduces the effectiveness of any healing by 50% for 10 sec.",
    "versusClassic": "new"
   },
@@ -348,11 +366,14 @@
    "tab": "Pets",
    "level": "Learned at level 50",
    "school": "Physical",
-   "cost": "Pet: Bat, Bird of Prey, Carrion Bird, Wind Serpent",
+   "cost": "20 Focus",
    "cast": "Instant",
    "cooldown": "30 sec cooldown",
+   "extraLines": [
+    "Pet: Bat, Bird of Prey, Carrion Bird, Wind Serpent"
+   ],
    "description": "Increases movement speed by 80% for 15 sec.",
-   "versusClassic": "changed"
+   "versusClassic": "same"
   },
   {
    "id": 1265904,
@@ -361,9 +382,12 @@
    "tab": "Pets",
    "level": "Learned at level 60",
    "school": "Physical",
-   "cost": "Pet: Tallstrider",
+   "cost": "10 Focus",
    "range": "Melee Range",
    "cast": "Instant",
+   "extraLines": [
+    "Pet: Tallstrider"
+   ],
    "description": "Your tallstrider kicks up an abrasive cloud of dust, reducing the target's Armor by 505 for 30 sec.",
    "versusClassic": "new"
   },
@@ -416,7 +440,7 @@
    "school": "Nature",
    "cost": "20 Mana",
    "range": "Unlimited range",
-   "cast": "Channeled",
+   "cast": "2 sec cast",
    "description": "Take direct control of your pet and see through its eyes for 2 min.",
    "versusClassic": "changed"
   },
@@ -512,11 +536,14 @@
    "tab": "Pets",
    "level": "Learned at level 56",
    "school": "Physical",
-   "cost": "Pet: Wolf",
+   "cost": "60 Focus",
    "range": "30 yd range",
    "cast": "Instant",
    "cooldown": "30 sec cooldown",
-   "description": "The wolf howls, increasing the melee attack power of all party members within 15 yards by 138. Lasts 1 min.",
+   "extraLines": [
+    "Pet: Wolf"
+   ],
+   "description": "The wolf howls, increasing the melee attack power of all party members within 15 yards by 83. Lasts 1 min.",
    "versusClassic": "changed"
   },
   {
@@ -603,9 +630,12 @@
    "tab": "Pets",
    "level": "Learned at level 60",
    "school": "Nature",
-   "cost": "Pet: Wind Serpent",
+   "cost": "50 Focus",
    "range": "20 yd range",
    "cast": "Instant",
+   "extraLines": [
+    "Pet: Wind Serpent"
+   ],
    "description": "Breathes lightning, instantly dealing 86 to 98 Nature damage to a single target.",
    "versusClassic": "changed"
   },
@@ -629,10 +659,13 @@
    "tab": "Pets",
    "level": "Learned at level 50",
    "school": "Physical",
-   "cost": "Pet: Bird of Prey",
+   "cost": "20 Focus",
    "range": "Melee Range",
    "cast": "Instant",
    "cooldown": "1 min cooldown",
+   "extraLines": [
+    "Pet: Bird of Prey"
+   ],
    "description": "Grabs an enemy's weapon with its talons, causing 41 to 47 damage and disarming them for 4 sec.",
    "versusClassic": "new"
   },
@@ -691,10 +724,13 @@
    "tab": "Pets",
    "level": "Learned at level 60",
    "school": "Physical",
-   "cost": "Pet: Crab",
+   "cost": "50 Focus",
    "range": "Melee Range",
    "cast": "Instant",
    "cooldown": "30 sec cooldown",
+   "extraLines": [
+    "Pet: Crab"
+   ],
    "description": "Pinches an enemy's legs for 88 to 102 damage and reduces movement speed by 50% for 9 sec.",
    "versusClassic": "new"
   },
@@ -705,9 +741,12 @@
    "tab": "Pets",
    "level": "Learned at level 50",
    "school": "Physical",
-   "cost": "Pet: Cat",
+   "cost": "40 Focus",
    "cast": "Instant",
    "cooldown": "10 sec cooldown",
+   "extraLines": [
+    "Pet: Cat"
+   ],
    "description": "Puts your pet in stealth mode, but slows its movement speed by 40%. The first attack from stealth receives a 50% bonus to damage. Lasts until cancelled.",
    "versusClassic": "same"
   },
@@ -756,10 +795,13 @@
    "tab": "Pets",
    "level": "Learned at level 60",
    "school": "Physical",
-   "cost": "Pet: Raptor",
+   "cost": "50 Focus",
    "range": "Melee Range",
    "cast": "Instant",
    "cooldown": "1 min cooldown",
+   "extraLines": [
+    "Pet: Raptor"
+   ],
    "description": "Slash an enemy with razor talons, causing the target to Bleed for 156 damage over 18 sec.",
    "versusClassic": "new"
   },
@@ -798,10 +840,13 @@
    "tab": "Pets",
    "level": "Learned at level 56",
    "school": "Nature",
-   "cost": "Pet: Scorpid",
+   "cost": "30 Focus",
    "range": "Melee Range",
    "cast": "Instant",
    "cooldown": "4 sec cooldown",
+   "extraLines": [
+    "Pet: Scorpid"
+   ],
    "description": "Inflicts 25 Nature damage over 10 sec. Effect can stack up to 5 times on a single target.",
    "versusClassic": "changed"
   },
@@ -848,9 +893,12 @@
    "tab": "Pets",
    "level": "Learned at level 20",
    "school": "Physical",
-   "cost": "Pet: Turtle",
+   "cost": "10 Focus",
    "cast": "Instant",
    "cooldown": "3 min cooldown",
+   "extraLines": [
+    "Pet: Turtle"
+   ],
    "description": "Reduces all damage your pet takes by 50% and increases the time between your pet's attacks by 60%, but deals more damage with each attack. Lasts 12 sec.",
    "versusClassic": "changed"
   },
@@ -862,10 +910,27 @@
    "level": "Learned at level 58",
    "school": "Physical",
    "cost": "365 Mana",
-   "range": "8-35 yd range",
+   "range": "8-45 yd range",
    "cast": "4 sec cast",
    "cooldown": "15 sec cooldown",
-   "description": "A steady snipe that increases ranged damage by 295.",
+   "description": "A long-range shot that deals ranged damage plus 295 and increases the range of your next 3 Shots by 10 yards for 10 sec.",
+   "versusClassic": "new"
+  },
+  {
+   "id": 1264482,
+   "name": "Sonic Blast",
+   "rank": 5,
+   "tab": "Pets",
+   "level": "Learned at level 60",
+   "school": "Nature",
+   "cost": "80 Focus",
+   "range": "Melee Range",
+   "cast": "Instant",
+   "cooldown": "30 sec cooldown",
+   "extraLines": [
+    "Pet: Bat"
+   ],
+   "description": "Emits a piercing shriek, inflicting 77 to 91 Nature damage and increasing the casting time of all spells by 60% for 30 sec.",
    "versusClassic": "new"
   },
   {
@@ -893,7 +958,7 @@
    "range": "35 yd range",
    "cast": "Instant",
    "cooldown": "6 sec cooldown",
-   "description": "Command a hawk to dive-bomb your targeted enemy, dealing 108 Physical damage and continuing its assault for 18 sec. Only 2 hawks can be active at once. Summon Hawk shares its cooldown with Arcane Shot.",
+   "description": "Command a hawk to dive-bomb your targeted enemy, dealing 108 plus 5% of your Ranged Attack Power Physical damage and continuing its assault for 18 sec. Only 2 hawks can be active at once. Summon Hawk shares its cooldown with Arcane Shot.",
    "versusClassic": "new"
   },
   {
@@ -903,10 +968,13 @@
    "tab": "Pets",
    "level": "Learned at level 60",
    "school": "Physical",
-   "cost": "Pet: Bear",
+   "cost": "20 Focus",
    "range": "Melee Range",
    "cast": "Instant",
    "cooldown": "5 sec cooldown",
+   "extraLines": [
+    "Pet: Bear"
+   ],
    "description": "Swipe 3 nearby enemies, inflicting 20 to 22 damage.",
    "versusClassic": "new"
   },
@@ -930,10 +998,13 @@
    "tab": "Pets",
    "level": "Learned at level 60",
    "school": "Physical",
-   "cost": "Pet: Hyena",
+   "cost": "25 Focus",
    "range": "Melee Range",
    "cast": "Instant",
    "cooldown": "30 sec cooldown",
+   "extraLines": [
+    "Pet: Hyena"
+   ],
    "description": "Tears at an enemy's legs for 60 damage over 9 sec and reduces movement speed by 50% for 9 sec.",
    "versusClassic": "new"
   },
@@ -944,10 +1015,13 @@
    "tab": "Pets",
    "level": "Learned at level 60",
    "school": "Nature",
-   "cost": "Pet: Gorilla",
+   "cost": "60 Focus",
    "cast": "Instant",
    "cooldown": "1 min cooldown",
-   "description": "Shakes the ground with thundering force, doing 122 to 142 Nature damage to all enemies within 8 yards.",
+   "extraLines": [
+    "Pet: Gorilla"
+   ],
+   "description": "Shakes the ground with thundering force, doing 122 to 142 Nature damage to all enemies within 8 yds.",
    "versusClassic": "new"
   },
   {
@@ -1059,10 +1133,13 @@
    "tab": "Pets",
    "level": "Learned at level 20",
    "school": "Physical",
-   "cost": "Pet: Fox",
+   "cost": "10 Focus",
    "cast": "Instant",
    "cooldown": "3 min cooldown",
-   "description": "Increases your pet's chance to Dodge by 50% and decreases the time between your pet's attacks by 30%. Lasts 12 sec.",
+   "extraLines": [
+    "Pet: Fox"
+   ],
+   "description": "Increases your pet's chance to Dodge by 50% and decreases the time between your pet's attacks by 30% for 12 sec.",
    "versusClassic": "new"
   },
   {
@@ -1111,10 +1188,13 @@
    "tab": "Pets",
    "level": "Learned at level 60",
    "school": "Nature",
-   "cost": "Pet: Spider",
+   "cost": "20 Focus",
    "range": "20 yd range",
    "cast": "Instant",
    "cooldown": "40 sec cooldown",
+   "extraLines": [
+    "Pet: Spider"
+   ],
    "description": "Entangles an enemy in a corrosive web, immobilizing them and dealing 52 Nature damage over 4 sec.",
    "versusClassic": "new"
   },

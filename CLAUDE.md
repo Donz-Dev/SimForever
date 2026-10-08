@@ -49,9 +49,20 @@ each entry actually did. See [docs/handoff-rotations.md](docs/handoff-rotations.
 Per-class state is [docs/handoff/](docs/handoff/) — one document per class,
 each the starting point for that class's deep dive, with its profiles, its live
 gaps and its own traps. **All nine have now been done**: the live-gap count went
-132 to 64, four classes are at 0–3, and what closed was mostly declarations and
+132 to 62, four classes are at 1–3, and what closed was mostly declarations and
 owner rulings rather than new engine capability. [HANDOVER.md](HANDOVER.md) has the
 recap.
+
+**AND FOREVER PATCHES, WHICH IS A WHOLE CLASS OF WORK THE NINE DIVES DID NOT
+COVER.** Client build 1.60.1.70170 removed four talents, added three, moved six
+Protection rows, swapped two Shaman tiers and re-specified ten of the
+twenty-four profiles. **A PATCH STARTS WITH THE THREE IMPORTERS AND THE DECODER,
+NOT WITH THE NOTES**: `import_forever_talents.mjs --check` says which trees
+changed shape, `import_forever_spells.mjs --all --write` says which numbers
+moved, and `decode_talent_build.mjs --profiles` says which builds stopped
+decoding. Seven of twenty did, and **three of the four removed talents are in no
+patch note at all** -- two of them with points spent in every Paladin build. The
+notes are a guide to what is intended, not a list of what changed.
 
 **THE UI HAS NOT HAD A PASS OF ITS OWN** and is the next piece of work:
 [docs/handoff/gui.md](docs/handoff/gui.md).
@@ -128,7 +139,7 @@ together told someone their build was missing features that were never coming.
 | --- | --- | --- |
 | `positioning` | positions, range, facing, movement, "nearby", radius, travel forms | 21 |
 | `crowdControl` | stuns, fears, roots, snares, silences, incapacitates, disorients, disarms, **and removing any of them** | 37 |
-| `threat` | threat, which is not tracked. Defensive Stance's +30% and Defiance are dropped, not deferred | 14 |
+| `threat` | threat, which is not tracked. Defensive Stance's +30% and Defiance are dropped, not deferred | 13 |
 | `healing` | healing THROUGHPUT. **Mana RETURN is NOT out of scope** — it changes a damage profile's sustain, so it is a live gap and gets no `scope` | 36 |
 | `stealth` | being stealthed, detecting it, and the openers requiring it — Ambush, Garrote, Cheap Shot. **NOT an in-combat proc that REMOVES a stealth requirement**, which is what Cutthroat is | 6 |
 | `castPushback` | avoiding, resisting or reducing the interruption or DELAY of a cast or channel from damage taken. **NOT an interrupt the TARGET suffers** — Earth Shock's school lockout is about the enemy casting and is inert for a different reason | 7 |
@@ -159,6 +170,15 @@ from the same base, both write the same number, git merges them without a
 conflict and the total is short. **So re-count rather than increment**, the same
 rule the talent census follows, and the one-liner that does it is a loop over the
 nine `*_TALENT_EFFECTS` tables counting `unmodelled` effects that carry a `scope`.
+
+**AND A FOURTH WAS WRONG, WHICH IS THE POINT OF SAYING SO FOR THE SECOND TIME.**
+`threat` read 14 against 13 declarations, and the paragraph above had already
+claimed every figure here was counted rather than adjusted. It was found by
+running that one-liner during the 1.60.1.70170 patch, on a column the patch did
+not touch -- so the drift happened at some point after the sentence promising it
+could not. HANDOVER's placeholder figure had drifted the same way, 10 against 9.
+**A note saying a number is derived is not the same as the number being
+re-derived**, which is this file's own recurring failure one level up.
 
 Adding a member to that union is a scope DECISION and needs the owner, not a
 judgement call while writing a class.
@@ -567,6 +587,16 @@ See [docs/combat-tables.md](docs/combat-tables.md).
   5.5%" and setting both would quietly inflate the direct damage as well —
   `RAKE_AP_COEFFICIENT` and `RAKE_TICK_AP_COEFFICIENT` are separate constants
   for exactly this reason.
+- **AND A PATCH NOTE IS A LATER STATEMENT, WHICH IS THE THIRD ONE.** The
+  1.60.1.70170 notes read "Fixed a bug causing Swipe to not scale with Attack
+  Power. It will now correctly gain 3% of the Druid's attack power", and
+  `WoWSimWorksheet.xlsx` says 10%. **The sheet records what the figure was meant
+  to be before the fix landed and the notes record what shipped**, so the notes
+  win and `SWIPE_AP_COEFFICIENT` says so beside itself — a refresh of the sheet
+  will not carry it and a reader who knows the sheet would read 0.03 as drift.
+  **IT MOVES NO PROFILE AND IS STILL WORTH DOING**: Swipe is in no priority list,
+  because every encounter here has one target, so what changes is what the number
+  MEANS the day a multi-target encounter exists.
 - **A COEFFICIENT IS MEASURED, NEVER COUNTED.** It is passed per `dealDamage`
   call, so `powerCoefficient` written in the wrong place is silent and grepping
   gives 77 damage sites and no ability names. `tools/coefficient_probe.ts` casts
@@ -980,6 +1010,28 @@ See [docs/resources.md](docs/resources.md).
   cancellation** — a proc pays a full `R × S` for a swing that cost no time. Rage
   income does not scale with gear, buffs or damage. A miss earns nothing, which
   is `ResourceGeneration.requiresDamage` and not a consequence of the arithmetic.
+- **A CRITICAL SWING PAYS MORE RAGE, AND IT IS THE FLAT HALF ONLY.**
+  `Combatant.critResourceMultiplier` — **2.0 for a Warrior, 1.75 for a Bear
+  Druid**, 1 for everything else — arrives on the combatant the way `baseGcdMs`
+  and `costRefundOnMiss` do, because the rule is the engine's and the two numbers
+  are the ruleset's. Forever states them separately, under two class headings,
+  and the owner has confirmed reading them independently rather than stacking the
+  Bear's 75% on a class-wide 100% that the word "Players" invites.
+  **THE `flat` HALF ONLY, AND THAT IS NOT A SIMPLIFICATION**: a `perDamage` award
+  is proportional to the damage and a crit has already doubled the damage, so
+  multiplying it here as well pays the bonus twice — a bigger number and no
+  error. Forever's two rage rules split exactly along that line, rage from
+  DEALING damage being flat per swing and rage from TAKING it per damage.
+  **SWINGS ONLY, AND BY DERIVATION RATHER THAN BY A TEST OF THE WORDING**:
+  "with a basic attack" needs no check because an ABILITY generates no rage in
+  this engine at all, so the auto-attack path is the only caller that has an
+  outcome to pass.
+  **IT MAKES CRIT A RAGE STAT, which is a change to what a build can AFFORD
+  rather than to what anything hits for.** Worth +75.5 to DW Fury, +18.0 to 2H
+  Arms and +6.8 to the tank — the tank least, because a Protection warrior is
+  already capping and wasting income. It is also the first thing in this section
+  that lets a FASTER weapon earn more: `R × S` cancels speed exactly, and a crit
+  RATE is per swing.
 - **Taking damage is `D × 10 / H` off the PRE-ARMOR figure MINUS THE BLOCK.**
   Defensive Stance reduces the rage earned, armor does not, and a block does.
   Armor and a block are one pipeline step, so `DamageResolution` carries
@@ -1589,12 +1641,24 @@ no per-point argument either way and what decides it is uptime.
 ### Gear and items
 
 - **AN ABILITY'S WEAPON REQUIREMENT IS GATED AT THE BOOK, NOT AT THE CAST.**
-  `abilitiesForBuild` takes `style` and refuses Shield Slam without a shield and
-  Spearing Strike without a two-hander, so the ability is simply ABSENT rather
-  than present and always refused. The difference is what a report says: an
-  ability in the book and never cast reads as a rotation problem, and this is a
-  weapon problem. A `canCast` gate is the Rogue's dagger shape and is right where
-  a weapon could change mid-fight; nothing here swaps weapons.
+  `abilitiesForBuild` takes `style` and refuses Shield Slam without a shield, so
+  the ability is simply ABSENT rather than present and always refused. The
+  difference is what a report says: an ability in the book and never cast reads as
+  a rotation problem, and this is a weapon problem. A `canCast` gate is the
+  Rogue's dagger shape and is right where a weapon could change mid-fight;
+  nothing here swaps weapons.
+- **A STANCE REQUIREMENT IS THE OTHER WAY ROUND, AND SPEARING STRIKE CROSSED
+  FROM ONE TO THE OTHER.** It required a two-handed weapon and was gated here
+  beside Shield Slam; at client build 1.60.1.70170 Forever replaced that with
+  Battle Stance, so it is `Ability.stances` now -- where Overpower's has always
+  lived -- and `abilitiesForBuild` has no opinion about it. **The dividing line is
+  whether the condition can change mid-fight**: a weapon cannot, so an ability
+  the character can never use should not be in the book at all; a stance can, so
+  `PriorityRotation` treats the wrong one as "not yet, and here is how" and will
+  cast a stance change to reach it. That last part is why the swap is not free --
+  Spearing Strike joined Revenge, Whirlwind and Recklessness as a reason the two
+  GENERIC Warrior lists dance, and it moves none of the three profiles only
+  because the stance-specific lists exist so that neither ever dances.
 - **A stat that only applies sometimes is a bug waiting to happen.** Equipment
   resolution strips the slots a style cannot fill, and only genuine conflicts are
   exclusive: a two-hander against a one-hander, and an off-hand the style cannot
@@ -2054,9 +2118,15 @@ Plus the permanent rulings under **Scope**.
   nothing on a character nothing attacks. **Assert the MECHANISM** — the resolved
   cost, the stack count, the stat arriving, the aura present. A talent working and
   a talent mattering are different questions.
-- **Read the owner's own words for what a talent selects.** Hot Streak names four
-  spells and Pyroblast is not one, which is what stops it feeding itself. Shadow
-  Weaving is on the CASTER in Forever and on the target in Classic. Twin
+- **Read the owner's own words for what a talent selects.** Heating Up names four
+  spells and Pyroblast is not one, which is what stops it feeding itself. (It was
+  HOT STREAK until client build 1.60.1.70170 renamed it, and the four spells did
+  not change with the name -- **but the rename cost its hand-filled value**: a
+  single-rank talent's number is keyed by TALENT ID, so the importer wrote a new
+  key, found no hand-fill under it and left `null`, and an effect that reads no
+  value is dropped in silence. A rename is the one case where the importer's merge
+  does not protect a hand-filled value.) Shadow Weaving is on the CASTER in
+  Forever and on the target in Classic. Twin
   Disciplines selects "instant cast spells", which no declaration expresses, so
   it names them one by one.
 
@@ -2117,8 +2187,13 @@ two sources are put side by side.
 - **THE RANK VALUES ARE THE TRAP, NOT THE TREE.** `values/<class>.json` is
   generated by matching `{0}` placeholders against each rank's text, and a
   single-rank talent has no variable to identify, so its values come back `null`.
-  Eight are hand-filled, each with a `note`. `--check` prints the count per
-  class, and the importer MERGES rather than overwrites.
+  **EIGHTEEN are hand-filled**, each with a `note` saying so. `--check` prints
+  the count per class, and the importer MERGES rather than overwrites.
+  **THE FIGURE SAID EIGHT AND WAS COUNTED FROM THE DECLARATIONS**, which is the
+  third derived count in this file found stale in one patch -- the one-liner is
+  the entries across the nine `values/*.json` files whose `note` is not exactly
+  `"single rank"`. It also grew by one in that patch: Twist of Light gained a
+  percentage clause and needed its 20 filling in.
 - **NEVER READ AN ABILITY NUMBER FROM CLASSIC.** Forever changes them heavily and
   in both directions, so a Classic value is not even a safe approximation. Aimed
   Shot's bonus went 600 → 166, Raptor Strike's 140 → 70, Serpent Sting's total
@@ -2139,6 +2214,23 @@ two sources are put side by side.
   wrong on its own. **Refresh the captures before trusting a figure, and do it
   for all nine classes at once** — `--write` per class, then read the diff, which
   is where the change announces itself.
+- **A RENAME IS A SOURCE CHANGE TOO, AND WHETHER THE ID FOLLOWS IT IS A
+  JUDGEMENT WITH ONE RULE.** The NAME always follows the client, because the name
+  is what a person reads on the damage table and the buff-uptime row. The ID
+  follows only when nothing much keys off it — so at 1.60.1.70170 the Mage's
+  `hot_streak` aura became `heating_up` and the Druid's `primal_fury` reactions
+  became `blood_frenzy`, while the ABILITY `mangle` kept its id under the display
+  name "Primal Bite" because rotations, profiles, talents and the Berserk aura all
+  reference it. **A TALENT ID HAS NO CHOICE**: it is slugified from the client's
+  name, so a renamed talent IS a new key.
+  **WHICH IS HOW A RENAME CAN LOSE A HAND-FILLED VALUE, SILENTLY.** Eighteen
+  single-rank talents have their number hand-filled in `values/*.json`, keyed by
+  talent id, and the importer MERGES — so a rename writes a new key, finds no
+  hand-fill under it and leaves `null`. Heating Up came back at `null` and an
+  effect that reads no value is DROPPED without saying so, which would have
+  stopped Pyroblast's 25% cast-time reduction applying on a talent reporting
+  itself fully modelled. **After a refresh, check every hand-filled entry still
+  has its value**, which is one grep for `"note"` across the nine files.
 - **`foreverchanges.pro` OPENS ON A RANK THAT IS NOT ALWAYS THE MAX.** Forever
   shifts ranks down and sometimes adds one, so reading the page as it loads can
   give a real Forever number for the wrong rank. It also separates "Forever
@@ -2163,6 +2255,23 @@ sources were one number at two ranks. **A figure you cannot place is more likely
 rank 1 of a granted ability than an invention**, so look there before writing
 that it came from nowhere — the hawk was recorded as an open question to the
 owner for as long as that comment stood. It was worth +144.4 DPS.
+
+**AND THE SPELLBOOK CAPTURE'S `cost` FIELD WAS WRONG FOR ABOUT A HUNDRED SPELLS
+ACROSS SEVEN CLASSES, FOR AS LONG AS IT EXISTED.** The cost/range/cast/cooldown
+lines arrive as a GRID of free text sorted into named fields by what each cell
+says, and `cost` was the fall-through — so a SECOND cost-shaped cell overwrote
+the first. A finisher is what exposed it, `["30 Energy", "Melee Range"], ["1 to 5
+Combo Points", ""]`, which made Rip and Ferocious Bite free; the same shape had
+been replacing mana costs with **reagent lines** (Shadowburn read "Reagents: Soul
+Shard" where its cost is 365 mana), **pet-family lines** (every Hunter pet ability
+read its family instead of its focus) and **totem tools**. `extraLines` carries
+them now and the FIRST cost-shaped cell wins.
+
+**NOTHING READS THAT CAPTURE PROGRAMMATICALLY, WHICH IS WHY IT SURVIVED.** The
+wrong number sat in a reference document that a reader would have believed, and
+no test could have failed on it — the file is a source, not an input. **An
+importer's own output is worth reading, not just diffing**: the bug is visible on
+one spell the moment anybody asks what Rip costs.
 
 **A CAPTURED TOOLTIP CAN DISAGREE WITH ITSELF, so read the effect rows and not
 only the description.** Base points run consistently ONE higher than the stated
@@ -2193,13 +2302,21 @@ states — it cannot express one. Both are charged. Taking a tie-break literally
 where there is no tie deletes a real cost.
 
 **AND IT CUTS THE OTHER WAY TOO: A SOURCE THAT OMITS A CLAUSE HAS NOT DENIED
-IT.** Wowhead's Forever tooltip for Spearing Strike carries no requirement line;
-the spellbook capture and `foreverchanges.pro` both state a two-handed weapon.
+IT.** Wowhead's Forever tooltip for Spearing Strike carried no requirement line;
+the spellbook capture and `foreverchanges.pro` both stated a two-handed weapon.
 That is two sources speaking and one saying nothing, so the tie-break never comes
-up and the clause is simply true. **The silence was read as "no requirement" for
+up and the clause was simply true. **The silence was read as "no requirement" for
 the whole project**, which is the same mistake as Shadowburn's in the opposite
 direction — one deletes a real cost, the other grants a real ability to a
 character that cannot use it.
+
+**THAT CLAUSE HAS SINCE BEEN REPLACED RATHER THAN REFUTED**, which is worth
+keeping the example for: at client build 1.60.1.70170 the requirement became
+Battle Stance, and the capture now reads "Requires Battle Stance" where it listed
+five two-handed weapon types. So the reading was right, the clause was real, and
+it then expired on its own. **A requirement line is DATA and it moves like any
+other number** -- which is the second reason to re-read the captures on a patch
+rather than only the damage.
 
 **A REFRESH AND A CROSS-CHECK FIND DIFFERENT THINGS AND NEITHER SUBSTITUTES FOR
 THE OTHER.** Slam's cooldown went 15 to 18 in ELEVEN DAYS, on the class with the
@@ -2277,7 +2394,7 @@ change: **never invent a number, and never let a borrowed one look sourced.**
 `src/game/character/baseStats.ts` is **generated** by `tools/import_base_stats.py`
 from the base stats spreadsheet. Never edit it by hand; re-run the generator.
 
-`src/data/talents/*.json` (468 talents) and `src/data/items/*.json` (151 items in
+`src/data/talents/*.json` (466 talents) and `src/data/items/*.json` (151 items in
 nine files, one per gear set) were **scraped** and are checked in. Each directory
 has a README recording where the data came from and how to refresh it. Never
 hand-edit either — `src/data/talents/values/*.json` is the one exception, for the
@@ -2330,7 +2447,7 @@ shape should fail loudly, not render a tree with a broken arrow.
 - **Write the spec out independently in the test.** The race/class table, the
   per-class resource table and the combat table constants are all duplicated by
   hand on purpose: a test that reads the source data passes no matter what the
-  source data says. Where volume makes that impractical — 468 talents —
+  source data says. Where volume makes that impractical — 466 talents —
   transcribe the shape and assert the invariants that hold for all of them.
 - **Two independent checks on a captured number**: the expected value written out
   by hand from the tooltip, AND the stored tooltip asserted to contain that same
@@ -2585,7 +2702,7 @@ containment check a gear commit uses.
 Two branches each moved the talent census total by one from the same base, so
 both wrote the same number, git merged them without a conflict and the total was
 short by one. **Re-sum a total from its rows rather than adjusting it**, and the
-same for any prose figure derived from it — "X of 468 talents do something" went
+same for any prose figure derived from it — "X of 466 talents do something" went
 wrong the same way. `tools/class_audit.ts` now derives the whole census
 independently and throws if its four buckets do not account for every talent.
 

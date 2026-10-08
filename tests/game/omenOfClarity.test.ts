@@ -76,12 +76,43 @@ describe('what Clearcasting pays for', () => {
   });
 
   it('does NOT pay for an ability that costs nothing', () => {
-    // "nor by spells or abilities that cost no resources."
+    /*
+     * "nor by spells or abilities that cost no resources."
+     *
+     * TIGER'S FURY WAS THE FOURTH NAME HERE and was removed at client build
+     * 1.60.1.70170. The three left are all the free Druid abilities there are,
+     * which is what makes this list and not a sample.
+     */
     const { actor } = clearcasting();
-    for (const id of ['tigers_fury', 'barkskin', 'enrage', 'berserk']) {
+    for (const id of ['barkskin', 'enrage', 'berserk']) {
       expect(byId(id).cost, id).toBeUndefined();
       expect(resolveCast(actor, byId(id)).modified, id).toBe(false);
     }
+  });
+
+  it('does NOT pay for Shifting Power, which costs mana and rolls nothing', () => {
+    /*
+     * ----------------------------------------------------------------------
+     * THE SECOND ABILITY OF THIS SHAPE, and it arrived with the talent that
+     * replaced Tiger's Fury. Shifting Power costs 530 mana and has no attack
+     * table, so `requiresAttackTable` is what keeps a Clearcasting charge off
+     * it -- the same clause that protects the Bear's Demoralizing Roar, and the
+     * same owner ruling behind it: "an ability is offensive if it is PROCESSED
+     * THROUGH A COMBAT TABLE."
+     *
+     * IT MATTERS MORE HERE THAN IT DID THERE. Shifting Power is the FIRST entry
+     * in the Cat list and comes off cooldown every eight seconds, so without
+     * this clause it would take most of the charges the owner's instruction says
+     * must all go on Shred -- and it would look like a working proc, because the
+     * aura still reports its uptime.
+     * ----------------------------------------------------------------------
+     */
+    const { actor } = clearcasting();
+    const shifting = byId('shifting_power');
+    expect(shifting.cost!.amount).toBeGreaterThan(0);
+    expect(shifting.attackTable).toBeUndefined();
+    expect(resolveCast(actor, shifting).costAmount).toBe(shifting.cost!.amount);
+    expect(resolveCast(actor, shifting).modified).toBe(false);
   });
 
   it('does NOT pay for Demoralizing Roar, which is the Druid\'s Battle Shout', () => {
@@ -102,16 +133,21 @@ describe('what Clearcasting pays for', () => {
     expect(resolveCast(actor, roar).costAmount).toBe(roar.cost!.amount);
   });
 
-  it('is the ONLY Druid ability that costs something and rolls nothing', () => {
+  it('names every Druid ability that costs something and rolls nothing', () => {
     /*
-     * The claim the clause above rests on, checked rather than asserted: if a
-     * second one appears, this fails and somebody decides whether it is
-     * offensive rather than finding out from a DPS figure.
+     * The claim the two clauses above rest on, checked rather than asserted: if
+     * a third appears, this fails and somebody decides whether it is offensive
+     * rather than finding out from a DPS figure.
+     *
+     * IT FOUND ITS SECOND AT CLIENT BUILD 1.60.1.70170. This read
+     * `toEqual(['demoralizing_roar'])` and Shifting Power joined it -- which is
+     * exactly what the test was written to catch, and the reason the new ability
+     * got a Clearcasting test of its own rather than an assumption.
      */
     const costingWithoutTable = DRUID_ABILITIES.filter(
       (ability) => (ability.cost?.amount ?? 0) > 0 && !ability.attackTable,
     ).map((ability) => ability.id);
-    expect(costingWithoutTable).toEqual(['demoralizing_roar']);
+    expect(costingWithoutTable.sort()).toEqual(['demoralizing_roar', 'shifting_power']);
   });
 });
 

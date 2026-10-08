@@ -12,7 +12,7 @@ import {
   MAGE_DAMAGE_SPELL_IDS,
   wintersChillAura,
   fingersOfFrostAura,
-  HOT_STREAK,
+  HEATING_UP,
   MISSILE_BARRAGE,
   fireVulnerabilityAura,
   igniteAura,
@@ -24,13 +24,13 @@ import {
  * ----------------------------------------------------------------------------
  * ALMOST ALL OF THE MAGE'S REACTIVE TALENTS FIRE OFF A CRITICAL STRIKE, which
  * makes crit worth more to this class than to any other in the project: Ignite
- * turns a crit into a burn, Hot Streak turns one into a faster Pyroblast, and
+ * turns a crit into a burn, Heating Up turns one into a faster Pyroblast, and
  * Master of Elements turns one into mana back.
  *
  * WHICH SPELLS COUNT IS PART OF EACH TOOLTIP and is checked by ability id
- * rather than by school. Hot Streak names four spells and Ignite says "Fire
+ * rather than by school. Heating Up names four spells and Ignite says "Fire
  * damage spells", and those are different sets -- Pyroblast is Fire and is not
- * a Hot Streak trigger, which is what stops it feeding itself.
+ * a Heating Up trigger, which is what stops it feeding itself.
  * ----------------------------------------------------------------------------
  */
 
@@ -44,8 +44,8 @@ import {
  */
 const FIRE_SPELLS = new Set(FIRE_SPELL_IDS);
 
-/** Hot Streak names four, and Pyroblast is deliberately not one of them. */
-const HOT_STREAK_TRIGGERS = new Set(['fireball', 'frostfire_bolt', 'fire_blast', 'scorch']);
+/** Heating Up names four, and Pyroblast is deliberately not one of them. */
+const HEATING_UP_TRIGGERS = new Set(['fireball', 'frostfire_bolt', 'fire_blast', 'scorch']);
 
 /**
  * Every damage spell, for the talents that say "any damage spell".
@@ -176,20 +176,23 @@ export const masterOfElements: TalentReactionBuilder = (percentRefunded) => ({
 });
 
 /**
- * Hot Streak: a non-periodic Fire crit shortens Pyroblast.
+ * Heating Up: a non-periodic Fire crit shortens Pyroblast.
  *
  * FOUR NAMED SPELLS, and Pyroblast is not one of them -- so a Pyroblast crit
  * does not refresh the buff that made it fast. Reading "Fire damage spells"
  * here instead would let the spell feed itself.
+ *
+ * CALLED HOT STREAK UNTIL CLIENT BUILD 1.60.1.70170, and the four spells it
+ * names did not change with the name.
  */
-export const hotStreak: TalentReactionBuilder = () => ({
-  id: 'hot_streak',
+export const heatingUp: TalentReactionBuilder = () => ({
+  id: 'heating_up',
   on: 'dealt',
   outcomes: ['crit'],
   canTrigger: (_context, _actor, attack) =>
-    attack.abilityId !== undefined && HOT_STREAK_TRIGGERS.has(attack.abilityId),
+    attack.abilityId !== undefined && HEATING_UP_TRIGGERS.has(attack.abilityId),
   onTrigger: (context, actor) => {
-    context.applyAura(actor, HOT_STREAK, actor.id);
+    context.applyAura(actor, HEATING_UP, actor.id);
   },
 });
 
@@ -410,7 +413,7 @@ export const MAGE_TALENT_REACTIONS: Readonly<Record<string, TalentReactionBuilde
   ignite,
   combustion: combustionCounter,
   master_of_elements: masterOfElements,
-  hot_streak: hotStreak,
+  heating_up: heatingUp,
   arcane_concentration: arcaneConcentration,
   missile_barrage: missileBarrage,
   improved_scorch: improvedScorchReaction,

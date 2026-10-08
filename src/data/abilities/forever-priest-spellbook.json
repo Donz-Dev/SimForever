@@ -1,7 +1,7 @@
 {
  "class": "priest",
  "source": "https://talentsforever.com/spelldesc.js",
- "build": "1.60.1.70009",
+ "build": "1.60.1.70170",
  "note": "Max rank only. The simulator runs at level 60, and a talent tooltip shows rank 1 of the ability it grants -- see docs/class-implementation.md.",
  "spells": [
   {
@@ -27,7 +27,7 @@
    "cost": "380 Mana",
    "range": "40 yd range",
    "cast": "1.5 sec cast",
-   "description": "Heals a friendly target and the caster for 773 to 909. Low threat.",
+   "description": "Heal yourself and a friendly target for 773 to 909. This causes low threat.",
    "versusClassic": "new"
   },
   {
@@ -41,7 +41,7 @@
    "range": "20 yd range",
    "cast": "Instant",
    "cooldown": "2 min cooldown",
-   "description": "Chastise the target, causing 272 to 306 Holy damage and Immobilizing them for up to 2 sec. Only works against Humanoids. This spell causes very low threat",
+   "description": "Chastise the target, causing 272 to 306 Holy damage and Immobilizing them for up to 2 sec. Only works against Humanoids. This spell causes very low threat.",
    "versusClassic": "new"
   },
   {
@@ -311,8 +311,8 @@
    "school": "Physical",
    "cast": "Instant",
    "cooldown": "3 min cooldown",
-   "description": "When activated, reduces the Mana cost of your next spell by 100% and increases its critical effect chance by 25% if it is capable of a critical effect.",
-   "versusClassic": "same"
+   "description": "When activated, reduces the Mana cost of your next spell by 100% and increases its critical effect chance by 25% if it is a non-periodic spell and capable of a critical effect.",
+   "versusClassic": "changed"
   },
   {
    "id": 2053,
@@ -334,23 +334,13 @@
    "tab": "Discipline",
    "level": "Learned at level 34",
    "school": "Holy",
-   "cost": "Reagents: Light Feather",
+   "cost": "100 Mana",
    "cast": "Instant",
+   "extraLines": [
+    "Reagents: Light Feather"
+   ],
    "description": "Allows the caster to levitate, floating a few feet above the ground. While levitating, you will fall at a reduced speed and travel over water-like surfaces. Mounting or any damage taken will cancel the effect. Lasts 2 min.",
    "versusClassic": "changed"
-  },
-  {
-   "id": 27871,
-   "name": "Lightwell",
-   "rank": 3,
-   "tab": "Holy",
-   "level": "Learned at level 60",
-   "school": "Holy",
-   "cost": "365 Mana",
-   "cast": "1.5 sec cast",
-   "cooldown": "10 min cooldown",
-   "description": "Creates a holy Lightwell near the priest. Members of your raid or party can click the Lightwell to restore 1,600 health over 10 sec. Being attacked cancels the effect. Lightwell lasts for 3 min or 5 charges.",
-   "versusClassic": "same"
   },
   {
    "id": 10876,
@@ -388,7 +378,7 @@
    "school": "Shadow",
    "cost": "750 Mana",
    "range": "20 yd range",
-   "cast": "Channeled",
+   "cast": "3 sec cast",
    "description": "Controls a humanoid mind up to level 64, but increases the time between attacks by 25%. Lasts up to 1 min.",
    "versusClassic": "same"
   },
@@ -439,7 +429,7 @@
    "level": "Learned at level 60",
    "school": "Holy",
    "cost": "355 Mana",
-   "range": "40 yd range",
+   "range": "Friendly: 40 yd range",
    "cast": "Channeled",
    "cooldown": "12 sec cooldown",
    "description": "Launches a volley of holy light at the target, causing 131 Holy damage to an enemy, or 673 healing to an ally, instantly and every 1 sec for 2 sec.",
@@ -493,9 +483,12 @@
    "tab": "Discipline",
    "level": "Learned at level 60",
    "school": "Holy",
-   "cost": "Reagents: Sacred Candle",
+   "cost": "3,400 Mana",
    "range": "40 yd range",
    "cast": "Instant",
+   "extraLines": [
+    "Reagents: Sacred Candle"
+   ],
    "description": "Power infuses all party and raid members, increasing their Stamina by 70 for 1 hour.",
    "versusClassic": "changed"
   },
@@ -523,7 +516,7 @@
    "range": "40 yd range",
    "cast": "Instant",
    "cooldown": "10 sec cooldown",
-   "description": "Places a spell on the target that heals them for 413 the next time they take damage or receive non-periodic healing. When the heal occurs, Prayer of Mending jumps to a party or raid member within 20 yards. Jumps up to 5 times and lasts 30 sec after each jump. This spell can only be placed on one target at a time per caster.",
+   "description": "Places a spell on the target that heals them for 413 the next time they take damage or receive non-periodic healing. When the heal occurs, Prayer of Mending jumps to a party or raid member within 20 yds. Jumps up to 5 times and lasts 30 sec after each jump. This spell can only be placed on one target at a time per caster.",
    "versusClassic": "new"
   },
   {
@@ -533,9 +526,12 @@
    "tab": "Shadow",
    "level": "Learned at level 56",
    "school": "Holy",
-   "cost": "Reagents: Sacred Candle",
+   "cost": "1,300 Mana",
    "range": "40 yd range",
    "cast": "Instant",
+   "extraLines": [
+    "Reagents: Sacred Candle"
+   ],
    "description": "Power infuses all party and raid members, increasing their Shadow resistance by 60 for 20 min.",
    "versusClassic": "changed"
   },
@@ -546,9 +542,12 @@
    "tab": "Discipline",
    "level": "Learned at level 60",
    "school": "Holy",
-   "cost": "Reagents: Sacred Candle",
+   "cost": "1,940 Mana",
    "range": "40 yd range",
    "cast": "Instant",
+   "extraLines": [
+    "Reagents: Sacred Candle"
+   ],
    "description": "Power infuses all party and raid members, increasing their Spirit by 40 for 1 hour.",
    "versusClassic": "changed"
   },
@@ -588,7 +587,7 @@
    "cost": "75% of base mana",
    "range": "30 yd range",
    "cast": "10 sec cast",
-   "description": "Brings a dead player back to life with 750 health and 1,000 mana. Cannot be cast when in combat.",
+   "description": "Brings a dead player back to life with 750 health and 1000 mana. Cannot be cast when in combat.",
    "versusClassic": "same"
   },
   {
@@ -727,13 +726,13 @@
    "name": "Vampiric Embrace",
    "rank": null,
    "tab": "Shadow",
-   "level": "Learned at level 30",
+   "level": "Learned at level 25",
    "school": "Shadow",
    "cost": "40 Mana",
    "range": "30 yd range",
    "cast": "Instant",
    "cooldown": "1 min cooldown",
-   "description": "Afflicts your target with Shadow energy that causes all party members to be healed for 20% of any Shadow spell damage you deal for 30 sec. Vampiric Embrace also grants a chance for your Spirit Tap talent to trigger when enemies afflicted by it die.",
+   "description": "Afflicts your target with Shadow energy that causes all party members to be healed for 20% of any Shadow spell damage you deal for 30 sec.",
    "versusClassic": "changed"
   }
  ]

@@ -1,7 +1,7 @@
 {
  "class": "warrior",
  "source": "https://talentsforever.com/spelldesc.js",
- "build": "1.60.1.70009",
+ "build": "1.60.1.70170",
  "note": "Max rank only. The simulator runs at level 60, and a talent tooltip shows rank 1 of the ability it grants -- see docs/class-implementation.md.",
  "spells": [
   {
@@ -33,13 +33,13 @@
    "name": "Berserker Rage",
    "rank": null,
    "tab": "Fury",
-   "level": "Learned at level 32",
+   "level": "Learned at level 30",
    "school": "Physical",
    "cast": "Instant",
    "cooldown": "30 sec cooldown",
    "requires": "Requires Berserker Stance",
    "description": "The warrior enters a berserker rage, becoming immune to Fear and Incapacitate effects and generating extra rage when taking damage. Lasts 10 sec.",
-   "versusClassic": "same"
+   "versusClassic": "changed"
   },
   {
    "id": 2458,
@@ -62,8 +62,8 @@
    "school": "Physical",
    "cast": "Instant",
    "cooldown": "1 min cooldown",
-   "description": "Generates 10 rage at the cost of health, and then generates an additional 10 rage over 10 sec. The warrior is considered in combat for the duration.",
-   "versusClassic": "same"
+   "description": "Generates 10 rage at the cost of health, and then generates an additional 10 rage over 10 sec.",
+   "versusClassic": "changed"
   },
   {
    "id": 23894,
@@ -76,7 +76,7 @@
    "range": "Melee Range",
    "cast": "Instant",
    "cooldown": "6 sec cooldown",
-   "description": "Instantly attack the target causing damage equal to 35% of your Attack Power plus 48 and increasing your movement speed by 10% for 10 sec.",
+   "description": "Instantly attack the target causing damage equal to 45% of your Attack Power plus 48 and increasing your movement speed by 10% for 10 sec.",
    "versusClassic": "changed"
   },
   {
@@ -250,8 +250,8 @@
    "range": "10 yd range",
    "cast": "Instant",
    "cooldown": "3 min cooldown",
-   "description": "The warrior shouts, causing the targeted enemy to cower in fear. Up to 5 total nearby enemies will flee in fear. Lasts 8 sec.",
-   "versusClassic": "same"
+   "description": "The warrior shouts, causing the targeted enemy to cower in fear. Up to 5 enemies within 8 yds will flee in fear. Lasts 8 sec.",
+   "versusClassic": "changed"
   },
   {
    "id": 12975,
@@ -318,7 +318,7 @@
    "school": "Physical",
    "cost": "10 Rage",
    "cast": "Instant",
-   "description": "Causes all nearby enemies to be Dazed, reducing movement speed by 50% for 6 sec.",
+   "description": "Causes all enemies within 10 yds to be Dazed, reducing movement speed by 50% for 6 sec.",
    "versusClassic": "changed"
   },
   {
@@ -402,7 +402,7 @@
    "range": "Melee Range",
    "cast": "Instant",
    "cooldown": "12 sec cooldown",
-   "requires": "Requires Battle Stance, Defensive Stance",
+   "requires": "Requires Shields",
    "description": "Bashes the target with your shield for 45 damage. It also interrupts spellcasting and prevents any spell in that school from being cast for 6 sec.",
    "versusClassic": "same"
   },
@@ -416,7 +416,7 @@
    "cost": "10 Rage",
    "cast": "Instant",
    "cooldown": "5 sec cooldown",
-   "requires": "Requires Defensive Stance",
+   "requires": "Requires Shields",
    "description": "Increases chance to block by 75% for 7 sec, but will only block 2 attacks.",
    "versusClassic": "changed"
   },
@@ -431,6 +431,7 @@
    "range": "Melee Range",
    "cast": "Instant",
    "cooldown": "6 sec cooldown",
+   "requires": "Requires Shields",
    "description": "Slam the target with your shield, causing 640 to 670 damage, increased by your Block Value, and has a 50% chance of dispelling 1 magic effect on the target. Causes a very high amount of threat.",
    "versusClassic": "changed"
   },
@@ -443,7 +444,7 @@
    "school": "Physical",
    "cast": "Instant",
    "cooldown": "15 min cooldown",
-   "requires": "Requires Defensive Stance",
+   "requires": "Requires Shields",
    "description": "Reduces the damage taken from all attacks by 60% for 12 sec.",
    "versusClassic": "changed"
   },
@@ -472,8 +473,8 @@
    "range": "Melee Range",
    "cast": "Instant",
    "cooldown": "20 sec cooldown",
-   "requires": "Requires Two-Handed Axes, Two-Handed Maces, Polearms, Two-Handed Swords, Staves",
-   "description": "A brutal attack that deals 40% weapon damage. Deals an additional 80% weapon damage against Giants, Dragonkin, and mounted targets. Mounted targets are dismounted.",
+   "requires": "Requires Battle Stance",
+   "description": "A brutal attack that deals 40% weapon damage, plus an additional 80% weapon damage against Giants, Dragonkin, and mounted targets.",
    "versusClassic": "new"
   },
   {
@@ -510,6 +511,7 @@
    "tab": "Arms",
    "level": "Learned at level 14",
    "school": "Physical",
+   "cost": "Passive",
    "description": "You retain up to 10 Rage when you change Stances.",
    "versusClassic": "note"
   },
@@ -565,8 +567,8 @@
    "cast": "Instant",
    "cooldown": "10 sec cooldown",
    "requires": "Requires Berserker Stance",
-   "description": "In a whirlwind of steel you attack up to 4 enemies within 8 yards, causing weapon damage to each enemy.",
-   "versusClassic": "same"
+   "description": "In a whirlwind of steel you attack up to 4 enemies within 8 yards, causing weapon damage from both melee weapons to each enemy.",
+   "versusClassic": "changed"
   }
  ]
 }

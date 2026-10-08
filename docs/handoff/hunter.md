@@ -8,6 +8,27 @@ directory for what the census columns mean and how to reprint every figure below
 
 ---
 
+## Client build 1.60.1.70170 — two rank values, and nothing else
+
+**NO BUILD CHANGED, no URL stopped decoding, and no figure moved outside its
+interval.** LW Melee 787.7 → 779.7 (-8.0, noise), the other two unchanged to the
+decimal. The Hunter is the class this patch touched least.
+
+| | |
+| --- | --- |
+| **Deflection** | 2/4/6/8/10% parry → **1/2/3/4/5%**. In the notes. Worth nothing to any Hunter profile: nothing attacks them |
+| **Lightning Reflexes** | 15% Agility → **10%** at 5/5. NOT in the notes, and LW Melee takes 5/5 -- which is most of its -8.0 |
+| Summon Hawk | its tooltip now STATES the 5% of ranged attack power. The ability already had it, from the owner directly |
+| Mongoose Bite, Strider Kick | movement clauses added. Out of scope |
+
+**THE SUMMON HAWK ROW IS THE ONE WORTH READING.** The capture gained a clause
+this project had already implemented from the owner's own words, so the diff shows
+a change and the code needed none. **A source catching up with a ruling looks
+exactly like a source changing**, and the difference is whether the figure moves.
+
+---
+
+
 ## The one thing to understand first
 
 **THIS CLASS HAS THE PROJECT'S ONLY THIRD SOURCE, AND ITS OWN WIKI.**

@@ -407,7 +407,7 @@ export const ECHO_AURA_IDS = SEAL_AURA_IDS.map((id) => `echo_${id}`);
 
 /**
  * Vengeance: "Increases your Physical and Holy damage dealt by {0}% for 30 sec
- * after landing a critical strike. Stacks up to 5 times."
+ * after landing a non-periodic critical strike. Stacks up to 3 times."
  *
  * TWO SCHOOLS BY NAME, so it is a pair of school modifiers rather than a
  * blanket one -- except that a Paladin deals only physical and Holy damage, so
@@ -421,7 +421,21 @@ export const ECHO_AURA_IDS = SEAL_AURA_IDS.map((id) => `echo_${id}`);
  * damage of some third school -- which none of them do.
  */
 export const VENGEANCE_DURATION_MS = seconds(30);
-export const VENGEANCE_MAX_STACKS = 5;
+/**
+ * "Stacks up to 3 times."
+ *
+ * FIVE UNTIL CLIENT BUILD 1.60.1.70170, which the patch notes do not mention at
+ * all -- the tooltip went from "after landing a critical strike. Stacks up to 5
+ * times" to "after landing a NON-PERIODIC critical strike. Stacks up to 3
+ * times". Two changes in one sentence, and this is the one worth a figure: at 3%
+ * a stack the ceiling went from 1.15x to 1.09x.
+ *
+ * THE "NON-PERIODIC" HALF NEEDS NO CODE and is recorded on the reaction, because
+ * `dealDamage` never offers a periodic tick to a reaction at all. It is a real
+ * narrowing of the tooltip and a no-op here, which is worth saying rather than
+ * leaving a reader to wonder which of the two changes was implemented.
+ */
+export const VENGEANCE_MAX_STACKS = 3;
 
 export function vengeanceAura(percentPerStack: number): AuraDefinition {
   return {
@@ -436,15 +450,33 @@ export function vengeanceAura(percentPerStack: number): AuraDefinition {
 }
 
 /**
- * Holy Shield: "Increases chance to block by 20% for 10 sec, and deals 221
+ * Holy Shield: "Increases chance to block by 30% for 10 sec, and deals 221
  * Holy damage for each attack blocked while active. Each block expends a
  * charge. 4 charges."
  *
  * FOUR BLOCKS OR TEN SECONDS, WHICHEVER ENDS FIRST, which is exactly what
  * `consumedByBlock` and `chargesOnApply` were built for -- Shield Block is the
  * same shape and came first.
+ *
+ * ----------------------------------------------------------------------------
+ * THE BLOCK CHANCE WENT 20% TO 30% at client build 1.60.1.70170 -- "Holy
+ * Shield's chance to Block changed to 30% (was 20%)" -- while REDOUBT, the other
+ * Protection block talent, was cut from 30% to 20% in the same patch. The two
+ * moved in opposite directions, which is the shape to be careful about: reading
+ * one note and applying it to both numbers would have been a wash and looked
+ * deliberate.
+ *
+ * IT RAISES THE ABILITY'S OWN DAMAGE AS WELL AS THE TANK'S MITIGATION, because
+ * the 221 is "for each attack BLOCKED": more blocks means the four charges are
+ * spent sooner and more often. That damage was 14.9% of the Protection profile
+ * when its reaction was first wired up.
+ *
+ * THE CHARGE COUNT DID NOT MOVE -- still four -- and the charge is spent AFTER
+ * the reactions run, which is load-bearing: spending first drops the aura on the
+ * fourth block and the last of the four deals nothing.
+ * ----------------------------------------------------------------------------
  */
-export const HOLY_SHIELD_BLOCK_CHANCE = 20;
+export const HOLY_SHIELD_BLOCK_CHANCE = 30;
 export const HOLY_SHIELD_DAMAGE = 221;
 export const HOLY_SHIELD_DURATION_MS = seconds(10);
 export const HOLY_SHIELD_CHARGES = 4;

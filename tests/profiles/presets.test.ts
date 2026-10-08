@@ -404,16 +404,19 @@ describe('DW Fury', () => {
     expect(isTankBuild(p.character.combatStyle, p.character.stance)).toBe(false);
   });
 
-  it('spends 18 in Arms and 33 in Fury', () => {
-    // Hand-counted from the owner's list.
+  it('spends 17 in Arms and 34 in Fury', () => {
+    // Hand-counted from the owner's list, re-specified at client build
+    // 1.60.1.70170. It was 18/33 before: the point that moved is Spearing
+    // Strike's, which went out of Arms when the ability became Battle Stance
+    // only, and Improved Execute took it in Fury.
     const talents = profile().talents;
     const inTree = (id: string) =>
       Object.entries(talents)
         .filter(([talentId]) => tree.byId.get(talentId)?.tree === id)
         .reduce((total, [, rank]) => total + rank, 0);
 
-    expect(inTree('arms')).toBe(18);
-    expect(inTree('fury')).toBe(33);
+    expect(inTree('arms')).toBe(17);
+    expect(inTree('fury')).toBe(34);
     expect(inTree('protection')).toBe(0);
   });
 
@@ -424,18 +427,38 @@ describe('DW Fury', () => {
     expect(t.improved_tactical_mastery).toBe(5);
     expect(t.anger_management).toBe(1);
     expect(t.deep_wounds).toBe(3);
-    expect(t.spearing_strike).toBe(1);
     expect(t.impale).toBe(2);
     expect(t.cruelty).toBe(5);
     expect(t.unbridled_wrath).toBe(5);
-    expect(t.blood_craze).toBe(3);
-    expect(t.boundless_rage).toBe(2);
     expect(t.dual_wield_specialization).toBe(5);
     expect(t.raging_blows).toBe(1);
-    expect(t.enrage).toBe(5);
     expect(t.death_wish).toBe(1);
     expect(t.flurry).toBe(5);
     expect(t.bloodthirst).toBe(1);
+    /*
+     * THE FIVE THAT CHANGED AT CLIENT BUILD 1.60.1.70170, asserted together so
+     * the reason is in one place.
+     *
+     * OUT: Spearing Strike 1 (the ability needs Battle Stance now and this build
+     * is Berserker), Blood Craze 3 (its Bloodthirst trigger was removed, which
+     * was the only one a warrior nothing is hitting could meet), Boundless Rage 2
+     * (the talent no longer exists).
+     *
+     * IN: Lingering Rage 2, Furious Precision 3 -- the off-hand hit that Dual
+     * Wield Specialization used to carry -- and Improved Execute 2.
+     *
+     * AND ENRAGE DROPS TO 4/5 WITHOUT COSTING FLURRY, which is the one change
+     * here that is a consequence rather than a choice: Flurry required Enrage
+     * 5/5 and now requires Death Wish 1/1.
+     */
+    expect(t.spearing_strike).toBeUndefined();
+    expect(t.blood_craze).toBeUndefined();
+    expect(t.boundless_rage).toBeUndefined();
+    expect(t.lingering_rage).toBe(2);
+    expect(t.furious_precision).toBe(3);
+    expect(t.improved_execute).toBe(2);
+    expect(t.enrage).toBe(4);
+    expect(t.gore_drinker).toBeUndefined();
   });
 
   it('carries Crusader on BOTH weapons', () => {
@@ -521,11 +544,19 @@ describe('Prot Warr', () => {
     expect(t.impale).toBe(2);
     expect(t.shield_specialization).toBe(5);
     expect(t.anticipation).toBe(5);
-    expect(t.improved_bloodrage).toBe(2);
     expect(t.last_stand).toBe(1);
     expect(t.master_of_defense).toBe(2);
     expect(t.improved_revenge).toBe(3);
     expect(t.defiance).toBe(3);
+    /*
+     * THE ONE SWAP IN THIS BUILD at client build 1.60.1.70170, which moved six
+     * Protection rows and kept the total at 17/0/34: Improved Bloodrage out,
+     * Improved Thunder Clap in. The former moved to row 1, past where this
+     * build's points reach; the latter is two rage off an ability that is 5.1%
+     * of this profile's damage.
+     */
+    expect(t.improved_bloodrage).toBeUndefined();
+    expect(t.improved_thunder_clap).toBe(2);
     expect(t.vanguard).toBe(1);
     expect(t.improved_shield_wall).toBe(2);
     expect(t.concussion_blow).toBe(1);
@@ -585,39 +616,49 @@ describe('2H Arms', () => {
     expect(p.encounter.targetAttacks).toBe(false);
   });
 
-  it('spends 38 in Arms and 13 in Fury', () => {
-    // Hand-counted from the owner's list.
+  it('spends 39 in Arms, 10 in Fury and 2 in Protection', () => {
+    // Hand-counted from the owner's list, re-specified at client build
+    // 1.60.1.70170. It was 38/13/0: Improved Cleave was removed, and its three
+    // points bought a second rank of Improved Charge and two of Improved
+    // Bloodrage -- which puts a 2H Arms warrior in the Protection tree for the
+    // first time.
     const talents = profile().talents;
     const inTree = (id: string) =>
       Object.entries(talents)
         .filter(([talentId]) => tree.byId.get(talentId)?.tree === id)
         .reduce((total, rank) => total + rank[1], 0);
 
-    expect(inTree('arms')).toBe(38);
-    expect(inTree('fury')).toBe(13);
-    expect(inTree('protection')).toBe(0);
+    expect(inTree('arms')).toBe(39);
+    expect(inTree('fury')).toBe(10);
+    expect(inTree('protection')).toBe(2);
     expect(pointsRemaining(talents)).toBe(0);
   });
 
-  it('spends its last three on Improved Cleave, which does nothing here', () => {
+  it('no longer spends three on Improved Cleave, because it is gone', () => {
     /*
-     * The ruleset owner's choice for the three the list was short. Worth a
-     * test of its own because it changes no number in a result: Improved
-     * Cleave reduces Cleave's rage cost, and CLEAVE IS IN NO PRIORITY LIST --
-     * it is an on-next-swing ability for hitting two targets, and every
-     * encounter here has one.
+     * THE TALENT WAS REMOVED at client build 1.60.1.70170. This test used to
+     * assert the three points were IN it, and the note it carried is worth
+     * keeping because the lesson outlived the talent:
      *
-     * Its ten-point Fury requirement is met exactly by Cruelty and Unbridled
-     * Wrath, so the placement is legal as well as deliberate.
+     *   "The ruleset owner's choice for the three the list was short. Worth a
+     *   test of its own because it changes no number in a result: Improved
+     *   Cleave reduces Cleave's rage cost, and CLEAVE IS IN NO PRIORITY LIST."
+     *
+     * So this was a talent the owner chose, legally placed, that moved nothing.
+     * Its replacement does move something -- Improved Bloodrage is rage at the
+     * pull -- and Improved Tactical Mastery is now this build's only talent
+     * worth literally zero.
      */
-    expect(profile().talents.improved_cleave).toBe(3);
+    expect(profile().talents.improved_cleave).toBeUndefined();
+    expect(profile().talents.improved_charge).toBe(2);
+    expect(profile().talents.improved_bloodrage).toBe(2);
   });
 
   it('takes the ranks the owner named', () => {
     const t = profile().talents;
     expect(t.improved_heroic_strike).toBe(3);
     expect(t.improved_rend).toBe(3);
-    expect(t.improved_charge).toBe(1);
+    expect(t.improved_charge).toBe(2);
     expect(t.improved_tactical_mastery).toBe(5);
     expect(t.improved_overpower).toBe(2);
     expect(t.anger_management).toBe(1);
@@ -632,7 +673,6 @@ describe('2H Arms', () => {
     expect(t.mortal_strike).toBe(1);
     expect(t.cruelty).toBe(5);
     expect(t.unbridled_wrath).toBe(5);
-    expect(t.improved_cleave).toBe(3);
   });
 
   it('holds one enchanted two-hander and no off hand', () => {

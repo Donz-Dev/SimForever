@@ -285,6 +285,58 @@ export const BLOOD_CRAZE_TICK_INTERVAL_MS = seconds(2);
 
 export const BLOOD_CRAZE_TICKS = BLOOD_CRAZE_DURATION_MS / BLOOD_CRAZE_TICK_INTERVAL_MS;
 
+/*
+ * GORE DRINKER: "your next 3 melee attacks ... restore 0.5/1% of your maximum
+ * Health." New at client build 1.60.1.70170.
+ *
+ * ----------------------------------------------------------------------------
+ * A WINDOW OF CHARGES RATHER THAN A DURATION, which is the family Flurry and
+ * Shield Block belong to: "your next N attacks" is a count, and an aura that
+ * expires on time alone cannot express it.
+ *
+ * IT DOES NOT DECLARE `consumedBySwing`, THOUGH, and that is the difference.
+ * `consumedBySwing` is spent by an AUTO-ATTACK and "melee attacks" is broader --
+ * an ability that uses the weapon counts, which for a Fury warrior is most of
+ * the attacks it makes. So the reaction that heals also spends the charge, and
+ * the ordering is written down where it happens.
+ *
+ * THE DURATION IS A BACKSTOP AND IS INVENTED, which is why it is named as one.
+ * The tooltip states no duration at all -- only the three attacks -- so a
+ * warrior who stops attacking would carry the window forever. Thirty seconds is
+ * far longer than any gap between melee attacks in any list here, so nothing
+ * reaches it; Flurry's twelve-second backstop is flagged the same way and for
+ * the same reason.
+ *
+ * THE PERCENTAGE IS NOT ON THE AURA, which is why the parameter is unused. The
+ * heal is `goreDrinkerHeal`'s and reads the pool at the moment it fires, so Last
+ * Stand's larger maximum counts while it is up -- the same choice Blood Craze's
+ * tick makes, for the same reason. The parameter is kept so the builder reads
+ * like `bloodCrazeAura` next door and so a future clause that DOES need a
+ * magnitude on the aura has somewhere to put it.
+ * ----------------------------------------------------------------------------
+ */
+export const GORE_DRINKER_ID = 'gore_drinker';
+export const GORE_DRINKER_ATTACKS = 3;
+export const PLACEHOLDER_GORE_DRINKER_DURATION_MS = seconds(30);
+
+export function goreDrinkerAura(_percentOfMaxHealth: number): AuraDefinition {
+  return {
+    id: GORE_DRINKER_ID,
+    name: 'Gore Drinker',
+    durationMs: PLACEHOLDER_GORE_DRINKER_DURATION_MS,
+    maxStacks: GORE_DRINKER_ATTACKS,
+    /*
+     * STARTS FULL AND IS RESTORED TO FULL. A second trigger inside the window
+     * refills the three rather than adding a fourth, which is what "your next 3
+     * melee attacks" says -- and declaring it is the only honest way to do it:
+     * writing `instance.stacks` by hand moves the state and leaves the telemetry
+     * reporting a count the engine does not hold.
+     */
+    chargesOnApply: GORE_DRINKER_ATTACKS,
+    refreshRestoresCharges: true,
+  };
+}
+
 export function bloodCrazeAura(percentOfMaxHealth: number): AuraDefinition {
   return {
     id: 'blood_craze',

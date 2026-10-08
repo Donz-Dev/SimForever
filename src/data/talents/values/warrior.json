@@ -103,7 +103,7 @@
    "name": "Spearing Strike",
    "tree": "arms",
    "ranks": 1,
-   "text": "A brutal attack that deals 40% weapon damage. Deals an additional 80% weapon damage against Giants, Dragonkin, and mounted targets. Mounted targets are dismounted.",
+   "text": "A brutal attack that deals 40% weapon damage, plus an additional 80% weapon damage against Giants, Dragonkin, and mounted targets.",
    "values": null,
    "note": "single rank"
   },
@@ -132,31 +132,26 @@
    "name": "Bloodthrill",
    "tree": "arms",
    "ranks": 5,
-   "text": "Your melee attacks against targets afflicted by your Rend have a {0}% chance to activate your Overpower ability for {1} attack on your current target. Lasts {2} sec.",
+   "text": "Your Main Hand melee attacks against enemies afflicted by your Rend have a {0}% chance to allow the use of your Overpower ability on the target. Lasts {1} sec.",
    "values": [
     [
-     2,
-     1,
-     6
-    ],
-    [
      4,
-     1,
-     6
-    ],
-    [
-     6,
-     1,
      6
     ],
     [
      8,
-     1,
      6
     ],
     [
-     10,
-     1,
+     12,
+     6
+    ],
+    [
+     16,
+     6
+    ],
+    [
+     20,
      6
     ]
    ]
@@ -206,10 +201,16 @@
    "name": "Improved Slam",
    "tree": "arms",
    "ranks": 2,
-   "text": "Reduces the global cooldown and cast time of your Slam ability by {0} sec. In addition, Slam no longer interrupts your melee swing time.",
+   "text": "Reduces the global cooldown and cast time of your Slam ability by {0} sec. In addition, Slam no longer interrupts or delays your melee swing and Slam's cooldown is reduced by {1} sec.",
    "values": [
-    0.25,
-    0.5
+    [
+     0.25,
+     3
+    ],
+    [
+     0.5,
+     3
+    ]
    ]
   },
   "improved_hamstring": {
@@ -244,13 +245,28 @@
    "name": "Booming Voice",
    "tree": "fury",
    "ranks": 5,
-   "text": "Increases the radius of your Battle Shout and Demoralizing Shout abilities by {0}%.",
+   "text": "Increases the area of effect of your Shouts by {0}% and reduces their Rage cost by {1}%.",
    "values": [
-    10,
-    20,
-    30,
-    40,
-    50
+    [
+     10,
+     5
+    ],
+    [
+     20,
+     10
+    ],
+    [
+     30,
+     15
+    ],
+    [
+     40,
+     20
+    ],
+    [
+     50,
+     25
+    ]
    ]
   },
   "cruelty": {
@@ -266,68 +282,63 @@
     5
    ]
   },
-  "iron_will": {
-   "name": "Iron Will",
+  "lingering_rage": {
+   "name": "Lingering Rage",
    "tree": "fury",
    "ranks": 5,
-   "text": "Reduces the duration of Stun and Fear effects inflicted on you by {0}%.",
+   "text": "Increases the time before your Rage begins to decay after leaving combat by {0} sec.",
    "values": [
-    3,
+    2,
+    4,
     6,
-    9,
-    12,
-    15
+    8,
+    10
    ]
   },
   "unbridled_wrath": {
    "name": "Unbridled Wrath",
    "tree": "fury",
    "ranks": 5,
-   "text": "Gives you a {0}% chance to generate {1} additional Rage when you deal melee damage with a weapon. This effect is increased to {2} Rage for two-handed weapons.",
+   "text": "Gives you a {0}% chance to generate {1} additional Rage when you deal melee damage with a weapon.",
    "values": [
     [
      12,
-     1,
-     2
+     1
     ],
     [
      24,
-     1,
-     2
+     1
     ],
     [
      36,
-     1,
-     2
+     1
     ],
     [
      48,
-     1,
-     2
+     1
     ],
     [
      60,
-     1,
-     2
+     1
     ]
    ]
   },
-  "improved_cleave": {
-   "name": "Improved Cleave",
+  "furious_precision": {
+   "name": "Furious Precision",
    "tree": "fury",
    "ranks": 3,
-   "text": "Reduces the Rage cost of your Cleave ability by {0}.",
+   "text": "Increases your chance to hit with off-hand attacks by {0}%.",
    "values": [
-    1,
-    2,
-    3
+    4,
+    7,
+    10
    ]
   },
   "piercing_howl": {
    "name": "Piercing Howl",
    "tree": "fury",
    "ranks": 1,
-   "text": "Causes all nearby enemies to be Dazed, reducing movement speed by 50% for 6 sec.",
+   "text": "Causes all enemies within 10 yds to be Dazed, reducing movement speed by 50% for 6 sec.",
    "values": null,
    "note": "single rank"
   },
@@ -335,7 +346,7 @@
    "name": "Blood Craze",
    "tree": "fury",
    "ranks": 3,
-   "text": "Regenerates {0}% of your total Health over {1} sec after being the victim of a critical strike, dealing damage with Bloodthirst, or suffering more than {2}% of your maximum Health from a single attack.",
+   "text": "Regenerates {0}% of your total Health over {1} sec after being the victim of a critical strike or suffering more than {2}% of your maximum Health from a single attack.",
    "values": [
     [
      1,
@@ -354,47 +365,31 @@
     ]
    ]
   },
-  "boundless_rage": {
-   "name": "Boundless Rage",
-   "tree": "fury",
-   "ranks": 3,
-   "text": "Increases your maximum Rage by {0}.",
-   "values": [
-    10,
-    20,
-    30
-   ]
-  },
   "dual_wield_specialization": {
    "name": "Dual Wield Specialization",
    "tree": "fury",
    "ranks": 5,
-   "text": "Increases your off-hand weapon damage by {0}%, off-hand Rage generation by {1}%, and chance to hit with off-hand attacks by {2}%.",
+   "text": "Increases the damage done by your off-hand weapon by {0}% and the Rage generated by your off-hand attacks by {1}%.",
    "values": [
     [
      5,
-     20,
-     2
+     10
     ],
     [
      10,
-     40,
-     4
+     20
     ],
     [
      15,
-     60,
-     6
+     30
     ],
     [
      20,
-     80,
-     8
+     40
     ],
     [
      25,
-     100,
-     10
+     50
     ]
    ]
   },
@@ -402,11 +397,11 @@
    "name": "Raging Blows",
    "tree": "fury",
    "ranks": 1,
-   "text": "Causes your Whirlwind to also strike with your off-hand weapon, and reduces the Rage cost of your Cleave ability by {0}.",
+   "text": "Reduces the Rage cost of your Cleave and Whirlwind abilities by {0}.",
    "values": [
-    2
+    3
    ],
-   "note": "single rank; the 2 filled in by hand on the ruleset owner's confirmation, per this directory's README - a single-rank talent has no variable the calculator can identify from its own text"
+   "note": "single rank; the 3 filled in by hand per this directory's README. The text states it literally rather than through a {0} placeholder and there is no variable for the importer to identify, so a refresh writes null and this entry survives it -- the importer MERGES. WAS 2 AND NAMED CLEAVE ALONE: at client build 1.60.1.70170 Forever made it 3 and added Whirlwind, in the same patch that deleted Improved Cleave, whose job this took over. Without a value here BOTH abilityCost effects read nothing and talentBuild drops them in SILENCE, which reads as an unmodelled talent that never said so."
   },
   "enrage": {
    "name": "Enrage",
@@ -451,15 +446,20 @@
     5
    ]
   },
-  "precision": {
-   "name": "Precision",
+  "improved_berserker_rage": {
+   "name": "Improved Berserker Rage",
    "tree": "fury",
-   "ranks": 3,
-   "text": "Improves your chance to hit by {0}%.",
+   "ranks": 2,
+   "text": "Your Berserker Rage ability will instantly generate {0} Rage and has a {1}% chance to remove all movement impairing effects when activated.",
    "values": [
-    1,
-    2,
-    3
+    [
+     5,
+     50
+    ],
+    [
+     10,
+     100
+    ]
    ]
   },
   "death_wish": {
@@ -478,22 +478,6 @@
    "values": [
     5,
     10
-   ]
-  },
-  "improved_berserker_rage": {
-   "name": "Improved Berserker Rage",
-   "tree": "fury",
-   "ranks": 2,
-   "text": "Your Berserker Rage ability will instantly generate {0} Rage and has a {1}% chance to remove all movement impairing effects when activated.",
-   "values": [
-    [
-     5,
-     50
-    ],
-    [
-     10,
-     100
-    ]
    ]
   },
   "flurry": {
@@ -524,13 +508,39 @@
     ]
    ]
   },
+  "gore_drinker": {
+   "name": "Gore Drinker",
+   "tree": "fury",
+   "ranks": 2,
+   "text": "Your Enrage, Berserker Rage, Bloodrage, Death Wish, and Bloodthirst abilities cause your next {0} melee attacks to restore {1}% of your maximum Health.",
+   "values": [
+    [
+     3,
+     0.5
+    ],
+    [
+     3,
+     1
+    ]
+   ]
+  },
   "bloodthirst": {
    "name": "Bloodthirst",
    "tree": "fury",
    "ranks": 1,
-   "text": "Instantly attack the target causing damage equal to 35% of your Attack Power plus 30 and increasing your movement speed by 10% for 10 sec.",
+   "text": "Instantly attack the target causing damage equal to 45% of your Attack Power plus 30 and increasing your movement speed by 10% for 10 sec.",
    "values": null,
    "note": "single rank"
+  },
+  "improved_bloodrage": {
+   "name": "Improved Bloodrage",
+   "tree": "protection",
+   "ranks": 2,
+   "text": "Increases all the Rage generated by your Bloodrage ability by {0}%.",
+   "values": [
+    25,
+    50
+   ]
   },
   "shield_specialization": {
    "name": "Shield Specialization",
@@ -565,6 +575,19 @@
     ]
    ]
   },
+  "iron_will": {
+   "name": "Iron Will",
+   "tree": "protection",
+   "ranks": 5,
+   "text": "Reduces the duration of Stun and Fear effects inflicted on you by {0}%.",
+   "values": [
+    3,
+    6,
+    9,
+    12,
+    15
+   ]
+  },
   "anticipation": {
    "name": "Anticipation",
    "tree": "protection",
@@ -578,27 +601,15 @@
     20
    ]
   },
-  "improved_bloodrage": {
-   "name": "Improved Bloodrage",
+  "improved_revenge": {
+   "name": "Improved Revenge",
    "tree": "protection",
-   "ranks": 2,
-   "text": "Increases all the Rage generated by your Bloodrage ability by {0}%.",
+   "ranks": 3,
+   "text": "Increases damage dealt by your Revenge ability by {0}%.",
    "values": [
-    25,
-    50
-   ]
-  },
-  "toughness": {
-   "name": "Toughness",
-   "tree": "protection",
-   "ranks": 5,
-   "text": "Increases your Armor value from items by {0}%.",
-   "values": [
-    2,
-    4,
-    6,
-    8,
-    10
+    20,
+    40,
+    60
    ]
   },
   "improved_thunder_clap": {
@@ -636,15 +647,15 @@
     ]
    ]
   },
-  "improved_revenge": {
-   "name": "Improved Revenge",
+  "improved_disarm": {
+   "name": "Improved Disarm",
    "tree": "protection",
    "ranks": 3,
-   "text": "Increases damage dealt by your Revenge ability by {0}%.",
+   "text": "Reduces the cooldown of your Disarm ability by {0} secs.",
    "values": [
-    20,
-    40,
-    60
+    7,
+    13,
+    20
    ]
   },
   "defiance": {
@@ -669,40 +680,11 @@
     3
    ]
   },
-  "improved_disarm": {
-   "name": "Improved Disarm",
-   "tree": "protection",
-   "ranks": 3,
-   "text": "Reduces the cooldown of your Disarm ability by {0} secs.",
-   "values": [
-    7,
-    13,
-    20
-   ]
-  },
   "vanguard": {
    "name": "Vanguard",
    "tree": "protection",
    "ranks": 1,
    "text": "Your Charge ability is now usable while in Defensive Stance.",
-   "values": null,
-   "note": "single rank"
-  },
-  "improved_shield_wall": {
-   "name": "Improved Shield Wall",
-   "tree": "protection",
-   "ranks": 2,
-   "text": "Reduces the cooldown of your Shield Wall ability by {0} min.",
-   "values": [
-    5.5,
-    11
-   ]
-  },
-  "concussion_blow": {
-   "name": "Concussion Blow",
-   "tree": "protection",
-   "ranks": 1,
-   "text": "Stuns the target for 5 sec.",
    "values": null,
    "note": "single rank"
   },
@@ -722,6 +704,35 @@
     ]
    ]
   },
+  "improved_shield_wall": {
+   "name": "Improved Shield Wall",
+   "tree": "protection",
+   "ranks": 2,
+   "text": "Reduces the cooldown of your Shield Wall ability by {0} min.",
+   "values": [
+    5.5,
+    11
+   ]
+  },
+  "concussion_blow": {
+   "name": "Concussion Blow",
+   "tree": "protection",
+   "ranks": 1,
+   "text": "Stuns the target for 5 sec.",
+   "values": null,
+   "note": "single rank"
+  },
+  "focused_rage": {
+   "name": "Focused Rage",
+   "tree": "protection",
+   "ranks": 3,
+   "text": "Reduces the Rage cost of your offensive abilities by {0}.",
+   "values": [
+    1,
+    2,
+    3
+   ]
+  },
   "bastion": {
    "name": "Bastion",
    "tree": "protection",
@@ -733,17 +744,6 @@
     6,
     8,
     10
-   ]
-  },
-  "focused_rage": {
-   "name": "Focused Rage",
-   "tree": "protection",
-   "ranks": 3,
-   "text": "Reduces the Rage cost of your offensive abilities by {0}.",
-   "values": [
-    1,
-    2,
-    3
    ]
   },
   "shield_slam": {

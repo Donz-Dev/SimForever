@@ -70,20 +70,26 @@ const presetPlayer = (preset: string) => {
 /* -------------------------------------------------------------------------- */
 
 describe('Sacred Arbiter, which was dropped for want of a number', () => {
-  it('has its 10% hand-filled in the values file', () => {
+  it('has its 20% hand-filled in the values file', () => {
     /*
      * THE ROOT CAUSE, asserted where it lives. A single-rank talent has no
      * variable the importer can match, so its entry came back `null` -- and the
      * `abilityDamage` effect that reads it was discarded in silence while
      * `class_audit` read the effect TABLE and called the talent fully modelled.
+     *
+     * TWENTY PERCENT SINCE CLIENT BUILD 1.60.1.70170, up from ten and not
+     * mentioned in the patch notes -- and the hand-filled value is the ONLY
+     * place that figure lives, so a refresh of the values file cannot carry it.
+     * That makes this assertion the whole talent twice over: once for the number
+     * existing at all, and once for it being the current one.
      */
-    expect(talentNumber('paladin', 'sacred_arbiter', 1, 0)).toBe(10);
+    expect(talentNumber('paladin', 'sacred_arbiter', 1, 0)).toBe(20);
   });
 
-  it('actually raises Holy Strike by 10% on the builds that take it', () => {
+  it('actually raises Holy Strike by 20% on the builds that take it', () => {
     for (const preset of ['pally_ret', 'pally_shockadin']) {
       const modifier = presetPlayer(preset).abilityModifierFor('holy_strike');
-      expect(modifier.damageMultiplier, preset).toBeCloseTo(1.1, 10);
+      expect(modifier.damageMultiplier, preset).toBeCloseTo(1.2, 10);
     }
   });
 

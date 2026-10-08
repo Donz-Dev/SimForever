@@ -1305,6 +1305,19 @@ export function dealDamage(
  *
  * Shared by damage dealt and damage taken. A zero or negative award is skipped
  * rather than emitting a telemetry event for nothing.
+ *
+ * ----------------------------------------------------------------------------
+ * A CRIT MULTIPLIES THE FLAT HALF, by `Combatant.critResourceMultiplier`, which
+ * is 1 unless the ruleset says otherwise. `crit` is the outcome of the event the
+ * award belongs to; callers that have no outcome to offer pass nothing and the
+ * multiplier never applies.
+ *
+ * THE FLAT HALF ONLY, AND THAT IS THE WHOLE CARE THIS NEEDS. A `perDamage` award
+ * is proportional to damage and a crit has already doubled the damage, so
+ * multiplying it here as well would pay the bonus twice -- a bigger number and
+ * no error. Forever's two rage rules split exactly along that line: rage from
+ * dealing damage is `flat`, rage from taking it is `perDamage`.
+ * ----------------------------------------------------------------------------
  */
 export function grantGeneratedResource(
   context: SimulationContext,
@@ -1312,14 +1325,15 @@ export function grantGeneratedResource(
   generation: ResourceGeneration | undefined,
   damage: number,
   source?: ResourceSource,
+  crit = false,
 ): void {
   if (!generation) return;
   // A flat award that says it needs damage is skipped entirely when none
   // landed. See `ResourceGeneration.requiresDamage`.
   if (generation.requiresDamage && damage <= 0) return;
 
-  const amount =
-    (generation.flat ?? 0) + (generation.perDamage ?? 0) * Math.max(0, damage);
+  const flat = (generation.flat ?? 0) * (crit ? actor.critResourceMultiplier : 1);
+  const amount = flat + (generation.perDamage ?? 0) * Math.max(0, damage);
   if (amount <= 0) return;
 
   context.grantResource(actor, generation.resource, amount, source);

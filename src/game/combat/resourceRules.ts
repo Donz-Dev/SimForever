@@ -1,5 +1,6 @@
 import type { Combatant, CostRefundRule, ResourceGeneration, ResourceRegen } from '../../engine';
 import { seconds } from '../../engine';
+import type { ClassId, CombatStyleId } from '../character/ids';
 
 /**
  * ----------------------------------------------------------------------------
@@ -84,6 +85,59 @@ export const RAGE_FROM_BEAR_PAW: ResourceGeneration = rageFromSwing(
   BEAR_FORM_BASE_SPEED_SECONDS,
   false,
 );
+
+/*
+ * ============================================================================
+ * A CRITICAL SWING PAYS MORE RAGE, and by how much is a CLASS property.
+ *
+ * Forever's 1.60.1.70170 notes state two figures and nothing else:
+ *
+ *   Warrior  "Players now generate 100% increased Rage when landing a critical
+ *            strike with a basic attack."
+ *   Druid    "Bear Form and Dire Bear Form now generate 75% increased Rage when
+ *            landing a Critical Strike."
+ *
+ * SO TWO MULTIPLIERS AND NOT ONE WITH AN EXCEPTION. The Warrior's sits under
+ * the Warrior heading and the Bear's names its own forms, and the owner has
+ * confirmed reading them as 2.0 and 1.75 independently -- not 1.75 stacking on
+ * top of a class-wide 2.0, which the word "Players" invites.
+ *
+ * IT IS THE FIRST THING IN THIS FILE THAT MAKES HASTE RAISE RAGE INCOME, and
+ * only indirectly: `rageFromSwing` cancels speed exactly, so income is R per
+ * second whatever the weapon -- but a crit RATE is per swing, so a faster
+ * weapon crits more often and collects this more often. The cancellation that
+ * section argues for is about the base award and still holds.
+ *
+ * AND IT IS WHY CRIT IS NOW A RAGE STAT FOR A WARRIOR. At a 2.0 multiplier a
+ * build at 30% crit earns 1.3x the rage it used to, which is a change to the
+ * rage economy of every Warrior and Bear list in the project rather than a
+ * damage change -- so a figure that moves here moves because the character
+ * could AFFORD more, not because anything hit harder.
+ * ============================================================================
+ */
+export const WARRIOR_CRIT_RAGE_MULTIPLIER = 2.0;
+export const BEAR_FORM_CRIT_RAGE_MULTIPLIER = 1.75;
+
+/**
+ * What a critical swing multiplies this character's flat rage award by.
+ *
+ * Shaped like `globalCooldownFor` deliberately: one function, dispatching on
+ * class and style, so a reader looking for "which classes have a special
+ * number here" finds every answer in one place rather than in `createPlayer`.
+ *
+ * A BEAR AND A DIRE BEAR ARE ONE STYLE in this engine, which is why `bear`
+ * covers both of the forms the note names. A Cat or a Moonkin gets 1 -- they
+ * own a rage pool and have nothing that fills it from a swing, and Forever
+ * states the increase for the bear forms only.
+ */
+export function critRageMultiplierFor(
+  characterClass: ClassId,
+  style: CombatStyleId | undefined,
+): number {
+  if (characterClass === 'warrior') return WARRIOR_CRIT_RAGE_MULTIPLIER;
+  if (characterClass === 'druid' && style === 'bear') return BEAR_FORM_CRIT_RAGE_MULTIPLIER;
+  return 1;
+}
 
 /**
  * Rage from TAKING damage, as Forever states it.

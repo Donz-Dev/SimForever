@@ -114,7 +114,7 @@
    "name": "Inner Focus",
    "tree": "discipline",
    "ranks": 1,
-   "text": "When activated, reduces the Mana cost of your next spell by 100% and increases its critical effect chance by 25% if it is capable of a critical effect.",
+   "text": "When activated, reduces the Mana cost of your next spell by 100% and increases its critical effect chance by 25% if it is a non-periodic spell and capable of a critical effect.",
    "values": null,
    "note": "single rank"
   },
@@ -511,7 +511,7 @@
    "name": "Spirit Tap",
    "tree": "shadow",
    "ranks": 5,
-   "text": "Gives you a {0}% chance to gain a {1}% bonus to your Spirit for {2} sec after killing a non-trivial target. For the duration, your Mana will regenerate at a {3}% of normal rate while casting.",
+   "text": "Gives you a {0}% chance to increase your Spirit by {1}% for {2} sec after killing a non-trivial target or when an enemy afflicted by your Vampiric Embrace dies. For the duration, {3}% of your Mana regeneration will continue while casting.",
    "values": [
     [
      20,
@@ -639,7 +639,7 @@
    "name": "Vampiric Embrace",
    "tree": "shadow",
    "ranks": 1,
-   "text": "Afflicts your target with Shadow energy that causes all party members to be healed for 20% of any Shadow spell damage you deal for 30 sec. Vampiric Embrace also grants a chance for your Spirit Tap talent to trigger when enemies afflicted by it die.",
+   "text": "Afflicts your target with Shadow energy that causes all party members to be healed for 20% of any Shadow spell damage you deal for 30 sec.",
    "values": null,
    "note": "single rank"
   },
@@ -681,7 +681,7 @@
    "name": "Devouring Contagion",
    "tree": "shadow",
    "ranks": 2,
-   "text": "Reduces the mana cost of your Devouring Plague by {0}%.\n\nTargets that die while Devouring Plague it is active spreads it, jumping to a nearby enemy within {1} yards for the remaining duration.",
+   "text": "Reduces the mana cost of your Devouring Plague by {0}%.\n\nTargets that die while Devouring Plague is active spreads it, jumping to a nearby enemy within {1} yds for the remaining duration.",
    "values": [
     [
      25,

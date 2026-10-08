@@ -176,18 +176,28 @@ export function abilitiesForBuild(
     if (ability.id === 'shield_slam' && style !== 'one_hand_shield') return false;
 
     /*
-     * SPEARING STRIKE NEEDS A TWO-HANDED WEAPON, by the same rule and for the
-     * same reason: "Requires Two-Handed Axes, Two-Handed Maces, Polearms,
-     * Two-Handed Swords, Staves" in the spellbook capture, "Requires
-     * Two-Handed Melee Weapon" on foreverchanges.pro. Our older Wowhead
-     * tooltip states no requirement at all, which is silence rather than
-     * disagreement -- see `SPEARING_STRIKE`.
+     * SPEARING STRIKE'S WEAPON REQUIREMENT IS GONE, and so is this gate.
      *
-     * Gated here rather than in `canCast` so that a dual-wielder does not
-     * carry it in the book: an ability listed and never cast reads as a
-     * rotation problem, and this one is a weapon problem.
+     * Forever replaced it at client build 1.60.1.70170 -- "Spearing Strike no
+     * longer requires a 2handed weapon. Spearing Strike requires Battle Stance"
+     * -- and the spellbook capture agrees, "Requires Battle Stance" where it
+     * said "Requires Two-Handed Axes, Two-Handed Maces, Polearms, Two-Handed
+     * Swords, Staves". A STANCE is not a weapon, so it is declared on the
+     * ability as `stances: ['battle_stance']` the way Overpower's is, and this
+     * function no longer has an opinion about it.
+     *
+     * WHAT THE OLD GATE COST, because the lesson outlives it: the requirement
+     * was found on 2026-09-30 and the Wowhead tooltip carried NO requirement
+     * line at all, which had been read as "no requirement" for the whole
+     * project. A source that omits a clause has not denied it. The DW Fury
+     * profile had been casting a two-handed ability while holding two swords
+     * and a test asserted that it did.
+     *
+     * AND THE PATCH DID NOT GIVE THE ABILITY BACK TO THAT BUILD. A dual-wielding
+     * Fury warrior can now hold the weapons for it and cannot hold the stance,
+     * so it is still absent -- the owner's new URL spends that point on Improved
+     * Execute instead. The gate moved and the answer did not.
      */
-    if (ability.id === 'spearing_strike' && style !== 'two_hander') return false;
 
     /*
      * A ROGUE'S DAGGER ABILITIES ARE GATED ON THE WEAPON, like Shield Slam:

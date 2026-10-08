@@ -270,9 +270,17 @@ export const FROST_SHOCK: Ability = {
 /**
  * Lava Burst, granted by the 31-point Elemental talent.
  *
- * THE TALENT TOOLTIP SAYS 106 TO 134 AND THE SPELLBOOK SAYS 192 TO 248, and
+ * THE TALENT TOOLTIP SAYS 150 TO 192 AND THE SPELLBOOK SAYS 192 TO 248, and
  * they do not disagree: the talent shows RANK 1 and a level 60 trains rank 3.
  * The project rule, and the fourth time it has come up.
+ *
+ * THE TALENT'S FIGURE MOVED AT CLIENT BUILD 1.60.1.70170 AND THE SPELLBOOK'S DID
+ * NOT -- rank 1 went 106-134 to 150-192 while rank 3 stayed at 192-248, which the
+ * patch notes do not mention. So Forever buffed the low ranks and left the one
+ * this project casts alone, and the figure here is unchanged. Recorded because
+ * the two sources now look CLOSER together, and a reader who remembers the old
+ * gap could easily read 192-248 as the talent's new number rather than the
+ * spellbook's unchanged one.
  *
  * The Flame Shock clause is read off the target at cast time, which makes the
  * priority list's order load-bearing -- Flame Shock sits above it for exactly

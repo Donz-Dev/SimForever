@@ -230,14 +230,28 @@ export const WARRIOR_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
   ],
 
   /*
-   * Two effects that scale and one that does not. "Slam no longer interrupts
-   * your melee swing time" is granted by both ranks, and is worth far more than
-   * the quarter second of cast time: without it a Slam costs a whole swing.
+   * Two effects that scale and two that do not. "Slam no longer interrupts or
+   * delays your melee swing" is granted by both ranks, and is worth far more
+   * than the half second of cast time: without it a Slam costs a whole swing.
+   *
+   * THE COOLDOWN CLAUSE IS NEW AT CLIENT BUILD 1.60.1.70170 and is the reason
+   * this entry now carries indices. The tooltip gained "and Slam's cooldown is
+   * reduced by 3.0 sec", so the row went from one number to two -- `[0.25, 3]`
+   * and `[0.5, 3]` -- and every effect that was reading it unindexed would have
+   * kept reading the first by accident. That is right for the three that want
+   * the cast time and wrong the moment a fourth wants something else, so all
+   * four say which number they take. See CLAUDE.md on `valueIndex`: four Druid
+   * talents and one Priest talent have been found reading the wrong one.
+   *
+   * THE THREE SECONDS DO NOT SCALE WITH RANK -- both ranks state 3 -- which is
+   * what the values file records and is why the sheet-style "one varying number"
+   * assumption does not hold here.
    */
   improved_slam: [
-    { kind: 'abilityCastTime', abilityId: 'slam' },
-    { kind: 'abilityGcd', abilityId: 'slam' },
+    { kind: 'abilityCastTime', abilityId: 'slam', valueIndex: 0 },
+    { kind: 'abilityGcd', abilityId: 'slam', valueIndex: 0 },
     { kind: 'abilityHoldsSwing', abilityId: 'slam' },
+    { kind: 'abilityCooldown', abilityId: 'slam', unit: 'seconds', valueIndex: 1 },
   ],
 
   improved_hamstring: [
@@ -249,8 +263,52 @@ export const WARRIOR_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
   // ---------------------------------------------------------------------
   // Fury
   // ---------------------------------------------------------------------
+  /*
+   * "Increases the area of effect of your Shouts by {0}% and reduces their Rage
+   * cost by {1}%" -- 50% and 25% at 5/5.
+   *
+   * THE SECOND CLAUSE IS NEW AT CLIENT BUILD 1.60.1.70170 and the talent was a
+   * pure `positioning` ruling before it. The notes: "Booming Voice is now a
+   * 10/20/30/40/50% increase area of effect to your Shouts and a 5/10/15/20/25%
+   * reduction to their Rage costs."
+   *
+   * WHICH IS EXACTLY THE SHAPE CLAUDE.md WARNS ABOUT UNDER `scope`: a ruling is
+   * permanent by design, so a talent filed under one is deliberately kept out of
+   * the live-gap list and off the Talent panel's "not modelled" column. A second
+   * clause arriving on a scoped talent is therefore the quietest kind of change
+   * there is -- the entry that exists to stop anybody looking again would have
+   * swallowed a real rage saving on two abilities. The positioning half stays
+   * ruled out and gets its own entry; the rage half is live.
+   *
+   * A PERCENTAGE, SO `grantCastModifier` AND NOT `abilityCost`. `abilityCost`
+   * subtracts a FLAT amount -- right for Improved Thunder Clap's two rage, wrong
+   * for a quarter of a ten-rage shout. Two on the same ability stack additively,
+   * which `resolveCast` gives for free by subtracting each from the base.
+   *
+   * "YOUR SHOUTS" IS THE TWO THIS PROJECT DECLARES. Battle Shout and Demoralizing
+   * Shout are the Warrior's shouts that are modelled; Challenging Shout is a
+   * taunt and threat is out of scope, and Piercing Howl is a howl. Listed by id
+   * because `abilityIds` is a list and there is no "is a shout" fact to read --
+   * which is the same reason Twin Disciplines names its instants one by one.
+   *
+   * WORTH NOTHING TO ANY PROFILE TODAY, and for a reason that is a LIST cause
+   * rather than an engine one: `battle_shout` is in the preset raid buff list, so
+   * every Warrior list's Battle Shout entry refuses itself for the whole fight,
+   * and no list casts Demoralizing Shout at all. See CLAUDE.md, "A MEASUREMENT IN
+   * A COMMENT EXPIRES THE SAME WAY AN `unmodelled` REASON DOES".
+   */
   booming_voice: [
-    { kind: 'unmodelled', scope: 'positioning', reason: 'Shout radius. The encounter has no positions.' },
+    {
+      kind: 'grantCastModifier',
+      abilityIds: ['battle_shout_cast', 'demoralizing_shout_cast'],
+      property: 'costFraction',
+      valueIndex: 1,
+    },
+    {
+      kind: 'unmodelled',
+      scope: 'positioning',
+      reason: 'Shout radius. The encounter has no positions.',
+    },
   ],
 
   // Crit is held in percentage POINTS, so "+1%" is a flat +1 and needs no scale.
@@ -260,9 +318,34 @@ export const WARRIOR_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
     { kind: 'unmodelled', scope: 'crowdControl', reason: 'Stun and fear duration. Nothing stuns or fears the player.' },
   ],
 
-  unbridled_wrath: [{ kind: 'reaction', reactionId: 'unbridled_wrath' }],
+  unbridled_wrath: [{ kind: 'reaction', reactionId: 'unbridled_wrath', valueIndex: 0 }],
 
-  improved_cleave: [{ kind: 'abilityCost', abilityId: 'cleave' }],
+  /*
+   * IMPROVED CLEAVE IS GONE, removed at client build 1.60.1.70170, and its
+   * three points went with it -- the 2H Arms build spent them there and the
+   * owner's new URL spends them on Improved Charge and Improved Bloodrage.
+   *
+   * ITS WORK MOVED TO RAGING BLOWS, which now reads "Reduces the Rage cost of
+   * your Cleave and Whirlwind abilities by 3" where it read 2 and named Cleave
+   * alone. So the rage saving on Cleave survives the talent that provided it.
+   */
+
+  /*
+   * FURIOUS PRECISION, new at client build 1.60.1.70170: "Increases your chance
+   * to hit with off-hand attacks by 4/7/10%."
+   *
+   * IT IS THE CLAUSE DUAL WIELD SPECIALIZATION LOST, at the same ranks and the
+   * same cap, moved onto a talent of its own -- "Dual Wield Specialization no
+   * longer grants hit to your off-hand attacks" and this in the row above it.
+   * So the `offHandHit` kind that was built for that talent needed no change
+   * and has a new owner.
+   *
+   * OFF-HAND ONLY, which no character-wide stat can express: `hitChance` would
+   * hand the main hand ten free points. `Combatant.hitBonusBySlot` is the field
+   * and `attackChances` adds the wielding hand's own bonus, which is also why
+   * `isWeaponUseOf` had to stop accepting a ranged slot -- see CLAUDE.md.
+   */
+  furious_precision: [{ kind: 'offHandHit' }],
 
   piercing_howl: [
     { kind: 'grantAbility', abilityId: 'piercing_howl' },
@@ -277,12 +360,25 @@ export const WARRIOR_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
   ],
 
   /*
-   * FULLY MODELLED. All three triggers fire:
-   * being critically struck, taking more than 20% of maximum health from one
-   * blow, and landing a Bloodthirst. Two reactions, because the first two
-   * watch attacks RECEIVED and the third one dealt.
+   * FULLY MODELLED. Both triggers fire: being critically struck, and taking
+   * more than 20% of maximum health from one blow.
    *
-   * THE TICK CADENCE IS NOW THE RULESET OWNER'S, not a placeholder: once every
+   * ----------------------------------------------------------------------
+   * IT HAD A THIRD AND FOREVER TOOK IT AWAY. "Blood Craze no longer activates
+   * off of Bloodthirst casts" at client build 1.60.1.70170, and the refreshed
+   * tooltip drops the clause -- so `blood_craze_bloodthirst`, which was a
+   * SECOND reaction because it watched the other side of the attack, is gone
+   * with it.
+   *
+   * WHICH MAKES THE TALENT WORTH NOTHING TO A FURY BUILD, and that is why the
+   * owner's new URL does not take it: the Bloodthirst clause was the only one a
+   * warrior nothing is hitting could ever meet. Both survivors fire on attacks
+   * RECEIVED, which needs `encounter.targetAttacks` -- a Protection setting --
+   * and Blood Craze is a Fury talent. It did not become inert; it became a tank
+   * talent in a damage tree.
+   * ----------------------------------------------------------------------
+   *
+   * THE TICK CADENCE IS THE RULESET OWNER'S, not a placeholder: once every
    * two seconds for three ticks across the six. It was the last thing about
    * this talent that came from Classic rather than from Forever.
    *
@@ -292,48 +388,77 @@ export const WARRIOR_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
    * the deaths are counted, and healing received is a figure on the results
    * page.
    */
-  blood_craze: [
-    { kind: 'reaction', reactionId: 'blood_craze' },
-    { kind: 'reaction', reactionId: 'blood_craze_bloodthirst' },
-  ],
-
-  boundless_rage: [{ kind: 'resourceMax', resource: 'rage' }],
+  blood_craze: [{ kind: 'reaction', reactionId: 'blood_craze' }],
 
   /*
-   * FULLY MODELLED, all three clauses. At 5/5: off-hand damage +25%, which
-   * takes the multiplier from 0.5 to 0.625; off-hand rage generation +100%,
-   * so it doubles; and +10 percentage points of hit on off-hand attacks only.
+   * BOUNDLESS RAGE IS GONE, removed at client build 1.60.1.70170 -- +10/20/30
+   * maximum rage, which the DW Fury build spent two points on.
    *
-   * Every rank is real captured data rather than interpolation -- the values
-   * file holds [5,20,2] through [25,100,10] and all three clauses were
-   * confirmed independently by the ruleset owner.
+   * `resourceMax` HAS NO OTHER CALLER NOW and is kept rather than deleted: it
+   * is a general declaration and exactly the kind of thing a ruleset adds back.
+   * A kind with no caller is visible in the type; a deleted one has to be
+   * re-derived from scratch.
+   */
+
+  /*
+   * FULLY MODELLED, both clauses. At 5/5: off-hand damage +25%, which takes the
+   * multiplier from 0.5 to 0.625, and off-hand rage generation +50%.
    *
-   * Three effect kinds because the three land in three different places, and
-   * that is precisely why this went unmodelled: one kind could only ever have
-   * done a third of the talent.
+   * ----------------------------------------------------------------------
+   * IT HAD THREE CLAUSES AND CLIENT BUILD 1.60.1.70170 CHANGED TWO OF THEM.
+   * The hit is gone -- "Dual Wield Specialization no longer grants hit to your
+   * off-hand attacks" -- and that is exactly what happened to it: the 2/4/6/8/10
+   * points of off-hand hit moved to FURIOUS PRECISION, a new talent one row
+   * above, at 4/7/10. The `offHandHit` kind needed no change and has a new
+   * owner.
+   *
+   * THE RAGE CLAUSE IS WHERE THE NOTES AND THE CLIENT DO NOT QUITE AGREE, AND
+   * THE CLIENT WINS. The note reads "no longer provides a 20/40/60/80/100%
+   * increase to your Off-Hand weapon's Rage generation", which on its own reads
+   * as the clause being removed; the client's own tooltip still carries one, at
+   * HALF the old figure -- "the Rage generated by your off-hand attacks by 50%"
+   * at 5/5, with the values file holding 10/20/30/40/50. So the note is about
+   * THAT increase rather than about rage generation as such, and 50% is what a
+   * dual-wielder gets. `foreverchanges.pro` is the third opinion if it matters.
+   *
+   * THE VALUE ROW WENT FROM THREE NUMBERS TO TWO, which is the half of this that
+   * could have gone wrong in silence: `offHandResourceGeneration` still wants
+   * index 1 and still finds the rage there, but anything reading index 2 now
+   * reads nothing -- and a talent effect that reads NO value is DROPPED without
+   * saying so, which reads as an unmodelled talent that never reported itself.
+   * The hit entry is deleted rather than left pointing past the end of the row.
+   * ----------------------------------------------------------------------
    */
   dual_wield_specialization: [
     { kind: 'offHandDamage', valueIndex: 0 },
     { kind: 'offHandResourceGeneration', valueIndex: 1 },
-    { kind: 'offHandHit', valueIndex: 2 },
   ],
 
   /*
-   * The Whirlwind half is MODELLED: the off hand strikes immediately after
-   * the main hand, carrying the off-hand damage penalty -- 0.625 with Dual
-   * Wield Specialization at 5/5 -- and not the off-hand miss penalty, which
-   * lives only in the auto-attack table and which a special never uses.
+   * "Reduces the Rage cost of your Cleave and Whirlwind abilities by 3."
    *
-   * The Cleave half is modelled too, now that the ruleset owner has confirmed
-   * the number: one rank, two rage off Cleave's twenty. A single-rank talent
-   * has no variable the calculator can identify from its own text, so the
-   * values file carries `null` until someone fills it in by hand -- which is
-   * exactly the workflow that directory's README describes, and the note on
-   * the entry records who confirmed it.
+   * ----------------------------------------------------------------------
+   * IT WAS A COST REDUCTION AND AN OFF-HAND STRIKE, AND THE STRIKE IS NOW FREE.
+   * Client build 1.60.1.70170: "Raging Blows no longer causes your Whirlwind to
+   * strike with your offhand. Whirlwind will now always strike with both weapons
+   * without requiring a talent point", and "Raging Blows now reduces the Rage
+   * cost of your Cleave and Whirlwind abilities by 3."
+   *
+   * So the `abilityFlag` is gone -- `WHIRLWIND` reads its own off hand now, and
+   * the only question left there is whether one is equipped -- and the cost
+   * reduction gained a second ability and a third rage. It took over Improved
+   * Cleave's job in the same patch that deleted Improved Cleave.
+   *
+   * A FLAT AMOUNT, so `abilityCost` is right, where Booming Voice's percentage
+   * needed `grantCastModifier`. Still a single-rank talent, so its value is
+   * hand-filled in `values/warrior.json` with a note: the importer cannot
+   * identify a variable in a sentence with no `{0}` placeholder, and an effect
+   * that reads no value is dropped in silence.
+   * ----------------------------------------------------------------------
    */
   raging_blows: [
-    { kind: 'abilityFlag', abilityId: 'whirlwind', key: 'offHandStrike' },
     { kind: 'abilityCost', abilityId: 'cleave' },
+    { kind: 'abilityCost', abilityId: 'whirlwind' },
   ],
 
   /*
@@ -349,7 +474,62 @@ export const WARRIOR_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
 
   improved_execute: [{ kind: 'abilityCost', abilityId: 'execute' }],
 
-  precision: [{ kind: 'stat', stat: 'hitChance', operation: 'flat' }],
+  /*
+   * LINGERING RAGE, new at client build 1.60.1.70170 and standing where Iron
+   * Will stood: "Increases the time before your Rage begins to decay after
+   * leaving combat by 2/4/6/8/10 sec."
+   *
+   * ----------------------------------------------------------------------
+   * THERE IS NO OUT-OF-COMBAT STATE HERE, so the whole talent is inert. A fight
+   * begins in combat -- which is why Charge is a one-shot opener and why every
+   * stealth opener is out of scope -- and it ends when the clock does. Nothing
+   * ever leaves combat, so no rage ever begins to decay, so there is no delay
+   * to lengthen.
+   *
+   * NO `scope` TAG, DELIBERATELY, and that is the whole judgement in this
+   * entry. `OutOfScope` has no member covering an out-of-combat state, and
+   * adding one is a scope DECISION that needs the owner. A scoped entry is
+   * filed as ANSWERED -- kept out of the live-gap list and shown apart in the
+   * Talent panel -- so tagging this would delete it from the one list that gets
+   * re-read, which has already cost three Rogue talents at once.
+   *
+   * SO IT IS A LIVE GAP WITH A REASON THAT NAMES ITS QUESTION, which is what
+   * makes it askable. ANGER MANAGEMENT'S SECOND CLAUSE IS THE SAME QUESTION --
+   * "reduces Rage loss while out of combat by 30%" -- and it is carried in a
+   * COMMENT on that talent rather than as a declaration, so the census counts
+   * Anger Management as fully modelled. That is the undeclared-ruling shape
+   * CLAUDE.md records under Feral Swiftness, and it is left alone here because
+   * fixing it means first deciding whether it is a ruling or a gap.
+   *
+   * THE DW FURY BUILD TAKES 2/5 OF IT, which the owner chose, so this is a
+   * talent whose points are real and whose effect is nothing -- the same honest
+   * shape Improved Tactical Mastery has had all along.
+   * ----------------------------------------------------------------------
+   */
+  lingering_rage: [
+    {
+      kind: 'unmodelled',
+      reason:
+        'Rage decay after leaving combat. Nothing here leaves combat: a fight ' +
+        'begins in combat and ends with the clock, so no rage decays and there ' +
+        'is no delay to lengthen. Whether an out-of-combat state belongs in ' +
+        'scope is a question for the ruleset owner rather than a gap in the ' +
+        'engine -- Anger Management carries the same clause.',
+    },
+  ],
+
+  /*
+   * PRECISION IS GONE from the Warrior, removed at client build 1.60.1.70170 and
+   * named in the patch notes nowhere at all -- the Fury tree is one talent
+   * shorter, 53 to 52, and this is the fourth removal that accounts for it,
+   * beside Improved Cleave, Boundless Rage and Toughness.
+   *
+   * NO WARRIOR BUILD SPENT A POINT HERE, so nothing moved. The PALADIN still has
+   * a talent of this name, in its Protection tree, which the Prot Pally build
+   * takes 3/3 of -- ids are unique within a class and not across them, which is
+   * why `values/*.json` is one file per class. Deleting the wrong one would have
+   * typechecked cleanly and produced a silently weaker tank.
+   */
 
   /*
    * FULLY MODELLED. The ability was missing from the spreadsheet and is in
@@ -410,7 +590,65 @@ export const WARRIOR_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
     },
   ],
 
+  /*
+   * ITS PREREQUISITE MOVED AND ITS EFFECT DID NOT. Flurry required Enrage 5/5
+   * and requires Death Wish 1/1 at client build 1.60.1.70170 -- which is tree
+   * STRUCTURE and lives in `data/talents/warrior.json`, so nothing here changes.
+   *
+   * IT IS WHAT LET THE OWNER'S NEW DW FURY BUILD DROP ENRAGE TO 4/5 and keep
+   * Flurry at 5/5. Gore Drinker, the new talent that DOES require Enrage 5, is
+   * the one that build passed over.
+   */
   flurry: [{ kind: 'reaction', reactionId: 'flurry' }],
+
+  /*
+   * GORE DRINKER, new at client build 1.60.1.70170: "Your Enrage, Berserker
+   * Rage, Bloodrage, Death Wish, and Bloodthirst abilities cause your next 3
+   * melee attacks to restore 0.5/1% of your maximum Health."
+   *
+   * ----------------------------------------------------------------------
+   * FOUR OF THE FIVE TRIGGERS ARE CASTS AND THE FIFTH IS NOT. Berserker Rage,
+   * Bloodrage, Death Wish and Bloodthirst are abilities a Warrior presses;
+   * ENRAGE IS A TALENT PROC in Forever and appears in no spellbook, so there is
+   * no cast for a cast reaction to see. That clause gets its own `unmodelled`
+   * entry rather than being quietly folded in with the other four -- a reason
+   * that names what is missing is the kind that expires.
+   *
+   * ONE CAST REACTION FOR FOUR ABILITIES, NOT FOUR REACTIONS.
+   * `CastReaction.abilityId` holds one id, so the set is checked in
+   * `canTrigger` instead. That is the opposite of what King of the Jungle's
+   * note argued for a SINGLE-ability reaction, and for the same reason: the
+   * field expresses one ability exactly and cannot express four at all.
+   *
+   * `valueIndex: 1` IS THE HEALTH PERCENTAGE. The row is `[3, 0.5]` and
+   * `[3, 1]` -- the charge count first, the percentage second -- so index 0
+   * would grant 3% of maximum health per attack at BOTH ranks: six times the
+   * talent at 1/2, three times at 2/2, and a perfectly plausible number either
+   * way. Both entries take index 1; the charge count is a constant on the aura,
+   * which is where Flurry keeps its three as well.
+   *
+   * TWO EFFECTS FOR ONE TALENT because the triggers sit on both sides: a CAST
+   * opens the window and an ATTACK spends it. The same two-entry shape Blood
+   * Craze had when its third clause existed.
+   *
+   * WORTH NOTHING TO ANY PROFILE -- no build takes it, and the one that could
+   * (DW Fury, which has Enrage) spends its points elsewhere. A BUILD cause, so
+   * it expires the day a build changes rather than the day the engine does.
+   * ----------------------------------------------------------------------
+   */
+  gore_drinker: [
+    { kind: 'castReaction', reactionId: 'gore_drinker', valueIndex: 1 },
+    { kind: 'reaction', reactionId: 'gore_drinker_heal', valueIndex: 1 },
+    {
+      kind: 'unmodelled',
+      reason:
+        'Its Enrage trigger does nothing: Enrage is a talent PROC in Forever ' +
+        'rather than an ability, so it is never cast and a cast reaction cannot ' +
+        'see it. It would need a hook on an aura being APPLIED, which the ' +
+        'engine has no equivalent of. The other four triggers are casts and ' +
+        'all four fire.',
+    },
+  ],
 
   bloodthirst: [{ kind: 'grantAbility', abilityId: 'bloodthirst' }],
 
@@ -457,15 +695,19 @@ export const WARRIOR_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
   ],
 
   /*
-   * FULLY MODELLED. 10% more armor FROM ITEMS at 5/5.
+   * TOUGHNESS IS GONE from the Warrior, removed at client build 1.60.1.70170 and
+   * named in the patch notes under Protection. No Warrior build spent a point on
+   * it -- the Prot build's 34 Protection points went elsewhere -- so nothing
+   * moved.
    *
-   * The old reason was right about the problem and wrong that it was
-   * unsolvable: the engine held one armor number, so a percentage would have
-   * scaled the class base too. `armorFromItems` reads the equipped
-   * contribution on its own, and the talent adds a flat amount computed from
-   * that -- so a character in no armor gets nothing, which is correct.
+   * `itemArmorPercent` STILL HAS TWO CALLERS and is not going anywhere: the
+   * PALADIN's Toughness, which the Prot Pally takes 5/5 of, and the Druid's
+   * Thick Hide, which the Bear takes 3/3 of. The argument for it is recorded
+   * there -- the engine held one armor number, so a percentage would have scaled
+   * the class base too, and `armorFromItems` reads the equipped contribution on
+   * its own, which is also why an ENCHANT's armor is outside it by the owner's
+   * ruling.
    */
-  toughness: [{ kind: 'itemArmorPercent' }],
 
   improved_thunder_clap: [{ kind: 'abilityCost', abilityId: 'thunder_clap' }],
 

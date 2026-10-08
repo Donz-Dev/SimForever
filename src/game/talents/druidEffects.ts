@@ -450,7 +450,15 @@ export const DRUID_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
     { kind: 'abilityCost', abilityId: 'lacerate', valueIndex: 1 },
   ],
 
-  mangle: [{ kind: 'grantAbility', abilityId: 'mangle' }],
+  /*
+   * THE TALENT IS `primal_bite` AND THE ABILITY IT GRANTS IS STILL `mangle`,
+   * which is not a typo. Forever renamed Mangle to Primal Bite; the ability's
+   * internal id was deliberately left alone -- rotations, tests and the Berserk
+   * aura all key off it -- and the TALENT's id is derived from the client's
+   * name, so the two parted company. `MANGLE.name` is "Primal Bite" and that is
+   * what a reader sees. See `abilities/druid.ts`.
+   */
+  primal_bite: [{ kind: 'grantAbility', abilityId: 'mangle' }],
 
   /*
    * "Increases your melee Attack Power in Cat Form, Bear Form, and Dire Bear
@@ -496,16 +504,16 @@ export const DRUID_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
    * Both clauses are form-gated now, as the tooltip states them.
    * ------------------------------------------------------------------------
    */
-  primal_fury: [
+  blood_frenzy: [
     {
       kind: 'reaction',
-      reactionId: 'primal_fury',
+      reactionId: 'blood_frenzy',
       valueIndex: 0,
       requires: { styles: ['bear'] },
     },
     {
       kind: 'reaction',
-      reactionId: 'primal_fury_combo_point',
+      reactionId: 'blood_frenzy_combo_point',
       valueIndex: 2,
       requires: { styles: ['cat'] },
     },
@@ -534,14 +542,30 @@ export const DRUID_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
   ],
 
   /*
-   * "Tiger's Fury now instantly grants you 60 Energy."
+   * KING OF THE JUNGLE IS GONE, with Tiger's Fury, the ability its only clause
+   * named. Removed at client build 1.60.1.70170.
    *
-   * ITS OWN REASON SAID IT WAS REACHABLE -- "it is a CAST reaction, which the
-   * engine now has -- this is reachable and simply not written yet" -- which is
-   * what an honest expired reason looks like, and why they are written
-   * specifically enough to re-read.
+   * SHIFTING POWER IS WHAT TOOK ITS PLACE IN THE TREE -- row 4 of Feral Combat,
+   * requiring Shredding Attacks 3 -- and it does the same job from the other
+   * end: King of the Jungle made a free cooldown refund 60 energy, and this buys
+   * 40 energy with 55% of base mana.
+   *
+   * "Instantly convert 55% of base Mana into 40 Energy." Everything about it --
+   * the cost, the cooldown, why the energy cap is not checked here -- is on
+   * `SHIFTING_POWER` in `abilities/druid.ts`, and the talent is a plain grant.
    */
-  king_of_the_jungle: [{ kind: 'castReaction', reactionId: 'king_of_the_jungle' }],
+  shifting_power: [{ kind: 'grantAbility', abilityId: 'shifting_power' }],
+
+  /*
+   * "Reduces the cooldown of your Shifting Power spell by 4/8 sec."
+   *
+   * A FLAT SECONDS REDUCTION, so `abilityCooldown` is the kind -- the same one
+   * Improved Arcane Shot and Improved Judgement use. At 2/2 it halves the
+   * sixteen second cooldown, which is what the Cat build takes.
+   */
+  improved_shifting_power: [
+    { kind: 'abilityCooldown', abilityId: 'shifting_power', unit: 'seconds' },
+  ],
 
   /*
    * "Increases your dodge chance by 5%, and gives you a 100% chance to gain 5

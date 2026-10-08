@@ -8,6 +8,28 @@ directory for what the census columns mean and how to reprint every figure below
 
 ---
 
+## Client build 1.60.1.70170 — one patch item that needed no change
+
+**NO BUILD CHANGED and the profile is unchanged to the decimal.**
+
+**"DEVOURING PLAGUE CAN NOW CORRECTLY CRITICALLY STRIKE" ALWAYS COULD HERE.** Both
+Priest damage-over-time effects share one `tick` helper and it has always passed
+`critFrom: 'spell'`, because "every DoT can crit" is a Forever RULE the owner gave
+for the whole ruleset rather than a per-spell property. **So the client had a bug
+this simulator never reproduced**, and the fix brings the game to where the model
+already was.
+
+**IT IS RECORDED BESIDE THE ABILITY RATHER THAN LEFT SILENT**, because a patch
+note with no diff next to it reads as something that was missed -- which is the
+same argument the `unmodelled` lists make from the other direction.
+
+Two tooltips were also narrowed and neither changes behaviour: Inner Focus now
+says "non-periodic", which `dealDamage` already guaranteed, and Spirit Tap's
+Vampiric Embrace trigger moved from Vampiric Embrace's text into Spirit Tap's.
+
+---
+
+
 ## The one thing to understand first
 
 **A CENSUS COUNTS A CLASS AND A PROFILE SPENDS POINTS, and for this class the two

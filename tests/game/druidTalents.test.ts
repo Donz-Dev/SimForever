@@ -40,6 +40,12 @@ import { TALENT_AURAS } from '../../src/game/auras/talentAuras';
 import { RAID_BUFFS_BY_ID } from '../../src/game/buffs/raidBuffs';
 import { trainingDummyEncounter } from '../../src/simulator/trainingDummyEncounter';
 import { DRUID_TALENT_EFFECTS } from '../../src/game/talents/druidEffects';
+import { DRUID_CAT } from '../../src/game/rotations/druid';
+import {
+  RAKE_AP_COEFFICIENT,
+  RAKE_TICK_AP_COEFFICIENT,
+  SWIPE_AP_COEFFICIENT,
+} from '../../src/game/combat/coefficients';
 import { NATURAL_REACTION_RAGE } from '../../src/game/reactions/druidTalents';
 import { talentBuild, talentContextFor } from '../../src/game/talents/talentBuild';
 import { talentNumber } from '../../src/game/talents/talentValues';
@@ -459,8 +465,27 @@ describe('Rend and Tear, which asks about the TARGET', () => {
   });
 });
 
-describe("King of the Jungle, on Tiger's Fury being USED", () => {
-  it("grants the energy when Tiger's Fury is cast and not otherwise", () => {
+/*
+ * ----------------------------------------------------------------------------
+ * KING OF THE JUNGLE AND TIGER'S FURY ARE BOTH GONE at client build
+ * 1.60.1.70170, and SHIFTING POWER took their place in the tree.
+ *
+ * WHAT USED TO BE TESTED HERE: Tiger's Fury cast on an empty energy bar filled
+ * it to sixty, and the talent's CAST REACTION named `tigers_fury` on the
+ * reaction rather than checking for it in the body, "so nothing else runs it".
+ * That second point is still a live rule -- `runCastReactions` skips a reaction
+ * whose `abilityId` does not match -- and the Mage and the Rogue still rely on
+ * it. The Warrior's new Gore Drinker is the first cast reaction here that CANNOT
+ * use it, because it names four abilities rather than one.
+ *
+ * SHIFTING POWER NEEDS NO REACTION AT ALL, which is the structural change: the
+ * energy is its own `onCast` rather than a talent's addition to somebody else's
+ * ability. A talent that ADDS to an existing ability is a cast reaction; a
+ * talent that GRANTS an ability is a grant.
+ * ----------------------------------------------------------------------------
+ */
+describe('Shifting Power, which replaced Tiger\'s Fury and King of the Jungle', () => {
+  it('converts mana into forty energy, and is the Cat build\'s own ability', () => {
     const cat = druid('druid_cat', 'cat');
     const target = makeTarget();
     const simulation = buildSimulation([cat, target]);
@@ -470,20 +495,36 @@ describe("King of the Jungle, on Tiger's Fury being USED", () => {
     energy.spend(energy.current);
     expect(energy.current).toBe(0);
 
-    const tigersFury = cat.abilities.get('tigers_fury')!;
-    castAbility(simulation, cat, tigersFury, target);
+    const mana = cat.resources.require('mana');
+    const manaBefore = mana.current;
 
-    // 60 at rank 3, stated by the talent.
-    expect(talentNumber('druid', 'king_of_the_jungle', 3, 0)).toBe(60);
-    expect(energy.current).toBe(60);
+    const shifting = cat.abilities.get('shifting_power')!;
+    castAbility(simulation, cat, shifting, target);
+
+    // "Instantly convert 55% of base Mana into 40 Energy." 55% of a Druid's
+    // 964 base mana is 530, written out rather than read off the constant.
+    expect(energy.current).toBe(40);
+    expect(manaBefore - mana.current).toBe(530);
   });
 
-  it('is registered as a CAST reaction on the Druid, naming that one ability', () => {
+  it('is a plain granted ability with no cast reaction behind it', () => {
     const build = buildIn('druid_cat', 'cat');
-    expect(build.castReactions.map((r) => r.id)).toContain('king_of_the_jungle');
-    const reaction = build.castReactions.find((r) => r.id === 'king_of_the_jungle')!;
-    // Named on the reaction rather than checked inside it, so nothing else runs it.
-    expect(reaction.abilityId).toBe('tigers_fury');
+    expect(build.grantedAbilities.has('shifting_power')).toBe(true);
+    // The Druid now has no cast reactions at all; the empty table is kept
+    // because a class missing from that registry fails in silence.
+    expect(build.castReactions).toEqual([]);
+  });
+
+  it('halves its cooldown at 2/2 of Improved Shifting Power, which the Cat takes', () => {
+    /*
+     * SIXTEEN SECONDS FROM THE SPELLBOOK CAPTURE, eight off from the talent --
+     * both written out by hand here rather than read from the constants. The
+     * talent tooltip states no cooldown for the ability at all, so the base
+     * figure has only one source.
+     */
+    expect(talentNumber('druid', 'improved_shifting_power', 2, 0)).toBe(8);
+    const cat = druid('druid_cat', 'cat');
+    expect(cat.abilities.get('shifting_power')!.cooldownMs).toBe(8_000);
   });
 });
 
@@ -1072,8 +1113,10 @@ describe('what is left, and it is two talents', () => {
     expect(live).toEqual(['furor', 'natural_shapeshifter']);
   });
 
-  it('declares an effect for all 51 and reaches every aura it names', () => {
-    expect(Object.keys(DRUID_TALENT_EFFECTS)).toHaveLength(51);
+  it('declares an effect for all 52 and reaches every aura it names', () => {
+    // 52 since client build 1.60.1.70170: King of the Jungle out, Shifting
+    // Power and Improved Shifting Power in.
+    expect(Object.keys(DRUID_TALENT_EFFECTS)).toHaveLength(52);
     /*
      * A granted aura with no entry in `TALENT_AURAS` is DROPPED rather than
      * throwing, which is right for a typo and wrong to leave untested -- the
@@ -1086,4 +1129,131 @@ describe('what is left, and it is two talents', () => {
       }
     }
   });
+});
+
+// ---------------------------------------------------------------------------
+// Swipe, and the Cat's new opener
+// ---------------------------------------------------------------------------
+
+describe("Swipe's attack power coefficient is 3%, not the sheet's 10%", () => {
+  /*
+   * ----------------------------------------------------------------------------
+   * "Fixed a bug causing Swipe to not scale with Attack Power. It will now
+   * correctly gain 3% of the Druid's attack power", from the 1.60.1.70170 notes.
+   *
+   * `WoWSimWorksheet.xlsx` SAYS 10% AND THE NOTES ARE LATER, which is the rule
+   * Rake's tick already runs on: a later statement from the owner outranks the
+   * sheet. The sheet records what the figure was meant to be before the fix
+   * landed; three is what Forever has shipped.
+   *
+   * WORTH NOTHING TO EVERY PROFILE and still worth fixing. Swipe is in no
+   * priority list -- it is a three-target rage ability and every encounter here
+   * has one target -- so this moves no figure in the baseline table. What changes
+   * is what the number MEANS the day a multi-target encounter exists.
+   * ----------------------------------------------------------------------------
+   */
+  it('is three percent, and Rake\'s two halves are untouched beside it', () => {
+    expect(SWIPE_AP_COEFFICIENT).toBe(0.03);
+    // The neighbouring owner-over-sheet correction, so the two cannot be
+    // confused for one change.
+    expect(RAKE_AP_COEFFICIENT).toBe(0.01);
+    expect(RAKE_TICK_AP_COEFFICIENT).toBe(0.055);
+  });
+
+  it('scales a real cast by attack power at that rate', () => {
+    /*
+     * MEASURED FROM DAMAGE THAT LANDED rather than read off the constant, because
+     * `powerCoefficient` is passed per `dealDamage` call -- a coefficient written
+     * in the wrong place is silent, which is why `coefficient_probe.ts` exists.
+     *
+     * Two bears, identical but for attack power, with the table forced to a plain
+     * hit so the comparison is not a crit against a glance.
+     */
+    const damageAt = (attackPower: number) => {
+      const bear = createPlayer({
+        race: 'tauren',
+        characterClass: 'druid',
+        combatStyle: 'bear',
+      });
+      bear.stats.addModifier({ sourceId: 'test', stat: 'attackPower', operation: 'flat', value: attackPower });
+      const target = makeTarget({ maxHealth: 10_000_000 });
+      let dealt = 0;
+      const simulation = buildSimulation([bear, target], { seed: 4242 }, {
+        emit: (event) => {
+          if (event.type === 'damage' && event.abilityId === 'swipe') dealt += event.amount;
+        },
+      });
+      simulation.begin();
+      bear.resources.require('rage').gain(100);
+      castAbility(simulation, bear, bear.abilities.get('swipe')!, target);
+      return dealt;
+    };
+
+    /*
+     * EXACTLY THIRTY: a thousand attack power at 3%, with the same seed on both
+     * sides so the damage roll cancels and `makeTarget` carrying no armor so
+     * nothing scales it afterwards. At the sheet's 10% this would read 100, which
+     * is why the figure is asserted rather than a direction.
+     */
+    const low = damageAt(0);
+    const high = damageAt(1000);
+    expect(high).toBeGreaterThan(low);
+    expect(high - low).toBeCloseTo(1000 * SWIPE_AP_COEFFICIENT, 6);
+  });
+});
+
+describe('the Cat list opens with Shifting Power rather than Tiger\'s Fury', () => {
+  it('is first, unconditional, and the only new entry', () => {
+    /*
+     * The owner's instruction with the patch notes: "It no longer uses Tiger's
+     * Fury and instead uses Shifting Power on cooldown as long as you have the
+     * mana to cast it."
+     *
+     * UNCONDITIONAL IS THE WHOLE "AS LONG AS YOU HAVE THE MANA". `checkCast`
+     * refuses an ability the character cannot afford and the list walks past it,
+     * so a condition here would be the list restating an engine rule -- the shape
+     * the Rogue's Ambush entry was corrected for.
+     */
+    expect(DRUID_CAT[0].abilityId).toBe('shifting_power');
+    expect(DRUID_CAT[0].condition).toBeUndefined();
+    expect(DRUID_CAT.map((entry) => entry.abilityId)).not.toContain('tigers_fury');
+  });
+
+  it('is not a floor under the list, because it has a cooldown', () => {
+    /*
+     * An unconditional entry at the top blocks everything below it ONLY when it
+     * is always castable. Sixteen seconds -- eight with Improved Shifting Power,
+     * which the Cat build takes 2/2 of -- so the list falls straight past it the
+     * rest of the time. That is the half of the rule the Hunter's Sniper Shot
+     * measurement settled.
+     */
+    const cat = druid('druid_cat', 'cat');
+    expect(cat.abilities.get('shifting_power')!.cooldownMs).toBeGreaterThan(0);
+  });
+
+  it('fires in a real fight, and the list still reaches its finisher', () => {
+    /*
+     * THE CHECK THAT THE NEW TOP ENTRY DID NOT STARVE THE LIST. An entry that
+     * never fires is a row that is not there, and an entry that fires too often
+     * is a list whose lower half is unreachable -- neither shows in a DPS figure.
+     */
+    let shifting = 0;
+    let rips = 0;
+    for (let seed = 1; seed <= 20; seed += 1) {
+      const simulation = new Simulation(
+        trainingDummyEncounter({ ...PRESETS_BY_ID.get('druid_cat')!.build() }, seed * 7919),
+        {
+          emit: (event) => {
+            if (event.type !== 'cast') return;
+            if (event.abilityId === 'shifting_power') shifting += 1;
+            if (event.abilityId === 'rip') rips += 1;
+          },
+        },
+      );
+      simulation.begin();
+      simulation.run();
+    }
+    expect(shifting / 20).toBeGreaterThan(1);
+    expect(rips / 20).toBeGreaterThan(2);
+  }, 20_000);
 });

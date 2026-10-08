@@ -18,13 +18,13 @@ import {
   ENRAGE_INSTANT_RAGE,
   FRENZIED_REGENERATION,
   FRENZIED_REGENERATION_COOLDOWN_MS,
-  TIGERS_FURY,
   NATURES_SWIFTNESS,
   NATURES_SWIFTNESS_COOLDOWN_MS,
   berserkAura,
   lengthened,
   ripAura,
 } from '../auras/druid';
+import { baseManaFor } from '../character/baseStatLookup';
 import { awardComboPoint, hasComboPoints, spendComboPoints } from '../combat/comboPoints';
 import {
   FEROCIOUS_BITE_AP_COEFFICIENT_PER_COMBO_POINT,
@@ -58,6 +58,20 @@ import {
  * MOONFIRE IS A HYBRID and shares one coefficient between its hit and its
  * burn; Insect Swarm is a PURE DoT and takes the whole periodic one. The pairs
  * live in `auras/druid.ts`, beside the effect half.
+ *
+ * ----------------------------------------------------------------------------
+ * ONE 1.60.1.70170 PATCH ITEM LANDS NOWHERE IN THIS FILE, AND THAT IS THE
+ * ANSWER RATHER THAN AN OMISSION. "Faerie Fire no longer resets your swing
+ * timer when used" -- and no Druid casts Faerie Fire here. The armor debuff is
+ * modelled as a RAID BUFF (`buffs/raidBuffs.ts`), applied to the encounter's
+ * target by an assumed raid rather than by this character, so there is no cast
+ * to reset a swing timer and no `Ability.swingTimer: 'hold'` to set.
+ *
+ * IT IS WRITTEN DOWN BECAUSE A PATCH NOTE WITH NO DIFF BESIDE IT READS AS
+ * SOMETHING THAT WAS MISSED, which is the same argument the `unmodelled` lists
+ * make from the other direction: an inert effect that SAYS it is inert is the
+ * honest failure mode. It expires the day a Druid profile casts the ability --
+ * at which point the clause is one field.
  * ----------------------------------------------------------------------------
  */
 
@@ -426,14 +440,68 @@ export const RIP: Ability = {
     'five flat totals and no coefficient.',
 };
 
-export const TIGERS_FURY_ABILITY: Ability = {
-  id: 'tigers_fury',
-  name: "Tiger's Fury",
-  cooldownMs: seconds(30),
+/**
+ * A Druid's base mana, which a "% of base mana" cost is a share of.
+ *
+ * BASE MANA IS A CLASS CONSTANT, not a character one -- the same figure for
+ * every race -- which is why the race passed here does not matter and the
+ * Mage's own note says the same. `baseManaFor` is the shared lookup.
+ */
+export const DRUID_BASE_MANA = baseManaFor('tauren', 'druid');
+
+/**
+ * Shifting Power: "Instantly convert 55% of base Mana into 40 Energy."
+ *
+ * ----------------------------------------------------------------------------
+ * THE TALENT THAT REPLACED TIGER'S FURY AND KING OF THE JUNGLE, at client build
+ * 1.60.1.70170. Free instant damage buff and a 60-energy refund on it, out; a
+ * mana-for-energy conversion on a sixteen second cooldown, in.
+ *
+ * SIXTEEN SECONDS, FROM THE SPELLBOOK CAPTURE and not from the talent tooltip,
+ * which states no cooldown at all. Improved Shifting Power takes 8 off it, so a
+ * Cat with 2/2 converts every eight seconds.
+ *
+ * ITS COST IS A SHARE OF BASE MANA and not of the character's pool, which is the
+ * distinction every "% of base mana" ability in this project turns on: a Cat
+ * Druid in raid gear has far more mana than its base, so reading the pool would
+ * make the ability cost more the better the gear is. 55% of 964 is 530.
+ *
+ * "SHIFTING POWER'S COST IS REDUCED BY EFFECTS THAT REDUCE THE COST OF
+ * SHAPESHIFTING" IS CARRIED AS UNMODELLED. Natural Shapeshifter is the effect it
+ * names and no feral preset takes it, so the clause is worth nothing today --
+ * but it is a real clause and a real route, `CastModifier.costFraction`, so it
+ * is recorded rather than silently dropped.
+ *
+ * IT IS NOT GATED ON THE ENERGY BAR HERE. `grantResource` reports what the cap
+ * threw away, so a cast on a full bar shows its waste on the results page rather
+ * than vanishing -- which is what lets the priority list's own mana condition be
+ * the only gate, exactly as King of the Jungle's note said of Tiger's Fury.
+ * ----------------------------------------------------------------------------
+ */
+export const SHIFTING_POWER_BASE_MANA_FRACTION = 0.55;
+export const SHIFTING_POWER_ENERGY = 40;
+export const SHIFTING_POWER_COOLDOWN_MS = seconds(16);
+export const SHIFTING_POWER_MANA_COST = Math.round(
+  DRUID_BASE_MANA * SHIFTING_POWER_BASE_MANA_FRACTION,
+);
+
+export const SHIFTING_POWER: Ability = {
+  id: 'shifting_power',
+  name: 'Shifting Power',
+  cost: { resource: 'mana', amount: SHIFTING_POWER_MANA_COST },
+  cooldownMs: SHIFTING_POWER_COOLDOWN_MS,
   requiresTarget: false,
-  onCast: ({ simulation, caster }) => {
-    simulation.applyAura(caster, TIGERS_FURY, caster.id);
+  onCast: ({ simulation, caster, ability }) => {
+    simulation.grantResource(caster, 'energy', SHIFTING_POWER_ENERGY, {
+      id: ability.id,
+      name: ability.name,
+    });
   },
+  unmodelled:
+    "Its \"cost is reduced by effects that reduce the cost of Shapeshifting\" " +
+    'does nothing: Natural Shapeshifter is the only such effect and no feral ' +
+    'preset takes it. The route exists -- `CastModifier.costFraction` -- so ' +
+    'this expires the day a build takes the talent.',
 };
 
 // ---------------------------------------------------------------------------
@@ -517,7 +585,8 @@ export const SWIPE: Ability = {
         abilityId: ability.id,
         abilityName: ability.name,
         school: PHYSICAL,
-        // Flat, plus the sheet's 10% of attack power.
+        // Flat, plus the patch notes' 3% of attack power -- see
+        // `SWIPE_AP_COEFFICIENT`, which the sheet put at 10%.
         baseAmount: SWIPE_DAMAGE,
         powerCoefficient: SWIPE_AP_COEFFICIENT,
         attackTable: ability.attackTable,
@@ -695,7 +764,6 @@ export const DRUID_ABILITIES: readonly Ability[] = [
   RAKE,
   FEROCIOUS_BITE,
   RIP,
-  TIGERS_FURY_ABILITY,
   MANGLE,
   MAUL,
   SWIPE,
@@ -708,4 +776,5 @@ export const DRUID_ABILITIES: readonly Ability[] = [
   // character's book without the point spent.
   BERSERK,
   NATURES_SWIFTNESS_ABILITY,
+  SHIFTING_POWER,
 ];

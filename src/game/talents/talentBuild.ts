@@ -20,6 +20,7 @@ import { COMBAT_CONSTANTS } from '../combat/attackChances';
 import type { TalentReactionBuilder } from '../reactions/warriorTalents';
 import { WARRIOR_TALENT_REACTIONS } from '../reactions/warriorTalents';
 import { ROGUE_TALENT_REACTIONS, ROGUE_CAST_REACTIONS } from '../reactions/rogueTalents';
+import { WARRIOR_CAST_REACTIONS } from '../reactions/warriorTalents';
 import { MAGE_CAST_REACTIONS } from '../reactions/mageTalents';
 import { PALADIN_CAST_REACTIONS } from '../reactions/paladinCasts';
 import { PRIEST_CAST_REACTIONS } from '../reactions/priestTalents';
@@ -79,6 +80,7 @@ const EFFECTS: Partial<Record<ClassId, Readonly<Record<string, TalentEffects>>>>
 const CAST_REACTIONS: Partial<
   Record<ClassId, Readonly<Record<string, (value: number) => CastReaction>>>
 > = {
+  warrior: WARRIOR_CAST_REACTIONS,
   rogue: ROGUE_CAST_REACTIONS,
   mage: MAGE_CAST_REACTIONS,
   paladin: PALADIN_CAST_REACTIONS,

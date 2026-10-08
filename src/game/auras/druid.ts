@@ -456,16 +456,23 @@ export function ripAura(comboPoints: number): AuraDefinition {
   };
 }
 
-/** "Increases Physical damage done by 15% for 6 sec." */
-export const TIGERS_FURY_DAMAGE = 1.15;
-export const TIGERS_FURY_DURATION_MS = seconds(6);
-
-export const TIGERS_FURY: AuraDefinition = {
-  id: 'tigers_fury',
-  name: "Tiger's Fury",
-  durationMs: TIGERS_FURY_DURATION_MS,
-  damageDoneMultiplier: TIGERS_FURY_DAMAGE,
-};
+/*
+ * TIGER'S FURY IS GONE, and so is its aura. Forever removed the ability at
+ * client build 1.60.1.70170 -- "Tiger's Fury has been removed" -- together with
+ * King of the Jungle, the talent whose only clause was "Tiger's Fury now
+ * instantly grants you 60 Energy".
+ *
+ * WHAT IT WAS: a free instant on a 30-second cooldown applying a 1.15x physical
+ * damage multiplier for six seconds. The Cat list cast it on an empty energy bar
+ * and King of the Jungle refilled 60 energy on the cast. Both are deleted rather
+ * than left inert, because an ability nothing can learn is not an inert ability
+ * -- it is one the ruleset does not have, and leaving it in the catalogue would
+ * put it back in the spellbook the day something enumerated the file.
+ *
+ * ITS REPLACEMENT IS NOT A DAMAGE BUFF. Shifting Power converts 55% of base mana
+ * into 40 energy -- the resource half of King of the Jungle, moved onto an
+ * ability of its own and paid for in mana.
+ */
 
 // ---------------------------------------------------------------------------
 // Feral: Bear
@@ -942,7 +949,6 @@ export const DRUID_AURAS: readonly AuraDefinition[] = [
   // this is a catalogue of the auras that exist, not a source of live ones.
   eclipseAura(ECLIPSE_RANK_3_SECONDS),
   RAKE_DOT,
-  TIGERS_FURY,
   LACERATE,
   DEMORALIZING_ROAR,
 ];

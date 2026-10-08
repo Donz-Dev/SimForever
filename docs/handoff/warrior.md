@@ -2,12 +2,55 @@
 
 **Class:** Warrior
 **Profiles:** 2H Arms, DW Fury, Prot Warr
-**Dive completed:** 2026-09-30. **Live gaps: 0.**
+**Dive completed:** 2026-09-30. **Live gaps: 1** -- it finished at 0 and client
+build 1.60.1.70170 added a talent nothing here can reach. See the patch note
+below.
 
 Read [CLAUDE.md](../../CLAUDE.md) first, then [README.md](README.md) in this
 directory for what the census columns mean and how to reprint every figure below.
 
 ---
+
+## Client build 1.60.1.70170 — the largest reshuffle of any class
+
+**ALL THREE BUILDS WERE RE-SPECIFIED and the owner supplied all three URLs with
+the patch notes.** DW Fury **790.4 → 892.0 (+101.6 REAL)**, 2H Arms
+**721.5 → 784.1 (+62.6 REAL)**, Prot Warr 499.3 → 504.9 (+5.6, noise).
+
+**AND THE ZERO LIVE GAPS BECAME ONE.** Forever added LINGERING RAGE, whose whole
+effect is the delay before rage decays after leaving combat, and nothing here
+leaves combat -- so the class that finished its dive at zero has a gap again
+because the ruleset grew one. It carries no `scope` tag: whether an
+out-of-combat state belongs in scope is the owner's decision, and a scoped entry
+is filed as answered. **Anger Management's second clause is the same question**
+and is carried in a COMMENT rather than a declaration, which is why the census
+counts that talent as fully modelled -- the undeclared-ruling shape, still here.
+
+| | |
+| --- | --- |
+| **removed** | Improved Cleave, Boundless Rage, **Precision** (silent), **Toughness** |
+| **added** | Lingering Rage, Furious Precision, Gore Drinker |
+| **moved** | Iron Will from Fury to Protection; Improved Berserker Rage up a row; six Protection rows |
+| **prerequisites** | Flurry wants Death Wish 1 where it wanted Enrage 5; Bloodthirst wants nothing; Last Stand wants nothing |
+
+**THE TWO LARGEST GAINS, MARGINAL:** the new crit-rage rule is **+75.5** to DW
+Fury and **+18.0** to 2H Arms, and Bloodthrill's doubling is **+33.5** to 2H Arms.
+A tank gets **+6.8** from the crit rage, because it is already capping.
+
+**SPEARING STRIKE'S REQUIREMENT CROSSED FROM A WEAPON TO A STANCE** -- two-handed
+to Battle Stance -- so it left `abilitiesForBuild` for `Ability.stances`, and DW
+Fury still cannot cast it: it can now hold the weapons and not the stance. The
+owner's new build moves that point to Improved Execute. **The answer did not
+change and the reason did, twice.**
+
+**GORE DRINKER IS BUILT AND NO BUILD TAKES IT.** Four of its five triggers are
+casts; ENRAGE is a talent proc in Forever and is never cast, which is the one
+`unmodelled` clause on it. It is the Warrior's first CAST reaction, so
+`talentBuild.ts` had no `warrior` entry in `CAST_REACTIONS` until now -- a
+registry that is optional and silent.
+
+---
+
 
 ## Read this before anything else
 

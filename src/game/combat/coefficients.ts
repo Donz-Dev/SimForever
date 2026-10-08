@@ -415,8 +415,27 @@ export const MOONFIRE_TICK_SP_COEFFICIENT = 0.13;
 export const RAKE_AP_COEFFICIENT = 0.01;
 export const RAKE_TICK_AP_COEFFICIENT = 0.055;
 
-/** Swipe: 10% of attack power. */
-export const SWIPE_AP_COEFFICIENT = 0.1;
+/**
+ * Swipe: 3% of attack power.
+ *
+ * ----------------------------------------------------------------------------
+ * THE SHEET SAYS 10% AND THE PATCH NOTES SAY 3%, AND THE NOTES ARE LATER. The
+ * 1.60.1.70170 notes read "Fixed a bug causing Swipe to not scale with Attack
+ * Power. It will now correctly gain 3% of the Druid's attack power" -- so the
+ * figure Forever has now SHIPPED is three, and `WoWSimWorksheet.xlsx` records
+ * what it was meant to be before the fix landed.
+ *
+ * THE SAME RULE RAKE'S TICK RUNS ON: a later statement from the owner outranks
+ * the sheet, and it is recorded here because a refresh of the sheet will not
+ * carry it and a reader who knows the sheet would read 0.03 as drift.
+ *
+ * WORTH NOTHING TO EVERY PROFILE, and that is not a reason to leave it. Swipe is
+ * in no priority list -- it is a three-target rage ability and every encounter
+ * here has one target -- so this moves no figure in the baseline table. What it
+ * changes is what the number MEANS the day a multi-target encounter exists.
+ * ----------------------------------------------------------------------------
+ */
+export const SWIPE_AP_COEFFICIENT = 0.03;
 
 /**
  * Lacerate: 10% of WEAPON DAMAGE per existing application, per tick.

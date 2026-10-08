@@ -385,6 +385,100 @@ now."** So it belongs on the spell exclusion list, not in the spellbook. **It is
 not the Lacerating Strikes TALENT**, which shares its 21-second duration, is
 real, and is built.
 
+## All nine refreshed 2026-10-08, to client build 1.60.1.70170
+
+**THE FIRST FULL REFRESH, and it was a PATCH rather than a cross-check.** `node
+tools/import_forever_spells.mjs --all --write` and `node
+tools/import_forever_talents.mjs --write` took every class from build
+1.60.1.70009 to 1.60.1.70170 in two commands. The section below this one had
+asked for exactly that and said the diff is where a change announces itself; it
+is, and the diff was large.
+
+**WHAT A REFRESH FINDS THAT A CROSS-CHECK CANNOT, demonstrated at scale.** Three
+trees changed SHAPE -- Warrior 53 talents to 52, Paladin 52 to 50, Druid 51 to
+52 -- and no amount of reading a second source for a number would have found
+that. The tell is the TALENT COUNT, which `--check` prints before it writes
+anything.
+
+### Four talents were removed and three of them are in no patch note
+
+| | |
+| --- | --- |
+| **Improved Holy Strike** | Paladin Holy. **All three** Paladin builds spent 2 points. Silent |
+| **Crusade** | Paladin Retribution. Two builds spent 2, +2% to everything. Silent |
+| **Precision** | Warrior Fury, +3% hit. No Warrior build took it. Silent |
+| **Toughness** | Warrior Protection. Named in the notes. No Warrior build took it |
+
+**AND TWO SHAMAN TALENTS SWAPPED TIERS WITHOUT BEING MENTIONED EITHER.**
+Elemental Fury went from row 3 (tier 10) to row 6 (tier 25) and Elemental
+Alacrity the other way, and Call of Thunder's prerequisite moved with them. That
+put Elemental Fury out of reach of the Enhancement build's nineteen Elemental
+points, which is a build change rather than a figure change and one the owner had
+to make.
+
+### The decoder is what noticed, and it throws rather than guessing
+
+**SEVEN OF THE TWENTY RECORDED BUILD URLS STOPPED DECODING AT ONCE.** The
+encoding is one digit per talent IN TREE ORDER, so a removal shifts every digit
+after it -- `tools/decode_talent_build.mjs --profiles` reports
+"Feral Charge given 2 of 1 ranks" rather than producing a legal-looking build
+nobody chose, which is the whole reason that check exists.
+
+**THE WARRIOR WAS NOT IN THAT LIST, FOR THE WHOLE PROJECT.** Its three builds
+were transcribed by hand from the owner's lists rather than decoded, so the one
+class with four sources was the one class no build URL was ever checked against
+-- and its tree had changed shape. All three are in the list now.
+
+### The figures that moved
+
+| Class | What moved | Worth |
+| --- | --- | --- |
+| Warrior | Bloodthirst 35% → 45% AP; Bloodthrill 10% → 20% and MAIN HAND only; Improved Slam's cooldown −3s; Spearing Strike's requirement two-hander → Battle Stance; Unbridled Wrath's two-handed doubling removed; Dual Wield Specialization's off-hand rage halved and its hit moved to a new talent | **+101.6 DW Fury, +62.6 2H Arms** |
+| Paladin | Champion of the Light 33/66/100% → 20/40/60% of Intellect; Vengeance 5 stacks → 3; Redoubt 30% → 20% block; Holy Shield 20% → 30% block; Two-Handed Weapon Spec 9% → 6%; Sacred Arbiter 10% → 20%; Holy Power now names Holy Strike; Twist of Light gains −20% seal mana | **−98.5 Ret, −80.7 Shockadin** |
+| Druid | Tiger's Fury and King of the Jungle REMOVED, Shifting Power and Improved Shifting Power added; Swipe's coefficient 10% → 3%; Primal Fury renamed Blood Frenzy | **+24.0 Cat** |
+| Mage | Hot Streak renamed Heating Up, window 15s → 20s; Combustion 4 crits → 3; Master of Elements' kill window 20s → 30s | +3.6 Fire, −10.4 Frostfire, both noise |
+| Shaman | Elemental Fury/Alacrity tier swap; Lava Burst's RANK 1 figure 106–134 → 150–192, max rank unchanged | −18.6 Enh, noise |
+| Hunter | Deflection 2/4/6/8/10% → 1/2/3/4/5% parry; Lightning Reflexes 15% → 10% agility; Summon Hawk's tooltip now states its 5% RAP | −8.0 LW Melee, noise |
+| Priest | Devouring Plague can crit (**it always could here**); Inner Focus narrowed to non-periodic; Spirit Tap gains a Vampiric Embrace trigger | 0.0 |
+| Warlock, Rogue | Soul Harvesting renamed Soul Harvest and its value row REORDERED; wording only otherwise | 0.0 |
+
+**THE LAVA BURST ENTRY IS THE ONE TO READ TWICE.** Rank 1 moved and rank 3 did
+not, so the talent tooltip and the spellbook now look CLOSER together than they
+did -- and a reader who remembers the old gap could easily take 192–248 for the
+talent's new number rather than the spellbook's unchanged one. The two sources
+were never disagreeing.
+
+**AND THE WARLOCK'S REORDERED VALUE ROW IS THE NEAR MISS.** `[10, 50, 50]` became
+`[50, 10, 50]`, duration and regeneration swapping places. It is harmless only
+because that talent's effect reads no value at all; an effect with a `valueIndex`
+would have started reading seconds as a percentage, which is the failure CLAUDE.md
+records four times over on the Druid and once on the Priest. **A REFRESH CAN
+REORDER A ROW WITHOUT CHANGING A NUMBER IN IT**, so the diff to read is the
+`values/*.json` one and not only the trees.
+
+### The importer's own bug, which the refresh is how you find
+
+**THE `cost` FIELD WAS WRONG FOR ABOUT A HUNDRED SPELLS ACROSS SEVEN CLASSES**,
+and had been since the importer was written. The cost/range/cast/cooldown lines
+arrive as a grid of free text sorted by what each cell SAYS, and `cost` was the
+fall-through -- so a second cost-shaped cell overwrote the first:
+
+| Spell | Capture said | Actually |
+| --- | --- | --- |
+| Rip, Ferocious Bite | `1 to 5 Combo Points` | 30 and 35 Energy |
+| Shadowburn | `Reagents: Soul Shard` | **365 Mana**, and a Soul Shard |
+| Every Hunter pet ability | `Pet: Wolf`, `Pet: Crab`, ... | 10 to 80 Focus |
+| Every Shaman totem | `Tools: Water Totem` | its mana cost |
+| Five Greater Blessings | `Reagents: Symbol of Kings` | its mana cost |
+
+`extraLines` carries them now and the FIRST cost-shaped cell wins, so a third
+kind of line cannot delete a cost either. **NOTHING READS THIS CAPTURE
+PROGRAMMATICALLY, WHICH IS WHY IT SURVIVED**: the wrong number sat in a reference
+document a reader would have believed, and no test could have failed on it. The
+Shadowburn row is the sharpest version -- this very file argues, correctly, that
+`foreverchanges.pro`'s 365 mana does not contradict a Soul Shard, and our own
+capture had been showing the Soul Shard INSTEAD OF the 365.
+
 ## Every class is now checked
 
 | Class | Agreed | Moved | Largest |
@@ -417,16 +511,22 @@ and the comment cited a real rule.
 
 ## Still unchecked
 
-**Eight classes are one refresh old.** The Warrior re-check found a figure that
-had gone stale in ELEVEN DAYS, on the class with the best sources in the project,
-and the mechanism was a live tuning change rather than anything anyone did wrong.
-The other eight captures are all at build 1.60.1.70009 and none has been
-re-fetched since 2026-09-25. `node tools/import_forever_spells.mjs --all --write`
-is one command and the diff is where a change announces itself.
+**ALL NINE CAPTURES ARE NOW AT BUILD 1.60.1.70170**, refreshed 2026-10-08. The
+paragraph that stood here asked for exactly that and is worth keeping as the
+reason: the Warrior re-check had found a figure that went stale in ELEVEN DAYS,
+on the class with the best sources in the project, and the mechanism was a live
+tuning change rather than anything anyone did wrong.
 
-Nothing, for abilities. What has NOT been cross-checked is **talent values**
-(`src/data/talents/values/*.json`), which come from `talentsforever.com` alone and
-have no second source at all.
+**WHAT IS STILL ONE-SOURCED IS THE 1.60.1.70170 DATA ITSELF.** Everything in the
+section above came from `talentsforever.com`; `foreverchanges.pro` has NOT been
+read beside it for any class at this build. The two have disagreed at the same
+build before -- Life Tap 424 against 840 -- so agreement is not assumed, and the
+Paladin's −98.5 and the Warrior's +101.6 both rest on one source.
+
+**AND TALENT VALUES STILL HAVE NO SECOND SOURCE AT ALL**
+(`src/data/talents/values/*.json`), which is where most of this patch landed:
+Champion of the Light's 20/40/60, Vengeance's 3 stacks and Redoubt's 20% are all
+rank values, and all three moved a published figure.
 
 **Three of the three classes checked so far needed corrections** — five figures on
 the Warrior, three on the Warlock, four on the Rogue and Priest between them — so

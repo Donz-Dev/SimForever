@@ -1,7 +1,7 @@
 {
  "class": "druid",
  "source": "https://talentsforever.com/spelldesc.js",
- "build": "1.60.1.70009",
+ "build": "1.60.1.70170",
  "note": "Max rank only. The simulator runs at level 60, and a talent tooltip shows rank 1 of the ability it grants -- see docs/class-implementation.md.",
  "spells": [
   {
@@ -26,7 +26,7 @@
    "school": "Physical",
    "cost": "20% of base mana",
    "cast": "Instant",
-   "description": "Shapeshift into aquatic form, increasing swim speed by 50% and allowing the druid to breathe underwater. Also protects the caster from Polymorph effects.\n\nThe act of shapeshifting frees the caster of Polymorph and Movement Impairing effects.",
+   "description": "Shapeshift into Aquatic Form, increasing swim speed by 50% and allowing the druid to breathe underwater. Also protects the caster from Polymorph effects.\n\nThe act of shapeshifting frees the caster of Polymorph and Movement Impairing effects.",
    "versusClassic": "same"
   },
   {
@@ -65,7 +65,7 @@
    "school": "Physical",
    "cost": "55% of base mana",
    "cast": "Instant",
-   "description": "Shapeshift into a bear, increasing melee attack power by 120, armor contribution from items by 180%, and health by 180. Also protects the caster from Polymorph effects and allows the use of various bear abilities.\n\nThe act of shapeshifting frees the caster of Polymorph and Movement Impairing effects.",
+   "description": "Shapeshift into Bear Form, increasing Attack Power by 120, Armor contribution from items by 180%, and Health by 180. Also protects the caster from Polymorph effects and allows the use of various bear abilities.\n\nThe act of shapeshifting frees the caster of Polymorph and Movement Impairing effects.",
    "versusClassic": "changed"
   },
   {
@@ -90,8 +90,8 @@
    "school": "Physical",
    "cost": "55% of base mana",
    "cast": "Instant",
-   "description": "Shapeshift into cat form, increasing melee attack power by 120 plus Agility. Also protects the caster from Polymorph effects and allows the use of various cat abilities.\n\nThe act of shapeshifting frees the caster of Polymorph and Movement Impairing effects.",
-   "versusClassic": "same"
+   "description": "Shapeshift into Cat Form, increasing Attack Power by 120 plus Agility. Also protects the caster from Polymorph effects and allows the use of various cat abilities.\n\nThe act of shapeshifting frees the caster of Polymorph and Movement Impairing effects.",
+   "versusClassic": "changed"
   },
   {
    "id": 5209,
@@ -184,8 +184,8 @@
    "school": "Physical",
    "cost": "55% of base mana",
    "cast": "Instant",
-   "description": "Shapeshift into a dire bear, increasing melee attack power by 180, armor contribution from items by 360%, and health by 1,240. Also protects the caster from Polymorph effects and allows the use of various bear abilities.\n\nThe act of shapeshifting frees the caster of Polymorph and Movement Impairing effects.",
-   "versusClassic": "same"
+   "description": "Shapeshift into Dire Bear Form, increasing Attack Power by 180, Armor contribution from items by 360%, and Health by 1,240. Also protects the caster from Polymorph effects and allows the use of various bear abilities.\n\nThe act of shapeshifting frees the caster of Polymorph and Movement Impairing effects.",
+   "versusClassic": "changed"
   },
   {
    "id": 5229,
@@ -223,9 +223,8 @@
    "cost": "115 Mana",
    "range": "30 yd range",
    "cast": "Instant",
-   "requires": "Requires Cat Form, Bear Form, Dire Bear Form",
    "description": "Decrease the armor of the target by 505 for 40 sec. While affected, the target cannot stealth or turn invisible.",
-   "versusClassic": "same"
+   "versusClassic": "note"
   },
   {
    "id": 20719,
@@ -249,8 +248,8 @@
    "range": "8-25 yd range",
    "cast": "Instant",
    "cooldown": "15 sec cooldown",
-   "requires": "Requires Cat Form, Bear Form, Dire Bear Form",
-   "description": "Charge an enemy, immobilizing them and interrupting any spell they are casting for 4 sec.\n\nLeap behind an enemy.",
+   "requires": "Requires Bear Form, Dire Bear Form",
+   "description": "Charge an enemy, immobilizing them and interrupting any spell they are casting for 4 sec.\n\nFeral Charge (Cat): 8-25 yd range, Instant, 30 sec cooldown, Requires Cat Form. Leap behind an enemy.",
    "versusClassic": "changed"
   },
   {
@@ -261,6 +260,7 @@
    "level": "Learned at level 60",
    "school": "Physical",
    "cost": "35 Energy",
+   "comboPoints": "1 to 5 Combo Points",
    "range": "Melee Range",
    "cast": "Instant",
    "requires": "Requires Cat Form",
@@ -287,9 +287,12 @@
    "tab": "Restoration",
    "level": "Learned at level 60",
    "school": "Nature",
-   "cost": "Reagents: Wild Thornroot",
+   "cost": "1,200 Mana",
    "range": "40 yd range",
    "cast": "Instant",
+   "extraLines": [
+    "Reagents: Wild Thornroot"
+   ],
    "description": "Gives the Gift of the Wild to all party and raid members, increasing armor by 385, all attributes by 16 and all resistances by 27 for 1 hour.",
    "versusClassic": "changed"
   },
@@ -435,7 +438,7 @@
    "school": "Physical",
    "cost": "35% of base mana",
    "cast": "Instant",
-   "description": "Transforms the Druid into Moonkin Form. While in this form, the armor contribution from items is increased by 360%, Omen of Clarity gains 100% increased chance to trigger, and all party members within 45 yards have their critical strike chance increased by 3%, exclusive with Leader of the Pack. The Moonkin cannot cast healing spells while shapeshifted.\n\nThe act of shapeshifting frees the caster of Polymorph and Movement Impairing effects.",
+   "description": "Shapeshift into Moonkin Form, increasing Omen of Clarity's chance to trigger by 100%, Armor contribution from items by 360%, and all party members within 45 yards have their Critical Strike chance increased by 3%, exclusive with Leader of the Pack. Also protects the caster from Polymorph effects and prevents the use of healing spells.\n\nThe act of shapeshifting frees the caster of Polymorph and Movement Impairing effects.",
    "versusClassic": "changed"
   },
   {
@@ -470,6 +473,7 @@
    "tab": "Balance",
    "level": "Learned at level 20",
    "school": "Nature",
+   "cost": "Passive",
    "description": "Your spells and attacks have a chance to grant you Clearcasting, reducing the Mana, Rage, or Energy cost of your next damage or healing spell or offensive ability by 100%. Clearcasting is not consumed by Wrath or by spells or abilities that cost no resources.",
    "versusClassic": "changed"
   },
@@ -499,7 +503,7 @@
    "cast": "Instant",
    "cooldown": "6 sec cooldown",
    "requires": "Requires Bear Form, Dire Bear Form",
-   "description": "Bite the target for 100% normal damage plus 77.",
+   "description": "Bite the target, dealing 100% normal damage plus 77 and generating a high amount of threat.",
    "versusClassic": "new"
   },
   {
@@ -550,11 +554,14 @@
    "tab": "Restoration",
    "level": "Learned at level 60",
    "school": "Nature",
-   "cost": "Reagents: Ironwood Seed",
+   "cost": "85% of base mana",
    "range": "30 yd range",
    "cast": "2 sec cast",
    "cooldown": "30 min cooldown",
-   "description": "Returns the spirit to the body, restoring a dead target to life with 2,200 health and 2,800 mana.",
+   "extraLines": [
+    "Reagents: Ironwood Seed"
+   ],
+   "description": "Returns the spirit to the body, restoring a dead target to life with 2,200 health and 2800 mana.",
    "versusClassic": "same"
   },
   {
@@ -606,7 +613,7 @@
    "cost": "75% of base mana",
    "range": "30 yd range",
    "cast": "10 sec cast",
-   "description": "Brings a dead player back to life with 750 health and 1,000 mana. Cannot be cast when in combat.",
+   "description": "Brings a dead player back to life with 750 health and 1000 mana. Cannot be cast when in combat.",
    "versusClassic": "new"
   },
   {
@@ -617,11 +624,26 @@
    "level": "Learned at level 60",
    "school": "Physical",
    "cost": "30 Energy",
+   "comboPoints": "1 to 5 Combo Points",
    "range": "Melee Range",
    "cast": "Instant",
    "requires": "Requires Cat Form",
    "description": "Finishing move that causes damage over time. Damage increases per combo point and by your Attack Power:\n 1 point : 243 damage over 12 sec.\n 2 points: 396 damage over 12 sec.\n 3 points: 549 damage over 12 sec.\n 4 points: 702 damage over 12 sec.\n 5 points: 855 damage over 12 sec.",
    "versusClassic": "changed"
+  },
+  {
+   "id": 1322605,
+   "name": "Shifting Power",
+   "rank": null,
+   "tab": "Feral Combat",
+   "level": "Learned at level 25",
+   "school": "Physical",
+   "cost": "55% of base mana",
+   "cast": "Instant",
+   "cooldown": "16 sec cooldown",
+   "requires": "Requires Cat Form",
+   "description": "Instantly convert 55% of base Mana into 40 Energy. Shifting Power's cost is reduced by effects that reduce the cost of Shapeshifting.",
+   "versusClassic": "new"
   },
   {
    "id": 9830,
@@ -689,7 +711,7 @@
    "cast": "Instant",
    "requires": "Requires Bear Form, Dire Bear Form",
    "description": "Swipe 3 nearby enemies, inflicting 83 damage.",
-   "versusClassic": "same"
+   "versusClassic": "note"
   },
   {
    "id": 18960,
@@ -714,19 +736,6 @@
    "range": "30 yd range",
    "cast": "Instant",
    "description": "Thorns sprout from the friendly target causing 22 Nature damage to attackers when hit. Lasts 10 min.",
-   "versusClassic": "changed"
-  },
-  {
-   "id": 5217,
-   "name": "Tiger's Fury",
-   "rank": null,
-   "tab": "Feral Combat",
-   "level": "Learned at level 24",
-   "school": "Physical",
-   "cast": "Instant",
-   "cooldown": "30 sec cooldown",
-   "requires": "Requires Cat Form",
-   "description": "Increases Physical damage done by 15% for 6 sec.",
    "versusClassic": "changed"
   },
   {
@@ -763,8 +772,8 @@
    "school": "Physical",
    "cost": "20% of base mana",
    "cast": "Instant",
-   "description": "Transforms the druid into a travel form, increasing movement speed by 40%. Also protects the caster from Polymorph effects. Only useable outdoors.\n\nThe act of shapeshifting frees the caster of Polymorph and Movement Impairing effects.",
-   "versusClassic": "same"
+   "description": "Shapeshift into Travel Form, increasing movement speed by 40%. Also protects the caster from Polymorph effects. Only useable outdoors.\n\nThe act of shapeshifting frees the caster of Polymorph and Movement Impairing effects.",
+   "versusClassic": "changed"
   },
   {
    "id": 1238215,
@@ -777,7 +786,7 @@
    "range": "40 yd range",
    "cast": "Instant",
    "cooldown": "6 sec cooldown",
-   "description": "Heals the target and their party for 679 over 7 sec. Party members must be within 43 yards of target. The amount healed is applied quickly at first, and slows down as Wild Growth reaches its full duration.",
+   "description": "Heals the target and their party for 679 over 7 sec. Party members must be within 43 yds of target. The amount healed is applied quickly at first, and slows down as Wild Growth reaches its full duration.",
    "versusClassic": "new"
   },
   {

@@ -277,15 +277,27 @@ function swing(
     weaponSlot: slot,
   });
 
-  // Resource from damage DEALT, proportional to what actually landed. A missed
-  // or dodged swing generates nothing, which is the behaviour that makes a
-  // high-miss build rage-starved as well as low-damage.
+  /*
+   * Resource from damage DEALT, proportional to what actually landed. A missed
+   * or dodged swing generates nothing, which is the behaviour that makes a
+   * high-miss build rage-starved as well as low-damage.
+   *
+   * THE OUTCOME IS PASSED SO A CRIT CAN PAY MORE -- Forever's "100% increased
+   * Rage when landing a critical strike with a basic attack" for the Warrior and
+   * 75% for a Bear Druid. The multiplier is the combatant's, the rule is here,
+   * and a crushing blow or a glance is not a crit and gets nothing extra.
+   *
+   * THIS IS THE ONLY PLACE THAT CAN PAY IT, which is what makes "with a basic
+   * attack" need no test of its own: an ability generates no rage in this engine
+   * at all. See `Combatant.critResourceMultiplier`.
+   */
   grantGeneratedResource(
     context,
     attacker,
     weapon.generates,
     result.amount,
     AUTO_ATTACK_RESOURCE_SOURCES[slot],
+    result.outcome === 'crit',
   );
 
 }

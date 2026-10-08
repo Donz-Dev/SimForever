@@ -8,6 +8,27 @@ directory for what the census columns mean and how to reprint every figure below
 
 ---
 
+## Client build 1.60.1.70170 — a rename, and a reordered value row
+
+**NO BUILD CHANGED and both profiles are unchanged to the decimal.** The live gap
+count fell to 19 by deletion rather than by work.
+
+**SOUL HARVESTING IS CALLED SOUL HARVEST, AND ITS VALUE ROW WAS REORDERED:**
+`[10, 50, 50]` became `[50, 10, 50]`, duration and regeneration swapping places.
+
+**THAT IS HARMLESS HERE FOR EXACTLY ONE REASON** -- the talent's only effect is
+`unmodelled` and reads no value at all. An effect with a `valueIndex` would have
+started reading a number of SECONDS as a percentage, which is the failure CLAUDE.md
+records four times over on the Druid and once on the Priest, and every one of those
+reported itself fully modelled while it did it.
+
+**SO THE DIFF TO READ ON A PATCH IS `values/*.json` AND NOT ONLY THE TREES.** A
+refresh can reorder a row without changing a number in it, and nothing about the
+tree's shape says so.
+
+---
+
+
 ## The one thing to understand first
 
 **EIGHT RULINGS FROM THE OWNER AND SM/DS GAINED 38.1 ON THEM.**

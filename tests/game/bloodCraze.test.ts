@@ -9,7 +9,6 @@ import {
 } from '../../src/game/auras/warriorTalents';
 import {
   BLOOD_CRAZE_BIG_HIT_FRACTION,
-  bloodCrazeOnBloodthirst,
   bloodCrazeWhenHurt,
 } from '../../src/game/reactions/warriorTalents';
 import { WARRIOR_TALENT_EFFECTS } from '../../src/game/talents/warriorEffects';
@@ -23,11 +22,24 @@ import { trainingDummyEncounter } from '../../src/simulator/trainingDummyEncount
  * Blood Craze, transcribed BY HAND from the captured talent text:
  *
  *   "Regenerates {1/2/3}% of your total Health over 6 sec after being the
- *    victim of a critical strike, dealing damage with Bloodthirst, or
- *    suffering more than 20% of your maximum Health from a single attack."
+ *    victim of a critical strike or suffering more than 20% of your maximum
+ *    Health from a single attack."
  *
- * THREE TRIGGERS, and the shorter version shown on a talent button names only
- * the first. Two of them watch attacks RECEIVED and one watches an attack
+ * ----------------------------------------------------------------------------
+ * IT HAD A THIRD TRIGGER UNTIL CLIENT BUILD 1.60.1.70170: "dealing damage with
+ * Bloodthirst", which the patch removed -- "Blood Craze no longer activates off
+ * of Bloodthirst casts". Every test below that exercised it has gone with it,
+ * and the header is kept in the shape it had so the two readings can be
+ * compared.
+ *
+ * IT WAS THE CLAUSE THAT MADE THIS A FURY TALENT. Both survivors watch attacks
+ * RECEIVED, so a warrior nothing is hitting can no longer set it off at all, and
+ * the owner's new DW Fury build drops it. What used to be a damage talent with a
+ * defensive half is now a defensive talent in a damage tree.
+ * ----------------------------------------------------------------------------
+ *
+ * TWO TRIGGERS, and the shorter version shown on a talent button names only
+ * the first. Both of them watch attacks RECEIVED rather than an attack
  * DEALT, which is why it takes two reactions.
  *
  * Its reason for being inert said the healing "would not be observable: the
@@ -128,40 +140,27 @@ describe('what sets Blood Craze off', () => {
     expect(hurt.outcomes).toContain('block');
   });
 
-  it('landing a Bloodthirst, which is the clause a DPS warrior gets', () => {
-    const { simulation, player, boss } = opened();
-    const bloodthirst = bloodCrazeOnBloodthirst(3);
-    const dealt = (abilityId: string | undefined, amount: number): AttackEvent => ({
-      attacker: player,
-      defender: boss,
-      outcome: 'hit',
-      abilityId,
-      abilityName: abilityId ?? 'Main Hand Auto-Attack',
-      amount,
-      weaponSlot: 'mainHand',
-      critical: false,
-    });
-
-    expect(bloodthirst.canTrigger?.(simulation, player, dealt('bloodthirst', 500))).toBe(true);
-    // "DEALING DAMAGE", so one that landed for nothing does not count.
-    expect(bloodthirst.canTrigger?.(simulation, player, dealt('bloodthirst', 0))).toBe(false);
-    expect(bloodthirst.canTrigger?.(simulation, player, dealt('mortal_strike', 500))).toBe(
-      false,
-    );
-  });
-
-  it('is two reactions, because the triggers sit on both sides of an attack', () => {
+  /*
+   * TWO TESTS WERE HERE FOR THE BLOODTHIRST CLAUSE and both are gone with it at
+   * client build 1.60.1.70170. What they asserted is worth recording, because the
+   * shape they tested is the one GORE DRINKER now uses in this same class:
+   *
+   *   - the clause fired on `dealt` with `abilityId === 'bloodthirst'` and
+   *     `amount > 0`, so a Bloodthirst that landed for nothing did not count --
+   *     "dealing damage" read as LANDING it.
+   *   - the talent was TWO reactions because `Reaction.on` names one side of an
+   *     attack and the triggers sat on both. That is still the rule, and Gore
+   *     Drinker is the next talent to need it.
+   *
+   * Gore Drinker reads the opposite way on the first point: its four triggers are
+   * CASTS, and a Bloodthirst that missed still opens its window.
+   */
+  it('is one reaction now, and it watches attacks RECEIVED', () => {
     expect(bloodCrazeWhenHurt(3).on).toBe('taken');
-    expect(bloodCrazeOnBloodthirst(3).on).toBe('dealt');
 
-    expect(WARRIOR_TALENT_EFFECTS.blood_craze).toContainEqual({
-      kind: 'reaction',
-      reactionId: 'blood_craze',
-    });
-    expect(WARRIOR_TALENT_EFFECTS.blood_craze).toContainEqual({
-      kind: 'reaction',
-      reactionId: 'blood_craze_bloodthirst',
-    });
+    expect(WARRIOR_TALENT_EFFECTS.blood_craze).toEqual([
+      { kind: 'reaction', reactionId: 'blood_craze' },
+    ]);
   });
 });
 
@@ -327,11 +326,24 @@ describe('Blood Craze in a real fight', () => {
     expect(Math.abs(withIt - without) / without).toBeLessThan(0.02);
   }, 20_000);
 
-  it('fires for a warrior nothing is attacking, off Bloodthirst alone', () => {
+  it('CANNOT fire for a warrior nothing is attacking any more', () => {
     /*
-     * The clause that makes this a Fury talent. A dual-wielder on a standing
-     * target takes no damage at all, so the two "being hurt" clauses can never
-     * fire -- and Blood Craze still goes up, off their own Bloodthirst.
+     * ----------------------------------------------------------------------
+     * THE ASSERTION IS INVERTED, AND THAT IS THE PATCH ITEM. This test read
+     * "fires for a warrior nothing is attacking, off Bloodthirst alone", and its
+     * note read: "The clause that makes this a Fury talent. A dual-wielder on a
+     * standing target takes no damage at all, so the two 'being hurt' clauses can
+     * never fire -- and Blood Craze still goes up, off their own Bloodthirst."
+     *
+     * Client build 1.60.1.70170 removed that clause, so both halves of the old
+     * sentence are now true at once: the hurt clauses cannot fire, and there is
+     * nothing else. The talent is dead weight to any build the target ignores.
+     *
+     * KEPT AS A TEST RATHER THAN DELETED because the thing worth pinning did not
+     * change -- it is the DEPENDENCE ON BEING ATTACKED, which the tank test above
+     * cannot show from the positive side. A talent that silently started working
+     * again on an unattacked warrior would mean a trigger had crept back in.
+     * ----------------------------------------------------------------------
      */
     const base = createDefaultProfile();
     const fury = {
@@ -347,10 +359,7 @@ describe('Blood Craze in a real fight', () => {
         ...PAD,
         blood_craze: 3,
         unbridled_wrath: 5,
-        improved_cleave: 3,
-        boundless_rage: 1,
         piercing_howl: 1,
-        iron_will: 5,
         death_wish: 1,
         bloodthirst: 1,
       },
@@ -361,7 +370,7 @@ describe('Blood Craze in a real fight', () => {
     const batch = runProfileBatch(fury);
     expect(batch.survival.damageTaken).toBe(0);
     const uptime = batch.buffUptime.find((b) => b.auraName === 'Blood Craze');
-    expect(uptime?.applications ?? 0).toBeGreaterThan(1);
+    expect(uptime?.applications ?? 0).toBe(0);
   });
 });
 

@@ -1,7 +1,7 @@
 {
  "class": "warlock",
  "source": "https://talentsforever.com/spelldesc.js",
- "build": "1.60.1.70009",
+ "build": "1.60.1.70170",
  "note": "Max rank only. The simulator runs at level 60, and a talent tooltip shows rank 1 of the ability it grants -- see docs/class-implementation.md.",
  "spells": [
   {
@@ -103,8 +103,11 @@
    "tab": "Demons",
    "level": "Learned at level 58",
    "school": "Shadow",
-   "cost": "Demon: Voidwalker",
+   "cost": "480 Mana",
    "cast": "Channeled",
+   "extraLines": [
+    "Demon: Voidwalker"
+   ],
    "description": "The Voidwalker consumes nearby shadows to bolster its form, recovering 1,940 health over 10 sec. Cannot be used while in combat.",
    "versusClassic": "same"
   },
@@ -128,8 +131,11 @@
    "tab": "Demonology",
    "level": "Learned at level 56",
    "school": "Fire",
-   "cost": "Reagents: Soul Shard",
+   "cost": "1,100 Mana",
    "cast": "3 sec cast",
+   "extraLines": [
+    "Reagents: Soul Shard"
+   ],
    "description": "Creates a Major Firestone which can be used to enchant your weapon with Fire, increasing your spell critical strike chance by 2% and the damage done by your Fire spells by up to 21.\n\nConjured items disappear if logged out for more than 15 minutes.",
    "versusClassic": "changed"
   },
@@ -140,8 +146,11 @@
    "tab": "Demonology",
    "level": "Learned at level 58",
    "school": "Shadow",
-   "cost": "Reagents: Soul Shard",
+   "cost": "1,120 Mana",
    "cast": "3 sec cast",
+   "extraLines": [
+    "Reagents: Soul Shard"
+   ],
    "description": "Creates a Major Healthstone that can be used to instantly restore 1,440 health.\n\nConjured items disappear if logged out for more than 15 minutes.",
    "versusClassic": "changed"
   },
@@ -152,9 +161,12 @@
    "tab": "Demonology",
    "level": "Learned at level 60",
    "school": "Shadow",
-   "cost": "Reagents: Soul Shard",
+   "cost": "85% of base mana",
    "cast": "3 sec cast",
-   "description": "Creates a Major Soulstone. The Soulstone can be used to store one target's soul. If the target dies while their soul is stored, they will be able to resurrect with 2,200 health and 2,800 mana.\n\nConjured items disappear if logged out for more than 15 minutes.",
+   "extraLines": [
+    "Reagents: Soul Shard"
+   ],
+   "description": "Creates a Major Soulstone. The Soulstone can be used to store one target's soul. If the target dies while their soul is stored, they will be able to resurrect with 2,200 health and 2800 mana.\n\nConjured items disappear if logged out for more than 15 minutes.",
    "versusClassic": "same"
   },
   {
@@ -164,8 +176,11 @@
    "tab": "Demonology",
    "level": "Learned at level 60",
    "school": "Shadow",
-   "cost": "Reagents: Soul Shard",
+   "cost": "1,000 Mana",
    "cast": "5 sec cast",
+   "extraLines": [
+    "Reagents: Soul Shard"
+   ],
    "description": "Creates a Major Spellstone which can be used to enchant your weapon with Shadow, increasing your spell haste by 2% and the damage done by your Shadow spells by up to 21.\n\nConjured items disappear if logged out for more than 15 minutes.",
    "versusClassic": "changed"
   },
@@ -205,8 +220,8 @@
    "cost": "200 Mana",
    "range": "30 yd range",
    "cast": "Instant",
-   "description": "Curses the target for 5 min, reducing Magic resistances by 75 and increases Magic damage taken by 10%. Only one Curse per Warlock can be active on any one target.",
-   "versusClassic": "new"
+   "description": "Curses the target for 5 min, reducing Magic resistances by 75 and increasing Magic damage taken by 10%. Only one Curse per Warlock can be active on any one target.",
+   "versusClassic": "changed"
   },
   {
    "id": 11719,
@@ -304,10 +319,13 @@
    "tab": "Demons",
    "level": "Learned at level 54",
    "school": "Shadow",
-   "cost": "Demon: Felhunter",
+   "cost": "215 Mana",
    "range": "30 yd range",
    "cast": "Instant",
    "cooldown": "8 sec cooldown",
+   "extraLines": [
+    "Demon: Felhunter"
+   ],
    "description": "Purges 1 harmful magic effect from a friend or 1 beneficial magic effect from an enemy. If an effect is devoured, the Felhunter will be healed for 618.",
    "versusClassic": "same"
   },
@@ -359,7 +377,7 @@
    "school": "Shadow",
    "cost": "100 Mana",
    "range": "Unlimited range",
-   "cast": "Channeled",
+   "cast": "5 sec cast",
    "description": "Summons an Eye of Kilrogg and binds your vision to it. The eye moves quickly but is very fragile.",
    "versusClassic": "same"
   },
@@ -395,9 +413,12 @@
    "tab": "Demons",
    "level": "Learned at level 54",
    "school": "Fire",
-   "cost": "Demon: Imp",
+   "cost": "165 Mana",
    "range": "30 yd range",
    "cast": "Instant",
+   "extraLines": [
+    "Demon: Imp"
+   ],
    "description": "Surrounds the target in a shield of fire. Every strike against the target causes 13 Fire damage to the attacker. Lasts 3 min. Your pet cannot cast Fire Shield on itself.",
    "versusClassic": "changed"
   },
@@ -408,9 +429,12 @@
    "tab": "Demons",
    "level": "Learned at level 58",
    "school": "Fire",
-   "cost": "Demon: Imp",
+   "cost": "115 Mana",
    "range": "30 yd range",
    "cast": "2 sec cast",
+   "extraLines": [
+    "Demon: Imp"
+   ],
    "description": "Deals 42 to 48 Fire damage to a target.",
    "versusClassic": "changed"
   },
@@ -421,6 +445,7 @@
    "tab": "Demonology",
    "level": "Learned at level 60",
    "school": "Shadow",
+   "cost": "79 Health, plus 61 per sec",
    "range": "20 yd range",
    "cast": "Channeled",
    "description": "Gives 153 health to the caster's pet every second for 10 sec as long as the caster channels. Generates reduced threat.",
@@ -484,10 +509,13 @@
    "tab": "Demonology",
    "level": "Learned at level 50",
    "school": "Shadow",
-   "cost": "Reagents: Infernal Stone",
+   "cost": "100% of base mana",
    "range": "30 yd range",
    "cast": "2 sec cast",
    "cooldown": "1 hour cooldown",
+   "extraLines": [
+    "Reagents: Infernal Stone"
+   ],
    "description": "Summons a meteor from the Twisting Nether, causing 200 Fire damage and stunning all enemy targets in the area for 2 sec. An Infernal rises from the crater, under the command of the caster for 5 min. Once control is lost, the Infernal must be Subjugated to maintain control. Can only be used outdoors.",
    "versusClassic": "same"
   },
@@ -498,10 +526,13 @@
    "tab": "Demons",
    "level": "Learned at level 60",
    "school": "Shadow",
-   "cost": "Demon: Succubus",
+   "cost": "160 Mana",
    "range": "Melee Range",
    "cast": "Instant",
    "cooldown": "12 sec cooldown",
+   "extraLines": [
+    "Demon: Succubus, Incubus"
+   ],
    "description": "An instant attack that lashes the target, causing 50 Shadow damage.",
    "versusClassic": "changed"
   },
@@ -512,8 +543,11 @@
    "tab": "Demons",
    "level": "Learned at level 32",
    "school": "Shadow",
-   "cost": "Demon: Succubus",
+   "cost": "100 Mana",
    "cast": "Instant",
+   "extraLines": [
+    "Demon: Succubus, Incubus"
+   ],
    "description": "Gives your summoned demon Lesser Invisibility for up to 5 min. This spell can only be used out of combat.",
    "versusClassic": "same"
   },
@@ -573,10 +607,13 @@
    "tab": "Demonology",
    "level": "Learned at level 60",
    "school": "Shadow",
-   "cost": "Reagents: Demonic Figurine",
+   "cost": "100% of base mana",
    "range": "30 yd range",
-   "cast": "Channeled",
+   "cast": "10 sec cast",
    "cooldown": "1 hour cooldown",
+   "extraLines": [
+    "Reagents: Demonic Figurine"
+   ],
    "description": "Begins a ritual that sacrifices a random participant to summon a doomguard. The doomguard must be immediately subjugated or it will attack the ritual participants. Requires the caster and 4 additional party members to complete the ritual. In order to participate, all players must right-click the portal and not move until the ritual is complete.",
    "versusClassic": "same"
   },
@@ -587,9 +624,12 @@
    "tab": "Demonology",
    "level": "Learned at level 20",
    "school": "Shadow",
-   "cost": "Reagents: Soul Shard",
+   "cost": "300 Mana",
    "range": "30 yd range",
-   "cast": "Channeled",
+   "cast": "5 sec cast",
+   "extraLines": [
+    "Reagents: Soul Shard"
+   ],
    "description": "Begins a ritual that summons the targeted group member. Requires the caster and 2 additional party members to complete the ritual. In order to participate, all players must be out of combat and right-click the portal and not move until the ritual is complete.",
    "versusClassic": "same"
   },
@@ -626,9 +666,12 @@
    "tab": "Demons",
    "level": "Learned at level 26",
    "school": "Shadow",
-   "cost": "Demon: Succubus",
+   "cost": "24% of base mana",
    "range": "30 yd range",
-   "cast": "Channeled",
+   "cast": "1.5 sec cast",
+   "extraLines": [
+    "Demon: Succubus, Incubus"
+   ],
    "description": "Seduces the target, preventing all actions for up to 15 sec. Any damage caused will remove the effect. Only works against Humanoids.",
    "versusClassic": "same"
   },
@@ -676,10 +719,13 @@
    "tab": "Destruction",
    "level": "Learned at level 56",
    "school": "Shadow",
-   "cost": "Reagents: Soul Shard",
+   "cost": "365 Mana",
    "range": "30 yd range",
    "cast": "Instant",
    "cooldown": "15 sec cooldown",
+   "extraLines": [
+    "Reagents: Soul Shard"
+   ],
    "description": "Instantly blasts the target for 258 to 288 Shadow damage. If the target dies within 8 sec of Shadowburn, and yields experience or honor, the caster gains a Soul Shard.",
    "versusClassic": "changed"
   },
@@ -703,10 +749,13 @@
    "tab": "Demons",
    "level": "Learned at level 58",
    "school": "Shadow",
-   "cost": "Demon: Succubus",
+   "cost": "100 Mana",
    "range": "10 yd range",
    "cast": "Instant",
    "cooldown": "4 sec cooldown",
+   "extraLines": [
+    "Demon: Succubus, Incubus"
+   ],
    "description": "Soothes the target, increasing the chance that it will attack something else. More effective than Soothing Kiss (Rank 3).",
    "versusClassic": "same"
   },
@@ -717,10 +766,13 @@
    "tab": "Destruction",
    "level": "Learned at level 56",
    "school": "Fire",
-   "cost": "Reagents: Soul Shard",
+   "cost": "335 Mana",
    "range": "30 yd range",
    "cast": "6 sec cast",
    "cooldown": "1 min cooldown",
+   "extraLines": [
+    "Reagents: Soul Shard"
+   ],
    "description": "Burn the enemy's soul, causing 390 to 486 Fire damage.",
    "versusClassic": "changed"
   },
@@ -729,7 +781,7 @@
    "name": "Soul Link",
    "rank": null,
    "tab": "Demonology",
-   "level": "Learned at level 40",
+   "level": "Learned at level 30",
    "school": "Shadow",
    "cost": "20% of base mana",
    "range": "100 yd range",
@@ -744,10 +796,13 @@
    "tab": "Demons",
    "level": "Learned at level 52",
    "school": "Shadow",
-   "cost": "Demon: Felhunter",
+   "cost": "200 Mana",
    "range": "30 yd range",
    "cast": "Instant",
    "cooldown": "30 sec cooldown",
+   "extraLines": [
+    "Demon: Felhunter"
+   ],
    "description": "Silences the enemy for 3 sec. If used on a casting target, it will counter the enemy's spellcast, preventing any spell from that school of magic from being cast for 8 sec.",
    "versusClassic": "same"
   },
@@ -758,9 +813,12 @@
    "tab": "Demonology",
    "level": "Learned at level 58",
    "school": "Shadow",
-   "cost": "Reagents: Soul Shard",
+   "cost": "700 Mana",
    "range": "30 yd range",
    "cast": "3 sec cast",
+   "extraLines": [
+    "Reagents: Soul Shard"
+   ],
    "description": "Subjugates the target demon, up to level 64, forcing it to do your bidding. While subjugated, the time between the demon's attacks is increased by 40% and its casting speed is slowed by 30%. Lasts up to 5 min. If you repeatedly subjugate the same demon, it will become more difficult to control with each attempt.",
    "versusClassic": "same"
   },
@@ -771,9 +829,12 @@
    "tab": "Demons",
    "level": "Learned at level 60",
    "school": "Shadow",
-   "cost": "Demon: Voidwalker",
+   "cost": "600 Mana",
    "cast": "Instant",
    "cooldown": "2 min cooldown",
+   "extraLines": [
+    "Demon: Voidwalker"
+   ],
    "description": "Taunts all enemies within 10 yards, increasing the chance that they will attack the Voidwalker. More effective than Suffering (Rank 3).",
    "versusClassic": "same"
   },
@@ -784,8 +845,11 @@
    "tab": "Demonology",
    "level": "Learned at level 30",
    "school": "Shadow",
-   "cost": "Reagents: Soul Shard",
+   "cost": "100% of base mana",
    "cast": "10 sec cast",
+   "extraLines": [
+    "Reagents: Soul Shard"
+   ],
    "description": "Summons a Felhunter under the command of the Warlock.",
    "versusClassic": "same"
   },
@@ -808,8 +872,11 @@
    "tab": "Demonology",
    "level": "Learned at level 20",
    "school": "Shadow",
-   "cost": "Reagents: Soul Shard",
+   "cost": "100% of base mana",
    "cast": "10 sec cast",
+   "extraLines": [
+    "Reagents: Soul Shard"
+   ],
    "description": "Summons an Incubus under the command of the Warlock.",
    "versusClassic": "same"
   },
@@ -820,8 +887,11 @@
    "tab": "Demonology",
    "level": "Learned at level 20",
    "school": "Shadow",
-   "cost": "Reagents: Soul Shard",
+   "cost": "100% of base mana",
    "cast": "10 sec cast",
+   "extraLines": [
+    "Reagents: Soul Shard"
+   ],
    "description": "Summons a Succubus under the command of the Warlock.",
    "versusClassic": "same"
   },
@@ -832,8 +902,11 @@
    "tab": "Demonology",
    "level": "Learned at level 10",
    "school": "Shadow",
-   "cost": "Reagents: Soul Shard",
+   "cost": "100% of base mana",
    "cast": "10 sec cast",
+   "extraLines": [
+    "Reagents: Soul Shard"
+   ],
    "description": "Summons a Voidwalker under the command of the Warlock.",
    "versusClassic": "same"
   },
@@ -844,8 +917,11 @@
    "tab": "Demons",
    "level": "Learned at level 56",
    "school": "Shadow",
-   "cost": "Demon: Felhunter",
+   "cost": "170 Mana",
    "cast": "Instant",
+   "extraLines": [
+    "Demon: Felhunter"
+   ],
    "description": "Taints the Felhunter's blood for 1 min. When the Felhunter is hit with a melee attack, the attacker will lose 40 melee attack power for 10 sec. Stacks up to 5 times on a single target.",
    "versusClassic": "same"
   },
@@ -856,10 +932,13 @@
    "tab": "Demons",
    "level": "Learned at level 60",
    "school": "Shadow",
-   "cost": "Demon: Voidwalker",
+   "cost": "145 Mana",
    "range": "Melee Range",
    "cast": "Instant",
    "cooldown": "5 sec cooldown",
+   "extraLines": [
+    "Demon: Voidwalker"
+   ],
    "description": "Taunts the creature, increasing the chance that it will attack the Voidwalker. More effective than Torment (Rank 5).",
    "versusClassic": "same"
   },
@@ -886,7 +965,7 @@
    "cost": "200 Mana",
    "range": "30 yd range",
    "cast": "Channeled",
-   "description": "Tears the target apart from within, dealing 36 Shadow damage every 1 sec and increasing the damage they take from your other Shadow damage over time effects by 10%. Lasts 6 sec.",
+   "description": "Tears the target apart from within, inflicting 36 Shadow damage every 1 sec and increasing the damage they take from your other Shadow damage over time effects by 10% for 6 sec.",
    "versusClassic": "new"
   }
  ]
