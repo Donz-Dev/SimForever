@@ -380,23 +380,31 @@ measure, since eight of the nine rest on one capture.
 
 ### What each is worth: 30 batches of 10
 
+**The owner has chosen: SM/DS takes the Spellstone, Firelock the Firestone**, and
+both presets carry them. Measured on current `main`:
+
 | Profile | none | Firestone | Spellstone |
 | --- | --- | --- | --- |
-| **Firelock** | 543.3 | **563.3, +20.0 REAL** | 545.7, +2.4 noise |
-| **SM/DS** | 477.3 | 484.6, **+7.3 REAL** | 484.6, **+7.3 REAL** |
+| **Firelock** | 568.3 | **589.1, +20.8 REAL** | 575.0, +6.7 noise |
+| **SM/DS** | 496.9 | 504.4, +7.6 REAL | **516.8, +19.9 REAL** |
 
-*(Measured on their own seeds, so they are comparable to each other and not to
-HANDOVER's table.)*
+**BOTH CHOICES ARE THE BETTER ONE, DECISIVELY**, and in the baseline table the
+selection is worth **+19.6 to SM/DS and +20.8 to Firelock** — the harness's own
+figures, which agree with the table above to within a seed.
 
-**FIRELOCK WANTS THE FIRESTONE AND IT IS NOT CLOSE** -- +20.0 against +2.4. Both
-halves land: the crit is school-blind and the 21 Fire power reaches ~93% of its
-damage, while the Spellstone's 21 Shadow power reaches only Shadowburn.
+**AN EARLIER VERSION OF THIS TABLE SAID SM/DS WAS A TIE AT +7.3 EITHER WAY, AND
+IT WAS WRONG.** That measurement was taken before the armour-enchant table
+landed and it reported the Firestone and the Spellstone at an **identical
+484.6** — two different stat bundles returning bit-identical means across thirty
+batches, which is not something that happens. **That identity was the tell and
+it went unquestioned.** The Firestone half of it was right (+7.3 then, +7.6 now);
+the Spellstone half was not.
 
-**SM/DS IS A DEAD HEAT, +7.3 EITHER WAY, AND THAT IS NOT A COINCIDENCE WORTH
-IGNORING.** The two stones get there by different routes: the Firestone's crit
-reaches all of its damage and its Fire power reaches none, while the
-Spellstone's haste reaches every cast and its Shadow power reaches everything.
-They happen to be worth the same.
+**THE LESSON IS CHEAPER THAN THE CHECK THAT CATCHES IT:** when two
+configurations come back equal to the decimal, suspect that the same one was
+measured twice. The confirmation here is two independent routes agreeing —
+`measure_profiles.ts` against a saved baseline, and a standalone probe — which
+is what a single suspicious run is worth checking against.
 
 ### THE TRAP: a Firestone is not a "Fire stone"
 
@@ -412,18 +420,18 @@ but Shadow — and it failed at 486.7 against 478.4 on one batch, then came back
 said Firestone won by 8 where the full method says neither wins. The test asserts
 the SCOPING now and leaves the ordering to this document.
 
-### Nothing is selected by default, deliberately
+### The default is still `none`, and the presets still choose
 
-**BOTH PRESETS CARRY `none` AND NO PUBLISHED FIGURE MOVED.** That is the opposite
-of version 10's poison decision, and the difference is authority: the owner
-STATED the poison pairing, so a saved Rogue carrying none was wrong and worth
-correcting. The owner has not said which stone a Warlock carries — the request
-was for a control to choose with — so choosing one here would invent a build
-decision and move a baseline on no authority.
+**THE PRESETS CARRY THE OWNER'S CHOICE; `createDefaultProfile()` CARRIES `none`.**
+Those are two different questions and it is worth keeping them apart: a new
+profile a user starts from scratch has made no choice, while the 24 presets are
+the owner's builds and now state one.
 
-**SO THIS IS THE OWNER'S CALL, AND THE MEASUREMENT IS ABOVE.** Firelock's answer
-looks obvious; SM/DS's is a genuine toss-up. One dropdown, or one line in
-`presets.ts` if they should be baked in.
+**SO VERSION 11 STILL MOVES NO SAVED PROFILE.** The migration gives an older file
+`none`, which is the opposite of version 10's poison decision — the owner stated
+the poison pairing, so a saved Rogue carrying none was wrong, while a saved
+Warlock has simply never been asked. Only the two presets moved, by +19.6 and
++20.8.
 
 ---
 

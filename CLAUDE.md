@@ -1510,6 +1510,16 @@ no per-point argument either way and what decides it is uptime.
   form swung a real sword instead of a paw — which read as a working feature.
   **When a rule is fixed for one slot, check its siblings**: `offHand` and
   `shield` are both off-hand slots.
+- **TWO CONFIGURATIONS COMING BACK EQUAL TO THE DECIMAL MEANS THE SAME ONE WAS
+  MEASURED TWICE.** A Firestone and a Spellstone grant different stats to
+  different schools, and a probe reported both at an IDENTICAL 484.6 across
+  thirty batches -- which was written into a handoff document and used to tell
+  the owner the choice was a toss-up. It was not: re-measured two independent
+  ways, the Spellstone is worth +19.9 to that profile and the Firestone +7.6.
+  **The identity was the evidence and it went unquestioned**, which is the same
+  shape as a share total of exactly 100% hiding a pooled column. A suspicious
+  run is worth confirming by a second route -- `measure_profiles.ts` against a
+  saved baseline AND a standalone probe -- before a figure leaves the session.
 - **A TEMPORARY WEAPON ENCHANT IS A PROFILE FIELD, NOT AN ITEM.** A Rogue's
   poisons and a Warlock's Firestone or Spellstone are both consumables applied
   before the pull, so they are selected in the Gear panel and stored on the

@@ -1,4 +1,27 @@
-# Handover
+**THE WARLOCK HAS A WEAPON STONE, AND BOTH PRESETS NOW CARRY ONE.**
+`profile.warlockStone` -- a Firestone or a Spellstone, selected in the Gear panel
+beside a Rogue's poisons, and **profile format v11**. The owner's choice:
+**SM/DS takes the Spellstone (+19.6 REAL) and Firelock the Firestone (+20.8
+REAL)**, and the other twenty-two profiles are identical to the decimal.
+
+| Profile | none | Firestone | Spellstone |
+| --- | --- | --- | --- |
+| Firelock | 568.3 | **589.1, +20.8 REAL** | 575.0, +6.7 noise |
+| SM/DS | 496.9 | 504.4, +7.6 REAL | **516.8, +19.9 REAL** |
+
+**A FIRESTONE IS NOT A "FIRE STONE"** -- only its +21 is school-scoped, while its
+2% spell crit is whole-character, which is why it is the better stone for a Fire
+build and still worth +7.6 to a pure Shadow one.
+
+**THE DEFAULT IS STILL `none` AND NO SAVED PROFILE MOVED.** The presets state the
+owner's choice; `createDefaultProfile()` states no choice at all, which is the
+opposite of version 10's poison decision and for the stated reason -- the owner
+supplied the poison pairing, and a saved Warlock has simply never been asked.
+
+**ONE FIGURE IN AN EARLIER VERSION OF THIS ENTRY WAS WRONG**, and the tell was
+visible: SM/DS's two stones were reported at an IDENTICAL 484.6, which two
+different stat bundles do not do across thirty batches. See
+[docs/handoff/warlock.md](docs/handoff/warlock.md).# Handover
 
 **Status only.** Rules and conventions are in [CLAUDE.md](CLAUDE.md); how a class
 gets built is [docs/class-implementation.md](docs/class-implementation.md).
@@ -935,7 +958,7 @@ while it worked.
 decimal -- which is what a talent change scoped to one build should look like.
 It makes Frostfire the top Mage, above Fire's 401.2 and Arcane's 392.6, and the
 build that existed for the Fire/Frost overlap now has a third reason to. The
-mean across **24** is **597.2**, RE-SUMMED FROM THE TABLE ABOVE rather than
+mean across **24** is **598.9**, RE-SUMMED FROM THE TABLE ABOVE rather than
 adjusted -- **by `tools/update_baseline_table.py`, which exists now**; the
 sentence above it had promised a script for several commits and there was none,
 so the mean and the ordering were still being maintained by hand.
@@ -1499,12 +1522,12 @@ cannot audit, which is why the check is a SET comparison and not a row count.
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | Seal Twist Ret | Paladin | 13/0/38 | 776.4 | | Arcane Mage | Mage | 47/4/0 | 609.6 |
 | LW Ranged | Hunter | 7/39/5 | 734.9 | | Shockadin | Paladin | 23/0/28 | 608.8 |
-| LW Melee | Hunter | 7/13/31 | 712.2 | | Firelock | Warlock | 5/11/35 | 565.9 |
+| LW Melee | Hunter | 7/13/31 | 712.2 | | **Firelock** | Warlock | 5/11/35 | **586.6** |
 | BM Hunter | Hunter | 31/20/0 | 711.7 | | Hemo Rogue | Rogue | 17/3/31 | 553.4 |
 | DW Fury | Warrior | 18/33/0 | 698.3 | | Moonkin | Druid | 38/0/13 | 542.1 |
 | Frostfire Mage | Mage | 0/29/22 | 697.9 | | Venom Rogue | Rogue | 37/12/2 | 538.0 |
 | Cat Druid | Druid | 9/35/7 | 694.3 | | Rupture Rogue | Rogue | 12/8/31 | 521.7 |
-| Fire Mage | Mage | 10/39/2 | 670.4 | | SM/DS | Warlock | 40/11/0 | 494.7 |
+| Fire Mage | Mage | 10/39/2 | 670.4 | | **SM/DS** | Warlock | 40/11/0 | **514.3** |
 | Enh Shaman | Shaman | 19/32/0 | 648.3 | | Ele Shaman | Shaman | 38/13/0 | 469.3 |
 | 2H Arms | Warrior | 38/13/0 | 644.8 | | Prot Warr | Warrior | 17/0/34 | 459.4 |
 | Combat Rogue | Rogue | 18/33/0 | 614.9 | | Bear Druid | Druid | 9/42/0 | 443.0 |
