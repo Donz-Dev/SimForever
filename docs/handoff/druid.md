@@ -39,8 +39,33 @@ must all go on Shred -- and the aura would still report its uptime.
 **SWIPE'S COEFFICIENT WENT 10% TO 3%** on a patch note that calls it a fix. The
 sheet says 10 and the notes are later. It moves no figure: Swipe is in no list.
 
-**THE BEAR'S CRIT NOW PAYS RAGE**, at 1.75x the flat per-swing award. Worth +5.7,
-inside the interval -- a Bear is not short of rage.
+**THE BEAR'S CRIT NOW PAYS RAGE**, at 2.0x the flat per-swing award -- 1.75x when
+it landed, raised one patch later ("increased to 100% increased Rage (Was 75%)").
+Worth +5.7 at 1.75 and **+3.8 at 2.0**, both inside the interval: a Bear is not
+short of rage, so a rage multiplier is close to free either way.
+
+**AND IT NOW EQUALS THE WARRIOR'S 2.0 WITHOUT BECOMING THE SAME FACT.**
+`WARRIOR_CRIT_RAGE_MULTIPLIER` and `BEAR_FORM_CRIT_RAGE_MULTIPLIER` are both 2.0
+and `critRageMultiplierFor` has two branches returning the same number. They are
+two owner statements about two classes and stay apart -- the arrangement Early
+Demise's 20 and `EXECUTE_PHASE_FRACTION` have for the same reason, and
+`critRage.test.ts` pins each by IDENTITY rather than asserting they are equal, so
+a patch moving one does not read as a test failure in the other.
+
+**SHIFTING POWER IS GATED ON `energy <= 50` AND THE GATE PAYS +13.2.** The owner's
+clause, and a gate being worth POSITIVE DPS is not the usual direction -- the
+ability grants 40 energy against a cap of 100, so a cast on a high bar throws
+part of the grant away. Over 20 fights, ungated against gated:
+
+| | casts a fight | energy gained | wasted |
+| --- | --- | --- | --- |
+| ungated | 8.00 | 280.0 | **40.0** (12.5% of the grant) |
+| gated | 7.45 | **298.0** | **0.0** |
+
+So the gated list casts it LESS and collects MORE. The reliable waster is the
+pull -- every fight opens at a full energy bar. **Fifty is the owner's figure and
+not the arithmetic boundary**, which is 60; deriving the gate from the grant would
+quietly move it.
 
 ---
 

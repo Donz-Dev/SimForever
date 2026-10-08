@@ -116,6 +116,42 @@ export const redoubt: TalentReactionBuilder = (blockChanceBonus) => ({
 });
 
 /**
+ * Reckoning's internal cooldown: 1.5 seconds, the ruleset owner's figure.
+ *
+ * ----------------------------------------------------------------------------
+ * "Reckoning: Now has a 1.5 second internal cooldown on how often it can be
+ * triggered." It had none, so every block and every crit taken rolled.
+ *
+ * AND IT IS WORTH EXACTLY NOTHING IN THIS ENCOUNTER, WHICH IS ARITHMETIC RATHER
+ * THAN LUCK -- measured at 0.0 DPS on the Protection profile, to the decimal,
+ * over 300 fights. The encounter has ONE attacker on a two-second swing timer
+ * (`PLACEHOLDER_BOSS_SWING_SECONDS`), widened further by the tank's own Thunder
+ * Clap slow: **25 attacks received a fight, median and minimum gap both 2,400ms,
+ * and not one gap under 1,500ms**, with 10.3 blocks and 0.0 crits taken. Two
+ * triggerable events cannot fall inside the window, so the cooldown refuses
+ * nothing.
+ *
+ * THAT IS AN ENCOUNTER CAUSE AND IT EXPIRES -- the day the encounter swings
+ * faster or carries a second attacker, this starts binding. Written down because
+ * a change measuring nothing is otherwise indistinguishable from one that did
+ * not apply, and `paladinTalents.test.ts` asserts the gap rather than leaving
+ * the claim here to be believed.
+ *
+ * THE FIRST VERSION OF THIS COMMENT PREDICTED THE OPPOSITE and was specific
+ * about it: "a tank is ... critically struck several times a second against a
+ * target that ramps". Crits taken are 0.0 and attacks arrive every 2.4 seconds.
+ * A prediction in a comment is a measurement that has not happened.
+ *
+ * THE SAME FIGURE AND THE SAME MECHANISM AS HAND OF JUSTICE, which is the other
+ * extra-attack source in this project with a stated internal cooldown -- also
+ * 1.5 seconds, also the owner's. Two different effects agreeing on a number is
+ * not a reason to share a constant: the trinket's is recorded against an item
+ * tooltip that says two seconds, and this one against a patch note.
+ * ----------------------------------------------------------------------------
+ */
+export const RECKONING_ICD_MS = 1500;
+
+/**
  * Reckoning: an extra attack after blocking, and after being critically hit.
  *
  * ----------------------------------------------------------------------------
@@ -137,26 +173,55 @@ export const redoubt: TalentReactionBuilder = (blockChanceBonus) => ({
  * reaction at all, so the qualifier is already enforced one layer down.
  * ----------------------------------------------------------------------------
  */
-export const reckoning: TalentReactionBuilder = (blockChancePercent) => ({
-  id: 'reckoning',
-  on: 'taken',
-  outcomes: ['crit', 'block'],
-  canTrigger: (context, _actor, attack) => {
-    if (attack.amount <= 0) return false;
-    /*
-     * THE TALENT'S FIRST VALUE IS THE BLOCK CHANCE AND ITS SECOND IS THE CRIT
-     * CHANCE -- [8, 20] through [40, 100]. The builder receives the first,
-     * because that is the one `valueIndex` defaults to and the one this clause
-     * needs; the crit chance is the named constant below, which is 100 at the
-     * only rank any profile takes.
-     */
-    const chance = attack.outcome === 'block' ? blockChancePercent : RECKONING_CRIT_CHANCE;
-    return context.rng.rollChance(chance / 100);
-  },
-  onTrigger: (context, actor) => {
-    context.extraAttack(actor, 'mainHand');
-  },
-});
+export const reckoning: TalentReactionBuilder = (blockChancePercent) => {
+  /*
+   * THE LAST TIME IT FIRED, PER COMBATANT, held in the closure rather than on
+   * the combatant -- the idiom `handOfJusticeReaction` uses and for the reason
+   * CLAUDE.md records: an internal cooldown is per-character state, and ONE
+   * SHARED CLOSURE SILENTLY STOPPED WINDFURY PROCCING after the first iteration
+   * of a batch.
+   *
+   * THIS IS SAFE BECAUSE A TALENT REACTION IS BUILT PER CHARACTER. `talentBuild`
+   * calls this builder from inside `createPlayer`, which the simulation calls
+   * once per iteration, and nothing memoises it -- so each character gets its
+   * own `lastProcAt`. A closure at MODULE level here would share one cooldown
+   * across every Paladin in a batch and the talent would appear to work.
+   */
+  let lastProcAt: number | null = null;
+
+  return {
+    id: 'reckoning',
+    on: 'taken',
+    outcomes: ['crit', 'block'],
+    canTrigger: (context, _actor, attack) => {
+      if (attack.amount <= 0) return false;
+
+      /*
+       * THE COOLDOWN IS CHECKED BEFORE THE ROLL, which is the ordering that
+       * matters: rolling first and discarding the result would consume a random
+       * number on an attack that could not proc, and every seeded figure in the
+       * project would shift. The same reason `critFrom` being absent consumes no
+       * number at all.
+       */
+      const now = context.clock.now();
+      if (lastProcAt !== null && now - lastProcAt < RECKONING_ICD_MS) return false;
+
+      /*
+       * THE TALENT'S FIRST VALUE IS THE BLOCK CHANCE AND ITS SECOND IS THE CRIT
+       * CHANCE -- [8, 20] through [40, 100]. The builder receives the first,
+       * because that is the one `valueIndex` defaults to and the one this clause
+       * needs; the crit chance is the named constant below, which is 100 at the
+       * only rank any profile takes.
+       */
+      const chance = attack.outcome === 'block' ? blockChancePercent : RECKONING_CRIT_CHANCE;
+      return context.rng.rollChance(chance / 100);
+    },
+    onTrigger: (context, actor) => {
+      lastProcAt = context.clock.now();
+      context.extraAttack(actor, 'mainHand');
+    },
+  };
+};
 
 /**
  * Reckoning's crit chance, which the Protection build takes at 5/5.

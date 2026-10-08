@@ -19,6 +19,7 @@ import {
   INSECT_SWARM_ABILITY,
   MOONFIRE,
   NATURES_SWIFTNESS_ABILITY,
+  SHIFTING_POWER_ENERGY,
   WRATH,
 } from '../../src/game/abilities/druid';
 import {
@@ -40,7 +41,7 @@ import { TALENT_AURAS } from '../../src/game/auras/talentAuras';
 import { RAID_BUFFS_BY_ID } from '../../src/game/buffs/raidBuffs';
 import { trainingDummyEncounter } from '../../src/simulator/trainingDummyEncounter';
 import { DRUID_TALENT_EFFECTS } from '../../src/game/talents/druidEffects';
-import { DRUID_CAT } from '../../src/game/rotations/druid';
+import { DRUID_CAT, SHIFTING_POWER_ENERGY_CEILING } from '../../src/game/rotations/druid';
 import {
   RAKE_AP_COEFFICIENT,
   RAKE_TICK_AP_COEFFICIENT,
@@ -1203,20 +1204,75 @@ describe("Swipe's attack power coefficient is 3%, not the sheet's 10%", () => {
 });
 
 describe('the Cat list opens with Shifting Power rather than Tiger\'s Fury', () => {
-  it('is first, unconditional, and the only new entry', () => {
+  it('is first, and gated on an energy bar with room for the 40 it grants', () => {
     /*
-     * The owner's instruction with the patch notes: "It no longer uses Tiger's
-     * Fury and instead uses Shifting Power on cooldown as long as you have the
-     * mana to cast it."
+     * ----------------------------------------------------------------------
+     * THE OWNER'S CONDITION, GIVEN AFTER THE FIRST INSTRUCTION. It was "on
+     * cooldown as long as you have the mana to cast it", which this test
+     * asserted as UNCONDITIONAL -- and the mana half of that is still not a
+     * condition, because `checkCast` refuses what the character cannot afford
+     * and a clause would be the list restating an engine rule.
      *
-     * UNCONDITIONAL IS THE WHOLE "AS LONG AS YOU HAVE THE MANA". `checkCast`
-     * refuses an ability the character cannot afford and the list walks past it,
-     * so a condition here would be the list restating an engine rule -- the shape
-     * the Rogue's Ambush entry was corrected for.
+     * WHAT WAS MISSING WAS THE OTHER RESOURCE: "only uses Shifting Power if
+     * current energy is <= 50". The ability GRANTS 40 energy against a cap of
+     * 100, so a cast on a high bar throws part of the grant away -- ungated it
+     * wastes 40.0 energy a fight, 12.5% of everything it grants, and the gate is
+     * worth +13.2 DPS.
+     * ----------------------------------------------------------------------
      */
     expect(DRUID_CAT[0].abilityId).toBe('shifting_power');
-    expect(DRUID_CAT[0].condition).toBeUndefined();
+    expect(DRUID_CAT[0].condition).toBeDefined();
     expect(DRUID_CAT.map((entry) => entry.abilityId)).not.toContain('tigers_fury');
+  });
+
+  it('refuses the cast above fifty energy and allows it at or below', () => {
+    /*
+     * DRIVEN ON BOTH SIDES OF THE BOUNDARY AND ON THE BOUNDARY ITSELF, because
+     * the owner stated `<= 50` and an off-by-one here is a condition that looks
+     * right: at 51 the cast wastes nothing visible, and at 50 exactly it is the
+     * difference between the gate firing and not.
+     *
+     * A resource level is not a probability, so this is scripted rather than
+     * sampled -- the same reason a combat table boundary uses a scripted roll.
+     */
+    const cat = druid('druid_cat', 'cat');
+    const target = makeTarget();
+    const simulation = buildSimulation([cat, target]);
+    simulation.begin();
+
+    const entry = DRUID_CAT[0];
+    const energy = cat.resources.require('energy');
+
+    for (const [current, expected] of [
+      [100, false],
+      [51, false],
+      [50, true],
+      [49, true],
+      [0, true],
+    ] as const) {
+      energy.set(current);
+      expect(entry.condition!(simulation, cat, target), `at ${current} energy`).toBe(expected);
+    }
+  });
+
+  it('grants exactly the forty the gate leaves room for', () => {
+    /*
+     * THE THREE FIGURES THAT DECIDE WHETHER THE GATE WASTES ANYTHING, asserted
+     * together because nothing else makes them agree: a change to the grant or
+     * the cap would start wasting energy under an unchanged gate, silently.
+     *
+     * AND THE GATE IS THE OWNER'S FIGURE RATHER THAN THIS ARITHMETIC'S. 40 into
+     * a cap of 100 overflows above **60**, so `<= 50` is ten energy inside the
+     * no-waste region and not on its edge -- which is why this asserts the
+     * boundary is SAFE rather than asserting it is tight. Deriving the gate from
+     * the grant would quietly move the owner's 50 to 60.
+     */
+    expect(SHIFTING_POWER_ENERGY).toBe(40);
+    const cat = druid('druid_cat', 'cat');
+    expect(cat.resources.require('energy').maximum).toBe(100);
+    expect(SHIFTING_POWER_ENERGY_CEILING + SHIFTING_POWER_ENERGY).toBeLessThanOrEqual(
+      cat.resources.require('energy').maximum,
+    );
   });
 
   it('is not a floor under the list, because it has a cooldown', () => {
