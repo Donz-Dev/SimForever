@@ -28,7 +28,7 @@ WHAT IT DOES, which is what that sentence promised:
     rows between the columns, and that is exactly the edit that goes wrong
     silently;
   - ASSERTS that the set it measured and the set the table carries are the same
-    24, so a profile added to the presets and not to the table is an error
+    25, so a profile added to the presets and not to the table is an error
     rather than a quiet omission;
   - re-sums the mean FROM THE ROWS it just wrote and updates the sentence under
     the table, because a count adjusted by hand is how this project's totals
@@ -68,6 +68,7 @@ LABELS = {
     'BM Hunter': 'bm_hunter',
     'LW Ranged': 'lw_ranged',
     'LW Melee': 'lw_melee',
+    'Hawk Melee': 'hawk_melee',
     'SM/DS': 'warlock_smds',
     'Firelock': 'warlock_firelock',
     'Shadow Priest': 'shadow_priest',
@@ -136,16 +137,30 @@ def main(figures_path, moved):
         # The columns are separated by an EMPTY cell -- the header is nine wide,
         # four plus a spacer plus four -- so the two halves join with a space
         # and the doubled pipe is deliberate.
-        right_cell = cell(right[i]) if i < len(right) else '| | | |'
+        #
+        # AN ODD COUNT LEAVES THE LAST RIGHT-HAND CELL EMPTY, and the filler
+        # has to be the same NINE columns wide as every other row: the spacer
+        # plus four. `| | | |` is the obvious thing to write and renders a
+        # seven-column row, which markdown accepts silently. First reached at
+        # 25 profiles -- it had been even every time until then.
+        right_cell = cell(right[i]) if i < len(right) else '| | | | | |'
         lines.append(cell(left[i]) + ' ' + right_cell)
 
     text = text[:start] + '\n'.join(lines) + text[end:]
 
     # RE-SUMMED FROM THE ROWS just written, never adjusted.
     mean = sum(figures[LABELS[label]] for label in ordered) / len(ordered)
+    #
+    # THE COUNT IS REWRITTEN TOO, NOT MATCHED ON. Keying the pattern to the
+    # count this run produced meant the script could not add a profile: with 25
+    # rows it looked for "mean across **25**", the sentence still said 24, and
+    # the tool failed on the one edit it exists to make. Matching ANY count and
+    # writing both numbers is also the stricter behaviour -- "the COUNT drifted
+    # too, which is the same failure one level up" is in HANDOVER because the
+    # sentence said twenty-three when Hemo had made it twenty-four.
     text, n = re.subn(
-        r'(mean across \*\*%d\*\* is \*\*)[\d.]+(\*\*)' % len(ordered),
-        lambda m: f'{m.group(1)}{mean:.1f}{m.group(2)}',
+        r'mean across \*\*\d+\*\* is \*\*[\d.]+\*\*',
+        f'mean across **{len(ordered)}** is **{mean:.1f}**',
         text,
         count=1,
     )

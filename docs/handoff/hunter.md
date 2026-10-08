@@ -1,7 +1,7 @@
 # HUNTER DEEP DIVE
 
 **Class:** Hunter
-**Profiles to audit and prepare:** BM Hunter, LW Ranged, LW Melee
+**Profiles to audit and prepare:** BM Hunter, LW Ranged, LW Melee, Hawk Melee
 
 Read [CLAUDE.md](../../CLAUDE.md) first, then [README.md](README.md) in this
 directory for what the census columns mean and how to reprint every figure below.
@@ -55,9 +55,10 @@ left, six are the encounter or the build, one is a consequence of a ruling, and
 
 | Profile | Talents | DPS | List | Notes |
 | --- | --- | --- | --- | --- |
-| BM Hunter | 31/20/0 | **668.6** | `HUNTER_BEAST_MASTERY` | **the only profile with a pet** |
-| LW Melee | 7/13/31 | **672.6** | `HUNTER_LONE_WOLF_MELEE` | **dual wield**, since 2026-10-03 |
-| LW Ranged | 7/39/5 | **681.1** | `HUNTER_LONE_WOLF_RANGED` | |
+| BM Hunter | 31/20/0 | **771.7** | `HUNTER_BEAST_MASTERY` | **the only profile with a pet** |
+| LW Melee | 7/13/31 | **779.7** | `HUNTER_LONE_WOLF_MELEE` | **dual wield**, since 2026-10-03 |
+| LW Ranged | 7/39/5 | **805.9** | `HUNTER_LONE_WOLF_RANGED` | |
+| Hawk Melee | 16/11/24 | **824.4** | `HUNTER_HAWK_MELEE` | **the top Hunter**, since 2026-10-08 |
 
 **BM HUNTER HAS HELD THREE DIFFERENT FIGURES IN TWO DAYS, AND THE SEQUENCE IS
 THE POINT RATHER THAN ANY ONE OF THEM.** 405.8, then 731.8, then 595.1, then
@@ -123,16 +124,86 @@ more accurate). We can revisit it once everything is working."*
 
 One batch of ten, so read the shape and not the decimals:
 
+**THE TWO MELEE ROWS ARE FROM THE 2026-10-08 RUN AND THE TWO RANGED ROWS ARE
+OLDER.** Shares are a fraction of a profile's own damage, so they do not move
+when the whole table does -- but the ranged pair have not been re-measured since
+the consumables landed, and a row is only as current as the run it came from.
+
 | Profile | Top sources |
 | --- | --- |
 | BM Hunter | Ranged Auto 30.0%, **Hawk 17.9%**, Cat Melee 17.2%, Serpent Sting 13.5%, Aimed Shot 13.1%, Claw 5.6%, Bite 2.7% |
 | LW Ranged | Ranged Auto 49.7%, Arcane Shot 19.6%, Aimed Shot 13.0%, Serpent Sting 11.0%, Sniper Shot 6.6% |
-| LW Melee | Main Hand Auto 29.3%, Off Hand Auto 23.4%, Raptor Strike 14.4%, Mongoose Bite 10.5%, Strider Kick 9.1%, Immolation Trap 5.9%, Wing Clip 3.6%, Lacerating Strikes 2.0%, Fatal Wound 1.9% |
+| LW Melee | Main Hand Auto 32.1%, Off Hand Auto 22.9%, Raptor Strike 13.9%, Mongoose Bite 10.8%, Strider Kick 8.1%, Immolation Trap 4.9%, Wing Clip 3.0%, Lacerating Strikes 2.9%, Fatal Wound 1.4% |
+| Hawk Melee | Main Hand Auto 26.9%, Off Hand Auto 20.8%, Raptor Strike 14.8%, **Hawk 11.5%**, Mongoose Bite 9.9%, Strider Kick 7.5%, Immolation Trap 5.0%, Wing Clip 2.4%, Fatal Wound 1.2% |
 
 **"Cat Melee" USED TO READ "Main Hand Auto-Attack" AND THAT WAS A LIE THIS
 DOCUMENT REPEATED.** See **The row that was about the wrong thing** below.
 
 ---
+
+## Hawk Melee, the fourth profile
+
+**824.4, SECOND OF TWENTY-FIVE AND THE TOP HUNTER.** The ruleset owner added it
+on 2026-10-08:
+
+> *"This is largely the same as 'LW melee' Hunter profile. The race, class,
+> combat style, gear, raid buffs, and consumables should be the same ... And the
+> APL will be the same as the 'LW melee' hunter profile, except Summon Hawk will
+> be used above Wing Clip."*
+
+16/11/24, from
+`https://talentsforever.com/hunter/60/50032005001-005005001-5002500300501201-gjk3nkqstvAHSVYEDK-6`.
+
+### Two allocations, measured against each other
+
+The owner supplied a second build and asked which was better. They differ on one
+thing that matters: **whether to keep Lone Wolf's 20% or drop it for a pet.**
+
+| Build | DPS |
+| --- | --- |
+| **16/11/24, Lone Wolf AND the hawk** -- shipped | **824.4** |
+| 16/10/25, the pet instead of Lone Wolf | 803.8 |
+| LW Melee -- Lone Wolf, no hawk | 779.7 |
+| 16/10/25 with Summon Hawk out of the list -- the pet, no hawk | 733.5 |
+
+**The pet loses and the hawk wins, independently.** The pet and its Claw and Bite
+were 13.2% of the 16/10/25 profile and did not cover the 20% they cost: take that
+build's hawk entry out and it is **-46.2 against LW Melee**, so trading Lone Wolf
+for a pet is a loss on its own. The hawk is worth having on either base.
+
+### Five points that do nothing, left alone on purpose
+
+| Talent | Points | Why it is inert |
+| --- | --- | --- |
+| `improved_aspect_of_the_monkey` | 3 | "Dodge from an Aspect no damage profile uses." A live gap, and nothing is likely to reach it |
+| `pathfinding` | 2 | `scope: 'positioning'` -- a permanent ruling, not a gap |
+
+It wins by 20.7 anyway. **The allocation stays exactly as the owner wrote it**:
+a preset that quietly re-spent five points would stop being the build they
+specified. A test names both talents and fails if either becomes modelled. The
+losing build wasted points too -- Endurance Training's three are pet health and
+armor, worth nothing to a profile nothing attacks.
+
+### Lone Wolf AND Summon Hawk, which is what makes the dispatch load-bearing
+
+Both melee Hunters are dual-wield, below the Beast Mastery capstone, and **both
+take Lone Wolf** -- so Summon Hawk is the only thing separating them, and it is
+also the talent the two lists actually differ by. Keyed on Lone Wolf, this
+profile would run `HUNTER_LONE_WOLF_MELEE`, never press the hawk it spends
+sixteen points on, and produce a perfectly ordinary figure.
+
+The key was chosen while the 16/10/25 build was the candidate, where it was one
+reasonable option of two; the build that shipped is the one that would have
+exposed the other choice.
+
+`hunterRotation` asks the Beast Mastery capstone first, then style, then Summon
+Hawk. The capstone has to stay first because Beast Mastery takes Summon Hawk too
+and is `combatStyle: 'ranged'`; fall it into a melee list and it stands there
+pressing Raptor Strike.
+
+The entry is gated on `hawksBelowCap` like both other lists that press it: a
+six-second cooldown against an eighteen-second hawk would otherwise overwrite the
+older of the two every time.
 
 ## Wing Clip, and what a filler is actually for
 

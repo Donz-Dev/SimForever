@@ -851,6 +851,50 @@ const HUNTER_LONE_WOLF_RANGED_TALENTS: TalentAllocation = {
   improved_tracking: 5,
 };
 
+/*
+ * ----------------------------------------------------------------------------
+ * HAWK MELEE -- 16/11/24. Sixteen points into Beast Mastery for Summon Hawk and
+ * Unleashed Fury, and LONE WOLF KEPT. Decoded from the ruleset owner's build:
+ *
+ *   https://talentsforever.com/hunter/60/50032005001-005005001-5002500300501201-gjk3nkqstvAHSVYEDK-6
+ *
+ * IT TAKES BOTH LONE WOLF AND SUMMON HAWK, which is the combination the whole
+ * profile rests on and the one that decides how `hunterRotation` tells the two
+ * melee lists apart. `bringsPet` is exactly `lone_wolf === 0`, so this build has
+ * NO PET -- it is Lone Wolf Melee's 20% with a hawk bolted on, not a pet build.
+ *
+ * THE OWNER MEASURED IT AGAINST A 16/10/25 ALTERNATIVE THAT DROPPED LONE WOLF
+ * FOR THE PET, and this one won by 20.7 -- 824.4 against 803.8. The pet and its
+ * Claw and Bite were 13.2% of that profile and did not cover the 20% they cost.
+ * Both readings were live until they were measured; see docs/handoff/hunter.md.
+ *
+ * FIVE OF ITS FIFTY-ONE POINTS DO NOTHING HERE and it wins anyway. Improved
+ * Aspect of the Monkey is dodge from an Aspect no damage profile uses, and
+ * Pathfinding is `scope: 'positioning'`, which is a permanent ruling rather
+ * than a gap. Recorded rather than quietly re-spent: the allocation is the
+ * owner's, and a preset that improved on it would stop being the build they
+ * specified.
+ * ----------------------------------------------------------------------------
+ */
+const HUNTER_HAWK_MELEE_TALENTS: TalentAllocation = {
+  deadly_aspects: 5,
+  improved_aspect_of_the_monkey: 3,
+  pathfinding: 2,
+  unleashed_fury: 5,
+  summon_hawk: 1,
+  lethal_attacks: 5,
+  careful_aim: 5,
+  lone_wolf: 1,
+  improved_tracking: 5,
+  savage_strikes: 2,
+  survivalist: 5,
+  surefooted: 3,
+  predator_s_edge: 5,
+  resourcefulness: 1,
+  expose_prey: 2,
+  strider_kick: 1,
+};
+
 const HUNTER_LONE_WOLF_MELEE_TALENTS: TalentAllocation = {
   deadly_aspects: 5,
   focused_fire: 2,
@@ -1543,6 +1587,39 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = [
         stance: 'battle',
       },
       talents: { ...HUNTER_LONE_WOLF_MELEE_TALENTS },
+      raidBuffs: [...PRESET_RAID_BUFFS],
+      consumables: { ...AGILITY_CONSUMABLES, mana_regen: 'mana_regen_12' },
+      equipment: { ...HUNTER_ARMOUR, ...HUNTER_DUAL_WIELD_WEAPONS },
+      encounter: { ...createDefaultProfile().encounter, targetAttacks: false },
+    }),
+  },
+  {
+    id: 'hawk_melee',
+    label: 'Hawk Melee',
+    detail: 'Orc, dual wield, no pet, two hawks, standing target. 16 Beast Mastery',
+    characterClass: 'hunter',
+    build: () => ({
+      ...createDefaultProfile(),
+      character: {
+        name: 'Hawk Melee',
+        race: 'orc',
+        characterClass: 'hunter',
+        level: 60,
+        // Every setting is LW Melee's. The TALENTS are the whole difference.
+        combatStyle: 'dual_wield',
+        stance: 'battle',
+        /*
+         * NO `petFamily`, and that is correct rather than an omission: this
+         * build takes Lone Wolf, so `bringsPet` is false and `petFor` never
+         * reaches its Cat fallback. Naming a family here would be inert and
+         * would read as a pet build -- which is what the first version of this
+         * profile was, before the owner's two allocations were measured
+         * against each other.
+         */
+      },
+      talents: { ...HUNTER_HAWK_MELEE_TALENTS },
+      // Everything below is LW Melee's, on the owner's instruction that race,
+      // gear, raid buffs and consumables are the same.
       raidBuffs: [...PRESET_RAID_BUFFS],
       consumables: { ...AGILITY_CONSUMABLES, mana_regen: 'mana_regen_12' },
       equipment: { ...HUNTER_ARMOUR, ...HUNTER_DUAL_WIELD_WEAPONS },
