@@ -1072,6 +1072,20 @@ button:disabled {
   cursor: default;
 }
 
+/*
+ * The Warlock's stone row. One control rather than the poison row's two, so it
+ * does not use `.gear-grid` -- see `StoneRow`.
+ */
+.gear-stone {
+  margin-top: 0.75rem;
+}
+
+.gear-stone-hint {
+  margin: 0.35rem 0 0;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
 .gear-no-enchant {
   text-align: center;
   font-size: 12px;

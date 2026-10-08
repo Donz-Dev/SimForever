@@ -69,6 +69,10 @@ import {
   weaponsForStyle,
 } from './weapons';
 import { poisonReactions, type PoisonLoadout } from '../reactions/poisons';
+import {
+  warlockStoneEffect,
+  type WarlockStoneId,
+} from '../buffs/warlockStones';
 import { COST_REFUND_ON_MISS } from '../combat/resourceRules';
 
 export interface PlayerOptions {
@@ -163,6 +167,14 @@ export interface PlayerOptions {
    * profile's loadout, which is where the default lives.
    */
   readonly poisons?: PoisonLoadout;
+  /**
+   * The temporary weapon enchant a Warlock carries. Ignored by everyone else.
+   *
+   * Absent means NONE, which is both the profile default and the safe reading
+   * for a caller that has not opted in -- the same asymmetry `poisons` has, and
+   * for the same reason: the default belongs on the profile, not in here.
+   */
+  readonly warlockStone?: WarlockStoneId;
   /**
    * Stats to size the HEALTH AND MANA POOLS from, when they are not the
    * character's own starting stats.
@@ -334,10 +346,27 @@ export function createPlayer(options: PlayerOptions): Combatant {
   const shieldBlock = liveEquipment(equipment, style).shield
     ? { blockChance: BASE_BLOCK_CHANCE_WITH_SHIELD }
     : {};
+  /*
+   * THE STONE, AND IT STACKS WITH THE WEAPON'S ENCHANT BY THE OWNER'S RULING.
+   *
+   * Layered in as plain stats beside the gear's, which is what makes "stacks"
+   * true without any code saying so: nothing here touches `equipment` or the
+   * enchant fields, so a Firestone and an Enchant Weapon - Spell Power are two
+   * independent contributions.
+   *
+   * GATED ON THE CLASS, the same way the poison reactions below are. A stone id
+   * on a Mage is a profile that should not carry one rather than an effect to
+   * apply -- and a profile CAN carry one, because the field is on every profile
+   * and only the panel is class-gated.
+   */
+  const stone = warlockStoneEffect(characterClass === 'warlock' ? options.warlockStone : 'none');
   const startingStats = addStats(
     addStats(
       addStats(
-        addStats(makeStats(baseStatsToEngineStats(base)), statsForStyle(equipment, style)),
+        addStats(
+          addStats(makeStats(baseStatsToEngineStats(base)), statsForStyle(equipment, style)),
+          stone.stats,
+        ),
         shieldBlock,
       ),
       options.bonusStats ?? {},
@@ -393,6 +422,16 @@ export function createPlayer(options: PlayerOptions): Combatant {
   const schoolModifiers = new SchoolModifiers();
   schoolModifiers.merge(build.schoolModifiers);
   for (const [school, spellPower] of Object.entries(schoolPowerForStyle(equipment, style))) {
+    schoolModifiers.add(school as DamageSchool, { spellPower });
+  }
+  /*
+   * AND THE STONE'S, THROUGH THE SAME DOOR. "The damage done by your Fire
+   * spells by up to 21" is the identical wording seventeen item lines carry, so
+   * it takes the identical route -- `SchoolModifiers.spellPower`, which
+   * `spellPowerFor` adds to the school-blind pool at the point of use. See
+   * `WARLOCK_STONE_SCHOOL_POWER`.
+   */
+  for (const [school, spellPower] of Object.entries(stone.schoolPower)) {
     schoolModifiers.add(school as DamageSchool, { spellPower });
   }
 

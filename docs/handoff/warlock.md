@@ -363,6 +363,78 @@ length takes its own gate with it.
 
 ---
 
+## The weapon stone, and which one each profile wants
+
+**A WARLOCK CARRIES A TEMPORARY WEAPON ENCHANT, SELECTED IN THE GEAR PANEL** --
+the same shape as a Rogue's poisons, and the owner asked for it in those terms.
+`profile.warlockStone`, arrived in profile version 11.
+
+| | |
+| --- | --- |
+| **Firestone** | +2% spell critical strike chance, +21 damage done by your **Fire** spells |
+| **Spellstone** | +2% spell haste, +21 damage done by your **Shadow** spells |
+
+**BOTH SOURCES AGREE ON ALL FOUR NUMBERS** -- the owner's message and
+`forever-warlock-spellbook.json` -- which for this class is the confidence
+measure, since eight of the nine rest on one capture.
+
+### What each is worth: 30 batches of 10
+
+**The owner has chosen: SM/DS takes the Spellstone, Firelock the Firestone**, and
+both presets carry them. Measured on current `main`:
+
+| Profile | none | Firestone | Spellstone |
+| --- | --- | --- | --- |
+| **Firelock** | 568.3 | **589.1, +20.8 REAL** | 575.0, +6.7 noise |
+| **SM/DS** | 496.9 | 504.4, +7.6 REAL | **516.8, +19.9 REAL** |
+
+**BOTH CHOICES ARE THE BETTER ONE, DECISIVELY**, and in the baseline table the
+selection is worth **+19.6 to SM/DS and +20.8 to Firelock** — the harness's own
+figures, which agree with the table above to within a seed.
+
+**AN EARLIER VERSION OF THIS TABLE SAID SM/DS WAS A TIE AT +7.3 EITHER WAY, AND
+IT WAS WRONG.** That measurement was taken before the armour-enchant table
+landed and it reported the Firestone and the Spellstone at an **identical
+484.6** — two different stat bundles returning bit-identical means across thirty
+batches, which is not something that happens. **That identity was the tell and
+it went unquestioned.** The Firestone half of it was right (+7.3 then, +7.6 now);
+the Spellstone half was not.
+
+**THE LESSON IS CHEAPER THAN THE CHECK THAT CATCHES IT:** when two
+configurations come back equal to the decimal, suspect that the same one was
+measured twice. The confirmation here is two independent routes agreeing —
+`measure_profiles.ts` against a saved baseline, and a standalone probe — which
+is what a single suspicious run is worth checking against.
+
+### THE TRAP: a Firestone is not a "Fire stone"
+
+**ONLY THE +21 IS SCHOOL-SCOPED.** `spellCritChance` is a whole-character stat
+read by the spell table for every school, so a Firestone's 2% crit helps a pure
+Shadow build exactly as much as a Fire one. The two stones are really "crit plus
+a little Fire power" and "haste plus a little Shadow power".
+
+**THIS COST A WRONG TEST ASSERTION.** I wrote "gives SM/DS more from the
+Spellstone than from the Firestone", reasoning from SM/DS dealing almost nothing
+but Shadow — and it failed at 486.7 against 478.4 on one batch, then came back a
+*tie* on thirty. Two lessons in one: the school reading, and that a single batch
+said Firestone won by 8 where the full method says neither wins. The test asserts
+the SCOPING now and leaves the ordering to this document.
+
+### The default is still `none`, and the presets still choose
+
+**THE PRESETS CARRY THE OWNER'S CHOICE; `createDefaultProfile()` CARRIES `none`.**
+Those are two different questions and it is worth keeping them apart: a new
+profile a user starts from scratch has made no choice, while the 24 presets are
+the owner's builds and now state one.
+
+**SO VERSION 11 STILL MOVES NO SAVED PROFILE.** The migration gives an older file
+`none`, which is the opposite of version 10's poison decision — the owner stated
+the poison pairing, so a saved Rogue carrying none was wrong, while a saved
+Warlock has simply never been asked. Only the two presets moved, by +19.6 and
++20.8.
+
+---
+
 ## Traps specific to this class
 
 - **"YOUR DESTRUCTION SPELLS" IS A TREE, NOT A SCHOOL, AND SHADOW BOLT IS IN IT.**
@@ -410,6 +482,16 @@ length takes its own gate with it.
   interrupt rule replaced. It cost one wrong measurement while it existed, and the
   lesson is in CLAUDE.md: when an entry's condition names an aura, grep for who
   else applies it before measuring that aura's removal.
+- **A FIRESTONE'S CRIT IS SCHOOL-BLIND AND ITS +21 IS NOT**, so neither stone is
+  "the Fire one" or "the Shadow one". See the stone section above; it cost a
+  wrong test assertion.
+- **`hasteRating` IS SPELL HASTE FOR A WARLOCK, AND ONLY BECAUSE IT NEVER
+  SWINGS.** `STAT_NAMES` is closed and has one haste member driving both swing
+  speed and cast speed, where crit is split into `critChance` and
+  `spellCritChance`. A `caster` is `autoAttack: 'none'`, so the reading is exact
+  here and would be generous for a class that swings -- and no such class can
+  carry a Spellstone. **The day a melee class gets a spell-haste effect is the
+  day the stat has to be split**, and `warlockStones.ts` says so.
 - **A CHANNEL IS CANCELLABLE AND BOTH HALVES HAVE TO AGREE** --
   `Ability.interruptibleChannel` and `PriorityEntry.interruptsChannel`. Only
   Wrack declares the first, deliberately: every channel in a real client can be

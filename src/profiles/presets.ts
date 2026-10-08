@@ -1439,6 +1439,18 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = [
         petFamily: 'imp',
       },
       talents: { ...WARLOCK_AFFLICTION_TALENTS },
+      /*
+       * THE SPELLSTONE, BY THE RULESET OWNER'S CHOICE, and the measurement says
+       * it was a free choice rather than an obvious one: over thirty batches of
+       * ten the two stones were worth +7.3 EACH to this profile, a dead heat.
+       *
+       * They get there by different routes, which is why the tie is not a
+       * coincidence. The Spellstone's 2% haste reaches every cast and its 21
+       * Shadow power reaches all of this build's damage; the Firestone's 2%
+       * spell crit is school-blind and also reaches all of it, while its 21
+       * Fire power reaches none. See `docs/handoff/warlock.md`.
+       */
+      warlockStone: 'spellstone',
       raidBuffs: [...PRESET_RAID_BUFFS],
       equipment: { ...WARLOCK_GEAR },
       encounter: { ...createDefaultProfile().encounter, targetAttacks: false },
@@ -1462,6 +1474,17 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = [
         petFamily: 'succubus',
       },
       talents: { ...WARLOCK_DESTRUCTION_TALENTS },
+      /*
+       * THE FIRESTONE, BY THE RULESET OWNER'S CHOICE, and here the measurement
+       * agreed emphatically: +20.0 REAL against the Spellstone's +2.4, inside
+       * the interval, over thirty batches of ten.
+       *
+       * BOTH HALVES LAND ON THIS BUILD, which is the whole of the difference.
+       * ~93% of its damage is Fire, so the 21 Fire power reaches nearly all of
+       * it and the school-blind crit reaches all of it -- where a Spellstone's
+       * 21 Shadow power would reach only Shadowburn.
+       */
+      warlockStone: 'firestone',
       raidBuffs: [...PRESET_RAID_BUFFS],
       equipment: { ...WARLOCK_GEAR },
       encounter: { ...createDefaultProfile().encounter, targetAttacks: false },

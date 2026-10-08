@@ -3,6 +3,10 @@ import type { ClassId, CombatStyleId, RaceId, StanceId } from '../game/character
 import type { Equipment } from '../game/items/Item';
 import type { TalentAllocation } from '../game/talents/Talent';
 import { DEFAULT_POISON_LOADOUT, type PoisonLoadout } from '../game/reactions/poisons';
+import {
+  DEFAULT_WARLOCK_STONE,
+  type WarlockStoneId,
+} from '../game/buffs/warlockStones';
 
 /**
  * The profile format version.
@@ -13,7 +17,7 @@ import { DEFAULT_POISON_LOADOUT, type PoisonLoadout } from '../game/reactions/po
  * moves on. Getting this in before anyone has saved anything is much cheaper
  * than retrofitting it later.
  */
-export const CURRENT_PROFILE_VERSION = 10;
+export const CURRENT_PROFILE_VERSION = 11;
 
 export interface CharacterSection {
   readonly name: string;
@@ -215,6 +219,28 @@ export interface CharacterProfile {
    * and every Rogue figure ever recorded is a floor.
    */
   readonly poisons: PoisonLoadout;
+  /**
+   * Which temporary weapon enchant a Warlock carries, if any.
+   *
+   * --------------------------------------------------------------------------
+   * THE SAME DECISION AS `poisons` AND THE OPPOSITE DEFAULT. It is a profile
+   * field because it is a player's choice, it has a control in the Gear panel
+   * under the weapon enchants, and it is Warlocks only.
+   *
+   * WHERE IT DIFFERS: version 10 gave every Rogue the owner's stated pairing
+   * and changed old results doing it, because a saved Rogue was not CHOOSING to
+   * fight without poisons. The owner has not stated which stone a Warlock
+   * carries -- the request was for a control to choose with -- so the default
+   * is `none` and no saved profile's figure moves. See `DEFAULT_WARLOCK_STONE`.
+   *
+   * A SINGLE VALUE RATHER THAN A PER-HAND LOADOUT, which is the other
+   * difference from poisons: a stone enchants the weapon, and a Warlock has one
+   * stone. Poisons are per hand because a Rogue coats each weapon separately.
+   *
+   * Arrived in version 11.
+   * --------------------------------------------------------------------------
+   */
+  readonly warlockStone: WarlockStoneId;
 }
 
 /** A sensible starting profile, matching the first-milestone prototype. */
@@ -222,6 +248,7 @@ export function createDefaultProfile(): CharacterProfile {
   return {
     version: CURRENT_PROFILE_VERSION,
     poisons: { ...DEFAULT_POISON_LOADOUT },
+    warlockStone: DEFAULT_WARLOCK_STONE,
     character: {
       name: 'Example',
       race: 'human',
@@ -281,6 +308,12 @@ export function cloneProfile(profile: CharacterProfile): CharacterProfile {
     // Its own object, or two profiles would share one loadout and swapping a
     // poison on either would swap it on both.
     poisons: { ...profile.poisons },
+    /*
+     * NO SPREAD, because a stone is a STRING. Copied by the enclosing spread
+     * already; the line is here so the next reader sees that it was considered
+     * rather than forgotten, which is the question `poisons` above raises.
+     */
+    warlockStone: profile.warlockStone,
     stats: { ...profile.stats },
     // One level deeper than a spread: each slot is its own object, so copying
     // only the map would leave both profiles sharing the same slot entries.
