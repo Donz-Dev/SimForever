@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { AttackOutcome } from '../../src/engine';
-import { grantGeneratedResource } from '../../src/engine';
+import { extraAttack, grantGeneratedResource } from '../../src/engine';
 import { createPlayer } from '../../src/game/actors/createPlayer';
 import {
   BEAR_FORM_CRIT_RAGE_MULTIPLIER,
@@ -172,6 +172,76 @@ describe('what it does not change', () => {
       expect(generation.requiresDamage).toBe(true);
       expect(generation.perDamage).toBeUndefined();
     }
+  });
+});
+
+describe('an extra attack pays it too, which the owner confirmed', () => {
+  /*
+   * ----------------------------------------------------------------------------
+   * A PROC'D EXTRA ATTACK ALREADY PAYS A FULL `R x S` FOR A SWING THAT COST NO
+   * TIME -- the one place CLAUDE.md records where the speed cancellation breaks --
+   * and the owner confirmed the crit bonus applies there as well. Hand of Justice
+   * is on the 2H Arms preset's second trinket, so this is live rather than
+   * hypothetical.
+   *
+   * IT IS ONE CODE SITE AND THE TEST IS WHAT SAYS SO. `extraAttack` schedules a
+   * call to the same `swing` the timer uses, which is the only caller of
+   * `grantGeneratedResource` with an outcome -- so the rule reaching one path and
+   * not the other is not expressible. That is worth asserting anyway, because the
+   * NEXT reader's change might split them: a general field read by only some of
+   * its callers is silent in the rest, which this project has now paid for three
+   * times (`resourceRegenMultiplier`, `modifiersScaleWithStacks`, `isWeaponUseOf`).
+   *
+   * CRIT IS FORCED WITH A STAT RATHER THAN A SCRIPTED ROLL, because the subject is
+   * the AWARD and not the table: at 100% crit chance every swing crits whatever
+   * the RNG does, so the two arms differ only in the thing being measured.
+   * ----------------------------------------------------------------------------
+   */
+  const rageFromOneExtraAttack = (critChance: number) => {
+    const actor = createPlayer({
+      race: 'orc',
+      characterClass: 'warrior',
+      combatStyle: 'two_hander',
+      stance: 'battle',
+    });
+    actor.stats.addModifier({
+      sourceId: 'test',
+      stat: 'critChance',
+      operation: 'flat',
+      value: critChance,
+    });
+    const target = makeTarget({ maxHealth: 10_000_000 });
+    let gained = 0;
+    const simulation = buildSimulation([actor, target], { seed: 99 }, {
+      emit: (event) => {
+        if (
+          event.type === 'resource_gained' &&
+          event.resource === 'rage' &&
+          event.source === 'auto_attack_main_hand'
+        ) {
+          gained += event.amount + event.wasted;
+        }
+      },
+    });
+    simulation.begin();
+    // Drain what the opener banked, so only the extra attack below is counted.
+    const rage = actor.resources.require('rage');
+    rage.spend(rage.current);
+    gained = 0;
+
+    extraAttack(simulation, actor, 'mainHand');
+    simulation.advanceTo(simulation.clock.now() + 1);
+    return gained;
+  };
+
+  it('doubles the rage a critical extra attack pays a Warrior', () => {
+    const critting = rageFromOneExtraAttack(100);
+    const never = rageFromOneExtraAttack(-100);
+
+    // A two-hander's `R x S`, written out: 4.5 a second at the weapon's base
+    // speed. The never-critting arm is the unmultiplied award.
+    expect(never).toBeGreaterThan(0);
+    expect(critting).toBeCloseTo(never * WARRIOR_CRIT_RAGE_MULTIPLIER, 6);
   });
 });
 

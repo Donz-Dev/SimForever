@@ -135,7 +135,7 @@ gets built is [docs/class-implementation.md](docs/class-implementation.md).
 
 All nine classes and all 24 profiles are implemented, every number traced to a
 source rather than invented, and **all 24 priority lists are the ruleset owner's
-own** -- specified entry by entry and measured after. **2,711 tests**, CI green
+own** -- specified entry by entry and measured after. **2,712 tests**, CI green
 on Node 20 and 22. Profile format **v12**. Live at
 <https://donz-dev.github.io/SimForever/>, republished by
 `.github/workflows/deploy.yml` on every push to `main` that passes.
@@ -155,7 +155,7 @@ demonstrated at the top. **Re-count rather than re-reading the sentence.**
 | **Profiles** | 24, all measured, **mean 704.3** -- the armour enchants are +27.0 of it and the consumables +105.9 |
 | **Scope rulings** | 7 members, all the owner's |
 | **Placeholders** | **10 declared** -- see the milestone table, and count DECLARATIONS |
-| **Tests** | 2,711 on Node 20 and 22 |
+| **Tests** | 2,712 on Node 20 and 22 |
 
 **FOUR CLASSES ARE ESSENTIALLY DONE** -- Warrior 1 live gap, Paladin 1, Druid 2,
 Rogue 3 -- and the remaining 62 sit mostly in the Warlock (19), Priest (12) and
