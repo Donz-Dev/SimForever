@@ -16,3 +16,40 @@ export { runBatch, runProfileBatch, resourceFlowOf } from './runBatch';
 export { runProfile, runSimulation } from './runSimulation';
 export { FIGHT_DURATION_VARIANCE } from './trainingDummyEncounter';
 export { characterAtCombatStart } from './characterAtCombatStart';
+
+/*
+ * STAT WEIGHTS. The arithmetic is one baseline run against one run per stat,
+ * and the reason it is a module rather than a loop is in `statWeights.ts`:
+ * shared seeds, a per-variant interval, and a capped stat measured as a ladder.
+ *
+ * `dpsSamplesFor` is exported alongside it because the UI's worker pool is a
+ * second driver over the same pieces -- it slices the iterations across cores
+ * and then calls `allocate`, `pairedDelta` and `weightsFrom` here, so there is
+ * one implementation of the statistics and not one per thread.
+ */
+export type { SampleSlice } from './dpsSamples';
+export { dpsSamplesFor, profileDpsSamples } from './dpsSamples';
+export type {
+  HeadroomReport,
+  HeadroomSlice,
+  PairedDelta,
+  SkippedStat,
+  StatTier,
+  StatWeight,
+  StatWeightOptions,
+  StatWeightPlan,
+  StatWeightRun,
+  StatWeightVariant,
+  TieredStat,
+  WeightableStat,
+  WeightVerdict,
+} from './statWeights';
+export {
+  WEIGHTABLE_STATS,
+  WEIGHTABLE_STATS_BY_ID,
+  pairedDelta,
+  runStatWeights,
+  statWeightPlan,
+  weightsFrom,
+  withStat,
+} from './statWeights';

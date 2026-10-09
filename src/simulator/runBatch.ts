@@ -61,6 +61,23 @@ export interface BatchResult {
   /** DPS across every iteration. */
   readonly dps: DistributionSummary;
   /**
+   * Every iteration's DPS, in iteration order.
+   *
+   * ----------------------------------------------------------------------------
+   * THE ORDER IS THE POINT, not the values -- `dps` above already summarises
+   * those. Iteration `i` derives its seed from `baseSeed` the same way every
+   * time, so two batches run at the same base seed can be differenced ITERATION
+   * BY ITERATION: the same fight with one thing changed, rather than two
+   * independent samples. That paired difference is what a stat-weight run
+   * measures, and it is worth about four orders of magnitude in variance over
+   * differencing the two means. See `statWeights.ts`.
+   *
+   * Costs one number per iteration, which the batch had already built in order
+   * to summarise it.
+   * ----------------------------------------------------------------------------
+   */
+  readonly dpsSamples: readonly number[];
+  /**
    * A full result for the iteration whose DPS landed closest to the median.
    *
    * FOR THE COMBAT LOG ONLY. A log has to be a single fight to make any sense,
@@ -275,6 +292,7 @@ export function runBatch(config: SimulationConfig, options: BatchOptions): Batch
     iterations,
     baseSeed: options.baseSeed,
     dps,
+    dpsSamples,
     representative,
     rotationName,
     meanDamage: totals.meanDamageFor(playerId),

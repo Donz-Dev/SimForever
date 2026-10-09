@@ -548,6 +548,102 @@ visible: SM/DS's two stones were reported at an IDENTICAL 484.6, which two
 different stat bundles do not do across thirty batches. See
 [docs/handoff/warlock.md](docs/handoff/warlock.md).
 
+# STAT WEIGHTS — a new feature, and a measurement technique worth reusing
+
+**No DPS figure moved.** Nothing about an existing run changed: `BatchResult`
+gained a `dpsSamples` field that the batch already built, and everything else is
+new. All 25 published rows were re-measured against `1718277` and every one came
+back at **+ 0.0**.
+
+What it does: one baseline run, then one run per selected stat with it
+temporarily added, and the weight is the DPS difference over the amount added.
+A checkbox under the Run button turns it on; `tools/stat_weights.ts` is the same
+thing from a command line. [docs/stat-weights.md](docs/stat-weights.md) is the
+write-up.
+
+**THREE OF THE FOUR DESIGN DECISIONS APPLY TO EVERY BEFORE-AND-AFTER THIS
+PROJECT TAKES, which is the part worth carrying away.**
+
+| | |
+| --- | --- |
+| **share the base seed** | the before and the after then run bit-identical fights, and differencing them ITERATION BY ITERATION is worth about **5,000x in variance**: +30 strength on DW Fury is 17.55 ±0.18 over 500 paired iterations against 16.15 ±12.33 over 500 independent ones |
+| **but not for every change** | one random stream, so a flipped miss roll reorders every later draw. The per-iteration SPREAD of the paired difference says which: 1.8 DPS for +30 strength, **124.7 for +9% hit** |
+| **but do not give the noisy ones more fights** | allocating from the spread is correct and twice as cheap, and the owner ruled it out: it made two rows of one table incomparable. Report the INTERVAL instead |
+| a capped stat is several stats | the owner's ruling, and new |
+
+**THE OWNER'S OWN DESIGN FOR HIT IS THE INTERESTING ONE.** "Chance to miss" is
+up to FIVE numbers and a build can be capped on one and not another -- a Combat
+Rogue on 16 points of hit has **nothing left on its specials, nothing on its
+spells, and eleven points left on its auto-attacks**. So hit is measured as a
+LADDER, one weight per interval between the caps, which the owner put as "these
+can be treated as multiple stats in effect".
+
+**AND A TIER IS LINEAR BY CONSTRUCTION**, which is what makes the big step safe:
+the boundaries sit exactly where a table stops paying, so nothing changes
+behaviour inside one. DW Fury measures **5.8971 ±0.5058** to cap its off hand
+and **2.6146 ±0.4053** for the ten more points that cap its main hand, and the
+monotone fall is the check that the boundaries are where they should be.
+
+**NAME A RUNG BY WHAT IT REACHES, NEVER BY ITS WIDTH -- the owner caught this
+on sight.** The first version said "Hit chance — first 9.00%" and the reply was
+that the melee cap is 8%, not 9%, and that it should never add 9 unless the
+character has no hit at all. Both halves of that are right about the WORDING
+and the number was never wrong: 9.00 is what DW Fury has LEFT on its off hand
+once its 8 points of gear hit and 10 from Dual Wield Specialization have come
+off a 27% dual-wield miss. **A width reads as a cap.** It says "+9.00% → caps
+Off-hand swings" now, and nothing is truncated -- a rung runs to the cap it
+names, because the question is how much it would TAKE.
+
+**AND THE 8% MISS FIX LANDED WHILE THIS WAS BEING WRITTEN, WHICH MADE THE
+OWNER'S OTHER EXAMPLE REAL.** `#214` took melee miss from 9% to 8%, so the
+Protection Warrior's 8 points of gear hit now cover every table it rolls on:
+its ladder comes back EMPTY and the panel says **"Already capped. No stat
+weight."** -- which is the case the cap reporting was asked for, and it did not
+exist on the branch point. Four figures and two tests in this work had to be
+re-derived for it; see **Git workflow** in CLAUDE.md, which is where that
+hazard is already written down.
+
+**A ZERO IS A REAL ANSWER HERE AND IT HAD TO BE TOLD APART FROM AN ABSENCE OF
+ONE.** Shared seeds make a stat the build cannot read produce a delta of exactly
+0.00, which is this project's own tell for "the patch did not apply". The
+planner BUILDS the character with the stat added and checks it arrived before
+spending a fight, so "worth nothing" and "never applied" are separated before
+the measurement. `WeightVerdict` is `measured` / `none` / `inconclusive`,
+because 0.0000 and 0.08 ±0.9 render as the same zero and only one is an answer.
+**Checking the delta alone does not find an identical pair** -- a constant +18
+on every iteration has a spread of zero too, and the first version called that
+"nothing". A test caught it.
+
+**WEB WORKERS, WHICH `simulator/index.ts` HAS ANTICIPATED IN WRITING SINCE
+BATCHING WAS WRITTEN.** 157.5 seconds to **41.7** for DW Fury's full 21-stat run
+at 3000 iterations each, 54,000 fights, on eleven workers. The engine needed no
+change for it: iterations are independent and nothing holds module-level state.
+
+**THE BASELINE IS THE FLOOR AND IT CANNOT BE SPLIT.** `BatchTotals` is one
+accumulator for the whole run, so every breakdown on the results page comes off
+one thread. **Merging it is the obvious next step** and was not worth the blast
+radius for this commit.
+
+**AND THE UNIFORM ITERATIONS COST ROUGHLY DOUBLE, WHICH IS THE TRADE THE OWNER
+MADE DELIBERATELY.** 24,000 fights became 54,000 and the wall clock went about
+23s to 41.7s. What it bought is a table that can be read straight down: under
+the allocation, a stat worth nothing settled in 250 fights and hit took 3000,
+and nothing on screen said which row rested on which.
+
+**THE BASELINE IT PRINTS IS NOT THE PUBLISHED ONE, and that is not a
+regression.** 3000 iterations at a fresh seed has a standard error of about 1.8
+DPS; `measure_profiles.ts` is 300 fights at about ±11.1. Three runs read DW Fury
+at **894.7, 896.8 and 900.7** against a published **901.8 ±11.1** -- they agree,
+and the stat-weight figure is simply tighter. Recorded because a reader who sees 885
+beside a table saying 892 will otherwise go looking for a bug.
+
+**THE SELECTION IS UI STATE, NOT A PROFILE FIELD**, which is the opposite of
+poisons, raid buffs and consumables. The rule those followed is that a choice
+which CHANGES WHAT A FIGHT PRODUCES belongs on the profile; this changes no
+fight, so a format version, a migration, a line in each of the 25 presets and a
+field `measure_profiles.ts` has to ignore would all buy nothing. `CURRENT_PROFILE_VERSION`
+is still **12**.
+
 # Handover
 
 **Status only.** Rules and conventions are in [CLAUDE.md](CLAUDE.md); how a class
