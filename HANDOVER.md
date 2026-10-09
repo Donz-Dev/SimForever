@@ -548,6 +548,41 @@ visible: SM/DS's two stones were reported at an IDENTICAL 484.6, which two
 different stat bundles do not do across thirty batches. See
 [docs/handoff/warlock.md](docs/handoff/warlock.md).
 
+# BLOCK IS CORRECTLY IMPLEMENTED AND CORRECTLY WORTH ALMOST NOTHING
+
+Both block rows come back "not measured" in the tank weights even at 3000
+iterations. That was chased rather than accepted, and it is **a magnitude, not
+a wiring fault**. No code changed.
+
+**THE MECHANISM IS LIVE, CHECKED BY SCALING IT.** Blocks are not rare -- the
+Prot Warrior blocks **16.05 of 26.60** attacks a fight, because Shield Block
+takes its 11.16% table slice far higher for its duration -- and the value is
+applied: **+5000 block value removes 64,243 damage and takes deaths from 8.69
+to 4.82**.
+
+**THE RATIO IS ARITHMETIC AND IT CHECKS OUT.** A dodge removes the whole blow
+and a block removes a flat 97 of it, so a point of block chance should be worth
+a point of dodge chance times `blockValue / meanHit`:
+
+      97 / 5230       = 1.85%   predicted
+      0.0017 / 0.1375 = 1.2%    measured
+
+Block chance does not resolve even at a 30-point step (`0.00238 +-0.00274`),
+which is itself the answer. Block VALUE does at a larger one -- 0.00205 a point
+at 50, 0.00133 at 200, 0.00107 at 1000 -- the fall being that a block never
+removes more than the blow it lands on.
+
+**THE CAUSE IS THE ENCOUNTER'S DAMAGE RAMP, AND THAT IS A PLACEHOLDER.** The
+boss opens at 5,000 and every swing is 10% harder, so incoming hits grow from
+**1,624 early to 12,458 late** while block value stays flat at 97 -- six percent
+of an early blow and 0.78% of a late one. Block's entire contribution is
+**1,556 of 139,118** damage taken, 1.12%.
+
+`targetSwingDamage` and `BOSS_DAMAGE_RAMP` are both invented numbers borrowed
+from Classic, so **whether a flat mitigation stat means anything in this project
+is currently decided by a placeholder** -- a question for the ruleset owner
+rather than something to tune. See **What to do next**.
+
 # PARRY HASTE POINTED THE WRONG WAY, AND THE BASELINE IS REFRESHED
 
 **THE RULESET OWNER, CLARIFYING THEIR OWN WORDING:** "if I parry an attack MY
@@ -3106,6 +3141,21 @@ Slam triggers **main-hand** effects; Careful Aim contributes to attack power
 **and** ranged attack power; resistances on an enemy target do not affect damage.
 
 ## What to do next
+
+**TWO OPEN QUESTIONS FROM THE STAT-WEIGHT WORK, BOTH THE OWNER'S TO CALL.**
+
+1. **The boss's damage ramp decides whether flat mitigation is worth anything.**
+   `targetSwingDamage: 5000` and a 10% compounding ramp are invented numbers
+   borrowed from Classic, and between them they make block worth about 1% of
+   dodge for survival -- see the block entry above for the arithmetic. A
+   shallower ramp or a block value that scales would both change that answer,
+   and either is a ruleset decision rather than something to tune.
+2. **`BatchTotals` cannot be merged, so the baseline batch cannot be split.**
+   It is one accumulator for the whole run, so every breakdown on the results
+   page comes off a single thread while the variants spread across every other
+   core -- which makes it a large share of a tank-weight run's wall clock.
+   Merging it is the obvious next performance step and was deliberately not
+   taken: every number on the results page flows through that accumulator.
 
 The refactor is phased; the milestone follows it.
 

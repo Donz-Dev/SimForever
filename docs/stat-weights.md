@@ -192,7 +192,7 @@ A fight is 3 to 5 ms, and a demanding selection is tens of thousands of them.
 Four things keep that down, and none of them trades accuracy for it.
 
 1. **Shared seeds**, above. Most stats need hundreds of iterations, not thousands.
-2. **A lean telemetry sink.** `dpsSamplesFor` keeps one number per source id
+2. **A lean telemetry sink.** `sampleIterations` keeps two numbers per actor
    where `runBatch` accumulates a whole `BatchTotals` — 1.2x to 1.75x faster,
    and it reproduces `runBatch`'s DPS to twelve significant digits. (Not bit for
    bit: the batch takes each iteration's damage as a difference of cumulative
