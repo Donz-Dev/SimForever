@@ -548,6 +548,86 @@ visible: SM/DS's two stones were reported at an IDENTICAL 484.6, which two
 different stat bundles do not do across thirty batches. See
 [docs/handoff/warlock.md](docs/handoff/warlock.md).
 
+# PARRY HASTE POINTED THE WRONG WAY, AND THE BASELINE IS REFRESHED
+
+**THE RULESET OWNER, CLARIFYING THEIR OWN WORDING:** "if I parry an attack MY
+NEXT ATTACK COMES SOONER. If a boss parries an attack THEIR NEXT ATTACK COMES
+SOONER." It shipped the other way round in the entry below -- `dealDamage`
+passed `source`, the unit whose blow was turned aside, where it should pass
+`target`, the parrier.
+
+| Profile | was | now | |
+| --- | --- | --- | --- |
+| Prot Warr | 543.5 | **529.7** | **-13.8 REAL** |
+| Bear | 448.4 | **437.3** | -11.0 noise |
+| Prot Pally | 369.7 | **362.9** | **-6.8 REAL** |
+
+The Shockadin does not move, correctly: its target does not swing back, so
+nothing parries it and it parries nothing. The other twenty-one moved by 0.0.
+
+**THE ORIGINAL SENTENCE IS WHY.** "Successfully parrying an attack reduces the
+ATTACKER'S remaining swing timer by 40% of their max swing time" reads as the
+unit whose blow was parried; it means the parrier, who is an attacker in their
+own right.
+
+**AND THE WRONG READING WAS SELF-CONSISTENT AND DANGEROUS-SOUNDING**, which is
+what carried it through a review and a full measurement pass: it made a tank
+parrying a boss speed the BOSS up, which is exactly what a tank is supposed to
+fear, and every figure it produced hung together.
+
+**IT EVEN PRODUCED A FINDING THAT READ AS INSIGHT, AND THAT FINDING WAS
+PUBLISHED.** The tank weights priced parry at 42% of dodge, which was written
+up, committed and opened as a PR before anybody asked why two stats that both
+avoid the entire blow should differ by 2.4x. **The owner asked.** Corrected,
+they are **0.1598 +-0.0393** against **0.1485 +-0.0346** and indistinguishable;
+with the mechanic stripped off entirely they are IDENTICAL TO FOUR DECIMAL
+PLACES, which is stronger than "similar" -- under shared seeds the two variants
+then run bit-identical fights, so there is provably no other asymmetry between
+them anywhere in the engine. `tools/probe_parry_haste.ts` is the command.
+
+**A MEASUREMENT THAT IS INTERNALLY CONSISTENT IS NOT A MEASUREMENT THAT IS
+RIGHT**, and the thing that caught this was not a test or an audit: it was
+somebody reading two rows of a table and knowing what they ought to say.
+
+**WHERE IT ACTUALLY BITES IS THE OPPOSITE OF WHERE IT LOOKED.** The boss parries
+14% of the TANK's blows and the tank attacks far more often than the boss
+swings, so the boss is hurried by the tank's own ATTACKS rather than by its
+defence -- and several parries land inside one boss swing cycle, driving it to
+the 20% floor. Its minimum gap is **480ms** where the wrong direction gave
+1,440ms, and the Reckoning test's floor assertion moved with it.
+
+Isolated one side at a time on Prot Warr, 1500 iterations:
+
+| parry haste on | player swings | attacks received | deaths |
+| --- | --- | --- | --- |
+| neither | 12.80 | 25.49 | 7.973 |
+| the player only | **13.15** | 25.49 | 7.964 |
+| the boss only | 11.67 | **27.14** | 9.262 |
+| both | 12.25 | 27.20 | 9.267 |
+
+The player's own parries raise its swings with attacks received untouched; the
+boss's raise attacks received. **THE PLAYER'S SWING COUNT FALLING IN THE
+BOSS-ONLY ROW IS NOT A TIMER FAULT** -- it is Heroic Strike replacing more
+auto-attacks as rage rises, and a replaced swing reports under its own name.
+A column that counts "Main Hand Auto-Attack" is counting UNREPLACED swings.
+
+## The baseline table is rebuilt
+
+All 25 re-measured at `f9d425b` and the table below rebuilt by
+`tools/update_baseline_table.py` -- four rows bold, being the ones three
+commits of parry work moved against what the table last carried. **The mean is
+re-summed from the table's own rows**: **699.8** against 698.8.
+
+**THE SECOND COPY OF THE MEAN DID NOT MOVE WITH IT, WHICH IS THIS FILE'S OWN
+RECURRING FAILURE.** The script rewrites the sentence under the table and knows
+nothing about the status block fifteen hundred lines above it, which carried
+698.8 until this commit. **A script that re-derives one copy of a figure is not
+a script that re-derives the figure.**
+
+The rest of that block was re-derived and had not moved: **260 / 39 / 105 / 62
+of 466** from `tools/class_audit.ts`, **10** placeholder DECLARATIONS, **129**
+scope entries across **9** members. The test count had: 2,750 to **2,809**.
+
 # TANK STAT WEIGHTS, AND TWO RULESET CHANGES THAT CAME WITH THEM
 
 **FOUR PROFILES MOVED AND TWENTY-ONE DID NOT.** The two rulings below are real
@@ -585,8 +665,8 @@ fights.
 "Successfully parrying an attack reduces the ATTACKER'S remaining swing timer"
 reads as the unit whose blow was turned aside, and that is how it was built.
 The clarification settles it: "if I parry an attack MY NEXT ATTACK COMES
-SOONER. If a boss parries an attack THEIR NEXT ATTACK COMES SOONER." See the
-entry above this one for what the correction cost.
+SOONER. If a boss parries an attack THEIR NEXT ATTACK COMES SOONER." The entry
+above this one is the correction and what it cost.
 
 **BOTH FRACTIONS ARE OF A FULL SWING AND NOT OF WHAT IS LEFT.** That is what
 makes it converge: each parry takes a fixed 40% off and the floor sits at 20% of
@@ -748,7 +828,7 @@ All nine classes and all **25** profiles are implemented, every number traced to
 source rather than invented, and **every priority list is the ruleset owner's
 own** -- specified entry by entry and measured after, the newest being Hawk
 Melee's, given as "the same as the LW melee hunter" plus one placement.
-**2,750 tests**, CI green on Node 20 and 22. Profile format **v12**. Live at
+**2,809 tests**, CI green on Node 20 and 22. Profile format **v12**. Live at
 <https://donz-dev.github.io/SimForever/>, republished by
 `.github/workflows/deploy.yml` on every push to `main` that passes.
 
@@ -764,10 +844,10 @@ demonstrated at the top. **Re-count rather than re-reading the sentence.**
 | --- | --- |
 | **Talents** | 260 fully, 39 partly, 105 ruled out, **62 a live gap**, out of **466** -- from 132 before the class dives |
 | **Abilities** | 114 declared against 478 captured |
-| **Profiles** | **25**, all measured, **mean 698.8** -- the armour enchants are +27.0 of it and the consumables +105.9 |
+| **Profiles** | **25**, all measured, **mean 699.8** -- the armour enchants are +27.0 of it and the consumables +105.9 |
 | **Scope rulings** | **9 members**, all the owner's, carrying 129 entries |
 | **Placeholders** | **10 declared** -- see the milestone table, and count DECLARATIONS |
-| **Tests** | **2,750** on Node 20 and 22 |
+| **Tests** | **2,809** on Node 20 and 22 |
 
 **FOUR CLASSES ARE ESSENTIALLY DONE** -- Warrior 1 live gap, Paladin 1, Druid 2,
 Rogue 3 -- and the remaining 62 sit mostly in the Warlock (19), Priest (12) and
@@ -775,12 +855,17 @@ Mage (10). **The Warlock's 19 overstates its own work**: thirteen of them are on
 build cause, Demonic Sacrifice killing the demon, so its real queue is about 11.
 
 **EVERY FIGURE IN THAT TABLE IS RE-DERIVED RATHER THAN ADJUSTED**, and the two
-that moved this time moved for different reasons: the profile count because a peer
-branch added **Hawk Melee**, a fourth Hunter build, and the mean because of that
-AND because round five of the patch raised fifteen rows. **The mean is re-summed
-from the table's own 25 rows** -- 689.4 and 690.2 are earlier published figures
-that still appear in this file against the rounds they belong to, and 704.8 was
-over 24 profiles, so it is not comparable to 698.8. The census, placeholder and
+that moved this time are the mean and the test count -- the mean because three
+commits of parry work moved four tank and shield rows, and the tests because
+those commits added fifteen. **The mean is re-summed from the table's own 25
+rows** -- 689.4, 690.2 and 698.8 are earlier published figures that still appear
+in this file against the commits they belong to, and 704.8 was over 24 profiles,
+so it is not comparable to 699.8.
+**AND 698.8 SURVIVED HERE FOR ONE COMMIT AFTER THE TABLE MOVED OFF IT**, because
+`update_baseline_table.py` rewrites the sentence under the table and knows
+nothing about this block. A script that re-derives ONE copy of a figure leaves
+the other to drift, which is the same shape as the counts this paragraph exists
+to warn about. The census, placeholder and
 `scope` figures were re-counted and had not moved: **260 / 39 / 105 / 62 of 466**
 from `tools/class_audit.ts`, 10 placeholder DECLARATIONS, and **129 scope entries
 across NINE members**.
@@ -1869,7 +1954,7 @@ while it worked.
 decimal -- which is what a talent change scoped to one build should look like.
 It makes Frostfire the top Mage, above Fire's 401.2 and Arcane's 392.6, and the
 build that existed for the Fire/Frost overlap now has a third reason to. The
-mean across **25** is **698.8**, RE-SUMMED FROM THE TABLE ABOVE rather than
+mean across **25** is **699.8**, RE-SUMMED FROM THE TABLE ABOVE rather than
 adjusted -- **by `tools/update_baseline_table.py`, which exists now**; the
 sentence above it had promised a script for several commits and there was none,
 so the mean and the ordering were still being maintained by hand.
@@ -2431,18 +2516,18 @@ cannot audit, which is why the check is a SET comparison and not a row count.
 
 | Profile | Class | Talents | DPS | | Profile | Class | Talents | DPS |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| **DW Fury** | Warrior | 17/34/0 | **901.8** | | **Enh Shaman** | Shaman | 17/34/0 | **716.1** |
-| **Hawk Melee** | Hunter | 16/11/24 | **826.1** | | **Combat Rogue** | Rogue | 18/33/0 | **702.9** |
-| **LW Ranged** | Hunter | 7/39/5 | **814.5** | | SM/DS | Warlock | 40/11/0 | 690.4 |
+| DW Fury | Warrior | 17/34/0 | 901.8 | | Enh Shaman | Shaman | 17/34/0 | 716.1 |
+| Hawk Melee | Hunter | 16/11/24 | 826.1 | | Combat Rogue | Rogue | 18/33/0 | 702.9 |
+| LW Ranged | Hunter | 7/39/5 | 814.5 | | SM/DS | Warlock | 40/11/0 | 690.4 |
 | Cat Druid | Druid | 9/34/8 | 807.2 | | Fire Mage | Mage | 10/39/2 | 690.1 |
-| **Seal Twist Ret** | Paladin | 15/0/36 | **796.8** | | **Hemo Rogue** | Rogue | 17/3/31 | **624.3** |
-| **2H Arms** | Warrior | 39/10/2 | **791.6** | | Ele Shaman | Shaman | 38/13/0 | 617.5 |
-| **LW Melee** | Hunter | 7/13/31 | **783.2** | | **Shockadin** | Paladin | 23/0/28 | **608.0** |
-| **BM Hunter** | Hunter | 31/20/0 | **777.8** | | **Venom Rogue** | Rogue | 37/12/2 | **601.5** |
-| Arcane Mage | Mage | 47/4/0 | 769.4 | | **Rupture Rogue** | Rogue | 12/8/31 | **588.2** |
-| Frostfire Mage | Mage | 0/29/22 | 768.3 | | **Prot Warr** | Warrior | 17/0/34 | **507.5** |
-| Firelock | Warlock | 5/11/35 | 759.7 | | Bear Druid | Druid | 9/42/0 | 500.0 |
-| Shadow Priest | Priest | 13/3/35 | 746.9 | | **Prot Pally** | Paladin | 8/34/9 | **357.0** |
+| Seal Twist Ret | Paladin | 15/0/36 | 796.8 | | **Shockadin** | Paladin | 23/0/28 | **667.7** |
+| 2H Arms | Warrior | 39/10/2 | 791.6 | | Hemo Rogue | Rogue | 17/3/31 | 624.3 |
+| LW Melee | Hunter | 7/13/31 | 783.2 | | Ele Shaman | Shaman | 38/13/0 | 617.5 |
+| BM Hunter | Hunter | 31/20/0 | 777.8 | | Venom Rogue | Rogue | 37/12/2 | 601.5 |
+| Arcane Mage | Mage | 47/4/0 | 769.4 | | Rupture Rogue | Rogue | 12/8/31 | 588.2 |
+| Frostfire Mage | Mage | 0/29/22 | 768.3 | | **Prot Warr** | Warrior | 17/0/34 | **529.7** |
+| Firelock | Warlock | 5/11/35 | 759.7 | | **Bear Druid** | Druid | 9/42/0 | **437.3** |
+| Shadow Priest | Priest | 13/3/35 | 746.9 | | **Prot Pally** | Paladin | 8/34/9 | **362.9** |
 | Moonkin | Druid | 38/0/13 | 724.0 | | | | | | |
 
 **THE TOP IS DW FURY, AND A CASTER HAS NOT HELD IT SINCE THE CONSUMABLES.**
