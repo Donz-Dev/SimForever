@@ -81,11 +81,15 @@ interface TelemetrySink {
 | `TelemetryRecorder` | Keeps everything. The default for a run you will inspect. |
 | `NullTelemetrySink` | Discards everything. |
 | `FanOutTelemetrySink` | Sends to several sinks. |
-| `StreamingDamageTotals` | Sums damage per source and discards the events. |
+| `StreamingIterationTotals` | Sums damage per source, counts deaths per actor, discards the events. |
 
-`StreamingDamageTotals` is why a 10,000-iteration batch does not exhaust memory:
-retaining every event for every iteration would cost gigabytes for numbers that
-get summed once and thrown away. The batch aggregates as it goes, then re-runs
+`StreamingIterationTotals` is why a 10,000-iteration batch does not exhaust
+memory: retaining every event for every iteration would cost gigabytes for
+numbers that get summed once and thrown away. It keeps TWO figures per actor,
+damage dealt and times died, because a stat weight reads both off the same
+fights -- a damage weight asks what a stat adds to DPS and a tank weight asks
+what it takes off the death count, and counting them in two passes would double
+every tank run for no new information. The batch aggregates as it goes, then re-runs
 only the median iteration with full recording so the log the user reads matches
 the headline number.
 

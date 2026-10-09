@@ -2903,6 +2903,53 @@ specific, written-down statement that nobody treats as a question.
 
 **When a fix moves nothing in the suite, that is a statement about the suite.**
 
+**AND NONE OF THE THREE SEES A MECHANIC THAT IS WIRED UP AND POINTING THE WRONG
+WAY.** `coefficient_probe` asks whether damage responds to a stat,
+`ability_audit` asks whether an ability is connected, and `measure_profiles`
+asks what each list entry did. A mechanic that fires, moves numbers, and moves
+them in the wrong DIRECTION passes all three -- and parry haste did it twice in
+one feature.
+
+**FIRST IT FIRED ZERO TIMES, AND SIX UNIT TESTS SAID OTHERWISE.** A swing's own
+handler resolves its blow and only THEN schedules its successor, so applying the
+haste inline from `dealDamage` reached a swing that was currently FIRING, with
+no time left on it. **THE TESTS PASSED BECAUSE A TEST CONSTRUCTS THE MOMENT.**
+Calling `dealDamage` by hand at a chosen timestamp leaves a real future swing
+pending, which is the one state the live path never presents -- so the suite was
+exercising a situation that cannot occur. **When a mechanic's bug IS the moment
+it runs at, a test that chooses the moment cannot find it**: run a fight and
+count. What caught it was the encounter's own quantity, three tank profiles
+taking **25.5 attacks a fight before the change and 25.5 after**.
+
+**THEN IT RAN BACKWARDS THROUGH A REVIEW, A MEASUREMENT PASS AND A MERGED PR.**
+The owner's wording -- "reduces the ATTACKER'S remaining swing timer" -- reads as
+the unit whose blow was turned aside, and means the parrier. **THE WRONG READING
+WAS SELF-CONSISTENT AND DANGEROUS-SOUNDING**, which is what carried it: a tank
+parrying a boss speeding the BOSS up is exactly what a tank is supposed to fear,
+every figure hung together, and twenty-one of twenty-five profiles correctly did
+not move.
+
+**IT EVEN PRODUCED A FINDING THAT READ AS INSIGHT AND WAS PUBLISHED.** The tank
+weights priced parry at 42% of dodge; that was measured, written up, committed
+and opened as a PR. **A MEASUREMENT THAT IS INTERNALLY CONSISTENT IS NOT A
+MEASUREMENT THAT IS RIGHT.** What found it was the owner reading two rows of a
+results table and knowing what they ought to say -- two stats that both avoid the
+entire blow have no business differing by 2.4x.
+
+**SO THE CHECK THAT WORKS ON A DIRECTION IS A SYMMETRY, NOT AN AUDIT.** Ask what
+two quantities OUGHT to be equal and measure whether they are: with parry haste
+stripped off every combatant, dodge and parry come back identical to four
+decimal places, which is stronger than "similar" -- under shared seeds the two
+variants then run bit-identical fights, so there is provably no other asymmetry
+between them anywhere in the engine. `tools/probe_parry_haste.ts` is that check,
+kept as a command.
+
+**AND PUT THE FIGURES IN FRONT OF THE OWNER, because that is what caught it.**
+Twice in one feature the owner's reading of a printed table beat every tool
+here: once to design the hit ladder -- "these can be treated as multiple stats
+in effect" -- and once to reverse a mechanic nothing in the repository could
+question.
+
 **AN INERT BUFF WITH VISIBLE UPTIME IS THE HARDEST KIND TO FIND, BECAUSE THE
 RESULTS PAGE SHOWS IT WORKING.** Adrenaline Rush was cast, spent its cooldown,
 applied its aura and reported **24.9% uptime** for the whole project while
@@ -3096,6 +3143,14 @@ in a throwaway `git worktree` at a named commit, never in the shared working
 tree: a measurement there once came back a clean −2.0% on two profiles, which
 read exactly like a real regression and was another session's uncommitted work.
 Never commit files you find modified there.
+
+**AND A SCRIPT THAT RE-DERIVES ONE COPY OF A FIGURE LEAVES THE OTHER TO DRIFT.**
+`tools/update_baseline_table.py` rebuilds HANDOVER's table and re-sums the mean
+in the sentence beneath it, which is exactly what it promises -- and the STATUS
+BLOCK fifteen hundred lines above carries the same mean and is not touched. It
+read 698.8 against the table's 699.8 for a commit. **The tool landing the lesson
+is not the same as the lesson landing everywhere the figure appears**, so grep
+for a derived number before trusting that regenerating its source updated it.
 
 **AND A DERIVED COUNT IS ONLY AS GOOD AS THE COMMAND BESIDE IT.** The placeholder
 figure in HANDOVER carried its own re-derivation command and was still wrong three
