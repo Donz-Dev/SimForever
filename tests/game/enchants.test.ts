@@ -751,7 +751,7 @@ describe('the enchants reach the built character', () => {
       ),
     } as typeof profile;
 
-    const chances = createForeverAttackChances(() => 'one_hand_shield');
+    const chances = createForeverAttackChances({ targetAttacks: true });
     const boss = createTrainingDummy({ attacks: true });
     const received = (p: typeof profile) =>
       chances('melee-received', boss, characterAtCombatStart(p)!, {});

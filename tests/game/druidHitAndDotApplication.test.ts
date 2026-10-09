@@ -140,7 +140,7 @@ describe("Nature's Reach, which was doing neither of its clauses", () => {
       const player = characterAtCombatStart(built)!;
       const bare = makeAttacker({ stats: { hitChance: 0 } });
       const chances = (actor: Combatant) =>
-        createForeverAttackChances(() => built.character.combatStyle)(
+        createForeverAttackChances()(
           kind,
           actor,
           makeTarget(),

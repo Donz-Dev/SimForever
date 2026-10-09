@@ -7,7 +7,7 @@ export type {
 export { DamageAnalyzer } from './DamageAnalyzer';
 export type { ActorHealing, HealingSummary } from './HealingAnalyzer';
 export { HealingAnalyzer } from './HealingAnalyzer';
-export { StreamingDamageTotals } from './StreamingDamageTotals';
+export { StreamingIterationTotals } from './StreamingIterationTotals';
 export type { ActorResult, SimulationResult } from './SimulationResult';
 export { buildSimulationResult } from './SimulationResult';
 export type { DistributionSummary } from './statistics';

@@ -1,6 +1,7 @@
 export type {
   AutoAttackMode,
   CombatantKind,
+  ParryHaste,
   CombatantOptions,
   CostRefundRule,
   Faction,

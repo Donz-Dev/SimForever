@@ -78,6 +78,21 @@ export interface BatchResult {
    */
   readonly dpsSamples: readonly number[];
   /**
+   * Every iteration's PLAYER DEATHS, in iteration order.
+   *
+   * ----------------------------------------------------------------------------
+   * THE SAME ARRAY IN THE SAME ORDER AS `dpsSamples`, so the two can be paired
+   * against another batch run at the same base seed. A TANK stat weight is the
+   * same arithmetic as a damage one with this quantity in place of DPS: what a
+   * point of a stat is worth is the DEATHS IT AVOIDS, and the baseline it is
+   * differenced against is this.
+   *
+   * All zero unless the target swings back, which is off by default -- and the
+   * tank panel only appears when it is on.
+   * ----------------------------------------------------------------------------
+   */
+  readonly deathSamples: readonly number[];
+  /**
    * A full result for the iteration whose DPS landed closest to the median.
    *
    * FOR THE COMBAT LOG ONLY. A log has to be a single fight to make any sense,
@@ -200,6 +215,7 @@ export function runBatch(config: SimulationConfig, options: BatchOptions): Batch
   const startedAt = Date.now();
 
   const dpsSamples: number[] = new Array(iterations);
+  const deathSamples: number[] = new Array(iterations);
   const seeds: number[] = new Array(iterations);
   const durations: number[] = new Array(iterations);
   let enemyIds: string[] = [];
@@ -214,6 +230,7 @@ export function runBatch(config: SimulationConfig, options: BatchOptions): Batch
   let friendlyIdsForReporting: readonly string[] = [];
   let rotationName: string | undefined;
   let damageSoFar = 0;
+  let deathsSoFar = 0;
   /*
    * Read off the player's ABILITY BOOK rather than from a static table,
    * because what a character knows depends on their talents and their gear.
@@ -262,6 +279,17 @@ export function runBatch(config: SimulationConfig, options: BatchOptions): Batch
     const cumulative = totals.totalForAny(friendlyIds);
     dpsSamples[index] = (cumulative - damageSoFar) / elapsedSeconds;
     damageSoFar = cumulative;
+
+    /*
+     * DEATHS THE SAME WAY, and for the same reason: one accumulator runs the
+     * whole batch, so this iteration's count is the difference since the last.
+     * THE PLAYER'S, not every friendly actor's -- which is the split `survival`
+     * already makes, and a pet dying is not what a tank weight is avoiding.
+     */
+    const deathsSoFarNow = totals.totalDeathsFor(playerId);
+    deathSamples[index] = deathsSoFarNow - deathsSoFar;
+    deathsSoFar = deathsSoFarNow;
+
     totals.finishIteration(run.elapsedMs);
 
     options.onProgress?.((index + 1) / iterations);
@@ -293,6 +321,7 @@ export function runBatch(config: SimulationConfig, options: BatchOptions): Batch
     baseSeed: options.baseSeed,
     dps,
     dpsSamples,
+    deathSamples,
     representative,
     rotationName,
     meanDamage: totals.meanDamageFor(playerId),

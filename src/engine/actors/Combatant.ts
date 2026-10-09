@@ -48,6 +48,22 @@ export type WeaponSlot = 'mainHand' | 'offHand' | 'ranged';
 export type AutoAttackMode = 'none' | 'main-hand' | 'dual-wield' | 'ranged';
 
 /**
+ * The two fractions parry haste is stated in, both of a full swing.
+ *
+ * BOTH OF THE SWING, NOT ONE OF THE SWING AND ONE OF WHAT IS LEFT. "Reduces
+ * the remaining swing timer by 40% of their max swing time, provided the
+ * reduction does not lower the timer below 20% of its original duration" --
+ * the subtraction and the floor are measured against the same thing, which is
+ * what makes two parries in a row unable to drive the timer to nothing.
+ */
+export interface ParryHaste {
+  /** Taken off the remaining timer, as a fraction of a full swing. */
+  readonly reductionFraction: number;
+  /** The remaining timer may not go below this fraction of a full swing. */
+  readonly floorFraction: number;
+}
+
+/**
  * A weapon's auto-attack behaviour.
  *
  * Auto attacks are off the global cooldown and repeat on their own timer, so
@@ -249,6 +265,31 @@ export interface CombatantOptions {
    * ----------------------------------------------------------------------------
    */
   readonly critResourceMultiplier?: number;
+  /**
+   * How much a PARRY against this combatant hurries its next swing.
+   *
+   * ----------------------------------------------------------------------------
+   * PARRY HASTE, and it is on the combatant for the fourth time and the same
+   * reason the three above are: the rule is the engine's and the numbers are
+   * the ruleset's. The ruleset owner: "successfully parrying an attack reduces
+   * the attacker's remaining swing timer by 40% of their max swing time,
+   * provided the reduction does not lower the timer below 20% of its original
+   * duration", and "this mechanic applies to both players and mobs, including
+   * raid bosses".
+   *
+   * IT BELONGS TO THE ATTACKER, WHICH IS THE PART THAT READS BACKWARDS. The
+   * DEFENDER parries and the ATTACKER's timer moves, so the numbers sit on
+   * whoever is swinging -- a boss carries them so that a tank parrying it
+   * brings its next swing forward, which is the whole danger of the mechanic,
+   * and a player carries them so that the boss parrying a strike does the same
+   * to them.
+   *
+   * ABSENT MEANS NO PARRY HASTE, so a combatant built by a test or by anything
+   * that has not been given ruleset numbers behaves exactly as it did. Forever
+   * supplies them in `game/actors`.
+   * ----------------------------------------------------------------------------
+   */
+  readonly parryHaste?: ParryHaste;
   /** Defaults to `none`: a combatant with no declared mode does not swing. */
   readonly autoAttack?: AutoAttackMode;
   /** Resources that refill on a timer. */
@@ -394,6 +435,8 @@ export class Combatant {
   readonly costRefundOnMiss?: CostRefundRule;
   /** What a critical swing multiplies a flat resource award by. See the option. */
   readonly critResourceMultiplier: number;
+  /** See the option of the same name. Absent means the mechanic is off. */
+  readonly parryHaste?: ParryHaste;
   /*
    * WHAT THE CAST IN FLIGHT PAID, so an avoided attack can hand most of it
    * back. Cleared by the first damage this ability resolves, whether that
@@ -577,6 +620,7 @@ export class Combatant {
     this.autoAttack = options.autoAttack ?? 'none';
     this.costRefundOnMiss = options.costRefundOnMiss;
     this.critResourceMultiplier = options.critResourceMultiplier ?? 1;
+    this.parryHaste = options.parryHaste;
     this.regeneration = options.regeneration ?? [];
     this.resourceOnDamageTaken = options.resourceOnDamageTaken;
     this.reactions = options.reactions ?? [];

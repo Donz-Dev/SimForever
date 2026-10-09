@@ -101,8 +101,11 @@ function warriorRows(profile: CharacterProfile, style: CombatStyleId): readonly 
   });
 
   // The same provider the fight uses, so the percentages shown are the ones
-  // that will actually be rolled against.
-  const chances = createForeverAttackChances(() => style);
+  // that will actually be rolled against -- including whether the target is
+  // swinging back, which is what decides enemy parry.
+  const chances = createForeverAttackChances({
+    targetAttacks: profile.encounter.targetAttacks,
+  });
   const stats = player.stats.effective;
 
   const percent = (units: number) => `${toPercent(units).toFixed(2)}%`;
@@ -167,12 +170,11 @@ function warriorRows(profile: CharacterProfile, style: CombatStyleId): readonly 
   }
   rows.push({ label: 'Enemy Dodge', value: perHand((c) => c.dodge) });
 
-  // Enemy parry applies only to a character standing in front of the target,
-  // which the ruleset reads as one holding a shield -- so there is only ever
-  // one hand to report it for. It does not derive from weapon skill either. A
-  // zero for everyone else would suggest the number was computed and came out
-  // at nil.
-  if (style === 'one_hand_shield') {
+  // Enemy parry applies only to a character the target is swinging at, so
+  // there is only ever one hand to report it for. It does not derive from
+  // weapon skill either. A zero for everyone else would suggest the number was
+  // computed and came out at nil.
+  if (profile.encounter.targetAttacks) {
     rows.push({ label: 'Enemy Parry', value: percent(forSlot('mainHand').parry) });
   }
 

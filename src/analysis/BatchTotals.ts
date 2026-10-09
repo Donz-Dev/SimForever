@@ -793,6 +793,19 @@ export class BatchTotals implements TelemetrySink {
       .sort((a, b) => b.uptime - a.uptime);
   }
 
+  /**
+   * Times an actor has died SO FAR in the batch, cumulatively.
+   *
+   * The raw running count, not a per-iteration mean, and it is here for the
+   * same reason `totalForAny` is: a batch runs one accumulator for the whole
+   * run, so an iteration's own figure is the DIFFERENCE since the last one.
+   * `runBatch` takes that difference to build `deathSamples`, which is what a
+   * tank stat weight pairs against.
+   */
+  totalDeathsFor(actorId: string): number {
+    return this.deathsByActor.get(actorId) ?? 0;
+  }
+
   /** Deaths, damage taken and healing received, per iteration. */
   survival(actorId: string): BatchSurvival {
     let damageTaken = 0;

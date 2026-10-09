@@ -3,11 +3,10 @@ import { RATING_PER_PERCENT } from '../engine';
 import { createForeverAttackChances } from '../game/combat/attackChances';
 import type { HeadroomSlice, StatTier, TieredStat } from '../game/combat/statHeadroom';
 import { headroomFor, tiersFrom } from '../game/combat/statHeadroom';
-import { resolveCombatStyle } from '../game/character';
 import { createTrainingDummy } from '../game/actors/createTrainingDummy';
 import type { CharacterProfile } from '../profiles';
 import { characterAtCombatStart } from './characterAtCombatStart';
-import { dpsSamplesFor } from './dpsSamples';
+import { sampleIterations } from './iterationSamples';
 import { trainingDummyEncounter } from './trainingDummyEncounter';
 
 /**
@@ -417,11 +416,9 @@ export function statWeightPlan(
     };
   }
 
-  const style = resolveCombatStyle(
-    profile.character.characterClass,
-    profile.character.combatStyle,
-  );
-  const chances = createForeverAttackChances(() => style);
+  const chances = createForeverAttackChances({
+    targetAttacks: profile.encounter.targetAttacks,
+  });
   const target = createTrainingDummy({
     name: profile.encounter.targetName,
     health: profile.encounter.targetHealth,
@@ -759,6 +756,56 @@ export function weightsFrom(
   return rows;
 }
 
+/**
+ * The same rows, measured in DEATHS AVOIDED instead of DPS.
+ *
+ * ==============================================================================
+ * A TANK STAT WEIGHT IS THE SAME ARITHMETIC ON A DIFFERENT QUANTITY. Nothing
+ * about the pairing, the interval or the cap ladder changes: what changes is
+ * that the number being differenced is how often the character died rather
+ * than how much damage it dealt. So this negates and calls `weightsFrom`,
+ * rather than being a second implementation of the statistics.
+ *
+ * NEGATED, BECAUSE MORE IS BETTER EVERYWHERE ELSE. `pairedDelta` reports
+ * `variant - baseline`, which for deaths is NEGATIVE when a stat helps. The
+ * ruleset owner put the quantity as "avoid death": 30 agility taking deaths
+ * from 10.5 to 9.8 is **+0.7 avoid death**, so the sign is flipped once, here,
+ * and every reader downstream sorts and renders it exactly as it does a DPS
+ * weight.
+ *
+ * FROM THE SAME FIGHTS AS THE DPS WEIGHTS, which is why a tank run costs
+ * nothing extra: `sampleIterations` returns both metrics off one pass, so the
+ * deaths were counted while the damage was being summed.
+ * ==============================================================================
+ */
+export function survivalWeightsFrom(
+  plan: StatWeightPlan,
+  baselineDeaths: readonly number[],
+  deaths: ReadonlyMap<string, readonly number[]>,
+): readonly StatWeight[] {
+  const avoided = (counts: readonly number[]) => counts.map((count) => -count);
+  return weightsFrom(
+    plan,
+    avoided(baselineDeaths),
+    new Map([...deaths].map(([key, counts]) => [key, avoided(counts)])),
+  ).filter(
+    /*
+     * A STAT THAT CANNOT REDUCE DEATHS IS NOT A TANK STAT, and the owner's
+     * wording is "any stat that REDUCES DEATHS should be populated here". A
+     * `none` verdict is the confident form of that: the variant ran
+     * bit-identical fights, so attack power and spell power did not move the
+     * death count by so much as a rounding error and a row for each of them is
+     * nine lines of nothing.
+     *
+     * `inconclusive` STAYS, because it is a different statement -- the stat
+     * changed the fight and the run could not resolve by how much. Dropping
+     * those would hide the stats that need more iterations behind the ones
+     * that need none.
+     */
+    (row) => row.verdict !== 'none',
+  );
+}
+
 /* ---------------------------------------------------------------------------
  * The synchronous runner.
  * ------------------------------------------------------------------------- */
@@ -767,9 +814,18 @@ export interface StatWeightRun {
   readonly plan: StatWeightPlan;
   /** Mean DPS of the baseline. */
   readonly baselineDps: number;
+  /** Mean deaths per fight in the baseline. Zero unless the target swings. */
+  readonly baselineDeaths: number;
   /** The count the baseline AND every variant ran. */
   readonly iterations: number;
   readonly weights: readonly StatWeight[];
+  /**
+   * The same stats again, measured in DEATHS AVOIDED.
+   *
+   * Empty when the target does not swing back, because nothing can then
+   * reduce a death count that is already zero.
+   */
+  readonly survival: readonly StatWeight[];
   /** Fights run, baseline included. The honest cost of the answer. */
   readonly fights: number;
   readonly elapsedRealMs: number;
@@ -815,27 +871,39 @@ export function runStatWeights(
   const plan = statWeightPlan(profile, selected);
   const slice = { from: 0, to: iterations };
 
-  const baseline = dpsSamplesFor(trainingDummyEncounter(profile), options.baseSeed, slice);
+  const baseline = sampleIterations(trainingDummyEncounter(profile), options.baseSeed, slice);
   options.onProgress?.(1 / (plan.variants.length + 1));
 
-  const samples = new Map<string, number[]>();
+  const dps = new Map<string, number[]>();
+  const deaths = new Map<string, number[]>();
   plan.variants.forEach((variant, index) => {
-    samples.set(
-      variant.key,
-      dpsSamplesFor(
-        trainingDummyEncounter(withStat(profile, variant.statId, variant.added)),
-        options.baseSeed,
-        slice,
-      ),
+    const taken = sampleIterations(
+      trainingDummyEncounter(withStat(profile, variant.statId, variant.added)),
+      options.baseSeed,
+      slice,
     );
+    dps.set(variant.key, taken.dps);
+    deaths.set(variant.key, taken.deaths);
     options.onProgress?.((index + 2) / (plan.variants.length + 1));
   });
 
+  const mean = (values: readonly number[]) =>
+    values.reduce((a, b) => a + b, 0) / Math.max(1, values.length);
+  const baselineDeaths = mean(baseline.deaths);
+
   return {
     plan,
-    baselineDps: baseline.reduce((a, b) => a + b, 0) / Math.max(1, baseline.length),
+    baselineDps: mean(baseline.dps),
+    baselineDeaths,
     iterations,
-    weights: weightsFrom(plan, baseline, samples),
+    weights: weightsFrom(plan, baseline.dps, dps),
+    /*
+     * ONLY WHERE SOMETHING CAN DIE. A fight the target does not swing in has a
+     * death count of zero on every iteration, so every weight would come back
+     * as a confident "nothing" -- true, and twenty rows of it is noise rather
+     * than an answer.
+     */
+    survival: baselineDeaths > 0 ? survivalWeightsFrom(plan, baseline.deaths, deaths) : [],
     fights: iterations * (plan.variants.length + 1),
     elapsedRealMs: Date.now() - startedAt,
   };

@@ -43,7 +43,7 @@ function wielder(mainHandSkill: number, offHandSkill: number): Combatant {
 }
 
 const dummy = createTrainingDummy({ level: 63 });
-const chances = createForeverAttackChances(() => 'dual_wield');
+const chances = createForeverAttackChances();
 const table = (player: Combatant, slot: 'mainHand' | 'offHand') =>
   chances('melee-auto', player, dummy, { slot });
 

@@ -21,6 +21,7 @@ because the stat-weight run's baseline **is** the ordinary batch.
 | the cap ladder | [`src/game/combat/statHeadroom.ts`](../src/game/combat/statHeadroom.ts) |
 | per-iteration DPS, sliceable | [`src/simulator/dpsSamples.ts`](../src/simulator/dpsSamples.ts) |
 | the worker pool | [`src/ui/hooks/useStatWeights.ts`](../src/ui/hooks/useStatWeights.ts) |
+| the tank table | [`src/ui/panels/TankStatWeightsPanel.tsx`](../src/ui/panels/TankStatWeightsPanel.tsx) |
 
 ---
 
@@ -237,3 +238,81 @@ The table in HANDOVER.md is `measure_profiles.ts`, which is 30 batches of 10 —
 at **894.7, 896.8 and 900.7** against a published **901.8 ± 11.1**: they agree,
 and the stat-weight figure is simply the tighter one. Do not read a few DPS of
 difference as a regression, and do not quote this one as a baseline.
+
+---
+
+## Tank weights: the same runs, read for deaths
+
+When the target swings back, a second table appears asking a different
+question: not what a point of a stat adds to DPS, but **what it takes off the
+death count**. The ruleset owner's framing is that avoiding death is itself a
+stat — 30 agility taking deaths from 10.5 to 9.8 is **+0.7 avoid death** — so
+the sign is flipped once, in `survivalWeightsFrom`, and more is better exactly
+as it is in the damage table.
+
+**It costs no extra fights.** `sampleIterations` counts deaths while it sums
+damage, so both tables are two readings of one measurement rather than two runs
+that might disagree.
+
+**Deaths are a rich count, not a rare event**, which is what makes them
+weightable at all. The encounter ramps the boss's damage 10% a swing and stands
+the character back up without resetting the ramp, so a tank dies **8 to 11
+times** in a sixty-second fight. The quantity is really "how far into the ramp
+this build survives".
+
+**A stat that cannot move the death count is left out**, not listed at zero.
+That is the `none` verdict — the variant ran bit-identical fights — and attack
+power, spell power and the rest of the offensive list produce it. `inconclusive`
+rows stay, because "the run could not resolve this" is a different statement
+from "this does nothing".
+
+Prot Warr, 600 iterations each: dodge chance **0.128 ± 0.079** deaths avoided a
+point, parry **0.049**, defense skill **0.015**, agility **0.0069**, stamina
+**0.0058**, armor **0.0004**.
+
+---
+
+## Two ruleset changes landed with it
+
+**Enemy parry follows the encounter, not the weapon.** The owner: "when the
+Target Attacks Back checkbox in the Encounter panel is selected, the target
+gains a 14% chance to parry you." It replaces a reading of "0% if 1H & Shield is
+not selected" as a statement about the STYLE, which was right about a shield
+tank and wrong either side of it — the Bear tanks without a shield and was never
+parried, the Shockadin holds one against a dummy that never swings and was being
+parried by it. `CombatStyleLookup` is gone with it: parry was the only thing it
+fed.
+
+**Parry haste.** A parried attack takes 40% of a full swing off the attacker's
+remaining timer, floored at 20% of a full swing — the owner's rule, applying to
+players and bosses alike. Both fractions are of a full swing rather than of what
+is left, which is what makes it converge: no run of parries can drive a timer to
+zero. [`engine/combat/parryHaste.ts`](../src/engine/combat/parryHaste.ts) owns
+the rule and [`game/combat/attackChances.ts`](../src/game/combat/attackChances.ts)
+owns the two numbers.
+
+**It is scheduled, not applied inline, and the first version was not — so it
+fired exactly zero times.** A swing's handler resolves its blow and only then
+schedules its successor, so at the moment the parry is seen the handle on the
+combatant is the swing that is *currently firing*, with no time left on it.
+Every unit test passed, because calling `dealDamage` by hand at a chosen moment
+does leave a real future swing pending — the one case the live path never
+presents. What caught it was measuring the mechanism: three tank profiles took
+**25.5 attacks a fight before the change and 25.5 after it**.
+
+| profile | before | after | |
+| --- | --- | --- | --- |
+| Prot Warr | 507.5 | **543.5** | +36.0 REAL — parry haste, more rage |
+| Bear | 500.0 | **448.4** | −51.6 REAL — now parried |
+| Shockadin | 608.0 | **667.7** | +59.7 REAL — no longer parried |
+| Prot Pally | 357.0 | **369.7** | +12.8 REAL — parry haste |
+
+The other 21 profiles moved by exactly 0.0.
+
+**And it expired a test that had been right.** `paladinTalents.test.ts` asserted
+that Reckoning's 1,500 ms internal cooldown "cannot bind in THIS encounter,
+because the one attacker swings slower than it" — true when the boss's slowed
+swing was 2,400 ms. Parry haste makes that 1,440 ms, sixty milliseconds inside
+the window: the minimum gap is now exactly 1,440 ms and 88 of 1,016 gaps fall
+under 1,500 ms. The test's own note said it "expires the day the encounter swings
+faster", and it did.

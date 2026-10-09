@@ -3,7 +3,6 @@ import { seconds } from '../engine';
 import type { CharacterProfile } from '../profiles';
 import { createPlayer } from '../game/actors/createPlayer';
 import { createForeverAttackChances } from '../game/combat/attackChances';
-import { resolveCombatStyle } from '../game/character';
 import { createTrainingDummy } from '../game/actors/createTrainingDummy';
 import type { RaidBuff } from '../game/buffs/raidBuffs';
 import { raidBuffPoolStats, selectedRaidBuffs } from '../game/buffs/raidBuffs';
@@ -94,16 +93,16 @@ export function trainingDummyEncounter(
     durationVariance: FIGHT_DURATION_VARIANCE,
     seed,
 
-    // The combat tables need to know the player's style, because enemy parry
-    // only applies to a character standing in front of the target.
-    attackChances: createForeverAttackChances((id) =>
-      id === 'player_1'
-        ? resolveCombatStyle(
-            profile.character.characterClass,
-            profile.character.combatStyle,
-          )
-        : undefined,
-    ),
+    /*
+     * The combat tables need to know whether the target is swinging back,
+     * because that is what puts the character in front of it where a parry can
+     * happen. The ruleset owner's condition, and it replaced a reading that
+     * inferred the same thing from the weapon in hand -- which was right about
+     * a shield tank and wrong about a Bear.
+     */
+    attackChances: createForeverAttackChances({
+      targetAttacks: profile.encounter.targetAttacks,
+    }),
 
     // A factory, not an array: every Monte Carlo iteration needs its own fresh
     // combatants rather than the previous iteration's leftovers.

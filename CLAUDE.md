@@ -324,6 +324,34 @@ See [docs/combat-tables.md](docs/combat-tables.md).
 - **Which table resolves an attack depends on who is being HIT**, not who swings.
   `melee-received` is the attacks-received table: crushing blows, and the
   DEFENDER's dodge, parry and block.
+- **ENEMY PARRY FOLLOWS THE ENCOUNTER, NOT THE WEAPON IN HAND.** The owner:
+  "when the Target Attacks Back checkbox in the Encounter panel is selected, the
+  target gains a 14% chance to parry you." It replaces a reading of the source's
+  "0% if 1H & Shield is not selected" as a statement about the STYLE -- which
+  was right about a shield tank and **wrong in both directions either side of
+  it**: the BEAR tanks without a shield and was never being parried, and the
+  SHOCKADIN holds a shield against a dummy that never swings and was being
+  parried by it. Worth **-51.6** and **+59.7**. `CombatStyleLookup` is gone with
+  it, because parry was the only thing it fed.
+- **A PARRY HURRIES THE ATTACKER'S NEXT SWING, which is the half that reads
+  backwards.** 40% of a full swing off the remaining timer, floored at 20% of a
+  full swing, and the owner states it "applies to both players and mobs,
+  including raid bosses" -- so a tank parrying a boss brings its next blow
+  forward, which is the whole danger of the mechanic. **BOTH FRACTIONS ARE OF A
+  FULL SWING AND NOT OF WHAT IS LEFT**: that is what makes it converge, because
+  no run of parries can drive a timer to zero. `engine/combat/parryHaste.ts`.
+- **AND IT HAS TO BE SCHEDULED, NOT APPLIED INLINE -- THE FIRST VERSION FIRED
+  EXACTLY ZERO TIMES.** A swing's handler resolves its blow and only THEN
+  schedules its successor, so at the moment `dealDamage` sees the parry the
+  handle on the combatant is the swing that is CURRENTLY FIRING, with no time
+  left on it; the real next swing is scheduled at full speed a moment later.
+  **SIX UNIT TESTS PASSED THROUGHOUT**, because a test that calls `dealDamage`
+  by hand at a chosen moment DOES leave a real future swing pending -- the one
+  case the live path never presents. What caught it was measuring the
+  mechanism's own quantity: three tank profiles took **25.5 attacks a fight
+  before the change and 25.5 after it**. One `events.schedule` at the current
+  timestamp is the fix, and it is the same fix for the same reason
+  `extraAttack` schedules rather than swinging inline.
 - **A block LANDS and is reduced by a flat amount.** Deliberately not in
   `AVOIDED_OUTCOMES`, and reduced in the damage pipeline rather than as a table
   multiplier — that flatness is the whole character of the stat.
@@ -2187,11 +2215,19 @@ Plus the permanent rulings under **Scope**.
   it too, and it can make a change arithmetically unable to do anything.
   Reckoning's new 1.5-second internal cooldown measured **0.0 on the Prot Pally,
   to the decimal**: there is one attacker on a two-second swing timer, widened by
-  the tank's own Thunder Clap slow, so a fight is **25 attacks received with a
-  median and minimum gap of 2,400ms and NOT ONE gap under 1,500ms**, at 0.0 crits
-  taken. Two triggerable events cannot fall inside the window. **The cooldown is
-  correctly implemented and correctly worth nothing**, and it starts binding the
-  day the encounter swings faster or gains a second attacker.
+  the tank's own Thunder Clap slow, so a fight was **25 attacks received with a
+  median and minimum gap of 2,400ms and NOT ONE gap under 1,500ms**. Two
+  triggerable events could not fall inside the window. **The cooldown was
+  correctly implemented and correctly worth nothing**, and it would start binding
+  the day the encounter swung faster or gained a second attacker.
+  **AND THAT DAY ARRIVED, WHICH IS WHY THIS ENTRY IS KEPT.** Parry haste takes
+  40% of a full swing off, so the boss's 2,400ms becomes **1,440ms** -- sixty
+  milliseconds inside the window. Measured over forty fights, the minimum gap is
+  exactly 1,440ms and **88 of 1,016 gaps fall under 1,500ms**, so the cooldown
+  now binds on about one gap in twelve. The prediction was right, the figure
+  expired on schedule, and the test that recorded it had to be rewritten to
+  assert the opposite. **An encounter-cause note is a dated claim like any
+  other.**
 - **SO MEASURE THE ENCOUNTER'S OWN QUANTITY WHEN A CHANGE MEASURES ZERO**, the
   way a correctness fix expected to be worth nothing is measured on its
   mechanism. The gaps between attacks are what settled this in one probe; the
@@ -2982,6 +3018,25 @@ baseline batch: `BatchTotals` is one accumulator for the whole run and nothing
 merges two, so every breakdown on the results page comes off one thread and that
 serial baseline is a large share of the wall clock. **Merging `BatchTotals` is
 the next step and was not worth the blast radius here.**
+
+**AND A TANK WEIGHT IS THE SAME ARITHMETIC ON DEATHS, FOR FREE.** When the
+target swings back a second table appears asking what a point TAKES OFF THE
+DEATH COUNT rather than what it adds to DPS, and "avoid death" is treated as a
+stat in the owner's own framing -- 30 agility taking deaths from 10.5 to 9.8 is
+**+0.7 avoid death**. The sign is flipped once, in `survivalWeightsFrom`, so
+more is better in both tables and a reader sorts them the same way.
+**IT COSTS NO EXTRA FIGHTS**: `sampleIterations` counts deaths while it sums
+damage, so the two tables are two readings of ONE measurement rather than two
+runs that might disagree. Sampling them separately would double a tank run and
+produce figures measured on different fights, which is the pairing the whole
+feature exists to preserve.
+**AND DEATHS ARE A RICH COUNT HERE RATHER THAN A RARE EVENT**, which is what
+makes them weightable: the encounter ramps the boss 10% a swing and stands the
+character back up without resetting the ramp, so a tank dies **8 to 11 times** a
+fight. The quantity is really "how far into the ramp this build survives".
+**A STAT THAT CANNOT MOVE IT IS LEFT OUT, NOT LISTED AT ZERO** -- the `none`
+verdict -- while `inconclusive` rows stay, because "the run could not resolve
+this" is a different statement from "this does nothing".
 
 **AND THE BASELINE IT PRINTS IS NOT THE PUBLISHED ONE.** 3000 iterations at a
 fresh seed has a standard error of about 1.8 DPS; `measure_profiles.ts` is 300

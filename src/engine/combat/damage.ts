@@ -12,6 +12,7 @@ import { ROLL_MAX, resolveAttackTable, toRollUnits } from './attackTable';
 import type { AbilityModifier, SchoolModifier } from './abilityModifiers';
 import { combineAbilityModifiers } from './abilityModifiers';
 import { armorConstantForLevel, versatilityMultiplierFrom } from './ratings';
+import { applyParryHaste } from './parryHaste';
 import type { AttackEvent } from './reactions';
 import { runReactions } from './reactions';
 import type { ResourceSource } from '../resources';
@@ -1158,6 +1159,20 @@ export function dealDamage(
   const { target, source } = request;
 
   refundCostIfAvoided(context, request, resolution);
+
+  /*
+   * A PARRY HURRIES THE ATTACKER'S NEXT SWING -- the defender parried, and it
+   * is the SOURCE's timer that moves. See `parryHaste.ts` for the rule and for
+   * why the numbers live on the attacker.
+   *
+   * ANY PARRIED ATTACK, not only a swing: the owner's wording is "successfully
+   * parrying an attack", and a special is an attack. The slot defaults to the
+   * main hand for an ability that names none, which is the hand whose timer a
+   * parried blow moves.
+   */
+  if (resolution.outcome === 'parry') {
+    applyParryHaste(context, source, request.weaponSlot ?? 'mainHand');
+  }
 
   /*
    * AND THE ABSORB IS SPENT HERE for the same reason the block charge is:
