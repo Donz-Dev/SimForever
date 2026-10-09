@@ -96,7 +96,9 @@ if (PLAN_ONLY) {
 const run = runStatWeights(profile, selected, { baseSeed: SEED, iterations: ITERATIONS });
 
 console.log(
-  `\n  baseline ${run.baselineDps.toFixed(1)} DPS, ${run.iterations} iterations each` +
+  `\n  baseline ${run.baselineDps.toFixed(1)} DPS` +
+    (run.baselineDeaths > 0 ? `, ${run.baselineDeaths.toFixed(2)} deaths a fight` : '') +
+    `, ${run.iterations} iterations each` +
     `   (${run.fights} fights total, ${(run.elapsedRealMs / 1000).toFixed(1)}s)\n`,
 );
 
@@ -153,6 +155,38 @@ if (noisy.length > 0) {
   for (const row of noisy) {
     console.log(
       `    ${row.name.padEnd(54)} per-iteration sd ${row.spread.toFixed(1).padStart(7)} DPS`,
+    );
+  }
+}
+
+/*
+ * THE TANK TABLE, off the SAME fights. A defensive weight asks what a point
+ * takes off the death count rather than what it adds to DPS, and both numbers
+ * were read from one pass -- so this costs no iterations at all.
+ *
+ * Only where something can die: in a fight the target does not swing in, every
+ * row would be a confident zero.
+ */
+if (run.survival.length > 0) {
+  const tank = [...run.survival].sort((a, b) => b.perUnit - a.perUnit);
+  const best = Math.max(
+    ...tank.filter((row) => row.verdict === 'measured').map((row) => Math.abs(row.perUnit)),
+    1e-9,
+  );
+
+  console.log('\n  TANK WEIGHTS -- deaths avoided per point, higher is better\n');
+  console.log(
+    '  stat                                                   added  avoid death/pt        95%     rel',
+  );
+  for (const row of tank) {
+    const unit = `${row.units}${row.unitLabel}`;
+    const relative = row.verdict === 'measured' ? (row.perUnit / best).toFixed(3) : '';
+    console.log(
+      `  ${row.name.padEnd(54)} ${unit.padStart(5)} ` +
+        `${row.perUnit.toFixed(4).padStart(12)} ` +
+        `${`+-${row.interval.toFixed(4)}`.padStart(11)} ` +
+        `${relative.padStart(6)}` +
+        VERDICTS[row.verdict],
     );
   }
 }

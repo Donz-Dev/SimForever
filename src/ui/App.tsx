@@ -23,6 +23,7 @@ import { ProfileRail } from './panels/ProfileRail';
 import type { StatWeightSelection } from './panels/SimulationPanel';
 import { NO_STAT_WEIGHTS, SimulationPanel } from './panels/SimulationPanel';
 import { StatWeightsPanel } from './panels/StatWeightsPanel';
+import { TankStatWeightsPanel } from './panels/TankStatWeightsPanel';
 import { TalentPanel } from './panels/TalentPanel';
 
 /**
@@ -255,6 +256,20 @@ export function App() {
                 iterations={weightRun.state.baseline.iterations}
                 fights={weightRun.state.fights}
                 workers={weightRun.state.workers}
+              />
+            ) : null}
+
+            {/*
+                THE TANK TABLE ONLY WHEN SOMETHING CAN KILL YOU, which is the
+                Encounter panel's own "target attacks back". The hook returns
+                an empty list otherwise rather than the UI deciding, so the
+                panel and the measurement agree about when it applies.
+            */}
+            {weightRun.state.status === 'done' && weightRun.state.survival.length > 0 ? (
+              <TankStatWeightsPanel
+                weights={weightRun.state.survival}
+                baselineDeaths={weightRun.state.baseline.survival.deaths}
+                iterations={weightRun.state.baseline.iterations}
               />
             ) : null}
 

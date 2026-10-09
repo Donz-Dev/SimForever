@@ -3,12 +3,13 @@ import type { StatName } from '../../src/engine';
 import {
   WEIGHTABLE_STATS,
   WEIGHTABLE_STATS_BY_ID,
-  dpsSamplesFor,
+  sampleIterations,
   pairedDelta,
-  profileDpsSamples,
+  profileSamples,
   runProfileBatch,
   runStatWeights,
   statWeightPlan,
+  survivalWeightsFrom,
   weightsFrom,
   withStat,
 } from '../../src/simulator';
@@ -340,7 +341,7 @@ describe('statWeightPlan', () => {
  * The two properties the worker pool depends on.
  * ========================================================================= */
 
-describe('dpsSamplesFor', () => {
+describe('sampleIterations', () => {
   it('reproduces runBatch DPS to the decimal', () => {
     /*
      * ------------------------------------------------------------------------
@@ -358,7 +359,7 @@ describe('dpsSamplesFor', () => {
       ...profile,
       simulation: { ...profile.simulation, iterations, seed: SEED },
     });
-    const samples = profileDpsSamples(profile, SEED, { from: 0, to: iterations });
+    const samples = profileSamples(profile, SEED, { from: 0, to: iterations }).dps;
 
     expect(samples).toHaveLength(iterations);
     expect(samples.reduce((a, b) => a + b, 0) / iterations).toBeCloseTo(batch.dps.mean, 9);
@@ -397,11 +398,11 @@ describe('dpsSamplesFor', () => {
      * ------------------------------------------------------------------------
      */
     const config = trainingDummyEncounter(presetNamed('rogue_combat'));
-    const whole = dpsSamplesFor(config, SEED, { from: 0, to: 30 });
+    const whole = sampleIterations(config, SEED, { from: 0, to: 30 }).dps;
     const pieces = [
-      ...dpsSamplesFor(config, SEED, { from: 0, to: 12 }),
-      ...dpsSamplesFor(config, SEED, { from: 12, to: 25 }),
-      ...dpsSamplesFor(config, SEED, { from: 25, to: 30 }),
+      ...sampleIterations(config, SEED, { from: 0, to: 12 }).dps,
+      ...sampleIterations(config, SEED, { from: 12, to: 25 }).dps,
+      ...sampleIterations(config, SEED, { from: 25, to: 30 }).dps,
     ];
 
     expect(pieces).toEqual(whole);
@@ -421,11 +422,11 @@ describe('dpsSamplesFor', () => {
      * ------------------------------------------------------------------------
      */
     const profile = presetNamed('dw_fury');
-    const base = profileDpsSamples(profile, SEED, { from: 0, to: 40 });
-    const variant = profileDpsSamples(withStat(profile, 'attackPower', 60), SEED, {
+    const base = profileSamples(profile, SEED, { from: 0, to: 40 }).dps;
+    const variant = profileSamples(withStat(profile, 'attackPower', 60), SEED, {
       from: 0,
       to: 40,
-    });
+    }).dps;
 
     const paired = pairedDelta(base, variant);
 
@@ -433,6 +434,121 @@ describe('dpsSamplesFor', () => {
     // Attack power scales damage and decides nothing, so no roll moves and
     // every fight is the same fight with bigger numbers.
     expect(paired.spread).toBeLessThan(5);
+  });
+});
+
+/* ===========================================================================
+ * Tank weights: the same runs, read for deaths instead of damage.
+ * ========================================================================= */
+
+describe('survivalWeightsFrom', () => {
+  function plannedArmor() {
+    const plan = statWeightPlan(presetNamed('prot_warr'), ['armor']);
+    expect(plan.variants).toHaveLength(1);
+    return plan;
+  }
+
+  it('reports deaths AVOIDED, so more is better as everywhere else', () => {
+    /*
+     * ------------------------------------------------------------------------
+     * THE SIGN IS FLIPPED ONCE, HERE. `pairedDelta` reports `variant -
+     * baseline`, which for a death count is NEGATIVE when a stat helps -- and
+     * the ruleset owner's framing is the other way up: 30 agility taking
+     * deaths from 10.5 to 9.8 is "+0.7 avoid death". Flipping it at the source
+     * means every reader downstream sorts and renders a tank row exactly as it
+     * does a damage one, instead of each remembering which way its own metric
+     * runs.
+     * ------------------------------------------------------------------------
+     */
+    const plan = plannedArmor();
+    const baseline = [10, 11, 10, 11];
+    const fewer = [9, 10, 10, 10];
+
+    const [row] = survivalWeightsFrom(plan, baseline, new Map([[plan.variants[0].key, fewer]]));
+
+    // Three deaths avoided over four fights is 0.75 a fight, over 500 armor.
+    expect(row.delta).toBeCloseTo(0.75, 9);
+    expect(row.perUnit).toBeCloseTo(0.75 / row.units, 9);
+    expect(row.verdict).toBe('measured');
+  });
+
+  it('reports a negative where a stat made things worse', () => {
+    // Stamina is the real case: more health means each point of damage taken
+    // is worth less rage, which is the formula doing what it says.
+    const plan = plannedArmor();
+    const baseline = [10, 10, 10, 10];
+    const worse = [11, 11, 11, 11];
+
+    const [row] = survivalWeightsFrom(plan, baseline, new Map([[plan.variants[0].key, worse]]));
+
+    expect(row.delta).toBeCloseTo(-1, 9);
+  });
+
+  it('leaves out a stat that cannot move the death count at all', () => {
+    /*
+     * THE OWNER'S WORDING IS "any stat that REDUCES DEATHS", and a `none`
+     * verdict is the confident form of not doing so: the variant ran
+     * bit-identical fights. Attack power belongs in the damage table and
+     * nowhere near this one -- a row of it at zero is a line of nothing.
+     *
+     * `inconclusive` STAYS, because that is a different statement: the stat
+     * changed the fight and the run could not resolve by how much.
+     */
+    const plan = statWeightPlan(presetNamed('prot_warr'), ['armor', 'strength']);
+    const unchanged = [10, 10, 10, 10];
+    const noisy = [9, 11, 10, 12];
+    // Keyed by stat rather than by index: the plan orders its variants by the
+    // CATALOGUE, so primaries come first and `variants[0]` is strength.
+    const keyOf = (stat: string) => plan.variants.find((v) => v.statId === stat)!.key;
+
+    const rows = survivalWeightsFrom(
+      plan,
+      unchanged,
+      new Map([
+        [keyOf('strength'), unchanged],
+        [keyOf('armor'), noisy],
+      ]),
+    );
+
+    expect(rows.map((row) => row.statId)).toEqual(['armor']);
+  });
+});
+
+describe('deaths as a measurable quantity', () => {
+  it('counts several a fight for a tank, and none for a standing target', () => {
+    /*
+     * ------------------------------------------------------------------------
+     * WHAT MAKES A TANK WEIGHT WORK AT ALL. This encounter ramps the boss's
+     * damage ten percent a swing and stands the character back up when they
+     * fall, without resetting the ramp -- so a tank dies several times in a
+     * sixty-second fight and "deaths" is a rich count rather than a rare
+     * event. A quantity that was 0 or 1 could not be weighted.
+     *
+     * AND IT IS EXACTLY ZERO WHERE NOTHING SWINGS, which is what the empty
+     * tank table turns on.
+     * ------------------------------------------------------------------------
+     */
+    const tank = profileSamples(presetNamed('prot_warr'), SEED, { from: 0, to: 20 });
+    const mean = tank.deaths.reduce((a, b) => a + b, 0) / tank.deaths.length;
+    expect(mean).toBeGreaterThan(1);
+
+    const standing = profileSamples(presetNamed('dw_fury'), SEED, { from: 0, to: 20 });
+    expect(standing.deaths.every((count) => count === 0)).toBe(true);
+  });
+
+  it('pairs death counts the way it pairs damage', () => {
+    // Both metrics come off ONE pass, so the tank answer costs no extra
+    // fights -- and iteration `i` of a variant is the same fight as iteration
+    // `i` of the baseline for deaths exactly as it is for DPS.
+    const profile = presetNamed('prot_warr');
+    const slice = { from: 0, to: 30 };
+    const base = profileSamples(profile, SEED, slice);
+    const tougher = profileSamples(withStat(profile, 'armor', 2000), SEED, slice);
+
+    expect(tougher.deaths).toHaveLength(base.deaths.length);
+    const avoided =
+      base.deaths.reduce((a, b) => a + b, 0) - tougher.deaths.reduce((a, b) => a + b, 0);
+    expect(avoided).toBeGreaterThan(0);
   });
 });
 
@@ -559,11 +675,11 @@ describe('the hit ladder', () => {
     expect(plan.variants.length).toBeGreaterThan(1);
 
     const slice = { from: 0, to: iterations };
-    const baseline = profileDpsSamples(profile, SEED, slice);
-    const samples = new Map(
+    const baseline = profileSamples(profile, SEED, slice).dps;
+    const samples = new Map<string, number[]>(
       plan.variants.map((variant) => [
         variant.key,
-        profileDpsSamples(withStat(profile, variant.statId, variant.added), SEED, slice),
+        profileSamples(withStat(profile, variant.statId, variant.added), SEED, slice).dps,
       ]),
     );
 
@@ -573,7 +689,7 @@ describe('the hit ladder', () => {
     const top = plan.variants[plan.variants.length - 1];
     const whole = pairedDelta(
       baseline,
-      profileDpsSamples(withStat(profile, 'hitChance', top.added), SEED, slice),
+      profileSamples(withStat(profile, 'hitChance', top.added), SEED, slice).dps,
     );
 
     expect(summed).toBeCloseTo(whole.delta, 6);

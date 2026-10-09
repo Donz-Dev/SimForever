@@ -126,7 +126,7 @@ describe('Anticipation', () => {
      */
     expect(COMBAT_CONSTANTS.defensePerSkill).toBe(4);
 
-    const chances = createForeverAttackChances(() => 'one_hand_shield');
+    const chances = createForeverAttackChances({ targetAttacks: true });
     const boss = createTrainingDummy({ attacks: true });
     const received = (talents: Record<string, number>) =>
       chances('melee-received', boss, built(talents), {});
@@ -152,7 +152,7 @@ describe('Anticipation', () => {
      * range, so it would pull the running total backwards and hand its range
      * to whatever came before it.
      */
-    const chances = createForeverAttackChances(() => 'one_hand_shield');
+    const chances = createForeverAttackChances({ targetAttacks: true });
     const boss = createTrainingDummy({ attacks: true });
     const absurd = createPlayer({
       race: 'tauren',
@@ -182,7 +182,7 @@ describe('Anticipation', () => {
   it('gives no block chance to a character with no shield', () => {
     // Defense multiplies a shield's block; it does not conjure one. A
     // dual-wielder with defense skill still blocks nothing.
-    const chances = createForeverAttackChances(() => 'dual_wield');
+    const chances = createForeverAttackChances();
     const boss = createTrainingDummy({ attacks: true });
     const noShield = createPlayer({
       race: 'tauren',
@@ -401,7 +401,7 @@ describe('a Warrior parries five percent before any talent', () => {
   });
 
   it('reaches the table the boss actually rolls against', () => {
-    const chances = createForeverAttackChances(() => 'one_hand_shield');
+    const chances = createForeverAttackChances({ targetAttacks: true });
     const boss = createTrainingDummy({ attacks: true });
     /*
      * 536, NOT 500, AND THE 36 IS NOT A PARRY SOURCE. The tank's enchant row
@@ -471,7 +471,7 @@ describe('block chance and block value are different numbers', () => {
 
   it('adds defense skill to block chance', () => {
     // Twenty defense is 0.8 points, the same as it gives dodge and parry.
-    const chances = createForeverAttackChances(() => 'one_hand_shield');
+    const chances = createForeverAttackChances({ targetAttacks: true });
     const boss = createTrainingDummy({ attacks: true });
     const block = (talents: Record<string, number>) =>
       chances('melee-received', boss, built(talents), {}).block;

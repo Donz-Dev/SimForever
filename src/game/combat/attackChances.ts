@@ -4,11 +4,11 @@ import type {
   AttackContext,
   AttackTableKind,
   Combatant,
+  ParryHaste,
   RollUnits,
   WeaponSlot,
 } from '../../engine';
 import { NO_CHANCES, ROLL_MAX, toRollUnits } from '../../engine';
-import type { CombatStyleId } from '../character';
 
 /**
  * The World of Warcraft: Forever combat table numbers.
@@ -88,7 +88,7 @@ export const COMBAT_CONSTANTS = {
   glanceBase: 1000,
   glancePerDefenseOver300: 200,
 
-  /** Enemy parry. Not derived from skill; see PARRYABLE_STYLES. */
+  /** Enemy parry. Not derived from skill; see `EncounterChances`. */
   enemyParry: 1400,
 
   /** Spells miss on their own flat chance, unaffected by weapon skill. */
@@ -151,6 +151,24 @@ export const COMBAT_CONSTANTS = {
    */
   defensePerSkill: 4,
 
+  /**
+   * PARRY HASTE, in fractions of a full swing.
+   *
+   * ----------------------------------------------------------------------------
+   * THE RULESET OWNER: "successfully parrying an attack reduces the attacker's
+   * remaining swing timer by 40% of their max swing time, provided the
+   * reduction does not lower the timer below 20% of its original duration",
+   * and "this mechanic applies to both players and mobs, including raid
+   * bosses".
+   *
+   * BOTH ARE OF A FULL SWING, which is what makes the mechanic converge rather
+   * than compound -- see `engine/combat/parryHaste.ts`, which owns the rule.
+   * Here are the two numbers and nothing else.
+   * ----------------------------------------------------------------------------
+   */
+  parryHasteReduction: 0.4,
+  parryHasteFloor: 0.2,
+
   bossMiss: 500,
   bossCrush: 1500,
   bossCrushMultiplier: 1.5,
@@ -159,19 +177,41 @@ export const COMBAT_CONSTANTS = {
 } as const;
 
 /**
- * Styles that put the character in front of the target, where it can be
- * parried.
+ * What the ruleset needs to know about the encounter, beyond the two
+ * combatants themselves.
  *
- * INTERPRETATION. The source says enemy parry is 14%, "0% if 1H & Shield is not
- * selected". Read as: only a character tanking with a shield stands in front,
- * and everyone else is behind the target where parry cannot happen.
+ * ------------------------------------------------------------------------------
+ * ONE FIELD, AND IT DECIDES ENEMY PARRY. The source says enemy parry is 14%,
+ * "0% if 1H & Shield is not selected", and that was read as a statement about
+ * the STYLE: only a character tanking with a shield stands in front of the
+ * target, and everybody else is behind it where a parry cannot happen.
+ *
+ * THE RULESET OWNER HAS SINCE STATED THE CONDITION DIRECTLY: "when the Target
+ * Attacks Back checkbox in the Encounter panel is selected, the target gains a
+ * 14% chance to parry you." Which is the same idea one level up -- being in
+ * front of something is what makes it hit you -- and it is a property of the
+ * ENCOUNTER rather than of the weapon in your hand.
+ *
+ * IT MOVES TWO PROFILES IN OPPOSITE DIRECTIONS, and both are corrections. The
+ * BEAR tanks without a shield and was never being parried; it is now. The
+ * SHOCKADIN holds a shield against a target that does not swing back, so it was
+ * eating 14% parry while standing behind a dummy; it no longer is.
+ *
+ * THE STYLE LOOKUP IS GONE WITH IT. Parry was the only thing it fed, so a
+ * provider no longer needs to know how anybody fights -- which also removes the
+ * last reason for `game/combat` to know what a `CombatStyleId` is.
+ * ------------------------------------------------------------------------------
  */
-const PARRYABLE_STYLES: ReadonlySet<CombatStyleId> = new Set<CombatStyleId>([
-  'one_hand_shield',
-]);
-
-/** Looks up the combat style a combatant is fighting in. */
-export type CombatStyleLookup = (combatantId: string) => CombatStyleId | undefined;
+export interface EncounterChances {
+  /**
+   * Whether the target is swinging at the player.
+   *
+   * Defaults to false, so a provider built with no options rolls no enemy
+   * parry -- which is what every standing-target profile and every unit test
+   * that does not say otherwise wants.
+   */
+  readonly targetAttacks?: boolean;
+}
 
 /**
  * Miss chance from a weapon skill deficit.
@@ -282,10 +322,10 @@ export function critSuppression(attackerLevel: number, targetLevel: number): Rol
 
 /** Build the Forever chance provider. */
 export function createForeverAttackChances(
-  styleOf: CombatStyleLookup = () => undefined,
+  encounter: EncounterChances = {},
 ): AttackChanceProvider {
   return (kind, source, target, context) =>
-    buildChances(kind, source, target, context ?? {}, styleOf);
+    buildChances(kind, source, target, context ?? {}, encounter);
 }
 
 function buildChances(
@@ -293,7 +333,7 @@ function buildChances(
   source: Combatant,
   target: Combatant,
   context: AttackContext,
-  styleOf: CombatStyleLookup,
+  encounter: EncounterChances,
 ): AttackChances {
   const stats = source.stats.effective;
   const defense = target.defenseSkill;
@@ -354,7 +394,7 @@ function buildChances(
         ...NO_CHANCES,
         miss: missFromSkill(skill, defense, hit, dualWield),
         dodge: clampChance(dodgeFromSkill(skill, defense) - avoidanceOff),
-        parry: clampChance(parryChance(source, styleOf) - avoidanceOff),
+        parry: clampChance(enemyParry(encounter) - avoidanceOff),
         glance: glanceChance(defense),
         crit,
         glanceMultiplierMin: glance.min,
@@ -370,7 +410,7 @@ function buildChances(
         // per hand. They also never glance.
         miss: missFromSkill(skill, defense, hit, 0),
         dodge: clampChance(dodgeFromSkill(skill, defense) - dodgeParryReduction(source)),
-        parry: clampChance(parryChance(source, styleOf) - dodgeParryReduction(source)),
+        parry: clampChance(enemyParry(encounter) - dodgeParryReduction(source)),
         crit,
         critMultiplier: COMBAT_CONSTANTS.meleeCritMultiplier,
       };
@@ -471,10 +511,20 @@ function clampChance(units: RollUnits): RollUnits {
   return Math.max(0, Math.min(ROLL_MAX, units));
 }
 
-/** Enemy parry, which only applies to a character standing in front of it. */
-function parryChance(source: Combatant, styleOf: CombatStyleLookup): RollUnits {
-  const style = styleOf(source.id);
-  return style !== undefined && PARRYABLE_STYLES.has(style)
-    ? COMBAT_CONSTANTS.enemyParry
-    : 0;
+/** Enemy parry, which only applies to a character the target is swinging at. */
+function enemyParry(encounter: EncounterChances): RollUnits {
+  return encounter.targetAttacks ? COMBAT_CONSTANTS.enemyParry : 0;
 }
+
+/**
+ * Parry haste as a combatant carries it.
+ *
+ * ONE SHAPE FOR BOTH SIDES, because the owner's rule names both: a tank
+ * parrying a boss hurries the boss, and a boss parrying a tank hurries the
+ * tank. `createPlayer` and `createTrainingDummy` hand this to every combatant
+ * they build, so the mechanic is on wherever Forever's numbers are.
+ */
+export const FOREVER_PARRY_HASTE: ParryHaste = {
+  reductionFraction: COMBAT_CONSTANTS.parryHasteReduction,
+  floorFraction: COMBAT_CONSTANTS.parryHasteFloor,
+};

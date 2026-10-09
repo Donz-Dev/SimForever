@@ -1,6 +1,6 @@
 /// <reference lib="webworker" />
-import type { BatchResult } from '../../simulator';
-import { profileDpsSamples, runProfileBatch } from '../../simulator';
+import type { BatchResult, IterationSamples } from '../../simulator';
+import { profileSamples, runProfileBatch } from '../../simulator';
 import type { CharacterProfile } from '../../profiles';
 
 /**
@@ -19,8 +19,10 @@ import type { CharacterProfile } from '../../profiles';
  * jobs, both of which are "run fights and hand back numbers":
  *
  *   batch    one full `runProfileBatch`, for the ordinary results page. Its
- *            `dpsSamples` double as the paired baseline a stat weight needs.
- *   samples  a SLICE of iterations, DPS only. The parallel unit.
+ *            `dpsSamples` and `deathSamples` double as the paired baselines a
+ *            stat weight needs.
+ *   samples  a SLICE of iterations: DPS and deaths, both read off the same
+ *            fights. The parallel unit.
  *
  * A SLICE IS A RANGE OF ITERATION INDICES, which is what makes splitting safe:
  * iteration `i` derives its seed from the base seed the same way wherever it
@@ -58,7 +60,7 @@ export type SimTask = BatchTask | SamplesTask;
 
 export type SimReply =
   | { readonly kind: 'batch'; readonly id: number; readonly batch: BatchResult }
-  | { readonly kind: 'samples'; readonly id: number; readonly samples: number[] }
+  | { readonly kind: 'samples'; readonly id: number; readonly samples: IterationSamples }
   /*
    * A FAILURE COMES BACK AS A MESSAGE RATHER THAN AS AN UNCAUGHT ERROR, so the
    * driver can fail the whole run with the reason on screen. A worker that
@@ -88,7 +90,7 @@ scope.onmessage = (event: MessageEvent<SimTask>) => {
       return;
     }
 
-    const samples = profileDpsSamples(task.profile, task.baseSeed, {
+    const samples = profileSamples(task.profile, task.baseSeed, {
       from: task.from,
       to: task.to,
     });

@@ -84,7 +84,7 @@ describe('a shield gives block chance and block value', () => {
   it('reaches the attacks-received table', () => {
     const warrior = shieldWarrior();
     const dummy = createTrainingDummy({ name: 'D', health: 1000, armor: 0, level: 63 });
-    const chances = createForeverAttackChances(() => 'one_hand_shield')(
+    const chances = createForeverAttackChances({ targetAttacks: true })(
       'melee-received',
       dummy,
       warrior,

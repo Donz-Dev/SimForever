@@ -1,11 +1,12 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type {
   BatchResult,
+  IterationSamples,
   StatWeight,
   StatWeightPlan,
   StatWeightVariant,
 } from '../../simulator';
-import { statWeightPlan, weightsFrom, withStat } from '../../simulator';
+import { statWeightPlan, survivalWeightsFrom, weightsFrom, withStat } from '../../simulator';
 import type { CharacterProfile } from '../../profiles';
 import type { StatName } from '../../engine';
 import type { SimReply, SimTask } from '../workers/simWorker';
@@ -95,6 +96,8 @@ export type StatWeightState =
       readonly plan: StatWeightPlan;
       readonly baseline: BatchResult;
       readonly weights: readonly StatWeight[];
+      /** The same stats again in DEATHS AVOIDED. Empty if nothing died. */
+      readonly survival: readonly StatWeight[];
       readonly fights: number;
       readonly elapsedRealMs: number;
       readonly workers: number;
@@ -220,8 +223,15 @@ export function useStatWeights() {
           setProgress(Math.min(0.999, done / Math.max(1, total)));
         };
 
-        /** One variant's iterations, split across whichever workers are free. */
-        const samplesFor = async (variant: StatWeightVariant): Promise<number[]> => {
+        /**
+         * One variant's iterations, split across whichever workers are free.
+         *
+         * The slices come back in dispatch order and are concatenated in it,
+         * which is what keeps iteration `i` of a variant paired with iteration
+         * `i` of the baseline. Both metrics travel together because both were
+         * read off the same fights.
+         */
+        const samplesFor = async (variant: StatWeightVariant): Promise<IterationSamples> => {
           const runProfile = withStat(profile, variant.statId, variant.added);
           const slices: Promise<SimReply>[] = [];
           for (let start = 0; start < iterations; start += CHUNK) {
@@ -236,12 +246,16 @@ export function useStatWeights() {
             );
           }
           const replies = await Promise.all(slices);
-          const out: number[] = [];
+          const dps: number[] = [];
+          const deaths: number[] = [];
           for (const reply of replies) {
             if (reply.kind === 'error') throw new Error(reply.message);
-            if (reply.kind === 'samples') out.push(...reply.samples);
+            if (reply.kind === 'samples') {
+              dps.push(...reply.samples.dps);
+              deaths.push(...reply.samples.deaths);
+            }
           }
-          return out;
+          return { dps, deaths };
         };
 
         setState({ status: 'running', phase: 'Running', plan });
@@ -273,14 +287,32 @@ export function useStatWeights() {
         if (baselineReply.kind !== 'batch') throw new Error('The baseline came back wrong.');
 
         const baseline = baselineReply.batch;
-        const samples = new Map<string, number[]>(
-          variantResults.map((result) => [result.variant.key, result.samples]),
+        const dps = new Map<string, number[]>(
+          variantResults.map((result) => [result.variant.key, result.samples.dps]),
+        );
+        const deaths = new Map<string, number[]>(
+          variantResults.map((result) => [result.variant.key, result.samples.deaths]),
         );
 
-        const weights = weightsFrom(plan, baseline.dpsSamples, samples);
+        const weights = weightsFrom(plan, baseline.dpsSamples, dps);
+        /*
+         * THE TANK WEIGHTS COST NOTHING EXTRA. Both metrics were read off the
+         * same fights, so the deaths were counted while the damage was being
+         * summed -- there is no second run here, only a second reading.
+         *
+         * EMPTY WHERE NOTHING CAN DIE. A fight the target does not swing in
+         * has a death count of zero on every iteration, so every weight would
+         * come back a confident "nothing" -- true, and twenty rows of it is
+         * noise rather than an answer.
+         */
+        const diedAtAll = baseline.deathSamples.some((count) => count > 0);
+        const survival = diedAtAll
+          ? survivalWeightsFrom(plan, baseline.deathSamples, deaths)
+          : [];
+
         const fights =
           baseline.dpsSamples.length +
-          [...samples.values()].reduce((sum, list) => sum + list.length, 0);
+          [...dps.values()].reduce((sum, list) => sum + list.length, 0);
 
         setProgress(1);
         setState({
@@ -288,6 +320,7 @@ export function useStatWeights() {
           plan,
           baseline,
           weights,
+          survival,
           fights,
           elapsedRealMs: baseline.elapsedRealMs,
           workers: workers.size,

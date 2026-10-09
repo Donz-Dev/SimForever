@@ -548,6 +548,93 @@ visible: SM/DS's two stones were reported at an IDENTICAL 484.6, which two
 different stat bundles do not do across thirty batches. See
 [docs/handoff/warlock.md](docs/handoff/warlock.md).
 
+# TANK STAT WEIGHTS, AND TWO RULESET CHANGES THAT CAME WITH THEM
+
+**FOUR PROFILES MOVED AND TWENTY-ONE DID NOT.** The two rulings below are real
+combat changes, so this is not a containment check that came back clean -- it is
+four rows that were supposed to move and did.
+
+| | was | now | |
+| --- | --- | --- | --- |
+| Prot Warr | 507.5 | **543.5** | **+36.0 REAL** -- parry haste, more rage |
+| Bear | 500.0 | **448.4** | **-51.6 REAL** -- now parried |
+| Shockadin | 608.0 | **667.7** | **+59.7 REAL** -- no longer parried |
+| Prot Pally | 357.0 | **369.7** | **+12.8 REAL** -- parry haste |
+
+## Enemy parry follows the ENCOUNTER, not the weapon in hand
+
+The owner: "when the Target Attacks Back checkbox in the Encounter panel is
+selected, the target gains a 14% chance to parry you." It replaces a reading of
+the source's "0% if 1H & Shield is not selected" as a statement about the STYLE
+-- only a shield tank stands in front of the boss.
+
+**THAT READING WAS WRONG IN BOTH DIRECTIONS EITHER SIDE OF THE ONE CASE IT GOT
+RIGHT.** The BEAR tanks without a shield and was never being parried; the
+SHOCKADIN holds a shield against a dummy that never swings and was being parried
+by it. `CombatStyleLookup` is gone with the change, because enemy parry was the
+only thing it fed -- so a chance provider no longer needs to know how anybody
+fights.
+
+## Parry haste
+
+40% of a full swing off the attacker's remaining timer, floored at 20% of a full
+swing, "to both players and mobs, including raid bosses" -- all the owner's.
+**THE DEFENDER PARRIES AND THE ATTACKER'S TIMER MOVES**, which is the half that
+reads backwards and is the whole danger of it for a tank.
+
+**BOTH FRACTIONS ARE OF A FULL SWING AND NOT OF WHAT IS LEFT.** That is what
+makes it converge: each parry takes a fixed 40% off and the floor sits at 20% of
+a swing, so no run of parries can drive a timer to zero. Read the floor as 20%
+of the REMAINING time and it could be squeezed arbitrarily close, which is a
+different and far more dangerous mechanic.
+
+**IT HAS TO BE SCHEDULED, NOT APPLIED INLINE, AND THE FIRST VERSION FIRED
+EXACTLY ZERO TIMES.** A swing's handler resolves its blow and only THEN
+schedules its successor, so at the moment `dealDamage` sees the parry the handle
+on the combatant is the swing that is CURRENTLY FIRING, with no time left on it.
+**SIX UNIT TESTS PASSED THROUGHOUT**, because a test that calls `dealDamage` by
+hand at a chosen moment DOES leave a real future swing pending -- the one case
+the live path never presents. What caught it was measuring the mechanism's own
+quantity: three tank profiles took **25.5 attacks a fight before the change and
+25.5 after it**. One `events.schedule` at the current timestamp is the fix, and
+it is the same fix for the same reason `extraAttack` schedules rather than
+swinging inline. There is an end-to-end test now that counts swings over a whole
+fight.
+
+**AND IT EXPIRED A TEST THAT HAD BEEN RIGHT, ON SCHEDULE.**
+`paladinTalents.test.ts` asserted Reckoning's 1,500ms internal cooldown "cannot
+bind in THIS encounter, because the one attacker swings slower than it" -- true
+while the boss's slowed swing was 2,400ms, and its own note said it "expires the
+day the encounter swings faster". Parry haste makes that **1,440ms**, sixty
+milliseconds inside the window: the minimum gap is now exactly 1,440ms and **88
+of 1,016 gaps** fall under 1,500ms. The test asserts the opposite now and keeps
+the history.
+
+## The tank table
+
+When the target swings back, a second weights table asks what a point TAKES OFF
+THE DEATH COUNT rather than what it adds to DPS. "Avoid death" is treated as a
+stat in the owner's own framing -- 30 agility taking deaths from 10.5 to 9.8 is
+**+0.7 avoid death** -- so the sign is flipped once and more is better in both
+tables.
+
+**IT COSTS NO EXTRA FIGHTS.** `sampleIterations` counts deaths while it sums
+damage, so the two tables are two readings of ONE measurement rather than two
+runs that might disagree.
+
+**DEATHS ARE A RICH COUNT HERE, WHICH IS WHAT MAKES THEM WEIGHTABLE.** The
+encounter ramps the boss 10% a swing and stands the character back up without
+resetting the ramp, so a tank dies **8 to 11 times** in a sixty-second fight.
+The quantity is really "how far into the ramp this build survives" rather than a
+chance of wiping.
+
+Prot Warr at 600 iterations: dodge chance **0.128 +-0.079** deaths avoided a
+point, parry **0.049**, defense skill **0.015**, agility **0.0069**, stamina
+**0.0058**, armor **0.0004**. A stat that cannot move the count -- attack power,
+spell power -- is left OUT rather than listed at zero, while `inconclusive` rows
+stay, because "the run could not resolve this" is a different statement from
+"this does nothing".
+
 # STAT WEIGHTS — a new feature, and a measurement technique worth reusing
 
 **No DPS figure moved.** Nothing about an existing run changed: `BatchResult`

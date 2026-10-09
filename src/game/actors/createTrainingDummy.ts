@@ -1,5 +1,6 @@
 import { Combatant } from '../../engine';
 import { BOSS_DAMAGE_RAMP_REACTION, bossMeleeWeapon } from '../encounters/raidBoss';
+import { FOREVER_PARRY_HASTE } from '../combat/attackChances';
 
 /**
  * Raid boss level, three above a level 60 character.
@@ -105,6 +106,18 @@ export function createTrainingDummy(options: TrainingDummyOptions = {}): Combata
            * target that is not swinging has nothing to ramp.
            */
           reactions: [BOSS_DAMAGE_RAMP_REACTION],
+          /*
+           * PARRY HASTE ON THE BOSS, which is the half of the mechanic a tank
+           * actually feels: parrying it brings its next swing forward, so a
+           * run of parries can land two blows inside one swing's worth of
+           * healing. The owner states it applies to mobs "including raid
+           * bosses".
+           *
+           * Inside the `attacks` branch because it needs a swing timer to
+           * hurry: a dummy that does not swing has none, so declaring it there
+           * would be a number nothing can read.
+           */
+          parryHaste: FOREVER_PARRY_HASTE,
         }
       : {}),
   });

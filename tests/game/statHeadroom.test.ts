@@ -9,7 +9,6 @@ import { createForeverAttackChances } from '../../src/game/combat/attackChances'
 import { createTrainingDummy } from '../../src/game/actors/createTrainingDummy';
 import { characterAtCombatStart } from '../../src/simulator';
 import { PROFILE_PRESETS } from '../../src/profiles';
-import { resolveCombatStyle } from '../../src/game/character';
 import type { CharacterProfile } from '../../src/profiles';
 
 /*
@@ -51,11 +50,13 @@ function presetNamed(id: string): CharacterProfile {
 function built(profile: CharacterProfile) {
   const player = characterAtCombatStart(profile);
   if (!player) throw new Error('no player');
-  const style = resolveCombatStyle(
-    profile.character.characterClass,
-    profile.character.combatStyle,
-  );
-  return { player, chances: createForeverAttackChances(() => style) };
+  return {
+    player,
+    // Enemy parry depends on whether the target swings back, not on the style.
+    chances: createForeverAttackChances({
+      targetAttacks: profile.encounter.targetAttacks,
+    }),
+  };
 }
 
 describe('tiersFrom', () => {

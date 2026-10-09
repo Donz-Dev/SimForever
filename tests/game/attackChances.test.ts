@@ -23,7 +23,14 @@ function warrior(combatStyle: CombatStyleId) {
   return createPlayer({ race: 'orc', characterClass: 'warrior', combatStyle });
 }
 
-const providerFor = (style: CombatStyleId) => createForeverAttackChances(() => style);
+/*
+ * A provider for a STANDING target. Enemy parry is the only thing the
+ * encounter decides, and a standing target does not parry -- so every table
+ * below reads the same whichever style the character fights in, which is the
+ * point: the style stopped being an input when the owner tied parry to whether
+ * the target swings back.
+ */
+const providerFor = (_style: CombatStyleId) => createForeverAttackChances();
 
 /** A level 60 character at capped skill against a level 63 boss. */
 const SKILL = MAX_WEAPON_SKILL_AT_60; // 300
@@ -229,14 +236,49 @@ describe('melee special attack chances', () => {
 });
 
 describe('enemy parry', () => {
-  it('applies only to 1H & Shield', () => {
-    expect(
-      providerFor('one_hand_shield')('melee-auto', warrior('one_hand_shield'), boss()).parry,
-    ).toBe(COMBAT_CONSTANTS.enemyParry);
+  /*
+   * ============================================================================
+   * IT DEPENDS ON WHETHER THE TARGET SWINGS BACK, NOT ON THE WEAPON IN HAND.
+   *
+   * The ruleset owner: "when the Target Attacks Back checkbox in the Encounter
+   * panel is selected, the target gains a 14% chance to parry you." The source
+   * line it replaces said 14%, "0% if 1H & Shield is not selected", which was
+   * read as a statement about the STYLE -- a shield tank stands in front of the
+   * boss and everybody else is behind it.
+   *
+   * That reading was right about a shield tank and wrong in both directions
+   * either side of it: a BEAR tanks without a shield and was never parried, and
+   * the SHOCKADIN holds a shield against a dummy that never swings and was
+   * being parried by it.
+   * ============================================================================
+   */
+  const swinging = createForeverAttackChances({ targetAttacks: true });
+  const standing = createForeverAttackChances({ targetAttacks: false });
 
-    for (const style of ['two_hander', 'dual_wield'] as CombatStyleId[]) {
-      expect(providerFor(style)('melee-auto', warrior(style), boss()).parry, style).toBe(0);
+  it('applies when the target swings back, whatever the character holds', () => {
+    for (const style of ['one_hand_shield', 'two_hander', 'dual_wield'] as CombatStyleId[]) {
+      expect(swinging('melee-auto', warrior(style), boss()).parry, style).toBe(
+        COMBAT_CONSTANTS.enemyParry,
+      );
     }
+  });
+
+  it('does not apply when it does not, whatever the character holds', () => {
+    for (const style of ['one_hand_shield', 'two_hander', 'dual_wield'] as CombatStyleId[]) {
+      expect(standing('melee-auto', warrior(style), boss()).parry, style).toBe(0);
+    }
+  });
+
+  it('reaches the special table as well as the swing', () => {
+    // "0% if 1H & Shield is not selected" was never about one table: a parry
+    // is the target turning a blow aside, and a special is a blow.
+    expect(swinging('melee-special', warrior('two_hander'), boss()).parry).toBe(
+      COMBAT_CONSTANTS.enemyParry,
+    );
+  });
+
+  it('defaults to off, so a provider built with no encounter rolls none', () => {
+    expect(createForeverAttackChances()('melee-auto', warrior('one_hand_shield'), boss()).parry).toBe(0);
   });
 });
 

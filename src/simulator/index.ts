@@ -22,13 +22,13 @@ export { characterAtCombatStart } from './characterAtCombatStart';
  * and the reason it is a module rather than a loop is in `statWeights.ts`:
  * shared seeds, a per-variant interval, and a capped stat measured as a ladder.
  *
- * `dpsSamplesFor` is exported alongside it because the UI's worker pool is a
+ * `sampleIterations` is exported alongside it because the UI's worker pool is a
  * second driver over the same pieces -- it slices the iterations across cores
  * and then calls `allocate`, `pairedDelta` and `weightsFrom` here, so there is
  * one implementation of the statistics and not one per thread.
  */
-export type { SampleSlice } from './dpsSamples';
-export { dpsSamplesFor, profileDpsSamples } from './dpsSamples';
+export type { IterationSamples, SampleSlice } from './iterationSamples';
+export { profileSamples, sampleIterations } from './iterationSamples';
 export type {
   HeadroomReport,
   HeadroomSlice,
@@ -50,6 +50,7 @@ export {
   pairedDelta,
   runStatWeights,
   statWeightPlan,
+  survivalWeightsFrom,
   weightsFrom,
   withStat,
 } from './statWeights';

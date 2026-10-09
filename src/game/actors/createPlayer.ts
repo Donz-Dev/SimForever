@@ -17,6 +17,7 @@ import {
   bindModifiers,
   makeStats,
 } from '../../engine';
+import { FOREVER_PARRY_HASTE } from '../combat/attackChances';
 import { abilitiesForBuild } from '../abilities/abilitiesForClass';
 import { withQuiverAndAmmo } from '../character/hunterRanged';
 import type {
@@ -712,6 +713,13 @@ export function createPlayer(options: PlayerOptions): Combatant {
     costRefundOnMiss: COST_REFUND_ON_MISS,
     // 2.0 for a Warrior, 1.75 for a Bear Druid, 1 for everyone else.
     critResourceMultiplier: critRageMultiplierFor(characterClass, style),
+    /*
+     * PARRY HASTE APPLIES TO PLAYERS TOO, which is the owner's own wording:
+     * "this mechanic applies to both players and mobs". So a boss parrying a
+     * strike hurries the character's next swing exactly as the character
+     * parrying hurries the boss's.
+     */
+    parryHaste: FOREVER_PARRY_HASTE,
   });
 
   /*

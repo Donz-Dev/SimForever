@@ -327,28 +327,29 @@ describe("Reckoning's internal cooldown", () => {
     ).toBe(true);
   });
 
-  it('cannot bind in THIS encounter, because the one attacker swings slower than it', () => {
+  it('CAN bind now, because parry haste hurries the one attacker inside it', () => {
     /*
-     * --------------------------------------------------------------------
-     * WHY THE CHANGE MEASURED 0.0 ON THE PROT PALLY, to the decimal, and it
-     * is arithmetic rather than luck.
+     * ======================================================================
+     * THIS TEST USED TO ASSERT THE OPPOSITE, AND PARRY HASTE EXPIRED IT.
      *
-     * The encounter has ONE attacker on a two-second swing timer, widened by
-     * the tank's own Thunder Clap slow: 25 attacks received over a fight,
-     * median and minimum gap both 2,400ms, and NOT ONE gap under 1,500ms.
-     * Two triggerable events can therefore never fall inside the window, so
-     * the cooldown refuses nothing and the profile cannot move.
+     * It read "cannot bind in THIS encounter, because the one attacker swings
+     * slower than it", and the arithmetic was right at the time: one attacker
+     * on a two-second timer, widened by the tank's own Thunder Clap slow to
+     * 2,400ms, so no two attacks could fall inside Reckoning's 1,500ms window
+     * and the internal cooldown refused nothing. The Prot Pally measured 0.0
+     * to the decimal and this recorded why.
      *
-     * AN ENCOUNTER CAUSE, NOT A GAP -- it expires the day the encounter swings
-     * faster or has a second attacker. The mechanism is tested above by
-     * driving the reaction directly; this records WHY it is worth nothing, so
-     * nobody reads the 0.0 as the change having failed to apply. A change that
-     * measures nothing is otherwise indistinguishable from one that did not
-     * land.
-     * --------------------------------------------------------------------
+     * PARRY HASTE TAKES 40% OF A FULL SWING OFF, so 2,400ms becomes 1,440ms
+     * -- sixty milliseconds inside the window. Measured over forty fights:
+     * the minimum gap is exactly 1,440ms and 88 of 1,016 gaps fall under
+     * 1,500ms, so the cooldown now binds on about one gap in twelve.
+     *
+     * IT IS THE ENCOUNTER CAUSE EXPIRING EXACTLY AS IT SAID IT WOULD -- "it
+     * expires the day the encounter swings faster or has a second attacker".
+     * Kept rather than deleted, because the reason the figure moved is worth
+     * more than the figure.
+     * ======================================================================
      */
-    expect(seconds(PLACEHOLDER_BOSS_SWING_SECONDS)).toBeGreaterThan(RECKONING_ICD_MS);
-
     const run = runProfile(built('prot_pally'), 1);
     const playerId = run.actors.find((actor) => actor.kind === 'player')!.id;
     const received = run.timeline
@@ -357,7 +358,16 @@ describe("Reckoning's internal cooldown", () => {
 
     expect(received.length).toBeGreaterThan(10);
     const gaps = received.slice(1).map((time, index) => time - received[index]);
-    expect(Math.min(...gaps)).toBeGreaterThanOrEqual(RECKONING_ICD_MS);
+
+    /*
+     * THE FLOOR IS THE HASTED SWING, not zero: 40% off a 2,400ms swing is the
+     * most one parry can buy, and the 20% floor stops a run of them going
+     * further. So no gap can be shorter than 1,440ms however many land.
+     */
+    const hurried = seconds(PLACEHOLDER_BOSS_SWING_SECONDS) * 1.2 * 0.6;
+    expect(Math.min(...gaps)).toBeGreaterThanOrEqual(hurried);
+    // And at least one gap is now inside the window the cooldown guards.
+    expect(Math.min(...gaps)).toBeLessThan(RECKONING_ICD_MS);
   });
 
   it('checks the cooldown BEFORE rolling, so a blocked proc consumes no randomness', () => {
