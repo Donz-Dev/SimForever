@@ -1,5 +1,47 @@
 # FOREVER PATCH 1.60.1.70170 — FIVE rounds of change, read them as one
 
+**THE LAST THREE COMMITS OF IT WENT OUT IN ONE SESSION, AND WHAT THEY HAVE IN
+COMMON IS THAT NONE OF THEM WAS A NEW MECHANIC.** Two were owner changes to
+numbers already modelled, one was two rulings that changed no code, and the
+largest effect of the three came from a figure this repository had had wrong for
+a year with its own docs recording the discrepancy.
+
+| | | |
+| --- | --- | --- |
+| `9e4b4d0` | round four: Bear crit rage 2.0x, Shifting Power gated on energy, Reckoning's internal cooldown | Cat **+13.2**, and **one change measuring exactly 0.0 for an arithmetic reason** |
+| `4672bde` | two rulings: Ice Lance's frozen case and Evocation's zero casts are both "intended" | no code; five sites stopped describing them as interpretations |
+| `0d91c7c` | round five: melee and ranged miss **8%** against a level 63 target | **15 of 25 rows**, the widest-reaching change of the patch |
+
+**THREE OF THE FOUR THINGS WORTH REMEMBERING ARE ABOUT MEASUREMENT RATHER THAN
+ABOUT THE RULESET**, and all three are now in CLAUDE.md:
+
+- **A change that measures 0.0 can be correct AND correctly worthless, for a
+  reason the encounter decides.** Reckoning's 1.5-second cooldown cannot bind
+  against one attacker swinging every 2.4 seconds. Probed rather than shrugged
+  at, because an unexplained zero is indistinguishable from a change that never
+  applied -- and the comment already beside the constant had PREDICTED the
+  opposite in specific terms.
+- **A gate can be worth POSITIVE DPS.** Every other condition in the project
+  refuses a cast; one on an ability that GRANTS a resource stops the grant
+  overflowing, so the Cat casts Shifting Power less and collects more.
+- **A difference that gets documented still needs somebody to call it wrong.**
+  The miss derivation reproduced two of the three flat constants it replaced and
+  moved the third by a point, and said so in `docs/combat-tables.md` for a year.
+
+And the fourth, which is about the shape of a patch rather than any one change:
+**neither a write-up nor an empty question list ends one.** Round four arrived
+after rounds one to three were documented as finished; round five arrived after
+the commit that closed the last two open questions, and was bigger than either.
+
+**TWO PEER BRANCHES ALSO MERGED DURING ROUND FIVE** -- a 25th profile and a
+Rogue talent fix -- so its figures were taken three times. That is written up
+with the round, and the transferable half is in CLAUDE.md: a delta is only
+meaningful against the baseline it was taken from, and patching the one row that
+moved publishes a comparison between two different baselines.
+
+---
+
+
 ## Round five: melee and ranged miss 8% against a level 63 target, not 9%
 
 **AND THE DERIVATION HAD BEEN WRONG SINCE PR #10, WITH THIS REPOSITORY'S OWN
@@ -513,10 +555,11 @@ gets built is [docs/class-implementation.md](docs/class-implementation.md).
 
 ## Where the project is
 
-All nine classes and all 24 profiles are implemented, every number traced to a
-source rather than invented, and **all 24 priority lists are the ruleset owner's
-own** -- specified entry by entry and measured after. **2,723 tests**, CI green
-on Node 20 and 22. Profile format **v12**. Live at
+All nine classes and all **25** profiles are implemented, every number traced to a
+source rather than invented, and **every priority list is the ruleset owner's
+own** -- specified entry by entry and measured after, the newest being Hawk
+Melee's, given as "the same as the LW melee hunter" plus one placement.
+**2,750 tests**, CI green on Node 20 and 22. Profile format **v12**. Live at
 <https://donz-dev.github.io/SimForever/>, republished by
 `.github/workflows/deploy.yml` on every push to `main` that passes.
 
@@ -532,15 +575,35 @@ demonstrated at the top. **Re-count rather than re-reading the sentence.**
 | --- | --- |
 | **Talents** | 260 fully, 39 partly, 105 ruled out, **62 a live gap**, out of **466** -- from 132 before the class dives |
 | **Abilities** | 114 declared against 478 captured |
-| **Profiles** | 24, all measured, **mean 689.4** -- the armour enchants are +27.0 of it and the consumables +105.9 |
-| **Scope rulings** | 7 members, all the owner's |
+| **Profiles** | **25**, all measured, **mean 698.8** -- the armour enchants are +27.0 of it and the consumables +105.9 |
+| **Scope rulings** | **9 members**, all the owner's, carrying 129 entries |
 | **Placeholders** | **10 declared** -- see the milestone table, and count DECLARATIONS |
-| **Tests** | 2,723 on Node 20 and 22 |
+| **Tests** | **2,750** on Node 20 and 22 |
 
 **FOUR CLASSES ARE ESSENTIALLY DONE** -- Warrior 1 live gap, Paladin 1, Druid 2,
 Rogue 3 -- and the remaining 62 sit mostly in the Warlock (19), Priest (12) and
 Mage (10). **The Warlock's 19 overstates its own work**: thirteen of them are one
 build cause, Demonic Sacrifice killing the demon, so its real queue is about 11.
+
+**EVERY FIGURE IN THAT TABLE IS RE-DERIVED RATHER THAN ADJUSTED**, and the two
+that moved this time moved for different reasons: the profile count because a peer
+branch added **Hawk Melee**, a fourth Hunter build, and the mean because of that
+AND because round five of the patch raised fifteen rows. **The mean is re-summed
+from the table's own 25 rows** -- 689.4 and 690.2 are earlier published figures
+that still appear in this file against the rounds they belong to, and 704.8 was
+over 24 profiles, so it is not comparable to 698.8. The census, placeholder and
+`scope` figures were re-counted and had not moved: **260 / 39 / 105 / 62 of 466**
+from `tools/class_audit.ts`, 10 placeholder DECLARATIONS, and **129 scope entries
+across NINE members**.
+
+**AND THAT LAST COUNT CORRECTS BOTH FILES, WHICH HAD SAID SEVEN.** `OutOfScope`
+declares nine and all nine are used. "Seven members, all of them the owner's" was
+true on the day the Shaman dive's two were ratified, and `dispel` and `immunity`
+arrived later from a single question whose answer split in two -- so the sentence
+recording the ratification was correct and the total beside it was never updated.
+**A COUNT IN PROSE DECAYS EVEN WHEN THE SENTENCE AROUND IT STAYS TRUE**, which is
+why the instruction is to re-count rather than adjust, and why the one-liner that
+does it is written down next to the table.
 
 **THE TALENT TOTAL IS 466 AND WAS 468**, which is client build 1.60.1.70170
 removing four talents and adding three. Every figure in that row is re-counted

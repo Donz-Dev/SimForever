@@ -56,25 +56,32 @@ owner rulings rather than new engine capability. [HANDOVER.md](HANDOVER.md) has 
 recap.
 
 **A PATCH ARRIVES IN WAVES, AND THE NOTES ARE ONLY THE FIRST ONE.** The
-1.60.1.70170 work took FOUR rounds and the notes were round one:
+1.60.1.70170 work took FIVE rounds across seven commits, and the notes were round
+one:
 
 | | what it was | largest effect |
 | --- | --- | --- |
 | 1 | the notes, plus four silent tree changes the importers found | DW Fury **+101.6**, Seal Twist Ret **-98.5** |
 | 2 | four rulings on questions round one RAISED | Fire **-187.6** |
 | 3 | one more coefficient the owner gave afterwards | Frostfire **-159.3** |
-| 4 | three more changes, arriving AFTER the write-up commit | Cat **+13.2** |
+| — | the write-up commit, documenting rounds one to three as a finished patch | no code |
+| 4 | three more changes, arriving AFTER that write-up | Cat **+13.2** |
+| — | two rulings closing the last open questions, both "intended" | no code |
+| 5 | melee and ranged miss 8% not 9%, arriving after THAT | **15 of 25 rows** |
 
-**THREE OF THE FOUR ROUNDS WERE EACH LARGER THAN ANYTHING IN THE NOTES.** So "the
+**FOUR OF THE FIVE ROUNDS WERE EACH LARGER THAN ANYTHING IN THE NOTES.** So "the
 patch notes are exhausted" is not "the patch is implemented": what the notes
 actually produce is a list of QUESTIONS, and the answers keep arriving. Plan for
 a patch to land in several commits and expect to re-measure after each.
 
-**AND THE WRITE-UP IS NOT THE END EITHER.** Round four arrived after rounds one
-to three had been documented as a finished patch in a commit of its own, so the
-header summarising them had to be reopened and its mean re-summed -- 689.4 was a
-round-three figure that read as the patch's final one. **Write the recap so
-another round can be added to it**, rather than as a closing statement.
+**AND NEITHER THE WRITE-UP NOR AN EMPTY QUESTION LIST IS THE END.** Round four
+arrived after rounds one to three had been documented as a finished patch in a
+commit of its own; round five arrived after a commit that closed the last two
+open questions, and it was the widest-reaching of the five. The header summarising
+them has been reopened twice and its mean re-summed three times -- 689.4 and 690.2
+are both still in `HANDOVER.md` as published figures that are no longer the mean.
+**Write the recap so another round can be added to it**, rather than as a closing
+statement, and name the round each figure belongs to.
 
 **EVERY ROUND'S FIGURES WERE PUBLISHED, AND THE TOP ROW CHANGED TWICE** --
 Frostfire to DW Fury, by way of Frostfire again. The baseline table was rebuilt
@@ -257,11 +264,26 @@ the project counted as work.**
 **THE LAST TWO WERE PROPOSED BY THE SHAMAN DIVE AND THE OWNER HAS SINCE RATIFIED
 THEM** -- "castPushback and totemEntities don't need to be implemented". So both
 are rulings in the full sense now, and the "blocked twice" argument that proposed
-them is a test worth reusing rather than a liberty that was taken. **Seven members,
-all of them the owner's.**
+them is a test worth reusing rather than a liberty that was taken. **Seven members
+at that point, all of them the owner's** -- NINE now, and see below.
 
 `totemEntities` is still narrower than it sounds: a DAMAGE totem turned out to be
 expressible, and Searing Totem is modelled as a debuff that ticks.
+
+**AND THE COUNT ABOVE IS NINE MEMBERS, NOT SEVEN, WHICH THIS FILE SAID FOR
+SEVERAL RELEASES.** `OutOfScope` declares nine and the table above has nine rows
+summing to **129 entries**. "Seven members, all of them the owner's" was true the
+day the Shaman dive's `castPushback` and `totemEntities` were ratified; `dispel`
+and `immunity` came later, from the one question whose answer split in two, and
+the sentence recording the earlier ratification was left with a total that had
+moved underneath it. **BOTH HALVES OF THAT SENTENCE WERE TRUE WHEN WRITTEN AND
+ONLY ONE OF THEM EXPIRED**, which is the compound-claim failure this file
+documents for `unmodelled` reasons, in prose instead of in a declaration. Count
+the union's members and the entries:
+
+```bash
+grep -rhoE "scope: '[a-zA-Z]+'" src/game/talents/ | sort | uniq -c   # entries, per member
+```
 
 ## Conventions that prevent real bugs
 
@@ -2780,6 +2802,27 @@ Paladin spends 3425 of the 3449 mana it gains. **And the cross-check that
 separates "cannot afford it" from "broken" is another build firing the same
 ability** — the Shockadin casts it 0.3 times a fight on more mana.
 
+**A DIFFERENCE THAT GETS WRITTEN DOWN STILL NEEDS SOMEBODY TO CALL IT WRONG.**
+The commit that derived the combat tables from weapon skill recorded, in
+`docs/combat-tables.md`, that "the formulas are consistent with the constants they
+replace; **only miss moves, from 8% to 9%**" -- dodge reproduced its flat 6.5%
+exactly, glance its 40% exactly, and miss alone changed by a point, because the
+large-gap regime was given a second, higher base. `BASE_CHANCES.meleeMiss` had
+been **8**, from the owner's own combat table.
+
+**TWO OF THREE FIGURES REPRODUCING AND THE THIRD MOVING IS THE SHAPE OF A BUG**,
+and that sentence sat for a year reading as a note ABOUT the formula rather than
+as a defect in it. Nobody was misled by the code; they were misled by the
+sentence above it agreeing with it. The owner eventually restored the figure as a
+patch note -- "the new melee and ranged attack miss chance against a level 63
+target is now 8% not 9%" -- and it was worth **+1.7 to +11.7 across 15 of the 25
+profiles**, the widest-reaching change of the five patch rounds.
+
+**SO WHEN A DERIVATION REPLACES FLAT CONSTANTS, THE CHECK IS THAT IT REPRODUCES
+EVERY ONE OF THEM**, and a single exception is the finding rather than a footnote.
+It is the same failure as a reason that describes a working half: a true,
+specific, written-down statement that nobody treats as a question.
+
 **When a fix moves nothing in the suite, that is a statement about the suite.**
 
 **AN INERT BUFF WITH VISIBLE UPTIME IS THE HARDEST KIND TO FIND, BECAUSE THE
@@ -2902,6 +2945,38 @@ branch had to be taken again — the baseline is whatever `main` says on the day
 not whatever it said when the branch started. **Re-measure after the rebase and
 check the untouched rows moved by 0.0 to the decimal**, which is the same
 containment check a gear commit uses.
+
+**IT HAPPENED TWICE IN ONE BRANCH ON THE MISS CHANGE, SO EVERY FIGURE WAS TAKEN
+THREE TIMES.** A 25th profile merged (Hawk Melee) and then Seal Fate's per-use
+cap merged, and the two cost different things:
+
+| | what merged | what it cost the round |
+| --- | --- | --- |
+| a new PROFILE | Hawk Melee at 824.4 | a full re-measure. The 24 originals reproduced to the decimal and the new row came in at +1.7 |
+| a change to a profile the round TOUCHED | Venom 600.8 → 594.5 | a full re-measure, and **this round's figure for Venom went +9.7 to +7.0** |
+
+**A DELTA IS ONLY MEANINGFUL AGAINST THE BASELINE IT WAS TAKEN FROM.** Venom's
++9.7 was measured against a baseline that no longer existed; the honest figure
+against what ships is +7.0. So a peer merge to any profile a change touches
+invalidates that profile's delta **even though the mechanism is untouched and the
+re-measured rows agree to the decimal everywhere else**. Patching the one row is
+the tempting repair and it publishes a difference between two different baselines.
+
+**AND THE CHEAP ISOLATION IS TO REVERT THE ONE BEHAVIOUR-AFFECTING FILE**, not to
+build a second worktree: `git checkout origin/main -- <file>`, measure, then
+`git checkout HEAD -- <file>` and measure again. The miss change touched six
+files and only `attackChances.ts` could move a number, so that pair of commands
+is the whole before-and-after -- and it satisfies the rule that a probe must
+revert EVERY file the change touched, because docs and tests cannot move a
+figure.
+
+**A MEAN ACROSS A CHANGED PROFILE COUNT IS NOT A COMPARISON.** The table's mean is
+**698.8 over 25** and the five patch rounds took the 24 builds that existed
+throughout from 704.8 to 693.9. Reading 704.8 against 698.8 says the project fell
+6.0, when those builds fell 10.9 and a new row above the mean pulled the average
+up. **State the count beside the mean, or compare the rows** -- the denominator
+moved inside the same commit range as the figures, which is exactly when a mean
+stops being a time series.
 
 **AND CHAIN THE BASELINES WHEN A PIECE OF WORK LANDS IN SEVERAL COMMITS.** The
 1.60.1.70170 patch went out in three, and each round's `SAVE=` file was the next
