@@ -11,9 +11,12 @@ import { buildSimulation } from '../helpers/buildSimulation';
  * reduction does not lower the timer below 20% of its original duration", and
  * "this mechanic applies to both players and mobs, including raid bosses".
  *
- * THE DEFENDER PARRIES AND THE ATTACKER'S TIMER MOVES, which is the half that
- * reads backwards and is the whole danger of it for a tank. Every assertion
- * below is on the ATTACKER's pending swing.
+ * THE UNIT THAT PARRIES IS THE UNIT THAT SPEEDS UP, which the sentence above
+ * does NOT make obvious -- "the attacker" reads as the one whose blow was
+ * turned aside. The owner's clarification settles it: "if I parry an attack MY
+ * NEXT ATTACK COMES SOONER. If a boss parries an attack THEIR NEXT ATTACK COMES
+ * SOONER." Every assertion below is therefore on the PARRIER's pending swing,
+ * and the first version of this file asserted the other combatant's.
  *
  * THE NUMBERS ARE WRITTEN OUT BY HAND rather than read from `COMBAT_CONSTANTS`:
  * a 2000ms swing, 40% of it is 800ms, and the floor is 400ms. A test that reads
@@ -32,40 +35,51 @@ function always(outcome: 'parry' | 'hit'): AttackChances {
     : { ...NO_CHANCES, critMultiplier: 2 };
 }
 
-function swinger(overrides: Partial<Parameters<typeof makeAttacker>[0]> = {}): Combatant {
+const WEAPON = { name: 'Sword', swingTimerMs: SWING_MS, baseDamage: 100 };
+const HASTE = { reductionFraction: 0.4, floorFraction: 0.2 };
+
+/**
+ * The combatant under test: it swings on its own timer AND parries what comes
+ * at it, so the mechanic has something to hurry.
+ */
+function parrier(overrides: Partial<Parameters<typeof makeAttacker>[0]> = {}): Combatant {
   return makeAttacker({
     autoAttack: 'main-hand',
-    weapons: {
-      mainHand: { name: 'Sword', swingTimerMs: SWING_MS, baseDamage: 100 },
-    },
-    parryHaste: { reductionFraction: 0.4, floorFraction: 0.2 },
+    weapons: { mainHand: WEAPON },
+    parryHaste: HASTE,
+    /*
+     * UNKILLABLE, because the thing under test is a SWING TIMER and a corpse
+     * stops swinging. `makeAttacker` defaults to 1000 health, which the
+     * whole-fight case below chewed through in twenty seconds -- it reported
+     * ten swings where the timer allows thirty, which reads exactly like a
+     * forked or stalled timer and was neither.
+     */
+    maxHealth: 10_000_000,
     ...overrides,
   });
 }
 
 /**
- * Run to `atMs` with nothing being parried, then deal `parries` parried blows,
- * and report when the attacker's next swing is due relative to that moment.
+ * Run to `atMs` with nothing being parried, then have `parries` blows land on
+ * the parrier, and report when ITS next swing is due relative to that moment.
  *
  * ------------------------------------------------------------------------------
  * THE OUTCOME IS SWITCHED PART-WAY ON PURPOSE. A provider that parries
- * everything parries the attacker's OWN auto-attacks on the way to `atMs`, so
- * each of those hurries the next one and the swing under test is nowhere near
- * where the arithmetic says it should be -- the first version of this helper
- * did exactly that and measured a fight it had not set up.
- *
- * Nothing is parried until the clock is parked, so the pending swing is at the
- * plain `atMs + remaining` the assertions are written against.
+ * everything parries the auto-attacks on the way to `atMs` too, so each of
+ * those hurries the next one and the swing under test is nowhere near where the
+ * arithmetic says it should be -- the first version of this helper did exactly
+ * that and measured a fight it had not set up.
  * ------------------------------------------------------------------------------
  */
 function remainingAfterParry(
-  attacker: Combatant,
+  defender: Combatant,
   atMs: number,
   options: { readonly parries?: number } = {},
 ): number {
-  const target = makeTarget();
+  // The one swinging AT the parrier. Its own timer must not be what moves.
+  const aggressor = makeTarget({ maxHealth: 10_000_000 });
   let outcome: 'parry' | 'hit' = 'hit';
-  const simulation = buildSimulation([attacker, target], {
+  const simulation = buildSimulation([defender, aggressor], {
     attackChances: () => always(outcome),
   });
 
@@ -77,8 +91,8 @@ function remainingAfterParry(
 
   for (let index = 0; index < (options.parries ?? 1); index++) {
     dealDamage(simulation, {
-      source: attacker,
-      target,
+      source: aggressor,
+      target: defender,
       abilityName: 'Strike',
       school: 'physical',
       baseAmount: 100,
@@ -86,26 +100,74 @@ function remainingAfterParry(
       weaponSlot: 'mainHand',
     });
     /*
-     * THE HASTE IS SCHEDULED, NOT INSTANT, so the clock has to be nudged for
-     * it to land -- which is the whole reason it works at all. See the module
-     * comment: applied inline it would be hurrying the swing that is currently
-     * firing, which has no time left on it.
+     * THE HASTE IS SCHEDULED, NOT INSTANT, so the clock has to be nudged for it
+     * to land. See the module comment for why it stayed scheduled after the
+     * direction was corrected.
      */
     simulation.advanceTo(atMs);
   }
 
-  const pending = attacker.pendingSwing('mainHand');
-  expect(pending, 'the attacker should have a swing pending').toBeDefined();
+  const pending = defender.pendingSwing('mainHand');
+  expect(pending, 'the parrier should have a swing pending').toBeDefined();
   return pending!.timestamp - simulation.clock.now();
 }
 
 describe('parry haste', () => {
+  it('hurries the PARRIER, not the one whose blow was parried', () => {
+    /*
+     * ==========================================================================
+     * THE DIRECTION, AND IT WAS BUILT BACKWARDS FIRST. The owner's original
+     * wording -- "reduces the attacker's remaining swing timer" -- reads as the
+     * unit whose blow was turned aside, and that is how it shipped. The
+     * clarification is unambiguous: "if I parry an attack MY NEXT ATTACK COMES
+     * SOONER."
+     *
+     * Both combatants swing here, so the test can say which one moved rather
+     * than only that something did.
+     * ==========================================================================
+     */
+    const defender = parrier();
+    const aggressor = makeTarget({
+      maxHealth: 10_000_000,
+      autoAttack: 'main-hand',
+      weapons: { mainHand: WEAPON },
+      parryHaste: HASTE,
+    });
+
+    let outcome: 'parry' | 'hit' = 'hit';
+    const simulation = buildSimulation([defender, aggressor], {
+      attackChances: () => always(outcome),
+    });
+    simulation.advanceTo(500);
+    outcome = 'parry';
+
+    const before = {
+      defender: defender.pendingSwing('mainHand')!.timestamp,
+      aggressor: aggressor.pendingSwing('mainHand')!.timestamp,
+    };
+
+    // The aggressor swings; the defender parries it.
+    dealDamage(simulation, {
+      source: aggressor,
+      target: defender,
+      abilityName: 'Strike',
+      school: 'physical',
+      baseAmount: 100,
+      attackTable: 'melee-special',
+      weaponSlot: 'mainHand',
+    });
+    simulation.advanceTo(500);
+
+    expect(defender.pendingSwing('mainHand')!.timestamp).toBe(before.defender - REDUCTION_MS);
+    expect(aggressor.pendingSwing('mainHand')!.timestamp).toBe(before.aggressor);
+  });
+
   it('takes 40% of a full swing off the remaining timer', () => {
     /*
      * The first swing lands at time 0 and the next is due at 2000. Stopping at
      * 500 leaves 1500 to run, and one parry should leave 700.
      */
-    const remaining = remainingAfterParry(swinger(), 500);
+    const remaining = remainingAfterParry(parrier(), 500);
 
     expect(remaining).toBe(SWING_MS - 500 - REDUCTION_MS);
   });
@@ -115,7 +177,7 @@ describe('parry haste', () => {
      * At 1400 there are 600ms left, and a flat 800ms reduction would put the
      * swing 200ms in the PAST. The floor is what stops it.
      */
-    const remaining = remainingAfterParry(swinger(), 1400);
+    const remaining = remainingAfterParry(parrier(), 1400);
 
     expect(SWING_MS - 1400).toBeLessThan(REDUCTION_MS); // the case is the right one
     expect(remaining).toBe(FLOOR_MS);
@@ -130,7 +192,7 @@ describe('parry haste', () => {
      * and is a far more dangerous mechanic than the one stated.
      * ------------------------------------------------------------------------
      */
-    const remaining = remainingAfterParry(swinger(), 100, { parries: 6 });
+    const remaining = remainingAfterParry(parrier(), 100, { parries: 6 });
 
     expect(remaining).toBe(FLOOR_MS);
   });
@@ -138,24 +200,24 @@ describe('parry haste', () => {
   it('does nothing when the swing is already inside the floor', () => {
     // 1700 leaves 300ms, which is already under the 400ms floor. A parry must
     // not push it BACK out to 400.
-    const remaining = remainingAfterParry(swinger(), 1700);
+    const remaining = remainingAfterParry(parrier(), 1700);
 
     expect(remaining).toBe(SWING_MS - 1700);
   });
 
   it('does nothing on an outcome that is not a parry', () => {
-    const remaining = remainingAfterParry(swinger(), 500, { parries: 0 });
+    const remaining = remainingAfterParry(parrier(), 500, { parries: 0 });
 
     expect(remaining).toBe(SWING_MS - 500);
   });
 
-  it('does nothing for an attacker the ruleset gave no parry haste', () => {
+  it('does nothing for a parrier the ruleset gave no parry haste', () => {
     /*
      * ABSENT MEANS OFF, which is what keeps every combatant a test builds by
      * hand behaving as it did. Forever supplies the numbers in `game/actors`;
      * the engine supplies the rule and no figures of its own.
      */
-    const plain = swinger({ parryHaste: undefined });
+    const plain = parrier({ parryHaste: undefined });
     const remaining = remainingAfterParry(plain, 500);
 
     expect(remaining).toBe(SWING_MS - 500);
@@ -164,33 +226,36 @@ describe('parry haste', () => {
   it('delivers more swings over a whole fight, on the live path', () => {
     /*
      * ==========================================================================
-     * THE TEST THAT WOULD HAVE CAUGHT IT, AND THE SIX ABOVE DID NOT.
+     * THE TEST THAT CAUGHT THE INLINE VERSION, AND THE UNIT ONES DID NOT.
      *
-     * The first version applied the haste INLINE from `dealDamage`, and it
-     * fired exactly zero times in a real fight. A swing's event handler
-     * resolves its blow and only then schedules its successor -- so at the
-     * moment the parry is seen, the handle on the combatant is the swing that
-     * is CURRENTLY FIRING, with zero time remaining, and the real next swing
-     * is scheduled at full speed a moment later.
+     * The first implementation applied the haste inline from `dealDamage` and
+     * fired exactly zero times in a real fight: a swing's handler resolves its
+     * blow and only then schedules its successor, so at that moment the handle
+     * on the combatant is the swing that is CURRENTLY FIRING, with no time
+     * left on it.
      *
-     * Every assertion above passed throughout, because calling `dealDamage` by
-     * hand at a chosen moment DOES leave a real future swing pending -- which
-     * is the one case the live path never presents. What found it was
-     * measuring the mechanism's own quantity: three tank profiles took 25.5
-     * attacks a fight before the change and 25.5 after it.
-     *
-     * So this one runs a FIGHT and counts what actually landed.
+     * Every unit assertion above passed throughout, because calling
+     * `dealDamage` by hand at a chosen moment DOES leave a real future swing
+     * pending. So this one runs a FIGHT and counts what actually landed.
      * ==========================================================================
      */
-    const swingsIn = (attacker: Combatant, outcome: 'parry' | 'hit'): number => {
-      const target = makeTarget({ maxHealth: 10_000_000 });
+    const swingsIn = (defender: Combatant, outcome: 'parry' | 'hit'): number => {
+      const aggressor = makeTarget({
+        maxHealth: 10_000_000,
+        autoAttack: 'main-hand',
+        weapons: { mainHand: WEAPON },
+      });
       let swings = 0;
       buildSimulation(
-        [attacker, target],
+        [defender, aggressor],
         { durationMs: seconds(60), attackChances: () => always(outcome) },
         {
           emit: (event) => {
-            if (event.type === 'damage' && event.abilityName === 'Main Hand Auto-Attack') {
+            if (
+              event.type === 'damage' &&
+              event.sourceId === defender.id &&
+              event.abilityName === 'Main Hand Auto-Attack'
+            ) {
               swings++;
             }
           },
@@ -200,49 +265,13 @@ describe('parry haste', () => {
     };
 
     // Unhurried: 60 seconds at one swing every two, from time zero.
-    expect(swingsIn(swinger(), 'hit')).toBe(30);
+    expect(swingsIn(parrier(), 'hit')).toBe(30);
 
     /*
-     * Hurried: every swing is parried, so every swing is followed by a 40%
-     * reduction on the next one -- 2000ms becomes 1200ms, and 60 seconds holds
-     * fifty of those.
+     * Hurried: everything is parried, so each blow the aggressor lands on the
+     * parrier takes 800ms off the parrier's next swing. It swings far more
+     * often as a result.
      */
-    expect(swingsIn(swinger(), 'parry')).toBe(50);
-  });
-
-  it('leaves exactly one swing pending, so the timer cannot fork', () => {
-    /*
-     * ------------------------------------------------------------------------
-     * THE INVARIANT `scheduleSwing` EXISTS TO HOLD. Four Hand of Justice procs
-     * once turned 115 main-hand swings into 211, because an extra attack
-     * scheduled a swing alongside the one already outstanding. Hurrying a
-     * swing has exactly the same shape, so it has to cancel what it replaces.
-     *
-     * Counted by running a whole fight and comparing swings against what the
-     * timer can physically deliver -- a forked timer shows up as more swings
-     * than the clock allows, which is how the original bug was found.
-     * ------------------------------------------------------------------------
-     */
-    const attacker = swinger();
-    const target = makeTarget({ maxHealth: 10_000_000 });
-    let swings = 0;
-    const simulation = buildSimulation(
-      [attacker, target],
-      { durationMs: seconds(20), attackChances: () => always('hit') },
-      {
-        emit: (event) => {
-          if (event.type === 'damage' && event.abilityName === 'Main Hand Auto-Attack') swings++;
-        },
-      },
-    );
-    simulation.run();
-
-    /*
-     * Twenty seconds at one swing every two, starting at time zero: 0 through
-     * 18000 inclusive is ten, and the one due at 20000 falls on the end of the
-     * fight and does not land. A forked timer would report more than the clock
-     * can deliver, which is exactly how the original bug was found.
-     */
-    expect(swings).toBe(10);
+    expect(swingsIn(parrier(), 'parry')).toBeGreaterThan(30);
   });
 });

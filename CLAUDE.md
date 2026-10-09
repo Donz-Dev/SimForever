@@ -333,13 +333,29 @@ See [docs/combat-tables.md](docs/combat-tables.md).
   SHOCKADIN holds a shield against a dummy that never swings and was being
   parried by it. Worth **-51.6** and **+59.7**. `CombatStyleLookup` is gone with
   it, because parry was the only thing it fed.
-- **A PARRY HURRIES THE ATTACKER'S NEXT SWING, which is the half that reads
-  backwards.** 40% of a full swing off the remaining timer, floored at 20% of a
-  full swing, and the owner states it "applies to both players and mobs,
-  including raid bosses" -- so a tank parrying a boss brings its next blow
-  forward, which is the whole danger of the mechanic. **BOTH FRACTIONS ARE OF A
-  FULL SWING AND NOT OF WHAT IS LEFT**: that is what makes it converge, because
-  no run of parries can drive a timer to zero. `engine/combat/parryHaste.ts`.
+- **PARRYING HURRIES THE PARRIER'S OWN NEXT SWING.** 40% of a full swing off
+  the remaining timer, floored at 20% of a full swing, "to both players and
+  mobs, including raid bosses". `engine/combat/parryHaste.ts`. **BOTH FRACTIONS
+  ARE OF A FULL SWING AND NOT OF WHAT IS LEFT**: that is what makes it
+  converge, because no run of parries can drive a timer to zero.
+- **AND IT SHIPPED POINTING THE WRONG WAY, OFF THE OWNER'S OWN SENTENCE.**
+  "Successfully parrying an attack reduces the ATTACKER'S remaining swing
+  timer" reads as the unit whose blow was turned aside, and that is how it was
+  built; the owner means the parrier, who is an attacker in their own right --
+  "if I parry an attack MY NEXT ATTACK COMES SOONER." **THE WRONG READING WAS
+  SELF-CONSISTENT AND DANGEROUS-SOUNDING**, which is what let it through a
+  review and a measurement pass: it made a tank parrying a boss speed the BOSS
+  up, which is what a tank is supposed to fear, and every figure it produced
+  was internally consistent. **It even produced a finding** -- "parry is worth
+  42% of dodge" -- which read as insight and was an artefact. Corrected, the
+  two are **0.1598 against 0.1485** and indistinguishable, which is what two
+  stats that both avoid the whole blow should be.
+  **WHERE IT ACTUALLY BITES IS THE OPPOSITE OF WHERE IT LOOKED.** The boss
+  parries 14% of the TANK's blows and the tank attacks far more often than the
+  boss swings, so the boss is hurried by the tank's own ATTACKS rather than by
+  its defence -- and several parries land inside one boss swing cycle, which
+  drives it to the 20% floor. Its minimum gap is **480ms** where the wrong
+  direction gave 1,440ms.
 - **AND IT HAS TO BE SCHEDULED, NOT APPLIED INLINE -- THE FIRST VERSION FIRED
   EXACTLY ZERO TIMES.** A swing's handler resolves its blow and only THEN
   schedules its successor, so at the moment `dealDamage` sees the parry the
@@ -2221,13 +2237,18 @@ Plus the permanent rulings under **Scope**.
   correctly implemented and correctly worth nothing**, and it would start binding
   the day the encounter swung faster or gained a second attacker.
   **AND THAT DAY ARRIVED, WHICH IS WHY THIS ENTRY IS KEPT.** Parry haste takes
-  40% of a full swing off, so the boss's 2,400ms becomes **1,440ms** -- sixty
-  milliseconds inside the window. Measured over forty fights, the minimum gap is
-  exactly 1,440ms and **88 of 1,016 gaps fall under 1,500ms**, so the cooldown
-  now binds on about one gap in twelve. The prediction was right, the figure
-  expired on schedule, and the test that recorded it had to be rewritten to
-  assert the opposite. **An encounter-cause note is a dated claim like any
+  40% of a full swing off, and the boss earns it by parrying the TANK -- which
+  it does on 14% of a tank's many blows, so several land inside one boss swing
+  cycle and drive it to the 20% floor. Measured over forty fights, the minimum
+  gap is **480ms** and **124 of 1,045 gaps fall under 1,500ms**, so the
+  cooldown now binds on about one gap in eight. The prediction was right, the
+  figure expired on schedule, and the test that recorded it had to be rewritten
+  to assert the opposite. **An encounter-cause note is a dated claim like any
   other.**
+  **AND IT MOVED AGAIN WHEN PARRY HASTE'S DIRECTION WAS CORRECTED**, from
+  1,440ms to 480ms, which is the difference between the boss being hurried once
+  per swing by the tank's rare parries and being hurried repeatedly by its own.
+  A figure derived from a mechanic is only as settled as the mechanic.
 - **AND A SECOND ONE: THE RAMP DECIDES WHETHER A FLAT MITIGATION STAT MEANS
   ANYTHING.** Block chance and block value both come back "not measured" in the
   tank weights even at 3000 iterations, and the cause is the encounter rather

@@ -4,19 +4,36 @@ import type { SimulationContext } from '../simulation/SimulationContext';
 import { applyHaste, hasteMultiplierFrom } from './ratings';
 
 /**
- * PARRY HASTE: a parried attack hurries the attacker's next swing.
+ * PARRY HASTE: parrying an attack hurries the PARRIER's own next swing.
  *
  * ==============================================================================
- * THE DEFENDER PARRIES AND THE ATTACKER'S TIMER MOVES, which is the part that
- * reads backwards and is the whole danger of the mechanic for a tank: parrying
- * a boss brings its next swing forward, so a run of parries can land two blows
- * inside one swing's worth of healing.
+ * THE UNIT THAT PARRIES IS THE UNIT THAT SPEEDS UP. The ruleset owner: "if I
+ * parry an attack MY NEXT ATTACK COMES SOONER. If a boss parries an attack
+ * THEIR NEXT ATTACK COMES SOONER." A parry is a counter, and a counter is the
+ * parrier acting.
  *
- * The ruleset owner's rule, and both figures are theirs: "successfully parrying
- * an attack reduces the attacker's remaining swing timer by 40% of their max
- * swing time, provided the reduction does not lower the timer below 20% of its
- * original duration", and "this mechanic applies to both players and mobs,
- * including raid bosses".
+ * IT WAS BUILT THE OTHER WAY ROUND FIRST, off the owner's original sentence --
+ * "successfully parrying an attack reduces the attacker's remaining swing timer
+ * by 40% of their max swing time" -- where "the attacker" reads naturally as the
+ * unit whose blow was turned aside. It means the parrier, who is an attacker in
+ * their own right.
+ *
+ * **THE WRONG READING WAS SELF-CONSISTENT AND DANGEROUS-SOUNDING**, which is
+ * what let it stand through a review and a measurement pass: it made a tank
+ * parrying a boss speed the BOSS up, which sounds exactly like the thing a tank
+ * should fear, and every figure it produced was internally consistent. It even
+ * produced a finding -- "parry is worth 42% of dodge" -- that was wrong and
+ * read as insight.
+ *
+ * AND IT BITES THE OTHER WAY ROUND. The boss parries 14% of the TANK's blows,
+ * and the tank swings far more often than the boss does, so the boss is hurried
+ * by the tank's own ATTACKS rather than by the tank's defence. The tank being
+ * hurried by its own parries is a straightforward gain.
+ *
+ * Both figures are the owner's: 40% of a full swing off the remaining timer,
+ * "provided the reduction does not lower the timer below 20% of its original
+ * duration", and "this mechanic applies to both players and mobs, including
+ * raid bosses".
  *
  * BOTH FRACTIONS ARE OF A FULL SWING, not one of the swing and one of what is
  * left, and that is what makes it converge: each parry takes a fixed 40% of a
@@ -28,9 +45,14 @@ import { applyHaste, hasteMultiplierFrom } from './ratings';
  * THE FULL SWING IS THE HASTED ONE, which is a choice and is written down. The
  * timer being shortened was set from `applyHaste(swingTimerMs, haste)`, so
  * measuring the reduction and the floor against the unhasted figure would let
- * a hasted attacker's floor exceed its own swing. No boss in this project has
- * haste, so nothing measures the difference today -- it is the day something
- * does that this matters.
+ * a hasted parrier's floor exceed its own swing.
+ *
+ * THE SLOT IS THE PARRIER'S MAIN HAND, and it has nothing to do with the weapon
+ * that was parried. "My next attack" is one swing, so a dual-wielder's off hand
+ * is deliberately left alone -- hurrying both would be "my next TWO attacks come
+ * sooner", which is not what was stated. Recorded as the reading it is, because
+ * nothing in this project dual-wields and parries often enough to measure the
+ * difference.
  *
  * ------------------------------------------------------------------------------
  * WHY IT IS ITS OWN FILE. `dealDamage` is what sees the parry and `autoAttack`
@@ -50,78 +72,70 @@ import { applyHaste, hasteMultiplierFrom } from './ratings';
  * exactly the forked-timer bug `scheduleSwing` exists to prevent.
  *
  * ------------------------------------------------------------------------------
- * IT IS SCHEDULED, NOT APPLIED INLINE, AND THE FIRST VERSION WAS NOT -- WHICH
- * MADE IT FIRE EXACTLY ZERO TIMES.
+ * IT IS STILL SCHEDULED RATHER THAN APPLIED INLINE, THOUGH THE REASON HAS
+ * SOFTENED. While this hurried the ATTACKER, inline was fatal: a swing's own
+ * handler resolves its blow and only THEN schedules its successor, so the handle
+ * on the combatant was the swing that was CURRENTLY FIRING -- no time left on
+ * it, nothing to hurry -- and the mechanic fired exactly zero times. Every unit
+ * test passed, because a test that calls `dealDamage` by hand DOES leave a real
+ * future swing pending, which is the one case that path never presents. What
+ * caught it was measuring the mechanism: three tank profiles took 25.5 attacks
+ * a fight before the change and 25.5 after it.
  *
- * A swing's own event handler resolves the blow and only THEN schedules its
- * successor. So at the moment `dealDamage` sees the parry, the handle on the
- * combatant is still the swing that is CURRENTLY FIRING: its timestamp is now,
- * its remaining time is zero, and hurrying it is a no-op. The real next swing
- * does not exist yet, and a moment later it is scheduled at full speed over
- * the top.
- *
- * NOTHING ABOUT THAT LOOKED WRONG. Every unit test passed, because a test that
- * calls `dealDamage` by hand at a chosen moment DOES have a real future swing
- * pending -- the one case the live path never presents. What caught it was
- * measuring the mechanism: three tank profiles took 25.5 attacks a fight
- * before the change and 25.5 after it.
- *
- * One `events.schedule` at the current timestamp puts it after the swing
- * handler has finished and scheduled its successor, which is the same fix and
- * the same reason `extraAttack` schedules rather than swinging inline.
- * ------------------------------------------------------------------------------
+ * Hurrying the PARRIER, that case cannot arise -- the parrier is being attacked
+ * rather than swinging, so its pending swing is a genuine future one. The
+ * schedule is kept anyway: it costs one event, it keeps the mechanic on the
+ * ordinary path the way `extraAttack` is, and it is what the end-to-end test
+ * pins.
  * ==============================================================================
  */
-export function applyParryHaste(
-  context: SimulationContext,
-  attacker: Combatant,
-  slot: WeaponSlot,
-): void {
-  const rule = attacker.parryHaste;
-  if (!rule || !attacker.weapons[slot]) return;
+export function applyParryHaste(context: SimulationContext, parrier: Combatant): void {
+  const rule = parrier.parryHaste;
+  const slot: WeaponSlot = 'mainHand';
+  if (!rule || !parrier.weapons[slot]) return;
 
   context.events.schedule(
     context.clock.now(),
-    createEvent(`parry-haste:${attacker.id}:${slot}`, EventPriority.AutoAttack, (ctx) => {
-      if (!attacker.isAlive || ctx.hasEnded) return;
-      hurry(ctx, attacker, slot, rule.reductionFraction, rule.floorFraction);
+    createEvent(`parry-haste:${parrier.id}:${slot}`, EventPriority.AutoAttack, (ctx) => {
+      if (!parrier.isAlive || ctx.hasEnded) return;
+      hurry(ctx, parrier, slot, rule.reductionFraction, rule.floorFraction);
     }),
   );
 }
 
-/** Move the attacker's pending swing earlier, once one actually exists. */
+/** Move the parrier's pending swing earlier, once one actually exists. */
 function hurry(
   context: SimulationContext,
-  attacker: Combatant,
+  parrier: Combatant,
   slot: WeaponSlot,
   reductionFraction: number,
   floorFraction: number,
 ): void {
-  const weapon = attacker.weapons[slot];
+  const weapon = parrier.weapons[slot];
   if (!weapon) return;
 
   /*
    * NOTHING PENDING MEANS NOTHING TO HURRY. A combatant that does not auto
-   * attack has no swing timer at all, so a parried special from a caster moves
+   * attack has no swing timer at all, so a caster parrying a blow moves
    * nothing -- correctly, because there is no swing for it to move.
    */
-  const pending = attacker.pendingSwing(slot);
+  const pending = parrier.pendingSwing(slot);
   if (!pending || pending.cancelled) return;
 
   const now = context.clock.now();
   const remaining = pending.timestamp - now;
   if (remaining <= 0) return;
 
-  const full = applyHaste(weapon.swingTimerMs, hasteMultiplierFrom(attacker.stats.effective));
+  const full = applyHaste(weapon.swingTimerMs, hasteMultiplierFrom(parrier.stats.effective));
   const hurried = Math.max(full * floorFraction, remaining - full * reductionFraction);
 
   /*
    * ALREADY AT OR INSIDE THE FLOOR, so the parry buys nothing. That is the
-   * floor doing its job rather than a case to special-case: an attacker whose
+   * floor doing its job rather than a case to special-case: a parrier whose
    * swing is nearly due cannot be hurried further.
    */
   if (hurried >= remaining) return;
 
   context.events.cancel(pending);
-  attacker.setPendingSwing(slot, context.events.schedule(now + hurried, pending.event));
+  parrier.setPendingSwing(slot, context.events.schedule(now + hurried, pending.event));
 }

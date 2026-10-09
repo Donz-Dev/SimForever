@@ -284,6 +284,55 @@ disagrees with the damage table on purpose**: it is worth `-0.0736` DPS a point
 and `+0.0054` deaths avoided, because Forever's `D x 10 / H` means a bigger
 health pool makes each point of damage taken worth less rage.
 
+### Dodge and parry price the same, and getting there took a correction
+
+They both avoid the entire blow, so they should be one stat. The first tank
+weights read **0.1375** against **0.0582** -- parry at 42% of dodge -- and that
+2.4x gap was not a finding but a bug.
+
+**Parry haste had been built pointing the wrong way.** The owner's original
+sentence reads "reduces the ATTACKER'S remaining swing timer", which is
+naturally the unit whose blow was turned aside; the clarification is "if I
+parry an attack MY NEXT ATTACK COMES SOONER". Built backwards, a tank parrying
+a boss sped the BOSS up -- so parry carried a penalty dodge did not, and that
+penalty was the whole gap.
+
+| | dodge | parry |
+| --- | --- | --- |
+| corrected | **0.1598 ± 0.0393** | **0.1485 ± 0.0346** |
+| parry haste off entirely | 0.1128 ± 0.0305 | 0.1128 ± 0.0305 |
+
+Corrected they are indistinguishable, which is what two stats that both avoid
+the whole blow should be. And with the mechanic off they come back **identical
+to four decimal places** -- stronger than "similar", because under shared seeds
+the two variants then run bit-identical fights, so there is provably no other
+asymmetry between them anywhere in the engine.
+
+**The wrong reading was self-consistent and dangerous-sounding**, which is why
+it survived a review and a measurement pass: speeding the boss up when the tank
+parries is what a tank is supposed to fear. `tools/probe_parry_haste.ts` is
+what exposed it -- not by failing, but by producing a 2.4x gap between two
+stats that have no business differing, which was worth asking about.
+
+**Where it actually bites is the opposite of where it looked.** The boss parries
+14% of the TANK's blows and the tank attacks far more often than the boss
+swings, so the boss is hurried by the tank's own attacks rather than by its
+defence -- and several parries land inside one boss swing cycle, driving it to
+the 20% floor. Its minimum gap is **480ms**, where the wrong direction gave
+1,440ms. Isolated one side at a time on Prot Warr:
+
+| parry haste on | player swings | attacks received | deaths |
+| --- | --- | --- | --- |
+| neither | 12.80 | 25.49 | 7.97 |
+| the player only | 13.15 | 25.49 | 7.96 |
+| the boss only | 11.67 | 27.14 | 9.26 |
+| both | 12.25 | 27.20 | 9.27 |
+
+The player's own parries raise its swings with attacks received untouched; the
+boss's raise attacks received. **The player's swing count FALLING in the
+boss-only row is not a timer fault** -- it is Heroic Strike replacing more
+auto-attacks as rage rises, and a replaced swing reports under its own name.
+
 ### Block is correctly implemented and correctly worth almost nothing here
 
 The two block rows do not resolve even at 3000, and that was worth chasing
@@ -335,9 +384,9 @@ parried, the Shockadin holds one against a dummy that never swings and was being
 parried by it. `CombatStyleLookup` is gone with it: parry was the only thing it
 fed.
 
-**Parry haste.** A parried attack takes 40% of a full swing off the attacker's
+**Parry haste.** Parrying takes 40% of a full swing off the PARRIER's own
 remaining timer, floored at 20% of a full swing — the owner's rule, applying to
-players and bosses alike. Both fractions are of a full swing rather than of what
+players and bosses alike. It shipped pointing the other way first; see below. Both fractions are of a full swing rather than of what
 is left, which is what makes it converge: no run of parries can drive a timer to
 zero. [`engine/combat/parryHaste.ts`](../src/engine/combat/parryHaste.ts) owns
 the rule and [`game/combat/attackChances.ts`](../src/game/combat/attackChances.ts)
