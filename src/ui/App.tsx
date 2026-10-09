@@ -10,6 +10,7 @@ import { resolveCombatStyle } from '../game/character';
 import { startingEquipmentFor } from '../game/items/startingSets';
 import { Logo } from './components/Logo';
 import { useSimulation } from './hooks/useSimulation';
+import { useStatWeights } from './hooks/useStatWeights';
 import { CharacterPanel } from './panels/CharacterPanel';
 import { CharacterSheetPanel } from './panels/CharacterSheetPanel';
 import { CombatLogPanel } from './panels/CombatLogPanel';
@@ -19,7 +20,9 @@ import { ConsumablesPanel } from './panels/ConsumablesPanel';
 import { RaidBuffsPanel } from './panels/RaidBuffsPanel';
 import { ResultsPanel } from './panels/ResultsPanel';
 import { ProfileRail } from './panels/ProfileRail';
-import { SimulationPanel } from './panels/SimulationPanel';
+import type { StatWeightSelection } from './panels/SimulationPanel';
+import { NO_STAT_WEIGHTS, SimulationPanel } from './panels/SimulationPanel';
+import { StatWeightsPanel } from './panels/StatWeightsPanel';
 import { TalentPanel } from './panels/TalentPanel';
 
 /**
@@ -64,6 +67,54 @@ export function App() {
 
   const { state, progress, run, reset } = useSimulation();
 
+  /*
+   * ----------------------------------------------------------------------------
+   * A SECOND HOOK RATHER THAN A FLAG ON THE FIRST. A stat-weight run has its
+   * own shape -- a plan, a pool of workers, two phases and a progress bar
+   * counted in fights -- and folding it into `useSimulation` would make the
+   * ordinary path carry all of it for the ninety-nine runs out of a hundred
+   * that do not want it.
+   *
+   * THEY ARE MUTUALLY EXCLUSIVE AT THE BUTTON, which is what keeps the page
+   * honest: the stat-weight run's baseline IS an ordinary batch, so its results
+   * and its combat log are shown from that one batch and no fight is run twice.
+   * Running both would mean two baselines and two different DPS figures on one
+   * page.
+   * ----------------------------------------------------------------------------
+   */
+  const [statWeights, setStatWeights] = useState<StatWeightSelection>(NO_STAT_WEIGHTS);
+  const weightRun = useStatWeights();
+
+  /** Both runs draw a fresh seed, for the reason `useSimulation` gives. */
+  const runEither = () => {
+    if (statWeights.enabled && statWeights.stats.length > 0) {
+      reset();
+      void weightRun.run(profile, statWeights.stats, Math.floor(Math.random() * 2 ** 31));
+      return;
+    }
+    weightRun.reset();
+    run(profile);
+  };
+
+  /*
+   * WHICHEVER RUN PRODUCED THE RESULTS ON SCREEN. A stat-weight run's baseline
+   * is a full batch, so the Results panel and the combat log read it exactly as
+   * they read an ordinary one -- there is no second code path for them.
+   */
+  const batch =
+    weightRun.state.status === 'done'
+      ? weightRun.state.baseline
+      : state.status === 'done'
+        ? state.batch
+        : undefined;
+  const busy = state.status === 'running' || weightRun.state.status === 'running';
+  const failure =
+    state.status === 'error'
+      ? state.message
+      : weightRun.state.status === 'error'
+        ? weightRun.state.message
+        : undefined;
+
   /**
    * Settle the character, and dress it if it is still naked.
    *
@@ -94,6 +145,7 @@ export function App() {
     setActivePresetId(preset.id);
     setConfirmed(true);
     reset();
+    weightRun.reset();
   };
 
   const confirmCharacter = () => {
@@ -123,6 +175,7 @@ export function App() {
     // Results belong to the character that produced them. Leaving them on
     // screen beside a character being rebuilt invites reading one as the other.
     reset();
+    weightRun.reset();
   };
 
   return (
@@ -150,9 +203,11 @@ export function App() {
               <SimulationPanel
                 profile={profile}
                 onChange={setProfile}
-                onRun={() => run(profile)}
-                isRunning={state.status === 'running'}
-                progress={progress}
+                onRun={runEither}
+                isRunning={busy}
+                progress={weightRun.state.status === 'idle' ? progress : weightRun.progress}
+                statWeights={statWeights}
+                onStatWeightsChange={setStatWeights}
               />
             </>
           ) : null}
@@ -174,22 +229,39 @@ export function App() {
                 because at most one consumable per category may be drunk. */}
             <ConsumablesPanel profile={profile} onChange={setProfile} />
 
-            {state.status === 'running' ? (
+            {busy ? (
               <div className="placeholder">
-                <p>Running...</p>
+                <p>
+                  {weightRun.state.status === 'running'
+                    ? `${weightRun.state.phase}...`
+                    : 'Running...'}
+                </p>
               </div>
             ) : null}
 
-            {state.status === 'error' ? (
+            {failure ? (
               <div className="placeholder error">
-                <p>The simulation failed: {state.message}</p>
+                <p>The simulation failed: {failure}</p>
               </div>
             ) : null}
 
-            {state.status === 'done' ? (
+            {/* The weights go ABOVE the ordinary results, because when both are
+                on screen the weights are what the run was for. */}
+            {weightRun.state.status === 'done' ? (
+              <StatWeightsPanel
+                plan={weightRun.state.plan}
+                weights={weightRun.state.weights}
+                baselineDps={weightRun.state.baseline.dps.mean}
+                iterations={weightRun.state.baseline.iterations}
+                fights={weightRun.state.fights}
+                workers={weightRun.state.workers}
+              />
+            ) : null}
+
+            {batch ? (
               <>
-                <ResultsPanel batch={state.batch} />
-                <CombatLogPanel result={state.batch.representative} />
+                <ResultsPanel batch={batch} />
+                <CombatLogPanel result={batch.representative} />
               </>
             ) : null}
           </div>

@@ -1447,3 +1447,54 @@ button:disabled {
 .timeline-end {
   text-anchor: end;
 }
+
+/* --- stat weights --- */
+
+/* ---------------------------------------------------------------------------
+   The picker sits UNDER the Run button, because it changes what that button
+   does. It is separated by a rule rather than by space alone: everything above
+   it describes the fight, and everything below it describes how many fights to
+   run.
+   --------------------------------------------------------------------------- */
+.stat-weight-toggle {
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+  /* Two columns, not the buff row's three: there is no detail column here, and
+     leaving the third would strand the label a third of the way across. */
+  grid-template-columns: auto 1fr;
+}
+
+.stat-weight-picker {
+  margin-top: 4px;
+}
+
+.stat-weight-picker .field-hint {
+  margin: 0 0 10px;
+}
+
+.stat-weight-actions {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+/* The count takes the slack so All and None sit together on the right, where
+   a pair of buttons reads as one control rather than two. */
+.stat-weight-actions .muted {
+  flex: 1;
+  font-size: 12px;
+}
+
+/* Two columns, not the buff row's three: a stat row is a box and a name, so
+   the detail column would leave the name stranded a third of the way across. */
+.stat-weight-row {
+  grid-template-columns: auto 1fr;
+}
+
+/* Denser than a buff list, because these rows carry one word each and
+   twenty-one of them at buff spacing is most of a laptop screen. */
+.stat-weight-list .stat-weight-row {
+  padding: 1px 0;
+}

@@ -34,6 +34,8 @@ npx vite-node tools/probe_block.ts               # a tank's block chain, link by
 npx vite-node tools/druid_attribution.ts         # what one talent is worth, with its CASCADE named
 npx vite-node tools/enchant_report.ts            # all 25 profiles' enchants, shaped like the owner's table
 npx vite-node tools/consumable_report.ts         # all 25 profiles' consumables, the same way
+PROFILE=dw_fury npx vite-node tools/stat_weights.ts        # what a point of each stat is worth
+PROFILE=rogue_combat PLAN=1 npx vite-node tools/stat_weights.ts   # the cap ladder, no fights
 ```
 
 The three audits in the middle are AUDITS rather than measurements and none of
@@ -2901,6 +2903,92 @@ a rotation that never casts one. Energy showed more spent than gained, because
 the 100 a Rogue opens with was never an event and the "unspent" figure clamped
 the negative away. **If the books do not balance, the missing side is usually
 something real that nothing reports.**
+
+## Stat weights, and the measurement technique they brought
+
+[docs/stat-weights.md](docs/stat-weights.md). The feature is one baseline run
+and one run per stat with it added; what is worth knowing here is the four
+things that decide the answer, because **three of them apply to every
+before-and-after this project takes.**
+
+**GIVE THE BEFORE AND THE AFTER THE SAME BASE SEED, AND THE DIFFERENCE GETS
+FOUR ORDERS OF MAGNITUDE QUIETER.** `deriveSeed(baseSeed, i)` fixes iteration
+`i`'s fight and a Simulation rolls its duration BEFORE anything else, so two
+runs at one base seed have bit-identical fight lengths. Difference them
+ITERATION BY ITERATION rather than mean against mean: +30 strength on DW Fury is
+**17.55 ±0.18** over 500 paired iterations against **16.15 ±12.33** over 500
+independent ones, a ~5,000x variance reduction. It costs nothing and biases nothing -- each run is still a valid sample of
+its own configuration, and pairing only correlates them. `BatchResult.dpsSamples`
+is what it needs, and it is the array the batch already built.
+
+**IT DOES NOT WORK FOR EVERY CHANGE, AND THE SPREAD IS WHAT TELLS YOU.** The
+engine draws from ONE random stream, so flipping a single miss roll reorders
+every later draw and the two fights decorrelate completely. The per-iteration
+spread of the paired difference is the diagnostic and it is free: **1.8 DPS for
++30 strength and 124.7 for +9% hit**, on the same profile. A change that cannot
+alter a roll is settled in a few hundred iterations; one that can is not settled
+in 3000. **So report the interval beside every figure**, because a reader
+sorting a table by value has no other way to tell which rows the measurement can
+stand behind.
+**AND DO NOT GIVE THE NOISY ONES MORE ITERATIONS, which was tried.** Allocating
+from the spread -- `n = (2 x spread / target)^2`, never from the measured value
+-- is correct and is about twice as cheap, and the owner ruled it out: it made
+two rows of one table incomparable, because nothing on screen said that one
+figure rested on twelve times the evidence of the one above it. **A cheaper
+measurement that cannot be read beside its neighbour is the wrong trade.**
+
+**A CAPPED STAT IS SEVERAL STATS, AND THE OWNER RULED IT SO**: "these can be
+treated as multiple stats in effect". "Chance to miss" is up to FIVE numbers and
+a build can be capped on one and not another -- a Rogue on 16 points of hit has
+nothing left on its specials or its spells and eleven points left on its
+auto-attacks. So hit is a LADDER, one weight per interval between the caps, and
+**a tier is linear by construction**: the boundaries sit exactly where a table
+stops paying, so the whole tier can be added at once for the signal and the
+per-point figure is still true. DW Fury measures **5.8971 ±0.5058 to cap its off
+hand and 2.6146 ±0.4053 for the ten more that cap its main hand**, and **the
+monotone fall is what says the boundaries are in the right places**.
+**NAME A RUNG BY WHAT IT REACHES, NEVER BY ITS WIDTH.** "Hit chance +9.00% ->
+caps Off-hand swings" is the figure somebody asked for; "the first 9.00%" reads
+as a 9% CAP, which the owner spotted immediately and which is not what it is --
+9.00 is what that build has LEFT on its off hand once 8 points of gear hit and
+10 from Dual Wield Specialization have come off a 27% miss. Same number,
+opposite meaning. **And do not truncate the ladder**: a rung runs to the cap it
+names, because the question is how much it would TAKE.
+**And a build can be capped everywhere**: the Prot Warrior carries 8 points of
+hit against an 8% miss on every table it rolls on, so its ladder is EMPTY and
+the answer is "already capped" rather than a measurement of nothing.
+**FOLD THE SLICES THAT AGREE.** `dodgeParryReduction` comes off three melee
+tables at the same 6.50%, so three rows naming each table is three rows of one
+fact -- it prints once as "Dodge", and splits again the moment they disagree.
+Hit's slices genuinely differ, so hit genuinely gets several rows.
+
+**AND A ZERO HAS TO BE TOLD APART FROM AN ABSENCE OF ONE.** Under shared seeds a
+stat the build cannot read produces a bit-identical fight and a delta of exactly
+0.00 -- which is this project's own tell for "the patch did not apply". What
+makes the zero trustworthy is that `statWeightPlan` BUILDS the character with
+the stat added and checks it arrived before spending a fight, so "worth nothing"
+and "never applied" are separated before the measurement rather than after it.
+`WeightVerdict` carries the three answers -- `measured`, `none`, `inconclusive`
+-- because 0.0000 and 0.08 ±0.9 render as the same zero and only one of them is
+an answer. **Checking the delta alone is not enough to spot an identical pair**:
+a constant +18 on every iteration has a spread of zero too, and the first
+version called it "nothing".
+
+**THE WORKERS ARE THE OTHER HALF, AND THE BASELINE IS THE FLOOR.** Iterations
+are independent and the engine holds no module-level state, so a pool of
+`src/ui/workers/simWorker.ts` parallelises them exactly -- **157.5s to 41.7s**
+for DW Fury's full 21-stat run, 54,000 fights. What does NOT split is the
+baseline batch: `BatchTotals` is one accumulator for the whole run and nothing
+merges two, so every breakdown on the results page comes off one thread and that
+serial baseline is a large share of the wall clock. **Merging `BatchTotals` is
+the next step and was not worth the blast radius here.**
+
+**AND THE BASELINE IT PRINTS IS NOT THE PUBLISHED ONE.** 3000 iterations at a
+fresh seed has a standard error of about 1.8 DPS; `measure_profiles.ts` is 300
+fights with an interval of about ±11.1. Three runs read DW Fury at 894.7, 896.8
+and 900.7 against a published 901.8 ±11.1 -- **they agree and the stat-weight
+figure is simply tighter**. A few DPS of difference is not a regression, and this one is not a
+baseline.
 
 ## Git workflow
 

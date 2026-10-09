@@ -28,6 +28,17 @@ interface PanelProps {
    * forget.
    */
   readonly collapsible?: boolean;
+  /**
+   * Start a collapsible panel OPEN.
+   *
+   * The default is shut, and that is the owner's call for every panel that
+   * CONFIGURES a run: the app opens on a character and a Run button, and the
+   * settings are one click away rather than one scroll. A RESULTS panel is the
+   * other kind -- it appears because a run just finished, so shutting it by
+   * default would hide the thing the run was for and leave a bare title bar in
+   * its place. It still gets the toggle, which is what was asked for.
+   */
+  readonly startOpen?: boolean;
   readonly className?: string;
   readonly bodyClassName?: string;
   readonly children: ReactNode;
@@ -40,11 +51,12 @@ export function Panel({
   badge,
   actions,
   collapsible = false,
+  startOpen = false,
   className,
   bodyClassName,
   children,
 }: PanelProps) {
-  const [collapsed, setCollapsed] = useState(true);
+  const [collapsed, setCollapsed] = useState(!startOpen);
   // Only a collapsible panel can be shut. Read through a constant rather than
   // trusting the state, so a panel that stops being collapsible cannot keep a
   // stale `true` and render as an empty title bar.
