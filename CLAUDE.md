@@ -31,6 +31,7 @@ node tools/decode_talent_build.mjs --profiles    # does every profile's build UR
 node tools/decode_talent_build.mjs --presets     # does each URL still MATCH its preset
 PROFILE=pally_ret npx vite-node tools/probe_resources.ts   # where one pool went
 npx vite-node tools/probe_block.ts               # a tank's block chain, link by link
+npx vite-node tools/probe_parry_haste.ts         # why parry is worth less than dodge
 npx vite-node tools/druid_attribution.ts         # what one talent is worth, with its CASCADE named
 npx vite-node tools/enchant_report.ts            # all 25 profiles' enchants, shaped like the owner's table
 npx vite-node tools/consumable_report.ts         # all 25 profiles' consumables, the same way
@@ -340,6 +341,15 @@ See [docs/combat-tables.md](docs/combat-tables.md).
   forward, which is the whole danger of the mechanic. **BOTH FRACTIONS ARE OF A
   FULL SWING AND NOT OF WHAT IS LEFT**: that is what makes it converge, because
   no run of parries can drive a timer to zero. `engine/combat/parryHaste.ts`.
+- **IT IS ALSO WHY PARRY IS WORTH 42% OF DODGE AND NOT 100%.** Both avoid the
+  whole blow, so the two should be one stat -- and the tank weights read 0.1375
+  against 0.0582 deaths avoided a point. **Strip `parryHaste` off every
+  combatant and they come back IDENTICAL TO FOUR DECIMAL PLACES**, 0.1128 both,
+  which is stronger than "similar": under shared seeds the two variants then run
+  bit-identical fights, so there is provably no other asymmetry between them
+  anywhere in the engine. `tools/probe_parry_haste.ts` is the command. Parry
+  haste costs the tank 0.86 deaths a fight on its own, and **dodge is worth MORE
+  with it switched on** -- a harsher fight makes avoidance matter more.
 - **AND IT HAS TO BE SCHEDULED, NOT APPLIED INLINE -- THE FIRST VERSION FIRED
   EXACTLY ZERO TIMES.** A swing's handler resolves its blow and only THEN
   schedules its successor, so at the moment `dealDamage` sees the parry the

@@ -284,6 +284,31 @@ disagrees with the damage table on purpose**: it is worth `-0.0736` DPS a point
 and `+0.0054` deaths avoided, because Forever's `D x 10 / H` means a bigger
 health pool makes each point of damage taken worth less rage.
 
+### Parry is worth 42% of dodge, and parry haste is the whole reason
+
+Both avoid the entire blow, so the two should be the same stat. They are not,
+and the gap is not a bug: **a parry hurries the attacker's next swing by 40% of
+a full one and a dodge does not**, so parry buys the same avoidance with a cost
+attached.
+
+`npx vite-node tools/probe_parry_haste.ts` strips `parryHaste` off every
+combatant at runtime and measures both again:
+
+| | dodge | parry |
+| --- | --- | --- |
+| parry haste **on** | 0.1375 ± 0.0377 | **0.0582** ± 0.0309 |
+| parry haste **off** | 0.1128 ± 0.0305 | **0.1128** ± 0.0305 |
+
+**Identical to four decimal places with the mechanic off**, which is a stronger
+result than "similar": under shared seeds, swapping two points of dodge for two
+points of parry then produces bit-identical fights, so there is provably no
+other asymmetry between them anywhere in the engine. The cumulative table walk
+displaces the same band of `hit` either way.
+
+Two things fall out of the same table. Parry haste costs the tank **0.86 deaths
+a fight** on its own (8.85 against 7.98), and **dodge is worth MORE with it on**
+(0.1375 against 0.1128) -- a harsher fight makes avoidance matter more.
+
 ### Block is correctly implemented and correctly worth almost nothing here
 
 The two block rows do not resolve even at 3000, and that was worth chasing
