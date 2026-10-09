@@ -577,10 +577,16 @@ fights.
 
 ## Parry haste
 
-40% of a full swing off the attacker's remaining timer, floored at 20% of a full
-swing, "to both players and mobs, including raid bosses" -- all the owner's.
-**THE DEFENDER PARRIES AND THE ATTACKER'S TIMER MOVES**, which is the half that
-reads backwards and is the whole danger of it for a tank.
+40% of a full swing off the remaining timer, floored at 20% of a full swing,
+"to both players and mobs, including raid bosses" -- all the owner's.
+**PARRYING HURRIES THE PARRIER'S OWN NEXT SWING.**
+
+**AND IT SHIPPED POINTING THE OTHER WAY, OFF THE OWNER'S OWN SENTENCE.**
+"Successfully parrying an attack reduces the ATTACKER'S remaining swing timer"
+reads as the unit whose blow was turned aside, and that is how it was built.
+The clarification settles it: "if I parry an attack MY NEXT ATTACK COMES
+SOONER. If a boss parries an attack THEIR NEXT ATTACK COMES SOONER." See the
+entry above this one for what the correction cost.
 
 **BOTH FRACTIONS ARE OF A FULL SWING AND NOT OF WHAT IS LEFT.** That is what
 makes it converge: each parry takes a fixed 40% off and the floor sits at 20% of

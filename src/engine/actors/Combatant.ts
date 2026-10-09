@@ -266,7 +266,7 @@ export interface CombatantOptions {
    */
   readonly critResourceMultiplier?: number;
   /**
-   * How much a PARRY against this combatant hurries its next swing.
+   * How much PARRYING something hurries this combatant's own next swing.
    *
    * ----------------------------------------------------------------------------
    * PARRY HASTE, and it is on the combatant for the fourth time and the same
@@ -277,12 +277,13 @@ export interface CombatantOptions {
    * duration", and "this mechanic applies to both players and mobs, including
    * raid bosses".
    *
-   * IT BELONGS TO THE ATTACKER, WHICH IS THE PART THAT READS BACKWARDS. The
-   * DEFENDER parries and the ATTACKER's timer moves, so the numbers sit on
-   * whoever is swinging -- a boss carries them so that a tank parrying it
-   * brings its next swing forward, which is the whole danger of the mechanic,
-   * and a player carries them so that the boss parrying a strike does the same
-   * to them.
+   * IT BELONGS TO THE PARRIER, which "the attacker" in that sentence does NOT
+   * make obvious -- it reads as the unit whose blow was turned aside, and that
+   * is how this shipped first. The owner's clarification settles it: "if I
+   * parry an attack MY NEXT ATTACK COMES SOONER. If a boss parries an attack
+   * THEIR NEXT ATTACK COMES SOONER." So a boss carries these so that parrying
+   * the tank speeds the boss up, and a player carries them so that parrying
+   * the boss speeds the player up.
    *
    * ABSENT MEANS NO PARRY HASTE, so a combatant built by a test or by anything
    * that has not been given ruleset numbers behaves exactly as it did. Forever

@@ -339,10 +339,12 @@ describe("Reckoning's internal cooldown", () => {
      * and the internal cooldown refused nothing. The Prot Pally measured 0.0
      * to the decimal and this recorded why.
      *
-     * PARRY HASTE TAKES 40% OF A FULL SWING OFF, so 2,400ms becomes 1,440ms
-     * -- sixty milliseconds inside the window. Measured over forty fights:
-     * the minimum gap is exactly 1,440ms and 88 of 1,016 gaps fall under
-     * 1,500ms, so the cooldown now binds on about one gap in twelve.
+     * PARRY HASTE TAKES 40% OF A FULL SWING OFF, and the boss earns it by
+     * parrying the TANK -- which it does on 14% of a tank's many blows, so
+     * several land inside one boss swing cycle and drive the timer down to
+     * its 20% floor. Measured over forty fights: the minimum gap is 480ms and
+     * 124 of 1,045 gaps fall under 1,500ms, so the cooldown now binds on
+     * about one gap in eight.
      *
      * IT IS THE ENCOUNTER CAUSE EXPIRING EXACTLY AS IT SAID IT WOULD -- "it
      * expires the day the encounter swings faster or has a second attacker".
@@ -360,12 +362,16 @@ describe("Reckoning's internal cooldown", () => {
     const gaps = received.slice(1).map((time, index) => time - received[index]);
 
     /*
-     * THE FLOOR IS THE HASTED SWING, not zero: 40% off a 2,400ms swing is the
-     * most one parry can buy, and the 20% floor stops a run of them going
-     * further. So no gap can be shorter than 1,440ms however many land.
+     * THE FLOOR IS 20% OF A FULL SWING, not zero and not 40% off one: several
+     * parries land inside a single boss swing cycle, so the reduction stacks
+     * until the floor stops it. 2,400ms slowed swing, floor 480ms.
+     *
+     * IT READ 1,440ms BEFORE PARRY HASTE'S DIRECTION WAS CORRECTED -- back
+     * when the boss was hurried by the tank's rare parries rather than by its
+     * own frequent ones, a single reduction per cycle was all it could get.
      */
-    const hurried = seconds(PLACEHOLDER_BOSS_SWING_SECONDS) * 1.2 * 0.6;
-    expect(Math.min(...gaps)).toBeGreaterThanOrEqual(hurried);
+    const floor = seconds(PLACEHOLDER_BOSS_SWING_SECONDS) * 1.2 * 0.2;
+    expect(Math.min(...gaps)).toBeGreaterThanOrEqual(floor);
     // And at least one gap is now inside the window the cooldown guards.
     expect(Math.min(...gaps)).toBeLessThan(RECKONING_ICD_MS);
   });

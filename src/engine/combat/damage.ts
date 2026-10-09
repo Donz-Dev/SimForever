@@ -1161,17 +1161,23 @@ export function dealDamage(
   refundCostIfAvoided(context, request, resolution);
 
   /*
-   * A PARRY HURRIES THE ATTACKER'S NEXT SWING -- the defender parried, and it
-   * is the SOURCE's timer that moves. See `parryHaste.ts` for the rule and for
-   * why the numbers live on the attacker.
+   * A PARRY HURRIES THE PARRIER'S OWN NEXT SWING -- the TARGET parried, so it
+   * is the TARGET's timer that moves, not the source's.
+   *
+   * THE SOURCE IS WHAT THIS READ FIRST, and it was backwards. The owner's
+   * original wording is "reduces the attacker's remaining swing timer", which
+   * reads as the unit whose blow was turned aside; their clarification is
+   * unambiguous the other way -- "if I parry an attack MY NEXT ATTACK COMES
+   * SOONER. If a boss parries an attack THEIR NEXT ATTACK COMES SOONER." A
+   * parry is a counter, and a counter is the parrier acting.
    *
    * ANY PARRIED ATTACK, not only a swing: the owner's wording is "successfully
-   * parrying an attack", and a special is an attack. The slot defaults to the
-   * main hand for an ability that names none, which is the hand whose timer a
-   * parried blow moves.
+   * parrying an attack", and a special is an attack. The slot is the PARRIER'S
+   * main hand and has nothing to do with the weapon that was parried -- see
+   * `parryHaste.ts`.
    */
   if (resolution.outcome === 'parry') {
-    applyParryHaste(context, source, request.weaponSlot ?? 'mainHand');
+    applyParryHaste(context, target);
   }
 
   /*
