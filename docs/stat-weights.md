@@ -266,9 +266,61 @@ power, spell power and the rest of the offensive list produce it. `inconclusive`
 rows stay, because "the run could not resolve this" is a different statement
 from "this does nothing".
 
-Prot Warr, 600 iterations each: dodge chance **0.128 ± 0.079** deaths avoided a
-point, parry **0.049**, defense skill **0.015**, agility **0.0069**, stamina
-**0.0058**, armor **0.0004**.
+Prot Warr at the default 3000 iterations, 66,000 fights, 8.81 deaths a fight:
+
+| stat | avoid death / point | |
+| --- | --- | --- |
+| Dodge chance | **0.1383 ± 0.0378** | 1.000 |
+| Parry chance | **0.0750 ± 0.0315** | 0.542 |
+| Defense skill | **0.0110 ± 0.0063** | 0.080 |
+| Agility | **0.0067 ± 0.0025** | 0.049 |
+| Stamina | **0.0054 ± 0.0031** | 0.039 |
+| Armor | **0.0005 ± 0.0001** | 0.004 |
+| Block chance | 0.0048 ± 0.0178 | not resolved |
+| Block value | 0.0008 ± 0.0012 | not resolved |
+
+Six rows resolve at 3000 where four did at 600. **Stamina is the row that
+disagrees with the damage table on purpose**: it is worth `-0.0736` DPS a point
+and `+0.0054` deaths avoided, because Forever's `D x 10 / H` means a bigger
+health pool makes each point of damage taken worth less rage.
+
+### Block is correctly implemented and correctly worth almost nothing here
+
+The two block rows do not resolve even at 3000, and that was worth chasing
+rather than accepting. It is a magnitude, not a wiring fault.
+
+**THE MECHANISM IS LIVE, CHECKED BY SCALING IT.** Blocks are not rare -- the
+Prot Warrior blocks **16.05 of 26.60** attacks a fight, because Shield Block
+takes its 11.16% table slice far higher for its duration. And the value is
+applied: **+5000 block value removes 64,243 damage and takes deaths from 8.69
+to 4.82.**
+
+**THE RATIO IS ARITHMETIC AND IT CHECKS OUT.** A dodge removes the whole blow
+and a block removes a flat 97 of it, so a point of block chance should be worth
+a point of dodge chance times `blockValue / meanHit`:
+
+```
+  97 / 5230  = 1.85%          what the arithmetic predicts
+  0.0017 / 0.1375 = 1.2%      what the measurement gives
+```
+
+Block chance does not resolve even at a 30-point step (`0.00238 +-0.00274`),
+which is itself the answer: its weight is somewhere under half a percent of
+dodge's. Block VALUE does resolve at a larger step -- `0.00205` a point at 50,
+`0.00133` at 200, `0.00107` at 1000, the fall being a block never removing more
+than the blow it lands on.
+
+**THE CAUSE IS THE ENCOUNTER'S DAMAGE RAMP, AND THAT IS A PLACEHOLDER.** The
+boss opens at 5,000 and every swing is 10% harder than the last, so incoming
+hits grow from **1,624 early to 12,458 late** while block value stays flat at
+97 -- six percent of an early swing and 0.78% of a late one. Block's entire
+contribution is **1,556 of 139,118** damage taken, 1.12%.
+
+So this is an ENCOUNTER cause in the sense `CLAUDE.md` already uses, and it
+expires if the ramp changes. `targetSwingDamage` and `BOSS_DAMAGE_RAMP` are
+both invented numbers borrowed from Classic, and they are what decide whether a
+flat mitigation stat means anything -- which is a question for the ruleset
+owner rather than something to tune.
 
 ---
 

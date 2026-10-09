@@ -2228,6 +2228,25 @@ Plus the permanent rulings under **Scope**.
   expired on schedule, and the test that recorded it had to be rewritten to
   assert the opposite. **An encounter-cause note is a dated claim like any
   other.**
+- **AND A SECOND ONE: THE RAMP DECIDES WHETHER A FLAT MITIGATION STAT MEANS
+  ANYTHING.** Block chance and block value both come back "not measured" in the
+  tank weights even at 3000 iterations, and the cause is the encounter rather
+  than the code. The boss opens at 5,000 and every swing is 10% harder, so
+  incoming hits grow from **1,624 early to 12,458 late** while block value stays
+  flat at 97 -- six percent of an early blow and 0.78% of a late one. Block's
+  whole contribution is **1,556 of 139,118** damage taken, 1.12%.
+  **THE MECHANISM IS LIVE AND WAS CHECKED BY SCALING IT**: the Prot Warrior
+  blocks 16.05 of 26.60 attacks a fight (Shield Block takes its 11.16% slice far
+  higher), and +5000 block value removes 64,243 damage and takes deaths from
+  8.69 to 4.82. **A ZERO HERE IS A MAGNITUDE, NOT A WIRING FAULT.**
+  **AND THE RATIO IS ARITHMETIC, WHICH IS WHAT MAKES IT CHECKABLE RATHER THAN
+  ASSERTED**: a dodge removes the whole blow and a block removes a flat 97 of
+  it, so a point of block chance is worth a point of dodge chance times
+  `blockValue / meanHit`. 97/5230 is 1.85% predicted against 0.0017/0.1375 =
+  1.2% measured. `targetSwingDamage` and `BOSS_DAMAGE_RAMP` are both invented
+  numbers borrowed from Classic, so **whether a flat mitigation stat is worth
+  anything in this project is currently decided by a placeholder** -- a question
+  for the owner rather than something to tune.
 - **SO MEASURE THE ENCOUNTER'S OWN QUANTITY WHEN A CHANGE MEASURES ZERO**, the
   way a correctness fix expected to be worth nothing is measured on its
   mechanism. The gaps between attacks are what settled this in one probe; the
