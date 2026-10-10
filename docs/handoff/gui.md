@@ -367,10 +367,17 @@ which let a half-typed id produce a condition that is permanently true or
 permanently false with nothing on screen to say so. `auras/auraCatalog.ts`
 derives the list rather than carrying one.
 
-**THE CONDITIONS THE EDITOR CANNOT DRAW ARE SHOWN AS A SENTENCE AND SAY SO.**
-`any`, `not` and the four builtins have no controls, and an editor that silently
-simplified one would change what the rotation does with nothing on screen to say
-so. The entry can still be reordered or removed; only its condition is fixed.
+**A CONDITION IS A TREE**: a group matching `all of` or `any of`, holding
+clauses and nested groups, each with a `not` toggle. It was a flat list of ANDed
+clauses first, and that LOCKED 51 OF THE 132 STOCK CONDITIONS -- one `not`
+anywhere, or one `any`, made the whole thing read-only.
+
+**AND A LEAF THE PANEL CANNOT DRAW NO LONGER POISONS THE REST.** A builtin or a
+swing-timer read is ONE row marked "fixed" -- shown as its sentence, negatable,
+removable, not rewritable -- inside a tree that is otherwise fully editable. 22
+such leaves across 20 conditions; nothing is locked as a whole any more. An
+editor that silently simplified one would change what the rotation does with
+nothing on screen to say so.
 
 ### What is left
 

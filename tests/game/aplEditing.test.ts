@@ -1,14 +1,22 @@
 import { describe, expect, it } from 'vitest';
 import type { AplCondition, AplEntry } from '../../src/game/rotations/apl';
+import type { GroupNode } from '../../src/ui/panels/aplEditing';
 import { compileCondition } from '../../src/game/rotations/apl';
 import {
   addEntry,
-  blankClause,
-  clausesOf,
-  conditionFromClauses,
+  appendTo,
+  blankClauseNode,
+  blankGroup,
+  conditionOf,
   moveEntry,
+  nodeAt,
+  removeAt,
   removeEntry,
+  replaceAt,
+  rootOf,
   setCondition,
+  setGroupOp,
+  toggleNegated,
 } from '../../src/ui/panels/aplEditing';
 import { ALL_PRIORITY_LISTS } from '../../src/game/rotations/allLists';
 import {
@@ -89,55 +97,138 @@ describe('reordering and membership', () => {
   });
 });
 
-describe('clauses round-trip through the editor', () => {
+describe('a condition round-trips through the editor', () => {
   /*
-   * THE ASSERTION THAT MATTERS. A clause the panel draws has to come back as
-   * the SAME condition -- not an equivalent-looking one. The failure mode is a
-   * person opening an entry, changing nothing, and the rotation quietly
-   * behaving differently afterwards.
+   * ==========================================================================
+   * THE ASSERTION THAT MATTERS, AND IT COVERS EVERY CONDITION NOW.
+   *
+   * A condition the panel opens has to come back as the SAME condition -- not
+   * an equivalent-looking one. The failure is a person opening an entry,
+   * changing nothing, and the rotation quietly behaving differently.
+   *
+   * IT USED TO SKIP WHAT THE EDITOR COULD NOT DRAW, which was 51 of the 132
+   * conditions in the stock lists. A leaf with no controls is a `fixed` node
+   * now -- kept exactly, shown as its sentence -- so there is nothing left to
+   * skip and the loop asserts on all of them.
+   * ==========================================================================
    */
-  it('every editable condition in every stock list survives unchanged', () => {
+  it('every condition in every stock list survives unchanged', () => {
     let checked = 0;
     for (const record of ALL_PRIORITY_LISTS) {
       for (const entry of record.list.entries) {
         if (!entry.condition) continue;
-        const clauses = clausesOf(entry.condition);
-        // `undefined` means the panel shows it read-only, which is the honest
-        // answer for `any`, `not` and the builtins.
-        if (clauses === undefined) continue;
-        expect(conditionFromClauses(clauses), `${record.list.name}: ${entry.abilityId}`).toEqual(
-          entry.condition,
-        );
+        expect(
+          conditionOf(rootOf(entry.condition)),
+          `${record.list.name}: ${entry.abilityId}`,
+        ).toEqual(entry.condition);
         checked += 1;
       }
     }
-    // A guard on the guard: if `clausesOf` started returning undefined for
-    // everything, the loop above would assert nothing at all.
-    expect(checked).toBeGreaterThan(40);
+    // A guard on the guard: a parser that returned an empty root for
+    // everything would make the loop above assert nothing.
+    expect(checked).toBeGreaterThan(120);
   });
 
-  it('shows a condition it cannot draw as read-only instead of simplifying it', () => {
-    // The Rogue's `not(poolingForAmbush)` and anything carrying a builtin.
-    expect(clausesOf({ kind: 'not', of: { kind: 'aura', on: 'self', auraId: 'x', present: true } }))
-      .toBeUndefined();
-    expect(clausesOf({ kind: 'builtin', id: 'hawks_below_cap' })).toBeUndefined();
-    expect(
-      clausesOf({
-        kind: 'any',
-        of: [
-          { kind: 'aura', on: 'self', auraId: 'x', present: true },
-          { kind: 'aura', on: 'self', auraId: 'y', present: true },
-        ],
-      }),
-    ).toBeUndefined();
-  });
-
-  it('keeps "has run out" apart from "has N seconds left"', () => {
+  it('no condition is read-only as a whole any more', () => {
     /*
-     * They are the same test only if a window of zero is a window, and the
-     * class files wrote them as different helpers because they are different
-     * ROTATION decisions: a refresh window CLIPS whatever is left, which cost
-     * the Moonkin 14.9 DPS.
+     * The thing this change was for. Before it, one `not` or one `any`
+     * anywhere locked an entire condition -- the Rogue pooling gates, the
+     * Paladin seal twist, the Mage Scorch, the Priest hold band.
+     */
+    for (const record of ALL_PRIORITY_LISTS) {
+      for (const entry of record.list.entries) {
+        if (!entry.condition) continue;
+        const root = rootOf(entry.condition);
+        expect(root.kind, `${record.list.name}: ${entry.abilityId}`).toBe('group');
+        expect(root.children.length).toBeGreaterThan(0);
+      }
+    }
+  });
+
+  it('keeps a leaf it cannot draw, rather than dropping or simplifying it', () => {
+    // A builtin has no controls that mean what it means.
+    const condition: AplCondition = {
+      kind: 'all',
+      of: [
+        { kind: 'resource', resource: 'rage', compare: 'atLeast', amount: 10 },
+        { kind: 'builtin', id: 'charge_stance_allowed' },
+      ],
+    };
+    const root = rootOf(condition);
+    expect(root.children.map((child) => child.kind)).toEqual(['clause', 'fixed']);
+    expect(conditionOf(root)).toEqual(condition);
+  });
+
+  it('reads any, not and nesting as a tree', () => {
+    // The shape the Mage Scorch condition is written in: a AND (b OR c).
+    const condition: AplCondition = {
+      kind: 'all',
+      of: [
+        { kind: 'hasReaction', reactionId: 'improved_scorch' },
+        {
+          kind: 'any',
+          of: [
+            {
+              kind: 'auraStacks',
+              on: 'target',
+              auraId: 'fire_vulnerability',
+              compare: 'below',
+              stacks: 5,
+            },
+            {
+              kind: 'auraTime',
+              on: 'target',
+              auraId: 'fire_vulnerability',
+              compare: 'atMost',
+              seconds: 3,
+            },
+          ],
+        },
+      ],
+    };
+    const root = rootOf(condition);
+    expect(root.op).toBe('all');
+    expect(root.children[0].kind).toBe('fixed');
+    const nested = root.children[1];
+    expect(nested.kind).toBe('group');
+    expect(nested.kind === 'group' && nested.op).toBe('any');
+    expect(nested.kind === 'group' && nested.children.length).toBe(2);
+    expect(conditionOf(root)).toEqual(condition);
+  });
+
+  it('reads a not as a flag on the node it negates', () => {
+    const condition: AplCondition = {
+      kind: 'not',
+      of: { kind: 'aura', on: 'self', auraId: 'cutthroat', present: true },
+    };
+    const root = rootOf(condition);
+    expect(root.children[0].negated).toBe(true);
+    expect(root.children[0].kind).toBe('clause');
+    expect(conditionOf(root)).toEqual(condition);
+  });
+
+  it('keeps a double negation whole rather than collapsing it', () => {
+    /*
+     * `not(not(x))` and `x` mean the same thing and are not the same DATA, and
+     * this editor has one promise: opening a condition and changing nothing
+     * leaves it byte-identical. A flag cannot hold two negations, so the whole
+     * thing becomes a fixed leaf.
+     */
+    const condition: AplCondition = {
+      kind: 'not',
+      of: { kind: 'not', of: { kind: 'aura', on: 'self', auraId: 'x', present: true } },
+    };
+    expect(rootOf(condition).children[0].kind).toBe('fixed');
+    expect(conditionOf(rootOf(condition))).toEqual(condition);
+  });
+
+  it('keeps "has run out" apart from "is not up"', () => {
+    /*
+     * `!auras.has(id)` and `remainingMs(id) <= 0` differ on an aura that is
+     * PRESENT WITH NOTHING LEFT, and the stock lists write both -- the Shaman
+     * Windfury Weapon entry is the first and five classes` `expired` helpers
+     * are the second. They were one option in a first draft, and the
+     * round-trip caught it.
      */
     const ranOut: AplCondition = {
       kind: 'auraTime',
@@ -146,22 +237,91 @@ describe('clauses round-trip through the editor', () => {
       compare: 'atMost',
       seconds: 0,
     };
-    const clauses = clausesOf(ranOut)!;
-    expect(clauses[0].test).toBe('down');
-    expect(conditionFromClauses(clauses)).toEqual(ranOut);
+    const notUp: AplCondition = { kind: 'aura', on: 'target', auraId: 'rip', present: false };
+    expect(conditionOf(rootOf(ranOut))).toEqual(ranOut);
+    expect(conditionOf(rootOf(notUp))).toEqual(notUp);
   });
 
   it('no clauses at all is no condition, not an empty one', () => {
-    // An empty `all` is TRUE for every actor, so storing one would turn a
+    // An empty `all` is TRUE for every actor, so emitting one would turn a
     // gated entry into an unconditional floor.
-    expect(conditionFromClauses([])).toBeUndefined();
+    expect(conditionOf(rootOf(undefined))).toBeUndefined();
   });
 
   it('every blank clause compiles', () => {
-    for (const kind of ['buff', 'resource', 'cooldown', 'fight'] as const) {
-      const condition = conditionFromClauses([blankClause(kind)])!;
-      expect(() => compileCondition(condition), kind).not.toThrow();
+    for (const kind of ['buff', 'resource', 'cooldown', 'fight', 'health'] as const) {
+      const root = appendTo(rootOf(undefined), [], blankClauseNode(kind)) as GroupNode;
+      const condition = conditionOf(root);
+      expect(condition, kind).toBeDefined();
+      expect(() => compileCondition(condition!), kind).not.toThrow();
     }
+  });
+});
+
+describe('changing the tree', () => {
+  const base = rootOf({
+    kind: 'all',
+    of: [
+      { kind: 'comboPoints', compare: 'atLeast', points: 4 },
+      { kind: 'aura', on: 'self', auraId: 'cutthroat', present: true },
+    ],
+  });
+
+  it('negates one node without touching its siblings', () => {
+    const next = toggleNegated(base, [1]) as GroupNode;
+    expect(conditionOf(next)).toEqual({
+      kind: 'all',
+      of: [
+        { kind: 'comboPoints', compare: 'atLeast', points: 4 },
+        { kind: 'not', of: { kind: 'aura', on: 'self', auraId: 'cutthroat', present: true } },
+      ],
+    });
+  });
+
+  it('switches a group between all and any', () => {
+    const next = setGroupOp(base, [], 'any') as GroupNode;
+    expect(conditionOf(next)?.kind).toBe('any');
+  });
+
+  it('removes a child, and unwraps the group when one is left', () => {
+    // Down to one child, `all([x])` is just `x` -- which is how the lists are
+    // written, and what the entry was before a second clause was added.
+    const next = removeAt(base, [1]) as GroupNode;
+    expect(conditionOf(next)).toEqual({ kind: 'comboPoints', compare: 'atLeast', points: 4 });
+  });
+
+  it('appends into a NESTED group rather than the root', () => {
+    const withGroup = appendTo(base, [], blankGroup('any'));
+    const deep = appendTo(withGroup, [2], blankClauseNode('resource'));
+    const nested = nodeAt(deep, [2]);
+    expect(nested?.kind).toBe('group');
+    expect(nested?.kind === 'group' && nested.children.length).toBe(1);
+    // ...and the root still has its own two.
+    expect(deep.kind === 'group' && deep.children.length).toBe(3);
+  });
+
+  it('replaces a clause in place', () => {
+    expect(nodeAt(base, [0])?.kind).toBe('clause');
+    const next = replaceAt(base, [0], {
+      kind: 'clause',
+      negated: false,
+      clause: { kind: 'resource', resource: 'energy', compare: 'atMost', value: 50 },
+    }) as GroupNode;
+    expect(conditionOf(next)).toEqual({
+      kind: 'all',
+      of: [
+        { kind: 'resource', resource: 'energy', compare: 'atMost', amount: 50 },
+        { kind: 'aura', on: 'self', auraId: 'cutthroat', present: true },
+      ],
+    });
+  });
+
+  it('ignores a path that does not exist', () => {
+    // A stale path from a render that raced an edit. Doing nothing is right;
+    // writing at the wrong index would silently rewrite another condition.
+    expect(removeAt(base, [9])).toBe(base);
+    expect(toggleNegated(base, [9])).toBe(base);
+    expect(appendTo(base, [0], blankClauseNode('buff'))).toBe(base);
   });
 });
 

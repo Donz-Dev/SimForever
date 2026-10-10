@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import type { ReactNode } from 'react';
 import type { CharacterProfile } from '../../profiles';
 import { defaultRotationFor, rotationMatchesBuild, stockListFor } from '../../profiles/rotation';
 import type { AplCondition, AplEntry, DescribeNames } from '../../game/rotations/apl';
@@ -7,15 +8,22 @@ import { resolveCombatStyle } from '../../game/character';
 import { abilitiesForClass } from '../../game/abilities/abilitiesForClass';
 import type { CatalogAura } from '../../game/auras/auraCatalog';
 import { aurasForClass } from '../../game/auras/auraCatalog';
-import type { Clause, ClauseKind } from './aplEditing';
+import type { Clause, ClauseKind, ConditionNode, GroupNode, NodePath } from './aplEditing';
 import {
   addEntry,
-  blankClause,
-  clausesOf,
-  conditionFromClauses,
+  appendTo,
+  blankClauseNode,
+  blankGroup,
+  conditionOf,
   moveEntry,
+  nodeAt,
+  removeAt,
   removeEntry,
+  replaceAt,
+  rootOf,
   setCondition,
+  setGroupOp,
+  toggleNegated,
 } from './aplEditing';
 import { Panel } from '../components/Panel';
 
@@ -228,14 +236,19 @@ export function AplEntries({
 }
 
 /**
- * One entry's condition: editable when it decomposes into flat clauses, and a
- * sentence when it does not.
+ * One entry's condition, as an editable TREE.
  *
- * THE READ-ONLY CASE IS HONEST RATHER THAN A GAP. A condition built from `any`,
- * `not` or one of the four builtins cannot be drawn with these controls, and an
- * editor that silently simplified it would change what the rotation does with
- * nothing on screen to say so. The entry can still be reordered or removed;
- * only its condition is fixed.
+ * ============================================================================
+ * IT USED TO BE A FLAT LIST OF `all` CLAUSES, AND THAT LOCKED 51 OF THE 132
+ * CONDITIONS IN THE STOCK LISTS. One `not` anywhere, or one `any`, made the
+ * whole condition read-only -- so the Rogue's pooling gates, the Paladin's
+ * entire seal twist, the Mage's Scorch and the Priest's hold band could be
+ * read and not touched.
+ *
+ * A LEAF THE PANEL CANNOT DRAW NO LONGER POISONS THE REST. A builtin or a
+ * swing-timer read is ONE fixed row inside a tree that is otherwise fully
+ * editable, where before it made everything around it read-only too.
+ * ============================================================================
  */
 function EntryCondition({
   condition,
@@ -250,16 +263,11 @@ function EntryCondition({
   readonly auras: readonly CatalogAura[];
   readonly onChange?: (condition: AplCondition | undefined) => void;
 }) {
-  const clauses = clausesOf(condition);
-
-  if (!onChange || clauses === undefined) {
+  if (!onChange) {
     return (
       <span className="apl-condition">
         {condition ? (
-          <>
-            if {describeCondition(condition, names)}
-            {onChange ? <span className="apl-fixed"> — not editable here</span> : null}
-          </>
+          <>if {describeCondition(condition, names)}</>
         ) : (
           /*
            * SAID RATHER THAN LEFT BLANK. An unconditional entry is a FLOOR
@@ -274,38 +282,236 @@ function EntryCondition({
     );
   }
 
-  const replace = (next: readonly Clause[]) => onChange(conditionFromClauses(next));
+  const root = rootOf(condition);
+  const update = (next: ConditionNode) =>
+    onChange(conditionOf(next as GroupNode));
 
   return (
     <span className="apl-clauses">
-      {clauses.length === 0 ? <span className="apl-condition muted">always</span> : null}
-      {clauses.map((clause, index) => (
-        <ClauseRow
-          key={index}
-          clause={clause}
-          abilities={abilities}
-          auras={auras}
-          onChange={(next) => replace(clauses.map((c, at) => (at === index ? next : c)))}
-          onRemove={() => replace(clauses.filter((_c, at) => at !== index))}
-        />
-      ))}
-      <select
-        className="apl-add-clause"
-        value=""
-        aria-label="Add a condition"
-        onChange={(event) => {
-          const kind = event.target.value as ClauseKind | '';
-          if (!kind) return;
-          replace([...clauses, blankClause(kind)]);
-        }}
-      >
-        <option value="">+ condition</option>
-        <option value="buff">Buff / debuff</option>
-        <option value="resource">Resource</option>
-        <option value="cooldown">Cooldown</option>
-        <option value="fight">Fight remaining</option>
-      </select>
+      {root.children.length === 0 ? <span className="apl-condition muted">always</span> : null}
+      <GroupEditor
+        root={root}
+        path={[]}
+        names={names}
+        abilities={abilities}
+        auras={auras}
+        onChange={update}
+      />
     </span>
+  );
+}
+
+/**
+ * A group of conditions: "all of" or "any of", with its children under it.
+ *
+ * THE ROOT HIDES ITS OWN OPERATOR WHILE IT HAS FEWER THAN TWO CHILDREN,
+ * because "all of" above a single clause is noise -- the overwhelmingly common
+ * case is one or two ANDed clauses, and the control appears when it starts to
+ * mean something.
+ */
+function GroupEditor({
+  root,
+  path,
+  names,
+  abilities,
+  auras,
+  onChange,
+}: {
+  readonly root: ConditionNode;
+  readonly path: NodePath;
+  readonly names: DescribeNames;
+  readonly abilities: readonly { readonly id: string; readonly name: string }[];
+  readonly auras: readonly CatalogAura[];
+  readonly onChange: (root: ConditionNode) => void;
+}) {
+  const group = nodeAt(root, path);
+  if (!group || group.kind !== 'group') return null;
+  const isRoot = path.length === 0;
+  const showOp = group.children.length > 1 || !isRoot;
+
+  return (
+    <span className={isRoot ? 'apl-group apl-group-root' : 'apl-group'}>
+      {showOp ? (
+        <span className="apl-group-head">
+          {!isRoot ? (
+            <NotToggle
+              negated={group.negated}
+              onToggle={() => onChange(toggleNegated(root, path))}
+            />
+          ) : null}
+          <select
+            value={group.op}
+            aria-label="Match all or any"
+            onChange={(event) =>
+              onChange(setGroupOp(root, path, event.target.value as 'all' | 'any'))
+            }
+          >
+            <option value="all">all of</option>
+            <option value="any">any of</option>
+          </select>
+          {!isRoot ? (
+            <button
+              type="button"
+              className="apl-clause-remove"
+              title="Remove this group"
+              onClick={() => onChange(removeAt(root, path))}
+            >
+              ✕
+            </button>
+          ) : null}
+        </span>
+      ) : null}
+
+      <span className="apl-group-children">
+        {group.children.map((_child, index) => (
+          <NodeEditor
+            key={index}
+            root={root}
+            path={[...path, index]}
+            names={names}
+            abilities={abilities}
+            auras={auras}
+            onChange={onChange}
+          />
+        ))}
+
+        <span className="apl-adders">
+          <select
+            className="apl-add-clause"
+            value=""
+            aria-label="Add a condition"
+            onChange={(event) => {
+              const kind = event.target.value as ClauseKind | '';
+              if (!kind) return;
+              onChange(appendTo(root, path, blankClauseNode(kind)));
+            }}
+          >
+            <option value="">+ condition</option>
+            <option value="buff">Buff / debuff</option>
+            <option value="resource">Resource</option>
+            <option value="cooldown">Cooldown</option>
+            <option value="fight">Fight timing</option>
+            <option value="health">Health</option>
+          </select>
+          {/*
+            * A NESTED GROUP IS WHAT MAKES "a and (b or c)" SAYABLE, which is
+            * the shape the Mage's Scorch and the Paladin's seal twist are
+            * written in. It defaults to `any`, because a group matching its
+            * parent's operator would do nothing a flat list does not.
+            */}
+          <button
+            type="button"
+            className="apl-add-group"
+            title="Add a nested group"
+            onClick={() => onChange(appendTo(root, path, blankGroup()))}
+          >
+            + group
+          </button>
+        </span>
+      </span>
+    </span>
+  );
+}
+
+/** One row of a group: a clause, a fixed condition, or a nested group. */
+function NodeEditor({
+  root,
+  path,
+  names,
+  abilities,
+  auras,
+  onChange,
+}: {
+  readonly root: ConditionNode;
+  readonly path: NodePath;
+  readonly names: DescribeNames;
+  readonly abilities: readonly { readonly id: string; readonly name: string }[];
+  readonly auras: readonly CatalogAura[];
+  readonly onChange: (root: ConditionNode) => void;
+}) {
+  const node = nodeAt(root, path);
+  if (!node) return null;
+
+  if (node.kind === 'group') {
+    return (
+      <GroupEditor
+        root={root}
+        path={path}
+        names={names}
+        abilities={abilities}
+        auras={auras}
+        onChange={onChange}
+      />
+    );
+  }
+
+  const notToggle = (
+    <NotToggle negated={node.negated} onToggle={() => onChange(toggleNegated(root, path))} />
+  );
+  const remove = (
+    <button
+      type="button"
+      className="apl-clause-remove"
+      title="Remove this condition"
+      onClick={() => onChange(removeAt(root, path))}
+    >
+      ✕
+    </button>
+  );
+
+  /*
+   * A FIXED LEAF IS SHOWN AS ITS SENTENCE AND SAYS SO. It can be negated,
+   * moved with its group, or removed; what it cannot be is rewritten, because
+   * there are no controls that mean what it means. An editor that silently
+   * simplified one would change the rotation with nothing on screen to say so.
+   */
+  if (node.kind === 'fixed') {
+    return (
+      <span className="apl-clause apl-clause-fixed">
+        {notToggle}
+        <span className="apl-condition">{describeCondition(node.condition, names)}</span>
+        <span className="apl-fixed">— fixed</span>
+        {remove}
+      </span>
+    );
+  }
+
+  return (
+    <ClauseRow
+      clause={node.clause}
+      abilities={abilities}
+      auras={auras}
+      before={notToggle}
+      onChange={(clause) => onChange(replaceAt(root, path, { ...node, clause }))}
+      onRemove={() => onChange(removeAt(root, path))}
+    />
+  );
+}
+
+/**
+ * The `not` toggle.
+ *
+ * A BUTTON THAT STAYS LIT rather than a checkbox, because it reads as part of
+ * the sentence the row makes -- "not  your Cutthroat is up" -- and because a
+ * checkbox at this size is hard to see the state of.
+ */
+function NotToggle({
+  negated,
+  onToggle,
+}: {
+  readonly negated: boolean;
+  readonly onToggle: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      className={negated ? 'apl-not apl-not-on' : 'apl-not'}
+      aria-pressed={negated}
+      title={negated ? 'Negated: remove the not' : 'Negate this condition'}
+      onClick={onToggle}
+    >
+      not
+    </button>
   );
 }
 
@@ -314,24 +520,37 @@ function ClauseRow({
   clause,
   abilities,
   auras,
+  before,
   onChange,
   onRemove,
 }: {
   readonly clause: Clause;
   readonly abilities: readonly { readonly id: string; readonly name: string }[];
   readonly auras: readonly CatalogAura[];
+  readonly before?: ReactNode;
   readonly onChange: (clause: Clause) => void;
   readonly onRemove: () => void;
 }) {
   const set = (patch: Partial<Clause>) => onChange({ ...clause, ...patch });
-  const numberField = (value: number | undefined) => (
-    <input
-      type="number"
-      className="apl-number"
-      value={value ?? 0}
-      onChange={(event) => set({ value: Number(event.target.value) })}
-    />
+  const numberField = (value: number | undefined, suffix?: string) => (
+    <>
+      <input
+        type="number"
+        className="apl-number"
+        value={value ?? 0}
+        aria-label="Amount"
+        onChange={(event) => set({ value: Number(event.target.value) })}
+      />
+      {suffix ? <span className="apl-unit">{suffix}</span> : null}
+    </>
   );
+  /*
+   * `below` AND `above` ARE OFFERED, and they are not decoration: the stock
+   * lists write "under 5 stacks" and "under 15% mana", and leaving them out
+   * was what locked those conditions out of the editor entirely. They are
+   * STRICT where the others are not, which matters at exactly the value a
+   * stack count or a resource lands on.
+   */
   const compareField = (withExactly: boolean) => (
     <select
       value={clause.compare}
@@ -340,36 +559,26 @@ function ClauseRow({
     >
       <option value="atMost">≤</option>
       <option value="atLeast">≥</option>
+      <option value="below">&lt;</option>
+      <option value="above">&gt;</option>
       {withExactly ? <option value="exactly">=</option> : null}
     </select>
   );
 
   return (
     <span className="apl-clause">
+      {before}
       {clause.kind === 'buff' ? (
         <>
           <select
             value={clause.on}
             aria-label="Whose buff"
-            onChange={(e) => set({ on: e.target.value as 'self' | 'target' })}
+            onChange={(e) => set({ on: e.target.value as Clause['on'] })}
           >
             <option value="self">your</option>
             <option value="target">target&apos;s</option>
+            <option value="pet">pet&apos;s</option>
           </select>
-          {/*
-            * A REAL DROPDOWN, WHICH THE FIRST VERSION OF THIS WAS NOT. It was
-            * a text box with a datalist of ABILITY ids beside it, on the
-            * reasoning that most aura ids are ability ids and there was no
-            * registry of the rest. Both halves were true and the conclusion was
-            * wrong: choosing a buff condition meant already knowing that Fire
-            * Vulnerability is `fire_vulnerability`, which you can only find by
-            * reading the source or an external site.
-            *
-            * AND A HALF-TYPED ID IS WORSE THAN A WRONG ONE: an aura that does
-            * not exist is never present, so "is up" is permanently false and
-            * "has run out" is permanently true -- an entry silently disabled,
-            * or silently ungated, with nothing on screen to say which.
-            */}
           <AuraChoice
             auraId={clause.auraId ?? ''}
             auras={auras}
@@ -384,13 +593,19 @@ function ClauseRow({
             <option value="down">has run out</option>
             <option value="absent">is not up</option>
             <option value="up">is up</option>
-            <option value="expiring">seconds left</option>
-            <option value="stacks">stacks</option>
+            {/*
+              * A PET CAN ONLY BE ASKED WHETHER AN AURA IS THERE -- `auraTime`
+              * and `auraStacks` read `self` or `target` and nothing else, so
+              * offering the clock for a pet would be a control whose value the
+              * data model cannot hold.
+              */}
+            {clause.on !== 'pet' ? <option value="expiring">seconds left</option> : null}
+            {clause.on !== 'pet' ? <option value="stacks">stacks</option> : null}
           </select>
           {clause.test === 'expiring' || clause.test === 'stacks' ? (
             <>
               {compareField(clause.test === 'stacks')}
-              {numberField(clause.value)}
+              {numberField(clause.value, clause.test === 'expiring' ? 's' : undefined)}
             </>
           ) : null}
         </>
@@ -410,7 +625,18 @@ function ClauseRow({
             <option value="combo">combo points</option>
           </select>
           {compareField(true)}
-          {numberField(clause.value)}
+          {numberField(clause.value, clause.asPercent ? '%' : undefined)}
+          {/* Combo points have no maximum worth comparing against. */}
+          {clause.resource !== 'combo' ? (
+            <select
+              value={clause.asPercent ? 'percent' : 'flat'}
+              aria-label="Amount or share"
+              onChange={(e) => set({ asPercent: e.target.value === 'percent' })}
+            >
+              <option value="flat">points</option>
+              <option value="percent">% of max</option>
+            </select>
+          ) : null}
         </>
       ) : null}
 
@@ -443,15 +669,24 @@ function ClauseRow({
       {clause.kind === 'fight' ? (
         <>
           {compareField(false)}
-          {numberField(clause.value)}
+          {numberField(clause.value, clause.unit === 'percentLeft' ? '%' : 's')}
           <select
-            value={clause.asPercent ? 'pct' : 'sec'}
-            aria-label="Remaining unit"
-            onChange={(e) => set({ asPercent: e.target.value === 'pct' })}
+            value={clause.unit}
+            aria-label="Fight timing"
+            onChange={(e) => set({ unit: e.target.value as Clause['unit'] })}
           >
-            <option value="pct">% left</option>
-            <option value="sec">seconds left</option>
+            <option value="percentLeft">of the fight left</option>
+            <option value="secondsLeft">seconds left</option>
+            <option value="secondsElapsed">seconds since the pull</option>
           </select>
+        </>
+      ) : null}
+
+      {clause.kind === 'health' ? (
+        <>
+          <span className="apl-unit">your health</span>
+          {compareField(false)}
+          {numberField(clause.value, '%')}
         </>
       ) : null}
 
