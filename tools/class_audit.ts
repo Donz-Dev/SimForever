@@ -113,15 +113,42 @@ function profilesOf(className: string): ProfileRow[] {
     const book = characterAtCombatStart(profile)?.abilities.all ?? [];
     const byName = new Map(batch.abilities.map((row) => [row.abilityName, row]));
 
+    /*
+     * ========================================================================
+     * THE PROFILE'S OWN LIST, NOT THE SHARED REGISTRY'S, AND NOT KNOWING THE
+     * DIFFERENCE MADE THIS REPORT LIE ON EVERY ROW.
+     *
+     * `ALL_PRIORITY_LISTS` holds the list as DECLARED, and the declared list
+     * names all four free racial cooldowns -- the shared constant in
+     * `racialCooldowns.ts` is spread into lists that belong to no race.
+     * `stockListFor` narrows that to what the build's RACE can learn before it
+     * reaches the profile, so the stored list and the declared one are
+     * different objects and only the stored one is what runs.
+     *
+     * Reading the declared one reported `berserking, elunes_light, eureka` as
+     * NEVER FIRED on every Orc profile, `blood_fury, berserking, eureka` on
+     * every Undead one, and so on -- three or four false rows per profile, in
+     * the one column of this audit whose whole job is to be read.
+     *
+     * AND AN ABILITY THE BUILD NEVER LEARNED IS A DIFFERENT ANSWER FROM ONE
+     * THE LIST NEVER REACHED. `PriorityRotation` skips what the character does
+     * not know in silence, which is the property that lets one list serve
+     * several builds; a zero for that reason is not a finding. The same fix
+     * `measure_profiles.ts` carries, for the same reason.
+     * ========================================================================
+     */
+    const entries = profile.rotation.entries;
     const neverFired: string[] = [];
-    for (const entry of record?.list.entries ?? []) {
+    for (const entry of entries) {
       const ability = book.find((candidate) => candidate.id === entry.abilityId);
-      const row = ability ? byName.get(ability.name) : undefined;
+      // Not learned: not this report's business, and not a gap.
+      if (!ability) continue;
+      const row = byName.get(ability.name);
       if ((row?.uses ?? 0) === 0 && !neverFired.includes(entry.abilityId)) {
         neverFired.push(entry.abilityId);
       }
     }
-    const listedIds = new Set(record?.list.entries.map((entry) => entry.abilityId) ?? []);
+    const listedIds = new Set(entries.map((entry) => entry.abilityId));
     const inBookOnly = book
       .filter((ability) => {
         const row = byName.get(ability.name);

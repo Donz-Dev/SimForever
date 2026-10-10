@@ -87,6 +87,27 @@ are both still in `HANDOVER.md` as published figures that are no longer the mean
 **Write the recap so another round can be added to it**, rather than as a closing
 statement, and name the round each figure belongs to.
 
+**AND A FEATURE ARRIVES IN WAVES TOO, WHICH IS THE SAME RULE WITH NO PATCH
+NOTES TO BLAME.** Racials shipped as one commit and then took THREE more rounds,
+two of them the owner's:
+
+| | what it was | effect |
+| --- | --- | --- |
+| 1 | the ten races, five abilities, four engine additions | 25 of 25 rows moved, mean 700.0 -> 709.8 |
+| 2 | the owner's three asks about the panel and the APL | no figure moved; all 75 hashes identical |
+| 3 | the owner found the proc at HALF its rate, by arithmetic | SM/DS 1.17 -> 2.03 procs a fight |
+| 4 | the sweep asking whether anything else was left behind | six DoTs, four on classes no profile reaches |
+
+**ROUND ONE'S HEADER SAID "THIS IS ROUND ONE" AND STILL GOT IT WRONG**, because
+it then listed a single row and left the table closed. Saying a thing is round
+one is not the same as leaving room for round two: **write the TABLE so a row
+can be added**, which is what this one is for.
+
+**AND ROUNDS THREE AND FOUR CAME FROM THE OWNER AFTER THE FEATURE WAS
+DOCUMENTED AS FINISHED**, which is the pattern below about who finds what the
+suite cannot -- so "the feature is built and measured" is not "the feature is
+right" any more than "the notes are exhausted" is "the patch is implemented".
+
 **EVERY ROUND'S FIGURES WERE PUBLISHED, AND THE TOP ROW CHANGED TWICE** --
 Frostfire to DW Fury, by way of Frostfire again. The baseline table was rebuilt
 three times by `tools/update_baseline_table.py` and no row drifted, which is the
@@ -3424,6 +3445,29 @@ bug is not a list that proves there is none.
 stock list; each needed somebody to ask the app for something no preset asks
 for. **Shipping an editor made the engine testable by hand**, and that is worth
 more than any one of the three fixes.
+
+**AND A FOURTH, FOUND BY ARITHMETIC RATHER THAN BY USING THE APP, WHICH IS A
+DIFFERENT SHAPE AGAIN.** Touch of the Grave procced 1.17 times a minute on the
+SM/DS Warlock against 21.6 damage-dealing casts, where its stated rate is 10% --
+and the owner divided one by the other. **BOTH NUMBERS WERE ALREADY ON THE
+RESULTS PAGE**: no new control, no new tool, nothing the app could not already
+show. What was missing was somebody asking whether the two agreed.
+
+| what | why no test could see it |
+| --- | --- |
+| a proc firing at half its rate | every assertion was about an ability that deals DIRECT damage, and the three that took no roll are pure DoTs |
+
+**IT IS THE HARDEST OF THE FOUR, because the proc FIRED.** An inert proc leaves
+a zero somewhere; this one produced an ordinary damage row, an ordinary share
+and an ordinary DPS figure. **A RATE IS ONLY CHECKABLE AGAINST A DENOMINATOR**,
+and nothing in the project computed one -- which is why `racials.test.ts` now
+divides procs by the actions entitled to a roll, and why the ability ids that
+qualify are written out by hand.
+
+**SO PUT THE RATES IN FRONT OF THE OWNER, not only the figures.** This is the
+third time their reading of a printed number has beaten every tool here -- the
+hit ladder, parry haste's direction, and now a proc rate -- and all three were
+cases where the tools were working correctly on the wrong question.
 
 **AND NONE OF THE THREE SEES A MECHANIC THAT IS WIRED UP AND POINTING THE WRONG
 WAY.** `coefficient_probe` asks whether damage responds to a stat,
