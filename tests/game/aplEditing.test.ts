@@ -1,4 +1,10 @@
 import { describe, expect, it } from 'vitest';
+import { runProfile } from '../../src/simulator';
+import { MIND_BLAST, MIND_FLAY } from '../../src/game/abilities/priest';
+import { seconds } from '../../src/engine';
+import { buildSimulation } from '../helpers/buildSimulation';
+import { makeAttacker, makeTarget } from '../helpers/actors';
+import type { CharacterProfile } from '../../src/profiles';
 import type { AplCondition, AplEntry } from '../../src/game/rotations/apl';
 import type { GroupNode } from '../../src/ui/panels/aplEditing';
 import { compileCondition } from '../../src/game/rotations/apl';
@@ -568,5 +574,148 @@ describe('cutting a channel short is a choice, not a baked-in flag', () => {
       'bane_of_agony',
       'corruption',
     ]);
+  });
+});
+
+describe('an interrupt only fires when the ability could actually be cast', () => {
+  /*
+   * ==========================================================================
+   * THE REGRESSION. `selectInterrupt` used to accept `already_casting` as the
+   * rejection reason, on the reasoning that `checkCast` reports ONE reason in a
+   * fixed order and the cast lock is checked second -- "so nothing else is in
+   * the way".
+   *
+   * EVERY STEP OF THAT IS TRUE AND THE CONCLUSION IS BACKWARDS: an earlier
+   * reason hides every later one, so the cast lock being second means the
+   * global cooldown, the ability's own cooldown, its cost and its target are
+   * never reached while the caster is channelling. `already_casting` says only
+   * that the caster is alive.
+   *
+   * IT WAS INVISIBLE UNTIL THE PANEL LET SOMEBODY TICK A BOX ON AN ABILITY WITH
+   * A COOLDOWN. The stock Warlock list is the only one with interrupting
+   * entries and all three are gated on an aura with no cooldown and no cost
+   * they could fail -- their conditions did the work this check was supposed to
+   * do. Mind Blast has an eight-second cooldown, and ticking it cancelled Mind
+   * Flay on EVERY poll for the whole of it.
+   * ==========================================================================
+   */
+  const SEEDS = [1, 2, 3, 4, 5];
+
+  const run = (profile: CharacterProfile) => {
+    let interrupts = 0;
+    let mindFlayTicks = 0;
+    let mindBlastHits = 0;
+    for (const seed of SEEDS) {
+      const result = runProfile(
+        { ...profile, simulation: { ...profile.simulation, iterations: 1, seed } },
+        seed,
+      );
+      for (const event of result.timeline as readonly { type: string; abilityName?: string }[]) {
+        if (event.type === 'channel_interrupted') interrupts += 1;
+        if (event.type === 'damage' && event.abilityName === 'Mind Flay') mindFlayTicks += 1;
+        if (event.type === 'damage' && event.abilityName === 'Mind Blast') mindBlastHits += 1;
+      }
+    }
+    const fights = SEEDS.length;
+    return {
+      interrupts: interrupts / fights,
+      mindFlayTicks: mindFlayTicks / fights,
+      mindBlastHits: mindBlastHits / fights,
+    };
+  };
+
+  const priest = () => PRESETS_BY_ID.get('shadow_priest')!.build();
+  const ticking = (abilityId: string) => {
+    const profile = priest();
+    return {
+      ...profile,
+      rotation: {
+        ...profile.rotation,
+        source: 'custom' as const,
+        entries: profile.rotation.entries.map((entry) =>
+          entry.abilityId === abilityId ? { ...entry, interruptsChannel: true } : entry,
+        ),
+      },
+    };
+  };
+
+  it('leaves the channel alone while the interrupting ability is on cooldown', () => {
+    /*
+     * THE ASSERTION THE BUG FAILS. Mind Blast is on an eight-second cooldown,
+     * so it can interrupt at most a handful of times a fight -- with the old
+     * check it fired on every poll and Mind Flay went to ZERO ticks.
+     */
+    const stock = run(priest());
+    const ticked = run(ticking('mind_blast'));
+
+    expect(stock.interrupts, 'the stock list interrupts nothing').toBe(0);
+    expect(stock.mindFlayTicks, 'the filler channel ticks').toBeGreaterThan(20);
+
+    // The channel is still the filler afterwards -- cut into, not deleted.
+    expect(ticked.mindFlayTicks, 'Mind Flay survives the tick').toBeGreaterThan(15);
+    // And an interrupt costs a cast, so there cannot be more of them than
+    // there are Mind Blasts to interrupt FOR.
+    expect(ticked.interrupts).toBeLessThanOrEqual(ticked.mindBlastHits + 1);
+  });
+
+  it('casts the ability it cancelled the channel for', () => {
+    // The whole point of checking before cancelling: the old code could throw
+    // away the rest of a channel and then cast nothing.
+    const ticked = run(ticking('mind_blast'));
+    expect(ticked.interrupts, 'it does interrupt sometimes').toBeGreaterThan(0);
+    expect(ticked.mindBlastHits, 'and gets more Mind Blasts out for it').toBeGreaterThan(
+      run(priest()).mindBlastHits,
+    );
+  });
+
+  it('reports the cooldown, not the cast lock, when asked past the lock', () => {
+    /*
+     * THE UNIT-LEVEL STATEMENT OF THE SAME THING, so the REASON is pinned and
+     * not only its consequence.
+     *
+     * `makeAttacker` RATHER THAN `createPlayer`, because a built player carries
+     * a ROTATION -- advancing the clock would let the Priest's own priority
+     * list cast things, and the first version of this test found the caster on
+     * a global cooldown three seconds later with no idea why. This project has
+     * that written down; it still took a failing test to remember.
+     */
+    const caster = makeAttacker({
+      abilities: [MIND_BLAST, MIND_FLAY],
+      resources: [{ type: 'mana', maximum: 10_000, initial: 10_000 }],
+    });
+    const target = makeTarget();
+    const simulation = buildSimulation([caster, target], { durationMs: seconds(60) });
+    simulation.begin();
+
+    // Mind Blast first, which puts it on its own cooldown...
+    expect(simulation.cast(caster, MIND_BLAST, target).ok).toBe(true);
+    // ...then past the cast and the global cooldown, and into the channel.
+    simulation.advanceTo(simulation.clock.now() + seconds(3));
+    expect(simulation.cast(caster, MIND_FLAY, target).ok, 'the channel starts').toBe(true);
+    expect(caster.isCasting(simulation.clock.now()), 'channelling').toBe(true);
+    expect(caster.abilities.isReady('mind_blast', simulation.clock.now())).toBe(false);
+
+    /*
+     * AT THE CHANNEL'S START THE GLOBAL COOLDOWN IS STILL RUNNING, and it is
+     * still checked -- cancelling a channel to sit on a running GCD would throw
+     * the rest of it away and cast nothing.
+     */
+    expect(
+      simulation.castRejection(caster, MIND_BLAST, target, { ignoreCastLock: true }),
+    ).toBe('on_gcd');
+
+    // Into the channel, past the global cooldown, with Mind Blast's own eight
+    // seconds still to run.
+    simulation.advanceTo(simulation.clock.now() + seconds(1.6));
+    expect(caster.isCasting(simulation.clock.now()), 'still channelling').toBe(true);
+    expect(caster.isOnGcd(simulation.clock.now()), 'off the global cooldown').toBe(false);
+
+    // The old reading: one reason, and it is the lock -- which says nothing
+    // about the cooldown, because the lock is checked first.
+    expect(simulation.castRejection(caster, MIND_BLAST, target)).toBe('already_casting');
+    // The real question, and the real answer.
+    expect(
+      simulation.castRejection(caster, MIND_BLAST, target, { ignoreCastLock: true }),
+    ).toBe('on_cooldown');
   });
 });

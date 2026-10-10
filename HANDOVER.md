@@ -1,3 +1,79 @@
+# THE APL IS EDITABLE, AND THE INTERRUPT CHECK WAS READING A LIE
+
+**SM/DS 690.4 -> 695.3, AND NOTHING ELSE MOVED BY A DECIMAL.** The Action
+Priority List is now data, shown in a panel, editable, and saved with the
+character -- six commits, through all of which the 75 combat-log hashes from
+`tools/rotation_fingerprint.ts` stayed identical. The one figure that did move
+is a BUG FIX the owner found by using the panel, and it is the only list in the
+project with an interrupting entry.
+
+| | what it was | effect |
+| --- | --- | --- |
+| `10a2dd6` | Save and Load a profile as a file | no figure; **`petFamily` was being dropped on load**, which cost both Warlocks their Demonic Sacrifice |
+| `d16a222` | a priority list becomes DATA; a panel shows it | 75 hashes unchanged across all 26 lists |
+| `a6e769e` | the list is editable and stored on the profile, format 13 | 75 hashes unchanged |
+| `6ea600b` | buffs chosen by NAME, not by typing an id | no figure |
+| `739912c` | `any`, `not` and nested conditions | 51 of 132 conditions stopped being read-only |
+| `5ee11c2` | 20 factory-built auras offered; interrupt becomes a checkbox | no figure |
+| this one | the interrupt check stops reading `already_casting` as an answer | **SM/DS +4.9**, 24 rows at 0.0 |
+
+## The bug, because it is the most transferable thing here
+
+`selectInterrupt` decided whether to cancel a channel by asking `checkCast` for
+its rejection reason and accepting `already_casting`. Its own comment explained
+why that was safe:
+
+> `already_casting` IS THE WHOLE TRICK. `checkCast` reports exactly one reason,
+> in a fixed order, and the cast lock is checked second -- so an entry that
+> comes back `already_casting` is one where NOTHING ELSE is in the way: it is
+> affordable, off cooldown, in the right stance and its condition is satisfied.
+
+**EVERY STEP OF THAT IS TRUE AND THE CONCLUSION IS BACKWARDS.** One reason in a
+fixed order means an earlier reason HIDES every later one. The cast lock being
+checked second means everything else is checked LATER -- which is to say, while
+the caster is channelling, not checked at all. `already_casting` establishes
+that the caster is ALIVE and nothing more.
+
+**WHAT IT COST, AND WHY NOBODY SAW IT FOR A YEAR.** Nothing, until the panel let
+somebody tick a box the stock lists do not. A Shadow Priest ticking "interrupt
+Mind Flay" on Mind Blast cancelled the channel on every poll -- including the
+whole eight seconds Mind Blast spends ON COOLDOWN -- so Mind Flay went from
+about 30 ticks a fight to ZERO. The owner found it in one sitting.
+
+**THE STOCK WARLOCK LIST HID IT PERFECTLY**, which is the part worth keeping.
+All three of its interrupting entries are gated on an aura, and none of the
+three has a cooldown or a cost it could fail -- so their CONDITIONS were doing
+the work this check was supposed to do, and the check's own contribution was
+never exercised. A list that happens to avoid a bug is not a list that proves
+there is none.
+
+Fixed by asking the real question: `castRejection(..., { ignoreCastLock: true })`
+-- would this be castable if the channel were abandoned? Everything else is
+checked as usual, the GLOBAL COOLDOWN included, because cancelling a channel to
+sit on a running GCD throws the rest of it away and casts nothing.
+
+**AND THE FIX IS WORTH +4.9 TO THE ONE PROFILE THAT USES IT.** SM/DS was
+cancelling Wrack to cast spells it could not afford; it now keeps the channel.
+The verdict prints `noise` against a +/- 3.7 interval and the mechanism is
+exact, which is this file's own rule about a verdict being a statement on
+variance rather than on whether anything happened.
+
+## Two things the rebuild turned up on its own
+
+**ENH SHAMAN WAS PUBLISHED AT 716.1 AND MEASURES 715.2**, a drift of -0.9 that
+predates this work and that nothing in this round touched -- the containment run
+has it at 0.0 either side. Rebuilding the whole table rather than patching the
+one row that moved is what found it, which is the argument
+`tools/update_baseline_table.py` exists to make.
+
+**AND THE STATUS BLOCK'S COPY OF THE MEAN NEEDED UPDATING BY HAND AGAIN**, 699.8
+to 700.0. The script re-sums the sentence under the table and knows nothing
+about the block fifteen hundred lines above it. That is written down two
+sections below as "a script that re-derives one copy of a figure is not a script
+that re-derives the figure", and it was still true this time.
+
+---
+
 # FOREVER PATCH 1.60.1.70170 — FIVE rounds of change, read them as one
 
 **THE LAST THREE COMMITS OF IT WENT OUT IN ONE SESSION, AND WHAT THEY HAVE IN
@@ -879,7 +955,7 @@ demonstrated at the top. **Re-count rather than re-reading the sentence.**
 | --- | --- |
 | **Talents** | 260 fully, 39 partly, 105 ruled out, **62 a live gap**, out of **466** -- from 132 before the class dives |
 | **Abilities** | 114 declared against 478 captured |
-| **Profiles** | **25**, all measured, **mean 699.8** -- the armour enchants are +27.0 of it and the consumables +105.9 |
+| **Profiles** | **25**, all measured, **mean 700.0** -- the armour enchants are +27.0 of it and the consumables +105.9 |
 | **Scope rulings** | **9 members**, all the owner's, carrying 129 entries |
 | **Placeholders** | **10 declared** -- see the milestone table, and count DECLARATIONS |
 | **Tests** | **2,809** on Node 20 and 22 |
@@ -1989,7 +2065,7 @@ while it worked.
 decimal -- which is what a talent change scoped to one build should look like.
 It makes Frostfire the top Mage, above Fire's 401.2 and Arcane's 392.6, and the
 build that existed for the Fire/Frost overlap now has a third reason to. The
-mean across **25** is **699.8**, RE-SUMMED FROM THE TABLE ABOVE rather than
+mean across **25** is **700.0**, RE-SUMMED FROM THE TABLE ABOVE rather than
 adjusted -- **by `tools/update_baseline_table.py`, which exists now**; the
 sentence above it had promised a script for several commits and there was none,
 so the mean and the ordering were still being maintained by hand.
@@ -2551,18 +2627,18 @@ cannot audit, which is why the check is a SET comparison and not a row count.
 
 | Profile | Class | Talents | DPS | | Profile | Class | Talents | DPS |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| DW Fury | Warrior | 17/34/0 | 901.8 | | Enh Shaman | Shaman | 17/34/0 | 716.1 |
+| DW Fury | Warrior | 17/34/0 | 901.8 | | Enh Shaman | Shaman | 17/34/0 | 715.2 |
 | Hawk Melee | Hunter | 16/11/24 | 826.1 | | Combat Rogue | Rogue | 18/33/0 | 702.9 |
-| LW Ranged | Hunter | 7/39/5 | 814.5 | | SM/DS | Warlock | 40/11/0 | 690.4 |
+| LW Ranged | Hunter | 7/39/5 | 814.5 | | **SM/DS** | Warlock | 40/11/0 | **695.3** |
 | Cat Druid | Druid | 9/34/8 | 807.2 | | Fire Mage | Mage | 10/39/2 | 690.1 |
-| Seal Twist Ret | Paladin | 15/0/36 | 796.8 | | **Shockadin** | Paladin | 23/0/28 | **667.7** |
+| Seal Twist Ret | Paladin | 15/0/36 | 796.8 | | Shockadin | Paladin | 23/0/28 | 667.7 |
 | 2H Arms | Warrior | 39/10/2 | 791.6 | | Hemo Rogue | Rogue | 17/3/31 | 624.3 |
 | LW Melee | Hunter | 7/13/31 | 783.2 | | Ele Shaman | Shaman | 38/13/0 | 617.5 |
 | BM Hunter | Hunter | 31/20/0 | 777.8 | | Venom Rogue | Rogue | 37/12/2 | 601.5 |
 | Arcane Mage | Mage | 47/4/0 | 769.4 | | Rupture Rogue | Rogue | 12/8/31 | 588.2 |
-| Frostfire Mage | Mage | 0/29/22 | 768.3 | | **Prot Warr** | Warrior | 17/0/34 | **529.7** |
-| Firelock | Warlock | 5/11/35 | 759.7 | | **Bear Druid** | Druid | 9/42/0 | **437.3** |
-| Shadow Priest | Priest | 13/3/35 | 746.9 | | **Prot Pally** | Paladin | 8/34/9 | **362.9** |
+| Frostfire Mage | Mage | 0/29/22 | 768.3 | | Prot Warr | Warrior | 17/0/34 | 529.7 |
+| Firelock | Warlock | 5/11/35 | 759.7 | | Bear Druid | Druid | 9/42/0 | 437.3 |
+| Shadow Priest | Priest | 13/3/35 | 746.9 | | Prot Pally | Paladin | 8/34/9 | 362.9 |
 | Moonkin | Druid | 38/0/13 | 724.0 | | | | | | |
 
 **THE TOP IS DW FURY, AND A CASTER HAS NOT HELD IT SINCE THE CONSUMABLES.**

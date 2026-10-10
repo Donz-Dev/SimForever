@@ -1393,6 +1393,45 @@ profiles' rows at once.
   **IT WAS WRITTEN AS 11 AND SO WAS THE WARLOCK STONE**, from the same base, and
   the two merged without a conflict. See **Git workflow**.
 
+### Interrupting a channel
+
+**BOTH HALVES HAVE TO AGREE AND NEITHER IS ENOUGH**: an ability declares
+`interruptibleChannel` and a list entry declares `interruptsChannel`, and
+nothing is cancelled unless both do. That is what lets the panel offer a
+checkbox safely, and what makes it meaningless in a list holding no
+interruptible channel -- so it is not offered there.
+
+- **`already_casting` IS NOT AN ANSWER ABOUT ANYTHING ELSE, AND A COMMENT HERE
+  ARGUED THAT IT WAS.** `checkCast` reports ONE reason in a fixed order, and the
+  cast lock is checked SECOND -- so an earlier reason hides every later one, and
+  while a caster is channelling the global cooldown, the ability's own cooldown,
+  its cost and its target are **never reached**. The comment reasoned "the cast
+  lock is checked second, so nothing else is in the way"; checked second means
+  everything else is checked LATER, which is to say not at all. **Every step
+  true, conclusion backwards.**
+  Ask the real question instead -- `castRejection(..., { ignoreCastLock: true })`
+  -- which is "would this be castable if the channel were abandoned".
+- **THE GLOBAL COOLDOWN STAYS CHECKED**, which is the one exception worth
+  stating: cancelling a channel to sit on a running GCD throws the rest of it
+  away and casts nothing.
+- **A LIST THAT AVOIDS A BUG IS NOT A LIST THAT PROVES THERE IS NONE.** The
+  stock Warlock list is the only one with interrupting entries, and all three
+  are gated on an aura with no cooldown and no cost they could fail -- so their
+  CONDITIONS did the work the broken check was supposed to do and it was never
+  exercised. It took the panel letting somebody tick a box on an ability with a
+  COOLDOWN: Mind Blast on the Shadow Priest cancelled Mind Flay on every poll
+  for the whole eight seconds it was unavailable, taking the channel from ~30
+  ticks a fight to zero.
+- **AN INTERRUPTIBLE CHANNEL POLLS INSTEAD OF SLEEPING TO ITS END**, because the
+  one moment it would otherwise wake is the moment the channel has already
+  finished. `Rotation.interruptsChannels` gates that poll, because it is pure
+  cost when no entry wants an interrupt -- marking Arcane Missiles and Mind Flay
+  interruptible cost the Arcane Mage 13% more events a fight and the Shadow
+  Priest 25% **for an identical combat log**. The hash was unchanged and
+  `eventsProcessed` was not, which is the only reason it was visible: **print a
+  mechanism's own quantity beside the hash, or a change that costs only time
+  looks like no change at all.**
+
 ### The priority list on a profile
 
 **PROFILE FORMAT 13**, and the list is written out IN FULL -- `source`, `name`

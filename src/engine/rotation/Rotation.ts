@@ -147,19 +147,31 @@ export class PriorityRotation implements Rotation {
    * What is worth interrupting the current channel for.
    *
    * ----------------------------------------------------------------------------
-   * `already_casting` IS THE WHOLE TRICK. `checkCast` reports exactly one
-   * reason, in a fixed order, and the cast lock is checked second -- so an
-   * entry that comes back `already_casting` is one where NOTHING ELSE is in the
-   * way: it is affordable, off cooldown, in the right stance and its condition
-   * is satisfied. Cancelling the channel is therefore guaranteed to be followed
-   * by the cast that justified it.
+   * IT ASKS WHETHER THE ABILITY WOULD BE CASTABLE IF THE CHANNEL WERE
+   * ABANDONED, which is the only question an interrupt decision is really
+   * making. `ignoreCastLock` is what asks it: everything else is checked as
+   * usual, the GLOBAL COOLDOWN INCLUDED, because cancelling a channel to sit on
+   * a running GCD would throw the rest of it away and cast nothing.
    *
-   * THAT MATTERS BECAUSE THE ALTERNATIVE SILENTLY WASTES THE CHANNEL. Cancelling
-   * first and asking afterwards would throw away the remaining ticks whenever
-   * the urgent ability turned out to be unaffordable -- a Corruption that has
-   * expired while the Warlock is out of mana would cut Wrack short and cast
-   * nothing. This is the same shape the stance swap below uses, for the same
-   * reason: one rejection reason is actionable and the rest mean "not now".
+   * THIS USED TO READ `already_casting` AS THE ANSWER, AND THAT WAS WRONG.
+   * `checkCast` reports ONE reason in a fixed order and the cast lock is
+   * checked SECOND -- so an earlier reason hides every later one, and
+   * `already_casting` establishes only that the caster is ALIVE. It says
+   * nothing about the global cooldown, the ability's own cooldown, its cost or
+   * its target, every one of which is checked after it.
+   *
+   * THE COMMENT THAT WAS HERE REASONED ITSELF INTO THE OPPOSITE: "the cast lock
+   * is checked second -- so an entry that comes back `already_casting` is one
+   * where NOTHING ELSE is in the way". Checked second means everything else is
+   * checked LATER, which is to say not checked at all. Every step of that
+   * sentence was true and its conclusion was backwards.
+   *
+   * WHAT IT COST: a Shadow Priest ticking "interrupt Mind Flay" on Mind Blast
+   * cancelled the channel on EVERY poll, including the whole eight seconds Mind
+   * Blast spends on cooldown -- Mind Flay went from about 30 ticks a fight to
+   * ZERO. The stock Warlock list hid it completely, because all three of its
+   * interrupting entries are gated on an aura and none of them has a cooldown:
+   * their conditions were doing the work this check was supposed to do.
    * ----------------------------------------------------------------------------
    */
   selectInterrupt(context: SimulationContext, actor: Combatant): RotationDecision | null {
@@ -176,7 +188,11 @@ export class PriorityRotation implements Rotation {
       if (entry.condition && !entry.condition(context, actor, target)) continue;
 
       // Everything except the cast lock has to be satisfied already.
-      if (context.castRejection(actor, ability, target) !== 'already_casting') continue;
+      // Castable but for the channel in progress: cost, cooldown, global
+      // cooldown, stance and target all checked, the cast lock alone ignored.
+      if (context.castRejection(actor, ability, target, { ignoreCastLock: true }) !== undefined) {
+        continue;
+      }
 
       return { ability, target };
     }
