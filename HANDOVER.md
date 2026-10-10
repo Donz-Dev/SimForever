@@ -49,19 +49,33 @@ no figure on nobody's authority:
 | the Rune below its own cost? | **refused**, not allowed to kill |
 | does anything scale a heal? | **no** — the stated range is the whole answer |
 
-**AND THREE MORE RULINGS CAME BACK ON THE FINISHED WORK**, which is this file's
-own rule about a write-up not ending a round:
+**AND FIVE MORE RULINGS CAME BACK ON THE FINISHED WORK, ACROSS TWO ROUNDS**,
+which is this file's own rule about a write-up not ending anything:
 
 | what was reported | the ruling |
 | --- | --- |
 | Preparation was resetting Thistle Tea | **"Preparation does NOT reset Thistle Tea's cooldown"** — confirms the fix as shipped |
 | healing a Warlock costs it 28 DPS | **"this should never be the case"** — a bug, not a property. See below |
 | no mana potion is selected anywhere | **"this may be the case and that's fine"** — ratified |
+| the Rune never fires on six profiles | **10% mana** is the default for mana users — the owner's figure, replacing our 30% |
+| 2H Arms and DW Fury carry no Other | **non-mana, non-energy users and the three tanks take the Healthstone** |
 
-**ONE OF THE THREE REVERSED A CONCLUSION AND NONE OF THEM REVERSED A
+**TWO OF THE FIVE REVERSED A CONCLUSION AND NONE OF THEM REVERSED A
 MEASUREMENT**, which is the distinction worth carrying: every figure reported
-was reproducible, and one of the three explanations built on top of a figure was
-wrong.
+was reproducible, and two of the five judgements built on top of a figure were
+wrong. The Warlock heal was read as a property of the class when it was a defect;
+the two empty `other` slots were read off this repository's own rule — "leave
+empty only what is worth literally nothing" — when what the owner wanted was the
+row a build would actually carry. **A row worth nothing is not the same as a row
+that should be blank.**
+
+**THE RUNE AT 10% COSTS THE FIRELOCK 4.3 AND GAINS 0.1 TO 2.4 ON SIX OTHERS**,
+every one inside its interval, and the mean does not move from 730.9. The
+direction is the mechanism: for a build that never runs dry, a Rune firing at 30%
+was spending health and a poll for mana it did not need; for the Firelock, which
+after the Life Tap gate genuinely does run dry, firing later is slightly worse.
+**The one row that went down is the one the gate matters to**, which is worth
+saying rather than reporting seven noise verdicts and a flat mean.
 
 **THE GCD ANSWER IS THE ONE THAT MATTERED MOST AND IS INVISIBLE.** An ability
 wrongly taking a global cooldown still restores the right pool for the right
@@ -206,27 +220,28 @@ strength is 120 attack power to a Warrior or a Druid against Frenzy's forty, ove
 twenty seconds against thirty — 2,400 attack-power-seconds against 1,200, plus
 the rage. +35.2 against +5.2 on DW Fury.
 
-**TWO PRESETS HAVE NO `other` AND BOTH ARE CORRECT.** 2H Arms and DW Fury
-restore no pool at all: no mana, no energy, nothing attacking them, and every
-Other candidate measured 0.00 casts on both. A genuine empty, like the ranged
-Hunter's Weapon Effect.
+**TWO PRESETS HAD NO `other` AND THE OWNER OVERRULED IT.** 2H Arms and DW Fury
+restore no pool at all — no mana, no energy, nothing attacking them — so the
+written rule's "leave empty only what is worth literally nothing" emptied them.
+The ruling: *"non-mana, non-energy users and the three tank profiles (Prot Warr,
+Prot Pally, and Bear) should use the Healthstone."* That is a SELECTION rather
+than a measurement, and it is the right one: it is what such a build actually
+carries, it still fires 0.00 times, and it moves no figure. **A row worth
+nothing is not the same as a row that should be blank.**
 
-**AND THE RUNE IS KEPT WHERE IT ALMOST NEVER FIRES**, which is the Evocation
-decision: 0.00 times on the Shockadin, the Moonkin, both melee Hunters, the
-Firelock and the Shadow Priest; 0.01 on the Frostfire and Arcane Mages, BM
-Hunter and SM/DS; 0.19 on Fire, 0.33 on the Elemental Shaman, 0.55 on
-Retribution, 0.91 on Enhancement, and **1.00 on LW Ranged** — the one build that
-genuinely empties its pool. The owner ruled an almost-never-fired safety net
-"intended" because it costs nothing and pays out in a fight that goes
-differently from the ones measured.
+**AND THE RUNE IS KEPT WHERE IT NEVER FIRES**, which is the Evocation decision.
+At the owner's **10%** gate, four of the fifteen presets that carry one use it in
+a sixty-second fight — the Firelock 1.0 times, LW Ranged 0.5, the Enhancement
+Shaman 0.4, Retribution a rounding — and the other eleven never reach 10% mana
+at all. Those four are the builds that genuinely run dry.
 
-**THE RULE WAS CHOSEN FOR BEING CHECKABLE, WHICH IS WHY IT IS "has a mana pool"
-AND NOT "the Rune fires".** A reader can verify the first from the class; the
-second can only be verified by re-running the probe, and this project's own
-standard for these rows is that "twenty-five separate opinions is not something
-a reader can check".
+**THE RULE WAS CHOSEN FOR BEING CHECKABLE, WHICH IS WHY IT IS "spends mana" AND
+NOT "the Rune fires".** A reader can verify the first from the class; the second
+can only be verified by re-running the probe, and this project's own standard for
+these rows is that "twenty-five separate opinions is not something a reader can
+check".
 
-**SO `USES=1` NOW PRINTS `<-- NEVER FIRED` AGAINST THE RUNE ON SIX PROFILES, AND
+**SO `USES=1` PRINTS `<-- NEVER FIRED` AGAINST THE RUNE ON ELEVEN PROFILES, AND
 THAT IS EXPECTED RATHER THAN A NEW DEFECT.** Said here because an audit flag
 nobody has explained is exactly the thing somebody later "fixes" — and the
 honest reading is the one Evocation already has: a conditional entry that is
@@ -3412,15 +3427,15 @@ cannot audit, which is why the check is a SET comparison and not a row count.
 | Profile | Class | Talents | DPS | | Profile | Class | Talents | DPS |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | DW Fury | Warrior | 17/34/0 | 946.6 | | Moonkin | Druid | 38/0/13 | 746.4 |
-| **Firelock** | Warlock | 5/11/35 | **865.4** | | Enh Shaman | Shaman | 17/34/0 | 727.4 |
-| Cat Druid | Druid | 9/34/8 | 855.8 | | SM/DS | Warlock | 40/11/0 | 715.4 |
-| Hawk Melee | Hunter | 16/11/24 | 848.8 | | Fire Mage | Mage | 10/39/2 | 707.6 |
-| LW Ranged | Hunter | 7/39/5 | 845.0 | | Hemo Rogue | Rogue | 17/3/31 | 694.2 |
+| Firelock | Warlock | 5/11/35 | 861.1 | | Enh Shaman | Shaman | 17/34/0 | 729.0 |
+| Cat Druid | Druid | 9/34/8 | 855.8 | | SM/DS | Warlock | 40/11/0 | 715.3 |
+| Hawk Melee | Hunter | 16/11/24 | 848.8 | | Fire Mage | Mage | 10/39/2 | 707.8 |
+| LW Ranged | Hunter | 7/39/5 | 845.8 | | Hemo Rogue | Rogue | 17/3/31 | 694.2 |
 | 2H Arms | Warrior | 39/10/2 | 825.0 | | Shockadin | Paladin | 23/0/28 | 684.6 |
-| Seal Twist Ret | Paladin | 15/0/36 | 814.1 | | Venom Rogue | Rogue | 37/12/2 | 663.6 |
+| Seal Twist Ret | Paladin | 15/0/36 | 816.5 | | Venom Rogue | Rogue | 37/12/2 | 663.6 |
 | LW Melee | Hunter | 7/13/31 | 812.8 | | Rupture Rogue | Rogue | 12/8/31 | 646.2 |
-| BM Hunter | Hunter | 31/20/0 | 798.0 | | Ele Shaman | Shaman | 38/13/0 | 631.2 |
-| Arcane Mage | Mage | 47/4/0 | 790.8 | | Prot Warr | Warrior | 17/0/34 | 542.0 |
+| BM Hunter | Hunter | 31/20/0 | 798.1 | | Ele Shaman | Shaman | 38/13/0 | 631.8 |
+| Arcane Mage | Mage | 47/4/0 | 790.9 | | Prot Warr | Warrior | 17/0/34 | 542.0 |
 | Frostfire Mage | Mage | 0/29/22 | 780.5 | | Bear Druid | Druid | 9/42/0 | 455.7 |
 | Shadow Priest | Priest | 13/3/35 | 751.2 | | Prot Pally | Paladin | 8/34/9 | 372.7 |
 | Combat Rogue | Rogue | 18/33/0 | 750.9 | | | | | | |

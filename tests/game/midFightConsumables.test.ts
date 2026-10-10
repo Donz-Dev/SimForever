@@ -5,6 +5,11 @@ import { buildSimulation } from '../helpers/buildSimulation';
 import { createDefaultProfile } from '../../src/profiles';
 import { PROFILE_PRESETS } from '../../src/profiles/presets';
 import { stockListFor, syncDefaultRotation } from '../../src/profiles/rotation';
+import {
+  CONSUMABLE_COOLDOWNS,
+  DEMONIC_RUNE_MANA_FRACTION,
+  POTION_MANA_FRACTION,
+} from '../../src/game/rotations/consumableCooldowns';
 import { abilityBookFor } from '../../src/ui/panels/AplPanel';
 import { aurasForClass } from '../../src/game/auras/auraCatalog';
 import {
@@ -389,23 +394,110 @@ describe('what selecting one does to the priority list', () => {
     }
   });
 
-  it('gives all 25 presets a Potion, and 23 of them an Other', () => {
+  it('gives all 25 presets both a Potion and an Other', () => {
     /*
      * THE COUNT, so that a preset losing its row is a failure rather than a
      * quiet omission -- which is the argument `update_baseline_table.py` makes
      * about asserting the measured set and the table's set are the same 25.
      *
-     * TWO PRESETS HAVE NO `other` AND BOTH ARE CORRECT: 2H Arms and DW Fury
-     * restore no pool at all. They have no mana and no energy, nothing attacks
-     * them, and every Other candidate measured 0.00 casts on both -- a genuine
-     * empty, like the ranged Hunter's Weapon Effect.
+     * IT WAS 23 FOR ONE COMMIT, when 2H Arms and DW Fury had no `other`: they
+     * restore no pool at all, and every candidate measured 0.00 casts on both,
+     * so the written rule's "leave empty only what is worth literally nothing"
+     * emptied them. The owner ruled otherwise -- "non-mana, non-energy users
+     * ... should use the Healthstone" -- which is a SELECTION rather than a
+     * measurement, and the right one: it is what such a build actually carries,
+     * and it still fires 0.00 times and moves no figure.
      */
-    const withPotion = PROFILE_PRESETS.filter((preset) => preset.build().consumables.potion);
-    const withOther = PROFILE_PRESETS.filter((preset) => preset.build().consumables.other);
-    expect(withPotion).toHaveLength(25);
-    expect(withOther.map((preset) => preset.id)).not.toContain('two_hand_arms');
-    expect(withOther.map((preset) => preset.id)).not.toContain('dw_fury');
-    expect(withOther).toHaveLength(23);
+    for (const preset of PROFILE_PRESETS) {
+      const consumables = preset.build().consumables;
+      expect(consumables.potion, `${preset.id} potion`).toBeDefined();
+      expect(consumables.other, `${preset.id} other`).toBeDefined();
+    }
+    expect(PROFILE_PRESETS).toHaveLength(25);
+  });
+
+  it("partitions `other` by pool, exactly as the owner's ruling does", () => {
+    /*
+     * ==========================================================================
+     * THE RULING, WRITTEN OUT, because it is a three-way partition of all 25 and
+     * that is the kind of claim checked by eye or not at all:
+     *
+     *   "Demonic rune being used at 10% mana remaining should be the default
+     *    behavior for pure mana users. Specifically cat druid should never use
+     *    it in favor of Thistle Tea. Non-mana, non-energy users and the three
+     *    tank profiles (Prot Warr, Prot Pally, and Bear) should use the
+     *    Healthstone."
+     *
+     * THE THREE DRUIDS ARE WHY THIS IS ASSERTED AS A TABLE RATHER THAN DERIVED
+     * FROM THE POOLS. All three own mana, rage AND energy -- `resourceSpecsFor`
+     * keys pools by CLASS and not by form -- so no reading of "which pools does
+     * it have" separates the Moonkin's Rune from the Cat's Tea from the Bear's
+     * Healthstone. Each is right for a different stated reason, and a derivation
+     * that cannot tell them apart would pass whatever the presets said.
+     *
+     * `tools/probe_other_assignment.ts` prints this beside the pools, for a
+     * person; this is the check.
+     * ==========================================================================
+     */
+    const EXPECTED: Readonly<Record<string, string>> = {
+      // Non-mana, non-energy, plus the three named tanks.
+      two_hand_arms: 'healthstone',
+      dw_fury: 'healthstone',
+      prot_warr: 'healthstone',
+      druid_bear: 'healthstone',
+      prot_pally: 'healthstone',
+      // The energy bars -- the four Rogues, and the Cat by name.
+      rogue_venom: 'thistle_tea',
+      rogue_combat: 'thistle_tea',
+      rogue_rupture: 'thistle_tea',
+      rogue_hemo: 'thistle_tea',
+      druid_cat: 'thistle_tea',
+      // Everything else that spends mana.
+      druid_moonkin: 'demonic_rune',
+      shaman_elemental: 'demonic_rune',
+      shaman_enhancement: 'demonic_rune',
+      mage_frostfire: 'demonic_rune',
+      mage_arcane: 'demonic_rune',
+      mage_fire: 'demonic_rune',
+      pally_ret: 'demonic_rune',
+      pally_shockadin: 'demonic_rune',
+      bm_hunter: 'demonic_rune',
+      lw_ranged: 'demonic_rune',
+      lw_melee: 'demonic_rune',
+      hawk_melee: 'demonic_rune',
+      warlock_smds: 'demonic_rune',
+      warlock_firelock: 'demonic_rune',
+      shadow_priest: 'demonic_rune',
+    };
+
+    // EXHAUSTIVE, so a new preset has to be classified rather than defaulting.
+    expect(Object.keys(EXPECTED).sort()).toEqual(PROFILE_PRESETS.map((p) => p.id).sort());
+    for (const preset of PROFILE_PRESETS) {
+      expect(preset.build().consumables.other, preset.id).toBe(EXPECTED[preset.id]);
+    }
+  });
+
+  it("uses the Rune at the owner's 10%, which is tighter than the potion's gate", () => {
+    /*
+     * TWO DIFFERENT FACTS, AND THE ASYMMETRY DOES WORK. The owner stated 10% for
+     * the Demonic Rune and nothing about the mana potion, so the potion keeps
+     * this repository's own 30% -- and because the two categories are not
+     * exclusive, a character carrying both spends the one with no downside
+     * first and only then the one that costs 600 to 1000 Hit Points.
+     *
+     * Pinned as a RELATION as well as two numbers, because the relation is the
+     * part that would still matter if either figure moved.
+     */
+    expect(DEMONIC_RUNE_MANA_FRACTION).toBe(0.1);
+    expect(POTION_MANA_FRACTION).toBe(0.3);
+    expect(DEMONIC_RUNE_MANA_FRACTION).toBeLessThan(POTION_MANA_FRACTION);
+
+    const rune = CONSUMABLE_COOLDOWNS.find((entry) => entry.abilityId === 'demonic_rune');
+    expect(rune?.condition).toMatchObject({
+      kind: 'resourceFraction',
+      resource: 'mana',
+      fraction: DEMONIC_RUNE_MANA_FRACTION,
+    });
   });
 });
 

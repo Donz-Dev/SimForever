@@ -107,6 +107,29 @@ export const POTION_HEALTH_FRACTION = 0.5;
 export const POTION_MANA_FRACTION = 0.3;
 
 /**
+ * The mana a DEMONIC RUNE is used at, which is the OWNER'S figure and is not
+ * the potion's.
+ *
+ * ----------------------------------------------------------------------------
+ * "Demonic rune being used at 10% mana remaining should be the default behavior
+ * for pure mana users" -- stated directly, and it matches the threshold the
+ * owner's own Mage lists already use for Evocation.
+ *
+ * KEPT SEPARATE FROM `POTION_MANA_FRACTION` FOR TWO REASONS, and only one of
+ * them is that a ruling covers what it says. The other is that the asymmetry
+ * does real work: the two categories are not exclusive, so a character may
+ * carry both, and a potion that fires at 30% ahead of a Rune that fires at 10%
+ * is a LADDER -- spend the one with no downside first, and only then the one
+ * that costs 600 to 1000 Hit Points.
+ *
+ * SO THE 30% IS STILL THIS REPOSITORY'S CHOICE AND THE 10% IS THE OWNER'S, and
+ * a reader who wants them unified should ask rather than assume the difference
+ * is an oversight.
+ * ----------------------------------------------------------------------------
+ */
+export const DEMONIC_RUNE_MANA_FRACTION = 0.1;
+
+/**
  * The energy Thistle Tea is drunk at.
  *
  * DERIVED AND THEN LOOSENED. Thistle Tea restores a full hundred into a cap of
@@ -157,11 +180,8 @@ export const CONSUMABLE_COOLDOWNS: readonly AplEntry[] = [
   },
   {
     abilityId: 'demonic_rune',
-    condition: resourceFraction('atMost', POTION_MANA_FRACTION, 'mana'),
-    note:
-      'The same gate as the mana potion, and it is a SEPARATE category -- a ' +
-      'character may carry both and use both. Refused above 1000 health lost ' +
-      'rather than below it: it costs up to 1000 Hit Points and will not kill.',
+    condition: resourceFraction('atMost', DEMONIC_RUNE_MANA_FRACTION, 'mana'),
+    note: `Used under ${DEMONIC_RUNE_MANA_FRACTION * 100}% mana, the owner's figure -- TIGHTER than the mana potion's gate, so a character carrying both spends the free one first. It costs 600 to 1000 Hit Points and is refused below 1000 rather than allowed to kill.`,
   },
   {
     abilityId: 'thistle_tea',

@@ -1130,7 +1130,7 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations([
       },
       talents: { ...PROT_WARR_TALENTS },
       raidBuffs: [...PRESET_RAID_BUFFS],
-      consumables: { ...STRENGTH_CONSUMABLES, other: 'healthstone' },
+      consumables: STRENGTH_CONSUMABLES,
       equipment: {
         // Dodge, defense skill and threat: the one Warrior row that spends
         // nothing on damage.
@@ -1315,7 +1315,7 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations([
       },
       talents: { ...DRUID_BEAR_TALENTS },
       raidBuffs: [...PRESET_RAID_BUFFS],
-      consumables: { ...STRENGTH_CONSUMABLES, other: 'healthstone' },
+      consumables: STRENGTH_CONSUMABLES,
       equipment: { ...DRUID_BEAR_GEAR },
       /*
        * THE ONE DRUID PROFILE THAT IS HIT BACK, which is the whole point of
