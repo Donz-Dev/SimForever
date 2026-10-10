@@ -7,6 +7,7 @@ import { describeCondition } from '../../game/rotations/apl';
 import { resolveCombatStyle } from '../../game/character';
 import type { Ability } from '../../engine';
 import { abilitiesForClass } from '../../game/abilities/abilitiesForClass';
+import { RACIAL_ABILITIES, racialsFor } from '../../game/racials';
 import type { CatalogAura } from '../../game/auras/auraCatalog';
 import { aurasForClass } from '../../game/auras/auraCatalog';
 import type { Clause, ClauseKind, ConditionNode, GroupNode, NodePath } from './aplEditing';
@@ -192,10 +193,42 @@ export function abilityChoicesFor(
     .sort((a, b) => a.name.localeCompare(b.name));
 }
 
-/** The abilities THIS build knows -- style and talents included. */
+/**
+ * The abilities THIS build knows -- style, talents and RACE included.
+ *
+ * ============================================================================
+ * THE RACE IS THE PART THAT IS EASY TO MISS, because `abilitiesForClass` is the
+ * obvious source and a racial belongs to no class: a Gnome Warrior and a Gnome
+ * Mage learn the same Eureka!. Leaving it out cost two separate things, and the
+ * panel showed no error for either.
+ *
+ * THE NAME. `aplNamesFor` falls back to prettifying the id, which is right for
+ * an aura -- "`shadow_trance` reading as Shadow Trance is honest" -- and gets
+ * two of the five racials wrong: `elunes_light` reads "Elunes Light" and
+ * `eureka` reads "Eureka". Close enough to look deliberate.
+ *
+ * THE DROPDOWN. Every list names all four free racial cooldowns, so somebody
+ * who removed one could not add it back: the "add an entry" dropdown offers
+ * this book, and the entry they had just deleted was not in it.
+ *
+ * `racialBuild` IS NOT USED HERE, deliberately. It needs the equipment to
+ * answer a weapon clause and none of the five abilities has one, so the race's
+ * granted set is read straight off `RACIALS` -- which also means the panel does
+ * not have to resolve gear to name an entry.
+ * ============================================================================
+ */
 export function abilityBookFor(profile: CharacterProfile): readonly Ability[] {
   const style = resolveCombatStyle(profile.character.characterClass, profile.character.combatStyle);
-  return abilitiesForClass(profile.character.characterClass, style, profile.talents);
+  const racials = racialsFor(profile.character.race)
+    .flatMap((trait) => trait.effects)
+    .flatMap((effect) =>
+      effect.kind === 'grantAbility' ? [RACIAL_ABILITIES[effect.abilityId]] : [],
+    )
+    .filter((ability): ability is Ability => ability !== undefined);
+  return [
+    ...abilitiesForClass(profile.character.characterClass, style, profile.talents),
+    ...racials,
+  ];
 }
 
 /**
@@ -928,9 +961,15 @@ export function aplNamesFor(profile: CharacterProfile): {
   readonly names: DescribeNames;
   readonly nameOf: (id: string) => string;
 } {
-  const style = resolveCombatStyle(profile.character.characterClass, profile.character.combatStyle);
-  const abilities = abilitiesForClass(profile.character.characterClass, style, profile.talents);
-  const abilityNames = new Map(abilities.map((ability) => [ability.id, ability.name]));
+  /*
+   * THROUGH `abilityBookFor` RATHER THAN `abilitiesForClass`, so the names and
+   * the dropdown cannot disagree about what the build knows. They did: this
+   * read the class book and the race's five abilities were absent, so two of
+   * them fell back to a prettified id.
+   */
+  const abilityNames = new Map(
+    abilityBookFor(profile).map((ability) => [ability.id, ability.name]),
+  );
   const nameOf = (id: string) => abilityNames.get(id) ?? prettify(id);
   return { names: { ability: nameOf, aura: nameOf }, nameOf };
 }

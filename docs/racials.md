@@ -222,6 +222,20 @@ the next decision is 100ms away rather than a global cooldown — about 0.17% of
 fight, once per two or three minute cooldown. The same price Bloodrage and the
 stance casts already pay at the top of the Warrior lists.
 
+## No profile format bump, and one consequence of that
+
+Race is already a required field, so nothing about the format changed and there
+is no migration. **The passives therefore reach a profile saved before this
+landed**, for the same reason its base stats do.
+
+**The five ABILITIES do not, and that is the frozen-list decision rather than a
+bug.** A saved profile carries its priority list in full — the owner's call, so
+that "a saved file is a complete description of the build" — and loading never
+re-derives one. So a file saved before this commit holds a list with no racial
+entries, and its character will learn Blood Fury and never cast it. The panel
+can add the entry back; `abilityChoicesFor` offers the build's own racial and no
+other race's, which is what that took.
+
 ## What is NOT modelled, and the owner's list is the scope
 
 Asked directly whether to build the traits their list omits, the owner ruled

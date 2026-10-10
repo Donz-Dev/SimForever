@@ -39,6 +39,7 @@ import {
   RACIAL_COOLDOWNS,
   RACIAL_DEFENSIVE_COOLDOWNS,
 } from '../../src/game/rotations/racialCooldowns';
+import { abilityChoicesFor, aplNamesFor } from '../../src/ui/panels/AplPanel';
 import { PRESETS_BY_ID } from '../../src/profiles/presets';
 import { characterAtCombatStart } from '../../src/simulator';
 import { trainingDummyEncounter } from '../../src/simulator/trainingDummyEncounter';
@@ -1229,3 +1230,46 @@ function itemIdIn(presetId: string, slot: 'mainHand' | 'offHand' | 'twoHand'): n
   expect(equipped, `${presetId} ${slot}`).toBeDefined();
   return equipped!.itemId;
 }
+
+describe('the panel can name and offer a racial ability', () => {
+  it('names all five properly, rather than prettifying the id', () => {
+    /*
+     * ========================================================================
+     * `aplNamesFor` FALLS BACK TO PRETTIFYING THE ID, which is right for an
+     * aura -- "`shadow_trance` reading as Shadow Trance is honest" is its own
+     * comment -- and gets two of the five racials wrong, because a racial
+     * belongs to no class and `abilitiesForClass` does not carry one.
+     *
+     * `elunes_light` prettifies to "Elunes Light" and `eureka` to "Eureka":
+     * close enough to look deliberate, which is why this is asserted on the
+     * two that differ rather than on all five.
+     * ========================================================================
+     */
+    const gnome = PRESETS_BY_ID.get('mage_fire')!.build();
+    expect(aplNamesFor(gnome).nameOf('eureka')).toBe('Eureka!');
+
+    const nightElf = {
+      ...gnome,
+      character: { ...gnome.character, race: 'night_elf' as const, characterClass: 'rogue' as const },
+    };
+    expect(aplNamesFor(nightElf).nameOf('elunes_light')).toBe("Elune's Light");
+  });
+
+  it('offers the race\'s own racial in the dropdown, and not another race\'s', () => {
+    /*
+     * Every list names all four free racial cooldowns, so somebody who removed
+     * one has to be able to add it back -- and the dropdown offers the build's
+     * BOOK, which is exactly the set `PriorityRotation` will act on.
+     */
+    const gnome = PRESETS_BY_ID.get('mage_fire')!.build();
+    const offered = new Set(abilityChoicesFor(gnome).map((choice) => choice.id));
+    expect(offered.has('eureka')).toBe(true);
+    expect(offered.has('blood_fury')).toBe(false);
+    expect(offered.has('berserking')).toBe(false);
+
+    const orc = PRESETS_BY_ID.get('dw_fury')!.build();
+    const orcOffered = new Set(abilityChoicesFor(orc).map((choice) => choice.id));
+    expect(orcOffered.has('blood_fury')).toBe(true);
+    expect(orcOffered.has('eureka')).toBe(false);
+  });
+});
