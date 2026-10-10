@@ -8,6 +8,7 @@ import {
   type WarlockStoneId,
 } from '../game/buffs/warlockStones';
 import type { ConsumableSelection } from '../game/buffs/consumables';
+import type { AplEntry } from '../game/rotations/apl';
 
 /**
  * The profile format version.
@@ -18,7 +19,7 @@ import type { ConsumableSelection } from '../game/buffs/consumables';
  * moves on. Getting this in before anyone has saved anything is much cheaper
  * than retrofitting it later.
  */
-export const CURRENT_PROFILE_VERSION = 12;
+export const CURRENT_PROFILE_VERSION = 13;
 
 export interface CharacterSection {
   readonly name: string;
@@ -273,6 +274,58 @@ export interface CharacterProfile {
    * first migration never runs. See `migrateProfile.ts`.
    */
   readonly consumables: ConsumableSelection;
+  /**
+   * The Action Priority List this character runs.
+   *
+   * ============================================================================
+   * WRITTEN OUT IN FULL, ALWAYS, which is the ruleset owner's call and is the
+   * opposite of how `combatStyle` handles its default. A saved file is a
+   * COMPLETE description of the build: nothing about it depends on what this
+   * version of the simulator happens to think the stock list for a Beast
+   * Mastery Hunter is.
+   *
+   * THE COST IS THAT A SAVED PROFILE IS FROZEN, and that is the trade the owner
+   * chose knowing it: a file saved today keeps its list after a stock list is
+   * improved, where storing a REFERENCE would have let the improvement reach
+   * old files and would have made the file depend on this build of the app.
+   * ============================================================================
+   */
+  readonly rotation: StoredRotation;
+}
+
+/**
+ * A priority list as a profile stores it.
+ *
+ * ----------------------------------------------------------------------------
+ * `source` IS WHAT STOPS A STORED LIST BECOMING THE WRONG LIST, and it exists
+ * because of a failure this project has already had: a Fire Mage ran the Arcane
+ * list for its whole life and produced a perfectly ordinary DPS figure, because
+ * nothing about a wrong rotation looks wrong.
+ *
+ * Storing the list freezes it, which is what was asked for -- and a frozen list
+ * stops following the BUILD. Change a Rogue's capstone and the stock list that
+ * belongs to the new spec is a different one; change class and the stored list
+ * names another class's abilities entirely. So:
+ *
+ *   - `'default'` means "this is the stock list, written out". Changing the
+ *     build INSIDE THE APP re-derives it, the way changing class replaces gear.
+ *   - `'custom'` means somebody edited it, so nothing touches it again -- and
+ *     the panel SAYS when a custom list no longer matches the build's stock
+ *     one, rather than silently running something meant for another spec.
+ *
+ * LOADING A FILE NEVER RE-DERIVES, whichever it says. That is the freezing the
+ * owner asked for: a loaded profile runs exactly the list in the file.
+ * ----------------------------------------------------------------------------
+ */
+export interface StoredRotation {
+  readonly source: 'default' | 'custom';
+  /**
+   * What the list is called -- the stock list's own name, or whatever a custom
+   * one was derived from. Shown in the panel badge and carried onto the
+   * compiled rotation, so the results page names the list that actually ran.
+   */
+  readonly name: string;
+  readonly entries: readonly AplEntry[];
 }
 
 /** A sensible starting profile, matching the first-milestone prototype. */
@@ -282,6 +335,14 @@ export function createDefaultProfile(): CharacterProfile {
     poisons: { ...DEFAULT_POISON_LOADOUT },
     warlockStone: DEFAULT_WARLOCK_STONE,
     consumables: {},
+    /*
+     * EMPTY, AND FILLED IN BY THE CALLER. This function cannot derive the
+     * stock list without importing `aplFor`, and `profiles/rotation.ts`
+     * imports THIS file -- so deriving here would be a cycle. The app calls
+     * `syncDefaultRotation` on the profile it builds, which fills it from the
+     * class and talents the character actually ends up with.
+     */
+    rotation: { source: 'default', name: '', entries: [] },
     character: {
       name: 'Example',
       race: 'human',
@@ -360,5 +421,12 @@ export function cloneProfile(profile: CharacterProfile): CharacterProfile {
     simulation: { ...profile.simulation },
     encounter: { ...profile.encounter },
     raidBuffs: [...profile.raidBuffs],
+    /*
+     * The entries are copied so two profiles never share a list -- reordering
+     * one would otherwise reorder the other. The ENTRIES THEMSELVES are not
+     * deep-copied, because nothing mutates an entry in place: the editor
+     * replaces one, the way every other update here works.
+     */
+    rotation: { ...profile.rotation, entries: [...profile.rotation.entries] },
   };
 }

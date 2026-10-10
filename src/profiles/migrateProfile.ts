@@ -1,4 +1,6 @@
 import { CURRENT_PROFILE_VERSION } from './CharacterProfile';
+import type { CharacterProfile } from './CharacterProfile';
+import { defaultRotationFor } from './rotation';
 import { DEFAULT_POISON_LOADOUT } from '../game/reactions/poisons';
 import { DEFAULT_WARLOCK_STONE } from '../game/buffs/warlockStones';
 
@@ -13,6 +15,33 @@ type Migration = (profile: Record<string, unknown>) => Record<string, unknown>;
  * files to the new shape.
  */
 const migrations: Record<number, Migration> = {
+  /**
+   * Version 13 added `rotation`, the Action Priority List written out in full.
+   *
+   * ----------------------------------------------------------------------------
+   * AN OLDER PROFILE GETS ITS BUILD'S STOCK LIST, marked `'default'`, which is
+   * exactly what it was already running -- every profile before this version
+   * ran whatever `rotationFor` dispatched to, so writing that same list into
+   * the file changes no result. That is the version 9 decision again: a saved
+   * character with no raid buffs was genuinely fighting unbuffed, and a saved
+   * character with no stored list was genuinely running the stock one.
+   *
+   * DERIVED HERE RATHER THAN LEFT EMPTY, which is the one thing that would
+   * change a result: an empty list is a character that casts nothing, so a
+   * migration that just added the field would silently reduce every old
+   * profile to auto attacks.
+   *
+   * IT IS ALSO WHY THIS MIGRATION IS THE FIRST TO READ THE REST OF THE
+   * PROFILE. Every earlier one supplies a constant -- `{}`, `[]`, a default
+   * loadout -- and this one has to look at the class, style, stance and
+   * talents to know which list the character was running.
+   * ----------------------------------------------------------------------------
+   */
+  12: (profile) => ({
+    ...profile,
+    rotation: defaultRotationFor(profile as unknown as CharacterProfile),
+  }),
+
   /**
    * Version 12 added `consumables`, the chosen consumable per category.
    *

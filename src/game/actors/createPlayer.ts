@@ -45,6 +45,8 @@ import { fixedMaximumFor, globalCooldownFor } from '../character';
 import { rageFromDamageTaken, regenerationFor } from '../combat/resourceRules';
 import { reactionsForClass } from '../reactions/reactionsForClass';
 import { rotationFor } from '../rotations/rotationFor';
+import type { AplList } from '../rotations/apl';
+import { compileRotation } from '../rotations/apl';
 import type { Equipment } from '../items/Item';
 import type { TalentAllocation } from '../talents/Talent';
 import { WARRIOR_STANCES } from '../auras/warrior';
@@ -94,6 +96,21 @@ export interface PlayerOptions {
    * Berserker for dual-wield, Defensive for a shield.
    */
   readonly stance?: StanceId;
+  /**
+   * The priority list to run, overriding the stock one for this build.
+   *
+   * ------------------------------------------------------------------------
+   * THE PROFILE'S STORED LIST ARRIVES HERE. A profile carries its list in full
+   * and may have had it EDITED, so dispatching to the stock list would throw
+   * away whatever the person wrote -- silently, because a wrong rotation
+   * produces a perfectly ordinary DPS figure.
+   *
+   * OMITTED FALLS BACK TO `rotationFor`, which is what every caller that is
+   * not a profile does: the test helpers, the probes, and anything building a
+   * character from a class and some talents.
+   * ------------------------------------------------------------------------
+   */
+  readonly rotation?: AplList;
   /**
    * Stats from gear, buffs and anything else on top of the race/class base.
    * Added to the base rather than replacing it.
@@ -528,12 +545,9 @@ export function createPlayer(options: PlayerOptions): Combatant {
   attackTableModifiers.merge(consumables.attackTableModifiers);
 
   const abilities = abilitiesForBuild(characterClass, style, build);
-  const rotation = rotationFor(
-    characterClass,
-    style,
-    resolveStance(style, options.stance),
-    legal.allocation,
-  );
+  const rotation = options.rotation
+    ? compileRotation(options.rotation)
+    : rotationFor(characterClass, style, resolveStance(style, options.stance), legal.allocation);
 
   const player = new Combatant({
     id: options.id ?? 'player_1',

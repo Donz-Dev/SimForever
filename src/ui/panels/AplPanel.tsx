@@ -1,97 +1,167 @@
+import { useState } from 'react';
 import type { CharacterProfile } from '../../profiles';
-import type { AplList, DescribeNames } from '../../game/rotations/apl';
-import { resolveCombatStyle, resolveStance } from '../../game/character';
-import { abilitiesForClass } from '../../game/abilities/abilitiesForClass';
-import { aplFor } from '../../game/rotations/rotationFor';
+import { defaultRotationFor, rotationMatchesBuild, stockListFor } from '../../profiles/rotation';
+import type { AplCondition, AplEntry, DescribeNames } from '../../game/rotations/apl';
 import { describeCondition } from '../../game/rotations/apl';
+import { resolveCombatStyle } from '../../game/character';
+import { abilitiesForClass } from '../../game/abilities/abilitiesForClass';
+import type { Clause, ClauseKind } from './aplEditing';
+import {
+  addEntry,
+  blankClause,
+  clausesOf,
+  conditionFromClauses,
+  moveEntry,
+  removeEntry,
+  setCondition,
+} from './aplEditing';
 import { Panel } from '../components/Panel';
 
 interface AplPanelProps {
   readonly profile: CharacterProfile;
+  readonly onChange: (profile: CharacterProfile) => void;
+}
+
+/** What a list looks like to this panel: the stored shape, or a stock one. */
+interface ShownList {
+  readonly name: string;
+  readonly entries: readonly AplEntry[];
 }
 
 /**
- * The Action Priority List the character actually runs.
+ * The Action Priority List the character runs, and the controls to change it.
  *
  * ============================================================================
- * THE LIST WAS THE ONE PART OF A CHARACTER NOBODY COULD SEE. Gear, talents,
- * raid buffs and consumables all have a panel; the rotation decided most of the
- * damage and was invisible -- so "why is this build worse" had no answer on
- * screen, and an entry that never fires looked exactly like an entry that does.
+ * THE LIST WAS THE ONE PART OF A CHARACTER NOBODY COULD SEE OR CHANGE. Gear,
+ * talents, raid buffs and consumables all have a panel; the rotation decided
+ * most of the damage and was invisible, so "why is this build worse" had no
+ * answer on screen and an entry that never fires looked exactly like one that
+ * does.
  *
- * BETWEEN GEAR AND RAID BUFFS, which is the owner's placement and reads in the
- * right order: what the character is holding, how it fights, then what the raid
+ * BETWEEN GEAR AND RAID BUFFS, the owner's placement, which reads in the right
+ * order: what the character is holding, how it fights, then what the raid
  * gives it.
  *
- * READ-ONLY FOR NOW, deliberately. The list is data and could be edited here;
- * what is missing is the profile field to store an edit in and the migration to
- * go with it, which is the next piece of work. A panel that let somebody
- * reorder entries and then silently lost the order on reload would be worse
- * than one that shows the order.
+ * EDITING MARKS THE LIST `custom`, AND THAT IS THE WHOLE SAFETY MECHANISM. A
+ * `default` list re-derives when the build changes, the way gear is replaced
+ * when class changes; a `custom` one is never silently replaced, and the panel
+ * SAYS when it no longer matches the build's stock list rather than quietly
+ * running a list meant for another spec. This project has already shipped a
+ * Fire Mage that ran the Arcane list and produced a perfectly ordinary number.
  * ============================================================================
  */
-export function AplPanel({ profile }: AplPanelProps) {
-  const style = resolveCombatStyle(profile.character.characterClass, profile.character.combatStyle);
-  const stance =
-    profile.character.characterClass === 'warrior'
-      ? resolveStance(style, profile.character.stance)
-      : undefined;
-  const list = aplFor(profile.character.characterClass, style, stance, profile.talents);
-
-  /*
-   * AURA IDS FALL BACK TO A PRETTIFIED ID, because there is no registry of
-   * every aura's display name and inventing one for a panel would be a second
-   * place for a name to live. Most aura ids ARE ability ids (`rip`, `moonfire`,
-   * `rend`), so the book answers for most of them, and `shadow_trance` reading
-   * as "Shadow Trance" is honest rather than wrong.
-   */
+export function AplPanel({ profile, onChange }: AplPanelProps) {
+  const list = profile.rotation;
   const { names, nameOf } = aplNamesFor(profile);
+  const abilities = abilityChoicesFor(profile);
+  const matchesBuild = rotationMatchesBuild(profile);
 
-  if (!list) {
-    return (
-      <Panel title="Priority list" collapsible>
-        <p className="muted">
-          No priority list is defined for this build, so it fights with auto attacks only.
-        </p>
-      </Panel>
-    );
-  }
+  /** Every edit goes through here, so nothing can change a list and forget. */
+  const update = (entries: readonly AplEntry[]) => {
+    onChange({
+      ...profile,
+      rotation: {
+        /*
+         * ANY EDIT MAKES IT `custom`, including one that happens to restore
+         * the stock order. The field answers "may this be replaced without
+         * asking", and the answer after somebody has touched it is no --
+         * comparing contents instead would silently re-take ownership of a
+         * list that had been edited back by hand.
+         */
+        source: 'custom',
+        name: list.name,
+        entries,
+      },
+    });
+  };
+
+  const reset = () => onChange({ ...profile, rotation: defaultRotationFor(profile) });
 
   return (
     <Panel
       title="Priority list"
       /*
-       * THE LIST'S OWN NAME AS THE BADGE, which is what the results page prints
-       * and what `rotationFor` dispatched to. It is the fastest way to catch
-       * the failure this project has already had twice: a build running a list
-       * meant for a different spec, which produces a perfectly ordinary number.
+       * THE LIST'S OWN NAME AS THE BADGE, which shows while the panel is SHUT.
+       * It is the cheapest guard against a build running a list meant for
+       * another spec -- a failure that produces an ordinary DPS figure and
+       * nothing that looks wrong.
        */
-      badge={list.name}
-      subtitle={`${list.entries.length} entries, highest priority first`}
+      badge={list.name || 'none'}
+      subtitle={
+        list.entries.length > 0
+          ? `${list.entries.length} entries, highest priority first${
+              list.source === 'custom' ? ' · edited' : ''
+            }`
+          : 'No list: this build fights with auto attacks only'
+      }
+      actions={
+        list.source === 'custom' ? (
+          <button type="button" onClick={reset} title="Go back to the stock list for this build">
+            Reset
+          </button>
+        ) : undefined
+      }
       collapsible
     >
-      <AplEntries list={list} names={names} nameOf={nameOf} />
+      {/*
+        * THE WARNING THAT A CUSTOM LIST IS FOR A DIFFERENT BUILD. A stored list
+        * does not follow the build -- that is what storing it means -- so
+        * changing spec after editing leaves a list whose entries the new build
+        * may not even know. `PriorityRotation` skips an ability the character
+        * does not have IN SILENCE, so the symptom is a rotation that does
+        * less, not an error.
+        */}
+      {!matchesBuild ? (
+        <p className="warn apl-warning">
+          This list was written for {list.name || 'another build'}; this build&apos;s stock list is{' '}
+          {stockListFor(profile)?.name ?? 'none'}. Entries for abilities it does not know are
+          skipped.
+        </p>
+      ) : null}
+
+      <AplEntries
+        list={list}
+        names={names}
+        nameOf={nameOf}
+        abilities={abilities}
+        onChange={update}
+      />
+
+      <AddEntry abilities={abilities} onAdd={(id) => update(addEntry(list.entries, id))} />
     </Panel>
   );
+}
+
+/** What an ability dropdown offers: the built character's own book. */
+export function abilityChoicesFor(
+  profile: CharacterProfile,
+): readonly { readonly id: string; readonly name: string }[] {
+  const style = resolveCombatStyle(profile.character.characterClass, profile.character.combatStyle);
+  return abilitiesForClass(profile.character.characterClass, style, profile.talents)
+    .map((ability) => ({ id: ability.id, name: ability.name }))
+    .sort((a, b) => a.name.localeCompare(b.name));
 }
 
 /**
  * The entries themselves, SEPARATE FROM THE PANEL so a test can render them.
  *
  * `Panel` is `useState(!startOpen)` and this one is collapsible, so it starts
- * SHUT and renders no body at all in a static render -- a test that went
- * through the panel would pass every "contains" check by containing nothing.
- * `gearPanelStone.test.ts` learned that from a failing test and wrote it down;
- * this is the same lesson applied before paying for it twice.
+ * SHUT and renders no body in a static render -- a test going through
+ * `AplPanel` would pass every "contains" check by containing nothing.
+ * `gearPanelStone.test.ts` learned that from a failing test.
  */
 export function AplEntries({
   list,
   names,
   nameOf,
+  abilities,
+  onChange,
 }: {
-  readonly list: AplList;
+  readonly list: ShownList;
   readonly names: DescribeNames;
   readonly nameOf: (id: string) => string;
+  readonly abilities?: readonly { readonly id: string; readonly name: string }[];
+  readonly onChange?: (entries: readonly AplEntry[]) => void;
 }) {
   return (
     <ol className="apl-list">
@@ -100,23 +170,48 @@ export function AplEntries({
           <span className="apl-rank">{index + 1}</span>
           <div className="apl-body">
             <span className="apl-ability">{nameOf(entry.abilityId)}</span>
-            {entry.condition ? (
-              <span className="apl-condition">if {describeCondition(entry.condition, names)}</span>
-            ) : (
-              /*
-               * SAID RATHER THAN LEFT BLANK. An unconditional entry is a FLOOR
-               * under everything below it -- nothing cheaper and ungated
-               * beneath it can ever be reached -- so it is the single most
-               * important thing to be able to see in a list, and an empty cell
-               * reads as "no information" rather than as "always".
-               */
-              <span className="apl-condition muted">always</span>
-            )}
+            <EntryCondition
+              condition={entry.condition}
+              names={names}
+              abilities={abilities ?? []}
+              onChange={
+                onChange
+                  ? (condition) => onChange(setCondition(list.entries, index, condition))
+                  : undefined
+              }
+            />
             {entry.note ? <span className="apl-note">{entry.note}</span> : null}
           </div>
           {entry.interruptsChannel ? (
             <span className="apl-flag" title="May cancel a channel in progress">
               interrupts
+            </span>
+          ) : null}
+          {onChange ? (
+            <span className="apl-controls">
+              <button
+                type="button"
+                title="Move up"
+                disabled={index === 0}
+                onClick={() => onChange(moveEntry(list.entries, index, -1))}
+              >
+                ▲
+              </button>
+              <button
+                type="button"
+                title="Move down"
+                disabled={index === list.entries.length - 1}
+                onClick={() => onChange(moveEntry(list.entries, index, 1))}
+              >
+                ▼
+              </button>
+              <button
+                type="button"
+                title="Remove"
+                onClick={() => onChange(removeEntry(list.entries, index))}
+              >
+                ✕
+              </button>
             </span>
           ) : null}
         </li>
@@ -126,11 +221,283 @@ export function AplEntries({
 }
 
 /**
+ * One entry's condition: editable when it decomposes into flat clauses, and a
+ * sentence when it does not.
+ *
+ * THE READ-ONLY CASE IS HONEST RATHER THAN A GAP. A condition built from `any`,
+ * `not` or one of the four builtins cannot be drawn with these controls, and an
+ * editor that silently simplified it would change what the rotation does with
+ * nothing on screen to say so. The entry can still be reordered or removed;
+ * only its condition is fixed.
+ */
+function EntryCondition({
+  condition,
+  names,
+  abilities,
+  onChange,
+}: {
+  readonly condition: AplCondition | undefined;
+  readonly names: DescribeNames;
+  readonly abilities: readonly { readonly id: string; readonly name: string }[];
+  readonly onChange?: (condition: AplCondition | undefined) => void;
+}) {
+  const clauses = clausesOf(condition);
+
+  if (!onChange || clauses === undefined) {
+    return (
+      <span className="apl-condition">
+        {condition ? (
+          <>
+            if {describeCondition(condition, names)}
+            {onChange ? <span className="apl-fixed"> — not editable here</span> : null}
+          </>
+        ) : (
+          /*
+           * SAID RATHER THAN LEFT BLANK. An unconditional entry is a FLOOR
+           * under everything below it -- nothing cheaper and ungated beneath
+           * it can ever be the first castable entry -- so it is the single
+           * most important thing to read off a list, and an empty cell reads
+           * as "no information" instead of as "always".
+           */
+          <span className="muted">always</span>
+        )}
+      </span>
+    );
+  }
+
+  const replace = (next: readonly Clause[]) => onChange(conditionFromClauses(next));
+
+  return (
+    <span className="apl-clauses">
+      {clauses.length === 0 ? <span className="apl-condition muted">always</span> : null}
+      {clauses.map((clause, index) => (
+        <ClauseRow
+          key={index}
+          clause={clause}
+          abilities={abilities}
+          onChange={(next) => replace(clauses.map((c, at) => (at === index ? next : c)))}
+          onRemove={() => replace(clauses.filter((_c, at) => at !== index))}
+        />
+      ))}
+      <select
+        className="apl-add-clause"
+        value=""
+        aria-label="Add a condition"
+        onChange={(event) => {
+          const kind = event.target.value as ClauseKind | '';
+          if (!kind) return;
+          replace([...clauses, blankClause(kind)]);
+        }}
+      >
+        <option value="">+ condition</option>
+        <option value="buff">Buff / debuff</option>
+        <option value="resource">Resource</option>
+        <option value="cooldown">Cooldown</option>
+        <option value="fight">Fight remaining</option>
+      </select>
+    </span>
+  );
+}
+
+/** One clause, as the handful of controls that kind needs. */
+function ClauseRow({
+  clause,
+  abilities,
+  onChange,
+  onRemove,
+}: {
+  readonly clause: Clause;
+  readonly abilities: readonly { readonly id: string; readonly name: string }[];
+  readonly onChange: (clause: Clause) => void;
+  readonly onRemove: () => void;
+}) {
+  const set = (patch: Partial<Clause>) => onChange({ ...clause, ...patch });
+  const numberField = (value: number | undefined) => (
+    <input
+      type="number"
+      className="apl-number"
+      value={value ?? 0}
+      onChange={(event) => set({ value: Number(event.target.value) })}
+    />
+  );
+  const compareField = (withExactly: boolean) => (
+    <select
+      value={clause.compare}
+      aria-label="Comparison"
+      onChange={(event) => set({ compare: event.target.value as Clause['compare'] })}
+    >
+      <option value="atMost">≤</option>
+      <option value="atLeast">≥</option>
+      {withExactly ? <option value="exactly">=</option> : null}
+    </select>
+  );
+
+  return (
+    <span className="apl-clause">
+      {clause.kind === 'buff' ? (
+        <>
+          <select
+            value={clause.on}
+            aria-label="Whose buff"
+            onChange={(e) => set({ on: e.target.value as 'self' | 'target' })}
+          >
+            <option value="self">your</option>
+            <option value="target">target&apos;s</option>
+          </select>
+          {/*
+            * A DATALIST RATHER THAN A CLOSED DROPDOWN, because there is no
+            * registry of every aura's display name -- most aura ids ARE
+            * ability ids, so the book answers for most of them, and the rest
+            * have to be typeable. A closed list would put Clearcasting, Shadow
+            * Trance and Fingers of Frost out of reach entirely.
+            */}
+          <input
+            className="apl-aura"
+            list="apl-aura-ids"
+            value={clause.auraId ?? ''}
+            placeholder="buff id"
+            aria-label="Buff id"
+            onChange={(e) => set({ auraId: e.target.value })}
+          />
+          <select
+            value={clause.test}
+            aria-label="Buff test"
+            onChange={(e) => set({ test: e.target.value as Clause['test'] })}
+          >
+            <option value="down">has run out</option>
+            <option value="absent">is not up</option>
+            <option value="up">is up</option>
+            <option value="expiring">seconds left</option>
+            <option value="stacks">stacks</option>
+          </select>
+          {clause.test === 'expiring' || clause.test === 'stacks' ? (
+            <>
+              {compareField(clause.test === 'stacks')}
+              {numberField(clause.value)}
+            </>
+          ) : null}
+        </>
+      ) : null}
+
+      {clause.kind === 'resource' ? (
+        <>
+          <select
+            value={clause.resource}
+            aria-label="Resource"
+            onChange={(e) => set({ resource: e.target.value as Clause['resource'] })}
+          >
+            <option value="rage">rage</option>
+            <option value="energy">energy</option>
+            <option value="mana">mana</option>
+            <option value="focus">focus</option>
+            <option value="combo">combo points</option>
+          </select>
+          {compareField(true)}
+          {numberField(clause.value)}
+        </>
+      ) : null}
+
+      {clause.kind === 'cooldown' ? (
+        <>
+          <select
+            className="apl-aura"
+            value={clause.abilityId ?? ''}
+            aria-label="Ability"
+            onChange={(e) => set({ abilityId: e.target.value })}
+          >
+            <option value="">(choose)</option>
+            {abilities.map((ability) => (
+              <option key={ability.id} value={ability.id}>
+                {ability.name}
+              </option>
+            ))}
+          </select>
+          <select
+            value={clause.ready ? 'ready' : 'cd'}
+            aria-label="Cooldown state"
+            onChange={(e) => set({ ready: e.target.value === 'ready' })}
+          >
+            <option value="ready">is ready</option>
+            <option value="cd">is on cooldown</option>
+          </select>
+        </>
+      ) : null}
+
+      {clause.kind === 'fight' ? (
+        <>
+          {compareField(false)}
+          {numberField(clause.value)}
+          <select
+            value={clause.asPercent ? 'pct' : 'sec'}
+            aria-label="Remaining unit"
+            onChange={(e) => set({ asPercent: e.target.value === 'pct' })}
+          >
+            <option value="pct">% left</option>
+            <option value="sec">seconds left</option>
+          </select>
+        </>
+      ) : null}
+
+      <button
+        type="button"
+        className="apl-clause-remove"
+        title="Remove this condition"
+        onClick={onRemove}
+      >
+        ✕
+      </button>
+    </span>
+  );
+}
+
+/** The control that puts another ability in the list. */
+function AddEntry({
+  abilities,
+  onAdd,
+}: {
+  readonly abilities: readonly { readonly id: string; readonly name: string }[];
+  readonly onAdd: (abilityId: string) => void;
+}) {
+  const [chosen, setChosen] = useState('');
+  return (
+    <div className="apl-add">
+      <select
+        value={chosen}
+        aria-label="Ability to add"
+        onChange={(event) => setChosen(event.target.value)}
+      >
+        <option value="">Add an ability...</option>
+        {abilities.map((ability) => (
+          <option key={ability.id} value={ability.id}>
+            {ability.name}
+          </option>
+        ))}
+      </select>
+      <button
+        type="button"
+        disabled={chosen === ''}
+        onClick={() => {
+          onAdd(chosen);
+          setChosen('');
+        }}
+      >
+        Add
+      </button>
+    </div>
+  );
+}
+
+/**
  * The name lookup the panel builds, exported so a test renders the SAME one.
  *
  * Names come from the built ability book, so an entry reads "Mortal Strike"
  * rather than `mortal_strike` -- and it is the book for THIS build, style and
  * talents included, so a talent-granted ability is named too.
+ *
+ * AURA IDS FALL BACK TO A PRETTIFIED ID, because there is no registry of every
+ * aura's display name and inventing one for a panel would be a second place
+ * for a name to live. Most aura ids ARE ability ids, so the book answers for
+ * most of them, and `shadow_trance` reading as "Shadow Trance" is honest.
  */
 export function aplNamesFor(profile: CharacterProfile): {
   readonly names: DescribeNames;

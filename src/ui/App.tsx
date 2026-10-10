@@ -6,6 +6,7 @@ type TalentUpdate = (previous: TalentAllocation) => TalentAllocation;
 import type { CharacterProfile } from '../profiles';
 import type { ProfilePreset } from '../profiles';
 import { createDefaultProfile } from '../profiles';
+import { syncDefaultRotation } from '../profiles/rotation';
 import { resolveCombatStyle } from '../game/character';
 import { startingEquipmentFor } from '../game/items/startingSets';
 import { Logo } from './components/Logo';
@@ -46,7 +47,13 @@ export function App() {
   // rather than inventing a new one.
   const [profile, setProfile] = useState<CharacterProfile>(() => {
     const base = createDefaultProfile();
-    return { ...base, character: { ...base.character, name: '' } };
+    /*
+     * SYNCED AT BIRTH, because `createDefaultProfile` cannot derive the stock
+     * list itself -- `profiles/rotation.ts` imports it, so doing it there
+     * would be a cycle. Without this the opening character would carry an
+     * EMPTY list and cast nothing.
+     */
+    return syncDefaultRotation({ ...base, character: { ...base.character, name: '' } });
   });
   const [confirmed, setConfirmed] = useState(false);
   // Talents live ON THE PROFILE, because they now decide which abilities a
@@ -56,8 +63,35 @@ export function App() {
   const talents = profile.talents;
   const setTalents = (update: TalentUpdate) => {
     setActivePresetId(undefined);
-    setProfile((previous) => ({ ...previous, talents: update(previous.talents) }));
+    setProfile((previous) =>
+      syncDefaultRotation({ ...previous, talents: update(previous.talents) }),
+    );
   };
+
+  /**
+   * Every edit a PANEL makes, with the stock priority list kept in step.
+   *
+   * ----------------------------------------------------------------------------
+   * WHY THIS IS NOT JUST `setProfile`. A stored list is frozen -- that is what
+   * storing it means -- so it stops following the build, and the build is
+   * editable. Change a Rogue's capstone and the stock list for the new spec is
+   * a different one; change class and the stored list names another class's
+   * abilities, every one of which `PriorityRotation` skips IN SILENCE.
+   *
+   * `syncDefaultRotation` RE-DERIVES ONLY A `default` LIST and never touches a
+   * `custom` one, so somebody's own list is never silently replaced -- the
+   * panel warns instead.
+   *
+   * APPLIED TO EVERY CHANGE rather than to the four that can matter, because it
+   * is idempotent and because the alternative is a list of "edits that change
+   * which stock list applies" that is correct until somebody adds a fifth.
+   *
+   * AND NOT APPLIED ON LOAD. `loadProfile` sets the profile directly: a loaded
+   * file runs exactly the list it carries, which is the freezing the owner
+   * asked for.
+   * ----------------------------------------------------------------------------
+   */
+  const editProfile = (next: CharacterProfile) => setProfile(syncDefaultRotation(next));
   /*
    * WHICH PRESET IS ON SCREEN, for the rail's selected pill -- and cleared by
    * the first edit, because a character that has been changed is no longer the
@@ -215,7 +249,7 @@ export function App() {
         <div className="column column-config">
           <CharacterPanel
             profile={profile}
-            onChange={setProfile}
+            onChange={editProfile}
             confirmed={confirmed}
             onConfirm={confirmCharacter}
             onEdit={editCharacter}
@@ -229,10 +263,10 @@ export function App() {
           {confirmed ? (
             <>
               <CharacterSheetPanel profile={profile} />
-              <EncounterPanel profile={profile} onChange={setProfile} />
+              <EncounterPanel profile={profile} onChange={editProfile} />
               <SimulationPanel
                 profile={profile}
-                onChange={setProfile}
+                onChange={editProfile}
                 onRun={runEither}
                 isRunning={busy}
                 progress={weightRun.state.status === 'idle' ? progress : weightRun.progress}
@@ -250,18 +284,18 @@ export function App() {
               allocation={talents}
               onChange={setTalents}
             />
-            <GearPanel profile={profile} onChange={setProfile} />
+            <GearPanel profile={profile} onChange={editProfile} />
             {/* BETWEEN THE GEAR AND THE RAID BUFFS, the owner's placement, and
                 it reads in the right order: what the character is holding, how
                 it fights, then what the raid gives it. */}
-            <AplPanel profile={profile} />
+            <AplPanel profile={profile} onChange={editProfile} />
             {/* After the gear, because it is the same kind of decision: what
                 the character walks in carrying. Set once and rarely touched. */}
-            <RaidBuffsPanel profile={profile} onChange={setProfile} />
+            <RaidBuffsPanel profile={profile} onChange={editProfile} />
             {/* And after those, for the same reason again: what the character
                 walks in carrying, chosen once. One dropdown per category,
                 because at most one consumable per category may be drunk. */}
-            <ConsumablesPanel profile={profile} onChange={setProfile} />
+            <ConsumablesPanel profile={profile} onChange={editProfile} />
 
             {busy ? (
               <div className="placeholder">

@@ -27,6 +27,7 @@ import {
   CATEGORY_BY_CONSUMABLE_ID,
   type ConsumableSelection,
 } from '../game/buffs/consumables';
+import { isBuiltinConditionId } from '../game/rotations/apl';
 
 /** Every slot a profile may name. */
 const EQUIPMENT_SLOT_SET: ReadonlySet<string> = new Set<EquipmentSlot>([
@@ -320,6 +321,54 @@ export function validateProfile(value: unknown): ValidationResult {
     }
   }
 
+  /*
+   * THE LIST'S SHAPE IS CHECKED AND ITS ABILITY IDS ARE NOT, which is the
+   * `raidBuffs` rule rather than the `equipment` one and is chosen for the
+   * same reason: `PriorityRotation` already SKIPS an entry whose ability the
+   * character does not know, so a list naming an ability this build lacks is
+   * one entry that does nothing rather than a profile that will not load.
+   * That is what lets a single list serve several builds, and it is how the
+   * stock lists already work.
+   *
+   * A BUILTIN CONDITION IS THE EXCEPTION AND IS CHECKED, because `compile`
+   * THROWS on an id the registry does not carry -- a profile naming one would
+   * load cleanly and then fail when the fight starts, which is the worst place
+   * to find out. Checked here, the file is refused with a message instead.
+   */
+  const rotation = value.rotation;
+  if (!isRecord(rotation)) {
+    issues.push({ path: 'rotation', message: 'Missing rotation section.' });
+  } else {
+    if (rotation.source !== 'default' && rotation.source !== 'custom') {
+      issues.push({ path: 'rotation.source', message: 'Must be "default" or "custom".' });
+    }
+    if (typeof rotation.name !== 'string') {
+      issues.push({ path: 'rotation.name', message: 'Must be a string.' });
+    }
+    if (!Array.isArray(rotation.entries)) {
+      issues.push({ path: 'rotation.entries', message: 'Must be a list of entries.' });
+    } else {
+      rotation.entries.forEach((entry, index) => {
+        if (!isRecord(entry) || typeof entry.abilityId !== 'string' || entry.abilityId.length === 0) {
+          issues.push({
+            path: `rotation.entries.${index}`,
+            message: 'Each entry needs an abilityId.',
+          });
+          return;
+        }
+        if (entry.condition !== undefined) {
+          const unknown = unknownBuiltin(entry.condition);
+          if (unknown !== undefined) {
+            issues.push({
+              path: `rotation.entries.${index}.condition`,
+              message: `Unknown condition "${unknown}".`,
+            });
+          }
+        }
+      });
+    }
+  }
+
   if (issues.length > 0) return { ok: false, issues };
 
   // Rebuild rather than casting, so unknown extra keys are dropped instead of
@@ -437,6 +486,18 @@ export function validateProfile(value: unknown): ValidationResult {
       // field should load as a character with no consumables rather than
       // reaching the engine as `undefined`.
       consumables: cleanConsumables(validated.consumables),
+      /*
+       * NAMED HERE, or it is dropped -- which is the hole `stance` and then
+       * `petFamily` both fell into, in this same rebuild, twice. A profile
+       * that loaded back without its list would run an EMPTY one and cast
+       * nothing, which is the loudest of the three and the only reason it
+       * would be noticed quickly.
+       */
+      rotation: {
+        source: validated.rotation.source === 'custom' ? 'custom' : 'default',
+        name: validated.rotation.name,
+        entries: validated.rotation.entries.map((entry) => ({ ...entry })),
+      },
     },
   };
 }
@@ -448,6 +509,27 @@ function cleanConsumables(selection: ConsumableSelection | undefined): Consumabl
     if (typeof id === 'string' && id.length > 0) clean[category] = id;
   }
   return clean;
+}
+
+/**
+ * The first builtin id in a condition tree that this build does not carry.
+ *
+ * Walks `all`/`any`/`not` as well, because a builtin can be nested inside one
+ * -- the Warrior's rage pooling is an `all` of a builtin and something else.
+ */
+function unknownBuiltin(condition: unknown): string | undefined {
+  if (!isRecord(condition)) return undefined;
+  if (condition.kind === 'builtin') {
+    return isBuiltinConditionId(condition.id) ? undefined : String(condition.id);
+  }
+  if (Array.isArray(condition.of)) {
+    for (const part of condition.of) {
+      const found = unknownBuiltin(part);
+      if (found !== undefined) return found;
+    }
+    return undefined;
+  }
+  return unknownBuiltin(condition.of);
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {

@@ -1605,3 +1605,75 @@ button:disabled {
   color: var(--accent);
   align-self: center;
 }
+
+/* --- editing a priority list --- */
+
+.apl-warning {
+  margin: 0 0 10px;
+  font-size: 12px;
+}
+
+/* The row's own controls sit at the end and must not be squeezed by a long
+   condition, which is why the body flexes and this does not. */
+.apl-controls {
+  display: flex;
+  gap: 2px;
+  flex-shrink: 0;
+  align-self: center;
+}
+
+.apl-controls button,
+.apl-clause-remove {
+  padding: 2px 6px;
+  font-size: 11px;
+  line-height: 1.2;
+}
+
+.apl-clauses {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+}
+
+.apl-clause {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 2px 4px;
+  border-radius: 5px;
+  background: var(--surface-sunken);
+}
+
+.apl-clause select,
+.apl-clause input,
+.apl-add-clause,
+.apl-add select {
+  font-size: 11px;
+  padding: 2px 4px;
+}
+
+/* Wide enough for `shadow_word_pain` without being wide enough to push the
+   row's controls off the end. */
+.apl-aura {
+  width: 130px;
+}
+
+.apl-number {
+  width: 56px;
+}
+
+/* An entry whose condition cannot be drawn with these controls says so rather
+   than offering an editor that would silently simplify it. */
+.apl-fixed {
+  font-style: italic;
+  opacity: 0.75;
+}
+
+.apl-add {
+  display: flex;
+  gap: 6px;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border);
+}

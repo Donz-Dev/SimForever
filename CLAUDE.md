@@ -1393,6 +1393,53 @@ profiles' rows at once.
   **IT WAS WRITTEN AS 11 AND SO WAS THE WARLOCK STONE**, from the same base, and
   the two merged without a conflict. See **Git workflow**.
 
+### The priority list on a profile
+
+**PROFILE FORMAT 13**, and the list is written out IN FULL -- `source`, `name`
+and every entry. The owner's call, and the opposite of how `combatStyle`
+handles its default: a saved file is a complete description of the build, and
+nothing about it depends on what this version thinks a Beast Mastery Hunter's
+stock list is. [docs/apl.md](docs/apl.md).
+
+- **THE COST IS THAT A SAVED PROFILE IS FROZEN, AND IT WAS CHOSEN KNOWINGLY.**
+  A file keeps its list after a stock list is improved. Storing a REFERENCE
+  would have let improvements reach old files and would have made the file
+  depend on this build of the app; the owner picked the file.
+- **`source` IS WHAT STOPS A STORED LIST BECOMING THE WRONG LIST.** Freezing a
+  list means it stops following the BUILD, and the build is editable -- change a
+  Rogue's capstone and a different stock list applies, change class and the
+  stored list names another class's abilities. **`PriorityRotation` SKIPS AN
+  ABILITY THE CHARACTER DOES NOT KNOW IN SILENCE**, so the symptom is a rotation
+  that quietly does less. A `default` list re-derives on a build change the way
+  gear is replaced when class changes; a `custom` one is never touched and the
+  panel SAYS it no longer matches. **The Fire Mage that ran the Arcane list is
+  what this is for.**
+- **AND LOADING NEVER RE-DERIVES, WHICHEVER IT SAYS.** That is the freezing. The
+  sync runs on edits made IN THE APP; a loaded file runs the list it carries.
+- **THE MIGRATION DERIVES THE LIST RATHER THAN ADDING AN EMPTY ONE**, which is
+  the one thing that would have changed a result: an empty list is a character
+  that casts nothing, so a migration that just added the field would silently
+  reduce every old profile to auto attacks. It is also the first migration that
+  READS the rest of the profile -- every earlier one supplies a constant.
+- **THE 25 PRESETS ARE WRAPPED, NOT EDITED.** `withStockRotations` fills each
+  `build()` from `aplFor`, so a preset stores the list it was already running
+  and no figure can move. Twenty-five hand-written copies would be
+  twenty-five chances to store the wrong one -- which is the mistake
+  `rotationIds.test.ts` exists for.
+- **AN EDIT IS CHECKED BY ROUND-TRIPPING THE CLAUSES, NOT BY RENDERING THEM.**
+  The panel breaks a condition into clauses and reassembles it, and a clause
+  that reassembles into a DIFFERENT condition is a rotation that changed because
+  somebody opened a panel. `aplEditing.test.ts` asserts every editable condition
+  in every stock list survives unchanged -- it caught `!auras.has(id)` and
+  `remainingMs(id) <= 0` being collapsed into one option, which differ on an
+  aura that is present with nothing left and which the stock lists both use.
+- **A LIST NAMING AN ABILITY THE BUILD LACKS STILL LOADS**, which is the
+  `raidBuffs` rule rather than the `equipment` one: the engine already skips
+  such an entry, and that is what lets one list serve several builds. **A
+  BUILTIN CONDITION IS THE EXCEPTION AND IS CHECKED AT LOAD**, because
+  `compileCondition` THROWS on an unknown id -- a profile naming one would load
+  cleanly and fail when the fight starts, which is the worst place to find out.
+
 ### Saving and loading a profile
 
 The Save button writes `serializeProfile` to a file and the Load button reads it

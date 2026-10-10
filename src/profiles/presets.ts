@@ -35,6 +35,7 @@ import type { Equipment } from '../game/items/Item';
 import type { TalentAllocation } from '../game/talents/Talent';
 import type { CharacterProfile } from './CharacterProfile';
 import { createDefaultProfile } from './CharacterProfile';
+import { syncDefaultRotation } from './rotation';
 
 /**
  * Ready-made characters, chosen with one button.
@@ -1019,7 +1020,24 @@ const PRIEST_SHADOW_TALENTS: TalentAllocation = {
   shadowform: 1,
 };
 
-export const PROFILE_PRESETS: readonly ProfilePreset[] = [
+/**
+ * Every preset, with its stock priority list filled in.
+ *
+ * ----------------------------------------------------------------------------
+ * WRAPPED RATHER THAN WRITTEN INTO ALL 25, which is the same argument the
+ * preset raid buff list already makes: twenty-five copies of a thing that can
+ * be derived is twenty-five chances for one of them to be the wrong list, and
+ * `rotationIds.test.ts` had to exist because exactly that happened -- the
+ * Shockadin profile spent its whole life running a list built around a talent
+ * it does not take.
+ *
+ * `syncDefaultRotation` READS THE BUILT PROFILE, so it sees the class, style,
+ * stance and talents each preset actually sets and dispatches the same way the
+ * engine did before this field existed. A preset's figure therefore cannot
+ * move: it stores the list it was already running.
+ * ----------------------------------------------------------------------------
+ */
+export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations([
   {
     id: 'two_hand_arms',
     label: '2H Arms',
@@ -1719,7 +1737,15 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = [
       encounter: { ...createDefaultProfile().encounter, targetAttacks: false },
     }),
   },
-];
+]);
+
+/** Give every preset's `build` the stock list for the character it builds. */
+function withStockRotations(presets: readonly ProfilePreset[]): readonly ProfilePreset[] {
+  return presets.map((preset) => ({
+    ...preset,
+    build: () => syncDefaultRotation(preset.build()),
+  }));
+}
 
 export const PRESETS_BY_ID: ReadonlyMap<string, ProfilePreset> = new Map(
   PROFILE_PRESETS.map((preset) => [preset.id, preset]),
