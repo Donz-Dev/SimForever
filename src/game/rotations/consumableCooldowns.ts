@@ -69,10 +69,16 @@ import { resource, resourceFraction, selfHealth } from './apl';
  * one off -- unlike the energy and rage gates below, where the pool's cap and
  * the grant together say where waste begins.
  *
- * IT IS WORTH ZERO ON TWENTY-THREE OF THE 25 PRESETS AND THAT IS CORRECT: with
+ * IT IS WORTH ZERO ON TWENTY-TWO OF THE 25 PRESETS AND THAT IS CORRECT: with
  * `targetAttacks` off, health never leaves maximum, so the condition is
- * permanently false and the entry never fires. It is the two tanks this is for,
- * where the measure is a count of deaths rather than a DPS figure.
+ * permanently false and the entry never fires. THE THREE TANKS are what it is
+ * for -- Prot Warr, Bear and Prot Pally -- and there the measure is a count of
+ * deaths rather than a DPS figure.
+ *
+ * THE COUNT IS NAMED RATHER THAN STATED, because the earlier version of this
+ * said "twenty-three" and no reading of the presets gives 23: there are exactly
+ * three profiles with `targetAttacks` on. A figure nobody can re-derive from the
+ * thing it describes is the shape this project keeps finding stale.
  * ----------------------------------------------------------------------------
  */
 export const POTION_HEALTH_FRACTION = 0.5;
@@ -226,33 +232,38 @@ export const CONSUMABLE_COOLDOWNS: readonly AplEntry[] = [
  * bottom" rule has nothing to protect.
  *
  * ============================================================================
- * "NEARLY", BECAUSE ONE PROFILE HEALS ITSELF INTO A LOSS AND IT IS NOT A TANK.
+ * "NEARLY", AND THE EXCEPTION WAS A BUG IN LIFE TAP RATHER THAN A FACT ABOUT
+ * HEALING. Worth keeping in full, because the wrong reading survived a
+ * measurement, a write-up and a review.
  *
- * The first version of this said the heals "never fire against a target that
- * does not attack, which is 23 of the 25 presets". Measured, it is 24 of 25 and
- * the exception is the FIRELOCK, where a healing potion is **-28.4 DPS and a
- * Healthstone -26.2**, both REAL, both drunk once.
+ * The first version of this note said the heals "never fire against a target
+ * that does not attack, which is 23 of the 25 presets" -- a prediction dressed
+ * as a fact, and wrong in the count. Measured, the FIRELOCK drank one and it was
+ * **-28.4 DPS**, with a Healthstone at -26.2, both REAL.
  *
- * WHAT COSTS IT IS A GLOBAL COOLDOWN AND NOT ANY DAMAGE. A Warlock spends HEALTH
- * for mana, and Life Tap's `canCast` asks whether there is health to spend and
- * room in the mana pool -- never whether the mana is WANTED. So 1,400 restored
- * health buys 1.63 more Life Taps, each of which costs a global cooldown, and
- * the list casts **1.43 fewer Incinerates** for mana it did not need: mana
- * GAINED rises 12,873 to 14,217 while mana SPENT falls 7,583 to 7,206.
- * `tools/probe_firelock_heal.ts` is that measurement.
+ * THAT WAS WRITTEN UP AS AN INTERESTING PROPERTY OF WARLOCKS AND IT WAS A
+ * DEFECT. The owner's ruling: "this should never be the case. Spending life tap
+ * on global cooldowns should only be based on the warlock's current mana." The
+ * Firelock's Life Tap entry was UNGATED, so a healing potion's 1,400 health
+ * bought 1.63 more taps -- each a global cooldown that deals nothing -- and the
+ * list cast 1.43 fewer Incinerates for mana it did not need.
  *
- * SO THE HEALS ARE NOT "WORTH NOTHING OFF A TANK", THEY ARE WORTH NEGATIVE ON A
- * BUILD THAT TRADES HEALTH FOR MANA -- which is why neither Warlock preset is
- * given one. The entry stays in every list because the same list serves a build
- * whose target swings back; what changed is the note, which was a prediction
- * dressed as a fact.
+ * GATED ON MANA, A HEAL IS WORTH **-0.1** ON THAT PROFILE, which is zero. The
+ * heals really are worth nothing off a tank, and the 24-of-25 figure is now 25
+ * of 25. See `rotations/warlock.ts` for the gate and the sweep behind it.
+ *
+ * THE LESSON IS THE ORDER THE TWO WERE FOUND IN. A measurement explained a
+ * number correctly -- the mechanism was exactly as described -- and that
+ * explanation was mistaken for a justification. **"Isolate a loss, do not blame
+ * the obvious suspect" has a second half: having found the real cause, ask
+ * whether the cause is itself correct.**
  * ============================================================================
  */
 export const CONSUMABLE_HEALS: readonly AplEntry[] = [
   {
     abilityId: 'major_healing_potion',
     condition: selfHealth('atMost', POTION_HEALTH_FRACTION),
-    note: `Under ${POTION_HEALTH_FRACTION * 100}% health. For a tank: 24 of the 25 presets never drop that low, and on the Firelock -- which Life Taps itself down -- healing is worth -28.4, because it buys Life Taps that cost global cooldowns.`,
+    note: `Under ${POTION_HEALTH_FRACTION * 100}% health. For a tank: no other preset drops that low, so this never fires on 24 of the 25.`,
   },
   {
     abilityId: 'healthstone',

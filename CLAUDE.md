@@ -1610,14 +1610,30 @@ The twelve that came before them, and which the rest of this section is about:
   twenty seconds against 40 for thirty, plus the rage — and the two Paladin
   hybrids take Spellblasting where the WEAPON EFFECT row splits them on their
   physical share, so one answer serves four builds that another row divides.
-- **AND THE ONE ROW A READER WOULD GET WRONG FROM THE ARCHETYPE IS THE WARLOCK'S,
-  BECAUSE HEALING IT IS WORTH NEGATIVE DPS.** Neither Warlock takes a heal: on
-  the Firelock a healing potion measures **-28.4** and a Healthstone **-26.2**,
-  both REAL, on a target that never attacks. A Warlock trades HEALTH for mana and
-  Life Tap's `canCast` asks whether there is health to spend and whether the pool
-  has room — **never whether the mana is wanted** — so 1,400 restored health buys
-  1.63 more Life Taps, each costing a global cooldown, and the list casts 1.43
-  fewer Incinerates. **A heal is not merely worth nothing off a tank.**
+- **AND A HEAL MEASURED -28.4 ON THE FIRELOCK, WHICH WAS A BUG IN LIFE TAP AND
+  WAS WRITTEN UP AS A PROPERTY OF WARLOCKS.** The measurement was right: a
+  Warlock trades HEALTH for mana, Life Tap's `canCast` asks whether there is
+  health to spend and whether the pool has room — never whether the mana is
+  WANTED — so 1,400 restored health bought 1.63 more taps, each costing a global
+  cooldown, and the list cast 1.43 fewer Incinerates. **The owner ruled that
+  "should never be the case"**, and the real fault was that the Firelock's Life
+  Tap entry was UNGATED where SM/DS's was gated at 15% — the lesson applied to
+  one of the two lists that needed it, with the SM/DS entry's own comment
+  recording it. Gated at a measured 5%, Life Tap fires 1.05 times instead of
+  5.46, a heal is worth **-0.1**, and the profile is **+88.7**.
+- **SO "ISOLATE A LOSS, DO NOT BLAME THE OBVIOUS SUSPECT" HAS A SECOND HALF:
+  HAVING FOUND THE REAL CAUSE, ASK WHETHER THE CAUSE IS ITSELF CORRECT.** The
+  isolation worked perfectly — `probe_firelock_heal.ts` named the mechanism to
+  the cast — and the conclusion drawn from it was still wrong, because a correct
+  explanation of a number was mistaken for a justification of it. **An
+  explanation is not a defence.**
+- **AND THE FIRELOCK'S OWN PAIR INVERTED UNDER THE FIX WITHOUT CHANGING.**
+  Gating Life Tap made the build genuinely mana-bound, so measured ALONE the
+  Major Mana Potion (+33.0) beat Spellblasting (+18.4) — and PAIRED with the
+  Demonic Rune, which already restores mana, Spellblasting wins again, **+41.5
+  against +38.5**. A category that is not exclusive with another makes a second
+  source of the same pool redundant, so a pair has to be measured as a pair:
+  "marginal values do not sum" can reverse a ranking and not merely shrink it.
 - **THE ROWS ARE DERIVED FROM TWO MEASURED THINGS, SO EACH CAN BE RE-DERIVED.**
   The conversion table decides Blasted Lands — and **a Cat Druid takes STRENGTH
   where a Rogue takes agility**, which is the entry a reader assumes wrongly,

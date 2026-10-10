@@ -62,11 +62,31 @@ for (const resource of ['mana', 'health'] as const) {
 }
 
 /*
- * WHAT THE ANSWER TURNED OUT TO BE, kept with the tool so the next reader does
- * not have to re-derive it: Life Tap goes 5.40 casts to 7.03 and Incinerate
- * 16.10 to 14.68. The potion's 1,400 health buys 1.63 more Life Taps, each of
- * which costs a global cooldown and deals nothing -- and mana GAINED rises
- * while mana SPENT falls, so the extra taps are for mana the build did not
- * need. Life Tap's `canCast` asks whether there is health to spend and whether
- * the pool has room; it never asks whether the mana is wanted.
+ * ============================================================================
+ * THE ANSWER, AND THE FIX, BOTH KEPT -- BECAUSE THE ANSWER ALONE WAS MISREAD.
+ *
+ * WHAT IT MEASURED: Life Tap went 5.40 casts to 7.03 and Incinerate 16.10 to
+ * 14.68. The potion's 1,400 health bought 1.63 more Life Taps, each a global
+ * cooldown that deals nothing -- and mana GAINED rose while mana SPENT fell, so
+ * the extra taps were for mana the build did not need. Life Tap's `canCast`
+ * asks whether there is health to spend and whether the pool has room; it never
+ * asks whether the mana is WANTED.
+ *
+ * THAT EXPLANATION WAS CORRECT AND WAS WRITTEN UP AS A PROPERTY OF WARLOCKS.
+ * The ruleset owner read it and ruled the opposite: "this should never be the
+ * case. Spending life tap on global cooldowns should only be based on the
+ * warlock's current mana." The Firelock's Life Tap entry was UNGATED where the
+ * SM/DS entry was already gated at 15% -- so the explanation was a description
+ * of a bug, not a justification for it.
+ *
+ * **HAVING FOUND THE REAL CAUSE, ASK WHETHER THE CAUSE IS ITSELF CORRECT.**
+ * That is the half of "isolate a loss, do not blame the obvious suspect" this
+ * episode adds: the isolation worked perfectly and the conclusion drawn from it
+ * was still wrong.
+ *
+ * SO THIS TOOL NOW MEASURES ZERO, which is the point of leaving it runnable.
+ * With the gate in place a healing potion is worth -0.1 on the Firelock, Life
+ * Tap fires about once a fight instead of five times, and the profile itself is
+ * **+88.7 DPS**. If it ever reads a large negative again, the gate has gone.
+ * ============================================================================
  */

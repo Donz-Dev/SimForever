@@ -760,11 +760,21 @@ export const CONSUMABLE_ABILITY_IDS: ReadonlySet<string> = new Set(
  * safety net that costs nothing and pays out in a fight that goes differently
  * from the ones measured. A caster carries a Demonic Rune.
  *
- * AND NEITHER WARLOCK TAKES A HEAL, which is the one row a reader would get
- * wrong from the archetype. On the Firelock a healing potion is **-28.4 DPS**:
- * a Warlock trades health for mana, Life Tap asks whether there is health to
- * spend rather than whether the mana is wanted, so healing buys Life Taps that
- * cost global cooldowns. See `CONSUMABLE_HEALS`.
+ * AND NEITHER WARLOCK TAKES A HEAL, which is now true for the ordinary reason
+ * rather than the interesting one. A healing potion measured **-28.4 DPS** on
+ * the Firelock while its Life Tap entry was UNGATED -- restoring health bought
+ * taps that cost global cooldowns -- and the owner ruled that "should never be
+ * the case". Gated on mana, a heal is worth -0.1 there: nothing, like every
+ * other build nothing attacks. See `CONSUMABLE_HEALS` and `rotations/warlock.ts`.
+ *
+ * THE FIRELOCK'S OWN PAIR WAS RE-MEASURED AFTER THAT FIX AND DID NOT CHANGE,
+ * which is worth recording because the single-candidate figures INVERTED. Gating
+ * Life Tap made the build genuinely mana-bound, so alone the Major Mana Potion
+ * (+33.0) beat Spellblasting (+18.4) -- and PAIRED with the Demonic Rune, which
+ * already restores mana, Spellblasting wins again: **+41.5 against +38.5**.
+ * `tools/probe_firelock_pair.ts`. A category that is not exclusive with another
+ * makes a second source of the same pool redundant, which is exactly why
+ * "marginal values do not sum" has to be measured as a pair rather than added.
  * ============================================================================
  */
 

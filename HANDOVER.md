@@ -1,6 +1,8 @@
 # MID-FIGHT CONSUMABLES — NINE POTIONS THAT ARE ABILITIES
 
-**ALL 25 ROWS MOVED AND EVERY ONE WENT UP, +1.8 TO +48.6, MEAN 709.6 -> 727.3.**
+**ALL 25 ROWS MOVED AND EVERY ONE WENT UP, MEAN 709.6 -> 730.9.** Twenty-five
+deltas of +1.8 to +48.6 from the preset selections, and then **+88.7 on the
+Firelock alone** from a bug those selections exposed.
 Two new consumable categories — Potion and Other — whose entries are used DURING
 the fight. The owner: they "must be treated like a character ability and be
 exposed on the APL and consumable panels", so each carries an `Ability`, joins
@@ -10,7 +12,8 @@ the ability book when it is selected, and gets an entry in the priority list.
 | --- | --- | --- |
 | `190016e` | the nine abilities, the two categories, the panel and the APL | **no figure moved**; all 75 hashes and event counts identical |
 | `8a78b5c` | Preparation reset a potion, which is not a Rogue ability | no published figure; **Thistle Tea 2.00 casts -> 1.00** |
-| this one | every preset gets a sensible Potion and Other, measured | **25 of 25 rows**, 10 REAL |
+| `c3df735` | every preset gets a sensible Potion and Other, measured | **25 of 25 rows**, 10 REAL |
+| this one | Life Tap gated on current mana, by the owner's ruling | Firelock **+88.7**, the other 24 at 0.0 |
 
 **NOTHING HERE NEEDED A NEW ENGINE CAPABILITY, AND THAT IS THE HEADLINE.** Every
 field used already existed. The racials that landed the week before are the
@@ -45,6 +48,20 @@ no figure on nobody's authority:
 | should any preset open with one? | **yes**, a sensible one each — which is this round's figures |
 | the Rune below its own cost? | **refused**, not allowed to kill |
 | does anything scale a heal? | **no** — the stated range is the whole answer |
+
+**AND THREE MORE RULINGS CAME BACK ON THE FINISHED WORK**, which is this file's
+own rule about a write-up not ending a round:
+
+| what was reported | the ruling |
+| --- | --- |
+| Preparation was resetting Thistle Tea | **"Preparation does NOT reset Thistle Tea's cooldown"** — confirms the fix as shipped |
+| healing a Warlock costs it 28 DPS | **"this should never be the case"** — a bug, not a property. See below |
+| no mana potion is selected anywhere | **"this may be the case and that's fine"** — ratified |
+
+**ONE OF THE THREE REVERSED A CONCLUSION AND NONE OF THEM REVERSED A
+MEASUREMENT**, which is the distinction worth carrying: every figure reported
+was reproducible, and one of the three explanations built on top of a figure was
+wrong.
 
 **THE GCD ANSWER IS THE ONE THAT MATTERED MOST AND IS INVISIBLE.** An ability
 wrongly taking a global cooldown still restores the right pool for the right
@@ -89,24 +106,75 @@ in `ABILITY_NAMES` says to add new ones there. A tool that answers "did this
 entry fire" must know every ability a list can name, or its zero means two
 different things.
 
-## Healing a Warlock costs it 28 DPS, and the mechanism is a global cooldown
+## Healing a Warlock cost it 28 DPS, and that was a bug in Life Tap
 
-**THE ONE FINDING NOBODY WOULD HAVE PREDICTED.** The two heals are gated on
-health and 24 of the 25 presets never drop that low — and on the FIRELOCK a
-Major Healing Potion measures **-28.4** and a Healthstone **-26.2**, both REAL,
-both drunk once, against a target that never attacks.
+**THE MOST TRANSFERABLE THING IN THIS ROUND, BECAUSE THE MEASUREMENT WAS RIGHT
+AND THE CONCLUSION WAS WRONG.** On the Firelock a Major Healing Potion measured
+**-28.4** and a Healthstone **-26.2**, both REAL, both drunk once, against a
+target that never attacks.
 
-A Warlock spends HEALTH for mana, and Life Tap's `canCast` asks whether there is
-health to spend and whether the mana pool has room — **never whether the mana is
-WANTED**. So 1,400 restored health buys 1.63 more Life Taps, each costing a
-global cooldown that deals nothing, and the list casts **1.43 fewer
-Incinerates**: mana GAINED rises 12,873 to 14,217 while mana SPENT falls 7,583
-to 7,206. `tools/probe_firelock_heal.ts`.
+`probe_firelock_heal.ts` isolated it exactly: a Warlock spends HEALTH for mana,
+Life Tap's `canCast` asks whether there is health to spend and whether the mana
+pool has room — **never whether the mana is WANTED** — so 1,400 restored health
+bought 1.63 more Life Taps, each a global cooldown that deals nothing, and the
+list cast **1.43 fewer Incinerates**. Mana GAINED rose 12,873 to 14,217 while
+mana SPENT fell 7,583 to 7,206.
 
-**SO THE HEALS ARE NOT "WORTH NOTHING OFF A TANK", THEY ARE WORTH NEGATIVE ON A
-BUILD THAT TRADES HEALTH FOR MANA.** The note on the entry said they "never fire
-against a target that does not attack, which is 23 of the 25 presets" — a
-prediction dressed as a fact, and wrong in both the count and the conclusion.
+**AND THAT WAS WRITTEN UP AS AN INTERESTING PROPERTY OF WARLOCKS.** The owner
+read it and ruled the opposite: *"this should never be the case. Spending life
+tap on global cooldowns should only be based on the warlock's current mana."*
+
+**THE REAL FAULT WAS THAT ONE OF THE TWO WARLOCK LISTS WAS GATED AND THE OTHER
+WAS NOT.** The SM/DS entry is `manaBelowFraction(0.15)` and carries a comment
+recording why — an unconditional Life Tap "fired five times a fight, each one a
+global cooldown that dealt nothing" — and the FIRELOCK entry was left ungated.
+**One caller is not a sample, and the sibling list is the first place to look.**
+
+| | taps a fight | DPS |
+| --- | --- | --- |
+| ungated (what shipped) | **5.46** | 776.6 |
+| below 1% | 0.27 | 850.3 |
+| below 3% | 0.83 | 862.8 |
+| **below 5%** | **1.05** | **865.4** |
+| below 8% | 1.23 | 862.9 |
+| below 15% (SM/DS's figure) | 1.70 | 855.9 |
+| below 50% | 5.00 | 793.3 |
+
+**FIVE PERCENT IS A MEASURED PEAK AND FALLS OFF BOTH SIDES** — too loose and the
+taps are waste, too tight and the build runs dry before it taps. A two-point
+comparison would have found neither edge, and 15% was not copied across:
+*"do not normalise a threshold across two lists of the same class."*
+
+**SM/DS NEEDED NO CHANGE, AND THE WAY THAT WAS CONFIRMED IS WORTH NOTING.** It
+measures **0.00 taps at every gate from 2% to 30%** and every one of those cells
+reads 715.4, identical to the decimal — which is normally this project's tell for
+a patch that did not apply. The `taps` column is what says it is genuine: its
+mana never falls that far, so its 15% was already doing the whole job.
+
+**WORTH +88.7 TO THE FIRELOCK, 776.6 -> 865.4, AND THE OTHER 24 ROWS MOVED BY
+0.0 TO THE DECIMAL.** A heal is now worth -0.1 there, which is the owner's
+ruling satisfied.
+
+**THE LESSON IS THE ORDER THE TWO WERE FOUND IN.** "Isolate a loss, do not blame
+the obvious suspect" has a second half: **having found the real cause, ask
+whether the cause is itself correct.** The isolation worked perfectly and the
+conclusion drawn from it was still wrong, because a correct explanation of a
+number was mistaken for a justification of it. **An explanation is not a
+defence.**
+
+## And the Firelock's pair inverted under the fix without changing
+
+Gating Life Tap made the build genuinely mana-bound, so its single-candidate
+figures reversed: measured ALONE the Major Mana Potion is **+33.0** against
+Spellblasting's +18.4, where before the fix it never fired at all.
+
+**PAIRED WITH THE DEMONIC RUNE, SPELLBLASTING WINS AGAIN — +41.5 AGAINST
++38.5.** The Rune already restores mana from a category the Potion is not
+exclusive with, so a second mana source is redundant. `probe_firelock_pair.ts`.
+
+So the selection did not change, and the reason it had to be re-measured anyway
+is that **"marginal values do not sum" can reverse a ranking rather than merely
+shrink it** — which is not what that rule says and is worth adding to it.
 
 ## What each preset drinks, and the one sentence behind it
 
@@ -207,9 +275,15 @@ the stat it grants.
 46.4 — each is "what removing this one costs with the other present", and they
 overlap because more energy means more Shreds carrying more attack power.
 
-**AND THE ROW ORDER CHANGED UNDER THE TABLE.** DW Fury keeps the top at 946.6
-and **the Cat Druid is second at 855.8**, up from FIFTH -- the two archetypes that
-can drink Mighty Rage are the two that moved most, which re-sorted the top five.
+**AND THE ROW ORDER CHANGED UNDER THE TABLE, TWICE IN ONE ROUND.** The preset
+selections put the **Cat Druid second at 855.8**, up from fifth, because the two
+archetypes that may drink Mighty Rage are the two they moved most. Then the Life
+Tap fix put the **FIRELOCK second at 865.4** and the Cat third.
+
+**SO THIS PARAGRAPH EXPIRED TWICE WHILE THE ROUND WAS BEING WRITTEN**, which is
+the cleanest demonstration this file has of why it keeps expiring: a sentence
+naming the second-place row is invalidated by any row moving, and a round that
+moves all 25 and then one of them again invalidates it twice.
 
 ---
 
@@ -232,7 +306,7 @@ arrives in waves exactly as a patch does, and "built and measured" is not
 1** -- the table above is in the order the work happened and the file is in the
 order this one always is. Each header's figures belong to ITS round and say so.
 
-**THE MEAN WAS 709.6 AT THE END OF THIS ROUND AND IS 727.3 NOW**, which is the
+**THE MEAN WAS 709.6 AT THE END OF THIS ROUND AND IS 730.9 NOW**, which is the
 mid-fight consumables above. The sentence under the baseline table is the only
 place that is ever live; rounds one and three each rebuilt the table, and every
 other figure in this file -- including that 709.6 -- is dated. That is not a
@@ -1629,7 +1703,7 @@ demonstrated at the top. **Re-count rather than re-reading the sentence.**
 | --- | --- |
 | **Talents** | 260 fully, 39 partly, 105 ruled out, **62 a live gap**, out of **466** -- from 132 before the class dives |
 | **Abilities** | 114 declared against 478 captured |
-| **Profiles** | **25**, all measured, **mean 727.3** -- the armour enchants are +27.0 of it, the pre-pull consumables +105.9, the racials **+9.8 at round one** and the MID-FIGHT consumables **+17.7** |
+| **Profiles** | **25**, all measured, **mean 730.9** -- the armour enchants are +27.0 of it, the pre-pull consumables +105.9, the racials **+9.8 at round one**, the MID-FIGHT consumables **+17.7** and the Life Tap gate **+3.5** |
 | **Racials** | **10 races, 40 traits**: 15 do something, 20 effects ruled out, 11 a live gap |
 | **Scope rulings** | **9 members**, all the owner's, carrying 129 TALENT entries and 19 racial declarations |
 | **Placeholders** | **10 declared** -- see the milestone table, and count DECLARATIONS |
@@ -1641,7 +1715,7 @@ Mage (10). **The Warlock's 19 overstates its own work**: thirteen of them are on
 build cause, Demonic Sacrifice killing the demon, so its real queue is about 11.
 
 **AND THIS BLOCK'S MEAN HAS NOW DRIFTED FOUR TIMES.** It read 700.0 against a
-table at 709.6 after the racials, and 709.6 against a table at 727.3 after the
+table at 709.6 after the racials, and 709.6 against a table at 730.9 after the
 mid-fight consumables -- each time because `update_baseline_table.py` re-sums
 the sentence under the table and knows nothing about this one fifteen hundred
 lines below it. The script was fixed in the racials round to stop writing the
@@ -3338,33 +3412,33 @@ cannot audit, which is why the check is a SET comparison and not a row count.
 | Profile | Class | Talents | DPS | | Profile | Class | Talents | DPS |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | DW Fury | Warrior | 17/34/0 | 946.6 | | Moonkin | Druid | 38/0/13 | 746.4 |
-| Cat Druid | Druid | 9/34/8 | 855.8 | | Enh Shaman | Shaman | 17/34/0 | 727.4 |
-| Hawk Melee | Hunter | 16/11/24 | 848.8 | | SM/DS | Warlock | 40/11/0 | 715.4 |
-| LW Ranged | Hunter | 7/39/5 | 845.0 | | Fire Mage | Mage | 10/39/2 | 707.6 |
-| 2H Arms | Warrior | 39/10/2 | 825.0 | | Hemo Rogue | Rogue | 17/3/31 | 694.2 |
-| Seal Twist Ret | Paladin | 15/0/36 | 814.1 | | Shockadin | Paladin | 23/0/28 | 684.6 |
-| LW Melee | Hunter | 7/13/31 | 812.8 | | Venom Rogue | Rogue | 37/12/2 | 663.6 |
-| BM Hunter | Hunter | 31/20/0 | 798.0 | | Rupture Rogue | Rogue | 12/8/31 | 646.2 |
-| Arcane Mage | Mage | 47/4/0 | 790.8 | | Ele Shaman | Shaman | 38/13/0 | 631.2 |
-| Frostfire Mage | Mage | 0/29/22 | 780.5 | | Prot Warr | Warrior | 17/0/34 | 542.0 |
-| Firelock | Warlock | 5/11/35 | 776.6 | | Bear Druid | Druid | 9/42/0 | 455.7 |
+| **Firelock** | Warlock | 5/11/35 | **865.4** | | Enh Shaman | Shaman | 17/34/0 | 727.4 |
+| Cat Druid | Druid | 9/34/8 | 855.8 | | SM/DS | Warlock | 40/11/0 | 715.4 |
+| Hawk Melee | Hunter | 16/11/24 | 848.8 | | Fire Mage | Mage | 10/39/2 | 707.6 |
+| LW Ranged | Hunter | 7/39/5 | 845.0 | | Hemo Rogue | Rogue | 17/3/31 | 694.2 |
+| 2H Arms | Warrior | 39/10/2 | 825.0 | | Shockadin | Paladin | 23/0/28 | 684.6 |
+| Seal Twist Ret | Paladin | 15/0/36 | 814.1 | | Venom Rogue | Rogue | 37/12/2 | 663.6 |
+| LW Melee | Hunter | 7/13/31 | 812.8 | | Rupture Rogue | Rogue | 12/8/31 | 646.2 |
+| BM Hunter | Hunter | 31/20/0 | 798.0 | | Ele Shaman | Shaman | 38/13/0 | 631.2 |
+| Arcane Mage | Mage | 47/4/0 | 790.8 | | Prot Warr | Warrior | 17/0/34 | 542.0 |
+| Frostfire Mage | Mage | 0/29/22 | 780.5 | | Bear Druid | Druid | 9/42/0 | 455.7 |
 | Shadow Priest | Priest | 13/3/35 | 751.2 | | Prot Pally | Paladin | 8/34/9 | 372.7 |
 | Combat Rogue | Rogue | 18/33/0 | 750.9 | | | | | | |
 
-The mean across **25** is **727.3**, RE-SUMMED FROM THE ROWS ABOVE rather than
+The mean across **25** is **730.9**, RE-SUMMED FROM THE ROWS ABOVE rather than
 adjusted, by `tools/update_baseline_table.py`.
 
-**THE TOP IS DW FURY AT 946.6 +/-10.3, AND THE CAT DRUID IS SECOND AT 855.8
-+/-5.4** -- up from FIFTH, because the two archetypes that may drink the Mighty
-Rage Potion are the two this round moved most. The gap is 90.8, the widest
-first place this table has had.
+**THE TOP IS DW FURY AT 946.6 +/-10.3, AND THE FIRELOCK IS SECOND AT 865.4
++/-5.5** -- up from ELEVENTH, on a Life Tap gate rather than on anything the
+consumables did. The gap is 81.2.
 
-**AND THAT IS THE FOURTH TIME THIS PARAGRAPH HAS BEEN REWRITTEN, WHICH IS THE
-POINT OF IT.** It has said "the top is still the Frostfire Mage and its lead has
-narrowed to one interval" (true for one commit), then DW Fury over LW Ranged by
-86.1, then DW Fury over Hawk Melee by 75.7 -- and now DW Fury over the Cat by
-90.8. **A SENTENCE NAMING THE SECOND-PLACE ROW EXPIRES WHENEVER ANY ROW MOVES**,
-which is most commits, and a round that moves all 25 expires it by construction.
+**AND THAT IS THE FIFTH REWRITE OF THIS PARAGRAPH, THE LAST TWO IN ONE ROUND.**
+It has said "the top is still the Frostfire Mage and its lead has narrowed to
+one interval" (true for one commit), then DW Fury over LW Ranged by 86.1, then
+over Hawk Melee by 75.7, then over the Cat by 90.8, and now over the Firelock by
+81.2. **A SENTENCE NAMING THE SECOND-PLACE ROW EXPIRES WHENEVER ANY ROW MOVES**,
+which is most commits -- and a round that moves all 25 and then moves one of
+them again expires it twice.
 
 **BOTH MAGE ROWS THAT FELL DID SO ON OWNER RULINGS ABOUT COEFFICIENTS AND
 CONSUMPTION, NOT ON ANYTHING THIS PROJECT GOT WRONG.** Frostfire went 927.6 to

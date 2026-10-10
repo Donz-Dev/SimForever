@@ -60,6 +60,15 @@ const actorHas = selfHas;
 /** "current mana is below N% of maximum". */
 const manaBelowFraction = (fraction: number) => resourceFraction('below', fraction, 'mana');
 
+/**
+ * The mana a Firelock Life Taps at. A MEASURED PEAK; see the entry.
+ *
+ * Named and exported so the test that pins it reads the same number the list
+ * does, and so the one figure in this file that was arrived at by a sweep says
+ * so where it is declared rather than only where it is used.
+ */
+export const FIRELOCK_LIFE_TAP_MANA = 0.05;
+
 // ---------------------------------------------------------------------------
 
 /**
@@ -239,7 +248,49 @@ export const WARLOCK_DESTRUCTION: AplList = {
    * not reach it either. What the global cooldown buys instead is Incinerate,
    * which is 25% larger against a burning target.
    */
-  { abilityId: 'life_tap' },
+  /*
+   * ==========================================================================
+   * LIFE TAP ON A MANA THRESHOLD, BY THE RULESET OWNER'S RULING: "spending life
+   * tap on global cooldowns should only be based on the warlock's current mana."
+   *
+   * IT WAS UNGATED HERE AND GATED IN THE SM/DS LIST, WHICH IS THE WHOLE BUG.
+   * That list carries the lesson in its own comment -- an unconditional Life Tap
+   * "fired five times a fight, each one a global cooldown that dealt nothing" --
+   * and the fix was applied to one of the two lists that needed it. **One caller
+   * is not a sample**, and the sibling list is the first place to look.
+   *
+   * WHAT UNGATED MEANT IS NOT "ALWAYS", WHICH IS WHY IT LOOKED REASONABLE. Life
+   * Tap's own `canCast` refuses unless there is health to spend AND the mana
+   * pool has room for the 840 it grants. Room in the pool is a LEGALITY check
+   * and belongs on the ability; "is the mana wanted" is a POLICY question and
+   * belongs here. The policy was "whenever the pool is 840 below full", which on
+   * this build is most of the fight: **5.46 taps a fight**, every one of them a
+   * global cooldown that could have been an Incinerate.
+   *
+   * FIVE PERCENT IS A MEASURED PEAK AND NOT A COPY OF SM/DS's FIFTEEN, which
+   * this project's own rule asks for -- "do not normalise a threshold across two
+   * lists of the same class". Swept by `tools/probe_life_tap_gate.ts`:
+   *
+   *     ungated   776.6      5.46 taps
+   *     below 1%  850.3      0.27        +73.7
+   *     below 3%  862.8      0.83        +86.2
+   *     below 5%  865.4      1.05        +88.7   <-- the peak
+   *     below 8%  862.9      1.23        +86.3
+   *     below 15% 855.9      1.70        +79.3
+   *     below 50% 793.3      5.00        +16.7
+   *
+   * IT FALLS OFF BOTH SIDES, which is what makes it a peak rather than a trend:
+   * too loose and the taps are waste, too tight and the build runs dry before it
+   * taps. A two-point comparison would have found neither edge.
+   *
+   * AND SM/DS NEEDS NO CHANGE, measured at **0.00 taps at every gate from 2% to
+   * 30%** -- its mana never falls that far, so its 15% was already doing the
+   * whole job. Every one of those cells reads 715.4, identical to the decimal,
+   * which would normally be this project's tell for a patch that did not apply;
+   * the `taps` column is what says it is genuine.
+   * ==========================================================================
+   */
+  { abilityId: 'life_tap', condition: manaBelowFraction(FIRELOCK_LIFE_TAP_MANA) },
   { abilityId: 'incinerate' },
   ],
 };
