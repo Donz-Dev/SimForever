@@ -1125,6 +1125,20 @@ button:disabled {
   grid-template-columns: 150px 1fr;
 }
 
+/*
+ * Where the other half of a mid-fight choice is made.
+ *
+ * The Potion and Other rows add an ability to the priority list as well as to
+ * the character, and a dropdown that silently also edits the rotation is worse
+ * than one that says it does. Muted and small, like the caveat list below it:
+ * it is a pointer, not a warning.
+ */
+.consumable-hint {
+  margin: 12px 0 0;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
 /* What a chosen consumable does NOT do, printed where it was chosen. */
 .consumable-caveats {
   margin: 12px 0 0;

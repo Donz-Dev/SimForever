@@ -80,11 +80,31 @@ export class AbilityBook {
    * SHARED GROUPS ARE CLEARED TOO, and only the groups the reset abilities
    * belong to. Clearing every group would reach a group whose other member was
    * spared, which is a rule nobody stated.
+   *
+   * ----------------------------------------------------------------------------
+   * `only` IS WHICH ABILITIES THE CALLER IS ENTITLED TO RESET, and it exists
+   * because "your other ROGUE abilities" turned out to be narrower than "every
+   * ability in the book".
+   *
+   * A BOOK HOLDS MORE THAN A CLASS'S OWN ABILITIES NOW. A racial is learned by a
+   * RACE and a potion by DRINKING one, and both are appended to the same book --
+   * so an unrestricted reset handed a Rogue a second Thistle Tea, which is a
+   * five minute cooldown fired TWICE in a sixty second fight. Measured at two
+   * casts a fight on both Subtlety profiles, and worth about thirty DPS of
+   * inflation: a bigger number and no error.
+   *
+   * THE ENGINE CANNOT ANSWER "is this a Rogue ability" and must not try -- it
+   * knows nothing about classes. So the CALLER passes the set it owns, which
+   * keeps the rule here ("reset these, if the book has them") and the content
+   * question in content. Omitted means every ability, which is what the only
+   * caller used to get and is still the right default for a reset that genuinely
+   * covers everything.
    * ----------------------------------------------------------------------------
    */
-  resetCooldowns(exceptId?: string): void {
+  resetCooldowns(exceptId?: string, only?: ReadonlySet<string>): void {
     for (const [id, ability] of this.abilities) {
       if (id === exceptId) continue;
+      if (only && !only.has(id)) continue;
       const state = this.states.get(id);
       if (state) {
         state.available = ability.charges ?? 1;

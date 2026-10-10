@@ -130,7 +130,7 @@ export function ConsumablesPanel({ profile, onChange }: ConsumablesPanelProps) {
         * should still get one -- and somebody who wants it drunk at a different
         * threshold needs to know where to go.
         */}
-      <p className="hint">
+      <p className="consumable-hint">
         <strong>Potion</strong> and <strong>Other</strong> are used during the fight, so choosing
         one adds it to the <strong>Priority list</strong> — where the condition it is used on can
         be changed. Potions share a two minute cooldown; an Other item has its own.
