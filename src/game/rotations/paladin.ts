@@ -1,6 +1,7 @@
 import type { Rotation } from '../../engine';
 import type { AplCondition, AplList } from './apl';
 import { RACIAL_COOLDOWNS, RACIAL_DEFENSIVE_COOLDOWNS } from './racialCooldowns';
+import { CONSUMABLE_COOLDOWNS, CONSUMABLE_HEALS } from './consumableCooldowns';
 import {
   all,
   any,
@@ -184,6 +185,8 @@ export const PALADIN_RETRIBUTION: AplList = {
    * MEASURED AND BOTH WERE WRONG -- see `racialCooldowns.ts`.
    */
   ...RACIAL_COOLDOWNS,
+  ...CONSUMABLE_COOLDOWNS,
+  ...CONSUMABLE_HEALS,
   { abilityId: 'judgement' },
   { abilityId: 'holy_strike' },
   /*
@@ -269,6 +272,8 @@ export const PALADIN_SHOCKADIN: AplList = {
    * MEASURED AND BOTH WERE WRONG -- see `racialCooldowns.ts`.
    */
   ...RACIAL_COOLDOWNS,
+  ...CONSUMABLE_COOLDOWNS,
+  ...CONSUMABLE_HEALS,
   { abilityId: 'judgement' },
   /*
    * SEAL OF RIGHTEOUSNESS, NOT COMMAND, AND NOT BY PREFERENCE. Seal of
@@ -328,6 +333,20 @@ export const PALADIN_PROTECTION: AplList = {
   { abilityId: 'righteous_fury', condition: selfExpired('righteous_fury') },
   { abilityId: 'holy_shield', condition: selfExpired('holy_shield') },
   { abilityId: 'templars_bulwark', condition: healthAtMostFraction(0.35) },
+  /*
+   * THE TWO HEALS, WITH THE REST OF THE SURVIVAL COOLDOWNS -- WHICH IS *NOT*
+   * WHERE THIS LIST PUTS THE OTHER FREE ENTRIES.
+   *
+   * The racial and consumable cooldowns sit LAST in a tank list, because "100ms
+   * is not free to a tank at thirty percent health". A healing potion is the one
+   * free entry that argument does not reach: the bottom of a tank list is a
+   * place entries are not REACHED, and something above is nearly always
+   * castable -- which is how five of seven racials came back inert.
+   *
+   * So they go here, beside the cooldowns that answer the same question, and
+   * below them because those are the bigger answer. See `CONSUMABLE_HEALS`.
+   */
+  ...CONSUMABLE_HEALS,
   { abilityId: 'judgement' },
   /*
    * SWIFT JUDGEMENT IS A SECOND JUDGEMENT, BACK TO BACK, which is the whole
@@ -380,6 +399,7 @@ export const PALADIN_PROTECTION: AplList = {
    */
   ...RACIAL_COOLDOWNS,
   ...RACIAL_DEFENSIVE_COOLDOWNS,
+  ...CONSUMABLE_COOLDOWNS,
 ],
 };
 

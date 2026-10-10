@@ -1,6 +1,7 @@
 import type { Rotation } from '../../engine';
 import type { AplCondition, AplList } from './apl';
 import { RACIAL_COOLDOWNS } from './racialCooldowns';
+import { CONSUMABLE_COOLDOWNS, CONSUMABLE_HEALS } from './consumableCooldowns';
 import {
   all,
   comboPoints,
@@ -243,6 +244,8 @@ export const ROGUE_VENOM: AplList = {
    * MEASURED AND BOTH WERE WRONG -- see `racialCooldowns.ts`.
    */
   ...RACIAL_COOLDOWNS,
+  ...CONSUMABLE_COOLDOWNS,
+  ...CONSUMABLE_HEALS,
   /*
    * ============================================================================
    * RUPTURE, AND IT IS THE WHOLE OF THIS LIST'S GAIN: 488.1 to 504.8, +16.7.
@@ -394,6 +397,8 @@ export const ROGUE_COMBAT: AplList = {
    * MEASURED AND BOTH WERE WRONG -- see `racialCooldowns.ts`.
    */
   ...RACIAL_COOLDOWNS,
+  ...CONSUMABLE_COOLDOWNS,
+  ...CONSUMABLE_HEALS,
   /*
    * EVISCERATE ABOVE THE TWO COOLDOWNS, WITH THE OWNER'S NINE-SECOND FLOOR AND
    * A TWO-POINT GATE. The gate is new; everything else is the owner's order.
@@ -529,6 +534,8 @@ export const ROGUE_RUPTURE: AplList = {
    * MEASURED AND BOTH WERE WRONG -- see `racialCooldowns.ts`.
    */
   ...RACIAL_COOLDOWNS,
+  ...CONSUMABLE_COOLDOWNS,
+  ...CONSUMABLE_HEALS,
   /*
    * AMBUSH SECOND AND UNCONDITIONAL, because its own `canCast` is the gate: a
    * dagger in the main hand and EITHER the Cutthroat proc or a stealth window.

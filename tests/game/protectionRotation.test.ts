@@ -17,6 +17,7 @@ import { bossMeleeWeapon } from '../../src/game/encounters/raidBoss';
 import { legalise } from '../helpers/legalTalents';
 import type { AplCondition } from '../../src/game/rotations/apl';
 import { compileCondition } from '../../src/game/rotations/apl';
+import { MID_FIGHT_CONSUMABLE_ABILITIES } from '../../src/game/abilities/consumables';
 
 /*
  * A condition is DATA now. `compileCondition` turns one back into the closure
@@ -55,6 +56,23 @@ const EXPECTED_ORDER = [
   'charge',
   'last_stand',
   'shield_wall_cast',
+  /*
+   * THE TWO CONSUMABLE HEALS, WITH THE SURVIVAL COOLDOWNS RATHER THAN WITH THE
+   * OTHER FREE ENTRIES AT THE BOTTOM.
+   *
+   * This is the one place the tank list's "free entries go last" rule is
+   * deliberately NOT followed, and the reason is the rule's own argument read
+   * the other way: the bottom of a tank list is a place entries are not
+   * REACHED. A Protection warrior caps its rage, so something above is nearly
+   * always castable -- which is how five of seven racials came back inert when
+   * they were tried at the bottom. A healing potion that is never reached is a
+   * healing potion that does nothing.
+   *
+   * They sit BELOW Last Stand and Shield Wall because those are the bigger
+   * answer to the same question, and the cheaper one should not be spent first.
+   */
+  'major_healing_potion',
+  'healthstone',
   'bloodrage_cast',
   'defensive_stance_cast',
   'battle_shout_cast',
@@ -84,6 +102,25 @@ const EXPECTED_ORDER = [
   'elunes_light',
   'eureka',
   'stoneform',
+  /*
+   * AND THE MID-FIGHT CONSUMABLES, LAST, FOR THE RACIALS' OWN REASON.
+   *
+   * Seven of the nine are here: the two heals are above, with the survival
+   * cooldowns. These seven restore a pool or grant a flat buff, so they are
+   * worth what a racial is worth to a tank and belong where a racial does.
+   *
+   * EVERY ONE OF THEM IS DROPPED AGAIN FOR A PROFILE THAT DID NOT DRINK IT.
+   * The shared constant names all nine because it is spread into lists that
+   * belong to no selection; `stockListFor` narrows it to what the profile
+   * actually carries. This constant is the DECLARED list, which is what
+   * `WARRIOR_SHIELD_DEFENSIVE` is.
+   */
+  'major_mana_potion',
+  'demonic_rune',
+  'thistle_tea',
+  'mighty_rage_potion',
+  'major_frenzy_potion',
+  'major_spellblasting_potion',
 ];
 
 /**
@@ -378,13 +415,24 @@ describe('Rend, which had never been cast', () => {
      * knows whichever of them its RACE grants, so they are not entries this
      * assertion is about.
      *
+     * NOR ARE THE SEVEN CONSUMABLES BELOW THOSE, which are the same kind of
+     * thing one category along: learned by DRINKING one rather than by being a
+     * Warrior, placed at the bottom for the identical reason, and dropped
+     * entirely for a profile that selected none. The two heals are above Rend
+     * rather than below it and are excluded here for the same reason: a
+     * Healthstone is not an ability a Warrior has.
+     *
      * Asserted as "nothing of the Warrior's below it" rather than by index,
      * which is the lesson this file already learned when Charge was inserted at
-     * the top and broke three positional tests.
+     * the top and broke three positional tests -- and the reason this grew by
+     * nine ids rather than by a new index.
      */
     const ids = WARRIOR_SHIELD_DEFENSIVE.entries.map((entry) => entry.abilityId);
-    const racials = new Set(['blood_fury', 'berserking', 'elunes_light', 'eureka', 'stoneform']);
-    const warriorOwn = ids.filter((id) => !racials.has(id));
+    const notTheWarriors = new Set([
+      ...['blood_fury', 'berserking', 'elunes_light', 'eureka', 'stoneform'],
+      ...MID_FIGHT_CONSUMABLE_ABILITIES.map((ability) => ability.id),
+    ]);
+    const warriorOwn = ids.filter((id) => !notTheWarriors.has(id));
     expect(warriorOwn.at(-1)).toBe('rend_cast');
   });
 });

@@ -8,6 +8,7 @@ import { resolveCombatStyle } from '../../game/character';
 import type { Ability } from '../../engine';
 import { abilitiesForClass } from '../../game/abilities/abilitiesForClass';
 import { RACIAL_ABILITIES, racialsFor } from '../../game/racials';
+import { consumableAbilities } from '../../game/buffs/consumables';
 import type { CatalogAura } from '../../game/auras/auraCatalog';
 import { aurasForClass } from '../../game/auras/auraCatalog';
 import type { Clause, ClauseKind, ConditionNode, GroupNode, NodePath } from './aplEditing';
@@ -229,6 +230,20 @@ export function abilityBookFor(profile: CharacterProfile): readonly Ability[] {
   return [
     ...abilitiesForClass(profile.character.characterClass, style, profile.talents),
     ...racials,
+    /*
+     * AND WHAT IT DRANK, which is the third source and the only one that can
+     * change without the build changing. Selecting a Major Mana Potion in the
+     * Consumables panel is what puts it in this dropdown -- the owner's ask,
+     * "when a potion is selected it will then become visible on the APL".
+     *
+     * THE SAME FUNCTION THE FIGHT CALLS, deliberately. `createPlayer` appends
+     * `consumableAbilities(class, consumables)` to its own book, and these two
+     * compositions are the thing that must not drift: a potion in this dropdown
+     * and not in the fight is an entry that silently never fires, and one in
+     * the fight and not here is an entry nobody can add back after deleting it.
+     * `consumableAbilities.test.ts` asserts the two agree.
+     */
+    ...consumableAbilities(profile.character.characterClass, profile.consumables),
   ];
 }
 

@@ -13,7 +13,11 @@ import {
   BANE_OF_AGONY_SP_COEFFICIENT,
   WRACK_TICK_SP_COEFFICIENT,
 } from '../../src/game/combat/coefficients';
-import { WARLOCK_AFFLICTION, WARLOCK_DESTRUCTION } from '../../src/game/rotations/warlock';
+import {
+  FIRELOCK_LIFE_TAP_MANA,
+  WARLOCK_AFFLICTION,
+  WARLOCK_DESTRUCTION,
+} from '../../src/game/rotations/warlock';
 import {
   CONFLAGRATE_DAMAGE,
   CONFLAGRATE_KEEPS_IMMOLATE,
@@ -381,6 +385,45 @@ describe('the two fights', () => {
 
     // And it is still in the owner's list, unreached rather than removed.
     expect(WARLOCK_AFFLICTION.entries.map((e) => e.abilityId)).toContain('life_tap');
+  });
+
+  it('is gated on CURRENT MANA in both lists, which is the owner’s ruling', () => {
+    /*
+     * ==========================================================================
+     * "SPENDING LIFE TAP ON GLOBAL COOLDOWNS SHOULD ONLY BE BASED ON THE
+     * WARLOCK'S CURRENT MANA" -- the ruleset owner, and this is the assertion
+     * that says both lists obey it rather than one.
+     *
+     * THE SM/DS LIST ALREADY DID AND THE FIRELOCK LIST DID NOT, which is the
+     * whole shape of the bug: the SM/DS entry carries a comment recording that
+     * an unconditional Life Tap "fired five times a fight, each one a global
+     * cooldown that dealt nothing", and the sibling list was left ungated. **One
+     * caller is not a sample.** Firelock measured 5.46 taps a fight and gating
+     * it was worth +88.7 DPS.
+     *
+     * ASSERTED AS THE SHAPE OF THE CONDITION RATHER THAN THE NUMBER, because the
+     * threshold is a measured peak that may legitimately move -- 5% on Firelock
+     * against 15% on SM/DS, and "do not normalise a threshold across two lists
+     * of the same class". What must not change is that there IS a mana gate.
+     *
+     * AND IT IS WHY HEALING A WARLOCK NO LONGER COSTS IT DPS. With the entry
+     * gated on health-via-`canCast` instead of mana, a healing potion bought
+     * more taps and cost the Firelock 28.4 DPS; the owner ruled that "should
+     * never be the case", and gating on mana is what makes a heal worth -0.1.
+     * ==========================================================================
+     */
+    for (const list of [WARLOCK_AFFLICTION, WARLOCK_DESTRUCTION]) {
+      const tap = list.entries.find((entry) => entry.abilityId === 'life_tap');
+      expect(tap, `${list.name} has a Life Tap entry`).toBeDefined();
+      expect(tap?.condition, `${list.name} gates Life Tap`).toMatchObject({
+        kind: 'resourceFraction',
+        resource: 'mana',
+        compare: 'below',
+      });
+    }
+
+    // The Firelock's figure is the swept one, so a change to it is deliberate.
+    expect(FIRELOCK_LIFE_TAP_MANA).toBe(0.05);
   });
 });
 

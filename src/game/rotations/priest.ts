@@ -2,6 +2,7 @@ import type { Rotation } from '../../engine';
 import type { TalentAllocation } from '../talents/Talent';
 import type { AplCondition, AplList } from './apl';
 import { RACIAL_COOLDOWNS } from './racialCooldowns';
+import { CONSUMABLE_COOLDOWNS, CONSUMABLE_HEALS } from './consumableCooldowns';
 import { any, compileRotation, fightRemainingFraction, not, selfMissing, targetExpired } from './apl';
 
 /**
@@ -122,6 +123,8 @@ export const PRIEST_SHADOW: AplList = {
    * MEASURED AND BOTH WERE WRONG -- see `racialCooldowns.ts`.
    */
   ...RACIAL_COOLDOWNS,
+  ...CONSUMABLE_COOLDOWNS,
+  ...CONSUMABLE_HEALS,
     { abilityId: 'shadow_word_pain', condition: expired('shadow_word_pain') },
     { abilityId: 'devouring_plague', condition: expired('devouring_plague') },
     { abilityId: 'vampiric_embrace', condition: expired('vampiric_embrace') },

@@ -1130,7 +1130,7 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations([
       },
       talents: { ...PROT_WARR_TALENTS },
       raidBuffs: [...PRESET_RAID_BUFFS],
-      consumables: STRENGTH_CONSUMABLES,
+      consumables: { ...STRENGTH_CONSUMABLES, other: 'healthstone' },
       equipment: {
         // Dodge, defense skill and threat: the one Warrior row that spends
         // nothing on damage.
@@ -1168,7 +1168,7 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations([
       },
       talents: { ...ROGUE_VENOM_TALENTS },
       raidBuffs: [...PRESET_RAID_BUFFS],
-      consumables: AGILITY_CONSUMABLES,
+      consumables: { ...AGILITY_CONSUMABLES, other: 'thistle_tea' },
       equipment: { ...ROGUE_ARMOUR, ...ROGUE_DAGGERS },
       encounter: { ...createDefaultProfile().encounter, targetAttacks: false },
     }),
@@ -1190,7 +1190,7 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations([
       },
       talents: { ...ROGUE_COMBAT_TALENTS },
       raidBuffs: [...PRESET_RAID_BUFFS],
-      consumables: AGILITY_CONSUMABLES,
+      consumables: { ...AGILITY_CONSUMABLES, other: 'thistle_tea' },
       equipment: { ...ROGUE_ARMOUR, ...ROGUE_SWORDS },
       encounter: { ...createDefaultProfile().encounter, targetAttacks: false },
     }),
@@ -1212,7 +1212,7 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations([
       },
       talents: { ...ROGUE_RUPTURE_TALENTS },
       raidBuffs: [...PRESET_RAID_BUFFS],
-      consumables: AGILITY_CONSUMABLES,
+      consumables: { ...AGILITY_CONSUMABLES, other: 'thistle_tea' },
       equipment: { ...ROGUE_ARMOUR, ...ROGUE_DAGGERS },
       encounter: { ...createDefaultProfile().encounter, targetAttacks: false },
     }),
@@ -1241,7 +1241,7 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations([
       },
       talents: { ...ROGUE_HEMO_TALENTS },
       raidBuffs: [...PRESET_RAID_BUFFS],
-      consumables: AGILITY_CONSUMABLES,
+      consumables: { ...AGILITY_CONSUMABLES, other: 'thistle_tea' },
       equipment: { ...ROGUE_ARMOUR, ...ROGUE_DAGGERS },
       encounter: { ...createDefaultProfile().encounter, targetAttacks: false },
     }),
@@ -1293,7 +1293,7 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations([
       },
       talents: { ...DRUID_CAT_TALENTS },
       raidBuffs: [...PRESET_RAID_BUFFS],
-      consumables: STRENGTH_CONSUMABLES,
+      consumables: { ...STRENGTH_CONSUMABLES, other: 'thistle_tea' },
       equipment: { ...DRUID_CAT_GEAR },
       encounter: { ...createDefaultProfile().encounter, targetAttacks: false },
     }),
@@ -1315,7 +1315,7 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations([
       },
       talents: { ...DRUID_BEAR_TALENTS },
       raidBuffs: [...PRESET_RAID_BUFFS],
-      consumables: STRENGTH_CONSUMABLES,
+      consumables: { ...STRENGTH_CONSUMABLES, other: 'healthstone' },
       equipment: { ...DRUID_BEAR_GEAR },
       /*
        * THE ONE DRUID PROFILE THAT IS HIT BACK, which is the whole point of
@@ -1525,11 +1525,27 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations([
       },
       talents: { ...PALADIN_PROTECTION_TALENTS },
       raidBuffs: [...PRESET_RAID_BUFFS],
-      consumables: hybridConsumables({
-        school: 'school_holy',
-        meleeWeaponEffect: false,
-        blastedLands: 'blasted_strength',
-      }),
+      /*
+       * THE HEALTHSTONE RATHER THAN THE RUNE, which is the one place a hybrid
+       * row is overridden and the reason is the same one that makes this
+       * profile different from the other three: it is HIT BACK. Health is the
+       * pool it empties, and the Rune is never drunk by it at all -- where the
+       * Healthstone fires 0.96 times a fight and takes deaths 8.54 to 8.31,
+       * the biggest survival figure any Other candidate produced here.
+       *
+       * IT COSTS 2.0 DPS TO DO THAT, which is the right trade for a build whose
+       * figure of merit is a death count and the reason the DPS table is the
+       * wrong measure for this row -- the same thing already recorded about the
+       * tanks' enchants being dodge and defense skill.
+       */
+      consumables: {
+        ...hybridConsumables({
+          school: 'school_holy',
+          meleeWeaponEffect: false,
+          blastedLands: 'blasted_strength',
+        }),
+        other: 'healthstone',
+      },
       equipment: { ...PALADIN_PROT_GEAR },
       encounter: { ...createDefaultProfile().encounter, targetAttacks: true },
     }),
@@ -1606,7 +1622,15 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations([
       },
       talents: { ...HUNTER_LONE_WOLF_MELEE_TALENTS },
       raidBuffs: [...PRESET_RAID_BUFFS],
-      consumables: { ...AGILITY_CONSUMABLES, mana_regen: 'mana_regen_12' },
+      // A melee Hunter HAS a mana pool, so it takes the Rune where a Rogue on
+      // the same row takes Thistle Tea -- which is Rogue-and-Druid only. It
+      // fires 0.00 times at sixty seconds on both, and is kept for the reason
+      // every rarely-fired safety net here is kept. See `casterConsumables`.
+      consumables: {
+        ...AGILITY_CONSUMABLES,
+        mana_regen: 'mana_regen_12',
+        other: 'demonic_rune',
+      },
       equipment: { ...HUNTER_ARMOUR, ...HUNTER_DUAL_WIELD_WEAPONS },
       encounter: { ...createDefaultProfile().encounter, targetAttacks: false },
     }),
@@ -1639,7 +1663,15 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations([
       // Everything below is LW Melee's, on the owner's instruction that race,
       // gear, raid buffs and consumables are the same.
       raidBuffs: [...PRESET_RAID_BUFFS],
-      consumables: { ...AGILITY_CONSUMABLES, mana_regen: 'mana_regen_12' },
+      // A melee Hunter HAS a mana pool, so it takes the Rune where a Rogue on
+      // the same row takes Thistle Tea -- which is Rogue-and-Druid only. It
+      // fires 0.00 times at sixty seconds on both, and is kept for the reason
+      // every rarely-fired safety net here is kept. See `casterConsumables`.
+      consumables: {
+        ...AGILITY_CONSUMABLES,
+        mana_regen: 'mana_regen_12',
+        other: 'demonic_rune',
+      },
       equipment: { ...HUNTER_ARMOUR, ...HUNTER_DUAL_WIELD_WEAPONS },
       encounter: { ...createDefaultProfile().encounter, targetAttacks: false },
     }),

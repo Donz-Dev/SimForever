@@ -66,6 +66,7 @@ import {
   RAPID_FIRE,
 } from '../../src/game/auras/hunter';
 import { talentBuild } from '../../src/game/talents/talentBuild';
+import { MAJOR_FRENZY_ATTACK_POWER } from '../../src/game/auras/consumables';
 
 /*
  * Pets, and the Hunter that brings one. The scaling figures come from the
@@ -481,12 +482,23 @@ describe("Hunter's Mark", () => {
      *
      * THIS TEST READ `+ 191` BEFORE RACIALS EXISTED and came back 189.59 high,
      * which is exactly ten percent of the Hunter's whole ranged attack power.
-     * Kept as the two openers plus the racial, each named, so that any one of
-     * the three going missing fails here.
+     * Kept as the openers plus the racial, each named, so that any one of them
+     * going missing fails here.
+     *
+     * AND A FOURTH TERM ARRIVED THE SAME WAY, which is why the shape of this
+     * expectation is worth keeping. The preset now drinks a Major Frenzy Potion
+     * -- "40 Attack Power and Ranged Attack Power for 30 seconds", the one
+     * mid-fight consumable a Hunter reads -- and the test came back 44 high,
+     * which is that forty through the same ten percent. Named like the rest
+     * rather than folded into a constant, so losing it fails here too.
      */
     expect(atPull.auras.has('blood_fury')).toBe(true);
+    expect(atPull.auras.has('major_frenzy_potion')).toBe(true);
     expect(atPull.stats.get('rangedAttackPower')).toBeCloseTo(
-      (before + ASPECT_OF_THE_HAWK_ATTACK_POWER + HUNTERS_MARK_RANGED_ATTACK_POWER) *
+      (before +
+        ASPECT_OF_THE_HAWK_ATTACK_POWER +
+        HUNTERS_MARK_RANGED_ATTACK_POWER +
+        MAJOR_FRENZY_ATTACK_POWER) *
         (1 + BLOOD_FURY_POWER_FRACTION),
       6,
     );

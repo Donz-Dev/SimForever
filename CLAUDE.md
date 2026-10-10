@@ -38,6 +38,9 @@ PROFILE=dw_fury npx vite-node tools/stat_weights.ts        # what a point of eac
 PROFILE=rogue_combat PLAN=1 npx vite-node tools/stat_weights.ts   # the cap ladder, no fights
 npx vite-node tools/probe_racials.ts             # does each racial MECHANISM do its thing
 npx vite-node tools/probe_racial_worth.ts        # what one race is worth, by RACE SWAP
+npx vite-node tools/probe_consumable_choice.ts   # every mid-fight candidate on every preset, with its CASTS
+PRESET=warlock_firelock npx vite-node tools/probe_firelock_heal.ts   # why healing a Warlock LOSES dps
+npx vite-node tools/probe_cat_rage.ts            # does a Cat's rage pool ever hold anything
 ```
 
 The three audits in the middle are AUDITS rather than measurements and none of
@@ -1437,9 +1440,97 @@ See [docs/resources.md](docs/resources.md).
 
 ### Consumables
 
-Twelve CATEGORIES from the ruleset owner's table, **at most one per category**.
-`game/buffs/consumables.ts`, and `tools/consumable_report.ts` prints all 24
-profiles' rows at once.
+FOURTEEN CATEGORIES from the ruleset owner's table, **at most one per
+category**. `game/buffs/consumables.ts`, and `tools/consumable_report.ts` prints
+all 25 profiles' rows at once.
+
+**AND THE LAST TWO ARE ACTIONS RATHER THAN STATS, WHICH FALSIFIES MOST OF WHAT
+THE TWELVE BELOW SAY ABOUT THEMSELVES.** Potion and Other are used DURING a
+fight, so each carries an `Ability`, joins the ability book when it is selected,
+and gets an entry in the priority list — the owner's instruction, "must be
+treated like a character ability and be exposed on the APL and consumable
+panels". They contribute no starting stats, they have a cooldown, they can be
+wasted, and WHEN to use one is a decision. `game/abilities/consumables.ts`,
+`game/auras/consumables.ts`, `rotations/consumableCooldowns.ts`.
+
+- **NOTHING NEEDED A NEW ENGINE CAPABILITY, AND THE RACIALS ARE THE TEMPLATE
+  THROUGHOUT.** An ability belonging to no class is appended in `createPlayer`
+  beside them; a shared constant puts an entry in all 25 stock lists;
+  `stockListFor` narrows it to what the profile carries. That last one is
+  `withoutUnselectedConsumables`, which is `withoutOtherRacials` with a
+  SELECTION in place of a race — and the difference is the whole feature: a race
+  is settled when the character is made and a selection changes while somebody
+  is looking at the panel.
+- **AND THE OWNER'S ASK WAS ALREADY SATISFIED BY A MECHANISM THAT EXISTED.**
+  Selecting a potion makes its entry appear because `editProfile` runs
+  `syncDefaultRotation` on every change a panel makes, and its own comment had
+  predicted this case: "applied to every change rather than to the four that can
+  matter, because the alternative is a list of edits that change which stock list
+  applies that is correct until somebody adds a fifth". **A consumable selection
+  is the fifth.** No format bump either — the selection is already a map from
+  category id to consumable id, so two more keys are legal in every saved file.
+- **ALL NINE ARE OFF THE GLOBAL COOLDOWN, by the owner's ruling**, which is the
+  same answer they gave for four of the five racials and it matters for the same
+  reason: an ability wrongly taking one still restores the right pool for the
+  right amount on the right cooldown, so the mistake is invisible in everything
+  except the DPS. **Being off it means ONE thing** — the ability does not START
+  one — and it is still BLOCKED by one running. A test that forgot that cast two
+  potions behind a Ghostly Strike and asserted on a state neither of them
+  reached.
+- **THE SHARED POTION COOLDOWN IS DECLARED AND IS INERT**, which is the point.
+  The owner describes using one as putting "all Potions on a 2 min cooldown",
+  and calls that what "effectively make[s] the choice exclusive" — and the
+  exclusivity is already a property of a selection keyed by category, so
+  `cooldownGroup: 'potion'` can never reach a second ability today. It is the
+  ruling written down where it is enforced rather than implied by a shape, and
+  it is right the day anything lets a character hold two.
+- **A CLASS LIST IS GATED TWICE AND FOR TWO DIFFERENT REASONS**, which is the
+  Warlock stone's arrangement. The PANEL does not offer a Mage the Mighty Rage
+  Potion, so nobody can choose one; `consumableAbilities` refuses it, so a
+  profile that carries one anyway — hand-edited, or saved before a class change
+  — is built WITHOUT the ability rather than refused. The panel still SHOWS the
+  stale choice, labelled, because a dropdown reading "None" would claim nothing
+  was chosen while the file says otherwise.
+- **`consumableEffects` IS CLASS-BLIND AND THAT IS SAFE FOR ONE REASON ONLY**:
+  both class-restricted entries grant an ability and no stats. It is a property
+  of the TABLE rather than of the function, so a test asserts it — a
+  class-restricted consumable gaining `stats` fails until somebody threads the
+  class through, because a condition nobody declared is a bonus being paid.
+- **THE TWO HEALS GO WHERE A TANK'S SURVIVAL COOLDOWNS ARE, AND THAT IS THE ONE
+  JUDGEMENT IN THE FEATURE.** A tank list puts free entries LAST on a measured
+  argument — "100ms is not free to a tank at thirty percent health" — and that
+  argument does not reach a healing potion, because **the bottom of a tank list
+  is a place entries are not REACHED**: a Protection warrior caps its rage, so
+  something above is nearly always castable, which is how five of seven racials
+  came back inert when they were tried there. So `CONSUMABLE_HEALS` sits with
+  Last Stand and Shield Wall and the other seven sit with the racials. In the
+  other 22 lists the position is free, because health never leaves maximum and an
+  unreachable condition is not a floor under anything.
+- **MAJOR MENDER'S POTION IS DECLARED, CASTABLE AND WORTH NOTHING, AND APPLIES
+  NO AURA.** Healing power is not a stat `STAT_NAMES` carries. The `unmodelled`
+  reason is shared by the ability and the catalogue entry rather than written
+  twice, and the missing aura is deliberate: a 30-second aura carrying nothing
+  would put a row on the buff-uptime table for a potion that did not do
+  anything, which is exactly how **Adrenaline Rush reported 24.9% uptime for the
+  life of the project while delivering no energy**. It is the one mid-fight
+  consumable with no line in any list, and `consumableCooldowns.ts` says so
+  where the entry is not.
+- **A MID-FIGHT ABILITY IN THE BOOK IS A NEW KIND OF THING FOR ANYTHING THAT
+  RESETS COOLDOWNS, AND PREPARATION WAS WRONG ABOUT IT.** "Immediately finishes
+  the cooldown on your other ROGUE abilities" was implemented as every ability
+  the character had, which was the same set until a book started holding
+  racials and potions — so it handed a Rogue **a second Thistle Tea on a five
+  minute cooldown**, 2.00 casts a fight, worth about 30 DPS of inflation.
+  `resetCooldowns` takes the ids the caller owns now. **Found by the CAST COUNT
+  and not by the DPS**: +64.7 reads as a potion that is unusually good, and
+  "two casts of something on a five minute cooldown" does not.
+- **AND THE THREE TESTS ON PREPARATION COULD NOT HAVE SEEN IT**, because all
+  three built the actor a book of two Rogue abilities — so the restriction had
+  nothing to restrict. **A test whose fixture cannot express the mistake proves
+  nothing about it**, which is the stock Warlock list's lesson about the
+  interrupt check, in a different file.
+
+The twelve that came before them, and which the rest of this section is about:
 
 - **THE EXCLUSIVITY IS STRUCTURAL, NOT CHECKED.** A selection is a map from
   CATEGORY id to consumable id, so two from one category is not representable
@@ -1498,14 +1589,51 @@ profiles' rows at once.
   a worn item by any reading, so Toughness and Thick Hide do not scale the +450
   either. It needs no exclusion of its own — `armorFromItems` sums ITEM stats
   directly, so a consumable is already outside it.
-- **THE 24 PRESET ROWS ARE CHOSEN, NOT STATED**, and an owner table arriving
+- **THE 25 PRESET ROWS ARE CHOSEN, NOT STATED**, and an owner table arriving
   later replaces them outright. They follow ONE written-down rule rather than
-  taste, because twenty-four separate opinions is not something a reader can
+  taste, because twenty-five separate opinions is not something a reader can
   check: **take every category the build can actually read, choosing within a
   category by what the build scales with, and leave empty only what is worth
   literally nothing.** Nothing competes across categories — one choice each and
   no budget between them — so the only real decisions are the three categories
   offering a caster option against a melee one.
+- **AND THE SAME RULE ON THE TWO MID-FIGHT ROWS CAME OUT AS ONE SENTENCE: THE
+  `other` SLOT TAKES THE POOL THE BUILD RUNS OUT OF AND THE `potion` SLOT TAKES
+  THE DAMAGE BUFF.** Measured rather than derived, because a potion is not a
+  conversion-table question — "forty attack power for thirty seconds" against
+  "sixty strength for twenty" against "2,250 mana" has no arithmetic answer. So
+  every candidate was run on every preset by
+  `tools/probe_consumable_choice.ts`. **NO MANA POTION IS SELECTED ANYWHERE**,
+  which falls out of the categories NOT being exclusive with each other: the
+  Demonic Rune covers mana from `other`, so `potion` is free for something that
+  hits. Mighty Rage beats Frenzy wherever it is legal — 120 attack power for
+  twenty seconds against 40 for thirty, plus the rage — and the two Paladin
+  hybrids take Spellblasting where the WEAPON EFFECT row splits them on their
+  physical share, so one answer serves four builds that another row divides.
+- **AND A HEAL MEASURED -28.4 ON THE FIRELOCK, WHICH WAS A BUG IN LIFE TAP AND
+  WAS WRITTEN UP AS A PROPERTY OF WARLOCKS.** The measurement was right: a
+  Warlock trades HEALTH for mana, Life Tap's `canCast` asks whether there is
+  health to spend and whether the pool has room — never whether the mana is
+  WANTED — so 1,400 restored health bought 1.63 more taps, each costing a global
+  cooldown, and the list cast 1.43 fewer Incinerates. **The owner ruled that
+  "should never be the case"**, and the real fault was that the Firelock's Life
+  Tap entry was UNGATED where SM/DS's was gated at 15% — the lesson applied to
+  one of the two lists that needed it, with the SM/DS entry's own comment
+  recording it. Gated at a measured 5%, Life Tap fires 1.05 times instead of
+  5.46, a heal is worth **-0.1**, and the profile is **+88.7**.
+- **SO "ISOLATE A LOSS, DO NOT BLAME THE OBVIOUS SUSPECT" HAS A SECOND HALF:
+  HAVING FOUND THE REAL CAUSE, ASK WHETHER THE CAUSE IS ITSELF CORRECT.** The
+  isolation worked perfectly — `probe_firelock_heal.ts` named the mechanism to
+  the cast — and the conclusion drawn from it was still wrong, because a correct
+  explanation of a number was mistaken for a justification of it. **An
+  explanation is not a defence.**
+- **AND THE FIRELOCK'S OWN PAIR INVERTED UNDER THE FIX WITHOUT CHANGING.**
+  Gating Life Tap made the build genuinely mana-bound, so measured ALONE the
+  Major Mana Potion (+33.0) beat Spellblasting (+18.4) — and PAIRED with the
+  Demonic Rune, which already restores mana, Spellblasting wins again, **+41.5
+  against +38.5**. A category that is not exclusive with another makes a second
+  source of the same pool redundant, so a pair has to be measured as a pair:
+  "marginal values do not sum" can reverse a ranking and not merely shrink it.
 - **THE ROWS ARE DERIVED FROM TWO MEASURED THINGS, SO EACH CAN BE RE-DERIVED.**
   The conversion table decides Blasted Lands — and **a Cat Druid takes STRENGTH
   where a Rogue takes agility**, which is the entry a reader assumes wrongly,

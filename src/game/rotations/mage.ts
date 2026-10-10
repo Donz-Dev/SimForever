@@ -1,6 +1,7 @@
 import type { Rotation } from '../../engine';
 import type { AplList } from './apl';
 import { RACIAL_COOLDOWNS } from './racialCooldowns';
+import { CONSUMABLE_COOLDOWNS, CONSUMABLE_HEALS } from './consumableCooldowns';
 import {
   all,
   any,
@@ -227,6 +228,8 @@ export const MAGE_FIRE: AplList = {
    * MEASURED AND BOTH WERE WRONG -- see `racialCooldowns.ts`.
    */
   ...RACIAL_COOLDOWNS,
+  ...CONSUMABLE_COOLDOWNS,
+  ...CONSUMABLE_HEALS,
   { abilityId: 'evocation', condition: evocationNeeded },
   { abilityId: 'scorch', condition: scorchNeeded },
   /*
@@ -277,6 +280,8 @@ export const MAGE_FROSTFIRE: AplList = {
    * MEASURED AND BOTH WERE WRONG -- see `racialCooldowns.ts`.
    */
   ...RACIAL_COOLDOWNS,
+  ...CONSUMABLE_COOLDOWNS,
+  ...CONSUMABLE_HEALS,
   { abilityId: 'evocation', condition: evocationNeeded },
   { abilityId: 'scorch', condition: scorchNeeded },
   { abilityId: 'pyroblast', condition: selfStacksExactly('heating_up', HEATING_UP_MAX_STACKS) },
@@ -323,6 +328,8 @@ export const MAGE_ARCANE: AplList = {
    * MEASURED AND BOTH WERE WRONG -- see `racialCooldowns.ts`.
    */
   ...RACIAL_COOLDOWNS,
+  ...CONSUMABLE_COOLDOWNS,
+  ...CONSUMABLE_HEALS,
   { abilityId: 'evocation', condition: evocationNeeded },
   /*
    * ARCANE POWER SPENT INTO A PROC RATHER THAN ON COOLDOWN, which is the shape

@@ -12,6 +12,7 @@ import { WARLOCK_ABILITIES } from '../../src/game/abilities/warlock';
 import { WARRIOR_ABILITIES } from '../../src/game/abilities/warrior';
 import { ALL_PRIORITY_LISTS } from '../../src/game/rotations/allLists';
 import { RACIAL_ABILITIES } from '../../src/game/racials';
+import { MID_FIGHT_CONSUMABLE_ABILITIES } from '../../src/game/abilities/consumables';
 import { rotationFor } from '../../src/game/rotations/rotationFor';
 import { WARRIOR_SHIELD_DEFENSIVE } from '../../src/game/rotations/warrior';
 import { PRESETS_BY_ID, PROFILE_PRESETS } from '../../src/profiles/presets';
@@ -76,19 +77,40 @@ import { PRESETS_BY_ID, PROFILE_PRESETS } from '../../src/profiles/presets';
  */
 const RACIAL_IDS: ReadonlySet<string> = new Set(Object.keys(RACIAL_ABILITIES));
 
-const withRacials = (abilities: readonly { readonly id: string }[]): ReadonlySet<string> =>
-  new Set([...abilities.map((a) => a.id), ...RACIAL_IDS]);
+/*
+ * AND THE NINE MID-FIGHT CONSUMABLES, FOR THE SAME REASON ONE STEP ALONG.
+ *
+ * ----------------------------------------------------------------------------
+ * A potion is learned by DRINKING one rather than by a class or a race, so no
+ * class ability table contains one and every player list names all nine -- see
+ * `consumableCooldowns.ts`. Without this they read as 225 unresolvable ids.
+ *
+ * NOT ADDED TO THE PET, which is again the one owner that must not have them: a
+ * pet drinks nothing, and a pet list naming Thistle Tea would be a real mistake
+ * worth failing on.
+ * ----------------------------------------------------------------------------
+ */
+const CONSUMABLE_IDS: ReadonlySet<string> = new Set(
+  MID_FIGHT_CONSUMABLE_ABILITIES.map((ability) => ability.id),
+);
+
+/**
+ * A class's own abilities plus the two sets that belong to no class: what a
+ * race grants, and what a consumable grants.
+ */
+const withSharedAbilities = (abilities: readonly { readonly id: string }[]): ReadonlySet<string> =>
+  new Set([...abilities.map((a) => a.id), ...RACIAL_IDS, ...CONSUMABLE_IDS]);
 
 const OWNER_ABILITIES: Readonly<Record<string, ReadonlySet<string>>> = {
-  warrior: withRacials(WARRIOR_ABILITIES),
-  rogue: withRacials(ROGUE_ABILITIES),
-  druid: withRacials(DRUID_ABILITIES),
-  shaman: withRacials(SHAMAN_ABILITIES),
-  mage: withRacials(MAGE_ABILITIES),
-  paladin: withRacials(PALADIN_ABILITIES),
-  hunter: withRacials(HUNTER_ABILITIES),
-  warlock: withRacials(WARLOCK_ABILITIES),
-  priest: withRacials(PRIEST_ABILITIES),
+  warrior: withSharedAbilities(WARRIOR_ABILITIES),
+  rogue: withSharedAbilities(ROGUE_ABILITIES),
+  druid: withSharedAbilities(DRUID_ABILITIES),
+  shaman: withSharedAbilities(SHAMAN_ABILITIES),
+  mage: withSharedAbilities(MAGE_ABILITIES),
+  paladin: withSharedAbilities(PALADIN_ABILITIES),
+  hunter: withSharedAbilities(HUNTER_ABILITIES),
+  warlock: withSharedAbilities(WARLOCK_ABILITIES),
+  priest: withSharedAbilities(PRIEST_ABILITIES),
   // A pet's three, which belong to no class: a Hunter cannot cast Claw, and a
   // pet cannot cast a racial.
   pet: new Set(PET_ABILITIES.map((a) => a.id)),

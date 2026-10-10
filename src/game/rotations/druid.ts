@@ -1,6 +1,7 @@
 import type { Rotation } from '../../engine';
 import type { AplList } from './apl';
 import { RACIAL_COOLDOWNS, RACIAL_DEFENSIVE_COOLDOWNS } from './racialCooldowns';
+import { CONSUMABLE_COOLDOWNS, CONSUMABLE_HEALS } from './consumableCooldowns';
 import {
   all,
   comboPoints,
@@ -156,6 +157,8 @@ export const DRUID_MOONKIN: AplList = {
    * MEASURED AND BOTH WERE WRONG -- see `racialCooldowns.ts`.
    */
   ...RACIAL_COOLDOWNS,
+  ...CONSUMABLE_COOLDOWNS,
+  ...CONSUMABLE_HEALS,
   { abilityId: 'insect_swarm', condition: expired('insect_swarm') },
   /*
    * TWO STARFIRE ENTRIES, and the second is not a duplicate. Eclipse charges
@@ -253,6 +256,8 @@ export const DRUID_CAT: AplList = {
    * MEASURED AND BOTH WERE WRONG -- see `racialCooldowns.ts`.
    */
   ...RACIAL_COOLDOWNS,
+  ...CONSUMABLE_COOLDOWNS,
+  ...CONSUMABLE_HEALS,
   { abilityId: 'berserk' },
   /*
    * EVERY CLEARCASTING PROC GOES ON SHRED, REGARDLESS OF COMBO POINTS -- the
@@ -312,6 +317,20 @@ export const DRUID_BEAR: AplList = {
   },
   { abilityId: 'barkskin', condition: healthAtMostFraction(0.5) },
   { abilityId: 'frenzied_regeneration', condition: healthAtMostFraction(0.35) },
+  /*
+   * THE TWO HEALS, WITH THE REST OF THE SURVIVAL COOLDOWNS -- WHICH IS *NOT*
+   * WHERE THIS LIST PUTS THE OTHER FREE ENTRIES.
+   *
+   * The racial and consumable cooldowns sit LAST in a tank list, because "100ms
+   * is not free to a tank at thirty percent health". A healing potion is the one
+   * free entry that argument does not reach: the bottom of a tank list is a
+   * place entries are not REACHED, and something above is nearly always
+   * castable -- which is how five of seven racials came back inert.
+   *
+   * So they go here, beside the cooldowns that answer the same question, and
+   * below them because those are the bigger answer. See `CONSUMABLE_HEALS`.
+   */
+  ...CONSUMABLE_HEALS,
   { abilityId: 'enrage' },
   { abilityId: 'berserk' },
   /*
@@ -346,6 +365,7 @@ export const DRUID_BEAR: AplList = {
    */
   ...RACIAL_COOLDOWNS,
   ...RACIAL_DEFENSIVE_COOLDOWNS,
+  ...CONSUMABLE_COOLDOWNS,
 ],
 };
 

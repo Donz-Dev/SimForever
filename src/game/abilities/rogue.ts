@@ -569,6 +569,29 @@ export const COLD_BLOOD_ABILITY: Ability = {
  * Blood. The list the owner wrote puts it LAST, below every builder, so it
  * fires only when nothing else can -- which is the correct place for an
  * ability whose value is entirely in what it gives back.
+ *
+ * ----------------------------------------------------------------------------
+ * AND "ROGUE ABILITIES" IS NARROWER THAN "the book", WHICH IS NOT WHAT THIS
+ * SHIPPED AS.
+ *
+ * `resetCooldowns(ability.id)` reset every ability the character had, and for as
+ * long as a book held nothing but class abilities that was the same thing. It is
+ * not any more: a RACIAL is learned by a race and a mid-fight CONSUMABLE by
+ * drinking one, and both are appended to the same book.
+ *
+ * SO IT WAS HANDING A ROGUE A SECOND THISTLE TEA -- a five minute cooldown fired
+ * TWICE in a sixty second fight, measured at 2.00 casts on the Rupture profile
+ * and 1.86 on Hemo, worth about thirty DPS of pure inflation. A hundred energy
+ * that should not exist is a bigger number and no error, and it was found only
+ * because the probe printed the CAST COUNT beside the DPS: the figure alone
+ * reads as a potion that is unusually good.
+ *
+ * THE RACIAL HALF IS THE SAME BUG AND IS WORTH 0.0 TODAY, which is why nobody
+ * found it when the racials landed. Preparation is only in the two SUBTLETY
+ * lists and both of those profiles are UNDEAD -- whose racial is a passive
+ * reaction, not an ability with a cooldown. An Orc Subtlety Rogue would have
+ * been resetting Blood Fury. "An encounter-cause note is a dated claim like any
+ * other", and this one expires the day a preset changes race.
  * ----------------------------------------------------------------------------
  */
 export const PREPARATION: Ability = {
@@ -577,7 +600,12 @@ export const PREPARATION: Ability = {
   cooldownMs: seconds(600),
   requiresTarget: false,
   onCast: ({ caster, ability }) => {
-    caster.abilities.resetCooldowns(ability.id);
+    /*
+     * THE CLASS'S OWN IDS, read off `ROGUE_ABILITIES` rather than written out,
+     * so an ability added to the class is covered the day it lands and nothing
+     * here can disagree with the spellbook.
+     */
+    caster.abilities.resetCooldowns(ability.id, ROGUE_ABILITY_IDS);
   },
 };
 
@@ -782,3 +810,22 @@ export const ROGUE_ABILITIES: readonly Ability[] = [
   // Granted by the Subtlety talent; `grantsByAbility` gates it.
   PREMEDITATION,
 ];
+
+/**
+ * The ids of everything above, for Preparation's reset.
+ *
+ * ----------------------------------------------------------------------------
+ * DERIVED FROM THE LIST rather than written out, so a Rogue ability added above
+ * is resettable the day it lands and the two cannot disagree. Declared AFTER
+ * `ROGUE_ABILITIES` and read inside `onCast`, which is what makes the forward
+ * reference from `PREPARATION` safe: the constant is resolved when the ability
+ * is CAST, long after this module has finished loading.
+ *
+ * WHAT IT EXCLUDES IS THE WHOLE POINT. A racial and a mid-fight consumable sit
+ * in the same ability BOOK and are not Rogue abilities, and resetting them gave
+ * a Rogue a second Thistle Tea on a five minute cooldown. See `PREPARATION`.
+ * ----------------------------------------------------------------------------
+ */
+export const ROGUE_ABILITY_IDS: ReadonlySet<string> = new Set(
+  ROGUE_ABILITIES.map((ability) => ability.id),
+);

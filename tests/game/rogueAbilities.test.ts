@@ -31,6 +31,8 @@ import { makeAttacker, makeTarget } from '../helpers/actors';
 import { castAbility, checkCast, seconds } from '../../src/engine';
 import { comboPointsOn } from '../../src/game/combat/comboPoints';
 import { talentNumber } from '../../src/game/talents/talentValues';
+import { THISTLE_TEA_ABILITY } from '../../src/game/abilities/consumables';
+import { BLOOD_FURY_ABILITY } from '../../src/game/racials/abilities';
 
 /*
  * The Rogue's numbers, written out by hand from the beta client's spellbook
@@ -309,6 +311,77 @@ describe('Preparation, and cooldown reset as an engine capability', () => {
     });
 
     expect(PREPARATION.cooldownMs).toBe(seconds(600));
+  });
+
+  it('resets a Rogue ability and leaves a potion and a racial alone', () => {
+    /*
+     * ==========================================================================
+     * "YOUR OTHER *ROGUE* ABILITIES", AND THAT IS NARROWER THAN THE BOOK.
+     *
+     * `resetCooldowns(ability.id)` cleared everything the character had, and for
+     * as long as a book held nothing but class abilities those were the same
+     * set. They are not any more: a RACIAL is learned by a race and a mid-fight
+     * CONSUMABLE by drinking one, and both are appended to the same book.
+     *
+     * WHAT IT COST: a Rogue drinking a second Thistle Tea -- a FIVE MINUTE
+     * cooldown fired twice in a sixty second fight, measured at 2.00 casts on
+     * the Rupture profile and 1.86 on Hemo, worth about thirty DPS of pure
+     * inflation. A hundred energy that should not exist is a bigger number and
+     * no error.
+     *
+     * AND THE TESTS ABOVE COULD NOT HAVE SEEN IT, WHICH IS WHY THIS ONE IS
+     * SHAPED THE WAY IT IS. `withCooldowns` hands the actor a book of Ghostly
+     * Strike and Preparation -- two Rogue abilities -- so the restriction had
+     * nothing to restrict. A test whose fixture cannot express the mistake
+     * proves nothing about it, which is the same lesson the stock Warlock list
+     * taught about the interrupt check.
+     *
+     * THE RACIAL HALF IS WORTH 0.0 TODAY and is asserted anyway: Preparation is
+     * only in the two SUBTLETY lists and both those profiles are Undead, whose
+     * racial is a passive reaction rather than an ability with a cooldown. It
+     * starts costing something the day a preset changes race.
+     * ==========================================================================
+     */
+    const actor = makeAttacker({
+      autoAttack: 'none',
+      // A Rogue ability, a potion, and a racial, all in one book -- which is
+      // exactly what `createPlayer` builds for a Rogue that drank something.
+      abilities: [GHOSTLY_STRIKE, PREPARATION, THISTLE_TEA_ABILITY, BLOOD_FURY_ABILITY],
+      resources: [{ type: 'energy', maximum: 100, initial: 100 }],
+    });
+    const target = makeTarget();
+    const simulation = buildSimulation([actor, target], { durationMs: seconds(60) });
+    simulation.begin();
+
+    /*
+     * THE TWO FREE ONES FIRST, AND THE ORDER IS LOAD-BEARING. Both are OFF the
+     * global cooldown, which means they do not START one -- it does not mean
+     * they ignore one that is running. Casting Ghostly Strike first put both of
+     * them behind its GCD, so neither was cast, neither started a cooldown, and
+     * the test failed asserting the thing it was written to prove.
+     *
+     * EVERY CAST IS CHECKED, which is the other half of that lesson: a refused
+     * cast and a cast that happened look identical from the state afterwards.
+     */
+    expect(castAbility(simulation, actor, THISTLE_TEA_ABILITY, undefined).ok).toBe(true);
+    expect(castAbility(simulation, actor, BLOOD_FURY_ABILITY, undefined).ok).toBe(true);
+    expect(castAbility(simulation, actor, GHOSTLY_STRIKE, target).ok).toBe(true);
+    simulation.advanceTo(seconds(2));
+
+    castAbility(simulation, actor, PREPARATION, undefined);
+    simulation.advanceTo(seconds(4));
+
+    // The Rogue ability comes back, which is the effect.
+    expect(checkCast(simulation, actor, GHOSTLY_STRIKE, target)).toEqual({ ok: true });
+    // The potion and the racial do not.
+    expect(checkCast(simulation, actor, THISTLE_TEA_ABILITY, undefined)).toEqual({
+      ok: false,
+      reason: 'on_cooldown',
+    });
+    expect(checkCast(simulation, actor, BLOOD_FURY_ABILITY, undefined)).toEqual({
+      ok: false,
+      reason: 'on_cooldown',
+    });
   });
 
   it('is granted by the talent, so only the build that takes it has one', () => {

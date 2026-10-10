@@ -1,6 +1,7 @@
 import type { Rotation } from '../../engine';
 import type { AplList } from './apl';
 import { RACIAL_COOLDOWNS } from './racialCooldowns';
+import { CONSUMABLE_COOLDOWNS, CONSUMABLE_HEALS } from './consumableCooldowns';
 import { compileRotation, selfMissing, selfStacks, targetExpired, targetTime } from './apl';
 import type { CombatStyleId } from '../character';
 import { MAELSTROM_WEAPON_MAX_STACKS } from '../auras/shaman';
@@ -115,6 +116,8 @@ export const SHAMAN_ELEMENTAL: AplList = {
    * MEASURED AND BOTH WERE WRONG -- see `racialCooldowns.ts`.
    */
   ...RACIAL_COOLDOWNS,
+  ...CONSUMABLE_COOLDOWNS,
+  ...CONSUMABLE_HEALS,
   { abilityId: 'lava_burst' },
   { abilityId: 'searing_totem', condition: expired('searing_totem') },
   { abilityId: 'lightning_bolt' },
@@ -151,6 +154,8 @@ export const SHAMAN_ENHANCEMENT: AplList = {
    * MEASURED AND BOTH WERE WRONG -- see `racialCooldowns.ts`.
    */
   ...RACIAL_COOLDOWNS,
+  ...CONSUMABLE_COOLDOWNS,
+  ...CONSUMABLE_HEALS,
   /*
    * LIGHTNING BOLT AT FIVE MAELSTROM STACKS, AND ONLY THERE.
    *

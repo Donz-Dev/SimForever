@@ -68,7 +68,11 @@ import {
   weaponsForEquipment,
 } from '../items/equipment';
 import { reactionsForEquipment } from '../items/procs';
-import { consumableEffects, type ConsumableSelection } from '../buffs/consumables';
+import {
+  consumableAbilities,
+  consumableEffects,
+  type ConsumableSelection,
+} from '../buffs/consumables';
 import {
   BASE_BLOCK_CHANCE_WITH_SHIELD,
   autoAttackModeForStyle,
@@ -650,11 +654,32 @@ export function createPlayer(options: PlayerOptions): Combatant {
    * aura, and nothing errored.
    * ==========================================================================
    */
+  /*
+   * AND A THIRD SOURCE: THE MID-FIGHT CONSUMABLES.
+   *
+   * ==========================================================================
+   * A POTION IS AN ABILITY THE CHARACTER KNOWS BECAUSE IT BROUGHT ONE, which is
+   * the same kind of fact as a racial and not the same kind as a class ability
+   * -- so it joins the book here for the reason the racials do: a Warrior's
+   * Major Mana Potion and a Mage's are the same potion, and `abilitiesForBuild`
+   * takes a class and a talent build and knows about neither.
+   *
+   * GATED ON THE CLASS INSIDE `consumableAbilities`, not here, so that the
+   * panel's dropdown and this book ask one function and cannot disagree about
+   * whether a Mage may drink a Mighty Rage Potion.
+   *
+   * AN ABILITY IN THE BOOK AND IN NO LIST NEVER FIRES, which is the fourth
+   * cause of inert and the one that reads exactly like an engine gap. These are
+   * reached because every stock list carries an entry for each, narrowed to
+   * what the profile actually selected -- see `rotations/consumableCooldowns.ts`.
+   * ==========================================================================
+   */
   const abilities = [
     ...abilitiesForBuild(characterClass, style, build),
     ...[...racials.grantedAbilities]
       .map((id) => RACIAL_ABILITIES[id])
       .filter((ability): ability is Ability => ability !== undefined),
+    ...consumableAbilities(characterClass, options.consumables),
   ];
   const rotation = options.rotation
     ? compileRotation(options.rotation)
