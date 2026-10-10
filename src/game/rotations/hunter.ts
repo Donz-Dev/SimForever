@@ -1,6 +1,7 @@
 import type { Rotation } from '../../engine';
 import type { AplCondition, AplList } from './apl';
 import { RACIAL_COOLDOWNS } from './racialCooldowns';
+import { CONSUMABLE_COOLDOWNS, CONSUMABLE_HEALS } from './consumableCooldowns';
 import { builtin, compileRotation, petHas, selfTime, swungWithin, targetMissing } from './apl';
 import type { TalentAllocation } from '../talents/Talent';
 
@@ -179,6 +180,8 @@ export const HUNTER_BEAST_MASTERY: AplList = {
    * MEASURED AND BOTH WERE WRONG -- see `racialCooldowns.ts`.
    */
   ...RACIAL_COOLDOWNS,
+  ...CONSUMABLE_COOLDOWNS,
+  ...CONSUMABLE_HEALS,
   { abilityId: 'hunters_mark', condition: selfExpired('hunters_mark') },
   { abilityId: 'serpent_sting', condition: missingOn('serpent_sting') },
   { abilityId: 'bestial_wrath', condition: petHasAura('frenzy') },
@@ -230,6 +233,8 @@ export const HUNTER_LONE_WOLF_RANGED: AplList = {
    * MEASURED AND BOTH WERE WRONG -- see `racialCooldowns.ts`.
    */
   ...RACIAL_COOLDOWNS,
+  ...CONSUMABLE_COOLDOWNS,
+  ...CONSUMABLE_HEALS,
   { abilityId: 'hunters_mark', condition: selfExpired('hunters_mark') },
   { abilityId: 'serpent_sting', condition: missingOn('serpent_sting') },
   { abilityId: 'rapid_fire' },
@@ -351,6 +356,8 @@ export const HUNTER_LONE_WOLF_MELEE: AplList = {
    * MEASURED AND BOTH WERE WRONG -- see `racialCooldowns.ts`.
    */
   ...RACIAL_COOLDOWNS,
+  ...CONSUMABLE_COOLDOWNS,
+  ...CONSUMABLE_HEALS,
   { abilityId: 'hunters_mark', condition: selfExpired('hunters_mark') },
   /*
    * RAPID FIRE, AND IT WAS IN THE BOOK AND IN NO LIST. "Increases RANGED AND

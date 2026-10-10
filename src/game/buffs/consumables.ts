@@ -1,10 +1,24 @@
 import type {
+  Ability,
   AbilityModifier,
   AttackTableKind,
   DamageSchool,
   PartialStats,
 } from '../../engine';
 import { AttackTableModifiers } from '../../engine';
+import {
+  DEMONIC_RUNE_ABILITY,
+  HEALTHSTONE_ABILITY,
+  MAJOR_FRENZY_POTION_ABILITY,
+  MAJOR_HEALING_POTION_ABILITY,
+  MAJOR_MANA_POTION_ABILITY,
+  MAJOR_MENDERS_POTION_ABILITY,
+  MAJOR_MENDERS_POTION_UNMODELLED,
+  MAJOR_SPELLBLASTING_POTION_ABILITY,
+  MIGHTY_RAGE_POTION_ABILITY,
+  THISTLE_TEA_ABILITY,
+} from '../abilities/consumables';
+import type { ClassId } from '../character';
 
 /**
  * CONSUMABLES, FROM THE RULESET OWNER'S TABLE.
@@ -28,6 +42,28 @@ import { AttackTableModifiers } from '../../engine';
  * and closes, Sunder Armor stacks. A consumable is drunk before the pull and
  * lasts the fight, so it is a layer of the starting stat block, and the
  * character sheet reads it for free. Nothing here needs an uptime row.
+ *
+ * ----------------------------------------------------------------------------
+ * EXCEPT FOR THE LAST TWO CATEGORIES, WHICH ARE ACTIONS RATHER THAN STATS, AND
+ * THE PARAGRAPH ABOVE IS WHY THEY NEEDED SAYING SEPARATELY.
+ *
+ * Potion and Other are used DURING a fight. The owner: they "must be treated
+ * like a character ability and be exposed on the APL and consumable panels" --
+ * so each carries an `ability`, joins the ability book when it is selected, and
+ * gets an entry in the priority list. Everything the first twelve categories
+ * say about themselves is false of these two: they contribute no starting
+ * stats, they have a cooldown, they can be wasted, and WHEN to use one is a
+ * decision.
+ *
+ * THE EXCLUSIVITY IS THE SAME MECHANISM DOING DOUBLE DUTY. The owner describes
+ * the Potion rule as a shared two-minute cooldown that "effectively make[s] the
+ * choice exclusive", and the Other rule as exclusive within its own category
+ * and NOT with Potions. Both are one category keyed by category id -- so a
+ * character may hold one Potion and one Other, and cannot hold two of either,
+ * with nothing enforcing it. The shared cooldown is declared as well, on the
+ * abilities, because a ruling written down where it is enforced is worth more
+ * than one that is merely implied by a shape; see `POTION_COOLDOWN_GROUP`.
+ * ----------------------------------------------------------------------------
  *
  * NOTHING IS ON BY DEFAULT at the profile level, exactly as raid buffs are not:
  * a consumable that applied itself would move every figure ever recorded. What
@@ -97,6 +133,43 @@ export interface Consumable {
    * ------------------------------------------------------------------------
    */
   readonly attackTableModifiers?: Readonly<Partial<Record<AttackTableKind, AbilityModifier>>>;
+  /**
+   * The ability this consumable grants, for one USED DURING THE FIGHT.
+   *
+   * --------------------------------------------------------------------------
+   * THE WHOLE OF WHAT MAKES A POTION DIFFERENT FROM A FLASK. A consumable with
+   * this joins the ability book when it is selected and gets an entry in the
+   * priority list; one without it is a layer of the starting stat block and is
+   * over before the first swing.
+   *
+   * BY REFERENCE RATHER THAN BY ID, which is the one place this deliberately
+   * differs from `grantAbility` on a talent or a racial. Those name an id and
+   * resolve it through a registry that DROPS what it cannot find -- right for a
+   * typo, and the reason `lone_wolf` left both Hunter profiles named after it
+   * without its 20% damage for the life of the project, silently. A reference
+   * cannot miss and needs no test to prove it did not.
+   * --------------------------------------------------------------------------
+   */
+  readonly ability?: Ability;
+  /**
+   * The classes that may choose this, where only some may.
+   *
+   * --------------------------------------------------------------------------
+   * ABSENT MEANS EVERY CLASS, which is true of thirty of the thirty-nine
+   * entries here and of every one of the original twelve categories. Two say
+   * otherwise and the owner's table says which: the Mighty Rage Potion is
+   * "(Warrior, Druid)" and Thistle Tea is "(Rogue, Druid)".
+   *
+   * GATED IN TWO PLACES AND FOR TWO DIFFERENT REASONS, which is the arrangement
+   * the Warlock's weapon stone already uses. The PANEL does not offer it, so
+   * nobody can choose one their class cannot use; and `consumableAbilities`
+   * refuses it, so a profile that carries one anyway -- hand-edited, or saved
+   * before a class change -- gets a character without the ability rather than
+   * one that cannot be built. "A profile CAN carry one, because the field is on
+   * every profile and only the panel is class-gated."
+   * --------------------------------------------------------------------------
+   */
+  readonly classes?: readonly ClassId[];
   /** What it does that the simulator does not, in the source's own words. */
   readonly unmodelled?: string;
 }
@@ -319,6 +392,74 @@ export const CONSUMABLE_CATEGORIES: readonly ConsumableCategory[] = [
       { id: 'food_agility', name: '+20 Agility', stats: { agility: 20 } },
     ],
   },
+  /*
+   * ==========================================================================
+   * AND THE TWO MID-FIGHT CATEGORIES, WHICH GO ON THE END.
+   *
+   * APPENDED RATHER THAN SLOTTED IN, which is the rule the Forever enchants
+   * already follow for the reason that matters more here than it does there: a
+   * saved profile keys its selection by CATEGORY id, so the order is a display
+   * decision and nothing else -- but the hand-written table in
+   * `consumables.test.ts` asserts the order row for row, so putting these in
+   * the middle would be a diff across the whole file for no reader's benefit.
+   *
+   * THE NAMES ARE THE OWNER'S OWN -- "Potions" are "the primary category" and
+   * "the 'Other' is the secondary category" -- and so is every figure in both.
+   * ==========================================================================
+   */
+  {
+    id: 'potion',
+    name: 'Potion',
+    options: [
+      {
+        id: 'major_healing_potion',
+        name: 'Major Healing Potion',
+        ability: MAJOR_HEALING_POTION_ABILITY,
+      },
+      { id: 'major_mana_potion', name: 'Major Mana Potion', ability: MAJOR_MANA_POTION_ABILITY },
+      {
+        /*
+         * THE ONE POTION WITH A CLASS LIST, and the only one whose value is not
+         * guessable from its name: a Cat Druid drinks it for the sixty strength
+         * and the rage is worth nothing to it -- not because it has no rage pool
+         * (it has one; pools are per class, not per form) but because nothing
+         * ever fills or spends it. Measured. See the ability.
+         */
+        id: 'mighty_rage_potion',
+        name: 'Mighty Rage Potion',
+        classes: ['warrior', 'druid'],
+        ability: MIGHTY_RAGE_POTION_ABILITY,
+      },
+      { id: 'major_frenzy_potion', name: 'Major Frenzy Potion', ability: MAJOR_FRENZY_POTION_ABILITY },
+      {
+        /*
+         * SELECTABLE, CASTABLE AND WORTH NOTHING, and it says so where it is
+         * chosen. The panel prints every `unmodelled` consumable beside the
+         * dropdown, which is the discipline items, enchants and raid buffs all
+         * follow -- and the reason is shared with the ability rather than
+         * written twice, so the two cannot drift.
+         */
+        id: 'major_menders_potion',
+        name: "Major Mender's Potion",
+        ability: MAJOR_MENDERS_POTION_ABILITY,
+        unmodelled: MAJOR_MENDERS_POTION_UNMODELLED,
+      },
+      {
+        id: 'major_spellblasting_potion',
+        name: 'Major Spellblasting Potion',
+        ability: MAJOR_SPELLBLASTING_POTION_ABILITY,
+      },
+    ],
+  },
+  {
+    id: 'other',
+    name: 'Other',
+    options: [
+      { id: 'thistle_tea', name: 'Thistle Tea', classes: ['rogue', 'druid'], ability: THISTLE_TEA_ABILITY },
+      { id: 'demonic_rune', name: 'Demonic Rune', ability: DEMONIC_RUNE_ABILITY },
+      { id: 'healthstone', name: 'Healthstone', ability: HEALTHSTONE_ABILITY },
+    ],
+  },
 ];
 
 /**
@@ -379,6 +520,18 @@ export const CONSUMABLE_CATEGORIES_BY_ID: ReadonlyMap<string, ConsumableCategory
  * consumable that no longer exists should load as a character without it, not
  * as a character that cannot be built -- which is the rule `startingEquipmentFor`
  * already follows for a stale item id. `validateProfile` is what reports it.
+ *
+ * AND IT IS CLASS-BLIND, WHICH IS SAFE FOR EXACTLY ONE REASON: both
+ * class-restricted consumables grant an ABILITY and no stats, so there is
+ * nothing here for a Mage holding a hand-edited Mighty Rage Potion to collect.
+ * `consumableAbilities` is where the class gate lives, because that is where
+ * the only class-restricted effect goes.
+ *
+ * THAT IS A PROPERTY OF TODAY'S TABLE RATHER THAN OF THIS FUNCTION, so
+ * `consumables.test.ts` asserts it: a class-restricted consumable carrying
+ * `stats`, `schoolPower`, `bonusHitPoints` or `attackTableModifiers` fails,
+ * which is what forces the class to be threaded through here on the day one
+ * does. A silent "bonus being paid" is the failure that guard exists to stop.
  * ----------------------------------------------------------------------------
  */
 export interface ConsumableEffects {
@@ -448,6 +601,77 @@ export function selectedConsumables(
   }
   return chosen;
 }
+
+/**
+ * Whether a class may choose this consumable at all.
+ *
+ * NO LIST MEANS EVERY CLASS, which is the honest reading of a table that names
+ * classes on two rows out of thirty-nine and says nothing on the rest.
+ */
+export function consumableAllowsClass(
+  consumable: Consumable,
+  characterClass: ClassId,
+): boolean {
+  return consumable.classes === undefined || consumable.classes.includes(characterClass);
+}
+
+/**
+ * The consumables a class may choose from a category -- what the panel offers.
+ *
+ * Narrowed here rather than in the panel so that the panel and the ability book
+ * cannot disagree about who may drink what: both ask this.
+ */
+export function consumableOptionsFor(
+  category: ConsumableCategory,
+  characterClass: ClassId,
+): readonly Consumable[] {
+  return category.options.filter((option) => consumableAllowsClass(option, characterClass));
+}
+
+/**
+ * The abilities the chosen consumables grant -- the mid-fight ones.
+ *
+ * ============================================================================
+ * WHAT TURNS A SELECTION INTO SOMETHING A PRIORITY LIST CAN NAME. `createPlayer`
+ * appends these to the ability book and `abilityBookFor` appends the same ones
+ * for the panel, so the dropdown offers exactly what the fight will carry.
+ *
+ * CLASS-GATED HERE, WHICH IS THE GATE THAT DECIDES ANYTHING. The panel already
+ * refuses to offer a Mage the Mighty Rage Potion; this is what happens when a
+ * profile carries one anyway, which it can -- a hand-edited file, or a profile
+ * saved as a Warrior and loaded after a class change. The character is built
+ * without the ability rather than refused, which is the rule
+ * `startingEquipmentFor` follows for a stale item id and `warlockStoneEffect`
+ * follows for a stone on a Mage.
+ *
+ * AND THE SAME ANSWER IS WHAT GATES THE *ENTRY*. `withoutUnselectedConsumables`
+ * takes the stock list's entry for an ability this build does not carry back
+ * out, so the panel does not show a line nobody can act on -- the engine never
+ * needed that, because `PriorityRotation` skips an unknown ability in silence.
+ * ============================================================================
+ */
+export function consumableAbilities(
+  characterClass: ClassId,
+  selection: ConsumableSelection | undefined,
+): readonly Ability[] {
+  return selectedConsumables(selection)
+    .filter((consumable) => consumableAllowsClass(consumable, characterClass))
+    .flatMap((consumable) => (consumable.ability ? [consumable.ability] : []));
+}
+
+/**
+ * Every ability any consumable can grant, by id.
+ *
+ * DERIVED FROM THE CATALOGUE rather than written out, so it cannot name an
+ * ability no consumable grants or miss one that is. It answers "is this entry a
+ * mid-fight consumable" for `withoutUnselectedConsumables`, which is the same
+ * question `ALL_RACIAL_ABILITY_IDS` answers for the racial entries.
+ */
+export const CONSUMABLE_ABILITY_IDS: ReadonlySet<string> = new Set(
+  CONSUMABLE_CATEGORIES.flatMap((category) =>
+    category.options.flatMap((option) => (option.ability ? [option.ability.id] : [])),
+  ),
+);
 
 /**
  * WHAT EACH KIND OF BUILD DRINKS.

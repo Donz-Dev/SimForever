@@ -1,6 +1,7 @@
 import { resolveCombatStyle, resolveStance } from '../game/character';
 import { aplFor } from '../game/rotations/rotationFor';
 import { withoutOtherRacials } from '../game/rotations/racialCooldowns';
+import { withoutUnselectedConsumables } from '../game/rotations/consumableCooldowns';
 import type { AplList } from '../game/rotations/apl';
 import type { CharacterProfile, StoredRotation } from './CharacterProfile';
 
@@ -66,6 +67,17 @@ export function defaultRotationFor(profile: CharacterProfile): StoredRotation {
  * into lists that belong to no race -- and a build only ever learns whichever
  * its own race grants, so the rest are entries a person reading the panel
  * cannot act on. See `withoutOtherRacials`.
+ *
+ * AND NARROWED BY WHAT IT DRANK, for the identical reason one step along: every
+ * list names all nine mid-fight consumables, and a build carries only the one
+ * Potion and the one Other it selected. See `withoutUnselectedConsumables`.
+ *
+ * THE TWO NARROWINGS DIFFER IN ONE WAY THAT MATTERS. A race is settled when the
+ * character is made; a SELECTION changes while somebody is looking at the
+ * Consumables panel -- and `syncDefaultRotation` re-derives a `default` list on
+ * every profile change, so choosing a Major Mana Potion is what makes its entry
+ * appear in the list. That is the owner's ask satisfied by a mechanism that was
+ * already here rather than by a new one.
  */
 export function stockListFor(profile: CharacterProfile): AplList | undefined {
   const style = resolveCombatStyle(profile.character.characterClass, profile.character.combatStyle);
@@ -74,7 +86,12 @@ export function stockListFor(profile: CharacterProfile): AplList | undefined {
       ? resolveStance(style, profile.character.stance)
       : undefined;
   const list = aplFor(profile.character.characterClass, style, stance, profile.talents);
-  return list ? withoutOtherRacials(list, profile.character.race) : undefined;
+  if (!list) return undefined;
+  return withoutUnselectedConsumables(
+    withoutOtherRacials(list, profile.character.race),
+    profile.character.characterClass,
+    profile.consumables,
+  );
 }
 
 /**

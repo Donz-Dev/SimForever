@@ -1,6 +1,7 @@
 import type { Rotation } from '../../engine';
 import type { AplList } from './apl';
 import { RACIAL_COOLDOWNS } from './racialCooldowns';
+import { CONSUMABLE_COOLDOWNS, CONSUMABLE_HEALS } from './consumableCooldowns';
 import { compileRotation, resourceFraction, selfHas, targetExpired, targetTime } from './apl';
 import type { TalentAllocation } from '../talents/Talent';
 
@@ -110,6 +111,8 @@ export const WARLOCK_AFFLICTION: AplList = {
    * MEASURED AND BOTH WERE WRONG -- see `racialCooldowns.ts`.
    */
   ...RACIAL_COOLDOWNS,
+  ...CONSUMABLE_COOLDOWNS,
+  ...CONSUMABLE_HEALS,
   /*
    * SHADOW TRANCE SPENT THE MOMENT IT LANDS. "Ensure that if a corruption tick
    * or wrack tick triggers Nightfall, the next action is to cast an instant
@@ -223,6 +226,8 @@ export const WARLOCK_DESTRUCTION: AplList = {
    * MEASURED AND BOTH WERE WRONG -- see `racialCooldowns.ts`.
    */
   ...RACIAL_COOLDOWNS,
+  ...CONSUMABLE_COOLDOWNS,
+  ...CONSUMABLE_HEALS,
   { abilityId: 'conflagrate' },
   { abilityId: 'shadowburn' },
   /*
