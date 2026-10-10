@@ -393,6 +393,36 @@ body {
   margin-right: 8px;
 }
 
+/* Save and Change, which would otherwise be pushed apart by the flex rule on
+   the row above -- that one is spacing the summary from the buttons. */
+.character-summary-actions {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+/*
+ * OFF SCREEN RATHER THAN `display: none`, for the file input behind the Load
+ * button.
+ *
+ * A hidden input is still focusable and still reachable by a keyboard and a
+ * screen reader, which `display: none` and `visibility: hidden` both remove
+ * from the page entirely. Safari has also historically refused to open the
+ * dialog for a programmatic click on an input it considers unrendered, and
+ * this costs nothing to be safe about.
+ */
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
 .warn {
   color: var(--accent);
 }

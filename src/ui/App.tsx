@@ -149,6 +149,31 @@ export function App() {
     weightRun.reset();
   };
 
+  /**
+   * Take a profile read from a file, and confirm it in the same step.
+   *
+   * THE SAME FOUR THINGS `applyPreset` DOES, and for the same reasons. A
+   * loaded profile is a settled character -- it was saved from one -- so
+   * leaving somebody on the creation screen to press Confirm on a build they
+   * did not assemble is a step that can only go wrong, and `confirmCharacter`
+   * would also dress an empty profile from the starting set.
+   *
+   * NO PRESET PILL, because a file is not a preset even when it was saved from
+   * one: it may have been edited since, and lighting a pill would claim the
+   * rail's build is on screen when something else is.
+   *
+   * THE RESULTS GO, because they belong to the character that produced them.
+   * Leaving a DPS figure on screen beside a character that has just been
+   * replaced wholesale invites reading one as the other.
+   */
+  const loadProfile = (loaded: CharacterProfile) => {
+    setProfile(loaded);
+    setActivePresetId(undefined);
+    setConfirmed(true);
+    reset();
+    weightRun.reset();
+  };
+
   const confirmCharacter = () => {
     setProfile((previous) =>
       Object.keys(previous.equipment).length > 0
@@ -193,8 +218,11 @@ export function App() {
             confirmed={confirmed}
             onConfirm={confirmCharacter}
             onEdit={editCharacter}
+            /* Still nothing. Import is the paste-a-profile half of this pair
+               and is deliberately not built yet; `panels/ProfilePanel.tsx`
+               holds the round-trip it wants. See docs/handoff/gui.md. */
             onImport={() => undefined}
-            onLoad={() => undefined}
+            onLoad={loadProfile}
           />
 
           {confirmed ? (

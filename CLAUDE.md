@@ -1393,6 +1393,50 @@ profiles' rows at once.
   **IT WAS WRITTEN AS 11 AND SO WAS THE WARLOCK STONE**, from the same base, and
   the two merged without a conflict. See **Git workflow**.
 
+### Saving and loading a profile
+
+The Save button writes `serializeProfile` to a file and the Load button reads it
+back through `parseProfile`, which is parse -> **MIGRATE** -> validate in that
+order. `docs/handoff/gui.md`.
+
+- **THE SAVED FILE IS THE PROFILE'S OWN JSON, AND THE VERSION FIELD IS WHY.** A
+  separate "build text file" was the obvious ask and would have been a second
+  serializer to keep in step with `CharacterProfile`, with no migration path: a
+  profile already carries `version` and twelve migrations already exist, so a
+  file saved today still opens after the format moves on. **The thing a second
+  format silently loses is not the fields, it is the ability to CHANGE them.**
+- **`validateProfile` REBUILDS THE PROFILE FIELD BY FIELD, so a field nobody
+  NAMES there is dropped on load in silence — AND IT HAS NOW HAPPENED TWICE IN
+  THE SAME FUNCTION.** The rebuild exists so unknown keys cannot ride along,
+  which is right; the cost is that every field is opt-in. `stance` was found
+  missing and fixed with a comment recording the lesson, and **`petFamily`
+  arrived later, was never added, and repeated it directly underneath that
+  comment**. A comment recording a lesson is not a mechanism, which is the same
+  thing this file says about a "build once" note in nine parallel briefs.
+  **THE PRICE WAS PAID ENTIRELY BY THE FALLBACKS.** Nothing errored, because
+  every consumer handles a missing family: a Hunter's `petFor` falls back to
+  `cat`, so a Wolf came back a Cat with a damage modifier of 1.1 instead of 1.0
+  — and `sacrificedDemon` does NOT fall back, so **both Warlock presets lost
+  Demonic Sacrifice entirely**, 15% of a school's damage, on a profile that
+  loaded with no issue raised.
+- **SO THE TEST IS A WHOLE-STRUCTURE COMPARISON, NOT A LIST OF FIELDS.**
+  `tests/profiles/roundTrip.test.ts` round-trips all 25 presets and asserts
+  `toEqual` on the entire profile, because **a test naming the fields is a
+  second copy of the rebuild with the same hole available to it** — whoever
+  forgets the field forgets the assertion. Compare STRUCTURALLY and not by text:
+  the rebuild emits its own key order, so all 25 differ as JSON and none differs
+  as a character.
+- **NO PUBLISHED FIGURE MOVED, BECAUSE NOTHING MEASURES THROUGH THAT PATH.**
+  `validateProfile` has no caller in `tools/` or in `simulator`: a preset goes
+  from `preset.build()` straight to the engine, so the baseline table never saw
+  the dropped field. **It was reachable only by a user saving and loading, which
+  is a thing nobody could do until Save existed** — check which path a
+  correctness fix is actually on before re-measuring, and say so either way.
+- **A FILE INPUT FIRES `change` ONLY WHEN ITS VALUE CHANGES**, so picking the
+  same file twice is silent the second time — which is exactly what somebody
+  does after editing a build on disk. Clear `event.target.value` BEFORE the
+  await, so the next pick is a change whatever the read does.
+
 ### Pets
 
 - **A pet is a second friendly combatant, and almost all of that already

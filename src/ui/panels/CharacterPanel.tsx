@@ -1,4 +1,7 @@
-import type { CharacterProfile } from '../../profiles';
+import { useRef, useState } from 'react';
+import type { ChangeEvent } from 'react';
+import type { CharacterProfile, ValidationIssue } from '../../profiles';
+import { downloadProfile, readProfileFile } from '../profileFile';
 import type { CharacterSelection, CombatStyleId } from '../../game/character';
 import { startingEquipmentFor } from '../../game/items/startingSets';
 import { abilitiesForClass } from '../../game/abilities/abilitiesForClass';
@@ -30,7 +33,16 @@ interface CharacterPanelProps {
   readonly onConfirm: () => void;
   readonly onEdit: () => void;
   readonly onImport: () => void;
-  readonly onLoad: () => void;
+  /**
+   * A profile read from a file, already parsed, migrated and validated.
+   *
+   * THE PANEL PARSES AND THE APP DECIDES WHAT THAT MEANS. Picking the file and
+   * saying what was wrong with it are this panel's job -- it owns the input and
+   * it has the one place to show issues. Confirming the character, clearing the
+   * preset pill and throwing away results that belong to the old character are
+   * the app's, and they are the same three things `applyPreset` does.
+   */
+  readonly onLoad: (profile: CharacterProfile) => void;
 }
 
 /**
@@ -83,6 +95,36 @@ export function CharacterPanel({
   onImport,
   onLoad,
 }: CharacterPanelProps) {
+  /*
+   * THE FILE INPUT IS HIDDEN AND CLICKED, which is the whole of "Load opens
+   * the file search". A bare `<input type="file">` cannot be styled to match
+   * anything here and would sit on the panel saying "No file chosen"; every
+   * browser gives a programmatic `.click()` on one the same dialog.
+   */
+  const fileInput = useRef<HTMLInputElement>(null);
+  const [issues, setIssues] = useState<readonly ValidationIssue[]>([]);
+
+  const handleFile = async (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    /*
+     * CLEARED IMMEDIATELY, AND THIS IS NOT TIDYING UP. An input fires `change`
+     * only when its value CHANGES, so choosing the same file twice is silent
+     * the second time -- which is exactly what someone does after editing a
+     * build on disk and loading it again. Clearing it before the await means
+     * the next pick is always a change, whatever happens below.
+     */
+    event.target.value = '';
+    if (!file) return;
+
+    const result = await readProfileFile(file);
+    if (!result.ok) {
+      setIssues(result.issues);
+      return;
+    }
+    setIssues([]);
+    onLoad(result.profile);
+  };
+
   const race = getRace(profile.character.race);
   const selection: CharacterSelection = {
     faction: race?.faction ?? 'alliance',
@@ -157,7 +199,14 @@ export function CharacterPanel({
   // explicit action, so a stray click cannot silently rebuild the character
   // underneath results that were run against the old one.
   if (confirmed) {
-    return <ConfirmedCharacter profile={profile} style={style} onEdit={onEdit} />;
+    return (
+      <ConfirmedCharacter
+        profile={profile}
+        style={style}
+        onEdit={onEdit}
+        onSave={() => downloadProfile(profile)}
+      />
+    );
   }
 
   const classDefinition = getClass(selection.characterClass);
@@ -174,12 +223,26 @@ export function CharacterPanel({
           <button type="button" onClick={onImport}>
             Import
           </button>
-          <button type="button" onClick={onLoad}>
+          <button type="button" onClick={() => fileInput.current?.click()}>
             Load
           </button>
         </>
       }
     >
+      {/*
+        * ACCEPTS JSON AND ALSO ANYTHING ELSE, because `accept` is a FILTER on
+        * the dialog rather than a rule -- every browser offers "All files"
+        * beside it, and a profile renamed `.txt` is still a profile. What
+        * decides whether a file loads is `parseProfile`, which is the same
+        * answer a paste would get.
+        */}
+      <input
+        ref={fileInput}
+        type="file"
+        accept="application/json,.json"
+        className="visually-hidden"
+        onChange={(event) => void handleFile(event)}
+      />
       {/*
         * FIRST, above the name, because it is the fastest way past all of it.
         * Someone who wants a Protection warrior wants five fields, a tree and
@@ -261,6 +324,26 @@ export function CharacterPanel({
         />
       ) : null}
 
+      {/*
+        * WHY A FILE DID NOT LOAD, IN FULL. `validateProfile` collects every
+        * problem rather than stopping at the first, precisely so somebody
+        * repairing a hand-edited build sees the whole list at once -- showing
+        * one at a time would waste that.
+        *
+        * ABOVE THE CONFIRM BUTTON AND BELOW THE FIELDS, because a failed load
+        * leaves the character exactly as it was: the panel is still usable,
+        * and this is a message about the file rather than about the character.
+        */}
+      {issues.length > 0 ? (
+        <ul className="issues">
+          {issues.map((issue) => (
+            <li key={`${issue.path}:${issue.message}`}>
+              {issue.path ? `${issue.path}: ${issue.message}` : issue.message}
+            </li>
+          ))}
+        </ul>
+      ) : null}
+
       {abilityCount === 0 ? (
         <p className="muted warn">
           No abilities are implemented for {classDefinition?.name ?? 'this class'} yet, so it
@@ -285,10 +368,12 @@ function ConfirmedCharacter({
   profile,
   style,
   onEdit,
+  onSave,
 }: {
   readonly profile: CharacterProfile;
   readonly style: CombatStyleId;
   readonly onEdit: () => void;
+  readonly onSave: () => void;
 }) {
   const race = getRace(profile.character.race);
   const classDefinition = getClass(profile.character.characterClass);
@@ -314,9 +399,26 @@ function ConfirmedCharacter({
             {stanceDefinition ? ` · ${stanceDefinition.name}` : ''}
           </span>
         </div>
-        <button type="button" onClick={onEdit}>
-          Change
-        </button>
+        {/*
+          * SAVE IS HERE AND NOT ON THE CREATION SCREEN, because this is the
+          * only place there is a whole character to save. The creation screen
+          * has five fields; the talents, the gear, the raid buffs, the
+          * consumables and the encounter are all chosen after it, and every
+          * one of them is in the file.
+          *
+          * SAVE BEFORE CHANGE, in that order, because `Change` CLEARS THE
+          * TALENT ALLOCATION. Putting the button that discards a build to the
+          * right of the one that writes it down is the cheapest thing that
+          * makes the pair read correctly.
+          */}
+        <div className="character-summary-actions">
+          <button type="button" onClick={onSave}>
+            Save
+          </button>
+          <button type="button" onClick={onEdit}>
+            Change
+          </button>
+        </div>
       </div>
     </section>
   );
