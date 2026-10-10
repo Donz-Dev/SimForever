@@ -44,6 +44,7 @@ npx vite-node tools/probe_cat_rage.ts            # does a Cat's rage pool ever h
 npx vite-node tools/probe_life_tap_gate.ts       # what mana a Warlock should Life Tap at
 npx vite-node tools/probe_other_assignment.ts    # each preset's `other` consumable beside its POOLS
 npx vite-node tools/item_budget.ts               # what an item COST to make, and whether it adds up
+FOREVER=1 npx vite-node tools/item_budget.ts     # the 64 Premier PvP cloth pieces, Forever's own
 ```
 
 The three audits in the middle are AUDITS rather than measurements and none of
@@ -3381,6 +3382,62 @@ that explains its own outliers is worth more than one that has none**, and the
 exchange rate it implies -- about 2.5 budget points per dps forgone, from TWO
 items -- is printed beside the item rather than folded into the budget, because
 folding it in would hide the one number this model does not have.
+
+**AND THE OWNER HAS SINCE SUPPLIED REAL FOREVER ARMOUR, WHICH IS THE FIRST OF
+IT IN THE PROJECT.** The 64 Premier PvP cloth pieces, item level 65, three
+classes, eight slots -- `tools/foreverPremierPvp.ts`. **NOT in
+`src/data/items/`**, because everything there is equippable and 64 more items
+would be in the Gear panel; the database stays frozen and this is reference
+data for the audit tool.
+
+**BASE ARMOUR IS NOW CONFIRMED FREE ON THE RULESET'S OWN DATA.** Forever's
+item-level-65 cloth wrist is 44 armour and its waist is 56 -- identical to
+Classic's General's Silk Cuffs and Sash at the same item level -- and four
+pieces list `+40 Armor` among the STATS, separately from the slot's own armour
+on the line above. **Forever's client writes the base/bonus split out**, which
+Classic's tooltips never do.
+
+**AND IT USES RATINGS WHERE CLASSIC USES FLAT PERCENTAGES.** "+7 Critical
+Strike Rating" where Classic's own rank-13/14 cloth says "+1% spell crit", so
+the budget source's blanket "any rating costs 1" -- dead weight in a ruleset
+with no ratings -- finally has something to price. **Healing and spell damage
+are two lines too**, "+33 Healing" and "+11 Spell Damage", at a ratio of 3.0
+across all five pairs that occur.
+
+**THEY SIT AT 85.1% OF CLASSIC'S EPIC BUDGET WITH A STANDARD DEVIATION OF 3.2
+POINTS, AND THE TIGHTNESS IS THE FINDING RATHER THAN THE 85%.** That is
+TIGHTER than the Classic and SoD items on file, which scatter over 90-110%: the
+Classic cost table reproduces the SHAPE of a Forever item better than it
+reproduces Classic's own. What differs is the LEVEL, and whether that is a
+Forever budget or a PvP discount is **a question for the owner** -- Classic's
+own item-level-65 PvP cloth is also under budget, at 96.0% and 90.6%, so PvP
+gear being cheap is not a Forever invention and two items cannot say how the 15
+points divide.
+
+**A WRONG STAT COST AND A WRONG BUDGET LOOK ALIKE, AND WHAT SEPARATES THEM IS A
+CORRELATION WITH THE ITEM'S COMPOSITION.** A scaled budget moves every slot and
+every build together; a dearer stat pushes the items that buy a lot of it
+further off. Here the budget reading wins -- 3.8 points of residual against
+5.8, and making spell power dearer leaves a +0.80 correlation with spell-power
+share. **THE FIRST CUT GOT THE OPPOSITE ANSWER FROM THE SAME DATA**, because it
+computed that share over spell power and spell damage while leaving HEALING
+out, which made it a test of "is this a healer piece" and returned -0.60.
+**A correlation whose sign depends on how the denominator is defined is not
+evidence**, and the cheap guard is to define the share over every stat the
+hypothesis touches.
+
+**AND THE STAT BLOCKS REPEAT, WHICH IS A TRANSCRIPTION CHECK FOR FREE.** Thirty
+distinct (slot, stats) blocks across the 64, with 62 appearing in BOTH rank
+tiers -- Centurion's Felweave Boots is Knight-Champion's Dreadweave Boots under
+another rank name. That leaves exactly two items without a twin and **they are
+the same item except 34 stamina against 37**, where every other head piece is
+34. Flagged on the row rather than corrected, because a 7 read off a 4 is the
+likelier explanation and it is the owner's client to check.
+**THE CHECK ONLY WORKS WITH THE KEYS SORTED**: `JSON.stringify` preserves key
+ORDER and the stats were transcribed in each tooltip's own order, so an
+unsorted key reported four twinned items as unique -- a check quietly weakened
+into saying nothing, caught only because an independent script had counted 30
+where it counted 34.
 
 **A DELTA, NOT A TOTAL**, because the owner gave it as one and because two of
 their four stated bases disagreed with the scrape. A bonus survives a re-scrape

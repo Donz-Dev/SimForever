@@ -164,6 +164,104 @@ Benediction's implied rate comes out at 1.28 rather than ~2.5, which is most
 likely the missing staff line rather than a different exchange rate. Indicative,
 not a figure.
 
+## Forever's own data: the Premier PvP cloth sets
+
+Sixty-four items, transcribed from the ruleset owner's client into
+`tools/foreverPremierPvp.ts` and priced by `FOREVER=1`. **The only real
+Forever ARMOUR in the project** — `src/data/items/` is Classic and Season of
+Discovery stand-ins, and the Immovable Object plus four spell-power overrides
+were the whole of the Forever item data until this. All 64 are item level 65,
+cloth, three classes, eight slots, across two rank tiers.
+
+They are **not** in `src/data/items/`. That directory is loaded by `itemData.ts`
+and everything in it is equippable; putting them there would add 64 items to the
+Gear panel. **The item database stays frozen.**
+
+### Base armour is confirmed free, on Forever's own data
+
+Classic's [General's Silk Cuffs](https://www.wowhead.com/classic/item=16538) is
+item level 65 cloth wrist at **44 armour**, and
+[General's Silk Sash](https://www.wowhead.com/classic/item=16537) is item level
+65 cloth waist at **56 armour**. Forever's item-level-65 cloth wrist is **44**
+and its waist is **56** — identical. Forever did not re-derive the base armour
+curve, so the "base armour comes with the slot" reading now rests on the
+ruleset's own data rather than on an inference from Classic.
+
+**And Forever writes the split out itself.** Four pieces list `+40 Armor` among
+the *stats*, separately from the slot's own armour on the line above — the
+Dreadweave Coronal is "81 Armor" and then "+34 Stamina, +20 Intellect,
++40 Armor". That is exactly the base/bonus distinction the budget model needed
+and that Classic's tooltips never state.
+
+### Two ruleset changes the budget makes visible
+
+- **Forever uses RATINGS where Classic uses flat percentages.** These items
+  grant "+7 Critical Strike Rating" and "+14 Critical Strike Rating"; Classic's
+  own rank-13/14 cloth grants a flat "+1% spell crit". The source's blanket
+  "any rating costs 1" is dead weight in Classic and finally has something to
+  price here — it is the one sourced cost that no Classic item could test.
+- **Healing and spell damage are two lines, not one.** Classic writes
+  "+N damage and healing"; Forever writes "+33 Healing" and "+11 Spell Damage"
+  separately, and the ratio is **3.0 across all five pairs** that occur
+  (22/7, 26/9, 33/11, 40/13, 18/6).
+- **Forever dropped Classic's PvP bonus armour.** Classic's Field Marshal's
+  Coronet carries 162 armour at item level 74 against a cloth-head baseline
+  near 99; Forever's Premier pieces carry the baseline and nothing else, except
+  where they say `+40 Armor` outright.
+
+### They are internally consistent and 15% under Classic's epic budget
+
+| | |
+| --- | --- |
+| mean | **85.1%** of the Classic epic budget for item level 65 |
+| spread | **sd 3.2 points**, range 81.9% to 92.9% |
+| by slot | 83.3% to 88.5% — every slot together |
+
+**THE TIGHTNESS IS THE FINDING, NOT THE 85%.** A 3.2-point standard deviation
+across 64 items is *tighter* than the Classic and Season of Discovery items on
+file, which scatter over 90–110%. Forever's itemization is more internally
+consistent than the game it is based on, and the Classic cost table reproduces
+the *shape* of a Forever item well. What differs is the LEVEL.
+
+**And it is the budget that differs, not a stat cost.** Those are two readings
+that look alike and the data separates them:
+
+| Reading | Residual sd | Verdict |
+| --- | --- | --- |
+| Classic costs, budget scaled to `0.6575 x ilvl - 1` | **3.8 points** | best fit; every slot moves together, which is what a scaled budget does |
+| Classic epic budget, spell-power family dearer by x1.61 | 5.8 points | **worse**, and it leaves a +0.80 correlation between a piece's spell-power share and how far off budget it lands |
+
+So the spell-power costs are right and the budget level is not. **A correlation
+between the residual and the item's COMPOSITION is what tells a wrong stat cost
+from a wrong budget**, and it is worth stating because the first cut of this
+analysis computed that correlation over a share that excluded healing, got −0.60,
+and read it as evidence for the dearer spell power — the exact opposite of what
+the full share says. A correlation whose sign depends on how the denominator is
+defined is not evidence of anything.
+
+**WHETHER 85% IS A FOREVER BUDGET OR A PvP DISCOUNT IS OPEN, AND IT IS A
+QUESTION FOR THE OWNER.** Classic's own item-level-65 PvP cloth is *also* under
+budget on the same costs — General's Silk Cuffs prices at **96.0%** and
+General's Silk Sash at **90.6%** — so PvP gear being under-budget is not a
+Forever invention, and Forever's is simply further under. Two Classic items is
+not enough to say how much of the 15 points is "PvP" and how much is "Forever",
+and nothing here picks one.
+
+### The sets are built from 30 stat templates
+
+Thirty distinct (slot, stats) blocks across 64 items, with **62 of them
+appearing in both rank tiers** — Centurion's Felweave Boots and
+Knight-Champion's Dreadweave Boots are the same item under two rank names. That
+is a fact about how the sets were built and it doubles as a transcription check,
+which is what it is printed for.
+
+**IT LEAVES EXACTLY TWO ITEMS WITHOUT A TWIN, AND THEY ARE THE SAME ITEM.**
+Field Marshal's Silk Coronet and Warlord's Magus Cowl are identical except for
+**34 stamina against 37**, where every other head piece in all six sets is 34.
+Transcribed as read and flagged on the row rather than corrected — but a 7 read
+off a 4 is the likelier of the two explanations, and it is worth the owner
+confirming against the client.
+
 ## What the source does not price, and what was fitted here
 
 Vanilla has no ratings, so the source's blanket "any rating costs 1" cannot be

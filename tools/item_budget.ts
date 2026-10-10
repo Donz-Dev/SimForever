@@ -23,10 +23,18 @@
  *     npx vite-node tools/item_budget.ts              # the ten reference items, then all 151 on file
  *     ITEM=226562 npx vite-node tools/item_budget.ts  # one item on file, itemised
  *     REFERENCE=1 npx vite-node tools/item_budget.ts  # the reference items alone, itemised
+ *     FOREVER=1 npx vite-node tools/item_budget.ts    # the 64 Premier PvP cloth pieces, Forever's own data
  */
 import { ITEMS, ITEMS_BY_ID } from '../src/game/items/itemData';
 import type { Item } from '../src/game/items/Item';
 import type { StatName } from '../src/engine';
+import {
+  FOREVER_CLOTH_ARMOR_ILVL65,
+  FOREVER_PREMIER_PVP_CLOTH,
+  FOREVER_PVP_ITEM_LEVEL,
+  type PvpItem,
+  type PvpSlot,
+} from './foreverPremierPvp';
 
 /* -------------------------------------------------------------------------- */
 /* The model                                                                  */
@@ -137,6 +145,20 @@ const SCHOOL_POWER_COST = 0.7;
 
 /** One school of resistance. The source gives 2.5 for all schools at once. */
 const RESISTANCE_COST = 1;
+
+/** "+N Healing", which buys no damage and is the cheapest thing on the table. */
+const HEALING_COST = 0.45;
+
+/**
+ * Any RATING, which in this data means Forever's Critical Strike Rating.
+ *
+ * The source's blanket "any rating costs 1" is dead weight in Classic, which
+ * has no ratings at all -- Classic's PvP cloth grants a flat "+1% spell crit"
+ * where Forever's grants "+7 Critical Strike Rating". So this line finally has
+ * something to price, and it is the first of the sourced costs that Classic
+ * items could not test.
+ */
+const RATING_COST = 1;
 
 /**
  * Budget points per point of a stat the source does NOT price, FITTED HERE.
@@ -751,6 +773,126 @@ function summarise(rows: readonly Pricing[], label: string): void {
   );
 }
 
+/* -------------------------------------------------------------------------- */
+/* Forever's own data                                                         */
+/* -------------------------------------------------------------------------- */
+
+const PVP_SLOT_CLASS: Readonly<Record<PvpSlot, SlotClass>> = {
+  head: 'full',
+  chest: 'full',
+  legs: 'full',
+  shoulder: 'medium',
+  hands: 'medium',
+  waist: 'medium',
+  feet: 'medium',
+  wrist: 'light',
+};
+
+/**
+ * Price a Forever PvP piece on the CLASSIC costs, deliberately unadjusted.
+ *
+ * The whole question these items answer is whether Forever itemizes to
+ * Classic's budget, so pricing them with anything fitted to them would be
+ * assuming the answer. `heal` takes the source's healing-only 0.45 and
+ * `spellDamage` the school-blind 0.86; `crit` is a RATING, which the source
+ * prices at 1 per point.
+ */
+function priceForever(item: PvpItem): Pricing {
+  const slotClass = PVP_SLOT_CLASS[item.slot];
+  const budget = qualityBase(FOREVER_PVP_ITEM_LEVEL, 4)! * SLOT_MULTIPLIER[slotClass];
+  const lines: Line[] = [
+    {
+      label: 'armor (base)',
+      value: FOREVER_CLOTH_ARMOR_ILVL65[item.slot],
+      cost: 0,
+      points: 0,
+      kind: 'free',
+    },
+  ];
+  const add = (label: string, value: number | undefined, cost: number, kind: Line['kind']) => {
+    if (!value) return;
+    lines.push({ label, value, cost, points: value * cost, kind });
+  };
+  add('stamina', item.stats.stamina, SOURCED_COST.stamina!, 'sourced');
+  add('intellect', item.stats.intellect, SOURCED_COST.intellect!, 'sourced');
+  add('spirit', item.stats.spirit, SOURCED_COST.spirit!, 'sourced');
+  add('spell power', item.stats.sp, SOURCED_COST.spellPower!, 'sourced');
+  add('healing', item.stats.heal, HEALING_COST, 'sourced');
+  add('spell damage', item.stats.spellDamage, SOURCED_COST.spellPower!, 'sourced');
+  add('crit rating', item.stats.crit, RATING_COST, 'sourced');
+  add('armor (bonus)', item.stats.bonusArmor, SOURCED_COST.armor!, 'sourced');
+
+  const notes = [...(item.unpriced ?? []).map((text) => `unpriced: Equip: ${text}`)];
+  if (item.note) notes.push(item.note);
+  return {
+    name: item.name,
+    itemLevel: FOREVER_PVP_ITEM_LEVEL,
+    slotClass,
+    budget,
+    lines,
+    unpriced: [],
+    notes,
+  };
+}
+
+function foreverReport(): void {
+  console.log(
+    "THE PREMIER PvP CLOTH SETS -- WoW: Forever's own data, priced on CLASSIC costs\n",
+  );
+  console.log(HEADER);
+  const priced = FOREVER_PREMIER_PVP_CLOTH.map(priceForever);
+  for (const pricing of priced) console.log(row(pricing));
+
+  const used = priced.map((p) => (spend(p.lines).implied / p.budget!) * 100);
+  const mean = used.reduce((a, b) => a + b, 0) / used.length;
+  const sd = Math.sqrt(used.reduce((a, b) => a + (b - mean) ** 2, 0) / used.length);
+  console.log(
+    `\nall ${used.length}: mean ${mean.toFixed(1)}%, sd ${sd.toFixed(1)} points, ` +
+      `range ${Math.min(...used).toFixed(1)}% to ${Math.max(...used).toFixed(1)}%`,
+  );
+
+  // Per slot, because a budget that is wrong per SLOT looks like one that is
+  // wrong overall until it is split.
+  console.log('\nby slot (a scaled budget moves every slot together; a wrong slot multiplier does not)');
+  const bySlot = new Map<PvpSlot, number[]>();
+  FOREVER_PREMIER_PVP_CLOTH.forEach((item, index) => {
+    const list = bySlot.get(item.slot) ?? [];
+    list.push(used[index]);
+    bySlot.set(item.slot, list);
+  });
+  for (const [slot, values] of bySlot) {
+    const slotMean = values.reduce((a, b) => a + b, 0) / values.length;
+    console.log(
+      `  ${pad(slot, 9)} n=${values.length}  mean ${slotMean.toFixed(1)}%  ` +
+        `range ${Math.min(...values).toFixed(1)}% to ${Math.max(...values).toFixed(1)}%`,
+    );
+  }
+
+  // The stat blocks repeat across rank tiers, which is both a transcription
+  // check and a fact about how these sets were built.
+  const blocks = new Map<string, string[]>();
+  for (const item of FOREVER_PREMIER_PVP_CLOTH) {
+    // Sorted, because `JSON.stringify` preserves KEY ORDER and these were
+    // transcribed in the order each tooltip lists them -- the Centurion boots
+    // read "+26 Stamina, +12 Intellect" and the Knight-Champion boots the
+    // other way round, so an unsorted key reports four twinned items as
+    // unique and quietly weakens the check into saying nothing.
+    const key = `${item.slot}|${Object.entries(item.stats)
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([name, value]) => `${name}=${value}`)
+      .join(',')}`;
+    blocks.set(key, [...(blocks.get(key) ?? []), item.name]);
+  }
+  const twinned = [...blocks.values()].filter((names) => names.length > 1);
+  console.log(
+    `\n${blocks.size} distinct (slot, stats) blocks across ${FOREVER_PREMIER_PVP_CLOTH.length} items; ` +
+      `${twinned.reduce((total, names) => total + names.length, 0)} of them appear in two rank tiers`,
+  );
+  for (const [, names] of blocks) {
+    if (names.length === 1) console.log(`  no twin: ${names[0]}`);
+  }
+}
+
 const only = process.env.ITEM;
 const referenceOnly = process.env.REFERENCE;
 
@@ -758,6 +900,8 @@ if (only) {
   const item = ITEMS_BY_ID.get(Number(only));
   if (!item) throw new Error(`no item ${only} on file`);
   itemise(price(item));
+} else if (process.env.FOREVER) {
+  foreverReport();
 } else if (referenceOnly) {
   for (const ref of REFERENCE_ITEMS) itemise(priceReference(ref));
 } else {
