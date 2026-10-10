@@ -8,12 +8,21 @@ the fight. The owner: they "must be treated like a character ability and be
 exposed on the APL and consumable panels", so each carries an `Ability`, joins
 the ability book when it is selected, and gets an entry in the priority list.
 
-| | what it was | effect |
+**IT LANDED AS TWO SQUASH COMMITS, `50fffe0` AND `ccf4dc8`**, and the six rounds
+below are what is inside them. The table named the four branch SHAs while the PR
+was open; a squash merge keeps none of them, so **a SHA written down before a
+merge is a pointer that expires AT the merge** -- which is this file's own rule
+about a pointer being a claim, applied to the one kind of pointer that cannot
+survive the workflow this project uses.
+
+| in | round | effect |
 | --- | --- | --- |
-| `190016e` | the nine abilities, the two categories, the panel and the APL | **no figure moved**; all 75 hashes and event counts identical |
-| `8a78b5c` | Preparation reset a potion, which is not a Rogue ability | no published figure; **Thistle Tea 2.00 casts -> 1.00** |
-| `c3df735` | every preset gets a sensible Potion and Other, measured | **25 of 25 rows**, 10 REAL |
-| this one | Life Tap gated on current mana, by the owner's ruling | Firelock **+88.7**, the other 24 at 0.0 |
+| `50fffe0` | the nine abilities, the two categories, the panel and the APL | **no figure moved**; all 75 hashes and event counts identical |
+| `50fffe0` | Preparation reset a potion, which is not a Rogue ability | no published figure; **Thistle Tea 2.00 casts -> 1.00** |
+| `50fffe0` | every preset gets a sensible Potion and Other, measured | **25 of 25 rows**, 10 REAL |
+| `50fffe0` | Life Tap gated on current mana, by the owner's ruling | Firelock **+88.7**, the other 24 at 0.0 |
+| `ccf4dc8` | the Rune at the owner's 10%, not this repository's 30% | Firelock -4.3, six others +0.1 to +2.4, **mean unmoved** |
+| `ccf4dc8` | a Healthstone for the builds with no pool to restore | 0.00 casts, **no figure moves** |
 
 **NOTHING HERE NEEDED A NEW ENGINE CAPABILITY, AND THAT IS THE HEADLINE.** Every
 field used already existed. The racials that landed the week before are the
@@ -248,6 +257,42 @@ honest reading is the one Evocation already has: a conditional entry that is
 almost never true costs the entries below it nothing. **Both halves of the
 Evocation precedent apply, including the second**: the right moment to go back
 and ask the owner is the moment one of these STARTS firing.
+
+## Two things from the end of the session that are not about consumables
+
+**THE PRIMARY CHECKOUT WAS FOUR COMMITS BEHIND `main` AND NOBODY WAS WORKING IN
+IT.** Reported to the owner as "four other sessions are working in this tree",
+which was an inference from four REGISTERED WORKTREES and was wrong: their last
+commits were three to sixteen days old and three of the four were clean. The
+real cause is structural and worth knowing, because this project's workflow
+guarantees it: **every PR is merged on GitHub, which moves `origin/main` and
+nothing else.** The checkout's own `main` ref never moves until somebody pulls,
+so a shared tree drifts behind silently and reads as activity. Four stale
+worktrees and 24 stale branches were pruned after checking each one.
+
+**AND ONE FULL-SUITE RUN FAILED ONCE AND WAS NOT DIAGNOSED**, which is recorded
+rather than buried. `chargeAndShieldTalents.test.ts` failed in one run of the
+full suite at `ccf4dc8` and has passed every run since -- **four times in
+isolation and twice more under the full suite**, 3,076 passing.
+
+What the failure RULES OUT is most of the explanations:
+
+| | |
+| --- | --- |
+| a different fight | the file pins `seed: 4242`, so the simulation is deterministic |
+| a timeout | **zero async bodies** in the file, and "a synchronous test cannot time out" -- the body blocks the event loop and vitest's timer never fires |
+| a slow test crossing a limit | its slowest individual test is **1,616ms** against a 5,000ms default, though the FILE is the suite's slowest at 13.1s |
+
+Which leaves the cause this file already documents: **"a seeded test that fails
+under the full suite and passes in isolation on the same commit is the shared
+checkout, not non-determinism."** Unproven here, and stated as unproven.
+
+**THE REAL MISTAKE WAS DESTROYING THE EVIDENCE.** The first run's output was
+filtered down to a summary line, and the fix was to RE-RUN with a different
+filter -- which passed, and took the assertion text with it. **Capture a suite
+failure before re-running it**: a flake you cannot reproduce is a flake you
+cannot diagnose, and the one artifact that would have settled it existed for
+about a minute.
 
 ## The deltas, and why fifteen "noise" verdicts all point the same way
 
@@ -1702,7 +1747,7 @@ All nine classes and all **25** profiles are implemented, every number traced to
 source rather than invented, and **every priority list is the ruleset owner's
 own** -- specified entry by entry and measured after, the newest being Hawk
 Melee's, given as "the same as the LW melee hunter" plus one placement.
-**3,073 tests**, CI green on Node 20 and 22. Profile format **v13**. Live at
+**3,076 tests**, CI green on Node 20 and 22. Profile format **v13**. Live at
 <https://donz-dev.github.io/SimForever/>, republished by
 `.github/workflows/deploy.yml` on every push to `main` that passes.
 
@@ -1722,7 +1767,7 @@ demonstrated at the top. **Re-count rather than re-reading the sentence.**
 | **Racials** | **10 races, 40 traits**: 15 do something, 20 effects ruled out, 11 a live gap |
 | **Scope rulings** | **9 members**, all the owner's, carrying 129 TALENT entries and 19 racial declarations |
 | **Placeholders** | **10 declared** -- see the milestone table, and count DECLARATIONS |
-| **Tests** | **3,073** on Node 20 and 22 |
+| **Tests** | **3,076** on Node 20 and 22 |
 
 **FOUR CLASSES ARE ESSENTIALLY DONE** -- Warrior 1 live gap, Paladin 1, Druid 2,
 Rogue 3 -- and the remaining 62 sit mostly in the Warlock (19), Priest (12) and

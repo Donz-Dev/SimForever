@@ -3863,6 +3863,67 @@ tree: a measurement there once came back a clean −2.0% on two profiles, which
 read exactly like a real regression and was another session's uncommitted work.
 Never commit files you find modified there.
 
+**BUT A REGISTERED WORKTREE IS NOT AN ACTIVE SESSION, AND READING IT AS ONE IS
+HOW THE SENTENCE ABOVE GETS OVER-APPLIED.** Four were registered against this
+repository and the owner was told "four other sessions are working in this
+tree"; their last commits were three to SIXTEEN days old and three of the four
+were clean. **Check the last commit date and the dirty count before concluding
+anything is in flight** -- `git worktree list` records a registration, not a
+person.
+
+**AND A MERGE ON GITHUB MOVES `origin/main` AND NOTHING ELSE**, which is why the
+shared checkout drifts behind without anybody touching it. Every PR here is
+merged on the remote, so the checkout's own `main` ref does not move until
+somebody pulls -- it sat **four commits behind in a single day** and read as
+somebody else's work in progress. A branch ref that has not moved is not
+evidence of activity; it is evidence of nobody having pulled.
+
+**AND A SHA WRITTEN DOWN BEFORE A MERGE EXPIRES AT THE MERGE.** HANDOVER's table
+for the mid-fight consumables named its four branch commits while the PR was
+open, and `--squash` keeps none of them -- so the file cited four SHAs that are
+in no history. **Cite the squash commit, or cite the PR number**, which is the
+one identifier that survives.
+
+**`git branch --merged` IS USELESS HERE, BECAUSE EVERYTHING IS SQUASHED.** A
+merged branch is not an ancestor of `main`, so every one of 24 stale branches
+read as unmerged. Matching by SUBJECT works and needs two normalisations that
+are easy to miss:
+
+- **strip the ` (#123)`** that `gh pr merge --squash` appends, or an exact match
+  never hits;
+- **drop local merge commits** with `--no-merges`, or every branch that ever
+  pulled `main` looks like it owns work it does not.
+
+Without both, a classifier reported **23 of 24 branches as unmerged** -- and the
+only reason that was caught is that the answer was too tidy to be true for
+branches NAMED after merged PRs. **A classifier that says "nothing is merged"
+about obviously-merged work is reporting its own bug.**
+
+**ASK GITHUB FIRST, THOUGH: `gh pr list --state all --head <branch>` IS
+AUTHORITATIVE** and needs no heuristic at all. It also catches what a subject
+match cannot: a branch whose PR was CLOSED rather than merged, whose work then
+re-landed under a second PR with the same title -- `druid-bear-cooldowns` was
+closed as #114 and merged as #124.
+
+**AND A BRANCH WITH NO PR AT ALL NEEDS A CONTENT CHECK.** The `merge/*`
+integration branches never had one and their commits were squashed under other
+titles, so both cheap tests are blind to them. What settles it is the share of
+their ADDED LINES that are in `main` today -- 82% to 93%, with every remaining
+line a superseded draft: an old `PLACEHOLDER_` figure, a requirement line a
+patch later replaced, prose since rewritten. **A branch is redundant when its
+residue is older than `main`, not when the diff is empty.**
+
+**CAPTURE A SUITE FAILURE BEFORE RE-RUNNING IT.** One full-suite run of
+`chargeAndShieldTalents.test.ts` failed at `ccf4dc8` and has passed every run
+since; the output had been filtered to a summary line, and the response was to
+RE-RUN with a different filter -- which passed and took the assertion text with
+it. The remaining evidence rules out a different fight (the file pins
+`seed: 4242`) and rules out a timeout (**zero async bodies**, and a synchronous
+body blocks the event loop so vitest's timer never fires), which leaves the
+shared-checkout cause this file already documents -- unproven, and recorded as
+unproven. **A flake you cannot reproduce is a flake you cannot diagnose**, and
+the artifact that would have settled it existed for about a minute.
+
 **AND A SCRIPT THAT RE-DERIVES ONE COPY OF A FIGURE LEAVES THE OTHER TO DRIFT.**
 `tools/update_baseline_table.py` rebuilds HANDOVER's table and re-sums the mean
 in the sentence beneath it, which is exactly what it promises -- and the STATUS
