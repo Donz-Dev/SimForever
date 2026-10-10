@@ -1604,6 +1604,32 @@ component, because it is the part that can be wrong.
   promise is that opening a condition and changing nothing leaves it
   byte-identical -- so a flag that cannot hold two negations keeps the whole
   thing as a fixed leaf rather than collapsing it.
+- **AN ENTRY CAN BE SWITCHED OFF INSTEAD OF REMOVED** -- `AplEntry.disabled`,
+  and the eye button in the panel. Removing a line to see what it is worth and
+  adding it back means retyping its condition, its note and its interrupt flag,
+  which is the thing this editor exists to make unnecessary.
+  **FILTERED IN `compileRotation`, NOT CHECKED IN `selectAction`**, and the
+  reason is the second kind of cost: `PriorityRotation` computes
+  `interruptsChannels` ONCE in its constructor, so a disabled INTERRUPTING entry
+  would still make the actor poll its channel every 100ms -- invisible, because
+  the combat log stays byte-identical and only `eventsProcessed` moves.
+  **THE FLAG IS DROPPED RATHER THAN STORED AS `false`**, because a stored list is
+  compared to the stock one BY VALUE and an entry switched off and on again has
+  to come back byte-identical. Absent means active, so no migration.
+- **A STORED LIST IS NARROWED BY RACE, AND THE ENGINE NEVER NEEDED THAT.** Every
+  list names all four free racial cooldowns -- the shared constant is spread
+  into lists belonging to no race -- and `PriorityRotation` skips what the
+  character does not know in SILENCE, so all 75 combat-log hashes and event
+  counts are identical with them in or out. **What it cost was a PERSON reading
+  the panel**: three of an Orc's first four entries were abilities no Orc can
+  cast. `withoutOtherRacials` drops them, and **only a RACIAL may be dropped** --
+  the wider "drop what the build lacks" would delete a capstone a list names for
+  a sibling spec.
+  **AND `syncDefaultRotation` HAD TO STOP COMPARING BY NAME.** For class, style,
+  stance and talents a different build means a different list NAME; race does
+  not work that way, so an Orc and a Gnome Warrior run the same named list with
+  different entries, and a name comparison left Blood Fury in after a race
+  change.
 - **A NEW ENTRY GOES AT THE BOTTOM**, the only position that cannot change what
   the list already does: an unconditional entry anywhere else is a FLOOR under
   everything below it. **Moving past either end is a no-op rather than a wrap**,

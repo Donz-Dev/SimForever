@@ -24,6 +24,7 @@ import {
   replaceAt,
   rootOf,
   setCondition,
+  setDisabled,
   setGroupOp,
   setInterrupts,
   toggleNegated,
@@ -260,7 +261,10 @@ export function AplEntries({
   return (
     <ol className="apl-list">
       {list.entries.map((entry, index) => (
-        <li key={`${entry.abilityId}-${index}`} className="apl-entry">
+        <li
+          key={`${entry.abilityId}-${index}`}
+          className={entry.disabled ? 'apl-entry apl-entry-off' : 'apl-entry'}
+        >
           <span className="apl-rank">{index + 1}</span>
           <div className="apl-body">
             <span className="apl-ability">{nameOf(entry.abilityId)}</span>
@@ -294,6 +298,25 @@ export function AplEntries({
           />
           {onChange ? (
             <span className="apl-controls">
+              {/*
+                * SWITCHED OFF RATHER THAN REMOVED, which is what the owner
+                * asked for: "a way I can easily toggle an APL line's
+                * visibility so I don't have to remove the line entirely just
+                * to re-add it later."
+                *
+                * FIRST IN THE ROW, left of the two movers and well left of the
+                * ✕, because it is the thing somebody reaches for INSTEAD of
+                * the ✕ and the two should not be neighbours.
+                */}
+              <button
+                type="button"
+                className="apl-toggle"
+                aria-pressed={entry.disabled !== true}
+                title={entry.disabled ? 'Switch this entry on' : 'Switch this entry off'}
+                onClick={() => onChange(setDisabled(list.entries, index, entry.disabled !== true))}
+              >
+                {entry.disabled ? '🚫' : '👁'}
+              </button>
               <button
                 type="button"
                 title="Move up"

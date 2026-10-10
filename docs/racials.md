@@ -281,6 +281,22 @@ Insight. That is the target's cause in a shape this project had not met: not
 "the boss is not a Beast" but "the encounter declares no creature type, so
 nothing can ask".
 
+## The panel shows no racials, which is the owner's decision
+
+A "Racial traits" section listing the chosen race's four tooltips was built and
+then **removed on the owner's instruction**. It is the same ruling that took the
+"equipped but not simulated" lists off the Gear, Talent, Raid buffs and Encounter
+panels during the GUI pass: this reporting is for the repository and not for
+somebody running a sim.
+
+What the panel does carry is the APL, and there the race decides what is in the
+list at all. `stockListFor` drops the racial entries a build cannot use, so an
+Orc's list names Blood Fury and not the other three — see
+[apl.md](apl.md#a-stored-list-is-narrowed-by-race). The engine never needed it:
+all 75 combat-log hashes and event counts are identical either way, because
+`PriorityRotation` was already skipping them in silence. What it cost was a
+person reading the panel.
+
 ## Tools
 
 ```bash

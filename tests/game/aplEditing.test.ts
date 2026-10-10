@@ -5,9 +5,9 @@ import { seconds } from '../../src/engine';
 import { buildSimulation } from '../helpers/buildSimulation';
 import { makeAttacker, makeTarget } from '../helpers/actors';
 import type { CharacterProfile } from '../../src/profiles';
-import type { AplCondition, AplEntry } from '../../src/game/rotations/apl';
+import type { AplCondition, AplEntry, AplList } from '../../src/game/rotations/apl';
 import type { GroupNode } from '../../src/ui/panels/aplEditing';
-import { compileCondition } from '../../src/game/rotations/apl';
+import { compileCondition, compileRotation } from '../../src/game/rotations/apl';
 import {
   addEntry,
   appendTo,
@@ -22,6 +22,7 @@ import {
   rootOf,
   setCondition,
   setGroupOp,
+  setDisabled,
   setInterrupts,
   toggleNegated,
 } from '../../src/ui/panels/aplEditing';
@@ -717,5 +718,114 @@ describe('an interrupt only fires when the ability could actually be cast', () =
     expect(
       simulation.castRejection(caster, MIND_BLAST, target, { ignoreCastLock: true }),
     ).toBe('on_cooldown');
+  });
+});
+
+/*
+ * ============================================================================
+ * SWITCHING AN ENTRY OFF, which the owner asked for: "a way I can easily toggle
+ * an APL line's visibility so I don't have to remove the line entirely just to
+ * re-add it later."
+ *
+ * THE POINT IS THAT NOTHING IS LOST. Removing an entry to see what it is worth
+ * and adding it back means retyping its condition, its note and its interrupt
+ * flag -- and this whole file exists because a condition that cannot be redrawn
+ * exactly is a rotation that changed with nothing on screen to say so.
+ * ============================================================================
+ */
+describe('switching an entry off', () => {
+  it('sets and clears the flag, and clears it by DROPPING the key', () => {
+    /*
+     * `setInterrupts`' rule, for the same reason and with a sharper edge now:
+     * `syncDefaultRotation` compares a stored list to the stock one BY VALUE,
+     * so an entry switched off and on again that kept `"disabled": false` would
+     * make the whole list stop matching the build it came from -- and a
+     * `default` list that does not match gets silently re-derived.
+     */
+    const entries: readonly AplEntry[] = [{ abilityId: 'shadow_bolt' }];
+    const off = setDisabled(entries, 0, true);
+    expect(off[0].disabled).toBe(true);
+
+    const on = setDisabled(off, 0, false);
+    expect('disabled' in on[0]).toBe(false);
+    expect(on[0]).toEqual({ abilityId: 'shadow_bolt' });
+  });
+
+  it('keeps everything else about the entry, which is the whole point', () => {
+    const entry: AplEntry = {
+      abilityId: 'shadow_bolt',
+      condition: { kind: 'aura', on: 'self', auraId: 'shadow_trance', present: true },
+      interruptsChannel: true,
+      note: 'the owner set this one',
+    };
+    const off = setDisabled([entry], 0, true);
+    const on = setDisabled(off, 0, false);
+    expect(on[0]).toEqual(entry);
+    // BYTE-IDENTICAL, not merely equal: a stored list is compared as JSON.
+    expect(JSON.stringify(on[0])).toBe(JSON.stringify(entry));
+  });
+
+  it('leaves the other entries alone, and refuses an index out of range', () => {
+    const entries: readonly AplEntry[] = [
+      { abilityId: 'shadow_bolt' },
+      { abilityId: 'corruption' },
+    ];
+    const off = setDisabled(entries, 1, true);
+    expect(off[0]).toBe(entries[0]);
+    expect(off[1].disabled).toBe(true);
+
+    expect(setDisabled(entries, 5, true)).toBe(entries);
+    expect(setDisabled(entries, -1, true)).toBe(entries);
+  });
+
+  it('is never offered to the rotation, and does not make a channel poll', () => {
+    /*
+     * ========================================================================
+     * FILTERED IN `compileRotation` RATHER THAN CHECKED IN `selectAction`, and
+     * the second half of this assertion is why.
+     *
+     * `PriorityRotation` computes `interruptsChannels` ONCE in its constructor,
+     * so a check at selection time would leave a switched-off interrupting
+     * entry still making the actor poll its channel every 100ms. That is the
+     * cost `Rotation.interruptsChannels` exists to avoid and it is invisible:
+     * the combat log is byte-identical and only `eventsProcessed` moves, which
+     * is exactly how the same mistake was found before.
+     * ========================================================================
+     */
+    const list: AplList = {
+      name: 'probe',
+      entries: [
+        { abilityId: 'shadow_bolt' },
+        { abilityId: 'corruption', disabled: true, interruptsChannel: true },
+      ],
+    };
+    const rotation = compileRotation(list);
+    expect(rotation.interruptsChannels).toBe(false);
+
+    // And the live entry is still there: this drops one, not the list.
+    const bare = compileRotation({ name: 'probe', entries: [{ abilityId: 'shadow_bolt' }] });
+    expect(rotation.name).toBe(bare.name);
+  });
+
+  it('survives a save and a load, with no migration', () => {
+    /*
+     * ABSENT MEANS ACTIVE, which is what makes this need no format bump: a
+     * profile saved before the field existed has no `disabled` key and behaves
+     * exactly as it did. What has to be checked is the other direction --
+     * `validateProfile` REBUILDS the profile field by field, and this project
+     * has had two fields silently dropped there. The rotation's entries are
+     * spread rather than named, so this rides along; the test is what says so.
+     */
+    const profile = PRESETS_BY_ID.get('warlock_smds')!.build();
+    const withOff = {
+      ...profile,
+      rotation: { ...profile.rotation, entries: setDisabled(profile.rotation.entries, 0, true) },
+    };
+
+    const parsed = parseProfile(serializeProfile(withOff));
+    expect(parsed.ok).toBe(true);
+    if (!parsed.ok) return;
+    expect(parsed.profile.rotation.entries[0].disabled).toBe(true);
+    expect(parsed.profile).toEqual(withOff);
   });
 });

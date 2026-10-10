@@ -93,6 +93,27 @@ export function setInterrupts(
   });
 }
 
+/**
+ * Switch an entry off, or back on.
+ *
+ * THE FLAG IS DROPPED RATHER THAN STORED AS `false`, which is `setInterrupts`'
+ * rule above and matters for the same reason: a stored list is compared to the
+ * stock one BY VALUE, so an entry switched off and on again has to come back
+ * byte-identical or the list stops matching the build it came from.
+ */
+export function setDisabled(
+  entries: readonly AplEntry[],
+  index: number,
+  disabled: boolean,
+): readonly AplEntry[] {
+  if (index < 0 || index >= entries.length) return entries;
+  return entries.map((entry, at) => {
+    if (at !== index) return entry;
+    const { disabled: _dropped, ...rest } = entry;
+    return disabled ? { ...rest, disabled: true } : rest;
+  });
+}
+
 export function setCondition(
   entries: readonly AplEntry[],
   index: number,

@@ -1768,30 +1768,26 @@ button:disabled {
 }
 
 /*
- * The chosen race's four traits, under the Race selector.
+ * An APL entry that has been switched off.
  *
- * A DEFINITION LIST IN EVERYTHING BUT MARKUP: the trait's name, then its
- * tooltip. `white-space: normal` is set explicitly because `.muted` is used
- * mostly for short inline spans elsewhere and a four-line tooltip needs to
- * wrap rather than run.
+ * DIMMED RATHER THAN HIDDEN, which is the whole point of the control: the line
+ * stays where it is, in its position, with its condition intact, and simply
+ * does not run. Hiding it would be the ✕ with extra steps.
+ *
+ * THE CONTROLS STAY AT FULL OPACITY, because the button that switches it back
+ * on is one of them -- dimming the row's own escape hatch is how a disabled
+ * state becomes a trap.
  */
-.racial-traits {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 0.4rem;
+.apl-entry-off > .apl-rank,
+.apl-entry-off > .apl-body {
+  opacity: 0.4;
 }
 
-.racial-traits li {
-  display: flex;
-  flex-direction: column;
-  gap: 0.1rem;
-  font-size: 0.85rem;
-  line-height: 1.35;
+.apl-entry-off > .apl-body .apl-ability {
+  text-decoration: line-through;
 }
 
-.racial-traits .muted {
-  white-space: normal;
+.apl-toggle {
+  /* Narrower than the movers: one glyph, no label. */
+  min-width: 1.9rem;
 }

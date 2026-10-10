@@ -1,5 +1,6 @@
 import { resolveCombatStyle, resolveStance } from '../game/character';
 import { aplFor } from '../game/rotations/rotationFor';
+import { withoutOtherRacials } from '../game/rotations/racialCooldowns';
 import type { AplList } from '../game/rotations/apl';
 import type { CharacterProfile, StoredRotation } from './CharacterProfile';
 
@@ -56,14 +57,24 @@ export function defaultRotationFor(profile: CharacterProfile): StoredRotation {
   };
 }
 
-/** The stock list for a build, or undefined where there is none. */
+/**
+ * The stock list for a build, or undefined where there is none.
+ *
+ * NARROWED BY RACE, which `aplFor` cannot do: it is keyed by class, style,
+ * stance and talents, and the five racial cooldowns belong to none of those.
+ * Every list names all four free ones because the shared constant is spread
+ * into lists that belong to no race -- and a build only ever learns whichever
+ * its own race grants, so the rest are entries a person reading the panel
+ * cannot act on. See `withoutOtherRacials`.
+ */
 export function stockListFor(profile: CharacterProfile): AplList | undefined {
   const style = resolveCombatStyle(profile.character.characterClass, profile.character.combatStyle);
   const stance =
     profile.character.characterClass === 'warrior'
       ? resolveStance(style, profile.character.stance)
       : undefined;
-  return aplFor(profile.character.characterClass, style, stance, profile.talents);
+  const list = aplFor(profile.character.characterClass, style, stance, profile.talents);
+  return list ? withoutOtherRacials(list, profile.character.race) : undefined;
 }
 
 /**
@@ -78,9 +89,24 @@ export function stockListFor(profile: CharacterProfile): AplList | undefined {
 export function syncDefaultRotation(profile: CharacterProfile): CharacterProfile {
   if (profile.rotation.source === 'custom') return profile;
   const stock = defaultRotationFor(profile);
-  // Unchanged is the common case by far, and returning the SAME OBJECT keeps
-  // React's reference equality useful for everything downstream.
-  if (stock.name === profile.rotation.name) return profile;
+  /*
+   * COMPARED BY CONTENTS AND NOT BY NAME ALONE, WHICH IS A CHANGE AND IS WHAT
+   * RACE MADE NECESSARY.
+   *
+   * The name identifies which stock list applies, and for class, style, stance
+   * and talents that was the whole question -- a different build means a
+   * different list and therefore a different name. RACE does not work that way:
+   * an Orc Warrior and a Gnome Warrior run the same NAMED list with different
+   * racial entries in it, so a name comparison would have left an Orc's Blood
+   * Fury in the list after somebody changed them to a Gnome, and left Eureka!
+   * out.
+   *
+   * Unchanged is still the common case by far and still returns the SAME
+   * OBJECT, which keeps React's reference equality useful downstream --
+   * `withoutOtherRacials` returns its argument when it has nothing to drop for
+   * the same reason.
+   */
+  if (sameRotation(stock, profile.rotation)) return profile;
   return { ...profile, rotation: stock };
 }
 
@@ -97,4 +123,21 @@ export function rotationMatchesBuild(profile: CharacterProfile): boolean {
   if (profile.rotation.source === 'default') return true;
   const stock = stockListFor(profile);
   return (stock?.name ?? '') === profile.rotation.name;
+}
+
+/**
+ * Whether two stored rotations are the same list.
+ *
+ * BY VALUE, THROUGH JSON, which is enough because a `StoredRotation` is exactly
+ * what gets written to a file: plain data, no closures, no undefined-versus-
+ * absent ambiguity that `JSON.stringify` does not already resolve the same way
+ * on both sides. `aplEditing.ts` relies on the identical property -- that a
+ * list round-trips byte-identically -- so this is the same promise read back.
+ *
+ * KEY ORDER IS NOT A RISK HERE, because both sides are built by the same code
+ * from the same declarations: one is `defaultRotationFor` and the other was
+ * `defaultRotationFor` the last time this ran.
+ */
+function sameRotation(a: StoredRotation, b: StoredRotation): boolean {
+  return a.name === b.name && JSON.stringify(a.entries) === JSON.stringify(b.entries);
 }

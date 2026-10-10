@@ -2,7 +2,7 @@ import { useRef, useState } from 'react';
 import type { ChangeEvent, ReactNode } from 'react';
 import type { CharacterProfile, ValidationIssue } from '../../profiles';
 import { downloadProfile, readProfileFile } from '../profileFile';
-import type { CharacterSelection, CombatStyleId, RaceId } from '../../game/character';
+import type { CharacterSelection, CombatStyleId } from '../../game/character';
 import { startingEquipmentFor } from '../../game/items/startingSets';
 import { abilitiesForClass } from '../../game/abilities/abilitiesForClass';
 import {
@@ -21,7 +21,6 @@ import {
   isTankBuild,
   resolveStance,
 } from '../../game/character';
-import { racialsFor } from '../../game/racials';
 import { TextField } from '../components/Field';
 import { OptionGroup } from '../components/OptionGroup';
 import { Panel } from '../components/Panel';
@@ -316,8 +315,6 @@ export function CharacterPanel({
         onChange={(next) => applyChange({ race: next })}
       />
 
-      <RacialTraits race={selection.race} />
-
       <OptionGroup
         label="Class"
         options={classesForRace(selection.race)}
@@ -486,48 +483,5 @@ function ConfirmedCharacter({
       {issues}
       {fileChooser}
     </section>
-  );
-}
-
-
-/**
- * What the chosen race brings, in the client's own words.
- *
- * ============================================================================
- * UNDER THE RACE SELECTOR AND NOT IN A PANEL OF ITS OWN, because it is not a
- * choice: a racial is not selectable the way a raid buff or a consumable is.
- * Race is already a required field and the base stats table is already keyed by
- * it, so the traits arrive with the race and the only question a person has is
- * "what did picking this one get me".
- *
- * IT SAYS NOTHING ABOUT WHAT IS SIMULATED, which is the ruleset owner's
- * standing decision rather than an omission. The GUI pass removed every
- * "equipped but not simulated" list from the interface -- the Gear panel's, the
- * Talent panel's two, the Raid buffs panel's and the Encounter panel's caveat --
- * on the instruction that this reporting is for the repository and not for
- * somebody running a sim. So this shows the four tooltips the game shows and
- * annotates none of them; `RACIALS` still carries every `unmodelled` reason and
- * `tools/` is what reads them.
- *
- * ALL FOUR, including the ones this simulator ignores. Showing only the three
- * that do something would be a different kind of claim -- that the race HAS
- * three traits -- and a reader comparing the panel against the game would find
- * one missing with nothing to explain it.
- * ============================================================================
- */
-function RacialTraits({ race }: { readonly race: RaceId }) {
-  const traits = racialsFor(race);
-  return (
-    <div className="field">
-      <span className="field-label">Racial traits</span>
-      <ul className="racial-traits">
-        {traits.map((trait) => (
-          <li key={trait.id}>
-            <strong>{trait.name}</strong>
-            <span className="muted">{trait.text}</span>
-          </li>
-        ))}
-      </ul>
-    </div>
   );
 }

@@ -30,7 +30,26 @@ type Condition = (
  * ----------------------------------------------------------------------------
  */
 export function compileRotation(list: AplList): PriorityRotation {
-  return new PriorityRotation(list.name, list.entries.map(compileEntry));
+  /*
+   * A SWITCHED-OFF ENTRY NEVER REACHES THE ROTATION AT ALL, which is the only
+   * place this can be honoured safely.
+   *
+   * --------------------------------------------------------------------------
+   * NOT A CHECK INSIDE `selectAction`, which is the obvious alternative and is
+   * worse in two ways: it would ask the question on every entry of every
+   * decision for a flag almost nothing sets, and `PriorityRotation` computes
+   * `interruptsChannels` from its entries ONCE in the constructor -- so a
+   * disabled interrupting entry would still make the actor poll its channel
+   * every 100ms. That is the cost `Rotation.interruptsChannels` exists to
+   * avoid, and it is invisible: the combat log is byte-identical and only
+   * `eventsProcessed` moves, which is how the same mistake was found before.
+   *
+   * Filtering here means the rotation is built as though the entry were not
+   * there, which is exactly what switching it off is supposed to mean.
+   * --------------------------------------------------------------------------
+   */
+  const live = list.entries.filter((entry) => entry.disabled !== true);
+  return new PriorityRotation(list.name, live.map(compileEntry));
 }
 
 export function compileEntry(entry: AplEntry): PriorityEntry {
