@@ -103,8 +103,21 @@ decoding. Seven of twenty did, and **three of the four removed talents are in no
 patch note at all** -- two of them with points spent in every Paladin build. The
 notes are a guide to what is intended, not a list of what changed.
 
-**THE UI HAS NOT HAD A PASS OF ITS OWN** and is the next piece of work:
-[docs/handoff/gui.md](docs/handoff/gui.md).
+**THE UI HAS HAD TWO PASSES NOW, AND THIS LINE CLAIMED IT HAD HAD NONE.** It
+read "THE UI HAS NOT HAD A PASS OF ITS OWN and is the next piece of work" while
+`docs/handoff/gui.md`'s own header read "THE FIRST PASS IS DONE, AND THIS
+DOCUMENT IS NOW ITS RECORD" -- two files disagreeing about the same fact, with
+the stale one at the top of the file everybody reads first. **A POINTER AT A
+DOCUMENT IS A CLAIM ABOUT THAT DOCUMENT AND EXPIRES LIKE ANY OTHER**, which is
+this file's own rule about an `unmodelled` reason applied one level up.
+
+Where it stands: the first pass settled the layout, the collapsing panels and
+the preset rail. The second built **Save and Load**, and the **Action Priority
+List** -- a panel, an editor, and the list stored on the profile.
+[docs/handoff/gui.md](docs/handoff/gui.md) is the record of both, and
+[docs/apl.md](docs/apl.md) is the APL's own. What is left is named at the end
+of each: Import still does nothing, nothing writes to `localStorage`, and eight
+condition kinds are shown but not editable.
 
 > **LAND THE SHARED ENGINE PIECES FIRST, BEFORE DISPATCHING ANY CLASS WORK.** The
 > owner's instruction after the first round of nine parallel dives, and it is about
@@ -1465,19 +1478,90 @@ stock list is. [docs/apl.md](docs/apl.md).
   and no figure can move. Twenty-five hand-written copies would be
   twenty-five chances to store the wrong one -- which is the mistake
   `rotationIds.test.ts` exists for.
-- **AN EDIT IS CHECKED BY ROUND-TRIPPING THE CLAUSES, NOT BY RENDERING THEM.**
-  The panel breaks a condition into clauses and reassembles it, and a clause
-  that reassembles into a DIFFERENT condition is a rotation that changed because
-  somebody opened a panel. `aplEditing.test.ts` asserts every editable condition
-  in every stock list survives unchanged -- it caught `!auras.has(id)` and
-  `remainingMs(id) <= 0` being collapsed into one option, which differ on an
-  aura that is present with nothing left and which the stock lists both use.
+- **AN EDIT IS CHECKED BY ROUND-TRIPPING THE CONDITION, NOT BY RENDERING IT.**
+  The panel parses a condition into a tree and emits it again, and a condition
+  that comes back DIFFERENT is a rotation that changed because somebody opened a
+  panel. `aplEditing.test.ts` asserts all 132 conditions in the stock lists
+  survive unchanged -- it caught `!auras.has(id)` and `remainingMs(id) <= 0`
+  being collapsed into one option, which differ on an aura that is present with
+  nothing left and which the stock lists both use.
+  **IT COVERED 81 OF 132 AT FIRST AND SKIPPED WHAT THE EDITOR COULD NOT DRAW**,
+  which is the shape to avoid: a round-trip test that skips the hard cases
+  asserts nothing about them. A leaf with no controls is a `fixed` node now --
+  kept verbatim, shown as its sentence -- so there is nothing left to skip.
 - **A LIST NAMING AN ABILITY THE BUILD LACKS STILL LOADS**, which is the
   `raidBuffs` rule rather than the `equipment` one: the engine already skips
   such an entry, and that is what lets one list serve several builds. **A
   BUILTIN CONDITION IS THE EXCEPTION AND IS CHECKED AT LOAD**, because
   `compileCondition` THROWS on an unknown id -- a profile naming one would load
   cleanly and fail when the fight starts, which is the worst place to find out.
+
+### Editing a priority list
+
+The panel parses a condition into a TREE -- a group matching `all of` or
+`any of`, holding clauses and nested groups, with a `not` flag on every node --
+and emits it again. `ui/panels/aplEditing.ts` holds that apart from the
+component, because it is the part that can be wrong.
+
+- **A FLAT LIST OF ANDed CLAUSES LOCKED 51 OF 132 CONDITIONS**, which is what
+  the first editor was. One `not` anywhere, or one `any`, made the WHOLE
+  condition read-only -- the Rogue's pooling gates, the Paladin's entire seal
+  twist, the Mage's Scorch, the Priest's hold band.
+- **AND A LEAF THE PANEL CANNOT DRAW NO LONGER POISONS THE REST**, which turned
+  out to be the larger half and was not the thing asked for. A builtin or a
+  swing-timer read is ONE `fixed` row inside a tree that is otherwise fully
+  editable; before, one of them made everything around it read-only too.
+- **AN EDITOR THAT CANNOT EXPRESS SOMETHING MUST SAY SO RATHER THAN SIMPLIFY
+  IT.** A `fixed` node is shown as its sentence, can be negated, moved or
+  removed, and cannot be rewritten. Silently redrawing the Rogue's
+  `not(poolingForAmbush)` as something the controls could hold would change the
+  rotation with nothing on screen to say so.
+- **`not` IS A FLAG AND A DOUBLE NEGATION IS KEPT WHOLE.** `not(not(x))` and
+  `x` mean the same thing and are not the same DATA, and the editor's one
+  promise is that opening a condition and changing nothing leaves it
+  byte-identical -- so a flag that cannot hold two negations keeps the whole
+  thing as a fixed leaf rather than collapsing it.
+- **A NEW ENTRY GOES AT THE BOTTOM**, the only position that cannot change what
+  the list already does: an unconditional entry anywhere else is a FLOOR under
+  everything below it. **Moving past either end is a no-op rather than a wrap**,
+  because position IS priority.
+- **AND THE STRICT COMPARISONS ARE NOT DECORATION.** Leaving `below` and `above`
+  out of the editor locked every stock condition using one -- "under 5 stacks",
+  "under 15% mana" -- by itself.
+
+### Offering a buff by name
+
+`game/auras/auraCatalog.ts` derives what a class can be asked about, so a
+condition is built from a dropdown rather than by typing an aura id.
+
+- **A HALF-TYPED ID IS WORSE THAN A WRONG ONE.** An aura that does not exist is
+  never present, so `is up` is permanently FALSE and `has run out` is
+  permanently TRUE -- one silently disables an entry and the other silently
+  ungates it, with nothing on screen to say which. A dropdown cannot produce
+  either.
+- **FINDING AURAS BY SHAPE MISSES EVERY ONE BUILT BY A FACTORY, AND THAT IS 20
+  OF THEM.** The catalog walks a module's exports and keeps whatever looks like
+  an `AuraDefinition`, which finds every aura declared as a CONSTANT and none
+  returned by a function. Rip is `ripAura(comboPoints)` because its damage
+  depends on the points spent; so are Deep Wounds, Ignite, Flurry, Blood Craze,
+  Expose Armor, Deadly Poison, Shadow Weaving and thirteen more. Each module
+  exports a `CATALOG_AURAS` list now, built by calling its own factories --
+  **the representative argument belongs beside the factory**, because the
+  catalog would otherwise be guessing and would break from a distance the day a
+  factory gained a required parameter.
+- **NOTHING IN THE SUITE COULD HAVE CAUGHT IT**, which is why the test for it
+  reads the SOURCE. Every earlier assertion was about ids the stock LISTS
+  mention, and no stock list mentions Rip's aura -- the Cat gates Rip on combo
+  points. `auraCatalog.test.ts` scans `game/auras/*.ts` for every aura
+  definition and fails naming the aura and the file.
+- **TALENT AURAS ARE NARROWED BY THE CLASS'S OWN TREE.** `TALENT_AURAS` is keyed
+  by TALENT id and talent ids are unique only WITHIN a class, so the record
+  alone cannot attribute an entry -- without `talentsForClass` every class was
+  offered the Warrior's Anger Management.
+- **BOTH GROUPS ARE ALWAYS OFFERED, ORDERED RATHER THAN FILTERED.** Showing only
+  debuffs for a target clause would be tidier and wrong: the Druid's Bear list
+  asks whether the TARGET has the WARRIOR's Demoralizing Shout. Hiding one a
+  list can legitimately name sends somebody back to hunting for ids.
 
 ### Saving and loading a profile
 
@@ -3096,6 +3180,29 @@ It is the same failure as a reason that describes a working half: a true,
 specific, written-down statement that nobody treats as a question.
 
 **When a fix moves nothing in the suite, that is a statement about the suite.**
+
+**AND THREE BUGS IN ONE ROUND WERE FOUND BY THE OWNER USING THE APP, EACH
+UNREACHABLE BY A TEST FOR A DIFFERENT REASON.** Worth reading together, because
+the three failure modes are distinct and all three recur:
+
+| what | why no test could see it |
+| --- | --- |
+| an aura missing from a dropdown | every assertion keyed off ids the stock LISTS mention, and no stock list mentions that aura |
+| a channel polling for an interrupt nobody wants | the combat log was BYTE-IDENTICAL; only `eventsProcessed` moved |
+| an interrupt firing while its ability was on cooldown | the only list using the feature happened to avoid it |
+
+**THE FIRST IS A COVERAGE SHAPE**: a check derived from what the project already
+USES cannot find what it does not use yet, so the test that replaced it reads
+the SOURCE instead. **THE SECOND IS A MEASURE SHAPE**: a change that costs only
+TIME is invisible to every check that compares outcomes, which is why
+`rotation_fingerprint.ts` prints the event count beside the hash. **THE THIRD IS
+A SAMPLE SHAPE**: one caller is not a sample -- a list that happens to avoid a
+bug is not a list that proves there is none.
+
+**AND ALL THREE NEEDED A CONTROL THAT DID NOT EXIST YET.** None could fire on a
+stock list; each needed somebody to ask the app for something no preset asks
+for. **Shipping an editor made the engine testable by hand**, and that is worth
+more than any one of the three fixes.
 
 **AND NONE OF THE THREE SEES A MECHANIC THAT IS WIRED UP AND POINTING THE WRONG
 WAY.** `coefficient_probe` asks whether damage responds to a stat,
