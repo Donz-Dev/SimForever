@@ -355,19 +355,57 @@ describe('what selecting one does to the priority list', () => {
     expect(ids.indexOf('shield_wall_cast')).toBeLessThan(ids.indexOf('major_healing_potion'));
   });
 
-  it('leaves every preset with no consumable entry, so no figure can move', () => {
+  it('gives every preset an entry for exactly what it selected, and no other', () => {
     /*
-     * THE OTHER HALF OF CONTAINMENT, read off the presets themselves rather
-     * than off a class. `withStockRotations` runs `syncDefaultRotation` on each
-     * preset's built profile, so this is what the measured 25 actually run.
+     * ==========================================================================
+     * THIS ASSERTED THE OPPOSITE FOR ONE COMMIT, AND BOTH VERSIONS WERE RIGHT.
+     *
+     * While no preset had selected anything it read "no preset carries a
+     * consumable entry", which was the containment check for the commit that
+     * built the mechanism: all 75 combat-log hashes were unchanged because every
+     * build ran the list it had always run. The owner then asked for each preset
+     * to get a sensible one, so the same property inverted -- and the thing
+     * worth pinning is not which it is but that the two SIDES AGREE.
+     *
+     * WHAT IT ACTUALLY GUARDS is the join between a selection and a list.
+     * `withStockRotations` runs `syncDefaultRotation` on each preset's built
+     * profile, so this is what the measured 25 really run -- and the two ways it
+     * can go wrong are both silent: an entry with no selection is an ability the
+     * build does not have and is skipped without a word, and a selection with no
+     * entry is a potion that is never drunk. Either reads as a profile that is
+     * simply a bit worse than expected.
+     * ==========================================================================
      */
     for (const preset of PROFILE_PRESETS) {
       const profile = preset.build();
-      const found = profile.rotation.entries
+      const selected = consumableAbilities(
+        profile.character.characterClass,
+        profile.consumables,
+      ).map((ability) => ability.id);
+      const inList = profile.rotation.entries
         .map((entry) => entry.abilityId)
         .filter((id) => CONSUMABLE_ABILITY_IDS.has(id));
-      expect(found, preset.id).toEqual([]);
+      expect(inList.slice().sort(), preset.id).toEqual(selected.slice().sort());
     }
+  });
+
+  it('gives all 25 presets a Potion, and 23 of them an Other', () => {
+    /*
+     * THE COUNT, so that a preset losing its row is a failure rather than a
+     * quiet omission -- which is the argument `update_baseline_table.py` makes
+     * about asserting the measured set and the table's set are the same 25.
+     *
+     * TWO PRESETS HAVE NO `other` AND BOTH ARE CORRECT: 2H Arms and DW Fury
+     * restore no pool at all. They have no mana and no energy, nothing attacks
+     * them, and every Other candidate measured 0.00 casts on both -- a genuine
+     * empty, like the ranged Hunter's Weapon Effect.
+     */
+    const withPotion = PROFILE_PRESETS.filter((preset) => preset.build().consumables.potion);
+    const withOther = PROFILE_PRESETS.filter((preset) => preset.build().consumables.other);
+    expect(withPotion).toHaveLength(25);
+    expect(withOther.map((preset) => preset.id)).not.toContain('two_hand_arms');
+    expect(withOther.map((preset) => preset.id)).not.toContain('dw_fury');
+    expect(withOther).toHaveLength(23);
   });
 });
 

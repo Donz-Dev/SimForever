@@ -219,20 +219,40 @@ export const CONSUMABLE_COOLDOWNS: readonly AplEntry[] = [
  * where that list already puts the things that answer "I am about to die". They
  * are gated on the same kind of condition and compete for the same moment.
  *
- * AND THE POSITION IS FREE IN THE OTHER TWENTY-TWO LISTS, which is what makes
- * one placement serviceable everywhere. With `targetAttacks` off health never
- * leaves maximum, so the condition is permanently FALSE, so the entry is never
- * the first castable one and is not a floor under anything. An unreachable
- * condition high in a list costs precisely nothing -- which is the one case
- * where this project's "a new entry goes at the bottom" rule has nothing to
- * protect.
+ * AND THE POSITION IS NEARLY FREE IN THE OTHER TWENTY-TWO LISTS, because with
+ * `targetAttacks` off health never leaves maximum, the condition is permanently
+ * false, and an unreachable condition high in a list is not a floor under
+ * anything. That is the one case where this project's "a new entry goes at the
+ * bottom" rule has nothing to protect.
+ *
+ * ============================================================================
+ * "NEARLY", BECAUSE ONE PROFILE HEALS ITSELF INTO A LOSS AND IT IS NOT A TANK.
+ *
+ * The first version of this said the heals "never fire against a target that
+ * does not attack, which is 23 of the 25 presets". Measured, it is 24 of 25 and
+ * the exception is the FIRELOCK, where a healing potion is **-28.4 DPS and a
+ * Healthstone -26.2**, both REAL, both drunk once.
+ *
+ * WHAT COSTS IT IS A GLOBAL COOLDOWN AND NOT ANY DAMAGE. A Warlock spends HEALTH
+ * for mana, and Life Tap's `canCast` asks whether there is health to spend and
+ * room in the mana pool -- never whether the mana is WANTED. So 1,400 restored
+ * health buys 1.63 more Life Taps, each of which costs a global cooldown, and
+ * the list casts **1.43 fewer Incinerates** for mana it did not need: mana
+ * GAINED rises 12,873 to 14,217 while mana SPENT falls 7,583 to 7,206.
+ * `tools/probe_firelock_heal.ts` is that measurement.
+ *
+ * SO THE HEALS ARE NOT "WORTH NOTHING OFF A TANK", THEY ARE WORTH NEGATIVE ON A
+ * BUILD THAT TRADES HEALTH FOR MANA -- which is why neither Warlock preset is
+ * given one. The entry stays in every list because the same list serves a build
+ * whose target swings back; what changed is the note, which was a prediction
+ * dressed as a fact.
  * ============================================================================
  */
 export const CONSUMABLE_HEALS: readonly AplEntry[] = [
   {
     abilityId: 'major_healing_potion',
     condition: selfHealth('atMost', POTION_HEALTH_FRACTION),
-    note: `Under ${POTION_HEALTH_FRACTION * 100}% health. Never fires against a target that does not attack, which is 23 of the 25 presets.`,
+    note: `Under ${POTION_HEALTH_FRACTION * 100}% health. For a tank: 24 of the 25 presets never drop that low, and on the Firelock -- which Life Taps itself down -- healing is worth -28.4, because it buys Life Taps that cost global cooldowns.`,
   },
   {
     abilityId: 'healthstone',

@@ -149,7 +149,7 @@ export function ConsumablesPanel({ profile, onChange }: ConsumablesPanelProps) {
   );
 }
 
-function ConsumableRow({
+export function ConsumableRow({
   category,
   characterClass,
   chosenId,

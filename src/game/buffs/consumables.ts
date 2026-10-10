@@ -713,7 +713,59 @@ export const CONSUMABLE_ABILITY_IDS: ReadonlySet<string> = new Set(
  * because a Hunter shot carries no spell coefficient. A Rogue takes no Spell
  * Power either: its poisons are 19% of the Venom build's damage and they scale
  * with ATTACK power.
- * ----------------------------------------------------------------------------
+ *
+ * ============================================================================
+ * AND THE TWO MID-FIGHT ROWS FOLLOW THE SAME RULE, MEASURED RATHER THAN DERIVED.
+ *
+ * The twelve above could be read off a table: the conversion table decides
+ * Blasted Lands, the measured damage school decides School Spell Power. A potion
+ * cannot be -- "forty attack power for thirty seconds" against "sixty strength
+ * for twenty" against "2,250 mana" is not an arithmetic question -- so every
+ * candidate was run on every preset. `tools/probe_consumable_choice.ts`.
+ *
+ * WHAT CAME OUT IS ONE SENTENCE: **the Other slot takes the pool the build
+ * actually runs out of, and the Potion slot takes the damage buff.** Because the
+ * two categories are not exclusive with each other, no build has to choose
+ * between sustain and damage -- which is why no mana potion is selected
+ * anywhere: the Demonic Rune covers mana from the other category and leaves the
+ * Potion slot free for something that hits.
+ *
+ *   POTION, by what the build's damage scales with:
+ *     mighty_rage_potion         Warriors, Cat, Bear   +13.3 to +35.2
+ *     major_frenzy_potion        Rogues, Hunters       +1.8 to +11.2
+ *     major_spellblasting_potion every caster, both    +1.8 to +18.2
+ *                                Paladin hybrids
+ *
+ *   OTHER, by which pool it empties:
+ *     thistle_tea   the four Rogues and the Cat      +30.7 to +38.0
+ *     healthstone   the three tanks                  health is the pool
+ *     demonic_rune  every other build with mana      a safety net
+ *     (nothing)     2H Arms and DW Fury              no pool to restore
+ *
+ * MIGHTY RAGE BEATS FRENZY WHEREVER IT IS LEGAL, AND NOT BY A LITTLE: sixty
+ * strength is 120 attack power to a Warrior or a Druid against Frenzy's forty,
+ * and it lasts twenty seconds against thirty -- 2,400 attack-power-seconds
+ * against 1,200, plus the rage. Measured at +35.2 against +5.2 on DW Fury.
+ *
+ * NO MANA POTION AND NO MENDER'S POTION IS SELECTED ANYWHERE, and both are real
+ * answers rather than oversights. The Mender's Potion does nothing at all. The
+ * mana potion is never the best use of the slot, because the Rune is in the
+ * other category -- and at sixty seconds most casters never reach its gate
+ * anyway: it fires 0.00 times on the Shockadin and the Moonkin, 0.01 on the
+ * Frostfire Mage and 1.00 on LW Ranged, which is the one build that genuinely
+ * empties its pool.
+ *
+ * THE RUNE IS KEPT WHERE IT RARELY FIRES, which is the Evocation decision: the
+ * owner ruled that an entry which almost never comes up is "intended" as a
+ * safety net that costs nothing and pays out in a fight that goes differently
+ * from the ones measured. A caster carries a Demonic Rune.
+ *
+ * AND NEITHER WARLOCK TAKES A HEAL, which is the one row a reader would get
+ * wrong from the archetype. On the Firelock a healing potion is **-28.4 DPS**:
+ * a Warlock trades health for mana, Life Tap asks whether there is health to
+ * spend rather than whether the mana is wanted, so healing buys Life Taps that
+ * cost global cooldowns. See `CONSUMABLE_HEALS`.
+ * ============================================================================
  */
 
 /** Everything a build with no mana and no spells can read. */
@@ -737,6 +789,19 @@ export const STRENGTH_CONSUMABLES: ConsumableSelection = {
   ...MELEE_COMMON,
   flask: 'flask_hit_points',
   blasted_lands: 'blasted_strength',
+  /*
+   * AND THE POTION IS MIGHTY RAGE FOR ALL FIVE OF THEM, which is the one
+   * mid-fight choice this archetype does not have to think about: sixty
+   * strength is 120 attack power to a Warrior or a Druid against the Frenzy
+   * Potion's forty, over twenty seconds against thirty, PLUS 45 to 75 rage.
+   * Measured +26.8 on 2H Arms, +35.2 on DW Fury, +13.3 on Prot Warr, +15.7 on
+   * the Cat and +24.6 on the Bear, against +2.0 to +5.2 for Frenzy.
+   *
+   * THE `other` SLOT IS NOT HERE, because these five do not agree about it: the
+   * Cat empties an energy bar, the two tanks lose health, and the two damage
+   * Warriors have no pool to restore at all. Each sets its own.
+   */
+  potion: 'mighty_rage_potion',
 };
 
 /**
@@ -749,6 +814,19 @@ export const AGILITY_CONSUMABLES: ConsumableSelection = {
   ...MELEE_COMMON,
   flask: 'flask_hit_points',
   blasted_lands: 'blasted_agility',
+  /*
+   * THE FRENZY POTION, because a Rogue may not drink Mighty Rage -- the owner's
+   * table says "(Warrior, Druid)" -- and forty attack power is the only thing
+   * in the category any of these six reads. Measured +1.8 to +11.2, which is
+   * small and is the whole of what is on offer: the only other non-zero cell is
+   * the Spellblasting Potion, and neither a Rogue nor a Hunter has a point of
+   * spell-power-scaled damage for it to raise.
+   *
+   * THE `other` SLOT IS NOT HERE EITHER, and for this row the reason is a class
+   * gate rather than a preference: Thistle Tea is "(Rogue, Druid)", so the four
+   * Rogues take it and the two Hunters -- who share this row -- cannot.
+   */
+  potion: 'major_frenzy_potion',
 };
 
 /**
@@ -770,9 +848,34 @@ const CASTER_COMMON: ConsumableSelection = {
   food: 'food_spell_power',
 };
 
-/** A caster's row, with the school its own damage actually uses. */
+/**
+ * A caster's row, with the school its own damage actually uses.
+ *
+ * ----------------------------------------------------------------------------
+ * THE MID-FIGHT PAIR IS THE SAME FOR ALL NINE CASTERS and is the clearest
+ * instance of the rule: the Potion slot takes the damage buff and the Other
+ * slot takes the pool.
+ *
+ * SPELLBLASTING, measured +1.8 to +18.2 and the only candidate any of them can
+ * read -- a Frenzy Potion's attack power reaches nothing a caster casts, and it
+ * measured between -6.7 and +7.5, which is noise either side of zero.
+ *
+ * AND THE RUNE RATHER THAN THE MANA POTION, because the two categories are not
+ * exclusive: the Rune covers mana from `other` and leaves `potion` free for
+ * something that hits. **It rarely fires at sixty seconds** -- 0.00 times on the
+ * Moonkin, 0.01 on the Frostfire Mage and SM/DS, 0.19 on Fire, 0.33 on the
+ * Elemental Shaman -- and it is kept anyway, which is the Evocation decision:
+ * the owner ruled an almost-never-fired safety net "intended", because it costs
+ * nothing and pays out in a fight that goes differently from the ones measured.
+ * ----------------------------------------------------------------------------
+ */
 export function casterConsumables(school: string): ConsumableSelection {
-  return { ...CASTER_COMMON, school_spell_power: school };
+  return {
+    ...CASTER_COMMON,
+    school_spell_power: school,
+    potion: 'major_spellblasting_potion',
+    other: 'demonic_rune',
+  };
 }
 
 /**
@@ -805,6 +908,19 @@ export const RANGED_HUNTER_CONSUMABLES: ConsumableSelection = {
   hit_points: 'hit_points_120',
   armor: 'armor_450',
   food: 'food_agility',
+  /*
+   * THE FRENZY POTION AND THE RUNE, and the Rune is the one row in the project
+   * where it genuinely earns its place rather than sitting there as a safety
+   * net: LW Ranged drinks it ONCE A FIGHT, which is the sentence above about
+   * emptying the pool by the thirty-second mark, measured.
+   *
+   * THE POTION SLOT IS STILL THE DAMAGE BUFF even on the build that runs dry,
+   * because the Rune already covers the mana from a category the Potion is not
+   * exclusive with. Frenzy measured +5.5 on BM and +5.3 on LW Ranged against
+   * the mana potion's +3.4, and the two together are better than either.
+   */
+  potion: 'major_frenzy_potion',
+  other: 'demonic_rune',
 };
 
 /**
@@ -826,6 +942,22 @@ export function hybridConsumables(options: {
 }): ConsumableSelection {
   return {
     flask: 'flask_hit_points',
+    /*
+     * THE SPELLBLASTING POTION FOR ALL FOUR, which is NOT the split the Weapon
+     * Effect above takes and is worth saying so. That row divides them on their
+     * measured physical share -- Retribution and Enhancement take the melee
+     * crit, the two shield Paladins take the spell crit -- and the potion does
+     * not divide at all: +9.1 on Enhancement, +6.6 on Retribution, +7.1 on the
+     * Shockadin and +5.6 on the Protection Paladin, against +1.7 to +8.8 for
+     * Frenzy. Every one of the four prefers it or cannot tell, so one answer
+     * serves them.
+     *
+     * AND THE RUNE, except on the Protection Paladin, which overrides it with a
+     * Healthstone in `presets.ts`: it is the one of the four that is hit back,
+     * so health is the pool it actually empties.
+     */
+    potion: 'major_spellblasting_potion',
+    other: 'demonic_rune',
     weapon_effect: options.meleeWeaponEffect ? 'weapon_melee_crit' : 'weapon_spell_crit',
     strength: 'elixir_strength',
     agility: 'elixir_agility',
