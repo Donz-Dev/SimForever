@@ -66,6 +66,24 @@ const EXPECTED_ORDER = [
   'revenge',
   'thunder_clap',
   'rend_cast',
+  /*
+   * AND THE RACIAL COOLDOWNS, WHICH A TANK LIST PUTS LAST.
+   *
+   * Every other list carries them SECOND, high enough to fire and below
+   * whatever opens the list. A tank list is the exception and for the reason
+   * this file already states about Charge: an entry above a survival cooldown
+   * "would cost a survival cooldown the moment it was needed", and casting a
+   * free off-GCD ability still moves the next decision 100ms out.
+   *
+   * Written out here rather than spread from `RACIAL_COOLDOWNS`, because the
+   * ORDER is what this constant specifies and a spread would pass whatever
+   * that constant said -- the same reason the thirteen above are written out.
+   */
+  'blood_fury',
+  'berserking',
+  'elunes_light',
+  'eureka',
+  'stoneform',
 ];
 
 /**
@@ -352,8 +370,22 @@ describe('Rend, which had never been cast', () => {
     expect(uptime?.uptime ?? 0).toBeGreaterThan(0.3);
   });
 
-  it('stays last, so it fills a gap rather than taking a strike', () => {
-    expect(WARRIOR_SHIELD_DEFENSIVE.entries.at(-1)?.abilityId).toBe('rend_cast');
+  it('stays last of the abilities a Warrior has, so it fills a gap', () => {
+    /*
+     * LAST OF THE WARRIOR'S OWN, not last in the list. The five racial
+     * cooldowns sit below it now -- a tank list puts them at the very bottom so
+     * that nothing can delay a survival cooldown -- and a Warrior build only
+     * knows whichever of them its RACE grants, so they are not entries this
+     * assertion is about.
+     *
+     * Asserted as "nothing of the Warrior's below it" rather than by index,
+     * which is the lesson this file already learned when Charge was inserted at
+     * the top and broke three positional tests.
+     */
+    const ids = WARRIOR_SHIELD_DEFENSIVE.entries.map((entry) => entry.abilityId);
+    const racials = new Set(['blood_fury', 'berserking', 'elunes_light', 'eureka', 'stoneform']);
+    const warriorOwn = ids.filter((id) => !racials.has(id));
+    expect(warriorOwn.at(-1)).toBe('rend_cast');
   });
 });
 

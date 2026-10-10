@@ -1,5 +1,6 @@
 import type { Rotation } from '../../engine';
 import type { AplCondition, AplEntry, AplList } from './apl';
+import { RACIAL_COOLDOWNS, RACIAL_DEFENSIVE_COOLDOWNS } from './racialCooldowns';
 import {
   all,
   any,
@@ -417,6 +418,14 @@ export const WARRIOR_BATTLE: AplList = {
   name: 'Warrior',
   entries: [
   ...OPENERS,
+  /*
+   * THE RACIAL COOLDOWNS, AFTER WHATEVER OPENS THIS LIST.
+   *
+   * Free, off the global cooldown, and skipped in silence by every build
+   * that is not of the race that learns them. BOTH ENDS OF THE LIST WERE
+   * MEASURED AND BOTH WERE WRONG -- see `racialCooldowns.ts`.
+   */
+  ...RACIAL_COOLDOWNS,
   ...CORE_STRIKES,
   ...FILLERS,
   ],
@@ -442,6 +451,14 @@ export const WARRIOR_SHIELD: AplList = {
   name: 'Warrior (Shield)',
   entries: [
   { abilityId: 'execute' },
+  /*
+   * THE RACIAL COOLDOWNS, AFTER WHATEVER OPENS THIS LIST.
+   *
+   * Free, off the global cooldown, and skipped in silence by every build
+   * that is not of the race that learns them. BOTH ENDS OF THE LIST WERE
+   * MEASURED AND BOTH WERE WRONG -- see `racialCooldowns.ts`.
+   */
+  ...RACIAL_COOLDOWNS,
   /*
    * SHIELD SLAM OUTRANKS THE OPENERS, which is the opposite of how the melee
    * list is built, and it is measured rather than reasoned.
@@ -548,6 +565,14 @@ export const WARRIOR_DUAL_WIELD_BERSERKER: AplList = {
    * takes no global cooldown and the stance cast can never fire at all.
    */
   { abilityId: 'bloodrage_cast' },
+  /*
+   * THE RACIAL COOLDOWNS, AFTER WHATEVER OPENS THIS LIST.
+   *
+   * Free, off the global cooldown, and skipped in silence by every build
+   * that is not of the race that learns them. BOTH ENDS OF THE LIST WERE
+   * MEASURED AND BOTH WERE WRONG -- see `racialCooldowns.ts`.
+   */
+  ...RACIAL_COOLDOWNS,
   /*
    * THE PRESET ALREADY OPENS IN BERSERKER STANCE, so this fires zero times --
    * the same shape as the Arms list's Battle Stance entry, and kept for the
@@ -817,7 +842,29 @@ export const WARRIOR_SHIELD_DEFENSIVE: AplList = {
     abilityId: 'rend_cast',
     condition: targetTime('atMost', 0, REND.id),
   },
-  ],
+    /*
+   * THE RACIAL COOLDOWNS LAST, WHICH IS A TANK LIST'S OWN RULE.
+   *
+   * Everywhere else they sit second -- high enough to fire, below whatever
+   * opens the list. A TANK LIST PUTS THEM LAST INSTEAD, and the reason is the
+   * one `protectionRotation.test.ts` already states about Charge: an entry
+   * above a survival cooldown "would cost a survival cooldown the moment it was
+   * needed". A racial is free and off the global cooldown, but casting one
+   * still moves the next decision 100ms out -- and 100ms is not free to a tank
+   * at thirty percent health taking twelve thousand a swing.
+   *
+   * WHAT IT COSTS: the four offensive racials may not fire at all here, because
+   * a tank list rarely falls this far. That is the right trade for a build
+   * whose figure of merit is a DEATH COUNT, and it is worth 0.0 to all three
+   * tank presets either way -- prot_warr and druid_bear are Tauren and
+   * prot_pally is Human, so not one of them learns an active racial. Stoneform
+   * is the one a tank would actually want, and at the bottom it fires when
+   * nothing more pressing can, which is the honest policy for a ten percent
+   * reduction that costs a global cooldown.
+   */
+  ...RACIAL_COOLDOWNS,
+  ...RACIAL_DEFENSIVE_COOLDOWNS,
+],
 };
 
 export const WARRIOR_SHIELD_DEFENSIVE_ROTATION: Rotation = compileRotation(WARRIOR_SHIELD_DEFENSIVE);
@@ -894,6 +941,14 @@ export const WARRIOR_TWO_HAND_BATTLE: AplList = {
    * global cooldown, so it costs the entries below it nothing.
    */
   chargeAtThePull,
+  /*
+   * THE RACIAL COOLDOWNS, AFTER WHATEVER OPENS THIS LIST.
+   *
+   * Free, off the global cooldown, and skipped in silence by every build
+   * that is not of the race that learns them. BOTH ENDS OF THE LIST WERE
+   * MEASURED AND BOTH WERE WRONG -- see `racialCooldowns.ts`.
+   */
+  ...RACIAL_COOLDOWNS,
   /*
    * BLOODRAGE SECOND, on the ruleset owner's instruction: "insert bloodrage in
    * between charge and battle stance."

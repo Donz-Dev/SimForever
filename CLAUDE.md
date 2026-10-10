@@ -36,6 +36,8 @@ npx vite-node tools/enchant_report.ts            # all 25 profiles' enchants, sh
 npx vite-node tools/consumable_report.ts         # all 25 profiles' consumables, the same way
 PROFILE=dw_fury npx vite-node tools/stat_weights.ts        # what a point of each stat is worth
 PROFILE=rogue_combat PLAN=1 npx vite-node tools/stat_weights.ts   # the cap ladder, no fights
+npx vite-node tools/probe_racials.ts             # does each racial MECHANISM do its thing
+npx vite-node tools/probe_racial_worth.ts        # what one race is worth, by RACE SWAP
 ```
 
 The three audits in the middle are AUDITS rather than measurements and none of
@@ -157,6 +159,15 @@ ui  ──▶  simulator  ──▶  engine
 | `simulator` | the only place engine + game + analysis meet. The UI imports from here |
 | `profiles` | versioned JSON character configuration |
 
+**AND `game/racials`, WHICH IS A SEVENTH LAYER OF THE CHARACTER AND NOT A
+TALENT.** `racialBuild` is `talentBuild`'s shape -- a declaration table, a
+builder, and `createPlayer` as the only reader -- and deliberately not part of
+it: a talent has RANKS and a generated values file, so every effect kind there
+carries a `valueIndex` and four talents have been found reading the wrong number
+off a multi-value row. **A racial has no row to index into**, which removes the
+commonest failure mode in the talent layer by construction rather than by care.
+[docs/racials.md](docs/racials.md).
+
 **Rules go in `engine`, numbers go in `game`.** When the engine needs a ruleset
 number it takes it as an injected function or value — `SimulationConfig.attackChances`,
 `StatBlock`'s derivation parameter. See [docs/architecture.md](docs/architecture.md).
@@ -232,6 +243,25 @@ could not. HANDOVER's placeholder figure had drifted the same way, 10 against 9.
 **A note saying a number is derived is not the same as the number being
 re-derived**, which is this file's own recurring failure one level up.
 
+**AND THAT COLUMN COUNTS TALENTS ONLY, WHICH IS NEW AND IS WHY THE ONE-LINER
+BELOW IS PATH-SCOPED.** `game/racials` declares `unmodelled` effects against the
+same union, so the project-wide total is the two sources added and neither figure
+is the other's. Count them apart, because they expire for different reasons: a
+talent's reason expires when the ENGINE gains something, and a racial's expires
+when the OWNER revisits a trait they declined.
+
+```bash
+grep -rhoE "scope: '[a-zA-Z]+'" src/game/racials/ | sort | uniq -c   # 19 declarations
+```
+
+**AND THAT GREP IS 19 WHERE THE CENSUS IS 20, WHICH IS NOT DRIFT.** A grep counts
+DECLARATIONS and the census counts per RACE, and the two Skyborne races SHARE
+three of their four traits -- one declaration each for Walk on Air, Elemental
+Insight and Wind Blessed, the arrangement Crusader already uses for its three
+weapon slots. So Walk on Air's one `positioning` tag is two entries in the
+census. **Said here because two figures that disagree by one is exactly what a
+stale count looks like**, and the difference is structural rather than an error
+in either.
 Adding a member to that union is a scope DECISION and needs the owner, not a
 judgement call while writing a class.
 
@@ -521,6 +551,23 @@ See [docs/combat-tables.md](docs/combat-tables.md).
   `events.schedule` at the current timestamp puts it back on the ordinary path —
   which is why `extraAttack` schedules too. Windfury's special attacks have to
   feed Maelstrom Weapon, and dealt inline they silently would not.
+- **A `dealt` REACTION NEVER SEES A TICK, AND AN EXCEPTION TO THAT NEEDS ITS OWN
+  TRIGGER.** `dealDamage` runs `dealt` and `taken` only for damage that
+  consulted a combat table and is not periodic -- "a bleed ticking is not an
+  attack anyone parries" -- and every one of the project's forty-odd reactions is
+  written against that, so widening it is not available. `ReactionTrigger` has a
+  third member, `periodicDealt`, which a reaction has to ASK for; nothing that
+  existed declares it, so adding it changed no behaviour at all.
+  **THE ONE CALLER IS THE OWNER'S OWN EXCEPTION, AND THE TWO HALVES OF IT NEED
+  TWO DIFFERENT MECHANISMS.** DoTs and channels proc Touch of the Grave "only on
+  cast not each tick", excepting Arcane Missiles and Consecration. Arcane
+  Missiles needs nothing: a CHANNEL's ticks are not periodic, so each missile is
+  already an ordinary non-periodic damage event and what the exception overrules
+  is the per-channel rule. **Consecration deals nothing at all on its cast** --
+  it applies a ground aura that ticks -- so through `dealt` a Paladin's only area
+  spell could never have procced, and the exception would have been silently
+  absent on a racial whose every other clause was implemented. **Two exceptions
+  in one sentence can be exceptions to two different rules.**
 - **IF WHETHER AN ABILITY CAN PROC SOMETHING IS IN QUESTION, ASK.** The owner's
   standing instruction. A wrong answer does not look wrong: Windfury spent its
   whole life refusing abilities and every figure was self-consistent and too low.
@@ -800,6 +847,23 @@ See [docs/combat-tables.md](docs/combat-tables.md).
   `attackTable ?? critFrom`; the damage multiplier reads `attackTable` alone. So
   Mortal Shots' crit damage reaches Serpent Sting's ticks and "damage you deal
   with ranged WEAPONS" correctly does not.
+- **"CANNOT CRIT" IS NOT WHAT OMITTING `critFrom` SAYS, AND THE TWO READINGS
+  LOOK IDENTICAL.** `critFrom` governs an attack with NO table -- a periodic
+  tick, which rolls for a crit and nothing else -- so leaving it off is how a
+  TICK is made unable to crit. An attack that DECLARES a table takes its crit
+  from that table, and the spell table's crit slice IS the caster's
+  `spellCritChance`. Touch of the Grave is the first thing in the ruleset that
+  needs both at once -- the owner's "uses the Spell Cast Combat Table" AND
+  "cannot crit" -- and it shipped as a bare absence of `critFrom`, which is the
+  obvious thing to write. **A test handing the caster a hundred points of crit
+  found 200 crits in 200 drains.** `DamageRequest.cannotCrit` is the field, and
+  it zeroes the slice AFTER every modifier for the reason `NO_CHANCES` already
+  records: `applyAbilityModifiers` ADDS a talent's `abilityCrit` to whatever the
+  provider returned.
+  **AND THE FIRST VERSION OF THAT TEST AGREED WITH THE BUG**, because it built
+  the `DamageRequest` by hand and omitted the flag exactly as the reaction did.
+  **A test that reconstructs the thing under test will reproduce its mistakes**
+  -- drive the real reaction and read the event stream.
 
 ### The modifier scopes — three keyed, two conditional
 
@@ -824,6 +888,17 @@ them, including `ALL_ABILITIES`.
   is the one thing none of them can see: whether the damage is a TICK.
   `DamageRequest.periodic` has carried that since the first DoT, so it is a new
   READER of an existing fact rather than a new fact.
+- **AND A FIFTH, WHICH IS THAT AXIS POINTING THE OTHER WAY.**
+  `AuraDefinition.nonPeriodicDamageMultiplier` is Eureka!'s "+10% damage;
+  periodic effects get nothing from it". **AN AURA FIELD WHERE GENESIS IS A
+  COMBATANT SCALAR**, which is the whole reason it is not one more argument to
+  that one: Genesis is a talent and lasts as long as the character, and Eureka!
+  is three charges that arrive and go.
+  **`abilityModifiers: { '*': ... }` IS THE NEAR MISS.** It selects every
+  ability correctly and `abilityModifierFor` is never told whether the damage is
+  a TICK -- and a tick carries its ability's id, so the catch-all finds it.
+  Ignite, Pyroblast's burn and every Corruption tick inside the window would
+  have collected it: a bigger number and no error.
 - **`bleedingTargetModifiers` IS THE SAME CLASS, A SECOND INSTANCE**, not a new
   shape: "on Bleeding targets" is `AttackTableModifiers` in every respect except
   that whether it counts is a question about somebody ELSE, answered per hit. Kept
@@ -1279,6 +1354,14 @@ See [docs/resources.md](docs/resources.md).
   `removedOnDeath`, which Last Stand and Shield Wall declare. Dropping them all
   would switch off the assumed healer when it is needed most. Which effects
   survive dying is a property of the effect, so the flag is on the aura.
+- **A RACIAL IS THE ONE THING THAT IS NOT SELECTED, WHICH IS THE EXCEPTION THAT
+  PROVES THE RULE BELOW.** Race is already a required field on every profile and
+  `baseStats.ts` is already keyed by it, so a racial applies for the same reason
+  a Tauren's base strength does -- there is nothing to tick. That it moved all
+  25 published figures is a consequence of the feature rather than an argument
+  for a switch. **The test is whether the thing is a CHOICE the character made**:
+  a raid buff is somebody else in the raid, a consumable was drunk, an enchant
+  was applied, and a race was not any of those.
 - **Raid buffs are SELECTED, never assumed.** Nothing is on by default; a buff
   that applied itself would move every figure ever recorded. **A proc's reaction
   is built PER CHARACTER**, because an internal cooldown is per-character state
@@ -1850,6 +1933,22 @@ Three things decide a list and none is visible in per-use damage:
 3. **Does the finding hold for the other builds of the same class?** The same
    ability was worth −23 to one and +4 to another.
 
+**A RACE CANNOT BE ISOLATED BY A BEFORE-AND-AFTER, AND THE CONTROL HAS TO BE
+CHOSEN RATHER THAN ASSUMED.** Racials moved all 25 rows at once, so every row
+carries its own race's traits AND the 100ms poll the lists now pay; and a weapon
+specialization cannot be isolated by removing the weapon, because Obsidian Edged
+Blade and Azuresong Mageblade both carry "+1% crit with all spells and attacks"
+-- that probe returned 1.000 and 3.269 where the racial is 0 and 2.
+**SWAP THE RACE ON IDENTICAL GEAR**, which holds the items, talents, enchants,
+consumables, raid buffs and list fixed. `tools/probe_racial_worth.ts`.
+**AND THE COMPARISON RACE'S OWN FOUR TRAITS HAVE TO BE INERT FOR THAT BUILD,
+WHICH IS A FACT TO LOOK UP AND NOT TO GUESS.** Comparing a Tauren Druid against
+a Night Elf measured ELUNE'S LIGHT: all three rows came back near -12 and read
+as the Tauren traits being worth negative DPS. Comparing a Human Paladin against
+an Undead measured "+2% crit minus Touch of the Grave". **Print the control
+beside the figure**, or a reader cannot tell which of the two races a row is
+about.
+
 **A STAT PROBE IS NOT AN ABILITY PROBE.** Injecting Hunter's Mark's 71 ranged
 attack power said +1.9 to the melee Hunter; casting the ABILITY — which also
 spends 60 mana and a GCD at the pull — measured −10.1. Measure the CAST.
@@ -1905,6 +2004,23 @@ Aimed Shot and Sniper Shot fired zero times in three lists, nothing errored, and
 the comment beside the mistake asserted the opposite of what the code did. **When
 a new condition primitive is added, the `USES=1` pass IS the test that it
 fires** -- the suite passed with it broken.
+
+**"A NEW ENTRY GOES AT THE BOTTOM" IS A RULE ABOUT AN ENTRY THAT COSTS
+SOMETHING, AND BOTH ENDS OF THE LIST WERE MEASURED TO FIND THAT OUT.** The four
+free racial cooldowns are learned by a RACE, so no class list was ever going to
+name them and an ability in the book and in no list never fires.
+
+| | what happened |
+| --- | --- |
+| **top** | **Charge went from one cast a fight to ZERO.** Its `canCast` is `clock.now() === CHARGE_OPENING_TIMESTAMP_MS` -- castable for one instant and never again -- and an off-GCD cast leaves the actor FREE, so `nextDecisionTime` returns `now + ROTATION_POLL_MS` and the window is gone |
+| **bottom** | the documented rule, "the only position that cannot change what the list already does" -- and **five of seven** profiles never cast their racial, because a list with anything castable never falls that far |
+
+They sit SECOND now, after whatever opens the list, and **LAST in a tank list**
+so nothing can delay a survival cooldown -- which is the argument
+`protectionRotation.test.ts` already made about Charge in its own words.
+**WHAT A FREE OFF-GCD CAST COSTS IS ONE POLL**, 100ms of idle because the actor
+is not busy, which is about 0.17% of a fight at a two or three minute cooldown
+and is the same price Bloodrage already pays.
 
 **AN UNCONDITIONAL ENTRY IS A FLOOR UNDER EVERYTHING BELOW IT.** The Rupture
 Rogue's Hemorrhage is 35 energy and ungated, with Ghostly Strike at 40 and
@@ -2285,6 +2401,15 @@ no per-point argument either way and what decides it is uptime.
   raised its Raptor Strike — and the melee build is given no ranged enchant at
   all even though one would be inert, because a loadout quietly carrying
   something the owner did not specify diverges the day a talent reads the bow.
+- **AND A RACIAL'S CRIT POINTS THE OTHER WAY FROM THAT ENCHANT'S, BY THE SAME
+  OWNER.** "+2% Global Crit Chance from all sources if holding a sword ... **this
+  includes +2% for pet crit chance**", so the weapon specializations are a STAT
+  -- and `createPet` reads `owner.stats.effective.critChance` and inherits all
+  of it, so the pet clause needs no code at all. The bow enchant had to be
+  `attackTableModifiers` precisely because the owner ruled it must NOT reach the
+  pet. **Two "+2% crit" lines from one owner with opposite answers about the
+  same pet**, and the engine already draws the line in the right place: what
+  there was to get right was choosing which side of it.
 - **FOUR ENCHANTS DO NOTHING AND ARE STILL SELECTABLE, which the owner asked
   for.** Healing power, threat in both directions and Minor Speed each carry an
   `unmodelled` entry with the source's own words — an inert effect that SAYS it
@@ -3148,6 +3273,24 @@ cast, reported nowhere. And **the share total is the completeness check**: a
 damage source nobody reports reads as a ZERO rather than as a gap, which is
 exactly how `resourceFlow` summed every pool under a heading saying "Rage" and
 produced a tidy 100%.
+
+**AND AN AUDIT THAT CANNOT NAME AN ABILITY REPORTS IT AS NEVER FIRED.**
+`printUses` joins a priority list's IDS to a damage table keyed by NAME through
+`ABILITY_NAMES`, and falls back to the raw id when the map has no entry -- which
+can never match. The five racials arrived in every list at once, were absent
+from that map, and **printed `<-- NEVER FIRED` on all 25 profiles** while a
+direct count off the event stream had each of them casting once a fight. **A
+tool that answers "did this entry fire" must know every ability a list can
+name**, or its zero means two different things.
+
+**AND FIXING THAT CREATED THE SECOND PROBLEM: AN HONEST ZERO AND A FINDING LOOK
+ALIKE.** Every list names all four free racial cooldowns and a character learns
+only whichever its RACE grants, so every profile grew three or four expected
+zeros -- and "a row of zeros looks like a row of numbers in a table this wide"
+is that function's own comment. It reads the built character's ability book now
+and prints **"(not learned by this build)"**, which is the distinction this file
+already describes: reading the book is what tells the BUILD cause apart from the
+POSITION cause rather than guessing.
 
 **AN AUDIT FINDS A NEVER-FIRED ENTRY AND SAYS NOTHING ABOUT WHY. MEASURE THE
 CAUSE.** Hammer of Wrath is the worked example: the plausible explanation — "needs

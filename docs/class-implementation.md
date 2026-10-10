@@ -20,7 +20,7 @@ walk, no clipboard.
 | `talentsforever.com/talents.js` | 429 KB | Every class's trees, every rank's text, prerequisites, and the granted ability's cost line |
 | `talentsforever.com/spellbooks.js` | 179 KB | Every trainer spell to 60, every rank |
 | `talentsforever.com/spelldesc.js` | 768 KB | Spell descriptions with cast, range and cooldown |
-| `talentsforever.com/racials.js` | 18 KB | Racials, by faction and race |
+| `talentsforever.com/racials.js` | 18 KB | Racials, by faction and race. **Used now** -- see [racials.md](racials.md) |
 
 `tools/import_forever_spells.mjs` reads `spellbooks.js` and `spelldesc.js` from
 that list, at max rank, and every capture in `src/data/abilities` names it as its

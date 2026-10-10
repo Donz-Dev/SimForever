@@ -103,7 +103,38 @@ export type MeleeWeaponSlot = 'mainHand' | 'offHand';
  * Overpower keys off the TARGET dodging, while its Revenge keys off the warrior
  * itself avoiding a blow.
  */
-export type ReactionTrigger = 'dealt' | 'taken';
+export type ReactionTrigger =
+  | 'dealt'
+  | 'taken'
+  /**
+   * Damage this combatant dealt WITH A PERIODIC TICK.
+   *
+   * ----------------------------------------------------------------------------
+   * `dealt` DELIBERATELY EXCLUDES A TICK, AND THAT IS NOT CHANGING. `dealDamage`
+   * runs `dealt` and `taken` only for damage that consulted a combat table and
+   * is not periodic -- "a bleed ticking is not an attack anyone parries" -- and
+   * every one of the project's reactions is written against that. Widening
+   * `dealt` would hand Flurry, Blood Craze, Reckoning, Seal Fate and forty
+   * others a stream of events they have never seen.
+   *
+   * So a tick gets its own trigger, and a reaction has to ASK for it. Nothing
+   * that exists today declares this, so adding it changes no behaviour at all --
+   * which is what made it safe to add for one caller.
+   *
+   * THE ONE CALLER IS TOUCH OF THE GRAVE, and it is the owner's ruling that
+   * created the need: DoTs and channels may proc it "only on cast not each
+   * tick", with two named exceptions, and one of them -- Consecration -- is a
+   * ground effect whose cast deals nothing at all. Through `dealt` it could
+   * never have procced, so the exception would have been silently absent on a
+   * racial whose every other clause was implemented.
+   *
+   * ITS `outcome` IS SYNTHESISED, because a tick never rolled a table: `crit`
+   * when the tick critically struck and `hit` otherwise. A tick's LANDING was
+   * settled when the aura went on, so "it landed" is the honest outcome, and it
+   * keeps `Reaction.outcomes` meaning one thing across all three triggers.
+   * ----------------------------------------------------------------------------
+   */
+  | 'periodicDealt';
 
 /**
  * Something that happens in response to an attack result.

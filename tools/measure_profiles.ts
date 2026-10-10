@@ -52,6 +52,8 @@ import { runProfileBatch } from '../src/simulator';
 import { PROFILE_PRESETS } from '../src/profiles';
 import type { CharacterProfile } from '../src/profiles';
 import { ALL_PRIORITY_LISTS } from '../src/game/rotations/allLists';
+import { characterAtCombatStart } from '../src/simulator';
+import { RACIAL_ABILITIES } from '../src/game/racials';
 import { DRUID_ABILITIES } from '../src/game/abilities/druid';
 import { HUNTER_ABILITIES } from '../src/game/abilities/hunter';
 import { MAGE_ABILITIES } from '../src/game/abilities/mage';
@@ -115,6 +117,19 @@ function measure(profile: CharacterProfile): Measurement {
  *
  * `BatchAbilityTotals` is keyed by the NAME the damage table shows and a
  * priority list is written in IDS, so the two cannot be joined without this.
+ *
+ * ----------------------------------------------------------------------------
+ * AND A MISSING ENTRY HERE READS AS "NEVER FIRED", WHICH IS THIS TOOL'S WHOLE
+ * JOB REPORTED BACKWARDS.
+ *
+ * `printUses` falls back to the raw id when an ability is absent from this map
+ * and then looks that up by NAME, which can never match -- so the entry comes
+ * back at zero uses with the flag attached. The racials arrived in every list
+ * at once and were absent from here, so all five reported `<-- NEVER FIRED` on
+ * all 25 profiles while a direct count off the event stream had each of them
+ * casting once a fight. A tool that answers "did this entry fire" must know
+ * every ability a list can name, or its zero means two different things.
+ * ----------------------------------------------------------------------------
  */
 const ABILITY_NAMES: ReadonlyMap<string, string> = new Map(
   [
@@ -128,6 +143,8 @@ const ABILITY_NAMES: ReadonlyMap<string, string> = new Map(
     WARLOCK_ABILITIES,
     PRIEST_ABILITIES,
     PET_ABILITIES,
+    // Learned by a RACE rather than a class, and named by every list.
+    Object.values(RACIAL_ABILITIES),
   ]
     .flat()
     .map((ability) => [ability.id, ability.name] as const),
@@ -151,6 +168,24 @@ function printUses(presetId: string, profile: CharacterProfile): void {
   if (!record) return;
 
   const byName = new Map(batch.abilities.map((row) => [row.abilityName, row]));
+  /*
+   * WHAT THE BUILD ACTUALLY KNOWS, so that "never fired" keeps meaning one
+   * thing.
+   *
+   * ------------------------------------------------------------------------
+   * An entry that never fired has four causes and three of them are invisible;
+   * the one this flag is FOR is the position cause -- the entry above never
+   * yields. The BUILD cause is a different answer and reading the character's
+   * own ability book is what tells them apart, rather than guessing.
+   *
+   * IT BECAME UNAVOIDABLE WITH THE RACIALS. Every list names all four free
+   * racial cooldowns, and a character learns only whichever its RACE grants --
+   * so every profile grew three or four expected zeros, and a real never-fired
+   * entry would sit among them unnoticed. "A row of zeros looks like a row of
+   * numbers in a table this wide" is this function's own comment.
+   * ------------------------------------------------------------------------
+   */
+  const known = characterAtCombatStart(profile)?.abilities;
   record.list.entries.forEach((entry, index) => {
     const name = ABILITY_NAMES.get(entry.abilityId) ?? entry.abilityId;
     const row = byName.get(name);
@@ -171,7 +206,20 @@ function printUses(presetId: string, profile: CharacterProfile): void {
      * bug and because a row of zeros looks like a row of numbers in a table
      * this wide.
      */
-    const flag = uses === 0 ? '  <-- NEVER FIRED' : repeated ? '  (pooled: id appears twice)' : '';
+    /*
+     * NOT LEARNED IS NOT THE SAME AS NEVER FIRED, and only the second is a
+     * finding. `PriorityRotation` skips an ability the character does not know
+     * in silence, which is the property that lets one list serve several builds
+     * -- a Gnome Warrior's list names Blood Fury and can never cast it.
+     */
+    const learned = known === undefined || known.has(entry.abilityId);
+    const flag = !learned
+      ? '  (not learned by this build)'
+      : uses === 0
+        ? '  <-- NEVER FIRED'
+        : repeated
+          ? '  (pooled: id appears twice)'
+          : '';
     console.log(
       `    ${String(index + 1).padStart(2)}. ${entry.abilityId.padEnd(26)}` +
         `${uses.toFixed(1).padStart(7)} uses ${share.toFixed(1).padStart(6)}%${flag}`,

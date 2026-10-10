@@ -88,6 +88,24 @@ export function fixedMaximumFor(resource: ResourceType): number | undefined {
 export type ResourceMaximumOverrides = Partial<Record<ResourceType, number>>;
 
 /**
+ * Multipliers on resource maximums, for a racial that raises a cap by a
+ * percentage.
+ *
+ * ----------------------------------------------------------------------------
+ * A MULTIPLIER AND NOT AN OVERRIDE, because Gnome Expansive Mind -- "Maximum
+ * Mana, Rage or Energy increased by 5%, whichever your class uses" -- has no
+ * single number to state. Rage and energy are the flat 100 above and mana is
+ * base plus fifteen a point of intellect, so the only thing it can be is a
+ * factor on whatever the rest of this function settled.
+ *
+ * APPLIED AFTER AN OVERRIDE, deliberately. A caller pinning a cap for a test is
+ * pinning the UNRACIAL cap, and a Gnome with that cap genuinely has five
+ * percent more of it -- so the two compose rather than one winning.
+ * ----------------------------------------------------------------------------
+ */
+export type ResourceMaximumMultipliers = Partial<Record<ResourceType, number>>;
+
+/**
  * The resource pools a character of this class starts a fight with.
  *
  * A Druid gets all three, because switching to bear form mid-fight must not
@@ -97,18 +115,32 @@ export function resourceSpecsFor(
   characterClass: ClassId,
   maxMana: number,
   overrides: ResourceMaximumOverrides = {},
+  multipliers: ResourceMaximumMultipliers = {},
 ): ResourceSpec[] {
   const definition = CLASS_BY_ID.get(characterClass);
   if (!definition) return [];
 
   return definition.resources.map((resource) => {
-    const maximum =
-      overrides[resource] ??
-      fixedMaximumFor(resource) ??
-      (resource === 'mana' ? maxMana : 0);
+    /*
+     * ROUNDED, for the reason the health pool is: every term without a
+     * multiplier is already a whole number, so this is neutral for everyone
+     * except a race that raises a cap -- and a Gnome Mage's 3018 x 1.05 is
+     * 3168.9, which is not a number of points of mana.
+     */
+    const maximum = Math.round(
+      (overrides[resource] ??
+        fixedMaximumFor(resource) ??
+        (resource === 'mana' ? maxMana : 0)) * (multipliers[resource] ?? 1),
+    );
     return {
       type: resource,
       maximum,
+      /*
+       * A POOL THAT STARTS FULL STARTS AT THE RAISED MAXIMUM, which is one
+       * number read twice rather than two that could disagree -- so a Gnome
+       * Rogue opens the fight on 105 energy rather than on 100 of a possible
+       * 105.
+       */
       initial: STARTS_FULL.has(resource) ? maximum : 0,
     };
   });

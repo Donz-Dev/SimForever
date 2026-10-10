@@ -35,6 +35,13 @@ const SPELL_HIT_CAP_PERCENT = 16;
 
 /** Nature's Reach at rank 2, by hand from the tooltip. */
 const NATURES_REACH_HIT = 4;
+/*
+ * AND ALL THREE DRUID PRESETS ARE A TAUREN, whose Endurance is "chance to hit
+ * for melee, ranged, and spells increased by 1%" -- the same `hitChance` stat
+ * Nature's Reach grants. Written out by hand like the figure above, so this
+ * stays a test of the ruleset rather than of the transcription.
+ */
+const TAUREN_ENDURANCE_HIT = 1;
 
 const spellMiss = (hitChance: number): number => {
   const caster = makeAttacker({ stats: { hitChance } });
@@ -119,16 +126,23 @@ describe("Nature's Reach, which was doing neither of its clauses", () => {
      * `missFromSkill`. So the Moonkin's spells and the Cat's and Bear's
      * abilities are all covered by one entry.
      */
-    for (const [preset, before] of [
+    /*
+     * AND SO DOES TAUREN ENDURANCE, WHICH ALL THREE PRESETS CARRY. It grants
+     * the same `hitChance` stat, so each figure is gear plus the racial plus
+     * the talent -- kept as three terms rather than one total so that either
+     * source going missing fails here instead of netting out against the other.
+     */
+    for (const [preset, fromGear] of [
       ['druid_moonkin', 5],
       ['druid_cat', 5],
       ['druid_bear', 7],
     ] as const) {
       const built = PRESETS_BY_ID.get(preset)!.build();
+      expect(built.character.race, preset).toBe('tauren');
       expect(built.talents.nature_s_reach, preset).toBe(2);
       const snapshot = characterAtCombatStart(built)!;
       expect(snapshot.stats.effective.hitChance, preset).toBeCloseTo(
-        before + NATURES_REACH_HIT,
+        fromGear + TAUREN_ENDURANCE_HIT + NATURES_REACH_HIT,
         6,
       );
     }
@@ -150,8 +164,11 @@ describe("Nature's Reach, which was doing neither of its clauses", () => {
     };
 
     // The Moonkin's spells, and the two feral builds' abilities.
+    // 5 from gear + 1 from Tauren Endurance + 4 from Nature's Reach.
     const moonkin = tableFor('druid_moonkin', 'spell');
-    expect(moonkin.talented).toBe(moonkin.untalented - toRollUnits(9));
+    expect(moonkin.talented).toBe(
+      moonkin.untalented - toRollUnits(5 + TAUREN_ENDURANCE_HIT + NATURES_REACH_HIT),
+    );
     for (const preset of ['druid_cat', 'druid_bear'] as const) {
       const melee = tableFor(preset, 'melee-special');
       expect(melee.talented, preset).toBeLessThan(melee.untalented);
@@ -271,7 +288,9 @@ describe('the Moonkin end to end', () => {
     const player = simulation.combatants.find((actor) => actor.kind === 'player')!;
     const enemy = simulation.combatants.find((actor) => actor.kind === 'enemy')!;
 
-    expect(player.stats.effective.hitChance).toBeCloseTo(9, 6);
-    expect(simulation.attackChances('spell', player, enemy, {}).miss).toBe(toRollUnits(8));
+    // 5 from gear + 1 from Tauren Endurance + 4 from Nature's Reach, against
+    // the flat 17% a spell misses on.
+    expect(player.stats.effective.hitChance).toBeCloseTo(10, 6);
+    expect(simulation.attackChances('spell', player, enemy, {}).miss).toBe(toRollUnits(7));
   });
 });

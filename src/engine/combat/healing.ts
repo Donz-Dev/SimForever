@@ -35,6 +35,13 @@ export interface HealRequest {
    * scale the incoming heal by the TANK's healing done and versatility. A
    * warrior has neither today, so the bug would be worth exactly zero until
    * the day something granted one.
+   *
+   * THE SECOND CALLER USES IT FOR THE SENTENCE ABOVE RATHER THAN THE NAME.
+   * Touch of the Grave heals the Undead for exactly what its drain dealt, and
+   * the owner's ruling is that it "only scales off your Hit Points" -- so
+   * "nothing about the source scales it" is precisely the contract wanted, even
+   * though the source is very much in the fight. Said here because a reader who
+   * knows only the first line would read that call as a mistake.
    */
   readonly external?: boolean;
 }

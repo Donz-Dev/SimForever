@@ -11,6 +11,7 @@ import { SHAMAN_ABILITIES } from '../../src/game/abilities/shaman';
 import { WARLOCK_ABILITIES } from '../../src/game/abilities/warlock';
 import { WARRIOR_ABILITIES } from '../../src/game/abilities/warrior';
 import { ALL_PRIORITY_LISTS } from '../../src/game/rotations/allLists';
+import { RACIAL_ABILITIES } from '../../src/game/racials';
 import { rotationFor } from '../../src/game/rotations/rotationFor';
 import { WARRIOR_SHIELD_DEFENSIVE } from '../../src/game/rotations/warrior';
 import { PRESETS_BY_ID, PROFILE_PRESETS } from '../../src/profiles/presets';
@@ -58,17 +59,38 @@ import { PRESETS_BY_ID, PROFILE_PRESETS } from '../../src/profiles/presets';
  * this test is for is the id being SPELLED right; gating is the rotation's own
  * business and is checked elsewhere.
  */
+/*
+ * AND THE FIVE RACIALS, WHICH BELONG TO NO CLASS AND TO EVERY CLASS.
+ *
+ * ----------------------------------------------------------------------------
+ * A racial ability is learned by a RACE, so a Gnome Warrior and a Gnome Mage
+ * know the same Eureka! and no class ability table contains it. Every player
+ * list names all four free ones -- see `racialCooldowns.ts` for why -- so
+ * without this they read as 108 unresolvable ids, which is the opposite of
+ * what this file is for.
+ *
+ * NOT ADDED TO THE PET, which is the one owner that must not have them: a pet
+ * receives no racials, its reaction list has no Touch of the Grave, and its own
+ * list naming Blood Fury would be a real mistake worth failing on.
+ * ----------------------------------------------------------------------------
+ */
+const RACIAL_IDS: ReadonlySet<string> = new Set(Object.keys(RACIAL_ABILITIES));
+
+const withRacials = (abilities: readonly { readonly id: string }[]): ReadonlySet<string> =>
+  new Set([...abilities.map((a) => a.id), ...RACIAL_IDS]);
+
 const OWNER_ABILITIES: Readonly<Record<string, ReadonlySet<string>>> = {
-  warrior: new Set(WARRIOR_ABILITIES.map((a) => a.id)),
-  rogue: new Set(ROGUE_ABILITIES.map((a) => a.id)),
-  druid: new Set(DRUID_ABILITIES.map((a) => a.id)),
-  shaman: new Set(SHAMAN_ABILITIES.map((a) => a.id)),
-  mage: new Set(MAGE_ABILITIES.map((a) => a.id)),
-  paladin: new Set(PALADIN_ABILITIES.map((a) => a.id)),
-  hunter: new Set(HUNTER_ABILITIES.map((a) => a.id)),
-  warlock: new Set(WARLOCK_ABILITIES.map((a) => a.id)),
-  priest: new Set(PRIEST_ABILITIES.map((a) => a.id)),
-  // A pet's three, which belong to no class: a Hunter cannot cast Claw.
+  warrior: withRacials(WARRIOR_ABILITIES),
+  rogue: withRacials(ROGUE_ABILITIES),
+  druid: withRacials(DRUID_ABILITIES),
+  shaman: withRacials(SHAMAN_ABILITIES),
+  mage: withRacials(MAGE_ABILITIES),
+  paladin: withRacials(PALADIN_ABILITIES),
+  hunter: withRacials(HUNTER_ABILITIES),
+  warlock: withRacials(WARLOCK_ABILITIES),
+  priest: withRacials(PRIEST_ABILITIES),
+  // A pet's three, which belong to no class: a Hunter cannot cast Claw, and a
+  // pet cannot cast a racial.
   pet: new Set(PET_ABILITIES.map((a) => a.id)),
 };
 

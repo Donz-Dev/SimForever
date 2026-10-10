@@ -411,20 +411,32 @@ character.characterClass: Tauren cannot be a Mage in World of Warcraft: Forever.
 
 ## What this does not do yet
 
-**Class now affects the simulation** — it determines the resource pools a
-character gets. Race still does not.
+**Class affects the simulation and so does RACE, which is new.** Class decides
+the resource pools; race decides the base stats, and now the racials too.
 
-Known gaps. **Six of the seven originally listed here have expired** — mana and
-health both derive from stats now, base stats per race are generated from the
-owner's spreadsheet, all nine classes have abilities, and the Druid's forms are
-combat styles with three profiles built on them. What is left:
+Known gaps. **Seven of the eight originally listed here have expired** — mana
+and health both derive from stats now, base stats per race are generated from the
+owner's spreadsheet, all nine classes have abilities, the Druid's forms are
+combat styles with three profiles built on them, and the racials are built. What
+is left:
 
-- **Racial traits** do not exist. They slot in as auras applied at combat start,
-  keyed off `profile.character.race`, and `talentsforever.com/racials.js` has the
-  data by faction and race.
 - **A profile has no `faction` field.** Faction is derived from race. See
   HANDOVER.md — the milestone asks for it as a default, so it is either that
   derivation, stated, or a stored field and a format bump.
+
+### Racial traits, which used to be the entry above
+
+**Built.** `src/game/racials/`, and [racials.md](racials.md) is the write-up.
+The guess recorded here was that they "slot in as auras applied at combat
+start", and that turned out to be wrong about all four shapes they actually
+take: a flat stat conditional on the weapon EQUIPPED, a percentage modifier, a
+multiplier on a pool the stat block cannot hold, and five abilities that go in
+every priority list. Exactly one of the ten races wants a standing aura and none
+of them uses one.
+
+The data source was right: `talentsforever.com/racials.js`, forty traits across
+the ten races, and it carried three details the ruleset owner's own statement
+did not — see the write-up for which source wins where.
 
 ## Adding a race or class
 

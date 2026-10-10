@@ -1,3 +1,190 @@
+# RACIALS EXIST, AND EVERY ONE OF THE 25 FIGURES MOVED
+
+**THE MEAN WENT 700.0 TO 709.8 AND SEVEN ROWS MOVED REAL.** Ten races, forty
+traits, fifteen of them doing something — three weapon specializations, five
+passives, five active cooldowns and Touch of the Grave with all eight of its
+exclusions. `game/character/ids.ts` has said "racial traits will key off them"
+since the vocabulary was written; this is that.
+
+[docs/racials.md](docs/racials.md) is the write-up.
+
+**THIS IS ROUND ONE AND THE SHAPE OF THE FEATURE SAYS SO.** The owner's
+statement produced four questions before a line was written and they were asked
+rather than guessed — Eureka!'s charge accounting, Touch of the Grave's
+magnitude, which hand "holding" means, and whether the traits their list omits
+are in scope. Three of the four answers changed the architecture, and the fourth
+drew the scope line. There are **three live clauses the owner declined by name**
+and they are declared rather than deleted, so the next round has somewhere to
+start.
+
+| | what it is | largest effect |
+| --- | --- | --- |
+| 1 | the ten races, five abilities, four engine additions | **Venom +28.9**, and 25 of 25 rows moved |
+
+## What moved
+
+```
+Venom          630.3 DPS +/-  5.7   was  601.5  + 28.9  REAL
+LW Ranged      842.6 DPS +/-  7.1   was  814.5  + 28.1  REAL
+Hemo           651.7 DPS +/-  5.9   was  624.3  + 27.4  REAL
+Rupture        613.4 DPS +/-  4.6   was  588.2  + 25.1  REAL
+LW Melee       801.6 DPS +/-  8.7   was  783.2  + 18.4  REAL
+Hawk Melee     844.4 DPS +/-  8.1   was  826.1  + 18.3  REAL
+BM Hunter      792.6 DPS +/-  5.2   was  777.8  + 14.7  REAL
+Arcane         786.2 DPS +/-  9.5   was  769.4  + 16.8  noise
+Seal Twist Ret 809.9 DPS +/-  8.4   was  796.8  + 13.0  noise
+Moonkin        734.4 DPS +/-  7.8   was  724.0  + 10.5  noise
+Shockadin      677.5 DPS +/-  5.4   was  667.7  +  9.7  noise
+DW Fury        911.5 DPS +/- 10.4   was  901.8  +  9.7  noise
+SM/DS          704.1 DPS +/-  4.5   was  695.3  +  8.9  noise
+Prot Pally     369.5 DPS +/-  3.4   was  362.9  +  6.6  noise
+2H Arms        798.2 DPS +/-  9.0   was  791.6  +  6.5  noise
+Combat         708.3 DPS +/-  6.2   was  702.9  +  5.5  noise
+Ele Shaman     622.3 DPS +/-  7.6   was  617.5  +  4.8  noise
+Frostfire      771.6 DPS +/- 18.2   was  768.3  +  3.2  noise
+Shadow         749.4 DPS +/-  5.1   was  746.9  +  2.5  noise
+Enh Shaman     716.8 DPS +/- 10.9   was  715.2  +  1.5  noise
+Fire           689.6 DPS +/-  9.4   was  690.1  -  0.5  noise
+Firelock       759.2 DPS +/-  4.9   was  759.7  -  0.5  noise
+Cat            807.2 DPS +/-  5.1   was  807.2  +  0.0  noise
+Prot Warr      526.2 DPS +/-  7.3   was  529.7  -  3.5  noise
+Bear           426.9 DPS +/-  5.7   was  437.3  - 10.4  noise
+```
+
+**A BEFORE-AND-AFTER CANNOT ATTRIBUTE ANY OF THAT TO A RACE**, which is the
+measurement lesson of the round. Every row carries its race's traits AND the
+100ms poll the priority lists now pay, and a weapon specialization cannot be
+isolated by removing the weapon because the weapon has its own crit on it.
+`tools/probe_racial_worth.ts` swaps the RACE on identical gear instead, and
+[docs/racials.md](docs/racials.md) has all nineteen cells. The three readings
+worth carrying:
+
+- **Tauren is worth essentially nothing to all five of its profiles, and that is
+  correct.** The usable melee hit cap is 8 with no miss floor, so Endurance's
+  point of hit is dead on the Cat (9% hit), the Bear (11%) and the Prot Warrior
+  (8) — and +5% health does nothing to a build nothing attacks.
+- **The Cat measured EXACTLY 0.0**, which is this project's own tell for a patch
+  that did not apply. Here it is the honest answer, and what proves it is the
+  Moonkin: same race, same file, and **+10.5**, because its SPELL hit was below
+  the 16% cap.
+- **The Bear is slightly NEGATIVE and that is the rage formula.** `D x 10 / H`,
+  so a 5% bigger pool makes each point of damage taken worth less rage.
+
+## THREE BUGS, AND EACH WAS CAUGHT BY A DIFFERENT KIND OF CHECK
+
+| what | what found it |
+| --- | --- |
+| **Touch of the Grave CRITTED** — 200 crits in 200 drains | a test that gave the caster a hundred points of crit |
+| **the racial entries at the top of each list broke Charge** — one cast a fight to ZERO | the existing suite, which has three positional tests about Charge |
+| **`measure_profiles` reported all five racials as NEVER FIRED on all 25 profiles** | a direct count off the event stream disagreeing with the audit |
+
+### "Cannot crit" is not what omitting `critFrom` says
+
+The drain shipped with no `critFrom`, which is the obvious way to write it and
+is about **the other case entirely**: `critFrom` governs an attack with NO table
+— a periodic tick, which rolls for a crit and nothing else. An attack that
+DECLARES a table takes its crit from that table, and the spell table's crit
+slice *is* the caster's `spellCritChance`. So "uses the Spell Cast Combat Table"
+and "cannot crit" are two requirements and the second needed its own field.
+
+**THE FIRST VERSION OF THAT TEST AGREED WITH THE BUG.** It built the
+`DamageRequest` by hand and omitted `cannotCrit` exactly as the reaction did, so
+it passed. **A test that reconstructs the thing under test will reproduce its
+mistakes** — it drives the reaction through real fights now and reads the event
+stream.
+
+### The entries' position in a priority list was measured, both ends, and both ends were wrong
+
+| | what happened |
+| --- | --- |
+| **top** | Charge's `canCast` allows only the opening timestamp, and an off-GCD cast leaves the actor free — so `nextDecisionTime` returns `now + 100ms` and the window is gone. Two Warrior builds lost their opener entirely. |
+| **bottom** | this project's own rule for a new entry, "the only position that cannot change what the list already does" — and it left **five of seven** racials never cast, because a list with anything castable never falls that far. |
+
+They sit **second** now, and **last in a tank list** so that nothing can delay a
+survival cooldown — which is the argument `protectionRotation.test.ts` already
+made about Charge, in its own words, before any of this existed.
+
+**THE BOTTOM RULE IS ABOUT AN ENTRY THAT COSTS SOMETHING.** These cost nothing —
+no resource, and four of the five take no global cooldown — so what the bottom
+costs instead is the entry ever being reached. Worth writing down because the
+rule reads as unconditional.
+
+### An audit that cannot name an ability reports it as never fired
+
+`printUses` falls back to the raw ability id when `ABILITY_NAMES` has no entry,
+then looks that up by NAME — which can never match. The racials arrived in every
+list at once and were absent from that map, so **all five printed `<-- NEVER
+FIRED` on all 25 profiles** while the event stream had each of them casting once
+a fight. The map covers them now.
+
+**AND THE FIX CREATED A SECOND PROBLEM THAT NEEDED FIXING TOO.** Once the names
+resolved, every profile grew three or four HONEST zeros — a Gnome cannot cast
+Blood Fury — and a real never-fired entry would have sat among them unnoticed.
+The audit reads the built character's ability book now and prints **"(not
+learned by this build)"**, which is the distinction CLAUDE.md already describes:
+"reading the built character's own ability book is what tells the BUILD cause
+apart from the POSITION cause rather than guessing."
+
+## Four engine additions, each with one caller
+
+| | for |
+| --- | --- |
+| `AuraDefinition.nonPeriodicDamageMultiplier` | Eureka!'s "+10%, periodic effects get nothing from it" |
+| `DamageRequest.cannotCrit` | the bug above |
+| `DamageRequest.ignoresAttackerDamageScaling` | "only scales off your Hit Points - not shadow damage talents" |
+| `ReactionTrigger` gains `'periodicDealt'` | so Consecration's ticks can proc Touch of the Grave at all |
+
+**`periodicDealt` IS THE ONE WORTH READING.** The owner names two exceptions to
+"DoTs and channels proc only on the cast" — Arcane Missiles and Consecration —
+and they need **two different mechanisms**. Arcane Missiles is a channel, and a
+channel's ticks are not periodic, so each missile is already an ordinary
+non-periodic damage event. **Consecration deals nothing at all on its cast**: it
+applies a ground aura that ticks, and `dealt` reactions never see a tick. So
+through `dealt` a Paladin's only area spell could never have procced, and the
+exception would have been silently absent on a racial whose every other clause
+was implemented.
+
+Nothing that existed declares `periodicDealt`, so adding it changed no
+behaviour — which is what made it safe to add for one caller.
+
+## And a doc bug the table script has had from the start
+
+`update_baseline_table.py` replaced the **first** `mean across **N** is **X**`
+in the whole file, and the first one is fifteen hundred lines ABOVE the table,
+inside a dated paragraph about the Shatter round. So every run since the script
+landed published the current mean in the middle of a historical write-up, and
+the sentence under the table — there wasn't one — stayed untouched.
+
+**THE SCRIPT'S OWN HEADER IS WHERE THIS IS DOCUMENTED AS SOLVED**: "a script
+that re-derives one copy of a figure leaves the other to drift". It was aiming
+at the wrong copy. It anchors after the table it just rebuilt now, the live
+sentence is under the table, and the historical paragraph states its own dated
+700.0.
+
+## What is left
+
+- **Three live clauses the owner declined by name**, each declared with a reason
+  and no `scope`: Orc Shatter Curse's −15% magic damage taken, Troll
+  Regeneration, and Skyborne Read Ley Line's mana return. All three are
+  expressible today and all three are worth 0.0 to every preset, because no
+  preset is a Dwarf, a Night Elf or a Skyborne.
+- **Four traits with no combat effect in any sense** — Underwater Breathing,
+  Find Treasure, Engineering Specialization, Cultivation — are live gaps only
+  because there is no `OutOfScope` member for "not combat", and adding one is a
+  scope decision that needs the owner.
+- **Three name the creature TYPE** (Beast Slaying, Big Game Hunter, Elemental
+  Insight), which is the target's cause in a shape this project had not met: not
+  "the boss is not a Beast" but "the encounter declares no creature type".
+- **No preset is a Dwarf, a Night Elf or either Skyborne**, so Stoneform,
+  Elune's Light and Wind Blessed are measured on their mechanisms and not on any
+  profile. The one figure available for Elune's Light is a by-product of the
+  confounded probe: a Night Elf Cat Druid measures **820.2** against a Skyborne's
+  **811.5**, so **+8.7 for Elune's Light and Quickness together, net of a point
+  of haste**. Stated as the compound it is rather than attributed to one trait --
+  which is the mistake that probe made in the first place.
+
+---
+
 # THE APL IS EDITABLE, AND THE INTERRUPT CHECK WAS READING A LIE
 
 **SM/DS 690.4 -> 695.3, AND NOTHING ELSE MOVED BY A DECIMAL.** The Action
@@ -2098,10 +2285,19 @@ while it worked.
 decimal -- which is what a talent change scoped to one build should look like.
 It makes Frostfire the top Mage, above Fire's 401.2 and Arcane's 392.6, and the
 build that existed for the Fire/Frost overlap now has a third reason to. The
-mean across **25** is **700.0**, RE-SUMMED FROM THE TABLE ABOVE rather than
+mean across 25 was **700.0** at that round, RE-SUMMED FROM THE TABLE rather than
 adjusted -- **by `tools/update_baseline_table.py`, which exists now**; the
 sentence above it had promised a script for several commits and there was none,
 so the mean and the ordering were still being maintained by hand.
+
+**AND THAT FIGURE IS DATED NOW, BECAUSE THE SCRIPT HAD BEEN REWRITING IT.**
+`update_baseline_table.py` replaced the FIRST "mean across N is X" in the whole
+file, and the first one was this sentence -- fifteen hundred lines above the
+table, inside a paragraph about Frostfire 412.5. So every run since has
+published the current mean in the middle of a dated write-up, which is this
+file's own complaint about a script that re-derives one copy of a figure,
+pointing at the copy it was aiming for. The script anchors AFTER the table it
+just rebuilt now, and the live sentence is under the table where it belongs.
 **AND RE-SUMMING IT ONCE MOVED IT 21.5 ON A CHANGE WORTH 1.7 A PROFILE** -- that
 was the Shatter edit, not this one -- which is the drift the instruction exists
 to catch: 558.9 was stale at that point and would have stayed stale if the
@@ -2660,19 +2856,22 @@ cannot audit, which is why the check is a SET comparison and not a row count.
 
 | Profile | Class | Talents | DPS | | Profile | Class | Talents | DPS |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| DW Fury | Warrior | 17/34/0 | 901.8 | | Enh Shaman | Shaman | 17/34/0 | 715.2 |
-| Hawk Melee | Hunter | 16/11/24 | 826.1 | | Combat Rogue | Rogue | 18/33/0 | 702.9 |
-| LW Ranged | Hunter | 7/39/5 | 814.5 | | **SM/DS** | Warlock | 40/11/0 | **695.3** |
-| Cat Druid | Druid | 9/34/8 | 807.2 | | Fire Mage | Mage | 10/39/2 | 690.1 |
-| Seal Twist Ret | Paladin | 15/0/36 | 796.8 | | Shockadin | Paladin | 23/0/28 | 667.7 |
-| 2H Arms | Warrior | 39/10/2 | 791.6 | | Hemo Rogue | Rogue | 17/3/31 | 624.3 |
-| LW Melee | Hunter | 7/13/31 | 783.2 | | Ele Shaman | Shaman | 38/13/0 | 617.5 |
-| BM Hunter | Hunter | 31/20/0 | 777.8 | | Venom Rogue | Rogue | 37/12/2 | 601.5 |
-| Arcane Mage | Mage | 47/4/0 | 769.4 | | Rupture Rogue | Rogue | 12/8/31 | 588.2 |
-| Frostfire Mage | Mage | 0/29/22 | 768.3 | | Prot Warr | Warrior | 17/0/34 | 529.7 |
-| Firelock | Warlock | 5/11/35 | 759.7 | | Bear Druid | Druid | 9/42/0 | 437.3 |
-| Shadow Priest | Priest | 13/3/35 | 746.9 | | Prot Pally | Paladin | 8/34/9 | 362.9 |
-| Moonkin | Druid | 38/0/13 | 724.0 | | | | | | |
+| DW Fury | Warrior | 17/34/0 | 911.5 | | Enh Shaman | Shaman | 17/34/0 | 716.8 |
+| **Hawk Melee** | Hunter | 16/11/24 | **844.4** | | Combat Rogue | Rogue | 18/33/0 | 708.3 |
+| **LW Ranged** | Hunter | 7/39/5 | **842.6** | | SM/DS | Warlock | 40/11/0 | 704.1 |
+| Seal Twist Ret | Paladin | 15/0/36 | 809.9 | | Fire Mage | Mage | 10/39/2 | 689.6 |
+| Cat Druid | Druid | 9/34/8 | 807.2 | | Shockadin | Paladin | 23/0/28 | 677.5 |
+| **LW Melee** | Hunter | 7/13/31 | **801.6** | | **Hemo Rogue** | Rogue | 17/3/31 | **651.7** |
+| 2H Arms | Warrior | 39/10/2 | 798.2 | | **Venom Rogue** | Rogue | 37/12/2 | **630.3** |
+| **BM Hunter** | Hunter | 31/20/0 | **792.6** | | Ele Shaman | Shaman | 38/13/0 | 622.3 |
+| Arcane Mage | Mage | 47/4/0 | 786.2 | | **Rupture Rogue** | Rogue | 12/8/31 | **613.4** |
+| Frostfire Mage | Mage | 0/29/22 | 771.6 | | Prot Warr | Warrior | 17/0/34 | 526.2 |
+| Firelock | Warlock | 5/11/35 | 759.2 | | Bear Druid | Druid | 9/42/0 | 426.9 |
+| Shadow Priest | Priest | 13/3/35 | 749.4 | | Prot Pally | Paladin | 8/34/9 | 369.5 |
+| Moonkin | Druid | 38/0/13 | 734.4 | | | | | | |
+
+The mean across **25** is **709.8**, RE-SUMMED FROM THE ROWS ABOVE rather than
+adjusted, by `tools/update_baseline_table.py`.
 
 **THE TOP IS DW FURY, AND A CASTER HAS NOT HELD IT SINCE THE CONSUMABLES.**
 **901.8 +/-11.1** against Hawk Melee's **826.1 +/-7.1** is 75.7, still the widest

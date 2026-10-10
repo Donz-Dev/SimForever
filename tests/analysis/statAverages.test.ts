@@ -180,9 +180,25 @@ describe('the wiring, through a real fight', () => {
      * `!== 0` would show the row and the panel's rule does not.
      * ------------------------------------------------------------------------
      */
+    /*
+     * AND IT IS NOW A LITTLE ABOVE 130, BECAUSE THIS PROFILE IS AN ORC.
+     *
+     * Blood Fury is "+10% Attack Power, Ranged Attack Power and Spell Power for
+     * 15 sec" on a two minute cooldown, so it is up for a quarter of a sixty
+     * second fight and the AVERAGE carries a quarter of its ten percent. The
+     * figure is 133.2 against a pull value of exactly 130.
+     *
+     * ASSERTED AS A BAND BETWEEN THE TWO, which is the honest statement: the
+     * floor is the unbuffed pool and the ceiling is the buffed one, and an
+     * average has to sit between them. A fixed figure here would be pinning
+     * Blood Fury's UPTIME, which is a rotation outcome -- the mistake this
+     * project has made twice with a cast count.
+     */
     const warrior = batchOf('two_hand_arms', 6, 7).stats!;
+    const atPullRangedPool = 50 + 40 + 40;
     expect(warrior.spellPower).toBe(0);
-    expect(warrior.rangedAttackPower).toBeCloseTo(50 + 40 + 40, 0);
+    expect(warrior.rangedAttackPower).toBeGreaterThanOrEqual(atPullRangedPool);
+    expect(warrior.rangedAttackPower).toBeLessThanOrEqual(atPullRangedPool * 1.1);
     // So `!== 0` would show the row, and the panel's rule does not.
     expect(warrior.rangedAttackPower).not.toBe(0);
     expect(warrior.rangedAttackPower).toBeLessThan(warrior.attackPower);
