@@ -158,14 +158,28 @@ def main(figures_path, moved):
     # writing both numbers is also the stricter behaviour -- "the COUNT drifted
     # too, which is the same failure one level up" is in HANDOVER because the
     # sentence said twenty-three when Hemo had made it twenty-four.
-    text, n = re.subn(
+    #
+    # ANCHORED AFTER THE TABLE IT JUST REBUILT, which is the fix for a bug this
+    # script had from the start: it replaced the FIRST match in the whole file,
+    # and the first match was fifteen hundred lines ABOVE the table, inside a
+    # dated paragraph about the Shatter round. So every run published the
+    # current mean in the middle of a historical write-up and left the sentence
+    # under the table -- there wasn't one -- untouched.
+    #
+    # `table_end` is where the rewritten table finishes in the NEW text, which
+    # is `start` plus what was just written rather than the old `end`: the table
+    # changes length whenever a profile is added.
+    table_end = start + len('\n'.join(lines))
+    head, tail = text[:table_end], text[table_end:]
+    tail, n = re.subn(
         r'mean across \*\*\d+\*\* is \*\*[\d.]+\*\*',
         f'mean across **{len(ordered)}** is **{mean:.1f}**',
-        text,
+        tail,
         count=1,
     )
+    text = head + tail
     if n != 1:
-        print('could not find the mean sentence to update')
+        print('could not find a mean sentence UNDER the table to update')
         return 1
 
     open(HANDOVER, 'w', encoding='utf-8', newline='').write(text)

@@ -320,9 +320,20 @@ function drainWithTouchOfTheGrave(
    * off, the heal would be scaled by the Undead's healing done and versatility
    * -- worth zero today and wrong the day a Priest racial grants either.
    *
-   * IT IS WORTH NOTHING TO ALL FIVE UNDEAD PRESETS AND IS STILL BUILT, because
-   * what it changes is the DEATH COUNT and none of the five is a tank. The day
-   * an Undead tank exists, this is already right.
+   * AND IT IS NOT OVERHEALING ON A WARLOCK, WHICH IS WHY THIS CLAUSE MATTERS TO
+   * A DPS PROFILE AT ALL.
+   *
+   * This comment first said the heal "is worth nothing to all five Undead
+   * presets, because what it changes is the DEATH COUNT and none of the five is
+   * a tank" -- which is true of the three Rogues and FALSE of both Warlocks.
+   * LIFE TAP SPENDS HEALTH FOR MANA, and the Firelock build is health-bound
+   * rather than mana-bound: measured over twenty fights it taps down to 2.3% of
+   * its pool. So the drain's heal is spent rather than wasted, and the Undead
+   * build gets 5.6 Life Taps a fight against a Human's 5.0.
+   *
+   * NEITHER WARLOCK DIES FROM IT, which was the first thing checked once the
+   * constraint was found -- a build tapping to 2.3% is one tap from the floor,
+   * and deaths are 0.000 a fight either way.
    */
   if (result.amount > 0) {
     applyHealing(context, {

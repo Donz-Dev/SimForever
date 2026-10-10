@@ -931,6 +931,81 @@ describe('Touch of the Grave', () => {
     expect([...TOUCH_OF_THE_GRAVE_PERIODIC_EXCEPTIONS]).toEqual(['consecration']);
   });
 
+  it("procs off CONSECRATION'S TICKS, which no `dealt` reaction can ever see", () => {
+    /*
+     * ========================================================================
+     * THE OWNER'S SECOND EXCEPTION, AND IT IS WHY `periodicDealt` EXISTS.
+     *
+     * "This rule has two exceptions for Mage's Arcane Missiles and Paladin's
+     * Consecration - each tick of both have a chance to trigger." Arcane
+     * Missiles needs no new machinery: a channel's ticks are not periodic, so
+     * each missile is an ordinary non-periodic damage event and the general
+     * rule reaches it already.
+     *
+     * CONSECRATION IS NOT LIKE THAT. Its cast deals nothing at all -- it
+     * applies a ground aura that ticks -- and `dealDamage` runs `dealt`
+     * reactions only for damage that consulted a combat table and is not
+     * periodic. So through `dealt` the ability could NEVER have procced, and
+     * the exception would have been silently absent on a racial whose every
+     * other clause was implemented.
+     *
+     * DRIVEN THROUGH A REAL FIGHT, because what is under test is the wiring
+     * between an aura's `onTick` and a reaction list -- which is exactly what a
+     * hand-built DamageRequest would skip, the mistake the crit test made.
+     * ========================================================================
+     */
+    const built = PRESETS_BY_ID.get('prot_pally')!.build();
+    // An Undead Paladin: the same build, the same Consecration, a race that
+    // drains. Undead can be a Paladin in Forever -- it is not Alliance-locked.
+    const undead = { ...built, character: { ...built.character, race: 'undead' as const } };
+
+    let fromConsecration = 0;
+    let consecrationTicks = 0;
+    for (let i = 0; i < 20; i += 1) {
+      const recorder = new TelemetryRecorder();
+      const simulation = new Simulation(
+        { ...trainingDummyEncounter(undead), seed: 8200 + i },
+        recorder,
+      );
+      simulation.run();
+      /*
+       * COUNTED BY ADJACENCY, which is the only signal available: the drain is
+       * dealt inline from inside the reaction, so its damage event follows the
+       * tick that caused it immediately in the stream.
+       */
+      let previousWasConsecrationTick = false;
+      for (const event of recorder.all) {
+        if (event.type !== 'damage') continue;
+        if (event.abilityId === TOUCH_OF_THE_GRAVE_ABILITY_ID) {
+          if (previousWasConsecrationTick) fromConsecration += 1;
+          continue;
+        }
+        previousWasConsecrationTick = event.abilityId === 'consecration';
+        if (previousWasConsecrationTick) consecrationTicks += 1;
+      }
+    }
+
+    // The ability has to be ticking, or the rest asserts nothing at all.
+    expect(consecrationTicks).toBeGreaterThan(50);
+    expect(fromConsecration).toBeGreaterThan(0);
+  });
+
+  it('does not proc off an ordinary DoT tick, which is the rule those two escape', () => {
+    /*
+     * "Channeled abilities can only trigger Touch of the Grave on the initial
+     * cast not each tick. Same rule for DoTs - only on cast not each tick."
+     *
+     * Rupture is the Rogue's own bleed and is not one of the two exceptions, so
+     * its ticks must never proc -- which the engine gives for free, since a tick
+     * reaches no `dealt` reaction, and which `periodicDealt` must not undo.
+     * Asserted on the exception SET, because the set is the thing a later reader
+     * would widen.
+     */
+    expect(TOUCH_OF_THE_GRAVE_PERIODIC_EXCEPTIONS.has('rupture')).toBe(false);
+    expect(TOUCH_OF_THE_GRAVE_PERIODIC_EXCEPTIONS.has('corruption')).toBe(false);
+    expect(TOUCH_OF_THE_GRAVE_PERIODIC_EXCEPTIONS.size).toBe(1);
+  });
+
   it('a PET never triggers it, because the reaction is only ever the player\'s', () => {
     /*
      * "Pets can never trigger Touch of the grave." There is nothing to switch

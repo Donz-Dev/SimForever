@@ -1766,3 +1766,32 @@ button:disabled {
 .apl-interrupt input {
   margin: 0;
 }
+
+/*
+ * The chosen race's four traits, under the Race selector.
+ *
+ * A DEFINITION LIST IN EVERYTHING BUT MARKUP: the trait's name, then its
+ * tooltip. `white-space: normal` is set explicitly because `.muted` is used
+ * mostly for short inline spans elsewhere and a four-line tooltip needs to
+ * wrap rather than run.
+ */
+.racial-traits {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.racial-traits li {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  font-size: 0.85rem;
+  line-height: 1.35;
+}
+
+.racial-traits .muted {
+  white-space: normal;
+}
