@@ -167,14 +167,22 @@ describe('the panel shows the list the build runs', () => {
       profile.character.characterClass === 'warrior'
         ? resolveStance(style, profile.character.stance)
         : undefined;
-    const list = aplFor(profile.character.characterClass, style, stance, profile.talents)!;
+    void style;
+    void stance;
     const { names, nameOf } = aplNamesFor(profile);
-    return renderToStaticMarkup(createElement(AplEntries, { list, names, nameOf }));
+    return renderToStaticMarkup(
+      createElement(AplEntries, { list: profile.rotation, names, nameOf }),
+    );
   };
 
   /** The panel's own header, which DOES render while the body is shut. */
   const renderPanel = (presetId: string) =>
-    renderToStaticMarkup(createElement(AplPanel, { profile: PRESETS_BY_ID.get(presetId)!.build() }));
+    renderToStaticMarkup(
+      createElement(AplPanel, {
+        profile: PRESETS_BY_ID.get(presetId)!.build(),
+        onChange: () => undefined,
+      }),
+    );
 
   it('names the list in the panel badge, which shows while it is shut', () => {
     /*

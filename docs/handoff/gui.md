@@ -348,19 +348,24 @@ in a static render -- a test going through `AplPanel` passes every "contains"
 check by containing nothing. `gearPanelStone.test.ts` learned that from a
 failing test; this applied it rather than paying for it twice.
 
-**READ-ONLY, DELIBERATELY.** The list is data and could be edited here; what is
-missing is the profile field to store an edit in and the migration to go with
-it. A panel that let somebody reorder entries and then silently lost the order
-on reload would be worse than one that shows the order. See
-[docs/apl.md](../apl.md).
+**IT EDITS NOW**, and an edit is saved with the profile: reorder with the arrows,
+remove with the cross, add from the class's own ability book, and build a
+condition out of clauses -- buff/debuff, resource, cooldown and fight remaining.
+See [docs/apl.md](../apl.md).
+
+**ANY EDIT MARKS THE LIST `custom`, WHICH IS THE WHOLE SAFETY MECHANISM.** A
+stored list is frozen, so it stops following the build -- and the build is
+editable. A `default` list re-derives when class, spec, style or stance changes;
+a `custom` one is never silently replaced, and the panel says when it no longer
+matches the build's stock list. A Reset button puts the stock list back.
+
+**THE CONDITIONS THE EDITOR CANNOT DRAW ARE SHOWN AS A SENTENCE AND SAY SO.**
+`any`, `not` and the four builtins have no controls, and an editor that silently
+simplified one would change what the rotation does with nothing on screen to say
+so. The entry can still be reordered or removed; only its condition is fixed.
 
 ### What is left
 
-- **THE APL PANEL DOES NOT EDIT.** Reordering, adding and removing entries, and
-  a condition editor, are the next piece of work, along with the profile field
-  (`rotation`) and the format version that carries it. The data model is built
-  for it: every condition survives JSON, and `describeCondition` already renders
-  each one.
 - **IMPORT STILL DOES NOTHING**, and `panels/ProfilePanel.tsx` is still not
   mounted. 83 lines holding the `serializeProfile` / `parseProfile` round trip
   in a paste box, which is the natural other half of the pair: Load reads a

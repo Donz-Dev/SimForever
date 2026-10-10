@@ -228,6 +228,15 @@ function createPlayerFor(
     characterClass: profile.character.characterClass,
     combatStyle: profile.character.combatStyle,
     stance: profile.character.stance,
+    /*
+     * THE PROFILE'S OWN LIST, which may have been edited. An empty one is
+     * passed as `undefined` rather than as an empty list: a build with no
+     * stock list stores `entries: []`, and handing that over would mean a
+     * character that casts nothing where it used to fall back correctly.
+     */
+    ...(profile.rotation.entries.length > 0
+      ? { rotation: { name: profile.rotation.name, entries: profile.rotation.entries } }
+      : {}),
     bonusStats: profile.stats,
     equipment: profile.equipment,
     talents: profile.talents,

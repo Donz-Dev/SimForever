@@ -127,10 +127,67 @@ measurement is exactly what makes this check work.
 
 All 75 hashes were unchanged by the conversion of all 26 lists.
 
+## Storing one on a profile
+
+`CharacterProfile.rotation` is a `StoredRotation`: a `source`, a `name`, and
+the entries in full. **Written out in full, always**, which is the owner's call
+and the opposite of how `combatStyle` handles its default — a saved file is a
+complete description of the build, and nothing about it depends on what this
+version of the simulator thinks a Beast Mastery Hunter's stock list is. The
+cost, chosen knowingly, is that a saved profile is **frozen**: it keeps its list
+after a stock list is improved.
+
+**`source` is what stops a stored list becoming the wrong list.** Freezing a
+list means it no longer follows the build, and the build is editable — change a
+Rogue's capstone and a different stock list applies; change class and the stored
+list names another class's abilities, every one of which `PriorityRotation`
+skips in silence. This project has already shipped a Fire Mage that ran the
+Arcane list and produced a perfectly ordinary DPS figure.
+
+| `source` | editing the build in the app | loading a file |
+| --- | --- | --- |
+| `default` | re-derives, the way changing class replaces gear | runs exactly what is in the file |
+| `custom` | left alone, and the panel **says** it no longer matches | runs exactly what is in the file |
+
+`syncDefaultRotation` runs on every profile change a panel makes rather than on
+the four that can matter, because it is idempotent and because the alternative
+is a list of "edits that change which stock list applies" that stays correct
+until somebody adds a fifth. It is **not** called on load: that is the freezing.
+
+## Editing one
+
+`ui/panels/aplEditing.ts` holds the edits as plain functions, apart from the
+component, because they are the part that can be wrong — an entry that loses its
+condition while being reordered, or a clause that round-trips into a *different*
+condition, is a rotation quietly doing something else and an ordinary-looking
+DPS figure.
+
+- **A new entry goes at the BOTTOM**, the only position that cannot change what
+  the list already does: an unconditional entry anywhere else is a floor under
+  everything below it.
+- **Moving past either end is a no-op, not a wrap.** Position is priority, so
+  wrapping the first entry to the bottom is the worst possible reading of a
+  mis-click.
+- **A duplicate is allowed**, because two stock lists need one — the Mage's
+  Arcane Missiles and the Warlock's Shadow Bolt are each in their list twice,
+  gated above and ungated below.
+
+A condition is edited as a **flat list of clauses**, which is what nearly every
+stock condition is. `any`, `not` and the four builtins decompose to nothing, so
+the panel shows them as a sentence and says they are not editable here — an
+editor that silently simplified the Rogue's `not(poolingForAmbush)` into
+something it could draw would change the rotation with nothing on screen to say
+so.
+
+**`is not up` and `has run out` are different options on purpose.** The first is
+`!auras.has(id)` and the second is `remainingMs(id) <= 0`; they differ on an
+aura that is present with nothing left, and the stock lists write both. They
+were one option in the first draft and the round-trip test caught it — opening
+the Enhancement list and touching nothing would have rewritten its Windfury
+Weapon entry into a reading of the clock.
+
 ## What is not here yet
 
-**The panel is read-only, and no profile stores a list.** The format is what
-editing and saving need; the profile field, its migration and the editor
-controls are the next piece of work. A panel that let somebody reorder entries
-and then silently lost the order on reload would be worse than one that shows
-the order.
+Nothing in the editor builds an `any`, a `not`, or a nested condition, and
+nothing edits a builtin. All four are preserved, shown and runnable; they just
+have to be written in TypeScript.

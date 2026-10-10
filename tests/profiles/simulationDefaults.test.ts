@@ -31,7 +31,7 @@ describe('a new profile', () => {
     expect(simulation.iterations).toBe(3000);
   });
 
-  it('is format 12, which added the consumables', () => {
+  it('is format 13, which added the priority list', () => {
     /*
      * Version 9 added `raidBuffs`, 10 a Rogue's poisons, 11 the Warlock's
      * stone, 12 the consumables. Written out rather than read from the
@@ -45,8 +45,8 @@ describe('a new profile', () => {
      * The typechecker found that one (TS1117); this is what says which version
      * the surviving field belongs to.
      */
-    expect(CURRENT_PROFILE_VERSION).toBe(12);
-    expect(createDefaultProfile().version).toBe(12);
+    expect(CURRENT_PROFILE_VERSION).toBe(13);
+    expect(createDefaultProfile().version).toBe(13);
     // Version 12's own field: a NEW profile has nothing chosen, which is the
     // version 9 decision rather than the version 10 one -- a character with no
     // consumables was genuinely fighting without them.
