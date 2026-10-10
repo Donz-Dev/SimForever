@@ -43,6 +43,7 @@ PRESET=warlock_firelock npx vite-node tools/probe_firelock_heal.ts   # why heali
 npx vite-node tools/probe_cat_rage.ts            # does a Cat's rage pool ever hold anything
 npx vite-node tools/probe_life_tap_gate.ts       # what mana a Warlock should Life Tap at
 npx vite-node tools/probe_other_assignment.ts    # each preset's `other` consumable beside its POOLS
+npx vite-node tools/item_budget.ts               # what an item COST to make, and whether it adds up
 ```
 
 The three audits in the middle are AUDITS rather than measurements and none of
@@ -3347,6 +3348,39 @@ Azuresong Mageblade and Anathema. The JSON is generated and `--verify`-checked,
 so a Forever value is layered OVER the scrape at build time and never written
 into it; `ENCHANT_RULES` beside it is the same shape for the same reason. The
 Immovable Object and those four are the real Forever item data.
+
+**AND AN ITEM HAS A BUDGET, WHICH IS A WAY OF READING ONE AND NEVER A WAY OF
+MAKING ONE.** `budget = qualityBase(ilvl) x slotMultiplier` and
+`budget^1.5 = sum((stat x cost)^1.5)`, from a community reconstruction, and it
+reproduces real items well enough to be useful: **122 of the 133 non-weapon
+items on file land within 90% to 110%** of their budget, mean 99.7%, and seven
+of ten hand-picked Classic examples sit between 95% and 107%. `tools/item_budget.ts`,
+[docs/itemization.md](docs/itemization.md).
+
+**IT IS AN AUDIT TOOL AND NOTHING IN `src/` READS IT.** Run backwards -- a
+budget used to GENERATE stats for an item no source states -- it is inventing
+game data with arithmetic in front of it, and the arithmetic is what makes the
+invention look sourced. It ranks below every row of the source table above: not
+Forever's, not the owner's, not even Blizzard's.
+
+**TWO THINGS COME FREE WITH THE ITEM LEVEL RATHER THAN OUT OF THE BUDGET**, and
+both were found by the budget refusing to balance. **BASE ARMOR** is a function
+of slot, armor type and item level -- and it cannot be budgeted, because
+Breastplate of Might's 749 armor at the sourced cost of 0.1 is `74.9^1.5` = 648
+against a whole chest budget of 352. **WEAPON DPS** is a straight line in item
+level per hand, and the fit is barely a fit: ten epic one-handers between item
+level 66 and 77 sit on one line with a worst residual of **0.31 dps**. What IS
+budgeted is giving either of them up -- Cenarion Pauldrons carry 120 armor above
+the leather-shoulder baseline, and Azuresong Mageblade is 10.1 dps below the
+one-hand line and spends the difference on spell power.
+
+**SO A CASTER WEAPON PRICING AT 206% OF ITS BUDGET IS NOT THE MODEL FAILING**,
+which is what it looks like beside Zin'rokh at 87%. Three of the ten examples
+are weapons and all three of the apparent failures are the DPS trade. **A model
+that explains its own outliers is worth more than one that has none**, and the
+exchange rate it implies -- about 2.5 budget points per dps forgone, from TWO
+items -- is printed beside the item rather than folded into the budget, because
+folding it in would hide the one number this model does not have.
 
 **A DELTA, NOT A TOTAL**, because the owner gave it as one and because two of
 their four stated bases disagreed with the scrape. A bonus survives a re-scrape

@@ -49,6 +49,17 @@ the set it came from, and the caster jewellery five classes share is owned by
 
 `node tools/import_item.mjs --build` prints what it skipped and where it went.
 
+## Checking whether an item's numbers add up
+
+`npx vite-node tools/item_budget.ts` prices every item here against the
+community itemization budget -- `budget = qualityBase(ilvl) x slotMultiplier`,
+spent at `budget^1.5 = sum((stat x cost)^1.5)`. **122 of the 133 non-weapon
+items land within 90% to 110%**, so an item well outside that is worth a second
+look at the scrape. It is a reading aid and an audit, NOT a way to generate an
+item's stats -- see [docs/itemization.md](../../../docs/itemization.md) for what
+it can and cannot say, and for the two things (base armor, weapon DPS) that come
+free with the item level rather than out of the budget.
+
 ## Adding an item, or a whole set
 
 ```bash
