@@ -169,6 +169,60 @@ export function touchOfTheGraveMayProc(
 }
 
 /**
+ * Whether this cast just applied a PERIODIC effect to the target.
+ *
+ * ============================================================================
+ * THIS IS HOW "A DAMAGE PART" IS ANSWERED FOR AN ABILITY THAT DEALS NONE.
+ *
+ * A pure damage-over-time cast emits no non-periodic damage event at all --
+ * Corruption, Bane of Agony and Siphon Life each just apply an aura -- so the
+ * damage half of this proc never sees them and they never rolled. That was the
+ * bug: the owner's rule is "same rule for DoTs - only on CAST not each tick",
+ * and "only on cast" was implemented as "only on the cast's direct damage",
+ * which for a pure DoT is nothing.
+ *
+ * WHAT IT COST: on the SM/DS Warlock those three are 8.95 casts a fight out of
+ * 21.4 qualifying actions, so the proc rate was 1.35 a fight against an
+ * expected 2.14 -- almost exactly half, which is how the owner found it.
+ *
+ * ASKED OF THE AURAS RATHER THAN DECLARED ON THE ABILITY, and the alternatives
+ * were worse. A flag on `Ability` is the obvious one and is the shape this
+ * project keeps paying for -- the DoT that forgot it would be silently inert,
+ * and there are ten of them across five classes. An EXCLUSION list is what the
+ * owner's wording suggests ("abilities which do not have a damage component
+ * LIKE DEMORALIZING SHOUT") and fails the other way, which is worse: an ability
+ * missing from it procs when it should not, and a proc that fires too often
+ * looks exactly like one that works.
+ *
+ * THREE CLAUSES, AND EACH ONE EXCLUDES SOMETHING REAL:
+ *
+ *   on the TARGET      Amplify Curse applies its aura to the CASTER, and is a
+ *                      cast with no damage part by anyone's reading
+ *   `periodic`         Demoralizing Shout, Expose Armor, Thunder Clap's slow
+ *                      and Wrack's amplification all land on the target and
+ *                      none of them ticks
+ *   applied NOW        an aura that was already there is not this cast's doing.
+ *                      It also keeps Wrack out twice over: its amplification
+ *                      refuses to refresh, so `appliedAt` stays at the first
+ *                      tick of the channel
+ *
+ * A PERIODIC AURA ON AN ENEMY IS A DoT, which is the one assumption here.
+ * `PeriodicEffect.onTick` is a closure, so nothing on the definition says
+ * whether it deals damage or heals -- and nothing in this ruleset puts a
+ * periodic HEAL on an enemy. Said out loud because that is the sentence that
+ * would stop being true first.
+ * ============================================================================
+ */
+function appliedPeriodicNow(target: Combatant, actor: Combatant, now: number): boolean {
+  for (const aura of target.auras.activeIterable) {
+    if (aura.sourceId !== actor.id) continue;
+    if (aura.appliedAt !== now) continue;
+    if (aura.definition.periodic !== undefined) return true;
+  }
+  return false;
+}
+
+/**
  * Touch of the Grave: a chance for a strike to drain health from the target.
  *
  * ============================================================================
@@ -205,18 +259,39 @@ export function touchOfTheGraveMayProc(
  * of a batch.
  * ============================================================================
  */
-export function touchOfTheGrave(characterClass: ClassId): readonly Reaction[] {
+export function touchOfTheGrave(characterClass: ClassId): {
+  readonly reactions: readonly Reaction[];
+  readonly casts: readonly CastReaction[];
+} {
   const chance = TOUCH_OF_THE_GRAVE_CHANCE[characterClass] ?? 0;
-  if (chance === 0) return [];
+  if (chance === 0) return { reactions: [], casts: [] };
 
+  /** When a PROC last fired. The client's one second internal cooldown. */
   let readyAt = 0;
+  /**
+   * When this character last TOOK a roll, won or lost.
+   *
+   * A DIFFERENT CLOCK FROM `readyAt` AND NOT A SUBSTITUTE FOR IT. This one
+   * keeps a single ACTION to a single roll across the damage half and the cast
+   * half -- `runCast` runs `onCast` before the cast reactions, so a spell that
+   * dealt direct damage has already rolled by the time the cast half is
+   * offered it, and comparing the instant is what makes "one roll per action"
+   * true rather than aspirational. `judgementOfWisdomReactions` is the same
+   * mechanism for the same reason.
+   */
+  let lastRolledAt: number | null = null;
+
   const ready = (context: SimulationContext): boolean => context.clock.now() >= readyAt;
+  const roll = (context: SimulationContext): boolean => {
+    lastRolledAt = context.clock.now();
+    return context.rng.rollChance(chance / 100);
+  };
   const fire = (context: SimulationContext, actor: Combatant, target: Combatant): void => {
     readyAt = context.clock.now() + TOUCH_OF_THE_GRAVE_INTERNAL_COOLDOWN_MS;
     drainWithTouchOfTheGrave(context, actor, target);
   };
 
-  return [
+  const reactions: readonly Reaction[] = [
     {
       id: 'touch_of_the_grave',
       on: 'dealt',
@@ -224,7 +299,7 @@ export function touchOfTheGrave(characterClass: ClassId): readonly Reaction[] {
       canTrigger: (context, actor, attack) =>
         ready(context) &&
         touchOfTheGraveMayProc(actor, attack.abilityId, attack.amount) &&
-        context.rng.rollChance(chance / 100),
+        roll(context),
       onTrigger: (context, actor, attack) => fire(context, actor, attack.defender),
     },
     {
@@ -237,10 +312,50 @@ export function touchOfTheGrave(characterClass: ClassId): readonly Reaction[] {
         attack.amount > 0 &&
         attack.abilityId !== undefined &&
         TOUCH_OF_THE_GRAVE_PERIODIC_EXCEPTIONS.has(attack.abilityId) &&
-        context.rng.rollChance(chance / 100),
+        roll(context),
       onTrigger: (context, actor, attack) => fire(context, actor, attack.defender),
     },
   ];
+
+  /**
+   * And the half that catches a cast which dealt no direct damage.
+   *
+   * ==========================================================================
+   * "SAME RULE FOR DoTs - ONLY ON CAST NOT EACH TICK", and the first half of
+   * that sentence had no implementation: a pure DoT emits no non-periodic
+   * damage event, so the damage half never saw one and Corruption, Bane of
+   * Agony and Siphon Life never procced at all. See `appliedPeriodicNow`.
+   *
+   * `cast.final` KEEPS A CHANNEL TO ONE, which is the other half of the same
+   * owner sentence. It costs nothing here -- no channel in the project applies
+   * a periodic aura to its target -- and it is the cheap guard against the one
+   * that will.
+   *
+   * AND THE DEDUPE IS WHAT STOPS AN ABILITY ROLLING TWICE. Immolate deals
+   * direct damage AND applies a DoT in the same instant: the damage half rolls
+   * and `lastRolledAt` then refuses this one, so it is one action and one
+   * roll. Without it Immolate would be at 19% where Corruption is at 10%, and
+   * both figures would look perfectly ordinary.
+   * ==========================================================================
+   */
+  const casts: readonly CastReaction[] = [
+    {
+      id: 'touch_of_the_grave_cast',
+      canTrigger: (context, actor, cast) => {
+        if (!cast.final || !cast.target) return false;
+        if (!ready(context)) return false;
+        // The damage half already rolled for this same action.
+        if (lastRolledAt === context.clock.now()) return false;
+        if (!appliedPeriodicNow(cast.target, actor, context.clock.now())) return false;
+        return roll(context);
+      },
+      onTrigger: (context, actor, cast) => {
+        if (cast.target) fire(context, actor, cast.target);
+      },
+    },
+  ];
+
+  return { reactions, casts };
 }
 
 /**

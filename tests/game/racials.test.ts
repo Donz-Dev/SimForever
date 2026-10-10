@@ -1028,6 +1028,144 @@ describe('Touch of the Grave', () => {
     );
   });
 
+  it('procs off a pure DoT CAST, which deals no direct damage at all', () => {
+    /*
+     * ========================================================================
+     * THE OWNER FOUND THIS BY ARITHMETIC AND NO TEST COULD HAVE.
+     *
+     * "Same rule for DoTs - only on CAST not each tick." That was implemented
+     * as "only on the cast's direct damage" -- and a pure DoT emits none, so
+     * Corruption, Bane of Agony and Siphon Life never rolled at all. Every
+     * assertion in this file was about an ability that DOES deal direct
+     * damage, so every one of them passed.
+     *
+     * WHAT IT COST, in the owner's own numbers: the SM/DS Warlock made 21.6
+     * damage-dealing casts a fight and procced 1.17 times where 10% of 21.6 is
+     * 2.16. Nearly half the procs, on the build whose whole core is DoTs.
+     *
+     * DRIVEN BY REAL CASTS, spaced past the one second internal cooldown so
+     * that what is measured is the ROLL RATE and not the cooldown.
+     * ========================================================================
+     */
+    const { procs, casts } = driveCasts('corruption', 300);
+    expect(casts).toBe(300);
+    // 10% of 300 is 30; a binomial at n=300 has a standard deviation of 5.2.
+    expect(procs).toBeGreaterThan(14);
+    expect(procs).toBeLessThan(50);
+  });
+
+  it('does not proc off a cast with no damage part', () => {
+    /*
+     * "Abilities which do not have a damage component like demoralizing shout
+     * cannot proc Touch of the Grave."
+     *
+     * LIFE TAP IS THE ONE A BARE WARLOCK HAS. It costs health, grants mana,
+     * deals no damage and applies nothing -- so it is excluded by every clause
+     * at once, which is the point: a cast reaction that rolled on any cast
+     * would fire on it, and the Warlock casts it five times a fight.
+     */
+    const { procs, casts } = driveCasts('life_tap', 120, (player) => {
+      // Health to spend, and room in the pool worth gaining. See `prepare`.
+      player.health.gain(player.health.maximum);
+      player.resources.require('mana').spend(player.resources.require('mana').current / 2);
+    });
+    /*
+     * ENOUGH CASTS THAT A TEN PERCENT RATE WOULD ALMOST CERTAINLY HAVE SHOWN:
+     * 0.9^120 is about one in three hundred thousand. A "procs: 0" assertion is
+     * only worth what its sample size is worth.
+     */
+    expect(casts).toBeGreaterThan(100);
+    expect(procs).toBe(0);
+  });
+
+  it('takes ONE roll for an ability that deals damage AND applies a DoT', () => {
+    /*
+     * ========================================================================
+     * IMMOLATE IS BOTH, and without a dedupe it would roll twice in the same
+     * instant -- once on its direct damage and once on the DoT it applied.
+     * That is 19% where Corruption is 10%, and both figures look perfectly
+     * ordinary on a results page.
+     *
+     * `lastRolledAt` is the dedupe and it is the same mechanism
+     * `judgementOfWisdomReactions` uses, for the same reason: `runCast` runs
+     * `onCast` before the cast reactions, so the damage half has already
+     * rolled by the time the cast half is offered the action.
+     *
+     * MEASURED AS A RATIO AGAINST CORRUPTION rather than against 10%, which is
+     * what makes it a test of the DEDUPE: both are driven the same way over the
+     * same number of casts, so a double roll shows up as Immolate proccing
+     * about twice as often and nothing else can produce that.
+     * ========================================================================
+     */
+    const corruption = driveCasts('corruption', 400);
+    const immolate = driveCasts('immolate', 400);
+    expect(immolate.casts).toBe(400);
+
+    // Within half of each other; a double roll would be ~1.9x.
+    const ratio = immolate.procs / Math.max(1, corruption.procs);
+    expect(ratio).toBeGreaterThan(0.6);
+    expect(ratio).toBeLessThan(1.5);
+  });
+
+  it('matches the rate the owner computed by hand on SM/DS', () => {
+    /*
+     * ========================================================================
+     * THE REGRESSION TEST FOR THE BUG, and it is a RATE rather than a branch.
+     *
+     * "A proc that never fires leaves nothing behind to notice" -- and this one
+     * fired, at half the rate it should. The only thing that catches that is
+     * dividing the procs by the actions that were entitled to a roll, which is
+     * exactly the arithmetic the owner did.
+     *
+     * THE DENOMINATOR IS COUNTED FROM THE EVENT STREAM and the qualifying
+     * abilities are written out BY HAND, which is this project's rule for a
+     * test: reading the predicate back out of the source would pass whatever
+     * the source said. A Wrack CAST is one action however many ticks it has --
+     * the owner's "channeled abilities only on the initial cast" -- and
+     * Amplify Curse is excluded because it has no damage part.
+     * ========================================================================
+     */
+    const QUALIFYING = new Set([
+      'shadow_bolt', // direct damage
+      'wrack', // a channel: one action, however many ticks
+      'corruption', // pure DoTs, which is what was broken
+      'bane_of_agony',
+      'siphon_life',
+    ]);
+
+    let qualifyingCasts = 0;
+    let procs = 0;
+    const fights = 40;
+    for (let i = 0; i < fights; i += 1) {
+      const built = PRESETS_BY_ID.get('warlock_smds')!.build();
+      const recorder = new TelemetryRecorder();
+      const simulation = new Simulation(
+        { ...trainingDummyEncounter(built), seed: 4000 + i },
+        recorder,
+      );
+      simulation.run();
+      for (const event of recorder.all) {
+        if (event.type === 'cast' && event.abilityId && QUALIFYING.has(event.abilityId)) {
+          qualifyingCasts += 1;
+        }
+        if (event.type === 'damage' && event.abilityId === TOUCH_OF_THE_GRAVE_ABILITY_ID) {
+          procs += 1;
+        }
+      }
+    }
+
+    expect(qualifyingCasts / fights).toBeGreaterThan(15);
+    const rate = (procs / qualifyingCasts) * 100;
+    /*
+     * A LITTLE UNDER TEN, and the shortfall is the internal cooldown rather
+     * than slack in the assertion: a proc blocks every roll for a second, and
+     * this build takes about one qualifying action every three. The bug read
+     * 3.0% here.
+     */
+    expect(rate).toBeGreaterThan(8);
+    expect(rate).toBeLessThanOrEqual(TOUCH_CASTER_CHANCE);
+  });
+
   it('procs in a real fight, at a rate the internal cooldown explains', () => {
     /*
      * A PROC THAT NEVER FIRES LEAVES NOTHING BEHIND TO NOTICE, which is why a
@@ -1365,3 +1503,63 @@ describe('the panel can name and offer a racial ability', () => {
     expect(orcOffered.has('eureka')).toBe(false);
   });
 });
+
+/**
+ * Cast one ability repeatedly on an Undead Warlock, and count the drains.
+ *
+ * SPACED PAST THE INTERNAL COOLDOWN, two seconds apart, so what is measured is
+ * the ROLL rate rather than the one second cooldown -- which on a build casting
+ * three times a second would be most of the answer.
+ */
+function driveCasts(
+  abilityId: string,
+  times: number,
+  /**
+   * Run before every cast, for an ability whose own `canCast` needs setting up.
+   *
+   * LIFE TAP IS WHY. It refuses unless there is "health to spend AND mana worth
+   * gaining", and this driver hands the caster ten million mana so a few
+   * hundred casts cannot run it dry -- which makes the pool permanently full
+   * and Life Tap permanently uncastable. Draining the pool and topping the
+   * health up is the setup, and it is the caller's because it is the ABILITY's
+   * rule rather than this helper's.
+   */
+  prepare?: (player: Combatant) => void,
+): { readonly procs: number; readonly casts: number } {
+  const player = createPlayer({
+    race: 'undead',
+    characterClass: 'warlock',
+    // Enough to pay for several hundred casts without running dry, which would
+    // silently shorten the sample.
+    resourceMaximums: { mana: 10_000_000 },
+  });
+  /*
+   * NO ROTATION, which is this project's standing rule for a test that runs the
+   * clock on a built character: `createPlayer` gives one, and with it the list
+   * casts its own spells between these and every one of them rolls too. The
+   * Soul Siphon test learned that the hard way -- its ratio read 2.27 against
+   * an expected 1.36 and neither number was about the talent.
+   */
+  (player as { rotation?: unknown }).rotation = undefined;
+  const target = makeTarget({ maxHealth: 100_000_000 });
+  const recorder = new TelemetryRecorder();
+  const simulation = buildSimulation([player, target], { durationMs: seconds(times * 3) }, recorder);
+  simulation.begin();
+
+  const ability = player.abilities.get(abilityId);
+  expect(ability, abilityId).toBeDefined();
+
+  let casts = 0;
+  for (let i = 1; i <= times; i += 1) {
+    simulation.advanceTo(seconds(i * 2));
+    prepare?.(player);
+    if (simulation.cast(player, ability!, target).ok) casts += 1;
+  }
+  // Let the last cast's reactions and any scheduled damage land.
+  simulation.advanceTo(seconds(times * 2 + 5));
+
+  const procs = recorder.all.filter(
+    (event) => event.type === 'damage' && event.abilityId === TOUCH_OF_THE_GRAVE_ABILITY_ID,
+  ).length;
+  return { procs, casts };
+}

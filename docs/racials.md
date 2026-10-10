@@ -165,6 +165,63 @@ Nothing states a floor for "up to", so none is invented.
 | "only scales off your Hit Points" | no coefficient and no weapon scaling, plus `ignoresAttackerDamageScaling` |
 | "BUT it does scale if the target is vulnerable" | the target's side, deliberately left alone |
 
+### "Only on cast" had no implementation for a pure DoT
+
+**The owner found this by arithmetic.** The SM/DS Warlock made 21.6
+damage-dealing casts a minute and procced **1.17** times, where 10% of 21.6 is
+2.16 — nearly half.
+
+"Same rule for DoTs — only on cast not each tick" shipped as *"only on the
+cast's direct damage"*, and a pure DoT deals none: Corruption, Bane of Agony
+and Siphon Life each just apply an aura. The damage half never saw them, so
+**8.95 casts a fight took no roll at all** on the build whose whole core is
+DoTs.
+
+So there is a **cast half** as well, and the pair is the shape
+`judgementOfWisdomReactions` already had — whose own comment names Corruption as
+the case it exists for. The damage half records the instant it rolled and the
+cast half refuses when a roll has been taken at that instant, which is what
+keeps Immolate (direct damage *and* a DoT in one instant) to one roll instead of
+19% where Corruption is at 10%.
+
+**"A damage part" is answered by asking the auras, not the ability.**
+`appliedPeriodicNow` looks for an aura **on the target**, with `periodic`,
+**applied at this instant**. Each of the three clauses excludes something real:
+Amplify Curse applies its aura to the *caster*; Demoralizing Shout, Expose
+Armor, Thunder Clap's slow and Wrack's amplification all land on the target and
+none of them ticks; and an aura already present is not this cast's doing.
+
+The alternatives were both worse. A flag on `Ability` is the shape this project
+keeps paying for — the DoT that forgot it would be silently inert, and there are
+ten across five classes. An *exclusion* list is what the owner's wording
+suggests ("abilities which do not have a damage component **like** demoralizing
+shout") and fails the other way, which is worse: an ability missing from it
+procs when it should not, and a proc that fires too often looks exactly like one
+that works.
+
+**What it was worth, measured on the mechanism rather than on DPS:**
+
+```
+procs a fight        before   after
+warlock_smds           1.17    2.03     <-- the owner's own figure, reproduced
+warlock_firelock       2.73    2.73     <-- Immolate already rolled; the dedupe holds
+rogue_rupture          4.85    4.55
+rogue_venom            5.22    5.60
+rogue_hemo             4.97    5.22
+```
+
+**Only SM/DS moves, and that is the point.** It is the one build whose damage is
+mostly pure DoTs. Firelock is *identical to the decimal*, which is the dedupe
+working: Immolate rolled on its direct damage before and still rolls once now.
+The three Rogues move by ±0.3 on a Poisson standard error of 0.29 — Rupture adds
+a roll and the one-second internal cooldown absorbs it, because a Rogue already
+takes a qualifying action about twice a second.
+
+**The DPS effect is below this project's resolution and is not claimed.** The
+extra procs are worth about 187 damage a fight on SM/DS, roughly +3 DPS, against
+a 300-fight interval of ±3.3. All 25 profiles measured inside their intervals
+and twenty of them at exactly 0.0.
+
 **The two exceptions need two different mechanisms, which is the finding.**
 Arcane Missiles is a **channel**, and a channel's ticks are not periodic — so
 each missile is already an ordinary non-periodic damage event and what the
