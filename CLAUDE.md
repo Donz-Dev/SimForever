@@ -568,6 +568,25 @@ See [docs/combat-tables.md](docs/combat-tables.md).
   spell could never have procced, and the exception would have been silently
   absent on a racial whose every other clause was implemented. **Two exceptions
   in one sentence can be exceptions to two different rules.**
+- **A PURE DoT EMITS NO DAMAGE EVENT FOR A PROC TO READ, AND "ON CAST" IS NOT
+  "ON THE CAST'S DAMAGE".** Touch of the Grave is "spells and attacks with a
+  damage part", with the owner's rule that DoTs proc "only on CAST not each
+  tick" -- and it was built to read the DAMAGE, so Corruption, Bane of Agony and
+  Siphon Life, which only apply an aura, never rolled at all. **The owner found
+  it by arithmetic**: 21.6 damage-dealing casts a minute against 1.17 procs
+  where 10% is 2.16, on the one build whose core is DoTs.
+  **THE FIX IS A DAMAGE HALF AND A CAST HALF SHARING ONE CLOSURE**, which is
+  exactly the shape `judgementOfWisdomReactions` already had -- and whose own
+  comment names Corruption as the case it exists for. The damage half records
+  the INSTANT it rolled and the cast half refuses when a roll was already taken
+  at that instant, because `runCast` runs `onCast` before the cast reactions.
+  Without the dedupe, Immolate -- direct damage AND a DoT in one instant --
+  would sit at 19% where Corruption is at 10%, and both figures read as ordinary.
+  **"HAS A DAMAGE PART" IS ANSWERED BY ASKING THE AURAS**: on the TARGET, with
+  `periodic`, applied at THIS instant. A flag on `Ability` is the shape where
+  the one that forgot is silently inert, and an EXCLUSION list -- which the
+  owner's "like demoralizing shout" wording invites -- fails the generous way,
+  which is worse.
 - **IF WHETHER AN ABILITY CAN PROC SOMETHING IS IN QUESTION, ASK.** The owner's
   standing instruction. A wrong answer does not look wrong: Windfury spent its
   whole life refusing abilities and every figure was self-consistent and too low.
@@ -3347,6 +3366,39 @@ profiles**, the widest-reaching change of the five patch rounds.
 EVERY ONE OF THEM**, and a single exception is the finding rather than a footnote.
 It is the same failure as a reason that describes a working half: a true,
 specific, written-down statement that nobody treats as a question.
+
+**AND A FIX FOUND ON ONE PROFILE IS TESTED ON ONE PROFILE'S ABILITIES, WHICH IS
+THE COVERAGE SHAPE AGAIN.** Touch of the Grave's DoT bug was found on the SM/DS
+Warlock and fixed, and the first tests covered the three WARLOCK DoTs that
+exposed it. Asked whether others were left behind, a sweep of every ability
+every Undead-legal class can cast named **six** against the old code -- Shadow
+Word: Pain, Devouring Plague, Rupture and Rend as well. **NOT ONE OF THOSE FOUR
+IS REACHED BY A PROFILE**: there is no Undead Warrior, Priest or Paladin preset
+at all. **So the build that exposes a bug is not the measure of the bug**, and
+the check that closes it walks the BOOK rather than the profiles.
+**FORCE THE ROLL RATHER THAN SAMPLING IT, so one cast is decisive.** The first
+version of that sweep drove two hundred casts an ability and was useless twice
+over: the caster's AUTO-ATTACKS procced too, so rows that never cast at all
+reported a dozen procs, and an ability on a three minute cooldown got one cast,
+where zero procs at 10% means nothing -- Devouring Plague read as a gap on a
+sample of one. `rollChance` forced true, auto-attacks off, and a hundred points
+of hit so the proc's own table cannot miss.
+**AND PIN WHAT THE HARNESS CANNOT REACH.** Eight abilities need fight state it
+cannot fabricate -- a seal up, the execute phase, a dodge, a block, stealth, the
+opening instant -- and they are listed BY NAME, because "could not drive it" and
+"takes no roll" are the two answers such a check exists to keep apart.
+
+**AND A PROC'S RATE NEEDS A DENOMINATOR, OR HALF OF IT CAN GO MISSING IN
+SILENCE.** Every assertion about Touch of the Grave was about an ability that
+deals direct damage, so every one passed while three pure DoTs took no roll at
+all -- 3,022 tests green on a proc firing at half its stated rate. **The check
+that finds it is procs divided by the actions that were ENTITLED to a roll**,
+which is the arithmetic the owner did by hand: count the qualifying casts off
+the event stream, with the qualifying ability ids written out BY HAND, and
+assert the ratio. A ratio also survives a list change, where a raw proc count
+does not.
+**IT IS THE SAME LESSON AS "A PROC THAT NEVER FIRES LEAVES NOTHING BEHIND",
+ONE STEP HARDER**: this one DID fire, and looked entirely ordinary doing it.
 
 **When a fix moves nothing in the suite, that is a statement about the suite.**
 

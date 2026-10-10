@@ -1,6 +1,123 @@
+# TOUCH OF THE GRAVE WAS PROCCING AT HALF ITS RATE, AND THE OWNER FOUND IT BY ARITHMETIC
+
+**1.17 PROCS A MINUTE AGAINST 21.6 DAMAGE-DEALING CASTS, WHERE 10% IS 2.16.**
+That is the whole report, and it is the kind this project is worst at finding on
+its own: the proc fired, every figure it produced was self-consistent, and the
+3,022-test suite was green.
+
+**"SAME RULE FOR DoTs - ONLY ON CAST NOT EACH TICK" HAD NO IMPLEMENTATION FOR A
+PURE DoT.** It shipped as "only on the cast's DIRECT DAMAGE", and a pure
+damage-over-time cast deals none -- Corruption, Bane of Agony and Siphon Life
+each just apply an aura. So **8.95 casts a fight took no roll at all**, on the
+one build whose core is DoTs.
+
+| | what it is | effect |
+| --- | --- | --- |
+| 1 | a CAST half for Touch of the Grave, paired with the damage half | **SM/DS 1.17 -> 2.03 procs a fight** |
+
+## What moved, measured on the MECHANISM
+
+```
+procs a fight        before   after
+warlock_smds           1.17    2.03     <-- the owner's own figure, reproduced
+warlock_firelock       2.73    2.73     <-- Immolate already rolled; the dedupe holds
+rogue_rupture          4.85    4.55
+rogue_venom            5.22    5.60
+rogue_hemo             4.97    5.22
+```
+
+**ONLY SM/DS MOVES, AND THAT IS THE POINT.** It is the one build whose damage is
+mostly pure DoTs. **Firelock is identical to the decimal**, which is the dedupe
+working: Immolate deals direct damage AND applies a DoT in one instant, and it
+rolled once before and rolls once now. The three Rogues move by +/-0.3 on a
+Poisson standard error of 0.29 -- Rupture adds a roll and the one second
+internal cooldown absorbs it, because a Rogue already takes a qualifying action
+about twice a second.
+
+**THE DPS EFFECT IS BELOW THIS PROJECT'S RESOLUTION AND IS NOT CLAIMED.** The
+extra procs are worth about 187 damage a fight on SM/DS, roughly +3 DPS, against
+a 300-fight interval of +/-3.3. All 25 profiles measured inside their intervals
+and **twenty of them at exactly 0.0**, which is the containment check: only the
+five Undead rows could move and only they did.
+
+## The fix is a shape that was already in the repository
+
+`judgementOfWisdomReactions` is a damage half and a cast half sharing one
+closure, and **its own comment names Corruption as the case the cast half exists
+for**. The damage half records the INSTANT it rolled; the cast half refuses when
+a roll was already taken at that instant, because `runCast` runs `onCast` before
+the cast reactions.
+
+**WITHOUT THE DEDUPE, IMMOLATE WOULD SIT AT 19% WHERE CORRUPTION IS AT 10%** --
+it would roll on its direct damage and again on the DoT it applied -- and both
+figures read as perfectly ordinary.
+
+**"HAS A DAMAGE PART" IS ANSWERED BY ASKING THE AURAS, NOT THE ABILITY.**
+`appliedPeriodicNow` looks for an aura ON THE TARGET, with `periodic`, APPLIED
+AT THIS INSTANT. Each clause excludes something real: Amplify Curse applies to
+the CASTER; Demoralizing Shout, Expose Armor, Thunder Clap's slow and Wrack's
+amplification all land on the target and none of them ticks; and an aura already
+present is not this cast's doing.
+
+The two alternatives were both worse. A flag on `Ability` is the shape where the
+one that forgot is silently inert, and there are ten DoTs across five classes.
+An EXCLUSION list is what the owner's wording invites -- "abilities which do not
+have a damage component LIKE demoralizing shout" -- and fails the generous way,
+which is the dangerous one.
+
+## AND IT WAS NEVER ONLY THE WARLOCK
+
+**THE FIX WAS MEASURED ON SM/DS AND TESTED ON THE THREE WARLOCK DoTs THAT
+EXPOSED IT**, which is a check derived from what the project already USES and
+cannot find what it does not use yet. The owner asked whether other DoTs were
+left behind. A sweep of every ability every Undead-legal class can cast named
+**SIX** against the pre-fix code:
+
+```
+priest/shadow_word_pain      warrior/rend_cast
+priest/devouring_plague      warlock/corruption
+rogue/rupture                warlock/bane_of_agony
+```
+
+**NOT ONE OF THE FIRST FOUR IS REACHED BY A PROFILE.** There is no Undead
+Warrior, Priest or Paladin preset at all, and the Undead Rogues take Rupture but
+it was never what moved the figure. **The build that exposes a bug is not the
+measure of the bug.**
+
+`racials.test.ts` walks the ability book of all six Undead-legal classes now,
+casts every ability once with the roll FORCED to win, and asserts nothing
+damaging takes no roll. **Forcing is what makes one cast decisive.** The first
+version of that sweep drove two hundred casts an ability and was useless twice
+over: the caster's AUTO-ATTACKS procced too, so rows that never cast at all
+reported a dozen procs -- and an ability on a three minute cooldown got one
+cast, where zero procs at 10% means nothing. **Devouring Plague read as a GAP on
+a sample of one.**
+
+**EIGHT ABILITIES THE HARNESS CANNOT REACH ARE PINNED BY NAME** -- Judgement,
+Hammer of Wrath, Backstab, Ambush, Overpower, Revenge, Execute and Charge, each
+needing fight state it cannot fabricate. Every one deals direct damage and goes
+through the half that was never broken. Listed rather than skipped, because
+"could not drive it" and "takes no roll" are the two answers the whole check
+exists to keep apart.
+
+## And the suite was green the whole time
+
+**EVERY ASSERTION ABOUT THIS PROC WAS ABOUT AN ABILITY THAT DEALS DIRECT
+DAMAGE**, so every one of them passed while three pure DoTs took no roll. That
+is the blind spot, and the test aimed at it is a RATE WITH A DENOMINATOR: procs
+divided by the actions that were entitled to a roll, with the qualifying ability
+ids written out by hand. It is the arithmetic the owner did.
+
+**Three of the four new tests fail against the old code and pass against the
+new**, which was checked by reverting the two source files and running them --
+the lesson from the crit bug earlier in this feature, where the first version of
+a test agreed with the bug because it rebuilt the thing under test by hand.
+
+---
+
 # RACIALS EXIST, AND EVERY ONE OF THE 25 FIGURES MOVED
 
-**THE MEAN WENT 700.0 TO 709.8 AND SEVEN ROWS MOVED REAL.** Ten races, forty
+**THE MEAN WENT 700.0 TO 709.8 AT THAT ROUND, AND SEVEN ROWS MOVED REAL.** Ten races, forty
 traits, fifteen of them doing something — three weapon specializations, five
 passives, five active cooldowns and Touch of the Grave with all eight of its
 exclusions. `game/character/ids.ts` has said "racial traits will key off them"
@@ -2857,20 +2974,20 @@ cannot audit, which is why the check is a SET comparison and not a row count.
 | Profile | Class | Talents | DPS | | Profile | Class | Talents | DPS |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | DW Fury | Warrior | 17/34/0 | 911.5 | | Enh Shaman | Shaman | 17/34/0 | 716.8 |
-| **Hawk Melee** | Hunter | 16/11/24 | **844.4** | | Combat Rogue | Rogue | 18/33/0 | 708.3 |
-| **LW Ranged** | Hunter | 7/39/5 | **842.6** | | SM/DS | Warlock | 40/11/0 | 704.1 |
+| Hawk Melee | Hunter | 16/11/24 | 844.4 | | Combat Rogue | Rogue | 18/33/0 | 708.3 |
+| LW Ranged | Hunter | 7/39/5 | 842.6 | | **SM/DS** | Warlock | 40/11/0 | **703.0** |
 | Seal Twist Ret | Paladin | 15/0/36 | 809.9 | | Fire Mage | Mage | 10/39/2 | 689.6 |
 | Cat Druid | Druid | 9/34/8 | 807.2 | | Shockadin | Paladin | 23/0/28 | 677.5 |
-| **LW Melee** | Hunter | 7/13/31 | **801.6** | | **Hemo Rogue** | Rogue | 17/3/31 | **651.7** |
-| 2H Arms | Warrior | 39/10/2 | 798.2 | | **Venom Rogue** | Rogue | 37/12/2 | **630.3** |
-| **BM Hunter** | Hunter | 31/20/0 | **792.6** | | Ele Shaman | Shaman | 38/13/0 | 622.3 |
-| Arcane Mage | Mage | 47/4/0 | 786.2 | | **Rupture Rogue** | Rogue | 12/8/31 | **613.4** |
+| LW Melee | Hunter | 7/13/31 | 801.6 | | **Hemo Rogue** | Rogue | 17/3/31 | **650.6** |
+| 2H Arms | Warrior | 39/10/2 | 798.2 | | **Venom Rogue** | Rogue | 37/12/2 | **628.3** |
+| BM Hunter | Hunter | 31/20/0 | 792.6 | | Ele Shaman | Shaman | 38/13/0 | 622.3 |
+| Arcane Mage | Mage | 47/4/0 | 786.2 | | **Rupture Rogue** | Rogue | 12/8/31 | **611.9** |
 | Frostfire Mage | Mage | 0/29/22 | 771.6 | | Prot Warr | Warrior | 17/0/34 | 526.2 |
 | Firelock | Warlock | 5/11/35 | 759.2 | | Bear Druid | Druid | 9/42/0 | 426.9 |
 | Shadow Priest | Priest | 13/3/35 | 749.4 | | Prot Pally | Paladin | 8/34/9 | 369.5 |
 | Moonkin | Druid | 38/0/13 | 734.4 | | | | | | |
 
-The mean across **25** is **709.8**, RE-SUMMED FROM THE ROWS ABOVE rather than
+The mean across **25** is **709.6**, RE-SUMMED FROM THE ROWS ABOVE rather than
 adjusted, by `tools/update_baseline_table.py`.
 
 **THE TOP IS DW FURY, AND A CASTER HAS NOT HELD IT SINCE THE CONSUMABLES.**

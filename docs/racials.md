@@ -165,6 +165,98 @@ Nothing states a floor for "up to", so none is invented.
 | "only scales off your Hit Points" | no coefficient and no weapon scaling, plus `ignoresAttackerDamageScaling` |
 | "BUT it does scale if the target is vulnerable" | the target's side, deliberately left alone |
 
+### "Only on cast" had no implementation for a pure DoT
+
+**The owner found this by arithmetic.** The SM/DS Warlock made 21.6
+damage-dealing casts a minute and procced **1.17** times, where 10% of 21.6 is
+2.16 — nearly half.
+
+"Same rule for DoTs — only on cast not each tick" shipped as *"only on the
+cast's direct damage"*, and a pure DoT deals none: Corruption, Bane of Agony
+and Siphon Life each just apply an aura. The damage half never saw them, so
+**8.95 casts a fight took no roll at all** on the build whose whole core is
+DoTs.
+
+So there is a **cast half** as well, and the pair is the shape
+`judgementOfWisdomReactions` already had — whose own comment names Corruption as
+the case it exists for. The damage half records the instant it rolled and the
+cast half refuses when a roll has been taken at that instant, which is what
+keeps Immolate (direct damage *and* a DoT in one instant) to one roll instead of
+19% where Corruption is at 10%.
+
+**"A damage part" is answered by asking the auras, not the ability.**
+`appliedPeriodicNow` looks for an aura **on the target**, with `periodic`,
+**applied at this instant**. Each of the three clauses excludes something real:
+Amplify Curse applies its aura to the *caster*; Demoralizing Shout, Expose
+Armor, Thunder Clap's slow and Wrack's amplification all land on the target and
+none of them ticks; and an aura already present is not this cast's doing.
+
+The alternatives were both worse. A flag on `Ability` is the shape this project
+keeps paying for — the DoT that forgot it would be silently inert, and there are
+ten across five classes. An *exclusion* list is what the owner's wording
+suggests ("abilities which do not have a damage component **like** demoralizing
+shout") and fails the other way, which is worse: an ability missing from it
+procs when it should not, and a proc that fires too often looks exactly like one
+that works.
+
+**What it was worth, measured on the mechanism rather than on DPS:**
+
+```
+procs a fight        before   after
+warlock_smds           1.17    2.03     <-- the owner's own figure, reproduced
+warlock_firelock       2.73    2.73     <-- Immolate already rolled; the dedupe holds
+rogue_rupture          4.85    4.55
+rogue_venom            5.22    5.60
+rogue_hemo             4.97    5.22
+```
+
+**Only SM/DS moves, and that is the point.** It is the one build whose damage is
+mostly pure DoTs. Firelock is *identical to the decimal*, which is the dedupe
+working: Immolate rolled on its direct damage before and still rolls once now.
+The three Rogues move by ±0.3 on a Poisson standard error of 0.29 — Rupture adds
+a roll and the one-second internal cooldown absorbs it, because a Rogue already
+takes a qualifying action about twice a second.
+
+**The DPS effect is below this project's resolution and is not claimed.** The
+extra procs are worth about 187 damage a fight on SM/DS, roughly +3 DPS, against
+a 300-fight interval of ±3.3. All 25 profiles measured inside their intervals
+and twenty of them at exactly 0.0.
+
+### And it was never only the Warlock
+
+**The fix was measured on SM/DS and tested on the three Warlock DoTs that
+exposed it — which is a check derived from what the project already uses, and
+cannot find what it does not use yet.** Asked whether other DoTs were left
+behind, a sweep of every ability every Undead-legal class can cast named **six**
+against the pre-fix code:
+
+```
+priest/shadow_word_pain      warrior/rend_cast
+priest/devouring_plague      warlock/corruption
+rogue/rupture                warlock/bane_of_agony
+```
+
+**Not one of the first four is reached by a profile.** There is no Undead
+Warrior, Priest or Paladin preset at all, and the Undead Rogues take Rupture but
+it was never what moved the figure. So the only build that could have exposed
+this was the one that did.
+
+`racials.test.ts` now walks the ability book of all six Undead-legal classes,
+casts every ability once with the roll **forced** to win, and asserts that
+nothing damaging takes no roll. Forcing is what makes one cast decisive: the
+first version of the sweep drove two hundred casts an ability and was useless
+twice over — the caster's auto-attacks procced too, so rows that never cast at
+all reported a dozen procs, and an ability on a three-minute cooldown got one
+cast, where zero procs at 10% means nothing. **Devouring Plague read as a gap on
+a sample of one.**
+
+**Eight abilities the harness cannot reach are pinned rather than skipped** —
+Judgement, Hammer of Wrath, Backstab, Ambush, Overpower, Revenge, Execute and
+Charge each need fight state it cannot fabricate. Every one deals direct damage
+and goes through the half that was never broken. They are listed by name because
+"could not drive it" and "takes no roll" are the two answers this whole check
+exists to keep apart, and a ninth joining them is a shrinking sample.
+
 **The two exceptions need two different mechanisms, which is the finding.**
 Arcane Missiles is a **channel**, and a channel's ticks are not periodic — so
 each missile is already an ordinary non-periodic damage event and what the

@@ -133,7 +133,16 @@ export function racialBuild(race: RaceId, context: RacialBuildContext): RacialBu
            * closure. One shared closure is what silently stopped Windfury
            * proccing after the first iteration of a batch.
            */
-          reactions.push(...touchOfTheGrave(characterClass));
+          {
+            /*
+             * THREE REACTIONS AND A CAST REACTION, all sharing one internal
+             * cooldown and one "already rolled for this action" clock -- which
+             * is why they are built together and must not be built separately.
+             */
+            const built = touchOfTheGrave(characterClass);
+            reactions.push(...built.reactions);
+            castReactions.push(...built.casts);
+          }
           break;
         case 'unmodelled':
           // Declared so the census can count it. Nothing to apply.
