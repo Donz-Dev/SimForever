@@ -92,6 +92,31 @@ function isAuraDefinition(value: unknown): value is AuraDefinition {
   );
 }
 
+/**
+ * Take an aura from an exported value, or a LIST of them.
+ *
+ * ----------------------------------------------------------------------------
+ * THE LIST HALF IS WHAT FINDS A FACTORY-BUILT AURA. Walking a module's exports
+ * finds every aura declared as a constant and none built by a function, which
+ * silently cost the dropdowns 20 auras across nine classes -- Rip, Deep Wounds,
+ * Ignite, Expose Armor, Deadly Poison and more. Each module that has factories
+ * now exports a `CATALOG_AURAS` array built by calling them, so this one check
+ * picks all of them up with no per-module wiring here.
+ *
+ * `SEAL_AURA_IDS` AND ITS KIND ARE SKIPPED, because an array of STRINGS is not
+ * an array of definitions and `every` says so.
+ * ----------------------------------------------------------------------------
+ */
+function addFrom(value: unknown, add: (aura: AuraDefinition) => void): void {
+  if (isAuraDefinition(value)) {
+    add(value);
+    return;
+  }
+  if (Array.isArray(value) && value.length > 0 && value.every(isAuraDefinition)) {
+    for (const aura of value) add(aura);
+  }
+}
+
 /** Every aura id a condition tree mentions. */
 function auraIdsIn(condition: AplCondition | undefined, found: Set<string>): void {
   if (!condition) return;
@@ -141,7 +166,9 @@ const EVERY_AURA: ReadonlyMap<string, AuraDefinition> = (() => {
   ];
   for (const module of modules) {
     for (const value of Object.values(module)) {
-      if (isAuraDefinition(value) && !all.has(value.id)) all.set(value.id, value);
+      addFrom(value, (aura) => {
+        if (!all.has(aura.id)) all.set(aura.id, aura);
+      });
     }
   }
   for (const aura of Object.values(TALENT_AURAS)) if (!all.has(aura.id)) all.set(aura.id, aura);
@@ -178,7 +205,7 @@ export function aurasForClass(characterClass: ClassId): readonly CatalogAura[] {
   };
 
   for (const module of CLASS_AURA_MODULES[characterClass]) {
-    for (const value of Object.values(module)) if (isAuraDefinition(value)) add(value);
+    for (const value of Object.values(module)) addFrom(value, add);
   }
 
   /*

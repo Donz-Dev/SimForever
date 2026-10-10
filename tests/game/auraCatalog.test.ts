@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { readFileSync, readdirSync } from 'node:fs';
 import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { aurasForClass, auraName } from '../../src/game/auras/auraCatalog';
@@ -101,6 +102,54 @@ describe('the catalog covers what the stock lists ask about', () => {
     expect(borrowed).toBeDefined();
     expect(borrowed!.name).toBe('Demoralizing Shout');
     expect(borrowed!.isDebuff).toBe(true);
+  });
+
+  /*
+   * ==========================================================================
+   * THE STRUCTURAL CHECK, AND THE ONE THAT WOULD HAVE CAUGHT THE REAL BUG.
+   *
+   * The catalog finds an aura by walking a module's exports and keeping what
+   * looks like an `AuraDefinition`. That finds every aura declared as a
+   * CONSTANT and none built by a FACTORY -- so Rip, Deep Wounds, Ignite,
+   * Expose Armor, Deadly Poison and fifteen others were simply absent from
+   * every dropdown, and the owner found it by trying to gate Rip on Rip.
+   *
+   * NOTHING IN THE SUITE COULD HAVE SEEN IT, because every earlier assertion
+   * was about ids the stock LISTS mention and no stock list happens to mention
+   * Rip's aura -- the Cat gates Rip on combo points. So this reads the SOURCE
+   * and asserts the catalog offers everything declared in it, which is the
+   * same argument `rotationIds.test.ts` makes about lists the registry misses.
+   * ==========================================================================
+   */
+  it('offers every aura the aura modules declare, however it is built', () => {
+    const directory = 'src/game/auras';
+    const offeredAnywhere = new Set<string>();
+    for (const characterClass of CLASS_IDS) {
+      for (const aura of aurasForClass(characterClass)) offeredAnywhere.add(aura.id);
+    }
+
+    const declared: { id: string; name: string; file: string }[] = [];
+    for (const file of readdirSync(directory)) {
+      if (!file.endsWith('.ts') || file === 'auraCatalog.ts') continue;
+      const source = readFileSync(`${directory}/${file}`, 'utf8');
+      // An aura definition is the one object shape carrying all three.
+      // `\s` already matches a newline, so the pattern needs no explicit one.
+      for (const match of source.matchAll(
+        /id:\s*'([a-z0-9_]+)',\s*name:\s*'([^']+)',\s*durationMs:/g,
+      )) {
+        declared.push({ id: match[1], name: match[2], file });
+      }
+    }
+
+    // A guard on the guard: a pattern that stopped matching would assert
+    // nothing at all and pass forever.
+    expect(declared.length).toBeGreaterThan(90);
+
+    const missing = declared.filter((aura) => !offeredAnywhere.has(aura.id));
+    expect(
+      missing.map((aura) => `${aura.id} (${aura.file})`),
+      'declared but offered to nobody -- a factory-built aura needs listing in its module CATALOG_AURAS',
+    ).toEqual([]);
   });
 
   it('names an aura from an id, for one that came out of a saved file', () => {

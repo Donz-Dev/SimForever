@@ -139,6 +139,14 @@ export const MIND_FLAY: Ability = {
   cost: { resource: 'mana', amount: 205 },
   castTimeMs: MIND_FLAY_CHANNEL_MS,
   channelTicks: MIND_FLAY_TICKS,
+  /*
+   * WILLING TO BE CUT SHORT, which on its own changes nothing: both halves
+   * have to agree, and no entry asks for it until somebody ticks the box. Mind
+   * Flay is the Shadow list's FILLER -- what it fills is the gaps between
+   * everything else -- so it is exactly the channel worth leaving when a bleed
+   * falls off. See `Ability.interruptibleChannel`.
+   */
+  interruptibleChannel: true,
   attackTable: 'spell',
   onCast: ({ simulation, caster, target, ability }) => {
     if (!target) return;
