@@ -41,6 +41,8 @@ npx vite-node tools/probe_racial_worth.ts        # what one race is worth, by RA
 npx vite-node tools/probe_consumable_choice.ts   # every mid-fight candidate on every preset, with its CASTS
 PRESET=warlock_firelock npx vite-node tools/probe_firelock_heal.ts   # why healing a Warlock LOSES dps
 npx vite-node tools/probe_cat_rage.ts            # does a Cat's rage pool ever hold anything
+npx vite-node tools/probe_life_tap_gate.ts       # what mana a Warlock should Life Tap at
+npx vite-node tools/probe_other_assignment.ts    # each preset's `other` consumable beside its POOLS
 ```
 
 The three audits in the middle are AUDITS rather than measurements and none of
@@ -1610,6 +1612,29 @@ The twelve that came before them, and which the rest of this section is about:
   twenty seconds against 40 for thirty, plus the rage — and the two Paladin
   hybrids take Spellblasting where the WEAPON EFFECT row splits them on their
   physical share, so one answer serves four builds that another row divides.
+- **THE `other` SLOT IS THE OWNER'S OWN THREE-WAY PARTITION, AND THE DRUIDS ARE
+  WHY IT IS A TABLE RATHER THAN A DERIVATION.** "Demonic rune being used at 10%
+  mana remaining should be the default behavior for pure mana users. Specifically
+  cat druid should never use it in favor of Thistle Tea. Non-mana, non-energy
+  users and the three tank profiles (Prot Warr, Prot Pally, and Bear) should use
+  the Healthstone." All three Druids own mana, rage AND energy — pools are keyed
+  by CLASS and not by form — so **no reading of "which pools does it have"
+  separates the Moonkin's Rune from the Cat's Tea from the Bear's Healthstone.**
+  Each is right for a different stated reason, and a derivation that cannot tell
+  them apart would pass whatever the presets said.
+- **AND THE RUNE'S 10% IS DELIBERATELY TIGHTER THAN THE MANA POTION'S 30%.** The
+  owner stated the first and nothing about the second, so the potion keeps this
+  repository's figure — and the asymmetry does work rather than merely surviving
+  the no-extension-by-analogy rule: the two categories are not exclusive, so a
+  character carrying both spends the one with no downside first and only then the
+  one that costs 600 to 1000 Hit Points. At 10% the Rune fires on **four of the
+  fifteen presets that carry one**, and those four are the builds that run dry.
+- **AND "LEAVE EMPTY ONLY WHAT IS WORTH LITERALLY NOTHING" IS A RULE ABOUT
+  MEASUREMENT THAT THE OWNER OVERRULED ON A SELECTION.** 2H Arms and DW Fury
+  restore no pool at all, every Other candidate measured 0.00 casts on both, and
+  the rule emptied them — and the ruling gives them a Healthstone, because that
+  is what such a build actually carries. It still fires 0.00 times and moves no
+  figure. **A row worth nothing is not the same as a row that should be blank.**
 - **AND A HEAL MEASURED -28.4 ON THE FIRELOCK, WHICH WAS A BUG IN LIFE TAP AND
   WAS WRITTEN UP AS A PROPERTY OF WARLOCKS.** The measurement was right: a
   Warlock trades HEALTH for mana, Life Tap's `canCast` asks whether there is

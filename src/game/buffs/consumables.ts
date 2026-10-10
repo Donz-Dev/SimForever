@@ -807,11 +807,24 @@ export const STRENGTH_CONSUMABLES: ConsumableSelection = {
    * Measured +26.8 on 2H Arms, +35.2 on DW Fury, +13.3 on Prot Warr, +15.7 on
    * the Cat and +24.6 on the Bear, against +2.0 to +5.2 for Frenzy.
    *
-   * THE `other` SLOT IS NOT HERE, because these five do not agree about it: the
-   * Cat empties an energy bar, the two tanks lose health, and the two damage
-   * Warriors have no pool to restore at all. Each sets its own.
+   * AND THE `other` SLOT IS THE HEALTHSTONE, BY THE OWNER'S RULING: "non-mana,
+   * non-energy users and the three tank profiles (Prot Warr, Prot Pally, and
+   * Bear) should use the Healthstone." Four of these five are exactly that set
+   * -- the two damage Warriors have neither a mana nor an energy bar, and Prot
+   * Warr and the Bear are two of the three named tanks -- so it belongs on the
+   * shared row rather than on four preset overrides.
+   *
+   * THE CAT IS THE ONE THAT OVERRIDES IT, also by the owner's ruling:
+   * "specifically cat druid should never use it in favor of Thistle Tea." It is
+   * the only member of this row with an energy bar.
+   *
+   * THE TWO DAMAGE WARRIORS DRINK IT AND IT FIRES 0.00 TIMES, which is correct
+   * and is a SELECTION rather than a measurement: nothing attacks them, so
+   * health never leaves maximum. The owner asked for what a build would
+   * actually carry, and a Warrior carries a Healthstone. It moves no figure.
    */
   potion: 'mighty_rage_potion',
+  other: 'healthstone',
 };
 
 /**
@@ -872,11 +885,17 @@ const CASTER_COMMON: ConsumableSelection = {
  *
  * AND THE RUNE RATHER THAN THE MANA POTION, because the two categories are not
  * exclusive: the Rune covers mana from `other` and leaves `potion` free for
- * something that hits. **It rarely fires at sixty seconds** -- 0.00 times on the
- * Moonkin, 0.01 on the Frostfire Mage and SM/DS, 0.19 on Fire, 0.33 on the
- * Elemental Shaman -- and it is kept anyway, which is the Evocation decision:
- * the owner ruled an almost-never-fired safety net "intended", because it costs
- * nothing and pays out in a fight that goes differently from the ones measured.
+ * something that hits.
+ *
+ * AT THE OWNER'S 10% IT RARELY FIRES, and that is the point of the figure rather
+ * than a cost of it. Of the fifteen presets that carry one, FOUR use it in a
+ * sixty-second fight -- the Firelock 1.0 times, LW Ranged 0.5, the Enhancement
+ * Shaman 0.4, Retribution a rounding -- and the other eleven never reach 10%
+ * mana at all. Those four are the builds that genuinely run dry.
+ *
+ * IT IS KEPT ON THE ELEVEN ANYWAY, which is the Evocation decision: the owner
+ * ruled an almost-never-fired safety net "intended", because it costs nothing
+ * and pays out in a fight that goes differently from the ones measured.
  * ----------------------------------------------------------------------------
  */
 export function casterConsumables(school: string): ConsumableSelection {
