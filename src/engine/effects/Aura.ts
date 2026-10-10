@@ -265,6 +265,37 @@ export interface AuraDefinition {
    * ----------------------------------------------------------------------------
    */
   readonly damageDoneBySchool?: Partial<Record<DamageSchool, number>>;
+  /**
+   * Multiplies damage the carrier deals that is NOT a periodic tick.
+   *
+   * ----------------------------------------------------------------------------
+   * THE SECOND FIELD IN THIS ENGINE THAT SELECTS ON THE KIND OF DAMAGE RATHER
+   * THAN ON WHO DEALS IT, WHAT SCHOOL IT IS OR WHICH TABLE IT ROLLED. The first
+   * is `Combatant.periodicDamageMultiplier`, which is Genesis -- "the periodic
+   * damage and healing done by your spells AND abilities" -- and this is that
+   * axis pointing the other way.
+   *
+   * IT IS AN AURA FIELD AND GENESIS IS A COMBATANT SCALAR, which is the whole
+   * reason this is not one more argument to that one. Genesis is a talent and
+   * lasts as long as the character; Eureka! is three charges that arrive and go.
+   * `periodicDamageMultiplier` is read off the combatant and built once.
+   *
+   * WHY `damageDoneMultiplier` COULD NOT CARRY IT. That field reaches every
+   * damage event the carrier produces, ticks included -- so Eureka!'s "periodic
+   * effects get nothing from it" would be false for Ignite, for Pyroblast's burn
+   * and for every Corruption tick inside the window. A bigger number and no
+   * error.
+   *
+   * AND WHY `abilityModifiers: { '*': ... }` COULD NOT EITHER, which is the
+   * nearer miss: it would select every ability, correctly, but
+   * `abilityModifierFor` is never told whether the damage in front of it is a
+   * tick. A tick carries its ability's id, so the catch-all finds it.
+   * `DamageRequest.periodic` is the only thing that separates the two, and it
+   * has carried that fact since the first DoT -- so this is a new READER of an
+   * existing fact rather than a new fact.
+   * ----------------------------------------------------------------------------
+   */
+  readonly nonPeriodicDamageMultiplier?: number;
   /** Multiplies damage the carrier takes, whatever school it is. */
   readonly damageTakenMultiplier?: number;
   /**

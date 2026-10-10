@@ -680,6 +680,20 @@ export class Combatant {
   }
 
   /**
+   * The same, for damage that is NOT a periodic tick.
+   *
+   * SEPARATE FROM `damageDoneMultiplier` RATHER THAN A FLAG ON IT, because the
+   * caller that knows whether the damage is a tick is `resolveDamage` and the
+   * callers of that getter are not all it. Folding the two would mean every
+   * reader of the blanket multiplier having to answer a question most of them
+   * cannot -- and a reader that passed the wrong answer would silently apply
+   * Eureka! to a Corruption tick.
+   */
+  get nonPeriodicDamageMultiplier(): number {
+    return this.auraMultiplier('nonPeriodicDamageMultiplier');
+  }
+
+  /**
    * How much more (or less) damage of one school this combatant DEALS.
    *
    * Folds the blanket multiplier in, exactly as `damageTakenMultiplierFor` does
@@ -1029,7 +1043,11 @@ export class Combatant {
   }
 
   private auraMultiplier(
-    key: 'damageDoneMultiplier' | 'damageTakenMultiplier' | 'healingDoneMultiplier',
+    key:
+      | 'damageDoneMultiplier'
+      | 'nonPeriodicDamageMultiplier'
+      | 'damageTakenMultiplier'
+      | 'healingDoneMultiplier',
   ): number {
     let product = 1;
     for (const aura of this.auras.active) {

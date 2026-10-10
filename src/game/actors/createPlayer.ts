@@ -1,4 +1,5 @@
 import type {
+  Ability,
   AuraDefinition,
   CastReaction,
   DamageSchool,
@@ -55,6 +56,7 @@ import { TALENT_AURAS } from '../auras/talentAuras';
 import { STEALTH } from '../auras/rogue';
 import { EXTERNAL_HEALER } from '../encounters/externalHealer';
 import { talentBuild, talentContextFor } from '../talents/talentBuild';
+import { RACIAL_ABILITIES, racialBuild } from '../racials';
 import { legalAllocation } from '../talents/talentRules';
 import { talentsForClass } from '../talents/talentData';
 import {
@@ -338,6 +340,33 @@ export function createPlayer(options: PlayerOptions): Combatant {
   );
 
   /*
+   * RACIALS, resolved the same way and at the same point as the talents.
+   *
+   * ==========================================================================
+   * AFTER THE WEAPONS, BECAUSE THREE RACIALS ASK WHAT IS HELD. Sword, Mace and
+   * Axe Specialization each grant crit "while you have a <weapon> equipped",
+   * and the owner's ruling is that EQUIPPED is what it means -- so this reads
+   * `liveEquipment` rather than the weapon profiles built above. The difference
+   * decides two profiles: `weaponsForEquipment` builds no main-hand profile for
+   * a style whose main hand is a stat stick, so a RANGED Orc Hunter holding
+   * Dreadforge Retaliator has no main-hand weapon and is still holding an axe.
+   *
+   * NOT SELECTABLE, WHICH IS THE ONE WAY A RACIAL IS NOT A RAID BUFF. Nothing
+   * is on by default among raid buffs because a buff that applied itself would
+   * move every figure ever recorded -- and a racial applies for the same reason
+   * a Tauren's base strength does: race is already a required field on every
+   * profile and the base stats table is already keyed by it. That this moved
+   * all 25 published figures is a consequence of the feature rather than an
+   * argument for a switch.
+   * ==========================================================================
+   */
+  const racials = racialBuild(race, {
+    characterClass,
+    equipment: liveEquipment(equipmentForWeapons, style),
+    style,
+  });
+
+  /*
    * THE OFF HAND, AFTER TALENTS. Dual Wield Specialization changes what the
    * off hand does, and it has to be applied here rather than when the weapon
    * was built, because the weapons had to exist first for weapon-conditional
@@ -417,19 +446,40 @@ export function createPlayer(options: PlayerOptions): Combatant {
       addStats(
         addStats(
           addStats(
-            addStats(makeStats(baseStatsToEngineStats(base)), statsForStyle(equipment, style)),
-            stone.stats,
+            addStats(
+              addStats(makeStats(baseStatsToEngineStats(base)), statsForStyle(equipment, style)),
+              stone.stats,
+            ),
+            shieldBlock,
           ),
-          shieldBlock,
+          options.bonusStats ?? {},
         ),
-        options.bonusStats ?? {},
+        // A LAYER OF THE STARTING BLOCK, before the conversions run -- so a
+        // consumable's agility reaches attack power and crit the way an item's
+        // does, and the pools below are sized with it in.
+        consumables.stats,
       ),
-      // A LAYER OF THE STARTING BLOCK, before the conversions run -- so a
-      // consumable's agility reaches attack power and crit the way an item's
-      // does, and the pools below are sized with it in.
-      consumables.stats,
+      build.stats,
     ),
-    build.stats,
+    /*
+     * AND A SEVENTH LAYER, FOR THE RACE.
+     *
+     * A LAYER OF ITS OWN rather than folded into any of the six, for the reason
+     * the stone and the consumables are kept apart from each other: they are
+     * different sources that happen to produce the same kinds of number, and
+     * keeping them separate is what lets any one of them be isolated for a
+     * measurement. They stack, which nothing has to say because nothing
+     * combines them.
+     *
+     * IN THE STARTING BLOCK AND NOT A MODIFIER, WHICH IS WHAT REACHES THE PET.
+     * `createPet` reads `owner.stats.effective.critChance` and inherits all of
+     * it, so a weapon specialization's crit arriving here is already on the
+     * pet -- which is the owner's clause, "+1% for pet crit chance if you're
+     * holding an axe", satisfied with no code. The percentage racials are the
+     * exception and go in as modifiers below, because a percentage resolved
+     * here would freeze against the unbuffed stat.
+     */
+    racials.stats,
   );
 
   // Layer 3, for the resource maximums only. The stat block handles the rest.
@@ -461,10 +511,35 @@ export function createPlayer(options: PlayerOptions): Combatant {
    * That is the formula doing what it says, and it is why this is named once
    * here rather than computed twice.
    */
-  const maximumHealth =
-    baseHitPointsFor(race, characterClass, style) +
-    derived.hitPoints +
-    consumables.bonusHitPoints;
+  /*
+   * AND THE RACE'S PERCENTAGE, APPLIED LAST -- Tauren Endurance's "+5%".
+   *
+   * ON THE WHOLE POOL, which is what "Total Health increased by 5%" says: the
+   * base, the stamina conversion and the consumable's flat hit points alike. A
+   * multiplier on only the base would be a different, smaller number and read
+   * as plausible.
+   *
+   * IT ALSO CHANGES RAGE, which is the formula doing what it says rather than a
+   * side effect to correct. Forever's rage from damage taken is `D x 10 / H`,
+   * and this is the one number both the pool and that rule are taken from -- so
+   * a Tauren Warrior survives slightly longer AND earns slightly less rage per
+   * blow, consistently. The "+1200 Hit Points" consumable already does this,
+   * for the same reason and through the same line.
+   */
+  /*
+   * ROUNDED, which is new and is behaviour-neutral for everything but a race
+   * that raises it: every other term is a whole number, so `Math.round` of
+   * their sum is that sum. A percentage is the first thing here that could
+   * produce a fraction -- a Tauren Warrior's 2629 x 1.05 is 2760.45 -- and a
+   * fractional hit point is not a thing. `createPet` already rounds its own
+   * pool for the same reason.
+   */
+  const maximumHealth = Math.round(
+    (baseHitPointsFor(race, characterClass, style) +
+      derived.hitPoints +
+      consumables.bonusHitPoints) *
+      racials.healthMultiplier,
+  );
 
   const resources = resourceSpecsFor(
     characterClass,
@@ -472,6 +547,18 @@ export function createPlayer(options: PlayerOptions): Combatant {
     // Explicit overrides win over talents, so a caller testing a specific cap
     // is not quietly overruled by a build.
     { ...talentResourceMaximums(build.resourceMaximums), ...options.resourceMaximums },
+    /*
+     * AND THE RACE'S PERCENTAGE, WHICH IS A MULTIPLIER AND NOT AN OVERRIDE.
+     *
+     * Gnome Expansive Mind is "Maximum Mana, Rage or Energy increased by 5%,
+     * whichever your class uses", and there is no single number to state: rage
+     * and energy are the flat 100 every class shares, and mana is derived from
+     * base plus intellect. So it multiplies whatever the three lines above
+     * settled on -- including an explicit override, which is deliberate: a
+     * caller pinning a cap of 50 for a test is pinning the UNRACIAL cap, and a
+     * Gnome with that cap really does have 52.5.
+     */
+    racials.resourceMaxMultipliers,
   );
 
   /*
@@ -544,7 +631,31 @@ export function createPlayer(options: PlayerOptions): Combatant {
    */
   attackTableModifiers.merge(consumables.attackTableModifiers);
 
-  const abilities = abilitiesForBuild(characterClass, style, build);
+  /*
+   * THE ABILITY BOOK, PLUS WHATEVER THE RACE GRANTS.
+   *
+   * ==========================================================================
+   * APPENDED HERE RATHER THAN INSIDE `abilitiesForBuild`, because that function
+   * takes a class and a talent build and knows nothing about a race -- and the
+   * five racial abilities are not class content: a Gnome Warrior and a Gnome
+   * Mage learn the same Eureka!.
+   *
+   * A MISSING DEFINITION IS DROPPED RATHER THAN THROWN, which is the
+   * `TALENT_AURAS` rule applied one layer up and for the same reason: a typo
+   * should show up as a racial that visibly does nothing, not as a character
+   * that cannot be built. What makes that safe rather than silent is the test:
+   * `racials.test.ts` fails if any `grantAbility` id across all ten races
+   * resolves to nothing, which is the check `lone_wolf` did not have -- both
+   * Hunter profiles NAMED AFTER that talent went the whole project without its
+   * aura, and nothing errored.
+   * ==========================================================================
+   */
+  const abilities = [
+    ...abilitiesForBuild(characterClass, style, build),
+    ...[...racials.grantedAbilities]
+      .map((id) => RACIAL_ABILITIES[id])
+      .filter((ability): ability is Ability => ability !== undefined),
+  ];
   const rotation = options.rotation
     ? compileRotation(options.rotation)
     : rotationFor(characterClass, style, resolveStance(style, options.stance), legal.allocation);
@@ -637,6 +748,14 @@ export function createPlayer(options: PlayerOptions): Combatant {
       ...(options.poisons && characterClass === 'rogue'
         ? poisonReactions(options.poisons, legal.allocation)
         : []),
+      /*
+       * AND THE RACE'S. Touch of the Grave is two reactions sharing one
+       * internal cooldown, and Eureka!'s marker is a third -- all built per
+       * character by `racialBuild`, the same per-character requirement Windfury
+       * has, where a shared closure silently stopped it proccing after the
+       * first iteration of a batch.
+       */
+      ...racials.reactions,
       ...(options.extraReactions ?? []),
     ],
     /*
@@ -644,7 +763,13 @@ export function createPlayer(options: PlayerOptions): Combatant {
      * A separate list because a cast event is not an attack event -- see
      * `AbilityCastEvent`. Four Rogue talents are why it exists.
      */
-    castReactions: [...build.castReactions, ...(options.extraCastReactions ?? [])],
+    castReactions: [
+      ...build.castReactions,
+      // Eureka!'s charge spender, which has to run AFTER `onCast` has dealt the
+      // damage its charge paid for. See `eurekaReactions`.
+      ...racials.castReactions,
+      ...(options.extraCastReactions ?? []),
+    ],
     // No abilities means nothing for a rotation to choose, so it is left off
     // rather than scheduling decision events that can never do anything.
     rotation: abilities.length > 0 ? rotation : undefined,
@@ -713,6 +838,13 @@ export function createPlayer(options: PlayerOptions): Combatant {
        * overhealing into the log for the whole fight.
        */
       ...(options.externalHealing ? [EXTERNAL_HEALER] : []),
+      /*
+       * AND ANY A RACE GRANTS. None today -- all five active racials are cast
+       * rather than permanent, and every passive one is a stat or a multiplier.
+       * Carried so that a race gaining a standing aura has the same door the
+       * talents do, rather than a new one being opened under pressure.
+       */
+      ...racials.openingAuras,
     ],
     // Real weapons when something is equipped, placeholders otherwise. The
     // placeholders are invented and the items are not, so anything equipped
@@ -751,11 +883,31 @@ export function createPlayer(options: PlayerOptions): Combatant {
     player.stats.addModifiers(bindModifiers(build.statModifiers, TALENT_MODIFIER_SOURCE));
   }
 
+  /*
+   * AND THE RACE'S PERCENTAGES, under a source of their own.
+   *
+   * The Human Spirit's "+5% Spirit" is the only caller, and it is a MODIFIER
+   * for the reason every percentage talent is: a percentage folded into a flat
+   * number at build time freezes against the unbuffed stat, so a Human drinking
+   * an Elixir of Spirit would get five percent of the wrong number.
+   *
+   * A SEPARATE SOURCE ID FROM THE TALENTS', so the two are removable
+   * independently. Nothing removes either -- a race lasts as long as a
+   * character does -- and sharing the id would make the first thing that wanted
+   * to strip a talent build strip the race with it.
+   */
+  if (racials.statModifiers.length > 0) {
+    player.stats.addModifiers(bindModifiers(racials.statModifiers, RACIAL_MODIFIER_SOURCE));
+  }
+
   return player;
 }
 
 /** Source id for every stat modifier a talent contributes. */
 export const TALENT_MODIFIER_SOURCE = 'talents';
+
+/** And for every one a RACE contributes. See why they are not one source. */
+export const RACIAL_MODIFIER_SOURCE = 'racials';
 
 /**
  * Turn a talent's "+10 maximum rage" into the absolute cap the spec wants.

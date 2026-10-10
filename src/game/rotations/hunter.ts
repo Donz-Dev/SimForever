@@ -1,5 +1,6 @@
 import type { Rotation } from '../../engine';
 import type { AplCondition, AplList } from './apl';
+import { RACIAL_COOLDOWNS } from './racialCooldowns';
 import { builtin, compileRotation, petHas, selfTime, swungWithin, targetMissing } from './apl';
 import type { TalentAllocation } from '../talents/Talent';
 
@@ -170,6 +171,14 @@ export const HUNTER_BEAST_MASTERY: AplList = {
    * `dual_wield` swings both melee hands and never the bow.
    */
   { abilityId: 'aspect_of_the_hawk', condition: selfExpired('aspect_of_the_hawk') },
+  /*
+   * THE RACIAL COOLDOWNS, AFTER WHATEVER OPENS THIS LIST.
+   *
+   * Free, off the global cooldown, and skipped in silence by every build
+   * that is not of the race that learns them. BOTH ENDS OF THE LIST WERE
+   * MEASURED AND BOTH WERE WRONG -- see `racialCooldowns.ts`.
+   */
+  ...RACIAL_COOLDOWNS,
   { abilityId: 'hunters_mark', condition: selfExpired('hunters_mark') },
   { abilityId: 'serpent_sting', condition: missingOn('serpent_sting') },
   { abilityId: 'bestial_wrath', condition: petHasAura('frenzy') },
@@ -213,6 +222,14 @@ export const HUNTER_LONE_WOLF_RANGED: AplList = {
   name: 'Hunter (Lone Wolf Ranged)',
   entries: [
   { abilityId: 'aspect_of_the_hawk', condition: selfExpired('aspect_of_the_hawk') },
+  /*
+   * THE RACIAL COOLDOWNS, AFTER WHATEVER OPENS THIS LIST.
+   *
+   * Free, off the global cooldown, and skipped in silence by every build
+   * that is not of the race that learns them. BOTH ENDS OF THE LIST WERE
+   * MEASURED AND BOTH WERE WRONG -- see `racialCooldowns.ts`.
+   */
+  ...RACIAL_COOLDOWNS,
   { abilityId: 'hunters_mark', condition: selfExpired('hunters_mark') },
   { abilityId: 'serpent_sting', condition: missingOn('serpent_sting') },
   { abilityId: 'rapid_fire' },
@@ -326,6 +343,14 @@ export const HUNTER_LONE_WOLF_MELEE: AplList = {
   name: 'Hunter (Lone Wolf Melee)',
   entries: [
   { abilityId: 'aspect_of_the_beast', condition: selfExpired('aspect_of_the_beast') },
+  /*
+   * THE RACIAL COOLDOWNS, AFTER WHATEVER OPENS THIS LIST.
+   *
+   * Free, off the global cooldown, and skipped in silence by every build
+   * that is not of the race that learns them. BOTH ENDS OF THE LIST WERE
+   * MEASURED AND BOTH WERE WRONG -- see `racialCooldowns.ts`.
+   */
+  ...RACIAL_COOLDOWNS,
   { abilityId: 'hunters_mark', condition: selfExpired('hunters_mark') },
   /*
    * RAPID FIRE, AND IT WAS IN THE BOOK AND IN NO LIST. "Increases RANGED AND
@@ -419,6 +444,16 @@ export const HUNTER_HAWK_MELEE: AplList = {
   name: 'Hunter (Hawk Melee)',
   entries: [
   ...HUNTER_LONE_WOLF_MELEE.entries.filter((entry) => entry.abilityId !== 'wing_clip'),
+  /*
+   * NO RACIAL COOLDOWNS OF ITS OWN: the spread above already carries them.
+   *
+   * This list is another list's entries plus a change, so `RACIAL_COOLDOWNS`
+   * arrives inside that spread -- in the position the other list put them,
+   * which is the position this list wants too. Adding them here as well put
+   * four abilities in twice, and `rotationIds.test.ts` caught it as a duplicate
+   * below an unconditional copy: a second entry for an ability on cooldown is
+   * unreachable, which reads as a list four entries longer than it is.
+   */
   { abilityId: 'summon_hawk', condition: hawksBelowCap },
   { abilityId: 'wing_clip' },
   ],

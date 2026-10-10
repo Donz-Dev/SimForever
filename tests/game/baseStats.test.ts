@@ -250,7 +250,15 @@ describe('createPlayer uses base stats', () => {
     expect(player.stats.get('agility')).toBe(75);
 
     // Everything else is base plus what the conversions add.
-    expect(player.health.maximum).toBe(2629); // 1509 + 112 stamina * 10
+    /*
+     * 1509 + 112 stamina * 10, AND THEN TAUREN ENDURANCE'S +5%.
+     *
+     * Written out as the two steps it is rather than as 2760, because the
+     * racial is the thing that could silently stop applying: 2629 is what the
+     * base stats and the conversion give, and `Math.round(2629 * 1.05)` is what
+     * a Tauren has. An Orc Warrior with the same gear has 2629.
+     */
+    expect(player.health.maximum).toBe(Math.round(2629 * 1.05)); // 2760
     expect(player.stats.get('attackPower')).toBe(410); // 160 + 125 str * 2
     expect(player.stats.get('armor')).toBe(150); // 75 agi * 2
     expect(player.stats.get('critChance')).toBeCloseTo(4.89, 6); // 1.14 + 75/20
@@ -273,9 +281,10 @@ describe('createPlayer uses base stats', () => {
     const caster = createPlayer({ race: 'tauren', characterClass: 'druid', combatStyle: 'caster' });
     const bear = createPlayer({ race: 'tauren', characterClass: 'druid', combatStyle: 'bear' });
 
-    // Both add 72 stamina * 10 on top of their form's base hit points.
-    expect(caster.health.maximum).toBe(2023); // 1303 + 720
-    expect(bear.health.maximum).toBe(3263); // 2543 + 720
+    // Both add 72 stamina * 10 on top of their form's base hit points, and
+    // both are a TAUREN, so Endurance raises the lot by 5%.
+    expect(caster.health.maximum).toBe(Math.round((1303 + 720) * 1.05)); // 2124
+    expect(bear.health.maximum).toBe(Math.round((2543 + 720) * 1.05)); // 3426
 
     // 70 strength * 2 on top of the form's base attack power.
     expect(caster.stats.get('attackPower')).toBe(104); // -36 + 140
@@ -289,12 +298,25 @@ describe('createPlayer uses base stats', () => {
   });
 
   it('gives every legal combination a usable character', () => {
+    /*
+     * TAUREN IS THE ONLY RACE WHOSE RACIAL TOUCHES HEALTH, and naming it here
+     * is the point of the test rather than an exception to it: Endurance is
+     * "Total Health increased by 5%" and nothing else in the ten races has a
+     * health clause at all. Written as a per-race factor so that a SECOND race
+     * gaining one fails here -- the alternative, reading the multiplier out of
+     * the racial tables, would pass whatever those tables said.
+     */
+    const healthMultiplier = (race: string): number => (race === 'tauren' ? 1.05 : 1);
+
     for (const race of RACE_IDS) {
       for (const characterClass of classesForRace(race)) {
         const player = createPlayer({ race, characterClass: characterClass.id });
         const stats = baseStatsFor(race, characterClass.id);
         expect(player.health.maximum, `${race} ${characterClass.id}`).toBe(
-          baseHitPointsFor(race, characterClass.id) + (stats?.stamina ?? 0) * 10,
+          Math.round(
+            (baseHitPointsFor(race, characterClass.id) + (stats?.stamina ?? 0) * 10) *
+              healthMultiplier(race),
+          ),
         );
       }
     }

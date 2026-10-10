@@ -423,6 +423,16 @@ describe('a talent that needs a pet', () => {
   });
 });
 
+/**
+ * Blood Fury's "+10%", written out by hand.
+ *
+ * The owner's own figure, and the one clause of it that is NOT in the client:
+ * `racials.js` says "Attack Power and Spell Power" and the owner says "Attack
+ * Power, Ranged Attack Power, and Spell Power". Four of the seven Orc presets
+ * are Hunters, so the ranged half is most of what the racial is worth to them.
+ */
+const BLOOD_FURY_POWER_FRACTION = 0.1;
+
 describe("Hunter's Mark", () => {
   it('grants the ranged attack power the spellbook states', () => {
     /*
@@ -458,8 +468,26 @@ describe("Hunter's Mark", () => {
      * bow reads 191 more than it would bare.
      */
     expect(atPull.auras.has('aspect_of_the_hawk')).toBe(true);
+
+    /*
+     * AND SO IS BLOOD FURY, because this preset is an ORC and its racial is in
+     * the list.
+     *
+     * "+10% Attack Power, Ranged Attack Power and Spell Power for 15 sec" is a
+     * `percentAdd` modifier, so it multiplies the whole derived pool AFTER the
+     * two flat openers have landed -- which is what makes the expectation a
+     * product rather than a third addend. Measured through the aura rather than
+     * written as 1.1, so the figure cannot drift from the racial.
+     *
+     * THIS TEST READ `+ 191` BEFORE RACIALS EXISTED and came back 189.59 high,
+     * which is exactly ten percent of the Hunter's whole ranged attack power.
+     * Kept as the two openers plus the racial, each named, so that any one of
+     * the three going missing fails here.
+     */
+    expect(atPull.auras.has('blood_fury')).toBe(true);
     expect(atPull.stats.get('rangedAttackPower')).toBeCloseTo(
-      before + ASPECT_OF_THE_HAWK_ATTACK_POWER + HUNTERS_MARK_RANGED_ATTACK_POWER,
+      (before + ASPECT_OF_THE_HAWK_ATTACK_POWER + HUNTERS_MARK_RANGED_ATTACK_POWER) *
+        (1 + BLOOD_FURY_POWER_FRACTION),
       6,
     );
   });

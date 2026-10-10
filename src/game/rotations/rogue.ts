@@ -1,5 +1,6 @@
 import type { Rotation } from '../../engine';
 import type { AplCondition, AplList } from './apl';
+import { RACIAL_COOLDOWNS } from './racialCooldowns';
 import {
   all,
   comboPoints,
@@ -235,6 +236,14 @@ export const ROGUE_VENOM: AplList = {
     condition: all(selfAuraDown('slice_and_dice'), atLeastPoints(3)),
   },
   /*
+   * THE RACIAL COOLDOWNS, AFTER WHATEVER OPENS THIS LIST.
+   *
+   * Free, off the global cooldown, and skipped in silence by every build
+   * that is not of the race that learns them. BOTH ENDS OF THE LIST WERE
+   * MEASURED AND BOTH WERE WRONG -- see `racialCooldowns.ts`.
+   */
+  ...RACIAL_COOLDOWNS,
+  /*
    * ============================================================================
    * RUPTURE, AND IT IS THE WHOLE OF THIS LIST'S GAIN: 488.1 to 504.8, +16.7.
    *
@@ -378,6 +387,14 @@ export const ROGUE_COMBAT: AplList = {
     condition: all(selfAuraDown('slice_and_dice'), atLeastPoints(3)),
   },
   /*
+   * THE RACIAL COOLDOWNS, AFTER WHATEVER OPENS THIS LIST.
+   *
+   * Free, off the global cooldown, and skipped in silence by every build
+   * that is not of the race that learns them. BOTH ENDS OF THE LIST WERE
+   * MEASURED AND BOTH WERE WRONG -- see `racialCooldowns.ts`.
+   */
+  ...RACIAL_COOLDOWNS,
+  /*
    * EVISCERATE ABOVE THE TWO COOLDOWNS, WITH THE OWNER'S NINE-SECOND FLOOR AND
    * A TWO-POINT GATE. The gate is new; everything else is the owner's order.
    *
@@ -504,6 +521,14 @@ export const ROGUE_RUPTURE: AplList = {
    * decision somebody has to read, so the owner's simpler entry stands.
    */
   { abilityId: 'premeditation' },
+  /*
+   * THE RACIAL COOLDOWNS, AFTER WHATEVER OPENS THIS LIST.
+   *
+   * Free, off the global cooldown, and skipped in silence by every build
+   * that is not of the race that learns them. BOTH ENDS OF THE LIST WERE
+   * MEASURED AND BOTH WERE WRONG -- see `racialCooldowns.ts`.
+   */
+  ...RACIAL_COOLDOWNS,
   /*
    * AMBUSH SECOND AND UNCONDITIONAL, because its own `canCast` is the gate: a
    * dagger in the main hand and EITHER the Cutthroat proc or a stealth window.
@@ -763,6 +788,16 @@ export const ROGUE_HEMO: AplList = {
   ...ROGUE_RUPTURE.entries.filter(
     (entry) => entry.abilityId !== 'backstab' && entry.abilityId !== 'hemorrhage',
   ),
+  /*
+   * NO RACIAL COOLDOWNS OF ITS OWN: the spread above already carries them.
+   *
+   * This list is another list's entries plus a change, so `RACIAL_COOLDOWNS`
+   * arrives inside that spread -- in the position the other list put them,
+   * which is the position this list wants too. Adding them here as well put
+   * four abilities in twice, and `rotationIds.test.ts` caught it as a duplicate
+   * below an unconditional copy: a second entry for an ability on cooldown is
+   * unreachable, which reads as a list four entries longer than it is.
+   */
   /*
    * ==========================================================================
    * HEMORRHAGE UNGATED, AND IT IS WORTH +108.9 -- 416.9 to 525.8.

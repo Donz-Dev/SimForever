@@ -1,5 +1,6 @@
 import type { Rotation } from '../../engine';
 import type { AplList } from './apl';
+import { RACIAL_COOLDOWNS } from './racialCooldowns';
 import { compileRotation, resourceFraction, selfHas, targetExpired, targetTime } from './apl';
 import type { TalentAllocation } from '../talents/Talent';
 
@@ -101,6 +102,14 @@ export const WARLOCK_AFFLICTION: AplList = {
    * the rest of the fight.
    */
   { abilityId: 'amplify_curse' },
+  /*
+   * THE RACIAL COOLDOWNS, AFTER WHATEVER OPENS THIS LIST.
+   *
+   * Free, off the global cooldown, and skipped in silence by every build
+   * that is not of the race that learns them. BOTH ENDS OF THE LIST WERE
+   * MEASURED AND BOTH WERE WRONG -- see `racialCooldowns.ts`.
+   */
+  ...RACIAL_COOLDOWNS,
   /*
    * SHADOW TRANCE SPENT THE MOMENT IT LANDS. "Ensure that if a corruption tick
    * or wrack tick triggers Nightfall, the next action is to cast an instant
@@ -206,6 +215,14 @@ export const WARLOCK_DESTRUCTION: AplList = {
   name: 'Warlock (Firelock)',
   entries: [
   { abilityId: 'immolate', condition: missing('immolate') },
+  /*
+   * THE RACIAL COOLDOWNS, AFTER WHATEVER OPENS THIS LIST.
+   *
+   * Free, off the global cooldown, and skipped in silence by every build
+   * that is not of the race that learns them. BOTH ENDS OF THE LIST WERE
+   * MEASURED AND BOTH WERE WRONG -- see `racialCooldowns.ts`.
+   */
+  ...RACIAL_COOLDOWNS,
   { abilityId: 'conflagrate' },
   { abilityId: 'shadowburn' },
   /*

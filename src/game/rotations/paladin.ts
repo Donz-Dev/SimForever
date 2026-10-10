@@ -1,5 +1,6 @@
 import type { Rotation } from '../../engine';
 import type { AplCondition, AplList } from './apl';
+import { RACIAL_COOLDOWNS, RACIAL_DEFENSIVE_COOLDOWNS } from './racialCooldowns';
 import {
   all,
   any,
@@ -175,6 +176,14 @@ export const PALADIN_RETRIBUTION: AplList = {
   name: 'Paladin (Seal Twist Ret)',
   entries: [
   { abilityId: 'seal_of_the_crusader', condition: firstEventOnly },
+  /*
+   * THE RACIAL COOLDOWNS, AFTER WHATEVER OPENS THIS LIST.
+   *
+   * Free, off the global cooldown, and skipped in silence by every build
+   * that is not of the race that learns them. BOTH ENDS OF THE LIST WERE
+   * MEASURED AND BOTH WERE WRONG -- see `racialCooldowns.ts`.
+   */
+  ...RACIAL_COOLDOWNS,
   { abilityId: 'judgement' },
   { abilityId: 'holy_strike' },
   /*
@@ -252,6 +261,14 @@ export const PALADIN_SHOCKADIN: AplList = {
   name: 'Paladin (Shockadin)',
   entries: [
   { abilityId: 'seal_of_the_crusader', condition: firstEventOnly },
+  /*
+   * THE RACIAL COOLDOWNS, AFTER WHATEVER OPENS THIS LIST.
+   *
+   * Free, off the global cooldown, and skipped in silence by every build
+   * that is not of the race that learns them. BOTH ENDS OF THE LIST WERE
+   * MEASURED AND BOTH WERE WRONG -- see `racialCooldowns.ts`.
+   */
+  ...RACIAL_COOLDOWNS,
   { abilityId: 'judgement' },
   /*
    * SEAL OF RIGHTEOUSNESS, NOT COMMAND, AND NOT BY PREFERENCE. Seal of
@@ -341,7 +358,29 @@ export const PALADIN_PROTECTION: AplList = {
   { abilityId: 'seal_of_fury', condition: selfExpired('seal_of_fury') },
   { abilityId: 'holy_strike' },
   { abilityId: 'consecration' },
-  ],
+    /*
+   * THE RACIAL COOLDOWNS LAST, WHICH IS A TANK LIST'S OWN RULE.
+   *
+   * Everywhere else they sit second -- high enough to fire, below whatever
+   * opens the list. A TANK LIST PUTS THEM LAST INSTEAD, and the reason is the
+   * one `protectionRotation.test.ts` already states about Charge: an entry
+   * above a survival cooldown "would cost a survival cooldown the moment it was
+   * needed". A racial is free and off the global cooldown, but casting one
+   * still moves the next decision 100ms out -- and 100ms is not free to a tank
+   * at thirty percent health taking twelve thousand a swing.
+   *
+   * WHAT IT COSTS: the four offensive racials may not fire at all here, because
+   * a tank list rarely falls this far. That is the right trade for a build
+   * whose figure of merit is a DEATH COUNT, and it is worth 0.0 to all three
+   * tank presets either way -- prot_warr and druid_bear are Tauren and
+   * prot_pally is Human, so not one of them learns an active racial. Stoneform
+   * is the one a tank would actually want, and at the bottom it fires when
+   * nothing more pressing can, which is the honest policy for a ten percent
+   * reduction that costs a global cooldown.
+   */
+  ...RACIAL_COOLDOWNS,
+  ...RACIAL_DEFENSIVE_COOLDOWNS,
+],
 };
 
 export const PALADIN_RETRIBUTION_ROTATION: Rotation = compileRotation(PALADIN_RETRIBUTION);

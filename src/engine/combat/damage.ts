@@ -136,6 +136,71 @@ export interface DamageRequest {
   /** True for damage-over-time ticks. Recorded in telemetry. */
   readonly periodic?: boolean;
   /**
+   * This damage is not raised by the ATTACKER'S own damage bonuses.
+   *
+   * ----------------------------------------------------------------------------
+   * TOUCH OF THE GRAVE IS THE ONLY CALLER, and the ruling is the owner's own
+   * sentence: it "only scales off your Hit Points - not attack power or spell
+   * power or shadow damage talents - BUT it does scale if the target is
+   * vulnerable to shadow/magic damage from a debuff like Curse of the Elements
+   * or Improved Shadow Bolt."
+   *
+   * ATTACK POWER AND SPELL POWER NEED NO FLAG and do not get one: they arrive
+   * only through `powerCoefficient` and `weaponScaling`, so an ability that
+   * declares neither cannot read either. That half of the ruling is structural.
+   *
+   * WHAT THIS FLAG IS FOR IS THE THIRD CLAUSE. "Shadow damage talents" reach
+   * damage along two routes that have nothing to do with a coefficient: the
+   * build-time `SchoolModifiers` a talent writes -- Shadow Mastery, and Forever's
+   * Shadow Weaving, which is on the CASTER here where Classic puts it on the
+   * target -- and an aura's `damageDoneBySchool`, which is Demonic Sacrifice.
+   * Both Undead Warlock presets carry the first and one carries the second, so a
+   * drain fixed by the Undead's health would otherwise have been scaled by a
+   * tenth and more of somebody else's Shadow talent.
+   *
+   * WHAT IT DELIBERATELY DOES NOT TOUCH, because the owner's exception names it:
+   * the TARGET's side. `damageTakenBySchool`, `periodicDamageTakenBySchool` and
+   * the target's per-ability modifiers all still apply, which is what makes
+   * Curse of the Elements raise it exactly as asked.
+   *
+   * NOR DOES IT TOUCH HIT OR CRIT. A school-scoped `hitBonus` -- Shadow Focus --
+   * is about whether the drain LANDS on the spell table, not how big it is, and
+   * the owner's sentence is about scaling. Crit does not arise: Touch of the
+   * Grave declares no `critFrom` and no table whose crit it borrows, because it
+   * cannot crit.
+   * ----------------------------------------------------------------------------
+   */
+  readonly ignoresAttackerDamageScaling?: boolean;
+  /**
+   * This attack CANNOT critically strike, whatever table resolves it.
+   *
+   * ----------------------------------------------------------------------------
+   * OMITTING `critFrom` IS NOT ENOUGH, AND THAT IS THE WHOLE REASON THIS EXISTS.
+   * `critFrom` governs an attack with NO table -- a periodic tick, which rolls
+   * for a crit and nothing else. An attack that DOES declare a table takes its
+   * crit from that table: the spell table's crit slice is the caster's
+   * `spellCritChance`, so a request declaring `attackTable: 'spell'` and no
+   * `critFrom` crits at the caster's full spell crit.
+   *
+   * Touch of the Grave is the first thing in the ruleset that has to do both at
+   * once: the owner's statement is that it "uses the Spell Cast Combat Table"
+   * AND "cannot crit". It was built by omitting `critFrom`, which reads exactly
+   * like the right thing and is about the other case -- a test giving the caster
+   * a hundred points of crit found 200 crits in 200 drains.
+   *
+   * ZEROED AFTER EVERY MODIFIER, not before, which is the ordering `NO_CHANCES`
+   * already taught: `applyAbilityModifiers` ADDS a talent's `abilityCrit` to
+   * whatever the provider returned, so a table handed zero crit still crits if
+   * anything adds to it. Conflagrate read 0.7071 against a declared 0.4286 for
+   * exactly that reason -- 1.5x of a coefficient, not a coefficient error.
+   *
+   * THE SLICE GOES TO THE REMAINDER, which is `hit`. A table's walk falls past
+   * every slice it is given and what is left over is a hit, so removing crit
+   * turns those rolls into ordinary landed hits rather than into misses.
+   * ----------------------------------------------------------------------------
+   */
+  readonly cannotCrit?: boolean;
+  /**
    * Roll for a critical strike even though there is no attack table.
    *
    * RULESET: in Forever, every damage-over-time effect can crit. A tick does
@@ -661,9 +726,30 @@ function rollTable(
   );
   return resolveAttackTable(
     request.attackTable,
-    withModifier(withCritTable(chances, request, context), modifier),
+    /*
+     * AND `cannotCrit` LAST, after the table, the crit-table swap and every
+     * modifier -- because each of those can ADD crit and a zero handed in
+     * earlier would be added to. See `DamageRequest.cannotCrit`.
+     */
+    withoutCrit(
+      withModifier(withCritTable(chances, request, context), modifier),
+      request.cannotCrit === true,
+    ),
     context.rng,
   );
+}
+
+/**
+ * Remove the crit slice entirely, for an attack that cannot critically strike.
+ *
+ * The chance goes to zero and the multiplier to one: the chance is what the
+ * roll walks past, and the multiplier is belt and braces -- nothing should read
+ * it once the outcome can never be `crit`, and a stray 1.5 sitting in the
+ * resolution is the kind of thing a later reader uses.
+ */
+function withoutCrit(chances: AttackChances, cannotCrit: boolean): AttackChances {
+  if (!cannotCrit) return chances;
+  return { ...chances, crit: 0, critMultiplier: 1 };
 }
 
 /**
@@ -909,7 +995,7 @@ export function resolveDamage(
    * every school before this line read the request's.
    */
   const attackerMultiplier =
-    source.damageDoneMultiplierFor(request.school) *
+    (request.ignoresAttackerDamageScaling ? 1 : source.damageDoneMultiplierFor(request.school)) *
     versatilityMultiplierFrom(source.stats.effective);
   // Per-ability scaling sits alongside the whole-character multipliers rather
   // than replacing them: "+20% Revenge damage" and "+10% damage done" are
@@ -925,7 +1011,9 @@ export function resolveDamage(
    * deals, Curse of the Elements raises the fire damage a target takes, and
    * the two are different effects that both apply.
    */
-  const schoolMultiplier = casterSchoolModifier(request).damageMultiplier ?? 1;
+  const schoolMultiplier = request.ignoresAttackerDamageScaling
+    ? 1
+    : casterSchoolModifier(request).damageMultiplier ?? 1;
   /*
    * PER TABLE, alongside the other three. Ranged Weapon Specialization is
    * "the damage you deal with ranged weapons", which is neither one ability
@@ -984,6 +1072,17 @@ export function resolveDamage(
    * rolled. Genesis is the only caller; a character without it carries 1.
    */
   const periodicMultiplier = request.periodic ? source.periodicDamageMultiplier : 1;
+  /*
+   * AND THE SAME AXIS POINTING THE OTHER WAY, which is Eureka!.
+   *
+   * "Your next 3 non-periodic damaging abilities ... deal 10% more damage.
+   * Periodic effects get nothing from it; a channeled spell is not periodic."
+   * Every other multiplier above selects on who deals the damage, its school,
+   * its table or its ability; none of them can say "not a tick". An aura field
+   * rather than a combatant scalar because Eureka! arrives and goes, where
+   * Genesis lasts as long as the character.
+   */
+  const nonPeriodicMultiplier = request.periodic ? 1 : source.nonPeriodicDamageMultiplier;
   const afterAttacker =
     afterCrit *
     attackerMultiplier *
@@ -991,7 +1090,8 @@ export function resolveDamage(
     schoolMultiplier *
     tableMultiplier *
     bleedingMultiplier *
-    periodicMultiplier;
+    periodicMultiplier *
+    nonPeriodicMultiplier;
 
   // Per SCHOOL, which folds in the blanket multiplier as well. Curse of the
   // Elements raises magic and leaves physical alone, so the school has to
@@ -1291,6 +1391,32 @@ export function dealDamage(
     };
     runReactions(context, source, 'dealt', event);
     runReactions(context, target, 'taken', event);
+  } else if (request.periodic) {
+    /*
+     * A TICK GETS ITS OWN TRIGGER, which nothing existing declares.
+     *
+     * The `dealt` exclusion above stands: every reaction in the project is
+     * written against a table-rolled attack, and a bleed ticking is not one.
+     * `periodicDealt` is opted into rather than inherited, so this branch is
+     * dead for every character that does not carry such a reaction -- see
+     * `ReactionTrigger`.
+     *
+     * NO `taken` COUNTERPART, because nothing asked for one. Adding it would be
+     * a second dead branch with no caller to say what its outcome should mean.
+     *
+     * THE OUTCOME IS SYNTHESISED from the crit, because a tick rolled no table.
+     */
+    const event: AttackEvent = {
+      attacker: source,
+      defender: target,
+      outcome: resolution.critical ? 'crit' : 'hit',
+      abilityId: request.abilityId,
+      abilityName: request.abilityName,
+      amount: resolution.amount,
+      weaponSlot: request.weaponSlot,
+      critical: resolution.critical,
+    };
+    runReactions(context, source, 'periodicDealt', event);
   }
 
   /*

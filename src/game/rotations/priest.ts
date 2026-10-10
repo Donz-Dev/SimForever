@@ -1,6 +1,7 @@
 import type { Rotation } from '../../engine';
 import type { TalentAllocation } from '../talents/Talent';
 import type { AplCondition, AplList } from './apl';
+import { RACIAL_COOLDOWNS } from './racialCooldowns';
 import { any, compileRotation, fightRemainingFraction, not, selfMissing, targetExpired } from './apl';
 
 /**
@@ -113,6 +114,14 @@ export const PRIEST_SHADOW: AplList = {
   name: 'Priest (Shadow)',
   entries: [
     { abilityId: 'shadowform', condition: withoutAura('shadowform') },
+  /*
+   * THE RACIAL COOLDOWNS, AFTER WHATEVER OPENS THIS LIST.
+   *
+   * Free, off the global cooldown, and skipped in silence by every build
+   * that is not of the race that learns them. BOTH ENDS OF THE LIST WERE
+   * MEASURED AND BOTH WERE WRONG -- see `racialCooldowns.ts`.
+   */
+  ...RACIAL_COOLDOWNS,
     { abilityId: 'shadow_word_pain', condition: expired('shadow_word_pain') },
     { abilityId: 'devouring_plague', condition: expired('devouring_plague') },
     { abilityId: 'vampiric_embrace', condition: expired('vampiric_embrace') },

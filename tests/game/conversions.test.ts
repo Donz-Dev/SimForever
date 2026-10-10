@@ -258,8 +258,17 @@ describe('conversions applied across every combination', () => {
 
   it('gives mana-using classes a pool larger than their base mana', () => {
     const player = createPlayer({ race: 'gnome', characterClass: 'mage' });
-    // 933 base + 139 intellect * 15.
-    expect(player.resources.require('mana').maximum).toBe(933 + 139 * 15);
+    /*
+     * 933 base + 139 intellect * 15, AND THEN EXPANSIVE MIND'S +5%.
+     *
+     * A GNOME IS THE ONE RACE WHERE THIS TEST IS NOT JUST THE CONVERSION, which
+     * is worth stating where the number is: "Maximum Mana, Rage or Energy
+     * increased by 5%, whichever your class uses". A Human Mage's pool is 3018
+     * exactly.
+     */
+    expect(player.resources.require('mana').maximum).toBe(
+      Math.round((933 + 139 * 15) * 1.05),
+    ); // 3169
   });
 
   it('gives Warriors and Rogues no mana pool despite having intellect', () => {

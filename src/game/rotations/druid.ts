@@ -1,5 +1,6 @@
 import type { Rotation } from '../../engine';
 import type { AplList } from './apl';
+import { RACIAL_COOLDOWNS, RACIAL_DEFENSIVE_COOLDOWNS } from './racialCooldowns';
 import {
   all,
   comboPoints,
@@ -147,6 +148,14 @@ export const DRUID_MOONKIN: AplList = {
   name: 'Druid (Moonkin)',
   entries: [
   { abilityId: 'moonfire', condition: expired('moonfire') },
+  /*
+   * THE RACIAL COOLDOWNS, AFTER WHATEVER OPENS THIS LIST.
+   *
+   * Free, off the global cooldown, and skipped in silence by every build
+   * that is not of the race that learns them. BOTH ENDS OF THE LIST WERE
+   * MEASURED AND BOTH WERE WRONG -- see `racialCooldowns.ts`.
+   */
+  ...RACIAL_COOLDOWNS,
   { abilityId: 'insect_swarm', condition: expired('insect_swarm') },
   /*
    * TWO STARFIRE ENTRIES, and the second is not a duplicate. Eclipse charges
@@ -236,6 +245,14 @@ export const DRUID_CAT: AplList = {
    * was free and cost a global cooldown; this one buys the resource back.
    */
   { abilityId: 'shifting_power', condition: energyAtMost(SHIFTING_POWER_ENERGY_CEILING) },
+  /*
+   * THE RACIAL COOLDOWNS, AFTER WHATEVER OPENS THIS LIST.
+   *
+   * Free, off the global cooldown, and skipped in silence by every build
+   * that is not of the race that learns them. BOTH ENDS OF THE LIST WERE
+   * MEASURED AND BOTH WERE WRONG -- see `racialCooldowns.ts`.
+   */
+  ...RACIAL_COOLDOWNS,
   { abilityId: 'berserk' },
   /*
    * EVERY CLEARCASTING PROC GOES ON SHRED, REGARDLESS OF COMBO POINTS -- the
@@ -307,7 +324,29 @@ export const DRUID_BEAR: AplList = {
   // Primal Bite is `mangle`: the id kept the old name, the display name did not.
   { abilityId: 'mangle' },
   { abilityId: 'lacerate' },
-  ],
+    /*
+   * THE RACIAL COOLDOWNS LAST, WHICH IS A TANK LIST'S OWN RULE.
+   *
+   * Everywhere else they sit second -- high enough to fire, below whatever
+   * opens the list. A TANK LIST PUTS THEM LAST INSTEAD, and the reason is the
+   * one `protectionRotation.test.ts` already states about Charge: an entry
+   * above a survival cooldown "would cost a survival cooldown the moment it was
+   * needed". A racial is free and off the global cooldown, but casting one
+   * still moves the next decision 100ms out -- and 100ms is not free to a tank
+   * at thirty percent health taking twelve thousand a swing.
+   *
+   * WHAT IT COSTS: the four offensive racials may not fire at all here, because
+   * a tank list rarely falls this far. That is the right trade for a build
+   * whose figure of merit is a DEATH COUNT, and it is worth 0.0 to all three
+   * tank presets either way -- prot_warr and druid_bear are Tauren and
+   * prot_pally is Human, so not one of them learns an active racial. Stoneform
+   * is the one a tank would actually want, and at the bottom it fires when
+   * nothing more pressing can, which is the honest policy for a ten percent
+   * reduction that costs a global cooldown.
+   */
+  ...RACIAL_COOLDOWNS,
+  ...RACIAL_DEFENSIVE_COOLDOWNS,
+],
 };
 
 export const DRUID_MOONKIN_ROTATION: Rotation = compileRotation(DRUID_MOONKIN);
