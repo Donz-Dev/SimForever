@@ -1653,10 +1653,17 @@ button:disabled {
   padding: 2px 4px;
 }
 
-/* Wide enough for `shadow_word_pain` without being wide enough to push the
-   row's controls off the end. */
+/* Sized for a NAME rather than an id, which is what this control shows now --
+   "Judgement of the Crusader" is half again as long as `shadow_word_pain`.
+   `max-width` rather than a fixed width so a narrow column shrinks it instead
+   of pushing the row's own controls off the end. */
 .apl-aura {
-  width: 130px;
+  /* `auto` lets a select size to its widest option, which is what makes a
+     name legible; the cap stops one long aura name setting the width of every
+     row. A clause is an inline-flex box, so a percentage width resolves
+     against nothing useful here -- it rendered at 124px and clipped. */
+  width: auto;
+  max-width: 210px;
 }
 
 .apl-number {

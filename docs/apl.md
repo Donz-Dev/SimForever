@@ -179,6 +179,30 @@ editor that silently simplified the Rogue's `not(poolingForAmbush)` into
 something it could draw would change the rotation with nothing on screen to say
 so.
 
+**Buffs and debuffs are chosen by NAME from a dropdown**, never typed.
+`auras/auraCatalog.ts` derives what a class can be asked about from three
+sources — the class's own aura module read as a namespace, its talent auras
+narrowed by its own talent tree, and the raid buffs — with a safety net that
+adds anything its stock lists mention, wherever that definition happens to
+live. `auraCatalog.test.ts` asserts that net holds for all 26 lists.
+
+The first version was a text box with a datalist of *ability* ids beside it, on
+the reasoning that most aura ids are ability ids and there was no registry of
+the rest. Both halves were true and the conclusion was wrong: it meant a buff
+condition was unreachable unless you already knew that Fire Vulnerability is
+`fire_vulnerability`. **And a half-typed id is worse than a wrong one** — an
+aura that does not exist is never present, so `is up` is permanently false and
+`has run out` is permanently true. One silently disables an entry, the other
+silently ungates it, and neither looks like anything but a rotation that
+performs differently than expected.
+
+Both groups are always offered, with the one matching the clause's subject on
+top. Filtering to debuffs alone for a target clause would be tidier and wrong:
+the Druid's Bear list asks whether the target has the *Warrior's* Demoralizing
+Shout. An id the catalog does not know is kept as its own option rather than
+falling back to the first entry, so a hand-edited file is never silently
+rewritten.
+
 **`is not up` and `has run out` are different options on purpose.** The first is
 `!auras.has(id)` and the second is `remainingMs(id) <= 0`; they differ on an
 aura that is present with nothing left, and the stock lists write both. They
