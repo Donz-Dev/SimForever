@@ -5,6 +5,8 @@ import type { AplCondition, AplEntry, DescribeNames } from '../../game/rotations
 import { describeCondition } from '../../game/rotations/apl';
 import { resolveCombatStyle } from '../../game/character';
 import { abilitiesForClass } from '../../game/abilities/abilitiesForClass';
+import type { CatalogAura } from '../../game/auras/auraCatalog';
+import { aurasForClass } from '../../game/auras/auraCatalog';
 import type { Clause, ClauseKind } from './aplEditing';
 import {
   addEntry,
@@ -54,6 +56,7 @@ export function AplPanel({ profile, onChange }: AplPanelProps) {
   const list = profile.rotation;
   const { names, nameOf } = aplNamesFor(profile);
   const abilities = abilityChoicesFor(profile);
+  const auras = aurasForClass(profile.character.characterClass);
   const matchesBuild = rotationMatchesBuild(profile);
 
   /** Every edit goes through here, so nothing can change a list and forget. */
@@ -124,6 +127,7 @@ export function AplPanel({ profile, onChange }: AplPanelProps) {
         names={names}
         nameOf={nameOf}
         abilities={abilities}
+        auras={auras}
         onChange={update}
       />
 
@@ -155,12 +159,14 @@ export function AplEntries({
   names,
   nameOf,
   abilities,
+  auras,
   onChange,
 }: {
   readonly list: ShownList;
   readonly names: DescribeNames;
   readonly nameOf: (id: string) => string;
   readonly abilities?: readonly { readonly id: string; readonly name: string }[];
+  readonly auras?: readonly CatalogAura[];
   readonly onChange?: (entries: readonly AplEntry[]) => void;
 }) {
   return (
@@ -174,6 +180,7 @@ export function AplEntries({
               condition={entry.condition}
               names={names}
               abilities={abilities ?? []}
+              auras={auras ?? []}
               onChange={
                 onChange
                   ? (condition) => onChange(setCondition(list.entries, index, condition))
@@ -234,11 +241,13 @@ function EntryCondition({
   condition,
   names,
   abilities,
+  auras,
   onChange,
 }: {
   readonly condition: AplCondition | undefined;
   readonly names: DescribeNames;
   readonly abilities: readonly { readonly id: string; readonly name: string }[];
+  readonly auras: readonly CatalogAura[];
   readonly onChange?: (condition: AplCondition | undefined) => void;
 }) {
   const clauses = clausesOf(condition);
@@ -275,6 +284,7 @@ function EntryCondition({
           key={index}
           clause={clause}
           abilities={abilities}
+          auras={auras}
           onChange={(next) => replace(clauses.map((c, at) => (at === index ? next : c)))}
           onRemove={() => replace(clauses.filter((_c, at) => at !== index))}
         />
@@ -303,11 +313,13 @@ function EntryCondition({
 function ClauseRow({
   clause,
   abilities,
+  auras,
   onChange,
   onRemove,
 }: {
   readonly clause: Clause;
   readonly abilities: readonly { readonly id: string; readonly name: string }[];
+  readonly auras: readonly CatalogAura[];
   readonly onChange: (clause: Clause) => void;
   readonly onRemove: () => void;
 }) {
@@ -345,19 +357,24 @@ function ClauseRow({
             <option value="target">target&apos;s</option>
           </select>
           {/*
-            * A DATALIST RATHER THAN A CLOSED DROPDOWN, because there is no
-            * registry of every aura's display name -- most aura ids ARE
-            * ability ids, so the book answers for most of them, and the rest
-            * have to be typeable. A closed list would put Clearcasting, Shadow
-            * Trance and Fingers of Frost out of reach entirely.
+            * A REAL DROPDOWN, WHICH THE FIRST VERSION OF THIS WAS NOT. It was
+            * a text box with a datalist of ABILITY ids beside it, on the
+            * reasoning that most aura ids are ability ids and there was no
+            * registry of the rest. Both halves were true and the conclusion was
+            * wrong: choosing a buff condition meant already knowing that Fire
+            * Vulnerability is `fire_vulnerability`, which you can only find by
+            * reading the source or an external site.
+            *
+            * AND A HALF-TYPED ID IS WORSE THAN A WRONG ONE: an aura that does
+            * not exist is never present, so "is up" is permanently false and
+            * "has run out" is permanently true -- an entry silently disabled,
+            * or silently ungated, with nothing on screen to say which.
             */}
-          <input
-            className="apl-aura"
-            list="apl-aura-ids"
-            value={clause.auraId ?? ''}
-            placeholder="buff id"
-            aria-label="Buff id"
-            onChange={(e) => set({ auraId: e.target.value })}
+          <AuraChoice
+            auraId={clause.auraId ?? ''}
+            auras={auras}
+            preferDebuffs={clause.on === 'target'}
+            onChange={(auraId) => set({ auraId })}
           />
           <select
             value={clause.test}
@@ -447,6 +464,76 @@ function ClauseRow({
         ✕
       </button>
     </span>
+  );
+}
+
+/**
+ * Choosing a buff or debuff BY NAME, grouped so the likely half comes first.
+ *
+ * ----------------------------------------------------------------------------
+ * BOTH GROUPS ARE ALWAYS OFFERED, with the one matching the clause's subject on
+ * top. Filtering to debuffs alone for a target clause would be tidier and
+ * wrong: the Druid's Bear list asks whether the TARGET has Demoralizing Shout
+ * -- a Warrior debuff -- and a Paladin's echo seals are buffs the character
+ * carries. Ordering helps; hiding would send somebody back to finding ids.
+ *
+ * AN ID THE CATALOG DOES NOT KNOW IS KEPT AS ITS OWN OPTION rather than
+ * silently falling back to the first entry. A hand-edited file or a renamed
+ * aura would otherwise have its condition quietly rewritten to name something
+ * else the moment the panel drew it.
+ * ----------------------------------------------------------------------------
+ */
+function AuraChoice({
+  auraId,
+  auras,
+  preferDebuffs,
+  onChange,
+}: {
+  readonly auraId: string;
+  readonly auras: readonly CatalogAura[];
+  readonly preferDebuffs: boolean;
+  readonly onChange: (auraId: string) => void;
+}) {
+  const debuffs = auras.filter((aura) => aura.isDebuff);
+  const buffs = auras.filter((aura) => !aura.isDebuff);
+  const groups = preferDebuffs
+    ? [
+        { label: 'Debuffs', auras: debuffs },
+        { label: 'Buffs', auras: buffs },
+      ]
+    : [
+        { label: 'Buffs', auras: buffs },
+        { label: 'Debuffs', auras: debuffs },
+      ];
+  const unknown = auraId.length > 0 && !auras.some((aura) => aura.id === auraId);
+
+  return (
+    <select
+      className="apl-aura"
+      value={auraId}
+      aria-label="Buff or debuff"
+      onChange={(event) => onChange(event.target.value)}
+    >
+      {/*
+        * AN EMPTY CHOICE THAT STAYS SELECTABLE, because a newly added clause
+        * has no aura yet and the alternative is defaulting to whichever name
+        * happens to sort first -- a condition nobody chose, reading as one
+        * they did.
+        */}
+      <option value="">(choose a buff)</option>
+      {unknown ? <option value={auraId}>{auraId} (not in this build)</option> : null}
+      {groups.map((group) =>
+        group.auras.length > 0 ? (
+          <optgroup key={group.label} label={group.label}>
+            {group.auras.map((aura) => (
+              <option key={aura.id} value={aura.id}>
+                {aura.name}
+              </option>
+            ))}
+          </optgroup>
+        ) : null,
+      )}
+    </select>
   );
 }
 

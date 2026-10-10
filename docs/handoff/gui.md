@@ -359,6 +359,14 @@ editable. A `default` list re-derives when class, spec, style or stance changes;
 a `custom` one is never silently replaced, and the panel says when it no longer
 matches the build's stock list. A Reset button puts the stock list back.
 
+**A BUFF OR DEBUFF IS CHOSEN BY NAME FROM A DROPDOWN**, grouped into buffs and
+debuffs with the half matching the clause's subject on top. It was a text box
+asking for an aura id at first -- which meant a buff condition was unreachable
+unless you already knew that Fire Vulnerability is `fire_vulnerability`, and
+which let a half-typed id produce a condition that is permanently true or
+permanently false with nothing on screen to say so. `auras/auraCatalog.ts`
+derives the list rather than carrying one.
+
 **THE CONDITIONS THE EDITOR CANNOT DRAW ARE SHOWN AS A SENTENCE AND SAY SO.**
 `any`, `not` and the four builtins have no controls, and an editor that silently
 simplified one would change what the rotation does with nothing on screen to say
