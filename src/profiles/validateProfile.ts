@@ -113,6 +113,18 @@ export function validateProfile(value: unknown): ValidationResult {
       });
     }
 
+    /*
+     * A STRING CHECK AND NOTHING MORE, which is deliberate -- see the note
+     * beside `petFamily` in the rebuild below for why the id itself is not
+     * checked against the known families. This exists so the field's declared
+     * type is not a lie: everything here arrives from a file a person can
+     * hand-edit, and `petFamily: 42` would otherwise ride through typed as a
+     * string.
+     */
+    if (character.petFamily !== undefined && typeof character.petFamily !== 'string') {
+      issues.push({ path: 'character.petFamily', message: 'Pet family must be an id string.' });
+    }
+
     // Combat style is optional; omitting it means "use the class default".
     if (character.combatStyle !== undefined) {
       if (!isCombatStyleId(character.combatStyle)) {
@@ -371,6 +383,35 @@ export function validateProfile(value: unknown): ValidationResult {
          */
         ...(validated.character.stance !== undefined
           ? { stance: validated.character.stance }
+          : {}),
+        /*
+         * AND SO WAS `petFamily`, FOR THE SAME REASON AND AT A HIGHER PRICE.
+         *
+         * The comment above was written when `stance` was found missing from
+         * this rebuild; `petFamily` arrived later and was never added either,
+         * so the lesson was recorded and the next field repeated it. The
+         * failure is identical in shape and quieter in effect: a profile
+         * carrying a pet family loaded back without one, and NOTHING
+         * complained, because every consumer has a fallback.
+         *
+         *   - a Hunter's `petFor` falls back to 'cat', so a Wolf or a Boar
+         *     silently became a Cat -- a damage modifier of 1.0 or 0.9 read
+         *     back as 1.1.
+         *   - a Warlock's `sacrificedDemon` returns UNDEFINED rather than
+         *     falling back, so Demonic Sacrifice applied no aura at all. Both
+         *     Warlock presets lost 15% of a school's damage by being saved
+         *     and loaded, with no issue raised and no field visibly missing.
+         *
+         * NOT VALIDATED AGAINST `isPetFamilyId`, which is the one difference
+         * from `warlockStone` below. The field is typed `string` on purpose --
+         * the families are content and a profile naming one this build does
+         * not carry should still load -- and both consumers already handle an
+         * unrecognised value. That is the `raidBuffs` rule rather than the
+         * `warlockStone` one, and it is chosen here because a Hunter whose pet
+         * family was renamed should open as a Cat, not refuse to load.
+         */
+        ...(validated.character.petFamily !== undefined
+          ? { petFamily: validated.character.petFamily }
           : {}),
       },
       stats: cleanStats,

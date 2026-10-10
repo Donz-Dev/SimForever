@@ -246,17 +246,89 @@ The original four, with what actually happened:
 
 ---
 
-## What is left
+## Save and Load, which is how a character gets out of the app and back in
 
-Two things, and they are the same thing.
+**LOAD WORKS AND SAVE EXISTS; IMPORT IS STILL `() => undefined`.** The owner
+scoped it that way deliberately -- "let's focus in on the Load and Save
+features" -- so the pair that moves a character to disk and back is built and
+the paste-a-profile half is still parked.
 
-- **IMPORT AND LOAD DO NOTHING.** `App.tsx` wires both to `() => undefined`. They
-  are two real-looking buttons at the top of the character panel that silently do
-  nothing when pressed -- no error, no feedback. The owner has parked this rather
-  than closed it.
-- **`panels/ProfilePanel.tsx` IS NOT MOUNTED.** 83 lines holding exactly the
-  `serializeProfile` / `parseProfile` round-trip those two buttons need, kept on
-  purpose. **Do not delete it** without building Import and Load first -- it is
-  dead today and it is the obvious implementation of the thing that is missing.
+| | where | what it does |
+| --- | --- | --- |
+| **Save** | the CONFIRMED summary line | writes `serializeProfile` as `<name>-<race>-<class>.json` |
+| **Load** | the creation panel AND the summary line | opens the file dialog, `parseProfile`, and confirms the character |
+| **Import** | the creation panel | nothing, still |
+
+**THE FILE IS THE PROFILE'S OWN JSON AND THAT IS THE WHOLE DESIGN DECISION.**
+The ask was for "a simple build text file with all of the variables that make a
+profile", and `serializeProfile` has written exactly that since format version
+1. What a second format would have cost is `version`: loading runs parse ->
+**MIGRATE** -> validate, so a file saved today still opens after the format
+moves on, and twelve versions of migration already exist to prove it. A bespoke
+text format would be a second serializer to keep in step with
+`CharacterProfile`, with no migration and nothing to notice when the two
+drifted.
+
+**SAVE IS ON FLOW TWO BECAUSE FLOW ONE HAS NO CHARACTER TO SAVE.** The creation
+screen holds five fields; the talents, the gear, the raid buffs, the
+consumables and the encounter are all chosen afterwards and all of them are in
+the file.
+
+**LOAD IS ON BOTH, AND THAT IS A CHANGE OF MIND WORTH RECORDING.** It was
+flow-one-only first, on the owner's call -- which left `Change` as the only
+route to it from a confirmed character, and **Change CLEARS THE TALENT
+ALLOCATION**. That is harmless when a file is then loaded, because a load
+replaces the whole profile, and it costs somebody their build the moment they
+cancel the file dialog instead. The owner reversed it once the trap was named:
+**a second entry point is cheaper than a trap.**
+
+**THE ORDER IS SAVE, LOAD, CHANGE**, and the rule behind it is that the
+destructive button goes last -- the two that preserve a build sit to the left of
+the one that discards it. `profileFile.test.ts` pins that RELATION rather than
+the exact positions, so adding a fourth button does not fail it for no reason.
+
+**ONE FILE INPUT, BUILT ONCE AND PASSED TO WHICHEVER SCREEN IS MOUNTED.** Both
+need one and only one renders at a time, so `CharacterPanel` builds the element
+and the issue list and hands them down. Writing the input out in both branches
+would be two things to keep in step, and **the half that drifted would be the
+one nobody pressed** -- there is a test that each screen has exactly one.
+
+**AND A FAILED LOAD IS CLEARED WHEN THE SCREEN CHANGES.** The panel stays
+mounted across the confirm/edit boundary, so an error raised on the creation
+screen would otherwise still be sitting under the summary line afterwards -- a
+message about a file, attached to a character that has nothing to do with it.
+Both Confirm and Change go through `clearingIssues`.
+
+### Three things that were not obvious
+
+- **`validateProfile` REBUILDS THE PROFILE FIELD BY FIELD**, so every field has
+  to be named there or it is dropped on load in total silence. It had already
+  happened to `stance` and been fixed with a comment recording the lesson;
+  `petFamily` arrived later, was never added, and repeated it directly
+  underneath that comment. **Both Warlock presets lost Demonic Sacrifice
+  entirely** -- `sacrificedDemon` returns undefined rather than falling back --
+  and the BM Hunter's Wolf or Boar would have come back a Cat.
+  `tests/profiles/roundTrip.test.ts` compares the WHOLE profile across all 25
+  presets rather than listing fields, because a test that lists them is a second
+  copy of the rebuild with the same hole in it.
+- **A FILE INPUT FIRES `change` ONLY WHEN ITS VALUE CHANGES**, so choosing the
+  same file twice is silent the second time -- which is exactly what someone
+  does after editing a build on disk. `CharacterPanel` clears `event.target.value`
+  before the await, so the next pick is always a change whatever happens after.
+- **THE HIDDEN INPUT IS OFF-SCREEN, NOT `display: none`.** A `none` input is
+  unfocusable and unreachable by a screen reader, and Safari has historically
+  refused to open a dialog for a programmatic click on one. `.visually-hidden`
+  in `styles.css`.
+
+### What is left
+
+- **IMPORT STILL DOES NOTHING**, and `panels/ProfilePanel.tsx` is still not
+  mounted. 83 lines holding the `serializeProfile` / `parseProfile` round trip
+  in a paste box, which is the natural other half of the pair: Load reads a
+  file, Import takes text somebody sent you. **Do not delete it** without
+  building Import -- it is dead today and it is the obvious implementation of
+  the thing that is missing.
+- **NOTHING WRITES TO `localStorage`.** Saving means a file on disk; closing the
+  tab still loses the character. Nobody has asked for the other thing.
 
 Everything else in this document is done or settled.
