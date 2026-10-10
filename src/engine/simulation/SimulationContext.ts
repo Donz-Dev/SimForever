@@ -1,6 +1,6 @@
 import type { Ability } from '../abilities/Ability';
 import type { CastCheck } from '../abilities/casting';
-import type { CastRejection } from '../abilities/casting';
+import type { CastCheckOptions, CastRejection } from '../abilities/casting';
 import type { Combatant, WeaponSlot } from '../actors/Combatant';
 import type {
   AttackChances,
@@ -91,6 +91,7 @@ export interface SimulationContext {
     actor: Combatant,
     ability: Ability,
     target: Combatant | undefined,
+    options?: CastCheckOptions,
   ): CastRejection | undefined;
 
   /** Use an ability, paying costs and starting cooldowns. */

@@ -1,6 +1,6 @@
 import type { Ability } from '../abilities/Ability';
 import { sampleStats } from '../logging/statSample';
-import type { CastCheck } from '../abilities/casting';
+import type { CastCheck, CastCheckOptions } from '../abilities/casting';
 import { castAbility, checkCast } from '../abilities/casting';
 import type { Combatant, WeaponSlot } from '../actors/Combatant';
 import { extraAttack, startAutoAttack } from '../combat/autoAttack';
@@ -229,8 +229,9 @@ export class Simulation implements SimulationContext {
     actor: Combatant,
     ability: Ability,
     target: Combatant | undefined,
+    options?: CastCheckOptions,
   ): CastRejection | undefined {
-    const check = checkCast(this, actor, ability, target);
+    const check = checkCast(this, actor, ability, target, options);
     return check.ok ? undefined : check.reason;
   }
 

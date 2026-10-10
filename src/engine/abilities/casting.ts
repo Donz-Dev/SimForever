@@ -32,16 +32,49 @@ export type CastCheck = { ok: true } | { ok: false; reason: CastRejection };
  * ability's own `canCast` for anything specific to it. Rotations call this
  * before committing, so the checks have to be side-effect free.
  */
+/** How a cast check may be relaxed. */
+export interface CastCheckOptions {
+  /**
+   * Answer as though the caster were NOT mid-cast.
+   *
+   * For asking whether a cast would be possible if the current one were
+   * abandoned -- which is the only question an interrupt decision is really
+   * making. Everything else is checked as usual, the global cooldown included:
+   * cancelling a channel to sit on a running GCD would throw the rest of the
+   * channel away and cast nothing.
+   */
+  readonly ignoreCastLock?: boolean;
+}
+
 export function checkCast(
   context: SimulationContext,
   caster: Combatant,
   ability: Ability,
   target: Combatant | undefined,
+  options?: CastCheckOptions,
 ): CastCheck {
   const now = context.clock.now();
 
   if (!caster.isAlive) return { ok: false, reason: 'caster_dead' };
-  if (caster.isCasting(now)) return { ok: false, reason: 'already_casting' };
+  /*
+   * THE CAST LOCK IS CHECKED SECOND, AND THAT IS WHY IT CAN BE SKIPPED.
+   *
+   * Reporting one reason in a fixed order means an earlier reason HIDES every
+   * later one -- so `already_casting` says nothing whatever about the global
+   * cooldown, the ability's own cooldown, its cost or its target, all of which
+   * are checked below. Anything that wants to know "could this be cast if the
+   * caster were not busy" has to look past it rather than read it as an answer.
+   *
+   * `selectInterrupt` IS THE CALLER, AND IT USED TO READ IT AS AN ANSWER. Its
+   * own comment claimed `already_casting` meant nothing else was in the way;
+   * it meant only that the caster was alive. A Shadow Priest ticking "interrupt
+   * Mind Flay" on Mind Blast therefore cancelled the channel on EVERY poll,
+   * including the whole eight seconds Mind Blast was on cooldown -- Mind Flay
+   * went from about 30 ticks a fight to zero.
+   */
+  if (!options?.ignoreCastLock && caster.isCasting(now)) {
+    return { ok: false, reason: 'already_casting' };
+  }
 
   /*
    * A RUNNING GLOBAL COOLDOWN BLOCKS EVERYTHING, including abilities that do
