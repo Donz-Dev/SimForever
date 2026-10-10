@@ -71,12 +71,37 @@ describe('what it does not touch', () => {
   /*
    * THE BLIND ROW IS UNCHANGED, which matters because it is the one every
    * recorded figure was taken against. This adds a row; it does not move one.
+   *
+   * ==========================================================================
+   * AND THE PROFILE HAS ITS POTION TAKEN OFF FIRST, WHICH IS NOT A CONVENIENCE.
+   *
+   * The assertion is "a fight average with nothing moving the pool equals the
+   * opener's figure", and the comment under it used to read "no aura in this
+   * build moves spell power". That stopped being true the day the Shadow Priest
+   * preset was given a Major Spellblasting Potion -- forty spell power for
+   * thirty seconds of a sixty-second fight, which is the 19.8 this came back
+   * high by: a correct average of a pool that genuinely moves.
+   *
+   * SO THE FIX IS TO REMOVE THE THING THAT MOVES IT rather than to widen the
+   * tolerance, which would have hidden the one term in the way. That is the
+   * same choice Ice Lance's measured slope forced: divide the extra factor back
+   * out and NAME it, do not loosen the assertion until it passes.
+   * ==========================================================================
    */
   it('leaves the blind average exactly where it was', () => {
-    const stats = batchOf('shadow_priest', 6, 11).stats!;
-    const character = characterAtCombatStart(PRESETS_BY_ID.get("shadow_priest")!.build())!;
+    const built = PRESETS_BY_ID.get('shadow_priest')!.build();
+    const consumables = { ...built.consumables };
+    delete consumables.potion;
+    const still = { ...built, consumables };
 
-    // No aura in this build moves spell power, so the average is the opener's.
+    const stats = runProfileBatch({
+      ...still,
+      simulation: { ...still.simulation, iterations: 6, seed: 11 },
+    } as never).stats!;
+    const character = characterAtCombatStart(still)!;
+
+    // With the potion gone, nothing in this build moves spell power, so the
+    // average over the fight is the opener's figure.
     expect(stats.spellPower).toBeCloseTo(character.stats.effective.spellPower, 6);
   });
 });

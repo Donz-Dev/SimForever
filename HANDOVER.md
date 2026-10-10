@@ -1,3 +1,218 @@
+# MID-FIGHT CONSUMABLES — NINE POTIONS THAT ARE ABILITIES
+
+**ALL 25 ROWS MOVED AND EVERY ONE WENT UP, +1.8 TO +48.6, MEAN 709.6 -> 727.3.**
+Two new consumable categories — Potion and Other — whose entries are used DURING
+the fight. The owner: they "must be treated like a character ability and be
+exposed on the APL and consumable panels", so each carries an `Ability`, joins
+the ability book when it is selected, and gets an entry in the priority list.
+
+| | what it was | effect |
+| --- | --- | --- |
+| `190016e` | the nine abilities, the two categories, the panel and the APL | **no figure moved**; all 75 hashes and event counts identical |
+| `8a78b5c` | Preparation reset a potion, which is not a Rogue ability | no published figure; **Thistle Tea 2.00 casts -> 1.00** |
+| this one | every preset gets a sensible Potion and Other, measured | **25 of 25 rows**, 10 REAL |
+
+**NOTHING HERE NEEDED A NEW ENGINE CAPABILITY, AND THAT IS THE HEADLINE.** Every
+field used already existed. The racials that landed the week before are the
+template throughout: an ability belonging to no class is appended in
+`createPlayer` beside them, a shared constant puts an entry in all 25 stock
+lists, and `stockListFor` narrows it to what the profile carries —
+`withoutUnselectedConsumables` is `withoutOtherRacials` with a SELECTION in
+place of a race.
+
+**AND THE OWNER'S ASK WAS ALREADY SATISFIED BY A MECHANISM THAT EXISTED.**
+"When a potion is selected it will then become visible on the APL so the user
+can place it amongst their rotation with conditions" needed no code at all:
+`editProfile` runs `syncDefaultRotation` on every change a panel makes, and its
+own comment had predicted exactly this case —
+
+> applied to every change rather than to the four that can matter, because it is
+> idempotent and because the alternative is a list of "edits that change which
+> stock list applies" that is correct until somebody adds a fifth.
+
+**A consumable selection is the fifth.** No profile format bump either: the
+selection is already a map from category id to consumable id, so two more keys
+are legal in every file ever saved.
+
+## The four rulings, which are what the questions were for
+
+Asked before anything was built, and three of the four went the way that moves
+no figure on nobody's authority:
+
+| question | the owner's answer |
+| --- | --- |
+| do they start a global cooldown? | **no** — the same answer they gave for four of the five racials |
+| should any preset open with one? | **yes**, a sensible one each — which is this round's figures |
+| the Rune below its own cost? | **refused**, not allowed to kill |
+| does anything scale a heal? | **no** — the stated range is the whole answer |
+
+**THE GCD ANSWER IS THE ONE THAT MATTERED MOST AND IS INVISIBLE.** An ability
+wrongly taking a global cooldown still restores the right pool for the right
+amount on the right cooldown, so the mistake shows up in nothing but the DPS.
+Being off it means ONE thing — the ability does not START one — and it is still
+BLOCKED by one running, which a test forgot: it cast two free potions behind a
+Ghostly Strike, neither happened, and it asserted on a state neither reached.
+
+**AND THE RUNE'S GUARD IS LOAD-BEARING FOR A SECOND REASON THE QUESTION DID NOT
+ASK ABOUT.** `Resource.spend` is all-or-nothing — it "returns false and changes
+nothing" when the pool is short — so without the refusal a character below the
+cost would have paid NO health and still collected the mana. A free Demonic Rune
+is a bigger number and no error.
+
+## Two bugs, both found by printing a quantity beside the figure
+
+**PREPARATION WAS HANDING A ROGUE A SECOND THISTLE TEA.** "Immediately finishes
+the cooldown on your other ROGUE abilities" was implemented as every ability the
+character had, which was the same set until a book started holding racials and
+potions. A five minute cooldown fired **twice in a sixty second fight** — 2.00
+casts on Rupture, 1.86 on Hemo — taking the potion from a true +32.5 to a
+reported +64.7 and +85.1.
+
+**IT WAS FOUND BY THE CAST COUNT AND NOT BY THE DPS.** +64.7 reads as a potion
+that is unusually good for a build with no other energy cooldown; "two casts of
+something on a five minute cooldown" does not read as anything but wrong.
+`resetCooldowns` takes the ids the caller owns now, because the engine cannot
+answer "is this a Rogue ability" and must not try.
+
+**AND THE THREE TESTS ALREADY ON PREPARATION COULD NOT HAVE SEEN IT**, because
+all three built the actor a book of two Rogue abilities — so the restriction had
+nothing to restrict. **A test whose fixture cannot express the mistake proves
+nothing about it**, which is the stock Warlock list's lesson about the interrupt
+check, in a different file. The racial half of the same bug is worth 0.0 today
+and is why nobody found it when the racials landed: Preparation is only in the
+two SUBTLETY lists and both those profiles are Undead, whose racial is a passive
+reaction rather than an ability with a cooldown.
+
+**AND `measure_profiles.ts` WOULD HAVE CALLED ALL NINE "NEVER FIRED"**, which is
+the racials' own bug repeated and was avoided only because the comment they left
+in `ABILITY_NAMES` says to add new ones there. A tool that answers "did this
+entry fire" must know every ability a list can name, or its zero means two
+different things.
+
+## Healing a Warlock costs it 28 DPS, and the mechanism is a global cooldown
+
+**THE ONE FINDING NOBODY WOULD HAVE PREDICTED.** The two heals are gated on
+health and 24 of the 25 presets never drop that low — and on the FIRELOCK a
+Major Healing Potion measures **-28.4** and a Healthstone **-26.2**, both REAL,
+both drunk once, against a target that never attacks.
+
+A Warlock spends HEALTH for mana, and Life Tap's `canCast` asks whether there is
+health to spend and whether the mana pool has room — **never whether the mana is
+WANTED**. So 1,400 restored health buys 1.63 more Life Taps, each costing a
+global cooldown that deals nothing, and the list casts **1.43 fewer
+Incinerates**: mana GAINED rises 12,873 to 14,217 while mana SPENT falls 7,583
+to 7,206. `tools/probe_firelock_heal.ts`.
+
+**SO THE HEALS ARE NOT "WORTH NOTHING OFF A TANK", THEY ARE WORTH NEGATIVE ON A
+BUILD THAT TRADES HEALTH FOR MANA.** The note on the entry said they "never fire
+against a target that does not attack, which is 23 of the 25 presets" — a
+prediction dressed as a fact, and wrong in both the count and the conclusion.
+
+## What each preset drinks, and the one sentence behind it
+
+The twelve older categories could be read off a table — the conversion table
+decides Blasted Lands, the measured damage school decides School Spell Power. A
+potion cannot: "forty attack power for thirty seconds" against "sixty strength
+for twenty" against "2,250 mana" is not an arithmetic question. So every
+candidate was run on every preset, 9 cells by 25 profiles by 300 fights, by
+`tools/probe_consumable_choice.ts`.
+
+**WHAT CAME OUT IS ONE SENTENCE: the Other slot takes the pool the build
+actually runs out of, and the Potion slot takes the damage buff.** The two
+categories are not exclusive with each other, so no build has to choose between
+sustain and damage — which is why **no mana potion is selected anywhere**: the
+Rune covers mana from the other category and leaves the Potion slot free for
+something that hits.
+
+| | Potion | Other | measured |
+| --- | --- | --- | --- |
+| Warriors, Cat, Bear | Mighty Rage | — / Thistle Tea / Healthstone | **+13.3 to +35.2** on the potion |
+| the four Rogues | Major Frenzy | Thistle Tea | **+32.5 to +47.3** on the Tea |
+| nine casters | Major Spellblasting | Demonic Rune | **+1.8 to +18.2** |
+| both Paladin hybrids, Enh Shaman | Major Spellblasting | Demonic Rune | +5.6 to +9.1 |
+| four Hunters | Major Frenzy | Demonic Rune | +4.5 to +11.2 |
+| Prot Pally | Major Spellblasting | **Healthstone** | deaths 8.54 -> 8.31 |
+
+**MIGHTY RAGE BEATS FRENZY WHEREVER IT IS LEGAL AND NOT BY A LITTLE**: sixty
+strength is 120 attack power to a Warrior or a Druid against Frenzy's forty, over
+twenty seconds against thirty — 2,400 attack-power-seconds against 1,200, plus
+the rage. +35.2 against +5.2 on DW Fury.
+
+**TWO PRESETS HAVE NO `other` AND BOTH ARE CORRECT.** 2H Arms and DW Fury
+restore no pool at all: no mana, no energy, nothing attacking them, and every
+Other candidate measured 0.00 casts on both. A genuine empty, like the ranged
+Hunter's Weapon Effect.
+
+**AND THE RUNE IS KEPT WHERE IT ALMOST NEVER FIRES**, which is the Evocation
+decision: 0.00 times on the Shockadin, the Moonkin, both melee Hunters, the
+Firelock and the Shadow Priest; 0.01 on the Frostfire and Arcane Mages, BM
+Hunter and SM/DS; 0.19 on Fire, 0.33 on the Elemental Shaman, 0.55 on
+Retribution, 0.91 on Enhancement, and **1.00 on LW Ranged** — the one build that
+genuinely empties its pool. The owner ruled an almost-never-fired safety net
+"intended" because it costs nothing and pays out in a fight that goes
+differently from the ones measured.
+
+**THE RULE WAS CHOSEN FOR BEING CHECKABLE, WHICH IS WHY IT IS "has a mana pool"
+AND NOT "the Rune fires".** A reader can verify the first from the class; the
+second can only be verified by re-running the probe, and this project's own
+standard for these rows is that "twenty-five separate opinions is not something
+a reader can check".
+
+**SO `USES=1` NOW PRINTS `<-- NEVER FIRED` AGAINST THE RUNE ON SIX PROFILES, AND
+THAT IS EXPECTED RATHER THAN A NEW DEFECT.** Said here because an audit flag
+nobody has explained is exactly the thing somebody later "fixes" — and the
+honest reading is the one Evocation already has: a conditional entry that is
+almost never true costs the entries below it nothing. **Both halves of the
+Evocation precedent apply, including the second**: the right moment to go back
+and ask the owner is the moment one of these STARTS firing.
+
+## The deltas, and why fifteen "noise" verdicts all point the same way
+
+```
+Cat            855.8 DPS +/-  5.4   was  807.2  + 48.6  REAL
+Hemo           694.2 DPS +/-  5.7   was  650.6  + 43.6  REAL
+Combat         750.9 DPS +/-  6.3   was  708.3  + 42.6  REAL
+DW Fury        946.6 DPS +/- 10.3   was  911.5  + 35.2  REAL
+Venom          663.6 DPS +/-  4.9   was  628.3  + 35.3  REAL
+Rupture        646.2 DPS +/-  5.3   was  611.9  + 34.3  REAL
+Bear           455.7 DPS +/-  7.2   was  426.9  + 28.8  REAL
+2H Arms        825.0 DPS +/- 10.2   was  798.2  + 26.8  REAL
+Fire           707.6 DPS +/-  9.2   was  689.6  + 18.0  noise
+Firelock       776.6 DPS +/-  6.8   was  759.2  + 17.4  REAL
+Prot Warr      542.0 DPS +/-  6.5   was  526.2  + 15.8  REAL
+SM/DS          715.4 DPS +/-  3.9   was  703.0  + 12.4  REAL
+Moonkin        746.4 DPS +/-  7.7   was  734.4  + 11.9  noise
+LW Melee       812.8 DPS +/-  8.4   was  801.6  + 11.2  noise
+Enh Shaman     727.4 DPS +/-  8.9   was  716.8  + 10.6  noise
+Ele Shaman     631.2 DPS +/-  5.3   was  622.3  +  9.0  noise
+Frostfire      780.5 DPS +/- 17.3   was  771.6  +  9.0  noise
+Shockadin      684.6 DPS +/-  5.2   was  677.5  +  7.1  noise
+BM Hunter      798.0 DPS +/-  4.0   was  792.6  +  5.4  noise
+Arcane         790.8 DPS +/-  9.1   was  786.2  +  4.7  noise
+Hawk Melee     848.8 DPS +/-  7.2   was  844.4  +  4.5  noise
+Seal Twist Ret 814.1 DPS +/-  8.2   was  809.9  +  4.2  noise
+Prot Pally     372.7 DPS +/-  4.2   was  369.5  +  3.2  noise
+LW Ranged      845.0 DPS +/-  6.3   was  842.6  +  2.4  noise
+Shadow         751.2 DPS +/-  5.9   was  749.4  +  1.8  noise
+```
+
+**TWENTY-FIVE SAME-SIGNED DELTAS IS THE SHAPE CLAUDE.md DESCRIBES**: where the
+mechanism predicts the direction, a "noise" verdict is a statement about
+variance and not about whether anything happened. A potion that is drunk is
+drunk; the per-profile size is just how much of the build's damage goes through
+the stat it grants.
+
+**THE MARGINAL FIGURES DO NOT SUM TO THE TOTAL AND CAN EXCEED IT.** The Cat's
++48.6 is Mighty Rage's +15.7 and the Tea's +30.7 measured separately, which is
+46.4 — each is "what removing this one costs with the other present", and they
+overlap because more energy means more Shreds carrying more attack power.
+
+**AND THE ROW ORDER CHANGED UNDER THE TABLE.** DW Fury keeps the top at 946.6
+and **the Cat Druid is second at 855.8**, up from FIFTH -- the two archetypes that
+can drink Mighty Rage are the two that moved most, which re-sorted the top five.
+
+---
+
 # RACIALS, IN FOUR ROUNDS — READ THEM AS ONE
 
 **THE FEATURE SHIPPED IN ONE COMMIT AND THEN TOOK THREE MORE ROUNDS, TWO OF
@@ -17,11 +232,13 @@ arrives in waves exactly as a patch does, and "built and measured" is not
 1** -- the table above is in the order the work happened and the file is in the
 order this one always is. Each header's figures belong to ITS round and say so.
 
-**THE MEAN IS 709.6, AND THE SENTENCE UNDER THE BASELINE TABLE IS THE ONLY
-PLACE THAT IS LIVE.** Rounds one and three each rebuilt the table; every other
-figure in this file is dated. That is not a style note -- `update_baseline_table.py`
-spent its whole life writing the live mean into a paragraph about the Shatter
-round, fifteen hundred lines above the table, which round one found and fixed.
+**THE MEAN WAS 709.6 AT THE END OF THIS ROUND AND IS 727.3 NOW**, which is the
+mid-fight consumables above. The sentence under the baseline table is the only
+place that is ever live; rounds one and three each rebuilt the table, and every
+other figure in this file -- including that 709.6 -- is dated. That is not a
+style note: `update_baseline_table.py` spent its whole life writing the live
+mean into a paragraph about the Shatter round, fifteen hundred lines above the
+table, which round one found and fixed.
 
 **ROUNDS THREE AND FOUR ARRIVED AFTER THE FEATURE WAS DOCUMENTED AS FINISHED**,
 which is this file's own recurring pattern and the reason the table above is
@@ -1396,7 +1613,7 @@ All nine classes and all **25** profiles are implemented, every number traced to
 source rather than invented, and **every priority list is the ruleset owner's
 own** -- specified entry by entry and measured after, the newest being Hawk
 Melee's, given as "the same as the LW melee hunter" plus one placement.
-**3,029 tests**, CI green on Node 20 and 22. Profile format **v13**. Live at
+**3,073 tests**, CI green on Node 20 and 22. Profile format **v13**. Live at
 <https://donz-dev.github.io/SimForever/>, republished by
 `.github/workflows/deploy.yml` on every push to `main` that passes.
 
@@ -1412,24 +1629,31 @@ demonstrated at the top. **Re-count rather than re-reading the sentence.**
 | --- | --- |
 | **Talents** | 260 fully, 39 partly, 105 ruled out, **62 a live gap**, out of **466** -- from 132 before the class dives |
 | **Abilities** | 114 declared against 478 captured |
-| **Profiles** | **25**, all measured, **mean 709.6** -- the armour enchants are +27.0 of it, the consumables +105.9 and the racials **+9.8 at round one** |
+| **Profiles** | **25**, all measured, **mean 727.3** -- the armour enchants are +27.0 of it, the pre-pull consumables +105.9, the racials **+9.8 at round one** and the MID-FIGHT consumables **+17.7** |
 | **Racials** | **10 races, 40 traits**: 15 do something, 20 effects ruled out, 11 a live gap |
 | **Scope rulings** | **9 members**, all the owner's, carrying 129 TALENT entries and 19 racial declarations |
 | **Placeholders** | **10 declared** -- see the milestone table, and count DECLARATIONS |
-| **Tests** | **3,029** on Node 20 and 22 |
+| **Tests** | **3,073** on Node 20 and 22 |
 
 **FOUR CLASSES ARE ESSENTIALLY DONE** -- Warrior 1 live gap, Paladin 1, Druid 2,
 Rogue 3 -- and the remaining 62 sit mostly in the Warlock (19), Priest (12) and
 Mage (10). **The Warlock's 19 overstates its own work**: thirteen of them are one
 build cause, Demonic Sacrifice killing the demon, so its real queue is about 11.
 
-**AND THIS BLOCK'S MEAN HAD DRIFTED AGAIN, FOR THE THIRD TIME**, reading 700.0
-against a table at 709.6 -- the racials round moved every row and the Touch of
-the Grave round moved five, and `update_baseline_table.py` re-sums the sentence
-under the table and knows nothing about this one fifteen hundred lines below it.
-The script was fixed in the racials round to stop writing the live mean into a
-DATED paragraph; it still does not know about this copy, and there is no obvious
-way for it to. **Grep for the figure after rebuilding the table.**
+**AND THIS BLOCK'S MEAN HAS NOW DRIFTED FOUR TIMES.** It read 700.0 against a
+table at 709.6 after the racials, and 709.6 against a table at 727.3 after the
+mid-fight consumables -- each time because `update_baseline_table.py` re-sums
+the sentence under the table and knows nothing about this one fifteen hundred
+lines below it. The script was fixed in the racials round to stop writing the
+live mean into a DATED paragraph; it still does not know about this copy, and
+there is no obvious way for it to.
+
+**THE INSTRUCTION WAS ALREADY HERE AND WAS STILL NOT ENOUGH.** "Grep for the
+figure after rebuilding the table" has been written in this block since the
+racials round, and the figure drifted anyway the very next time the table moved.
+A note telling a reader to re-derive a number is not the same as the number
+being re-derived -- which is this file's own recurring failure, recorded for the
+fourth time about the same four digits.
 
 **THE RACIALS' +9.8 IS ROUND ONE'S AND NOT THE FEATURE'S NET**, which is 700.0
 to 709.6 -- round three gave 0.2 back, and that 0.2 is five Undead rows moving
@@ -3113,32 +3337,34 @@ cannot audit, which is why the check is a SET comparison and not a row count.
 
 | Profile | Class | Talents | DPS | | Profile | Class | Talents | DPS |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| DW Fury | Warrior | 17/34/0 | 911.5 | | Enh Shaman | Shaman | 17/34/0 | 716.8 |
-| Hawk Melee | Hunter | 16/11/24 | 844.4 | | Combat Rogue | Rogue | 18/33/0 | 708.3 |
-| LW Ranged | Hunter | 7/39/5 | 842.6 | | **SM/DS** | Warlock | 40/11/0 | **703.0** |
-| Seal Twist Ret | Paladin | 15/0/36 | 809.9 | | Fire Mage | Mage | 10/39/2 | 689.6 |
-| Cat Druid | Druid | 9/34/8 | 807.2 | | Shockadin | Paladin | 23/0/28 | 677.5 |
-| LW Melee | Hunter | 7/13/31 | 801.6 | | **Hemo Rogue** | Rogue | 17/3/31 | **650.6** |
-| 2H Arms | Warrior | 39/10/2 | 798.2 | | **Venom Rogue** | Rogue | 37/12/2 | **628.3** |
-| BM Hunter | Hunter | 31/20/0 | 792.6 | | Ele Shaman | Shaman | 38/13/0 | 622.3 |
-| Arcane Mage | Mage | 47/4/0 | 786.2 | | **Rupture Rogue** | Rogue | 12/8/31 | **611.9** |
-| Frostfire Mage | Mage | 0/29/22 | 771.6 | | Prot Warr | Warrior | 17/0/34 | 526.2 |
-| Firelock | Warlock | 5/11/35 | 759.2 | | Bear Druid | Druid | 9/42/0 | 426.9 |
-| Shadow Priest | Priest | 13/3/35 | 749.4 | | Prot Pally | Paladin | 8/34/9 | 369.5 |
-| Moonkin | Druid | 38/0/13 | 734.4 | | | | | | |
+| DW Fury | Warrior | 17/34/0 | 946.6 | | Moonkin | Druid | 38/0/13 | 746.4 |
+| Cat Druid | Druid | 9/34/8 | 855.8 | | Enh Shaman | Shaman | 17/34/0 | 727.4 |
+| Hawk Melee | Hunter | 16/11/24 | 848.8 | | SM/DS | Warlock | 40/11/0 | 715.4 |
+| LW Ranged | Hunter | 7/39/5 | 845.0 | | Fire Mage | Mage | 10/39/2 | 707.6 |
+| 2H Arms | Warrior | 39/10/2 | 825.0 | | Hemo Rogue | Rogue | 17/3/31 | 694.2 |
+| Seal Twist Ret | Paladin | 15/0/36 | 814.1 | | Shockadin | Paladin | 23/0/28 | 684.6 |
+| LW Melee | Hunter | 7/13/31 | 812.8 | | Venom Rogue | Rogue | 37/12/2 | 663.6 |
+| BM Hunter | Hunter | 31/20/0 | 798.0 | | Rupture Rogue | Rogue | 12/8/31 | 646.2 |
+| Arcane Mage | Mage | 47/4/0 | 790.8 | | Ele Shaman | Shaman | 38/13/0 | 631.2 |
+| Frostfire Mage | Mage | 0/29/22 | 780.5 | | Prot Warr | Warrior | 17/0/34 | 542.0 |
+| Firelock | Warlock | 5/11/35 | 776.6 | | Bear Druid | Druid | 9/42/0 | 455.7 |
+| Shadow Priest | Priest | 13/3/35 | 751.2 | | Prot Pally | Paladin | 8/34/9 | 372.7 |
+| Combat Rogue | Rogue | 18/33/0 | 750.9 | | | | | | |
 
-The mean across **25** is **709.6**, RE-SUMMED FROM THE ROWS ABOVE rather than
+The mean across **25** is **727.3**, RE-SUMMED FROM THE ROWS ABOVE rather than
 adjusted, by `tools/update_baseline_table.py`.
 
-**THE TOP IS DW FURY, AND A CASTER HAS NOT HELD IT SINCE THE CONSUMABLES.**
-**901.8 +/-11.1** against Hawk Melee's **826.1 +/-7.1** is 75.7, still the widest
-first-place gap this table has had. **TWO COMMITS HAVE MOVED BOTH HALVES OF THAT
-SENTENCE SINCE IT WAS WRITTEN** -- the gap read 86.1 over LW Ranged on the day,
-and a new profile took second place while the miss change raised fourteen other
-rows. Before that the paragraph said "the top is still the Frostfire Mage and its
-lead has narrowed to one interval", which was true for one commit. **A SENTENCE
-NAMING THE SECOND-PLACE ROW EXPIRES WHENEVER ANY ROW MOVES**, which is most
-commits.
+**THE TOP IS DW FURY AT 946.6 +/-10.3, AND THE CAT DRUID IS SECOND AT 855.8
++/-5.4** -- up from FIFTH, because the two archetypes that may drink the Mighty
+Rage Potion are the two this round moved most. The gap is 90.8, the widest
+first place this table has had.
+
+**AND THAT IS THE FOURTH TIME THIS PARAGRAPH HAS BEEN REWRITTEN, WHICH IS THE
+POINT OF IT.** It has said "the top is still the Frostfire Mage and its lead has
+narrowed to one interval" (true for one commit), then DW Fury over LW Ranged by
+86.1, then DW Fury over Hawk Melee by 75.7 -- and now DW Fury over the Cat by
+90.8. **A SENTENCE NAMING THE SECOND-PLACE ROW EXPIRES WHENEVER ANY ROW MOVES**,
+which is most commits, and a round that moves all 25 expires it by construction.
 
 **BOTH MAGE ROWS THAT FELL DID SO ON OWNER RULINGS ABOUT COEFFICIENTS AND
 CONSUMPTION, NOT ON ANYTHING THIS PROJECT GOT WRONG.** Frostfire went 927.6 to

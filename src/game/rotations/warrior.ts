@@ -1,6 +1,7 @@
 import type { Rotation } from '../../engine';
 import type { AplCondition, AplEntry, AplList } from './apl';
 import { RACIAL_COOLDOWNS, RACIAL_DEFENSIVE_COOLDOWNS } from './racialCooldowns';
+import { CONSUMABLE_COOLDOWNS, CONSUMABLE_HEALS } from './consumableCooldowns';
 import {
   all,
   any,
@@ -426,6 +427,8 @@ export const WARRIOR_BATTLE: AplList = {
    * MEASURED AND BOTH WERE WRONG -- see `racialCooldowns.ts`.
    */
   ...RACIAL_COOLDOWNS,
+  ...CONSUMABLE_COOLDOWNS,
+  ...CONSUMABLE_HEALS,
   ...CORE_STRIKES,
   ...FILLERS,
   ],
@@ -459,6 +462,8 @@ export const WARRIOR_SHIELD: AplList = {
    * MEASURED AND BOTH WERE WRONG -- see `racialCooldowns.ts`.
    */
   ...RACIAL_COOLDOWNS,
+  ...CONSUMABLE_COOLDOWNS,
+  ...CONSUMABLE_HEALS,
   /*
    * SHIELD SLAM OUTRANKS THE OPENERS, which is the opposite of how the melee
    * list is built, and it is measured rather than reasoned.
@@ -573,6 +578,8 @@ export const WARRIOR_DUAL_WIELD_BERSERKER: AplList = {
    * MEASURED AND BOTH WERE WRONG -- see `racialCooldowns.ts`.
    */
   ...RACIAL_COOLDOWNS,
+  ...CONSUMABLE_COOLDOWNS,
+  ...CONSUMABLE_HEALS,
   /*
    * THE PRESET ALREADY OPENS IN BERSERKER STANCE, so this fires zero times --
    * the same shape as the Arms list's Battle Stance entry, and kept for the
@@ -735,6 +742,20 @@ export const WARRIOR_SHIELD_DEFENSIVE: AplList = {
     ),
   },
   /*
+   * THE TWO HEALS, WITH THE REST OF THE SURVIVAL COOLDOWNS -- WHICH IS *NOT*
+   * WHERE THIS LIST PUTS THE OTHER FREE ENTRIES.
+   *
+   * The racial and consumable cooldowns sit LAST in a tank list, because "100ms
+   * is not free to a tank at thirty percent health". A healing potion is the one
+   * free entry that argument does not reach: the bottom of a tank list is a
+   * place entries are not REACHED, and something above is nearly always
+   * castable -- which is how five of seven racials came back inert.
+   *
+   * So they go here, beside the cooldowns that answer the same question, and
+   * below them because those are the bigger answer. See `CONSUMABLE_HEALS`.
+   */
+  ...CONSUMABLE_HEALS,
+  /*
    * FIRST OF THE ROTATION PROPER, and only while there is room for the rage.
    *
    * Above the stance because it costs nothing to be there: Bloodrage is off
@@ -864,6 +885,7 @@ export const WARRIOR_SHIELD_DEFENSIVE: AplList = {
    */
   ...RACIAL_COOLDOWNS,
   ...RACIAL_DEFENSIVE_COOLDOWNS,
+  ...CONSUMABLE_COOLDOWNS,
 ],
 };
 
@@ -949,6 +971,8 @@ export const WARRIOR_TWO_HAND_BATTLE: AplList = {
    * MEASURED AND BOTH WERE WRONG -- see `racialCooldowns.ts`.
    */
   ...RACIAL_COOLDOWNS,
+  ...CONSUMABLE_COOLDOWNS,
+  ...CONSUMABLE_HEALS,
   /*
    * BLOODRAGE SECOND, on the ruleset owner's instruction: "insert bloodrage in
    * between charge and battle stance."

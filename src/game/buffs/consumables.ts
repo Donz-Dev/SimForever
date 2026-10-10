@@ -1,10 +1,24 @@
 import type {
+  Ability,
   AbilityModifier,
   AttackTableKind,
   DamageSchool,
   PartialStats,
 } from '../../engine';
 import { AttackTableModifiers } from '../../engine';
+import {
+  DEMONIC_RUNE_ABILITY,
+  HEALTHSTONE_ABILITY,
+  MAJOR_FRENZY_POTION_ABILITY,
+  MAJOR_HEALING_POTION_ABILITY,
+  MAJOR_MANA_POTION_ABILITY,
+  MAJOR_MENDERS_POTION_ABILITY,
+  MAJOR_MENDERS_POTION_UNMODELLED,
+  MAJOR_SPELLBLASTING_POTION_ABILITY,
+  MIGHTY_RAGE_POTION_ABILITY,
+  THISTLE_TEA_ABILITY,
+} from '../abilities/consumables';
+import type { ClassId } from '../character';
 
 /**
  * CONSUMABLES, FROM THE RULESET OWNER'S TABLE.
@@ -28,6 +42,28 @@ import { AttackTableModifiers } from '../../engine';
  * and closes, Sunder Armor stacks. A consumable is drunk before the pull and
  * lasts the fight, so it is a layer of the starting stat block, and the
  * character sheet reads it for free. Nothing here needs an uptime row.
+ *
+ * ----------------------------------------------------------------------------
+ * EXCEPT FOR THE LAST TWO CATEGORIES, WHICH ARE ACTIONS RATHER THAN STATS, AND
+ * THE PARAGRAPH ABOVE IS WHY THEY NEEDED SAYING SEPARATELY.
+ *
+ * Potion and Other are used DURING a fight. The owner: they "must be treated
+ * like a character ability and be exposed on the APL and consumable panels" --
+ * so each carries an `ability`, joins the ability book when it is selected, and
+ * gets an entry in the priority list. Everything the first twelve categories
+ * say about themselves is false of these two: they contribute no starting
+ * stats, they have a cooldown, they can be wasted, and WHEN to use one is a
+ * decision.
+ *
+ * THE EXCLUSIVITY IS THE SAME MECHANISM DOING DOUBLE DUTY. The owner describes
+ * the Potion rule as a shared two-minute cooldown that "effectively make[s] the
+ * choice exclusive", and the Other rule as exclusive within its own category
+ * and NOT with Potions. Both are one category keyed by category id -- so a
+ * character may hold one Potion and one Other, and cannot hold two of either,
+ * with nothing enforcing it. The shared cooldown is declared as well, on the
+ * abilities, because a ruling written down where it is enforced is worth more
+ * than one that is merely implied by a shape; see `POTION_COOLDOWN_GROUP`.
+ * ----------------------------------------------------------------------------
  *
  * NOTHING IS ON BY DEFAULT at the profile level, exactly as raid buffs are not:
  * a consumable that applied itself would move every figure ever recorded. What
@@ -97,6 +133,43 @@ export interface Consumable {
    * ------------------------------------------------------------------------
    */
   readonly attackTableModifiers?: Readonly<Partial<Record<AttackTableKind, AbilityModifier>>>;
+  /**
+   * The ability this consumable grants, for one USED DURING THE FIGHT.
+   *
+   * --------------------------------------------------------------------------
+   * THE WHOLE OF WHAT MAKES A POTION DIFFERENT FROM A FLASK. A consumable with
+   * this joins the ability book when it is selected and gets an entry in the
+   * priority list; one without it is a layer of the starting stat block and is
+   * over before the first swing.
+   *
+   * BY REFERENCE RATHER THAN BY ID, which is the one place this deliberately
+   * differs from `grantAbility` on a talent or a racial. Those name an id and
+   * resolve it through a registry that DROPS what it cannot find -- right for a
+   * typo, and the reason `lone_wolf` left both Hunter profiles named after it
+   * without its 20% damage for the life of the project, silently. A reference
+   * cannot miss and needs no test to prove it did not.
+   * --------------------------------------------------------------------------
+   */
+  readonly ability?: Ability;
+  /**
+   * The classes that may choose this, where only some may.
+   *
+   * --------------------------------------------------------------------------
+   * ABSENT MEANS EVERY CLASS, which is true of thirty of the thirty-nine
+   * entries here and of every one of the original twelve categories. Two say
+   * otherwise and the owner's table says which: the Mighty Rage Potion is
+   * "(Warrior, Druid)" and Thistle Tea is "(Rogue, Druid)".
+   *
+   * GATED IN TWO PLACES AND FOR TWO DIFFERENT REASONS, which is the arrangement
+   * the Warlock's weapon stone already uses. The PANEL does not offer it, so
+   * nobody can choose one their class cannot use; and `consumableAbilities`
+   * refuses it, so a profile that carries one anyway -- hand-edited, or saved
+   * before a class change -- gets a character without the ability rather than
+   * one that cannot be built. "A profile CAN carry one, because the field is on
+   * every profile and only the panel is class-gated."
+   * --------------------------------------------------------------------------
+   */
+  readonly classes?: readonly ClassId[];
   /** What it does that the simulator does not, in the source's own words. */
   readonly unmodelled?: string;
 }
@@ -319,6 +392,74 @@ export const CONSUMABLE_CATEGORIES: readonly ConsumableCategory[] = [
       { id: 'food_agility', name: '+20 Agility', stats: { agility: 20 } },
     ],
   },
+  /*
+   * ==========================================================================
+   * AND THE TWO MID-FIGHT CATEGORIES, WHICH GO ON THE END.
+   *
+   * APPENDED RATHER THAN SLOTTED IN, which is the rule the Forever enchants
+   * already follow for the reason that matters more here than it does there: a
+   * saved profile keys its selection by CATEGORY id, so the order is a display
+   * decision and nothing else -- but the hand-written table in
+   * `consumables.test.ts` asserts the order row for row, so putting these in
+   * the middle would be a diff across the whole file for no reader's benefit.
+   *
+   * THE NAMES ARE THE OWNER'S OWN -- "Potions" are "the primary category" and
+   * "the 'Other' is the secondary category" -- and so is every figure in both.
+   * ==========================================================================
+   */
+  {
+    id: 'potion',
+    name: 'Potion',
+    options: [
+      {
+        id: 'major_healing_potion',
+        name: 'Major Healing Potion',
+        ability: MAJOR_HEALING_POTION_ABILITY,
+      },
+      { id: 'major_mana_potion', name: 'Major Mana Potion', ability: MAJOR_MANA_POTION_ABILITY },
+      {
+        /*
+         * THE ONE POTION WITH A CLASS LIST, and the only one whose value is not
+         * guessable from its name: a Cat Druid drinks it for the sixty strength
+         * and the rage is worth nothing to it -- not because it has no rage pool
+         * (it has one; pools are per class, not per form) but because nothing
+         * ever fills or spends it. Measured. See the ability.
+         */
+        id: 'mighty_rage_potion',
+        name: 'Mighty Rage Potion',
+        classes: ['warrior', 'druid'],
+        ability: MIGHTY_RAGE_POTION_ABILITY,
+      },
+      { id: 'major_frenzy_potion', name: 'Major Frenzy Potion', ability: MAJOR_FRENZY_POTION_ABILITY },
+      {
+        /*
+         * SELECTABLE, CASTABLE AND WORTH NOTHING, and it says so where it is
+         * chosen. The panel prints every `unmodelled` consumable beside the
+         * dropdown, which is the discipline items, enchants and raid buffs all
+         * follow -- and the reason is shared with the ability rather than
+         * written twice, so the two cannot drift.
+         */
+        id: 'major_menders_potion',
+        name: "Major Mender's Potion",
+        ability: MAJOR_MENDERS_POTION_ABILITY,
+        unmodelled: MAJOR_MENDERS_POTION_UNMODELLED,
+      },
+      {
+        id: 'major_spellblasting_potion',
+        name: 'Major Spellblasting Potion',
+        ability: MAJOR_SPELLBLASTING_POTION_ABILITY,
+      },
+    ],
+  },
+  {
+    id: 'other',
+    name: 'Other',
+    options: [
+      { id: 'thistle_tea', name: 'Thistle Tea', classes: ['rogue', 'druid'], ability: THISTLE_TEA_ABILITY },
+      { id: 'demonic_rune', name: 'Demonic Rune', ability: DEMONIC_RUNE_ABILITY },
+      { id: 'healthstone', name: 'Healthstone', ability: HEALTHSTONE_ABILITY },
+    ],
+  },
 ];
 
 /**
@@ -379,6 +520,18 @@ export const CONSUMABLE_CATEGORIES_BY_ID: ReadonlyMap<string, ConsumableCategory
  * consumable that no longer exists should load as a character without it, not
  * as a character that cannot be built -- which is the rule `startingEquipmentFor`
  * already follows for a stale item id. `validateProfile` is what reports it.
+ *
+ * AND IT IS CLASS-BLIND, WHICH IS SAFE FOR EXACTLY ONE REASON: both
+ * class-restricted consumables grant an ABILITY and no stats, so there is
+ * nothing here for a Mage holding a hand-edited Mighty Rage Potion to collect.
+ * `consumableAbilities` is where the class gate lives, because that is where
+ * the only class-restricted effect goes.
+ *
+ * THAT IS A PROPERTY OF TODAY'S TABLE RATHER THAN OF THIS FUNCTION, so
+ * `consumables.test.ts` asserts it: a class-restricted consumable carrying
+ * `stats`, `schoolPower`, `bonusHitPoints` or `attackTableModifiers` fails,
+ * which is what forces the class to be threaded through here on the day one
+ * does. A silent "bonus being paid" is the failure that guard exists to stop.
  * ----------------------------------------------------------------------------
  */
 export interface ConsumableEffects {
@@ -450,6 +603,77 @@ export function selectedConsumables(
 }
 
 /**
+ * Whether a class may choose this consumable at all.
+ *
+ * NO LIST MEANS EVERY CLASS, which is the honest reading of a table that names
+ * classes on two rows out of thirty-nine and says nothing on the rest.
+ */
+export function consumableAllowsClass(
+  consumable: Consumable,
+  characterClass: ClassId,
+): boolean {
+  return consumable.classes === undefined || consumable.classes.includes(characterClass);
+}
+
+/**
+ * The consumables a class may choose from a category -- what the panel offers.
+ *
+ * Narrowed here rather than in the panel so that the panel and the ability book
+ * cannot disagree about who may drink what: both ask this.
+ */
+export function consumableOptionsFor(
+  category: ConsumableCategory,
+  characterClass: ClassId,
+): readonly Consumable[] {
+  return category.options.filter((option) => consumableAllowsClass(option, characterClass));
+}
+
+/**
+ * The abilities the chosen consumables grant -- the mid-fight ones.
+ *
+ * ============================================================================
+ * WHAT TURNS A SELECTION INTO SOMETHING A PRIORITY LIST CAN NAME. `createPlayer`
+ * appends these to the ability book and `abilityBookFor` appends the same ones
+ * for the panel, so the dropdown offers exactly what the fight will carry.
+ *
+ * CLASS-GATED HERE, WHICH IS THE GATE THAT DECIDES ANYTHING. The panel already
+ * refuses to offer a Mage the Mighty Rage Potion; this is what happens when a
+ * profile carries one anyway, which it can -- a hand-edited file, or a profile
+ * saved as a Warrior and loaded after a class change. The character is built
+ * without the ability rather than refused, which is the rule
+ * `startingEquipmentFor` follows for a stale item id and `warlockStoneEffect`
+ * follows for a stone on a Mage.
+ *
+ * AND THE SAME ANSWER IS WHAT GATES THE *ENTRY*. `withoutUnselectedConsumables`
+ * takes the stock list's entry for an ability this build does not carry back
+ * out, so the panel does not show a line nobody can act on -- the engine never
+ * needed that, because `PriorityRotation` skips an unknown ability in silence.
+ * ============================================================================
+ */
+export function consumableAbilities(
+  characterClass: ClassId,
+  selection: ConsumableSelection | undefined,
+): readonly Ability[] {
+  return selectedConsumables(selection)
+    .filter((consumable) => consumableAllowsClass(consumable, characterClass))
+    .flatMap((consumable) => (consumable.ability ? [consumable.ability] : []));
+}
+
+/**
+ * Every ability any consumable can grant, by id.
+ *
+ * DERIVED FROM THE CATALOGUE rather than written out, so it cannot name an
+ * ability no consumable grants or miss one that is. It answers "is this entry a
+ * mid-fight consumable" for `withoutUnselectedConsumables`, which is the same
+ * question `ALL_RACIAL_ABILITY_IDS` answers for the racial entries.
+ */
+export const CONSUMABLE_ABILITY_IDS: ReadonlySet<string> = new Set(
+  CONSUMABLE_CATEGORIES.flatMap((category) =>
+    category.options.flatMap((option) => (option.ability ? [option.ability.id] : [])),
+  ),
+);
+
+/**
  * WHAT EACH KIND OF BUILD DRINKS.
  *
  * ----------------------------------------------------------------------------
@@ -489,7 +713,59 @@ export function selectedConsumables(
  * because a Hunter shot carries no spell coefficient. A Rogue takes no Spell
  * Power either: its poisons are 19% of the Venom build's damage and they scale
  * with ATTACK power.
- * ----------------------------------------------------------------------------
+ *
+ * ============================================================================
+ * AND THE TWO MID-FIGHT ROWS FOLLOW THE SAME RULE, MEASURED RATHER THAN DERIVED.
+ *
+ * The twelve above could be read off a table: the conversion table decides
+ * Blasted Lands, the measured damage school decides School Spell Power. A potion
+ * cannot be -- "forty attack power for thirty seconds" against "sixty strength
+ * for twenty" against "2,250 mana" is not an arithmetic question -- so every
+ * candidate was run on every preset. `tools/probe_consumable_choice.ts`.
+ *
+ * WHAT CAME OUT IS ONE SENTENCE: **the Other slot takes the pool the build
+ * actually runs out of, and the Potion slot takes the damage buff.** Because the
+ * two categories are not exclusive with each other, no build has to choose
+ * between sustain and damage -- which is why no mana potion is selected
+ * anywhere: the Demonic Rune covers mana from the other category and leaves the
+ * Potion slot free for something that hits.
+ *
+ *   POTION, by what the build's damage scales with:
+ *     mighty_rage_potion         Warriors, Cat, Bear   +13.3 to +35.2
+ *     major_frenzy_potion        Rogues, Hunters       +1.8 to +11.2
+ *     major_spellblasting_potion every caster, both    +1.8 to +18.2
+ *                                Paladin hybrids
+ *
+ *   OTHER, by which pool it empties:
+ *     thistle_tea   the four Rogues and the Cat      +30.7 to +38.0
+ *     healthstone   the three tanks                  health is the pool
+ *     demonic_rune  every other build with mana      a safety net
+ *     (nothing)     2H Arms and DW Fury              no pool to restore
+ *
+ * MIGHTY RAGE BEATS FRENZY WHEREVER IT IS LEGAL, AND NOT BY A LITTLE: sixty
+ * strength is 120 attack power to a Warrior or a Druid against Frenzy's forty,
+ * and it lasts twenty seconds against thirty -- 2,400 attack-power-seconds
+ * against 1,200, plus the rage. Measured at +35.2 against +5.2 on DW Fury.
+ *
+ * NO MANA POTION AND NO MENDER'S POTION IS SELECTED ANYWHERE, and both are real
+ * answers rather than oversights. The Mender's Potion does nothing at all. The
+ * mana potion is never the best use of the slot, because the Rune is in the
+ * other category -- and at sixty seconds most casters never reach its gate
+ * anyway: it fires 0.00 times on the Shockadin and the Moonkin, 0.01 on the
+ * Frostfire Mage and 1.00 on LW Ranged, which is the one build that genuinely
+ * empties its pool.
+ *
+ * THE RUNE IS KEPT WHERE IT RARELY FIRES, which is the Evocation decision: the
+ * owner ruled that an entry which almost never comes up is "intended" as a
+ * safety net that costs nothing and pays out in a fight that goes differently
+ * from the ones measured. A caster carries a Demonic Rune.
+ *
+ * AND NEITHER WARLOCK TAKES A HEAL, which is the one row a reader would get
+ * wrong from the archetype. On the Firelock a healing potion is **-28.4 DPS**:
+ * a Warlock trades health for mana, Life Tap asks whether there is health to
+ * spend rather than whether the mana is wanted, so healing buys Life Taps that
+ * cost global cooldowns. See `CONSUMABLE_HEALS`.
+ * ============================================================================
  */
 
 /** Everything a build with no mana and no spells can read. */
@@ -513,6 +789,19 @@ export const STRENGTH_CONSUMABLES: ConsumableSelection = {
   ...MELEE_COMMON,
   flask: 'flask_hit_points',
   blasted_lands: 'blasted_strength',
+  /*
+   * AND THE POTION IS MIGHTY RAGE FOR ALL FIVE OF THEM, which is the one
+   * mid-fight choice this archetype does not have to think about: sixty
+   * strength is 120 attack power to a Warrior or a Druid against the Frenzy
+   * Potion's forty, over twenty seconds against thirty, PLUS 45 to 75 rage.
+   * Measured +26.8 on 2H Arms, +35.2 on DW Fury, +13.3 on Prot Warr, +15.7 on
+   * the Cat and +24.6 on the Bear, against +2.0 to +5.2 for Frenzy.
+   *
+   * THE `other` SLOT IS NOT HERE, because these five do not agree about it: the
+   * Cat empties an energy bar, the two tanks lose health, and the two damage
+   * Warriors have no pool to restore at all. Each sets its own.
+   */
+  potion: 'mighty_rage_potion',
 };
 
 /**
@@ -525,6 +814,19 @@ export const AGILITY_CONSUMABLES: ConsumableSelection = {
   ...MELEE_COMMON,
   flask: 'flask_hit_points',
   blasted_lands: 'blasted_agility',
+  /*
+   * THE FRENZY POTION, because a Rogue may not drink Mighty Rage -- the owner's
+   * table says "(Warrior, Druid)" -- and forty attack power is the only thing
+   * in the category any of these six reads. Measured +1.8 to +11.2, which is
+   * small and is the whole of what is on offer: the only other non-zero cell is
+   * the Spellblasting Potion, and neither a Rogue nor a Hunter has a point of
+   * spell-power-scaled damage for it to raise.
+   *
+   * THE `other` SLOT IS NOT HERE EITHER, and for this row the reason is a class
+   * gate rather than a preference: Thistle Tea is "(Rogue, Druid)", so the four
+   * Rogues take it and the two Hunters -- who share this row -- cannot.
+   */
+  potion: 'major_frenzy_potion',
 };
 
 /**
@@ -546,9 +848,34 @@ const CASTER_COMMON: ConsumableSelection = {
   food: 'food_spell_power',
 };
 
-/** A caster's row, with the school its own damage actually uses. */
+/**
+ * A caster's row, with the school its own damage actually uses.
+ *
+ * ----------------------------------------------------------------------------
+ * THE MID-FIGHT PAIR IS THE SAME FOR ALL NINE CASTERS and is the clearest
+ * instance of the rule: the Potion slot takes the damage buff and the Other
+ * slot takes the pool.
+ *
+ * SPELLBLASTING, measured +1.8 to +18.2 and the only candidate any of them can
+ * read -- a Frenzy Potion's attack power reaches nothing a caster casts, and it
+ * measured between -6.7 and +7.5, which is noise either side of zero.
+ *
+ * AND THE RUNE RATHER THAN THE MANA POTION, because the two categories are not
+ * exclusive: the Rune covers mana from `other` and leaves `potion` free for
+ * something that hits. **It rarely fires at sixty seconds** -- 0.00 times on the
+ * Moonkin, 0.01 on the Frostfire Mage and SM/DS, 0.19 on Fire, 0.33 on the
+ * Elemental Shaman -- and it is kept anyway, which is the Evocation decision:
+ * the owner ruled an almost-never-fired safety net "intended", because it costs
+ * nothing and pays out in a fight that goes differently from the ones measured.
+ * ----------------------------------------------------------------------------
+ */
 export function casterConsumables(school: string): ConsumableSelection {
-  return { ...CASTER_COMMON, school_spell_power: school };
+  return {
+    ...CASTER_COMMON,
+    school_spell_power: school,
+    potion: 'major_spellblasting_potion',
+    other: 'demonic_rune',
+  };
 }
 
 /**
@@ -581,6 +908,19 @@ export const RANGED_HUNTER_CONSUMABLES: ConsumableSelection = {
   hit_points: 'hit_points_120',
   armor: 'armor_450',
   food: 'food_agility',
+  /*
+   * THE FRENZY POTION AND THE RUNE, and the Rune is the one row in the project
+   * where it genuinely earns its place rather than sitting there as a safety
+   * net: LW Ranged drinks it ONCE A FIGHT, which is the sentence above about
+   * emptying the pool by the thirty-second mark, measured.
+   *
+   * THE POTION SLOT IS STILL THE DAMAGE BUFF even on the build that runs dry,
+   * because the Rune already covers the mana from a category the Potion is not
+   * exclusive with. Frenzy measured +5.5 on BM and +5.3 on LW Ranged against
+   * the mana potion's +3.4, and the two together are better than either.
+   */
+  potion: 'major_frenzy_potion',
+  other: 'demonic_rune',
 };
 
 /**
@@ -602,6 +942,22 @@ export function hybridConsumables(options: {
 }): ConsumableSelection {
   return {
     flask: 'flask_hit_points',
+    /*
+     * THE SPELLBLASTING POTION FOR ALL FOUR, which is NOT the split the Weapon
+     * Effect above takes and is worth saying so. That row divides them on their
+     * measured physical share -- Retribution and Enhancement take the melee
+     * crit, the two shield Paladins take the spell crit -- and the potion does
+     * not divide at all: +9.1 on Enhancement, +6.6 on Retribution, +7.1 on the
+     * Shockadin and +5.6 on the Protection Paladin, against +1.7 to +8.8 for
+     * Frenzy. Every one of the four prefers it or cannot tell, so one answer
+     * serves them.
+     *
+     * AND THE RUNE, except on the Protection Paladin, which overrides it with a
+     * Healthstone in `presets.ts`: it is the one of the four that is hit back,
+     * so health is the pool it actually empties.
+     */
+    potion: 'major_spellblasting_potion',
+    other: 'demonic_rune',
     weapon_effect: options.meleeWeaponEffect ? 'weapon_melee_crit' : 'weapon_spell_crit',
     strength: 'elixir_strength',
     agility: 'elixir_agility',

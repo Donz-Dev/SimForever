@@ -81,7 +81,24 @@ function replay(seeds = 20) {
         ) {
           comboFromBloodFrenzy += event.amount;
         }
-        if (event.type === 'resource_gained' && event.resource === 'rage') rage += event.amount;
+        /*
+         * FILTERED BY SOURCE, LIKE THE COMBO POINTS ABOVE, and the asymmetry
+         * between the two was a latent bug in this test rather than a style
+         * choice. "No rage at all" is a claim about BLOOD FRENZY, and summing
+         * every rage event made it a claim about the whole fight -- which stayed
+         * true only for as long as nothing else in a Cat's list granted any.
+         *
+         * The Mighty Rage Potion is what falsified it: the Cat preset now drinks
+         * one for its sixty strength, and 45 to 75 rage lands in a pool nothing
+         * spends. The test read 1,148 and the talent was as inert as ever.
+         */
+        if (
+          event.type === 'resource_gained' &&
+          event.resource === 'rage' &&
+          event.source === 'blood_frenzy'
+        ) {
+          rage += event.amount;
+        }
       },
     });
     simulation.begin();

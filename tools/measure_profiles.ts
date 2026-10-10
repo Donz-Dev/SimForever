@@ -64,6 +64,7 @@ import { ROGUE_ABILITIES } from '../src/game/abilities/rogue';
 import { SHAMAN_ABILITIES } from '../src/game/abilities/shaman';
 import { WARLOCK_ABILITIES } from '../src/game/abilities/warlock';
 import { WARRIOR_ABILITIES } from '../src/game/abilities/warrior';
+import { MID_FIGHT_CONSUMABLE_ABILITIES } from '../src/game/abilities/consumables';
 
 const SEEDS = Number(process.env.SEEDS ?? 30);
 const ITERATIONS = Number(process.env.ITERATIONS ?? 10);
@@ -145,6 +146,15 @@ const ABILITY_NAMES: ReadonlyMap<string, string> = new Map(
     PET_ABILITIES,
     // Learned by a RACE rather than a class, and named by every list.
     Object.values(RACIAL_ABILITIES),
+    /*
+     * AND LEARNED BY DRINKING ONE, which is the same omission one category
+     * along -- and the note above is what says to add it here rather than
+     * finding out the way the racials did. All nine are named by every list,
+     * narrowed per profile to what it selected, so leaving them out would have
+     * reported the one entry a profile DOES carry as `<-- NEVER FIRED` while it
+     * fired once a fight.
+     */
+    MID_FIGHT_CONSUMABLE_ABILITIES,
   ]
     .flat()
     .map((ability) => [ability.id, ability.name] as const),

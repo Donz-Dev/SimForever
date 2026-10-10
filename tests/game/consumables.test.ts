@@ -59,6 +59,32 @@ const TABLE: Readonly<Record<string, readonly string[]>> = {
     '+20 Strength',
     '+20 Agility',
   ],
+  /*
+   * AND THE TWO MID-FIGHT ROWS, which the owner gave as two further categories:
+   * "Potions are the primary category" and "the 'Other' is the secondary
+   * category". Exclusive within themselves and not with each other, which is
+   * one map keyed by category and nothing to enforce.
+   */
+  Potion: [
+    'Major Healing Potion',
+    'Major Mana Potion',
+    'Mighty Rage Potion',
+    'Major Frenzy Potion',
+    "Major Mender's Potion",
+    'Major Spellblasting Potion',
+  ],
+  Other: ['Thistle Tea', 'Demonic Rune', 'Healthstone'],
+};
+
+/**
+ * Who may drink what, from the two rows of the owner's table that say so.
+ *
+ * Written out by hand like everything else here: a test that read the class
+ * lists off the catalogue would pass whatever the catalogue said.
+ */
+const CLASS_RESTRICTED: Readonly<Record<string, readonly string[]>> = {
+  mighty_rage_potion: ['warrior', 'druid'],
+  thistle_tea: ['rogue', 'druid'],
 };
 
 describe('the catalogue', () => {
@@ -260,18 +286,62 @@ describe('what a consumable is worth', () => {
     }
   });
 
-  it('reports "+44 Healing Power" as doing nothing, and it is the only one', () => {
+  it('reports the two healing-power entries as doing nothing, and only those', () => {
     /*
      * An inert effect that SAYS it is inert is the honest failure mode. The
      * mirror assertion is the one that expires: any OTHER consumable gaining a
-     * caveat, or this one gaining a stat, has to be a deliberate edit here.
+     * caveat, or either of these gaining a stat, has to be a deliberate edit
+     * here.
+     *
+     * BOTH ARE HEALING POWER, AND THAT IS THE WHOLE LIST. Nothing a character
+     * does in this simulator heals anybody, so there is no throughput for the
+     * Food's +44 or the Major Mender's Potion's +75 to scale -- and they are the
+     * only two entries in the owner's table that name it.
      */
     const inert = CONSUMABLE_CATEGORIES.flatMap((category) => category.options).filter(
       (option) => option.unmodelled !== undefined,
     );
-    expect(inert.map((option) => option.name)).toEqual(['+44 Healing Power']);
-    expect(inert[0].stats).toBeUndefined();
+    expect(inert.map((option) => option.name)).toEqual([
+      '+44 Healing Power',
+      "Major Mender's Potion",
+    ]);
+    for (const option of inert) expect(option.stats, option.name).toBeUndefined();
     expect(consumableEffects({ food: 'food_healing_power' }).unmodelled).toHaveLength(1);
+    expect(consumableEffects({ potion: 'major_menders_potion' }).unmodelled).toHaveLength(1);
+  });
+
+  it('keeps every class-restricted consumable free of stats', () => {
+    /*
+     * ==========================================================================
+     * THE CONDITION UNDER WHICH `consumableEffects` MAY STAY CLASS-BLIND.
+     *
+     * It takes a selection and no class, so a Mage carrying a hand-edited Mighty
+     * Rage Potion would collect whatever stats it declared. That is safe today
+     * for one reason only: both class-restricted entries grant an ABILITY and
+     * nothing else, and `consumableAbilities` is where the class gate lives.
+     *
+     * So this is the guard on a property of the TABLE rather than of the
+     * function. A class-restricted consumable that gained a stat would be a
+     * bonus silently paid to every class -- "a condition nobody declared is not
+     * an omission, it is a bonus being paid" -- and this fails until somebody
+     * threads the class through instead.
+     * ==========================================================================
+     */
+    const restricted = CONSUMABLE_CATEGORIES.flatMap((category) => category.options).filter(
+      (option) => option.classes !== undefined,
+    );
+    expect(restricted.map((option) => option.id).sort()).toEqual(
+      Object.keys(CLASS_RESTRICTED).sort(),
+    );
+    for (const option of restricted) {
+      expect([...(option.classes ?? [])].sort(), option.id).toEqual(
+        [...CLASS_RESTRICTED[option.id]].sort(),
+      );
+      expect(option.stats, option.id).toBeUndefined();
+      expect(option.schoolPower, option.id).toBeUndefined();
+      expect(option.bonusHitPoints, option.id).toBeUndefined();
+      expect(option.attackTableModifiers, option.id).toBeUndefined();
+    }
   });
 
   it('does not reach a Hunter’s pet', () => {

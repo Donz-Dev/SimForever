@@ -154,6 +154,52 @@ that way: an Orc Warrior and a Gnome Warrior run the **same named list** with
 different racial entries in it, so a name comparison would have left Blood Fury
 in after somebody changed an Orc to a Gnome, and left Eureka! out.
 
+## And by what the character DRANK
+
+The same mechanism one category along, and the one difference is what makes it
+interesting. `rotations/consumableCooldowns.ts` holds nine entries — six Potions
+and three Other items — spread into every one of the 25 stock lists, and
+`stockListFor` drops the ones the profile did not select. See
+`withoutUnselectedConsumables`, which is `withoutOtherRacials` with a selection
+in place of a race.
+
+**A race is settled when the character is made; a selection changes while
+somebody is looking at the panel.** That is the whole difference, and it is what
+satisfies the request this was built for — *"when a potion is selected it will
+then become visible on the APL so the user can place it amongst their rotation
+with conditions"*. Choosing a Major Mana Potion makes its entry appear, with its
+condition and its note, because `syncDefaultRotation` re-derives a `default`
+list on every profile change.
+
+**It needed no new mechanism, and `editProfile` had already predicted it.** Its
+own comment reads: *"applied to every change rather than to the four that can
+matter, because it is idempotent and because the alternative is a list of edits
+that change which stock list applies that is correct until somebody adds a
+fifth."* A consumable selection is the fifth, and it arrived for free.
+
+**The seven that are not heals go where the racials go** — second in a DPS list,
+last in a tank list. Free, off the global cooldown, so both ends of a list were
+already measured for the racials and both were wrong: the top costs Charge its
+one-instant window, and the bottom is where five of seven racials came back
+inert.
+
+**The two heals are the exception, and they are the one judgement here.** A tank
+list puts free entries last on a measured argument — *"100ms is not free to a
+tank at thirty percent health"* — and that argument does not reach a healing
+potion, because the bottom of a tank list is a place entries are **not reached**.
+A Protection warrior caps its rage, so something above is nearly always
+castable. So `CONSUMABLE_HEALS` sits with Last Stand and Shield Wall, below them
+because those are the bigger answer to the same question. In the other 22 lists
+the position is free: with `targetAttacks` off, health never leaves maximum, the
+condition is permanently false, and an unreachable condition high in a list is
+not a floor under anything.
+
+**Major Mender's Potion is deliberately in no list**, and the constant says so
+where the entry is not — because an absent entry for something the catalogue
+offers reads exactly like an omission. It grants 75 Healing Power, healing power
+is not a stat this engine has, and an entry for it would cost one rotation poll
+per two minutes to achieve nothing.
+
 ## Storing one on a profile
 
 `CharacterProfile.rotation` is a `StoredRotation`: a `source`, a `name`, and

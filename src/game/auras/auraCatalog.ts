@@ -16,6 +16,7 @@ import * as shamanAuras from './shaman';
 import * as warlockAuras from './warlock';
 import * as warriorAuras from './warrior';
 import * as warriorTalentAuras from './warriorTalents';
+import { CATALOG_AURAS as CONSUMABLE_AURAS } from './consumables';
 
 /**
  * Which buffs and debuffs a class can be asked about in a priority list.
@@ -171,6 +172,7 @@ const EVERY_AURA: ReadonlyMap<string, AuraDefinition> = (() => {
       });
     }
   }
+  for (const aura of CONSUMABLE_AURAS) if (!all.has(aura.id)) all.set(aura.id, aura);
   for (const aura of Object.values(TALENT_AURAS)) if (!all.has(aura.id)) all.set(aura.id, aura);
   for (const buff of RAID_BUFFS) {
     const aura = buff.aura;
@@ -207,6 +209,19 @@ export function aurasForClass(characterClass: ClassId): readonly CatalogAura[] {
   for (const module of CLASS_AURA_MODULES[characterClass]) {
     for (const value of Object.values(module)) addFrom(value, add);
   }
+
+  /*
+   * THE MID-FIGHT CONSUMABLE BUFFS, FOR EVERY CLASS, which is the raid buff
+   * compromise rather than the talent-aura one.
+   *
+   * A consumable belongs to no class, so there is no tree to narrow these by --
+   * and this function is CACHED PER CLASS and so cannot see a selection at all.
+   * That leaves offering them always or never: a Mage is offered Mighty Rage,
+   * which only a Warrior or a Druid can drink, and that costs a reader one line
+   * in a dropdown. Leaving them out instead costs anybody who HAS chosen one the
+   * ability to gate on it, which is the failure this whole catalog exists to fix.
+   */
+  for (const aura of CONSUMABLE_AURAS) add(aura);
 
   /*
    * TALENT AURAS, NARROWED TO THIS CLASS'S OWN TALENTS.
