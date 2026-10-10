@@ -2,10 +2,17 @@
 
 **SM/DS 690.4 -> 695.3, AND NOTHING ELSE MOVED BY A DECIMAL.** The Action
 Priority List is now data, shown in a panel, editable, and saved with the
-character -- six commits, through all of which the 75 combat-log hashes from
+character -- SEVEN commits, through six of which the 75 combat-log hashes from
 `tools/rotation_fingerprint.ts` stayed identical. The one figure that did move
-is a BUG FIX the owner found by using the panel, and it is the only list in the
-project with an interrupting entry.
+is a BUG FIX the owner found by using the panel, and it moves the only list in
+the project with an interrupting entry.
+
+**THE APL WAS THE LAST PART OF A CHARACTER THAT COULD NOT BE SEEN OR CHANGED**,
+and the reason was structural rather than neglect: `PriorityEntry.condition` is
+a CLOSURE. A function cannot be written to a file, rendered in a panel, or
+edited by somebody who is not editing TypeScript -- so the thing deciding most
+of a build's damage had no panel, no profile field, and no way to adjust it.
+Everything below is downstream of turning that one field into data.
 
 | | what it was | effect |
 | --- | --- | --- |
@@ -15,7 +22,33 @@ project with an interrupting entry.
 | `6ea600b` | buffs chosen by NAME, not by typing an id | no figure |
 | `739912c` | `any`, `not` and nested conditions | 51 of 132 conditions stopped being read-only |
 | `5ee11c2` | 20 factory-built auras offered; interrupt becomes a checkbox | no figure |
-| this one | the interrupt check stops reading `already_casting` as an answer | **SM/DS +4.9**, 24 rows at 0.0 |
+| `7541f1b` | the interrupt check stops reading `already_casting` as an answer | **SM/DS +4.9**, 24 rows at 0.0 |
+
+## THREE BUGS, ALL FOUND BY THE OWNER, NONE FINDABLE BY THE SUITE
+
+The most useful thing in this round is not any one fix. It is that the owner
+found three real bugs by USING the panel, and in every case the 2,970-test
+suite was structurally incapable of finding them -- for three different reasons.
+
+| what | why no test could see it |
+| --- | --- |
+| **Rip missing from the Druid's debuff dropdown** | every aura assertion keyed off ids the stock LISTS mention, and no stock list mentions Rip's aura -- the Cat gates Rip on combo points |
+| **an interruptible channel polling for nothing** | the combat log was BYTE-IDENTICAL; only `eventsProcessed` moved, 13% on the Arcane Mage and 25% on the Shadow Priest |
+| **the interrupt check reading `already_casting`** | the only list using the feature happened to avoid it -- all three Warlock entries are aura-gated with no cooldown and no cost they could fail |
+
+**EACH ONE NOW HAS A TEST AIMED AT THE BLIND SPOT RATHER THAN THE SYMPTOM.**
+The first reads the SOURCE of every aura module and fails if anything declared
+there is offered to nobody. The second is why `rotation_fingerprint.ts` prints
+the event count beside the hash. The third asserts the consequence (Mind Flay
+keeps its ticks) AND the reason (`ignoreCastLock` reports `on_cooldown` where
+the plain call reports `already_casting`).
+
+**AND ALL THREE WERE REACHABLE ONLY BECAUSE THE PANEL EXISTS.** None of them
+could fire on a stock list: the catalog gap needed somebody to want a condition
+no stock list writes, the poll cost needed an ability marked interruptible that
+no entry interrupts, and the interrupt bug needed a tick on an ability with a
+COOLDOWN. **Shipping the editor is what made the engine testable by hand**,
+which is worth more than any one of the three fixes.
 
 ## The bug, because it is the most transferable thing here
 
