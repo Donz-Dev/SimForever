@@ -127,6 +127,33 @@ measurement is exactly what makes this check work.
 
 All 75 hashes were unchanged by the conversion of all 26 lists.
 
+## A stored list is narrowed by RACE
+
+Every list names all four free racial cooldowns, because the shared constant in
+`rotations/racialCooldowns.ts` is spread into lists that belong to no race. A
+build only ever learns whichever its own race grants, so `stockListFor` drops
+the rest — see `withoutOtherRacials`.
+
+**The engine never needed it and the panel did.** `PriorityRotation` skips an
+ability the character does not know in silence, which is the property that lets
+one list serve several builds, so an Orc carrying Berserking, Elune's Light and
+Eureka! cost exactly nothing: all 75 combat-log hashes and event counts are
+identical either way. What it cost was a *person* reading the panel — three of
+an Orc's first four entries were abilities no Orc can cast, with nothing on
+screen to say so.
+
+**Only a racial may be dropped.** "Drop what the build does not know" is the
+wider rule and it would delete a capstone a list names for a sibling spec: one
+Hunter list serves a build without the capstone, and the Hemo list *is* the
+Rupture list minus two entries.
+
+**And `syncDefaultRotation` had to stop comparing by name alone.** For class,
+style, stance and talents the name was the whole question — a different build
+means a different stock list and therefore a different name. Race does not work
+that way: an Orc Warrior and a Gnome Warrior run the **same named list** with
+different racial entries in it, so a name comparison would have left Blood Fury
+in after somebody changed an Orc to a Gnome, and left Eureka! out.
+
 ## Storing one on a profile
 
 `CharacterProfile.rotation` is a `StoredRotation`: a `source`, a `name`, and
@@ -231,6 +258,35 @@ aura that is present with nothing left, and the stock lists write both. They
 were one option in the first draft and the round-trip test caught it — opening
 the Enhancement list and touching nothing would have rewritten its Windfury
 Weapon entry into a reading of the clock.
+
+## Switching an entry off
+
+`AplEntry.disabled` keeps a line in the list and never offers it to the
+rotation. The eye button in the panel is the toggle.
+
+**So that trying something does not cost the line.** Removing an entry to see
+what it is worth and adding it back means retyping its condition, its note and
+its interrupt flag — and this whole editing layer exists because a condition
+that cannot be redrawn exactly is a rotation that changed with nothing on screen
+to say so.
+
+**Filtered in `compileRotation`, not checked in `selectAction`.** The second is
+the obvious alternative and is worse twice over: it would ask the question on
+every entry of every decision for a flag almost nothing sets, and
+`PriorityRotation` computes `interruptsChannels` ONCE in its constructor — so a
+disabled *interrupting* entry would still make the actor poll its channel every
+100ms. That is the cost `Rotation.interruptsChannels` exists to avoid, and it is
+invisible: the combat log stays byte-identical and only `eventsProcessed` moves,
+which is exactly how that mistake was found the first time.
+
+**The flag is dropped rather than stored as `false`**, which is
+`interruptsChannel`'s rule and matters more here: `syncDefaultRotation` compares
+a stored list to the stock one **by value**, so an entry switched off and on
+again has to come back byte-identical or a `default` list silently stops
+matching the build it came from.
+
+**Absent means active, so there is no migration.** A profile saved before the
+field existed has no `disabled` key and behaves exactly as it did.
 
 ## Interrupting a channel
 

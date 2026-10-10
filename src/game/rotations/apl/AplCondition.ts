@@ -182,6 +182,29 @@ export interface AplEntry {
    * the field that lets that reasoning travel with the list it is about.
    */
   readonly note?: string;
+  /**
+   * Switched OFF: kept in the list, and never offered to the rotation.
+   *
+   * ==========================================================================
+   * SO THAT TRYING SOMETHING DOES NOT COST THE LINE. Removing an entry to see
+   * what it is worth and adding it back afterwards means retyping its
+   * condition, its note and its interrupt flag -- and `aplEditing.ts` exists
+   * because a condition that cannot be redrawn exactly is a rotation that
+   * changed with nothing on screen to say so. Switching it off keeps every
+   * byte of it.
+   *
+   * IT IS DROPPED RATHER THAN STORED AS `false`, the rule `interruptsChannel`
+   * already follows: `JSON.stringify` writes `"disabled": false` and omits an
+   * absent key, so a list that was switched off and on again would no longer
+   * compare equal to the stock one it came from -- and `syncDefaultRotation`
+   * compares stored lists by value.
+   *
+   * ABSENT MEANS ACTIVE, which is what makes this need no migration: every
+   * profile saved before the field existed has no `disabled` key and behaves
+   * exactly as it did. See `compileRotation` for where it is honoured.
+   * ==========================================================================
+   */
+  readonly disabled?: boolean;
 }
 
 /** A whole list: what it is called, and what is in it. */

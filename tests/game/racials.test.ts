@@ -38,9 +38,11 @@ import { ALL_PRIORITY_LISTS } from '../../src/game/rotations/allLists';
 import {
   RACIAL_COOLDOWNS,
   RACIAL_DEFENSIVE_COOLDOWNS,
+  withoutOtherRacials,
 } from '../../src/game/rotations/racialCooldowns';
 import { abilityChoicesFor, aplNamesFor } from '../../src/ui/panels/AplPanel';
 import { PRESETS_BY_ID } from '../../src/profiles/presets';
+import { syncDefaultRotation } from '../../src/profiles/rotation';
 import { characterAtCombatStart } from '../../src/simulator';
 import { trainingDummyEncounter } from '../../src/simulator/trainingDummyEncounter';
 import { makeAttacker, makeTarget } from '../helpers/actors';
@@ -1101,15 +1103,105 @@ describe('the racials are in the priority lists, or they never fire', () => {
     );
   });
 
-  it('is skipped in silence by a build of the wrong race, which is what makes one list serve ten', () => {
-    // A Tauren Druid's list names Blood Fury, Berserking, Elune's Light and
-    // Eureka!, and the character knows none of them.
-    const built = PRESETS_BY_ID.get('druid_cat')!.build();
-    const player = characterAtCombatStart(built)!;
-    for (const abilityId of RACIAL_COOLDOWNS.map((entry) => entry.abilityId)) {
-      expect(player.abilities.has(abilityId), abilityId).toBe(false);
+  it('stores only the racials the build\'s own RACE can learn', () => {
+    /*
+     * ========================================================================
+     * THE ENGINE NEVER NEEDED THIS AND THE PANEL DID, which is why this test
+     * replaced one asserting the opposite.
+     *
+     * `PriorityRotation` skips an ability the character does not know in
+     * silence -- the property that lets one list serve several builds -- so an
+     * Orc carrying Berserking, Elune's Light and Eureka! cost exactly nothing
+     * and no figure moved either way. What it cost was a PERSON reading the
+     * panel: three of an Orc's first four entries were abilities no Orc can
+     * cast, with nothing on screen to say so.
+     * ========================================================================
+     */
+    for (const [preset, keeps] of [
+      ['druid_cat', []],
+      ['dw_fury', ['blood_fury']],
+      ['mage_fire', ['eureka']],
+      ['shadow_priest', ['berserking']],
+    ] as const) {
+      const built = PRESETS_BY_ID.get(preset)!.build();
+      const named = built.rotation.entries
+        .map((entry) => entry.abilityId)
+        .filter((id) => RACIAL_ABILITIES[id] !== undefined);
+      expect(named, preset).toEqual([...keeps]);
+
+      // And what it stores is exactly what the character actually learned.
+      const player = characterAtCombatStart(built)!;
+      for (const abilityId of Object.keys(RACIAL_ABILITIES)) {
+        expect(player.abilities.has(abilityId), `${preset} / ${abilityId}`).toBe(
+          keeps.includes(abilityId as never),
+        );
+      }
     }
-    expect(built.rotation!.entries.some((entry) => entry.abilityId === 'blood_fury')).toBe(true);
+  });
+
+  it('drops a RACIAL the build lacks and keeps an ordinary ability it lacks', () => {
+    /*
+     * THE NARROW TEST IS THE POINT. "Drop what the build does not know" would
+     * delete a capstone a list names for a sibling spec -- one Hunter list
+     * serves a build without the capstone, and the Hemo list is the Rupture
+     * list minus two entries. Only a racial may be dropped.
+     */
+    const list = {
+      name: 'probe',
+      entries: [
+        { abilityId: 'blood_fury' },
+        { abilityId: 'eureka' },
+        // A real ability, and one a Warrior in no spec ever has.
+        { abilityId: 'heroic_strike' },
+        { abilityId: 'mortal_strike' },
+        { abilityId: 'shield_slam' },
+      ],
+    };
+    expect(withoutOtherRacials(list, 'orc').entries.map((entry) => entry.abilityId)).toEqual([
+      'blood_fury',
+      'heroic_strike',
+      'mortal_strike',
+      'shield_slam',
+    ]);
+
+    // AND A LIST WITH NOTHING TO DROP COMES BACK AS THE SAME OBJECT, which
+    // `syncDefaultRotation` leans on for reference equality.
+    const clean = { name: 'probe', entries: [{ abilityId: 'heroic_strike' }] };
+    expect(withoutOtherRacials(clean, 'orc')).toBe(clean);
+  });
+
+  it('re-derives the stored list when the RACE changes, which a name alone cannot see', () => {
+    /*
+     * ========================================================================
+     * `syncDefaultRotation` COMPARED BY NAME, AND RACE BROKE THAT ASSUMPTION.
+     *
+     * For class, style, stance and talents the name was the whole question: a
+     * different build means a different stock list and therefore a different
+     * name. An Orc Warrior and a Gnome Warrior run the SAME NAMED LIST with
+     * different racial entries in it -- so a name comparison would have left
+     * Blood Fury in the list after somebody changed an Orc to a Gnome, and
+     * left Eureka! out.
+     * ========================================================================
+     */
+    const orc = PRESETS_BY_ID.get('dw_fury')!.build();
+    expect(orc.rotation.source).toBe('default');
+
+    const asGnome = syncDefaultRotation({
+      ...orc,
+      character: { ...orc.character, race: 'gnome' },
+    });
+    const ids = asGnome.rotation.entries.map((entry) => entry.abilityId);
+    expect(ids).toContain('eureka');
+    expect(ids).not.toContain('blood_fury');
+
+    // AND A CUSTOM LIST IS STILL LEFT ALONE, which is the other half of that
+    // function's contract and must not be collateral.
+    const custom = {
+      ...orc,
+      rotation: { ...orc.rotation, source: 'custom' as const },
+      character: { ...orc.character, race: 'gnome' as const },
+    };
+    expect(syncDefaultRotation(custom)).toBe(custom);
   });
 });
 

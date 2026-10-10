@@ -1,4 +1,6 @@
-import type { AplEntry } from './apl';
+import type { RaceId } from '../character';
+import { RACIALS } from '../racials';
+import type { AplEntry, AplList } from './apl';
 
 /**
  * The racial cooldowns every priority list carries.
@@ -109,3 +111,60 @@ export const RACIAL_DEFENSIVE_COOLDOWNS: readonly AplEntry[] = [
   // Dwarf: -10% physical damage taken for 8s. Costs a global cooldown.
   { abilityId: 'stoneform' },
 ];
+
+/**
+ * Every racial ability ONE RACE learns.
+ *
+ * Read off `RACIALS` rather than written out, so a race gaining an active trait
+ * needs no edit here and the two cannot disagree about what a Gnome knows.
+ */
+function abilitiesOf(race: RaceId): ReadonlySet<string> {
+  const granted = new Set<string>();
+  for (const trait of RACIALS[race].traits) {
+    for (const effect of trait.effects) {
+      if (effect.kind === 'grantAbility') granted.add(effect.abilityId);
+    }
+  }
+  return granted;
+}
+
+/** Every racial ability ANY race learns, for telling one entry from another. */
+const ALL_RACIAL_ABILITY_IDS: ReadonlySet<string> = new Set(
+  [...RACIAL_COOLDOWNS, ...RACIAL_DEFENSIVE_COOLDOWNS].map((entry) => entry.abilityId),
+);
+
+/**
+ * A list with the racial entries this race cannot use taken out.
+ *
+ * ============================================================================
+ * THE ENGINE NEVER NEEDED THIS AND THE PANEL DID.
+ *
+ * `PriorityRotation` skips an ability the character does not know in silence,
+ * which is the property that lets one list serve several builds -- so an Orc
+ * carrying Berserking, Elune's Light and Eureka! costs exactly nothing and
+ * every figure is unchanged either way. What it costs is a PERSON reading the
+ * panel: three of an Orc's first four entries were abilities no Orc can cast,
+ * with nothing on screen to say so. The owner asked for them gone.
+ *
+ * A RACIAL IS THE ONLY KIND OF ENTRY THIS MAY DROP, and the test is membership
+ * of `ALL_RACIAL_ABILITY_IDS` rather than "the build does not know it". The
+ * wider rule would delete a capstone a list names for a sibling spec, which is
+ * the same property pointing the other way and is deliberate -- one Hunter list
+ * serves a build without the capstone, and the Hemo list is the Rupture list
+ * minus two entries.
+ *
+ * APPLIED WHERE THE LIST IS DERIVED FOR A PROFILE, not where it is declared:
+ * the shared constant has to name all five, because it is spread into lists
+ * that belong to no race. `stockListFor` is the one caller that knows one.
+ *
+ * A LIST WITH NOTHING TO DROP IS RETURNED UNCHANGED, which keeps reference
+ * equality useful upstream -- `syncDefaultRotation` leans on it.
+ * ============================================================================
+ */
+export function withoutOtherRacials(list: AplList, race: RaceId): AplList {
+  const mine = abilitiesOf(race);
+  const keep = list.entries.filter(
+    (entry) => !ALL_RACIAL_ABILITY_IDS.has(entry.abilityId) || mine.has(entry.abilityId),
+  );
+  return keep.length === list.entries.length ? list : { ...list, entries: keep };
+}
