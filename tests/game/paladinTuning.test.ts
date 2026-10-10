@@ -22,6 +22,16 @@ import {
   PALADIN_SHOCKADIN,
 } from '../../src/game/rotations/paladin';
 import { talentNumber } from '../../src/game/talents/talentValues';
+import type { AplCondition } from '../../src/game/rotations/apl';
+import { compileCondition } from '../../src/game/rotations/apl';
+
+/*
+ * A condition is DATA now. `compileCondition` turns one back into the closure
+ * the engine runs, which is what these assertions have always been calling --
+ * the step used to be implicit because a list held closures directly.
+ */
+const compiled = (condition: AplCondition | undefined) =>
+  condition ? compileCondition(condition) : undefined;
 
 /*
  * ==============================================================================
@@ -170,7 +180,7 @@ describe('Instrument of Law, and the Hammer of Wrath it makes', () => {
   });
 
   it('is in the Retribution list under that condition, and ungated in the Shockadin', () => {
-    const ret = PALADIN_RETRIBUTION.find((e) => e.abilityId === 'hammer_of_wrath');
+    const ret = PALADIN_RETRIBUTION.entries.find((e) => e.abilityId === 'hammer_of_wrath');
     expect(ret?.condition).toBeDefined();
 
     /*
@@ -179,7 +189,7 @@ describe('Instrument of Law, and the Hammer of Wrath it makes', () => {
      * instruction named the Retribution profile, and widening it would silently
      * delete an entry that fires.
      */
-    const shockadin = PALADIN_SHOCKADIN.find((e) => e.abilityId === 'hammer_of_wrath');
+    const shockadin = PALADIN_SHOCKADIN.entries.find((e) => e.abilityId === 'hammer_of_wrath');
     expect(shockadin?.condition).toBeUndefined();
   });
 });
@@ -298,7 +308,7 @@ describe('Swift Judgement, which is meant to double-cast a Judgement', () => {
      * carrying the Crusader's seal with Judgement on cooldown must now be
      * allowed to cast it.
      */
-    const entry = PALADIN_PROTECTION.find((e) => e.abilityId === 'swift_judgement')!;
+    const entry = PALADIN_PROTECTION.entries.find((e) => e.abilityId === 'swift_judgement')!;
     const p = built('prot_pally');
     const actor = makeAttacker({
       autoAttack: 'none',
@@ -314,6 +324,6 @@ describe('Swift Judgement, which is meant to double-cast a Judgement', () => {
     castAbility(simulation, actor, actor.abilities.get('judgement')!, target);
     simulation.advanceTo(seconds(4));
 
-    expect(entry.condition?.(simulation, actor, target)).toBe(true);
+    expect(compiled(entry.condition)?.(simulation, actor, target)).toBe(true);
   });
 });

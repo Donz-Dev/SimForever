@@ -63,6 +63,16 @@ import {
   HUNTER_LONE_WOLF_MELEE,
 } from '../../src/game/rotations/hunter';
 import { HUNTER_TALENT_EFFECTS } from '../../src/game/talents/hunterEffects';
+import type { AplCondition } from '../../src/game/rotations/apl';
+import { compileCondition } from '../../src/game/rotations/apl';
+
+/*
+ * A condition is DATA now. `compileCondition` turns one back into the closure
+ * the engine runs, which is what these assertions have always been calling --
+ * the step used to be implicit because a list held closures directly.
+ */
+const compiled = (condition: AplCondition | undefined) =>
+  condition ? compileCondition(condition) : undefined;
 
 /*
  * ------------------------------------------------------------------------------
@@ -380,7 +390,7 @@ describe('Immolation Trap', () => {
      * POSITION and not merely the presence. An unconditional entry is a floor
      * under everything below it, so where it sits is the whole of what it does.
      */
-    const ids = HUNTER_LONE_WOLF_MELEE.map((entry) => entry.abilityId);
+    const ids = HUNTER_LONE_WOLF_MELEE.entries.map((entry) => entry.abilityId);
     expect(ids[ids.indexOf('strider_kick') + 1]).toBe('immolation_trap');
     /*
      * IT IS NO LONGER LAST, AND THAT ASSERTION WAS MINE RATHER THAN THE
@@ -628,18 +638,18 @@ describe('the hawk: two of them, each on its own clock', () => {
      * this list casts every six seconds for the whole fight, spending 190 mana
      * to restart a hawk with twelve seconds left on a build that runs dry.
      */
-    const entry = HUNTER_BEAST_MASTERY.find((e) => e.abilityId === 'summon_hawk');
+    const entry = HUNTER_BEAST_MASTERY.entries.find((e) => e.abilityId === 'summon_hawk');
     expect(entry?.condition).toBeDefined();
 
     const { simulation } = recordingSimulation([hawkOwner(), makeTarget()], seconds(60));
     const [actor, target] = simulation.combatants;
     simulation.begin();
 
-    expect(entry!.condition!(simulation, actor, target)).toBe(true);
+    expect(compiled(entry!.condition)!(simulation, actor, target)).toBe(true);
     SUMMON_HAWK.onCast({ simulation, caster: actor, target, ability: SUMMON_HAWK });
-    expect(entry!.condition!(simulation, actor, target)).toBe(true);
+    expect(compiled(entry!.condition)!(simulation, actor, target)).toBe(true);
     SUMMON_HAWK.onCast({ simulation, caster: actor, target, ability: SUMMON_HAWK });
-    expect(entry!.condition!(simulation, actor, target)).toBe(false);
+    expect(compiled(entry!.condition)!(simulation, actor, target)).toBe(false);
   });
 });
 
@@ -1008,10 +1018,10 @@ describe('Wing Clip is pressed for the procs, not the 50', () => {
   });
 
   it('is the last entry, and a floor because it has no cooldown', () => {
-    const ids = HUNTER_LONE_WOLF_MELEE.map((entry) => entry.abilityId);
+    const ids = HUNTER_LONE_WOLF_MELEE.entries.map((entry) => entry.abilityId);
     expect(ids[ids.length - 1]).toBe('wing_clip');
 
-    const entry = HUNTER_LONE_WOLF_MELEE[ids.length - 1];
+    const entry = HUNTER_LONE_WOLF_MELEE.entries[ids.length - 1];
     expect(entry.condition).toBeUndefined();
 
     /*
@@ -1019,7 +1029,7 @@ describe('Wing Clip is pressed for the procs, not the 50', () => {
      * it is ungated too, but has a 30-second cooldown, so the list falls past
      * it; Wing Clip has none, so nothing below it could ever be reached.
      */
-    const trap = HUNTER_LONE_WOLF_MELEE.find((e) => e.abilityId === 'immolation_trap')!;
+    const trap = HUNTER_LONE_WOLF_MELEE.entries.find((e) => e.abilityId === 'immolation_trap')!;
     expect(trap.condition).toBeUndefined();
     expect(IMMOLATION_TRAP_ABILITY.cooldownMs).toBeGreaterThan(0);
   });

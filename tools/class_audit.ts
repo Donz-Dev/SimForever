@@ -109,19 +109,19 @@ function profilesOf(className: string): ProfileRow[] {
       ...profile,
       simulation: { ...profile.simulation, seed: 12345, iterations: ITERATIONS },
     });
-    const list = ALL_PRIORITY_LISTS.find((record) => record.profiles.includes(preset.id));
+    const record = ALL_PRIORITY_LISTS.find((row) => row.profiles.includes(preset.id));
     const book = characterAtCombatStart(profile)?.abilities.all ?? [];
     const byName = new Map(batch.abilities.map((row) => [row.abilityName, row]));
 
     const neverFired: string[] = [];
-    for (const entry of list?.entries ?? []) {
+    for (const entry of record?.list.entries ?? []) {
       const ability = book.find((candidate) => candidate.id === entry.abilityId);
       const row = ability ? byName.get(ability.name) : undefined;
       if ((row?.uses ?? 0) === 0 && !neverFired.includes(entry.abilityId)) {
         neverFired.push(entry.abilityId);
       }
     }
-    const listedIds = new Set(list?.entries.map((entry) => entry.abilityId) ?? []);
+    const listedIds = new Set(record?.list.entries.map((entry) => entry.abilityId) ?? []);
     const inBookOnly = book
       .filter((ability) => {
         const row = byName.get(ability.name);
@@ -133,7 +133,7 @@ function profilesOf(className: string): ProfileRow[] {
       presetId: preset.id,
       label: preset.label,
       rotation: batch.rotationName ?? 'NO ROTATION',
-      listName: list?.name ?? 'unregistered',
+      listName: record?.name ?? 'unregistered',
       dps: batch.dps.mean,
       entriesNeverFired: neverFired,
       inBookNeverCast: inBookOnly,

@@ -1,7 +1,19 @@
-import type { PriorityEntry, Rotation, SimulationContext, Combatant } from '../../engine';
-import { PriorityRotation } from '../../engine';
+import type { Rotation } from '../../engine';
+import type { AplList } from './apl';
+import {
+  all,
+  comboPoints,
+  compileRotation,
+  not,
+  resource,
+  selfHas,
+  selfHealth,
+  selfStacks,
+  targetExpired,
+  targetHas,
+} from './apl';
 import type { CombatStyleId } from '../character';
-import { MAX_COMBO_POINTS, comboPointsOn } from '../combat/comboPoints';
+import { MAX_COMBO_POINTS } from '../combat/comboPoints';
 
 /**
  * Druid priority lists.
@@ -47,18 +59,14 @@ import { MAX_COMBO_POINTS, comboPointsOn } from '../combat/comboPoints';
  * the two-second window was paying for it. `missing` and `REFRESH_WINDOW_MS`
  * are gone from this file with the lists that used them.
  */
-const expired = (auraId: string) =>
-  (context: SimulationContext, _actor: Combatant, target?: Combatant): boolean =>
-    target !== undefined && target.auras.remainingMs(auraId, context.clock.now()) <= 0;
+const expired = targetExpired;
 
 /** "<buff> duration > 0", on the Druid. */
-const selfActive = (auraId: string) =>
-  (_context: SimulationContext, actor: Combatant): boolean => actor.auras.has(auraId);
+const selfActive = selfHas;
 
 /** "<buff> stacks >= N", on the Druid. */
 const selfStacksAtLeast = (auraId: string, minimum: number) =>
-  (_context: SimulationContext, actor: Combatant): boolean =>
-    actor.auras.stacksOf(auraId) >= minimum;
+  selfStacks('atLeast', minimum, auraId);
 
 /**
  * The energy ceiling Shifting Power is gated on, from the owner's condition.
@@ -73,45 +81,23 @@ const selfStacksAtLeast = (auraId: string, minimum: number) =>
 export const SHIFTING_POWER_ENERGY_CEILING = 50;
 
 /** "energy <= N". */
-const energyAtMost = (maximum: number) =>
-  (_context: SimulationContext, actor: Combatant): boolean =>
-    (actor.resources.get('energy')?.current ?? 0) <= maximum;
+const energyAtMost = (maximum: number) => resource('atMost', maximum, 'energy');
 
 /** "rage >= N". */
-const rageAtLeast = (minimum: number) =>
-  (_context: SimulationContext, actor: Combatant): boolean =>
-    (actor.resources.get('rage')?.current ?? 0) >= minimum;
+const rageAtLeast = (minimum: number) => resource('atLeast', minimum, 'rage');
 
 /** "hit points <= N% of maximum". */
-const healthAtMostFraction = (fraction: number) =>
-  (_context: SimulationContext, actor: Combatant): boolean =>
-    actor.health.maximum > 0 && actor.health.current / actor.health.maximum <= fraction;
+const healthAtMostFraction = (fraction: number) => selfHealth('atMost', fraction);
 
 /** "combo points = N", read THROUGH the target so a stale pool reads zero. */
-const exactlyPoints = (count: number) =>
-  (_context: SimulationContext, actor: Combatant, target?: Combatant): boolean =>
-    comboPointsOn(actor, target) === count;
+const exactlyPoints = (count: number) => comboPoints('exactly', count);
 
 /** "<debuff> is on the target". */
-const hasDebuff = (auraId: string) =>
-  (_context: SimulationContext, _actor: Combatant, target?: Combatant): boolean =>
-    target !== undefined && target.auras.has(auraId);
+const hasDebuff = targetHas;
 
 /** Every condition must hold. */
-const all =
-  (...conditions: readonly ((
-    context: SimulationContext,
-    actor: Combatant,
-    target?: Combatant,
-  ) => boolean)[]) =>
-  (context: SimulationContext, actor: Combatant, target?: Combatant): boolean =>
-    conditions.every((condition) => condition(context, actor, target));
 
 /** The condition must NOT hold. */
-const not =
-  (condition: (context: SimulationContext, actor: Combatant, target?: Combatant) => boolean) =>
-  (context: SimulationContext, actor: Combatant, target?: Combatant): boolean =>
-    !condition(context, actor, target);
 
 /*
  * ----------------------------------------------------------------------------
@@ -157,7 +143,9 @@ const not =
  * tick and a seventh -- so "if not active" holds each one up for longer and the
  * list reaches Starfire more often.
  */
-export const DRUID_MOONKIN: readonly PriorityEntry[] = [
+export const DRUID_MOONKIN: AplList = {
+  name: 'Druid (Moonkin)',
+  entries: [
   { abilityId: 'moonfire', condition: expired('moonfire') },
   { abilityId: 'insect_swarm', condition: expired('insect_swarm') },
   /*
@@ -180,7 +168,8 @@ export const DRUID_MOONKIN: readonly PriorityEntry[] = [
     condition: all(selfStacksAtLeast('eclipse', 1), selfActive('natures_grace')),
   },
   { abilityId: 'wrath' },
-];
+  ],
+};
 
 /**
  * CAT — Rake and Rip held up, Ferocious Bite otherwise, Shred as the builder.
@@ -204,7 +193,9 @@ export const DRUID_MOONKIN: readonly PriorityEntry[] = [
  * unconditional one, which can never be reached. The Mage's Arcane Missiles and
  * the Warlock's Shadow Bolt are each in their lists twice for the same reason.
  */
-export const DRUID_CAT: readonly PriorityEntry[] = [
+export const DRUID_CAT: AplList = {
+  name: 'Druid (Cat)',
+  entries: [
   /*
    * SHIFTING POWER ON A LOW ENERGY BAR, which is the owner's condition: "Make
    * sure shifting power has a clause in the APL when it only uses Shifting
@@ -269,7 +260,8 @@ export const DRUID_CAT: readonly PriorityEntry[] = [
   { abilityId: 'rip', condition: exactlyPoints(MAX_COMBO_POINTS) },
   { abilityId: 'rake', condition: expired('rake') },
   { abilityId: 'shred' },
-];
+  ],
+};
 
 /**
  * BEAR — Mangle on cooldown, Lacerate held up, Maul as the rage dump.
@@ -285,7 +277,9 @@ export const DRUID_CAT: readonly PriorityEntry[] = [
  * unchanged and the entry above it is not: `rageAtLeast(42)` is a claim about a
  * rage economy that has moved.
  */
-export const DRUID_BEAR: readonly PriorityEntry[] = [
+export const DRUID_BEAR: AplList = {
+  name: 'Druid (Bear)',
+  entries: [
   /*
    * NOT IF THE WARRIOR'S SHOUT IS ALREADY ON THE TARGET. The two do not stack
    * -- both are an attack power reduction -- so the owner's condition checks
@@ -313,14 +307,12 @@ export const DRUID_BEAR: readonly PriorityEntry[] = [
   // Primal Bite is `mangle`: the id kept the old name, the display name did not.
   { abilityId: 'mangle' },
   { abilityId: 'lacerate' },
-];
+  ],
+};
 
-export const DRUID_MOONKIN_ROTATION: Rotation = new PriorityRotation(
-  'Druid (Moonkin)',
-  DRUID_MOONKIN,
-);
-export const DRUID_CAT_ROTATION: Rotation = new PriorityRotation('Druid (Cat)', DRUID_CAT);
-export const DRUID_BEAR_ROTATION: Rotation = new PriorityRotation('Druid (Bear)', DRUID_BEAR);
+export const DRUID_MOONKIN_ROTATION: Rotation = compileRotation(DRUID_MOONKIN);
+export const DRUID_CAT_ROTATION: Rotation = compileRotation(DRUID_CAT);
+export const DRUID_BEAR_ROTATION: Rotation = compileRotation(DRUID_BEAR);
 
 /** Which list a Druid runs, from the form it is in. */
 export function druidRotation(style: CombatStyleId): Rotation | undefined {

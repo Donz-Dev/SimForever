@@ -1,5 +1,6 @@
-import type { Combatant, PriorityEntry, Rotation, SimulationContext } from '../../engine';
-import { PriorityRotation } from '../../engine';
+import type { Rotation } from '../../engine';
+import type { AplList } from './apl';
+import { compileRotation, resource } from './apl';
 import { BITE, CLAW } from '../abilities/pet';
 
 /**
@@ -33,13 +34,24 @@ import { BITE, CLAW } from '../abilities/pet';
  * Reserving its cost is the whole fix, and it is a priority list doing what a
  * priority list is for rather than an engine rule.
  */
-const focusToSpare = (_context: SimulationContext, actor: Combatant): boolean =>
-  (actor.resources.get('focus')?.current ?? 0) >=
-  (CLAW.cost?.amount ?? 0) + (BITE.cost?.amount ?? 0);
+/*
+ * READ OFF THE ABILITIES' OWN COSTS rather than written out, so a change to
+ * either cost moves the gate with it. The data model holds a NUMBER, so it is
+ * resolved once at module load instead of per decision -- which is fine,
+ * because a declared cost does not change during a fight.
+ */
+const focusToSpare = resource(
+  'atLeast',
+  (CLAW.cost?.amount ?? 0) + (BITE.cost?.amount ?? 0),
+  'focus',
+);
 
-export const PET_PRIORITY: readonly PriorityEntry[] = [
-  { abilityId: 'pet_bite' },
-  { abilityId: 'pet_claw', condition: focusToSpare },
-];
+export const PET_PRIORITY: AplList = {
+  name: 'Pet',
+  entries: [
+    { abilityId: 'pet_bite' },
+    { abilityId: 'pet_claw', condition: focusToSpare },
+  ],
+};
 
-export const PET_ROTATION: Rotation = new PriorityRotation('Pet', PET_PRIORITY);
+export const PET_ROTATION: Rotation = compileRotation(PET_PRIORITY);

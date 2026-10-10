@@ -82,7 +82,7 @@ describe('the two fractions', () => {
 
 
   it('is in the list, ungated except for the hold', () => {
-    const entry = PRIEST_SHADOW.find((e) => e.abilityId === 'shadow_word_death');
+    const entry = PRIEST_SHADOW.entries.find((e) => e.abilityId === 'shadow_word_death');
     expect(entry).toBeDefined();
     expect(entry!.condition).toBeDefined();
   });

@@ -14,6 +14,16 @@ import {
 } from '../../src/game/combat/comboPoints';
 import { buildSimulation } from '../helpers/buildSimulation';
 import { makeAttacker, makeTarget } from '../helpers/actors';
+import type { AplCondition } from '../../src/game/rotations/apl';
+import { compileCondition } from '../../src/game/rotations/apl';
+
+/*
+ * A condition is DATA now. `compileCondition` turns one back into the closure
+ * the engine runs, which is what these assertions have always been calling --
+ * the step used to be implicit because the list held closures directly.
+ */
+const compiled = (condition: AplCondition | undefined) =>
+  condition ? compileCondition(condition) : undefined;
 
 /**
  * A Rogue with N combo points banked ON THE TARGET.
@@ -50,8 +60,8 @@ const pool = (points: number) => {
  * ==============================================================================
  */
 
-const entry = (abilityId: string) => ROGUE_RUPTURE.find((e) => e.abilityId === abilityId);
-const ids = ROGUE_RUPTURE.map((e) => e.abilityId);
+const entry = (abilityId: string) => ROGUE_RUPTURE.entries.find((e) => e.abilityId === abilityId);
+const ids = ROGUE_RUPTURE.entries.map((e) => e.abilityId);
 
 describe('why Rupture spends four points and not five', () => {
   /*
@@ -101,12 +111,12 @@ describe('why Rupture spends four points and not five', () => {
      */
     const { sim, player, target } = pool(4);
     expect(target.auras.has('rupture')).toBe(false);
-    expect(entry('rupture')?.condition?.(sim, player, target)).toBe(true);
+    expect(compiled(entry('rupture')?.condition)?.(sim, player, target)).toBe(true);
   });
 
   it('still refuses at three', () => {
     const { sim, player, target } = pool(3);
-    expect(entry('rupture')?.condition?.(sim, player, target)).toBe(false);
+    expect(compiled(entry('rupture')?.condition)?.(sim, player, target)).toBe(false);
   });
 
   it('refuses while the debuff is still up, however full the pool', () => {
@@ -119,7 +129,7 @@ describe('why Rupture spends four points and not five', () => {
      */
     const { sim, player, target } = pool(MAX_COMBO_POINTS);
     sim.applyAura(target, ruptureAura(5), player.id);
-    expect(entry('rupture')?.condition?.(sim, player, target)).toBe(false);
+    expect(compiled(entry('rupture')?.condition)?.(sim, player, target)).toBe(false);
   });
 });
 
@@ -186,12 +196,12 @@ describe('Eviscerate’s two duration floors are gone', () => {
     sim.advanceTo(seconds(8));
 
     expect(comboPointsOn(player, target)).toBe(MAX_COMBO_POINTS);
-    expect(entry('eviscerate')?.condition?.(sim, player, target)).toBe(true);
+    expect(compiled(entry('eviscerate')?.condition)?.(sim, player, target)).toBe(true);
   });
 
   it('still refuses below five', () => {
     const { sim, player, target } = pool(4);
-    expect(entry('eviscerate')?.condition?.(sim, player, target)).toBe(false);
+    expect(compiled(entry('eviscerate')?.condition)?.(sim, player, target)).toBe(false);
   });
 
   it('still holds for the maximum, which is the opposite of the Combat list', () => {

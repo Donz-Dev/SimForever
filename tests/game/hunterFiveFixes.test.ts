@@ -265,7 +265,7 @@ describe('Summon Hawk survives dropping Bestial Wrath', () => {
 
     // Both of the lists such a build can land in now carry the hawk.
     for (const list of [HUNTER_BEAST_MASTERY, HUNTER_LONE_WOLF_RANGED]) {
-      expect(list.map((entry) => entry.abilityId)).toContain('summon_hawk');
+      expect(list.entries.map((entry) => entry.abilityId)).toContain('summon_hawk');
     }
   });
 
@@ -283,7 +283,7 @@ describe('Summon Hawk survives dropping Bestial Wrath', () => {
   });
 
   it('leaves the melee list alone, which does not shoot', () => {
-    expect(HUNTER_LONE_WOLF_MELEE.map((entry) => entry.abilityId)).not.toContain('summon_hawk');
+    expect(HUNTER_LONE_WOLF_MELEE.entries.map((entry) => entry.abilityId)).not.toContain('summon_hawk');
     expect(HUNTER_TALENT_EFFECTS.summon_hawk).toContainEqual({
       kind: 'grantAbility',
       abilityId: 'summon_hawk',

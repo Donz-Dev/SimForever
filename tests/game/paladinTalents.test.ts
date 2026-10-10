@@ -649,7 +649,7 @@ describe('Divine Favor', () => {
   });
 
   it('is in the Shockadin list ABOVE Holy Shock, or it arms a spell already gone', () => {
-    const ids = PALADIN_SHOCKADIN.map((e) => e.abilityId);
+    const ids = PALADIN_SHOCKADIN.entries.map((e) => e.abilityId);
     expect(ids).toContain('divine_favor');
     expect(ids.indexOf('divine_favor')).toBeLessThan(ids.indexOf('holy_shock'));
   });

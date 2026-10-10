@@ -1,7 +1,7 @@
-import type { PriorityEntry, Rotation, SimulationContext, Combatant } from '../../engine';
-import { PriorityRotation } from '../../engine';
+import type { Rotation } from '../../engine';
+import type { AplCondition, AplList } from './apl';
+import { builtin, compileRotation, petHas, selfTime, swungWithin, targetMissing } from './apl';
 import type { TalentAllocation } from '../talents/Talent';
-import { HAWK_MAX_ACTIVE, activeHawks } from '../auras/hunter';
 
 /**
  * Hunter priority lists — THE RULESET OWNER'S OWN, entry by entry.
@@ -83,10 +83,7 @@ import { HAWK_MAX_ACTIVE, activeHawks } from '../auras/hunter';
  * ----------------------------------------------------------------------------
  */
 const RANGED_WEAVE_WINDOW_MS = 500;
-const shotLandedRecently =
-  (windowMs: number) =>
-  (context: SimulationContext, actor: Combatant): boolean =>
-    actor.swungWithin('ranged', context.clock.now(), windowMs);
+const shotLandedRecently = (windowMs: number) => swungWithin('ranged', windowMs);
 
 /**
  * "BESTIAL WRATH IF PET FRENZY IS ACTIVE", which reads across two combatants.
@@ -97,18 +94,10 @@ const shotLandedRecently =
  * cooldown: the entry spends one on the other, which is the only condition in
  * any list here that crosses actors.
  */
-const petHasAura = (auraId: string) =>
-  (context: SimulationContext, actor: Combatant): boolean => {
-    const pet = context.combatants.find(
-      (combatant) => combatant.ownerId === actor.id && combatant.isAlive,
-    );
-    return pet !== undefined && pet.auras.has(auraId);
-  };
+const petHasAura = petHas;
 
 /** "<buff> is not active", on the Hunter -- the owner's "if not active". */
-const selfExpired = (auraId: string) =>
-  (context: SimulationContext, actor: Combatant): boolean =>
-    actor.auras.remainingMs(auraId, context.clock.now()) <= 0;
+const selfExpired = (auraId: string) => selfTime('atMost', 0, auraId);
 
 /**
  * "CAST SUMMON HAWK IF summoned_hawks < 2", the ruleset owner's clause.
@@ -130,13 +119,9 @@ const selfExpired = (auraId: string) =>
  * auras with separate clocks, which is the whole point of the model.
  * ----------------------------------------------------------------------------
  */
-const hawksBelowCap =
-  (_context: SimulationContext, actor: Combatant): boolean =>
-    activeHawks(actor) < HAWK_MAX_ACTIVE;
+const hawksBelowCap: AplCondition = builtin('hawks_below_cap');
 
-const missingOn = (auraId: string) =>
-  (_context: SimulationContext, _actor: Combatant, target?: Combatant): boolean =>
-    target !== undefined && !target.auras.has(auraId);
+const missingOn = targetMissing;
 
 // ---------------------------------------------------------------------------
 
@@ -171,7 +156,9 @@ const missingOn = (auraId: string) =>
  * list puts on it. Beast Mastery has no Sniper Shot to spend mana on, so Aimed
  * is its best remaining sink.
  */
-export const HUNTER_BEAST_MASTERY: readonly PriorityEntry[] = [
+export const HUNTER_BEAST_MASTERY: AplList = {
+  name: 'Hunter (Beast Mastery)',
+  entries: [
   /*
    * THE OWNER'S LIST OPENS WITH "disable melee auto-attacks and start ranged
    * auto-attack", AND IT IS ALREADY TRUE. A combatant's auto-attack mode comes
@@ -189,7 +176,8 @@ export const HUNTER_BEAST_MASTERY: readonly PriorityEntry[] = [
   { abilityId: 'rapid_fire' },
   { abilityId: 'summon_hawk', condition: hawksBelowCap },
   { abilityId: 'aimed_shot', condition: shotLandedRecently(RANGED_WEAVE_WINDOW_MS) },
-];
+  ],
+};
 
 /**
  * LONE WOLF RANGED — no pet, and 20% more damage for not having one.
@@ -221,7 +209,9 @@ export const HUNTER_BEAST_MASTERY: readonly PriorityEntry[] = [
  * 0.55 apart inside a 2.26 interval, so the capstone goes first on the grounds
  * that it hits harder and nothing argues otherwise.
  */
-export const HUNTER_LONE_WOLF_RANGED: readonly PriorityEntry[] = [
+export const HUNTER_LONE_WOLF_RANGED: AplList = {
+  name: 'Hunter (Lone Wolf Ranged)',
+  entries: [
   { abilityId: 'aspect_of_the_hawk', condition: selfExpired('aspect_of_the_hawk') },
   { abilityId: 'hunters_mark', condition: selfExpired('hunters_mark') },
   { abilityId: 'serpent_sting', condition: missingOn('serpent_sting') },
@@ -282,7 +272,8 @@ export const HUNTER_LONE_WOLF_RANGED: readonly PriorityEntry[] = [
   { abilityId: 'sniper_shot', condition: shotLandedRecently(RANGED_WEAVE_WINDOW_MS) },
   { abilityId: 'arcane_shot' },
   { abilityId: 'summon_hawk', condition: hawksBelowCap },
-];
+  ],
+};
 
 /**
  * LONE WOLF MELEE — Aspect of the Beast, and a Hunter in melee range.
@@ -331,7 +322,9 @@ export const HUNTER_LONE_WOLF_RANGED: readonly PriorityEntry[] = [
  * Hunter would still cast it in the game; it is not in the damage list because
  * the damage list is measured.
  */
-export const HUNTER_LONE_WOLF_MELEE: readonly PriorityEntry[] = [
+export const HUNTER_LONE_WOLF_MELEE: AplList = {
+  name: 'Hunter (Lone Wolf Melee)',
+  entries: [
   { abilityId: 'aspect_of_the_beast', condition: selfExpired('aspect_of_the_beast') },
   { abilityId: 'hunters_mark', condition: selfExpired('hunters_mark') },
   /*
@@ -396,7 +389,8 @@ export const HUNTER_LONE_WOLF_MELEE: readonly PriorityEntry[] = [
    * mana to spare; an ungated 80-mana filler is exactly what spends it.
    */
   { abilityId: 'wing_clip' },
-];
+  ],
+};
 
 /**
  * HAWK MELEE -- Lone Wolf Melee's list with the hawk in it, and a pet behind it.
@@ -421,28 +415,19 @@ export const HUNTER_LONE_WOLF_MELEE: readonly PriorityEntry[] = [
  * ungated and always castable.
  * ----------------------------------------------------------------------------
  */
-export const HUNTER_HAWK_MELEE: readonly PriorityEntry[] = [
-  ...HUNTER_LONE_WOLF_MELEE.filter((entry) => entry.abilityId !== 'wing_clip'),
+export const HUNTER_HAWK_MELEE: AplList = {
+  name: 'Hunter (Hawk Melee)',
+  entries: [
+  ...HUNTER_LONE_WOLF_MELEE.entries.filter((entry) => entry.abilityId !== 'wing_clip'),
   { abilityId: 'summon_hawk', condition: hawksBelowCap },
   { abilityId: 'wing_clip' },
-];
+  ],
+};
 
-export const HUNTER_BEAST_MASTERY_ROTATION: Rotation = new PriorityRotation(
-  'Hunter (Beast Mastery)',
-  HUNTER_BEAST_MASTERY,
-);
-export const HUNTER_LONE_WOLF_RANGED_ROTATION: Rotation = new PriorityRotation(
-  'Hunter (Lone Wolf Ranged)',
-  HUNTER_LONE_WOLF_RANGED,
-);
-export const HUNTER_LONE_WOLF_MELEE_ROTATION: Rotation = new PriorityRotation(
-  'Hunter (Lone Wolf Melee)',
-  HUNTER_LONE_WOLF_MELEE,
-);
-export const HUNTER_HAWK_MELEE_ROTATION: Rotation = new PriorityRotation(
-  'Hunter (Hawk Melee)',
-  HUNTER_HAWK_MELEE,
-);
+export const HUNTER_BEAST_MASTERY_ROTATION: Rotation = compileRotation(HUNTER_BEAST_MASTERY);
+export const HUNTER_LONE_WOLF_RANGED_ROTATION: Rotation = compileRotation(HUNTER_LONE_WOLF_RANGED);
+export const HUNTER_LONE_WOLF_MELEE_ROTATION: Rotation = compileRotation(HUNTER_LONE_WOLF_MELEE);
+export const HUNTER_HAWK_MELEE_ROTATION: Rotation = compileRotation(HUNTER_HAWK_MELEE);
 
 /**
  * Which list a Hunter runs.

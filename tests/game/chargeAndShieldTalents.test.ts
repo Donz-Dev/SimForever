@@ -12,6 +12,16 @@ import { weaponsFor } from '../../src/game/actors/createPlayer';
 import { PRESETS_BY_ID } from '../../src/profiles/presets';
 import { runProfileBatch, characterAtCombatStart, resourceFlowOf } from '../../src/simulator';
 import { legalise } from '../helpers/legalTalents';
+import type { AplCondition } from '../../src/game/rotations/apl';
+import { compileCondition } from '../../src/game/rotations/apl';
+
+/*
+ * A condition is DATA now. `compileCondition` turns one back into the closure
+ * the engine runs, which is what these assertions have always been calling --
+ * the step used to be implicit because a list held closures directly.
+ */
+const compiled = (condition: AplCondition | undefined) =>
+  condition ? compileCondition(condition) : undefined;
 
 /*
  * Charge at the pull, Vanguard as its gate, and Master of Defense's shield.
@@ -62,8 +72,8 @@ describe('Charge is used exactly once, as the first action', () => {
   });
 
   it('opens the two-hander and Protection lists, and no others', () => {
-    expect(WARRIOR_TWO_HAND_BATTLE[0].abilityId).toBe('charge');
-    expect(WARRIOR_SHIELD_DEFENSIVE[0].abilityId).toBe('charge');
+    expect(WARRIOR_TWO_HAND_BATTLE.entries[0].abilityId).toBe('charge');
+    expect(WARRIOR_SHIELD_DEFENSIVE.entries[0].abilityId).toBe('charge');
   });
 
   it('fires exactly once a fight for 2H Arms, and pays 21 rage', () => {
@@ -151,9 +161,9 @@ describe('Vanguard is what lets a tank Charge', () => {
 
     // And the condition itself says no, which is what prevents the swap.
     const tank = characterAtCombatStart(profile)!;
-    expect(WARRIOR_SHIELD_DEFENSIVE[0].condition?.(undefined as never, tank, undefined)).toBe(
-      false,
-    );
+    expect(
+      compiled(WARRIOR_SHIELD_DEFENSIVE.entries[0].condition)?.(undefined as never, tank, undefined),
+    ).toBe(false);
   });
 });
 
@@ -281,7 +291,7 @@ describe('Spearing Strike needs Battle Stance', () => {
      * that the build has not quietly regained the talent.
      */
     expect(
-      WARRIOR_DUAL_WIELD_BERSERKER.some((entry) => entry.abilityId === 'spearing_strike'),
+      WARRIOR_DUAL_WIELD_BERSERKER.entries.some((entry) => entry.abilityId === 'spearing_strike'),
     ).toBe(true);
     expect(presetTalents('dw_fury').spearing_strike).toBeUndefined();
     expect(casts('dw_fury', 'Spearing Strike')).toBe(0);

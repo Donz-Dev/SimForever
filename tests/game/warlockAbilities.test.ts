@@ -380,7 +380,7 @@ describe('the two fights', () => {
     expect(actor.resources.get('mana')!.current - manaBefore).toBe(LIFE_TAP_AMOUNT);
 
     // And it is still in the owner's list, unreached rather than removed.
-    expect(WARLOCK_AFFLICTION.map((e) => e.abilityId)).toContain('life_tap');
+    expect(WARLOCK_AFFLICTION.entries.map((e) => e.abilityId)).toContain('life_tap');
   });
 });
 
@@ -482,7 +482,7 @@ describe('Wrack, scaling now, and still not worth casting', () => {
      * Bolt it displaces the filler, and below it would never be reached.
      * ------------------------------------------------------------------------
      */
-    const ids = WARLOCK_AFFLICTION.map((entry) => entry.abilityId);
+    const ids = WARLOCK_AFFLICTION.entries.map((entry) => entry.abilityId);
     expect(ids).toContain('wrack');
     expect(ids.indexOf('wrack')).toBe(ids.indexOf('life_tap') + 1);
     /*
@@ -512,7 +512,7 @@ describe('Wrack, scaling now, and still not worth casting', () => {
      * should fail on the other.
      * ------------------------------------------------------------------------
      */
-    const entry = WARLOCK_AFFLICTION.find((e) => e.abilityId === 'wrack')!;
+    const entry = WARLOCK_AFFLICTION.entries.find((e) => e.abilityId === 'wrack')!;
     expect(entry.condition).toBeUndefined();
     expect(WRACK.interruptibleChannel).toBe(true);
   });
@@ -533,21 +533,21 @@ describe('Wrack, scaling now, and still not worth casting', () => {
      * one that resembles it.
      * ------------------------------------------------------------------------
      */
-    const interrupters = WARLOCK_AFFLICTION.filter((e) => e.interruptsChannel).map(
+    const interrupters = WARLOCK_AFFLICTION.entries.filter((e) => e.interruptsChannel).map(
       (e) => e.abilityId,
     );
     expect(interrupters.sort()).toEqual(['bane_of_agony', 'corruption', 'shadow_bolt']);
 
     // And the entries above Wrack that are NOT interrupters stay out of it.
-    const above = WARLOCK_AFFLICTION.slice(
+    const above = WARLOCK_AFFLICTION.entries.slice(
       0,
-      WARLOCK_AFFLICTION.findIndex((e) => e.abilityId === 'wrack'),
+      WARLOCK_AFFLICTION.entries.findIndex((e) => e.abilityId === 'wrack'),
     ).map((e) => e.abilityId);
     expect(above).toContain('siphon_life');
     expect(above).toContain('life_tap');
     for (const id of ['siphon_life', 'life_tap', 'amplify_curse']) {
       expect(
-        WARLOCK_AFFLICTION.find((e) => e.abilityId === id)?.interruptsChannel ?? false,
+        WARLOCK_AFFLICTION.entries.find((e) => e.abilityId === id)?.interruptsChannel ?? false,
         id,
       ).toBe(false);
     }
@@ -791,7 +791,7 @@ describe('Amplify Curse, the opener', () => {
      * only safe BECAUSE of that cooldown -- an ungated entry with no cooldown
      * would be a floor under everything below it.
      */
-    const ids = WARLOCK_AFFLICTION.map((entry) => entry.abilityId);
+    const ids = WARLOCK_AFFLICTION.entries.map((entry) => entry.abilityId);
     expect(ids[0]).toBe('amplify_curse');
     expect(ids.indexOf('amplify_curse')).toBeLessThan(ids.indexOf('bane_of_agony'));
 
@@ -860,7 +860,7 @@ describe('Siphon Life, the one damage-over-time effect that cannot crit', () => 
      * than remembering to work around it.
      * ------------------------------------------------------------------------
      */
-    const ids = WARLOCK_AFFLICTION.map((entry) => entry.abilityId);
+    const ids = WARLOCK_AFFLICTION.entries.map((entry) => entry.abilityId);
     expect(ids).toContain('siphon_life');
     /*
      * AND THE COUPLING THAT MADE THE FIRST ANSWER WRONG IS GONE WITH THE GATE.
@@ -871,7 +871,7 @@ describe('Siphon Life, the one damage-over-time effect that cannot crit', () => 
      * the question answers itself cleanly: +15.7, re-measured after the
      * interrupt rule landed.
      */
-    expect(WARLOCK_AFFLICTION.find((entry) => entry.abilityId === 'wrack')?.condition)
+    expect(WARLOCK_AFFLICTION.entries.find((entry) => entry.abilityId === 'wrack')?.condition)
       .toBeUndefined();
   });
 });
@@ -886,7 +886,7 @@ describe('Firelock casts no Corruption, by the owner\'s instruction', () => {
      * Corruption and no Shadow Mastery, and Ruin and Agonizing Flames stop at
      * the Destruction tree.
      */
-    expect(WARLOCK_DESTRUCTION.map((entry) => entry.abilityId)).not.toContain('corruption');
+    expect(WARLOCK_DESTRUCTION.entries.map((entry) => entry.abilityId)).not.toContain('corruption');
 
     const batch = batchOf('warlock_firelock', 20, 4);
     expect(batch.abilities.find((a) => a.abilityName === 'Corruption')?.uses ?? 0).toBe(0);

@@ -320,8 +320,47 @@ Both Confirm and Change go through `clearingIssues`.
   refused to open a dialog for a programmatic click on one. `.visually-hidden`
   in `styles.css`.
 
+## The priority list panel
+
+**BETWEEN GEAR AND RAID BUFFS**, the owner's placement, and it reads in the
+right order: what the character is holding, how it fights, then what the raid
+gives it. Collapsible like every other configuration panel and shut by default.
+
+**THE LIST WAS THE ONE PART OF A CHARACTER NOBODY COULD SEE.** Gear, talents,
+raid buffs and consumables all had a panel; the rotation decided most of the
+damage and was invisible, so "why is this build worse" had no answer on screen
+and an entry that never fires looked exactly like one that does.
+
+**THE BADGE IS THE LIST'S OWN NAME**, which shows while the panel is SHUT. That
+is the cheapest guard against the failure this project has had twice -- a build
+running a list meant for another spec, which produces a perfectly ordinary DPS
+figure and nothing that looks wrong.
+
+**AN ENTRY WITH NO CONDITION SAYS "always" RATHER THAN RENDERING BLANK.** An
+unconditional entry is a FLOOR under everything below it -- nothing cheaper and
+ungated beneath it can ever be the first castable entry -- so it is the single
+most important thing to be able to read off a list, and an empty cell reads as
+"no information" instead.
+
+**IT RENDERS `AplEntries` AND NOT THE PANEL IN TESTS.** `Panel` is
+`useState(!startOpen)`, so a collapsible panel starts shut and renders no body
+in a static render -- a test going through `AplPanel` passes every "contains"
+check by containing nothing. `gearPanelStone.test.ts` learned that from a
+failing test; this applied it rather than paying for it twice.
+
+**READ-ONLY, DELIBERATELY.** The list is data and could be edited here; what is
+missing is the profile field to store an edit in and the migration to go with
+it. A panel that let somebody reorder entries and then silently lost the order
+on reload would be worse than one that shows the order. See
+[docs/apl.md](../apl.md).
+
 ### What is left
 
+- **THE APL PANEL DOES NOT EDIT.** Reordering, adding and removing entries, and
+  a condition editor, are the next piece of work, along with the profile field
+  (`rotation`) and the format version that carries it. The data model is built
+  for it: every condition survives JSON, and `describeCondition` already renders
+  each one.
 - **IMPORT STILL DOES NOTHING**, and `panels/ProfilePanel.tsx` is still not
   mounted. 83 lines holding the `serializeProfile` / `parseProfile` round trip
   in a paste box, which is the natural other half of the pair: Load reads a

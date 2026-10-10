@@ -140,8 +140,8 @@ function auditOne(presetId: string, label: string, profile: CharacterProfile): P
   const player = characterAtCombatStart(profile);
   const book = player?.abilities.all ?? [];
 
-  const list = ALL_PRIORITY_LISTS.find((record) => record.profiles.includes(presetId));
-  const listedIds = new Set(list?.entries.map((entry) => entry.abilityId) ?? []);
+  const record = ALL_PRIORITY_LISTS.find((row) => row.profiles.includes(presetId));
+  const listedIds = new Set(record?.list.entries.map((entry) => entry.abilityId) ?? []);
 
   // The damage table is keyed by NAME, so the book supplies the id -> name map.
   const byName = new Map(batch.abilities.map((row) => [row.abilityName, row]));

@@ -72,12 +72,12 @@ describe('the Hemo build', () => {
 });
 
 describe('the Hemo list', () => {
-  const ids = ROGUE_HEMO.map((entry) => entry.abilityId);
+  const ids = ROGUE_HEMO.entries.map((entry) => entry.abilityId);
 
   it('has no Backstab at all', () => {
     expect(ids).not.toContain('backstab');
     // And the list it derives from still does.
-    expect(ROGUE_RUPTURE.map((e) => e.abilityId)).toContain('backstab');
+    expect(ROGUE_RUPTURE.entries.map((e) => e.abilityId)).toContain('backstab');
   });
 
   it('is the Rupture list in the Rupture list’s order, otherwise', () => {
@@ -91,7 +91,7 @@ describe('the Hemo list', () => {
      * ORDER of everything the two lists share, so an entry inserted into Rupture
      * in the wrong place here would fail rather than being absorbed.
      */
-    const shared = ROGUE_RUPTURE.map((e) => e.abilityId).filter(
+    const shared = ROGUE_RUPTURE.entries.map((e) => e.abilityId).filter(
       (id) => id !== 'backstab' && id !== 'hemorrhage',
     );
     expect(ids.filter((id) => id !== 'hemorrhage')).toEqual(shared);
@@ -109,9 +109,9 @@ describe('the Hemo list', () => {
      * written threw away a third of the profile's income.
      */
     expect(ids[ids.length - 1]).toBe('hemorrhage');
-    expect(ROGUE_HEMO[ROGUE_HEMO.length - 1].condition).toBeUndefined();
+    expect(ROGUE_HEMO.entries[ROGUE_HEMO.entries.length - 1].condition).toBeUndefined();
     // The Rupture list's own Hemorrhage is still gated.
-    expect(ROGUE_RUPTURE.find((e) => e.abilityId === 'hemorrhage')?.condition).toBeDefined();
+    expect(ROGUE_RUPTURE.entries.find((e) => e.abilityId === 'hemorrhage')?.condition).toBeDefined();
   });
 
   it('names no ability twice', () => {

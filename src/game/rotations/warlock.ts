@@ -1,5 +1,6 @@
-import type { PriorityEntry, Rotation, SimulationContext, Combatant } from '../../engine';
-import { PriorityRotation } from '../../engine';
+import type { Rotation } from '../../engine';
+import type { AplList } from './apl';
+import { compileRotation, resourceFraction, selfHas, targetExpired, targetTime } from './apl';
 import type { TalentAllocation } from '../talents/Talent';
 
 /**
@@ -24,9 +25,12 @@ import type { TalentAllocation } from '../talents/Talent';
 const REFRESH_WINDOW_MS = 2000;
 
 const missing = (auraId: string) =>
-  (context: SimulationContext, _actor: Combatant, target?: Combatant): boolean =>
-    target !== undefined &&
-    target.auras.remainingMs(auraId, context.clock.now()) < REFRESH_WINDOW_MS;
+  /*
+   * A STRICT `<` AGAINST THE WINDOW, which is what the closure wrote. `below`
+   * rather than `atMost` matters at exactly the boundary, and the boundary is
+   * a value a tick can land on.
+   */
+  targetTime('below', REFRESH_WINDOW_MS / 1000, auraId);
 
 /**
  * "IF NOT ACTIVE", which is the ruleset owner's wording and is NOT the same as
@@ -46,21 +50,13 @@ const missing = (auraId: string) =>
  * readings sit side by side rather than one silently becoming the other.
  * ----------------------------------------------------------------------------
  */
-const expired = (auraId: string) =>
-  (context: SimulationContext, _actor: Combatant, target?: Combatant): boolean =>
-    target !== undefined && target.auras.remainingMs(auraId, context.clock.now()) <= 0;
+const expired = targetExpired;
 
 /** "this aura is on the actor", for a proc the next action should spend. */
-const actorHas = (auraId: string) =>
-  (_context: SimulationContext, actor: Combatant): boolean => actor.auras.has(auraId);
+const actorHas = selfHas;
 
 /** "current mana is below N% of maximum". */
-const manaBelowFraction = (fraction: number) =>
-  (_context: SimulationContext, actor: Combatant): boolean => {
-    const mana = actor.resources.get('mana');
-    if (!mana || mana.maximum <= 0) return false;
-    return mana.current / mana.maximum < fraction;
-  };
+const manaBelowFraction = (fraction: number) => resourceFraction('below', fraction, 'mana');
 
 // ---------------------------------------------------------------------------
 
@@ -82,7 +78,9 @@ const manaBelowFraction = (fraction: number) =>
  * Its own `canCast` refuses when the pool is near full, which keeps it from
  * costing a global cooldown for nothing.
  */
-export const WARLOCK_AFFLICTION: readonly PriorityEntry[] = [
+export const WARLOCK_AFFLICTION: AplList = {
+  name: 'Warlock (SM/DS)',
+  entries: [
   /*
    * THE THREE DOTS FIRST, IN THE OWNER'S ORDER, and the Shadow Trance-gated
    * Shadow Bolt that used to head this list is gone. That entry existed to
@@ -188,7 +186,8 @@ export const WARLOCK_AFFLICTION: readonly PriorityEntry[] = [
    * and this is the half that is now redundant rather than the half that works.
    */
   { abilityId: 'shadow_bolt' },
-];
+  ],
+};
 
 /**
  * FIRELOCK — Immolate held up, Conflagrate on cooldown, Incinerate as filler.
@@ -203,7 +202,9 @@ export const WARLOCK_AFFLICTION: readonly PriorityEntry[] = [
  * 25% more against a burning target and reads that at cast time, so a list
  * that let Immolate lapse would quietly lose a quarter of its filler.
  */
-export const WARLOCK_DESTRUCTION: readonly PriorityEntry[] = [
+export const WARLOCK_DESTRUCTION: AplList = {
+  name: 'Warlock (Firelock)',
+  entries: [
   { abilityId: 'immolate', condition: missing('immolate') },
   { abilityId: 'conflagrate' },
   { abilityId: 'shadowburn' },
@@ -218,16 +219,11 @@ export const WARLOCK_DESTRUCTION: readonly PriorityEntry[] = [
    */
   { abilityId: 'life_tap' },
   { abilityId: 'incinerate' },
-];
+  ],
+};
 
-export const WARLOCK_AFFLICTION_ROTATION: Rotation = new PriorityRotation(
-  'Warlock (SM/DS)',
-  WARLOCK_AFFLICTION,
-);
-export const WARLOCK_DESTRUCTION_ROTATION: Rotation = new PriorityRotation(
-  'Warlock (Firelock)',
-  WARLOCK_DESTRUCTION,
-);
+export const WARLOCK_AFFLICTION_ROTATION: Rotation = compileRotation(WARLOCK_AFFLICTION);
+export const WARLOCK_DESTRUCTION_ROTATION: Rotation = compileRotation(WARLOCK_DESTRUCTION);
 
 /**
  * Which list a Warlock runs, by capstone.
