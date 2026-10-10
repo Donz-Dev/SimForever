@@ -1501,6 +1501,70 @@ order. `docs/handoff/gui.md`.
 
 ### Rotations
 
+**A PRIORITY LIST IS DATA, NOT CODE, AND THAT IS RECENT.**
+`PriorityEntry.condition` is a closure and always was; a list is now written as
+`AplList` -- plain JSON-safe objects -- and `compileRotation` turns one into the
+closures the engine runs, once, when the character is built.
+`src/game/rotations/apl/`, and [docs/apl.md](docs/apl.md).
+
+- **IT EXISTS BECAUSE A FUNCTION CANNOT BE SAVED, SHOWN OR EDITED.** The list
+  decided most of a build's damage and was the one part of a character with no
+  panel, no profile field and no way to change it without editing TypeScript.
+  Everything else about this is downstream of that one fact.
+- **THE CONVERSION OF ALL 26 LISTS CHANGED NOTHING, AND THE PROOF IS NOT A DPS
+  FIGURE.** `tools/rotation_fingerprint.ts` hashes the COMBAT LOG of all 25
+  presets over three seeds -- the log is a pure formatter over the whole
+  telemetry stream, so it carries every cast, swing, aura and tick in order.
+  All 75 hashes are unchanged. **That is stronger than `measure_profiles.ts`
+  for this question and about a hundred times cheaper**: a mean answers "did
+  the published figure move", which is a question about variance and needs 300
+  fights a profile; a hash answers "did any decision change", which is a
+  question about identity and needs three. The engine draws from ONE random
+  stream, so a single differing decision reorders every later draw and the rest
+  of the fight diverges completely -- the property that ruins paired
+  measurement is what makes this check sharp.
+- **MIRROR THE SOURCE'S COMPARISON EXACTLY, INCLUDING STRICTNESS.** The nine
+  class files had written `< cap` and `<= cap` and `!has()` and
+  `remainingMs() <= 0` in different places and MEANT both of each pair, so
+  `AplCompare` carries `below` and `above` beside `atLeast` and `atMost`, and
+  `aura present` is a different test from `auraTime atMost 0`. An aura can be
+  present with nothing left on it.
+- **THE SAME HELPER NAME MEANT DIFFERENT THINGS IN DIFFERENT FILES.** `expired`
+  read the TARGET's aura in five files while the Hunter wrote `selfExpired`
+  beside it for its own; `missing`, `missingOn`, `withoutAura`, `selfLacks` and
+  `actorHas` were five names over two tests. Every builder in `apl/shorthand.ts`
+  says WHOSE aura it is in its own name, because that is the one mistranslation
+  that converts silently -- both readings compile and both produce an ordinary
+  rotation.
+- **AND TWO CLASSES DISAGREED ABOUT AN ABILITY THE BUILD DOES NOT HAVE.**
+  `chargesAvailable` returns 0 for an absent ability, so `isReady` is false, so
+  the Paladin's unguarded `!isReady` reported an ability it never learned as
+  PERMANENTLY on cooldown while the Rogue's guarded version said the opposite.
+  Both survive: `{ state: 'onCooldown' }` is the Rogue's and `not(ready(...))`
+  is the Paladin's. **Check what a predicate says about the ABSENT case before
+  folding two class helpers into one.**
+- **THREE CONDITIONS RESISTED BEING DATA AND ARE AN HONEST ESCAPE HATCH.**
+  `{ kind: 'builtin', id, args }` names a closure in a registry -- the Warrior's
+  rage pooling, Charge's stance gate, the Hawk cap and Slam's swing-timer
+  talent. It serialises, survives a save and a load, and describes itself, so an
+  entry carrying one can be reordered or removed; what it cannot be is rewritten
+  in a panel, and the panel says so rather than offering an editor that would
+  drop the half it cannot express. **The registry THROWS on an unknown id**,
+  which is the opposite of `TALENT_AURAS`' deliberate silent drop: a talent that
+  does nothing is visible, and an entry that LOSES its gate fires far more often
+  than it should, which is a bigger number and no error.
+- **A LIST NAMES ITSELF NOW, so `rotationName` is gone from the registry.** It
+  was written out beside the entries because the only alternative was reading it
+  off a compiled rotation; `compileRotation` puts `list.name` on the rotation, so
+  the two cannot disagree. **One name I retyped by hand drifted** -- "Two-Hander"
+  to "Two-Hand" -- and `presets.test.ts` caught it, which is what that test is
+  for.
+- **`aplFor` GOES THROUGH `rotationFor` AND LOOKS THE RESULT UP BY NAME** rather
+  than repeating a dispatch that is nine rules in five patterns. A second copy
+  would be the shape this file documents everywhere else: both compile, both
+  produce a plausible list, and the one that drifts is the one nobody measured.
+
+
 - **A rotation will change stance to reach an ability, and that is not always
   wanted.** `PriorityRotation` treats a wrong stance as "not yet, and here is
   how". An entry that must NOT provoke a swap says so in its `condition`, checked

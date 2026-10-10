@@ -1,5 +1,6 @@
-import type { PriorityEntry, Rotation, SimulationContext, Combatant } from '../../engine';
-import { PriorityRotation } from '../../engine';
+import type { Rotation } from '../../engine';
+import type { AplList } from './apl';
+import { compileRotation, selfMissing, selfStacks, targetExpired, targetTime } from './apl';
 import type { CombatStyleId } from '../character';
 import { MAELSTROM_WEAPON_MAX_STACKS } from '../auras/shaman';
 
@@ -43,22 +44,15 @@ import { MAELSTROM_WEAPON_MAX_STACKS } from '../auras/shaman';
  * code that no longer needs it.
  * ----------------------------------------------------------------------------
  */
-const expired = (auraId: string) =>
-  (context: SimulationContext, _actor: Combatant, target?: Combatant): boolean =>
-    target !== undefined && target.auras.remainingMs(auraId, context.clock.now()) <= 0;
+const expired = targetExpired;
 
 /** "<debuff> duration > N seconds", on the target. */
 const targetAuraAtLeast = (auraId: string, secondsLeft: number) =>
-  (context: SimulationContext, _actor: Combatant, target?: Combatant): boolean =>
-    target !== undefined &&
-    target.auras.remainingMs(auraId, context.clock.now()) > secondsLeft * 1000;
+  targetTime('atLeast', secondsLeft, auraId);
 
-const withoutAura = (auraId: string) => (_context: SimulationContext, actor: Combatant): boolean =>
-  !actor.auras.has(auraId);
+const withoutAura = selfMissing;
 
-const atStacks = (auraId: string, stacks: number) =>
-  (_context: SimulationContext, actor: Combatant): boolean =>
-    actor.auras.stacksOf(auraId) >= stacks;
+const atStacks = (auraId: string, stacks: number) => selfStacks('atLeast', stacks, auraId);
 
 // ---------------------------------------------------------------------------
 
@@ -108,12 +102,15 @@ const atStacks = (auraId: string, stacks: number) =>
  * Elemental does not, which is a mana question rather than a damage one.
  * ----------------------------------------------------------------------------
  */
-export const SHAMAN_ELEMENTAL: readonly PriorityEntry[] = [
+export const SHAMAN_ELEMENTAL: AplList = {
+  name: 'Shaman (Elemental)',
+  entries: [
   { abilityId: 'flame_shock', condition: expired('flame_shock') },
   { abilityId: 'lava_burst' },
   { abilityId: 'searing_totem', condition: expired('searing_totem') },
   { abilityId: 'lightning_bolt' },
-];
+  ],
+};
 
 /**
  * ENHANCEMENT — the imbue first, then Stormstrike, then shocks between swings.
@@ -133,7 +130,9 @@ export const SHAMAN_ELEMENTAL: readonly PriorityEntry[] = [
  * of the next Lightning Bolt, Chain Lightning or EARTH SHOCK by 20%, and
  * Flame Shock is not on that list.
  */
-export const SHAMAN_ENHANCEMENT: readonly PriorityEntry[] = [
+export const SHAMAN_ENHANCEMENT: AplList = {
+  name: 'Shaman (Enhancement)',
+  entries: [
   { abilityId: 'windfury_weapon', condition: withoutAura('windfury_weapon') },
   /*
    * LIGHTNING BOLT AT FIVE MAELSTROM STACKS, AND ONLY THERE.
@@ -184,16 +183,11 @@ export const SHAMAN_ENHANCEMENT: readonly PriorityEntry[] = [
    * in docs/handoff/shaman.md.
    */
   { abilityId: 'fire_nova' },
-];
+  ],
+};
 
-export const SHAMAN_ELEMENTAL_ROTATION: Rotation = new PriorityRotation(
-  'Shaman (Elemental)',
-  SHAMAN_ELEMENTAL,
-);
-export const SHAMAN_ENHANCEMENT_ROTATION: Rotation = new PriorityRotation(
-  'Shaman (Enhancement)',
-  SHAMAN_ENHANCEMENT,
-);
+export const SHAMAN_ELEMENTAL_ROTATION: Rotation = compileRotation(SHAMAN_ELEMENTAL);
+export const SHAMAN_ENHANCEMENT_ROTATION: Rotation = compileRotation(SHAMAN_ENHANCEMENT);
 
 /** Which list a Shaman runs, from its combat style. */
 export function shamanRotation(style: CombatStyleId): Rotation | undefined {

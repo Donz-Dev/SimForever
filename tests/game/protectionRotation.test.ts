@@ -15,6 +15,16 @@ import {
 } from '../../src/game/auras/warrior';
 import { bossMeleeWeapon } from '../../src/game/encounters/raidBoss';
 import { legalise } from '../helpers/legalTalents';
+import type { AplCondition } from '../../src/game/rotations/apl';
+import { compileCondition } from '../../src/game/rotations/apl';
+
+/*
+ * A condition is DATA now. `compileCondition` turns one back into the closure
+ * the engine runs, which is what these assertions have always been calling --
+ * the step used to be implicit because a list held closures directly.
+ */
+const compiled = (condition: AplCondition | undefined) =>
+  condition ? compileCondition(condition) : undefined;
 
 /*
  * The Protection priority list, in the ruleset owner's order.
@@ -66,7 +76,7 @@ const EXPECTED_ORDER = [
  * from anything they were testing. The id is what each of them actually means.
  */
 function entryFor(abilityId: string) {
-  const found = WARRIOR_SHIELD_DEFENSIVE.find((e) => e.abilityId === abilityId);
+  const found = WARRIOR_SHIELD_DEFENSIVE.entries.find((e) => e.abilityId === abilityId);
   if (!found) throw new Error(`${abilityId} is not in the Protection list`);
   return found;
 }
@@ -121,7 +131,7 @@ const usesOf = (batch: ReturnType<typeof runProfileBatch>, name: string) =>
 
 describe('the Protection list', () => {
   it('is in the order the ruleset owner gave', () => {
-    expect(WARRIOR_SHIELD_DEFENSIVE.map((entry) => entry.abilityId)).toEqual(EXPECTED_ORDER);
+    expect(WARRIOR_SHIELD_DEFENSIVE.entries.map((entry) => entry.abilityId)).toEqual(EXPECTED_ORDER);
   });
 
   it('puts the two survival cooldowns above everything that can repeat', () => {
@@ -133,9 +143,9 @@ describe('the Protection list', () => {
      * global cooldown. Anything else placed there would cost a survival
      * cooldown the moment it was needed.
      */
-    expect(WARRIOR_SHIELD_DEFENSIVE[0].abilityId).toBe('charge');
-    expect(WARRIOR_SHIELD_DEFENSIVE[1].abilityId).toBe('last_stand');
-    expect(WARRIOR_SHIELD_DEFENSIVE[2].abilityId).toBe('shield_wall_cast');
+    expect(WARRIOR_SHIELD_DEFENSIVE.entries[0].abilityId).toBe('charge');
+    expect(WARRIOR_SHIELD_DEFENSIVE.entries[1].abilityId).toBe('last_stand');
+    expect(WARRIOR_SHIELD_DEFENSIVE.entries[2].abilityId).toBe('shield_wall_cast');
   });
 
   it('does not let Charge drag the tank into Battle Stance', () => {
@@ -151,7 +161,7 @@ describe('the Protection list', () => {
      */
     const withoutVanguard = characterAtCombatStart(tank(PROTECTION_31))!;
     const charge = entryFor('charge');
-    expect(charge.condition?.(undefined as never, withoutVanguard, undefined)).toBe(false);
+    expect(compiled(charge.condition)?.(undefined as never, withoutVanguard, undefined)).toBe(false);
   });
 });
 
@@ -167,14 +177,14 @@ describe('Last Stand', () => {
     const entry = entryFor('last_stand');
 
     // Full health: no.
-    expect(entry.condition?.(undefined as never, player, undefined)).toBe(false);
+    expect(compiled(entry.condition)?.(undefined as never, player, undefined)).toBe(false);
 
     // Exactly at the line is not below it.
     player.health.set(player.health.maximum * 0.3);
-    expect(entry.condition?.(undefined as never, player, undefined)).toBe(false);
+    expect(compiled(entry.condition)?.(undefined as never, player, undefined)).toBe(false);
 
     player.health.set(player.health.maximum * 0.29);
-    expect(entry.condition?.(undefined as never, player, undefined)).toBe(true);
+    expect(compiled(entry.condition)?.(undefined as never, player, undefined)).toBe(true);
   });
 
   it('is cast in nearly every fight once the talent is taken', () => {
@@ -201,7 +211,7 @@ describe('Shield Wall', () => {
     const context = { clock: { now: () => 0 } } as never;
 
     // Healthy: no, whatever Last Stand is doing.
-    expect(entry.condition?.(context, player, undefined)).toBe(false);
+    expect(compiled(entry.condition)?.(context, player, undefined)).toBe(false);
 
     /*
      * Hurt, but Last Stand is READY. Shield Wall waits: a thirty minute
@@ -209,11 +219,11 @@ describe('Shield Wall', () => {
      */
     player.health.set(player.health.maximum * 0.1);
     expect(player.abilities.isReady('last_stand', 0)).toBe(true);
-    expect(entry.condition?.(context, player, undefined)).toBe(false);
+    expect(compiled(entry.condition)?.(context, player, undefined)).toBe(false);
 
     // Last Stand spent. Now Shield Wall is the only thing left.
     player.abilities.consumeCharge('last_stand', 0);
-    expect(entry.condition?.(context, player, undefined)).toBe(true);
+    expect(compiled(entry.condition)?.(context, player, undefined)).toBe(true);
   });
 
   it('does not stack on top of an active Last Stand', () => {
@@ -227,12 +237,12 @@ describe('Shield Wall', () => {
 
     player.health.set(player.health.maximum * 0.1);
     player.abilities.consumeCharge('last_stand', simulation.clock.now());
-    expect(entry.condition?.(simulation, player, undefined)).toBe(true);
+    expect(compiled(entry.condition)?.(simulation, player, undefined)).toBe(true);
 
     // With the buff actually up it waits: two cooldowns on one swing is one
     // of them wasted.
     simulation.applyAura(player, LAST_STAND, player.id);
-    expect(entry.condition?.(simulation, player, undefined)).toBe(false);
+    expect(compiled(entry.condition)?.(simulation, player, undefined)).toBe(false);
   });
 
   it('fires freely for a warrior who has no Last Stand at all', () => {
@@ -343,7 +353,7 @@ describe('Rend, which had never been cast', () => {
   });
 
   it('stays last, so it fills a gap rather than taking a strike', () => {
-    expect(WARRIOR_SHIELD_DEFENSIVE.at(-1)?.abilityId).toBe('rend_cast');
+    expect(WARRIOR_SHIELD_DEFENSIVE.entries.at(-1)?.abilityId).toBe('rend_cast');
   });
 });
 

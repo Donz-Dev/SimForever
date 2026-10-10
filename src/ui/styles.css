@@ -1528,3 +1528,80 @@ button:disabled {
 .stat-weight-list .stat-weight-row {
   padding: 1px 0;
 }
+
+/* --- the priority list --- */
+
+.apl-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.apl-entry {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  padding: 6px 8px;
+  border-radius: 6px;
+}
+
+/* Striped, because a priority list is read by POSITION and a flat column of
+   twelve rows is hard to count down.
+
+   `--surface-raised` WITH NO FALLBACK COLOUR. Every theme defines it, and a
+   literal fallback is what `themes.test.ts` refuses: a hard-coded colour is the
+   one thing that would not follow a theme change, so it would be right in the
+   dark themes and wrong in any light one. That test matches on SOURCE TEXT, so
+   it catches a colour function named in a comment too -- which is why this one
+   does not name it. */
+.apl-entry:nth-child(odd) {
+  background: var(--surface-raised);
+}
+
+.apl-rank {
+  flex-shrink: 0;
+  min-width: 18px;
+  text-align: right;
+  font-size: 12px;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.apl-body {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 8px;
+  flex: 1;
+}
+
+.apl-ability {
+  color: var(--accent-strong);
+  font-weight: 600;
+}
+
+.apl-condition {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+/* A note is the measured figure or owner ruling that belongs to this entry,
+   which lived only in a TypeScript comment before the list was data. */
+.apl-note {
+  flex-basis: 100%;
+  font-size: 11px;
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+.apl-flag {
+  flex-shrink: 0;
+  font-size: 10px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--accent);
+  align-self: center;
+}

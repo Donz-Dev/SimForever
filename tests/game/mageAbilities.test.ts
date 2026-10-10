@@ -80,6 +80,16 @@ import {
 } from '../../src/game/rotations/mage';
 import { baseManaFor } from '../../src/game/character/baseStatLookup';
 import { RACE_IDS } from '../../src/game/character/ids';
+import type { AplCondition } from '../../src/game/rotations/apl';
+import { compileCondition } from '../../src/game/rotations/apl';
+
+/*
+ * A condition is DATA now. `compileCondition` turns one back into the closure
+ * the engine runs, which is what these assertions have always been calling --
+ * the step used to be implicit because a list held closures directly.
+ */
+const compiled = (condition: AplCondition | undefined) =>
+  condition ? compileCondition(condition) : undefined;
 
 /*
  * The Mage's numbers, written out by hand from the beta client's spellbook.
@@ -1673,7 +1683,7 @@ describe('Evocation, which pays out during its own channel', () => {
      * --------------------------------------------------------------------------
      */
     for (const list of [MAGE_FIRE, MAGE_FROSTFIRE, MAGE_ARCANE]) {
-      const entry = list.find((candidate) => candidate.abilityId === 'evocation');
+      const entry = list.entries.find((candidate) => candidate.abilityId === 'evocation');
       expect(entry).toBeDefined();
       expect(entry!.condition).toBeDefined();
     }
@@ -1686,14 +1696,14 @@ describe('Evocation, which pays out during its own channel', () => {
     simulation.begin();
 
     const mana = actor.resources.require('mana');
-    const entry = MAGE_FIRE.find((candidate) => candidate.abilityId === 'evocation')!;
+    const entry = MAGE_FIRE.entries.find((candidate) => candidate.abilityId === 'evocation')!;
 
     mana.fill();
-    expect(entry.condition!(simulation, actor, target)).toBe(false);
+    expect(compiled(entry.condition)!(simulation, actor, target)).toBe(false);
 
     mana.spend(mana.maximum * 0.95);
     expect(mana.current / mana.maximum).toBeLessThan(0.1);
-    expect(entry.condition!(simulation, actor, target)).toBe(true);
+    expect(compiled(entry.condition)!(simulation, actor, target)).toBe(true);
   });
 
   it('is reached by NO profile now, which is a LIST cause rather than a gap', () => {
@@ -1757,10 +1767,10 @@ describe('the three lists, after the owner tuned them', () => {
     // Both still KNOW Scorch, which is why the book cannot be the test.
     expect(untalented.abilities.get('scorch')).toBeDefined();
 
-    const entry = MAGE_FIRE.find((row) => row.abilityId === 'scorch')!;
+    const entry = MAGE_FIRE.entries.find((row) => row.abilityId === 'scorch')!;
     const simulation = buildSimulation([untalented, makeTarget()], { durationMs: seconds(60) });
     simulation.begin();
-    expect(entry.condition?.(simulation, untalented, undefined)).toBe(false);
+    expect(compiled(entry.condition)?.(simulation, untalented, undefined)).toBe(false);
   });
 
   it('puts Evocation in all three lists and fires it only when mana is low', () => {
@@ -1772,7 +1782,7 @@ describe('the three lists, after the owner tuned them', () => {
      * fight.
      */
     for (const list of [MAGE_FIRE, MAGE_FROSTFIRE, MAGE_ARCANE]) {
-      expect(list.some((row) => row.abilityId === 'evocation')).toBe(true);
+      expect(list.entries.some((row) => row.abilityId === 'evocation')).toBe(true);
     }
 
     const built = PRESETS_BY_ID.get('mage_fire')!.build();
@@ -1782,15 +1792,15 @@ describe('the three lists, after the owner tuned them', () => {
     });
     const simulation = buildSimulation([mage, makeTarget()], { durationMs: seconds(60) });
     simulation.begin();
-    const entry = MAGE_FIRE.find((row) => row.abilityId === 'evocation')!;
+    const entry = MAGE_FIRE.entries.find((row) => row.abilityId === 'evocation')!;
     const mana = mage.resources.get('mana')!;
 
     mana.set(mana.maximum);
-    expect(entry.condition?.(simulation, mage, undefined)).toBe(false);
+    expect(compiled(entry.condition)?.(simulation, mage, undefined)).toBe(false);
     mana.set(mana.maximum * 0.5);
-    expect(entry.condition?.(simulation, mage, undefined)).toBe(false);
+    expect(compiled(entry.condition)?.(simulation, mage, undefined)).toBe(false);
     mana.set(mana.maximum * 0.09);
-    expect(entry.condition?.(simulation, mage, undefined)).toBe(true);
+    expect(compiled(entry.condition)?.(simulation, mage, undefined)).toBe(true);
   });
 
   it('spends Presence of Mind on the CHEAP Arcane Blast, without a Barrage', () => {
@@ -1806,8 +1816,8 @@ describe('the three lists, after the owner tuned them', () => {
     });
     const simulation = buildSimulation([mage, makeTarget()], { durationMs: seconds(60) });
     simulation.begin();
-    const entry = MAGE_ARCANE.find((row) => row.abilityId === 'presence_of_mind')!;
-    const fires = () => entry.condition?.(simulation, mage, undefined) ?? true;
+    const entry = MAGE_ARCANE.entries.find((row) => row.abilityId === 'presence_of_mind')!;
+    const fires = () => compiled(entry.condition)?.(simulation, mage, undefined) ?? true;
 
     expect(fires()).toBe(false);
 

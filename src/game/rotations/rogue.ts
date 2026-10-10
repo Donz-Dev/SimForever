@@ -1,6 +1,17 @@
-import type { PriorityEntry, Rotation, SimulationContext, Combatant } from '../../engine';
-import { PriorityRotation } from '../../engine';
-import { comboPointsOn } from '../combat/comboPoints';
+import type { Rotation } from '../../engine';
+import type { AplCondition, AplList } from './apl';
+import {
+  all,
+  comboPoints,
+  compileRotation,
+  not,
+  onCooldown,
+  resource,
+  selfHas,
+  selfTime,
+  targetTime,
+} from './apl';
+
 import { MAX_COMBO_POINTS } from '../combat/comboPoints';
 import { RUPTURE_BY_COMBO_POINT, VENOM_AURA_ID } from '../auras/rogue';
 import { AMBUSH_ENERGY_COST } from '../abilities/rogue';
@@ -47,19 +58,13 @@ import { AMBUSH_ENERGY_COST } from '../abilities/rogue';
  */
 
 /** "combo points >= N", read through the TARGET so a stale pool reads zero. */
-const atLeastPoints = (minimum: number) =>
-  (_context: SimulationContext, actor: Combatant, target?: Combatant): boolean =>
-    comboPointsOn(actor, target) >= minimum;
+const atLeastPoints = (minimum: number) => comboPoints('atLeast', minimum);
 
 /** "exactly N", which for the cap is the same question `AT_FIVE` asks. */
-const exactlyPoints = (count: number) =>
-  (_context: SimulationContext, actor: Combatant, target?: Combatant): boolean =>
-    comboPointsOn(actor, target) === count;
+const exactlyPoints = (count: number) => comboPoints('exactly', count);
 
 /** "<buff> is not active", on the Rogue. */
-const selfAuraDown = (auraId: string) =>
-  (context: SimulationContext, actor: Combatant): boolean =>
-    actor.auras.remainingMs(auraId, context.clock.now()) <= 0;
+const selfAuraDown = (auraId: string) => selfTime('atMost', 0, auraId);
 
 /**
  * "<buff> duration >= N seconds", on the Rogue.
@@ -70,35 +75,19 @@ const selfAuraDown = (auraId: string) =>
  * drop. It is the opposite polarity to a refresh condition and reads almost
  * the same, so it is named rather than written inline twice.
  */
-const selfAuraAtLeast = (auraId: string, seconds: number) =>
-  (context: SimulationContext, actor: Combatant): boolean =>
-    actor.auras.remainingMs(auraId, context.clock.now()) >= seconds * 1000;
+const selfAuraAtLeast = (auraId: string, seconds: number) => selfTime('atLeast', seconds, auraId);
 
 /** Every condition in a list must hold. */
-const all =
-  (...conditions: readonly ((
-    context: SimulationContext,
-    actor: Combatant,
-    target?: Combatant,
-  ) => boolean)[]) =>
-  (context: SimulationContext, actor: Combatant, target?: Combatant): boolean =>
-    conditions.every((condition) => condition(context, actor, target));
 
 /** "<debuff> is not active", on the target. */
-const targetAuraDown = (auraId: string) =>
-  (context: SimulationContext, _actor: Combatant, target?: Combatant): boolean =>
-    target !== undefined && target.auras.remainingMs(auraId, context.clock.now()) <= 0;
+const targetAuraDown = (auraId: string) => targetTime('atMost', 0, auraId);
 
 /** "<debuff> duration <= N seconds", on the target. An absent debuff counts. */
 const targetAuraAtMost = (auraId: string, secondsLeft: number) =>
-  (context: SimulationContext, _actor: Combatant, target?: Combatant): boolean =>
-    target !== undefined &&
-    target.auras.remainingMs(auraId, context.clock.now()) <= secondsLeft * 1000;
+  targetTime('atMost', secondsLeft, auraId);
 
 /** "combo points <= N", read through the TARGET like `atLeastPoints`. */
-const atMostPoints = (maximum: number) =>
-  (_context: SimulationContext, actor: Combatant, target?: Combatant): boolean =>
-    comboPointsOn(actor, target) <= maximum;
+const atMostPoints = (maximum: number) => comboPoints('atMost', maximum);
 
 /**
  * "<ability> is known AND its cooldown is running."
@@ -115,19 +104,17 @@ const atMostPoints = (maximum: number) =>
  * the next list to use this primitive will not necessarily.
  * ----------------------------------------------------------------------------
  */
-const abilityOnCooldown = (abilityId: string) =>
-  (context: SimulationContext, actor: Combatant): boolean =>
-    actor.abilities.has(abilityId) && !actor.abilities.isReady(abilityId, context.clock.now());
+/*
+ * THE GUARDED READING -- an ability the build never learned is NOT on
+ * cooldown. That is what this closure wrote (`has(id) && !isReady(id)`) and
+ * the Paladin's wrote the other one; both survive, see `compile.ts`.
+ */
+const abilityOnCooldown = onCooldown;
 
 /** "<buff> is active", on the Rogue. */
-const selfActive = (auraId: string) =>
-  (_context: SimulationContext, actor: Combatant): boolean => actor.auras.has(auraId);
+const selfActive = selfHas;
 
 /** Inverts a condition, so a cheap entry can be held rather than duplicated. */
-const not =
-  (condition: (c: SimulationContext, a: Combatant, t?: Combatant) => boolean) =>
-  (context: SimulationContext, actor: Combatant, target?: Combatant): boolean =>
-    !condition(context, actor, target);
 
 /**
  * "a Cutthroat window is open and the pool cannot pay for Ambush yet."
@@ -157,14 +144,15 @@ const not =
  * read.
  * ----------------------------------------------------------------------------
  */
-const poolingForAmbush = (_context: SimulationContext, actor: Combatant): boolean =>
-  actor.auras.has('cutthroat') &&
-  (actor.resources.get('energy')?.current ?? 0) < AMBUSH_ENERGY_COST;
+const poolingForAmbush: AplCondition = all(
+  selfHas('cutthroat'),
+  // A STRICT `<`, which is what the closure wrote: at exactly the cost the
+  // Rogue is not pooling any more, it can afford the Ambush.
+  resource('below', AMBUSH_ENERGY_COST, 'energy'),
+);
 
 /** "energy >= N". */
-const atLeastEnergy = (minimum: number) =>
-  (_context: SimulationContext, actor: Combatant): boolean =>
-    (actor.resources.get('energy')?.current ?? 0) >= minimum;
+const atLeastEnergy = (minimum: number) => resource('atLeast', minimum, 'energy');
 
 // ---------------------------------------------------------------------------
 
@@ -208,7 +196,9 @@ const atLeastEnergy = (minimum: number) =>
  * the build the poisons matter most to: the spec is named for them, and its
  * Venom finisher does nothing else at all.
  */
-export const ROGUE_VENOM: readonly PriorityEntry[] = [
+export const ROGUE_VENOM: AplList = {
+  name: 'Rogue (Assassination, Venom)',
+  entries: [
   /*
    * THREE POINTS, NOT TWO, and the owner's number rather than this file's.
    * Mutilate awards two at a time, so a Venom Rogue passes through three on
@@ -331,7 +321,8 @@ export const ROGUE_VENOM: readonly PriorityEntry[] = [
     condition: all(exactlyPoints(0), atLeastEnergy(60)),
   },
   { abilityId: 'mutilate' },
-];
+  ],
+};
 
 /**
  * COMBAT — swords, Sinister Strike into Eviscerate, with the two cooldowns.
@@ -348,7 +339,9 @@ export const ROGUE_VENOM: readonly PriorityEntry[] = [
  */
 const EVISCERATE_COMBO_POINTS_COMBAT = 2;
 
-export const ROGUE_COMBAT: readonly PriorityEntry[] = [
+export const ROGUE_COMBAT: AplList = {
+  name: 'Rogue (Combat)',
+  entries: [
   /*
    * THE OWNER'S "IF NOT ACTIVE" STAYS, AND A REFRESH WINDOW WAS MEASURED AND
    * REJECTED. Recorded here so it is not re-run.
@@ -443,7 +436,8 @@ export const ROGUE_COMBAT: readonly PriorityEntry[] = [
   { abilityId: 'adrenaline_rush' },
   { abilityId: 'blade_flurry' },
   { abilityId: 'sinister_strike' },
-];
+  ],
+};
 
 /**
  * RUPTURE — Subtlety, Hemorrhage into Rupture, bleeding rather than bursting.
@@ -492,7 +486,9 @@ export const ROGUE_COMBAT: readonly PriorityEntry[] = [
  */
 const RUPTURE_COMBO_POINTS = 4;
 
-export const ROGUE_RUPTURE: readonly PriorityEntry[] = [
+export const ROGUE_RUPTURE: AplList = {
+  name: 'Rogue (Subtlety, Rupture)',
+  entries: [
   /*
    * PREMEDITATION FIRST, UNGATED, WHICH IS THE OWNER'S ENTRY UNCHANGED. Free,
    * two minutes, +2 combo points. Its Forever tooltip has no stealth clause at
@@ -724,7 +720,8 @@ export const ROGUE_RUPTURE: readonly PriorityEntry[] = [
    * and dropping a Rupture to buy an Ambush gives back more than it takes.
    */
   { abilityId: 'backstab', condition: not(poolingForAmbush) },
-];
+  ],
+};
 
 /**
  * HEMO — the Rupture build with the Backstab engine taken out.
@@ -757,11 +754,13 @@ export const ROGUE_RUPTURE: readonly PriorityEntry[] = [
  * affordable.
  * ----------------------------------------------------------------------------
  */
-export const ROGUE_HEMO: readonly PriorityEntry[] = [
+export const ROGUE_HEMO: AplList = {
+  name: 'Rogue (Subtlety, Hemo)',
+  entries: [
   /*
    * Everything above the filler, in the Rupture list's own order.
    */
-  ...ROGUE_RUPTURE.filter(
+  ...ROGUE_RUPTURE.entries.filter(
     (entry) => entry.abilityId !== 'backstab' && entry.abilityId !== 'hemorrhage',
   ),
   /*
@@ -808,24 +807,13 @@ export const ROGUE_HEMO: readonly PriorityEntry[] = [
    * ==========================================================================
    */
   { abilityId: 'hemorrhage' },
-];
+  ],
+};
 
-export const ROGUE_VENOM_ROTATION: Rotation = new PriorityRotation(
-  'Rogue (Assassination, Venom)',
-  ROGUE_VENOM,
-);
-export const ROGUE_COMBAT_ROTATION: Rotation = new PriorityRotation(
-  'Rogue (Combat)',
-  ROGUE_COMBAT,
-);
-export const ROGUE_RUPTURE_ROTATION: Rotation = new PriorityRotation(
-  'Rogue (Subtlety, Rupture)',
-  ROGUE_RUPTURE,
-);
-export const ROGUE_HEMO_ROTATION: Rotation = new PriorityRotation(
-  'Rogue (Subtlety, Hemo)',
-  ROGUE_HEMO,
-);
+export const ROGUE_VENOM_ROTATION: Rotation = compileRotation(ROGUE_VENOM);
+export const ROGUE_COMBAT_ROTATION: Rotation = compileRotation(ROGUE_COMBAT);
+export const ROGUE_RUPTURE_ROTATION: Rotation = compileRotation(ROGUE_RUPTURE);
+export const ROGUE_HEMO_ROTATION: Rotation = compileRotation(ROGUE_HEMO);
 
 /**
  * Which list a Rogue runs.

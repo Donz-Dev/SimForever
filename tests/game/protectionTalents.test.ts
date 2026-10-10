@@ -31,6 +31,16 @@ import { talentBuild } from '../../src/game/talents/talentBuild';
 import { createDefaultProfile } from '../../src/profiles';
 import { characterAtCombatStart, runProfileBatch, resourceFlowOf } from '../../src/simulator';
 import { legalise } from '../helpers/legalTalents';
+import type { AplCondition } from '../../src/game/rotations/apl';
+import { compileCondition } from '../../src/game/rotations/apl';
+
+/*
+ * A condition is DATA now. `compileCondition` turns one back into the closure
+ * the engine runs, which is what these assertions have always been calling --
+ * the step used to be implicit because a list held closures directly.
+ */
+const compiled = (condition: AplCondition | undefined) =>
+  condition ? compileCondition(condition) : undefined;
 
 /*
  * The Protection audit: defense skill, armor from items, and a damage
@@ -582,12 +592,12 @@ describe('the Protection priority list', () => {
      * by id rather than by index so that reordering the list around it does
      * not fail a test about Bloodrage's threshold.
      */
-    const entry = WARRIOR_SHIELD_DEFENSIVE.find((e) => e.abilityId === 'bloodrage_cast')!;
+    const entry = WARRIOR_SHIELD_DEFENSIVE.entries.find((e) => e.abilityId === 'bloodrage_cast')!;
     expect(entry).toBeDefined();
-    expect(entry.condition?.(undefined as never, player, undefined)).toBe(false);
+    expect(compiled(entry.condition)?.(undefined as never, player, undefined)).toBe(false);
 
     pool.drain(pool.current);
-    expect(entry.condition?.(undefined as never, player, undefined)).toBe(true);
+    expect(compiled(entry.condition)?.(undefined as never, player, undefined)).toBe(true);
   });
 
   it('never leaves Defensive Stance', () => {

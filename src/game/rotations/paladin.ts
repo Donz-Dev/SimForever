@@ -1,7 +1,19 @@
-import type { PriorityEntry, Rotation, SimulationContext, Combatant } from '../../engine';
-import { PriorityRotation } from '../../engine';
+import type { Rotation } from '../../engine';
+import type { AplCondition, AplList } from './apl';
+import {
+  all,
+  any,
+  castsInstantly,
+  compileRotation,
+  fightElapsed,
+  not,
+  ready,
+  selfHas,
+  selfHealth,
+  selfTime,
+} from './apl';
 import type { TalentAllocation } from '../talents/Talent';
-import { activeSeal } from '../auras/paladin';
+import { SEAL_AURA_IDS } from '../auras/paladin';
 
 /**
  * Paladin priority lists.
@@ -32,12 +44,6 @@ import { activeSeal } from '../auras/paladin';
  * ============================================================================
  */
 
-type Condition = (
-  context: SimulationContext,
-  actor: Combatant,
-  target?: Combatant,
-) => boolean;
-
 /**
  * "FIRST EVENT ONLY", which all three of the owner's lists open with.
  *
@@ -54,14 +60,13 @@ type Condition = (
  * ----------------------------------------------------------------------------
  */
 const OPENING_TIMESTAMP_MS = 0;
-const firstEventOnly: Condition = (context) => context.clock.now() === OPENING_TIMESTAMP_MS;
+const firstEventOnly: AplCondition = fightElapsed('exactly', OPENING_TIMESTAMP_MS / 1000);
 
 /** "<buff> is not active", on the Paladin. */
-const selfExpired = (auraId: string): Condition =>
-  (context, actor) => actor.auras.remainingMs(auraId, context.clock.now()) <= 0;
+const selfExpired = (auraId: string) => selfTime('atMost', 0, auraId);
 
 /** "<buff> is active", on the Paladin. */
-const selfActive = (auraId: string): Condition => (_context, actor) => actor.auras.has(auraId);
+const selfActive = selfHas;
 
 /**
  * "A seal is up", whichever one.
@@ -70,19 +75,29 @@ const selfActive = (auraId: string): Condition => (_context, actor) => actor.aur
  * Judgement being castable states the ability's rule rather than a narrower
  * guess at it.
  */
-const anySealUp: Condition = (_context, actor) => activeSeal(actor) !== undefined;
+/*
+ * "ANY SEAL IS UP", built from the SAME LIST `activeSeal` walks rather than
+ * from a builtin of its own. `activeSeal` is `SEAL_AURA_IDS.find(has)`, so a
+ * disjunction over those ids is the same question -- and it stays the same
+ * question when a seal is added, because both read the one array.
+ */
+const anySealUp: AplCondition = any(...SEAL_AURA_IDS.map(selfHas));
 
 /** "hit points <= N% of maximum". */
-const healthAtMostFraction = (fraction: number): Condition =>
-  (_context, actor) =>
-    actor.health.maximum > 0 && actor.health.current / actor.health.maximum <= fraction;
+const healthAtMostFraction = (fraction: number) => selfHealth('atMost', fraction);
 
 /**
  * "<ability> is on cooldown", which the Protection list gates Swift Judgement
  * on -- it is the fallback for the window where the real Judgement cannot go.
  */
-const abilityOnCooldown = (abilityId: string): Condition =>
-  (context, actor) => !actor.abilities.isReady(abilityId, context.clock.now());
+/*
+ * `not(ready(...))` AND NOT `onCooldown(...)`, which differ on an ability the
+ * build never learned: `isReady` is false for an absent ability, so this
+ * closure reported one as permanently on cooldown. Preserved exactly rather
+ * than quietly corrected -- this commit changes no behaviour, and the Paladin
+ * lists only ask it about Judgement, which every build has.
+ */
+const abilityOnCooldown = (abilityId: string) => not(ready(abilityId));
 
 /**
  * "...and the build made this ability INSTANT", which only Instrument of Law
@@ -101,23 +116,9 @@ const abilityOnCooldown = (abilityId: string): Condition =>
  * asked for.
  * ----------------------------------------------------------------------------
  */
-const castsInstantly = (abilityId: string): Condition =>
-  (_context, actor) => (actor.abilities.get(abilityId)?.castTimeMs ?? 0) <= 0;
 
-const all =
-  (...conditions: readonly Condition[]): Condition =>
-  (context, actor, target) =>
-    conditions.every((condition) => condition(context, actor, target));
 
-const either =
-  (...conditions: readonly Condition[]): Condition =>
-  (context, actor, target) =>
-    conditions.some((condition) => condition(context, actor, target));
-
-const not =
-  (condition: Condition): Condition =>
-  (context, actor, target) =>
-    !condition(context, actor, target);
+const either = any;
 
 /*
  * ----------------------------------------------------------------------------
@@ -170,7 +171,9 @@ const not =
  * a priority list rather than a scripted sequence.
  * ----------------------------------------------------------------------------
  */
-export const PALADIN_RETRIBUTION: readonly PriorityEntry[] = [
+export const PALADIN_RETRIBUTION: AplList = {
+  name: 'Paladin (Seal Twist Ret)',
+  entries: [
   { abilityId: 'seal_of_the_crusader', condition: firstEventOnly },
   { abilityId: 'judgement' },
   { abilityId: 'holy_strike' },
@@ -227,7 +230,8 @@ export const PALADIN_RETRIBUTION: readonly PriorityEntry[] = [
     abilityId: 'seal_of_righteousness',
     condition: all(selfActive('seal_of_command'), not(selfActive('echo_seal_of_command'))),
   },
-];
+  ],
+};
 
 /**
  * SHOCKADIN — a Retribution body with a Holy head.
@@ -244,7 +248,9 @@ export const PALADIN_RETRIBUTION: readonly PriorityEntry[] = [
  * IT IS ALSO THE LIST AN UNTALENTED PALADIN RUNS, because every ability in it
  * is a trainer ability.
  */
-export const PALADIN_SHOCKADIN: readonly PriorityEntry[] = [
+export const PALADIN_SHOCKADIN: AplList = {
+  name: 'Paladin (Shockadin)',
+  entries: [
   { abilityId: 'seal_of_the_crusader', condition: firstEventOnly },
   { abilityId: 'judgement' },
   /*
@@ -275,7 +281,8 @@ export const PALADIN_SHOCKADIN: readonly PriorityEntry[] = [
   { abilityId: 'holy_strike' },
   { abilityId: 'hammer_of_wrath' },
   { abilityId: 'consecration' },
-];
+  ],
+};
 
 /**
  * PROTECTION — Holy Shield up, Consecration down, Holy Strike on cooldown.
@@ -289,7 +296,9 @@ export const PALADIN_SHOCKADIN: readonly PriorityEntry[] = [
  * 35 Holy on every swing plus an absorb, against Command's rolled burst. The
  * build takes Improved Seal of Fury, which says which one it means to use.
  */
-export const PALADIN_PROTECTION: readonly PriorityEntry[] = [
+export const PALADIN_PROTECTION: AplList = {
+  name: 'Paladin (Protection)',
+  entries: [
   { abilityId: 'seal_of_the_crusader', condition: firstEventOnly },
   /*
    * RIGHTEOUS FURY DOES NOTHING HERE AND IS CAST ANYWAY, on the owner's
@@ -332,20 +341,12 @@ export const PALADIN_PROTECTION: readonly PriorityEntry[] = [
   { abilityId: 'seal_of_fury', condition: selfExpired('seal_of_fury') },
   { abilityId: 'holy_strike' },
   { abilityId: 'consecration' },
-];
+  ],
+};
 
-export const PALADIN_RETRIBUTION_ROTATION: Rotation = new PriorityRotation(
-  'Paladin (Seal Twist Ret)',
-  PALADIN_RETRIBUTION,
-);
-export const PALADIN_SHOCKADIN_ROTATION: Rotation = new PriorityRotation(
-  'Paladin (Shockadin)',
-  PALADIN_SHOCKADIN,
-);
-export const PALADIN_PROTECTION_ROTATION: Rotation = new PriorityRotation(
-  'Paladin (Protection)',
-  PALADIN_PROTECTION,
-);
+export const PALADIN_RETRIBUTION_ROTATION: Rotation = compileRotation(PALADIN_RETRIBUTION);
+export const PALADIN_SHOCKADIN_ROTATION: Rotation = compileRotation(PALADIN_SHOCKADIN);
+export const PALADIN_PROTECTION_ROTATION: Rotation = compileRotation(PALADIN_PROTECTION);
 
 /**
  * Which list a Paladin runs.

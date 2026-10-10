@@ -1,4 +1,4 @@
-import type { PriorityEntry } from '../../engine';
+import type { AplList } from './apl';
 import type { ClassId } from '../character';
 import { DRUID_BEAR, DRUID_CAT, DRUID_MOONKIN } from './druid';
 import {
@@ -70,17 +70,23 @@ export interface PriorityListRecord {
    */
   readonly owner: ClassId | 'pet';
   /**
-   * The name the wrapped `PriorityRotation` carries, which is what the results
-   * page prints and what `rotationFor` returns.
+   * The list itself, which now CARRIES its own name.
    *
-   * Written out rather than read off the rotation, so the test can pin WHICH
-   * LIST EACH PROFILE RUNS -- the question this registry exists to answer, and
-   * the one nothing could answer before: a Warrior's list depends on style and
-   * stance, a Mage's on points spent, and the Shockadin profile spent its whole
-   * life running a list that asked for a talent it does not take.
+   * ------------------------------------------------------------------------
+   * `rotationName` USED TO BE A SEPARATE FIELD HERE and is gone, because a
+   * list is data now and names itself -- `list.name` is what `compileRotation`
+   * hands the `PriorityRotation`, so the registry and the results page cannot
+   * disagree about what a list is called. It was written out on purpose when
+   * the only alternative was reading it off a compiled rotation, and that
+   * reason expired with this format.
+   *
+   * What it was FOR has not changed and is still the point of this registry:
+   * pinning WHICH LIST EACH PROFILE RUNS. A Warrior's depends on style and
+   * stance, a Mage's on points spent, and the Shockadin profile spent its
+   * whole life running a list built around a talent it does not take.
+   * ------------------------------------------------------------------------
    */
-  readonly rotationName: string;
-  readonly entries: readonly PriorityEntry[];
+  readonly list: AplList;
   /**
    * Which of the 25 profiles runs it, by preset id, or `[]` for a list no
    * preset reaches.
@@ -100,36 +106,31 @@ export const ALL_PRIORITY_LISTS: readonly PriorityListRecord[] = [
   {
     name: 'WARRIOR_TWO_HAND_BATTLE',
     owner: 'warrior',
-    rotationName: 'Warrior (Two-Hander, Battle)',
-    entries: WARRIOR_TWO_HAND_BATTLE,
+    list: WARRIOR_TWO_HAND_BATTLE,
     profiles: ['two_hand_arms'],
   },
   {
     name: 'WARRIOR_DUAL_WIELD_BERSERKER',
     owner: 'warrior',
-    rotationName: 'Warrior (Dual-Wield, Berserker)',
-    entries: WARRIOR_DUAL_WIELD_BERSERKER,
+    list: WARRIOR_DUAL_WIELD_BERSERKER,
     profiles: ['dw_fury'],
   },
   {
     name: 'WARRIOR_SHIELD_DEFENSIVE',
     owner: 'warrior',
-    rotationName: 'Warrior (Shield, Defensive)',
-    entries: WARRIOR_SHIELD_DEFENSIVE,
+    list: WARRIOR_SHIELD_DEFENSIVE,
     profiles: ['prot_warr'],
   },
   {
     name: 'WARRIOR_BATTLE',
     owner: 'warrior',
-    rotationName: 'Warrior',
-    entries: WARRIOR_BATTLE,
+    list: WARRIOR_BATTLE,
     profiles: [],
   },
   {
     name: 'WARRIOR_SHIELD',
     owner: 'warrior',
-    rotationName: 'Warrior (Shield)',
-    entries: WARRIOR_SHIELD,
+    list: WARRIOR_SHIELD,
     profiles: [],
   },
 
@@ -137,29 +138,25 @@ export const ALL_PRIORITY_LISTS: readonly PriorityListRecord[] = [
   {
     name: 'ROGUE_VENOM',
     owner: 'rogue',
-    rotationName: 'Rogue (Assassination, Venom)',
-    entries: ROGUE_VENOM,
+    list: ROGUE_VENOM,
     profiles: ['rogue_venom'],
   },
   {
     name: 'ROGUE_COMBAT',
     owner: 'rogue',
-    rotationName: 'Rogue (Combat)',
-    entries: ROGUE_COMBAT,
+    list: ROGUE_COMBAT,
     profiles: ['rogue_combat'],
   },
   {
     name: 'ROGUE_RUPTURE',
     owner: 'rogue',
-    rotationName: 'Rogue (Subtlety, Rupture)',
-    entries: ROGUE_RUPTURE,
+    list: ROGUE_RUPTURE,
     profiles: ['rogue_rupture'],
   },
   {
     name: 'ROGUE_HEMO',
     owner: 'rogue',
-    rotationName: 'Rogue (Subtlety, Hemo)',
-    entries: ROGUE_HEMO,
+    list: ROGUE_HEMO,
     profiles: ['rogue_hemo'],
   },
 
@@ -167,22 +164,19 @@ export const ALL_PRIORITY_LISTS: readonly PriorityListRecord[] = [
   {
     name: 'DRUID_MOONKIN',
     owner: 'druid',
-    rotationName: 'Druid (Moonkin)',
-    entries: DRUID_MOONKIN,
+    list: DRUID_MOONKIN,
     profiles: ['druid_moonkin'],
   },
   {
     name: 'DRUID_CAT',
     owner: 'druid',
-    rotationName: 'Druid (Cat)',
-    entries: DRUID_CAT,
+    list: DRUID_CAT,
     profiles: ['druid_cat'],
   },
   {
     name: 'DRUID_BEAR',
     owner: 'druid',
-    rotationName: 'Druid (Bear)',
-    entries: DRUID_BEAR,
+    list: DRUID_BEAR,
     profiles: ['druid_bear'],
   },
 
@@ -190,15 +184,13 @@ export const ALL_PRIORITY_LISTS: readonly PriorityListRecord[] = [
   {
     name: 'SHAMAN_ELEMENTAL',
     owner: 'shaman',
-    rotationName: 'Shaman (Elemental)',
-    entries: SHAMAN_ELEMENTAL,
+    list: SHAMAN_ELEMENTAL,
     profiles: ['shaman_elemental'],
   },
   {
     name: 'SHAMAN_ENHANCEMENT',
     owner: 'shaman',
-    rotationName: 'Shaman (Enhancement)',
-    entries: SHAMAN_ENHANCEMENT,
+    list: SHAMAN_ENHANCEMENT,
     profiles: ['shaman_enhancement'],
   },
 
@@ -206,22 +198,19 @@ export const ALL_PRIORITY_LISTS: readonly PriorityListRecord[] = [
   {
     name: 'MAGE_FIRE',
     owner: 'mage',
-    rotationName: 'Mage (Fire)',
-    entries: MAGE_FIRE,
+    list: MAGE_FIRE,
     profiles: ['mage_fire'],
   },
   {
     name: 'MAGE_FROSTFIRE',
     owner: 'mage',
-    rotationName: 'Mage (Frostfire)',
-    entries: MAGE_FROSTFIRE,
+    list: MAGE_FROSTFIRE,
     profiles: ['mage_frostfire'],
   },
   {
     name: 'MAGE_ARCANE',
     owner: 'mage',
-    rotationName: 'Mage (Arcane)',
-    entries: MAGE_ARCANE,
+    list: MAGE_ARCANE,
     profiles: ['mage_arcane'],
   },
 
@@ -229,22 +218,19 @@ export const ALL_PRIORITY_LISTS: readonly PriorityListRecord[] = [
   {
     name: 'PALADIN_RETRIBUTION',
     owner: 'paladin',
-    rotationName: 'Paladin (Seal Twist Ret)',
-    entries: PALADIN_RETRIBUTION,
+    list: PALADIN_RETRIBUTION,
     profiles: ['pally_ret'],
   },
   {
     name: 'PALADIN_SHOCKADIN',
     owner: 'paladin',
-    rotationName: 'Paladin (Shockadin)',
-    entries: PALADIN_SHOCKADIN,
+    list: PALADIN_SHOCKADIN,
     profiles: ['pally_shockadin'],
   },
   {
     name: 'PALADIN_PROTECTION',
     owner: 'paladin',
-    rotationName: 'Paladin (Protection)',
-    entries: PALADIN_PROTECTION,
+    list: PALADIN_PROTECTION,
     profiles: ['prot_pally'],
   },
 
@@ -252,29 +238,25 @@ export const ALL_PRIORITY_LISTS: readonly PriorityListRecord[] = [
   {
     name: 'HUNTER_BEAST_MASTERY',
     owner: 'hunter',
-    rotationName: 'Hunter (Beast Mastery)',
-    entries: HUNTER_BEAST_MASTERY,
+    list: HUNTER_BEAST_MASTERY,
     profiles: ['bm_hunter'],
   },
   {
     name: 'HUNTER_LONE_WOLF_RANGED',
     owner: 'hunter',
-    rotationName: 'Hunter (Lone Wolf Ranged)',
-    entries: HUNTER_LONE_WOLF_RANGED,
+    list: HUNTER_LONE_WOLF_RANGED,
     profiles: ['lw_ranged'],
   },
   {
     name: 'HUNTER_LONE_WOLF_MELEE',
     owner: 'hunter',
-    rotationName: 'Hunter (Lone Wolf Melee)',
-    entries: HUNTER_LONE_WOLF_MELEE,
+    list: HUNTER_LONE_WOLF_MELEE,
     profiles: ['lw_melee'],
   },
   {
     name: 'HUNTER_HAWK_MELEE',
     owner: 'hunter',
-    rotationName: 'Hunter (Hawk Melee)',
-    entries: HUNTER_HAWK_MELEE,
+    list: HUNTER_HAWK_MELEE,
     profiles: ['hawk_melee'],
   },
 
@@ -282,15 +264,13 @@ export const ALL_PRIORITY_LISTS: readonly PriorityListRecord[] = [
   {
     name: 'WARLOCK_AFFLICTION',
     owner: 'warlock',
-    rotationName: 'Warlock (SM/DS)',
-    entries: WARLOCK_AFFLICTION,
+    list: WARLOCK_AFFLICTION,
     profiles: ['warlock_smds'],
   },
   {
     name: 'WARLOCK_DESTRUCTION',
     owner: 'warlock',
-    rotationName: 'Warlock (Firelock)',
-    entries: WARLOCK_DESTRUCTION,
+    list: WARLOCK_DESTRUCTION,
     profiles: ['warlock_firelock'],
   },
 
@@ -298,8 +278,7 @@ export const ALL_PRIORITY_LISTS: readonly PriorityListRecord[] = [
   {
     name: 'PRIEST_SHADOW',
     owner: 'priest',
-    rotationName: 'Priest (Shadow)',
-    entries: PRIEST_SHADOW,
+    list: PRIEST_SHADOW,
     profiles: ['shadow_priest'],
   },
 
@@ -311,8 +290,7 @@ export const ALL_PRIORITY_LISTS: readonly PriorityListRecord[] = [
   {
     name: 'PET_PRIORITY',
     owner: 'pet',
-    rotationName: 'Pet',
-    entries: PET_PRIORITY,
+    list: PET_PRIORITY,
     profiles: ['bm_hunter'],
   },
 ];

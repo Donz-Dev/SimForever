@@ -145,13 +145,13 @@ function printUses(presetId: string, profile: CharacterProfile): void {
     ...profile,
     simulation: { ...profile.simulation, seed: 12345, iterations: ITERATIONS },
   });
-  const list = ALL_PRIORITY_LISTS.find((record) => record.profiles.includes(presetId));
+  const record = ALL_PRIORITY_LISTS.find((row) => row.profiles.includes(presetId));
 
-  console.log(`\n  ${batch.rotationName ?? 'NO ROTATION AT ALL'}  (${list?.name ?? 'unregistered'})`);
-  if (!list) return;
+  console.log(`\n  ${batch.rotationName ?? 'NO ROTATION AT ALL'}  (${record?.name ?? 'unregistered'})`);
+  if (!record) return;
 
   const byName = new Map(batch.abilities.map((row) => [row.abilityName, row]));
-  list.entries.forEach((entry, index) => {
+  record.list.entries.forEach((entry, index) => {
     const name = ABILITY_NAMES.get(entry.abilityId) ?? entry.abilityId;
     const row = byName.get(name);
     const uses = row?.uses ?? 0;
@@ -164,7 +164,8 @@ function printUses(presetId: string, profile: CharacterProfile): void {
      * Shadow Bolt are each in their list twice on purpose, gated above and
      * ungated below.
      */
-    const repeated = list.entries.filter((other) => other.abilityId === entry.abilityId).length > 1;
+    const repeated =
+      record.list.entries.filter((other) => other.abilityId === entry.abilityId).length > 1;
     /*
      * ZERO USES IS FLAGGED RATHER THAN LEFT TO THE READER, because it is the
      * bug and because a row of zeros looks like a row of numbers in a table
@@ -183,7 +184,7 @@ function printUses(presetId: string, profile: CharacterProfile): void {
    * melee Hunter's largest single source is its own swing, which appears in no
    * priority list anywhere.
    */
-  const listed = new Set(list.entries.map((entry) => ABILITY_NAMES.get(entry.abilityId)));
+  const listed = new Set(record.list.entries.map((entry) => ABILITY_NAMES.get(entry.abilityId)));
   const unlisted = batch.abilities
     .filter((row) => !listed.has(row.abilityName) && row.damage > 0)
     .sort((a, b) => b.share - a.share);

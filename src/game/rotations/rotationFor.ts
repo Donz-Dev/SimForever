@@ -1,4 +1,6 @@
 import type { Rotation } from '../../engine';
+import { ALL_PRIORITY_LISTS } from './allLists';
+import type { AplList } from './apl';
 import type { ClassId, CombatStyleId, StanceId } from '../character';
 import type { TalentAllocation } from '../talents/Talent';
 import { warriorRotation } from './warrior';
@@ -63,4 +65,38 @@ export function rotationFor(
   // The ninth and last. One profile, so one list.
   if (characterClass === 'priest') return priestRotation(talents ?? {});
   return undefined;
+}
+
+/**
+ * The priority list a build runs, as DATA rather than as a compiled rotation.
+ *
+ * ----------------------------------------------------------------------------
+ * WHAT THE PANEL NEEDS. `rotationFor` hands back something that can make
+ * decisions and cannot be read; this hands back the entries and their
+ * conditions, which is what a person looking at the APL panel is asking for.
+ *
+ * IT GOES THROUGH `rotationFor` AND LOOKS THE RESULT UP BY NAME, rather than
+ * repeating the dispatch above. That dispatch is nine rules in five patterns --
+ * style, stance, capstone, points spent, and two of them at once -- and a
+ * second copy of it is exactly the shape this project keeps paying for: both
+ * copies compile, both produce a plausible list, and the one that drifts is
+ * the one nobody measured. `rotationIds.test.ts` already pins that the registry
+ * holds every list and that every profile maps to the right one, so the lookup
+ * cannot quietly miss.
+ *
+ * A NAME IS THE KEY because `compileRotation` puts `list.name` on the rotation
+ * it builds, so the two cannot disagree -- that is the same field, not a
+ * parallel one. It was a parallel one until this format landed: the registry
+ * used to carry its own `rotationName` beside the entries.
+ * ----------------------------------------------------------------------------
+ */
+export function aplFor(
+  characterClass: ClassId,
+  style: CombatStyleId,
+  stance?: StanceId,
+  talents?: TalentAllocation,
+): AplList | undefined {
+  const rotation = rotationFor(characterClass, style, stance, talents);
+  if (!rotation) return undefined;
+  return ALL_PRIORITY_LISTS.find((record) => record.list.name === rotation.name)?.list;
 }

@@ -1,5 +1,21 @@
-import type { Combatant, PriorityEntry, Rotation, SimulationContext } from '../../engine';
-import { PriorityRotation } from '../../engine';
+import type { Rotation } from '../../engine';
+import type { AplCondition, AplEntry, AplList } from './apl';
+import {
+  all,
+  any,
+  builtin,
+  compileRotation,
+  fightRemaining,
+  fightRemainingFraction,
+  not,
+  ready,
+  resource,
+  selfHealth,
+  selfTime,
+  swingIn,
+  targetStacks,
+  targetTime,
+} from './apl';
 import type { CombatStyleId, StanceId } from '../character';
 import { isTankBuild } from '../character';
 import {
@@ -132,14 +148,14 @@ const RESERVED_ABILITY_ID = 'mortal_strike';
  * Shared by every entry below Mortal Strike in the list, so the pooling rule is
  * stated once rather than repeated per line.
  */
-function spendableRage(context: SimulationContext, actor: Combatant): number {
-  const rage = actor.resources.get('rage')?.current ?? 0;
-  if (!actor.abilities.has(RESERVED_ABILITY_ID)) return rage;
-  const reserved = actor.abilities.isReady(RESERVED_ABILITY_ID, context.clock.now())
-    ? MORTAL_STRIKE_RAGE_RESERVE
-    : 0;
-  return rage - reserved;
-}
+/*
+ * MOVED TO `apl/builtins.ts` AS `spendable_rage_at_least`, because a list is
+ * data now and this is the one Warrior rule that is a CALCULATION rather than
+ * a comparison: rage minus a reserve that appears and disappears with another
+ * ability's cooldown. The reserve and the ability it is held for live there.
+ */
+const spendableRageAtLeast = (cost: number): AplCondition =>
+  builtin('spendable_rage_at_least', cost);
 
 /** An entry that only fires when it can be paid for out of spare rage. */
 /**
@@ -167,20 +183,15 @@ function spendableRage(context: SimulationContext, actor: Combatant): number {
  * rule cannot drift from the talent that grants it.
  * ----------------------------------------------------------------------------
  */
-const chargeAtThePull: PriorityEntry = {
+const chargeAtThePull: AplEntry = {
   abilityId: 'charge',
-  condition: (_context, actor) => {
-    const charge = actor.abilities.get('charge');
-    if (!charge?.stances) return true;
-    return charge.stances.some((stanceId) => actor.auras.has(stanceId));
-  },
+  condition: builtin('charge_stance_allowed'),
 };
 
-function pooled(abilityId: string, cost: number, extra?: PriorityEntry['condition']): PriorityEntry {
+function pooled(abilityId: string, cost: number, extra?: AplCondition): AplEntry {
   return {
     abilityId,
-    condition: (context, actor, target) =>
-      spendableRage(context, actor) >= cost && (!extra || extra(context, actor, target)),
+    condition: extra ? all(spendableRageAtLeast(cost), extra) : spendableRageAtLeast(cost),
   };
 }
 
@@ -234,7 +245,7 @@ export const REND_REFRESH_WINDOW_MS = 2000;
  * honest statement is that the measurement does not object rather than that it
  * agrees. Anyone reordering these should not expect to find a difference.
  */
-const OPENERS: readonly PriorityEntry[] = [
+const OPENERS: readonly AplEntry[] = [
   /*
    * Battle Shout, once: 139 attack power for three minutes at 10 rage. It
    * outlasts every fight this simulator runs, so the condition is simply
@@ -262,8 +273,7 @@ const OPENERS: readonly PriorityEntry[] = [
    */
   {
     abilityId: 'battle_shout_cast',
-    condition: (context, actor) =>
-      actor.auras.remainingMs(BATTLE_SHOUT.id, context.clock.now()) <= 0,
+    condition: selfTime('atMost', 0, BATTLE_SHOUT.id),
   },
   /*
    * Recklessness next: free, and 100 points of crit for 15 seconds.
@@ -313,8 +323,7 @@ const OPENERS: readonly PriorityEntry[] = [
    */
   {
     abilityId: 'sunder_armor_cast',
-    condition: (_context, _actor, target) =>
-      target !== undefined && target.auras.stacksOf(SUNDER_ARMOR.id) < SUNDER_ARMOR_MAX_STACKS,
+    condition: targetStacks('below', SUNDER_ARMOR_MAX_STACKS, SUNDER_ARMOR.id),
   },
 ];
 
@@ -334,7 +343,7 @@ const OPENERS: readonly PriorityEntry[] = [
  * know, so one list serves every build and the ordering states the preference
  * for the warrior who somehow has both rather than pretending it cannot happen.
  */
-const CORE_STRIKES: readonly PriorityEntry[] = [
+const CORE_STRIKES: readonly AplEntry[] = [
   { abilityId: 'execute' },
   /*
    * Revenge outranks everything but Execute when its window is open.
@@ -367,9 +376,7 @@ const CORE_STRIKES: readonly PriorityEntry[] = [
   // to the two abilities.
   {
     abilityId: 'rend_cast',
-    condition: (context, _actor, target) =>
-      target !== undefined &&
-      target.auras.remainingMs(REND.id, context.clock.now()) < REND_REFRESH_WINDOW_MS,
+    condition: targetTime('below', REND_REFRESH_WINDOW_MS / 1000, REND.id),
   },
   { abilityId: RESERVED_ABILITY_ID },
   { abilityId: 'bloodthirst' },
@@ -379,17 +386,16 @@ const CORE_STRIKES: readonly PriorityEntry[] = [
   pooled(
     'slam',
     15,
-    (_context, actor) => actor.abilities.get('slam')?.swingTimer === 'hold',
+    builtin('ability_holds_swing_timer', 'slam'),
   ),
 ];
 
 /** Dump genuinely surplus rage into the next swing. */
-const FILLERS: readonly PriorityEntry[] = [
+const FILLERS: readonly AplEntry[] = [
   pooled(
     'heroic_strike',
     15,
-    (_context, actor) =>
-      (actor.resources.get('rage')?.current ?? 0) >= HEROIC_STRIKE_RAGE_THRESHOLD,
+    resource('atLeast', HEROIC_STRIKE_RAGE_THRESHOLD, 'rage'),
   ),
 ];
 
@@ -407,16 +413,16 @@ const FILLERS: readonly PriorityEntry[] = [
  * a real ability. `PriorityRotation` skips an id it cannot resolve in silence,
  * and one list carried a misspelled one for its whole life.
  */
-export const WARRIOR_BATTLE: readonly PriorityEntry[] = [
+export const WARRIOR_BATTLE: AplList = {
+  name: 'Warrior',
+  entries: [
   ...OPENERS,
   ...CORE_STRIKES,
   ...FILLERS,
-];
+  ],
+};
 
-export const WARRIOR_MELEE_ROTATION: Rotation = new PriorityRotation(
-  'Warrior',
-  WARRIOR_BATTLE,
-);
+export const WARRIOR_MELEE_ROTATION: Rotation = compileRotation(WARRIOR_BATTLE);
 
 /**
  * With a shield, Shield Slam joins the list.
@@ -432,7 +438,9 @@ export const WARRIOR_MELEE_ROTATION: Rotation = new PriorityRotation(
  * fix by several changes, which is this project's most common documentation
  * failure and is worth one visible instance per file.
  */
-export const WARRIOR_SHIELD: readonly PriorityEntry[] = [
+export const WARRIOR_SHIELD: AplList = {
+  name: 'Warrior (Shield)',
+  entries: [
   { abilityId: 'execute' },
   /*
    * SHIELD SLAM OUTRANKS THE OPENERS, which is the opposite of how the melee
@@ -462,12 +470,10 @@ export const WARRIOR_SHIELD: readonly PriorityEntry[] = [
   ...OPENERS,
   ...CORE_STRIKES.filter((entry) => entry.abilityId !== 'execute'),
   ...FILLERS,
-];
+  ],
+};
 
-export const WARRIOR_SHIELD_ROTATION: Rotation = new PriorityRotation(
-  'Warrior (Shield)',
-  WARRIOR_SHIELD,
-);
+export const WARRIOR_SHIELD_ROTATION: Rotation = compileRotation(WARRIOR_SHIELD);
 
 /**
  * Seconds of fight left when Death Wish goes out.
@@ -510,9 +516,6 @@ export const DEFENSIVE_BLOODRAGE_RAGE = 50;
 export const DEFENSIVE_EMERGENCY_HEALTH = 0.3;
 
 /** Milliseconds of fight remaining. */
-function remainingMs(context: SimulationContext): number {
-  return context.plannedDurationMs - context.clock.now();
-}
 
 /**
  * Dual-wield, Berserker Stance. Specified by the ruleset owner, in this order.
@@ -530,7 +533,9 @@ function remainingMs(context: SimulationContext): number {
  * unreachable. Deriving it from the other list would make every one of those a
  * coincidence rather than a decision.
  */
-export const WARRIOR_DUAL_WIELD_BERSERKER: readonly PriorityEntry[] = [
+export const WARRIOR_DUAL_WIELD_BERSERKER: AplList = {
+  name: 'Warrior (Dual-Wield, Berserker)',
+  entries: [
   /*
    * BLOODRAGE FIRST AND BERSERKER STANCE SECOND, on the ruleset owner's
    * instruction: "move bloodrage up above battle shout" and "add berserker
@@ -551,14 +556,12 @@ export const WARRIOR_DUAL_WIELD_BERSERKER: readonly PriorityEntry[] = [
    */
   {
     abilityId: 'berserker_stance_cast',
-    condition: (context, actor) =>
-      actor.auras.remainingMs(BERSERKER_STANCE.id, context.clock.now()) <= 0,
+    condition: selfTime('atMost', 0, BERSERKER_STANCE.id),
   },
   // Once, and it lasts three minutes.
   {
     abilityId: 'battle_shout_cast',
-    condition: (context, actor) =>
-      actor.auras.remainingMs(BATTLE_SHOUT.id, context.clock.now()) <= 0,
+    condition: selfTime('atMost', 0, BATTLE_SHOUT.id),
   },
   /*
    * Build to five stacks, then hold it there.
@@ -570,18 +573,15 @@ export const WARRIOR_DUAL_WIELD_BERSERKER: readonly PriorityEntry[] = [
    */
   {
     abilityId: 'sunder_armor_cast',
-    condition: (context, _actor, target) => {
-      if (!target) return false;
-      const stacks = target.auras.stacksOf(SUNDER_ARMOR.id);
-      if (stacks < SUNDER_ARMOR_MAX_STACKS) return true;
-      return target.auras.remainingMs(SUNDER_ARMOR.id, context.clock.now()) <
-        SUNDER_REFRESH_WINDOW_MS;
-    },
+    condition: any(
+      targetStacks('below', SUNDER_ARMOR_MAX_STACKS, SUNDER_ARMOR.id),
+      targetTime('below', SUNDER_REFRESH_WINDOW_MS / 1000, SUNDER_ARMOR.id),
+    ),
   },
   // Timed to cover the end of the fight rather than used on cooldown.
   {
     abilityId: 'death_wish',
-    condition: (context) => remainingMs(context) <= DEATH_WISH_WINDOW_MS,
+    condition: fightRemaining('atMost', DEATH_WISH_WINDOW_MS / 1000),
   },
   /*
    * The execute phase, measured in TIME rather than target health.
@@ -591,14 +591,12 @@ export const WARRIOR_DUAL_WIELD_BERSERKER: readonly PriorityEntry[] = [
    */
   {
     abilityId: 'execute',
-    condition: (context) =>
-      remainingMs(context) <= context.plannedDurationMs * EXECUTE_PHASE_FRACTION,
+    condition: fightRemainingFraction('atMost', EXECUTE_PHASE_FRACTION),
   },
   // Surplus rage into the next swing.
   {
     abilityId: 'heroic_strike',
-    condition: (_context, actor) =>
-      (actor.resources.get('rage')?.current ?? 0) >= BERSERKER_HEROIC_STRIKE_RAGE,
+    condition: resource('atLeast', BERSERKER_HEROIC_STRIKE_RAGE, 'rage'),
   },
   { abilityId: 'bloodthirst' },
   { abilityId: 'whirlwind' },
@@ -634,12 +632,10 @@ export const WARRIOR_DUAL_WIELD_BERSERKER: readonly PriorityEntry[] = [
    * ----------------------------------------------------------------------------
    */
   { abilityId: 'spearing_strike' },
-];
+  ],
+};
 
-export const WARRIOR_DUAL_WIELD_BERSERKER_ROTATION: Rotation = new PriorityRotation(
-  'Warrior (Dual-Wield, Berserker)',
-  WARRIOR_DUAL_WIELD_BERSERKER,
-);
+export const WARRIOR_DUAL_WIELD_BERSERKER_ROTATION: Rotation = compileRotation(WARRIOR_DUAL_WIELD_BERSERKER);
 
 /**
  * 1H & Shield, Defensive Stance. Specified by the ruleset owner, in this order.
@@ -667,7 +663,9 @@ export const WARRIOR_DUAL_WIELD_BERSERKER_ROTATION: Rotation = new PriorityRotat
  * the order and the conditions without the rotation having to expose its
  * entries. What order a list is in is the thing being specified.
  */
-export const WARRIOR_SHIELD_DEFENSIVE: readonly PriorityEntry[] = [
+export const WARRIOR_SHIELD_DEFENSIVE: AplList = {
+  name: 'Warrior (Shield, Defensive)',
+  entries: [
   // At the pull, and only with Vanguard. See `chargeAtThePull`, which reads
   // the stance list rather than naming the talent.
   chargeAtThePull,
@@ -684,7 +682,7 @@ export const WARRIOR_SHIELD_DEFENSIVE: readonly PriorityEntry[] = [
    */
   {
     abilityId: 'last_stand',
-    condition: (_context, actor) => actor.health.fraction < DEFENSIVE_EMERGENCY_HEALTH,
+    condition: selfHealth('below', DEFENSIVE_EMERGENCY_HEALTH),
   },
   /*
    * Shield Wall, only once Last Stand cannot help.
@@ -700,12 +698,16 @@ export const WARRIOR_SHIELD_DEFENSIVE: readonly PriorityEntry[] = [
    */
   {
     abilityId: 'shield_wall_cast',
-    condition: (context, actor) => {
-      if (actor.health.fraction >= DEFENSIVE_EMERGENCY_HEALTH) return false;
-      const now = context.clock.now();
-      if (actor.auras.remainingMs(LAST_STAND.id, now) > 0) return false;
-      return !actor.abilities.isReady('last_stand', now);
-    },
+    condition: all(
+      selfHealth('below', DEFENSIVE_EMERGENCY_HEALTH),
+      selfTime('atMost', 0, LAST_STAND.id),
+      /*
+       * THE UNGUARDED READING, which is what this closure wrote: a warrior
+       * WITHOUT Last Stand reads as "not ready", so Shield Wall stays
+       * reachable for them. `onCooldown` would make it unreachable instead.
+       */
+      not(ready('last_stand')),
+    ),
   },
   /*
    * FIRST OF THE ROTATION PROPER, and only while there is room for the rage.
@@ -722,8 +724,7 @@ export const WARRIOR_SHIELD_DEFENSIVE: readonly PriorityEntry[] = [
    */
   {
     abilityId: 'bloodrage_cast',
-    condition: (_context, actor) =>
-      (actor.resources.get('rage')?.current ?? 0) < DEFENSIVE_BLOODRAGE_RAGE,
+    condition: resource('below', DEFENSIVE_BLOODRAGE_RAGE, 'rage'),
   },
   /*
    * Then the stance, and only when it is not already up.
@@ -734,13 +735,11 @@ export const WARRIOR_SHIELD_DEFENSIVE: readonly PriorityEntry[] = [
    */
   {
     abilityId: 'defensive_stance_cast',
-    condition: (context, actor) =>
-      actor.auras.remainingMs(DEFENSIVE_STANCE.id, context.clock.now()) <= 0,
+    condition: selfTime('atMost', 0, DEFENSIVE_STANCE.id),
   },
   {
     abilityId: 'battle_shout_cast',
-    condition: (context, actor) =>
-      actor.auras.remainingMs(BATTLE_SHOUT.id, context.clock.now()) <= 0,
+    condition: selfTime('atMost', 0, BATTLE_SHOUT.id),
   },
   /*
    * To five stacks, and then held there.
@@ -751,15 +750,10 @@ export const WARRIOR_SHIELD_DEFENSIVE: readonly PriorityEntry[] = [
    */
   {
     abilityId: 'sunder_armor_cast',
-    condition: (context, _actor, target) => {
-      if (!target) return false;
-      const stacks = target.auras.stacksOf(SUNDER_ARMOR.id);
-      if (stacks < SUNDER_ARMOR_MAX_STACKS) return true;
-      return (
-        target.auras.remainingMs(SUNDER_ARMOR.id, context.clock.now()) <
-        SUNDER_REFRESH_WINDOW_MS
-      );
-    },
+    condition: any(
+      targetStacks('below', SUNDER_ARMOR_MAX_STACKS, SUNDER_ARMOR.id),
+      targetTime('below', SUNDER_REFRESH_WINDOW_MS / 1000, SUNDER_ARMOR.id),
+    ),
   },
   /*
    * Demoralizing Shout, kept up on the target.
@@ -782,8 +776,7 @@ export const WARRIOR_SHIELD_DEFENSIVE: readonly PriorityEntry[] = [
    */
   {
     abilityId: 'demoralizing_shout_cast',
-    condition: (context, _actor, target) =>
-      !!target && target.auras.remainingMs(DEMORALIZING_SHOUT.id, context.clock.now()) <= 0,
+    condition: targetTime('atMost', 0, DEMORALIZING_SHOUT.id),
   },
   /*
    * Surplus rage into the next swing, at 26 rather than the Berserker list's
@@ -791,8 +784,7 @@ export const WARRIOR_SHIELD_DEFENSIVE: readonly PriorityEntry[] = [
    */
   {
     abilityId: 'heroic_strike',
-    condition: (_context, actor) =>
-      (actor.resources.get('rage')?.current ?? 0) >= DEFENSIVE_HEROIC_STRIKE_RAGE,
+    condition: resource('atLeast', DEFENSIVE_HEROIC_STRIKE_RAGE, 'rage'),
   },
   /*
    * Above Shield Slam, and it costs nothing to put there: Shield Block does
@@ -823,15 +815,12 @@ export const WARRIOR_SHIELD_DEFENSIVE: readonly PriorityEntry[] = [
    */
   {
     abilityId: 'rend_cast',
-    condition: (context, _actor, target) =>
-      !!target && target.auras.remainingMs(REND.id, context.clock.now()) <= 0,
+    condition: targetTime('atMost', 0, REND.id),
   },
-];
+  ],
+};
 
-export const WARRIOR_SHIELD_DEFENSIVE_ROTATION: Rotation = new PriorityRotation(
-  'Warrior (Shield, Defensive)',
-  WARRIOR_SHIELD_DEFENSIVE,
-);
+export const WARRIOR_SHIELD_DEFENSIVE_ROTATION: Rotation = compileRotation(WARRIOR_SHIELD_DEFENSIVE);
 
 /** Rage above which the Arms list spends the surplus on Heroic Strike. */
 export const BATTLE_HEROIC_STRIKE_RAGE = 75;
@@ -869,11 +858,6 @@ export const BATTLE_SUNDER_REFRESH_WINDOW_MS = seconds(3);
 export const SLAM_SWING_WINDOW_MS = seconds(1);
 
 /** Milliseconds until this actor's main hand swings again, or 0 if it is idle. */
-function mainHandSwingIn(context: SimulationContext, actor: Combatant): number {
-  const pending = actor.pendingSwing('mainHand');
-  if (!pending || pending.cancelled) return 0;
-  return Math.max(0, pending.timestamp - context.clock.now());
-}
 
 /**
  * Two-hander, Battle Stance. Specified by the ruleset owner, in this order.
@@ -901,7 +885,9 @@ function mainHandSwingIn(context: SimulationContext, actor: Combatant): number {
  * needing a condition.
  * ----------------------------------------------------------------------------
  */
-export const WARRIOR_TWO_HAND_BATTLE: readonly PriorityEntry[] = [
+export const WARRIOR_TWO_HAND_BATTLE: AplList = {
+  name: 'Warrior (Two-Hander, Battle)',
+  entries: [
   /*
    * FIRST, because it is the one entry whose window is a single instant: put
    * it below anything and that anything takes the instant. It is off the
@@ -925,39 +911,30 @@ export const WARRIOR_TWO_HAND_BATTLE: readonly PriorityEntry[] = [
    */
   {
     abilityId: 'battle_stance_cast',
-    condition: (context, actor) =>
-      actor.auras.remainingMs(BATTLE_STANCE.id, context.clock.now()) <= 0,
+    condition: selfTime('atMost', 0, BATTLE_STANCE.id),
   },
   {
     abilityId: 'battle_shout_cast',
-    condition: (context, actor) =>
-      actor.auras.remainingMs(BATTLE_SHOUT.id, context.clock.now()) <= 0,
+    condition: selfTime('atMost', 0, BATTLE_SHOUT.id),
   },
   // Gated on the window a target's dodge opens; `checkCast` refuses it until
   // then, so repeating that rule here would be a second copy of it.
   { abilityId: 'overpower' },
   {
     abilityId: 'sunder_armor_cast',
-    condition: (context, _actor, target) => {
-      if (!target) return false;
-      const stacks = target.auras.stacksOf(SUNDER_ARMOR.id);
-      if (stacks < SUNDER_ARMOR_MAX_STACKS) return true;
-      return (
-        target.auras.remainingMs(SUNDER_ARMOR.id, context.clock.now()) <
-        BATTLE_SUNDER_REFRESH_WINDOW_MS
-      );
-    },
+    condition: any(
+      targetStacks('below', SUNDER_ARMOR_MAX_STACKS, SUNDER_ARMOR.id),
+      targetTime('below', BATTLE_SUNDER_REFRESH_WINDOW_MS / 1000, SUNDER_ARMOR.id),
+    ),
   },
   // Surplus rage into the next swing, at 75 -- see the constant.
   {
     abilityId: 'heroic_strike',
-    condition: (_context, actor) =>
-      (actor.resources.get('rage')?.current ?? 0) >= BATTLE_HEROIC_STRIKE_RAGE,
+    condition: resource('atLeast', BATTLE_HEROIC_STRIKE_RAGE, 'rage'),
   },
   {
     abilityId: 'rend_cast',
-    condition: (context, _actor, target) =>
-      !!target && target.auras.remainingMs(REND.id, context.clock.now()) <= 0,
+    condition: targetTime('atMost', 0, REND.id),
   },
   // Talent-gated: a warrior without the capstone does not know it.
   { abilityId: 'mortal_strike' },
@@ -967,8 +944,7 @@ export const WARRIOR_TWO_HAND_BATTLE: readonly PriorityEntry[] = [
    */
   {
     abilityId: 'execute',
-    condition: (context) =>
-      remainingMs(context) <= context.plannedDurationMs * EXECUTE_PHASE_FRACTION,
+    condition: fightRemainingFraction('atMost', EXECUTE_PHASE_FRACTION),
   },
   { abilityId: 'spearing_strike' },
   /*
@@ -978,14 +954,12 @@ export const WARRIOR_TWO_HAND_BATTLE: readonly PriorityEntry[] = [
    */
   {
     abilityId: 'slam',
-    condition: (context, actor) => mainHandSwingIn(context, actor) > SLAM_SWING_WINDOW_MS,
+    condition: swingIn('above', SLAM_SWING_WINDOW_MS),
   },
-];
+  ],
+};
 
-export const WARRIOR_TWO_HAND_BATTLE_ROTATION: Rotation = new PriorityRotation(
-  'Warrior (Two-Hander, Battle)',
-  WARRIOR_TWO_HAND_BATTLE,
-);
+export const WARRIOR_TWO_HAND_BATTLE_ROTATION: Rotation = compileRotation(WARRIOR_TWO_HAND_BATTLE);
 
 /**
  * The list a warrior of this combat style and stance uses.

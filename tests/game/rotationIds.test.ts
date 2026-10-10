@@ -77,7 +77,7 @@ describe('every priority list names real abilities', () => {
     const known = OWNER_ABILITIES[list.owner];
 
     it(`${list.name} has no unresolvable id`, () => {
-      const unknown = list.entries.map((e) => e.abilityId).filter((id) => !known.has(id));
+      const unknown = list.list.entries.map((e) => e.abilityId).filter((id) => !known.has(id));
       expect(unknown, `unresolvable in ${list.name}`).toEqual([]);
     });
 
@@ -101,7 +101,7 @@ describe('every priority list names real abilities', () => {
        */
       const unreachable: string[] = [];
       const unconditional = new Set<string>();
-      for (const entry of list.entries) {
+      for (const entry of list.list.entries) {
         if (unconditional.has(entry.abilityId)) unreachable.push(entry.abilityId);
         if (!entry.condition) unconditional.add(entry.abilityId);
       }
@@ -110,7 +110,7 @@ describe('every priority list names real abilities', () => {
 
     it(`${list.name} is not empty`, () => {
       // A list that lost its entries would read as a build with nothing to do.
-      expect(list.entries.length).toBeGreaterThan(0);
+      expect(list.list.entries.length).toBeGreaterThan(0);
     });
   }
 });
@@ -121,7 +121,7 @@ describe('Rend, specifically', () => {
      * Named on its own as well as covered by the sweep above, because this is
      * the one that was wrong and a regression here should say so by name.
      */
-    const rend = WARRIOR_SHIELD_DEFENSIVE.find((entry) => entry.abilityId.startsWith('rend'));
+    const rend = WARRIOR_SHIELD_DEFENSIVE.entries.find((entry) => entry.abilityId.startsWith('rend'));
     expect(rend?.abilityId).toBe('rend_cast');
   });
 });
@@ -161,7 +161,7 @@ describe('the 25 profiles and their lists', () => {
           profile.character.stance,
           profile.talents,
         );
-        expect(rotation?.name).toBe(list.rotationName);
+        expect(rotation?.name).toBe(list.list.name);
       });
     }
   }
@@ -209,9 +209,20 @@ describe('the registry covers every list that exists', () => {
     for (const file of readdirSync(directory)) {
       if (!file.endsWith('.ts')) continue;
       const source = readFileSync(`${directory}/${file}`, 'utf8');
-      for (const match of source.matchAll(
-        /export const ([A-Z_0-9]+): readonly PriorityEntry\[\]/g,
-      )) {
+      /*
+       * `AplList` RATHER THAN `readonly PriorityEntry[]`, which is what a list
+       * is declared as now. The pattern is the structural half of this test and
+       * it is matched against SOURCE TEXT, so it went on finding nothing
+       * quietly when the declaration changed -- the `toBeGreaterThan(20)` below
+       * is what turned that into a failure rather than a vacuously passing
+       * comparison of two empty lists.
+       *
+       * THE FRAGMENTS ARE EXCLUDED BY THE SAME PATTERN. `OPENERS`,
+       * `CORE_STRIKES` and `FILLERS` in the Warrior file are `AplEntry[]` and
+       * are spread INTO lists rather than being lists, so they are correctly
+       * not registered and correctly not matched here.
+       */
+      for (const match of source.matchAll(/export const ([A-Z_0-9]+): AplList/g)) {
         exported.push(match[1]);
       }
     }

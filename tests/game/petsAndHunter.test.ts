@@ -490,7 +490,7 @@ describe("Hunter's Mark", () => {
       HUNTER_LONE_WOLF_RANGED,
       HUNTER_LONE_WOLF_MELEE,
     ]) {
-      expect(list.map((e) => e.abilityId)).toContain('hunters_mark');
+      expect(list.entries.map((e) => e.abilityId)).toContain('hunters_mark');
     }
 
     // Two minutes outlasts the fight, so it is cast once and never refreshed.
@@ -520,7 +520,7 @@ describe('Sniper Shot is kept though it measures as a loss', () => {
      * cooldown gets used, so the entry is live rather than decorative.
      * ------------------------------------------------------------------------
      */
-    expect(HUNTER_LONE_WOLF_RANGED.map((e) => e.abilityId)).toContain('sniper_shot');
+    expect(HUNTER_LONE_WOLF_RANGED.entries.map((e) => e.abilityId)).toContain('sniper_shot');
 
     const batch = batchOf('lw_ranged', 30, 5);
     const sniper = batch.abilities.find((a) => /Sniper/.test(a.abilityName));
@@ -832,7 +832,7 @@ describe('Rapid Fire reaches the melee Hunter too', () => {
       HUNTER_LONE_WOLF_RANGED,
       HUNTER_LONE_WOLF_MELEE,
     ]) {
-      expect(list.map((entry) => entry.abilityId)).toContain('rapid_fire');
+      expect(list.entries.map((entry) => entry.abilityId)).toContain('rapid_fire');
     }
 
     /*
@@ -1020,8 +1020,8 @@ describe('Hawk Melee takes BOTH Lone Wolf and Summon Hawk', () => {
      * day it was written and drift the moment either list changed, which is
      * exactly how four rows of the baseline table went stale.
      */
-    const hawk = HUNTER_HAWK_MELEE.map((e) => e.abilityId);
-    const lw = HUNTER_LONE_WOLF_MELEE.map((e) => e.abilityId);
+    const hawk = HUNTER_HAWK_MELEE.entries.map((e) => e.abilityId);
+    const lw = HUNTER_LONE_WOLF_MELEE.entries.map((e) => e.abilityId);
 
     expect(hawk).toHaveLength(lw.length + 1);
     expect(hawk.filter((id) => id !== 'summon_hawk')).toEqual(lw);
@@ -1036,10 +1036,10 @@ describe('Hawk Melee takes BOTH Lone Wolf and Summon Hawk', () => {
      * throwing away twelve seconds of a hawk each time. The other two lists
      * that press it both gate it the same way.
      */
-    const entry = HUNTER_HAWK_MELEE.find((e) => e.abilityId === 'summon_hawk')!;
+    const entry = HUNTER_HAWK_MELEE.entries.find((e) => e.abilityId === 'summon_hawk')!;
     expect(entry.condition).toBeDefined();
     // And Wing Clip beneath it is still the floor, because this one is gated.
-    expect(HUNTER_HAWK_MELEE[HUNTER_HAWK_MELEE.length - 1].condition).toBeUndefined();
+    expect(HUNTER_HAWK_MELEE.entries[HUNTER_HAWK_MELEE.entries.length - 1].condition).toBeUndefined();
   });
 
   it('summons hawks in a real fight, and they strike', () => {

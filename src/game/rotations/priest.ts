@@ -1,7 +1,7 @@
-import type { PriorityEntry, Rotation, SimulationContext, Combatant } from '../../engine';
-import { PriorityRotation } from '../../engine';
-import { inExecutePhase } from '../combat/executePhase';
+import type { Rotation } from '../../engine';
 import type { TalentAllocation } from '../talents/Talent';
+import type { AplCondition, AplList } from './apl';
+import { any, compileRotation, fightRemainingFraction, not, selfMissing, targetExpired } from './apl';
 
 /**
  * "IF NOT ACTIVE", which is the ruleset owner's wording and is NOT the same as
@@ -21,12 +21,8 @@ import type { TalentAllocation } from '../talents/Talent';
  * readings sit side by side rather than one silently becoming the other.
  * ----------------------------------------------------------------------------
  */
-const expired = (auraId: string) =>
-  (context: SimulationContext, _actor: Combatant, target?: Combatant): boolean =>
-    target !== undefined && target.auras.remainingMs(auraId, context.clock.now()) <= 0;
-
-const withoutAura = (auraId: string) => (_context: SimulationContext, actor: Combatant): boolean =>
-  !actor.auras.has(auraId);
+const expired = targetExpired;
+const withoutAura = selfMissing;
 
 /**
  * Where Shadow Word: Death is HELD, so it comes off cooldown inside the window
@@ -80,9 +76,17 @@ const withoutAura = (auraId: string) => (_context: SimulationContext, actor: Com
 export const EARLY_DEMISE_FRACTION = 0.2;
 export const SHADOW_WORD_DEATH_HOLD_FRACTION = 0.35;
 
-const outsideTheHoldBand = (context: SimulationContext): boolean =>
-  !inExecutePhase(context, SHADOW_WORD_DEATH_HOLD_FRACTION) ||
-  inExecutePhase(context, EARLY_DEMISE_FRACTION);
+/*
+ * "NOT YET INSIDE THE HOLD BAND, OR ALREADY PAST IT."
+ *
+ * `inExecutePhase(context, f)` IS `fightRemaining atMost fraction f` exactly --
+ * it compares the same two numbers the same way -- so the band converts to data
+ * with no helper and no approximation.
+ */
+const outsideTheHoldBand: AplCondition = any(
+  not(fightRemainingFraction('atMost', SHADOW_WORD_DEATH_HOLD_FRACTION)),
+  fightRemainingFraction('atMost', EARLY_DEMISE_FRACTION),
+);
 
 /**
  * SHADOW — the form first, then the two bleeds, then Mind Flay as the filler.
@@ -105,26 +109,30 @@ const outsideTheHoldBand = (context: SimulationContext): boolean =>
  * +37.7 and the gate on it is worth -4.9 -- see `outsideTheHoldBand` above for
  * why the gate costs rather than pays.
  */
-export const PRIEST_SHADOW: readonly PriorityEntry[] = [
-  { abilityId: 'shadowform', condition: withoutAura('shadowform') },
-  { abilityId: 'shadow_word_pain', condition: expired('shadow_word_pain') },
-  { abilityId: 'devouring_plague', condition: expired('devouring_plague') },
-  { abilityId: 'vampiric_embrace', condition: expired('vampiric_embrace') },
-  { abilityId: 'mind_blast' },
+export const PRIEST_SHADOW: AplList = {
+  name: 'Priest (Shadow)',
+  entries: [
+    { abilityId: 'shadowform', condition: withoutAura('shadowform') },
+    { abilityId: 'shadow_word_pain', condition: expired('shadow_word_pain') },
+    { abilityId: 'devouring_plague', condition: expired('devouring_plague') },
+    { abilityId: 'vampiric_embrace', condition: expired('vampiric_embrace') },
+    { abilityId: 'mind_blast' },
   /*
    * ON COOLDOWN, EXCEPT THROUGH THE HOLD BAND. The condition is the only thing
    * gating it -- there is no combo point, no proc and no debuff to wait for --
    * so between 35% and 20% remaining the list simply falls past it to Mind
    * Flay, which is what "held" costs and is less than the cooldown would.
    */
-  { abilityId: 'shadow_word_death', condition: outsideTheHoldBand },
+  {
+    abilityId: 'shadow_word_death',
+    condition: outsideTheHoldBand,
+    note: 'Held out of the band Early Demise wants it in. Worth +37.7; the gate costs -4.9.',
+  },
   { abilityId: 'mind_flay' },
-];
+  ],
+};
 
-export const PRIEST_SHADOW_ROTATION: Rotation = new PriorityRotation(
-  'Priest (Shadow)',
-  PRIEST_SHADOW,
-);
+export const PRIEST_SHADOW_ROTATION: Rotation = compileRotation(PRIEST_SHADOW);
 
 /**
  * Which list a Priest runs.

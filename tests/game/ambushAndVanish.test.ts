@@ -8,6 +8,16 @@ import { STEALTH, CUTTHROAT } from '../../src/game/auras/rogue';
 import { ROGUE_RUPTURE } from '../../src/game/rotations/rogue';
 import { buildSimulation } from '../helpers/buildSimulation';
 import { makeAttacker, makeTarget } from '../helpers/actors';
+import type { AplCondition } from '../../src/game/rotations/apl';
+import { compileCondition } from '../../src/game/rotations/apl';
+
+/*
+ * A condition is DATA now. `compileCondition` turns one back into the closure
+ * the engine runs, which is what these assertions have always been calling --
+ * the step used to be implicit because the list held closures directly.
+ */
+const compiled = (condition: AplCondition | undefined) =>
+  condition ? compileCondition(condition) : undefined;
 
 const rogue = () => createPlayer({ race: 'orc', characterClass: 'rogue' });
 const effectsFor = (id: string) => ROGUE_TALENT_EFFECTS[id] ?? [];
@@ -283,7 +293,7 @@ describe('a Cutthroat window is pooled for, not spent through', () => {
    * ============================================================================
    */
   const conditionFor = (abilityId: string) =>
-    ROGUE_RUPTURE.find((entry) => entry.abilityId === abilityId)?.condition;
+    ROGUE_RUPTURE.entries.find((entry) => entry.abilityId === abilityId)?.condition;
 
   const probe = (energy: number, auras: readonly (typeof STEALTH)[]) => {
     const player = makeAttacker({
@@ -305,12 +315,12 @@ describe('a Cutthroat window is pooled for, not spent through', () => {
   it('refuses Hemorrhage while the pool is short of Ambush', () => {
     const { sim, player, target } = probe(40, [CUTTHROAT]);
     // 40 energy pays for Hemorrhage's 35 and not for Ambush's 60.
-    expect(conditionFor('hemorrhage')?.(sim, player, target)).toBe(false);
+    expect(compiled(conditionFor('hemorrhage'))?.(sim, player, target)).toBe(false);
   });
 
   it('allows Hemorrhage again once the pool can pay for Ambush', () => {
     const { sim, player, target } = probe(60, [CUTTHROAT]);
-    expect(conditionFor('hemorrhage')?.(sim, player, target)).toBe(true);
+    expect(compiled(conditionFor('hemorrhage'))?.(sim, player, target)).toBe(true);
   });
 
   it('does not hold anything when no window is open', () => {
@@ -320,13 +330,13 @@ describe('a Cutthroat window is pooled for, not spent through', () => {
      * would read as a plausible small loss rather than as a bug.
      */
     const { sim, player, target } = probe(40, []);
-    expect(conditionFor('hemorrhage')?.(sim, player, target)).toBe(true);
-    expect(conditionFor('backstab')?.(sim, player, target)).toBe(true);
+    expect(compiled(conditionFor('hemorrhage'))?.(sim, player, target)).toBe(true);
+    expect(compiled(conditionFor('backstab'))?.(sim, player, target)).toBe(true);
   });
 
   it('holds Backstab too, which costs exactly what Ambush does', () => {
     const { sim, player, target } = probe(59, [CUTTHROAT]);
-    expect(conditionFor('backstab')?.(sim, player, target)).toBe(false);
+    expect(compiled(conditionFor('backstab'))?.(sim, player, target)).toBe(false);
   });
 
   it('does not hold for a stealth window, which is never wasted', () => {
@@ -336,7 +346,7 @@ describe('a Cutthroat window is pooled for, not spent through', () => {
      * for a case that does not arise is still a decision somebody has to read.
      */
     const { sim, player, target } = probe(40, [STEALTH]);
-    expect(conditionFor('hemorrhage')?.(sim, player, target)).toBe(true);
+    expect(compiled(conditionFor('hemorrhage'))?.(sim, player, target)).toBe(true);
   });
 
   it('refuses Vanish while Cutthroat is already up', () => {
@@ -349,15 +359,15 @@ describe('a Cutthroat window is pooled for, not spent through', () => {
      * a cost. A later edit could move either of those accidents.
      */
     const open = probe(100, [CUTTHROAT]);
-    expect(conditionFor('vanish')?.(open.sim, open.player, open.target)).toBe(false);
+    expect(compiled(conditionFor('vanish'))?.(open.sim, open.player, open.target)).toBe(false);
 
     const clear = probe(100, []);
-    expect(conditionFor('vanish')?.(clear.sim, clear.player, clear.target)).toBe(true);
+    expect(compiled(conditionFor('vanish'))?.(clear.sim, clear.player, clear.target)).toBe(true);
   });
 });
 
 describe('the Rupture list carries the owner’s stealth cycle', () => {
-  const ids = ROGUE_RUPTURE.map((entry) => entry.abilityId);
+  const ids = ROGUE_RUPTURE.entries.map((entry) => entry.abilityId);
 
   it('has every ability the four sequences name', () => {
     for (const id of ['premeditation', 'ambush', 'vanish', 'preparation']) {
@@ -384,7 +394,7 @@ describe('the Rupture list carries the owner’s stealth cycle', () => {
      * the rule once there were two. An entry that restates half a condition is
      * worse than one that restates none.
      */
-    const entry = ROGUE_RUPTURE.find((e) => e.abilityId === 'ambush');
+    const entry = ROGUE_RUPTURE.entries.find((e) => e.abilityId === 'ambush');
     expect(entry?.condition).toBeUndefined();
   });
 

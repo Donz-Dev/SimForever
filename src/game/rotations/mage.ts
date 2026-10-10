@@ -1,5 +1,17 @@
-import type { PriorityEntry, Rotation, SimulationContext, Combatant } from '../../engine';
-import { PriorityRotation } from '../../engine';
+import type { Rotation } from '../../engine';
+import type { AplList } from './apl';
+import {
+  all,
+  any,
+  compileRotation,
+  hasReaction,
+  resourceFraction,
+  selfMissing,
+  selfStacks,
+  selfTime,
+  targetStacks,
+  targetTime,
+} from './apl';
 import type { TalentAllocation } from '../talents/Talent';
 import { HEATING_UP_MAX_STACKS, IMPROVED_SCORCH_MAX_STACKS } from '../auras/mage';
 
@@ -35,44 +47,32 @@ import { HEATING_UP_MAX_STACKS, IMPROVED_SCORCH_MAX_STACKS } from '../auras/mage
  */
 
 /** "<buff> is not active", on the Mage. */
-const selfExpired = (auraId: string) =>
-  (context: SimulationContext, actor: Combatant): boolean =>
-    actor.auras.remainingMs(auraId, context.clock.now()) <= 0;
+const selfExpired = (auraId: string) => selfTime('atMost', 0, auraId);
 
 /** "<buff> stacks = N", on the Mage. */
-const selfStacksExactly = (auraId: string, count: number) =>
-  (_context: SimulationContext, actor: Combatant): boolean =>
-    actor.auras.stacksOf(auraId) === count;
+const selfStacksExactly = (auraId: string, count: number) => selfStacks('exactly', count, auraId);
 
 /** "<buff> stacks >= N", on the Mage. */
 const selfStacksAtLeast = (auraId: string, minimum: number) =>
-  (_context: SimulationContext, actor: Combatant): boolean =>
-    actor.auras.stacksOf(auraId) >= minimum;
+  selfStacks('atLeast', minimum, auraId);
 
 /** "<buff> stacks > 0", on the Mage. */
 const selfHasStack = (auraId: string) => selfStacksAtLeast(auraId, 1);
 
 /** "<debuff> stacks >= N", on the target. */
 const targetStacksAtLeast = (auraId: string, minimum: number) =>
-  (_context: SimulationContext, _actor: Combatant, target?: Combatant): boolean =>
-    target !== undefined && target.auras.stacksOf(auraId) >= minimum;
+  targetStacks('atLeast', minimum, auraId);
 
 /** "<debuff> duration <= N seconds", on the target. An absent debuff counts. */
 const targetAuraAtMost = (auraId: string, secondsLeft: number) =>
-  (context: SimulationContext, _actor: Combatant, target?: Combatant): boolean =>
-    target !== undefined &&
-    target.auras.remainingMs(auraId, context.clock.now()) <= secondsLeft * 1000;
+  targetTime('atMost', secondsLeft, auraId);
 
 /** "<debuff> duration >= N seconds", on the target. */
 const targetAuraAtLeast = (auraId: string, secondsLeft: number) =>
-  (context: SimulationContext, _actor: Combatant, target?: Combatant): boolean =>
-    target !== undefined &&
-    target.auras.remainingMs(auraId, context.clock.now()) >= secondsLeft * 1000;
+  targetTime('atLeast', secondsLeft, auraId);
 
 /** "<debuff> stacks < N", on the target. */
-const targetStacksBelow = (auraId: string, cap: number) =>
-  (_context: SimulationContext, _actor: Combatant, target?: Combatant): boolean =>
-    target !== undefined && target.auras.stacksOf(auraId) < cap;
+const targetStacksBelow = (auraId: string, cap: number) => targetStacks('below', cap, auraId);
 
 /**
  * "The character actually has <reaction>", which is how a list asks whether a
@@ -91,37 +91,22 @@ const targetStacksBelow = (auraId: string, cap: number) =>
  * not work: Scorch is a trainer spell every Mage owns.
  * ----------------------------------------------------------------------------
  */
-const hasReaction = (reactionId: string) =>
-  (_context: SimulationContext, actor: Combatant): boolean =>
-    actor.reactions.some((reaction) => reaction.id === reactionId);
 
 /** "Mana is at or below N% of maximum." */
 const selfResourceBelowPercent = (resource: 'mana', percent: number) =>
-  (_context: SimulationContext, actor: Combatant): boolean => {
-    const pool = actor.resources.get(resource);
-    if (!pool || pool.maximum <= 0) return false;
-    return (pool.current / pool.maximum) * 100 <= percent;
-  };
+  /*
+   * THE CLOSURE COMPARED A PERCENTAGE AND THE DATA MODEL HOLDS A FRACTION, so
+   * the conversion happens here rather than at every call: `(current/maximum)
+   * * 100 <= percent` is `current/maximum <= percent/100`, which is the same
+   * comparison and the same boundary.
+   */
+  resourceFraction('atMost', percent / 100, resource);
 
 /** "<buff> is not on the Mage at all." */
-const selfLacks = (auraId: string) =>
-  (_context: SimulationContext, actor: Combatant): boolean => !actor.auras.has(auraId);
+const selfLacks = selfMissing;
 
-type Condition = (
-  context: SimulationContext,
-  actor: Combatant,
-  target?: Combatant,
-) => boolean;
 
-const all =
-  (...conditions: readonly Condition[]): Condition =>
-  (context, actor, target) =>
-    conditions.every((condition) => condition(context, actor, target));
-
-const either =
-  (...conditions: readonly Condition[]): Condition =>
-  (context, actor, target) =>
-    conditions.some((condition) => condition(context, actor, target));
+const either = any;
 
 /*
  * ----------------------------------------------------------------------------
@@ -229,7 +214,9 @@ const scorchNeeded = all(
  * COMBUSTION AND FIRE BLAST ON COOLDOWN, both instants that cost nothing but
  * a global cooldown.
  */
-export const MAGE_FIRE: readonly PriorityEntry[] = [
+export const MAGE_FIRE: AplList = {
+  name: 'Mage (Fire)',
+  entries: [
   { abilityId: 'mage_armor', condition: selfExpired('mage_armor') },
   { abilityId: 'evocation', condition: evocationNeeded },
   { abilityId: 'scorch', condition: scorchNeeded },
@@ -253,7 +240,8 @@ export const MAGE_FIRE: readonly PriorityEntry[] = [
     ),
   },
   { abilityId: 'fireball' },
-];
+  ],
+};
 
 /**
  * FROSTFIRE — Frostfire Bolt as the filler, with the same Scorch opener.
@@ -268,7 +256,9 @@ export const MAGE_FIRE: readonly PriorityEntry[] = [
  * instant for 160 mana -- worse per global cooldown than anything above it.
  * Left out deliberately rather than forgotten.
  */
-export const MAGE_FROSTFIRE: readonly PriorityEntry[] = [
+export const MAGE_FROSTFIRE: AplList = {
+  name: 'Mage (Frostfire)',
+  entries: [
   { abilityId: 'mage_armor', condition: selfExpired('mage_armor') },
   { abilityId: 'evocation', condition: evocationNeeded },
   { abilityId: 'scorch', condition: scorchNeeded },
@@ -281,7 +271,8 @@ export const MAGE_FROSTFIRE: readonly PriorityEntry[] = [
    */
   { abilityId: 'ice_lance', condition: selfHasStack('fingers_of_frost') },
   { abilityId: 'frostfire_bolt' },
-];
+  ],
+};
 
 /**
  * ARCANE — Arcane Blast until it is too expensive, Missiles on a proc.
@@ -303,7 +294,9 @@ export const MAGE_FROSTFIRE: readonly PriorityEntry[] = [
  */
 export const ARCANE_BLAST_STACK_LIMIT = 2;
 
-export const MAGE_ARCANE: readonly PriorityEntry[] = [
+export const MAGE_ARCANE: AplList = {
+  name: 'Mage (Arcane)',
+  entries: [
   { abilityId: 'mage_armor', condition: selfExpired('mage_armor') },
   { abilityId: 'evocation', condition: evocationNeeded },
   /*
@@ -356,7 +349,8 @@ export const MAGE_ARCANE: readonly PriorityEntry[] = [
     ),
   },
   { abilityId: 'arcane_blast' },
-];
+  ],
+};
 
 /*
  * PRESENCE OF MIND IS NOT IN THE OWNER'S LIST and is left out rather than kept.
@@ -372,12 +366,9 @@ export const MAGE_ARCANE: readonly PriorityEntry[] = [
  */
 export const FROSTFIRE_FROST_THRESHOLD = 15;
 
-export const MAGE_FIRE_ROTATION: Rotation = new PriorityRotation('Mage (Fire)', MAGE_FIRE);
-export const MAGE_FROSTFIRE_ROTATION: Rotation = new PriorityRotation(
-  'Mage (Frostfire)',
-  MAGE_FROSTFIRE,
-);
-export const MAGE_ARCANE_ROTATION: Rotation = new PriorityRotation('Mage (Arcane)', MAGE_ARCANE);
+export const MAGE_FIRE_ROTATION: Rotation = compileRotation(MAGE_FIRE);
+export const MAGE_FROSTFIRE_ROTATION: Rotation = compileRotation(MAGE_FROSTFIRE);
+export const MAGE_ARCANE_ROTATION: Rotation = compileRotation(MAGE_ARCANE);
 
 /**
  * Which list a Mage runs, from where its points went.

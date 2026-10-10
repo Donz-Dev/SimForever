@@ -475,7 +475,7 @@ describe('Maelstrom Weapon, the capstone that was worth nothing twice over', () 
      * one -- so it stacked to five and sat there, and the talent was worth
      * exactly zero however correct the aura was.
      */
-    expect(SHAMAN_ENHANCEMENT.map((entry) => entry.abilityId)).toContain('lightning_bolt');
+    expect(SHAMAN_ENHANCEMENT.entries.map((entry) => entry.abilityId)).toContain('lightning_bolt');
 
     const batch = batchOf('shaman_enhancement', 60, 5);
     expect(batch.abilities.find((a) => a.abilityName === 'Lightning Bolt')?.uses ?? 0)
@@ -1017,7 +1017,7 @@ describe('Fire Nova, which was blocked on the wrong thing for the whole project'
   });
 
   it('is in the Enhancement list at the bottom, where the owner put it', () => {
-    const ids = SHAMAN_ENHANCEMENT.map((entry) => entry.abilityId);
+    const ids = SHAMAN_ENHANCEMENT.entries.map((entry) => entry.abilityId);
     expect(ids[ids.length - 1]).toBe('fire_nova');
 
     // And it fires, which is the only thing that says the totem gate opens.
@@ -1033,7 +1033,7 @@ describe('Fire Nova, which was blocked on the wrong thing for the whole project'
      * mana on a six-second cycle starves the filler. The floor rule: nothing
      * below an ungated entry can ever be the first castable one.
      */
-    expect(SHAMAN_ELEMENTAL.map((entry) => entry.abilityId)).not.toContain('fire_nova');
+    expect(SHAMAN_ELEMENTAL.entries.map((entry) => entry.abilityId)).not.toContain('fire_nova');
   });
 });
 

@@ -92,7 +92,7 @@ function replay(seeds = 20) {
 
 describe('1. every Clearcasting proc goes on Shred', () => {
   it('puts a Clearcasting-gated Shred above the finisher', () => {
-    const ids = DRUID_CAT.map((entry) => entry.abilityId);
+    const ids = DRUID_CAT.entries.map((entry) => entry.abilityId);
     expect(ids.indexOf('shred')).toBeLessThan(ids.indexOf('rip'));
     // Twice on purpose: gated above, ungated as the filler below.
     expect(ids.filter((id) => id === 'shred')).toHaveLength(2);

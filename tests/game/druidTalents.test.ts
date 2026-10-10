@@ -54,6 +54,16 @@ import { ITEMS_BY_ID } from '../../src/game/items/itemData';
 import { armorFromItems, statsForStyle } from '../../src/game/items/equipment';
 import { MAX_CHARACTER_LEVEL } from '../../src/game/character';
 import { weaponsFor } from '../../src/game/actors/createPlayer';
+import type { AplCondition } from '../../src/game/rotations/apl';
+import { compileCondition } from '../../src/game/rotations/apl';
+
+/*
+ * A condition is DATA now. `compileCondition` turns one back into the closure
+ * the engine runs, which is what these assertions have always been calling --
+ * the step used to be implicit because a list held closures directly.
+ */
+const compiled = (condition: AplCondition | undefined) =>
+  condition ? compileCondition(condition) : undefined;
 
 /*
  * ============================================================================
@@ -1220,9 +1230,9 @@ describe('the Cat list opens with Shifting Power rather than Tiger\'s Fury', () 
      * worth +13.2 DPS.
      * ----------------------------------------------------------------------
      */
-    expect(DRUID_CAT[0].abilityId).toBe('shifting_power');
-    expect(DRUID_CAT[0].condition).toBeDefined();
-    expect(DRUID_CAT.map((entry) => entry.abilityId)).not.toContain('tigers_fury');
+    expect(DRUID_CAT.entries[0].abilityId).toBe('shifting_power');
+    expect(DRUID_CAT.entries[0].condition).toBeDefined();
+    expect(DRUID_CAT.entries.map((entry) => entry.abilityId)).not.toContain('tigers_fury');
   });
 
   it('refuses the cast above fifty energy and allows it at or below', () => {
@@ -1240,7 +1250,7 @@ describe('the Cat list opens with Shifting Power rather than Tiger\'s Fury', () 
     const simulation = buildSimulation([cat, target]);
     simulation.begin();
 
-    const entry = DRUID_CAT[0];
+    const entry = DRUID_CAT.entries[0];
     const energy = cat.resources.require('energy');
 
     for (const [current, expected] of [
@@ -1251,7 +1261,9 @@ describe('the Cat list opens with Shifting Power rather than Tiger\'s Fury', () 
       [0, true],
     ] as const) {
       energy.set(current);
-      expect(entry.condition!(simulation, cat, target), `at ${current} energy`).toBe(expected);
+      expect(compiled(entry.condition)!(simulation, cat, target), `at ${current} energy`).toBe(
+        expected,
+      );
     }
   });
 

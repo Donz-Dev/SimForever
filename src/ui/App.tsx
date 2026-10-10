@@ -16,6 +16,7 @@ import { CharacterSheetPanel } from './panels/CharacterSheetPanel';
 import { CombatLogPanel } from './panels/CombatLogPanel';
 import { EncounterPanel } from './panels/EncounterPanel';
 import { GearPanel } from './panels/GearPanel';
+import { AplPanel } from './panels/AplPanel';
 import { ConsumablesPanel } from './panels/ConsumablesPanel';
 import { RaidBuffsPanel } from './panels/RaidBuffsPanel';
 import { ResultsPanel } from './panels/ResultsPanel';
@@ -250,6 +251,10 @@ export function App() {
               onChange={setTalents}
             />
             <GearPanel profile={profile} onChange={setProfile} />
+            {/* BETWEEN THE GEAR AND THE RAID BUFFS, the owner's placement, and
+                it reads in the right order: what the character is holding, how
+                it fights, then what the raid gives it. */}
+            <AplPanel profile={profile} />
             {/* After the gear, because it is the same kind of decision: what
                 the character walks in carrying. Set once and rarely touched. */}
             <RaidBuffsPanel profile={profile} onChange={setProfile} />
