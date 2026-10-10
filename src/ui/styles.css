@@ -1684,3 +1684,68 @@ button:disabled {
   padding-top: 10px;
   border-top: 1px solid var(--border);
 }
+
+/* --- a condition as a tree --- */
+
+.apl-group {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+/* A nested group is INDENTED AND RULED, because the whole point of it is that
+   its children bind together before the ones outside it -- "a and (b or c)"
+   is a different rotation from "a and b or c", and a flat row of controls
+   cannot show which one is meant. */
+.apl-group:not(.apl-group-root) {
+  border-left: 2px solid var(--accent-wash);
+  padding-left: 10px;
+  margin-left: 6px;
+}
+
+.apl-group-head,
+.apl-adders {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+.apl-group-children {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  align-items: flex-start;
+}
+
+/* The `not` toggle reads as part of the sentence its row makes, so it is a
+   lit button rather than a checkbox -- at this size a checkbox's state is
+   hard to see, and the state is the whole meaning. */
+.apl-not {
+  padding: 2px 5px;
+  font-size: 10px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  opacity: 0.45;
+}
+
+.apl-not-on {
+  opacity: 1;
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
+.apl-add-group {
+  font-size: 11px;
+  padding: 2px 6px;
+}
+
+/* A leaf with no controls: shown, negatable, removable, not rewritable. */
+.apl-clause-fixed {
+  gap: 6px;
+}
+
+.apl-unit {
+  font-size: 11px;
+  color: var(--text-muted);
+}

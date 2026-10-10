@@ -172,12 +172,24 @@ DPS figure.
   Arcane Missiles and the Warlock's Shadow Bolt are each in their list twice,
   gated above and ungated below.
 
-A condition is edited as a **flat list of clauses**, which is what nearly every
-stock condition is. `any`, `not` and the four builtins decompose to nothing, so
-the panel shows them as a sentence and says they are not editable here — an
-editor that silently simplified the Rogue's `not(poolingForAmbush)` into
-something it could draw would change the rotation with nothing on screen to say
-so.
+A condition is edited as a **tree**: a group that matches `all of` or `any of`,
+holding clauses and nested groups, each with a `not` toggle.
+
+It was a flat list of ANDed clauses at first, and that **locked 51 of the 132
+stock conditions** — one `not` anywhere, or one `any`, made the whole condition
+read-only. The Rogue's pooling gates, the Paladin's entire seal twist, the
+Mage's Scorch and the Priest's hold band could be read and not touched.
+
+The tree has a second, larger benefit: **a leaf the panel cannot draw no longer
+poisons its whole condition.** A builtin, a swing-timer read, `hasReaction` or
+`castsInstantly` becomes one `fixed` row — shown as its sentence, negatable,
+removable, not rewritable — inside a tree that is otherwise fully editable. 22
+such leaves remain across 20 conditions; nothing is locked as a whole.
+
+`not` is a **flag on a node** rather than a node of its own, because that is
+what a checkbox is and because `not(not(x))` is not a thing any list writes. A
+double negation that did arrive is kept whole as a fixed leaf rather than
+collapsed, so it still round-trips exactly.
 
 **Buffs and debuffs are chosen by NAME from a dropdown**, never typed.
 `auras/auraCatalog.ts` derives what a class can be asked about from three
@@ -212,6 +224,9 @@ Weapon entry into a reading of the clock.
 
 ## What is not here yet
 
-Nothing in the editor builds an `any`, a `not`, or a nested condition, and
-nothing edits a builtin. All four are preserved, shown and runnable; they just
-have to be written in TypeScript.
+Five condition kinds have no controls and stay `fixed`: the four builtins,
+`swingIn`, `swungWithin`, `hasReaction` and `castsInstantly`. Each is genuinely
+class machinery rather than a rule somebody would write in a panel — "rage minus
+the reserve held for Mortal Strike while Mortal Strike is off cooldown" does not
+belong in a dropdown. They are preserved, shown, negatable, removable and
+runnable; they just have to be written in TypeScript.
