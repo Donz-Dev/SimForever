@@ -185,10 +185,52 @@ describe('the controls are on the screen', () => {
     const markup = renderPanel(PROFILE_PRESETS[0].build(), true);
     expect(markup).toContain('>Save</button>');
     expect(markup).toContain('>Change</button>');
-    expect(markup.indexOf('>Save</button>')).toBeLessThan(markup.indexOf('>Change</button>'));
   });
 
   it('the creation screen does not offer Save', () => {
     expect(renderPanel(createDefaultProfile(), false)).not.toContain('>Save</button>');
+  });
+
+  /*
+   * LOAD IS ON BOTH SCREENS, and the confirmed one is what this pins. It was
+   * creation-screen-only at first, which made `Change` the only route to it --
+   * and Change CLEARS THE TALENT ALLOCATION, so cancelling the file dialog
+   * afterwards cost somebody their build. The second entry point is the fix,
+   * and a render test is the only thing that would notice it going again.
+   */
+  it('the confirmed character offers Load too, with an input to open', () => {
+    const markup = renderPanel(PROFILE_PRESETS[0].build(), true);
+    expect(markup).toContain('>Load</button>');
+    expect(markup).toContain('type="file"');
+    expect(markup).toContain('accept="application/json,.json"');
+  });
+
+  /*
+   * THE DESTRUCTIVE BUTTON IS LAST, on both screens that have one. Change
+   * clears the talents, so it sits to the right of the two buttons that
+   * preserve a build rather than between them.
+   */
+  it('puts Change after the buttons that preserve the build', () => {
+    const markup = renderPanel(PROFILE_PRESETS[0].build(), true);
+    const change = markup.indexOf('>Change</button>');
+    expect(markup.indexOf('>Save</button>')).toBeLessThan(change);
+    expect(markup.indexOf('>Load</button>')).toBeLessThan(change);
+  });
+
+  /*
+   * EXACTLY ONE FILE INPUT ON EITHER SCREEN. Both screens need one and only
+   * one is mounted at a time, so the element is built once and passed to
+   * whichever renders -- two copies would be two things to keep in step, and
+   * the half that drifted would be the one nobody pressed.
+   */
+  it.each([
+    ['the creation screen', false],
+    ['the confirmed summary', true],
+  ] as const)('%s has exactly one file input', (_where, confirmed) => {
+    const markup = renderPanel(
+      confirmed ? PROFILE_PRESETS[0].build() : createDefaultProfile(),
+      confirmed,
+    );
+    expect(markup.match(/type="file"/g)?.length).toBe(1);
   });
 });

@@ -255,8 +255,8 @@ the paste-a-profile half is still parked.
 
 | | where | what it does |
 | --- | --- | --- |
-| **Save** | the CONFIRMED summary line, beside Change | writes `serializeProfile` as `<name>-<race>-<class>.json` |
-| **Load** | the creation panel, beside Import | opens the file dialog, `parseProfile`, and confirms the character |
+| **Save** | the CONFIRMED summary line | writes `serializeProfile` as `<name>-<race>-<class>.json` |
+| **Load** | the creation panel AND the summary line | opens the file dialog, `parseProfile`, and confirms the character |
 | **Import** | the creation panel | nothing, still |
 
 **THE FILE IS THE PROFILE'S OWN JSON AND THAT IS THE WHOLE DESIGN DECISION.**
@@ -272,15 +272,32 @@ drifted.
 **SAVE IS ON FLOW TWO BECAUSE FLOW ONE HAS NO CHARACTER TO SAVE.** The creation
 screen holds five fields; the talents, the gear, the raid buffs, the
 consumables and the encounter are all chosen afterwards and all of them are in
-the file. It sits to the LEFT of Change, because Change CLEARS THE TALENT
-ALLOCATION -- putting the button that discards a build beside the one that
-writes it down is worth getting the order right.
+the file.
 
-**LOAD IS ON FLOW ONE ONLY, which is the owner's call** against the alternative
-of putting it on both. The consequence to know: reaching it from a confirmed
-character means pressing Change first, and that clears the talents. Harmless
-when a file is then loaded, because a load replaces the whole profile -- and not
-harmless if the file dialog is then cancelled.
+**LOAD IS ON BOTH, AND THAT IS A CHANGE OF MIND WORTH RECORDING.** It was
+flow-one-only first, on the owner's call -- which left `Change` as the only
+route to it from a confirmed character, and **Change CLEARS THE TALENT
+ALLOCATION**. That is harmless when a file is then loaded, because a load
+replaces the whole profile, and it costs somebody their build the moment they
+cancel the file dialog instead. The owner reversed it once the trap was named:
+**a second entry point is cheaper than a trap.**
+
+**THE ORDER IS SAVE, LOAD, CHANGE**, and the rule behind it is that the
+destructive button goes last -- the two that preserve a build sit to the left of
+the one that discards it. `profileFile.test.ts` pins that RELATION rather than
+the exact positions, so adding a fourth button does not fail it for no reason.
+
+**ONE FILE INPUT, BUILT ONCE AND PASSED TO WHICHEVER SCREEN IS MOUNTED.** Both
+need one and only one renders at a time, so `CharacterPanel` builds the element
+and the issue list and hands them down. Writing the input out in both branches
+would be two things to keep in step, and **the half that drifted would be the
+one nobody pressed** -- there is a test that each screen has exactly one.
+
+**AND A FAILED LOAD IS CLEARED WHEN THE SCREEN CHANGES.** The panel stays
+mounted across the confirm/edit boundary, so an error raised on the creation
+screen would otherwise still be sitting under the summary line afterwards -- a
+message about a file, attached to a character that has nothing to do with it.
+Both Confirm and Change go through `clearingIssues`.
 
 ### Three things that were not obvious
 

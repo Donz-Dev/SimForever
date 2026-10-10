@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react';
-import type { ChangeEvent } from 'react';
+import type { ChangeEvent, ReactNode } from 'react';
 import type { CharacterProfile, ValidationIssue } from '../../profiles';
 import { downloadProfile, readProfileFile } from '../profileFile';
 import type { CharacterSelection, CombatStyleId } from '../../game/character';
@@ -195,6 +195,59 @@ export function CharacterPanel({
     });
   };
 
+  /*
+   * ONE CHOOSER AND ONE ISSUE LIST, BUILT HERE AND USED BY BOTH SCREENS.
+   *
+   * Load is on the creation panel AND on the confirmed summary, so the pieces
+   * behind it are needed twice -- and only ONE of the two screens is ever
+   * mounted, so this is a single element reaching whichever is. Writing the
+   * input out in both branches would be two things to keep in step, and the
+   * half that drifted would be the one nobody pressed.
+   *
+   * ACCEPTS JSON AND ALSO ANYTHING ELSE, because `accept` is a FILTER on the
+   * dialog rather than a rule -- every browser offers "All files" beside it,
+   * and a profile renamed `.txt` is still a profile. What decides whether a
+   * file loads is `parseProfile`, which is the same answer a paste would get.
+   */
+  const fileChooser = (
+    <input
+      ref={fileInput}
+      type="file"
+      accept="application/json,.json"
+      className="visually-hidden"
+      onChange={(event) => void handleFile(event)}
+    />
+  );
+
+  /*
+   * WHY A FILE DID NOT LOAD, IN FULL. `validateProfile` collects every problem
+   * rather than stopping at the first, precisely so somebody repairing a
+   * hand-edited build sees the whole list at once -- showing one at a time
+   * would waste that.
+   */
+  const issueList =
+    issues.length > 0 ? (
+      <ul className="issues">
+        {issues.map((issue) => (
+          <li key={`${issue.path}:${issue.message}`}>
+            {issue.path ? `${issue.path}: ${issue.message}` : issue.message}
+          </li>
+        ))}
+      </ul>
+    ) : null;
+
+  /*
+   * A FAILED LOAD IS NEWS ABOUT A FILE, AND IT STOPS BEING NEWS WHEN THE SCREEN
+   * CHANGES. This panel stays mounted across the confirm/edit boundary, so an
+   * error raised on the creation screen would otherwise still be sitting under
+   * the summary line after confirming a character that has nothing to do with
+   * it -- an error message about a character you are no longer looking at.
+   */
+  const clearingIssues = (then: () => void) => () => {
+    setIssues([]);
+    then();
+  };
+
   // Once confirmed the whole block collapses to a single line. Editing is an
   // explicit action, so a stray click cannot silently rebuild the character
   // underneath results that were run against the old one.
@@ -203,8 +256,11 @@ export function CharacterPanel({
       <ConfirmedCharacter
         profile={profile}
         style={style}
-        onEdit={onEdit}
+        onEdit={clearingIssues(onEdit)}
         onSave={() => downloadProfile(profile)}
+        onLoad={() => fileInput.current?.click()}
+        fileChooser={fileChooser}
+        issues={issueList}
       />
     );
   }
@@ -229,20 +285,7 @@ export function CharacterPanel({
         </>
       }
     >
-      {/*
-        * ACCEPTS JSON AND ALSO ANYTHING ELSE, because `accept` is a FILTER on
-        * the dialog rather than a rule -- every browser offers "All files"
-        * beside it, and a profile renamed `.txt` is still a profile. What
-        * decides whether a file loads is `parseProfile`, which is the same
-        * answer a paste would get.
-        */}
-      <input
-        ref={fileInput}
-        type="file"
-        accept="application/json,.json"
-        className="visually-hidden"
-        onChange={(event) => void handleFile(event)}
-      />
+      {fileChooser}
       {/*
         * FIRST, above the name, because it is the fastest way past all of it.
         * Someone who wants a Protection warrior wants five fields, a tree and
@@ -325,24 +368,11 @@ export function CharacterPanel({
       ) : null}
 
       {/*
-        * WHY A FILE DID NOT LOAD, IN FULL. `validateProfile` collects every
-        * problem rather than stopping at the first, precisely so somebody
-        * repairing a hand-edited build sees the whole list at once -- showing
-        * one at a time would waste that.
-        *
         * ABOVE THE CONFIRM BUTTON AND BELOW THE FIELDS, because a failed load
         * leaves the character exactly as it was: the panel is still usable,
         * and this is a message about the file rather than about the character.
         */}
-      {issues.length > 0 ? (
-        <ul className="issues">
-          {issues.map((issue) => (
-            <li key={`${issue.path}:${issue.message}`}>
-              {issue.path ? `${issue.path}: ${issue.message}` : issue.message}
-            </li>
-          ))}
-        </ul>
-      ) : null}
+      {issueList}
 
       {abilityCount === 0 ? (
         <p className="muted warn">
@@ -351,7 +381,12 @@ export function CharacterPanel({
         </p>
       ) : null}
 
-      <button type="button" className="confirm" onClick={onConfirm} disabled={!named}>
+      <button
+        type="button"
+        className="confirm"
+        onClick={clearingIssues(onConfirm)}
+        disabled={!named}
+      >
         {named ? 'Confirm character' : 'Name your character'}
       </button>
     </Panel>
@@ -369,11 +404,19 @@ function ConfirmedCharacter({
   style,
   onEdit,
   onSave,
+  onLoad,
+  fileChooser,
+  issues,
 }: {
   readonly profile: CharacterProfile;
   readonly style: CombatStyleId;
   readonly onEdit: () => void;
   readonly onSave: () => void;
+  readonly onLoad: () => void;
+  /** The one hidden file input, built by the panel. See `fileChooser` there. */
+  readonly fileChooser: ReactNode;
+  /** Why a file did not load, when one did not. Built by the panel too. */
+  readonly issues: ReactNode;
 }) {
   const race = getRace(profile.character.race);
   const classDefinition = getClass(profile.character.characterClass);
@@ -406,20 +449,39 @@ function ConfirmedCharacter({
           * consumables and the encounter are all chosen after it, and every
           * one of them is in the file.
           *
-          * SAVE BEFORE CHANGE, in that order, because `Change` CLEARS THE
-          * TALENT ALLOCATION. Putting the button that discards a build to the
-          * right of the one that writes it down is the cheapest thing that
-          * makes the pair read correctly.
+          * LOAD IS HERE *AS WELL AS* ON THE CREATION SCREEN, which is a change
+          * of mind and worth saying so. It was creation-screen-only first,
+          * which made `Change` the only route to it -- and Change CLEARS THE
+          * TALENT ALLOCATION. That is harmless when a file is then loaded,
+          * because a load replaces the whole profile, and it costs somebody
+          * their build the moment they cancel the file dialog instead. A
+          * second entry point is cheaper than a trap.
+          *
+          * SAVE, LOAD, THEN CHANGE, in that order, because Change is the
+          * destructive one. Putting the button that discards a build to the
+          * right of the two that preserve it is the cheapest thing that makes
+          * the row read correctly.
           */}
         <div className="character-summary-actions">
           <button type="button" onClick={onSave}>
             Save
+          </button>
+          <button type="button" onClick={onLoad}>
+            Load
           </button>
           <button type="button" onClick={onEdit}>
             Change
           </button>
         </div>
       </div>
+      {/*
+        * INSIDE THE SECTION AND BELOW THE ROW, so a file that would not load
+        * says why against the character it failed to replace. The summary is
+        * one line and stays one line; this appears only when there is
+        * something to say.
+        */}
+      {issues}
+      {fileChooser}
     </section>
   );
 }
