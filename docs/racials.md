@@ -222,6 +222,41 @@ extra procs are worth about 187 damage a fight on SM/DS, roughly +3 DPS, against
 a 300-fight interval of ±3.3. All 25 profiles measured inside their intervals
 and twenty of them at exactly 0.0.
 
+### And it was never only the Warlock
+
+**The fix was measured on SM/DS and tested on the three Warlock DoTs that
+exposed it — which is a check derived from what the project already uses, and
+cannot find what it does not use yet.** Asked whether other DoTs were left
+behind, a sweep of every ability every Undead-legal class can cast named **six**
+against the pre-fix code:
+
+```
+priest/shadow_word_pain      warrior/rend_cast
+priest/devouring_plague      warlock/corruption
+rogue/rupture                warlock/bane_of_agony
+```
+
+**Not one of the first four is reached by a profile.** There is no Undead
+Warrior, Priest or Paladin preset at all, and the Undead Rogues take Rupture but
+it was never what moved the figure. So the only build that could have exposed
+this was the one that did.
+
+`racials.test.ts` now walks the ability book of all six Undead-legal classes,
+casts every ability once with the roll **forced** to win, and asserts that
+nothing damaging takes no roll. Forcing is what makes one cast decisive: the
+first version of the sweep drove two hundred casts an ability and was useless
+twice over — the caster's auto-attacks procced too, so rows that never cast at
+all reported a dozen procs, and an ability on a three-minute cooldown got one
+cast, where zero procs at 10% means nothing. **Devouring Plague read as a gap on
+a sample of one.**
+
+**Eight abilities the harness cannot reach are pinned rather than skipped** —
+Judgement, Hammer of Wrath, Backstab, Ambush, Overpower, Revenge, Execute and
+Charge each need fight state it cannot fabricate. Every one deals direct damage
+and goes through the half that was never broken. They are listed by name because
+"could not drive it" and "takes no roll" are the two answers this whole check
+exists to keep apart, and a ninth joining them is a shrinking sample.
+
 **The two exceptions need two different mechanisms, which is the finding.**
 Arcane Missiles is a **channel**, and a channel's ticks are not periodic — so
 each missile is already an ordinary non-periodic damage event and what the

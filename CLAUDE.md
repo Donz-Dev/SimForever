@@ -3367,6 +3367,27 @@ EVERY ONE OF THEM**, and a single exception is the finding rather than a footnot
 It is the same failure as a reason that describes a working half: a true,
 specific, written-down statement that nobody treats as a question.
 
+**AND A FIX FOUND ON ONE PROFILE IS TESTED ON ONE PROFILE'S ABILITIES, WHICH IS
+THE COVERAGE SHAPE AGAIN.** Touch of the Grave's DoT bug was found on the SM/DS
+Warlock and fixed, and the first tests covered the three WARLOCK DoTs that
+exposed it. Asked whether others were left behind, a sweep of every ability
+every Undead-legal class can cast named **six** against the old code -- Shadow
+Word: Pain, Devouring Plague, Rupture and Rend as well. **NOT ONE OF THOSE FOUR
+IS REACHED BY A PROFILE**: there is no Undead Warrior, Priest or Paladin preset
+at all. **So the build that exposes a bug is not the measure of the bug**, and
+the check that closes it walks the BOOK rather than the profiles.
+**FORCE THE ROLL RATHER THAN SAMPLING IT, so one cast is decisive.** The first
+version of that sweep drove two hundred casts an ability and was useless twice
+over: the caster's AUTO-ATTACKS procced too, so rows that never cast at all
+reported a dozen procs, and an ability on a three minute cooldown got one cast,
+where zero procs at 10% means nothing -- Devouring Plague read as a gap on a
+sample of one. `rollChance` forced true, auto-attacks off, and a hundred points
+of hit so the proc's own table cannot miss.
+**AND PIN WHAT THE HARNESS CANNOT REACH.** Eight abilities need fight state it
+cannot fabricate -- a seal up, the execute phase, a dodge, a block, stealth, the
+opening instant -- and they are listed BY NAME, because "could not drive it" and
+"takes no roll" are the two answers such a check exists to keep apart.
+
 **AND A PROC'S RATE NEEDS A DENOMINATOR, OR HALF OF IT CAN GO MISSING IN
 SILENCE.** Every assertion about Touch of the Grave was about an ability that
 deals direct damage, so every one passed while three pure DoTs took no roll at

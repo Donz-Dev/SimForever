@@ -65,6 +65,41 @@ An EXCLUSION list is what the owner's wording invites -- "abilities which do not
 have a damage component LIKE demoralizing shout" -- and fails the generous way,
 which is the dangerous one.
 
+## AND IT WAS NEVER ONLY THE WARLOCK
+
+**THE FIX WAS MEASURED ON SM/DS AND TESTED ON THE THREE WARLOCK DoTs THAT
+EXPOSED IT**, which is a check derived from what the project already USES and
+cannot find what it does not use yet. The owner asked whether other DoTs were
+left behind. A sweep of every ability every Undead-legal class can cast named
+**SIX** against the pre-fix code:
+
+```
+priest/shadow_word_pain      warrior/rend_cast
+priest/devouring_plague      warlock/corruption
+rogue/rupture                warlock/bane_of_agony
+```
+
+**NOT ONE OF THE FIRST FOUR IS REACHED BY A PROFILE.** There is no Undead
+Warrior, Priest or Paladin preset at all, and the Undead Rogues take Rupture but
+it was never what moved the figure. **The build that exposes a bug is not the
+measure of the bug.**
+
+`racials.test.ts` walks the ability book of all six Undead-legal classes now,
+casts every ability once with the roll FORCED to win, and asserts nothing
+damaging takes no roll. **Forcing is what makes one cast decisive.** The first
+version of that sweep drove two hundred casts an ability and was useless twice
+over: the caster's AUTO-ATTACKS procced too, so rows that never cast at all
+reported a dozen procs -- and an ability on a three minute cooldown got one
+cast, where zero procs at 10% means nothing. **Devouring Plague read as a GAP on
+a sample of one.**
+
+**EIGHT ABILITIES THE HARNESS CANNOT REACH ARE PINNED BY NAME** -- Judgement,
+Hammer of Wrath, Backstab, Ambush, Overpower, Revenge, Execute and Charge, each
+needing fight state it cannot fabricate. Every one deals direct damage and goes
+through the half that was never broken. Listed rather than skipped, because
+"could not drive it" and "takes no roll" are the two answers the whole check
+exists to keep apart.
+
 ## And the suite was green the whole time
 
 **EVERY ASSERTION ABOUT THIS PROC WAS ABOUT AN ABILITY THAT DEALS DIRECT

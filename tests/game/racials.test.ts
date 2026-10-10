@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import type { Combatant } from '../../src/engine';
+import type { Ability, Combatant, RNG } from '../../src/engine';
 import {
   RATING_PER_PERCENT,
   Simulation,
@@ -10,6 +10,7 @@ import {
   resolveCast,
   seconds,
 } from '../../src/engine';
+import type { ClassId } from '../../src/game/character';
 import {
   RACE_IDS,
   RACES,
@@ -34,6 +35,8 @@ import {
   TOUCH_OF_THE_GRAVE_POISON_EXCLUSIONS,
   touchOfTheGraveMayProc,
 } from '../../src/game/racials/reactions';
+import { WARRIOR_STANCES } from '../../src/game/auras/warrior';
+import { MAX_COMBO_POINTS } from '../../src/game/combat/comboPoints';
 import { ALL_PRIORITY_LISTS } from '../../src/game/rotations/allLists';
 import {
   RACIAL_COOLDOWNS,
@@ -1563,3 +1566,248 @@ function driveCasts(
   ).length;
   return { procs, casts };
 }
+
+/*
+ * ============================================================================
+ * EVERY DAMAGING ABILITY AN UNDEAD CAN CAST, AND WHETHER IT ROLLS.
+ *
+ * THIS IS THE COVERAGE SHAPE, AND IT IS WHAT LET THE DoT BUG THROUGH. The proc
+ * was found at half its rate on the SM/DS Warlock, fixed, and tested on the
+ * three Warlock DoTs that exposed it -- a check derived from what the project
+ * already USES, which cannot find what it does not use yet. Rend, Rupture,
+ * Devouring Plague and Shadow Word: Pain are DoTs on three other Undead-legal
+ * classes, and NO PROFILE IS AN UNDEAD WARRIOR, PRIEST OR PALADIN AT ALL.
+ *
+ * So this walks the ability book of every class an Undead may be, casts each
+ * ability once, and asks one question: did a drain land.
+ *
+ * FORCED RATHER THAN SAMPLED, WHICH IS WHAT MAKES ONE CAST ENOUGH. The first
+ * version of this drove two hundred casts an ability and counted procs, and was
+ * useless twice over: the caster's AUTO-ATTACKS procced too, so rows that never
+ * cast at all reported a dozen procs -- and an ability on a three minute
+ * cooldown got one cast, where zero procs at 10% means nothing. Devouring
+ * Plague read as a GAP on a sample of one.
+ *
+ * "COULD NOT DRIVE IT" AND "TAKES NO ROLL" MUST NOT LOOK ALIKE, which is the
+ * whole lesson, so the harness reports the refusal reason and the assertion
+ * below pins how many abilities are unreachable rather than passing over them.
+ * ============================================================================
+ */
+
+/** An RNG that wins every chance, so one cast settles the question. */
+function alwaysWins(inner: RNG): RNG {
+  return {
+    next: () => inner.next(),
+    nextInt: (min, max) => inner.nextInt(min, max),
+    nextFloat: (min, max) => inner.nextFloat(min, max),
+    nextDuration: (min, max) => inner.nextDuration(min, max),
+    pick: (items) => inner.pick(items),
+    rollChance: () => true,
+  };
+}
+
+interface CoverageRow {
+  readonly characterClass: ClassId;
+  readonly ability: string;
+  readonly cast: boolean;
+  readonly refused?: string;
+  readonly direct: number;
+  readonly appliedDot: boolean;
+  readonly rolled: boolean;
+}
+
+/**
+ * A Warrior's three stances, tried in turn until one lets the ability cast.
+ *
+ * Six abilities are unreachable with a single stance forced -- Whirlwind,
+ * Intercept, Recklessness and Berserker Rage want Berserker; Shield Wall and
+ * Shield Block want Defensive; Rend and Thunder Clap want Battle.
+ */
+function coverageFor(characterClass: ClassId, ability: Ability): CoverageRow {
+  if (characterClass !== 'warrior') return attemptCast(characterClass, ability, undefined);
+  let last = attemptCast(characterClass, ability, 'battle_stance');
+  for (const stance of ['berserker_stance', 'defensive_stance'] as const) {
+    if (last.cast) return last;
+    last = attemptCast(characterClass, ability, stance);
+  }
+  return last;
+}
+
+function attemptCast(
+  characterClass: ClassId,
+  ability: Ability,
+  stanceId: string | undefined,
+): CoverageRow {
+  const player = createPlayer({
+    race: 'undead',
+    characterClass,
+    /*
+     * A HUNDRED POINTS OF HIT, so the drain cannot miss its own spell-table
+     * roll and turn a working ability into a failure. The table draws from
+     * `next`, not `rollChance`, so forcing the chance does not cover it.
+     */
+    bonusStats: { hitChance: 100 },
+    resourceMaximums: { mana: 10_000_000, rage: 1_000, energy: 1_000 },
+  });
+  // NO ROTATION and NO SWINGING: both act on their own and proc, and a proc
+  // from a swing reads as this ability's.
+  (player as { rotation?: unknown }).rotation = undefined;
+  (player as { autoAttack: string }).autoAttack = 'none';
+
+  const target = makeTarget({ maxHealth: 1_000_000_000 });
+  const recorder = new TelemetryRecorder();
+  const simulation = new Simulation(
+    { durationMs: seconds(120), seed: 7, createCombatants: () => [player, target] },
+    recorder,
+  );
+  (simulation as { rng: RNG }).rng = alwaysWins(simulation.rng);
+  simulation.begin();
+  // Past the opening instant and any opening global cooldown.
+  simulation.advanceTo(seconds(10));
+  prepareCaster(simulation, player, characterClass, stanceId);
+
+  const refused = simulation.castRejection(player, ability, target);
+  const cast = simulation.cast(player, ability, target).ok;
+  // Five seconds clears the longest cast time here.
+  simulation.advanceTo(seconds(15));
+
+  /*
+   * THE DoT IS LOOKED FOR HERE AND NOT AT THE END, which the first version got
+   * wrong in the other direction: checking at thirty seconds had Shadow Word:
+   * Pain, Rupture and Corruption all reading as applying nothing, because their
+   * DoT had already EXPIRED.
+   */
+  let appliedDot = false;
+  for (const aura of target.auras.activeIterable) {
+    if (aura.sourceId !== player.id) continue;
+    if (aura.definition.periodic === undefined) continue;
+    appliedDot = true;
+  }
+
+  simulation.advanceTo(seconds(40));
+
+  let direct = 0;
+  let rolled = false;
+  for (const event of recorder.all) {
+    if (event.type !== 'damage') continue;
+    if (event.abilityId === TOUCH_OF_THE_GRAVE_ABILITY_ID) rolled = true;
+    else if (event.abilityId === ability.id && !event.periodic) direct += 1;
+  }
+
+  return {
+    characterClass,
+    ability: ability.id,
+    cast,
+    ...(refused ? { refused: String(refused) } : {}),
+    direct,
+    appliedDot,
+    rolled,
+  };
+}
+
+/** Everything an ability's own `canCast` might want, granted up front. */
+function prepareCaster(
+  simulation: Simulation,
+  player: Combatant,
+  characterClass: ClassId,
+  stanceId: string | undefined,
+): void {
+  player.health.gain(player.health.maximum);
+  for (const type of ['rage', 'energy'] as const) player.resources.get(type)?.gain(1000);
+  // A finisher needs points AND the target they were built on.
+  const combo = player.resources.get('comboPoints');
+  if (combo) {
+    combo.gain(MAX_COMBO_POINTS);
+    (player as { comboPointTargetId?: string }).comboPointTargetId = 'target';
+  }
+  // Mana, with room to spare so Life Tap is castable too.
+  const mana = player.resources.get('mana');
+  if (mana) mana.spend(mana.current / 2);
+  if (characterClass === 'warrior' && stanceId !== undefined) {
+    const wanted = WARRIOR_STANCES.find((stance) => stance.id === stanceId)!;
+    for (const stance of WARRIOR_STANCES) {
+      if (stance.id !== wanted.id) player.auras.remove(simulation, stance.id);
+    }
+    simulation.applyAura(player, wanted, player.id);
+  }
+}
+
+describe('every damaging ability an Undead can cast takes a roll', () => {
+  const UNDEAD_CLASSES = RACES.find((race) => race.id === 'undead')!.classes;
+  const rows: CoverageRow[] = [];
+  for (const characterClass of UNDEAD_CLASSES) {
+    for (const ability of createPlayer({ race: 'undead', characterClass }).abilities.all) {
+      rows.push(coverageFor(characterClass, ability));
+    }
+  }
+
+  it('leaves no damaging ability without one', () => {
+    /*
+     * FAILS NAMING THE ABILITY AND THE CLASS, which is `auraCatalog.test.ts`'s
+     * rule: a structural check that says only "something is wrong" sends
+     * somebody hunting.
+     */
+    const gaps = rows
+      .filter((row) => row.cast && (row.direct > 0 || row.appliedDot) && !row.rolled)
+      .map((row) => `${row.characterClass}/${row.ability}`);
+    expect(gaps).toEqual([]);
+  });
+
+  it('covers the four DoTs no PROFILE reaches, by name', () => {
+    /*
+     * ========================================================================
+     * THE OWNER ASKED FOR THESE FOUR BY NAME, and the general assertion above
+     * would pass if any of them quietly stopped being castable from this
+     * harness. Named here so that a rename, a stance change or a new cost is a
+     * failure rather than a silent drop out of the sample -- which is this
+     * project's commonest way of losing coverage.
+     *
+     * NOT ONE OF THEM IS REACHED BY A PROFILE: there is no Undead Warrior,
+     * Priest or Paladin preset, and the Undead Rogue builds that exist do take
+     * Rupture but it was never the thing that moved.
+     * ========================================================================
+     */
+    for (const [characterClass, abilityId] of [
+      ['warrior', 'rend_cast'],
+      ['rogue', 'rupture'],
+      ['priest', 'devouring_plague'],
+      ['priest', 'shadow_word_pain'],
+    ] as const) {
+      const row = rows.find(
+        (entry) => entry.characterClass === characterClass && entry.ability === abilityId,
+      );
+      expect(row, `${characterClass}/${abilityId}`).toBeDefined();
+      expect(row!.cast, `${characterClass}/${abilityId} was not castable`).toBe(true);
+      expect(row!.appliedDot, `${characterClass}/${abilityId} applied no DoT`).toBe(true);
+      expect(row!.rolled, `${characterClass}/${abilityId} took no roll`).toBe(true);
+    }
+  });
+
+  it('pins what the harness cannot reach, so a silent drop is visible', () => {
+    /*
+     * EIGHT ABILITIES NEED FIGHT STATE THIS HARNESS CANNOT FABRICATE -- a seal
+     * up, the execute phase, a dodge to answer, a block to answer, stealth, or
+     * the one instant at the pull. Every one of them deals DIRECT damage and
+     * goes through the damage half, which is the route that was never broken.
+     *
+     * PINNED RATHER THAN IGNORED, because "could not drive it" and "takes no
+     * roll" are the two answers this whole file exists to keep apart: a ninth
+     * ability joining this list is a shrinking sample, and the first version of
+     * this check would have reported that as a pass.
+     */
+    const unreachable = rows
+      .filter((row) => !row.cast)
+      .map((row) => `${row.characterClass}/${row.ability}`)
+      .sort();
+    expect(unreachable).toEqual([
+      'paladin/hammer_of_wrath',
+      'paladin/judgement',
+      'rogue/ambush',
+      'rogue/backstab',
+      'warrior/charge',
+      'warrior/execute',
+      'warrior/overpower',
+      'warrior/revenge',
+    ]);
+  });
+});
