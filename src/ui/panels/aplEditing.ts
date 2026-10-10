@@ -65,6 +65,34 @@ export function addEntry(entries: readonly AplEntry[], abilityId: string): reado
   return [...entries, { abilityId }];
 }
 
+/**
+ * Turn an entry's channel interrupt on or off.
+ *
+ * ----------------------------------------------------------------------------
+ * IT WAS BAKED INTO THREE WARLOCK ENTRIES AND NOBODY COULD CHANGE IT. The flag
+ * is half of a pair -- a channel declares `interruptibleChannel` and an entry
+ * declares this, and nothing is cancelled unless BOTH do -- so it was a real
+ * rotation decision expressed only in TypeScript.
+ *
+ * THE FLAG IS DROPPED RATHER THAN STORED AS `false`, which keeps a saved list
+ * byte-identical to the stock one it came from: `JSON.stringify` writes
+ * `"interruptsChannel": false` and omits an absent key, and the two would
+ * compare as different lists.
+ * ----------------------------------------------------------------------------
+ */
+export function setInterrupts(
+  entries: readonly AplEntry[],
+  index: number,
+  interrupts: boolean,
+): readonly AplEntry[] {
+  if (index < 0 || index >= entries.length) return entries;
+  return entries.map((entry, at) => {
+    if (at !== index) return entry;
+    const { interruptsChannel: _dropped, ...rest } = entry;
+    return interrupts ? { ...rest, interruptsChannel: true } : rest;
+  });
+}
+
 export function setCondition(
   entries: readonly AplEntry[],
   index: number,

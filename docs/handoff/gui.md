@@ -367,6 +367,14 @@ which let a half-typed id produce a condition that is permanently true or
 permanently false with nothing on screen to say so. `auras/auraCatalog.ts`
 derives the list rather than carrying one.
 
+**INTERRUPTING A CHANNEL IS A CHECKBOX**, where it was baked into three Warlock
+entries and reachable from nowhere else. Offered only when the list holds an
+interruptible channel, and never on that channel's own entry, with the label
+naming which -- "interrupt Arcane Missiles". A Mage's can only ever cut Arcane
+Missiles short, because EVOCATION IS DELIBERATELY NOT INTERRUPTIBLE: it is
+eight seconds of mana regeneration and cutting it short would throw away what
+it was cast for.
+
 **A CONDITION IS A TREE**: a group matching `all of` or `any of`, holding
 clauses and nested groups, each with a `not` toggle. It was a flat list of ANDed
 clauses first, and that LOCKED 51 OF THE 132 STOCK CONDITIONS -- one `not`

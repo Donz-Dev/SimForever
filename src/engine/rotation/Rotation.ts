@@ -27,6 +27,25 @@ export interface Rotation {
    * itself interruptible.
    */
   selectInterrupt?(context: SimulationContext, actor: Combatant): RotationDecision | null;
+  /**
+   * Whether anything in this rotation would ever cancel a channel.
+   *
+   * ----------------------------------------------------------------------------
+   * IT EXISTS TO STOP THE ENGINE POLLING FOR NOTHING. An interruptible channel
+   * wakes its actor every `ROTATION_POLL_MS` instead of sleeping to the end,
+   * because the one moment it would otherwise wake is the moment the channel
+   * has already finished. That is the right trade when something might
+   * interrupt and pure waste when nothing can -- marking Arcane Missiles and
+   * Mind Flay interruptible, with no entry asking to interrupt them, cost the
+   * Arcane Mage 13% more events a fight and the Shadow Priest 25%, for an
+   * IDENTICAL combat log.
+   *
+   * A ROTATION THAT DOES NOT SAY IS ASSUMED TO INTERRUPT, which is the safe
+   * default: a rotation that wanted to and failed to declare it would silently
+   * stop interrupting, where one that says nothing merely polls.
+   * ----------------------------------------------------------------------------
+   */
+  readonly interruptsChannels?: boolean;
 }
 
 /** One line of a priority list. */
@@ -72,10 +91,19 @@ export interface PriorityEntry {
  * than fixed sequences.
  */
 export class PriorityRotation implements Rotation {
+  /**
+   * Computed once, because it cannot change: the entries are fixed when the
+   * character is built, and this is read on every decision an interruptible
+   * channel makes.
+   */
+  readonly interruptsChannels: boolean;
+
   constructor(
     readonly name: string,
     private readonly entries: readonly PriorityEntry[],
-  ) {}
+  ) {
+    this.interruptsChannels = entries.some((entry) => entry.interruptsChannel === true);
+  }
 
   selectAction(context: SimulationContext, actor: Combatant): RotationDecision | null {
     for (const entry of this.entries) {

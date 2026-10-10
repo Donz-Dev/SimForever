@@ -472,6 +472,22 @@ export const ARCANE_MISSILES: Ability = {
   cost: { resource: 'mana', amount: 655 },
   castTimeMs: ARCANE_MISSILES_CHANNEL_MS,
   channelTicks: ARCANE_MISSILES_TICKS,
+  /*
+   * WILLING TO BE CUT SHORT, which on its own changes nothing.
+   *
+   * BOTH HALVES HAVE TO AGREE: a channel says it is interruptible and an ENTRY
+   * says it is worth interrupting for, and nothing is cancelled unless both do.
+   * So marking this costs no DPS and takes no decision -- it makes the panel's
+   * "interrupt" checkbox mean something for a Mage, and the person ticking it
+   * is the one deciding.
+   *
+   * EVOCATION IS THE OTHER MAGE CHANNEL AND IS DELIBERATELY NOT MARKED, on the
+   * owner's instruction. It is eight seconds of mana regeneration and cutting
+   * it short would throw away the thing it was cast for -- so the checkbox on
+   * a Mage entry can only ever interrupt THIS, which is what makes it safe to
+   * offer. `mageAbilities.test.ts` pins that Evocation stays uninterruptible.
+   */
+  interruptibleChannel: true,
   attackTable: 'spell',
   onCast: ({ simulation, caster, target, ability }) => {
     if (!target) return;

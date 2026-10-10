@@ -208,6 +208,16 @@ aura that does not exist is never present, so `is up` is permanently false and
 silently ungates it, and neither looks like anything but a rotation that
 performs differently than expected.
 
+**A factory-built aura has to be listed in its module's `CATALOG_AURAS`.**
+Walking a module's exports finds every aura declared as a constant and none
+built by a function — which silently cost the dropdowns 20 auras across nine
+classes, Rip and Deep Wounds and Ignite among them. Rip is how it was noticed: a
+Druid could not gate Rip on Rip already being up, the single most ordinary thing
+a feral rotation does. Each module now exports the definitions its factories
+build, with the representative argument beside the factory rather than in the
+catalog, and `auraCatalog.test.ts` reads the *source* and fails if anything
+declared is offered to nobody.
+
 Both groups are always offered, with the one matching the clause's subject on
 top. Filtering to debuffs alone for a target clause would be tidier and wrong:
 the Druid's Bear list asks whether the target has the *Warrior's* Demoralizing
@@ -221,6 +231,40 @@ aura that is present with nothing left, and the stock lists write both. They
 were one option in the first draft and the round-trip test caught it — opening
 the Enhancement list and touching nothing would have rewritten its Windfury
 Weapon entry into a reading of the clock.
+
+## Interrupting a channel
+
+`AplEntry.interruptsChannel` is a **checkbox** on each entry. It was baked into
+three Warlock entries and reachable from nowhere else, which made a real
+rotation decision — is this worth throwing away the rest of a channel for? —
+expressible only in TypeScript.
+
+**Both halves still have to agree.** The channel declares
+`interruptibleChannel` and the entry declares `interruptsChannel`, and nothing
+is cancelled unless both do. So the checkbox is offered only when the list
+actually holds an interruptible channel, and never on that channel's own entry:
+a tick that could never fire is worse than no control, and "cancel this channel
+to cast it again" is a loop rather than a rotation.
+
+**The label names the channel** — "interrupt Arcane Missiles", "interrupt
+Wrack", "interrupt Mind Flay" — read off the list and the ability book rather
+than from a list of classes, so a fourth interruptible channel is covered the
+day it lands.
+
+**Evocation is deliberately not interruptible**, on the owner's instruction. It
+is the Mage's other channel and is eight seconds of mana regeneration; cutting
+it short would throw away the thing it was cast for. That is why a Mage can be
+offered the checkbox safely — it can only ever cut Arcane Missiles short — and
+`aplEditing.test.ts` pins it at the ability as well as in the panel.
+
+**An interruptible channel POLLS instead of sleeping to its end**, every
+`ROTATION_POLL_MS`, because the one moment it would otherwise wake is the moment
+the channel has already finished. That is the right trade when something might
+interrupt and pure waste when nothing can: marking Arcane Missiles and Mind Flay
+interruptible, with no entry asking to interrupt them, cost the Arcane Mage 13%
+more events a fight and the Shadow Priest 25% — for an *identical combat log*.
+`Rotation.interruptsChannels` is what gates it, and a rotation that does not say
+is assumed to interrupt, because that is the safe default.
 
 ## What is not here yet
 

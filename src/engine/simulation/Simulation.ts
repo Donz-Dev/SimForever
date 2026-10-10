@@ -564,7 +564,20 @@ export class Simulation implements SimulationContext {
      * Nightfall proc landing mid-channel is acted on within a tenth of a second
      * rather than at the end of six.
      */
-    if (actor.channelling?.interruptibleChannel && actor.isCasting(now)) {
+    /*
+     * AND ONLY WHEN THE ROTATION WOULD ACTUALLY INTERRUPT. Polling for an
+     * interrupt no entry asks for is pure cost: marking Arcane Missiles and
+     * Mind Flay interruptible, so the panel's checkbox means something, moved
+     * the Arcane Mage 13% more events a fight and the Shadow Priest 25% for an
+     * IDENTICAL combat log. `interruptsChannels` is false when no entry wants
+     * one, and undefined on a rotation that does not say -- which keeps the
+     * old behaviour for anything that has not been taught to answer.
+     */
+    if (
+      actor.channelling?.interruptibleChannel &&
+      actor.rotation?.interruptsChannels !== false &&
+      actor.isCasting(now)
+    ) {
       return Math.min(now + ROTATION_POLL_MS, Math.max(actor.gcdReadyAt, actor.castEndsAt));
     }
     const busyUntil = Math.max(actor.gcdReadyAt, actor.castEndsAt);

@@ -521,3 +521,28 @@ export const DEMONIC_SACRIFICE_UNMODELLED =
   'moves a damage figure for a profile nothing attacks. The Imp and Succubus ' +
   'options -- the two the ruleset owner takes -- are fully applied, each to ' +
   'the one school it names.';
+
+/*
+ * ----------------------------------------------------------------------------
+ * THE AURAS THIS MODULE BUILDS WITH A FACTORY, LISTED SO THE PANEL CAN OFFER
+ * THEM.
+ *
+ * `auraCatalog` finds an aura by walking a module's exports and keeping
+ * whatever looks like an `AuraDefinition`. That finds every aura declared as a
+ * constant and NONE built by a function -- which silently cost the dropdowns 20
+ * auras across nine classes, Rip and Deep Wounds and Ignite among them. Rip is
+ * how it was noticed: a Druid could not gate Rip on Rip already being up, which
+ * is the single most ordinary thing a feral rotation does.
+ *
+ * THE ARGUMENT IS REPRESENTATIVE AND ONLY THE ID, NAME AND `isDebuff` ARE READ,
+ * none of which depends on it. It lives here rather than in the catalog because
+ * what a sensible argument IS belongs next to the factory -- the catalog would
+ * otherwise be guessing, and a factory that gained a required argument would
+ * break it from a distance.
+ * ----------------------------------------------------------------------------
+ */
+export const CATALOG_AURAS: readonly AuraDefinition[] = [
+  improvedShadowBoltAura(0),
+  demonicSacrificeAura('imp')!,
+  demonicSacrificeAura('succubus')!,
+];

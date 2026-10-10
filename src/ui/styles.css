@@ -1749,3 +1749,20 @@ button:disabled {
   font-size: 11px;
   color: var(--text-muted);
 }
+
+/* The interrupt checkbox: a real control now, where it used to be a baked-in
+   flag three Warlock entries carried and nothing else could reach. */
+.apl-interrupt {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+  align-self: center;
+  font-size: 11px;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.apl-interrupt input {
+  margin: 0;
+}

@@ -16,8 +16,11 @@ import {
   rootOf,
   setCondition,
   setGroupOp,
+  setInterrupts,
   toggleNegated,
 } from '../../src/ui/panels/aplEditing';
+import { abilityBookFor, interruptibleChannelsIn } from '../../src/ui/panels/AplPanel';
+import { abilitiesForClass } from '../../src/game/abilities/abilitiesForClass';
 import { ALL_PRIORITY_LISTS } from '../../src/game/rotations/allLists';
 import {
   CURRENT_PROFILE_VERSION,
@@ -462,5 +465,108 @@ describe('the list survives a save and a load', () => {
     const edited = JSON.parse(serializeProfile(profile));
     edited.rotation.entries = [{ abilityId: 'a_spell_from_another_class' }];
     expect(parseProfile(JSON.stringify(edited)).ok).toBe(true);
+  });
+});
+
+describe('cutting a channel short is a choice, not a baked-in flag', () => {
+  /*
+   * ==========================================================================
+   * IT WAS EXPRESSIBLE ONLY IN TYPESCRIPT. Three Warlock entries carried
+   * `interruptsChannel` and nothing else could, so a real rotation decision --
+   * is this worth throwing away the rest of a channel for -- was unreachable
+   * from the app.
+   *
+   * BOTH HALVES STILL HAVE TO AGREE: the channel declares
+   * `interruptibleChannel` and the entry declares `interruptsChannel`, and
+   * nothing is cancelled unless both do. That is what makes the checkbox safe
+   * to offer, and what makes it meaningless in a list with no interruptible
+   * channel in it -- which is why it is not offered there.
+   * ==========================================================================
+   */
+  it('offers the checkbox only where the list holds an interruptible channel', () => {
+    const cases = [
+      ['warlock_smds', 'Wrack'],
+      ['mage_arcane', 'Arcane Missiles'],
+      ['shadow_priest', 'Mind Flay'],
+    ] as const;
+    for (const [presetId, channelName] of cases) {
+      const profile = PRESETS_BY_ID.get(presetId)!.build();
+      const channels = interruptibleChannelsIn(profile.rotation.entries, abilityBookFor(profile));
+      expect(channels.map((channel) => channel.name), presetId).toContain(channelName);
+    }
+
+    // A class with no interruptible channel offers nothing, so no entry can be
+    // ticked into doing nothing for ever.
+    for (const presetId of ['two_hand_arms', 'druid_cat', 'rogue_combat']) {
+      const profile = PRESETS_BY_ID.get(presetId)!.build();
+      expect(
+        interruptibleChannelsIn(profile.rotation.entries, abilityBookFor(profile)),
+        presetId,
+      ).toEqual([]);
+    }
+  });
+
+  it("a Mage's checkbox can only ever interrupt Arcane Missiles", () => {
+    /*
+     * THE OWNER'S EDGE CASE. Evocation is the Mage's OTHER channel -- eight
+     * seconds of mana regeneration -- and cutting it short would throw away
+     * the thing it was cast for. It is deliberately not marked
+     * `interruptibleChannel`, so it cannot be offered and cannot be cancelled,
+     * and the label on the checkbox names Arcane Missiles alone.
+     */
+    for (const presetId of ['mage_arcane', 'mage_fire', 'mage_frostfire']) {
+      const profile = PRESETS_BY_ID.get(presetId)!.build();
+      const names = interruptibleChannelsIn(
+        profile.rotation.entries,
+        abilityBookFor(profile),
+      ).map((channel) => channel.name);
+      expect(names, presetId).not.toContain('Evocation');
+    }
+
+    // And at the source: the ability itself refuses, whatever any list says.
+    const book = abilitiesForClass('mage', 'caster');
+    const evocation = book.find((ability) => ability.id === 'evocation');
+    expect(evocation, 'Evocation is in the book').toBeDefined();
+    expect(evocation!.interruptibleChannel, 'Evocation must not be interruptible').toBeFalsy();
+    expect(
+      book.find((ability) => ability.id === 'arcane_missiles')!.interruptibleChannel,
+    ).toBe(true);
+  });
+
+  it('does not offer to interrupt a channel with itself', () => {
+    // `selectInterrupt` is consulted only while the actor is channelling, so a
+    // tick on the channel's own entry would mean "cancel this to cast it
+    // again" -- a loop, not a rotation.
+    const profile = PRESETS_BY_ID.get('warlock_smds')!.build();
+    const channels = interruptibleChannelsIn(profile.rotation.entries, abilityBookFor(profile));
+    const forWrack = channels.filter((channel) => channel.id !== 'wrack');
+    expect(forWrack).toEqual([]);
+  });
+
+  it('sets and clears the flag, and clears it by DROPPING the key', () => {
+    /*
+     * `JSON.stringify` writes `"interruptsChannel": false` and omits an absent
+     * key, so storing the false would make a list that had been ticked and
+     * unticked compare as different from the stock one it came from.
+     */
+    const entries: readonly AplEntry[] = [{ abilityId: 'shadow_bolt' }];
+    const on = setInterrupts(entries, 0, true);
+    expect(on[0].interruptsChannel).toBe(true);
+
+    const off = setInterrupts(on, 0, false);
+    expect('interruptsChannel' in off[0]).toBe(false);
+    expect(off[0]).toEqual({ abilityId: 'shadow_bolt' });
+  });
+
+  it('keeps the flag on the stock Warlock list, which the owner set', () => {
+    // Three entries, by the owner's list: a Shadow Bolt on a Nightfall proc, a
+    // Corruption that fell off, a Bane of Agony that fell off.
+    const profile = PRESETS_BY_ID.get('warlock_smds')!.build();
+    const ticked = profile.rotation.entries.filter((entry) => entry.interruptsChannel);
+    expect(ticked.map((entry) => entry.abilityId)).toEqual([
+      'shadow_bolt',
+      'bane_of_agony',
+      'corruption',
+    ]);
   });
 });

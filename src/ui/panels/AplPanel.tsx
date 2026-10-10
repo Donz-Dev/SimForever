@@ -5,6 +5,7 @@ import { defaultRotationFor, rotationMatchesBuild, stockListFor } from '../../pr
 import type { AplCondition, AplEntry, DescribeNames } from '../../game/rotations/apl';
 import { describeCondition } from '../../game/rotations/apl';
 import { resolveCombatStyle } from '../../game/character';
+import type { Ability } from '../../engine';
 import { abilitiesForClass } from '../../game/abilities/abilitiesForClass';
 import type { CatalogAura } from '../../game/auras/auraCatalog';
 import { aurasForClass } from '../../game/auras/auraCatalog';
@@ -23,6 +24,7 @@ import {
   rootOf,
   setCondition,
   setGroupOp,
+  setInterrupts,
   toggleNegated,
 } from './aplEditing';
 import { Panel } from '../components/Panel';
@@ -65,6 +67,7 @@ export function AplPanel({ profile, onChange }: AplPanelProps) {
   const { names, nameOf } = aplNamesFor(profile);
   const abilities = abilityChoicesFor(profile);
   const auras = aurasForClass(profile.character.characterClass);
+  const channels = interruptibleChannelsIn(list.entries, abilityBookFor(profile));
   const matchesBuild = rotationMatchesBuild(profile);
 
   /** Every edit goes through here, so nothing can change a list and forget. */
@@ -136,6 +139,7 @@ export function AplPanel({ profile, onChange }: AplPanelProps) {
         nameOf={nameOf}
         abilities={abilities}
         auras={auras}
+        channels={channels}
         onChange={update}
       />
 
@@ -144,14 +148,54 @@ export function AplPanel({ profile, onChange }: AplPanelProps) {
   );
 }
 
+/**
+ * The interruptible channels this LIST actually contains, by display name.
+ *
+ * ============================================================================
+ * THE CHECKBOX ONLY APPEARS WHEN THERE IS SOMETHING TO INTERRUPT, which is the
+ * owner's rule and is also the only way the control can be honest. Interrupting
+ * is half of a pair -- a channel declares `interruptibleChannel` and an entry
+ * declares `interruptsChannel`, and nothing is cancelled unless both do -- so
+ * an entry ticked in a list with no interruptible channel in it would do
+ * exactly nothing, for ever, with a tick in the box saying otherwise.
+ *
+ * READ OFF THE LIST AND THE ABILITY BOOK rather than from a list of classes.
+ * Three classes have an interruptible channel today -- the Mage's Arcane
+ * Missiles, the Warlock's Wrack, the Priest's Mind Flay -- and writing those
+ * three down here would be a fourth place to remember when a fifth arrives.
+ *
+ * AND EVOCATION IS NOT AMONG THEM, which is the whole reason a Mage can be
+ * offered this safely: it is the other Mage channel and is deliberately not
+ * marked interruptible, so a Mage's checkbox can only ever cut Arcane Missiles
+ * short. The label says which, so nobody has to take that on trust.
+ * ============================================================================
+ */
+export function interruptibleChannelsIn(
+  entries: readonly AplEntry[],
+  book: readonly Ability[],
+): readonly { readonly id: string; readonly name: string }[] {
+  const byId = new Map(book.map((ability) => [ability.id, ability]));
+  const found = new Map<string, string>();
+  for (const entry of entries) {
+    const ability = byId.get(entry.abilityId);
+    if (ability?.interruptibleChannel) found.set(ability.id, ability.name);
+  }
+  return [...found.entries()].map(([id, name]) => ({ id, name }));
+}
+
 /** What an ability dropdown offers: the built character's own book. */
 export function abilityChoicesFor(
   profile: CharacterProfile,
 ): readonly { readonly id: string; readonly name: string }[] {
-  const style = resolveCombatStyle(profile.character.characterClass, profile.character.combatStyle);
-  return abilitiesForClass(profile.character.characterClass, style, profile.talents)
+  return abilityBookFor(profile)
     .map((ability) => ({ id: ability.id, name: ability.name }))
     .sort((a, b) => a.name.localeCompare(b.name));
+}
+
+/** The abilities THIS build knows -- style and talents included. */
+export function abilityBookFor(profile: CharacterProfile): readonly Ability[] {
+  const style = resolveCombatStyle(profile.character.characterClass, profile.character.combatStyle);
+  return abilitiesForClass(profile.character.characterClass, style, profile.talents);
 }
 
 /**
@@ -168,6 +212,7 @@ export function AplEntries({
   nameOf,
   abilities,
   auras,
+  channels,
   onChange,
 }: {
   readonly list: ShownList;
@@ -175,6 +220,8 @@ export function AplEntries({
   readonly nameOf: (id: string) => string;
   readonly abilities?: readonly { readonly id: string; readonly name: string }[];
   readonly auras?: readonly CatalogAura[];
+  /** The interruptible channels in this list, if any. See the helper above. */
+  readonly channels?: readonly { readonly id: string; readonly name: string }[];
   readonly onChange?: (entries: readonly AplEntry[]) => void;
 }) {
   return (
@@ -197,11 +244,21 @@ export function AplEntries({
             />
             {entry.note ? <span className="apl-note">{entry.note}</span> : null}
           </div>
-          {entry.interruptsChannel ? (
-            <span className="apl-flag" title="May cancel a channel in progress">
-              interrupts
-            </span>
-          ) : null}
+          <InterruptToggle
+            entry={entry}
+            /*
+             * NOT OFFERED ON THE CHANNEL'S OWN ENTRY. `selectInterrupt` is only
+             * consulted while the actor is channelling, so a tick here would
+             * mean "cancel this channel to cast it again" -- which is a loop,
+             * not a rotation.
+             */
+            channels={(channels ?? []).filter((channel) => channel.id !== entry.abilityId)}
+            onChange={
+              onChange
+                ? (interrupts) => onChange(setInterrupts(list.entries, index, interrupts))
+                : undefined
+            }
+          />
           {onChange ? (
             <span className="apl-controls">
               <button
@@ -485,6 +542,52 @@ function NodeEditor({
       onChange={(clause) => onChange(replaceAt(root, path, { ...node, clause }))}
       onRemove={() => onChange(removeAt(root, path))}
     />
+  );
+}
+
+/**
+ * Whether this entry is worth cutting a channel short for.
+ *
+ * IT USED TO BE BAKED IN: three Warlock entries carried the flag and nothing
+ * else could, so a real rotation decision was expressible only in TypeScript.
+ *
+ * THE LABEL NAMES THE CHANNEL, because "interrupt" on its own does not say
+ * what -- and for a Mage the answer matters: Arcane Missiles is interruptible
+ * and Evocation deliberately is not, so the box can only ever cut the one it
+ * names. Shown read-only when the list has no interruptible channel in it,
+ * because a tick that could never fire is worse than no control at all.
+ */
+function InterruptToggle({
+  entry,
+  channels,
+  onChange,
+}: {
+  readonly entry: AplEntry;
+  readonly channels: readonly { readonly id: string; readonly name: string }[];
+  readonly onChange?: (interrupts: boolean) => void;
+}) {
+  const names = channels.map((channel) => channel.name).join(' or ');
+
+  if (!onChange || channels.length === 0) {
+    // Still SAID when it is set, so a list that interrupts reads as one --
+    // and a flag that somehow survived its channel leaving the list is
+    // visible rather than silent.
+    return entry.interruptsChannel ? (
+      <span className="apl-flag" title="May cancel a channel in progress">
+        interrupts
+      </span>
+    ) : null;
+  }
+
+  return (
+    <label className="apl-interrupt" title={`Cancel ${names} in progress to cast this`}>
+      <input
+        type="checkbox"
+        checked={entry.interruptsChannel === true}
+        onChange={(event) => onChange(event.target.checked)}
+      />
+      interrupt {names}
+    </label>
   );
 }
 
