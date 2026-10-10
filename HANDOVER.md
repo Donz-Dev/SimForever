@@ -1,3 +1,57 @@
+# RACIALS, IN FOUR ROUNDS — READ THEM AS ONE
+
+**THE FEATURE SHIPPED IN ONE COMMIT AND THEN TOOK THREE MORE ROUNDS, TWO OF
+THEM THE OWNER'S.** The four headers below are one piece of work, and the thing
+worth carrying out of it is the SHAPE rather than any single figure: a feature
+arrives in waves exactly as a patch does, and "built and measured" is not
+"right" any more than "the notes are exhausted" is "the patch is implemented".
+
+| | what it was | effect |
+| --- | --- | --- |
+| 1 | the ten races, five abilities, four engine additions | 25 of 25 rows moved, mean **700.0 -> 709.8** |
+| 2 | the owner's three asks about the panel and the APL | no figure moved; all **75 hashes identical** |
+| 3 | the owner found the proc at HALF its rate, by arithmetic | SM/DS **1.17 -> 2.03** procs a fight |
+| 4 | the sweep asking whether anything ELSE was left behind | **six DoTs**, four on classes no profile reaches |
+
+**THE HEADERS BELOW RUN NEWEST FIRST, so they are rounds 3-and-4, then 2, then
+1** -- the table above is in the order the work happened and the file is in the
+order this one always is. Each header's figures belong to ITS round and say so.
+
+**THE MEAN IS 709.6, AND THE SENTENCE UNDER THE BASELINE TABLE IS THE ONLY
+PLACE THAT IS LIVE.** Rounds one and three each rebuilt the table; every other
+figure in this file is dated. That is not a style note -- `update_baseline_table.py`
+spent its whole life writing the live mean into a paragraph about the Shatter
+round, fifteen hundred lines above the table, which round one found and fixed.
+
+**ROUNDS THREE AND FOUR ARRIVED AFTER THE FEATURE WAS DOCUMENTED AS FINISHED**,
+which is this file's own recurring pattern and the reason the table above is
+written so a fifth row can be added to it.
+
+## What the owner contributed that no tool here did
+
+**FOUR QUESTIONS ANSWERED BEFORE A LINE WAS WRITTEN, and three of the four
+changed the architecture** — Eureka! spending one charge per CAST rather than
+per hit, Touch of the Grave being a flat 5% that also HEALS, and "holding a
+sword" meaning EQUIPPED rather than wielded. That last one is the difference
+between Axe Specialization reaching two profiles and reaching NONE: the only two
+Orc presets holding an axe carry it as a stat stick on a ranged build.
+
+**AND THEN THE BUG, FOUND BY DIVIDING TWO NUMBERS THE RESULTS PAGE ALREADY
+SHOWED.** 1.17 procs a minute against 21.6 damage-dealing casts, where the rate
+is 10%. No new control and no new tool — just somebody asking whether the two
+agreed. **It is the third time the owner's reading of a printed figure has
+beaten every tool here**, after the hit ladder and parry haste's direction, and
+all three were cases where the tools were working correctly on the wrong
+question.
+
+**AND THEN ASKING WHETHER IT WAS ONLY THE WARLOCK**, which found four more DoTs
+on three classes no profile uses at all. The fix had been measured and tested on
+the build that exposed it, which is the coverage shape this file documents
+elsewhere: a check derived from what the project already USES cannot find what
+it does not use yet.
+
+---
+
 # TOUCH OF THE GRAVE WAS PROCCING AT HALF ITS RATE, AND THE OWNER FOUND IT BY ARITHMETIC
 
 **1.17 PROCS A MINUTE AGAINST 21.6 DAMAGE-DEALING CASTS, WHERE 10% IS 2.16.**
@@ -115,6 +169,68 @@ a test agreed with the bug because it rebuilt the thing under test by hand.
 
 ---
 
+# THE OWNER'S THREE ASKS, AND NOTHING MOVED BY A DECIMAL
+
+**ALL 75 COMBAT-LOG HASHES AND EVENT COUNTS IDENTICAL**, which is the right
+check for the middle one of these and about a hundred times cheaper than
+re-measuring: it answers "did any decision change" rather than "did the
+published figure move".
+
+| | what was asked | what it took |
+| --- | --- | --- |
+| 1 | the Character panel's racial-traits section, gone | one component and its CSS, removed |
+| 2 | an Orc's APL should not offer Berserking, Elune's Light and Eureka! | `withoutOtherRacials`, and a real bug in `syncDefaultRotation` |
+| 3 | a way to switch an APL line off without removing it | `AplEntry.disabled`, filtered in `compileRotation` |
+
+**THE FIRST IS A RULING AND NOT A REVERT.** The section listed the chosen race's
+four tooltips and was built one commit earlier. It is the same decision that took
+the "equipped but not simulated" lists off the Gear, Talent, Raid buffs and
+Encounter panels during the GUI pass: **this reporting is for the repository and
+not for somebody running a sim.** The data is untouched; what went is a READER.
+
+## The second one found a bug that had nothing to do with racials
+
+`syncDefaultRotation` compared a stored list to the stock one **by NAME**, and
+for class, style, stance and talents that was the whole question — a different
+build means a different stock list and therefore a different name. **RACE DOES
+NOT WORK THAT WAY**: an Orc Warrior and a Gnome Warrior run the SAME NAMED LIST
+with different racial entries in it. So changing an Orc to a Gnome would have
+left Blood Fury in the list and never added Eureka!. It compares by value now.
+
+**THE ENGINE NEVER NEEDED THE NARROWING AND THE PANEL DID.**
+`PriorityRotation` skips an ability the character does not know in SILENCE —
+the property that lets one list serve several builds — so an Orc carrying all
+four cost exactly nothing. What it cost was a person reading the panel: three of
+an Orc's first four entries were abilities no Orc can cast.
+
+**ONLY A RACIAL MAY BE DROPPED**, which is the narrow version on purpose. "Drop
+what the build does not know" would delete a capstone a list names for a sibling
+spec — one Hunter list serves a build without the capstone, and the Hemo list IS
+the Rupture list minus two entries.
+
+## And the third one is filtered where it cannot cost anything
+
+`AplEntry.disabled` is honoured in `compileRotation`, not checked in
+`selectAction`, and the reason is a cost that does not show up in a combat log:
+**`PriorityRotation` computes `interruptsChannels` ONCE in its constructor**, so
+a disabled INTERRUPTING entry would still make the actor poll its channel every
+100ms. That is the cost `Rotation.interruptsChannels` exists to avoid, and the
+last time it was paid the log was byte-identical and only `eventsProcessed`
+moved.
+
+**THE FLAG IS DROPPED RATHER THAN STORED AS `false`** — `interruptsChannel`'s
+rule, and sharper now that a stored list is compared BY VALUE: an entry switched
+off and on again has to come back byte-identical or a `default` list silently
+stops matching its build. Absent means active, so no migration and no format
+bump.
+
+**AND IT WAS SEEN IN A BROWSER**, which the racials round was not. The managed
+dev server was unavailable both times — all five slots for this folder held by
+other sessions — so the built app was served on a spare port and torn down
+afterwards.
+
+---
+
 # RACIALS EXIST, AND EVERY ONE OF THE 25 FIGURES MOVED
 
 **THE MEAN WENT 700.0 TO 709.8 AT THAT ROUND, AND SEVEN ROWS MOVED REAL.** Ten races, forty
@@ -125,14 +241,18 @@ since the vocabulary was written; this is that.
 
 [docs/racials.md](docs/racials.md) is the write-up.
 
-**THIS IS ROUND ONE AND THE SHAPE OF THE FEATURE SAYS SO.** The owner's
-statement produced four questions before a line was written and they were asked
-rather than guessed — Eureka!'s charge accounting, Touch of the Grave's
-magnitude, which hand "holding" means, and whether the traits their list omits
-are in scope. Three of the four answers changed the architecture, and the fourth
-drew the scope line. There are **three live clauses the owner declined by name**
-and they are declared rather than deleted, so the next round has somewhere to
-start.
+**THIS WAS ROUND ONE OF FOUR**, and the header at the top of this file indexes
+the rest.
+The owner's statement produced four questions before a line was written and they
+were asked rather than guessed — Eureka!'s charge accounting, Touch of the
+Grave's magnitude, which hand "holding" means, and whether the traits their list
+omits are in scope. Three of the four answers changed the architecture, and the
+fourth drew the scope line.
+
+**AND THIS PARAGRAPH SAID "THIS IS ROUND ONE" AND STILL GOT IT WRONG**, because
+it then printed a one-row table and closed it. Saying a thing is round one is
+not the same as leaving room for round two — the TABLE is what has to be
+writable, which is the correction now in CLAUDE.md.
 
 | | what it is | largest effect |
 | --- | --- | --- |
@@ -1276,7 +1396,7 @@ All nine classes and all **25** profiles are implemented, every number traced to
 source rather than invented, and **every priority list is the ruleset owner's
 own** -- specified entry by entry and measured after, the newest being Hawk
 Melee's, given as "the same as the LW melee hunter" plus one placement.
-**2,809 tests**, CI green on Node 20 and 22. Profile format **v12**. Live at
+**3,029 tests**, CI green on Node 20 and 22. Profile format **v13**. Live at
 <https://donz-dev.github.io/SimForever/>, republished by
 `.github/workflows/deploy.yml` on every push to `main` that passes.
 
@@ -1292,15 +1412,35 @@ demonstrated at the top. **Re-count rather than re-reading the sentence.**
 | --- | --- |
 | **Talents** | 260 fully, 39 partly, 105 ruled out, **62 a live gap**, out of **466** -- from 132 before the class dives |
 | **Abilities** | 114 declared against 478 captured |
-| **Profiles** | **25**, all measured, **mean 700.0** -- the armour enchants are +27.0 of it and the consumables +105.9 |
-| **Scope rulings** | **9 members**, all the owner's, carrying 129 entries |
+| **Profiles** | **25**, all measured, **mean 709.6** -- the armour enchants are +27.0 of it, the consumables +105.9 and the racials **+9.8 at round one** |
+| **Racials** | **10 races, 40 traits**: 15 do something, 20 effects ruled out, 11 a live gap |
+| **Scope rulings** | **9 members**, all the owner's, carrying 129 TALENT entries and 19 racial declarations |
 | **Placeholders** | **10 declared** -- see the milestone table, and count DECLARATIONS |
-| **Tests** | **2,809** on Node 20 and 22 |
+| **Tests** | **3,029** on Node 20 and 22 |
 
 **FOUR CLASSES ARE ESSENTIALLY DONE** -- Warrior 1 live gap, Paladin 1, Druid 2,
 Rogue 3 -- and the remaining 62 sit mostly in the Warlock (19), Priest (12) and
 Mage (10). **The Warlock's 19 overstates its own work**: thirteen of them are one
 build cause, Demonic Sacrifice killing the demon, so its real queue is about 11.
+
+**AND THIS BLOCK'S MEAN HAD DRIFTED AGAIN, FOR THE THIRD TIME**, reading 700.0
+against a table at 709.6 -- the racials round moved every row and the Touch of
+the Grave round moved five, and `update_baseline_table.py` re-sums the sentence
+under the table and knows nothing about this one fifteen hundred lines below it.
+The script was fixed in the racials round to stop writing the live mean into a
+DATED paragraph; it still does not know about this copy, and there is no obvious
+way for it to. **Grep for the figure after rebuilding the table.**
+
+**THE RACIALS' +9.8 IS ROUND ONE'S AND NOT THE FEATURE'S NET**, which is 700.0
+to 709.6 -- round three gave 0.2 back, and that 0.2 is five Undead rows moving
+INSIDE their intervals rather than a loss. Attributing it would be publishing
+noise as a figure.
+
+**THE TWO RACIAL ROWS ARE COUNTED PER RACE AND THE SCOPE ONE PER DECLARATION**,
+which differ by one and are both right: the two Skyborne races SHARE three of
+their four traits, so Walk on Air's single `positioning` tag is two entries in
+the census and one in a grep. `racials.test.ts` pins the per-race figures by
+hand; the one-liner is in CLAUDE.md beside the scope table.
 
 **EVERY FIGURE IN THAT TABLE IS RE-DERIVED RATHER THAN ADJUSTED**, and the two
 that moved this time are the mean and the test count -- the mean because three
