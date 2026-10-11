@@ -498,8 +498,50 @@ export function validateProfile(value: unknown): ValidationResult {
         name: validated.rotation.name,
         entries: validated.rotation.entries.map((entry) => ({ ...entry })),
       },
+      /*
+       * NAMED HERE FOR THE REASON THE THREE ABOVE ARE. This rebuild has now
+       * silently dropped `stance`, then `petFamily`, then very nearly
+       * `rotation` -- three fields, two of them after a comment recording that
+       * it had happened. Both of these are OPTIONAL, which makes them the
+       * quietest kind yet: a dropped valuation re-derives to the default and a
+       * dropped template id falls back to the name, so nothing errors and
+       * nothing looks missing. `roundTrip.test.ts` compares the WHOLE profile
+       * for exactly this reason -- a test naming the fields is a second copy
+       * of this list with the same hole available to it.
+       */
+      ...(validated.statValuation !== undefined
+        ? { statValuation: cleanValuation(validated.statValuation) }
+        : {}),
+      ...(typeof validated.benchmarkTemplateId === 'string'
+        ? { benchmarkTemplateId: validated.benchmarkTemplateId }
+        : {}),
     },
   };
+}
+
+/**
+ * Rebuild the valuation, keeping only real stat names with finite weights.
+ *
+ * THE SAME TREATMENT `stats` GETS, and for the same reason: it arrives from a
+ * file a person can hand-edit. A weight that is not a number would reach
+ * `scoreStats` and turn every item's score into `NaN`, which sorts
+ * unpredictably and prints as "NaN" beside every row -- visible, but only
+ * after it has made the panel useless.
+ *
+ * NOT AN ISSUE, JUST A DROP, which is the `raidBuffs` rule rather than the
+ * `warlockStone` one: a valuation naming a stat this build no longer carries
+ * should open with that entry ignored, not refuse to load. Nothing it decides
+ * can be wrong in a way that matters to a result.
+ */
+function cleanValuation(value: unknown): Partial<Record<StatName, number>> {
+  const clean: Partial<Record<StatName, number>> = {};
+  if (!isRecord(value)) return clean;
+  for (const [name, weight] of Object.entries(value)) {
+    if (!STAT_NAME_SET.has(name)) continue;
+    if (typeof weight !== 'number' || !Number.isFinite(weight)) continue;
+    clean[name as StatName] = weight;
+  }
+  return clean;
 }
 
 /** Rebuild the selection, dropping anything that is not a category entry. */

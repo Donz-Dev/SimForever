@@ -1,5 +1,7 @@
 import type { HeadroomReport, StatWeight, StatWeightPlan } from '../../simulator';
+import type { StatValuation } from '../../game/items/itemValue';
 import { Panel } from '../components/Panel';
+import { hasMeasuredWeights, valuationFromWeights } from './gear/valuationFromWeights';
 
 interface StatWeightsPanelProps {
   readonly plan: StatWeightPlan;
@@ -10,6 +12,26 @@ interface StatWeightsPanelProps {
   readonly iterations: number;
   readonly fights: number;
   readonly workers: number;
+  /**
+   * Write these weights onto the profile, for sorting gear.
+   *
+   * --------------------------------------------------------------------------
+   * THE OWNER ASKED FOR THIS EXPLICITLY: a profile opens with a default
+   * valuation "which can then be overwritten by the user running a Stat
+   * Weights Sim and choosing to overwrite the default numbers". **Choosing**
+   * is the word that makes it a button rather than something a finished run
+   * does by itself -- a run that silently rewrote the sort order would change
+   * what the Gear panel says about every item with nothing on screen to say a
+   * decision had been made.
+   *
+   * IT IS ONE-WAY AND THAT IS DELIBERATE. The Gear panel's own control is
+   * what puts the default back, because "revert" belongs where the valuation
+   * is read rather than on a results panel that is gone the next run.
+   * --------------------------------------------------------------------------
+   */
+  readonly onUseForGear?: (valuation: StatValuation) => void;
+  /** True when the profile is already running these weights. */
+  readonly usedForGear?: boolean;
 }
 
 /**
@@ -49,6 +71,8 @@ export function StatWeightsPanel({
   iterations,
   fights,
   workers,
+  onUseForGear,
+  usedForGear = false,
 }: StatWeightsPanelProps) {
   const ranked = [...weights].sort((a, b) => b.perUnit - a.perUnit);
   /*
@@ -78,6 +102,22 @@ export function StatWeightsPanel({
         `${fights.toLocaleString()} fights`,
         `${workers} ${workers === 1 ? 'worker' : 'workers'}`,
       ].join(' · ')}
+      actions={
+        onUseForGear ? (
+          <button
+            type="button"
+            onClick={() => onUseForGear(valuationFromWeights(weights))}
+            disabled={!hasMeasuredWeights(weights) || usedForGear}
+            title={
+              hasMeasuredWeights(weights)
+                ? 'Sort the Gear panel by these weights instead of this build\u2019s defaults. Only the rows this run actually measured are taken.'
+                : 'This run resolved nothing, so there is nothing to sort by.'
+            }
+          >
+            {usedForGear ? 'Sorting gear' : 'Use for gear'}
+          </button>
+        ) : undefined
+      }
     >
       {ranked.length === 0 ? (
         <p className="muted">Nothing was measured. Every stat selected is in the list below.</p>

@@ -541,24 +541,65 @@ for (const template of BENCHMARK_TEMPLATES) {
 export function benchmarkEquipmentFor(
   presetId: string,
   setId: BenchmarkSetId,
+  /**
+   * WHAT IS ON THE CHARACTER NOW, so its ENCHANTS survive the swap.
+   *
+   * --------------------------------------------------------------------------
+   * THE BUG THIS FIXES: pressing E65 and then E75 built every slot as
+   * `{ itemId }` and nothing else, so an enchant applied to a slot was dropped
+   * on the floor. The four buttons exist to compare one build at four item
+   * levels, and an enchant worth **+2.4 to +53.7 DPS a profile** vanishing
+   * between two presses makes exactly that comparison wrong -- and silently,
+   * because the Gear panel simply shows an unenchanted slot and nothing says
+   * a choice was discarded.
+   *
+   * AN ENCHANT BELONGS TO THE SLOT HERE, NOT TO THE ITEM, and that is the one
+   * place this disagrees with `GearSlotRow`, which drops the enchant when the
+   * ITEM in a slot is changed by hand. The difference is what the action
+   * means: changing one item is a new item in a slot, and pressing a benchmark
+   * button is re-gearing the whole character at a different item level. The
+   * owner asked for the enchants to be retained in so many words.
+   *
+   * THE ENCHANT IS STILL CHECKED AGAINST THE NEW ITEM'S SLOT by the caller's
+   * own data -- `enchantsForSlot` is keyed by SLOT and a benchmark set fills
+   * the same slots every time, so an enchant carried across is always legal
+   * for the slot it lands in.
+   * --------------------------------------------------------------------------
+   */
+  current: Equipment = {},
 ): Equipment | undefined {
   const items = BY_KEY.get(`${presetId}|${setId}`);
   if (!items) return undefined;
-  const equipment: Record<string, { itemId: number }> = {};
+  const equipment: Record<string, { itemId: number; enchantId?: number }> = {};
   const template = BENCHMARK_TEMPLATES_BY_PRESET.get(presetId)!;
+
+  /*
+   * ONE PLACE THE ENCHANT IS CARRIED ACROSS, rather than six.
+   *
+   * Every slot below used to be written as its own `{ itemId: item.id }`
+   * literal, which is six chances for the next slot to forget -- the same
+   * shape as `validateProfile`'s field-by-field rebuild, which dropped
+   * `stance` and then dropped `petFamily` underneath the comment recording
+   * that it had dropped `stance`.
+   */
+  const put = (slot: EquipmentSlot, itemId: number) => {
+    const enchantId = current[slot]?.enchantId;
+    equipment[slot] = enchantId !== undefined ? { itemId, enchantId } : { itemId };
+  };
+
   let armourIndex = 0;
   for (const item of items) {
     if (armourIndex < ARMOUR_SLOTS.length) {
-      equipment[ARMOUR_SLOTS[armourIndex].slot] = { itemId: item.id };
+      put(ARMOUR_SLOTS[armourIndex].slot as EquipmentSlot, item.id);
       armourIndex += 1;
       continue;
     }
     const w = template.weapons;
-    if (item.inventoryType === 'Two-Hand') equipment.twoHand = { itemId: item.id };
-    else if (item.inventoryType === 'Ranged') equipment.ranged = { itemId: item.id };
-    else if (item.subclass === 'Shield') equipment.shield = { itemId: item.id };
-    else if (!equipment.mainHand) equipment.mainHand = { itemId: item.id };
-    else if (w.kind === 'dualWield') equipment.offHand = { itemId: item.id };
+    if (item.inventoryType === 'Two-Hand') put('twoHand', item.id);
+    else if (item.inventoryType === 'Ranged') put('ranged', item.id);
+    else if (item.subclass === 'Shield') put('shield', item.id);
+    else if (!equipment.mainHand) put('mainHand', item.id);
+    else if (w.kind === 'dualWield') put('offHand', item.id);
   }
   return equipment as Equipment;
 }
@@ -590,9 +631,11 @@ export const BENCHMARK_TEMPLATES_BY_LABEL: ReadonlyMap<string, BenchmarkTemplate
 export function benchmarkEquipmentForName(
   characterName: string,
   setId: BenchmarkSetId,
+  /** Carried through so the swap keeps its enchants. See `benchmarkEquipmentFor`. */
+  current: Equipment = {},
 ): Equipment | undefined {
   const template = BENCHMARK_TEMPLATES_BY_LABEL.get(characterName);
-  return template ? benchmarkEquipmentFor(template.presetId, setId) : undefined;
+  return template ? benchmarkEquipmentFor(template.presetId, setId, current) : undefined;
 }
 
 export type { EquipmentSlot };

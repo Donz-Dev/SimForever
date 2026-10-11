@@ -137,21 +137,26 @@ decoding. Seven of twenty did, and **three of the four removed talents are in no
 patch note at all** -- two of them with points spent in every Paladin build. The
 notes are a guide to what is intended, not a list of what changed.
 
-**THE UI HAS HAD TWO PASSES NOW, AND THIS LINE CLAIMED IT HAD HAD NONE.** It
-read "THE UI HAS NOT HAD A PASS OF ITS OWN and is the next piece of work" while
-`docs/handoff/gui.md`'s own header read "THE FIRST PASS IS DONE, AND THIS
-DOCUMENT IS NOW ITS RECORD" -- two files disagreeing about the same fact, with
-the stale one at the top of the file everybody reads first. **A POINTER AT A
-DOCUMENT IS A CLAIM ABOUT THAT DOCUMENT AND EXPIRES LIKE ANY OTHER**, which is
-this file's own rule about an `unmodelled` reason applied one level up.
+**THE UI HAS HAD THREE PASSES NOW, AND THIS LINE HAS ALREADY BEEN WRONG ONCE
+BY THE SAME ARITHMETIC.** It once read "THE UI HAS NOT HAD A PASS OF ITS OWN
+and is the next piece of work" while `docs/handoff/gui.md`'s own header read
+"THE FIRST PASS IS DONE, AND THIS DOCUMENT IS NOW ITS RECORD" -- two files
+disagreeing about the same fact, with the stale one at the top of the file
+everybody reads first. **A POINTER AT A DOCUMENT IS A CLAIM ABOUT THAT DOCUMENT
+AND EXPIRES LIKE ANY OTHER**, which is this file's own rule about an
+`unmodelled` reason applied one level up. **So COUNT the passes against the
+handoff document rather than incrementing this sentence.**
 
 Where it stands: the first pass settled the layout, the collapsing panels and
 the preset rail. The second built **Save and Load**, and the **Action Priority
-List** -- a panel, an editor, and the list stored on the profile.
-[docs/handoff/gui.md](docs/handoff/gui.md) is the record of both, and
-[docs/apl.md](docs/apl.md) is the APL's own. What is left is named at the end
-of each: Import still does nothing, nothing writes to `localStorage`, and eight
-condition kinds are shown but not editable.
+List** -- a panel, an editor, and the list stored on the profile. The third
+rebuilt the **Gear panel as a character planner**: item cards, a class
+proficiency filter, items sorted by what the build values, and the four test
+sets exposed. [docs/handoff/gui.md](docs/handoff/gui.md) is the record of all
+three, [docs/apl.md](docs/apl.md) is the APL's own and
+[docs/gear-planner.md](docs/gear-planner.md) is the planner's. What is left is
+named at the end of each: Import still does nothing, nothing writes to
+`localStorage`, and eight condition kinds are shown but not editable.
 
 > **LAND THE SHARED ENGINE PIECES FIRST, BEFORE DISPATCHING ANY CLASS WORK.** The
 > owner's instruction after the first round of nine parallel dives, and it is about
@@ -1748,8 +1753,9 @@ interruptible channel -- so it is not offered there.
 
 ### The priority list on a profile
 
-**PROFILE FORMAT 13**, and the list is written out IN FULL -- `source`, `name`
-and every entry. The owner's call, and the opposite of how `combatStyle`
+**PROFILE FORMAT 14**, and the list is written out IN FULL -- `source`, `name`
+and every entry. (The list arrived at 13; 14 added the Gear panel's stat
+valuation and the benchmark template id, neither of which the engine reads.) The owner's call, and the opposite of how `combatStyle`
 handles its default: a saved file is a complete description of the build, and
 nothing about it depends on what this version thinks a Beast Mastery Hunter's
 stock list is. [docs/apl.md](docs/apl.md).
@@ -2484,6 +2490,74 @@ Its duration table is proportional -- a flat three seconds a point -- so there i
 no per-point argument either way and what decides it is uptime.
 
 ### Gear and items
+
+**WHAT A CLASS MAY EQUIP IS THE OWNER'S OWN TABLE, AND ASKING FOR IT BEAT EVERY
+ALTERNATIVE.** Nothing in the six data sources states a proficiency -- not the
+spellbook captures, not `talentsforever.com`, not `foreverchanges.pro` -- so
+the honest options were to borrow Classic's behind a `PLACEHOLDER_` name or to
+ask. Asking produced all 27 columns for all nine classes in one message, and
+**three rows disagree with Classic**:
+
+| | Forever | Classic |
+| --- | --- | --- |
+| Rogue, one-handed axe | **may** | may not, until Burning Crusade |
+| Druid, dagger | **may not** | may |
+| Hunter, two-handed axe and polearm | **may**, and no mace of either size | the same, and it reads wrong |
+
+**SO A CLASSIC TABLE WOULD HAVE BEEN WRONG IN BOTH DIRECTIONS ON THE ONE CLASS
+THE OWNER USED AS THE EXAMPLE.** `game/character/proficiency.ts` holds it and
+`proficiency.test.ts` transcribes it a SECOND time in the owner's own
+`TRUE`/`FALSE` grid, so an error has to be made twice in two different shapes
+to survive.
+
+- **AN ARMOUR CLASS APPLIES TO THE EIGHT ARMOUR SLOTS AND NOT TO A CLOAK.**
+  All 44 cloaks in the data carry the subclass "Cloth" and every class wears
+  one, so reading the subclass without asking which SLOT it is for leaves eight
+  classes with no back slot at all -- **and it looks exactly like a correct
+  filter**, because a missing item and an item that was never in the database
+  are the same absence. `ARMOUR_CLASS_SLOTS` is that line.
+- **DUAL WIELD IS A RULE ABOUT THE SLOT, NOT ABOUT THE ITEM.** A one-handed
+  sword is legal for a Paladin in the main hand and illegal in the off hand. A
+  SHIELD and a HELD OFF-HAND ITEM both sit in the off hand and neither is a
+  second weapon: the shield asks for its own `shield` column and a held item
+  asks for nothing. `item.weapon !== undefined` is what separates them, read
+  off the one field that answers "does it swing".
+- **ONE-HANDED AND TWO-HANDED ARE SEPARATE COLUMNS AND THE SUBCLASS CANNOT TELL
+  THEM APART.** The capture says "Axe" and says nothing about which hand, so
+  `proficiencyForItem` takes the INVENTORY TYPE as well -- and `Item` carries
+  `subclass` and `inventoryType` now for exactly that, because `slots` is a
+  lossy derivation of the second. A Hunter may hold a two-handed axe and no
+  mace of either size, which is the row that needs both halves.
+- **THE FILTER DEFAULTS TO PERMISSIVE AND HAS AN ESCAPE HATCH, BOTH ON
+  PURPOSE.** A word the switch does not recognise returns `undefined` and the
+  item is offered; the picker has a "show items this class cannot use" toggle
+  that greys them instead of hiding them; and **whatever is already equipped is
+  always listed**. A filter is the one kind of bug that leaves nothing behind
+  to notice -- there is no zero anywhere and nothing to count -- so the
+  containment check is that **all 25 presets wear only what their class may
+  equip**, which `proficiency.test.ts` asserts per preset.
+- **AND SOMETHING HAS TO ASK WHETHER THE FILTER EVER FIRES**, which is
+  `isWeaponUseOf(attack, 'ranged')`'s lesson and the ranged-attack-power item
+  rule's: a predicate that is always false reads exactly like one that is
+  sometimes true, and a permissive default would make a typo in that switch a
+  silent no-op across the whole database. The counts are pinned -- a Rogue has
+  no two-hander at all, a Druid no ranged weapon, and each relic reaches
+  exactly the class whose column names it.
+
+**AND THE FOUR TEST SETS DROPPED EVERY ENCHANT ON A SWAP.**
+`benchmarkEquipmentFor` built each slot as `{ itemId }` and nothing else, so
+pressing E65 and then E75 discarded the whole loadout -- worth **+2.4 to +53.7
+DPS a profile** -- and made exactly the four-item-level comparison the buttons
+exist for wrong. **Silently**: an unenchanted slot looks like a slot nobody
+enchanted. It takes the current equipment now and carries each slot's enchant
+across, through ONE helper rather than six slot literals, which is
+`validateProfile`'s field-by-field rebuild in miniature.
+
+**AN ENCHANT BELONGS TO THE SLOT THERE AND TO THE ITEM EVERYWHERE ELSE**, and
+the difference is what the action MEANS: changing one item by hand is a new
+item in a slot, and pressing a benchmark button is re-gearing the whole
+character at a different item level. The owner asked for the second in so many
+words.
 
 - **AN ABILITY'S WEAPON REQUIREMENT IS GATED AT THE BOOK, NOT AT THE CAST.**
   `abilitiesForBuild` takes `style` and refuses Shield Slam without a shield, so

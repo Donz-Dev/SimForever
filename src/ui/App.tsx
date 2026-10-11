@@ -279,12 +279,18 @@ export function App() {
 
         {confirmed ? (
           <div className="column column-results">
+            {/*
+                GEAR ABOVE TALENTS, the owner's placement. Both stay
+                collapsible, and both still start shut -- `Panel`'s own
+                default, which is what keeps the column a list of titles until
+                somebody opens one.
+            */}
+            <GearPanel profile={profile} onChange={editProfile} />
             <TalentPanel
               characterClass={profile.character.characterClass}
               allocation={talents}
               onChange={setTalents}
             />
-            <GearPanel profile={profile} onChange={editProfile} />
             {/* BETWEEN THE GEAR AND THE RAID BUFFS, the owner's placement, and
                 it reads in the right order: what the character is holding, how
                 it fights, then what the raid gives it. */}
@@ -323,6 +329,20 @@ export function App() {
                 iterations={weightRun.state.baseline.iterations}
                 fights={weightRun.state.fights}
                 workers={weightRun.state.workers}
+                /*
+                  THE OWNER'S "overwrite the default numbers", AS A BUTTON. The
+                  run does not do it by itself: a finished run that silently
+                  rewrote the Gear panel's sort order would change what the
+                  panel says about every item with nothing on screen to say a
+                  decision had been made.
+
+                  `editProfile` RATHER THAN `setProfile`, like every other
+                  panel edit, so the stored priority list stays in step -- the
+                  sync is idempotent and applying it to every change is what
+                  stops the list of "edits that can matter" going stale.
+                */
+                onUseForGear={(statValuation) => editProfile({ ...profile, statValuation })}
+                usedForGear={profile.statValuation !== undefined}
               />
             ) : null}
 

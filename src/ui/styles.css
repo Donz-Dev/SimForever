@@ -254,6 +254,63 @@
      assumed, and the shaman blue is the tightest at about 5.4:1. */
   --class-ink: #11181a;
 
+  /*
+   * ----------------------------------------------------------------------------
+   * THE ITEM CARD'S OWN PALETTE, and it is deliberately NOT a theme role.
+   *
+   * Beside the class colours above, for the same reason they are here: these
+   * are the GAME's colours, not this page's, and they must read identically in
+   * all four schemes. A rare is #0070dd to a player whatever surface it is
+   * drawn on, and a card that re-tinted itself per theme would be a card that
+   * says something different about the same item in each one.
+   *
+   * THE CARD IS NEAR-BLACK FOR THE SAME REASON. Blizzard's quality colours are
+   * tuned against the client's own black tooltip; dropping them on this page's
+   * teal surface makes the blue of a rare and the purple of an epic hard to
+   * tell apart, and those two are the thing a player reads first.
+   *
+   * SO THE RULE THIS BENDS -- roles, never shades -- IS NOT BROKEN, BECAUSE
+   * THESE ARE DECLARED AS ROLES. `--item-card-bg` is a role; what it must not
+   * be is a hex literal sitting in a rule, which is the thing
+   * `themes.test.ts` is actually guarding against.
+   * ----------------------------------------------------------------------------
+   */
+  /*
+   * ITEM QUALITY, Blizzard's own six, and the one palette on this page a
+   * player reads without reading: grey is vendor trash and purple is a raid
+   * drop. They are declared here rather than in the TypeScript that applies
+   * them so there is ONE copy -- an inline `style` can name a custom property
+   * just as a rule can, which is what makes that possible.
+   *
+   * THE BORDER SET IS DIMMER THAN THE NAME SET, because a 36px icon ringed in
+   * full-saturation green is a ring of neon and the name beside it already
+   * carries the same information. Common takes the panel's own border token,
+   * so an ordinary item is not a white box.
+   */
+  --quality-0: #9d9d9d;
+  --quality-1: #ffffff;
+  --quality-2: #1eff00;
+  --quality-3: #0070dd;
+  --quality-4: #a335ee;
+  --quality-5: #ff8000;
+
+  --quality-edge-0: #5a5a5a;
+  --quality-edge-1: var(--border);
+  --quality-edge-2: #1a7a1a;
+  --quality-edge-3: #1d4f99;
+  --quality-edge-4: #6b2b96;
+  --quality-edge-5: #9c5200;
+
+  --item-card-bg: #06080c;
+  --item-card-border: #2a2f3a;
+  --item-card-text: #ffffff;
+  --item-card-dim: #9d9d9d;
+  --item-card-stat: #1eff00;
+  --item-card-shadow: rgb(0 0 0 / 70%);
+
+  /* The popup list, which IS a page surface and takes the page's shadow. */
+  --popup-shadow: rgb(0 0 0 / 55%);
+
   --font-ui: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   --font-mono: ui-monospace, 'Cascadia Code', 'Consolas', monospace;
 
@@ -1052,6 +1109,435 @@ button:disabled {
 }
 
 /* --- gear --- */
+
+/*
+ * ---------------------------------------------------------------------------
+ * THE CHARACTER PANE: two columns of slots, no model between them.
+ *
+ * The reference planner puts a 3D model in the middle and loses a third of the
+ * panel's width to it; the owner asked for the pane without that. Two columns
+ * side by side, each a row of [icon][name over enchant][value], and the hands
+ * across the bottom where a character pane puts them.
+ *
+ * `minmax(0, 1fr)` RATHER THAN `1fr`, which is the grid trap worth naming: a
+ * `1fr` track has an `auto` minimum, so a long item name -- the Hunter's
+ * "Longbow of the Ancient Keepers" -- pushes its column wider than its share
+ * and the two columns stop being equal. Zero is what lets the name ellipsis
+ * instead.
+ * ---------------------------------------------------------------------------
+ */
+.gear-pane {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 6px 18px;
+}
+
+.gear-column {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 4px;
+  align-content: start;
+}
+
+/* The hands. Same row shape, laid out across rather than down. */
+.gear-weapons {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 4px 18px;
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
+
+.gear-sort-note {
+  margin: 0 0 12px;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+/* An inline link, not a button-shaped button: it sits mid-sentence. */
+.gear-valuation-reset {
+  padding: 0;
+  background: none;
+  border: none;
+  color: var(--accent-strong);
+  font-size: 12px;
+  text-decoration: underline;
+}
+
+.gear-valuation-reset:hover:not(:disabled) {
+  border: none;
+  color: var(--accent);
+}
+
+.gear-row {
+  position: relative;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.gear-row-icon {
+  display: block;
+  line-height: 0;
+}
+
+/*
+ * The icon is a button so the whole tile opens the list, which is what anybody
+ * who has used a character pane will try first. No padding and no background:
+ * the icon IS the control.
+ */
+.gear-icon-button {
+  padding: 0;
+  background: none;
+  border: none;
+  border-radius: 2px;
+  line-height: 0;
+}
+
+.item-icon {
+  display: block;
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  object-fit: cover;
+}
+
+/*
+ * AN EMPTY SLOT IS THE SAME TILE, dimmed. Drawn rather than left out so the
+ * two columns keep their row height whether a slot is filled or not --
+ * otherwise clearing one piece makes every row below it jump.
+ */
+.item-icon.is-empty {
+  background: var(--surface-sunken);
+  border-style: dashed;
+}
+
+.gear-row-text {
+  min-width: 0;
+}
+
+/*
+ * The item name. A button rather than a label, because clicking the name is
+ * the other thing somebody tries -- and `text-align: left` because a button's
+ * default is centred, which would make a column of names ragged on both sides.
+ */
+.gear-item-button {
+  display: block;
+  width: 100%;
+  padding: 0;
+  background: none;
+  border: none;
+  color: var(--text);
+  font-size: 13px;
+  text-align: left;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.gear-item-button:hover:not(:disabled) {
+  border: none;
+  text-decoration: underline;
+}
+
+.gear-empty {
+  color: var(--text-muted);
+}
+
+.gear-row-second {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  min-width: 0;
+}
+
+.gear-enchant-button {
+  padding: 0;
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: 11px;
+  text-align: left;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.gear-enchant-button:hover:not(:disabled) {
+  border: none;
+  color: var(--text);
+}
+
+/* An enchant that IS set reads as a value rather than as a prompt. */
+.gear-enchant-button.is-set {
+  color: var(--success);
+}
+
+/*
+ * What the item is worth, in the monospace face every number in this app uses.
+ * `tabular-nums` so a column of them lines up on the decimal point, which is
+ * the whole reason the figure is beside each row rather than inside the card.
+ */
+.gear-row-score {
+  flex: none;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-muted);
+}
+
+/* ---------------------------------------------------------------------------
+   THE ITEM PICKER: the list a slot opens.
+
+   Absolutely positioned over the pane rather than inline, because a list of
+   201 waist items pushed inline would move every row beneath it half a screen
+   down -- and the row you were comparing against is the one that moves.
+   --------------------------------------------------------------------------- */
+
+.picker {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  z-index: 40;
+  width: min(420px, 90vw);
+  max-height: 440px;
+  overflow-y: auto;
+  padding: 8px;
+  background: var(--surface-raised);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  box-shadow: 0 10px 30px var(--popup-shadow);
+}
+
+.picker-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.picker-header h3 {
+  margin: 0;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+}
+
+.picker-close {
+  padding: 0 6px;
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: 16px;
+  line-height: 1;
+}
+
+.picker-controls {
+  display: grid;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.picker-search {
+  width: 100%;
+  padding: 5px 8px;
+  background: var(--surface-sunken);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--text);
+  font-family: var(--font-ui);
+  font-size: 12px;
+}
+
+.picker-toggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+
+.picker-toggle input {
+  width: auto;
+  margin: 0;
+}
+
+.picker-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* The HoverCard wrapper around each row, which is otherwise an inline span. */
+.picker-list > li > span {
+  display: block;
+}
+
+/*
+ * A row: icon, name, item level, value. The two numeric columns are fixed so
+ * they line up down the list -- a value column that moved with the name length
+ * would be unreadable, which is the one job it has.
+ */
+.picker-row {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) 34px 52px;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 3px 6px;
+  background: none;
+  border: 1px solid transparent;
+  border-radius: 3px;
+  text-align: left;
+}
+
+.picker-row:hover:not(:disabled) {
+  background: var(--surface-sunken);
+  border-color: var(--border-strong);
+}
+
+.picker-row.is-empty {
+  grid-template-columns: auto minmax(0, 1fr);
+  margin-bottom: 4px;
+  color: var(--text-muted);
+}
+
+.picker-row.is-equipped {
+  border-color: var(--accent);
+}
+
+/*
+ * AN ITEM THE CLASS CANNOT USE IS DIMMED, NOT HIDDEN -- and only when the
+ * checkbox asks for it. Dimmed rather than disabled, because a disabled button
+ * takes no hover and the card is the thing that would explain the row.
+ */
+.picker-row.is-illegal {
+  opacity: 0.45;
+}
+
+.picker-name {
+  overflow: hidden;
+  font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.picker-ilvl,
+.picker-score {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  color: var(--text-muted);
+}
+
+.picker-score {
+  color: var(--text);
+}
+
+.picker-empty {
+  margin: 8px 2px 2px;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+/* ---------------------------------------------------------------------------
+   THE ITEM CARD.
+
+   `position: fixed` and portalled to the body: every gear row lives inside a
+   panel that scrolls, and a card rendered in place would be clipped by it --
+   which is exactly where a tooltip is least useful. `HoverCard` positions it.
+   --------------------------------------------------------------------------- */
+
+.hover-card {
+  position: fixed;
+  z-index: 60;
+  pointer-events: none;
+}
+
+/*
+ * A NEAR-BLACK CARD RATHER THAN A THEME SURFACE, which is the one place in
+ * this stylesheet that names a colour instead of a role. The quality colours
+ * are Blizzard's and are tuned against the game's own black tooltip; dropping
+ * them on a teal panel makes the blue of a rare and the purple of an epic hard
+ * to tell apart, and those two colours are the thing a player reads first.
+ */
+.item-card {
+  width: max-content;
+  max-width: 340px;
+  padding: 10px 12px;
+  background: var(--item-card-bg);
+  border: 1px solid var(--item-card-border);
+  border-radius: 4px;
+  box-shadow: 0 12px 34px var(--item-card-shadow);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.item-card-name {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.item-card-name.is-enchant {
+  color: var(--item-card-stat);
+}
+
+.item-card-name.is-empty {
+  color: var(--text-muted);
+}
+
+.item-card-meta {
+  margin-bottom: 4px;
+  font-size: 11px;
+  color: var(--item-card-dim);
+}
+
+/*
+ * A tooltip row. The split lines -- a slot beside its armour class, damage
+ * beside a speed -- are the reason this is a flex row: the right half goes to
+ * the right edge, which is what makes a card look like a card.
+ */
+.item-card-line {
+  display: flex;
+  justify-content: space-between;
+  gap: 18px;
+  color: var(--item-card-text);
+}
+
+.item-card-line.is-stat {
+  color: var(--item-card-stat);
+}
+
+.item-card-line.is-muted {
+  color: var(--item-card-dim);
+}
+
+.item-card-right {
+  flex: none;
+}
+
+/*
+ * THE SCORE IS RULED OFF, because it is the one line on the card that is not
+ * the item speaking. Everything above it is the capture's own words; this is
+ * what this tool thinks the item is worth, and running the two together would
+ * make a placeholder weight look like a sourced number.
+ */
+.item-card-score {
+  margin-top: 6px;
+  padding-top: 5px;
+  border-top: 1px solid var(--item-card-border);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--accent-strong);
+}
+
 
 .gear-grid {
   display: grid;

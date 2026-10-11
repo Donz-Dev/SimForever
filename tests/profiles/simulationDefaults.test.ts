@@ -31,7 +31,7 @@ describe('a new profile', () => {
     expect(simulation.iterations).toBe(3000);
   });
 
-  it('is format 13, which added the priority list', () => {
+  it('is format 14, which added the gear-sorting stat valuation', () => {
     /*
      * Version 9 added `raidBuffs`, 10 a Rogue's poisons, 11 the Warlock's
      * stone, 12 the consumables. Written out rather than read from the
@@ -45,8 +45,17 @@ describe('a new profile', () => {
      * The typechecker found that one (TS1117); this is what says which version
      * the surviving field belongs to.
      */
-    expect(CURRENT_PROFILE_VERSION).toBe(13);
-    expect(createDefaultProfile().version).toBe(13);
+    expect(CURRENT_PROFILE_VERSION).toBe(14);
+    expect(createDefaultProfile().version).toBe(14);
+    /*
+     * VERSION 14's TWO FIELDS ARE BOTH ABSENT ON A NEW PROFILE, and that is
+     * the field's own design rather than an oversight: absent means "derive
+     * it". The valuation falls back to the build's benchmark template and the
+     * template id falls back to the name join, so a profile that stores
+     * neither behaves exactly as one that stores both.
+     */
+    expect(createDefaultProfile().statValuation).toBeUndefined();
+    expect(createDefaultProfile().benchmarkTemplateId).toBeUndefined();
     // Version 12's own field: a NEW profile has nothing chosen, which is the
     // version 9 decision rather than the version 10 one -- a character with no
     // consumables was genuinely fighting without them.
