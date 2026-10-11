@@ -18,12 +18,14 @@ import {
   blankClauseNode,
   blankGroup,
   conditionOf,
+  duplicateEntry,
   moveEntry,
   nodeAt,
   removeAt,
   removeEntry,
   replaceAt,
   rootOf,
+  setAbility,
   setCondition,
   setDisabled,
   setGroupOp,
@@ -282,7 +284,16 @@ export function AplEntries({
         >
           <span className="apl-rank">{index + 1}</span>
           <div className="apl-body">
-            <span className="apl-ability">{nameOf(entry.abilityId)}</span>
+            <EntryAbility
+              abilityId={entry.abilityId}
+              name={nameOf(entry.abilityId)}
+              abilities={abilities ?? []}
+              onChange={
+                onChange
+                  ? (abilityId) => onChange(setAbility(list.entries, index, abilityId))
+                  : undefined
+              }
+            />
             <EntryCondition
               condition={entry.condition}
               names={names}
@@ -332,6 +343,27 @@ export function AplEntries({
               >
                 {entry.disabled ? '🚫' : '👁'}
               </button>
+              {/*
+                * DUPLICATE, and the copy lands DIRECTLY BELOW this line.
+                *
+                * The owner's ask, and the reason is the one the eye button
+                * answers from the other side: the expensive part of an entry
+                * is its condition. "The same rule one stack lower" was a
+                * whole line to rebuild and is now one press and one number.
+                *
+                * BESIDE THE EYE AND LEFT OF THE MOVERS, so the three controls
+                * that do not destroy anything sit together and the ✕ keeps
+                * its own end of the row. See `duplicateEntry` for why a copy
+                * below its own original cannot change what the list does.
+                */}
+              <button
+                type="button"
+                className="apl-duplicate"
+                title="Duplicate this entry below"
+                onClick={() => onChange(duplicateEntry(list.entries, index))}
+              >
+                ⧉
+              </button>
               <button
                 type="button"
                 title="Move up"
@@ -360,6 +392,58 @@ export function AplEntries({
         </li>
       ))}
     </ol>
+  );
+}
+
+/**
+ * WHICH ABILITY THIS LINE CASTS -- a dropdown when the list can be edited.
+ *
+ * ============================================================================
+ * IT WAS FIXED FOR THE LIFE OF THE PANEL, which made every other control on
+ * the row half a feature: an entry's condition, note, interrupt flag and
+ * position were all editable and the thing they were about was not. Changing
+ * which ability a rule applies to meant deleting the line, adding a new one at
+ * the bottom, rebuilding the condition from the dropdowns and walking it back
+ * up to where it was.
+ *
+ * THE CONDITION TRAVELS WITH IT, which is the decision -- see `setAbility`.
+ *
+ * AN ABILITY THE BUILD DOES NOT KNOW KEEPS ITS OWN OPTION, which is
+ * `AuraChoice`'s rule and matters for the same reason: every stock list names
+ * all four free racial cooldowns, so three or four entries in any list name an
+ * ability this character cannot cast. Falling back to whichever name sorts
+ * first would silently rewrite them the moment the panel drew them.
+ * ============================================================================
+ */
+function EntryAbility({
+  abilityId,
+  name,
+  abilities,
+  onChange,
+}: {
+  readonly abilityId: string;
+  readonly name: string;
+  readonly abilities: readonly { readonly id: string; readonly name: string }[];
+  readonly onChange?: (abilityId: string) => void;
+}) {
+  if (!onChange || abilities.length === 0) {
+    return <span className="apl-ability">{name}</span>;
+  }
+  const unknown = !abilities.some((ability) => ability.id === abilityId);
+  return (
+    <select
+      className="apl-ability apl-ability-choice"
+      value={abilityId}
+      aria-label="Ability"
+      onChange={(event) => onChange(event.target.value)}
+    >
+      {unknown ? <option value={abilityId}>{name} (not in this build)</option> : null}
+      {abilities.map((ability) => (
+        <option key={ability.id} value={ability.id}>
+          {ability.name}
+        </option>
+      ))}
+    </select>
   );
 }
 

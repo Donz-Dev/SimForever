@@ -194,11 +194,44 @@ describe('the panel shows the list the build runs', () => {
   });
 
   it('lists every ability, in priority order', () => {
+    /*
+     * ==========================================================================
+     * READ OFF THE LIST RATHER THAN NAMED, AND THAT IS THE REPAIR RATHER THAN
+     * THE TEST.
+     *
+     * It used to assert "Mortal Strike before Slam" -- which pinned a ROTATION
+     * DECISION in a file about how a panel renders, and failed the day the
+     * owner respecified the Arms list and put Slam above Mortal Strike. The
+     * decision changed owner; the panel did not change at all.
+     *
+     * What this file is actually for is that the panel draws the entries IN
+     * THE LIST'S OWN ORDER, which is an invariant: every pair of consecutive
+     * entries appears in the markup in the order the list holds them, whatever
+     * that order is. See `petsAndHunter.test.ts` for the same distinction made
+     * the other way round.
+     * ==========================================================================
+     */
+    const profile = PRESETS_BY_ID.get('two_hand_arms')!.build();
+    const { nameOf } = aplNamesFor(profile);
     const markup = render('two_hand_arms');
-    expect(markup).toContain('Mortal Strike');
-    expect(markup).toContain('Slam');
-    // Order matters and is the whole meaning of the list.
-    expect(markup.indexOf('Mortal Strike')).toBeLessThan(markup.indexOf('Slam'));
+
+    const names = profile.rotation.entries.map((entry) => nameOf(entry.abilityId));
+    expect(names.length).toBeGreaterThan(5);
+    for (const name of names) expect(markup, name).toContain(name);
+
+    /*
+     * SPLIT INTO ROWS RATHER THAN COMPARED BY POSITION IN ONE STRING, because
+     * an ability name also occurs inside CONDITIONS -- the Sunder Armor entry
+     * names its own aura, and three entries name a stance they also cast. A
+     * naive `indexOf` would be comparing a condition against a heading and
+     * would pass or fail by coincidence.
+     *
+     * `apl-rank` is the first element of every row, so splitting on it gives
+     * one chunk per entry in the order they were drawn.
+     */
+    const rows = markup.split('class="apl-rank"').slice(1);
+    expect(rows).toHaveLength(names.length);
+    for (const [index, name] of names.entries()) expect(rows[index], name).toContain(name);
   });
 
   it('says "always" for an entry with no condition', () => {

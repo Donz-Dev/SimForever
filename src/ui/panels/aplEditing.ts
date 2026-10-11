@@ -47,6 +47,74 @@ export function removeEntry(entries: readonly AplEntry[], index: number): readon
 }
 
 /**
+ * Copy an entry and put the copy DIRECTLY BELOW the original.
+ *
+ * ----------------------------------------------------------------------------
+ * THE OWNER'S ASK, and the reason is the one `setDisabled` already answers from
+ * the other side: a condition, a note and an interrupt flag are expensive to
+ * retype. "Mortal Strike, but at five stacks instead of four" is one dropdown
+ * away from an entry that already exists and was a whole line to build.
+ *
+ * BELOW RATHER THAN ABOVE, AND THAT IS WHAT MAKES IT SAFE TO INSERT IN THE
+ * MIDDLE. Every other insertion in this file goes at the BOTTOM, because an
+ * unconditional entry anywhere else is a floor under everything beneath it. A
+ * copy placed immediately under its own original is the one exception that
+ * cannot be: the original is checked FIRST and the two are identical, so
+ * whenever the copy would be castable the original already was, and the list
+ * walks past the copy to exactly where it went before. It starts inert by
+ * construction and becomes a decision only once somebody edits it.
+ *
+ * ABOVE would be the opposite -- the copy would take every cast the original
+ * was making, which is a no-op today and a silent reordering the moment the
+ * entry above it is the one that gets edited.
+ * ----------------------------------------------------------------------------
+ */
+export function duplicateEntry(
+  entries: readonly AplEntry[],
+  index: number,
+): readonly AplEntry[] {
+  if (index < 0 || index >= entries.length) return entries;
+  const next = [...entries];
+  // A shallow copy, so the two rows are not the same object -- everything
+  // inside an entry is immutable, so sharing a condition is safe and sharing
+  // the entry itself would make a later `{ ...entry, abilityId }` ambiguous to
+  // read even though it would still behave.
+  next.splice(index + 1, 0, { ...entries[index] });
+  return next;
+}
+
+/**
+ * Point an entry at a different ability, KEEPING everything else about it.
+ *
+ * ----------------------------------------------------------------------------
+ * THE ABILITY WAS THE ONE FIELD OF AN ENTRY THAT COULD NOT BE CHANGED. Its
+ * condition, its note, its interrupt flag and its position were all editable,
+ * so "the same rule, on Bloodthirst instead of Mortal Strike" meant deleting
+ * the line, adding a new one at the bottom, rebuilding the condition and
+ * walking it back up -- four chances to produce a list nobody meant.
+ *
+ * THE CONDITION IS KEPT RATHER THAN CLEARED, which is the decision here and is
+ * the whole point of the control: the condition is the expensive part. A
+ * condition that names the OLD ability -- "Mortal Strike is ready" on an entry
+ * now casting Slam -- is a legal rule rather than an error, and one somebody
+ * writes on purpose; clearing it would throw away work to guard against an
+ * edit the panel can show and the reader can see.
+ *
+ * AN EMPTY ID IS A NO-OP, the rule `addEntry` already follows: the dropdown has
+ * to be able to hold "(choose)" without that selection emptying an entry.
+ * ----------------------------------------------------------------------------
+ */
+export function setAbility(
+  entries: readonly AplEntry[],
+  index: number,
+  abilityId: string,
+): readonly AplEntry[] {
+  if (index < 0 || index >= entries.length) return entries;
+  if (abilityId.length === 0) return entries;
+  return entries.map((entry, at) => (at === index ? { ...entry, abilityId } : entry));
+}
+
+/**
  * Add an ability at the BOTTOM, with no condition.
  *
  * At the bottom because that is the only position that cannot change what the
