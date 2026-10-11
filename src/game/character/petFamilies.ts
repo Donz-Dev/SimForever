@@ -120,6 +120,30 @@ export const PET_FAMILIES: Record<PetFamilyId, PetFamilyDefinition> = {
   felhunter: { id: 'felhunter', name: 'Felhunter', ...UNMODIFIED },
 };
 
+/**
+ * The four WARLOCK families, which is the subset a demon chooser may offer.
+ *
+ * ============================================================================
+ * DERIVED FROM THE ONE LIST RATHER THAN WRITTEN OUT, which is the rule this
+ * file already follows for `SPELLBOOK_NAME` and `PET_FAMILIES`: a second
+ * hand-written copy of a set is how the two drift, and the one that drifts is
+ * the one nobody re-reads. A fifth demon added above appears here for free.
+ *
+ * THE SPLIT IS BY CLASS AND NOT BY WHAT THE FAMILY DOES. All four demons carry
+ * `UNMODIFIED` modifiers and so could be told apart that way today -- and that
+ * is an accident of nobody having sourced a demon's damage, not a rule. The
+ * Hunter families are listed first and the demons last in `PET_FAMILY_IDS`,
+ * which is the ORDER and not a classification either, so the membership is
+ * stated once here and tested.
+ * ============================================================================
+ */
+export const DEMON_FAMILY_IDS = ['imp', 'voidwalker', 'succubus', 'felhunter'] as const;
+export type DemonFamilyId = (typeof DEMON_FAMILY_IDS)[number];
+
+export function isDemonFamilyId(value: unknown): value is DemonFamilyId {
+  return typeof value === 'string' && (DEMON_FAMILY_IDS as readonly string[]).includes(value);
+}
+
 export function isPetFamilyId(value: unknown): value is PetFamilyId {
   return typeof value === 'string' && (PET_FAMILY_IDS as readonly string[]).includes(value);
 }

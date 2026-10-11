@@ -978,9 +978,36 @@ const HUNTER_BEAST_MASTERY_TALENTS: TalentAllocation = {
   mortal_shots: 5,
 };
 
+/**
+ * LONE WOLF RANGED -- 5 Beast Mastery / 39 Marksmanship / 7 Survival.
+ *
+ * ============================================================================
+ * TWO POINTS OUT OF FOCUSED FIRE AND INTO SURVIVALIST, by the owner, and
+ * **BOTH ENDS OF THAT MOVE ARE WORTH EXACTLY NOTHING TO THIS PROFILE.** Said
+ * plainly because a talent change that cannot move a figure reads as a
+ * measurement that failed to apply.
+ *
+ *   FOCUSED FIRE   "increases all damage you and your pet deal by 2% WHILE
+ *                  YOUR PET IS ACTIVE". `bringsPet` is exactly
+ *                  `lone_wolf === 0`, so this build has no pet and the clause
+ *                  has never paid -- it was a cheap route to Careful Aim and
+ *                  nothing else. (It DID pay once, wrongly: the talent shipped
+ *                  with `requires: {}` and both Lone Wolf builds collected the
+ *                  2% for a pet that is never built. That is fixed, which is
+ *                  what makes these two points genuinely free to move.)
+ *   SURVIVALIST    "+10% total Health" at 5/5, so +4% here. This profile sets
+ *                  `targetAttacks: false` and is never hit, so health is a
+ *                  number nothing reads.
+ *
+ * SO THE EXPECTED MEASUREMENT IS 0.0 TO THE DECIMAL, which is a prediction
+ * and is checked rather than assumed. What the move DOES change is the tree
+ * totals a person reads on the panel, and those are the owner's to set.
+ * ============================================================================
+ */
 const HUNTER_LONE_WOLF_RANGED_TALENTS: TalentAllocation = {
+  // Beast Mastery, 5
   deadly_aspects: 5,
-  focused_fire: 2,
+  // Marksmanship, 39
   hawk_eye: 3,
   lethal_attacks: 5,
   careful_aim: 5,
@@ -994,7 +1021,9 @@ const HUNTER_LONE_WOLF_RANGED_TALENTS: TalentAllocation = {
   scatter_shot: 1,
   ranged_weapon_specialization: 5,
   sniper_shot: 1,
+  // Survival, 7
   improved_tracking: 5,
+  survivalist: 2,
 };
 
 /*
@@ -1041,13 +1070,40 @@ const HUNTER_HAWK_MELEE_TALENTS: TalentAllocation = {
   strider_kick: 1,
 };
 
+/**
+ * LONE WOLF MELEE -- 5 Beast Mastery / 13 Marksmanship / 33 Survival.
+ *
+ * ============================================================================
+ * THE SAME TWO POINTS OUT OF FOCUSED FIRE AS LW RANGED, and they land on
+ * SURVIVALIST'S DISCIPLINE here. **Both ends are worth nothing again, and for
+ * a different reason at the far end** -- which is worth separating, because
+ * one of the two reasons expires and the other does not.
+ *
+ *   FOCUSED FIRE               no pet, so the clause cannot pay. A BUILD
+ *                              cause, and it expires only if this build takes
+ *                              a pet, which Lone Wolf forbids.
+ *   SURVIVALIST'S DISCIPLINE   "reduces the cooldown of your Trap and
+ *                              Deterrence abilities by 40%" -- declared
+ *                              `unmodelled`, because `abilityCooldown`
+ *                              subtracts a FLAT amount and has no fractional
+ *                              form. **An ENGINE cause, and it expires the day
+ *                              somebody adds one**, at which point this build
+ *                              gains two points of real effect without
+ *                              anybody touching it.
+ *
+ * SO THIS IS A LIVE GAP ARRIVING IN A PROFILE, which the census counts and a
+ * DPS figure cannot see. Expected measurement: 0.0 to the decimal.
+ * ============================================================================
+ */
 const HUNTER_LONE_WOLF_MELEE_TALENTS: TalentAllocation = {
+  // Beast Mastery, 5
   deadly_aspects: 5,
-  focused_fire: 2,
+  // Marksmanship, 13
   lethal_attacks: 5,
   careful_aim: 5,
   rapid_killing: 2,
   lone_wolf: 1,
+  // Survival, 33
   improved_tracking: 5,
   savage_strikes: 2,
   survivalist: 4,
@@ -1056,6 +1112,7 @@ const HUNTER_LONE_WOLF_MELEE_TALENTS: TalentAllocation = {
   predator_s_edge: 5,
   resourcefulness: 2,
   expose_prey: 2,
+  survivalist_s_discipline: 2,
   strider_kick: 1,
   lightning_reflexes: 5,
   lacerating_strikes: 1,
@@ -1812,11 +1869,39 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations(with
       },
       talents: { ...PALADIN_RETRIBUTION_TALENTS },
       raidBuffs: [...PRESET_RAID_BUFFS],
-      consumables: hybridConsumables({
-        school: 'school_holy',
-        meleeWeaponEffect: true,
-        blastedLands: 'blasted_strength',
-      }),
+      /*
+       * ======================================================================
+       * THE SPELL POWER FLASK AND THE SPELL POWER FOOD, BOTH THE OWNER'S, AND
+       * BOTH AS OVERRIDES RATHER THAN AS AN EDIT TO `hybridConsumables`.
+       *
+       * THE ROW SERVES FOUR BUILDS -- this one, the Shockadin, the Protection
+       * Paladin and the Enhancement Shaman -- and the owner has now named
+       * three of them with TWO DIFFERENT ANSWERS: Retribution and the Shockadin
+       * take the Spell Power flask, and the Protection Paladin was given the
+       * FOOD and not the flask. So no edit to the shared row satisfies the
+       * rulings that exist, which is the same arithmetic that settled
+       * `STRENGTH_CONSUMABLES` and is a fact about the SHAPE rather than a
+       * reading of any one sentence.
+       *
+       * THE FLASK IS A REAL TRADE AND NOT A STRICT UPGRADE. +1200 Hit Points
+       * against +150 Spell Power: this profile is 54% Holy by measured share,
+       * so the spell power reaches rather more than half of what it does, and
+       * the hit points reach a build that is never attacked. For the
+       * PROTECTION Paladin the hit points reach a build that IS attacked,
+       * which is the obvious reason the owner named its food and not its
+       * flask -- recorded as the likely reason and not as an inference acted
+       * on. A ruling covers what it says.
+       * ======================================================================
+       */
+      consumables: {
+        ...hybridConsumables({
+          school: 'school_holy',
+          meleeWeaponEffect: true,
+          blastedLands: 'blasted_strength',
+        }),
+        flask: 'flask_spell_power',
+        food: 'food_spell_power',
+      },
       encounter: { ...createDefaultProfile().encounter, targetAttacks: false },
     }),
   },
@@ -1846,11 +1931,22 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations(with
       },
       talents: { ...PALADIN_SHOCKADIN_TALENTS },
       raidBuffs: [...PRESET_RAID_BUFFS],
-      consumables: hybridConsumables({
-        school: 'school_holy',
-        meleeWeaponEffect: false,
-        blastedLands: 'blasted_strength',
-      }),
+      /*
+       * THE SAME PAIR AS SEAL TWIST RET, and on this build the case is
+       * stronger rather than merely equal: the Shockadin is **74% Holy** by
+       * measured share, the highest of the four hybrids, so +150 Spell Power
+       * reaches nearly all of its damage. See the Retribution row above for
+       * why these are overrides and not an edit to the shared one.
+       */
+      consumables: {
+        ...hybridConsumables({
+          school: 'school_holy',
+          meleeWeaponEffect: false,
+          blastedLands: 'blasted_strength',
+        }),
+        flask: 'flask_spell_power',
+        food: 'food_spell_power',
+      },
       encounter: { ...createDefaultProfile().encounter, targetAttacks: false },
     }),
   },
@@ -1884,12 +1980,21 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations(with
        * wrong measure for this row -- the same thing already recorded about the
        * tanks' enchants being dodge and defense skill.
        */
+      /*
+       * AND THE SPELL POWER FOOD, WITHOUT THE SPELL POWER FLASK, which is what
+       * the owner named for this profile and is the one asymmetry in the three
+       * Paladin rows. The other two took both. +1200 Hit Points is worth
+       * something here that it is worth nowhere else in the row -- this is the
+       * build that is HIT BACK -- so the asymmetry reads as deliberate, and it
+       * is applied exactly as stated either way.
+       */
       consumables: {
         ...hybridConsumables({
           school: 'school_holy',
           meleeWeaponEffect: false,
           blastedLands: 'blasted_strength',
         }),
+        food: 'food_spell_power',
         other: 'healthstone',
       },
       encounter: { ...createDefaultProfile().encounter, targetAttacks: true },
