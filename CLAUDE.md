@@ -46,6 +46,7 @@ npx vite-node tools/probe_other_assignment.ts    # each preset's `other` consuma
 npx vite-node tools/item_vocabulary.ts           # which item lines the parser does NOT read, by shape
 npx vite-node tools/stamina_share.ts             # what share of a real item's budget is stamina, PvP split out
 ITEMS=19321,21126 npx vite-node tools/item_show.ts   # one item's tooltip beside its parse
+node tools/fetch_class_restrictions.mjs --check  # which set pieces carry no `Classes:` line, by set
 npx vite-node tools/benchmark_stat_report.ts     # what a benchmark set GRANTS, per build, on the character
 STAT=critRating CLASS=warrior npx vite-node tools/real_set_shape.ts   # what a REAL set of that item level carries
 npx vite-node tools/item_budget.ts               # what an item COST to make, and whether it adds up
@@ -127,6 +128,28 @@ three times by `tools/update_baseline_table.py` and no row drifted, which is the
 first time that script has been under real pressure; a row-at-a-time edit across
 three rounds is exactly the drift it was written for. **Re-run the FULL
 measurement after each round rather than patching the rows the round touched.**
+
+**AND A THIRD TIME, WHERE ROUND ONE MOVED NO FIGURE AT ALL.** The Gear panel
+took five rounds, FOUR of them the owner reading the result and sending it
+back:
+
+| | what it was | mean |
+| --- | --- | --- |
+| 1 | the panel as a **character planner** -- cards, a class filter, value sorting | **no figure moved**; all 75 hashes identical |
+| 2 | six tweaks, aimed at Forever's own items instead of at a target | 719.6 -> 736.1 |
+| 3 | a hit rating paid for out of **crit**, not out of spell power | 736.1 -> 737.3 |
+| 4 | twelve movements on the template gear | 737.3 -> 748.4 |
+| 5 | a dual-wielder applies the **weapon effect twice** | 748.4 -> 752.7 |
+
+**THE WRINKLE IS THAT ROUND ONE WAS CORRECTLY WORTH NOTHING.** A UI feature
+that moves a figure has a bug in it, so "no row moved" was the containment
+check rather than a disappointment -- and it is exactly why rounds two to five
+existed: **the planner is what let the owner SEE the gear**, and four of their
+five findings came from reading a panel that had just been built. Shipping the
+thing that makes a fault visible is itself a round.
+
+**SO A FEATURE THAT MOVES NOTHING CAN BE THE ONE THAT CAUSES THE NEXT FOUR
+ROUNDS**, which is the opposite of how "worth no DPS" usually reads here.
 
 **AND FOREVER PATCHES, WHICH IS A WHOLE CLASS OF WORK THE NINE DIVES DID NOT
 COVER.** Client build 1.60.1.70170 removed four talents, added three, moved six
@@ -3601,6 +3624,25 @@ it belongs to, it is numbered from 9,500,000 clear of every real id, and
 `itemsForSlot` never offers one, so nothing can mistake it for a drop.
 **THE DANGEROUS VERSION WOULD BE THE SAME ARITHMETIC WITH A REAL ITEM'S NAME ON
 IT.**
+
+**THE OWNER SAYS WHICH DIRECTION AND THE ITEMS SAY HOW FAR, AND TAKING EITHER
+ALONE IS WRONG.** Three rulings in one thread needed it, and each failed
+differently when read literally:
+
+| the ruling | read literally | what the items said |
+| --- | --- | --- |
+| "pull from crit rating to get more hit rating" | crit drained to **74** against a real mage set's 154, and spell power above the richest set in the database | bound it at 40% -- crit **153** |
+| "the eight **plate** slots shouldn't have both strength and attack power" | plate only | **0 of 1,374** armour pieces carry both, every class -- so all four |
+| the same, dropping the later stat outright | the Rogue's Strength **zero across the set** | both appear on real sets; the slots take turns |
+
+**THE FIRST TRADES ONE UNREALISTIC NUMBER FOR TWO**, which is the shape to
+watch for: a correction that overshoots looks like a correction right up to the
+moment somebody measures the thing it was supposed to fix.
+
+**AND A RULING CAN BE WIDER THAN ITS AUTHOR SCOPED IT.** "Likely only the DPS
+warrior profiles" was a guess about which PROFILES would move, not about the
+rule -- so **check the scope against the data rather than taking it from the
+sentence**, and say which half of the statement you are relying on.
 
 **AND A SET'S SHAPE IS AIMED AT FOREVER'S OWN ITEMS, WHICH THE BUDGET CANNOT
 CHECK.** `item_budget.ts` asks whether an item fits its budget and every one
