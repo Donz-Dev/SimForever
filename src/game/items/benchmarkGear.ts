@@ -337,22 +337,55 @@ interface SlotPlan {
   readonly noArmour?: boolean;
 }
 
+/**
+ * HOW MANY STATS EACH SLOT CARRIES, AND IT IS THE OWNER'S OWN TABLE.
+ *
+ * ==============================================================================
+ * "High value slots (Head, Chest, Legs) should probably always have 5 stats.
+ * Shoulders, Hands, Feet, Waist have 4. Trinkets 1 stat. Wrist, Neck, Rings,
+ * Shields have 3 stats."
+ *
+ * WHAT IT IS FOR is the FIFTH AND SIXTH PREFERENCE. Every slot used to take at
+ * most four, so a spreadsheet row's fifth entry was never bought at all: a
+ * caster benchmark granted **no Spirit**, and the Bear's **Dodge and Defense**
+ * were the fifth and sixth of its six and equally absent. The owner's own words
+ * on raising the counts: "it should open up some space for Spirit, Dodge,
+ * Defense etc."
+ *
+ * IT CHANGES THE SHAPE RATHER THAN THE TOTAL. A slot's budget is unchanged, so
+ * five stats on a head means five smaller numbers -- the owner: "I understand
+ * that this may change the shape of the gear". The 3/2 power makes that cost
+ * something real: a concentrated item buys more total stat than a spread one,
+ * which is exactly what the exponent is for.
+ *
+ * THE CLOAK IS THE ONE SLOT THE TABLE DOES NOT NAME, and it takes 3 with the
+ * other `light` slots -- same slot multiplier as a wrist, a neck and a ring.
+ * Said here rather than assumed silently.
+ *
+ * A TRINKET DROPS FROM TWO STATS TO ONE, which is the only count that FELL.
+ * With `onePrimary` as well it is now the purest expression of a build's first
+ * preference: one line, the stat the spreadsheet puts first.
+ * ==============================================================================
+ */
 export const ARMOUR_SLOTS: readonly SlotPlan[] = [
-  { slot: 'head', inventory: 'Head', slotClass: 'full', stats: 4 },
-  { slot: 'neck', inventory: 'Neck', slotClass: 'light', stats: 2, onePrimary: true, noArmour: true },
-  { slot: 'shoulders', inventory: 'Shoulder', slotClass: 'medium', stats: 3 },
-  { slot: 'cloak', inventory: 'Back', slotClass: 'light', stats: 2 },
-  { slot: 'chest', inventory: 'Chest', slotClass: 'full', stats: 4 },
-  { slot: 'wrists', inventory: 'Wrist', slotClass: 'light', stats: 2 },
-  { slot: 'gloves', inventory: 'Hands', slotClass: 'medium', stats: 3 },
-  { slot: 'waist', inventory: 'Waist', slotClass: 'medium', stats: 3 },
-  { slot: 'legs', inventory: 'Legs', slotClass: 'full', stats: 4 },
-  { slot: 'feet', inventory: 'Feet', slotClass: 'medium', stats: 3 },
-  { slot: 'ring1', inventory: 'Finger', slotClass: 'light', stats: 2, onePrimary: true, noArmour: true },
-  { slot: 'ring2', inventory: 'Finger', slotClass: 'light', stats: 2, onePrimary: true, noArmour: true },
-  { slot: 'trinket1', inventory: 'Trinket', slotClass: 'trinket', stats: 2, onePrimary: true, noArmour: true },
-  { slot: 'trinket2', inventory: 'Trinket', slotClass: 'trinket', stats: 2, onePrimary: true, noArmour: true },
+  { slot: 'head', inventory: 'Head', slotClass: 'full', stats: 5 },
+  { slot: 'neck', inventory: 'Neck', slotClass: 'light', stats: 3, onePrimary: true, noArmour: true },
+  { slot: 'shoulders', inventory: 'Shoulder', slotClass: 'medium', stats: 4 },
+  { slot: 'cloak', inventory: 'Back', slotClass: 'light', stats: 3 },
+  { slot: 'chest', inventory: 'Chest', slotClass: 'full', stats: 5 },
+  { slot: 'wrists', inventory: 'Wrist', slotClass: 'light', stats: 3 },
+  { slot: 'gloves', inventory: 'Hands', slotClass: 'medium', stats: 4 },
+  { slot: 'waist', inventory: 'Waist', slotClass: 'medium', stats: 4 },
+  { slot: 'legs', inventory: 'Legs', slotClass: 'full', stats: 5 },
+  { slot: 'feet', inventory: 'Feet', slotClass: 'medium', stats: 4 },
+  { slot: 'ring1', inventory: 'Finger', slotClass: 'light', stats: 3, onePrimary: true, noArmour: true },
+  { slot: 'ring2', inventory: 'Finger', slotClass: 'light', stats: 3, onePrimary: true, noArmour: true },
+  { slot: 'trinket1', inventory: 'Trinket', slotClass: 'trinket', stats: 1, onePrimary: true, noArmour: true },
+  { slot: 'trinket2', inventory: 'Trinket', slotClass: 'trinket', stats: 1, onePrimary: true, noArmour: true },
 ];
+
+/** A shield carries three, by the same table. Not an armour slot: see `benchmarkSets`. */
+export const SHIELD_STATS = 3;
 
 /**
  * Where hit and expertise go, in order.
@@ -418,6 +451,17 @@ export const SHARES: Readonly<Record<number, readonly number[]>> = {
   2: [0.65, 0.35],
   3: [0.5, 0.3, 0.2],
   4: [0.45, 0.27, 0.18, 0.1],
+  /*
+   * FIVE, FOR THE HIGH-VALUE SLOTS, and the fifth share is what makes a fifth
+   * preference exist at all -- the row that buys a caster its Spirit and the
+   * Bear its Dodge.
+   *
+   * THE SHAPE FOLLOWS THE FOUR-STAT ROW rather than being invented: each share
+   * is about 0.6 of the one above it, which is what gives a first preference
+   * visibly more than a last without making the last a rounding error. It sums
+   * to 1 exactly, which the arithmetic requires.
+   */
+  5: [0.4, 0.24, 0.16, 0.12, 0.08],
 };
 
 /** The stats a slot carries, after the jewellery rule has narrowed them. */

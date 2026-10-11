@@ -532,21 +532,19 @@ describe('the item data', () => {
         // No Forever item grants haste at all yet. The enchant table does.
         '^\\+(\\d+) Haste Rating\\.?$',
         /*
-         * SPIRIT, WHICH IS THE ONE ENTRY HERE THAT IS ABOUT THE GENERATOR
-         * RATHER THAN ABOUT A CLASSIC WORDING.
+         * SPIRIT WAS ON THIS LIST AND HAS COME OFF IT, WHICH IS WHAT AN
+         * EXPIRING ENTRY LOOKS LIKE.
          *
-         * A captured item carries spirit in its raw `stats` like every other
-         * primary, so only the benchmark gear can reach this rule -- and it
-         * never does: spirit is FIFTH in the caster preference list and a full
-         * slot takes four stats. "Descending order of importance" is the
-         * owner's instruction and four-per-slot is this generator's choice, so
-         * the fifth preference is simply never bought.
+         * It was unreachable because a slot bought at most FOUR stats and
+         * spirit is fifth in the caster preference list -- so a caster
+         * benchmark granted none at all. Raised with the owner, who answered
+         * with a slot table: "High value slots (Head, Chest, Legs) should
+         * probably always have 5 stats ... it should open up some space for
+         * Spirit, Dodge, Defense etc."
          *
-         * A QUESTION FOR THE OWNER RATHER THAN A BUG: a caster benchmark grants
-         * no spirit at all, which is defensible for a damage profile and is not
-         * what the spreadsheet row looks like.
+         * So the rule is reached now, and this test failing is how that was
+         * confirmed rather than assumed.
          */
-        '^\\+(\\d+) Spirit\\.?$',
         // Classic's flat percentages, every one of which Forever writes as a
         // rating -- "+14 Critical Strike Rating" for "a critical strike by 1%".
         '^Improves your chance to get a critical strike by (\\d+)%\\.?$',

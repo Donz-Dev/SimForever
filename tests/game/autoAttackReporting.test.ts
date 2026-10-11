@@ -177,9 +177,18 @@ describe('the character sheet shows the stance, and hides crit suppression', () 
       return rows.find((row) => row.abilityName === 'Main Hand Auto-Attack')!.critRate;
     };
 
-    // Against an equal-level target there is no suppression at all, so crit
-    // must be materially higher than against a boss.
-    expect(critRateAt(60)).toBeGreaterThan(critRateAt(63) + 0.02);
+    /*
+     * AGAINST AN EQUAL-LEVEL TARGET THERE IS NO SUPPRESSION AT ALL, so crit
+     * must be higher than against a boss.
+     *
+     * NOT BY A FIXED MARGIN, THOUGH, which is what this asserted. Suppression
+     * is a flat 1.8 percentage points off a 1-10000 die, and whether the
+     * MEASURED rate over sixty fights clears a 2-point margin depends on how
+     * many swings the build makes -- the margin was 0.0004 short after a gear
+     * change. The suppression itself is pinned exactly by `critSuppression`
+     * below; what is asserted here is that it reaches the roll.
+     */
+    expect(critRateAt(60)).toBeGreaterThan(critRateAt(63));
   });
 });
 

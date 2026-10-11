@@ -9,6 +9,7 @@ import {
   LINE,
   RATING_SLOTS,
   SHARES,
+  SHIELD_STATS,
   SLOT_MULTIPLIER,
   WEAPON_DPS,
   baseArmour,
@@ -117,12 +118,18 @@ export const BENCHMARK_TEMPLATES: readonly BenchmarkTemplate[] = [
    * two-hander and the Shockadin fought with the PLACEHOLDER weapon, which is
    * the Hemo/Ambush shape again and just as silent.
    *
+   * AND THE OWNER HAS RULED ON IT: "We'll leave shockadin as a 1H + Shield
+   * build for now." So this is a decision rather than a reading, and the
+   * spreadsheet's "2H" column is the part that gave way.
+   *
    * THE 2.0 SPEED IS KEPT, because that is the part of the spreadsheet row that
    * is about the build rather than about the slot: a fast weapon is what a
-   * Shockadin wants, for the seal that fires per swing. **Whether the owner
-   * meant a two-handed mace and a two-handed STYLE is a question for them** --
+   * Shockadin wants, for the seal that fires per swing. **The question that was
+   * open here was whether the owner meant a two-handed STYLE** --
    * Seal of Righteousness is 20% of spell power one-handed against 22%
-   * two-handed, so the two readings are not worth the same.
+   * two-handed, so the two readings were not worth the same -- which is why it
+   * was raised rather than guessed at. Settled now, and the one-handed 20% is
+   * what the Shockadin's seal reads.
    */
   { presetId: 'pally_shockadin', label: 'Shockadin', hit: 80, expertise: 0, preferred: ['Crit', 'Spell Power', 'Intellect', 'Strength', 'Stamina', 'Agility', 'Attack Power'], armour: 'Plate', weapons: { kind: 'oneHandShield', subclass: 'Mace', speed: 2.0 } },
   { presetId: 'prot_pally', label: 'Prot Pally', hit: 50, expertise: 20, preferred: TANK, armour: 'Plate', weapons: { kind: 'oneHandShield', subclass: 'Mace', caster: true } },
@@ -411,8 +418,21 @@ export function benchmarkItemsFor(
      * mitigation and, through Shield Slam, their damage.
      * ------------------------------------------------------------------------
      */
+    /*
+     * THREE STATS, FROM THE BUILD'S OWN PREFERENCES, by the owner's slot
+     * table -- "Wrist, Neck, Rings, Shields have 3 stats".
+     *
+     * It was a hard-coded single `Stamina` line, which was right for a tank by
+     * accident and wrong for the Elemental Shaman and the Shockadin: both hold
+     * a shield and neither leads with stamina. The shield is a `light` slot
+     * like a wrist, so it reads the preference order exactly as one does.
+     */
     const shieldBudget = base * SLOT_MULTIPLIER.light;
-    const { effects, spent } = toLines(new Map(), ['Stamina'] as BenchStat[], shieldBudget);
+    const shieldStats = statsFor(
+      { slot: 'shield', inventory: 'Off Hand', slotClass: 'light', stats: SHIELD_STATS },
+      template.preferred,
+    );
+    const { effects, spent } = toLines(new Map(), shieldStats, shieldBudget);
     items.push(
       makeItem(
         nextId(),

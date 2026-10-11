@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { ROLL_MAX, STAT_NAMES, toPercent, toSeconds } from '../../src/engine';
+import { ROLL_MAX, STAT_NAMES, toPercent, toRollUnits, toSeconds } from '../../src/engine';
 import {
   COMBAT_CONSTANTS,
   createForeverAttackChances,
@@ -422,8 +422,21 @@ describe('a Warrior parries five percent before any talent', () => {
   });
 
   it('stacks with Deflection and with defense skill', () => {
-    // Deflection is 1% a rank, so 5/5 doubles the baseline.
-    expect(built(legalise({ deflection: 5 })).stats.effective.parryChance).toBeCloseTo(10, 10);
+    /*
+     * Deflection is 1% a rank, so 5/5 DOUBLES the class baseline -- and the
+     * gear's own parry is a third term now, which it was not.
+     *
+     * The benchmark tank buys Parry Rating: the owner's slot table takes the
+     * high-value slots to five stats, and `Parry` is fifth in the Protection
+     * preference list. So the figure is 5 + 5 + whatever the gear gives, and
+     * the TALENT is what this asserts.
+     */
+    const geared = built().stats.effective.parryChance;
+    expect(geared).toBeGreaterThan(5);
+    expect(built(legalise({ deflection: 5 })).stats.effective.parryChance).toBeCloseTo(
+      geared + 5,
+      10,
+    );
   });
 
   it('gives a class nobody supplied a figure for nothing', () => {
@@ -458,8 +471,15 @@ describe('a Warrior parries five percent before any talent', () => {
     const tank = built();
     const defenseSkill = tank.stats.effective.defenseSkill;
     expect(defenseSkill).toBeGreaterThan(0);
+    /*
+     * AND THE GEAR'S OWN PARRY IS IN IT TOO, which it was not when this was
+     * written: the benchmark tank buys Parry Rating now, so the table reads
+     * the class baseline PLUS the stat PLUS defense skill. All three have to
+     * reach the one table the boss rolls against, which is the join.
+     */
     expect(chances('melee-received', boss, tank, {}).parry).toBe(
-      500 + defenseSkill * COMBAT_CONSTANTS.defensePerSkill,
+      toRollUnits(tank.stats.effective.parryChance) +
+        defenseSkill * COMBAT_CONSTANTS.defensePerSkill,
     );
   });
 });
