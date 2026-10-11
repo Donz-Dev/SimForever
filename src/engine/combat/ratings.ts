@@ -86,9 +86,26 @@ export function critChanceFrom(stats: Stats): number {
   return clamp01(stats.critChance / 100 + fromRating);
 }
 
-/** Spell crit chance as a fraction in [0, 1]. */
+/**
+ * Spell crit chance as a fraction in [0, 1].
+ *
+ * ----------------------------------------------------------------------------
+ * `critRating` FEEDS THIS TOO, which is a ruleset fact rather than a tidy-up.
+ * Classic has two separate item lines -- "Improves your chance to get a
+ * critical strike by 1%" and "...with spells by 2%" -- and Forever rewrote
+ * BOTH into one "+N Critical Strike Rating". The rewrites are in the data and
+ * they settle it: across 42 items the melee line converts at exactly 14 rating
+ * per point, and across 20 items the SPELL line converts at exactly 14 too.
+ * One rating, both tables.
+ *
+ * So a Forever caster item granting 28 Critical Strike Rating is granting 2%
+ * spell crit, and reading the rating on the melee side only would have deleted
+ * every point of spell crit Forever gear carries.
+ * ----------------------------------------------------------------------------
+ */
 export function spellCritChanceFrom(stats: Stats): number {
-  return clamp01(stats.spellCritChance / 100);
+  const fromRating = stats.critRating / RATING_PER_PERCENT.crit / 100;
+  return clamp01(stats.spellCritChance / 100 + fromRating);
 }
 
 /**

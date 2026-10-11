@@ -13,6 +13,7 @@ import paladinItems from '../../data/items/sod-paladin.json';
 import warlockItems from '../../data/items/sod-warlock.json';
 import priestItems from '../../data/items/sod-priest.json';
 import foreverNewEpics from '../../data/items/forever-new-epics.json';
+import foreverChangedEpics from '../../data/items/forever-changed-epics.json';
 
 /**
  * Items, from Wowhead's Classic tooltip data.
@@ -751,14 +752,52 @@ const ITEM_FILES: readonly RawData[] = [
   foreverNewEpics,
 ] as unknown as readonly RawData[];
 
-const RAW_ITEMS = ITEM_FILES.flatMap((file) => file.items);
+/**
+ * CLASSIC ITEMS FOREVER CHANGED, and they OVERRIDE what is on file.
+ *
+ * ----------------------------------------------------------------------------
+ * Kept out of `ITEM_FILES` on purpose, because its entries are allowed to
+ * share an id with a stand-in and the duplicate check below must keep throwing
+ * for everything else. The ruleset owner's ruling is that the Forever side is
+ * definitive, so a Classic or Season of Discovery entry with the same id is
+ * REPLACED rather than merged -- merged is how an item ends up with Classic's
+ * flat "+1% crit" and Forever's "+14 Critical Strike Rating" both applied.
+ *
+ * THREE IDS COLLIDE TODAY and all three are effectively unchanged once the
+ * rating conversion is applied: The Immovable Object and Don Julio's Band
+ * differ only in wording, and The Unstoppable Force's "+2% crit" became
+ * "+28 Critical Strike Rating", which at 14 per point is the same 2%.
+ * ----------------------------------------------------------------------------
+ */
+const OVERRIDE_FILE = foreverChangedEpics as unknown as RawData;
 
-const duplicates = RAW_ITEMS.map((item) => item.id).filter(
+const BASE_ITEMS = ITEM_FILES.flatMap((file) => file.items);
+
+const duplicates = BASE_ITEMS.map((item) => item.id).filter(
   (id, index, all) => all.indexOf(id) !== index,
 );
 if (duplicates.length > 0) {
   throw new Error(`Duplicate item ids across the item files: ${duplicates.join(', ')}`);
 }
+
+/**
+ * How many stand-ins the Forever override replaces.
+ *
+ * Exported so a test can pin it: an override that silently stops matching --
+ * because an id moved, or a file was renamed -- would leave the Classic
+ * version in place and look like nothing at all.
+ */
+export const FOREVER_OVERRIDDEN_IDS: readonly number[] = OVERRIDE_FILE.items
+  .map((item) => item.id)
+  .filter((id) => BASE_ITEMS.some((item) => item.id === id))
+  .sort((a, b) => a - b);
+
+const overrideById = new Map(OVERRIDE_FILE.items.map((item) => [item.id, item] as const));
+
+const RAW_ITEMS: readonly RawItem[] = [
+  ...BASE_ITEMS.map((item) => overrideById.get(item.id) ?? item),
+  ...OVERRIDE_FILE.items.filter((item) => !BASE_ITEMS.some((base) => base.id === item.id)),
+];
 
 export const ITEMS: readonly Item[] = RAW_ITEMS.map(buildItem);
 

@@ -1,4 +1,5 @@
 import type { Combatant, WeaponSlot } from '../actors/Combatant';
+import { critChanceFrom, spellCritChanceFrom } from './ratings';
 import type { RNG } from '../rng';
 
 /**
@@ -387,9 +388,26 @@ export function defaultAttackChances(
   const stats = source.stats.effective;
   const isSpell = kind === 'spell';
 
+  /*
+   * ------------------------------------------------------------------------
+   * THROUGH `critChanceFrom`, NOT OFF THE STAT. This read `stats.critChance`
+   * directly, and `critChanceFrom` -- the one function that folds `critRating`
+   * in -- HAD NO CALLERS AT ALL. So `critRating` was a declared stat, exported,
+   * documented, priced by the stat-weight catalogue, and read by nothing: two
+   * correct halves with nothing joining them, which is the shape this project
+   * has been caught by before with `armorPenetration`.
+   *
+   * It cost nothing for as long as no gear granted a rating, and the moment
+   * Forever items did it cost about 1% DPS on thirteen profiles -- every one
+   * of them DOWN, which is what made it findable: float noise is symmetric and
+   * a missing point of crit is not.
+   * ------------------------------------------------------------------------
+   */
   return {
     ...NO_CHANCES,
-    crit: toRollUnits(isSpell ? stats.spellCritChance : stats.critChance),
+    crit: toRollUnits(
+      (isSpell ? spellCritChanceFrom(stats) : critChanceFrom(stats)) * 100,
+    ),
     critMultiplier: isSpell ? 1.5 : 2,
   };
 }

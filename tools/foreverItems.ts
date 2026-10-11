@@ -16,6 +16,7 @@
  * ----------------------------------------------------------------------------
  */
 import data from '../src/data/items/forever-new-epics.json';
+import changed from '../src/data/items/forever-changed-epics.json';
 
 export interface ForeverRawItem {
   readonly id: number;
@@ -37,8 +38,47 @@ export interface ForeverRawItem {
 export const FOREVER_BUILD = data.foreverBuild as string;
 export const FOREVER_CAPTURED_ON = data.capturedOn as string;
 
-/** Every Forever item on file. `unknown` first -- see `foreverWeapons`. */
-export const FOREVER_ITEMS = data.items as unknown as readonly ForeverRawItem[];
+/**
+ * Items that exist only in Forever.
+ *
+ * `unknown` first: the JSON import infers a union of every literal record
+ * shape in the file, so an optional key will not narrow directly.
+ */
+export const FOREVER_NEW_ITEMS = data.items as unknown as readonly ForeverRawItem[];
+
+/**
+ * CLASSIC items Forever changed, which are the control group.
+ *
+ * ----------------------------------------------------------------------------
+ * THESE ARE WHAT ANSWERS "IS FOREVER'S BUDGET LOWER". Most of them differ from
+ * Classic only in WORDING -- 487 of 653 carry stat for stat what Classic
+ * carries -- so pricing them is pricing CLASSIC'S OWN ITEMIZATION through the
+ * same model, on the same slots, at the same item levels. Any shortfall they
+ * show is the MODEL's, not the ruleset's.
+ *
+ * Without them the only available baseline was 100%, and 100% is not something
+ * the model achieves even on Classic.
+ * ----------------------------------------------------------------------------
+ */
+export const FOREVER_CHANGED_ITEMS = changed.items as unknown as readonly ForeverRawItem[];
+
+/** Everything on file, both files. */
+export const FOREVER_ITEMS: readonly ForeverRawItem[] = [
+  ...FOREVER_NEW_ITEMS,
+  ...FOREVER_CHANGED_ITEMS,
+];
+
+/**
+ * An item Forever changed only in wording, so its stats ARE Classic's.
+ *
+ * The capture carries the flag; it is recomputed here from nothing and simply
+ * read, because the comparison rests on it.
+ */
+export const FOREVER_WORDING_ONLY_IDS: ReadonlySet<number> = new Set(
+  (changed.items as unknown as { id: number; wordingOnly?: boolean }[])
+    .filter((item) => item.wordingOnly)
+    .map((item) => item.id),
+);
 
 /**
  * What a tooltip line calls a stat, and what a point of it costs.
@@ -135,26 +175,45 @@ export function priceableStats(item: ForeverRawItem): PricedStats {
 }
 
 /** The Premier PvP cloth, which is what the owner supplied as screenshots. */
-export const FOREVER_PVP_CLOTH = FOREVER_ITEMS.filter(
+export const FOREVER_PVP_CLOTH = FOREVER_NEW_ITEMS.filter(
   (item) => item.subclass === 'Cloth' && item.name.startsWith('Premier '),
 );
 
-/** Every weapon in the capture. */
-export const FOREVER_WEAPONS = FOREVER_ITEMS.filter((item) => item.weapon !== null);
+/**
+ * Classic's own epics, priced through this model -- the control.
+ *
+ * Only the wording-only ones, because those are the items whose stats Forever
+ * did not touch.
+ */
+export const CLASSIC_CONTROL_ITEMS = FOREVER_CHANGED_ITEMS.filter((item) =>
+  FOREVER_WORDING_ONLY_IDS.has(item.id),
+);
+
+/** Every weapon in the NEW capture. */
+export const FOREVER_WEAPONS = FOREVER_NEW_ITEMS.filter((item) => item.weapon !== null);
 
 /**
  * The physical DPS each hand carries at item level 65, READ OFF THE DATA.
  *
+ * ----------------------------------------------------------------------------
  * Not fitted: every physical weapon of a hand at this item level carries the
- * same dps whatever its speed, so the figure is observed. One-handers run 47.2
- * to 47.4 across speeds 1.80, 2.00, 2.30, 2.40 and 2.90.
+ * same dps whatever its speed, so the figure is observed. One-handers run
+ * **47.22 to 47.39** across speeds 1.80, 2.00, 2.30, 2.40 and 2.90 -- a 61%
+ * spread in speed and 0.17 dps of spread in the result.
+ *
+ * THESE ARE THE DERIVED FIGURES, NOT THE TOOLTIP'S. The importer computes
+ * `(min + max) / 2 / speed` and keeps the printed dps as a check on it, because
+ * the source rounds for display -- it prints 47.2 where the damage range gives
+ * 47.24. Reading the rounded figure made the line look 0.2 wide when it is
+ * 0.17, so the derived value is both more accurate and kinder to the claim.
+ * ----------------------------------------------------------------------------
  */
 export const FOREVER_PHYSICAL_DPS_ILVL65: Readonly<Record<string, number>> = {
-  'One-Hand': 47.2,
-  'Main Hand': 47.2,
-  'Off Hand': 47.2,
-  'Two-Hand': 61.6,
-  Ranged: 36.9,
+  'One-Hand': 47.24,
+  'Main Hand': 47.24,
+  'Off Hand': 47.24,
+  'Two-Hand': 61.58,
+  Ranged: 36.94,
 };
 
 /** What the lines fitted from CLASSIC weapons predict at item level 65. */

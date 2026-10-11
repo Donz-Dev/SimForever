@@ -1,6 +1,14 @@
 import { describe, expect, it } from 'vitest';
-import { RATING_PER_PERCENT, critChanceFrom, hasteMultiplierFrom } from '../../src/engine';
+import {
+  RATING_PER_PERCENT,
+  critChanceFrom,
+  hasteMultiplierFrom,
+  spellCritChanceFrom,
+} from '../../src/engine';
+import type { AttackTableKind, PartialStats } from '../../src/engine';
 import { ITEMS } from '../../src/game/items/itemData';
+import { createForeverAttackChances } from '../../src/game/combat/attackChances';
+import { makeAttacker } from '../helpers/actors';
 import { makeStats } from '../../src/engine/stats/Stats';
 
 /**
@@ -56,6 +64,60 @@ describe("Forever's rating conversions", () => {
 
   it('turns 10 haste rating into one percent of haste', () => {
     expect(hasteMultiplierFrom(makeStats({ hasteRating: 10 }))).toBeCloseTo(1.01, 10);
+  });
+
+  it('feeds SPELL crit from the same rating', () => {
+    // Classic has two item lines and Forever has one: the rewrites convert the
+    // melee line and the spell line at the same 14 per point, so one rating
+    // has to reach both tables.
+    const none = makeStats({ spellCritChance: 0, critRating: 0 });
+    const fourteen = makeStats({ spellCritChance: 0, critRating: 14 });
+    expect(spellCritChanceFrom(fourteen) - spellCritChanceFrom(none)).toBeCloseTo(0.01, 10);
+  });
+});
+
+describe('the crit rating actually reaches the combat table', () => {
+  /**
+   * ---------------------------------------------------------------------------
+   * THE JOIN, WHICH IS THE PART THAT WAS MISSING.
+   *
+   * `critRating` was declared, exported, documented and priced by the
+   * stat-weight catalogue, and BOTH places that build a crit slice read
+   * `stats.critChance` directly -- so `critChanceFrom`, the only function that
+   * folds the rating in, had NO CALLERS ANYWHERE. Two correct halves with
+   * nothing joining them, which is exactly how `armorPenetration` shipped
+   * unread.
+   *
+   * ASSERTING THE ARITHMETIC OF `critChanceFrom` PASSES EITHER WAY, which is
+   * why the test above is not enough. This drives the RULESET'S OWN provider --
+   * the one `createPlayer` installs -- and reads the slice back out.
+   * ---------------------------------------------------------------------------
+   */
+  const critSlice = (stats: PartialStats, kind: AttackTableKind = 'melee-special') => {
+    const attacker = makeAttacker({ stats });
+    const provider = createForeverAttackChances();
+    return provider(kind, attacker, makeAttacker({}), {}).crit;
+  };
+
+  it('moves the melee crit slice, and by the stated amount', () => {
+    // One percentage point is 100 roll units out of 10000.
+    expect(critSlice({ critChance: 10, critRating: 14 }) - critSlice({ critChance: 10 })).toBe(
+      100,
+    );
+  });
+
+  it('moves the SPELL crit slice from the same rating', () => {
+    expect(
+      critSlice({ spellCritChance: 10, critRating: 14 }, 'spell') -
+        critSlice({ spellCritChance: 10 }, 'spell'),
+    ).toBe(100);
+  });
+
+  it('is worth the same as the flat stat it replaced', () => {
+    // 14 rating and 1 point of crit are the same purchase, so the slice they
+    // produce has to be the same number of roll units -- this is the assertion
+    // that would have caught thirteen profiles quietly losing 1% crit.
+    expect(critSlice({ critChance: 10, critRating: 14 })).toBe(critSlice({ critChance: 11 }));
   });
 });
 

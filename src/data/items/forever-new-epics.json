@@ -1,6 +1,6 @@
 {
  "set": "forever-new-epics",
- "description": "Every NEW epic weapon and armour piece at item level 55 and above in the WoW: Forever beta client, build 1.60.1.70338, captured 2026-10-10. REAL FOREVER DATA, unlike the Classic and Season of Discovery stand-ins in the other files here. Converted by tools/import_forever_items.mjs from the capture in tools/data/, which records its own SHA-256. The eight \"Premier Emboldened\" upgrade seals are excluded: they carry no armour, stats or effects.",
+ "description": "Every NEW epic weapon and armour piece at item level 55 and above in the WoW: Forever beta client, build 1.60.1.70338, captured 2026-10-10. REAL FOREVER DATA, unlike the Classic and Season of Discovery stand-ins in the other files here. Converted by tools/import_forever_items.mjs from the capture in tools/data/, which records its own SHA-256.",
  "source": "https://foreverchanges.pro/items/new.json",
  "foreverBuild": "1.60.1.70338",
  "classicBuild": "1.15.9.69722",
@@ -1415,7 +1415,7 @@
     "minDamage": 109,
     "maxDamage": 165,
     "speed": 2.9,
-    "dps": 47.2
+    "dps": 47.24
    },
    "stats": {
     "stamina": 2
@@ -3616,7 +3616,7 @@
     "minDamage": 109,
     "maxDamage": 165,
     "speed": 2.9,
-    "dps": 47.2
+    "dps": 47.24
    },
    "stats": {
     "stamina": 2
@@ -3648,7 +3648,7 @@
     "minDamage": 187,
     "maxDamage": 281,
     "speed": 3.8,
-    "dps": 61.6
+    "dps": 61.58
    },
    "stats": {
     "stamina": 35,
@@ -3677,7 +3677,7 @@
     "minDamage": 53,
     "maxDamage": 80,
     "speed": 1.8,
-    "dps": 36.9
+    "dps": 36.94
    },
    "stats": {
     "stamina": 6
@@ -3733,7 +3733,7 @@
     "minDamage": 75,
     "maxDamage": 114,
     "speed": 2,
-    "dps": 47.3
+    "dps": 47.25
    },
    "stats": {
     "stamina": 2
@@ -3765,7 +3765,7 @@
     "minDamage": 109,
     "maxDamage": 165,
     "speed": 2.9,
-    "dps": 47.2
+    "dps": 47.24
    },
    "stats": {
     "stamina": 2
@@ -3797,7 +3797,7 @@
     "minDamage": 109,
     "maxDamage": 165,
     "speed": 2.9,
-    "dps": 47.2
+    "dps": 47.24
    },
    "stats": {
     "stamina": 2
@@ -3857,7 +3857,7 @@
     "minDamage": 109,
     "maxDamage": 165,
     "speed": 2.9,
-    "dps": 47.2
+    "dps": 47.24
    },
    "stats": {
     "stamina": 2
@@ -3889,7 +3889,7 @@
     "minDamage": 187,
     "maxDamage": 281,
     "speed": 3.8,
-    "dps": 61.6
+    "dps": 61.58
    },
    "stats": {
     "stamina": 35,
@@ -3918,7 +3918,7 @@
     "minDamage": 187,
     "maxDamage": 281,
     "speed": 3.8,
-    "dps": 61.6
+    "dps": 61.58
    },
    "stats": {
     "stamina": 35,
@@ -3947,7 +3947,7 @@
     "minDamage": 109,
     "maxDamage": 165,
     "speed": 3,
-    "dps": 45.7
+    "dps": 45.67
    },
    "stats": {
     "stamina": 36,
@@ -3980,7 +3980,7 @@
     "minDamage": 187,
     "maxDamage": 281,
     "speed": 3.8,
-    "dps": 61.6
+    "dps": 61.58
    },
    "stats": {
     "stamina": 35,
@@ -4009,7 +4009,7 @@
     "minDamage": 64,
     "maxDamage": 119,
     "speed": 2.9,
-    "dps": 31.6
+    "dps": 31.55
    },
    "stats": {
     "stamina": 12,
@@ -4046,7 +4046,7 @@
     "minDamage": 187,
     "maxDamage": 281,
     "speed": 3.8,
-    "dps": 61.6
+    "dps": 61.58
    },
    "stats": {
     "stamina": 25,
@@ -4109,7 +4109,7 @@
     "minDamage": 68,
     "maxDamage": 102,
     "speed": 1.8,
-    "dps": 47.2
+    "dps": 47.22
    },
    "stats": {
     "stamina": 2
@@ -4194,7 +4194,7 @@
     "minDamage": 109,
     "maxDamage": 165,
     "speed": 2.9,
-    "dps": 47.2
+    "dps": 47.24
    },
    "stats": {
     "stamina": 2
@@ -6406,7 +6406,7 @@
     "minDamage": 109,
     "maxDamage": 165,
     "speed": 2.9,
-    "dps": 47.2
+    "dps": 47.24
    },
    "stats": {
     "stamina": 2
@@ -6438,7 +6438,7 @@
     "minDamage": 187,
     "maxDamage": 281,
     "speed": 3.8,
-    "dps": 61.6
+    "dps": 61.58
    },
    "stats": {
     "stamina": 35,
@@ -6467,7 +6467,7 @@
     "minDamage": 53,
     "maxDamage": 80,
     "speed": 1.8,
-    "dps": 36.9
+    "dps": 36.94
    },
    "stats": {
     "stamina": 6
@@ -6523,7 +6523,7 @@
     "minDamage": 75,
     "maxDamage": 114,
     "speed": 2,
-    "dps": 47.3
+    "dps": 47.25
    },
    "stats": {
     "stamina": 2
@@ -6555,7 +6555,7 @@
     "minDamage": 109,
     "maxDamage": 165,
     "speed": 2.9,
-    "dps": 47.2
+    "dps": 47.24
    },
    "stats": {
     "stamina": 2
@@ -6587,7 +6587,7 @@
     "minDamage": 109,
     "maxDamage": 165,
     "speed": 2.9,
-    "dps": 47.2
+    "dps": 47.24
    },
    "stats": {
     "stamina": 2
@@ -6647,7 +6647,7 @@
     "minDamage": 109,
     "maxDamage": 165,
     "speed": 2.9,
-    "dps": 47.2
+    "dps": 47.24
    },
    "stats": {
     "stamina": 2
@@ -6679,7 +6679,7 @@
     "minDamage": 187,
     "maxDamage": 281,
     "speed": 3.8,
-    "dps": 61.6
+    "dps": 61.58
    },
    "stats": {
     "stamina": 35,
@@ -6708,7 +6708,7 @@
     "minDamage": 187,
     "maxDamage": 281,
     "speed": 3.8,
-    "dps": 61.6
+    "dps": 61.58
    },
    "stats": {
     "stamina": 35,
@@ -6737,7 +6737,7 @@
     "minDamage": 109,
     "maxDamage": 165,
     "speed": 3,
-    "dps": 45.7
+    "dps": 45.67
    },
    "stats": {
     "stamina": 36,
@@ -6770,7 +6770,7 @@
     "minDamage": 187,
     "maxDamage": 281,
     "speed": 3.8,
-    "dps": 61.6
+    "dps": 61.58
    },
    "stats": {
     "stamina": 35,
@@ -6832,7 +6832,7 @@
     "minDamage": 64,
     "maxDamage": 119,
     "speed": 2.9,
-    "dps": 31.6
+    "dps": 31.55
    },
    "stats": {
     "stamina": 12,
@@ -6869,7 +6869,7 @@
     "minDamage": 187,
     "maxDamage": 281,
     "speed": 3.8,
-    "dps": 61.6
+    "dps": 61.58
    },
    "stats": {
     "stamina": 25,
@@ -6899,7 +6899,7 @@
     "minDamage": 68,
     "maxDamage": 102,
     "speed": 1.8,
-    "dps": 47.2
+    "dps": 47.22
    },
    "stats": {
     "stamina": 2
@@ -13859,7 +13859,7 @@
     "minDamage": 91,
     "maxDamage": 170,
     "speed": 1.7,
-    "dps": 76.8
+    "dps": 76.76
    },
    "stats": {
     "spirit": 11
@@ -14144,7 +14144,7 @@
     "minDamage": 79,
     "maxDamage": 148,
     "speed": 2.4,
-    "dps": 47.3
+    "dps": 47.29
    },
    "stats": {
     "strength": 8,
@@ -14173,7 +14173,7 @@
     "minDamage": 162,
     "maxDamage": 244,
     "speed": 3.3,
-    "dps": 61.5
+    "dps": 61.52
    },
    "stats": {
     "stamina": 27,
@@ -14202,7 +14202,7 @@
     "minDamage": 76,
     "maxDamage": 142,
     "speed": 2.3,
-    "dps": 47.4
+    "dps": 47.39
    },
    "stats": {
     "agility": 8,

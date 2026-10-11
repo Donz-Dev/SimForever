@@ -30,8 +30,35 @@
 import { readFileSync, writeFileSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 
-const CAPTURE = 'tools/data/forever-new-epics.capture.json';
-const OUT = 'src/data/items/forever-new-epics.json';
+/**
+ * The captures, and what each one is.
+ *
+ * `new` is gear that exists only in Forever. `changed` is CLASSIC gear Forever
+ * altered -- and the ruleset owner has ruled that the Forever side is
+ * definitive, so where one of these shares an id with a Classic or Season of
+ * Discovery stand-in already on file, this one wins. `itemData` applies that as
+ * a declared override rather than by silently letting a later file through.
+ */
+const CAPTURES = [
+  {
+    capture: 'tools/data/forever-new-epics.capture.json',
+    out: 'src/data/items/forever-new-epics.json',
+    set: 'forever-new-epics',
+    what: 'Every NEW epic weapon and armour piece at item level 55 and above',
+  },
+  {
+    capture: 'tools/data/forever-changed.capture.json',
+    out: 'src/data/items/forever-changed-epics.json',
+    set: 'forever-changed-epics',
+    what:
+      'Every CLASSIC epic at item level 55 and above that Forever CHANGED. ' +
+      'Most differ only in wording -- Classic\'s "Improves your chance to get a ' +
+      'critical strike by 1%" is Forever\'s "+14 Critical Strike Rating" -- and ' +
+      'those rewrites confirm the owner\'s rating table exactly: 14 per 1% crit ' +
+      'and spell crit, 10 per 1% hit, 12 per 1% dodge, with no variation across ' +
+      '83 items that carry both.',
+  },
+];
 
 /** Inventory types that appear on their own line, with no subclass after a tab. */
 const BARE_INVENTORY_TYPES = new Set([
@@ -79,7 +106,11 @@ const IGNORED = [
   /^Binds when /,
   /^Unique(-Equipped)?(:.*)?$/,
   /^Requires Level \d+$/,
-  /^Requires .+ - (Exalted|Revered|Honored|Friendly)$/,
+  // A reputation requirement, at any standing -- `Neutral` is the one that
+  // turned up only in the CHANGED capture, on the Brood of Nozdormu rings.
+  /^Requires .+ - (Exalted|Revered|Honored|Friendly|Neutral|Unfriendly|Hostile|Hated)$/,
+  // A profession requirement: "Requires Engineering (300)".
+  /^Requires [A-Za-z ]+ \(\d+\)$/,
   /^Classes: /,
   /^Races: /,
   /^Sell Price/,
@@ -105,6 +136,18 @@ function convert(raw) {
     effects: [],
     tooltip: [raw.name, ...raw.lines].join('\n'),
   };
+  /*
+   * CARRIED THROUGH, because it is what makes a CONTROL GROUP possible.
+   *
+   * `wordingOnly` means Forever changed the prose and not a single number, so
+   * the item's stats ARE Classic's -- and pricing those through the budget
+   * model measures CLASSIC's itemization, on the same slots at the same item
+   * levels, with the same blind spots. Without it the only available baseline
+   * is 100%, which is not a number this model reaches even on Classic, and
+   * comparing against it is what produced a "Forever runs 11 points light"
+   * reading that was entirely the model's own residual.
+   */
+  if (raw.wordingOnly !== undefined) item.wordingOnly = raw.wordingOnly;
 
   const unknown = [];
   let pendingDamage = null;
@@ -126,6 +169,7 @@ function convert(raw) {
           maxDamage: Number(damage[2]),
           speed: Number(speed[1]),
           dps: 0,
+          printedDps: 0,
         };
         continue;
       }
@@ -140,7 +184,7 @@ function convert(raw) {
 
     const dps = /^\(([\d.]+) damage per second\)$/.exec(line);
     if (dps && pendingDamage) {
-      pendingDamage.dps = Number(dps[1]);
+      pendingDamage.printedDps = Number(dps[1]);
       continue;
     }
 
@@ -206,10 +250,37 @@ function convert(raw) {
     unknown.push(line);
   }
 
-  if (pendingDamage) item.weapon = pendingDamage;
+  if (pendingDamage) {
+    /*
+     * DPS IS DERIVED, NOT TRANSCRIBED, and the printed figure becomes the
+     * CHECK on it rather than the value.
+     *
+     * `(min + max) / 2 / speed` is what dps means, and the source prints it
+     * ROUNDED on at least one item -- the 90 Epic Frost Staff is 119-226 at
+     * 2.70s, which is 63.889, and the tooltip says 64. `itemData` cross-checks
+     * damage against dps to a tolerance of 0.05 and would throw on that, so
+     * storing the printed number puts a display rounding into the data and
+     * then fails on it.
+     *
+     * The redundancy that check exists for is kept here instead, at the
+     * source's own precision: a scrape that dropped a digit moves the printed
+     * figure by far more than half a point.
+     */
+    const { minDamage, maxDamage, speed, printedDps } = pendingDamage;
+    const derived = (minDamage + maxDamage) / 2 / speed;
+    if (Math.abs(derived - printedDps) > 0.5) {
+      unknown.push(
+        `dps ${printedDps} disagrees with ${minDamage}-${maxDamage} at ${speed}s (${derived.toFixed(2)})`,
+      );
+    }
+    item.weapon = { minDamage, maxDamage, speed, dps: Number(derived.toFixed(2)) };
+  }
   return { item, unknown };
 }
 
+for (const job of CAPTURES) run(job);
+
+function run({ capture: CAPTURE, out: OUT, set: SET, what: WHAT }) {
 const capture = JSON.parse(readFileSync(CAPTURE, 'utf8'));
 /*
  * RE-HASH THE PAYLOAD, NOT THE FILE.
@@ -225,7 +296,7 @@ const recomputed = createHash('sha256').update(JSON.stringify(payload)).digest('
 
 const problemsBeforeItems = [];
 const items = [];
-const problems = [...problemsBeforeItems];
+const problems = [];
 for (const raw of capture.items) {
   const { item, unknown } = convert(raw);
   if (!item.inventoryType) problems.push(`${item.name} (${item.id}): no inventory type`);
@@ -248,7 +319,12 @@ if (recomputed !== claimed) {
   console.error(`         recomputed ${recomputed}`);
   problemsBeforeItems.push('capture hash mismatch -- the file was changed after it was accepted');
 }
-console.log(`dropped as having nothing to model: ${capture.dropped_tokens.join(', ')}`);
+problems.push(...problemsBeforeItems);
+{
+}
+if (capture.dropped_tokens) {
+  console.log(`dropped as having nothing to model: ${capture.dropped_tokens.join(', ')}`);
+}
 console.log(`converted ${items.length} items`);
 const withWeapon = items.filter((i) => i.weapon).length;
 const withArmor = items.filter((i) => i.armor).length;
@@ -266,14 +342,13 @@ if (process.argv.includes('--write')) {
     process.exit(1);
   }
   const out = {
-    set: 'forever-new-epics',
+    set: SET,
     description:
-      `Every NEW epic weapon and armour piece at item level 55 and above in the ` +
-      `WoW: Forever beta client, build ${capture.build}, captured ${capture.build_date}. ` +
-      `REAL FOREVER DATA, unlike the Classic and Season of Discovery stand-ins in the ` +
-      `other files here. Converted by tools/import_forever_items.mjs from the capture ` +
-      `in tools/data/, which records its own SHA-256. The eight "Premier Emboldened" ` +
-      `upgrade seals are excluded: they carry no armour, stats or effects.`,
+      `${WHAT} in the WoW: Forever beta client, build ${capture.build}, captured ` +
+      `${capture.build_date}. REAL FOREVER DATA, unlike the Classic and Season of ` +
+      `Discovery stand-ins in the other files here. Converted by ` +
+      `tools/import_forever_items.mjs from the capture in tools/data/, which records ` +
+      `its own SHA-256.`,
     source: capture.source,
     foreverBuild: capture.build,
     classicBuild: capture.classic_build,
@@ -284,4 +359,5 @@ if (process.argv.includes('--write')) {
   console.log(`\nwrote ${OUT}`);
 } else {
   console.log('\n(dry run -- pass --write to update src/data/items/)');
+}
 }

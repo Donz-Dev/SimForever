@@ -366,7 +366,14 @@ a correct number becomes a wrong one with nobody touching it. Not acted on here
 — it is a separate job from itemization — but it is now a dated fact rather
 than a suspicion.
 
-## The answer, on 289 armour pieces
+## The answer, on 289 armour pieces — superseded
+
+**ALSO WRONG, AND FOR A DEEPER REASON THAN THE FIRST ONE.** This section's
+figures are right and its conclusion is not: it compared Forever's items
+against **100%**, and 100% is not a number this model reaches even on Classic
+gear. See **[The answer, with a control group](#the-answer-with-a-control-group)**.
+
+## The answer, on 289 armour pieces (figures kept)
 
 The 41 weapons were the wrong population to settle it on. The 449-item capture
 has **289 armour pieces at item level 65**, and they split cleanly:
@@ -397,6 +404,92 @@ Shoulder (n=15, +9.1), and both point the same way as the total.
 PvP sets' tight band. That is what individually designed items look like beside
 ones stamped from a handful of templates — the PvP sets are 30 pieces a slot
 built from 30 stat blocks.
+
+## The answer, with a control group
+
+The third attempt, and the first with a baseline that is not an assumption.
+
+`forever-changed-epics.json` holds the 653 Classic epics Forever altered — and
+**487 of them differ only in WORDING**. Classic's "Improves your chance to get
+a critical strike by 1%" is Forever's "+14 Critical Strike Rating": same stat,
+same value, different prose. Their stats *are* Classic's, so pricing them
+measures **Classic's own itemization through the same model**, on the same
+slots, at the same item levels, with the same blind spots.
+
+Clean armour — nothing the budget cannot price — at item level 65:
+
+| | n | mean | sd |
+| --- | --- | --- | --- |
+| **Classic's own epics** | 24 | **93.2%** | 9.4 |
+| **Forever new, not PvP** | 41 | **93.3%** | 11.2 |
+| Forever new, PvP | 66 | **87.0%** | 7.8 |
+
+**Classic and Forever's non-PvP gear agree to a tenth of a point.** There is no
+general Forever budget reduction. The ~7 points below 100% are the **model's**
+residual, and the only real effect in the data is a **PvP discount of about 6
+points** — which is what the ruleset owner suspected from the start.
+
+**"COMPARED AGAINST WHAT" WAS THE WHOLE QUESTION AND IT WENT UNASKED THROUGH
+TWO ROUNDS.** The figures were never wrong; treating a reconstruction's 100% as
+ground truth was. **A model needs a control before it needs more data**, and
+the control was one capture away the entire time.
+
+### Two things that make any such comparison meaningless if ignored
+
+- **An item with a proc reads low, and that is the model.** A proc, an on-use
+  or a set bonus costs budget nothing here can price. Classic epics *with* one
+  price at **90.0%** against **95.4%** for those without, and Classic gear is
+  full of them — so an unfiltered comparison measures how many procs each
+  population has. `isClean` is that filter.
+- **The populations have very different spreads.** sd 7.8 for the PvP sets
+  against 9.4–11.2 for everything else: 30 pieces a slot stamped from a handful
+  of stat blocks, against individually designed items.
+
+## Forever's rewrites confirm the rating table independently
+
+Where Forever replaced a Classic flat percentage with a rating, the ratio is
+exact, with **no variation at all**:
+
+| Line | Items | Rating per 1% |
+| --- | --- | --- |
+| Critical strike | 42 | **14.0** |
+| Critical strike *with spells* | 20 | **14.0** |
+| Hit | 18 | **10.0** |
+| Dodge | 3 | **12.0** |
+
+The owner's table arrived in one message; the client's own item data
+reproduces it exactly. **And it settles something the budget doc had flagged as
+assumed**: spell crit converts at the same 14, so **one Critical Strike Rating
+feeds both tables**. Classic has two item lines and Forever has one.
+
+## `critRating` was read by nothing, and Forever gear found it
+
+A latent bug, pre-existing and invisible until real ratings arrived.
+
+`critRating` was declared in `STAT_NAMES`, exported, documented, and priced by
+the stat-weight catalogue. Both places that build a crit slice —
+`game/combat/attackChances.ts` and the engine's `defaultAttackChances` — read
+`stats.critChance` **off the block**, so `critChanceFrom`, the one function
+that folds the rating in, **had no callers anywhere**. Two correct halves with
+nothing joining them, exactly how `armorPenetration` once shipped unread.
+
+**THE DIRECTION IS WHAT MADE IT FINDABLE.** Moving Don Julio's Band from
+`critChance: 1` to `critRating: 14` dropped thirteen profiles by about 1% DPS
+— and **all thirteen moved down**. The first explanation reached for was this
+engine's documented float-truncation hazard, which predicts a *symmetric*
+scatter. Thirteen negatives is not that.
+
+**THE FIX HAD THREE SITES.** The engine fallback, the ruleset's own provider,
+and `createPet`, which inherits the owner's crit and was reading the raw stat
+too. Fixing the first two left **BM Hunter at −1.2 and every other affected
+profile at 0.0** — a residual that names its own cause, BM being the one
+profile with a pet. A join missing in one place is worth grepping for in all.
+
+With all three fixed, 20 of 25 profiles reproduce to **0.0**, four move by
++0.1 to +0.6 (the truncation reordering, now genuinely the only cause left),
+and **Enh Shaman moves −8.7 for a real reason**: Forever changed The
+Unstoppable Force from 175–292 at 3.8s to 166–277 at 3.6s. Same DPS, faster
+weapon.
 
 ## The items are in the project's database now
 

@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import type { Equipment } from '../../src/game/items/Item';
 import {
   CRUSADER,
+  FOREVER_OVERRIDDEN_IDS,
   FOREVER_SPELL_POWER_BUFFS,
   ITEMS,
   ITEMS_BY_ID,
@@ -82,8 +83,33 @@ describe('the item data', () => {
     const PER_FILE = [19, 12, 13, 35, 20, 8, 27, 8, 9, 449];
     const total = PER_FILE.reduce((sum, count) => sum + count, 0);
     expect(total).toBe(600);
-    expect(ITEMS).toHaveLength(total);
-    expect(new Set(ITEMS.map((item) => item.id)).size).toBe(total);
+
+    /*
+     * THE CHANGED FILE IS AN OVERRIDE LAYER, so it adds its 653 items MINUS
+     * the three that replace a stand-in rather than joining it. Counting it as
+     * a plain eleventh file would be off by exactly the number of overrides,
+     * which is the one thing about this arrangement worth getting wrong.
+     */
+    expect(FOREVER_OVERRIDDEN_IDS).toEqual([19321, 19323, 19325]);
+    const expected = total + 653 - FOREVER_OVERRIDDEN_IDS.length;
+    expect(ITEMS).toHaveLength(expected);
+    expect(new Set(ITEMS.map((item) => item.id)).size).toBe(expected);
+  });
+
+  it('lets a Forever change override the Classic stand-in, not merge with it', () => {
+    /*
+     * ------------------------------------------------------------------------
+     * MERGED IS THE FAILURE THIS GUARDS. Classic's Don Julio's Band says
+     * "Improves your chance to get a critical strike by 1%" and Forever's says
+     * "+14 Critical Strike Rating" -- the SAME 1%, written two ways. An item
+     * carrying both lines would be worth 2%, and nothing about it would look
+     * wrong.
+     * ------------------------------------------------------------------------
+     */
+    const ring = ITEMS_BY_ID.get(19325)!;
+    expect(ring.stats.critRating).toBe(14);
+    expect(ring.stats.critChance ?? 0).toBe(0);
+    expect(ring.stats.hitChance).toBeCloseTo(1, 10);
   });
 
   /*
@@ -100,7 +126,15 @@ describe('the item data', () => {
     expect(shield.slots).toEqual(['shield']);
     expect(shield.stats.armor).toBe(2468);
     expect(shield.stats.stamina).toBe(15);
-    expect(shield.source).toContain('/forever/');
+    /*
+     * THE SOURCE MOVED, AND THAT IS THE POINT OF THE ASSERTION RATHER THAN A
+     * BREAKAGE. This shield was hand-transcribed from a Wowhead Forever
+     * tooltip and was the project's ONLY Forever item; it now comes from the
+     * client's own item data through `forever-changed-epics.json`, which
+     * overrides the stand-in. What stays true is that it is Forever data and
+     * says where it came from.
+     */
+    expect(shield.source).toMatch(/foreverchanges\.pro|\/forever\//);
 
     /*
      * BOTH LINES ARE BLOCK VALUE, and this test used to say otherwise.
@@ -149,7 +183,10 @@ describe('the item data', () => {
     const ring = ITEMS_BY_ID.get(19325);
     expect(ring?.stats).toMatchObject({
       stamina: 11,
-      critChance: 1,
+      // A RATING now: the Forever version of this ring says "+14 Critical
+      // Strike Rating" where Classic says "+1%", and 14 per point is the same
+      // 1%. `forever-changed-epics.json` overrides the Classic stand-in.
+      critRating: 14,
       hitChance: 1,
       attackPower: 16,
     });

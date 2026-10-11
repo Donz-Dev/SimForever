@@ -1,5 +1,5 @@
 import type { Ability, Combatant as CombatantType } from '../../engine';
-import { Combatant, seconds } from '../../engine';
+import { Combatant, critChanceFrom, seconds } from '../../engine';
 import { regenerationFor } from '../combat/resourceRules';
 import type { PetModifiers } from '../talents/talentBuild';
 import { NO_PET_MODIFIERS } from '../talents/talentBuild';
@@ -299,9 +299,20 @@ export function createPet(options: PetOptions): CombatantType {
        * "Pet Crit Chance = Agility / 20 + HunterCritChance", plus Ferocity on
        * top -- the talent is a further bonus and says so.
        */
+      /*
+       * THROUGH `critChanceFrom`, because the owner's crit can arrive as a
+       * RATING. Forever grants "+14 Critical Strike Rating" where Classic
+       * grants "+1% crit", and reading `stats.critChance` off the block sees
+       * the second and not the first -- so a Hunter wearing Forever gear would
+       * pass its pet less crit than it has, which is the same missing join the
+       * attack tables had and is worth about a point of DPS on BM.
+       *
+       * `critChanceFrom` returns a FRACTION, so it is multiplied back into the
+       * percentage POINTS every other term here is in.
+       */
       critChance:
         PET_BASE_AGILITY / PET_AGILITY_PER_CRIT +
-        stats.critChance * PET_CRIT_SHARE +
+        critChanceFrom(stats) * 100 * PET_CRIT_SHARE +
         talents.critBonus,
       strength: PET_BASE_STRENGTH,
       agility: PET_BASE_AGILITY,

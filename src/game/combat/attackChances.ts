@@ -8,7 +8,13 @@ import type {
   RollUnits,
   WeaponSlot,
 } from '../../engine';
-import { NO_CHANCES, ROLL_MAX, toRollUnits } from '../../engine';
+import {
+  NO_CHANCES,
+  ROLL_MAX,
+  critChanceFrom,
+  spellCritChanceFrom,
+  toRollUnits,
+} from '../../engine';
 
 /**
  * The World of Warcraft: Forever combat table numbers.
@@ -364,13 +370,37 @@ function buildChances(
    */
   const spellHit = toRollUnits(stats.hitChance);
 
+  /*
+   * ----------------------------------------------------------------------------
+   * THROUGH `critChanceFrom`, NOT OFF THE STAT, because Forever grants crit as a
+   * RATING and `critRating` is where it lands.
+   *
+   * These two lines read `stats.critChance` and `stats.spellCritChance`
+   * directly, and `critChanceFrom` -- the one function that folds the rating in
+   * -- HAD NO CALLERS ANYWHERE. So `critRating` was declared, exported,
+   * documented and read by nothing: two correct halves with nothing joining
+   * them, the shape `armorPenetration` was already caught by.
+   *
+   * It cost nothing while no gear granted a rating. The moment Forever items
+   * did, it was worth about 1% DPS on thirteen profiles -- and every one of
+   * them moved DOWN, which is what made it findable at all, because float noise
+   * is symmetric and a missing point of crit is not.
+   *
+   * ONE RATING FEEDS BOTH TABLES, which is a ruleset fact and not a
+   * convenience: Classic has separate "critical strike" and "critical strike
+   * with spells" item lines and Forever rewrote both into one Critical Strike
+   * Rating, at exactly 14 per point in each direction across 62 items that
+   * carry the pair.
+   * ----------------------------------------------------------------------------
+   */
   const crit = Math.max(
     0,
-    toRollUnits(stats.critChance) - critSuppression(source.level, target.level),
+    toRollUnits(critChanceFrom(stats) * 100) - critSuppression(source.level, target.level),
   );
   const spellCrit = Math.max(
     0,
-    toRollUnits(stats.spellCritChance) - critSuppression(source.level, target.level),
+    toRollUnits(spellCritChanceFrom(stats) * 100) -
+      critSuppression(source.level, target.level),
   );
 
   switch (kind) {

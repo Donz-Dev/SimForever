@@ -33,7 +33,9 @@ import {
   CLASSIC_FITTED_DPS_ILVL65,
   FOREVER_BUILD,
   FOREVER_CAPTURED_ON,
+  CLASSIC_CONTROL_ITEMS,
   FOREVER_ITEMS,
+  FOREVER_NEW_ITEMS,
   FOREVER_PHYSICAL_DPS_ILVL65,
   FOREVER_PVP_CLOTH,
   FOREVER_STAT_COST,
@@ -856,6 +858,19 @@ function priceForeverItem(item: ForeverRawItem): Pricing {
   };
 }
 
+/**
+ * An item the budget can see ENTIRELY.
+ *
+ * A proc, an on-use or a set bonus costs budget the model cannot price, so the
+ * item reads LOW through no fault of the ruleset -- and Classic epics are full
+ * of them. Mixing them into a mean is what made the first comparison of
+ * Forever against Classic meaningless.
+ */
+function isClean(item: ForeverRawItem): boolean {
+  const { unpriced, setBonuses } = priceableStats(item);
+  return unpriced.length === 0 && setBonuses === 0;
+}
+
 /** Mean, spread and count for a group, which is how every row below reads. */
 function foreverSummary(label: string, items: readonly ForeverRawItem[]): void {
   const priced = items
@@ -879,6 +894,13 @@ function foreverReport(): void {
   console.log(`${FOREVER_ITEMS.length} items, priced on CLASSIC costs`);
   console.log('');
 
+  console.log("THE CONTROL FIRST. These are CLASSIC's own epics, which Forever changed only");
+  console.log("in wording -- so their stats ARE Classic's, priced through the same model.");
+  console.log('Any shortfall here is the MODEL, not the ruleset.\n');
+  foreverSummary("CLASSIC's own epics (the control)", CLASSIC_CONTROL_ITEMS);
+  foreverSummary('  clean: nothing the budget cannot price', CLASSIC_CONTROL_ITEMS.filter(isClean));
+  console.log('');
+
   foreverSummary('all Forever items', FOREVER_ITEMS);
   foreverSummary('  the Premier PvP cloth', FOREVER_PVP_CLOTH);
   foreverSummary('  weapons', FOREVER_WEAPONS);
@@ -890,6 +912,14 @@ function foreverReport(): void {
     '  armour, not PvP',
     FOREVER_ITEMS.filter((i) => !i.weapon && !i.name.startsWith('Premier ')),
   );
+
+  console.log('');
+  console.log('APPLES TO APPLES -- clean armour only, item level 65, nothing unpriceable\n');
+  const at65 = (rows: readonly ForeverRawItem[]) =>
+    rows.filter((i) => !i.weapon && i.itemLevel === 65 && isClean(i));
+  foreverSummary("  CLASSIC's own epics", at65(CLASSIC_CONTROL_ITEMS));
+  foreverSummary('  FOREVER new, not PvP', at65(FOREVER_NEW_ITEMS).filter((i) => !i.name.startsWith('Premier ')));
+  foreverSummary('  FOREVER new, PvP', at65(FOREVER_NEW_ITEMS).filter((i) => i.name.startsWith('Premier ')));
 
   console.log('');
   console.log('by item level');
