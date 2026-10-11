@@ -1580,12 +1580,24 @@ The twelve that came before them, and which the rest of this section is about:
   Attack AND Ranged attack power for this consumable". It reaches the Food of
   the same name too, because the effect text is identical and treating two
   identical lines differently would need a reason.
+  **AND IT IS A GENERAL RULE NOW, NOT A CONSUMABLE ONE:** "Attack Power always
+  equals and reaches Melee & Ranged Attack Power. And Melee Attack Power NEVER
+  reaches Ranged Attack Power." So **164 item lines** that read bare "Attack
+  Power" grant both pools, where every one of them was melee-only. Worth
+  **+24.1 to BM Hunter and +29.2 to LW Ranged**; the other 21 profiles moved by
+  0.0, and LW Melee moved 0.0 because it fires nothing — only Hawk Melee's
+  summon picked up a trickle. The two lines that say "ranged Attack Power" keep
+  their own rule: ranged-only is still expressible, it is just not what the bare
+  words mean.
   **IT SHIPPED THE OTHER WAY FOR ONE REVIEW AND THE REASONING WAS SOUND**: every
-  ITEM line in the data reads bare "Attack Power" as `attackPower` and has a
+  ITEM line in the data read bare "Attack Power" as `attackPower` and had a
   separate rule for "ranged Attack Power", and the owner's one existing ruling
   the other way — Careful Aim — is about a TALENT, which a ruling covers what it
-  says and is not extended by analogy. **So an item's wording and a consumable's
-  are now known to mean different things, and neither settles the other.**
+  says and is not extended by analogy. **That conclusion — "an item's wording and
+  a consumable's mean different things, and neither settles the other" — was
+  right on the evidence and has been SUPERSEDED by the general ruling above.**
+  Waiting still beat guessing: the answer, when it came, covered every line in
+  one sentence rather than one line at a time.
   Waiting was still right: the price of asking was one review, and the price of
   guessing would have been two Hunter profiles carrying an elixir worth nothing
   with nobody to notice.

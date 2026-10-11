@@ -103,8 +103,17 @@ describe('the item data', () => {
     expect(FOREVER_OVERRIDDEN_IDS).toEqual([19321, 19323, 19325]);
     const expected = sum(STAND_INS) + sum(FOREVER) - FOREVER_OVERRIDDEN_IDS.length;
     expect(expected).toBe(1821);
-    expect(ITEMS).toHaveLength(expected);
-    expect(new Set(ITEMS.map((item) => item.id)).size).toBe(expected);
+
+    /*
+     * CAPTURED ITEMS ONLY. `ITEMS` also carries the synthetic benchmark gear,
+     * which is generated rather than captured and lives above 9,500,000 -- so
+     * counting the whole list would make this assertion about the generator
+     * instead of about the files, and it would move every time a template
+     * changed. `benchmarkGear.test.ts` owns the other half.
+     */
+    const captured = ITEMS.filter((item) => item.id < 9_500_000);
+    expect(captured).toHaveLength(expected);
+    expect(new Set(captured.map((item) => item.id)).size).toBe(expected);
   });
 
   it('lets a Forever change override the Classic stand-in, not merge with it', () => {
