@@ -3490,6 +3490,30 @@ model**: if the fitted crit cost of 16 or a slot multiplier is wrong, this is
 where it shows up. The source's 0.67 and the footnote's 1.0 BRACKET it, and
 the sourced era-correct 1.0 is the default.
 
+**AND THE SAME METHOD ANSWERED THE SPELL POWER QUESTION WITHOUT A FOURTH WRONG
+ANSWER, WHICH IS THE POINT OF HAVING IT.** Asked whether Forever devalued spell
+power to fit more on an item, the control separates "the model's cost is wrong"
+from "Forever changed it": items carrying spell power run over budget by
+**+2.5 +/- 2.0 in CLASSIC's own gear** and +4.4 +/- 2.4 in Forever's non-PvP
+gear, so the transcribed 0.86 is a little high for this era REGARDLESS of
+ruleset. **Forever's premium over Classic is +1.9 +/- 3.1, which is 0.6
+sigma** -- suspicion directionally right about the cost, not supported as a
+Forever-specific change. Best fit against the control is **0.783**.
+
+**AND THE CLASSIFICATION NEARLY REPEATED THE MISTAKE IT WAS TESTING.** The
+first cut split "caster" from "physical" by spell power's SHARE of budget --
+which moves with the stamina cost -- so the categories depended on the
+parameter under test and the stamina-heavy PvP sets kept crossing the
+threshold. Classifying by whether the item carries ANY spell power is
+parameter-free. **A test whose GROUPS depend on the thing being tested is not a
+test.**
+
+**A FIT WILL ALWAYS BLAME THE PARAMETER YOU LET IT MOVE**, which is why the PvP
+row comes back wanting spell power at 0.361: spell power is a small share of
+those items, so the fit drives it absurdly low trying to pull a STAMINA-heavy
+population down. Read a best-fit figure beside the share of budget the stat
+actually commands, or it is answering a different question.
+
 **NO CONCLUSION RESTING ON LESS THAN ABOUT TEN POINTS OF BUDGET IS SAFE HERE,
 AND THREE ANSWERS IN A ROW RESTED ON SIX.** "Not PvP-specific" (two items),
 "11 points general plus 5 PvP" (no baseline), "PvP only, about 6" (this). Each

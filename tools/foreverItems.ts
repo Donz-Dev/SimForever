@@ -122,9 +122,33 @@ export const FOREVER_STAT_COST: Readonly<Record<string, number>> = {
   Armor: 0.1,
   'Attack Power': 0.5,
   'Ranged Attack Power': 0.4,
-  'Spell Power': 0.86,
-  'Spell Damage': 0.86,
-  Healing: 0.45,
+  /**
+   * THE SPELL POWER FAMILY, SCALED TOGETHER BY `SPELLPOWER=`.
+   *
+   * --------------------------------------------------------------------------
+   * 0.86 school-blind, 0.70 for one school, 0.45 for healing -- all three
+   * transcribed, and all three apparently a little HIGH for this era. An item
+   * carrying spell power runs over budget relative to one that does not, and
+   * **it does so in CLASSIC's own gear too**: +2.5 +/- 2.0 points for the
+   * control against +4.4 +/- 2.4 for Forever's non-PvP items.
+   *
+   * Best fit against the control is **0.783** school-blind, about 9% under the
+   * transcribed figure.
+   *
+   * WHETHER FOREVER DEVALUED IT FURTHER IS NOT SUPPORTED BY THE NON-PvP DATA:
+   * the premium over Classic is **+1.9 +/- 3.1, which is 0.6 sigma**. The PvP
+   * sets show +6.4 +/- 3.1 (2.1 sigma) and are the population most sensitive to
+   * the stamina cost, so that one is suggestive and confounded rather than a
+   * finding.
+   *
+   * SCALED AS A FAMILY and not individually, because fitting three costs to one
+   * residual would be three free parameters chasing one number -- which is the
+   * trap `STAMINA` already documents one level up.
+   * --------------------------------------------------------------------------
+   */
+  'Spell Power': 0.86 * Number(process.env.SPELLPOWER ?? 1),
+  'Spell Damage': 0.86 * Number(process.env.SPELLPOWER ?? 1),
+  Healing: 0.45 * Number(process.env.SPELLPOWER ?? 1),
   'Mana Regeneration': 2.5,
   'Critical Strike Rating': 1,
   'Hit Rating': 1,

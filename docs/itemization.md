@@ -523,6 +523,73 @@ costs one command:
 STAMINA=0.67 FOREVER=1 npx vite-node tools/item_budget.ts
 ```
 
+## Is spell power devalued in Forever?
+
+The ruleset owner's suspicion: Forever shaved spell power's cost so more of it
+fits on an item. **The control group can separate that from the model being
+wrong**, which is two different claims:
+
+- **A — the model's cost is wrong for this era.** Then CLASSIC's own items want
+  a lower cost too.
+- **B — Forever devalued it.** Then Classic's items are fine at 0.86 and only
+  Forever's want less.
+
+Stamina fixed at 1.0 throughout, per the owner's ruling. Items are classified
+by whether they carry **any** spell power — not by its share, which moves with
+the stamina cost and would make the classification depend on the thing under
+test.
+
+| | with spell power | without | difference |
+| --- | --- | --- | --- |
+| **Classic's own** (control) | 103.9% ±0.9 (n=101) | 101.5% ±1.8 (n=74) | **+2.5 ±2.0** |
+| Forever new, not PvP | 105.2% ±2.3 (n=48) | 100.8% ±0.7 (n=33) | **+4.4 ±2.4** |
+| Forever new, PvP | 110.7% ±2.3 (n=42) | 101.8% ±0.3 (n=24) | **+8.9 ±2.3** |
+
+### The answer is mostly A, and B is not supported on the non-PvP data
+
+**Yes, the over-budget items are disproportionately the spell-power ones** —
+and that is true in **Classic's own gear too**, by +2.5 points. So the
+transcribed 0.86 is a little high for this era regardless of ruleset.
+
+**Forever's premium over Classic is +1.9 ±3.1 on non-PvP items — 0.6 sigma.**
+That is not a finding. The PvP sets show **+6.4 ±3.1 (2.1 sigma)**, which is
+suggestive, but the PvP population is exactly the one shown above to be most
+sensitive to the stamina cost, so it is confounded rather than evidence.
+
+### What the value would be
+
+Best fit, items carrying spell power:
+
+| | school-blind | one school | healing |
+| --- | --- | --- | --- |
+| **Classic's own** (the calibration target) | **0.783** | 0.637 | 0.410 |
+| Forever new, not PvP | 0.731 | 0.595 | 0.383 |
+| *Forever new, PvP* | *0.361* | *0.294* | *0.189* |
+
+**0.783 against the transcribed 0.86 — about 9% cheaper.** Forever's non-PvP
+figure is 0.731, within ~7% of that and inside the uncertainty.
+
+**THE PvP ROW IS AN ARTEFACT AND IS ITALICISED FOR IT.** 0.361 is the fit
+dragging one cost absurdly low to pull a stamina-heavy population down from
+107.5%, because spell power is a small share of those items and barely moves
+them. **A fit will always blame the parameter you let it move**, which is the
+same trap as stamina, one parameter along.
+
+### Two caveats that matter more than the numbers
+
+- **Lowering spell power cannot fix everything, and that is informative.** At
+  stamina 1.0 the items WITHOUT any spell power still sit at 101.5%, and no
+  spell-power cost touches them. So there are two effects: a general ~1.5-point
+  residual, and ~2.5 points more on spell-power items.
+- **This is the second parameter fitted to one residual.** Stamina was the
+  first. Each fit absorbs every other error in the model, so "0.783" means
+  "what spell power wants to be given everything else here", not a claim about
+  the ruleset.
+
+```bash
+SPELLPOWER=0.91 STAMINA=1.0 FOREVER=1 npx vite-node tools/item_budget.ts
+```
+
 ## Forever's rewrites confirm the rating table independently
 
 Where Forever replaced a Classic flat percentage with a rating, the ratio is
