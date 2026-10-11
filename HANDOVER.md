@@ -13,6 +13,7 @@ the tooling to be a bit more sophisticated as well."
 | 2 | **DW Fury** food: +40 Attack Power -> +20 Strength | 988.5 -> **989.6** (**+1.2**) | **753.7** |
 | 3 | **Prot Warr** list: four moves, the owner's order | 471.5 -> 471.1 (**-0.4**), deaths 6.17 -> 6.18 | 753.7 |
 | 3 | **Prot Warr** food: +40 Attack Power -> **+20 Stamina** | **deaths 6.17 -> 5.93**, at -5.0 DPS | **753.6** |
+| 4 | **Hack and Slash** is global across BOTH HANDS -- a TALENT fix, before the Rogue lists | Combat 776.2 -> **808.7** (**+32.5 REAL**) | **754.9** |
 
 **AND MORE ROWS CAN BE ADDED, WHICH IS THE POINT OF ITS BEING A TABLE** --
 there are twenty-two lists left and the owner has said so. **THE HEADER IS
@@ -23,6 +24,90 @@ ARMS IS RESPECIFIED" for exactly one round.
 **AND THE THIRD ROUND IS THE FIRST WHOSE RIGHT-HAND COLUMN IS NOT A DPS
 FIGURE**, which is the whole of what a tank round is: a Protection warrior's
 figure of merit is a DEATH COUNT, and both of its changes are read there.
+
+**THE FOURTH IS NOT A LIST AT ALL**, and that is worth a row rather than a
+footnote: the owner asked for the Rogue next and named a TALENT that had to be
+fixed first. **It was the largest single figure of the four rounds.**
+
+## Round four: Hack and Slash, a five-point talent worth nothing
+
+**THE OWNER'S RULING:** "these are global effects ... if you have a MH mace, and
+an off hand Dagger/Fist the off hand gives a global 5% crit chance to
+everything, and the mace gives a global 15% armor pen to everything."
+
+**IT WAS MAIN-HAND-ONLY, AND THE COMBAT ROGUE HOLDS A SWORD AND A DAGGER.** The
+sword earned the extra attack; the dagger's 5% crit was dropped, because the
+only hand the clause asked about was the sword's. Measured before the fix, 5/5
+against 0/5 on that preset: **27.88% crit against 27.88%**. Worth **+32.5 DPS**,
+and **24 of 25 rows moved 0.0 to the decimal** -- the sharpest containment check
+available, because the change is keyed on holding a qualifying weapon in the
+OFF hand and exactly one preset does.
+
+### Three reasons nothing caught it, and they are three different shapes
+
+| | |
+| --- | --- |
+| **the fixture** | `rogueTalents.test.ts` drives the talent with `holding('dagger')` -- a main hand and NO off hand -- so every case in it is a hand combination where both readings give the same answer |
+| **the comment** | it said "ONLY THE COMBAT PROFILE TAKES THIS, and it holds two swords", which stopped being true when the presets moved into the benchmark gear. Two swords is again a character for whom both readings agree |
+| **the census** | the talent reported itself FULLY MODELLED. Its three clauses are all declared and two of them were correctly inert for the weapons it thought the character held |
+
+**A FIXTURE THAT CANNOT EXPRESS THE MISTAKE PROVES NOTHING ABOUT IT**, which is
+the stock Warlock list's lesson in another file -- and here the COMMENT
+described exactly the character the fixture did, so a reader checking either
+would have found nothing wrong.
+
+### Two thirds of the ruling were already right, and are now pinned
+
+**THE EXTRA ATTACK** is the owner's stated exception -- "it can only proc when
+you use that weapon and it always triggers a MH swing regardless of weapon
+type" -- and was already gated inside the reaction on the weapon that SWUNG.
+Both worked examples are asserted in both directions now, **with the roll
+FORCED so one use is decisive**: a 5% chance over a sample answers "how often",
+and the question is "can it at all".
+
+**ARMOR PENETRATION IS ALREADY A PERCENTAGE OF WHAT IS LEFT.** Every armor
+debuff is a flat stat modifier on the DEFENDER and `penetratedArmor` reads the
+defender's stat, so the ordering the owner described holds BY CONSTRUCTION. The
+worked example is transcribed as a test -- 3500 -> 1000 by debuffs -> **850** --
+because "it already works" was a claim about the code that nothing was
+checking, and a change that penetrated a BASE figure would reproduce every
+earlier test while quietly inflating every armor debuff.
+
+### `meets()` takes the context now, and the reason is a bug it caused
+
+The off hand was **already on `TalentBuildContext`** and simply never reached
+the requirement check: seven call sites each passed `context.mainHand` by hand,
+and none of them could have passed the other one. One object cannot be passed
+in the wrong order.
+
+**AND FIVE ARGUMENTS OF WHICH THREE WERE OPTIONAL IS A SHAPE THAT ACCEPTS A
+WRONG CALL SILENTLY.** A probe written while investigating this talent called
+`weaponsFor(class, style, equipment)` against a signature of
+`(equipment, style, multiplier)`, got the PLACEHOLDER weapons back, and briefly
+"found" that every Rogue preset holds an untyped weapon -- which would have been
+a far larger bug than the real one. It typechecked, because the first parameter
+is an object either way.
+
+### The ruling that was NOT extended, and the one that expired next door
+
+**TWO DAGGERS ARE 5% AND NOT 10%.** "Global" is not "per weapon", and the
+doubling reading is the generous one. No preset holds two of a kind that
+matter, so nothing turns on it -- pinned and flagged for the owner rather than
+assumed.
+
+**THE WARRIOR'S WEAPONMASTER IS THIS TALENT WITH THE FAMILIES PERMUTED**, and
+its `unmodelled` reason claimed its two clauses "read the MAIN HAND only" **as
+though that were a property of the engine**. It was a property of
+`BuildRequirement`, so the reason expired ACROSS A CLASS BOUNDARY with nothing
+in its own file changing -- the kind this project keeps missing. It names the
+RULING it is waiting on now rather than a capability, which is what gets one
+asked.
+
+**AND IT ALSO CLAIMED EVERY WARRIOR GEAR SET HOLDS A SWORD.** 2H Arms and DW
+Fury hold AXES since the benchmark gear landed, so Weaponmaster's axe/polearm
+crit clause is **live on 2H Arms** rather than unreachable. 2H Arms is the only
+Warrior taking it and holds a two-hander, so the either-hand question moves no
+figure there today.
 
 ## Round three: Prot Warr, where the DPS row is the wrong measure
 
@@ -353,10 +438,17 @@ as an accident.
 ## What is left
 
 - **TWENTY-TWO LISTS**, which is the rest of the ask. 2H Arms was the first,
-  DW Fury the second, Prot Warr the third. **Re-count this against the table at
-  the top of this section rather than decrementing it** -- which is the rule
-  this file applies to every other derived figure, and the two places are a
-  commit apart.
+  DW Fury the second, Prot Warr the third; round four was a TALENT rather than
+  a list, so the count did not move. **Re-count this against the table at the
+  top of this section rather than decrementing it** -- which is the rule this
+  file applies to every other derived figure, and the two places are a commit
+  apart.
+- **WHETHER WEAPONMASTER READS THE SAME WAY AS HACK AND SLASH**, which is a
+  question for the owner and not an engine gap: the capability exists and the
+  reason on the talent names it. It moves no figure today.
+- **WHETHER TWO QUALIFYING WEAPONS PAY A CLAUSE TWICE.** Implemented as once,
+  which is the conservative reading of "global"; no preset can tell the
+  difference.
 - **THE MID-FIGHT CONSUMABLE'S POSITION IN A TANK LIST IS A POLICY, NOT A
   MEASURED GAIN.** The owner moved it off the bottom and it was already firing
   1.00 times a fight there, because a two minute cooldown in a sixty second
@@ -3084,7 +3176,7 @@ demonstrated at the top. **Re-count rather than re-reading the sentence.**
 | --- | --- |
 | **Talents** | 260 fully, 39 partly, 105 ruled out, **62 a live gap**, out of **466** -- from 132 before the class dives |
 | **Abilities** | 114 declared against 478 captured |
-| **Profiles** | **25**, all measured, **mean 753.6** on FOREVER'S OWN ITEMS -- every earlier figure in this file was measured on Classic and Season of Discovery stand-ins, so the contributions below belong to that gear and not to this mean: the armour enchants were +27.0 of it, the pre-pull consumables +105.9, the racials **+9.8 at round one**, the MID-FIGHT consumables **+17.7** and the Life Tap gate **+3.5** |
+| **Profiles** | **25**, all measured, **mean 754.9** on FOREVER'S OWN ITEMS -- every earlier figure in this file was measured on Classic and Season of Discovery stand-ins, so the contributions below belong to that gear and not to this mean: the armour enchants were +27.0 of it, the pre-pull consumables +105.9, the racials **+9.8 at round one**, the MID-FIGHT consumables **+17.7** and the Life Tap gate **+3.5** |
 | **Racials** | **10 races, 40 traits**: 15 do something, 20 effects ruled out, 11 a live gap |
 | **Scope rulings** | **9 members**, all the owner's, carrying 129 TALENT entries and 19 racial declarations |
 | **Placeholders** | **11 declared** -- see the milestone table, and count DECLARATIONS. **One of the eleven is not a ruleset number**: `PLACEHOLDER_PREFERRED_WEIGHT` is the Gear panel's stat-sorting weight, which no simulation reads, so it can sort a list badly and cannot move a figure |
@@ -4801,12 +4893,12 @@ cannot audit, which is why the check is a SET comparison and not a row count.
 | BM Hunter | Hunter | 31/20/0 | 856.2 | | Venom Rogue | Rogue | 37/12/2 | 684.9 |
 | 2H Arms | Warrior | 39/10/2 | 849.7 | | Rupture Rogue | Rogue | 12/8/31 | 659.0 |
 | Frostfire Mage | Mage | 0/29/22 | 837.0 | | Ele Shaman | Shaman | 38/13/0 | 651.4 |
-| LW Melee | Hunter | 7/13/31 | 831.5 | | **Prot Warr** | Warrior | 17/0/34 | **469.7** |
+| LW Melee | Hunter | 7/13/31 | 831.5 | | Prot Warr | Warrior | 17/0/34 | 469.7 |
 | Seal Twist Ret | Paladin | 15/0/36 | 816.5 | | Prot Pally | Paladin | 8/34/9 | 400.6 |
-| Moonkin | Druid | 38/0/13 | 788.4 | | Bear Druid | Druid | 9/42/0 | 395.7 |
-| Combat Rogue | Rogue | 18/33/0 | 776.2 | | | | | | |
+| **Combat Rogue** | Rogue | 18/33/0 | **808.7** | | Bear Druid | Druid | 9/42/0 | 395.7 |
+| Moonkin | Druid | 38/0/13 | 788.4 | | | | | | |
 
-The mean across **25** is **753.6**, RE-SUMMED FROM THE ROWS ABOVE rather than
+The mean across **25** is **754.9**, RE-SUMMED FROM THE ROWS ABOVE rather than
 adjusted, by `tools/update_baseline_table.py`.
 
 **THE TOP IS DW FURY AT 974.3 +/-10.3, AND LW RANGED IS SECOND AT 888.9
