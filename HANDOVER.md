@@ -29,6 +29,11 @@ the tooling to be a bit more sophisticated as well."
 | 8 | **Moonkin** -- list only: the potion opens it, Starfire's Eclipse gate 2 -> 3 | 788.4 -> 785.9 (**-2.5**) | 768.0 |
 | 8 | **Cat Druid** -- Frenzy Potion held for Berserk, Strength food, four list changes | 859.0 -> **892.7** (**+33.6 REAL**) | 768.0 |
 | 8 | **Bear Druid** -- Stamina food, and the Mighty Rage Potion off the bottom | **deaths 10.00 -> 9.98**, at -9.6 DPS | **768.0** |
+| 9 | **Seal Twist Ret** -- +150 Spell Power flask and +33 Spell Power food | 816.5 -> **876.4** (**+59.9 REAL**) | 774.2 |
+| 9 | **Shockadin** -- the same pair, on the build that is 74% Holy | 714.4 -> **787.7** (**+73.3 REAL**) | 774.2 |
+| 9 | **Prot Pally** -- the food, a respecified list, and SWIFT JUDGEMENT off the GCD | 400.6 -> **434.5** (**+33.9 REAL**), deaths 9.40 -> 9.37 | 774.2 |
+| 9 | **LW Ranged** and **LW Melee** -- 5/39/7 and 5/13/33 | **0.0 to the decimal on both**, and correctly so | 774.2 |
+| 9 | **Warlock** -- a CHOOSER for the sacrificed demon, and the 15% confirmed | **no figure moved**; 24 of 27 rows 0.0 to the decimal | **774.2** |
 
 **AND MORE ROWS CAN BE ADDED, WHICH IS THE POINT OF ITS BEING A TABLE** --
 there are fifteen lists left and the owner has said so. **THE HEADER IS
@@ -43,6 +48,120 @@ figure of merit is a DEATH COUNT, and both of its changes are read there.
 **THE FOURTH IS NOT A LIST AT ALL**, and that is worth a row rather than a
 footnote: the owner asked for the Rogue next and named a TALENT that had to be
 fixed first. **It was the largest single figure of the four rounds.**
+
+## Round nine: where a CONSUMABLE beat every list change in the series
+
+**THE TWO BIGGEST FIGURES IN NINE ROUNDS ARE A FLASK AND A PIECE OF FOOD.**
+Seal Twist Ret **+59.9** and the Shockadin **+73.3**, and 24 of 27 rows are 0.0
+to the decimal.
+
+| | what moved | the half that did it |
+| --- | --- | --- |
+| Seal Twist Ret | 816.5 -> **876.4** | the consumables, **+56.4** of it; it got no list change at all |
+| Shockadin | 714.4 -> **787.7** | the consumables, **+71.8** |
+| Prot Pally | 400.6 -> **434.5** | the LIST, **+26.5** -- its food is +2.4, inside the interval |
+
+### The decomposition, because three changes landed on one profile
+
+Measured by reverting each half in a worktree, 20 seeds each, against the same
+round-eight baseline:
+
+| | consumables alone | list + GCD alone | measured total |
+| --- | --- | --- | --- |
+| Seal Twist Ret | **+56.4** | -3.4 (noise, and it has no list change) | +59.9 |
+| Shockadin | **+71.8** | -1.5 (noise, same) | +73.3 |
+| Prot Pally | +2.4 (noise) | **+26.5** | +33.9 |
+
+**AND THE SWIFT JUDGEMENT RULING IS +5.4 OF THAT 26.5**, measured on its own --
+borderline against its own +/-4.9 interval, which is about what taking a global
+cooldown off a once-a-fight ability should be worth. The owner asked for it as
+a correctness fix rather than a tune, and that is what the figure says it is.
+
+**MARGINAL VALUES DO NOT SUM, which these illustrate rather than violate**: the
+two halves of Prot Pally's row come to 28.9 against a measured 33.9, because
+each was measured with the other absent.
+
+### Why a flask was worth more than any list
+
+**+1200 Hit Points -> +150 Spell Power on a build that is never attacked.** The
+hit points reach a pool nothing touches; the spell power reaches 54% of Seal
+Twist Ret's damage and **74% of the Shockadin's**, which is the highest Holy
+share of the four hybrid builds and is why it is the bigger figure.
+
+**THE PROTECTION PALADIN WAS GIVEN THE FOOD AND NOT THE FLASK**, and that
+asymmetry is the owner's. It is the one of the four that is HIT BACK, so +1200
+Hit Points is worth something there that it is worth nowhere else in the row --
+recorded as the likely reason and not acted on, because a ruling covers what it
+says. **Its food is +2.4, which is noise**, so the row is the list's.
+
+**AND IT MAKES THREE OF `hybridConsumables`' FOUR BUILDS RULED ON, HOLDING TWO
+DIFFERENT ANSWERS**, so the shared row cannot be edited -- the same arithmetic
+that settled `STRENGTH_CONSUMABLES`, reached one category along. The Enhancement
+Shaman is the remainder and is what the row still supplies.
+
+### Three changes that moved nothing, and all three are correct
+
+**SAID PLAINLY BECAUSE A 0.0 IS THIS PROJECT'S OWN TELL FOR A PATCH THAT DID NOT
+APPLY.** Each of these was predicted to be worth nothing BEFORE it was measured,
+which is what makes the zero evidence rather than an absence of it.
+
+- **Both Lone Wolf Hunters**, respecified to 5/39/7 and 5/13/33. Both move the
+  same two points out of **Focused Fire**, which has never paid them: "+2% while
+  your pet is active", and `bringsPet` is exactly `lone_wolf === 0`. They land
+  on **Survivalist** (health, on a build nothing attacks) and **Survivalist's
+  Discipline** (a PERCENTAGE cooldown reduction, which `abilityCooldown` cannot
+  express). **Only the second reason expires** -- it is a live gap arriving in a
+  profile, and the day somebody gives `abilityCooldown` a fractional form this
+  build gains two points of real effect with nobody touching it.
+- **The demon chooser**, which is a UI control and should move nothing. Both
+  Warlock rows are 0.0, which is the containment check a panel change gets.
+- **The Prot Paladin's death count**, 9.40 -> 9.37. Its DPS row moved +33.9 and
+  its figure of merit did not, which is the right way round for a change that
+  was about what the list CASTS rather than about what it survives.
+
+### And the 15% was confirmed rather than assumed
+
+The owner's second ask: "ensure that this 15% shadow damage bonus is being
+applied". Measured per ability against the same build with no demon chosen:
+
+| | x1.1500 | x1.0000 |
+| --- | --- | --- |
+| **SM/DS (Imp)** | Wrack, Corruption, Bane of Agony, Siphon Life, Shadow Bolt | Touch of the Grave |
+| **Firelock (Succubus)** | Incinerate, Immolate, Conflagrate | **Shadowburn**, Touch of the Grave |
+
+**SHADOWBURN AT x1.0000 IS THE RESULT, not a gap**: it is a Shadow spell on a
+Fire build, so a whole-character reading would have raised it -- which is the
+exact mistake that cost this profile 55.3 DPS before `damageDoneBySchool` landed
+on `AuraDefinition`.
+
+**AND TOUCH OF THE GRAVE IS THE ROW THAT LOOKS LIKE A MISS AND IS A RULING.** It
+is Shadow and it declares `ignoresAttackerDamageScaling`, because the owner's
+text is "only scales off your hit points" -- so the CASTER'S Shadow Mastery,
+Shadow Weaving and this sacrifice all stop at it while a debuff on the TARGET
+still raises it. Pinned by name in `demonicSacrifice.test.ts` so a reader
+checking "all Shadow went up 15%" does not file it as a defect.
+
+**ASSERTED END TO END AND NOT ON THE CONSTANT**, which is the Adrenaline Rush
+lesson: `DEMONIC_SACRIFICE_DAMAGE` has read 1.15 since the aura was written, and
+a constant check cannot see an aura that is applied, reports its uptime and is
+read by nothing.
+
+### The control nobody could reach
+
+**`petFamily` HAD NO UI ANYWHERE.** It was settable by a preset or by hand-editing
+a saved file and by nothing else -- which is how it went missing from
+`validateProfile`'s field-by-field rebuild and cost both Warlock presets 15% of
+a school on load, in silence. The Talent panel has a chooser now, shown when a
+Warlock has taken Demonic Sacrifice.
+
+**A RADIO GROUP AND NOT FOUR CHECKBOXES**, which is the owner's word read
+against the field: `petFamily` holds ONE id, so four independent boxes would let
+somebody tick two and the profile could not hold the answer. Same structural
+argument the consumable selection makes about one choice per category.
+
+**AND NOTHING IS PRE-SELECTED.** An absent field gets no buff rather than a
+default one, so a chooser that opened on the Imp would claim a choice the file
+does not contain.
 
 ## Round eight: seven profiles at once, and the first round with a LOSS in it
 
@@ -3414,7 +3533,7 @@ demonstrated at the top. **Re-count rather than re-reading the sentence.**
 | --- | --- |
 | **Talents** | 260 fully, 39 partly, 105 ruled out, **62 a live gap**, out of **466** -- from 132 before the class dives |
 | **Abilities** | 114 declared against 478 captured |
-| **Profiles** | **27**, all measured, **mean 768.0** on FOREVER'S OWN ITEMS -- Combat Mut is the first profile ADDED rather than measured, and the count had been 25 since the gear swap -- every earlier figure in this file was measured on Classic and Season of Discovery stand-ins, so the contributions below belong to that gear and not to this mean: the armour enchants were +27.0 of it, the pre-pull consumables +105.9, the racials **+9.8 at round one**, the MID-FIGHT consumables **+17.7** and the Life Tap gate **+3.5** |
+| **Profiles** | **27**, all measured, **mean 774.2** on FOREVER'S OWN ITEMS -- Combat Mut is the first profile ADDED rather than measured, and the count had been 25 since the gear swap -- every earlier figure in this file was measured on Classic and Season of Discovery stand-ins, so the contributions below belong to that gear and not to this mean: the armour enchants were +27.0 of it, the pre-pull consumables +105.9, the racials **+9.8 at round one**, the MID-FIGHT consumables **+17.7** and the Life Tap gate **+3.5** |
 | **Racials** | **10 races, 40 traits**: 15 do something, 20 effects ruled out, 11 a live gap |
 | **Scope rulings** | **9 members**, all the owner's, carrying 129 TALENT entries and 19 racial declarations |
 | **Placeholders** | **11 declared** -- see the milestone table, and count DECLARATIONS. **One of the eleven is not a ruleset number**: `PLACEHOLDER_PREFERRED_WEIGHT` is the Gear panel's stat-sorting weight, which no simulation reads, so it can sort a list badly and cannot move a figure |
@@ -5122,22 +5241,22 @@ cannot audit, which is why the check is a SET comparison and not a row count.
 
 | Profile | Class | Talents | DPS | | Profile | Class | Talents | DPS |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| DW Fury | Warrior | 17/34/0 | 989.6 | | Hemo Dagger | Rogue | 17/3/31 | 787.0 |
-| LW Ranged | Hunter | 7/39/5 | 912.5 | | Moonkin | Druid | 38/0/13 | 785.9 |
-| Cat Druid | Druid | 9/34/8 | 892.7 | | Shadow Priest | Priest | 13/3/35 | 774.7 |
-| Firelock | Warlock | 5/11/35 | 891.4 | | Enh Shaman | Shaman | 17/34/0 | 750.7 |
-| Hawk Melee | Hunter | 16/11/24 | 883.0 | | Pure Hemo | Rogue | 21/8/22 | 723.5 |
+| DW Fury | Warrior | 17/34/0 | 989.6 | | Shockadin | Paladin | 23/0/28 | 787.7 |
+| LW Ranged | Hunter | 7/39/5 | 912.5 | | Hemo Dagger | Rogue | 17/3/31 | 787.0 |
+| Cat Druid | Druid | 9/34/8 | 892.7 | | Moonkin | Druid | 38/0/13 | 785.9 |
+| Firelock | Warlock | 5/11/35 | 891.4 | | Shadow Priest | Priest | 13/3/35 | 774.7 |
+| Hawk Melee | Hunter | 16/11/24 | 883.0 | | Enh Shaman | Shaman | 17/34/0 | 750.7 |
+| Seal Twist Ret | Paladin | 15/0/36 | 876.4 | | Pure Hemo | Rogue | 21/8/22 | 723.5 |
 | Arcane Mage | Mage | 47/4/0 | 866.8 | | SM/DS | Warlock | 40/11/0 | 722.4 |
 | Frostfire Mage | Mage | 0/29/22 | 863.3 | | Rupture Rogue | Rogue | 12/8/31 | 719.4 |
 | BM Hunter | Hunter | 31/20/0 | 856.2 | | Venom Rogue | Rogue | 37/12/2 | 718.9 |
-| 2H Arms | Warrior | 39/10/2 | 849.7 | | Shockadin | Paladin | 23/0/28 | 714.4 |
-| Fire Mage | Mage | 10/39/2 | 843.7 | | Ele Shaman | Shaman | 38/13/0 | 671.1 |
-| LW Melee | Hunter | 7/13/31 | 831.5 | | Prot Warr | Warrior | 17/0/34 | 469.7 |
-| Combat Rogue | Rogue | 18/33/0 | 824.1 | | Prot Pally | Paladin | 8/34/9 | 400.6 |
-| Seal Twist Ret | Paladin | 15/0/36 | 816.5 | | Bear Druid | Druid | 9/42/0 | 386.1 |
+| 2H Arms | Warrior | 39/10/2 | 849.7 | | Ele Shaman | Shaman | 38/13/0 | 671.1 |
+| Fire Mage | Mage | 10/39/2 | 843.7 | | Prot Warr | Warrior | 17/0/34 | 469.7 |
+| LW Melee | Hunter | 7/13/31 | 831.5 | | Prot Pally | Paladin | 8/34/9 | 434.5 |
+| Combat Rogue | Rogue | 18/33/0 | 824.1 | | Bear Druid | Druid | 9/42/0 | 386.1 |
 | Combat Mut | Rogue | 30/21/0 | 790.6 | | | | | | |
 
-The mean across **27** is **768.0**, RE-SUMMED FROM THE ROWS ABOVE rather than
+The mean across **27** is **774.2**, RE-SUMMED FROM THE ROWS ABOVE rather than
 adjusted, by `tools/update_baseline_table.py`.
 
 **THE TOP IS DW FURY AT 974.3 +/-10.3, AND LW RANGED IS SECOND AT 888.9
