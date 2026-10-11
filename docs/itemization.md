@@ -650,6 +650,41 @@ purchases. Dropping the paired spell damage:
 `HEALRIDER=1` re-runs any of it. **It is not the default**: it is a third
 fitted reading of the same residual and the source says nothing about it.
 
+### And with the rider dropped, 0.45 fits
+
+The owner's reading — the paired spell damage is **about a third** of the
+healing (measured: 3.0, range 2.86–3.14) and is a by-product of it, not a
+second purchase. Dropping it and testing healing at the transcribed **0.45**,
+against the sibling items in the same population rather than against 100%:
+
+| | healing items | plain items | difference |
+| --- | --- | --- | --- |
+| **Classic's own** (control) | 104.1% ±2.0 (n=34) | 101.5% ±1.8 (n=74) | **+2.6 ±2.7** (1.0σ) |
+| **Forever new, not PvP** | 102.8% ±3.5 (n=20) | 100.8% ±0.7 (n=33) | **+2.0 ±3.6** (0.5σ) |
+| Forever new, PvP | 112.1% ±4.2 (n=20) | 101.8% ±0.3 (n=24) | +10.3 ±4.2 (2.5σ) |
+
+**0.45 fits both non-PvP populations**, and it is inside the 95% interval for
+each. The best-fit value is **0.42 for Classic and 0.42 for Forever** — the
+same number to two decimals, about 7% under the transcribed figure and well
+inside the uncertainty.
+
+**SO THE HEALING COST IS NOT A FOREVER CHANGE EITHER.** Once the by-product is
+not charged for, Forever's healer items are priced exactly as Classic's are,
+at the cost the source states.
+
+### The one thing still unexplained
+
+**PvP healer gear is 10.3 ±4.2 points over its own siblings (2.5σ)** and wants
+healing at 0.20. That is the only residual in this whole thread that survives
+a control group, a sensitivity sweep and a population split.
+
+It is also the population confounded at every previous step — the Premier sets
+spend 40.8% of their budget on stamina, and they were the group that inverted
+when the stamina cost moved. **A finding that only ever appears in the
+population most sensitive to the model's weakest parameter is not yet a
+finding**, and it is recorded as open rather than claimed.
+
+
 **NOTE HOW THE BEST-FIT HEALING COST FALLS AS HEALING'S SHARE FALLS** — 0.36
 for the control at 36% share, 0.20 for Forever at 22%, 0.10 for PvP at 13%.
 That is the fit blaming whatever it is allowed to move, the same hazard the

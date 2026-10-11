@@ -3505,6 +3505,22 @@ Damage", at a ratio of 3.0 across every pair in the data -- and charging both
 treats one design decision as two purchases: dropping the rider takes Forever's
 non-PvP healing items from 112.1% to **102.8%**.
 
+**AND WITH THE BY-PRODUCT NOT CHARGED FOR, 0.45 FITS.** The paired spell damage
+is 1/3 of the healing (measured 3.0, range 2.86-3.14); dropping it, healing
+items sit **+2.6 +/- 2.7 over their own siblings in Classic and +2.0 +/- 3.6 in
+Forever**, and the best-fit cost is **0.42 in BOTH** -- the same number to two
+decimals, inside the uncertainty of the transcribed 0.45. **So the healing cost
+is not a Forever change either**: once one purchase is charged once, Forever's
+healer items are priced exactly as Classic's are.
+
+**THE ONE RESIDUAL LEFT IS PvP HEALER GEAR, 10.3 +/- 4.2 OVER ITS OWN SIBLINGS
+(2.5 sigma), AND IT IS RECORDED AS OPEN RATHER THAN CLAIMED.** It is the only
+thing in the whole thread that survives a control group, a sensitivity sweep
+and a population split -- and it is also the population confounded at every
+earlier step, being 40.8% stamina and the group that inverted when the stamina
+cost moved. **A finding that only ever appears in the population most sensitive
+to the model's weakest parameter is not yet a finding.**
+
 **MIXING TWO POPULATIONS AND FITTING A PARAMETER TO THE BLEND PRODUCES A
 CONFIDENT NUMBER FOR A THING THAT DOES NOT EXIST**, which is what "spell power
 is 9% too expensive" was. It is the fourth correction in this thread and the
