@@ -163,7 +163,7 @@ describe('they are unmistakably synthetic', () => {
 });
 
 describe('the panel can find a template from the profile alone', () => {
-  it('matches all 26 presets by character name', () => {
+  it('matches all 27 presets by character name', () => {
     /*
      * THE JOIN THE UI DEPENDS ON. `game` may not import from `profiles`, so the
      * Gear panel looks a template up by `character.name` -- and a preset label
@@ -186,7 +186,7 @@ describe('the panel can find a template from the profile alone', () => {
 });
 
 describe('a set equips onto its profile', () => {
-  it('fills every slot for all 26 presets, at every set', () => {
+  it('fills every slot for all 27 presets, at every set', () => {
     for (const preset of PROFILE_PRESETS) {
       for (const set of BENCHMARK_SETS) {
         const equipment = benchmarkEquipmentFor(preset.id, set.id);

@@ -13,6 +13,8 @@ import { WARRIOR_ABILITIES } from '../../src/game/abilities/warrior';
 import { ALL_PRIORITY_LISTS } from '../../src/game/rotations/allLists';
 import { RACIAL_ABILITIES } from '../../src/game/racials';
 import { MID_FIGHT_CONSUMABLE_ABILITIES } from '../../src/game/abilities/consumables';
+import { weaponsFor } from '../../src/game/actors/createPlayer';
+import { resolveCombatStyle } from '../../src/game/character';
 import { rotationFor } from '../../src/game/rotations/rotationFor';
 import { WARRIOR_SHIELD_DEFENSIVE } from '../../src/game/rotations/warrior';
 import { PRESETS_BY_ID, PROFILE_PRESETS } from '../../src/profiles/presets';
@@ -199,11 +201,23 @@ describe('the 25 profiles and their lists', () => {
          * pressed. So an absent style is a broken preset, not a default.
          */
         expect(profile.character.combatStyle, `${presetId} sets no style`).toBeDefined();
+        /*
+         * THE MAIN-HAND WEAPON TOO, which the Rogue's two Hemorrhage builds
+         * are told apart by -- one casts Ambush and Ambush needs a dagger.
+         * Resolved the same way the fight resolves it, so this test asks the
+         * dispatch the same question `createPlayer` does; leaving it out made
+         * the sword build map to the dagger list and the failure named the
+         * right preset.
+         */
         const rotation = rotationFor(
           profile.character.characterClass,
           profile.character.combatStyle!,
           profile.character.stance,
           profile.talents,
+          weaponsFor(
+            profile.equipment,
+            resolveCombatStyle(profile.character.characterClass, profile.character.combatStyle),
+          ).mainHand?.weaponType,
         );
         expect(rotation?.name).toBe(list.list.name);
       });

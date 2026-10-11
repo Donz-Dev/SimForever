@@ -427,6 +427,52 @@ const ROGUE_COMBAT_MUT_TALENTS: TalentAllocation = {
   blade_flurry: 1,
 };
 
+/**
+ * Pure Hemo -- Assassination 21 / Combat 8 / Subtlety 22.
+ *
+ * ============================================================================
+ * A NEW PROFILE AND THE SECOND HEMORRHAGE BUILD, and the owner's framing is
+ * "the same as Hemo Dagger except it's gonna use the Main Hand weapon from the
+ * Combat templates" -- plus its own talents and its own list.
+ *
+ * ALL THREE TREE TOTALS SUM EXACTLY from the icons, which is the first talent
+ * panel in this series that needed no question asked. The totals the panel
+ * prints are the check.
+ *
+ * IT SPENDS NO POINTS BELOW TIER FOUR OF SUBTLETY, which is what makes it
+ * "pure": no Cutthroat, so no in-combat Ambush window, and no Quietus or
+ * Thousand Cuts. The twenty-two points buy Hemorrhage, Serrated Blades and
+ * Preparation and stop. What the other twenty-nine buy is the five-point
+ * Eviscerate its list is built around -- Lethality, Improved Eviscerate,
+ * Relentless Strikes, Ruthlessness, Cold Blood and Precision.
+ * ============================================================================
+ */
+const ROGUE_PURE_HEMO_TALENTS: TalentAllocation = {
+  // Assassination, 21
+  malice: 5,
+  ruthlessness: 3,
+  murder: 2,
+  improved_slice_and_dice: 3,
+  relentless_strikes: 1,
+  lethality: 5,
+  cold_blood: 1,
+  vigor: 1,
+  // Combat, 8
+  improved_eviscerate: 3,
+  lightning_reflexes: 2,
+  precision: 3,
+  // Subtlety, 22
+  camouflage: 5,
+  master_of_deception: 3,
+  opportunity: 2,
+  improved_ambush: 3,
+  initiative: 3,
+  premeditation: 1,
+  serrated_blades: 3,
+  preparation: 1,
+  hemorrhage: 1,
+};
+
 const ROGUE_RUPTURE_TALENTS: TalentAllocation = {
   /*
    * ==========================================================================
@@ -1085,7 +1131,27 @@ const PRIEST_SHADOW_TALENTS: TalentAllocation = {
  * ----------------------------------------------------------------------------
  */
 
-export const PROFILE_PRESETS: readonly ProfilePreset[] = withBenchmarkGear(withStockRotations([
+/*
+ * ============================================================================
+ * THE GEAR IS APPLIED BEFORE THE ROTATIONS, AND THE ORDER IS NOW LOAD-BEARING.
+ *
+ * IT WAS `withBenchmarkGear(withStockRotations(...))` -- rotations first --
+ * which was fine while a list depended only on class, style, stance and
+ * talents. The Rogue's two Hemorrhage builds are told apart by the WEAPON IN
+ * THE MAIN HAND, so `stockListFor` has to see the gear, and at the old order
+ * the equipment was still empty: Pure Hemo silently got the dagger list.
+ *
+ * SILENTLY IS THE WHOLE PROBLEM. `PriorityRotation` skips an entry whose
+ * ability the character does not know, so a sword-wielding build running the
+ * dagger list simply loses its Ambush and its Vanish and produces an ordinary
+ * figure -- which is the failure this project has shipped twice already.
+ *
+ * THE OTHER DIRECTION IS SAFE: nothing about which GEAR a preset gets depends
+ * on its rotation, so gearing first cannot change what any of the other 26
+ * wear. `presets.test.ts` round-trips every one of them.
+ * ============================================================================
+ */
+export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations(withBenchmarkGear([
   {
     id: 'two_hand_arms',
     label: '2H Arms',
@@ -1411,6 +1477,38 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withBenchmarkGear(withS
       consumables: { ...AGILITY_CONSUMABLES, other: 'thistle_tea' },
       encounter: { ...createDefaultProfile().encounter, targetAttacks: false },
     }),
+  },
+  {
+    /*
+     * ==========================================================================
+     * PURE HEMO, AND IT IS THE HEMO DAGGER PRESET WITH TWO FIELDS REPLACED.
+     *
+     * The owner's framing: "the same as Hemo Dagger - except it's gonna use the
+     * Main Hand weapon from the Combat templates. And it has a different talent
+     * spread, and APL." So it SPREADS that build and changes the name and the
+     * allocation, the arrangement Combat Mut already uses.
+     *
+     * THE WEAPON IS NOT A FIELD HERE AND THE APL IS NOT EITHER, which is the
+     * thing worth knowing about this preset: `withBenchmarkGear` gears it from
+     * its OWN template -- keyed by preset id, and that template carries the
+     * sword main hand -- and `withStockRotations` fills its rotation from
+     * `aplFor`, which now reads that weapon to choose the list. So replacing
+     * the id-keyed template is what gives this profile both its gear AND its
+     * rotation, and the two cannot disagree.
+     * ==========================================================================
+     */
+    id: 'rogue_pure_hemo',
+    label: 'Pure Hemo',
+    detail: 'Undead, sword and dagger, standing target. 21 Assassination / 22 Subtlety',
+    characterClass: 'rogue',
+    build: () => {
+      const hemo = PRESETS_BY_ID.get('rogue_hemo')!.build();
+      return {
+        ...hemo,
+        character: { ...hemo.character, name: 'Pure Hemo' },
+        talents: { ...ROGUE_PURE_HEMO_TALENTS },
+      };
+    },
   },
   {
     id: 'druid_moonkin',

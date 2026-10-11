@@ -193,6 +193,17 @@ export const BENCHMARK_TEMPLATES: readonly BenchmarkTemplate[] = [
    * records about `character.name`.
    */
   { presetId: 'rogue_hemo', characterClass: 'rogue', label: 'Hemo Dagger', hit: 120, expertise: 10, preferred: ROGUE, armour: 'Leather', weapons: { kind: 'dualWield', subclass: 'Dagger', offSubclass: 'Dagger' }, statStick: ROGUE_STICK },
+  /*
+   * PURE HEMO IS THE HEMO DAGGER TEMPLATE WITH THE COMBAT TEMPLATE'S MAIN
+   * HAND -- the owner's own framing: "the same as Hemo Dagger except it's
+   * gonna use the Main Hand weapon from the Combat templates."
+   *
+   * SO EXACTLY ONE FIELD DIFFERS from the row above, and it is the field the
+   * ROTATION DISPATCH reads: a sword main hand is why this build runs its own
+   * list rather than the dagger one, because that list casts Ambush and Ambush
+   * needs a dagger. The gear and the rotation are one decision here.
+   */
+  { presetId: 'rogue_pure_hemo', characterClass: 'rogue', label: 'Pure Hemo', hit: 120, expertise: 10, preferred: ROGUE, armour: 'Leather', weapons: { kind: 'dualWield', subclass: 'Sword', offSubclass: 'Dagger' }, statStick: ROGUE_STICK },
   { presetId: 'druid_moonkin', characterClass: 'druid', label: 'Moonkin', hit: 110, expertise: 0, preferred: CASTER, armour: 'Leather', weapons: { kind: 'twoHand', subclass: 'Staff', caster: true } },
   { presetId: 'druid_cat', characterClass: 'druid', label: 'Cat', hit: 30, expertise: 10, preferred: ['Strength', 'Agility', 'Crit', 'Stamina', 'Attack Power'], armour: 'Leather', weapons: { kind: 'twoHand', subclass: 'Mace' } },
   { presetId: 'druid_bear', characterClass: 'druid', label: 'Bear', hit: 30, expertise: 20, preferred: ['Stamina', 'Bonus Armor', 'Agility', 'Strength', 'Dodge', 'Defense'], armour: 'Leather', weapons: { kind: 'twoHand', subclass: 'Mace' }, trinkets: TANK_TRINKETS },

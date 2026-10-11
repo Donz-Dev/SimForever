@@ -1,4 +1,4 @@
-import type { Rotation } from '../../engine';
+import type { Rotation, WeaponType } from '../../engine';
 import type { AplCondition, AplList } from './apl';
 import { RACIAL_COOLDOWNS } from './racialCooldowns';
 import {
@@ -967,10 +967,109 @@ export const ROGUE_HEMO: AplList = {
   ],
 };
 
+/**
+ * What the Pure Hemo list spends and waits for. All of it is the owner's.
+ *
+ * ----------------------------------------------------------------------------
+ * THE SLICE AND DICE FLOOR IS ONE SECOND, which is the loosest in the project
+ * and reads almost like no floor at all. It is not: the entry it guards spends
+ * the FULL FIVE points, so what one second buys is that a five-point Eviscerate
+ * never lands in the instant the buff is expiring -- the cheapest possible
+ * version of the protection the other four lists pay three, four or six
+ * seconds for.
+ * ----------------------------------------------------------------------------
+ */
+const PURE_HEMO_RUPTURE_POINTS = 3;
+const PURE_HEMO_SLICE_AND_DICE_POINTS = 3;
+const PURE_HEMO_FLOOR_SECONDS = 1;
+
+export const ROGUE_PURE_HEMO: AplList = {
+  name: 'Rogue (Subtlety, Pure Hemo)',
+  entries: [
+  { abilityId: 'premeditation' },
+  thistleTeaCooldown(TIGHT_THISTLE_TEA_ENERGY_THRESHOLD),
+  ...consumableCooldowns({ exclude: ['thistle_tea'] }),
+  ...RACIAL_COOLDOWNS,
+  ...CONSUMABLE_HEALS,
+  /*
+   * ==========================================================================
+   * RUPTURE BEHIND SIX CLAUSES, WHICH IS THE MOST CONDITIONED ENTRY IN THE
+   * PROJECT -- AND ALL SIX SAY ONE THING: do not spend points on the bleed
+   * while any of the burst is available.
+   *
+   * The three cooldown clauses and the aura clause are the same question asked
+   * four ways: Preparation, Cold Blood and Premeditation all have to be SPENT,
+   * and the Cold Blood buff has to be gone. Only then are the points free for
+   * a bleed.
+   *
+   * WHY THAT IS NOT REDUNDANT. Premeditation banks two points and Preparation
+   * gives Cold Blood and Premeditation back, so a pool that looks spendable can
+   * be about to be needed -- and the finisher the points are being saved FOR is
+   * five entries below, where nothing can hold them for it. A priority list
+   * cannot reserve a resource; this is how a build asks it to anyway.
+   *
+   * IT IS ALSO THE SHAPE THAT MOST EASILY NEVER FIRES, which is why the
+   * profile test counts its casts rather than trusting the gate.
+   * ==========================================================================
+   */
+  {
+    abilityId: 'rupture',
+    condition: all(
+      targetAuraDown('rupture'),
+      atLeastPoints(PURE_HEMO_RUPTURE_POINTS),
+      abilityOnCooldown('preparation'),
+      abilityOnCooldown('cold_blood'),
+      abilityOnCooldown('premeditation'),
+      selfAuraDown('cold_blood'),
+    ),
+  },
+  {
+    abilityId: 'slice_and_dice',
+    condition: all(
+      selfAuraDown('slice_and_dice'),
+      atLeastPoints(PURE_HEMO_SLICE_AND_DICE_POINTS),
+    ),
+  },
+  /*
+   * COLD BLOOD AND EVISCERATE SHARE A GATE EXACTLY, the Hemo Dagger
+   * arrangement: the free off-GCD cooldown fires in the same window as the
+   * finisher it is saved for, so the guaranteed crit lands on a five-point
+   * Eviscerate. There is no cheaper finisher here for it to be wasted on.
+   */
+  {
+    abilityId: 'cold_blood',
+    condition: all(
+      exactlyPoints(MAX_COMBO_POINTS),
+      selfAuraAtLeast('slice_and_dice', PURE_HEMO_FLOOR_SECONDS),
+    ),
+  },
+  {
+    abilityId: 'eviscerate',
+    condition: all(
+      exactlyPoints(MAX_COMBO_POINTS),
+      selfAuraAtLeast('slice_and_dice', PURE_HEMO_FLOOR_SECONDS),
+    ),
+  },
+  /*
+   * PREPARATION WAITS ON PREMEDITATION AND COLD BLOOD, where every other list
+   * that casts it waits on VANISH -- because this list has no Vanish and no
+   * Ambush at all. "Finishes the cooldown on your other Rogue abilities" is
+   * worth what the abilities it gives back are worth, and here those are the
+   * two that feed the five-point Eviscerate.
+   */
+  {
+    abilityId: 'preparation',
+    condition: all(abilityOnCooldown('premeditation'), abilityOnCooldown('cold_blood')),
+  },
+  { abilityId: 'hemorrhage' },
+  ],
+};
+
 export const ROGUE_VENOM_ROTATION: Rotation = compileRotation(ROGUE_VENOM);
 export const ROGUE_COMBAT_ROTATION: Rotation = compileRotation(ROGUE_COMBAT);
 export const ROGUE_RUPTURE_ROTATION: Rotation = compileRotation(ROGUE_RUPTURE);
 export const ROGUE_HEMO_ROTATION: Rotation = compileRotation(ROGUE_HEMO);
+export const ROGUE_PURE_HEMO_ROTATION: Rotation = compileRotation(ROGUE_PURE_HEMO);
 export const ROGUE_COMBAT_MUT_ROTATION: Rotation = compileRotation(ROGUE_COMBAT_MUT);
 
 /**
@@ -989,7 +1088,11 @@ export const ROGUE_COMBAT_MUT_ROTATION: Rotation = compileRotation(ROGUE_COMBAT_
  * deliberate choice.
  * ----------------------------------------------------------------------------
  */
-export function rogueRotation(talents: Readonly<Record<string, number>>): Rotation {
+export function rogueRotation(
+  talents: Readonly<Record<string, number>>,
+  /** What is in the MAIN HAND, for the two Hemorrhage builds. See below. */
+  mainHandWeapon?: WeaponType,
+): Rotation {
   /*
    * ==========================================================================
    * TWO MUTILATE BUILDS NOW, AND THE VENOM CAPSTONE SEPARATES THEM.
@@ -1025,7 +1128,30 @@ export function rogueRotation(talents: Readonly<Record<string, number>>): Rotati
    * about which list can function.
    */
   if ((talents.hemorrhage ?? 0) > 0) {
-    return (talents.cutthroat ?? 0) > 0 ? ROGUE_RUPTURE_ROTATION : ROGUE_HEMO_ROTATION;
+    if ((talents.cutthroat ?? 0) > 0) return ROGUE_RUPTURE_ROTATION;
+    /*
+     * ========================================================================
+     * AND THE TWO HEMORRHAGE BUILDS BY THE WEAPON IN THE MAIN HAND, which is
+     * the first time anything in this project has dispatched on one.
+     *
+     * IT IS THE FUNCTIONAL DISCRIMINATOR AND NOT A PROXY. The Hemo Dagger list
+     * casts AMBUSH, and Ambush requires a dagger in the main hand -- so a
+     * sword-wielding Hemorrhage build cannot run that list, and two of its
+     * eleven entries (Ambush and the Vanish that exists to enable it) would be
+     * dead. Pure Hemo has neither, and holds the Combat template's sword.
+     *
+     * A TALENT WOULD HAVE BEEN A PROXY HERE. The two builds differ in eight
+     * talents and not one of them gates a list entry: Quietus and Thousand
+     * Cuts are damage, Precision and Vigor are stats. Reading one would work
+     * today and say nothing about which list can FUNCTION, which is the
+     * standard the Cutthroat clause above sets.
+     *
+     * AN UNKNOWN WEAPON KEEPS THE DAGGER LIST, which is the existing answer
+     * for every caller that does not supply one -- a hand-built Rogue with no
+     * equipment behaves exactly as it did.
+     * ========================================================================
+     */
+    return mainHandWeapon === 'sword' ? ROGUE_PURE_HEMO_ROTATION : ROGUE_HEMO_ROTATION;
   }
   return ROGUE_COMBAT_ROTATION;
 }

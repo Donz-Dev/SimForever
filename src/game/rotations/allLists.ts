@@ -19,6 +19,7 @@ import {
   ROGUE_COMBAT,
   ROGUE_COMBAT_MUT,
   ROGUE_HEMO,
+  ROGUE_PURE_HEMO,
   ROGUE_RUPTURE,
   ROGUE_VENOM,
 } from './rogue';
@@ -175,6 +176,17 @@ export const ALL_PRIORITY_LISTS: readonly PriorityListRecord[] = [
     owner: 'rogue',
     list: ROGUE_HEMO,
     profiles: ['rogue_hemo'],
+  },
+  {
+    /*
+     * THE SECOND HEMORRHAGE BUILD, and the only pair in the project told apart
+     * by the WEAPON IN THE MAIN HAND rather than by a talent: the Hemo Dagger
+     * list casts Ambush, which needs a dagger.
+     */
+    name: 'ROGUE_PURE_HEMO',
+    owner: 'rogue',
+    list: ROGUE_PURE_HEMO,
+    profiles: ['rogue_pure_hemo'],
   },
 
   // Druid -- by form, which IS the combat style.

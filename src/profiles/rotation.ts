@@ -1,5 +1,6 @@
 import { resolveCombatStyle, resolveStance } from '../game/character';
 import { aplFor } from '../game/rotations/rotationFor';
+import { weaponsFor } from '../game/actors/createPlayer';
 import { withoutOtherRacials } from '../game/rotations/racialCooldowns';
 import { withoutUnselectedConsumables } from '../game/rotations/consumableCooldowns';
 import type { AplList } from '../game/rotations/apl';
@@ -85,7 +86,20 @@ export function stockListFor(profile: CharacterProfile): AplList | undefined {
     profile.character.characterClass === 'warrior'
       ? resolveStance(style, profile.character.stance)
       : undefined;
-  const list = aplFor(profile.character.characterClass, style, stance, profile.talents);
+  /*
+   * THE MAIN-HAND WEAPON TOO, which the Rogue's two Hemorrhage builds are told
+   * apart by -- one casts Ambush and Ambush needs a dagger. It is resolved the
+   * same way the fight resolves it, through `weaponsFor`, so the list the panel
+   * shows and the list the fight runs cannot disagree about what is held.
+   */
+  const mainHand = weaponsFor(profile.equipment, style).mainHand?.weaponType;
+  const list = aplFor(
+    profile.character.characterClass,
+    style,
+    stance,
+    profile.talents,
+    mainHand,
+  );
   if (!list) return undefined;
   return withoutUnselectedConsumables(
     withoutOtherRacials(list, profile.character.race),

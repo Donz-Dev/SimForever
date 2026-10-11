@@ -470,7 +470,7 @@ describe('the bow’s +2% crit reaches ranged attacks and nothing else', () => {
 });
 
 // ---------------------------------------------------------------------------
-// What each of the 26 profiles opens with
+// What each of the 27 profiles opens with
 // ---------------------------------------------------------------------------
 
 /**
@@ -510,6 +510,10 @@ const LOADOUTS: Readonly<Record<string, Readonly<Record<string, string>>>> = {
     wrists: '+9 Agility', gloves: '+15 Agility', legs: '+8 Agility', feet: '+7 Agility',
   },
   rogue_hemo: {
+    head: '+8 Agility', neck: '+5 Agility', cloak: '+5 Agility', chest: '+4 Stats',
+    wrists: '+9 Agility', gloves: '+15 Agility', legs: '+8 Agility', feet: '+7 Agility',
+  },
+  rogue_pure_hemo: {
     head: '+8 Agility', neck: '+5 Agility', cloak: '+5 Agility', chest: '+4 Stats',
     wrists: '+9 Agility', gloves: '+15 Agility', legs: '+8 Agility', feet: '+7 Agility',
   },
@@ -607,7 +611,7 @@ const ARMOUR_SLOTS: readonly EquipmentSlot[] = [
   'ranged',
 ];
 
-describe('what each of the 26 profiles opens with', () => {
+describe('what each of the 27 profiles opens with', () => {
   it('covers every preset, so a new one cannot slip through unenchanted', () => {
     expect(PROFILE_PRESETS.map((preset) => preset.id).sort()).toEqual(
       Object.keys(LOADOUTS).sort(),
