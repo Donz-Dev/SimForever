@@ -1,18 +1,76 @@
-# THE APL EDITOR GROWS TEETH, AND 2H ARMS IS RESPECIFIED
+# OPTIMISING THE 25 LISTS, ONE PROFILE AT A TIME
 
-**ROUND ONE OF OPTIMISING ALL 25 LISTS**, and it is two pieces of work that
-have to happen in that order: **the tooling to make a list cheap to change, and
-then the first list changed.** The owner's framing -- "in order to actually
-optimize the APL I need the tooling to be a bit more sophisticated as well."
+**THE TOOLING FIRST, THEN THE LISTS**, which is the order it has to happen in
+and is the owner's own framing -- "in order to actually optimize the APL I need
+the tooling to be a bit more sophisticated as well."
 
-| | what it was | 2H Arms | mean |
+| | what it was | the profile | mean |
 | --- | --- | --- | --- |
 | 1 | three APL tooling asks -- **duplicate**, **retarget**, and a **timeline** | **no figure moved**; all 25 rows reproduced the published table to the decimal | 752.7 |
-| 1 | 2H Arms **food**: +40 Attack Power -> +20 Strength | 825.0 -> 825.9 (**+0.9**) | 752.7 |
-| 1 | 2H Arms **list**, respecified by the owner | 825.9 -> **849.7** (**+23.8 REAL**) | **753.7** |
+| 1 | **2H Arms** food: +40 Attack Power -> +20 Strength | 825.0 -> 825.9 (**+0.9**) | 752.7 |
+| 1 | **2H Arms** list, respecified by the owner | 825.9 -> **849.7** (**+23.8 REAL**) | **753.7** |
+| 2 | **DW Fury** list: Death Wish eighth -> fourth | **no decision moved**; all 75 hashes and event counts identical | 753.7 |
+| 2 | **DW Fury** food: +40 Attack Power -> +20 Strength | 988.5 -> **989.6** (**+1.2**) | **753.7** |
 
 **AND MORE ROWS CAN BE ADDED, WHICH IS THE POINT OF ITS BEING A TABLE** --
-there are twenty-four lists left and the owner has said so.
+there are twenty-three lists left and the owner has said so. **THE HEADER IS
+WRITTEN FOR THE SERIES RATHER THAN FOR ITS FIRST ENTRY**, which is this file's
+own rule arriving where it belongs: it read "THE APL EDITOR GROWS TEETH, AND 2H
+ARMS IS RESPECIFIED" for exactly one round.
+
+## Round two: DW Fury, and a move that provably changes nothing
+
+**ONE ENTRY MOVED.** Death Wish goes from EIGHTH -- directly above Execute --
+to FOURTH, between the potions and the Healthstone. No condition changed and
+nothing else in the list moved.
+
+**THE FOUR ENTRIES IT PASSES ARE ALL INERT, EACH FOR ITS OWN REASON:**
+
+| | why it never fires |
+| --- | --- |
+| Healthstone | nothing attacks this build, so health never leaves maximum |
+| Berserker Stance | the preset opens in it |
+| Battle Shout | in `PRESET_RAID_BUFFS`, so its condition refuses all fight |
+| Sunder Armor | a preset raid DEBUFF puts five stacks on the boss before the pull |
+
+So the entry Death Wish is really above is **still Execute**, which is where it
+already was.
+
+**PROVEN BY THE CHEAP CHECK RATHER THAN THE EXPENSIVE ONE.**
+`tools/rotation_fingerprint.ts` hashes the COMBAT LOG, so unchanged hashes say
+no DECISION moved -- all 75, and every event count. The engine draws from ONE
+random stream, so a single differing choice would reorder every later draw and
+the rest of the fight would diverge completely; the property that ruins paired
+measurement is what makes this sharp. **A DPS figure could only ever have said
+"inside the interval"**, which is the same thing a change that failed to apply
+says.
+
+**IT IS STILL WORTH MAKING, AND THE FOUR REASONS ARE WHY.** Every one of them
+belongs to the ENCOUNTER and to the raid rather than to the abilities, so
+changing the raid buff selection or letting the target swing back wakes three
+of them up -- and then the position is the difference between a 30-second
+damage cooldown landing on time and landing behind a shout. **An entry that is
+inert for an encounter reason is a dated fact**, which this file already
+records about Reckoning's internal cooldown.
+
+**THE FOOD IS +1.2 AND IS THE WHOLE OF THE ROUND'S MOVEMENT**, which the two
+checks between them establish exactly: the fingerprint says the reorder is
+zero, and 24 of 25 rows are 0.0 to the decimal -- including 2H Arms at exactly
+849.7, so round one is undisturbed.
+
+**AND IT IS A SECOND RULING RATHER THAN THE FIRST ONE EXTENDED.** The owner
+named 2H Arms, then named DW Fury, one profile at a time -- so it is a second
+OVERRIDE and `STRENGTH_CONSUMABLES` is still untouched. **TWO OF FIVE IS NOT A
+ROW**: Prot Warr and both feral Druids share it and have not been named, and
+`MELEE_COMMON` beneath it carries four Rogues and a melee Hunter. If the Druids
+are named too, the honest edit is the row and both overrides come out together.
+
+**THE CONTAINMENT TEST EARNED ITS KEEP IN ONE ROUND.**
+`armsRotation.test.ts` asserted the other four members of the archetype row
+were untouched, and it FAILED on `dw_fury` the moment this landed, naming the
+profile that had changed. That is exactly what the list is for -- it shrinks by
+one each time the owner names another -- and it asserts BOTH sides now, so it
+says which side each profile is on rather than only naming the remainder.
 
 ## The tooling moved nothing, and that is the containment check
 
@@ -182,7 +240,10 @@ as an accident.
 
 ## What is left
 
-- **TWENTY-FOUR LISTS**, which is the rest of the ask. 2H Arms is the first.
+- **TWENTY-THREE LISTS**, which is the rest of the ask. 2H Arms was the first
+  and DW Fury the second. **Re-count this against the table at the top of this
+  section rather than decrementing it** -- which is the rule this file applies
+  to every other derived figure, and the two places are a commit apart.
 - **NEW PROFILES**, which the owner named as the work after the 25.
 - **THE TIMELINE HAS NO AVERAGE VIEW** and deliberately does not; whether a
   per-lane figure pooled across the batch belongs beside each row -- uptime
@@ -4613,14 +4674,14 @@ cannot audit, which is why the check is a SET comparison and not a row count.
 
 | Profile | Class | Talents | DPS | | Profile | Class | Talents | DPS |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| DW Fury | Warrior | 17/34/0 | 988.5 | | Shadow Priest | Priest | 13/3/35 | 774.7 |
+| **DW Fury** | Warrior | 17/34/0 | **989.6** | | Shadow Priest | Priest | 13/3/35 | 774.7 |
 | LW Ranged | Hunter | 7/39/5 | 912.5 | | Fire Mage | Mage | 10/39/2 | 753.0 |
 | Firelock | Warlock | 5/11/35 | 891.4 | | Enh Shaman | Shaman | 17/34/0 | 750.7 |
 | Hawk Melee | Hunter | 16/11/24 | 883.0 | | SM/DS | Warlock | 40/11/0 | 722.4 |
 | Cat Druid | Druid | 9/34/8 | 859.0 | | Hemo Rogue | Rogue | 17/3/31 | 715.8 |
 | Arcane Mage | Mage | 47/4/0 | 857.7 | | Shockadin | Paladin | 23/0/28 | 714.4 |
 | BM Hunter | Hunter | 31/20/0 | 856.2 | | Venom Rogue | Rogue | 37/12/2 | 684.9 |
-| **2H Arms** | Warrior | 39/10/2 | **849.7** | | Rupture Rogue | Rogue | 12/8/31 | 659.0 |
+| 2H Arms | Warrior | 39/10/2 | 849.7 | | Rupture Rogue | Rogue | 12/8/31 | 659.0 |
 | Frostfire Mage | Mage | 0/29/22 | 837.0 | | Ele Shaman | Shaman | 38/13/0 | 651.4 |
 | LW Melee | Hunter | 7/13/31 | 831.5 | | Prot Warr | Warrior | 17/0/34 | 471.5 |
 | Seal Twist Ret | Paladin | 15/0/36 | 816.5 | | Prot Pally | Paladin | 8/34/9 | 400.6 |
