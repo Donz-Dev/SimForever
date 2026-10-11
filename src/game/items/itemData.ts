@@ -264,10 +264,33 @@ const EFFECT_RULES: readonly EffectRule[] = [
     },
   },
   {
-    // "+20 Attack Power."
+    /*
+     * "+20 Attack Power" -- BOTH POOLS, BY THE OWNER'S HARD RULING.
+     *
+     * ------------------------------------------------------------------------
+     * "Attack Power always equals and reaches Melee & Ranged Attack Power. And
+     * Melee Attack Power NEVER reaches Ranged Attack Power." That is a ruling
+     * about the WORDING wherever it appears, and it reverses what this rule
+     * did: 164 item lines in this data say plain "Attack Power" and every one
+     * of them was melee-only.
+     *
+     * CLAUDE.md RECORDED THE OPPOSITE AND RECORDED IT CAREFULLY. The owner had
+     * already ruled that a CONSUMABLE's "+40 Attack Power" feeds both pools,
+     * and the note concluded that "an item's wording and a consumable's are
+     * now known to mean different things, and neither settles the other" --
+     * because every item line here read bare "Attack Power" as melee and had
+     * a separate rule for "ranged Attack Power". The reasoning was sound and
+     * the general ruling supersedes it.
+     *
+     * TWO LINES IN THIS DATA SAY "ranged Attack Power" and they keep their own
+     * rule below: ranged-only is still expressible, it is just not what the
+     * bare words mean.
+     * ------------------------------------------------------------------------
+     */
     pattern: /^\+(\d+) Attack Power\.?$/,
     apply: (value, into) => {
       into.attackPower = (into.attackPower ?? 0) + value;
+      into.rangedAttackPower = (into.rangedAttackPower ?? 0) + value;
     },
   },
   {

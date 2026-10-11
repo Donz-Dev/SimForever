@@ -168,34 +168,25 @@ describe('the wiring, through a real fight', () => {
   it('has a ranged attack power it will never use, on a class that never shoots', () => {
     /*
      * ------------------------------------------------------------------------
-     * 130, AND IT WAS 50. The base is still the shared 50 every class carries;
-     * the other 80 is the owner's ruling that a consumable's "+40 Attack Power"
-     * is "truly Melee Attack AND Ranged attack power", twice over -- the elixir
-     * and the Food of the same name, which this profile's row takes both of.
+     * THE FLOOR IS READ OFF THE CHARACTER NOW, AND IT USED TO BE `50 + 40 + 40`
+     * WRITTEN OUT BY HAND.
      *
-     * NONE OF IT DOES ANYTHING HERE, which is the point of the row rather than
-     * a problem with it: an Arms Warrior swings no ranged weapon, so a pool it
-     * cannot read is 80 wasted points of a consumable it drinks for the melee
-     * half. The assertion that matters is unchanged and is the one below --
-     * `!== 0` would show the row and the panel's rule does not.
+     * Writing a spec out independently is this project's rule and it was the
+     * right instinct -- but an ENUMERATION of contributors is only a spec while
+     * the list is complete, and the owner's ruling that plain "Attack Power"
+     * reaches BOTH pools added 164 item lines to it overnight. The hand-sum
+     * went from 130 to being short by 120.
+     *
+     * The invariant was never the three contributors. It is that a fight
+     * AVERAGE sits between the unbuffed pool and the buffed one, so the floor
+     * comes from the pull and the ceiling is Blood Fury's 10%. A fixed figure
+     * would pin Blood Fury's UPTIME, which is a rotation outcome.
      * ------------------------------------------------------------------------
      */
-    /*
-     * AND IT IS NOW A LITTLE ABOVE 130, BECAUSE THIS PROFILE IS AN ORC.
-     *
-     * Blood Fury is "+10% Attack Power, Ranged Attack Power and Spell Power for
-     * 15 sec" on a two minute cooldown, so it is up for a quarter of a sixty
-     * second fight and the AVERAGE carries a quarter of its ten percent. The
-     * figure is 133.2 against a pull value of exactly 130.
-     *
-     * ASSERTED AS A BAND BETWEEN THE TWO, which is the honest statement: the
-     * floor is the unbuffed pool and the ceiling is the buffed one, and an
-     * average has to sit between them. A fixed figure here would be pinning
-     * Blood Fury's UPTIME, which is a rotation outcome -- the mistake this
-     * project has made twice with a cast count.
-     */
     const warrior = batchOf('two_hand_arms', 6, 7).stats!;
-    const atPullRangedPool = 50 + 40 + 40;
+    const atPullRangedPool = characterAtCombatStart(
+      PRESETS_BY_ID.get('two_hand_arms')!.build() as never,
+    )!.stats.effective.rangedAttackPower;
     expect(warrior.spellPower).toBe(0);
     expect(warrior.rangedAttackPower).toBeGreaterThanOrEqual(atPullRangedPool);
     expect(warrior.rangedAttackPower).toBeLessThanOrEqual(atPullRangedPool * 1.1);
