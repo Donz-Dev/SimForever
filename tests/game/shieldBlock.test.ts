@@ -26,6 +26,27 @@ const BASE_BLOCK = 5;
 /** A point of strength is a twentieth of a point of block value. */
 const blockValueFromStrength = (strength: number) => strength / 20;
 
+/**
+ * The block value of whatever shield a set actually puts in the slot.
+ *
+ * ----------------------------------------------------------------------------
+ * READ OFF THE SET RATHER THAN HARD-CODED, because the starting set is the E65
+ * BENCHMARK set now and not the owner's Classic one. Its shield carries 44 --
+ * the inherent block value Forever gives every item-level-65 shield, fitted
+ * from its own eighteen -- where The Immovable Object carries 44 inherent AND
+ * a bought "+27 Block Value" on top.
+ *
+ * The 27 is the whole difference, and three assertions in this file were
+ * hard-coded to 71. What they are really about is that the EQUIPPED shield's
+ * value reaches the character and Shield Slam, so they ask the set.
+ * ----------------------------------------------------------------------------
+ */
+const equippedShieldBlockValue = (style: 'one_hand_shield') => {
+  const set = startingEquipmentFor('warrior', style);
+  const shield = ITEMS_BY_ID.get(set.shield!.itemId);
+  return shield!.stats.blockValue!;
+};
+
 /*
  * `createPlayer` strips talents whose tier gate or prerequisite is not met, so
  * `{ shield_slam: 1 }` alone -- a 31-point capstone needing Concussion Blow --
@@ -63,7 +84,7 @@ describe('a shield gives block chance and block value', () => {
     const warrior = shieldWarrior();
     const strength = warrior.stats.effective.strength;
     expect(warrior.stats.effective.blockValue).toBeCloseTo(
-      SHIELD.blockValue + blockValueFromStrength(strength),
+      equippedShieldBlockValue('one_hand_shield') + blockValueFromStrength(strength),
       6,
     );
   });
@@ -91,15 +112,23 @@ describe('a shield gives block chance and block value', () => {
       {},
     );
     /*
-     * 5% as roll units on the 1-10000 die, PLUS the enchants' defense skill.
+     * 5% AS ROLL UNITS ON THE 1-10000 DIE, PLUS WHATEVER DEFENSE SKILL THE SET
+     * CARRIES -- and the second term is READ off the character rather than
+     * written down.
      *
-     * The starting set for a shield Warrior now carries the owner's Protection
-     * enchant row, which is +5 Defense Skill on the neck and +4 on the bracer.
-     * Nine points at 0.04 percentage points each is 36 units on every one of
-     * the five numbers defense skill moves -- so the shield's own 5% is
-     * unchanged and this is what sits on top of it.
+     * It used to be `9 * defensePerSkill`, the owner's Protection enchant row:
+     * +5 Defense Skill on the neck and +4 on the bracer. The benchmark set buys
+     * Defense as a RATING instead -- the Prot Warrior's template lists it
+     * fourth -- so the figure is a different one and will move again the next
+     * time the template does.
+     *
+     * WHAT THE TEST IS ABOUT IS THE JOIN, not the figure: the shield's flat 5%
+     * and the character's defense skill both have to reach the one table the
+     * boss rolls against. Hard-coding the total tested the gear.
      */
-    expect(chances.block).toBe(500 + 9 * COMBAT_CONSTANTS.defensePerSkill);
+    const defenseSkill = warrior.stats.effective.defenseSkill;
+    expect(defenseSkill).toBeGreaterThan(0);
+    expect(chances.block).toBe(500 + defenseSkill * COMBAT_CONSTANTS.defensePerSkill);
   });
 });
 
@@ -118,8 +147,13 @@ describe('Shield Slam', () => {
      * and a twentieth of its strength, which is what makes Shield Slam scale
      * with strength at all.
      */
+    const shieldValue = equippedShieldBlockValue('one_hand_shield');
     const blockValue = warrior.stats.effective.blockValue;
-    expect(blockValue).toBeGreaterThan(SHIELD.blockValue);
+    // Strength adds to the shield's own, which is what makes Shield Slam scale
+    // with strength at all.
+    expect(blockValue).toBeGreaterThan(shieldValue);
+    // And 655 from Forever plus The Immovable Object's 71 is still 726: the
+    // ADDITION is the rule, whichever shield is in the slot.
     expect(SHIELD_SLAM_DAMAGE + SHIELD.blockValue).toBe(726);
   });
 });

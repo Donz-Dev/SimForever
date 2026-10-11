@@ -469,12 +469,33 @@ describe('the three fights', () => {
      * per spell. Nothing was invented and nothing was read from Classic.
      * --------------------------------------------------------------------------
      */
-    for (const preset of ['mage_fire', 'mage_frostfire', 'mage_arcane']) {
-      // 516 now: Forever's +64 on the Azuresong Mageblade, which all three
-      // Mage profiles hold. Arcanist itself is untouched.
-      // Plus the caster enchant row: +6 neck, +16 bracer, +20 gloves.
-      expect(presetPlayer(preset).stats.get('spellPower'), preset).toBe(452 + 64 + 6 + 16 + 20);
+    /*
+     * ------------------------------------------------------------------------
+     * THE FIGURE IS THE GEAR'S AND THE CLAIM IS THE JOIN, which is what this
+     * assertion has to be now.
+     *
+     * It pinned an exact total, rebuilt three times as the gear changed -- the
+     * items, then Forever's +64 on the caster weapon, then the owner's caster
+     * enchant row. The gear underneath is the E65 benchmark set now and the
+     * old weapon is deleted, so a fourth literal would be a fourth thing to
+     * rewrite.
+     *
+     * WHAT THE TEST IS FOR is that the set's spell power REACHES the character:
+     * the shortfall it was written for was a caster in a Warrior's gear
+     * reading zero. So the enchant's contribution is isolated -- it is the one
+     * term that can be removed -- and the rest is asserted to be real.
+     * ------------------------------------------------------------------------
+     */
+    const totals = ['mage_fire', 'mage_frostfire', 'mage_arcane'].map((preset) =>
+      presetPlayer(preset).stats.get('spellPower'),
+    );
+    for (const [index, total] of totals.entries()) {
+      expect(total, String(index)).toBeGreaterThan(6 + 16 + 20 + 30);
     }
+    // AND ALL THREE READ THE SAME, which is the half that catches one Mage
+    // being given a different set: their templates are identical in everything
+    // the budget sees.
+    expect(new Set(totals).size).toBe(1);
     const named = batchOf('mage_fire', 20, 5).castButNotSimulated.map((e) => e.abilityName);
     expect(named).not.toContain('Fireball');
   });
@@ -1508,9 +1529,54 @@ describe('what the Results panel divides its rates by', () => {
     const bolt = batch.abilities.find((row) => row.abilityName === 'Frostfire Bolt')!;
     // The burn really is in this row: more attempts than casts.
     expect(bolt.attempts).toBeGreaterThan(bolt.uses);
-    // And the rate is about the casts. 5/5 Elemental Precision on a 15% table.
-    expect(100 * bolt.avoidRate).toBeGreaterThan(7);
-    expect(100 * bolt.avoidRate).toBeLessThan(13);
+    /*
+     * ------------------------------------------------------------------------
+     * AND THE RATE IS ABOUT THE CASTS, CHECKED AGAINST THE CHARACTER'S OWN
+     * MISS RATHER THAN AGAINST A BAND.
+     *
+     * The band was 7% to 13%: 5/5 Elemental Precision against the old gear's
+     * hit. The E65 benchmark set targets 110 hit rating for a caster, which
+     * with the talent's 5% puts this Mage ON the owner's 1% spell miss FLOOR --
+     * so the honest expectation is about 1%, and a band around 10% would now
+     * fail a build that is working perfectly.
+     *
+     * THE DENOMINATOR IS STILL THE CLAIM, and it is what the second assertion
+     * rules out: attempts outnumber casts in this row, so dividing by them --
+     * which is what the bug did -- gives a visibly smaller number.
+     * ------------------------------------------------------------------------
+     */
+    /*
+     * AGAINST A SPELL WITH NOTHING TO DILUTE IT, on the same character and the
+     * same table -- which is the comparison the paragraph above names as what
+     * pinned the cause. A row whose attempts EQUAL its casts has no burn, so
+     * its rate was right even while the hybrid's was not.
+     *
+     * NOT AGAINST `17 - hitChance`, which is the tempting arithmetic and is
+     * wrong here: Elemental Precision is a SCHOOL-SCOPED hit bonus folded in by
+     * `withModifier`, so it never appears on the stat block. The character
+     * reads 11 points of hit and its Frost spells miss 1% of the time, and
+     * both are true.
+     */
+    const clean = batch.abilities.find(
+      (row) => row.uses > 5 && row.attempts === row.uses && row.avoidRate > 0,
+    );
+    expect(clean, 'no undiluted spell row to compare against').toBeDefined();
+
+    /*
+     * AS A COMPARISON OF DISTANCES rather than of values, because both numbers
+     * are now DOWN AT THE 1% FLOOR -- this build is spell-hit capped, so an
+     * absolute tolerance that means anything at 10% means nothing at 1%.
+     *
+     * The claim is the DENOMINATOR: the hybrid's reported rate has to sit
+     * nearer the undiluted spell's than the tick-diluted figure does. That
+     * holds at any miss chance, which is what makes it the right assertion.
+     */
+    const cleanRate = 100 * clean!.avoidRate;
+    const reported = 100 * bolt.avoidRate;
+    const diluted = (reported * bolt.uses) / bolt.attempts;
+
+    expect(Math.abs(reported - cleanRate)).toBeLessThan(Math.abs(diluted - cleanRate));
+    expect(diluted).toBeLessThan(reported);
   });
 
   it('leaves a pure DoT at zero rather than dividing by nothing', () => {

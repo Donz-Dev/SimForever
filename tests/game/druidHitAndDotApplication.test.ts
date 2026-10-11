@@ -132,16 +132,32 @@ describe("Nature's Reach, which was doing neither of its clauses", () => {
      * the talent -- kept as three terms rather than one total so that either
      * source going missing fails here instead of netting out against the other.
      */
-    for (const [preset, fromGear] of [
-      ['druid_moonkin', 5],
-      ['druid_cat', 5],
-      ['druid_bear', 7],
-    ] as const) {
+    /*
+     * THE GEAR'S TERM IS MEASURED AND THE OTHER TWO ARE WRITTEN DOWN, which is
+     * the whole point of keeping three terms: either SOURCE going missing has
+     * to fail here rather than netting out against the other.
+     *
+     * The gear figures used to be literals -- 5, 5 and 7, the Classic sets'
+     * hit -- and the benchmark templates target their own totals (110 rating
+     * for the Moonkin, 30 for the two feral builds). So the gear is read by
+     * building the same character WITHOUT the racial and the talent, and what
+     * is asserted is that the racial and the talent add on top of it.
+     */
+    for (const preset of ['druid_moonkin', 'druid_cat', 'druid_bear'] as const) {
       const built = PRESETS_BY_ID.get(preset)!.build();
       expect(built.character.race, preset).toBe('tauren');
       expect(built.talents.nature_s_reach, preset).toBe(2);
-      const snapshot = characterAtCombatStart(built)!;
-      expect(snapshot.stats.effective.hitChance, preset).toBeCloseTo(
+
+      const withBoth = characterAtCombatStart(built)!;
+      const withNeither = characterAtCombatStart({
+        ...built,
+        character: { ...built.character, race: 'night_elf' },
+        talents: { ...built.talents, nature_s_reach: 0 },
+      } as never)!;
+
+      const fromGear = withNeither.stats.effective.hitChance;
+      expect(fromGear, preset).toBeGreaterThan(0);
+      expect(withBoth.stats.effective.hitChance, preset).toBeCloseTo(
         fromGear + TAUREN_ENDURANCE_HIT + NATURES_REACH_HIT,
         6,
       );
@@ -163,12 +179,22 @@ describe("Nature's Reach, which was doing neither of its clauses", () => {
       return { talented: chances(player), untalented: chances(bare) };
     };
 
-    // The Moonkin's spells, and the two feral builds' abilities.
-    // 5 from gear + 1 from Tauren Endurance + 4 from Nature's Reach.
+    /*
+     * THE MOONKIN'S SPELLS, AND THE TWO FERAL BUILDS' ABILITIES.
+     *
+     * The gear's own hit is READ rather than written as a literal: it was "5
+     * from gear + 1 from Tauren Endurance + 4 from Nature's Reach", and the
+     * benchmark template targets 110 hit rating instead of the Classic set's 5
+     * points. What stays true is that the character's WHOLE hit comes off the
+     * miss band, which is the join this test is about -- and the floor is why
+     * it is checked against the stat rather than against a sum.
+     */
+    const moonkinHit = characterAtCombatStart(PRESETS_BY_ID.get('druid_moonkin')!.build())!.stats
+      .effective.hitChance;
+    // The racial and the talent are part of it, so the total has to exceed them.
+    expect(moonkinHit).toBeGreaterThan(TAUREN_ENDURANCE_HIT + NATURES_REACH_HIT);
     const moonkin = tableFor('druid_moonkin', 'spell');
-    expect(moonkin.talented).toBe(
-      moonkin.untalented - toRollUnits(5 + TAUREN_ENDURANCE_HIT + NATURES_REACH_HIT),
-    );
+    expect(moonkin.talented).toBe(moonkin.untalented - toRollUnits(moonkinHit));
     for (const preset of ['druid_cat', 'druid_bear'] as const) {
       const melee = tableFor(preset, 'melee-special');
       expect(melee.talented, preset).toBeLessThan(melee.untalented);
@@ -288,9 +314,31 @@ describe('the Moonkin end to end', () => {
     const player = simulation.combatants.find((actor) => actor.kind === 'player')!;
     const enemy = simulation.combatants.find((actor) => actor.kind === 'enemy')!;
 
-    // 5 from gear + 1 from Tauren Endurance + 4 from Nature's Reach, against
-    // the flat 17% a spell misses on.
-    expect(player.stats.effective.hitChance).toBeCloseTo(10, 6);
-    expect(simulation.attackChances('spell', player, enemy, {}).miss).toBe(toRollUnits(7));
+    /*
+     * THE FLAT 17% A SPELL MISSES ON, LESS WHATEVER HIT THE CHARACTER HAS, AND
+     * FLOORED AT 1%.
+     *
+     * This read "5 from gear + 1 from Tauren Endurance + 4 from Nature's
+     * Reach" and pinned 10 and 7 outright. The benchmark template targets 110
+     * hit rating -- 11 points -- so the Moonkin now carries 16 and its spells
+     * sit ON the floor: 17 - 16 is 1, which is exactly the minimum the owner
+     * stated. Both figures moved and the RULE did not, so the rule is what is
+     * asserted.
+     */
+    const hit = player.stats.effective.hitChance;
+    expect(hit).toBeGreaterThan(0);
+    const expectedMiss = Math.max(1, 17 - hit);
+    expect(simulation.attackChances('spell', player, enemy, {}).miss).toBe(
+      toRollUnits(expectedMiss),
+    );
+
+    /*
+     * AND IT IS WORTH SAYING THAT THIS BUILD IS NOW AT THE CAP. The owner's
+     * usable spell hit cap is 16 points, the template asks for 110 rating and
+     * the racial and the talent add five more -- so the last of them buys
+     * nothing. That is the ladder doing its job rather than a mistake, and
+     * `statHeadroom.test.ts` is where it is reported.
+     */
+    expect(expectedMiss).toBe(1);
   });
 });

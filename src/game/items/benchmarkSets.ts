@@ -9,11 +9,14 @@ import {
   LINE,
   RATING_SLOTS,
   SHARES,
+  SHIELD_STATS,
   SLOT_MULTIPLIER,
   WEAPON_DPS,
   baseArmour,
   qualityBase,
+  shieldBlockValue,
   spreadRating,
+  staminaFloor,
   statsFor,
   type ArmourClass,
   type BenchStat,
@@ -62,7 +65,13 @@ export interface WeaponPlan {
   readonly caster?: boolean;
   /** A bow, for the four Hunter builds. */
   readonly ranged?: boolean;
-  /** Shockadin's "Fast 2H Mace (2.0 attack speed)". */
+  /**
+   * An explicit swing speed, for a row that specifies one.
+   *
+   * The Shockadin's is the only one: "Fast 2H Mace (2.0 attack speed)". Read by
+   * both the two-hand and the one-hand branches -- it was read by only the
+   * first, which made the field silently inert for a shield build.
+   */
   readonly speed?: number;
 }
 
@@ -79,7 +88,15 @@ export const BENCHMARK_TEMPLATES: readonly BenchmarkTemplate[] = [
   { presetId: 'rogue_venom', label: 'Venom', hit: 120, expertise: 10, preferred: ROGUE, armour: 'Leather', weapons: { kind: 'dualWield', subclass: 'Dagger', offSubclass: 'Dagger' } },
   { presetId: 'rogue_combat', label: 'Combat', hit: 120, expertise: 10, preferred: ROGUE, armour: 'Leather', weapons: { kind: 'dualWield', subclass: 'Sword', offSubclass: 'Dagger' } },
   { presetId: 'rogue_rupture', label: 'Rupture', hit: 120, expertise: 10, preferred: ROGUE, armour: 'Leather', weapons: { kind: 'dualWield', subclass: 'Dagger', offSubclass: 'Dagger' } },
-  { presetId: 'rogue_hemo', label: 'Hemo', hit: 120, expertise: 10, preferred: ROGUE, armour: 'Leather', weapons: { kind: 'dualWield', subclass: 'Mace', offSubclass: 'Dagger' } },
+  /*
+   * DAGGERS, NOT THE SPREADSHEET'S "MH Mace, OH Dagger" -- the owner's ruling
+   * after the conflict was raised. Ambush is gated on
+   * `mainHand?.weaponType === 'dagger'`, so a mace main hand switches it off
+   * SILENTLY: the entry stays in the list, fires zero times, and the profile
+   * produces an ordinary-looking figure. That is the failure mode this project
+   * documents hardest, and it is why the weapon column loses to the build.
+   */
+  { presetId: 'rogue_hemo', label: 'Hemo', hit: 120, expertise: 10, preferred: ROGUE, armour: 'Leather', weapons: { kind: 'dualWield', subclass: 'Dagger', offSubclass: 'Dagger' } },
   { presetId: 'druid_moonkin', label: 'Moonkin', hit: 110, expertise: 0, preferred: CASTER, armour: 'Leather', weapons: { kind: 'twoHand', subclass: 'Staff', caster: true } },
   { presetId: 'druid_cat', label: 'Cat', hit: 30, expertise: 10, preferred: ['Strength', 'Agility', 'Crit', 'Stamina', 'Attack Power'], armour: 'Leather', weapons: { kind: 'twoHand', subclass: 'Mace' } },
   { presetId: 'druid_bear', label: 'Bear', hit: 30, expertise: 20, preferred: ['Stamina', 'Bonus Armor', 'Agility', 'Strength', 'Dodge', 'Defense'], armour: 'Leather', weapons: { kind: 'twoHand', subclass: 'Mace' } },
@@ -89,7 +106,33 @@ export const BENCHMARK_TEMPLATES: readonly BenchmarkTemplate[] = [
   { presetId: 'mage_arcane', label: 'Arcane', characterName: 'Arcane Mage', hit: 110, expertise: 0, preferred: CASTER, armour: 'Cloth', weapons: { kind: 'twoHand', subclass: 'Staff', caster: true } },
   { presetId: 'mage_fire', label: 'Fire', characterName: 'Fire Mage', hit: 110, expertise: 0, preferred: CASTER, armour: 'Cloth', weapons: { kind: 'twoHand', subclass: 'Staff', caster: true } },
   { presetId: 'pally_ret', label: 'Seal Twist Ret', hit: 80, expertise: 10, preferred: ['Crit', 'Strength', 'Spell Power', 'Agility', 'Intellect', 'Stamina', 'Attack Power'], armour: 'Plate', weapons: { kind: 'twoHand', subclass: 'Mace' } },
-  { presetId: 'pally_shockadin', label: 'Shockadin', hit: 80, expertise: 0, preferred: ['Crit', 'Spell Power', 'Intellect', 'Strength', 'Stamina', 'Agility', 'Attack Power'], armour: 'Plate', weapons: { kind: 'twoHand', subclass: 'Mace', speed: 2.0 } },
+  /*
+   * A ONE-HANDER AND A SHIELD, NOT THE SPREADSHEET'S "Fast 2H Mace", and the
+   * owner already ruled on this conflict from the other side.
+   *
+   * `presets.ts` says so in its own words: "The owner's Shockadin set is
+   * Azuresong Mageblade and Earth and Fire: a one-hander and a caster shield. A
+   * two-hand style deletes the main hand and both off-hand slots, so that set
+   * under that style is a Paladin holding nothing." The preset's style was
+   * changed FROM `two_hander` for exactly that reason -- and a `twoHand`
+   * template then made the same mistake in reverse: `liveEquipment` dropped the
+   * two-hander and the Shockadin fought with the PLACEHOLDER weapon, which is
+   * the Hemo/Ambush shape again and just as silent.
+   *
+   * AND THE OWNER HAS RULED ON IT: "We'll leave shockadin as a 1H + Shield
+   * build for now." So this is a decision rather than a reading, and the
+   * spreadsheet's "2H" column is the part that gave way.
+   *
+   * THE 2.0 SPEED IS KEPT, because that is the part of the spreadsheet row that
+   * is about the build rather than about the slot: a fast weapon is what a
+   * Shockadin wants, for the seal that fires per swing. **The question that was
+   * open here was whether the owner meant a two-handed STYLE** --
+   * Seal of Righteousness is 20% of spell power one-handed against 22%
+   * two-handed, so the two readings were not worth the same -- which is why it
+   * was raised rather than guessed at. Settled now, and the one-handed 20% is
+   * what the Shockadin's seal reads.
+   */
+  { presetId: 'pally_shockadin', label: 'Shockadin', hit: 80, expertise: 0, preferred: ['Crit', 'Spell Power', 'Intellect', 'Strength', 'Stamina', 'Agility', 'Attack Power'], armour: 'Plate', weapons: { kind: 'oneHandShield', subclass: 'Mace', speed: 2.0 } },
   { presetId: 'prot_pally', label: 'Prot Pally', hit: 50, expertise: 20, preferred: TANK, armour: 'Plate', weapons: { kind: 'oneHandShield', subclass: 'Mace', caster: true } },
   { presetId: 'bm_hunter', label: 'BM Hunter', hit: 80, expertise: 0, preferred: HUNTER, armour: 'Mail', weapons: { kind: 'twoHand', subclass: 'Axe', ranged: true } },
   { presetId: 'lw_ranged', label: 'LW Ranged', hit: 80, expertise: 0, preferred: HUNTER, armour: 'Mail', weapons: { kind: 'twoHand', subclass: 'Axe', ranged: true } },
@@ -160,6 +203,23 @@ const toLines = (
   }
   return { effects, spent: spent === 0 ? 0 : spent ** (1 / BUDGET_EXPONENT) };
 };
+
+/**
+ * The stamina a generated line list came out with.
+ *
+ * Read back off the TOOLTIP TEXT rather than tracked alongside it, for the same
+ * reason the whole generator writes text and parses it: one source of truth. If
+ * `LINE.Stamina` ever changes its wording this returns zero and the floor
+ * applies on every piece, which is visible -- where a parallel tally would
+ * quietly disagree with what the item says.
+ */
+function staminaIn(effects: readonly { kind: string; text: string }[]): number {
+  for (const effect of effects) {
+    const match = effect.text.match(/^\+(\d+) Stamina$/);
+    if (match) return Number(match[1]);
+  }
+  return 0;
+}
 
 function makeItem(
   id: number,
@@ -284,7 +344,49 @@ export function benchmarkItemsFor(
     if (h) fixed.set('Hit', h);
     const e = expertise.get(plan.slot);
     if (e) fixed.set('Expertise', e);
-    const { effects, spent } = toLines(fixed, statsFor(plan, template.preferred), budget);
+    /*
+     * EVERY ARMOUR-CLASS PIECE CARRIES STAMINA, AS A FLOOR.
+     *
+     * ------------------------------------------------------------------------
+     * `staminaFloor` is the owner's share of the slot's budget, and it applies
+     * to the EIGHT armour slots only -- not the cloak, not the jewellery, not a
+     * weapon. The owner named those eight, and 93.3% of Forever's own clean
+     * armour pieces carry stamina against a generator that dropped it whenever
+     * it fell outside a template's stat count.
+     *
+     * A FLOOR, SO A TANK IS UNTOUCHED. The Bear and both Protection builds lead
+     * with stamina and already buy several times this; the two-pass below only
+     * intervenes when the preference allocation would come in under it.
+     *
+     * AND WHEN IT DOES INTERVENE, STAMINA MOVES OUT OF THE SHARE LIST AND INTO
+     * `fixed`. Leaving it in both would pay it twice -- the floor plus its own
+     * share -- which is the double-count that `toLines` cannot see, because
+     * `fixed` is added before the shares are divided and nothing cross-checks
+     * the two.
+     * ------------------------------------------------------------------------
+     */
+    const chosen = statsFor(plan, template.preferred);
+    let shares = chosen;
+    if (!plan.noArmour && plan.slot !== 'cloak') {
+      /*
+       * CLAMPED BY WHAT THE RATINGS ALREADY TOOK. Hit and expertise are in
+       * `fixed` and cost real budget, so the floor has to be what the slot can
+       * still afford -- a B55 medium slot carrying 25 Hit Rating has 3% of its
+       * budget left and cannot have six stamina on top of it.
+       */
+      const committed = [...fixed.entries()].reduce(
+        (sum, [stat, value]) => sum + (value * COST[stat]) ** BUDGET_EXPONENT,
+        0,
+      );
+      const floor = staminaFloor(budget, committed);
+      const firstPass = toLines(fixed, chosen, budget);
+      if (floor > 0 && staminaIn(firstPass.effects) < floor) {
+        fixed.set('Stamina', floor);
+        shares = chosen.filter((stat) => stat !== 'Stamina');
+      }
+    }
+
+    const { effects, spent } = toLines(fixed, shares, budget);
     const armour = plan.noArmour ? null : baseArmour(plan.inventory, template.armour, set.itemLevel);
     items.push(
       makeItem(
@@ -345,10 +447,52 @@ export function benchmarkItemsFor(
     addWeapon('One-Hand', 'oneHand', 'oneHand', w.subclass, SPEED[w.subclass] ?? SPEED.oneHand, `Main-Hand ${w.subclass}`);
     addWeapon('One-Hand', 'oneHand', 'oneHand', w.offSubclass!, SPEED[w.offSubclass!] ?? SPEED.oneHand, `Off-Hand ${w.offSubclass}`);
   } else {
-    addWeapon('One-Hand', 'oneHand', 'oneHand', w.subclass, SPEED.oneHand, `One-Hand ${w.subclass}`);
-    // A shield: light slot, carrying block value on top of its base armour.
+    /*
+     * `w.speed` IS HONOURED HERE TOO, and it was not. The field exists for the
+     * Shockadin's fast mace and only the two-hand branch read it, so moving
+     * that template to a shield build would have silently given it the default
+     * 2.4 -- a different weapon from the one the owner specified, in a row
+     * whose whole point is the speed.
+     */
+    addWeapon(
+      'One-Hand',
+      'oneHand',
+      'oneHand',
+      w.subclass,
+      w.speed ?? SPEED[w.subclass] ?? SPEED.oneHand,
+      `One-Hand ${w.subclass}`,
+    );
+    /*
+     * A SHIELD, AND ITS BLOCK VALUE IS FREE RATHER THAN BOUGHT.
+     *
+     * ------------------------------------------------------------------------
+     * THIS USED TO SPEND THE BUDGET ON `Block` AND GOT SIX POINTS. A real
+     * Forever shield at item level 65 carries 44, as a STAT line inherent to
+     * the slot -- `shieldBlockValue` is that fit, and it is free with the item
+     * level exactly as base armour is. The Immovable Object carries 44
+     * inherent AND "Equip: +27 Block Value" bought on top, which is what says
+     * the two are different kinds of number.
+     *
+     * SO THE BUDGET BUYS STAMINA AND THE SLOT GIVES THE BLOCK. Six points of
+     * block value against 44 was costing the Protection builds their
+     * mitigation and, through Shield Slam, their damage.
+     * ------------------------------------------------------------------------
+     */
+    /*
+     * THREE STATS, FROM THE BUILD'S OWN PREFERENCES, by the owner's slot
+     * table -- "Wrist, Neck, Rings, Shields have 3 stats".
+     *
+     * It was a hard-coded single `Stamina` line, which was right for a tank by
+     * accident and wrong for the Elemental Shaman and the Shockadin: both hold
+     * a shield and neither leads with stamina. The shield is a `light` slot
+     * like a wrist, so it reads the preference order exactly as one does.
+     */
     const shieldBudget = base * SLOT_MULTIPLIER.light;
-    const { effects, spent } = toLines(new Map(), ['Stamina', 'Block'] as BenchStat[], shieldBudget);
+    const shieldStats = statsFor(
+      { slot: 'shield', inventory: 'Off Hand', slotClass: 'light', stats: SHIELD_STATS },
+      template.preferred,
+    );
+    const { effects, spent } = toLines(new Map(), shieldStats, shieldBudget);
     items.push(
       makeItem(
         nextId(),
@@ -358,7 +502,10 @@ export function benchmarkItemsFor(
         'Shield',
         Math.round(baseArmour('Chest', template.armour, set.itemLevel) * 3.3),
         null,
-        effects,
+        [
+          { kind: 'Stat', text: `${shieldBlockValue(set.quality, set.itemLevel)} Block` },
+          ...effects,
+        ],
         shieldBudget,
         spent,
       ),

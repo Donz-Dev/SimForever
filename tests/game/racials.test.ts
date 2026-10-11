@@ -172,18 +172,38 @@ describe('the weapon specializations', () => {
      * reading would be right about two builds and silently worth nothing to the
      * third.
      */
-    const sword = PRESETS_BY_ID.get('pally_shockadin')!.build();
-    const asHuman = characterAtCombatStart(sword)!;
-    const asUndead = characterAtCombatStart({
-      ...sword,
-      character: { ...sword.character, race: 'undead' },
-    })!;
+    /*
+     * ------------------------------------------------------------------------
+     * ON A HAND-BUILT SWORD RATHER THAN ON THE SHOCKADIN, whose benchmark
+     * template holds a MACE -- the owner's spreadsheet column for that row --
+     * so a sword specialization grants it nothing and this test read zero.
+     *
+     * The paragraph above still holds and is why the sword matters: the
+     * melee-only reading would be worth nothing to a build whose damage is
+     * mostly spells. What changed is that the sword has to be put in the
+     * character's hand rather than found in a preset's.
+     *
+     * High Warlord's Blade, a Forever one-hand sword.
+     * ------------------------------------------------------------------------
+     */
+    const equipment = { mainHand: { itemId: 16345 } };
+    const asHuman = racialBuild('human', {
+      characterClass: 'paladin',
+      equipment,
+      style: 'one_hand_shield',
+    });
+    const asUndead = racialBuild('undead', {
+      characterClass: 'paladin',
+      equipment,
+      style: 'one_hand_shield',
+    });
 
+    expect((asHuman.stats.critChance ?? 0) - (asUndead.stats.critChance ?? 0)).toBeCloseTo(
+      SWORD_CRIT,
+      9,
+    );
     expect(
-      asHuman.stats.effective.critChance - asUndead.stats.effective.critChance,
-    ).toBeCloseTo(SWORD_CRIT, 9);
-    expect(
-      asHuman.stats.effective.spellCritChance - asUndead.stats.effective.spellCritChance,
+      (asHuman.stats.spellCritChance ?? 0) - (asUndead.stats.spellCritChance ?? 0),
     ).toBeCloseTo(SWORD_CRIT, 9);
   });
 
@@ -205,16 +225,38 @@ describe('the weapon specializations', () => {
      * like a working trait. This test is that fact, written down.
      * ========================================================================
      */
-    const holdsAnAxe = ['bm_hunter', 'lw_ranged'] as const;
-    const noAxe = ['dw_fury', 'two_hand_arms', 'lw_melee', 'hawk_melee', 'rogue_combat'] as const;
+    /*
+     * SIX OF THE SEVEN ORC BUILDS HOLD AN AXE NOW, where two did.
+     *
+     * The benchmark templates arm every Warrior and Hunter build with axes --
+     * the owner's spreadsheet column -- so what used to be a two-preset
+     * exception is almost the rule. The POINT is untouched and is now tested
+     * more widely than before: the two RANGED Hunters hold an axe their style
+     * never swings, and they still collect the crit.
+     */
+    const holdsAnAxe = [
+      'bm_hunter',
+      'lw_ranged',
+      'two_hand_arms',
+      'dw_fury',
+      'lw_melee',
+      'hawk_melee',
+    ] as const;
+    // The Combat Rogue is the one Orc build with no axe at all: sword and dagger.
+    const noAxe = ['rogue_combat'] as const;
 
     for (const preset of holdsAnAxe) {
       const built = PRESETS_BY_ID.get(preset)!.build();
       expect(built.character.race, preset).toBe('orc');
-      // The style's main hand is a stat stick, so nothing swings the axe.
-      expect(built.character.combatStyle, preset).toBe('ranged');
       const delta = racialSpellCritDelta(preset, 'troll');
       expect(delta, preset).toBeCloseTo(AXE_CRIT, 9);
+    }
+
+    // AND THE TWO THAT NEVER SWING IT ARE THE WHOLE ARGUMENT: a stat-stick
+    // style builds no main-hand weapon profile, so reading the profile instead
+    // of the equipment would give these two nothing.
+    for (const preset of ['bm_hunter', 'lw_ranged'] as const) {
+      expect(PRESETS_BY_ID.get(preset)!.build().character.combatStyle, preset).toBe('ranged');
     }
 
     for (const preset of noAxe) {
@@ -225,9 +267,18 @@ describe('the weapon specializations', () => {
   });
 
   it('counts either hand, so a dual-wielder with one sword is holding a sword', () => {
-    // Vis'kag in the main hand and a dagger in the off hand, and the other way.
-    const viskag = itemIdIn('dw_fury', 'mainHand');
-    const dagger = itemIdIn('rogue_rupture', 'offHand');
+    /*
+     * NAMED OUTRIGHT RATHER THAN BORROWED FROM A PRESET'S GEAR. This read the
+     * DW Fury main hand for its sword and the Rupture off hand for its dagger,
+     * and the benchmark templates give DW Fury AXES -- so the "sword" was an
+     * axe and the test asserted sword specialization off a weapon that cannot
+     * grant it.
+     *
+     * High Warlord's Blade is a Forever one-hand SWORD and Death's Sting a
+     * Forever DAGGER, transcribed from their own tooltips.
+     */
+    const viskag = 16345;
+    const dagger = 21126;
 
     const mainHand = racialBuild('human', {
       characterClass: 'rogue',

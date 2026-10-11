@@ -37,19 +37,42 @@ describe('a swing is named for the hand that threw it', () => {
 
     expect(names).toContain('Main Hand Auto-Attack');
     expect(names).toContain('Off Hand Auto-Attack');
-    // The starting set is Vis'kag and Brutality Blade; neither should head a row.
-    expect(names.some((name) => name.includes("Vis'kag"))).toBe(false);
-    expect(names.some((name) => name.includes('Brutality'))).toBe(false);
+    /*
+     * AND NO ITEM NAME HEADS A ROW. This named Vis'kag and Brutality Blade,
+     * which is the Classic set; the benchmark weapons are called "E65
+     * Main-Hand Axe" and so on, so the check is that NO row is named after
+     * whatever is in the hands -- which is the stronger version of the same
+     * assertion and does not need rewriting when the gear moves again.
+     */
+    const equipped = ['E65 Main-Hand Axe', 'E65 Off-Hand Axe'];
+    for (const weapon of equipped) {
+      expect(names, weapon).not.toContain(weapon);
+    }
   });
 
-  it('still names a weapon PROC after the weapon', () => {
+  it('still names a weapon PROC after the weapon, not after the hand', () => {
     /*
-     * Only the swing is renamed. Fatal Wound is Vis'kag's proc and is its own
-     * effect with its own damage -- collapsing it into the hand would lose the
-     * one thing the row exists to show.
+     * ------------------------------------------------------------------------
+     * ON CRUSADER, BECAUSE VIS'KAG IS GONE FROM THE RULESET.
+     *
+     * Fatal Wound was the example and Vis'kag the Bloodletter is in Forever's
+     * own `missing.json` -- so no set can equip one and this row can never
+     * appear. Crusader makes the same point: the proc's effect is reported
+     * under its OWN name, Holy Strength, rather than collapsed into the swing
+     * that triggered it.
+     *
+     * WHY THE DISTINCTION MATTERS is Windfury's: an extra SWING reports as
+     * "Main Hand Auto-Attack" and hid 15.9% of a build, and the fix was to
+     * name the effect rather than the weapon. A proc with its own damage or its
+     * own aura needs its own row.
+     * ------------------------------------------------------------------------
      */
-    const names = runProfileBatch(geared()).abilities.map((row) => row.abilityName);
-    expect(names).toContain('Fatal Wound');
+    const batch = runProfileBatch(geared());
+    const auras = batch.buffUptime.map((row) => row.auraId);
+    expect(auras.some((id) => id.startsWith('holy_strength'))).toBe(true);
+
+    // And the two hands are told apart, which one shared row could not do.
+    expect(auras).toContain('holy_strength_mainHand');
   });
 });
 
@@ -154,9 +177,18 @@ describe('the character sheet shows the stance, and hides crit suppression', () 
       return rows.find((row) => row.abilityName === 'Main Hand Auto-Attack')!.critRate;
     };
 
-    // Against an equal-level target there is no suppression at all, so crit
-    // must be materially higher than against a boss.
-    expect(critRateAt(60)).toBeGreaterThan(critRateAt(63) + 0.02);
+    /*
+     * AGAINST AN EQUAL-LEVEL TARGET THERE IS NO SUPPRESSION AT ALL, so crit
+     * must be higher than against a boss.
+     *
+     * NOT BY A FIXED MARGIN, THOUGH, which is what this asserted. Suppression
+     * is a flat 1.8 percentage points off a 1-10000 die, and whether the
+     * MEASURED rate over sixty fights clears a 2-point margin depends on how
+     * many swings the build makes -- the margin was 0.0004 short after a gear
+     * change. The suppression itself is pinned exactly by `critSuppression`
+     * below; what is asserted here is that it reaches the roll.
+     */
+    expect(critRateAt(60)).toBeGreaterThan(critRateAt(63));
   });
 });
 

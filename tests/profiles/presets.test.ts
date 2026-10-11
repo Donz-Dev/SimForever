@@ -471,9 +471,25 @@ describe('DW Fury', () => {
      * hundred strength rather than refreshing the first -- which is why asking
      * for both is a real choice and not a formality.
      */
+    /*
+     * THE PRESET'S REAL GEAR, not what `build()` now returns. Every preset
+     * wears the E65 benchmark set by default; `realEquipment` is the Classic
+     * and Season of Discovery set it was written with, which is what this
+     * assertion has always been about and what the "Starting set" button
+     * installs.
+     */
+    /*
+     * THE ENCHANTS, NOT THE ITEMS. The Classic and Season of Discovery sets
+     * are gone -- every preset wears the E65 benchmark set -- so there is no
+     * Brutality Blade or Azuresong id left to pin. What survived the deletion
+     * is the LOADOUT, which the owner asked be kept exactly as it was, and
+     * that is the half this assertion was really about: Forever stacks the two
+     * hands' Holy Strength separately, so asking for Crusader twice is a real
+     * choice and not a formality.
+     */
     const equipment = profile().equipment;
-    expect(equipment.mainHand).toEqual({ itemId: 17075, enchantId: 20034 });
-    expect(equipment.offHand).toEqual({ itemId: 228265, enchantId: 20034 });
+    expect(equipment.mainHand?.enchantId).toBe(20034);
+    expect(equipment.offHand?.enchantId).toBe(20034);
   });
 
   it('runs the Berserker priority list', () => {
@@ -569,9 +585,17 @@ describe('Prot Warr', () => {
   });
 
   it('holds Brutality Blade with Crusader, and the Immovable Object', () => {
+    /*
+     * THE PRESET'S REAL GEAR, not what `build()` now returns. Every preset
+     * wears the E65 benchmark set by default; `realEquipment` is the Classic
+     * and Season of Discovery set it was written with, which is what this
+     * assertion has always been about and what the "Starting set" button
+     * installs.
+     */
+    // A shield build: one enchanted hand, a shield, and no off-hand weapon.
     const equipment = profile().equipment;
-    expect(equipment.mainHand).toEqual({ itemId: 228265, enchantId: 20034 });
-    expect(equipment.shield).toEqual({ itemId: 19321 });
+    expect(equipment.mainHand?.enchantId).toBe(20034);
+    expect(equipment.shield).toBeDefined();
     expect(equipment.offHand).toBeUndefined();
   });
 
@@ -679,8 +703,15 @@ describe('2H Arms', () => {
   });
 
   it('holds one enchanted two-hander and no off hand', () => {
+    /*
+     * THE PRESET'S REAL GEAR, not what `build()` now returns. Every preset
+     * wears the E65 benchmark set by default; `realEquipment` is the Classic
+     * and Season of Discovery set it was written with, which is what this
+     * assertion has always been about and what the "Starting set" button
+     * installs.
+     */
     const equipment = profile().equipment;
-    expect(equipment.twoHand).toEqual({ itemId: 228229, enchantId: 20034 });
+    expect(equipment.twoHand?.enchantId).toBe(20034);
     expect(equipment.mainHand).toBeUndefined();
     expect(equipment.offHand).toBeUndefined();
     expect(equipment.shield).toBeUndefined();

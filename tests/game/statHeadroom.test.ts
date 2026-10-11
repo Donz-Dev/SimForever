@@ -141,36 +141,52 @@ describe('tiersFrom', () => {
 describe('hit headroom', () => {
   it('takes the spell floor off, so the cap is 16 points and not 17', () => {
     /*
-     * The Shadow Priest carries ONE point of spell hit from its gear, so its
-     * miss is 17 - 1 and its headroom is 16 - 1: the figure to check is that
-     * the floor is subtracted at all. Read `miss` alone and the seventeenth
-     * point of hit would be promised to a caster the owner's own cap says
-     * cannot use it.
+     * THE FIGURE TO CHECK IS THAT THE FLOOR IS SUBTRACTED AT ALL, not what the
+     * gear happens to carry. Read `miss` alone and the seventeenth point of hit
+     * would be promised to a caster the owner's own cap says cannot use it.
+     *
+     * THE GEAR'S OWN HIT IS READ RATHER THAN WRITTEN DOWN. This said "the
+     * Shadow Priest carries ONE point of spell hit" -- true of its Classic set
+     * and not of the benchmark one, whose template targets 120 hit rating. The
+     * invariant is the gap between the two: 17 to miss, 16 usable, so a build's
+     * headroom is always one point less than its miss.
      */
     const { player, chances } = built(presetNamed('shadow_priest'));
     const spells = hitHeadroom(player, BOSS, chances).find((entry) => entry.table === 'spell');
+    const fromGear = player.stats.effective.hitChance;
 
     expect(spells).toBeDefined();
-    expect(spells!.current).toBeCloseTo(17 - 1, 6);
-    expect(spells!.headroom).toBeCloseTo(16 - 1, 6);
+    expect(fromGear).toBeGreaterThan(0);
+    expect(spells!.current).toBeCloseTo(17 - fromGear, 6);
+    expect(spells!.headroom).toBeCloseTo(16 - fromGear, 6);
+    // And the one point of difference IS the floor.
+    expect(spells!.current - spells!.headroom).toBeCloseTo(1, 6);
   });
 
   it('reports a capped slice beside an uncapped one on the same character', () => {
     /*
      * THE CASE THE WHOLE LADDER EXISTS FOR, and the ruleset owner's own
-     * example. A Combat Rogue sits on 16 points of hit: 8% of special miss is
-     * gone twice over, and its auto-attacks still carry the 19-point
-     * dual-wield penalty and miss 27 - 16 = 11% of the time.
+     * example. A Combat Rogue carries more hit than its SPECIALS can use -- 8%
+     * of special miss is gone twice over -- and its auto-attacks still carry
+     * the 19-point dual-wield penalty, so they miss 27% less whatever hit it
+     * has and still have headroom.
+     *
+     * THE HIT IS READ OFF THE CHARACTER. It used to be written as 16, the
+     * Rogue's Classic set; its benchmark template targets 120 rating, which is
+     * 12 points. The SHAPE is the invariant: one slice capped at zero, the
+     * other two still paying, off one character.
      */
     const { player, chances } = built(presetNamed('rogue_combat'));
     const slices = hitHeadroom(player, BOSS, chances);
+    const hit = player.stats.effective.hitChance;
 
     const specials = slices.find((entry) => entry.label === 'Specials');
     const autos = slices.filter((entry) => entry.table === 'melee-auto');
 
+    expect(hit).toBeGreaterThan(8);
     expect(specials!.headroom).toBe(0);
     expect(autos).toHaveLength(2);
-    for (const auto of autos) expect(auto.headroom).toBeCloseTo(27 - 16, 6);
+    for (const auto of autos) expect(auto.headroom).toBeCloseTo(27 - hit, 6);
 
     // So hit is NOT written off for this build: one rung remains, bought by
     // the swings alone.
@@ -201,8 +217,16 @@ describe('hit headroom', () => {
     const { player, chances } = built(presetNamed('dw_fury'));
     const slices = dodgeParryHeadroom(player, BOSS, chances);
 
+    /*
+     * AND THE GEAR HAS ALREADY SPENT SOME OF IT. The benchmark templates buy
+     * Expertise -- DW Fury's row asks for 10 rating, which is one percentage
+     * point of reduced dodge and parry -- where the Classic sets carried none.
+     * So the headroom is 6.5 LESS whatever the character already has, and the
+     * folding is what this test is about.
+     */
+    const spent = player.stats.effective.dodgeParryReduction;
     expect(slices.map((slice) => slice.label).sort()).toEqual(['Dodge', 'Parry']);
-    expect(slices.find((slice) => slice.label === 'Dodge')!.headroom).toBeCloseTo(6.5, 6);
+    expect(slices.find((slice) => slice.label === 'Dodge')!.headroom).toBeCloseTo(6.5 - spent, 6);
     expect(slices.find((slice) => slice.label === 'Parry')!.headroom).toBe(0);
   });
 
@@ -216,12 +240,19 @@ describe('hit headroom', () => {
     const { player, chances } = built(presetNamed('prot_warr'));
     const tiers = tiersFrom(dodgeParryHeadroom(player, BOSS, chances));
 
+    /*
+     * THE RUNGS ARE WHERE THE CAPS ARE, LESS WHAT THE GEAR ALREADY BOUGHT. The
+     * Protection template asks for 20 Expertise Rating, which is two points of
+     * reduced dodge and parry, so the first rung runs to 6.5 - 2 and the second
+     * to 14 - 2. The SHAPE -- two rungs, dodge capping first -- is the claim.
+     */
+    const spent = player.stats.effective.dodgeParryReduction;
     expect(tiers).toHaveLength(2);
-    expect(tiers[0].to).toBeCloseTo(6.5, 6);
+    expect(tiers[0].to).toBeCloseTo(6.5 - spent, 6);
     expect(tiers[0].caps).toEqual(['Dodge']);
     expect([...tiers[0].benefits].sort()).toEqual(['Dodge', 'Parry']);
     // Past the dodge cap, only parry is still paying -- all the way to 14%.
-    expect(tiers[1].to).toBeCloseTo(14, 6);
+    expect(tiers[1].to).toBeCloseTo(14 - spent, 6);
     expect(tiers[1].caps).toEqual(['Parry']);
     expect(tiers[1].benefits).toEqual(['Parry']);
   });

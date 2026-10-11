@@ -133,14 +133,22 @@ describe('which attack power a weapon scales with', () => {
      * worked example is what settles it.
      * ------------------------------------------------------------------------
      */
-    // A REAL profile's bow, so the figures below are the ones a reader sees.
-    const bow = characterAtCombatStart(PRESETS_BY_ID.get('lw_ranged')!.build())!.weapons.ranged!;
-    const item = ITEMS_BY_ID.get(228334)!;
+    /*
+     * A REAL PROFILE'S BOW, READ OFF THE PROFILE. This named Rhok'delar at id
+     * 228334 and its 3.2-second speed outright; that bow was a Season of
+     * Discovery stand-in and is deleted, and the benchmark set gives the four
+     * Hunters a generated one. The quiver and the ammunition are rules about
+     * ANY bow, so the bow's own speed is what the arithmetic is checked
+     * against.
+     */
+    const profile = PRESETS_BY_ID.get('lw_ranged')!.build();
+    const bow = characterAtCombatStart(profile)!.weapons.ranged!;
+    const item = ITEMS_BY_ID.get(profile.equipment.ranged!.itemId)!;
 
-    // Rhok'delar is a 3.2-second bow before the quiver.
-    expect(item.weapon!.speed).toBeCloseTo(3.2, 6);
-    expect(bow.swingTimerMs).toBe(Math.round(3200 / 1.15));
-    expect(bow.swingTimerMs).toBe(2783);
+    const baseSpeed = item.weapon!.speed;
+    expect(baseSpeed).toBeGreaterThan(0);
+    // A DIVISOR: the quiver takes 15% off the timer, it does not take 15% of it.
+    expect(bow.swingTimerMs).toBe(Math.round((baseSpeed * 1000) / 1.15));
 
     /*
      * AMMO IS A DPS, so it becomes per-shot damage by multiplying a speed -- and
@@ -149,8 +157,8 @@ describe('which attack power a weapon scales with', () => {
      * 16.5 DPS forever instead of letting the quiver multiply it.
      */
     const itemAverage = (item.weapon!.minDamage + item.weapon!.maxDamage) / 2;
-    expect(bow.baseDamage).toBeCloseTo(itemAverage + 16.5 * 3.2, 6);
-    expect(bow.baseDamage - itemAverage).toBeCloseTo(52.8, 6);
+    expect(bow.baseDamage).toBeCloseTo(itemAverage + 16.5 * baseSpeed, 6);
+    expect(bow.baseDamage - itemAverage).toBeCloseTo(16.5 * baseSpeed, 6);
 
     /*
      * AND NOT THE QUIVER-SHORTENED SPEED, which is the rejected reading and the
@@ -160,10 +168,10 @@ describe('which attack power a weapon scales with', () => {
      * an interpretation, and the assertion is written to FAIL the alternative
      * rather than merely to pass the choice.
      */
-    expect(bow.baseDamage - itemAverage).not.toBeCloseTo(16.5 * (3.2 / 1.15), 1);
+    expect(bow.baseDamage - itemAverage).not.toBeCloseTo(16.5 * (baseSpeed / 1.15), 1);
 
     // And the coefficient is untouched: base speed over fourteen.
-    expect(bow.powerCoefficient).toBeCloseTo(3.2 / 14, 10);
+    expect(bow.powerCoefficient).toBeCloseTo(baseSpeed / 14, 10);
   });
 
   it('gives a MELEE Hunter neither, because its bow has no weapon profile', () => {
@@ -173,11 +181,13 @@ describe('which attack power a weapon scales with', () => {
      * quiver hastened a dual-wielder's daggers" is the obvious way to get this
      * wrong, and the engine has only ONE haste rating.
      */
-    const melee = characterAtCombatStart(PRESETS_BY_ID.get('lw_melee')!.build())!;
+    const meleeProfile = PRESETS_BY_ID.get('lw_melee')!.build();
+    const melee = characterAtCombatStart(meleeProfile)!;
     expect(melee.weapons.ranged).toBeUndefined();
-    expect(melee.weapons.mainHand!.swingTimerMs).toBe(
-      ITEMS_BY_ID.get(17075)!.weapon!.speed * 1000,
-    );
+    // Its MAIN HAND is unhastened, which is the half that matters: the quiver
+    // reaches the bow and nothing else, and the engine has only one haste.
+    const mainHandItem = ITEMS_BY_ID.get(meleeProfile.equipment.mainHand!.itemId)!;
+    expect(melee.weapons.mainHand!.swingTimerMs).toBe(mainHandItem.weapon!.speed * 1000);
   });
 
   it('still scales a MELEE weapon with melee attack power, and not with ranged', () => {
@@ -315,12 +325,13 @@ describe('a stat stick is held and never swung', () => {
     const style = profile.character.combatStyle as never;
     const actor = characterAtCombatStart(profile)!;
 
-    // Dreadforge Retaliator is equipped in the two-hand slot...
-    expect(profile.equipment.twoHand?.itemId).toBe(227981);
+    // A two-hander is equipped in the two-hand slot...
+    expect(profile.equipment.twoHand).toBeDefined();
     // ...contributes no main-hand weapon...
     expect(weaponsForEquipment(profile.equipment, style).mainHand).toBeUndefined();
     expect(actor.weapons.mainHand).toBeUndefined();
-    // ...and the bow is what swings.
-    expect(actor.weapons.ranged?.name).toBe("Rhok'delar, Longbow of the Ancient Keepers");
+    // ...and the bow is what swings. (Named by its SET rather than by an item
+    // id, because the Hunter sets are generated from the budget now.)
+    expect(actor.weapons.ranged?.name).toMatch(/^E65 /);
   });
 });

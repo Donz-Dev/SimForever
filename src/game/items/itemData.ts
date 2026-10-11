@@ -3,47 +3,52 @@ import type { CombatStyleId } from '../character/ids';
 import { DAMAGE_SCHOOLS, RATING_PER_PERCENT } from '../../engine';
 import type { Enchant, EquipmentSlot, Item, ItemWeapon, UnmodelledEffect } from './Item';
 import { FOREVER_ENCHANTS, FOREVER_ENCHANT_ID_BASE } from './foreverEnchants';
-import warriorItems from '../../data/items/classic-warrior.json';
-import hunterItems from '../../data/items/sod-hunter.json';
-import rogueItems from '../../data/items/sod-rogue.json';
-import druidItems from '../../data/items/sod-druid.json';
-import shamanItems from '../../data/items/sod-shaman.json';
-import mageItems from '../../data/items/sod-mage.json';
-import paladinItems from '../../data/items/sod-paladin.json';
-import warlockItems from '../../data/items/sod-warlock.json';
-import priestItems from '../../data/items/sod-priest.json';
 import foreverNewEpics from '../../data/items/forever-new-epics.json';
 import foreverChangedEpics from '../../data/items/forever-changed-epics.json';
 import foreverNewRares from '../../data/items/forever-new-rares.json';
 import foreverChangedRares from '../../data/items/forever-changed-rares.json';
+import foreverSame from '../../data/items/forever-same.json';
+import weaponEnchants from '../../data/items/weapon-enchants.json';
 import { BENCHMARK_ITEMS } from './benchmarkSets';
 
 /**
- * Items, from Wowhead's Classic tooltip data.
+ * Items, from WoW: Forever's own client data.
  *
- * Source: `https://nether.wowhead.com/classic/tooltip/item/<id>`, scraped into
- * `src/data/items/*.json` -- `classic-warrior.json` first and hash-checked on
- * the way in, `sod-hunter.json` afterwards through `tools/import_item.mjs`.
- * Those files are the record; this one turns them into what the simulator
- * uses.
+ * ==============================================================================
+ * FIVE CAPTURES FROM `foreverchanges.pro`, imported into `src/data/items/*.json`
+ * by `tools/import_forever_items.mjs` and hash-checked on the way in. Those
+ * files are the record; this one turns them into what the simulator uses.
  *
- * ONE FILE PER SET, so "where did this number come from" has a per-file
- * answer: each carries its own `source` and the set it was taken from. They
- * are concatenated here and nothing downstream knows there were two.
+ * ONE FILE PER POPULATION, so "where did this number come from" has a per-file
+ * answer: each carries its own `source` and the capture it came from.
  *
- * RULESET NOTE, and it matters. These are WoW CLASSIC items — the Tier 1
- * Unstoppable Might set is Season of Discovery — while everything else in this
- * project is World of Warcraft: Forever. They were chosen deliberately, to get
- * real weapon numbers in place of the invented placeholders, but a Forever item
- * of the same name may not have the same values. Nothing here should be taken
- * as Forever data.
+ *   forever-new-epics      items Forever ADDED
+ *   forever-new-rares
+ *   forever-changed-epics  Classic items Forever ALTERED  (an override layer)
+ *   forever-changed-rares
+ *   forever-same           Classic items Forever KEPT, captured because "new
+ *                          and changed" leaves out everything it did not touch
  *
- * WHAT IS AND IS NOT CARRIED OVER. An item's stats, armor, attack power, hit
- * and crit all map onto engine stats and are applied. Anything else -- a
- * chance-on-hit proc, an extra attack, a resistance -- is recorded verbatim in
- * `unmodelled` and does NOTHING. A character wearing these is therefore weaker
- * than the same character in the real game, in ways the UI lists rather than
- * hides.
+ * THE CLASSIC AND SEASON OF DISCOVERY STAND-INS ARE GONE, on the ruleset
+ * owner's instruction -- "they were just random templates of items that won't
+ * exist 1-to-1 in Forever". The header this replaces warned at length that
+ * nothing here should be taken as Forever data. Now all of it is.
+ *
+ * WHAT IS AND IS NOT CARRIED OVER. An item's stats, armour, attack power,
+ * ratings and school-scoped spell power all map onto engine stats and are
+ * applied. Anything else -- a chance-on-hit proc, an extra attack, a set
+ * bonus, a resistance -- is recorded verbatim in `unmodelled` and does
+ * NOTHING. A character wearing these is therefore weaker than the same
+ * character in the real game, by exactly the amount `unmodelled` lists.
+ *
+ * AND AN UNREAD LINE IS NOT THE SAME AS AN UNREADABLE ONE.
+ * `tools/item_vocabulary.ts` groups the unread lines by SHAPE, which is how
+ * three rules were found missing at once: Forever writes "+94 Spell Power",
+ * "+36 Ranged Attack Power", "+4 Mana Regeneration" and "+3 Daggers Skill"
+ * where Classic wrote four different sentences. **Run it when a capture is
+ * refreshed**: a shape with a large count is a missing rule, where a shape
+ * with a count of one is usually a real proc.
+ * ==============================================================================
  */
 
 interface RawEffect {
@@ -141,12 +146,29 @@ const SLOTS_BY_INVENTORY_TYPE: Readonly<Record<string, readonly EquipmentSlot[]>
  * that matches nothing is preserved as unmodelled rather than guessed at, so
  * adding a pattern is how an effect becomes real -- never by editing a number.
  */
-interface EffectRule {
+export interface EffectRule {
   readonly pattern: RegExp;
   readonly apply: (value: number, into: Record<string, number>) => void;
 }
 
-const EFFECT_RULES: readonly EffectRule[] = [
+/**
+ * Exported SO A TEST CAN ASK WHICH RULES THE DATA ACTUALLY REACHES.
+ *
+ * ----------------------------------------------------------------------------
+ * A RULE THAT MATCHES NOTHING READS EXACTLY LIKE ONE THAT SOMETIMES MATCHES,
+ * and that is not hypothetical here: the ranged attack power rule was written
+ * for Classic's "+48 ranged Attack Power." and every one of the twelve lines
+ * in the Forever data says "+36 Ranged Attack Power" with a capital R. It
+ * matched nothing, for the whole dataset, and a Hunter's own bow granted no
+ * ranged attack power at all.
+ *
+ * `items.test.ts` walks every rule against every effect line and fails on an
+ * unreachable one that is not on its stated list. Seven are expected to be
+ * unreachable and each is a CLASSIC wording kept for an inherited tooltip --
+ * the point of the list is that an EIGHTH has to be explained.
+ * ----------------------------------------------------------------------------
+ */
+export const EFFECT_RULES: readonly EffectRule[] = [
   {
     /*
      * A shield's "44 Block" is its INHERENT BLOCK VALUE, not a block chance.
@@ -294,22 +316,109 @@ const EFFECT_RULES: readonly EffectRule[] = [
       into.rangedAttackPower = (into.rangedAttackPower ?? 0) + value;
     },
   },
+  /*
+   * ---------------------------------------------------------------------------
+   * A BARE PRIMARY LINE, AND IT IS THE BENCHMARK GEAR THAT NEEDS IT.
+   *
+   * A CAPTURED item never carries one as an EFFECT: the importer sorts "+32
+   * Stamina" into the raw `stats` object and leaves `effects` for the Equip
+   * lines, so zero of the 1,946 items on file match any of the six rules
+   * below. The GENERATED benchmark gear is written as TOOLTIP TEXT on purpose --
+   * so it reaches the engine down the same path a captured item does, rather
+   * than through a second copy of this parser -- and text is all it has.
+   *
+   * WHICH MEANT EVERY BENCHMARK SET LOST ALL ITS PRIMARIES. A Warrior's E65 set
+   * came out as 328 Critical Strike Rating and **no strength, stamina or
+   * agility at all**, because "+19 Strength" matched no rule and went to
+   * `unmodelled`. 23.4% crit from gear is a plausible-looking figure, every set
+   * was internally consistent, and the first full measurement of E65 was taken
+   * with it.
+   *
+   * AND THE TOOL THAT EXISTS TO FIND THIS SKIPPED THEM. `item_vocabulary.ts`
+   * excluded ids above 9,500,000 on the reasoning that an unread line there is
+   * a bug in the generator rather than a gap in the parser -- which is true,
+   * and it was the generator's bug, and excluding it is what hid it for a
+   * commit. It reports them in their own section now.
+   * ---------------------------------------------------------------------------
+   */
+  ...(['Strength', 'Agility', 'Stamina', 'Intellect', 'Spirit'] as const).map((name) => ({
+    pattern: new RegExp(`^\\+(\\d+) ${name}\\.?$`),
+    apply: (value: number, into: Record<string, number>) => {
+      const key = name.toLowerCase();
+      into[key] = (into[key] ?? 0) + value;
+    },
+  })),
   {
     /*
-     * "+48 ranged Attack Power." -- the RANGED pool, which is a different
+     * "+70 Armor" -- BONUS armour, which is budgeted where base armour is free.
+     *
+     * A captured item has this folded into its raw `armor` field by the
+     * importer, base and bonus together: Field Marshal's Headdress is 92 base
+     * and +70 bonus and the capture states 162. The benchmark generator keeps
+     * them apart, because only one of the two costs budget -- so the Bear's
+     * "Bonus Armor" preference is written as a line and read here.
+     */
+    pattern: /^\+(\d+) Armor\.?$/,
+    apply: (value, into) => {
+      into.armor = (into.armor ?? 0) + value;
+    },
+  },
+  {
+    /*
+     * "+36 Ranged Attack Power" -- the RANGED pool, which is a different
      * stat and not a subset of the one above.
      *
-     * It has to be matched BEFORE nothing, and it is listed after the plain
-     * rule only because that rule is anchored and cannot swallow it. A
-     * Hunter's gear says this on a trinket and on the bow itself, and
-     * without a rule the words fell through to `unmodelled` and 65 ranged
-     * attack power went quietly missing -- honest, because the Gear panel
-     * prints every unmodelled line, but wrong when the stat exists and the
-     * source names it unambiguously.
+     * ------------------------------------------------------------------------
+     * THIS PATTERN MATCHED NOTHING IN THE CURRENT DATA AND READ EXACTLY LIKE A
+     * WORKING RULE. It was written for Classic's wording, "+48 ranged Attack
+     * Power." with a lower-case r, and the comment it replaces said so: "a
+     * Hunter's gear says this on a trinket and on the bow itself". It did --
+     * on the Season of Discovery stand-ins, which are deleted. **Forever
+     * writes a capital R and no full stop, and all TWELVE lines in the data
+     * are Forever's**, so the rule was always false and every one of them fell
+     * through to `unmodelled`.
+     *
+     * WHAT IT COST IS A HUNTER'S OWN BOW. Rhok'delar is +17, the two PvP bows
+     * and both guns are +36, and the Zandalar bracers are +34 -- so the one
+     * stat a ranged build cares about most was being dropped by the one rule
+     * written to catch it. Found by `tools/item_vocabulary.ts`, which groups
+     * unread lines by shape: twelve identical shapes is a missing RULE, where
+     * one is usually a real proc.
+     *
+     * CASE-INSENSITIVE ON THAT ONE WORD, so Classic's wording still parses if
+     * a Classic tooltip is ever read again -- a rule that covers both costs
+     * nothing and the alternative is this bug a second time.
+     * ------------------------------------------------------------------------
      */
-    pattern: /^\+(\d+) ranged Attack Power\.?$/,
+    pattern: /^\+(\d+) [Rr]anged Attack Power\.?$/,
     apply: (value, into) => {
       into.rangedAttackPower = (into.rangedAttackPower ?? 0) + value;
+    },
+  },
+  {
+    /*
+     * "+4 Mana Regeneration" -- MANA PER FIVE SECONDS, and the unit is
+     * settled by the ruleset's own data rather than assumed.
+     *
+     * ------------------------------------------------------------------------
+     * THE CONTROL GROUP ANSWERS IT. 252 of the changed items carry Classic's
+     * own lines beside Forever's in `tools/data/forever-changed.capture.json`,
+     * and Field Marshal's Headdress reads "Restores 4 mana per 5 sec." in
+     * Classic and "+4 Mana Regeneration" in Forever. **The same number**, so
+     * the compact rewrite keeps the per-five-seconds unit and `manaPer5` is
+     * where it lands.
+     *
+     * A GUESS HERE WOULD HAVE BEEN FIVE TIMES OUT IN EITHER DIRECTION and
+     * entirely plausible: "+4 Mana Regeneration" reads just as naturally as 4
+     * mana a second. The pairs are what made it a fact.
+     *
+     * 160 LINES, every one of them a caster piece, and mana RETURN is
+     * explicitly not out of scope -- it changes a damage profile's sustain.
+     * ------------------------------------------------------------------------
+     */
+    pattern: /^\+(\d+) Mana Regeneration\.?$/,
+    apply: (value, into) => {
+      into.manaPer5 = (into.manaPer5 ?? 0) + value;
     },
   },
   {
@@ -440,8 +549,40 @@ const EFFECT_RULES: readonly EffectRule[] = [
   },
 ];
 
-/** Bonus weapon skill, which is a weapon property rather than a stat. */
-const WEAPON_SKILL_PATTERN = /^Increased ([\w\- ]+) \+(\d+)\.?$/;
+/**
+ * Bonus weapon skill, which is a weapon property rather than a stat.
+ *
+ * ----------------------------------------------------------------------------
+ * TWO WORDINGS FOR ONE THING, AND THE RULESET USES THE SECOND. Classic says
+ * "Increased Daggers +3." and Forever says "+3 Daggers Skill" -- Death's Sting
+ * and Frenzied Striker are the two items in the data that carry it, and
+ * neither was read until `tools/item_vocabulary.ts` grouped the unread lines
+ * by shape.
+ *
+ * SMALL, AND THE SAME CLASS OF MISTAKE AS THE 1,384 SPELL POWER LINES: a stat
+ * the source names unambiguously, dropped because the parser knew only the
+ * other era's sentence for it. Both are kept, because a Classic tooltip is
+ * still read for an item Forever inherited.
+ *
+ * THE CLASSIC FORM MATCHES "Increased Defense +7" TOO, which is why the named
+ * rules in `EFFECT_RULES` are tried first -- a weapon's bonus skill on a
+ * breastplate is dropped on the floor, because only a weapon carries one. The
+ * Forever form needs no such care: nothing says "Defense Skill".
+ * ----------------------------------------------------------------------------
+ */
+const WEAPON_SKILL_PATTERNS: readonly RegExp[] = [
+  /^Increased ([\w\- ]+) \+(\d+)\.?$/,
+  /^\+(\d+) ([\w\- ]+) Skill\.?$/,
+];
+
+/** The skill points a weapon-skill line grants, or undefined if it is not one. */
+function weaponSkillFrom(text: string): number | undefined {
+  const classic = text.match(WEAPON_SKILL_PATTERNS[0]);
+  if (classic) return Number(classic[2]);
+  const forever = text.match(WEAPON_SKILL_PATTERNS[1]);
+  if (forever) return Number(forever[1]);
+  return undefined;
+}
 
 /**
  * "Increases damage done by Shadow spells and effects by up to 39."
@@ -542,10 +683,37 @@ function stylesFromFormList(list: string): readonly CombatStyleId[] | undefined 
  * the other behaviour and is listed here only so it stops being reported as
  * missing. The ruleset owner supplied the rates the tooltips do not give.
  */
-const MODELLED_AS_PROCS: readonly RegExp[] = [
-  /Delivers a fatal wound for \d+ damage/,
-  /chance on melee hit to gain 1 extra attack/,
-];
+/**
+ * The item procs the simulator implements, by the WORDING that names them.
+ *
+ * ==============================================================================
+ * KEYED BY THE SOURCE'S OWN WORDS RATHER THAN BY ITEM ID, and that is a change
+ * the real data forced. `procs.ts` used to install Vis'kag's Fatal Wound by
+ * testing `item.id === 17075` and Hand of Justice's extra attack against a list
+ * of two ids -- **and neither item is in Forever's data at all.** Both are in
+ * `missing.json`: the ruleset removed them.
+ *
+ * SO THE BINDING WAS THREE DEAD IDS AND THE MECHANISMS WERE UNREACHABLE. Keyed
+ * on the wording instead, an item Forever adds that says "Delivers a fatal
+ * wound for 240 damage" gets the implementation for free -- which is the
+ * arrangement `AuraDefinition.isBleed` already uses for the same reason: a
+ * ruleset TAG the engine reads, rather than a list somebody has to remember to
+ * extend.
+ *
+ * IT IS ALSO ONE SOURCE OF TRUTH FOR TWO QUESTIONS that have to agree. A line
+ * is kept OUT of `unmodelled` because it is implemented, and the reaction is
+ * INSTALLED because it is implemented -- and those were two separate lists.
+ * `reasonFor` and `reactionsForEquipment` read this one.
+ * ==============================================================================
+ */
+export const ITEM_PROCS = {
+  /** Vis'kag the Bloodletter, and anything Forever gives the same line. */
+  fatalWound: /Delivers a fatal wound for \d+ damage/,
+  /** Hand of Justice. */
+  extraAttack: /chance on melee hit to gain 1 extra attack/,
+} as const;
+
+const MODELLED_AS_PROCS: readonly RegExp[] = Object.values(ITEM_PROCS);
 
 /** Why a given effect is not modelled. Keyed by the kind, with a default. */
 function reasonFor(kind: string, text: string): string {
@@ -615,7 +783,7 @@ function buildStats(item: RawItem): {
     /*
      * THE RULES COME FIRST, and the order is load-bearing.
      *
-     * `WEAPON_SKILL_PATTERN` is `Increased <anything> +N`, so it also matches
+     * `WEAPON_SKILL_PATTERNS` holds `Increased <anything> +N`, so it also matches
      * "Increased Defense +10" -- and a weapon's bonus skill on a breastplate
      * is silently discarded, because only a weapon carries one. Trying the
      * named rules first lets the defense rule claim it, and "Increased
@@ -630,9 +798,9 @@ function buildStats(item: RawItem): {
       }
     }
 
-    const skill = effect.text.match(WEAPON_SKILL_PATTERN);
-    if (skill) {
-      bonusSkill += Number(skill[2]);
+    const skill = weaponSkillFrom(effect.text);
+    if (skill !== undefined) {
+      bonusSkill += skill;
       continue;
     }
 
@@ -685,49 +853,32 @@ function buildStats(item: RawItem): {
   };
 }
 
-/**
- * Forever's buffs to the caster weapons, over the Classic stand-ins.
+/*
+ * FOREVER_SPELL_POWER_BUFFS IS GONE, AND THE REAL DATA IS WHY.
  *
- * ----------------------------------------------------------------------------
- * THE RULESET OWNER'S, given directly, and the first item numbers in this
- * project that are Forever's rather than Classic's -- the Immovable Object
- * aside. **+64 spell power to each of four weapons**, which is how the owner
- * stated it and therefore how it is encoded: as a DELTA, not as four absolute
- * figures. A re-scrape that moved a base would then still mean "Forever buffed
- * this by 64" rather than silently reinstating a Classic value.
+ * ==============================================================================
+ * It carried the ruleset owner's +64 spell power on four caster weapons as a
+ * hand-maintained layer over the Classic scrape -- Staff of Dominance,
+ * Sorcerous Dagger, Azuresong Mageblade and Anathema. **Three of the four are
+ * in Forever's own `missing.json`: the ruleset REMOVED those items.** The
+ * fourth, Anathema, is in `changed.json` at id 18609 carrying Forever's own
+ * wording, so the client states what the override used to assert.
  *
- * THE OWNER'S OWN FIGURES FOR TWO OF THEM DID NOT MATCH THIS DATA -- Staff of
- * Dominance quoted at 60 against the scrape's 47, Azuresong at 40 against 44 --
- * and the owner chose the DELTA over the absolutes when asked. That is the
- * whole reason this is a map of bonuses and not a map of totals.
+ * WHAT THE SHAPE WAS RIGHT ABOUT IS WORTH KEEPING. It was A DELTA AND NOT A
+ * TOTAL on purpose: the owner gave +64 as a bonus, two of their four stated
+ * bases disagreed with the scrape, and a bonus survives a re-scrape meaning
+ * the same thing where a total silently reinstates whatever Classic says.
+ * `ENCHANT_RULES` below is the same shape for the same reason.
  *
- * AN OVERRIDE LAYER, NEVER AN EDIT TO THE JSON. `src/data/items/*.json` is
- * generated by `tools/import_item.mjs --build` and checked by `--verify`, so a
- * hand-edited figure there is overwritten by the next build and reported as
- * drift by the next verify. `ENCHANT_RULES` below is the same shape for the
- * same reason.
- *
- * ANATHEMA STAYS SHADOW-SCOPED, which the owner confirmed. Its line reads
- * "damage done by SHADOW spells", so the bonus lands on that school rather
- * than on the school-blind pool -- widening it would also feed Holy, and the
- * two must not be folded together in either direction.
- * ----------------------------------------------------------------------------
+ * AND IT TAUGHT THAT AN OVERRIDE KEYED BY ID IS SILENT WHEN THE ID IS WRONG.
+ * Two entries were first written with Classic ids where the data held Season
+ * of Discovery ones -- 17103 and 18608 against 228269 and 228336. It
+ * typechecked, the suite passed, and the buff reached nothing for half the
+ * items it named. `forever-changed-*.json` is the override layer now:
+ * generated, hashed, and matched by id with `FOREVER_OVERRIDDEN_IDS` exported
+ * so a test can pin how many ids actually collide.
+ * ==============================================================================
  */
-interface SpellPowerBuff {
-  readonly name: string;
-  readonly amount: number;
-  /** Absent means the school-blind pool. */
-  readonly school?: DamageSchool;
-  /** What the scrape says, so a re-scrape that moves it is visible here. */
-  readonly wasInClassic: number;
-}
-
-export const FOREVER_SPELL_POWER_BUFFS: Readonly<Record<number, SpellPowerBuff>> = {
-  228271: { name: 'Staff of Dominance', amount: 64, wasInClassic: 47 },
-  228263: { name: 'Sorcerous Dagger', amount: 64, wasInClassic: 36 },
-  228269: { name: 'Azuresong Mageblade', amount: 64, wasInClassic: 44 },
-  228336: { name: 'Anathema', amount: 64, school: 'shadow', wasInClassic: 75 },
-};
 
 function buildItem(item: RawItem): Item {
   /*
@@ -748,20 +899,6 @@ function buildItem(item: RawItem): Item {
 
   const { stats, schoolPower, styleStats, unmodelled, bonusSkill } = buildStats(item);
 
-  /*
-   * APPLIED AFTER THE PARSE, so the tooltip and the `unmodelled` list still
-   * describe what the source says and only the NUMBER the engine reads moves.
-   * The Gear panel prints the tooltip, so an item buffed here still shows its
-   * Classic wording -- which is honest about where the text came from.
-   */
-  const buff = FOREVER_SPELL_POWER_BUFFS[item.id];
-  if (buff) {
-    if (buff.school) {
-      schoolPower[buff.school] = (schoolPower[buff.school] ?? 0) + buff.amount;
-    } else {
-      stats.spellPower = (stats.spellPower ?? 0) + buff.amount;
-    }
-  }
   // Carried through for display. Still in `unmodelled` too: the sheet shows
   // the total and the Gear panel says it does nothing, and both are true.
   const resistances = { ...item.resistances };
@@ -799,41 +936,31 @@ function buildItem(item: RawItem): Item {
   };
 }
 
-const data = warriorItems as unknown as RawData;
-
 /*
- * EVERY item file, in the same order as `tools/item-sets.json`.
+ * EVERY item file, and they are ALL FOREVER'S OWN now.
  *
- * That order is what decides which file OWNS a shared piece, and twenty-two of
- * these are worn by more than one set -- Choker of the Fire Lord by five of
- * them. An id lands in the first file that asks for it and is omitted from
- * every later one, so this throws rather than silently keeping one of two
- * entries for the same item.
+ * ----------------------------------------------------------------------------
+ * The nine Classic and Season of Discovery files are gone on the ruleset
+ * owner's instruction -- "random templates of items that won't exist 1-to-1 in
+ * Forever" -- and with them `gearSets.ts`, `tools/item-sets.json` and the
+ * importer that built them. What is left is what the beta client has:
+ *
+ *   forever-new-epics      items only Forever has
+ *   forever-new-rares
+ *   forever-changed-epics  Classic items Forever altered  (an override layer)
+ *   forever-changed-rares
+ *   forever-same           Classic items Forever KEPT, captured because "new
+ *                          and changed" leaves out everything it did not touch
+ *
+ * The comment this replaces explained which file owned a shared piece, because
+ * twenty-two items were worn by more than one stand-in set. Nothing is shared
+ * any more: a Forever capture carries each id once.
+ * ----------------------------------------------------------------------------
  */
 const ITEM_FILES: readonly RawData[] = [
-  warriorItems,
-  hunterItems,
-  rogueItems,
-  druidItems,
-  shamanItems,
-  mageItems,
-  paladinItems,
-  warlockItems,
-  priestItems,
-  /*
-   * REAL FOREVER DATA, and the only file here that is. Everything above is a
-   * Classic or Season of Discovery stand-in, as `src/data/items/README.md`
-   * says; this is every new epic at item level 55 and up in the beta client,
-   * captured from the ruleset's own item data and converted by
-   * `tools/import_forever_items.mjs`.
-   *
-   * ADDING IT MOVED NO PUBLISHED FIGURE, and that is checkable rather than
-   * assumed: a preset names its items BY ID, so a new file changes what can be
-   * CHOSEN and not what any of the 25 builds wear. All 75 combat-log hashes
-   * from `tools/rotation_fingerprint.ts` are unchanged.
-   */
   foreverNewEpics,
   foreverNewRares,
+  foreverSame,
 ] as unknown as readonly RawData[];
 
 /**
@@ -847,10 +974,17 @@ const ITEM_FILES: readonly RawData[] = [
  * REPLACED rather than merged -- merged is how an item ends up with Classic's
  * flat "+1% crit" and Forever's "+14 Critical Strike Rating" both applied.
  *
- * THREE IDS COLLIDE TODAY and all three are effectively unchanged once the
- * rating conversion is applied: The Immovable Object and Don Julio's Band
- * differ only in wording, and The Unstoppable Force's "+2% crit" became
- * "+28 Critical Strike Rating", which at 14 per point is the same 2%.
+ * NOTHING COLLIDES TODAY, AND THE LAYER STAYS ANYWAY. Three ids used to --
+ * The Immovable Object, Don Julio's Band and The Unstoppable Force -- and all
+ * three collisions were against the CLASSIC stand-ins, which are deleted.
+ * Forever's own five captures carry each id exactly once.
+ *
+ * IT IS KEPT BECAUSE `same.json` AND `changed.json` ARE TWO READINGS OF ONE
+ * CLIENT. A refreshed capture can legitimately list an item in both, and the
+ * alternative to this layer is the duplicate check throwing -- or worse,
+ * merging, which is how an item ends up carrying both wordings of the same 1%.
+ * `FOREVER_OVERRIDDEN_IDS` is exported so a test can pin the count, and
+ * `items.test.ts` asserts it is EMPTY: the day it is not, that says so.
  * ----------------------------------------------------------------------------
  */
 const OVERRIDE_FILES = [foreverChangedEpics, foreverChangedRares] as unknown as readonly RawData[];
@@ -957,7 +1091,19 @@ const ENCHANT_RULES: Readonly<
   },
 };
 
-const SCRAPED_ENCHANTS: readonly Enchant[] = data.enchants.map((enchant) => {
+/*
+ * THE TWO SCRAPED ENCHANTS SURVIVED THE DELETION, in a file of their own.
+ *
+ * They used to ride along in `classic-warrior.json` beside its items, and that
+ * file is gone -- but Crusader and Weapon Spell Power are not Classic
+ * STAND-INS the way the items were. They have a real Wowhead spell id, an icon
+ * and a tooltip, every preset still names one, and `foreverEnchants.ts` is
+ * explicitly the owner's own table of the OTHER 28. Losing them with the items
+ * would have silently unenchanted every weapon in the project.
+ */
+const SCRAPED_ENCHANTS: readonly Enchant[] = (
+  weaponEnchants as unknown as RawData
+).enchants.map((enchant) => {
   const rule = ENCHANT_RULES[enchant.id];
   if (!rule) throw new Error(`${enchant.name}: no enchant rule for spell ${enchant.id}`);
   return {

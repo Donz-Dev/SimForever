@@ -43,6 +43,9 @@ PRESET=warlock_firelock npx vite-node tools/probe_firelock_heal.ts   # why heali
 npx vite-node tools/probe_cat_rage.ts            # does a Cat's rage pool ever hold anything
 npx vite-node tools/probe_life_tap_gate.ts       # what mana a Warlock should Life Tap at
 npx vite-node tools/probe_other_assignment.ts    # each preset's `other` consumable beside its POOLS
+npx vite-node tools/item_vocabulary.ts           # which item lines the parser does NOT read, by shape
+npx vite-node tools/stamina_share.ts             # what share of a real item's budget is stamina, PvP split out
+ITEMS=19321,21126 npx vite-node tools/item_show.ts   # one item's tooltip beside its parse
 npx vite-node tools/item_budget.ts               # what an item COST to make, and whether it adds up
 FOREVER=1 npx vite-node tools/item_budget.ts     # the 64 Premier PvP cloth pieces, Forever's own
 WEAPONS=1 npx vite-node tools/item_budget.ts     # the 41 new Forever epic weapons
@@ -1385,9 +1388,16 @@ See [docs/resources.md](docs/resources.md).
   fields, and `encounter.targetAttacks` is what tells the two Paladin shield
   builds apart, because the style cannot and stances belong to the Warrior.
 - **Gear belongs to a class, so changing class replaces it.** A race change keeps
-  it. The sets live in `game/items/gearSets.ts`, not `presets.ts`: two layers
-  need them, `game` may not import from `profiles`, and duplicated item ids
-  drift.
+  it. The sets live in `game/items/` -- `benchmarkSets.ts` and the
+  `startingSets.ts` that picks one -- and not in `presets.ts`: two layers need
+  them, `game` may not import from `profiles`, and duplicated item ids drift.
+  **`gearSets.ts` IS GONE and that is the owner's instruction**: the nine
+  Classic and Season of Discovery sets "were just random templates of items
+  that won't exist 1-to-1 in Forever". `startingEquipmentFor` kept its name and
+  its shape and returns the **E65 benchmark set**, which is what let 23 test
+  files carry on unedited -- none of them cares WHICH realistic character it
+  gets, and rewriting them all would have been 23 chances to change what a test
+  measures while claiming to move a gear set.
 - **An encounter that hits back RAMPS, and the character can die.**
   `targetAttacks` brings three mechanisms, none of them Forever data: the
   target's damage grows 10% a swing compounding, an assumed healer restores a
@@ -2547,6 +2557,37 @@ no per-point argument either way and what decides it is uptime.
   `spellCritChance` are read by separate tables, so an item line saying both has
   to grant both. Sixty-two lines say it, and granting only the melee half was
   invisible for exactly as long as no caster owned any gear.
+- **A RULE THAT MATCHES NOTHING READS EXACTLY LIKE ONE THAT SOMETIMES MATCHES,
+  AND SEVEN OF TWENTY-TWO ITEM RULES MATCH NOTHING.** That is fine -- they are
+  Classic wordings kept for an inherited tooltip -- and the EIGHTH is the
+  problem. `/^\+(\d+) ranged Attack Power\.?$/` was written for Classic's
+  lower-case r, every one of the twelve lines in Forever's data has a capital
+  R, and **a Hunter's own bow granted no ranged attack power for the whole
+  dataset**. The rule that existed to catch it was the thing that was broken.
+  **`EFFECT_RULES` IS EXPORTED SO A TEST CAN ASK WHICH RULES THE DATA REACHES**,
+  and `items.test.ts` asserts the unreachable list EXACTLY: a tenth entry fails,
+  and so does one of the nine becoming reachable. The second half has already
+  paid -- `+N Spirit` was on it with a comment calling it a question for the
+  owner, the owner answered with a slot table, and the test failing is how that
+  was confirmed rather than assumed. It is the same shape as
+  `isWeaponUseOf(attack, 'ranged')`, which was always false for every attack,
+  and the same guard: make something ask whether the predicate ever fires.
+- **A RULESET CAN WRITE THE SAME STAT IN WORDS THE PARSER HAS NEVER SEEN, AND
+  1,384 LINES WENT MISSING THAT WAY.** Classic writes spell power as "Increases
+  damage and healing done by magical spells and effects by up to 40" and that
+  sentence was the only rule; **Forever writes "+94 Spell Power" and "+58 Spell
+  Damage"**, so Premier High Warlord's War Staff reported +94 on its tooltip and
+  granted zero. **IT WAS INVISIBLE BECAUSE NO PRESET WORE A FOREVER ITEM** --
+  an item in the database and in no profile is the quietest place in this
+  project for a stat to go missing, and it stayed quiet right up to the commit
+  that made every preset wear one.
+  **SO WHEN A NEW SOURCE LANDS, DIFF ITS VOCABULARY AND NOT ONLY ITS NUMBERS.**
+  The `unmodelled` list is the report that would have said so, and it was
+  thousands of lines long; a count of unmodelled lines per source file is the
+  cheap check.
+- **AND A NEGATIVE STAT IS A STAT.** `^([+-]\d+)`, because Lapidis Tankard
+  carries "-15 Agility" and a `+`-only pattern silently drops a penalty, which
+  is a bigger number and no error.
 - **The named item rules are tried BEFORE the weapon-skill pattern.**
   `^Increased (.+) \+(\d+)$` matches `Increased Defense +7`, and a weapon's
   `bonusSkill` on a breastplate is dropped on the floor.
@@ -2594,18 +2635,34 @@ no per-point argument either way and what decides it is uptime.
   **The SHOULDER column reads "None" and nothing else**, so no enchant lists it
   and the Gear panel shows that slot a dash, which is the honest rendering of a
   column with no options.
-- **A LOADOUT IS SEPARATE FROM THE GEAR SET, BECAUSE THREE SETS SERVE PROFILES
-  WHOSE ENCHANTS DIFFER.** The Warrior's plate serves Arms, Fury and Protection
-  and the Hunter's mail serves two ranged builds and a melee one; only the
-  enchants tell them apart. `withEnchants(set, loadout)` is how one set of items
-  becomes three builds, it writes **only the slots the loadout names** so a
-  weapon keeps its Crusader, and it **THROWS** when a loadout names a slot the
-  set does not fill — every call is on a module constant, so a mismatch fails
-  the typecheck, the suite and the build rather than producing a profile
-  silently missing a stat.
-- **A LOADOUT NAMES ITS ENCHANTS BY THE OWNER'S OWN WORDING**, not by id, so a
-  row reads straight against the spreadsheet. `foreverEnchantId` throws on a
-  name the table does not contain.
+- **A LOADOUT IS SEPARATE FROM THE GEAR, AND IT OUTLIVED THE GEAR.** The
+  enchants used to be written into each preset's `equipment` block by
+  `withEnchants(set, loadout)` over a gear set -- which is how one Warrior plate
+  set served Arms, Fury and Protection: only the enchants told them apart. Both
+  the sets and that function are deleted, so the 25 loadouts are a table of
+  their own, `PRESET_ENCHANTS` in `presets.ts`, applied slot by slot over the
+  benchmark set by `withBenchmarkGear`.
+- **EXTRACT WHAT RIDES ALONG WITH A DATA LAYER BEFORE DELETING IT.** The owner
+  asked for the gear to change and the enchants to stay exactly as they were,
+  and the enchants lived INSIDE the thing being deleted -- worth **+2.4 to
+  +53.7 DPS a profile**, the figures `enchants.test.ts` records, and a loss
+  nobody would have thought to look for inside a gear swap. They were read off
+  the BUILT profiles rather than retyped, so the table is what the presets
+  actually wore rather than what somebody believed they wore.
+  **THE SECOND PASSENGER WAS THE TWO SCRAPED WEAPON ENCHANTS**, which sat in
+  `classic-warrior.json` because that is the file they were scraped with:
+  Crusader and Weapon Spell Power have a spell id, an icon and a tooltip, where
+  the other 28 are the owner's declared table. Deleting the file would have
+  silently unenchanted every weapon in the project, so they were moved to
+  `weapon-enchants.json` first. **ASK WHAT ELSE IS IN A FILE BEFORE DELETING
+  IT FOR WHAT IS NAMED AFTER IT.**
+- **AND THE COST OF THE TABLE IS THAT IT NAMES ITS ENCHANTS BY ID.** The old
+  loadouts said "+8 Strength" and read straight against the owner's
+  spreadsheet; `PRESET_ENCHANTS` stores 900,000-block numbers, so
+  `foreverEnchantId` -- which throws on a name the table does not contain --
+  now has no caller outside its own test. Recorded as a readability regression
+  rather than a decision: mapping the ids back to the owner's wording is cheap
+  and nothing depends on them being numbers.
 - **"+4 Stats" IS ALL FIVE PRIMARIES**, four each — stamina, strength, agility,
   intellect AND spirit. The owner's clarification, and the reading that is easy
   to get wrong: a version granting the three a melee build reads would be right
@@ -3066,7 +3123,8 @@ Six sources. **All nine classes were built from the two client-derived ones.**
 | `talentsforever.com` | the beta client's own files, four static JS assignments a plain `fetch` reaches. **The source of record for talents AND for every ability number in the project**, and the build URLs the profiles are specified by |
 | `foreverchanges.pro/spellbook/<class>` | the beta client diffed against Classic Era, per rank, with cost, cast time and cooldown. **The tie-break: where it and our capture disagree, it wins, by the owner's standing rule.** Nothing imports from it — it is read by hand. Checked so far: the Warrior (five numbers moved) and the Warlock (three moved). Seven classes to go |
 | `foreverchanges.pro/items/*.json` | **the ITEMS half of the same site, and it is plain JSON rather than the RSC flight script this file used to describe.** `new.json`, `changed.json`, `same.json`, `missing.json` and `sources.json`, each stating the beta build it was taken at. **A plain `curl` is refused with a 403**, so it is read in a browser on the origin and the payload hashed there and re-hashed on disk. `tools/data/forever-epic-weapons.json` is the first capture from it |
-| `nether.wowhead.com/classic/tooltip/item/<id>` | Classic item and spell tooltips as JSON, no browser. The current items are Classic stand-ins, not Forever data |
+| `foreverchanges.pro/items` | **the item database, and the source of record for it.** Serves `/items/{new,changed,same,missing,sources}.json` -- Forever's own items diffed against Classic Era, with each item's full tooltip. Five captures are checked in under `tools/data/`, imported by `tools/import_forever_items.mjs` into `src/data/items/`. Plain `curl` gets a 403: read it in a browser on the origin and hash the transfer |
+| `nether.wowhead.com/classic/tooltip/item/<id>` | Classic item and spell tooltips as JSON, no browser. **For READING an item Forever inherited, and no longer the project's item data** -- the Classic and Season of Discovery stand-ins are deleted |
 | `github.com/classic-hunter/forever-hunter/wiki` | the ONLY source for pet stat scaling and pet focus regeneration, plus a full Forever-vs-Classic diff for the Hunter. Community-maintained, so it ranks below the two above where they overlap — they have not yet disagreed |
 
 `talentsforever.com` serves `/talents.js` (all nine trees, every rank's text,
@@ -3337,43 +3395,71 @@ change: **never invent a number, and never let a borrowed one look sourced.**
 `src/game/character/baseStats.ts` is **generated** by `tools/import_base_stats.py`
 from the base stats spreadsheet. Never edit it by hand; re-run the generator.
 
-`src/data/talents/*.json` (466 talents) and `src/data/items/*.json` (151 items in
-nine files, one per gear set) were **scraped** and are checked in. Each directory
-has a README recording where the data came from and how to refresh it. Never
-hand-edit either — `src/data/talents/values/*.json` is the one exception, for the
-single-rank talents above.
+`src/data/talents/*.json` (466 talents) and `src/data/items/*.json` were
+**scraped** and are checked in. Each directory has a README recording where the
+data came from and how to refresh it. Never hand-edit either —
+`src/data/talents/values/*.json` is the one exception, for the single-rank
+talents above.
 
-**THE ITEM FILES ARE REBUILT BY ONE COMMAND**, `node tools/import_item.mjs
---build`, off the ordered spec in `tools/item-sets.json` — which is also what
-`--verify` reads, so a set added to one is covered by the other. They used to be
-two lists and a file was once added to only one, which turns "re-parse everything
-on file" into a false promise. **Twenty-two items are worn by more than one set**,
-`itemData` throws on a duplicate id, and the spec order decides which file owns
-each shared piece.
+**THE ITEM DATABASE IS FOREVER'S OWN AND HAS NO CLASSIC IN IT.** The owner's
+instruction: "only new/changed authentic Forever items, and KEEP THE RECENTLY
+MADE TEST ITEMS. None of the old WoW Vanilla/Classic/SoD items." So the nine
+stand-in files, `gearSets.ts`, `tools/item-sets.json` and
+`tools/import_item.mjs` are all deleted, and what is left is five captures
+from `foreverchanges.pro`:
 
-**The item database WAS frozen, and the owner has since lifted it by supplying
-real Forever items.** The freeze was "pending further Forever item changes" and
-those arrived: `forever-new-epics.json` is 449 real Forever epics, imported by
-`tools/import_forever_items.mjs` from a capture this project now owns. **The
-rest of `src/data/items/` is still Season of Discovery stand-ins, not Forever
-data, and the README still says so -- keep saying so about THOSE.** Do not go
-looking for more Classic or SoD gear; a new Forever capture is a different
-thing and is the supported path.
+| file | n | |
+| --- | --- | --- |
+| `forever-new-epics.json` | 449 | items Forever ADDED |
+| `forever-new-rares.json` | 412 | |
+| `forever-changed-epics.json` | 614 | Classic items Forever ALTERED -- an **override layer** |
+| `forever-changed-rares.json` | 198 | |
+| `forever-same.json` | 273 | Classic items Forever KEPT, captured because "new and changed" leaves out everything it did not touch |
 
-**ADDING 449 ITEMS MOVED NO PUBLISHED FIGURE, and that is checkable rather than
-assumed.** A preset names its items BY ID, so a new file changes what can be
-CHOSEN and not what any of the 25 builds wear: all 75 combat-log hashes and
-event counts from `tools/rotation_fingerprint.ts` are unchanged. **That is the
-containment check for any item commit** -- the profiles whose gear did not
-change must not move by a decimal.
+**1,943 items, plus the benchmark gear, which is generated and not captured.**
+`src/data/items/` is captured data ONLY -- the benchmark items are built in
+code from the budget, numbered from 9,500,000, resolvable by id and kept out of
+every dropdown so a person browsing a slot sees real items only.
 
-**AND THE FIRST OF THOSE FURTHER CHANGES HAS ARRIVED, AS AN OVERRIDE RATHER THAN
-AN EDIT.** `FOREVER_SPELL_POWER_BUFFS` in `itemData.ts` carries the owner's +64
-spell power on four caster weapons -- Staff of Dominance, Sorcerous Dagger,
-Azuresong Mageblade and Anathema. The JSON is generated and `--verify`-checked,
-so a Forever value is layered OVER the scrape at build time and never written
-into it; `ENCHANT_RULES` beside it is the same shape for the same reason. The
-Immovable Object and those four are the real Forever item data.
+**THE CHANGED FILES ARE AN OVERRIDE LAYER RATHER THAN MORE ITEMS**, because
+their entries are allowed to share an id with something on file and the
+duplicate check has to keep throwing for everything else. The owner's ruling is
+that the Forever side is definitive, so a colliding id is **REPLACED rather
+than merged** -- merged is how an item ends up carrying Classic's flat "+1%
+crit" AND Forever's "+14 Critical Strike Rating" at once.
+`FOREVER_OVERRIDDEN_IDS` is exported so a test can pin how many collide,
+because an override that silently stops matching leaves the Classic version in
+place and looks like nothing at all.
+
+**AND `same.json` IS THE FILE THAT IS EASY NOT TO TAKE.** A diff site publishes
+what CHANGED, so "new plus changed" is a complete description of the diff and
+an incomplete description of the game -- 273 items Forever left alone would
+simply have been absent from a database claiming to be Forever's.
+
+**ADDING ITEMS MOVES NO PUBLISHED FIGURE AND SWAPPING THE PRESETS' GEAR MOVES
+EVERY ONE.** A preset names its items BY ID, so a new capture changes what can
+be CHOSEN and not what any of the 25 builds wear -- all 75 combat-log hashes
+from `tools/rotation_fingerprint.ts` were unchanged when the first 449 landed.
+**That is the containment check for any item commit.** It does not apply to
+this one: every preset now wears E65, so every row moved and the baseline table
+has to be rebuilt rather than checked.
+
+**`FOREVER_SPELL_POWER_BUFFS` IS THE OVERRIDE THAT THE REAL DATA RETIRED.** It
+carries the owner's +64 spell power on four caster weapons as a HAND-MAINTAINED
+layer over the scrape -- and three of the four, Staff of Dominance, Sorcerous
+Dagger and Azuresong Mageblade, are in Forever's own `missing.json`: the
+ruleset REMOVED them. The fourth, Anathema, is in `changed.json` at id 18609
+with Forever's own wording. **So the map is dead weight pointing at items that
+no longer exist**, and the override shape it demonstrated is now redundant --
+`forever-changed-*.json` IS the override layer, generated and hashed rather
+than typed. Deleting it is outstanding work.
+
+**THE SHAPE IS STILL RIGHT AND WORTH KEEPING THE LESSON FOR.** A Forever value
+layered OVER a generated file at build time and never written into it is how
+`ENCHANT_RULES` works too, and it was **A DELTA AND NOT A TOTAL** on purpose:
+the owner gave +64 as a bonus, two of their four stated bases disagreed with
+the scrape, and a bonus survives a re-scrape meaning the same thing where a
+total silently reinstates whatever Classic says.
 
 **AND AN ITEM HAS A BUDGET, WHICH IS A WAY OF READING ONE AND NEVER A WAY OF
 MAKING ONE.** `budget = qualityBase(ilvl) x slotMultiplier` and
@@ -3383,11 +3469,119 @@ items on file land within 90% to 110%** of their budget, mean 99.7%, and seven
 of ten hand-picked Classic examples sit between 95% and 107%. `tools/item_budget.ts`,
 [docs/itemization.md](docs/itemization.md).
 
-**IT IS AN AUDIT TOOL AND NOTHING IN `src/` READS IT.** Run backwards -- a
+**IT WAS AN AUDIT TOOL AND NOTHING IN `src/` READ IT.** Run backwards -- a
 budget used to GENERATE stats for an item no source states -- it is inventing
 game data with arithmetic in front of it, and the arithmetic is what makes the
 invention look sourced. It ranks below every row of the source table above: not
 Forever's, not the owner's, not even Blizzard's.
+
+**AND IT IS RUN BACKWARDS IN `src/` NOW, BY THE OWNER'S OWN DESIGN, WHICH IS AN
+EXCEPTION AND NOT A REPEAL.** `game/items/benchmarkGear.ts` generates four full
+sets from the budget -- **B55, E65, E75, E85**, blue item level 55 and epic 65,
+75 and 85 -- to a 25-row specification the owner supplied: each build's hit cap,
+its reduced dodge/parry, and its preferred stats **in descending order of
+importance**. The rule above forbids passing an invented item off as a sourced
+one; **a benchmark item is not claiming to exist.** What makes it legitimate is
+exactly what the rule asks for: the owner asked for it, it is named for the set
+it belongs to, it is numbered from 9,500,000 clear of every real id, and
+`itemsForSlot` never offers one, so nothing can mistake it for a drop.
+**THE DANGEROUS VERSION WOULD BE THE SAME ARITHMETIC WITH A REAL ITEM'S NAME ON
+IT.**
+
+**HIT AND EXPERTISE ARE ABSOLUTE TOTALS PER SET AND STILL COST BUDGET**, the
+owner's instruction in capitals: "even though the needed hit cap is mandatory,
+IT STILL COUNTS AGAINST THE STAT BUDGET ON THE ITEMS". So a Rogue spends 120
+points on hit before buying anything else, which is what makes a benchmark set
+a fair comparison rather than a wish list.
+
+**EVERY ARMOUR-CLASS PIECE CARRIES STAMINA, AS A FLOOR, AND THE OWNER SPOTTED
+ITS ABSENCE BY READING THE ITEMS.** "It's strange to me that stamina was dropped
+on some of the template items ... Typically all armor class items have stamina."
+**639 of Forever's 685 clean armour pieces carry it, 93.3%** -- so a piece
+without any is the exception, and the generator had made it the rule by buying
+stamina only when it fell inside a template's stat count. `staminaFloor` is a
+share of the slot's budget on the EIGHT armour slots, and `tools/stamina_share.ts`
+is what measures the real figure.
+**A FLOOR RATHER THAN A PLACE IN THE PREFERENCE ORDER**, which is what leaves a
+tank untouched: the Bear and both Protection builds already buy several times
+it, and all five stamina-led profiles measured **0.0 to the decimal** across the
+change. Putting stamina into the order instead would have moved it ahead of
+every build's first choice.
+**AND THE FLOOR IS CLAMPED BY WHAT THE RATINGS ALREADY TOOK**, which 48 items
+proved by going over their own budget. A B55 medium slot has 25.6 points and a
+Rogue's hit puts 25 Hit Rating on it -- 97% of `budget^1.5` -- so the floor on
+top was 26.9 of 25.6. **A floor that wins against the budget is not a floor, it
+is a leak**, and the honest answer is that such a slot cannot afford it.
+**THE SHARE IS 25%, AND THE ROUTE TO IT IS THE POINT.** The owner remembered
+"around 10-15% of its item budget"; it went in at 12.5% with the measurement
+recorded beside it -- Forever's own non-PvP armour spends a median 25% of
+`budget^1.5`, per slot 20.5% to 35.0% -- because "I BELIEVE" marks a
+recollection and not a ruling. Shown the figures they ruled: "use 25% and
+re-measure". **Picking a different number because the data suggests one is the
+thing this project does not do; putting the data in front of the owner is the
+thing that works**, and it is the fourth time their reading of a printed table
+has settled something no tool here could.
+**AND THE CAVEAT CAME OFF WHEN THE ANSWER LANDED**, which is the half that gets
+forgotten: a flagged question outlives the doubt it describes, and a reader who
+finds one next year cannot tell a live question from a settled one.
+
+**HOW MANY STATS A SLOT CARRIES IS THE OWNER'S TABLE TOO, AND A PREFERENCE LIST
+LONGER THAN IT SILENTLY LOSES ITS TAIL.** Head, chest and legs take FIVE;
+shoulders, hands, feet and waist four; wrist, neck, rings and shields three; a
+trinket one. Every slot used to take at most four, so a fifth preference was
+never bought at ALL -- a caster benchmark granted **no Spirit**, and the Bear's
+**Dodge** and **Defense** were fifth and sixth of its six. The owner on raising
+the counts: "it should open up some space for Spirit, Dodge, Defense etc."
+**FIVE OF THE 25 TEMPLATES STILL LOSE SOMETHING**, because they list six or
+seven: both Protection builds lose `Block`, the Bear loses `Defense`, Seal Twist
+Ret loses `Stamina` and `Attack Power`, the Shockadin loses `Agility` and
+`Attack Power`. Twenty of 25 now buy everything they list. **A spreadsheet row
+is a wish and a slot count is a budget**, and where they disagree the row's tail
+is what gives -- so the count is worth checking against the longest row before
+reading a set as faithful.
+**AND IT CHANGES THE SHAPE RATHER THAN THE TOTAL**, which the owner called:
+"I understand that this may change the shape of the gear." Five stats on a head
+is five smaller numbers, and the 3/2 power makes that cost something real -- a
+concentrated item buys more total stat than a spread one, which is what the
+exponent is for.
+
+**IT GENERATES TOOLTIP TEXT AND PARSES IT BACK**, rather than writing stat
+blocks directly, so a generated item travels the same path a captured one does
+-- and that is how **1,384 stranded spell power lines** were found, because the
+generator wrote a line nothing could read. A shortcut straight to the stat block
+would have hidden the engine bug it exposed.
+
+**THE COST OF THAT CHOICE IS A SEAM, AND IT SWALLOWED EVERY PRIMARY ON EVERY
+SET.** `LINE.Strength` writes "+19 Strength"; a CAPTURED item carries its
+primaries in the raw `stats` object, so no rule existed for the words. A
+Warrior's E65 came out as **328 Critical Strike Rating with no strength, stamina
+or agility at all** -- 23.4% crit from gear, entirely plausible -- and the first
+full measurement of the four sets was taken that way.
+
+**WHAT MADE IT INVISIBLE IS THAT `budget` AND `spent` STILL BALANCED**, because
+both are computed from the ALLOCATION rather than from the parse. Every item was
+inside its budget, in the right slot, with a tooltip that reads correctly to a
+person. **A generator that checks its own arithmetic has checked the half that
+was never in doubt**; what needed checking was whether the words it wrote are
+words the reader knows.
+
+**SO THE GUARD IS ON THE OTHER SIDE OF THE SEAM.** `benchmarkGear.test.ts`
+asserts that no generated item leaves anything in `unmodelled` -- a line there
+is a stat the set paid budget for and did not grant -- and
+`tools/item_vocabulary.ts` reports the generated items in their own section.
+
+**AND THAT TOOL HID THE BUG FROM ITSELF FOR A COMMIT, WHICH IS THE SHARPEST
+LESSON HERE.** It EXCLUDED ids above 9,500,000, on the reasoning that an unread
+line on a generated item is a bug in the generator rather than a gap in the
+parser's vocabulary. That reasoning is correct. The exclusion was still wrong,
+because the generator is the thing most likely to write a line nobody has taught
+the parser to read. **An exclusion justified by "that would be a different kind
+of bug" is an exclusion that hides that kind of bug.**
+
+**AND `Math.floor`, NOT `Math.round`, PLUS A SLOT THAT CAN AFFORD THE RATING.**
+Two separate ways to go over budget: rounding up, and placing a rating on a slot
+too small to pay for it -- a B55 neck at 18.8 points of an 18.3 budget. Filter
+the candidate slots by affordability BEFORE spreading a rating across them.
 
 **TWO THINGS COME FREE WITH THE ITEM LEVEL RATHER THAN OUT OF THE BUDGET**, and
 both were found by the budget refusing to balance. **BASE ARMOR** is a function
@@ -3410,10 +3604,12 @@ folding it in would hide the one number this model does not have.
 
 **AND THE OWNER HAS SINCE SUPPLIED REAL FOREVER ARMOUR, WHICH IS THE FIRST OF
 IT IN THE PROJECT.** The 64 Premier PvP cloth pieces, item level 65, three
-classes, eight slots -- `tools/foreverPremierPvp.ts`. **NOT in
-`src/data/items/`**, because everything there is equippable and 64 more items
-would be in the Gear panel; the database stays frozen and this is reference
-data for the audit tool.
+classes, eight slots -- transcribed by hand from screenshots into
+`tools/foreverPremierPvp.ts` as reference data for the audit tool while the
+database was still frozen. **They are equippable items now**, arriving with
+everybody else through `foreverchanges.pro`, and that transcription is kept
+because it was read off the owner's own client rather than off the diff site --
+two independent readings of the same 64 items.
 
 **BASE ARMOUR IS NOW CONFIRMED FREE ON THE RULESET'S OWN DATA.** Forever's
 item-level-65 cloth wrist is 44 armour and its waist is 56 -- identical to
@@ -3712,6 +3908,21 @@ with SHA-256 there and re-hashed on disk before being accepted. The clipboard is
 working channel on Windows (`document.execCommand('copy')` after a real click,
 then `Get-Clipboard -Raw`) and it overwrites the user's clipboard, so say so.
 
+**THE TAB HAS TO BE FRONTED OR THE WRITE DOES NOT LAND, AND `execCommand`
+REPORTS SUCCESS EITHER WAY.** A background tab's copy returns `true` and
+`Get-Clipboard` comes back with whatever was there before -- so the hash check
+is what catches it, and without one the previous chunk would have been imported
+twice under the new chunk's name. `tabs_select` first.
+**AND CHUNK IT AT 70-90KB.** 362KB in one write came back empty with no error;
+hash each chunk in the browser, re-hash on disk, and concatenate only once
+every piece matches.
+
+**A 403 ON `curl` IS NOT A DEAD END WHEN THE DATA IS A PAGE'S OWN JSON.**
+`foreverchanges.pro/items/*.json` refuses a plain request and serves the same
+bytes to a `fetch` from its own origin, which the built-in browser can make.
+**Read it in the browser, hash it there, and prove the transfer** -- which is
+the rule above, not an exception to it.
+
 **Validate scraped data at load and throw.** `talentData.ts` checks tier against
 row, prerequisites resolving inside their own tree, and duplicate ids; the item
 loader recomputes each weapon's dps from its damage and speed. A page that changes
@@ -3732,6 +3943,31 @@ shape should fail loudly, not render a tree with a broken arrow.
   says it cannot fire, because nothing attacks the player" and enforced the stale
   caveat instead of catching it.
 - **Assert the MECHANISM, not a DPS delta.** A correct talent can be worth zero.
+- **A TEST THAT HARD-CODES A GEAR FIGURE IS TESTING THE GEAR, AND ABOUT FORTY
+  OF THEM WERE.** Replacing the twelve Classic stand-in sets with generated
+  benchmark gear broke 100 tests across 22 files, and almost every one broke for
+  the same reason: a literal that was a PROPERTY OF THE SET rather than of the
+  thing under test. "The Shadow Priest carries ONE point of spell hit";
+  "Deflection is 1% a rank, so 5/5 doubles the baseline" (true until the gear
+  granted parry); "the shield's 71"; "409 off the items plus 30 from the staff
+  enchant".
+  **THE REPAIR IS THE SAME EVERY TIME: READ THE BASE OFF THE CHARACTER AND
+  ASSERT THE RULE.** `17 - hitChance` for a miss band, `shield.stats.blockValue
+  + strength / 20` for block value, `(base + 16) * 1.1` for Blessing of Kings --
+  a base that is MEASURED cannot be stale, and the arithmetic written out by
+  hand is the part that was ever the claim. Several of these had already been
+  rewritten once when the armour enchants landed and once when a weapon buff
+  did; the third rewrite is the one that stopped them needing a fourth.
+  **AND IT FOUND THREE REAL BUGS ON THE WAY**, which is the argument for doing
+  it rather than widening a tolerance: a test asserting a figure fails the same
+  way whether the gear moved or the engine broke, and only re-deriving the
+  figure tells you which.
+- **A FIXED MARGIN BETWEEN TWO MEASURED RATES IS A THIRD KIND OF STALE FIGURE.**
+  "Crit against an equal-level target must exceed crit against a boss BY 0.02"
+  held for as long as the build made a particular number of swings, and missed
+  by 0.0004 after a gear change. The suppression itself is pinned exactly beside
+  it; what this assertion is for is that it REACHES the roll, so the comparison
+  is the direction and not the size.
 - **A `createPlayer` COMBATANT CARRIES A ROTATION, SO A TEST THAT RUNS THE CLOCK
   IS TESTING THE PRIORITY LIST TOO.** A Soul Siphon test cast Wrack once,
   advanced ten seconds and summed every `wrack` damage event -- correct only
@@ -3923,6 +4159,23 @@ does not.
 ONE STEP HARDER**: this one DID fire, and looked entirely ordinary doing it.
 
 **When a fix moves nothing in the suite, that is a statement about the suite.**
+
+**AND A ROUND THAT MOVES ALL 25 ROWS WANTS SPLITTING BY ARCHETYPE BEFORE IT IS
+READ AS A FINDING.** Swapping every preset into the E65 benchmark set moved the
+mean 730.9 to 741.0, which is the least informative thing about it: **16 rows
+rose and 9 fell**, and the groups are almost perfectly clean -- physical
+non-tank **+39.0** over 13 rows, casters **-7.4** over 9, the three tanks
+**-62.4**. A mean over the 25 hides all three.
+**TWO CHANGES PULLING AGAINST EACH OTHER**, and neither is about the ruleset:
+the gear started granting its primaries, which lifts whatever a build scales
+with; and the old sets ran from item level 66 to 88 and UNEVENLY between
+classes, where E65 is uniform -- so a build whose stand-in set happened to be
+item level 88 fell on the swap. **Part of every gap between two presets used to
+be a gap in their gear**, which is the whole reason a benchmark set exists.
+**AND A TANK'S DPS ROW IS THE WRONG MEASURE, WHICH A 62-POINT FALL MAKES LOOK
+LIKE A REGRESSION.** Their templates spend the budget on stamina, armour,
+defense skill and parry. `tools/bear_survival.ts` and the SURVIVAL half of the
+stat weights are where a Protection change is read.
 
 **AND THREE BUGS IN ONE ROUND WERE FOUND BY THE OWNER USING THE APP, EACH
 UNREACHABLE BY A TEST FOR A DIFFERENT REASON.** Worth reading together, because
@@ -4151,6 +4404,17 @@ the answer is "already capped" rather than a measurement of nothing.
 tables at the same 6.50%, so three rows naming each table is three rows of one
 fact -- it prints once as "Dodge", and splits again the moment they disagree.
 Hit's slices genuinely differ, so hit genuinely gets several rows.
+
+**AND THE CATALOGUE PRICES ONE CRIT ROW, NOT THREE, BECAUSE FOREVER HAS ONE
+CRIT STAT.** It used to offer `critChance`, `spellCritChance` AND `critRating`;
+the owner: "it should just be crit rating since that's how Forever calls it and
+it functions as global crit chance for all sources." **THE DUPLICATE ROWS WERE
+NOT A DISPLAY BUG** -- collapsing the catalogue failed immediately with
+`['critChance', 'spellCritChance']` unpriced, because items still granted them,
+so the three rows were the catalogue correctly reporting that two eras of gear
+were in the database at once. **A panel showing a stat twice can be the panel
+telling you about the DATA**, and the fix was upstream of it: the Classic flat
+percentages left with the Classic items.
 
 **AND A ZERO HAS TO BE TOLD APART FROM AN ABSENCE OF ONE.** Under shared seeds a
 stat the build cannot read produces a bit-identical fight and a delta of exactly

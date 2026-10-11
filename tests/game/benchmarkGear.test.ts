@@ -216,3 +216,73 @@ describe('a set equips onto its profile', () => {
     expect(hunter.ranged).toBeDefined();
   });
 });
+
+describe('every line a benchmark item states is a line the engine reads', () => {
+  it('leaves nothing in `unmodelled` on any of the 1,560 generated items', () => {
+    /*
+     * ==========================================================================
+     * THE SET PAYS BUDGET FOR A STAT AND THEN HAS TO GRANT IT.
+     *
+     * A benchmark item is generated as TOOLTIP TEXT and parsed back through
+     * `itemData`'s own rules, deliberately: that is what makes it reach the
+     * engine down the same path a captured item does, instead of through a
+     * second copy of the parser. The cost of that choice is a seam -- the
+     * generator can write a line the parser has never been taught to read, and
+     * the budget is spent either way.
+     *
+     * IT HAPPENED, AND IT COST EVERY PRIMARY ON EVERY SET. `LINE.Strength`
+     * writes "+19 Strength", a CAPTURED item carries its primaries in the raw
+     * `stats` object instead, and so no rule existed for the words. A Warrior's
+     * E65 set came out as 328 Critical Strike Rating -- 23.4% crit, entirely
+     * plausible -- with **no strength, stamina or agility at all**, and the
+     * first full measurement of the E65 sets was taken that way.
+     *
+     * WHY NOTHING CAUGHT IT: `budget` and `spent` still balanced, because both
+     * are computed from the ALLOCATION rather than from the parse; the items
+     * were in the right slots; the tooltips read correctly to a human; and
+     * `item_vocabulary.ts`, the one tool whose job is to find unread lines,
+     * excluded generated items on purpose.
+     *
+     * SO THE ASSERTION IS ZERO, FOR EVERY ITEM, AND IT NAMES WHAT IT FOUND --
+     * a count alone would say "17 lines" and leave somebody grepping.
+     * ==========================================================================
+     */
+    const stranded = ITEMS.filter((item) => item.id >= BENCHMARK_ID_BASE).flatMap((item) =>
+      item.unmodelled.map((effect) => `${item.name} (${item.id}): "${effect.text}"`),
+    );
+    expect(stranded).toEqual([]);
+  });
+
+  it('grants every primary its preferred stats name', () => {
+    /*
+     * THE OTHER HALF, because "nothing unread" would also be true of a
+     * generator that stopped writing primaries altogether. A melee set's
+     * strength is the biggest single thing on it, so it is asserted directly.
+     */
+    for (const presetId of ['two_hand_arms', 'dw_fury', 'druid_cat']) {
+      const equipment = benchmarkEquipmentFor(presetId, 'E65')!;
+      const strength = Object.values(equipment).reduce(
+        (sum, equipped) => sum + (ITEMS_BY_ID.get(equipped!.itemId)?.stats.strength ?? 0),
+        0,
+      );
+      expect(strength, presetId).toBeGreaterThan(50);
+    }
+
+    // And a caster set carries spell power and intellect rather than strength.
+    const mage = benchmarkEquipmentFor('mage_fire', 'E65')!;
+    const casterTotals = Object.values(mage).reduce(
+      (acc, equipped) => {
+        const stats = ITEMS_BY_ID.get(equipped!.itemId)?.stats ?? {};
+        return {
+          spellPower: acc.spellPower + (stats.spellPower ?? 0),
+          intellect: acc.intellect + (stats.intellect ?? 0),
+          strength: acc.strength + (stats.strength ?? 0),
+        };
+      },
+      { spellPower: 0, intellect: 0, strength: 0 },
+    );
+    expect(casterTotals.spellPower).toBeGreaterThan(100);
+    expect(casterTotals.intellect).toBeGreaterThan(50);
+    expect(casterTotals.strength).toBe(0);
+  });
+});

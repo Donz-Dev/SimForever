@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { ROLL_MAX, STAT_NAMES, toPercent, toSeconds } from '../../src/engine';
+import { ROLL_MAX, STAT_NAMES, toPercent, toRollUnits, toSeconds } from '../../src/engine';
 import {
   COMBAT_CONSTANTS,
   createForeverAttackChances,
@@ -90,18 +90,43 @@ describe('what counts as a tank build', () => {
 });
 
 describe('the shield starting set', () => {
-  it('is Brutality Blade with Crusader, and the Immovable Object', () => {
+  it('is a one-hander with Crusader, and a shield', () => {
+    /*
+     * ------------------------------------------------------------------------
+     * THE ITEMS ARE GENERATED NOW AND THE ENCHANT IS NOT. This named Brutality
+     * Blade and The Immovable Object, which is the owner's Classic set and is
+     * deleted; the E65 benchmark set replaces it. What has to stay true is the
+     * SHAPE -- a one-hander, a shield, and Crusader on the hand -- because the
+     * owner asked for the enchants to be kept exactly as they were.
+     * ------------------------------------------------------------------------
+     */
     const set = startingEquipmentFor('warrior', 'one_hand_shield');
-    expect(set.mainHand).toEqual({ itemId: 228265, enchantId: 20034 });
-    expect(set.shield).toEqual({ itemId: 19321 });
+    expect(set.mainHand?.enchantId).toBe(20034);
+    expect(set.shield).toBeDefined();
+    expect(set.shield?.enchantId).toBeUndefined();
+    expect(set.offHand).toBeUndefined();
   });
 
-  it('leaves the other sets unenchanted', () => {
-    // Only the tank set carries one. A dual-wielder has two weapons and the
-    // choice of what to put on them is the person's.
+  it('enchants EVERY set from the owner\'s own loadout, which it did not', () => {
+    /*
+     * ------------------------------------------------------------------------
+     * THIS TEST ASSERTED THE OPPOSITE AND WAS RIGHT AT THE TIME. It read
+     * "leaves the other sets unenchanted -- only the tank set carries one",
+     * which was true of the curated Classic sets: Crusader was baked into the
+     * one set that had it and a dual-wielder's hands were bare.
+     *
+     * The owner's enchant table covers all 25 builds, and `PRESET_ENCHANTS` is
+     * now applied to a from-scratch character as well as to a preset -- so DW
+     * Fury's row puts Crusader on BOTH hands, which is a real choice and not a
+     * formality: Forever stacks the two hands' Holy Strength separately.
+     * ------------------------------------------------------------------------
+     */
     const dual = startingEquipmentFor('warrior', 'dual_wield');
-    expect(dual.mainHand?.enchantId).toBeUndefined();
-    expect(dual.offHand?.enchantId).toBeUndefined();
+    expect(dual.mainHand?.enchantId).toBe(20034);
+    expect(dual.offHand?.enchantId).toBe(20034);
+
+    // And a two-hander gets it once, on the one hand it has.
+    expect(startingEquipmentFor('warrior', 'two_hander').twoHand?.enchantId).toBe(20034);
   });
 });
 
@@ -116,16 +141,20 @@ describe('Anticipation', () => {
      * free at level 60 -- and the talent adds on top of it.
      */
     /*
-     * AND NINE OF IT IS THE ENCHANTS NOW. The owner's Protection row puts +5
-     * Defense Skill on the neck and +4 on the bracer, so a tank built from the
-     * preset stands at 309 before spending a point. Written as the two terms
-     * rather than as 309, because a change to either slot should move one of
-     * them and not a number nobody can place.
+     * AND THE GEAR'S OWN CONTRIBUTION IS MEASURED RATHER THAN WRITTEN DOWN.
+     *
+     * This read `300 + 9`, the owner's Protection enchant row -- +5 Defense
+     * Skill on the neck and +4 on the bracer -- and the benchmark set buys
+     * Defense as a RATING as well, which the enchants' nine points sit on top
+     * of. Two numbers added by hand is how a figure nobody can place gets into
+     * a test, so the baseline is taken from the character and the TALENT is
+     * what this asserts: twenty points at 5/5, four at 1/5, on top of whatever
+     * the gear gave.
      */
-    const fromEnchants = 5 + 4;
-    expect(built().defenseSkill).toBe(300 + fromEnchants);
-    expect(built(legalise({ anticipation: 5 })).defenseSkill).toBe(320 + fromEnchants);
-    expect(built(legalise({ anticipation: 1 })).defenseSkill).toBe(304 + fromEnchants);
+    const fromGear = built().defenseSkill - 300;
+    expect(fromGear).toBeGreaterThan(0);
+    expect(built(legalise({ anticipation: 5 })).defenseSkill).toBe(320 + fromGear);
+    expect(built(legalise({ anticipation: 1 })).defenseSkill).toBe(304 + fromGear);
   });
 
   it('is worth 0.04 percentage points a point, to five numbers at once', () => {
@@ -393,8 +422,21 @@ describe('a Warrior parries five percent before any talent', () => {
   });
 
   it('stacks with Deflection and with defense skill', () => {
-    // Deflection is 1% a rank, so 5/5 doubles the baseline.
-    expect(built(legalise({ deflection: 5 })).stats.effective.parryChance).toBeCloseTo(10, 10);
+    /*
+     * Deflection is 1% a rank, so 5/5 DOUBLES the class baseline -- and the
+     * gear's own parry is a third term now, which it was not.
+     *
+     * The benchmark tank buys Parry Rating: the owner's slot table takes the
+     * high-value slots to five stats, and `Parry` is fifth in the Protection
+     * preference list. So the figure is 5 + 5 + whatever the gear gives, and
+     * the TALENT is what this asserts.
+     */
+    const geared = built().stats.effective.parryChance;
+    expect(geared).toBeGreaterThan(5);
+    expect(built(legalise({ deflection: 5 })).stats.effective.parryChance).toBeCloseTo(
+      geared + 5,
+      10,
+    );
   });
 
   it('gives a class nobody supplied a figure for nothing', () => {
@@ -414,26 +456,60 @@ describe('a Warrior parries five percent before any talent', () => {
     const chances = createForeverAttackChances({ targetAttacks: true });
     const boss = createTrainingDummy({ attacks: true });
     /*
-     * 536, NOT 500, AND THE 36 IS NOT A PARRY SOURCE. The tank's enchant row
-     * carries nine points of defense skill, and the owner's formula is 0.04
-     * percentage points a point to each of five numbers -- so nine points is
-     * 0.36%, or 36 roll units, on parry exactly as on block and miss. The
+     * MORE THAN 500, AND THE SURPLUS IS NOT A PARRY SOURCE.
+     *
+     * Defense skill is 0.04 percentage points a point to each of FIVE numbers,
+     * so it lands on parry exactly as it does on block and miss -- and the
      * class baseline it is added to is still the stated 5%.
+     *
+     * THE SURPLUS IS MEASURED RATHER THAN WRITTEN DOWN. It used to be
+     * `9 * defensePerSkill`, the tank enchant row's nine points, and the
+     * benchmark set buys Defense as a rating on top of that; hard-coding the
+     * total made this a test of the gear. The DEFENSE SKILL is read off the
+     * same character the table is asked about, so what is asserted is the join.
      */
-    expect(chances('melee-received', boss, built(), {}).parry).toBe(
-      500 + 9 * COMBAT_CONSTANTS.defensePerSkill,
+    const tank = built();
+    const defenseSkill = tank.stats.effective.defenseSkill;
+    expect(defenseSkill).toBeGreaterThan(0);
+    /*
+     * AND THE GEAR'S OWN PARRY IS IN IT TOO, which it was not when this was
+     * written: the benchmark tank buys Parry Rating now, so the table reads
+     * the class baseline PLUS the stat PLUS defense skill. All three have to
+     * reach the one table the boss rolls against, which is the join.
+     */
+    expect(chances('melee-received', boss, tank, {}).parry).toBe(
+      toRollUnits(tank.stats.effective.parryChance) +
+        defenseSkill * COMBAT_CONSTANTS.defensePerSkill,
     );
   });
 });
 
 describe('resistances are totalled for display and nothing else', () => {
   it('sums the equipped set', () => {
-    const total = resistancesFromItems(
-      startingEquipmentFor('warrior', 'one_hand_shield'),
-      'one_hand_shield',
-    );
-    expect(Object.keys(total).length).toBeGreaterThan(0);
-    for (const value of Object.values(total)) expect(value).toBeGreaterThan(0);
+    /*
+     * ------------------------------------------------------------------------
+     * ON A CAPTURED SET, BECAUSE THE BENCHMARK GEAR HAS NO RESISTANCES AT ALL.
+     * This used to read the starting set, which was the owner's Classic plate
+     * and carried fire resistance on nineteen pieces. A generated item only
+     * ever carries what the budget bought, and resistance is not in any
+     * template's preference list -- so the starting set totals to nothing and
+     * the function under test would never be exercised.
+     *
+     * The Elemental Mage Staff is +20 Fire and +20 Frost, transcribed by hand
+     * from its own tooltip.
+     * ------------------------------------------------------------------------
+     */
+    const total = resistancesFromItems({ twoHand: { itemId: 944 } }, 'two_hander');
+    expect(total).toEqual({ fire: 20, frost: 20 });
+
+    // And a benchmark set genuinely carries none, which is the honest zero
+    // rather than a missing read.
+    expect(
+      resistancesFromItems(
+        startingEquipmentFor('warrior', 'one_hand_shield'),
+        'one_hand_shield',
+      ),
+    ).toEqual({});
   });
 
   it('is NOT a stat, and changes no fight', () => {
@@ -453,7 +529,7 @@ describe('resistances are totalled for display and nothing else', () => {
      * panel. Listing each piece was accurate and useless -- it buried the
      * effects that genuinely have no mechanic behind them.
      */
-    const item = ITEMS_BY_ID.get(226496)!; // Treads of Might, +5 Fire
+    const item = ITEMS_BY_ID.get(944)!; // Elemental Mage Staff, +20 Fire and Frost
     expect(Object.keys(item.resistances).length).toBeGreaterThan(0);
     expect(item.unmodelled.some((effect) => /Resistance/.test(effect.text))).toBe(false);
   });
@@ -501,9 +577,21 @@ describe('block chance and block value are different numbers', () => {
   });
 
   it('adds a twentieth of total strength to block value', () => {
+    /*
+     * THE SHIELD'S OWN VALUE IS READ RATHER THAN HARD-CODED AT 71, which was
+     * The Immovable Object's 44 inherent plus its bought 27. The benchmark
+     * shield carries the 44 that Forever gives every item-level-65 shield and
+     * buys stamina with the rest, so the figure moved and the RULE did not.
+     */
     const player = built();
     const strength = player.stats.effective.strength;
-    expect(player.stats.effective.blockValue).toBeCloseTo(71 + strength / 20, 6);
+    const shield = ITEMS_BY_ID.get(
+      startingEquipmentFor('warrior', 'one_hand_shield').shield!.itemId,
+    )!;
+    expect(player.stats.effective.blockValue).toBeCloseTo(
+      shield.stats.blockValue! + strength / 20,
+      6,
+    );
   });
 
   it('follows strength as it changes, rather than being fixed at creation', () => {

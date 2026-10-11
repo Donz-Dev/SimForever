@@ -162,7 +162,9 @@ export interface WeightableStat {
  *
  * BOTH RATINGS ARE PRICED IN PERCENT rather than in rating points, which is the
  * project's one idiom for this -- `percent * RATING_PER_PERCENT.x` -- so a
- * weight reads as DPS per 1% and stays comparable with `critChance` beside it.
+ * weight reads as DPS per 1% whatever the conversion is. It USED to be said
+ * that this kept the rating comparable with `critChance` beside it; there is
+ * no `critChance` row any more, and the entry below says why.
  * `RATING_PER_PERCENT.crit` and `.haste` are the owner's own figures now; the
  * siblings `masteryRating` and `versatilityRating` are still placeholders that
  * nothing grants, and are still absent.
@@ -206,22 +208,6 @@ export const WEIGHTABLE_STATS: readonly WeightableStat[] = [
     detail: 'School-blind. Each spell scales it by its own coefficient.',
   },
   {
-    id: 'critChance',
-    name: 'Crit chance',
-    statPerUnit: 1,
-    unitLabel: '%',
-    step: 2,
-    detail: 'Percentage points, read by the melee and ranged tables.',
-  },
-  {
-    id: 'spellCritChance',
-    name: 'Spell crit chance',
-    statPerUnit: 1,
-    unitLabel: '%',
-    step: 2,
-    detail: 'A separate stat from melee crit; only the spell table reads it.',
-  },
-  {
     id: 'hitChance',
     name: 'Hit chance',
     statPerUnit: 1,
@@ -233,15 +219,34 @@ export const WEIGHTABLE_STATS: readonly WeightableStat[] = [
     detail: 'Taken off miss, and every table caps at a different point.',
   },
   {
+    /*
+     * ------------------------------------------------------------------------
+     * THE ONLY CRIT ROW, because Forever has one crit stat.
+     *
+     * This table used to carry three -- "Crit chance", "Spell crit chance" and
+     * "Crit rating" -- which read as three things a character could buy and is
+     * not how the ruleset works. **Forever grants crit as a RATING and that one
+     * rating is global**: `critChanceFrom` and `spellCritChanceFrom` both fold
+     * it in, so 14 rating is a point of melee crit AND a point of spell crit,
+     * and the client's own rewrites of Classic items convert both lines at
+     * exactly 14.
+     *
+     * The two flat stats still EXIST in the engine -- a class base, the agility
+     * conversion and a handful of talents grant percentage points directly --
+     * but nothing a person can gear for grants them, so offering them as
+     * weightable invited a reader to price a stat they cannot buy, and to add
+     * it to the rating row as though the two were separate purchases.
+     *
+     * Priced in PERCENT like haste: one displayed unit is one percentage point
+     * whatever the conversion is.
+     * ------------------------------------------------------------------------
+     */
     id: 'critRating',
     name: 'Crit rating',
-    // Priced in PERCENT, like haste: one unit is one percentage point of crit,
-    // whatever the conversion is. Forever gear grants this; Classic gear
-    // granted `critChance` directly, and both appear in the table.
     statPerUnit: RATING_PER_PERCENT.crit,
     unitLabel: '%',
     step: 1,
-    detail: 'Forever grants crit as a rating; 14 rating is one point of crit.',
+    detail: 'One global rating: 14 of it is a point of melee AND spell crit.',
   },
   {
     id: 'hasteRating',

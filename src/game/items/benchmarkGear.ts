@@ -231,6 +231,46 @@ export function baseArmour(slotName: string, armour: ArmourClass, itemLevel: num
 }
 
 /**
+ * A shield's INHERENT block value, which comes free with the item level.
+ *
+ * ----------------------------------------------------------------------------
+ * THE SAME SHAPE AS BASE ARMOUR, AND FOR THE SAME REASON. The eighteen shields
+ * in the Forever data carry a "44 Block" STAT line -- inherent, like the armour
+ * on the line above it -- and The Immovable Object carries a second, BUDGETED
+ * "Equip: +27 Block Value" on top. One is free with the slot and the other is
+ * bought, which is exactly the base-armour/bonus-armour split.
+ *
+ * FITTED FROM FOREVER'S OWN SHIELDS and the fit is barely a fit: every one of
+ * the nine distinct item levels on file is reproduced EXACTLY once rounded,
+ * with a worst residual of 0.44 of a point.
+ *
+ *   blue   ilvl 52 -> 31, 54 -> 33, 55 -> 34, 56 -> 35, 58 -> 36
+ *   epic   ilvl 65 -> 44 (six shields), 70 -> 48, 78 -> 55, 79 -> 55, 81 -> 57
+ *
+ * THE TWO SLOPES ARE THE SAME TO THREE DECIMALS, 0.818 and 0.813, and quality
+ * moves the intercept by about 2.4 points. Two of the four benchmark sets land
+ * on an item level that is DIRECTLY OBSERVED -- B55 blue gives 34, which is
+ * Sunderbark Vigil, and E65 gives 44, which is what all six epic shields at
+ * that level carry -- so only E75 and E85 are interpolated at all.
+ *
+ * WHAT IT COST TO BE MISSING: the budget bought a tank's shield SIX points of
+ * block value where a real one carries 44, because block value at a cost of
+ * 0.65 is expensive and a shield is a light slot. Shield Slam adds the
+ * wielder's block value to its own damage, so the Protection builds were
+ * losing it twice -- once in mitigation and once in damage.
+ * ----------------------------------------------------------------------------
+ */
+export const SHIELD_BLOCK: Readonly<Record<3 | 4, readonly [number, number]>> = {
+  3: [0.8182, -11.242],
+  4: [0.8128, -8.832],
+};
+
+export function shieldBlockValue(quality: 3 | 4, itemLevel: number): number {
+  const line = SHIELD_BLOCK[quality];
+  return Math.round(line[0] * itemLevel + line[1]);
+}
+
+/**
  * Weapon damage per second, fitted per hand and quality.
  *
  * ----------------------------------------------------------------------------
@@ -297,22 +337,133 @@ interface SlotPlan {
   readonly noArmour?: boolean;
 }
 
+/**
+ * HOW MANY STATS EACH SLOT CARRIES, AND IT IS THE OWNER'S OWN TABLE.
+ *
+ * ==============================================================================
+ * "High value slots (Head, Chest, Legs) should probably always have 5 stats.
+ * Shoulders, Hands, Feet, Waist have 4. Trinkets 1 stat. Wrist, Neck, Rings,
+ * Shields have 3 stats."
+ *
+ * WHAT IT IS FOR is the FIFTH AND SIXTH PREFERENCE. Every slot used to take at
+ * most four, so a spreadsheet row's fifth entry was never bought at all: a
+ * caster benchmark granted **no Spirit**, and the Bear's **Dodge and Defense**
+ * were the fifth and sixth of its six and equally absent. The owner's own words
+ * on raising the counts: "it should open up some space for Spirit, Dodge,
+ * Defense etc."
+ *
+ * IT CHANGES THE SHAPE RATHER THAN THE TOTAL. A slot's budget is unchanged, so
+ * five stats on a head means five smaller numbers -- the owner: "I understand
+ * that this may change the shape of the gear". The 3/2 power makes that cost
+ * something real: a concentrated item buys more total stat than a spread one,
+ * which is exactly what the exponent is for.
+ *
+ * THE CLOAK IS THE ONE SLOT THE TABLE DOES NOT NAME, and it takes 3 with the
+ * other `light` slots -- same slot multiplier as a wrist, a neck and a ring.
+ * Said here rather than assumed silently.
+ *
+ * A TRINKET DROPS FROM TWO STATS TO ONE, which is the only count that FELL.
+ * With `onePrimary` as well it is now the purest expression of a build's first
+ * preference: one line, the stat the spreadsheet puts first.
+ * ==============================================================================
+ */
 export const ARMOUR_SLOTS: readonly SlotPlan[] = [
-  { slot: 'head', inventory: 'Head', slotClass: 'full', stats: 4 },
-  { slot: 'neck', inventory: 'Neck', slotClass: 'light', stats: 2, onePrimary: true, noArmour: true },
-  { slot: 'shoulders', inventory: 'Shoulder', slotClass: 'medium', stats: 3 },
-  { slot: 'cloak', inventory: 'Back', slotClass: 'light', stats: 2 },
-  { slot: 'chest', inventory: 'Chest', slotClass: 'full', stats: 4 },
-  { slot: 'wrists', inventory: 'Wrist', slotClass: 'light', stats: 2 },
-  { slot: 'gloves', inventory: 'Hands', slotClass: 'medium', stats: 3 },
-  { slot: 'waist', inventory: 'Waist', slotClass: 'medium', stats: 3 },
-  { slot: 'legs', inventory: 'Legs', slotClass: 'full', stats: 4 },
-  { slot: 'feet', inventory: 'Feet', slotClass: 'medium', stats: 3 },
-  { slot: 'ring1', inventory: 'Finger', slotClass: 'light', stats: 2, onePrimary: true, noArmour: true },
-  { slot: 'ring2', inventory: 'Finger', slotClass: 'light', stats: 2, onePrimary: true, noArmour: true },
-  { slot: 'trinket1', inventory: 'Trinket', slotClass: 'trinket', stats: 2, onePrimary: true, noArmour: true },
-  { slot: 'trinket2', inventory: 'Trinket', slotClass: 'trinket', stats: 2, onePrimary: true, noArmour: true },
+  { slot: 'head', inventory: 'Head', slotClass: 'full', stats: 5 },
+  { slot: 'neck', inventory: 'Neck', slotClass: 'light', stats: 3, onePrimary: true, noArmour: true },
+  { slot: 'shoulders', inventory: 'Shoulder', slotClass: 'medium', stats: 4 },
+  { slot: 'cloak', inventory: 'Back', slotClass: 'light', stats: 3 },
+  { slot: 'chest', inventory: 'Chest', slotClass: 'full', stats: 5 },
+  { slot: 'wrists', inventory: 'Wrist', slotClass: 'light', stats: 3 },
+  { slot: 'gloves', inventory: 'Hands', slotClass: 'medium', stats: 4 },
+  { slot: 'waist', inventory: 'Waist', slotClass: 'medium', stats: 4 },
+  { slot: 'legs', inventory: 'Legs', slotClass: 'full', stats: 5 },
+  { slot: 'feet', inventory: 'Feet', slotClass: 'medium', stats: 4 },
+  { slot: 'ring1', inventory: 'Finger', slotClass: 'light', stats: 3, onePrimary: true, noArmour: true },
+  { slot: 'ring2', inventory: 'Finger', slotClass: 'light', stats: 3, onePrimary: true, noArmour: true },
+  { slot: 'trinket1', inventory: 'Trinket', slotClass: 'trinket', stats: 1, onePrimary: true, noArmour: true },
+  { slot: 'trinket2', inventory: 'Trinket', slotClass: 'trinket', stats: 1, onePrimary: true, noArmour: true },
 ];
+
+/** A shield carries three, by the same table. Not an armour slot: see `benchmarkSets`. */
+export const SHIELD_STATS = 3;
+
+/**
+ * EVERY ARMOUR-CLASS PIECE CARRIES STAMINA, AS A FLOOR ON ITS BUDGET.
+ *
+ * ==============================================================================
+ * THE OWNER'S OBSERVATION: "It's strange to me that stamina was dropped on some
+ * of the template items. This was meant to produce very similar items to
+ * forever items. Typically all armor class items have stamina -- and I believe
+ * the figure was around 10-15% of its item budget for those 8 slots."
+ *
+ * AND THEY WERE RIGHT ABOUT THE FIRST HALF. Stamina was bought only when it sat
+ * inside a template's stat count, so a Rogue's wrists got none (fifth of five
+ * preferences on a three-stat slot) and Seal Twist Ret got none ANYWHERE
+ * (stamina is sixth of its seven). **93.3% of Forever's own clean armour pieces
+ * carry stamina** -- 639 of 685 -- so an armour piece without any is the
+ * exception and the generator was making it the rule.
+ *
+ * A FLOOR AND NOT A FIXED AMOUNT, which is what keeps a tank unharmed. The Bear
+ * and both Protection builds lead with stamina and already buy far more than
+ * this; the floor only tops up a slot that would otherwise drop it. Dropping it
+ * INTO the preference order instead would have moved stamina ahead of a
+ * build's first choice on every piece.
+ *
+ * ------------------------------------------------------------------------------
+ * THE SHARE IS 25%, WHICH IS THE OWNER'S RULING AFTER THE DATA WAS PUT IN FRONT
+ * OF THEM -- "use 25% and re-measure".
+ *
+ * They first remembered "around 10-15% of its item budget", which went in at
+ * 12.5% with the measurement recorded beside it rather than overriding it,
+ * because "I believe" marks a recollection and not a ruling. Measured by
+ * `tools/stamina_share.ts` over Forever's own clean NON-PvP armour, stamina's
+ * median share of `budget^1.5` is:
+ *
+ *     head 30.4%   shoulders 25.0%   chest 20.5%   wrists 22.6%
+ *     gloves 24.6%  waist 24.4%      legs 30.0%    feet 35.0%
+ *
+ * -- a median of about 25% across the eight, which is the figure now used. At
+ * E65 that is 19 stamina on a chest against Forever's own median of 17, and 19
+ * on a head against 24.
+ *
+ * **SO THE FLAGGED QUESTION IS CLOSED AND THIS NOTE SAYS SO**, which is the half
+ * that matters: a caveat outlives the doubt it describes, and a reader who finds
+ * one of these next year cannot tell a live question from a settled one. The PvP
+ * sets, which are not the comparison, sit at 55.9%.
+ *
+ * MEASURED IN THE CURRENCY THE BUDGET IS SPENT IN, which is the 3/2 power:
+ * `stamina = (share x budget^1.5)^(2/3) / cost`. The linear reading --
+ * `stamina = share x budget` -- gives 12 on a chest instead of 19, and the two
+ * are a factor of about 1.6 apart on every slot. Both are printed by the tool so
+ * the choice is visible rather than implied.
+ * ==============================================================================
+ */
+export const STAMINA_BUDGET_SHARE = 0.25;
+
+/**
+ * The least stamina an armour-class piece carries, for a slot of this budget.
+ *
+ * ----------------------------------------------------------------------------
+ * `alreadySpent` IS THE BUDGET POINTS THE SLOT HAS ALREADY COMMITTED, at the
+ * 3/2 power, and the floor is CLAMPED to what is left. Without it the floor
+ * pushes an item over its own budget, which is what happened on 48 of them: a
+ * B55 medium slot has a budget of 25.6 and a Rogue's hit lands 25 Hit Rating on
+ * it, which alone is 97% of `budget^1.5` -- so six stamina on top came out at
+ * 26.9 of 25.6.
+ *
+ * THAT IS THE OWNER'S OWN RULE BITING, not a bug in it: "even though the needed
+ * hit cap is mandatory, IT STILL COUNTS AGAINST THE STAT BUDGET ON THE ITEMS."
+ * A 120-hit Rogue at BLUE item level 55 really is spending almost everything on
+ * hit, and the honest answer is that such a slot cannot afford the floor -- not
+ * that the floor wins and the budget gives way.
+ * ----------------------------------------------------------------------------
+ */
+export function staminaFloor(budget: number, alreadySpent = 0): number {
+  const wanted = (STAMINA_BUDGET_SHARE * budget ** BUDGET_EXPONENT) ** (1 / BUDGET_EXPONENT);
+  const remaining = Math.max(0, budget ** BUDGET_EXPONENT - alreadySpent);
+  const affordable = remaining ** (1 / BUDGET_EXPONENT);
+  return Math.floor(Math.min(wanted, affordable) / COST.Stamina);
+}
 
 /**
  * Where hit and expertise go, in order.
@@ -378,6 +529,17 @@ export const SHARES: Readonly<Record<number, readonly number[]>> = {
   2: [0.65, 0.35],
   3: [0.5, 0.3, 0.2],
   4: [0.45, 0.27, 0.18, 0.1],
+  /*
+   * FIVE, FOR THE HIGH-VALUE SLOTS, and the fifth share is what makes a fifth
+   * preference exist at all -- the row that buys a caster its Spirit and the
+   * Bear its Dodge.
+   *
+   * THE SHAPE FOLLOWS THE FOUR-STAT ROW rather than being invented: each share
+   * is about 0.6 of the one above it, which is what gives a first preference
+   * visibly more than a last without making the last a rounding error. It sums
+   * to 1 exactly, which the arithmetic requires.
+   */
+  5: [0.4, 0.24, 0.16, 0.12, 0.08],
 };
 
 /** The stats a slot carries, after the jewellery rule has narrowed them. */

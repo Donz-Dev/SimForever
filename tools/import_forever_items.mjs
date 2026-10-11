@@ -75,6 +75,16 @@ const CAPTURES = [
       'confirms stamina at 1.0 (best fit 0.99) on a different quality formula and a ' +
       'different item level band from the epics.',
   },
+  {
+    capture: 'tools/data/forever-same.capture.json',
+    out: 'src/data/items/forever-same.json',
+    set: 'forever-same',
+    what:
+      'Every item at these levels that Forever did NOT change from Classic. ' +
+      'Still real Forever items -- the client has them, identical to their ' +
+      'Classic originals -- and captured because "new and changed" leaves out ' +
+      'everything the ruleset simply kept',
+  },
 ];
 
 /** Inventory types that appear on their own line, with no subclass after a tab. */
@@ -237,7 +247,14 @@ function convert(raw) {
       continue;
     }
 
-    const bare = /^\+(\d+) (.+?)\.?$/.exec(line);
+    /*
+     * A SIGN, BECAUSE A STAT CAN BE NEGATIVE. The Lapidis Tankard of Tidesippe
+     * states "-15 Agility" -- Classic has a handful of cursed items and the
+     * `same` capture is the first to reach one. Matching `+` only sent it to
+     * the unread list, which would have stopped the whole import rather than
+     * losing the line, so the importer's refusal did its job.
+     */
+    const bare = /^([+-]\d+) (.+?)\.?$/.exec(line);
     if (bare) {
       const value = Number(bare[1]);
       const name = bare[2];

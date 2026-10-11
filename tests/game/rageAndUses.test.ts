@@ -222,12 +222,27 @@ describe('the Uses column', () => {
     /*
      * An auto attack, a weapon proc and a bleed tick are damage without a
      * use. Counting them as uses would make "casts per fight" meaningless.
+     *
+     * FATAL WOUND IS NO LONGER ONE OF THE THREE: Vis'kag the Bloodletter is in
+     * Forever's `missing.json`, so nothing can equip the weapon that procs it
+     * and the row never appears.
+     *
+     * WHIRLWIND'S OFF HAND CARRIES THAT HALF, and it is a better example than
+     * a proc was: the ability IS cast, once, and its off-hand damage gets a
+     * row of its own with no cast behind it. A row that counted it would say
+     * the build casts Whirlwind twice as often as it does.
      */
     const rows = berserker().abilities;
     const byName = new Map(rows.map((row) => [row.abilityName, row]));
     expect(byName.get('Main Hand Auto-Attack')!.uses).toBe(0);
     expect(byName.get('Off Hand Auto-Attack')!.uses).toBe(0);
-    expect(byName.get('Fatal Wound')!.uses).toBe(0);
+
+    const offHandHalf = byName.get('Whirlwind (Off Hand)');
+    expect(offHandHalf, 'no uncast damage row to check').toBeDefined();
+    expect(offHandHalf!.uses).toBe(0);
+    expect(offHandHalf!.damage).toBeGreaterThan(0);
+    // And the ability itself IS counted, once per cast.
+    expect(byName.get('Whirlwind')!.uses).toBeGreaterThan(0);
   });
 
   it('counts an on-next-swing ability once per arming', () => {

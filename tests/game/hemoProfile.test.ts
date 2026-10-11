@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { PRESETS_BY_ID } from '../../src/profiles/presets';
+import { ITEMS_BY_ID } from '../../src/game/items/itemData';
 import { characterAtCombatStart } from '../../src/simulator';
 import { ROGUE_HEMO, ROGUE_RUPTURE, rogueRotation } from '../../src/game/rotations/rogue';
 
@@ -57,7 +58,27 @@ describe('the Hemo build', () => {
     expect(hemo.character.level).toBe(rupture.character.level);
     expect(hemo.character.combatStyle).toBe(rupture.character.combatStyle);
     expect(hemo.character.stance).toBe(rupture.character.stance);
-    expect(hemo.equipment).toEqual(rupture.equipment);
+    /*
+     * THE SAME GEAR, SLOT BY SLOT AND STAT BY STAT, BUT NOT THE SAME ITEM IDS.
+     *
+     * Each benchmark template generates its OWN items -- the Hemo set is
+     * numbered separately from the Rupture set -- so comparing the equipment
+     * objects compares the id allocator and not the gear. The two templates are
+     * identical in everything the budget reads (hit 120, expertise 10, the
+     * Rogue preference order, leather, two daggers), so what has to match is
+     * the stats, and a mismatch there is the thing this test exists to catch.
+     */
+    expect(Object.keys(hemo.equipment).sort()).toEqual(Object.keys(rupture.equipment).sort());
+    for (const slot of Object.keys(hemo.equipment)) {
+      const mine = ITEMS_BY_ID.get(
+        (hemo.equipment as Record<string, { itemId: number }>)[slot].itemId,
+      );
+      const theirs = ITEMS_BY_ID.get(
+        (rupture.equipment as Record<string, { itemId: number }>)[slot].itemId,
+      );
+      expect(mine?.stats, slot).toEqual(theirs?.stats);
+      expect(mine?.weapon?.speed, slot).toBe(theirs?.weapon?.speed);
+    }
     expect(hemo.raidBuffs).toEqual(rupture.raidBuffs);
     expect(hemo.encounter).toEqual(rupture.encounter);
     expect(hemo.talents).not.toEqual(rupture.talents);

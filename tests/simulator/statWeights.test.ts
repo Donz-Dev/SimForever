@@ -93,8 +93,16 @@ describe('runStatWeights', () => {
      * a uniform `iterations` per row.
      * ------------------------------------------------------------------------
      */
+    /*
+     * `critRating` RATHER THAN `critChance`, because the catalogue has ONE crit
+     * row now -- the owner: "it should just be crit rating since that's how
+     * Forever calls it and it functions as global crit chance for all
+     * sources." A stat the catalogue does not carry is dropped rather than
+     * priced, so asking for the old name silently returned ONE row and this
+     * test caught it.
+     */
     const iterations = 8;
-    const run = runStatWeights(presetNamed('dw_fury'), ['strength', 'critChance'], {
+    const run = runStatWeights(presetNamed('dw_fury'), ['strength', 'critRating'], {
       baseSeed: SEED,
       iterations,
     });

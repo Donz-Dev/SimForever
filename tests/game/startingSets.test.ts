@@ -9,34 +9,24 @@ import { validateProfile } from '../../src/profiles';
 import { createDefaultProfile } from '../../src/profiles';
 
 /*
- * The Warrior's starting set, transcribed BY HAND from the item data rather
- * than read out of startingSets.ts. A test that asked the set what the set said
- * would pass whatever the set said -- including pointing at an item that no
- * longer exists, which is the failure this is guarding against.
+ * ============================================================================
+ * THE STARTING SET IS THE E65 BENCHMARK SET NOW, which is what this whole file
+ * had to be rewritten around.
+ *
+ * It used to name twelve curated Classic and Season of Discovery sets item by
+ * item -- "Jaws of Might", "Vis'kag the Bloodletter" -- transcribed by hand so
+ * that a test could not pass by asking the set what the set said. Those nine
+ * files are deleted on the owner's instruction, and `startingEquipmentFor`
+ * returns gear generated from the itemization budget instead.
+ *
+ * SO THE SUBJECT CHANGED FROM *WHICH ITEMS* TO *WHICH SHAPE*, and the shape is
+ * what the old file was really protecting: every class armed, nothing in a slot
+ * it cannot occupy, a shield in `shield` and never in a weapon hand, the two
+ * Paladin shield builds told apart, and no slot silently dropped by the style.
+ * Every one of those bugs has happened, and none of them needs a named item to
+ * be worth testing.
+ * ============================================================================
  */
-const WARRIOR_ARMOUR: Partial<Record<EquipmentSlot, string>> = {
-  head: 'Jaws of Might',
-  neck: 'Onyxia Tooth Pendant',
-  shoulders: 'Pauldrons of Might',
-  cloak: 'Cape of the Black Baron',
-  chest: 'Hauberk of Might',
-  wrists: 'Armguards of Might',
-  gloves: 'Hands of Might',
-  waist: 'Sash of Might',
-  legs: 'Leggings of Might',
-  feet: 'Treads of Might',
-  ring1: "Don Julio's Band",
-  ring2: 'Quick Strike Ring',
-  trinket1: "Blackhand's Breadth",
-  trinket2: 'Hand of Justice',
-  ranged: "Striker's Mark",
-};
-
-const WARRIOR_WEAPONS: Record<string, Partial<Record<EquipmentSlot, string>>> = {
-  dual_wield: { mainHand: "Vis'kag the Bloodletter", offHand: 'Brutality Blade' },
-  two_hander: { twoHand: 'Obsidian Edged Blade' },
-  one_hand_shield: { mainHand: 'Brutality Blade', shield: 'The Immovable Object' },
-};
 
 const nameOf = (itemId: number) => ITEMS_BY_ID.get(itemId)?.name;
 
@@ -64,17 +54,34 @@ const DEFAULT_STYLES: readonly (readonly [ClassId, CombatStyleId, RaceId])[] = [
   ['priest', 'caster', 'troll'],
 ];
 
-describe('the Warrior starting set', () => {
-  for (const [style, weapons] of Object.entries(WARRIOR_WEAPONS)) {
-    const expected = { ...WARRIOR_ARMOUR, ...weapons };
+/**
+ * Which weapon slots each Warrior style fills, and nothing about which ITEM.
+ *
+ * The three styles are the reason this mapping is worth a test at all: a
+ * two-hander in a dual-wield set is dropped, a one-hander in a two-hand set is
+ * dropped, and either mistake leaves a character swinging the placeholder.
+ */
+const WARRIOR_HANDS: Record<string, readonly EquipmentSlot[]> = {
+  dual_wield: ['mainHand', 'offHand'],
+  two_hander: ['twoHand'],
+  one_hand_shield: ['mainHand', 'shield'],
+};
 
-    it(`equips the right items for ${style}`, () => {
-      const set = startingEquipmentFor('warrior', style as CombatStyleId);
-      const actual: Record<string, string | undefined> = {};
-      for (const [slot, equipped] of Object.entries(set)) {
-        actual[slot] = equipped ? nameOf(equipped.itemId) : undefined;
-      }
-      expect(actual).toEqual(expected);
+describe('the starting set', () => {
+  for (const [style, hands] of Object.entries(WARRIOR_HANDS)) {
+    it(`fills exactly the right hands for ${style}`, () => {
+      const set = startingEquipmentFor('warrior', style as CombatStyleId, {
+        targetAttacks: style === 'one_hand_shield',
+      });
+      const WEAPON_SLOTS: readonly EquipmentSlot[] = [
+        'mainHand',
+        'offHand',
+        'twoHand',
+        'shield',
+        'ranged',
+      ];
+      const filled = WEAPON_SLOTS.filter((slot) => set[slot] !== undefined);
+      expect(filled).toEqual(hands);
     });
 
     it(`puts every ${style} item in a slot it can actually go in`, () => {
@@ -89,29 +96,27 @@ describe('the Warrior starting set', () => {
 
   it('puts the shield in the shield slot, not the off hand', () => {
     /*
-     * Wowhead gives a shield the inventory type "Off Hand", the same as a held
+     * Forever gives a shield the inventory type "Off Hand", the same as a held
      * off-hand item, and only the subclass says otherwise. Getting this wrong
      * would let a dual-wielder equip a shield and SWING it.
      */
-    const shield = ITEMS_BY_ID.get(19321);
-    expect(shield?.slots).toEqual(['shield']);
-
-    const set = startingEquipmentFor('warrior', 'one_hand_shield');
-    expect(set.shield?.itemId).toBe(19321);
+    const set = startingEquipmentFor('warrior', 'one_hand_shield', { targetAttacks: true });
+    expect(set.shield).toBeDefined();
     expect(set.offHand).toBeUndefined();
+    expect(ITEMS_BY_ID.get(set.shield!.itemId)?.slots).toEqual(['shield']);
 
     // And a dual-wielder is never handed one.
     expect(startingEquipmentFor('warrior', 'dual_wield').shield).toBeUndefined();
   });
 
-  it('has a curated set for every class now, which it did not', () => {
+  it('has a set for every class', () => {
     /*
      * THIS TEST USED TO ASSERT THAT A MAGE GOT NOTHING, and the comment in
-     * `startingSets.ts` said why: "the honest answer rather than dressing a Mage
-     * in plate". That was honest for exactly as long as there was no Mage gear.
-     * Twelve sets later, a from-scratch Mage in an empty Gear panel is the
-     * dishonest answer -- it fights with placeholder weapons and still produces
-     * a confident-looking number.
+     * `startingSets.ts` said why: "the honest answer rather than dressing a
+     * Mage in plate". That was honest for exactly as long as there was no Mage
+     * gear. A from-scratch Mage in an empty Gear panel is the dishonest
+     * answer -- it fights with placeholder weapons and still produces a
+     * confident-looking number.
      */
     for (const characterClass of CLASSES) {
       expect(hasStartingEquipment(characterClass), characterClass).toBe(true);
@@ -124,51 +129,82 @@ describe('the Warrior starting set', () => {
     }
   });
 
-  it('puts every class in its own armour, not the Warrior plate', () => {
+  it('puts every class in its own armour class, not the Warrior plate', () => {
     /*
-     * The bug this whole area exists to prevent: seventeen profiles once wore
-     * `SHARED_ARMOUR`, which is the Warrior set, and a profile in the wrong gear
-     * runs perfectly and produces a plausible number. The head slot is enough to
-     * tell them apart, and each name is transcribed by hand.
+     * ------------------------------------------------------------------------
+     * THE BUG THIS WHOLE AREA EXISTS TO PREVENT: seventeen profiles once wore
+     * the WARRIOR's set, and a profile in the wrong gear runs perfectly and
+     * produces a plausible number.
+     *
+     * IT IS CHECKED ON THE ARMOUR VALUE NOW RATHER THAN ON THE ITEM NAME,
+     * because every benchmark head piece is called "E65 Head" -- the name
+     * carries the set and the slot, and the armour CLASS is the thing that
+     * differs. Base armour is a function of slot, armour class and item level,
+     * so at one item level the four classes are strictly ordered and a Mage in
+     * plate would show up here immediately.
+     * ------------------------------------------------------------------------
      */
-    const head = (characterClass: ClassId, style: CombatStyleId) => {
-      const slot = startingEquipmentFor(characterClass, style).head;
-      return slot ? nameOf(slot.itemId) : undefined;
+    const headArmour = (characterClass: ClassId, style: CombatStyleId) => {
+      const slot = startingEquipmentFor(characterClass, style).head!;
+      return ITEMS_BY_ID.get(slot.itemId)!.stats.armor ?? 0;
     };
 
-    expect(head('warrior', 'dual_wield')).toBe('Jaws of Might');
-    expect(head('rogue', 'dual_wield')).toBe('Nightslayer Cover');
-    expect(head('druid', 'moonkin')).toBe('Cenarion Antlers');
-    expect(head('druid', 'cat')).toBe('Cenarion Horns');
-    expect(head('druid', 'bear')).toBe('Cenarion Crown');
-    expect(head('shaman', 'caster')).toBe('Coif of The Five Thunders');
-    expect(head('shaman', 'two_hander')).toBe('Crown of Destruction');
-    expect(head('mage', 'caster')).toBe('Arcanist Crown');
-    expect(head('hunter', 'ranged')).toBe('Crown of Destruction');
-    expect(head('warlock', 'caster')).toBe('Deathmist Mask');
-    expect(head('priest', 'caster')).toBe('Crown of Prophecy');
+    const plate = headArmour('warrior', 'dual_wield');
+    const mail = headArmour('hunter', 'ranged');
+    const leather = headArmour('rogue', 'dual_wield');
+    const cloth = headArmour('mage', 'caster');
+
+    expect(plate).toBeGreaterThan(mail);
+    expect(mail).toBeGreaterThan(leather);
+    expect(leather).toBeGreaterThan(cloth);
+
+    // The armour class follows the CLASS and not the style: a Moonkin is in
+    // leather like the Rogue, and both Shaman styles are mail.
+    expect(headArmour('druid', 'moonkin')).toBe(leather);
+    expect(headArmour('shaman', 'two_hander')).toBe(mail);
+    expect(headArmour('paladin', 'two_hander')).toBe(plate);
+
+    /*
+     * THE BEAR IS THE EXCEPTION AND IT IS BUYING SOMETHING. Its template lists
+     * "Bonus Armor" second in its preferences, which is a BUDGETED stat at a
+     * cost of 0.1 -- so its head is leather's 155 base plus 192 it paid for.
+     * Base armour comes free with the item level and bonus armour does not,
+     * and the two being separable is the whole reason the generator writes
+     * them as separate lines.
+     */
+    expect(headArmour('druid', 'bear')).toBeGreaterThan(leather);
+    expect(headArmour('druid', 'bear')).toBeLessThan(plate);
   });
 
   it('tells the two Paladin shield builds apart by the ENCOUNTER', () => {
     /*
      * ------------------------------------------------------------------------
      * BOTH HOLD A ONE-HANDER AND A SHIELD, so the style cannot separate them.
+     * What tells them apart is whether the target swings back -- the ruleset
+     * owner's own answer, and the same shape as `isTankBuild`: a build inferred
+     * from two fields rather than declared in one.
      *
-     * Shockadin's shield is Earth and Fire, which is a CASTER shield carrying 26
-     * spell power; Protection's is Earthen Guard. What tells them apart is
-     * whether the target swings back -- the ruleset owner's own answer, and the
-     * same shape as `isTankBuild`: a build inferred from two fields rather than
-     * declared in one.
+     * THE DIFFERENCE IS NOW THE STAT LINE RATHER THAN THE ITEM. Protection's
+     * template leads with Stamina, Strength, Agility, Defense, Parry and Block;
+     * the Shockadin's leads with Crit and Spell Power. So the tank's shield
+     * carries stamina a damage build's does not, and the Shockadin's gear
+     * carries spell power the tank's does not.
      * ------------------------------------------------------------------------
      */
     const tank = startingEquipmentFor('paladin', 'one_hand_shield', { targetAttacks: true });
     const shockadin = startingEquipmentFor('paladin', 'one_hand_shield', { targetAttacks: false });
 
-    expect(nameOf(tank.shield!.itemId)).toBe('Earthen Guard');
-    expect(nameOf(tank.head!.itemId)).toBe('Lawbringer Headguard');
+    expect(tank.shield).toBeDefined();
+    expect(shockadin.shield).toBeDefined();
+    expect(tank.shield!.itemId).not.toBe(shockadin.shield!.itemId);
 
-    expect(nameOf(shockadin.shield!.itemId)).toBe('Earth and Fire');
-    expect(nameOf(shockadin.head!.itemId)).toBe('Lawbringer Crown');
+    const spellPower = (set: typeof tank) =>
+      Object.values(set).reduce(
+        (sum, equipped) => sum + (ITEMS_BY_ID.get(equipped!.itemId)?.stats.spellPower ?? 0),
+        0,
+      );
+    expect(spellPower(shockadin)).toBeGreaterThan(0);
+    expect(spellPower(tank)).toBe(0);
 
     // Omitted defaults to the damage build, because a character is created
     // before the encounter is set up and nothing has said it is tanking yet.
@@ -176,8 +212,9 @@ describe('the Warrior starting set', () => {
 
     // The two-hander is Retribution and holds nothing in the other hand.
     const ret = startingEquipmentFor('paladin', 'two_hander');
-    expect(nameOf(ret.twoHand!.itemId)).toBe('Obsidian Edged Blade');
+    expect(ret.twoHand).toBeDefined();
     expect(ret.shield).toBeUndefined();
+    expect(nameOf(ret.twoHand!.itemId)).toMatch(/Two-Hand/);
   });
 
   it('keeps every slot the style can fill, and drops none of them', () => {
@@ -185,8 +222,8 @@ describe('the Warrior starting set', () => {
      * A set can be equipped and contribute NOTHING: `liveEquipment` strips the
      * slots a style cannot fill, and a caster shield in a stat-stick off hand
      * used to be one of them. Worth asserting per class, because the sets that
-     * fill unusual slots -- a shield on a caster, a relic, a wand -- are exactly
-     * the ones a style rule can silently discard.
+     * fill unusual slots -- a shield on a caster, a bow on a melee Hunter --
+     * are exactly the ones a style rule can silently discard.
      */
     for (const [characterClass, style] of DEFAULT_STYLES) {
       const set = startingEquipmentFor(characterClass, style, { targetAttacks: true });
@@ -196,6 +233,53 @@ describe('the Warrior starting set', () => {
           (live as Record<string, unknown>)[slot],
           `${characterClass}/${style} loses ${slot}`,
         ).toBeDefined();
+      }
+    }
+  });
+
+  it('arms every class, rather than leaving it on a placeholder', () => {
+    /*
+     * ------------------------------------------------------------------------
+     * THE FAILURE THIS CATCHES HAS HAPPENED TWICE, in opposite directions, and
+     * both times it was silent: a set whose weapon the STYLE cannot hold is
+     * dropped, and the character swings "Melee", which is a placeholder with a
+     * plausible damage range.
+     *
+     * The Shockadin was the second: its benchmark template said `twoHand` while
+     * its style is `one_hand_shield`, so it held nothing at all. Checked for
+     * every class and style here rather than for the one that broke.
+     *
+     * A CASTER AND A FERAL DRUID ARE THE TWO HONEST EXCEPTIONS. A caster style
+     * HOLDS its weapon as a stat stick and never swings it, so it has no weapon
+     * profile by design; a Druid in form swings a PAW built from the weapon's
+     * dps. Both are named rather than skipped, because "could not swing it" and
+     * "was never given one" are the two answers this test exists to separate.
+     * ------------------------------------------------------------------------
+     */
+    for (const [characterClass, style, race] of DEFAULT_STYLES) {
+      const player = createPlayer({
+        race,
+        characterClass,
+        combatStyle: style,
+        equipment: startingEquipmentFor(characterClass, style, { targetAttacks: true }),
+      });
+
+      if (style === 'caster') {
+        // Held, never swung: no weapon profile at all.
+        expect(player.weapons.mainHand, characterClass).toBeUndefined();
+      } else if (style === 'ranged') {
+        /*
+         * A RANGED HUNTER IS THE OTHER STAT-STICK STYLE: its melee weapon is
+         * held and its BOW is the one that swings, so the slot to check is the
+         * ranged one. Checking `mainHand` here is how this test first read a
+         * correctly armed Hunter as unarmed.
+         */
+        expect(player.weapons.mainHand, characterClass).toBeUndefined();
+        expect(player.weapons.ranged?.name, characterClass).toMatch(/^E65 /);
+      } else if (characterClass === 'druid') {
+        expect(player.weapons.mainHand?.name, characterClass).toBe('Cat Paw');
+      } else {
+        expect(player.weapons.mainHand?.name, characterClass).toMatch(/^E65 /);
       }
     }
   });
@@ -235,8 +319,9 @@ describe('the Warrior starting set', () => {
     });
 
     // Real weapons replace the placeholders outright.
-    expect(geared.weapons.mainHand?.name).toBe("Vis'kag the Bloodletter");
-    expect(geared.weapons.offHand?.name).toBe('Brutality Blade');
+    expect(naked.weapons.mainHand?.name).toBe('Melee');
+    expect(geared.weapons.mainHand?.name).toBe('E65 Main-Hand Axe');
+    expect(geared.weapons.offHand?.name).toBe('E65 Off-Hand Axe');
     // And the armour is worth something.
     expect(geared.stats.effective.attackPower).toBeGreaterThan(
       naked.stats.effective.attackPower,

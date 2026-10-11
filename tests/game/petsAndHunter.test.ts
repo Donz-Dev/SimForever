@@ -12,6 +12,7 @@ import {
 import { buildSimulation } from '../helpers/buildSimulation';
 import { makeTarget } from '../helpers/actors';
 import { PRESETS_BY_ID } from '../../src/profiles/presets';
+import { ITEMS_BY_ID } from '../../src/game/items/itemData';
 import {
   PET_ARMOR_SHARE,
   PET_ATTACK_POWER_SHARE,
@@ -1027,7 +1028,19 @@ describe('Hawk Melee takes BOTH Lone Wolf and Summon Hawk', () => {
     expect(hawk.character.combatStyle).toBe(lw.character.combatStyle);
     expect(hawk.character.stance).toBe(lw.character.stance);
     expect(hawk.character.petFamily).toBe(lw.character.petFamily);
-    expect(hawk.equipment).toEqual(lw.equipment);
+    /*
+     * THE SAME GEAR, STAT BY STAT, BUT NOT THE SAME ITEM IDS: each benchmark
+     * template generates its own items, so comparing the objects compares the
+     * id allocator. The two templates are identical in everything the budget
+     * reads, so the stats are what have to match -- and a mismatch there is
+     * exactly the "all three Hunters wore the WARRIOR set" bug this guards.
+     */
+    expect(Object.keys(hawk.equipment).sort()).toEqual(Object.keys(lw.equipment).sort());
+    for (const slot of Object.keys(hawk.equipment)) {
+      const mine = ITEMS_BY_ID.get((hawk.equipment as Record<string, { itemId: number }>)[slot].itemId);
+      const theirs = ITEMS_BY_ID.get((lw.equipment as Record<string, { itemId: number }>)[slot].itemId);
+      expect(mine?.stats, slot).toEqual(theirs?.stats);
+    }
     expect(hawk.raidBuffs).toEqual(lw.raidBuffs);
     expect(hawk.consumables).toEqual(lw.consumables);
     expect(hawk.encounter).toEqual(lw.encounter);
