@@ -186,37 +186,22 @@ describe('what 2H Arms eats', () => {
     expect(PRESETS_BY_ID.get('two_hand_arms')!.build().consumables.food).toBe('food_strength');
   });
 
-  it('leaves the builds the owner has NOT named on the archetype row', () => {
+  it('does not change anything else about what it drinks', () => {
     /*
-     * ==========================================================================
-     * THE CONTAINMENT CHECK, AND IT IS THE WHOLE REASON THIS IS AN OVERRIDE ON
-     * ONE PRESET RATHER THAN AN EDIT TO `MELEE_COMMON`.
+     * THE ROW-WIDE CLAIM LIVES IN `consumables.test.ts` NOW, under "who eats
+     * what, on the plate-and-fur row" -- it is a claim about the consumable
+     * ROW rather than about this list, and it was written here AND in
+     * `berserkerRotation.test.ts`, so one ruling failed two files and the set
+     * of unnamed profiles had to be edited in both. Two copies of a set is how
+     * the two drift.
      *
-     * A ruling covers what it says and is not extended by analogy. The row is
-     * shared with DW Fury, Prot Warr and both feral Druids, and `MELEE_COMMON`
-     * beneath it with four Rogues and a melee Hunter -- changing it would have
-     * moved ten published figures on one sentence about an eleventh.
-     *
-     * AND IT HAS ALREADY EARNED ITS KEEP. It FAILED on `dw_fury` the moment the
-     * owner's second food ruling landed, naming the profile that had changed --
-     * which is what this list is for: the set shrinks by one each time they
-     * name another, and the failure is how that gets noticed rather than
-     * quietly widened.
-     *
-     * **TWO OF FIVE IS NOT A ROW.** When the three below are named too, the
-     * honest edit is `STRENGTH_CONSUMABLES` itself and both overrides come out
-     * together -- and this assertion is what will say so, by having nothing
-     * left to assert.
-     * ==========================================================================
+     * WHAT BELONGS HERE is that this profile's override touches the FOOD and
+     * nothing else: the Flask, the Blasted Lands elixir and the weapon effect
+     * are what make it a plate build and are not what the owner changed.
      */
-    for (const id of ['prot_warr', 'druid_cat', 'druid_bear']) {
-      expect(PRESETS_BY_ID.get(id)!.build().consumables.food, id).toBe('food_attack_power');
-    }
-
-    // The two the owner HAS named, so this test says which side each is on
-    // rather than only naming the remainder.
-    for (const id of ['two_hand_arms', 'dw_fury']) {
-      expect(PRESETS_BY_ID.get(id)!.build().consumables.food, id).toBe('food_strength');
-    }
+    const selection = PRESETS_BY_ID.get('two_hand_arms')!.build().consumables;
+    expect(selection.blasted_lands).toBe('blasted_strength');
+    expect(selection.potion).toBe('mighty_rage_potion');
+    expect(selection.other).toBe('healthstone');
   });
 });

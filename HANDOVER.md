@@ -11,12 +11,124 @@ the tooling to be a bit more sophisticated as well."
 | 1 | **2H Arms** list, respecified by the owner | 825.9 -> **849.7** (**+23.8 REAL**) | **753.7** |
 | 2 | **DW Fury** list: Death Wish eighth -> fourth | **no decision moved**; all 75 hashes and event counts identical | 753.7 |
 | 2 | **DW Fury** food: +40 Attack Power -> +20 Strength | 988.5 -> **989.6** (**+1.2**) | **753.7** |
+| 3 | **Prot Warr** list: four moves, the owner's order | 471.5 -> 471.1 (**-0.4**), deaths 6.17 -> 6.18 | 753.7 |
+| 3 | **Prot Warr** food: +40 Attack Power -> **+20 Stamina** | **deaths 6.17 -> 5.93**, at -5.0 DPS | **753.6** |
 
 **AND MORE ROWS CAN BE ADDED, WHICH IS THE POINT OF ITS BEING A TABLE** --
-there are twenty-three lists left and the owner has said so. **THE HEADER IS
+there are twenty-two lists left and the owner has said so. **THE HEADER IS
 WRITTEN FOR THE SERIES RATHER THAN FOR ITS FIRST ENTRY**, which is this file's
 own rule arriving where it belongs: it read "THE APL EDITOR GROWS TEETH, AND 2H
 ARMS IS RESPECIFIED" for exactly one round.
+
+**AND THE THIRD ROUND IS THE FIRST WHOSE RIGHT-HAND COLUMN IS NOT A DPS
+FIGURE**, which is the whole of what a tank round is: a Protection warrior's
+figure of merit is a DEATH COUNT, and both of its changes are read there.
+
+## Round three: Prot Warr, where the DPS row is the wrong measure
+
+**TWO CHANGES, AND NEITHER IS A DPS DECISION.** The published row moves 471.5
+-> **469.7**, which is inside its own +/-3.2 interval and is the least
+informative thing about the round. 24 of 25 rows are 0.0 to the decimal.
+
+### The four list moves, and one of them overturns an argument this repo made
+
+| | from | to |
+| --- | --- | --- |
+| **Defensive Stance** | sixth, BELOW the two survival cooldowns | **second**, above them |
+| **Bloodrage** | two entries above Battle Shout | below it |
+| **the mid-fight consumables** | LAST, with the racials | **tenth** |
+| **Revenge** | below Shield Slam | above it |
+
+**`protectionRotation.test.ts` ASSERTED THE OPPOSITE OF THE FIRST ONE AND GAVE
+A REASON** -- the two survival cooldowns sat "above everything that can repeat
+... above even the stance, because a dead tank is in no stance at all". The
+decision was ours and is the owner's now.
+
+**AND THE OLD ARGUMENT WAS NEVER LOAD-BEARING**, which is why this costs
+nothing either way: the stance entry is gated on Defensive Stance having RUN
+OUT, so it fires once at the pull -- where the tank is at full health and both
+cooldowns below it are refused anyway. **The two orders differ only in a moment
+when neither of the things being ordered can happen.** It becomes real the day
+something moves the tank out of its stance mid-fight.
+
+**WHAT SURVIVES IN THE TEST IS THE INVARIANT.** Nothing that REPEATS sits above
+the two cooldowns: only Charge, castable for one instant at the pull, and the
+stance, which is also a once-a-fight entry at a moment when nothing is in
+danger. Both are off the global cooldown. **A test that pins a rotation
+decision gives way when the decision changes owner; one that pins an invariant
+does not**, and this is the clearest instance of that split the project has
+produced.
+
+### The list reorder is worth nothing, and the reason is not the one expected
+
+**-0.4 DPS and +0.01 deaths**, on 300 fights. The move that looked like it
+would matter was the mid-fight consumable coming up from the bottom -- the
+racials' own position, which this file documents as a place entries are NOT
+REACHED, "which is how five of seven racials came back inert when they were
+tried there".
+
+**IT WAS ALREADY FIRING 1.00 TIMES A FIGHT AT THE BOTTOM.** A two minute
+cooldown in a sixty second fight is one cast whatever its position, and a tank
+list does fall that far often enough to take it. **So the argument that
+justified the move is sound and did not apply to this entry**, and the honest
+reading is that the split between the potion and the racials is a policy the
+owner has stated rather than a measured gain. It would start mattering on a
+longer fight, where the potion is worth more than one cast.
+
+**THE REVENGE/SHIELD SLAM SWAP IS THE ONE BOTH ENTRIES CONTEST**, and it moved
+them 9.7 -> 10.4 and 9.4 -> 9.2 casts a fight for no net figure.
+
+### The stamina food is the round, and it is a TRADE
+
+| | before | after |
+| --- | --- | --- |
+| health | 8,803 | **9,034** |
+| deaths | 6.17 | **5.93** |
+| damage taken | 120,416 | 119,090 |
+| rage gained | 655 | 651 |
+| DPS | 471.5 | 466.5 |
+
+**EVERY COLUMN MOVES THE WAY THE MECHANISM PREDICTS, INCLUDING THE TWO THAT
+LOOK LIKE LOSSES.** Stamina buys health; health is what a death count is
+counted in; and Forever's `D x 10 / H` means a bigger pool makes each point of
+damage taken worth LESS rage -- so rage falls, and the damage that rage would
+have bought falls with it. **A -5.0 DPS row is the price of -0.24 deaths**,
+which is the trade a tank food is for.
+
+**THE PAIRING IS WHAT MAKES THE DEATH FIGURE READABLE.** Four configurations
+were measured and they fall into two pairs by HEALTH rather than by list: the
+two at 8,803 health read 6.17 and 6.18 deaths, and the two at 9,034 read 5.93
+and 5.98. The pairs do not overlap, and the thing that separates them is the
+only thing that differs between them.
+
+**AND THE TOOL HAD TO BE GENERALISED TO SEE ANY OF IT.** `bear_survival.ts` was
+named after the Bear and served only the Bear, and its columns are not a Druid
+fact -- deaths, damage taken, armor, dodge and rage are what ANY build whose
+figure of merit is a death count is read on, and there are three such presets.
+It takes a `PROFILE` now, prints HEALTH (a stamina change is invisible in every
+other column), and REFUSES a build nothing attacks rather than printing a row
+of zeros that reads like a finding.
+
+### Three food rulings, two answers, and the row that can now never move
+
+**2H ARMS AND DW FURY TAKE +20 STRENGTH; PROT WARR TAKES +20 STAMINA.** Three
+of the five members of `STRENGTH_CONSUMABLES` are named and two different
+answers are among them -- so **a shared row holds one value and the owner has
+given two**, and no edit to it can satisfy the rulings that exist.
+
+**THAT IS A FACT ABOUT THE SHAPE RATHER THAN A RULE ABOUT CAUTION**, which is
+what the first two overrides rested on ("a ruling covers what it says and is
+not extended by analogy"). It is the stronger argument and it arrived by the
+owner simply answering a third time.
+
+**AND THE ROW-WIDE TEST NOW LIVES IN ONE PLACE.** It was written in
+`armsRotation.test.ts` and again in `berserkerRotation.test.ts`, so this single
+ruling failed BOTH files and the set of "unnamed" profiles had to be edited in
+each -- **two copies of a set is how the two drift**. It is a claim about the
+consumable ROW rather than about any list, so it sits in `consumables.test.ts`
+with the arithmetic that decides when the row itself should finally move. What
+each rotation file keeps is that its own override touches the FOOD and nothing
+else.
 
 ## Round two: DW Fury, and a move that provably changes nothing
 
@@ -240,10 +352,16 @@ as an accident.
 
 ## What is left
 
-- **TWENTY-THREE LISTS**, which is the rest of the ask. 2H Arms was the first
-  and DW Fury the second. **Re-count this against the table at the top of this
-  section rather than decrementing it** -- which is the rule this file applies
-  to every other derived figure, and the two places are a commit apart.
+- **TWENTY-TWO LISTS**, which is the rest of the ask. 2H Arms was the first,
+  DW Fury the second, Prot Warr the third. **Re-count this against the table at
+  the top of this section rather than decrementing it** -- which is the rule
+  this file applies to every other derived figure, and the two places are a
+  commit apart.
+- **THE MID-FIGHT CONSUMABLE'S POSITION IN A TANK LIST IS A POLICY, NOT A
+  MEASURED GAIN.** The owner moved it off the bottom and it was already firing
+  1.00 times a fight there, because a two minute cooldown in a sixty second
+  fight is one cast wherever it sits. It would start to matter on a longer
+  fight; nothing here runs one.
 - **NEW PROFILES**, which the owner named as the work after the 25.
 - **THE TIMELINE HAS NO AVERAGE VIEW** and deliberately does not; whether a
   per-lane figure pooled across the batch belongs beside each row -- uptime
@@ -2966,7 +3084,7 @@ demonstrated at the top. **Re-count rather than re-reading the sentence.**
 | --- | --- |
 | **Talents** | 260 fully, 39 partly, 105 ruled out, **62 a live gap**, out of **466** -- from 132 before the class dives |
 | **Abilities** | 114 declared against 478 captured |
-| **Profiles** | **25**, all measured, **mean 753.7** on FOREVER'S OWN ITEMS -- every earlier figure in this file was measured on Classic and Season of Discovery stand-ins, so the contributions below belong to that gear and not to this mean: the armour enchants were +27.0 of it, the pre-pull consumables +105.9, the racials **+9.8 at round one**, the MID-FIGHT consumables **+17.7** and the Life Tap gate **+3.5** |
+| **Profiles** | **25**, all measured, **mean 753.6** on FOREVER'S OWN ITEMS -- every earlier figure in this file was measured on Classic and Season of Discovery stand-ins, so the contributions below belong to that gear and not to this mean: the armour enchants were +27.0 of it, the pre-pull consumables +105.9, the racials **+9.8 at round one**, the MID-FIGHT consumables **+17.7** and the Life Tap gate **+3.5** |
 | **Racials** | **10 races, 40 traits**: 15 do something, 20 effects ruled out, 11 a live gap |
 | **Scope rulings** | **9 members**, all the owner's, carrying 129 TALENT entries and 19 racial declarations |
 | **Placeholders** | **11 declared** -- see the milestone table, and count DECLARATIONS. **One of the eleven is not a ruleset number**: `PLACEHOLDER_PREFERRED_WEIGHT` is the Gear panel's stat-sorting weight, which no simulation reads, so it can sort a list badly and cannot move a figure |
@@ -4674,7 +4792,7 @@ cannot audit, which is why the check is a SET comparison and not a row count.
 
 | Profile | Class | Talents | DPS | | Profile | Class | Talents | DPS |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| **DW Fury** | Warrior | 17/34/0 | **989.6** | | Shadow Priest | Priest | 13/3/35 | 774.7 |
+| DW Fury | Warrior | 17/34/0 | 989.6 | | Shadow Priest | Priest | 13/3/35 | 774.7 |
 | LW Ranged | Hunter | 7/39/5 | 912.5 | | Fire Mage | Mage | 10/39/2 | 753.0 |
 | Firelock | Warlock | 5/11/35 | 891.4 | | Enh Shaman | Shaman | 17/34/0 | 750.7 |
 | Hawk Melee | Hunter | 16/11/24 | 883.0 | | SM/DS | Warlock | 40/11/0 | 722.4 |
@@ -4683,12 +4801,12 @@ cannot audit, which is why the check is a SET comparison and not a row count.
 | BM Hunter | Hunter | 31/20/0 | 856.2 | | Venom Rogue | Rogue | 37/12/2 | 684.9 |
 | 2H Arms | Warrior | 39/10/2 | 849.7 | | Rupture Rogue | Rogue | 12/8/31 | 659.0 |
 | Frostfire Mage | Mage | 0/29/22 | 837.0 | | Ele Shaman | Shaman | 38/13/0 | 651.4 |
-| LW Melee | Hunter | 7/13/31 | 831.5 | | Prot Warr | Warrior | 17/0/34 | 471.5 |
+| LW Melee | Hunter | 7/13/31 | 831.5 | | **Prot Warr** | Warrior | 17/0/34 | **469.7** |
 | Seal Twist Ret | Paladin | 15/0/36 | 816.5 | | Prot Pally | Paladin | 8/34/9 | 400.6 |
 | Moonkin | Druid | 38/0/13 | 788.4 | | Bear Druid | Druid | 9/42/0 | 395.7 |
 | Combat Rogue | Rogue | 18/33/0 | 776.2 | | | | | | |
 
-The mean across **25** is **753.7**, RE-SUMMED FROM THE ROWS ABOVE rather than
+The mean across **25** is **753.6**, RE-SUMMED FROM THE ROWS ABOVE rather than
 adjusted, by `tools/update_baseline_table.py`.
 
 **THE TOP IS DW FURY AT 974.3 +/-10.3, AND LW RANGED IS SECOND AT 888.9

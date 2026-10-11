@@ -1105,7 +1105,29 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withBenchmarkGear(withS
       },
       talents: { ...PROT_WARR_TALENTS },
       raidBuffs: [...PRESET_RAID_BUFFS],
-      consumables: STRENGTH_CONSUMABLES,
+      /*
+       * STAMINA FOOD, AND IT IS THE THIRD FOOD RULING AND THE FIRST TO GIVE A
+       * DIFFERENT ANSWER.
+       *
+       * ----------------------------------------------------------------------
+       * 2H ARMS AND DW FURY TOOK +20 STRENGTH; A TANK TAKES +20 STAMINA. So the
+       * five members of `STRENGTH_CONSUMABLES` now hold THREE different answers
+       * between them, which settles the question these overrides kept raising:
+       * **the row cannot be edited to satisfy them**, because a shared row has
+       * one value and the owner has given three.
+       *
+       * THAT IS A STRONGER REASON THAN "a ruling covers what it says", which is
+       * what the first two overrides rested on. It was a rule about caution;
+       * this is a fact about the shape.
+       *
+       * AND IT IS THE ONE FOOD CHANGE THAT IS NOT A DPS DECISION. Stamina buys
+       * health, health is what a tank's figure of merit is counted in, and
+       * Forever's rage formula is `D x 10 / H` -- so a bigger pool also makes
+       * every point of damage taken worth LESS rage. Read this change on
+       * DEATHS, not on the DPS row, and expect the DPS to fall slightly.
+       * ----------------------------------------------------------------------
+       */
+      consumables: { ...STRENGTH_CONSUMABLES, food: 'food_stamina' },
       encounter: {
         ...createDefaultProfile().encounter,
         /*

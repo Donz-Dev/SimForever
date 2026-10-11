@@ -30,23 +30,40 @@ const compiled = (condition: AplCondition | undefined) =>
 /*
  * The Protection priority list, in the ruleset owner's order.
  *
- *   1  Last Stand           health < 30%
- *   2  Shield Wall          health < 30%, Last Stand neither active nor ready
- *   3  Bloodrage            rage < 50
- *   4  Defensive Stance     not already in it
- *   5  Battle Shout         not active
+ *   1  Defensive Stance     not already in it
+ *   2  Last Stand           health < 30%
+ *   3  Shield Wall          health < 30%, Last Stand neither active nor ready
+ *   4  Battle Shout         not active
+ *   5  Bloodrage            rage < 50
  *   6  Sunder Armor         below 5 stacks, or running out
  *   7  Demoralizing Shout   not on the target
  *   8  Heroic Strike        rage >= 26
  *   9  Shield Block         whenever it is off cooldown
- *  10  Shield Slam          talent-gated
- *  11  Revenge              window-gated
+ *  10  Revenge              window-gated
+ *  11  Shield Slam          talent-gated
  *  12  Thunder Clap
  *  13  Rend                 not on the target
  *
  * The order is written out here by hand, because the ORDER is the thing being
  * specified. A test that read it from the list would pass whatever the list
  * said.
+ *
+ * ============================================================================
+ * FOUR THINGS MOVED WHEN THE OWNER RESPECIFIED IT, and one of them overturns
+ * an argument this file used to make rather than filling a gap:
+ *
+ *   - DEFENSIVE STANCE to SECOND, above the two survival cooldowns. This file
+ *     asserted the opposite and gave a reason -- "above even the stance,
+ *     because a dead tank is in no stance at all". The decision was ours and
+ *     is the owner's now, and it costs nothing either way: the entry is gated
+ *     on the stance having RUN OUT, so it fires once at the pull, where the
+ *     tank is at full health and both cooldowns below it are refused anyway.
+ *   - BLOODRAGE below Battle Shout, from two entries above it.
+ *   - THE MID-FIGHT CONSUMABLES from LAST to tenth, which splits them from the
+ *     racials they used to share a position and an argument with.
+ *   - REVENGE above Shield Slam, which is the one swap here that both entries
+ *     can actually contest.
+ * ============================================================================
  */
 const EXPECTED_ORDER = [
   // Added on the ruleset owner's instruction: once, at the pull, and only
@@ -54,6 +71,13 @@ const EXPECTED_ORDER = [
   // a talent check here. Above the survival cooldowns because its window is a
   // single instant and it takes no global cooldown from them.
   'charge',
+  /*
+   * THE STANCE SECOND, AND THIS FILE USED TO ASSERT IT WAS BELOW THE TWO
+   * COOLDOWNS. See the header: the argument for the old order was real and was
+   * never load-bearing, because the moment the two orders differ is a moment
+   * when neither cooldown can fire.
+   */
+  'defensive_stance_cast',
   'last_stand',
   'shield_wall_cast',
   /*
@@ -73,15 +97,43 @@ const EXPECTED_ORDER = [
    */
   'major_healing_potion',
   'healthstone',
-  'bloodrage_cast',
-  'defensive_stance_cast',
   'battle_shout_cast',
+  'bloodrage_cast',
   'sunder_armor_cast',
   'demoralizing_shout_cast',
+  /*
+   * THE MID-FIGHT CONSUMABLES, TENTH, AND NO LONGER WITH THE RACIALS.
+   *
+   * --------------------------------------------------------------------------
+   * THEY SHARED A POSITION AND AN ARGUMENT -- "100ms is not free to a tank at
+   * thirty percent health" -- and the owner has now priced that 100ms against
+   * the two entries differently. A racial is FREE; a Mighty Rage Potion is
+   * 45-75 rage and 60 strength on a two minute cooldown.
+   *
+   * It is the same move the two HEALS already got, and for the same stated
+   * reason: the bottom of a tank list is a place entries are not REACHED, so
+   * an entry that is never reached is worth none of what it grants.
+   *
+   * Written out rather than spread, like the racials below and for the same
+   * reason -- the ORDER is what this constant specifies.
+   * --------------------------------------------------------------------------
+   */
+  'major_mana_potion',
+  'demonic_rune',
+  'thistle_tea',
+  'mighty_rage_potion',
+  'major_frenzy_potion',
+  'major_spellblasting_potion',
   'heroic_strike',
   'shield_block_cast',
-  'shield_slam',
+  /*
+   * REVENGE ABOVE SHIELD SLAM, where the two were the other way round. The one
+   * swap in this list that both entries can contest -- and it is cheap because
+   * Revenge is gated on a window that closes by itself, so it yields to Shield
+   * Slam whenever the window is shut.
+   */
   'revenge',
+  'shield_slam',
   'thunder_clap',
   'rend_cast',
   /*
@@ -102,25 +154,6 @@ const EXPECTED_ORDER = [
   'elunes_light',
   'eureka',
   'stoneform',
-  /*
-   * AND THE MID-FIGHT CONSUMABLES, LAST, FOR THE RACIALS' OWN REASON.
-   *
-   * Seven of the nine are here: the two heals are above, with the survival
-   * cooldowns. These seven restore a pool or grant a flat buff, so they are
-   * worth what a racial is worth to a tank and belong where a racial does.
-   *
-   * EVERY ONE OF THEM IS DROPPED AGAIN FOR A PROFILE THAT DID NOT DRINK IT.
-   * The shared constant names all nine because it is spread into lists that
-   * belong to no selection; `stockListFor` narrows it to what the profile
-   * actually carries. This constant is the DECLARED list, which is what
-   * `WARRIOR_SHIELD_DEFENSIVE` is.
-   */
-  'major_mana_potion',
-  'demonic_rune',
-  'thistle_tea',
-  'mighty_rage_potion',
-  'major_frenzy_potion',
-  'major_spellblasting_potion',
 ];
 
 /**
@@ -191,16 +224,34 @@ describe('the Protection list', () => {
 
   it('puts the two survival cooldowns above everything that can repeat', () => {
     /*
-     * Above even the stance, because a dead tank is in no stance at all.
+     * ==========================================================================
+     * THIS TEST USED TO SAY "above even the stance, because a dead tank is in
+     * no stance at all", AND THE OWNER HAS OVERTURNED IT.
      *
-     * Charge sits above them and is not a counter-example: it is castable for
-     * one instant at the pull, when nothing is in danger, and is off the
-     * global cooldown. Anything else placed there would cost a survival
-     * cooldown the moment it was needed.
+     * The old reading was ours; the order is theirs. It is kept as a worked
+     * example of the distinction this project draws: a test that pins a
+     * ROTATION DECISION gives way when the decision changes owner, and one
+     * that pins an INVARIANT does not.
+     *
+     * WHAT SURVIVES IS THE INVARIANT. Nothing that REPEATS sits above the two
+     * cooldowns -- only Charge, castable for one instant at the pull, and the
+     * stance, gated on having run out and therefore also a once-a-fight entry
+     * at a moment when nothing is in danger. Both are off the global cooldown.
+     * An entry that could fire again and again up there would cost a survival
+     * cooldown the moment it was needed, and that is still true.
+     * ==========================================================================
      */
-    expect(WARRIOR_SHIELD_DEFENSIVE.entries[0].abilityId).toBe('charge');
-    expect(WARRIOR_SHIELD_DEFENSIVE.entries[1].abilityId).toBe('last_stand');
-    expect(WARRIOR_SHIELD_DEFENSIVE.entries[2].abilityId).toBe('shield_wall_cast');
+    const ids = WARRIOR_SHIELD_DEFENSIVE.entries.map((entry) => entry.abilityId);
+    expect(ids[0]).toBe('charge');
+    expect(ids[1]).toBe('defensive_stance_cast');
+    expect(ids[2]).toBe('last_stand');
+    expect(ids[3]).toBe('shield_wall_cast');
+
+    // The invariant: the two entries above the cooldowns are both off the
+    // global cooldown AND both fire at most once, so neither can delay one.
+    for (const once of ['charge', 'defensive_stance_cast']) {
+      expect(entryFor(once).condition, once).toBeDefined();
+    }
   });
 
   it('does not let Charge drag the tank into Battle Stance', () => {

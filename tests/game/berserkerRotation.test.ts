@@ -388,17 +388,17 @@ describe('what DW Fury eats', () => {
     expect(PRESETS_BY_ID.get('dw_fury')!.build().consumables.food).toBe('food_strength');
   });
 
-  it('leaves the three unnamed members of the archetype row alone', () => {
+  it('does not change anything else about what it drinks', () => {
     /*
-     * TWO OF FIVE IS NOT A ROW. `STRENGTH_CONSUMABLES` is shared with Prot
-     * Warr and both feral Druids, and the owner has named neither -- so this
-     * is a second OVERRIDE rather than the first ruling extended by analogy.
-     * If the Druids are named too, the honest edit is the row and both
-     * overrides come out together.
+     * THE ROW-WIDE CLAIM LIVES IN `consumables.test.ts` NOW -- see
+     * `armsRotation.test.ts` for why it stopped being written in two places.
+     * What belongs here is that the override touches the FOOD and nothing
+     * else.
      */
-    for (const id of ['prot_warr', 'druid_cat', 'druid_bear']) {
-      expect(PRESETS_BY_ID.get(id)!.build().consumables.food, id).toBe('food_attack_power');
-    }
+    const selection = PRESETS_BY_ID.get('dw_fury')!.build().consumables;
+    expect(selection.blasted_lands).toBe('blasted_strength');
+    expect(selection.potion).toBe('mighty_rage_potion');
+    expect(selection.other).toBe('healthstone');
   });
 });
 
