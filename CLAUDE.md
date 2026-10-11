@@ -3620,6 +3620,25 @@ archetypes -- one with 28 crit and a scaling damage stat, one pure -- and
 **A MAXIMUM IS NOT A FIXED AMOUNT**: 28 crit costs 28 budget points and a B55
 trinket has 23.3, so `trinketCrit` clamps it exactly as `staminaFloor` does.
 
+**AND NO ARMOUR PIECE CARRIES BOTH STRENGTH AND ATTACK POWER**, the owner's
+rule -- and **the data made it WIDER than they scoped it**. They said "the eight
+PLATE armor class item slots ... this should likely only affect the DPS warrior
+profiles"; across all **1,374 real armour pieces on file, every class, not one
+carries both**. So `EXCLUSIVE_PAIRS` applies to all four armour classes, and the
+owner's guess was about which PROFILES would move rather than about the scope.
+
+**AGILITY AND ATTACK POWER ARE NOT A PAIR**, which is why that list has one
+entry rather than a blanket "no two offensive stats": 8 leather and 21 mail
+pieces carry both.
+
+**AND DROPPING THE LATER MEMBER OUTRIGHT COLLIDES WITH THE ZERO RULE.** It took
+the Rogue's STRENGTH to nothing across the whole set, which is the owner's own
+earlier instruction about a stat going to zero. **The two are about different
+SCOPES and both can hold**: the pair is about one ITEM and the zero check is
+about the SET, so the slots take turns -- the earlier preference on three in
+four, which is the real items' own ratio (plate 130 Strength to 14 Attack
+Power, leather 33 to 22).
+
 **AND A HIT OR EXPERTISE RATING IS PAID FOR OUT OF CRIT**, the owner's ruling
 -- "instead of pull from spell power to get more hit rating, it should be pull
 from crit rating". It replaced taking the cost off the TOTAL before the shares
