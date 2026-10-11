@@ -5,6 +5,7 @@ import {
   CONSUMABLES_BY_ID,
   consumableEffects,
   selectedConsumables,
+  weaponEffectCount,
   type ConsumableSelection,
 } from '../../src/game/buffs/consumables';
 import { PRESETS_BY_ID, PROFILE_PRESETS } from '../../src/profiles/presets';
@@ -545,5 +546,107 @@ describe('what each of the 24 presets opens with', () => {
     );
     // The flat hit points, which take their own route to the pool.
     expect(withRow.health.maximum - without.health.maximum).toBe(120);
+  });
+});
+
+/*
+ * ==============================================================================
+ * A WEAPON EFFECT IS COATED ONTO A WEAPON, SO A DUAL-WIELDER BUYS TWO.
+ *
+ * The owner's ruling: "Dual wielding needs to trigger a second weapon effect
+ * consumable for an additional +2% melee crit chance."
+ *
+ * It is the ONE row in the table whose worth depends on what the character is
+ * holding -- every other one is drunk -- and the selection is still a single
+ * choice, because asking somebody to pick the same stone twice would be a
+ * control whose only correct answer is the one above it.
+ * ==============================================================================
+ */
+describe('the weapon effect is applied once per weapon', () => {
+  const melee = { weapon_effect: 'weapon_melee_crit' };
+
+  it('gives a dual-wielder twice what a two-hander gets', () => {
+    const twoHand = consumableEffects(melee, 'two_hander');
+    const dualWield = consumableEffects(melee, 'dual_wield');
+
+    expect(twoHand.attackTableModifiers.for('melee-auto')?.critBonus).toBe(2);
+    expect(dualWield.attackTableModifiers.for('melee-auto')?.critBonus).toBe(4);
+    // And the special table too, which is the other half of the owner's row.
+    expect(dualWield.attackTableModifiers.for('melee-special')?.critBonus).toBe(4);
+  });
+
+  it('counts a SHIELD and a held off-hand item as one weapon, not two', () => {
+    /*
+     * The question is how many weapons SWING, which `offHand: 'weapon'` is the
+     * one rule in `combatStyles.ts` that answers. Reading "two hands full"
+     * instead would pay a Protection warrior for coating its shield.
+     */
+    expect(weaponEffectCount('one_hand_shield')).toBe(1);
+    expect(weaponEffectCount('caster')).toBe(1);
+    expect(weaponEffectCount('ranged')).toBe(1);
+    expect(weaponEffectCount('two_hander')).toBe(1);
+    expect(weaponEffectCount('dual_wield')).toBe(2);
+  });
+
+  it('doubles nothing else, whatever the character is holding', () => {
+    const everything = {
+      flask: 'flask_hit_points',
+      agility: 'elixir_agility',
+      strength: 'elixir_strength',
+    };
+    const twoHand = consumableEffects(everything, 'two_hander');
+    const dualWield = consumableEffects(everything, 'dual_wield');
+    expect(dualWield.stats).toEqual(twoHand.stats);
+    expect(dualWield.bonusHitPoints).toBe(twoHand.bonusHitPoints);
+  });
+
+  it('is the only per-weapon row in the table', () => {
+    // Declared rather than derived, so a second one has to be deliberate --
+    // nothing about a flask, an elixir or food is per-weapon.
+    const perWeapon = CONSUMABLE_CATEGORIES.filter((c) => c.perWeapon === true).map((c) => c.id);
+    expect(perWeapon).toEqual(['weapon_effect']);
+  });
+
+  it('applies the WHOLE consumable twice, not just its crit', () => {
+    /*
+     * A second weapon effect is a second stone on a second weapon, so whatever
+     * it grants it grants again. The caster option is the one that carries
+     * stats, which is what makes this checkable at all.
+     */
+    const spell = { weapon_effect: 'weapon_spell_crit' };
+    const one = consumableEffects(spell, 'two_hander');
+    const two = consumableEffects(spell, 'dual_wield');
+    expect(two.stats.spellPower).toBe((one.stats.spellPower ?? 0) * 2);
+    expect(two.stats.spellCritChance).toBe((one.stats.spellCritChance ?? 0) * 2);
+  });
+
+  it('defaults to one application when no style is given', () => {
+    // Callers asking what a selection is worth in the abstract get one.
+    expect(consumableEffects(melee).attackTableModifiers.for('melee-auto')?.critBonus).toBe(2);
+  });
+
+  it('reaches a built dual-wielding character, and only a dual-wielding one', () => {
+    const crit = (presetId: string) => {
+      const base = PRESETS_BY_ID.get(presetId)!.build();
+      const without = characterAtCombatStart({
+        ...base,
+        consumables: { ...base.consumables, weapon_effect: undefined },
+      } as never)!;
+      const withIt = characterAtCombatStart({
+        ...base,
+        consumables: { ...base.consumables, weapon_effect: 'weapon_melee_crit' },
+      })!;
+      return (
+        (withIt.attackTableModifiers.for('melee-auto')?.critBonus ?? 0) -
+        (without.attackTableModifiers.for('melee-auto')?.critBonus ?? 0)
+      );
+    };
+
+    // THE DELTA, not the absolute: talents put crit on this table too, so an
+    // absolute figure would be testing the build rather than the consumable.
+    expect(crit('dw_fury')).toBe(4);
+    expect(crit('rogue_venom')).toBe(4);
+    expect(crit('two_hand_arms')).toBe(2);
+    expect(crit('prot_warr')).toBe(2);
   });
 });

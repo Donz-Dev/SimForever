@@ -18,7 +18,8 @@ import {
   MIGHTY_RAGE_POTION_ABILITY,
   THISTLE_TEA_ABILITY,
 } from '../abilities/consumables';
-import type { ClassId } from '../character';
+import type { ClassId, CombatStyleId } from '../character';
+import { getCombatStyle } from '../character';
 
 /**
  * CONSUMABLES, FROM THE RULESET OWNER'S TABLE.
@@ -180,6 +181,29 @@ export interface ConsumableCategory {
   /** The owner's own name for the row. */
   readonly name: string;
   readonly options: readonly Consumable[];
+  /**
+   * APPLIED ONCE PER WEAPON THE CHARACTER WIELDS, so a dual-wielder gets two.
+   *
+   * ==========================================================================
+   * THE OWNER'S RULING: "Dual wielding needs to trigger a second weapon effect
+   * consumable for an additional +2% melee crit chance." A weapon effect is
+   * coated onto a WEAPON rather than drunk, so somebody holding two buys two
+   * -- which is the one row in the table where the character's hands change
+   * what a single selection is worth.
+   *
+   * THE SELECTION IS STILL ONE CHOICE, which is why this is a property of the
+   * CATEGORY and not a second dropdown. The panel offers one weapon effect and
+   * the character applies it to whatever it is holding; asking somebody to
+   * pick the same stone twice would be a control whose only correct answer is
+   * the one already above it.
+   *
+   * ONLY THE WEAPON EFFECT ROW, and it has to be declared rather than derived:
+   * nothing about a flask, an elixir or a piece of food is per-weapon, and
+   * `consumables.test.ts` pins that this is the single row that carries it so
+   * a second one has to be deliberate.
+   * ==========================================================================
+   */
+  readonly perWeapon?: boolean;
 }
 
 /**
@@ -204,6 +228,8 @@ export const CONSUMABLE_CATEGORIES: readonly ConsumableCategory[] = [
   {
     id: 'weapon_effect',
     name: 'Weapon Effect',
+    // Coated onto a weapon, so a dual-wielder buys two. See `perWeapon`.
+    perWeapon: true,
     options: [
       {
         /*
@@ -543,26 +569,73 @@ export interface ConsumableEffects {
   readonly unmodelled: readonly { readonly name: string; readonly reason: string }[];
 }
 
-export function consumableEffects(selection: ConsumableSelection | undefined): ConsumableEffects {
+/**
+ * How many times a `perWeapon` consumable is applied, by combat style.
+ *
+ * ----------------------------------------------------------------------------
+ * TWO FOR A DUAL-WIELDER AND ONE FOR EVERYBODY ELSE, which is the owner's
+ * instruction read literally -- they named dual wielding and nothing else.
+ *
+ * A SHIELD IS NOT A SECOND COATED WEAPON, and neither is a held off-hand item
+ * or the two-hander a Hunter carries as a stat stick: the question is how many
+ * weapons SWING, and `offHand: 'weapon'` is the one rule in `combatStyles.ts`
+ * that says a second one does. Reading "two hands full" instead would pay a
+ * Protection warrior for coating its shield.
+ * ----------------------------------------------------------------------------
+ */
+export function weaponEffectCount(style: CombatStyleId | undefined): number {
+  if (style === undefined) return 1;
+  return getCombatStyle(style)?.offHand === 'weapon' ? 2 : 1;
+}
+
+export function consumableEffects(
+  selection: ConsumableSelection | undefined,
+  /**
+   * How the character fights, for the one row that is per-weapon.
+   *
+   * OPTIONAL, AND ABSENT MEANS ONE. Every caller that has a style passes it;
+   * the ones that do not are asking what a selection is worth in the abstract,
+   * and one application is the honest answer to that.
+   */
+  style?: CombatStyleId,
+): ConsumableEffects {
   const stats: Record<string, number> = {};
   const schoolPower: Partial<Record<DamageSchool, number>> = {};
   const attackTableModifiers = new AttackTableModifiers();
   const unmodelled: { name: string; reason: string }[] = [];
   let bonusHitPoints = 0;
 
-  for (const consumable of selectedConsumables(selection)) {
-    for (const [name, value] of Object.entries(consumable.stats ?? {})) {
-      if (typeof value !== 'number') continue;
-      stats[name] = (stats[name] ?? 0) + value;
+  const perWeapon = new Set(
+    CONSUMABLE_CATEGORIES.filter((category) => category.perWeapon === true).map((c) => c.id),
+  );
+  const hands = weaponEffectCount(style);
+
+  for (const [categoryId, consumable] of selectedConsumableEntries(selection)) {
+    /*
+     * THE WHOLE CONSUMABLE IS APPLIED TWICE, not just its crit. A second
+     * weapon effect is a second stone on a second weapon, so whatever it
+     * grants it grants again -- which is also what keeps this honest if the
+     * owner's table ever gives the row something besides crit.
+     */
+    const times = perWeapon.has(categoryId) ? hands : 1;
+
+    for (let i = 0; i < times; i += 1) {
+      for (const [name, value] of Object.entries(consumable.stats ?? {})) {
+        if (typeof value !== 'number') continue;
+        stats[name] = (stats[name] ?? 0) + value;
+      }
+      for (const [school, value] of Object.entries(consumable.schoolPower ?? {})) {
+        const key = school as DamageSchool;
+        schoolPower[key] = (schoolPower[key] ?? 0) + value;
+      }
+      for (const [table, modifier] of Object.entries(consumable.attackTableModifiers ?? {})) {
+        attackTableModifiers.add(table as AttackTableKind, modifier);
+      }
+      bonusHitPoints += consumable.bonusHitPoints ?? 0;
     }
-    for (const [school, value] of Object.entries(consumable.schoolPower ?? {})) {
-      const key = school as DamageSchool;
-      schoolPower[key] = (schoolPower[key] ?? 0) + value;
-    }
-    for (const [table, modifier] of Object.entries(consumable.attackTableModifiers ?? {})) {
-      attackTableModifiers.add(table as AttackTableKind, modifier);
-    }
-    bonusHitPoints += consumable.bonusHitPoints ?? 0;
+
+    // Reported ONCE however many were drunk: it is one caveat about one
+    // choice, and printing it twice would read as two different problems.
     if (consumable.unmodelled) {
       unmodelled.push({ name: consumable.name, reason: consumable.unmodelled });
     }
@@ -591,13 +664,26 @@ export function consumableEffects(selection: ConsumableSelection | undefined): C
 export function selectedConsumables(
   selection: ConsumableSelection | undefined,
 ): readonly Consumable[] {
+  return selectedConsumableEntries(selection).map(([, consumable]) => consumable);
+}
+
+/**
+ * The same, keeping the CATEGORY each choice came from.
+ *
+ * `consumableEffects` needs it, because `perWeapon` is a property of the row
+ * rather than of the consumable -- and looking the category back up from the
+ * consumable would be a second search keyed on something that is not a key.
+ */
+export function selectedConsumableEntries(
+  selection: ConsumableSelection | undefined,
+): readonly (readonly [string, Consumable])[] {
   if (!selection) return [];
-  const chosen: Consumable[] = [];
+  const chosen: (readonly [string, Consumable])[] = [];
   for (const category of CONSUMABLE_CATEGORIES) {
     const id = selection[category.id];
     if (!id) continue;
     const consumable = category.options.find((option) => option.id === id);
-    if (consumable) chosen.push(consumable);
+    if (consumable) chosen.push([category.id, consumable] as const);
   }
   return chosen;
 }
