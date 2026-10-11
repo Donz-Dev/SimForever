@@ -28,7 +28,7 @@ import { createDefaultProfile } from '../../src/profiles';
  * ============================================================================
  */
 
-const nameOf = (itemId: number) => ITEMS_BY_ID.get(itemId)?.name;
+const itemOf = (itemId: number) => ITEMS_BY_ID.get(itemId);
 
 /** Every class, written out rather than read from the source under test. */
 const CLASSES: readonly ClassId[] = [
@@ -214,7 +214,9 @@ describe('the starting set', () => {
     const ret = startingEquipmentFor('paladin', 'two_hander');
     expect(ret.twoHand).toBeDefined();
     expect(ret.shield).toBeUndefined();
-    expect(nameOf(ret.twoHand!.itemId)).toMatch(/Two-Hand/);
+    // The NAME is the build and the set now -- "Seal Twist Ret (E65)" -- so
+        // which hand it is comes off the item's inventory type instead.
+        expect(itemOf(ret.twoHand!.itemId)?.inventoryType).toBe('Two-Hand');
   });
 
   it('keeps every slot the style can fill, and drops none of them', () => {
@@ -275,11 +277,11 @@ describe('the starting set', () => {
          * correctly armed Hunter as unarmed.
          */
         expect(player.weapons.mainHand, characterClass).toBeUndefined();
-        expect(player.weapons.ranged?.name, characterClass).toMatch(/^E65 /);
+        expect(player.weapons.ranged?.name, characterClass).toMatch(/\(E65\)$/);
       } else if (characterClass === 'druid') {
         expect(player.weapons.mainHand?.name, characterClass).toBe('Cat Paw');
       } else {
-        expect(player.weapons.mainHand?.name, characterClass).toMatch(/^E65 /);
+        expect(player.weapons.mainHand?.name, characterClass).toMatch(/\(E65\)$/);
       }
     }
   });
@@ -320,8 +322,16 @@ describe('the starting set', () => {
 
     // Real weapons replace the placeholders outright.
     expect(naked.weapons.mainHand?.name).toBe('Melee');
-    expect(geared.weapons.mainHand?.name).toBe('E65 Main-Hand Axe');
-    expect(geared.weapons.offHand?.name).toBe('E65 Off-Hand Axe');
+    /*
+     * BOTH HANDS SHARE A NAME, because a benchmark piece is named for its
+     * BUILD and its SET rather than for its slot -- the owner's format. What
+     * tells them apart is the slot they resolved into, which is what this is
+     * really asserting: a dual-wielder ends up with two one-handers.
+     */
+    expect(geared.weapons.mainHand?.name).toBe('DW Fury (E65)');
+    expect(geared.weapons.offHand?.name).toBe('DW Fury (E65)');
+    expect(geared.weapons.mainHand?.weaponType).toBe('axe');
+    expect(geared.weapons.offHand?.weaponType).toBe('axe');
     // And the armour is worth something.
     expect(geared.stats.effective.attackPower).toBeGreaterThan(
       naked.stats.effective.attackPower,

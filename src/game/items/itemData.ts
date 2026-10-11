@@ -1,5 +1,6 @@
 import type { DamageSchool, PartialStats } from '../../engine';
-import type { CombatStyleId } from '../character/ids';
+import type { ClassId, CombatStyleId } from '../character/ids';
+import { isClassId } from '../character/ids';
 import { DAMAGE_SCHOOLS, RATING_PER_PERCENT } from '../../engine';
 import type { Enchant, EquipmentSlot, Item, ItemWeapon, UnmodelledEffect } from './Item';
 import { FOREVER_ENCHANTS, FOREVER_ENCHANT_ID_BASE } from './foreverEnchants';
@@ -880,6 +881,42 @@ function buildStats(item: RawItem): {
  * ==============================================================================
  */
 
+/**
+ * The classes a tooltip's `Classes:` line names.
+ *
+ * ==============================================================================
+ * **895 OF THE 1,943 ITEMS ON FILE CARRY ONE** -- nearly half the database --
+ * and until this was written the line was in the tooltip text and nowhere
+ * else. So the proficiency filter offered a Warrior the Rogue and Druid tier
+ * sets: leather and mail are armour classes a Warrior may wear, and the line
+ * that says otherwise was never read.
+ *
+ * THIRTEEN DISTINCT WORDINGS, all of them a comma-separated list of class
+ * names -- nine single-class lines and four that name two or three. **No item
+ * carries a `Races:` line**, which was checked rather than assumed.
+ *
+ * `undefined` MEANS ANY CLASS, which is the honest default and the same one
+ * `proficiencyForItem` takes: a restriction this cannot parse must OFFER the
+ * item rather than hide it, because a hidden item leaves nothing behind to
+ * notice. An unrecognised NAME inside a line it did parse is dropped and the
+ * rest of the line stands, so a future capture adding a tenth class narrows
+ * the item rather than unrestricting it.
+ * ==============================================================================
+ */
+const CLASSES_LINE = /^Classes:\s*(.+)$/m;
+
+export function classRestrictionsFrom(tooltip: string): readonly ClassId[] | undefined {
+  const match = CLASSES_LINE.exec(tooltip);
+  if (!match) return undefined;
+
+  const named = match[1]
+    .split(',')
+    .map((name) => name.trim().toLowerCase())
+    .filter((name): name is ClassId => isClassId(name));
+
+  return named.length > 0 ? named : undefined;
+}
+
 function buildItem(item: RawItem): Item {
   /*
    * A SHIELD is resolved by its subclass, not its inventory type.
@@ -898,6 +935,7 @@ function buildItem(item: RawItem): Item {
   }
 
   const { stats, schoolPower, styleStats, unmodelled, bonusSkill } = buildStats(item);
+  const classRestrictions = classRestrictionsFrom(item.tooltip);
 
   // Carried through for display. Still in `unmodelled` too: the sheet shows
   // the total and the Gear panel says it does nothing, and both are true.
@@ -927,6 +965,7 @@ function buildItem(item: RawItem): Item {
     quality: item.quality,
     ...(item.subclass ? { subclass: item.subclass } : {}),
     inventoryType: item.inventoryType,
+    ...(classRestrictions ? { classRestrictions } : {}),
     slots,
     stats,
     schoolPower,

@@ -210,13 +210,22 @@ describe('the filter actually filters, which a permissive default could hide', (
 
   it('takes mail and plate away from a Rogue s head slot', () => {
     const all = itemsForSlot('head').length;
-    expect(legalCount('warrior', 'head')).toBe(all);
-    expect(legalCount('rogue', 'head')).toBeLessThan(all);
+    expect(legalCount('warrior', 'head')).toBeLessThan(all);
+    expect(legalCount('rogue', 'head')).toBeLessThan(legalCount('warrior', 'head'));
   });
 
   it('leaves a Rogue no two-hander at all', () => {
     expect(legalCount('rogue', 'twoHand')).toBe(0);
-    expect(legalCount('warrior', 'twoHand')).toBe(itemsForSlot('twoHand').length);
+    /*
+     * A WARRIOR DOES NOT GET EVERY TWO-HANDER EITHER, AND THAT IS THE
+     * `Classes:` LINE. It used to, because the proficiency table alone has
+     * nothing to say about a Paladin-only mace -- and the four two-handers a
+     * Warrior cannot take are exactly the ones that name another class.
+     */
+    const twoHanders = itemsForSlot('twoHand');
+    expect(legalCount('warrior', 'twoHand')).toBeLessThan(twoHanders.length);
+    const refused = twoHanders.filter((item) => !canEquip('warrior', item, 'twoHand'));
+    expect(refused.every((item) => item.classRestrictions !== undefined)).toBe(true);
   });
 
   it('leaves a Mage and a Druid only what their row allows in the ranged slot', () => {
@@ -232,5 +241,84 @@ describe('the filter actually filters, which a permissive default could hide', (
     expect(legalCount('shaman', 'relic')).toBeGreaterThan(0);
     expect(legalCount('warrior', 'relic')).toBe(0);
     expect(legalCount('rogue', 'relic')).toBe(0);
+  });
+});
+
+/*
+ * ==============================================================================
+ * THE `Classes:` LINE, which the proficiency table cannot replace.
+ *
+ * The table answers "may this class wear leather". It cannot answer "may a
+ * Warrior wear the ROGUE tier set", which is leather and says so on its own
+ * tooltip -- and **895 of the 1,946 items on file name a class**, nearly half
+ * the database. Offering a Warrior the Rogue and Druid tier is what the owner
+ * saw.
+ * ==============================================================================
+ */
+describe('an item that names a class is offered only to that class', () => {
+  it('reads the line off the tooltip for every item that has one', () => {
+    const restricted = ITEMS.filter((item) => item.id < 9_500_000 && item.classRestrictions);
+    expect(restricted.length).toBeGreaterThan(800);
+    for (const item of restricted) {
+      // Every name parsed is a real class id, and the line is in the tooltip.
+      expect(item.tooltip).toMatch(/^Classes:/m);
+      for (const id of item.classRestrictions!) expect(CLASS_IDS).toContain(id);
+    }
+  });
+
+  it('refuses a named class and allows the one it names', () => {
+    const mageOnly = ITEMS.find(
+      (item) =>
+        item.classRestrictions?.length === 1 &&
+        item.classRestrictions[0] === 'mage' &&
+        item.slots.includes('head'),
+    )!;
+    expect(mageOnly).toBeDefined();
+    expect(canEquip('mage', mageOnly, 'head')).toBe(true);
+    expect(canEquip('warlock', mageOnly, 'head')).toBe(false);
+    // And the armour class alone would have allowed the warlock: both wear cloth.
+    expect(mageOnly.subclass).toBe('Cloth');
+  });
+
+  it('honours a line that names several classes', () => {
+    const several = ITEMS.find((item) => (item.classRestrictions?.length ?? 0) > 1)!;
+    expect(several).toBeDefined();
+    for (const id of CLASS_IDS) {
+      const allowed = several.classRestrictions!.includes(id);
+      expect(`${id}: ${canEquip(id, several, several.slots[0])}`).toBe(`${id}: ${allowed}`);
+    }
+  });
+
+  it('offers an item with no line to anyone its proficiency allows', () => {
+    const open = ITEMS.find(
+      (item) =>
+        item.id < 9_500_000 && !item.classRestrictions && item.subclass === 'Plate' && item.slots.includes('head'),
+    )!;
+    expect(canEquip('warrior', open, 'head')).toBe(true);
+    expect(canEquip('rogue', open, 'head')).toBe(false); // plate, not the line
+  });
+
+  /*
+   * ----------------------------------------------------------------------------
+   * A SOURCE GAP, PINNED SO IT IS NOT MISTAKEN FOR A BUG HERE.
+   *
+   * **184 items carry a set bonus and NO `Classes:` line** -- the capture
+   * itself omits it, which was checked in the raw JSON rather than assumed.
+   * Conqueror's Crown states "Classes: Warrior" and Bonescythe Helmet states
+   * nothing, so the T2.5 sets are still offered to anybody whose armour class
+   * allows them.
+   *
+   * NOT EVERY ONE OF THE 184 IS A CLASS SET. Devilsaur Armor, the Dragon Mail
+   * sets and the Highlander's/Defiler's PvP sets are crafted or reputation
+   * sets that genuinely have no class restriction, so "has a set bonus
+   * therefore belongs to a class" would be wrong -- which is why nothing here
+   * infers one, and why the number is written down for the owner instead.
+   * ----------------------------------------------------------------------------
+   */
+  it('records how many set pieces the capture leaves unrestricted', () => {
+    const real = ITEMS.filter((item) => item.id < 9_500_000);
+    const setPieces = real.filter((item) => /^\(\d+\) Set/m.test(item.tooltip));
+    const unrestricted = setPieces.filter((item) => !item.classRestrictions);
+    expect(`${unrestricted.length} of ${setPieces.length}`).toBe('184 of 742');
   });
 });

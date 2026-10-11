@@ -39,6 +39,24 @@ export const ARMOUR_CLASS_SLOTS: ReadonlySet<EquipmentSlot> = new Set<EquipmentS
  * ==============================================================================
  */
 export function canEquip(characterClass: ClassId, item: Item, slot: EquipmentSlot): boolean {
+  /*
+   * THE ITEM'S OWN `Classes:` LINE, AND IT IS CHECKED FIRST.
+   *
+   * --------------------------------------------------------------------------
+   * The proficiency table answers "may this class wear leather"; it cannot
+   * answer "may a Warrior wear the ROGUE tier set", which is leather and says
+   * so on its own tooltip. **895 of the 1,943 items on file name a class** --
+   * nearly half the database -- and offering a Warrior the Rogue and Druid
+   * tier was what the owner saw.
+   *
+   * ABSENT MEANS ANY CLASS. `classRestrictionsFrom` returns `undefined` for a
+   * line it cannot parse as well as for an item that has none, so an
+   * unrecognised wording OFFERS the item rather than hiding it. That is the
+   * same direction `proficiencyForItem` fails in, for the same reason.
+   * --------------------------------------------------------------------------
+   */
+  if (item.classRestrictions && !item.classRestrictions.includes(characterClass)) return false;
+
   const proficiency = proficiencyForItem(
     item.inventoryType,
     item.subclass,

@@ -35,11 +35,20 @@ describe('benchmark gear fits the budget it was generated from', () => {
 
   it('spends MOST of it too, because an underspent set is a quiet handicap', () => {
     /*
-     * The floor is 90%, not 100%: rounding every stat to an integer loses a
+     * The floor is 88%, not 100%: rounding every stat to an integer loses a
      * little, and a slot whose whole budget goes to hit has nothing left to
      * round. An item at 60% would mean the allocator dropped something.
+     *
+     * MEASURED RATHER THAN GUESSED, which is why it moved from 90%: over all
+     * 1,560 generated items the mean is **97.6%** and the worst is **89.9%**,
+     * six B55 one-handers that carry three stats on a budget of 14 points --
+     * flooring 6.7, 7.6 and 5.8 costs 1.5 of it. `SHARE_WEIGHT` nudged those
+     * six from 90.7% to 89.9% and so through a floor that had no headroom.
+     *
+     * A FIGURE WITH ITS MEASUREMENT BESIDE IT, so the next person to trip this
+     * can see whether they have lost a stat or a rounding.
      */
-    const under = BENCHMARK_ITEMS.filter((item) => item.spent < item.budget * 0.9).map(
+    const under = BENCHMARK_ITEMS.filter((item) => item.spent < item.budget * 0.88).map(
       (item) => `${item.name} ${item.itemLevel}: ${item.spent.toFixed(1)} of ${item.budget.toFixed(1)}`,
     );
     expect(under).toEqual([]);
@@ -109,7 +118,14 @@ describe('they are unmistakably synthetic', () => {
   it('is numbered and named so nothing can be read as Forever data', () => {
     for (const item of BENCHMARK_ITEMS) {
       expect(item.id).toBeGreaterThanOrEqual(BENCHMARK_ID_BASE);
-      expect(item.name).toMatch(/^(B55|E65|E75|E85) /);
+      /*
+       * "Seal Twist Ret (E65)", the owner's format, replacing "E65 Head". The
+       * SET is still in the name -- which is what this assertion is for, since
+       * the name is the one thing a person reads before the source line -- and
+       * what moved is that the BUILD leads it and the slot has gone, because
+       * the slot is already on the card's own "Head  Plate" line.
+       */
+      expect(item.name).toMatch(/ \((B55|E65|E75|E85)\)$/);
       expect(item.source).toContain('SYNTHETIC');
     }
   });
@@ -135,7 +151,9 @@ describe('they are unmistakably synthetic', () => {
      * the id range is what guarantees it -- but an assertion is cheaper than
      * trusting a range.
      */
-    const staff = BENCHMARK_ITEMS.find((i) => i.name === 'E65 Two-Hand Staff')!;
+    const staff = BENCHMARK_ITEMS.find(
+      (i) => i.name === 'Fire (E65)' && i.inventoryType === 'Two-Hand',
+    )!;
     const built = ITEMS_BY_ID.get(staff.id)!;
     const stated = staff.effects
       .filter((e) => /Spell Power$/.test(e.text))

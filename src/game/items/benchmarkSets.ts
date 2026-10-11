@@ -1,3 +1,7 @@
+import type { ClassId } from '../character/ids';
+import { MAX_CHARACTER_LEVEL } from '../character/definitions';
+import { className } from '../character/selection';
+import { benchmarkIcon } from './benchmarkIcons';
 import type { Equipment, EquipmentSlot } from './Item';
 import {
   ARMOUR_SLOTS,
@@ -8,8 +12,8 @@ import {
   DPS_TO_BUDGET,
   LINE,
   RATING_SLOTS,
-  SHARES,
   SHIELD_STATS,
+  trinketCrit,
   SLOT_MULTIPLIER,
   WEAPON_DPS,
   baseArmour,
@@ -18,6 +22,7 @@ import {
   spreadRating,
   staminaFloor,
   statsFor,
+  weightedShares,
   type ArmourClass,
   type BenchStat,
   type BenchmarkSetId,
@@ -40,6 +45,22 @@ import {
  */
 export interface BenchmarkTemplate {
   readonly presetId: string;
+  /**
+   * The class this build is, which the generated items STATE on themselves.
+   *
+   * --------------------------------------------------------------------------
+   * The owner's instruction for the item cards: a template piece should name
+   * its class the way a real tier piece does, so "Requires Level 60" is
+   * followed by "Classes: Paladin" rather than by nothing.
+   *
+   * DECLARED HERE AND NOT DERIVED, because `game` may not import `profiles`
+   * and the preset is the only thing that knows. `benchmarkTemplates.test.ts`
+   * cross-checks all 25 against the presets, which is the layer that can see
+   * both -- so a declaration that drifts from its preset fails the suite
+   * rather than mislabelling a card.
+   * --------------------------------------------------------------------------
+   */
+  readonly characterClass: ClassId;
   readonly label: string;
   /**
    * What the preset calls the CHARACTER, where that differs from the label.
@@ -82,12 +103,12 @@ const HUNTER: readonly BenchStat[] = ['Crit', 'Agility', 'Intellect', 'Attack Po
 const TANK: readonly BenchStat[] = ['Stamina', 'Strength', 'Agility', 'Defense', 'Parry', 'Block'];
 
 export const BENCHMARK_TEMPLATES: readonly BenchmarkTemplate[] = [
-  { presetId: 'two_hand_arms', label: '2H Arms', hit: 80, expertise: 10, preferred: MELEE, armour: 'Plate', weapons: { kind: 'twoHand', subclass: 'Axe' } },
-  { presetId: 'dw_fury', label: 'DW Fury', hit: 80, expertise: 10, preferred: MELEE, armour: 'Plate', weapons: { kind: 'dualWield', subclass: 'Axe', offSubclass: 'Axe' } },
-  { presetId: 'prot_warr', label: 'Prot Warr', hit: 70, expertise: 20, preferred: TANK, armour: 'Plate', weapons: { kind: 'oneHandShield', subclass: 'Sword' } },
-  { presetId: 'rogue_venom', label: 'Venom', hit: 120, expertise: 10, preferred: ROGUE, armour: 'Leather', weapons: { kind: 'dualWield', subclass: 'Dagger', offSubclass: 'Dagger' } },
-  { presetId: 'rogue_combat', label: 'Combat', hit: 120, expertise: 10, preferred: ROGUE, armour: 'Leather', weapons: { kind: 'dualWield', subclass: 'Sword', offSubclass: 'Dagger' } },
-  { presetId: 'rogue_rupture', label: 'Rupture', hit: 120, expertise: 10, preferred: ROGUE, armour: 'Leather', weapons: { kind: 'dualWield', subclass: 'Dagger', offSubclass: 'Dagger' } },
+  { presetId: 'two_hand_arms', characterClass: 'warrior', label: '2H Arms', hit: 80, expertise: 10, preferred: MELEE, armour: 'Plate', weapons: { kind: 'twoHand', subclass: 'Axe' } },
+  { presetId: 'dw_fury', characterClass: 'warrior', label: 'DW Fury', hit: 80, expertise: 10, preferred: MELEE, armour: 'Plate', weapons: { kind: 'dualWield', subclass: 'Axe', offSubclass: 'Axe' } },
+  { presetId: 'prot_warr', characterClass: 'warrior', label: 'Prot Warr', hit: 70, expertise: 20, preferred: TANK, armour: 'Plate', weapons: { kind: 'oneHandShield', subclass: 'Sword' } },
+  { presetId: 'rogue_venom', characterClass: 'rogue', label: 'Venom', hit: 120, expertise: 10, preferred: ROGUE, armour: 'Leather', weapons: { kind: 'dualWield', subclass: 'Dagger', offSubclass: 'Dagger' } },
+  { presetId: 'rogue_combat', characterClass: 'rogue', label: 'Combat', hit: 120, expertise: 10, preferred: ROGUE, armour: 'Leather', weapons: { kind: 'dualWield', subclass: 'Sword', offSubclass: 'Dagger' } },
+  { presetId: 'rogue_rupture', characterClass: 'rogue', label: 'Rupture', hit: 120, expertise: 10, preferred: ROGUE, armour: 'Leather', weapons: { kind: 'dualWield', subclass: 'Dagger', offSubclass: 'Dagger' } },
   /*
    * DAGGERS, NOT THE SPREADSHEET'S "MH Mace, OH Dagger" -- the owner's ruling
    * after the conflict was raised. Ambush is gated on
@@ -96,16 +117,16 @@ export const BENCHMARK_TEMPLATES: readonly BenchmarkTemplate[] = [
    * produces an ordinary-looking figure. That is the failure mode this project
    * documents hardest, and it is why the weapon column loses to the build.
    */
-  { presetId: 'rogue_hemo', label: 'Hemo', hit: 120, expertise: 10, preferred: ROGUE, armour: 'Leather', weapons: { kind: 'dualWield', subclass: 'Dagger', offSubclass: 'Dagger' } },
-  { presetId: 'druid_moonkin', label: 'Moonkin', hit: 110, expertise: 0, preferred: CASTER, armour: 'Leather', weapons: { kind: 'twoHand', subclass: 'Staff', caster: true } },
-  { presetId: 'druid_cat', label: 'Cat', hit: 30, expertise: 10, preferred: ['Strength', 'Agility', 'Crit', 'Stamina', 'Attack Power'], armour: 'Leather', weapons: { kind: 'twoHand', subclass: 'Mace' } },
-  { presetId: 'druid_bear', label: 'Bear', hit: 30, expertise: 20, preferred: ['Stamina', 'Bonus Armor', 'Agility', 'Strength', 'Dodge', 'Defense'], armour: 'Leather', weapons: { kind: 'twoHand', subclass: 'Mace' } },
-  { presetId: 'shaman_elemental', label: 'Ele Shaman', hit: 110, expertise: 0, preferred: CASTER, armour: 'Mail', weapons: { kind: 'oneHandShield', subclass: 'Mace', caster: true } },
-  { presetId: 'shaman_enhancement', label: 'Enh Shaman', hit: 70, expertise: 10, preferred: ['Crit', 'Strength', 'Intellect', 'Agility', 'Stamina', 'Attack Power'], armour: 'Mail', weapons: { kind: 'twoHand', subclass: 'Mace' } },
-  { presetId: 'mage_frostfire', label: 'Frostfire', characterName: 'Frostfire Mage', hit: 110, expertise: 0, preferred: CASTER, armour: 'Cloth', weapons: { kind: 'twoHand', subclass: 'Staff', caster: true } },
-  { presetId: 'mage_arcane', label: 'Arcane', characterName: 'Arcane Mage', hit: 110, expertise: 0, preferred: CASTER, armour: 'Cloth', weapons: { kind: 'twoHand', subclass: 'Staff', caster: true } },
-  { presetId: 'mage_fire', label: 'Fire', characterName: 'Fire Mage', hit: 110, expertise: 0, preferred: CASTER, armour: 'Cloth', weapons: { kind: 'twoHand', subclass: 'Staff', caster: true } },
-  { presetId: 'pally_ret', label: 'Seal Twist Ret', hit: 80, expertise: 10, preferred: ['Crit', 'Strength', 'Spell Power', 'Agility', 'Intellect', 'Stamina', 'Attack Power'], armour: 'Plate', weapons: { kind: 'twoHand', subclass: 'Mace' } },
+  { presetId: 'rogue_hemo', characterClass: 'rogue', label: 'Hemo', hit: 120, expertise: 10, preferred: ROGUE, armour: 'Leather', weapons: { kind: 'dualWield', subclass: 'Dagger', offSubclass: 'Dagger' } },
+  { presetId: 'druid_moonkin', characterClass: 'druid', label: 'Moonkin', hit: 110, expertise: 0, preferred: CASTER, armour: 'Leather', weapons: { kind: 'twoHand', subclass: 'Staff', caster: true } },
+  { presetId: 'druid_cat', characterClass: 'druid', label: 'Cat', hit: 30, expertise: 10, preferred: ['Strength', 'Agility', 'Crit', 'Stamina', 'Attack Power'], armour: 'Leather', weapons: { kind: 'twoHand', subclass: 'Mace' } },
+  { presetId: 'druid_bear', characterClass: 'druid', label: 'Bear', hit: 30, expertise: 20, preferred: ['Stamina', 'Bonus Armor', 'Agility', 'Strength', 'Dodge', 'Defense'], armour: 'Leather', weapons: { kind: 'twoHand', subclass: 'Mace' } },
+  { presetId: 'shaman_elemental', characterClass: 'shaman', label: 'Ele Shaman', hit: 110, expertise: 0, preferred: CASTER, armour: 'Mail', weapons: { kind: 'oneHandShield', subclass: 'Mace', caster: true } },
+  { presetId: 'shaman_enhancement', characterClass: 'shaman', label: 'Enh Shaman', hit: 70, expertise: 10, preferred: ['Crit', 'Strength', 'Intellect', 'Agility', 'Stamina', 'Attack Power'], armour: 'Mail', weapons: { kind: 'twoHand', subclass: 'Mace' } },
+  { presetId: 'mage_frostfire', characterClass: 'mage', label: 'Frostfire', characterName: 'Frostfire Mage', hit: 110, expertise: 0, preferred: CASTER, armour: 'Cloth', weapons: { kind: 'twoHand', subclass: 'Staff', caster: true } },
+  { presetId: 'mage_arcane', characterClass: 'mage', label: 'Arcane', characterName: 'Arcane Mage', hit: 110, expertise: 0, preferred: CASTER, armour: 'Cloth', weapons: { kind: 'twoHand', subclass: 'Staff', caster: true } },
+  { presetId: 'mage_fire', characterClass: 'mage', label: 'Fire', characterName: 'Fire Mage', hit: 110, expertise: 0, preferred: CASTER, armour: 'Cloth', weapons: { kind: 'twoHand', subclass: 'Staff', caster: true } },
+  { presetId: 'pally_ret', characterClass: 'paladin', label: 'Seal Twist Ret', hit: 80, expertise: 10, preferred: ['Crit', 'Strength', 'Spell Power', 'Agility', 'Intellect', 'Stamina', 'Attack Power'], armour: 'Plate', weapons: { kind: 'twoHand', subclass: 'Mace' } },
   /*
    * A ONE-HANDER AND A SHIELD, NOT THE SPREADSHEET'S "Fast 2H Mace", and the
    * owner already ruled on this conflict from the other side.
@@ -132,15 +153,15 @@ export const BENCHMARK_TEMPLATES: readonly BenchmarkTemplate[] = [
    * was raised rather than guessed at. Settled now, and the one-handed 20% is
    * what the Shockadin's seal reads.
    */
-  { presetId: 'pally_shockadin', label: 'Shockadin', hit: 80, expertise: 0, preferred: ['Crit', 'Spell Power', 'Intellect', 'Strength', 'Stamina', 'Agility', 'Attack Power'], armour: 'Plate', weapons: { kind: 'oneHandShield', subclass: 'Mace', speed: 2.0 } },
-  { presetId: 'prot_pally', label: 'Prot Pally', hit: 50, expertise: 20, preferred: TANK, armour: 'Plate', weapons: { kind: 'oneHandShield', subclass: 'Mace', caster: true } },
-  { presetId: 'bm_hunter', label: 'BM Hunter', hit: 80, expertise: 0, preferred: HUNTER, armour: 'Mail', weapons: { kind: 'twoHand', subclass: 'Axe', ranged: true } },
-  { presetId: 'lw_ranged', label: 'LW Ranged', hit: 80, expertise: 0, preferred: HUNTER, armour: 'Mail', weapons: { kind: 'twoHand', subclass: 'Axe', ranged: true } },
-  { presetId: 'lw_melee', label: 'LW Melee', hit: 80, expertise: 0, preferred: HUNTER, armour: 'Mail', weapons: { kind: 'dualWield', subclass: 'Axe', offSubclass: 'Axe', ranged: true } },
-  { presetId: 'hawk_melee', label: 'Hawk Melee', hit: 80, expertise: 0, preferred: HUNTER, armour: 'Mail', weapons: { kind: 'dualWield', subclass: 'Axe', offSubclass: 'Axe', ranged: true } },
-  { presetId: 'warlock_smds', label: 'SM/DS', hit: 120, expertise: 0, preferred: CASTER, armour: 'Cloth', weapons: { kind: 'twoHand', subclass: 'Staff', caster: true } },
-  { presetId: 'warlock_firelock', label: 'Firelock', hit: 110, expertise: 0, preferred: CASTER, armour: 'Cloth', weapons: { kind: 'twoHand', subclass: 'Staff', caster: true } },
-  { presetId: 'shadow_priest', label: 'Shadow', characterName: 'Shadow Priest', hit: 110, expertise: 0, preferred: CASTER, armour: 'Cloth', weapons: { kind: 'twoHand', subclass: 'Staff', caster: true } },
+  { presetId: 'pally_shockadin', characterClass: 'paladin', label: 'Shockadin', hit: 80, expertise: 0, preferred: ['Crit', 'Spell Power', 'Intellect', 'Strength', 'Stamina', 'Agility', 'Attack Power'], armour: 'Plate', weapons: { kind: 'oneHandShield', subclass: 'Mace', speed: 2.0 } },
+  { presetId: 'prot_pally', characterClass: 'paladin', label: 'Prot Pally', hit: 50, expertise: 20, preferred: TANK, armour: 'Plate', weapons: { kind: 'oneHandShield', subclass: 'Mace', caster: true } },
+  { presetId: 'bm_hunter', characterClass: 'hunter', label: 'BM Hunter', hit: 80, expertise: 0, preferred: HUNTER, armour: 'Mail', weapons: { kind: 'twoHand', subclass: 'Axe', ranged: true } },
+  { presetId: 'lw_ranged', characterClass: 'hunter', label: 'LW Ranged', hit: 80, expertise: 0, preferred: HUNTER, armour: 'Mail', weapons: { kind: 'twoHand', subclass: 'Axe', ranged: true } },
+  { presetId: 'lw_melee', characterClass: 'hunter', label: 'LW Melee', hit: 80, expertise: 0, preferred: HUNTER, armour: 'Mail', weapons: { kind: 'dualWield', subclass: 'Axe', offSubclass: 'Axe', ranged: true } },
+  { presetId: 'hawk_melee', characterClass: 'hunter', label: 'Hawk Melee', hit: 80, expertise: 0, preferred: HUNTER, armour: 'Mail', weapons: { kind: 'dualWield', subclass: 'Axe', offSubclass: 'Axe', ranged: true } },
+  { presetId: 'warlock_smds', characterClass: 'warlock', label: 'SM/DS', hit: 120, expertise: 0, preferred: CASTER, armour: 'Cloth', weapons: { kind: 'twoHand', subclass: 'Staff', caster: true } },
+  { presetId: 'warlock_firelock', characterClass: 'warlock', label: 'Firelock', hit: 110, expertise: 0, preferred: CASTER, armour: 'Cloth', weapons: { kind: 'twoHand', subclass: 'Staff', caster: true } },
+  { presetId: 'shadow_priest', characterClass: 'priest', label: 'Shadow', characterName: 'Shadow Priest', hit: 110, expertise: 0, preferred: CASTER, armour: 'Cloth', weapons: { kind: 'twoHand', subclass: 'Staff', caster: true } },
 ];
 
 export const BENCHMARK_TEMPLATES_BY_PRESET: ReadonlyMap<string, BenchmarkTemplate> = new Map(
@@ -175,7 +196,9 @@ const toLines = (
     used += (value * COST[stat]) ** BUDGET_EXPONENT;
   }
   const left = Math.max(0, total - used);
-  const weights = SHARES[shares.length] ?? SHARES[4];
+  // WEIGHTED, not the bare positional table: `SHARE_WEIGHT` is what pulls crit
+  // back and pushes spell power up, measured against Forever's own items.
+  const weights = weightedShares(shares);
   shares.forEach((stat, index) => {
     /*
      * FLOOR, NOT ROUND. Rounding to NEAREST sends an item over its own budget
@@ -221,6 +244,52 @@ function staminaIn(effects: readonly { kind: string; text: string }[]): number {
   return 0;
 }
 
+/**
+ * THE ORDER A GENERATED TOOLTIP IS WRITTEN IN, which is the owner's.
+ *
+ * ==============================================================================
+ * "Name | Binds when picked up | [Slot] [Armor Class] | [Armor] | [Base
+ * Attributes] | [Requirements] | [Rating Stats] | [Procs]"
+ *
+ * It was the ALLOCATION order before, which is the order the budget happened to
+ * spend in -- so a head came out "+19 Stamina, Equip: +23 Critical Strike
+ * Rating, +13 Intellect", with a rating in the middle of the attributes. The
+ * allocator has no opinion about reading order and should not have one; this is
+ * the one place that does.
+ *
+ * ------------------------------------------------------------------------------
+ * `Classes:` IS WRITTEN OUT, which is also the owner's ask -- "I want them to
+ * all be ASSIGNED their respective class for that profile". A real tier piece
+ * names its class and a template piece now does the same, which is why
+ * `BenchmarkTemplate` gained a `characterClass`.
+ *
+ * IT IS NOT COSMETIC. `classRestrictionsFrom` parses this line back out of the
+ * tooltip, so a generated item is class-restricted by the same rule a captured
+ * one is -- the generator writes text and the parser reads it, which is the
+ * seam this whole file is built on.
+ * ==============================================================================
+ */
+const ATTRIBUTE_LINE = /^\+\d+ (Strength|Agility|Stamina|Intellect|Spirit|Armor)$/;
+
+/**
+ * WHAT A BENCHMARK PIECE IS CALLED: "Seal Twist Ret (E65)", "Cat (E75)".
+ *
+ * ==============================================================================
+ * THE OWNER'S FORMAT, replacing "E65 Head" and "B55 Main-Hand Axe". The name
+ * now says which BUILD and which SET the piece belongs to, which is the thing a
+ * reader cannot work out from anywhere else on the card -- where the SLOT is
+ * already on the line below it ("Head  Plate") and in the row's own position in
+ * the character pane.
+ *
+ * SO EVERY PIECE IN ONE SET SHARES A NAME, which is deliberate and costs
+ * nothing here: benchmark items are never offered in a picker -- `itemsForSlot`
+ * excludes them -- so the only place two of them ever appear together is the
+ * character pane, where each sits in its own labelled slot.
+ * ==============================================================================
+ */
+const benchmarkName = (template: BenchmarkTemplate, set: (typeof BENCHMARK_SETS)[number]) =>
+  `${template.label} (${set.id})`;
+
 function makeItem(
   id: number,
   name: string,
@@ -232,24 +301,44 @@ function makeItem(
   effects: readonly { kind: string; text: string }[],
   budget: number,
   spent: number,
+  characterClass: ClassId,
+  armourClass: ArmourClass,
 ): GeneratedItem {
-  const head = [
+  const lines: string[] = [
     name,
     `Item Level ${set.itemLevel}`,
     'Binds when picked up',
     subclass ? `${inventory}\t${subclass}` : inventory,
   ];
+
+  // The item's own physical line: what it swings for, or what it absorbs.
   if (weapon) {
-    head.push(`${weapon.minDamage} - ${weapon.maxDamage} Damage\tSpeed ${weapon.speed.toFixed(2)}`);
-    head.push(`(${weapon.dps.toFixed(1)} damage per second)`);
+    lines.push(`${weapon.minDamage} - ${weapon.maxDamage} Damage\tSpeed ${weapon.speed.toFixed(2)}`);
+    lines.push(`(${weapon.dps.toFixed(1)} damage per second)`);
   }
-  if (armor) head.push(`${armor} Armor`);
-  const body = effects.map((e) => (e.kind === 'Equip' ? `Equip: ${e.text}` : e.text));
+  if (armor) lines.push(`${armor} Armor`);
+
+  /*
+   * THE BASE ATTRIBUTES, THEN THE REQUIREMENTS, THEN THE RATINGS. Split by
+   * SHAPE rather than by the `kind` the allocator tagged them with: a shield's
+   * inherent "44 Block" is tagged `Stat` and is not an attribute, and bonus
+   * armour is written "+40 Armor" and belongs with them. The pattern is what
+   * says which is which.
+   */
+  const written = effects.map((e) => (e.kind === 'Equip' ? `Equip: ${e.text}` : e.text));
+  const attributes = written.filter((line) => ATTRIBUTE_LINE.test(line));
+  const rest = written.filter((line) => !ATTRIBUTE_LINE.test(line));
+
+  lines.push(...attributes);
+  lines.push(`Classes: ${className(characterClass)}`);
+  lines.push(`Requires Level ${MAX_CHARACTER_LEVEL}`);
+  lines.push(...rest);
+
   return {
     id,
     name,
     quality: set.quality,
-    icon: 'inv_misc_questionmark',
+    icon: benchmarkIcon(inventory, subclass, armourClass),
     source: `SYNTHETIC benchmark gear generated from the itemization budget -- ${set.description}. Not a Forever item.`,
     itemLevel: set.itemLevel,
     inventoryType: inventory,
@@ -259,7 +348,7 @@ function makeItem(
     stats: {},
     resistances: {},
     effects: [...effects],
-    tooltip: [...head, ...body].join('\n'),
+    tooltip: lines.join('\n'),
     budget,
     spent,
   };
@@ -337,9 +426,82 @@ export function benchmarkItemsFor(
 
   const items: GeneratedItem[] = [];
 
+  /*
+   * ============================================================================
+   * THE TWO TRINKETS, WHICH ARE THE OWNER'S OWN DESIGN.
+   *
+   * They were the single worst thing in a set: a trinket is a ONE-stat slot and
+   * four of the five preference lists open with Crit, so both trinkets bought
+   * crit and the trinket multiplier made them the two largest crit sources in
+   * the whole set -- **68 rating, 4.9% crit, from two items**.
+   *
+   * THE OWNER'S RULING IS A PAIR OF ARCHETYPES: "it's expected to see trinkets
+   * that have 28 crit rating + a scaling spell power / attack power value. OR
+   * pure spell power trinkets", with "a maximum of 28 crit rating (2%) across
+   * both trinkets". So the first trinket is the crit-plus-scaling one and the
+   * second is the pure one, and the pair carries 28 between them rather than
+   * 28 each.
+   *
+   * ----------------------------------------------------------------------------
+   * AND REAL TRINKETS AT THIS ITEM LEVEL CARRY NO PASSIVE STATS AT ALL, which
+   * is worth writing down because it is the opposite of what one would guess.
+   * Of the 35 real trinkets on file between item level 58 and 72, **35 carry a
+   * proc or an on-use effect and 6 carry any engine stat** (dodge, on tank
+   * trinkets). A real trinket's contribution is an effect this engine cannot
+   * model.
+   *
+   * So these two are a STAND-IN for that contribution rather than a copy of a
+   * real item, and the owner's archetypes are what they should look like. A
+   * trinket left empty instead would make every benchmark set quietly weaker
+   * than the real thing in two slots.
+   *
+   * A BUILD THAT DOES NOT WANT CRIT GETS NEITHER ARCHETYPE. The tanks and the
+   * Bear name no Crit and no damage stat, so their trinkets keep the stat their
+   * preference list leads with -- which is Stamina, and is right.
+   * ============================================================================
+   */
+  const wantsCrit = template.preferred.includes('Crit');
+  const damageStat = template.preferred.find(
+    (stat) => stat === 'Spell Power' || stat === 'Attack Power',
+  );
+
+  let armourIndex = -1;
   for (const plan of ARMOUR_SLOTS) {
+    armourIndex += 1;
     const budget = base * SLOT_MULTIPLIER[plan.slotClass];
     const fixed = new Map<BenchStat, number>();
+
+    if (plan.slot === 'trinket1' || plan.slot === 'trinket2') {
+      const crit = plan.slot === 'trinket1' && wantsCrit ? trinketCrit(budget) : 0;
+      if (crit > 0) fixed.set('Crit', crit);
+      /*
+       * ALWAYS CARRIED, which a ternary here got wrong and the stat report
+       * caught: a build with no Crit and no damage stat -- the three tanks and
+       * the Bear -- was passed an EMPTY share list, so both its trinkets came
+       * out blank and the set lost 68 stamina. A trinket always carries
+       * something; what changes is WHAT.
+       */
+      const carried = damageStat ? [damageStat] : statsFor(plan, template.preferred);
+      const { effects, spent } = toLines(fixed, carried, budget);
+      items.push(
+        makeItem(
+          nextId(),
+          benchmarkName(template, set),
+          set,
+          plan.inventory,
+          null,
+          null,
+          null,
+          effects,
+          budget,
+          spent,
+          template.characterClass,
+          template.armour,
+        ),
+      );
+      continue;
+    }
+
     const h = hit.get(plan.slot);
     if (h) fixed.set('Hit', h);
     const e = expertise.get(plan.slot);
@@ -365,7 +527,7 @@ export function benchmarkItemsFor(
      * the two.
      * ------------------------------------------------------------------------
      */
-    const chosen = statsFor(plan, template.preferred);
+    const chosen = statsFor(plan, template.preferred, armourIndex);
     let shares = chosen;
     if (!plan.noArmour && plan.slot !== 'cloak') {
       /*
@@ -391,7 +553,7 @@ export function benchmarkItemsFor(
     items.push(
       makeItem(
         nextId(),
-        `${set.id} ${plan.inventory}`,
+        benchmarkName(template, set),
         set,
         plan.inventory,
         plan.noArmour ? null : template.armour,
@@ -400,6 +562,8 @@ export function benchmarkItemsFor(
         effects,
         budget,
         spent,
+        template.characterClass,
+        template.armour,
       ),
     );
   }
@@ -413,7 +577,6 @@ export function benchmarkItemsFor(
     slotClass: 'full' | 'oneHand' | 'ranged' | 'light',
     subclass: string,
     speed: number,
-    label: string,
   ) => {
     const damage = weaponDamage(hand, set.quality, set.itemLevel, speed, caster && hand !== 'ranged');
     const budget =
@@ -422,7 +585,7 @@ export function benchmarkItemsFor(
     items.push(
       makeItem(
         nextId(),
-        `${set.id} ${label}`,
+        benchmarkName(template, set),
         set,
         inventory,
         subclass,
@@ -436,16 +599,18 @@ export function benchmarkItemsFor(
         effects,
         budget,
         spent,
+        template.characterClass,
+        template.armour,
       ),
     );
   };
 
   if (w.kind === 'twoHand') {
     const speed = w.speed ?? (w.subclass === 'Staff' ? SPEED.Staff : SPEED.twoHand);
-    addWeapon('Two-Hand', 'twoHand', 'full', w.subclass, speed, `Two-Hand ${w.subclass}`);
+    addWeapon('Two-Hand', 'twoHand', 'full', w.subclass, speed);
   } else if (w.kind === 'dualWield') {
-    addWeapon('One-Hand', 'oneHand', 'oneHand', w.subclass, SPEED[w.subclass] ?? SPEED.oneHand, `Main-Hand ${w.subclass}`);
-    addWeapon('One-Hand', 'oneHand', 'oneHand', w.offSubclass!, SPEED[w.offSubclass!] ?? SPEED.oneHand, `Off-Hand ${w.offSubclass}`);
+    addWeapon('One-Hand', 'oneHand', 'oneHand', w.subclass, SPEED[w.subclass] ?? SPEED.oneHand);
+    addWeapon('One-Hand', 'oneHand', 'oneHand', w.offSubclass!, SPEED[w.offSubclass!] ?? SPEED.oneHand);
   } else {
     /*
      * `w.speed` IS HONOURED HERE TOO, and it was not. The field exists for the
@@ -460,7 +625,6 @@ export function benchmarkItemsFor(
       'oneHand',
       w.subclass,
       w.speed ?? SPEED[w.subclass] ?? SPEED.oneHand,
-      `One-Hand ${w.subclass}`,
     );
     /*
      * A SHIELD, AND ITS BLOCK VALUE IS FREE RATHER THAN BOUGHT.
@@ -496,7 +660,7 @@ export function benchmarkItemsFor(
     items.push(
       makeItem(
         nextId(),
-        `${set.id} Shield`,
+        benchmarkName(template, set),
         set,
         'Off Hand',
         'Shield',
@@ -508,12 +672,14 @@ export function benchmarkItemsFor(
         ],
         shieldBudget,
         spent,
+        template.characterClass,
+        template.armour,
       ),
     );
   }
 
   if (w.ranged) {
-    addWeapon('Ranged', 'ranged', 'ranged', 'Bow', SPEED.ranged, 'Bow');
+    addWeapon('Ranged', 'ranged', 'ranged', 'Bow', SPEED.ranged);
   }
 
   return items;

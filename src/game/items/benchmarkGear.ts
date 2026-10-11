@@ -542,19 +542,153 @@ export const SHARES: Readonly<Record<number, readonly number[]>> = {
   5: [0.4, 0.24, 0.16, 0.12, 0.08],
 };
 
-/** The stats a slot carries, after the jewellery rule has narrowed them. */
-export function statsFor(plan: SlotPlan, preferred: readonly BenchStat[]): readonly BenchStat[] {
-  const picked: BenchStat[] = [];
+/**
+ * HOW MUCH OF A SLOT'S BUDGET EACH STAT GETS, RELATIVE TO ITS POSITION.
+ *
+ * ==============================================================================
+ * `SHARES` above is POSITIONAL -- the first preference takes 0.4 of a five-stat
+ * slot whatever that preference is. These weights multiply it per STAT, and the
+ * result is renormalised, so a stat can be made systematically cheaper or
+ * dearer without reordering anybody's preference list.
+ *
+ * ------------------------------------------------------------------------------
+ * BOTH ENTRIES WERE MEASURED AGAINST FOREVER'S OWN ITEMS, not chosen. The owner
+ * reported two symptoms -- "crit rating is too prevalent" and "spell power
+ * numbers are way down from what I'm expecting" -- and then set the standard:
+ * "if 750 isn't reachable that's fine. I want it to be realistic."
+ *
+ * `tools/real_set_shape.ts` is what answers that. Over real Forever items at
+ * item level 60-70 that a class can equip, PvP excluded, summing the per-slot
+ * figure across a full set:
+ *
+ *                      median   p75   best-in-database
+ *   crit rating          168    182        210     (a warrior set)
+ *   spell power          290    345        397     (a mage set)
+ *
+ * -- against a benchmark set that was carrying **295 crit and 205 spell
+ * power**. So crit sat 40% above the best real set in the game and spell power
+ * sat BELOW an ordinary one, which is exactly the pair of symptoms reported.
+ *
+ * A BENCHMARK SET SHOULD SIT BETWEEN p75 AND BEST, which is the judgement here
+ * and the only one: these sets exist so two builds can be compared at the same
+ * item level, so each should be a strong set of that item level rather than an
+ * average one -- and it must not EXCEED what the game contains, or the
+ * comparison stops being about the builds.
+ *
+ * ------------------------------------------------------------------------------
+ * A WEIGHT IS A FRACTION OF BUDGET, SO IT SCALES WITH ITEM LEVEL FOR FREE,
+ * which is what the owner asked for -- "for all sets and all item levels". An
+ * absolute pullback in rating points would have to be re-derived per set.
+ * ==============================================================================
+ */
+/**
+ * The crit rating the two trinkets carry BETWEEN them.
+ *
+ * The owner's number, and the owner's shape: "a maximum of 28 crit rating (2%)
+ * across both trinkets", with the first being the "28 crit rating + a scaling
+ * spell power / attack power" archetype and the second "pure spell power". See
+ * the trinket branch in `benchmarkSets.ts` for why a real trinket carries
+ * neither.
+ */
+export const TRINKET_CRIT_RATING = 28;
+
+/**
+ * The most of a trinket's budget the crit half of the archetype may take.
+ *
+ * ----------------------------------------------------------------------------
+ * A MAXIMUM OF 28 IS NOT THE SAME AS 28, which the B55 sets proved: a blue
+ * item-level-55 trinket has a budget of 23.3 points and 28 crit rating costs
+ * 28 of them, so the flat figure put the item **20% over its own budget** and
+ * left nothing for the scaling half -- turning the owner's "28 crit rating +
+ * a scaling spell power / attack power value" back into a pure crit trinket,
+ * which is the thing it replaced.
+ *
+ * THE SAME CLAMP `staminaFloor` ALREADY APPLIES, for the same reason stated
+ * there: "a floor that wins against the budget is not a floor, it is a leak,
+ * and the honest answer is that such a slot cannot afford it."
+ *
+ * 0.75 IS WHERE 28 AND THE CLAMP MEET AT E65, which is the set the owner's
+ * figure was read off -- so every epic set gets the full 28 and only B55, the
+ * blue one, carries less. The remaining quarter is what guarantees the
+ * scaling half is never zero.
+ * ----------------------------------------------------------------------------
+ */
+export const TRINKET_CRIT_BUDGET_SHARE = 0.75;
+
+/** The crit a trinket of this budget can carry, capped and clamped. */
+export function trinketCrit(budget: number): number {
+  const affordable =
+    (TRINKET_CRIT_BUDGET_SHARE * budget ** BUDGET_EXPONENT) ** (1 / BUDGET_EXPONENT) / COST.Crit;
+  return Math.min(TRINKET_CRIT_RATING, Math.floor(affordable));
+}
+
+export const SHARE_WEIGHT: Readonly<Partial<Record<BenchStat, number>>> = {
+  Crit: 0.5,
+  'Spell Power': 2,
+};
+
+/**
+ * The positional shares for a slot, with `SHARE_WEIGHT` applied and renormalised.
+ *
+ * RENORMALISED, so the parts still sum to one and the budget arithmetic stays
+ * exact rather than iterative. What crit gives up is therefore spread across
+ * whatever else the slot carries -- which on every list but the casters' is
+ * mostly BASE ATTRIBUTES, the owner's stated destination for it.
+ */
+export function weightedShares(stats: readonly BenchStat[]): readonly number[] {
+  const positional = SHARES[stats.length] ?? SHARES[4];
+  const weighted = stats.map((stat, index) => positional[index] * (SHARE_WEIGHT[stat] ?? 1));
+  const total = weighted.reduce((sum, value) => sum + value, 0);
+  return total === 0 ? positional : weighted.map((value) => value / total);
+}
+
+/**
+ * The stats a slot carries, after the jewellery rule has narrowed them.
+ *
+ * ==============================================================================
+ * `rotation` IS WHY NO PREFERRED STAT COMES OUT AT ZERO ANY MORE.
+ *
+ * A template may name more stats than a slot has room for -- Seal Twist Ret
+ * names seven and a head holds five -- and this took the first N every time,
+ * so the TAIL of a long list was bought nowhere in the whole set. Five of the
+ * 25 sets had at least one: Ret had no Attack Power, the Shockadin had no
+ * Agility and no Attack Power, both Protection builds had no Block and the
+ * Bear had no Defense.
+ *
+ * The owner on it: stats going to nothing across a whole set "is unrealistic
+ * to how items are actually designed" -- and they are right twice over, since
+ * real sets also do not put the identical five stats on every piece.
+ *
+ * SO THE LAST POSITION CYCLES THROUGH THE TAIL, by slot index. The slot keeps
+ * its first `stats - 1` preferences, which is the build's core, and its last
+ * line rotates -- so over the eight armour slots every tail stat is bought
+ * somewhere, and no slot loses a stat it was already getting.
+ *
+ * IT CHANGES NOTHING FOR A TEMPLATE THAT FITS. When `preferred.length` is at
+ * most `plan.stats` the tail is a single stat and the rotation returns it
+ * every time, which is twenty of the twenty-five.
+ * ==============================================================================
+ */
+export function statsFor(
+  plan: SlotPlan,
+  preferred: readonly BenchStat[],
+  rotation = 0,
+): readonly BenchStat[] {
+  const eligible: BenchStat[] = [];
   let primaries = 0;
   for (const stat of preferred) {
-    if (picked.length >= plan.stats) break;
     if (PRIMARY.has(stat)) {
       if (plan.onePrimary && primaries >= 1) continue;
       primaries += 1;
     }
-    picked.push(stat);
+    eligible.push(stat);
   }
-  return picked;
+
+  if (eligible.length <= plan.stats) return eligible;
+
+  const core = eligible.slice(0, plan.stats - 1);
+  const tail = eligible.slice(plan.stats - 1);
+  return [...core, tail[rotation % tail.length]];
 }
 
 export interface GeneratedItem {

@@ -332,6 +332,6 @@ describe('a stat stick is held and never swung', () => {
     expect(actor.weapons.mainHand).toBeUndefined();
     // ...and the bow is what swings. (Named by its SET rather than by an item
     // id, because the Hunter sets are generated from the budget now.)
-    expect(actor.weapons.ranged?.name).toMatch(/^E65 /);
+    expect(actor.weapons.ranged?.name).toMatch(/\(E65\)$/);
   });
 });
