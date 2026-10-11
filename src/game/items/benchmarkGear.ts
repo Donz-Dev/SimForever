@@ -410,31 +410,35 @@ export const SHIELD_STATS = 3;
  * build's first choice on every piece.
  *
  * ------------------------------------------------------------------------------
- * THE SHARE IS THE OWNER'S FIGURE AND THE DATA SAYS IT IS ABOUT HALF WHAT
- * FOREVER CARRIES. Measured by `tools/stamina_share.ts` over Forever's own
- * clean NON-PvP armour, stamina's median share of `budget^1.5` is:
+ * THE SHARE IS 25%, WHICH IS THE OWNER'S RULING AFTER THE DATA WAS PUT IN FRONT
+ * OF THEM -- "use 25% and re-measure".
+ *
+ * They first remembered "around 10-15% of its item budget", which went in at
+ * 12.5% with the measurement recorded beside it rather than overriding it,
+ * because "I believe" marks a recollection and not a ruling. Measured by
+ * `tools/stamina_share.ts` over Forever's own clean NON-PvP armour, stamina's
+ * median share of `budget^1.5` is:
  *
  *     head 30.4%   shoulders 25.0%   chest 20.5%   wrists 22.6%
  *     gloves 24.6%  waist 24.4%      legs 30.0%    feet 35.0%
  *
- * -- a median of about 25% across the eight, against this 12.5%. At E65 that is
- * 12 stamina on a chest where Forever's own median is 17, and 12 on a head
- * where Forever's is 24.
+ * -- a median of about 25% across the eight, which is the figure now used. At
+ * E65 that is 19 stamina on a chest against Forever's own median of 17, and 19
+ * on a head against 24.
  *
- * **THE OWNER'S NUMBER IS USED ANYWAY, AND THE DISCREPANCY IS WHY THIS NOTE IS
- * HERE.** They said "I believe", which marks a recollection rather than a
- * ruling, and raising it is a one-line change -- but inventing a different
- * figure because the data suggests one is exactly what this project does not
- * do. The PvP sets, which are not the comparison, sit at 55.9%.
+ * **SO THE FLAGGED QUESTION IS CLOSED AND THIS NOTE SAYS SO**, which is the half
+ * that matters: a caveat outlives the doubt it describes, and a reader who finds
+ * one of these next year cannot tell a live question from a settled one. The PvP
+ * sets, which are not the comparison, sit at 55.9%.
  *
  * MEASURED IN THE CURRENCY THE BUDGET IS SPENT IN, which is the 3/2 power:
  * `stamina = (share x budget^1.5)^(2/3) / cost`. The linear reading --
- * `stamina = share x budget` -- gives 6 on a chest instead of 12, and the two
- * are a factor of two apart on every slot. Both are printed by the tool so the
- * choice is visible rather than implied.
+ * `stamina = share x budget` -- gives 12 on a chest instead of 19, and the two
+ * are a factor of about 1.6 apart on every slot. Both are printed by the tool so
+ * the choice is visible rather than implied.
  * ==============================================================================
  */
-export const STAMINA_BUDGET_SHARE = 0.125;
+export const STAMINA_BUDGET_SHARE = 0.25;
 
 /**
  * The least stamina an armour-class piece carries, for a slot of this budget.
