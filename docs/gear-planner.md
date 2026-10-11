@@ -223,6 +223,8 @@ re-derive them.
   arrives.
 - **177 set pieces are class-restricted by neither source**, the T3 sets among
   them. The owner's ruling decides whether Forever means them class-locked.
+- **E85's spell power still runs above the best real item-level-80-92 set**
+  (555 against 491), though its crit is now in range at 236 against 252.
 - **E85 runs about 8% above the best real item-level-80-92 set** -- crit 271
   against 252, spell power 531 against 491. Arguably right for the top
   benchmark, and recorded rather than tuned.
