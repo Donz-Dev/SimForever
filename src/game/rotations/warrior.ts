@@ -579,6 +579,35 @@ export const WARRIOR_DUAL_WIELD_BERSERKER: AplList = {
    */
   ...RACIAL_COOLDOWNS,
   ...CONSUMABLE_COOLDOWNS,
+  /*
+   * DEATH WISH FOURTH, ON THE OWNER'S RESPECIFICATION -- it was EIGHTH, directly
+   * above Execute.
+   *
+   * --------------------------------------------------------------------------
+   * IT MOVES ABOVE FOUR ENTRIES THAT NEVER FIRE, AND THAT IS WHY IT CHANGES
+   * NOTHING. The Healthstone needs health this build never loses, the stance is
+   * already the one the preset opens in, Battle Shout is in `PRESET_RAID_BUFFS`
+   * so its condition refuses all fight, and a preset raid DEBUFF puts five
+   * stacks of Sunder Armor on the boss before the pull. So the entry it is
+   * really above is still Execute, which is where it already was.
+   *
+   * PROVEN RATHER THAN ARGUED: all 75 combat-log hashes from
+   * `tools/rotation_fingerprint.ts` are unchanged, which says no DECISION moved
+   * -- a sharper answer than a DPS figure and about a hundred times cheaper,
+   * because the engine draws from one random stream and a single differing
+   * choice would reorder every later draw.
+   *
+   * IT IS STILL WORTH MAKING. The four entries above it are inert for reasons
+   * that belong to the ENCOUNTER and to the raid, not to the ability -- change
+   * the raid buff selection or hit this warrior and three of them wake up, and
+   * then the position is the difference between a 30-second damage cooldown
+   * landing on time and landing behind a shout.
+   * --------------------------------------------------------------------------
+   */
+  {
+    abilityId: 'death_wish',
+    condition: fightRemaining('atMost', DEATH_WISH_WINDOW_MS / 1000),
+  },
   ...CONSUMABLE_HEALS,
   /*
    * THE PRESET ALREADY OPENS IN BERSERKER STANCE, so this fires zero times --
@@ -610,16 +639,15 @@ export const WARRIOR_DUAL_WIELD_BERSERKER: AplList = {
       targetTime('below', SUNDER_REFRESH_WINDOW_MS / 1000, SUNDER_ARMOR.id),
     ),
   },
-  // Timed to cover the end of the fight rather than used on cooldown.
-  {
-    abilityId: 'death_wish',
-    condition: fightRemaining('atMost', DEATH_WISH_WINDOW_MS / 1000),
-  },
   /*
    * The execute phase, measured in TIME rather than target health.
    *
    * A training dummy never drops to 20% health, so Execute's own gate accepts
    * the last 20% of a fixed-length fight as well. See `EXECUTE`.
+   *
+   * DEATH WISH USED TO SIT DIRECTLY ABOVE THIS and now sits fourth; the
+   * entries between them are all inert, so this is still the first thing Death
+   * Wish outranks. See its new position for why that is the whole of it.
    */
   {
     abilityId: 'execute',

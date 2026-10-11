@@ -6,7 +6,13 @@ import { legalise } from '../helpers/legalTalents';
 import { createDefaultProfile } from '../../src/profiles';
 import { runProfile, runProfileBatch, resourceFlowOf } from '../../src/simulator';
 import { startingEquipmentFor } from '../../src/game/items/startingSets';
-import { warriorRotation } from '../../src/game/rotations/warrior';
+import {
+  BERSERKER_HEROIC_STRIKE_RAGE,
+  SUNDER_REFRESH_WINDOW_MS,
+  WARRIOR_DUAL_WIELD_BERSERKER,
+  warriorRotation,
+} from '../../src/game/rotations/warrior';
+import { PRESETS_BY_ID } from '../../src/profiles/presets';
 import {
   BERSERKER_RAGE,
   BERSERKER_RAGE_DURATION_MS,
@@ -230,6 +236,169 @@ describe('dual-wield in Berserker Stance uses its own list', () => {
     expect(heroic?.count ?? 0).toBeGreaterThan(0);
     // Nothing was spent changing stance, because nothing changed stance.
     expect(resourceFlowOf(batch, 'rage').spent.some((row) => row.sourceId === 'stance_change')).toBe(false);
+  });
+});
+
+/*
+ * ============================================================================
+ * THE ORDER THE RULESET OWNER GAVE, written out BY HAND rather than read back
+ * out of the list under test -- a test that asks the implementation what the
+ * implementation says passes whatever it says. The same shape
+ * `protectionRotation.test.ts` and `armsRotation.test.ts` use.
+ *
+ * IT PINS A ROTATION DECISION ON PURPOSE, which is legitimate because the
+ * decision is the OWNER'S: a measurement of ours does not outrank it, and the
+ * day they respecify this list the failure is how that gets noticed rather
+ * than merged as an accident.
+ * ============================================================================
+ */
+
+/** Death Wish is FOURTH now and was eighth; nothing else about it moved. */
+const OWNER_ORDER = [
+  'bloodrage_cast',
+  // The four free racial cooldowns, of which an Orc learns one.
+  'blood_fury',
+  'berserking',
+  'elunes_light',
+  'eureka',
+  // Every mid-fight consumable, of which this profile carries two.
+  'major_mana_potion',
+  'demonic_rune',
+  'thistle_tea',
+  'mighty_rage_potion',
+  'major_frenzy_potion',
+  'major_spellblasting_potion',
+  'death_wish',
+  'major_healing_potion',
+  'healthstone',
+  'berserker_stance_cast',
+  'battle_shout_cast',
+  'sunder_armor_cast',
+  'execute',
+  'heroic_strike',
+  'bloodthirst',
+  'whirlwind',
+  'spearing_strike',
+];
+
+/** What an ORC drinking Mighty Rage and a Healthstone actually runs. */
+const ORC_FURY_ORDER = [
+  'bloodrage_cast',
+  'blood_fury',
+  'mighty_rage_potion',
+  'death_wish',
+  'healthstone',
+  'berserker_stance_cast',
+  'battle_shout_cast',
+  'sunder_armor_cast',
+  'execute',
+  'heroic_strike',
+  'bloodthirst',
+  'whirlwind',
+  'spearing_strike',
+];
+
+describe('the Berserker list order', () => {
+  it('is the order the ruleset owner gave', () => {
+    expect(WARRIOR_DUAL_WIELD_BERSERKER.entries.map((entry) => entry.abilityId)).toEqual(
+      OWNER_ORDER,
+    );
+  });
+
+  it('narrows to thirteen entries for the preset that runs it', () => {
+    /*
+     * THE PANEL IS WHAT THE OWNER READ, and it shows the NARROWED list: every
+     * stock list names all four racial cooldowns and all nine consumables, and
+     * a character learns one race's and drinks its own two.
+     */
+    const profile = PRESETS_BY_ID.get('dw_fury')!.build();
+    expect(profile.rotation.entries.map((entry) => entry.abilityId)).toEqual(ORC_FURY_ORDER);
+  });
+
+  it('puts Death Wish above four entries that never fire, and above Execute', () => {
+    /*
+     * ==========================================================================
+     * WHY THE MOVE CHANGES NOTHING, ASSERTED RATHER THAN STATED.
+     *
+     * Death Wish came from EIGHTH, directly above Execute, to FOURTH. The four
+     * entries it passed are all inert on this profile and each for its own
+     * reason: the Healthstone needs health nothing takes, the stance is the one
+     * the preset opens in, Battle Shout is in `PRESET_RAID_BUFFS` so its
+     * condition refuses all fight, and a preset raid DEBUFF puts five stacks of
+     * Sunder Armor on the boss before the pull.
+     *
+     * So the entry Death Wish is really above is STILL Execute, which is where
+     * it already was -- and `rotation_fingerprint.ts` says the same thing from
+     * the other end, with all 75 combat-log hashes unchanged.
+     *
+     * THE FOUR REASONS BELONG TO THE ENCOUNTER AND THE RAID RATHER THAN TO THE
+     * ABILITIES, which is why this is pinned as "inert on this profile" and not
+     * as a property of the list: change the raid buff selection, or let the
+     * target swing back, and three of the four wake up.
+     * ==========================================================================
+     */
+    const ids = WARRIOR_DUAL_WIELD_BERSERKER.entries.map((entry) => entry.abilityId);
+    for (const passed of [
+      'healthstone',
+      'berserker_stance_cast',
+      'battle_shout_cast',
+      'sunder_armor_cast',
+      'execute',
+    ]) {
+      expect(ids.indexOf('death_wish'), passed).toBeLessThan(ids.indexOf(passed));
+    }
+
+    const built = PRESETS_BY_ID.get('dw_fury')!.build();
+    const batch = runProfileBatch({
+      ...built,
+      simulation: { ...built.simulation, iterations: 40, seed: 4242 },
+    } as never);
+    const uses = (name: string) =>
+      batch.abilities.find((row) => row.abilityName === name)?.uses ?? 0;
+    for (const name of ['Healthstone', 'Berserker Stance', 'Battle Shout', 'Sunder Armor']) {
+      expect(uses(name), name).toBe(0);
+    }
+    // And Death Wish itself does fire, so this is not four zeros and a fifth.
+    expect(uses('Death Wish')).toBeGreaterThan(0);
+  });
+
+  it('keeps its own Heroic Strike floor and its own Sunder window', () => {
+    /*
+     * 42, against the Arms list's 90 and the tank's 26 -- three owner figures
+     * for three lists. Pinned by IDENTITY rather than by asserting any two are
+     * equal, so the day one moves the failure lands on the one that moved.
+     */
+    const heroic = WARRIOR_DUAL_WIELD_BERSERKER.entries.find(
+      (entry) => entry.abilityId === 'heroic_strike',
+    );
+    expect(heroic?.condition).toEqual({
+      kind: 'resource',
+      resource: 'rage',
+      compare: 'atLeast',
+      amount: BERSERKER_HEROIC_STRIKE_RAGE,
+    });
+    expect(BERSERKER_HEROIC_STRIKE_RAGE).toBe(42);
+    expect(SUNDER_REFRESH_WINDOW_MS).toBe(4000);
+  });
+});
+
+describe('what DW Fury eats', () => {
+  it('takes +20 Strength rather than +40 Attack Power', () => {
+    // The owner's second food ruling, named one profile at a time.
+    expect(PRESETS_BY_ID.get('dw_fury')!.build().consumables.food).toBe('food_strength');
+  });
+
+  it('leaves the three unnamed members of the archetype row alone', () => {
+    /*
+     * TWO OF FIVE IS NOT A ROW. `STRENGTH_CONSUMABLES` is shared with Prot
+     * Warr and both feral Druids, and the owner has named neither -- so this
+     * is a second OVERRIDE rather than the first ruling extended by analogy.
+     * If the Druids are named too, the honest edit is the row and both
+     * overrides come out together.
+     */
+    for (const id of ['prot_warr', 'druid_cat', 'druid_bear']) {
+      expect(PRESETS_BY_ID.get(id)!.build().consumables.food, id).toBe('food_attack_power');
+    }
   });
 });
 
