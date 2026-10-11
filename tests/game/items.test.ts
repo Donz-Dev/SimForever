@@ -80,24 +80,29 @@ describe('the item data', () => {
      * range of their own (234819 to 284716) that cannot collide with the
      * Classic and Season of Discovery ones.
      */
-    const PER_FILE = [19, 12, 13, 35, 20, 8, 27, 8, 9, 449];
-    const total = PER_FILE.reduce((sum, count) => sum + count, 0);
-    expect(total).toBe(600);
+    /*
+     * EVERY FILE, COUNTED ONCE, because the first version of this double-counted
+     * `forever-new-epics` -- it was in the stand-in list AND in the Forever
+     * total -- and the test failed by exactly those 449.
+     *
+     *   nine Classic / Season of Discovery stand-ins   151
+     *   forever-new-epics                              449
+     *   forever-changed-epics                          614  (653 less 39 "90 Epic" test items)
+     *   forever-new-rares                              412
+     *   forever-changed-rares                          198  (199 less Orb of Deception, no slot)
+     *
+     * The two CHANGED files are an override layer: three of their ids already
+     * belong to a stand-in and REPLACE it rather than joining the total.
+     */
+    const STAND_INS = [19, 12, 13, 35, 20, 8, 27, 8, 9];
+    const FOREVER = [449, 614, 412, 198];
+    const sum = (list: readonly number[]) => list.reduce((a, b) => a + b, 0);
+    expect(sum(STAND_INS)).toBe(151);
+    expect(sum(FOREVER)).toBe(1673);
 
-    /*
-     * THE CHANGED FILE IS AN OVERRIDE LAYER, so it adds its 653 items MINUS
-     * the three that replace a stand-in rather than joining it. Counting it as
-     * a plain eleventh file would be off by exactly the number of overrides,
-     * which is the one thing about this arrangement worth getting wrong.
-     */
     expect(FOREVER_OVERRIDDEN_IDS).toEqual([19321, 19323, 19325]);
-    /*
-     * 614, not 653: thirty-nine "90 Epic <class> <slot>" developer test items
-     * are excluded by the importer and listed by name in the file it writes.
-     * Matched on the NAME, because six real Naxxramas trinkets also sit at
-     * item level 90 and an item-level rule would have taken those too.
-     */
-    const expected = total + 614 - FOREVER_OVERRIDDEN_IDS.length;
+    const expected = sum(STAND_INS) + sum(FOREVER) - FOREVER_OVERRIDDEN_IDS.length;
+    expect(expected).toBe(1821);
     expect(ITEMS).toHaveLength(expected);
     expect(new Set(ITEMS.map((item) => item.id)).size).toBe(expected);
   });

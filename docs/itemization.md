@@ -699,6 +699,63 @@ needed a new capture; this one needed somebody to notice that two kinds of item
 had been put in one bucket. **Mixing two populations and fitting a parameter to
 the blend produces a confident number for a thing that does not exist.**
 
+## The blues confirm it independently
+
+Everything above was epics on the purple row, `0.77 x ilvl - 1`. The rares test
+a **different quality formula** — `0.625 x ilvl - 1.15` — at a **different item
+level band**, 50 to 60, on 611 items that had no part in fitting anything.
+
+Carrying the epic settings over unchanged (stamina 1.0, the healer pair priced
+once, clean items only, compared against siblings):
+
+| | n | mean |
+| --- | --- | --- |
+| **Classic's own blues** (control) | 52 | **100.3% ±2.3** |
+| **Forever's new blues** | 200 | **100.6% ±0.8** |
+
+**Both land on 100%**, and on each other. The blue row of the quality table is
+right, and Forever's rares are itemized exactly as Classic's are.
+
+### Stamina at 1.0 is confirmed by a population that never fitted it
+
+Best fit against the blue control:
+
+| | best fit | we use |
+| --- | --- | --- |
+| **stamina** | **0.99** | 1.00 |
+| **healing** (rider dropped) | **0.49** | 0.45 |
+
+**0.99 against the 1.0 the owner ruled, from a different quality formula and a
+different item band.** That is the strongest evidence in the whole thread,
+because nothing about the blues was used to choose it — the footnote said 1.0,
+the owner ruled 1.0, and an untouched population independently asks for 0.99.
+
+For contrast, stamina back at 0.67 puts the blue control at **93.8%** and
+Forever's blues at **87.0%** — the same 6-to-13 point shortfall the epics
+showed, and the same artefact.
+
+### Composition, by population
+
+| | plain | pure spell power | healing |
+| --- | --- | --- | --- |
+| Classic's own | 97.7% ±3.5 (n=23) | 104.2% ±3.9 (**+6.5**) | 96.6% ±1.4 (−1.1) |
+| Forever's new | 101.4% ±1.4 (n=90) | 99.3% ±0.4 (**−2.1**) | 101.2% ±2.1 (−0.1) |
+
+**Forever's blues are flat across all three compositions** — 99.3 to 101.4,
+every category within two points of the others. Classic's are noisier and show
+a +6.5 lean on spell-power items that Forever's does not, which if anything is
+the opposite of the devaluation hypothesis.
+
+### Two items the importer refused, both correctly
+
+- **Arcanite Blacksmith Hammer** carries the inventory type `Thrown`, which
+  nothing here had seen. Classic equips a thrown weapon in the **ranged** slot,
+  so that is the mapping — and the tooltip keeps the source's own word.
+- **Orb of Deception** has **no equipment slot at all**: a bag item whose only
+  line is a Use effect. It reached the importer because the capture filter
+  keeps anything with an effect, which is right for a trinket and wrong for
+  this. Excluded and listed by name.
+
 ## Forever's rewrites confirm the rating table independently
 
 Where Forever replaced a Classic flat percentage with a rating, the ratio is

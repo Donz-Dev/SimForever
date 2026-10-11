@@ -3505,6 +3505,31 @@ Damage", at a ratio of 3.0 across every pair in the data -- and charging both
 treats one design decision as two purchases: dropping the rider takes Forever's
 non-PvP healing items from 112.1% to **102.8%**.
 
+**AND THE BLUES CONFIRM ALL OF IT ON A POPULATION THAT FITTED NONE OF IT.**
+611 rares at item level 50-60 price on a DIFFERENT quality row --
+`0.625 x ilvl - 1.15` -- and with the epic settings carried over unchanged they
+land at **100.3% +/- 2.3 for Classic's own and 100.6% +/- 0.8 for Forever's**.
+Best fit against that control is **stamina 0.99** and **healing 0.49**, against
+the 1.0 the owner ruled and the 0.45 the source states. **Nothing about the
+blues was used to choose either number**, which makes this the strongest
+evidence in the thread -- and at stamina 0.67 the same blues read 93.8% and
+87.0%, reproducing the artefact exactly.
+
+**A SECOND QUALITY ROW AND A SECOND ITEM-LEVEL BAND IS WHAT AN INDEPENDENT
+CHECK LOOKS LIKE**, as against more items of the kind already fitted. The epic
+work could not distinguish "the model is right" from "the model has been tuned
+to these items"; the blues can, because they were never in the tuning set.
+
+**AND THE EXTENSION FOUND TWO IMPORTER GAPS, BOTH REAL.** `Thrown` is an
+inventory type nothing here had seen -- Classic equips a thrown weapon in the
+RANGED slot, so that is the mapping, with the source's own word kept in the
+tooltip. And **Orb of Deception has no equipment slot at all**, a bag item
+whose only line is a Use effect: it reached the importer because the capture
+filter keeps anything with an effect, which is right for a trinket and wrong
+for this. Excluded and listed by name, under its own heading rather than the
+test-item one -- **two exclusions for two reasons are two lines of output**,
+because a shared label made the Orb read as a developer test item.
+
 **AND WITH THE BY-PRODUCT NOT CHARGED FOR, 0.45 FITS.** The paired spell damage
 is 1/3 of the healing (measured 3.0, range 2.86-3.14); dropping it, healing
 items sit **+2.6 +/- 2.7 over their own siblings in Classic and +2.0 +/- 3.6 in

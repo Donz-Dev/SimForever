@@ -14,6 +14,8 @@ import warlockItems from '../../data/items/sod-warlock.json';
 import priestItems from '../../data/items/sod-priest.json';
 import foreverNewEpics from '../../data/items/forever-new-epics.json';
 import foreverChangedEpics from '../../data/items/forever-changed-epics.json';
+import foreverNewRares from '../../data/items/forever-new-rares.json';
+import foreverChangedRares from '../../data/items/forever-changed-rares.json';
 
 /**
  * Items, from Wowhead's Classic tooltip data.
@@ -108,6 +110,16 @@ const SLOTS_BY_INVENTORY_TYPE: Readonly<Record<string, readonly EquipmentSlot[]>
   // inventory type, and the same engine slot a shield uses.
   'Held In Off-hand': ['offHand'],
   Ranged: ['ranged'],
+  /*
+   * A THROWN WEAPON, WHICH IS THE RANGED SLOT IN CLASSIC.
+   *
+   * The Arcanite Blacksmith Hammer is the first one in this data. It is a real
+   * weapon with damage and a speed, and Classic equips it where a bow goes --
+   * so it maps to `ranged` and `weaponSlotFor` resolves it the same way. The
+   * capture keeps the source's own word "Thrown" in the tooltip; only the SLOT
+   * is translated.
+   */
+  Thrown: ['ranged'],
   /*
    * An idol, libram or totem.
    *
@@ -750,6 +762,7 @@ const ITEM_FILES: readonly RawData[] = [
    * from `tools/rotation_fingerprint.ts` are unchanged.
    */
   foreverNewEpics,
+  foreverNewRares,
 ] as unknown as readonly RawData[];
 
 /**
@@ -769,7 +782,8 @@ const ITEM_FILES: readonly RawData[] = [
  * "+28 Critical Strike Rating", which at 14 per point is the same 2%.
  * ----------------------------------------------------------------------------
  */
-const OVERRIDE_FILE = foreverChangedEpics as unknown as RawData;
+const OVERRIDE_FILES = [foreverChangedEpics, foreverChangedRares] as unknown as readonly RawData[];
+const OVERRIDE_ITEMS: readonly RawItem[] = OVERRIDE_FILES.flatMap((file) => file.items);
 
 const BASE_ITEMS = ITEM_FILES.flatMap((file) => file.items);
 
@@ -787,16 +801,16 @@ if (duplicates.length > 0) {
  * because an id moved, or a file was renamed -- would leave the Classic
  * version in place and look like nothing at all.
  */
-export const FOREVER_OVERRIDDEN_IDS: readonly number[] = OVERRIDE_FILE.items
+export const FOREVER_OVERRIDDEN_IDS: readonly number[] = OVERRIDE_ITEMS
   .map((item) => item.id)
   .filter((id) => BASE_ITEMS.some((item) => item.id === id))
   .sort((a, b) => a - b);
 
-const overrideById = new Map(OVERRIDE_FILE.items.map((item) => [item.id, item] as const));
+const overrideById = new Map(OVERRIDE_ITEMS.map((item) => [item.id, item] as const));
 
 const RAW_ITEMS: readonly RawItem[] = [
   ...BASE_ITEMS.map((item) => overrideById.get(item.id) ?? item),
-  ...OVERRIDE_FILE.items.filter((item) => !BASE_ITEMS.some((base) => base.id === item.id)),
+  ...OVERRIDE_ITEMS.filter((item) => !BASE_ITEMS.some((base) => base.id === item.id)),
 ];
 
 export const ITEMS: readonly Item[] = RAW_ITEMS.map(buildItem);

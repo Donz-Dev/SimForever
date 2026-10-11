@@ -15,6 +15,8 @@ Nine files, 151 items and 2 enchants between them. **One file per set**, so
 | `sod-warlock.json` | 8 | A Warlock's -- Felheart with the Deathmist pieces |
 | `sod-priest.json` | 9 | A Shadow Priest's -- Vestments of Prophecy with Anathema |
 | `forever-new-epics.json` | 449 | **REAL FOREVER DATA.** Every new epic at item level 55 and up in beta build 1.60.1.70338. Not a curated set and nothing equips it -- it is what Forever actually has |
+| `forever-new-rares.json` | 412 | **REAL FOREVER DATA.** Every new RARE (blue) item at item level 50-60 |
+| `forever-changed-rares.json` | 198 | **REAL FOREVER DATA**, and definitive. Classic rares Forever changed; also an OVERRIDE layer |
 | `forever-changed-epics.json` | 614 | **REAL FOREVER DATA, and the DEFINITIVE version of any item it names.** Every CLASSIC epic at item level 55 and up that Forever changed. It is an OVERRIDE layer: three ids collide with a stand-in and the Forever side wins |
 
 Every one after the first came from a **sixtyupgrades.com set the project owner

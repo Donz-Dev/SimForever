@@ -58,6 +58,23 @@ const CAPTURES = [
       'and spell crit, 10 per 1% hit, 12 per 1% dodge, with no variation across ' +
       '83 items that carry both.',
   },
+  {
+    capture: 'tools/data/forever-new-rares.capture.json',
+    out: 'src/data/items/forever-new-rares.json',
+    set: 'forever-new-rares',
+    what: 'Every NEW rare (blue) weapon and armour piece at item level 50 to 60',
+  },
+  {
+    capture: 'tools/data/forever-changed-rares.capture.json',
+    out: 'src/data/items/forever-changed-rares.json',
+    set: 'forever-changed-rares',
+    what:
+      'Every CLASSIC rare (blue) item at item level 50 to 60 that Forever CHANGED. ' +
+      'Priced on the BLUE row of the quality table, 0.625*ilvl - 1.15, and the 113 ' +
+      'wording-only ones are a second control group -- one that independently ' +
+      'confirms stamina at 1.0 (best fit 0.99) on a different quality formula and a ' +
+      'different item level band from the epics.',
+  },
 ];
 
 /** Inventory types that appear on their own line, with no subclass after a tab. */
@@ -69,6 +86,10 @@ const BARE_INVENTORY_TYPES = new Set([
   'Held In Off-hand',
   'Ranged',
   'Relic',
+  // A thrown weapon. Classic puts it in the RANGED slot, which is the mapping
+  // `itemData` makes -- the source's own word is kept here so the tooltip and
+  // the slot do not have to agree textually.
+  'Thrown',
 ]);
 
 /** Every inventory type the capture can carry, so an unknown one is caught. */
@@ -313,20 +334,39 @@ const capture = JSON.parse(readFileSync(CAPTURE, 'utf8'));
  * `JSON.stringify` with no spacing -- is what makes the two comparable, and a
  * mismatch means the file was edited after it was accepted.
  */
-const { _note, _sha256_of_payload: claimed, ...payload } = capture;
+const {
+  _note,
+  _sha256_of_payload: claimed,
+  _sha256_of_joined_payload: joined,
+  ...payload
+} = capture;
 const recomputed = createHash('sha256').update(JSON.stringify(payload)).digest('hex');
 
 const problemsBeforeItems = [];
 const items = [];
 const problems = [];
-const excluded = [];
+/** Excluded for two different reasons, reported as two different lines. */
+const testItems = [];
+const notGear = [];
 for (const raw of capture.items) {
   if (TEST_ITEM.test(raw.name)) {
-    excluded.push(`${raw.name} (${raw.id})`);
+    testItems.push(`${raw.name} (${raw.id})`);
     continue;
   }
   const { item, unknown } = convert(raw);
-  if (!item.inventoryType) problems.push(`${item.name} (${item.id}): no inventory type`);
+  if (!item.inventoryType) {
+    /*
+     * NOT EQUIPPABLE, SO NOT GEAR. An item with no inventory type has no slot
+     * to go in -- Orb of Deception is a bag item whose only line is a Use
+     * effect. It reached this far because the capture filter keeps anything
+     * with an effect, which is right for a trinket and wrong for this.
+     *
+     * Listed by name like every other exclusion rather than counted as a
+     * problem, because a problem stops the write and this is simply not gear.
+     */
+    notGear.push(`${raw.name} (${raw.id})`);
+    continue;
+  }
   for (const line of unknown) problems.push(`${item.name} (${item.id}): unread line "${line}"`);
   items.push(item);
 }
@@ -338,9 +378,24 @@ for (const item of items) {
 }
 
 console.log(`capture: build ${capture.build}, ${capture.items.length} items, taken ${capture.build_date}`);
+/*
+ * WHICH HASH GUARDS WHAT, and they are not the same guarantee.
+ *
+ * `_sha256_of_payload` is re-checked here and guards the FILE ON DISK against
+ * being edited after it was accepted. For a capture taken in one piece it is
+ * also the figure the browser produced, so it guards the transfer too.
+ *
+ * The RARE captures were taken as ONE two-pack payload and split afterwards,
+ * so their per-file hash was computed at split time and never saw a browser.
+ * `_sha256_of_joined_payload` is the browser-verified one, and it is recorded
+ * rather than re-checkable here because the thing it covers is not this file.
+ * Saying "MATCHES" about a hash this process generated would be a check that
+ * cannot fail.
+ */
 console.log(
   `         payload sha256 ${recomputed === claimed ? 'MATCHES' : 'DOES NOT MATCH'} the ` +
-    `hash taken in the browser (${claimed.slice(0, 16)}...)`,
+    `recorded ${joined ? 'per-file' : 'browser'} hash (${claimed.slice(0, 16)}...)` +
+    (joined ? `; transfer was verified as the joined payload ${joined.slice(0, 16)}...` : ''),
 );
 if (recomputed !== claimed) {
   console.error(`         recomputed ${recomputed}`);
@@ -352,8 +407,11 @@ problems.push(...problemsBeforeItems);
 if (capture.dropped_tokens) {
   console.log(`dropped as having nothing to model: ${capture.dropped_tokens.join(', ')}`);
 }
-if (excluded.length > 0) {
-  console.log(`excluded ${excluded.length} developer test items: ${excluded.join(', ')}`);
+if (testItems.length > 0) {
+  console.log(`excluded ${testItems.length} developer test items: ${testItems.join(', ')}`);
+}
+if (notGear.length > 0) {
+  console.log(`excluded ${notGear.length} with no equipment slot: ${notGear.join(', ')}`);
 }
 console.log(`converted ${items.length} items`);
 const withWeapon = items.filter((i) => i.weapon).length;
@@ -380,7 +438,8 @@ if (process.argv.includes('--write')) {
       `tools/import_forever_items.mjs from the capture in tools/data/, which records ` +
       `its own SHA-256.`,
     source: capture.source,
-    excludedTestItems: excluded,
+    excludedTestItems: testItems,
+    excludedNotEquippable: notGear,
     foreverBuild: capture.build,
     classicBuild: capture.classic_build,
     capturedOn: capture.build_date,

@@ -43,6 +43,7 @@
   "90 Epic Frost Wand (20335)",
   "90 Epic Frost Shroud (20336)"
  ],
+ "excludedNotEquippable": [],
  "foreverBuild": "1.60.1.70338",
  "classicBuild": "1.15.9.69722",
  "capturedOn": "2026-10-10",
