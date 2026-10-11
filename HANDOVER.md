@@ -14,6 +14,8 @@ the tooling to be a bit more sophisticated as well."
 | 3 | **Prot Warr** list: four moves, the owner's order | 471.5 -> 471.1 (**-0.4**), deaths 6.17 -> 6.18 | 753.7 |
 | 3 | **Prot Warr** food: +40 Attack Power -> **+20 Stamina** | **deaths 6.17 -> 5.93**, at -5.0 DPS | **753.6** |
 | 4 | **Hack and Slash** is global across BOTH HANDS -- a TALENT fix, before the Rogue lists | Combat 776.2 -> **808.7** (**+32.5 REAL**) | **754.9** |
+| 5 | **Venom** list, respecified: Rupture out, Eviscerate back | 684.9 -> **718.9** (**+33.5 REAL**) | 756.3 |
+| 5 | **Venom** food: +40 Attack Power -> **+20 Agility** | +0.3 | **756.3** |
 
 **AND MORE ROWS CAN BE ADDED, WHICH IS THE POINT OF ITS BEING A TABLE** --
 there are twenty-two lists left and the owner has said so. **THE HEADER IS
@@ -28,6 +30,89 @@ figure of merit is a DEATH COUNT, and both of its changes are read there.
 **THE FOURTH IS NOT A LIST AT ALL**, and that is worth a row rather than a
 footnote: the owner asked for the Rogue next and named a TALENT that had to be
 fixed first. **It was the largest single figure of the four rounds.**
+
+## Round five: Venom, where the owner reversed two measured decisions
+
+**+33.5, AND ALL OF IT IS THE LIST.** The agility food is **+0.3** -- a Rogue
+gets 1 attack power a point, so +20 Agility is HALF the attack power of +40 and
+buys crit with the difference, and the two come out level. 24 of 25 rows are
+0.0 to the decimal.
+
+### Two reversals, and both of ours were measured
+
+| | what we had, and why | what the owner specified |
+| --- | --- | --- |
+| **Rupture** | measured INTO this list at **+16.7**, because the build's points were overflowing -- ~28.5 gained a fight with **7.21 wasted at the cap** | **out entirely** |
+| **Eviscerate** | taken OUT because it fired **0.0 times**: its gate wanted Slice and Dice above TEN seconds, Venom above TEN, AND exactly FIVE points, with Rupture taking the pool at four before the third could be true | **back**, at three points and a three-second floor -- **3.6 casts a fight** |
+
+**THE OVERFLOW ARGUMENT SURVIVES INTACT AND POINTS SOMEWHERE ELSE.** Rupture
+was not there because Rupture is good; it was there because the points had
+nowhere to go. The owner has given them a different outlet by LOOSENING every
+number on the entry that could not fire, which is why this is a
+respecification rather than a revert -- and `USES=1` confirms every one of the
+seven entries fires.
+
+**SO "AN ENTRY THAT CANNOT FIRE" WAS THE RIGHT DIAGNOSIS AND "REMOVE IT" WAS
+ONE OF TWO CURES.** The note on the removal said an entry that cannot fire "is
+the single most common rotation bug in this project and the one that hides
+best", and it was right about the entry; what it did not consider is that the
+gate was what could not fire, and the gate is a number.
+
+### Cold Blood now aims at a finisher, and its GCD is what makes that work
+
+The previous version fired it at **zero points and 60 energy**, on the stated
+reasoning that the next ability would be the builder. The owner's gate is the
+opposite in every term -- **three points, 35 energy, both buffs up** -- which is
+Eviscerate's own gate plus the energy to pay for it. **The 35 is not Cold
+Blood's cost**, because Cold Blood is free; it is the cost of what it is saved
+for.
+
+**THE OWNER ASKED FOR COLD BLOOD TO TAKE NO GLOBAL COOLDOWN AND IT ALREADY
+DID**, which is the result rather than a disappointment -- and it is
+load-bearing for this list where it was not for the last one. Pinned on the
+EVENT STREAM as well as the flag.
+
+**AND THE GAP IS ONE 100ms POLL RATHER THAN ZERO**, which is the documented
+price of a free off-GCD cast: the actor is left FREE, so `nextDecisionTime`
+returns `now + ROTATION_POLL_MS`. Charge and the four racial cooldowns already
+pay it. **The test asserts the BAND and not the instant**, because the
+distinction the owner's gate depends on is poll-versus-global, not zero.
+
+### A note can contradict its own entry, and the owner's screenshot shows one
+
+Their panel reads **"energy <= 10"** with a note underneath saying **"Under 20
+is the compromise"**. Both are correct about different moments: the gate was
+edited and **the note is a frozen string that an edit does not touch**.
+
+**NOTHING HERE CAN FIX A HAND-EDITED ENTRY**, and the stock lists are now
+asserted self-consistent instead -- `consumableCooldowns({ thistleTeaEnergy })`
+builds the note from the same number the condition uses, so the only way to see
+a note disagree with its gate is to have edited it yourself. **Whether the
+panel should drop or flag a note when its condition changes is an open
+question.**
+
+**AND THE GATE IS A PARAMETER RATHER THAN A MOVED CONSTANT**, because the entry
+is in a SHARED list fragment: five profiles drink Thistle Tea -- all four Rogues
+and the Cat Druid -- from one entry every list spreads. `CONSUMABLE_COOLDOWNS`
+is that function called with nothing, so the other 25 lists are byte-identical.
+
+### The test file was rewritten before it landed
+
+Its first version ran three batches of 200, 200 and 40 and cost **7.5 seconds**,
+making it the heaviest file in the suite -- and `chargeAndShieldTalents` timed
+out on the run that added it.
+
+**THAT FILE IS A DOCUMENTED FLAKE UNDER LOAD**, 1.6s alone against a 5s limit,
+and this is its FOURTH recorded instance. **The run was captured before being
+re-run this time**, which is the rule this file states and had already been
+broken once: the full suite passed at 3,414 and the file timed in isolation, so
+both halves of the evidence survive.
+
+**SO IT IS NOT PROOF OF CAUSE, AND IT IS STILL A REASON NOT TO SPEND SEVEN
+SECONDS ASKING A QUESTION WORTH ONE.** Every question the file asks of a fight
+is "does this fire at all", and `uses` is a MEAN PER FIGHT -- sixty iterations
+answer it as well as three hundred. One memoised batch, **518ms**, same
+fourteen assertions.
 
 ## Round four: Hack and Slash, a five-point talent worth nothing
 
@@ -437,12 +522,18 @@ as an accident.
 
 ## What is left
 
-- **TWENTY-TWO LISTS**, which is the rest of the ask. 2H Arms was the first,
-  DW Fury the second, Prot Warr the third; round four was a TALENT rather than
-  a list, so the count did not move. **Re-count this against the table at the
-  top of this section rather than decrementing it** -- which is the rule this
-  file applies to every other derived figure, and the two places are a commit
-  apart.
+- **TWENTY-ONE LISTS**, which is the rest of the ask. 2H Arms was the first,
+  DW Fury the second, Prot Warr the third, Venom the fourth; round four was a
+  TALENT rather than a list, so the count did not move there. **Re-count this
+  against the table at the top of this section rather than decrementing it** --
+  which is the rule this file applies to every other derived figure, and the
+  two places are a commit apart.
+- **WHETHER THE PANEL SHOULD DROP OR FLAG A NOTE WHOSE CONDITION WAS EDITED.**
+  The owner's own Venom screenshot shows a gate of 10 under a note saying 20.
+  The stock lists cannot disagree with themselves; a hand-edited entry can.
+- **THE OTHER THREE ROGUE LISTS**, and with them whether the Thistle Tea gate
+  of ten is this list's or the archetype's. Four of five would still not be a
+  row: the Cat Druid drinks it too.
 - **WHETHER WEAPONMASTER READS THE SAME WAY AS HACK AND SLASH**, which is a
   question for the owner and not an engine gap: the capability exists and the
   reason on the talent names it. It moves no figure today.
@@ -3176,7 +3267,7 @@ demonstrated at the top. **Re-count rather than re-reading the sentence.**
 | --- | --- |
 | **Talents** | 260 fully, 39 partly, 105 ruled out, **62 a live gap**, out of **466** -- from 132 before the class dives |
 | **Abilities** | 114 declared against 478 captured |
-| **Profiles** | **25**, all measured, **mean 754.9** on FOREVER'S OWN ITEMS -- every earlier figure in this file was measured on Classic and Season of Discovery stand-ins, so the contributions below belong to that gear and not to this mean: the armour enchants were +27.0 of it, the pre-pull consumables +105.9, the racials **+9.8 at round one**, the MID-FIGHT consumables **+17.7** and the Life Tap gate **+3.5** |
+| **Profiles** | **25**, all measured, **mean 756.3** on FOREVER'S OWN ITEMS -- every earlier figure in this file was measured on Classic and Season of Discovery stand-ins, so the contributions below belong to that gear and not to this mean: the armour enchants were +27.0 of it, the pre-pull consumables +105.9, the racials **+9.8 at round one**, the MID-FIGHT consumables **+17.7** and the Life Tap gate **+3.5** |
 | **Racials** | **10 races, 40 traits**: 15 do something, 20 effects ruled out, 11 a live gap |
 | **Scope rulings** | **9 members**, all the owner's, carrying 129 TALENT entries and 19 racial declarations |
 | **Placeholders** | **11 declared** -- see the milestone table, and count DECLARATIONS. **One of the eleven is not a ruleset number**: `PLACEHOLDER_PREFERRED_WEIGHT` is the Gear panel's stat-sorting weight, which no simulation reads, so it can sort a list badly and cannot move a figure |
@@ -4888,17 +4979,17 @@ cannot audit, which is why the check is a SET comparison and not a row count.
 | LW Ranged | Hunter | 7/39/5 | 912.5 | | Fire Mage | Mage | 10/39/2 | 753.0 |
 | Firelock | Warlock | 5/11/35 | 891.4 | | Enh Shaman | Shaman | 17/34/0 | 750.7 |
 | Hawk Melee | Hunter | 16/11/24 | 883.0 | | SM/DS | Warlock | 40/11/0 | 722.4 |
-| Cat Druid | Druid | 9/34/8 | 859.0 | | Hemo Rogue | Rogue | 17/3/31 | 715.8 |
-| Arcane Mage | Mage | 47/4/0 | 857.7 | | Shockadin | Paladin | 23/0/28 | 714.4 |
-| BM Hunter | Hunter | 31/20/0 | 856.2 | | Venom Rogue | Rogue | 37/12/2 | 684.9 |
+| Cat Druid | Druid | 9/34/8 | 859.0 | | **Venom Rogue** | Rogue | 37/12/2 | **718.9** |
+| Arcane Mage | Mage | 47/4/0 | 857.7 | | Hemo Rogue | Rogue | 17/3/31 | 715.8 |
+| BM Hunter | Hunter | 31/20/0 | 856.2 | | Shockadin | Paladin | 23/0/28 | 714.4 |
 | 2H Arms | Warrior | 39/10/2 | 849.7 | | Rupture Rogue | Rogue | 12/8/31 | 659.0 |
 | Frostfire Mage | Mage | 0/29/22 | 837.0 | | Ele Shaman | Shaman | 38/13/0 | 651.4 |
 | LW Melee | Hunter | 7/13/31 | 831.5 | | Prot Warr | Warrior | 17/0/34 | 469.7 |
 | Seal Twist Ret | Paladin | 15/0/36 | 816.5 | | Prot Pally | Paladin | 8/34/9 | 400.6 |
-| **Combat Rogue** | Rogue | 18/33/0 | **808.7** | | Bear Druid | Druid | 9/42/0 | 395.7 |
+| Combat Rogue | Rogue | 18/33/0 | 808.7 | | Bear Druid | Druid | 9/42/0 | 395.7 |
 | Moonkin | Druid | 38/0/13 | 788.4 | | | | | | |
 
-The mean across **25** is **754.9**, RE-SUMMED FROM THE ROWS ABOVE rather than
+The mean across **25** is **756.3**, RE-SUMMED FROM THE ROWS ABOVE rather than
 adjusted, by `tools/update_baseline_table.py`.
 
 **THE TOP IS DW FURY AT 974.3 +/-10.3, AND LW RANGED IS SECOND AT 888.9
