@@ -1,3 +1,148 @@
+# THE TEMPLATE GEAR, AIMED AT FOREVER'S OWN ITEMS INSTEAD OF AT A TARGET
+
+**THE GEAR PANEL'S SECOND ROUND, AND IT IS THE ONE THAT MOVED FIGURES.** The
+first built the planner and moved nothing; this one is six owner tweaks to the
+benchmark sets, two of which are about what a set CARRIES.
+
+**MEAN 719.6 -> 736.1, 19 rows up and 6 down**, and the split is the whole
+story: **casters +42.7**, physical non-tank +5.2, the three tanks **-0.5**. 3,324
+tests, typecheck and build clean.
+
+| | the owner's ask | what it took |
+| --- | --- | --- |
+| 1 | icons instead of question marks | a table sourced FROM real items |
+| 2 | "Seal Twist Ret (E65)", and the tooltip in their order | a rewritten `makeItem`, plus a `Classes:` line |
+| 3 | crit is too prevalent, trinkets worst | `SHARE_WEIGHT` and two trinket archetypes |
+| 4 | class-restricted items are being offered | 895 items carry a line nothing read |
+| 5 | "Hit Rating", not "Hit Chance" | one label |
+| 6 | caster spell power is way down | the other half of 3 |
+
+**A ROW CAN BE ADDED TO THAT TABLE.**
+
+## The question changed, and that is what made it answerable
+
+The ask was "shoot for 750 spell power". Then: **"if 750 isn't reachable that's
+fine. I want it to be realistic."**
+
+That turned an unverifiable target into a measurable one, and
+`tools/real_set_shape.ts` is what answers it -- the per-slot distribution of a
+stat across REAL Forever items a class can equip, PvP excluded, summed over a
+full set:
+
+| item level 60-70 | median | p75 | best in database |
+| --- | --- | --- | --- |
+| crit rating, a warrior set | 168 | 182 | **210** |
+| spell power, a mage set | 290 | 345 | **397** |
+
+**Against a benchmark set carrying 295 crit and 205 spell power.** So crit sat
+**40% above the best real set in the game** and spell power sat **below an
+ordinary one** -- which is exactly the pair of symptoms reported, arrived at
+independently.
+
+**A BENCHMARK SET SHOULD SIT BETWEEN p75 AND BEST**, which is the one judgement
+in this round: these sets exist so two builds can be compared at one item
+level, so each should be a STRONG set of that level and must not exceed what
+the game contains. After: **crit 185, spell power 376**.
+
+**AND THE MEDIAN IS THE ANSWER WHERE THE MAXIMUM IS NOT.** A first pass took
+the single richest spell-power item in every slot and got 503 -- a ceiling no
+character wears, cherry-picked across factions, raids and professions. The
+median over the items that carry the stat at all is what a piece of that kind
+looks like.
+
+## Real trinkets carry nothing, which is the opposite of the guess
+
+Of the **35 real trinkets between item level 58 and 72, all 35 carry a proc or
+an on-use effect and 6 carry any engine stat** -- dodge, on tank trinkets. A
+real trinket's contribution is an effect this engine cannot model.
+
+So the benchmark trinkets were the worst thing in a set for a reason nothing
+would have flagged: a trinket is a ONE-stat slot, four of the five preference
+lists open with Crit, and the trinket multiplier made the pair **the two
+largest crit sources in the whole set -- 68 rating, 4.9% crit, from two items.**
+
+**THE OWNER'S RULING IS A PAIR OF ARCHETYPES**: "it's expected to see trinkets
+that have 28 crit rating + a scaling spell power / attack power value. OR pure
+spell power trinkets", with "a maximum of 28 crit rating (2%) across both
+trinkets". So the first is the crit-plus-scaling one, the second is pure, and
+the pair carries 28 between them.
+
+**A MAXIMUM IS NOT A FIXED AMOUNT**, which the B55 sets proved: a blue
+item-level-55 trinket has a budget of 23.3 points and 28 crit costs 28 of them,
+so the flat figure put the item **20% over its own budget** AND left nothing
+for the scaling half -- turning the archetype back into the pure crit trinket it
+replaced. `trinketCrit` clamps it the way `staminaFloor` already clamps, and
+only B55 carries less.
+
+## 895 items name a class, and nothing read the line
+
+The proficiency table answers "may this class wear leather". It cannot answer
+"may a Warrior wear the ROGUE tier set", which is leather and says so on its own
+tooltip -- and **895 of the 1,946 items on file carry a `Classes:` line**,
+nearly half the database. Thirteen distinct wordings, all comma-separated class
+names; **no item carries a `Races:` line**, which was checked rather than
+assumed.
+
+It is parsed in `buildItem` and checked FIRST in `canEquip`. A Warrior's head
+slot went from 132 items to 54.
+
+**AND 184 SET PIECES LEAVE IT OUT, WHICH IS A SOURCE GAP AND IS FOR THE
+OWNER.** Conqueror's Crown states "Classes: Warrior" and Bonescythe Helmet
+states nothing -- checked in the raw capture JSON, so it is not an importer bug.
+The T2.5 sets are the ones affected and they are the highest item level, so they
+sort to the TOP of a Warrior's list, which is what was seen.
+
+**NOTHING INFERS A CLASS FROM A SET BONUS**, and that is deliberate: Devilsaur
+Armor, the Dragon Mail sets and the Highlander's/Defiler's PvP sets are crafted
+and reputation sets with no class restriction at all, so "has a set bonus
+therefore belongs to a class" is wrong for a good fraction of the 184. The count
+is pinned in `proficiency.test.ts` instead.
+
+## What the measurement said, and the containment check
+
+| | n | mean delta |
+| --- | --- | --- |
+| casters | 8 | **+42.7** |
+| physical non-tank | 14 | +5.2 |
+| **tanks** | 3 | **-0.5** |
+
+**THE TANKS NOT MOVING IS THE CHECK, NOT A RESULT.** Their preference lists name
+no Crit and no damage stat, so `SHARE_WEIGHT` and the trinket archetypes cannot
+reach them -- and the one thing that does reach them, the tail rotation, buys
+Block and Defense they were not getting. -0.5 over three profiles says the two
+cancelled rather than that nothing happened, which `tools/benchmark_stat_report.ts`
+confirms directly: Prot Warr's stamina is unchanged at 324.
+
+**AND A BUG WAS CAUGHT BY EXACTLY THAT.** The first version of the trinket
+branch passed an EMPTY share list to a build with no Crit and no damage stat, so
+all three tanks and the Bear got two blank trinkets and the set silently lost 68
+stamina. The DPS moved by less than the interval; the stat report moved by 68.
+
+## The five bugs this round, and how each was found
+
+| what | found by |
+| --- | --- |
+| 895 items' class line read by nothing | the owner, using the panel |
+| trinkets carrying 68 crit between them | the owner, reading the character sheet |
+| caster spell power below an ordinary real set | the owner, expecting 750 |
+| 28 crit overspending a B55 trinket by 20% | `benchmarkGear.test.ts`'s budget assertion |
+| two blank trinkets on every tank | `benchmark_stat_report.ts`, not the DPS |
+
+**THREE OF THE FIVE WERE THE OWNER READING THE APP**, which is now the fourth
+round running. The two the suite caught were both caught by an assertion that
+exists because something earlier went wrong the same way -- the budget check and
+the stat report.
+
+## What is left
+
+- **THE 184 UNRESTRICTED SET PIECES** need either a ruling or a re-pull. Forty-
+  eight set names, of which maybe thirty are genuine class sets.
+- **E85 RUNS ~8% ABOVE THE BEST REAL ITEM LEVEL 80-92 SET** -- crit 271 against
+  252, spell power 531 against 491. Arguably right for the top benchmark, and
+  recorded rather than tuned.
+- **THE DEFAULT STAT VALUATION IS STILL EVERY PREFERRED STAT AT 1.00**, pending
+  the owner's table.
+
 # THE GEAR PANEL IS A CHARACTER PLANNER, AND NOT ONE FIGURE MOVED
 
 **THE THIRD UI PASS.** The owner asked for six things on the Gear panel: move
@@ -2128,11 +2273,11 @@ demonstrated at the top. **Re-count rather than re-reading the sentence.**
 | --- | --- |
 | **Talents** | 260 fully, 39 partly, 105 ruled out, **62 a live gap**, out of **466** -- from 132 before the class dives |
 | **Abilities** | 114 declared against 478 captured |
-| **Profiles** | **25**, all measured, **mean 719.6** on FOREVER'S OWN ITEMS -- every earlier figure in this file was measured on Classic and Season of Discovery stand-ins, so the contributions below belong to that gear and not to this mean: the armour enchants were +27.0 of it, the pre-pull consumables +105.9, the racials **+9.8 at round one**, the MID-FIGHT consumables **+17.7** and the Life Tap gate **+3.5** |
+| **Profiles** | **25**, all measured, **mean 736.1** on FOREVER'S OWN ITEMS -- every earlier figure in this file was measured on Classic and Season of Discovery stand-ins, so the contributions below belong to that gear and not to this mean: the armour enchants were +27.0 of it, the pre-pull consumables +105.9, the racials **+9.8 at round one**, the MID-FIGHT consumables **+17.7** and the Life Tap gate **+3.5** |
 | **Racials** | **10 races, 40 traits**: 15 do something, 20 effects ruled out, 11 a live gap |
 | **Scope rulings** | **9 members**, all the owner's, carrying 129 TALENT entries and 19 racial declarations |
 | **Placeholders** | **10 declared** -- see the milestone table, and count DECLARATIONS |
-| **Tests** | **3,101** on Node 20 and 22 |
+| **Tests** | **3,324** on Node 20 and 22 |
 
 **FOUR CLASSES ARE ESSENTIALLY DONE** -- Warrior 1 live gap, Paladin 1, Druid 2,
 Rogue 3 -- and the remaining 62 sit mostly in the Warlock (19), Priest (12) and
@@ -3836,21 +3981,21 @@ cannot audit, which is why the check is a SET comparison and not a row count.
 
 | Profile | Class | Talents | DPS | | Profile | Class | Talents | DPS |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| DW Fury | Warrior | 17/34/0 | 974.3 | | Shadow Priest | Priest | 13/3/35 | 728.0 |
-| LW Ranged | Hunter | 7/39/5 | 888.9 | | Moonkin | Druid | 38/0/13 | 698.1 |
-| Hawk Melee | Hunter | 16/11/24 | 877.1 | | Hemo Rogue | Rogue | 17/3/31 | 690.1 |
-| Cat Druid | Druid | 9/34/8 | 852.2 | | Fire Mage | Mage | 10/39/2 | 684.5 |
-| BM Hunter | Hunter | 31/20/0 | 839.5 | | Shockadin | Paladin | 23/0/28 | 681.5 |
-| 2H Arms | Warrior | 39/10/2 | 830.9 | | Venom Rogue | Rogue | 37/12/2 | 670.8 |
-| Seal Twist Ret | Paladin | 15/0/36 | 825.5 | | Rupture Rogue | Rogue | 12/8/31 | 635.7 |
-| LW Melee | Hunter | 7/13/31 | 819.4 | | SM/DS | Warlock | 40/11/0 | 625.8 |
-| Frostfire Mage | Mage | 0/29/22 | 800.3 | | Ele Shaman | Shaman | 38/13/0 | 593.1 |
-| Firelock | Warlock | 5/11/35 | 794.3 | | Prot Warr | Warrior | 17/0/34 | 455.5 |
-| Arcane Mage | Mage | 47/4/0 | 779.9 | | Bear Druid | Druid | 9/42/0 | 367.3 |
-| Enh Shaman | Shaman | 17/34/0 | 760.5 | | Prot Pally | Paladin | 8/34/9 | 360.6 |
-| Combat Rogue | Rogue | 18/33/0 | 755.5 | | | | | | |
+| DW Fury | Warrior | 17/34/0 | 974.3 | | Enh Shaman | Shaman | 17/34/0 | 754.1 |
+| LW Ranged | Hunter | 7/39/5 | 893.9 | | **Shadow Priest** | Priest | 13/3/35 | **750.9** |
+| Hawk Melee | Hunter | 16/11/24 | 871.4 | | **Fire Mage** | Mage | 10/39/2 | **725.7** |
+| Cat Druid | Druid | 9/34/8 | 850.7 | | **Hemo Rogue** | Rogue | 17/3/31 | **710.4** |
+| **Firelock** | Warlock | 5/11/35 | **848.4** | | **Shockadin** | Paladin | 23/0/28 | **701.3** |
+| BM Hunter | Hunter | 31/20/0 | 841.3 | | **SM/DS** | Warlock | 40/11/0 | **686.3** |
+| 2H Arms | Warrior | 39/10/2 | 833.2 | | Venom Rogue | Rogue | 37/12/2 | 678.9 |
+| **Arcane Mage** | Mage | 47/4/0 | **825.3** | | **Rupture Rogue** | Rogue | 12/8/31 | **653.7** |
+| LW Melee | Hunter | 7/13/31 | 821.6 | | **Ele Shaman** | Shaman | 38/13/0 | **645.2** |
+| Seal Twist Ret | Paladin | 15/0/36 | 821.2 | | Prot Warr | Warrior | 17/0/34 | 452.7 |
+| Frostfire Mage | Mage | 0/29/22 | 806.0 | | Prot Pally | Paladin | 8/34/9 | 366.3 |
+| **Combat Rogue** | Rogue | 18/33/0 | **769.4** | | Bear Druid | Druid | 9/42/0 | 362.8 |
+| **Moonkin** | Druid | 38/0/13 | **758.1** | | | | | | |
 
-The mean across **25** is **719.6**, RE-SUMMED FROM THE ROWS ABOVE rather than
+The mean across **25** is **736.1**, RE-SUMMED FROM THE ROWS ABOVE rather than
 adjusted, by `tools/update_baseline_table.py`.
 
 **THE TOP IS DW FURY AT 974.3 +/-10.3, AND LW RANGED IS SECOND AT 888.9

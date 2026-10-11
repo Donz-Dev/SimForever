@@ -260,10 +260,12 @@ describe('an item that names a class is offered only to that class', () => {
     const restricted = ITEMS.filter((item) => item.id < 9_500_000 && item.classRestrictions);
     expect(restricted.length).toBeGreaterThan(800);
     for (const item of restricted) {
-      // Every name parsed is a real class id, and the line is in the tooltip.
-      expect(item.tooltip).toMatch(/^Classes:/m);
+      // Every name parsed is a real class id. The LINE is in the tooltip for
+      // all but the seven the Wowhead capture answers -- see below.
       for (const id of item.classRestrictions!) expect(CLASS_IDS).toContain(id);
     }
+    const fromTooltip = restricted.filter((item) => /^Classes:/m.test(item.tooltip));
+    expect(restricted.length - fromTooltip.length).toBe(7);
   });
 
   it('refuses a named class and allows the one it names', () => {
@@ -315,10 +317,30 @@ describe('an item that names a class is offered only to that class', () => {
    * infers one, and why the number is written down for the owner instead.
    * ----------------------------------------------------------------------------
    */
-  it('records how many set pieces the capture leaves unrestricted', () => {
+  it('records how many set pieces NEITHER source restricts', () => {
     const real = ITEMS.filter((item) => item.id < 9_500_000);
     const setPieces = real.filter((item) => /^\(\d+\) Set/m.test(item.tooltip));
     const unrestricted = setPieces.filter((item) => !item.classRestrictions);
-    expect(`${unrestricted.length} of ${setPieces.length}`).toBe('184 of 742');
+    /*
+     * 184 LACKED A LINE IN FOREVER'S CAPTURE AND EVERY ONE WAS ASKED OF
+     * WOWHEAD; seven -- the Bonescythe set -- had one, which is why the figure
+     * is 177 and not 184. The other 177 carry none in Classic's own data
+     * either, so a Paladin being offered a Frostfire Circlet is what BOTH
+     * sources say about that item rather than a gap in this filter.
+     */
+    expect(`${unrestricted.length} of ${setPieces.length}`).toBe('177 of 742');
+  });
+
+  it('answers a missing line from the capture, and never overrides a stated one', () => {
+    const bonescythe = ITEMS.find((item) => item.name === 'Bonescythe Helmet')!;
+    // Its own tooltip says nothing; the capture says Rogue.
+    expect(bonescythe.tooltip).not.toMatch(/^Classes:/m);
+    expect(bonescythe.classRestrictions).toEqual(['rogue']);
+    expect(canEquip('warrior', bonescythe, 'head')).toBe(false);
+    expect(canEquip('rogue', bonescythe, 'head')).toBe(true);
+
+    // And an item that states its own is answered by the tooltip.
+    const stated = ITEMS.find((item) => /^Classes: Warrior$/m.test(item.tooltip))!;
+    expect(stated.classRestrictions).toEqual(['warrior']);
   });
 });

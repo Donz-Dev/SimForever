@@ -46,6 +46,8 @@ npx vite-node tools/probe_other_assignment.ts    # each preset's `other` consuma
 npx vite-node tools/item_vocabulary.ts           # which item lines the parser does NOT read, by shape
 npx vite-node tools/stamina_share.ts             # what share of a real item's budget is stamina, PvP split out
 ITEMS=19321,21126 npx vite-node tools/item_show.ts   # one item's tooltip beside its parse
+npx vite-node tools/benchmark_stat_report.ts     # what a benchmark set GRANTS, per build, on the character
+STAT=critRating CLASS=warrior npx vite-node tools/real_set_shape.ts   # what a REAL set of that item level carries
 npx vite-node tools/item_budget.ts               # what an item COST to make, and whether it adds up
 FOREVER=1 npx vite-node tools/item_budget.ts     # the 64 Premier PvP cloth pieces, Forever's own
 WEAPONS=1 npx vite-node tools/item_budget.ts     # the 41 new Forever epic weapons
@@ -2544,6 +2546,30 @@ to survive.
   no two-hander at all, a Druid no ranged weapon, and each relic reaches
   exactly the class whose column names it.
 
+**AND AN ITEM'S OWN `Classes:` LINE IS A SECOND FILTER THE TABLE CANNOT
+REPLACE.** The proficiency table answers "may this class wear leather"; it
+cannot answer "may a Warrior wear the ROGUE tier set", which is leather and
+says so on its own tooltip. **895 of the 1,946 items on file carry one** --
+nearly half the database -- and it sat in the tooltip text, read by nothing,
+until the owner was offered the Rogue and Druid tier on a Warrior. Thirteen
+distinct wordings, all comma-separated class names; **no item carries a
+`Races:` line**, which was checked rather than assumed.
+
+**AND 184 SET PIECES CARRY NO LINE, OF WHICH SEVEN HAVE ONE UPSTREAM.** Every
+one was asked of Wowhead, which is allowed here for the reason CLAUDE.md
+already states about Shadowburn's Soul Shard: **the preferred source is SILENT
+rather than different**, so `foreverchanges.pro` having no class field cannot
+contradict a line it is unable to express. Only the Bonescythe set had one.
+**The T3 sets and the tier-0 dungeon sets carry none in Classic's own data
+either**, so a Paladin being offered a Frostfire Circlet is what both sources
+say about that item rather than a gap in the filter -- and whether Forever
+means them class-locked is a question for the owner.
+
+**NOTHING INFERS A CLASS FROM A SET BONUS**, which is the tempting shortcut and
+is wrong for a good fraction of the 177: Devilsaur Armor, the Dragon Mail sets
+and the Highlander's/Defiler's PvP sets are crafted and reputation sets with no
+class restriction at all.
+
 **AND THE FOUR TEST SETS DROPPED EVERY ENCHANT ON A SWAP.**
 `benchmarkEquipmentFor` built each slot as `{ itemId }` and nothing else, so
 pressing E65 and then E75 discarded the whole loadout -- worth **+2.4 to +53.7
@@ -3561,6 +3587,46 @@ it belongs to, it is numbered from 9,500,000 clear of every real id, and
 `itemsForSlot` never offers one, so nothing can mistake it for a drop.
 **THE DANGEROUS VERSION WOULD BE THE SAME ARITHMETIC WITH A REAL ITEM'S NAME ON
 IT.**
+
+**AND A SET'S SHAPE IS AIMED AT FOREVER'S OWN ITEMS, WHICH THE BUDGET CANNOT
+CHECK.** `item_budget.ts` asks whether an item fits its budget and every one
+did while a benchmark set carried **295 crit rating and 205 spell power**
+against real item-level-60-70 sets at **168-210 crit and 290-397 spell power**.
+So crit sat 40% above the best real set in the game and spell power below an
+ordinary one, and nothing in the suite could see it: **the budget's arithmetic
+is about TOTALS and both faults were about SHAPE.**
+
+`tools/real_set_shape.ts` is the measure -- the per-slot distribution of a stat
+over real Forever items a class can equip, PvP excluded, summed across a set --
+and `tools/benchmark_stat_report.ts` is what a generated set grants beside it.
+**THE MEDIAN IS THE ANSWER AND THE MAXIMUM IS NOT**: taking the richest item in
+every slot gives a ceiling no character wears, cherry-picked across factions,
+raids and professions.
+
+**A BENCHMARK SET SITS BETWEEN p75 AND BEST**, which is the one judgement in it:
+these sets exist so two builds can be compared at one item level, so each
+should be a STRONG set of that level and must not exceed what the game
+contains. `SHARE_WEIGHT` is the lever, a per-stat multiplier on the positional
+shares -- **a fraction of budget, so it scales with item level for free**,
+where an absolute pullback would have to be re-derived per set.
+
+**AND A TRINKET IS THE SLOT THAT GOES WRONG.** It is a ONE-stat slot, four of
+the five preference lists open with Crit, and the trinket multiplier made the
+pair **the two largest crit sources in the whole set -- 68 rating from two
+items**. Real trinkets at that item level carry **no passive stats at all**:
+of the 35 on file between item level 58 and 72, all 35 have a proc or an on-use
+effect and 6 carry any engine stat. The owner's replacement is a pair of
+archetypes -- one with 28 crit and a scaling damage stat, one pure -- and
+**A MAXIMUM IS NOT A FIXED AMOUNT**: 28 crit costs 28 budget points and a B55
+trinket has 23.3, so `trinketCrit` clamps it exactly as `staminaFloor` does.
+
+**AND A PREFERRED STAT MUST NOT COME OUT AT ZERO ACROSS A WHOLE SET**, the
+owner's ruling -- "that's unrealistic to how items are actually designed". A
+template may name more stats than a slot holds and the first N were taken every
+time, so the TAIL of a long list was bought nowhere: Ret had no Attack Power,
+the Shockadin no Agility, both Protection builds no Block, the Bear no Defense.
+The last position rotates through the tail by slot index now, which also stops
+every piece in a set carrying the identical five stats.
 
 **HIT AND EXPERTISE ARE ABSOLUTE TOTALS PER SET AND STILL COST BUDGET**, the
 owner's instruction in capitals: "even though the needed hit cap is mandatory,

@@ -1,0 +1,49 @@
+{
+  "source": "https://nether.wowhead.com/classic/tooltip/item/<id> -- the `Classes:` line for items whose foreverchanges.pro capture omits one. Read because the preferred source is SILENT rather than different; see the header of tools/fetch_class_restrictions.mjs.",
+  "captured": "2026-10-11",
+  "candidates": 184,
+  "restrictions": {
+    "22476": {
+      "name": "Bonescythe Breastplate",
+      "classes": [
+        "Rogue"
+      ]
+    },
+    "22477": {
+      "name": "Bonescythe Legplates",
+      "classes": [
+        "Rogue"
+      ]
+    },
+    "22478": {
+      "name": "Bonescythe Helmet",
+      "classes": [
+        "Rogue"
+      ]
+    },
+    "22479": {
+      "name": "Bonescythe Pauldrons",
+      "classes": [
+        "Rogue"
+      ]
+    },
+    "22480": {
+      "name": "Bonescythe Sabatons",
+      "classes": [
+        "Rogue"
+      ]
+    },
+    "22481": {
+      "name": "Bonescythe Gauntlets",
+      "classes": [
+        "Rogue"
+      ]
+    },
+    "22482": {
+      "name": "Bonescythe Waistguard",
+      "classes": [
+        "Rogue"
+      ]
+    }
+  }
+}
