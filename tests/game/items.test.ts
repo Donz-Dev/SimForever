@@ -608,12 +608,27 @@ describe('what the items do that the simulator does not', () => {
      * AND THE ARMOUR ENCHANTS MUST NOT REACH A WEAPON SLOT. This used to
      * assert the three hands against a hard-coded pair of ids, which would
      * have passed just as happily with a helmet enchant appended -- so it asks
-     * the stronger question now: the two weapon ids EXACTLY, and nothing else
-     * offered there.
+     * the stronger question: what each hand offers, EXACTLY.
+     *
+     * THE OWNER HAS SINCE ADDED TWO WEAPON ENCHANTS TO THEIR OWN TABLE --
+     * "+65 Spell Power" for a caster staff, which they distinguished from the
+     * scraped 1H "+30 damage to spells", and "+25 Agility" for the two bow
+     * Hunters' melee stat stick. Both belong on a hand, so the expected list
+     * is written out by NAME: an id is a position in a block and the claim
+     * here is about which enchants a hand offers.
      */
-    for (const slot of ['mainHand', 'offHand', 'twoHand'] as const) {
-      expect(enchantsForSlot(slot).map((e) => e.id), slot).toEqual([20034, 22749]);
-    }
+    const offered = (slot: 'mainHand' | 'offHand' | 'twoHand') =>
+      enchantsForSlot(slot)
+        .map((e) => e.name)
+        .sort((a, b) => a.localeCompare(b));
+    const scraped = ['Enchant Weapon - Crusader', 'Enchant Weapon - Spell Power'];
+    expect(offered('mainHand'), 'mainHand').toEqual(['+25 Agility', ...scraped]);
+    expect(offered('offHand'), 'offHand').toEqual(['+25 Agility', ...scraped]);
+    expect(offered('twoHand'), 'twoHand').toEqual([
+      '+25 Agility',
+      '+65 Spell Power',
+      ...scraped,
+    ]);
 
     /*
      * THE BOW TAKES ONE ENCHANT AND IT IS NOT A WEAPON ONE. "+2% Crit Chance"

@@ -4,6 +4,7 @@ import {
   COMBAT_CONSTANTS,
   createForeverAttackChances,
 } from '../../src/game/combat/attackChances';
+import { ENCHANTS_BY_ID } from '../../src/game/items/itemData';
 import { createPlayer } from '../../src/game/actors/createPlayer';
 import { createTrainingDummy } from '../../src/game/actors/createTrainingDummy';
 import { buildSimulation } from '../helpers/buildSimulation';
@@ -96,14 +97,17 @@ describe('the shield starting set', () => {
      * THE ITEMS ARE GENERATED NOW AND THE ENCHANT IS NOT. This named Brutality
      * Blade and The Immovable Object, which is the owner's Classic set and is
      * deleted; the E65 benchmark set replaces it. What has to stay true is the
-     * SHAPE -- a one-hander, a shield, and Crusader on the hand -- because the
-     * owner asked for the enchants to be kept exactly as they were.
+     * SHAPE -- a one-hander, a shield, and Crusader on the hand.
+     *
+     * **AND THE SHIELD IS ENCHANTED NOW**, which it was not: the owner's table
+     * had no shield column at all, so four builds carrying one had an
+     * unenchantable slot. "+9 Stamina" is the default they asked for.
      * ------------------------------------------------------------------------
      */
     const set = startingEquipmentFor('warrior', 'one_hand_shield');
     expect(set.mainHand?.enchantId).toBe(20034);
     expect(set.shield).toBeDefined();
-    expect(set.shield?.enchantId).toBeUndefined();
+    expect(ENCHANTS_BY_ID.get(set.shield!.enchantId!)?.name).toBe('+9 Stamina');
     expect(set.offHand).toBeUndefined();
   });
 

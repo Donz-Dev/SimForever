@@ -247,17 +247,46 @@ describe('a death takes the survival cooldowns with it', () => {
     const { simulation } = opened();
     void simulation;
 
-    const batch = runProfileBatch(tankProfile());
-    const log = batch.representative.combatLog;
+    /*
+     * ------------------------------------------------------------------------
+     * OVER SEVERAL SEEDS, BECAUSE THIS IS A RATE AND NOT A BOUNDARY.
+     *
+     * It read ONE representative log and required a Last Stand to fade on a
+     * death somewhere in it -- fine while the comment's "a fight with twenty
+     * deaths" was true, and the benchmark gear has since taken the Protection
+     * warrior to about SIX. The mechanism is unchanged; the coincidence simply
+     * stopped landing inside one seeded fight.
+     *
+     * That is this project's own lesson about a cast count: deterministic
+     * under a seed is not the same as a boundary, and a single seed is how a
+     * BOUNDARY is tested -- with a scripted roll. Something that depends on a
+     * death and a buff coinciding is counted over several.
+     * ------------------------------------------------------------------------
+     */
+    let anyDeath = false;
+    let fadesOnDeath = false;
+    for (const seed of [12345, 999, 4242, 8080, 31337]) {
+      const profile = tankProfile() as unknown as {
+        simulation: Record<string, unknown>;
+      };
+      const batch = runProfileBatch({
+        ...profile,
+        simulation: { ...profile.simulation, seed },
+      } as never);
+      const log = batch.representative.combatLog;
+      if (log.some((line) => /dies/.test(line))) anyDeath = true;
+      if (
+        log.some(
+          (line, index) =>
+            /Last Stand fades/.test(line) && index > 0 && /dies/.test(log[index - 1]),
+        )
+      ) {
+        fadesOnDeath = true;
+        break;
+      }
+    }
 
-    const died = log.findIndex((line) => /dies/.test(line));
-    expect(died).toBeGreaterThan(0);
-
-    // Somewhere in a fight with twenty deaths, a Last Stand ends on one.
-    const fadesOnDeath = log.some(
-      (line, index) =>
-        /Last Stand fades/.test(line) && index > 0 && /dies/.test(log[index - 1]),
-    );
+    expect(anyDeath).toBe(true);
     expect(fadesOnDeath).toBe(true);
   });
 });

@@ -335,6 +335,15 @@ interface SlotPlan {
   /** Jewellery takes at most ONE base attribute -- the owner's realism rule. */
   readonly onePrimary?: boolean;
   readonly noArmour?: boolean;
+  /**
+   * One of the EIGHT slots that has an armour class, which is where
+   * `EXCLUSIVE_PAIRS` applies.
+   *
+   * Not the same as "has armour": a cloak has armour and no armour class, and
+   * the owner's rule is about the eight. It is the same eight
+   * `equipRules.ARMOUR_CLASS_SLOTS` names, for the same reason.
+   */
+  readonly armourClassPiece?: boolean;
 }
 
 /**
@@ -368,21 +377,101 @@ interface SlotPlan {
  * ==============================================================================
  */
 export const ARMOUR_SLOTS: readonly SlotPlan[] = [
-  { slot: 'head', inventory: 'Head', slotClass: 'full', stats: 5 },
+  { slot: 'head', inventory: 'Head', armourClassPiece: true, slotClass: 'full', stats: 5 },
   { slot: 'neck', inventory: 'Neck', slotClass: 'light', stats: 3, onePrimary: true, noArmour: true },
-  { slot: 'shoulders', inventory: 'Shoulder', slotClass: 'medium', stats: 4 },
+  { slot: 'shoulders', inventory: 'Shoulder', armourClassPiece: true, slotClass: 'medium', stats: 4 },
   { slot: 'cloak', inventory: 'Back', slotClass: 'light', stats: 3 },
-  { slot: 'chest', inventory: 'Chest', slotClass: 'full', stats: 5 },
-  { slot: 'wrists', inventory: 'Wrist', slotClass: 'light', stats: 3 },
-  { slot: 'gloves', inventory: 'Hands', slotClass: 'medium', stats: 4 },
-  { slot: 'waist', inventory: 'Waist', slotClass: 'medium', stats: 4 },
-  { slot: 'legs', inventory: 'Legs', slotClass: 'full', stats: 5 },
-  { slot: 'feet', inventory: 'Feet', slotClass: 'medium', stats: 4 },
+  { slot: 'chest', inventory: 'Chest', armourClassPiece: true, slotClass: 'full', stats: 5 },
+  { slot: 'wrists', inventory: 'Wrist', armourClassPiece: true, slotClass: 'light', stats: 3 },
+  { slot: 'gloves', inventory: 'Hands', armourClassPiece: true, slotClass: 'medium', stats: 4 },
+  { slot: 'waist', inventory: 'Waist', armourClassPiece: true, slotClass: 'medium', stats: 4 },
+  { slot: 'legs', inventory: 'Legs', armourClassPiece: true, slotClass: 'full', stats: 5 },
+  { slot: 'feet', inventory: 'Feet', armourClassPiece: true, slotClass: 'medium', stats: 4 },
   { slot: 'ring1', inventory: 'Finger', slotClass: 'light', stats: 3, onePrimary: true, noArmour: true },
   { slot: 'ring2', inventory: 'Finger', slotClass: 'light', stats: 3, onePrimary: true, noArmour: true },
   { slot: 'trinket1', inventory: 'Trinket', slotClass: 'trinket', stats: 1, onePrimary: true, noArmour: true },
   { slot: 'trinket2', inventory: 'Trinket', slotClass: 'trinket', stats: 1, onePrimary: true, noArmour: true },
 ];
+
+/**
+ * WHAT A TRINKET CARRIES, declared per template.
+ *
+ * ==============================================================================
+ * IT WAS TWO HARD-CODED ARCHETYPES and the owner has now specified a third
+ * shape for the tanks: "Tank (Bear, Prot Warr, Prot Pally) trinkets shouldn't
+ * both be stamina only. Let's mix it up and do 1 with half item budget on
+ * stamina / half on crit. The other trinket can be similar crit + attack power
+ * for bear and prot warr. And one pure spell power trinket for Prot pally."
+ *
+ * So the pair became a declaration rather than a branch, and the two DPS
+ * archetypes are now the DEFAULT rather than the only thing expressible.
+ *
+ * ------------------------------------------------------------------------------
+ * `cappedCrit` IS THE DPS ARCHETYPE'S CRIT: a fixed rating, capped at
+ * `TRINKET_CRIT_RATING` across the pair and clamped to what the slot can
+ * afford. Listing `Crit` in `stats` instead gives it a SHARE of the budget,
+ * which is what "half item budget on crit" asks for -- two different things,
+ * and a trinket uses one or the other.
+ *
+ * **THE TANK PLANS THEREFORE RUN PAST THE 28 CAP, AND THAT IS THE OWNER'S TWO
+ * STATEMENTS DISAGREEING RATHER THAN A BUG HERE.** "A maximum of 28 crit
+ * rating across both trinkets" was said of the DPS archetypes; "half item
+ * budget on crit" is a later and more specific instruction about the tanks,
+ * and half a trinket's budget is about 21 rating at E65. The later and more
+ * specific statement wins, which is this project's standing rule -- and the
+ * figure it produces is printed by `benchmark_stat_report.ts` so the owner can
+ * see what their two sentences add up to.
+ * ==============================================================================
+ */
+export interface TrinketPlan {
+  /** Takes the capped, clamped crit rating. The DPS archetype's first half. */
+  readonly cappedCrit?: boolean;
+  /** Stats dividing whatever budget is left. */
+  readonly stats: readonly BenchStat[];
+  /**
+   * Divide it EVENLY rather than by `SHARES`.
+   *
+   * "Half item budget on stamina / half on crit" is a 50/50 split, where the
+   * positional table would give 65/35 and `SHARE_WEIGHT` would then halve the
+   * crit again. A trinket is one line or two and has no "first preference" to
+   * express, so an even split is the honest reading of the owner's words.
+   */
+  readonly even?: boolean;
+}
+
+/**
+ * A WEAPON HELD PURELY FOR ITS STATS, in a slot the build never swings.
+ *
+ * ==============================================================================
+ * THE OWNER ASKED FOR TWO KINDS AT ONCE:
+ *
+ *   "2H arms, DW Fury, Prot Warr, Venom, Combat, Rupture, Hemo need a ranged
+ *    weapon stat stick -- for the warrior profile ranged slots make their stat
+ *    budget stamina + crit rating. For the rogue profile ranged slots make
+ *    their stat budget agility + hit rating."
+ *
+ *   "Firelock, SM/DS, Shadow, Fire, Frostfire, and Arcane profiles need a Wand
+ *    weapon stat stick -- these should all be a split item budget with
+ *    intellect + spell power."
+ *
+ * ------------------------------------------------------------------------------
+ * IT NEVER SWINGS AND NOTHING HAD TO BE ADDED FOR THAT. Only the `ranged`
+ * STYLE fires a ranged weapon -- `rangedSlot: 'required'`, which is the four
+ * Hunters -- so for every one of these thirteen the item contributes its stats
+ * and no attacks. The melee Hunters already proved the arrangement.
+ *
+ * AND THE SIX WAND PROFILES ARE EXACTLY THE THREE CLASSES WITH THE WAND
+ * PROFICIENCY. Warlock, Priest and Mage; the Moonkin and the Elemental Shaman
+ * are absent from the owner's list and are also absent from the `wand` column
+ * of their table, which is a pleasing cross-check rather than a coincidence.
+ * ==============================================================================
+ */
+export interface StatStick {
+  /** `Bow`, `Wand`. Decides the icon and the proficiency the item demands. */
+  readonly subclass: string;
+  /** What its budget buys, in descending order. */
+  readonly stats: readonly BenchStat[];
+}
 
 /** A shield carries three, by the same table. Not an armour slot: see `benchmarkSets`. */
 export const SHIELD_STATS = 3;
@@ -780,6 +869,66 @@ export function weightedShares(stats: readonly BenchStat[]): readonly number[] {
 }
 
 /**
+ * STATS A SINGLE ARMOUR PIECE NEVER CARRIES TOGETHER.
+ *
+ * ==============================================================================
+ * THE OWNER'S RULE: "The eight plate armor class item slots shouldn't have
+ * BOTH strength and attack power, this should likely only affect the DPS
+ * warrior profiles."
+ *
+ * **AND IT IS NOT PLATE-ONLY, WHICH THE DATA SETTLES RATHER THAN A JUDGEMENT.**
+ * Across all 1,374 real armour pieces on file -- every class, every slot --
+ * **not one carries both Strength and Attack Power**:
+ *
+ *     Plate    304 pieces   218 with Strength    1 with Attack Power   BOTH 0
+ *     Mail     328           70                 40                     BOTH 0
+ *     Leather  363          123                 33                     BOTH 0
+ *     Cloth    379            0                  0                     BOTH 0
+ *
+ * So the rule is general, and the owner's "likely only the DPS warriors" was a
+ * guess about which PROFILES it would move rather than about its scope.
+ *
+ * AGILITY AND ATTACK POWER ARE NOT A PAIR, which is why this is a list of one
+ * rather than a blanket "no two offensive stats": 8 leather and 21 mail pieces
+ * carry both, so excluding that combination would be inventing a rule the data
+ * contradicts.
+ *
+ * THE EARLIER PREFERENCE WINS, because the spreadsheet's order is the owner's
+ * statement of what the build wants most. Every list that names both puts
+ * Strength first.
+ * ==============================================================================
+ */
+export const EXCLUSIVE_PAIRS: readonly (readonly [BenchStat, BenchStat])[] = [
+  ['Strength', 'Attack Power'],
+];
+
+/**
+ * How often the LATER member of a pair gets the slot instead of the earlier.
+ *
+ * ==============================================================================
+ * ONE SLOT IN FOUR, SO NEITHER MEMBER VANISHES FROM THE SET.
+ *
+ * Dropping the later member outright is the obvious reading of "an item should
+ * not have both", and it took the Rogue's **Strength to zero across the whole
+ * set** -- which is the other rule the owner gave, that a preferred stat going
+ * to nothing "is unrealistic to how items are actually designed". The two
+ * rules are about different scopes: the pair is about ONE ITEM and the zero
+ * check is about the SET, and both can hold at once if the slots take turns.
+ *
+ * THE RATIO IS THE REAL ITEMS', not a convenience. Over armour at item level
+ * 60-80 that each class can equip:
+ *
+ *     a warrior's plate     130 pieces with Strength    14 with Attack Power
+ *     a rogue's leather      33                         22
+ *
+ * -- both present on both, with the earlier preference commoner on each. Three
+ * slots in four is that shape without pretending to a precision two samples
+ * cannot support.
+ * ==============================================================================
+ */
+export const EXCLUSIVE_PAIR_PERIOD = 4;
+
+/**
  * The stats a slot carries, after the jewellery rule has narrowed them.
  *
  * ==============================================================================
@@ -806,6 +955,29 @@ export function weightedShares(stats: readonly BenchStat[]): readonly number[] {
  * every time, which is twenty of the twenty-five.
  * ==============================================================================
  */
+/**
+ * Whether this slot's turn of an exclusive pair goes to the OTHER member.
+ *
+ * Asked of the template's whole `preferred` list rather than of what is
+ * already eligible, so the answer does not depend on how far the loop has
+ * got -- which is what makes it the same for both members and therefore
+ * consistent.
+ */
+function excluded(
+  stat: BenchStat,
+  preferred: readonly BenchStat[],
+  rotation: number,
+): boolean {
+  for (const [first, second] of EXCLUSIVE_PAIRS) {
+    if (stat !== first && stat !== second) continue;
+    if (!preferred.includes(first) || !preferred.includes(second)) continue;
+    const laterWins = rotation % EXCLUSIVE_PAIR_PERIOD === EXCLUSIVE_PAIR_PERIOD - 1;
+    const wanted = laterWins ? second : first;
+    if (stat !== wanted) return true;
+  }
+  return false;
+}
+
 export function statsFor(
   plan: SlotPlan,
   preferred: readonly BenchStat[],
@@ -818,6 +990,12 @@ export function statsFor(
       if (plan.onePrimary && primaries >= 1) continue;
       primaries += 1;
     }
+    /*
+     * NO ARMOUR PIECE CARRIES BOTH HALVES OF AN EXCLUSIVE PAIR, and which half
+     * it carries turns with the slot -- the earlier preference on three slots
+     * in four. See `EXCLUSIVE_PAIRS` and `EXCLUSIVE_PAIR_PERIOD`.
+     */
+    if (plan.armourClassPiece === true && excluded(stat, preferred, rotation)) continue;
     eligible.push(stat);
   }
 

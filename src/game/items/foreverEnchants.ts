@@ -221,6 +221,34 @@ const DECLARED: readonly Declared[] = [
       'ranged-special': { critBonus: 2 },
     },
   },
+
+  /* ==========================================================================
+   * THREE THE OWNER ADDED LATER, AND THEY GO ON THE END.
+   *
+   * The ids are allocated BY POSITION from the 900,000 block, so an entry may
+   * never be reordered or removed once a profile has been saved against it --
+   * a new one goes last or somebody's helmet enchant moves onto their boots.
+   * These are 900,029 to 900,031.
+   *
+   * WHY EACH EXISTS:
+   *
+   *   +65 Spell Power  "The two-handed staff caster enchant (+65 Spell Power)
+   *                    is different from the 1H caster enchant (+30 Spell
+   *                    Power)." The 1H one is the SCRAPED Enchant Weapon -
+   *                    Spell Power (22749), which is "+30 damage to spells";
+   *                    the two-hand figure is the owner's and had no entry.
+   *
+   *   +9 Stamina       The shield default, and the FIRST enchant in the table
+   *                    to name the shield slot at all -- the owner's original
+   *                    column list had none, so four builds carrying a shield
+   *                    had an unenchantable slot.
+   *
+   *   +25 Agility      The melee-weapon default for the two bow Hunters, whose
+   *                    two-hander is a stat stick they never swing.
+   * ========================================================================== */
+  { name: '+65 Spell Power', slots: ['twoHand'], stats: { spellPower: 65 } },
+  { name: '+9 Stamina', slots: ['shield'], stats: { stamina: 9 } },
+  { name: '+25 Agility', slots: ['mainHand', 'offHand', 'twoHand'], stats: { agility: 25 } },
 ];
 
 /**
