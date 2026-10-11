@@ -33,6 +33,8 @@ import { PRESETS_BY_ID, PROFILE_PRESETS } from '../../src/profiles/presets';
 const THISTLE_TEA_GATES: Readonly<Record<string, number>> = {
   rogue_venom: TIGHT_THISTLE_TEA_ENERGY_THRESHOLD,
   rogue_rupture: TIGHT_THISTLE_TEA_ENERGY_THRESHOLD,
+  // Combat Mut has its own list and the owner gave it the same ten.
+  rogue_combat_mut: TIGHT_THISTLE_TEA_ENERGY_THRESHOLD,
   rogue_combat: COMBAT_THISTLE_TEA_ENERGY_THRESHOLD,
   /*
    * ==========================================================================

@@ -162,18 +162,36 @@ describe('which list a Subtlety Rogue runs', () => {
     expect(rogueRotation({ hemorrhage: 1 }).name).toContain('Hemo');
   });
 
-  it('still sends Mutilate to Venom and everything else to Combat', () => {
-    // Mutilate wins even over a Hemorrhage build, which is the existing order.
-    expect(rogueRotation({ mutilate: 1, hemorrhage: 1 }).name).toContain('Venom');
+  it('sends Mutilate to Venom only WITH the Venom capstone', () => {
+    /*
+     * ==========================================================================
+     * THIS ASSERTED `mutilate -> Venom` FULL STOP, AND A SECOND MUTILATE BUILD
+     * MADE THAT WRONG. Combat Mut takes Mutilate and Seal Fate and spends on
+     * Eviscerate; it does NOT take the Venom capstone, and the Venom list's
+     * second entry is the Venom finisher.
+     *
+     * A LIST THAT NAMES AN ABILITY THE BUILD CANNOT CAST IS SKIPPED IN SILENCE,
+     * so the wrong answer here is the kind that produces an ordinary DPS figure
+     * -- which this project has shipped twice, as a Fire Mage running the Arcane
+     * list and a Shockadin running a list built around a talent it does not take.
+     *
+     * MUTILATE STILL WINS OVER HEMORRHAGE, which is the existing order and the
+     * half of this test that did not change.
+     * ==========================================================================
+     */
+    expect(rogueRotation({ mutilate: 1, venom: 1, hemorrhage: 1 }).name).toContain('Venom');
+    expect(rogueRotation({ mutilate: 1, hemorrhage: 1 }).name).toContain('Combat Mut');
     expect(rogueRotation({ adrenaline_rush: 1 }).name).toContain('Combat');
   });
 
-  it('routes each of the four presets to its own list', () => {
+  it('routes each of the five presets to its own list', () => {
     const listFor = (id: string) =>
       rogueRotation(talentsOf(id) as Readonly<Record<string, number>>).name;
     expect(listFor('rogue_venom')).toContain('Venom');
     expect(listFor('rogue_combat')).toContain('Combat');
     expect(listFor('rogue_rupture')).toContain('Rupture');
     expect(listFor('rogue_hemo')).toContain('Hemo');
+    // The fifth, and the one that forced the capstone clause into the dispatch.
+    expect(listFor('rogue_combat_mut')).toContain('Combat Mut');
   });
 });

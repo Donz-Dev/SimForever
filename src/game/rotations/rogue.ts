@@ -405,6 +405,96 @@ export const ROGUE_VENOM: AplList = {
  */
 const EVISCERATE_COMBO_POINTS_COMBAT = MAX_COMBO_POINTS;
 
+/**
+ * COMBAT MUT -- Assassination 30 / Combat 21, Mutilate into Eviscerate.
+ *
+ * ============================================================================
+ * A NEW PROFILE, AND THE OWNER'S FRAMING IS WHAT MAKES IT CHEAP: "this profile
+ * copies everything from Venom except the APL and Talents which I'll provide."
+ * So the preset is the Venom preset with two fields replaced, and this is one
+ * of them.
+ *
+ * IT IS A VENOM ROGUE THAT SPENDS ON EVISCERATE RATHER THAN ON VENOM. Both
+ * builds take Mutilate and Seal Fate -- so both gain about two points a cast
+ * and four on a double crit -- and this one has no Venom entry at all, which
+ * is what the twenty-one Combat points are for: Dual Wield Specialization,
+ * Precision, Puncturing Wounds and Blade Flurry are all about what the two
+ * daggers do rather than about a finisher.
+ *
+ * NO RUPTURE AND NO COLD BLOOD BELOW THE FINISHER, which is where it diverges
+ * from both of its neighbours: Cold Blood sits ABOVE Eviscerate here, as it
+ * does on Venom, but the gate is the owner's own pair -- four points and
+ * twenty-five energy -- rather than Venom's four-term one.
+ * ============================================================================
+ */
+const COMBAT_MUT_SLICE_AND_DICE_POINTS = 1;
+const COMBAT_MUT_COLD_BLOOD_POINTS = 4;
+const COMBAT_MUT_COLD_BLOOD_ENERGY = 25;
+const COMBAT_MUT_EVISCERATE_POINTS = 3;
+
+export const ROGUE_COMBAT_MUT: AplList = {
+  name: 'Rogue (Assassination, Combat Mut)',
+  entries: [
+  /*
+   * SLICE AND DICE OPENS THE LIST, which no other Rogue list does -- and at
+   * ONE point, which three of the four now share. A maintenance buff wants
+   * UPTIME rather than duration, so the cheapest cast that keeps it up is the
+   * right one, and opening with it is that argument taken to the pull.
+   */
+  {
+    abilityId: 'slice_and_dice',
+    condition: all(
+      selfAuraDown('slice_and_dice'),
+      atLeastPoints(COMBAT_MUT_SLICE_AND_DICE_POINTS),
+    ),
+  },
+  /*
+   * THISTLE TEA AT TEN, the third list to take that gate -- see
+   * `TIGHT_THISTLE_TEA_ENERGY_THRESHOLD`. It sits above Blade Flurry and the
+   * Frenzy Potion, which is the owner's order and costs nothing: all three are
+   * free or off the global cooldown.
+   */
+  thistleTeaCooldown(TIGHT_THISTLE_TEA_ENERGY_THRESHOLD),
+  { abilityId: 'blade_flurry' },
+  ...consumableCooldowns({ exclude: ['thistle_tea'] }),
+  ...RACIAL_COOLDOWNS,
+  ...CONSUMABLE_HEALS,
+  /*
+   * COLD BLOOD ABOVE THE FINISHER, AIMED AT IT.
+   *
+   * --------------------------------------------------------------------------
+   * FOUR POINTS AND TWENTY-FIVE ENERGY, which is the Eviscerate beneath it
+   * plus the energy to pay for it -- the same shape the Venom list uses and a
+   * point looser on both terms. Cold Blood is free and takes NO GLOBAL
+   * COOLDOWN, so the Eviscerate is the next thing out and takes the guaranteed
+   * crit; a global between them would aim it at whatever the list reached
+   * first.
+   *
+   * ITS GATE IS A POINT ABOVE EVISCERATE'S ON PURPOSE. Eviscerate spends at
+   * three and Cold Blood waits for four, so the cheapest finisher does not
+   * consume a three-minute cooldown -- which is the opposite of the failure a
+   * matched pair would produce and is not something the order alone can do.
+   * --------------------------------------------------------------------------
+   */
+  {
+    abilityId: 'cold_blood',
+    condition: all(
+      atLeastPoints(COMBAT_MUT_COLD_BLOOD_POINTS),
+      atLeastEnergy(COMBAT_MUT_COLD_BLOOD_ENERGY),
+    ),
+  },
+  /*
+   * EVISCERATE AT THREE, WITH NO FLOORS AT ALL -- which is the third different
+   * answer the four Rogue lists give to the same question. Venom holds it
+   * behind three seconds of two buffs, Rupture behind six seconds of two, and
+   * Combat spends the full five ungated. Nothing here should be normalised
+   * across them.
+   */
+  { abilityId: 'eviscerate', condition: atLeastPoints(COMBAT_MUT_EVISCERATE_POINTS) },
+  { abilityId: 'mutilate' },
+  ],
+};
+
 export const ROGUE_COMBAT: AplList = {
   name: 'Rogue (Combat)',
   entries: [
@@ -798,6 +888,7 @@ export const ROGUE_VENOM_ROTATION: Rotation = compileRotation(ROGUE_VENOM);
 export const ROGUE_COMBAT_ROTATION: Rotation = compileRotation(ROGUE_COMBAT);
 export const ROGUE_RUPTURE_ROTATION: Rotation = compileRotation(ROGUE_RUPTURE);
 export const ROGUE_HEMO_ROTATION: Rotation = compileRotation(ROGUE_HEMO);
+export const ROGUE_COMBAT_MUT_ROTATION: Rotation = compileRotation(ROGUE_COMBAT_MUT);
 
 /**
  * Which list a Rogue runs.
@@ -816,7 +907,26 @@ export const ROGUE_HEMO_ROTATION: Rotation = compileRotation(ROGUE_HEMO);
  * ----------------------------------------------------------------------------
  */
 export function rogueRotation(talents: Readonly<Record<string, number>>): Rotation {
-  if ((talents.mutilate ?? 0) > 0) return ROGUE_VENOM_ROTATION;
+  /*
+   * ==========================================================================
+   * TWO MUTILATE BUILDS NOW, AND THE VENOM CAPSTONE SEPARATES THEM.
+   *
+   * `mutilate > 0` alone sent BOTH to the Venom list, which is the failure
+   * this project has already shipped twice: a Fire Mage ran the Arcane list
+   * and a Shockadin ran a list built around a talent it does not take, and
+   * both produced perfectly ordinary DPS figures. A list that names an ability
+   * the build cannot cast is skipped IN SILENCE.
+   *
+   * THE DISCRIMINATOR IS FUNCTIONAL RATHER THAN AN ARBITRARY TIEBREAK, which
+   * is the rule the Cutthroat clause below already follows: the Venom list is
+   * built around the Venom finisher, so a Mutilate build WITHOUT the talent
+   * cannot run it at all -- its second entry would be dead. Combat Mut takes
+   * Mutilate and Seal Fate and spends on Eviscerate instead.
+   * ==========================================================================
+   */
+  if ((talents.mutilate ?? 0) > 0) {
+    return (talents.venom ?? 0) > 0 ? ROGUE_VENOM_ROTATION : ROGUE_COMBAT_MUT_ROTATION;
+  }
   /*
    * TWO SUBTLETY BUILDS NOW, AND HEMORRHAGE NO LONGER SEPARATES THEM -- both
    * take it, because both are built around it.

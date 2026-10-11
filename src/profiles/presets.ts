@@ -379,6 +379,54 @@ const ROGUE_COMBAT_TALENTS: TalentAllocation = {
 };
 
 /** Rupture -- Assassination 12 / Combat 8 / Subtlety 31. Hemorrhage and bleeds. */
+/**
+ * Combat Mut -- Assassination 30 / Combat 21 / Subtlety 0.
+ *
+ * ============================================================================
+ * A NEW PROFILE, AND THE OWNER'S FRAMING IS WHAT KEEPS IT SMALL: "this profile
+ * copies everything from Venom except the APL and Talents which I'll provide."
+ * So the preset below spreads the Venom one and replaces two fields.
+ *
+ * READ OFF THE TALENT PANEL, and the per-tree totals it prints -- 30, 21, 0 --
+ * are what made the decode checkable. **THEY ARE ALSO WHAT CAUGHT A MISREAD**:
+ * the Combat icons summed to 18 against a stated 21, and exactly two single
+ * talents could close a three-point gap. The owner answered Precision, which
+ * is the one that matters -- +3% hit against Lightning Reflexes' dodge, worth
+ * nothing to a build nothing attacks. **A tree total is the cheap check that a
+ * decode is right**, and it is the one thing a screenshot states in words.
+ *
+ * IT IS A VENOM BUILD THAT SPENDS ON EVISCERATE. Both take Mutilate and Seal
+ * Fate, so both gain about two points a cast and four on a double crit; what
+ * the twenty-one Combat points buy is what the two daggers DO -- Dual Wield
+ * Specialization, Precision, Puncturing Wounds, Blade Flurry -- rather than a
+ * finisher. The Venom capstone is NOT taken, which is what `rogueRotation`
+ * reads to tell the two apart.
+ * ============================================================================
+ */
+const ROGUE_COMBAT_MUT_TALENTS: TalentAllocation = {
+  // Assassination, 30
+  malice: 5,
+  ruthlessness: 3,
+  murder: 2,
+  improved_slice_and_dice: 3,
+  relentless_strikes: 1,
+  lethality: 5,
+  cold_blood: 1,
+  improved_poisons: 4,
+  mutilate: 1,
+  seal_fate: 5,
+  // Combat, 21
+  improved_eviscerate: 3,
+  lightning_reflexes: 2,
+  puncturing_wounds: 3,
+  precision: 3,
+  endurance: 2,
+  improved_sprint: 2,
+  flawless_execution: 1,
+  dual_wield_specialization: 4,
+  blade_flurry: 1,
+};
+
 const ROGUE_RUPTURE_TALENTS: TalentAllocation = {
   /*
    * ==========================================================================
@@ -1200,6 +1248,42 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withBenchmarkGear(withS
       consumables: { ...AGILITY_CONSUMABLES, other: 'thistle_tea', food: 'food_agility' },
       encounter: { ...createDefaultProfile().encounter, targetAttacks: false },
     }),
+  },
+  {
+    /*
+     * ==========================================================================
+     * COMBAT MUT, AND IT IS THE VENOM PRESET WITH TWO FIELDS REPLACED.
+     *
+     * The owner's own framing: "this profile copies everything from Venom
+     * except the APL and Talents which I'll provide." So it SPREADS the Venom
+     * build rather than restating it -- same race, same gear, same enchants,
+     * same consumables, same encounter -- and the two things that differ are
+     * the two things named.
+     *
+     * A SPREAD RATHER THAN A COPY, which is the rule this file already follows
+     * for `ROGUE_HEMO` deriving from `ROGUE_RUPTURE`: a hand-written copy of
+     * eight fields drifts from its original silently, and the copy is the one
+     * nobody re-reads. `presets.test.ts` asserts every preset sets every field,
+     * and a spread satisfies that by construction.
+     *
+     * THE APL IS NOT A FIELD HERE: `withStockRotations` fills each preset's
+     * rotation from `aplFor`, which dispatches on the TALENTS. So replacing the
+     * allocation is what gives this profile its own list, and `rogueRotation`
+     * reads the Venom capstone to tell the two Mutilate builds apart.
+     * ==========================================================================
+     */
+    id: 'rogue_combat_mut',
+    label: 'Combat Mut',
+    detail: 'Undead, dual-wield, standing target. 30 Assassination / 21 Combat',
+    characterClass: 'rogue',
+    build: () => {
+      const venom = PRESETS_BY_ID.get('rogue_venom')!.build();
+      return {
+        ...venom,
+        character: { ...venom.character, name: 'Combat Mut' },
+        talents: { ...ROGUE_COMBAT_MUT_TALENTS },
+      };
+    },
   },
   {
     id: 'rogue_combat',

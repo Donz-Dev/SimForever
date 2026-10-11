@@ -165,6 +165,15 @@ export const BENCHMARK_TEMPLATES: readonly BenchmarkTemplate[] = [
   { presetId: 'dw_fury', characterClass: 'warrior', label: 'DW Fury', hit: 80, expertise: 10, preferred: MELEE, armour: 'Plate', weapons: { kind: 'dualWield', subclass: 'Axe', offSubclass: 'Axe' }, statStick: WARRIOR_STICK },
   { presetId: 'prot_warr', characterClass: 'warrior', label: 'Prot Warr', hit: 70, expertise: 20, preferred: TANK, armour: 'Plate', weapons: { kind: 'oneHandShield', subclass: 'Sword' }, trinkets: TANK_TRINKETS, statStick: WARRIOR_STICK },
   { presetId: 'rogue_venom', characterClass: 'rogue', label: 'Venom', hit: 120, expertise: 10, preferred: ROGUE, armour: 'Leather', weapons: { kind: 'dualWield', subclass: 'Dagger', offSubclass: 'Dagger' }, statStick: ROGUE_STICK },
+  /*
+   * COMBAT MUT IS THE VENOM TEMPLATE WITH TWO FIELDS CHANGED, which is the
+   * owner's own framing of the profile: it copies everything from Venom but
+   * the APL and the talents. Same leather, same two daggers, same hit cap,
+   * same preference order -- so a difference between the two profiles is a
+   * difference in the BUILD rather than in what it is wearing, which is the
+   * whole point of a benchmark set.
+   */
+  { presetId: 'rogue_combat_mut', characterClass: 'rogue', label: 'Combat Mut', hit: 120, expertise: 10, preferred: ROGUE, armour: 'Leather', weapons: { kind: 'dualWield', subclass: 'Dagger', offSubclass: 'Dagger' }, statStick: ROGUE_STICK },
   { presetId: 'rogue_combat', characterClass: 'rogue', label: 'Combat', hit: 120, expertise: 10, preferred: ROGUE, armour: 'Leather', weapons: { kind: 'dualWield', subclass: 'Sword', offSubclass: 'Dagger' }, statStick: ROGUE_STICK },
   { presetId: 'rogue_rupture', characterClass: 'rogue', label: 'Rupture', hit: 120, expertise: 10, preferred: ROGUE, armour: 'Leather', weapons: { kind: 'dualWield', subclass: 'Dagger', offSubclass: 'Dagger' }, statStick: ROGUE_STICK },
   /*

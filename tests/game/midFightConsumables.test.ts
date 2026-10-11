@@ -394,7 +394,7 @@ describe('what selecting one does to the priority list', () => {
     }
   });
 
-  it('gives all 25 presets both a Potion and an Other', () => {
+  it('gives all 26 presets both a Potion and an Other', () => {
     /*
      * THE COUNT, so that a preset losing its row is a failure rather than a
      * quiet omission -- which is the argument `update_baseline_table.py` makes
@@ -413,7 +413,7 @@ describe('what selecting one does to the priority list', () => {
       expect(consumables.potion, `${preset.id} potion`).toBeDefined();
       expect(consumables.other, `${preset.id} other`).toBeDefined();
     }
-    expect(PROFILE_PRESETS).toHaveLength(25);
+    expect(PROFILE_PRESETS).toHaveLength(26);
   });
 
   it("partitions `other` by pool, exactly as the owner's ruling does", () => {
@@ -448,6 +448,7 @@ describe('what selecting one does to the priority list', () => {
       prot_pally: 'healthstone',
       // The energy bars -- the four Rogues, and the Cat by name.
       rogue_venom: 'thistle_tea',
+      rogue_combat_mut: 'thistle_tea',
       rogue_combat: 'thistle_tea',
       rogue_rupture: 'thistle_tea',
       rogue_hemo: 'thistle_tea',

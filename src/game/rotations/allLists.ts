@@ -15,7 +15,13 @@ import {
 } from './paladin';
 import { PET_PRIORITY } from './pet';
 import { PRIEST_SHADOW } from './priest';
-import { ROGUE_COMBAT, ROGUE_HEMO, ROGUE_RUPTURE, ROGUE_VENOM } from './rogue';
+import {
+  ROGUE_COMBAT,
+  ROGUE_COMBAT_MUT,
+  ROGUE_HEMO,
+  ROGUE_RUPTURE,
+  ROGUE_VENOM,
+} from './rogue';
 import { SHAMAN_ELEMENTAL, SHAMAN_ENHANCEMENT } from './shaman';
 import { WARLOCK_AFFLICTION, WARLOCK_DESTRUCTION } from './warlock';
 import {
@@ -146,6 +152,17 @@ export const ALL_PRIORITY_LISTS: readonly PriorityListRecord[] = [
     owner: 'rogue',
     list: ROGUE_COMBAT,
     profiles: ['rogue_combat'],
+  },
+  {
+    /*
+     * THE SECOND MUTILATE BUILD. `rogueRotation` reads the VENOM CAPSTONE to
+     * tell it from the Venom list -- a functional discriminator, because the
+     * Venom list is built around a finisher this build cannot cast.
+     */
+    name: 'ROGUE_COMBAT_MUT',
+    owner: 'rogue',
+    list: ROGUE_COMBAT_MUT,
+    profiles: ['rogue_combat_mut'],
   },
   {
     name: 'ROGUE_RUPTURE',
