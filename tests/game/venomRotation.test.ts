@@ -1,9 +1,5 @@
 import { describe, expect, it } from 'vitest';
 import { ROGUE_VENOM } from '../../src/game/rotations/rogue';
-import {
-  THISTLE_TEA_ENERGY_THRESHOLD,
-  VENOM_THISTLE_TEA_ENERGY_THRESHOLD,
-} from '../../src/game/rotations/consumableCooldowns';
 import { PRESETS_BY_ID } from '../../src/profiles/presets';
 import { COLD_BLOOD_ABILITY } from '../../src/game/abilities/rogue';
 import { runProfileBatch } from '../../src/simulator';
@@ -266,58 +262,17 @@ describe('what the Venom Rogue drinks', () => {
      * `AGILITY_CONSUMABLES` is shared with the other three Rogues and the melee
      * Hunter; the owner has named one of the five.
      */
-    for (const id of ['rogue_combat', 'rogue_rupture', 'rogue_hemo', 'lw_melee']) {
+    for (const id of ['rogue_hemo', 'lw_melee']) {
       expect(PRESETS_BY_ID.get(id)!.build().consumables.food, id).toBe('food_attack_power');
     }
   });
 
-  it('drinks its Thistle Tea at ten, and leaves the other four carriers at twenty', () => {
-    /*
-     * ==========================================================================
-     * A SHARED LIST FRAGMENT, NOT A SELECTION, which is what made this one
-     * harder than the food. FIVE profiles drink Thistle Tea -- all four Rogues
-     * and the Cat Druid -- and the entry lives in `CONSUMABLE_COOLDOWNS`, which
-     * every list spreads.
-     *
-     * So the gate is a PARAMETER rather than a moved constant, and this is the
-     * check that the parameter reached exactly one list.
-     * ==========================================================================
-     */
-    expect(VENOM_THISTLE_TEA_ENERGY_THRESHOLD).toBe(10);
-    expect(THISTLE_TEA_ENERGY_THRESHOLD).toBe(20);
-
-    const gateOf = (presetId: string) => {
-      const entry = PRESETS_BY_ID.get(presetId)!
-        .build()
-        .rotation.entries.find((e) => e.abilityId === 'thistle_tea');
-      return (entry?.condition as { amount?: number } | undefined)?.amount;
-    };
-    expect(gateOf('rogue_venom')).toBe(10);
-    for (const id of ['rogue_combat', 'rogue_rupture', 'rogue_hemo', 'druid_cat']) {
-      expect(gateOf(id), id).toBe(20);
-    }
-  });
-
-  it('keeps the note and the gate telling the same story', () => {
-    /*
-     * --------------------------------------------------------------------------
-     * A NOTE IS A FROZEN STRING AND CAN CONTRADICT ITS OWN ENTRY, which is
-     * visible in the owner's own screenshot: they changed the number to 10 in
-     * the panel and the note beneath it still read "Under 20", because editing
-     * a condition does not touch the note attached to it.
-     *
-     * NOTHING HERE CAN FIX THE PANEL -- a hand-edited entry keeps whatever note
-     * it had. What this asserts is that the STOCK lists are self-consistent, so
-     * the only way to see a note disagree with its gate is to have edited it
-     * yourself.
-     * --------------------------------------------------------------------------
-     */
-    for (const id of ['rogue_venom', 'rogue_combat', 'druid_cat']) {
-      const entry = PRESETS_BY_ID.get(id)!
-        .build()
-        .rotation.entries.find((e) => e.abilityId === 'thistle_tea')!;
-      const gate = (entry.condition as { amount: number }).amount;
-      expect(entry.note, id).toContain(`Under ${gate} is the compromise`);
-    }
-  });
+  /*
+   * THE THISTLE TEA GATE MAP AND THE NOTE CHECK BOTH MOVED to
+   * `consumableCooldownGates.test.ts`, which is where a claim about a SHARED
+   * fragment belongs -- the owner has now given THREE different gates (twenty
+   * shared, fifteen on Combat, ten here), and a per-list copy of that set means
+   * one ruling fails several files and the set has to be edited in each. It is
+   * the same move the food row's test made into `consumables.test.ts`.
+   */
 });

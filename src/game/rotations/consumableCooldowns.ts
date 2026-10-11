@@ -141,7 +141,7 @@ export const DEMONIC_RUNE_MANA_FRACTION = 0.1;
 export const THISTLE_TEA_ENERGY_THRESHOLD = 20;
 
 /**
- * The Venom Rogue's own Thistle Tea gate, which is TIGHTER than the shared one.
+ * The TIGHT Thistle Tea gate: ten, which the Venom and Rupture lists both use.
  *
  * ============================================================================
  * THE OWNER'S FIGURE, READ OFF THEIR OWN PANEL: ten rather than twenty. It is
@@ -149,19 +149,41 @@ export const THISTLE_TEA_ENERGY_THRESHOLD = 20;
  * of the hundred at worst instead of twenty, at the cost of the gate opening
  * less often.
  *
+ * NAMED FOR THE NUMBER RATHER THAN FOR A LIST, because the owner has now given
+ * it twice -- for Venom and for Rupture -- and a constant called
+ * `VENOM_...` that two lists read is the shape that drifts. The third gate,
+ * fifteen, is the Combat Rogue's and has its own.
+ *
  * A SECOND CONSTANT RATHER THAN A MOVE OF THE FIRST, because the entry is in a
  * SHARED list fragment and FIVE profiles drink Thistle Tea: all four Rogues and
- * the Cat Druid. The owner respecified ONE of them, so moving the shared number
- * would change four published figures on a screenshot about a fifth -- which is
- * the food rulings' lesson applied to a list fragment instead of a selection.
+ * the Cat Druid. THREE of the five are named now and they hold TWO different
+ * numbers between them, so no move of the shared constant can satisfy them --
+ * which is the same arithmetic the food rows reached, and it is what settles
+ * the shape rather than making it awkward.
  *
- * IF THE OTHER THREE ROGUE LISTS ARRIVE WITH THE SAME TEN, the honest edit is
- * the shared constant and this one disappears -- and the Cat is then the only
- * profile left on twenty, which is a question for the owner rather than an
- * answer. Four of five is still not a row.
+ * WHAT IS LEFT IS THE HEMO ROGUE AND THE CAT DRUID, still on twenty.
  * ============================================================================
  */
-export const VENOM_THISTLE_TEA_ENERGY_THRESHOLD = 10;
+export const TIGHT_THISTLE_TEA_ENERGY_THRESHOLD = 10;
+
+/**
+ * The Combat Rogue's own Thistle Tea gate: fifteen.
+ *
+ * ============================================================================
+ * THREE DIFFERENT NUMBERS NOW -- twenty shared, fifteen here, ten on Venom --
+ * and that is what settles the shape rather than making it awkward. A shared
+ * list fragment holds ONE value and the owner has given three, so the gate had
+ * to become a parameter and the question of "should the shared constant just
+ * move" is answered for good.
+ *
+ * IT IS THE SAME TRADE AT A DIFFERENT POINT. Thistle Tea restores a full
+ * hundred into a cap of a hundred, so every point on the bar when it is drunk
+ * is thrown away: a lower gate wastes less and opens less often. Fifteen sits
+ * between the Venom Rogue's ten and the Cat Druid's twenty, which is what a
+ * build that spends its energy at a middling rate should want.
+ * ============================================================================
+ */
+export const COMBAT_THISTLE_TEA_ENERGY_THRESHOLD = 15;
 
 /**
  * The rage a Mighty Rage Potion is drunk at.
@@ -206,9 +228,27 @@ export const MIGHTY_RAGE_THRESHOLD = 25;
  * ----------------------------------------------------------------------------
  */
 export function consumableCooldowns(
-  options: { readonly thistleTeaEnergy?: number } = {},
+  options: {
+    readonly thistleTeaEnergy?: number;
+    /**
+     * Ability ids to leave OUT, for a list that places one of them itself.
+     *
+     * ------------------------------------------------------------------------
+     * THE COMBAT ROGUE PUTS THISTLE TEA ABOVE ITS RACIALS and the rest of the
+     * row below them, so the group is split rather than reordered -- the
+     * owner dragged one entry to the top of their panel and left everything
+     * else where it was.
+     *
+     * AN EXCLUSION RATHER THAN A HAND-WRITTEN COPY, because a copy of a shared
+     * fragment drifts from it silently and is the copy nobody re-reads. The
+     * excluded entry is still built HERE, by `thistleTeaCooldown`, so its
+     * condition and its note cannot disagree with the shared one's.
+     * ------------------------------------------------------------------------
+     */
+    readonly exclude?: readonly string[];
+  } = {},
 ): readonly AplEntry[] {
-  const thistleTeaEnergy = options.thistleTeaEnergy ?? THISTLE_TEA_ENERGY_THRESHOLD;
+  const exclude = new Set(options.exclude ?? []);
   return [
     /*
      * THE THREE POOL RESTORES, EACH GATED ON ITS OWN POOL. A restore drunk into a
@@ -228,11 +268,7 @@ export function consumableCooldowns(
       condition: resourceFraction('atMost', DEMONIC_RUNE_MANA_FRACTION, 'mana'),
       note: `Used under ${DEMONIC_RUNE_MANA_FRACTION * 100}% mana, the owner's figure -- TIGHTER than the mana potion's gate, so a character carrying both spends the free one first. It costs 600 to 1000 Hit Points and is refused below 1000 rather than allowed to kill.`,
     },
-    {
-      abilityId: 'thistle_tea',
-      condition: resource('atMost', thistleTeaEnergy, 'energy'),
-      note: `100 energy into a cap of 100, so every point on the bar is wasted. Under ${thistleTeaEnergy} is the compromise between waste and the gate ever opening.`,
-    },
+    thistleTeaCooldown(options.thistleTeaEnergy),
     /*
      * THE ONE THAT IS BOTH. Its rage half wants a trough and its strength half
      * wants to be up early; the gate serves the rage and the Cat ignores it.
@@ -268,7 +304,28 @@ export function consumableCooldowns(
      * per two minutes to achieve that nothing. It is the one mid-fight consumable
      * with no line in any list, and it is the one with nothing to decide.
      */
-  ];
+  ].filter((entry) => !exclude.has(entry.abilityId));
+}
+
+/**
+ * The Thistle Tea entry on its own, so a list can place it itself.
+ *
+ * THE NOTE IS BUILT FROM THE SAME NUMBER THE CONDITION USES, which is the whole
+ * reason the gate is a parameter here rather than something patched onto the
+ * entry afterwards: a note is a FROZEN STRING, so an override applied to the
+ * condition alone leaves the row explaining a gate it no longer has. The
+ * owner's own Venom screenshot shows one -- a gate of 10 under a note reading
+ * "Under 20" -- because editing a condition in the panel does not touch its
+ * note. Nothing can fix a hand-edited entry; what this guarantees is that a
+ * STOCK list cannot disagree with itself.
+ */
+export function thistleTeaCooldown(energy?: number): AplEntry {
+  const gate = energy ?? THISTLE_TEA_ENERGY_THRESHOLD;
+  return {
+    abilityId: 'thistle_tea',
+    condition: resource('atMost', gate, 'energy'),
+    note: `100 energy into a cap of 100, so every point on the bar is wasted. Under ${gate} is the compromise between waste and the gate ever opening.`,
+  };
 }
 
 /** The shared seven, on the default gates. What every list but one spreads. */

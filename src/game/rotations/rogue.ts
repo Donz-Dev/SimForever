@@ -2,10 +2,11 @@ import type { Rotation } from '../../engine';
 import type { AplCondition, AplList } from './apl';
 import { RACIAL_COOLDOWNS } from './racialCooldowns';
 import {
-  CONSUMABLE_COOLDOWNS,
+  COMBAT_THISTLE_TEA_ENERGY_THRESHOLD,
   CONSUMABLE_HEALS,
-  VENOM_THISTLE_TEA_ENERGY_THRESHOLD,
+  TIGHT_THISTLE_TEA_ENERGY_THRESHOLD,
   consumableCooldowns,
+  thistleTeaCooldown,
 } from './consumableCooldowns';
 import {
   all,
@@ -16,6 +17,7 @@ import {
   resource,
   selfHas,
   selfTime,
+  targetHas,
   targetTime,
 } from './apl';
 
@@ -67,8 +69,14 @@ import { AMBUSH_ENERGY_COST } from '../abilities/rogue';
 /** "combo points >= N", read through the TARGET so a stale pool reads zero. */
 const atLeastPoints = (minimum: number) => comboPoints('atLeast', minimum);
 
-/** "exactly N", which for the cap is the same question `AT_FIVE` asks. */
-const exactlyPoints = (count: number) => comboPoints('exactly', count);
+/*
+ * `exactlyPoints` IS GONE, AND SO IS EVERY `exactly` GATE IN THIS FILE. All
+ * three Rogue finisher gates the owner respecified read `atLeast` now -- Venom
+ * at three, Combat at five, Rupture at four -- so the helper had no caller
+ * left. `atLeast` at the cap and `exactly` at the cap are the same test; they
+ * stop being the same the moment a cap moves, which is why the owner's wording
+ * is followed rather than preserved.
+ */
 
 /** "<buff> is not active", on the Rogue. */
 const selfAuraDown = (auraId: string) => selfTime('atMost', 0, auraId);
@@ -83,6 +91,17 @@ const selfAuraDown = (auraId: string) => selfTime('atMost', 0, auraId);
  * the same, so it is named rather than written inline twice.
  */
 const selfAuraAtLeast = (auraId: string, seconds: number) => selfTime('atLeast', seconds, auraId);
+
+/**
+ * "<debuff> duration >= N seconds", on the TARGET -- `selfAuraAtLeast`'s mirror.
+ *
+ * THE FIRST FLOOR IN THESE LISTS THAT IS ON A BLEED rather than on a buff the
+ * character carries. The Rupture list holds Eviscerate behind six seconds of
+ * Rupture: spending four points on a direct hit while the bleed is about to
+ * fall off is how a Subtlety Rogue loses the thing it is built around.
+ */
+const targetAuraAtLeast = (auraId: string, seconds: number) =>
+  targetTime('atLeast', seconds, auraId);
 
 /** Every condition in a list must hold. */
 
@@ -248,10 +267,10 @@ export const ROGUE_VENOM: AplList = {
    * AND THE THISTLE TEA GATE IS THIS LIST'S OWN, at ten rather than the shared
    * twenty. Five profiles drink Thistle Tea and the owner respecified one, so
    * the number is passed in rather than moved; see
-   * `VENOM_THISTLE_TEA_ENERGY_THRESHOLD`.
+   * `TIGHT_THISTLE_TEA_ENERGY_THRESHOLD`.
    * ==========================================================================
    */
-  ...consumableCooldowns({ thistleTeaEnergy: VENOM_THISTLE_TEA_ENERGY_THRESHOLD }),
+  ...consumableCooldowns({ thistleTeaEnergy: TIGHT_THISTLE_TEA_ENERGY_THRESHOLD }),
   /*
    * THE RACIAL COOLDOWNS AND THE HEALS, both of which narrow to NOTHING on the
    * preset that runs this list: a Venom Rogue is UNDEAD, which learns no active
@@ -371,120 +390,110 @@ export const ROGUE_VENOM: AplList = {
  * Sinister Strike needs no dagger, no position and no stealth.
  */
 /**
- * What the Combat list spends on Eviscerate, measured rather than chosen.
+ * What the Combat list spends on Eviscerate: the FULL five, the owner's figure.
  *
- * NAMED BECAUSE IT IS A MEASURED RESULT AND NOT A TOOLTIP NUMBER, so the sweep
- * that produced it has somewhere to live and the next reader does not take it
- * for the owner's figure. The sweep is on the entry.
+ * ----------------------------------------------------------------------------
+ * IT WAS TWO AND IT WAS MEASURED, and this constant's own doc comment used to
+ * say "measured rather than chosen ... the next reader does not take it for the
+ * owner's figure". It is the owner's figure now, which is the opposite reading
+ * of the same name -- so the comment is rewritten rather than left to be read
+ * the wrong way round.
+ *
+ * THE SWEEP THAT CHOSE TWO IS QUOTED ON THE ENTRY, along with why a figure from
+ * it is a price rather than a veto.
+ * ----------------------------------------------------------------------------
  */
-const EVISCERATE_COMBO_POINTS_COMBAT = 2;
+const EVISCERATE_COMBO_POINTS_COMBAT = MAX_COMBO_POINTS;
 
 export const ROGUE_COMBAT: AplList = {
   name: 'Rogue (Combat)',
   entries: [
+  /*
+   * ==========================================================================
+   * THISTLE TEA FIRST, ABOVE THE RACIALS -- and the rest of its own row BELOW
+   * them, which is why the group is split rather than reordered.
+   *
+   * THAT IS WHAT THE OWNER'S PANEL SHOWS, and the shape of it says how it was
+   * made: Thistle Tea moved from third to first and Blood Fury and the Frenzy
+   * Potion stayed exactly where they were relative to each other. One entry
+   * dragged to the top, nothing else touched.
+   *
+   * IT IS WORTH ABOUT NOTHING AND IS IMPLEMENTED ANYWAY. All three are free
+   * and off the global cooldown, so the only thing a position decides among
+   * them is which 100ms poll each takes -- and the two beneath it are on long
+   * cooldowns, so neither is a floor under anything. The owner drew it; the
+   * cost of being faithful here is one line.
+   * ==========================================================================
+   */
+  thistleTeaCooldown(COMBAT_THISTLE_TEA_ENERGY_THRESHOLD),
+  /*
+   * THE RACIAL COOLDOWNS, AFTER WHATEVER OPENS THIS LIST.
+   *
+   * Free, off the global cooldown, and skipped in silence by every build that
+   * is not of the race that learns them. The Combat preset is an ORC, so Blood
+   * Fury is the one of the four it draws.
+   */
+  ...RACIAL_COOLDOWNS,
+  ...consumableCooldowns({ exclude: ['thistle_tea'] }),
+  ...CONSUMABLE_HEALS,
+  /*
+   * THE TWO COOLDOWNS, ABOVE EVERYTHING THAT SPENDS ENERGY -- the owner's
+   * order, and they moved up from sixth and seventh.
+   *
+   * --------------------------------------------------------------------------
+   * NEITHER IS A FLOOR, which is what makes the position cheap: both are on
+   * cooldowns far longer than a fight's decision cadence, so an ungated entry
+   * here is refused on nearly every poll and the list walks straight past it.
+   *
+   * AND ADRENALINE RUSH WANTS TO BE EARLY FOR A REASON THE OTHERS DO NOT.
+   * It multiplies energy REGENERATION for its window, so what it is worth
+   * depends on how much of the window is spent at a pool that is not full --
+   * which is the opposite of a flat buff and is why "cast it on cooldown" is
+   * the whole rule rather than a compromise.
+   * --------------------------------------------------------------------------
+   */
+  { abilityId: 'adrenaline_rush' },
+  { abilityId: 'blade_flurry' },
   /*
    * THE OWNER'S "IF NOT ACTIVE" STAYS, AND A REFRESH WINDOW WAS MEASURED AND
    * REJECTED. Recorded here so it is not re-run.
    *
    * Slice and Dice sat at 86.7% uptime, which looks like something to fix: the
    * entry only fires once the buff is GONE, and rebuilding three points takes
-   * three Sinister Strikes, so every expiry costs a visible gap. Refreshing at
-   * two or four seconds remaining does close most of it -- and is worth nothing
-   * measurable, both at 90 batches of 10:
+   * a moment. A two-second refresh window was tried and measured 576.4 against
+   * 577.7 -- inside the interval, and in the direction this project's own rule
+   * predicts: a refresh RESETS the aura, so whatever is left is thrown away.
    *
-   *     if not active        588.5  +/- 2.9    88.3% uptime   <- shipped
-   *     <= 2s remaining      590.2  +/- 2.9    89.3% uptime
-   *     <= 4s remaining      590.0  +/- 3.3    89.4% uptime
-   *
-   * +1.7 against an interval of +/- 2.9 is not a difference this method can
-   * report, and the project's standing warning about refresh windows applies in
-   * full -- a refresh RESETS the aura, so whatever is left is thrown away. With
-   * no Improved Slice and Dice in this build (it is an Assassination talent) a
-   * three-point cast runs 15 seconds, not 21.75, so four seconds clipped is a
-   * QUARTER of the buff rather than a fifth.
-   *
-   * WHAT ACTUALLY RAISED THE UPTIME WAS THE EVISCERATE GATE BELOW, 86.7% to
-   * 88.3% with this entry untouched: an ungated Eviscerate was draining the bar
-   * to zero on every single point, so there was never a point banked when Slice
-   * and Dice needed three. The uptime problem was not in the Slice and Dice
-   * entry at all.
-   *
-   * THE THRESHOLD IS NOT A LEVER EITHER. Dropping it to two points measures
-   * 580.0 to 583.7 and raising it to five measures 583.6, both worse than the
-   * owner's three.
+   * IT DROPS TO SIXTH, BELOW THE TWO COOLDOWNS, which is the owner's order and
+   * is where the gate makes it harmless: it needs three points AND the buff
+   * down, so it cannot starve the Eviscerate beneath it on a full pool.
    */
   {
     abilityId: 'slice_and_dice',
     condition: all(selfAuraDown('slice_and_dice'), atLeastPoints(3)),
   },
   /*
-   * THE RACIAL COOLDOWNS, AFTER WHATEVER OPENS THIS LIST.
-   *
-   * Free, off the global cooldown, and skipped in silence by every build
-   * that is not of the race that learns them. BOTH ENDS OF THE LIST WERE
-   * MEASURED AND BOTH WERE WRONG -- see `racialCooldowns.ts`.
-   */
-  ...RACIAL_COOLDOWNS,
-  ...CONSUMABLE_COOLDOWNS,
-  ...CONSUMABLE_HEALS,
-  /*
-   * EVISCERATE ABOVE THE TWO COOLDOWNS, WITH THE OWNER'S NINE-SECOND FLOOR AND
-   * A TWO-POINT GATE. The gate is new; everything else is the owner's order.
+   * EVISCERATE AT FIVE POINTS, AND NO SLICE AND DICE FLOOR AT ALL.
    *
    * ==========================================================================
-   * WITHOUT A GATE IT SPENT EXACTLY ONE POINT, EVERY SINGLE CAST. Ten casts a
-   * fight, ten points. That is not a tendency, it is arithmetic: Sinister
-   * Strike is the only builder in this list and awards one point, Eviscerate
-   * sits ABOVE it and is the first castable entry the moment a point exists, so
-   * the bar went 0 -> 1 -> 0 and could never reach two. An ungated finisher
-   * above the only builder does not "spend whatever is on the bar" -- it spends
-   * ONE, always, and the list reads as though it might spend five.
+   * BOTH HALVES REVERSE A MEASURED DECISION, AND THE SWEEP THAT PRODUCED IT IS
+   * WORTH QUOTING RATHER THAN DELETING. Sweeping the point gate over every
+   * count gave 577.7, **588.5**, 587.2, 580.6, **572.2** for one through five
+   * -- so TWO was the peak and FIVE was the worst cell in the sweep, 16.3
+   * below it. The old entry also held a nine-second floor on Slice and Dice.
    *
-   * SO THE GATE IS NOT A FLOOR HERE, IT IS THE POINT COUNT. Every cast lands at
-   * exactly the gate -- the same mechanism, now choosing the number -- which is
-   * what makes the sweep below a sweep over Eviscerate's combo point cost
-   * rather than over a condition.
+   * THE SWEEP IS WHY THAT FIGURE IS NOT A REASON TO REFUSE. It was taken
+   * before the benchmark gear, before the racials, and before Hack and Slash
+   * started paying this build its off-hand dagger's 5% crit -- which is +32.5
+   * on this profile alone. A sweep is true of the build it was run on.
    *
-   *     points spent    DPS (90 batches of 10)
-   *       1 (ungated)   577.7  +/- 3.4
-   *       2             588.5  +/- 2.9   <- shipped
-   *       3             587.2  +/- 3.4
-   *       4             580.6  +/- 4.9
-   *       5             572.2  +/- 4.2
-   *
-   * TWO POINTS IS WORTH +10.8 OVER ONE, and five is worth -5.5. Two and three
-   * cannot be separated, so the lower one ships: it is the one that reaches the
-   * finisher sooner and therefore depends least on the fight not ending.
-   *
-   * THE REASON FIVE LOSES IS IN THE DAMAGE TABLE, AND IT IS THE OPPOSITE OF
-   * THIS PROJECT'S USUAL INTUITION. `EVISCERATE_BY_COMBO_POINT` is 278, 448,
-   * 618, 788, 958 -- which is 278 for the FIRST point and 170 for each one
-   * after it. So damage per combo point FALLS as the bar fills: 278 at one
-   * point, 224 at two, 206 at three, 192 at five. Holding for five buys 170
-   * more damage per extra point while the Sinister Strike that bought that
-   * point costs 45 energy and a global cooldown of its own. "Hold for five"
-   * is the right rule for a finisher whose table runs through the origin, and
-   * Eviscerate's does not.
-   *
-   * AND ONE POINT STILL LOSES, because the 35 energy and the global cooldown
-   * are paid per CAST rather than per point: 278 damage for a full cast is
-   * worse than the Sinister Strike it displaced. The peak is where those two
-   * pressures meet, which is why it is measured and not reasoned.
+   * AND IT IS THE OWNER'S CALL EITHER WAY, which is the standing rule here:
+   * their list outranks a measured decision of ours, and the measurement
+   * becomes the PRICE of the choice rather than an argument against it. The
+   * price is re-measured on this commit rather than quoted from the old sweep.
    * ==========================================================================
-   *
-   * NINE SECONDS RATHER THAN THE VENOM LIST'S TEN, and given as two separate
-   * numbers rather than one shared constant, so neither is quietly moved by an
-   * edit to the other.
    */
-  {
-    abilityId: 'eviscerate',
-    condition: all(
-      selfAuraAtLeast('slice_and_dice', 9),
-      atLeastPoints(EVISCERATE_COMBO_POINTS_COMBAT),
-    ),
-  },
-  { abilityId: 'adrenaline_rush' },
-  { abilityId: 'blade_flurry' },
+  { abilityId: 'eviscerate', condition: atLeastPoints(EVISCERATE_COMBO_POINTS_COMBAT) },
   { abilityId: 'sinister_strike' },
   ],
 };
@@ -528,238 +537,144 @@ export const ROGUE_COMBAT: AplList = {
  * ============================================================================
  */
 /**
- * What the Rupture list spends on Rupture, measured rather than chosen.
- *
- * NAMED BECAUSE IT IS A MEASURED RESULT AND NOT A TOOLTIP NUMBER. The sweep that
- * produced it, and why four beats five on a bleed whose damage per point falls,
- * are on the entry itself.
+ * What the Rupture list spends on Rupture. FOUR, and now twice over: it was a
+ * measured result and it is also the owner's figure in their respecification,
+ * which is the rare case of the two agreeing. The sweep, and why four beats
+ * five on a bleed whose damage per point falls, are on the entry itself.
  */
 const RUPTURE_COMBO_POINTS = 4;
+
+/**
+ * What the Rupture list spends and waits for. All four are the owner's.
+ *
+ * ----------------------------------------------------------------------------
+ * EVISCERATE DROPS TO FOUR AND GAINS TWO FLOORS, where it was `exactly 5` and
+ * had none. The floors are the same shape the Venom list uses -- spend on
+ * damage only while the things that must stay up have plenty of time left --
+ * and they are SIX seconds here against Venom's three, which is the longer
+ * window a bleed deserves: Rupture is the build's name and re-applying it late
+ * costs ticks rather than a buff's uptime.
+ *
+ * AND SLICE AND DICE DROPS TO ONE, which is the same move the Venom list made
+ * and rests on the same argument: a maintenance buff wants UPTIME, so the
+ * cheapest cast that keeps it up is the right one.
+ * ----------------------------------------------------------------------------
+ */
+const RUPTURE_SLICE_AND_DICE_POINTS = 1;
+const RUPTURE_EVISCERATE_POINTS = 4;
+const RUPTURE_FLOOR_SECONDS = 6;
 
 export const ROGUE_RUPTURE: AplList = {
   name: 'Rogue (Subtlety, Rupture)',
   entries: [
   /*
-   * PREMEDITATION FIRST, UNGATED, WHICH IS THE OWNER'S ENTRY UNCHANGED. Free,
-   * two minutes, +2 combo points. Its Forever tooltip has no stealth clause at
-   * all -- that was Classic's, and reading it into this talent is what kept it
-   * recorded as inert.
-   *
-   * A POINT GATE WAS TRIED AND MEASURES EXACTLY NOTHING, 482.8 either way to
-   * the decimal, so it is not here. `atMostPoints(3)` is the arithmetic the
-   * Slice and Dice threshold rests on -- it grants two, so a pool at four
-   * throws one away -- and the reason it buys nothing is the COOLDOWN: at two
-   * minutes this fires at the pull and once more after Preparation, and the
-   * pool is low at both. A guard against a case that cannot arise is still a
-   * decision somebody has to read, so the owner's simpler entry stands.
+   * PREMEDITATION OPENS THE LIST, and it is off the global cooldown now on the
+   * owner's ruling -- which is what makes opening with it free. It banks two
+   * points for whatever goes out next, so a global spent here would be a
+   * global the thing it was banked FOR does not get.
    */
   { abilityId: 'premeditation' },
   /*
-   * THE RACIAL COOLDOWNS, AFTER WHATEVER OPENS THIS LIST.
-   *
-   * Free, off the global cooldown, and skipped in silence by every build
-   * that is not of the race that learns them. BOTH ENDS OF THE LIST WERE
-   * MEASURED AND BOTH WERE WRONG -- see `racialCooldowns.ts`.
+   * THISTLE TEA AT TEN, the same gate the Venom list uses and the second time
+   * the owner has given that number. See `TIGHT_THISTLE_TEA_ENERGY_THRESHOLD`.
    */
+  thistleTeaCooldown(TIGHT_THISTLE_TEA_ENERGY_THRESHOLD),
+  ...consumableCooldowns({ exclude: ['thistle_tea'] }),
   ...RACIAL_COOLDOWNS,
-  ...CONSUMABLE_COOLDOWNS,
   ...CONSUMABLE_HEALS,
   /*
-   * AMBUSH SECOND AND UNCONDITIONAL, because its own `canCast` is the gate: a
-   * dagger in the main hand and EITHER the Cutthroat proc or a stealth window.
-   * The entry used to carry `selfActive('cutthroat')`, which was the list
-   * restating the ability's rule -- and once there were two routes to the gate
-   * it would have been the list restating HALF of it, which is worse than not
-   * restating it at all.
+   * ==========================================================================
+   * AMBUSH, AND VANISH DIRECTLY BENEATH IT RATHER THAN ABOVE IT.
    *
-   * IT IS NOT A FLOOR UNDER THE LIST despite being unconditional, because
-   * `checkCast` refuses it whenever neither aura is up. An ungated entry is only
-   * a floor when it is ALSO always castable.
+   * A PRIORITY LIST CANNOT HOLD A SEQUENCE AND DOES NOT NEED TO. The owner's
+   * design is Vanish into Ambush, and what makes that happen is that the list
+   * is re-read from the top every decision: Vanish puts stealth up, and on the
+   * next read Ambush is the higher entry and takes it. Ambush ABOVE Vanish is
+   * the sequence expressed as priorities rather than as steps.
    *
-   * SECOND RATHER THAN FIRST so the opener spends Premeditation's global
-   * cooldown while still stealthed -- the window is ten seconds and one global
-   * cooldown is one. That is the owner's order.
+   * AMBUSH NEEDS NO CONDITION. Its own `canCast` asks for the stealth, and a
+   * gate here would be the list restating half of a rule the ability already
+   * owns -- which is harmless until the owner adds a second route to it, as
+   * they did when Cutthroat became Ambush's stealth requirement.
+   * ==========================================================================
    */
   { abilityId: 'ambush' },
   /*
-   * VANISH, WHICH EXISTS TO BE AMBUSH'S SECOND AND THIRD USE. Five minutes is
-   * longer than any fight here, so on its own it is one extra Ambush; what makes
-   * it worth a list entry is Preparation finishing its cooldown.
+   * VANISH, AND IT IS OFF THE GLOBAL COOLDOWN NOW on the owner's ruling. That
+   * matters more here than a free cast usually does: the Ambush it exists to
+   * enable is the entry directly above, so a global between them would push
+   * the Ambush a cast later and spend the window on something else.
    *
-   * A POINT GATE, because Ambush awards TWO points with Initiative at 3/3: a
-   * pool at three goes to five and a pool at four wastes one. Gating Vanish
-   * rather than Ambush is the deliberate choice -- a Cutthroat proc is free and
-   * should be spent whatever the pool looks like, and a five-minute cooldown
-   * should not be.
-   *
-   * ------------------------------------------------------------------------
-   * AND AN ENERGY GATE, WORTH +5.7 AND THE ONLY REFINEMENT IN THIS LIST THAT
-   * MEASURED AS ONE: 488.5 against 482.8 at 60 batches of 10.
-   *
-   * SPENDING A GLOBAL COOLDOWN ON VANISH ONLY TO FIND AMBUSH UNAFFORDABLE IS
-   * THE FAILURE IT PREVENTS. Ambush costs 60 of a 100 energy pool, and the
-   * window is ten seconds -- long enough that it does not usually expire, but
-   * the Rogue spends those seconds on Backstab and Hemorrhage, each of which
-   * pushes the 60 further away. The waste is not a lost window so much as a
-   * stealth Ambush arriving several global cooldowns late, behind builders that
-   * refilled the pool it was waiting on.
-   *
-   * ON VANISH AND NOT ON AMBUSH, which is the same split as the point gate: the
-   * cost of being early is paid by the thing with the cooldown.
-   * ------------------------------------------------------------------------
+   * THE CUTTHROAT CLAUSE IS WHY IT IS NOT CAST INTO A WINDOW THAT IS ALREADY
+   * OPEN -- Cutthroat's proc IS Ambush's stealth requirement, by the owner's
+   * ruling, so Vanishing while it is up buys nothing and spends a five minute
+   * cooldown.
    */
   {
     abilityId: 'vanish',
-    /*
-     * AND IT REFUSES WHILE CUTTHROAT IS UP, which is the owner's instruction and
-     * measures as EXACTLY NOTHING -- 493.0 either way, and zero occurrences in
-     * 300 fights before it existed. It is here because the reasoning is sound
-     * and the guard is free: spending a five-minute cooldown to open a gate that
-     * is already open would waste it outright.
-     *
-     * THE REASON IT CANNOT HAPPEN TODAY IS AN ORDERING, NOT A RULE, and that is
-     * the case for writing it down. Ambush sits ABOVE Vanish, so whenever
-     * Cutthroat is up and Ambush is affordable, Ambush is simply the first
-     * castable entry -- and when it is not affordable, Vanish's own energy gate
-     * refuses too, because the two share a cost. Both halves of that accident
-     * are things a later edit could move.
-     */
-    condition: all(
-      atMostPoints(3),
-      atLeastEnergy(AMBUSH_ENERGY_COST),
-      not(selfActive('cutthroat')),
-    ),
+    condition: all(atMostPoints(3), atLeastEnergy(AMBUSH_ENERGY_COST), not(selfActive('cutthroat'))),
   },
   {
     abilityId: 'slice_and_dice',
-    condition: all(selfAuraDown('slice_and_dice'), atLeastPoints(3)),
+    condition: all(
+      selfAuraDown('slice_and_dice'),
+      atLeastPoints(RUPTURE_SLICE_AND_DICE_POINTS),
+    ),
   },
   /*
-   * RUPTURE AT FOUR POINTS RATHER THAN FIVE, worth +3.0.
-   *
    * ==========================================================================
-   * ITS DAMAGE *AND* ITS DURATION PER COMBO POINT BOTH FALL AS THE POOL FILLS,
-   * which is the opposite of the intuition "hold for five" rests on.
-   * `RUPTURE_BY_COMBO_POINT` is 159/222/295/377/469 damage over 8/10/12/14/16
-   * seconds, so per point:
+   * HEMORRHAGE MOVES ABOVE RUPTURE, AND RUPTURE NOW REQUIRES IT.
    *
-   *     points    1      2      3      4      5
-   *     damage   159    111     98     94     94
-   *     seconds  8.0    5.0    4.0    3.5    3.2
+   * The two changes are one change: Hemorrhage is a DEBUFF the list wants on
+   * the target before it commits four points to a bleed, so it goes above the
+   * thing that waits for it and the thing that waits for it says so.
    *
-   * A FOUR-POINT RUPTURE IS 94 DAMAGE AND 3.5 SECONDS PER POINT AGAINST THE
-   * FIFTH POINT'S 92 AND 2.0. The fifth point buys 92 damage and two seconds;
-   * a fourth buys 82 and two. They are close, and what separates them is the
-   * WAIT: this build gains 21.5 combo points a fight and spends 19.7, so the
-   * binding constraint is time-to-threshold rather than points available, and
-   * the debuff was up only 43.7% of the fight.
-   *
-   * THE WHOLE GRID WAS MEASURED, 60 batches of 10 a cell, with the Slice and
-   * Dice threshold on the other axis:
-   *
-   *              Rupt>=3   Rupt>=4   Rupt=5
-   *     SnD>=2     494.8     495.2     492.3
-   *     SnD>=3     494.4     495.7     493.0   <- shipped row
-   *     SnD>=4     489.6     493.7     494.1
-   *     SnD>=5     477.4     476.7     489.2
-   *
-   * Confirmed at 150 batches: 493.6 at five points, 496.6 at four.
-   *
-   * SLICE AND DICE'S OWN THRESHOLD IS NOT A LEVER between two and four -- the
-   * top rows are inside each other's intervals -- and holding it to FIVE costs
-   * 4 to 18. Same finding as the Combat list: it is a MAINTENANCE buff, so
-   * uptime beats duration. The owner's three stands.
-   *
-   * AND RUPTURE MUST STAY *BELOW* SLICE AND DICE. Swapping the two entries
-   * measures 487.2, a loss of 8.5: the haste is on every auto-attack and the
-   * autos are half this profile's damage, so losing attack speed to keep a
-   * bleed up is the wrong trade in exactly the way the ordering already said.
+   * WITHOUT THE REQUIREMENT THE ORDER ALONE WOULD NOT DO IT. Hemorrhage is
+   * gated on its own debuff running out, so it yields as soon as the debuff is
+   * up -- and Rupture directly beneath it would then fire on a target that had
+   * never had it, exactly once, at the pull. The clause is what makes the
+   * order mean anything.
    * ==========================================================================
-   */
-  {
-    abilityId: 'rupture',
-    condition: all(targetAuraDown('rupture'), atLeastPoints(RUPTURE_COMBO_POINTS)),
-  },
-  /*
-   * EVISCERATE'S TWO DURATION FLOORS ARE GONE, worth +1.5 ON TOP of Rupture's
-   * threshold -- and it is the SECOND list those floors have suppressed.
-   *
-   * ==========================================================================
-   * THEY SUPPRESSED IT TO ZERO CASTS A FIGHT, for the whole life of this list.
-   * "Spend five points on damage only while Slice and Dice AND Rupture both
-   * have ten seconds left" is three conditions at once, and the third is the
-   * only one doing useful work. CLAUDE.md already records the same pair costing
-   * the VENOM list 20 DPS; this is the same mistake in the same file, found by
-   * reading the `USES=1` column rather than by suspecting it.
-   *
-   * IT ONLY BECAME CASTABLE ONCE RUPTURE STOPPED HOARDING THE FIFTH POINT, so
-   * the two halves of this change are not independent: at Rupture-exactly-five
-   * dropping the floors is worth +0.6 and nothing fires, and at Rupture-four it
-   * is worth +1.5 and Eviscerate fires 0.2 times a fight for 1.2% of damage.
-   * A finisher with nothing left to spend reads identically to a suppressed one.
-   *
-   * FIVE POINTS AND NOT FOUR, which is the reverse of the Combat list's answer
-   * and for a reason: this profile has a BLEED to maintain, so a point taken by
-   * Eviscerate is a point Rupture needed. Letting it spend less is a real loss
-   * rather than a flat choice --
-   *
-   *     Eviscerate at 5   498.1      at >=4   497.7
-   *     Eviscerate at 3   489.3      at >=2   479.2
-   *
-   * -- and the two upper figures are inside each other's intervals, so the
-   * HIGHER gate ships: it keeps Eviscerate as an overflow valve for the points
-   * Rupture and Slice and Dice could not use, rather than a competitor for them.
-   * ==========================================================================
-   */
-  { abilityId: 'eviscerate', condition: exactlyPoints(MAX_COMBO_POINTS) },
-  /*
-   * HEMORRHAGE BECOMES A MAINTENANCE STRIKE RATHER THAN THE FILLER. It was
-   * UNCONDITIONAL and the cheapest builder in the list, which made it a floor
-   * nothing below could reach -- Ghostly Strike and Sinister Strike both fired
-   * zero times, and a six-entry list was really a three-entry one. Gated on
-   * its own debuff having a second left, it maintains and Backstab builds.
-   */
-  /*
-   * AND IT HOLDS FOR A CUTTHROAT WINDOW. At 35 energy it is the cheapest thing
-   * in the list, which made it the reason Ambush could not be cast: 156 of them
-   * fired inside the 177 windows that never produced an Ambush.
    */
   {
     abilityId: 'hemorrhage',
     condition: all(targetAuraAtMost('hemorrhage', 1), not(poolingForAmbush)),
   },
+  {
+    abilityId: 'rupture',
+    condition: all(
+      targetAuraDown('rupture'),
+      atLeastPoints(RUPTURE_COMBO_POINTS),
+      targetHas('hemorrhage'),
+    ),
+  },
   /*
-   * PREPARATION, MOVED UP OUT OF LAST PLACE AND GIVEN THE OWNER'S CONDITION.
+   * EVISCERATE AT FOUR, BEHIND SIX SECONDS OF EACH OF THE TWO THINGS THAT MUST
+   * STAY UP. It was `exactly 5` with no floors at all.
    *
-   * --------------------------------------------------------------------------
-   * IT USED TO BE UNCONDITIONAL AND BOTTOM, below every builder, and the
-   * comment there argued that was the right place for "an ability whose entire
-   * value is what it gives back": it fires only when nothing else can. That
-   * reasoning was sound while the only things it reset were Premeditation,
-   * Ghostly Strike and Cold Blood -- none of which the list is ever waiting on.
+   * THE FLOOR ON RUPTURE IS THE ONE THAT IS NEW IN KIND: every other floor in
+   * these lists is on a buff the character carries, and this is on the BLEED.
+   * Spending four points on a direct hit while the bleed is about to fall off
+   * is how a Subtlety Rogue loses the thing it is built around.
+   */
+  {
+    abilityId: 'eviscerate',
+    condition: all(
+      atLeastPoints(RUPTURE_EVISCERATE_POINTS),
+      targetAuraAtLeast('rupture', RUPTURE_FLOOR_SECONDS),
+      selfAuraAtLeast('slice_and_dice', RUPTURE_FLOOR_SECONDS),
+    ),
+  },
+  /*
+   * PREPARATION, WHICH IS WHAT MAKES VANISH ROTATIONAL. It finishes the
+   * cooldown on every other Rogue ability, so one Vanish and one Preparation
+   * is two Vanishes -- and the gate waits until both of the things worth
+   * resetting are actually spent.
    *
-   * VANISH CHANGES WHAT IT IS FOR. The thing worth resetting is now a
-   * five-minute cooldown that buys an Ambush, so Preparation is the second half
-   * of the stealth cycle rather than a tidy-up at the end of the fight, and
-   * WHEN it fires decides whether that second Vanish happens inside the fight
-   * at all.
-   *
-   * THE OWNER'S CONDITION IS BOTH COOLDOWNS DOWN AND THE POOL NEARLY EMPTY:
-   * both, because resetting one while the other is up wastes the other; and a
-   * pool at one point or less, because the Vanish-Ambush-Premeditation sequence
-   * it unlocks is worth four points and wants somewhere to put them.
-   *
-   * STILL BELOW THE DAMAGE FINISHERS, so a Rupture or an Eviscerate that is
-   * ready is never displaced by a cooldown reset.
-   *
-   * IT MEASURES FLAT AND IT IS THE OWNER'S DESIGN, WHICH IS THE WHOLE NOTE.
-   * Unconditional and last, as it was, reads 481.6 against 482.8 -- inside the
-   * interval, so this method cannot separate the two placements. The condition
-   * is here because the owner specified it, and the measurement is recorded as
-   * its price rather than as an argument for it: the 1.0 cast a fight happens
-   * either way, and what the gate changes is WHEN, which a sixty-second fight
-   * is too short to reward.
-   * --------------------------------------------------------------------------
+   * THE FOURTH SEQUENCE THE OWNER DESCRIBED NEEDS NO ENTRY: once Preparation
+   * has finished their cooldowns, the same three entries above are castable
+   * again and the list simply walks them. Said here because an absent entry
+   * for a clause the owner named reads exactly like an omission.
    */
   {
     abilityId: 'preparation',
@@ -770,14 +685,13 @@ export const ROGUE_RUPTURE: AplList = {
     ),
   },
   /*
-   * BACKSTAB HOLDS FOR THE WINDOW TOO, and it is the same 60 energy as Ambush --
-   * so without this the filler and the thing it is meant to make room for race
-   * for the same pool, and the filler is below everything else that can also
-   * spend it.
+   * BACKSTAB LAST, AND THE POOLING GATE IS WHY AMBUSH CAN EVER BE CAST.
    *
-   * ONLY THESE TWO HOLD, AND HOLDING MORE MEASURED WORSE. Gating Slice and Dice
-   * and Rupture the same way reads 490.8 against 493.0 -- they are maintenance,
-   * and dropping a Rupture to buy an Ambush gives back more than it takes.
+   * AN UNGATED CHEAPER ENTRY STARVES AN EXPENSIVE ONE FROM BENEATH, however
+   * high the expensive one sits: both cost 60 energy, so without this the pool
+   * would never hold enough for the Ambush seven entries above. Measured over
+   * 300 fights before the gate existed: 207 Cutthroat windows, 30 ending in an
+   * Ambush, with mean energy at the moment a window OPENED of 0.2.
    */
   { abilityId: 'backstab', condition: not(poolingForAmbush) },
   ],

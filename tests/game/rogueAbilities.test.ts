@@ -573,13 +573,27 @@ describe('Lethality, which named six abilities and could not reach them', () => 
   };
 
   it('scales with rank, on the MELEE crit half', () => {
-    // Venom 5/5 is 20%, Combat 4/5 is 16%, Rupture 2/5 is 8%.
+    /*
+     * Venom 5/5 is 20% and Combat 4/5 is 16%.
+     *
+     * THE RUPTURE BUILD SPENDS NOTHING HERE NOW. It held 2/5 for 8% until the
+     * owner respecified its Assassination twelve -- Lethality 2 -> 0, with the
+     * points going to Ruthlessness and Relentless Strikes -- so the right
+     * assertion is that the modifier is ABSENT rather than zero.
+     *
+     * ABSENT AND ZERO ARE DIFFERENT ANSWERS AND ONLY ONE IS RIGHT.
+     * `abilityModifiers.for` returns an empty modifier for an ability nothing
+     * registered against, so `critMultiplierBonus` is undefined -- and a test
+     * written as `toBeCloseTo(0)` would read `undefined` as NaN and fail for a
+     * reason that has nothing to do with the talent.
+     */
     expect(rogue('rogue_venom').abilityModifiers.for('sinister_strike').critMultiplierBonus)
       .toBeCloseTo(0.2, 6);
     expect(rogue('rogue_combat').abilityModifiers.for('sinister_strike').critMultiplierBonus)
       .toBeCloseTo(0.16, 6);
-    expect(rogue('rogue_rupture').abilityModifiers.for('sinister_strike').critMultiplierBonus)
-      .toBeCloseTo(0.08, 6);
+    expect(
+      rogue('rogue_rupture').abilityModifiers.for('sinister_strike').critMultiplierBonus ?? 0,
+    ).toBe(0);
   });
 
   it('reaches the five abilities it names that exist, and nothing else', () => {

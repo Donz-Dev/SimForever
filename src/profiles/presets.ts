@@ -380,10 +380,27 @@ const ROGUE_COMBAT_TALENTS: TalentAllocation = {
 
 /** Rupture -- Assassination 12 / Combat 8 / Subtlety 31. Hemorrhage and bleeds. */
 const ROGUE_RUPTURE_TALENTS: TalentAllocation = {
+  /*
+   * ==========================================================================
+   * THE ASSASSINATION TWELVE WERE RESPECIFIED, AND THE OTHER TWO TREES WERE
+   * NOT. Combat stays at 8 and Subtlety at 31; what moved is three talents
+   * inside the first tree, for a net of zero points.
+   *
+   *   Ruthlessness        2 -> 3
+   *   Lethality           2 -> 0
+   *   Relentless Strikes  0 -> 1
+   *
+   * READ OFF THE OWNER'S TALENT PANEL rather than a build URL, so the grid was
+   * decoded against `src/data/talents/rogue.json` by row and column and the
+   * three per-tree totals checked against the ones the panel prints -- 12, 8
+   * and 31. **A tree total is the cheap check that a decode is right**, and it
+   * is the one thing a screenshot states in words rather than in icons.
+   * ==========================================================================
+   */
   malice: 5,
-  ruthlessness: 2,
+  ruthlessness: 3,
+  relentless_strikes: 1,
   improved_slice_and_dice: 3,
-  lethality: 2,
   improved_eviscerate: 3,
   lightning_reflexes: 2,
   puncturing_wounds: 3,
@@ -1201,7 +1218,16 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withBenchmarkGear(withS
       },
       talents: { ...ROGUE_COMBAT_TALENTS },
       raidBuffs: [...PRESET_RAID_BUFFS],
-      consumables: { ...AGILITY_CONSUMABLES, other: 'thistle_tea' },
+      /*
+       * AGILITY FOOD, THE SECOND ROGUE TO TAKE IT AND THE FIFTH FOOD RULING.
+       *
+       * Two of the five members of `AGILITY_CONSUMABLES` are named now, which
+       * is the same arithmetic the plate-and-fur row is at: a shared row holds
+       * ONE value, and until the Rupture and Hemo Rogues and the melee Hunter
+       * are named too, overriding is the only reading that does not move a
+       * published figure on somebody else's behalf.
+       */
+      consumables: { ...AGILITY_CONSUMABLES, other: 'thistle_tea', food: 'food_agility' },
       encounter: { ...createDefaultProfile().encounter, targetAttacks: false },
     }),
   },
@@ -1222,7 +1248,12 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withBenchmarkGear(withS
       },
       talents: { ...ROGUE_RUPTURE_TALENTS },
       raidBuffs: [...PRESET_RAID_BUFFS],
-      consumables: { ...AGILITY_CONSUMABLES, other: 'thistle_tea' },
+      /*
+       * AGILITY FOOD, THE THIRD ROGUE AND THE SIXTH FOOD RULING. Three of the
+       * five members of `AGILITY_CONSUMABLES` are named now; the Hemo Rogue
+       * and the melee Hunter are what is left.
+       */
+      consumables: { ...AGILITY_CONSUMABLES, other: 'thistle_tea', food: 'food_agility' },
       encounter: { ...createDefaultProfile().encounter, targetAttacks: false },
     }),
   },

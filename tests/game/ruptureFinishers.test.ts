@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { seconds } from '../../src/engine';
-import { ROGUE_RUPTURE } from '../../src/game/rotations/rogue';
+import { ROGUE_COMBAT, ROGUE_RUPTURE } from '../../src/game/rotations/rogue';
 import {
+  HEMORRHAGE_DEBUFF,
   RUPTURE_BY_COMBO_POINT,
   SLICE_AND_DICE_DURATIONS_MS,
   ruptureAura,
@@ -103,19 +104,40 @@ describe('why Rupture spends four points and not five', () => {
     expect(fifth.durationMs - fourth.durationMs).toBe(seconds(2));
   });
 
-  it('fires at FOUR points with the debuff down', () => {
+  it('fires at FOUR points with the debuff down AND Hemorrhage up', () => {
     /*
-     * THE OLD GATE WAS `exactlyPoints(MAX_COMBO_POINTS)`, so this is the one
-     * input that separates the two lists. Asserting only that a condition exists
-     * -- which an earlier version of this test did -- passes against either.
+     * FOUR POINTS SURVIVED THE RESPECIFICATION and is now the owner's figure as
+     * well as a measured one, which is the rare case of the two agreeing.
+     *
+     * WHAT IS NEW IS THE THIRD CLAUSE: the owner's Rupture waits for Hemorrhage
+     * to be on the target. That is why this test applies it -- without it the
+     * entry refuses at four points, and a reader would take that for the point
+     * gate having moved.
      */
     const { sim, player, target } = pool(4);
     expect(target.auras.has('rupture')).toBe(false);
+    sim.applyAura(target, HEMORRHAGE_DEBUFF, player.id);
     expect(compiled(entry('rupture')?.condition)?.(sim, player, target)).toBe(true);
+  });
+
+  it('refuses at four points with Hemorrhage absent', () => {
+    /*
+     * ==========================================================================
+     * THE CLAUSE AND THE ORDER ARE ONE CHANGE. Hemorrhage moved above Rupture
+     * AND Rupture now requires it, and the second is what makes the first mean
+     * anything: Hemorrhage is gated on its own debuff running out, so it yields
+     * the moment the debuff is up -- and Rupture directly beneath it would
+     * otherwise fire on a target that had never had it, once, at the pull.
+     * ==========================================================================
+     */
+    const { sim, player, target } = pool(4);
+    expect(target.auras.has('hemorrhage')).toBe(false);
+    expect(compiled(entry('rupture')?.condition)?.(sim, player, target)).toBe(false);
   });
 
   it('still refuses at three', () => {
     const { sim, player, target } = pool(3);
+    sim.applyAura(target, HEMORRHAGE_DEBUFF, player.id);
     expect(compiled(entry('rupture')?.condition)?.(sim, player, target)).toBe(false);
   });
 
@@ -160,35 +182,43 @@ describe('Slice and Dice keeps its place and its threshold', () => {
   });
 });
 
-describe('Eviscerate’s two duration floors are gone', () => {
+describe('Eviscerate’s duration floors came BACK, at six seconds', () => {
   /*
    * ============================================================================
-   * THE SECOND LIST THOSE FLOORS HAVE SUPPRESSED, IN THE SAME FILE.
+   * THIS BLOCK USED TO BE CALLED "Eviscerate’s two duration floors are gone",
+   * AND THE OWNER HAS PUT THEM BACK. The history is why it is rewritten rather
+   * than deleted.
    *
-   * "Spend five points only while Slice and Dice AND Rupture both have ten
-   * seconds left" held Eviscerate to ZERO casts a fight for the whole life of
-   * this list, and CLAUDE.md already records the same pair costing the Venom list
-   * 20 DPS. A finisher with nothing left to spend reads identically to a
-   * suppressed one, which is why this was found in the `USES=1` column rather
-   * than by suspecting it.
+   * THE FLOORS WERE REMOVED FOR A GOOD REASON. "Spend five points only while
+   * Slice and Dice AND Rupture both have TEN seconds left" held Eviscerate to
+   * ZERO casts a fight for the whole life of this list -- a suppressed finisher
+   * reads identically to one with nothing to spend, which is why it was found
+   * in the `USES=1` column rather than by suspecting it.
    *
-   * AND THE TWO HALVES OF THE FIX ARE NOT INDEPENDENT: with Rupture still
-   * hoarding the fifth point, dropping the floors is worth +0.6 and nothing
-   * fires. With Rupture at four it is worth +1.5 and Eviscerate fires 0.2 times
-   * a fight. The floors were not the only thing stopping it.
+   * THE OWNER'S FLOORS ARE THE SAME SHAPE WITH EVERY NUMBER LOOSENED: SIX
+   * seconds rather than ten, and the point gate dropped from five to FOUR. So
+   * this is the Venom list's lesson applied here -- the gate was what could not
+   * fire, and a gate is a number -- rather than a return to the thing that was
+   * broken.
+   *
+   * WHICH MEANS THE ONE THING TO CHECK IS THAT IT STILL FIRES. That is asserted
+   * on the PROFILE in `ruptureRotation.test.ts`, not here: this block is about
+   * what the condition SAYS, and a condition that says the right thing can
+   * still never be true.
    * ============================================================================
    */
-  it('fires at five points with both effects ABOUT TO DROP', () => {
+  it('refuses with both effects about to drop', () => {
     /*
-     * THE BEHAVIOURAL DIFFERENCE, AND THE FIRST VERSION OF THIS TEST DID NOT
-     * MEASURE IT. It compared the condition's ARITY -- and `all(...)` and a bare
-     * `exactlyPoints` both return a three-argument function, so it passed against
-     * either list and proved nothing. The floors are a CLOCK condition, so the
-     * only way to see them is to put the clock somewhere they would refuse.
+     * THE BEHAVIOURAL DIFFERENCE, AND THE OLD VERSION OF THIS TEST ASSERTED THE
+     * OPPOSITE. Five points with Slice and Dice and Rupture each on one second
+     * is exactly the moment a floor exists to refuse -- the previous list
+     * fired here and the owner's does not.
      *
-     * Five points, Slice and Dice with one second left and Rupture with one: the
-     * old floors wanted ten of each and would have refused this, and it is
-     * exactly the moment a five-point pool most wants spending.
+     * A FLOOR IS A CLOCK CONDITION, so the only way to see one is to put the
+     * clock somewhere it would refuse. Comparing the condition's ARITY proves
+     * nothing: `all(...)` and a bare point gate both return a three-argument
+     * function, which is how an earlier version of this test passed against
+     * either list.
      */
     const { sim, player, target } = pool(MAX_COMBO_POINTS);
     sim.applyAura(player, sliceAndDiceAura(1), player.id);
@@ -196,25 +226,58 @@ describe('Eviscerate’s two duration floors are gone', () => {
     sim.advanceTo(seconds(8));
 
     expect(comboPointsOn(player, target)).toBe(MAX_COMBO_POINTS);
-    expect(compiled(entry('eviscerate')?.condition)?.(sim, player, target)).toBe(true);
-  });
-
-  it('still refuses below five', () => {
-    const { sim, player, target } = pool(4);
     expect(compiled(entry('eviscerate')?.condition)?.(sim, player, target)).toBe(false);
   });
 
-  it('still holds for the maximum, which is the opposite of the Combat list', () => {
+  it('fires at FOUR points with both effects comfortably up', () => {
     /*
-     * FIVE HERE AND TWO THERE, and the difference is a BLEED. Combat has no
-     * Rupture to maintain, so its Eviscerate is where its points are supposed to
-     * go and the peak is at two. Here a point taken by Eviscerate is a point
-     * Rupture needed, so letting it spend less is a real loss: 489.3 at three
-     * points and 479.2 at two, against 498.1 at five.
-     *
-     * So this is not a convention anybody should normalise across the two lists.
+     * FOUR, NOT FIVE, which is the other half of the respecification -- and it
+     * is the input that separates the owner's gate from the old one in the
+     * direction a reader would not guess: the floors got tighter and the point
+     * gate got looser.
      */
-    expect(MAX_COMBO_POINTS).toBe(5);
+    const { sim, player, target } = pool(4);
+    sim.applyAura(player, sliceAndDiceAura(seconds(20)), player.id);
+    sim.applyAura(target, ruptureAura(seconds(20)), player.id);
+
+    expect(compiled(entry('eviscerate')?.condition)?.(sim, player, target)).toBe(true);
+  });
+
+  it('still refuses below four', () => {
+    const { sim, player, target } = pool(3);
+    sim.applyAura(player, sliceAndDiceAura(seconds(20)), player.id);
+    sim.applyAura(target, ruptureAura(seconds(20)), player.id);
+    expect(compiled(entry('eviscerate')?.condition)?.(sim, player, target)).toBe(false);
+  });
+
+  it('spends FEWER points than the Combat list, which is the opposite of before', () => {
+    /*
+     * ==========================================================================
+     * THE TWO LISTS SWAPPED SIDES, AND THE OLD COMMENT HERE ARGUED FOR THE
+     * ARRANGEMENT THEY HAVE JUST LEFT.
+     *
+     * It read: "FIVE HERE AND TWO THERE, and the difference is a BLEED. Combat
+     * has no Rupture to maintain, so its Eviscerate is where its points are
+     * supposed to go and the peak is at two. Here a point taken by Eviscerate
+     * is a point Rupture needed, so letting it spend less is a real loss: 489.3
+     * at three points and 479.2 at two, against 498.1 at five." Every figure in
+     * that was measured.
+     *
+     * THE OWNER HAS IT AT FOUR HERE AND FIVE ON COMBAT. The reasoning the old
+     * comment gave is not refuted by the swap -- a point taken by Eviscerate is
+     * still a point Rupture needed -- but this list now holds Eviscerate behind
+     * SIX SECONDS of Rupture as well, which protects the bleed by a different
+     * route than hoarding the fifth point did.
+     *
+     * SO THE RULE THE OLD COMMENT ENDED ON SURVIVES AND POINTS THE OTHER WAY:
+     * "this is not a convention anybody should normalise across the two lists."
+     * It was true when the numbers were 5 and 2, and it is true now they are 4
+     * and 5.
+     * ==========================================================================
+     */
+    expect(JSON.stringify(entry('eviscerate')?.condition)).toContain('"points":4');
+    expect(JSON.stringify(ROGUE_COMBAT.entries.find((e) => e.abilityId === 'eviscerate')?.condition))
+      .toContain(`"points":${MAX_COMBO_POINTS}`);
   });
 });
 
