@@ -689,7 +689,15 @@ export function createPlayer(options: PlayerOptions): Combatant {
   ];
   const rotation = options.rotation
     ? compileRotation(options.rotation)
-    : rotationFor(characterClass, style, resolveStance(style, options.stance), legal.allocation);
+    : rotationFor(
+        characterClass,
+        style,
+        resolveStance(style, options.stance),
+        legal.allocation,
+        // The Rogue's two Hemorrhage builds are told apart by it; see
+        // `rogueRotation`. Every other class ignores it.
+        weapons.mainHand?.weaponType,
+      );
 
   const player = new Combatant({
     id: options.id ?? 'player_1',

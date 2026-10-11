@@ -297,18 +297,24 @@ describe('Iron Creed', () => {
 /* -------------------------------------------------------------------------- */
 
 describe('Swift Judgement, which is meant to double-cast a Judgement', () => {
-  it('is gated on ANY seal rather than on Seal of Fury', () => {
-    /*
-     * THE GATE USED TO NAME SEAL OF FURY and that cost it the back-to-back: the
-     * Protection opener judges while Seal of the Crusader is up, so at the first
-     * moment Judgement was on cooldown the named seal was not up yet and the
-     * entry fell through for a global cooldown.
-     *
-     * ASSERTED BY BEHAVIOUR rather than by reading the closure: a Paladin
-     * carrying the Crusader's seal with Judgement on cooldown must now be
-     * allowed to cast it.
-     */
-    const entry = PALADIN_PROTECTION.entries.find((e) => e.abilityId === 'swift_judgement')!;
+  /*
+   * ==========================================================================
+   * THIS TEST HAS NOW BEEN REWRITTEN TWICE BY THE SAME CLAUSE MOVING, and both
+   * times the thing it protects was the same: **the entry can actually fire in
+   * the window it exists for.**
+   *
+   * It first read "is gated on Seal of Fury" and that cost the back-to-back --
+   * the opener judged under a different seal, so at the first moment Judgement
+   * was on cooldown the named seal was not up. It then read "ANY seal". The
+   * owner has now narrowed it to SEAL OF RIGHTEOUSNESS, which is the only seal
+   * their new list applies, so the two select the same states for this build.
+   *
+   * WHAT IS PINNED IS THE INVARIANT AND NOT THE CLAUSE. A gate on a seal the
+   * list never applies is an entry that CANNOT FIRE -- this project's commonest
+   * rotation bug, and the one that leaves nothing behind to notice.
+   * ==========================================================================
+   */
+  const protectionActor = () => {
     const p = built('prot_pally');
     const actor = makeAttacker({
       autoAttack: 'none',
@@ -316,14 +322,65 @@ describe('Swift Judgement, which is meant to double-cast a Judgement', () => {
       resources: [{ type: 'mana', maximum: 100_000 }],
     });
     const target = makeTarget({ maxHealth: 1_000_000 });
-    const simulation = buildSimulation([actor, target]);
+    return { actor, target, simulation: buildSimulation([actor, target]) };
+  };
 
-    // Seal of the Crusader up, Judgement spent: the window Swift Judgement is for.
-    castAbility(simulation, actor, actor.abilities.get('seal_of_the_crusader')!, undefined);
+  it('fires in the window it is for, under the seal the list actually applies', () => {
+    const entry = PALADIN_PROTECTION.entries.find((e) => e.abilityId === 'swift_judgement')!;
+    const { actor, target, simulation } = protectionActor();
+
+    // The seal this list applies, Judgement spent: the window it is for.
+    castAbility(simulation, actor, actor.abilities.get('seal_of_righteousness')!, undefined);
     simulation.advanceTo(seconds(2));
     castAbility(simulation, actor, actor.abilities.get('judgement')!, target);
     simulation.advanceTo(seconds(4));
 
     expect(compiled(entry.condition)?.(simulation, actor, target)).toBe(true);
+  });
+
+  it('names a seal the Protection list can actually put up', () => {
+    /*
+     * THE STRUCTURAL HALF, AND IT IS WHAT WOULD HAVE CAUGHT BOTH REWRITES. The
+     * entry's condition is checked against the seals this list has entries
+     * for, so a gate on a seal the list never casts fails here rather than
+     * silently reading false for a whole fight.
+     */
+    const sealsTheListApplies = new Set(
+      PALADIN_PROTECTION.entries
+        .map((e) => e.abilityId)
+        .filter((id) => id.startsWith('seal_of_')),
+    );
+    expect(sealsTheListApplies).toEqual(new Set(['seal_of_righteousness']));
+
+    const entry = PALADIN_PROTECTION.entries.find((e) => e.abilityId === 'swift_judgement')!;
+    const named = JSON.stringify(entry.condition).match(/seal_of_[a-z_]+/g) ?? [];
+    expect(named.length).toBeGreaterThan(0);
+    for (const seal of named) expect(sealsTheListApplies.has(seal), seal).toBe(true);
+  });
+
+  it('takes no global cooldown, which is the owner’s ruling', () => {
+    /*
+     * ASSERT THE MECHANISM. An ability wrongly taking a global cooldown still
+     * has the right cooldown, the right cost and the right effect -- the
+     * mistake is invisible in everything except the figure, which is why this
+     * is pinned rather than measured.
+     *
+     * BEING OFF IT MEANS ONE THING: the cast does not START a global cooldown.
+     * It is still BLOCKED by one already running, which is the half that is
+     * easy to assert the wrong way round.
+     */
+    const { actor, target, simulation } = protectionActor();
+    castAbility(simulation, actor, actor.abilities.get('seal_of_righteousness')!, undefined);
+    simulation.advanceTo(seconds(2));
+    castAbility(simulation, actor, actor.abilities.get('judgement')!, target);
+    simulation.advanceTo(seconds(4));
+
+    const before = actor.gcdReadyAt;
+    expect(
+      castAbility(simulation, actor, actor.abilities.get('swift_judgement')!, undefined),
+    ).toEqual({ ok: true });
+    expect(actor.gcdReadyAt).toBe(before);
+    // And the Judgement it reset is available in the same instant.
+    expect(actor.abilities.isReady('judgement', simulation.clock.now())).toBe(true);
   });
 });

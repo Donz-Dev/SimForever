@@ -1,7 +1,13 @@
 import type { Rotation } from '../../engine';
 import type { AplList } from './apl';
 import { RACIAL_COOLDOWNS, RACIAL_DEFENSIVE_COOLDOWNS } from './racialCooldowns';
-import { CONSUMABLE_COOLDOWNS, CONSUMABLE_HEALS } from './consumableCooldowns';
+import {
+  buffPotionCooldown,
+  consumableCooldown,
+  consumableCooldowns,
+  CONSUMABLE_HEALS,
+  TIGHT_THISTLE_TEA_ENERGY_THRESHOLD,
+} from './consumableCooldowns';
 import {
   all,
   comboPoints,
@@ -13,6 +19,7 @@ import {
   selfStacks,
   targetExpired,
   targetHas,
+  targetTime,
 } from './apl';
 import type { CombatStyleId } from '../character';
 import { MAX_COMBO_POINTS } from '../combat/comboPoints';
@@ -85,14 +92,32 @@ export const SHIFTING_POWER_ENERGY_CEILING = 50;
 /** "energy <= N". */
 const energyAtMost = (maximum: number) => resource('atMost', maximum, 'energy');
 
+/**
+ * What the Cat's Berserk window waits for, both the owner's figures.
+ *
+ * THIRTY ENERGY is enough for a Shred the instant the window opens -- Berserk
+ * halves costs, so Shred is 21 inside it -- and TWO SECONDS OF RAKE is enough
+ * that the window will not spend one of its own global cooldowns re-applying
+ * the bleed. Neither is derived; both are stated.
+ */
+const BERSERK_ENERGY_FLOOR = 30;
+const BERSERK_RAKE_SECONDS = 2;
+
 /** "rage >= N". */
 const rageAtLeast = (minimum: number) => resource('atLeast', minimum, 'rage');
 
 /** "hit points <= N% of maximum". */
 const healthAtMostFraction = (fraction: number) => selfHealth('atMost', fraction);
 
-/** "combo points = N", read THROUGH the target so a stale pool reads zero. */
-const exactlyPoints = (count: number) => comboPoints('exactly', count);
+/** "combo points >= N", read THROUGH the target so a stale pool reads zero. */
+const atLeastPoints = (count: number) => comboPoints('atLeast', count);
+
+/** "<debuff> has at least N seconds left", on the target. */
+const targetAuraAtLeast = (auraId: string, secondsLeft: number) =>
+  targetTime('atLeast', secondsLeft, auraId);
+
+/** "energy >= N". */
+const energyAtLeast = (minimum: number) => resource('atLeast', minimum, 'energy');
 
 /** "<debuff> is on the target". */
 const hasDebuff = targetHas;
@@ -148,24 +173,45 @@ const hasDebuff = targetHas;
 export const DRUID_MOONKIN: AplList = {
   name: 'Druid (Moonkin)',
   entries: [
-  { abilityId: 'moonfire', condition: expired('moonfire') },
   /*
-   * THE RACIAL COOLDOWNS, AFTER WHATEVER OPENS THIS LIST.
+   * THE SPELLBLASTING POTION OPENS THE LIST, which is the owner's order and is
+   * the Elemental Shaman's too. A free off-GCD cast pushes the next decision
+   * one 100ms poll out, which is what destroyed Charge at the top of a Warrior
+   * list -- and nothing here has a one-instant window for that poll to miss,
+   * so what it buys is thirty seconds of spell power from the pull rather than
+   * from one cast later.
+   */
+  buffPotionCooldown('major_spellblasting_potion'),
+  ...consumableCooldowns({ exclude: ['major_spellblasting_potion'] }),
+  ...CONSUMABLE_HEALS,
+  /*
+   * THE RACIAL COOLDOWNS, BESIDE THE CONSUMABLES AS EVERYWHERE ELSE.
    *
    * Free, off the global cooldown, and skipped in silence by every build
    * that is not of the race that learns them. BOTH ENDS OF THE LIST WERE
    * MEASURED AND BOTH WERE WRONG -- see `racialCooldowns.ts`.
+   *
+   * THE OWNER'S PANEL SHOWS NO RACIAL ROW AT ALL, because the Moonkin preset is
+   * a Tauren and War Stomp is crowd control, so `withoutOtherRacials` drops
+   * every one of them -- which means their position here is this file's choice
+   * and not a transcription. They stay with the consumables, which is where
+   * they have been in every list but the Shaman's and the three tanks'.
    */
   ...RACIAL_COOLDOWNS,
-  ...CONSUMABLE_COOLDOWNS,
-  ...CONSUMABLE_HEALS,
+  { abilityId: 'moonfire', condition: expired('moonfire') },
   { abilityId: 'insect_swarm', condition: expired('insect_swarm') },
   /*
    * TWO STARFIRE ENTRIES, and the second is not a duplicate. Eclipse charges
    * shorten Starfire's cast and Nature's Grace shortens every cast AND the
    * global cooldown -- so the owner's first entry spends charges freely when
-   * there are two or more, and the second spends the LAST one only while
-   * Nature's Grace is up, which is the window where it is worth most.
+   * there are three or more, and the second spends one down to the LAST only
+   * while Nature's Grace is up, which is the window where it is worth most.
+   *
+   * THE FIRST GATE WAS TWO AND IS THREE NOW, by the owner. What that buys is a
+   * wider band in which the second entry is the one that fires: at two stacks
+   * the list no longer spends freely, so the charge is held for a Nature's
+   * Grace window instead of going out at whatever cast speed happens to be
+   * current.
    *
    * A repeated ability id is legal and is checked for the shape that is not:
    * a copy below an UNCONDITIONAL one, which can never be reached. Both of
@@ -173,7 +219,7 @@ export const DRUID_MOONKIN: AplList = {
    */
   {
     abilityId: 'starfire',
-    condition: selfStacksAtLeast('eclipse', 2),
+    condition: selfStacksAtLeast('eclipse', 3),
   },
   {
     abilityId: 'starfire',
@@ -256,9 +302,57 @@ export const DRUID_CAT: AplList = {
    * MEASURED AND BOTH WERE WRONG -- see `racialCooldowns.ts`.
    */
   ...RACIAL_COOLDOWNS,
-  ...CONSUMABLE_COOLDOWNS,
+  /*
+   * THISTLE TEA AT TEN ENERGY RATHER THAN TWENTY, which is the owner's figure
+   * for this profile and is the fourth time they have named one. The tea
+   * restores a full hundred into a cap of a hundred, so every point on the bar
+   * when it is drunk is thrown away: ten wastes half what twenty does and opens
+   * half as often. See `TIGHT_THISTLE_TEA_ENERGY_THRESHOLD`.
+   */
+  ...consumableCooldowns({
+    thistleTeaEnergy: TIGHT_THISTLE_TEA_ENERGY_THRESHOLD,
+    exclude: ['major_frenzy_potion'],
+  }),
+  /*
+   * ==========================================================================
+   * AND THE FRENZY POTION HELD FOR BERSERK, which is the owner's gate and
+   * replaces the Mighty Rage Potion this profile used to drink.
+   *
+   * THE TWO CHANGES ARE ONE CHANGE. Mighty Rage is gated on RAGE and a Cat has
+   * none that anything fills, so its gate read permanently true and the potion
+   * fired at the pull for its 60 Strength -- a flat window with nothing lined
+   * up against it, which is exactly what this file says an ungated buff potion
+   * is. Frenzy is 40 attack power, which is less, and it is spent inside a
+   * damage cooldown instead of at a moment nobody chose.
+   *
+   * IT CANNOT STARVE ITSELF. Berserk is the entry directly below, so the first
+   * poll finds no aura, skips this and casts the cooldown; the next poll -- one
+   * ROTATION_POLL_MS later, because a potion takes no global cooldown -- finds
+   * the window open. A gate waiting on something only an entry ABOVE it could
+   * supply would never open at all.
+   * ==========================================================================
+   */
+  buffPotionCooldown('major_frenzy_potion', { id: 'berserk', label: 'Berserk' }),
   ...CONSUMABLE_HEALS,
-  { abilityId: 'berserk' },
+  /*
+   * BERSERK BEHIND TWO CLAUSES, where it was unconditional. Both are the
+   * owner's and both say the same thing: do not open the window until there is
+   * something to spend it on.
+   *
+   * ENERGY AT LEAST 30 is the bar having enough for a Shred the instant the
+   * window opens -- Berserk halves energy costs, so a Shred inside it is 21
+   * after Improved Shred, and opening on an empty bar spends the first seconds
+   * of a fifteen-second cooldown regenerating.
+   *
+   * RAKE WITH TWO SECONDS LEFT ON IT is the other half: Rake is above the
+   * filler and below the Clearcasting entry, so a window opened while the bleed
+   * is about to drop spends one of its global cooldowns re-applying a 35-energy
+   * debuff instead of on the 42-energy strike the halved cost is worth most on.
+   */
+  {
+    abilityId: 'berserk',
+    condition: all(energyAtLeast(BERSERK_ENERGY_FLOOR), targetAuraAtLeast('rake', BERSERK_RAKE_SECONDS)),
+  },
   /*
    * EVERY CLEARCASTING PROC GOES ON SHRED, REGARDLESS OF COMBO POINTS -- the
    * ruleset owner's instruction, and the reason it needs its own entry above
@@ -279,8 +373,29 @@ export const DRUID_CAT: AplList = {
    * no resources". So their position costs this entry nothing.
    */
   { abilityId: 'shred', condition: selfActive('clearcasting') },
-  { abilityId: 'rip', condition: exactlyPoints(MAX_COMBO_POINTS) },
+  /*
+   * RAKE ABOVE RIP, WHICH IS A SWAP, and it is the same argument the Berserk
+   * gate above makes from the other side: a bleed that has dropped is damage
+   * the build is not doing, where a finisher at five points can wait a global
+   * cooldown without losing anything -- the points do not decay.
+   */
   { abilityId: 'rake', condition: expired('rake') },
+  /*
+   * AND RIP ONLY WHEN RIP IS NOT ALREADY UP, which is the owner's new second
+   * clause and is a guard against the thing this project calls a clipped
+   * refresh: a re-application RESETS the aura, so a five-point Rip cast over
+   * one with seconds left throws those seconds away. The first clause alone
+   * would do exactly that every time the pool refilled.
+   *
+   * AT LEAST FIVE POINTS RATHER THAN EXACTLY FIVE, which is the owner's
+   * comparison. Five is the cap, so the two readings select the same states --
+   * transcribed as written because `AplCompare` carries both and the panel
+   * round-trips what it is given.
+   */
+  {
+    abilityId: 'rip',
+    condition: all(atLeastPoints(MAX_COMBO_POINTS), expired('rip')),
+  },
   { abilityId: 'shred' },
   ],
 };
@@ -332,6 +447,34 @@ export const DRUID_BEAR: AplList = {
    */
   ...CONSUMABLE_HEALS,
   { abilityId: 'enrage' },
+  /*
+   * ==========================================================================
+   * THE MIGHTY RAGE POTION MOVES FROM THE BOTTOM OF THE LIST TO HERE, by the
+   * owner -- and in a TANK list that is the difference between firing and not.
+   *
+   * THE TANK RULE PUTS FREE ENTRIES LAST, on a measured argument: "100ms is not
+   * free to a tank at thirty percent health". What that rule costs is reach,
+   * and this file already records the price -- five of seven racials came back
+   * inert at the bottom of a tank list, because a Protection build caps its rage
+   * and something above is nearly always castable, so the list never falls that
+   * far. `CONSUMABLE_HEALS` is placed high in this same list for exactly that
+   * reason.
+   *
+   * SO THIS IS THE HEALS' ARGUMENT APPLIED TO A POTION THAT IS NOT A HEAL, and
+   * the owner has made the call. It is the one mid-fight consumable a Bear can
+   * drink that does something at the pull -- 60 Strength is 120 attack power --
+   * and at the bottom it was competing with Maul, Primal Bite and Lacerate for
+   * a poll that a rage-capped tank rarely has spare.
+   *
+   * IT KEEPS ITS GATE AND ITS NOTE, which is what `consumableCooldown` is for:
+   * a hand-written copy of a shared entry drifts from it silently, and the copy
+   * is the one nobody re-reads.
+   *
+   * WHETHER IT WAS FIRING AT ALL IS A MEASUREMENT, not an argument -- `USES=1`
+   * is what says so, and it is the column to read on this profile.
+   * ==========================================================================
+   */
+  consumableCooldown('mighty_rage_potion'),
   { abilityId: 'berserk' },
   /*
    * "QUEUE MAUL IF RAGE >= 42". Maul is on-next-swing, so `queue` is exactly
@@ -365,7 +508,14 @@ export const DRUID_BEAR: AplList = {
    */
   ...RACIAL_COOLDOWNS,
   ...RACIAL_DEFENSIVE_COOLDOWNS,
-  ...CONSUMABLE_COOLDOWNS,
+  /*
+   * AND THE REST OF THE CONSUMABLES, WITHOUT THE MIGHTY RAGE POTION, which this
+   * list places itself halfway up. Excluded rather than left here and
+   * duplicated: a repeated ability id is legal only when the copies are gated
+   * differently, and two entries for one potion would be one entry and one
+   * entry that can never be reached.
+   */
+  ...consumableCooldowns({ exclude: ['mighty_rage_potion'] }),
 ],
 };
 

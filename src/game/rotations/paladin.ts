@@ -12,10 +12,10 @@ import {
   ready,
   selfHas,
   selfHealth,
+  selfMissing,
   selfTime,
 } from './apl';
 import type { TalentAllocation } from '../talents/Talent';
-import { SEAL_AURA_IDS } from '../auras/paladin';
 
 /**
  * Paladin priority lists.
@@ -70,20 +70,24 @@ const selfExpired = (auraId: string) => selfTime('atMost', 0, auraId);
 /** "<buff> is active", on the Paladin. */
 const selfActive = selfHas;
 
-/**
- * "A seal is up", whichever one.
- *
- * Judgement's own `canCast` is exactly this, so a list entry that depends on a
- * Judgement being castable states the ability's rule rather than a narrower
- * guess at it.
- */
 /*
- * "ANY SEAL IS UP", built from the SAME LIST `activeSeal` walks rather than
- * from a builtin of its own. `activeSeal` is `SEAL_AURA_IDS.find(has)`, so a
- * disjunction over those ids is the same question -- and it stays the same
- * question when a seal is added, because both read the one array.
+ * ============================================================================
+ * "ANY SEAL IS UP" IS GONE, AND SAYING SO IS THE POINT.
+ *
+ * It was `any(...SEAL_AURA_IDS.map(selfHas))` -- built from the SAME array
+ * `activeSeal` walks, so it asked Judgement's own `canCast` question and
+ * stayed the same question when a seal was added.
+ *
+ * ITS ONE CALLER WAS THE PROTECTION LIST'S SWIFT JUDGEMENT, and the owner has
+ * replaced the clause with a specific seal. For that build the two select the
+ * same states -- it applies no other seal -- so what was lost is generality
+ * rather than behaviour, and the generality was only ever used once.
+ *
+ * IF A LIST WANTS IT AGAIN, rebuild it from `SEAL_AURA_IDS` rather than
+ * writing the disjunction out: that is the half worth keeping, and it is why
+ * this note names the array instead of just deleting the line.
+ * ============================================================================
  */
-const anySealUp: AplCondition = any(...SEAL_AURA_IDS.map(selfHas));
 
 /** "hit points <= N% of maximum". */
 const healthAtMostFraction = (fraction: number) => selfHealth('atMost', fraction);
@@ -321,7 +325,28 @@ export const PALADIN_SHOCKADIN: AplList = {
 export const PALADIN_PROTECTION: AplList = {
   name: 'Paladin (Protection)',
   entries: [
-  { abilityId: 'seal_of_the_crusader', condition: firstEventOnly },
+  /*
+   * ==========================================================================
+   * SEAL OF RIGHTEOUSNESS IS THE ONLY SEAL IN THIS LIST NOW, and it replaces
+   * TWO entries: the Seal of the Crusader that opened it and the Seal of Fury
+   * that was maintained below Swift Judgement.
+   *
+   * THE OWNER'S LIST, AND IT SIMPLIFIES THE SEAL STORY TO ONE LINE. What went
+   * with Seal of the Crusader is its Judgement of the Crusader debuff -- the
+   * +Holy damage taken that the opener existed to apply -- and what went with
+   * Seal of Fury is its rage-equivalent clause. Both are the owner's to spend.
+   *
+   * "IS NOT UP" AND NOT "HAS RUN OUT", which the panel distinguishes and this
+   * project does too: an aura can be PRESENT with nothing left on it. Here the
+   * difference is real rather than cosmetic -- JUDGEMENT CONSUMES THE SEAL, so
+   * what this entry mostly reacts to is a seal that was spent rather than one
+   * that expired, and `auras.has` is the test that sees that immediately.
+   * ==========================================================================
+   */
+  {
+    abilityId: 'seal_of_righteousness',
+    condition: selfMissing('seal_of_righteousness'),
+  },
   /*
    * RIGHTEOUS FURY DOES NOTHING HERE AND IS CAST ANYWAY, on the owner's
    * ruling. Its whole effect is "+60% threat from your Holy attacks" and
@@ -347,34 +372,73 @@ export const PALADIN_PROTECTION: AplList = {
    * below them because those are the bigger answer. See `CONSUMABLE_HEALS`.
    */
   ...CONSUMABLE_HEALS,
+  /*
+   * ==========================================================================
+   * AND THE MID-FIGHT CONSUMABLES COME OFF THE BOTTOM OF THIS TANK LIST, which
+   * is the owner's order and is the SECOND tank list to move them this round --
+   * the Bear's Mighty Rage Potion made the same journey.
+   *
+   * THE TANK RULE PUTS FREE ENTRIES LAST, on a measured argument: "100ms is not
+   * free to a tank at thirty percent health". What that rule costs is REACH,
+   * and this file already records the price next door -- five of seven racials
+   * came back inert at the bottom of a tank list, because something above is
+   * nearly always castable and the list never falls that far.
+   *
+   * SO THIS IS THE HEALS' OWN ARGUMENT, APPLIED ONE CATEGORY ALONG. They are
+   * directly above for exactly this reason; the owner has decided the
+   * Spellblasting Potion belongs with them rather than beneath Consecration.
+   *
+   * THE RACIALS STAY AT THE BOTTOM. They were not named, and the two groups
+   * were separated for a reason -- a racial is a flat buff window with nothing
+   * to line it up against, where a potion the owner has placed is a decision.
+   * ==========================================================================
+   */
+  ...CONSUMABLE_COOLDOWNS,
   { abilityId: 'judgement' },
   /*
    * SWIFT JUDGEMENT IS A SECOND JUDGEMENT, BACK TO BACK, which is the whole
-   * point of it: Judgement, then this, then Judgement again.
+   * point of it: Judgement, then this, then Judgement again. It is OFF the
+   * global cooldown as of the owner's ruling, so the two really are
+   * consecutive rather than 1.5 seconds apart.
    *
    * --------------------------------------------------------------------------
    * ITS GATE USED TO NAME SEAL OF FURY, and that cost it the back-to-back. The
-   * Protection opener is Seal of the Crusader, judge, THEN Seal of Fury -- so at
-   * the first moment Judgement was on cooldown the named seal was not up yet,
-   * the entry fell through, and Swift Judgement went a global cooldown later
-   * than it had to. Judgement landed at 4.5s and 9.0s with a seal cast wedged
-   * between them instead of the two being consecutive.
+   * Protection opener was Seal of the Crusader, judge, THEN Seal of Fury -- so
+   * at the first moment Judgement was on cooldown the named seal was not up
+   * yet, the entry fell through, and Swift Judgement went a global cooldown
+   * later than it had to.
    *
-   * ANY SEAL, which is the real condition and is Judgement's own: `canCast`
-   * refuses without one, so resetting the cooldown for a Paladin carrying no
-   * seal would waste a one-minute cooldown rather than a global. Reading it off
-   * `activeSeal` means the list states the same rule the ability does instead of
-   * a narrower guess at it.
+   * IT NAMES SEAL OF RIGHTEOUSNESS NOW, which is the owner's clause and is the
+   * same rule one seal narrower: this list applies no other seal, so "any seal"
+   * and "Seal of Righteousness" select the same states for this build. The
+   * requirement it restates is Judgement's own -- `canCast` refuses without a
+   * seal, so resetting a one-minute cooldown for a Paladin carrying none would
+   * waste the cooldown rather than a global.
    *
-   * IT FIRES ONCE A FIGHT AND THAT IS ITS COOLDOWN, not a bug: sixty seconds
-   * against a sixty-second encounter.
-   * --------------------------------------------------------------------------
+   * ==========================================================================
+   * THE READING OF THAT CLAUSE IS A CHOICE AND IS FLAGGED. The owner's panel
+   * draws it as a NEGATABLE GROUP around "Seal of Righteousness is up", and
+   * whether that group's own NOT is set is not legible in the screenshot. The
+   * two readings are not close:
+   *
+   *   seal IS up    this entry, and the one implemented. Judgement consumes
+   *                 the seal, so a Judgement is available the moment the seal
+   *                 is back -- and the seal entry is FIRST in the list, so it
+   *                 is back on the very next decision.
+   *   seal is NOT   permanently dead. The seal entry at the top of the list
+   *                 re-applies the seal before anything can reach row eight,
+   *                 so the clause would be false every time it was evaluated.
+   *
+   * IMPLEMENT THE READING THAT LEAVES EVERY CLAUSE DOING WORK -- this
+   * project's own rule, the one that settled "Scorch if the debuff <= 5" and
+   * the Seal Twist cycle that had no entry point. Both of those were a
+   * specification read literally disabling itself, and both looked fine.
+   * ==========================================================================
    */
   {
     abilityId: 'swift_judgement',
-    condition: all(abilityOnCooldown('judgement'), anySealUp),
+    condition: all(abilityOnCooldown('judgement'), selfHas('seal_of_righteousness')),
   },
-  { abilityId: 'seal_of_fury', condition: selfExpired('seal_of_fury') },
   { abilityId: 'holy_strike' },
   { abilityId: 'consecration' },
     /*
@@ -399,7 +463,6 @@ export const PALADIN_PROTECTION: AplList = {
    */
   ...RACIAL_COOLDOWNS,
   ...RACIAL_DEFENSIVE_COOLDOWNS,
-  ...CONSUMABLE_COOLDOWNS,
 ],
 };
 

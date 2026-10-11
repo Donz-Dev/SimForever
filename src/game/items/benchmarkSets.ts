@@ -165,6 +165,15 @@ export const BENCHMARK_TEMPLATES: readonly BenchmarkTemplate[] = [
   { presetId: 'dw_fury', characterClass: 'warrior', label: 'DW Fury', hit: 80, expertise: 10, preferred: MELEE, armour: 'Plate', weapons: { kind: 'dualWield', subclass: 'Axe', offSubclass: 'Axe' }, statStick: WARRIOR_STICK },
   { presetId: 'prot_warr', characterClass: 'warrior', label: 'Prot Warr', hit: 70, expertise: 20, preferred: TANK, armour: 'Plate', weapons: { kind: 'oneHandShield', subclass: 'Sword' }, trinkets: TANK_TRINKETS, statStick: WARRIOR_STICK },
   { presetId: 'rogue_venom', characterClass: 'rogue', label: 'Venom', hit: 120, expertise: 10, preferred: ROGUE, armour: 'Leather', weapons: { kind: 'dualWield', subclass: 'Dagger', offSubclass: 'Dagger' }, statStick: ROGUE_STICK },
+  /*
+   * COMBAT MUT IS THE VENOM TEMPLATE WITH TWO FIELDS CHANGED, which is the
+   * owner's own framing of the profile: it copies everything from Venom but
+   * the APL and the talents. Same leather, same two daggers, same hit cap,
+   * same preference order -- so a difference between the two profiles is a
+   * difference in the BUILD rather than in what it is wearing, which is the
+   * whole point of a benchmark set.
+   */
+  { presetId: 'rogue_combat_mut', characterClass: 'rogue', label: 'Combat Mut', hit: 120, expertise: 10, preferred: ROGUE, armour: 'Leather', weapons: { kind: 'dualWield', subclass: 'Dagger', offSubclass: 'Dagger' }, statStick: ROGUE_STICK },
   { presetId: 'rogue_combat', characterClass: 'rogue', label: 'Combat', hit: 120, expertise: 10, preferred: ROGUE, armour: 'Leather', weapons: { kind: 'dualWield', subclass: 'Sword', offSubclass: 'Dagger' }, statStick: ROGUE_STICK },
   { presetId: 'rogue_rupture', characterClass: 'rogue', label: 'Rupture', hit: 120, expertise: 10, preferred: ROGUE, armour: 'Leather', weapons: { kind: 'dualWield', subclass: 'Dagger', offSubclass: 'Dagger' }, statStick: ROGUE_STICK },
   /*
@@ -175,7 +184,26 @@ export const BENCHMARK_TEMPLATES: readonly BenchmarkTemplate[] = [
    * produces an ordinary-looking figure. That is the failure mode this project
    * documents hardest, and it is why the weapon column loses to the build.
    */
-  { presetId: 'rogue_hemo', characterClass: 'rogue', label: 'Hemo', hit: 120, expertise: 10, preferred: ROGUE, armour: 'Leather', weapons: { kind: 'dualWield', subclass: 'Dagger', offSubclass: 'Dagger' }, statStick: ROGUE_STICK },
+  /*
+   * THE LABEL IS THE CHARACTER NAME, which is why renaming the preset to "Hemo
+   * Dagger" had to reach here too. `BENCHMARK_TEMPLATES_BY_LABEL` joins on it,
+   * and that join is the FALLBACK for a profile saved before presets stamped
+   * their template id -- so a stale label here takes the four test-set buttons
+   * away from any such file, silently. The same hazard this file already
+   * records about `character.name`.
+   */
+  { presetId: 'rogue_hemo', characterClass: 'rogue', label: 'Hemo Dagger', hit: 120, expertise: 10, preferred: ROGUE, armour: 'Leather', weapons: { kind: 'dualWield', subclass: 'Dagger', offSubclass: 'Dagger' }, statStick: ROGUE_STICK },
+  /*
+   * PURE HEMO IS THE HEMO DAGGER TEMPLATE WITH THE COMBAT TEMPLATE'S MAIN
+   * HAND -- the owner's own framing: "the same as Hemo Dagger except it's
+   * gonna use the Main Hand weapon from the Combat templates."
+   *
+   * SO EXACTLY ONE FIELD DIFFERS from the row above, and it is the field the
+   * ROTATION DISPATCH reads: a sword main hand is why this build runs its own
+   * list rather than the dagger one, because that list casts Ambush and Ambush
+   * needs a dagger. The gear and the rotation are one decision here.
+   */
+  { presetId: 'rogue_pure_hemo', characterClass: 'rogue', label: 'Pure Hemo', hit: 120, expertise: 10, preferred: ROGUE, armour: 'Leather', weapons: { kind: 'dualWield', subclass: 'Sword', offSubclass: 'Dagger' }, statStick: ROGUE_STICK },
   { presetId: 'druid_moonkin', characterClass: 'druid', label: 'Moonkin', hit: 110, expertise: 0, preferred: CASTER, armour: 'Leather', weapons: { kind: 'twoHand', subclass: 'Staff', caster: true } },
   { presetId: 'druid_cat', characterClass: 'druid', label: 'Cat', hit: 30, expertise: 10, preferred: ['Strength', 'Agility', 'Crit', 'Stamina', 'Attack Power'], armour: 'Leather', weapons: { kind: 'twoHand', subclass: 'Mace' } },
   { presetId: 'druid_bear', characterClass: 'druid', label: 'Bear', hit: 30, expertise: 20, preferred: ['Stamina', 'Bonus Armor', 'Agility', 'Strength', 'Dodge', 'Defense'], armour: 'Leather', weapons: { kind: 'twoHand', subclass: 'Mace' }, trinkets: TANK_TRINKETS },

@@ -631,10 +631,24 @@ export const PREPARATION: Ability = {
  * to charge -- the reagent is the cost, and a consumable is not a resource this
  * engine tracks.
  *
- * IT TAKES A GLOBAL COOLDOWN, which is the engine's default and not a stated
- * fact. Nothing in the source says it is off the GCD, and `triggersGcd` is
- * derived rather than declared here precisely so a guess is never written down
- * as data. If the owner states otherwise it is one field.
+ * IT TAKES NO GLOBAL COOLDOWN, ON THE OWNER'S RULING -- AND THE FLAGGED
+ * QUESTION IS WHAT GOT IT ANSWERED.
+ *
+ * This comment used to read: "IT TAKES A GLOBAL COOLDOWN, which is the engine's
+ * default and not a stated fact. Nothing in the source says it is off the GCD,
+ * and `triggersGcd` is derived rather than declared here precisely so a guess
+ * is never written down as data. **If the owner states otherwise it is one
+ * field.**" They have, and it was.
+ *
+ * WHICH IS WORTH KEEPING RATHER THAN DELETING, because the alternative was to
+ * write the default down as though it were sourced -- and a guess recorded as
+ * data is the one thing this project's rules forbid outright. The caveat is
+ * what made the question askable.
+ *
+ * IT MATTERS MORE HERE THAN A FREE CAST USUALLY DOES. Vanish exists in this
+ * list to put Ambush's stealth up, and Ambush is the entry directly beneath it
+ * -- so a global between them would push the Ambush a cast later and spend the
+ * window on whatever the list reached first.
  * ----------------------------------------------------------------------------
  */
 export const VANISH: Ability = {
@@ -642,6 +656,9 @@ export const VANISH: Ability = {
   name: 'Vanish',
   cooldownMs: seconds(300),
   requiresTarget: false,
+  // The owner's ruling. Being off it means ONE thing -- it does not START a
+  // global -- and it is still BLOCKED by one already running.
+  triggersGcd: false,
   onCast: ({ simulation, caster }) => {
     simulation.applyAura(caster, STEALTH, caster.id);
   },
@@ -760,6 +777,13 @@ export const PREMEDITATION: Ability = {
   name: 'Premeditation',
   cooldownMs: seconds(120),
   requiresTarget: true,
+  /*
+   * OFF THE GLOBAL COOLDOWN, on the owner's ruling and for the same reason
+   * Vanish is: this banks two points for the ability beneath it, so a global
+   * spent here is a global the thing it was banked FOR does not get. It opens
+   * the list, where a global costs the whole opener a cast.
+   */
+  triggersGcd: false,
   onCast: ({ simulation, caster, target, ability }) => {
     if (!target) return;
     awardComboPoint(

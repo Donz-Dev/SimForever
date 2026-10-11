@@ -1,4 +1,4 @@
-import type { Rotation } from '../../engine';
+import type { Rotation, WeaponType } from '../../engine';
 import { ALL_PRIORITY_LISTS } from './allLists';
 import type { AplList } from './apl';
 import type { ClassId, CombatStyleId, StanceId } from '../character';
@@ -36,9 +36,23 @@ export function rotationFor(
   style: CombatStyleId,
   stance?: StanceId,
   talents?: TalentAllocation,
+  /**
+   * What is in the MAIN HAND, which only the Rogue reads.
+   *
+   * --------------------------------------------------------------------------
+   * A FIFTH SELECTOR, AND THE FIRST THAT IS AN ITEM RATHER THAN A BUILD
+   * SETTING. The two Hemorrhage builds are both dual-wield, both Subtlety, and
+   * differ in eight talents of which none gates a list entry -- what separates
+   * them is that one casts AMBUSH, which requires a dagger in the main hand.
+   *
+   * OPTIONAL, AND ABSENT MEANS THE EXISTING ANSWER. Every caller that does not
+   * supply one gets exactly what it got before.
+   * --------------------------------------------------------------------------
+   */
+  mainHandWeapon?: WeaponType,
 ): Rotation | undefined {
   if (characterClass === 'warrior') return warriorRotation(style, stance);
-  if (characterClass === 'rogue') return rogueRotation(talents ?? {});
+  if (characterClass === 'rogue') return rogueRotation(talents ?? {}, mainHandWeapon);
   // A Druid's form IS its combat style, so the style selects the list -- the
   // Warrior's arrangement rather than the Rogue's.
   if (characterClass === 'druid') return druidRotation(style);
@@ -95,8 +109,10 @@ export function aplFor(
   style: CombatStyleId,
   stance?: StanceId,
   talents?: TalentAllocation,
+  /** Passed straight through; see `rotationFor`. The Rogue is its only reader. */
+  mainHandWeapon?: WeaponType,
 ): AplList | undefined {
-  const rotation = rotationFor(characterClass, style, stance, talents);
+  const rotation = rotationFor(characterClass, style, stance, talents, mainHandWeapon);
   if (!rotation) return undefined;
   return ALL_PRIORITY_LISTS.find((record) => record.list.name === rotation.name)?.list;
 }

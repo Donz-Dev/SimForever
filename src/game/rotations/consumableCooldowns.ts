@@ -5,7 +5,7 @@ import {
   type ConsumableSelection,
 } from '../buffs/consumables';
 import type { AplEntry, AplList } from './apl';
-import { resource, resourceFraction, selfHealth } from './apl';
+import { resource, resourceFraction, selfHas, selfHealth } from './apl';
 
 /**
  * The mid-fight consumables every priority list carries.
@@ -141,6 +141,54 @@ export const DEMONIC_RUNE_MANA_FRACTION = 0.1;
 export const THISTLE_TEA_ENERGY_THRESHOLD = 20;
 
 /**
+ * The TIGHT Thistle Tea gate: ten, which the Venom and Rupture lists both use.
+ *
+ * ============================================================================
+ * THE OWNER'S FIGURE, READ OFF THEIR OWN PANEL: ten rather than twenty. It is
+ * the same trade the shared constant describes, taken further -- ten wastes ten
+ * of the hundred at worst instead of twenty, at the cost of the gate opening
+ * less often.
+ *
+ * NAMED FOR THE NUMBER RATHER THAN FOR A LIST, because the owner has now given
+ * it twice -- for Venom and for Rupture -- and a constant called
+ * `VENOM_...` that two lists read is the shape that drifts. The third gate,
+ * fifteen, is the Combat Rogue's and has its own.
+ *
+ * A SECOND CONSTANT RATHER THAN A MOVE OF THE FIRST, because the entry is in a
+ * SHARED list fragment and FIVE profiles drink Thistle Tea: all four Rogues and
+ * the Cat Druid. THREE of the five are named now and they hold TWO different
+ * numbers between them, so no move of the shared constant can satisfy them --
+ * which is the same arithmetic the food rows reached, and it is what settles
+ * the shape rather than making it awkward.
+ *
+ * AND THE CAT DRUID HAS SINCE JOINED IT, which leaves the HEMO DAGGER ROGUE as
+ * the only thing in the project still on twenty -- so four of the five profiles
+ * that drink Thistle Tea are now named by the owner, and the shared constant is
+ * what the fifth has rather than what anything was designed around.
+ * ============================================================================
+ */
+export const TIGHT_THISTLE_TEA_ENERGY_THRESHOLD = 10;
+
+/**
+ * The Combat Rogue's own Thistle Tea gate: fifteen.
+ *
+ * ============================================================================
+ * THREE DIFFERENT NUMBERS NOW -- twenty shared, fifteen here, ten on Venom --
+ * and that is what settles the shape rather than making it awkward. A shared
+ * list fragment holds ONE value and the owner has given three, so the gate had
+ * to become a parameter and the question of "should the shared constant just
+ * move" is answered for good.
+ *
+ * IT IS THE SAME TRADE AT A DIFFERENT POINT. Thistle Tea restores a full
+ * hundred into a cap of a hundred, so every point on the bar when it is drunk
+ * is thrown away: a lower gate wastes less and opens less often. Fifteen sits
+ * between the Venom Rogue's ten and the Cat Druid's twenty, which is what a
+ * build that spends its energy at a middling rate should want.
+ * ============================================================================
+ */
+export const COMBAT_THISTLE_TEA_ENERGY_THRESHOLD = 15;
+
+/**
  * The rage a Mighty Rage Potion is drunk at.
  *
  * ----------------------------------------------------------------------------
@@ -164,66 +212,210 @@ export const THISTLE_TEA_ENERGY_THRESHOLD = 20;
  */
 export const MIGHTY_RAGE_THRESHOLD = 25;
 
-export const CONSUMABLE_COOLDOWNS: readonly AplEntry[] = [
-  /*
-   * THE THREE POOL RESTORES, EACH GATED ON ITS OWN POOL. A restore drunk into a
-   * nearly full pool is the waste `grantResource` reports in `wasted` and a DPS
-   * figure cannot see -- the Cat's Shifting Power is the worked example, where a
-   * gate on exactly this was worth POSITIVE DPS because the ungated version
-   * threw away 12.5% of everything it granted and the reliable waster was THE
-   * PULL, which every fight opens at a full bar.
-   */
-  {
-    abilityId: 'major_mana_potion',
-    condition: resourceFraction('atMost', POTION_MANA_FRACTION, 'mana'),
-    note: `Drunk under ${POTION_MANA_FRACTION * 100}% mana, which wastes none of it on any class's pool.`,
-  },
-  {
-    abilityId: 'demonic_rune',
-    condition: resourceFraction('atMost', DEMONIC_RUNE_MANA_FRACTION, 'mana'),
-    note: `Used under ${DEMONIC_RUNE_MANA_FRACTION * 100}% mana, the owner's figure -- TIGHTER than the mana potion's gate, so a character carrying both spends the free one first. It costs 600 to 1000 Hit Points and is refused below 1000 rather than allowed to kill.`,
-  },
-  {
+/**
+ * The mid-fight consumables, as entries, with the gates a list may override.
+ *
+ * ----------------------------------------------------------------------------
+ * A FUNCTION BECAUSE ONE LIST NEEDED A DIFFERENT NUMBER, and the alternative
+ * was writing its seven entries out by hand -- which is the shape
+ * `rotationIds.test.ts` exists for: a hand-written copy of a shared fragment
+ * drifts from it silently, and the copy is the one nobody re-reads.
+ *
+ * `CONSUMABLE_COOLDOWNS` IS THIS CALLED WITH NOTHING, so all 25 other lists are
+ * byte-identical to what they were and no figure can move.
+ *
+ * THE NOTE IS BUILT FROM THE SAME NUMBER THE CONDITION USES, which is the whole
+ * reason the override goes HERE rather than being patched onto the entry
+ * afterwards: a note is a frozen string, so an override applied to the
+ * condition alone would leave the row explaining a gate it no longer has.
+ * ----------------------------------------------------------------------------
+ */
+export function consumableCooldowns(
+  options: {
+    readonly thistleTeaEnergy?: number;
+    /**
+     * Ability ids to leave OUT, for a list that places one of them itself.
+     *
+     * ------------------------------------------------------------------------
+     * THE COMBAT ROGUE PUTS THISTLE TEA ABOVE ITS RACIALS and the rest of the
+     * row below them, so the group is split rather than reordered -- the
+     * owner dragged one entry to the top of their panel and left everything
+     * else where it was.
+     *
+     * AN EXCLUSION RATHER THAN A HAND-WRITTEN COPY, because a copy of a shared
+     * fragment drifts from it silently and is the copy nobody re-reads. The
+     * excluded entry is still built HERE, by `thistleTeaCooldown`, so its
+     * condition and its note cannot disagree with the shared one's.
+     * ------------------------------------------------------------------------
+     */
+    readonly exclude?: readonly string[];
+  } = {},
+): readonly AplEntry[] {
+  const exclude = new Set(options.exclude ?? []);
+  return [
+    /*
+     * THE THREE POOL RESTORES, EACH GATED ON ITS OWN POOL. A restore drunk into a
+     * nearly full pool is the waste `grantResource` reports in `wasted` and a DPS
+     * figure cannot see -- the Cat's Shifting Power is the worked example, where a
+     * gate on exactly this was worth POSITIVE DPS because the ungated version
+     * threw away 12.5% of everything it granted and the reliable waster was THE
+     * PULL, which every fight opens at a full bar.
+     */
+    {
+      abilityId: 'major_mana_potion',
+      condition: resourceFraction('atMost', POTION_MANA_FRACTION, 'mana'),
+      note: `Drunk under ${POTION_MANA_FRACTION * 100}% mana, which wastes none of it on any class's pool.`,
+    },
+    {
+      abilityId: 'demonic_rune',
+      condition: resourceFraction('atMost', DEMONIC_RUNE_MANA_FRACTION, 'mana'),
+      note: `Used under ${DEMONIC_RUNE_MANA_FRACTION * 100}% mana, the owner's figure -- TIGHTER than the mana potion's gate, so a character carrying both spends the free one first. It costs 600 to 1000 Hit Points and is refused below 1000 rather than allowed to kill.`,
+    },
+    thistleTeaCooldown(options.thistleTeaEnergy),
+    /*
+     * THE ONE THAT IS BOTH. Its rage half wants a trough and its strength half
+     * wants to be up early; the gate serves the rage and the Cat ignores it.
+     */
+    {
+      abilityId: 'mighty_rage_potion',
+      condition: resource('atMost', MIGHTY_RAGE_THRESHOLD, 'rage'),
+      note: `${MIGHTY_RAGE_THRESHOLD} rage is the no-waste point for the 45-75 it restores. A Cat Druid has no rage pool, so this reads as zero and the potion fires at the pull for its 60 Strength.`,
+    },
+    /*
+     * THE TWO PURE BUFFS, UNGATED BY DEFAULT -- which was the racials' own
+     * argument: a flat stat for a fixed window has nothing in this encounter to
+     * line it up with, so any condition would be a guess at a burst phase that
+     * does not exist here.
+     *
+     * AND TWO OF THE OWNER'S LISTS NOW LINE THEM UP WITH SOMETHING, which is
+     * what `buffPotionCooldown` is for -- the Arcane Mage holds Spellblasting
+     * for Presence of Mind and the Cat holds Frenzy for Berserk. So the
+     * reasoning above was right about the ENCOUNTER and wrong about the BUILD:
+     * what the window can be lined up against is one of the character's own
+     * damage cooldowns, which is a thing only the list knows.
+     */
+    buffPotionCooldown('major_frenzy_potion'),
+    buffPotionCooldown('major_spellblasting_potion'),
+    /*
+     * MAJOR MENDER'S POTION IS DELIBERATELY ABSENT, and saying so here is the
+     * point -- "say so where the entry is not", because an absent entry for
+     * something the catalogue offers reads exactly like an omission.
+     *
+     * It grants 75 Healing Power and healing power is not a stat this engine has,
+     * so the ability is declared, selectable, castable and worth exactly nothing;
+     * its own `unmodelled` says so. An entry for it would cost one rotation poll
+     * per two minutes to achieve that nothing. It is the one mid-fight consumable
+     * with no line in any list, and it is the one with nothing to decide.
+     */
+  ].filter((entry) => !exclude.has(entry.abilityId));
+}
+
+/**
+ * The Thistle Tea entry on its own, so a list can place it itself.
+ *
+ * THE NOTE IS BUILT FROM THE SAME NUMBER THE CONDITION USES, which is the whole
+ * reason the gate is a parameter here rather than something patched onto the
+ * entry afterwards: a note is a FROZEN STRING, so an override applied to the
+ * condition alone leaves the row explaining a gate it no longer has. The
+ * owner's own Venom screenshot shows one -- a gate of 10 under a note reading
+ * "Under 20" -- because editing a condition in the panel does not touch its
+ * note. Nothing can fix a hand-edited entry; what this guarantees is that a
+ * STOCK list cannot disagree with itself.
+ */
+export function thistleTeaCooldown(energy?: number): AplEntry {
+  const gate = energy ?? THISTLE_TEA_ENERGY_THRESHOLD;
+  return {
     abilityId: 'thistle_tea',
-    condition: resource('atMost', THISTLE_TEA_ENERGY_THRESHOLD, 'energy'),
-    note: `100 energy into a cap of 100, so every point on the bar is wasted. Under ${THISTLE_TEA_ENERGY_THRESHOLD} is the compromise between waste and the gate ever opening.`,
-  },
-  /*
-   * THE ONE THAT IS BOTH. Its rage half wants a trough and its strength half
-   * wants to be up early; the gate serves the rage and the Cat ignores it.
-   */
-  {
-    abilityId: 'mighty_rage_potion',
-    condition: resource('atMost', MIGHTY_RAGE_THRESHOLD, 'rage'),
-    note: `${MIGHTY_RAGE_THRESHOLD} rage is the no-waste point for the 45-75 it restores. A Cat Druid has no rage pool, so this reads as zero and the potion fires at the pull for its 60 Strength.`,
-  },
-  /*
-   * THE TWO PURE BUFFS, UNGATED, which is the racials' own argument: a flat
-   * stat for a fixed window has nothing in this encounter to line it up with,
-   * so any condition would be a guess at a burst phase that does not exist
-   * here. Neither can be wasted and neither is a floor -- both are on a two
-   * minute cooldown.
-   */
-  {
-    abilityId: 'major_frenzy_potion',
-    note: '40 attack power and ranged attack power for 30s. Ungated: a flat window with nothing to line it up against.',
-  },
-  {
-    abilityId: 'major_spellblasting_potion',
-    note: '40 spell power for 30s. Ungated, for the same reason as the Frenzy Potion.',
-  },
-  /*
-   * MAJOR MENDER'S POTION IS DELIBERATELY ABSENT, and saying so here is the
-   * point -- "say so where the entry is not", because an absent entry for
-   * something the catalogue offers reads exactly like an omission.
-   *
-   * It grants 75 Healing Power and healing power is not a stat this engine has,
-   * so the ability is declared, selectable, castable and worth exactly nothing;
-   * its own `unmodelled` says so. An entry for it would cost one rotation poll
-   * per two minutes to achieve that nothing. It is the one mid-fight consumable
-   * with no line in any list, and it is the one with nothing to decide.
-   */
-];
+    condition: resource('atMost', gate, 'energy'),
+    note: `100 energy into a cap of 100, so every point on the bar is wasted. Under ${gate} is the compromise between waste and the gate ever opening.`,
+  };
+}
+
+/** The two mid-fight consumables that are a flat buff and nothing else. */
+export type BuffPotionId = 'major_frenzy_potion' | 'major_spellblasting_potion';
+
+/** What each one grants, for the note. Not a stat the engine reads from here. */
+const BUFF_POTION_GRANT: Readonly<Record<BuffPotionId, string>> = {
+  major_frenzy_potion: '40 attack power and ranged attack power for 30s',
+  major_spellblasting_potion: '40 spell power for 30s',
+};
+
+/**
+ * One of the two pure buff potions, optionally HELD FOR A WINDOW.
+ *
+ * ============================================================================
+ * UNGATED IS STILL THE DEFAULT, AND IT IS STILL THE RIGHT DEFAULT. Thirty
+ * seconds of a flat stat has nothing in a one-target, no-phase encounter to
+ * line it up against, so a condition written here would be a guess -- which is
+ * exactly what `RACIAL_COOLDOWNS` says about itself and for the same reason.
+ *
+ * WHAT A LIST CAN KNOW THAT THIS FILE CANNOT is whether the BUILD has a damage
+ * cooldown worth stacking the window onto, and two of the owner's lists do:
+ * the Arcane Mage holds Spellblasting for Presence of Mind and the Cat holds
+ * Frenzy for Berserk. Both are the owner's conditions.
+ *
+ * THE GATED ENTRY CANNOT STARVE ITSELF, which is the thing to check before
+ * writing one. The aura it waits on is applied by an entry BELOW it in both
+ * lists, so the first poll skips the potion and casts the cooldown, and the
+ * next poll finds the window open -- and because a potion is off the global
+ * cooldown, that next poll is 100ms later rather than a cast later. A gate
+ * waiting on something only an entry ABOVE it could supply would never open.
+ *
+ * ============================================================================
+ * THE NOTE IS BUILT FROM THE SAME AURA THE CONDITION READS, which is the whole
+ * reason this is a function rather than a condition patched onto a shared
+ * entry afterwards. A note is a FROZEN STRING: an override that touched only
+ * the condition would leave the row in the panel explaining a gate it no
+ * longer has, which is the mistake `thistleTeaCooldown` exists to prevent one
+ * category along.
+ * ============================================================================
+ */
+export function buffPotionCooldown(
+  abilityId: BuffPotionId,
+  /** The damage cooldown whose window this is held for, if any. */
+  insideAura?: { readonly id: string; readonly label: string },
+): AplEntry {
+  const grant = BUFF_POTION_GRANT[abilityId];
+  if (insideAura === undefined) {
+    return {
+      abilityId,
+      note: `${grant}. Ungated: a flat window with nothing in this encounter to line it up against.`,
+    };
+  }
+  return {
+    abilityId,
+    condition: selfHas(insideAura.id),
+    note: `${grant}, held for the ${insideAura.label} window so the two stack. The entry that applies ${insideAura.label} is BELOW this one, so the first poll casts the cooldown and the next -- 100ms later, because a potion takes no global cooldown -- drinks this.`,
+  };
+}
+
+/**
+ * One shared consumable entry on its own, so a list can place it by hand.
+ *
+ * ----------------------------------------------------------------------------
+ * THE `exclude` OPTION'S OTHER HALF. A list that drops an entry from the group
+ * has to put it back somewhere, and writing it out by hand is the shape
+ * `rotationIds.test.ts` exists for -- a hand-written copy of a shared fragment
+ * drifts from it silently, and the copy is the one nobody re-reads. The Bear
+ * moves its Mighty Rage Potion from the bottom of the list to the middle and
+ * this is how it carries the gate and the note with it.
+ *
+ * IT THROWS ON AN ID THE GROUP DOES NOT HOLD, rather than returning an entry
+ * for an ability nobody declared -- an entry naming an unknown ability is
+ * skipped by `PriorityRotation` in SILENCE, which is the fourth cause of inert
+ * and the one that reads exactly like a working list.
+ * ----------------------------------------------------------------------------
+ */
+export function consumableCooldown(abilityId: string): AplEntry {
+  const entry = consumableCooldowns().find((candidate) => candidate.abilityId === abilityId);
+  if (entry === undefined) {
+    throw new Error(`consumableCooldown: no shared entry for "${abilityId}"`);
+  }
+  return entry;
+}
+
+/** The shared seven, on the default gates. What every list but one spreads. */
+export const CONSUMABLE_COOLDOWNS: readonly AplEntry[] = consumableCooldowns();
 
 /**
  * And the two that HEAL, which belong where a tank's survival cooldowns are.

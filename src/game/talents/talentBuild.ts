@@ -368,14 +368,29 @@ export interface TalentBuildContext {
   readonly level?: number;
 }
 
-/** Whether the held weapon satisfies a conditional effect. */
+/**
+ * Whether what the character IS and is HOLDING satisfies a conditional effect.
+ *
+ * ----------------------------------------------------------------------------
+ * IT TAKES THE WHOLE CONTEXT RATHER THAN FIVE POSITIONAL ARGUMENTS, which is
+ * what let `weaponIn: 'eitherHand'` be added at all: the off hand was already
+ * on `TalentBuildContext` and was simply not reaching here, so seven call
+ * sites each had to remember to pass `context.mainHand` and none of them could
+ * have passed the other one.
+ *
+ * FIVE ARGUMENTS OF WHICH THREE WERE OPTIONAL IS ALSO A SHAPE THAT ACCEPTS THE
+ * WRONG CALL SILENTLY -- a probe written while investigating this talent
+ * called `weaponsFor(class, style, equipment)` against a signature of
+ * `(equipment, style, multiplier)`, got the placeholder weapons back, and
+ * reported that every Rogue preset holds an untyped weapon. One object cannot
+ * be passed in the wrong order.
+ * ----------------------------------------------------------------------------
+ */
 function meets(
   requires: BuildRequirement,
-  weapon: WeaponProfile | undefined,
-  hasShield = false,
-  hasPet = false,
-  style?: CombatStyleId,
+  context: TalentBuildContext,
 ): boolean {
+  const { hasShield = false, hasPet = false, style } = context;
   /*
    * THE STYLE CLAUSE FIRST, with the pet and the shield, because like them it
    * is about what the character IS rather than about what is in a hand. A
@@ -399,14 +414,27 @@ function meets(
    */
   if (requires.shield !== undefined && requires.shield !== hasShield) return false;
   if (requires.weaponTypes === undefined && requires.twoHanded === undefined) return true;
-  if (!weapon) return false;
-  if (requires.twoHanded !== undefined && (weapon.twoHanded ?? false) !== requires.twoHanded) {
-    return false;
-  }
-  if (requires.weaponTypes && !requires.weaponTypes.includes(weapon.weaponType ?? 'unknown')) {
-    return false;
-  }
-  return true;
+  /*
+   * THE MAIN HAND ALONE UNLESS THE TALENT ASKS FOR BOTH, which keeps every
+   * existing caller's behaviour exactly: `weaponIn` is absent on all of them.
+   *
+   * EITHER HAND MEANS EITHER HAND SATISFIES IT, not that both must -- and the
+   * clause pays out ONCE however many hands match. See `BuildRequirement`.
+   */
+  const hands =
+    requires.weaponIn === 'eitherHand'
+      ? [context.mainHand, context.offHand]
+      : [context.mainHand];
+  return hands.some((weapon) => {
+    if (!weapon) return false;
+    if (requires.twoHanded !== undefined && (weapon.twoHanded ?? false) !== requires.twoHanded) {
+      return false;
+    }
+    if (requires.weaponTypes && !requires.weaponTypes.includes(weapon.weaponType ?? 'unknown')) {
+      return false;
+    }
+    return true;
+  });
 }
 
 /**
@@ -614,7 +642,7 @@ export function talentBuild(
       if (effect.kind === 'grantAura') {
         if (
           effect.requires &&
-          !meets(effect.requires, context.mainHand, context.hasShield, context.hasPet, context.style)
+          !meets(effect.requires, context)
         ) {
           report(talentId, rank, unmetReason(effect.requires));
           continue;
@@ -726,7 +754,7 @@ export function talentBuild(
            * of the Wild's stamina clause is Bear Form only, and a Cat that
            * collected it would read as a working talent worth more than it is.
            */
-          if (effect.requires && !meets(effect.requires, context.mainHand, context.hasShield, context.hasPet, context.style)) {
+          if (effect.requires && !meets(effect.requires, context)) {
             report(talentId, rank, unmetReason(effect.requires));
             break;
           }
@@ -753,7 +781,7 @@ export function talentBuild(
          * already relied on and the new reading is the one that has to ask.
          */
         case 'statFromLevel': {
-          if (effect.requires && !meets(effect.requires, context.mainHand, context.hasShield, context.hasPet, context.style)) {
+          if (effect.requires && !meets(effect.requires, context)) {
             report(talentId, rank, unmetReason(effect.requires));
             break;
           }
@@ -807,7 +835,7 @@ export function talentBuild(
            */
           if (
             effect.requires &&
-            !meets(effect.requires, context.mainHand, context.hasShield, context.hasPet, context.style)
+            !meets(effect.requires, context)
           ) {
             report(talentId, rank, unmetReason(effect.requires));
             break;
@@ -856,7 +884,7 @@ export function talentBuild(
            * where the equipment is in scope. Not registering it at all is the
            * accurate outcome: the proc does not exist for this character.
            */
-          if (effect.requires && !meets(effect.requires, context.mainHand, context.hasShield, context.hasPet, context.style)) {
+          if (effect.requires && !meets(effect.requires, context)) {
             report(
               talentId,
               rank,
@@ -899,7 +927,7 @@ export function talentBuild(
           break;
         }
         case 'conditionalDamage':
-          if (meets(effect.requires, context.mainHand, context.hasShield, context.hasPet, context.style)) {
+          if (meets(effect.requires, context)) {
             damageMultiplier *= 1 + value / 100;
           } else {
             report(talentId, rank, unmetReason(effect.requires));
@@ -991,7 +1019,7 @@ export function talentBuild(
            * `meets` is false and the branch below runs instead.
            * ----------------------------------------------------------------------
            */
-          if (meets(effect.requires, context.mainHand, context.hasShield, context.hasPet, context.style)) {
+          if (meets(effect.requires, context)) {
             attackTableModifiers.add('melee-auto', { critBonus: value });
             attackTableModifiers.add('melee-special', { critBonus: value });
           } else {

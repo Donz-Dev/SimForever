@@ -3,6 +3,9 @@ import type { ClassTalents, Talent, TalentAllocation, TalentTree } from '../../g
 import { TOTAL_TALENT_POINTS } from '../../game/talents/Talent';
 import { accentFor, talentsForClass } from '../../game/talents/talentData';
 import { Panel } from '../components/Panel';
+import { OptionGroup } from '../components/OptionGroup';
+import type { DemonFamilyId, PetFamilyId } from '../../game/character/petFamilies';
+import { isDemonFamilyId } from '../../game/character/petFamilies';
 import {
   canSpend,
   canUnspend,
@@ -34,6 +37,42 @@ interface TalentPanelProps {
   readonly characterClass: ClassId;
   readonly allocation: TalentAllocation;
   readonly onChange: (update: TalentUpdate) => void;
+  /**
+   * The companion on the profile, and the setter for it.
+   *
+   * --------------------------------------------------------------------------
+   * TWO NARROW PROPS RATHER THAN THE WHOLE PROFILE, which is deliberate: this
+   * panel deliberately takes no `equipment` and no profile, and the commit that
+   * removed the unmodelled list recorded why. What it needs here is one field.
+   *
+   * OPTIONAL, so every existing caller and test is unchanged -- without them
+   * the chooser below simply does not render.
+   * --------------------------------------------------------------------------
+   */
+  readonly petFamily?: string;
+  readonly onPetFamilyChange?: (family: PetFamilyId) => void;
+}
+
+/**
+ * Whether this build sacrifices a demon, which is what puts the chooser on
+ * screen.
+ *
+ * ============================================================================
+ * IT ASKS THE TALENT AND THE CLASS, which is the owner's own condition --
+ * "a checkbox for which pet demon is sacrificed IF THEY TAKE THE DEMONIC
+ * SACRIFICE TALENT". A Warlock without the talent keeps its demon and the
+ * field means something else entirely; a Hunter's companion is a different
+ * question with a different list.
+ *
+ * IT IS NOT `bringsPet` INVERTED. `bringsPet` is false for a Lone Wolf Hunter
+ * too, and that build has no demon to choose.
+ * ============================================================================
+ */
+export function sacrificesADemon(
+  characterClass: ClassId,
+  allocation: TalentAllocation,
+): boolean {
+  return characterClass === 'warlock' && (allocation.demonic_sacrifice ?? 0) > 0;
 }
 
 /**
@@ -55,7 +94,13 @@ interface TalentPanelProps {
  * Collapsible because it is tall: three trees of seven rows push the results
  * off screen on a laptop, and the trees are set once and then watched rarely.
  */
-export function TalentPanel({ characterClass, allocation, onChange }: TalentPanelProps) {
+export function TalentPanel({
+  characterClass,
+  allocation,
+  onChange,
+  petFamily,
+  onPetFamilyChange,
+}: TalentPanelProps) {
   const talents = talentsForClass(characterClass);
   if (!talents) return null;
 
@@ -85,7 +130,63 @@ export function TalentPanel({ characterClass, allocation, onChange }: TalentPane
           />
         ))}
       </div>
+      {sacrificesADemon(characterClass, allocation) && onPetFamilyChange !== undefined ? (
+        <DemonChoice value={petFamily} onChange={onPetFamilyChange} />
+      ) : null}
     </Panel>
+  );
+}
+
+/**
+ * Which demon Demonic Sacrifice killed.
+ *
+ * ============================================================================
+ * MUTUALLY EXCLUSIVE, WHICH IS WHY IT IS A RADIO GROUP AND NOT FOUR
+ * CHECKBOXES. The owner asked for "a checkbox for which pet demon is
+ * sacrificed", and the field it writes is ONE id -- a Warlock summons one
+ * demon and sacrifices it. Four independent checkboxes would let somebody tick
+ * two and the profile could not hold the answer, which is the same structural
+ * argument the consumable selection makes about one choice per category.
+ *
+ * `OptionGroup` is the control this app already uses for exactly that shape.
+ *
+ * ============================================================================
+ * TWO OF THE FOUR ARE WORTH A DAMAGE FIGURE AND TWO ARE NOT, and the labels
+ * say so rather than offering four options that look interchangeable. The Imp
+ * is +15% Shadow and the Succubus +15% Fire -- both applied, both measured at
+ * exactly x1.1500 on the school they name and x1.0000 on every other -- where
+ * the Voidwalker's mana and the Felhunter's health move nothing for a profile
+ * that is never attacked and never runs dry. See `DEMONIC_SACRIFICE_UNMODELLED`.
+ * ============================================================================
+ */
+const DEMON_OPTIONS: readonly { readonly id: DemonFamilyId; readonly name: string }[] = [
+  { id: 'imp', name: 'Imp · +15% Shadow' },
+  { id: 'succubus', name: 'Succubus · +15% Fire' },
+  { id: 'voidwalker', name: 'Voidwalker · mana' },
+  { id: 'felhunter', name: 'Felhunter · health' },
+];
+
+function DemonChoice({
+  value,
+  onChange,
+}: {
+  readonly value: string | undefined;
+  readonly onChange: (family: PetFamilyId) => void;
+}) {
+  /*
+   * AN UNSET FIELD SHOWS NOTHING SELECTED RATHER THAN DEFAULTING TO THE IMP.
+   * `sacrificedDemon` returns `undefined` when the field is absent and the
+   * buff is then simply not applied -- so a profile that has not chosen gets
+   * no bonus, and a chooser that pre-selected one would claim a choice the
+   * file does not contain. `validateProfile` already records that asymmetry.
+   */
+  return (
+    <OptionGroup<DemonFamilyId>
+      label="Demon sacrificed"
+      options={DEMON_OPTIONS}
+      value={(isDemonFamilyId(value) ? value : '') as DemonFamilyId}
+      onChange={onChange}
+    />
   );
 }
 

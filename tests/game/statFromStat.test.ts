@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { createPlayer } from '../../src/game/actors/createPlayer';
 import { flat, makeStats } from '../../src/engine';
 import { PRESETS_BY_ID } from '../../src/profiles/presets';
+import { legalise } from '../helpers/legalTalents';
 import { buildSimulation } from '../helpers/buildSimulation';
 import { makeTarget } from '../helpers/actors';
 import { talentBuild } from '../../src/game/talents/talentBuild';
@@ -259,10 +260,34 @@ describe('where it lands, and where it correctly does not', () => {
      * takes a hit, so it reduces nothing. Declared anyway, so a talent that
      * works and does not matter cannot be mistaken for one that cannot be
      * expressed.
+     *
+     * ------------------------------------------------------------------------
+     * THE ALLOCATION IS BUILT BY HAND AND NOT READ OFF THE PROFILE, which is
+     * the correction this file already makes for the Priest one screen up. It
+     * took `mage_arcane`'s talents, and the owner's respecification of that
+     * build to 35/11/5 dropped Arcane Resilience along with every other
+     * defensive point in the tree -- so the test failed with an empty list and
+     * was RIGHT to.
+     *
+     * **This pins a MECHANISM and a RULING ABOUT IT** -- the conversion exists,
+     * and being worth nothing is not a reason to leave it undeclared -- so it
+     * must not depend on where a profile spends its points. That no Mage
+     * profile now takes the talent at all is a fact about the builds, asserted
+     * separately below so it reads as a build fact and not as a missing stat.
+     * ------------------------------------------------------------------------
      */
     expect(
-      talentBuild('mage', PRESETS_BY_ID.get('mage_arcane')!.build().talents).statConversions,
+      talentBuild('mage', legalise({ arcane_resilience: 2 }, 'mage')).statConversions,
     ).toEqual([{ from: 'intellect', to: 'armor', fraction: 0.5 }]);
+
+    // And NO Mage profile spends a point on it since the respecification, so
+    // the conversion reaches nothing that anybody measures. Both facts, apart.
+    for (const id of ['mage_arcane', 'mage_fire', 'mage_frostfire']) {
+      expect(
+        talentBuild('mage', PRESETS_BY_ID.get(id)!.build().talents).statConversions,
+        id,
+      ).toEqual([]);
+    }
   });
 });
 

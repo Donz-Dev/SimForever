@@ -295,7 +295,30 @@ export const SWIFT_JUDGEMENT: Ability = {
   name: 'Swift Judgement',
   cooldownMs: seconds(60),
   requiresTarget: false,
-  // Only worth a global cooldown when there is something to reset.
+  /*
+   * ==========================================================================
+   * OFF THE GLOBAL COOLDOWN, BY THE OWNER'S RULING, and it was on one.
+   *
+   * WHAT IT WAS WORTH WHILE IT TOOK ONE: a global cooldown spent dealing
+   * nothing, in exchange for a Judgement arriving a global cooldown sooner --
+   * which is close enough to nothing that a DPS figure could not say. That is
+   * why this is a RULING rather than a measurement: an ability wrongly taking
+   * a global cooldown still has the right cooldown, the right cost and the
+   * right effect, so the mistake is invisible everywhere except the figure.
+   *
+   * BEING OFF IT MEANS ONE THING -- the ability does not START a global
+   * cooldown -- and it is still BLOCKED by one already running. What it buys
+   * is that the Judgement it resets can go out in the SAME decision window
+   * rather than 1.5 seconds later, which is what "Judgement, Swift Judgement,
+   * Judgement" was always meant to be.
+   *
+   * IT STILL COSTS ONE `ROTATION_POLL_MS`, because a free off-GCD cast leaves
+   * the actor idle and `nextDecisionTime` returns `now + 100ms`. That is the
+   * same price the racials, the consumables and Bloodrage already pay.
+   * ==========================================================================
+   */
+  triggersGcd: false,
+  // Only worth casting at all when there is something to reset.
   canCast: ({ simulation, caster }) =>
     !caster.abilities.isReady('judgement', simulation.clock.now()),
   onCast: ({ caster }) => {

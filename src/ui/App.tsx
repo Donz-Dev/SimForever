@@ -291,6 +291,25 @@ export function App() {
               characterClass={profile.character.characterClass}
               allocation={talents}
               onChange={setTalents}
+              /*
+               * THE DEMON CHOOSER'S TWO PROPS, and it renders only when a
+               * Warlock has taken Demonic Sacrifice -- the panel decides that,
+               * because the talent allocation is the thing it already holds.
+               *
+               * IT GOES THROUGH `editProfile` LIKE EVERY OTHER PANEL EDIT,
+               * which is what makes the stock rotation re-derive: `editProfile`
+               * runs `syncDefaultRotation` on every change, applied to all of
+               * them rather than to the four that can matter. Nothing in a
+               * Warlock list reads the demon today, and that is exactly the
+               * comment's own argument for not enumerating which edits count.
+               */
+              petFamily={profile.character.petFamily}
+              onPetFamilyChange={(petFamily) =>
+                editProfile({
+                  ...profile,
+                  character: { ...profile.character, petFamily },
+                })
+              }
             />
             {/* BETWEEN THE GEAR AND THE RAID BUFFS, the owner's placement, and
                 it reads in the right order: what the character is holding, how

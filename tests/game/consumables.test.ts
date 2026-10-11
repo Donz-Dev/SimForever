@@ -666,11 +666,21 @@ describe('who eats what, on the plate-and-fur row', () => {
    * which is a stronger reason than the one the first two overrides rested on
    * ("a ruling covers what it says and is not extended by analogy").
    *
-   * THE TWO DRUIDS ARE THE REMAINDER, and they are what the row still
-   * supplies. If the owner names them too, this test is where the arithmetic
-   * gets done: three strength and two stamina is still not a row, and five of
-   * five the same WOULD be -- at which point the honest edit is the row and
-   * every override comes out together.
+   * ==========================================================================
+   * AND THE OWNER HAS NOW NAMED THE TWO DRUIDS, so the arithmetic this test
+   * said it would do is done: the Cat takes +20 Strength and the Bear +20
+   * Stamina.
+   *
+   * FIVE OF FIVE ARE NAMED AND THEY HOLD TWO ANSWERS -- three strength, two
+   * stamina -- so the row still cannot be edited, which is exactly the
+   * condition written down here before the last two rulings arrived. The "five
+   * of five the same WOULD be a row" branch did not happen, and saying which
+   * branch was taken is the point of having written both.
+   *
+   * THE ROW IS NOW REACHED BY NOBODY IN THIS TABLE and must still not move:
+   * `STRENGTH_CONSUMABLES` is shared, and `MELEE_COMMON` beneath it reaches
+   * four Rogues and a melee Hunter. A default is what an unruled build gets.
+   * ==========================================================================
    *
    * IT LIVES HERE RATHER THAN IN A ROTATION FILE. It is a claim about the
    * consumable ROW, not about any one priority list -- and it was written
@@ -683,9 +693,10 @@ describe('who eats what, on the plate-and-fur row', () => {
     two_hand_arms: 'food_strength',
     dw_fury: 'food_strength',
     prot_warr: 'food_stamina',
-    // Not named by the owner, so still whatever the shared row supplies.
-    druid_cat: 'food_attack_power',
-    druid_bear: 'food_attack_power',
+    // Both named now: the Cat with its Major Frenzy Potion swap, the Bear on
+    // its own. Three strength and two stamina, which is still not one row.
+    druid_cat: 'food_strength',
+    druid_bear: 'food_stamina',
   };
 
   it('gives each of the five what the owner said, or the row if they said nothing', () => {
@@ -696,9 +707,12 @@ describe('who eats what, on the plate-and-fur row', () => {
 
   it('keeps the row itself on attack power, because it cannot hold two answers', () => {
     /*
-     * THE ROW IS THE THING THAT MUST NOT MOVE. Editing it would reach the two
-     * Druids, whom the owner has not named, and `MELEE_COMMON` beneath it
-     * would reach four Rogues and a melee Hunter as well.
+     * THE ROW IS THE THING THAT MUST NOT MOVE, and the reason is now stronger
+     * rather than weaker. Every profile the owner has ruled on carries an
+     * override, so the row reaches only what is UNRULED -- `MELEE_COMMON`
+     * beneath it still supplies four Rogues and a melee Hunter -- and the five
+     * rulings it would have to satisfy are three of one answer and two of
+     * another, which no single value does.
      */
     expect(STRENGTH_CONSUMABLES.food).toBe('food_attack_power');
     expect(AGILITY_CONSUMABLES.food).toBe('food_attack_power');

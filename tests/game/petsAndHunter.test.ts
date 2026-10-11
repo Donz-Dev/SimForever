@@ -12,6 +12,7 @@ import {
 import { buildSimulation } from '../helpers/buildSimulation';
 import { makeTarget } from '../helpers/actors';
 import { PRESETS_BY_ID } from '../../src/profiles/presets';
+import { legalise } from '../helpers/legalTalents';
 import { ITEMS_BY_ID } from '../../src/game/items/itemData';
 import {
   PET_ARMOR_SHARE,
@@ -398,12 +399,47 @@ describe('a talent that needs a pet', () => {
     expect(withPet.damageDoneMultiplier).toBeCloseTo(1.02, 6);
 
     /*
-     * Lone Wolf Ranged takes Focused Fire 2/2 AND Improved Tracking 5/5, so
-     * its multiplier is the tracking alone -- 1.05, not the 1.0710 the two
-     * together used to give.
+     * ========================================================================
+     * LONE WOLF RANGED NO LONGER TAKES FOCUSED FIRE AT ALL, and its multiplier
+     * is Improved Tracking's 1.05 either way -- which is the SAME NUMBER this
+     * assertion read before, for a different reason.
+     *
+     * THAT IS WHY THE CONTROL BELOW IS BUILT BY HAND. The owner's
+     * respecification moved those two points out, so this profile stopped
+     * exercising the gate and the assertion would have gone on passing while
+     * testing nothing: 1.05 from "the talent is absent" and 1.05 from "the
+     * talent is present and correctly refused" are indistinguishable here.
+     * A test whose fixture can no longer express the mistake proves nothing
+     * about it.
+     * ========================================================================
      */
     expect(withoutPet.damageDoneMultiplier).toBeCloseTo(1.05, 6);
     expect(withoutPet.damageDoneMultiplier).not.toBeCloseTo(1.05 * 1.02, 6);
+
+    /*
+     * THE GATE ITSELF, ON A BUILD THAT HOLDS BOTH HALVES: Focused Fire and the
+     * talent that means "no pet". Nothing in the presets does this any more,
+     * so the control is hand-built -- through `createPlayer`, which is the
+     * path that decides `hasPet` from the allocation rather than being told.
+     *
+     * `legalise` is not optional here: `createPlayer` strips an allocation
+     * whose tier gate is unmet IN SILENCE, so an unpadded one would read as
+     * "the talent is worth nothing" for the wrong reason entirely.
+     */
+    const petless = createPlayer({
+      race: 'orc',
+      characterClass: 'hunter',
+      combatStyle: 'ranged',
+      talents: legalise({ focused_fire: 2, lone_wolf: 1 }, 'hunter'),
+    });
+    const petted = createPlayer({
+      race: 'orc',
+      characterClass: 'hunter',
+      combatStyle: 'ranged',
+      talents: legalise({ focused_fire: 2 }, 'hunter'),
+    });
+    expect(petless.damageDoneMultiplier).toBeCloseTo(1, 6);
+    expect(petted.damageDoneMultiplier).toBeCloseTo(1.02, 6);
   });
 
   it('answers "will there be a pet" from ONE function', () => {
@@ -422,14 +458,50 @@ describe('a talent that needs a pet', () => {
   });
 
   it('says WHICH clause failed, not just that one did', () => {
-    // "Applies only with a particular weapon" on a Lone Wolf hunter would be
+    /*
+     * ========================================================================
+     * THE ALLOCATION IS BUILT BY HAND AND NOT READ OFF A PROFILE. It took
+     * `lw_melee`'s talents, and the owner's respecification to 5/13/33 moved
+     * both Focused Fire points out -- so `build.unmodelled` held no entry at
+     * all and the assertion failed on `undefined` rather than on a wrong
+     * sentence.
+     *
+     * **This pins the WORDING of a reason, which is a property of the talent
+     * declaration**, so it must not depend on where a profile spends its
+     * points. That is the fifth test in this repository broken by an owner
+     * revision that had nothing to do with what it checks.
+     * ========================================================================
+     */
+    // "Applies only with a particular weapon" on a petless hunter would be
     // a true sentence about the wrong thing.
-    const build = talentBuild('hunter', PRESETS_BY_ID.get('lw_melee')!.build().talents, {
+    const build = talentBuild('hunter', legalise({ focused_fire: 2, lone_wolf: 1 }, 'hunter'), {
       hasPet: false,
     });
     const focused = build.unmodelled.find((u) => u.talentId === 'focused_fire');
     expect(focused?.reason).toMatch(/pet is active/i);
     expect(focused?.reason).not.toMatch(/weapon/i);
+  });
+
+  it('is in no Hunter preset now, which is a BUILD fact and is asserted apart', () => {
+    /*
+     * THE OTHER HALF OF THE CORRECTION ABOVE. The mechanism is pinned on a
+     * hand-built allocation; that no profile reaches it any more is a separate
+     * claim, and writing it down is what stops the next reader concluding the
+     * talent was deleted.
+     *
+     * BOTH LONE WOLF BUILDS SPENT THE POINTS HERE AS A CHEAP ROUTE TO CAREFUL
+     * AIM and collected nothing for them once the gate was fixed, so the
+     * owner's respecification moves two dead points somewhere else. Hawk Melee
+     * and BM Hunter never took it.
+     */
+    for (const preset of ['lw_ranged', 'lw_melee', 'hawk_melee']) {
+      const talents = PRESETS_BY_ID.get(preset)!.build().talents;
+      expect(talents.focused_fire ?? 0, preset).toBe(0);
+    }
+    // And the one build that still takes it is the one that has a pet.
+    const bm = PRESETS_BY_ID.get('bm_hunter')!.build().talents;
+    expect(bm.focused_fire).toBe(2);
+    expect(bringsPet('hunter', bm)).toBe(true);
   });
 });
 

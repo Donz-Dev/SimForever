@@ -36,7 +36,7 @@ describe('the Gear panel offers the benchmark sets', () => {
     }
   });
 
-  it('shows them for every one of the 25 presets', () => {
+  it('shows them for every one of the 27 presets', () => {
     for (const [id] of PRESETS_BY_ID) {
       const markup = render(id);
       const missing = BENCHMARK_SETS.filter((set) => !markup.includes(`>${set.id}<`));

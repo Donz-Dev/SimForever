@@ -58,6 +58,7 @@ import {
   IMPROVED_SCORCH_MAX_STACKS,
   MAGE_ARMOR,
   MAGE_ARMOR_REGEN_BYPASS,
+  PRESENCE_OF_MIND,
   PYROBLAST_COEFFICIENTS,
   igniteAura,
   fireVulnerabilityAura,
@@ -1869,11 +1870,25 @@ describe('the three lists, after the owner tuned them', () => {
     expect(compiled(entry.condition)?.(simulation, mage, undefined)).toBe(true);
   });
 
-  it('spends Presence of Mind on the CHEAP Arcane Blast, without a Barrage', () => {
+  it('spends Presence of Mind at the Arcane Blast CAP, to make Pyroblast instant', () => {
     /*
-     * ONE STACK AND NOT FOUR, which is the opposite of where a damage cooldown
-     * goes and is the point: each stack raises Arcane Blast's cost by 175%, so
-     * the cheap Blast is the one worth making instant.
+     * ==========================================================================
+     * THE OWNER MOVED THIS ENTRY AND THIS TEST GIVES WAY, which is the rule:
+     * **a test that pins a rotation decision has to give way when the decision
+     * changes owner; a test that pins an invariant does not.**
+     *
+     * WHAT IT USED TO ASSERT, and why that was a decision rather than an
+     * invariant: Presence of Mind at exactly ONE Arcane Blast stack and no
+     * Missile Barrage, on the argument that each stack raises the Blast's cost
+     * by 175% so the CHEAP Blast is the one worth making instant. Sound, and
+     * about a two-and-a-half second cast.
+     *
+     * WHAT IT ASSERTS NOW: the cap, so the charge goes on the SIX-SECOND
+     * Pyroblast directly below. The pair is the rotation -- `requiresCastTime`
+     * on the aura is what carries the charge past every instant and off-GCD
+     * entry in between, and the Pyroblast entry's condition is this one's plus
+     * "the charge is in hand", so nothing else can take it.
+     * ==========================================================================
      */
     const built = PRESETS_BY_ID.get('mage_arcane')!.build();
     const mage = createPlayer({
@@ -1882,23 +1897,60 @@ describe('the three lists, after the owner tuned them', () => {
     });
     const simulation = buildSimulation([mage, makeTarget()], { durationMs: seconds(60) });
     simulation.begin();
-    const entry = MAGE_ARCANE.entries.find((row) => row.abilityId === 'presence_of_mind')!;
-    const fires = () => compiled(entry.condition)?.(simulation, mage, undefined) ?? true;
+    const entryFor = (abilityId: string, at: number) =>
+      MAGE_ARCANE.entries.filter((row) => row.abilityId === abilityId)[at]!;
+    const fires = (entry: { condition?: unknown }) =>
+      compiled(entry.condition as never)?.(simulation, mage, undefined) ?? true;
+    const presenceOfMind = entryFor('presence_of_mind', 0);
+    const pyroblast = entryFor('pyroblast', 0);
 
-    expect(fires()).toBe(false);
+    expect(fires(presenceOfMind)).toBe(false);
+
+    // Not on the way up: one, two and three stacks are all refused.
+    for (let stacks = 1; stacks < ARCANE_BLAST_MAX_STACKS; stacks += 1) {
+      simulation.applyAura(mage, ARCANE_BLAST, mage.id);
+      expect(mage.auras.stacksOf('arcane_blast')).toBe(stacks);
+      expect(fires(presenceOfMind)).toBe(false);
+      // And the Pyroblast beneath it is refused the whole way up too.
+      expect(fires(pyroblast)).toBe(false);
+    }
 
     simulation.applyAura(mage, ARCANE_BLAST, mage.id);
-    expect(mage.auras.stacksOf('arcane_blast')).toBe(1);
-    expect(fires()).toBe(true);
+    expect(mage.auras.stacksOf('arcane_blast')).toBe(ARCANE_BLAST_MAX_STACKS);
+    expect(fires(presenceOfMind)).toBe(true);
 
-    // Not while a free, half-length Arcane Missiles is already waiting.
+    /*
+     * AND THE PYROBLAST WAITS FOR THE CHARGE, which is the half that makes the
+     * pair a pair: at the cap with no Presence of Mind up it is still refused,
+     * so the list cannot cast a SIX-SECOND Pyroblast at full cast time.
+     */
+    expect(fires(pyroblast)).toBe(false);
+    simulation.applyAura(mage, PRESENCE_OF_MIND, mage.id);
+    expect(fires(pyroblast)).toBe(true);
+
+    // A Barrage no longer excludes either of them: the owner dropped that
+    // clause from this entry when they moved it.
     simulation.applyAura(mage, MISSILE_BARRAGE, mage.id);
-    expect(fires()).toBe(false);
-    mage.auras.remove(simulation, 'missile_barrage');
+    expect(fires(presenceOfMind)).toBe(true);
+  });
 
-    // And not at two stacks: the owner said exactly one.
-    simulation.applyAura(mage, ARCANE_BLAST, mage.id);
-    expect(mage.auras.stacksOf('arcane_blast')).toBe(2);
-    expect(fires()).toBe(false);
+  it('makes that Pyroblast actually instant, which is the whole point of the pair', () => {
+    /*
+     * ASSERT THE MECHANISM AND NOT ONLY THE CONDITIONS. Two entries can be
+     * correctly gated and still buy nothing if the charge does not reach the
+     * ability -- `PRESENCE_OF_MIND_SPELLS` is a NAMED LIST, so a spell absent
+     * from it takes the full cast with every condition reading true.
+     */
+    const mage = createPlayer({
+      race: 'gnome', characterClass: 'mage', combatStyle: 'caster',
+      talents: PRESETS_BY_ID.get('mage_arcane')!.build().talents,
+    });
+    const simulation = buildSimulation([mage, makeTarget()], { durationMs: seconds(60) });
+    simulation.begin();
+    const pyroblast = mage.abilities.get('pyroblast')!;
+    expect(resolveCast(mage, pyroblast).baseCastTimeMs).toBeGreaterThan(0);
+
+    simulation.applyAura(mage, PRESENCE_OF_MIND, mage.id);
+    expect(resolveCast(mage, pyroblast).baseCastTimeMs).toBe(0);
   });
 });

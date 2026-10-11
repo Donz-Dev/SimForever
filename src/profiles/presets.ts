@@ -379,11 +379,122 @@ const ROGUE_COMBAT_TALENTS: TalentAllocation = {
 };
 
 /** Rupture -- Assassination 12 / Combat 8 / Subtlety 31. Hemorrhage and bleeds. */
-const ROGUE_RUPTURE_TALENTS: TalentAllocation = {
+/**
+ * Combat Mut -- Assassination 30 / Combat 21 / Subtlety 0.
+ *
+ * ============================================================================
+ * A NEW PROFILE, AND THE OWNER'S FRAMING IS WHAT KEEPS IT SMALL: "this profile
+ * copies everything from Venom except the APL and Talents which I'll provide."
+ * So the preset below spreads the Venom one and replaces two fields.
+ *
+ * READ OFF THE TALENT PANEL, and the per-tree totals it prints -- 30, 21, 0 --
+ * are what made the decode checkable. **THEY ARE ALSO WHAT CAUGHT A MISREAD**:
+ * the Combat icons summed to 18 against a stated 21, and exactly two single
+ * talents could close a three-point gap. The owner answered Precision, which
+ * is the one that matters -- +3% hit against Lightning Reflexes' dodge, worth
+ * nothing to a build nothing attacks. **A tree total is the cheap check that a
+ * decode is right**, and it is the one thing a screenshot states in words.
+ *
+ * IT IS A VENOM BUILD THAT SPENDS ON EVISCERATE. Both take Mutilate and Seal
+ * Fate, so both gain about two points a cast and four on a double crit; what
+ * the twenty-one Combat points buy is what the two daggers DO -- Dual Wield
+ * Specialization, Precision, Puncturing Wounds, Blade Flurry -- rather than a
+ * finisher. The Venom capstone is NOT taken, which is what `rogueRotation`
+ * reads to tell the two apart.
+ * ============================================================================
+ */
+const ROGUE_COMBAT_MUT_TALENTS: TalentAllocation = {
+  // Assassination, 30
   malice: 5,
-  ruthlessness: 2,
+  ruthlessness: 3,
+  murder: 2,
   improved_slice_and_dice: 3,
-  lethality: 2,
+  relentless_strikes: 1,
+  lethality: 5,
+  cold_blood: 1,
+  improved_poisons: 4,
+  mutilate: 1,
+  seal_fate: 5,
+  // Combat, 21
+  improved_eviscerate: 3,
+  lightning_reflexes: 2,
+  puncturing_wounds: 3,
+  precision: 3,
+  endurance: 2,
+  improved_sprint: 2,
+  flawless_execution: 1,
+  dual_wield_specialization: 4,
+  blade_flurry: 1,
+};
+
+/**
+ * Pure Hemo -- Assassination 21 / Combat 8 / Subtlety 22.
+ *
+ * ============================================================================
+ * A NEW PROFILE AND THE SECOND HEMORRHAGE BUILD, and the owner's framing is
+ * "the same as Hemo Dagger except it's gonna use the Main Hand weapon from the
+ * Combat templates" -- plus its own talents and its own list.
+ *
+ * ALL THREE TREE TOTALS SUM EXACTLY from the icons, which is the first talent
+ * panel in this series that needed no question asked. The totals the panel
+ * prints are the check.
+ *
+ * IT SPENDS NO POINTS BELOW TIER FOUR OF SUBTLETY, which is what makes it
+ * "pure": no Cutthroat, so no in-combat Ambush window, and no Quietus or
+ * Thousand Cuts. The twenty-two points buy Hemorrhage, Serrated Blades and
+ * Preparation and stop. What the other twenty-nine buy is the five-point
+ * Eviscerate its list is built around -- Lethality, Improved Eviscerate,
+ * Relentless Strikes, Ruthlessness, Cold Blood and Precision.
+ * ============================================================================
+ */
+const ROGUE_PURE_HEMO_TALENTS: TalentAllocation = {
+  // Assassination, 21
+  malice: 5,
+  ruthlessness: 3,
+  murder: 2,
+  improved_slice_and_dice: 3,
+  relentless_strikes: 1,
+  lethality: 5,
+  cold_blood: 1,
+  vigor: 1,
+  // Combat, 8
+  improved_eviscerate: 3,
+  lightning_reflexes: 2,
+  precision: 3,
+  // Subtlety, 22
+  camouflage: 5,
+  master_of_deception: 3,
+  opportunity: 2,
+  improved_ambush: 3,
+  initiative: 3,
+  premeditation: 1,
+  serrated_blades: 3,
+  preparation: 1,
+  hemorrhage: 1,
+};
+
+const ROGUE_RUPTURE_TALENTS: TalentAllocation = {
+  /*
+   * ==========================================================================
+   * THE ASSASSINATION TWELVE WERE RESPECIFIED, AND THE OTHER TWO TREES WERE
+   * NOT. Combat stays at 8 and Subtlety at 31; what moved is three talents
+   * inside the first tree, for a net of zero points.
+   *
+   *   Ruthlessness        2 -> 3
+   *   Lethality           2 -> 0
+   *   Relentless Strikes  0 -> 1
+   *
+   * READ OFF THE OWNER'S TALENT PANEL rather than a build URL, so the grid was
+   * decoded against `src/data/talents/rogue.json` by row and column and the
+   * three per-tree totals checked against the ones the panel prints -- 12, 8
+   * and 31. **A tree total is the cheap check that a decode is right**, and it
+   * is the one thing a screenshot states in words rather than in icons.
+   * ==========================================================================
+   */
+  malice: 5,
+  ruthlessness: 3,
+  relentless_strikes: 1,
+  improved_slice_and_dice: 3,
   improved_eviscerate: 3,
   lightning_reflexes: 2,
   puncturing_wounds: 3,
@@ -433,12 +544,43 @@ const ROGUE_RUPTURE_TALENTS: TalentAllocation = {
  * ----------------------------------------------------------------------------
  */
 const ROGUE_HEMO_TALENTS: TalentAllocation = {
+  // Assassination, 17
   malice: 5,
   ruthlessness: 3,
-  improved_slice_and_dice: 3,
+  improved_slice_and_dice: 2,
   relentless_strikes: 1,
   lethality: 5,
+  /*
+   * COLD BLOOD IS THE NEW POINT, and it is what the respecified list needs:
+   * the owner's Hemo Dagger APL has a Cold Blood entry, and this build did not
+   * take the talent. A list naming an ability the build cannot cast is skipped
+   * IN SILENCE, so the two halves of the respecification only work together.
+   *
+   * IT IS PAID FOR OUT OF IMPROVED SLICE AND DICE, 3 -> 2, for a net of zero.
+   * That is the cheapest place it could have come from on this build: the list
+   * casts Slice and Dice at ONE combo point and only when the buff is DOWN, so
+   * what the talent buys is duration on a buff whose uptime is already the
+   * thing being managed.
+   */
+  cold_blood: 1,
+  // Combat, 3
   improved_eviscerate: 3,
+  /*
+   * ==========================================================================
+   * SUBTLETY IS UNCHANGED, ON THE OWNER'S INSTRUCTION, AND THEIR SCREENSHOT
+   * DISAGREES WITH IT.
+   *
+   * The panel they sent shows Improved Ambush at 0/3 against the 3/3 below,
+   * and states a tree total of 31 either way -- so three points moved inside
+   * Subtlety and the icons were not legible enough to say where to. Asked
+   * which, the owner chose to keep this tree as it is.
+   *
+   * RECORDED RATHER THAN SILENTLY RESOLVED, because it is the one part of this
+   * build that is a READING rather than a statement: if the figure looks wrong
+   * later, this is the first thing to re-ask, and the build URL run through
+   * `decode_talent_build.mjs` is what would settle it in one command.
+   * ==========================================================================
+   */
   camouflage: 5,
   master_of_deception: 3,
   opportunity: 2,
@@ -556,24 +698,40 @@ const DRUID_BEAR_TALENTS: TalentAllocation = {
  * of it, and the owner supplied a new URL when asked.
  * ----------------------------------------------------------------------------
  */
+/**
+ * Elemental -- 32 Elemental / 6 Enhancement / 13 Restoration, respecified.
+ *
+ * ----------------------------------------------------------------------------
+ * IT WAS 38/13/0 AND THE THIRTEEN MOVED OUT OF ENHANCEMENT INTO RESTORATION.
+ * Convection, Reverberation, Earthbound, Improved Ghost Wolf and Shamanistic
+ * Focus are gone; Elemental Warding, Improved Fire Nova, Totemic Focus,
+ * Mindfulness and Tidal Focus arrive.
+ *
+ * ALL THREE TREE TOTALS SUM FROM THE ICONS, which the panel prints and which
+ * is the check: 32, 6 and 13 is 51.
+ * ----------------------------------------------------------------------------
+ */
 const SHAMAN_ELEMENTAL_TALENTS: TalentAllocation = {
-  convection: 5,
+  // Elemental, 32
   concussion: 5,
-  reverberation: 5,
+  elemental_warding: 3,
   call_of_flame: 3,
   elemental_focus: 1,
-  elemental_fury: 5,
+  elemental_alacrity: 3,
+  improved_fire_nova: 2,
   eye_of_the_storm: 3,
   call_of_thunder: 1,
   elemental_reach: 2,
   lightning_overload: 3,
-  earthbound: 1,
-  elemental_alacrity: 3,
+  elemental_fury: 5,
   lava_burst: 1,
+  // Enhancement, 6
   thundering_strikes: 5,
-  ancestral_knowledge: 5,
-  improved_ghost_wolf: 2,
-  shamanistic_focus: 1,
+  ancestral_knowledge: 1,
+  // Restoration, 13
+  totemic_focus: 5,
+  mindfulness: 3,
+  tidal_focus: 5,
 };
 
 const SHAMAN_ENHANCEMENT_TALENTS: TalentAllocation = {
@@ -626,48 +784,84 @@ const MAGE_FROSTFIRE_TALENTS: TalentAllocation = {
   fingers_of_frost: 2,
 };
 
+/**
+ * Arcane -- 35 Arcane / 11 Fire / 5 Frost, respecified.
+ *
+ * ----------------------------------------------------------------------------
+ * IT WAS 47/4/0, so TWELVE POINTS LEFT THE ARCANE TREE. What goes is the
+ * defensive and utility filler -- Wand Specialization, Magic Absorption,
+ * Arcane Resilience, Arcane Geometry, Arcane Shielding, Improved Counterspell
+ * -- and what arrives is IGNITE, PYROBLAST and ELEMENTAL PRECISION, which is
+ * the list's new Pyroblast entry paid for in talents.
+ *
+ * THE LIST AND THE ALLOCATION ARE ONE CHANGE, the shape these respecifications
+ * keep taking: the APL gained a Pyroblast and the build had no Pyroblast
+ * talent, and a list naming an ability the build cannot cast is skipped IN
+ * SILENCE.
+ *
+ * All three tree totals sum from the icons: 35, 11 and 5 is 51.
+ * ----------------------------------------------------------------------------
+ */
 const MAGE_ARCANE_TALENTS: TalentAllocation = {
-  wand_specialization: 2,
+  // Arcane, 35
   arcane_focus: 5,
   improved_channeling: 5,
   arcane_subtlety: 2,
-  magic_absorption: 2,
   arcane_concentration: 5,
-  arcane_resilience: 2,
-  arcane_geometry: 2,
   arcane_impact: 3,
   arcane_blast: 1,
-  arcane_shielding: 2,
-  improved_counterspell: 2,
   arcane_meditation: 3,
   missile_barrage: 1,
   presence_of_mind: 1,
   arcane_mind: 5,
   arcane_instability: 3,
   arcane_power: 1,
-  wake_of_fire: 1,
+  // Fire, 11
+  wake_of_fire: 2,
   incineration: 3,
+  ignite: 5,
+  pyroblast: 1,
+  // Frost, 5
+  elemental_precision: 5,
 };
 
+/**
+ * Fire -- 16 Arcane / 31 Fire / 4 Frost, respecified.
+ *
+ * ----------------------------------------------------------------------------
+ * IT WAS 10/39/2. The Fire tree LOSES eight -- Flame Throwing, Impact, Burning
+ * Soul, Blast Wave and one of Wake of Fire -- and Arcane gains six, which buys
+ * ARCANE SUBTLETY, ARCANE IMPACT and MISSILE BARRAGE. The list's Arcane
+ * Missiles entry is gated on Missile Barrage, and this build did not have the
+ * talent: the list and the allocation are one change again.
+ *
+ * MASTER OF ELEMENTS GOES 1 -> 3, which is the other half of the mana story --
+ * this is the build whose Evocation the owner has also loosened.
+ *
+ * All three tree totals sum from the icons: 16, 31 and 4 is 51.
+ * ----------------------------------------------------------------------------
+ */
 const MAGE_FIRE_TALENTS: TalentAllocation = {
+  // Arcane, 16
   arcane_focus: 5,
+  arcane_subtlety: 2,
   arcane_concentration: 5,
-  wake_of_fire: 2,
+  arcane_impact: 3,
+  missile_barrage: 1,
+  // Fire, 31
+  wake_of_fire: 1,
   incineration: 3,
   improved_fireball: 5,
   ignite: 5,
-  flame_throwing: 2,
-  impact: 3,
-  burning_soul: 3,
   pyroblast: 1,
   improved_scorch: 3,
   heating_up: 1,
-  master_of_elements: 1,
+  master_of_elements: 3,
   critical_mass: 3,
-  blast_wave: 1,
   fire_power: 5,
   combustion: 1,
-  elemental_precision: 2,
+  // Frost, 4
+  elemental_precision: 4,
 };
 
 /**
@@ -784,9 +978,36 @@ const HUNTER_BEAST_MASTERY_TALENTS: TalentAllocation = {
   mortal_shots: 5,
 };
 
+/**
+ * LONE WOLF RANGED -- 5 Beast Mastery / 39 Marksmanship / 7 Survival.
+ *
+ * ============================================================================
+ * TWO POINTS OUT OF FOCUSED FIRE AND INTO SURVIVALIST, by the owner, and
+ * **BOTH ENDS OF THAT MOVE ARE WORTH EXACTLY NOTHING TO THIS PROFILE.** Said
+ * plainly because a talent change that cannot move a figure reads as a
+ * measurement that failed to apply.
+ *
+ *   FOCUSED FIRE   "increases all damage you and your pet deal by 2% WHILE
+ *                  YOUR PET IS ACTIVE". `bringsPet` is exactly
+ *                  `lone_wolf === 0`, so this build has no pet and the clause
+ *                  has never paid -- it was a cheap route to Careful Aim and
+ *                  nothing else. (It DID pay once, wrongly: the talent shipped
+ *                  with `requires: {}` and both Lone Wolf builds collected the
+ *                  2% for a pet that is never built. That is fixed, which is
+ *                  what makes these two points genuinely free to move.)
+ *   SURVIVALIST    "+10% total Health" at 5/5, so +4% here. This profile sets
+ *                  `targetAttacks: false` and is never hit, so health is a
+ *                  number nothing reads.
+ *
+ * SO THE EXPECTED MEASUREMENT IS 0.0 TO THE DECIMAL, which is a prediction
+ * and is checked rather than assumed. What the move DOES change is the tree
+ * totals a person reads on the panel, and those are the owner's to set.
+ * ============================================================================
+ */
 const HUNTER_LONE_WOLF_RANGED_TALENTS: TalentAllocation = {
+  // Beast Mastery, 5
   deadly_aspects: 5,
-  focused_fire: 2,
+  // Marksmanship, 39
   hawk_eye: 3,
   lethal_attacks: 5,
   careful_aim: 5,
@@ -800,7 +1021,9 @@ const HUNTER_LONE_WOLF_RANGED_TALENTS: TalentAllocation = {
   scatter_shot: 1,
   ranged_weapon_specialization: 5,
   sniper_shot: 1,
+  // Survival, 7
   improved_tracking: 5,
+  survivalist: 2,
 };
 
 /*
@@ -847,13 +1070,40 @@ const HUNTER_HAWK_MELEE_TALENTS: TalentAllocation = {
   strider_kick: 1,
 };
 
+/**
+ * LONE WOLF MELEE -- 5 Beast Mastery / 13 Marksmanship / 33 Survival.
+ *
+ * ============================================================================
+ * THE SAME TWO POINTS OUT OF FOCUSED FIRE AS LW RANGED, and they land on
+ * SURVIVALIST'S DISCIPLINE here. **Both ends are worth nothing again, and for
+ * a different reason at the far end** -- which is worth separating, because
+ * one of the two reasons expires and the other does not.
+ *
+ *   FOCUSED FIRE               no pet, so the clause cannot pay. A BUILD
+ *                              cause, and it expires only if this build takes
+ *                              a pet, which Lone Wolf forbids.
+ *   SURVIVALIST'S DISCIPLINE   "reduces the cooldown of your Trap and
+ *                              Deterrence abilities by 40%" -- declared
+ *                              `unmodelled`, because `abilityCooldown`
+ *                              subtracts a FLAT amount and has no fractional
+ *                              form. **An ENGINE cause, and it expires the day
+ *                              somebody adds one**, at which point this build
+ *                              gains two points of real effect without
+ *                              anybody touching it.
+ *
+ * SO THIS IS A LIVE GAP ARRIVING IN A PROFILE, which the census counts and a
+ * DPS figure cannot see. Expected measurement: 0.0 to the decimal.
+ * ============================================================================
+ */
 const HUNTER_LONE_WOLF_MELEE_TALENTS: TalentAllocation = {
+  // Beast Mastery, 5
   deadly_aspects: 5,
-  focused_fire: 2,
+  // Marksmanship, 13
   lethal_attacks: 5,
   careful_aim: 5,
   rapid_killing: 2,
   lone_wolf: 1,
+  // Survival, 33
   improved_tracking: 5,
   savage_strikes: 2,
   survivalist: 4,
@@ -862,6 +1112,7 @@ const HUNTER_LONE_WOLF_MELEE_TALENTS: TalentAllocation = {
   predator_s_edge: 5,
   resourcefulness: 2,
   expose_prey: 2,
+  survivalist_s_discipline: 2,
   strider_kick: 1,
   lightning_reflexes: 5,
   lacerating_strikes: 1,
@@ -989,7 +1240,27 @@ const PRIEST_SHADOW_TALENTS: TalentAllocation = {
  * ----------------------------------------------------------------------------
  */
 
-export const PROFILE_PRESETS: readonly ProfilePreset[] = withBenchmarkGear(withStockRotations([
+/*
+ * ============================================================================
+ * THE GEAR IS APPLIED BEFORE THE ROTATIONS, AND THE ORDER IS NOW LOAD-BEARING.
+ *
+ * IT WAS `withBenchmarkGear(withStockRotations(...))` -- rotations first --
+ * which was fine while a list depended only on class, style, stance and
+ * talents. The Rogue's two Hemorrhage builds are told apart by the WEAPON IN
+ * THE MAIN HAND, so `stockListFor` has to see the gear, and at the old order
+ * the equipment was still empty: Pure Hemo silently got the dagger list.
+ *
+ * SILENTLY IS THE WHOLE PROBLEM. `PriorityRotation` skips an entry whose
+ * ability the character does not know, so a sword-wielding build running the
+ * dagger list simply loses its Ambush and its Vanish and produces an ordinary
+ * figure -- which is the failure this project has shipped twice already.
+ *
+ * THE OTHER DIRECTION IS SAFE: nothing about which GEAR a preset gets depends
+ * on its rotation, so gearing first cannot change what any of the other 26
+ * wear. `presets.test.ts` round-trips every one of them.
+ * ============================================================================
+ */
+export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations(withBenchmarkGear([
   {
     id: 'two_hand_arms',
     label: '2H Arms',
@@ -1158,9 +1429,67 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withBenchmarkGear(withS
       },
       talents: { ...ROGUE_VENOM_TALENTS },
       raidBuffs: [...PRESET_RAID_BUFFS],
-      consumables: { ...AGILITY_CONSUMABLES, other: 'thistle_tea' },
+      /*
+       * AGILITY FOOD, THE FOURTH FOOD RULING AND THE THIRD ANSWER.
+       *
+       * ----------------------------------------------------------------------
+       * +20 Agility against +40 Attack Power, and for a Rogue that trade is NOT
+       * the Warrior's. Agility is 1 attack power a point here, so the owner is
+       * giving up HALF the attack power -- and buying crit with it, which
+       * attack power does not touch. It is also a primary, so it goes through
+       * the conversion and a percentage modifier reaches it.
+       *
+       * SO THE THREE ANSWERS ARE NOW STRENGTH, STAMINA AND AGILITY across two
+       * shared rows, which is the argument these are overrides stated a third
+       * time: `AGILITY_CONSUMABLES` is shared with the other three Rogues and
+       * the melee Hunter, and `MELEE_COMMON` beneath it with the Warriors and
+       * both feral Druids. A shared row holds one value.
+       *
+       * THIS PRESET ALREADY OVERRODE THE ROW for `other`, so the food is one
+       * more key rather than a new shape -- the Rogue row carries no `other` at
+       * all, because Thistle Tea is "(Rogue, Druid)" and the row is shared with
+       * a Hunter that may not drink it.
+       * ----------------------------------------------------------------------
+       */
+      consumables: { ...AGILITY_CONSUMABLES, other: 'thistle_tea', food: 'food_agility' },
       encounter: { ...createDefaultProfile().encounter, targetAttacks: false },
     }),
+  },
+  {
+    /*
+     * ==========================================================================
+     * COMBAT MUT, AND IT IS THE VENOM PRESET WITH TWO FIELDS REPLACED.
+     *
+     * The owner's own framing: "this profile copies everything from Venom
+     * except the APL and Talents which I'll provide." So it SPREADS the Venom
+     * build rather than restating it -- same race, same gear, same enchants,
+     * same consumables, same encounter -- and the two things that differ are
+     * the two things named.
+     *
+     * A SPREAD RATHER THAN A COPY, which is the rule this file already follows
+     * for `ROGUE_HEMO` deriving from `ROGUE_RUPTURE`: a hand-written copy of
+     * eight fields drifts from its original silently, and the copy is the one
+     * nobody re-reads. `presets.test.ts` asserts every preset sets every field,
+     * and a spread satisfies that by construction.
+     *
+     * THE APL IS NOT A FIELD HERE: `withStockRotations` fills each preset's
+     * rotation from `aplFor`, which dispatches on the TALENTS. So replacing the
+     * allocation is what gives this profile its own list, and `rogueRotation`
+     * reads the Venom capstone to tell the two Mutilate builds apart.
+     * ==========================================================================
+     */
+    id: 'rogue_combat_mut',
+    label: 'Combat Mut',
+    detail: 'Undead, dual-wield, standing target. 30 Assassination / 21 Combat',
+    characterClass: 'rogue',
+    build: () => {
+      const venom = PRESETS_BY_ID.get('rogue_venom')!.build();
+      return {
+        ...venom,
+        character: { ...venom.character, name: 'Combat Mut' },
+        talents: { ...ROGUE_COMBAT_MUT_TALENTS },
+      };
+    },
   },
   {
     id: 'rogue_combat',
@@ -1179,7 +1508,16 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withBenchmarkGear(withS
       },
       talents: { ...ROGUE_COMBAT_TALENTS },
       raidBuffs: [...PRESET_RAID_BUFFS],
-      consumables: { ...AGILITY_CONSUMABLES, other: 'thistle_tea' },
+      /*
+       * AGILITY FOOD, THE SECOND ROGUE TO TAKE IT AND THE FIFTH FOOD RULING.
+       *
+       * Two of the five members of `AGILITY_CONSUMABLES` are named now, which
+       * is the same arithmetic the plate-and-fur row is at: a shared row holds
+       * ONE value, and until the Rupture and Hemo Rogues and the melee Hunter
+       * are named too, overriding is the only reading that does not move a
+       * published figure on somebody else's behalf.
+       */
+      consumables: { ...AGILITY_CONSUMABLES, other: 'thistle_tea', food: 'food_agility' },
       encounter: { ...createDefaultProfile().encounter, targetAttacks: false },
     }),
   },
@@ -1200,13 +1538,30 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withBenchmarkGear(withS
       },
       talents: { ...ROGUE_RUPTURE_TALENTS },
       raidBuffs: [...PRESET_RAID_BUFFS],
-      consumables: { ...AGILITY_CONSUMABLES, other: 'thistle_tea' },
+      /*
+       * AGILITY FOOD, THE THIRD ROGUE AND THE SIXTH FOOD RULING. Three of the
+       * five members of `AGILITY_CONSUMABLES` are named now; the Hemo Rogue
+       * and the melee Hunter are what is left.
+       */
+      consumables: { ...AGILITY_CONSUMABLES, other: 'thistle_tea', food: 'food_agility' },
       encounter: { ...createDefaultProfile().encounter, targetAttacks: false },
     }),
   },
   {
+    /*
+     * THE ID STAYS `rogue_hemo` WHILE THE LABEL BECOMES "Hemo Dagger".
+     *
+     * A preset id is a STABLE KEY: saved profiles carry it, and the benchmark
+     * gear templates, the enchant loadouts, the baseline table and six test
+     * files are all keyed by it. Renaming it would silently unenchant and
+     * un-gear this profile and drop it out of the table's set assertion --
+     * which is the one thing that would NOT show up as an error.
+     *
+     * The label and the character name are what a person reads, and those are
+     * what the owner asked to change.
+     */
     id: 'rogue_hemo',
-    label: 'Hemo',
+    label: 'Hemo Dagger',
     detail: 'Undead, dual-wield, standing target. 31 Subtlety, no Backstab',
     characterClass: 'rogue',
     /*
@@ -1219,7 +1574,7 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withBenchmarkGear(withS
     build: () => ({
       ...createDefaultProfile(),
       character: {
-        name: 'Hemo',
+        name: 'Hemo Dagger',
         race: 'undead',
         characterClass: 'rogue',
         level: 60,
@@ -1231,6 +1586,38 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withBenchmarkGear(withS
       consumables: { ...AGILITY_CONSUMABLES, other: 'thistle_tea' },
       encounter: { ...createDefaultProfile().encounter, targetAttacks: false },
     }),
+  },
+  {
+    /*
+     * ==========================================================================
+     * PURE HEMO, AND IT IS THE HEMO DAGGER PRESET WITH TWO FIELDS REPLACED.
+     *
+     * The owner's framing: "the same as Hemo Dagger - except it's gonna use the
+     * Main Hand weapon from the Combat templates. And it has a different talent
+     * spread, and APL." So it SPREADS that build and changes the name and the
+     * allocation, the arrangement Combat Mut already uses.
+     *
+     * THE WEAPON IS NOT A FIELD HERE AND THE APL IS NOT EITHER, which is the
+     * thing worth knowing about this preset: `withBenchmarkGear` gears it from
+     * its OWN template -- keyed by preset id, and that template carries the
+     * sword main hand -- and `withStockRotations` fills its rotation from
+     * `aplFor`, which now reads that weapon to choose the list. So replacing
+     * the id-keyed template is what gives this profile both its gear AND its
+     * rotation, and the two cannot disagree.
+     * ==========================================================================
+     */
+    id: 'rogue_pure_hemo',
+    label: 'Pure Hemo',
+    detail: 'Undead, sword and dagger, standing target. 21 Assassination / 22 Subtlety',
+    characterClass: 'rogue',
+    build: () => {
+      const hemo = PRESETS_BY_ID.get('rogue_hemo')!.build();
+      return {
+        ...hemo,
+        character: { ...hemo.character, name: 'Pure Hemo' },
+        talents: { ...ROGUE_PURE_HEMO_TALENTS },
+      };
+    },
   },
   {
     id: 'druid_moonkin',
@@ -1278,7 +1665,37 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withBenchmarkGear(withS
       },
       talents: { ...DRUID_CAT_TALENTS },
       raidBuffs: [...PRESET_RAID_BUFFS],
-      consumables: { ...STRENGTH_CONSUMABLES, other: 'thistle_tea' },
+      /*
+       * ======================================================================
+       * STRENGTH FOOD AND THE FRENZY POTION, BOTH THE OWNER'S -- and with them
+       * FOUR of the five members of `STRENGTH_CONSUMABLES` are named, holding
+       * THREE different food answers between them.
+       *
+       * 2H Arms and DW Fury eat strength, Prot Warr eats stamina, and this one
+       * eats strength. Only the Bear is unnamed on food -- and it is named in
+       * this same round, for stamina -- so after it the row supplies NOTHING to
+       * anybody and every member overrides it.
+       *
+       * THAT IS WORTH SAYING RATHER THAN COLLAPSING. The honest edit at that
+       * point is to delete the `food` key from the row and let each preset
+       * state its own, and it is a question for the owner rather than a tidy-up
+       * to do unasked: the row still carries nine other categories that all
+       * five agree on, and a row that is right about nine of ten is not a row
+       * to delete.
+       *
+       * AND THE POTION IS A SWAP RATHER THAN AN OVERRIDE OF THE ROW'S DEFAULT:
+       * Mighty Rage is 60 strength and 45-75 RAGE, and a Cat gains no rage at
+       * all -- measured at zero over twenty fights -- so half of it was always
+       * wasted here. The Frenzy Potion is 40 attack power with nothing wasted,
+       * and the owner's list gates it on BERSERK being up rather than ungated.
+       * ======================================================================
+       */
+      consumables: {
+        ...STRENGTH_CONSUMABLES,
+        other: 'thistle_tea',
+        food: 'food_strength',
+        potion: 'major_frenzy_potion',
+      },
       encounter: { ...createDefaultProfile().encounter, targetAttacks: false },
     }),
   },
@@ -1299,7 +1716,17 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withBenchmarkGear(withS
       },
       talents: { ...DRUID_BEAR_TALENTS },
       raidBuffs: [...PRESET_RAID_BUFFS],
-      consumables: STRENGTH_CONSUMABLES,
+      /*
+       * STAMINA FOOD, THE OWNER'S, AND THE FIFTH AND LAST MEMBER OF THE ROW TO
+       * BE NAMED. The three answers across the five are strength, stamina and
+       * strength again -- see `druid_cat` for why the row is not collapsed.
+       *
+       * IT IS THE SECOND TANK TO TAKE IT and for the same reason: stamina buys
+       * health, health is what a death count is counted in, and Forever's
+       * `D x 10 / H` then makes each point of damage taken worth LESS rage. Read
+       * this one on DEATHS, not on the DPS row, and expect the DPS to fall.
+       */
+      consumables: { ...STRENGTH_CONSUMABLES, food: 'food_stamina' },
       /*
        * THE ONE DRUID PROFILE THAT IS HIT BACK, which is the whole point of
        * Bear Form: rage is earned by taking damage as well as dealing it, and
@@ -1442,11 +1869,39 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withBenchmarkGear(withS
       },
       talents: { ...PALADIN_RETRIBUTION_TALENTS },
       raidBuffs: [...PRESET_RAID_BUFFS],
-      consumables: hybridConsumables({
-        school: 'school_holy',
-        meleeWeaponEffect: true,
-        blastedLands: 'blasted_strength',
-      }),
+      /*
+       * ======================================================================
+       * THE SPELL POWER FLASK AND THE SPELL POWER FOOD, BOTH THE OWNER'S, AND
+       * BOTH AS OVERRIDES RATHER THAN AS AN EDIT TO `hybridConsumables`.
+       *
+       * THE ROW SERVES FOUR BUILDS -- this one, the Shockadin, the Protection
+       * Paladin and the Enhancement Shaman -- and the owner has now named
+       * three of them with TWO DIFFERENT ANSWERS: Retribution and the Shockadin
+       * take the Spell Power flask, and the Protection Paladin was given the
+       * FOOD and not the flask. So no edit to the shared row satisfies the
+       * rulings that exist, which is the same arithmetic that settled
+       * `STRENGTH_CONSUMABLES` and is a fact about the SHAPE rather than a
+       * reading of any one sentence.
+       *
+       * THE FLASK IS A REAL TRADE AND NOT A STRICT UPGRADE. +1200 Hit Points
+       * against +150 Spell Power: this profile is 54% Holy by measured share,
+       * so the spell power reaches rather more than half of what it does, and
+       * the hit points reach a build that is never attacked. For the
+       * PROTECTION Paladin the hit points reach a build that IS attacked,
+       * which is the obvious reason the owner named its food and not its
+       * flask -- recorded as the likely reason and not as an inference acted
+       * on. A ruling covers what it says.
+       * ======================================================================
+       */
+      consumables: {
+        ...hybridConsumables({
+          school: 'school_holy',
+          meleeWeaponEffect: true,
+          blastedLands: 'blasted_strength',
+        }),
+        flask: 'flask_spell_power',
+        food: 'food_spell_power',
+      },
       encounter: { ...createDefaultProfile().encounter, targetAttacks: false },
     }),
   },
@@ -1476,11 +1931,22 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withBenchmarkGear(withS
       },
       talents: { ...PALADIN_SHOCKADIN_TALENTS },
       raidBuffs: [...PRESET_RAID_BUFFS],
-      consumables: hybridConsumables({
-        school: 'school_holy',
-        meleeWeaponEffect: false,
-        blastedLands: 'blasted_strength',
-      }),
+      /*
+       * THE SAME PAIR AS SEAL TWIST RET, and on this build the case is
+       * stronger rather than merely equal: the Shockadin is **74% Holy** by
+       * measured share, the highest of the four hybrids, so +150 Spell Power
+       * reaches nearly all of its damage. See the Retribution row above for
+       * why these are overrides and not an edit to the shared one.
+       */
+      consumables: {
+        ...hybridConsumables({
+          school: 'school_holy',
+          meleeWeaponEffect: false,
+          blastedLands: 'blasted_strength',
+        }),
+        flask: 'flask_spell_power',
+        food: 'food_spell_power',
+      },
       encounter: { ...createDefaultProfile().encounter, targetAttacks: false },
     }),
   },
@@ -1514,12 +1980,21 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withBenchmarkGear(withS
        * wrong measure for this row -- the same thing already recorded about the
        * tanks' enchants being dodge and defense skill.
        */
+      /*
+       * AND THE SPELL POWER FOOD, WITHOUT THE SPELL POWER FLASK, which is what
+       * the owner named for this profile and is the one asymmetry in the three
+       * Paladin rows. The other two took both. +1200 Hit Points is worth
+       * something here that it is worth nowhere else in the row -- this is the
+       * build that is HIT BACK -- so the asymmetry reads as deliberate, and it
+       * is applied exactly as stated either way.
+       */
       consumables: {
         ...hybridConsumables({
           school: 'school_holy',
           meleeWeaponEffect: false,
           blastedLands: 'blasted_strength',
         }),
+        food: 'food_spell_power',
         other: 'healthstone',
       },
       encounter: { ...createDefaultProfile().encounter, targetAttacks: true },
