@@ -3,25 +3,37 @@
 **THIS SESSION REPLACED THE ITEM LAYER.** It began as a reading exercise -- how
 are items generated -- and ended with the Classic and Season of Discovery
 stand-ins deleted, 1,946 real Forever items in their place, four
-budget-generated benchmark sets, and **ten bugs that only real item data could
-have exposed**.
+budget-generated benchmark sets, and **eleven bugs that only real item data
+could have exposed**.
 
-**IT IS FINISHED AND MEASURED.** All 3,101 tests pass, the typecheck and the
-build are clean, and all 25 profiles are re-measured on the E65 set: the mean is
-**741.0** against 730.9, with 16 rows up and 9 down. The baseline table at the
-end of this file is the record.
+**IT IS MERGED AND MEASURED.** 3,101 tests, typecheck and build clean, and all
+25 profiles re-measured on the E65 set: the mean is **719.6** against 730.9,
+with 11 rows up and 14 down. The baseline table at the end of this file is the
+record.
 
 | | what | state |
 | --- | --- | --- |
 | `c5900b0` | the itemization budget, verified; 1,673 Forever items; the rating table; `critRating` read by nothing | **merged** |
 | `f985e55` (#240) | benchmark gear, the Attack Power ruling, 1,384 stranded spell power lines | **merged** |
-| `49fda35` | Classic and SoD deleted, E65 as the default set, one crit row | on `forever-items` |
-| `427caed` | six bugs the test repairs uncovered, and 100 tests repaired | on `forever-items` |
-| `5ff9da8` | the owner's slot-stat table, which buys the fifth and sixth preference | on `forever-items` |
+| `3745ebc` (#241) | Forever's own items only, eleven bugs, 100 test repairs, three rebuilds of the baseline | **merged** |
 
-**THE SIX BUGS THE TEST REPAIRS FOUND ARE THE PART WORTH READING**, because four
-of them were in code the item swap did not touch and every one produced a
-plausible number. See **Ten bugs, and how each one hid** below.
+**IT TOOK THREE MEASUREMENTS AND FOUR OWNER RULINGS**, which is this file's own
+rule about a feature arriving in waves, with nothing but item data to blame:
+
+| | what moved | mean |
+| --- | --- | --- |
+| 1 | every preset into the E65 set, with the parser bugs fixed | 730.9 -> **741.0** |
+| — | the owner's slot-stat table (5/4/3/1 by slot), which buys the fifth preference | measured in round 2 |
+| 2 | every armour piece carries stamina, at 12.5% of its slot | **734.1** |
+| 3 | the owner's ruling that the share is 25% | **719.6** |
+
+Plus two rulings that moved no figure: the Shockadin stays a 1H + shield build,
+and Hemo keeps dual daggers.
+
+**THE ELEVEN BUGS ARE THE PART WORTH READING**, because five were in code the
+item swap did not touch, one was found by the owner reading the generated items,
+and every one produced a plausible number. See **Eleven bugs, and how each one
+hid** below.
 
 ## The budget, and four wrong answers to one question
 
@@ -96,7 +108,7 @@ Hit and expertise are absolute totals and **still cost budget**, so a Rogue
 spends 120 points before buying anything else. Generated as tooltip TEXT and
 parsed back, which is how the spell power gap above was found.
 
-## Ten bugs, and how each one hid
+## Eleven bugs, and how each one hid
 
 **EVERY ONE PRODUCED A PLAUSIBLE NUMBER**, which is the only thing they have in
 common and is the reason this list is worth more than the feature it came out
@@ -115,8 +127,18 @@ REPAIRS, in code the item swap did not touch.
 | 8 | **A tank's shield carried SIX points of block value** where Forever's own carry 44 | the budget bought it at a cost of 0.65 on a light slot. Shield Slam reads block value, so Protection lost it twice |
 | 9 | **The Shockadin fought with the PLACEHOLDER weapon.** Its template said `twoHand` and its style is `one_hand_shield`, so `liveEquipment` dropped the weapon | the Hemo/Ambush shape, and `presets.ts` had already ruled on this exact conflict from the other direction |
 | 10 | **A character created from scratch stopped getting enchants**, worth +2.4 to +53.7 DPS | the old curated sets carried them INSIDE; deleting those sets took the enchants with them, and only a PRESET re-applied a loadout |
+| 11 | **Armour pieces were generated with NO STAMINA.** Bought only when it fell inside a template's stat count, so a Rogue's wrists had none and Seal Twist Ret had none ANYWHERE | **the owner found it by reading the items** -- "it's strange to me that stamina was dropped on some of the template items". 93.3% of Forever's own clean armour carries stamina, so the generator had made the exception the rule |
 
-**FOUR OF THE TEN WERE FOUND BY ONE TOOL, AND IT HAD TO BE WRITTEN FIRST.**
+**THE ELEVENTH IS THE ONE NO TOOL HERE WAS GOING TO FIND, AND THAT IS NOW A
+PATTERN RATHER THAN AN ANECDOTE.** Nothing was unread, nothing was over budget,
+every item was in the right slot and the arithmetic balanced -- the gear was
+simply not shaped like Forever's gear, which is a judgement about the RULESET
+and not about the code. It is the fifth time the owner's reading of printed
+output has beaten every check in this repository: the hit ladder, parry haste's
+direction, Touch of the Grave's proc rate, Feral Swiftness's 30 dodge, and now
+this. **Put the generated items in front of them, not only the figures.**
+
+**FOUR OF THE ELEVEN WERE FOUND BY ONE TOOL, AND IT HAD TO BE WRITTEN FIRST.**
 `tools/item_vocabulary.ts` groups the lines the parser could not read by SHAPE --
 every number replaced by `N` -- so a hundred spell power lines are one row and a
 one-off proc is one row too. A repeated shape is a missing RULE; a shape seen
@@ -153,9 +175,10 @@ table, and **the test failing is how that was confirmed**.
 gear, the Attack Power ruling and the spell power fix -- `c5900b0` and
 `f985e55` (#240).
 
-**LANDED ON `forever-items`, in three commits:** the owner's four instructions --
+**MERGED AS `3745ebc` (#241), IN SIX COMMITS:** the owner's four instructions --
 keep the enchants, delete the old gear sets, keep only Forever and benchmark
-items, collapse the duplicate crit rows.
+items, collapse the duplicate crit rows -- plus the slot-stat table and the
+stamina floor that came out of reading the result.
 
 - the nine Classic/SoD files, `gearSets.ts`, `item-sets.json` and
   `import_item.mjs` are deleted

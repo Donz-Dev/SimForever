@@ -4160,6 +4160,17 @@ ONE STEP HARDER**: this one DID fire, and looked entirely ordinary doing it.
 
 **When a fix moves nothing in the suite, that is a statement about the suite.**
 
+**AND A DIRECTION IS A COUNT, NOT AN IMPRESSION. IT WENT OUT WRONG TWICE IN ONE
+ROUND.** The first draft of the paragraph under the baseline table said "every
+one of them is a bigger number" and "twenty-three of the 25 rose"; it was 16 and
+9. The second draft said 12 up and 13 down; it was 15 and 10. Both were caught
+by running the subtraction rather than by rereading the sentence.
+**WHAT MADE BOTH FEEL SAFE IS THAT THE MEAN MOVED THE EXPECTED WAY** -- up on
+the first, down on the second -- so the claim about the ROWS was assumed from the
+claim about the mean. A mean over 25 rows hid a 62-point fall on three of them.
+**When a round moves every row, the per-row count is the cheap check and the
+mean is the misleading one.**
+
 **AND A ROUND THAT MOVES ALL 25 ROWS WANTS SPLITTING BY ARCHETYPE BEFORE IT IS
 READ AS A FINDING.** Swapping every preset into the E65 benchmark set moved the
 mean 730.9 to 741.0, which is the least informative thing about it: **16 rows
@@ -4475,6 +4486,20 @@ tree: a measurement there once came back a clean −2.0% on two profiles, which
 read exactly like a real regression and was another session's uncommitted work.
 Never commit files you find modified there.
 
+**A FRESH WORKTREE HAS NO `node_modules` AND `npm install` IS NOT THE ANSWER.**
+Junction the existing one in -- from PowerShell, because the Bash tool's path
+translation defeats `mklink`:
+
+```powershell
+cmd /c mklink /J "<worktree>\node_modules" "C:\Users\Donz\code\SimForever\node_modules"
+```
+
+Then `SAVE=figures.json npx vite-node tools/measure_profiles.ts` inside it, and
+`BASELINE=` the previous run's file for the before-and-after. **Three
+measurements in one round cost about four minutes each this way**, where a fresh
+install is minutes before the first fight. `git worktree remove --force` when
+done, and `git worktree prune` first if an earlier one was deleted by hand.
+
 **BUT A REGISTERED WORKTREE IS NOT AN ACTIVE SESSION, AND READING IT AS ONE IS
 HOW THE SENTENCE ABOVE GETS OVER-APPLIED.** Four were registered against this
 repository and the owner was told "four other sessions are working in this
@@ -4543,6 +4568,15 @@ of thing that would tip a test near its limit. Measured: **529-620ms to build
 600 items against 494-545ms for 151**, so the change adds about 40ms across a
 41-second suite. Not it. **A plausible culprit arriving in the same commit is
 not evidence**, and the measurement took one command.
+
+**AND IT HAPPENED A THIRD TIME, TO SOMEBODY WHO HAD JUST READ THIS RULE.** One
+full-suite run failed during the item round; the response was to re-run, which
+passed, and the assertion text went with it. Four captured full runs since are
+clean at 3,101. The honest state is that it MIGHT have been
+`chargeAndShieldTalents.test.ts` and there is no evidence either way.
+**THE RULE IS CHEAP AND THE INSTINCT IS NOT**: `npx vitest run > run.txt 2>&1`
+costs nothing and a re-run destroys the only artifact. Reading the rule is not
+the same as following it, which is what three instances say.
 
 **CAPTURE A SUITE FAILURE BEFORE RE-RUNNING IT.** One full-suite run of
 `chargeAndShieldTalents.test.ts` failed at `ccf4dc8` and has passed every run
@@ -4653,6 +4687,22 @@ for these removed and the history was rewritten to strip them.
   refreshed `$env:Path` works reliably.
 - Heredocs in the Bash tool are unreliable for large multi-line content. Write a
   script to a file and run it, or use Write/Edit.
+- **AND A QUOTED HEREDOC STILL EATS `\n` INSIDE A STRING LITERAL, WHICH BROKE
+  THREE PATCHES IN ONE SESSION.** `<<'EOF'` is supposed to be literal, and
+  `console.log('\nSPLIT BY POPULATION\n')` came out as a REAL line break in
+  the middle of a TypeScript string -- a syntax error whose message points at
+  the line AFTER the damage. The same thing mangles a Python replacement string,
+  so the patch then matches nothing. **Write the script with the Write tool when
+  it contains an escape sequence at all**, and repair a mangled one with Edit
+  rather than with a second heredoc.
+- **AND A PYTHON TRIPLE-QUOTED STRING IS NOT RAW**: a Windows path inside one
+  turns `\Users` into an escape and `\U` into a syntax error. `chr(92)`
+  or an `r'...'` prefix, or write the file with Write.
+- **A `replace()` THAT MATCHES NOTHING FAILS SILENTLY UNLESS IT IS ASSERTED.**
+  Every patch script here ends `assert s.count(old) == 1` before writing, which
+  is what turns a mangled pattern into an error instead of a file that looks
+  edited and is not. Four scripts in one session hit that assertion and every
+  one of them would otherwise have reported success.
 - **A PYTHON PATCH SCRIPT REWRITES THE WHOLE FILE'S LINE ENDINGS UNLESS YOU SAY
   OTHERWISE, AND ONE TEST READS A FILE AS TEXT.** `.gitattributes` forces LF, so
   git normalises on commit and `git diff` shows nothing — the damage is in the
