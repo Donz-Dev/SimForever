@@ -1,29 +1,4 @@
 import {
-  CRUSADER,
-  DRUID_BEAR_GEAR,
-  DRUID_CAT_GEAR,
-  DRUID_MOONKIN_GEAR,
-  HUNTER_ARMOUR,
-  HUNTER_DUAL_WIELD_WEAPONS,
-  HUNTER_STAT_STICK,
-  MAGE_GEAR,
-  PALADIN_PROT_GEAR,
-  PALADIN_RET_GEAR,
-  PALADIN_SHOCKADIN_GEAR,
-  PRIEST_GEAR,
-  ROGUE_ARMOUR,
-  ROGUE_DAGGERS,
-  ROGUE_SWORDS,
-  SHAMAN_ELEMENTAL_GEAR,
-  SHAMAN_ENHANCEMENT_GEAR,
-  WARLOCK_GEAR,
-  withEnchants,
-  PROTECTION_WARRIOR_ENCHANTS,
-  STRENGTH_ENCHANTS,
-  STRENGTH_ENCHANTS_WITH_AGILITY_BOOTS,
-  HUNTER_ARMOUR_RANGED_CRIT,
-} from '../game/items/gearSets';
-import {
   AGILITY_CONSUMABLES,
   RANGED_HUNTER_CONSUMABLES,
   STRENGTH_CONSUMABLES,
@@ -31,7 +6,8 @@ import {
   hybridConsumables,
 } from '../game/buffs/consumables';
 import type { ClassId } from '../game/character';
-import type { Equipment } from '../game/items/Item';
+import type { Equipment, EquippedSlot } from '../game/items/Item';
+import { benchmarkEquipmentForName } from '../game/items/benchmarkSets';
 import type { TalentAllocation } from '../game/talents/Talent';
 import type { CharacterProfile } from './CharacterProfile';
 import { createDefaultProfile } from './CharacterProfile';
@@ -207,32 +183,6 @@ const MOONKIN_RAID_BUFFS: readonly string[] = PRESET_RAID_BUFFS.map((id) =>
   id === 'leader_of_the_pack' ? 'moonkin_form' : id,
 );
 
-/**
- * Everything that is not a weapon, shared by all three builds.
- *
- * Identical in the ruleset owner's three lists, item for item, which is why it
- * is written once. The ids are the same ones `startingSets.ts` curates -- and this
- * deliberately does NOT call that function, because a preset is a stated build
- * rather than "whatever the starting set happens to be today". If the starting
- * set changes, these should not silently change with it.
- */
-const SHARED_ARMOUR: Equipment = {
-  ranged: { itemId: 17069 }, // Striker's Mark
-  head: { itemId: 226495 }, // Jaws of Might
-  neck: { itemId: 228685 }, // Onyxia Tooth Pendant
-  shoulders: { itemId: 226492 }, // Pauldrons of Might
-  cloak: { itemId: 13340 }, // Cape of the Black Baron
-  chest: { itemId: 226494 }, // Hauberk of Might
-  wrists: { itemId: 226499 }, // Armguards of Might
-  gloves: { itemId: 226497 }, // Hands of Might
-  waist: { itemId: 226498 }, // Sash of Might
-  legs: { itemId: 226493 }, // Leggings of Might
-  feet: { itemId: 226496 }, // Treads of Might
-  ring1: { itemId: 19325 }, // Don Julio's Band
-  ring2: { itemId: 228261 }, // Quick Strike Ring
-  trinket1: { itemId: 13965 }, // Blackhand's Breadth
-  trinket2: { itemId: 11815 }, // Hand of Justice
-};
 
 /**
  * 2H Arms: 39 in Arms, 10 in Fury, 2 in Protection. Fifty-one exactly.
@@ -1037,7 +987,58 @@ const PRIEST_SHADOW_TALENTS: TalentAllocation = {
  * move: it stores the list it was already running.
  * ----------------------------------------------------------------------------
  */
-export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations([
+/**
+ * The enchant each preset wears, slot by slot.
+ *
+ * ==============================================================================
+ * EXTRACTED FROM THE OLD GEAR SETS BEFORE THEY WERE DELETED, because the owner
+ * asked for the enchants to stay exactly as they were while the Classic and
+ * Season of Discovery items went. They used to live inside each preset's
+ * `equipment` block, applied by `withEnchants` over a gear set -- and that set
+ * no longer exists, so the loadout had to become a thing of its own or be lost
+ * in the deletion.
+ *
+ * READ OFF THE BUILT PROFILES rather than retyped, so what is here is what the
+ * presets actually wore rather than what somebody believed they wore. The ids
+ * are `foreverEnchants.ts`'s own, allocated by position from 900,000 -- except
+ * 20034 (Crusader) and 22749 (Weapon Spell Power), which are real Wowhead
+ * spell ids because those two were SCRAPED and the other 28 are the owner's
+ * table.
+ *
+ * A SLOT THE BENCHMARK SET DOES NOT FILL SIMPLY LOSES ITS ENCHANT -- the four
+ * Hunters' `ranged` is the only one, and they keep it because the benchmark
+ * gives them a bow.
+ * ==============================================================================
+ */
+const PRESET_ENCHANTS: Readonly<Record<string, Readonly<Record<string, number>>>> = {
+  two_hand_arms: { chest: 900015, cloak: 900011, feet: 900025, gloves: 900021, head: 900005, legs: 900005, neck: 900008, twoHand: 20034, wrists: 900017 },
+  dw_fury: { chest: 900015, cloak: 900011, feet: 900026, gloves: 900021, head: 900005, legs: 900005, mainHand: 20034, neck: 900008, offHand: 20034, wrists: 900017 },
+  prot_warr: { chest: 900015, cloak: 900001, feet: 900025, gloves: 900024, head: 900001, legs: 900001, mainHand: 20034, neck: 900012, wrists: 900016 },
+  rogue_venom: { chest: 900015, cloak: 900011, feet: 900026, gloves: 900022, head: 900003, legs: 900003, mainHand: 20034, neck: 900011, offHand: 20034, wrists: 900019 },
+  rogue_combat: { chest: 900015, cloak: 900011, feet: 900026, gloves: 900022, head: 900003, legs: 900003, mainHand: 20034, neck: 900011, offHand: 20034, wrists: 900019 },
+  rogue_rupture: { chest: 900015, cloak: 900011, feet: 900026, gloves: 900022, head: 900003, legs: 900003, mainHand: 20034, neck: 900011, offHand: 20034, wrists: 900019 },
+  rogue_hemo: { chest: 900015, cloak: 900011, feet: 900026, gloves: 900022, head: 900003, legs: 900003, mainHand: 20034, neck: 900011, offHand: 20034, wrists: 900019 },
+  druid_moonkin: { chest: 900015, cloak: 900014, feet: 900025, gloves: 900023, head: 900002, legs: 900002, neck: 900009, twoHand: 22749, wrists: 900018 },
+  druid_cat: { chest: 900015, cloak: 900011, feet: 900026, gloves: 900022, head: 900003, legs: 900003, neck: 900011, wrists: 900019 },
+  druid_bear: { chest: 900015, cloak: 900001, feet: 900025, gloves: 900022, head: 900001, legs: 900001, neck: 900011, wrists: 900019 },
+  shaman_elemental: { chest: 900015, cloak: 900014, feet: 900025, gloves: 900023, head: 900002, legs: 900002, mainHand: 22749, neck: 900009, wrists: 900018 },
+  shaman_enhancement: { chest: 900015, cloak: 900011, feet: 900025, gloves: 900021, head: 900005, legs: 900005, neck: 900008, twoHand: 20034, wrists: 900017 },
+  mage_frostfire: { chest: 900015, cloak: 900014, feet: 900025, gloves: 900023, head: 900002, legs: 900002, neck: 900009, twoHand: 22749, wrists: 900018 },
+  mage_arcane: { chest: 900015, cloak: 900014, feet: 900025, gloves: 900023, head: 900002, legs: 900002, neck: 900009, twoHand: 22749, wrists: 900018 },
+  mage_fire: { chest: 900015, cloak: 900014, feet: 900025, gloves: 900023, head: 900002, legs: 900002, neck: 900009, twoHand: 22749, wrists: 900018 },
+  pally_ret: { chest: 900015, cloak: 900011, feet: 900026, gloves: 900002, head: 900002, legs: 900002, neck: 900008, twoHand: 20034, wrists: 900017 },
+  pally_shockadin: { chest: 900015, cloak: 900011, feet: 900026, gloves: 900023, head: 900005, legs: 900005, mainHand: 20034, neck: 900008, wrists: 900018 },
+  prot_pally: { chest: 900015, cloak: 900001, feet: 900027, gloves: 900023, head: 900001, legs: 900001, mainHand: 20034, neck: 900012, wrists: 900016 },
+  bm_hunter: { chest: 900015, cloak: 900011, feet: 900026, gloves: 900022, head: 900003, legs: 900003, neck: 900011, ranged: 900028, wrists: 900019 },
+  lw_ranged: { chest: 900015, cloak: 900011, feet: 900026, gloves: 900022, head: 900003, legs: 900003, neck: 900011, ranged: 900028, wrists: 900019 },
+  lw_melee: { chest: 900015, cloak: 900011, feet: 900026, gloves: 900022, head: 900003, legs: 900003, mainHand: 20034, neck: 900011, offHand: 20034, wrists: 900019 },
+  hawk_melee: { chest: 900015, cloak: 900011, feet: 900026, gloves: 900022, head: 900003, legs: 900003, mainHand: 20034, neck: 900011, offHand: 20034, wrists: 900019 },
+  warlock_smds: { chest: 900015, cloak: 900014, feet: 900025, gloves: 900023, head: 900002, legs: 900002, neck: 900009, twoHand: 22749, wrists: 900018 },
+  warlock_firelock: { chest: 900015, cloak: 900014, feet: 900025, gloves: 900023, head: 900002, legs: 900002, neck: 900009, twoHand: 22749, wrists: 900018 },
+  shadow_priest: { chest: 900015, cloak: 900014, feet: 900025, gloves: 900023, head: 900002, legs: 900002, neck: 900009, twoHand: 22749, wrists: 900018 },
+};
+
+export const PROFILE_PRESETS: readonly ProfilePreset[] = withBenchmarkGear(withStockRotations([
   {
     id: 'two_hand_arms',
     label: '2H Arms',
@@ -1062,12 +1063,6 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations([
        * and defense skill. The set is the items; the loadout is the build.
        */
       consumables: STRENGTH_CONSUMABLES,
-      equipment: {
-        ...withEnchants(SHARED_ARMOUR, STRENGTH_ENCHANTS),
-        // Obsidian Edged Blade, enchanted. A two-hander carries one weapon and
-        // therefore one Crusader.
-        twoHand: { itemId: 228229, enchantId: CRUSADER },
-      },
       encounter: {
         ...createDefaultProfile().encounter,
         // A damage warrior is not the one being hit.
@@ -1093,19 +1088,6 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations([
       talents: { ...DW_FURY_TALENTS },
       raidBuffs: [...PRESET_RAID_BUFFS],
       consumables: STRENGTH_CONSUMABLES,
-      equipment: {
-        // Arms' row with AGILITY boots instead of Minor Speed, which is the
-        // owner's one difference between the two damage warriors.
-        ...withEnchants(SHARED_ARMOUR, STRENGTH_ENCHANTS_WITH_AGILITY_BOOTS),
-        /*
-         * BOTH WEAPONS ENCHANTED, which the dual-wield starting set is not.
-         * The ruleset owner asks for Crusader on each, and Forever stacks the
-         * two hands' Holy Strength separately -- so the second enchant is
-         * worth a second hundred strength rather than refreshing the first.
-         */
-        mainHand: { itemId: 17075, enchantId: CRUSADER }, // Vis'kag the Bloodletter
-        offHand: { itemId: 228265, enchantId: CRUSADER }, // Brutality Blade
-      },
       encounter: {
         ...createDefaultProfile().encounter,
         // A damage warrior is not the one being hit.
@@ -1131,13 +1113,6 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations([
       talents: { ...PROT_WARR_TALENTS },
       raidBuffs: [...PRESET_RAID_BUFFS],
       consumables: STRENGTH_CONSUMABLES,
-      equipment: {
-        // Dodge, defense skill and threat: the one Warrior row that spends
-        // nothing on damage.
-        ...withEnchants(SHARED_ARMOUR, PROTECTION_WARRIOR_ENCHANTS),
-        mainHand: { itemId: 228265, enchantId: CRUSADER }, // Brutality Blade
-        shield: { itemId: 19321 }, // The Immovable Object
-      },
       encounter: {
         ...createDefaultProfile().encounter,
         /*
@@ -1169,7 +1144,6 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations([
       talents: { ...ROGUE_VENOM_TALENTS },
       raidBuffs: [...PRESET_RAID_BUFFS],
       consumables: { ...AGILITY_CONSUMABLES, other: 'thistle_tea' },
-      equipment: { ...ROGUE_ARMOUR, ...ROGUE_DAGGERS },
       encounter: { ...createDefaultProfile().encounter, targetAttacks: false },
     }),
   },
@@ -1191,7 +1165,6 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations([
       talents: { ...ROGUE_COMBAT_TALENTS },
       raidBuffs: [...PRESET_RAID_BUFFS],
       consumables: { ...AGILITY_CONSUMABLES, other: 'thistle_tea' },
-      equipment: { ...ROGUE_ARMOUR, ...ROGUE_SWORDS },
       encounter: { ...createDefaultProfile().encounter, targetAttacks: false },
     }),
   },
@@ -1213,7 +1186,6 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations([
       talents: { ...ROGUE_RUPTURE_TALENTS },
       raidBuffs: [...PRESET_RAID_BUFFS],
       consumables: { ...AGILITY_CONSUMABLES, other: 'thistle_tea' },
-      equipment: { ...ROGUE_ARMOUR, ...ROGUE_DAGGERS },
       encounter: { ...createDefaultProfile().encounter, targetAttacks: false },
     }),
   },
@@ -1242,7 +1214,6 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations([
       talents: { ...ROGUE_HEMO_TALENTS },
       raidBuffs: [...PRESET_RAID_BUFFS],
       consumables: { ...AGILITY_CONSUMABLES, other: 'thistle_tea' },
-      equipment: { ...ROGUE_ARMOUR, ...ROGUE_DAGGERS },
       encounter: { ...createDefaultProfile().encounter, targetAttacks: false },
     }),
   },
@@ -1272,7 +1243,6 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations([
        */
       raidBuffs: [...MOONKIN_RAID_BUFFS],
       consumables: casterConsumables('school_arcane'),
-      equipment: { ...DRUID_MOONKIN_GEAR },
       encounter: { ...createDefaultProfile().encounter, targetAttacks: false },
     }),
   },
@@ -1294,7 +1264,6 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations([
       talents: { ...DRUID_CAT_TALENTS },
       raidBuffs: [...PRESET_RAID_BUFFS],
       consumables: { ...STRENGTH_CONSUMABLES, other: 'thistle_tea' },
-      equipment: { ...DRUID_CAT_GEAR },
       encounter: { ...createDefaultProfile().encounter, targetAttacks: false },
     }),
   },
@@ -1316,7 +1285,6 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations([
       talents: { ...DRUID_BEAR_TALENTS },
       raidBuffs: [...PRESET_RAID_BUFFS],
       consumables: STRENGTH_CONSUMABLES,
-      equipment: { ...DRUID_BEAR_GEAR },
       /*
        * THE ONE DRUID PROFILE THAT IS HIT BACK, which is the whole point of
        * Bear Form: rage is earned by taking damage as well as dealing it, and
@@ -1344,7 +1312,6 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations([
       talents: { ...SHAMAN_ELEMENTAL_TALENTS },
       raidBuffs: [...PRESET_RAID_BUFFS],
       consumables: casterConsumables('school_nature'),
-      equipment: { ...SHAMAN_ELEMENTAL_GEAR },
       encounter: { ...createDefaultProfile().encounter, targetAttacks: false },
     }),
   },
@@ -1377,7 +1344,6 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations([
         meleeWeaponEffect: true,
         blastedLands: 'blasted_strength',
       }),
-      equipment: { ...SHAMAN_ENHANCEMENT_GEAR },
       encounter: { ...createDefaultProfile().encounter, targetAttacks: false },
     }),
   },
@@ -1399,7 +1365,6 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations([
       talents: { ...MAGE_FROSTFIRE_TALENTS },
       raidBuffs: [...PRESET_RAID_BUFFS],
       consumables: casterConsumables('school_fire'),
-      equipment: { ...MAGE_GEAR },
       encounter: { ...createDefaultProfile().encounter, targetAttacks: false },
     }),
   },
@@ -1421,7 +1386,6 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations([
       talents: { ...MAGE_ARCANE_TALENTS },
       raidBuffs: [...PRESET_RAID_BUFFS],
       consumables: casterConsumables('school_arcane'),
-      equipment: { ...MAGE_GEAR },
       encounter: { ...createDefaultProfile().encounter, targetAttacks: false },
     }),
   },
@@ -1443,7 +1407,6 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations([
       talents: { ...MAGE_FIRE_TALENTS },
       raidBuffs: [...PRESET_RAID_BUFFS],
       consumables: casterConsumables('school_fire'),
-      equipment: { ...MAGE_GEAR },
       encounter: { ...createDefaultProfile().encounter, targetAttacks: false },
     }),
   },
@@ -1469,7 +1432,6 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations([
         meleeWeaponEffect: true,
         blastedLands: 'blasted_strength',
       }),
-      equipment: { ...PALADIN_RET_GEAR },
       encounter: { ...createDefaultProfile().encounter, targetAttacks: false },
     }),
   },
@@ -1504,7 +1466,6 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations([
         meleeWeaponEffect: false,
         blastedLands: 'blasted_strength',
       }),
-      equipment: { ...PALADIN_SHOCKADIN_GEAR },
       encounter: { ...createDefaultProfile().encounter, targetAttacks: false },
     }),
   },
@@ -1546,7 +1507,6 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations([
         }),
         other: 'healthstone',
       },
-      equipment: { ...PALADIN_PROT_GEAR },
       encounter: { ...createDefaultProfile().encounter, targetAttacks: true },
     }),
   },
@@ -1571,7 +1531,6 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations([
       // See `RANGED_HUNTER_RAID_BUFFS`.
       raidBuffs: [...RANGED_HUNTER_RAID_BUFFS],
       consumables: RANGED_HUNTER_CONSUMABLES,
-      equipment: { ...HUNTER_ARMOUR_RANGED_CRIT, ...HUNTER_STAT_STICK },
       encounter: { ...createDefaultProfile().encounter, targetAttacks: false },
     }),
   },
@@ -1595,7 +1554,6 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations([
       // See `RANGED_HUNTER_RAID_BUFFS`.
       raidBuffs: [...RANGED_HUNTER_RAID_BUFFS],
       consumables: RANGED_HUNTER_CONSUMABLES,
-      equipment: { ...HUNTER_ARMOUR_RANGED_CRIT, ...HUNTER_STAT_STICK },
       encounter: { ...createDefaultProfile().encounter, targetAttacks: false },
     }),
   },
@@ -1631,7 +1589,6 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations([
         mana_regen: 'mana_regen_12',
         other: 'demonic_rune',
       },
-      equipment: { ...HUNTER_ARMOUR, ...HUNTER_DUAL_WIELD_WEAPONS },
       encounter: { ...createDefaultProfile().encounter, targetAttacks: false },
     }),
   },
@@ -1672,7 +1629,6 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations([
         mana_regen: 'mana_regen_12',
         other: 'demonic_rune',
       },
-      equipment: { ...HUNTER_ARMOUR, ...HUNTER_DUAL_WIELD_WEAPONS },
       encounter: { ...createDefaultProfile().encounter, targetAttacks: false },
     }),
   },
@@ -1708,7 +1664,6 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations([
       warlockStone: 'spellstone',
       raidBuffs: [...PRESET_RAID_BUFFS],
       consumables: casterConsumables('school_shadow'),
-      equipment: { ...WARLOCK_GEAR },
       encounter: { ...createDefaultProfile().encounter, targetAttacks: false },
     }),
   },
@@ -1743,7 +1698,6 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations([
       warlockStone: 'firestone',
       raidBuffs: [...PRESET_RAID_BUFFS],
       consumables: casterConsumables('school_fire'),
-      equipment: { ...WARLOCK_GEAR },
       encounter: { ...createDefaultProfile().encounter, targetAttacks: false },
     }),
   },
@@ -1765,17 +1719,79 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations([
       talents: { ...PRIEST_SHADOW_TALENTS },
       raidBuffs: [...PRESET_RAID_BUFFS],
       consumables: casterConsumables('school_shadow'),
-      equipment: { ...PRIEST_GEAR },
       encounter: { ...createDefaultProfile().encounter, targetAttacks: false },
     }),
   },
-]);
+]));
 
 /** Give every preset's `build` the stock list for the character it builds. */
 function withStockRotations(presets: readonly ProfilePreset[]): readonly ProfilePreset[] {
   return presets.map((preset) => ({
     ...preset,
     build: () => syncDefaultRotation(preset.build()),
+  }));
+}
+
+/**
+ * Every preset wears the E65 benchmark set, on the ruleset owner's instruction.
+ *
+ * ==============================================================================
+ * WRAPPED AND NOT EDITED, the same way `withStockRotations` fills the priority
+ * list: twenty-five hand-written swaps would be twenty-five chances to put the
+ * wrong set on a build, and the one that drifts is the one nobody measures.
+ *
+ * WHY: the real sets are Classic and Season of Discovery stand-ins at whatever
+ * item level the owner's spreadsheets supplied -- item level 66 to 88, with
+ * procs, and unevenly distributed between classes. Some of any gap between two
+ * presets was therefore a gap in their GEAR. Every build now wears the same
+ * quality at the same item level, targeting its own hit cap and its own
+ * preferred stats, so a comparison between two rows is a comparison between
+ * two BUILDS.
+ *
+ * IT MOVES EVERY PUBLISHED FIGURE AND IS MEANT TO. The benchmark set is leaner
+ * than what the presets wore -- 2H Arms goes from 1829 attack power to 1055 --
+ * because it is item level 65 flat against a set that reached 88, and because
+ * a generated item has no proc. The baseline table was re-measured in full.
+ *
+ * THE REAL GEAR IS NOT GONE. `startingEquipmentFor` still returns it and the
+ * Gear panel's "Starting set" button still installs it, which is the way back
+ * to the figures every earlier commit was measured on.
+ * ==============================================================================
+ */
+function withBenchmarkGear(presets: readonly ProfilePreset[]): readonly ProfilePreset[] {
+  return presets.map((preset) => ({
+    ...preset,
+    build: () => {
+      const profile = preset.build();
+      const benchmark = benchmarkEquipmentForName(profile.character.name, 'E65');
+      if (!benchmark) return profile;
+
+      /*
+       * THE ENCHANTS COME ACROSS, on the owner's instruction: the gear changed
+       * and the enchants were to stay exactly as they were. They are worth
+       * +2.4 to +53.7 DPS a profile -- the figures `enchants.test.ts` records
+       * -- so losing them inside a gear swap is the kind of change nobody
+       * would think to look for.
+       *
+       * `withEnchants` could not be reused: it THROWS when a loadout names a
+       * slot the set does not fill, and a benchmark set has no relic and gives
+       * a ranged weapon only to the four Hunters.
+       */
+      const loadout = PRESET_ENCHANTS[preset.id] ?? {};
+      const equipment: Record<string, { itemId: number; enchantId?: number }> = {};
+      for (const [slot, equipped] of Object.entries(benchmark) as [
+        string,
+        EquippedSlot | undefined,
+      ][]) {
+        if (!equipped) continue;
+        const enchantId = loadout[slot];
+        equipment[slot] =
+          enchantId === undefined
+            ? { itemId: equipped.itemId }
+            : { itemId: equipped.itemId, enchantId };
+      }
+      return { ...profile, equipment: equipment as Equipment };
+    },
   }));
 }
 

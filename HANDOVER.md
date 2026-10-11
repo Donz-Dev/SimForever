@@ -1,3 +1,133 @@
+# ITEMS: A BUDGET MODEL, FOREVER'S OWN DATA, AND A DATABASE WITH NO CLASSIC IN IT
+
+**THIS SESSION REPLACED THE ITEM LAYER.** It began as a reading exercise -- how
+are items generated -- and ended with the Classic and Season of Discovery
+stand-ins deleted, 2,000-odd real Forever items in their place, four
+budget-generated benchmark sets, and three engine bugs that only real item data
+could have exposed.
+
+**THE LAST PIECE IS NOT FINISHED AND THIS SECTION SAYS SO AT THE TOP.** See
+**Where it stands** below: the Forever-only database is structurally complete
+and **100 tests fail**, nothing is re-measured, and no DPS figure anywhere in
+this file has been updated for it.
+
+| | what | state |
+| --- | --- | --- |
+| `c5900b0` | the itemization budget, verified; 1,673 Forever items; the rating table; `critRating` read by nothing | **merged** |
+| PR #240 | benchmark gear, the Attack Power ruling, 1,384 stranded spell power lines | **green, unmerged** |
+| `forever-items-only` | Classic and SoD deleted, E65 as the default set, one crit row | **unfinished** |
+
+## The budget, and four wrong answers to one question
+
+An item's stats are bought out of a budget: `budget = qualityBase(ilvl) x
+slotMultiplier`, spent at `budget^1.5 = sum((stat x cost)^1.5)`. It reproduces
+real items well -- **122 of 133 non-weapon items on file within 90-110%** -- and
+`docs/itemization.md` is the whole write-up.
+
+**THE INTERESTING PART IS THE SEQUENCE OF WRONG ANSWERS**, because every one of
+them was confidently stated and each was corrected by the owner's next question:
+
+| | answer | what was wrong |
+| --- | --- | --- |
+| 1 | "not PvP-specific, it's Forever's budget" | two items, one from each population |
+| 2 | "both: 11 points general, 5 PvP" | **no baseline** -- 100% was assumed to be the target |
+| 3 | "PvP only, about 6 points" | one uncertain parameter, and PvP gear is the part most exposed to it |
+| 4 | "spell power is 9% cheap" | **two populations in one bucket** -- it was the healing items |
+
+The answer is that **Forever changed nothing**: stamina, spell power and
+healing were each suspected and none of them moved. Classic's own epics and
+Forever's non-PvP gear price at **93.2% and 93.3%** through the same model.
+
+**WHAT FIXED IT WAS A CONTROL GROUP, NOT MORE DATA.** 487 of the 653 changed
+items differ from Classic only in WORDING, so pricing them measures CLASSIC's
+itemization through the same model with the same blind spots. Three rounds of
+analysis had compared against 100%, which is not a number this model reaches
+even on Classic.
+
+**AND THE BLUES CONFIRMED IT ON A POPULATION THAT FITTED NOTHING.** 611 rares on
+a different quality row land at 100.3% (Classic's own) and 100.6% (Forever's),
+and independently ask for stamina at **0.99** against the 1.0 the owner ruled.
+
+## Three bugs that only real item data could find
+
+**`critRating` WAS READ BY NOTHING.** Declared, exported, documented, priced by
+the stat-weight catalogue -- and both places that build a crit slice read
+`stats.critChance` off the block, so `critChanceFrom` had no callers anywhere.
+Harmless until Forever gear granted a rating, then worth **1% DPS on thirteen
+profiles**. The DIRECTION is what made it findable: all thirteen moved DOWN, and
+float noise is symmetric.
+
+**1,384 SPELL POWER LINES FELL THROUGH THE PARSER.** Classic writes "Increases
+damage and healing done by magical spells and effects by up to 40"; **Forever
+writes "+94 Spell Power"**, and only the Classic sentence had a rule. Premier
+High Warlord's War Staff reported +94 and delivered zero. Invisible because no
+preset wore a Forever item -- **an item in the database and in no profile is the
+quietest place in this project for a stat to go missing.**
+
+**"ATTACK POWER" REACHED ONE POOL.** The owner's hard ruling -- it reaches both
+melee and ranged, and "Melee Attack Power" never reaches ranged -- moved 164
+item lines. BM Hunter **+24.1**, LW Ranged **+29.2**, the other 21 profiles 0.0
+to the decimal.
+
+## The rating table, confirmed twice
+
+The owner's conversions: 1 defense, 10 hit, 14 crit, 10 haste, 10 expertise,
+12 dodge, 20 parry, 5 block. **Forever's own rewrites of Classic items
+reproduce them exactly** -- crit 14.0 over 42 items, spell crit 14.0 over 20,
+hit 10.0 over 18, dodge 12.0 over 3, **with no variation at all**. Which also
+settles that ONE rating feeds both crit tables: Classic has two item lines and
+Forever has one.
+
+## The benchmark sets
+
+Four buttons -- **B55, E65, E75, E85** -- each generating a full set from the
+budget at one quality and item level, targeting the build's hit cap and its
+preferred stats in the owner's own order. `docs/itemization.md` records the
+exception this makes to its own prohibition and why it is not the thing that
+rule forbids.
+
+Hit and expertise are absolute totals and **still cost budget**, so a Rogue
+spends 120 points before buying anything else. Generated as tooltip TEXT and
+parsed back, which is how the spell power gap above was found.
+
+## Where it stands
+
+**MERGED:** the budget model, the item database, the rating table.
+
+**GREEN AND UNMERGED, PR #240:** benchmark gear, the Attack Power ruling, the
+spell power fix. `gh pr merge 240 --squash --delete-branch`.
+
+**UNFINISHED, branch `forever-items-only`:** the owner's four instructions --
+keep the enchants, delete the old gear sets, keep only Forever and benchmark
+items, collapse the duplicate crit rows. Structurally done:
+
+- the nine Classic/SoD files, `gearSets.ts`, `item-sets.json` and
+  `import_item.mjs` are deleted
+- `forever-same.json` captured (273 items Forever kept unchanged), so the
+  database is new + changed + same + benchmark
+- `startingEquipmentFor` keeps its name and returns E65, which is what lets 23
+  test files carry on unedited
+- the 25 enchant loadouts were **extracted before the deletion** and live in
+  `PRESET_ENCHANTS`
+- the two SCRAPED weapon enchants were rescued into `weapon-enchants.json` --
+  they rode along inside `classic-warrior.json` and deleting it would have
+  silently unenchanted every weapon in the project
+- the stat-weight catalogue has ONE crit row
+
+**NOT DONE: 100 tests fail and nothing is re-measured.** Every DPS figure in
+this file is from before the swap. The last full measurement of E65 against the
+old sets, taken before `same.json` and the deletions, read 2H Arms **825.0 ->
+704.4** and Cat **855.8 -> 614.4**, with the casters GAINING -- Frostfire
+**+61.3** -- because the old caster sets sat at 2% spell hit against a 16-point
+cap. Those numbers will have moved again and are recorded only as the shape of
+the change.
+
+**AND THE CRIT ROW IS WHY POINTS 3 AND 4 WERE ONE CHANGE.** Collapsing the
+catalogue to `critRating` failed immediately with `['critChance',
+'spellCritChance']` unpriced -- because items still granted them. The duplicate
+rows were not a display bug; they were the catalogue correctly reporting that
+two eras of gear were in the database at once.
+
 # MID-FIGHT CONSUMABLES — NINE POTIONS THAT ARE ABILITIES
 
 **ALL 25 ROWS MOVED AND EVERY ONE WENT UP, MEAN 709.6 -> 730.9.** Twenty-five

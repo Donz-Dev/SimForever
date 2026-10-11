@@ -1,268 +1,101 @@
 import type { ClassId, CombatStyleId } from '../character';
-import type { Equipment, EquipmentSlot } from './Item';
-import { ITEMS_BY_ID } from './itemData';
+import type { Equipment } from './Item';
 import {
-  withEnchants,
-  type EnchantLoadout,
-  PROTECTION_WARRIOR_ENCHANTS,
-  STRENGTH_ENCHANTS,
-  STRENGTH_ENCHANTS_WITH_AGILITY_BOOTS,
-  HUNTER_ARMOUR_RANGED_CRIT,
-  CRUSADER as CRUSADER_ENCHANT,
-  DRUID_BEAR_GEAR,
-  DRUID_CAT_GEAR,
-  DRUID_MOONKIN_GEAR,
-  HUNTER_ARMOUR,
-  HUNTER_DUAL_WIELD_WEAPONS,
-  HUNTER_MELEE_WEAPONS,
-  HUNTER_STAT_STICK,
-  MAGE_GEAR,
-  PALADIN_PROT_GEAR,
-  PALADIN_RET_GEAR,
-  PALADIN_SHOCKADIN_GEAR,
-  PRIEST_GEAR,
-  ROGUE_ARMOUR,
-  ROGUE_DAGGERS,
-  SHAMAN_ELEMENTAL_GEAR,
-  SHAMAN_ENHANCEMENT_GEAR,
-  WARLOCK_GEAR,
-} from './gearSets';
+  BENCHMARK_TEMPLATES,
+  benchmarkEquipmentFor,
+  type BenchmarkSetId,
+} from './benchmarkSets';
 
 /**
- * A ready-made set of gear a character starts with, per class and combat style.
+ * The gear a character starts with, which is now a BENCHMARK SET.
  *
- * WHY THIS EXISTS
+ * ==============================================================================
+ * THE CLASSIC AND SEASON OF DISCOVERY SETS ARE GONE, on the ruleset owner's
+ * instruction: "they were just random templates of items that won't exist
+ * 1-to-1 in Forever". `src/data/items/` holds Forever's own items only, and
+ * the 151 stand-ins that used to furnish every preset went with them.
  *
- * A character created with empty slots fights with placeholder weapons and no
- * stats, and every number it produces is meaningless until someone fills
- * nineteen dropdowns by hand. Worse, it is not OBVIOUSLY meaningless — an
- * ungeared warrior still produces a confident-looking DPS figure. Starting from
- * a real set means the first result a person sees is one worth reading.
+ * WHAT REPLACED THEM is the E65 benchmark set -- generated from the
+ * itemization budget at item level 65 epic, targeting the build's hit cap and
+ * its preferred stats. Every build therefore starts at the same item level,
+ * which the old sets never managed: they ran from item level 66 to 88 and were
+ * distributed unevenly between classes, so part of any gap between two presets
+ * was a gap in their gear.
  *
- * These are the same Classic items `src/data/items/` holds, which are stand-ins
- * for Forever gear rather than Forever data. The set is therefore a starting
- * POINT, not a recommendation: it is simply everything available, with the
- * obvious choice made where a slot has more than one candidate.
- *
- * The ids are written out rather than derived. Which ring goes in which slot is
- * a curation decision, and "whatever the item loader happened to list first"
- * is not one. A test asserts every id here exists and fits the slot it is in,
- * so a change to the item data cannot leave this silently pointing at nothing.
+ * THE FUNCTION KEPT ITS NAME AND SHAPE DELIBERATELY. Twenty-three test files
+ * call `startingEquipmentFor` to furnish a realistic character, and none of
+ * them cares WHICH realistic character -- rewriting all of them to say
+ * `benchmarkEquipmentFor` would have been twenty-three chances to change what
+ * a test was measuring while claiming to move a gear set.
+ * ==============================================================================
  */
-
-/** Everything that is not a weapon. Identical for every Warrior style. */
-const WARRIOR_ARMOUR: Partial<Record<EquipmentSlot, number>> = {
-  head: 226495, // Jaws of Might
-  neck: 228685, // Onyxia Tooth Pendant
-  shoulders: 226492, // Pauldrons of Might
-  cloak: 13340, // Cape of the Black Baron
-  chest: 226494, // Hauberk of Might
-  wrists: 226499, // Armguards of Might
-  gloves: 226497, // Hands of Might
-  waist: 226498, // Sash of Might
-  legs: 226493, // Leggings of Might
-  feet: 226496, // Treads of Might
-  ring1: 19325, // Don Julio's Band
-  ring2: 228261, // Quick Strike Ring
-  trinket1: 13965, // Blackhand's Breadth
-  trinket2: 11815, // Hand of Justice
-  // A bow does not swing while meleeing, but it is equipped and its stats
-  // count -- 22 attack power and 1% hit that a melee warrior keeps.
-  ranged: 17069, // Striker's Mark
-};
-
-/** Crusader. Named here as well so the Warrior weapons below read as they did. */
-const CRUSADER = CRUSADER_ENCHANT;
 
 /**
- * The armour enchants a new Warrior starts with, per style.
+ * Which template furnishes a bare class and style.
  *
  * ----------------------------------------------------------------------------
- * THE WARRIOR IS THE ONE CLASS WHOSE STARTING SET HAS TO CHOOSE. Every other
- * class's armour carries its loadout on the named set in `gearSets.ts`, because
- * every profile sharing those items shares its enchants too. Three Warrior
- * builds share one suit of plate and take three different rows, and the only
- * thing that can tell them apart here is the style -- the same field that
- * already decides which weapons they get.
- *
- * IT MATCHES THE PRESETS BY CONSTRUCTION, because both read the same named
- * loadouts. A starting set is still not a preset: this answers "which enchants,
- * given the style on screen" and a preset states the build.
+ * A BENCHMARK TEMPLATE IS PER PROFILE and this function is handed a CLASS and a
+ * STYLE, which is less: four Rogue builds share one class and one style and
+ * differ in their weapons and their rotations. So one representative is picked
+ * per (class, style), and `isTank` separates the two Paladin shield builds the
+ * way `isTankBuild` already does elsewhere -- Protection wants stamina and
+ * defense, the Shockadin wants spell power.
  * ----------------------------------------------------------------------------
  */
-const WARRIOR_ENCHANTS: Partial<Record<CombatStyleId, EnchantLoadout>> = {
-  two_hander: STRENGTH_ENCHANTS,
-  dual_wield: STRENGTH_ENCHANTS_WITH_AGILITY_BOOTS,
-  one_hand_shield: PROTECTION_WARRIOR_ENCHANTS,
+const REPRESENTATIVE: Readonly<Record<string, string>> = {
+  'warrior|two_hander': 'two_hand_arms',
+  'warrior|dual_wield': 'dw_fury',
+  'warrior|one_hand_shield': 'prot_warr',
+  'rogue|dual_wield': 'rogue_venom',
+  'druid|moonkin': 'druid_moonkin',
+  'druid|cat': 'druid_cat',
+  'druid|bear': 'druid_bear',
+  'druid|caster': 'druid_moonkin',
+  'shaman|caster': 'shaman_elemental',
+  'shaman|two_hander': 'shaman_enhancement',
+  'shaman|dual_wield': 'shaman_enhancement',
+  'mage|caster': 'mage_fire',
+  'paladin|two_hander': 'pally_ret',
+  'paladin|one_hand_shield': 'prot_pally',
+  'paladin|caster': 'pally_shockadin',
+  'hunter|ranged': 'bm_hunter',
+  'hunter|dual_wield': 'lw_melee',
+  'hunter|two_hander': 'bm_hunter',
+  'warlock|caster': 'warlock_smds',
+  'priest|caster': 'shadow_priest',
 };
 
-/** Weapons per style, with the enchant where the set carries one. */
-const WARRIOR_WEAPONS: Partial<Record<CombatStyleId, Equipment>> = {
-  dual_wield: {
-    mainHand: { itemId: 17075 }, // Vis'kag the Bloodletter -- the slower weapon leads
-    offHand: { itemId: 228265 }, // Brutality Blade
-  },
-  two_hander: {
-    twoHand: { itemId: 228229 }, // Obsidian Edged Blade
-  },
-  one_hand_shield: {
-    /*
-     * Brutality Blade rather than Vis'kag: the ruleset owner's own pairing, and
-     * the faster weapon is the better one-hander when it is not being used to
-     * carry an off-hand's swing timer.
-     *
-     * ENCHANTED, which the other sets are not. The ruleset owner names this as
-     * the tank build's default gear, and a tank holds one weapon -- so the one
-     * enchant it can carry is part of the set rather than a choice to make
-     * afterwards.
-     */
-    mainHand: { itemId: 228265, enchantId: CRUSADER }, // Brutality Blade
-    shield: { itemId: 19321 }, // The Immovable Object -- the first real FOREVER item
-  },
+/** The Shockadin and the Protection Paladin share a class and a style. */
+const SHIELD_TANK: Readonly<Record<string, string>> = {
+  'paladin|one_hand_shield': 'prot_pally',
+  'warrior|one_hand_shield': 'prot_warr',
 };
 
-/**
- * What a character created FROM SCRATCH is given, per class and combat style.
- *
- * ----------------------------------------------------------------------------
- * EIGHT OF THE NINE USED TO GIVE NOTHING, and the comment above said so: "Only
- * the Warrior has items at all. Every other class gets nothing, which is the
- * honest answer rather than dressing a Mage in plate." That was honest for
- * exactly as long as there was no Mage gear to give it. There are twelve sets
- * now, from the project owner's own sixtyupgrades links, so the honest answer
- * changed.
- *
- * A PRESET IS STILL NOT THIS. A preset states all five settings that have to
- * agree; this answers the narrower question "which gear, given the class and
- * style on screen". They share the same named sets and neither calls the other.
- *
- * WHERE A STYLE HAS NO SET OF ITS OWN it takes the nearest one that fits and
- * says which: a Druid in caster or tree form takes the Moonkin set, because
- * Balance gear is what a Druid casting anything wants, and a dual-wielding
- * Hunter takes the armour with no weapons, because no Hunter one-hander is on
- * file to put in either hand.
- * ----------------------------------------------------------------------------
- */
-const STARTING_SETS: Partial<
-  Record<ClassId, (style: CombatStyleId, options: StartingSetOptions) => Equipment>
-> = {
-  warrior: (style) => ({
-    ...withEnchants(
-      Object.fromEntries(
-        Object.entries(WARRIOR_ARMOUR).map(([slot, itemId]) => [slot, { itemId }]),
-      ) as Equipment,
-      // A style with no set of its own -- there is none today -- would get the
-      // plate and no enchants rather than another build's row.
-      WARRIOR_ENCHANTS[style] ?? {},
-    ),
-    ...(WARRIOR_WEAPONS[style] ?? {}),
-  }),
-
-  // Daggers, which is what two of the three Rogue builds use and what makes
-  // Backstab and Mutilate castable at all. The Combat set's swords are a choice
-  // made afterwards rather than the one to start from.
-  rogue: () => ({ ...ROGUE_ARMOUR, ...ROGUE_DAGGERS }),
-
-  druid: (style) => {
-    if (style === 'cat') return DRUID_CAT_GEAR;
-    if (style === 'bear') return DRUID_BEAR_GEAR;
-    // moonkin, caster and tree. The last two have no set of their own.
-    return DRUID_MOONKIN_GEAR;
-  },
-
-  shaman: (style) =>
-    style === 'two_hander' ? SHAMAN_ENHANCEMENT_GEAR : SHAMAN_ELEMENTAL_GEAR,
-
-  /*
-   * THE TWO SHIELD BUILDS ARE TOLD APART BY THE ENCOUNTER, not by the style.
-   *
-   * Protection and Shockadin both hold a one-hander and a shield -- the second
-   * only because Earth and Fire is a CASTER shield -- so the style cannot
-   * separate them. What does is whether the target swings back, which is the
-   * ruleset owner's own answer and the same shape as `isTankBuild`: a build
-   * inferred from two fields rather than declared in one.
-   */
-  paladin: (style, { targetAttacks }) => {
-    if (style === 'two_hander') return PALADIN_RET_GEAR;
-    if (style === 'one_hand_shield') {
-      return targetAttacks ? PALADIN_PROT_GEAR : PALADIN_SHOCKADIN_GEAR;
-    }
-    // `caster`, which for a Paladin is the Shockadin shape.
-    return PALADIN_SHOCKADIN_GEAR;
-  },
-
-  hunter: (style) => {
-    /*
-     * THREE STYLES, THREE WEAPON SETS, AND THE DUAL-WIELD ONE IS NEW. The
-     * comment here used to read "a dual-wielding Hunter gets neither: there is
-     * no Hunter one-hander on file", and the owner has since named two --
-     * Vis'kag and the Core Hound Tooth, both enchanted. A style that returned
-     * armour alone was a Hunter punching the boss.
-     */
-    if (style === 'two_hander') return { ...HUNTER_ARMOUR, ...HUNTER_MELEE_WEAPONS };
-    if (style === 'dual_wield') return { ...HUNTER_ARMOUR, ...HUNTER_DUAL_WIELD_WEAPONS };
-    /*
-     * The stat stick the two ranged builds hold and never swing -- and the bow
-     * with its crit enchant, which is the one piece the melee styles above do
-     * NOT get. The owner's table gives "+2% Crit Chance" to the two ranged
-     * Hunters and None to the melee one, and the enchant reaches ranged attacks
-     * only, so a melee build would be carrying something inert.
-     */
-    return { ...HUNTER_ARMOUR_RANGED_CRIT, ...HUNTER_STAT_STICK };
-  },
-
-  mage: () => MAGE_GEAR,
-  warlock: () => WARLOCK_GEAR,
-  priest: () => PRIEST_GEAR,
-};
-
-/**
- * Everything beyond the class and the style that changes which set is right.
- *
- * One field, and it exists because two Paladin builds hold a one-hander and a
- * shield. See `STARTING_SETS.paladin`.
- */
 export interface StartingSetOptions {
-  /**
-   * Whether the encounter has the target swinging back.
-   *
-   * DEFAULTS TO FALSE, which makes a Paladin's shield build the Shockadin one.
-   * That is the right default rather than an arbitrary one: a character is
-   * created before the encounter is set up, so at the moment this is first
-   * called nothing has said the target fights back, and a damage build is the
-   * safer thing to hand someone who has not said they are tanking. The Gear
-   * panel's "Starting set" button is the same call made later, once it has.
-   */
+  /** Whether the target swings back, which picks between two shield builds. */
   readonly targetAttacks?: boolean;
+  /** Which benchmark set to install. E65 unless a caller says otherwise. */
+  readonly set?: BenchmarkSetId;
 }
 
-/**
- * The gear a newly created character starts in.
- *
- * Every class has one now. Eight of them had nothing until their own sets were
- * imported, and the old comment here -- "the honest answer rather than dressing
- * a Mage in plate" -- was honest only while there was no Mage gear to give.
- */
+/** Whether this class has a starting set at all. Every one of the nine does. */
+export function hasStartingEquipment(characterClass: ClassId): boolean {
+  return BENCHMARK_TEMPLATES.some((template) =>
+    template.presetId.startsWith(characterClass.slice(0, 3)),
+  )
+    ? true
+    : Object.keys(REPRESENTATIVE).some((key) => key.startsWith(`${characterClass}|`));
+}
+
+/** The equipment a freshly created character of this class and style wears. */
 export function startingEquipmentFor(
   characterClass: ClassId,
   style: CombatStyleId,
   options: StartingSetOptions = {},
 ): Equipment {
-  const build = STARTING_SETS[characterClass];
-  if (!build) return {};
-
-  const equipment: Record<string, { itemId: number; enchantId?: number }> = {};
-  for (const [slot, equipped] of Object.entries(build(style, options))) {
-    if (!equipped) continue;
-    // Silently skipping an id the data no longer has would produce a set with a
-    // hole in it that nothing explains. The test below catches that at build
-    // time; this guard keeps a stale id from reaching a profile at runtime.
-    if (ITEMS_BY_ID.has(equipped.itemId)) equipment[slot] = { ...equipped };
-  }
-  return equipment as Equipment;
-}
-
-/** Whether a class has a curated starting set at all. */
-export function hasStartingEquipment(characterClass: ClassId): boolean {
-  return STARTING_SETS[characterClass] !== undefined;
+  const key = `${characterClass}|${style}`;
+  const tank = options.targetAttacks === true ? SHIELD_TANK[key] : undefined;
+  const presetId = tank ?? REPRESENTATIVE[key];
+  if (!presetId) return {};
+  return benchmarkEquipmentFor(presetId, options.set ?? 'E65') ?? {};
 }

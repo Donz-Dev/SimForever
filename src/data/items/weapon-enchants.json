@@ -1,0 +1,22 @@
+{
+ "set": "weapon-enchants",
+ "description": "The two SCRAPED weapon enchants, kept when the Classic and Season of Discovery item files were deleted. They are not items and were never stand-ins: Crusader and Weapon Spell Power have a real Wowhead spell id, an icon and a tooltip, and every preset still names one. The other 28 enchants are the ruleset owner's own table and live in game/items/foreverEnchants.ts, declared rather than scraped.",
+ "source": "https://nether.wowhead.com/classic/tooltip/spell/<id> -- carried over from classic-warrior.json, which held them alongside its items",
+ "items": [],
+ "enchants": [
+  {
+   "id": 20034,
+   "name": "Enchant Weapon - Crusader",
+   "icon": "spell_holy_greaterheal",
+   "source": "https://www.wowhead.com/classic/spell=20034",
+   "tooltip": "Enchant Weapon - Crusader\n5 sec cast\nTools:\nRuned Arcanite RodReagents:\nLarge Brilliant Shard (4), Righteous Orb (2)Permanently enchant a melee weapon so that often when attacking in melee it heals for 75 to 125 and increases Strength by 100 for 15 sec."
+  },
+  {
+   "id": 22749,
+   "name": "Enchant Weapon - Spell Power",
+   "icon": "spell_holy_greaterheal",
+   "source": "https://www.wowhead.com/classic/spell=22749",
+   "tooltip": "Enchant Weapon - Spell Power\n5 sec cast\nTools:\nRuned Arcanite RodReagents:\nLarge Brilliant Shard (4), Greater Eternal Essence (12), Essence of Fire (4), Essence of Water (4), Essence of Air (4), Golden Pearl (2)Permanently enchant a Melee Weapon to add up to 30 damage to spells."
+  }
+ ]
+}

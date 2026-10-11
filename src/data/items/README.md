@@ -1,138 +1,132 @@
 # Item data
 
-Nine files, 151 items and 2 enchants between them. **One file per set**, so
-"where did this number come from" has a per-file answer.
+**Forever's own items, and nothing else.** Five captures from
+`foreverchanges.pro`, 1,943 items and 2 enchants between them. One file per
+population, so "where did this number come from" has a per-file answer.
 
 | File | Items | What it is |
 | --- | --- | --- |
-| `classic-warrior.json` | 19 | Classic stand-ins curated for a Warrior, plus the Tier 1 Unstoppable Might set (Season of Discovery) and one real Forever item |
-| `sod-hunter.json` | 12 | A Hunter's gear -- full Giantstalker with Rhok'delar |
-| `sod-rogue.json` | 13 | A Rogue's -- full Nightslayer, with daggers and swords |
-| `sod-druid.json` | 35 | A Druid's, in three cuts: Cenarion caster, feral and tank |
-| `sod-shaman.json` | 20 | A Shaman's -- Earthfury, Elemental and Enhancement |
-| `sod-mage.json` | 8 | A Mage's -- full Arcanist |
-| `sod-paladin.json` | 27 | A Paladin's, in three cuts: Retribution, Shockadin, Protection |
-| `sod-warlock.json` | 8 | A Warlock's -- Felheart with the Deathmist pieces |
-| `sod-priest.json` | 9 | A Shadow Priest's -- Vestments of Prophecy with Anathema |
-| `forever-new-epics.json` | 449 | **REAL FOREVER DATA.** Every new epic at item level 55 and up in beta build 1.60.1.70338. Not a curated set and nothing equips it -- it is what Forever actually has |
-| `forever-new-rares.json` | 412 | **REAL FOREVER DATA.** Every new RARE (blue) item at item level 50-60 |
-| `forever-changed-rares.json` | 198 | **REAL FOREVER DATA**, and definitive. Classic rares Forever changed; also an OVERRIDE layer |
-| `forever-changed-epics.json` | 614 | **REAL FOREVER DATA, and the DEFINITIVE version of any item it names.** Every CLASSIC epic at item level 55 and up that Forever changed. It is an OVERRIDE layer: three ids collide with a stand-in and the Forever side wins |
+| `forever-new-epics.json` | 449 | Every new epic at item level 55 and up, beta build 1.60.1.70338 |
+| `forever-new-rares.json` | 412 | Every new RARE (blue) at item level 50-60 |
+| `forever-changed-epics.json` | 614 | Every CLASSIC epic at item level 55+ that Forever changed. An **override layer** |
+| `forever-changed-rares.json` | 198 | The same for rares. Also an override layer |
+| `forever-same.json` | 273 | Classic items Forever KEPT UNCHANGED |
+| `weapon-enchants.json` | — | Crusader and Enchant Weapon - Spell Power, the two SCRAPED enchants |
 
-Every one after the first came from a **sixtyupgrades.com set the project owner
-supplied**, and each file carries the URL it came from.
-
-**`forever-new-epics.json` IS THE EXCEPTION AND IT IS THE ONLY REAL FOREVER
-ARMOUR HERE.** It is a bulk capture rather than a curated set: 449 items, every
-new epic at item level 55 and above in the beta client, imported by
-`tools/import_forever_items.mjs` from `tools/data/forever-new-epics.capture.json`,
-which records its own SHA-256, the build it came from and the filter used.
-Nothing equips it yet -- a preset names its items by id, so adding it changed
-what can be CHOSEN and not what any of the 25 builds wear.
+**All five are beta build 1.60.1.70338**, which is two builds AHEAD of the
+project's spell and talent captures (1.60.1.70170) -- a dated fact rather than
+a suspicion. Each file's header records the capture it came from; each capture
+under `tools/data/` records its own SHA-256, the build and the filter used.
 
 ```bash
 node tools/import_forever_items.mjs --check   # what it would write, and any unread line
 node tools/import_forever_items.mjs --write
 ```
 
-**THE CHANGED FILE IS A CONTROL GROUP AS WELL AS DATA.** 487 of its 653 items
-differ from Classic only in WORDING -- Classic's "Improves your chance to get a
-critical strike by 1%" is Forever's "+14 Critical Strike Rating" -- so their
-stats ARE Classic's, and pricing them measures Classic's own itemization
-through the same model. Each such item carries `wordingOnly: true`, which is
-what makes the comparison possible. Without it the only baseline is 100%, and
-100% is not a number the budget model reaches even on Classic gear.
+## The Classic and Season of Discovery stand-ins are gone
 
-**TAKING A NEW CAPTURE.** `foreverchanges.pro` serves plain JSON at
-`/items/new.json` and four siblings, each stating its beta build. A plain fetch
-is refused with a 403, so it is read in a browser ON THE ORIGIN, hashed there
-with SHA-256 and re-hashed on disk before being accepted. The importer re-checks
-that hash and refuses to write if an item carries a line it could not read, so
-a changed tooltip format fails loudly instead of dropping a stat.
+Nine files and 151 items used to sit here — a curated set per class, scraped
+from sixtyupgrades sets the project owner supplied. The owner removed them:
+they "were just random templates of items that won't exist 1-to-1 in Forever".
+`src/game/items/gearSets.ts`, `tools/item-sets.json` and
+`tools/import_item.mjs` went with them, because all three existed to build and
+verify exactly those files.
 
-**Almost none of it is WoW: Forever data, in a WoW: Forever simulator.** They
-were chosen deliberately, to replace invented placeholder weapons with real
-numbers, but a Forever item of the same name may not carry the same values.
+**What replaced them as the presets' gear is the E65 BENCHMARK SET**, generated
+from the itemization budget rather than captured — `src/game/items/benchmarkGear.ts`
+and `benchmarkSets.ts`. Those items are **not in this directory and will not
+be**: everything here is captured data with a source url, and a generated item
+has neither. They are built in code, numbered from 9,500,000, and
+`itemsForSlot` never offers one, so a person browsing a slot sees real items
+only.
 
-**The Immovable Object** is the one real Forever item. Nothing equips it any
-more -- the owner's Protection Paladin set uses Earthen Guard -- and it is still
-on file and still selectable.
+**Do not go looking for more Classic or SoD gear.** A new Forever capture is
+the supported way to add items.
 
-## Where the sets themselves live
+## The override layer
 
-The item DATA is here; which items make up a set is
-[`src/game/items/gearSets.ts`](../../game/items/gearSets.ts). Two things read
-it, in different layers: `profiles/presets.ts`, where a preset states a whole
-build, and `startingSets.ts`, which answers the narrower "which gear, given the
-class and style on screen" for a character created from scratch. They share the
-named sets and neither calls the other.
+`forever-changed-*.json` are allowed to share an id with something already on
+file, which is why they are kept out of `ITEM_FILES` — the duplicate check has
+to keep throwing for everything else. The owner's ruling is that the Forever
+side is definitive, so a colliding id is **REPLACED rather than merged**:
+merged is how an item ends up carrying Classic's flat "+1% crit" AND Forever's
+"+14 Critical Strike Rating" at once.
 
-## Which file owns a shared piece
+`FOREVER_OVERRIDDEN_IDS` is exported so a test can pin how many collide. An
+override that silently stops matching — because an id moved or a file was
+renamed — leaves the older version in place and looks like nothing at all.
 
-**Twenty-two items are worn by more than one set.** Choker of the Fire Lord is in
-five of them; Hand of Justice is in five. `itemData.ts` **throws on a duplicate
-id**, by design, so that nothing can silently keep one of two entries for the
-same item -- which means an id has to live in exactly one file.
+## `same.json` is the file that is easy not to take
 
-The order in `tools/item-sets.json` decides it: an id lands in the **first** file
-that asks for it and is skipped in every later one. So every file is shorter than
-the set it came from, and the caster jewellery five classes share is owned by
-`sod-druid.json` for no better reason than that the Druid came first.
+A diff site publishes what CHANGED, so "new plus changed" is a complete
+description of the diff and an incomplete description of the game. Without this
+file, 273 items Forever left alone would simply have been absent from a
+database claiming to be Forever's.
 
-`node tools/import_item.mjs --build` prints what it skipped and where it went.
+## The changed files are a control group as well as data
+
+487 of the changed epics differ from Classic **only in WORDING** — Classic's
+"Improves your chance to get a critical strike by 1%" is Forever's "+14
+Critical Strike Rating" — so their stats ARE Classic's, and pricing them
+measures Classic's own itemization through the same model with the same blind
+spots. Each such item carries `wordingOnly: true`, which is what makes the
+comparison possible.
+
+Without it the only baseline is 100%, and **100% is not a number the budget
+model reaches even on Classic gear**. Three successive answers about Forever's
+budget were wrong for exactly that reason. See
+[docs/itemization.md](../../../docs/itemization.md).
+
+## Taking a new capture
+
+`foreverchanges.pro` serves plain JSON at `/items/new.json` and four siblings —
+`changed`, `same`, `missing`, `sources` — each stating its beta build.
+
+A plain `fetch` from outside is refused with a **403**, so it is read in a
+browser ON THE ORIGIN, hashed there with SHA-256 and re-hashed on disk before
+being accepted. Two things that cost a transfer:
+
+- **the tab must be FRONTED for a clipboard write to land.** `execCommand`
+  returns `true` from a background tab and the clipboard keeps its old
+  contents, so without the hash check the previous chunk gets imported twice
+  under the new chunk's name.
+- **chunk it at 70-90KB.** 362KB in one write came back empty with no error.
+  Hash each chunk in the browser, re-hash on disk, concatenate once every
+  piece matches.
+
+The importer re-checks the capture's hash and **refuses to write if any item
+carries a line it could not read**, so a changed tooltip format fails loudly
+instead of dropping a stat.
+
+## What the import excludes, and each exclusion gets its own line
+
+| | why |
+| --- | --- |
+| 39 "90 Epic" test items | developer test gear, matched on NAME at the owner's instruction |
+| 8 "Premier Emboldened" seals | not equippable items |
+| Orb of Deception | a bag item with **no equipment slot at all**, whose only line is a Use effect. It reached the importer because the capture filter keeps anything with an effect — right for a trinket, wrong for this |
+
+**Two exclusions for two reasons are two lines of output.** A shared label made
+the Orb read as a developer test item, which it is not.
 
 ## Checking whether an item's numbers add up
 
-`npx vite-node tools/item_budget.ts` prices every item here against the
-community itemization budget -- `budget = qualityBase(ilvl) x slotMultiplier`,
-spent at `budget^1.5 = sum((stat x cost)^1.5)`. **122 of the 133 non-weapon
-items land within 90% to 110%**, so an item well outside that is worth a second
-look at the scrape. It is a reading aid and an audit, NOT a way to generate an
-item's stats -- see [docs/itemization.md](../../../docs/itemization.md) for what
-it can and cannot say, and for the two things (base armor, weapon DPS) that come
-free with the item level rather than out of the budget.
-
-## Adding an item, or a whole set
-
 ```bash
-node tools/import_item.mjs forever 19321   # prints the entry to append
-node tools/import_item.mjs classic 228291  # a Season of Discovery id
-node tools/import_item.mjs --build         # rebuild EVERY file from the spec
-node tools/import_item.mjs --build sod-mage  # ...or one of them
-node tools/import_item.mjs --verify        # re-parse EVERY item on file
+npx vite-node tools/item_budget.ts            # the items on file
+FOREVER=1 npx vite-node tools/item_budget.ts  # Forever's own, split by population
+REFERENCE=1 npx vite-node tools/item_budget.ts
 ```
 
-A new set is a new entry in `tools/item-sets.json` -- its file, its game, its
-description, the sixtyupgrades URL and the ids in slot order -- plus an import in
-`itemData.ts`'s `ITEM_FILES`.
+`budget = qualityBase(ilvl) x slotMultiplier`, spent at
+`budget^1.5 = sum((stat x cost)^1.5)`. **122 of 133 non-weapon items land
+within 90% to 110%**, so an item well outside that is worth a second look at
+the capture.
 
-**`--build` IS A GENERATOR AND NOT ONLY A REFRESH.** The spec lists every id and
-every file's own header, so deleting the whole of `src/data/items/*.json` and
-running it brings all 151 items back byte for byte, provenance included. It did
-not: the first two files said "reuse the ids already in the file", which left
-fourteen ids -- the Giantstalker pieces, Rhok'delar, Dreadforge Retaliator, the
-Royal Seal -- recorded nowhere but inside the data they were meant to rebuild.
-Deleting one of those files would have failed rather than regenerated it, and
-listing the ids alone brought the items back while silently dropping the
-sixtyupgrades link they came from. `--verify` reads the same spec, so **a file added to
-one is covered by the other**; the two lists used to be separate and a file was
-once added to only one, which turns "re-parse everything on file" into a false
-promise.
-
-**An item's GAME is per item, not per set.** `classic-warrior.json` is eighteen
-Classic items and one Forever one, and a rebuild that assumed one endpoint for
-the file replaced The Immovable Object with its Classic self -- same stats, a
-different source url and a differently worded block line. `--build` reads each
-stored item's own `source` back rather than assuming.
-
-**It currently reproduces all 151 exactly**, which is why the tool can be trusted
-with the next one.
-
-Add the slot to `SLOTS_BY_INVENTORY_TYPE` in `itemData.ts` if it is a kind
-nothing else uses. Note that a SHIELD is resolved by its subclass rather than
-its inventory type: Wowhead calls a shield's slot "Off Hand", the same as a held
-off-hand item, so mapping on inventory type alone would put a shield in the
-off-hand weapon slot where a dual-wielder could swing it.
+It is a reading aid and an audit. [docs/itemization.md](../../../docs/itemization.md)
+has what it can and cannot say, the two things that come free with the item
+level rather than out of the budget (base armour and weapon DPS), and the one
+authorised exception to running it backwards — the benchmark sets, which the
+owner asked for and which do not claim to be real items.
 
 ## What the loader does with it
 
@@ -142,142 +136,125 @@ off-hand weapon slot where a dual-wielder could swing it.
 | --- | --- |
 | `+26 Strength` | `stats.strength` |
 | `749 Armor` | `stats.armor` |
-| `+20 Attack Power.` | `stats.attackPower` |
-| `+48 ranged Attack Power.` | `stats.rangedAttackPower` |
-| `Increases damage and healing done by magical spells and effects by up to 47.` | `stats.spellPower` |
-| `Improves your chance to hit ... by 1%.` | `stats.hitChance` |
-| `Improves your chance to get a critical strike by 2%.` | `stats.critChance` |
+| `+20 Attack Power.` | **both** `attackPower` and `rangedAttackPower` |
+| `+48 ranged Attack Power.` | `stats.rangedAttackPower` alone |
+| `+94 Spell Power` / `+58 Spell Damage` | `stats.spellPower` — **Forever's wording** |
+| `Increases damage and healing done by magical spells and effects by up to 47.` | `stats.spellPower` — Classic's |
+| `+14 Critical Strike Rating` | `stats.critRating`, which feeds **both** crit tables |
+| `+10 Hit Rating`, `+10 Haste Rating`, `+10 Expertise Rating`, `+12 Dodge Rating`, `+20 Parry Rating`, `+5 Block Rating`, `+1 Defense Rating` | the matching rating stat |
+| `Improves your chance to hit ... by 1%.` | `stats.hitChance` — Classic's flat form |
 | `...a critical strike with all spells and attacks by 2%.` | **both** `critChance` and `spellCritChance` |
-| `...a critical strike with spells by 2%.` | `stats.spellCritChance` |
 | `Increased Defense +7.` | `stats.defenseSkill` |
-| `44 Block`, `+27 Block Value`, `Increases the block value of your shield by 12.` | `stats.blockValue` |
+| `-15 Agility` | `stats.agility`, negative |
 | `100 - 187 Damage`, `Speed 2.60` | a `WeaponProfile` |
 | `Increased Two-handed Swords +3.` | the weapon's `skill` |
 | anything else | an entry in `unmodelled`, applied nowhere |
 
-**Nothing is guessed.** An effect that matches no rule is kept verbatim and does
-nothing, and the Gear panel lists every one of them under "Equipped but not
-simulated". A geared character here is weaker than the same character in the
+**"ATTACK POWER" REACHES BOTH POOLS**, by the owner's hard ruling: "Attack
+Power always equals and reaches Melee & Ranged Attack Power. And Melee Attack
+Power NEVER reaches Ranged Attack Power." 164 item lines were melee-only before
+it; it is worth +24.1 to BM Hunter and +29.2 to LW Ranged.
+
+**FOREVER USES RATINGS WHERE CLASSIC USES FLAT PERCENTAGES**, and the owner's
+conversions are 1 point of Defense, 10 hit, 14 crit, 10 haste, 10 expertise,
+12 dodge, 20 parry, 5 block. Forever's own rewrites of Classic items reproduce
+every one of them exactly — crit 14.0 across 42 items, spell crit 14.0 across
+20, hit 10.0 across 18, dodge 12.0 across 3, **with no variation at all** —
+which also settles that ONE Critical Strike Rating feeds both the melee and the
+spell table: Classic has two item lines and Forever has one.
+
+**A RULESET CAN WRITE A STAT IN WORDS THE PARSER HAS NEVER SEEN.** Only
+Classic's spell power sentence had a rule, so **1,384 Forever spell power lines
+fell through** — Premier High Warlord's War Staff reported +94 on its tooltip
+and granted zero. Invisible because no preset wore a Forever item. **When a new
+source lands, diff its vocabulary and not only its numbers**; a count of
+unmodelled lines per file is the cheap check.
+
+**Nothing is guessed.** An effect that matches no rule is kept verbatim and
+does nothing. A geared character here is weaker than the same character in the
 game, by exactly the listed amount.
 
 Procs are the exception: they are behaviour, not stats, so they live in
-`src/game/items/procs.ts` rather than being either. Vis'kag, Crusader and Hand
-of Justice are all implemented there, using rates the ruleset owner supplied --
-the tooltips give none of them, saying only "Chance on hit" and "often".
+`src/game/items/procs.ts`. Vis'kag, Crusader and Hand of Justice are
+implemented there using rates the ruleset owner supplied — the tooltips give
+none of them, saying only "Chance on hit" and "often".
 
-**"With all spells and attacks" is TWO stats.** `critChance` and
-`spellCritChance` are separate and are read by separate tables, so a line saying
-both has to grant both, exactly as the raid buffs that say it already do. It used
-to grant only the melee half, which was invisible for as long as nothing in the
-item data was caster gear -- sixty-two lines across these files say it.
+## Two enchants here, and 28 that are not
 
-**Two enchants here, and one of them is a stat.** Crusader is a proc; Enchant
-Weapon - Spell Power is a flat 30 spell power, which the five caster sets put on
-a staff or a dagger. A stat enchant applies to a weapon that is only ever HELD,
-which is what a caster's main hand is.
+Crusader is a proc; Enchant Weapon - Spell Power is a flat 30 spell power. Both
+came out of Wowhead with a spell id, an icon and a tooltip, **which is the
+whole reason they are a data file at all.**
+
+They used to live inside `classic-warrior.json` because that is the file they
+were scraped with, so deleting it would have silently unenchanted every weapon
+in the project. They were moved here first.
 
 **THE ARMOUR ENCHANTS ARE NOT IN THESE FILES AND WILL NOT BE.** The ruleset
-owner supplied 28 of them as a table -- an effect and a slot per entry, with no
-spell behind any of them -- so there is nothing to scrape, nothing for
-`--verify` to re-fetch and no tooltip to store. They are declared outright in
+owner supplied 28 of them as a table — an effect and a slot per entry, with no
+spell behind any of them — so there is nothing to scrape, nothing to re-fetch
+and no tooltip to store. They are declared outright in
 `src/game/items/foreverEnchants.ts` with simulator-allocated ids, which is also
-where the reasoning is written down. These two stay here because they came out
-of Wowhead, which is the whole difference.
+where the reasoning is written down.
 
-**SPELL POWER FOR ONE SCHOOL IS NOT THE SAME STAT, and it is not a stat at all.**
-"Increases damage done by Shadow spells and effects by up to 39" names a school;
-"Increases damage and healing done by magical spells and effects by up to 47"
-does not. Seventeen lines say the first -- nine Priest pieces naming Shadow,
-eight Lawbringer pieces naming Holy -- and they land in `Item.schoolPower`,
-which becomes a `SchoolModifiers` entry beside the crit and damage already keyed
-by school. `STAT_NAMES` is a deliberately closed flat set with no room for a
-keyed stat, which is why this has its own route out of the item rather than
-being `shadowSpellPower`.
+## Spell power for one school is not the same stat
+
+"Increases damage done by Shadow spells and effects by up to 39" names a
+school; "Increases damage and healing done by magical spells and effects by up
+to 47" does not. The scoped ones land in `Item.schoolPower`, which becomes a
+`SchoolModifiers` entry beside the crit and damage already keyed by school.
+`STAT_NAMES` is a deliberately closed flat set with no room for a keyed stat,
+which is why this has its own route out of the item.
 
 **They cannot be folded together in EITHER direction.** A Shadow-only bonus
-added to `spellPower` would make the same character's Holy and Arcane spells hit
-harder; a generic bonus filed under one school would be lost by the other six.
-The wording also draws the damage/healing line for us: the scoped one says
-"damage", the blind one says "damage AND HEALING", so `resolveHealing` reads the
-stat alone and a Paladin's 161 Holy raises its seal and not its Holy Light.
-
-**When it landed it moved exactly one profile, and not the one that found it**:
-the Shadow Priest's full 497 arrived and multiplied nothing, because Forever's
-spell data states flat damage. **The spell coefficient rule, in the same change,
-is what made it matter** -- `castTime / 3.5` of `spellPower + schoolSpellPower`,
-so the scoped half now scales every Shadow spell the Priest casts. Retribution's
-79 Holy is still worth zero, because its seals are Command and Crusader and
-**Seal of Command is 70% of WEAPON damage with no spell power term**. Assert the
-stat arriving, scoped to the right school, not a DPS delta.
+added to `spellPower` would make the same character's Holy and Arcane spells
+hit harder; a generic bonus filed under one school would be lost by the other
+six. The wording also draws the damage/healing line: the scoped one says
+"damage", the blind one says "damage AND HEALING", so `resolveHealing` reads
+the blind stat alone and a Paladin's Holy power raises its seal and not its
+Holy Light.
 
 ## What is NOT modelled, and why
 
-Fourteen lines across the nine files, plus every set bonus. The ones that cost
-a real number:
-
-**+172 ATTACK POWER IN CAT, BEAR AND DIRE BEAR FORMS ONLY**, on the Glaive of
-Obsidian Fury that both feral Druids hold. An item stat cannot be conditional on
-the combat style. It is the largest single unmodelled line on any one item, and
-both feral figures are understated by it.
-
 **Set bonuses, all of them.** A set bonus counts pieces across a whole set and
-nothing here tracks that. They are now at least VISIBLE: they read `(4) Set : ...`
-and start with a bracket, so they matched no rule and were **dropped** -- not
-unmodelled, dropped -- until twenty profiles went into Tier 1. The Priest's
-four-piece is a flat +2% spell crit that would have read as simply missing.
+nothing here tracks that. They are at least VISIBLE: they read `(4) Set : ...`
+and start with a bracket, so they matched no rule and were **dropped** — not
+unmodelled, dropped — until twenty profiles went into gear that had them.
 
-**Ability-specific relic lines.** Almost everything an idol, libram or totem does
-names one ability: "the damage of your Moonfire spell", "the rage cost of Maul and
-Swipe". The `relic` slot exists so the item is visible rather than absent.
+**Ability-specific relic lines.** Almost everything an idol, libram or totem
+does names one ability. The `relic` slot exists so the item is visible rather
+than absent.
 
-**Two of them are SPELL POWER for a named ability**, which is the scope between
-the school-scoped kind above and nothing: Totem of the Storm's "Increases damage
-done by Chain Lightning and Lightning Bolt by up to 33" and Idol of the Moon's
-"Increases the damage of your Moonfire spell by up to 33". `AbilityModifiers` is
-the shape they want and it deliberately has no `spellPower` field -- the type is
-what stops a modifier being hung where nothing reads it. Worth nothing today in
-any case: neither the Shaman's nor the Druid's spells state a coefficient.
+**Spell power for a named ability** — "Increases the damage of your Moonfire
+spell by up to 33" — is the scope between the school-scoped kind above and
+nothing. `AbilityModifiers` is the shape it wants and deliberately has no
+`spellPower` field: the type is what stops a modifier being hung where nothing
+reads it.
 
-**Totem of Rage grants nothing at all.** The tooltip Wowhead serves for id 227977
-carries no equip line -- item level, binding, "Relic", and nothing else. Whatever
-it does is not stated by the source, so nothing is invented.
+**A wand's damage.** "110 - 204 Fire Damage" is not the `min - max Damage`
+shape a weapon parses from, and no caster style swings the ranged slot anyway.
 
-**A wand's damage.** "110 - 204 Fire Damage" is not the `min - max Damage` shape a
-weapon parses from, and no caster style swings the ranged slot anyway.
+**A conditional stat line.** "+172 Attack Power in Cat, Bear, and Dire Bear
+forms only" is now modelled — `Item.styleStats`, read through `statsForStyle`
+— and the FORM LIST is mapped in full or not at all, because half a stat is
+worse than a reported one.
 
-Resistances are totalled on the character sheet for display and are deliberately
-not a combat stat, which is the ruleset owner's decision rather than a gap.
-
-## Validated against the planner's own stat panel
-
-Every set was checked by building the profile with **raid buffs and talents off**
-and comparing each primary stat to `panel - base`. **All twelve sets supply
-exactly what the planner says they do.**
-
-Where the resulting figure still differs, it is the BASE and not the set, and
-base stats here are Forever's from the ruleset owner's spreadsheet:
-
-| | |
-| --- | --- |
-| gnome Mage | intellect 139, the planner implies 148 |
-| troll Priest | strength 36/34, agility 42/38, intellect 116/118, spirit 126/130 |
-
-Crit differs everywhere for the same reason. Do not "fix" either.
-
-**One item disagrees between the two sources.** sixtyupgrades states Cenarion
-Trousers at +20 agility and +16 stamina; `nether.wowhead.com/classic/tooltip/item/226666`
-states +18 and +11. Wowhead's is kept, because it is this project's item source
-and the one `--verify` reproduces -- so both feral Druid sets read 2 agility and 5
-stamina below the planner's own total, and that is the whole of the difference.
+Resistances are totalled on the character sheet for display and are
+deliberately not a combat stat, which is the ruleset owner's decision rather
+than a gap.
 
 ## A check worth keeping
 
 Each weapon tooltip states damage, speed AND dps, which are redundant. The
 loader recomputes dps from damage and speed and throws if they disagree by more
-than 0.05, so a scrape that dropped a digit fails loudly instead of producing a
-quietly wrong weapon.
+than 0.05, so a capture that dropped a digit fails loudly instead of producing
+a quietly wrong weapon.
 
-The first eighteen items were parsed in a browser and transferred with a SHA-256
-check, which proved the BYTES arrived intact -- not that they were parsed
-correctly. `--verify` closes that gap: it re-fetches every item on file and diffs
-the parse, including the effect list, against what is stored.
+**The dps is derived from the ROUNDED min and max**, not computed
+independently: `damage 70-105 at 2.4s` gives 36.46 where the tooltip says
+36.39, and the tooltip is right about its own arithmetic because Forever
+rounded the damage range for display.
+
+Hashing the transfer proves the BYTES arrived intact — not that they were
+parsed correctly. `--check` closes part of that gap: it refuses to write when
+any item carries a line no rule reads, so a format change cannot quietly drop a
+stat.

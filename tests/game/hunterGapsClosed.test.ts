@@ -4,7 +4,7 @@ import type { Combatant, TelemetryEvent } from '../../src/engine';
 import { buildSimulation } from '../helpers/buildSimulation';
 import { makeAttacker, makeTarget } from '../helpers/actors';
 import { PRESETS_BY_ID } from '../../src/profiles/presets';
-import { CRUSADER } from '../../src/game/items/gearSets';
+import { CRUSADER } from '../../src/game/items/itemData';
 import { OFF_HAND_DAMAGE_MULTIPLIER } from '../../src/game/actors/weapons';
 import { characterAtCombatStart } from '../../src/simulator';
 import { talentBuild } from '../../src/game/talents/talentBuild';
@@ -831,8 +831,14 @@ describe('the melee Hunter dual-wields', () => {
   it('holds Vis\u2019kag and the Core Hound Tooth, both enchanted', () => {
     const profile = melee();
     expect(profile.character.combatStyle).toBe('dual_wield');
-    expect(profile.equipment.mainHand).toEqual({ itemId: 17075, enchantId: CRUSADER });
-    expect(profile.equipment.offHand).toEqual({ itemId: 228277, enchantId: CRUSADER });
+    /*
+     * THE ENCHANTS, NOT THE ITEMS. Vis'kag and the Core Hound Tooth were
+     * Season of Discovery stand-ins and went with the rest of them; the melee
+     * Hunter wears the E65 benchmark set now. What this test was really about
+     * survives: it dual-wields, and BOTH hands carry Crusader.
+     */
+    expect(profile.equipment.mainHand?.enchantId).toBe(CRUSADER.id);
+    expect(profile.equipment.offHand?.enchantId).toBe(CRUSADER.id);
     // The two-hander is gone rather than carried alongside.
     expect(profile.equipment.twoHand).toBeUndefined();
   });

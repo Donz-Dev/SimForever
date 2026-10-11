@@ -3,19 +3,12 @@ import type { CombatStyleId } from '../character/ids';
 import { DAMAGE_SCHOOLS, RATING_PER_PERCENT } from '../../engine';
 import type { Enchant, EquipmentSlot, Item, ItemWeapon, UnmodelledEffect } from './Item';
 import { FOREVER_ENCHANTS, FOREVER_ENCHANT_ID_BASE } from './foreverEnchants';
-import warriorItems from '../../data/items/classic-warrior.json';
-import hunterItems from '../../data/items/sod-hunter.json';
-import rogueItems from '../../data/items/sod-rogue.json';
-import druidItems from '../../data/items/sod-druid.json';
-import shamanItems from '../../data/items/sod-shaman.json';
-import mageItems from '../../data/items/sod-mage.json';
-import paladinItems from '../../data/items/sod-paladin.json';
-import warlockItems from '../../data/items/sod-warlock.json';
-import priestItems from '../../data/items/sod-priest.json';
 import foreverNewEpics from '../../data/items/forever-new-epics.json';
 import foreverChangedEpics from '../../data/items/forever-changed-epics.json';
 import foreverNewRares from '../../data/items/forever-new-rares.json';
 import foreverChangedRares from '../../data/items/forever-changed-rares.json';
+import foreverSame from '../../data/items/forever-same.json';
+import weaponEnchants from '../../data/items/weapon-enchants.json';
 import { BENCHMARK_ITEMS } from './benchmarkSets';
 
 /**
@@ -799,41 +792,31 @@ function buildItem(item: RawItem): Item {
   };
 }
 
-const data = warriorItems as unknown as RawData;
-
 /*
- * EVERY item file, in the same order as `tools/item-sets.json`.
+ * EVERY item file, and they are ALL FOREVER'S OWN now.
  *
- * That order is what decides which file OWNS a shared piece, and twenty-two of
- * these are worn by more than one set -- Choker of the Fire Lord by five of
- * them. An id lands in the first file that asks for it and is omitted from
- * every later one, so this throws rather than silently keeping one of two
- * entries for the same item.
+ * ----------------------------------------------------------------------------
+ * The nine Classic and Season of Discovery files are gone on the ruleset
+ * owner's instruction -- "random templates of items that won't exist 1-to-1 in
+ * Forever" -- and with them `gearSets.ts`, `tools/item-sets.json` and the
+ * importer that built them. What is left is what the beta client has:
+ *
+ *   forever-new-epics      items only Forever has
+ *   forever-new-rares
+ *   forever-changed-epics  Classic items Forever altered  (an override layer)
+ *   forever-changed-rares
+ *   forever-same           Classic items Forever KEPT, captured because "new
+ *                          and changed" leaves out everything it did not touch
+ *
+ * The comment this replaces explained which file owned a shared piece, because
+ * twenty-two items were worn by more than one stand-in set. Nothing is shared
+ * any more: a Forever capture carries each id once.
+ * ----------------------------------------------------------------------------
  */
 const ITEM_FILES: readonly RawData[] = [
-  warriorItems,
-  hunterItems,
-  rogueItems,
-  druidItems,
-  shamanItems,
-  mageItems,
-  paladinItems,
-  warlockItems,
-  priestItems,
-  /*
-   * REAL FOREVER DATA, and the only file here that is. Everything above is a
-   * Classic or Season of Discovery stand-in, as `src/data/items/README.md`
-   * says; this is every new epic at item level 55 and up in the beta client,
-   * captured from the ruleset's own item data and converted by
-   * `tools/import_forever_items.mjs`.
-   *
-   * ADDING IT MOVED NO PUBLISHED FIGURE, and that is checkable rather than
-   * assumed: a preset names its items BY ID, so a new file changes what can be
-   * CHOSEN and not what any of the 25 builds wear. All 75 combat-log hashes
-   * from `tools/rotation_fingerprint.ts` are unchanged.
-   */
   foreverNewEpics,
   foreverNewRares,
+  foreverSame,
 ] as unknown as readonly RawData[];
 
 /**
@@ -957,7 +940,19 @@ const ENCHANT_RULES: Readonly<
   },
 };
 
-const SCRAPED_ENCHANTS: readonly Enchant[] = data.enchants.map((enchant) => {
+/*
+ * THE TWO SCRAPED ENCHANTS SURVIVED THE DELETION, in a file of their own.
+ *
+ * They used to ride along in `classic-warrior.json` beside its items, and that
+ * file is gone -- but Crusader and Weapon Spell Power are not Classic
+ * STAND-INS the way the items were. They have a real Wowhead spell id, an icon
+ * and a tooltip, every preset still names one, and `foreverEnchants.ts` is
+ * explicitly the owner's own table of the OTHER 28. Losing them with the items
+ * would have silently unenchanted every weapon in the project.
+ */
+const SCRAPED_ENCHANTS: readonly Enchant[] = (
+  weaponEnchants as unknown as RawData
+).enchants.map((enchant) => {
   const rule = ENCHANT_RULES[enchant.id];
   if (!rule) throw new Error(`${enchant.name}: no enchant rule for spell ${enchant.id}`);
   return {
