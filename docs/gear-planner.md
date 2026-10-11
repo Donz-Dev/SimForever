@@ -166,7 +166,24 @@ stat is worth what the whole ladder says.
 ## The proficiency filter
 
 See CLAUDE.md's **Gear and items** for the table and the three rows that
-disagree with Classic. The panel-side rules:
+disagree with Classic.
+
+**TWO FILTERS, NOT ONE.** The owner's proficiency table answers "may this class
+wear leather"; an item's own `Classes:` line answers "may a Warrior wear the
+ROGUE tier set", which is leather and says so. **895 of the 1,946 items carry
+one**, and 7 more are answered from a Wowhead capture for items whose Forever
+tooltip omits the line -- read because the preferred source is SILENT rather
+than different, which is a rule this project already states for Shadowburn's
+Soul Shard. `forever-class-restrictions.json`, and the capture never overrides
+a stated line.
+
+**177 SET PIECES ARE RESTRICTED BY NEITHER SOURCE**, including every T3 set and
+most of the tier-0 dungeon sets, because Classic's own data has no line for
+them either. That is a question for the owner and not a gap here; nothing
+infers a class from a set bonus, since a good fraction of the 177 are crafted
+and reputation sets with no restriction at all.
+
+The panel-side rules:
 
 - the list is **filtered by default**, with a checkbox that greys the unusable
   ones instead of hiding them;
@@ -204,6 +221,11 @@ re-derive them.
 - **The default valuation discards the owner's preference ORDER.** Every
   preferred stat is 1.00, which is what was asked for until a real valuation
   arrives.
+- **177 set pieces are class-restricted by neither source**, the T3 sets among
+  them. The owner's ruling decides whether Forever means them class-locked.
+- **E85 runs about 8% above the best real item-level-80-92 set** -- crit 271
+  against 252, spell power 531 against 491. Arguably right for the top
+  benchmark, and recorded rather than tuned.
 - **The enchant list is not filtered by class or by what the item is.** Every
   enchant whose table lists the slot is offered, which is how it worked before.
 - **A slot's picker lists every item in the database for that slot**, with no

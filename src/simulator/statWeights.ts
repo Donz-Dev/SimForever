@@ -209,7 +209,16 @@ export const WEIGHTABLE_STATS: readonly WeightableStat[] = [
   },
   {
     id: 'hitChance',
-    name: 'Hit chance',
+    /*
+     * "HIT RATING", NOT "HIT CHANCE", on the owner's instruction -- Forever
+     * grants hit as a RATING and that is what a player gears for. It reads as
+     * the crit row beside it already does: `critRating` is displayed as "Crit
+     * rating" with a `%` unit, because the weight is per percentage POINT
+     * whatever the conversion is. The ENGINE stat stays `hitChance`, which is
+     * what the item parser produces -- `+14 Hit Rating` becomes 1.4 points --
+     * and only the label moves.
+     */
+    name: 'Hit rating',
     statPerUnit: 1,
     unitLabel: '%',
     // Unused: the ladder decides the step. Kept at one point so a reader who

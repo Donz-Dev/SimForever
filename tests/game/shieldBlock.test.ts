@@ -47,6 +47,36 @@ const equippedShieldBlockValue = (style: 'one_hand_shield') => {
   return shield!.stats.blockValue!;
 };
 
+/**
+ * The block CHANCE the equipped set carries, read off the items.
+ *
+ * ----------------------------------------------------------------------------
+ * ZERO UNTIL THE BENCHMARK SETS STARTED BUYING IT. The Protection template
+ * lists `Block` sixth of six preferences and a slot holds at most five, so the
+ * whole set bought none -- which is why three assertions in this file could
+ * write "the character's block chance IS the flat 5% for holding a shield" and
+ * be right.
+ *
+ * The generator rotates the tail of a long preference list across the slots
+ * now, on the owner's instruction that a stat going to nothing across a whole
+ * set "is unrealistic to how items are actually designed". So the set buys
+ * Block Rating, the character has more than 5%, and the three assertions were
+ * testing the GEAR rather than the rule.
+ *
+ * READ, NOT WRITTEN DOWN -- the repair this project applies every time a test
+ * turns out to be pinning a gear figure. The arithmetic each assertion makes
+ * on top is the part that was ever the claim.
+ * ----------------------------------------------------------------------------
+ */
+const equippedBlockChance = (style: 'one_hand_shield') => {
+  const set = startingEquipmentFor('warrior', style);
+  let total = 0;
+  for (const equipped of Object.values(set)) {
+    total += ITEMS_BY_ID.get(equipped!.itemId)?.stats.blockChance ?? 0;
+  }
+  return total;
+};
+
 /*
  * `createPlayer` strips talents whose tier gate or prerequisite is not met, so
  * `{ shield_slam: 1 }` alone -- a 31-point capstone needing Concussion Blow --
@@ -71,8 +101,13 @@ describe('a shield gives block chance and block value', () => {
     expect(item?.stats.blockChance).toBeUndefined();
   });
 
-  it('gives five percent block for holding a shield', () => {
-    expect(shieldWarrior().stats.effective.blockChance).toBe(BASE_BLOCK);
+  it('gives five percent block for holding a shield, on top of the set', () => {
+    // The RULE is the flat 5% for holding one. What the set carries is read
+    // off the set, because that is a property of the gear and not of the rule.
+    expect(shieldWarrior().stats.effective.blockChance).toBeCloseTo(
+      BASE_BLOCK + equippedBlockChance('one_hand_shield'),
+      6,
+    );
   });
 
   it('adds the shield value and a twentieth of strength', () => {
@@ -128,7 +163,16 @@ describe('a shield gives block chance and block value', () => {
      */
     const defenseSkill = warrior.stats.effective.defenseSkill;
     expect(defenseSkill).toBeGreaterThan(0);
-    expect(chances.block).toBe(500 + defenseSkill * COMBAT_CONSTANTS.defensePerSkill);
+    /*
+     * AND THE SET'S OWN BLOCK CHANCE IS READ TOO, for the same reason the
+     * defense skill is: the Protection template buys Block Rating now, so the
+     * flat 500 roll units was the gear figure of the day rather than the rule.
+     */
+    const blockChance = warrior.stats.effective.blockChance;
+    expect(blockChance).toBeGreaterThan(BASE_BLOCK);
+    expect(chances.block).toBe(
+      Math.trunc(blockChance * 100) + defenseSkill * COMBAT_CONSTANTS.defensePerSkill,
+    );
   });
 });
 
@@ -170,10 +214,15 @@ describe('Revenge', () => {
 
 describe('Shield Specialization', () => {
   it('adds block chance from its FIRST value', () => {
-    // Rank 5 is "+5% block and a 100% chance of 5 rage": 5 and 100. On top of
-    // the flat 5% for holding a shield.
-    const warrior = shieldWarrior({ shield_specialization: 5 });
-    expect(warrior.stats.effective.blockChance).toBe(BASE_BLOCK + 5);
+    /*
+     * Rank 5 is "+5% block and a 100% chance of 5 rage": 5 and 100. The
+     * assertion is the DIFFERENCE the talent makes, against the same character
+     * without it -- which is the talent's own claim and carries no gear figure
+     * at all.
+     */
+    const without = shieldWarrior().stats.effective.blockChance;
+    const with5 = shieldWarrior({ shield_specialization: 5 }).stats.effective.blockChance;
+    expect(with5 - without).toBeCloseTo(5, 6);
   });
 
   it('grants a rage reaction from its SECOND value', () => {

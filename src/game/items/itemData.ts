@@ -1,5 +1,6 @@
 import type { DamageSchool, PartialStats } from '../../engine';
-import type { CombatStyleId } from '../character/ids';
+import type { ClassId, CombatStyleId } from '../character/ids';
+import { isClassId } from '../character/ids';
 import { DAMAGE_SCHOOLS, RATING_PER_PERCENT } from '../../engine';
 import type { Enchant, EquipmentSlot, Item, ItemWeapon, UnmodelledEffect } from './Item';
 import { FOREVER_ENCHANTS, FOREVER_ENCHANT_ID_BASE } from './foreverEnchants';
@@ -9,6 +10,7 @@ import foreverNewRares from '../../data/items/forever-new-rares.json';
 import foreverChangedRares from '../../data/items/forever-changed-rares.json';
 import foreverSame from '../../data/items/forever-same.json';
 import weaponEnchants from '../../data/items/weapon-enchants.json';
+import classRestrictionCapture from '../../data/items/forever-class-restrictions.json';
 import { BENCHMARK_ITEMS } from './benchmarkSets';
 
 /**
@@ -880,6 +882,95 @@ function buildStats(item: RawItem): {
  * ==============================================================================
  */
 
+/**
+ * The classes a tooltip's `Classes:` line names.
+ *
+ * ==============================================================================
+ * **895 OF THE 1,943 ITEMS ON FILE CARRY ONE** -- nearly half the database --
+ * and until this was written the line was in the tooltip text and nowhere
+ * else. So the proficiency filter offered a Warrior the Rogue and Druid tier
+ * sets: leather and mail are armour classes a Warrior may wear, and the line
+ * that says otherwise was never read.
+ *
+ * THIRTEEN DISTINCT WORDINGS, all of them a comma-separated list of class
+ * names -- nine single-class lines and four that name two or three. **No item
+ * carries a `Races:` line**, which was checked rather than assumed.
+ *
+ * `undefined` MEANS ANY CLASS, which is the honest default and the same one
+ * `proficiencyForItem` takes: a restriction this cannot parse must OFFER the
+ * item rather than hide it, because a hidden item leaves nothing behind to
+ * notice. An unrecognised NAME inside a line it did parse is dropped and the
+ * rest of the line stands, so a future capture adding a tenth class narrows
+ * the item rather than unrestricting it.
+ * ==============================================================================
+ */
+const CLASSES_LINE = /^Classes:\s*(.+)$/m;
+
+/**
+ * THE CLASS LINE FOR ITEMS WHOSE FOREVER CAPTURE LEAVES IT OUT.
+ *
+ * ==============================================================================
+ * 184 ITEMS CARRY A SET BONUS AND NO `Classes:` LINE, which is how the owner
+ * came to be offered the Rogue tier set on a Warrior: Conqueror's Crown states
+ * "Classes: Warrior" in the capture and Bonescythe Helmet states nothing.
+ *
+ * WHY WOWHEAD IS ALLOWED TO ANSWER THIS, when it ranks below
+ * `foreverchanges.pro` everywhere else: **THE PREFERRED SOURCE IS SILENT, NOT
+ * DIFFERENT.** CLAUDE.md states that exception in those words for Shadowburn's
+ * Soul Shard -- `foreverchanges.pro` carries no reagent field for any spell, so
+ * its mana cost cannot contradict a reagent it is unable to express. The same
+ * holds here: the capture has no class field for these items at all.
+ *
+ * ------------------------------------------------------------------------------
+ * SEVEN OF THE 184, AND THAT IS THE FINDING RATHER THAN A SHORTFALL. Every one
+ * of the 184 was asked; only the Bonescythe set has a line upstream. The T3
+ * sets -- Dreadnaught, Redemption, Vestments of Faith, Frostfire, Plagueheart,
+ * Dreamwalker -- carry none in Classic's own data either, and neither do the
+ * tier-0 dungeon sets. **So a Paladin being offered a Frostfire Circlet is what
+ * both sources say about that item**, not a gap in this filter.
+ *
+ * WHETHER FOREVER MEANS THOSE SETS TO BE CLASS-LOCKED IS A QUESTION FOR THE
+ * OWNER, and it is the one thing here that is NOT answerable from data. It is
+ * written up in HANDOVER.md rather than guessed at: inferring a class from a
+ * set bonus would be wrong for a good fraction of the 177, since Devilsaur
+ * Armor, the Dragon Mail sets and the Highlander's/Defiler's PvP sets have no
+ * class restriction at all.
+ * ==============================================================================
+ */
+const CAPTURED_CLASS_RESTRICTIONS: ReadonlyMap<number, readonly ClassId[]> = new Map(
+  Object.entries(
+    (classRestrictionCapture as { restrictions: Record<string, { classes: string[] }> })
+      .restrictions,
+  ).map(
+    ([id, entry]) =>
+      [
+        Number(id),
+        entry.classes.map((name) => name.toLowerCase()).filter(isClassId),
+      ] as const,
+  ),
+);
+
+export function classRestrictionsFrom(
+  tooltip: string,
+  /** The item's id, for the capture above. Omitted where there is no item. */
+  itemId?: number,
+): readonly ClassId[] | undefined {
+  const match = CLASSES_LINE.exec(tooltip);
+  if (!match) {
+    // THE CAPTURE IS THE FALLBACK AND NEVER THE OVERRIDE: an item whose own
+    // tooltip states a class is answered by the tooltip, which keeps Forever's
+    // word ahead of Classic's wherever Forever has one.
+    return itemId === undefined ? undefined : CAPTURED_CLASS_RESTRICTIONS.get(itemId);
+  }
+
+  const named = match[1]
+    .split(',')
+    .map((name) => name.trim().toLowerCase())
+    .filter((name): name is ClassId => isClassId(name));
+
+  return named.length > 0 ? named : undefined;
+}
+
 function buildItem(item: RawItem): Item {
   /*
    * A SHIELD is resolved by its subclass, not its inventory type.
@@ -898,6 +989,7 @@ function buildItem(item: RawItem): Item {
   }
 
   const { stats, schoolPower, styleStats, unmodelled, bonusSkill } = buildStats(item);
+  const classRestrictions = classRestrictionsFrom(item.tooltip, item.id);
 
   // Carried through for display. Still in `unmodelled` too: the sheet shows
   // the total and the Gear panel says it does nothing, and both are true.
@@ -927,6 +1019,7 @@ function buildItem(item: RawItem): Item {
     quality: item.quality,
     ...(item.subclass ? { subclass: item.subclass } : {}),
     inventoryType: item.inventoryType,
+    ...(classRestrictions ? { classRestrictions } : {}),
     slots,
     stats,
     schoolPower,

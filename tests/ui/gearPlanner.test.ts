@@ -196,9 +196,17 @@ describe('a slot s list is sorted by what the build values', () => {
   });
 
   it('filters to what the class can equip', () => {
+    /*
+     * NO CLASS SEES EVERY HEAD ITEM ANY MORE, which is the `Classes:` line: a
+     * Warrior is refused the Mage and Priest tier it could otherwise wear by
+     * armour class alone. So the assertion is the ORDERING -- a Rogue, who is
+     * refused mail and plate on top of that, sees fewer than a Warrior.
+     */
     const all = itemsForSlot('head').length;
-    expect(list({ characterClass: 'warrior' })).toHaveLength(all);
-    expect(list({ characterClass: 'rogue' }).length).toBeLessThan(all);
+    const warrior = list({ characterClass: 'warrior' }).length;
+    const rogue = list({ characterClass: 'rogue' }).length;
+    expect(warrior).toBeLessThan(all);
+    expect(rogue).toBeLessThan(warrior);
   });
 
   it('shows the unusable ones greyed when asked, and sorts them LAST', () => {

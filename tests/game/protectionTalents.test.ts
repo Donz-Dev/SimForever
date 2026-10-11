@@ -541,10 +541,19 @@ describe('resistances are totalled for display and nothing else', () => {
 
 describe('block chance and block value are different numbers', () => {
   it('gives five percent block for holding a shield, and none without one', () => {
-    // The ruleset owner's figure, before talents, defense skill or Shield
-    // Block. It belongs to the shield: a dual-wielder blocks nothing.
+    /*
+     * The ruleset owner's figure, before talents, defense skill or Shield
+     * Block. It belongs to the shield: a dual-wielder blocks nothing.
+     *
+     * THE CHARACTER CARRIES MORE THAN THE FLAT 5% NOW, and that is the GEAR:
+     * the Protection template lists `Block` among its preferences and the
+     * generator buys it, where it used to fall off the end of a slot's stat
+     * count and be bought nowhere in the set. So the constant is pinned
+     * directly and the character is asserted to be AT LEAST it -- the part
+     * that is about the shield rather than about what is worn with it.
+     */
     expect(BASE_BLOCK_CHANCE_WITH_SHIELD).toBe(5);
-    expect(built().stats.effective.blockChance).toBe(5);
+    expect(built().stats.effective.blockChance).toBeGreaterThanOrEqual(5);
 
     const dual = createPlayer({
       race: 'tauren',

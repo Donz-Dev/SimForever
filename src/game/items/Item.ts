@@ -5,7 +5,7 @@ import type {
   PartialStats,
   WeaponSlot,
 } from '../../engine';
-import type { CombatStyleId } from '../character/ids';
+import type { ClassId, CombatStyleId } from '../character/ids';
 
 /**
  * Where an item goes.
@@ -117,6 +117,23 @@ export interface Item {
    * tell a `Main Hand` dagger from a `One-Hand` one either.
    */
   readonly inventoryType: string;
+  /**
+   * The classes this item names, where it names any.
+   *
+   * --------------------------------------------------------------------------
+   * "Classes: Rogue" on a tier piece, and **895 of the 1,943 items on file
+   * carry one** -- nearly half the database. It was in the tooltip text and
+   * nowhere else, so the proficiency filter offered a Warrior the Rogue and
+   * Druid tier sets: both are armour classes a Warrior may wear, and the line
+   * that says otherwise was never read.
+   *
+   * ABSENT MEANS ANY CLASS, which is most items and is the honest default --
+   * the same reason `proficiencyForItem` returns `undefined` for a word it
+   * does not know. A restriction that fails to parse must offer the item, not
+   * hide it.
+   * --------------------------------------------------------------------------
+   */
+  readonly classRestrictions?: readonly ClassId[];
   /** Slots this item may go in. A ring lists both ring slots. */
   readonly slots: readonly EquipmentSlot[];
   readonly stats: PartialStats;
