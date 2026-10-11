@@ -51,7 +51,7 @@ budget^1.5  = sum over stats of (value x statCost)^1.5
 | Stat | Budget points per point |
 | --- | --- |
 | Strength, Agility, Intellect, Spirit | 1.00 |
-| Stamina | 0.67 |
+| Stamina | 1.00 — **see below**, the source footnotes this one |
 | Attack power | 0.50 |
 | Ranged attack power | 0.40 |
 | Spell damage and healing, school-blind | 0.86 |
@@ -405,7 +405,14 @@ PvP sets' tight band. That is what individually designed items look like beside
 ones stamped from a handful of templates — the PvP sets are 30 pieces a slot
 built from 30 stat blocks.
 
-## The answer, with a control group
+## The answer, with a control group — and then the parameter underneath it
+
+**READ THE STAMINA SECTION BELOW BEFORE USING ANY FIGURE IN THIS ONE.** The
+control group was the right idea and it is still the right idea; what it could
+not do is separate a PvP discount from an error in ONE cost, because the PvP
+sets spend 40.8% of their budget on stamina and everything else spends 14%.
+
+## The answer, with a control group (figures at stamina 0.67)
 
 The third attempt, and the first with a baseline that is not an assumption.
 
@@ -444,6 +451,77 @@ the control was one capture away the entire time.
 - **The populations have very different spreads.** sd 7.8 for the PvP sets
   against 9.4–11.2 for everything else: 30 pieces a slot stamped from a handful
   of stat blocks, against individually designed items.
+
+## Stamina, the footnote, and why three answers in a row were wrong
+
+The source's table prices stamina at **0.67** and footnotes it:
+
+> This value was changed with Burning Crusade, and was originally 1 as well.
+
+**Everything in this project is pre-Burning Crusade**, so 0.67 is a later
+expansion's number and **1.0 is the era-correct one**. That makes 1.0 the
+sourced default here. It also breaks every conclusion drawn before it.
+
+### It does not "fix" the shortfall — it overshoots
+
+Clean armour, all item levels, mean budget used:
+
+| stamina cost | 0.67 | 0.80 | **0.86** | 0.90 | 1.00 |
+| --- | --- | --- | --- | --- | --- |
+| **Classic's own epics** (control) | 96.1% | 98.7% | **99.9%** | 100.7% | 102.9% |
+| Forever new, not PvP | 95.2% | 98.3% | 99.8% | 100.8% | 103.4% |
+| Forever new, PvP | 89.0% | 96.1% | 99.4% | 101.7% | 107.5% |
+
+1.0 takes the control past 100% to **102.9%**. The value that centres it is
+**0.86** — between the table's figure and the footnote's.
+
+### And it inverts the PvP finding, which is the serious part
+
+**The Premier PvP sets spend 40.8% of their budget on stamina. Classic's own
+epics spend 14.0%, and Forever's non-PvP gear 17.1%.** PvP gear is nearly three
+times as stamina-heavy as anything it is being compared with, so the stamina
+cost is precisely the lever that moves it relative to everything else:
+
+| stamina cost | PvP | not PvP | gap |
+| --- | --- | --- | --- |
+| 0.67 | 89.0% | 95.2% | **−6.2** |
+| **0.87** | — | — | **−0.1** |
+| 1.00 | 107.5% | 103.4% | **+4.0** |
+
+**The "PvP discount of about 6 points" was this parameter.** At the stamina
+cost that centres the control it is −0.4, which is nothing.
+
+**AND TWO INDEPENDENT CRITERIA LAND ON THE SAME PLACE**, which is the one
+genuinely encouraging thing here: "Classic's own gear should price at 100%"
+gives **0.86**, and "there is no reason for PvP gear to be discounted" gives
+**0.87**. Those were not fitted together.
+
+### What this means for every figure in this document
+
+**0.86 IS FITTED AND IT ABSORBS EVERY OTHER RESIDUAL IN THE MODEL.** It is not
+a claim about the real cost of stamina. If the fitted crit cost of 16, or the
+hit cost of 10, or a slot multiplier is off, this is where that error would
+show up — one free parameter will happily soak up the sum of all the others.
+The honest reading is that the source's 0.67 and its footnote's 1.0 **bracket**
+the truth and the data prefers the middle.
+
+**SO NO CONCLUSION THAT RESTS ON LESS THAN ABOUT TEN POINTS OF BUDGET IS SAFE
+HERE**, and three successive answers to one question rested on six:
+
+| | answer | what was wrong |
+| --- | --- | --- |
+| 1 | "not PvP-specific, it's Forever's budget" | two items, one per population |
+| 2 | "both: 11 points general, 5 PvP" | no baseline — 100% was assumed |
+| 3 | "PvP only, about 6 points" | one uncertain parameter, and PvP gear is the part most exposed to it |
+
+Each correction came from better data and each felt conclusive at the time.
+**The thing that would have prevented all three is a sensitivity check** — vary
+the least certain parameter and see whether the conclusion survives. That now
+costs one command:
+
+```bash
+STAMINA=0.67 FOREVER=1 npx vite-node tools/item_budget.ts
+```
 
 ## Forever's rewrites confirm the rating table independently
 

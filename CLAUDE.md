@@ -3474,6 +3474,32 @@ Clean armour at item level 65:
 general Forever budget reduction; the ~7 points below 100% are the MODEL's own
 residual, and the only real effect is a PvP discount of about 6.
 
+**AND THEN THE PvP GAP TURNED OUT TO BE ONE UNCERTAIN PARAMETER, WHICH IS A
+THIRD WRONG ANSWER TO THE SAME QUESTION.** The budget source prices stamina at
+0.67 and FOOTNOTES IT -- "changed with Burning Crusade, originally 1 as well"
+-- and everything here is pre-Burning Crusade. **The Premier PvP sets spend
+40.8% of their budget on stamina against 14.0% for Classic's own epics**, so
+that one cost is exactly the lever that moves PvP gear relative to everything
+else, and the gap goes **-6.2 at 0.67, -0.1 at 0.87, +4.0 at 1.00**. It
+inverts.
+
+**TWO INDEPENDENT CRITERIA LAND ON 0.86-0.87** -- "Classic's own gear should
+price at 100%" and "PvP gear has no reason to be discounted" -- which is the
+encouraging part. **But 0.86 is FITTED and absorbs every other residual in the
+model**: if the fitted crit cost of 16 or a slot multiplier is wrong, this is
+where it shows up. The source's 0.67 and the footnote's 1.0 BRACKET it, and
+the sourced era-correct 1.0 is the default.
+
+**NO CONCLUSION RESTING ON LESS THAN ABOUT TEN POINTS OF BUDGET IS SAFE HERE,
+AND THREE ANSWERS IN A ROW RESTED ON SIX.** "Not PvP-specific" (two items),
+"11 points general plus 5 PvP" (no baseline), "PvP only, about 6" (this). Each
+correction came from better data and each felt conclusive. **What would have
+prevented all three is a SENSITIVITY CHECK** -- vary the least certain
+parameter and see whether the conclusion survives -- and it now costs one
+command, `STAMINA=0.67 FOREVER=1 npx vite-node tools/item_budget.ts`.
+**A CONTROL GROUP ANSWERS "COMPARED AGAINST WHAT"; IT DOES NOT ANSWER "HOW
+SURE IS THE MODEL".** Those are two different questions and this took both.
+
 **SO "COMPARED AGAINST WHAT" WAS THE WHOLE QUESTION, AND IT WENT UNASKED
 THROUGH TWO ROUNDS OF CONFIDENT ARITHMETIC.** The figures were never wrong --
 84.6% and 89.2% are what those items price at. What was wrong was treating a

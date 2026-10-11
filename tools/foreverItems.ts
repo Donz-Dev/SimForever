@@ -92,7 +92,33 @@ export const FOREVER_STAT_COST: Readonly<Record<string, number>> = {
   Agility: 1,
   Intellect: 1,
   Spirit: 1,
-  Stamina: 0.67,
+  /**
+   * STAMINA, AND IT IS THE ONE COST THE SOURCE ITSELF FOOTNOTES.
+   *
+   * --------------------------------------------------------------------------
+   * The table says 0.67 and footnotes it: "This value was changed with Burning
+   * Crusade, and was originally 1 as well." Everything in this project is
+   * PRE-Burning Crusade, so 1.0 is the era-correct figure and 0.67 is the one
+   * belonging to a later expansion -- which makes 1.0 the SOURCED value here
+   * and the default.
+   *
+   * IT IS ALSO THE PARAMETER EVERY CONCLUSION IN `docs/itemization.md` TURNED
+   * OUT TO REST ON, because the populations differ enormously in how much
+   * stamina they buy: the Premier PvP sets spend **40.8%** of their budget on
+   * it against **14.0%** for Classic's own epics. Raising its price therefore
+   * moves PvP gear about three times as far as anything else, and the "PvP
+   * discount" that two rounds of analysis converged on simply inverts:
+   *
+   *     stamina 0.67 -> PvP  89.0%, non-PvP  95.2%   gap -6.2
+   *     stamina 0.86 -> PvP  99.4%, non-PvP  99.8%   gap -0.4
+   *     stamina 1.00 -> PvP 107.5%, non-PvP 103.4%   gap +4.0
+   *
+   * `STAMINA=0.67 FOREVER=1 npx vite-node tools/item_budget.ts` re-runs any of
+   * it, because a conclusion that moves this much with one parameter needs to
+   * be re-checkable in one command rather than argued about.
+   * --------------------------------------------------------------------------
+   */
+  Stamina: Number(process.env.STAMINA ?? 1.0),
   Armor: 0.1,
   'Attack Power': 0.5,
   'Ranged Attack Power': 0.4,
