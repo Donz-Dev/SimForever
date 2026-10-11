@@ -1,7 +1,12 @@
 import type { Rotation } from '../../engine';
 import type { AplCondition, AplList } from './apl';
 import { RACIAL_COOLDOWNS } from './racialCooldowns';
-import { CONSUMABLE_COOLDOWNS, CONSUMABLE_HEALS } from './consumableCooldowns';
+import {
+  CONSUMABLE_COOLDOWNS,
+  CONSUMABLE_HEALS,
+  VENOM_THISTLE_TEA_ENERGY_THRESHOLD,
+  consumableCooldowns,
+} from './consumableCooldowns';
 import {
   all,
   comboPoints,
@@ -198,139 +203,162 @@ const atLeastEnergy = (minimum: number) => resource('atLeast', minimum, 'energy'
  * the build the poisons matter most to: the spec is named for them, and its
  * Venom finisher does nothing else at all.
  */
+/**
+ * What the Venom list spends on a finisher, and the floor its two buffs must
+ * clear before it does. All four are the ruleset owner's, read off their panel.
+ *
+ * ----------------------------------------------------------------------------
+ * THREE EVERYWHERE EXCEPT SLICE AND DICE, WHICH IS ONE -- and the asymmetry is
+ * the design rather than an oversight. Slice and Dice is a MAINTENANCE buff, so
+ * what matters is that it is UP: Improved Slice and Dice is +45% and even a
+ * one-point cast runs long enough that refreshing early beats letting 30%
+ * attack speed drop while the pool refills. Everything else is damage, and
+ * damage waits for points.
+ *
+ * THE THREE-SECOND FLOOR IS A FLOOR AND NOT A REFRESH WINDOW, which is the
+ * opposite polarity and reads almost the same: spend on damage only while both
+ * buffs have plenty of time left, so a finisher never lands with Slice and Dice
+ * about to drop.
+ * ----------------------------------------------------------------------------
+ */
+const VENOM_SLICE_AND_DICE_POINTS = 1;
+const VENOM_BUFF_COMBO_POINTS = 3;
+const VENOM_FINISHER_COMBO_POINTS = 3;
+const VENOM_MAINTENANCE_FLOOR_SECONDS = 3;
+
+/**
+ * The energy Cold Blood waits for, which is about what comes AFTER it.
+ *
+ * Cold Blood is free and off the global cooldown, so the number is not its own
+ * cost -- it is the cost of the Eviscerate directly beneath it. Firing the
+ * guaranteed crit with nothing in the pool to spend it on would put it on the
+ * Mutilate below instead, which is where the previous version of this list
+ * deliberately aimed it and is not where the owner aims it now.
+ */
+const VENOM_COLD_BLOOD_ENERGY = 35;
+
 export const ROGUE_VENOM: AplList = {
   name: 'Rogue (Assassination, Venom)',
   entries: [
   /*
-   * THREE POINTS, NOT TWO, and the owner's number rather than this file's.
-   * Mutilate awards two at a time, so a Venom Rogue passes through three on
-   * its way to five in a single cast and the threshold is cheaper to hit here
-   * than anywhere.
+   * ==========================================================================
+   * THE MID-FIGHT CONSUMABLES OPEN THIS LIST, which is new and is the owner's
+   * order -- everywhere else they sit below whatever opens it.
    *
-   * THE WHOLE THRESHOLD GRID WAS MEASURED AND ONLY ONE ROW OF IT MATTERS.
-   * Slice and Dice at 2, 3, 4 and 5 against Venom at 2, 3, 4 and 5, sixteen
-   * lists, 30 batches of 10 each:
+   * AND THE THISTLE TEA GATE IS THIS LIST'S OWN, at ten rather than the shared
+   * twenty. Five profiles drink Thistle Tea and the owner respecified one, so
+   * the number is passed in rather than moved; see
+   * `VENOM_THISTLE_TEA_ENERGY_THRESHOLD`.
+   * ==========================================================================
+   */
+  ...consumableCooldowns({ thistleTeaEnergy: VENOM_THISTLE_TEA_ENERGY_THRESHOLD }),
+  /*
+   * THE RACIAL COOLDOWNS AND THE HEALS, both of which narrow to NOTHING on the
+   * preset that runs this list: a Venom Rogue is UNDEAD, which learns no active
+   * racial, and its `other` slot is the Thistle Tea above rather than a
+   * Healthstone. They are here so a hand-built character of another race gets
+   * them, which is the same reason every list carries all four racials.
    *
-   *              Venom>=2   Venom>=3   Venom>=4   Venom>=5
-   *     SnD>=2      504.8      504.5      504.6      505.4
-   *     SnD>=3      504.2      505.2      504.8      504.0   <- shipped
-   *     SnD>=4      503.2      505.2      505.1      504.6
-   *     SnD>=5      491.4      489.4      493.1      498.4
+   * SO THE OWNER'S SCREENSHOT SHOWS SEVEN ENTRIES AND THIS LIST DECLARES
+   * TWELVE, and the two agree. Their position could not be read off the
+   * picture, because nothing in either group is drawn for this build.
+   */
+  ...RACIAL_COOLDOWNS,
+  ...CONSUMABLE_HEALS,
+  /*
+   * AT ONE POINT, which is as early as a finisher can be cast.
    *
-   * TWELVE OF THE SIXTEEN ARE ONE LIST. The top three rows span 503.2 to
-   * 505.4 -- a range of 2.2 against intervals of +/- 4 to 5 -- so nothing in
-   * them is separable, and the best cell beats the shipped one by 0.6, which
-   * is not a number this method can report. The thresholds are not a lever.
+   * --------------------------------------------------------------------------
+   * IT WAS THREE, AND THE SWEEP THAT CHOSE THREE COULD NOT HAVE SEPARATED ONE
+   * FROM IT. Sixteen lists were measured across Slice and Dice at 2-5 against
+   * Venom at 2-5, and the top twelve cells spanned 503.2 to 505.4 against
+   * intervals of +/-4 to 5 -- "the thresholds are not a lever" was the
+   * conclusion and it still is. ONE was never in that grid.
    *
-   * THE ONE REAL EDGE IS HOLDING SLICE AND DICE TO FIVE, which costs 8 to 15
-   * depending on the Venom threshold beside it. It is a MAINTENANCE buff, so
-   * what matters is uptime and not duration: Improved Slice and Dice is +45%
-   * and a three-point cast already runs 21.75 seconds, while waiting for five
-   * leaves the 30% attack speed DOWN while the pool refills. Buying nine more
-   * seconds of a buff that is already up is worth less than not dropping it.
-   *
-   * SO THE OWNER'S ORIGINAL NUMBERS STAY. A measurement that cannot separate
-   * twelve lists is not an argument for changing any of them.
+   * THE REASONING SURVIVES THE OWNER'S CHANGE AND POINTS THE SAME WAY: what a
+   * maintenance buff wants is UPTIME rather than duration, so the cheapest cast
+   * that keeps it up is the right one. One point is that argument taken to its
+   * end.
+   * --------------------------------------------------------------------------
    */
   {
     abilityId: 'slice_and_dice',
-    condition: all(selfAuraDown('slice_and_dice'), atLeastPoints(3)),
+    condition: all(selfAuraDown('slice_and_dice'), atLeastPoints(VENOM_SLICE_AND_DICE_POINTS)),
   },
   /*
-   * THE RACIAL COOLDOWNS, AFTER WHATEVER OPENS THIS LIST.
+   * VENOM NEXT, AND RUPTURE IS GONE FROM THIS LIST.
    *
-   * Free, off the global cooldown, and skipped in silence by every build
-   * that is not of the race that learns them. BOTH ENDS OF THE LIST WERE
-   * MEASURED AND BOTH WERE WRONG -- see `racialCooldowns.ts`.
-   */
-  ...RACIAL_COOLDOWNS,
-  ...CONSUMABLE_COOLDOWNS,
-  ...CONSUMABLE_HEALS,
-  /*
-   * ============================================================================
-   * RUPTURE, AND IT IS THE WHOLE OF THIS LIST'S GAIN: 488.1 to 504.8, +16.7.
+   * ==========================================================================
+   * THAT REVERSES A MEASURED DECISION OF OURS, AND THE OWNER IS WHO REVERSED
+   * IT. Rupture was worth +16.7 here and was put in precisely because the
+   * build's points were overflowing -- Seal Fate at 5/5 and a Mutilate that
+   * crits twice gives about 28.5 points a fight, of which 7.21 were being
+   * wasted at the cap. **The overflow is real and it has a different outlet
+   * now**: Eviscerate comes back at three points below, where the old version
+   * gated it at five and it fired 0.3 times a fight.
    *
-   * EVERY OTHER FIGURE IN THIS COMMENT COMES FROM ONE SWEEP and is quoted
-   * against that sweep's 505.0 for this same list, so the comparisons below are
-   * internally consistent; 504.8 is the shipped commit measured on its own. The
-   * 0.2 between them is two runs of identical code.
-   *
-   * It was in the build's ability book and in no list, which is the state the
-   * ability audit exists to find -- declared, learnable, castable, never cast.
-   * Nothing was wrong with it; there was simply nowhere for the build's combo
-   * points to go.
-   *
-   * THE POINTS WERE OVERFLOWING, which is what made it worth this much. Seal
-   * Fate is 100% at 5/5 and MUTILATE CRITS TWICE, so one double-critting cast
-   * is four points -- two of its own and two from Seal Fate. The build gains
-   * about 28.5 a fight and, before this, wasted 7.21 of them at the cap.
-   * Rupture takes 3.3 casts a fight and 7.8% of the damage, and the waste
-   * falls to 2.02.
-   *
-   * ABOVE VENOM RATHER THAN BELOW IT, worth 4.8: 505.0 against 500.2. Below,
-   * Venom takes the points first and Rupture drops to 2.2 casts.
-   *
-   * AT FOUR POINTS AND NOT FIVE, worth 3.9 over `exactly 5`. Mutilate awards
-   * two, so a pool sitting at four goes to six and wastes one -- spending at
-   * four is what stops that, and it is the same reasoning the Slice and Dice
-   * threshold above rests on.
-   *
-   * "IF NOT ACTIVE" RATHER THAN A REFRESH WINDOW, which is the standing rule
-   * here: a refresh RESETS the aura, so whatever is left is thrown away, and
-   * the faster the character acts the sooner it reaches the entry inside that
-   * window.
-   * ============================================================================
-   */
-  {
-    abilityId: 'rupture',
-    condition: all(targetAuraDown('rupture'), atLeastPoints(4)),
-  },
-  /*
-   * VENOM SURVIVES THE REORDER, at 1.9 casts rather than 2.8. It was measured
-   * out of three earlier lists and back into this one by the owner, and with
-   * Rupture above it it is still worth keeping: dropping it entirely reads
-   * 507.4 against 505.0, which is inside both intervals and therefore not a
-   * difference this method can call.
-   *
-   * SO THE OWNER'S ENTRY STAYS, because a measurement that cannot separate two
-   * lists is not an argument for deleting one of them.
+   * SO THE POINTS STILL HAVE SOMEWHERE TO GO, which is the half of the old
+   * argument that had to survive. What changed is which finisher they go to,
+   * and that is the owner's call rather than a measurement's.
+   * ==========================================================================
    */
   {
     abilityId: 'venom',
-    condition: all(selfAuraDown(VENOM_AURA_ID), atLeastPoints(4)),
+    condition: all(selfAuraDown(VENOM_AURA_ID), atLeastPoints(VENOM_BUFF_COMBO_POINTS)),
   },
   /*
-   * ----------------------------------------------------------------------------
-   * EVISCERATE IS GONE FROM THIS LIST, AND IT WAS ALREADY DOING NOTHING.
+   * COLD BLOOD, AND IT NOW AIMS AT THE EVISCERATE BELOW IT RATHER THAN AT A
+   * MUTILATE.
    *
-   * It fired 0.3 times a fight for 0.9% of the damage before this change and
-   * 0.0 times after it, because its gate asked for three things at once --
-   * Slice and Dice above ten seconds, the Venom buff above ten seconds, AND
-   * exactly five combo points -- and Rupture now takes the pool at four before
-   * the third can be true.
+   * --------------------------------------------------------------------------
+   * THE PREVIOUS VERSION FIRED IT AT **zero points and 60 energy** on the
+   * stated reasoning that the next ability would be the builder -- "it costs
+   * nothing a finisher wanted and lands on the builder that is about to go out
+   * anyway". The owner's gate is the opposite in every term: three points, 35
+   * energy, and both buffs comfortably up, which is EVISCERATE'S OWN GATE plus
+   * the energy to pay for it.
    *
-   * REMOVED RATHER THAN LEFT DEAD, on the owner's call. An entry that cannot
-   * fire is the single most common rotation bug in this project and the one
-   * that hides best: it produces an ordinary DPS figure and an ordinary
-   * results page, because a row that is not there looks like a row that is not
-   * there. Keeping it would have cost nothing in damage and cost the "every
-   * entry fires" invariant that makes `USES=1` worth running.
-   *
-   * THE POINTS IT WOULD HAVE SPENT ARE NOT LOST. They go to Rupture, which is
-   * why this list is faster without it: the owner's instruction for this pass
-   * was explicitly NOT to reach a higher figure by casting Eviscerate more.
-   * ----------------------------------------------------------------------------
-   */
-  /*
-   * COLD BLOOD AT ZERO POINTS, which reads backwards until the ability is
-   * read: it guarantees a crit on the NEXT ability, and for this build that is
-   * the Mutilate below. Cast while the pool is empty and the energy is full,
-   * it costs nothing a finisher wanted and lands on the builder that is about
-   * to go out anyway. Worth 5.1 -- the list reads 502.3 without it.
+   * IT ONLY WORKS BECAUSE COLD BLOOD TAKES NO GLOBAL COOLDOWN. Being off the
+   * GCD means one thing -- it does not START one -- so the Eviscerate beneath
+   * it goes out in the same decision window and takes the guaranteed crit. An
+   * entry above a finisher that DID cost a global would push that finisher a
+   * cast later and aim the crit at whatever came next instead.
+   * --------------------------------------------------------------------------
    */
   {
     abilityId: 'cold_blood',
-    condition: all(exactlyPoints(0), atLeastEnergy(60)),
+    condition: all(
+      atLeastPoints(VENOM_FINISHER_COMBO_POINTS),
+      atLeastEnergy(VENOM_COLD_BLOOD_ENERGY),
+      selfAuraAtLeast('slice_and_dice', VENOM_MAINTENANCE_FLOOR_SECONDS),
+      selfAuraAtLeast(VENOM_AURA_ID, VENOM_MAINTENANCE_FLOOR_SECONDS),
+    ),
+  },
+  /*
+   * EVISCERATE IS BACK, AND THE REASON IT WAS REMOVED IS THE REASON IT RETURNS.
+   *
+   * ==========================================================================
+   * IT WAS TAKEN OUT BECAUSE IT FIRED 0.0 TIMES. Its gate asked for Slice and
+   * Dice above TEN seconds, Venom above TEN seconds AND exactly FIVE points --
+   * three conditions at once, with Rupture taking the pool at four before the
+   * third could ever be true. "An entry that cannot fire is the single most
+   * common rotation bug in this project and the one that hides best" is what
+   * the removal note said, and it was right.
+   *
+   * THE OWNER'S GATE IS THE SAME SHAPE WITH EVERY NUMBER LOOSENED: three
+   * points rather than five, three seconds rather than ten, and Rupture gone
+   * from above it. So the entry that could not fire is now the list's only
+   * damage finisher -- which is what makes this a respecification rather than a
+   * revert.
+   * ==========================================================================
+   */
+  {
+    abilityId: 'eviscerate',
+    condition: all(
+      atLeastPoints(VENOM_FINISHER_COMBO_POINTS),
+      selfAuraAtLeast('slice_and_dice', VENOM_MAINTENANCE_FLOOR_SECONDS),
+      selfAuraAtLeast(VENOM_AURA_ID, VENOM_MAINTENANCE_FLOOR_SECONDS),
+    ),
   },
   { abilityId: 'mutilate' },
   ],

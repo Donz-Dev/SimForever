@@ -141,6 +141,29 @@ export const DEMONIC_RUNE_MANA_FRACTION = 0.1;
 export const THISTLE_TEA_ENERGY_THRESHOLD = 20;
 
 /**
+ * The Venom Rogue's own Thistle Tea gate, which is TIGHTER than the shared one.
+ *
+ * ============================================================================
+ * THE OWNER'S FIGURE, READ OFF THEIR OWN PANEL: ten rather than twenty. It is
+ * the same trade the shared constant describes, taken further -- ten wastes ten
+ * of the hundred at worst instead of twenty, at the cost of the gate opening
+ * less often.
+ *
+ * A SECOND CONSTANT RATHER THAN A MOVE OF THE FIRST, because the entry is in a
+ * SHARED list fragment and FIVE profiles drink Thistle Tea: all four Rogues and
+ * the Cat Druid. The owner respecified ONE of them, so moving the shared number
+ * would change four published figures on a screenshot about a fifth -- which is
+ * the food rulings' lesson applied to a list fragment instead of a selection.
+ *
+ * IF THE OTHER THREE ROGUE LISTS ARRIVE WITH THE SAME TEN, the honest edit is
+ * the shared constant and this one disappears -- and the Cat is then the only
+ * profile left on twenty, which is a question for the owner rather than an
+ * answer. Four of five is still not a row.
+ * ============================================================================
+ */
+export const VENOM_THISTLE_TEA_ENERGY_THRESHOLD = 10;
+
+/**
  * The rage a Mighty Rage Potion is drunk at.
  *
  * ----------------------------------------------------------------------------
@@ -164,66 +187,92 @@ export const THISTLE_TEA_ENERGY_THRESHOLD = 20;
  */
 export const MIGHTY_RAGE_THRESHOLD = 25;
 
-export const CONSUMABLE_COOLDOWNS: readonly AplEntry[] = [
-  /*
-   * THE THREE POOL RESTORES, EACH GATED ON ITS OWN POOL. A restore drunk into a
-   * nearly full pool is the waste `grantResource` reports in `wasted` and a DPS
-   * figure cannot see -- the Cat's Shifting Power is the worked example, where a
-   * gate on exactly this was worth POSITIVE DPS because the ungated version
-   * threw away 12.5% of everything it granted and the reliable waster was THE
-   * PULL, which every fight opens at a full bar.
-   */
-  {
-    abilityId: 'major_mana_potion',
-    condition: resourceFraction('atMost', POTION_MANA_FRACTION, 'mana'),
-    note: `Drunk under ${POTION_MANA_FRACTION * 100}% mana, which wastes none of it on any class's pool.`,
-  },
-  {
-    abilityId: 'demonic_rune',
-    condition: resourceFraction('atMost', DEMONIC_RUNE_MANA_FRACTION, 'mana'),
-    note: `Used under ${DEMONIC_RUNE_MANA_FRACTION * 100}% mana, the owner's figure -- TIGHTER than the mana potion's gate, so a character carrying both spends the free one first. It costs 600 to 1000 Hit Points and is refused below 1000 rather than allowed to kill.`,
-  },
-  {
-    abilityId: 'thistle_tea',
-    condition: resource('atMost', THISTLE_TEA_ENERGY_THRESHOLD, 'energy'),
-    note: `100 energy into a cap of 100, so every point on the bar is wasted. Under ${THISTLE_TEA_ENERGY_THRESHOLD} is the compromise between waste and the gate ever opening.`,
-  },
-  /*
-   * THE ONE THAT IS BOTH. Its rage half wants a trough and its strength half
-   * wants to be up early; the gate serves the rage and the Cat ignores it.
-   */
-  {
-    abilityId: 'mighty_rage_potion',
-    condition: resource('atMost', MIGHTY_RAGE_THRESHOLD, 'rage'),
-    note: `${MIGHTY_RAGE_THRESHOLD} rage is the no-waste point for the 45-75 it restores. A Cat Druid has no rage pool, so this reads as zero and the potion fires at the pull for its 60 Strength.`,
-  },
-  /*
-   * THE TWO PURE BUFFS, UNGATED, which is the racials' own argument: a flat
-   * stat for a fixed window has nothing in this encounter to line it up with,
-   * so any condition would be a guess at a burst phase that does not exist
-   * here. Neither can be wasted and neither is a floor -- both are on a two
-   * minute cooldown.
-   */
-  {
-    abilityId: 'major_frenzy_potion',
-    note: '40 attack power and ranged attack power for 30s. Ungated: a flat window with nothing to line it up against.',
-  },
-  {
-    abilityId: 'major_spellblasting_potion',
-    note: '40 spell power for 30s. Ungated, for the same reason as the Frenzy Potion.',
-  },
-  /*
-   * MAJOR MENDER'S POTION IS DELIBERATELY ABSENT, and saying so here is the
-   * point -- "say so where the entry is not", because an absent entry for
-   * something the catalogue offers reads exactly like an omission.
-   *
-   * It grants 75 Healing Power and healing power is not a stat this engine has,
-   * so the ability is declared, selectable, castable and worth exactly nothing;
-   * its own `unmodelled` says so. An entry for it would cost one rotation poll
-   * per two minutes to achieve that nothing. It is the one mid-fight consumable
-   * with no line in any list, and it is the one with nothing to decide.
-   */
-];
+/**
+ * The mid-fight consumables, as entries, with the gates a list may override.
+ *
+ * ----------------------------------------------------------------------------
+ * A FUNCTION BECAUSE ONE LIST NEEDED A DIFFERENT NUMBER, and the alternative
+ * was writing its seven entries out by hand -- which is the shape
+ * `rotationIds.test.ts` exists for: a hand-written copy of a shared fragment
+ * drifts from it silently, and the copy is the one nobody re-reads.
+ *
+ * `CONSUMABLE_COOLDOWNS` IS THIS CALLED WITH NOTHING, so all 25 other lists are
+ * byte-identical to what they were and no figure can move.
+ *
+ * THE NOTE IS BUILT FROM THE SAME NUMBER THE CONDITION USES, which is the whole
+ * reason the override goes HERE rather than being patched onto the entry
+ * afterwards: a note is a frozen string, so an override applied to the
+ * condition alone would leave the row explaining a gate it no longer has.
+ * ----------------------------------------------------------------------------
+ */
+export function consumableCooldowns(
+  options: { readonly thistleTeaEnergy?: number } = {},
+): readonly AplEntry[] {
+  const thistleTeaEnergy = options.thistleTeaEnergy ?? THISTLE_TEA_ENERGY_THRESHOLD;
+  return [
+    /*
+     * THE THREE POOL RESTORES, EACH GATED ON ITS OWN POOL. A restore drunk into a
+     * nearly full pool is the waste `grantResource` reports in `wasted` and a DPS
+     * figure cannot see -- the Cat's Shifting Power is the worked example, where a
+     * gate on exactly this was worth POSITIVE DPS because the ungated version
+     * threw away 12.5% of everything it granted and the reliable waster was THE
+     * PULL, which every fight opens at a full bar.
+     */
+    {
+      abilityId: 'major_mana_potion',
+      condition: resourceFraction('atMost', POTION_MANA_FRACTION, 'mana'),
+      note: `Drunk under ${POTION_MANA_FRACTION * 100}% mana, which wastes none of it on any class's pool.`,
+    },
+    {
+      abilityId: 'demonic_rune',
+      condition: resourceFraction('atMost', DEMONIC_RUNE_MANA_FRACTION, 'mana'),
+      note: `Used under ${DEMONIC_RUNE_MANA_FRACTION * 100}% mana, the owner's figure -- TIGHTER than the mana potion's gate, so a character carrying both spends the free one first. It costs 600 to 1000 Hit Points and is refused below 1000 rather than allowed to kill.`,
+    },
+    {
+      abilityId: 'thistle_tea',
+      condition: resource('atMost', thistleTeaEnergy, 'energy'),
+      note: `100 energy into a cap of 100, so every point on the bar is wasted. Under ${thistleTeaEnergy} is the compromise between waste and the gate ever opening.`,
+    },
+    /*
+     * THE ONE THAT IS BOTH. Its rage half wants a trough and its strength half
+     * wants to be up early; the gate serves the rage and the Cat ignores it.
+     */
+    {
+      abilityId: 'mighty_rage_potion',
+      condition: resource('atMost', MIGHTY_RAGE_THRESHOLD, 'rage'),
+      note: `${MIGHTY_RAGE_THRESHOLD} rage is the no-waste point for the 45-75 it restores. A Cat Druid has no rage pool, so this reads as zero and the potion fires at the pull for its 60 Strength.`,
+    },
+    /*
+     * THE TWO PURE BUFFS, UNGATED, which is the racials' own argument: a flat
+     * stat for a fixed window has nothing in this encounter to line it up with,
+     * so any condition would be a guess at a burst phase that does not exist
+     * here. Neither can be wasted and neither is a floor -- both are on a two
+     * minute cooldown.
+     */
+    {
+      abilityId: 'major_frenzy_potion',
+      note: '40 attack power and ranged attack power for 30s. Ungated: a flat window with nothing to line it up against.',
+    },
+    {
+      abilityId: 'major_spellblasting_potion',
+      note: '40 spell power for 30s. Ungated, for the same reason as the Frenzy Potion.',
+    },
+    /*
+     * MAJOR MENDER'S POTION IS DELIBERATELY ABSENT, and saying so here is the
+     * point -- "say so where the entry is not", because an absent entry for
+     * something the catalogue offers reads exactly like an omission.
+     *
+     * It grants 75 Healing Power and healing power is not a stat this engine has,
+     * so the ability is declared, selectable, castable and worth exactly nothing;
+     * its own `unmodelled` says so. An entry for it would cost one rotation poll
+     * per two minutes to achieve that nothing. It is the one mid-fight consumable
+     * with no line in any list, and it is the one with nothing to decide.
+     */
+  ];
+}
+
+/** The shared seven, on the default gates. What every list but one spreads. */
+export const CONSUMABLE_COOLDOWNS: readonly AplEntry[] = consumableCooldowns();
 
 /**
  * And the two that HEAL, which belong where a tank's survival cooldowns are.

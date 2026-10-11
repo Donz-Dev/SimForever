@@ -1158,7 +1158,29 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withBenchmarkGear(withS
       },
       talents: { ...ROGUE_VENOM_TALENTS },
       raidBuffs: [...PRESET_RAID_BUFFS],
-      consumables: { ...AGILITY_CONSUMABLES, other: 'thistle_tea' },
+      /*
+       * AGILITY FOOD, THE FOURTH FOOD RULING AND THE THIRD ANSWER.
+       *
+       * ----------------------------------------------------------------------
+       * +20 Agility against +40 Attack Power, and for a Rogue that trade is NOT
+       * the Warrior's. Agility is 1 attack power a point here, so the owner is
+       * giving up HALF the attack power -- and buying crit with it, which
+       * attack power does not touch. It is also a primary, so it goes through
+       * the conversion and a percentage modifier reaches it.
+       *
+       * SO THE THREE ANSWERS ARE NOW STRENGTH, STAMINA AND AGILITY across two
+       * shared rows, which is the argument these are overrides stated a third
+       * time: `AGILITY_CONSUMABLES` is shared with the other three Rogues and
+       * the melee Hunter, and `MELEE_COMMON` beneath it with the Warriors and
+       * both feral Druids. A shared row holds one value.
+       *
+       * THIS PRESET ALREADY OVERRODE THE ROW for `other`, so the food is one
+       * more key rather than a new shape -- the Rogue row carries no `other` at
+       * all, because Thistle Tea is "(Rogue, Druid)" and the row is shared with
+       * a Hunter that may not drink it.
+       * ----------------------------------------------------------------------
+       */
+      consumables: { ...AGILITY_CONSUMABLES, other: 'thistle_tea', food: 'food_agility' },
       encounter: { ...createDefaultProfile().encounter, targetAttacks: false },
     }),
   },
