@@ -55,6 +55,7 @@ LABELS = {
     'Combat Rogue': 'rogue_combat',
     'Rupture Rogue': 'rogue_rupture',
     'Hemo Dagger': 'rogue_hemo',
+    'Pure Hemo': 'rogue_pure_hemo',
     'Moonkin': 'druid_moonkin',
     'Cat Druid': 'druid_cat',
     'Bear Druid': 'druid_bear',
