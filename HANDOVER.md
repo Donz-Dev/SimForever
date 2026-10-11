@@ -20,6 +20,7 @@ the tooling to be a bit more sophisticated as well."
 | 6 | **Rupture** list, TALENTS and agility food | 659.0 -> **719.4** (**+60.4 REAL**) | 760.9 |
 | 6 | **Hemo**, which DERIVES from the Rupture list and was not respecified | 715.8 -> 726.2 (**+10.4**) | 760.9 |
 | 6 | **Combat Mut**, a NEW profile -- Venom with two fields replaced | **790.6**, the 26th row | **760.9** |
+| 7 | **Hemo Dagger** -- renamed, respecified, and NO LONGER DERIVED from Rupture | 726.2 -> **787.0** (**+60.7 REAL**) | **763.3** |
 
 **AND MORE ROWS CAN BE ADDED, WHICH IS THE POINT OF ITS BEING A TABLE** --
 there are twenty-two lists left and the owner has said so. **THE HEADER IS
@@ -526,7 +527,20 @@ as an accident.
 
 ## What is left
 
-- **EIGHTEEN LISTS**, which is the rest of the ask. All four Rogue lists are
+- **SEVENTEEN LISTS**, which is the rest of the ask. All five Rogue profiles are
+  done and the class is finished.
+- **THE HEMO DAGGER SUBTLETY TREE IS A READING RATHER THAN A STATEMENT.** The
+  owner's panel shows Improved Ambush at 0/3 against the 3/3 kept here, with a
+  stated total of 31 either way; asked which three talents moved, they chose to
+  keep the tree. **If that row's figure ever looks wrong, this is the first
+  thing to re-ask** -- and a build URL through `decode_talent_build.mjs` settles
+  it in one command.
+- **ITS EVISCERATE FIRES 0.2 TIMES A FIGHT**, which is the tightest gate in the
+  project that is not zero: exactly five points AND four seconds of each of two
+  effects. It is the owner's and it DOES fire, which is the distinction that
+  got Eviscerate removed from the Venom list and then put back -- but it is the
+  entry to watch.
+- **EIGHTEEN LISTS WAS THE COUNT BEFORE THIS ROUND.** All four Rogue lists are
   done; round six also ADDED one, so the denominator moved for the first time.
 - **THE COMBAT ROGUE'S FIVE-POINT EVISCERATE MEASURED +15.3**, which is the
   opposite of what the old sweep predicted -- it had five as the WORST cell,
@@ -534,10 +548,13 @@ as an accident.
   racials and Hack and Slash paying this build its off-hand dagger. **A sweep
   is true of the build it was run on**, and this is the second time that has
   been the operative fact in this series.
-- **THE HEMO ROGUE MOVED ON NOBODY'S INSTRUCTION**, +10.4, because `ROGUE_HEMO`
-  IS `...ROGUE_RUPTURE.entries.filter(...)`. That is the derivation working
-  rather than leaking -- the list is DEFINED as the Rupture build minus the
-  Backstab engine -- and it is still a profile the owner did not respecify.
+- ~~**THE HEMO ROGUE MOVED ON NOBODY'S INSTRUCTION**~~ **CLOSED IN ROUND SEVEN
+  BY THE OWNER RATHER THAN BY US.** It moved +10.4 because `ROGUE_HEMO` WAS
+  `...ROGUE_RUPTURE.entries.filter(...)` and inherited four changes it had
+  never been given. It has its own numbers now and is its own list: the
+  derivation was right while the two lists agreed on every number, and **a
+  derivation that has to override four of eleven entries is a copy with extra
+  steps**.
 - **TWENTY-ONE LISTS WAS THE COUNT BEFORE THIS ROUND.** 2H Arms was the first,
   DW Fury the second, Prot Warr the third, Venom the fourth; round four was a
   TALENT rather than a list, so the count did not move there. **Re-count this
@@ -3283,7 +3300,7 @@ demonstrated at the top. **Re-count rather than re-reading the sentence.**
 | --- | --- |
 | **Talents** | 260 fully, 39 partly, 105 ruled out, **62 a live gap**, out of **466** -- from 132 before the class dives |
 | **Abilities** | 114 declared against 478 captured |
-| **Profiles** | **26**, all measured, **mean 760.9** on FOREVER'S OWN ITEMS -- Combat Mut is the first profile ADDED rather than measured, and the count had been 25 since the gear swap -- every earlier figure in this file was measured on Classic and Season of Discovery stand-ins, so the contributions below belong to that gear and not to this mean: the armour enchants were +27.0 of it, the pre-pull consumables +105.9, the racials **+9.8 at round one**, the MID-FIGHT consumables **+17.7** and the Life Tap gate **+3.5** |
+| **Profiles** | **26**, all measured, **mean 763.3** on FOREVER'S OWN ITEMS -- Combat Mut is the first profile ADDED rather than measured, and the count had been 25 since the gear swap -- every earlier figure in this file was measured on Classic and Season of Discovery stand-ins, so the contributions below belong to that gear and not to this mean: the armour enchants were +27.0 of it, the pre-pull consumables +105.9, the racials **+9.8 at round one**, the MID-FIGHT consumables **+17.7** and the Life Tap gate **+3.5** |
 | **Racials** | **10 races, 40 traits**: 15 do something, 20 effects ruled out, 11 a live gap |
 | **Scope rulings** | **9 members**, all the owner's, carrying 129 TALENT entries and 19 racial declarations |
 | **Placeholders** | **11 declared** -- see the milestone table, and count DECLARATIONS. **One of the eleven is not a ruleset number**: `PLACEHOLDER_PREFERRED_WEIGHT` is the Gear panel's stat-sorting weight, which no simulation reads, so it can sort a list badly and cannot move a figure |
@@ -4992,20 +5009,20 @@ cannot audit, which is why the check is a SET comparison and not a row count.
 | Profile | Class | Talents | DPS | | Profile | Class | Talents | DPS |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | DW Fury | Warrior | 17/34/0 | 989.6 | | Moonkin | Druid | 38/0/13 | 788.4 |
-| LW Ranged | Hunter | 7/39/5 | 912.5 | | Shadow Priest | Priest | 13/3/35 | 774.7 |
-| Firelock | Warlock | 5/11/35 | 891.4 | | Fire Mage | Mage | 10/39/2 | 753.0 |
-| Hawk Melee | Hunter | 16/11/24 | 883.0 | | Enh Shaman | Shaman | 17/34/0 | 750.7 |
-| Cat Druid | Druid | 9/34/8 | 859.0 | | Hemo Rogue | Rogue | 17/3/31 | 726.2 |
+| LW Ranged | Hunter | 7/39/5 | 912.5 | | **Hemo Dagger** | Rogue | 17/3/31 | **787.0** |
+| Firelock | Warlock | 5/11/35 | 891.4 | | Shadow Priest | Priest | 13/3/35 | 774.7 |
+| Hawk Melee | Hunter | 16/11/24 | 883.0 | | Fire Mage | Mage | 10/39/2 | 753.0 |
+| Cat Druid | Druid | 9/34/8 | 859.0 | | Enh Shaman | Shaman | 17/34/0 | 750.7 |
 | Arcane Mage | Mage | 47/4/0 | 857.7 | | SM/DS | Warlock | 40/11/0 | 722.4 |
-| BM Hunter | Hunter | 31/20/0 | 856.2 | | **Rupture Rogue** | Rogue | 12/8/31 | **719.4** |
+| BM Hunter | Hunter | 31/20/0 | 856.2 | | Rupture Rogue | Rogue | 12/8/31 | 719.4 |
 | 2H Arms | Warrior | 39/10/2 | 849.7 | | Venom Rogue | Rogue | 37/12/2 | 718.9 |
 | Frostfire Mage | Mage | 0/29/22 | 837.0 | | Shockadin | Paladin | 23/0/28 | 714.4 |
 | LW Melee | Hunter | 7/13/31 | 831.5 | | Ele Shaman | Shaman | 38/13/0 | 651.4 |
-| **Combat Rogue** | Rogue | 18/33/0 | **824.1** | | Prot Warr | Warrior | 17/0/34 | 469.7 |
+| Combat Rogue | Rogue | 18/33/0 | 824.1 | | Prot Warr | Warrior | 17/0/34 | 469.7 |
 | Seal Twist Ret | Paladin | 15/0/36 | 816.5 | | Prot Pally | Paladin | 8/34/9 | 400.6 |
-| **Combat Mut** | Rogue | 30/21/0 | **790.6** | | Bear Druid | Druid | 9/42/0 | 395.7 |
+| Combat Mut | Rogue | 30/21/0 | 790.6 | | Bear Druid | Druid | 9/42/0 | 395.7 |
 
-The mean across **26** is **760.9**, RE-SUMMED FROM THE ROWS ABOVE rather than
+The mean across **26** is **763.3**, RE-SUMMED FROM THE ROWS ABOVE rather than
 adjusted, by `tools/update_baseline_table.py`.
 
 **THE TOP IS DW FURY AT 974.3 +/-10.3, AND LW RANGED IS SECOND AT 888.9
