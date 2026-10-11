@@ -45,6 +45,7 @@ npx vite-node tools/probe_life_tap_gate.ts       # what mana a Warlock should Li
 npx vite-node tools/probe_other_assignment.ts    # each preset's `other` consumable beside its POOLS
 npx vite-node tools/item_budget.ts               # what an item COST to make, and whether it adds up
 FOREVER=1 npx vite-node tools/item_budget.ts     # the 64 Premier PvP cloth pieces, Forever's own
+WEAPONS=1 npx vite-node tools/item_budget.ts     # the 41 new Forever epic weapons
 ```
 
 The three audits in the middle are AUDITS rather than measurements and none of
@@ -3051,7 +3052,8 @@ Six sources. **All nine classes were built from the two client-derived ones.**
 | `C:\Users\Donz\Documents\WoWForever*` | the owner's own files, **highest authority**: base stats, the combat table, stat conversions, resources, and **one ability spreadsheet — the Warrior's**. There is no spreadsheet for the other eight classes. `WoWForeverSimGuidance.docx` is NOT data — it is screenshots of an architecture discussion |
 | `WoWSimWorksheet.xlsx` | the owner's **authoritative document for COEFFICIENTS**, all nine classes, supplied 2026-09-29 and transcribed in `src/game/combat/coefficients.ts`. It SUPERSEDES the Warrior ability sheet on Rend, Revenge and Thunder Clap, and the earlier seal formula on Seal of Righteousness -- where it and an older owner document disagree, the sheet wins and the disagreement is recorded at the call site |
 | `talentsforever.com` | the beta client's own files, four static JS assignments a plain `fetch` reaches. **The source of record for talents AND for every ability number in the project**, and the build URLs the profiles are specified by |
-| `foreverchanges.pro/spellbook/<class>` | the beta client diffed against Classic Era, per rank, with cost, cast time and cooldown. **The tie-break: where it and our capture disagree, it wins, by the owner's standing rule.** Nothing imports from it — it is read by hand, and its data is in the page's RSC flight script, not the DOM. Checked so far: the Warrior (five numbers moved) and the Warlock (three moved). Seven classes to go |
+| `foreverchanges.pro/spellbook/<class>` | the beta client diffed against Classic Era, per rank, with cost, cast time and cooldown. **The tie-break: where it and our capture disagree, it wins, by the owner's standing rule.** Nothing imports from it — it is read by hand. Checked so far: the Warrior (five numbers moved) and the Warlock (three moved). Seven classes to go |
+| `foreverchanges.pro/items/*.json` | **the ITEMS half of the same site, and it is plain JSON rather than the RSC flight script this file used to describe.** `new.json`, `changed.json`, `same.json`, `missing.json` and `sources.json`, each stating the beta build it was taken at. **A plain `curl` is refused with a 403**, so it is read in a browser on the origin and the payload hashed there and re-hashed on disk. `tools/data/forever-epic-weapons.json` is the first capture from it |
 | `nether.wowhead.com/classic/tooltip/item/<id>` | Classic item and spell tooltips as JSON, no browser. The current items are Classic stand-ins, not Forever data |
 | `github.com/classic-hunter/forever-hunter/wiki` | the ONLY source for pet stat scaling and pet focus regeneration, plus a full Forever-vs-Classic diff for the Hunter. Community-maintained, so it ranks below the two above where they overlap — they have not yet disagreed |
 
@@ -3337,10 +3339,21 @@ on file" into a false promise. **Twenty-two items are worn by more than one set*
 `itemData` throws on a duplicate id, and the spec order decides which file owns
 each shared piece.
 
-**The item database is FROZEN**, pending further Forever item changes. Do not add
-sets or go looking for gear. The sets in scope are the ones the owner supplied;
-they are Season of Discovery stand-ins, not Forever data, and the README says so.
-**Keep saying so.**
+**The item database WAS frozen, and the owner has since lifted it by supplying
+real Forever items.** The freeze was "pending further Forever item changes" and
+those arrived: `forever-new-epics.json` is 449 real Forever epics, imported by
+`tools/import_forever_items.mjs` from a capture this project now owns. **The
+rest of `src/data/items/` is still Season of Discovery stand-ins, not Forever
+data, and the README still says so -- keep saying so about THOSE.** Do not go
+looking for more Classic or SoD gear; a new Forever capture is a different
+thing and is the supported path.
+
+**ADDING 449 ITEMS MOVED NO PUBLISHED FIGURE, and that is checkable rather than
+assumed.** A preset names its items BY ID, so a new file changes what can be
+CHOSEN and not what any of the 25 builds wear: all 75 combat-log hashes and
+event counts from `tools/rotation_fingerprint.ts` are unchanged. **That is the
+containment check for any item commit** -- the profiles whose gear did not
+change must not move by a decimal.
 
 **AND THE FIRST OF THOSE FURTHER CHANGES HAS ARRIVED, AS AN OVERRIDE RATHER THAN
 AN EDIT.** `FOREVER_SPELL_POWER_BUFFS` in `itemData.ts` carries the owner's +64
@@ -3438,6 +3451,60 @@ ORDER and the stats were transcribed in each tooltip's own order, so an
 unsorted key reported four twinned items as unique -- a check quietly weakened
 into saying nothing, caught only because an independent script had counted 30
 where it counted 34.
+
+**THE 85% IS BOTH A FOREVER BUDGET AND A PvP DISCOUNT, AND THE FIRST ANSWER
+HERE WAS WRONG BECAUSE IT RESTED ON TWO ITEMS.** With 289 armour pieces at item
+level 65 the split is **PvP 84.6% against non-PvP 89.2%** -- so Forever's epics
+run about 11 points under Classic's epic budget generally, and PvP gear is a
+further 5 under that. **The earlier reading said "not PvP-specific" off a PvP
+axe at 86.5% and a non-PvP axe at 85.5%**, which is a sample of one on each
+side of a comparison whose real spread is sd 5.6 and 9.5. Both figures were
+right and the conclusion drawn from them was not.
+
+**TWO ITEMS AGREEING IS NOT EVIDENCE WHEN THE POPULATIONS OVERLAP**, which is
+the same shape as this file's "a two-point comparison cannot see a peak" and
+its warning about an identical pair. The guard is the one the stat-weight work
+already states: **report n and the spread beside the figure**, because a reader
+sorting rows by value cannot otherwise tell which the measurement can stand
+behind.
+
+**AND THE NON-PvP ITEMS SCATTER TWICE AS WIDELY** -- sd 9.5 against 5.6, from
+67.6% to 121.4% -- which is what hand-made items look like beside ones stamped
+from templates. The PvP sets are 30 pieces a slot built from a handful of stat
+blocks; the rest are individually designed.
+
+**THE ONE-HAND AND RANGED ROWS LOOK LIKE A PvP PREMIUM AND ARE MOSTLY THE 3/2
+POWER.** High Warlord's Blade and Ironwood Blade carry nearly the same raw
+points -- 27.34 against 26.04 -- and price 13 points apart, because the Blade
+concentrates its spend into two large chunks where the Ironwood spreads it over
+three small ones; the Blade's own points spread evenly would price at 92.3%
+instead of 101.4%. **A concentrated item costs more for the same stat total,
+which is what the exponent is FOR** -- so reading a used% difference as a
+richness difference needs the raw points checked beside it.
+
+**WEAPON DPS IS NOW DEMONSTRATED RATHER THAN FITTED.** At one item level a
+hand's dps does not move with speed: Forever's one-handers run 47.2 to 47.4
+across speeds 1.80, 2.00, 2.30, 2.40 and 2.90, a 61% spread in speed and none
+in dps. **And the lines fitted from CLASSIC weapons predict all three hands
+within 0.65 dps**, having never seen a Forever item -- so Forever did not
+re-derive the weapon curve any more than it re-derived base armour. The six
+caster weapons each give up **15.6 to 15.9 dps**, and on the two-hand slot that
+is 2.97 budget points per dps, corroborating the 2.33-2.72 estimated from
+Classic.
+
+**AND FOREVER GRANTS HIT AND CRIT AS RATINGS, WHICH IS AN ENGINE QUESTION AND
+NOT ONLY A BUDGET ONE.** Fourteen stat names across those 41 weapons and every
+one has a cost in the source -- the first capture here where nothing falls
+through -- including **Critical Strike Rating, Hit Rating and Spell
+Penetration**, three things Classic could never have tested because it has no
+ratings at all. `STAT_NAMES` carries `hitChance` and `critChance` as flat
+percentage POINTS and `critRating` is barely read. **The conversion is the
+owner's to state**, and nothing here invents one.
+
+**AND THAT CAPTURE IS BUILD 1.60.1.70338 WHERE THE PROJECT'S ARE 1.60.1.70170.**
+Two builds stale, by this file's own rule that a capture goes stale and a
+correct number becomes a wrong one with nobody touching it. Not acted on with
+the itemization work, and now a dated fact rather than a suspicion.
 
 **A DELTA, NOT A TOTAL**, because the owner gave it as one and because two of
 their four stated bases disagreed with the scrape. A bonus survives a re-scrape
@@ -4003,6 +4070,25 @@ their ADDED LINES that are in `main` today -- 82% to 93%, with every remaining
 line a superseded draft: an old `PLACEHOLDER_` figure, a requirement line a
 patch later replaced, prose since rewritten. **A branch is redundant when its
 residue is older than `main`, not when the diff is empty.**
+
+**AND IT HAS NOW HAPPENED A SECOND TIME, WHICH FALSIFIES THE REASONING THAT
+EXPLAINED AWAY THE FIRST.** `chargeAndShieldTalents.test.ts` timed out again --
+"lets the Prot preset Charge once, and stops it without the talent", 5000ms,
+under the full suite only, passing alone at 1568ms and passing on an immediate
+re-run of the whole suite. **The file still has ZERO async bodies**, so the
+argument below -- a synchronous body blocks the event loop and vitest's timer
+never fires -- predicts this cannot happen, and it has now happened twice.
+**The claim is wrong, or incomplete, and it is the thing to stop leaning on**:
+treat a timeout in this file as a real flake under load rather than as proof
+that something else is going on.
+
+**AND IT WAS NOT THE CHANGE IT LANDED BESIDE, WHICH IS WORTH MEASURING RATHER
+THAN ASSUMING EITHER WAY.** It failed in the run that first added 449 items,
+which quadruples what `itemData` parses at module load and is exactly the kind
+of thing that would tip a test near its limit. Measured: **529-620ms to build
+600 items against 494-545ms for 151**, so the change adds about 40ms across a
+41-second suite. Not it. **A plausible culprit arriving in the same commit is
+not evidence**, and the measurement took one command.
 
 **CAPTURE A SUITE FAILURE BEFORE RE-RUNNING IT.** One full-suite run of
 `chargeAndShieldTalents.test.ts` failed at `ccf4dc8` and has passed every run

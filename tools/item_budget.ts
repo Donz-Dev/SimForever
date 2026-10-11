@@ -24,17 +24,23 @@
  *     ITEM=226562 npx vite-node tools/item_budget.ts  # one item on file, itemised
  *     REFERENCE=1 npx vite-node tools/item_budget.ts  # the reference items alone, itemised
  *     FOREVER=1 npx vite-node tools/item_budget.ts    # the 64 Premier PvP cloth pieces, Forever's own data
+ *     WEAPONS=1 npx vite-node tools/item_budget.ts    # the 41 new Forever epic weapons
  */
 import { ITEMS, ITEMS_BY_ID } from '../src/game/items/itemData';
 import type { Item } from '../src/game/items/Item';
 import type { StatName } from '../src/engine';
 import {
-  FOREVER_CLOTH_ARMOR_ILVL65,
-  FOREVER_PREMIER_PVP_CLOTH,
-  FOREVER_PVP_ITEM_LEVEL,
-  type PvpItem,
-  type PvpSlot,
-} from './foreverPremierPvp';
+  CLASSIC_FITTED_DPS_ILVL65,
+  FOREVER_BUILD,
+  FOREVER_CAPTURED_ON,
+  FOREVER_ITEMS,
+  FOREVER_PHYSICAL_DPS_ILVL65,
+  FOREVER_PVP_CLOTH,
+  FOREVER_STAT_COST,
+  FOREVER_WEAPONS,
+  priceableStats,
+  type ForeverRawItem,
+} from './foreverItems';
 
 /* -------------------------------------------------------------------------- */
 /* The model                                                                  */
@@ -146,19 +152,6 @@ const SCHOOL_POWER_COST = 0.7;
 /** One school of resistance. The source gives 2.5 for all schools at once. */
 const RESISTANCE_COST = 1;
 
-/** "+N Healing", which buys no damage and is the cheapest thing on the table. */
-const HEALING_COST = 0.45;
-
-/**
- * Any RATING, which in this data means Forever's Critical Strike Rating.
- *
- * The source's blanket "any rating costs 1" is dead weight in Classic, which
- * has no ratings at all -- Classic's PvP cloth grants a flat "+1% spell crit"
- * where Forever's grants "+7 Critical Strike Rating". So this line finally has
- * something to price, and it is the first of the sourced costs that Classic
- * items could not test.
- */
-const RATING_COST = 1;
 
 /**
  * Budget points per point of a stat the source does NOT price, FITTED HERE.
@@ -774,59 +767,87 @@ function summarise(rows: readonly Pricing[], label: string): void {
 }
 
 /* -------------------------------------------------------------------------- */
-/* Forever's own data                                                         */
+/* Forever's own data, read from src/data/items/forever-new-epics.json        */
 /* -------------------------------------------------------------------------- */
 
-const PVP_SLOT_CLASS: Readonly<Record<PvpSlot, SlotClass>> = {
-  head: 'full',
-  chest: 'full',
-  legs: 'full',
-  shoulder: 'medium',
-  hands: 'medium',
-  waist: 'medium',
-  feet: 'medium',
-  wrist: 'light',
+const FOREVER_SLOT_CLASS: Readonly<Record<string, SlotClass>> = {
+  Head: 'full',
+  Chest: 'full',
+  Legs: 'full',
+  'Two-Hand': 'full',
+  Shoulder: 'medium',
+  Hands: 'medium',
+  Waist: 'medium',
+  Feet: 'medium',
+  Wrist: 'light',
+  Back: 'light',
+  Neck: 'light',
+  Finger: 'light',
+  Shield: 'light',
+  'Held In Off-hand': 'light',
+  Trinket: 'trinket',
+  'One-Hand': 'oneHand',
+  'Main Hand': 'oneHand',
+  'Off Hand': 'oneHand',
+  Ranged: 'ranged',
 };
 
+/** The four weapons the PvP-against-not table shows, one per comparison. */
+const SHOWN_PVP_WEAPONS = new Set([
+  "Premier High Warlord's Blade",
+  "Premier High Warlord's Battle Axe",
+  "Premier High Warlord's Recurve",
+  "Premier High Warlord's Destroyer",
+]);
+
 /**
- * Price a Forever PvP piece on the CLASSIC costs, deliberately unadjusted.
+ * Price a Forever item on the CLASSIC costs, deliberately unadjusted.
  *
- * The whole question these items answer is whether Forever itemizes to
- * Classic's budget, so pricing them with anything fitted to them would be
- * assuming the answer. `heal` takes the source's healing-only 0.45 and
- * `spellDamage` the school-blind 0.86; `crit` is a RATING, which the source
- * prices at 1 per point.
+ * The question these items answer is whether Forever itemizes to Classic's
+ * budget, so pricing them with anything fitted TO them would assume the answer.
  */
-function priceForever(item: PvpItem): Pricing {
-  const slotClass = PVP_SLOT_CLASS[item.slot];
-  const budget = qualityBase(FOREVER_PVP_ITEM_LEVEL, 4)! * SLOT_MULTIPLIER[slotClass];
-  const lines: Line[] = [
-    {
-      label: 'armor (base)',
-      value: FOREVER_CLOTH_ARMOR_ILVL65[item.slot],
+function priceForeverItem(item: ForeverRawItem): Pricing {
+  const key = item.subclass === 'Shield' ? 'Shield' : item.inventoryType;
+  const slotClass = FOREVER_SLOT_CLASS[key];
+  const budget =
+    slotClass === undefined
+      ? undefined
+      : qualityBase(item.itemLevel, 4)! * SLOT_MULTIPLIER[slotClass];
+  const { stats, unpriced, setBonuses } = priceableStats(item);
+
+  const lines: Line[] = [];
+  const notes: string[] = [];
+  if (item.armor) {
+    lines.push({
+      label: 'armor (total; base is free)',
+      value: item.armor,
       cost: 0,
       points: 0,
       kind: 'free',
-    },
-  ];
-  const add = (label: string, value: number | undefined, cost: number, kind: Line['kind']) => {
-    if (!value) return;
-    lines.push({ label, value, cost, points: value * cost, kind });
-  };
-  add('stamina', item.stats.stamina, SOURCED_COST.stamina!, 'sourced');
-  add('intellect', item.stats.intellect, SOURCED_COST.intellect!, 'sourced');
-  add('spirit', item.stats.spirit, SOURCED_COST.spirit!, 'sourced');
-  add('spell power', item.stats.sp, SOURCED_COST.spellPower!, 'sourced');
-  add('healing', item.stats.heal, HEALING_COST, 'sourced');
-  add('spell damage', item.stats.spellDamage, SOURCED_COST.spellPower!, 'sourced');
-  add('crit rating', item.stats.crit, RATING_COST, 'sourced');
-  add('armor (bonus)', item.stats.bonusArmor, SOURCED_COST.armor!, 'sourced');
+    });
+  }
+  for (const [name, value] of Object.entries(stats)) {
+    const cost = FOREVER_STAT_COST[name];
+    if (cost === undefined) continue;
+    lines.push({ label: name, value, cost, points: value * cost, kind: 'sourced' });
+  }
+  if (item.weapon) {
+    const physical = FOREVER_PHYSICAL_DPS_ILVL65[item.inventoryType];
+    if (physical !== undefined) {
+      const short = physical - item.weapon.dps;
+      notes.push(
+        short > 0.5
+          ? `weapon ${item.weapon.dps.toFixed(1)} dps, ${short.toFixed(1)} below the ${physical.toFixed(1)} this hand carries`
+          : `weapon ${item.weapon.dps.toFixed(1)} dps, on the line`,
+      );
+    }
+  }
+  if (setBonuses > 0) notes.push(`${setBonuses} set bonuses, which the budget does not price`);
+  for (const line of unpriced) notes.push(`unpriced: ${line}`);
 
-  const notes = [...(item.unpriced ?? []).map((text) => `unpriced: Equip: ${text}`)];
-  if (item.note) notes.push(item.note);
   return {
     name: item.name,
-    itemLevel: FOREVER_PVP_ITEM_LEVEL,
+    itemLevel: item.itemLevel,
     slotClass,
     budget,
     lines,
@@ -835,63 +856,117 @@ function priceForever(item: PvpItem): Pricing {
   };
 }
 
-function foreverReport(): void {
-  console.log(
-    "THE PREMIER PvP CLOTH SETS -- WoW: Forever's own data, priced on CLASSIC costs\n",
-  );
-  console.log(HEADER);
-  const priced = FOREVER_PREMIER_PVP_CLOTH.map(priceForever);
-  for (const pricing of priced) console.log(row(pricing));
-
-  const used = priced.map((p) => (spend(p.lines).implied / p.budget!) * 100);
+/** Mean, spread and count for a group, which is how every row below reads. */
+function foreverSummary(label: string, items: readonly ForeverRawItem[]): void {
+  const priced = items
+    .map(priceForeverItem)
+    .filter((p): p is Pricing & { budget: number } => p.budget !== undefined)
+    .filter((p) => spend(p.lines).sum > 0);
+  if (priced.length === 0) return;
+  const used = priced.map((p) => (spend(p.lines).implied / p.budget) * 100);
   const mean = used.reduce((a, b) => a + b, 0) / used.length;
   const sd = Math.sqrt(used.reduce((a, b) => a + (b - mean) ** 2, 0) / used.length);
   console.log(
-    `\nall ${used.length}: mean ${mean.toFixed(1)}%, sd ${sd.toFixed(1)} points, ` +
-      `range ${Math.min(...used).toFixed(1)}% to ${Math.max(...used).toFixed(1)}%`,
+    `${pad(label, 32)} n=${String(priced.length).padStart(3)}  mean ${num(mean, 6, 1)}%  ` +
+      `sd ${num(sd, 5, 1)}  range ${num(Math.min(...used), 6, 1)}% to ${num(Math.max(...used), 6, 1)}%`,
   );
+}
 
-  // Per slot, because a budget that is wrong per SLOT looks like one that is
-  // wrong overall until it is split.
-  console.log('\nby slot (a scaled budget moves every slot together; a wrong slot multiplier does not)');
-  const bySlot = new Map<PvpSlot, number[]>();
-  FOREVER_PREMIER_PVP_CLOTH.forEach((item, index) => {
-    const list = bySlot.get(item.slot) ?? [];
-    list.push(used[index]);
-    bySlot.set(item.slot, list);
-  });
-  for (const [slot, values] of bySlot) {
-    const slotMean = values.reduce((a, b) => a + b, 0) / values.length;
-    console.log(
-      `  ${pad(slot, 9)} n=${values.length}  mean ${slotMean.toFixed(1)}%  ` +
-        `range ${Math.min(...values).toFixed(1)}% to ${Math.max(...values).toFixed(1)}%`,
-    );
-  }
-
-  // The stat blocks repeat across rank tiers, which is both a transcription
-  // check and a fact about how these sets were built.
-  const blocks = new Map<string, string[]>();
-  for (const item of FOREVER_PREMIER_PVP_CLOTH) {
-    // Sorted, because `JSON.stringify` preserves KEY ORDER and these were
-    // transcribed in the order each tooltip lists them -- the Centurion boots
-    // read "+26 Stamina, +12 Intellect" and the Knight-Champion boots the
-    // other way round, so an unsorted key reports four twinned items as
-    // unique and quietly weakens the check into saying nothing.
-    const key = `${item.slot}|${Object.entries(item.stats)
-      .sort(([a], [b]) => a.localeCompare(b))
-      .map(([name, value]) => `${name}=${value}`)
-      .join(',')}`;
-    blocks.set(key, [...(blocks.get(key) ?? []), item.name]);
-  }
-  const twinned = [...blocks.values()].filter((names) => names.length > 1);
+function foreverReport(): void {
   console.log(
-    `\n${blocks.size} distinct (slot, stats) blocks across ${FOREVER_PREMIER_PVP_CLOTH.length} items; ` +
-      `${twinned.reduce((total, names) => total + names.length, 0)} of them appear in two rank tiers`,
+    `FOREVER ITEMS ON FILE -- beta build ${FOREVER_BUILD}, captured ${FOREVER_CAPTURED_ON}`,
   );
-  for (const [, names] of blocks) {
-    if (names.length === 1) console.log(`  no twin: ${names[0]}`);
+  console.log(`${FOREVER_ITEMS.length} items, priced on CLASSIC costs`);
+  console.log('');
+
+  foreverSummary('all Forever items', FOREVER_ITEMS);
+  foreverSummary('  the Premier PvP cloth', FOREVER_PVP_CLOTH);
+  foreverSummary('  weapons', FOREVER_WEAPONS);
+  foreverSummary(
+    '  armour, PvP',
+    FOREVER_ITEMS.filter((i) => !i.weapon && i.name.startsWith('Premier ')),
+  );
+  foreverSummary(
+    '  armour, not PvP',
+    FOREVER_ITEMS.filter((i) => !i.weapon && !i.name.startsWith('Premier ')),
+  );
+
+  console.log('');
+  console.log('by item level');
+  const levels = [...new Set(FOREVER_ITEMS.map((i) => i.itemLevel))].sort((a, b) => a - b);
+  for (const ilvl of levels) {
+    foreverSummary(`  item level ${ilvl}`, FOREVER_ITEMS.filter((i) => i.itemLevel === ilvl));
+  }
+
+  console.log('');
+  console.log('by slot');
+  for (const slot of [...new Set(FOREVER_ITEMS.map((i) => i.inventoryType))].sort()) {
+    foreverSummary(`  ${slot}`, FOREVER_ITEMS.filter((i) => i.inventoryType === slot));
   }
 }
+
+function foreverWeaponReport(): void {
+  console.log(`${FOREVER_WEAPONS.length} FOREVER EPIC WEAPONS -- beta build ${FOREVER_BUILD}`);
+  console.log('');
+  console.log('1. DPS IS A LINE. Same hand, same item level, speed varies, dps does not.');
+  console.log('');
+  for (const hand of ['One-Hand', 'Two-Hand', 'Ranged']) {
+    const physical = FOREVER_WEAPONS.filter(
+      (w) => w.inventoryType === hand && w.weapon!.dps >= FOREVER_PHYSICAL_DPS_ILVL65[hand] - 1,
+    );
+    if (physical.length === 0) continue;
+    const seen = [
+      ...new Set(physical.map((w) => `${w.weapon!.speed.toFixed(2)}s:${w.weapon!.dps.toFixed(1)}`)),
+    ];
+    const predicted = CLASSIC_FITTED_DPS_ILVL65[hand];
+    const observed = FOREVER_PHYSICAL_DPS_ILVL65[hand];
+    console.log(
+      `   ${pad(hand, 10)} observed ${observed.toFixed(1)}   ` +
+        `Classic-fitted line predicts ${predicted.toFixed(2)}   ` +
+        `off by ${(observed - predicted).toFixed(2)} dps`,
+    );
+    console.log(`              ${seen.join('   ')}`);
+  }
+
+  console.log('');
+  console.log('2. PvP AGAINST NOT. The two-hand multiplier is 1.00 and is the only one the');
+  console.log('   source states with confidence, so that row is the one to read.');
+  console.log('');
+  console.log(
+    `   ${pad('item', 40)}${pad('slot', 11)}${pad('dps', 7)}${pad('budget', 8)}   used  pvp`,
+  );
+  for (const hand of ['Two-Hand', 'One-Hand', 'Ranged']) {
+    for (const w of FOREVER_WEAPONS.filter((x) => x.inventoryType === hand)) {
+      if (w.weapon!.dps < FOREVER_PHYSICAL_DPS_ILVL65[hand] - 1) continue;
+      const pvp = w.name.startsWith('Premier ');
+      if (pvp && !SHOWN_PVP_WEAPONS.has(w.name)) continue;
+      const priced = priceForeverItem(w);
+      console.log(
+        `   ${pad(w.name, 40)}${pad(w.inventoryType, 11)}${num(w.weapon!.dps, 6, 1)} ` +
+          `${num(priced.budget!, 7, 2)} ` +
+          `${num((spend(priced.lines).implied / priced.budget!) * 100, 6, 1)}%  ${pvp ? 'yes' : 'no'}`,
+      );
+    }
+  }
+
+  console.log('');
+  console.log("3. WHAT A CASTER WEAPON GAVE UP, against Forever's own physical dps");
+  console.log('');
+  for (const w of FOREVER_WEAPONS) {
+    const physical = FOREVER_PHYSICAL_DPS_ILVL65[w.inventoryType];
+    if (physical === undefined || w.subclass === 'Wand') continue;
+    if (w.weapon!.dps >= physical - 1) continue;
+    const priced = priceForeverItem(w);
+    const short = physical - w.weapon!.dps;
+    const over = spend(priced.lines).implied - priced.budget!;
+    console.log(
+      `   ${pad(w.name, 40)}${num(w.weapon!.dps, 6, 1)} against ${physical.toFixed(1)} -> ` +
+        `${short.toFixed(1)} short` +
+        (over > 0 ? `, ${(over / short).toFixed(2)} budget points per dps` : ''),
+    );
+  }
+}
+
 
 const only = process.env.ITEM;
 const referenceOnly = process.env.REFERENCE;
@@ -900,6 +975,8 @@ if (only) {
   const item = ITEMS_BY_ID.get(Number(only));
   if (!item) throw new Error(`no item ${only} on file`);
   itemise(price(item));
+} else if (process.env.WEAPONS) {
+  foreverWeaponReport();
 } else if (process.env.FOREVER) {
   foreverReport();
 } else if (referenceOnly) {

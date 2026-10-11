@@ -60,22 +60,28 @@ const MIGHT_SET: readonly (readonly [id: number, name: string, str: number, sta:
 ];
 
 describe('the item data', () => {
-  it('holds both item files, and no id twice', () => {
+  it('holds every item file, and no id twice', () => {
     /*
-     * NINE FILES, and the count is per file so that one failing to load is a
+     * TEN FILES, and the count is per file so that one failing to load is a
      * failure rather than a shorter list nobody notices.
      *
      *   classic-warrior 19, sod-hunter 12, sod-rogue 13, sod-druid 35,
      *   sod-shaman 20, sod-mage 8, sod-paladin 27, sod-warlock 8, sod-priest 9
+     *   forever-new-epics 449
      *
-     * Every one of them is SHORTER than the set it came from, because
-     * twenty-two pieces are worn by more than one set and an id belongs to the
-     * first file that asks for it -- `tools/item-sets.json` decides which.
-     * `itemData` throws on a duplicate, which is what makes that safe.
+     * The nine stand-in files are each SHORTER than the set they came from,
+     * because twenty-two pieces are worn by more than one set and an id belongs
+     * to the first file that asks for it -- `tools/item-sets.json` decides
+     * which. `itemData` throws on a duplicate, which is what makes that safe.
+     *
+     * `forever-new-epics` is not a set and is not curated: it is every new epic
+     * at item level 55 and up in the Forever beta client, and its ids are in a
+     * range of their own (234819 to 284716) that cannot collide with the
+     * Classic and Season of Discovery ones.
      */
-    const PER_FILE = [19, 12, 13, 35, 20, 8, 27, 8, 9];
+    const PER_FILE = [19, 12, 13, 35, 20, 8, 27, 8, 9, 449];
     const total = PER_FILE.reduce((sum, count) => sum + count, 0);
-    expect(total).toBe(151);
+    expect(total).toBe(600);
     expect(ITEMS).toHaveLength(total);
     expect(new Set(ITEMS.map((item) => item.id)).size).toBe(total);
   });

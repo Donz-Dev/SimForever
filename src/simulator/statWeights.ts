@@ -154,12 +154,18 @@ export interface WeightableStat {
  * the ruleset owner asked for the dodge/parry one by name. They are also the
  * two that make the cap reporting worth having at all.
  *
- * `critRating`, `hasteRating`'s siblings and the other rating stats are NOT
- * here. `RATING_PER_PERCENT` says of itself that every constant in it is a
- * placeholder, and no gear in this project grants rating -- an item line that
- * says "+2% crit" becomes `critChance`, the percentage points, which is what
- * the combat table reads. Haste is the one exception and it is expressed in
- * percent for exactly that reason.
+ * `critRating` IS HERE NOW, AND THE REASON IT WAS NOT HAS EXPIRED. This read
+ * "no gear in this project grants rating" -- true of Classic and Season of
+ * Discovery gear, where "+2% crit" becomes `critChance` outright, and false the
+ * moment real Forever items landed: Forever grants "+14 Critical Strike Rating"
+ * and the parser keeps it as a rating because `critChanceFrom` reads one.
+ *
+ * BOTH RATINGS ARE PRICED IN PERCENT rather than in rating points, which is the
+ * project's one idiom for this -- `percent * RATING_PER_PERCENT.x` -- so a
+ * weight reads as DPS per 1% and stays comparable with `critChance` beside it.
+ * `RATING_PER_PERCENT.crit` and `.haste` are the owner's own figures now; the
+ * siblings `masteryRating` and `versatilityRating` are still placeholders that
+ * nothing grants, and are still absent.
  * ------------------------------------------------------------------------------
  */
 export const WEIGHTABLE_STATS: readonly WeightableStat[] = [
@@ -225,6 +231,17 @@ export const WEIGHTABLE_STATS: readonly WeightableStat[] = [
     step: 1,
     tiered: 'hitChance',
     detail: 'Taken off miss, and every table caps at a different point.',
+  },
+  {
+    id: 'critRating',
+    name: 'Crit rating',
+    // Priced in PERCENT, like haste: one unit is one percentage point of crit,
+    // whatever the conversion is. Forever gear grants this; Classic gear
+    // granted `critChance` directly, and both appear in the table.
+    statPerUnit: RATING_PER_PERCENT.crit,
+    unitLabel: '%',
+    step: 1,
+    detail: 'Forever grants crit as a rating; 14 rating is one point of crit.',
   },
   {
     id: 'hasteRating',

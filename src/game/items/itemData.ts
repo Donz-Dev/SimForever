@@ -1,6 +1,6 @@
 import type { DamageSchool, PartialStats } from '../../engine';
 import type { CombatStyleId } from '../character/ids';
-import { DAMAGE_SCHOOLS } from '../../engine';
+import { DAMAGE_SCHOOLS, RATING_PER_PERCENT } from '../../engine';
 import type { Enchant, EquipmentSlot, Item, ItemWeapon, UnmodelledEffect } from './Item';
 import { FOREVER_ENCHANTS, FOREVER_ENCHANT_ID_BASE } from './foreverEnchants';
 import warriorItems from '../../data/items/classic-warrior.json';
@@ -12,6 +12,7 @@ import mageItems from '../../data/items/sod-mage.json';
 import paladinItems from '../../data/items/sod-paladin.json';
 import warlockItems from '../../data/items/sod-warlock.json';
 import priestItems from '../../data/items/sod-priest.json';
+import foreverNewEpics from '../../data/items/forever-new-epics.json';
 
 /**
  * Items, from Wowhead's Classic tooltip data.
@@ -165,6 +166,88 @@ const EFFECT_RULES: readonly EffectRule[] = [
     pattern: /^\+?(\d+)% (?:Chance to Block|Block Chance)$/,
     apply: (value, into) => {
       into.blockChance = (into.blockChance ?? 0) + value;
+    },
+  },
+  /*
+   * ---------------------------------------------------------------------------
+   * FOREVER GRANTS RATINGS WHERE CLASSIC GRANTS FLAT PERCENTAGES, and the eight
+   * conversions below are the ruleset owner's own table. Classic's PvP cloth
+   * says "+1% spell crit"; Forever's says "+7 Critical Strike Rating".
+   *
+   * WHICH SIDE OF THE CONVERSION A LINE LANDS ON IS DECIDED BY WHETHER
+   * ANYTHING READS THE RATING. `critRating` and `hasteRating` have readers --
+   * `critChanceFrom` and `hasteMultiplierFrom` divide by the same constants --
+   * so those two are stored AS RATINGS and converted at the point of use,
+   * which keeps them buffable. `dodgeRating`, `parryRating` and `blockRating`
+   * are declared and READ BY NOTHING, and there is no hit, defense or
+   * expertise rating stat at all, so those six are converted here into the
+   * flat stat the engine does read. This project's own rule is that a stat is
+   * not modelled until something reads it, and six unread stats dressed as
+   * modelled would be worse than one honest asymmetry.
+   *
+   * THE DAY A BUFF GRANTS DODGE RATING, the fix is to give those three stats a
+   * reader in the derivation rather than to convert here -- a buff cannot move
+   * a number that was already folded away at parse time.
+   *
+   * All eight are implemented though only five occur in the data today, which
+   * is the "wired for one caller" failure this file has been caught by before.
+   * ---------------------------------------------------------------------------
+   */
+  {
+    // Stored as a rating: `critChanceFrom` divides by the same constant.
+    pattern: /^\+(\d+) Critical Strike Rating\.?$/,
+    apply: (value, into) => {
+      into.critRating = (into.critRating ?? 0) + value;
+    },
+  },
+  {
+    // Stored as a rating: `hasteMultiplierFrom` divides by the same constant.
+    pattern: /^\+(\d+) Haste Rating\.?$/,
+    apply: (value, into) => {
+      into.hasteRating = (into.hasteRating ?? 0) + value;
+    },
+  },
+  {
+    pattern: /^\+(\d+) Hit Rating\.?$/,
+    apply: (value, into) => {
+      into.hitChance = (into.hitChance ?? 0) + value / RATING_PER_PERCENT.hit;
+    },
+  },
+  {
+    // "1 Rating = 1 Defense Skill" -- a SKILL POINT and not a percentage, so
+    // this one divides by one and is still written as a division, because the
+    // day the owner changes it there must be one place to change.
+    pattern: /^\+(\d+) Defense Rating\.?$/,
+    apply: (value, into) => {
+      into.defenseSkill = (into.defenseSkill ?? 0) + value / RATING_PER_PERCENT.defense;
+    },
+  },
+  {
+    // Expertise reduces the chance to be DODGED OR PARRIED, which is its own
+    // stat here and deliberately not hit -- they come off different slices of
+    // the table and are worth different amounts.
+    pattern: /^\+(\d+) Expertise Rating\.?$/,
+    apply: (value, into) => {
+      into.dodgeParryReduction =
+        (into.dodgeParryReduction ?? 0) + value / RATING_PER_PERCENT.expertise;
+    },
+  },
+  {
+    pattern: /^\+(\d+) Dodge Rating\.?$/,
+    apply: (value, into) => {
+      into.dodgeChance = (into.dodgeChance ?? 0) + value / RATING_PER_PERCENT.dodge;
+    },
+  },
+  {
+    pattern: /^\+(\d+) Parry Rating\.?$/,
+    apply: (value, into) => {
+      into.parryChance = (into.parryChance ?? 0) + value / RATING_PER_PERCENT.parry;
+    },
+  },
+  {
+    pattern: /^\+(\d+) Block Rating\.?$/,
+    apply: (value, into) => {
+      into.blockChance = (into.blockChance ?? 0) + value / RATING_PER_PERCENT.block;
     },
   },
   {
@@ -653,6 +736,19 @@ const ITEM_FILES: readonly RawData[] = [
   paladinItems,
   warlockItems,
   priestItems,
+  /*
+   * REAL FOREVER DATA, and the only file here that is. Everything above is a
+   * Classic or Season of Discovery stand-in, as `src/data/items/README.md`
+   * says; this is every new epic at item level 55 and up in the beta client,
+   * captured from the ruleset's own item data and converted by
+   * `tools/import_forever_items.mjs`.
+   *
+   * ADDING IT MOVED NO PUBLISHED FIGURE, and that is checkable rather than
+   * assumed: a preset names its items BY ID, so a new file changes what can be
+   * CHOSEN and not what any of the 25 builds wear. All 75 combat-log hashes
+   * from `tools/rotation_fingerprint.ts` are unchanged.
+   */
+  foreverNewEpics,
 ] as unknown as readonly RawData[];
 
 const RAW_ITEMS = ITEM_FILES.flatMap((file) => file.items);

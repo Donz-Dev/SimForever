@@ -14,9 +14,30 @@ Nine files, 151 items and 2 enchants between them. **One file per set**, so
 | `sod-paladin.json` | 27 | A Paladin's, in three cuts: Retribution, Shockadin, Protection |
 | `sod-warlock.json` | 8 | A Warlock's -- Felheart with the Deathmist pieces |
 | `sod-priest.json` | 9 | A Shadow Priest's -- Vestments of Prophecy with Anathema |
+| `forever-new-epics.json` | 449 | **REAL FOREVER DATA.** Every new epic at item level 55 and up in beta build 1.60.1.70338. Not a curated set and nothing equips it -- it is what Forever actually has |
 
 Every one after the first came from a **sixtyupgrades.com set the project owner
 supplied**, and each file carries the URL it came from.
+
+**`forever-new-epics.json` IS THE EXCEPTION AND IT IS THE ONLY REAL FOREVER
+ARMOUR HERE.** It is a bulk capture rather than a curated set: 449 items, every
+new epic at item level 55 and above in the beta client, imported by
+`tools/import_forever_items.mjs` from `tools/data/forever-new-epics.capture.json`,
+which records its own SHA-256, the build it came from and the filter used.
+Nothing equips it yet -- a preset names its items by id, so adding it changed
+what can be CHOSEN and not what any of the 25 builds wear.
+
+```bash
+node tools/import_forever_items.mjs --check   # what it would write, and any unread line
+node tools/import_forever_items.mjs --write
+```
+
+**TAKING A NEW CAPTURE.** `foreverchanges.pro` serves plain JSON at
+`/items/new.json` and four siblings, each stating its beta build. A plain fetch
+is refused with a 403, so it is read in a browser ON THE ORIGIN, hashed there
+with SHA-256 and re-hashed on disk before being accepted. The importer re-checks
+that hash and refuses to write if an item carries a line it could not read, so
+a changed tooltip format fails loudly instead of dropping a stat.
 
 **Almost none of it is WoW: Forever data, in a WoW: Forever simulator.** They
 were chosen deliberately, to replace invented placeholder weapons with real

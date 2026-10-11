@@ -262,6 +262,205 @@ Transcribed as read and flagged on the row rather than corrected — but a 7 rea
 off a 4 is the likelier of the two explanations, and it is worth the owner
 confirming against the client.
 
+## Forever's 41 new epic weapons, and the answer to the PvP question
+
+`WEAPONS=1`, from `tools/data/forever-epic-weapons.json` — the whole of the new
+epic weapons in Forever beta build **1.60.1.70338**, captured 2026-10-10. Five
+of the 41 are **not** PvP items, which is what makes the question answerable.
+
+### How it was captured, because the recorded method no longer applies
+
+CLAUDE.md said of `foreverchanges.pro` that "its data is in the page's RSC
+flight script, not the DOM". That is no longer true: the items page fetches
+plain JSON — `/items/new.json`, `/items/changed.json`, `/items/same.json`,
+`/items/missing.json` and `/items/sources.json` — each carrying the beta build
+it was taken at. **A plain `curl` is refused with a 403**, so it is read in a
+browser on the origin, hashed there and re-hashed on disk, which is this
+project's rule for anything out of a browser. 13,464 bytes, SHA-256
+`0345f048…`, matching.
+
+### Weapon DPS is a line — demonstrated, not fitted
+
+The earlier finding was a fit over Classic weapons. Forever shows it directly:
+at one item level, a hand's DPS **does not move with speed**.
+
+| Hand | Speeds observed | DPS | Classic-fitted line predicts | Off by |
+| --- | --- | --- | --- | --- |
+| One-hand | 1.80, 2.00, 2.30, 2.40, 2.90 | 47.2–47.4 | 46.81 | **0.39** |
+| Two-hand | 3.30, 3.80 | 61.5–61.6 | 60.95 | 0.65 |
+| Ranged | 1.80, 2.50, 2.90 | 36.8–36.9 | 36.60 | **0.30** |
+
+A one-hander's speed varies by 61% across that row and its DPS does not move.
+And the lines fitted from **Classic** weapons over item levels 65–81, which had
+never seen a Forever item, predict all three within **0.65 DPS**. Forever did
+not re-derive the weapon DPS curve any more than it re-derived base armour.
+
+### The answer, superseded below
+
+**WHAT THIS SECTION CONCLUDED WAS WRONG AND IS KEPT FOR THE SHAPE OF THE
+MISTAKE.** It read the two-hand rows -- a PvP axe at 86.5% and a non-PvP axe at
+85.5% -- and concluded the shortfall was Forever's budget rather than a PvP
+discount. Those two figures are correct. The conclusion is not: see
+**[The answer, on 289 armour pieces](#the-answer-on-289-armour-pieces)**.
+
+| Item | Slot | PvP | Used |
+| --- | --- | --- | --- |
+| Premier High Warlord's Battle Axe | two-hand | yes | **86.5%** |
+| Forest Defender's Axe | two-hand | no | **85.5%** |
+| Premier High Warlord's Destroyer | two-hand | yes | 98.9% |
+| Premier High Warlord's Blade | one-hand | yes | 101.4% |
+| Ironwood Blade | one-hand | no | 87.9% |
+| Greenhammer | one-hand | no | 87.9% |
+| Premier High Warlord's Recurve | ranged | yes | 117.7% |
+| Hyper Deluxe Sniper Rifle Mk XVII | ranged | no | 94.0% |
+
+**READ THE TWO-HAND ROWS AND IGNORE THE REST.** The two-hand multiplier is 1.00
+— no multiplier at all — and is the only one in the source not open to doubt.
+There, a PvP axe and a non-PvP axe price at **86.5% and 85.5%**, which is each
+other and is also the Premier cloth's **85.1%**.
+
+So the ~15% shortfall is **Forever's budget, not a PvP discount.** Every
+non-PvP epic weapon here is under budget too (85.5%, 87.9%, 87.9%, 94.0%), and
+if anything the PvP weapons are the *richer* ones.
+
+**THE ONE-HAND AND RANGED ROWS LOOK LIKE A PvP PREMIUM AND ARE MOSTLY THE 3/2
+POWER.** High Warlord's Blade and Ironwood Blade carry nearly the same raw
+budget points — **27.34 against 26.04** — and price 13 points apart, because
+the Blade concentrates its spend into two large chunks (24 attack power,
+14 crit rating) where the Ironwood spreads it over three small ones. Spread
+across three equal chunks the Blade's own points would price at 92.3% instead
+of 101.4%. That is the exponent doing exactly what it is for, on top of the two
+shakiest multipliers in the source.
+
+### What a Forever caster weapon gave up
+
+All six caster and healer weapons give up **15.6 to 15.9 DPS** against the
+physical weapon of the same hand at the same item level — a tight figure, and
+the first time the trade has been measurable inside a single ruleset at a
+single item level rather than across a fitted line.
+
+On the two-hand slot that works out at **2.97 budget points per DPS forgone**,
+which corroborates the 2.33–2.72 estimated from Classic's Azuresong Mageblade
+and Lok'amir il Romathis. The one-hand figures (4.22 and 5.69) rest on the 0.42
+multiplier and on healing at 0.45, and are not worth leaning on.
+
+### Forever grants ratings, and the budget source was ready for them
+
+Fourteen stat names appear across these 41 weapons and **every one has a cost
+in the source** — the first capture in this project where nothing falls through.
+Three of them Classic could never have tested: **Critical Strike Rating**,
+**Hit Rating** and **Spell Penetration** (the source's "Magic Penetration").
+The blanket "any rating costs 1" was dead weight in a ruleset with no ratings.
+
+**THIS IS A QUESTION FOR THE ENGINE, NOT JUST FOR THE BUDGET.** `STAT_NAMES`
+carries `hitChance` and `critChance` as flat percentage POINTS, with
+`critRating` and `hasteRating` present but barely used, and Forever is granting
+hit and crit as RATINGS on real items. The conversion is the ruleset owner's to
+state.
+
+### The captures on file are two builds stale
+
+This capture is build **1.60.1.70338**; the project's talent and spell captures
+are at **1.60.1.70170**. CLAUDE.md's own rule is that a capture goes stale and
+a correct number becomes a wrong one with nobody touching it. Not acted on here
+— it is a separate job from itemization — but it is now a dated fact rather
+than a suspicion.
+
+## The answer, on 289 armour pieces
+
+The 41 weapons were the wrong population to settle it on. The 449-item capture
+has **289 armour pieces at item level 65**, and they split cleanly:
+
+| Armour, item level 65 | n | Mean | Median | sd |
+| --- | --- | --- | --- | --- |
+| PvP (`Premier ...`) | **248** | **84.6%** | 83.6% | 5.6 |
+| not PvP | **41** | **89.2%** | 92.1% | 9.5 |
+
+**It is both.** Forever's epics run about 11 points under Classic's epic budget
+generally, and PvP gear is a further 5 points under that. The owner's hunch
+that it "could be a PvP-specific issue" is half right, and the half that is not
+is the larger half.
+
+**THE EARLIER ANSWER CAME FROM TWO ITEMS AND WAS CONFIDENT.** A PvP axe at
+86.5% and a non-PvP axe at 85.5% agree to within a point — and they are one
+sample from each of two populations whose spreads are 5.6 and 9.5, so agreeing
+to a point is what they would often do even if the means were five points
+apart. Both figures were right; the conclusion was not. **Report n and the
+spread beside any figure that is going to carry an argument.**
+
+**THE SLOT BREAKDOWN LOOKS LIKE IT CONTRADICTS THIS AND DOES NOT.** Chest shows
+a −16.3 gap and Shield a +21.3 — on non-PvP samples of **one item each**. The
+only two slots with a non-PvP sample worth reading are Hands (n=10, +6.9) and
+Shoulder (n=15, +9.1), and both point the same way as the total.
+
+**AND THE NON-PvP ITEMS SCATTER TWICE AS WIDELY**, 67.6% to 121.4% against the
+PvP sets' tight band. That is what individually designed items look like beside
+ones stamped from a handful of templates — the PvP sets are 30 pieces a slot
+built from 30 stat blocks.
+
+## The items are in the project's database now
+
+`src/data/items/forever-new-epics.json`, 449 items, imported by
+`tools/import_forever_items.mjs` from a capture under `tools/data/` that
+records its own SHA-256, the beta build and the filter. **This project no
+longer reads anybody's website to know what a Forever item is.**
+
+- **Nothing was silently dropped.** The only exclusions are the eight
+  "Premier Emboldened &lt;slot&gt; Seal" upgrade tokens, which carry no armour,
+  stats, effects or set bonuses — and they are listed in the capture **by
+  name**, because "nothing was lost" has to be checkable. The importer refuses
+  to write if any line in any item went unread.
+- **Adding them moved no published figure.** A preset names its items by id, so
+  a new file changes what can be CHOSEN and not what the 25 builds wear. All 75
+  combat-log hashes and event counts are unchanged.
+- **The hand-transcribed modules are gone.** The Premier cloth and the weapons
+  each had a module of their own while the items were outside the project;
+  `tools/foreverItems.ts` reads the real file instead. A second copy of a
+  number is a copy that drifts, and this one already had: 63 of the 64 cloth
+  pieces matched the client exactly and one did not.
+
+**THE MISMATCH WAS THE ONE THE PAIRING CHECK HAD FLAGGED, AND IT WAS FLAGGED
+IN THE WRONG DIRECTION.** Two items out of 64 had no twin, differing only in
+34 stamina against 37, and the note said a 7 misread off a 4 was the likelier
+explanation. The client says **both are 37**: the error was reading 37 as 34 on
+the other item. So the check found the right pair for the right reason and the
+guess about which half was wrong was itself wrong — **a structural check earns
+its keep by pointing at the pair, not by explaining it.**
+
+## Forever's rating conversions
+
+The owner's table, now in `RATING_PER_PERCENT` and no longer placeholders:
+
+| | | | |
+| --- | --- | --- | --- |
+| 1 Rating | 1 Defense Skill | 12 Rating | +1% Dodge |
+| 10 Rating | +1% Hit | 20 Rating | +1% Parry |
+| 14 Rating | +1% Crit | 5 Rating | +1% Block Chance |
+| 10 Rating | +1% Haste | 10 Rating | +1% Expertise |
+
+**CHANGING CRIT FROM 180 TO 14 MOVED NOTHING**, which looks like it should have
+moved everything. Nothing in the project grants `critRating` — every profile
+defaults it to 0 — and every haste source uses the
+`percent * RATING_PER_PERCENT.haste` idiom that `hasteMultiplierFrom` divides
+straight back out, so the constant cancels. All 75 hashes unchanged.
+
+**WHICH SIDE OF THE CONVERSION AN ITEM LINE LANDS ON IS DECIDED BY WHETHER
+ANYTHING READS THE RATING.** `critRating` and `hasteRating` have readers, so
+those two are stored as ratings and converted at the point of use, which keeps
+them buffable. `dodgeRating`, `parryRating` and `blockRating` are declared and
+read by nothing, and there is no hit, defense or expertise rating stat at all,
+so those six are converted at the item parser into the flat stat the engine
+does read. **The day a buff grants dodge rating, the fix is to give those three
+stats a reader** — a buff cannot move a number already folded away at parse
+time.
+
+All eight are implemented though only five occur in the data today, because
+wiring only the callers that exist is how the second caller finds a silent
+no-op.
+
+`mastery` and `versatility` are still placeholders: Forever states neither and
+nothing grants either.
+
 ## What the source does not price, and what was fitted here
 
 Vanilla has no ratings, so the source's blanket "any rating costs 1" cannot be
