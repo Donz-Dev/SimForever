@@ -22,6 +22,10 @@ import {
 import { COMBAT_CONSTANTS } from '../../src/game/combat/attackChances';
 import { WARLOCK_TALENT_EFFECTS } from '../../src/game/talents/warlockEffects';
 import type { TalentEffect } from '../../src/game/talents/TalentEffect';
+import { legalise } from '../helpers/legalTalents';
+import { talentNumber } from '../../src/game/talents/talentValues';
+import { talentsForClass } from '../../src/game/talents/talentData';
+import { legalAllocation } from '../../src/game/talents/talentRules';
 
 /*
  * ============================================================================
@@ -383,5 +387,104 @@ describe('Two lists, and conflating them would have been the bug', () => {
         expect(effect.reason).not.toContain('CastModifier');
       }
     }
+  });
+});
+
+/* -------------------------------------------------------------------------- */
+
+describe('Aftermath, which read a movement speed as a damage bonus', () => {
+  /*
+   * ==========================================================================
+   * THE WRONG-INDEX BUG CLAUDE.md NAMED BEFORE IT COULD BITE: "The Warlock's
+   * Aftermath has the same mistake and escapes it only because at 5/5 the two
+   * numbers coincide."
+   *
+   * The row is "Increases the initial damage of your Immolate spell by {0}%
+   * and your Conflagrate spell has a {1}% chance to Daze the target, reducing
+   * the target's movement speed by {2}% for {3} sec", and `abilityDamage`
+   * declared `valueIndex: 2` -- the MOVEMENT SPEED, which is a constant 50 at
+   * every rank. At 5/5 the correct figure is also 50, so it was correct by
+   * coincidence for the whole life of the talent.
+   *
+   * WHAT MADE IT LIVE WAS A TALENT CHANGE, NOT A CODE CHANGE. The owner's
+   * respecification takes Firelock to 2/5, where the right answer is 20 and
+   * index 2 still reads 50 -- two and a half times the talent, on the
+   * profile's second-largest damage source.
+   *
+   * SO THIS ASSERTS THE RANK SCALING RATHER THAN ONE VALUE, which is the only
+   * shape that could have caught it: any single-rank check at 5/5 passes
+   * against both the right index and the wrong one. **"Assert the MECHANISM"
+   * means the SIZE of the mechanism**, and here it means its SLOPE.
+   * ==========================================================================
+   */
+  const immolateMultiplier = (rank: number) =>
+    createPlayer({
+      race: 'undead',
+      characterClass: 'warlock',
+      combatStyle: 'caster',
+      talents: legalise({ aftermath: rank }, 'warlock'),
+    }).abilityModifierFor('immolate').damageMultiplier ?? 1;
+
+  it('scales with rank rather than reading a constant', () => {
+    // {0} by rank: 10 / 20 / 30 / 40 / 50.
+    for (const [rank, expected] of [[1, 1.1], [2, 1.2], [3, 1.3], [4, 1.4], [5, 1.5]] as const) {
+      expect(immolateMultiplier(rank), `rank ${rank}`).toBeCloseTo(expected, 10);
+    }
+  });
+
+  it('is not the constant index 2 would have produced', () => {
+    /*
+     * THE MIRROR ASSERTION, and it is the one that expires usefully: index 2
+     * is 50 at EVERY rank, so the wrong reading is a flat 1.5. Rank 5 cannot
+     * tell the two apart, which is exactly why it hid -- so the check is that
+     * the low ranks differ from it.
+     */
+    expect(immolateMultiplier(2)).not.toBeCloseTo(1.5, 10);
+    expect(talentNumber('warlock', 'aftermath', 2, 2)).toBe(50);
+    expect(talentNumber('warlock', 'aftermath', 2, 0)).toBe(20);
+    // And the coincidence that hid it, stated outright.
+    expect(talentNumber('warlock', 'aftermath', 5, 0)).toBe(
+      talentNumber('warlock', 'aftermath', 5, 2),
+    );
+  });
+
+  it('contributes exactly its own rank on the Firelock preset', () => {
+    /*
+     * ========================================================================
+     * MEASURED AS A RATIO AGAINST THE SAME BUILD WITHOUT IT, because the
+     * ABSOLUTE figure is not Aftermath's. The preset reads **1.32** on
+     * Immolate, which is `1.20 x 1.10` -- Agonizing Flames raises every
+     * Destruction spell on top, and this file's own test one screen up is
+     * about that talent selecting a TREE.
+     *
+     * The first version of this assertion expected 1.20 and failed at 1.32.
+     * **The code was right and the assertion was wrong**, which is the hazard
+     * a per-ability multiplier carries: several talents land on one id and
+     * multiply, so an absolute expectation silently becomes a claim about
+     * every one of them.
+     * ========================================================================
+     */
+    const talents = PRESETS_BY_ID.get('warlock_firelock')!.build().talents;
+    expect(talents.aftermath).toBe(2);
+
+    const without = { ...talents };
+    delete without.aftermath;
+    const multiplierFor = (allocation: typeof talents) =>
+      createPlayer({
+        race: 'undead',
+        characterClass: 'warlock',
+        combatStyle: 'caster',
+        talents: allocation,
+      }).abilityModifierFor('immolate').damageMultiplier ?? 1;
+
+    /*
+     * AND THE CASCADE IS NAMED RATHER THAN ASSUMED -- "an isolation probe has
+     * to print `dropped` beside every figure". Destruction goes 35 -> 33,
+     * which is still above every tier this build reaches, so nothing else
+     * leaves with it.
+     */
+    expect(legalAllocation(talentsForClass('warlock')!, without).dropped).toEqual([]);
+
+    expect(multiplierFor(talents) / multiplierFor(without)).toBeCloseTo(1.2, 10);
   });
 });
