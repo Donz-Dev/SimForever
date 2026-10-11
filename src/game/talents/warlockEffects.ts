@@ -384,11 +384,42 @@ export const WARLOCK_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
 
   aftermath: [
     /*
-     * "Increases the INITIAL damage of your Immolate spell by {2}%." The
-     * initial half and the burn are one ability id here, so this raises both
-     * -- which is generous, and the amount by which is the burn's share.
+     * ========================================================================
+     * `valueIndex` WAS 2 AND IS 0, WHICH IS THE WRONG-INDEX BUG CLAUDE.md
+     * NAMED BY NAME BEFORE IT COULD BITE: "The Warlock's Aftermath has the
+     * same mistake and escapes it only because at 5/5 the two numbers
+     * coincide."
+     *
+     * The row is "Increases the initial damage of your Immolate spell by {0}%
+     * and your Conflagrate spell has a {1}% chance to Daze the target,
+     * reducing the target's movement speed by {2}% for {3} sec", and the four
+     * numbers by rank are:
+     *
+     *     rank   1              2              3              4              5
+     *     {0}    10             20             30             40             50   <- Immolate
+     *     {1}    20             40             60             80            100   <- daze chance
+     *     {2}    50             50             50             50             50   <- MOVEMENT SPEED
+     *     {3}     5              5              5              5              5   <- seconds
+     *
+     * SO INDEX 2 IS A MOVEMENT SPEED, CONSTANT AT EVERY RANK, and it read 50
+     * where the talent grants 50 only at 5/5 -- which is the rank every
+     * Warlock preset happened to carry. **It was correct by coincidence.**
+     *
+     * WHAT MADE IT LIVE IS A TALENT CHANGE, NOT A CODE CHANGE. The owner's
+     * respecification takes Firelock to 2/5, where the correct figure is 20
+     * and index 2 still reads 50 -- Immolate would have collected **two and a
+     * half times the talent**, on the profile's second-largest damage source,
+     * with nothing anywhere reading wrong. That is this project's own
+     * description of the failure: "the plausible wrong value is usually
+     * another rank's right one".
+     *
+     * THE COMMENT HERE RESTATED THE WRONG INDEX IN ITS OWN WORDS ("by {2}%"),
+     * which is the second half of the Rip lesson -- a wrong reading survives
+     * in the prose beside it, so the figure that would expose it is wrong in
+     * the same sentence that asserts it.
+     * ========================================================================
      */
-    { kind: 'abilityDamage', abilityId: 'immolate', valueIndex: 2 },
+    { kind: 'abilityDamage', abilityId: 'immolate', valueIndex: 0 },
     {
       kind: 'unmodelled',
       reason:

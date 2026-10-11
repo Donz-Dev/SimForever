@@ -34,6 +34,7 @@ the tooling to be a bit more sophisticated as well."
 | 9 | **Prot Pally** -- the food, a respecified list, and SWIFT JUDGEMENT off the GCD | 400.6 -> **434.5** (**+33.9 REAL**), deaths 9.40 -> 9.37 | 774.2 |
 | 9 | **LW Ranged** and **LW Melee** -- 5/39/7 and 5/13/33 | **0.0 to the decimal on both**, and correctly so | 774.2 |
 | 9 | **Warlock** -- a CHOOSER for the sacrificed demon, and the 15% confirmed | **no figure moved**; 24 of 27 rows 0.0 to the decimal | **774.2** |
+| 10 | **Firelock** -- 5/11/35, a new list, and an AFTERMATH INDEX THAT WAS RIGHT BY LUCK | 891.4 -> 885.5 (**-5.9**), and **26 of 27 rows 0.0** | **774.0** |
 
 **AND MORE ROWS CAN BE ADDED, WHICH IS THE POINT OF ITS BEING A TABLE** --
 there are fifteen lists left and the owner has said so. **THE HEADER IS
@@ -48,6 +49,91 @@ figure of merit is a DEATH COUNT, and both of its changes are read there.
 **THE FOURTH IS NOT A LIST AT ALL**, and that is worth a row rather than a
 footnote: the owner asked for the Rogue next and named a TALENT that had to be
 fixed first. **It was the largest single figure of the four rounds.**
+
+## Round ten: a dormant bug that a TALENT CHANGE woke up
+
+**THE NET IS -5.9 AND EVERY PART OF IT IS LARGE.** Three changes landed on one
+profile and two of them nearly cancel, which is exactly the shape a single
+figure hides. Decomposed by reverting each in a worktree, 20 seeds each:
+
+| | Firelock | what it is |
+| --- | --- | --- |
+| round nine baseline | 891.4 | |
+| **the owner's LIST alone** | **921.0** | **+29.6** -- Bane of Agony, Shadowburn second, the potion first |
+| **the owner's TALENTS alone** | **853.1** | **-38.3** -- Aftermath 5/5 -> 2/5 is 30% off Immolate |
+| both, which is what ships | 885.5 | -5.9 |
+
+Marginals do not sum (891.4 + 29.6 - 38.3 = 882.7 against 885.5), which is the
+usual overlap and is said rather than hidden.
+
+### The bug, and why nothing could have caught it
+
+**AFTERMATH READ A MOVEMENT SPEED AS A DAMAGE BONUS FOR THE WHOLE LIFE OF THE
+TALENT.** CLAUDE.md named it before it could bite -- *"The Warlock's Aftermath
+has the same mistake and escapes it only because at 5/5 the two numbers
+coincide"* -- and this is the round where 5/5 stopped being true.
+
+    rank    1     2     3     4     5
+    {0}    10    20    30    40    50   <- Immolate initial damage
+    {1}    20    40    60    80   100   <- daze chance
+    {2}    50    50    50    50    50   <- MOVEMENT SPEED  <- what it read
+    {3}     5     5     5     5     5   <- seconds
+
+**THE COST OF NOT FIXING IT WAS MEASURED RATHER THAN ASSERTED: 921.0 against
+885.5, +35.5.** With the owner's 2/5 and the wrong index, Immolate collects 50%
+where the talent grants 20% -- two and a half times the talent on the profile's
+second-largest damage source -- and the published figure would have read **+29.6
+instead of -5.9**, in the right direction, on nobody's authority.
+
+**AND THE 921.0 APPEARS TWICE IN THAT TABLE, WHICH IS NOT THIS PROJECT'S USUAL
+TELL.** "Two variants that agree exactly are a patch that did not apply" -- here
+they agree because they ARE the same configuration: old talents at 5/5 with a
+correct index and new talents at 2/5 with the broken one both give Immolate
+x1.50 under the same list. The identity is explicable, and saying which of the
+two readings applies is the whole reason to check rather than to celebrate.
+
+**THE COMMENT RESTATED THE WRONG INDEX IN ITS OWN WORDS**, "by {2}%" -- the Rip
+lesson repeating, where a wrong reading survives in the prose beside it and the
+figure that would expose it is wrong in the same sentence that asserts it.
+
+**THE TEST ASSERTS THE SLOPE, NOT A VALUE.** Any single-rank check at 5/5 passes
+against both indices, so the only shape that catches this is the rank scaling --
+1.10 / 1.20 / 1.30 / 1.40 / 1.50 against a flat 1.50. `warlockTalents.test.ts`.
+
+**AND ITS THIRD CASE WAS WRONG FIRST.** It expected the preset's Immolate
+multiplier to be 1.20 and read **1.32**, because Agonizing Flames multiplies on
+the same ability id. The code was right and the assertion was not -- so it
+measures Aftermath as a RATIO against the same build without it, with
+`legalAllocation(...).dropped` printed beside it. **An absolute expectation on a
+per-ability multiplier is silently a claim about every talent that lands there.**
+
+### Three points that buy nothing, and will never buy anything
+
+**INTENSITY IS `castPushback`**, which is a permanent ruling rather than a gap:
+the engine resolves a cast time once, before `onCast`, AND no caster profile is
+attacked. **Blocked twice**, which is this project's own test for a ruling.
+
+So the owner's respecification moves three points from a talent worth 30% of
+Immolate's damage into one that is out of scope by construction. **That is the
+figure worth putting in front of them**: the list they wrote is +29.6 and the
+talents they wrote are -38.3, and the two are independent choices.
+
+### The list, and two readings kept apart on purpose
+
+Eight entries. **Bane of Agony is new** -- the first Affliction spell a
+Destruction Warlock casts here, and a trainer spell, so it needs no talent.
+2.0 casts a fight at **9.0% of the profile's damage**.
+
+**BOTH DAMAGE-OVER-TIME ENTRIES GAIN A FIGHT FLOOR AND ONLY ONE IS A
+JUDGEMENT.** Bane of Agony's 25 is `BANE_OF_AGONY_DURATION_MS` plus one, so the
+debuff goes out only if it can run in full; Immolate's 3 is a choice and is the
+owner's.
+
+**AND THE TWO USE DIFFERENT READINGS IN ONE LIST** -- a 1.5-second refresh
+window on Immolate, "is not up" on Bane of Agony. Transcribed as given rather
+than normalised into one, which is the editor's own promise. The shared
+two-second `REFRESH_WINDOW_MS` lost its last caller here and is removed, with
+the reading it stood for kept beside the constant that now uses it.
 
 ## Round nine: where a CONSUMABLE beat every list change in the series
 
@@ -3533,7 +3619,7 @@ demonstrated at the top. **Re-count rather than re-reading the sentence.**
 | --- | --- |
 | **Talents** | 260 fully, 39 partly, 105 ruled out, **62 a live gap**, out of **466** -- from 132 before the class dives |
 | **Abilities** | 114 declared against 478 captured |
-| **Profiles** | **27**, all measured, **mean 774.2** on FOREVER'S OWN ITEMS -- Combat Mut is the first profile ADDED rather than measured, and the count had been 25 since the gear swap -- every earlier figure in this file was measured on Classic and Season of Discovery stand-ins, so the contributions below belong to that gear and not to this mean: the armour enchants were +27.0 of it, the pre-pull consumables +105.9, the racials **+9.8 at round one**, the MID-FIGHT consumables **+17.7** and the Life Tap gate **+3.5** |
+| **Profiles** | **27**, all measured, **mean 774.0** on FOREVER'S OWN ITEMS -- Combat Mut is the first profile ADDED rather than measured, and the count had been 25 since the gear swap -- every earlier figure in this file was measured on Classic and Season of Discovery stand-ins, so the contributions below belong to that gear and not to this mean: the armour enchants were +27.0 of it, the pre-pull consumables +105.9, the racials **+9.8 at round one**, the MID-FIGHT consumables **+17.7** and the Life Tap gate **+3.5** |
 | **Racials** | **10 races, 40 traits**: 15 do something, 20 effects ruled out, 11 a live gap |
 | **Scope rulings** | **9 members**, all the owner's, carrying 129 TALENT entries and 19 racial declarations |
 | **Placeholders** | **11 declared** -- see the milestone table, and count DECLARATIONS. **One of the eleven is not a ruleset number**: `PLACEHOLDER_PREFERRED_WEIGHT` is the Gear panel's stat-sorting weight, which no simulation reads, so it can sort a list badly and cannot move a figure |
@@ -5244,7 +5330,7 @@ cannot audit, which is why the check is a SET comparison and not a row count.
 | DW Fury | Warrior | 17/34/0 | 989.6 | | Shockadin | Paladin | 23/0/28 | 787.7 |
 | LW Ranged | Hunter | 7/39/5 | 912.5 | | Hemo Dagger | Rogue | 17/3/31 | 787.0 |
 | Cat Druid | Druid | 9/34/8 | 892.7 | | Moonkin | Druid | 38/0/13 | 785.9 |
-| Firelock | Warlock | 5/11/35 | 891.4 | | Shadow Priest | Priest | 13/3/35 | 774.7 |
+| Firelock | Warlock | 5/11/35 | 885.5 | | Shadow Priest | Priest | 13/3/35 | 774.7 |
 | Hawk Melee | Hunter | 16/11/24 | 883.0 | | Enh Shaman | Shaman | 17/34/0 | 750.7 |
 | Seal Twist Ret | Paladin | 15/0/36 | 876.4 | | Pure Hemo | Rogue | 21/8/22 | 723.5 |
 | Arcane Mage | Mage | 47/4/0 | 866.8 | | SM/DS | Warlock | 40/11/0 | 722.4 |
@@ -5256,7 +5342,7 @@ cannot audit, which is why the check is a SET comparison and not a row count.
 | Combat Rogue | Rogue | 18/33/0 | 824.1 | | Bear Druid | Druid | 9/42/0 | 386.1 |
 | Combat Mut | Rogue | 30/21/0 | 790.6 | | | | | | |
 
-The mean across **27** is **774.2**, RE-SUMMED FROM THE ROWS ABOVE rather than
+The mean across **27** is **774.0**, RE-SUMMED FROM THE ROWS ABOVE rather than
 adjusted, by `tools/update_baseline_table.py`.
 
 **THE TOP IS DW FURY AT 974.3 +/-10.3, AND LW RANGED IS SECOND AT 888.9

@@ -1,8 +1,22 @@
 import type { Rotation } from '../../engine';
 import type { AplList } from './apl';
 import { RACIAL_COOLDOWNS } from './racialCooldowns';
-import { CONSUMABLE_COOLDOWNS, CONSUMABLE_HEALS } from './consumableCooldowns';
-import { compileRotation, resourceFraction, selfHas, targetExpired, targetTime } from './apl';
+import {
+  buffPotionCooldown,
+  consumableCooldowns,
+  CONSUMABLE_COOLDOWNS,
+  CONSUMABLE_HEALS,
+} from './consumableCooldowns';
+import {
+  all,
+  compileRotation,
+  fightRemaining,
+  resourceFraction,
+  selfHas,
+  targetExpired,
+  targetMissing,
+  targetTime,
+} from './apl';
 import type { TalentAllocation } from '../talents/Talent';
 
 /**
@@ -23,16 +37,28 @@ import type { TalentAllocation } from '../talents/Talent';
  * ----------------------------------------------------------------------------
  */
 
-/** Refresh a debuff when it is nearly gone, not on cooldown. */
-const REFRESH_WINDOW_MS = 2000;
-
-const missing = (auraId: string) =>
-  /*
-   * A STRICT `<` AGAINST THE WINDOW, which is what the closure wrote. `below`
-   * rather than `atMost` matters at exactly the boundary, and the boundary is
-   * a value a tick can land on.
-   */
-  targetTime('below', REFRESH_WINDOW_MS / 1000, auraId);
+/*
+ * ============================================================================
+ * THE SHARED TWO-SECOND REFRESH WINDOW IS GONE, AND ITS LAST CALLER WENT WITH
+ * THE OWNER'S FIRELOCK LIST.
+ *
+ * It was `targetTime('below', 2, auraId)` -- a STRICT `<`, because that is
+ * what the original closure wrote and `below` differs from `atMost` at
+ * exactly the boundary, which is a value a tick can land on.
+ *
+ * BOTH LISTS ARE THE OWNER'S NOW and neither wants it: the Affliction list
+ * asks "if not active" and the Firelock list carries its own, TIGHTER window
+ * of 1.5 seconds on Immolate alone. So the constant is removed rather than
+ * left for a caller that no longer exists -- and the reading it stood for is
+ * kept where it is now used, beside `IMMOLATE_REFRESH_SECONDS`.
+ *
+ * WHAT THE WINDOW COSTS IS STILL THE THING TO KNOW. A refresh RESETS the
+ * aura, so whatever is left on the clock is thrown away, and the faster the
+ * character acts the sooner it reaches the entry inside the window and the
+ * more it clips. Measured on the Moonkin, where Nature's Grace cost 14.9 DPS
+ * doing nothing but speeding it up.
+ * ============================================================================
+ */
 
 /**
  * "IF NOT ACTIVE", which is the ruleset owner's wording and is NOT the same as
@@ -53,6 +79,42 @@ const missing = (auraId: string) =>
  * ----------------------------------------------------------------------------
  */
 const expired = targetExpired;
+
+/** "<debuff> is not up" on the target -- `auras.has`, not the clock. */
+const targetLacks = targetMissing;
+
+/** "<debuff> has at most N seconds left" on the target. */
+const targetAuraAtMost = (auraId: string, secondsLeft: number) =>
+  targetTime('atMost', secondsLeft, auraId);
+
+/**
+ * What the Firelock's two damage-over-time entries wait for, both the owner's.
+ *
+ * ============================================================================
+ * A ONE-AND-A-HALF SECOND REFRESH WINDOW ON IMMOLATE, which is this file's
+ * `REFRESH_WINDOW_MS` tightened by half a second -- and it is a WINDOW rather
+ * than the "if not active" the owner's other lists use, which is worth saying
+ * because this file already records what a window costs: a refresh RESETS the
+ * aura, so whatever is left is thrown away, and the faster the character acts
+ * the sooner it reaches the entry inside the window.
+ *
+ * AND A FIGHT FLOOR UNDER EACH, which is new here and is the half that derives
+ * cleanly. A damage-over-time effect applied with less fight left than its own
+ * duration is mana and a global cooldown spent on ticks nobody collects:
+ *
+ *     Immolate       15s burn, floor  3s  -- a fifth of it, loose
+ *     Bane of Agony  24s burn, floor 25s  -- ONE SECOND MORE THAN ITS OWN
+ *                                            DURATION, so it goes out only if
+ *                                            it can run in full
+ *
+ * SO BANE OF AGONY'S FLOOR IS NOT A JUDGEMENT AT ALL -- 25 is
+ * `BANE_OF_AGONY_DURATION_MS` plus one, and a reader can check it against the
+ * constant. Immolate's 3 is a choice, and it is the owner's.
+ * ============================================================================
+ */
+const IMMOLATE_REFRESH_SECONDS = 1.5;
+const IMMOLATE_FIGHT_FLOOR_SECONDS = 3;
+const BANE_OF_AGONY_FIGHT_FLOOR_SECONDS = 25;
 
 /** "this aura is on the actor", for a proc the next action should spend. */
 const actorHas = selfHas;
@@ -226,19 +288,75 @@ export const WARLOCK_AFFLICTION: AplList = {
 export const WARLOCK_DESTRUCTION: AplList = {
   name: 'Warlock (Firelock)',
   entries: [
-  { abilityId: 'immolate', condition: missing('immolate') },
+  /*
+   * THE SPELLBLASTING POTION OPENS THE LIST, the owner's order and the third
+   * list to take it -- the Elemental Shaman and the Moonkin are the others. A
+   * free off-GCD cast pushes the next decision one 100ms poll out, which is
+   * what destroyed Charge at the top of a Warrior list; nothing here has a
+   * one-instant window for that poll to miss.
+   */
+  buffPotionCooldown('major_spellblasting_potion'),
   /*
    * THE RACIAL COOLDOWNS, AFTER WHATEVER OPENS THIS LIST.
    *
-   * Free, off the global cooldown, and skipped in silence by every build
-   * that is not of the race that learns them. BOTH ENDS OF THE LIST WERE
-   * MEASURED AND BOTH WERE WRONG -- see `racialCooldowns.ts`.
+   * Free, off the global cooldown, and skipped in silence by every build that
+   * is not of the race that learns them -- which is this one. Firelock is
+   * UNDEAD and Touch of the Grave is a passive proc rather than an entry, so
+   * no racial row appears on the owner's panel at all and their position here
+   * is this file's choice rather than a transcription.
    */
   ...RACIAL_COOLDOWNS,
-  ...CONSUMABLE_COOLDOWNS,
-  ...CONSUMABLE_HEALS,
-  { abilityId: 'conflagrate' },
+  /*
+   * SHADOWBURN SECOND, WHERE IT WAS SIXTH -- the one reorder in this list that
+   * changes WHICH spell gets a global cooldown rather than only when. It is
+   * instant and it was below Conflagrate; both now sit above the filler.
+   */
   { abilityId: 'shadowburn' },
+  /*
+   * IMMOLATE ON A TIGHT WINDOW AND A FIGHT FLOOR, where it was "if not active".
+   * See the constants for why Bane of Agony's floor derives and this one does
+   * not.
+   */
+  {
+    abilityId: 'immolate',
+    condition: all(
+      targetAuraAtMost('immolate', IMMOLATE_REFRESH_SECONDS),
+      fightRemaining('atLeast', IMMOLATE_FIGHT_FLOOR_SECONDS),
+    ),
+  },
+  { abilityId: 'conflagrate' },
+  /*
+   * ==========================================================================
+   * BANE OF AGONY IS NEW TO THIS LIST, and it is the first Affliction spell a
+   * Destruction Warlock casts here.
+   *
+   * "IS NOT UP" RATHER THAN A WINDOW, which is the owner's other reading and
+   * the one this project measured as better: a refresh RESETS the aura, and a
+   * 24-second debuff clipped at two seconds throws away a twelfth of itself on
+   * every application. The Immolate entry above uses a window and this one
+   * does not, so BOTH READINGS SIT IN ONE LIST -- transcribed as given rather
+   * than normalised, which is the editor's own promise.
+   *
+   * THE BUILD CAN CAST IT: Bane of Agony is a trainer spell, so the entry is
+   * live on a build that spends nothing in Affliction beyond Suppression.
+   * ==========================================================================
+   */
+  {
+    abilityId: 'bane_of_agony',
+    condition: all(
+      targetLacks('bane_of_agony'),
+      fightRemaining('atLeast', BANE_OF_AGONY_FIGHT_FLOOR_SECONDS),
+    ),
+  },
+  /*
+   * AND THE REST OF THE CONSUMABLES DOWN HERE WITH LIFE TAP, which is the
+   * owner's split and reads as one decision rather than two: the Demonic Rune
+   * at 10% mana and Life Tap at 5% are a LADDER down the same pool, and the
+   * Rune is the rung that costs no global cooldown. Putting them together is
+   * what makes that legible on the panel.
+   */
+  ...consumableCooldowns({ exclude: ['major_spellblasting_potion'] }),
+  ...CONSUMABLE_HEALS,
   /*
    * NO CORRUPTION, by the ruleset owner's instruction. It was 10.3% of this
    * profile's damage and it is out: a 2-second cast and a global cooldown spent

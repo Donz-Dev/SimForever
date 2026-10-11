@@ -1157,18 +1157,48 @@ const WARLOCK_AFFLICTION_TALENTS: TalentAllocation = {
   demonic_sacrifice: 1,
 };
 
+/**
+ * FIRELOCK -- 5 Affliction / 11 Demonology / 35 Destruction, respecified.
+ *
+ * ============================================================================
+ * THREE POINTS OUT OF AFTERMATH AND INTO INTENSITY, and nothing else moves.
+ * Both halves are worth reading, because they fail in opposite directions.
+ *
+ *   INTENSITY      "a 70% chance to resist interruption caused by damage while
+ *                  casting or channeling any Destruction spell" -- which is
+ *                  `castPushback`, a PERMANENT RULING rather than a gap. The
+ *                  engine resolves a cast time once, before `onCast`, AND no
+ *                  caster profile is attacked: blocked twice, which is this
+ *                  project's own test for a ruling. So three points buy
+ *                  exactly nothing here and will never buy anything.
+ *   AFTERMATH 5->2 Immolate's initial damage falls from +50% to +20%.
+ *
+ * AND THE SECOND HALF IS WHY THIS COMMIT IS NOT JUST AN ALLOCATION EDIT.
+ * `aftermath` declared `valueIndex: 2`, which is the MOVEMENT SPEED of its
+ * daze clause -- constant at 50 across every rank. At 5/5 the correct figure
+ * is also 50, so the wrong index was invisible; at 2/5 it would have paid 50
+ * where the talent grants 20. **The owner's talent change is what turns a
+ * dormant bug into a live one**, and `warlockEffects.ts` carries the table.
+ *
+ * All three tree totals sum from the icons: 5, 11 and 35 is 51.
+ * ============================================================================
+ */
 const WARLOCK_DESTRUCTION_TALENTS: TalentAllocation = {
+  // Affliction, 5
   suppression: 5,
+  // Demonology, 11
   demonic_embrace: 5,
   demonic_aegis: 2,
   fel_vitality: 3,
   demonic_sacrifice: 1,
+  // Destruction, 35
   destructive_reach: 2,
   bane: 5,
   cataclysm: 3,
-  aftermath: 5,
+  aftermath: 2,
   ruin: 5,
   shadowburn: 1,
+  intensity: 3,
   agonizing_flames: 3,
   conflagrate: 1,
   bane_of_havoc: 1,
