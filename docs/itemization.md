@@ -523,7 +523,14 @@ costs one command:
 STAMINA=0.67 FOREVER=1 npx vite-node tools/item_budget.ts
 ```
 
-## Is spell power devalued in Forever?
+## Is spell power devalued in Forever? — no, and the healing items were hiding it
+
+**THE SECTION BELOW IS SUPERSEDED.** Its figures mixed healing items in with
+damage ones, and the healing items are the whole effect. Separated, spell power
+shows no anomaly at all. See
+**[It was healing, not spell power](#it-was-healing-not-spell-power)**.
+
+## Is spell power devalued in Forever? (figures with healing items mixed in)
 
 The ruleset owner's suspicion: Forever shaved spell power's cost so more of it
 fits on an item. **The control group can separate that from the model being
@@ -589,6 +596,73 @@ same trap as stamina, one parameter along.
 ```bash
 SPELLPOWER=0.91 STAMINA=1.0 FOREVER=1 npx vite-node tools/item_budget.ts
 ```
+
+## It was healing, not spell power
+
+The owner's follow-up — *ignore the items that have healing and spell power
+together, that may be a different case* — turned out to be the whole thing.
+
+Excluding every item carrying a Healing line, and comparing against items with
+no spell power at all:
+
+| | pure spell power | no spell power | difference |
+| --- | --- | --- | --- |
+| **Classic's own** (control) | 102.2% ±0.6 (n=67) | 101.5% ±1.8 (n=74) | **+0.7 ±1.9** |
+| Forever new, not PvP | 100.3% ±2.6 (n=28) | 100.8% ±0.7 (n=33) | **−0.5 ±2.7** |
+| Forever new, PvP | 104.7% ±1.0 (n=22) | 101.8% ±0.3 (n=24) | +2.9 ±1.0 |
+
+**There is no spell-power anomaly.** Forever's non-PvP damage-caster items sit
+*slightly under* the items with no spell power at all, and its premium over
+Classic is **−1.3 ±3.3**. The hypothesis is not merely unsupported here, it is
+pointing the other way.
+
+And the best-fit cost, healing excluded:
+
+| | school-blind | vs transcribed 0.86 |
+| --- | --- | --- |
+| **Classic's own** (control) | **0.817** | −5% |
+| **Forever new, not PvP** | **0.851** | **−1%** |
+
+**Forever's damage-caster items fit the transcribed cost better than Classic's
+own do.** The earlier "0.783, about 9% cheaper" was healing contamination.
+
+### The healing items are the ones over budget
+
+| at healing = 0.45 | | healing's share of their budget |
+| --- | --- | --- |
+| Classic's own | **107.4%** (n=34) | 36% |
+| Forever new, not PvP | **112.1%** (n=20) | 22% |
+| Forever new, PvP | **117.3%** (n=20) | 13% |
+
+### And the likely reason is that the pair is one purchase
+
+Forever writes a healer item as **two lines** — "+33 Healing" *and* "+11 Spell
+Damage" — at a ratio of **3.0 across every pair in the data** (2.86 to 3.14,
+with one 20/20 outlier). Charging both treats one design decision as two
+purchases. Dropping the paired spell damage:
+
+| | charging both | pair as one purchase |
+| --- | --- | --- |
+| Classic's own | 107.4% | **104.1%** |
+| Forever new, not PvP | 112.1% | **102.8%** |
+| Forever new, PvP | 117.3% | 112.1% |
+
+`HEALRIDER=1` re-runs any of it. **It is not the default**: it is a third
+fitted reading of the same residual and the source says nothing about it.
+
+**NOTE HOW THE BEST-FIT HEALING COST FALLS AS HEALING'S SHARE FALLS** — 0.36
+for the control at 36% share, 0.20 for Forever at 22%, 0.10 for PvP at 13%.
+That is the fit blaming whatever it is allowed to move, the same hazard the
+stamina and spell-power sweeps both hit. **A best-fit figure is only worth
+reading beside the share of budget that stat actually commands.**
+
+### What the owner's question actually did
+
+It is the fourth correction in this thread and the only one that came from
+**narrowing the population rather than widening the data**. Each earlier fix
+needed a new capture; this one needed somebody to notice that two kinds of item
+had been put in one bucket. **Mixing two populations and fitting a parameter to
+the blend produces a confident number for a thing that does not exist.**
 
 ## Forever's rewrites confirm the rating table independently
 

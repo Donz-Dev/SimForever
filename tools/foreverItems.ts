@@ -221,6 +221,29 @@ export function priceableStats(item: ForeverRawItem): PricedStats {
     unpriced.push(`${effect.kind}: ${effect.text}`);
   }
 
+  /*
+   * THE HEALER PAIR IS ARGUABLY ONE PURCHASE, AND `HEALRIDER=1` PRICES IT AS
+   * ONE.
+   *
+   * --------------------------------------------------------------------------
+   * Forever writes a healer item as TWO lines -- "+33 Healing" and "+11 Spell
+   * Damage" -- at a ratio of 3.0 across every pair in the data (2.86 to 3.14,
+   * with one 20/20 outlier). Charging both treats a single design decision as
+   * two purchases, and the healing items are exactly the ones that run over
+   * budget: 107.4% for Classic's own, 112.1% for Forever's non-PvP.
+   *
+   * Dropping the paired spell damage takes Forever's non-PvP healing items
+   * from **112.1% to 102.8%** and Classic's from 107.4% to 104.1%.
+   *
+   * NOT THE DEFAULT, because it is a third fitted reading of the same residual
+   * and the source says nothing about it. It is here so the question can be
+   * re-asked in one command instead of argued about.
+   * --------------------------------------------------------------------------
+   */
+  if (process.env.HEALRIDER && stats.Healing && stats['Spell Damage']) {
+    delete stats['Spell Damage'];
+  }
+
   return { stats, unpriced, setBonuses };
 }
 

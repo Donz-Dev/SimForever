@@ -3490,6 +3490,33 @@ model**: if the fitted crit cost of 16 or a slot multiplier is wrong, this is
 where it shows up. The source's 0.67 and the footnote's 1.0 BRACKET it, and
 the sourced era-correct 1.0 is the default.
 
+**AND THE SPELL POWER ANSWER WAS WRONG TOO UNTIL THE OWNER SPLIT THE
+POPULATION.** Asked to re-run ignoring items that carry healing AND spell power
+together -- "that may be a different case" -- the effect vanished entirely:
+pure damage-caster items run **+0.7 +/- 1.9** over non-caster items in Classic
+and **-0.5 +/- 2.7** in Forever's non-PvP gear, and the best-fit cost is
+**0.851 for Forever against a transcribed 0.86**. Forever's caster items fit
+the stated cost BETTER than Classic's own do.
+
+**THE ANOMALY IS HEALING, AND IT WAS CONTAMINATING THE SPELL POWER SIGNAL.**
+Healing items run 107.4% (Classic), 112.1% (Forever non-PvP), 117.3% (PvP).
+Forever writes a healer item as TWO lines -- "+33 Healing" and "+11 Spell
+Damage", at a ratio of 3.0 across every pair in the data -- and charging both
+treats one design decision as two purchases: dropping the rider takes Forever's
+non-PvP healing items from 112.1% to **102.8%**.
+
+**MIXING TWO POPULATIONS AND FITTING A PARAMETER TO THE BLEND PRODUCES A
+CONFIDENT NUMBER FOR A THING THAT DOES NOT EXIST**, which is what "spell power
+is 9% too expensive" was. It is the fourth correction in this thread and the
+only one that came from NARROWING the population rather than widening the data
+-- every earlier fix needed a new capture; this one needed somebody to notice
+that two kinds of item were in one bucket.
+
+**AND THE BEST-FIT COST FALLS AS THE STAT'S SHARE OF BUDGET FALLS** -- healing
+fits 0.36 at a 36% share, 0.20 at 22%, 0.10 at 13%. The fit blames whatever it
+is allowed to move. **Read a best-fit figure beside the share of budget that
+stat actually commands**, or it is answering a different question.
+
 **AND THE SAME METHOD ANSWERED THE SPELL POWER QUESTION WITHOUT A FOURTH WRONG
 ANSWER, WHICH IS THE POINT OF HAVING IT.** Asked whether Forever devalued spell
 power to fit more on an item, the control separates "the model's cost is wrong"
