@@ -16,6 +16,7 @@ import {
   qualityBase,
   shieldBlockValue,
   spreadRating,
+  staminaFloor,
   statsFor,
   type ArmourClass,
   type BenchStat,
@@ -203,6 +204,23 @@ const toLines = (
   return { effects, spent: spent === 0 ? 0 : spent ** (1 / BUDGET_EXPONENT) };
 };
 
+/**
+ * The stamina a generated line list came out with.
+ *
+ * Read back off the TOOLTIP TEXT rather than tracked alongside it, for the same
+ * reason the whole generator writes text and parses it: one source of truth. If
+ * `LINE.Stamina` ever changes its wording this returns zero and the floor
+ * applies on every piece, which is visible -- where a parallel tally would
+ * quietly disagree with what the item says.
+ */
+function staminaIn(effects: readonly { kind: string; text: string }[]): number {
+  for (const effect of effects) {
+    const match = effect.text.match(/^\+(\d+) Stamina$/);
+    if (match) return Number(match[1]);
+  }
+  return 0;
+}
+
 function makeItem(
   id: number,
   name: string,
@@ -326,7 +344,49 @@ export function benchmarkItemsFor(
     if (h) fixed.set('Hit', h);
     const e = expertise.get(plan.slot);
     if (e) fixed.set('Expertise', e);
-    const { effects, spent } = toLines(fixed, statsFor(plan, template.preferred), budget);
+    /*
+     * EVERY ARMOUR-CLASS PIECE CARRIES STAMINA, AS A FLOOR.
+     *
+     * ------------------------------------------------------------------------
+     * `staminaFloor` is the owner's share of the slot's budget, and it applies
+     * to the EIGHT armour slots only -- not the cloak, not the jewellery, not a
+     * weapon. The owner named those eight, and 93.3% of Forever's own clean
+     * armour pieces carry stamina against a generator that dropped it whenever
+     * it fell outside a template's stat count.
+     *
+     * A FLOOR, SO A TANK IS UNTOUCHED. The Bear and both Protection builds lead
+     * with stamina and already buy several times this; the two-pass below only
+     * intervenes when the preference allocation would come in under it.
+     *
+     * AND WHEN IT DOES INTERVENE, STAMINA MOVES OUT OF THE SHARE LIST AND INTO
+     * `fixed`. Leaving it in both would pay it twice -- the floor plus its own
+     * share -- which is the double-count that `toLines` cannot see, because
+     * `fixed` is added before the shares are divided and nothing cross-checks
+     * the two.
+     * ------------------------------------------------------------------------
+     */
+    const chosen = statsFor(plan, template.preferred);
+    let shares = chosen;
+    if (!plan.noArmour && plan.slot !== 'cloak') {
+      /*
+       * CLAMPED BY WHAT THE RATINGS ALREADY TOOK. Hit and expertise are in
+       * `fixed` and cost real budget, so the floor has to be what the slot can
+       * still afford -- a B55 medium slot carrying 25 Hit Rating has 3% of its
+       * budget left and cannot have six stamina on top of it.
+       */
+      const committed = [...fixed.entries()].reduce(
+        (sum, [stat, value]) => sum + (value * COST[stat]) ** BUDGET_EXPONENT,
+        0,
+      );
+      const floor = staminaFloor(budget, committed);
+      const firstPass = toLines(fixed, chosen, budget);
+      if (floor > 0 && staminaIn(firstPass.effects) < floor) {
+        fixed.set('Stamina', floor);
+        shares = chosen.filter((stat) => stat !== 'Stamina');
+      }
+    }
+
+    const { effects, spent } = toLines(fixed, shares, budget);
     const armour = plan.noArmour ? null : baseArmour(plan.inventory, template.armour, set.itemLevel);
     items.push(
       makeItem(

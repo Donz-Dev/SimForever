@@ -388,6 +388,80 @@ export const ARMOUR_SLOTS: readonly SlotPlan[] = [
 export const SHIELD_STATS = 3;
 
 /**
+ * EVERY ARMOUR-CLASS PIECE CARRIES STAMINA, AS A FLOOR ON ITS BUDGET.
+ *
+ * ==============================================================================
+ * THE OWNER'S OBSERVATION: "It's strange to me that stamina was dropped on some
+ * of the template items. This was meant to produce very similar items to
+ * forever items. Typically all armor class items have stamina -- and I believe
+ * the figure was around 10-15% of its item budget for those 8 slots."
+ *
+ * AND THEY WERE RIGHT ABOUT THE FIRST HALF. Stamina was bought only when it sat
+ * inside a template's stat count, so a Rogue's wrists got none (fifth of five
+ * preferences on a three-stat slot) and Seal Twist Ret got none ANYWHERE
+ * (stamina is sixth of its seven). **93.3% of Forever's own clean armour pieces
+ * carry stamina** -- 639 of 685 -- so an armour piece without any is the
+ * exception and the generator was making it the rule.
+ *
+ * A FLOOR AND NOT A FIXED AMOUNT, which is what keeps a tank unharmed. The Bear
+ * and both Protection builds lead with stamina and already buy far more than
+ * this; the floor only tops up a slot that would otherwise drop it. Dropping it
+ * INTO the preference order instead would have moved stamina ahead of a
+ * build's first choice on every piece.
+ *
+ * ------------------------------------------------------------------------------
+ * THE SHARE IS THE OWNER'S FIGURE AND THE DATA SAYS IT IS ABOUT HALF WHAT
+ * FOREVER CARRIES. Measured by `tools/stamina_share.ts` over Forever's own
+ * clean NON-PvP armour, stamina's median share of `budget^1.5` is:
+ *
+ *     head 30.4%   shoulders 25.0%   chest 20.5%   wrists 22.6%
+ *     gloves 24.6%  waist 24.4%      legs 30.0%    feet 35.0%
+ *
+ * -- a median of about 25% across the eight, against this 12.5%. At E65 that is
+ * 12 stamina on a chest where Forever's own median is 17, and 12 on a head
+ * where Forever's is 24.
+ *
+ * **THE OWNER'S NUMBER IS USED ANYWAY, AND THE DISCREPANCY IS WHY THIS NOTE IS
+ * HERE.** They said "I believe", which marks a recollection rather than a
+ * ruling, and raising it is a one-line change -- but inventing a different
+ * figure because the data suggests one is exactly what this project does not
+ * do. The PvP sets, which are not the comparison, sit at 55.9%.
+ *
+ * MEASURED IN THE CURRENCY THE BUDGET IS SPENT IN, which is the 3/2 power:
+ * `stamina = (share x budget^1.5)^(2/3) / cost`. The linear reading --
+ * `stamina = share x budget` -- gives 6 on a chest instead of 12, and the two
+ * are a factor of two apart on every slot. Both are printed by the tool so the
+ * choice is visible rather than implied.
+ * ==============================================================================
+ */
+export const STAMINA_BUDGET_SHARE = 0.125;
+
+/**
+ * The least stamina an armour-class piece carries, for a slot of this budget.
+ *
+ * ----------------------------------------------------------------------------
+ * `alreadySpent` IS THE BUDGET POINTS THE SLOT HAS ALREADY COMMITTED, at the
+ * 3/2 power, and the floor is CLAMPED to what is left. Without it the floor
+ * pushes an item over its own budget, which is what happened on 48 of them: a
+ * B55 medium slot has a budget of 25.6 and a Rogue's hit lands 25 Hit Rating on
+ * it, which alone is 97% of `budget^1.5` -- so six stamina on top came out at
+ * 26.9 of 25.6.
+ *
+ * THAT IS THE OWNER'S OWN RULE BITING, not a bug in it: "even though the needed
+ * hit cap is mandatory, IT STILL COUNTS AGAINST THE STAT BUDGET ON THE ITEMS."
+ * A 120-hit Rogue at BLUE item level 55 really is spending almost everything on
+ * hit, and the honest answer is that such a slot cannot afford the floor -- not
+ * that the floor wins and the budget gives way.
+ * ----------------------------------------------------------------------------
+ */
+export function staminaFloor(budget: number, alreadySpent = 0): number {
+  const wanted = (STAMINA_BUDGET_SHARE * budget ** BUDGET_EXPONENT) ** (1 / BUDGET_EXPONENT);
+  const remaining = Math.max(0, budget ** BUDGET_EXPONENT - alreadySpent);
+  const affordable = remaining ** (1 / BUDGET_EXPONENT);
+  return Math.floor(Math.min(wanted, affordable) / COST.Stamina);
+}
+
+/**
  * Where hit and expertise go, in order.
  *
  * A REALISM RULE AND NOT AN ARITHMETIC ONE. The budget does not care which slot
