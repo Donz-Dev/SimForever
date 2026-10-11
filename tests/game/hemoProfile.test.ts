@@ -101,21 +101,67 @@ describe('the Hemo list', () => {
     expect(ROGUE_RUPTURE.entries.map((e) => e.abilityId)).toContain('backstab');
   });
 
-  it('is the Rupture list in the Rupture list’s order, otherwise', () => {
+  it('is a list of its OWN now, and differs from Rupture in four places', () => {
     /*
-     * IT IS DERIVED FROM `ROGUE_RUPTURE` RATHER THAN TRANSCRIBED, so that
-     * anything measured into the Rupture list reaches this one for free. Two
-     * near-identical lists maintained by hand DRIFT, and the drift is invisible:
-     * an entry is four lines and a difference reads as deliberate.
+     * ==========================================================================
+     * IT WAS `ROGUE_RUPTURE.entries.filter(...)` AND THIS TEST ASSERTED THAT.
      *
-     * This is the test that the derivation is still a derivation. It compares the
-     * ORDER of everything the two lists share, so an entry inserted into Rupture
-     * in the wrong place here would fail rather than being absorbed.
+     * The derivation was right while the two lists agreed on every number, and
+     * it is what this project argues for everywhere else: two near-identical
+     * lists maintained by hand DRIFT, and the drift is invisible, because an
+     * entry is four lines and a difference reads as deliberate.
+     *
+     * IT IS ALSO WHY THIS PROFILE MOVED +10.4 ON NOBODY'S INSTRUCTION one
+     * round ago, inheriting four Rupture changes it had never been given.
+     *
+     * THE OWNER HAS NOW GIVEN IT ITS OWN NUMBERS, and they differ in every one
+     * of the four places the two lists overlap. A derivation that has to
+     * override four of eleven entries is a copy with extra steps, and the
+     * overrides are exactly where the two would drift -- so it is a list.
+     *
+     * WHAT THIS TEST DOES NOW IS NAME THE DIFFERENCES, so a future edit that
+     * quietly re-aligns one of them has to say so.
+     * ==========================================================================
      */
-    const shared = ROGUE_RUPTURE.entries.map((e) => e.abilityId).filter(
-      (id) => id !== 'backstab' && id !== 'hemorrhage',
-    );
-    expect(ids.filter((id) => id !== 'hemorrhage')).toEqual(shared);
+    const gate = (list: typeof ROGUE_HEMO, abilityId: string) =>
+      JSON.stringify(list.entries.find((e) => e.abilityId === abilityId)?.condition);
+
+    // Rupture: three points here, four there, and no Hemorrhage clause here.
+    expect(gate(ROGUE_HEMO, 'rupture')).toContain('"points":3');
+    expect(gate(ROGUE_RUPTURE, 'rupture')).toContain('"points":4');
+    expect(gate(ROGUE_HEMO, 'rupture')).not.toContain('hemorrhage');
+    expect(gate(ROGUE_RUPTURE, 'rupture')).toContain('hemorrhage');
+
+    // Eviscerate: EXACTLY five here against four or more there, and a
+    // four-second floor against six.
+    expect(gate(ROGUE_HEMO, 'eviscerate')).toContain('"compare":"exactly","points":5');
+    expect(gate(ROGUE_RUPTURE, 'eviscerate')).toContain('"compare":"atLeast","points":4');
+    expect(gate(ROGUE_HEMO, 'eviscerate')).toContain('"seconds":4');
+    expect(gate(ROGUE_RUPTURE, 'eviscerate')).toContain('"seconds":6');
+
+    // And Cold Blood is in this list and in no other Subtlety one -- the
+    // talent is new on this build, paid for out of Improved Slice and Dice.
+    expect(ids).toContain('cold_blood');
+    expect(ROGUE_RUPTURE.entries.map((e) => e.abilityId)).not.toContain('cold_blood');
+  });
+
+  it('shares its SHAPE with the Rupture list, which is still the point', () => {
+    /*
+     * The numbers diverged and the skeleton did not: both open with
+     * Premeditation, both put Ambush above Vanish so the sequence emerges from
+     * the priorities, and both end with Preparation over a filler. Asserted
+     * because "it is its own list now" is the kind of change that invites
+     * someone to reorder it freely.
+     */
+    const order = (list: typeof ROGUE_HEMO, abilityId: string) =>
+      list.entries.findIndex((e) => e.abilityId === abilityId);
+    for (const list of [ROGUE_HEMO, ROGUE_RUPTURE]) {
+      expect(order(list, 'premeditation')).toBe(0);
+      expect(order(list, 'ambush')).toBeLessThan(order(list, 'vanish'));
+      expect(order(list, 'slice_and_dice')).toBeLessThan(order(list, 'rupture'));
+      expect(order(list, 'rupture')).toBeLessThan(order(list, 'eviscerate'));
+      expect(order(list, 'preparation')).toBeGreaterThan(order(list, 'eviscerate'));
+    }
   });
 
   it('puts Hemorrhage last and ungated, as the filler', () => {

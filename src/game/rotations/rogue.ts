@@ -69,14 +69,22 @@ import { AMBUSH_ENERGY_COST } from '../abilities/rogue';
 /** "combo points >= N", read through the TARGET so a stale pool reads zero. */
 const atLeastPoints = (minimum: number) => comboPoints('atLeast', minimum);
 
-/*
- * `exactlyPoints` IS GONE, AND SO IS EVERY `exactly` GATE IN THIS FILE. All
- * three Rogue finisher gates the owner respecified read `atLeast` now -- Venom
- * at three, Combat at five, Rupture at four -- so the helper had no caller
- * left. `atLeast` at the cap and `exactly` at the cap are the same test; they
- * stop being the same the moment a cap moves, which is why the owner's wording
- * is followed rather than preserved.
+/**
+ * "exactly N", which the Hemo Dagger list uses for both of its finisher gates.
+ *
+ * ----------------------------------------------------------------------------
+ * IT WAS DELETED ONE ROUND AGO AND IS BACK, which is worth a sentence rather
+ * than a silent restore. Every `exactly` gate went to `atLeast` when the owner
+ * respecified Venom, Combat and Rupture -- and their Hemo Dagger panel reads
+ * `=` on Cold Blood and Eviscerate, so the helper has callers again.
+ *
+ * `atLeast` AT THE CAP AND `exactly` AT THE CAP ARE THE SAME TEST TODAY. They
+ * stop being the same the moment a cap moves, which is why the owner's own
+ * wording is followed in each list rather than normalised across them.
+ * ----------------------------------------------------------------------------
  */
+const exactlyPoints = (count: number) => comboPoints('exactly', count);
+
 
 /** "<buff> is not active", on the Rogue. */
 const selfAuraDown = (auraId: string) => selfTime('atMost', 0, auraId);
@@ -818,67 +826,142 @@ export const ROGUE_RUPTURE: AplList = {
  * affordable.
  * ----------------------------------------------------------------------------
  */
+/**
+ * What the Hemo Dagger list spends and waits for. All four are the owner's.
+ *
+ * ----------------------------------------------------------------------------
+ * EVERY ONE OF THEM DIFFERS FROM THE RUPTURE LIST'S, which is why this list is
+ * no longer derived from it -- see the list itself.
+ *
+ *   Rupture at THREE points, where the Rupture list spends four.
+ *   Both finishers at EXACTLY FIVE, where that list takes four or more.
+ *   The floors at FOUR seconds, where that list waits six.
+ *
+ * SO THE TWO BUILDS WANT OPPOSITE THINGS FROM THE SAME POOL. The Rupture list
+ * has Backstab, so points are cheap and a bleed can afford to wait; this one
+ * has Hemorrhage as its only builder and a much lower point income, so the
+ * bleed goes out earlier and the direct finishers wait for the full five.
+ * ----------------------------------------------------------------------------
+ */
+const HEMO_RUPTURE_POINTS = 3;
+const HEMO_SLICE_AND_DICE_POINTS = 1;
+const HEMO_FLOOR_SECONDS = 4;
+
 export const ROGUE_HEMO: AplList = {
-  name: 'Rogue (Subtlety, Hemo)',
+  name: 'Rogue (Subtlety, Hemo Dagger)',
   entries: [
   /*
-   * Everything above the filler, in the Rupture list's own order.
-   */
-  ...ROGUE_RUPTURE.entries.filter(
-    (entry) => entry.abilityId !== 'backstab' && entry.abilityId !== 'hemorrhage',
-  ),
-  /*
-   * NO RACIAL COOLDOWNS OF ITS OWN: the spread above already carries them.
-   *
-   * This list is another list's entries plus a change, so `RACIAL_COOLDOWNS`
-   * arrives inside that spread -- in the position the other list put them,
-   * which is the position this list wants too. Adding them here as well put
-   * four abilities in twice, and `rotationIds.test.ts` caught it as a duplicate
-   * below an unconditional copy: a second entry for an ability on cooldown is
-   * unreachable, which reads as a list four entries longer than it is.
-   */
-  /*
    * ==========================================================================
-   * HEMORRHAGE UNGATED, AND IT IS WORTH +108.9 -- 416.9 to 525.8.
+   * IT IS A LIST OF ITS OWN NOW, AND IT WAS `ROGUE_RUPTURE.entries.filter(...)`.
    *
-   * REMOVING BACKSTAB REMOVED THE LIST'S ONLY UNGATED BUILDER, and nothing in
-   * the entries above it is castable on demand: Premeditation and Vanish are on
-   * minute cooldowns, Ambush needs a stealth window this build can only get from
-   * Vanish, and the three finishers need combo points this list then has no way
-   * to earn. With Hemorrhage still gated on its own debuff, the profile wasted
-   * 272.7 energy a fight at the cap -- a THIRD of its income -- and spent global
-   * cooldowns doing nothing.
+   * THE DERIVATION WAS RIGHT WHILE THE TWO LISTS AGREED ON EVERY NUMBER. It is
+   * what this file argues for everywhere else -- a hand-written copy of eleven
+   * entries drifts from its original silently, and the copy is the one nobody
+   * re-reads -- and it is why the Hemo profile moved +10.4 last round on
+   * nobody's instruction, inheriting four Rupture changes it had never been
+   * given.
    *
-   * THE GATE'S OWN JUSTIFICATION WENT WITH BACKSTAB, which is why this is not a
-   * second opinion about the owner's list. The Rupture list's note reads
-   * "gated on its own debuff having a second left, it MAINTAINS and Backstab
-   * BUILDS" -- the gate was correct because something else was doing the
-   * building, and it made Hemorrhage a floor that starved Ghostly Strike and
-   * Sinister Strike beneath it. HERE THERE IS NOTHING BENEATH IT, so the floor
-   * costs nothing and the building has to come from somewhere.
+   * THE OWNER HAS NOW GIVEN IT ITS OWN NUMBERS, and they differ from the
+   * Rupture list's in every one of the four places the two lists overlap. A
+   * derivation that has to override four of eleven entries is not a derivation
+   * any more; it is a copy with extra steps, and the overrides are where the
+   * two would drift.
    *
-   * SO IT MAINTAINS AND BUILDS, which is what Hemorrhage was in this file before
-   * the Rupture list had a Backstab engine to separate the two jobs.
-   *
-   * ----------------------------------------------------------------------------
-   * MEASURED, 60 batches of 10, and a 45-energy filler is strictly worse:
-   *
-   *     Backstab out, nothing added          416.9   the specification as given
-   *     Hemorrhage ungated                   525.8   shipped
-   *     Sinister Strike at the bottom        483.8
-   *     BOTH of the above                    525.8   identical, to the decimal
-   *     (reference) Backstab left in          506.9
-   *
-   * THE "BOTH" ROW IS THE FLOOR RULE CONFIRMING ITSELF: Sinister Strike at 45
-   * energy below an ungated Hemorrhage at 35 can never be the first castable
-   * entry, so adding it changes nothing at all. That is the same arithmetic that
-   * made Hemorrhage a problem in the Rupture list, pointing the other way.
-   *
-   * AND IT BEATS THE RUPTURE LIST WITH BACKSTAB IN IT, 525.8 against 506.9 on
-   * this build -- so the owner's instruction to drop Backstab is right about this
-   * tree, and what it needed was the filler moving rather than the entry staying.
-   * ----------------------------------------------------------------------------
+   * SO THE FLAG FROM LAST ROUND IS CLOSED BY THE OWNER RATHER THAN BY US: the
+   * profile that was moving without a spec has a spec.
    * ==========================================================================
+   */
+  { abilityId: 'premeditation' },
+  thistleTeaCooldown(TIGHT_THISTLE_TEA_ENERGY_THRESHOLD),
+  ...consumableCooldowns({ exclude: ['thistle_tea'] }),
+  ...RACIAL_COOLDOWNS,
+  ...CONSUMABLE_HEALS,
+  /*
+   * AMBUSH ABOVE VANISH, which is the sequence expressed as priorities: Vanish
+   * puts the stealth up and the next read of the list finds Ambush higher and
+   * takes it. A priority list cannot hold a sequence and does not need to.
+   */
+  { abilityId: 'ambush' },
+  {
+    abilityId: 'vanish',
+    condition: all(atMostPoints(3), atLeastEnergy(AMBUSH_ENERGY_COST), not(selfActive('cutthroat'))),
+  },
+  {
+    abilityId: 'slice_and_dice',
+    condition: all(selfAuraDown('slice_and_dice'), atLeastPoints(HEMO_SLICE_AND_DICE_POINTS)),
+  },
+  /*
+   * RUPTURE AT THREE, AND WITH NO HEMORRHAGE CLAUSE -- both of which separate
+   * it from the Rupture list, where it waits for four points AND for the
+   * debuff.
+   *
+   * THE DEBUFF CLAUSE WOULD BE REDUNDANT HERE AND IS CORRECTLY ABSENT.
+   * Hemorrhage is this list's UNGATED FILLER at the bottom rather than a
+   * maintained debuff above the bleed, so it is on the target almost all the
+   * time and a clause asking for it would be a condition that is nearly always
+   * true -- which is a floor wearing a gate's clothes.
+   */
+  {
+    abilityId: 'rupture',
+    condition: all(targetAuraDown('rupture'), atLeastPoints(HEMO_RUPTURE_POINTS)),
+  },
+  /*
+   * COLD BLOOD AND EVISCERATE SHARE A GATE, EXACTLY, AND THAT IS THE DESIGN.
+   *
+   * --------------------------------------------------------------------------
+   * BOTH ASK FOR FIVE POINTS AND FOUR SECONDS OF EACH OF THE TWO THINGS THAT
+   * MUST STAY UP, so Cold Blood fires in the same decision window as the
+   * Eviscerate beneath it and the guaranteed crit lands on it. Cold Blood is
+   * free and takes NO GLOBAL COOLDOWN, which is what makes a matched pair work
+   * at all -- a global between them would aim the crit at whatever came next.
+   *
+   * IT IS THE OPPOSITE ARRANGEMENT TO COMBAT MUT, where the owner put Cold
+   * Blood's gate a point ABOVE the finisher's so the cheapest Eviscerate does
+   * not consume a three-minute cooldown. Here the finisher only ever spends at
+   * the cap, so there is no cheaper cast for the cooldown to be wasted on and
+   * the two gates can be identical. **Nothing here should be normalised across
+   * the five Rogue lists**; this is the fourth different answer they give.
+   *
+   * COLD BLOOD IS A NEW TALENT ON THIS BUILD, paid for out of Improved Slice
+   * and Dice. The list and the allocation are one change.
+   * --------------------------------------------------------------------------
+   */
+  {
+    abilityId: 'cold_blood',
+    condition: all(
+      exactlyPoints(MAX_COMBO_POINTS),
+      targetAuraAtLeast('rupture', HEMO_FLOOR_SECONDS),
+      selfAuraAtLeast('slice_and_dice', HEMO_FLOOR_SECONDS),
+    ),
+  },
+  {
+    abilityId: 'eviscerate',
+    condition: all(
+      exactlyPoints(MAX_COMBO_POINTS),
+      targetAuraAtLeast('rupture', HEMO_FLOOR_SECONDS),
+      selfAuraAtLeast('slice_and_dice', HEMO_FLOOR_SECONDS),
+    ),
+  },
+  {
+    abilityId: 'preparation',
+    condition: all(
+      abilityOnCooldown('vanish'),
+      abilityOnCooldown('premeditation'),
+      atMostPoints(1),
+    ),
+  },
+  /*
+   * HEMORRHAGE LAST AND UNGATED, which is worth +108.9 on this build and is
+   * the one entry that survived the respecification untouched.
+   *
+   * REMOVING BACKSTAB REMOVED THE LIST'S ONLY UNGATED BUILDER. Nothing above it
+   * is castable on demand -- Premeditation and Vanish are on minute cooldowns,
+   * Ambush needs a stealth window, and the finishers need points this list
+   * would then have no way to earn. With Hemorrhage gated on its own debuff the
+   * profile wasted 272.7 energy a fight at the cap, a THIRD of its income.
+   *
+   * SO IT MAINTAINS AND BUILDS, and the gate's own justification went with
+   * Backstab rather than being a second opinion about the owner's list.
    */
   { abilityId: 'hemorrhage' },
   ],

@@ -498,12 +498,43 @@ const ROGUE_RUPTURE_TALENTS: TalentAllocation = {
  * ----------------------------------------------------------------------------
  */
 const ROGUE_HEMO_TALENTS: TalentAllocation = {
+  // Assassination, 17
   malice: 5,
   ruthlessness: 3,
-  improved_slice_and_dice: 3,
+  improved_slice_and_dice: 2,
   relentless_strikes: 1,
   lethality: 5,
+  /*
+   * COLD BLOOD IS THE NEW POINT, and it is what the respecified list needs:
+   * the owner's Hemo Dagger APL has a Cold Blood entry, and this build did not
+   * take the talent. A list naming an ability the build cannot cast is skipped
+   * IN SILENCE, so the two halves of the respecification only work together.
+   *
+   * IT IS PAID FOR OUT OF IMPROVED SLICE AND DICE, 3 -> 2, for a net of zero.
+   * That is the cheapest place it could have come from on this build: the list
+   * casts Slice and Dice at ONE combo point and only when the buff is DOWN, so
+   * what the talent buys is duration on a buff whose uptime is already the
+   * thing being managed.
+   */
+  cold_blood: 1,
+  // Combat, 3
   improved_eviscerate: 3,
+  /*
+   * ==========================================================================
+   * SUBTLETY IS UNCHANGED, ON THE OWNER'S INSTRUCTION, AND THEIR SCREENSHOT
+   * DISAGREES WITH IT.
+   *
+   * The panel they sent shows Improved Ambush at 0/3 against the 3/3 below,
+   * and states a tree total of 31 either way -- so three points moved inside
+   * Subtlety and the icons were not legible enough to say where to. Asked
+   * which, the owner chose to keep this tree as it is.
+   *
+   * RECORDED RATHER THAN SILENTLY RESOLVED, because it is the one part of this
+   * build that is a READING rather than a statement: if the figure looks wrong
+   * later, this is the first thing to re-ask, and the build URL run through
+   * `decode_talent_build.mjs` is what would settle it in one command.
+   * ==========================================================================
+   */
   camouflage: 5,
   master_of_deception: 3,
   opportunity: 2,
@@ -1342,8 +1373,20 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withBenchmarkGear(withS
     }),
   },
   {
+    /*
+     * THE ID STAYS `rogue_hemo` WHILE THE LABEL BECOMES "Hemo Dagger".
+     *
+     * A preset id is a STABLE KEY: saved profiles carry it, and the benchmark
+     * gear templates, the enchant loadouts, the baseline table and six test
+     * files are all keyed by it. Renaming it would silently unenchant and
+     * un-gear this profile and drop it out of the table's set assertion --
+     * which is the one thing that would NOT show up as an error.
+     *
+     * The label and the character name are what a person reads, and those are
+     * what the owner asked to change.
+     */
     id: 'rogue_hemo',
-    label: 'Hemo',
+    label: 'Hemo Dagger',
     detail: 'Undead, dual-wield, standing target. 31 Subtlety, no Backstab',
     characterClass: 'rogue',
     /*
@@ -1356,7 +1399,7 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withBenchmarkGear(withS
     build: () => ({
       ...createDefaultProfile(),
       character: {
-        name: 'Hemo',
+        name: 'Hemo Dagger',
         race: 'undead',
         characterClass: 'rogue',
         level: 60,

@@ -184,7 +184,15 @@ export const BENCHMARK_TEMPLATES: readonly BenchmarkTemplate[] = [
    * produces an ordinary-looking figure. That is the failure mode this project
    * documents hardest, and it is why the weapon column loses to the build.
    */
-  { presetId: 'rogue_hemo', characterClass: 'rogue', label: 'Hemo', hit: 120, expertise: 10, preferred: ROGUE, armour: 'Leather', weapons: { kind: 'dualWield', subclass: 'Dagger', offSubclass: 'Dagger' }, statStick: ROGUE_STICK },
+  /*
+   * THE LABEL IS THE CHARACTER NAME, which is why renaming the preset to "Hemo
+   * Dagger" had to reach here too. `BENCHMARK_TEMPLATES_BY_LABEL` joins on it,
+   * and that join is the FALLBACK for a profile saved before presets stamped
+   * their template id -- so a stale label here takes the four test-set buttons
+   * away from any such file, silently. The same hazard this file already
+   * records about `character.name`.
+   */
+  { presetId: 'rogue_hemo', characterClass: 'rogue', label: 'Hemo Dagger', hit: 120, expertise: 10, preferred: ROGUE, armour: 'Leather', weapons: { kind: 'dualWield', subclass: 'Dagger', offSubclass: 'Dagger' }, statStick: ROGUE_STICK },
   { presetId: 'druid_moonkin', characterClass: 'druid', label: 'Moonkin', hit: 110, expertise: 0, preferred: CASTER, armour: 'Leather', weapons: { kind: 'twoHand', subclass: 'Staff', caster: true } },
   { presetId: 'druid_cat', characterClass: 'druid', label: 'Cat', hit: 30, expertise: 10, preferred: ['Strength', 'Agility', 'Crit', 'Stamina', 'Attack Power'], armour: 'Leather', weapons: { kind: 'twoHand', subclass: 'Mace' } },
   { presetId: 'druid_bear', characterClass: 'druid', label: 'Bear', hit: 30, expertise: 20, preferred: ['Stamina', 'Bonus Armor', 'Agility', 'Strength', 'Dodge', 'Defense'], armour: 'Leather', weapons: { kind: 'twoHand', subclass: 'Mace' }, trinkets: TANK_TRINKETS },

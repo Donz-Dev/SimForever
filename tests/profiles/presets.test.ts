@@ -83,7 +83,7 @@ describe('the preset catalogue', () => {
       'Combat Mut',
       'Combat',
       'Rupture',
-      'Hemo',
+      'Hemo Dagger',
       'Moonkin',
       'Cat',
       'Bear',
