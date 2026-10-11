@@ -44,6 +44,7 @@ npx vite-node tools/probe_cat_rage.ts            # does a Cat's rage pool ever h
 npx vite-node tools/probe_life_tap_gate.ts       # what mana a Warlock should Life Tap at
 npx vite-node tools/probe_other_assignment.ts    # each preset's `other` consumable beside its POOLS
 npx vite-node tools/item_vocabulary.ts           # which item lines the parser does NOT read, by shape
+npx vite-node tools/stamina_share.ts             # what share of a real item's budget is stamina, PvP split out
 ITEMS=19321,21126 npx vite-node tools/item_show.ts   # one item's tooltip beside its parse
 npx vite-node tools/item_budget.ts               # what an item COST to make, and whether it adds up
 FOREVER=1 npx vite-node tools/item_budget.ts     # the 64 Premier PvP cloth pieces, Forever's own
@@ -3492,6 +3493,32 @@ owner's instruction in capitals: "even though the needed hit cap is mandatory,
 IT STILL COUNTS AGAINST THE STAT BUDGET ON THE ITEMS". So a Rogue spends 120
 points on hit before buying anything else, which is what makes a benchmark set
 a fair comparison rather than a wish list.
+
+**EVERY ARMOUR-CLASS PIECE CARRIES STAMINA, AS A FLOOR, AND THE OWNER SPOTTED
+ITS ABSENCE BY READING THE ITEMS.** "It's strange to me that stamina was dropped
+on some of the template items ... Typically all armor class items have stamina."
+**639 of Forever's 685 clean armour pieces carry it, 93.3%** -- so a piece
+without any is the exception, and the generator had made it the rule by buying
+stamina only when it fell inside a template's stat count. `staminaFloor` is a
+share of the slot's budget on the EIGHT armour slots, and `tools/stamina_share.ts`
+is what measures the real figure.
+**A FLOOR RATHER THAN A PLACE IN THE PREFERENCE ORDER**, which is what leaves a
+tank untouched: the Bear and both Protection builds already buy several times
+it, and all five stamina-led profiles measured **0.0 to the decimal** across the
+change. Putting stamina into the order instead would have moved it ahead of
+every build's first choice.
+**AND THE FLOOR IS CLAMPED BY WHAT THE RATINGS ALREADY TOOK**, which 48 items
+proved by going over their own budget. A B55 medium slot has 25.6 points and a
+Rogue's hit puts 25 Hit Rating on it -- 97% of `budget^1.5` -- so the floor on
+top was 26.9 of 25.6. **A floor that wins against the budget is not a floor, it
+is a leak**, and the honest answer is that such a slot cannot afford it.
+**THE OWNER'S SHARE IS ABOUT HALF WHAT THE DATA SAYS AND IS USED ANYWAY.** They
+remembered "around 10-15% of its item budget"; Forever's own non-PvP armour
+spends a median 25% of `budget^1.5` on it, per slot 20.5% to 35.0%. They said
+"I BELIEVE", which marks a recollection rather than a ruling -- so the figure
+is theirs, the measurement is recorded beside it, and raising it is one line.
+**Picking a different number because the data suggests one is the thing this
+project does not do**, and a note nobody can act on is the other failure.
 
 **HOW MANY STATS A SLOT CARRIES IS THE OWNER'S TABLE TOO, AND A PREFERENCE LIST
 LONGER THAN IT SILENTLY LOSES ITS TAIL.** Head, chest and legs take FIVE;
