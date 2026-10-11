@@ -730,7 +730,35 @@ export const WARRIOR_SHIELD_DEFENSIVE: AplList = {
   // the stance list rather than naming the talent.
   chargeAtThePull,
   /*
-   * SURVIVAL FIRST. Two entries that nothing in this project could have
+   * THE STANCE SECOND, ON THE OWNER'S RESPECIFICATION -- IT WAS SIXTH, AND IT
+   * WAS BELOW THE TWO SURVIVAL COOLDOWNS ON PURPOSE.
+   *
+   * --------------------------------------------------------------------------
+   * THIS OVERTURNS A STATED ARGUMENT RATHER THAN FILLING A GAP, which is worth
+   * saying plainly. `protectionRotation.test.ts` asserted the two survival
+   * cooldowns sat "above everything that can repeat ... above even the stance,
+   * because a dead tank is in no stance at all", and that test asserts the
+   * owner's order now. The decision was ours and is theirs.
+   *
+   * AND IT COSTS NOTHING, which is why the old argument was never load-bearing:
+   * the entry is gated on Defensive Stance having RUN OUT, so it fires once at
+   * the pull and never again -- and at the pull the tank is at full health, so
+   * both cooldowns below it are refused anyway. The two orders differ only in a
+   * moment where neither of the things being ordered can happen.
+   *
+   * IT BECOMES REAL THE DAY SOMETHING MOVES THE TANK OUT OF ITS STANCE
+   * mid-fight, and then the owner's order is the one that gets the stance back
+   * before anything else -- which is the reading the old comment gave of its
+   * own condition: "unless something else moved the character, which is exactly
+   * when it should fire".
+   * --------------------------------------------------------------------------
+   */
+  {
+    abilityId: 'defensive_stance_cast',
+    condition: selfTime('atMost', 0, DEFENSIVE_STANCE.id),
+  },
+  /*
+   * SURVIVAL NEXT. Two entries that nothing in this project could have
    * written a week ago, because the character could not drop below one health
    * and no rotation had any reason to look at the number.
    *
@@ -783,13 +811,20 @@ export const WARRIOR_SHIELD_DEFENSIVE: AplList = {
    * below them because those are the bigger answer. See `CONSUMABLE_HEALS`.
    */
   ...CONSUMABLE_HEALS,
+  {
+    abilityId: 'battle_shout_cast',
+    condition: selfTime('atMost', 0, BATTLE_SHOUT.id),
+  },
   /*
-   * FIRST OF THE ROTATION PROPER, and only while there is room for the rage.
+   * BLOODRAGE BELOW BATTLE SHOUT NOW, where it used to sit two entries above
+   * it -- the owner's order.
    *
-   * Above the stance because it costs nothing to be there: Bloodrage is off
+   * It costs the entries below it nothing wherever it goes: Bloodrage is off
    * the global cooldown, so taking this entry does not delay whatever comes
-   * next. A tank opens at zero rage and can do nothing until it has some,
-   * which is the one moment in the fight when twenty rage matters most.
+   * next. What the position decides is only which INSTANT it takes, and the
+   * entry above it is in `PRESET_RAID_BUFFS` and therefore refuses all fight on
+   * every preset that runs this list -- so for those builds the two orders are
+   * the same order.
    *
    * The fifty is the ruleset owner's. Bloodrage grants ten immediately and
    * ten more over ten seconds, so casting it near the cap throws most of the
@@ -799,21 +834,6 @@ export const WARRIOR_SHIELD_DEFENSIVE: AplList = {
   {
     abilityId: 'bloodrage_cast',
     condition: resource('below', DEFENSIVE_BLOODRAGE_RAGE, 'rage'),
-  },
-  /*
-   * Then the stance, and only when it is not already up.
-   *
-   * A stance is an aura that lasts until another replaces it, so this fires
-   * once at the pull and then never again -- unless something else moved the
-   * character, which is exactly when it should fire.
-   */
-  {
-    abilityId: 'defensive_stance_cast',
-    condition: selfTime('atMost', 0, DEFENSIVE_STANCE.id),
-  },
-  {
-    abilityId: 'battle_shout_cast',
-    condition: selfTime('atMost', 0, BATTLE_SHOUT.id),
   },
   /*
    * To five stacks, and then held there.
@@ -853,6 +873,30 @@ export const WARRIOR_SHIELD_DEFENSIVE: AplList = {
     condition: targetTime('atMost', 0, DEMORALIZING_SHOUT.id),
   },
   /*
+   * THE MID-FIGHT CONSUMABLE TENTH, AND THE OWNER HAS SPLIT IT FROM THE
+   * RACIALS, WHICH STAY LAST.
+   *
+   * ==========================================================================
+   * THE TWO USED TO SIT TOGETHER AT THE BOTTOM UNDER ONE ARGUMENT -- "100ms is
+   * not free to a tank at thirty percent health" -- and the cost of that
+   * argument is written into the comment at the end of this list: the bottom of
+   * a tank list is a place entries are NOT REACHED, which is how five of seven
+   * racials came back inert when they were tried there.
+   *
+   * THAT COST IS WHY THE SPLIT IS NOT ARBITRARY. A racial is free; a Mighty
+   * Rage Potion is 45-75 rage and 60 strength on a two minute cooldown, and an
+   * entry that never fires is worth exactly none of it. The owner has priced
+   * the 100ms against the potion and against the racial differently, which is
+   * a judgement the two entries genuinely invite differently.
+   *
+   * IT IS THE SAME SHAPE AS `CONSUMABLE_HEALS` ALREADY SITTING UP HERE rather
+   * than at the bottom, and for the same reason -- the heals were pulled out of
+   * that group first, on the argument that the bottom is unreachable. This is
+   * that argument applied to the rest of the row.
+   * ==========================================================================
+   */
+  ...CONSUMABLE_COOLDOWNS,
+  /*
    * Surplus rage into the next swing, at 26 rather than the Berserker list's
    * 42. A tank has less rage to spare and more to spend it on.
    */
@@ -871,12 +915,22 @@ export const WARRIOR_SHIELD_DEFENSIVE: AplList = {
    * `checkCast` already enforces the only limit there is.
    */
   { abilityId: 'shield_block_cast' },
+  /*
+   * REVENGE ABOVE SHIELD SLAM NOW, where the two were the other way round --
+   * the owner's order, and the one swap in this list that both entries can
+   * actually contest.
+   *
+   * Revenge is gated on the window an avoided attack opens and `checkCast`
+   * refuses it until then, so repeating that rule here would be a second copy
+   * of it -- and it is that gate which makes the position cheap: the entry
+   * yields to Shield Slam whenever the window is shut, and the window is the
+   * thing that closes on its own whether or not it is used. Five rage for a
+   * flat 81-99 is also the cheapest damage a warrior has.
+   */
+  { abilityId: 'revenge' },
   // Talent-gated: a character without Shield Slam does not know the ability,
   // so the entry is simply skipped rather than needing a condition.
   { abilityId: 'shield_slam' },
-  // Gated on the window an avoided attack opens. `checkCast` refuses it until
-  // then, so repeating that rule here would be a second copy of it.
-  { abilityId: 'revenge' },
   { abilityId: 'thunder_clap' },
   /*
    * Last: a bleed is worth least when everything else is available.
@@ -902,6 +956,11 @@ export const WARRIOR_SHIELD_DEFENSIVE: AplList = {
    * still moves the next decision 100ms out -- and 100ms is not free to a tank
    * at thirty percent health taking twelve thousand a swing.
    *
+   * AND THE MID-FIGHT CONSUMABLE NO LONGER SHARES IT -- the owner has moved
+   * that one up to tenth. The 100ms is priced against a free racial here and
+   * against 45-75 rage and 60 strength there, which is a judgement the two
+   * entries invite differently. See where `CONSUMABLE_COOLDOWNS` sits now.
+   *
    * WHAT IT COSTS: the four offensive racials may not fire at all here, because
    * a tank list rarely falls this far. That is the right trade for a build
    * whose figure of merit is a DEATH COUNT, and it is worth 0.0 to all three
@@ -913,7 +972,6 @@ export const WARRIOR_SHIELD_DEFENSIVE: AplList = {
    */
   ...RACIAL_COOLDOWNS,
   ...RACIAL_DEFENSIVE_COOLDOWNS,
-  ...CONSUMABLE_COOLDOWNS,
 ],
 };
 

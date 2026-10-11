@@ -6,6 +6,8 @@ import {
   consumableEffects,
   selectedConsumables,
   weaponEffectCount,
+  AGILITY_CONSUMABLES,
+  STRENGTH_CONSUMABLES,
   type ConsumableSelection,
 } from '../../src/game/buffs/consumables';
 import { PRESETS_BY_ID, PROFILE_PRESETS } from '../../src/profiles/presets';
@@ -648,5 +650,72 @@ describe('the weapon effect is applied once per weapon', () => {
     expect(crit('rogue_venom')).toBe(4);
     expect(crit('two_hand_arms')).toBe(2);
     expect(crit('prot_warr')).toBe(2);
+  });
+});
+
+
+describe('who eats what, on the plate-and-fur row', () => {
+  /*
+   * ==========================================================================
+   * THE OWNER HAS NAMED THREE OF THE FIVE MEMBERS OF `STRENGTH_CONSUMABLES`
+   * AND GIVEN TWO DIFFERENT ANSWERS, WHICH SETTLES WHY THESE ARE OVERRIDES.
+   *
+   * 2H Arms and DW Fury take +20 Strength; Prot Warr takes +20 Stamina. A
+   * shared row holds ONE value, so no edit to `STRENGTH_CONSUMABLES` can
+   * satisfy the rulings that exist -- and that is a fact about the SHAPE,
+   * which is a stronger reason than the one the first two overrides rested on
+   * ("a ruling covers what it says and is not extended by analogy").
+   *
+   * THE TWO DRUIDS ARE THE REMAINDER, and they are what the row still
+   * supplies. If the owner names them too, this test is where the arithmetic
+   * gets done: three strength and two stamina is still not a row, and five of
+   * five the same WOULD be -- at which point the honest edit is the row and
+   * every override comes out together.
+   *
+   * IT LIVES HERE RATHER THAN IN A ROTATION FILE. It is a claim about the
+   * consumable ROW, not about any one priority list -- and it was written
+   * twice, in `armsRotation.test.ts` and `berserkerRotation.test.ts`, which
+   * meant one ruling failed two files and the set of "unnamed" profiles had to
+   * be edited in both. Two copies of a set is how the two drift.
+   * ==========================================================================
+   */
+  const FOOD: Readonly<Record<string, string>> = {
+    two_hand_arms: 'food_strength',
+    dw_fury: 'food_strength',
+    prot_warr: 'food_stamina',
+    // Not named by the owner, so still whatever the shared row supplies.
+    druid_cat: 'food_attack_power',
+    druid_bear: 'food_attack_power',
+  };
+
+  it('gives each of the five what the owner said, or the row if they said nothing', () => {
+    for (const [id, food] of Object.entries(FOOD)) {
+      expect(PRESETS_BY_ID.get(id)!.build().consumables.food, id).toBe(food);
+    }
+  });
+
+  it('keeps the row itself on attack power, because it cannot hold two answers', () => {
+    /*
+     * THE ROW IS THE THING THAT MUST NOT MOVE. Editing it would reach the two
+     * Druids, whom the owner has not named, and `MELEE_COMMON` beneath it
+     * would reach four Rogues and a melee Hunter as well.
+     */
+    expect(STRENGTH_CONSUMABLES.food).toBe('food_attack_power');
+    expect(AGILITY_CONSUMABLES.food).toBe('food_attack_power');
+  });
+
+  it('is the only category any of the three overrides changes', () => {
+    /*
+     * A CONTAINMENT CHECK ON THE OVERRIDE ITSELF. `{ ...ROW, food: x }` is one
+     * key, and a future edit that spread something else in would change a
+     * profile's flask or weapon effect with nothing here to say so.
+     */
+    for (const id of ['two_hand_arms', 'dw_fury', 'prot_warr']) {
+      const selection = PRESETS_BY_ID.get(id)!.build().consumables;
+      for (const [category, chosen] of Object.entries(STRENGTH_CONSUMABLES)) {
+        if (category === 'food') continue;
+        expect(selection[category as keyof typeof selection], `${id}.${category}`).toBe(chosen);
+      }
+    }
   });
 });
