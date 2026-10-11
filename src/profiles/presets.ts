@@ -1013,7 +1013,32 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withBenchmarkGear(withS
        * their enchants: Arms and Fury take strength and Protection takes dodge
        * and defense skill. The set is the items; the loadout is the build.
        */
-      consumables: STRENGTH_CONSUMABLES,
+      /*
+       * STRENGTH FOOD RATHER THAN ATTACK POWER, AND ON THIS PRESET ALONE.
+       *
+       * ----------------------------------------------------------------------
+       * THE OWNER'S RULING: "2H Arms warrior Food Consumable needs to be
+       * changed from attack power to strength." It is +20 Strength against
+       * +40 Attack Power, which for a plate build is the SAME 40 attack power
+       * before anything scales it and more after -- strength goes through the
+       * conversion, so every percentage multiplier on the primary reaches it
+       * and none of them reaches a flat pool.
+       *
+       * AN OVERRIDE ON THE PRESET, NOT AN EDIT TO `MELEE_COMMON`. The ruling
+       * names one profile, and a ruling covers what it says and is not
+       * extended by analogy -- `STRENGTH_CONSUMABLES` is shared with DW Fury,
+       * Prot Warr and both feral Druids, and `MELEE_COMMON` beneath it with
+       * four Rogues and a Hunter besides. Changing the row would move eleven
+       * published figures on one sentence about one of them.
+       *
+       * IT IS THEREFORE THE FIRST THING IN THIS FILE TO DISAGREE WITH ITS OWN
+       * ARCHETYPE ROW, which is worth saying because the row's whole argument
+       * is that twenty-five separate opinions is not something a reader can
+       * check. The exception is the owner's, stated here, and if they want it
+       * for the archetype the edit is one line up in `consumables.ts`.
+       * ----------------------------------------------------------------------
+       */
+      consumables: { ...STRENGTH_CONSUMABLES, food: 'food_strength' },
       encounter: {
         ...createDefaultProfile().encounter,
         // A damage warrior is not the one being hit.

@@ -891,8 +891,23 @@ export const WARRIOR_SHIELD_DEFENSIVE: AplList = {
 
 export const WARRIOR_SHIELD_DEFENSIVE_ROTATION: Rotation = compileRotation(WARRIOR_SHIELD_DEFENSIVE);
 
-/** Rage above which the Arms list spends the surplus on Heroic Strike. */
-export const BATTLE_HEROIC_STRIKE_RAGE = 75;
+/**
+ * Rage above which the Arms list spends the surplus on Heroic Strike.
+ *
+ * ----------------------------------------------------------------------------
+ * NINETY, AND IT WAS 75 UNTIL THE OWNER RESPECIFIED THE LIST. It is the
+ * highest floor in the project -- against the Berserker list's 42 and the
+ * tank's 26 -- and it has to be, because this entry MOVED ABOVE Sunder Armor
+ * in the same change. An ungated entry is a floor under everything below it,
+ * and a cheap one above an expensive one starves it from beneath whatever the
+ * order says, so the threshold is the only thing stopping Heroic Strike taking
+ * the rage Mortal Strike, Rend and Slam are queued for.
+ *
+ * At a cap of 100, ninety means the dump only happens with a Mortal Strike's
+ * whole cost still spare behind it.
+ * ----------------------------------------------------------------------------
+ */
+export const BATTLE_HEROIC_STRIKE_RAGE = 90;
 
 /**
  * Refresh Sunder Armor with less than this left, in the ARMS list.
@@ -940,14 +955,15 @@ export const SLAM_SWING_WINDOW_MS = seconds(1);
  *
  * WHAT IS DIFFERENT FROM THE OTHER TWO.
  *
- *   - HEROIC STRIKE AT 75 RAGE, against Berserker's 42 and the tank's 26. An
+ *   - HEROIC STRIKE AT 90 RAGE, against Berserker's 42 and the tank's 26. An
  *     Arms warrior has Mortal Strike, Slam, Rend and Execute to spend on, so
- *     the surplus that goes into a swing is a much bigger surplus.
- *   - SLAM IS LAST and gated on the swing timer, which is the only entry in
- *     any list that reads it. See `SLAM_SWING_WINDOW_MS`.
- *   - OVERPOWER IS THIRD, above everything that costs a global cooldown worth
- *     having. It needs no condition here: it is gated on the window a target's
- *     dodge opens, and `checkCast` refuses it until then.
+ *     the surplus that goes into a swing is a much bigger surplus -- and the
+ *     entry sits ABOVE all four of them, which only works because of that.
+ *   - SLAM IS ABOVE MORTAL STRIKE and gated on the swing timer, which is the
+ *     only entry in any list that reads it. See `SLAM_SWING_WINDOW_MS`.
+ *   - OVERPOWER IS BELOW SUNDER ARMOR. It needs no condition here: it is
+ *     gated on the window a target's dodge opens, and `checkCast` refuses it
+ *     until then.
  *
  * Execute needs no talent gate and Mortal Strike does: a warrior without the
  * capstone simply does not know it, so the entry is skipped rather than
@@ -996,9 +1012,20 @@ export const WARRIOR_TWO_HAND_BATTLE: AplList = {
     abilityId: 'battle_shout_cast',
     condition: selfTime('atMost', 0, BATTLE_SHOUT.id),
   },
-  // Gated on the window a target's dodge opens; `checkCast` refuses it until
-  // then, so repeating that rule here would be a second copy of it.
-  { abilityId: 'overpower' },
+  /*
+   * SURPLUS RAGE INTO THE NEXT SWING, AND IT IS NOW THE FIRST THING BELOW THE
+   * SHOUTS rather than the fourth -- the owner's order.
+   *
+   * ITS THRESHOLD IS WHAT MAKES THE POSITION SAFE, which is why the two moved
+   * together: a cheap entry starves an expensive one from beneath however high
+   * the expensive one sits, so Heroic Strike above Sunder Armor, Mortal Strike,
+   * Rend and Slam is only not a floor under all four because 90 rage leaves
+   * every one of them affordable underneath it. See the constant.
+   */
+  {
+    abilityId: 'heroic_strike',
+    condition: resource('atLeast', BATTLE_HEROIC_STRIKE_RAGE, 'rage'),
+  },
   {
     abilityId: 'sunder_armor_cast',
     condition: any(
@@ -1006,14 +1033,33 @@ export const WARRIOR_TWO_HAND_BATTLE: AplList = {
       targetTime('below', BATTLE_SUNDER_REFRESH_WINDOW_MS / 1000, SUNDER_ARMOR.id),
     ),
   },
-  // Surplus rage into the next swing, at 75 -- see the constant.
-  {
-    abilityId: 'heroic_strike',
-    condition: resource('atLeast', BATTLE_HEROIC_STRIKE_RAGE, 'rage'),
-  },
+  /*
+   * OVERPOWER BELOW SUNDER ARMOR NOW, where it used to sit above it.
+   *
+   * Still gated on nothing written here: its window is the one a target's
+   * dodge opens and `checkCast` refuses it until then, so repeating that rule
+   * in the list would be a second copy of it. What the move costs is that a
+   * window opening while Sunder is still being built waits a global cooldown
+   * -- and the stack is five casts at the pull, after which the entry above is
+   * refusing for the rest of the fight.
+   */
+  { abilityId: 'overpower' },
   {
     abilityId: 'rend_cast',
     condition: targetTime('atMost', 0, REND.id),
+  },
+  /*
+   * SLAM ABOVE MORTAL STRIKE, and it was LAST in the list until the owner
+   * respecified it.
+   *
+   * The gate is unchanged and is what makes the position affordable: the entry
+   * only fires with more than a second of swing timer left, so it is refused
+   * outright in the window where it would cost a swing. It is the one entry in
+   * any list that reads the swing timer; see `SLAM_SWING_WINDOW_MS`.
+   */
+  {
+    abilityId: 'slam',
+    condition: swingIn('above', SLAM_SWING_WINDOW_MS),
   },
   // Talent-gated: a warrior without the capstone does not know it.
   { abilityId: 'mortal_strike' },
@@ -1026,15 +1072,6 @@ export const WARRIOR_TWO_HAND_BATTLE: AplList = {
     condition: fightRemainingFraction('atMost', EXECUTE_PHASE_FRACTION),
   },
   { abilityId: 'spearing_strike' },
-  /*
-   * LAST, and only with room to cast it. The one entry in any list that reads
-   * the swing timer; see `SLAM_SWING_WINDOW_MS` for why a cast time makes this
-   * different from everything above it.
-   */
-  {
-    abilityId: 'slam',
-    condition: swingIn('above', SLAM_SWING_WINDOW_MS),
-  },
   ],
 };
 

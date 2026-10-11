@@ -1978,6 +1978,174 @@ button:disabled {
   text-anchor: end;
 }
 
+/* --- one fight, drawn against the clock --- */
+
+/*
+ * THE LABEL COLUMN IS FIXED AND THE TRACK FLEXES, which is what makes every
+ * row in every section share one clock: a per-row axis would let two sections
+ * be drawn at different scales, and comparing a cast row against a buff row is
+ * the only reason this panel exists.
+ */
+.fight-timeline {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  font-size: 12px;
+}
+
+.ft-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 18px;
+}
+
+.ft-label {
+  flex: 0 0 9.5rem;
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ft-track {
+  position: relative;
+  flex: 1;
+  height: 14px;
+  border-left: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+}
+
+.ft-count {
+  flex: 0 0 3rem;
+  text-align: right;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+/* --- the axis --- */
+
+.ft-axis-row {
+  align-items: flex-end;
+}
+
+.ft-axis-row .ft-track {
+  height: 16px;
+  border-bottom-color: var(--border-strong);
+}
+
+.ft-tick {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  border-left: 1px solid var(--border);
+}
+
+.ft-tick-label {
+  position: absolute;
+  bottom: 100%;
+  left: 2px;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+/* --- a cast, which is an instant and not a duration --- */
+
+/*
+ * A TICK, NOT A BAR. A cast happens AT a moment; giving it a width would be
+ * inventing a duration, and the one ability that genuinely has one -- a
+ * channel -- shows its length in the aura section instead.
+ */
+.ft-mark {
+  position: absolute;
+  top: 1px;
+  bottom: 1px;
+  width: 3px;
+  margin-left: -1px;
+  border-radius: 1px;
+  background: var(--accent);
+}
+
+.ft-mark-crit {
+  background: var(--accent-strong);
+}
+
+/* --- an aura, which is a duration --- */
+
+.ft-bar {
+  position: absolute;
+  top: 2px;
+  bottom: 2px;
+  min-width: 2px;
+  border-radius: 2px;
+  background: var(--series-1);
+}
+
+/* A debuff is on the TARGET and a buff is on the character, which is the one
+   distinction worth a colour here: the two sit in the same section because a
+   rotation maintains both, and nothing else on the row says which is which. */
+.ft-bar-debuff {
+  background: var(--series-2);
+}
+
+/* --- a pool, which is a level --- */
+
+.ft-row-pool .ft-track {
+  height: 34px;
+}
+
+.ft-pool {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.ft-pool-fill {
+  fill: var(--accent-wash);
+}
+
+.ft-pool-line {
+  stroke: var(--accent);
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+}
+
+/* --- sections --- */
+
+.ft-section {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.ft-section-head {
+  align-self: flex-start;
+  background: none;
+  border: none;
+  padding: 2px 0;
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+
+.ft-section-mark {
+  display: inline-block;
+  min-width: 1rem;
+}
+
+.ft-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.ft-empty {
+  margin: 0;
+  font-size: 12px;
+}
+
 /* --- stat weights --- */
 
 /* ---------------------------------------------------------------------------
@@ -2287,7 +2455,31 @@ button:disabled {
   text-decoration: line-through;
 }
 
-.apl-toggle {
+.apl-toggle,
+.apl-duplicate {
   /* Narrower than the movers: one glyph, no label. */
   min-width: 1.9rem;
+}
+
+/*
+ * The ability a line casts, as a dropdown.
+ *
+ * IT HAS TO KEEP READING AS THE HEADING OF THE ROW, which is why it inherits
+ * the accent colour and the weight the static span had rather than looking
+ * like the condition selects beneath it: the ability is what somebody scans
+ * the list for, and a row whose first element reads as one more control is a
+ * row that has lost its label.
+ */
+.apl-ability-choice {
+  background: transparent;
+  border-color: transparent;
+  font-weight: 600;
+  color: var(--accent-strong);
+  padding: 1px 2px;
+  max-width: 14rem;
+}
+
+.apl-ability-choice:hover,
+.apl-ability-choice:focus {
+  border-color: var(--border);
 }

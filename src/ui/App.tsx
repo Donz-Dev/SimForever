@@ -21,6 +21,7 @@ import { AplPanel } from './panels/AplPanel';
 import { ConsumablesPanel } from './panels/ConsumablesPanel';
 import { RaidBuffsPanel } from './panels/RaidBuffsPanel';
 import { ResultsPanel } from './panels/ResultsPanel';
+import { TimelinePanel } from './panels/TimelinePanel';
 import { ProfileRail } from './panels/ProfileRail';
 import type { StatWeightSelection } from './panels/SimulationPanel';
 import { NO_STAT_WEIGHTS, SimulationPanel } from './panels/SimulationPanel';
@@ -363,6 +364,14 @@ export function App() {
             {batch ? (
               <>
                 <ResultsPanel batch={batch} />
+                {/*
+                  * BETWEEN THE RESULTS AND THE LOG, which is the order the
+                  * three are read in: what the fight produced, how it was
+                  * SHAPED, and then the lines themselves. Both this and the
+                  * log read the representative iteration, so the two are
+                  * describing the same fight.
+                  */}
+                <TimelinePanel result={batch.representative} />
                 <CombatLogPanel result={batch.representative} />
               </>
             ) : null}

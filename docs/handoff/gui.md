@@ -2,7 +2,7 @@
 
 **Purpose:** finalize the GUI and the miscellaneous tweaks around it.
 
-**THREE PASSES ARE DONE, AND THIS DOCUMENT IS NOW THEIR RECORD** rather than a
+**FOUR PASSES ARE DONE, AND THIS DOCUMENT IS NOW THEIR RECORD** rather than a
 brief. Everything below that reads as outstanding work is marked with what
 happened to it. Read it the way the per-class documents are read: for the state
 of the area and the traps in it, not for a queue.
@@ -12,6 +12,15 @@ of the area and the traps in it, not for a queue.
 | 1 | the layout, the collapsing panels, the preset rail |
 | 2 | **Save and Load**, and the **Action Priority List** -- a panel, an editor, and the list stored on the profile |
 | 3 | the **Gear panel as a character planner** -- item cards, a class proficiency filter, value sorting, the four test sets |
+| 4 | the APL editor's **duplicate** and **retarget** controls, and the **Timeline** panel |
+
+**THE FOURTH PASS IS THE FIRST ONE ASKED FOR AS A MEANS RATHER THAN AN END.**
+The owner's framing was "in order to actually optimize the APL I need the
+tooling to be a bit more sophisticated as well", and the list changes came in
+the same message -- so it is the Gear panel's lesson stated outright by the
+person it happened to: **shipping the thing that makes a fault visible is
+itself a round.** It is recorded in [apl.md](../apl.md) rather than here,
+because it is a feature rather than a tidy-up.
 
 **THE THIRD PASS HAS ITS OWN DOCUMENT**, [gear-planner.md](../gear-planner.md),
 because it is a feature rather than a tidy-up: it added a layer to `game` (the
