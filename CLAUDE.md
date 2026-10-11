@@ -3512,13 +3512,18 @@ proved by going over their own budget. A B55 medium slot has 25.6 points and a
 Rogue's hit puts 25 Hit Rating on it -- 97% of `budget^1.5` -- so the floor on
 top was 26.9 of 25.6. **A floor that wins against the budget is not a floor, it
 is a leak**, and the honest answer is that such a slot cannot afford it.
-**THE OWNER'S SHARE IS ABOUT HALF WHAT THE DATA SAYS AND IS USED ANYWAY.** They
-remembered "around 10-15% of its item budget"; Forever's own non-PvP armour
-spends a median 25% of `budget^1.5` on it, per slot 20.5% to 35.0%. They said
-"I BELIEVE", which marks a recollection rather than a ruling -- so the figure
-is theirs, the measurement is recorded beside it, and raising it is one line.
-**Picking a different number because the data suggests one is the thing this
-project does not do**, and a note nobody can act on is the other failure.
+**THE SHARE IS 25%, AND THE ROUTE TO IT IS THE POINT.** The owner remembered
+"around 10-15% of its item budget"; it went in at 12.5% with the measurement
+recorded beside it -- Forever's own non-PvP armour spends a median 25% of
+`budget^1.5`, per slot 20.5% to 35.0% -- because "I BELIEVE" marks a
+recollection and not a ruling. Shown the figures they ruled: "use 25% and
+re-measure". **Picking a different number because the data suggests one is the
+thing this project does not do; putting the data in front of the owner is the
+thing that works**, and it is the fourth time their reading of a printed table
+has settled something no tool here could.
+**AND THE CAVEAT CAME OFF WHEN THE ANSWER LANDED**, which is the half that gets
+forgotten: a flagged question outlives the doubt it describes, and a reader who
+finds one next year cannot tell a live question from a settled one.
 
 **HOW MANY STATS A SLOT CARRIES IS THE OWNER'S TABLE TOO, AND A PREFERENCE LIST
 LONGER THAN IT SILENTLY LOSES ITS TAIL.** Head, chest and legs take FIVE;

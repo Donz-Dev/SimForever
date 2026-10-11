@@ -171,18 +171,21 @@ items, collapse the duplicate crit rows.
 - the stat-weight catalogue has ONE crit row
 
 **DONE NOW, AND THE FIGURES ARE IN THE BASELINE TABLE.** All 3,101 tests pass
-and all 25 profiles are re-measured on the E65 set: the mean is **734.1** where
-it was 730.9, with **15 rows up and 10 down** -- physical builds +30.2 on
-average, casters -13.9, the three tanks -62.4. The table at the end of this
+and all 25 profiles are re-measured on the E65 set: the mean is **719.6** where
+it was 730.9, with **11 rows up and 14 down** -- physical builds +14.4 on
+average, casters -31.6, the three tanks -62.4. The table at the end of this
 file is the record and the paragraph under it says why the split falls that way.
 
-**AND THAT MEAN MOVED TWICE IN ONE ROUND**, 741.0 and then 734.1, because the
-owner's stamina floor landed between the two measurements: twenty of the 25
-builds now spend part of every armour slot on stamina that was going to damage
-stats. **The five that did not move are the five that already led with
-stamina** -- 2H Arms, DW Fury, Prot Warr, Bear and Prot Pally, all at 0.0 to the
-decimal -- which is the containment check that says the floor only tops up a
-slot that would otherwise have dropped it.
+**AND THAT MEAN MOVED THREE TIMES IN ONE ROUND**, 741.0 then 734.1 then 719.6,
+because the owner's stamina floor landed between measurements and then its share
+was ruled up from 12.5% to 25%. Every armour-class piece carries stamina now,
+which on most builds is budget that was going to a damage stat.
+**THE THREE THAT DO NOT MOVE AT ALL ARE THE THREE THAT LEAD WITH STAMINA** --
+Prot Warr, Bear and Prot Pally, every one at 0.0 to the decimal through both
+changes -- which is the containment check that says the floor tops up a slot
+that would otherwise have dropped stamina rather than competing with a build
+that wanted it. At 12.5% that list was five; 2H Arms and DW Fury carry stamina
+third in their preference order, which clears a 12.5% floor and not a 25% one.
 
 **AND THE INTERIM FIGURES THAT WERE RECORDED HERE WERE MEASURED ON A BUG.** This
 paragraph used to read "2H Arms 825.0 -> 704.4" and "Cat 855.8 -> 614.4" as the
@@ -566,8 +569,9 @@ arrives in waves exactly as a patch does, and "built and measured" is not
 1** -- the table above is in the order the work happened and the file is in the
 order this one always is. Each header's figures belong to ITS round and say so.
 
-**THE MEAN WAS 709.6 AT THE END OF THIS ROUND AND IS 734.1 NOW**, by way of
-730.9 at the mid-fight consumables and 741.0 before the stamina floor. The sentence under the baseline table is the
+**THE MEAN WAS 709.6 AT THE END OF THIS ROUND AND IS 719.6 NOW**, by way of
+730.9 at the mid-fight consumables, 741.0 on Forever's items and 734.1 with the
+stamina floor at half its final share. The sentence under the baseline table is the
 only place that is ever live; rounds one and three each rebuilt the table, and
 every other figure in this file -- including that 709.6 -- is dated. That is not a
 style note: `update_baseline_table.py` spent its whole life writing the live
@@ -1963,7 +1967,7 @@ demonstrated at the top. **Re-count rather than re-reading the sentence.**
 | --- | --- |
 | **Talents** | 260 fully, 39 partly, 105 ruled out, **62 a live gap**, out of **466** -- from 132 before the class dives |
 | **Abilities** | 114 declared against 478 captured |
-| **Profiles** | **25**, all measured, **mean 734.1** on FOREVER'S OWN ITEMS -- every earlier figure in this file was measured on Classic and Season of Discovery stand-ins, so the contributions below belong to that gear and not to this mean: the armour enchants were +27.0 of it, the pre-pull consumables +105.9, the racials **+9.8 at round one**, the MID-FIGHT consumables **+17.7** and the Life Tap gate **+3.5** |
+| **Profiles** | **25**, all measured, **mean 719.6** on FOREVER'S OWN ITEMS -- every earlier figure in this file was measured on Classic and Season of Discovery stand-ins, so the contributions below belong to that gear and not to this mean: the armour enchants were +27.0 of it, the pre-pull consumables +105.9, the racials **+9.8 at round one**, the MID-FIGHT consumables **+17.7** and the Life Tap gate **+3.5** |
 | **Racials** | **10 races, 40 traits**: 15 do something, 20 effects ruled out, 11 a live gap |
 | **Scope rulings** | **9 members**, all the owner's, carrying 129 TALENT entries and 19 racial declarations |
 | **Placeholders** | **10 declared** -- see the milestone table, and count DECLARATIONS |
@@ -3671,25 +3675,25 @@ cannot audit, which is why the check is a SET comparison and not a row count.
 
 | Profile | Class | Talents | DPS | | Profile | Class | Talents | DPS |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| DW Fury | Warrior | 17/34/0 | 992.8 | | Shadow Priest | Priest | 13/3/35 | 743.9 |
-| LW Ranged | Hunter | 7/39/5 | 910.1 | | Moonkin | Druid | 38/0/13 | 717.4 |
-| Hawk Melee | Hunter | 16/11/24 | 897.8 | | Hemo Rogue | Rogue | 17/3/31 | 700.9 |
-| Cat Druid | Druid | 9/34/8 | 869.0 | | Fire Mage | Mage | 10/39/2 | 700.7 |
-| BM Hunter | Hunter | 31/20/0 | 856.4 | | Shockadin | Paladin | 23/0/28 | 697.9 |
-| Seal Twist Ret | Paladin | 15/0/36 | 844.6 | | Venom Rogue | Rogue | 37/12/2 | 682.2 |
-| 2H Arms | Warrior | 39/10/2 | 843.8 | | Rupture Rogue | Rogue | 12/8/31 | 645.0 |
-| LW Melee | Hunter | 7/13/31 | 836.8 | | SM/DS | Warlock | 40/11/0 | 641.0 |
-| Frostfire Mage | Mage | 0/29/22 | 822.1 | | Ele Shaman | Shaman | 38/13/0 | 608.9 |
-| Firelock | Warlock | 5/11/35 | 814.8 | | Prot Warr | Warrior | 17/0/34 | 455.5 |
-| Arcane Mage | Mage | 47/4/0 | 797.9 | | Bear Druid | Druid | 9/42/0 | 367.3 |
-| Combat Rogue | Rogue | 18/33/0 | 775.1 | | Prot Pally | Paladin | 8/34/9 | 360.6 |
-| Enh Shaman | Shaman | 17/34/0 | 770.7 | | | | | | |
+| DW Fury | Warrior | 17/34/0 | 974.3 | | Shadow Priest | Priest | 13/3/35 | 728.0 |
+| LW Ranged | Hunter | 7/39/5 | 888.9 | | Moonkin | Druid | 38/0/13 | 698.1 |
+| Hawk Melee | Hunter | 16/11/24 | 877.1 | | Hemo Rogue | Rogue | 17/3/31 | 690.1 |
+| Cat Druid | Druid | 9/34/8 | 852.2 | | Fire Mage | Mage | 10/39/2 | 684.5 |
+| BM Hunter | Hunter | 31/20/0 | 839.5 | | Shockadin | Paladin | 23/0/28 | 681.5 |
+| 2H Arms | Warrior | 39/10/2 | 830.9 | | Venom Rogue | Rogue | 37/12/2 | 670.8 |
+| Seal Twist Ret | Paladin | 15/0/36 | 825.5 | | Rupture Rogue | Rogue | 12/8/31 | 635.7 |
+| LW Melee | Hunter | 7/13/31 | 819.4 | | SM/DS | Warlock | 40/11/0 | 625.8 |
+| Frostfire Mage | Mage | 0/29/22 | 800.3 | | Ele Shaman | Shaman | 38/13/0 | 593.1 |
+| Firelock | Warlock | 5/11/35 | 794.3 | | Prot Warr | Warrior | 17/0/34 | 455.5 |
+| Arcane Mage | Mage | 47/4/0 | 779.9 | | Bear Druid | Druid | 9/42/0 | 367.3 |
+| Enh Shaman | Shaman | 17/34/0 | 760.5 | | Prot Pally | Paladin | 8/34/9 | 360.6 |
+| Combat Rogue | Rogue | 18/33/0 | 755.5 | | | | | | |
 
-The mean across **25** is **734.1**, RE-SUMMED FROM THE ROWS ABOVE rather than
+The mean across **25** is **719.6**, RE-SUMMED FROM THE ROWS ABOVE rather than
 adjusted, by `tools/update_baseline_table.py`.
 
-**THE TOP IS DW FURY AT 992.8 +/-11.2, AND LW RANGED IS SECOND AT 910.1
-+/-7.6.** The gap is 82.7.
+**THE TOP IS DW FURY AT 974.3 +/-10.3, AND LW RANGED IS SECOND AT 888.9
++/-7.2.** The gap is 85.4.
 
 **AND THAT IS THE SIXTH REWRITE OF THIS PARAGRAPH.** It has said "the top is
 still the Frostfire Mage and its lead has narrowed to one interval" (true for
@@ -3702,21 +3706,26 @@ ANY ROW MOVES**, which is most commits.
 earlier row in this file was measured in Classic and Season of Discovery
 stand-ins; all 25 builds now wear the **E65 benchmark set**, generated from the
 itemization budget at one quality and one item level. The mean went 730.9 to
-**734.1**, which is the least interesting thing about it: **15 rows rose and 10
+**719.6**, which is the least interesting thing about it: **11 rows rose and 14
 fell**, and the split is almost perfectly by archetype.
 
 | | n | mean move |
 | --- | --- | --- |
-| physical, not tanking | 13 | **+30.2** |
-| casters | 9 | **-13.9** |
+| physical, not tanking | 13 | **+14.4** |
+| casters | 9 | **-31.6** |
 | tanks | 3 | **-62.4** |
 
-**AND IT WAS MEASURED TWICE, WITH THE OWNER'S STAMINA FLOOR LANDING BETWEEN.**
-The first run put the mean at 741.0 and the second at 734.1: every armour-class
-piece carries stamina now, which on twenty of the 25 builds is budget that was
-going to a damage stat. The **five that moved 0.0 to the decimal are the five
-that already led with stamina**, which is what says the floor tops up rather
-than overrides.
+**AND IT WAS MEASURED THREE TIMES, WHICH IS WORTH READING AS A SEQUENCE.**
+741.0 on Forever's items; 734.1 once every armour-class piece carried stamina at
+12.5% of its slot's budget; 719.6 once the owner ruled that share up to the 25%
+their own data shows. **Each step moved the mean DOWN and made the items more
+like Forever's**, which is the trade the whole benchmark exists to make: a
+generated set that spends its budget the way the ruleset does will not be the
+set that maximises a DPS figure.
+**THE THREE ROWS AT 0.0 THROUGH BOTH CHANGES ARE THE THREE THAT LEAD WITH
+STAMINA** -- Prot Warr, Bear, Prot Pally -- which is what says the floor tops up
+rather than overrides. At 12.5% it was five: 2H Arms and DW Fury carry stamina
+THIRD, which clears a 12.5% floor and not a 25% one.
 
 **TWO CHANGES PULLING AGAINST EACH OTHER, AND NEITHER IS A RULESET FINDING.**
 The gear now grants its PRIMARIES, which no benchmark set did -- "+19 Strength"
