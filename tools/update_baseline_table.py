@@ -51,6 +51,7 @@ LABELS = {
     'DW Fury': 'dw_fury',
     'Prot Warr': 'prot_warr',
     'Venom Rogue': 'rogue_venom',
+    'Combat Mut': 'rogue_combat_mut',
     'Combat Rogue': 'rogue_combat',
     'Rupture Rogue': 'rogue_rupture',
     'Hemo Rogue': 'rogue_hemo',
