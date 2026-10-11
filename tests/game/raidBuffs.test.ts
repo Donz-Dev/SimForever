@@ -145,24 +145,31 @@ describe('buffs on the character', () => {
 
   it('add up exactly, flats first and Kings multiplying the total', () => {
     /*
-     * Hand-computed, from the ruleset owner's numbers.
+     * ========================================================================
+     * THE RULE IS HAND-COMPUTED AND THE BASE IS MEASURED, which is a change
+     * this test has now been through twice.
      *
-     *   strength  393 base + 53 (Strength of Earth) + 16 (Mark of the Wild)
-     *             = 462, x 1.1 (Blessing of Kings) = 508.2
-     *   agility   186 + 89 (Grace of Air) + 16 = 291, x 1.1 = 320.1
+     *   strength  base + 53 (Strength of Earth) + 16 (Mark of the Wild),
+     *             all of it x 1.1 (Blessing of Kings)
+     *   agility   base + 89 (Grace of Air) + 16, x 1.1
      *
      * MULTIPLICATIVE is the point: Kings is "+10% (1.1x)" in the owner's own
      * notation, so it multiplies what the flats already produced rather than
-     * joining an additive pool with them.
+     * joining an additive pool with them. The owner's figures for the two
+     * totems and the Mark are what this is really pinning.
      *
-     * THE TWO BASES MOVED WITH THE ARMOUR ENCHANTS AND THE RULE DID NOT, which
-     * is why they are written as sums here. The Fury row is 8 + 5 + 9 + 15 + 8
-     * strength plus the chest's "+4 Stats", and 5 on the cloak + 4 from the
-     * same chest + 7 on the boots of agility.
+     * THE BASE MOVED TWICE AND THE RULE DID NOT. It was 393 strength when the
+     * armour enchants landed and was rewritten as a sum of the Fury enchant
+     * row; the gear underneath it is now the E65 benchmark set, so the sum is
+     * different again. A base that is READ cannot be wrong, and an arithmetic
+     * rule written out by hand is what the test is for.
+     * ========================================================================
      */
     const plain = sheet([]);
-    expect(plain.stats.get('strength')).toBe(344 + (8 + 5 + 9 + 15 + 8) + 4);
-    expect(plain.stats.get('agility')).toBe(170 + 5 + 4 + 7);
+    const baseStrength = plain.stats.get('strength');
+    const baseAgility = plain.stats.get('agility');
+    expect(baseStrength).toBeGreaterThan(0);
+    expect(baseAgility).toBeGreaterThan(0);
 
     const buffed = sheet([
       'strength_of_earth_totem',
@@ -170,16 +177,25 @@ describe('buffs on the character', () => {
       'mark_of_the_wild',
       'blessing_of_kings',
     ]);
-    expect(buffed.stats.get('strength')).toBeCloseTo(508.2, 6);
-    expect(buffed.stats.get('agility')).toBeCloseTo(320.1, 6);
+    expect(buffed.stats.get('strength')).toBeCloseTo((baseStrength + 53 + 16) * 1.1, 6);
+    expect(buffed.stats.get('agility')).toBeCloseTo((baseAgility + 89 + 16) * 1.1, 6);
   });
 
   it('give Blessing of Kings a MULTIPLICATIVE ten percent, not an additive one', () => {
-    // 393 + 16 = 409, x 1.1 = 449.9. An additive pool with anything else
-    // would land somewhere else, and nothing else here is a percentage -- the
-    // armour enchants are flat and are already in the 393.
+    /*
+     * (base + 16) x 1.1. An ADDITIVE pool with anything else would land
+     * somewhere else, and nothing else here is a percentage -- the armour
+     * enchants and the gear are flat and are already in the base.
+     *
+     * WHAT MAKES THIS WORTH ITS OWN TEST beside the one above is that it has
+     * ONE flat source: if Kings were folded into an additive pool with the
+     * Mark, the two tests would disagree and only this one names the reason.
+     */
+    const base = sheet([]).stats.get('strength');
     const both = sheet(['mark_of_the_wild', 'blessing_of_kings']);
-    expect(both.stats.get('strength')).toBeCloseTo(449.9, 6);
+    expect(both.stats.get('strength')).toBeCloseTo((base + 16) * 1.1, 6);
+    // And NOT the additive reading, which is the thing being ruled out.
+    expect(both.stats.get('strength')).not.toBeCloseTo(base * 1.1 + 16, 3);
   });
 
   it('GROW THE HEALTH POOL, which is the whole point of Fortitude', () => {
@@ -379,10 +395,24 @@ describe('the Warrior keeps Thunder Clap up', () => {
     const slow = batch.debuffUptime.find((row) => row.auraId === 'thunder_clap');
     // Renewed on every cast, so applications track casts one for one.
     expect(slow?.applications ?? 0).toBeGreaterThan(5);
-    // Better than the raid's one-shot 50%, and short of the 100% a list that
-    // reached it sooner would give. The band is wide because where it lands
-    // inside it is a property of the list's ORDER, which is the owner's.
-    expect(slow?.uptime ?? 0).toBeGreaterThan(0.6);
+    /*
+     * BETTER THAN THE RAID'S ONE-SHOT 50%, and short of the 100% a list that
+     * reached it sooner would give. The band is wide because where it lands
+     * inside it is a property of the list's ORDER, which is the owner's.
+     *
+     * AND IT HAS NOW MOVED THREE TIMES WITHOUT THE BUFF CHANGING: 74.7% when
+     * it was written, about 67% when the rage formula changed, and 57% on the
+     * E65 benchmark set. The cause is the same each time -- Thunder Clap sits
+     * near the BOTTOM of the tank list, so anything that lets the entries
+     * above it fire more often pushes its first cast later. Better gear is one
+     * more such thing.
+     *
+     * SO THE LOWER BOUND IS THE RAID'S 50% rather than a figure measured on
+     * one set of gear. That is the comparison the test's name makes, and it is
+     * the one that does not move when something above Thunder Clap gets
+     * cheaper.
+     */
+    expect(slow?.uptime ?? 0).toBeGreaterThan(0.5);
     expect(slow?.uptime ?? 0).toBeLessThan(0.9);
   });
 

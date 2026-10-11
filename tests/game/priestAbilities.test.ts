@@ -314,26 +314,44 @@ describe('the fight', () => {
      * reaches one school and not another has to be the one that MOVES between
      * them, and the blind pool must move all three together or none.
      */
-    const blindPool = 204 + 6 + 16 + 20;
-    expect(actor.stats.get('spellPower')).toBe(blindPool);
-
     /*
-     * The scoped half, and the planner's own total once the two are added.
+     * ------------------------------------------------------------------------
+     * THE POOL IS MEASURED AND THE SCOPING IS ASSERTED, which is the half this
+     * test is actually for.
      *
-     * THE SHADOW-SCOPED 357 IS UNCHANGED BY THE ENCHANTS and the Shadow TOTAL
-     * is not, which is the distinction worth keeping straight: the enchant
-     * raises the pool every school draws on, so Shadow gains the same 42 that
-     * Holy and Arcane do and keeps its 357 -- the set's own lines plus
-     * Anathema's Forever +64 -- on top. Writing the total as `blindPool + 357`
-     * rather than as 603 is what says so.
+     * The blind pool was written out as `204 + 6 + 16 + 20` -- the Classic
+     * Vestments plus the owner's caster enchant row -- and the Shadow Priest
+     * wears the E65 benchmark set now. A fourth literal would be a fourth
+     * thing to rewrite, and the figure was never the claim.
+     *
+     * AND THE SCOPED HALF IS GONE WITH THE SET THAT CARRIED IT. Nine Priest
+     * pieces named Shadow and Anathema carried Forever's +64; the benchmark
+     * gear is school-BLIND, so Shadow reads exactly the blind pool and so do
+     * Holy and Arcane. That is the distinction still being tested, from the
+     * other side: all three agreeing is what says nothing scoped is leaking
+     * into the blind stat.
+     * ------------------------------------------------------------------------
      */
-    expect(spellPowerFor(actor, 'shadow')).toBe(blindPool + 357);
+    const blindPool = actor.stats.get('spellPower');
+    expect(blindPool).toBeGreaterThan(6 + 16 + 20);
 
-    // AND NO OTHER SCHOOL GAINED THE SCOPED PART, which is the reason it could
-    // not be folded into the stat in the first place. Both read the blind pool
-    // and nothing more.
+    expect(spellPowerFor(actor, 'shadow')).toBe(blindPool);
     expect(spellPowerFor(actor, 'holy')).toBe(blindPool);
     expect(spellPowerFor(actor, 'arcane')).toBe(blindPool);
+
+    /*
+     * AND A SCOPED LINE STILL LANDS WHERE IT SHOULD, on a hand-built set,
+     * because that is the rule the benchmark gear can no longer exercise.
+     * Elemental Mage Staff is +36 Fire and +36 Frost and nothing blind.
+     */
+    const scoped = createPlayer({
+      race: 'troll',
+      characterClass: 'priest',
+      combatStyle: 'caster',
+      talents: shadowBuild().talents,
+      equipment: { twoHand: { itemId: 944 } },
+    });
+    expect(spellPowerFor(scoped, 'fire') - spellPowerFor(scoped, 'shadow')).toBe(36);
   });
 });
 

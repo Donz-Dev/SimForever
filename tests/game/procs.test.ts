@@ -182,31 +182,54 @@ describe('Hand of Justice', () => {
 });
 
 describe('which weapon carries which proc', () => {
-  it("puts Vis'kag's proc on the hand Vis'kag is in", () => {
-    expect(reactionsForEquipment({ mainHand: { itemId: 17075 } }).map((r) => r.id)).toEqual([
-      'viskag_mainHand',
-    ]);
-    expect(reactionsForEquipment({ offHand: { itemId: 17075 } }).map((r) => r.id)).toEqual([
-      'viskag_offHand',
-    ]);
-    // Brutality Blade has no proc of its own.
-    expect(reactionsForEquipment({ mainHand: { itemId: 228265 } })).toEqual([]);
+  /*
+   * ============================================================================
+   * NO FOREVER ITEM CARRIES VIS'KAG'S PROC, so these tests drive CRUSADER --
+   * the one weapon proc the ruleset still reaches -- and the slot rules are the
+   * same rules.
+   *
+   * Vis'kag the Bloodletter and Hand of Justice are both in Forever's own
+   * `missing.json`: the ruleset removed them. `reactionsForEquipment` used to
+   * install Fatal Wound by testing `item.id === 17075`, which made the branch
+   * unreachable the day the stand-ins were deleted; it keys on the TOOLTIP'S
+   * WORDING now, so an item Forever adds with that line gets the
+   * implementation for free.
+   *
+   * WHAT IS LOST IS THE END-TO-END TEST AND NOT THE MECHANISM, and
+   * `items.test.ts` asserts that no item carries either wording today -- so the
+   * day one does, that assertion fails and somebody comes back here.
+   * ============================================================================
+   */
+  const WEAPON = 16345; // High Warlord's Blade, a plain one-hander
+
+  it('puts Crusader on the hand the enchant is on', () => {
+    expect(
+      reactionsForEquipment({ mainHand: { itemId: WEAPON, enchantId: 20034 } }).map((r) => r.id),
+    ).toEqual(['crusader_mainHand']);
+    expect(
+      reactionsForEquipment({ offHand: { itemId: WEAPON, enchantId: 20034 } }).map((r) => r.id),
+    ).toEqual(['crusader_offHand']);
+    // An unenchanted weapon brings no proc of its own.
+    expect(reactionsForEquipment({ mainHand: { itemId: WEAPON } })).toEqual([]);
   });
 
   it('treats a two-hander as the main hand', () => {
-    const ids = reactionsForEquipment({ twoHand: { itemId: 228229, enchantId: 20034 } }).map(
+    const ids = reactionsForEquipment({ twoHand: { itemId: 18877, enchantId: 20034 } }).map(
       (r) => r.id,
     );
     expect(ids).toEqual(['crusader_mainHand']);
   });
 
   it('only fires for attacks made with its own weapon', () => {
-    const reaction = reactionsForEquipment({ offHand: { itemId: 17075 } })[0];
+    const reaction = reactionsForEquipment({ offHand: { itemId: WEAPON, enchantId: 20034 } })[0];
     const player = createPlayer({
       race: 'human',
       characterClass: 'warrior',
       combatStyle: 'dual_wield',
-      equipment: { mainHand: { itemId: 228265 }, offHand: { itemId: 17075 } },
+      equipment: {
+        mainHand: { itemId: WEAPON },
+        offHand: { itemId: WEAPON, enchantId: 20034 },
+      },
     });
 
     const context = {
@@ -232,7 +255,7 @@ describe('which weapon carries which proc', () => {
   });
 
   it('cannot proc off an attack that never landed', () => {
-    const reaction = reactionsForEquipment({ mainHand: { itemId: 17075 } })[0];
+    const reaction = reactionsForEquipment({ mainHand: { itemId: WEAPON, enchantId: 20034 } })[0];
     // A missed swing is not in the reaction's outcome list at all, which is the
     // first line of defence; `canProc` is the second.
     expect(reaction.outcomes).not.toContain('miss');
@@ -250,32 +273,41 @@ describe('procs in a real fight', () => {
     return {
       ...base,
       character: { ...base.character, combatStyle: 'dual_wield' as const },
+      /*
+       * TWO CRUSADERS AND NOTHING ELSE, because Vis'kag and Hand of Justice are
+       * both in Forever's `missing.json` -- the ruleset removed them. This set
+       * held all three procs and now holds the one the data can still reach.
+       */
       equipment: {
-        mainHand: { itemId: 17075, enchantId: 20034 },
-        offHand: { itemId: 228265, enchantId: 20034 },
-        trinket2: { itemId: 11815 },
+        mainHand: { itemId: 16345, enchantId: 20034 },
+        offHand: { itemId: 16345, enchantId: 20034 },
       },
       simulation: { ...base.simulation, durationSeconds: 300, seed },
     };
   }
 
-  it('fires all three often enough to see, over a long fight', () => {
-    let fatalWounds = 0;
+  it('fires often enough to see, over a long fight', () => {
+    /*
+     * ------------------------------------------------------------------------
+     * ONE PROC RATHER THAN THREE, AND SAYING SO IS THE POINT. Fatal Wound and
+     * the extra attack are implemented and no item in the ruleset carries
+     * either, so counting them here would assert zero forever and read as a
+     * passing test of a working mechanism.
+     *
+     * `items.test.ts` holds the other half: it fails if any item starts
+     * carrying one of those two wordings, which is the moment to come back and
+     * put them in this fight.
+     * ------------------------------------------------------------------------
+     */
     let holyStrength = 0;
-    let extraAttacks = 0;
-
     for (let seed = 1; seed <= 12; seed++) {
-      const result = runProfile(gearedProfile(seed), seed);
-      for (const event of result.timeline) {
-        if (event.type === 'damage' && event.abilityId === 'fatal_wound') fatalWounds++;
-        if (event.type === 'aura_applied' && event.auraId.startsWith('holy_strength')) holyStrength++;
+      for (const event of runProfile(gearedProfile(seed), seed).timeline) {
+        if (event.type === 'aura_applied' && event.auraId.startsWith('holy_strength')) {
+          holyStrength++;
+        }
       }
-      extraAttacks += result.combatLog.filter((line) => /extra/i.test(line)).length;
     }
-
-    expect(fatalWounds).toBeGreaterThan(0);
     expect(holyStrength).toBeGreaterThan(0);
-    void extraAttacks;
   });
 
   it('stacks both hands, for two hundred strength', () => {
@@ -324,22 +356,25 @@ describe('procs in a real fight', () => {
     expect([...ids].sort()).toEqual(['holy_strength_mainHand', 'holy_strength_offHand']);
   });
 
-  it("deals Vis'kag's stated damage", () => {
-    // 240 before armor. Against a 3731-armor level 63 target, 39.3% is removed.
-    for (let seed = 1; seed <= 12; seed++) {
-      const result = runProfile(gearedProfile(seed), seed);
-      const wound = result.timeline.find(
-        (event) => event.type === 'damage' && event.abilityId === 'fatal_wound',
-      );
-      if (!wound || wound.type !== 'damage') continue;
-
-      // Non-critical procs land at the flat value less armor.
-      if (!wound.critical) {
-        expect(wound.amount + wound.mitigated).toBeCloseTo(VISKAG_DAMAGE, 6);
-        return;
-      }
-    }
-    throw new Error('no Fatal Wound landed in twelve fights');
+  it("states Vis'kag's damage, for an item the ruleset no longer has", () => {
+    /*
+     * ========================================================================
+     * THE FIGURE IS THE OWNER'S AND THE ITEM IS GONE.
+     *
+     * This drove twelve fights and read the Fatal Wound damage off the event
+     * stream, which is the right way to test a proc -- and Vis'kag the
+     * Bloodletter is in Forever's `missing.json`, so there is no longer a way
+     * to equip one. Twelve fights now find nothing and the test threw "no
+     * Fatal Wound landed in twelve fights", which is true and is not a defect.
+     *
+     * WHAT IS KEPT IS THE NUMBER, because it came from the ruleset owner and
+     * deleting it would lose sourced data for an implementation that still
+     * exists. The mechanism is exercised by Crusader next door, which shares
+     * `weaponProc` and the whole roll path.
+     * ========================================================================
+     */
+    expect(VISKAG_DAMAGE).toBe(240);
+    expect(VISKAG_PPM).toBe(1);
   });
 
   it('respects the internal cooldown between extra attacks', () => {

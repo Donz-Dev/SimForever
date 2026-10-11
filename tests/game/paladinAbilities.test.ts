@@ -98,6 +98,24 @@ const presetPlayer = (preset: string) => {
   });
 };
 
+/**
+ * The same character with one slot replaced.
+ *
+ * The presets wear generated benchmark gear, which is school-BLIND, so the
+ * school-scoped route has to be exercised on a CAPTURED item -- and the rest of
+ * the build has to stay the same for the comparison to mean anything.
+ */
+const presetPlayerWith = (preset: string, slots: Record<string, { itemId: number }>) => {
+  const built = PRESETS_BY_ID.get(preset)!.build();
+  return createPlayer({
+    race: 'human',
+    characterClass: 'paladin',
+    combatStyle: built.character.combatStyle as never,
+    talents: built.talents,
+    equipment: { ...built.equipment, ...slots } as never,
+  });
+};
+
 describe('the numbers', () => {
   it('takes the midpoint of each judgement, at MAX RANK', () => {
     // Figures that follow foreverchanges.pro where it and our own capture
@@ -161,16 +179,39 @@ describe('the numbers', () => {
     const blind = shockadin.stats.get('spellPower');
 
     /*
-     * Eight Lawbringer pieces: 27 + 21 + 16 + 14 + 20 + 19 + 24 + 20.
+     * ------------------------------------------------------------------------
+     * THE SCOPED HALF IS GONE WITH THE SET THAT CARRIED IT, AND THE RULE IS
+     * ASSERTED FROM THE OTHER SIDE.
      *
-     * `toBeCloseTo` because the school-blind half is 373.3 -- Holy Power
-     * converts a percentage of intellect -- so the difference of two floats is
-     * 160.99999999999994 and the exact comparison is the wrong tool.
+     * This was eight Lawbringer pieces summing to 161 Holy spell power --
+     * 27 + 21 + 16 + 14 + 20 + 19 + 24 + 20 -- and Lawbringer is a Season of
+     * Discovery set, deleted with the rest. The benchmark gear is school-BLIND,
+     * so every school reads exactly the blind pool.
+     *
+     * ALL SEVEN AGREEING IS THE TEST NOW, and it is the half that catches the
+     * mistake that mattered: a scoped line leaking into the school-blind stat
+     * would raise Shadow and Physical along with Holy. The scoped ROUTE is
+     * checked below on a hand-built set, because the presets can no longer
+     * exercise it.
+     * ------------------------------------------------------------------------
      */
-    expect(spellPowerFor(shockadin, 'holy') - blind).toBeCloseTo(161, 6);
-    // And NOTHING else gained, which is the whole reason it is not a stat.
-    expect(spellPowerFor(shockadin, 'shadow')).toBe(blind);
-    expect(spellPowerFor(shockadin, 'physical')).toBe(blind);
+    for (const school of ['holy', 'shadow', 'physical'] as const) {
+      expect(spellPowerFor(shockadin, school), school).toBe(blind);
+    }
+
+    /*
+     * AND A SCOPED LINE STILL LANDS ON ITS OWN SCHOOL. Radiant Gloves are
+     * "+19 Holy Spell Damage" and nothing blind, transcribed from their own
+     * tooltip -- so Holy reads 19 above Shadow and the blind pool is untouched.
+     *
+     * IN THE GLOVES RATHER THAN A WEAPON SLOT, because the Shockadin's style is
+     * `one_hand_shield` and `liveEquipment` strips a two-hander from it: a
+     * scoped STAFF would contribute nothing and the test would read zero for a
+     * reason that has nothing to do with scoping.
+     */
+    const scoped = presetPlayerWith('pally_shockadin', { gloves: { itemId: 254105 } });
+    expect(spellPowerFor(scoped, 'holy') - spellPowerFor(scoped, 'shadow')).toBe(19);
+    expect(spellPowerFor(scoped, 'shadow')).toBe(scoped.stats.get('spellPower'));
   });
 
   it('is worth a real number to ONE of the two builds that carry it', () => {
@@ -190,12 +231,32 @@ describe('the numbers', () => {
      * is why the assertion above is on the stat.
      * ------------------------------------------------------------------------
      */
+    /*
+     * AND NEITHER BUILD CARRIES SCOPED HOLY POWER ANY MORE. Retribution's four
+     * Lawbringer pieces were the 79, and that set is deleted -- so what is
+     * asserted is that both read their blind pool and nothing more, which is
+     * the same claim pointing the other way.
+     *
+     * THE PARAGRAPH ABOVE IS STILL THE REASON THIS TEST IS ON THE STAT rather
+     * than on damage: Seal of Command is 70% of WEAPON damage with no spell
+     * power term, so Retribution's Holy power multiplies nothing however much
+     * of it there is.
+     */
     const ret = presetPlayer('pally_ret');
-    expect(spellPowerFor(ret, 'holy') - ret.stats.get('spellPower')).toBeCloseTo(79, 6);
+    expect(spellPowerFor(ret, 'holy')).toBe(ret.stats.get('spellPower'));
 
-    // Protection's tank cut of Lawbringer says nothing about Holy at all.
     const prot = presetPlayer('prot_pally');
     expect(spellPowerFor(prot, 'holy')).toBe(prot.stats.get('spellPower'));
+
+    /*
+     * AND THE SHOCKADIN'S SEAL IS STILL THE ONE THAT READS IT, which is the
+     * half worth keeping: given scoped Holy power, its damage moves and
+     * Retribution's does not.
+     */
+    const shockadinScoped = presetPlayerWith('pally_shockadin', { gloves: { itemId: 254105 } });
+    expect(
+      spellPowerFor(shockadinScoped, 'holy') - shockadinScoped.stats.get('spellPower'),
+    ).toBe(19);
   });
 
   it('makes a two-hander hit harder, in one step rather than continuously', () => {

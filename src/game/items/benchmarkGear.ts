@@ -231,6 +231,46 @@ export function baseArmour(slotName: string, armour: ArmourClass, itemLevel: num
 }
 
 /**
+ * A shield's INHERENT block value, which comes free with the item level.
+ *
+ * ----------------------------------------------------------------------------
+ * THE SAME SHAPE AS BASE ARMOUR, AND FOR THE SAME REASON. The eighteen shields
+ * in the Forever data carry a "44 Block" STAT line -- inherent, like the armour
+ * on the line above it -- and The Immovable Object carries a second, BUDGETED
+ * "Equip: +27 Block Value" on top. One is free with the slot and the other is
+ * bought, which is exactly the base-armour/bonus-armour split.
+ *
+ * FITTED FROM FOREVER'S OWN SHIELDS and the fit is barely a fit: every one of
+ * the nine distinct item levels on file is reproduced EXACTLY once rounded,
+ * with a worst residual of 0.44 of a point.
+ *
+ *   blue   ilvl 52 -> 31, 54 -> 33, 55 -> 34, 56 -> 35, 58 -> 36
+ *   epic   ilvl 65 -> 44 (six shields), 70 -> 48, 78 -> 55, 79 -> 55, 81 -> 57
+ *
+ * THE TWO SLOPES ARE THE SAME TO THREE DECIMALS, 0.818 and 0.813, and quality
+ * moves the intercept by about 2.4 points. Two of the four benchmark sets land
+ * on an item level that is DIRECTLY OBSERVED -- B55 blue gives 34, which is
+ * Sunderbark Vigil, and E65 gives 44, which is what all six epic shields at
+ * that level carry -- so only E75 and E85 are interpolated at all.
+ *
+ * WHAT IT COST TO BE MISSING: the budget bought a tank's shield SIX points of
+ * block value where a real one carries 44, because block value at a cost of
+ * 0.65 is expensive and a shield is a light slot. Shield Slam adds the
+ * wielder's block value to its own damage, so the Protection builds were
+ * losing it twice -- once in mitigation and once in damage.
+ * ----------------------------------------------------------------------------
+ */
+export const SHIELD_BLOCK: Readonly<Record<3 | 4, readonly [number, number]>> = {
+  3: [0.8182, -11.242],
+  4: [0.8128, -8.832],
+};
+
+export function shieldBlockValue(quality: 3 | 4, itemLevel: number): number {
+  const line = SHIELD_BLOCK[quality];
+  return Math.round(line[0] * itemLevel + line[1]);
+}
+
+/**
  * Weapon damage per second, fitted per hand and quality.
  *
  * ----------------------------------------------------------------------------

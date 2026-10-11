@@ -5,6 +5,7 @@ import {
   benchmarkEquipmentFor,
   type BenchmarkSetId,
 } from './benchmarkSets';
+import { PRESET_ENCHANTS } from './presetEnchants';
 
 /**
  * The gear a character starts with, which is now a BENCHMARK SET.
@@ -56,7 +57,14 @@ const REPRESENTATIVE: Readonly<Record<string, string>> = {
   'shaman|dual_wield': 'shaman_enhancement',
   'mage|caster': 'mage_fire',
   'paladin|two_hander': 'pally_ret',
-  'paladin|one_hand_shield': 'prot_pally',
+  /*
+   * THE SHOCKADIN IS THE DEFAULT SHIELD PALADIN, not Protection, and this read
+   * `prot_pally` -- which made `SHIELD_TANK` below a no-op and gave a
+   * from-scratch Paladin a tank's stat line whether or not anything was hitting
+   * it. The two are separated by the ENCOUNTER, so the damage build has to be
+   * the one here and the tank the override.
+   */
+  'paladin|one_hand_shield': 'pally_shockadin',
   'paladin|caster': 'pally_shockadin',
   'hunter|ranged': 'bm_hunter',
   'hunter|dual_wield': 'lw_melee',
@@ -97,5 +105,39 @@ export function startingEquipmentFor(
   const tank = options.targetAttacks === true ? SHIELD_TANK[key] : undefined;
   const presetId = tank ?? REPRESENTATIVE[key];
   if (!presetId) return {};
-  return benchmarkEquipmentFor(presetId, options.set ?? 'E65') ?? {};
+  const gear = benchmarkEquipmentFor(presetId, options.set ?? 'E65');
+  if (!gear) return {};
+
+  /*
+   * ENCHANTED, AS IT ALWAYS WAS, AND IT STOPPED BEING FOR A COMMIT.
+   *
+   * --------------------------------------------------------------------------
+   * The old curated sets carried their enchants inside them -- the tank set's
+   * main hand was Brutality Blade WITH Crusader -- so a character created from
+   * scratch arrived enchanted. Deleting those sets took the enchants with them
+   * and left this function handing back bare gear: worth **+2.4 to +53.7 DPS**,
+   * the figures `enchants.test.ts` records, lost with nothing on screen to say
+   * so. A preset kept its loadout because `withBenchmarkGear` re-applies one;
+   * nothing re-applied it here.
+   *
+   * THE SAME TABLE AS THE PRESETS USE, which is why it lives in `game/items/`.
+   * A character created as a Warrior and a Warrior preset should be wearing the
+   * same enchants, and two copies of that table would be two things to drift.
+   *
+   * ONLY THE SLOTS THE SET ACTUALLY FILLS, so a loadout naming a slot this
+   * build does not use -- a `ranged` row on a melee Hunter -- is dropped rather
+   * than producing an enchant hanging off nothing.
+   * --------------------------------------------------------------------------
+   */
+  const loadout = PRESET_ENCHANTS[presetId] ?? {};
+  const enchanted: Record<string, { itemId: number; enchantId?: number }> = {};
+  for (const [slot, equipped] of Object.entries(gear)) {
+    if (!equipped) continue;
+    const enchantId = loadout[slot as keyof typeof loadout];
+    enchanted[slot] =
+      enchantId === undefined
+        ? { itemId: equipped.itemId }
+        : { itemId: equipped.itemId, enchantId };
+  }
+  return enchanted as Equipment;
 }

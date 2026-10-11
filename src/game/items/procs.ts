@@ -14,7 +14,7 @@ import {
   isWeaponUseOf,
   seconds,
 } from '../../engine';
-import { ITEMS_BY_ID } from './itemData';
+import { ITEMS_BY_ID, ITEM_PROCS } from './itemData';
 
 /**
  * Procs per minute.
@@ -373,7 +373,14 @@ export function reactionsForEquipment(
     if (!equipped) continue;
 
     const item = ITEMS_BY_ID.get(equipped.itemId);
-    if (item?.id === 17075) {
+    /*
+     * BY THE TOOLTIP'S WORDING, NOT BY AN ITEM ID. This read `item?.id ===
+     * 17075` -- Vis'kag the Bloodletter, which is in Forever's `missing.json`
+     * and in no capture, so the branch was unreachable. `ITEM_PROCS` is the one
+     * place that says which procs are implemented, and `itemData` reads the
+     * same table to decide that such a line is NOT a gap.
+     */
+    if (item !== undefined && ITEM_PROCS.fatalWound.test(item.tooltip)) {
       reactions.push(
         weaponProc({
           id: `viskag_${weaponSlot}`,
@@ -398,7 +405,20 @@ export function reactionsForEquipment(
 
   for (const slot of ['trinket1', 'trinket2'] as const) {
     const itemId = equipment[slot]?.itemId;
-    if (itemId !== undefined && HAND_OF_JUSTICE_IDS.includes(itemId)) {
+    if (itemId === undefined) continue;
+    const item = ITEMS_BY_ID.get(itemId);
+    /*
+     * THE WORDING, OR THE TWO KNOWN IDS. Hand of Justice is in Forever's
+     * `missing.json` like Vis'kag, so the id list alone is dead -- and unlike
+     * Vis'kag this one has to keep working for a trinket that states the proc
+     * in its tooltip without the exact sentence, which is why both routes are
+     * tried. The ids are the Classic and Season of Discovery ones and are kept
+     * because a SAVED PROFILE can still name them.
+     */
+    if (
+      HAND_OF_JUSTICE_IDS.includes(itemId) ||
+      (item !== undefined && ITEM_PROCS.extraAttack.test(item.tooltip))
+    ) {
       reactions.push(handOfJusticeReaction());
     }
   }

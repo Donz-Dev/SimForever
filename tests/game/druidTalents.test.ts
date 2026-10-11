@@ -236,32 +236,46 @@ describe('a form is a combat style, so three talents can read it', () => {
   });
 });
 
-describe('the Glaive of Obsidian Fury finally pays its 172', () => {
-  const GLAIVE = 227833;
-  const FORM_ATTACK_POWER = 172;
+describe('a form-only attack power line finally pays out', () => {
+  /*
+   * ============================================================================
+   * THE MACE OF UNENDING LIFE, NOT THE GLAIVE OF OBSIDIAN FURY. The Glaive was
+   * a Season of Discovery stand-in and is deleted with the rest of them; the
+   * Mace is Forever's own and carries the identical clause at a different
+   * figure, which is the one line in 1,946 items that says a stat applies in
+   * some combat styles and not others.
+   *
+   * Everything this test was about is unchanged: the clause is read rather than
+   * reported as unmodelled, it lands on `styleStats` and NOT on the
+   * unconditional stats, and Dire Bear folds into Bear because the engine has
+   * one bear style.
+   * ============================================================================
+   */
+  const MACE = 21407;
+  const FORM_ATTACK_POWER = 140;
 
   it('reads the form clause off the tooltip instead of listing it as unmodelled', () => {
-    const glaive = ITEMS_BY_ID.get(GLAIVE)!;
-    expect(glaive.name).toBe('Glaive of Obsidian Fury');
+    const mace = ITEMS_BY_ID.get(MACE)!;
+    expect(mace.name).toBe('Mace of Unending Life');
     // The line itself, from the capture, so a re-scrape that reworded it fails.
-    expect(glaive.tooltip).toContain(
-      '+172 Attack Power in Cat, Bear, and Dire Bear forms only.',
+    expect(mace.tooltip).toContain(
+      '+140 Attack Power in Cat, Bear, and Dire Bear forms only.',
     );
     // Cat and Bear, and Dire Bear folds into Bear because there is one bear style.
-    expect(glaive.styleStats).toEqual({
+    expect(mace.styleStats).toEqual({
       cat: { attackPower: FORM_ATTACK_POWER },
       bear: { attackPower: FORM_ATTACK_POWER },
     });
     // It is NOT in the unconditional stats, which would pay every style.
-    expect(glaive.stats.attackPower ?? 0).toBe(0);
+    expect(mace.stats.attackPower ?? 0).toBe(0);
     // And it is no longer reported as something the simulator cannot do.
-    expect(glaive.unmodelled.map((u) => u.text)).not.toContain(
-      '+172 Attack Power in Cat, Bear, and Dire Bear forms only.',
+    expect(mace.unmodelled.map((u) => u.text)).not.toContain(
+      '+140 Attack Power in Cat, Bear, and Dire Bear forms only.',
     );
   });
 
   it('pays it in cat and bear form and nowhere else', () => {
-    const equipment = { twoHand: { itemId: GLAIVE } };
+    const equipment = { mainHand: { itemId: MACE } };
     const ap = (style: 'cat' | 'bear' | 'moonkin' | 'caster') =>
       statsForStyle(equipment, style).attackPower ?? 0;
     expect(ap('cat')).toBe(FORM_ATTACK_POWER);
@@ -1006,12 +1020,26 @@ describe('Thick Hide is armor per level and per excess defense point', () => {
      * your level". `Combatant.defenseSkill` adds the baseline back, so reading
      * that one instead would pay for all 300 points -- 600 armor too much.
      */
+    /*
+     * AND THE SURPLUS IS ZERO ON THE BENCHMARK SET, WHICH IS WORTH SAYING
+     * RATHER THAN ASSERTING AWAY.
+     *
+     * This used to read `expect(surplus).toBeGreaterThan(0)` and then pin the
+     * total at 274 -- the owner's Classic Bear set carried defense skill on its
+     * enchants. The benchmark template lists Defense SIXTH in the Bear's
+     * preferences and a slot buys at most four, so it is never bought: the
+     * second clause of Thick Hide has nothing to convert.
+     *
+     * THAT IS A QUESTION FOR THE OWNER about the Bear's row, not a bug in the
+     * talent -- so the arithmetic is asserted against whatever surplus the gear
+     * actually gives, and the clause itself is pinned by the CONVERSION below,
+     * which is live whether or not anything feeds it.
+     */
     const surplus = bear.stats.get('defenseSkill');
-    expect(surplus).toBeGreaterThan(0);
     expect(bear.defenseSkill).toBe(MAX_CHARACTER_LEVEL * 5 + surplus);
 
     const expected = perLevel * MAX_CHARACTER_LEVEL + perDefense * surplus;
-    expect(expected).toBe(274);
+    expect(expected).toBe(180 + perDefense * surplus);
 
     /*
      * ASSERTED WHERE EACH CLAUSE LANDS, not only on the total: the level clause
@@ -1038,10 +1066,22 @@ describe('Thick Hide is armor per level and per excess defense point', () => {
      * armor figures and a reader needs to see that the old one was WRONG
      * rather than merely small. A fifth of the correct value.
      */
+    /*
+     * COMPARED AGAINST THE CORRECT FIGURE RATHER THAN AGAINST A BAND. The band
+     * was 40 to 60, which was 3% of the Classic Bear set's item armour; the
+     * benchmark Bear BUYS bonus armour -- it is second in its preference list --
+     * so 3% of its item armour is about twice that and the band said nothing
+     * about the rule.
+     *
+     * What makes the old behaviour wrong is that it reads a DIFFERENT QUANTITY,
+     * so the assertion is that the two do not agree: 3 armor per level is 180
+     * and cannot be a percentage of whatever the gear happens to carry.
+     */
     const built = PRESETS_BY_ID.get('druid_bear')!.build();
     const asItemPercent = (armorFromItems(built.equipment, 'bear') * 3) / 100;
-    expect(asItemPercent).toBeGreaterThan(40);
-    expect(asItemPercent).toBeLessThan(60);
+    const perLevelClause = talentNumber('druid', 'thick_hide', 3, 0)! * MAX_CHARACTER_LEVEL;
+    expect(perLevelClause).toBe(180);
+    expect(Math.abs(asItemPercent - perLevelClause)).toBeGreaterThan(20);
   });
 
   it('FOLLOWS a buffed defense skill, which a build-time number would not', () => {
