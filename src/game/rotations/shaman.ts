@@ -1,8 +1,20 @@
 import type { Rotation } from '../../engine';
 import type { AplList } from './apl';
 import { RACIAL_COOLDOWNS } from './racialCooldowns';
-import { CONSUMABLE_COOLDOWNS, CONSUMABLE_HEALS } from './consumableCooldowns';
-import { compileRotation, selfMissing, selfStacks, targetExpired, targetTime } from './apl';
+import {
+  buffPotionCooldown,
+  consumableCooldowns,
+  CONSUMABLE_COOLDOWNS,
+  CONSUMABLE_HEALS,
+} from './consumableCooldowns';
+import {
+  compileRotation,
+  selfMissing,
+  selfStacks,
+  targetExpired,
+  targetHas,
+  targetTime,
+} from './apl';
 import type { CombatStyleId } from '../character';
 import { MAELSTROM_WEAPON_MAX_STACKS } from '../auras/shaman';
 
@@ -56,16 +68,21 @@ const withoutAura = selfMissing;
 
 const atStacks = (auraId: string, stacks: number) => selfStacks('atLeast', stacks, auraId);
 
+/** "<debuff> is on the target" -- `auras.has`, not a reading of the clock. */
+const hasDebuff = targetHas;
+
 // ---------------------------------------------------------------------------
 
 /**
  * ELEMENTAL — Flame Shock held up, Lava Burst on cooldown, Lightning Bolt as
  * the filler.
  *
- * FLAME SHOCK ABOVE LAVA BURST, AND THE ORDER IS LOAD-BEARING. Lava Burst
- * reads the target for Flame Shock at the moment it casts and is worth 20%
- * more when it finds it, so a list that put the burst first would quietly
- * throw that away on the opener and after every refresh.
+ * FLAME SHOCK ABOVE LAVA BURST, AND IT IS A CLAUSE NOW RATHER THAN AN ORDER.
+ * Lava Burst reads the target for Flame Shock at the moment it casts and is
+ * worth 20% more when it finds it -- which the order alone guaranteed only
+ * while nothing could sit between the two entries, and the owner's racial block
+ * now does. `lava_burst` carries the condition itself, so the guarantee no
+ * longer depends on what a later edit puts in between.
  *
  * CHAIN LIGHTNING IS NOT HERE. It jumps to two further enemies and every
  * encounter in this project has one target, so all it does against a single
@@ -77,8 +94,12 @@ const atStacks = (auraId: string, stacks: number) => selfStacks('atLeast', stack
  * seconds of burn beat one instant hit.
  *
  * ----------------------------------------------------------------------------
- * SEARING TOTEM IS THE FOURTH ENTRY AND IT IS WORTH +59.5, which is the largest
- * single rotation finding in this class and one of the largest in the project.
+ * SEARING TOTEM IS WORTH +59.5, which is the largest single rotation finding in
+ * this class and one of the largest in the project.
+ *
+ * IT WAS "THE FOURTH ENTRY" AND IS THE FIRST DAMAGE ENTRY NOW, by the owner's
+ * reorder -- a position is a dated fact like any other figure, and naming one in
+ * a header is how a header goes stale without anybody touching it.
  *
  * THE LIST RAN WITHOUT IT FOR ITS WHOLE LIFE. Three entries, all of them nukes,
  * no totem at all -- and the build spends 3/3 on CALL OF FLAME, whose first
@@ -91,11 +112,17 @@ const atStacks = (auraId: string, stacks: number) => selfStacks('atLeast', stack
  * owner added the entry on 2026-09-30 having been shown the figure. It is their
  * list; the measurement only put a number beside the choice.
  *
- * ABOVE LIGHTNING BOLT, BELOW LAVA BURST. The bolt is this list's unconditional
- * filler, so anything below it can never be the first castable entry -- the
- * floor rule, which is what made Fire Nova inert when it was tried there. Above
- * Lava Burst would cost a burst cast at the pull for a totem that lasts 55
- * seconds either way.
+ * ABOVE LIGHTNING BOLT, AND NOW ABOVE LAVA BURST TOO. The bolt is this list's
+ * unconditional filler, so anything below it can never be the first castable
+ * entry -- the floor rule, which is what made Fire Nova inert when it was tried
+ * there, and it is unchanged.
+ *
+ * WHAT CHANGED IS THE UPPER BOUND. This file argued that "above Lava Burst
+ * would cost a burst cast at the pull for a totem that lasts 55 seconds either
+ * way", and the owner has put it there: the trade is one Lava Burst delayed by
+ * a global cooldown once a fight against 55 seconds of totem starting that much
+ * sooner, and the same argument reads either way round. It is their list, and
+ * the measurement is what says what the swap cost.
  *
  * FIRE NOVA IS DELIBERATELY NOT HERE, and it was measured rather than reasoned
  * about: below the bolt it fired ZERO times and the figure was 375.0 to the
@@ -107,19 +134,66 @@ const atStacks = (auraId: string, stacks: number) => selfStacks('atLeast', stack
 export const SHAMAN_ELEMENTAL: AplList = {
   name: 'Shaman (Elemental)',
   entries: [
+  /*
+   * ==========================================================================
+   * THE SPELLBLASTING POTION OPENS THE LIST, which is the owner's order and is
+   * the only list in the project where a consumable is the first entry.
+   *
+   * IT IS SAFE HERE FOR THE REASON THE TOP WAS UNSAFE FOR THE WARRIOR. A free
+   * off-GCD cast leaves the actor idle, so `nextDecisionTime` pushes the next
+   * decision one 100ms poll out -- which destroyed Charge, whose `canCast` is
+   * true for a single instant at the pull. NOTHING IN THIS LIST HAS A WINDOW
+   * OF THAT SHAPE: every entry below is castable for as long as its condition
+   * holds, so the poll costs 100ms of a 60-second fight and buys thirty
+   * seconds of spell power starting at the pull instead of one cast later.
+   *
+   * ABOVE THE DEMONIC RUNE, WHICH IS THE PART THAT IS NOT ARBITRARY. The Rune
+   * is gated at 10% mana and this is not gated at all, so a list that reached
+   * the Rune first would still fall through to here on every poll but one --
+   * the order between them decides nothing except where the panel draws them,
+   * and the owner drew them this way round.
+   * ==========================================================================
+   */
+  buffPotionCooldown('major_spellblasting_potion'),
+  ...consumableCooldowns({ exclude: ['major_spellblasting_potion'] }),
+  ...CONSUMABLE_HEALS,
+  /*
+   * SEARING TOTEM ABOVE FLAME SHOCK, which is new and is the owner's order.
+   * Both are maintenance, both are "if not active", and the totem lasts 55
+   * seconds against the shock's twelve -- so putting it first costs the shock
+   * one global cooldown once a fight and gets the totem ticking from the pull.
+   */
+  { abilityId: 'searing_totem', condition: expired('searing_totem') },
   { abilityId: 'flame_shock', condition: expired('flame_shock') },
   /*
-   * THE RACIAL COOLDOWNS, AFTER WHATEVER OPENS THIS LIST.
+   * AND THE RACIAL COOLDOWNS *BELOW* THE TWO MAINTENANCE ENTRIES, which is the
+   * owner's order and is a departure from every other non-tank list in the
+   * project -- they sit second everywhere else.
    *
-   * Free, off the global cooldown, and skipped in silence by every build
-   * that is not of the race that learns them. BOTH ENDS OF THE LIST WERE
-   * MEASURED AND BOTH WERE WRONG -- see `racialCooldowns.ts`.
+   * IT IS THE RIGHT DEPARTURE FOR THIS BUILD. The Shaman's racial is
+   * Berserking, +10% spell and attack speed for ten seconds, and haste is
+   * worth what the casts inside the window are worth: opened at the pull, two
+   * of its ten seconds are spent on an instant shock and a totem, which are
+   * the two entries in this list haste does least for. Below them the window
+   * lands on Lava Burst and Lightning Bolt.
+   *
+   * THE OTHER THREE RACIALS MOVE WITH IT rather than being split out. They are
+   * all a flat percentage for a fixed window, so the argument above is the same
+   * argument for each of them, and splitting the shared fragment to place one
+   * entry would be a hand-written copy of it -- which is the shape that drifts.
    */
   ...RACIAL_COOLDOWNS,
-  ...CONSUMABLE_COOLDOWNS,
-  ...CONSUMABLE_HEALS,
-  { abilityId: 'lava_burst' },
-  { abilityId: 'searing_totem', condition: expired('searing_totem') },
+  /*
+   * LAVA BURST ONLY WITH FLAME SHOCK ON THE TARGET, which is the owner's
+   * clause and it REPLACES AN ORDERING ARGUMENT WITH A CONDITION.
+   *
+   * The entry above used to carry the whole rule: "Flame Shock above Lava
+   * Burst, and the order is load-bearing", because Lava Burst reads the target
+   * for the debuff at the moment it casts and is worth 20% more when it finds
+   * it. That held only while nothing could come between them -- and the racial
+   * block now does. Written as a clause it holds whatever is in between.
+   */
+  { abilityId: 'lava_burst', condition: hasDebuff('flame_shock') },
   { abilityId: 'lightning_bolt' },
   ],
 };

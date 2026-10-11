@@ -5,7 +5,7 @@ import {
   type ConsumableSelection,
 } from '../buffs/consumables';
 import type { AplEntry, AplList } from './apl';
-import { resource, resourceFraction, selfHealth } from './apl';
+import { resource, resourceFraction, selfHas, selfHealth } from './apl';
 
 /**
  * The mid-fight consumables every priority list carries.
@@ -161,7 +161,10 @@ export const THISTLE_TEA_ENERGY_THRESHOLD = 20;
  * which is the same arithmetic the food rows reached, and it is what settles
  * the shape rather than making it awkward.
  *
- * WHAT IS LEFT IS THE HEMO ROGUE AND THE CAT DRUID, still on twenty.
+ * AND THE CAT DRUID HAS SINCE JOINED IT, which leaves the HEMO DAGGER ROGUE as
+ * the only thing in the project still on twenty -- so four of the five profiles
+ * that drink Thistle Tea are now named by the owner, and the shared constant is
+ * what the fifth has rather than what anything was designed around.
  * ============================================================================
  */
 export const TIGHT_THISTLE_TEA_ENERGY_THRESHOLD = 10;
@@ -279,20 +282,20 @@ export function consumableCooldowns(
       note: `${MIGHTY_RAGE_THRESHOLD} rage is the no-waste point for the 45-75 it restores. A Cat Druid has no rage pool, so this reads as zero and the potion fires at the pull for its 60 Strength.`,
     },
     /*
-     * THE TWO PURE BUFFS, UNGATED, which is the racials' own argument: a flat
-     * stat for a fixed window has nothing in this encounter to line it up with,
-     * so any condition would be a guess at a burst phase that does not exist
-     * here. Neither can be wasted and neither is a floor -- both are on a two
-     * minute cooldown.
+     * THE TWO PURE BUFFS, UNGATED BY DEFAULT -- which was the racials' own
+     * argument: a flat stat for a fixed window has nothing in this encounter to
+     * line it up with, so any condition would be a guess at a burst phase that
+     * does not exist here.
+     *
+     * AND TWO OF THE OWNER'S LISTS NOW LINE THEM UP WITH SOMETHING, which is
+     * what `buffPotionCooldown` is for -- the Arcane Mage holds Spellblasting
+     * for Presence of Mind and the Cat holds Frenzy for Berserk. So the
+     * reasoning above was right about the ENCOUNTER and wrong about the BUILD:
+     * what the window can be lined up against is one of the character's own
+     * damage cooldowns, which is a thing only the list knows.
      */
-    {
-      abilityId: 'major_frenzy_potion',
-      note: '40 attack power and ranged attack power for 30s. Ungated: a flat window with nothing to line it up against.',
-    },
-    {
-      abilityId: 'major_spellblasting_potion',
-      note: '40 spell power for 30s. Ungated, for the same reason as the Frenzy Potion.',
-    },
+    buffPotionCooldown('major_frenzy_potion'),
+    buffPotionCooldown('major_spellblasting_potion'),
     /*
      * MAJOR MENDER'S POTION IS DELIBERATELY ABSENT, and saying so here is the
      * point -- "say so where the entry is not", because an absent entry for
@@ -326,6 +329,89 @@ export function thistleTeaCooldown(energy?: number): AplEntry {
     condition: resource('atMost', gate, 'energy'),
     note: `100 energy into a cap of 100, so every point on the bar is wasted. Under ${gate} is the compromise between waste and the gate ever opening.`,
   };
+}
+
+/** The two mid-fight consumables that are a flat buff and nothing else. */
+export type BuffPotionId = 'major_frenzy_potion' | 'major_spellblasting_potion';
+
+/** What each one grants, for the note. Not a stat the engine reads from here. */
+const BUFF_POTION_GRANT: Readonly<Record<BuffPotionId, string>> = {
+  major_frenzy_potion: '40 attack power and ranged attack power for 30s',
+  major_spellblasting_potion: '40 spell power for 30s',
+};
+
+/**
+ * One of the two pure buff potions, optionally HELD FOR A WINDOW.
+ *
+ * ============================================================================
+ * UNGATED IS STILL THE DEFAULT, AND IT IS STILL THE RIGHT DEFAULT. Thirty
+ * seconds of a flat stat has nothing in a one-target, no-phase encounter to
+ * line it up against, so a condition written here would be a guess -- which is
+ * exactly what `RACIAL_COOLDOWNS` says about itself and for the same reason.
+ *
+ * WHAT A LIST CAN KNOW THAT THIS FILE CANNOT is whether the BUILD has a damage
+ * cooldown worth stacking the window onto, and two of the owner's lists do:
+ * the Arcane Mage holds Spellblasting for Presence of Mind and the Cat holds
+ * Frenzy for Berserk. Both are the owner's conditions.
+ *
+ * THE GATED ENTRY CANNOT STARVE ITSELF, which is the thing to check before
+ * writing one. The aura it waits on is applied by an entry BELOW it in both
+ * lists, so the first poll skips the potion and casts the cooldown, and the
+ * next poll finds the window open -- and because a potion is off the global
+ * cooldown, that next poll is 100ms later rather than a cast later. A gate
+ * waiting on something only an entry ABOVE it could supply would never open.
+ *
+ * ============================================================================
+ * THE NOTE IS BUILT FROM THE SAME AURA THE CONDITION READS, which is the whole
+ * reason this is a function rather than a condition patched onto a shared
+ * entry afterwards. A note is a FROZEN STRING: an override that touched only
+ * the condition would leave the row in the panel explaining a gate it no
+ * longer has, which is the mistake `thistleTeaCooldown` exists to prevent one
+ * category along.
+ * ============================================================================
+ */
+export function buffPotionCooldown(
+  abilityId: BuffPotionId,
+  /** The damage cooldown whose window this is held for, if any. */
+  insideAura?: { readonly id: string; readonly label: string },
+): AplEntry {
+  const grant = BUFF_POTION_GRANT[abilityId];
+  if (insideAura === undefined) {
+    return {
+      abilityId,
+      note: `${grant}. Ungated: a flat window with nothing in this encounter to line it up against.`,
+    };
+  }
+  return {
+    abilityId,
+    condition: selfHas(insideAura.id),
+    note: `${grant}, held for the ${insideAura.label} window so the two stack. The entry that applies ${insideAura.label} is BELOW this one, so the first poll casts the cooldown and the next -- 100ms later, because a potion takes no global cooldown -- drinks this.`,
+  };
+}
+
+/**
+ * One shared consumable entry on its own, so a list can place it by hand.
+ *
+ * ----------------------------------------------------------------------------
+ * THE `exclude` OPTION'S OTHER HALF. A list that drops an entry from the group
+ * has to put it back somewhere, and writing it out by hand is the shape
+ * `rotationIds.test.ts` exists for -- a hand-written copy of a shared fragment
+ * drifts from it silently, and the copy is the one nobody re-reads. The Bear
+ * moves its Mighty Rage Potion from the bottom of the list to the middle and
+ * this is how it carries the gate and the note with it.
+ *
+ * IT THROWS ON AN ID THE GROUP DOES NOT HOLD, rather than returning an entry
+ * for an ability nobody declared -- an entry naming an unknown ability is
+ * skipped by `PriorityRotation` in SILENCE, which is the fourth cause of inert
+ * and the one that reads exactly like a working list.
+ * ----------------------------------------------------------------------------
+ */
+export function consumableCooldown(abilityId: string): AplEntry {
+  const entry = consumableCooldowns().find((candidate) => candidate.abilityId === abilityId);
+  if (entry === undefined) {
+    throw new Error(`consumableCooldown: no shared entry for "${abilityId}"`);
+  }
+  return entry;
 }
 
 /** The shared seven, on the default gates. What every list but one spreads. */

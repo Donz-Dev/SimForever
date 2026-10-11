@@ -199,20 +199,33 @@ describe('the two builds, and what their talents actually do', () => {
      * "Reduces the cooldown of your Shock spells by 1 sec" at rank 5. The unit
      * is declared on the effect because the values file keeps the source's own
      * number, and reading 1 as a millisecond would be silently almost-right.
+     *
+     * ------------------------------------------------------------------------
+     * THE ALLOCATION IS BUILT BY HAND AND NOT READ OFF A PROFILE. It used to
+     * take `shaman_elemental`'s talents, and the owner's respecification of
+     * that build to 32/6/13 spends nothing on Reverberation -- so the test
+     * failed with 6000 against 5000 and was RIGHT to: the character genuinely
+     * no longer had the talent.
+     *
+     * **This pins a MECHANISM -- a cooldown reduction stated in seconds -- so
+     * it must not depend on where a profile spends its points.** The control
+     * below is a character with NO points in it rather than the Enhancement
+     * preset, for the same reason.
+     * ------------------------------------------------------------------------
      */
-    const built = PRESETS_BY_ID.get('shaman_elemental')!.build();
-    const book = new Map(
-      abilitiesForClass('shaman', 'caster', built.talents).map((a) => [a.id, a]),
+    const withIt = new Map(
+      abilitiesForClass('shaman', 'caster', legalise({ reverberation: 5 }, 'shaman')).map(
+        (a) => [a.id, a],
+      ),
     );
     for (const id of ['earth_shock', 'flame_shock', 'frost_shock']) {
-      expect(book.get(id)!.cooldownMs, id).toBe(5000);
+      expect(withIt.get(id)!.cooldownMs, id).toBe(5000);
     }
-    // Enhancement has no points in it, so its shocks stay at six seconds.
-    const enh = PRESETS_BY_ID.get('shaman_enhancement')!.build();
-    const enhBook = new Map(
-      abilitiesForClass('shaman', 'two_hander', enh.talents).map((a) => [a.id, a]),
+    // Without the talent the shocks keep their printed six seconds.
+    const without = new Map(
+      abilitiesForClass('shaman', 'caster', {}).map((a) => [a.id, a]),
     );
-    expect(enhBook.get('earth_shock')!.cooldownMs).toBe(6000);
+    expect(without.get('earth_shock')!.cooldownMs).toBe(6000);
   });
 
   it('scales Windfury Weapon with Elemental Weapons, from the SECOND value', () => {
@@ -1120,11 +1133,15 @@ describe('what is left, which is the claim this deep dive makes', () => {
       ].sort();
 
       /*
-       * ELEMENTAL WARDING JOINED THE ENHANCEMENT LIST at client build
-       * 1.60.1.70170, and it is a BUILD change rather than an engine one: the
-       * Elemental Fury/Alacrity swap put Elemental Fury out of reach of that
-       * build's nineteen Elemental points, and the owner's new URL spends three
-       * of them here.
+       * ========================================================================
+       * ELEMENTAL WARDING IS IN *BOTH* BUILDS NOW, and both times it arrived as
+       * a BUILD change rather than an engine one.
+       *
+       * It joined Enhancement at client build 1.60.1.70170, when the Elemental
+       * Fury/Alacrity swap put Elemental Fury out of reach of that build's
+       * nineteen Elemental points. It joined ELEMENTAL with the owner's
+       * respecification to 32/6/13, which spends three of its tier-one points
+       * here where the old 38/13/0 spent five on Convection.
        *
        * IT IS A GENUINE LIVE GAP AND NOT A CENSUS ARTEFACT, unlike Elemental
        * Weapons beside it: "reduces Fire, Frost and Nature damage TAKEN", and
@@ -1132,14 +1149,22 @@ describe('what is left, which is the claim this deep dive makes', () => {
        * ENCOUNTER cause -- it expires if the encounter changes, not if the engine
        * does -- and `damageTakenBySchool` lives on an aura rather than on a
        * talent effect, which is the declaration it would need.
+       *
+       * SO THE ELEMENTAL BUILD NOW SPENDS THREE POINTS ON NOTHING MEASURABLE,
+       * which is the owner's call and is written down here rather than quietly
+       * absorbed -- it is the kind of thing a figure cannot show, because a
+       * talent that does nothing costs nothing and reports nothing.
+       * ========================================================================
        */
       expect(gaps, preset).toEqual(
-        preset === 'shaman_enhancement' ? ['elemental_warding', 'elemental_weapons'] : [],
+        preset === 'shaman_enhancement'
+          ? ['elemental_warding', 'elemental_weapons']
+          : ['elemental_warding'],
       );
     }
   });
 
-  it('leaves exactly two partly-modelled talents in either build', () => {
+  it('leaves the partly-modelled talents this file names, and no others', () => {
     /*
      * THE OTHER HALF OF THE CLAIM, because "does something" and "does everything"
      * are different and the first one alone would hide a dead clause. Both builds
@@ -1165,18 +1190,29 @@ describe('what is left, which is the claim this deep dive makes', () => {
       ].sort();
 
       /*
+       * ========================================================================
        * ELEMENTAL FURY LEFT THE ENHANCEMENT LIST at client build 1.60.1.70170 --
        * the build cannot reach it any more -- so its Magma Totem clause is a
-       * dead clause on the Elemental build alone now.
+       * dead clause on the Elemental build alone.
        *
-       * WHICH MAKES THE TEST NAME HALF TRUE: two partly-modelled clauses in the
-       * Elemental build and two in Enhancement, and only one of each pair is
-       * Magma Totem. Improved Stormstrike is still the Enhancement-only one.
+       * AND TIDAL FOCUS JOINS THE ELEMENTAL BUILD with the owner's
+       * respecification, which spends five of its thirteen Restoration points
+       * there. It is partly modelled in the healthiest way: **its hit half is
+       * the whole reason the points are there** -- a flat +5% chance to hit
+       * with everything, against a 17% spell miss and a 16-point usable cap --
+       * and only its "reduces the Mana cost of your HEALING spells" half is
+       * dead, scoped `healing` because no profile heals.
+       *
+       * THE TEST NO LONGER COUNTS, which is why it was renamed. "Exactly two"
+       * was a figure about one revision of two builds, and a count in a test
+       * NAME is a figure that goes stale with nobody touching it -- the same
+       * thing this project keeps finding in a header. The LIST is the claim.
+       * ========================================================================
        */
       expect(partly, preset).toEqual(
         preset === 'shaman_enhancement'
           ? ['call_of_flame', 'improved_stormstrike']
-          : ['call_of_flame', 'elemental_fury'],
+          : ['call_of_flame', 'elemental_fury', 'tidal_focus'],
       );
     }
   });

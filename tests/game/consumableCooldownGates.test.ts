@@ -58,8 +58,18 @@ const THISTLE_TEA_GATES: Readonly<Record<string, number>> = {
    * ==========================================================================
    */
   rogue_hemo: TIGHT_THISTLE_TEA_ENERGY_THRESHOLD,
-  // The one carrier that is not a Rogue, and the only one still on twenty.
-  druid_cat: THISTLE_TEA_ENERGY_THRESHOLD,
+  /*
+   * THE ONE CARRIER THAT IS NOT A ROGUE, AND IT IS ON THE TIGHT GATE NOW. The
+   * owner gave the Cat ten with the rest of its respecification, which leaves
+   * `THISTLE_TEA_ENERGY_THRESHOLD` reaching NOTHING in this map.
+   *
+   * THE SHARED TWENTY IS STILL THE RIGHT DEFAULT AND IS NOW UNREACHED, which
+   * is a thing to say rather than a thing to tidy: it is what a build that
+   * nobody has ruled on gets, and five of five rulings landing on something
+   * else is evidence about these five builds and not about the default. The
+   * assertion below is what will say so if a sixth drinker appears.
+   */
+  druid_cat: TIGHT_THISTLE_TEA_ENERGY_THRESHOLD,
 };
 
 const gateOf = (presetId: string) => {
@@ -71,13 +81,43 @@ const gateOf = (presetId: string) => {
 
 describe('the Thistle Tea gate', () => {
   it('is three different numbers, and each one is the owner’s', () => {
-    // And FOUR of the five drinkers are on a respecified one now, three of
-    // them by instruction and the Hemo Rogue by derivation. See the map.
+    // And ALL SIX drinkers are on a respecified one now -- four by
+    // instruction, the Hemo Dagger Rogue and Pure Hemo by derivation. See the
+    // map, and see the assertion below for what the unreached default means.
     expect(THISTLE_TEA_ENERGY_THRESHOLD).toBe(20);
     expect(COMBAT_THISTLE_TEA_ENERGY_THRESHOLD).toBe(15);
     expect(TIGHT_THISTLE_TEA_ENERGY_THRESHOLD).toBe(10);
-    // THREE of the five drinkers are named and they hold TWO numbers, which is
-    // what settles the parameter: no move of the shared constant fits them.
+    // TWO numbers are actually carried by a profile and the third is the
+    // default, which is what settles the parameter: no move of the shared
+    // constant fits the two, and the default is what a sixth build would get.
+  });
+
+  it('leaves the shared default reaching no profile, which is not a bug', () => {
+    /*
+     * ========================================================================
+     * EVERY DRINKER IS ON AN OVERRIDE, so `THISTLE_TEA_ENERGY_THRESHOLD` is
+     * carried by nothing -- and the thing NOT to do about that is move the
+     * shared constant to ten and delete the override.
+     *
+     * A DEFAULT IS A STATEMENT ABOUT THE BUILD NOBODY HAS RULED ON. The twenty
+     * is this repository's own compromise, derived and written down; the tens
+     * and the fifteen are the owner's, given one profile at a time. Folding the
+     * owner's commonest answer into the default would make the next
+     * unspecified build inherit a ruling that was never about it -- which is
+     * the "a ruling covers what it says and is not extended by analogy" rule,
+     * applied to a number instead of to a sentence.
+     *
+     * THIS ASSERTION IS WHAT MAKES THE CLAIM CHECKABLE rather than a comment.
+     * ========================================================================
+     */
+    const onTheDefault = Object.entries(THISTLE_TEA_GATES).filter(
+      ([, gate]) => gate === THISTLE_TEA_ENERGY_THRESHOLD,
+    );
+    expect(onTheDefault).toEqual([]);
+    // And it is still what an unparameterised call produces.
+    expect((thistleTeaCooldown().condition as { amount: number }).amount).toBe(
+      THISTLE_TEA_ENERGY_THRESHOLD,
+    );
   });
 
   it('reaches exactly the profile it was given for', () => {

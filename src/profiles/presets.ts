@@ -698,24 +698,40 @@ const DRUID_BEAR_TALENTS: TalentAllocation = {
  * of it, and the owner supplied a new URL when asked.
  * ----------------------------------------------------------------------------
  */
+/**
+ * Elemental -- 32 Elemental / 6 Enhancement / 13 Restoration, respecified.
+ *
+ * ----------------------------------------------------------------------------
+ * IT WAS 38/13/0 AND THE THIRTEEN MOVED OUT OF ENHANCEMENT INTO RESTORATION.
+ * Convection, Reverberation, Earthbound, Improved Ghost Wolf and Shamanistic
+ * Focus are gone; Elemental Warding, Improved Fire Nova, Totemic Focus,
+ * Mindfulness and Tidal Focus arrive.
+ *
+ * ALL THREE TREE TOTALS SUM FROM THE ICONS, which the panel prints and which
+ * is the check: 32, 6 and 13 is 51.
+ * ----------------------------------------------------------------------------
+ */
 const SHAMAN_ELEMENTAL_TALENTS: TalentAllocation = {
-  convection: 5,
+  // Elemental, 32
   concussion: 5,
-  reverberation: 5,
+  elemental_warding: 3,
   call_of_flame: 3,
   elemental_focus: 1,
-  elemental_fury: 5,
+  elemental_alacrity: 3,
+  improved_fire_nova: 2,
   eye_of_the_storm: 3,
   call_of_thunder: 1,
   elemental_reach: 2,
   lightning_overload: 3,
-  earthbound: 1,
-  elemental_alacrity: 3,
+  elemental_fury: 5,
   lava_burst: 1,
+  // Enhancement, 6
   thundering_strikes: 5,
-  ancestral_knowledge: 5,
-  improved_ghost_wolf: 2,
-  shamanistic_focus: 1,
+  ancestral_knowledge: 1,
+  // Restoration, 13
+  totemic_focus: 5,
+  mindfulness: 3,
+  tidal_focus: 5,
 };
 
 const SHAMAN_ENHANCEMENT_TALENTS: TalentAllocation = {
@@ -768,48 +784,84 @@ const MAGE_FROSTFIRE_TALENTS: TalentAllocation = {
   fingers_of_frost: 2,
 };
 
+/**
+ * Arcane -- 35 Arcane / 11 Fire / 5 Frost, respecified.
+ *
+ * ----------------------------------------------------------------------------
+ * IT WAS 47/4/0, so TWELVE POINTS LEFT THE ARCANE TREE. What goes is the
+ * defensive and utility filler -- Wand Specialization, Magic Absorption,
+ * Arcane Resilience, Arcane Geometry, Arcane Shielding, Improved Counterspell
+ * -- and what arrives is IGNITE, PYROBLAST and ELEMENTAL PRECISION, which is
+ * the list's new Pyroblast entry paid for in talents.
+ *
+ * THE LIST AND THE ALLOCATION ARE ONE CHANGE, the shape these respecifications
+ * keep taking: the APL gained a Pyroblast and the build had no Pyroblast
+ * talent, and a list naming an ability the build cannot cast is skipped IN
+ * SILENCE.
+ *
+ * All three tree totals sum from the icons: 35, 11 and 5 is 51.
+ * ----------------------------------------------------------------------------
+ */
 const MAGE_ARCANE_TALENTS: TalentAllocation = {
-  wand_specialization: 2,
+  // Arcane, 35
   arcane_focus: 5,
   improved_channeling: 5,
   arcane_subtlety: 2,
-  magic_absorption: 2,
   arcane_concentration: 5,
-  arcane_resilience: 2,
-  arcane_geometry: 2,
   arcane_impact: 3,
   arcane_blast: 1,
-  arcane_shielding: 2,
-  improved_counterspell: 2,
   arcane_meditation: 3,
   missile_barrage: 1,
   presence_of_mind: 1,
   arcane_mind: 5,
   arcane_instability: 3,
   arcane_power: 1,
-  wake_of_fire: 1,
+  // Fire, 11
+  wake_of_fire: 2,
   incineration: 3,
+  ignite: 5,
+  pyroblast: 1,
+  // Frost, 5
+  elemental_precision: 5,
 };
 
+/**
+ * Fire -- 16 Arcane / 31 Fire / 4 Frost, respecified.
+ *
+ * ----------------------------------------------------------------------------
+ * IT WAS 10/39/2. The Fire tree LOSES eight -- Flame Throwing, Impact, Burning
+ * Soul, Blast Wave and one of Wake of Fire -- and Arcane gains six, which buys
+ * ARCANE SUBTLETY, ARCANE IMPACT and MISSILE BARRAGE. The list's Arcane
+ * Missiles entry is gated on Missile Barrage, and this build did not have the
+ * talent: the list and the allocation are one change again.
+ *
+ * MASTER OF ELEMENTS GOES 1 -> 3, which is the other half of the mana story --
+ * this is the build whose Evocation the owner has also loosened.
+ *
+ * All three tree totals sum from the icons: 16, 31 and 4 is 51.
+ * ----------------------------------------------------------------------------
+ */
 const MAGE_FIRE_TALENTS: TalentAllocation = {
+  // Arcane, 16
   arcane_focus: 5,
+  arcane_subtlety: 2,
   arcane_concentration: 5,
-  wake_of_fire: 2,
+  arcane_impact: 3,
+  missile_barrage: 1,
+  // Fire, 31
+  wake_of_fire: 1,
   incineration: 3,
   improved_fireball: 5,
   ignite: 5,
-  flame_throwing: 2,
-  impact: 3,
-  burning_soul: 3,
   pyroblast: 1,
   improved_scorch: 3,
   heating_up: 1,
-  master_of_elements: 1,
+  master_of_elements: 3,
   critical_mass: 3,
-  blast_wave: 1,
   fire_power: 5,
   combustion: 1,
-  elemental_precision: 2,
+  // Frost, 4
+  elemental_precision: 4,
 };
 
 /**
@@ -1556,7 +1608,37 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations(with
       },
       talents: { ...DRUID_CAT_TALENTS },
       raidBuffs: [...PRESET_RAID_BUFFS],
-      consumables: { ...STRENGTH_CONSUMABLES, other: 'thistle_tea' },
+      /*
+       * ======================================================================
+       * STRENGTH FOOD AND THE FRENZY POTION, BOTH THE OWNER'S -- and with them
+       * FOUR of the five members of `STRENGTH_CONSUMABLES` are named, holding
+       * THREE different food answers between them.
+       *
+       * 2H Arms and DW Fury eat strength, Prot Warr eats stamina, and this one
+       * eats strength. Only the Bear is unnamed on food -- and it is named in
+       * this same round, for stamina -- so after it the row supplies NOTHING to
+       * anybody and every member overrides it.
+       *
+       * THAT IS WORTH SAYING RATHER THAN COLLAPSING. The honest edit at that
+       * point is to delete the `food` key from the row and let each preset
+       * state its own, and it is a question for the owner rather than a tidy-up
+       * to do unasked: the row still carries nine other categories that all
+       * five agree on, and a row that is right about nine of ten is not a row
+       * to delete.
+       *
+       * AND THE POTION IS A SWAP RATHER THAN AN OVERRIDE OF THE ROW'S DEFAULT:
+       * Mighty Rage is 60 strength and 45-75 RAGE, and a Cat gains no rage at
+       * all -- measured at zero over twenty fights -- so half of it was always
+       * wasted here. The Frenzy Potion is 40 attack power with nothing wasted,
+       * and the owner's list gates it on BERSERK being up rather than ungated.
+       * ======================================================================
+       */
+      consumables: {
+        ...STRENGTH_CONSUMABLES,
+        other: 'thistle_tea',
+        food: 'food_strength',
+        potion: 'major_frenzy_potion',
+      },
       encounter: { ...createDefaultProfile().encounter, targetAttacks: false },
     }),
   },
@@ -1577,7 +1659,17 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations(with
       },
       talents: { ...DRUID_BEAR_TALENTS },
       raidBuffs: [...PRESET_RAID_BUFFS],
-      consumables: STRENGTH_CONSUMABLES,
+      /*
+       * STAMINA FOOD, THE OWNER'S, AND THE FIFTH AND LAST MEMBER OF THE ROW TO
+       * BE NAMED. The three answers across the five are strength, stamina and
+       * strength again -- see `druid_cat` for why the row is not collapsed.
+       *
+       * IT IS THE SECOND TANK TO TAKE IT and for the same reason: stamina buys
+       * health, health is what a death count is counted in, and Forever's
+       * `D x 10 / H` then makes each point of damage taken worth LESS rage. Read
+       * this one on DEATHS, not on the DPS row, and expect the DPS to fall.
+       */
+      consumables: { ...STRENGTH_CONSUMABLES, food: 'food_stamina' },
       /*
        * THE ONE DRUID PROFILE THAT IS HIT BACK, which is the whole point of
        * Bear Form: rage is earned by taking damage as well as dealing it, and

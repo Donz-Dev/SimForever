@@ -145,11 +145,46 @@ describe('a talent can grant a cast modifier', () => {
   });
 
   it('touches only the abilities the talent names', () => {
-    // Shamanistic Focus is the Shocks. Lightning Bolt is not one.
-    const shock = costOf('shaman_elemental', 'shaman', 'flame_shock');
-    const bolt = costOf('shaman_elemental', 'shaman', 'lightning_bolt');
+    /*
+     * ------------------------------------------------------------------------
+     * THE ALLOCATION IS BUILT BY HAND AND NOT READ OFF THE PROFILE, which is
+     * the same correction the Mental Agility test above records -- and this
+     * test needed it for the same reason, one revision later.
+     *
+     * IT USED TO TAKE `shaman_elemental`'s talents, and the owner's
+     * respecification of that build to 32/6/13 dropped BOTH Convection and
+     * Shamanistic Focus. The test then failed with 410 against 184.5 and was
+     * RIGHT to: the character genuinely no longer had either talent. **This
+     * pins a MECHANISM -- that a cast modifier reaches the abilities its
+     * talent names and no others -- so it must not depend on where a profile
+     * spends its points.**
+     *
+     * TWO TESTS IN ONE FILE BROKEN BY TWO UNRELATED OWNER REVISIONS is the
+     * argument for the rule rather than an anecdote about it.
+     * ------------------------------------------------------------------------
+     */
+    const talents = legalise({ convection: 5, shamanistic_focus: 1 }, 'shaman');
+    const actor = createPlayer({
+      race: 'troll',
+      characterClass: 'shaman',
+      combatStyle: 'caster',
+      talents,
+    });
+    buildSimulation([actor, makeTarget()]).advanceTo(0);
+    const costs = (abilityId: string) => {
+      const ability = actor.abilities.get(abilityId)!;
+      return {
+        printed: ability.cost?.amount ?? 0,
+        resolved: resolveCast(actor, ability).costAmount,
+      };
+    };
 
-    // Convection (-10%) and Shamanistic Focus (-45%) both reach Flame Shock.
+    // Shamanistic Focus is the Shocks. Lightning Bolt is not one.
+    const shock = costs('flame_shock');
+    const bolt = costs('lightning_bolt');
+
+    // Convection (-10%) and Shamanistic Focus (-45%) both reach Flame Shock,
+    // and the two stack ADDITIVELY off the base rather than compounding.
     expect(shock.resolved).toBeCloseTo(shock.printed * 0.45, 6);
     // Only Convection reaches Lightning Bolt.
     expect(bolt.resolved).toBeCloseTo(bolt.printed * 0.9, 6);

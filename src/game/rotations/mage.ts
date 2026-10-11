@@ -1,13 +1,20 @@
 import type { Rotation } from '../../engine';
 import type { AplList } from './apl';
 import { RACIAL_COOLDOWNS } from './racialCooldowns';
-import { CONSUMABLE_COOLDOWNS, CONSUMABLE_HEALS } from './consumableCooldowns';
+import {
+  buffPotionCooldown,
+  consumableCooldowns,
+  CONSUMABLE_COOLDOWNS,
+  CONSUMABLE_HEALS,
+} from './consumableCooldowns';
 import {
   all,
   any,
   compileRotation,
+  fightRemaining,
   hasReaction,
   resourceFraction,
+  selfHas,
   selfMissing,
   selfStacks,
   selfTime,
@@ -15,7 +22,11 @@ import {
   targetTime,
 } from './apl';
 import type { TalentAllocation } from '../talents/Talent';
-import { HEATING_UP_MAX_STACKS, IMPROVED_SCORCH_MAX_STACKS } from '../auras/mage';
+import {
+  ARCANE_BLAST_MAX_STACKS,
+  HEATING_UP_MAX_STACKS,
+  IMPROVED_SCORCH_MAX_STACKS,
+} from '../auras/mage';
 
 /**
  * Mage priority lists.
@@ -54,12 +65,8 @@ const selfExpired = (auraId: string) => selfTime('atMost', 0, auraId);
 /** "<buff> stacks = N", on the Mage. */
 const selfStacksExactly = (auraId: string, count: number) => selfStacks('exactly', count, auraId);
 
-/** "<buff> stacks >= N", on the Mage. */
-const selfStacksAtLeast = (auraId: string, minimum: number) =>
-  selfStacks('atLeast', minimum, auraId);
-
 /** "<buff> stacks > 0", on the Mage. */
-const selfHasStack = (auraId: string) => selfStacksAtLeast(auraId, 1);
+const selfHasStack = (auraId: string) => selfStacks('atLeast', 1, auraId);
 
 /** "<debuff> stacks >= N", on the target. */
 const targetStacksAtLeast = (auraId: string, minimum: number) =>
@@ -106,6 +113,17 @@ const selfResourceBelowPercent = (resource: 'mana', percent: number) =>
 
 /** "<buff> is not on the Mage at all." */
 const selfLacks = selfMissing;
+
+/** "<buff> is up", on the Mage -- `auras.has`, not a reading of the clock. */
+const selfActive = selfHas;
+
+/** "<buff> has at most N seconds left", on the Mage. */
+const selfAuraAtMost = (auraId: string, secondsLeft: number) =>
+  selfTime('atMost', secondsLeft, auraId);
+
+/** "Mana is at or above N% of maximum" -- `selfResourceBelowPercent`'s mirror. */
+const selfResourceAbovePercent = (resource: 'mana', percent: number) =>
+  resourceFraction('atLeast', percent / 100, resource);
 
 
 const either = any;
@@ -188,7 +206,49 @@ const SCORCH_REFRESH_SECONDS = 3;
  * ============================================================================
  */
 const EVOCATION_MANA_PERCENT = 10;
-const evocationNeeded = selfResourceBelowPercent('mana', EVOCATION_MANA_PERCENT);
+
+/**
+ * AND ENOUGH FIGHT LEFT TO BE WORTH CHANNELLING, which is the owner's new
+ * second clause -- and it is NOT the same number on all three lists.
+ *
+ * ============================================================================
+ * EVOCATION IS AN EIGHT-SECOND CHANNEL THAT DEALS NOTHING. Starting one with
+ * five seconds on the clock is five seconds of silence bought with mana the
+ * fight ends before anybody can spend, so the gate above -- "the pool is
+ * nearly empty" -- is only half the question. The other half is whether there
+ * is a fight left to spend the pool in.
+ *
+ * IT DOES NOT CHANGE THE ZERO ABOVE, AND THAT IS WORTH SAYING. The entry still
+ * fires on no profile at all: this NARROWS a condition that was already never
+ * true, so the ruling recorded above ("This is intended") is untouched and
+ * `mageAbilities.test.ts` still pins the zero. What moves is what the entry
+ * does in a fight that goes differently from the ones measured, which is the
+ * only thing a safety net is for.
+ *
+ * FIFTEEN SECONDS ON ARCANE AND FROSTFIRE, TEN ON FIRE, both the owner's.
+ * STATED AS TWO CONSTANTS rather than one shared number: nothing says the
+ * three lists should agree, the owner has given two figures, and the Thistle
+ * Tea gate next door is the worked example of what happens when a shared
+ * constant has to serve three owner answers at once.
+ * ============================================================================
+ */
+const EVOCATION_FIGHT_SECONDS = 15;
+const FIRE_EVOCATION_FIGHT_SECONDS = 10;
+
+const evocationFor = (secondsLeft: number) =>
+  all(
+    selfResourceBelowPercent('mana', EVOCATION_MANA_PERCENT),
+    fightRemaining('atLeast', secondsLeft),
+  );
+
+/**
+ * The Heating Up stacks the FROSTFIRE list salvages, and how little is left.
+ *
+ * Two of three, with 3.5 seconds to run. Both the owner's, and see the entry
+ * for why spending at two stacks is worse than waiting anywhere else.
+ */
+const HEATING_UP_SALVAGE_STACKS = 2;
+const HEATING_UP_SALVAGE_SECONDS = 3.5;
 
 const scorchNeeded = all(
   hasReaction('improved_scorch'),
@@ -230,10 +290,10 @@ export const MAGE_FIRE: AplList = {
   ...RACIAL_COOLDOWNS,
   ...CONSUMABLE_COOLDOWNS,
   ...CONSUMABLE_HEALS,
-  { abilityId: 'evocation', condition: evocationNeeded },
+  { abilityId: 'evocation', condition: evocationFor(FIRE_EVOCATION_FIGHT_SECONDS) },
   { abilityId: 'scorch', condition: scorchNeeded },
   /*
-   * AT THREE STACKS, WHICH IS THE CAP. Hot Streak takes a quarter off
+   * AT THREE STACKS, WHICH IS THE CAP. Heating Up takes a quarter off
    * Pyroblast's cast per stack, so three turns a six-second cast into a second
    * and a half -- the only point at which it beats two Fireballs.
    */
@@ -251,6 +311,32 @@ export const MAGE_FIRE: AplList = {
       targetAuraAtLeast('fire_vulnerability', 10),
     ),
   },
+  /*
+   * ==========================================================================
+   * FIRE BLAST ONLY WHILE CLEARCASTING IS *NOT* UP, which is the owner's gate
+   * and is the opposite polarity to the one a reader expects of a free cast.
+   *
+   * CLEARCASTING MAKES THE NEXT SPELL FREE and `CastModifier` spends the charge
+   * on whatever goes out next, narrowed by `requiresCost` and
+   * `requiresAttackTable` but not by how much the spell costs. So a 425-mana
+   * instant under the proc eats a charge that a 585-mana Fireball wanted, and
+   * the saving simply lands somewhere worth less -- the invisible failure this
+   * project already records for a charge spent on the wrong ability: the proc
+   * fires, the aura reports its uptime, and nothing anywhere reads wrong.
+   *
+   * SO THE GATE HOLDS THE CHEAP INSTANT BACK until the free cast has been
+   * taken by the filler below.
+   * ==========================================================================
+   */
+  { abilityId: 'fire_blast', condition: selfLacks('clearcasting') },
+  /*
+   * ARCANE MISSILES ON A BARRAGE PROC, WHICH IS NEW TO THIS LIST AND IS PAID
+   * FOR IN TALENTS. The respecification moves six points into Arcane for
+   * Missile Barrage; without the talent nothing applies the aura, so the entry
+   * would be permanently false and the list would be eleven rows describing a
+   * ten-row rotation. THE LIST AND THE ALLOCATION ARE ONE CHANGE.
+   */
+  { abilityId: 'arcane_missiles', condition: selfHasStack('missile_barrage') },
   { abilityId: 'fireball' },
   ],
 };
@@ -282,9 +368,42 @@ export const MAGE_FROSTFIRE: AplList = {
   ...RACIAL_COOLDOWNS,
   ...CONSUMABLE_COOLDOWNS,
   ...CONSUMABLE_HEALS,
-  { abilityId: 'evocation', condition: evocationNeeded },
+  { abilityId: 'evocation', condition: evocationFor(EVOCATION_FIGHT_SECONDS) },
   { abilityId: 'scorch', condition: scorchNeeded },
   { abilityId: 'pyroblast', condition: selfStacksExactly('heating_up', HEATING_UP_MAX_STACKS) },
+  /*
+   * ==========================================================================
+   * A SECOND PYROBLAST AT *TWO* STACKS, AND ONLY WHEN THEY ARE ABOUT TO GO.
+   *
+   * THE OWNER'S ENTRY, AND IT IS A SALVAGE RATHER THAN A ROTATION. Heating Up
+   * lasts twenty seconds and is `consumedByCast: 'all'`, so a build that
+   * reaches two stacks and then does not reach three throws BOTH away -- and
+   * this repository has measured exactly that shape next door: correcting the
+   * consumption rule took the Fire build's Pyroblast from 13.55 casts a fight
+   * to 1.75, because three stacks are only reached twice.
+   *
+   * THE 3.5-SECOND WINDOW IS WHAT MAKES IT A SALVAGE AND NOT A DOWNGRADE. Two
+   * stacks is two thirds of the cast-time reduction of three, so spending
+   * there is worse than waiting -- everywhere except in the last moment before
+   * the waiting costs everything, which is the only moment this fires.
+   *
+   * IT IS A SECOND ENTRY FOR THE SAME ABILITY, which is legal and deliberate:
+   * the Mage's own Arcane Missiles is in its list twice. What is illegal is a
+   * copy below an UNCONDITIONAL one, and both of these are gated.
+   *
+   * AND IT CANNOT SHADOW THE ENTRY ABOVE IT, because the two conditions are
+   * mutually exclusive by construction -- `exactly 3` and `exactly 2` -- so
+   * the order between them decides nothing. That is not true of a `below 3`
+   * reading, which is the version to not quietly "simplify" this into.
+   * ==========================================================================
+   */
+  {
+    abilityId: 'pyroblast',
+    condition: all(
+      selfStacksExactly('heating_up', HEATING_UP_SALVAGE_STACKS),
+      selfAuraAtMost('heating_up', HEATING_UP_SALVAGE_SECONDS),
+    ),
+  },
   /*
    * ICE LANCE ENTERS A LIST FOR THE FIRST TIME. Its 300% clause was inert for
    * as long as nothing could make the target count as Frozen; Fingers of Frost
@@ -292,6 +411,19 @@ export const MAGE_FROSTFIRE: AplList = {
    * though it were. With a charge in hand it is a times-four instant.
    */
   { abilityId: 'ice_lance', condition: selfHasStack('fingers_of_frost') },
+  /*
+   * FIRE BLAST ONLY ABOVE 10% MANA, which is the MIRROR of the Evocation entry
+   * at the top of this list and shares its constant deliberately. Below that
+   * threshold the list is about to stop and channel for eight seconds, and
+   * spending the last of the pool on a 425-mana instant is spending it on the
+   * thing that caused the channel.
+   *
+   * NOT GATED ON CLEARCASTING, WHICH THE FIRE LIST'S COPY IS. Two owner
+   * conditions for one ability on two lists, and they are left as two: the
+   * Fire build takes Arcane Concentration 5/5 and has a proc to protect, and
+   * nothing says the Frostfire build's answer should be the same one.
+   */
+  { abilityId: 'fire_blast', condition: selfResourceAbovePercent('mana', EVOCATION_MANA_PERCENT) },
   { abilityId: 'frostfire_bolt' },
   ],
 };
@@ -314,12 +446,28 @@ export const MAGE_FROSTFIRE: AplList = {
  * hoards a three-minute cooldown for a perfect moment is describing a player
  * and not a rotation.
  */
-export const ARCANE_BLAST_STACK_LIMIT = 2;
-
 export const MAGE_ARCANE: AplList = {
   name: 'Mage (Arcane)',
   entries: [
-  { abilityId: 'mage_armor', condition: selfExpired('mage_armor') },
+  /*
+   * "MAGE ARMOR IS NOT UP", AND IT IS *NOT* THE "HAS RUN OUT" THE OTHER TWO
+   * LISTS USE.
+   *
+   * --------------------------------------------------------------------------
+   * The owner's Arcane panel reads `aura present: false` where the Fire and
+   * Frostfire panels read the clock, and the two are different tests: an aura
+   * can be PRESENT with nothing left on it. `AplCompare` carries both because
+   * the nine class files wrote both and meant both.
+   *
+   * IT IS WORTH NOTHING TODAY AND IS TRANSCRIBED ANYWAY. Mage Armor lasts
+   * thirty minutes against a one-minute fight, so neither reading can be
+   * reached after the opener and the entry fires exactly once either way. What
+   * is being preserved is that opening the panel and changing nothing leaves
+   * the condition byte-identical -- the editor's one promise -- and a list that
+   * quietly normalises the owner's two readings into one breaks it.
+   * --------------------------------------------------------------------------
+   */
+  { abilityId: 'mage_armor', condition: selfLacks('mage_armor') },
   /*
    * THE RACIAL COOLDOWNS, AFTER WHATEVER OPENS THIS LIST.
    *
@@ -328,67 +476,95 @@ export const MAGE_ARCANE: AplList = {
    * MEASURED AND BOTH WERE WRONG -- see `racialCooldowns.ts`.
    */
   ...RACIAL_COOLDOWNS,
-  ...CONSUMABLE_COOLDOWNS,
-  ...CONSUMABLE_HEALS,
-  { abilityId: 'evocation', condition: evocationNeeded },
+  ...consumableCooldowns({ exclude: ['major_spellblasting_potion'] }),
   /*
-   * ARCANE POWER SPENT INTO A PROC RATHER THAN ON COOLDOWN, which is the shape
-   * of the owner's whole list: it fires only when a free, half-length Arcane
-   * Missiles is already waiting AND Arcane Blast has stacked its damage bonus
-   * three deep. A three-minute cooldown held for the moment it is worth most,
-   * where this file's shell spent it the instant it came up.
+   * AND THE SPELLBLASTING POTION HELD FOR PRESENCE OF MIND, which is the
+   * owner's gate and is the first time anything in this project lines a potion
+   * up against one of the character's own cooldowns.
+   *
+   * ITS POSITION IS UNCHANGED -- the potion is last in the shared group, so
+   * excluding it and placing it here keeps every other row exactly where it
+   * was. What moved is the condition, and `buffPotionCooldown` is what carries
+   * the NOTE with it: a note is a frozen string, and an override that touched
+   * only the condition would leave the panel explaining a gate that is gone.
+   */
+  buffPotionCooldown('major_spellblasting_potion', {
+    id: 'presence_of_mind',
+    label: 'Presence of Mind',
+  }),
+  ...CONSUMABLE_HEALS,
+  { abilityId: 'evocation', condition: evocationFor(EVOCATION_FIGHT_SECONDS) },
+  /*
+   * ARCANE POWER ON A BARRAGE PROC ALONE, which is LOOSER than it was. The
+   * entry used to want a proc AND three Arcane Blast stacks; the owner has
+   * dropped the stack clause, so the cooldown now fires on the first free
+   * Missiles of the fight rather than waiting for the Blast debuff to build
+   * underneath it.
+   *
+   * WHY THAT IS NOT A REGRESSION. Arcane Power is +30% damage for fifteen
+   * seconds on a three-minute cooldown, so in a one-minute fight it is cast at
+   * most once and every poll it spends waiting is a poll of the window thrown
+   * away. The tighter gate was this file's reading of "worth most"; the looser
+   * one is the owner's reading of "worth having at all", and in a fight this
+   * short the second is the better trade.
+   */
+  { abilityId: 'arcane_power', condition: selfHasStack('missile_barrage') },
+  /*
+   * ==========================================================================
+   * PRESENCE OF MIND AT THE ARCANE BLAST CAP, AND THE PYROBLAST BENEATH IT IS
+   * WHAT IT IS FOR. The owner has moved both: the old entry fired at exactly
+   * ONE stack to make a cheap Blast instant, and these two make a SIX-SECOND
+   * PYROBLAST instant instead.
+   *
+   * THE PAIR IS THE ROTATION AND NEITHER HALF WORKS ALONE. Presence of Mind
+   * applies an aura with `requiresCastTime`, so the charge survives every
+   * instant and off-GCD entry above it and is spent by the next real cast --
+   * and the next real cast is the Pyroblast directly below, because its
+   * condition is this entry's condition plus "the charge is in hand". Nothing
+   * between them can take it.
+   *
+   * WHY PYROBLAST IS THE RIGHT TARGET. It is the longest cast the build owns at
+   * six seconds against Arcane Blast's two and a half, so making it free of its
+   * cast time is worth two and a half times what the old one-stack entry bought
+   * -- and the four-stack clause is why the pair sits where it does: at the cap
+   * the next Blast costs 175% more for no further damage, so a global cooldown
+   * spent on something else is a global cooldown saved.
+   *
+   * PYROBLAST IS NEW TO THIS BUILD AND IS PAID FOR IN TALENTS. The
+   * respecification moves eleven points into Fire for Ignite and Pyroblast;
+   * without the talent the ability is not in the book and `PriorityRotation`
+   * skips the entry in SILENCE, which is the fourth cause of inert. THE LIST
+   * AND THE ALLOCATION ARE ONE CHANGE.
+   * ==========================================================================
    */
   {
-    abilityId: 'arcane_power',
-    condition: all(selfHasStack('missile_barrage'), selfStacksAtLeast('arcane_blast', 3)),
+    abilityId: 'presence_of_mind',
+    condition: selfStacksExactly('arcane_blast', ARCANE_BLAST_MAX_STACKS),
+  },
+  {
+    abilityId: 'pyroblast',
+    condition: all(
+      selfStacksExactly('arcane_blast', ARCANE_BLAST_MAX_STACKS),
+      selfActive('presence_of_mind'),
+    ),
   },
   { abilityId: 'arcane_missiles', condition: selfHasStack('missile_barrage') },
   /*
-   * AND AT FOUR ARCANE BLAST STACKS WITHOUT ONE. Four is the cap, where the
-   * next Blast costs 175% more for no further damage bonus -- so the list
-   * spends the stack on Missiles rather than paying that price.
+   * AND AT THE ARCANE BLAST CAP WITHOUT ONE. Four is the cap, where the next
+   * Blast costs 175% more for no further damage bonus -- so the list spends the
+   * stack on Missiles rather than paying that price, and the debuff falls off
+   * during the channel.
    *
    * A repeated ability id is legal; what is not is a copy below an
    * UNCONDITIONAL one. Both entries are gated and Arcane Blast is the filler.
    */
-  { abilityId: 'arcane_missiles', condition: selfStacksExactly('arcane_blast', 4) },
-  /*
-   * PRESENCE OF MIND AT EXACTLY ONE ARCANE BLAST STACK, WITHOUT A BARRAGE, by
-   * the ruleset owner -- and it was in no list at all before, which the
-   * handoff recorded as deliberate: "it makes the next cast instant, and the
-   * shell used it on cooldown; the owner's order does not name it".
-   *
-   * WHAT THE CONDITION BUYS. The next cast after this one is Arcane Blast --
-   * the filler below, and nothing between here and there can fire, because
-   * Missile Barrage is excluded by this entry's own condition and the
-   * four-stack Missiles entry cannot be true at one stack. So the instant goes
-   * where the owner aimed it rather than wherever the list happened to be.
-   *
-   * ONE STACK AND NOT FOUR, which is the opposite of where a damage cooldown
-   * goes and is the point: the stacks raise the cost of Arcane Blast by 175%
-   * each, so the CHEAP Blast is the one worth making free of its cast time,
-   * and the expensive ones are what the Missiles entry above is for.
-   *
-   * `requiresCastTime` on its aura is what stops the charge being eaten by an
-   * instant, so this cannot be wasted on the Mage Armor or Evocation entries
-   * above it.
-   */
   {
-    abilityId: 'presence_of_mind',
-    condition: all(
-      selfStacksExactly('arcane_blast', 1),
-      selfLacks('missile_barrage'),
-    ),
+    abilityId: 'arcane_missiles',
+    condition: selfStacksExactly('arcane_blast', ARCANE_BLAST_MAX_STACKS),
   },
   { abilityId: 'arcane_blast' },
   ],
 };
-
-/*
- * PRESENCE OF MIND IS NOT IN THE OWNER'S LIST and is left out rather than kept.
- * It makes the next cast instant, and the shell used it on cooldown; the
- * owner's order does not name it at all.
- */
 
 /**
  * How much Frost makes a mostly-Fire build a FROSTFIRE one.
