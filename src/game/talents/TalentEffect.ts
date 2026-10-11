@@ -1077,14 +1077,41 @@ export type OutOfScope =
  * out of four about something other than a weapon is a renamed interface, not
  * a third exception.
  *
- * The weapon clauses are checked against the MAIN HAND, which is what "the
- * weapon you are using" means for a talent; an off-hand of a different type is
- * a case no Warrior talent here distinguishes.
+ * The weapon clauses are checked against the MAIN HAND by default, which is
+ * what "the weapon you are using" means for most talents -- and `weaponIn`
+ * is how a talent says otherwise. See it for the one that does.
  * ----------------------------------------------------------------------------
  */
 export interface BuildRequirement {
   /** Any one of these types satisfies it. */
   readonly weaponTypes?: readonly WeaponType[];
+  /**
+   * WHICH HANDS `weaponTypes` AND `twoHanded` READ. The main hand by default.
+   *
+   * ==========================================================================
+   * `eitherHand` IS THE RULESET OWNER'S RULING ON HACK AND SLASH: "these are
+   * global effects ... if you have a MH mace, and an off hand Dagger/Fist the
+   * off hand gives a global 5% crit chance to everything, and the mace gives a
+   * global 15% armor pen to everything."
+   *
+   * SO THE EFFECT IS A PROPERTY OF WHAT IS HELD, NOT OF WHAT SWINGS. Both
+   * clauses pay out whole-character, and each hand can satisfy a different
+   * one at the same time.
+   *
+   * IT WAS MAIN-HAND-ONLY AND THAT MADE THE TALENT INERT ON THE ONE PROFILE
+   * THAT TAKES IT. The Combat Rogue holds a SWORD and a DAGGER: the sword
+   * earns the extra attack, and the dagger's 5% crit was dropped because the
+   * only hand being asked was the sword's. 5/5 contributed 0.00 crit.
+   *
+   * ONCE PER CLAUSE, NOT ONCE PER HAND -- two daggers are 5% and not 10%. The
+   * owner's word is "global", and a global effect that doubles when both hands
+   * match is a different claim from the one they made. It is also the generous
+   * reading, which is this project's commonest shape of wrong. Flagged for the
+   * owner rather than assumed: no preset holds two of a kind that matter, so
+   * nothing turns on it today.
+   * ==========================================================================
+   */
+  readonly weaponIn?: 'mainHand' | 'eitherHand';
   /** Whether the weapon must be two-handed. */
   readonly twoHanded?: boolean;
   /**

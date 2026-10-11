@@ -309,15 +309,29 @@ export const ROGUE_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
   blade_flurry: [{ kind: 'grantAbility', abilityId: 'blade_flurry' }],
 
   /*
-   * ALL THREE CLAUSES, EACH GATED ON A DIFFERENT WEAPON, and only one of the
-   * three is ever live for a given character.
+   * ALL THREE CLAUSES, EACH GATED ON A DIFFERENT WEAPON -- AND A DUAL WIELDER
+   * CAN HAVE TWO OF THEM LIVE AT ONCE.
    *
-   *   Axe/Sword   5% chance of an extra attack. A proc, so a `reaction`, and
-   *               gated INSIDE it on the weapon that SWUNG rather than by the
-   *               effect's `requires` -- that gate reads the main hand only,
-   *               which is right for a whole-character stat and wrong for a
-   *               per-swing proc. Sword Specialization on the Warrior is the
-   *               same clause and was settled the same way.
+   * ==========================================================================
+   * "ONLY ONE OF THE THREE IS EVER LIVE FOR A GIVEN CHARACTER" IS WHAT THIS
+   * COMMENT USED TO SAY, AND IT WAS A CONSEQUENCE OF THE BUG RATHER THAN A
+   * FACT ABOUT THE TALENT. The owner's ruling: "these are global effects ...
+   * if you have a MH mace, and an off hand Dagger/Fist the off hand gives a
+   * global 5% crit chance to everything, and the mace gives a global 15%
+   * armor pen to everything."
+   *
+   * The two stat clauses read EITHER HAND now -- `weaponIn: 'eitherHand'`,
+   * which is where the ruling is written down.
+   * ==========================================================================
+   *
+   *   Axe/Sword   5% chance of an extra attack, and the owner's STATED
+   *               EXCEPTION to the other two: "it can only proc when you use
+   *               that weapon and it always triggers a MH swing regardless of
+   *               weapon type". So it is a proc, gated INSIDE the reaction on
+   *               the weapon that SWUNG, and `weaponIn` would be the wrong
+   *               tool -- a build clause cannot ask which hand is swinging.
+   *               Sword Specialization on the Warrior is the same clause and
+   *               was settled the same way.
    *   Dagger/Fist +5% crit. A plain stat, and `critChance` rather than
    *               `conditionalCrit`: the latter registers under
    *               `ALL_ABILITIES`, which by design does NOT reach an auto
@@ -330,9 +344,18 @@ export const ROGUE_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
    *               "the same gap as the Warrior Weaponmaster mace clause". It
    *               was that gap, and the gap is now closed for both.
    *
-   * ONLY THE COMBAT PROFILE TAKES THIS, and it holds two swords -- so the
-   * extra attack is the live clause and the other two are reported unmet by
-   * `talentBuild` rather than silently skipped.
+   * ONLY THE COMBAT PROFILE TAKES THIS, AND IT HOLDS A SWORD AND A DAGGER --
+   * so TWO clauses are live: the sword earns the extra attack and the dagger
+   * earns the 5% crit. The mace clause is reported unmet by `talentBuild`
+   * rather than silently skipped.
+   *
+   * THIS SENTENCE SAID "it holds two swords" AND THAT HAD STOPPED BEING TRUE
+   * when every preset moved into the generated benchmark gear. It is the
+   * second half of what made the bug invisible: the comment described a
+   * character for whom the main-hand reading and the either-hand reading give
+   * the same answer, so a reader checking it would have found nothing wrong.
+   * `hackAndSlash.test.ts` asserts the preset's own delta now, which is a
+   * claim about the build rather than about the gear it happens to wear.
    */
   hack_and_slash: [
     { kind: 'reaction', reactionId: 'hack_and_slash', valueIndex: 0 },
@@ -341,14 +364,14 @@ export const ROGUE_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
       stat: 'critChance',
       operation: 'flat',
       valueIndex: 1,
-      requires: { weaponTypes: ['dagger', 'fist'] },
+      requires: { weaponTypes: ['dagger', 'fist'], weaponIn: 'eitherHand' },
     },
     {
       kind: 'stat',
       stat: 'armorPenetration',
       operation: 'flat',
       valueIndex: 2,
-      requires: { weaponTypes: ['mace'] },
+      requires: { weaponTypes: ['mace'], weaponIn: 'eitherHand' },
     },
   ],
 

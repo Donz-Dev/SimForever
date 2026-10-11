@@ -219,13 +219,39 @@ export const WARRIOR_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
     },
     { kind: 'reaction', reactionId: 'weaponmaster', valueIndex: 2 },
     {
+      /*
+       * ------------------------------------------------------------------------
+       * A QUESTION FOR THE OWNER RATHER THAN AN ENGINE GAP, AND THE REASON SAYS
+       * WHICH -- which is what gets one asked.
+       *
+       * THE PREVIOUS REASON CLAIMED THESE TWO CLAUSES "read the MAIN HAND only"
+       * AS THOUGH IT WERE A PROPERTY OF THE ENGINE. It was a property of
+       * `BuildRequirement`, and `weaponIn: 'eitherHand'` exists now -- added for
+       * the Rogue's Hack and Slash, which is this talent in another class with
+       * the families permuted. So the capability is here and only the RULING is
+       * missing. An `unmodelled` reason is a claim about the engine on the day
+       * it was written, and this one expired across a class boundary without
+       * anything in this file changing.
+       *
+       * IT ALSO SAID every Warrior gear set holds a SWORD, which stopped being
+       * true when the presets moved into the benchmark gear: 2H Arms and DW
+       * Fury hold AXES, so the axe/polearm crit clause is LIVE on 2H Arms now
+       * rather than unreachable. 2H Arms is the only Warrior taking the talent
+       * and holds a two-hander, so it has no off hand and the question below
+       * moves no figure today.
+       * ------------------------------------------------------------------------
+       */
       kind: 'unmodelled',
       reason:
         'All three clauses apply. Two of them read the MAIN HAND only -- the ' +
-        'axe/polearm crit because crit chance has no per-slot form, and the ' +
-        'mace/staff armor penetration because it is a whole-character stat -- ' +
-        'so an off-hand axe earns neither. The sword extra attack is gated on ' +
-        'the weapon that actually swung and does reach the off hand.',
+        'axe/polearm crit and the mace/staff armor penetration -- so an ' +
+        'off-hand axe earns neither. That is a RULING this talent is waiting ' +
+        'on rather than a missing capability: the owner has ruled the Rogue ' +
+        "twin's equivalent clauses global across both hands, and " +
+        "`weaponIn: 'eitherHand'` expresses it; whether Weaponmaster reads " +
+        'the same way is a question for the ruleset owner. The sword extra ' +
+        'attack is gated on the weapon that actually swung and already ' +
+        'reaches the off hand.',
     },
   ],
 
