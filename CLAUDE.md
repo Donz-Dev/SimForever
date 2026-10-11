@@ -162,7 +162,7 @@ decoding. Seven of twenty did, and **three of the four removed talents are in no
 patch note at all** -- two of them with points spent in every Paladin build. The
 notes are a guide to what is intended, not a list of what changed.
 
-**THE UI HAS HAD THREE PASSES NOW, AND THIS LINE HAS ALREADY BEEN WRONG ONCE
+**THE UI HAS HAD FOUR PASSES NOW, AND THIS LINE HAS ALREADY BEEN WRONG ONCE
 BY THE SAME ARITHMETIC.** It once read "THE UI HAS NOT HAD A PASS OF ITS OWN
 and is the next piece of work" while `docs/handoff/gui.md`'s own header read
 "THE FIRST PASS IS DONE, AND THIS DOCUMENT IS NOW ITS RECORD" -- two files
@@ -177,11 +177,24 @@ the preset rail. The second built **Save and Load**, and the **Action Priority
 List** -- a panel, an editor, and the list stored on the profile. The third
 rebuilt the **Gear panel as a character planner**: item cards, a class
 proficiency filter, items sorted by what the build values, and the four test
-sets exposed. [docs/handoff/gui.md](docs/handoff/gui.md) is the record of all
-three, [docs/apl.md](docs/apl.md) is the APL's own and
+sets exposed. The fourth gave the APL editor **duplicate** and **retarget**
+controls and added the **Timeline** panel -- one fight drawn against the clock,
+which is the view a priority list is read with, because every question a list
+is tuned against is about where two things sat RELATIVE to each other.
+[docs/handoff/gui.md](docs/handoff/gui.md) is the record of all four,
+[docs/apl.md](docs/apl.md) is the APL's own and
 [docs/gear-planner.md](docs/gear-planner.md) is the planner's. What is left is
 named at the end of each: Import still does nothing, nothing writes to
-`localStorage`, and eight condition kinds are shown but not editable.
+`localStorage`, and five condition kinds are shown but not editable.
+
+**AND THE FOURTH PASS WAS ASKED FOR AS A MEANS RATHER THAN AN END**, which is
+the Gear panel's lesson stated outright by the person it happened to: "in order
+to actually optimize the APL I need the tooling to be a bit more sophisticated
+as well." **Shipping the thing that makes a fault visible is itself a round**,
+and the panel found something in the first list it was pointed at -- 2H Arms'
+Sunder Armor entry fires 0.00 times because a preset raid DEBUFF puts five
+stacks on the boss before the pull, which is the fourth cause of a never-fired
+entry and the one that reads least like a defect.
 
 > **LAND THE SHARED ENGINE PIECES FIRST, BEFORE DISPATCHING ANY CLASS WORK.** The
 > owner's instruction after the first round of nine parallel dives, and it is about

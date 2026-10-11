@@ -1,3 +1,199 @@
+# THE APL EDITOR GROWS TEETH, AND 2H ARMS IS RESPECIFIED
+
+**ROUND ONE OF OPTIMISING ALL 25 LISTS**, and it is two pieces of work that
+have to happen in that order: **the tooling to make a list cheap to change, and
+then the first list changed.** The owner's framing -- "in order to actually
+optimize the APL I need the tooling to be a bit more sophisticated as well."
+
+| | what it was | 2H Arms | mean |
+| --- | --- | --- | --- |
+| 1 | three APL tooling asks -- **duplicate**, **retarget**, and a **timeline** | **no figure moved**; all 25 rows reproduced the published table to the decimal | 752.7 |
+| 1 | 2H Arms **food**: +40 Attack Power -> +20 Strength | 825.0 -> 825.9 (**+0.9**) | 752.7 |
+| 1 | 2H Arms **list**, respecified by the owner | 825.9 -> **849.7** (**+23.8 REAL**) | **753.7** |
+
+**AND MORE ROWS CAN BE ADDED, WHICH IS THE POINT OF ITS BEING A TABLE** --
+there are twenty-four lists left and the owner has said so.
+
+## The tooling moved nothing, and that is the containment check
+
+**THE BASELINE WAS TAKEN AT THIS COMMIT WITH ONLY THE TWO BEHAVIOUR-AFFECTING
+FILES REVERTED**, which is the cheap isolation this file already argues for:
+`git checkout <parent> -- src/game/rotations/warrior.ts src/profiles/presets.ts`,
+measure, restore, measure. So the baseline run had **the whole editor and the
+whole timeline panel in it**, and all 25 rows came back identical to the
+published table.
+
+**THAT IS A STRONGER CHECK THAN "the UI cannot move a figure"**, which is an
+argument rather than a measurement -- and it is the Gear panel's round one
+arriving a second time: a UI feature that moves a figure has a bug in it, so
+"no row moved" is the thing to verify rather than the thing to be disappointed
+by.
+
+## The three tooling items answer one complaint
+
+**THE EXPENSIVE PART OF AN ENTRY IS ITS CONDITION**, and every way of changing
+an entry threw it away. That is the whole of what the first two do.
+
+| | what it replaces |
+| --- | --- |
+| **duplicate**, copy directly below | delete, add at the bottom, rebuild the condition, walk it back up |
+| **retarget**, the ability as a dropdown | the same four steps, for "the same rule on the other strike" |
+| **the timeline** | holding two timestamps in your head and subtracting |
+
+**BELOW RATHER THAN ABOVE IS WHAT MAKES A MID-LIST INSERTION SAFE AT ALL.**
+Every other insertion in `aplEditing.ts` goes at the BOTTOM, because an
+unconditional entry anywhere else is a floor under everything beneath it. A
+copy placed under its own original is the one exception that cannot be: the
+original is checked FIRST and the two are byte-identical, so whenever the copy
+would be castable the original already was, and the list walks past it to
+exactly where it went before. **It starts inert by construction** and becomes a
+decision only once somebody edits it. Above would be the opposite -- the copy
+would take every cast the original was making.
+
+**AND AN ABILITY THE BUILD DOES NOT KNOW KEEPS ITS OWN OPTION**, which is
+`AuraChoice`'s rule and matters more here than it does there: falling back to
+whichever name sorts first would rewrite the entry the moment the panel DREW
+it. An edit nobody made, to a list nobody touched, with nothing on screen to
+say so.
+
+## The timeline is a different question from the combat log, not a prettier one
+
+The log is every event in order as text, which is the right shape for "what
+happened at 14.2 seconds" and the wrong shape for **every question a priority
+list is actually tuned against** -- all of which are about where two things sat
+RELATIVE to each other. Did the buff fall off before it was refreshed. Did the
+pool sit at zero through the window the expensive ability was up. Is this
+cooldown ever lined up with that one.
+
+**THE BUILDER IS SEPARATE FROM THE COMPONENT**, which is `aplEditing.ts`'s own
+rule, and the reason is that the three aura edges are the part that can be
+wrong and **all three render perfectly**:
+
+| the edge | what getting it wrong draws |
+| --- | --- |
+| a REFRESH does not close a window | one 30-second Sunder Armor as a dozen bars with gaps that never existed |
+| a STACK CHANGE does not either | the same, on anything that stacks |
+| an aura still up at the END never emits a removal | every maintained buff ending whenever it was last refreshed, which reads as a rotation that stopped |
+
+**AND THE AURA FILTER IS DELIBERATELY WIDER THAN THE CAST ONE.** A preset raid
+DEBUFF is applied at the pull with the TARGET as its own source, so a
+source-only filter drops it -- and the filter WAS source-only in the first
+version, which is how a test driven by a real fight caught it. See below for
+why that matters more than it sounds.
+
+**ONE ITERATION, THE REPRESENTATIVE ONE, AND THE SUBTITLE SAYS SO.** Averaging
+"was this up at t=12s" across iterations of different lengths that cast
+different abilities draws a fight nobody ran; `ResourceTimeline` already made
+that argument and this is the same argument over three more lanes.
+
+## What the timeline immediately said about the list it was built for
+
+**THE ARMS LIST'S SUNDER ARMOR ENTRY FIRES 0.00 TIMES, AND THE CAUSE IS THE
+ENCOUNTER.** Five stacks are on the boss before the fight starts, because
+`sunder_armor` is in `PRESET_RAID_BUFFS` -- so the entry's condition refuses it
+for the whole fight, exactly as Battle Shout's does.
+
+**IT IS THE FOURTH OF THE FOUR DOCUMENTED CAUSES** of a never-fired entry, and
+the one that reads least like a defect: the id resolves, the build knows the
+ability, the entry above yields, and the thing it would apply is already there.
+**It is also the one the timeline shows directly**, which is why the wider aura
+filter is not a convenience -- a row for a debuff that was up from the pull is
+the answer, drawn.
+
+**NOT CHANGED, BECAUSE IT IS NOT OURS TO CHANGE.** The entry is in the list the
+owner specified and it costs that list nothing. Flagged here rather than
+removed.
+
+## 2H Arms: what each half was worth
+
+**FOOD IS +0.9 AND IS CORRECT**, which is worth stating rather than
+apologising for. +20 Strength and +40 Attack Power are **the same 40 attack
+power** on a plate build before anything scales them -- strength is 2 attack
+power a point -- and the difference is only that strength goes through the
+CONVERSION, so Blessing of Kings' 10% reaches it and reaches no flat pool. Two
+strength is four attack power on a character carrying about 1,800.
+
+**AN OVERRIDE ON THE PRESET, NOT AN EDIT TO `MELEE_COMMON`.** The ruling names
+one profile, and a ruling covers what it says. That row is shared with DW Fury,
+Prot Warr and both feral Druids, and `MELEE_COMMON` beneath it with four Rogues
+and a melee Hunter -- so the edit would have moved **ten published figures on
+one sentence about an eleventh**. `armsRotation.test.ts` asserts the other four
+are untouched, which is the containment check written down.
+
+**THE LIST IS +23.8, AND BOTH HALVES OF IT CONTRIBUTE:**
+
+| | 2H Arms, against 825.9 |
+| --- | --- |
+| the threshold alone, 75 -> 90 | **+10.5** |
+| the reorder alone, at the old 75 | **+14.6** |
+| **both, which is what shipped** | **+23.8 REAL** |
+
+**MARGINAL VALUES MEASURED AGAINST THE SAME BASE DO NOT SUM** -- 10.5 and 14.6
+make 25.1 against a measured 23.8 -- and they overlap for a nameable reason
+rather than an unknown one: the reorder puts Heroic Strike above four entries
+it used to sit below, so part of what raising its floor buys is the same part
+the reorder would otherwise have cost.
+
+**AND EACH HALF ALONE PRINTS `noise`, WHICH IS A STATEMENT ABOUT VARIANCE AND
+NOT ABOUT WHETHER ANYTHING HAPPENED.** 2H Arms' own interval is about +/-9, so
++10.5 and +14.6 sit on its edge while their sum does not. The verdict is the
+right default and the per-half figures are still what they are.
+
+## The three things that moved in the list, and why two had to move together
+
+| | from | to |
+| --- | --- | --- |
+| **Heroic Strike** | below Sunder Armor, floor 75 | above it, floor **90** |
+| **Overpower** | above Sunder Armor | below it |
+| **Slam** | LAST | above Mortal Strike |
+
+**THE THRESHOLD AND THE POSITION ARE ONE CHANGE.** Heroic Strike now sits above
+Sunder Armor, Mortal Strike, Rend and Slam; an ungated entry there would be a
+FLOOR under all four. What stops it being one is 90 out of a cap of 100 --
+which leaves a whole Mortal Strike's thirty unaffordable to it, so the entry
+can only ever spend rage none of the four could have reached. **It is the
+highest floor in the project**, against the Berserker list's 42 and the tank's
+26, and it has to be.
+
+**SLAM'S GATE IS UNCHANGED AND IS WHAT MAKES THE NEW POSITION AFFORDABLE.** It
+only fires with more than a second of swing timer left, so it is refused
+outright in the window where it would cost a swing. Above Mortal Strike without
+that gate would be an Arms warrior trading its hardest hit for a cast.
+
+## One test gave way, and it was the right one
+
+`aplFormat.test.ts` asserted **"Mortal Strike before Slam"** -- a ROTATION
+DECISION pinned in a file about how a panel renders -- and it failed the day the
+owner put Slam above Mortal Strike. **The decision changed owner; the panel did
+not change at all.**
+
+It reads the entries off the list now and asserts the panel draws them in the
+list's OWN order, whatever that order is. **And it splits on `apl-rank` rather
+than comparing positions in one string**, because an ability name also occurs
+inside CONDITIONS -- the Sunder Armor entry names its own aura and three
+entries name a stance they also cast, so the old shape would have been
+comparing a condition against a heading.
+
+**THE REPLACEMENT PINS THE OWNER'S ORDER TOO, IN THE RIGHT FILE.**
+`armsRotation.test.ts` writes all 24 entries out by hand, the way
+`protectionRotation.test.ts` already does for the tank list -- so the owner
+respecifying it again FAILS, which is how that gets noticed rather than merged
+as an accident.
+
+## What is left
+
+- **TWENTY-FOUR LISTS**, which is the rest of the ask. 2H Arms is the first.
+- **NEW PROFILES**, which the owner named as the work after the 25.
+- **THE TIMELINE HAS NO AVERAGE VIEW** and deliberately does not; whether a
+  per-lane figure pooled across the batch belongs beside each row -- uptime
+  already is, on the Results page -- is an open question rather than an
+  omission.
+- **THE CAST LANE DRAWS A CHANNEL AS A TICK**, because a cast happens AT a
+  moment and its length shows in the aura section instead. Right for every
+  channel in the project today, and worth revisiting if one ever has no aura.
+
+---
+
 # THE GEAR PANEL, IN FIVE ROUNDS — READ THEM AS ONE
 
 **ONE PIECE OF WORK IN FIVE COMMITS**, and the five headers below are its
@@ -18,8 +214,15 @@ records for the racials and for a patch, arriving a third time.
 the table above is in the order the work happened and the file is in the order
 this one always is. Each header's figures belong to ITS round and say so.
 
-**THE LIVE MEAN IS 752.7**, and the sentence under the baseline table is the
-only place that is ever current. Every other figure in this section is dated.
+**THE MEAN AT THE END OF THIS ROUND WAS 752.7**, and the sentence under the
+baseline table is the only place that is ever current. Every figure in this
+section belongs to the round it sits under.
+
+**THIS PARAGRAPH READ "THE LIVE MEAN IS 752.7" UNTIL THE APL ROUND ABOVE IT
+MOVED ONE ROW**, which is worth leaving as a worked example of its own warning:
+a sentence claiming to be current is only current while nothing newer exists,
+and that is every section header in this file eventually. **Name the round a
+figure belongs to and it never needs editing.**
 
 **AND A SIXTH ROW CAN BE ADDED**, which is the point of its being a table.
 
@@ -2702,7 +2905,7 @@ demonstrated at the top. **Re-count rather than re-reading the sentence.**
 | --- | --- |
 | **Talents** | 260 fully, 39 partly, 105 ruled out, **62 a live gap**, out of **466** -- from 132 before the class dives |
 | **Abilities** | 114 declared against 478 captured |
-| **Profiles** | **25**, all measured, **mean 752.7** on FOREVER'S OWN ITEMS -- every earlier figure in this file was measured on Classic and Season of Discovery stand-ins, so the contributions below belong to that gear and not to this mean: the armour enchants were +27.0 of it, the pre-pull consumables +105.9, the racials **+9.8 at round one**, the MID-FIGHT consumables **+17.7** and the Life Tap gate **+3.5** |
+| **Profiles** | **25**, all measured, **mean 753.7** on FOREVER'S OWN ITEMS -- every earlier figure in this file was measured on Classic and Season of Discovery stand-ins, so the contributions below belong to that gear and not to this mean: the armour enchants were +27.0 of it, the pre-pull consumables +105.9, the racials **+9.8 at round one**, the MID-FIGHT consumables **+17.7** and the Life Tap gate **+3.5** |
 | **Racials** | **10 races, 40 traits**: 15 do something, 20 effects ruled out, 11 a live gap |
 | **Scope rulings** | **9 members**, all the owner's, carrying 129 TALENT entries and 19 racial declarations |
 | **Placeholders** | **11 declared** -- see the milestone table, and count DECLARATIONS. **One of the eleven is not a ruleset number**: `PLACEHOLDER_PREFERRED_WEIGHT` is the Gear panel's stat-sorting weight, which no simulation reads, so it can sort a list badly and cannot move a figure |
@@ -4410,21 +4613,21 @@ cannot audit, which is why the check is a SET comparison and not a row count.
 
 | Profile | Class | Talents | DPS | | Profile | Class | Talents | DPS |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| **DW Fury** | Warrior | 17/34/0 | **988.5** | | Shadow Priest | Priest | 13/3/35 | 774.7 |
+| DW Fury | Warrior | 17/34/0 | 988.5 | | Shadow Priest | Priest | 13/3/35 | 774.7 |
 | LW Ranged | Hunter | 7/39/5 | 912.5 | | Fire Mage | Mage | 10/39/2 | 753.0 |
 | Firelock | Warlock | 5/11/35 | 891.4 | | Enh Shaman | Shaman | 17/34/0 | 750.7 |
-| **Hawk Melee** | Hunter | 16/11/24 | **883.0** | | SM/DS | Warlock | 40/11/0 | 722.4 |
-| Cat Druid | Druid | 9/34/8 | 859.0 | | **Hemo Rogue** | Rogue | 17/3/31 | **715.8** |
+| Hawk Melee | Hunter | 16/11/24 | 883.0 | | SM/DS | Warlock | 40/11/0 | 722.4 |
+| Cat Druid | Druid | 9/34/8 | 859.0 | | Hemo Rogue | Rogue | 17/3/31 | 715.8 |
 | Arcane Mage | Mage | 47/4/0 | 857.7 | | Shockadin | Paladin | 23/0/28 | 714.4 |
-| BM Hunter | Hunter | 31/20/0 | 856.2 | | **Venom Rogue** | Rogue | 37/12/2 | **684.9** |
-| Frostfire Mage | Mage | 0/29/22 | 837.0 | | **Rupture Rogue** | Rogue | 12/8/31 | **659.0** |
-| **LW Melee** | Hunter | 7/13/31 | **831.5** | | Ele Shaman | Shaman | 38/13/0 | 651.4 |
-| 2H Arms | Warrior | 39/10/2 | 825.0 | | Prot Warr | Warrior | 17/0/34 | 471.5 |
+| BM Hunter | Hunter | 31/20/0 | 856.2 | | Venom Rogue | Rogue | 37/12/2 | 684.9 |
+| **2H Arms** | Warrior | 39/10/2 | **849.7** | | Rupture Rogue | Rogue | 12/8/31 | 659.0 |
+| Frostfire Mage | Mage | 0/29/22 | 837.0 | | Ele Shaman | Shaman | 38/13/0 | 651.4 |
+| LW Melee | Hunter | 7/13/31 | 831.5 | | Prot Warr | Warrior | 17/0/34 | 471.5 |
 | Seal Twist Ret | Paladin | 15/0/36 | 816.5 | | Prot Pally | Paladin | 8/34/9 | 400.6 |
 | Moonkin | Druid | 38/0/13 | 788.4 | | Bear Druid | Druid | 9/42/0 | 395.7 |
-| **Combat Rogue** | Rogue | 18/33/0 | **776.2** | | | | | | |
+| Combat Rogue | Rogue | 18/33/0 | 776.2 | | | | | | |
 
-The mean across **25** is **752.7**, RE-SUMMED FROM THE ROWS ABOVE rather than
+The mean across **25** is **753.7**, RE-SUMMED FROM THE ROWS ABOVE rather than
 adjusted, by `tools/update_baseline_table.py`.
 
 **THE TOP IS DW FURY AT 974.3 +/-10.3, AND LW RANGED IS SECOND AT 888.9

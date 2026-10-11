@@ -244,6 +244,21 @@ DPS figure.
 - **A duplicate is allowed**, because two stock lists need one — the Mage's
   Arcane Missiles and the Warlock's Shadow Bolt are each in their list twice,
   gated above and ungated below.
+- **DUPLICATING AN ENTRY PUTS THE COPY DIRECTLY BELOW IT**, which is the one
+  insertion in this file that does not go at the bottom, and the exception is
+  what makes it safe: the original is checked FIRST and the two are
+  byte-identical, so whenever the copy would be castable the original already
+  was. It starts inert by construction and becomes a decision once somebody
+  edits it. ABOVE would be the opposite — the copy would take every cast the
+  original was making.
+- **THE ABILITY AN ENTRY CASTS IS A DROPDOWN, and the condition travels with
+  it.** It was the one field of an entry that could not be changed, which made
+  every other control on the row half a feature. The condition is kept rather
+  than cleared because the condition is the expensive part; one that names the
+  OLD ability is a legal rule, not an error, and the panel shows it.
+- **AN ABILITY THE BUILD DOES NOT KNOW KEEPS ITS OWN OPTION**, labelled. Every
+  stock list names all four free racial cooldowns, so falling back to whichever
+  name sorts first would rewrite an entry the moment the panel DREW it.
 
 A condition is edited as a **tree**: a group that matches `all of` or `any of`,
 holding clauses and nested groups, each with a `not` toggle.
@@ -367,6 +382,33 @@ interruptible, with no entry asking to interrupt them, cost the Arcane Mage 13%
 more events a fight and the Shadow Priest 25% — for an *identical combat log*.
 `Rotation.interruptsChannels` is what gates it, and a rotation that does not say
 is assumed to interrupt, because that is the safe default.
+
+## Reading what a list actually did
+
+The **Timeline** panel, between the Results and the combat log, draws one fight
+against the clock: casts as ticks, buffs and debuffs as the stretches they were
+up, and every pool as a step area, all under ONE axis so two rows can be
+compared. `ui/charts/EventTimeline.tsx` builds the lanes and
+`ui/panels/TimelinePanel.tsx` draws them.
+
+It is the view a priority list is read with, because every question a list is
+tuned against is about where two things sat RELATIVE to each other — did the
+buff fall off before it was refreshed, did the pool sit at zero through the
+window the expensive ability was up. The combat log is the right shape for
+"what happened at 14.2 seconds" and the wrong shape for all of those.
+
+- **ONE ITERATION, THE REPRESENTATIVE ONE**, the same fight the combat log
+  shows. A timeline is the one thing on that page that must not be pooled:
+  averaging "was this up at t=12s" across iterations of different lengths that
+  cast different abilities draws a fight nobody ran.
+- **THE AURA LANES INCLUDE ANYTHING ON THE TARGET**, however it got there,
+  which is wider than the cast lanes' source filter. A preset raid DEBUFF is
+  applied at the pull with the target as its own source — and a five-stack
+  Sunder Armor already on the boss is exactly why the Arms list's own Sunder
+  entry fires zero times, which is the answer this panel exists to draw.
+- **SWINGS ARE OFF BY DEFAULT** and the control says so. A geared melee build
+  lands far more swings than casts, so two rows of solid ink push every row
+  carrying a decision off the top.
 
 ## What is not here yet
 
