@@ -1554,6 +1554,20 @@ wasted, and WHEN to use one is a decision. `game/abilities/consumables.ts`,
 
 The twelve that came before them, and which the rest of this section is about:
 
+- **A WEAPON EFFECT IS COATED ONTO A WEAPON, SO A DUAL-WIELDER BUYS TWO** --
+  the owner's ruling, and `ConsumableCategory.perWeapon` is where it lives.
+  **It is a property of the ROW and of nothing else**: a flask, an elixir and
+  a piece of food are worth the same whatever is in the character's hands, and
+  a test pins that Weapon Effect is the only row carrying the flag.
+  **TWO WEAPONS MEANS TWO THAT SWING**, which is `offHand: 'weapon'` in
+  `combatStyles.ts` -- a shield is not a second coated weapon, nor is a held
+  off-hand item nor a Hunter's melee stat stick, and reading "two hands full"
+  instead would pay a Protection warrior for coating its shield.
+  **THE WHOLE CONSUMABLE IS APPLIED TWICE, NOT JUST ITS CRIT**, which the
+  caster option is what makes checkable: it carries spell power as well, and
+  both double. **And the SELECTION is still one choice** -- asking somebody to
+  pick the same stone twice would be a control whose only correct answer is
+  the one above it.
 - **THE EXCLUSIVITY IS STRUCTURAL, NOT CHECKED.** A selection is a map from
   CATEGORY id to consumable id, so two from one category is not representable
   and the second write replaces the first. `RaidBuff.exclusiveWith` is the other

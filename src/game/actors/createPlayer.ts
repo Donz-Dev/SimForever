@@ -443,7 +443,13 @@ export function createPlayer(options: PlayerOptions): Combatant {
    * number, and keeping them apart is what lets either be isolated. They stack,
    * which nothing has to say because nothing combines them.
    */
-  const consumables = consumableEffects(options.consumables);
+  /*
+   * THE STYLE IS PASSED BECAUSE ONE ROW IS PER-WEAPON. A weapon effect is
+   * coated onto a weapon rather than drunk, so a dual-wielder applies two --
+   * the owner's ruling. Every other row is worth the same whatever is in the
+   * character's hands. See `weaponEffectCount`.
+   */
+  const consumables = consumableEffects(options.consumables, style);
 
   const startingStats = addStats(
     addStats(

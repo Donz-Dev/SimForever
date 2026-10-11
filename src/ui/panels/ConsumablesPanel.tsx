@@ -3,8 +3,10 @@ import {
   CONSUMABLE_CATEGORIES,
   consumableOptionsFor,
   selectedConsumables,
+  weaponEffectCount,
 } from '../../game/buffs/consumables';
 import type { ClassId } from '../../game/character';
+import { resolveCombatStyle } from '../../game/character';
 import type { CharacterProfile } from '../../profiles';
 import { Panel } from '../components/Panel';
 
@@ -66,6 +68,7 @@ export function ConsumablesPanel({ profile, onChange }: ConsumablesPanelProps) {
   const selection = profile.consumables;
   const chosen = selectedConsumables(selection);
   const characterClass = profile.character.characterClass;
+  const style = resolveCombatStyle(characterClass, profile.character.combatStyle);
 
   const select = (categoryId: string, consumableId: string) => {
     const consumables: Record<string, string> = { ...selection };
@@ -135,6 +138,20 @@ export function ConsumablesPanel({ profile, onChange }: ConsumablesPanelProps) {
         one adds it to the <strong>Priority list</strong> — where the condition it is used on can
         be changed. Potions share a two minute cooldown; an Other item has its own.
       </p>
+
+      {/*
+        * SAID ONLY WHERE IT IS TRUE, which is the point of the condition. A
+        * weapon effect is coated onto a WEAPON rather than drunk, so a
+        * dual-wielder applies two and the single row above is worth double --
+        * and that is invisible from the panel, since the selection is one
+        * choice either way. A build holding one weapon needs no explanation.
+        */}
+      {weaponEffectCount(style) > 1 ? (
+        <p className="consumable-hint">
+          Dual wielding, so the <strong>Weapon Effect</strong> is applied to both weapons and
+          counts twice.
+        </p>
+      ) : null}
 
       {inert.length > 0 ? (
         <ul className="consumable-caveats">
