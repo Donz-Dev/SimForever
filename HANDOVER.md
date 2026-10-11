@@ -1,3 +1,151 @@
+# THE GEAR PANEL, IN FIVE ROUNDS — READ THEM AS ONE
+
+**ONE PIECE OF WORK IN FIVE COMMITS**, and the five headers below are its
+rounds. The thing worth carrying out of it is the SHAPE: **the first round
+built a feature and moved no figure at all; the next four were the owner
+reading the result and sending it back.** That is the pattern this file already
+records for the racials and for a patch, arriving a third time.
+
+| | what it was | mean | PR |
+| --- | --- | --- | --- |
+| 1 | the Gear panel as a **character planner** -- item cards, a class filter, value sorting, the four test sets | **no figure moved**; all 75 hashes identical | [#243](https://github.com/Donz-Dev/SimForever/pull/243) |
+| 2 | six tweaks, **aimed at Forever's own items** instead of at a target | 719.6 -> **736.1** | [#244](https://github.com/Donz-Dev/SimForever/pull/244) |
+| 3 | a hit rating **paid for out of crit**, not out of spell power | 736.1 -> **737.3** | [#245](https://github.com/Donz-Dev/SimForever/pull/245) |
+| 4 | **twelve movements** on the template gear | 737.3 -> **748.4** | [#246](https://github.com/Donz-Dev/SimForever/pull/246) |
+| 5 | a dual-wielder applies the **weapon effect twice** | 748.4 -> **752.7** | [#247](https://github.com/Donz-Dev/SimForever/pull/247) |
+
+**THE HEADERS BELOW RUN NEWEST FIRST**, so they are round 5, then 4, 3, 2, 1 --
+the table above is in the order the work happened and the file is in the order
+this one always is. Each header's figures belong to ITS round and say so.
+
+**THE LIVE MEAN IS 752.7**, and the sentence under the baseline table is the
+only place that is ever current. Every other figure in this section is dated.
+
+**AND A SIXTH ROW CAN BE ADDED**, which is the point of its being a table.
+
+## What the owner contributed that no tool here did
+
+**THE PROFICIENCY TABLE, ALL 27 COLUMNS, IN ONE MESSAGE.** Nothing in the six
+data sources states one, so the choice was between borrowing Classic's behind a
+`PLACEHOLDER_` name and asking. **Three rows disagree with Classic** -- a Rogue
+may use a one-handed axe, a Druid may NOT use a dagger, a Hunter may use a
+two-handed axe and no mace -- so a borrowed table would have been wrong in
+**both directions on the one class the owner used as their example.**
+
+**AND THEN FOUR READINGS OF THE RESULT, each of which found something no check
+here was asking about:**
+
+| what they read | what it was |
+| --- | --- |
+| the Gear panel's item list | 895 items carry a `Classes:` line that nothing parsed |
+| the character sheet | two trinkets carrying 68 crit between them |
+| "I was expecting 750 spell power" | a caster set below an ORDINARY real one |
+| four B55 items | `+25 Hit Rating, +2 Stamina, +1 Spell Power` |
+
+**EVERY ONE OF THOSE PASSED `item_budget.ts`**, which asks whether an item fits
+its budget. All of them did. **Its arithmetic is about TOTALS and every one of
+these faults was about SHAPE**, which is why `benchmark_stat_report.ts` and
+`real_set_shape.ts` exist now.
+
+## The question that changed, and the tool it produced
+
+The ask was "shoot for 750 spell power". Then: **"if 750 isn't reachable that's
+fine. I want it to be realistic."**
+
+That turned an unverifiable target into a measurable one.
+`tools/real_set_shape.ts` is the answer -- the per-slot distribution of a stat
+over REAL Forever items a class can equip, PvP excluded, summed across a set:
+
+| item level 60-70 | median | p75 | best in database |
+| --- | --- | --- | --- |
+| crit rating, a warrior set | 168 | 182 | **210** |
+| spell power, a mage set | 290 | 345 | **397** |
+
+Against a benchmark carrying **295 crit and 205 spell power** -- 40% above the
+best real set on one and below an ordinary one on the other. Both symptoms,
+arrived at independently.
+
+**THE MEDIAN IS THE ANSWER AND THE MAXIMUM IS NOT.** A first pass took the
+richest item in every slot and got 503, a ceiling no character wears --
+cherry-picked across factions, raids and professions.
+
+**AND A BENCHMARK SET SITS BETWEEN p75 AND BEST**, which is the one judgement in
+the whole thread: these sets exist so two builds can be compared at one item
+level, so each should be a STRONG set of that level and must not exceed what
+the game contains.
+
+## Three times the owner's words had to be bounded or widened by the data
+
+**THIS IS THE REUSABLE PART.** In each case the owner said which DIRECTION and
+Forever's own items said HOW FAR -- and taking either alone would have been
+wrong.
+
+| the ruling | read literally | what the items said |
+| --- | --- | --- |
+| "pull from crit rating to get more hit rating" | crit drained to **74** against a real mage set's 154, spell power above the richest in the database | bound it at 40%: crit **153** |
+| "the eight **plate** armor class slots shouldn't have both strength and attack power" | plate only | **0 of 1,374** armour pieces carry both, every class -- so it is all four |
+| the same, dropping the later stat | the Rogue's Strength **zero across the set** | both appear on real sets; the slots take turns, earlier preference three in four |
+
+**AND ONE WHERE TWO OF THE OWNER'S OWN STATEMENTS DISAGREE AND THE LATER ONE
+WINS.** "A maximum of 28 crit rating across both trinkets" was said of the DPS
+archetypes; "half item budget on crit" is a later, more specific instruction
+about the tanks, and half a trinket's budget is ~21 at E65 -- so **a tank pair
+is 42**. The test exempts exactly the three templates that declare their own
+pair rather than widening its assertion, and the stat report prints the figure
+so the owner can see what their two sentences add up to.
+
+## What each round's containment check was
+
+**THE CHECK IS DIFFERENT EACH TIME, AND PICKING THE RIGHT ONE IS THE SKILL.**
+
+| round | the check | why that one |
+| --- | --- | --- |
+| 1 | all **75 combat-log hashes and event counts** unchanged | a UI feature must move no figure, and event counts catch a change that costs only TIME |
+| 3 | **24 of 25 rows noise** | crit and spell power are worth about the same, so moving budget between them is about SHAPE |
+| 4 | **three rows 0.0 to the decimal** | two are in none of the twelve lists; the third's only change grants stamina, which a caster's fight never reads |
+| 5 | **exactly seven rows moved** | the change is keyed on one combat style and the set with that style is the set that moved |
+
+## Two bugs the suite and a report caught, where the DPS could not
+
+- **28 crit overspent a B55 trinket by 20%** -- caught by `benchmarkGear.test.ts`'s
+  budget assertion, because a maximum is not a fixed amount.
+- **A ternary handed every tank two BLANK trinkets.** The set lost 68 stamina
+  while the DPS moved less than its interval; `benchmark_stat_report.ts` is what
+  showed it. **A figure inside the interval cannot say which half moved.**
+
+## And two tests that were testing the gear rather than the rule
+
+Both are the shape this file already documents, found again:
+
+- **`shieldBlock.test.ts` asserted the shield's flat 5% block IS the
+  character's**, which held only while the Protection template bought no Block
+  Rating. The repair is the documented one: read the set's contribution off the
+  SET and assert the arithmetic.
+- **`lastStand.test.ts` required a Last Stand to fade on a death inside ONE
+  seeded log**, written when its own comment said "a fight with twenty deaths".
+  The gear has the tank at about **six** now, so the coincidence stopped
+  landing. **Deterministic under a seed is not the same as a boundary**; it
+  counts over five seeds.
+
+## What is left, and it is the same three every round
+
+- **177 SET PIECES ARE CLASS-RESTRICTED BY NEITHER SOURCE**, the T3 sets among
+  them. All 184 that Forever's capture leaves unrestricted were asked of
+  Wowhead and seven -- the Bonescythe set -- had a line; the rest carry none in
+  Classic's own data either. **Nothing infers a class from a set bonus**,
+  because a good fraction of the 177 are crafted and reputation sets with no
+  restriction at all. A ruling plus about thirty set names would close it.
+- **E85's SPELL POWER RUNS ABOVE THE BEST REAL ITEM-LEVEL-80-92 SET**, 555
+  against 491. Its crit came into range in round four (236 against 252). It is
+  the one set that exceeds what the game contains, recorded rather than tuned.
+- **THE DEFAULT STAT VALUATION IS STILL EVERY PREFERRED STAT AT 1.00**, the
+  owner's instruction until they supply a table. **What it costs is that their
+  preference ORDER is discarded** -- a build values its first and fifth
+  preference identically -- and the order is already in
+  `BenchmarkTemplate.preferred`, so a real table is one record.
+
+---
+
 # A DUAL-WIELDER APPLIES THE WEAPON EFFECT TWICE
 
 **THE OWNER'S RULING**, read off the Consumables panel: "Dual wielding needs to
@@ -565,9 +713,13 @@ budget-generated benchmark sets, and **eleven bugs that only real item data
 could have exposed**.
 
 **IT IS MERGED AND MEASURED.** 3,101 tests, typecheck and build clean, and all
-25 profiles re-measured on the E65 set: the mean is **719.6** against 730.9,
-with 11 rows up and 14 down. The baseline table at the end of this file is the
-record.
+25 profiles re-measured on the E65 set: the mean was **719.6** against 730.9,
+with 11 rows up and 14 down.
+
+**THAT FIGURE IS THIS ROUND'S AND THE TABLE HAS MOVED FIVE TIMES SINCE**, to
+752.7 by way of the Gear panel's five rounds at the top of this file. The
+baseline table is the record of what is CURRENT; this paragraph is the record
+of what this commit did, and the two are supposed to differ.
 
 | | what | state |
 | --- | --- | --- |
@@ -751,10 +903,12 @@ stamina floor that came out of reading the result.
   silently unenchanted every weapon in the project
 - the stat-weight catalogue has ONE crit row
 
-**DONE NOW, AND THE FIGURES ARE IN THE BASELINE TABLE.** All 3,101 tests pass
-and all 25 profiles are re-measured on the E65 set: the mean is **719.6** where
-it was 730.9, with **11 rows up and 14 down** -- physical builds +14.4 on
-average, casters -31.6, the three tanks -62.4. The table at the end of this
+**DONE NOW, AND THE FIGURES WENT INTO THE BASELINE TABLE.** All 3,101 tests
+passed and all 25 profiles were re-measured on the E65 set: the mean was
+**719.6** where it had been 730.9, with **11 rows up and 14 down** -- physical
+builds +14.4 on average, casters -31.6, the three tanks -62.4. **The table has
+moved five times since and reads 752.7**; this is the figure the round
+produced. The table at the end of this
 file is the record and the paragraph under it says why the split falls that way.
 
 **AND THAT MEAN MOVED THREE TIMES IN ONE ROUND**, 741.0 then 734.1 then 719.6,
@@ -2551,7 +2705,7 @@ demonstrated at the top. **Re-count rather than re-reading the sentence.**
 | **Profiles** | **25**, all measured, **mean 752.7** on FOREVER'S OWN ITEMS -- every earlier figure in this file was measured on Classic and Season of Discovery stand-ins, so the contributions below belong to that gear and not to this mean: the armour enchants were +27.0 of it, the pre-pull consumables +105.9, the racials **+9.8 at round one**, the MID-FIGHT consumables **+17.7** and the Life Tap gate **+3.5** |
 | **Racials** | **10 races, 40 traits**: 15 do something, 20 effects ruled out, 11 a live gap |
 | **Scope rulings** | **9 members**, all the owner's, carrying 129 TALENT entries and 19 racial declarations |
-| **Placeholders** | **10 declared** -- see the milestone table, and count DECLARATIONS |
+| **Placeholders** | **11 declared** -- see the milestone table, and count DECLARATIONS. **One of the eleven is not a ruleset number**: `PLACEHOLDER_PREFERRED_WEIGHT` is the Gear panel's stat-sorting weight, which no simulation reads, so it can sort a list badly and cannot move a figure |
 | **Tests** | **3,341** on Node 20 and 22 |
 
 **FOUR CLASSES ARE ESSENTIALLY DONE** -- Warrior 1 live gap, Paladin 1, Druid 2,
@@ -4752,13 +4906,15 @@ does not have, which is the check in the other direction. Each class is one
 | ~~`PLACEHOLDER_PET_BASE_DPS`~~ | — | **DELETED 2026-10-01.** The owner supplied the whole pet model — 36.34–55.32 a swing at 2.0 seconds, from 136 strength and 100 agility, with attack power and crit formulas — so there is nothing left for a placeholder to hold. Worth **−193.0** to BM Hunter |
 | ~~`PLACEHOLDER_MAELSTROM_WEAPON_PROC_CHANCE`~~ | ~~20~~ | **DELETED 2026-09-30.** The owner gave **5 PPM**, which changed the SHAPE as well as the number. This row survived as an epitaph after the constant went, which is the over-counting the note above describes |
 | `PLACEHOLDER_SOUL_SHARDS` | 10 | what a Warlock banks before a pull. No in-fight income |
-| `PLACEHOLDER_COMBUSTION_DURATION_MS` | 30s | its real end is "until 4 crits", which nothing counts. Generous |
+| ~~`PLACEHOLDER_COMBUSTION_DURATION_MS`~~ | ~~30s~~ | **DELETED, and this row was still reading as LIVE.** `auras/mage.ts` names it as deleted in its own comment. It is the over-counting the note above this table describes, caught by counting DECLARATIONS against the table rather than reading either alone |
 | ~~`PLACEHOLDER_WINDFURY_WEAPON_DURATION_MS`~~ | ~~1.5s~~ | **DELETED 2026-10-07, and not by being answered.** It held the imbue's attack power WINDOW, borrowed from Windfury Totem. The owner's ruling is that the imbue has no window at all -- the attack power is "added into the hits themselves" -- so there is nothing left for a placeholder to hold. **A placeholder can be retired by the QUESTION going away rather than by the number arriving**, and the borrow is what made that visible: an unnamed 1.5 would have survived the rework. The claimed SoD trinket tooltip reading 2s does not exist anywhere in this repository and the claim is withdrawn |
 | ~~`PLACEHOLDER_WINDFURY_WEAPON_INTERNAL_COOLDOWN_MS`~~ | ~~1.5s~~ | **DELETED 2026-09-30.** The owner gave **3 seconds for the imbue**; the totem's 1.5 is still right for the totem |
 | `PLACEHOLDER_FLURRY_DURATION_MS` / `_REVENGE_WINDOW_MS` | 12s / 5s | Warrior-era; charges end Flurry in practice. **`_BERSERKER_RAGE_DURATION_MS` is gone**: all three sources say "Lasts 10 sec", and the placeholder's reason was a claim about the owner's spreadsheet being silent — true of the spreadsheet and irrelevant to the data |
 | ~~`PLACEHOLDER_PET_SWING_SECONDS`~~ | — | **DELETED 2026-10-01.** "Base Swing Time = 2.0 seconds", stated, and it is the speed the `2 / 14` in the owner's damage formula is the coefficient for — so the two halves cannot disagree |
+| `PLACEHOLDER_GORE_DRINKER_DURATION_MS` | 30s | **ADDED TO THIS TABLE, NOT TO THE CODE.** It has been declared in `auras/warriorTalents.ts` throughout and had no row, which is the opposite drift to Combustion's above and was found by the same count |
 | `PLACEHOLDER_BOSS_*` | 5000 / 2s / 15% | the encounter, not a class. See [docs/incoming-damage.md](docs/incoming-damage.md) |
 | `PLACEHOLDER_ONE_HAND` / `_TWO_HANDER` / `_RANGED` | — | only used when nothing is equipped; every preset equips |
+| `PLACEHOLDER_PREFERRED_WEIGHT` | 1.00 | **THE ONE HERE THAT IS NOT A RULESET NUMBER.** The Gear panel's stat-sorting weight, which nothing in `engine`, `game` or `simulator` reads -- so a wrong value sorts a slot's list badly and cannot move a figure. The owner has said they will supply a valuation; until then every preferred stat is 1.00, which discards the ORDER their spreadsheet gives |
 
 **Interpretations** are not placeholders — a real number read one of two ways,
 with the reading beside it: Seal of Righteousness' base as the LOW end of "21 to
