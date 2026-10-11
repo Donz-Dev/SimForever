@@ -2,20 +2,26 @@
 
 **THIS SESSION REPLACED THE ITEM LAYER.** It began as a reading exercise -- how
 are items generated -- and ended with the Classic and Season of Discovery
-stand-ins deleted, 2,000-odd real Forever items in their place, four
-budget-generated benchmark sets, and three engine bugs that only real item data
-could have exposed.
+stand-ins deleted, 1,946 real Forever items in their place, four
+budget-generated benchmark sets, and **ten bugs that only real item data could
+have exposed**.
 
-**THE LAST PIECE IS NOT FINISHED AND THIS SECTION SAYS SO AT THE TOP.** See
-**Where it stands** below: the Forever-only database is structurally complete
-and **100 tests fail**, nothing is re-measured, and no DPS figure anywhere in
-this file has been updated for it.
+**IT IS FINISHED AND MEASURED.** All 3,101 tests pass, the typecheck and the
+build are clean, and all 25 profiles are re-measured on the E65 set: the mean is
+**741.0** against 730.9, with 16 rows up and 9 down. The baseline table at the
+end of this file is the record.
 
 | | what | state |
 | --- | --- | --- |
 | `c5900b0` | the itemization budget, verified; 1,673 Forever items; the rating table; `critRating` read by nothing | **merged** |
-| PR #240 | benchmark gear, the Attack Power ruling, 1,384 stranded spell power lines | **green, unmerged** |
-| `forever-items-only` | Classic and SoD deleted, E65 as the default set, one crit row | **unfinished** |
+| `f985e55` (#240) | benchmark gear, the Attack Power ruling, 1,384 stranded spell power lines | **merged** |
+| `49fda35` | Classic and SoD deleted, E65 as the default set, one crit row | on `forever-items` |
+| `427caed` | six bugs the test repairs uncovered, and 100 tests repaired | on `forever-items` |
+| `5ff9da8` | the owner's slot-stat table, which buys the fifth and sixth preference | on `forever-items` |
+
+**THE SIX BUGS THE TEST REPAIRS FOUND ARE THE PART WORTH READING**, because four
+of them were in code the item swap did not touch and every one produced a
+plausible number. See **Ten bugs, and how each one hid** below.
 
 ## The budget, and four wrong answers to one question
 
@@ -90,16 +96,66 @@ Hit and expertise are absolute totals and **still cost budget**, so a Rogue
 spends 120 points before buying anything else. Generated as tooltip TEXT and
 parsed back, which is how the spell power gap above was found.
 
+## Ten bugs, and how each one hid
+
+**EVERY ONE PRODUCED A PLAUSIBLE NUMBER**, which is the only thing they have in
+common and is the reason this list is worth more than the feature it came out
+of. Four needed real item data to exist at all; four more were found by the
+REPAIRS, in code the item swap did not touch.
+
+| | what was wrong | why nothing noticed |
+| --- | --- | --- |
+| 1 | **`critRating` was read by nothing.** Declared, exported, documented, priced by the stat-weight catalogue -- and both crit-slice builders read `stats.critChance`, so `critChanceFrom` had no callers | harmless until Forever gear granted a rating. Found by the DIRECTION: all thirteen affected profiles moved DOWN, and float noise is symmetric |
+| 2 | **1,384 spell power lines fell through the parser.** Classic writes a sentence, Forever writes "+94 Spell Power" | no preset wore a Forever item. An item in the database and in no profile is the quietest place for a stat to go missing |
+| 3 | **"Attack Power" reached one pool.** 164 item lines, melee only | the owner's ruling is that it reaches both. A Hunter with plausible attack power produces a plausible number |
+| 4 | **Every benchmark set lost ALL its primaries.** A Warrior's E65 was 328 crit rating and no strength, stamina or agility | `budget` and `spent` still balanced, because both are computed from the ALLOCATION rather than from the parse. 23.4% crit from gear reads as ordinary |
+| 5 | **Ranged attack power went unread on all twelve items that grant it**, Rhok'delar included | the rule was written for Classic's lower-case "ranged Attack Power." and every Forever line has a capital R. **A rule that matches nothing reads exactly like one that sometimes matches** |
+| 6 | **160 mana regeneration lines unread** | Forever's "+4 Mana Regeneration" against Classic's "Restores 4 mana per 5 sec." |
+| 7 | **Two weapon skill lines unread** -- "+3 Daggers Skill" against "Increased Daggers +3." | same shape, two items |
+| 8 | **A tank's shield carried SIX points of block value** where Forever's own carry 44 | the budget bought it at a cost of 0.65 on a light slot. Shield Slam reads block value, so Protection lost it twice |
+| 9 | **The Shockadin fought with the PLACEHOLDER weapon.** Its template said `twoHand` and its style is `one_hand_shield`, so `liveEquipment` dropped the weapon | the Hemo/Ambush shape, and `presets.ts` had already ruled on this exact conflict from the other direction |
+| 10 | **A character created from scratch stopped getting enchants**, worth +2.4 to +53.7 DPS | the old curated sets carried them INSIDE; deleting those sets took the enchants with them, and only a PRESET re-applied a loadout |
+
+**FOUR OF THE TEN WERE FOUND BY ONE TOOL, AND IT HAD TO BE WRITTEN FIRST.**
+`tools/item_vocabulary.ts` groups the lines the parser could not read by SHAPE --
+every number replaced by `N` -- so a hundred spell power lines are one row and a
+one-off proc is one row too. A repeated shape is a missing RULE; a shape seen
+once is usually a real proc. The list of 4,000 distinct sentences that preceded
+it said nothing.
+
+**AND THE TOOL HID BUG 4 FROM ITSELF FOR A COMMIT.** It excluded the GENERATED
+items, on the reasoning that an unread line there is a bug in `benchmarkGear.ts`
+rather than a gap in the parser's vocabulary. That reasoning is correct and the
+exclusion was still wrong: it is the generator that writes a line nobody has
+taught the parser to read. **An exclusion whose justification is "this would be
+a different kind of bug" is an exclusion that hides that kind of bug.**
+
+**THE UNIT OF BUG 6 WAS SETTLED BY THE DATA AND NOT BY A GUESS**, which is worth
+its own line. "+4 Mana Regeneration" reads just as naturally as 4 mana a second,
+and the two are five times apart. 252 of the changed items carry CLASSIC's own
+lines beside Forever's in the capture, and Field Marshal's Headdress reads
+"Restores 4 mana per 5 sec." against "+4 Mana Regeneration" -- the same number.
+**The control group that was built to price Classic's itemization answered a
+question about units**, which is not what it was for.
+
+**TWO GUARDS CAME OUT OF IT, both of the shape this file prefers -- a mirror
+assertion that EXPIRES rather than a figure that drifts.** `items.test.ts` walks
+every effect rule against every effect line and fails on an unreachable one that
+is not on its stated list; `benchmarkGear.test.ts` fails if any generated item
+leaves anything in `unmodelled`, which is a stat the set paid budget for and
+lost. The first has already paid: `+N Spirit` was on the unreachable list with a
+comment calling it a question for the owner, the owner answered with a slot
+table, and **the test failing is how that was confirmed**.
+
 ## Where it stands
 
-**MERGED:** the budget model, the item database, the rating table.
+**MERGED:** the budget model, the item database, the rating table, the benchmark
+gear, the Attack Power ruling and the spell power fix -- `c5900b0` and
+`f985e55` (#240).
 
-**GREEN AND UNMERGED, PR #240:** benchmark gear, the Attack Power ruling, the
-spell power fix. `gh pr merge 240 --squash --delete-branch`.
-
-**UNFINISHED, branch `forever-items-only`:** the owner's four instructions --
+**LANDED ON `forever-items`, in three commits:** the owner's four instructions --
 keep the enchants, delete the old gear sets, keep only Forever and benchmark
-items, collapse the duplicate crit rows. Structurally done:
+items, collapse the duplicate crit rows.
 
 - the nine Classic/SoD files, `gearSets.ts`, `item-sets.json` and
   `import_item.mjs` are deleted
@@ -114,13 +170,19 @@ items, collapse the duplicate crit rows. Structurally done:
   silently unenchanted every weapon in the project
 - the stat-weight catalogue has ONE crit row
 
-**NOT DONE: 100 tests fail and nothing is re-measured.** Every DPS figure in
-this file is from before the swap. The last full measurement of E65 against the
-old sets, taken before `same.json` and the deletions, read 2H Arms **825.0 ->
-704.4** and Cat **855.8 -> 614.4**, with the casters GAINING -- Frostfire
-**+61.3** -- because the old caster sets sat at 2% spell hit against a 16-point
-cap. Those numbers will have moved again and are recorded only as the shape of
-the change.
+**DONE NOW, AND THE FIGURES ARE IN THE BASELINE TABLE.** All 3,101 tests pass
+and all 25 profiles are re-measured on the E65 set: the mean is **741.0** where
+it was 730.9, with **16 rows up and 9 down** -- physical builds +39.0 on average,
+casters -7.4, the three tanks -62.4. The table at the end of this file is the
+record and the paragraph under it says why the split falls that way.
+
+**AND THE INTERIM FIGURES THAT WERE RECORDED HERE WERE MEASURED ON A BUG.** This
+paragraph used to read "2H Arms 825.0 -> 704.4" and "Cat 855.8 -> 614.4" as the
+shape of the change. Those were taken before the benchmark sets granted any
+PRIMARIES at all -- a Warrior's E65 was 328 crit rating and no strength -- so
+they measured gear that was missing its main stat. The real figures are 843.8
+and 872.6, in the other direction. **An interim measurement is worth recording
+and is not worth trusting**, which is why it is replaced rather than deleted.
 
 **AND THE CRIT ROW IS WHY POINTS 3 AND 4 WERE ONE CHANGE.** Collapsing the
 catalogue to `critRating` failed immediately with `['critChance',
@@ -496,10 +558,10 @@ arrives in waves exactly as a patch does, and "built and measured" is not
 1** -- the table above is in the order the work happened and the file is in the
 order this one always is. Each header's figures belong to ITS round and say so.
 
-**THE MEAN WAS 709.6 AT THE END OF THIS ROUND AND IS 730.9 NOW**, which is the
-mid-fight consumables above. The sentence under the baseline table is the only
-place that is ever live; rounds one and three each rebuilt the table, and every
-other figure in this file -- including that 709.6 -- is dated. That is not a
+**THE MEAN WAS 709.6 AT THE END OF THIS ROUND AND IS 741.0 NOW**, by way of
+730.9 at the mid-fight consumables. The sentence under the baseline table is the
+only place that is ever live; rounds one and three each rebuilt the table, and
+every other figure in this file -- including that 709.6 -- is dated. That is not a
 style note: `update_baseline_table.py` spent its whole life writing the live
 mean into a paragraph about the Shatter round, fifteen hundred lines above the
 table, which round one found and fixed.
@@ -1893,11 +1955,11 @@ demonstrated at the top. **Re-count rather than re-reading the sentence.**
 | --- | --- |
 | **Talents** | 260 fully, 39 partly, 105 ruled out, **62 a live gap**, out of **466** -- from 132 before the class dives |
 | **Abilities** | 114 declared against 478 captured |
-| **Profiles** | **25**, all measured, **mean 730.9** -- the armour enchants are +27.0 of it, the pre-pull consumables +105.9, the racials **+9.8 at round one**, the MID-FIGHT consumables **+17.7** and the Life Tap gate **+3.5** |
+| **Profiles** | **25**, all measured, **mean 741.0** on FOREVER'S OWN ITEMS -- every earlier figure in this file was measured on Classic and Season of Discovery stand-ins, so the contributions below belong to that gear and not to this mean: the armour enchants were +27.0 of it, the pre-pull consumables +105.9, the racials **+9.8 at round one**, the MID-FIGHT consumables **+17.7** and the Life Tap gate **+3.5** |
 | **Racials** | **10 races, 40 traits**: 15 do something, 20 effects ruled out, 11 a live gap |
 | **Scope rulings** | **9 members**, all the owner's, carrying 129 TALENT entries and 19 racial declarations |
 | **Placeholders** | **10 declared** -- see the milestone table, and count DECLARATIONS |
-| **Tests** | **3,076** on Node 20 and 22 |
+| **Tests** | **3,101** on Node 20 and 22 |
 
 **FOUR CLASSES ARE ESSENTIALLY DONE** -- Warrior 1 live gap, Paladin 1, Druid 2,
 Rogue 3 -- and the remaining 62 sit mostly in the Warlock (19), Priest (12) and
@@ -3601,34 +3663,72 @@ cannot audit, which is why the check is a SET comparison and not a row count.
 
 | Profile | Class | Talents | DPS | | Profile | Class | Talents | DPS |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| DW Fury | Warrior | 17/34/0 | 946.6 | | Moonkin | Druid | 38/0/13 | 746.4 |
-| Firelock | Warlock | 5/11/35 | 861.1 | | Enh Shaman | Shaman | 17/34/0 | 729.0 |
-| Cat Druid | Druid | 9/34/8 | 855.8 | | SM/DS | Warlock | 40/11/0 | 715.3 |
-| Hawk Melee | Hunter | 16/11/24 | 848.8 | | Fire Mage | Mage | 10/39/2 | 707.8 |
-| LW Ranged | Hunter | 7/39/5 | 845.8 | | Hemo Rogue | Rogue | 17/3/31 | 694.2 |
-| 2H Arms | Warrior | 39/10/2 | 825.0 | | Shockadin | Paladin | 23/0/28 | 684.6 |
-| Seal Twist Ret | Paladin | 15/0/36 | 816.5 | | Venom Rogue | Rogue | 37/12/2 | 663.6 |
-| LW Melee | Hunter | 7/13/31 | 812.8 | | Rupture Rogue | Rogue | 12/8/31 | 646.2 |
-| BM Hunter | Hunter | 31/20/0 | 798.1 | | Ele Shaman | Shaman | 38/13/0 | 631.8 |
-| Arcane Mage | Mage | 47/4/0 | 790.9 | | Prot Warr | Warrior | 17/0/34 | 542.0 |
-| Frostfire Mage | Mage | 0/29/22 | 780.5 | | Bear Druid | Druid | 9/42/0 | 455.7 |
-| Shadow Priest | Priest | 13/3/35 | 751.2 | | Prot Pally | Paladin | 8/34/9 | 372.7 |
-| Combat Rogue | Rogue | 18/33/0 | 750.9 | | | | | | |
+| DW Fury | Warrior | 17/34/0 | 992.8 | | Shadow Priest | Priest | 13/3/35 | 748.8 |
+| LW Ranged | Hunter | 7/39/5 | 926.0 | | Moonkin | Druid | 38/0/13 | 724.5 |
+| Hawk Melee | Hunter | 16/11/24 | 909.4 | | Shockadin | Paladin | 23/0/28 | 708.8 |
+| Cat Druid | Druid | 9/34/8 | 872.6 | | Hemo Rogue | Rogue | 17/3/31 | 707.6 |
+| BM Hunter | Hunter | 31/20/0 | 869.0 | | Fire Mage | Mage | 10/39/2 | 706.0 |
+| Seal Twist Ret | Paladin | 15/0/36 | 863.8 | | Venom Rogue | Rogue | 37/12/2 | 686.5 |
+| LW Melee | Hunter | 7/13/31 | 849.2 | | Rupture Rogue | Rogue | 12/8/31 | 650.7 |
+| 2H Arms | Warrior | 39/10/2 | 843.8 | | SM/DS | Warlock | 40/11/0 | 647.1 |
+| Frostfire Mage | Mage | 0/29/22 | 829.8 | | Ele Shaman | Shaman | 38/13/0 | 614.2 |
+| Firelock | Warlock | 5/11/35 | 820.2 | | Prot Warr | Warrior | 17/0/34 | 455.5 |
+| Arcane Mage | Mage | 47/4/0 | 803.4 | | Bear Druid | Druid | 9/42/0 | 367.3 |
+| Combat Rogue | Rogue | 18/33/0 | 788.9 | | Prot Pally | Paladin | 8/34/9 | 360.6 |
+| Enh Shaman | Shaman | 17/34/0 | 780.0 | | | | | | |
 
-The mean across **25** is **730.9**, RE-SUMMED FROM THE ROWS ABOVE rather than
+The mean across **25** is **741.0**, RE-SUMMED FROM THE ROWS ABOVE rather than
 adjusted, by `tools/update_baseline_table.py`.
 
-**THE TOP IS DW FURY AT 946.6 +/-10.3, AND THE FIRELOCK IS SECOND AT 865.4
-+/-5.5** -- up from ELEVENTH, on a Life Tap gate rather than on anything the
-consumables did. The gap is 81.2.
+**THE TOP IS DW FURY AT 992.8 +/-11.2, AND LW RANGED IS SECOND AT 926.0
++/-7.7.** The gap is 66.8.
 
-**AND THAT IS THE FIFTH REWRITE OF THIS PARAGRAPH, THE LAST TWO IN ONE ROUND.**
-It has said "the top is still the Frostfire Mage and its lead has narrowed to
-one interval" (true for one commit), then DW Fury over LW Ranged by 86.1, then
-over Hawk Melee by 75.7, then over the Cat by 90.8, and now over the Firelock by
-81.2. **A SENTENCE NAMING THE SECOND-PLACE ROW EXPIRES WHENEVER ANY ROW MOVES**,
-which is most commits -- and a round that moves all 25 and then moves one of
-them again expires it twice.
+**AND THAT IS THE SIXTH REWRITE OF THIS PARAGRAPH.** It has said "the top is
+still the Frostfire Mage and its lead has narrowed to one interval" (true for
+one commit), then DW Fury over LW Ranged by 86.1, then over Hawk Melee by 75.7,
+then over the Cat by 90.8, then over the Firelock by 81.2, and now over LW
+Ranged again by 66.8. **A SENTENCE NAMING THE SECOND-PLACE ROW EXPIRES WHENEVER
+ANY ROW MOVES**, which is most commits.
+
+**THESE 25 ARE THE FIRST FIGURES MEASURED ON FOREVER'S OWN ITEMS.** Every
+earlier row in this file was measured in Classic and Season of Discovery
+stand-ins; all 25 builds now wear the **E65 benchmark set**, generated from the
+itemization budget at one quality and one item level. The mean went 730.9 to
+**741.0**, which is the least interesting thing about it: **16 rows rose and 9
+fell**, and the split is almost perfectly by archetype.
+
+| | n | mean move |
+| --- | --- | --- |
+| physical, not tanking | 13 | **+39.0** |
+| casters | 9 | **-7.4** |
+| tanks | 3 | **-62.4** |
+
+**TWO CHANGES PULLING AGAINST EACH OTHER, AND NEITHER IS A RULESET FINDING.**
+The gear now grants its PRIMARIES, which no benchmark set did -- "+19 Strength"
+was written as tooltip text and no rule read it, so every set was pure crit
+rating -- plus ranged attack power, mana regeneration and a shield's real block
+value. That lifts whatever a build scales with, which is why the physical rows
+gained most.
+
+**AND THE OLD SETS WERE NOT ALL ITEM LEVEL 65.** They ran from 66 to 88 and were
+distributed unevenly between classes, so part of any gap between two presets was
+a gap in their GEAR. E65 is uniform, which is the whole point of a benchmark --
+and it means a build whose stand-in set happened to be item level 88 fell on the
+swap. **The nine that fell are the nine with the most to lose from levelling the
+field**, not nine builds that got worse.
+
+**THE THREE TANKS FELL HARDEST AND IT IS THE WRONG MEASURE FOR THEM.** Bear
+455.7 -> 367.3, Prot Warr 542.0 -> 455.5, Prot Pally 372.7 -> 360.6 -- and their
+templates spend the budget on stamina, armour, defense skill and now parry, none
+of which is damage. `tools/bear_survival.ts` and the SURVIVAL half of the stat
+weights are where a Protection change is read; a DPS row for a tank is a number
+that moves, not a number that means something.
+
+**SO THIS TABLE IS NOT COMPARABLE TO ANY FIGURE ABOVE IT IN THIS FILE**, and the
+reason is the gear rather than the engine. Every delta recorded in an earlier
+round -- the enchants' +27.0, the consumables' +105.9, the racials' +9.8 -- was
+measured on gear that no longer exists, and re-deriving any of them means
+re-running that probe against this set.
 
 **BOTH MAGE ROWS THAT FELL DID SO ON OWNER RULINGS ABOUT COEFFICIENTS AND
 CONSUMPTION, NOT ON ANYTHING THIS PROJECT GOT WRONG.** Frostfire went 927.6 to

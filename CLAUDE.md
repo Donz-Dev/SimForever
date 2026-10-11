@@ -43,6 +43,8 @@ PRESET=warlock_firelock npx vite-node tools/probe_firelock_heal.ts   # why heali
 npx vite-node tools/probe_cat_rage.ts            # does a Cat's rage pool ever hold anything
 npx vite-node tools/probe_life_tap_gate.ts       # what mana a Warlock should Life Tap at
 npx vite-node tools/probe_other_assignment.ts    # each preset's `other` consumable beside its POOLS
+npx vite-node tools/item_vocabulary.ts           # which item lines the parser does NOT read, by shape
+ITEMS=19321,21126 npx vite-node tools/item_show.ts   # one item's tooltip beside its parse
 npx vite-node tools/item_budget.ts               # what an item COST to make, and whether it adds up
 FOREVER=1 npx vite-node tools/item_budget.ts     # the 64 Premier PvP cloth pieces, Forever's own
 WEAPONS=1 npx vite-node tools/item_budget.ts     # the 41 new Forever epic weapons
@@ -2554,6 +2556,21 @@ no per-point argument either way and what decides it is uptime.
   `spellCritChance` are read by separate tables, so an item line saying both has
   to grant both. Sixty-two lines say it, and granting only the melee half was
   invisible for exactly as long as no caster owned any gear.
+- **A RULE THAT MATCHES NOTHING READS EXACTLY LIKE ONE THAT SOMETIMES MATCHES,
+  AND SEVEN OF TWENTY-TWO ITEM RULES MATCH NOTHING.** That is fine -- they are
+  Classic wordings kept for an inherited tooltip -- and the EIGHTH is the
+  problem. `/^\+(\d+) ranged Attack Power\.?$/` was written for Classic's
+  lower-case r, every one of the twelve lines in Forever's data has a capital
+  R, and **a Hunter's own bow granted no ranged attack power for the whole
+  dataset**. The rule that existed to catch it was the thing that was broken.
+  **`EFFECT_RULES` IS EXPORTED SO A TEST CAN ASK WHICH RULES THE DATA REACHES**,
+  and `items.test.ts` asserts the unreachable list EXACTLY: a tenth entry fails,
+  and so does one of the nine becoming reachable. The second half has already
+  paid -- `+N Spirit` was on it with a comment calling it a question for the
+  owner, the owner answered with a slot table, and the test failing is how that
+  was confirmed rather than assumed. It is the same shape as
+  `isWeaponUseOf(attack, 'ranged')`, which was always false for every attack,
+  and the same guard: make something ask whether the predicate ever fires.
 - **A RULESET CAN WRITE THE SAME STAT IN WORDS THE PARSER HAS NEVER SEEN, AND
   1,384 LINES WENT MISSING THAT WAY.** Classic writes spell power as "Increases
   damage and healing done by magical spells and effects by up to 40" and that
@@ -3476,11 +3493,58 @@ IT STILL COUNTS AGAINST THE STAT BUDGET ON THE ITEMS". So a Rogue spends 120
 points on hit before buying anything else, which is what makes a benchmark set
 a fair comparison rather than a wish list.
 
+**HOW MANY STATS A SLOT CARRIES IS THE OWNER'S TABLE TOO, AND A PREFERENCE LIST
+LONGER THAN IT SILENTLY LOSES ITS TAIL.** Head, chest and legs take FIVE;
+shoulders, hands, feet and waist four; wrist, neck, rings and shields three; a
+trinket one. Every slot used to take at most four, so a fifth preference was
+never bought at ALL -- a caster benchmark granted **no Spirit**, and the Bear's
+**Dodge** and **Defense** were fifth and sixth of its six. The owner on raising
+the counts: "it should open up some space for Spirit, Dodge, Defense etc."
+**FIVE OF THE 25 TEMPLATES STILL LOSE SOMETHING**, because they list six or
+seven: both Protection builds lose `Block`, the Bear loses `Defense`, Seal Twist
+Ret loses `Stamina` and `Attack Power`, the Shockadin loses `Agility` and
+`Attack Power`. Twenty of 25 now buy everything they list. **A spreadsheet row
+is a wish and a slot count is a budget**, and where they disagree the row's tail
+is what gives -- so the count is worth checking against the longest row before
+reading a set as faithful.
+**AND IT CHANGES THE SHAPE RATHER THAN THE TOTAL**, which the owner called:
+"I understand that this may change the shape of the gear." Five stats on a head
+is five smaller numbers, and the 3/2 power makes that cost something real -- a
+concentrated item buys more total stat than a spread one, which is what the
+exponent is for.
+
 **IT GENERATES TOOLTIP TEXT AND PARSES IT BACK**, rather than writing stat
 blocks directly, so a generated item travels the same path a captured one does
 -- and that is how **1,384 stranded spell power lines** were found, because the
 generator wrote a line nothing could read. A shortcut straight to the stat block
 would have hidden the engine bug it exposed.
+
+**THE COST OF THAT CHOICE IS A SEAM, AND IT SWALLOWED EVERY PRIMARY ON EVERY
+SET.** `LINE.Strength` writes "+19 Strength"; a CAPTURED item carries its
+primaries in the raw `stats` object, so no rule existed for the words. A
+Warrior's E65 came out as **328 Critical Strike Rating with no strength, stamina
+or agility at all** -- 23.4% crit from gear, entirely plausible -- and the first
+full measurement of the four sets was taken that way.
+
+**WHAT MADE IT INVISIBLE IS THAT `budget` AND `spent` STILL BALANCED**, because
+both are computed from the ALLOCATION rather than from the parse. Every item was
+inside its budget, in the right slot, with a tooltip that reads correctly to a
+person. **A generator that checks its own arithmetic has checked the half that
+was never in doubt**; what needed checking was whether the words it wrote are
+words the reader knows.
+
+**SO THE GUARD IS ON THE OTHER SIDE OF THE SEAM.** `benchmarkGear.test.ts`
+asserts that no generated item leaves anything in `unmodelled` -- a line there
+is a stat the set paid budget for and did not grant -- and
+`tools/item_vocabulary.ts` reports the generated items in their own section.
+
+**AND THAT TOOL HID THE BUG FROM ITSELF FOR A COMMIT, WHICH IS THE SHARPEST
+LESSON HERE.** It EXCLUDED ids above 9,500,000, on the reasoning that an unread
+line on a generated item is a bug in the generator rather than a gap in the
+parser's vocabulary. That reasoning is correct. The exclusion was still wrong,
+because the generator is the thing most likely to write a line nobody has taught
+the parser to read. **An exclusion justified by "that would be a different kind
+of bug" is an exclusion that hides that kind of bug.**
 
 **AND `Math.floor`, NOT `Math.round`, PLUS A SLOT THAT CAN AFFORD THE RATING.**
 Two separate ways to go over budget: rounding up, and placing a rating on a slot
@@ -3847,6 +3911,31 @@ shape should fail loudly, not render a tree with a broken arrow.
   says it cannot fire, because nothing attacks the player" and enforced the stale
   caveat instead of catching it.
 - **Assert the MECHANISM, not a DPS delta.** A correct talent can be worth zero.
+- **A TEST THAT HARD-CODES A GEAR FIGURE IS TESTING THE GEAR, AND ABOUT FORTY
+  OF THEM WERE.** Replacing the twelve Classic stand-in sets with generated
+  benchmark gear broke 100 tests across 22 files, and almost every one broke for
+  the same reason: a literal that was a PROPERTY OF THE SET rather than of the
+  thing under test. "The Shadow Priest carries ONE point of spell hit";
+  "Deflection is 1% a rank, so 5/5 doubles the baseline" (true until the gear
+  granted parry); "the shield's 71"; "409 off the items plus 30 from the staff
+  enchant".
+  **THE REPAIR IS THE SAME EVERY TIME: READ THE BASE OFF THE CHARACTER AND
+  ASSERT THE RULE.** `17 - hitChance` for a miss band, `shield.stats.blockValue
+  + strength / 20` for block value, `(base + 16) * 1.1` for Blessing of Kings --
+  a base that is MEASURED cannot be stale, and the arithmetic written out by
+  hand is the part that was ever the claim. Several of these had already been
+  rewritten once when the armour enchants landed and once when a weapon buff
+  did; the third rewrite is the one that stopped them needing a fourth.
+  **AND IT FOUND THREE REAL BUGS ON THE WAY**, which is the argument for doing
+  it rather than widening a tolerance: a test asserting a figure fails the same
+  way whether the gear moved or the engine broke, and only re-deriving the
+  figure tells you which.
+- **A FIXED MARGIN BETWEEN TWO MEASURED RATES IS A THIRD KIND OF STALE FIGURE.**
+  "Crit against an equal-level target must exceed crit against a boss BY 0.02"
+  held for as long as the build made a particular number of swings, and missed
+  by 0.0004 after a gear change. The suppression itself is pinned exactly beside
+  it; what this assertion is for is that it REACHES the roll, so the comparison
+  is the direction and not the size.
 - **A `createPlayer` COMBATANT CARRIES A ROTATION, SO A TEST THAT RUNS THE CLOCK
   IS TESTING THE PRIORITY LIST TOO.** A Soul Siphon test cast Wrack once,
   advanced ten seconds and summed every `wrack` damage event -- correct only
@@ -4038,6 +4127,23 @@ does not.
 ONE STEP HARDER**: this one DID fire, and looked entirely ordinary doing it.
 
 **When a fix moves nothing in the suite, that is a statement about the suite.**
+
+**AND A ROUND THAT MOVES ALL 25 ROWS WANTS SPLITTING BY ARCHETYPE BEFORE IT IS
+READ AS A FINDING.** Swapping every preset into the E65 benchmark set moved the
+mean 730.9 to 741.0, which is the least informative thing about it: **16 rows
+rose and 9 fell**, and the groups are almost perfectly clean -- physical
+non-tank **+39.0** over 13 rows, casters **-7.4** over 9, the three tanks
+**-62.4**. A mean over the 25 hides all three.
+**TWO CHANGES PULLING AGAINST EACH OTHER**, and neither is about the ruleset:
+the gear started granting its primaries, which lifts whatever a build scales
+with; and the old sets ran from item level 66 to 88 and UNEVENLY between
+classes, where E65 is uniform -- so a build whose stand-in set happened to be
+item level 88 fell on the swap. **Part of every gap between two presets used to
+be a gap in their gear**, which is the whole reason a benchmark set exists.
+**AND A TANK'S DPS ROW IS THE WRONG MEASURE, WHICH A 62-POINT FALL MAKES LOOK
+LIKE A REGRESSION.** Their templates spend the budget on stamina, armour,
+defense skill and parry. `tools/bear_survival.ts` and the SURVIVAL half of the
+stat weights are where a Protection change is read.
 
 **AND THREE BUGS IN ONE ROUND WERE FOUND BY THE OWNER USING THE APP, EACH
 UNREACHABLE BY A TEST FOR A DIFFERENT REASON.** Worth reading together, because
