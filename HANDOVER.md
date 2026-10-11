@@ -1,3 +1,63 @@
+# A DUAL-WIELDER APPLIES THE WEAPON EFFECT TWICE
+
+**THE OWNER'S RULING**, read off the Consumables panel: "Dual wielding needs to
+trigger a second weapon effect consumable for an additional +2% melee crit
+chance."
+
+**MEAN 748.4 -> 752.7, AND EXACTLY SEVEN ROWS MOVED** -- the seven dual-wield
+profiles, by +10.7 to +23.8, mean **+15.2**. **The other eighteen are 0.0 to the
+decimal.** 3,341 tests.
+
+| | |
+| --- | --- |
+| DW Fury | +23.8 |
+| LW Melee | +19.5 |
+| Hawk Melee | +16.7 |
+| Combat | +13.5 |
+| Hemo | +11.6 |
+| Rupture | +10.8 |
+| Venom | +10.7 |
+
+**THAT IS THE CONTAINMENT CHECK AND IT IS UNUSUALLY SHARP**: the change is
+keyed on one combat style, and the set of profiles with that style is exactly
+the set that moved. Nothing else could have.
+
+## It is a property of the ROW, not of the consumable
+
+`ConsumableCategory.perWeapon` -- declared on Weapon Effect and nowhere else.
+A weapon effect is COATED ONTO A WEAPON rather than drunk, so somebody holding
+two buys two; a flask, an elixir and a piece of food are worth the same
+whatever is in the character's hands.
+
+**DECLARED RATHER THAN DERIVED**, and `consumables.test.ts` pins that it is the
+only row carrying the flag, so a second one has to be deliberate.
+
+## The whole consumable is applied twice, not just its crit
+
+A second weapon effect is a second stone on a second weapon, so whatever it
+grants it grants again. **The caster option is what makes that checkable**: it
+carries `+1% Spell Crit Chance & +36 Spell Power`, and the test asserts both
+double. If the owner's table ever gives the row something besides crit, it
+already behaves.
+
+## Two weapons means two that SWING
+
+`weaponEffectCount` reads `offHand: 'weapon'` from `combatStyles.ts`, which is
+the one rule that says a second weapon swings.
+
+**A SHIELD IS NOT A SECOND COATED WEAPON**, and neither is a held off-hand item
+nor the two-hander a Hunter carries as a stat stick. Reading "two hands full"
+instead would have paid a Protection warrior for coating its shield -- a bigger
+number and no error, which is this project's commonest shape of wrong.
+
+## The selection is still one choice
+
+The panel offers one weapon effect and the character applies it to whatever it
+is holding. **Asking somebody to pick the same stone twice would be a control
+whose only correct answer is the one already above it** -- so the row is
+unchanged and a line under it says so, shown ONLY to a build that dual wields,
+because a build holding one weapon needs no explanation.
+
 # TWELVE MOVEMENTS ON THE TEMPLATE GEAR
 
 **ROUND FOUR, AND THE FIRST WHERE THE DATA OVERRULED THE OWNER'S OWN SCOPE.**
@@ -2488,11 +2548,11 @@ demonstrated at the top. **Re-count rather than re-reading the sentence.**
 | --- | --- |
 | **Talents** | 260 fully, 39 partly, 105 ruled out, **62 a live gap**, out of **466** -- from 132 before the class dives |
 | **Abilities** | 114 declared against 478 captured |
-| **Profiles** | **25**, all measured, **mean 748.4** on FOREVER'S OWN ITEMS -- every earlier figure in this file was measured on Classic and Season of Discovery stand-ins, so the contributions below belong to that gear and not to this mean: the armour enchants were +27.0 of it, the pre-pull consumables +105.9, the racials **+9.8 at round one**, the MID-FIGHT consumables **+17.7** and the Life Tap gate **+3.5** |
+| **Profiles** | **25**, all measured, **mean 752.7** on FOREVER'S OWN ITEMS -- every earlier figure in this file was measured on Classic and Season of Discovery stand-ins, so the contributions below belong to that gear and not to this mean: the armour enchants were +27.0 of it, the pre-pull consumables +105.9, the racials **+9.8 at round one**, the MID-FIGHT consumables **+17.7** and the Life Tap gate **+3.5** |
 | **Racials** | **10 races, 40 traits**: 15 do something, 20 effects ruled out, 11 a live gap |
 | **Scope rulings** | **9 members**, all the owner's, carrying 129 TALENT entries and 19 racial declarations |
 | **Placeholders** | **10 declared** -- see the milestone table, and count DECLARATIONS |
-| **Tests** | **3,334** on Node 20 and 22 |
+| **Tests** | **3,341** on Node 20 and 22 |
 
 **FOUR CLASSES ARE ESSENTIALLY DONE** -- Warrior 1 live gap, Paladin 1, Druid 2,
 Rogue 3 -- and the remaining 62 sit mostly in the Warlock (19), Priest (12) and
@@ -4196,21 +4256,21 @@ cannot audit, which is why the check is a SET comparison and not a row count.
 
 | Profile | Class | Talents | DPS | | Profile | Class | Talents | DPS |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| DW Fury | Warrior | 17/34/0 | 964.6 | | Combat Rogue | Rogue | 18/33/0 | 762.8 |
-| **LW Ranged** | Hunter | 7/39/5 | **912.5** | | **Fire Mage** | Mage | 10/39/2 | **753.0** |
-| **Firelock** | Warlock | 5/11/35 | **891.4** | | Enh Shaman | Shaman | 17/34/0 | 750.7 |
-| Hawk Melee | Hunter | 16/11/24 | 866.3 | | **SM/DS** | Warlock | 40/11/0 | **722.4** |
-| Cat Druid | Druid | 9/34/8 | 859.0 | | **Shockadin** | Paladin | 23/0/28 | **714.4** |
-| **Arcane Mage** | Mage | 47/4/0 | **857.7** | | Hemo Rogue | Rogue | 17/3/31 | 704.2 |
-| **BM Hunter** | Hunter | 31/20/0 | **856.2** | | Venom Rogue | Rogue | 37/12/2 | 674.3 |
-| **Frostfire Mage** | Mage | 0/29/22 | **837.0** | | Ele Shaman | Shaman | 38/13/0 | 651.4 |
-| 2H Arms | Warrior | 39/10/2 | 825.0 | | Rupture Rogue | Rogue | 12/8/31 | 648.2 |
-| Seal Twist Ret | Paladin | 15/0/36 | 816.5 | | **Prot Warr** | Warrior | 17/0/34 | **471.5** |
-| LW Melee | Hunter | 7/13/31 | 812.0 | | **Prot Pally** | Paladin | 8/34/9 | **400.6** |
-| **Moonkin** | Druid | 38/0/13 | **788.4** | | **Bear Druid** | Druid | 9/42/0 | **395.7** |
-| **Shadow Priest** | Priest | 13/3/35 | **774.7** | | | | | | |
+| **DW Fury** | Warrior | 17/34/0 | **988.5** | | Shadow Priest | Priest | 13/3/35 | 774.7 |
+| LW Ranged | Hunter | 7/39/5 | 912.5 | | Fire Mage | Mage | 10/39/2 | 753.0 |
+| Firelock | Warlock | 5/11/35 | 891.4 | | Enh Shaman | Shaman | 17/34/0 | 750.7 |
+| **Hawk Melee** | Hunter | 16/11/24 | **883.0** | | SM/DS | Warlock | 40/11/0 | 722.4 |
+| Cat Druid | Druid | 9/34/8 | 859.0 | | **Hemo Rogue** | Rogue | 17/3/31 | **715.8** |
+| Arcane Mage | Mage | 47/4/0 | 857.7 | | Shockadin | Paladin | 23/0/28 | 714.4 |
+| BM Hunter | Hunter | 31/20/0 | 856.2 | | **Venom Rogue** | Rogue | 37/12/2 | **684.9** |
+| Frostfire Mage | Mage | 0/29/22 | 837.0 | | **Rupture Rogue** | Rogue | 12/8/31 | **659.0** |
+| **LW Melee** | Hunter | 7/13/31 | **831.5** | | Ele Shaman | Shaman | 38/13/0 | 651.4 |
+| 2H Arms | Warrior | 39/10/2 | 825.0 | | Prot Warr | Warrior | 17/0/34 | 471.5 |
+| Seal Twist Ret | Paladin | 15/0/36 | 816.5 | | Prot Pally | Paladin | 8/34/9 | 400.6 |
+| Moonkin | Druid | 38/0/13 | 788.4 | | Bear Druid | Druid | 9/42/0 | 395.7 |
+| **Combat Rogue** | Rogue | 18/33/0 | **776.2** | | | | | | |
 
-The mean across **25** is **748.4**, RE-SUMMED FROM THE ROWS ABOVE rather than
+The mean across **25** is **752.7**, RE-SUMMED FROM THE ROWS ABOVE rather than
 adjusted, by `tools/update_baseline_table.py`.
 
 **THE TOP IS DW FURY AT 974.3 +/-10.3, AND LW RANGED IS SECOND AT 888.9
