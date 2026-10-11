@@ -1,3 +1,123 @@
+# TWELVE MOVEMENTS ON THE TEMPLATE GEAR
+
+**ROUND FOUR, AND THE FIRST WHERE THE DATA OVERRULED THE OWNER'S OWN SCOPE.**
+Twelve asks: a stat pair that never appears on one item, spell power for the two
+Paladin shield builds, the block line's position on a card, tank trinkets,
+thirteen stat sticks, five enchant defaults and two new enchants.
+
+**MEAN 737.3 -> 748.4**, 14 rows up, 8 down and **3 unchanged to the decimal** --
+casters **+24.1**, tanks **+29.7**, physical non-tank **-0.3**. 3,334 tests.
+
+| | what | where |
+| --- | --- | --- |
+| 1 | no armour piece carries Strength AND Attack Power | `EXCLUSIVE_PAIRS` |
+| 2 | Shockadin and Prot Pally: spell power weapons and gear | the templates |
+| 3 | a shield's block value under its armour on the card | `makeItem` |
+| 4 | tank trinkets mixed | `TrinketPlan` |
+| 5 | ranged stat sticks for three Warriors and four Rogues | `StatStick` |
+| 6 | wand stat sticks for six casters | `StatStick` |
+| 7 | relic slots left empty | nothing to do |
+| 8-12 | five enchant defaults, three new enchants | `foreverEnchants`, `presetEnchants` |
+
+**A ROW CAN BE ADDED TO THAT TABLE.**
+
+## The data said the rule was wider than the owner thought
+
+"The eight **plate** armor class item slots shouldn't have BOTH strength and
+attack power, this should likely only affect the DPS warrior profiles."
+
+Across **all 1,374 real armour pieces on file, not one carries both**:
+
+| | pieces | with Strength | with Attack Power | BOTH |
+| --- | --- | --- | --- | --- |
+| Plate | 304 | 218 | 1 | **0** |
+| Mail | 328 | 70 | 40 | **0** |
+| Leather | 363 | 123 | 33 | **0** |
+| Cloth | 379 | 0 | 0 | **0** |
+
+So it is every armour class, and the owner's "likely only the DPS warriors" was
+a guess about which PROFILES would move rather than about the rule's scope.
+
+**AND AGILITY AND ATTACK POWER ARE NOT A PAIR**, which is why `EXCLUSIVE_PAIRS`
+is a list of one rather than a blanket "no two offensive stats": 8 leather and
+21 mail pieces carry both, so excluding that combination would be inventing a
+rule the data contradicts.
+
+## And then the rule collided with an older one
+
+Dropping the later member outright is the obvious reading, and it took the
+**Rogue's Strength to zero across the whole set** -- which is the owner's own
+earlier rule that a preferred stat going to nothing "is unrealistic to how
+items are actually designed".
+
+**THE TWO ARE ABOUT DIFFERENT SCOPES AND BOTH CAN HOLD**: the pair is about one
+ITEM and the zero check is about the SET. So the slots take turns --
+`EXCLUSIVE_PAIR_PERIOD`, the earlier preference on three slots in four, which is
+the shape the real items have:
+
+    a warrior's plate     130 pieces with Strength    14 with Attack Power
+    a rogue's leather      33                         22
+
+## The owner's two trinket statements disagree, and the later one wins
+
+"A maximum of 28 crit rating across both trinkets" was said of the DPS
+archetypes. "1 with half item budget on stamina / half on crit" is a later and
+more specific instruction about the tanks -- and half a trinket's budget is
+about 21 rating at E65, so a tank pair comes to **42**.
+
+The later and more specific statement wins, which is this project's standing
+rule. **The figure is printed by `benchmark_stat_report.ts`** so the owner can
+see what their two sentences add up to, and `benchmarkShape.test.ts` exempts
+exactly the three templates that declare their own pair rather than widening
+the assertion.
+
+## Thirteen stat sticks, and nothing had to be added for them
+
+Only the `ranged` STYLE fires a ranged weapon -- `rangedSlot: 'required'`, which
+is the four Hunters -- so for the three Warriors, four Rogues and six casters
+the item contributes its stats and no attacks. Checked rather than assumed: all
+four spot-checked profiles report **no ranged damage row at all**.
+
+**AND THE SIX WAND PROFILES ARE EXACTLY THE THREE CLASSES WITH THE WAND
+PROFICIENCY.** Warlock, Priest and Mage; the Moonkin and the Elemental Shaman
+are absent from the owner's list and are also absent from the `wand` column of
+their own table.
+
+**THE ROGUE'S HIT HAD TO BE RESERVED RATHER THAN COMPETED FOR.** Adding the
+ranged slot to the hit spread did nothing, because `spreadRating` fills the
+largest headroom first and the ranged slot is the SMALLEST budget in the set --
+so the armour absorbed every point and the bow came out with agility and no
+hit, which is half of what was asked for. It is taken off the template's total,
+not added to it, so the owner's hit figure is still absolute.
+
+## Three unchanged rows are the containment check
+
+**LW Melee, Hawk Melee and Ele Shaman moved 0.0 to the decimal.** The first two
+are in none of the owner's twelve lists -- item 12 names only LW Ranged and BM
+Hunter -- and the Elemental Shaman's only change is a shield enchant granting
+**stamina**, which moves a caster's maximum health and nothing a fight reads.
+Bit-identical is the right answer for all three.
+
+## What moved, and why
+
+| | mean | what did it |
+| --- | --- | --- |
+| tanks | **+29.7** | trinket crit and attack power where there was stamina only |
+| casters | **+24.1** | the +65 staff enchant, replacing a +30 |
+| physical non-tank | **-0.3** | the Strength/Attack Power exclusivity, roughly cancelling the stat stick |
+
+Caster spell power on the character is now **724-773**, which lands on the
+owner's original 750 instinct for the first time.
+
+## What is left
+
+- the **177** set pieces restricted by neither source, T3 among them;
+- **E85's spell power above the best real item-level-80-92 set**;
+- the **default stat valuation**, still every preferred stat at 1.00;
+- **the relic slots stay empty**, which is the owner's instruction rather than
+  an omission: "Druid, Paladin, and Shaman have very specific 'relic' slots
+  that are currently unknown and can be left empty as they are now."
+
 # A HIT RATING IS PAID FOR OUT OF CRIT, AND THE DPS DID NOT MOVE
 
 **ROUND THREE OF THE GEAR PANEL, AND THE FIRST WHOSE POINT IS NOT A NUMBER.**
@@ -2368,11 +2488,11 @@ demonstrated at the top. **Re-count rather than re-reading the sentence.**
 | --- | --- |
 | **Talents** | 260 fully, 39 partly, 105 ruled out, **62 a live gap**, out of **466** -- from 132 before the class dives |
 | **Abilities** | 114 declared against 478 captured |
-| **Profiles** | **25**, all measured, **mean 737.3** on FOREVER'S OWN ITEMS -- every earlier figure in this file was measured on Classic and Season of Discovery stand-ins, so the contributions below belong to that gear and not to this mean: the armour enchants were +27.0 of it, the pre-pull consumables +105.9, the racials **+9.8 at round one**, the MID-FIGHT consumables **+17.7** and the Life Tap gate **+3.5** |
+| **Profiles** | **25**, all measured, **mean 748.4** on FOREVER'S OWN ITEMS -- every earlier figure in this file was measured on Classic and Season of Discovery stand-ins, so the contributions below belong to that gear and not to this mean: the armour enchants were +27.0 of it, the pre-pull consumables +105.9, the racials **+9.8 at round one**, the MID-FIGHT consumables **+17.7** and the Life Tap gate **+3.5** |
 | **Racials** | **10 races, 40 traits**: 15 do something, 20 effects ruled out, 11 a live gap |
 | **Scope rulings** | **9 members**, all the owner's, carrying 129 TALENT entries and 19 racial declarations |
 | **Placeholders** | **10 declared** -- see the milestone table, and count DECLARATIONS |
-| **Tests** | **3,332** on Node 20 and 22 |
+| **Tests** | **3,334** on Node 20 and 22 |
 
 **FOUR CLASSES ARE ESSENTIALLY DONE** -- Warrior 1 live gap, Paladin 1, Druid 2,
 Rogue 3 -- and the remaining 62 sit mostly in the Warlock (19), Priest (12) and
@@ -4076,21 +4196,21 @@ cannot audit, which is why the check is a SET comparison and not a row count.
 
 | Profile | Class | Talents | DPS | | Profile | Class | Talents | DPS |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| DW Fury | Warrior | 17/34/0 | 973.7 | | Shadow Priest | Priest | 13/3/35 | 752.4 |
-| LW Ranged | Hunter | 7/39/5 | 894.4 | | Enh Shaman | Shaman | 17/34/0 | 751.6 |
-| Hawk Melee | Hunter | 16/11/24 | 866.3 | | Fire Mage | Mage | 10/39/2 | 727.1 |
-| Firelock | Warlock | 5/11/35 | 857.5 | | Hemo Rogue | Rogue | 17/3/31 | 714.5 |
-| Cat Druid | Druid | 9/34/8 | 852.4 | | Shockadin | Paladin | 23/0/28 | 702.6 |
-| BM Hunter | Hunter | 31/20/0 | 841.1 | | SM/DS | Warlock | 40/11/0 | 693.4 |
-| 2H Arms | Warrior | 39/10/2 | 832.4 | | Venom Rogue | Rogue | 37/12/2 | 681.0 |
-| Arcane Mage | Mage | 47/4/0 | 829.5 | | Rupture Rogue | Rogue | 12/8/31 | 657.4 |
-| Seal Twist Ret | Paladin | 15/0/36 | 818.5 | | Ele Shaman | Shaman | 38/13/0 | 651.4 |
-| LW Melee | Hunter | 7/13/31 | 812.0 | | Prot Warr | Warrior | 17/0/34 | 452.0 |
-| Frostfire Mage | Mage | 0/29/22 | 807.1 | | Prot Pally | Paladin | 8/34/9 | 364.9 |
-| Combat Rogue | Rogue | 18/33/0 | 773.2 | | Bear Druid | Druid | 9/42/0 | 361.9 |
-| Moonkin | Druid | 38/0/13 | 764.4 | | | | | | |
+| DW Fury | Warrior | 17/34/0 | 964.6 | | Combat Rogue | Rogue | 18/33/0 | 762.8 |
+| **LW Ranged** | Hunter | 7/39/5 | **912.5** | | **Fire Mage** | Mage | 10/39/2 | **753.0** |
+| **Firelock** | Warlock | 5/11/35 | **891.4** | | Enh Shaman | Shaman | 17/34/0 | 750.7 |
+| Hawk Melee | Hunter | 16/11/24 | 866.3 | | **SM/DS** | Warlock | 40/11/0 | **722.4** |
+| Cat Druid | Druid | 9/34/8 | 859.0 | | **Shockadin** | Paladin | 23/0/28 | **714.4** |
+| **Arcane Mage** | Mage | 47/4/0 | **857.7** | | Hemo Rogue | Rogue | 17/3/31 | 704.2 |
+| **BM Hunter** | Hunter | 31/20/0 | **856.2** | | Venom Rogue | Rogue | 37/12/2 | 674.3 |
+| **Frostfire Mage** | Mage | 0/29/22 | **837.0** | | Ele Shaman | Shaman | 38/13/0 | 651.4 |
+| 2H Arms | Warrior | 39/10/2 | 825.0 | | Rupture Rogue | Rogue | 12/8/31 | 648.2 |
+| Seal Twist Ret | Paladin | 15/0/36 | 816.5 | | **Prot Warr** | Warrior | 17/0/34 | **471.5** |
+| LW Melee | Hunter | 7/13/31 | 812.0 | | **Prot Pally** | Paladin | 8/34/9 | **400.6** |
+| **Moonkin** | Druid | 38/0/13 | **788.4** | | **Bear Druid** | Druid | 9/42/0 | **395.7** |
+| **Shadow Priest** | Priest | 13/3/35 | **774.7** | | | | | | |
 
-The mean across **25** is **737.3**, RE-SUMMED FROM THE ROWS ABOVE rather than
+The mean across **25** is **748.4**, RE-SUMMED FROM THE ROWS ABOVE rather than
 adjusted, by `tools/update_baseline_table.py`.
 
 **THE TOP IS DW FURY AT 974.3 +/-10.3, AND LW RANGED IS SECOND AT 888.9

@@ -53,7 +53,31 @@ import { AttackTableModifiers } from '../../src/engine';
  * "None" is not an entry here: it is the empty option every dropdown already
  * has, so a column reading only "None" -- the shoulder -- is the empty list.
  */
+/*
+ * ==============================================================================
+ * THREE ENTRIES THE OWNER ADDED AFTER THE ORIGINAL TABLE, and they are a
+ * column the spreadsheet did not have rather than a correction to one:
+ *
+ *   twoHand  '+65 Spell Power'  the caster STAFF enchant, which the owner
+ *                               distinguished from the 1H "+30 damage to
+ *                               spells" (the scraped 22749)
+ *   twoHand  '+25 Agility'      the melee stat-stick enchant for the two bow
+ *   mainHand                    Hunters
+ *   offHand
+ *   shield   '+9 Stamina'       the shield default -- and the FIRST enchant in
+ *                               the table to name the shield slot at all
+ *
+ * THEY SIT ON WEAPON SLOTS, which is why `keeps the armour enchants off every
+ * weapon slot` below had to learn about them: that assertion was "nothing from
+ * the Forever block reaches a hand", and the Forever block now holds two
+ * enchants that belong on one.
+ * ==============================================================================
+ */
 const COLUMNS: Readonly<Record<string, readonly string[]>> = {
+  twoHand: ['+65 Spell Power', '+25 Agility'],
+  mainHand: ['+25 Agility'],
+  offHand: ['+25 Agility'],
+  shield: ['+9 Stamina'],
   head: [
     '+1% Dodge',
     '+1% Haste',
@@ -116,9 +140,18 @@ describe('the enchants each slot offers', () => {
      * SLOT LIST is the only thing stopping it, and the Gear panel builds its
      * dropdown from exactly this call.
      */
+    /*
+     * THE OWNER'S THREE LATE ADDITIONS ARE WEAPON ENCHANTS IN THE FOREVER
+     * BLOCK, so "nothing from the block reaches a hand" is no longer the rule.
+     * What is still the rule is that nothing meant for a HEAD or a CLOAK does,
+     * which is what the assertion is for -- so it is written as the column
+     * table's own answer rather than as a blanket exclusion.
+     */
     for (const slot of ['mainHand', 'offHand', 'twoHand'] as const) {
-      const armour = enchantsForSlot(slot).filter((e) => e.id > FOREVER_ENCHANT_ID_BASE);
-      expect(armour, slot).toEqual([]);
+      const offered = enchantsForSlot(slot)
+        .filter((e) => e.id > FOREVER_ENCHANT_ID_BASE)
+        .map((e) => e.name);
+      expect([...offered].sort(), slot).toEqual([...COLUMNS[slot]].sort());
     }
   });
 
@@ -156,7 +189,7 @@ describe('the ids are stable and are nobody else’s', () => {
      */
     expect(foreverEnchantId('+1% Dodge')).toBe(FOREVER_ENCHANT_ID_BASE + 1);
     expect(foreverEnchantId('+2% Crit Chance')).toBe(FOREVER_ENCHANT_ID_BASE + 28);
-    expect(FOREVER_ENCHANTS).toHaveLength(28);
+    expect(FOREVER_ENCHANTS).toHaveLength(31);
   });
 
   it('throws on a name the table does not contain', () => {
@@ -607,8 +640,12 @@ describe('what each of the 25 profiles opens with', () => {
      * is given" is a claim about a function, and this is the claim about the
      * result.
      *
-     * Eleven of the fourteen weapon slots across the presets carry one, which
-     * is the figure that moves if an armour loadout ever reaches a hand.
+     * THE SET IS NO LONGER JUST THOSE TWO. The owner has since moved the two
+     * Paladin shield builds onto "+30 damage to spells", given every shield
+     * "+9 Stamina", given the caster staves "+65 Spell Power" and given the
+     * two bow Hunters' stat stick "+25 Agility" -- so the assertion is the
+     * EXPLICIT set rather than "only the two scraped ones", and it is still
+     * the claim about the result rather than about `withEnchants`.
      * ------------------------------------------------------------------------
      */
     const weaponEnchants = new Set<number>();
@@ -619,8 +656,21 @@ describe('what each of the 25 profiles opens with', () => {
         if (id !== undefined) weaponEnchants.add(id);
       }
     }
-    // The two scraped spell ids, and nothing from the Forever block.
-    expect([...weaponEnchants].sort((a, b) => a - b)).toEqual([20034, 22749]);
+    /*
+     * The two scraped spell ids, plus the three the owner added later -- named
+     * by NAME rather than by id, because an id is a position in a block and
+     * what this is really pinning is which ENCHANT each hand ends up with.
+     */
+    const names = [...weaponEnchants]
+      .map((id) => ENCHANTS_BY_ID.get(id)?.name)
+      .sort((a, b) => String(a).localeCompare(String(b)));
+    expect(names).toEqual([
+      '+25 Agility',
+      '+65 Spell Power',
+      '+9 Stamina',
+      'Enchant Weapon - Crusader',
+      'Enchant Weapon - Spell Power',
+    ]);
   });
 });
 

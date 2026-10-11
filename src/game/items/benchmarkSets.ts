@@ -28,6 +28,8 @@ import {
   weightedShares,
   type ArmourClass,
   type BenchStat,
+  type StatStick,
+  type TrinketPlan,
   type BenchmarkSetId,
   type GeneratedItem,
 } from './benchmarkGear';
@@ -79,6 +81,23 @@ export interface BenchmarkTemplate {
   readonly preferred: readonly BenchStat[];
   readonly armour: ArmourClass;
   readonly weapons: WeaponPlan;
+  /**
+   * The two trinkets, where this build wants something other than the default.
+   *
+   * ABSENT MEANS THE DPS PAIR -- "28 crit plus a scaling damage stat" and
+   * "pure damage stat" -- which is what twenty-two of the twenty-five want.
+   * The three tanks declare their own. See `TrinketPlan`.
+   */
+  readonly trinkets?: readonly [TrinketPlan, TrinketPlan];
+  /**
+   * A weapon held in the ranged slot purely for its stats.
+   *
+   * Thirteen of the twenty-five have one on the owner's instruction: a bow for
+   * the three Warriors and the four Rogues, a wand for the six casters whose
+   * class has the wand proficiency. It never swings -- only the `ranged` STYLE
+   * fires one -- so it is stats and nothing else. See `StatStick`.
+   */
+  readonly statStick?: StatStick;
 }
 
 /** What the character holds. `caster` trades damage for stats. */
@@ -99,19 +118,55 @@ export interface WeaponPlan {
   readonly speed?: number;
 }
 
+/**
+ * The ranged and wand stat sticks, by what they carry.
+ *
+ * Named rather than written out per template for the reason `MELEE` and `TANK`
+ * are: seven templates share the first two between them and six share the
+ * third, and seven copies of a list is seven chances to mistype one.
+ */
+const WARRIOR_STICK: StatStick = { subclass: 'Bow', stats: ['Stamina', 'Crit'] };
+const ROGUE_STICK: StatStick = { subclass: 'Bow', stats: ['Agility', 'Hit'] };
+const WAND_STICK: StatStick = { subclass: 'Wand', stats: ['Intellect', 'Spell Power'] };
+
+/**
+ * The tank trinket pair, which is the owner's own design.
+ *
+ * "1 with half item budget on stamina / half on crit. The other trinket can be
+ * similar crit + attack power for bear and prot warr. And one pure spell power
+ * trinket for Prot pally."
+ */
+const TANK_TRINKETS: readonly [TrinketPlan, TrinketPlan] = [
+  { stats: ['Stamina', 'Crit'], even: true },
+  { stats: ['Crit', 'Attack Power'], even: true },
+];
+const PROT_PALLY_TRINKETS: readonly [TrinketPlan, TrinketPlan] = [
+  { stats: ['Stamina', 'Crit'], even: true },
+  { stats: ['Spell Power'] },
+];
+
 const MELEE: readonly BenchStat[] = ['Crit', 'Strength', 'Stamina', 'Agility', 'Attack Power'];
 const ROGUE: readonly BenchStat[] = ['Crit', 'Agility', 'Attack Power', 'Strength', 'Stamina'];
 const CASTER: readonly BenchStat[] = ['Crit', 'Spell Power', 'Intellect', 'Stamina', 'Spirit'];
 const HUNTER: readonly BenchStat[] = ['Crit', 'Agility', 'Intellect', 'Attack Power', 'Stamina'];
 const TANK: readonly BenchStat[] = ['Stamina', 'Strength', 'Agility', 'Defense', 'Parry', 'Block'];
+/*
+ * THE PROTECTION PALADIN IS A TANK WITH SPELL POWER WHERE AGILITY WOULD BE,
+ * the owner's instruction: "the Shockadin and Prot pally template gear should
+ * have spell power instead of agility". It holds its position in the order, so
+ * the only thing that changes is which stat the slots buy there -- and the
+ * weapon, which takes `preferred.slice(0, 3)`, now buys spell power with the
+ * budget its caster trade already earned it.
+ */
+const PROT_PALLY: readonly BenchStat[] = ['Stamina', 'Strength', 'Spell Power', 'Defense', 'Parry', 'Block'];
 
 export const BENCHMARK_TEMPLATES: readonly BenchmarkTemplate[] = [
-  { presetId: 'two_hand_arms', characterClass: 'warrior', label: '2H Arms', hit: 80, expertise: 10, preferred: MELEE, armour: 'Plate', weapons: { kind: 'twoHand', subclass: 'Axe' } },
-  { presetId: 'dw_fury', characterClass: 'warrior', label: 'DW Fury', hit: 80, expertise: 10, preferred: MELEE, armour: 'Plate', weapons: { kind: 'dualWield', subclass: 'Axe', offSubclass: 'Axe' } },
-  { presetId: 'prot_warr', characterClass: 'warrior', label: 'Prot Warr', hit: 70, expertise: 20, preferred: TANK, armour: 'Plate', weapons: { kind: 'oneHandShield', subclass: 'Sword' } },
-  { presetId: 'rogue_venom', characterClass: 'rogue', label: 'Venom', hit: 120, expertise: 10, preferred: ROGUE, armour: 'Leather', weapons: { kind: 'dualWield', subclass: 'Dagger', offSubclass: 'Dagger' } },
-  { presetId: 'rogue_combat', characterClass: 'rogue', label: 'Combat', hit: 120, expertise: 10, preferred: ROGUE, armour: 'Leather', weapons: { kind: 'dualWield', subclass: 'Sword', offSubclass: 'Dagger' } },
-  { presetId: 'rogue_rupture', characterClass: 'rogue', label: 'Rupture', hit: 120, expertise: 10, preferred: ROGUE, armour: 'Leather', weapons: { kind: 'dualWield', subclass: 'Dagger', offSubclass: 'Dagger' } },
+  { presetId: 'two_hand_arms', characterClass: 'warrior', label: '2H Arms', hit: 80, expertise: 10, preferred: MELEE, armour: 'Plate', weapons: { kind: 'twoHand', subclass: 'Axe' }, statStick: WARRIOR_STICK },
+  { presetId: 'dw_fury', characterClass: 'warrior', label: 'DW Fury', hit: 80, expertise: 10, preferred: MELEE, armour: 'Plate', weapons: { kind: 'dualWield', subclass: 'Axe', offSubclass: 'Axe' }, statStick: WARRIOR_STICK },
+  { presetId: 'prot_warr', characterClass: 'warrior', label: 'Prot Warr', hit: 70, expertise: 20, preferred: TANK, armour: 'Plate', weapons: { kind: 'oneHandShield', subclass: 'Sword' }, trinkets: TANK_TRINKETS, statStick: WARRIOR_STICK },
+  { presetId: 'rogue_venom', characterClass: 'rogue', label: 'Venom', hit: 120, expertise: 10, preferred: ROGUE, armour: 'Leather', weapons: { kind: 'dualWield', subclass: 'Dagger', offSubclass: 'Dagger' }, statStick: ROGUE_STICK },
+  { presetId: 'rogue_combat', characterClass: 'rogue', label: 'Combat', hit: 120, expertise: 10, preferred: ROGUE, armour: 'Leather', weapons: { kind: 'dualWield', subclass: 'Sword', offSubclass: 'Dagger' }, statStick: ROGUE_STICK },
+  { presetId: 'rogue_rupture', characterClass: 'rogue', label: 'Rupture', hit: 120, expertise: 10, preferred: ROGUE, armour: 'Leather', weapons: { kind: 'dualWield', subclass: 'Dagger', offSubclass: 'Dagger' }, statStick: ROGUE_STICK },
   /*
    * DAGGERS, NOT THE SPREADSHEET'S "MH Mace, OH Dagger" -- the owner's ruling
    * after the conflict was raised. Ambush is gated on
@@ -120,15 +175,15 @@ export const BENCHMARK_TEMPLATES: readonly BenchmarkTemplate[] = [
    * produces an ordinary-looking figure. That is the failure mode this project
    * documents hardest, and it is why the weapon column loses to the build.
    */
-  { presetId: 'rogue_hemo', characterClass: 'rogue', label: 'Hemo', hit: 120, expertise: 10, preferred: ROGUE, armour: 'Leather', weapons: { kind: 'dualWield', subclass: 'Dagger', offSubclass: 'Dagger' } },
+  { presetId: 'rogue_hemo', characterClass: 'rogue', label: 'Hemo', hit: 120, expertise: 10, preferred: ROGUE, armour: 'Leather', weapons: { kind: 'dualWield', subclass: 'Dagger', offSubclass: 'Dagger' }, statStick: ROGUE_STICK },
   { presetId: 'druid_moonkin', characterClass: 'druid', label: 'Moonkin', hit: 110, expertise: 0, preferred: CASTER, armour: 'Leather', weapons: { kind: 'twoHand', subclass: 'Staff', caster: true } },
   { presetId: 'druid_cat', characterClass: 'druid', label: 'Cat', hit: 30, expertise: 10, preferred: ['Strength', 'Agility', 'Crit', 'Stamina', 'Attack Power'], armour: 'Leather', weapons: { kind: 'twoHand', subclass: 'Mace' } },
-  { presetId: 'druid_bear', characterClass: 'druid', label: 'Bear', hit: 30, expertise: 20, preferred: ['Stamina', 'Bonus Armor', 'Agility', 'Strength', 'Dodge', 'Defense'], armour: 'Leather', weapons: { kind: 'twoHand', subclass: 'Mace' } },
+  { presetId: 'druid_bear', characterClass: 'druid', label: 'Bear', hit: 30, expertise: 20, preferred: ['Stamina', 'Bonus Armor', 'Agility', 'Strength', 'Dodge', 'Defense'], armour: 'Leather', weapons: { kind: 'twoHand', subclass: 'Mace' }, trinkets: TANK_TRINKETS },
   { presetId: 'shaman_elemental', characterClass: 'shaman', label: 'Ele Shaman', hit: 110, expertise: 0, preferred: CASTER, armour: 'Mail', weapons: { kind: 'oneHandShield', subclass: 'Mace', caster: true } },
   { presetId: 'shaman_enhancement', characterClass: 'shaman', label: 'Enh Shaman', hit: 70, expertise: 10, preferred: ['Crit', 'Strength', 'Intellect', 'Agility', 'Stamina', 'Attack Power'], armour: 'Mail', weapons: { kind: 'twoHand', subclass: 'Mace' } },
-  { presetId: 'mage_frostfire', characterClass: 'mage', label: 'Frostfire', characterName: 'Frostfire Mage', hit: 110, expertise: 0, preferred: CASTER, armour: 'Cloth', weapons: { kind: 'twoHand', subclass: 'Staff', caster: true } },
-  { presetId: 'mage_arcane', characterClass: 'mage', label: 'Arcane', characterName: 'Arcane Mage', hit: 110, expertise: 0, preferred: CASTER, armour: 'Cloth', weapons: { kind: 'twoHand', subclass: 'Staff', caster: true } },
-  { presetId: 'mage_fire', characterClass: 'mage', label: 'Fire', characterName: 'Fire Mage', hit: 110, expertise: 0, preferred: CASTER, armour: 'Cloth', weapons: { kind: 'twoHand', subclass: 'Staff', caster: true } },
+  { presetId: 'mage_frostfire', characterClass: 'mage', label: 'Frostfire', characterName: 'Frostfire Mage', hit: 110, expertise: 0, preferred: CASTER, armour: 'Cloth', weapons: { kind: 'twoHand', subclass: 'Staff', caster: true }, statStick: WAND_STICK },
+  { presetId: 'mage_arcane', characterClass: 'mage', label: 'Arcane', characterName: 'Arcane Mage', hit: 110, expertise: 0, preferred: CASTER, armour: 'Cloth', weapons: { kind: 'twoHand', subclass: 'Staff', caster: true }, statStick: WAND_STICK },
+  { presetId: 'mage_fire', characterClass: 'mage', label: 'Fire', characterName: 'Fire Mage', hit: 110, expertise: 0, preferred: CASTER, armour: 'Cloth', weapons: { kind: 'twoHand', subclass: 'Staff', caster: true }, statStick: WAND_STICK },
   { presetId: 'pally_ret', characterClass: 'paladin', label: 'Seal Twist Ret', hit: 80, expertise: 10, preferred: ['Crit', 'Strength', 'Spell Power', 'Agility', 'Intellect', 'Stamina', 'Attack Power'], armour: 'Plate', weapons: { kind: 'twoHand', subclass: 'Mace' } },
   /*
    * A ONE-HANDER AND A SHIELD, NOT THE SPREADSHEET'S "Fast 2H Mace", and the
@@ -156,15 +211,15 @@ export const BENCHMARK_TEMPLATES: readonly BenchmarkTemplate[] = [
    * was raised rather than guessed at. Settled now, and the one-handed 20% is
    * what the Shockadin's seal reads.
    */
-  { presetId: 'pally_shockadin', characterClass: 'paladin', label: 'Shockadin', hit: 80, expertise: 0, preferred: ['Crit', 'Spell Power', 'Intellect', 'Strength', 'Stamina', 'Agility', 'Attack Power'], armour: 'Plate', weapons: { kind: 'oneHandShield', subclass: 'Mace', speed: 2.0 } },
-  { presetId: 'prot_pally', characterClass: 'paladin', label: 'Prot Pally', hit: 50, expertise: 20, preferred: TANK, armour: 'Plate', weapons: { kind: 'oneHandShield', subclass: 'Mace', caster: true } },
+  { presetId: 'pally_shockadin', characterClass: 'paladin', label: 'Shockadin', hit: 80, expertise: 0, preferred: ['Crit', 'Spell Power', 'Intellect', 'Strength', 'Stamina', 'Attack Power'], armour: 'Plate', weapons: { kind: 'oneHandShield', subclass: 'Mace', speed: 2.0, caster: true } },
+  { presetId: 'prot_pally', characterClass: 'paladin', label: 'Prot Pally', hit: 50, expertise: 20, preferred: PROT_PALLY, armour: 'Plate', weapons: { kind: 'oneHandShield', subclass: 'Mace', caster: true }, trinkets: PROT_PALLY_TRINKETS },
   { presetId: 'bm_hunter', characterClass: 'hunter', label: 'BM Hunter', hit: 80, expertise: 0, preferred: HUNTER, armour: 'Mail', weapons: { kind: 'twoHand', subclass: 'Axe', ranged: true } },
   { presetId: 'lw_ranged', characterClass: 'hunter', label: 'LW Ranged', hit: 80, expertise: 0, preferred: HUNTER, armour: 'Mail', weapons: { kind: 'twoHand', subclass: 'Axe', ranged: true } },
   { presetId: 'lw_melee', characterClass: 'hunter', label: 'LW Melee', hit: 80, expertise: 0, preferred: HUNTER, armour: 'Mail', weapons: { kind: 'dualWield', subclass: 'Axe', offSubclass: 'Axe', ranged: true } },
   { presetId: 'hawk_melee', characterClass: 'hunter', label: 'Hawk Melee', hit: 80, expertise: 0, preferred: HUNTER, armour: 'Mail', weapons: { kind: 'dualWield', subclass: 'Axe', offSubclass: 'Axe', ranged: true } },
-  { presetId: 'warlock_smds', characterClass: 'warlock', label: 'SM/DS', hit: 120, expertise: 0, preferred: CASTER, armour: 'Cloth', weapons: { kind: 'twoHand', subclass: 'Staff', caster: true } },
-  { presetId: 'warlock_firelock', characterClass: 'warlock', label: 'Firelock', hit: 110, expertise: 0, preferred: CASTER, armour: 'Cloth', weapons: { kind: 'twoHand', subclass: 'Staff', caster: true } },
-  { presetId: 'shadow_priest', characterClass: 'priest', label: 'Shadow', characterName: 'Shadow Priest', hit: 110, expertise: 0, preferred: CASTER, armour: 'Cloth', weapons: { kind: 'twoHand', subclass: 'Staff', caster: true } },
+  { presetId: 'warlock_smds', characterClass: 'warlock', label: 'SM/DS', hit: 120, expertise: 0, preferred: CASTER, armour: 'Cloth', weapons: { kind: 'twoHand', subclass: 'Staff', caster: true }, statStick: WAND_STICK },
+  { presetId: 'warlock_firelock', characterClass: 'warlock', label: 'Firelock', hit: 110, expertise: 0, preferred: CASTER, armour: 'Cloth', weapons: { kind: 'twoHand', subclass: 'Staff', caster: true }, statStick: WAND_STICK },
+  { presetId: 'shadow_priest', characterClass: 'priest', label: 'Shadow', characterName: 'Shadow Priest', hit: 110, expertise: 0, preferred: CASTER, armour: 'Cloth', weapons: { kind: 'twoHand', subclass: 'Staff', caster: true }, statStick: WAND_STICK },
 ];
 
 export const BENCHMARK_TEMPLATES_BY_PRESET: ReadonlyMap<string, BenchmarkTemplate> = new Map(
@@ -190,6 +245,15 @@ const toLines = (
   fixed: ReadonlyMap<BenchStat, number>,
   shares: readonly BenchStat[],
   budget: number,
+  /**
+   * Divide the budget EVENLY rather than by `SHARES`.
+   *
+   * A trinket carries one line or two and has no "first preference" to
+   * express, so the owner's "half item budget on stamina / half on crit" is a
+   * 50/50 split -- where the positional table would give 65/35 and
+   * `SHARE_WEIGHT` would then halve the crit again.
+   */
+  even = false,
 ) => {
   const total = budget ** BUDGET_EXPONENT;
   const amounts = new Map<BenchStat, number>();
@@ -201,7 +265,7 @@ const toLines = (
 
   // WEIGHTED, not the bare positional table: `SHARE_WEIGHT` is what pulls crit
   // back and pushes spell power up, measured against Forever's own items.
-  const weights = weightedShares(shares);
+  const weights = even ? shares.map(() => 1 / shares.length) : weightedShares(shares);
   const portions = weights.map((weight) => weight * total);
 
   /*
@@ -369,13 +433,29 @@ function makeItem(
   if (armor) lines.push(`${armor} Armor`);
 
   /*
+   * A SHIELD'S BLOCK VALUE GOES UNDER ITS ARMOUR, which is the owner's ask and
+   * is where the client puts it: "Shield item cards should have block value
+   * located under the base armor on the item, not at the bottom of the item
+   * card."
+   *
+   * IT IS NOT A STAT AND NOT A RATING, which is why it fell to the bottom. A
+   * shield's "44 Block" is INHERENT to the slot -- free with the item level
+   * the way base armour is -- so it belongs with the armour line and not with
+   * the things the budget bought.
+   */
+  const blockLine = effects.find((effect) => /^\d+ Block$/.test(effect.text));
+  if (blockLine) lines.push(blockLine.text);
+
+  /*
    * THE BASE ATTRIBUTES, THEN THE REQUIREMENTS, THEN THE RATINGS. Split by
    * SHAPE rather than by the `kind` the allocator tagged them with: a shield's
    * inherent "44 Block" is tagged `Stat` and is not an attribute, and bonus
    * armour is written "+40 Armor" and belongs with them. The pattern is what
    * says which is which.
    */
-  const written = effects.map((e) => (e.kind === 'Equip' ? `Equip: ${e.text}` : e.text));
+  const written = effects
+    .filter((effect) => effect !== blockLine)
+    .map((e) => (e.kind === 'Equip' ? `Equip: ${e.text}` : e.text));
   const attributes = written.filter((line) => ATTRIBUTE_LINE.test(line));
   const rest = written.filter((line) => !ATTRIBUTE_LINE.test(line));
 
@@ -463,12 +543,42 @@ export function benchmarkItemsFor(
    * so the rest of the item is still an item.
    */
   const capacityOf = (stat: 'Hit' | 'Expertise') => (slot: EquipmentSlot) => {
-    const plan = ARMOUR_SLOTS.find((p) => p.slot === slot);
-    if (plan === undefined) return 0;
-    return ratingCapacity(base * SLOT_MULTIPLIER[plan.slotClass], COST[stat]);
+    // The ranged slot is not in `ARMOUR_SLOTS`; it is the stat stick's, and it
+    // takes the ranged multiplier like the weapon it is.
+    const slotClass =
+      slot === 'ranged' ? 'ranged' : ARMOUR_SLOTS.find((p) => p.slot === slot)?.slotClass;
+    if (slotClass === undefined) return 0;
+    return ratingCapacity(base * SLOT_MULTIPLIER[slotClass], COST[stat]);
   };
 
-  const hit = spreadRating(template.hit, RATING_SLOTS, capacityOf('Hit'));
+  /*
+   * THE RANGED SLOT JOINS THE HIT SPREAD ONLY WHEN THE STAT STICK ASKS FOR IT.
+   *
+   * The owner's rogue stick is "agility + hit rating", and the template's hit
+   * total is ABSOLUTE -- so hit on the stick has to come OUT of that total
+   * rather than on top of it, or every Rogue would quietly exceed the cap the
+   * owner set. Adding the slot to the spread is what makes it one number.
+   *
+   * AND ONLY FOR A STICK THAT NAMES HIT: the warriors' is stamina and crit and
+   * the casters' is intellect and spell power, and neither should have hit
+   * pushed onto it by a spread looking for somewhere to put it.
+   */
+  const stickWantsHit = template.statStick?.stats.includes('Hit') === true;
+  /*
+   * THE STICK'S SHARE IS RESERVED RATHER THAN COMPETED FOR, which adding the
+   * slot to the spread did not achieve: `spreadRating` fills the largest
+   * headroom first and the ranged slot has the SMALLEST budget in the set, so
+   * the armour absorbed every point and the Rogue's bow came out with agility
+   * and no hit at all -- which is half of what the owner asked for.
+   *
+   * TAKEN OFF THE TOTAL, not added to it, so the template's hit figure is
+   * still the absolute number the owner set.
+   */
+  const stickHit = stickWantsHit
+    ? Math.min(capacityOf('Hit')('ranged'), template.hit)
+    : 0;
+  const hit = spreadRating(template.hit - stickHit, RATING_SLOTS, capacityOf('Hit'));
+  if (stickHit > 0) hit.set('ranged', stickHit);
   /*
    * EXPERTISE GOES ON FROM THE OTHER END and is told what hit already took --
    * without that the two passes can land on one slot and put it over the cap
@@ -528,6 +638,17 @@ export function benchmarkItemsFor(
     (stat) => stat === 'Spell Power' || stat === 'Attack Power',
   );
 
+  /*
+   * THE PAIR, DECLARED OR DEFAULTED. Twenty-two builds want the DPS pair and
+   * the three tanks declare their own; a build with neither Crit nor a damage
+   * stat falls back to the stat its preference list leads with, which is what
+   * kept the tanks' trinkets from being blank before they had a plan.
+   */
+  const trinketPlans: readonly [TrinketPlan, TrinketPlan] = template.trinkets ?? [
+    { cappedCrit: wantsCrit, stats: damageStat ? [damageStat] : [] },
+    { stats: damageStat ? [damageStat] : [] },
+  ];
+
   let armourIndex = -1;
   for (const plan of ARMOUR_SLOTS) {
     armourIndex += 1;
@@ -535,17 +656,17 @@ export function benchmarkItemsFor(
     const fixed = new Map<BenchStat, number>();
 
     if (plan.slot === 'trinket1' || plan.slot === 'trinket2') {
-      const crit = plan.slot === 'trinket1' && wantsCrit ? trinketCrit(budget) : 0;
-      if (crit > 0) fixed.set('Crit', crit);
+      const trinket = trinketPlans[plan.slot === 'trinket1' ? 0 : 1];
+      if (trinket.cappedCrit === true) fixed.set('Crit', trinketCrit(budget));
       /*
        * ALWAYS CARRIED, which a ternary here got wrong and the stat report
-       * caught: a build with no Crit and no damage stat -- the three tanks and
-       * the Bear -- was passed an EMPTY share list, so both its trinkets came
-       * out blank and the set lost 68 stamina. A trinket always carries
-       * something; what changes is WHAT.
+       * caught: a build with no Crit and no damage stat was passed an EMPTY
+       * share list, so both its trinkets came out blank and the set lost 68
+       * stamina. A trinket always carries something; what changes is WHAT.
        */
-      const carried = damageStat ? [damageStat] : statsFor(plan, template.preferred);
-      const { effects, spent } = toLines(fixed, carried, budget);
+      const carried =
+        trinket.stats.length > 0 ? trinket.stats : statsFor(plan, template.preferred);
+      const { effects, spent } = toLines(fixed, carried, budget, trinket.even === true);
       items.push(
         makeItem(
           nextId(),
@@ -743,6 +864,59 @@ export function benchmarkItemsFor(
 
   if (w.ranged) {
     addWeapon('Ranged', 'ranged', 'ranged', 'Bow', SPEED.ranged);
+  }
+
+  /*
+   * ============================================================================
+   * A WEAPON HELD PURELY FOR ITS STATS, in a slot this build never swings.
+   *
+   * Thirteen templates carry one on the owner's instruction -- a bow for the
+   * three Warriors and the four Rogues, a wand for the six casters whose class
+   * has the wand proficiency. Only the `ranged` STYLE fires a ranged weapon,
+   * so for every one of these the item contributes its stats and no attacks;
+   * the melee Hunters already proved the arrangement.
+   *
+   * AND NEVER BESIDE A REAL BOW. The four Hunters are the only templates with
+   * `w.ranged`, and none of them declares a stat stick -- but the guard is
+   * here rather than in the declarations, because two items in one slot is the
+   * kind of mistake that shows up as one silently replacing the other.
+   * ============================================================================
+   */
+  const stick = template.statStick;
+  if (stick && !w.ranged) {
+    const budget = base * SLOT_MULTIPLIER.ranged;
+    const fixed = new Map<BenchStat, number>();
+    const assigned = hit.get('ranged');
+    if (assigned) fixed.set('Hit', assigned);
+    const shares = stick.stats.filter((stat) => stat !== 'Hit');
+    const { effects, spent } = toLines(fixed, shares, budget);
+    /*
+     * A WAND IS A RANGED WEAPON WITH DAMAGE AND A BOW IS TOO, so both get
+     * one -- weapon damage is free with the item level rather than bought, and
+     * an item with a damage line and no damage would read as broken on a card.
+     */
+    const damage = weaponDamage('ranged', set.quality, set.itemLevel, SPEED.ranged, false);
+    items.push(
+      makeItem(
+        nextId(),
+        benchmarkName(template, set),
+        set,
+        'Ranged',
+        stick.subclass,
+        null,
+        {
+          minDamage: damage.minDamage,
+          maxDamage: damage.maxDamage,
+          speed: damage.speed,
+          dps: damage.dps,
+        },
+        effects,
+        budget,
+        spent,
+        template.characterClass,
+        template.armour,
+      ),
+    );
   }
 
   return items;

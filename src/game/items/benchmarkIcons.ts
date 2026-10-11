@@ -102,6 +102,8 @@ const WEAPON_ICONS: Readonly<Record<string, string>> = {
   Polearm: 'inv_spear_08',
   Bow: 'inv_weapon_bow_12',
   Shield: 'inv_shield_05',
+  // The six caster stat sticks, which had no entry and drew the question mark.
+  Wand: 'inv_wand_11',
   'Fist Weapon': 'inv_misc_monsterclaw_03',
 };
 

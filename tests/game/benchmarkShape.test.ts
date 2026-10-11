@@ -198,8 +198,27 @@ describe('the two trinkets are the owner s pair of archetypes', () => {
    * pair the two largest crit sources in the whole set -- 68 rating from two
    * items.
    */
-  it('never carries more than the owner s cap between them, in any set', () => {
-    for (const template of BENCHMARK_TEMPLATES) {
+  it('never carries more than the owner s cap between them, on a DPS pair', () => {
+    /*
+     * ------------------------------------------------------------------------
+     * THE THREE TANKS ARE EXEMPT, AND THAT IS THE OWNER'S TWO STATEMENTS
+     * DISAGREEING RATHER THAN A HOLE HERE.
+     *
+     * "A maximum of 28 crit rating across both trinkets" was said of the DPS
+     * archetypes. "1 with half item budget on stamina / half on crit. The
+     * other trinket can be similar crit + attack power" is a later and more
+     * specific instruction about the tanks, and half a trinket's budget is
+     * about 21 rating at E65 -- so a tank pair comes to 42.
+     *
+     * The later and more specific statement wins, which is this project's
+     * standing rule, and the figure is printed by `benchmark_stat_report.ts`
+     * so the owner can see what their two sentences add up to.
+     * ------------------------------------------------------------------------
+     */
+    const declared = BENCHMARK_TEMPLATES.filter((template) => template.trinkets === undefined);
+    expect(declared.length).toBe(BENCHMARK_TEMPLATES.length - 3);
+
+    for (const template of declared) {
       for (const set of BENCHMARK_SETS) {
         const equipment = benchmarkEquipmentFor(template.presetId, set.id)!;
         const crit = (['trinket1', 'trinket2'] as const).reduce(
@@ -243,19 +262,46 @@ describe('the two trinkets are the owner s pair of archetypes', () => {
     expect(b55.stats.critRating!).toBeGreaterThan(0);
   });
 
-  it('gives a build that wants no crit neither archetype, and not an empty slot', () => {
-    // The three tanks and the Bear name no Crit and no damage stat, so their
-    // trinkets keep what their preference list leads with. A ternary here once
-    // handed them an EMPTY share list and the set silently lost 68 stamina.
-    for (const presetId of ['prot_warr', 'prot_pally', 'druid_bear']) {
+  it('gives the three tanks the owner s own pair, and never an empty slot', () => {
+    /*
+     * "Tank trinkets shouldn't both be stamina only. Let's mix it up and do 1
+     * with half item budget on stamina / half on crit. The other trinket can
+     * be similar crit + attack power for bear and prot warr. And one pure
+     * spell power trinket for Prot pally."
+     *
+     * A ternary here once handed these three an EMPTY share list and the set
+     * silently lost 68 stamina, which is why every assertion below is that
+     * something IS there.
+     */
+    for (const presetId of ['prot_warr', 'druid_bear']) {
       const equipment = benchmarkEquipmentFor(presetId, 'E65')!;
-      for (const slot of ['trinket1', 'trinket2'] as const) {
-        const item = ITEMS_BY_ID.get(equipment[slot]!.itemId)!;
-        expect(`${presetId} ${slot} crit`, `${presetId} ${slot}`).toBeTruthy();
-        expect(item.stats.critRating ?? 0).toBe(0);
-        expect(item.stats.stamina ?? 0).toBeGreaterThan(0);
-      }
+      const first = ITEMS_BY_ID.get(equipment.trinket1!.itemId)!;
+      const second = ITEMS_BY_ID.get(equipment.trinket2!.itemId)!;
+      expect(first.stats.stamina ?? 0).toBeGreaterThan(0);
+      expect(first.stats.critRating ?? 0).toBeGreaterThan(0);
+      expect(second.stats.critRating ?? 0).toBeGreaterThan(0);
+      expect(second.stats.attackPower ?? 0).toBeGreaterThan(0);
     }
+
+    const pally = benchmarkEquipmentFor('prot_pally', 'E65')!;
+    const pallyFirst = ITEMS_BY_ID.get(pally.trinket1!.itemId)!;
+    const pallySecond = ITEMS_BY_ID.get(pally.trinket2!.itemId)!;
+    expect(pallyFirst.stats.stamina ?? 0).toBeGreaterThan(0);
+    expect(pallyFirst.stats.critRating ?? 0).toBeGreaterThan(0);
+    // Pure spell power: the owner's word, so nothing else on it.
+    expect(pallySecond.stats.spellPower ?? 0).toBeGreaterThan(0);
+    expect(pallySecond.stats.critRating ?? 0).toBe(0);
+    expect(pallySecond.stats.attackPower ?? 0).toBe(0);
+  });
+
+  it('splits the tank s first trinket evenly, which SHARES would not', () => {
+    // "Half item budget on stamina / half on crit". The positional table gives
+    // 65/35 and `SHARE_WEIGHT` would then halve the crit again, so an even
+    // split is a different mechanism rather than a different number.
+    const first = ITEMS_BY_ID.get(
+      benchmarkEquipmentFor('prot_warr', 'E65')!.trinket1!.itemId,
+    )!;
+    expect(first.stats.stamina!).toBe(first.stats.critRating!);
   });
 });
 
@@ -405,11 +451,16 @@ describe('a set grants something of every stat its template prefers', () => {
     expect(first[4]).not.toBe(second[4]);
   });
 
-  it('changes nothing for a template that already fits', () => {
-    // Twenty of the twenty-five name no more stats than a head holds, and for
-    // those the rotation returns the same list whatever index it is given.
+  it('changes nothing for a template that already fits and has no pair', () => {
+    /*
+     * The rotation itself is a no-op for a list a slot can hold whole. The
+     * example avoids Strength and Attack Power TOGETHER, because those two are
+     * an `EXCLUSIVE_PAIR` and the pair takes its own turn by rotation -- which
+     * is a second reason a slot's list can differ between indices and would
+     * make this assertion test both mechanisms at once.
+     */
     const plan = ARMOUR_SLOTS.find((p) => p.slot === 'head')!;
-    const short = ['Crit', 'Strength', 'Stamina', 'Agility', 'Attack Power'] as const;
+    const short = ['Crit', 'Agility', 'Stamina', 'Intellect', 'Spirit'] as const;
     expect(statsFor(plan, short, 0)).toEqual(statsFor(plan, short, 3));
   });
 });

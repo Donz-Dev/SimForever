@@ -62,9 +62,17 @@ const DEFAULT_STYLES: readonly (readonly [ClassId, CombatStyleId, RaceId])[] = [
  * dropped, and either mistake leaves a character swinging the placeholder.
  */
 const WARRIOR_HANDS: Record<string, readonly EquipmentSlot[]> = {
-  dual_wield: ['mainHand', 'offHand'],
-  two_hander: ['twoHand'],
-  one_hand_shield: ['mainHand', 'shield'],
+  /*
+   * THE RANGED SLOT IS IN ALL THREE NOW, and it is a STAT STICK rather than a
+   * weapon this build uses: the owner asked for the three Warrior templates to
+   * carry a bow for its stamina and crit. Only the `ranged` STYLE fires one,
+   * so it contributes stats and no attacks -- which is why it belongs in a
+   * mapping about which hands are FILLED and changes nothing about which
+   * swing.
+   */
+  dual_wield: ['mainHand', 'offHand', 'ranged'],
+  two_hander: ['twoHand', 'ranged'],
+  one_hand_shield: ['mainHand', 'shield', 'ranged'],
 };
 
 describe('the starting set', () => {
@@ -185,10 +193,15 @@ describe('the starting set', () => {
      * from two fields rather than declared in one.
      *
      * THE DIFFERENCE IS NOW THE STAT LINE RATHER THAN THE ITEM. Protection's
-     * template leads with Stamina, Strength, Agility, Defense, Parry and Block;
-     * the Shockadin's leads with Crit and Spell Power. So the tank's shield
-     * carries stamina a damage build's does not, and the Shockadin's gear
-     * carries spell power the tank's does not.
+     * template leads with Stamina, Strength and Spell Power; the Shockadin's
+     * leads with Crit and Spell Power. So the tank's shield carries stamina a
+     * damage build's does not.
+     *
+     * **BOTH CARRY SPELL POWER SINCE THE OWNER'S LATEST ROUND** -- "the
+     * Shockadin and Prot pally template gear should have spell power instead
+     * of agility" -- so the assertion that the tank has NONE has expired, and
+     * what separates them is how MUCH. The Shockadin is a damage caster and
+     * leads with it; the tank spends most of its budget on survival.
      * ------------------------------------------------------------------------
      */
     const tank = startingEquipmentFor('paladin', 'one_hand_shield', { targetAttacks: true });
@@ -204,7 +217,8 @@ describe('the starting set', () => {
         0,
       );
     expect(spellPower(shockadin)).toBeGreaterThan(0);
-    expect(spellPower(tank)).toBe(0);
+    expect(spellPower(tank)).toBeGreaterThan(0);
+    expect(spellPower(shockadin)).toBeGreaterThan(spellPower(tank));
 
     // Omitted defaults to the damage build, because a character is created
     // before the encounter is set up and nothing has said it is tanking yet.
