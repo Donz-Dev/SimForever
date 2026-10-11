@@ -119,6 +119,28 @@ const IGNORED = [
   /^.+ \(\d+\/\d+\)$/, // a set header, e.g. "Warlord's Threads (0/6)"
 ];
 
+/**
+ * A developer test item, excluded on the ruleset owner's instruction.
+ *
+ * ----------------------------------------------------------------------------
+ * Thirty-nine items named "90 Epic <class> <slot>" -- a full epic set per class
+ * at item level 90, in a ruleset whose cap is 60. They are REQUIRES LEVEL 60,
+ * so a character could wear them and they would be offered in the Gear panel
+ * beside real gear; they are also plainly a tuning fixture rather than loot.
+ *
+ * MATCHED ON THE NAME AND NOT ON THE ITEM LEVEL, because item level 90 is not
+ * the thing that makes them test items. Six REAL Naxxramas trinkets sit at 90
+ * -- Slayer's Crest, Mark of the Champion, Eye of the Dead, The Restrained
+ * Essence of Sapphiron, Glyph of Deflection -- and an item-level rule would
+ * have taken those with them.
+ *
+ * Excluded items are listed BY NAME in the output, the same as the "Premier
+ * Emboldened" seals, because "nothing was lost" has to be checkable rather
+ * than asserted.
+ * ----------------------------------------------------------------------------
+ */
+const TEST_ITEM = /^90 Epic /;
+
 function convert(raw) {
   const item = {
     id: raw.id,
@@ -297,7 +319,12 @@ const recomputed = createHash('sha256').update(JSON.stringify(payload)).digest('
 const problemsBeforeItems = [];
 const items = [];
 const problems = [];
+const excluded = [];
 for (const raw of capture.items) {
+  if (TEST_ITEM.test(raw.name)) {
+    excluded.push(`${raw.name} (${raw.id})`);
+    continue;
+  }
   const { item, unknown } = convert(raw);
   if (!item.inventoryType) problems.push(`${item.name} (${item.id}): no inventory type`);
   for (const line of unknown) problems.push(`${item.name} (${item.id}): unread line "${line}"`);
@@ -325,6 +352,9 @@ problems.push(...problemsBeforeItems);
 if (capture.dropped_tokens) {
   console.log(`dropped as having nothing to model: ${capture.dropped_tokens.join(', ')}`);
 }
+if (excluded.length > 0) {
+  console.log(`excluded ${excluded.length} developer test items: ${excluded.join(', ')}`);
+}
 console.log(`converted ${items.length} items`);
 const withWeapon = items.filter((i) => i.weapon).length;
 const withArmor = items.filter((i) => i.armor).length;
@@ -350,6 +380,7 @@ if (process.argv.includes('--write')) {
       `tools/import_forever_items.mjs from the capture in tools/data/, which records ` +
       `its own SHA-256.`,
     source: capture.source,
+    excludedTestItems: excluded,
     foreverBuild: capture.build,
     classicBuild: capture.classic_build,
     capturedOn: capture.build_date,

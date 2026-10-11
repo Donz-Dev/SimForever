@@ -2,6 +2,7 @@
  "set": "forever-new-epics",
  "description": "Every NEW epic weapon and armour piece at item level 55 and above in the WoW: Forever beta client, build 1.60.1.70338, captured 2026-10-10. REAL FOREVER DATA, unlike the Classic and Season of Discovery stand-ins in the other files here. Converted by tools/import_forever_items.mjs from the capture in tools/data/, which records its own SHA-256.",
  "source": "https://foreverchanges.pro/items/new.json",
+ "excludedTestItems": [],
  "foreverBuild": "1.60.1.70338",
  "classicBuild": "1.15.9.69722",
  "capturedOn": "2026-10-10",

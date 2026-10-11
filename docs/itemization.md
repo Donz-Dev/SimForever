@@ -498,11 +498,19 @@ weapon.
 records its own SHA-256, the beta build and the filter. **This project no
 longer reads anybody's website to know what a Forever item is.**
 
-- **Nothing was silently dropped.** The only exclusions are the eight
-  "Premier Emboldened &lt;slot&gt; Seal" upgrade tokens, which carry no armour,
-  stats, effects or set bonuses — and they are listed in the capture **by
-  name**, because "nothing was lost" has to be checkable. The importer refuses
-  to write if any line in any item went unread.
+- **Nothing was silently dropped.** Two exclusions, both listed **by name** in
+  the file the importer writes, because "nothing was lost" has to be checkable:
+  the eight "Premier Emboldened &lt;slot&gt; Seal" upgrade tokens, which carry
+  no armour, stats, effects or set bonuses; and **39 developer test items**
+  named `90 Epic <class> <slot>` — a full epic set per class at item level 90
+  in a ruleset capped at 60, removed on the owner's instruction. The importer
+  refuses to write if any line in any item went unread.
+- **The test items are matched on the NAME, not the item level.** Six real
+  Naxxramas trinkets sit at item level 90 — Slayer's Crest, Mark of the
+  Champion, Eye of the Dead, The Restrained Essence of Sapphiron, Glyph of
+  Deflection — so an item-level rule would have taken those with them. Removing
+  them moved nothing: **no preset references any of the 39 ids**, which is a
+  cheaper and stronger argument than a fingerprint.
 - **Adding them moved no published figure.** A preset names its items by id, so
   a new file changes what can be CHOSEN and not what the 25 builds wear. All 75
   combat-log hashes and event counts are unchanged.

@@ -91,7 +91,13 @@ describe('the item data', () => {
      * which is the one thing about this arrangement worth getting wrong.
      */
     expect(FOREVER_OVERRIDDEN_IDS).toEqual([19321, 19323, 19325]);
-    const expected = total + 653 - FOREVER_OVERRIDDEN_IDS.length;
+    /*
+     * 614, not 653: thirty-nine "90 Epic <class> <slot>" developer test items
+     * are excluded by the importer and listed by name in the file it writes.
+     * Matched on the NAME, because six real Naxxramas trinkets also sit at
+     * item level 90 and an item-level rule would have taken those too.
+     */
+    const expected = total + 614 - FOREVER_OVERRIDDEN_IDS.length;
     expect(ITEMS).toHaveLength(expected);
     expect(new Set(ITEMS.map((item) => item.id)).size).toBe(expected);
   });
