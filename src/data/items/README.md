@@ -14,9 +14,41 @@ Nine files, 151 items and 2 enchants between them. **One file per set**, so
 | `sod-paladin.json` | 27 | A Paladin's, in three cuts: Retribution, Shockadin, Protection |
 | `sod-warlock.json` | 8 | A Warlock's -- Felheart with the Deathmist pieces |
 | `sod-priest.json` | 9 | A Shadow Priest's -- Vestments of Prophecy with Anathema |
+| `forever-new-epics.json` | 449 | **REAL FOREVER DATA.** Every new epic at item level 55 and up in beta build 1.60.1.70338. Not a curated set and nothing equips it -- it is what Forever actually has |
+| `forever-new-rares.json` | 412 | **REAL FOREVER DATA.** Every new RARE (blue) item at item level 50-60 |
+| `forever-changed-rares.json` | 198 | **REAL FOREVER DATA**, and definitive. Classic rares Forever changed; also an OVERRIDE layer |
+| `forever-changed-epics.json` | 614 | **REAL FOREVER DATA, and the DEFINITIVE version of any item it names.** Every CLASSIC epic at item level 55 and up that Forever changed. It is an OVERRIDE layer: three ids collide with a stand-in and the Forever side wins |
 
 Every one after the first came from a **sixtyupgrades.com set the project owner
 supplied**, and each file carries the URL it came from.
+
+**`forever-new-epics.json` IS THE EXCEPTION AND IT IS THE ONLY REAL FOREVER
+ARMOUR HERE.** It is a bulk capture rather than a curated set: 449 items, every
+new epic at item level 55 and above in the beta client, imported by
+`tools/import_forever_items.mjs` from `tools/data/forever-new-epics.capture.json`,
+which records its own SHA-256, the build it came from and the filter used.
+Nothing equips it yet -- a preset names its items by id, so adding it changed
+what can be CHOSEN and not what any of the 25 builds wear.
+
+```bash
+node tools/import_forever_items.mjs --check   # what it would write, and any unread line
+node tools/import_forever_items.mjs --write
+```
+
+**THE CHANGED FILE IS A CONTROL GROUP AS WELL AS DATA.** 487 of its 653 items
+differ from Classic only in WORDING -- Classic's "Improves your chance to get a
+critical strike by 1%" is Forever's "+14 Critical Strike Rating" -- so their
+stats ARE Classic's, and pricing them measures Classic's own itemization
+through the same model. Each such item carries `wordingOnly: true`, which is
+what makes the comparison possible. Without it the only baseline is 100%, and
+100% is not a number the budget model reaches even on Classic gear.
+
+**TAKING A NEW CAPTURE.** `foreverchanges.pro` serves plain JSON at
+`/items/new.json` and four siblings, each stating its beta build. A plain fetch
+is refused with a 403, so it is read in a browser ON THE ORIGIN, hashed there
+with SHA-256 and re-hashed on disk before being accepted. The importer re-checks
+that hash and refuses to write if an item carries a line it could not read, so
+a changed tooltip format fails loudly instead of dropping a stat.
 
 **Almost none of it is WoW: Forever data, in a WoW: Forever simulator.** They
 were chosen deliberately, to replace invented placeholder weapons with real
@@ -48,6 +80,17 @@ the set it came from, and the caster jewellery five classes share is owned by
 `sod-druid.json` for no better reason than that the Druid came first.
 
 `node tools/import_item.mjs --build` prints what it skipped and where it went.
+
+## Checking whether an item's numbers add up
+
+`npx vite-node tools/item_budget.ts` prices every item here against the
+community itemization budget -- `budget = qualityBase(ilvl) x slotMultiplier`,
+spent at `budget^1.5 = sum((stat x cost)^1.5)`. **122 of the 133 non-weapon
+items land within 90% to 110%**, so an item well outside that is worth a second
+look at the scrape. It is a reading aid and an audit, NOT a way to generate an
+item's stats -- see [docs/itemization.md](../../../docs/itemization.md) for what
+it can and cannot say, and for the two things (base armor, weapon DPS) that come
+free with the item level rather than out of the budget.
 
 ## Adding an item, or a whole set
 

@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import type { Equipment } from '../../src/game/items/Item';
 import {
   CRUSADER,
+  FOREVER_OVERRIDDEN_IDS,
   FOREVER_SPELL_POWER_BUFFS,
   ITEMS,
   ITEMS_BY_ID,
@@ -60,24 +61,66 @@ const MIGHT_SET: readonly (readonly [id: number, name: string, str: number, sta:
 ];
 
 describe('the item data', () => {
-  it('holds both item files, and no id twice', () => {
+  it('holds every item file, and no id twice', () => {
     /*
-     * NINE FILES, and the count is per file so that one failing to load is a
+     * TEN FILES, and the count is per file so that one failing to load is a
      * failure rather than a shorter list nobody notices.
      *
      *   classic-warrior 19, sod-hunter 12, sod-rogue 13, sod-druid 35,
      *   sod-shaman 20, sod-mage 8, sod-paladin 27, sod-warlock 8, sod-priest 9
+     *   forever-new-epics 449
      *
-     * Every one of them is SHORTER than the set it came from, because
-     * twenty-two pieces are worn by more than one set and an id belongs to the
-     * first file that asks for it -- `tools/item-sets.json` decides which.
-     * `itemData` throws on a duplicate, which is what makes that safe.
+     * The nine stand-in files are each SHORTER than the set they came from,
+     * because twenty-two pieces are worn by more than one set and an id belongs
+     * to the first file that asks for it -- `tools/item-sets.json` decides
+     * which. `itemData` throws on a duplicate, which is what makes that safe.
+     *
+     * `forever-new-epics` is not a set and is not curated: it is every new epic
+     * at item level 55 and up in the Forever beta client, and its ids are in a
+     * range of their own (234819 to 284716) that cannot collide with the
+     * Classic and Season of Discovery ones.
      */
-    const PER_FILE = [19, 12, 13, 35, 20, 8, 27, 8, 9];
-    const total = PER_FILE.reduce((sum, count) => sum + count, 0);
-    expect(total).toBe(151);
-    expect(ITEMS).toHaveLength(total);
-    expect(new Set(ITEMS.map((item) => item.id)).size).toBe(total);
+    /*
+     * EVERY FILE, COUNTED ONCE, because the first version of this double-counted
+     * `forever-new-epics` -- it was in the stand-in list AND in the Forever
+     * total -- and the test failed by exactly those 449.
+     *
+     *   nine Classic / Season of Discovery stand-ins   151
+     *   forever-new-epics                              449
+     *   forever-changed-epics                          614  (653 less 39 "90 Epic" test items)
+     *   forever-new-rares                              412
+     *   forever-changed-rares                          198  (199 less Orb of Deception, no slot)
+     *
+     * The two CHANGED files are an override layer: three of their ids already
+     * belong to a stand-in and REPLACE it rather than joining the total.
+     */
+    const STAND_INS = [19, 12, 13, 35, 20, 8, 27, 8, 9];
+    const FOREVER = [449, 614, 412, 198];
+    const sum = (list: readonly number[]) => list.reduce((a, b) => a + b, 0);
+    expect(sum(STAND_INS)).toBe(151);
+    expect(sum(FOREVER)).toBe(1673);
+
+    expect(FOREVER_OVERRIDDEN_IDS).toEqual([19321, 19323, 19325]);
+    const expected = sum(STAND_INS) + sum(FOREVER) - FOREVER_OVERRIDDEN_IDS.length;
+    expect(expected).toBe(1821);
+    expect(ITEMS).toHaveLength(expected);
+    expect(new Set(ITEMS.map((item) => item.id)).size).toBe(expected);
+  });
+
+  it('lets a Forever change override the Classic stand-in, not merge with it', () => {
+    /*
+     * ------------------------------------------------------------------------
+     * MERGED IS THE FAILURE THIS GUARDS. Classic's Don Julio's Band says
+     * "Improves your chance to get a critical strike by 1%" and Forever's says
+     * "+14 Critical Strike Rating" -- the SAME 1%, written two ways. An item
+     * carrying both lines would be worth 2%, and nothing about it would look
+     * wrong.
+     * ------------------------------------------------------------------------
+     */
+    const ring = ITEMS_BY_ID.get(19325)!;
+    expect(ring.stats.critRating).toBe(14);
+    expect(ring.stats.critChance ?? 0).toBe(0);
+    expect(ring.stats.hitChance).toBeCloseTo(1, 10);
   });
 
   /*
@@ -94,7 +137,15 @@ describe('the item data', () => {
     expect(shield.slots).toEqual(['shield']);
     expect(shield.stats.armor).toBe(2468);
     expect(shield.stats.stamina).toBe(15);
-    expect(shield.source).toContain('/forever/');
+    /*
+     * THE SOURCE MOVED, AND THAT IS THE POINT OF THE ASSERTION RATHER THAN A
+     * BREAKAGE. This shield was hand-transcribed from a Wowhead Forever
+     * tooltip and was the project's ONLY Forever item; it now comes from the
+     * client's own item data through `forever-changed-epics.json`, which
+     * overrides the stand-in. What stays true is that it is Forever data and
+     * says where it came from.
+     */
+    expect(shield.source).toMatch(/foreverchanges\.pro|\/forever\//);
 
     /*
      * BOTH LINES ARE BLOCK VALUE, and this test used to say otherwise.
@@ -143,7 +194,10 @@ describe('the item data', () => {
     const ring = ITEMS_BY_ID.get(19325);
     expect(ring?.stats).toMatchObject({
       stamina: 11,
-      critChance: 1,
+      // A RATING now: the Forever version of this ring says "+14 Critical
+      // Strike Rating" where Classic says "+1%", and 14 per point is the same
+      // 1%. `forever-changed-epics.json` overrides the Classic stand-in.
+      critRating: 14,
       hitChance: 1,
       attackPower: 16,
     });

@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { RATING_PER_PERCENT } from '../../src/engine';
 import type { StatName } from '../../src/engine';
 import {
   WEIGHTABLE_STATS,
@@ -162,20 +163,35 @@ describe('the weightable stat catalogue', () => {
     );
   });
 
-  it('expresses haste in percent, not in the placeholder rating', () => {
+  it('prices both ratings in percent, whatever the conversion is', () => {
     /*
-     * `RATING_PER_PERCENT` says of itself that every constant in it is a
-     * placeholder. Expressing the step as `percent * RATING_PER_PERCENT.haste`
-     * -- the project's one idiom for it -- means the weight is DPS per 1%
-     * haste, and stays that if the conversion is ever replaced.
+     * ------------------------------------------------------------------------
+     * THIS USED TO ASSERT THE LITERAL 170, AND THAT WAS PINNING A PLACEHOLDER.
+     * The conversion was invented, the test froze it, and when the ruleset
+     * owner supplied Forever's real table -- 10 rating per 1% haste, 14 per 1%
+     * crit -- the test failed on a change that made the project MORE correct.
+     *
+     * The invariant is the RELATIONSHIP and not the number: one displayed unit
+     * is one percentage point, so a weight reads as DPS per 1% and survives the
+     * conversion moving again. The owner's actual figures are written out by
+     * hand in `ratingConversions.test.ts`, which is where an independently
+     * transcribed spec belongs.
+     * ------------------------------------------------------------------------
      */
-    const haste = WEIGHTABLE_STATS_BY_ID.get('hasteRating');
-    expect(haste?.unitLabel).toBe('%');
-    expect(haste?.statPerUnit).toBe(170);
+    for (const id of ['hasteRating', 'critRating'] as StatName[]) {
+      const stat = WEIGHTABLE_STATS_BY_ID.get(id);
+      expect(stat?.unitLabel).toBe('%');
+      expect(stat?.statPerUnit).toBe(
+        id === 'hasteRating' ? RATING_PER_PERCENT.haste : RATING_PER_PERCENT.crit,
+      );
+    }
   });
 
   it('does not offer a rating stat that nothing in the data grants', () => {
-    for (const name of ['critRating', 'masteryRating', 'versatilityRating'] as StatName[]) {
+    // `critRating` came OFF this list when Forever items started granting it.
+    // These two are still placeholders in `RATING_PER_PERCENT` and still
+    // granted by nothing.
+    for (const name of ['masteryRating', 'versatilityRating'] as StatName[]) {
       expect(WEIGHTABLE_STATS_BY_ID.has(name)).toBe(false);
     }
   });

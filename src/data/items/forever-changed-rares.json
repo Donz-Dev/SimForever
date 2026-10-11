@@ -1,0 +1,6281 @@
+{
+ "set": "forever-changed-rares",
+ "description": "Every CLASSIC rare (blue) item at item level 50 to 60 that Forever CHANGED. Priced on the BLUE row of the quality table, 0.625*ilvl - 1.15, and the 113 wording-only ones are a second control group -- one that independently confirms stamina at 1.0 (best fit 0.99) on a different quality formula and a different item level band from the epics. in the WoW: Forever beta client, build 1.60.1.70338, captured 2026-10-10. REAL FOREVER DATA, unlike the Classic and Season of Discovery stand-ins in the other files here. Converted by tools/import_forever_items.mjs from the capture in tools/data/, which records its own SHA-256.",
+ "source": "https://foreverchanges.pro/items/changed.json",
+ "excludedTestItems": [],
+ "excludedNotEquippable": [
+  "Orb of Deception (1973)"
+ ],
+ "foreverBuild": "1.60.1.70338",
+ "classicBuild": "1.15.9.69722",
+ "capturedOn": "2026-10-10",
+ "items": [
+  {
+   "id": 2564,
+   "name": "Elven Spirit Claws",
+   "quality": 3,
+   "icon": "inv_gauntlets_07",
+   "source": "https://foreverchanges.pro/items/new.json#2564",
+   "itemLevel": 50,
+   "inventoryType": "Hands",
+   "subclass": "Leather",
+   "armor": 91,
+   "weapon": null,
+   "stats": {
+    "spirit": 9,
+    "intellect": 5
+   },
+   "resistances": {},
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "+21 Nature Spell Damage"
+    }
+   ],
+   "tooltip": "Elven Spirit Claws\nBinds when equipped\nHands\tLeather\n91 Armor\n+9 Spirit\n+5 Intellect\nRequires Level 45\nEquip: +21 Nature Spell Damage\nSell Price: 68s 17c",
+   "wordingOnly": true
+  },
+  {
+   "id": 7734,
+   "name": "Six Demon Bag",
+   "quality": 3,
+   "icon": "inv_misc_bag_01",
+   "source": "https://foreverchanges.pro/items/new.json#7734",
+   "itemLevel": 51,
+   "inventoryType": "Trinket",
+   "subclass": null,
+   "armor": null,
+   "weapon": null,
+   "stats": {},
+   "resistances": {},
+   "effects": [
+    {
+     "kind": "Use",
+     "text": "Blasts enemies in front of you with the power of wind, fire, all that kind of thing! (30 Min Cooldown)"
+    }
+   ],
+   "tooltip": "Six Demon Bag\nBinds when equipped\nUnique-Equipped\nTrinket\nRequires Level 46\nUse: Blasts enemies in front of you with the power of wind, fire, all that kind of thing! (30 Min Cooldown)\nSell Price: 1g 20s 2c",
+   "wordingOnly": true
+  },
+  {
+   "id": 7959,
+   "name": "Blight",
+   "quality": 3,
+   "icon": "inv_spear_07",
+   "source": "https://foreverchanges.pro/items/new.json#7959",
+   "itemLevel": 50,
+   "inventoryType": "Two-Hand",
+   "subclass": "Polearm",
+   "armor": null,
+   "weapon": {
+    "minDamage": 128,
+    "maxDamage": 193,
+    "speed": 3.7,
+    "dps": 43.38
+   },
+   "stats": {},
+   "resistances": {},
+   "effects": [
+    {
+     "kind": "Chance on hit",
+     "text": "Diseases a target for 100 Nature damage and an additional 360 damage over 1 min."
+    }
+   ],
+   "tooltip": "Blight\nBinds when equipped\nTwo-Hand\tPolearm\n128 - 193 Damage\tSpeed 3.70\n(43.4 damage per second)\nRequires Level 45\nChance on hit: Diseases a target for 100 Nature damage and an additional 360 damage over 1 min.\nSell Price: 3g 38s 57c",
+   "wordingOnly": false
+  },
+  {
+   "id": 7960,
+   "name": "Truesilver Champion",
+   "quality": 3,
+   "icon": "inv_sword_19",
+   "source": "https://foreverchanges.pro/items/new.json#7960",
+   "itemLevel": 52,
+   "inventoryType": "Two-Hand",
+   "subclass": "Sword",
+   "armor": null,
+   "weapon": {
+    "minDamage": 122,
+    "maxDamage": 184,
+    "speed": 3.4,
+    "dps": 45
+   },
+   "stats": {},
+   "resistances": {},
+   "effects": [
+    {
+     "kind": "Chance on hit",
+     "text": "Protects the caster with a holy shield."
+    }
+   ],
+   "tooltip": "Truesilver Champion\nBinds when equipped\nTwo-Hand\tSword\n122 - 184 Damage\tSpeed 3.40\n(45.0 damage per second)\nRequires Level 47\nChance on hit: Protects the caster with a holy shield.\nSell Price: 3g 85s 48c",
+   "wordingOnly": true
+  },
+  {
+   "id": 8348,
+   "name": "Helm of Fire",
+   "quality": 3,
+   "icon": "inv_helmet_08",
+   "source": "https://foreverchanges.pro/items/new.json#8348",
+   "itemLevel": 50,
+   "inventoryType": "Head",
+   "subclass": "Leather",
+   "armor": 118,
+   "weapon": null,
+   "stats": {
+    "agility": 17,
+    "stamina": 10
+   },
+   "resistances": {
+    "fire": 5
+   },
+   "effects": [
+    {
+     "kind": "Use",
+     "text": "Hurls a fiery ball that causes 286 to 376 Fire damage and an additional 132 damage over 8 sec. (5 Min Cooldown)"
+    }
+   ],
+   "tooltip": "Helm of Fire\nBinds when equipped\nHead\tLeather\n118 Armor\n+17 Agility\n+10 Stamina\n+5 Fire Resistance\nRequires Level 45\nUse: Hurls a fiery ball that causes 286 to 376 Fire damage and an additional 132 damage over 8 sec. (5 Min Cooldown)\nSell Price: 1g 8s 19c",
+   "wordingOnly": true
+  },
+  {
+   "id": 8349,
+   "name": "Feathered Breastplate",
+   "quality": 3,
+   "icon": "inv_chest_leather_06",
+   "source": "https://foreverchanges.pro/items/new.json#8349",
+   "itemLevel": 50,
+   "inventoryType": "Chest",
+   "subclass": "Leather",
+   "armor": 146,
+   "weapon": null,
+   "stats": {
+    "spirit": 24,
+    "intellect": 10
+   },
+   "resistances": {},
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "+19 Spell Power"
+    }
+   ],
+   "tooltip": "Feathered Breastplate\nBinds when equipped\nChest\tLeather\n146 Armor\n+24 Spirit\n+10 Intellect\nRequires Level 45\nEquip: +19 Spell Power\nSell Price: 1g 44s 78c",
+   "wordingOnly": true
+  },
+  {
+   "id": 8367,
+   "name": "Dragonscale Breastplate",
+   "quality": 3,
+   "icon": "inv_chest_chain_07",
+   "source": "https://foreverchanges.pro/items/new.json#8367",
+   "itemLevel": 51,
+   "inventoryType": "Chest",
+   "subclass": "Mail",
+   "armor": 306,
+   "weapon": null,
+   "stats": {
+    "stamina": 10
+   },
+   "resistances": {
+    "arcane": 13,
+    "fire": 13,
+    "frost": 13,
+    "nature": 13,
+    "shadow": 13
+   },
+   "effects": [
+    {
+     "kind": "Use",
+     "text": "Absorbs 600 magical damage. Lasts 2 min. (5 Min Cooldown)"
+    }
+   ],
+   "tooltip": "Dragonscale Breastplate\nBinds when equipped\nChest\tMail\n306 Armor\n+10 Stamina\n+13 Arcane Resistance\n+13 Fire Resistance\n+13 Frost Resistance\n+13 Nature Resistance\n+13 Shadow Resistance\nRequires Level 46\nUse: Absorbs 600 magical damage. Lasts 2 min. (5 Min Cooldown)\nSell Price: 1g 84s 55c",
+   "wordingOnly": false
+  },
+  {
+   "id": 9380,
+   "name": "Jang'thraze the Protector",
+   "quality": 3,
+   "icon": "inv_sword_43",
+   "source": "https://foreverchanges.pro/items/new.json#9380",
+   "itemLevel": 50,
+   "inventoryType": "One-Hand",
+   "subclass": "Sword",
+   "armor": null,
+   "weapon": {
+    "minDamage": 44,
+    "maxDamage": 83,
+    "speed": 1.9,
+    "dps": 33.42
+   },
+   "stats": {},
+   "resistances": {},
+   "effects": [
+    {
+     "kind": "Use",
+     "text": "Combines Jang'thraze and Sang'thraze to form the mighty sword, Sul'thraze."
+    },
+    {
+     "kind": "Chance on hit",
+     "text": "Shields the wielder from physical damage, absorbing 66 to 102 damage. Lasts 20 sec."
+    }
+   ],
+   "tooltip": "Jang'thraze the Protector\nBinds when picked up\nUnique\nOne-Hand\tSword\n44 - 83 Damage\tSpeed 1.90\n(33.4 damage per second)\nRequires Level 45\nUse: Combines Jang'thraze and Sang'thraze to form the mighty sword, Sul'thraze.\nChance on hit: Shields the wielder from physical damage, absorbing 66 to 102 damage. Lasts 20 sec.\nSell Price: 2g 83s 34c",
+   "wordingOnly": true
+  },
+  {
+   "id": 10041,
+   "name": "Dreamweave Circlet",
+   "quality": 3,
+   "icon": "inv_crown_01",
+   "source": "https://foreverchanges.pro/items/new.json#10041",
+   "itemLevel": 50,
+   "inventoryType": "Head",
+   "subclass": "Cloth",
+   "armor": 58,
+   "weapon": null,
+   "stats": {
+    "spirit": 12,
+    "intellect": 10
+   },
+   "resistances": {},
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "+21 Spell Power"
+    }
+   ],
+   "tooltip": "Dreamweave Circlet\nBinds when equipped\nHead\tCloth\n58 Armor\n+12 Spirit\n+10 Intellect\nRequires Level 45\nEquip: +21 Spell Power\nSell Price: 85s 93c",
+   "wordingOnly": true
+  },
+  {
+   "id": 11302,
+   "name": "Uther's Strength",
+   "quality": 3,
+   "icon": "inv_jewelry_talisman_06",
+   "source": "https://foreverchanges.pro/items/new.json#11302",
+   "itemLevel": 52,
+   "inventoryType": "Trinket",
+   "subclass": null,
+   "armor": null,
+   "weapon": null,
+   "stats": {},
+   "resistances": {},
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "+18 Healing"
+    },
+    {
+     "kind": "Equip",
+     "text": "+6 Spell Damage"
+    },
+    {
+     "kind": "Equip",
+     "text": "2% chance when struck in melee to gain a holy shield, absorbing 216 damage for 15 sec. This chance is doubled in Wasteland and Haunted areas."
+    }
+   ],
+   "tooltip": "Uther's Strength\nBinds when equipped\nUnique-Equipped\nTrinket\nRequires Level 47\nEquip: +18 Healing\nEquip: +6 Spell Damage\nEquip: 2% chance when struck in melee to gain a holy shield, absorbing 216 damage for 15 sec. This chance is doubled in Wasteland and Haunted areas.\nSell Price: 1g 27s 22c",
+   "wordingOnly": true
+  },
+  {
+   "id": 11604,
+   "name": "Dark Iron Plate",
+   "quality": 3,
+   "icon": "inv_chest_plate08",
+   "source": "https://foreverchanges.pro/items/new.json#11604",
+   "itemLevel": 59,
+   "inventoryType": "Chest",
+   "subclass": "Plate",
+   "armor": 817,
+   "weapon": null,
+   "stats": {
+    "stamina": 12
+   },
+   "resistances": {
+    "fire": 19
+   },
+   "effects": [],
+   "tooltip": "Dark Iron Plate\nBinds when picked up\nChest\tPlate\n617 Armor\n+12 Stamina\n+19 Fire Resistance\n+200 Armor\nRequires Level 54\nSell Price: 1g 94s 28c",
+   "wordingOnly": false
+  },
+  {
+   "id": 11811,
+   "name": "Smoking Heart of the Mountain",
+   "quality": 3,
+   "icon": "inv_misc_gem_bloodstone_01",
+   "source": "https://foreverchanges.pro/items/new.json#11811",
+   "itemLevel": 55,
+   "inventoryType": "Trinket",
+   "subclass": null,
+   "armor": null,
+   "weapon": null,
+   "stats": {},
+   "resistances": {
+    "fire": 7,
+    "nature": 7,
+    "frost": 7,
+    "shadow": 7
+   },
+   "effects": [
+    {
+     "kind": "Use",
+     "text": "Increases armor by 520 for 20 sec. (6 Min Cooldown)"
+    }
+   ],
+   "tooltip": "Smoking Heart of the Mountain\nBinds when picked up\nTrinket\n+7 Fire Resistance\n+7 Nature Resistance\n+7 Frost Resistance\n+7 Shadow Resistance\nRequires Level 50\nUse: Increases armor by 520 for 20 sec. (6 Min Cooldown)\nSell Price: 1g 51s 52c",
+   "wordingOnly": false
+  },
+  {
+   "id": 11902,
+   "name": "Linken's Sword of Mastery",
+   "quality": 3,
+   "icon": "inv_sword_39",
+   "source": "https://foreverchanges.pro/items/new.json#11902",
+   "itemLevel": 56,
+   "inventoryType": "Main Hand",
+   "subclass": "Sword",
+   "armor": null,
+   "weapon": {
+    "minDamage": 46,
+    "maxDamage": 87,
+    "speed": 1.8,
+    "dps": 36.94
+   },
+   "stats": {},
+   "resistances": {},
+   "effects": [
+    {
+     "kind": "Chance on hit",
+     "text": "Blasts a target for 74 to 122 Nature damage."
+    }
+   ],
+   "tooltip": "Linken's Sword of Mastery\nBinds when picked up\nMain Hand\tSword\n46 - 87 Damage\tSpeed 1.80\n(36.9 damage per second)\nChance on hit: Blasts a target for 74 to 122 Nature damage.\nSell Price: 4g 1s 54c",
+   "wordingOnly": false
+  },
+  {
+   "id": 11904,
+   "name": "Spirit of Aquementas",
+   "quality": 3,
+   "icon": "inv_ore_arcanite_02",
+   "source": "https://foreverchanges.pro/items/new.json#11904",
+   "itemLevel": 56,
+   "inventoryType": "Held In Off-hand",
+   "subclass": null,
+   "armor": null,
+   "weapon": null,
+   "stats": {},
+   "resistances": {},
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "+21 Spell Power"
+    }
+   ],
+   "tooltip": "Spirit of Aquementas\nBinds when picked up\nHeld In Off-hand\nEquip: +21 Spell Power\nSell Price: 1g 60s 61c",
+   "wordingOnly": true
+  },
+  {
+   "id": 12018,
+   "name": "Conservator Helm",
+   "quality": 3,
+   "icon": "inv_helmet_01",
+   "source": "https://foreverchanges.pro/items/new.json#12018",
+   "itemLevel": 54,
+   "inventoryType": "Head",
+   "subclass": "Mail",
+   "armor": 262,
+   "weapon": null,
+   "stats": {
+    "stamina": 22,
+    "spirit": 20
+   },
+   "resistances": {},
+   "effects": [],
+   "tooltip": "Conservator Helm\nBinds when picked up\nHead\tMail\n262 Armor\n+22 Stamina\n+20 Spirit\nSell Price: 1g 61s 53c",
+   "wordingOnly": false
+  },
+  {
+   "id": 12021,
+   "name": "Shieldplate Sabatons",
+   "quality": 3,
+   "icon": "inv_boots_plate_01",
+   "source": "https://foreverchanges.pro/items/new.json#12021",
+   "itemLevel": 54,
+   "inventoryType": "Feet",
+   "subclass": "Plate",
+   "armor": 390,
+   "weapon": null,
+   "stats": {
+    "strength": 12,
+    "stamina": 15,
+    "spirit": 9
+   },
+   "resistances": {},
+   "effects": [],
+   "tooltip": "Shieldplate Sabatons\nBinds when picked up\nFeet\tPlate\n390 Armor\n+12 Strength\n+15 Stamina\n+9 Spirit\nSell Price: 1g 87s 26c",
+   "wordingOnly": false
+  },
+  {
+   "id": 12041,
+   "name": "Windshear Leggings",
+   "quality": 3,
+   "icon": "inv_pants_13",
+   "source": "https://foreverchanges.pro/items/new.json#12041",
+   "itemLevel": 54,
+   "inventoryType": "Legs",
+   "subclass": "Leather",
+   "armor": 136,
+   "weapon": null,
+   "stats": {
+    "stamina": 5,
+    "agility": 19,
+    "spirit": 22
+   },
+   "resistances": {},
+   "effects": [],
+   "tooltip": "Windshear Leggings\nBinds when picked up\nLegs\tLeather\n136 Armor\n+5 Stamina\n+19 Agility\n+22 Spirit\nSell Price: 1g 78s 68c",
+   "wordingOnly": false
+  },
+  {
+   "id": 12185,
+   "name": "Bloodsail Admiral's Hat",
+   "quality": 3,
+   "icon": "inv_helmet_66",
+   "source": "https://foreverchanges.pro/items/new.json#12185",
+   "itemLevel": 60,
+   "inventoryType": "Head",
+   "subclass": "Cosmetic",
+   "armor": null,
+   "weapon": null,
+   "stats": {},
+   "resistances": {},
+   "effects": [
+    {
+     "kind": "Use",
+     "text": "Right Click to summon and dismiss your Blood Parrot."
+    }
+   ],
+   "tooltip": "Bloodsail Admiral's Hat\nBinds when picked up\nHead\tCosmetic\nUse: Right Click to summon and dismiss your Blood Parrot.",
+   "wordingOnly": false
+  },
+  {
+   "id": 12624,
+   "name": "Wildthorn Mail",
+   "quality": 3,
+   "icon": "inv_chest_chain_12",
+   "source": "https://foreverchanges.pro/items/new.json#12624",
+   "itemLevel": 54,
+   "inventoryType": "Chest",
+   "subclass": "Mail",
+   "armor": 322,
+   "weapon": null,
+   "stats": {
+    "stamina": 5
+   },
+   "resistances": {},
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "+11 Spell Power"
+    },
+    {
+     "kind": "Equip",
+     "text": "+10 Hit Rating"
+    }
+   ],
+   "tooltip": "Wildthorn Mail\nBinds when equipped\nChest\tMail\n322 Armor\n+5 Stamina\nRequires Level 49\nEquip: +11 Spell Power\nEquip: +10 Hit Rating\nSell Price: 2g 6s 42c",
+   "wordingOnly": false
+  },
+  {
+   "id": 12625,
+   "name": "Dawnbringer Shoulders",
+   "quality": 3,
+   "icon": "inv_shoulder_20",
+   "source": "https://foreverchanges.pro/items/new.json#12625",
+   "itemLevel": 58,
+   "inventoryType": "Shoulder",
+   "subclass": "Plate",
+   "armor": 455,
+   "weapon": null,
+   "stats": {
+    "spirit": 10
+   },
+   "resistances": {},
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "+44 Healing"
+    },
+    {
+     "kind": "Equip",
+     "text": "+15 Spell Damage"
+    }
+   ],
+   "tooltip": "Dawnbringer Shoulders\nBinds when equipped\nShoulder\tPlate\n455 Armor\n+10 Spirit\nRequires Level 53\nEquip: +44 Healing\nEquip: +15 Spell Damage\nSell Price: 1g 30s 80c",
+   "wordingOnly": true
+  },
+  {
+   "id": 12628,
+   "name": "Demon Forged Breastplate",
+   "quality": 3,
+   "icon": "inv_chest_plate06",
+   "source": "https://foreverchanges.pro/items/new.json#12628",
+   "itemLevel": 57,
+   "inventoryType": "Chest",
+   "subclass": "Plate",
+   "armor": 597,
+   "weapon": null,
+   "stats": {
+    "stamina": 12
+   },
+   "resistances": {},
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "When struck has a 3% chance of stealing 240 life from the attacker over 4 sec."
+    }
+   ],
+   "tooltip": "Demon Forged Breastplate\nBinds when equipped\nChest\tPlate\n597 Armor\n+12 Stamina\nRequires Level 52\nEquip: When struck has a 3% chance of stealing 240 life from the attacker over 4 sec.\nSell Price: 1g 66s 40c",
+   "wordingOnly": true
+  },
+  {
+   "id": 12631,
+   "name": "Fiery Plate Gauntlets",
+   "quality": 3,
+   "icon": "inv_gauntlets_03",
+   "source": "https://foreverchanges.pro/items/new.json#12631",
+   "itemLevel": 58,
+   "inventoryType": "Hands",
+   "subclass": "Plate",
+   "armor": 379,
+   "weapon": null,
+   "stats": {},
+   "resistances": {
+    "fire": 10
+   },
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "Adds 4 Fire damage to your weapon attack."
+    }
+   ],
+   "tooltip": "Fiery Plate Gauntlets\nBinds when equipped\nHands\tPlate\n379 Armor\n+10 Fire Resistance\nRequires Level 53\nEquip: Adds 4 Fire damage to your weapon attack.\nSell Price: 89s 19c",
+   "wordingOnly": true
+  },
+  {
+   "id": 12632,
+   "name": "Storm Gauntlets",
+   "quality": 3,
+   "icon": "inv_gauntlets_30",
+   "source": "https://foreverchanges.pro/items/new.json#12632",
+   "itemLevel": 59,
+   "inventoryType": "Hands",
+   "subclass": "Mail",
+   "armor": 218,
+   "weapon": null,
+   "stats": {
+    "stamina": 7
+   },
+   "resistances": {},
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "+18 Spell Power"
+    },
+    {
+     "kind": "Equip",
+     "text": "+10 Hit Rating"
+    },
+    {
+     "kind": "Equip",
+     "text": "Adds 3 Lightning damage to your melee attacks."
+    }
+   ],
+   "tooltip": "Storm Gauntlets\nBinds when equipped\nHands\tMail\n218 Armor\n+7 Stamina\nRequires Level 54\nEquip: +18 Spell Power\nEquip: +10 Hit Rating\nEquip: Adds 3 Lightning damage to your melee attacks.\nSell Price: 1g 40s 99c",
+   "wordingOnly": false
+  },
+  {
+   "id": 12633,
+   "name": "Whitesoul Helm",
+   "quality": 3,
+   "icon": "inv_helmet_13",
+   "source": "https://foreverchanges.pro/items/new.json#12633",
+   "itemLevel": 60,
+   "inventoryType": "Head",
+   "subclass": "Plate",
+   "armor": 629,
+   "weapon": null,
+   "stats": {
+    "spirit": 15,
+    "intellect": 15
+   },
+   "resistances": {},
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "+35 Healing"
+    },
+    {
+     "kind": "Equip",
+     "text": "+12 Spell Damage"
+    }
+   ],
+   "tooltip": "Whitesoul Helm\nBinds when equipped\nHead\tPlate\n509 Armor\n+15 Spirit\n+15 Intellect\n+120 Armor\nRequires Level 55\nEquip: +35 Healing\nEquip: +12 Spell Damage\nSell Price: 1g 48s 59c",
+   "wordingOnly": false
+  },
+  {
+   "id": 12774,
+   "name": "Dawn's Edge",
+   "quality": 3,
+   "icon": "inv_axe_05",
+   "source": "https://foreverchanges.pro/items/new.json#12774",
+   "itemLevel": 55,
+   "inventoryType": "One-Hand",
+   "subclass": "Axe",
+   "armor": null,
+   "weapon": {
+    "minDamage": 53,
+    "maxDamage": 100,
+    "speed": 2.1,
+    "dps": 36.43
+   },
+   "stats": {},
+   "resistances": {},
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "+14 Critical Strike Rating"
+    }
+   ],
+   "tooltip": "Dawn's Edge\nBinds when equipped\nOne-Hand\tAxe\n53 - 100 Damage\tSpeed 2.10\n(36.4 damage per second)\nRequires Level 50\nEquip: +14 Critical Strike Rating\nSell Price: 3g 60s 44c",
+   "wordingOnly": true
+  },
+  {
+   "id": 12776,
+   "name": "Enchanted Battlehammer",
+   "quality": 3,
+   "icon": "inv_hammer_05",
+   "source": "https://foreverchanges.pro/items/new.json#12776",
+   "itemLevel": 56,
+   "inventoryType": "Two-Hand",
+   "subclass": "Mace",
+   "armor": null,
+   "weapon": {
+    "minDamage": 135,
+    "maxDamage": 203,
+    "speed": 3.5,
+    "dps": 48.29
+   },
+   "stats": {},
+   "resistances": {
+    "arcane": 4
+   },
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "+21 Parry Rating"
+    },
+    {
+     "kind": "Equip",
+     "text": "+20 Hit Rating"
+    }
+   ],
+   "tooltip": "Enchanted Battlehammer\nBinds when equipped\nTwo-Hand\tMace\n135 - 203 Damage\tSpeed 3.50\n(48.3 damage per second)\n+4 Arcane Resistance\nRequires Level 51\nEquip: +21 Parry Rating\nEquip: +20 Hit Rating\nSell Price: 4g 81s 24c",
+   "wordingOnly": false
+  },
+  {
+   "id": 12777,
+   "name": "Blazing Rapier",
+   "quality": 3,
+   "icon": "inv_sword_30",
+   "source": "https://foreverchanges.pro/items/new.json#12777",
+   "itemLevel": 56,
+   "inventoryType": "One-Hand",
+   "subclass": "Sword",
+   "armor": null,
+   "weapon": {
+    "minDamage": 62,
+    "maxDamage": 116,
+    "speed": 2.4,
+    "dps": 37.08
+   },
+   "stats": {},
+   "resistances": {},
+   "effects": [
+    {
+     "kind": "Chance on hit",
+     "text": "Burns the enemy for 200 damage over 30 sec."
+    }
+   ],
+   "tooltip": "Blazing Rapier\nBinds when equipped\nOne-Hand\tSword\n62 - 116 Damage\tSpeed 2.40\n(37.1 damage per second)\nRequires Level 51\nChance on hit: Burns the enemy for 200 damage over 30 sec.\nSell Price: 3g 86s 48c",
+   "wordingOnly": true
+  },
+  {
+   "id": 12781,
+   "name": "Serenity",
+   "quality": 3,
+   "icon": "inv_mace_02",
+   "source": "https://foreverchanges.pro/items/new.json#12781",
+   "itemLevel": 57,
+   "inventoryType": "One-Hand",
+   "subclass": "Mace",
+   "armor": null,
+   "weapon": {
+    "minDamage": 65,
+    "maxDamage": 123,
+    "speed": 2.5,
+    "dps": 37.6
+   },
+   "stats": {},
+   "resistances": {},
+   "effects": [
+    {
+     "kind": "Chance on hit",
+     "text": "Dispels a magic effect on the current foe."
+    }
+   ],
+   "tooltip": "Serenity\nBinds when equipped\nUnique-Equipped\nOne-Hand\tMace\n65 - 123 Damage\tSpeed 2.50\n(37.6 damage per second)\nRequires Level 52\nChance on hit: Dispels a magic effect on the current foe.\nSell Price: 4g 27s 21c",
+   "wordingOnly": false
+  },
+  {
+   "id": 12782,
+   "name": "Corruption",
+   "quality": 3,
+   "icon": "inv_sword_07",
+   "source": "https://foreverchanges.pro/items/new.json#12782",
+   "itemLevel": 58,
+   "inventoryType": "Two-Hand",
+   "subclass": "Sword",
+   "armor": null,
+   "weapon": {
+    "minDamage": 131,
+    "maxDamage": 197,
+    "speed": 3.3,
+    "dps": 49.7
+   },
+   "stats": {
+    "strength": 30,
+    "stamina": 30
+   },
+   "resistances": {},
+   "effects": [],
+   "tooltip": "Corruption\nBinds when picked up\nTwo-Hand\tSword\n131 - 197 Damage\tSpeed 3.30\n(49.7 damage per second)\n+30 Strength\n+30 Stamina\nRequires Level 53\nSell Price: 5g 68s 8c",
+   "wordingOnly": true
+  },
+  {
+   "id": 12802,
+   "name": "Darkspear",
+   "quality": 3,
+   "icon": "inv_spear_08",
+   "source": "https://foreverchanges.pro/items/new.json#12802",
+   "itemLevel": 60,
+   "inventoryType": "Two-Hand",
+   "subclass": "Polearm",
+   "armor": null,
+   "weapon": {
+    "minDamage": 131,
+    "maxDamage": 197,
+    "speed": 3.2,
+    "dps": 51.25
+   },
+   "stats": {},
+   "resistances": {},
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "Chance on hit to grant nearby party members 4% increased critical strike chance."
+    }
+   ],
+   "tooltip": "Darkspear\nBinds when equipped\nTwo-Hand\tPolearm\n131 - 197 Damage\tSpeed 3.20\n(51.3 damage per second)\nRequires Level 55\nEquip: Chance on hit to grant nearby party members 4% increased critical strike chance.\nSell Price: 6g 21s 77c",
+   "wordingOnly": true
+  },
+  {
+   "id": 13007,
+   "name": "Mageflame Cloak",
+   "quality": 3,
+   "icon": "inv_misc_cape_18",
+   "source": "https://foreverchanges.pro/items/new.json#13007",
+   "itemLevel": 58,
+   "inventoryType": "Back",
+   "subclass": "Cloth",
+   "armor": 41,
+   "weapon": null,
+   "stats": {},
+   "resistances": {
+    "fire": 10
+   },
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "+21 Fire Spell Damage"
+    }
+   ],
+   "tooltip": "Mageflame Cloak\nBinds when equipped\nBack\tCloth\n41 Armor\n+10 Fire Resistance\nRequires Level 53\nEquip: +21 Fire Spell Damage\nSell Price: 1g 35s 85c",
+   "wordingOnly": true
+  },
+  {
+   "id": 13013,
+   "name": "Elder Wizard's Mantle",
+   "quality": 3,
+   "icon": "inv_shoulder_14",
+   "source": "https://foreverchanges.pro/items/new.json#13013",
+   "itemLevel": 56,
+   "inventoryType": "Shoulder",
+   "subclass": "Cloth",
+   "armor": 60,
+   "weapon": null,
+   "stats": {
+    "intellect": 20
+   },
+   "resistances": {},
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "+11 Spell Power"
+    }
+   ],
+   "tooltip": "Elder Wizard's Mantle\nBinds when equipped\nShoulder\tCloth\n60 Armor\n+20 Intellect\nRequires Level 51\nEquip: +11 Spell Power\nSell Price: 1g 23s 55c",
+   "wordingOnly": true
+  },
+  {
+   "id": 13036,
+   "name": "Assassination Blade",
+   "quality": 3,
+   "icon": "inv_sword_42",
+   "source": "https://foreverchanges.pro/items/new.json#13036",
+   "itemLevel": 57,
+   "inventoryType": "One-Hand",
+   "subclass": "Sword",
+   "armor": null,
+   "weapon": {
+    "minDamage": 71,
+    "maxDamage": 132,
+    "speed": 2.7,
+    "dps": 37.59
+   },
+   "stats": {
+    "strength": 3
+   },
+   "resistances": {},
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "+14 Critical Strike Rating"
+    }
+   ],
+   "tooltip": "Assassination Blade\nBinds when equipped\nOne-Hand\tSword\n71 - 132 Damage\tSpeed 2.70\n(37.6 damage per second)\n+3 Strength\nRequires Level 52\nEquip: +14 Critical Strike Rating\nSell Price: 4g 9s 88c",
+   "wordingOnly": true
+  },
+  {
+   "id": 13044,
+   "name": "Demonslayer",
+   "quality": 3,
+   "icon": "inv_sword_03",
+   "source": "https://foreverchanges.pro/items/new.json#13044",
+   "itemLevel": 57,
+   "inventoryType": "Two-Hand",
+   "subclass": "Sword",
+   "armor": null,
+   "weapon": {
+    "minDamage": 121,
+    "maxDamage": 182,
+    "speed": 3.1,
+    "dps": 48.87
+   },
+   "stats": {},
+   "resistances": {},
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "+48 Attack Power Vs Demons"
+    },
+    {
+     "kind": "Equip",
+     "text": "+52 Attack Power"
+    }
+   ],
+   "tooltip": "Demonslayer\nBinds when equipped\nTwo-Hand\tSword\n121 - 182 Damage\tSpeed 3.10\n(48.9 damage per second)\nRequires Level 52\nEquip: +48 Attack Power Vs Demons\nEquip: +52 Attack Power\nSell Price: 5g 28s",
+   "wordingOnly": true
+  },
+  {
+   "id": 13052,
+   "name": "Warmonger",
+   "quality": 3,
+   "icon": "inv_sword_46",
+   "source": "https://foreverchanges.pro/items/new.json#13052",
+   "itemLevel": 52,
+   "inventoryType": "Two-Hand",
+   "subclass": "Sword",
+   "armor": null,
+   "weapon": {
+    "minDamage": 108,
+    "maxDamage": 162,
+    "speed": 3,
+    "dps": 45
+   },
+   "stats": {
+    "strength": 3
+   },
+   "resistances": {},
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "+30 Hit Rating"
+    }
+   ],
+   "tooltip": "Warmonger\nBinds when equipped\nTwo-Hand\tSword\n108 - 162 Damage\tSpeed 3.00\n(45.0 damage per second)\n+3 Strength\nRequires Level 47\nEquip: +30 Hit Rating\nSell Price: 4g 16s 77c",
+   "wordingOnly": true
+  },
+  {
+   "id": 13056,
+   "name": "Frenzied Striker",
+   "quality": 3,
+   "icon": "inv_spear_07",
+   "source": "https://foreverchanges.pro/items/new.json#13056",
+   "itemLevel": 56,
+   "inventoryType": "Two-Hand",
+   "subclass": "Polearm",
+   "armor": null,
+   "weapon": {
+    "minDamage": 108,
+    "maxDamage": 162,
+    "speed": 2.8,
+    "dps": 48.21
+   },
+   "stats": {},
+   "resistances": {},
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "+15 Parry Rating"
+    },
+    {
+     "kind": "Equip",
+     "text": "+20 Hit Rating"
+    },
+    {
+     "kind": "Equip",
+     "text": "+1 Polearms Skill"
+    }
+   ],
+   "tooltip": "Frenzied Striker\nBinds when equipped\nTwo-Hand\tPolearm\n108 - 162 Damage\tSpeed 2.80\n(48.2 damage per second)\nRequires Level 51\nEquip: +15 Parry Rating\nEquip: +20 Hit Rating\nEquip: +1 Polearms Skill\nSell Price: 4g 83s 30c",
+   "wordingOnly": true
+  },
+  {
+   "id": 13072,
+   "name": "Stonegrip Gauntlets",
+   "quality": 3,
+   "icon": "inv_gauntlets_03",
+   "source": "https://foreverchanges.pro/items/new.json#13072",
+   "itemLevel": 60,
+   "inventoryType": "Hands",
+   "subclass": "Plate",
+   "armor": 392,
+   "weapon": null,
+   "stats": {
+    "strength": 9,
+    "stamina": 14
+   },
+   "resistances": {},
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "+10 Defense Rating"
+    }
+   ],
+   "tooltip": "Stonegrip Gauntlets\nBinds when equipped\nHands\tPlate\n392 Armor\n+9 Strength\n+14 Stamina\nRequires Level 55\nEquip: +10 Defense Rating\nSell Price: 1g 4s 26c",
+   "wordingOnly": true
+  },
+  {
+   "id": 13091,
+   "name": "Medallion of Grand Marshal Morris",
+   "quality": 3,
+   "icon": "inv_jewelry_talisman_08",
+   "source": "https://foreverchanges.pro/items/new.json#13091",
+   "itemLevel": 57,
+   "inventoryType": "Neck",
+   "subclass": null,
+   "armor": null,
+   "weapon": null,
+   "stats": {
+    "stamina": 7
+   },
+   "resistances": {},
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "+10 Defense Rating"
+    }
+   ],
+   "tooltip": "Medallion of Grand Marshal Morris\nBinds when equipped\nNeck\n+7 Stamina\nRequires Level 52\nEquip: +10 Defense Rating\nSell Price: 1g 6s 37c",
+   "wordingOnly": true
+  },
+  {
+   "id": 13101,
+   "name": "Wolfrunner Shoes",
+   "quality": 3,
+   "icon": "inv_boots_05",
+   "source": "https://foreverchanges.pro/items/new.json#13101",
+   "itemLevel": 59,
+   "inventoryType": "Feet",
+   "subclass": "Cloth",
+   "armor": 58,
+   "weapon": null,
+   "stats": {
+    "stamina": 11,
+    "spirit": 11,
+    "intellect": 11
+   },
+   "resistances": {},
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "+13 Spell Power"
+    }
+   ],
+   "tooltip": "Wolfrunner Shoes\nBinds when equipped\nFeet\tCloth\n58 Armor\n+11 Stamina\n+11 Spirit\n+11 Intellect\nRequires Level 54\nEquip: +13 Spell Power\nSell Price: 1g 43s 18c",
+   "wordingOnly": true
+  },
+  {
+   "id": 13146,
+   "name": "Shell Launcher Shotgun",
+   "quality": 3,
+   "icon": "inv_weapon_rifle_08",
+   "source": "https://foreverchanges.pro/items/new.json#13146",
+   "itemLevel": 58,
+   "inventoryType": "Ranged",
+   "subclass": "Gun",
+   "armor": null,
+   "weapon": {
+    "minDamage": 48,
+    "maxDamage": 89,
+    "speed": 2.3,
+    "dps": 29.78
+   },
+   "stats": {},
+   "resistances": {},
+   "effects": [
+    {
+     "kind": "Chance on hit",
+     "text": "Strike the target with a Flaming Shell for 32 to 45 Fire damage."
+    }
+   ],
+   "tooltip": "Shell Launcher Shotgun\nBinds when equipped\nRanged\tGun\n48 - 89 Damage\tSpeed 2.30\n(29.8 damage per second)\nRequires Level 53\nChance on hit: Strike the target with a Flaming Shell for 32 to 45 Fire damage.\nSell Price: 3g 47s 4c",
+   "wordingOnly": true
+  },
+  {
+   "id": 14134,
+   "name": "Cloak of Fire",
+   "quality": 3,
+   "icon": "inv_misc_cape_18",
+   "source": "https://foreverchanges.pro/items/new.json#14134",
+   "itemLevel": 55,
+   "inventoryType": "Back",
+   "subclass": "Cloth",
+   "armor": 39,
+   "weapon": null,
+   "stats": {},
+   "resistances": {
+    "fire": 6
+   },
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "+14 Fire Spell Damage"
+    },
+    {
+     "kind": "Use",
+     "text": "Deals 25 Fire damage every 5 sec to all nearby enemies for 15 sec. (2 Min Cooldown)"
+    }
+   ],
+   "tooltip": "Cloak of Fire\nBinds when equipped\nBack\tCloth\n39 Armor\n+6 Fire Resistance\nRequires Level 50\nEquip: +14 Fire Spell Damage\nUse: Deals 25 Fire damage every 5 sec to all nearby enemies for 15 sec. (2 Min Cooldown)\nSell Price: 1g 12s 80c",
+   "wordingOnly": false
+  },
+  {
+   "id": 14136,
+   "name": "Robe of Winter Night",
+   "quality": 3,
+   "icon": "inv_chest_cloth_49",
+   "source": "https://foreverchanges.pro/items/new.json#14136",
+   "itemLevel": 57,
+   "inventoryType": "Chest",
+   "subclass": "Cloth",
+   "armor": 81,
+   "weapon": null,
+   "stats": {
+    "intellect": 12
+   },
+   "resistances": {},
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "+40 Shadow Spell Damage"
+    },
+    {
+     "kind": "Equip",
+     "text": "+40 Frost Spell Damage"
+    }
+   ],
+   "tooltip": "Robe of Winter Night\nBinds when equipped\nChest\tCloth\n81 Armor\n+12 Intellect\nRequires Level 52\nEquip: +40 Shadow Spell Damage\nEquip: +40 Frost Spell Damage\nSell Price: 1g 70s 25c",
+   "wordingOnly": true
+  },
+  {
+   "id": 14137,
+   "name": "Mooncloth Leggings",
+   "quality": 3,
+   "icon": "inv_pants_13",
+   "source": "https://foreverchanges.pro/items/new.json#14137",
+   "itemLevel": 58,
+   "inventoryType": "Legs",
+   "subclass": "Cloth",
+   "armor": 72,
+   "weapon": null,
+   "stats": {
+    "spirit": 21,
+    "stamina": 12
+   },
+   "resistances": {},
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "+31 Healing"
+    },
+    {
+     "kind": "Equip",
+     "text": "+11 Spell Damage"
+    }
+   ],
+   "tooltip": "Mooncloth Leggings\nBinds when equipped\nLegs\tCloth\n72 Armor\n+21 Spirit\n+12 Stamina\nRequires Level 53\nEquip: +31 Healing\nEquip: +11 Spell Damage\nSell Price: 1g 81s 13c",
+   "wordingOnly": false
+  },
+  {
+   "id": 14138,
+   "name": "Mooncloth Vest",
+   "quality": 3,
+   "icon": "inv_chest_cloth_08",
+   "source": "https://foreverchanges.pro/items/new.json#14138",
+   "itemLevel": 60,
+   "inventoryType": "Chest",
+   "subclass": "Cloth",
+   "armor": 85,
+   "weapon": null,
+   "stats": {
+    "intellect": 20,
+    "spirit": 19
+   },
+   "resistances": {},
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "+26 Healing"
+    },
+    {
+     "kind": "Equip",
+     "text": "+9 Spell Damage"
+    }
+   ],
+   "tooltip": "Mooncloth Vest\nBinds when equipped\nChest\tCloth\n85 Armor\n+20 Intellect\n+19 Spirit\nRequires Level 55\nEquip: +26 Healing\nEquip: +9 Spell Damage\nSell Price: 2g 42c",
+   "wordingOnly": false
+  },
+  {
+   "id": 15045,
+   "name": "Green Dragonscale Breastplate",
+   "quality": 3,
+   "icon": "inv_chest_chain_06",
+   "source": "https://foreverchanges.pro/items/new.json#15045",
+   "itemLevel": 52,
+   "inventoryType": "Chest",
+   "subclass": "Mail",
+   "armor": 311,
+   "weapon": null,
+   "stats": {
+    "stamina": 10
+   },
+   "resistances": {
+    "nature": 11
+   },
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "+21 Spell Damage"
+    },
+    {
+     "kind": "Equip",
+     "text": "+10 Healing"
+    },
+    {
+     "kind": "Set",
+     "text": "(2) Restores 3 mana per 5 sec."
+    },
+    {
+     "kind": "Set",
+     "text": "(3) Allows 15% of your Mana regeneration to continue while casting."
+    }
+   ],
+   "tooltip": "Green Dragonscale Breastplate\nBinds when equipped\nChest\tMail\n311 Armor\n+10 Stamina\n+11 Nature Resistance\nRequires Level 47\nEquip: +21 Spell Damage\nEquip: +10 Healing\nGreen Dragon Mail (0/3)\n(2) Set: Restores 3 mana per 5 sec.\n(3) Set: Allows 15% of your Mana regeneration to continue while casting.\nSell Price: 1g 99s 38c",
+   "wordingOnly": false
+  },
+  {
+   "id": 15046,
+   "name": "Green Dragonscale Leggings",
+   "quality": 3,
+   "icon": "inv_pants_05",
+   "source": "https://foreverchanges.pro/items/new.json#15046",
+   "itemLevel": 54,
+   "inventoryType": "Legs",
+   "subclass": "Mail",
+   "armor": 282,
+   "weapon": null,
+   "stats": {
+    "stamina": 10
+   },
+   "resistances": {
+    "nature": 11
+   },
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "+22 Healing"
+    },
+    {
+     "kind": "Equip",
+     "text": "+17 Spell Damage"
+    },
+    {
+     "kind": "Set",
+     "text": "(2) Restores 3 mana per 5 sec."
+    },
+    {
+     "kind": "Set",
+     "text": "(3) Allows 15% of your Mana regeneration to continue while casting."
+    }
+   ],
+   "tooltip": "Green Dragonscale Leggings\nBinds when equipped\nLegs\tMail\n282 Armor\n+10 Stamina\n+11 Nature Resistance\nRequires Level 49\nEquip: +22 Healing\nEquip: +17 Spell Damage\nGreen Dragon Mail (0/3)\n(2) Set: Restores 3 mana per 5 sec.\n(3) Set: Allows 15% of your Mana regeneration to continue while casting.\nSell Price: 2g 24s 82c",
+   "wordingOnly": false
+  },
+  {
+   "id": 15048,
+   "name": "Blue Dragonscale Breastplate",
+   "quality": 3,
+   "icon": "inv_chest_chain_04",
+   "source": "https://foreverchanges.pro/items/new.json#15048",
+   "itemLevel": 57,
+   "inventoryType": "Chest",
+   "subclass": "Mail",
+   "armor": 338,
+   "weapon": null,
+   "stats": {
+    "intellect": 28
+   },
+   "resistances": {
+    "arcane": 8
+   },
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "+8 Spell Power"
+    },
+    {
+     "kind": "Set",
+     "text": "(2) +4 All Resistances."
+    },
+    {
+     "kind": "Set",
+     "text": "(3) Increases damage and healing done by magical spells and effects by up to 28."
+    }
+   ],
+   "tooltip": "Blue Dragonscale Breastplate\nBinds when equipped\nChest\tMail\n338 Armor\n+28 Intellect\n+8 Arcane Resistance\nRequires Level 52\nEquip: +8 Spell Power\nBlue Dragon Mail (0/3)\n(2) Set: +4 All Resistances.\n(3) Set: Increases damage and healing done by magical spells and effects by up to 28.\nSell Price: 2g 44s 9c",
+   "wordingOnly": false
+  },
+  {
+   "id": 15049,
+   "name": "Blue Dragonscale Shoulders",
+   "quality": 3,
+   "icon": "inv_shoulder_18",
+   "source": "https://foreverchanges.pro/items/new.json#15049",
+   "itemLevel": 59,
+   "inventoryType": "Shoulder",
+   "subclass": "Mail",
+   "armor": 262,
+   "weapon": null,
+   "stats": {
+    "intellect": 21
+   },
+   "resistances": {
+    "arcane": 6
+   },
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "+6 Spell Power"
+    },
+    {
+     "kind": "Set",
+     "text": "(2) +4 All Resistances."
+    },
+    {
+     "kind": "Set",
+     "text": "(3) Increases damage and healing done by magical spells and effects by up to 28."
+    }
+   ],
+   "tooltip": "Blue Dragonscale Shoulders\nBinds when equipped\nShoulder\tMail\n262 Armor\n+21 Intellect\n+6 Arcane Resistance\nRequires Level 54\nEquip: +6 Spell Power\nBlue Dragon Mail (0/3)\n(2) Set: +4 All Resistances.\n(3) Set: Increases damage and healing done by magical spells and effects by up to 28.\nSell Price: 2g 5s 43c",
+   "wordingOnly": false
+  },
+  {
+   "id": 15050,
+   "name": "Black Dragonscale Breastplate",
+   "quality": 3,
+   "icon": "inv_chest_plate06",
+   "source": "https://foreverchanges.pro/items/new.json#15050",
+   "itemLevel": 58,
+   "inventoryType": "Chest",
+   "subclass": "Mail",
+   "armor": 344,
+   "weapon": null,
+   "stats": {
+    "stamina": 8
+   },
+   "resistances": {
+    "fire": 12
+   },
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "+50 Attack Power"
+    },
+    {
+     "kind": "Set",
+     "text": "(2) Improves your chance to hit by 1.0%."
+    },
+    {
+     "kind": "Set",
+     "text": "(3) Improves your chance to get a critical strike with melee attacks by 2.0%."
+    }
+   ],
+   "tooltip": "Black Dragonscale Breastplate\nBinds when equipped\nChest\tMail\n344 Armor\n+8 Stamina\n+12 Fire Resistance\nRequires Level 53\nEquip: +50 Attack Power\nBlack Dragon Mail (0/3)\n(2) Set: Improves your chance to hit by 1.0%.\n(3) Set: Improves your chance to get a critical strike with melee attacks by 2.0%.\nSell Price: 2g 60s 71c",
+   "wordingOnly": true
+  },
+  {
+   "id": 15051,
+   "name": "Black Dragonscale Shoulders",
+   "quality": 3,
+   "icon": "inv_shoulder_01",
+   "source": "https://foreverchanges.pro/items/new.json#15051",
+   "itemLevel": 60,
+   "inventoryType": "Shoulder",
+   "subclass": "Mail",
+   "armor": 266,
+   "weapon": null,
+   "stats": {
+    "stamina": 9
+   },
+   "resistances": {
+    "fire": 6
+   },
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "+40 Attack Power"
+    },
+    {
+     "kind": "Set",
+     "text": "(2) Improves your chance to hit by 1.0%."
+    },
+    {
+     "kind": "Set",
+     "text": "(3) Improves your chance to get a critical strike with melee attacks by 2.0%."
+    }
+   ],
+   "tooltip": "Black Dragonscale Shoulders\nBinds when equipped\nShoulder\tMail\n266 Armor\n+9 Stamina\n+6 Fire Resistance\nRequires Level 55\nEquip: +40 Attack Power\nBlack Dragon Mail (0/3)\n(2) Set: Improves your chance to hit by 1.0%.\n(3) Set: Improves your chance to get a critical strike with melee attacks by 2.0%.\nSell Price: 2g 17s 36c",
+   "wordingOnly": true
+  },
+  {
+   "id": 15056,
+   "name": "Stormshroud Armor",
+   "quality": 3,
+   "icon": "inv_chest_leather_08",
+   "source": "https://foreverchanges.pro/items/new.json#15056",
+   "itemLevel": 57,
+   "inventoryType": "Chest",
+   "subclass": "Leather",
+   "armor": 163,
+   "weapon": null,
+   "stats": {},
+   "resistances": {},
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "+28 Critical Strike Rating"
+    },
+    {
+     "kind": "Equip",
+     "text": "+12 Dodge Rating"
+    },
+    {
+     "kind": "Set",
+     "text": "(2) 10% chance of dealing 15 to 25 Nature damage on a successful melee attack."
+    },
+    {
+     "kind": "Set",
+     "text": "(3) 4% chance on melee attack of restoring 30 energy."
+    },
+    {
+     "kind": "Set",
+     "text": "(4) +14 Attack Power."
+    }
+   ],
+   "tooltip": "Stormshroud Armor\nBinds when equipped\nChest\tLeather\n163 Armor\nRequires Level 52\nEquip: +28 Critical Strike Rating\nEquip: +12 Dodge Rating\nStormshroud Armor (0/4)\n(2) Set: 10% chance of dealing 15 to 25 Nature damage on a successful melee attack.\n(3) Set: 4% chance on melee attack of restoring 30 energy.\n(4) Set: +14 Attack Power.\nSell Price: 2g 9s 66c",
+   "wordingOnly": true
+  },
+  {
+   "id": 15057,
+   "name": "Stormshroud Pants",
+   "quality": 3,
+   "icon": "inv_pants_09",
+   "source": "https://foreverchanges.pro/items/new.json#15057",
+   "itemLevel": 55,
+   "inventoryType": "Legs",
+   "subclass": "Leather",
+   "armor": 138,
+   "weapon": null,
+   "stats": {},
+   "resistances": {},
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "+28 Critical Strike Rating"
+    },
+    {
+     "kind": "Equip",
+     "text": "+12 Dodge Rating"
+    },
+    {
+     "kind": "Set",
+     "text": "(2) 10% chance of dealing 15 to 25 Nature damage on a successful melee attack."
+    },
+    {
+     "kind": "Set",
+     "text": "(3) 4% chance on melee attack of restoring 30 energy."
+    },
+    {
+     "kind": "Set",
+     "text": "(4) +14 Attack Power."
+    }
+   ],
+   "tooltip": "Stormshroud Pants\nBinds when equipped\nLegs\tLeather\n138 Armor\nRequires Level 50\nEquip: +28 Critical Strike Rating\nEquip: +12 Dodge Rating\nStormshroud Armor (0/4)\n(2) Set: 10% chance of dealing 15 to 25 Nature damage on a successful melee attack.\n(3) Set: 4% chance on melee attack of restoring 30 energy.\n(4) Set: +14 Attack Power.\nSell Price: 1g 87s 28c",
+   "wordingOnly": true
+  },
+  {
+   "id": 15058,
+   "name": "Stormshroud Shoulders",
+   "quality": 3,
+   "icon": "inv_shoulder_05",
+   "source": "https://foreverchanges.pro/items/new.json#15058",
+   "itemLevel": 59,
+   "inventoryType": "Shoulder",
+   "subclass": "Leather",
+   "armor": 126,
+   "weapon": null,
+   "stats": {
+    "stamina": 12
+   },
+   "resistances": {},
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "+14 Critical Strike Rating"
+    },
+    {
+     "kind": "Equip",
+     "text": "+12 Dodge Rating"
+    },
+    {
+     "kind": "Set",
+     "text": "(2) 10% chance of dealing 15 to 25 Nature damage on a successful melee attack."
+    },
+    {
+     "kind": "Set",
+     "text": "(3) 4% chance on melee attack of restoring 30 energy."
+    },
+    {
+     "kind": "Set",
+     "text": "(4) +14 Attack Power."
+    }
+   ],
+   "tooltip": "Stormshroud Shoulders\nBinds when equipped\nShoulder\tLeather\n126 Armor\n+12 Stamina\nRequires Level 54\nEquip: +14 Critical Strike Rating\nEquip: +12 Dodge Rating\nStormshroud Armor (0/4)\n(2) Set: 10% chance of dealing 15 to 25 Nature damage on a successful melee attack.\n(3) Set: 4% chance on melee attack of restoring 30 energy.\n(4) Set: +14 Attack Power.\nSell Price: 1g 76s 31c",
+   "wordingOnly": true
+  },
+  {
+   "id": 15059,
+   "name": "Living Breastplate",
+   "quality": 3,
+   "icon": "inv_chest_plate07",
+   "source": "https://foreverchanges.pro/items/new.json#15059",
+   "itemLevel": 60,
+   "inventoryType": "Chest",
+   "subclass": "Leather",
+   "armor": 169,
+   "weapon": null,
+   "stats": {
+    "spirit": 25,
+    "stamina": 10
+   },
+   "resistances": {
+    "nature": 5
+   },
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "+26 Healing"
+    },
+    {
+     "kind": "Equip",
+     "text": "+9 Spell Damage"
+    }
+   ],
+   "tooltip": "Living Breastplate\nBinds when equipped\nChest\tLeather\n169 Armor\n+25 Spirit\n+10 Stamina\n+5 Nature Resistance\nRequires Level 55\nEquip: +26 Healing\nEquip: +9 Spell Damage\nSell Price: 2g 47s 76c",
+   "wordingOnly": true
+  },
+  {
+   "id": 15060,
+   "name": "Living Leggings",
+   "quality": 3,
+   "icon": "inv_pants_05",
+   "source": "https://foreverchanges.pro/items/new.json#15060",
+   "itemLevel": 57,
+   "inventoryType": "Legs",
+   "subclass": "Leather",
+   "armor": 142,
+   "weapon": null,
+   "stats": {
+    "spirit": 25,
+    "stamina": 8
+   },
+   "resistances": {
+    "nature": 5
+   },
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "+26 Healing"
+    },
+    {
+     "kind": "Equip",
+     "text": "+9 Spell Damage"
+    }
+   ],
+   "tooltip": "Living Leggings\nBinds when equipped\nLegs\tLeather\n142 Armor\n+25 Spirit\n+8 Stamina\n+5 Nature Resistance\nRequires Level 52\nEquip: +26 Healing\nEquip: +9 Spell Damage\nSell Price: 2g 12s 77c",
+   "wordingOnly": true
+  },
+  {
+   "id": 15061,
+   "name": "Living Shoulders",
+   "quality": 3,
+   "icon": "inv_shoulder_18",
+   "source": "https://foreverchanges.pro/items/new.json#15061",
+   "itemLevel": 54,
+   "inventoryType": "Shoulder",
+   "subclass": "Leather",
+   "armor": 117,
+   "weapon": null,
+   "stats": {
+    "spirit": 13,
+    "stamina": 8
+   },
+   "resistances": {
+    "nature": 3
+   },
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "+31 Healing"
+    },
+    {
+     "kind": "Equip",
+     "text": "+10 Spell Damage"
+    }
+   ],
+   "tooltip": "Living Shoulders\nBinds when equipped\nShoulder\tLeather\n117 Armor\n+13 Spirit\n+8 Stamina\n+3 Nature Resistance\nRequires Level 49\nEquip: +31 Healing\nEquip: +10 Spell Damage\nSell Price: 1g 38s 3c",
+   "wordingOnly": true
+  },
+  {
+   "id": 15062,
+   "name": "Devilsaur Leggings",
+   "quality": 3,
+   "icon": "inv_pants_wolf",
+   "source": "https://foreverchanges.pro/items/new.json#15062",
+   "itemLevel": 60,
+   "inventoryType": "Legs",
+   "subclass": "Leather",
+   "armor": 148,
+   "weapon": null,
+   "stats": {
+    "stamina": 12
+   },
+   "resistances": {},
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "+46 Attack Power"
+    },
+    {
+     "kind": "Equip",
+     "text": "+14 Critical Strike Rating"
+    },
+    {
+     "kind": "Set",
+     "text": "(2) Improves your chance to hit by 2.0%."
+    }
+   ],
+   "tooltip": "Devilsaur Leggings\nBinds when equipped\nLegs\tLeather\n148 Armor\n+12 Stamina\nRequires Level 55\nEquip: +46 Attack Power\nEquip: +14 Critical Strike Rating\nDevilsaur Armor (0/2)\n(2) Set: Improves your chance to hit by 2.0%.\nSell Price: 2g 57s 9c",
+   "wordingOnly": true
+  },
+  {
+   "id": 15063,
+   "name": "Devilsaur Gauntlets",
+   "quality": 3,
+   "icon": "inv_gauntlets_26",
+   "source": "https://foreverchanges.pro/items/new.json#15063",
+   "itemLevel": 58,
+   "inventoryType": "Hands",
+   "subclass": "Leather",
+   "armor": 103,
+   "weapon": null,
+   "stats": {
+    "stamina": 9
+   },
+   "resistances": {},
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "+28 Attack Power"
+    },
+    {
+     "kind": "Equip",
+     "text": "+14 Critical Strike Rating"
+    },
+    {
+     "kind": "Set",
+     "text": "(2) Improves your chance to hit by 2.0%."
+    }
+   ],
+   "tooltip": "Devilsaur Gauntlets\nBinds when equipped\nHands\tLeather\n103 Armor\n+9 Stamina\nRequires Level 53\nEquip: +28 Attack Power\nEquip: +14 Critical Strike Rating\nDevilsaur Armor (0/2)\n(2) Set: Improves your chance to hit by 2.0%.\nSell Price: 1g 17s 1c",
+   "wordingOnly": true
+  },
+  {
+   "id": 15064,
+   "name": "Warbear Harness",
+   "quality": 3,
+   "icon": "inv_chest_leather_04",
+   "source": "https://foreverchanges.pro/items/new.json#15064",
+   "itemLevel": 55,
+   "inventoryType": "Chest",
+   "subclass": "Leather",
+   "armor": 158,
+   "weapon": null,
+   "stats": {
+    "stamina": 27,
+    "strength": 11,
+    "agility": 18
+   },
+   "resistances": {},
+   "effects": [],
+   "tooltip": "Warbear Harness\nBinds when equipped\nChest\tLeather\n158 Armor\n+27 Stamina\n+11 Strength\n+18 Agility\nRequires Level 50\nSell Price: 1g 97s 17c",
+   "wordingOnly": false
+  },
+  {
+   "id": 15065,
+   "name": "Warbear Woolies",
+   "quality": 3,
+   "icon": "inv_pants_wolf",
+   "source": "https://foreverchanges.pro/items/new.json#15065",
+   "itemLevel": 57,
+   "inventoryType": "Legs",
+   "subclass": "Leather",
+   "armor": 142,
+   "weapon": null,
+   "stats": {
+    "strength": 28,
+    "stamina": 12,
+    "agility": 18
+   },
+   "resistances": {},
+   "effects": [],
+   "tooltip": "Warbear Woolies\nBinds when equipped\nLegs\tLeather\n142 Armor\n+28 Strength\n+12 Stamina\n+18 Agility\nRequires Level 52\nSell Price: 2g 22s 33c",
+   "wordingOnly": false
+  },
+  {
+   "id": 15066,
+   "name": "Ironfeather Breastplate",
+   "quality": 3,
+   "icon": "inv_chest_leather_06",
+   "source": "https://foreverchanges.pro/items/new.json#15066",
+   "itemLevel": 58,
+   "inventoryType": "Chest",
+   "subclass": "Leather",
+   "armor": 165,
+   "weapon": null,
+   "stats": {
+    "spirit": 28,
+    "intellect": 12
+   },
+   "resistances": {},
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "+21 Spell Power"
+    },
+    {
+     "kind": "Set",
+     "text": "(2) Increases damage and healing done by magical spells and effects by up to 20."
+    }
+   ],
+   "tooltip": "Ironfeather Breastplate\nBinds when equipped\nChest\tLeather\n165 Armor\n+28 Spirit\n+12 Intellect\nRequires Level 53\nEquip: +21 Spell Power\nIronfeather Armor (0/2)\n(2) Set: Increases damage and healing done by magical spells and effects by up to 20.\nSell Price: 2g 36s 50c",
+   "wordingOnly": true
+  },
+  {
+   "id": 15067,
+   "name": "Ironfeather Shoulders",
+   "quality": 3,
+   "icon": "inv_shoulder_06",
+   "source": "https://foreverchanges.pro/items/new.json#15067",
+   "itemLevel": 54,
+   "inventoryType": "Shoulder",
+   "subclass": "Leather",
+   "armor": 117,
+   "weapon": null,
+   "stats": {
+    "intellect": 20,
+    "spirit": 8
+   },
+   "resistances": {},
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "+15 Spell Power"
+    },
+    {
+     "kind": "Set",
+     "text": "(2) Increases damage and healing done by magical spells and effects by up to 20."
+    }
+   ],
+   "tooltip": "Ironfeather Shoulders\nBinds when equipped\nShoulder\tLeather\n117 Armor\n+20 Intellect\n+8 Spirit\nRequires Level 49\nEquip: +15 Spell Power\nIronfeather Armor (0/2)\n(2) Set: Increases damage and healing done by magical spells and effects by up to 20.\nSell Price: 1g 27s 58c",
+   "wordingOnly": true
+  },
+  {
+   "id": 15138,
+   "name": "Onyxia Scale Cloak",
+   "quality": 3,
+   "icon": "inv_misc_cape_05",
+   "source": "https://foreverchanges.pro/items/new.json#15138",
+   "itemLevel": 60,
+   "inventoryType": "Back",
+   "subclass": "Cloth",
+   "armor": 43,
+   "weapon": null,
+   "stats": {
+    "stamina": 7
+   },
+   "resistances": {
+    "fire": 16
+   },
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "Protects the wearer from being fully engulfed by Shadow Flame."
+    }
+   ],
+   "tooltip": "Onyxia Scale Cloak\nBinds when equipped\nBack\tCloth\n43 Armor\n+7 Stamina\n+16 Fire Resistance\nRequires Level 55\nEquip: Protects the wearer from being fully engulfed by Shadow Flame.\nSell Price: 1g 49s 22c",
+   "wordingOnly": true
+  },
+  {
+   "id": 15802,
+   "name": "Mooncloth Boots",
+   "quality": 3,
+   "icon": "inv_boots_05",
+   "source": "https://foreverchanges.pro/items/new.json#15802",
+   "itemLevel": 56,
+   "inventoryType": "Feet",
+   "subclass": "Cloth",
+   "armor": 55,
+   "weapon": null,
+   "stats": {
+    "intellect": 14,
+    "spirit": 13
+   },
+   "resistances": {},
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "+24 Healing"
+    },
+    {
+     "kind": "Equip",
+     "text": "+8 Spell Damage"
+    }
+   ],
+   "tooltip": "Mooncloth Boots\nBinds when equipped\nFeet\tCloth\n55 Armor\n+14 Intellect\n+13 Spirit\nRequires Level 51\nEquip: +24 Healing\nEquip: +8 Spell Damage\nSell Price: 1g 16s 48c",
+   "wordingOnly": false
+  },
+  {
+   "id": 15855,
+   "name": "Ring of Protection",
+   "quality": 3,
+   "icon": "inv_jewelry_ring_26",
+   "source": "https://foreverchanges.pro/items/new.json#15855",
+   "itemLevel": 60,
+   "inventoryType": "Finger",
+   "subclass": null,
+   "armor": 150,
+   "weapon": null,
+   "stats": {
+    "stamina": 9
+   },
+   "resistances": {},
+   "effects": [],
+   "tooltip": "Ring of Protection\nBinds when picked up\nFinger\n+9 Stamina\n+150 Armor\nSell Price: 78s 88c",
+   "wordingOnly": false
+  },
+  {
+   "id": 15856,
+   "name": "Archlight Talisman",
+   "quality": 3,
+   "icon": "inv_jewelry_necklace_11",
+   "source": "https://foreverchanges.pro/items/new.json#15856",
+   "itemLevel": 60,
+   "inventoryType": "Neck",
+   "subclass": null,
+   "armor": null,
+   "weapon": null,
+   "stats": {
+    "intellect": 10,
+    "stamina": 8
+   },
+   "resistances": {},
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "+12 Spell Power"
+    }
+   ],
+   "tooltip": "Archlight Talisman\nBinds when picked up\nNeck\n+10 Intellect\n+8 Stamina\nEquip: +12 Spell Power\nSell Price: 87s 88c",
+   "wordingOnly": false
+  },
+  {
+   "id": 16004,
+   "name": "Dark Iron Rifle",
+   "quality": 3,
+   "icon": "inv_weapon_rifle_08",
+   "source": "https://foreverchanges.pro/items/new.json#16004",
+   "itemLevel": 55,
+   "inventoryType": "Ranged",
+   "subclass": "Gun",
+   "armor": null,
+   "weapon": {
+    "minDamage": 53,
+    "maxDamage": 100,
+    "speed": 2.7,
+    "dps": 28.33
+   },
+   "stats": {},
+   "resistances": {},
+   "effects": [
+    {
+     "kind": "Chance on hit",
+     "text": "Fires a Shadow Shot at the target for 21 to 31 Shadow damage."
+    }
+   ],
+   "tooltip": "Dark Iron Rifle\nBinds when equipped\nRanged\tGun\n53 - 100 Damage\tSpeed 2.70\n(28.3 damage per second)\nRequires Level 50\nChance on hit: Fires a Shadow Shot at the target for 21 to 31 Shadow damage.\nSell Price: 2g 91s 52c",
+   "wordingOnly": true
+  },
+  {
+   "id": 16022,
+   "name": "Arcanite Dragonling",
+   "quality": 3,
+   "icon": "inv_misc_head_dragon_01",
+   "source": "https://foreverchanges.pro/items/new.json#16022",
+   "itemLevel": 60,
+   "inventoryType": "Trinket",
+   "subclass": null,
+   "armor": null,
+   "weapon": null,
+   "stats": {},
+   "resistances": {},
+   "effects": [
+    {
+     "kind": "Use",
+     "text": "Activates your Arcanite Dragonling to fight for you for 1 min. (60 Min Cooldown)"
+    }
+   ],
+   "tooltip": "Arcanite Dragonling\nBinds when equipped\nUnique-Equipped\nTrinket\nRequires Level 50\nRequires Engineering (300)\nUse: Activates your Arcanite Dragonling to fight for you for 1 min. (60 Min Cooldown)\nSell Price: 4g",
+   "wordingOnly": true
+  },
+  {
+   "id": 16341,
+   "name": "Sergeant's Cloak",
+   "quality": 3,
+   "icon": "inv_misc_cape_07",
+   "source": "https://foreverchanges.pro/items/new.json#16341",
+   "itemLevel": 50,
+   "inventoryType": "Back",
+   "subclass": "Cloth",
+   "armor": 96,
+   "weapon": null,
+   "stats": {
+    "stamina": 14
+   },
+   "resistances": {},
+   "effects": [],
+   "tooltip": "Sergeant's Cloak\nBinds when picked up\nUnique\nBack\tCloth\n36 Armor\n+14 Stamina\n+60 Armor\nRequires Level 45\nSell Price: 42s 85c",
+   "wordingOnly": false
+  },
+  {
+   "id": 16669,
+   "name": "Pauldrons of Elements",
+   "quality": 3,
+   "icon": "inv_shoulder_29",
+   "source": "https://foreverchanges.pro/items/new.json#16669",
+   "itemLevel": 60,
+   "inventoryType": "Shoulder",
+   "subclass": "Mail",
+   "armor": 266,
+   "weapon": null,
+   "stats": {
+    "intellect": 15,
+    "stamina": 14,
+    "spirit": 6,
+    "strength": 5
+   },
+   "resistances": {},
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "+2 Spell Penetration"
+    },
+    {
+     "kind": "Set",
+     "text": "(2) +8 All Resistances."
+    },
+    {
+     "kind": "Set",
+     "text": "(3) Increases damage and healing done by magical spells and effects by up to 18."
+    },
+    {
+     "kind": "Set",
+     "text": "(4) When struck in melee combat, has a 5% chance of Disarming the attacker for 4 sec. Can only occur once every 60 sec."
+    },
+    {
+     "kind": "Set",
+     "text": "(5) Chance on melee autoattack and spellcast to increase your damage and healing done by magical spells and effects by up to 65 for 10 sec."
+    },
+    {
+     "kind": "Set",
+     "text": "(6) Restores 8 mana per 5 sec."
+    }
+   ],
+   "tooltip": "Pauldrons of Elements\nBinds when picked up\nShoulder\tMail\n266 Armor\n+15 Intellect\n+14 Stamina\n+6 Spirit\n+5 Strength\nRequires Level 55\nEquip: +2 Spell Penetration\nThe Elements (0/8)\n(2) Set: +8 All Resistances.\n(3) Set: Increases damage and healing done by magical spells and effects by up to 18.\n(4) Set: When struck in melee combat, has a 5% chance of Disarming the attacker for 4 sec. Can only occur once every 60 sec.\n(5) Set: Chance on melee autoattack and spellcast to increase your damage and healing done by magical spells and effects by up to 65 for 10 sec.\n(6) Set: Restores 8 mana per 5 sec.\nSell Price: 2g 24s 83c",
+   "wordingOnly": false
+  },
+  {
+   "id": 16670,
+   "name": "Boots of Elements",
+   "quality": 3,
+   "icon": "inv_boots_wolf",
+   "source": "https://foreverchanges.pro/items/new.json#16670",
+   "itemLevel": 59,
+   "inventoryType": "Feet",
+   "subclass": "Mail",
+   "armor": 240,
+   "weapon": null,
+   "stats": {
+    "spirit": 17,
+    "agility": 9
+   },
+   "resistances": {},
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "+14 Spell Power"
+    },
+    {
+     "kind": "Set",
+     "text": "(2) +8 All Resistances."
+    },
+    {
+     "kind": "Set",
+     "text": "(3) Increases damage and healing done by magical spells and effects by up to 18."
+    },
+    {
+     "kind": "Set",
+     "text": "(4) When struck in melee combat, has a 5% chance of Disarming the attacker for 4 sec. Can only occur once every 60 sec."
+    },
+    {
+     "kind": "Set",
+     "text": "(5) Chance on melee autoattack and spellcast to increase your damage and healing done by magical spells and effects by up to 65 for 10 sec."
+    },
+    {
+     "kind": "Set",
+     "text": "(6) Restores 8 mana per 5 sec."
+    }
+   ],
+   "tooltip": "Boots of Elements\nBinds when picked up\nFeet\tMail\n240 Armor\n+17 Spirit\n+9 Agility\nRequires Level 54\nEquip: +14 Spell Power\nThe Elements (0/8)\n(2) Set: +8 All Resistances.\n(3) Set: Increases damage and healing done by magical spells and effects by up to 18.\n(4) Set: When struck in melee combat, has a 5% chance of Disarming the attacker for 4 sec. Can only occur once every 60 sec.\n(5) Set: Chance on melee autoattack and spellcast to increase your damage and healing done by magical spells and effects by up to 65 for 10 sec.\n(6) Set: Restores 8 mana per 5 sec.\nSell Price: 2g 14s 12c",
+   "wordingOnly": true
+  },
+  {
+   "id": 16671,
+   "name": "Bindings of Elements",
+   "quality": 3,
+   "icon": "inv_bracer_02",
+   "source": "https://foreverchanges.pro/items/new.json#16671",
+   "itemLevel": 57,
+   "inventoryType": "Wrist",
+   "subclass": "Mail",
+   "armor": 148,
+   "weapon": null,
+   "stats": {
+    "intellect": 8,
+    "spirit": 10,
+    "stamina": 7
+   },
+   "resistances": {},
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "+5 Spell Power"
+    },
+    {
+     "kind": "Equip",
+     "text": "+3 Hit Rating"
+    },
+    {
+     "kind": "Set",
+     "text": "(2) +8 All Resistances."
+    },
+    {
+     "kind": "Set",
+     "text": "(3) Increases damage and healing done by magical spells and effects by up to 18."
+    },
+    {
+     "kind": "Set",
+     "text": "(4) When struck in melee combat, has a 5% chance of Disarming the attacker for 4 sec. Can only occur once every 60 sec."
+    },
+    {
+     "kind": "Set",
+     "text": "(5) Chance on melee autoattack and spellcast to increase your damage and healing done by magical spells and effects by up to 65 for 10 sec."
+    },
+    {
+     "kind": "Set",
+     "text": "(6) Restores 8 mana per 5 sec."
+    }
+   ],
+   "tooltip": "Bindings of Elements\nBinds when equipped\nWrist\tMail\n148 Armor\n+8 Intellect\n+10 Spirit\n+7 Stamina\nRequires Level 52\nEquip: +5 Spell Power\nEquip: +3 Hit Rating\nThe Elements (0/8)\n(2) Set: +8 All Resistances.\n(3) Set: Increases damage and healing done by magical spells and effects by up to 18.\n(4) Set: When struck in melee combat, has a 5% chance of Disarming the attacker for 4 sec. Can only occur once every 60 sec.\n(5) Set: Chance on melee autoattack and spellcast to increase your damage and healing done by magical spells and effects by up to 65 for 10 sec.\n(6) Set: Restores 8 mana per 5 sec.\nSell Price: 1g 27s 69c",
+   "wordingOnly": false
+  },
+  {
+   "id": 16672,
+   "name": "Gauntlets of Elements",
+   "quality": 3,
+   "icon": "inv_gauntlets_11",
+   "source": "https://foreverchanges.pro/items/new.json#16672",
+   "itemLevel": 59,
+   "inventoryType": "Hands",
+   "subclass": "Mail",
+   "armor": 218,
+   "weapon": null,
+   "stats": {
+    "spirit": 16,
+    "intellect": 10,
+    "stamina": 4
+   },
+   "resistances": {},
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "+9 Hit Rating"
+    },
+    {
+     "kind": "Equip",
+     "text": "+6 Spell Power"
+    },
+    {
+     "kind": "Set",
+     "text": "(2) +8 All Resistances."
+    },
+    {
+     "kind": "Set",
+     "text": "(3) Increases damage and healing done by magical spells and effects by up to 18."
+    },
+    {
+     "kind": "Set",
+     "text": "(4) When struck in melee combat, has a 5% chance of Disarming the attacker for 4 sec. Can only occur once every 60 sec."
+    },
+    {
+     "kind": "Set",
+     "text": "(5) Chance on melee autoattack and spellcast to increase your damage and healing done by magical spells and effects by up to 65 for 10 sec."
+    },
+    {
+     "kind": "Set",
+     "text": "(6) Restores 8 mana per 5 sec."
+    }
+   ],
+   "tooltip": "Gauntlets of Elements\nBinds when equipped\nHands\tMail\n218 Armor\n+16 Spirit\n+10 Intellect\n+4 Stamina\nRequires Level 54\nEquip: +9 Hit Rating\nEquip: +6 Spell Power\nThe Elements (0/8)\n(2) Set: +8 All Resistances.\n(3) Set: Increases damage and healing done by magical spells and effects by up to 18.\n(4) Set: When struck in melee combat, has a 5% chance of Disarming the attacker for 4 sec. Can only occur once every 60 sec.\n(5) Set: Chance on melee autoattack and spellcast to increase your damage and healing done by magical spells and effects by up to 65 for 10 sec.\n(6) Set: Restores 8 mana per 5 sec.\nSell Price: 1g 42s 11c",
+   "wordingOnly": false
+  },
+  {
+   "id": 16673,
+   "name": "Cord of Elements",
+   "quality": 3,
+   "icon": "inv_belt_16",
+   "source": "https://foreverchanges.pro/items/new.json#16673",
+   "itemLevel": 58,
+   "inventoryType": "Waist",
+   "subclass": "Mail",
+   "armor": 193,
+   "weapon": null,
+   "stats": {
+    "intellect": 17,
+    "strength": 9,
+    "spirit": 7,
+    "stamina": 6
+   },
+   "resistances": {},
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "+2 Spell Penetration"
+    },
+    {
+     "kind": "Set",
+     "text": "(2) +8 All Resistances."
+    },
+    {
+     "kind": "Set",
+     "text": "(3) Increases damage and healing done by magical spells and effects by up to 18."
+    },
+    {
+     "kind": "Set",
+     "text": "(4) When struck in melee combat, has a 5% chance of Disarming the attacker for 4 sec. Can only occur once every 60 sec."
+    },
+    {
+     "kind": "Set",
+     "text": "(5) Chance on melee autoattack and spellcast to increase your damage and healing done by magical spells and effects by up to 65 for 10 sec."
+    },
+    {
+     "kind": "Set",
+     "text": "(6) Restores 8 mana per 5 sec."
+    }
+   ],
+   "tooltip": "Cord of Elements\nBinds when equipped\nWaist\tMail\n193 Armor\n+17 Intellect\n+9 Strength\n+7 Spirit\n+6 Stamina\nRequires Level 53\nEquip: +2 Spell Penetration\nThe Elements (0/8)\n(2) Set: +8 All Resistances.\n(3) Set: Increases damage and healing done by magical spells and effects by up to 18.\n(4) Set: When struck in melee combat, has a 5% chance of Disarming the attacker for 4 sec. Can only occur once every 60 sec.\n(5) Set: Chance on melee autoattack and spellcast to increase your damage and healing done by magical spells and effects by up to 65 for 10 sec.\n(6) Set: Restores 8 mana per 5 sec.\nSell Price: 1g 35s 35c",
+   "wordingOnly": true
+  },
+  {
+   "id": 16675,
+   "name": "Beaststalker's Boots",
+   "quality": 3,
+   "icon": "inv_boots_plate_07",
+   "source": "https://foreverchanges.pro/items/new.json#16675",
+   "itemLevel": 59,
+   "inventoryType": "Feet",
+   "subclass": "Mail",
+   "armor": 240,
+   "weapon": null,
+   "stats": {
+    "agility": 21,
+    "stamina": 9,
+    "intellect": 3
+   },
+   "resistances": {},
+   "effects": [
+    {
+     "kind": "Set",
+     "text": "(2) +8 All Resistances."
+    },
+    {
+     "kind": "Set",
+     "text": "(3) +30 Attack Power."
+    },
+    {
+     "kind": "Set",
+     "text": "(4) When struck in combat, has a 8% chance to remove a Root effect from yourself. Can only occur once every 60 sec."
+    },
+    {
+     "kind": "Set",
+     "text": "(5) Your melee and ranged autoattacks have a 5% chance to energize you for 200 mana."
+    },
+    {
+     "kind": "Set",
+     "text": "(6) Restores 8 mana per 5 sec."
+    }
+   ],
+   "tooltip": "Beaststalker's Boots\nBinds when picked up\nFeet\tMail\n240 Armor\n+21 Agility\n+9 Stamina\n+3 Intellect\nRequires Level 54\nBeaststalker Armor (0/8)\n(2) Set: +8 All Resistances.\n(3) Set: +30 Attack Power.\n(4) Set: When struck in combat, has a 8% chance to remove a Root effect from yourself. Can only occur once every 60 sec.\n(5) Set: Your melee and ranged autoattacks have a 5% chance to energize you for 200 mana.\n(6) Set: Restores 8 mana per 5 sec.\nSell Price: 2g 14s 12c",
+   "wordingOnly": false
+  },
+  {
+   "id": 16676,
+   "name": "Beaststalker's Gloves",
+   "quality": 3,
+   "icon": "inv_gauntlets_10",
+   "source": "https://foreverchanges.pro/items/new.json#16676",
+   "itemLevel": 59,
+   "inventoryType": "Hands",
+   "subclass": "Mail",
+   "armor": 218,
+   "weapon": null,
+   "stats": {
+    "agility": 14,
+    "spirit": 10,
+    "stamina": 10,
+    "intellect": 10
+   },
+   "resistances": {},
+   "effects": [
+    {
+     "kind": "Set",
+     "text": "(2) +8 All Resistances."
+    },
+    {
+     "kind": "Set",
+     "text": "(3) +30 Attack Power."
+    },
+    {
+     "kind": "Set",
+     "text": "(4) When struck in combat, has a 8% chance to remove a Root effect from yourself. Can only occur once every 60 sec."
+    },
+    {
+     "kind": "Set",
+     "text": "(5) Your melee and ranged autoattacks have a 5% chance to energize you for 200 mana."
+    },
+    {
+     "kind": "Set",
+     "text": "(6) Restores 8 mana per 5 sec."
+    }
+   ],
+   "tooltip": "Beaststalker's Gloves\nBinds when equipped\nHands\tMail\n218 Armor\n+14 Agility\n+10 Spirit\n+10 Stamina\n+10 Intellect\nRequires Level 54\nBeaststalker Armor (0/8)\n(2) Set: +8 All Resistances.\n(3) Set: +30 Attack Power.\n(4) Set: When struck in combat, has a 8% chance to remove a Root effect from yourself. Can only occur once every 60 sec.\n(5) Set: Your melee and ranged autoattacks have a 5% chance to energize you for 200 mana.\n(6) Set: Restores 8 mana per 5 sec.\nSell Price: 1g 42s 11c",
+   "wordingOnly": false
+  },
+  {
+   "id": 16679,
+   "name": "Beaststalker's Mantle",
+   "quality": 3,
+   "icon": "inv_shoulder_10",
+   "source": "https://foreverchanges.pro/items/new.json#16679",
+   "itemLevel": 60,
+   "inventoryType": "Shoulder",
+   "subclass": "Mail",
+   "armor": 266,
+   "weapon": null,
+   "stats": {
+    "stamina": 17,
+    "agility": 11,
+    "intellect": 7,
+    "spirit": 7
+   },
+   "resistances": {},
+   "effects": [
+    {
+     "kind": "Set",
+     "text": "(2) +8 All Resistances."
+    },
+    {
+     "kind": "Set",
+     "text": "(3) +30 Attack Power."
+    },
+    {
+     "kind": "Set",
+     "text": "(4) When struck in combat, has a 8% chance to remove a Root effect from yourself. Can only occur once every 60 sec."
+    },
+    {
+     "kind": "Set",
+     "text": "(5) Your melee and ranged autoattacks have a 5% chance to energize you for 200 mana."
+    },
+    {
+     "kind": "Set",
+     "text": "(6) Restores 8 mana per 5 sec."
+    }
+   ],
+   "tooltip": "Beaststalker's Mantle\nBinds when picked up\nShoulder\tMail\n266 Armor\n+17 Stamina\n+11 Agility\n+7 Intellect\n+7 Spirit\nRequires Level 55\nBeaststalker Armor (0/8)\n(2) Set: +8 All Resistances.\n(3) Set: +30 Attack Power.\n(4) Set: When struck in combat, has a 8% chance to remove a Root effect from yourself. Can only occur once every 60 sec.\n(5) Set: Your melee and ranged autoattacks have a 5% chance to energize you for 200 mana.\n(6) Set: Restores 8 mana per 5 sec.\nSell Price: 2g 24s 83c",
+   "wordingOnly": false
+  },
+  {
+   "id": 16680,
+   "name": "Beaststalker's Belt",
+   "quality": 3,
+   "icon": "inv_belt_28",
+   "source": "https://foreverchanges.pro/items/new.json#16680",
+   "itemLevel": 58,
+   "inventoryType": "Waist",
+   "subclass": "Mail",
+   "armor": 193,
+   "weapon": null,
+   "stats": {
+    "spirit": 11,
+    "agility": 10,
+    "intellect": 9,
+    "strength": 8,
+    "stamina": 6
+   },
+   "resistances": {},
+   "effects": [
+    {
+     "kind": "Set",
+     "text": "(2) +8 All Resistances."
+    },
+    {
+     "kind": "Set",
+     "text": "(3) +30 Attack Power."
+    },
+    {
+     "kind": "Set",
+     "text": "(4) When struck in combat, has a 8% chance to remove a Root effect from yourself. Can only occur once every 60 sec."
+    },
+    {
+     "kind": "Set",
+     "text": "(5) Your melee and ranged autoattacks have a 5% chance to energize you for 200 mana."
+    },
+    {
+     "kind": "Set",
+     "text": "(6) Restores 8 mana per 5 sec."
+    }
+   ],
+   "tooltip": "Beaststalker's Belt\nBinds when equipped\nWaist\tMail\n193 Armor\n+11 Spirit\n+10 Agility\n+9 Intellect\n+8 Strength\n+6 Stamina\nRequires Level 53\nBeaststalker Armor (0/8)\n(2) Set: +8 All Resistances.\n(3) Set: +30 Attack Power.\n(4) Set: When struck in combat, has a 8% chance to remove a Root effect from yourself. Can only occur once every 60 sec.\n(5) Set: Your melee and ranged autoattacks have a 5% chance to energize you for 200 mana.\n(6) Set: Restores 8 mana per 5 sec.\nSell Price: 1g 35s 35c",
+   "wordingOnly": false
+  },
+  {
+   "id": 16681,
+   "name": "Beaststalker's Bindings",
+   "quality": 3,
+   "icon": "inv_bracer_17",
+   "source": "https://foreverchanges.pro/items/new.json#16681",
+   "itemLevel": 57,
+   "inventoryType": "Wrist",
+   "subclass": "Mail",
+   "armor": 148,
+   "weapon": null,
+   "stats": {
+    "agility": 15,
+    "stamina": 8
+   },
+   "resistances": {},
+   "effects": [
+    {
+     "kind": "Set",
+     "text": "(2) +8 All Resistances."
+    },
+    {
+     "kind": "Set",
+     "text": "(3) +30 Attack Power."
+    },
+    {
+     "kind": "Set",
+     "text": "(4) When struck in combat, has a 8% chance to remove a Root effect from yourself. Can only occur once every 60 sec."
+    },
+    {
+     "kind": "Set",
+     "text": "(5) Your melee and ranged autoattacks have a 5% chance to energize you for 200 mana."
+    },
+    {
+     "kind": "Set",
+     "text": "(6) Restores 8 mana per 5 sec."
+    }
+   ],
+   "tooltip": "Beaststalker's Bindings\nBinds when equipped\nWrist\tMail\n148 Armor\n+15 Agility\n+8 Stamina\nRequires Level 52\nBeaststalker Armor (0/8)\n(2) Set: +8 All Resistances.\n(3) Set: +30 Attack Power.\n(4) Set: When struck in combat, has a 8% chance to remove a Root effect from yourself. Can only occur once every 60 sec.\n(5) Set: Your melee and ranged autoattacks have a 5% chance to energize you for 200 mana.\n(6) Set: Restores 8 mana per 5 sec.\nSell Price: 1g 27s 69c",
+   "wordingOnly": false
+  },
+  {
+   "id": 16682,
+   "name": "Magister's Boots",
+   "quality": 3,
+   "icon": "inv_boots_02",
+   "source": "https://foreverchanges.pro/items/new.json#16682",
+   "itemLevel": 59,
+   "inventoryType": "Feet",
+   "subclass": "Cloth",
+   "armor": 58,
+   "weapon": null,
+   "stats": {
+    "spirit": 14,
+    "intellect": 14,
+    "stamina": 7
+   },
+   "resistances": {},
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "+9 Spell Power"
+    },
+    {
+     "kind": "Set",
+     "text": "(2) +8 All Resistances."
+    },
+    {
+     "kind": "Set",
+     "text": "(3) Increases damage and healing done by magical spells and effects by up to 18."
+    },
+    {
+     "kind": "Set",
+     "text": "(4) When struck in combat has a 2% chance of freezing the attacker in place for 3 sec. Can only occur once every 60 sec."
+    },
+    {
+     "kind": "Set",
+     "text": "(5) Your spellcasts have a 5% chance to energize you for 200 mana."
+    },
+    {
+     "kind": "Set",
+     "text": "(6) Restores 8 mana per 5 sec."
+    }
+   ],
+   "tooltip": "Magister's Boots\nBinds when picked up\nFeet\tCloth\n58 Armor\n+14 Spirit\n+14 Intellect\n+7 Stamina\nRequires Level 54\nEquip: +9 Spell Power\nMagister's Regalia (0/8)\n(2) Set: +8 All Resistances.\n(3) Set: Increases damage and healing done by magical spells and effects by up to 18.\n(4) Set: When struck in combat has a 2% chance of freezing the attacker in place for 3 sec. Can only occur once every 60 sec.\n(5) Set: Your spellcasts have a 5% chance to energize you for 200 mana.\n(6) Set: Restores 8 mana per 5 sec.\nSell Price: 1g 42s 11c",
+   "wordingOnly": false
+  },
+  {
+   "id": 16683,
+   "name": "Magister's Bindings",
+   "quality": 3,
+   "icon": "inv_jewelry_ring_23",
+   "source": "https://foreverchanges.pro/items/new.json#16683",
+   "itemLevel": 57,
+   "inventoryType": "Wrist",
+   "subclass": "Cloth",
+   "armor": 35,
+   "weapon": null,
+   "stats": {
+    "intellect": 13,
+    "spirit": 6,
+    "stamina": 6
+   },
+   "resistances": {},
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "+2 Spell Penetration"
+    },
+    {
+     "kind": "Set",
+     "text": "(2) +8 All Resistances."
+    },
+    {
+     "kind": "Set",
+     "text": "(3) Increases damage and healing done by magical spells and effects by up to 18."
+    },
+    {
+     "kind": "Set",
+     "text": "(4) When struck in combat has a 2% chance of freezing the attacker in place for 3 sec. Can only occur once every 60 sec."
+    },
+    {
+     "kind": "Set",
+     "text": "(5) Your spellcasts have a 5% chance to energize you for 200 mana."
+    },
+    {
+     "kind": "Set",
+     "text": "(6) Restores 8 mana per 5 sec."
+    }
+   ],
+   "tooltip": "Magister's Bindings\nBinds when equipped\nWrist\tCloth\n35 Armor\n+13 Intellect\n+6 Spirit\n+6 Stamina\nRequires Level 52\nEquip: +2 Spell Penetration\nMagister's Regalia (0/8)\n(2) Set: +8 All Resistances.\n(3) Set: Increases damage and healing done by magical spells and effects by up to 18.\n(4) Set: When struck in combat has a 2% chance of freezing the attacker in place for 3 sec. Can only occur once every 60 sec.\n(5) Set: Your spellcasts have a 5% chance to energize you for 200 mana.\n(6) Set: Restores 8 mana per 5 sec.\nSell Price: 85s 12c",
+   "wordingOnly": false
+  },
+  {
+   "id": 16684,
+   "name": "Magister's Gloves",
+   "quality": 3,
+   "icon": "inv_gauntlets_17",
+   "source": "https://foreverchanges.pro/items/new.json#16684",
+   "itemLevel": 59,
+   "inventoryType": "Hands",
+   "subclass": "Cloth",
+   "armor": 52,
+   "weapon": null,
+   "stats": {
+    "spirit": 14,
+    "intellect": 14,
+    "stamina": 8
+   },
+   "resistances": {},
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "+7 Spell Power"
+    },
+    {
+     "kind": "Set",
+     "text": "(2) +8 All Resistances."
+    },
+    {
+     "kind": "Set",
+     "text": "(3) Increases damage and healing done by magical spells and effects by up to 18."
+    },
+    {
+     "kind": "Set",
+     "text": "(4) When struck in combat has a 2% chance of freezing the attacker in place for 3 sec. Can only occur once every 60 sec."
+    },
+    {
+     "kind": "Set",
+     "text": "(5) Your spellcasts have a 5% chance to energize you for 200 mana."
+    },
+    {
+     "kind": "Set",
+     "text": "(6) Restores 8 mana per 5 sec."
+    }
+   ],
+   "tooltip": "Magister's Gloves\nBinds when equipped\nHands\tCloth\n52 Armor\n+14 Spirit\n+14 Intellect\n+8 Stamina\nRequires Level 54\nEquip: +7 Spell Power\nMagister's Regalia (0/8)\n(2) Set: +8 All Resistances.\n(3) Set: Increases damage and healing done by magical spells and effects by up to 18.\n(4) Set: When struck in combat has a 2% chance of freezing the attacker in place for 3 sec. Can only occur once every 60 sec.\n(5) Set: Your spellcasts have a 5% chance to energize you for 200 mana.\n(6) Set: Restores 8 mana per 5 sec.\nSell Price: 94s 74c",
+   "wordingOnly": false
+  },
+  {
+   "id": 16685,
+   "name": "Magister's Belt",
+   "quality": 3,
+   "icon": "inv_belt_08",
+   "source": "https://foreverchanges.pro/items/new.json#16685",
+   "itemLevel": 58,
+   "inventoryType": "Waist",
+   "subclass": "Cloth",
+   "armor": 46,
+   "weapon": null,
+   "stats": {
+    "intellect": 21,
+    "stamina": 6
+   },
+   "resistances": {},
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "+7 Spell Power"
+    },
+    {
+     "kind": "Equip",
+     "text": "+1 Spell Penetration"
+    },
+    {
+     "kind": "Set",
+     "text": "(2) +8 All Resistances."
+    },
+    {
+     "kind": "Set",
+     "text": "(3) Increases damage and healing done by magical spells and effects by up to 18."
+    },
+    {
+     "kind": "Set",
+     "text": "(4) When struck in combat has a 2% chance of freezing the attacker in place for 3 sec. Can only occur once every 60 sec."
+    },
+    {
+     "kind": "Set",
+     "text": "(5) Your spellcasts have a 5% chance to energize you for 200 mana."
+    },
+    {
+     "kind": "Set",
+     "text": "(6) Restores 8 mana per 5 sec."
+    }
+   ],
+   "tooltip": "Magister's Belt\nBinds when equipped\nWaist\tCloth\n46 Armor\n+21 Intellect\n+6 Stamina\nRequires Level 53\nEquip: +7 Spell Power\nEquip: +1 Spell Penetration\nMagister's Regalia (0/8)\n(2) Set: +8 All Resistances.\n(3) Set: Increases damage and healing done by magical spells and effects by up to 18.\n(4) Set: When struck in combat has a 2% chance of freezing the attacker in place for 3 sec. Can only occur once every 60 sec.\n(5) Set: Your spellcasts have a 5% chance to energize you for 200 mana.\n(6) Set: Restores 8 mana per 5 sec.\nSell Price: 90s 23c",
+   "wordingOnly": false
+  },
+  {
+   "id": 16689,
+   "name": "Magister's Mantle",
+   "quality": 3,
+   "icon": "inv_shoulder_23",
+   "source": "https://foreverchanges.pro/items/new.json#16689",
+   "itemLevel": 60,
+   "inventoryType": "Shoulder",
+   "subclass": "Cloth",
+   "armor": 64,
+   "weapon": null,
+   "stats": {
+    "intellect": 22,
+    "stamina": 6
+   },
+   "resistances": {},
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "+8 Spell Power"
+    },
+    {
+     "kind": "Set",
+     "text": "(2) +8 All Resistances."
+    },
+    {
+     "kind": "Set",
+     "text": "(3) Increases damage and healing done by magical spells and effects by up to 18."
+    },
+    {
+     "kind": "Set",
+     "text": "(4) When struck in combat has a 2% chance of freezing the attacker in place for 3 sec. Can only occur once every 60 sec."
+    },
+    {
+     "kind": "Set",
+     "text": "(5) Your spellcasts have a 5% chance to energize you for 200 mana."
+    },
+    {
+     "kind": "Set",
+     "text": "(6) Restores 8 mana per 5 sec."
+    }
+   ],
+   "tooltip": "Magister's Mantle\nBinds when picked up\nShoulder\tCloth\n64 Armor\n+22 Intellect\n+6 Stamina\nRequires Level 55\nEquip: +8 Spell Power\nMagister's Regalia (0/8)\n(2) Set: +8 All Resistances.\n(3) Set: Increases damage and healing done by magical spells and effects by up to 18.\n(4) Set: When struck in combat has a 2% chance of freezing the attacker in place for 3 sec. Can only occur once every 60 sec.\n(5) Set: Your spellcasts have a 5% chance to energize you for 200 mana.\n(6) Set: Restores 8 mana per 5 sec.\nSell Price: 1g 49s 22c",
+   "wordingOnly": false
+  },
+  {
+   "id": 16691,
+   "name": "Devout Sandals",
+   "quality": 3,
+   "icon": "inv_boots_05",
+   "source": "https://foreverchanges.pro/items/new.json#16691",
+   "itemLevel": 59,
+   "inventoryType": "Feet",
+   "subclass": "Cloth",
+   "armor": 58,
+   "weapon": null,
+   "stats": {
+    "spirit": 17,
+    "intellect": 10,
+    "stamina": 9
+   },
+   "resistances": {},
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "+11 Healing"
+    },
+    {
+     "kind": "Equip",
+     "text": "+4 Spell Damage"
+    },
+    {
+     "kind": "Set",
+     "text": "(2) +8 All Resistances."
+    },
+    {
+     "kind": "Set",
+     "text": "(3) Increases damage and healing done by magical spells and effects by up to 18."
+    },
+    {
+     "kind": "Set",
+     "text": "(4) When struck in combat has a 2% chance of shielding the wearer in a protective shield which will absorb 488 damage. Can only occur once every 60 sec."
+    },
+    {
+     "kind": "Set",
+     "text": "(5) Your spellcasts have a 5% chance to energize you for 200 mana."
+    },
+    {
+     "kind": "Set",
+     "text": "(6) Restores 8 mana per 5 sec."
+    }
+   ],
+   "tooltip": "Devout Sandals\nBinds when picked up\nFeet\tCloth\n58 Armor\n+17 Spirit\n+10 Intellect\n+9 Stamina\nRequires Level 54\nEquip: +11 Healing\nEquip: +4 Spell Damage\nVestments of the Devout (0/8)\n(2) Set: +8 All Resistances.\n(3) Set: Increases damage and healing done by magical spells and effects by up to 18.\n(4) Set: When struck in combat has a 2% chance of shielding the wearer in a protective shield which will absorb 488 damage. Can only occur once every 60 sec.\n(5) Set: Your spellcasts have a 5% chance to energize you for 200 mana.\n(6) Set: Restores 8 mana per 5 sec.\nSell Price: 1g 42s 11c",
+   "wordingOnly": true
+  },
+  {
+   "id": 16692,
+   "name": "Devout Gloves",
+   "quality": 3,
+   "icon": "inv_gauntlets_14",
+   "source": "https://foreverchanges.pro/items/new.json#16692",
+   "itemLevel": 59,
+   "inventoryType": "Hands",
+   "subclass": "Cloth",
+   "armor": 52,
+   "weapon": null,
+   "stats": {
+    "spirit": 17,
+    "intellect": 10,
+    "stamina": 8
+   },
+   "resistances": {},
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "+15 Healing"
+    },
+    {
+     "kind": "Equip",
+     "text": "+5 Spell Damage"
+    },
+    {
+     "kind": "Set",
+     "text": "(2) +8 All Resistances."
+    },
+    {
+     "kind": "Set",
+     "text": "(3) Increases damage and healing done by magical spells and effects by up to 18."
+    },
+    {
+     "kind": "Set",
+     "text": "(4) When struck in combat has a 2% chance of shielding the wearer in a protective shield which will absorb 488 damage. Can only occur once every 60 sec."
+    },
+    {
+     "kind": "Set",
+     "text": "(5) Your spellcasts have a 5% chance to energize you for 200 mana."
+    },
+    {
+     "kind": "Set",
+     "text": "(6) Restores 8 mana per 5 sec."
+    }
+   ],
+   "tooltip": "Devout Gloves\nBinds when equipped\nHands\tCloth\n52 Armor\n+17 Spirit\n+10 Intellect\n+8 Stamina\nRequires Level 54\nEquip: +15 Healing\nEquip: +5 Spell Damage\nVestments of the Devout (0/8)\n(2) Set: +8 All Resistances.\n(3) Set: Increases damage and healing done by magical spells and effects by up to 18.\n(4) Set: When struck in combat has a 2% chance of shielding the wearer in a protective shield which will absorb 488 damage. Can only occur once every 60 sec.\n(5) Set: Your spellcasts have a 5% chance to energize you for 200 mana.\n(6) Set: Restores 8 mana per 5 sec.\nSell Price: 94s 74c",
+   "wordingOnly": false
+  },
+  {
+   "id": 16695,
+   "name": "Devout Mantle",
+   "quality": 3,
+   "icon": "inv_shoulder_02",
+   "source": "https://foreverchanges.pro/items/new.json#16695",
+   "itemLevel": 60,
+   "inventoryType": "Shoulder",
+   "subclass": "Cloth",
+   "armor": 64,
+   "weapon": null,
+   "stats": {
+    "intellect": 21,
+    "spirit": 9,
+    "stamina": 4
+   },
+   "resistances": {},
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "+11 Healing"
+    },
+    {
+     "kind": "Equip",
+     "text": "+4 Spell Damage"
+    },
+    {
+     "kind": "Set",
+     "text": "(2) +8 All Resistances."
+    },
+    {
+     "kind": "Set",
+     "text": "(3) Increases damage and healing done by magical spells and effects by up to 18."
+    },
+    {
+     "kind": "Set",
+     "text": "(4) When struck in combat has a 2% chance of shielding the wearer in a protective shield which will absorb 488 damage. Can only occur once every 60 sec."
+    },
+    {
+     "kind": "Set",
+     "text": "(5) Your spellcasts have a 5% chance to energize you for 200 mana."
+    },
+    {
+     "kind": "Set",
+     "text": "(6) Restores 8 mana per 5 sec."
+    }
+   ],
+   "tooltip": "Devout Mantle\nBinds when picked up\nShoulder\tCloth\n64 Armor\n+21 Intellect\n+9 Spirit\n+4 Stamina\nRequires Level 55\nEquip: +11 Healing\nEquip: +4 Spell Damage\nVestments of the Devout (0/8)\n(2) Set: +8 All Resistances.\n(3) Set: Increases damage and healing done by magical spells and effects by up to 18.\n(4) Set: When struck in combat has a 2% chance of shielding the wearer in a protective shield which will absorb 488 damage. Can only occur once every 60 sec.\n(5) Set: Your spellcasts have a 5% chance to energize you for 200 mana.\n(6) Set: Restores 8 mana per 5 sec.\nSell Price: 1g 49s 22c",
+   "wordingOnly": true
+  },
+  {
+   "id": 16696,
+   "name": "Devout Belt",
+   "quality": 3,
+   "icon": "inv_belt_10",
+   "source": "https://foreverchanges.pro/items/new.json#16696",
+   "itemLevel": 58,
+   "inventoryType": "Waist",
+   "subclass": "Cloth",
+   "armor": 46,
+   "weapon": null,
+   "stats": {
+    "intellect": 20,
+    "spirit": 9,
+    "stamina": 4
+   },
+   "resistances": {},
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "+11 Healing"
+    },
+    {
+     "kind": "Equip",
+     "text": "+4 Spell Damage"
+    },
+    {
+     "kind": "Set",
+     "text": "(2) +8 All Resistances."
+    },
+    {
+     "kind": "Set",
+     "text": "(3) Increases damage and healing done by magical spells and effects by up to 18."
+    },
+    {
+     "kind": "Set",
+     "text": "(4) When struck in combat has a 2% chance of shielding the wearer in a protective shield which will absorb 488 damage. Can only occur once every 60 sec."
+    },
+    {
+     "kind": "Set",
+     "text": "(5) Your spellcasts have a 5% chance to energize you for 200 mana."
+    },
+    {
+     "kind": "Set",
+     "text": "(6) Restores 8 mana per 5 sec."
+    }
+   ],
+   "tooltip": "Devout Belt\nBinds when equipped\nWaist\tCloth\n46 Armor\n+20 Intellect\n+9 Spirit\n+4 Stamina\nRequires Level 53\nEquip: +11 Healing\nEquip: +4 Spell Damage\nVestments of the Devout (0/8)\n(2) Set: +8 All Resistances.\n(3) Set: Increases damage and healing done by magical spells and effects by up to 18.\n(4) Set: When struck in combat has a 2% chance of shielding the wearer in a protective shield which will absorb 488 damage. Can only occur once every 60 sec.\n(5) Set: Your spellcasts have a 5% chance to energize you for 200 mana.\n(6) Set: Restores 8 mana per 5 sec.\nSell Price: 90s 23c",
+   "wordingOnly": true
+  },
+  {
+   "id": 16697,
+   "name": "Devout Bracers",
+   "quality": 3,
+   "icon": "inv_belt_31",
+   "source": "https://foreverchanges.pro/items/new.json#16697",
+   "itemLevel": 57,
+   "inventoryType": "Wrist",
+   "subclass": "Cloth",
+   "armor": 35,
+   "weapon": null,
+   "stats": {
+    "intellect": 8,
+    "spirit": 10,
+    "stamina": 7
+   },
+   "resistances": {},
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "+11 Healing"
+    },
+    {
+     "kind": "Equip",
+     "text": "+4 Spell Damage"
+    },
+    {
+     "kind": "Set",
+     "text": "(2) +8 All Resistances."
+    },
+    {
+     "kind": "Set",
+     "text": "(3) Increases damage and healing done by magical spells and effects by up to 18."
+    },
+    {
+     "kind": "Set",
+     "text": "(4) When struck in combat has a 2% chance of shielding the wearer in a protective shield which will absorb 488 damage. Can only occur once every 60 sec."
+    },
+    {
+     "kind": "Set",
+     "text": "(5) Your spellcasts have a 5% chance to energize you for 200 mana."
+    },
+    {
+     "kind": "Set",
+     "text": "(6) Restores 8 mana per 5 sec."
+    }
+   ],
+   "tooltip": "Devout Bracers\nBinds when equipped\nWrist\tCloth\n35 Armor\n+8 Intellect\n+10 Spirit\n+7 Stamina\nRequires Level 52\nEquip: +11 Healing\nEquip: +4 Spell Damage\nVestments of the Devout (0/8)\n(2) Set: +8 All Resistances.\n(3) Set: Increases damage and healing done by magical spells and effects by up to 18.\n(4) Set: When struck in combat has a 2% chance of shielding the wearer in a protective shield which will absorb 488 damage. Can only occur once every 60 sec.\n(5) Set: Your spellcasts have a 5% chance to energize you for 200 mana.\n(6) Set: Restores 8 mana per 5 sec.\nSell Price: 85s 12c",
+   "wordingOnly": false
+  },
+  {
+   "id": 16701,
+   "name": "Dreadmist Mantle",
+   "quality": 3,
+   "icon": "inv_misc_bone_taurenskull_01",
+   "source": "https://foreverchanges.pro/items/new.json#16701",
+   "itemLevel": 60,
+   "inventoryType": "Shoulder",
+   "subclass": "Cloth",
+   "armor": 64,
+   "weapon": null,
+   "stats": {
+    "intellect": 15,
+    "stamina": 14
+   },
+   "resistances": {},
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "+11 Spell Power"
+    },
+    {
+     "kind": "Set",
+     "text": "(2) +8 All Resistances."
+    },
+    {
+     "kind": "Set",
+     "text": "(3) Increases damage and healing done by magical spells and effects by up to 18."
+    },
+    {
+     "kind": "Set",
+     "text": "(4) When struck in combat has a 2% chance of causing the attacker to flee in terror for 2 sec. Can only occur once every 60 sec."
+    },
+    {
+     "kind": "Set",
+     "text": "(5) Your spellcasts have a 5% chance to heal you for 270 to 330."
+    },
+    {
+     "kind": "Set",
+     "text": "(6) Restores 8 mana per 5 sec."
+    }
+   ],
+   "tooltip": "Dreadmist Mantle\nBinds when picked up\nShoulder\tCloth\n64 Armor\n+15 Intellect\n+14 Stamina\nRequires Level 55\nEquip: +11 Spell Power\nDreadmist Raiment (0/8)\n(2) Set: +8 All Resistances.\n(3) Set: Increases damage and healing done by magical spells and effects by up to 18.\n(4) Set: When struck in combat has a 2% chance of causing the attacker to flee in terror for 2 sec. Can only occur once every 60 sec.\n(5) Set: Your spellcasts have a 5% chance to heal you for 270 to 330.\n(6) Set: Restores 8 mana per 5 sec.\nSell Price: 1g 49s 22c",
+   "wordingOnly": false
+  },
+  {
+   "id": 16702,
+   "name": "Dreadmist Belt",
+   "quality": 3,
+   "icon": "inv_belt_12",
+   "source": "https://foreverchanges.pro/items/new.json#16702",
+   "itemLevel": 58,
+   "inventoryType": "Waist",
+   "subclass": "Cloth",
+   "armor": 46,
+   "weapon": null,
+   "stats": {
+    "intellect": 14,
+    "stamina": 10,
+    "spirit": 9
+   },
+   "resistances": {},
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "+9 Spell Power"
+    },
+    {
+     "kind": "Equip",
+     "text": "+1 Spell Penetration"
+    },
+    {
+     "kind": "Set",
+     "text": "(2) +8 All Resistances."
+    },
+    {
+     "kind": "Set",
+     "text": "(3) Increases damage and healing done by magical spells and effects by up to 18."
+    },
+    {
+     "kind": "Set",
+     "text": "(4) When struck in combat has a 2% chance of causing the attacker to flee in terror for 2 sec. Can only occur once every 60 sec."
+    },
+    {
+     "kind": "Set",
+     "text": "(5) Your spellcasts have a 5% chance to heal you for 270 to 330."
+    },
+    {
+     "kind": "Set",
+     "text": "(6) Restores 8 mana per 5 sec."
+    }
+   ],
+   "tooltip": "Dreadmist Belt\nBinds when equipped\nWaist\tCloth\n46 Armor\n+14 Intellect\n+10 Stamina\n+9 Spirit\nRequires Level 53\nEquip: +9 Spell Power\nEquip: +1 Spell Penetration\nDreadmist Raiment (0/8)\n(2) Set: +8 All Resistances.\n(3) Set: Increases damage and healing done by magical spells and effects by up to 18.\n(4) Set: When struck in combat has a 2% chance of causing the attacker to flee in terror for 2 sec. Can only occur once every 60 sec.\n(5) Set: Your spellcasts have a 5% chance to heal you for 270 to 330.\n(6) Set: Restores 8 mana per 5 sec.\nSell Price: 90s 23c",
+   "wordingOnly": false
+  },
+  {
+   "id": 16703,
+   "name": "Dreadmist Bracers",
+   "quality": 3,
+   "icon": "inv_bracer_13",
+   "source": "https://foreverchanges.pro/items/new.json#16703",
+   "itemLevel": 57,
+   "inventoryType": "Wrist",
+   "subclass": "Cloth",
+   "armor": 35,
+   "weapon": null,
+   "stats": {
+    "intellect": 11,
+    "stamina": 10,
+    "spirit": 5
+   },
+   "resistances": {},
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "+5 Spell Power"
+    },
+    {
+     "kind": "Set",
+     "text": "(2) +8 All Resistances."
+    },
+    {
+     "kind": "Set",
+     "text": "(3) Increases damage and healing done by magical spells and effects by up to 18."
+    },
+    {
+     "kind": "Set",
+     "text": "(4) When struck in combat has a 2% chance of causing the attacker to flee in terror for 2 sec. Can only occur once every 60 sec."
+    },
+    {
+     "kind": "Set",
+     "text": "(5) Your spellcasts have a 5% chance to heal you for 270 to 330."
+    },
+    {
+     "kind": "Set",
+     "text": "(6) Restores 8 mana per 5 sec."
+    }
+   ],
+   "tooltip": "Dreadmist Bracers\nBinds when equipped\nWrist\tCloth\n35 Armor\n+11 Intellect\n+10 Stamina\n+5 Spirit\nRequires Level 52\nEquip: +5 Spell Power\nDreadmist Raiment (0/8)\n(2) Set: +8 All Resistances.\n(3) Set: Increases damage and healing done by magical spells and effects by up to 18.\n(4) Set: When struck in combat has a 2% chance of causing the attacker to flee in terror for 2 sec. Can only occur once every 60 sec.\n(5) Set: Your spellcasts have a 5% chance to heal you for 270 to 330.\n(6) Set: Restores 8 mana per 5 sec.\nSell Price: 85s 12c",
+   "wordingOnly": false
+  },
+  {
+   "id": 16704,
+   "name": "Dreadmist Sandals",
+   "quality": 3,
+   "icon": "inv_boots_05",
+   "source": "https://foreverchanges.pro/items/new.json#16704",
+   "itemLevel": 59,
+   "inventoryType": "Feet",
+   "subclass": "Cloth",
+   "armor": 58,
+   "weapon": null,
+   "stats": {
+    "stamina": 17,
+    "spirit": 10,
+    "intellect": 7
+   },
+   "resistances": {},
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "+9 Spell Power"
+    },
+    {
+     "kind": "Set",
+     "text": "(2) +8 All Resistances."
+    },
+    {
+     "kind": "Set",
+     "text": "(3) Increases damage and healing done by magical spells and effects by up to 18."
+    },
+    {
+     "kind": "Set",
+     "text": "(4) When struck in combat has a 2% chance of causing the attacker to flee in terror for 2 sec. Can only occur once every 60 sec."
+    },
+    {
+     "kind": "Set",
+     "text": "(5) Your spellcasts have a 5% chance to heal you for 270 to 330."
+    },
+    {
+     "kind": "Set",
+     "text": "(6) Restores 8 mana per 5 sec."
+    }
+   ],
+   "tooltip": "Dreadmist Sandals\nBinds when picked up\nFeet\tCloth\n58 Armor\n+17 Stamina\n+10 Spirit\n+7 Intellect\nRequires Level 54\nEquip: +9 Spell Power\nDreadmist Raiment (0/8)\n(2) Set: +8 All Resistances.\n(3) Set: Increases damage and healing done by magical spells and effects by up to 18.\n(4) Set: When struck in combat has a 2% chance of causing the attacker to flee in terror for 2 sec. Can only occur once every 60 sec.\n(5) Set: Your spellcasts have a 5% chance to heal you for 270 to 330.\n(6) Set: Restores 8 mana per 5 sec.\nSell Price: 1g 42s 11c",
+   "wordingOnly": false
+  },
+  {
+   "id": 16705,
+   "name": "Dreadmist Wraps",
+   "quality": 3,
+   "icon": "inv_gauntlets_32",
+   "source": "https://foreverchanges.pro/items/new.json#16705",
+   "itemLevel": 59,
+   "inventoryType": "Hands",
+   "subclass": "Cloth",
+   "armor": 52,
+   "weapon": null,
+   "stats": {
+    "spirit": 14,
+    "intellect": 9,
+    "stamina": 13
+   },
+   "resistances": {},
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "+10 Hit Rating"
+    },
+    {
+     "kind": "Set",
+     "text": "(2) +8 All Resistances."
+    },
+    {
+     "kind": "Set",
+     "text": "(3) Increases damage and healing done by magical spells and effects by up to 18."
+    },
+    {
+     "kind": "Set",
+     "text": "(4) When struck in combat has a 2% chance of causing the attacker to flee in terror for 2 sec. Can only occur once every 60 sec."
+    },
+    {
+     "kind": "Set",
+     "text": "(5) Your spellcasts have a 5% chance to heal you for 270 to 330."
+    },
+    {
+     "kind": "Set",
+     "text": "(6) Restores 8 mana per 5 sec."
+    }
+   ],
+   "tooltip": "Dreadmist Wraps\nBinds when equipped\nHands\tCloth\n52 Armor\n+14 Spirit\n+9 Intellect\n+13 Stamina\nRequires Level 54\nEquip: +10 Hit Rating\nDreadmist Raiment (0/8)\n(2) Set: +8 All Resistances.\n(3) Set: Increases damage and healing done by magical spells and effects by up to 18.\n(4) Set: When struck in combat has a 2% chance of causing the attacker to flee in terror for 2 sec. Can only occur once every 60 sec.\n(5) Set: Your spellcasts have a 5% chance to heal you for 270 to 330.\n(6) Set: Restores 8 mana per 5 sec.\nSell Price: 94s 74c",
+   "wordingOnly": true
+  },
+  {
+   "id": 16708,
+   "name": "Shadowcraft Spaulders",
+   "quality": 3,
+   "icon": "inv_shoulder_07",
+   "source": "https://foreverchanges.pro/items/new.json#16708",
+   "itemLevel": 60,
+   "inventoryType": "Shoulder",
+   "subclass": "Leather",
+   "armor": 127,
+   "weapon": null,
+   "stats": {
+    "agility": 22,
+    "stamina": 9
+   },
+   "resistances": {},
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "+2 Hit Rating"
+    },
+    {
+     "kind": "Set",
+     "text": "(2) +8 All Resistances."
+    },
+    {
+     "kind": "Set",
+     "text": "(3) +30 Attack Power."
+    },
+    {
+     "kind": "Set",
+     "text": "(4) When struck in combat, has a 5% chance to remove a Snare effect from yourself. Can only occur once every 60 sec."
+    },
+    {
+     "kind": "Set",
+     "text": "(5) Chance on melee attack to restore 20 Energy."
+    },
+    {
+     "kind": "Set",
+     "text": "(6) Restores 15 health per 5 sec."
+    }
+   ],
+   "tooltip": "Shadowcraft Spaulders\nBinds when picked up\nShoulder\tLeather\n127 Armor\n+22 Agility\n+9 Stamina\nRequires Level 55\nEquip: +2 Hit Rating\nShadowcraft Armor (0/8)\n(2) Set: +8 All Resistances.\n(3) Set: +30 Attack Power.\n(4) Set: When struck in combat, has a 5% chance to remove a Snare effect from yourself. Can only occur once every 60 sec.\n(5) Set: Chance on melee attack to restore 20 Energy.\n(6) Set: Restores 15 health per 5 sec.\nSell Price: 1g 87s 3c",
+   "wordingOnly": true
+  },
+  {
+   "id": 16710,
+   "name": "Shadowcraft Bracers",
+   "quality": 3,
+   "icon": "inv_bracer_07",
+   "source": "https://foreverchanges.pro/items/new.json#16710",
+   "itemLevel": 57,
+   "inventoryType": "Wrist",
+   "subclass": "Leather",
+   "armor": 71,
+   "weapon": null,
+   "stats": {
+    "agility": 15,
+    "stamina": 7
+   },
+   "resistances": {},
+   "effects": [
+    {
+     "kind": "Set",
+     "text": "(2) +8 All Resistances."
+    },
+    {
+     "kind": "Set",
+     "text": "(3) +30 Attack Power."
+    },
+    {
+     "kind": "Set",
+     "text": "(4) When struck in combat, has a 5% chance to remove a Snare effect from yourself. Can only occur once every 60 sec."
+    },
+    {
+     "kind": "Set",
+     "text": "(5) Chance on melee attack to restore 20 Energy."
+    },
+    {
+     "kind": "Set",
+     "text": "(6) Restores 15 health per 5 sec."
+    }
+   ],
+   "tooltip": "Shadowcraft Bracers\nBinds when equipped\nWrist\tLeather\n71 Armor\n+15 Agility\n+7 Stamina\nRequires Level 52\nShadowcraft Armor (0/8)\n(2) Set: +8 All Resistances.\n(3) Set: +30 Attack Power.\n(4) Set: When struck in combat, has a 5% chance to remove a Snare effect from yourself. Can only occur once every 60 sec.\n(5) Set: Chance on melee attack to restore 20 Energy.\n(6) Set: Restores 15 health per 5 sec.\nSell Price: 1g 7s 26c",
+   "wordingOnly": true
+  },
+  {
+   "id": 16711,
+   "name": "Shadowcraft Boots",
+   "quality": 3,
+   "icon": "inv_boots_08",
+   "source": "https://foreverchanges.pro/items/new.json#16711",
+   "itemLevel": 59,
+   "inventoryType": "Feet",
+   "subclass": "Leather",
+   "armor": 115,
+   "weapon": null,
+   "stats": {
+    "agility": 21,
+    "stamina": 9
+   },
+   "resistances": {},
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "+3 Hit Rating"
+    },
+    {
+     "kind": "Set",
+     "text": "(2) +8 All Resistances."
+    },
+    {
+     "kind": "Set",
+     "text": "(3) +30 Attack Power."
+    },
+    {
+     "kind": "Set",
+     "text": "(4) When struck in combat, has a 5% chance to remove a Snare effect from yourself. Can only occur once every 60 sec."
+    },
+    {
+     "kind": "Set",
+     "text": "(5) Chance on melee attack to restore 20 Energy."
+    },
+    {
+     "kind": "Set",
+     "text": "(6) Restores 15 health per 5 sec."
+    }
+   ],
+   "tooltip": "Shadowcraft Boots\nBinds when picked up\nFeet\tLeather\n115 Armor\n+21 Agility\n+9 Stamina\nRequires Level 54\nEquip: +3 Hit Rating\nShadowcraft Armor (0/8)\n(2) Set: +8 All Resistances.\n(3) Set: +30 Attack Power.\n(4) Set: When struck in combat, has a 5% chance to remove a Snare effect from yourself. Can only occur once every 60 sec.\n(5) Set: Chance on melee attack to restore 20 Energy.\n(6) Set: Restores 15 health per 5 sec.\nSell Price: 1g 78s 12c",
+   "wordingOnly": true
+  },
+  {
+   "id": 16712,
+   "name": "Shadowcraft Gloves",
+   "quality": 3,
+   "icon": "inv_gauntlets_24",
+   "source": "https://foreverchanges.pro/items/new.json#16712",
+   "itemLevel": 59,
+   "inventoryType": "Hands",
+   "subclass": "Leather",
+   "armor": 105,
+   "weapon": null,
+   "stats": {
+    "agility": 14,
+    "spirit": 11,
+    "stamina": 10,
+    "strength": 9
+   },
+   "resistances": {},
+   "effects": [
+    {
+     "kind": "Set",
+     "text": "(2) +8 All Resistances."
+    },
+    {
+     "kind": "Set",
+     "text": "(3) +30 Attack Power."
+    },
+    {
+     "kind": "Set",
+     "text": "(4) When struck in combat, has a 5% chance to remove a Snare effect from yourself. Can only occur once every 60 sec."
+    },
+    {
+     "kind": "Set",
+     "text": "(5) Chance on melee attack to restore 20 Energy."
+    },
+    {
+     "kind": "Set",
+     "text": "(6) Restores 15 health per 5 sec."
+    }
+   ],
+   "tooltip": "Shadowcraft Gloves\nBinds when equipped\nHands\tLeather\n105 Armor\n+14 Agility\n+11 Spirit\n+10 Stamina\n+9 Strength\nRequires Level 54\nShadowcraft Armor (0/8)\n(2) Set: +8 All Resistances.\n(3) Set: +30 Attack Power.\n(4) Set: When struck in combat, has a 5% chance to remove a Snare effect from yourself. Can only occur once every 60 sec.\n(5) Set: Chance on melee attack to restore 20 Energy.\n(6) Set: Restores 15 health per 5 sec.\nSell Price: 1g 19s 37c",
+   "wordingOnly": false
+  },
+  {
+   "id": 16713,
+   "name": "Shadowcraft Belt",
+   "quality": 3,
+   "icon": "inv_belt_03",
+   "source": "https://foreverchanges.pro/items/new.json#16713",
+   "itemLevel": 58,
+   "inventoryType": "Waist",
+   "subclass": "Leather",
+   "armor": 93,
+   "weapon": null,
+   "stats": {
+    "agility": 14,
+    "stamina": 10,
+    "spirit": 11,
+    "strength": 9
+   },
+   "resistances": {},
+   "effects": [
+    {
+     "kind": "Set",
+     "text": "(2) +8 All Resistances."
+    },
+    {
+     "kind": "Set",
+     "text": "(3) +30 Attack Power."
+    },
+    {
+     "kind": "Set",
+     "text": "(4) When struck in combat, has a 5% chance to remove a Snare effect from yourself. Can only occur once every 60 sec."
+    },
+    {
+     "kind": "Set",
+     "text": "(5) Chance on melee attack to restore 20 Energy."
+    },
+    {
+     "kind": "Set",
+     "text": "(6) Restores 15 health per 5 sec."
+    }
+   ],
+   "tooltip": "Shadowcraft Belt\nBinds when equipped\nWaist\tLeather\n93 Armor\n+14 Agility\n+10 Stamina\n+11 Spirit\n+9 Strength\nRequires Level 53\nShadowcraft Armor (0/8)\n(2) Set: +8 All Resistances.\n(3) Set: +30 Attack Power.\n(4) Set: When struck in combat, has a 5% chance to remove a Snare effect from yourself. Can only occur once every 60 sec.\n(5) Set: Chance on melee attack to restore 20 Energy.\n(6) Set: Restores 15 health per 5 sec.\nSell Price: 1g 13s 69c",
+   "wordingOnly": false
+  },
+  {
+   "id": 16714,
+   "name": "Wildheart Bracers",
+   "quality": 3,
+   "icon": "inv_bracer_09",
+   "source": "https://foreverchanges.pro/items/new.json#16714",
+   "itemLevel": 57,
+   "inventoryType": "Wrist",
+   "subclass": "Leather",
+   "armor": 71,
+   "weapon": null,
+   "stats": {
+    "intellect": 15,
+    "strength": 5
+   },
+   "resistances": {},
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "+9 Healing"
+    },
+    {
+     "kind": "Equip",
+     "text": "+3 Spell Damage"
+    },
+    {
+     "kind": "Set",
+     "text": "(2) +8 All Resistances."
+    },
+    {
+     "kind": "Set",
+     "text": "(3) Increases damage and healing done by magical spells and effects by up to 18."
+    },
+    {
+     "kind": "Set",
+     "text": "(3) +30 Attack Power."
+    },
+    {
+     "kind": "Set",
+     "text": "(4) When struck in combat, has a 5% chance to increase your movement speed by 10% for 8 sec. Can only occur once every 60 sec."
+    },
+    {
+     "kind": "Set",
+     "text": "(5) Chance on spellcast to restore 200 Mana, on melee attack to regenerate 20 Energy over 5 sec, and when struck by a melee attack to generate 10 Rage."
+    },
+    {
+     "kind": "Set",
+     "text": "(6) Restores 8 mana per 5 sec."
+    }
+   ],
+   "tooltip": "Wildheart Bracers\nBinds when equipped\nWrist\tLeather\n71 Armor\n+15 Intellect\n+5 Strength\nRequires Level 52\nEquip: +9 Healing\nEquip: +3 Spell Damage\nWildheart Raiment (0/8)\n(2) Set: +8 All Resistances.\n(3) Set: Increases damage and healing done by magical spells and effects by up to 18.\n(3) Set: +30 Attack Power.\n(4) Set: When struck in combat, has a 5% chance to increase your movement speed by 10% for 8 sec. Can only occur once every 60 sec.\n(5) Set: Chance on spellcast to restore 200 Mana, on melee attack to regenerate 20 Energy over 5 sec, and when struck by a melee attack to generate 10 Rage.\n(6) Set: Restores 8 mana per 5 sec.\nSell Price: 1g 7s 26c",
+   "wordingOnly": false
+  },
+  {
+   "id": 16715,
+   "name": "Wildheart Boots",
+   "quality": 3,
+   "icon": "inv_boots_08",
+   "source": "https://foreverchanges.pro/items/new.json#16715",
+   "itemLevel": 59,
+   "inventoryType": "Feet",
+   "subclass": "Leather",
+   "armor": 115,
+   "weapon": null,
+   "stats": {
+    "spirit": 17,
+    "stamina": 10,
+    "intellect": 9
+   },
+   "resistances": {},
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "+11 Healing"
+    },
+    {
+     "kind": "Equip",
+     "text": "+4 Spell Damage"
+    },
+    {
+     "kind": "Set",
+     "text": "(2) +8 All Resistances."
+    },
+    {
+     "kind": "Set",
+     "text": "(3) Increases damage and healing done by magical spells and effects by up to 18."
+    },
+    {
+     "kind": "Set",
+     "text": "(3) +30 Attack Power."
+    },
+    {
+     "kind": "Set",
+     "text": "(4) When struck in combat, has a 5% chance to increase your movement speed by 10% for 8 sec. Can only occur once every 60 sec."
+    },
+    {
+     "kind": "Set",
+     "text": "(5) Chance on spellcast to restore 200 Mana, on melee attack to regenerate 20 Energy over 5 sec, and when struck by a melee attack to generate 10 Rage."
+    },
+    {
+     "kind": "Set",
+     "text": "(6) Restores 8 mana per 5 sec."
+    }
+   ],
+   "tooltip": "Wildheart Boots\nBinds when picked up\nFeet\tLeather\n115 Armor\n+17 Spirit\n+10 Stamina\n+9 Intellect\nRequires Level 54\nEquip: +11 Healing\nEquip: +4 Spell Damage\nWildheart Raiment (0/8)\n(2) Set: +8 All Resistances.\n(3) Set: Increases damage and healing done by magical spells and effects by up to 18.\n(3) Set: +30 Attack Power.\n(4) Set: When struck in combat, has a 5% chance to increase your movement speed by 10% for 8 sec. Can only occur once every 60 sec.\n(5) Set: Chance on spellcast to restore 200 Mana, on melee attack to regenerate 20 Energy over 5 sec, and when struck by a melee attack to generate 10 Rage.\n(6) Set: Restores 8 mana per 5 sec.\nSell Price: 1g 78s 12c",
+   "wordingOnly": true
+  },
+  {
+   "id": 16716,
+   "name": "Wildheart Belt",
+   "quality": 3,
+   "icon": "inv_belt_15",
+   "source": "https://foreverchanges.pro/items/new.json#16716",
+   "itemLevel": 58,
+   "inventoryType": "Waist",
+   "subclass": "Leather",
+   "armor": 93,
+   "weapon": null,
+   "stats": {
+    "intellect": 17,
+    "spirit": 10,
+    "stamina": 9
+   },
+   "resistances": {},
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "+11 Healing"
+    },
+    {
+     "kind": "Equip",
+     "text": "+4 Spell Damage"
+    },
+    {
+     "kind": "Set",
+     "text": "(2) +8 All Resistances."
+    },
+    {
+     "kind": "Set",
+     "text": "(3) Increases damage and healing done by magical spells and effects by up to 18."
+    },
+    {
+     "kind": "Set",
+     "text": "(3) +30 Attack Power."
+    },
+    {
+     "kind": "Set",
+     "text": "(4) When struck in combat, has a 5% chance to increase your movement speed by 10% for 8 sec. Can only occur once every 60 sec."
+    },
+    {
+     "kind": "Set",
+     "text": "(5) Chance on spellcast to restore 200 Mana, on melee attack to regenerate 20 Energy over 5 sec, and when struck by a melee attack to generate 10 Rage."
+    },
+    {
+     "kind": "Set",
+     "text": "(6) Restores 8 mana per 5 sec."
+    }
+   ],
+   "tooltip": "Wildheart Belt\nBinds when equipped\nWaist\tLeather\n93 Armor\n+17 Intellect\n+10 Spirit\n+9 Stamina\nRequires Level 53\nEquip: +11 Healing\nEquip: +4 Spell Damage\nWildheart Raiment (0/8)\n(2) Set: +8 All Resistances.\n(3) Set: Increases damage and healing done by magical spells and effects by up to 18.\n(3) Set: +30 Attack Power.\n(4) Set: When struck in combat, has a 5% chance to increase your movement speed by 10% for 8 sec. Can only occur once every 60 sec.\n(5) Set: Chance on spellcast to restore 200 Mana, on melee attack to regenerate 20 Energy over 5 sec, and when struck by a melee attack to generate 10 Rage.\n(6) Set: Restores 8 mana per 5 sec.\nSell Price: 1g 13s 69c",
+   "wordingOnly": true
+  },
+  {
+   "id": 16717,
+   "name": "Wildheart Gloves",
+   "quality": 3,
+   "icon": "inv_gauntlets_17",
+   "source": "https://foreverchanges.pro/items/new.json#16717",
+   "itemLevel": 59,
+   "inventoryType": "Hands",
+   "subclass": "Leather",
+   "armor": 105,
+   "weapon": null,
+   "stats": {
+    "spirit": 21,
+    "intellect": 9
+   },
+   "resistances": {},
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "+11 Healing"
+    },
+    {
+     "kind": "Equip",
+     "text": "+4 Spell Damage"
+    },
+    {
+     "kind": "Set",
+     "text": "(2) +8 All Resistances."
+    },
+    {
+     "kind": "Set",
+     "text": "(3) Increases damage and healing done by magical spells and effects by up to 18."
+    },
+    {
+     "kind": "Set",
+     "text": "(3) +30 Attack Power."
+    },
+    {
+     "kind": "Set",
+     "text": "(4) When struck in combat, has a 5% chance to increase your movement speed by 10% for 8 sec. Can only occur once every 60 sec."
+    },
+    {
+     "kind": "Set",
+     "text": "(5) Chance on spellcast to restore 200 Mana, on melee attack to regenerate 20 Energy over 5 sec, and when struck by a melee attack to generate 10 Rage."
+    },
+    {
+     "kind": "Set",
+     "text": "(6) Restores 8 mana per 5 sec."
+    }
+   ],
+   "tooltip": "Wildheart Gloves\nBinds when equipped\nHands\tLeather\n105 Armor\n+21 Spirit\n+9 Intellect\nRequires Level 54\nEquip: +11 Healing\nEquip: +4 Spell Damage\nWildheart Raiment (0/8)\n(2) Set: +8 All Resistances.\n(3) Set: Increases damage and healing done by magical spells and effects by up to 18.\n(3) Set: +30 Attack Power.\n(4) Set: When struck in combat, has a 5% chance to increase your movement speed by 10% for 8 sec. Can only occur once every 60 sec.\n(5) Set: Chance on spellcast to restore 200 Mana, on melee attack to regenerate 20 Energy over 5 sec, and when struck by a melee attack to generate 10 Rage.\n(6) Set: Restores 8 mana per 5 sec.\nSell Price: 1g 19s 37c",
+   "wordingOnly": true
+  },
+  {
+   "id": 16718,
+   "name": "Wildheart Spaulders",
+   "quality": 3,
+   "icon": "inv_shoulder_01",
+   "source": "https://foreverchanges.pro/items/new.json#16718",
+   "itemLevel": 60,
+   "inventoryType": "Shoulder",
+   "subclass": "Leather",
+   "armor": 127,
+   "weapon": null,
+   "stats": {
+    "intellect": 18,
+    "stamina": 9,
+    "spirit": 8
+   },
+   "resistances": {},
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "+20 Healing"
+    },
+    {
+     "kind": "Equip",
+     "text": "+7 Spell Damage"
+    },
+    {
+     "kind": "Set",
+     "text": "(2) +8 All Resistances."
+    },
+    {
+     "kind": "Set",
+     "text": "(3) Increases damage and healing done by magical spells and effects by up to 18."
+    },
+    {
+     "kind": "Set",
+     "text": "(3) +30 Attack Power."
+    },
+    {
+     "kind": "Set",
+     "text": "(4) When struck in combat, has a 5% chance to increase your movement speed by 10% for 8 sec. Can only occur once every 60 sec."
+    },
+    {
+     "kind": "Set",
+     "text": "(5) Chance on spellcast to restore 200 Mana, on melee attack to regenerate 20 Energy over 5 sec, and when struck by a melee attack to generate 10 Rage."
+    },
+    {
+     "kind": "Set",
+     "text": "(6) Restores 8 mana per 5 sec."
+    }
+   ],
+   "tooltip": "Wildheart Spaulders\nBinds when picked up\nShoulder\tLeather\n127 Armor\n+18 Intellect\n+9 Stamina\n+8 Spirit\nRequires Level 55\nEquip: +20 Healing\nEquip: +7 Spell Damage\nWildheart Raiment (0/8)\n(2) Set: +8 All Resistances.\n(3) Set: Increases damage and healing done by magical spells and effects by up to 18.\n(3) Set: +30 Attack Power.\n(4) Set: When struck in combat, has a 5% chance to increase your movement speed by 10% for 8 sec. Can only occur once every 60 sec.\n(5) Set: Chance on spellcast to restore 200 Mana, on melee attack to regenerate 20 Energy over 5 sec, and when struck by a melee attack to generate 10 Rage.\n(6) Set: Restores 8 mana per 5 sec.\nSell Price: 1g 87s 3c",
+   "wordingOnly": true
+  },
+  {
+   "id": 16722,
+   "name": "Lightforge Bracers",
+   "quality": 3,
+   "icon": "inv_bracer_14",
+   "source": "https://foreverchanges.pro/items/new.json#16722",
+   "itemLevel": 57,
+   "inventoryType": "Wrist",
+   "subclass": "Plate",
+   "armor": 261,
+   "weapon": null,
+   "stats": {
+    "stamina": 10,
+    "strength": 8,
+    "intellect": 7,
+    "agility": 5
+   },
+   "resistances": {},
+   "effects": [
+    {
+     "kind": "Set",
+     "text": "(2) +8 All Resistances."
+    },
+    {
+     "kind": "Set",
+     "text": "(3) Increases damage and healing done by magical spells and effects by up to 18."
+    },
+    {
+     "kind": "Set",
+     "text": "(4) When struck by a harmful spell, has a 7% chance of Silencing the caster for 3 sec. Can only occur once every 60 sec."
+    },
+    {
+     "kind": "Set",
+     "text": "(5) Chance on melee autoattack and spellcast to increase your damage and healing done by magical spells and effects by up to 65 for 10 sec."
+    },
+    {
+     "kind": "Set",
+     "text": "(6) Restores 8 mana per 5 sec."
+    }
+   ],
+   "tooltip": "Lightforge Bracers\nBinds when equipped\nWrist\tPlate\n261 Armor\n+10 Stamina\n+8 Strength\n+7 Intellect\n+5 Agility\nRequires Level 52\nLightforge Armor (0/8)\n(2) Set: +8 All Resistances.\n(3) Set: Increases damage and healing done by magical spells and effects by up to 18.\n(4) Set: When struck by a harmful spell, has a 7% chance of Silencing the caster for 3 sec. Can only occur once every 60 sec.\n(5) Set: Chance on melee autoattack and spellcast to increase your damage and healing done by magical spells and effects by up to 65 for 10 sec.\n(6) Set: Restores 8 mana per 5 sec.\nSell Price: 1g 49s 82c",
+   "wordingOnly": false
+  },
+  {
+   "id": 16723,
+   "name": "Lightforge Belt",
+   "quality": 3,
+   "icon": "inv_belt_11",
+   "source": "https://foreverchanges.pro/items/new.json#16723",
+   "itemLevel": 58,
+   "inventoryType": "Waist",
+   "subclass": "Plate",
+   "armor": 341,
+   "weapon": null,
+   "stats": {
+    "intellect": 15,
+    "stamina": 9,
+    "strength": 10
+   },
+   "resistances": {},
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "+7 Spell Power"
+    },
+    {
+     "kind": "Equip",
+     "text": "+5 Hit Rating"
+    },
+    {
+     "kind": "Set",
+     "text": "(2) +8 All Resistances."
+    },
+    {
+     "kind": "Set",
+     "text": "(3) Increases damage and healing done by magical spells and effects by up to 18."
+    },
+    {
+     "kind": "Set",
+     "text": "(4) When struck by a harmful spell, has a 7% chance of Silencing the caster for 3 sec. Can only occur once every 60 sec."
+    },
+    {
+     "kind": "Set",
+     "text": "(5) Chance on melee autoattack and spellcast to increase your damage and healing done by magical spells and effects by up to 65 for 10 sec."
+    },
+    {
+     "kind": "Set",
+     "text": "(6) Restores 8 mana per 5 sec."
+    }
+   ],
+   "tooltip": "Lightforge Belt\nBinds when equipped\nWaist\tPlate\n341 Armor\n+15 Intellect\n+9 Stamina\n+10 Strength\nRequires Level 53\nEquip: +7 Spell Power\nEquip: +5 Hit Rating\nLightforge Armor (0/8)\n(2) Set: +8 All Resistances.\n(3) Set: Increases damage and healing done by magical spells and effects by up to 18.\n(4) Set: When struck by a harmful spell, has a 7% chance of Silencing the caster for 3 sec. Can only occur once every 60 sec.\n(5) Set: Chance on melee autoattack and spellcast to increase your damage and healing done by magical spells and effects by up to 65 for 10 sec.\n(6) Set: Restores 8 mana per 5 sec.\nSell Price: 1g 58s 81c",
+   "wordingOnly": false
+  },
+  {
+   "id": 16724,
+   "name": "Lightforge Gauntlets",
+   "quality": 3,
+   "icon": "inv_gauntlets_19",
+   "source": "https://foreverchanges.pro/items/new.json#16724",
+   "itemLevel": 59,
+   "inventoryType": "Hands",
+   "subclass": "Plate",
+   "armor": 386,
+   "weapon": null,
+   "stats": {
+    "spirit": 14,
+    "strength": 14,
+    "stamina": 9,
+    "intellect": 5
+   },
+   "resistances": {},
+   "effects": [
+    {
+     "kind": "Set",
+     "text": "(2) +8 All Resistances."
+    },
+    {
+     "kind": "Set",
+     "text": "(3) Increases damage and healing done by magical spells and effects by up to 18."
+    },
+    {
+     "kind": "Set",
+     "text": "(4) When struck by a harmful spell, has a 7% chance of Silencing the caster for 3 sec. Can only occur once every 60 sec."
+    },
+    {
+     "kind": "Set",
+     "text": "(5) Chance on melee autoattack and spellcast to increase your damage and healing done by magical spells and effects by up to 65 for 10 sec."
+    },
+    {
+     "kind": "Set",
+     "text": "(6) Restores 8 mana per 5 sec."
+    }
+   ],
+   "tooltip": "Lightforge Gauntlets\nBinds when equipped\nHands\tPlate\n386 Armor\n+14 Spirit\n+14 Strength\n+9 Stamina\n+5 Intellect\nRequires Level 54\nLightforge Armor (0/8)\n(2) Set: +8 All Resistances.\n(3) Set: Increases damage and healing done by magical spells and effects by up to 18.\n(4) Set: When struck by a harmful spell, has a 7% chance of Silencing the caster for 3 sec. Can only occur once every 60 sec.\n(5) Set: Chance on melee autoattack and spellcast to increase your damage and healing done by magical spells and effects by up to 65 for 10 sec.\n(6) Set: Restores 8 mana per 5 sec.\nSell Price: 1g 66s 75c",
+   "wordingOnly": false
+  },
+  {
+   "id": 16725,
+   "name": "Lightforge Boots",
+   "quality": 3,
+   "icon": "inv_boots_plate_03",
+   "source": "https://foreverchanges.pro/items/new.json#16725",
+   "itemLevel": 59,
+   "inventoryType": "Feet",
+   "subclass": "Plate",
+   "armor": 424,
+   "weapon": null,
+   "stats": {
+    "stamina": 18,
+    "spirit": 9,
+    "strength": 11
+   },
+   "resistances": {},
+   "effects": [
+    {
+     "kind": "Set",
+     "text": "(2) +8 All Resistances."
+    },
+    {
+     "kind": "Set",
+     "text": "(3) Increases damage and healing done by magical spells and effects by up to 18."
+    },
+    {
+     "kind": "Set",
+     "text": "(4) When struck by a harmful spell, has a 7% chance of Silencing the caster for 3 sec. Can only occur once every 60 sec."
+    },
+    {
+     "kind": "Set",
+     "text": "(5) Chance on melee autoattack and spellcast to increase your damage and healing done by magical spells and effects by up to 65 for 10 sec."
+    },
+    {
+     "kind": "Set",
+     "text": "(6) Restores 8 mana per 5 sec."
+    }
+   ],
+   "tooltip": "Lightforge Boots\nBinds when picked up\nFeet\tPlate\n424 Armor\n+18 Stamina\n+9 Spirit\n+11 Strength\nRequires Level 54\nLightforge Armor (0/8)\n(2) Set: +8 All Resistances.\n(3) Set: Increases damage and healing done by magical spells and effects by up to 18.\n(4) Set: When struck by a harmful spell, has a 7% chance of Silencing the caster for 3 sec. Can only occur once every 60 sec.\n(5) Set: Chance on melee autoattack and spellcast to increase your damage and healing done by magical spells and effects by up to 65 for 10 sec.\n(6) Set: Restores 8 mana per 5 sec.\nSell Price: 2g 48s 23c",
+   "wordingOnly": false
+  },
+  {
+   "id": 16729,
+   "name": "Lightforge Spaulders",
+   "quality": 3,
+   "icon": "inv_shoulder_10",
+   "source": "https://foreverchanges.pro/items/new.json#16729",
+   "itemLevel": 60,
+   "inventoryType": "Shoulder",
+   "subclass": "Plate",
+   "armor": 470,
+   "weapon": null,
+   "stats": {
+    "stamina": 15,
+    "intellect": 10,
+    "strength": 9,
+    "agility": 5
+   },
+   "resistances": {},
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "+9 Hit Rating"
+    },
+    {
+     "kind": "Set",
+     "text": "(2) +8 All Resistances."
+    },
+    {
+     "kind": "Set",
+     "text": "(3) Increases damage and healing done by magical spells and effects by up to 18."
+    },
+    {
+     "kind": "Set",
+     "text": "(4) When struck by a harmful spell, has a 7% chance of Silencing the caster for 3 sec. Can only occur once every 60 sec."
+    },
+    {
+     "kind": "Set",
+     "text": "(5) Chance on melee autoattack and spellcast to increase your damage and healing done by magical spells and effects by up to 65 for 10 sec."
+    },
+    {
+     "kind": "Set",
+     "text": "(6) Restores 8 mana per 5 sec."
+    }
+   ],
+   "tooltip": "Lightforge Spaulders\nBinds when picked up\nShoulder\tPlate\n470 Armor\n+15 Stamina\n+10 Intellect\n+9 Strength\n+5 Agility\nRequires Level 55\nEquip: +9 Hit Rating\nLightforge Armor (0/8)\n(2) Set: +8 All Resistances.\n(3) Set: Increases damage and healing done by magical spells and effects by up to 18.\n(4) Set: When struck by a harmful spell, has a 7% chance of Silencing the caster for 3 sec. Can only occur once every 60 sec.\n(5) Set: Chance on melee autoattack and spellcast to increase your damage and healing done by magical spells and effects by up to 65 for 10 sec.\n(6) Set: Restores 8 mana per 5 sec.\nSell Price: 2g 60s 64c",
+   "wordingOnly": false
+  },
+  {
+   "id": 16733,
+   "name": "Spaulders of Valor",
+   "quality": 3,
+   "icon": "inv_shoulder_30",
+   "source": "https://foreverchanges.pro/items/new.json#16733",
+   "itemLevel": 60,
+   "inventoryType": "Shoulder",
+   "subclass": "Plate",
+   "armor": 470,
+   "weapon": null,
+   "stats": {
+    "stamina": 17,
+    "strength": 11,
+    "agility": 9
+   },
+   "resistances": {},
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "+4 Defense Rating"
+    },
+    {
+     "kind": "Set",
+     "text": "(2) +8 All Resistances."
+    },
+    {
+     "kind": "Set",
+     "text": "(3) +15 Strength."
+    },
+    {
+     "kind": "Set",
+     "text": "(4) When struck in combat, has a 10% chance to remove a Disarm effect from yourself. Can only occur once every 60 sec."
+    },
+    {
+     "kind": "Set",
+     "text": "(5) Chance on melee attack to heal for 88 to 132 and generate 10 Rage"
+    },
+    {
+     "kind": "Set",
+     "text": "(6) Restores 15 health per 5 sec."
+    }
+   ],
+   "tooltip": "Spaulders of Valor\nBinds when picked up\nShoulder\tPlate\n470 Armor\n+17 Stamina\n+11 Strength\n+9 Agility\nRequires Level 55\nEquip: +4 Defense Rating\nBattlegear of Valor (0/8)\n(2) Set: +8 All Resistances.\n(3) Set: +15 Strength.\n(4) Set: When struck in combat, has a 10% chance to remove a Disarm effect from yourself. Can only occur once every 60 sec.\n(5) Set: Chance on melee attack to heal for 88 to 132 and generate 10 Rage\n(6) Set: Restores 15 health per 5 sec.\nSell Price: 2g 60s 64c",
+   "wordingOnly": true
+  },
+  {
+   "id": 16734,
+   "name": "Boots of Valor",
+   "quality": 3,
+   "icon": "inv_boots_plate_03",
+   "source": "https://foreverchanges.pro/items/new.json#16734",
+   "itemLevel": 59,
+   "inventoryType": "Feet",
+   "subclass": "Plate",
+   "armor": 424,
+   "weapon": null,
+   "stats": {
+    "stamina": 20,
+    "strength": 9,
+    "agility": 5
+   },
+   "resistances": {},
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "+2 Defense Rating"
+    },
+    {
+     "kind": "Set",
+     "text": "(2) +8 All Resistances."
+    },
+    {
+     "kind": "Set",
+     "text": "(3) +15 Strength."
+    },
+    {
+     "kind": "Set",
+     "text": "(4) When struck in combat, has a 10% chance to remove a Disarm effect from yourself. Can only occur once every 60 sec."
+    },
+    {
+     "kind": "Set",
+     "text": "(5) Chance on melee attack to heal for 88 to 132 and generate 10 Rage"
+    },
+    {
+     "kind": "Set",
+     "text": "(6) Restores 15 health per 5 sec."
+    }
+   ],
+   "tooltip": "Boots of Valor\nBinds when picked up\nFeet\tPlate\n424 Armor\n+20 Stamina\n+9 Strength\n+5 Agility\nRequires Level 54\nEquip: +2 Defense Rating\nBattlegear of Valor (0/8)\n(2) Set: +8 All Resistances.\n(3) Set: +15 Strength.\n(4) Set: When struck in combat, has a 10% chance to remove a Disarm effect from yourself. Can only occur once every 60 sec.\n(5) Set: Chance on melee attack to heal for 88 to 132 and generate 10 Rage\n(6) Set: Restores 15 health per 5 sec.\nSell Price: 2g 48s 23c",
+   "wordingOnly": false
+  },
+  {
+   "id": 16735,
+   "name": "Bracers of Valor",
+   "quality": 3,
+   "icon": "inv_bracer_18",
+   "source": "https://foreverchanges.pro/items/new.json#16735",
+   "itemLevel": 57,
+   "inventoryType": "Wrist",
+   "subclass": "Plate",
+   "armor": 261,
+   "weapon": null,
+   "stats": {
+    "stamina": 14,
+    "strength": 7,
+    "agility": 3,
+    "spirit": 2
+   },
+   "resistances": {},
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "+2 Defense Rating"
+    },
+    {
+     "kind": "Set",
+     "text": "(2) +8 All Resistances."
+    },
+    {
+     "kind": "Set",
+     "text": "(3) +15 Strength."
+    },
+    {
+     "kind": "Set",
+     "text": "(4) When struck in combat, has a 10% chance to remove a Disarm effect from yourself. Can only occur once every 60 sec."
+    },
+    {
+     "kind": "Set",
+     "text": "(5) Chance on melee attack to heal for 88 to 132 and generate 10 Rage"
+    },
+    {
+     "kind": "Set",
+     "text": "(6) Restores 15 health per 5 sec."
+    }
+   ],
+   "tooltip": "Bracers of Valor\nBinds when equipped\nWrist\tPlate\n261 Armor\n+14 Stamina\n+7 Strength\n+3 Agility\n+2 Spirit\nRequires Level 52\nEquip: +2 Defense Rating\nBattlegear of Valor (0/8)\n(2) Set: +8 All Resistances.\n(3) Set: +15 Strength.\n(4) Set: When struck in combat, has a 10% chance to remove a Disarm effect from yourself. Can only occur once every 60 sec.\n(5) Set: Chance on melee attack to heal for 88 to 132 and generate 10 Rage\n(6) Set: Restores 15 health per 5 sec.\nSell Price: 1g 49s 82c",
+   "wordingOnly": true
+  },
+  {
+   "id": 16736,
+   "name": "Belt of Valor",
+   "quality": 3,
+   "icon": "inv_belt_34",
+   "source": "https://foreverchanges.pro/items/new.json#16736",
+   "itemLevel": 58,
+   "inventoryType": "Waist",
+   "subclass": "Plate",
+   "armor": 341,
+   "weapon": null,
+   "stats": {
+    "strength": 14,
+    "stamina": 12,
+    "agility": 7,
+    "spirit": 4
+   },
+   "resistances": {},
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "+6 Defense Rating"
+    },
+    {
+     "kind": "Set",
+     "text": "(2) +8 All Resistances."
+    },
+    {
+     "kind": "Set",
+     "text": "(3) +15 Strength."
+    },
+    {
+     "kind": "Set",
+     "text": "(4) When struck in combat, has a 10% chance to remove a Disarm effect from yourself. Can only occur once every 60 sec."
+    },
+    {
+     "kind": "Set",
+     "text": "(5) Chance on melee attack to heal for 88 to 132 and generate 10 Rage"
+    },
+    {
+     "kind": "Set",
+     "text": "(6) Restores 15 health per 5 sec."
+    }
+   ],
+   "tooltip": "Belt of Valor\nBinds when equipped\nWaist\tPlate\n341 Armor\n+14 Strength\n+12 Stamina\n+7 Agility\n+4 Spirit\nRequires Level 53\nEquip: +6 Defense Rating\nBattlegear of Valor (0/8)\n(2) Set: +8 All Resistances.\n(3) Set: +15 Strength.\n(4) Set: When struck in combat, has a 10% chance to remove a Disarm effect from yourself. Can only occur once every 60 sec.\n(5) Set: Chance on melee attack to heal for 88 to 132 and generate 10 Rage\n(6) Set: Restores 15 health per 5 sec.\nSell Price: 1g 58s 81c",
+   "wordingOnly": false
+  },
+  {
+   "id": 16737,
+   "name": "Gauntlets of Valor",
+   "quality": 3,
+   "icon": "inv_gauntlets_26",
+   "source": "https://foreverchanges.pro/items/new.json#16737",
+   "itemLevel": 59,
+   "inventoryType": "Hands",
+   "subclass": "Plate",
+   "armor": 386,
+   "weapon": null,
+   "stats": {
+    "strength": 17,
+    "stamina": 10,
+    "spirit": 8,
+    "agility": 3
+   },
+   "resistances": {},
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "+4 Defense Rating"
+    },
+    {
+     "kind": "Set",
+     "text": "(2) +8 All Resistances."
+    },
+    {
+     "kind": "Set",
+     "text": "(3) +15 Strength."
+    },
+    {
+     "kind": "Set",
+     "text": "(4) When struck in combat, has a 10% chance to remove a Disarm effect from yourself. Can only occur once every 60 sec."
+    },
+    {
+     "kind": "Set",
+     "text": "(5) Chance on melee attack to heal for 88 to 132 and generate 10 Rage"
+    },
+    {
+     "kind": "Set",
+     "text": "(6) Restores 15 health per 5 sec."
+    }
+   ],
+   "tooltip": "Gauntlets of Valor\nBinds when equipped\nHands\tPlate\n386 Armor\n+17 Strength\n+10 Stamina\n+8 Spirit\n+3 Agility\nRequires Level 54\nEquip: +4 Defense Rating\nBattlegear of Valor (0/8)\n(2) Set: +8 All Resistances.\n(3) Set: +15 Strength.\n(4) Set: When struck in combat, has a 10% chance to remove a Disarm effect from yourself. Can only occur once every 60 sec.\n(5) Set: Chance on melee attack to heal for 88 to 132 and generate 10 Rage\n(6) Set: Restores 15 health per 5 sec.\nSell Price: 1g 66s 75c",
+   "wordingOnly": true
+  },
+  {
+   "id": 17705,
+   "name": "Thrash Blade",
+   "quality": 3,
+   "icon": "inv_sword_36",
+   "source": "https://foreverchanges.pro/items/new.json#17705",
+   "itemLevel": 53,
+   "inventoryType": "One-Hand",
+   "subclass": "Sword",
+   "armor": null,
+   "weapon": {
+    "minDamage": 66,
+    "maxDamage": 124,
+    "speed": 2.7,
+    "dps": 35.19
+   },
+   "stats": {},
+   "resistances": {},
+   "effects": [
+    {
+     "kind": "Chance on hit",
+     "text": "Grants an extra attack on your next swing."
+    }
+   ],
+   "tooltip": "Thrash Blade\nBinds when picked up\nUnique-Equipped\nOne-Hand\tSword\n66 - 124 Damage\tSpeed 2.70\n(35.2 damage per second)\nChance on hit: Grants an extra attack on your next swing.\nSell Price: 3g 37s 14c",
+   "wordingOnly": true
+  },
+  {
+   "id": 17733,
+   "name": "Fist of Stone",
+   "quality": 3,
+   "icon": "inv_hammer_17",
+   "source": "https://foreverchanges.pro/items/new.json#17733",
+   "itemLevel": 53,
+   "inventoryType": "Main Hand",
+   "subclass": "Mace",
+   "armor": null,
+   "weapon": {
+    "minDamage": 44,
+    "maxDamage": 83,
+    "speed": 1.8,
+    "dps": 35.28
+   },
+   "stats": {
+    "stamina": 11,
+    "spirit": 5
+   },
+   "resistances": {},
+   "effects": [
+    {
+     "kind": "Chance on hit",
+     "text": "Restores 32 mana. Restore 32 times as much if attacking an Earth Elementals, Golems, or Titan-forged enermy."
+    }
+   ],
+   "tooltip": "Fist of Stone\nBinds when picked up\nMain Hand\tMace\n44 - 83 Damage\tSpeed 1.80\n(35.3 damage per second)\n+11 Stamina\n+5 Spirit\nRequires Level 48\nChance on hit: Restores 32 mana. Restore 32 times as much if attacking an Earth Elementals, Golems, or Titan-forged enermy.\nSell Price: 3g 47s 35c",
+   "wordingOnly": true
+  },
+  {
+   "id": 17743,
+   "name": "Resurgence Rod",
+   "quality": 3,
+   "icon": "inv_staff_goldfeathered_01",
+   "source": "https://foreverchanges.pro/items/new.json#17743",
+   "itemLevel": 53,
+   "inventoryType": "Two-Hand",
+   "subclass": "Staff",
+   "armor": null,
+   "weapon": {
+    "minDamage": 103,
+    "maxDamage": 156,
+    "speed": 3.8,
+    "dps": 34.08
+   },
+   "stats": {},
+   "resistances": {},
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "+11 Health Regeneration"
+    },
+    {
+     "kind": "Equip",
+     "text": "+11 Mana Regeneration"
+    },
+    {
+     "kind": "Equip",
+     "text": "+112 Healing"
+    },
+    {
+     "kind": "Equip",
+     "text": "+37 Spell Damage"
+    }
+   ],
+   "tooltip": "Resurgence Rod\nBinds when picked up\nTwo-Hand\tStaff\n103 - 156 Damage\tSpeed 3.80\n(34.1 damage per second)\nEquip: +11 Health Regeneration\nEquip: +11 Mana Regeneration\nEquip: +112 Healing\nEquip: +37 Spell Damage\nSell Price: 4g 21s 42c",
+   "wordingOnly": false
+  },
+  {
+   "id": 17753,
+   "name": "Verdant Keeper's Aim",
+   "quality": 3,
+   "icon": "inv_weapon_bow_03",
+   "source": "https://foreverchanges.pro/items/new.json#17753",
+   "itemLevel": 53,
+   "inventoryType": "Ranged",
+   "subclass": "Bow",
+   "armor": null,
+   "weapon": {
+    "minDamage": 53,
+    "maxDamage": 100,
+    "speed": 2.8,
+    "dps": 27.32
+   },
+   "stats": {},
+   "resistances": {},
+   "effects": [
+    {
+     "kind": "Chance on hit",
+     "text": "Strike your target with Keeper's Sting for 23 to 33 Nature damage."
+    }
+   ],
+   "tooltip": "Verdant Keeper's Aim\nBinds when picked up\nRanged\tBow\n53 - 100 Damage\tSpeed 2.80\n(27.3 damage per second)\nChance on hit: Strike your target with Keeper's Sting for 23 to 33 Nature damage.\nSell Price: 2g 52s 85c",
+   "wordingOnly": true
+  },
+  {
+   "id": 17902,
+   "name": "Stormpike Insignia Rank 4",
+   "quality": 3,
+   "icon": "inv_jewelry_stormpiketrinket_03",
+   "source": "https://foreverchanges.pro/items/new.json#17902",
+   "itemLevel": 60,
+   "inventoryType": "Trinket",
+   "subclass": null,
+   "armor": null,
+   "weapon": null,
+   "stats": {},
+   "resistances": {
+    "frost": 8
+   },
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "+18 Health Regeneration"
+    },
+    {
+     "kind": "Equip",
+     "text": "+12 Dodge Rating"
+    },
+    {
+     "kind": "Use",
+     "text": "Returns you to the sanctuary of Dun Baldar. (2 Min Cooldown)"
+    }
+   ],
+   "tooltip": "Stormpike Insignia Rank 4\nBinds when picked up\nUnique\nTrinket\n+8 Frost Resistance\nEquip: +18 Health Regeneration\nEquip: +12 Dodge Rating\nUse: Returns you to the sanctuary of Dun Baldar. (2 Min Cooldown)",
+   "wordingOnly": true
+  },
+  {
+   "id": 17903,
+   "name": "Stormpike Insignia Rank 5",
+   "quality": 3,
+   "icon": "inv_jewelry_stormpiketrinket_04",
+   "source": "https://foreverchanges.pro/items/new.json#17903",
+   "itemLevel": 60,
+   "inventoryType": "Trinket",
+   "subclass": null,
+   "armor": null,
+   "weapon": null,
+   "stats": {},
+   "resistances": {
+    "frost": 10
+   },
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "+25 Health Regeneration"
+    },
+    {
+     "kind": "Equip",
+     "text": "+12 Dodge Rating"
+    },
+    {
+     "kind": "Use",
+     "text": "Returns you to the sanctuary of Dun Baldar. (2 Min Cooldown)"
+    }
+   ],
+   "tooltip": "Stormpike Insignia Rank 5\nBinds when picked up\nUnique\nTrinket\n+10 Frost Resistance\nEquip: +25 Health Regeneration\nEquip: +12 Dodge Rating\nUse: Returns you to the sanctuary of Dun Baldar. (2 Min Cooldown)",
+   "wordingOnly": true
+  },
+  {
+   "id": 17907,
+   "name": "Frostwolf Insignia Rank 4",
+   "quality": 3,
+   "icon": "inv_jewelry_frostwolftrinket_03",
+   "source": "https://foreverchanges.pro/items/new.json#17907",
+   "itemLevel": 60,
+   "inventoryType": "Trinket",
+   "subclass": null,
+   "armor": null,
+   "weapon": null,
+   "stats": {},
+   "resistances": {
+    "frost": 8
+   },
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "+18 Health Regeneration"
+    },
+    {
+     "kind": "Equip",
+     "text": "+12 Dodge Rating"
+    },
+    {
+     "kind": "Use",
+     "text": "Returns you to the sanctuary of Frostwolf Keep. (2 Min Cooldown)"
+    }
+   ],
+   "tooltip": "Frostwolf Insignia Rank 4\nBinds when picked up\nUnique\nTrinket\n+8 Frost Resistance\nEquip: +18 Health Regeneration\nEquip: +12 Dodge Rating\nUse: Returns you to the sanctuary of Frostwolf Keep. (2 Min Cooldown)",
+   "wordingOnly": true
+  },
+  {
+   "id": 17908,
+   "name": "Frostwolf Insignia Rank 5",
+   "quality": 3,
+   "icon": "inv_jewelry_frostwolftrinket_04",
+   "source": "https://foreverchanges.pro/items/new.json#17908",
+   "itemLevel": 60,
+   "inventoryType": "Trinket",
+   "subclass": null,
+   "armor": null,
+   "weapon": null,
+   "stats": {},
+   "resistances": {
+    "frost": 10
+   },
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "+25 Health Regeneration"
+    },
+    {
+     "kind": "Equip",
+     "text": "+12 Dodge Rating"
+    },
+    {
+     "kind": "Use",
+     "text": "Returns you to the sanctuary of Frostwolf Keep. (2 Min Cooldown)"
+    }
+   ],
+   "tooltip": "Frostwolf Insignia Rank 5\nBinds when picked up\nUnique\nTrinket\n+10 Frost Resistance\nEquip: +25 Health Regeneration\nEquip: +12 Dodge Rating\nUse: Returns you to the sanctuary of Frostwolf Keep. (2 Min Cooldown)",
+   "wordingOnly": true
+  },
+  {
+   "id": 18023,
+   "name": "Blood Ruby Pendant",
+   "quality": 3,
+   "icon": "inv_misc_gem_ruby_01",
+   "source": "https://foreverchanges.pro/items/new.json#18023",
+   "itemLevel": 59,
+   "inventoryType": "Neck",
+   "subclass": null,
+   "armor": null,
+   "weapon": null,
+   "stats": {
+    "intellect": 10,
+    "stamina": 10
+   },
+   "resistances": {},
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "+13 Arcane Spell Damage"
+    },
+    {
+     "kind": "Equip",
+     "text": "+13 Shadow Spell Damage"
+    }
+   ],
+   "tooltip": "Blood Ruby Pendant\nBinds when equipped\nNeck\n+10 Intellect\n+10 Stamina\nRequires Level 54\nEquip: +13 Arcane Spell Damage\nEquip: +13 Shadow Spell Damage\nSell Price: 1g 55s 38c",
+   "wordingOnly": true
+  },
+  {
+   "id": 18441,
+   "name": "Sergeant's Cape",
+   "quality": 3,
+   "icon": "inv_misc_cape_21",
+   "source": "https://foreverchanges.pro/items/new.json#18441",
+   "itemLevel": 50,
+   "inventoryType": "Back",
+   "subclass": "Cloth",
+   "armor": 96,
+   "weapon": null,
+   "stats": {
+    "stamina": 14
+   },
+   "resistances": {},
+   "effects": [],
+   "tooltip": "Sergeant's Cape\nBinds when picked up\nUnique\nBack\tCloth\n36 Armor\n+14 Stamina\n+60 Armor\nRequires Level 45\nSell Price: 41s 78c",
+   "wordingOnly": false
+  },
+  {
+   "id": 18602,
+   "name": "Tome of Sacrifice",
+   "quality": 3,
+   "icon": "inv_misc_book_06",
+   "source": "https://foreverchanges.pro/items/new.json#18602",
+   "itemLevel": 60,
+   "inventoryType": "Held In Off-hand",
+   "subclass": null,
+   "armor": null,
+   "weapon": null,
+   "stats": {
+    "stamina": 12
+   },
+   "resistances": {},
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "+12 Health Regeneration"
+    },
+    {
+     "kind": "Equip",
+     "text": "+13 Shadow Spell Damage"
+    }
+   ],
+   "tooltip": "Tome of Sacrifice\nBinds when picked up\nUnique\nHeld In Off-hand\n+12 Stamina\nClasses: Warlock\nEquip: +12 Health Regeneration\nEquip: +13 Shadow Spell Damage",
+   "wordingOnly": false
+  },
+  {
+   "id": 18634,
+   "name": "Gyrofreeze Ice Reflector",
+   "quality": 3,
+   "icon": "inv_misc_enggizmos_02",
+   "source": "https://foreverchanges.pro/items/new.json#18634",
+   "itemLevel": 52,
+   "inventoryType": "Trinket",
+   "subclass": null,
+   "armor": null,
+   "weapon": null,
+   "stats": {},
+   "resistances": {
+    "frost": 15
+   },
+   "effects": [
+    {
+     "kind": "Use",
+     "text": "Reflects Frost spells back at their caster for 5 sec. (5 Min Cooldown)"
+    }
+   ],
+   "tooltip": "Gyrofreeze Ice Reflector\nBinds when equipped\nUnique-Equipped\nTrinket\n+15 Frost Resistance\nRequires Level 47\nRequires Engineering (260)\nUse: Reflects Frost spells back at their caster for 5 sec. (5 Min Cooldown)\nSell Price: 1g 25s",
+   "wordingOnly": true
+  },
+  {
+   "id": 18638,
+   "name": "Hyper-Radiant Flame Reflector",
+   "quality": 3,
+   "icon": "inv_misc_enggizmos_04",
+   "source": "https://foreverchanges.pro/items/new.json#18638",
+   "itemLevel": 58,
+   "inventoryType": "Trinket",
+   "subclass": null,
+   "armor": null,
+   "weapon": null,
+   "stats": {},
+   "resistances": {
+    "fire": 18
+   },
+   "effects": [
+    {
+     "kind": "Use",
+     "text": "Reflects Fire spells back at their caster for 5 sec. (5 Min Cooldown)"
+    }
+   ],
+   "tooltip": "Hyper-Radiant Flame Reflector\nBinds when equipped\nUnique-Equipped\nTrinket\n+18 Fire Resistance\nRequires Level 53\nRequires Engineering (290)\nUse: Reflects Fire spells back at their caster for 5 sec. (5 Min Cooldown)\nSell Price: 1g 25s",
+   "wordingOnly": true
+  },
+  {
+   "id": 18639,
+   "name": "Ultra-Flash Shadow Reflector",
+   "quality": 3,
+   "icon": "inv_misc_enggizmos_16",
+   "source": "https://foreverchanges.pro/items/new.json#18639",
+   "itemLevel": 60,
+   "inventoryType": "Trinket",
+   "subclass": null,
+   "armor": null,
+   "weapon": null,
+   "stats": {},
+   "resistances": {
+    "shadow": 20
+   },
+   "effects": [
+    {
+     "kind": "Use",
+     "text": "Reflects Shadow spells back at their caster for 5 sec. (5 Min Cooldown)"
+    }
+   ],
+   "tooltip": "Ultra-Flash Shadow Reflector\nBinds when equipped\nUnique-Equipped\nTrinket\n+20 Shadow Resistance\nRequires Level 55\nRequires Engineering (300)\nUse: Reflects Shadow spells back at their caster for 5 sec. (5 Min Cooldown)\nSell Price: 1g 25s",
+   "wordingOnly": true
+  },
+  {
+   "id": 18709,
+   "name": "Arena Wristguards",
+   "quality": 3,
+   "icon": "inv_bracer_10",
+   "source": "https://foreverchanges.pro/items/new.json#18709",
+   "itemLevel": 50,
+   "inventoryType": "Wrist",
+   "subclass": "Cloth",
+   "armor": 31,
+   "weapon": null,
+   "stats": {
+    "spirit": 6
+   },
+   "resistances": {},
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "+14 Critical Strike Rating"
+    }
+   ],
+   "tooltip": "Arena Wristguards\nBinds when equipped\nWrist\tCloth\n31 Armor\n+6 Spirit\nRequires Level 45\nEquip: +14 Critical Strike Rating\nSell Price: 57s 58c",
+   "wordingOnly": true
+  },
+  {
+   "id": 18711,
+   "name": "Arena Bands",
+   "quality": 3,
+   "icon": "inv_bracer_03",
+   "source": "https://foreverchanges.pro/items/new.json#18711",
+   "itemLevel": 50,
+   "inventoryType": "Wrist",
+   "subclass": "Mail",
+   "armor": 131,
+   "weapon": null,
+   "stats": {
+    "stamina": 6
+   },
+   "resistances": {},
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "+28 Attack Power"
+    }
+   ],
+   "tooltip": "Arena Bands\nBinds when equipped\nWrist\tMail\n131 Armor\n+6 Stamina\nRequires Level 45\nEquip: +28 Attack Power\nSell Price: 87s",
+   "wordingOnly": true
+  },
+  {
+   "id": 18712,
+   "name": "Arena Vambraces",
+   "quality": 3,
+   "icon": "inv_bracer_19",
+   "source": "https://foreverchanges.pro/items/new.json#18712",
+   "itemLevel": 50,
+   "inventoryType": "Wrist",
+   "subclass": "Plate",
+   "armor": 371,
+   "weapon": null,
+   "stats": {
+    "stamina": 6
+   },
+   "resistances": {},
+   "effects": [],
+   "tooltip": "Arena Vambraces\nBinds when equipped\nWrist\tPlate\n231 Armor\n+6 Stamina\n+140 Armor\nRequires Level 45\nSell Price: 58s 21c",
+   "wordingOnly": false
+  },
+  {
+   "id": 18762,
+   "name": "Shard of the Green Flame",
+   "quality": 3,
+   "icon": "inv_misc_shadowegg",
+   "source": "https://foreverchanges.pro/items/new.json#18762",
+   "itemLevel": 54,
+   "inventoryType": "Held In Off-hand",
+   "subclass": null,
+   "armor": null,
+   "weapon": null,
+   "stats": {
+    "stamina": 12
+   },
+   "resistances": {},
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "+16 Fire Spell Damage"
+    }
+   ],
+   "tooltip": "Shard of the Green Flame\nBinds when picked up\nHeld In Off-hand\n+12 Stamina\nEquip: +16 Fire Spell Damage\nSell Price: 2g 76s 31c",
+   "wordingOnly": true
+  },
+  {
+   "id": 19024,
+   "name": "Arena Grand Master",
+   "quality": 3,
+   "icon": "inv_misc_armorkit_04",
+   "source": "https://foreverchanges.pro/items/new.json#19024",
+   "itemLevel": 55,
+   "inventoryType": "Trinket",
+   "subclass": null,
+   "armor": null,
+   "weapon": null,
+   "stats": {},
+   "resistances": {},
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "+12 Dodge Rating"
+    },
+    {
+     "kind": "Use",
+     "text": "Absorbs 810 to 1350 damage. Lasts 20 sec. (9 Min Cooldown)"
+    },
+    {
+     "kind": "Equip",
+     "text": "Reduces your damage taken by 6% in the Battle Ring and The Maul."
+    }
+   ],
+   "tooltip": "Arena Grand Master\nBinds when picked up\nUnique-Equipped: Arena Master (1)\nTrinket\nRequires Level 50\nEquip: +12 Dodge Rating\nUse: Absorbs 810 to 1350 damage. Lasts 20 sec. (9 Min Cooldown)\nEquip: Reduces your damage taken by 6% in the Battle Ring and The Maul.\nSell Price: 1g 31c",
+   "wordingOnly": true
+  },
+  {
+   "id": 19043,
+   "name": "Heavy Timbermaw Belt",
+   "quality": 3,
+   "icon": "inv_belt_16",
+   "source": "https://foreverchanges.pro/items/new.json#19043",
+   "itemLevel": 58,
+   "inventoryType": "Waist",
+   "subclass": "Mail",
+   "armor": 193,
+   "weapon": null,
+   "stats": {
+    "stamina": 9
+   },
+   "resistances": {},
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "+42 Attack Power"
+    }
+   ],
+   "tooltip": "Heavy Timbermaw Belt\nBinds when equipped\nWaist\tMail\n193 Armor\n+9 Stamina\nRequires Level 53\nEquip: +42 Attack Power\nSell Price: 1g 32s 91c",
+   "wordingOnly": true
+  },
+  {
+   "id": 19044,
+   "name": "Might of the Timbermaw",
+   "quality": 3,
+   "icon": "inv_belt_09",
+   "source": "https://foreverchanges.pro/items/new.json#19044",
+   "itemLevel": 58,
+   "inventoryType": "Waist",
+   "subclass": "Leather",
+   "armor": 93,
+   "weapon": null,
+   "stats": {
+    "strength": 21,
+    "stamina": 9,
+    "agility": 14
+   },
+   "resistances": {},
+   "effects": [],
+   "tooltip": "Might of the Timbermaw\nBinds when equipped\nWaist\tLeather\n93 Armor\n+21 Strength\n+9 Stamina\n+14 Agility\nRequires Level 53\nSell Price: 1g 11s 16c",
+   "wordingOnly": false
+  },
+  {
+   "id": 19047,
+   "name": "Wisdom of the Timbermaw",
+   "quality": 3,
+   "icon": "inv_belt_09",
+   "source": "https://foreverchanges.pro/items/new.json#19047",
+   "itemLevel": 58,
+   "inventoryType": "Waist",
+   "subclass": "Cloth",
+   "armor": 46,
+   "weapon": null,
+   "stats": {
+    "intellect": 14,
+    "spirit": 9
+   },
+   "resistances": {},
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "+31 Healing"
+    },
+    {
+     "kind": "Equip",
+     "text": "+11 Spell Damage"
+    }
+   ],
+   "tooltip": "Wisdom of the Timbermaw\nBinds when equipped\nWaist\tCloth\n46 Armor\n+14 Intellect\n+9 Spirit\nRequires Level 53\nEquip: +31 Healing\nEquip: +11 Spell Damage\nSell Price: 92s 32c",
+   "wordingOnly": false
+  },
+  {
+   "id": 19052,
+   "name": "Dawn Treaders",
+   "quality": 3,
+   "icon": "inv_boots_cloth_08",
+   "source": "https://foreverchanges.pro/items/new.json#19052",
+   "itemLevel": 58,
+   "inventoryType": "Feet",
+   "subclass": "Leather",
+   "armor": 114,
+   "weapon": null,
+   "stats": {
+    "stamina": 18,
+    "strength": 9,
+    "agility": 14
+   },
+   "resistances": {},
+   "effects": [],
+   "tooltip": "Dawn Treaders\nBinds when equipped\nFeet\tLeather\n114 Armor\n+18 Stamina\n+9 Strength\n+14 Agility\nRequires Level 53\nSell Price: 1g 76s 21c",
+   "wordingOnly": false
+  },
+  {
+   "id": 19056,
+   "name": "Argent Boots",
+   "quality": 3,
+   "icon": "inv_boots_cloth_03",
+   "source": "https://foreverchanges.pro/items/new.json#19056",
+   "itemLevel": 58,
+   "inventoryType": "Feet",
+   "subclass": "Cloth",
+   "armor": 57,
+   "weapon": null,
+   "stats": {
+    "stamina": 21
+   },
+   "resistances": {
+    "shadow": 4
+   },
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "+8 Spell Power"
+    }
+   ],
+   "tooltip": "Argent Boots\nBinds when equipped\nFeet\tCloth\n57 Armor\n+21 Stamina\n+4 Shadow Resistance\nRequires Level 53\nEquip: +8 Spell Power\nSell Price: 1g 29s 41c",
+   "wordingOnly": false
+  },
+  {
+   "id": 19065,
+   "name": "Emerald Circle",
+   "quality": 3,
+   "icon": "inv_jewelry_ring_37",
+   "source": "https://foreverchanges.pro/items/new.json#19065",
+   "itemLevel": 59,
+   "inventoryType": "Finger",
+   "subclass": null,
+   "armor": null,
+   "weapon": null,
+   "stats": {
+    "stamina": 14,
+    "spirit": 8
+   },
+   "resistances": {},
+   "effects": [],
+   "tooltip": "Emerald Circle\nBinds when picked up\nFinger\n+14 Stamina\n+8 Spirit\nSell Price: 1g 78s 31c",
+   "wordingOnly": false
+  },
+  {
+   "id": 19083,
+   "name": "Frostwolf Legionnaire's Cloak",
+   "quality": 3,
+   "icon": "inv_misc_cape_16",
+   "source": "https://foreverchanges.pro/items/new.json#19083",
+   "itemLevel": 60,
+   "inventoryType": "Back",
+   "subclass": "Cloth",
+   "armor": 43,
+   "weapon": null,
+   "stats": {
+    "stamina": 11
+   },
+   "resistances": {
+    "frost": 5
+   },
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "+24 Attack Power"
+    }
+   ],
+   "tooltip": "Frostwolf Legionnaire's Cloak\nBinds when picked up\nBack\tCloth\n43 Armor\n+11 Stamina\n+5 Frost Resistance\nRequires Level 55\nEquip: +24 Attack Power\nSell Price: 1g 50s 44c",
+   "wordingOnly": true
+  },
+  {
+   "id": 19084,
+   "name": "Stormpike Soldier's Cloak",
+   "quality": 3,
+   "icon": "inv_misc_cape_18",
+   "source": "https://foreverchanges.pro/items/new.json#19084",
+   "itemLevel": 60,
+   "inventoryType": "Back",
+   "subclass": "Cloth",
+   "armor": 43,
+   "weapon": null,
+   "stats": {
+    "stamina": 11
+   },
+   "resistances": {
+    "frost": 5
+   },
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "+24 Attack Power"
+    }
+   ],
+   "tooltip": "Stormpike Soldier's Cloak\nBinds when picked up\nBack\tCloth\n43 Armor\n+11 Stamina\n+5 Frost Resistance\nRequires Level 55\nEquip: +24 Attack Power\nSell Price: 1g 51s",
+   "wordingOnly": true
+  },
+  {
+   "id": 19085,
+   "name": "Frostwolf Advisor's Cloak",
+   "quality": 3,
+   "icon": "inv_misc_cape_16",
+   "source": "https://foreverchanges.pro/items/new.json#19085",
+   "itemLevel": 60,
+   "inventoryType": "Back",
+   "subclass": "Cloth",
+   "armor": 43,
+   "weapon": null,
+   "stats": {
+    "stamina": 11
+   },
+   "resistances": {
+    "frost": 5
+   },
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "+14 Spell Power"
+    }
+   ],
+   "tooltip": "Frostwolf Advisor's Cloak\nBinds when picked up\nBack\tCloth\n43 Armor\n+11 Stamina\n+5 Frost Resistance\nRequires Level 55\nEquip: +14 Spell Power\nSell Price: 1g 51s 55c",
+   "wordingOnly": true
+  },
+  {
+   "id": 19086,
+   "name": "Stormpike Sage's Cloak",
+   "quality": 3,
+   "icon": "inv_misc_cape_18",
+   "source": "https://foreverchanges.pro/items/new.json#19086",
+   "itemLevel": 60,
+   "inventoryType": "Back",
+   "subclass": "Cloth",
+   "armor": 43,
+   "weapon": null,
+   "stats": {
+    "stamina": 11
+   },
+   "resistances": {
+    "frost": 5
+   },
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "+14 Spell Power"
+    }
+   ],
+   "tooltip": "Stormpike Sage's Cloak\nBinds when picked up\nBack\tCloth\n43 Armor\n+11 Stamina\n+5 Frost Resistance\nRequires Level 55\nEquip: +14 Spell Power\nSell Price: 1g 52s 9c",
+   "wordingOnly": true
+  },
+  {
+   "id": 19090,
+   "name": "Frostwolf Cloth Belt",
+   "quality": 3,
+   "icon": "inv_belt_04",
+   "source": "https://foreverchanges.pro/items/new.json#19090",
+   "itemLevel": 60,
+   "inventoryType": "Waist",
+   "subclass": "Cloth",
+   "armor": 48,
+   "weapon": null,
+   "stats": {
+    "intellect": 10,
+    "stamina": 11
+   },
+   "resistances": {
+    "frost": 5
+   },
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "+18 Spell Power"
+    }
+   ],
+   "tooltip": "Frostwolf Cloth Belt\nBinds when picked up\nWaist\tCloth\n48 Armor\n+10 Intellect\n+11 Stamina\n+5 Frost Resistance\nRequires Level 55\nEquip: +18 Spell Power\nSell Price: 1g 2s 85c",
+   "wordingOnly": true
+  },
+  {
+   "id": 19094,
+   "name": "Stormpike Cloth Girdle",
+   "quality": 3,
+   "icon": "inv_belt_04",
+   "source": "https://foreverchanges.pro/items/new.json#19094",
+   "itemLevel": 60,
+   "inventoryType": "Waist",
+   "subclass": "Cloth",
+   "armor": 48,
+   "weapon": null,
+   "stats": {
+    "intellect": 10,
+    "stamina": 11
+   },
+   "resistances": {
+    "frost": 5
+   },
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "+18 Spell Power"
+    }
+   ],
+   "tooltip": "Stormpike Cloth Girdle\nBinds when picked up\nWaist\tCloth\n48 Armor\n+10 Intellect\n+11 Stamina\n+5 Frost Resistance\nRequires Level 55\nEquip: +18 Spell Power\nSell Price: 94s 88c",
+   "wordingOnly": true
+  },
+  {
+   "id": 19095,
+   "name": "Frostwolf Legionnaire's Pendant",
+   "quality": 3,
+   "icon": "inv_jewelry_necklace_16",
+   "source": "https://foreverchanges.pro/items/new.json#19095",
+   "itemLevel": 60,
+   "inventoryType": "Neck",
+   "subclass": null,
+   "armor": null,
+   "weapon": null,
+   "stats": {
+    "stamina": 15
+   },
+   "resistances": {},
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "+18 Attack Power"
+    }
+   ],
+   "tooltip": "Frostwolf Legionnaire's Pendant\nBinds when picked up\nNeck\n+15 Stamina\nRequires Level 55\nEquip: +18 Attack Power\nSell Price: 1g 79s 12c",
+   "wordingOnly": true
+  },
+  {
+   "id": 19096,
+   "name": "Frostwolf Advisor's Pendant",
+   "quality": 3,
+   "icon": "inv_jewelry_necklace_07",
+   "source": "https://foreverchanges.pro/items/new.json#19096",
+   "itemLevel": 60,
+   "inventoryType": "Neck",
+   "subclass": null,
+   "armor": null,
+   "weapon": null,
+   "stats": {
+    "stamina": 10,
+    "intellect": 10
+   },
+   "resistances": {},
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "+4 Mana Regeneration"
+    }
+   ],
+   "tooltip": "Frostwolf Advisor's Pendant\nBinds when picked up\nNeck\n+10 Stamina\n+10 Intellect\nRequires Level 55\nEquip: +4 Mana Regeneration\nSell Price: 1g 79s 12c",
+   "wordingOnly": true
+  },
+  {
+   "id": 19097,
+   "name": "Stormpike Soldier's Pendant",
+   "quality": 3,
+   "icon": "inv_jewelry_necklace_15",
+   "source": "https://foreverchanges.pro/items/new.json#19097",
+   "itemLevel": 60,
+   "inventoryType": "Neck",
+   "subclass": null,
+   "armor": null,
+   "weapon": null,
+   "stats": {
+    "stamina": 15
+   },
+   "resistances": {},
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "+18 Attack Power"
+    }
+   ],
+   "tooltip": "Stormpike Soldier's Pendant\nBinds when picked up\nNeck\n+15 Stamina\nRequires Level 55\nEquip: +18 Attack Power\nSell Price: 1g 79s 12c",
+   "wordingOnly": true
+  },
+  {
+   "id": 19098,
+   "name": "Stormpike Sage's Pendant",
+   "quality": 3,
+   "icon": "inv_jewelry_necklace_08",
+   "source": "https://foreverchanges.pro/items/new.json#19098",
+   "itemLevel": 60,
+   "inventoryType": "Neck",
+   "subclass": null,
+   "armor": null,
+   "weapon": null,
+   "stats": {
+    "stamina": 10,
+    "intellect": 10
+   },
+   "resistances": {},
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "+4 Mana Regeneration"
+    }
+   ],
+   "tooltip": "Stormpike Sage's Pendant\nBinds when picked up\nNeck\n+10 Stamina\n+10 Intellect\nRequires Level 55\nEquip: +4 Mana Regeneration\nSell Price: 1g 79s 12c",
+   "wordingOnly": true
+  },
+  {
+   "id": 19121,
+   "name": "Deep Woodlands Cloak",
+   "quality": 3,
+   "icon": "inv_misc_cape_17",
+   "source": "https://foreverchanges.pro/items/new.json#19121",
+   "itemLevel": 51,
+   "inventoryType": "Back",
+   "subclass": "Cloth",
+   "armor": 37,
+   "weapon": null,
+   "stats": {
+    "intellect": 9,
+    "stamina": 6
+   },
+   "resistances": {},
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "+12 Spell Power"
+    }
+   ],
+   "tooltip": "Deep Woodlands Cloak\nBinds when picked up\nBack\tCloth\n37 Armor\n+9 Intellect\n+6 Stamina\nEquip: +12 Spell Power\nSell Price: 85s 85c",
+   "wordingOnly": true
+  },
+  {
+   "id": 19302,
+   "name": "Darkmoon Ring",
+   "quality": 3,
+   "icon": "inv_jewelry_ring_34",
+   "source": "https://foreverchanges.pro/items/new.json#19302",
+   "itemLevel": 55,
+   "inventoryType": "Finger",
+   "subclass": null,
+   "armor": null,
+   "weapon": null,
+   "stats": {
+    "stamina": 14
+   },
+   "resistances": {},
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "+14 Health Regeneration"
+    }
+   ],
+   "tooltip": "Darkmoon Ring\nBinds when picked up\nFinger\n+14 Stamina\nRequires Level 50\nEquip: +14 Health Regeneration\nSell Price: 1g 51s 52c",
+   "wordingOnly": false
+  },
+  {
+   "id": 19303,
+   "name": "Darkmoon Necklace",
+   "quality": 3,
+   "icon": "inv_jewelry_necklace_11",
+   "source": "https://foreverchanges.pro/items/new.json#19303",
+   "itemLevel": 55,
+   "inventoryType": "Neck",
+   "subclass": null,
+   "armor": null,
+   "weapon": null,
+   "stats": {
+    "intellect": 6
+   },
+   "resistances": {},
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "+6 Mana Regeneration"
+    }
+   ],
+   "tooltip": "Darkmoon Necklace\nBinds when picked up\nNeck\n+6 Intellect\nRequires Level 50\nEquip: +6 Mana Regeneration\nSell Price: 1g 25s",
+   "wordingOnly": true
+  },
+  {
+   "id": 19519,
+   "name": "Advisor's Ring",
+   "quality": 3,
+   "icon": "inv_jewelry_ring_20",
+   "source": "https://foreverchanges.pro/items/new.json#19519",
+   "itemLevel": 53,
+   "inventoryType": "Finger",
+   "subclass": null,
+   "armor": null,
+   "weapon": null,
+   "stats": {
+    "stamina": 6
+   },
+   "resistances": {},
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "+4 Mana Regeneration"
+    },
+    {
+     "kind": "Equip",
+     "text": "+12 Spell Power"
+    }
+   ],
+   "tooltip": "Advisor's Ring\nBinds when picked up\nUnique\nFinger\n+6 Stamina\nRequires Level 48\nEquip: +4 Mana Regeneration\nEquip: +12 Spell Power\nSell Price: 1g 50s",
+   "wordingOnly": true
+  },
+  {
+   "id": 19523,
+   "name": "Lorekeeper's Ring",
+   "quality": 3,
+   "icon": "inv_jewelry_ring_28",
+   "source": "https://foreverchanges.pro/items/new.json#19523",
+   "itemLevel": 53,
+   "inventoryType": "Finger",
+   "subclass": null,
+   "armor": null,
+   "weapon": null,
+   "stats": {
+    "stamina": 6
+   },
+   "resistances": {},
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "+4 Mana Regeneration"
+    },
+    {
+     "kind": "Equip",
+     "text": "+12 Spell Power"
+    }
+   ],
+   "tooltip": "Lorekeeper's Ring\nBinds when picked up\nUnique\nFinger\n+6 Stamina\nRequires Level 48\nEquip: +4 Mana Regeneration\nEquip: +12 Spell Power\nSell Price: 1g 50s",
+   "wordingOnly": true
+  },
+  {
+   "id": 19527,
+   "name": "Battle Healer's Cloak",
+   "quality": 3,
+   "icon": "inv_misc_cape_18",
+   "source": "https://foreverchanges.pro/items/new.json#19527",
+   "itemLevel": 53,
+   "inventoryType": "Back",
+   "subclass": "Cloth",
+   "armor": 38,
+   "weapon": null,
+   "stats": {
+    "stamina": 9,
+    "spirit": 6
+   },
+   "resistances": {},
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "+22 Healing"
+    },
+    {
+     "kind": "Equip",
+     "text": "+7 Spell Damage"
+    }
+   ],
+   "tooltip": "Battle Healer's Cloak\nBinds when picked up\nUnique\nBack\tCloth\n38 Armor\n+9 Stamina\n+6 Spirit\nRequires Level 48\nEquip: +22 Healing\nEquip: +7 Spell Damage\nSell Price: 96s 31c",
+   "wordingOnly": true
+  },
+  {
+   "id": 19531,
+   "name": "Caretaker's Cape",
+   "quality": 3,
+   "icon": "inv_misc_cape_13",
+   "source": "https://foreverchanges.pro/items/new.json#19531",
+   "itemLevel": 53,
+   "inventoryType": "Back",
+   "subclass": "Cloth",
+   "armor": 38,
+   "weapon": null,
+   "stats": {
+    "stamina": 9,
+    "spirit": 6
+   },
+   "resistances": {},
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "+22 Healing"
+    },
+    {
+     "kind": "Equip",
+     "text": "+7 Spell Damage"
+    }
+   ],
+   "tooltip": "Caretaker's Cape\nBinds when picked up\nUnique\nBack\tCloth\n38 Armor\n+9 Stamina\n+6 Spirit\nRequires Level 48\nEquip: +22 Healing\nEquip: +7 Spell Damage\nSell Price: 1g 48c",
+   "wordingOnly": true
+  },
+  {
+   "id": 19567,
+   "name": "Advisor's Gnarled Staff",
+   "quality": 3,
+   "icon": "inv_staff_25",
+   "source": "https://foreverchanges.pro/items/new.json#19567",
+   "itemLevel": 53,
+   "inventoryType": "Two-Hand",
+   "subclass": "Staff",
+   "armor": null,
+   "weapon": {
+    "minDamage": 106,
+    "maxDamage": 160,
+    "speed": 2.9,
+    "dps": 45.86
+   },
+   "stats": {
+    "stamina": 18,
+    "intellect": 11
+   },
+   "resistances": {},
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "+7 Mana Regeneration"
+    }
+   ],
+   "tooltip": "Advisor's Gnarled Staff\nBinds when picked up\nTwo-Hand\tStaff\n106 - 160 Damage\tSpeed 2.90\n(45.9 damage per second)\n+18 Stamina\n+11 Intellect\nRequires Level 48\nEquip: +7 Mana Regeneration\nSell Price: 4g 1s 95c",
+   "wordingOnly": true
+  },
+  {
+   "id": 19571,
+   "name": "Lorekeeper's Staff",
+   "quality": 3,
+   "icon": "inv_staff_28",
+   "source": "https://foreverchanges.pro/items/new.json#19571",
+   "itemLevel": 53,
+   "inventoryType": "Two-Hand",
+   "subclass": "Staff",
+   "armor": null,
+   "weapon": {
+    "minDamage": 106,
+    "maxDamage": 160,
+    "speed": 2.9,
+    "dps": 45.86
+   },
+   "stats": {
+    "stamina": 18,
+    "intellect": 11
+   },
+   "resistances": {},
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "+7 Mana Regeneration"
+    }
+   ],
+   "tooltip": "Lorekeeper's Staff\nBinds when picked up\nTwo-Hand\tStaff\n106 - 160 Damage\tSpeed 2.90\n(45.9 damage per second)\n+18 Stamina\n+11 Intellect\nRequires Level 48\nEquip: +7 Mana Regeneration\nSell Price: 4g 18s 56c",
+   "wordingOnly": true
+  },
+  {
+   "id": 19575,
+   "name": "Strength of Mugamba",
+   "quality": 3,
+   "icon": "inv_jewelry_necklace_24",
+   "source": "https://foreverchanges.pro/items/new.json#19575",
+   "itemLevel": 60,
+   "inventoryType": "Neck",
+   "subclass": null,
+   "armor": null,
+   "weapon": null,
+   "stats": {
+    "agility": 6,
+    "strength": 7,
+    "stamina": 10
+   },
+   "resistances": {},
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "+4 Defense Rating"
+    }
+   ],
+   "tooltip": "Strength of Mugamba\nBinds when picked up\nUnique\nNeck\n+6 Agility\n+7 Strength\n+10 Stamina\nClasses: Warrior\nEquip: +4 Defense Rating",
+   "wordingOnly": true
+  },
+  {
+   "id": 19592,
+   "name": "The Eye of Zuldazar",
+   "quality": 3,
+   "icon": "inv_jewelry_necklace_24",
+   "source": "https://foreverchanges.pro/items/new.json#19592",
+   "itemLevel": 60,
+   "inventoryType": "Neck",
+   "subclass": null,
+   "armor": null,
+   "weapon": null,
+   "stats": {
+    "intellect": 7,
+    "spirit": 10,
+    "stamina": 6
+   },
+   "resistances": {},
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "+13 Healing"
+    }
+   ],
+   "tooltip": "The Eye of Zuldazar\nBinds when picked up\nUnique\nNeck\n+7 Intellect\n+10 Spirit\n+6 Stamina\nClasses: Priest\nEquip: +13 Healing",
+   "wordingOnly": true
+  },
+  {
+   "id": 19599,
+   "name": "Pebble of Kajaro",
+   "quality": 3,
+   "icon": "inv_jewelry_necklace_24",
+   "source": "https://foreverchanges.pro/items/new.json#19599",
+   "itemLevel": 60,
+   "inventoryType": "Neck",
+   "subclass": null,
+   "armor": null,
+   "weapon": null,
+   "stats": {
+    "intellect": 10,
+    "spirit": 6,
+    "stamina": 7
+   },
+   "resistances": {},
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "+7 Spell Power"
+    }
+   ],
+   "tooltip": "Pebble of Kajaro\nBinds when picked up\nUnique\nNeck\n+10 Intellect\n+6 Spirit\n+7 Stamina\nClasses: Mage\nEquip: +7 Spell Power",
+   "wordingOnly": true
+  },
+  {
+   "id": 19603,
+   "name": "Kezan's Taint",
+   "quality": 3,
+   "icon": "inv_jewelry_necklace_24",
+   "source": "https://foreverchanges.pro/items/new.json#19603",
+   "itemLevel": 60,
+   "inventoryType": "Neck",
+   "subclass": null,
+   "armor": null,
+   "weapon": null,
+   "stats": {
+    "stamina": 10,
+    "intellect": 6
+   },
+   "resistances": {},
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "+12 Spell Power"
+    }
+   ],
+   "tooltip": "Kezan's Taint\nBinds when picked up\nUnique\nNeck\n+10 Stamina\n+6 Intellect\nClasses: Warlock\nEquip: +12 Spell Power",
+   "wordingOnly": true
+  },
+  {
+   "id": 19986,
+   "name": "Pirate's Eye Patch",
+   "quality": 3,
+   "icon": "inv_helmet_46",
+   "source": "https://foreverchanges.pro/items/new.json#19986",
+   "itemLevel": 52,
+   "inventoryType": "Head",
+   "subclass": "Leather",
+   "armor": 122,
+   "weapon": null,
+   "stats": {
+    "stamina": 20,
+    "agility": 12
+   },
+   "resistances": {},
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "Reduces the hit chance of Fear effects against you by 4%."
+    }
+   ],
+   "tooltip": "Pirate's Eye Patch\nBinds when picked up\nHead\tLeather\n122 Armor\n+20 Stamina\n+12 Agility\nEquip: Reduces the hit chance of Fear effects against you by 4%.\n\"Arrrrrgh!\"\nSell Price: 1g 13s 76c",
+   "wordingOnly": true
+  },
+  {
+   "id": 19989,
+   "name": "Tome of Devouring Shadows",
+   "quality": 3,
+   "icon": "inv_misc_book_11",
+   "source": "https://foreverchanges.pro/items/new.json#19989",
+   "itemLevel": 52,
+   "inventoryType": "Held In Off-hand",
+   "subclass": null,
+   "armor": null,
+   "weapon": null,
+   "stats": {},
+   "resistances": {
+    "nature": 6
+   },
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "+20 Shadow Spell Damage"
+    }
+   ],
+   "tooltip": "Tome of Devouring Shadows\nBinds when picked up\nHeld In Off-hand\n+6 Nature Resistance\nEquip: +20 Shadow Spell Damage\n\"Some secrets are best left unknown.\"",
+   "wordingOnly": true
+  },
+  {
+   "id": 20003,
+   "name": "Devilsaur Claws",
+   "quality": 3,
+   "icon": "inv_misc_monsterclaw_02",
+   "source": "https://foreverchanges.pro/items/new.json#20003",
+   "itemLevel": 52,
+   "inventoryType": "Main Hand",
+   "subclass": "Fist Weapon",
+   "armor": null,
+   "weapon": {
+    "minDamage": 48,
+    "maxDamage": 90,
+    "speed": 2,
+    "dps": 34.5
+   },
+   "stats": {
+    "agility": 4
+   },
+   "resistances": {},
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "+10 Hit Rating"
+    }
+   ],
+   "tooltip": "Devilsaur Claws\nBinds when picked up\nMain Hand\tFist Weapon\n48 - 90 Damage\tSpeed 2.00\n(34.5 damage per second)\n+4 Agility\nEquip: +10 Hit Rating\n\"The claws hum with primal energy.\"\nSell Price: 3g 15s 96c",
+   "wordingOnly": true
+  },
+  {
+   "id": 20088,
+   "name": "Highlander's Chain Girdle",
+   "quality": 3,
+   "icon": "inv_belt_20",
+   "source": "https://foreverchanges.pro/items/new.json#20088",
+   "itemLevel": 53,
+   "inventoryType": "Waist",
+   "subclass": "Mail",
+   "armor": 178,
+   "weapon": null,
+   "stats": {
+    "stamina": 8
+   },
+   "resistances": {},
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "+14 Critical Strike Rating"
+    },
+    {
+     "kind": "Equip",
+     "text": "+20 Attack Power"
+    }
+   ],
+   "tooltip": "Highlander's Chain Girdle\nBinds when picked up\nUnique\nWaist\tMail\n178 Armor\n+8 Stamina\nRequires Level 48\nRequires The League of Arathor - Honored\nEquip: +14 Critical Strike Rating\nEquip: +20 Attack Power\nSell Price: 1g 4s 95c",
+   "wordingOnly": true
+  },
+  {
+   "id": 20094,
+   "name": "Highlander's Cloth Boots",
+   "quality": 3,
+   "icon": "inv_boots_cloth_07",
+   "source": "https://foreverchanges.pro/items/new.json#20094",
+   "itemLevel": 53,
+   "inventoryType": "Feet",
+   "subclass": "Cloth",
+   "armor": 132,
+   "weapon": null,
+   "stats": {
+    "stamina": 13,
+    "intellect": 6
+   },
+   "resistances": {},
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "+9 Spell Power"
+    },
+    {
+     "kind": "Equip",
+     "text": "Run speed increased slightly."
+    }
+   ],
+   "tooltip": "Highlander's Cloth Boots\nBinds when picked up\nUnique\nFeet\tCloth\n52 Armor\n+13 Stamina\n+6 Intellect\n+80 Armor\nRequires Level 48\nRequires The League of Arathor - Revered\nEquip: +9 Spell Power\nEquip: Run speed increased slightly.\nSell Price: 99s 74c",
+   "wordingOnly": false
+  },
+  {
+   "id": 20097,
+   "name": "Highlander's Cloth Girdle",
+   "quality": 3,
+   "icon": "inv_belt_17",
+   "source": "https://foreverchanges.pro/items/new.json#20097",
+   "itemLevel": 53,
+   "inventoryType": "Waist",
+   "subclass": "Cloth",
+   "armor": 113,
+   "weapon": null,
+   "stats": {
+    "stamina": 6,
+    "intellect": 5
+   },
+   "resistances": {},
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "+14 Critical Strike Rating"
+    },
+    {
+     "kind": "Equip",
+     "text": "+9 Spell Power"
+    }
+   ],
+   "tooltip": "Highlander's Cloth Girdle\nBinds when picked up\nUnique\nWaist\tCloth\n43 Armor\n+6 Stamina\n+5 Intellect\n+70 Armor\nRequires Level 48\nRequires The League of Arathor - Honored\nEquip: +14 Critical Strike Rating\nEquip: +9 Spell Power\nSell Price: 67s 23c",
+   "wordingOnly": false
+  },
+  {
+   "id": 20100,
+   "name": "Highlander's Lizardhide Boots",
+   "quality": 3,
+   "icon": "inv_boots_cloth_04",
+   "source": "https://foreverchanges.pro/items/new.json#20100",
+   "itemLevel": 53,
+   "inventoryType": "Feet",
+   "subclass": "Leather",
+   "armor": 145,
+   "weapon": null,
+   "stats": {
+    "stamina": 13,
+    "agility": 8,
+    "intellect": 7
+   },
+   "resistances": {},
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "+12 Attack Power"
+    },
+    {
+     "kind": "Equip",
+     "text": "Run speed increased slightly."
+    }
+   ],
+   "tooltip": "Highlander's Lizardhide Boots\nBinds when picked up\nUnique\nFeet\tLeather\n105 Armor\n+13 Stamina\n+8 Agility\n+7 Intellect\n+40 Armor\nRequires Level 48\nRequires The League of Arathor - Revered\nEquip: +12 Attack Power\nEquip: Run speed increased slightly.\nSell Price: 1g 27s 46c",
+   "wordingOnly": false
+  },
+  {
+   "id": 20103,
+   "name": "Highlander's Lizardhide Girdle",
+   "quality": 3,
+   "icon": "inv_belt_17",
+   "source": "https://foreverchanges.pro/items/new.json#20103",
+   "itemLevel": 53,
+   "inventoryType": "Waist",
+   "subclass": "Leather",
+   "armor": 136,
+   "weapon": null,
+   "stats": {
+    "stamina": 6,
+    "intellect": 10
+   },
+   "resistances": {},
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "+14 Critical Strike Rating"
+    }
+   ],
+   "tooltip": "Highlander's Lizardhide Girdle\nBinds when picked up\nUnique\nWaist\tLeather\n86 Armor\n+6 Stamina\n+10 Intellect\n+50 Armor\nRequires Level 48\nRequires The League of Arathor - Honored\nEquip: +14 Critical Strike Rating\nSell Price: 85s 90c",
+   "wordingOnly": false
+  },
+  {
+   "id": 20106,
+   "name": "Highlander's Lamellar Girdle",
+   "quality": 3,
+   "icon": "inv_belt_14",
+   "source": "https://foreverchanges.pro/items/new.json#20106",
+   "itemLevel": 53,
+   "inventoryType": "Waist",
+   "subclass": "Plate",
+   "armor": 313,
+   "weapon": null,
+   "stats": {
+    "strength": 11,
+    "stamina": 4,
+    "intellect": 8
+   },
+   "resistances": {},
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "+14 Critical Strike Rating"
+    }
+   ],
+   "tooltip": "Highlander's Lamellar Girdle\nBinds when picked up\nUnique\nWaist\tPlate\n313 Armor\n+11 Strength\n+4 Stamina\n+8 Intellect\nRequires Level 48\nRequires The League of Arathor - Honored\nEquip: +14 Critical Strike Rating\nSell Price: 69s 46c",
+   "wordingOnly": true
+  },
+  {
+   "id": 20112,
+   "name": "Highlander's Leather Boots",
+   "quality": 3,
+   "icon": "inv_boots_cloth_05",
+   "source": "https://foreverchanges.pro/items/new.json#20112",
+   "itemLevel": 53,
+   "inventoryType": "Feet",
+   "subclass": "Leather",
+   "armor": 145,
+   "weapon": null,
+   "stats": {
+    "stamina": 13,
+    "agility": 11
+   },
+   "resistances": {},
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "+12 Attack Power"
+    },
+    {
+     "kind": "Equip",
+     "text": "Run speed increased slightly."
+    }
+   ],
+   "tooltip": "Highlander's Leather Boots\nBinds when picked up\nUnique\nFeet\tLeather\n105 Armor\n+13 Stamina\n+11 Agility\n+40 Armor\nRequires Level 48\nRequires The League of Arathor - Revered\nEquip: +12 Attack Power\nEquip: Run speed increased slightly.\nSell Price: 1g 23s 73c",
+   "wordingOnly": false
+  },
+  {
+   "id": 20115,
+   "name": "Highlander's Leather Girdle",
+   "quality": 3,
+   "icon": "inv_belt_17",
+   "source": "https://foreverchanges.pro/items/new.json#20115",
+   "itemLevel": 53,
+   "inventoryType": "Waist",
+   "subclass": "Leather",
+   "armor": 136,
+   "weapon": null,
+   "stats": {
+    "stamina": 6
+   },
+   "resistances": {},
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "+14 Critical Strike Rating"
+    },
+    {
+     "kind": "Equip",
+     "text": "+20 Attack Power"
+    }
+   ],
+   "tooltip": "Highlander's Leather Girdle\nBinds when picked up\nUnique\nWaist\tLeather\n86 Armor\n+6 Stamina\n+50 Armor\nRequires Level 48\nRequires The League of Arathor - Honored\nEquip: +14 Critical Strike Rating\nEquip: +20 Attack Power\nSell Price: 83s 41c",
+   "wordingOnly": false
+  },
+  {
+   "id": 20118,
+   "name": "Highlander's Mail Girdle",
+   "quality": 3,
+   "icon": "inv_belt_20",
+   "source": "https://foreverchanges.pro/items/new.json#20118",
+   "itemLevel": 53,
+   "inventoryType": "Waist",
+   "subclass": "Mail",
+   "armor": 178,
+   "weapon": null,
+   "stats": {
+    "stamina": 8,
+    "intellect": 10
+   },
+   "resistances": {},
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "+14 Critical Strike Rating"
+    }
+   ],
+   "tooltip": "Highlander's Mail Girdle\nBinds when picked up\nUnique\nWaist\tMail\n178 Armor\n+8 Stamina\n+10 Intellect\nRequires Level 48\nRequires The League of Arathor - Honored\nEquip: +14 Critical Strike Rating\nSell Price: 1g 1s 21c",
+   "wordingOnly": true
+  },
+  {
+   "id": 20124,
+   "name": "Highlander's Plate Girdle",
+   "quality": 3,
+   "icon": "inv_belt_14",
+   "source": "https://foreverchanges.pro/items/new.json#20124",
+   "itemLevel": 53,
+   "inventoryType": "Waist",
+   "subclass": "Plate",
+   "armor": 313,
+   "weapon": null,
+   "stats": {
+    "strength": 10,
+    "stamina": 8
+   },
+   "resistances": {},
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "+14 Critical Strike Rating"
+    }
+   ],
+   "tooltip": "Highlander's Plate Girdle\nBinds when picked up\nUnique\nWaist\tPlate\n313 Armor\n+10 Strength\n+8 Stamina\nRequires Level 48\nRequires The League of Arathor - Honored\nEquip: +14 Critical Strike Rating\nSell Price: 70s 75c",
+   "wordingOnly": true
+  },
+  {
+   "id": 20151,
+   "name": "Defiler's Chain Girdle",
+   "quality": 3,
+   "icon": "inv_belt_20",
+   "source": "https://foreverchanges.pro/items/new.json#20151",
+   "itemLevel": 53,
+   "inventoryType": "Waist",
+   "subclass": "Mail",
+   "armor": 178,
+   "weapon": null,
+   "stats": {
+    "stamina": 8
+   },
+   "resistances": {},
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "+14 Critical Strike Rating"
+    },
+    {
+     "kind": "Equip",
+     "text": "+20 Attack Power"
+    }
+   ],
+   "tooltip": "Defiler's Chain Girdle\nBinds when picked up\nUnique\nWaist\tMail\n178 Armor\n+8 Stamina\nRequires Level 48\nRequires The Defilers - Honored\nEquip: +14 Critical Strike Rating\nEquip: +20 Attack Power\nSell Price: 98s 58c",
+   "wordingOnly": true
+  },
+  {
+   "id": 20160,
+   "name": "Defiler's Cloth Boots",
+   "quality": 3,
+   "icon": "inv_boots_cloth_07",
+   "source": "https://foreverchanges.pro/items/new.json#20160",
+   "itemLevel": 53,
+   "inventoryType": "Feet",
+   "subclass": "Cloth",
+   "armor": 132,
+   "weapon": null,
+   "stats": {
+    "stamina": 13,
+    "intellect": 6
+   },
+   "resistances": {},
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "+9 Spell Power"
+    },
+    {
+     "kind": "Equip",
+     "text": "Run speed increased slightly."
+    }
+   ],
+   "tooltip": "Defiler's Cloth Boots\nBinds when picked up\nUnique\nFeet\tCloth\n52 Armor\n+13 Stamina\n+6 Intellect\n+80 Armor\nRequires Level 48\nRequires The Defilers - Revered\nEquip: +9 Spell Power\nEquip: Run speed increased slightly.\nSell Price: 1g 4s 61c",
+   "wordingOnly": false
+  },
+  {
+   "id": 20165,
+   "name": "Defiler's Cloth Girdle",
+   "quality": 3,
+   "icon": "inv_belt_17",
+   "source": "https://foreverchanges.pro/items/new.json#20165",
+   "itemLevel": 53,
+   "inventoryType": "Waist",
+   "subclass": "Cloth",
+   "armor": 113,
+   "weapon": null,
+   "stats": {
+    "stamina": 6,
+    "intellect": 5
+   },
+   "resistances": {},
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "+14 Critical Strike Rating"
+    },
+    {
+     "kind": "Equip",
+     "text": "+9 Spell Power"
+    }
+   ],
+   "tooltip": "Defiler's Cloth Girdle\nBinds when picked up\nUnique\nWaist\tCloth\n43 Armor\n+6 Stamina\n+5 Intellect\n+70 Armor\nRequires Level 48\nRequires The Defilers - Honored\nEquip: +14 Critical Strike Rating\nEquip: +9 Spell Power\nSell Price: 64s 23c",
+   "wordingOnly": false
+  },
+  {
+   "id": 20170,
+   "name": "Defiler's Lizardhide Boots",
+   "quality": 3,
+   "icon": "inv_boots_cloth_04",
+   "source": "https://foreverchanges.pro/items/new.json#20170",
+   "itemLevel": 53,
+   "inventoryType": "Feet",
+   "subclass": "Leather",
+   "armor": 145,
+   "weapon": null,
+   "stats": {
+    "stamina": 13,
+    "agility": 8,
+    "intellect": 7
+   },
+   "resistances": {},
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "+12 Attack Power"
+    },
+    {
+     "kind": "Equip",
+     "text": "Run speed increased slightly."
+    }
+   ],
+   "tooltip": "Defiler's Lizardhide Boots\nBinds when picked up\nUnique\nFeet\tLeather\n105 Armor\n+13 Stamina\n+8 Agility\n+7 Intellect\n+40 Armor\nRequires Level 48\nRequires The Defilers - Revered\nEquip: +12 Attack Power\nEquip: Run speed increased slightly.\nSell Price: 1g 22s 74c",
+   "wordingOnly": false
+  },
+  {
+   "id": 20174,
+   "name": "Defiler's Lizardhide Girdle",
+   "quality": 3,
+   "icon": "inv_belt_17",
+   "source": "https://foreverchanges.pro/items/new.json#20174",
+   "itemLevel": 53,
+   "inventoryType": "Waist",
+   "subclass": "Leather",
+   "armor": 136,
+   "weapon": null,
+   "stats": {
+    "stamina": 6,
+    "intellect": 10
+   },
+   "resistances": {},
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "+14 Critical Strike Rating"
+    }
+   ],
+   "tooltip": "Defiler's Lizardhide Girdle\nBinds when picked up\nUnique\nWaist\tLeather\n86 Armor\n+6 Stamina\n+10 Intellect\n+50 Armor\nRequires Level 48\nRequires The Defilers - Honored\nEquip: +14 Critical Strike Rating\nSell Price: 85s 30c",
+   "wordingOnly": false
+  },
+  {
+   "id": 20179,
+   "name": "Defiler's Lamellar Girdle",
+   "quality": 3,
+   "icon": "inv_belt_14",
+   "source": "https://foreverchanges.pro/items/new.json#20179",
+   "itemLevel": 53,
+   "inventoryType": "Waist",
+   "subclass": "Plate",
+   "armor": 313,
+   "weapon": null,
+   "stats": {
+    "strength": 11,
+    "stamina": 4,
+    "intellect": 8
+   },
+   "resistances": {},
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "+14 Critical Strike Rating"
+    }
+   ],
+   "tooltip": "Defiler's Lamellar Girdle\nBinds when picked up\nUnique\nWaist\tPlate\n313 Armor\n+11 Strength\n+4 Stamina\n+8 Intellect\nRequires Level 48\nRequires The Defilers - Honored\nEquip: +14 Critical Strike Rating\nSell Price: 69s 48c",
+   "wordingOnly": true
+  },
+  {
+   "id": 20189,
+   "name": "Defiler's Leather Boots",
+   "quality": 3,
+   "icon": "inv_boots_cloth_05",
+   "source": "https://foreverchanges.pro/items/new.json#20189",
+   "itemLevel": 53,
+   "inventoryType": "Feet",
+   "subclass": "Leather",
+   "armor": 145,
+   "weapon": null,
+   "stats": {
+    "stamina": 13,
+    "agility": 11
+   },
+   "resistances": {},
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "+12 Attack Power"
+    },
+    {
+     "kind": "Equip",
+     "text": "Run speed increased slightly."
+    }
+   ],
+   "tooltip": "Defiler's Leather Boots\nBinds when picked up\nUnique\nFeet\tLeather\n105 Armor\n+13 Stamina\n+11 Agility\n+40 Armor\nRequires Level 48\nRequires The Defilers - Revered\nEquip: +12 Attack Power\nEquip: Run speed increased slightly.\nSell Price: 1g 25s 61c",
+   "wordingOnly": false
+  },
+  {
+   "id": 20193,
+   "name": "Defiler's Leather Girdle",
+   "quality": 3,
+   "icon": "inv_belt_17",
+   "source": "https://foreverchanges.pro/items/new.json#20193",
+   "itemLevel": 53,
+   "inventoryType": "Waist",
+   "subclass": "Leather",
+   "armor": 136,
+   "weapon": null,
+   "stats": {
+    "stamina": 6
+   },
+   "resistances": {},
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "+14 Critical Strike Rating"
+    },
+    {
+     "kind": "Equip",
+     "text": "+20 Attack Power"
+    }
+   ],
+   "tooltip": "Defiler's Leather Girdle\nBinds when picked up\nUnique\nWaist\tLeather\n86 Armor\n+6 Stamina\n+50 Armor\nRequires Level 48\nRequires The Defilers - Honored\nEquip: +14 Critical Strike Rating\nEquip: +20 Attack Power\nSell Price: 84s 98c",
+   "wordingOnly": false
+  },
+  {
+   "id": 20196,
+   "name": "Defiler's Mail Girdle",
+   "quality": 3,
+   "icon": "inv_belt_20",
+   "source": "https://foreverchanges.pro/items/new.json#20196",
+   "itemLevel": 53,
+   "inventoryType": "Waist",
+   "subclass": "Mail",
+   "armor": 178,
+   "weapon": null,
+   "stats": {
+    "stamina": 8,
+    "intellect": 10
+   },
+   "resistances": {},
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "+14 Critical Strike Rating"
+    }
+   ],
+   "tooltip": "Defiler's Mail Girdle\nBinds when picked up\nUnique\nWaist\tMail\n178 Armor\n+8 Stamina\n+10 Intellect\nRequires Level 48\nRequires The Defilers - Honored\nEquip: +14 Critical Strike Rating\nSell Price: 1g 3s 9c",
+   "wordingOnly": true
+  },
+  {
+   "id": 20205,
+   "name": "Defiler's Plate Girdle",
+   "quality": 3,
+   "icon": "inv_belt_14",
+   "source": "https://foreverchanges.pro/items/new.json#20205",
+   "itemLevel": 53,
+   "inventoryType": "Waist",
+   "subclass": "Plate",
+   "armor": 313,
+   "weapon": null,
+   "stats": {
+    "strength": 10,
+    "stamina": 8
+   },
+   "resistances": {},
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "+14 Critical Strike Rating"
+    }
+   ],
+   "tooltip": "Defiler's Plate Girdle\nBinds when picked up\nUnique\nWaist\tPlate\n313 Armor\n+10 Strength\n+8 Stamina\nRequires Level 48\nRequires The Defilers - Honored\nEquip: +14 Critical Strike Rating\nSell Price: 65s 99c",
+   "wordingOnly": true
+  },
+  {
+   "id": 20218,
+   "name": "Faded Hakkari Cloak",
+   "quality": 3,
+   "icon": "inv_misc_cape_13",
+   "source": "https://foreverchanges.pro/items/new.json#20218",
+   "itemLevel": 59,
+   "inventoryType": "Back",
+   "subclass": "Cloth",
+   "armor": 42,
+   "weapon": null,
+   "stats": {
+    "intellect": 8,
+    "stamina": 5
+   },
+   "resistances": {},
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "+6 Mana Regeneration"
+    }
+   ],
+   "tooltip": "Faded Hakkari Cloak\nBinds when picked up\nBack\tCloth\n42 Armor\n+8 Intellect\n+5 Stamina\nEquip: +6 Mana Regeneration\nSell Price: 1g 45s 90c",
+   "wordingOnly": true
+  },
+  {
+   "id": 20219,
+   "name": "Tattered Hakkari Cape",
+   "quality": 3,
+   "icon": "inv_misc_cape_14",
+   "source": "https://foreverchanges.pro/items/new.json#20219",
+   "itemLevel": 59,
+   "inventoryType": "Back",
+   "subclass": "Cloth",
+   "armor": 42,
+   "weapon": null,
+   "stats": {
+    "strength": 11,
+    "stamina": 10
+   },
+   "resistances": {},
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "+12 Health Regeneration"
+    }
+   ],
+   "tooltip": "Tattered Hakkari Cape\nBinds when picked up\nBack\tCloth\n42 Armor\n+11 Strength\n+10 Stamina\nEquip: +12 Health Regeneration\nSell Price: 1g 46s 41c",
+   "wordingOnly": false
+  },
+  {
+   "id": 20295,
+   "name": "Blue Dragonscale Leggings",
+   "quality": 3,
+   "icon": "inv_pants_mail_15",
+   "source": "https://foreverchanges.pro/items/new.json#20295",
+   "itemLevel": 60,
+   "inventoryType": "Legs",
+   "subclass": "Mail",
+   "armor": 310,
+   "weapon": null,
+   "stats": {
+    "intellect": 20
+   },
+   "resistances": {
+    "arcane": 12
+   },
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "+19 Spell Power"
+    },
+    {
+     "kind": "Set",
+     "text": "(2) +4 All Resistances."
+    },
+    {
+     "kind": "Set",
+     "text": "(3) Increases damage and healing done by magical spells and effects by up to 28."
+    }
+   ],
+   "tooltip": "Blue Dragonscale Leggings\nBinds when equipped\nLegs\tMail\n310 Armor\n+20 Intellect\n+12 Arcane Resistance\nRequires Level 55\nEquip: +19 Spell Power\nBlue Dragon Mail (0/3)\n(2) Set: +4 All Resistances.\n(3) Set: Increases damage and healing done by magical spells and effects by up to 28.\nSell Price: 3g 10s 83c",
+   "wordingOnly": false
+  },
+  {
+   "id": 20296,
+   "name": "Green Dragonscale Gauntlets",
+   "quality": 3,
+   "icon": "inv_gauntlets_12",
+   "source": "https://foreverchanges.pro/items/new.json#20296",
+   "itemLevel": 56,
+   "inventoryType": "Hands",
+   "subclass": "Mail",
+   "armor": 208,
+   "weapon": null,
+   "stats": {
+    "stamina": 5
+   },
+   "resistances": {
+    "nature": 18
+   },
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "+40 Healing"
+    },
+    {
+     "kind": "Equip",
+     "text": "+14 Spell Damage"
+    },
+    {
+     "kind": "Set",
+     "text": "(2) Restores 3 mana per 5 sec."
+    },
+    {
+     "kind": "Set",
+     "text": "(3) Allows 15% of your Mana regeneration to continue while casting."
+    }
+   ],
+   "tooltip": "Green Dragonscale Gauntlets\nBinds when equipped\nHands\tMail\n208 Armor\n+18 Nature Resistance\n+5 Stamina\nRequires Level 51\nEquip: +40 Healing\nEquip: +14 Spell Damage\nGreen Dragon Mail (0/3)\n(2) Set: Restores 3 mana per 5 sec.\n(3) Set: Allows 15% of your Mana regeneration to continue while casting.\nSell Price: 1g 25s 90c",
+   "wordingOnly": false
+  },
+  {
+   "id": 20502,
+   "name": "Ironbark Shield",
+   "quality": 3,
+   "icon": "inv_shield_11",
+   "source": "https://foreverchanges.pro/items/new.json#20502",
+   "itemLevel": 52,
+   "inventoryType": "Off Hand",
+   "subclass": "Shield",
+   "armor": 1803,
+   "weapon": null,
+   "stats": {
+    "stamina": 6
+   },
+   "resistances": {},
+   "effects": [
+    {
+     "kind": "Stat",
+     "text": "31 Block"
+    },
+    {
+     "kind": "Equip",
+     "text": "+14 Critical Strike Rating"
+    }
+   ],
+   "tooltip": "Ironbark Shield\nBinds when picked up\nOff Hand\tShield\n1803 Armor\n31 Block\n+6 Stamina\nEquip: +14 Critical Strike Rating\nSell Price: 2g 12s 77c",
+   "wordingOnly": true
+  },
+  {
+   "id": 20522,
+   "name": "Feral Staff",
+   "quality": 3,
+   "icon": "inv_staff_20",
+   "source": "https://foreverchanges.pro/items/new.json#20522",
+   "itemLevel": 52,
+   "inventoryType": "Two-Hand",
+   "subclass": "Staff",
+   "armor": 110,
+   "weapon": {
+    "minDamage": 108,
+    "maxDamage": 162,
+    "speed": 3,
+    "dps": 45
+   },
+   "stats": {
+    "strength": 17,
+    "agility": 16
+   },
+   "resistances": {},
+   "effects": [],
+   "tooltip": "Feral Staff\nBinds when picked up\nUnique\nTwo-Hand\tStaff\n108 - 162 Damage\tSpeed 3.00\n(45.0 damage per second)\n+17 Strength\n+16 Agility\n+110 Armor\nSell Price: 4g 15s 54c",
+   "wordingOnly": false
+  },
+  {
+   "id": 20524,
+   "name": "Shadowhide Leggings",
+   "quality": 3,
+   "icon": "inv_pants_cloth_05",
+   "source": "https://foreverchanges.pro/items/new.json#20524",
+   "itemLevel": 52,
+   "inventoryType": "Legs",
+   "subclass": "Leather",
+   "armor": 252,
+   "weapon": null,
+   "stats": {
+    "intellect": 12,
+    "spirit": 6
+   },
+   "resistances": {
+    "shadow": 6
+   },
+   "effects": [],
+   "tooltip": "Shadowhide Leggings\nBinds when picked up\nLegs\tLeather\n132 Armor\n+12 Intellect\n+6 Spirit\n+6 Shadow Resistance\n+120 Armor\n\"Shadowmaw panthers are known for their exquisite hides.\"\nSell Price: 1g 51s 46c",
+   "wordingOnly": false
+  },
+  {
+   "id": 21115,
+   "name": "Defiler's Talisman",
+   "quality": 3,
+   "icon": "inv_jewelry_talisman_05",
+   "source": "https://foreverchanges.pro/items/new.json#21115",
+   "itemLevel": 53,
+   "inventoryType": "Trinket",
+   "subclass": null,
+   "armor": null,
+   "weapon": null,
+   "stats": {
+    "stamina": 10
+   },
+   "resistances": {},
+   "effects": [
+    {
+     "kind": "Use",
+     "text": "Absorbs 454 to 554 physical damage. Lasts 15 sec. (3 Min Cooldown)"
+    }
+   ],
+   "tooltip": "Defiler's Talisman\nBinds when picked up\nUnique-Equipped: Talisman of Battle (1)\nTrinket\n+10 Stamina\nRequires Level 48\nRequires The Defilers - Friendly\nUse: Absorbs 454 to 554 physical damage. Lasts 15 sec. (3 Min Cooldown)\nSell Price: 70s 57c",
+   "wordingOnly": false
+  },
+  {
+   "id": 21117,
+   "name": "Talisman of Arathor",
+   "quality": 3,
+   "icon": "inv_jewelry_talisman_05",
+   "source": "https://foreverchanges.pro/items/new.json#21117",
+   "itemLevel": 53,
+   "inventoryType": "Trinket",
+   "subclass": null,
+   "armor": null,
+   "weapon": null,
+   "stats": {
+    "stamina": 10
+   },
+   "resistances": {},
+   "effects": [
+    {
+     "kind": "Use",
+     "text": "Absorbs 454 to 554 physical damage. Lasts 15 sec. (3 Min Cooldown)"
+    }
+   ],
+   "tooltip": "Talisman of Arathor\nBinds when picked up\nUnique-Equipped: Talisman of Battle (1)\nTrinket\n+10 Stamina\nRequires Level 48\nRequires The League of Arathor - Friendly\nUse: Absorbs 454 to 554 physical damage. Lasts 15 sec. (3 Min Cooldown)\nSell Price: 70s 57c",
+   "wordingOnly": false
+  },
+  {
+   "id": 22230,
+   "name": "Frightmaw Hide",
+   "quality": 3,
+   "icon": "inv_misc_cape_03",
+   "source": "https://foreverchanges.pro/items/new.json#22230",
+   "itemLevel": 52,
+   "inventoryType": "Back",
+   "subclass": "Cloth",
+   "armor": 77,
+   "weapon": null,
+   "stats": {
+    "strength": 15
+   },
+   "resistances": {},
+   "effects": [],
+   "tooltip": "Frightmaw Hide\nBinds when picked up\nBack\tCloth\n37 Armor\n+15 Strength\n+40 Armor\nSell Price: 99s 78c",
+   "wordingOnly": false
+  },
+  {
+   "id": 22273,
+   "name": "Moonshadow Hood",
+   "quality": 3,
+   "icon": "inv_helmet_30",
+   "source": "https://foreverchanges.pro/items/new.json#22273",
+   "itemLevel": 52,
+   "inventoryType": "Head",
+   "subclass": "Leather",
+   "armor": 122,
+   "weapon": null,
+   "stats": {
+    "intellect": 15
+   },
+   "resistances": {},
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "+18 Spell Power"
+    },
+    {
+     "kind": "Equip",
+     "text": "+14 Critical Strike Rating"
+    }
+   ],
+   "tooltip": "Moonshadow Hood\nBinds when picked up\nHead\tLeather\n122 Armor\n+15 Intellect\nEquip: +18 Spell Power\nEquip: +14 Critical Strike Rating\nSell Price: 1g 14s 8c",
+   "wordingOnly": true
+  },
+  {
+   "id": 23125,
+   "name": "Chains of the Lich",
+   "quality": 3,
+   "icon": "inv_belt_18",
+   "source": "https://foreverchanges.pro/items/new.json#23125",
+   "itemLevel": 60,
+   "inventoryType": "Neck",
+   "subclass": null,
+   "armor": null,
+   "weapon": null,
+   "stats": {},
+   "resistances": {},
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "+22 Spell Power"
+    }
+   ],
+   "tooltip": "Chains of the Lich\nBinds when picked up\nNeck\nRequires Level 55\nEquip: +22 Spell Power\nSell Price: 4g 19s 53c",
+   "wordingOnly": true
+  },
+  {
+   "id": 24222,
+   "name": "The Shadowfoot Stabber",
+   "quality": 3,
+   "icon": "inv_weapon_shortblade_18",
+   "source": "https://foreverchanges.pro/items/new.json#24222",
+   "itemLevel": 57,
+   "inventoryType": "One-Hand",
+   "subclass": "Dagger",
+   "armor": null,
+   "weapon": {
+    "minDamage": 47,
+    "maxDamage": 88,
+    "speed": 1.8,
+    "dps": 37.5
+   },
+   "stats": {
+    "stamina": 8
+   },
+   "resistances": {},
+   "effects": [
+    {
+     "kind": "Equip",
+     "text": "+18 Attack Power"
+    }
+   ],
+   "tooltip": "The Shadowfoot Stabber\nBinds when equipped\nOne-Hand\tDagger\n47 - 88 Damage\tSpeed 1.80\n(37.5 damage per second)\n+8 Stamina\nRequires Level 52\nEquip: +18 Attack Power\nSell Price: 4g 42s 10c",
+   "wordingOnly": true
+  }
+ ]
+}

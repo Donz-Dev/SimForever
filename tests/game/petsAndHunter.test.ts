@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { critChanceFrom } from '../../src/engine';
 import { createPlayer } from '../../src/game/actors/createPlayer';
 import { characterAtCombatStart, runProfileBatch } from '../../src/simulator';
 import {
@@ -142,8 +143,15 @@ describe('a pet is built from its owner', () => {
      * Written out by hand here rather than read back, so a constant moving
      * fails this.
      */
+    /*
+     * `critChanceFrom`, NOT the raw stat. "100% of the player's crit chance"
+     * is the spec, and a Forever Hunter's crit arrives partly as a RATING --
+     * Don Julio's Band is "+14 Critical Strike Rating" where Classic's was
+     * "+1% crit". Reading `stats.critChance` here reconstructs the formula
+     * instead of the spec, and it was short by exactly that one point.
+     */
     expect(pet.stats.get('critChance')).toBeCloseTo(
-      100 / 20 + stats.critChance * PET_CRIT_SHARE,
+      100 / 20 + critChanceFrom(stats) * 100 * PET_CRIT_SHARE,
       6,
     );
     expect(pet.stats.get('attackPower')).toBeCloseTo(
@@ -779,7 +787,12 @@ describe("the owner's talents reach the pet", () => {
      * Chance = Agility / 20 + HunterCritChance", and a pet's base agility is
      * 100.
      */
-    expect(pet.stats.get('critChance')).toBeCloseTo(stats.critChance + 10 + 100 / 20, 6);
+    // Through `critChanceFrom` for the reason given on the inheritance test:
+    // the owner's crit is partly a rating.
+    expect(pet.stats.get('critChance')).toBeCloseTo(
+      critChanceFrom(stats) * 100 + 10 + 100 / 20,
+      6,
+    );
     // Endurance Training's 1.09, and the Cat's own 0.98 on top.
     expect(pet.health.maximum).toBe(
       Math.round(

@@ -43,6 +43,9 @@ PRESET=warlock_firelock npx vite-node tools/probe_firelock_heal.ts   # why heali
 npx vite-node tools/probe_cat_rage.ts            # does a Cat's rage pool ever hold anything
 npx vite-node tools/probe_life_tap_gate.ts       # what mana a Warlock should Life Tap at
 npx vite-node tools/probe_other_assignment.ts    # each preset's `other` consumable beside its POOLS
+npx vite-node tools/item_budget.ts               # what an item COST to make, and whether it adds up
+FOREVER=1 npx vite-node tools/item_budget.ts     # the 64 Premier PvP cloth pieces, Forever's own
+WEAPONS=1 npx vite-node tools/item_budget.ts     # the 41 new Forever epic weapons
 ```
 
 The three audits in the middle are AUDITS rather than measurements and none of
@@ -3049,7 +3052,8 @@ Six sources. **All nine classes were built from the two client-derived ones.**
 | `C:\Users\Donz\Documents\WoWForever*` | the owner's own files, **highest authority**: base stats, the combat table, stat conversions, resources, and **one ability spreadsheet — the Warrior's**. There is no spreadsheet for the other eight classes. `WoWForeverSimGuidance.docx` is NOT data — it is screenshots of an architecture discussion |
 | `WoWSimWorksheet.xlsx` | the owner's **authoritative document for COEFFICIENTS**, all nine classes, supplied 2026-09-29 and transcribed in `src/game/combat/coefficients.ts`. It SUPERSEDES the Warrior ability sheet on Rend, Revenge and Thunder Clap, and the earlier seal formula on Seal of Righteousness -- where it and an older owner document disagree, the sheet wins and the disagreement is recorded at the call site |
 | `talentsforever.com` | the beta client's own files, four static JS assignments a plain `fetch` reaches. **The source of record for talents AND for every ability number in the project**, and the build URLs the profiles are specified by |
-| `foreverchanges.pro/spellbook/<class>` | the beta client diffed against Classic Era, per rank, with cost, cast time and cooldown. **The tie-break: where it and our capture disagree, it wins, by the owner's standing rule.** Nothing imports from it — it is read by hand, and its data is in the page's RSC flight script, not the DOM. Checked so far: the Warrior (five numbers moved) and the Warlock (three moved). Seven classes to go |
+| `foreverchanges.pro/spellbook/<class>` | the beta client diffed against Classic Era, per rank, with cost, cast time and cooldown. **The tie-break: where it and our capture disagree, it wins, by the owner's standing rule.** Nothing imports from it — it is read by hand. Checked so far: the Warrior (five numbers moved) and the Warlock (three moved). Seven classes to go |
+| `foreverchanges.pro/items/*.json` | **the ITEMS half of the same site, and it is plain JSON rather than the RSC flight script this file used to describe.** `new.json`, `changed.json`, `same.json`, `missing.json` and `sources.json`, each stating the beta build it was taken at. **A plain `curl` is refused with a 403**, so it is read in a browser on the origin and the payload hashed there and re-hashed on disk. `tools/data/forever-epic-weapons.json` is the first capture from it |
 | `nether.wowhead.com/classic/tooltip/item/<id>` | Classic item and spell tooltips as JSON, no browser. The current items are Classic stand-ins, not Forever data |
 | `github.com/classic-hunter/forever-hunter/wiki` | the ONLY source for pet stat scaling and pet focus regeneration, plus a full Forever-vs-Classic diff for the Hunter. Community-maintained, so it ranks below the two above where they overlap — they have not yet disagreed |
 
@@ -3335,10 +3339,21 @@ on file" into a false promise. **Twenty-two items are worn by more than one set*
 `itemData` throws on a duplicate id, and the spec order decides which file owns
 each shared piece.
 
-**The item database is FROZEN**, pending further Forever item changes. Do not add
-sets or go looking for gear. The sets in scope are the ones the owner supplied;
-they are Season of Discovery stand-ins, not Forever data, and the README says so.
-**Keep saying so.**
+**The item database WAS frozen, and the owner has since lifted it by supplying
+real Forever items.** The freeze was "pending further Forever item changes" and
+those arrived: `forever-new-epics.json` is 449 real Forever epics, imported by
+`tools/import_forever_items.mjs` from a capture this project now owns. **The
+rest of `src/data/items/` is still Season of Discovery stand-ins, not Forever
+data, and the README still says so -- keep saying so about THOSE.** Do not go
+looking for more Classic or SoD gear; a new Forever capture is a different
+thing and is the supported path.
+
+**ADDING 449 ITEMS MOVED NO PUBLISHED FIGURE, and that is checkable rather than
+assumed.** A preset names its items BY ID, so a new file changes what can be
+CHOSEN and not what any of the 25 builds wear: all 75 combat-log hashes and
+event counts from `tools/rotation_fingerprint.ts` are unchanged. **That is the
+containment check for any item commit** -- the profiles whose gear did not
+change must not move by a decimal.
 
 **AND THE FIRST OF THOSE FURTHER CHANGES HAS ARRIVED, AS AN OVERRIDE RATHER THAN
 AN EDIT.** `FOREVER_SPELL_POWER_BUFFS` in `itemData.ts` carries the owner's +64
@@ -3347,6 +3362,327 @@ Azuresong Mageblade and Anathema. The JSON is generated and `--verify`-checked,
 so a Forever value is layered OVER the scrape at build time and never written
 into it; `ENCHANT_RULES` beside it is the same shape for the same reason. The
 Immovable Object and those four are the real Forever item data.
+
+**AND AN ITEM HAS A BUDGET, WHICH IS A WAY OF READING ONE AND NEVER A WAY OF
+MAKING ONE.** `budget = qualityBase(ilvl) x slotMultiplier` and
+`budget^1.5 = sum((stat x cost)^1.5)`, from a community reconstruction, and it
+reproduces real items well enough to be useful: **122 of the 133 non-weapon
+items on file land within 90% to 110%** of their budget, mean 99.7%, and seven
+of ten hand-picked Classic examples sit between 95% and 107%. `tools/item_budget.ts`,
+[docs/itemization.md](docs/itemization.md).
+
+**IT IS AN AUDIT TOOL AND NOTHING IN `src/` READS IT.** Run backwards -- a
+budget used to GENERATE stats for an item no source states -- it is inventing
+game data with arithmetic in front of it, and the arithmetic is what makes the
+invention look sourced. It ranks below every row of the source table above: not
+Forever's, not the owner's, not even Blizzard's.
+
+**TWO THINGS COME FREE WITH THE ITEM LEVEL RATHER THAN OUT OF THE BUDGET**, and
+both were found by the budget refusing to balance. **BASE ARMOR** is a function
+of slot, armor type and item level -- and it cannot be budgeted, because
+Breastplate of Might's 749 armor at the sourced cost of 0.1 is `74.9^1.5` = 648
+against a whole chest budget of 352. **WEAPON DPS** is a straight line in item
+level per hand, and the fit is barely a fit: ten epic one-handers between item
+level 66 and 77 sit on one line with a worst residual of **0.31 dps**. What IS
+budgeted is giving either of them up -- Cenarion Pauldrons carry 120 armor above
+the leather-shoulder baseline, and Azuresong Mageblade is 10.1 dps below the
+one-hand line and spends the difference on spell power.
+
+**SO A CASTER WEAPON PRICING AT 206% OF ITS BUDGET IS NOT THE MODEL FAILING**,
+which is what it looks like beside Zin'rokh at 87%. Three of the ten examples
+are weapons and all three of the apparent failures are the DPS trade. **A model
+that explains its own outliers is worth more than one that has none**, and the
+exchange rate it implies -- about 2.5 budget points per dps forgone, from TWO
+items -- is printed beside the item rather than folded into the budget, because
+folding it in would hide the one number this model does not have.
+
+**AND THE OWNER HAS SINCE SUPPLIED REAL FOREVER ARMOUR, WHICH IS THE FIRST OF
+IT IN THE PROJECT.** The 64 Premier PvP cloth pieces, item level 65, three
+classes, eight slots -- `tools/foreverPremierPvp.ts`. **NOT in
+`src/data/items/`**, because everything there is equippable and 64 more items
+would be in the Gear panel; the database stays frozen and this is reference
+data for the audit tool.
+
+**BASE ARMOUR IS NOW CONFIRMED FREE ON THE RULESET'S OWN DATA.** Forever's
+item-level-65 cloth wrist is 44 armour and its waist is 56 -- identical to
+Classic's General's Silk Cuffs and Sash at the same item level -- and four
+pieces list `+40 Armor` among the STATS, separately from the slot's own armour
+on the line above. **Forever's client writes the base/bonus split out**, which
+Classic's tooltips never do.
+
+**AND IT USES RATINGS WHERE CLASSIC USES FLAT PERCENTAGES.** "+7 Critical
+Strike Rating" where Classic's own rank-13/14 cloth says "+1% spell crit", so
+the budget source's blanket "any rating costs 1" -- dead weight in a ruleset
+with no ratings -- finally has something to price. **Healing and spell damage
+are two lines too**, "+33 Healing" and "+11 Spell Damage", at a ratio of 3.0
+across all five pairs that occur.
+
+**THEY SIT AT 85.1% OF CLASSIC'S EPIC BUDGET WITH A STANDARD DEVIATION OF 3.2
+POINTS, AND THE TIGHTNESS IS THE FINDING RATHER THAN THE 85%.** That is
+TIGHTER than the Classic and SoD items on file, which scatter over 90-110%: the
+Classic cost table reproduces the SHAPE of a Forever item better than it
+reproduces Classic's own. What differs is the LEVEL, and whether that is a
+Forever budget or a PvP discount is **a question for the owner** -- Classic's
+own item-level-65 PvP cloth is also under budget, at 96.0% and 90.6%, so PvP
+gear being cheap is not a Forever invention and two items cannot say how the 15
+points divide.
+
+**A WRONG STAT COST AND A WRONG BUDGET LOOK ALIKE, AND WHAT SEPARATES THEM IS A
+CORRELATION WITH THE ITEM'S COMPOSITION.** A scaled budget moves every slot and
+every build together; a dearer stat pushes the items that buy a lot of it
+further off. Here the budget reading wins -- 3.8 points of residual against
+5.8, and making spell power dearer leaves a +0.80 correlation with spell-power
+share. **THE FIRST CUT GOT THE OPPOSITE ANSWER FROM THE SAME DATA**, because it
+computed that share over spell power and spell damage while leaving HEALING
+out, which made it a test of "is this a healer piece" and returned -0.60.
+**A correlation whose sign depends on how the denominator is defined is not
+evidence**, and the cheap guard is to define the share over every stat the
+hypothesis touches.
+
+**AND THE STAT BLOCKS REPEAT, WHICH IS A TRANSCRIPTION CHECK FOR FREE.** Thirty
+distinct (slot, stats) blocks across the 64, with 62 appearing in BOTH rank
+tiers -- Centurion's Felweave Boots is Knight-Champion's Dreadweave Boots under
+another rank name. That leaves exactly two items without a twin and **they are
+the same item except 34 stamina against 37**, where every other head piece is
+34. Flagged on the row rather than corrected, because a 7 read off a 4 is the
+likelier explanation and it is the owner's client to check.
+**THE CHECK ONLY WORKS WITH THE KEYS SORTED**: `JSON.stringify` preserves key
+ORDER and the stats were transcribed in each tooltip's own order, so an
+unsorted key reported four twinned items as unique -- a check quietly weakened
+into saying nothing, caught only because an independent script had counted 30
+where it counted 34.
+
+**THE SHORTFALL IS PvP AND NOTHING ELSE, AND IT TOOK A CONTROL GROUP TO SEE
+IT.** The question was answered twice and wrongly, both times for the same
+reason: **there was no baseline, so 100% was used as one, and 100% is not a
+number this model reaches even on Classic.**
+
+`forever-changed-epics.json` is the control. 487 of its 653 items differ from
+Classic ONLY IN WORDING -- Classic's "Improves your chance to get a critical
+strike by 1%" is Forever's "+14 Critical Strike Rating" -- so their stats ARE
+Classic's, and pricing them measures CLASSIC'S itemization through the same
+model, on the same slots, at the same item levels, with the same blind spots.
+Clean armour at item level 65:
+
+| | n | mean |
+| --- | --- | --- |
+| **Classic's own epics** | 24 | **93.2%** |
+| **Forever new, not PvP** | 41 | **93.3%** |
+| Forever new, PvP | 66 | 87.0% |
+
+**Classic and Forever's non-PvP gear agree to a TENTH OF A POINT.** There is no
+general Forever budget reduction; the ~7 points below 100% are the MODEL's own
+residual, and the only real effect is a PvP discount of about 6.
+
+**AND THEN THE PvP GAP TURNED OUT TO BE ONE UNCERTAIN PARAMETER, WHICH IS A
+THIRD WRONG ANSWER TO THE SAME QUESTION.** The budget source prices stamina at
+0.67 and FOOTNOTES IT -- "changed with Burning Crusade, originally 1 as well"
+-- and everything here is pre-Burning Crusade. **The Premier PvP sets spend
+40.8% of their budget on stamina against 14.0% for Classic's own epics**, so
+that one cost is exactly the lever that moves PvP gear relative to everything
+else, and the gap goes **-6.2 at 0.67, -0.1 at 0.87, +4.0 at 1.00**. It
+inverts.
+
+**TWO INDEPENDENT CRITERIA LAND ON 0.86-0.87** -- "Classic's own gear should
+price at 100%" and "PvP gear has no reason to be discounted" -- which is the
+encouraging part. **But 0.86 is FITTED and absorbs every other residual in the
+model**: if the fitted crit cost of 16 or a slot multiplier is wrong, this is
+where it shows up. The source's 0.67 and the footnote's 1.0 BRACKET it, and
+the sourced era-correct 1.0 is the default.
+
+**AND THE SPELL POWER ANSWER WAS WRONG TOO UNTIL THE OWNER SPLIT THE
+POPULATION.** Asked to re-run ignoring items that carry healing AND spell power
+together -- "that may be a different case" -- the effect vanished entirely:
+pure damage-caster items run **+0.7 +/- 1.9** over non-caster items in Classic
+and **-0.5 +/- 2.7** in Forever's non-PvP gear, and the best-fit cost is
+**0.851 for Forever against a transcribed 0.86**. Forever's caster items fit
+the stated cost BETTER than Classic's own do.
+
+**THE ANOMALY IS HEALING, AND IT WAS CONTAMINATING THE SPELL POWER SIGNAL.**
+Healing items run 107.4% (Classic), 112.1% (Forever non-PvP), 117.3% (PvP).
+Forever writes a healer item as TWO lines -- "+33 Healing" and "+11 Spell
+Damage", at a ratio of 3.0 across every pair in the data -- and charging both
+treats one design decision as two purchases: dropping the rider takes Forever's
+non-PvP healing items from 112.1% to **102.8%**.
+
+**AND THE BLUES CONFIRM ALL OF IT ON A POPULATION THAT FITTED NONE OF IT.**
+611 rares at item level 50-60 price on a DIFFERENT quality row --
+`0.625 x ilvl - 1.15` -- and with the epic settings carried over unchanged they
+land at **100.3% +/- 2.3 for Classic's own and 100.6% +/- 0.8 for Forever's**.
+Best fit against that control is **stamina 0.99** and **healing 0.49**, against
+the 1.0 the owner ruled and the 0.45 the source states. **Nothing about the
+blues was used to choose either number**, which makes this the strongest
+evidence in the thread -- and at stamina 0.67 the same blues read 93.8% and
+87.0%, reproducing the artefact exactly.
+
+**A SECOND QUALITY ROW AND A SECOND ITEM-LEVEL BAND IS WHAT AN INDEPENDENT
+CHECK LOOKS LIKE**, as against more items of the kind already fitted. The epic
+work could not distinguish "the model is right" from "the model has been tuned
+to these items"; the blues can, because they were never in the tuning set.
+
+**AND THE EXTENSION FOUND TWO IMPORTER GAPS, BOTH REAL.** `Thrown` is an
+inventory type nothing here had seen -- Classic equips a thrown weapon in the
+RANGED slot, so that is the mapping, with the source's own word kept in the
+tooltip. And **Orb of Deception has no equipment slot at all**, a bag item
+whose only line is a Use effect: it reached the importer because the capture
+filter keeps anything with an effect, which is right for a trinket and wrong
+for this. Excluded and listed by name, under its own heading rather than the
+test-item one -- **two exclusions for two reasons are two lines of output**,
+because a shared label made the Orb read as a developer test item.
+
+**AND WITH THE BY-PRODUCT NOT CHARGED FOR, 0.45 FITS.** The paired spell damage
+is 1/3 of the healing (measured 3.0, range 2.86-3.14); dropping it, healing
+items sit **+2.6 +/- 2.7 over their own siblings in Classic and +2.0 +/- 3.6 in
+Forever**, and the best-fit cost is **0.42 in BOTH** -- the same number to two
+decimals, inside the uncertainty of the transcribed 0.45. **So the healing cost
+is not a Forever change either**: once one purchase is charged once, Forever's
+healer items are priced exactly as Classic's are.
+
+**THE ONE RESIDUAL LEFT IS PvP HEALER GEAR, 10.3 +/- 4.2 OVER ITS OWN SIBLINGS
+(2.5 sigma), AND IT IS RECORDED AS OPEN RATHER THAN CLAIMED.** It is the only
+thing in the whole thread that survives a control group, a sensitivity sweep
+and a population split -- and it is also the population confounded at every
+earlier step, being 40.8% stamina and the group that inverted when the stamina
+cost moved. **A finding that only ever appears in the population most sensitive
+to the model's weakest parameter is not yet a finding.**
+
+**MIXING TWO POPULATIONS AND FITTING A PARAMETER TO THE BLEND PRODUCES A
+CONFIDENT NUMBER FOR A THING THAT DOES NOT EXIST**, which is what "spell power
+is 9% too expensive" was. It is the fourth correction in this thread and the
+only one that came from NARROWING the population rather than widening the data
+-- every earlier fix needed a new capture; this one needed somebody to notice
+that two kinds of item were in one bucket.
+
+**AND THE BEST-FIT COST FALLS AS THE STAT'S SHARE OF BUDGET FALLS** -- healing
+fits 0.36 at a 36% share, 0.20 at 22%, 0.10 at 13%. The fit blames whatever it
+is allowed to move. **Read a best-fit figure beside the share of budget that
+stat actually commands**, or it is answering a different question.
+
+**AND THE SAME METHOD ANSWERED THE SPELL POWER QUESTION WITHOUT A FOURTH WRONG
+ANSWER, WHICH IS THE POINT OF HAVING IT.** Asked whether Forever devalued spell
+power to fit more on an item, the control separates "the model's cost is wrong"
+from "Forever changed it": items carrying spell power run over budget by
+**+2.5 +/- 2.0 in CLASSIC's own gear** and +4.4 +/- 2.4 in Forever's non-PvP
+gear, so the transcribed 0.86 is a little high for this era REGARDLESS of
+ruleset. **Forever's premium over Classic is +1.9 +/- 3.1, which is 0.6
+sigma** -- suspicion directionally right about the cost, not supported as a
+Forever-specific change. Best fit against the control is **0.783**.
+
+**AND THE CLASSIFICATION NEARLY REPEATED THE MISTAKE IT WAS TESTING.** The
+first cut split "caster" from "physical" by spell power's SHARE of budget --
+which moves with the stamina cost -- so the categories depended on the
+parameter under test and the stamina-heavy PvP sets kept crossing the
+threshold. Classifying by whether the item carries ANY spell power is
+parameter-free. **A test whose GROUPS depend on the thing being tested is not a
+test.**
+
+**A FIT WILL ALWAYS BLAME THE PARAMETER YOU LET IT MOVE**, which is why the PvP
+row comes back wanting spell power at 0.361: spell power is a small share of
+those items, so the fit drives it absurdly low trying to pull a STAMINA-heavy
+population down. Read a best-fit figure beside the share of budget the stat
+actually commands, or it is answering a different question.
+
+**NO CONCLUSION RESTING ON LESS THAN ABOUT TEN POINTS OF BUDGET IS SAFE HERE,
+AND THREE ANSWERS IN A ROW RESTED ON SIX.** "Not PvP-specific" (two items),
+"11 points general plus 5 PvP" (no baseline), "PvP only, about 6" (this). Each
+correction came from better data and each felt conclusive. **What would have
+prevented all three is a SENSITIVITY CHECK** -- vary the least certain
+parameter and see whether the conclusion survives -- and it now costs one
+command, `STAMINA=0.67 FOREVER=1 npx vite-node tools/item_budget.ts`.
+**A CONTROL GROUP ANSWERS "COMPARED AGAINST WHAT"; IT DOES NOT ANSWER "HOW
+SURE IS THE MODEL".** Those are two different questions and this took both.
+
+**SO "COMPARED AGAINST WHAT" WAS THE WHOLE QUESTION, AND IT WENT UNASKED
+THROUGH TWO ROUNDS OF CONFIDENT ARITHMETIC.** The figures were never wrong --
+84.6% and 89.2% are what those items price at. What was wrong was treating a
+reconstruction's 100% as ground truth. **A model needs a control before it
+needs more data**, and the control was one capture away the entire time.
+
+**TWO ITEMS AGREEING IS NOT EVIDENCE WHEN THE POPULATIONS OVERLAP**, which is
+the same shape as this file's "a two-point comparison cannot see a peak" and
+its warning about an identical pair. The guard is the one the stat-weight work
+already states: **report n and the spread beside the figure**, because a reader
+sorting rows by value cannot otherwise tell which the measurement can stand
+behind.
+
+**AND THE NON-PvP ITEMS SCATTER TWICE AS WIDELY** -- sd 9.5 against 5.6, from
+67.6% to 121.4% -- which is what hand-made items look like beside ones stamped
+from templates. The PvP sets are 30 pieces a slot built from a handful of stat
+blocks; the rest are individually designed.
+
+**AND AN ITEM WITH A PROC READS LOW, WHICH IS THE MODEL AND NOT THE ITEM.** A
+proc, an on-use or a set bonus costs budget that nothing here can price, so the
+item comes out short through no fault of the ruleset -- Classic epics with one
+price at **90.0%** against **95.4%** for the ones without. Classic gear is full
+of them, so any comparison that does not filter them is measuring how many
+procs each population has. `isClean` in `item_budget.ts` is that filter.
+
+**`critRating` WAS DECLARED, EXPORTED, DOCUMENTED, PRICED BY THE STAT-WEIGHT
+CATALOGUE AND READ BY NOTHING.** Both places that build a crit slice --
+`game/combat/attackChances.ts` and the engine's `defaultAttackChances` -- read
+`stats.critChance` off the block, so `critChanceFrom`, the ONE function that
+folds the rating in, **had no callers anywhere in the project**. Two correct
+halves with nothing joining them, which is precisely how `armorPenetration`
+shipped unread.
+
+**IT COST NOTHING UNTIL FOREVER GEAR GRANTED A RATING, AND THEN IT COST 1% DPS
+ON THIRTEEN PROFILES.** What made it findable was the DIRECTION: every one of
+the thirteen moved DOWN. **Float-truncation noise is symmetric and a missing
+point of crit is not**, so "all thirteen negative" is the tell -- the first
+explanation reached for was the documented truncation hazard, and that
+explanation predicts a sign that the data did not show.
+
+**AND THE FIX HAD THREE SITES, NOT ONE.** The engine fallback, the ruleset's
+own provider, and `createPet`, which inherits the owner's crit and was reading
+the raw stat too. Fixing the first two left **BM Hunter at -1.2** and every
+other affected profile at 0.0 -- a residual that names its own cause, because
+BM is the one profile with a pet. **A join that is missing in one place is
+worth grepping for in all of them.**
+
+**ONE RATING FEEDS BOTH TABLES IN FOREVER**, which the changed items settle
+rather than suggest: Classic has separate "critical strike" and "critical
+strike with spells" lines and Forever rewrote both into one Critical Strike
+Rating, at **exactly 14 per point in each direction** across 62 items carrying
+the pair. Reading it on the melee side only would have deleted every point of
+spell crit Forever gear carries.
+
+**AND THE 83 REWRITES CONFIRM THE OWNER'S WHOLE TABLE INDEPENDENTLY**: crit
+14.0 across 42 items, spell crit 14.0 across 20, hit 10.0 across 18, dodge 12.0
+across 3, **with no variation at all**. The table came from the owner in one
+message and the client's own item data reproduces it exactly.
+
+**THE ONE-HAND AND RANGED ROWS LOOK LIKE A PvP PREMIUM AND ARE MOSTLY THE 3/2
+POWER.** High Warlord's Blade and Ironwood Blade carry nearly the same raw
+points -- 27.34 against 26.04 -- and price 13 points apart, because the Blade
+concentrates its spend into two large chunks where the Ironwood spreads it over
+three small ones; the Blade's own points spread evenly would price at 92.3%
+instead of 101.4%. **A concentrated item costs more for the same stat total,
+which is what the exponent is FOR** -- so reading a used% difference as a
+richness difference needs the raw points checked beside it.
+
+**WEAPON DPS IS NOW DEMONSTRATED RATHER THAN FITTED.** At one item level a
+hand's dps does not move with speed: Forever's one-handers run 47.2 to 47.4
+across speeds 1.80, 2.00, 2.30, 2.40 and 2.90, a 61% spread in speed and none
+in dps. **And the lines fitted from CLASSIC weapons predict all three hands
+within 0.65 dps**, having never seen a Forever item -- so Forever did not
+re-derive the weapon curve any more than it re-derived base armour. The six
+caster weapons each give up **15.6 to 15.9 dps**, and on the two-hand slot that
+is 2.97 budget points per dps, corroborating the 2.33-2.72 estimated from
+Classic.
+
+**AND FOREVER GRANTS HIT AND CRIT AS RATINGS, WHICH IS AN ENGINE QUESTION AND
+NOT ONLY A BUDGET ONE.** Fourteen stat names across those 41 weapons and every
+one has a cost in the source -- the first capture here where nothing falls
+through -- including **Critical Strike Rating, Hit Rating and Spell
+Penetration**, three things Classic could never have tested because it has no
+ratings at all. `STAT_NAMES` carries `hitChance` and `critChance` as flat
+percentage POINTS and `critRating` is barely read. **The conversion is the
+owner's to state**, and nothing here invents one.
+
+**AND THAT CAPTURE IS BUILD 1.60.1.70338 WHERE THE PROJECT'S ARE 1.60.1.70170.**
+Two builds stale, by this file's own rule that a capture goes stale and a
+correct number becomes a wrong one with nobody touching it. Not acted on with
+the itemization work, and now a dated fact rather than a suspicion.
 
 **A DELTA, NOT A TOTAL**, because the owner gave it as one and because two of
 their four stated bases disagreed with the scrape. A bonus survives a re-scrape
@@ -3912,6 +4248,25 @@ their ADDED LINES that are in `main` today -- 82% to 93%, with every remaining
 line a superseded draft: an old `PLACEHOLDER_` figure, a requirement line a
 patch later replaced, prose since rewritten. **A branch is redundant when its
 residue is older than `main`, not when the diff is empty.**
+
+**AND IT HAS NOW HAPPENED A SECOND TIME, WHICH FALSIFIES THE REASONING THAT
+EXPLAINED AWAY THE FIRST.** `chargeAndShieldTalents.test.ts` timed out again --
+"lets the Prot preset Charge once, and stops it without the talent", 5000ms,
+under the full suite only, passing alone at 1568ms and passing on an immediate
+re-run of the whole suite. **The file still has ZERO async bodies**, so the
+argument below -- a synchronous body blocks the event loop and vitest's timer
+never fires -- predicts this cannot happen, and it has now happened twice.
+**The claim is wrong, or incomplete, and it is the thing to stop leaning on**:
+treat a timeout in this file as a real flake under load rather than as proof
+that something else is going on.
+
+**AND IT WAS NOT THE CHANGE IT LANDED BESIDE, WHICH IS WORTH MEASURING RATHER
+THAN ASSUMING EITHER WAY.** It failed in the run that first added 449 items,
+which quadruples what `itemData` parses at module load and is exactly the kind
+of thing that would tip a test near its limit. Measured: **529-620ms to build
+600 items against 494-545ms for 151**, so the change adds about 40ms across a
+41-second suite. Not it. **A plausible culprit arriving in the same commit is
+not evidence**, and the measurement took one command.
 
 **CAPTURE A SUITE FAILURE BEFORE RE-RUNNING IT.** One full-suite run of
 `chargeAndShieldTalents.test.ts` failed at `ccf4dc8` and has passed every run

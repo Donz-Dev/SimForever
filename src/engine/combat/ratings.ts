@@ -3,18 +3,48 @@ import type { Stats } from '../stats';
 /**
  * Converting secondary ratings into percentages.
  *
- * Every constant here is a PLACEHOLDER. Real WoW values vary by expansion and
- * by character level, and pinning them down is a content problem, not an
- * engine problem. What matters now is that the conversion lives in exactly one
- * place, so replacing these with real, level-scaled tables later is a change to
- * this file and nothing else.
+ * ----------------------------------------------------------------------------
+ * EIGHT OF THESE ARE THE RULESET OWNER'S OWN FIGURES AND ARE NO LONGER
+ * PLACEHOLDERS. They were placeholders for the whole project -- "real WoW
+ * values vary by expansion and by character level" -- and the owner has since
+ * stated Forever's table outright, which is also the first time anything here
+ * needed it: Forever grants hit, crit, dodge, defense and expertise as RATINGS
+ * on real items where Classic grants flat percentages.
+ *
+ * CHANGING CRIT FROM 180 TO 14 MOVED NOTHING, which is worth recording because
+ * it looks like it should have moved everything. Nothing in the project grants
+ * `critRating` -- every profile defaults it to 0 -- and every haste source
+ * uses the `percent * RATING_PER_PERCENT.haste` idiom that `hasteMultiplierFrom`
+ * divides straight back out, so the constant cancels. All 75 combat-log hashes
+ * are unchanged across the change.
+ *
+ * `mastery` and `versatility` are STILL PLACEHOLDERS: Forever states neither,
+ * and nothing in the ruleset grants either. They keep the old invented numbers
+ * and say so.
+ * ----------------------------------------------------------------------------
  */
 
-/** Rating required for one percentage point, at the level this build targets. */
+/** Rating required for one percentage point. The owner's table. */
 export const RATING_PER_PERCENT = {
-  crit: 180,
-  haste: 170,
+  /** 14 Rating = +1% Crit Chance. */
+  crit: 14,
+  /** 10 Rating = +1% Haste. */
+  haste: 10,
+  /** 10 Rating = +1% Hit Chance. */
+  hit: 10,
+  /** 1 Rating = 1 Defense Skill -- a SKILL POINT, not a percentage. */
+  defense: 1,
+  /** 10 Rating = +1% reduced chance to be Dodged or Parried. */
+  expertise: 10,
+  /** 12 Rating = +1% Dodge Chance. */
+  dodge: 12,
+  /** 20 Rating = +1% Parry Chance. */
+  parry: 20,
+  /** 5 Rating = +1% Block Chance. */
+  block: 5,
+  /** PLACEHOLDER. Forever states nothing and nothing grants it. */
   mastery: 180,
+  /** PLACEHOLDER. Forever states nothing and nothing grants it. */
   versatility: 205,
 } as const;
 
@@ -56,9 +86,26 @@ export function critChanceFrom(stats: Stats): number {
   return clamp01(stats.critChance / 100 + fromRating);
 }
 
-/** Spell crit chance as a fraction in [0, 1]. */
+/**
+ * Spell crit chance as a fraction in [0, 1].
+ *
+ * ----------------------------------------------------------------------------
+ * `critRating` FEEDS THIS TOO, which is a ruleset fact rather than a tidy-up.
+ * Classic has two separate item lines -- "Improves your chance to get a
+ * critical strike by 1%" and "...with spells by 2%" -- and Forever rewrote
+ * BOTH into one "+N Critical Strike Rating". The rewrites are in the data and
+ * they settle it: across 42 items the melee line converts at exactly 14 rating
+ * per point, and across 20 items the SPELL line converts at exactly 14 too.
+ * One rating, both tables.
+ *
+ * So a Forever caster item granting 28 Critical Strike Rating is granting 2%
+ * spell crit, and reading the rating on the melee side only would have deleted
+ * every point of spell crit Forever gear carries.
+ * ----------------------------------------------------------------------------
+ */
 export function spellCritChanceFrom(stats: Stats): number {
-  return clamp01(stats.spellCritChance / 100);
+  const fromRating = stats.critRating / RATING_PER_PERCENT.crit / 100;
+  return clamp01(stats.spellCritChance / 100 + fromRating);
 }
 
 /**
