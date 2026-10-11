@@ -3620,6 +3620,29 @@ archetypes -- one with 28 crit and a scaling damage stat, one pure -- and
 **A MAXIMUM IS NOT A FIXED AMOUNT**: 28 crit costs 28 budget points and a B55
 trinket has 23.3, so `trinketCrit` clamps it exactly as `staminaFloor` does.
 
+**AND A HIT OR EXPERTISE RATING IS PAID FOR OUT OF CRIT**, the owner's ruling
+-- "instead of pull from spell power to get more hit rating, it should be pull
+from crit rating". It replaced taking the cost off the TOTAL before the shares
+divided anything, which shrank every stat together: four slots of every B55
+caster set read **"+25 Hit Rating, +2 Stamina, +1 Spell Power"**, because at
+the 3/2 power a slot with little left rounds each share to 0 or 1.
+
+**THE RULE ALONE WOULD NOT HAVE FIXED IT, AND THOSE FOUR SLOTS SAY WHY: THEY
+CARRIED NO CRIT AT ALL.** 25 hit costs **97% of a B55 medium slot** whatever it
+is taken from, so `RATING_BUDGET_SHARE` caps a rating at half a slot and
+`spreadRating` gives each slot what it can afford rather than one uniform
+chunk. **The chunk was a circle** -- the smallest of 10/15/20/25 that fit the
+total into a slot list that had itself been filtered by affordability, so a set
+whose small slots could not afford 25 got FEWER eligible slots and therefore a
+BIGGER chunk.
+
+**AND THE LITERAL READING OVER-CORRECTS, WHICH THE ITEMS SAY AND THE RULE DOES
+NOT.** Draining crit without limit leaves a caster at **74 crit against a real
+mage set's 154** and pushes spell power above the richest set in the database
+-- one unrealistic number traded for two. `RATING_DONOR_SHARE` bounds it at
+40%, which lands caster crit at 153. **The owner's rule said which direction
+and Forever's own items said how far**, which is the shape to copy.
+
 **AND A PREFERRED STAT MUST NOT COME OUT AT ZERO ACROSS A WHOLE SET**, the
 owner's ruling -- "that's unrealistic to how items are actually designed". A
 template may name more stats than a slot holds and the first N were taken every

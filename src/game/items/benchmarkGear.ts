@@ -491,23 +491,123 @@ export const RATING_SLOTS: readonly EquipmentSlot[] = [
 /* -------------------------------------------------------------------------- */
 
 /**
- * Spread a rating total across slots in realistic chunks.
+ * The most of a slot's budget a hit or expertise rating may take.
  *
- * Returns a map from slot to the amount it carries. The chunk is the smallest
- * of 10, 15 or 20 that lets the total fit inside `RATING_SLOTS`, so a Rogue's
- * 120 hit becomes eight items of 15 rather than three of 40.
+ * ==============================================================================
+ * THE SECOND HALF OF THE OWNER'S "+1 SPELL POWER" FINDING. Funding the rating
+ * out of crit (see `RATING_DONORS`) fixes a slot that HAS crit to give; it
+ * cannot fix one where the rating alone costs more than the whole slot.
+ *
+ * A B55 medium slot has 25.6 budget points, so at the 3/2 power:
+ *
+ *     10 hit   24% of the slot      20 hit   69%
+ *     15 hit   45%                  25 hit   **97%**
+ *
+ * -- and four slots of every B55 caster set carried 25, which is why they read
+ * "+25 Hit Rating, +2 Stamina, +1 Spell Power". There was nothing left to
+ * divide, and at the 3/2 power a tiny remainder rounds to 0 or 1.
+ *
+ * HALF, SO THE REST OF THE ITEM IS STILL AN ITEM. It is the one number here
+ * that is a judgement rather than a measurement, and it is stated as a share
+ * so it scales with item level: the same 25 hit is 97% of a B55 medium slot
+ * and 42% of an E85 one, and only the first is a problem.
+ * ==============================================================================
  */
-export function spreadRating(total: number, slots: readonly EquipmentSlot[]): Map<EquipmentSlot, number> {
+export const RATING_BUDGET_SHARE = 0.5;
+
+/**
+ * Ratings are spread in multiples of this.
+ *
+ * FIVE, because Forever's own items carry hit in whole percentage points --
+ * 10 rating is 1% -- and a line reading "+13 Hit Rating" would be the
+ * generator showing its arithmetic. It is the realism rule `RATING_SLOTS`
+ * already exists for, applied to the amount instead of the count.
+ */
+export const RATING_STEP = 5;
+
+/** The most rating a slot of this budget may carry, rounded to a real step. */
+export function ratingCapacity(budget: number, cost: number): number {
+  const points = (RATING_BUDGET_SHARE * budget ** BUDGET_EXPONENT) ** (1 / BUDGET_EXPONENT);
+  return Math.floor(points / cost / RATING_STEP) * RATING_STEP;
+}
+
+/**
+ * Spread a rating total across slots, giving each what it can afford.
+ *
+ * ==============================================================================
+ * LARGEST HEADROOM FIRST, IN STEPS OF FIVE, which replaces "one uniform chunk
+ * for every slot". The chunk was the smallest of 10/15/20/25 that fit the
+ * total into the slot list -- and because the slot list had itself been
+ * filtered by affordability, a set whose small slots could not afford 25 ended
+ * up with FEWER eligible slots and therefore a BIGGER chunk. The circle closed
+ * on 25 for every one of them.
+ *
+ * Giving each slot what it can afford is also the more realistic answer: a
+ * real set does not put the same 15 hit on a ring and on a chest.
+ *
+ * ------------------------------------------------------------------------------
+ * `taken` IS WHY HIT AND EXPERTISE CANNOT COLLIDE. They are spread in two
+ * passes over the same slots, so the second has to know what the first used --
+ * without it a Rogue's 120 hit and 10 expertise could land on one slot and put
+ * it over the cap that exists to stop exactly that.
+ *
+ * AND THE TOTAL IS MET EVEN IF THE CAPS CANNOT ABSORB IT, because the owner's
+ * figure is absolute: "even though the needed hit cap is mandatory, IT STILL
+ * COUNTS AGAINST THE STAT BUDGET ON THE ITEMS". The overflow goes to the
+ * biggest slots, which is where it does least harm -- and `benchmarkShape`
+ * asserts how often that happens, so a template that outgrows its set is
+ * visible rather than silent.
+ * ==============================================================================
+ */
+export function spreadRating(
+  total: number,
+  slots: readonly EquipmentSlot[],
+  capacityOf: (slot: EquipmentSlot) => number,
+  taken: ReadonlyMap<EquipmentSlot, number> = new Map(),
+): Map<EquipmentSlot, number> {
   const out = new Map<EquipmentSlot, number>();
-  if (total <= 0) return out;
-  const chunk = [10, 15, 20, 25].find((c) => Math.ceil(total / c) <= slots.length) ?? 25;
+  if (total <= 0 || slots.length === 0) return out;
+
+  const headroom = new Map<EquipmentSlot, number>(
+    slots.map((slot) => [slot, Math.max(0, capacityOf(slot) - (taken.get(slot) ?? 0))] as const),
+  );
+
   let left = total;
-  for (const slot of slots) {
-    if (left <= 0) break;
-    const amount = Math.min(chunk, left);
-    out.set(slot, amount);
-    left -= amount;
+  while (left > 0) {
+    // The slot with the most room left. Ties break on the list's own order,
+    // which is `RATING_SLOTS` -- a stated preference, not an accident.
+    let best: EquipmentSlot | undefined;
+    let most = 0;
+    for (const slot of slots) {
+      const room = headroom.get(slot) ?? 0;
+      if (room > most) {
+        most = room;
+        best = slot;
+      }
+    }
+    if (best === undefined) break;
+
+    const step = Math.min(RATING_STEP, left, most);
+    out.set(best, (out.get(best) ?? 0) + step);
+    headroom.set(best, most - step);
+    left -= step;
   }
+
+  /*
+   * THE CAPS COULD NOT ABSORB IT. The total is the owner's and is absolute, so
+   * the remainder goes onto the slots in order and the cap gives way -- the
+   * opposite of `staminaFloor`, where the BUDGET is absolute and the floor
+   * gives way, because these two numbers have different owners.
+   */
+  if (left > 0) {
+    for (const slot of slots) {
+      if (left <= 0) break;
+      const step = Math.min(RATING_STEP, left);
+      out.set(slot, (out.get(slot) ?? 0) + step);
+      left -= step;
+    }
+  }
+
   return out;
 }
 
@@ -621,6 +721,43 @@ export function trinketCrit(budget: number): number {
     (TRINKET_CRIT_BUDGET_SHARE * budget ** BUDGET_EXPONENT) ** (1 / BUDGET_EXPONENT) / COST.Crit;
   return Math.min(TRINKET_CRIT_RATING, Math.floor(affordable));
 }
+
+/**
+ * Which stat pays for a hit or expertise rating on the same slot.
+ *
+ * ----------------------------------------------------------------------------
+ * THE OWNER'S RULING: "Instead of pull from spell power to get more hit
+ * rating, it should be pull from crit rating to get more hit rating. Therefore
+ * it keeps the spell power reasonable."
+ *
+ * A LIST SO A SECOND DONOR CAN BE ADDED, and because the ORDER is the rule --
+ * the first donor is drained before the second is touched. Crit is the only
+ * one today and is the one the owner named. See `toLines`.
+ * ----------------------------------------------------------------------------
+ */
+export const RATING_DONORS: readonly BenchStat[] = ['Crit'];
+
+/**
+ * How much of its OWN portion a donor may give up before the rest chips in.
+ *
+ * ==============================================================================
+ * THE OWNER'S RULE, BOUNDED, AND THE BOUND IS A MEASUREMENT RATHER THAN A
+ * TASTE. Draining crit without limit is the rule read literally, and it
+ * over-corrects: a caster carries 110 hit across almost every slot, so crit
+ * has nothing left anywhere. Measured at E65, against the real item-level-60-70
+ * population a mage set occupies (crit 154, spell power 290-397):
+ *
+ *     donor share   caster crit   caster gear spell power
+ *     0% (no rule)      181            384
+ *     100% (literal)     74            427   <- crit far below real, SP above
+ *
+ * So the literal reading takes crit BELOW what real sets carry and spell power
+ * ABOVE the richest set in the database -- trading one unrealistic number for
+ * two. The bound is what keeps the owner's rule pointing the right way without
+ * running past the thing it was for.
+ * ==============================================================================
+ */
+export const RATING_DONOR_SHARE = 0.4;
 
 export const SHARE_WEIGHT: Readonly<Partial<Record<BenchStat, number>>> = {
   Crit: 0.5,

@@ -12,6 +12,9 @@ import {
   DPS_TO_BUDGET,
   LINE,
   RATING_SLOTS,
+  RATING_DONORS,
+  RATING_DONOR_SHARE,
+  ratingCapacity,
   SHIELD_STATS,
   trinketCrit,
   SLOT_MULTIPLIER,
@@ -195,10 +198,57 @@ const toLines = (
     amounts.set(stat, value);
     used += (value * COST[stat]) ** BUDGET_EXPONENT;
   }
-  const left = Math.max(0, total - used);
+
   // WEIGHTED, not the bare positional table: `SHARE_WEIGHT` is what pulls crit
   // back and pushes spell power up, measured against Forever's own items.
   const weights = weightedShares(shares);
+  const portions = weights.map((weight) => weight * total);
+
+  /*
+   * ============================================================================
+   * A HIT OR EXPERTISE RATING IS PAID FOR OUT OF CRIT, NOT OUT OF EVERYTHING.
+   *
+   * THE OWNER'S RULING, and it came from reading the items: "The spell power
+   * has been reduced down to +1 spell power on some B55 items in order to
+   * account for +25 hit rating. I think it's pulling from the wrong pull
+   * so-to-speak. Instead of pull from spell power to get more hit rating, it
+   * should be pull from crit rating to get more hit rating. Therefore it keeps
+   * the spell power reasonable. (1 spell power is unrealistically low for an
+   * item to have)"
+   *
+   * ----------------------------------------------------------------------------
+   * WHAT IT REPLACED: the rating's cost came off the TOTAL before the shares
+   * divided anything, so every stat on the slot shrank together -- and at the
+   * 3/2 power a slot that has spent most of its budget has almost nothing left
+   * to divide, so each share rounded to 0 or 1. Four slots of a B55 caster set
+   * read "+25 Hit Rating, +2 Stamina, +1 Spell Power" and carried no crit at
+   * all.
+   *
+   * NOW THE SHARES ARE COMPUTED FROM THE WHOLE BUDGET and the rating's cost is
+   * taken from CRIT's portion first, overflowing proportionally into the rest
+   * only when crit's share runs out. On a slot carrying no crit at all --
+   * which is every tank slot -- that overflow is the whole of it, so the
+   * behaviour there is exactly what it was.
+   *
+   * THE ORDER IS A LIST SO A SECOND DONOR CAN BE ADDED. Crit is the only one
+   * today, and it is the one the owner named.
+   * ============================================================================
+   */
+  let owed = used;
+  for (const donor of RATING_DONORS) {
+    if (owed <= 0) break;
+    const index = shares.indexOf(donor);
+    if (index < 0) continue;
+    const taken = Math.min(owed, portions[index] * RATING_DONOR_SHARE);
+    portions[index] -= taken;
+    owed -= taken;
+  }
+  if (owed > 0) {
+    const remaining = portions.reduce((sum, portion) => sum + portion, 0);
+    const scale = remaining > 0 ? Math.max(0, 1 - owed / remaining) : 0;
+    for (let index = 0; index < portions.length; index += 1) portions[index] *= scale;
+  }
+
   shares.forEach((stat, index) => {
     /*
      * FLOOR, NOT ROUND. Rounding to NEAREST sends an item over its own budget
@@ -207,7 +257,7 @@ const toLines = (
      * by `13.7 -> 14`. Flooring costs under a point per stat and makes "fits
      * the budget" true by construction rather than true within a tolerance.
      */
-    const points = (weights[index] * left) ** (1 / BUDGET_EXPONENT);
+    const points = portions[index] ** (1 / BUDGET_EXPONENT);
     const value = Math.floor(points / COST[stat]);
     if (value > 0) amounts.set(stat, (amounts.get(stat) ?? 0) + value);
   });
@@ -407,15 +457,28 @@ export function benchmarkItemsFor(
    * candidate slots by what the rating would cost keeps the set inside its
    * budget AND is the realistic answer: a small slot carries less.
    */
-  const affords = (slot: EquipmentSlot, amount: number) => {
+  /*
+   * WHAT EACH SLOT CAN CARRY OF A RATING, which replaces two `affords` filters
+   * against hard-coded amounts. See `ratingCapacity`: half the slot's budget,
+   * so the rest of the item is still an item.
+   */
+  const capacityOf = (stat: 'Hit' | 'Expertise') => (slot: EquipmentSlot) => {
     const plan = ARMOUR_SLOTS.find((p) => p.slot === slot);
-    return plan === undefined || amount <= base * SLOT_MULTIPLIER[plan.slotClass];
+    if (plan === undefined) return 0;
+    return ratingCapacity(base * SLOT_MULTIPLIER[plan.slotClass], COST[stat]);
   };
-  const hitSlots = RATING_SLOTS.filter((slot) => affords(slot, template.hit / 8));
-  const hit = spreadRating(template.hit, hitSlots.filter((s) => affords(s, 25)));
+
+  const hit = spreadRating(template.hit, RATING_SLOTS, capacityOf('Hit'));
+  /*
+   * EXPERTISE GOES ON FROM THE OTHER END and is told what hit already took --
+   * without that the two passes can land on one slot and put it over the cap
+   * that exists to stop exactly that.
+   */
   const expertise = spreadRating(
     template.expertise,
-    [...RATING_SLOTS].reverse().filter((s) => affords(s, 25)),
+    [...RATING_SLOTS].reverse(),
+    capacityOf('Expertise'),
+    hit,
   );
 
   // A stable id per (template, set, slot) so a set is the same every time.
