@@ -21,9 +21,17 @@ the tooling to be a bit more sophisticated as well."
 | 6 | **Hemo**, which DERIVES from the Rupture list and was not respecified | 715.8 -> 726.2 (**+10.4**) | 760.9 |
 | 6 | **Combat Mut**, a NEW profile -- Venom with two fields replaced | **790.6**, the 26th row | **760.9** |
 | 7 | **Hemo Dagger** -- renamed, respecified, and NO LONGER DERIVED from Rupture | 726.2 -> **787.0** (**+60.7 REAL**) | **763.3** |
+| 7 | **Pure Hemo**, a NEW profile -- the first list chosen by the WEAPON IN HAND | **723.5**, the 27th row | **761.6** |
+| 8 | **Arcane Mage** -- 35/11/5, and Presence of Mind moved to make PYROBLAST instant | 857.7 -> 866.8 (**+9.1**) | 768.0 |
+| 8 | **Fire Mage** -- 16/31/4, Fire Blast outside Clearcasting, Missiles on a Barrage | 753.0 -> **843.7** (**+90.7 REAL**) | 768.0 |
+| 8 | **Frostfire Mage** -- list only: a SALVAGE Pyroblast, and Fire Blast above 10% mana | 837.0 -> **863.3** (**+26.3 REAL**) | 768.0 |
+| 8 | **Ele Shaman** -- 32/6/13, the potion opens the list, the racials move DOWN | 651.4 -> **671.1** (**+19.7 REAL**) | 768.0 |
+| 8 | **Moonkin** -- list only: the potion opens it, Starfire's Eclipse gate 2 -> 3 | 788.4 -> 785.9 (**-2.5**) | 768.0 |
+| 8 | **Cat Druid** -- Frenzy Potion held for Berserk, Strength food, four list changes | 859.0 -> **892.7** (**+33.6 REAL**) | 768.0 |
+| 8 | **Bear Druid** -- Stamina food, and the Mighty Rage Potion off the bottom | **deaths 10.00 -> 9.98**, at -9.6 DPS | **768.0** |
 
 **AND MORE ROWS CAN BE ADDED, WHICH IS THE POINT OF ITS BEING A TABLE** --
-there are twenty-two lists left and the owner has said so. **THE HEADER IS
+there are fifteen lists left and the owner has said so. **THE HEADER IS
 WRITTEN FOR THE SERIES RATHER THAN FOR ITS FIRST ENTRY**, which is this file's
 own rule arriving where it belongs: it read "THE APL EDITOR GROWS TEETH, AND 2H
 ARMS IS RESPECIFIED" for exactly one round.
@@ -35,6 +43,112 @@ figure of merit is a DEATH COUNT, and both of its changes are read there.
 **THE FOURTH IS NOT A LIST AT ALL**, and that is worth a row rather than a
 footnote: the owner asked for the Rogue next and named a TALENT that had to be
 fixed first. **It was the largest single figure of the four rounds.**
+
+## Round eight: seven profiles at once, and the first round with a LOSS in it
+
+**FOUR OF THE SEVEN ARE REAL AND ONE OF THEM IS +90.7**, which is the largest
+single figure in this series. The twenty untouched rows are **0.0 to the
+decimal**, which is the containment check.
+
+| | what moved | what it was |
+| --- | --- | --- |
+| **Fire Mage** | 753.0 -> **843.7** | talents AND list: six points into Arcane bought Missile Barrage, and the list gained the Arcane Missiles entry that spends it, plus a Fire Blast gated OUT of Clearcasting |
+| **Cat Druid** | 859.0 -> **892.7** | four list changes and a potion swap at once; not decomposed |
+| **Frostfire** | 837.0 -> **863.3** | a Fire Blast above 10% mana, and a SALVAGE Pyroblast at two Heating Up stacks |
+| **Ele Shaman** | 651.4 -> **671.1** | 32/6/13, Searing Totem first, and the racials BELOW the two maintenance entries |
+| Arcane Mage | 857.7 -> 866.8 | inside the interval; the respecification is a rebuild of the build rather than a tune |
+| Moonkin | 788.4 -> 785.9 | inside the interval |
+| Bear Druid | **deaths 10.00 -> 9.98** | a tank row, and the DPS is the wrong measure -- see below |
+
+### The Bear's row is the one worth reading twice
+
+**STAMINA FOOD BOUGHT 231 HEALTH AND TOOK 0.02 DEATHS OFF A FIGHT, AT -9.6
+DPS.** Measured on the mechanism rather than inferred, which is what
+`tools/bear_survival.ts` is for:
+
+| | before | after |
+| --- | --- | --- |
+| health | 9,254 | **9,485** |
+| deaths | 10.00 | **9.98** |
+| damage taken | 232,985 | 232,551 |
+| dps | 395.7 | 386.1 |
+
+**THE ENCOUNTER IS WHY, AND IT IS THE RAMP RATHER THAN THE FOOD.** The boss
+opens at 5,000 and every swing is 10% harder, so by the end of a fight a single
+blow is north of twelve thousand -- 231 more health is a fraction of one late
+swing, and the character dies at the same point in the ramp either way. **This
+is the same shape as block value measuring "not measured" in the tank weights**:
+a flat mitigation quantity against a geometric one.
+
+**IT IS THE OWNER'S CHOICE AND IT IS RECORDED, NOT ARGUED WITH.** What is worth
+saying is that the comparison it invites -- against the Prot Warrior's stamina
+food, which took deaths 6.17 -> 5.93 -- is a comparison between two different
+HEALTH POOLS and two different ramp positions rather than between two foods.
+
+**AND THE MIGHTY RAGE POTION NOW FIRES.** Moving it from the bottom of the tank
+list to between Enrage and Berserk takes it to **1.0 casts a fight**, which is
+what the move was for: the bottom of a tank list is a place entries are not
+REACHED, and this file already records five of seven racials coming back inert
+there.
+
+### What the respecifications cost, which no DPS figure shows
+
+Three things that a measurement cannot report, found by the suite and by the
+census rather than by a number:
+
+- **The Elemental build now spends three points on ELEMENTAL WARDING**, which
+  reduces Fire, Frost and Nature damage TAKEN against a target that deals none.
+  A genuine live gap with the ENCOUNTER cause. `shamanAbilities.test.ts` records
+  it on both Shaman builds now rather than on Enhancement alone.
+- **TIDAL FOCUS joins that build partly modelled, in the healthy direction**:
+  its +5% chance to hit is why the five points are there, against a 17% spell
+  miss and a 16-point usable cap, and only its healing-cost half is dead.
+- **No Mage profile takes ARCANE RESILIENCE any more.** The conversion still
+  works and is still declared; what changed is that nothing reaches it.
+
+### Four tests were reading a profile to pin a mechanism
+
+All four broke on an owner revision that had nothing to do with what they test
+-- Reverberation, Shamanistic Focus, Arcane Resilience and the Presence of Mind
+entry -- and three of them are the SAME correction
+`grantCastModifier.test.ts` already recorded for Mental Agility one revision
+earlier, in its own words: "this pins a mechanism, so it must not depend on
+which talents a profile happens to spend points on". They build their
+allocation by hand now.
+
+**THE FOURTH IS THE EXCEPTION AND IT GIVES WAY.** "Spends Presence of Mind on
+the CHEAP Arcane Blast, without a Barrage" pinned a ROTATION DECISION, and the
+owner has made a different one -- the charge goes on a six-second Pyroblast at
+the Arcane Blast cap instead. **A test that pins a rotation decision has to give
+way when the decision changes owner; a test that pins an invariant does not.**
+
+### Two builders, because a shared fragment was asked for three things at once
+
+`buffPotionCooldown` is the two pure buff potions, optionally **held for one of
+the character's own cooldowns** -- Spellblasting for Presence of Mind on the
+Arcane Mage, Frenzy for Berserk on the Cat -- and `consumableCooldown` hands one
+shared entry to a list that places it itself, which is what the Bear's move
+needed. **Both carry the NOTE with the condition**, which is the whole reason
+they are functions and not conditions patched on afterwards: a note is a frozen
+string, and an override touching only the condition leaves the panel explaining
+a gate that is gone. `thistleTeaCooldown` has had this shape for two rounds.
+
+**A GATED POTION CANNOT STARVE ITSELF, and that is the thing to check before
+writing one.** The aura each waits on is applied by an entry BELOW it, so the
+first poll skips the potion and casts the cooldown and the next poll -- 100ms
+later, because a potion takes no global cooldown -- finds the window open. A
+gate waiting on something only an entry ABOVE it could supply would never open
+at all, and would read exactly like a working list.
+
+### And the Thistle Tea default is now reached by nobody
+
+The Cat joined the tight ten, which was the last of the six drinkers still on
+the shared twenty. **The shared constant must not move to ten.** A default is
+what an UNRULED build gets; the tens and the fifteen are the owner's, given one
+profile at a time, and folding their commonest answer into the default would
+make the next unspecified build inherit a ruling that was never about it.
+`consumableCooldownGates.test.ts` asserts the emptiness so the claim is
+checkable rather than a comment.
 
 ## Round five: Venom, where the owner reversed two measured decisions
 
@@ -3300,7 +3414,7 @@ demonstrated at the top. **Re-count rather than re-reading the sentence.**
 | --- | --- |
 | **Talents** | 260 fully, 39 partly, 105 ruled out, **62 a live gap**, out of **466** -- from 132 before the class dives |
 | **Abilities** | 114 declared against 478 captured |
-| **Profiles** | **27**, all measured, **mean 761.6** on FOREVER'S OWN ITEMS -- Combat Mut is the first profile ADDED rather than measured, and the count had been 25 since the gear swap -- every earlier figure in this file was measured on Classic and Season of Discovery stand-ins, so the contributions below belong to that gear and not to this mean: the armour enchants were +27.0 of it, the pre-pull consumables +105.9, the racials **+9.8 at round one**, the MID-FIGHT consumables **+17.7** and the Life Tap gate **+3.5** |
+| **Profiles** | **27**, all measured, **mean 768.0** on FOREVER'S OWN ITEMS -- Combat Mut is the first profile ADDED rather than measured, and the count had been 25 since the gear swap -- every earlier figure in this file was measured on Classic and Season of Discovery stand-ins, so the contributions below belong to that gear and not to this mean: the armour enchants were +27.0 of it, the pre-pull consumables +105.9, the racials **+9.8 at round one**, the MID-FIGHT consumables **+17.7** and the Life Tap gate **+3.5** |
 | **Racials** | **10 races, 40 traits**: 15 do something, 20 effects ruled out, 11 a live gap |
 | **Scope rulings** | **9 members**, all the owner's, carrying 129 TALENT entries and 19 racial declarations |
 | **Placeholders** | **11 declared** -- see the milestone table, and count DECLARATIONS. **One of the eleven is not a ruleset number**: `PLACEHOLDER_PREFERRED_WEIGHT` is the Gear panel's stat-sorting weight, which no simulation reads, so it can sort a list badly and cannot move a figure |
@@ -5008,22 +5122,22 @@ cannot audit, which is why the check is a SET comparison and not a row count.
 
 | Profile | Class | Talents | DPS | | Profile | Class | Talents | DPS |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| DW Fury | Warrior | 17/34/0 | 989.6 | | Moonkin | Druid | 38/0/13 | 788.4 |
-| LW Ranged | Hunter | 7/39/5 | 912.5 | | **Hemo Dagger** | Rogue | 17/3/31 | **787.0** |
-| Firelock | Warlock | 5/11/35 | 891.4 | | Shadow Priest | Priest | 13/3/35 | 774.7 |
-| Hawk Melee | Hunter | 16/11/24 | 883.0 | | Fire Mage | Mage | 10/39/2 | 753.0 |
-| Cat Druid | Druid | 9/34/8 | 859.0 | | Enh Shaman | Shaman | 17/34/0 | 750.7 |
-| Arcane Mage | Mage | 47/4/0 | 857.7 | | SM/DS | Warlock | 40/11/0 | 722.4 |
-| BM Hunter | Hunter | 31/20/0 | 856.2 | | Rupture Rogue | Rogue | 12/8/31 | 719.4 |
-| 2H Arms | Warrior | 39/10/2 | 849.7 | | Venom Rogue | Rogue | 37/12/2 | 718.9 |
-| Frostfire Mage | Mage | 0/29/22 | 837.0 | | Shockadin | Paladin | 23/0/28 | 714.4 |
-| LW Melee | Hunter | 7/13/31 | 831.5 | | Ele Shaman | Shaman | 38/13/0 | 651.4 |
-| Combat Rogue | Rogue | 18/33/0 | 824.1 | | Prot Warr | Warrior | 17/0/34 | 469.7 |
-| Seal Twist Ret | Paladin | 15/0/36 | 816.5 | | Prot Pally | Paladin | 8/34/9 | 400.6 |
-| Combat Mut | Rogue | 30/21/0 | 790.6 | | Bear Druid | Druid | 9/42/0 | 395.7 |
-| Pure Hemo | Rogue | 21/8/22 | 718.8 | | | | | |
+| DW Fury | Warrior | 17/34/0 | 989.6 | | Hemo Dagger | Rogue | 17/3/31 | 787.0 |
+| LW Ranged | Hunter | 7/39/5 | 912.5 | | Moonkin | Druid | 38/0/13 | 785.9 |
+| Cat Druid | Druid | 9/34/8 | 892.7 | | Shadow Priest | Priest | 13/3/35 | 774.7 |
+| Firelock | Warlock | 5/11/35 | 891.4 | | Enh Shaman | Shaman | 17/34/0 | 750.7 |
+| Hawk Melee | Hunter | 16/11/24 | 883.0 | | Pure Hemo | Rogue | 21/8/22 | 723.5 |
+| Arcane Mage | Mage | 47/4/0 | 866.8 | | SM/DS | Warlock | 40/11/0 | 722.4 |
+| Frostfire Mage | Mage | 0/29/22 | 863.3 | | Rupture Rogue | Rogue | 12/8/31 | 719.4 |
+| BM Hunter | Hunter | 31/20/0 | 856.2 | | Venom Rogue | Rogue | 37/12/2 | 718.9 |
+| 2H Arms | Warrior | 39/10/2 | 849.7 | | Shockadin | Paladin | 23/0/28 | 714.4 |
+| Fire Mage | Mage | 10/39/2 | 843.7 | | Ele Shaman | Shaman | 38/13/0 | 671.1 |
+| LW Melee | Hunter | 7/13/31 | 831.5 | | Prot Warr | Warrior | 17/0/34 | 469.7 |
+| Combat Rogue | Rogue | 18/33/0 | 824.1 | | Prot Pally | Paladin | 8/34/9 | 400.6 |
+| Seal Twist Ret | Paladin | 15/0/36 | 816.5 | | Bear Druid | Druid | 9/42/0 | 386.1 |
+| Combat Mut | Rogue | 30/21/0 | 790.6 | | | | | | |
 
-The mean across **27** is **761.6**, RE-SUMMED FROM THE ROWS ABOVE rather than
+The mean across **27** is **768.0**, RE-SUMMED FROM THE ROWS ABOVE rather than
 adjusted, by `tools/update_baseline_table.py`.
 
 **THE TOP IS DW FURY AT 974.3 +/-10.3, AND LW RANGED IS SECOND AT 888.9
