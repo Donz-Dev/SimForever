@@ -1063,7 +1063,24 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withBenchmarkGear(withS
       },
       talents: { ...DW_FURY_TALENTS },
       raidBuffs: [...PRESET_RAID_BUFFS],
-      consumables: STRENGTH_CONSUMABLES,
+      /*
+       * STRENGTH FOOD, THE SECOND PROFILE TO TAKE IT, AND STILL AN OVERRIDE.
+       *
+       * ----------------------------------------------------------------------
+       * THE OWNER NAMED 2H ARMS FIRST AND DW FURY SECOND, one profile at a
+       * time, so this is a second RULING rather than the first one extended by
+       * analogy -- which is the difference that kept the archetype row intact
+       * when only one of them had been named.
+       *
+       * AND THE ROW STILL SHOULD NOT MOVE, because it would now take three
+       * profiles with it that the owner has NOT named: Prot Warr and both
+       * feral Druids. `MELEE_COMMON` beneath it would take four Rogues and a
+       * melee Hunter as well. **Two of five is not a row** -- if the owner
+       * names the Druids too, the honest edit is `STRENGTH_CONSUMABLES` and
+       * these two overrides come out together.
+       * ----------------------------------------------------------------------
+       */
+      consumables: { ...STRENGTH_CONSUMABLES, food: 'food_strength' },
       encounter: {
         ...createDefaultProfile().encounter,
         // A damage warrior is not the one being hit.
