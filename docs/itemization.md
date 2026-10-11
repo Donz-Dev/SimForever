@@ -6,7 +6,16 @@ that budget at a price. This document records the model, what it reproduces,
 what it does not, and — most importantly — **what it may and may not be used
 for in this project**.
 
-> **NOTHING IN `src/` READS ANY OF THIS, AND NOTHING SHOULD.** The model is a
+> **THE OWNER HAS SINCE AUTHORISED ONE EXCEPTION, AND IT IS THE ONLY ONE.**
+> `src/game/items/benchmarkGear.ts` runs the model BACKWARDS to generate the
+> B55/E65/E75/E85 benchmark sets. The prohibition below is about invented data
+> wearing a source's clothes; benchmark gear is the opposite and is built so it
+> cannot be mistaken for the real thing — named for its set, numbered from
+> 9,500,000, absent from every dropdown, and saying "SYNTHETIC" in its own
+> `source`. **No preset equips one, so no published figure can move.** The rule
+> below is otherwise unchanged and applies to everything else.
+>
+> **NOTHING ELSE IN `src/` READS ANY OF THIS, AND NOTHING ELSE SHOULD.** The model is a
 > community RECONSTRUCTION of a system Blizzard never published, verified here
 > against real items to about ±5%. It is a tool for UNDERSTANDING an item that
 > already exists: why a +40 spell damage ring has nothing else on it, why a

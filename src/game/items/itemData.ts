@@ -16,6 +16,7 @@ import foreverNewEpics from '../../data/items/forever-new-epics.json';
 import foreverChangedEpics from '../../data/items/forever-changed-epics.json';
 import foreverNewRares from '../../data/items/forever-new-rares.json';
 import foreverChangedRares from '../../data/items/forever-changed-rares.json';
+import { BENCHMARK_ITEMS } from './benchmarkSets';
 
 /**
  * Items, from Wowhead's Classic tooltip data.
@@ -385,6 +386,34 @@ const EFFECT_RULES: readonly EffectRule[] = [
   },
   {
     /*
+     * -------------------------------------------------------------------------
+     * FOREVER'S OWN WORDING, AND 1,384 LINES WERE FALLING THROUGH THIS GAP.
+     *
+     * Classic writes "Increases damage and healing done by magical spells and
+     * effects by up to 40" and Forever writes "+94 Spell Power". The rule above
+     * only ever saw the Classic sentence, so EVERY Forever caster item in the
+     * database granted zero spell power while stating it on the tooltip --
+     * Premier High Warlord's War Staff reported +94 and delivered nothing.
+     *
+     * Invisible because no preset wears one: the Forever items were added as a
+     * browsable database rather than as gear anything equips, so no published
+     * figure moved and nothing failed. **An item in the database and in no
+     * profile is the quietest place in this project for a stat to go missing**,
+     * which is the `ability_audit` lesson wearing different clothes.
+     *
+     * "Spell Damage" IS THE SAME STAT HERE. Forever distinguishes Spell Power
+     * (damage and healing) from Spell Damage (damage only) and the engine has
+     * no healing stat at all, so both reach `spellPower` and the difference is
+     * carried in the tooltip rather than in a number that does nothing.
+     * -------------------------------------------------------------------------
+     */
+    pattern: /^\+(\d+) Spell (?:Power|Damage)\.?$/,
+    apply: (value, into) => {
+      into.spellPower = (into.spellPower ?? 0) + value;
+    },
+  },
+  {
+    /*
      * "Increased Defense +10." -- DEFENSE SKILL, seventeen lines of it across
      * the tank and feral sets.
      *
@@ -437,6 +466,25 @@ const WEAPON_SKILL_PATTERN = /^Increased ([\w\- ]+) \+(\d+)\.?$/;
  */
 const SCHOOL_SPELL_POWER_PATTERN =
   /^Increases damage done by (\w+) spells and effects by up to (\d+)\.?$/;
+
+/**
+ * The same thing in Forever's words: "+36 Fire Spell Damage".
+ *
+ * Capture order is reversed from the Classic pattern -- the school comes
+ * second there and first here -- so `schoolSpellPower` normalises both into
+ * (school, amount) rather than either caller reading groups by position.
+ */
+const FOREVER_SCHOOL_SPELL_POWER_PATTERN =
+  /^\+(\d+) (\w+) Spell (?:Damage|Power)\.?$/;
+
+/** (school, amount) from either wording, or undefined. */
+function schoolSpellPower(text: string): readonly [string, number] | undefined {
+  const classic = SCHOOL_SPELL_POWER_PATTERN.exec(text);
+  if (classic) return [classic[1], Number(classic[2])];
+  const forever = FOREVER_SCHOOL_SPELL_POWER_PATTERN.exec(text);
+  if (forever) return [forever[2], Number(forever[1])];
+  return undefined;
+}
 
 /**
  * "+172 Attack Power in Cat, Bear, and Dire Bear forms only."
@@ -594,13 +642,13 @@ function buildStats(item: RawItem): {
      * like weapon skill it is not a flat stat and has nowhere to land in
      * `stats`.
      */
-    const scoped = effect.text.match(SCHOOL_SPELL_POWER_PATTERN);
+    const scoped = schoolSpellPower(effect.text);
     if (scoped) {
-      const school = scoped[1].toLowerCase() as DamageSchool;
+      const school = scoped[0].toLowerCase() as DamageSchool;
       // Validated, not assumed: an unrecognised school is reported rather
       // than silently credited to whichever one the cast happens to be.
       if (DAMAGE_SCHOOLS.includes(school)) {
-        schoolPower[school] = (schoolPower[school] ?? 0) + Number(scoped[2]);
+        schoolPower[school] = (schoolPower[school] ?? 0) + scoped[1];
         continue;
       }
     }
@@ -836,7 +884,28 @@ const RAW_ITEMS: readonly RawItem[] = [
   ...OVERRIDE_ITEMS.filter((item) => !BASE_ITEMS.some((base) => base.id === item.id)),
 ];
 
-export const ITEMS: readonly Item[] = RAW_ITEMS.map(buildItem);
+const CAPTURED_ITEMS: readonly Item[] = RAW_ITEMS.map(buildItem);
+
+/**
+ * SYNTHETIC BENCHMARK GEAR, resolvable but NOT BROWSABLE.
+ *
+ * ----------------------------------------------------------------------------
+ * Generated from the itemization budget rather than captured, so it is kept out
+ * of `itemsForSlot` and no dropdown ever offers one -- a person browsing a slot
+ * sees real items only. `ITEMS_BY_ID` resolves them, because that is what an
+ * equipped set needs, and `ITEMS` carries them so the character sheet and the
+ * Gear panel can describe what is equipped.
+ *
+ * `src/data/items/` stays captured data ONLY. These are built in code, named
+ * for the set they belong to, and numbered from 9,500,000.
+ * ----------------------------------------------------------------------------
+ */
+const BENCHMARK = BENCHMARK_ITEMS.map((item) => buildItem(item as unknown as RawItem));
+
+export const ITEMS: readonly Item[] = [...CAPTURED_ITEMS, ...BENCHMARK];
+
+/** Ids that `itemsForSlot` must not offer. */
+const BENCHMARK_IDS: ReadonlySet<number> = new Set(BENCHMARK.map((item) => item.id));
 
 export const ITEMS_BY_ID: ReadonlyMap<number, Item> = new Map(
   ITEMS.map((item) => [item.id, item] as const),
@@ -963,7 +1032,10 @@ export const ENCHANTS_BY_ID: ReadonlyMap<number, Enchant> = new Map(
 
 /** Items that can go in a slot. */
 export function itemsForSlot(slot: EquipmentSlot): readonly Item[] {
-  return ITEMS.filter((item) => item.slots.includes(slot));
+  // Benchmark gear is excluded: it is generated rather than captured, and a
+  // dropdown that offered "E85 Chest" beside real loot would be the one place
+  // somebody could mistake it for Forever data.
+  return ITEMS.filter((item) => !BENCHMARK_IDS.has(item.id) && item.slots.includes(slot));
 }
 
 /** Enchants that can go on a slot. */

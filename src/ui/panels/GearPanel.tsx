@@ -4,6 +4,11 @@ import { resolveCombatStyle } from '../../game/character';
 import type { Equipment, EquipmentSlot } from '../../game/items/Item';
 import { enchantsForSlot, itemsForSlot } from '../../game/items/itemData';
 import { hasStartingEquipment, startingEquipmentFor } from '../../game/items/startingSets';
+import {
+  BENCHMARK_SETS,
+  BENCHMARK_TEMPLATES_BY_LABEL,
+  benchmarkEquipmentForName,
+} from '../../game/items/benchmarkSets';
 import { Panel } from '../components/Panel';
 import {
   POISON_NAMES,
@@ -172,17 +177,53 @@ export function GearPanel({ profile, onChange }: GearPanelProps) {
 
   const clearAll = () => onChange({ ...profile, equipment: {} });
 
+  /*
+   * THE FOUR BENCHMARK BUTTONS.
+   *
+   * B55, E65, E75, E85 install a full set generated from the itemization
+   * budget at one quality and one item level, targeting this build's hit cap
+   * and its preferred stats in the owner's own order. They exist so two builds
+   * can be compared at the SAME item level -- the real sets are a mixture of
+   * Classic and Season of Discovery stand-ins at whatever level the owner's
+   * spreadsheets supplied, so some of any gap between two presets is a gap in
+   * their gear.
+   *
+   * THE GEAR IS SYNTHETIC AND SAYS SO: every piece is named for its set, the
+   * ids start at 9,500,000, and none is offered in a slot dropdown. Pressing a
+   * button fills the slots like any other equipment change, so a piece can be
+   * inspected or swapped out afterwards.
+   */
+  const benchmark = BENCHMARK_TEMPLATES_BY_LABEL.get(profile.character.name);
+  const equipBenchmark = (setId: (typeof BENCHMARK_SETS)[number]['id']) => {
+    const equipment = benchmarkEquipmentForName(profile.character.name, setId);
+    if (equipment) onChange({ ...profile, equipment });
+  };
+
   return (
     <Panel
       title="Gear"
       collapsible
       badge={`${equipped} equipped`}
       actions={
-        hasStartingEquipment(profile.character.characterClass) ? (
+        hasStartingEquipment(profile.character.characterClass) || benchmark ? (
           <>
-            <button type="button" onClick={equipStartingSet}>
-              Starting set
-            </button>
+            {benchmark
+              ? BENCHMARK_SETS.map((set) => (
+                  <button
+                    key={set.id}
+                    type="button"
+                    onClick={() => equipBenchmark(set.id)}
+                    title={`${set.description} -- generated to this build's ${benchmark.hit} hit rating and its preferred stats`}
+                  >
+                    {set.id}
+                  </button>
+                ))
+              : null}
+            {hasStartingEquipment(profile.character.characterClass) ? (
+              <button type="button" onClick={equipStartingSet} title="The real items this preset ships with">
+                Starting set
+              </button>
+            ) : null}
             <button type="button" onClick={clearAll} disabled={equipped === 0}>
               Clear
             </button>
