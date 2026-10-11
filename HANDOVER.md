@@ -3300,7 +3300,7 @@ demonstrated at the top. **Re-count rather than re-reading the sentence.**
 | --- | --- |
 | **Talents** | 260 fully, 39 partly, 105 ruled out, **62 a live gap**, out of **466** -- from 132 before the class dives |
 | **Abilities** | 114 declared against 478 captured |
-| **Profiles** | **26**, all measured, **mean 763.3** on FOREVER'S OWN ITEMS -- Combat Mut is the first profile ADDED rather than measured, and the count had been 25 since the gear swap -- every earlier figure in this file was measured on Classic and Season of Discovery stand-ins, so the contributions below belong to that gear and not to this mean: the armour enchants were +27.0 of it, the pre-pull consumables +105.9, the racials **+9.8 at round one**, the MID-FIGHT consumables **+17.7** and the Life Tap gate **+3.5** |
+| **Profiles** | **27**, all measured, **mean 761.6** on FOREVER'S OWN ITEMS -- Combat Mut is the first profile ADDED rather than measured, and the count had been 25 since the gear swap -- every earlier figure in this file was measured on Classic and Season of Discovery stand-ins, so the contributions below belong to that gear and not to this mean: the armour enchants were +27.0 of it, the pre-pull consumables +105.9, the racials **+9.8 at round one**, the MID-FIGHT consumables **+17.7** and the Life Tap gate **+3.5** |
 | **Racials** | **10 races, 40 traits**: 15 do something, 20 effects ruled out, 11 a live gap |
 | **Scope rulings** | **9 members**, all the owner's, carrying 129 TALENT entries and 19 racial declarations |
 | **Placeholders** | **11 declared** -- see the milestone table, and count DECLARATIONS. **One of the eleven is not a ruleset number**: `PLACEHOLDER_PREFERRED_WEIGHT` is the Gear panel's stat-sorting weight, which no simulation reads, so it can sort a list badly and cannot move a figure |
@@ -5021,8 +5021,9 @@ cannot audit, which is why the check is a SET comparison and not a row count.
 | Combat Rogue | Rogue | 18/33/0 | 824.1 | | Prot Warr | Warrior | 17/0/34 | 469.7 |
 | Seal Twist Ret | Paladin | 15/0/36 | 816.5 | | Prot Pally | Paladin | 8/34/9 | 400.6 |
 | Combat Mut | Rogue | 30/21/0 | 790.6 | | Bear Druid | Druid | 9/42/0 | 395.7 |
+| Pure Hemo | Rogue | 21/8/22 | 718.8 | | | | | |
 
-The mean across **26** is **763.3**, RE-SUMMED FROM THE ROWS ABOVE rather than
+The mean across **27** is **761.6**, RE-SUMMED FROM THE ROWS ABOVE rather than
 adjusted, by `tools/update_baseline_table.py`.
 
 **THE TOP IS DW FURY AT 974.3 +/-10.3, AND LW RANGED IS SECOND AT 888.9
