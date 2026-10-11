@@ -286,3 +286,60 @@ describe('every line a benchmark item states is a line the engine reads', () => 
     expect(casterTotals.strength).toBe(0);
   });
 });
+
+/*
+ * ==============================================================================
+ * SWAPPING ONE SET FOR ANOTHER KEEPS THE ENCHANTS.
+ *
+ * THE BUG: `benchmarkEquipmentFor` built every slot as `{ itemId }` and
+ * nothing else, so pressing E65 and then E75 dropped every enchant on the
+ * character. The four buttons exist so one build can be compared at four item
+ * levels, and the enchants are worth **+2.4 to +53.7 DPS a profile** -- the
+ * figures `enchants.test.ts` records -- so losing them between two presses
+ * makes exactly that comparison wrong.
+ *
+ * AND SILENTLY. An unenchanted slot looks like a slot nobody enchanted; there
+ * is no zero anywhere and nothing to count. Only a before-and-after says so,
+ * which is what this is.
+ * ==============================================================================
+ */
+describe('swapping between two benchmark sets keeps the enchants', () => {
+  it('carries every enchant across, slot for slot', () => {
+    const before = PRESETS_BY_ID.get('dw_fury')!.build().equipment;
+    const enchanted = Object.entries(before).filter(([, slot]) => slot?.enchantId !== undefined);
+    // The fixture has to be able to express the mistake, or the test proves
+    // nothing about it.
+    expect(enchanted.length).toBeGreaterThan(5);
+
+    const after = benchmarkEquipmentFor('dw_fury', 'E75', before)!;
+    for (const [slot, equipped] of enchanted) {
+      expect(after[slot as keyof typeof after]?.enchantId).toBe(equipped!.enchantId);
+      // The ITEM did change: this is a different set, not a no-op.
+      expect(after[slot as keyof typeof after]?.itemId).not.toBe(equipped!.itemId);
+    }
+  });
+
+  it('carries them across the weapons too, which take their own branch', () => {
+    const before = PRESETS_BY_ID.get('prot_warr')!.build().equipment;
+    const after = benchmarkEquipmentFor('prot_warr', 'E85', before)!;
+    expect(after.mainHand?.enchantId).toBe(before.mainHand?.enchantId);
+    expect(after.shield?.enchantId).toBe(before.shield?.enchantId);
+  });
+
+  it('adds no enchant to a slot that had none', () => {
+    const after = benchmarkEquipmentFor('dw_fury', 'E65', {})!;
+    for (const equipped of Object.values(after)) {
+      expect(equipped?.enchantId).toBeUndefined();
+    }
+  });
+
+  it('survives a round trip back to where it started', () => {
+    // Four presses of four buttons must not accumulate or lose anything.
+    const start = PRESETS_BY_ID.get('druid_cat')!.build().equipment;
+    let equipment = start;
+    for (const set of ['E75', 'E85', 'B55', 'E65'] as const) {
+      equipment = benchmarkEquipmentFor('druid_cat', set, equipment)!;
+    }
+    expect(equipment).toEqual(start);
+  });
+});

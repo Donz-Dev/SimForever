@@ -8,6 +8,7 @@ import {
   type WarlockStoneId,
 } from '../game/buffs/warlockStones';
 import type { ConsumableSelection } from '../game/buffs/consumables';
+import type { StatValuation } from '../game/items/itemValue';
 import type { AplEntry } from '../game/rotations/apl';
 
 /**
@@ -19,7 +20,7 @@ import type { AplEntry } from '../game/rotations/apl';
  * moves on. Getting this in before anyone has saved anything is much cheaper
  * than retrofitting it later.
  */
-export const CURRENT_PROFILE_VERSION = 13;
+export const CURRENT_PROFILE_VERSION = 14;
 
 export interface CharacterSection {
   readonly name: string;
@@ -291,6 +292,54 @@ export interface CharacterProfile {
    * ============================================================================
    */
   readonly rotation: StoredRotation;
+  /**
+   * What a point of each stat is worth to this character, for SORTING GEAR.
+   *
+   * ==========================================================================
+   * NOT A SIMULATED NUMBER, and nothing in `engine`, `game` or `simulator`
+   * reads it. It decides what order the Gear panel lists a slot's items in and
+   * what figure sits beside each one -- so a wrong weight sorts a list badly
+   * and cannot move a DPS figure. That is why it is allowed to carry numbers
+   * nobody measured.
+   *
+   * THE UNIT IS THE STAT-WEIGHT RUN'S UNIT, deliberately: "per displayed unit",
+   * with the two ratings in percentage points. A Stat Weights run produces
+   * exactly these, so "use these weights" is a copy rather than a conversion.
+   * See `game/items/itemValue.ts`.
+   *
+   * OPTIONAL, AND ABSENT MEANS "DERIVE IT", which is the `combatStyle`
+   * decision rather than the `rotation` one -- and the two are opposite on
+   * purpose. A stored priority list is written out in full because the owner
+   * wanted a file to be a complete description of the build; a valuation is
+   * left out because it is a TOOL SETTING that no result depends on, and a
+   * file that froze it would keep a placeholder after the owner supplies a
+   * real one. `defaultValuationForPreset` is what fills it in.
+   *
+   * Arrived in format version 14. Older profiles have none, which reads as
+   * "use the default", and no figure anywhere moves.
+   * ==========================================================================
+   */
+  readonly statValuation?: StatValuation;
+  /**
+   * Which benchmark template this character was built from, if any.
+   *
+   * --------------------------------------------------------------------------
+   * IT REPLACES A JOIN ON THE CHARACTER'S NAME. `BENCHMARK_TEMPLATES_BY_LABEL`
+   * matches `character.name` against the 25 template labels, because `game`
+   * may not import `profiles` and the name was the only thing both sides had.
+   * That join is on a string a user can edit: renaming the character took away
+   * the four test-set buttons AND the default stat valuation, which is a
+   * visible failure rather than a wrong one and is still a failure.
+   *
+   * THE NAME JOIN IS KEPT AS THE FALLBACK, for every file saved before this
+   * field existed. `templateIdFor` is the one place that order is decided.
+   *
+   * Arrived in format version 14, alongside `statValuation`. Older profiles
+   * have none and fall back to the name, which is exactly what they did
+   * before.
+   * --------------------------------------------------------------------------
+   */
+  readonly benchmarkTemplateId?: string;
 }
 
 /**

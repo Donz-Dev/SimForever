@@ -2,10 +2,26 @@
 
 **Purpose:** finalize the GUI and the miscellaneous tweaks around it.
 
-**THE FIRST PASS IS DONE, AND THIS DOCUMENT IS NOW ITS RECORD** rather than its
+**THREE PASSES ARE DONE, AND THIS DOCUMENT IS NOW THEIR RECORD** rather than a
 brief. Everything below that reads as outstanding work is marked with what
 happened to it. Read it the way the per-class documents are read: for the state
 of the area and the traps in it, not for a queue.
+
+| | what it built |
+| --- | --- |
+| 1 | the layout, the collapsing panels, the preset rail |
+| 2 | **Save and Load**, and the **Action Priority List** -- a panel, an editor, and the list stored on the profile |
+| 3 | the **Gear panel as a character planner** -- item cards, a class proficiency filter, value sorting, the four test sets |
+
+**THE THIRD PASS HAS ITS OWN DOCUMENT**, [gear-planner.md](../gear-planner.md),
+because it is a feature rather than a tidy-up: it added a layer to `game` (the
+owner's proficiency table and a gear valuation), a profile format version, and
+six UI modules. What is recorded HERE is only what it changed about the shell
+and about the panels that already existed.
+
+**A ROW CAN BE ADDED TO THAT TABLE**, which is the point of its being a table:
+this header has already been wrong about the count once, reading "the UI has
+not had a pass of its own" while this file said the first was done.
 
 Read [CLAUDE.md](../../CLAUDE.md) first — it is the rules, and about a fifth of it
 is lessons paid for in wrong numbers. Then this file.
@@ -387,7 +403,7 @@ such leaves across 20 conditions; nothing is locked as a whole any more. An
 editor that silently simplified one would change what the rotation does with
 nothing on screen to say so.
 
-### What is left
+### What is left in this pass
 
 - **IMPORT STILL DOES NOTHING**, and `panels/ProfilePanel.tsx` is still not
   mounted. 83 lines holding the `serializeProfile` / `parseProfile` round trip
@@ -399,3 +415,73 @@ nothing on screen to say so.
   tab still loses the character. Nobody has asked for the other thing.
 
 Everything else in this document is done or settled.
+
+---
+
+## The Gear panel, rebuilt as a character planner
+
+The third pass. [gear-planner.md](../gear-planner.md) is its document; what
+belongs here is what it changed about the shell and about the panels that were
+already standing.
+
+**GEAR SITS ABOVE TALENTS NOW**, the owner's placement, and both still start
+shut -- `Panel`'s own default, which is what keeps the results column a list of
+titles until somebody opens one.
+
+**THE STAT WEIGHTS PANEL GREW AN ACTION.** "Use for gear" writes the measured
+weights onto the profile, which is the owner's "overwrite the default numbers".
+It is a BUTTON and not something a finished run does by itself: a run that
+silently rewrote the Gear panel's sort order would change what that panel says
+about every item, with nothing on screen to say a decision had been made. It
+disables itself once the profile is running those weights, and the way BACK is
+in the Gear panel rather than here -- a results panel is gone the next run and
+a valuation outlives it.
+
+**PROFILE FORMAT 14**, for two optional fields neither of which the engine
+reads: `statValuation` and `benchmarkTemplateId`. Absent means "derive it" for
+both, so the migration supplies a constant and **all 75 combat-log hashes and
+event counts were unchanged** across the whole pass. That is the containment
+check this project uses for an item commit, and it covers the "a change that
+costs only time" case through the event counts.
+
+### What it found in the panels that already existed
+
+**THE FOUR TEST SETS DROPPED EVERY ENCHANT ON A SWAP.** Pressing E65 and then
+E75 rebuilt each slot as `{ itemId }` and nothing else. The enchants are worth
++2.4 to +53.7 DPS a profile, and the buttons exist precisely so one build can
+be compared at four item levels -- so losing them between two presses made that
+comparison wrong, and silently: an unenchanted slot looks like a slot nobody
+enchanted.
+
+**THE TEST SETS AND THE DEFAULT VALUATION BOTH HUNG OFF `character.name`.**
+`BENCHMARK_TEMPLATES_BY_LABEL` matches the name against the 25 template labels,
+because `game` may not import `profiles` and the name was the only thing both
+layers had. Renaming the character took the buttons away. The preset stamps its
+template id on the profile now, and the name join is the fallback for files
+saved before it.
+
+**THE ITEM CARD PRINTED "Item Level 65" TWICE FOR HALF THE DATABASE.** A
+generated benchmark item writes an item-level line into its own tooltip and a
+captured Forever item writes none. Found by looking at the rendered page, not
+by a test -- which is this document's own recurring lesson about the three bugs
+the owner found using the app.
+
+**`scoreStats` PAID A MELEE BUILD FOR A RANGED-ONLY ATTACK POWER LINE.** The
+owner's ruling is that a bare "+40 Attack Power" reaches both pools, so the two
+fields have to be priced as ONE purchase -- and the first version took the
+larger of the two weights unconditionally, which is "Melee Attack Power NEVER
+reaches Ranged Attack Power" read backwards. Caught by a test that was written
+for the opposite case.
+
+### What is left here
+
+- **THE DEFAULT VALUATION DISCARDS THE OWNER'S PREFERENCE ORDER.** Every
+  preferred stat is 1.00, which is what the owner asked for until they supply a
+  real valuation. The order is already in `BenchmarkTemplate.preferred`, in
+  descending importance, so a real table is one record away.
+- **THE POISON AND WEAPON STONE ROWS ARE STILL `<select>`s** with no cards.
+  They are closed sets of four and three, so the cost is much lower than it was
+  for the item slots -- but they are the last two controls in the panel that
+  cannot show what they do.
+- **THE ENCHANT LIST IS NOT FILTERED BY CLASS OR BY ITEM**, only by slot, which
+  is how it worked before.

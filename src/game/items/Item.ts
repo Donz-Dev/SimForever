@@ -93,6 +93,30 @@ export interface Item {
   readonly source: string;
   readonly itemLevel: number;
   readonly quality: number;
+  /**
+   * The source's own word for what KIND of thing this is: `Plate`, `Dagger`,
+   * `Shield`, `Idol`. Absent for jewellery and a held off-hand item, which is
+   * what the capture says about them.
+   *
+   * --------------------------------------------------------------------------
+   * CARRIED SO THE PROFICIENCY FILTER CAN READ IT. It was on `weapon.subclass`
+   * and nowhere else, so an item's armour class -- the thing that decides
+   * whether a Rogue may wear it -- was thrown away for every one of the 1,418
+   * armour pieces on file the moment `buildItem` ran.
+   * --------------------------------------------------------------------------
+   */
+  readonly subclass?: string;
+  /**
+   * The source's own word for WHERE it goes: `Two-Hand`, `One-Hand`,
+   * `Main Hand`, `Head`, `Thrown`.
+   *
+   * `slots` is derived from this and is the thing the simulator uses; this is
+   * kept because the derivation is LOSSY in the one place the proficiency
+   * table needs it. A one-handed and a two-handed axe share the subclass "Axe"
+   * and are two different columns of the owner's table, and `slots` cannot
+   * tell a `Main Hand` dagger from a `One-Hand` one either.
+   */
+  readonly inventoryType: string;
   /** Slots this item may go in. A ring lists both ring slots. */
   readonly slots: readonly EquipmentSlot[];
   readonly stats: PartialStats;

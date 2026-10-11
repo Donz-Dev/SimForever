@@ -16,6 +16,24 @@ type Migration = (profile: Record<string, unknown>) => Record<string, unknown>;
  */
 const migrations: Record<number, Migration> = {
   /**
+   * Version 14 added `statValuation` and `benchmarkTemplateId`.
+   *
+   * --------------------------------------------------------------------------
+   * BOTH ARE OPTIONAL AND BOTH ARE LEFT ABSENT, which is why this migration
+   * supplies a constant and not a derivation. Absent means "derive it": the
+   * valuation falls back to the build's own template and the template id falls
+   * back to the name join that was the only route before this version. So an
+   * older profile behaves EXACTLY as it did, and no figure moves -- neither
+   * field is read by the engine at all.
+   *
+   * It bumps the version and nothing else, which is a real step rather than a
+   * no-op: without it a version-13 file would stop at 13 and never reach the
+   * current version's checks.
+   * --------------------------------------------------------------------------
+   */
+  13: (profile) => ({ ...profile }),
+
+  /**
    * Version 13 added `rotation`, the Action Priority List written out in full.
    *
    * ----------------------------------------------------------------------------

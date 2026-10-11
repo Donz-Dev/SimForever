@@ -1713,7 +1713,23 @@ function withBenchmarkGear(presets: readonly ProfilePreset[]): readonly ProfileP
   return presets.map((preset) => ({
     ...preset,
     build: () => {
-      const profile = preset.build();
+      /*
+       * THE TEMPLATE ID IS STAMPED ON HERE, where the preset id is in hand.
+       *
+       * ----------------------------------------------------------------------
+       * IT REPLACES A JOIN ON THE CHARACTER'S NAME. `BENCHMARK_TEMPLATES_BY_LABEL`
+       * matches `character.name` against the 25 template labels, because `game`
+       * may not import `profiles` and the name was the only thing both layers
+       * had. That join is on a string a user can edit: renaming the character
+       * took away the four test-set buttons AND the default stat valuation.
+       *
+       * THIS IS THE ONE PLACE THAT KNOWS BOTH, which is why it is here rather
+       * than in each of the 25 `build()` functions -- twenty-five hand-written
+       * copies is the mistake `withStockRotations` already exists to avoid.
+       * The name join is kept as the fallback for files saved before it.
+       * ----------------------------------------------------------------------
+       */
+      const profile = { ...preset.build(), benchmarkTemplateId: preset.id };
       const benchmark = benchmarkEquipmentForName(profile.character.name, 'E65');
       if (!benchmark) return profile;
 

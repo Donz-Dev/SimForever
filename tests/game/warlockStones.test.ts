@@ -280,8 +280,8 @@ describe('the profile field', () => {
      * Written out rather than read from the constant, so a bump is deliberate.
      * ------------------------------------------------------------------------
      */
-    expect(CURRENT_PROFILE_VERSION).toBe(13);
-    expect(createDefaultProfile().version).toBe(13);
+    expect(CURRENT_PROFILE_VERSION).toBe(14);
+    expect(createDefaultProfile().version).toBe(14);
     // And a version 10 file still gains a stone, which is the test below.
   });
 

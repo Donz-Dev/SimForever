@@ -925,6 +925,8 @@ function buildItem(item: RawItem): Item {
     source: item.source,
     itemLevel: item.itemLevel,
     quality: item.quality,
+    ...(item.subclass ? { subclass: item.subclass } : {}),
+    inventoryType: item.inventoryType,
     slots,
     stats,
     schoolPower,

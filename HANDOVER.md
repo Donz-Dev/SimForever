@@ -1,3 +1,141 @@
+# THE GEAR PANEL IS A CHARACTER PLANNER, AND NOT ONE FIGURE MOVED
+
+**THE THIRD UI PASS.** The owner asked for six things on the Gear panel: move
+it above Talents, lay it out as a character planner without the model and
+without the cosmetic slots, show a WoW item card on hover, filter each slot to
+what the class can equip, sort by what the build values, and expose the four
+test sets — with the enchant-loss bug on a test-set swap fixed. All six are in.
+
+**ALL 75 COMBAT-LOG HASHES AND EVENT COUNTS ARE UNCHANGED**, which is the
+containment check: nothing in this round can move a published figure, and the
+event counts cover the "a change that costs only time" case the interruptible
+channel taught. 3,229 tests pass, up from 3,101; typecheck and build clean.
+
+| | what | state |
+| --- | --- | --- |
+| this round | the planner, the proficiency table, the valuation, format 14 | **this branch** |
+
+**A ROW CAN BE ADDED TO THAT TABLE.** This file's own rule: a feature arrives
+in waves, and the racials took four rounds with two of them the owner's.
+
+## What the owner supplied, and what it was worth
+
+**THE PROFICIENCY TABLE, ALL 27 COLUMNS FOR ALL NINE CLASSES, IN ONE MESSAGE.**
+Nothing in the six data sources states one — not the spellbook captures, not
+`talentsforever.com`, not `foreverchanges.pro` — so the choice was between
+borrowing Classic's behind a `PLACEHOLDER_` name and asking. **Three rows
+disagree with Classic:**
+
+| | Forever | Classic |
+| --- | --- | --- |
+| Rogue, one-handed axe | **may** | may not, until Burning Crusade |
+| Druid, dagger | **may not** | may |
+| Hunter, two-handed axe and polearm | **may**, and no mace of either size | the same |
+
+**SO A BORROWED TABLE WOULD HAVE BEEN WRONG IN BOTH DIRECTIONS ON THE ONE CLASS
+THE OWNER USED AS THEIR EXAMPLE** — "If I'm a Rogue then I can't equip Plate
+gear, Mail Gear, or two handed weapons". Asking beat inferring again, and it
+cost one question.
+
+**AND THE VALUATION: "I'll provide the stat valuation after this feature is
+fully implemented. For now just make all the preferred stats valued at 1.00."**
+So no magnitude is invented anywhere. Which stats a build prefers is the
+owner's own `BenchmarkTemplate.preferred` column; the flat 1.00 is theirs too.
+**What it costs, said plainly: at 1.00 each the ORDER they wrote is
+discarded**, so the sort is "how much preferred stat is on this item" rather
+than "how good is this item". One record away from being right.
+
+## Four bugs, each hidden a different way
+
+**THE FOUR TEST SETS DROPPED EVERY ENCHANT ON A SWAP.**
+`benchmarkEquipmentFor` rebuilt each slot as `{ itemId }` and nothing else, so
+pressing E65 and then E75 discarded the whole loadout — worth **+2.4 to +53.7
+DPS a profile**. The buttons exist so one build can be compared at four item
+levels, which is precisely the comparison this made wrong. **Silently**: an
+unenchanted slot looks like a slot nobody enchanted, so there is no zero
+anywhere and nothing to count. **The owner found it by using the app**, which
+is the shape this file already records three times over.
+
+**`scoreStats` PAID A MELEE BUILD FOR A RANGED-ONLY ATTACK POWER LINE.** The
+owner's ruling is that a bare "+40 Attack Power" reaches BOTH pools, so 164
+item lines set the two fields to the same number and pricing them independently
+doubles every one. The rule is "the larger amount times the larger weight **of
+the pools the item actually grants**" — and the first version dropped that last
+clause, which is "Melee Attack Power NEVER reaches Ranged Attack Power" read
+backwards. **Caught by a test written for the opposite case**, before it ever
+rendered.
+
+**THE ITEM CARD PRINTED "Item Level 65" TWICE FOR HALF THE DATABASE.** A
+generated benchmark item writes an item-level line into its own tooltip and a
+captured Forever item writes none. Found by looking at the rendered page in the
+browser, not by any test — the same shape as the three bugs the owner found
+using the app during the racials round.
+
+**THE TEST SETS AND THE DEFAULT VALUATION BOTH HUNG OFF `character.name`.**
+`BENCHMARK_TEMPLATES_BY_LABEL` joins on the name because `game` may not import
+`profiles` and the name was the only thing both layers had — so renaming the
+character took the four buttons away and, once the valuation existed, the
+sorting with them. A preset stamps its template id on the profile now, and the
+name join is the fallback for every file saved before it.
+
+## A filter is the one kind of bug that leaves nothing behind
+
+**AN ITEM A WRONG PROFICIENCY ROW EXCLUDES LOOKS EXACTLY LIKE AN ITEM THAT IS
+NOT IN THE DATABASE.** No zero, no count, nothing on screen. So the filter is
+built to be visible when it is wrong:
+
+- **it defaults to permissive** — a word `proficiencyForItem` does not
+  recognise returns `undefined` and the item is offered;
+- the picker has a **"show items this class cannot use"** checkbox that greys
+  them instead of hiding them, and an illegal row stays **clickable and
+  hoverable** so its card can still explain it;
+- **whatever is already equipped is always listed**, whatever the table says;
+- and **all 25 presets wear only what their class may equip**, asserted per
+  preset — which is the containment check that the table agrees with 25 builds
+  the owner specified by hand.
+
+**AND SOMETHING HAS TO ASK WHETHER THE FILTER EVER FIRES.** A permissive
+default makes a typo in that switch a silent no-op across the whole database,
+which is `isWeaponUseOf(attack, 'ranged')`'s failure exactly. The counts are
+pinned: a Rogue has no two-hander at all, a Druid no ranged weapon, and each
+relic reaches exactly the class whose column names it.
+
+**THE CLOAK IS THE TRAP INSIDE THE TRAP.** All 44 cloaks carry the subclass
+"Cloth" and every class wears one, so reading the subclass without asking which
+SLOT it is for leaves eight classes with no back slot — and it would have
+looked like a correct filter.
+
+## What is in the profile now
+
+**FORMAT 14**, two optional fields, **neither read by the engine**:
+`statValuation` (what a point of each stat is worth, for SORTING gear) and
+`benchmarkTemplateId`. Absent means "derive it" for both, so the migration
+supplies a constant and no saved profile's result changes.
+
+**THE UNIT IS THE STAT-WEIGHT RUN'S OWN UNIT**, deliberately: "per displayed
+unit", with the two ratings in percentage points. That makes "Use for gear" a
+COPY rather than a conversion — and a conversion is exactly where two tables
+drift. The two live in layers that cannot import one another, so
+`itemValue.test.ts` pins `unitsOf` against `WeightableStat.statPerUnit` for
+every stat both name.
+
+**IT MATTERS EVEN WITHOUT A RUN**, because the item parser is inconsistent
+about ratings on purpose: `+14 Hit Rating` becomes `hitChance: 1.4` at parse
+time and `+14 Critical Strike Rating` stays `critRating: 14`, because one has a
+reader for the rating and the other does not. Scoring the engine stats raw
+would make a point of crit worth ten times a point of hit for no reason anybody
+chose.
+
+## What is left
+
+- **THE DEFAULT VALUATION DISCARDS THE OWNER'S PREFERENCE ORDER**, which is
+  what was asked for until they supply a real table. `BenchmarkTemplate.preferred`
+  already holds the order, in descending importance.
+- **THE POISON AND WEAPON STONE ROWS ARE STILL `<select>`s** with no cards.
+- **THE ENCHANT LIST IS FILTERED BY SLOT ONLY**, as it always was.
+- **`docs/gear-planner.md`** is the feature's own document;
+  `docs/handoff/gui.md` records what this pass changed about the shell.
+
 # ITEMS: A BUDGET MODEL, FOREVER'S OWN DATA, AND A DATABASE WITH NO CLASSIC IN IT
 
 **THIS SESSION REPLACED THE ITEM LAYER.** It began as a reading exercise -- how

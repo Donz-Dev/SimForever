@@ -143,4 +143,62 @@ describe('what a load refuses', () => {
     if (!result.ok) return;
     expect(result.profile.character.petFamily).toBe('chimaera');
   });
+
+  /*
+   * ==========================================================================
+   * VERSION 14'S TWO FIELDS, WHICH THE 25-PRESET COMPARISON ABOVE CANNOT
+   * REACH ON ITS OWN.
+   *
+   * `benchmarkTemplateId` IS covered -- every preset stamps one, so dropping
+   * it from the rebuild fails all 25. `statValuation` is not: it is absent on
+   * a preset by design, because absent means "derive it". So a profile that
+   * CARRIES one has to be built here, or the field could be dropped from
+   * `validateProfile`'s field-by-field rebuild in total silence -- which is
+   * the hole that swallowed `stance`, and then swallowed `petFamily`
+   * underneath the comment recording that it had swallowed `stance`.
+   * ==========================================================================
+   */
+  it('keeps a stat valuation a user has overwritten', () => {
+    const profile: CharacterProfile = {
+      ...createDefaultProfile(),
+      statValuation: { strength: 2.5, critRating: 11.25, agility: 0 },
+    };
+    expect(roundTrip(profile).statValuation).toEqual({
+      strength: 2.5,
+      critRating: 11.25,
+      agility: 0,
+    });
+  });
+
+  it('keeps a benchmark template id, so a renamed character keeps its test sets', () => {
+    const profile: CharacterProfile = {
+      ...createDefaultProfile(),
+      benchmarkTemplateId: 'dw_fury',
+    };
+    expect(roundTrip(profile).benchmarkTemplateId).toBe('dw_fury');
+  });
+
+  /*
+   * A HAND-EDITED VALUATION IS CLEANED RATHER THAN REFUSED, which is the
+   * `raidBuffs` rule and not the `warlockStone` one: nothing it decides can be
+   * wrong in a way that reaches a result. What it must NOT do is let a
+   * non-number through -- `scoreStats` would turn every item's score into
+   * `NaN`, which sorts unpredictably and prints "NaN" beside every row.
+   */
+  it('drops a weight that is not a finite number, and a stat it does not know', () => {
+    const edited = JSON.parse(serializeProfile(createDefaultProfile()));
+    edited.statValuation = {
+      strength: 3,
+      agility: 'lots',
+      stamina: null,
+      intellect: Number.NaN,
+      frobnication: 7,
+    };
+    const result = parseProfile(JSON.stringify(edited));
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    // NaN does not survive JSON at all -- it serialises as null -- so the
+    // guard that matters is the type check, and this pins all three routes in.
+    expect(result.profile.statValuation).toEqual({ strength: 3 });
+  });
 });

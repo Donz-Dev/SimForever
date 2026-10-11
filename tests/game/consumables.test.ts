@@ -377,7 +377,7 @@ describe('the profile field', () => {
     expect(loaded.ok).toBe(true);
     if (!loaded.ok) return;
     expect(loaded.profile.consumables).toEqual({});
-    expect(loaded.profile.version).toBe(13);
+    expect(loaded.profile.version).toBe(14);
   });
 
   it('runs BOTH of the last two migrations, which once collided', () => {
@@ -402,7 +402,7 @@ describe('the profile field', () => {
     const loaded = loadProfile(old);
     expect(loaded.ok).toBe(true);
     if (!loaded.ok) return;
-    expect(loaded.profile.version).toBe(13);
+    expect(loaded.profile.version).toBe(14);
     expect(loaded.profile.consumables).toEqual({});
     expect(loaded.profile.warlockStone).toBe('none');
   });
