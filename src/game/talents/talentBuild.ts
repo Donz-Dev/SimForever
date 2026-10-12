@@ -156,6 +156,38 @@ export interface TalentBuild {
    * a number computed once. `createPlayer` is the only reader.
    */
   readonly statConversions: readonly StatFromStat[];
+  /**
+   * The armor a TALENT granted that a FORM's multiplier is allowed to scale.
+   *
+   * ==========================================================================
+   * THICK HIDE IS THE ONLY SOURCE AND ITS OWN TOOLTIP ASKS FOR THIS: "you gain
+   * 3 additional base Armor per level and another 2.00 base Armor for each
+   * point of defense skill beyond five times your level. **This amount can be
+   * further increased by multipliers from those forms.**"
+   *
+   * THIS FILE USED TO SAY THAT SENTENCE NEEDED NOTHING. `druidEffects.ts`
+   * recorded "the text's 'multipliers from those forms' refers to something
+   * the engine applies elsewhere or not at all" -- a hedge that was half
+   * right: Moonkin's multiplier genuinely did not reach it, and the conclusion
+   * drawn was that nothing should. The owner has ruled that it does.
+   *
+   * TWO NUMBERS RATHER THAN ONE, because the two halves of Thick Hide arrive
+   * by different mechanisms and only one can be resolved here:
+   *
+   *   `flat`            armor per LEVEL, resolved once -- level cannot be
+   *                     buffed, so this is a number.
+   *   `perDefensePoint` armor per point of DEFENSE SKILL, which stays a
+   *                     CONVERSION so it follows a buffed defense skill. The
+   *                     form multiplier therefore has to compose with the
+   *                     derivation rather than resolve it, and `createPlayer`
+   *                     adds a second conversion at the multiplied rate.
+   *
+   * RESOLVING THE SECOND HERE WOULD WORK TODAY AND IS THE WRONG SHAPE: nothing
+   * currently buffs defense skill mid-fight, so a build-time figure would be
+   * correct and would silently stop being correct the day something does.
+   * ==========================================================================
+   */
+  readonly formScalableArmor: { readonly flat: number; readonly perDefensePoint: number };
   /** Resource caps to raise. */
   readonly resourceMaximums: Partial<Record<ResourceType, number>>;
   /** Abilities a talent grants, which the character otherwise would not have. */
@@ -279,6 +311,7 @@ const EMPTY: TalentBuild = {
   stats: {},
   statModifiers: [],
   statConversions: [],
+  formScalableArmor: { flat: 0, perDefensePoint: 0 },
   resourceMaximums: {},
   grantedAbilities: new Set(),
   grantedAuras: new Set(),
@@ -558,6 +591,13 @@ export function talentBuild(
   const stats: Partial<Record<StatName, number>> = {};
   const statModifiers: StatModifierSpec[] = [];
   const statConversions: StatFromStat[] = [];
+  /*
+   * ARMOR A FORM MAY MULTIPLY, accumulated as the two effects below write it.
+   * Captured at the WRITE SITES rather than re-derived from the talent table,
+   * so a second talent of this shape is counted without anybody remembering to
+   * add it to a list -- the `allLists.ts` argument, one layer down.
+   */
+  const formScalableArmor = { flat: 0, perDefensePoint: 0 };
   const resourceMaximums: Partial<Record<ResourceType, number>> = {};
   const grantedAbilities = new Set<string>();
   const grantedAuras = new Set<string>();
@@ -794,8 +834,12 @@ export function talentBuild(
             );
             break;
           }
-          stats[effect.to] =
-            (stats[effect.to] ?? 0) + context.level * value * (effect.scale ?? 0.01);
+          {
+            const granted = context.level * value * (effect.scale ?? 0.01);
+            stats[effect.to] = (stats[effect.to] ?? 0) + granted;
+            // See `formScalableArmor`: a form's multiplier reaches this.
+            if (effect.to === 'armor') formScalableArmor.flat += granted;
+          }
           break;
         }
         /*
@@ -840,11 +884,15 @@ export function talentBuild(
             report(talentId, rank, unmetReason(effect.requires));
             break;
           }
-          statConversions.push({
-            from: effect.from,
-            to: effect.to,
-            fraction: value * (effect.scale ?? 0.01),
-          });
+          {
+            const fraction = value * (effect.scale ?? 0.01);
+            statConversions.push({ from: effect.from, to: effect.to, fraction });
+            // See `formScalableArmor`: this one stays a conversion, so the
+            // multiplier is applied as a SECOND conversion by `createPlayer`.
+            if (effect.to === 'armor' && effect.from === 'defenseSkill') {
+              formScalableArmor.perDefensePoint += fraction;
+            }
+          }
           break;
         }
         case 'abilityCost':
@@ -1180,6 +1228,7 @@ export function talentBuild(
     stats,
     statModifiers,
     statConversions,
+    formScalableArmor,
     resourceMaximums,
     grantedAbilities,
     grantedAuras,

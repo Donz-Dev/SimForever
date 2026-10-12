@@ -52,6 +52,7 @@ import { talentBuild, talentContextFor } from '../../src/game/talents/talentBuil
 import { talentNumber } from '../../src/game/talents/talentValues';
 import { ITEMS_BY_ID } from '../../src/game/items/itemData';
 import { armorFromItems, statsForStyle } from '../../src/game/items/equipment';
+import { formArmorMultiplier } from '../../src/game/character/druidForms';
 import { MAX_CHARACTER_LEVEL } from '../../src/game/character';
 import { weaponsFor } from '../../src/game/actors/createPlayer';
 import type { AplCondition } from '../../src/game/rotations/apl';
@@ -995,6 +996,20 @@ describe('Thick Hide is armor per level and per excess defense point', () => {
    * the four value-index bugs did not find this: both indices were ignored
    * equally, so no index was readable as the wrong one.
    *
+   * ==========================================================================
+   * AND ITS AMOUNT IS NOW MULTIPLIED BY THE FORM, which is the clause this
+   * file used to say needed nothing: "This amount can be further increased by
+   * multipliers from those forms." `druidEffects.ts` recorded that the
+   * sentence "refers to something the engine applies elsewhere or not at
+   * all" -- half right, because Moonkin's multiplier genuinely did not reach
+   * it, and the conclusion drawn was that nothing should. The owner has ruled
+   * that Dire Bear Form's +360% does.
+   *
+   * SO A BEAR'S THICK HIDE IS x4.6 OF WHAT IT WAS, and the assertions below
+   * carry the multiplier explicitly rather than folding it into an expected
+   * number -- `FORM_ARMOR_PERCENT.bear` is the one place the 360 is written.
+   * ==========================================================================
+   *
    * AND IT IS WORTH ALMOST NOTHING TO THE BEAR'S DAMAGE. The prediction before
    * it was measured was "more armor means less damage taken means less rage,
    * so the DPS falls", and **ARMOR DOES NOT REDUCE RAGE** -- the rage from a
@@ -1038,8 +1053,16 @@ describe('Thick Hide is armor per level and per excess defense point', () => {
     const surplus = bear.stats.get('defenseSkill');
     expect(bear.defenseSkill).toBe(MAX_CHARACTER_LEVEL * 5 + surplus);
 
-    const expected = perLevel * MAX_CHARACTER_LEVEL + perDefense * surplus;
-    expect(expected).toBe(180 + perDefense * surplus);
+    /*
+     * THE FORM MULTIPLIES BOTH CLAUSES. `formArmorMultiplier` is 3.6 for a
+     * bear, so Thick Hide's own amount arrives at 4.6x -- the talent's own
+     * grant plus 360% of it.
+     */
+    const formBonus = formArmorMultiplier('druid', 'bear');
+    expect(formBonus).toBeCloseTo(3.6, 10);
+    const granted = perLevel * MAX_CHARACTER_LEVEL + perDefense * surplus;
+    const expected = granted * (1 + formBonus);
+    expect(granted).toBe(180 + perDefense * surplus);
 
     /*
      * ASSERTED WHERE EACH CLAUSE LANDS, not only on the total: the level clause
@@ -1054,6 +1077,15 @@ describe('Thick Hide is armor per level and per excess defense point', () => {
       to: 'armor',
       fraction: perDefense,
     });
+
+    /*
+     * AND THE TALENT REPORTS WHAT THE FORM MAY MULTIPLY, which is the field
+     * `createPlayer` reads. The per-level half is a resolved number and the
+     * per-defense half stays a RATE, because the second one has to compose
+     * with the derivation rather than be resolved -- see `formScalableArmor`.
+     */
+    expect(build.formScalableArmor.flat).toBeCloseTo(perLevel * MAX_CHARACTER_LEVEL, 6);
+    expect(build.formScalableArmor.perDefensePoint).toBeCloseTo(perDefense, 10);
 
     expect(
       bear.stats.get('armor') - untalented('druid_bear', 'bear').stats.get('armor'),
@@ -1097,13 +1129,19 @@ describe('Thick Hide is armor per level and per excess defense point', () => {
      * a mechanism rather than an observed number. The Warrior's and the
      * Paladin's Anticipation grant it from a TALENT, though, so the hazard is
      * one content change away rather than hypothetical.
+     *
+     * AND THE FORM'S MULTIPLIER RIDES ON IT, which is the half that would have
+     * been lost by resolving the clause at build time instead. The form adds a
+     * SECOND conversion at the multiplied rate rather than a flat number, so a
+     * buffed defense point is still worth 4.6x and not 1x.
      * ------------------------------------------------------------------------
      */
     const bear = druid('druid_bear', 'bear');
     const before = bear.stats.get('armor');
     bear.stats.addModifier({ ...flat('defenseSkill', 10), sourceId: 'probe' });
     expect(bear.stats.get('armor') - before).toBeCloseTo(
-      talentNumber('druid', 'thick_hide', 3, 1)! * 10,
+      // x4.6: the talent's own rate, plus Dire Bear Form's 360% of it.
+      talentNumber('druid', 'thick_hide', 3, 1)! * 10 * (1 + formArmorMultiplier('druid', 'bear')),
       6,
     );
   });

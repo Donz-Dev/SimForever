@@ -60,6 +60,7 @@ import { RACIAL_ABILITIES, racialBuild } from '../racials';
 import { legalAllocation } from '../talents/talentRules';
 import { talentsForClass } from '../talents/talentData';
 import {
+  armorFromItems,
   attackTableModifiersForStyle,
   liveEquipment,
   schoolPowerForStyle,
@@ -67,6 +68,7 @@ import {
   heldWeaponForForm,
   weaponsForEquipment,
 } from '../items/equipment';
+import { formArmorMultiplier } from '../character/druidForms';
 import { reactionsForEquipment } from '../items/procs';
 import {
   consumableAbilities,
@@ -451,7 +453,63 @@ export function createPlayer(options: PlayerOptions): Combatant {
    */
   const consumables = consumableEffects(options.consumables, style);
 
+  /*
+   * ==========================================================================
+   * AN EIGHTH LAYER, FOR THE FORM -- which had no layer at all, and is why the
+   * Bear Druid spent the whole project on item armor alone.
+   *
+   * Forever's Dire Bear Form: "increasing Attack Power by 180, **Armor
+   * contribution from items by 360%**, and Health by 1,240". The attack power
+   * and the health are in `baseStats.ts` already, per form -- a Tauren is 1,303
+   * hit points in caster form and 2,543 in bear, a difference of exactly the
+   * 1,240 the tooltip states. The ARMOR had nowhere to live, because a form is
+   * a COMBAT STYLE here and nothing granted stats for a style. Moonkin's
+   * identical clause works only because Moonkin Form is a TALENT and could
+   * carry an `itemArmorPercent` effect; Bear Form has no talent to hang on.
+   *
+   * WHAT IT MULTIPLIES IS TWO THINGS, both the owner's ruling:
+   *
+   *   ITEM ARMOR, BASE **AND** BONUS. `armorFromItems` sums `item.stats.armor`,
+   *   which the parser fills from BOTH tooltip lines -- a generated Bear head
+   *   reads "155 Armor" and "+165 Armor" and carries 320. So the "second stat
+   *   line" is already in, and that was worth checking rather than assuming:
+   *   the two lines are budgeted differently and only one of them costs
+   *   anything, so they could easily have been separate fields.
+   *
+   *   THICK HIDE, whose own tooltip asks for it -- "This amount can be further
+   *   increased by multipliers from those forms." Its per-LEVEL half is a flat
+   *   number and is multiplied here; its per-DEFENSE-POINT half is a
+   *   CONVERSION, so the multiplier is applied as a SECOND CONVERSION at the
+   *   multiplied rate and still follows a buffed defense skill.
+   *
+   * WHAT IT DOES **NOT** MULTIPLY is armor from an ENCHANT or a POTION. That
+   * is the owner's existing ruling that neither is "armor from items", and it
+   * needs no exclusion here: `armorFromItems` sums item stats directly and has
+   * never counted either. The form's clause says "from items" and is the same
+   * line being read twice.
+   * ==========================================================================
+   */
+  const formArmor = formArmorMultiplier(characterClass, style);
+  const formArmorStats: Partial<Record<'armor', number>> =
+    formArmor > 0
+      ? {
+          armor:
+            (armorFromItems(equipment, style) + build.formScalableArmor.flat) * formArmor,
+        }
+      : {};
+  const formArmorConversions =
+    formArmor > 0 && build.formScalableArmor.perDefensePoint > 0
+      ? [
+          {
+            from: 'defenseSkill' as const,
+            to: 'armor' as const,
+            fraction: build.formScalableArmor.perDefensePoint * formArmor,
+          },
+        ]
+      : [];
+
   const startingStats = addStats(
+    addStats(
     addStats(
       addStats(
         addStats(
@@ -490,6 +548,13 @@ export function createPlayer(options: PlayerOptions): Combatant {
      * here would freeze against the unbuffed stat.
      */
     racials.stats,
+    ),
+    /*
+     * AND AN EIGHTH, FOR THE FORM -- outermost, so it is a layer of its own
+     * that a measurement can isolate. The same argument the race, the stone
+     * and the consumables each get their own layer for.
+     */
+    formArmorStats,
   );
 
   // Layer 3, for the resource maximums only. The stat block handles the rest.
@@ -718,7 +783,11 @@ export function createPlayer(options: PlayerOptions): Combatant {
      */
     statDerivation: withStatConversions(
       statDerivationFor(characterClass, style),
-      build.statConversions,
+      /*
+       * AND THE FORM'S MULTIPLIER REACHES THICK HIDE'S DEFENSE CLAUSE AS A
+       * SECOND CONVERSION rather than by resolving it -- see `formArmor`.
+       */
+      [...build.statConversions, ...formArmorConversions],
     ),
     resources,
     regeneration: regenerationFor(resources.map((spec) => spec.type)),
