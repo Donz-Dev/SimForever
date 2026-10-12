@@ -488,6 +488,11 @@ function buildChances(
        * character at the level baseline, so charging for all 300 points would
        * move every one of them before a talent was spent. What a talent or a
        * piece of gear ADDED is the surplus, and that is what is worth 0.04
+       *
+       * AND `bossCrush` IS NAMED HERE AND DELIBERATELY NOT ADJUSTED BELOW,
+       * which this sentence used to hide by grouping all three together. See
+       * the `crush` line itself -- the owner has ruled on it, and the grouping
+       * is what made a correct implementation read as an oversight.
        * percentage points a point to five separate numbers.
        *
        * This is what Anticipation was blocked on. The formula is the ruleset
@@ -514,6 +519,38 @@ function buildChances(
           target.stats.get('blockChance') > 0
             ? clampChance(toRollUnits(target.stats.get('blockChance')) + fromDefense)
             : 0,
+        /*
+         * ======================================================================
+         * CRUSHING BLOWS ARE FLAT AND DEFENSE SKILL DOES NOT TOUCH THEM, which
+         * is the ruleset owner's ruling and is the opposite of what a Classic
+         * reading gives.
+         *
+         * Asked whether this was a bug -- every other figure here takes
+         * `fromDefense` and this one does not -- the answer was: **"this isn't
+         * true. Defense CAN reduce crushing blow chance, but only indirectly.
+         * By obtaining so much of the avoidance stat above crushing blow in the
+         * combat table to the point that it 'pushes crushing blows off the
+         * table'."**
+         *
+         * SO THE MECHANISM IS THE WALK ITSELF AND NEEDS NO ARITHMETIC. The
+         * attacks-received order is miss, dodge, parry, block, crush, crit, and
+         * `walk` accumulates a ceiling in that order -- so once miss, dodge,
+         * parry and block sum past the roll space, a roll can never reach
+         * crush. Defense skill reaches crushing blows by raising the four
+         * outcomes ABOVE them and in no other way.
+         *
+         * IT IS VISIBLE IN THE TWO SHIELD TANKS. The Protection Warrior's
+         * avoidance and block come to 95.9% of the table and it takes 2.0%
+         * crushing blows; the Protection Paladin's come to 75.0% and it takes
+         * 12.7%, on the same flat 15% figure. Neither has crush reduced; one of
+         * them has it squeezed.
+         *
+         * DO NOT "FIX" THIS BY SUBTRACTING `fromDefense`. The asymmetry with
+         * `miss` and `crit` two lines up is deliberate, and the comment above
+         * used to group all three in a way that invited exactly that edit.
+         * `attackChances.test.ts` fails if anybody makes it.
+         * ======================================================================
+         */
         crush: COMBAT_CONSTANTS.bossCrush,
         crit: clampChance(COMBAT_CONSTANTS.bossCrit - fromDefense),
         crushMultiplier: COMBAT_CONSTANTS.bossCrushMultiplier,
