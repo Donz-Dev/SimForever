@@ -35,19 +35,36 @@ the tooling to be a bit more sophisticated as well."
 | 9 | **LW Ranged** and **LW Melee** -- 5/39/7 and 5/13/33 | **0.0 to the decimal on both**, and correctly so | 774.2 |
 | 9 | **Warlock** -- a CHOOSER for the sacrificed demon, and the 15% confirmed | **no figure moved**; 24 of 27 rows 0.0 to the decimal | **774.2** |
 | 10 | **Firelock** -- 5/11/35, a new list, and an AFTERMATH INDEX THAT WAS RIGHT BY LUCK | 891.4 -> 885.5 (**-5.9**), and **26 of 27 rows 0.0** | **774.0** |
+| 11 | **The tank case study** -- DIRE BEAR FORM'S ARMOR MULTIPLIER, which nothing applied | Bear armor 4,690 -> **16,753**, taken **-55%**, deaths 9.98 -> **4.73** | see below |
+| 11 | **Armor caps at 75%**, which an asymptote can never reach | binds at **17,265**; Bear +0.7% taken, the other two 0.0 | see below |
+| 11 | **Crushing blows are flat** -- a RULING, and the implementation was already right | no behaviour change; a comment and a test | see below |
 | 12 | **Shockadin** -- a fast 2H as an EXCLUSIVE alternative, both setups optimised, and A TALENT TIER RULE THAT WAS WRONG | 787.7 -> **856.0**, and the 2H at **933.2** as the 28th row | see below |
 | 13 | **BM Hunter** and **LW Ranged** -- an ABILITY IN THE BOOK AND IN NO LIST, two trees with almost no freedom, and TWO CORRECTNESS FIXES BESIDE THEM | 856.2 -> **898.1** and 912.5 -> **935.3** | see below |
 | 14 | **Moonkin** and **Cat** -- the round where nearly every CANDIDATE measured as a loss | 778.6 -> **790.3** and 890.0 -> **898.4** | see below |
 | 15 | **2H Arms** and **DW Fury** -- AN ABILITY ALREADY IN THE BOOK was 94 of the 103, and both trees turned out completely FORCED. The owner then asked for that entry SWITCHED OFF | 849.7 -> **872.8** and 989.6 -> **997.3**, and **897.2** / **1092.6** with it enabled | see below |
 | 16 | **Nine sweeping changes at once**, the owner's own itemised list -- caster weapons, a new enchant, pre-combat actions, two raid buffs, the weapon stone per hand, Inner Focus, two APL additions, Predator's Edge and the food | **not re-baselined**, on the owner's standing instruction; 75 hashes unchanged on six of the nine | see below |
 
-**ROUND 11 IS MISSING FROM THAT TABLE ON PURPOSE AND NOT BY ARITHMETIC.** It is
-the tank case study -- Dire Bear Form's armor multiplier, the 75% armor cap and
-the crushing-blow ruling -- and it is written up on its own branch, which had
-not merged when this row was added. **Numbering this one 12 rather than taking
-the next free integer** is the thing that stops two branches both calling
-themselves 11, which is the clean-merge arithmetic failure CLAUDE.md documents
-and which has already cost this project a profile format version.
+**ROUND 11 WAS MISSING FROM THAT TABLE AND IS NOW IN IT**, which is worth
+saying rather than quietly closing: for four rounds it read "ROUND 11 IS
+MISSING FROM THAT TABLE ON PURPOSE AND NOT BY ARITHMETIC", because the tank
+case study sat unmerged on its own branch while rounds 12 to 16 landed.
+
+**NUMBERING THAT NEXT ROUND 12 RATHER THAN TAKING THE NEXT FREE INTEGER IS
+WHAT MADE THIS RESOLVABLE AT ALL.** Two branches both calling themselves 11 is
+the clean-merge arithmetic failure CLAUDE.md documents -- git merges two
+same-numbered rows without a conflict -- and it has already cost this project a
+profile format version. Leaving the gap meant the row could simply be dropped
+into it, four days and five rounds later, with nothing to renumber.
+
+**AND THE NOTE THAT HELD THE PLACE IS DELETED WITH THE THING IT DESCRIBED**,
+which is this file's own rule about a caveat outliving its doubt: a reader who
+found "round 11 is missing on purpose" next year could not tell a live gap from
+a filled one.
+
+**ROUND ELEVEN HAS NO MEAN, AND THAT IS THE POINT.** It is the first round whose
+figures the owner measured rather than this repository -- see **The baseline is
+the owner's now** below, which also says which rows of the table further down
+are stale.
 
 ## Questions outstanding for the owner
 
@@ -505,6 +522,181 @@ figure of merit is a DEATH COUNT, and both of its changes are read there.
 **THE FOURTH IS NOT A LIST AT ALL**, and that is worth a row rather than a
 footnote: the owner asked for the Rogue next and named a TALENT that had to be
 fixed first. **It was the largest single figure of the four rounds.**
+
+## The baseline is the owner's now, and it is FOUR tables
+
+**THE PROJECT'S BASELINE IS NO LONGER THE 27-ROW TABLE FURTHER DOWN THIS FILE.**
+The owner maintains it themselves, across all four gear templates, and states
+what one is: *"This is what is considered a full baseline"* --
+
+| | |
+| --- | --- |
+| Table 1 | DPS for the **24 non-tank** profiles in all four templates |
+| Table 2 | DPS for the **3 tank** profiles in all four templates |
+| Table 3 | **DTPS** for the 3 tank profiles in all four templates |
+
+and the columns are **Pre-BiS / Tier 1 / Tier 2 / Tier 3**, which are this
+repository's `B55 / E65 / E75 / E85`. Drawn as line charts here:
+<https://claude.ai/artifact/3ekfA8mHxUNPxneqfHeqgy>
+
+**AND THE INSTRUCTION THAT GOES WITH IT**: *"don't deliberate so much over
+baselining. I'm already doing that and tell you what to implement. it's fine if
+you catch something but often times we're wasting hours a day re-baselining
+profiles."* So a round is implement, typecheck, test, `USES=1` on the touched
+profile, and ship. CLAUDE.md carries the rule.
+
+### Which rows of the 27-row table are now stale
+
+**NOT PATCHED, BECAUSE PATCHING ONE ROW PUBLISHES A DIFFERENCE BETWEEN TWO
+BASELINES** -- this file's own rule. Listed instead:
+
+| what | the table said | what the presets say |
+| --- | --- | --- |
+| **Bear Druid DPS** | 386.1 | **~402.9** -- Dire Bear Form's armor, then the 75% cap |
+| Arcane Mage talents | 47/4/0 | **35/11/5** |
+| Fire Mage talents | 10/39/2 | **16/31/4** |
+| Ele Shaman talents | 38/13/0 | **32/6/13** |
+| LW Ranged talents | 7/39/5 | **5/41/5** |
+| LW Melee talents | 7/13/31 | **5/13/33** |
+| Moonkin talents | 38/0/13 | **41/0/10** |
+
+The talent columns are corrected in place below, because a build is a FACT and
+not a measurement. **The Bear's figure is left alone and flagged**, and the mean
+beneath the table is therefore a mean over one stale row.
+
+**AND TWO OF THOSE CORRECTIONS WENT STALE BEFORE THIS ROUND MERGED, WHICH IS
+THE SAME FAILURE ONE LEVEL UP.** This section sat on an unmerged branch for
+four days while rounds 12 to 16 landed, and two of the builds it was correcting
+were respecified underneath it:
+
+  - **LW Ranged** was written here as `5/39/7`, which was right when written.
+    Round 13 respecified it and the preset is `5/41/5`.
+  - **Moonkin** was not in this list at all, because it was correct when the
+    list was made. Round 14 respecified it from `38/0/13` to `41/0/10`.
+
+**BOTH WERE RE-DERIVED FROM `PRESETS_BY_ID` RATHER THAN TAKEN FROM EITHER SIDE
+OF THE MERGE**, which is the only reading that could have caught them: the
+branch's figure and main's figure disagreed, and BOTH were wrong. "A number
+with a source named beside it is not the same as a number that still matches
+its source", applied to a correction rather than to the thing being corrected.
+
+## Round eleven: two rules that were never declared at all
+
+**BOTH CAME FROM THE OWNER READING A TABLE**, and neither was findable by any
+audit here -- which is a class of bug this project did not have a name for. The
+three audits find an ability that is not connected, a coefficient that does not
+respond, and a list entry that never fires. **A rule that was never declared
+leaves no zero, no caveat, no `unmodelled` entry and no talent reporting itself
+partly modelled.** There is nothing to count and nothing to re-read.
+
+### The question that started it
+
+*"Bear is taking a tremendous amount more damage than the other 2 profiles. And
+I can't tell if it's that something is bugged with Bear ... or something is
+bugged with Prot Warr, like the shield wall uptime is high or not being removed
+on death."*
+
+Measured over 20 fights each, per attack RECEIVED:
+
+| | attacks | avoided | blocked | mean hit | total taken | deaths |
+| --- | --- | --- | --- | --- | --- | --- |
+| **Bear** | 26.4 | 38.1% | **0.0%** | **12,636** | 206,596 | 9.98 |
+| Prot Warr | 26.9 | 46.7% | 49.2% | 8,106 | 115,915 | 5.98 |
+| Prot Pally | 26.8 | 33.2% | 44.6% | 9,130 | 163,422 | 9.37 |
+
+**SHIELD WALL WAS RULED OUT**: 3.6% uptime, 0.30 casts a fight, and
+`removedOnDeath: true` is declared on it and honoured in `AuraCollection`. The
+Warrior is not bugged -- its 46.7% avoided plus 49.2% blocked is 95.9% of the
+attack table, which squeezes crushing blows down to 2.0% against the Bear's
+14.6%.
+
+### Dire Bear Form's armor multiplier (#257)
+
+Forever's own spellbook: *"Shapeshift into Dire Bear Form, increasing Attack
+Power by 180, **Armor contribution from items by 360%**, and Health by 1,240."*
+
+| | before | after |
+| --- | --- | --- |
+| armor | 4,690 | **16,753** |
+| damage taken | 232,551 | **105,058** (-55%) |
+| deaths | 9.98 | **4.73** |
+
+**A FORM IS A COMBAT STYLE HERE AND NOTHING GRANTED STATS FOR A STYLE.**
+Moonkin's identical 360% works only because Moonkin Form is a TALENT and could
+carry an `itemArmorPercent` effect. `game/character/druidForms.ts` is the layer
+now. The Bear's DPS rises 386.1 -> 403.3 because it spends less of the fight
+dead, not because armor did anything for it.
+
+**`bear` IS DIRE BEAR, SETTLED BY DATA RATHER THAN BY A DEFAULT** -- 180%
+against 360% was worth about 35,000 damage taken a fight. `baseStats.ts` gives a
+Tauren 1,303 hit points in caster form and **2,543 in bear**, exactly the 1,240
+Dire Bear states, and a Night Elf's attack power moves -20 to 160, exactly its
++180. **So the attack power and health needed nothing**, which the owner asked
+to have verified rather than assumed.
+
+**THE MULTIPLIER REACHES ITEM ARMOR, BASE AND BONUS** -- both tooltip lines
+parse into `item.stats.armor` -- **AND THICK HIDE**, whose tooltip asks for it.
+Its per-level half is flat and multiplied directly; its per-defense-point half is
+a CONVERSION, so the multiplier is a second conversion at the multiplied rate
+and still follows a buffed defense skill. Two Druid talent tests broke by
+exactly **x4.6**, which is what says the implementation is the ruling.
+
+**OUTSTANDING**: Moonkin's Thick Hide is still unmultiplied (worth 0.0, nothing
+attacks it), and `ENRAGE_BEAR_ARMOR_REDUCTION` answers "which bear is this" the
+other way -- the 27% Bear figure with 16% Dire Bear declared and unused.
+
+### Armor caps at 75% (#258)
+
+The owner's ruling. `armor / (K + armor)` is an **asymptote**, so a missing
+ceiling left no trace: nothing reads too large, there is no flat figure to be
+wrong about. At level 63 it binds at **17,265 armor**.
+
+**IT WAS UNREACHABLE UNTIL ONE COMMIT EARLIER.** The highest armor in the
+project was 7,864 -- 57.74%, seventeen points clear -- and the form multiplier
+took the Bear to 16,753 in a single change. Measured: Bear +0.7% damage taken,
+both plate tanks identical to the decimal. **Not isolated**: the Bear's 16,753
+is just under the threshold, so something moves its armor over the line during
+the fight and a probe for a 0.7% effect was not worth the time. Recorded as
+unexplained. **The Bear now sits on its armor cap**, which is a fact about its
+gear budget -- `Bonus Armor` is second in its benchmark preference list.
+
+### Crushing blows are flat (#259)
+
+**NO BEHAVIOUR CHANGE. THE IMPLEMENTATION WAS RAISED AS A BUG AND WAS RIGHT.**
+Every figure in the attacks-received table takes `fromDefense` and `crush` does
+not, and the comment above it groups `bossMiss`, `bossCrit` and `bossCrush` as
+the same kind of flat figure -- which is this file's own "two of three
+reproducing and the third moving is the shape of a bug".
+
+The ruling: *"Defense CAN reduce crushing blow chance, but only indirectly. By
+obtaining so much of the avoidance stat above crushing blow in the combat table
+to the point that it 'pushes crushing blows off the table'."* The walk resolves
+miss, dodge, parry, block, crush, crit and accumulates a ceiling, so the
+mechanism needs no arithmetic at all.
+
+**A GROUPING COMMENT MANUFACTURED THE APPEARANCE OF A BUG**, and the fix is at
+the grouping as much as at the line. `attackChances.test.ts` pins it, because a
+ruling that is only prose gets re-raised -- this one already had been.
+
+### And Prot Pally against Prot Warr, which is NOT a bug
+
+The 44% gap decomposes as `attacks x landed x mean hit`: **25% more land and
+each lands 13% harder.** All of it is owner decisions --
+
+| | Prot Warr | Prot Pally |
+| --- | --- | --- |
+| agility | **176** | **69** -- the template takes Spell Power instead, the owner's instruction |
+| defense surplus | **115** | **66** -- Anticipation 5/5 against 2/5 |
+| Shield Specialization | block **chance** | block **value** -- different talents |
+
+Together: avoidance+block **95.9%** against **75.0%**. Mitigation multipliers
+are not the cause -- the Warrior runs Defensive Stance x0.9 at 100% uptime and
+the Paladin Righteous Fury x0.94 at 97.5% plus Iron Creed x0.90 at 50%,
+averaging slightly better.
+
+**STILL UNVERIFIED**: Shield Block sits at **81.3% uptime** driving the
+Warrior's 49.2% block rate; its duration, charges and cooldown were never
+checked against the source.
 
 ## Round ten: a dormant bug that a TALENT CHANGE woke up
 
@@ -5784,22 +5976,33 @@ cannot audit, which is why the check is a SET comparison and not a row count.
 | Profile | Class | Talents | DPS | | Profile | Class | Talents | DPS |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | DW Fury | Warrior | 17/34/0 | 989.6 | | Shockadin | Paladin | 23/0/28 | 787.7 |
-| LW Ranged | Hunter | 7/39/5 | 912.5 | | Hemo Dagger | Rogue | 17/3/31 | 787.0 |
-| Cat Druid | Druid | 9/34/8 | 892.7 | | Moonkin | Druid | 38/0/13 | 785.9 |
+| LW Ranged | Hunter | 5/41/5 | 912.5 | | Hemo Dagger | Rogue | 17/3/31 | 787.0 |
+| Cat Druid | Druid | 9/34/8 | 892.7 | | Moonkin | Druid | 41/0/10 | 785.9 |
 | Firelock | Warlock | 5/11/35 | 885.5 | | Shadow Priest | Priest | 13/3/35 | 774.7 |
 | Hawk Melee | Hunter | 16/11/24 | 883.0 | | Enh Shaman | Shaman | 17/34/0 | 750.7 |
 | Seal Twist Ret | Paladin | 15/0/36 | 876.4 | | Pure Hemo | Rogue | 21/8/22 | 723.5 |
-| Arcane Mage | Mage | 47/4/0 | 866.8 | | SM/DS | Warlock | 40/11/0 | 722.4 |
+| Arcane Mage | Mage | 35/11/5 | 866.8 | | SM/DS | Warlock | 40/11/0 | 722.4 |
 | Frostfire Mage | Mage | 0/29/22 | 863.3 | | Rupture Rogue | Rogue | 12/8/31 | 719.4 |
 | BM Hunter | Hunter | 31/20/0 | 856.2 | | Venom Rogue | Rogue | 37/12/2 | 718.9 |
-| 2H Arms | Warrior | 39/10/2 | 849.7 | | Ele Shaman | Shaman | 38/13/0 | 671.1 |
-| Fire Mage | Mage | 10/39/2 | 843.7 | | Prot Warr | Warrior | 17/0/34 | 469.7 |
-| LW Melee | Hunter | 7/13/31 | 831.5 | | Prot Pally | Paladin | 8/34/9 | 434.5 |
-| Combat Rogue | Rogue | 18/33/0 | 824.1 | | Bear Druid | Druid | 9/42/0 | 386.1 |
+| 2H Arms | Warrior | 39/10/2 | 849.7 | | Ele Shaman | Shaman | 32/6/13 | 671.1 |
+| Fire Mage | Mage | 16/31/4 | 843.7 | | Prot Warr | Warrior | 17/0/34 | 469.7 |
+| LW Melee | Hunter | 5/13/33 | 831.5 | | Prot Pally | Paladin | 8/34/9 | 434.5 |
+| Combat Rogue | Rogue | 18/33/0 | 824.1 | | Bear Druid | Druid | 9/42/0 | 386.1 † |
 | Combat Mut | Rogue | 30/21/0 | 790.6 | | | | | | |
 
 The mean across **27** is **774.0**, RE-SUMMED FROM THE ROWS ABOVE rather than
 adjusted, by `tools/update_baseline_table.py`.
+
+**† THE BEAR'S FIGURE IS STALE AND THE MEAN IS THEREFORE A MEAN OVER ONE STALE
+ROW.** Dire Bear Form's armor multiplier and the 75% armor cap both landed after
+this table was last rebuilt, and the Bear measures **~402.9** now. It is flagged
+rather than patched, because patching one row publishes a difference between two
+baselines -- this file's own rule. The TALENT columns above were corrected in
+place, because a build is a fact rather than a measurement: Arcane 35/11/5, Fire
+16/31/4, Ele Shaman 32/6/13, LW Ranged 5/39/7, LW Melee 5/13/33.
+
+**AND THIS TABLE IS NO LONGER THE PROJECT'S BASELINE.** It is one gear template
+of four. See **The baseline is the owner's now** at the top of this file.
 
 **THE TOP IS DW FURY AT 974.3 +/-10.3, AND LW RANGED IS SECOND AT 888.9
 +/-7.2.** The gap is 85.4.

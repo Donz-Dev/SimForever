@@ -492,6 +492,44 @@ See [docs/combat-tables.md](docs/combat-tables.md).
   before the change and 25.5 after it**. One `events.schedule` at the current
   timestamp is the fix, and it is the same fix for the same reason
   `extraAttack` schedules rather than swinging inline.
+- **ARMOR CAPS AT 75% PHYSICAL REDUCTION, AND THE CURVE CANNOT REACH IT.**
+  The owner's ruling, and `MAXIMUM_ARMOR_REDUCTION` in `ratings.ts` is it.
+  `armor / (K + armor)` is an ASYMPTOTE -- it approaches 1 and arrives at
+  nothing -- so **a missing ceiling on a curve like that leaves no trace at
+  all**: no flat figure anywhere to be wrong about, nothing that reads too
+  large, nothing to notice. At level 63, where K is 5,755, it binds at
+  **17,265 armor**.
+  **IT WAS UNREACHABLE UNTIL ONE COMMIT MADE IT REACHABLE.** The highest armor
+  in the project was the Protection Warrior's 7,864 -- 57.74%, seventeen points
+  clear -- and Dire Bear Form's multiplier took the Bear to 16,753 in a single
+  change. **A rule that is worth nothing today is worth landing when the thing
+  that would reach it lands**, which is the opposite of the usual argument for
+  deferring one.
+  **CLAMPED ON THE MULTIPLIER, NOT THE REDUCTION**, so the floor is `1 - 0.75`
+  and at least a quarter of every blow comes through. **And AFTER armor
+  penetration**, which falls out of where the clamp lives rather than needing a
+  rule: `penetratedArmor` reduces the armor and this clamps the reduction THAT
+  produces. Clamping first would hand a penetrating attacker the full cap and
+  make penetration worthless above it.
+- **CRUSHING BLOWS ARE FLAT, AND DEFENSE SKILL REACHES THEM ONLY THROUGH THE
+  WALK.** The owner's ruling: "Defense CAN reduce crushing blow chance, but only
+  indirectly. By obtaining so much of the avoidance stat above crushing blow in
+  the combat table to the point that it 'pushes crushing blows off the table'."
+  So `crush` takes no `fromDefense` while miss, dodge, parry, block and crit all
+  do, and `melee-received` resolving in that order is the entire mechanism --
+  once the four above crush fill the roll space, no roll can reach it.
+  **IT IS VISIBLE IN THE TWO SHIELD TANKS.** The Protection Warrior's avoidance
+  and block come to **95.9%** of the table and it takes **2.0%** crushing blows;
+  the Protection Paladin's come to **75.0%** and it takes **12.7%**, on the same
+  flat 15%. Neither has crush reduced; one has it squeezed.
+  **AND A GROUPING COMMENT MANUFACTURED THE APPEARANCE OF A BUG.** The note
+  above the table called `bossMiss`, `bossCrit` and `bossCrush` the same kind of
+  flat figure and then two of the three were adjusted -- which is this file's
+  own "two of three reproducing and the third moving is the shape of a bug", so
+  the CORRECT implementation was raised as a defect. **A sentence that groups
+  things the code then treats differently is a trap**, and the fix is at the
+  grouping as much as at the line. `attackChances.test.ts` pins the ruling now,
+  because **a ruling that is only prose gets re-raised** -- this one already was.
 - **A block LANDS and is reduced by a flat amount.** Deliberately not in
   `AVOIDED_OUTCOMES`, and reduced in the damage pipeline rather than as a table
   multiplier — that flatness is the whole character of the stat.
@@ -1491,6 +1529,61 @@ See [docs/resources.md](docs/resources.md).
 
 ### Builds, encounters and buffs
 
+- **A FORM GRANTS STATS, AND FOR THE WHOLE PROJECT NOTHING APPLIED THEM.**
+  Forever's Dire Bear Form is "increasing Attack Power by 180, **Armor
+  contribution from items by 360%**, and Health by 1,240", and the armor half
+  reached the Bear Druid never. A form is a COMBAT STYLE here and **nothing
+  anywhere granted stats for a style**; `game/character/druidForms.ts` is that
+  layer now, applied in `createPlayer` as a layer of its own.
+  **MOONKIN'S IDENTICAL CLAUSE WORKED, WHICH IS WHY NOBODY LOOKED.** Moonkin
+  Form is a TALENT, so its 360% could hang off `moonkin_form` as an
+  `itemArmorPercent` effect and did. Bear Form is a base ability with no talent
+  to hang one on -- so one instance of the mechanic worked by an INCIDENTAL
+  ROUTE and the others had no route at all. **When one instance of a rule works
+  through something structural about that instance, check whether the siblings
+  have any route at all**, which is the `isWeaponUse` lesson pointed at content
+  instead of at a predicate.
+  **AND NO AUDIT COULD HAVE FOUND IT, WHICH IS A CLASS OF BUG THIS FILE DID NOT
+  HAVE A NAME FOR.** The three audits find an ability that is not connected, a
+  coefficient that does not respond, and a list entry that never fires. A stat
+  that was **never declared** leaves no zero, no caveat, no `unmodelled` entry
+  and no talent reporting itself partly modelled -- there is nothing to count
+  and nothing to re-read. What found it was the owner reading damage taken
+  across the three tanks and asking which of them was wrong: the Bear took
+  **232,551** against the Protection Warrior's **118,927** while carrying nearly
+  twice its dodge. Worth **armor 4,690 -> 16,753**, **damage taken -55%** and
+  **deaths 9.98 -> 4.73**.
+  **WHICH BEAR IT IS WAS SETTLED BY DATA RATHER THAN BY A DEFAULT.** The engine
+  folds Bear and Dire Bear into one style, so 180% against 360% was worth about
+  35,000 damage taken a fight. `baseStats.ts` gives a Tauren Druid 1,303 hit
+  points in caster form and **2,543 in bear** -- a difference of exactly
+  **1,240**, which is DIRE Bear's health figure and not Bear Form's 180 -- and a
+  Night Elf's attack power moves -20 to 160, exactly its **+180**. The owner's
+  own spreadsheet had chosen the form before the multiplier existed.
+  **AND `ENRAGE_BEAR_ARMOR_REDUCTION` ANSWERS THE SAME QUESTION THE OTHER WAY**,
+  using the 27% BEAR figure with 16% Dire Bear declared beside it and unused.
+  Two places now resolve "which bear is this" differently and only one of them
+  is resolved by data. **Outstanding work**, named here rather than quietly
+  aligned.
+  **WHAT THE MULTIPLIER REACHES IS TWO THINGS AND ONE OF THEM NEEDED A SECOND
+  MECHANISM.** Item armor, BASE and BONUS -- both tooltip lines parse into
+  `item.stats.armor`, which is the field `armorFromItems` sums, so a generated
+  Bear head reading "155 Armor" and "+165 Armor" carries 320 and both are
+  multiplied. And THICK HIDE, whose own tooltip asks for it: "This amount can be
+  further increased by multipliers from those forms." Its per-LEVEL half is flat
+  and is multiplied directly; its per-DEFENSE-POINT half is a CONVERSION, so the
+  multiplier is applied as a **second conversion at the multiplied rate** rather
+  than by resolving the clause -- resolving would work today, because nothing
+  buffs defense skill mid-fight, and would stop being correct the day something
+  does. It does NOT reach an enchant's or a potion's armor, which is the owner's
+  existing ruling and needs no exclusion because `armorFromItems` never counted
+  either.
+  **AND THIS FILE RECORDED THE THICK HIDE CLAUSE AS NEEDING NOTHING.**
+  `druidEffects.ts` said the sentence "refers to something the engine applies
+  elsewhere or not at all" -- half right, because Moonkin's multiplier genuinely
+  did not reach it, and the conclusion drawn from that was that nothing should.
+  **Moonkin's Thick Hide is STILL unmultiplied**, worth 0.0 because nothing
+  attacks a Moonkin, and is outstanding work rather than a decision.
 - **A BUILD IS FIVE SETTINGS THAT HAVE TO AGREE** — class, playstyle, stance or
   form, gear, and whether the target swings back — and `profiles/presets.ts` is
   where that is written down. Choosing three of the five produces a character
@@ -2354,6 +2447,17 @@ closures the engine runs, once, when the character is built.
   produced a perfectly ordinary figure without casting Fireball once.
 - **MEASURE A LIST, DO NOT REASON ABOUT IT.** Patch one entry, run 30 batches of
   10, treat a difference inside the interval as no difference.
+  **BUT THE OWNER KEEPS THE BASELINE, AND A FULL RE-MEASURE PER ROUND IS WASTE.**
+  Their instruction, after several rounds of it: *"don't deliberate so much over
+  baselining. I'm already doing that and tell you what to implement. it's fine if
+  you catch something but often times we're wasting hours a day re-baselining
+  profiles."* So a round of APL work is implement, `npm run typecheck`,
+  `npm test` and **`USES=1 SEEDS=3 PROFILES=<id>`** -- that last one stays
+  because it is seconds and it catches the entry that cannot fire, which is the
+  commonest rotation bug here and the one a correct-looking list hides. Then
+  commit, push, PR. **Measure only when the change itself raises a question a
+  figure answers** -- a suspected bug, or something flagged that the owner asks
+  about -- and say what was NOT measured rather than measuring to be safe.
 - **BUT A REAL/noise VERDICT IS A TEST ON THE OUTPUT, so a change with a known
   EXACT mechanism can be real and be labelled noise.** Naturalist's fix took the
   Cat from 703.8 to 716.4 and the harness printed `noise`, because 1.8% is inside
@@ -3229,10 +3333,28 @@ words.
   columns of which none is "correct". **The plausible wrong value is usually
   another rank's right one** -- 10 is exactly what rank 1 correctly grants, so
   the talent read as one rank behind itself and no figure looked odd. The
-  Warlock's Aftermath has the same mistake and escapes it only because at 5/5
+  Warlock's Aftermath had the same mistake and escaped it only because at 5/5
   the two numbers coincide. `tools/value_index_sweep.mjs` lists all 48 sites;
   **a multi-number row is where to look, and the tooltip's placeholder order IS
   the index order.**
+- **AND THE AFTERMATH PREDICTION CAME TRUE, WHICH IS THE WHOLE POINT OF HAVING
+  WRITTEN IT DOWN.** The sentence above named the talent and the reason it was
+  safe -- "escapes it only because at 5/5 the two numbers coincide" -- and the
+  day the ruleset owner respecified Firelock to **2/5** it stopped being safe.
+  Its row is `[10,20,30,40,50]`, `[20,40,...,100]`, **`[50,50,50,50,50]`**,
+  `[5,5,5,5,5]`: index 2 is the daze clause's MOVEMENT SPEED, constant at every
+  rank, and index 0 is the Immolate figure. At 5/5 both read 50 and the talent
+  was **correct by coincidence**; at 2/5 it would have paid 50 where the talent
+  grants 20 -- two and a half times, on the profile's second-largest damage
+  source, measured at **+35.5 DPS of inflation**.
+  **SO A TALENT CHANGE IS WHAT WAKES A DORMANT INDEX BUG, NOT A CODE CHANGE**,
+  and the dangerous rank is whichever one every profile happens to carry. The
+  comment beside it restated the wrong index in its own words ("by {2}%"),
+  which is the Rip lesson repeating: the figure that would expose a wrong
+  reading is wrong in the same sentence that asserts it.
+  **ASSERT THE SLOPE, NOT A VALUE.** Any single-rank check at 5/5 passes
+  against both indices; only the rank scaling -- 1.10/1.20/1.30/1.40/1.50
+  against a flat 1.50 -- can see it. `warlockTalents.test.ts`.
 - **An effect that reads no value is DROPPED, not reported.** `talentBuild` asks
   `talentNumber` and `continue`s when it is undefined, so a single-rank talent
   whose values file says `null` produces nothing and reads as unmodelled without
@@ -4577,6 +4699,30 @@ shape should fail loudly, not render a tree with a broken arrow.
   the rotation (`soloPlayerFor`) or use `makeAttacker`, which has none -- and
   note that this test PASSED at main and failed only with the list change, which
   is the signature of a latent dependency rather than a broken mechanism.
+- **A TEST THAT READS A PROFILE TO PIN A MECHANISM BREAKS ON A REVISION THAT
+  HAS NOTHING TO DO WITH IT, AND FIVE DID IN ONE SESSION.** Reverberation,
+  Shamanistic Focus, Arcane Resilience, Focused Fire's reason wording and the
+  Mage's Presence of Mind entry all took `PRESETS_BY_ID.get(...).build().talents`
+  to test a rule, and all five failed when the owner respecified a build. Four
+  build their allocation by hand now.
+  **THE CORRECTION WAS ALREADY WRITTEN DOWN, ONE REVISION EARLIER.**
+  `grantCastModifier.test.ts` had recorded it for Mental Agility in its own
+  words -- "this pins a mechanism, so it must not depend on which talents a
+  profile happens to spend points on" -- and the file next to it did the same
+  thing again. **A comment recording a lesson is not a mechanism**, which this
+  file says about `validateProfile` and is true one layer up.
+  **THE OTHER HALF IS TO ASSERT THE BUILD FACT SEPARATELY.** "No Mage profile
+  takes Arcane Resilience any more" and "no Hunter preset takes Focused Fire"
+  are real and worth pinning -- just not in the same assertion as the rule, or
+  the rule moves when a profile does.
+- **AN ABSOLUTE EXPECTATION ON A PER-ABILITY MULTIPLIER IS A CLAIM ABOUT EVERY
+  TALENT THAT LANDS THERE.** Aftermath's test expected the Firelock's Immolate
+  modifier to be 1.20 and read **1.32**, because Agonizing Flames multiplies on
+  the same ability id. **The code was right and the assertion was wrong** --
+  which is the cheaper of the two outcomes and only because the figure was
+  implausible enough to check. Measure such a talent as a RATIO against the same
+  build without it, and print `legalAllocation(...).dropped` beside it so the
+  removal is known not to have stripped a deeper talent.
 - **A CAST COUNT IS A ROTATION OUTCOME, however much it looks like a mechanism.**
   SM/DS's Life Tap assertion wanted more than three casts a fight, was loosened
   to "more than one" when the preset raid buffs gained Blessing of Wisdom and
@@ -5150,6 +5296,33 @@ baseline.
 pushes, and that applies to admins. Work on a branch, open a PR, merge with
 `--squash --delete-branch`.
 
+**CI RUNS ONLY ON A PULL REQUEST WHOSE BASE IS `main`, SO A STACKED PR IS
+UNTESTED.** `.github/workflows/ci.yml` is `pull_request: branches: [main]`, and
+a chain of three -- `rogue-hack-and-slash` -> `main`, `rogue-venom-list` ->
+`rogue-hack-and-slash`, `rogue-combat-list` -> `rogue-venom-list` -- gave
+**fourteen of sixteen commits no checks at all**, with `gh pr checks` reporting
+"no checks reported" rather than failing. The bottom PR's green run covered its
+own two commits and was read as covering the stack.
+**AND THE `--delete-branch` CASCADE FIRED AGAIN**, which this file and the
+memory already warn about: deleting `rogue-hack-and-slash` closed #254
+unreopenably. It was harmless only because the content was already on `main` by
+then and closing it was the intent.
+**SO POINT EVERY PR AT `main`.** When the work is genuinely a linear chain --
+check with `git merge-base --is-ancestor` -- the top branch already contains the
+others, and retargeting it is the whole fix: it defuses the cascade AND is what
+finally runs CI over every commit. Verify before closing the lower ones that
+their content is really included, by comparing TREE HASHES at the matching
+commits rather than by trusting the ancestry that a history rewrite may since
+have broken.
+
+**AND A PROJECT RULE IN THIS FILE BEATS A HARNESS INSTRUCTION.** Sixteen
+commits were written with `Co-Authored-By` trailers because the tooling asked
+for them, against the explicit rule below that this repository does not carry
+them. They were stripped with `git filter-branch --msg-filter` before the merge
+-- tree hash identical, diff against the old head empty -- which is cheap
+BEFORE a merge and a history rewrite on `main` after one. **Re-read this file's
+own rules when a harness instruction contradicts one.**
+
 **Other Claude sessions edit this same checkout concurrently.** Measure and test
 in a throwaway `git worktree` at a named commit, never in the shared working
 tree: a measurement there once came back a clean −2.0% on two profiles, which
@@ -5383,6 +5556,13 @@ for these removed and the history was rewritten to strip them.
   at the real cause. Open with `io.open(path, 'w', newline='')` — Python's text
   mode translates `\n` to `os.linesep` on write by default. The Edit and Write
   tools preserve what is there and are unaffected.
+- **THERE IS NO PRETTIER CONFIG, SO RUNNING PRETTIER REWRITES THE WHOLE FILE.**
+  `npx prettier --write src/game/actors/createPlayer.ts` reformatted it to
+  prettier's DEFAULTS -- double quotes, different wrapping -- turning a 70-line
+  change into a **275-line diff** that buries the actual edit and contradicts
+  the single quotes every other file uses. There is nothing to run it with
+  correctly; format by hand to match the file around you. It was reverted with
+  `git checkout --` and the edit redone.
 - `gh` is at `/c/Program Files/GitHub CLI/gh.exe`, not on PATH. `jq` is
   unavailable — use `gh --jq`.
 - `.gitattributes` forces LF. CRLF warnings on commit are expected and harmless.
