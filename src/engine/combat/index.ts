@@ -44,6 +44,7 @@ export { applyHealing, resolveHealing } from './healing';
 export {
   RATING_PER_PERCENT,
   applyHaste,
+  MAXIMUM_ARMOR_REDUCTION,
   armorConstantForLevel,
   critChanceFrom,
   hasteMultiplierFrom,

@@ -11,7 +11,11 @@ import type {
 import { ROLL_MAX, resolveAttackTable, toRollUnits } from './attackTable';
 import type { AbilityModifier, SchoolModifier } from './abilityModifiers';
 import { combineAbilityModifiers } from './abilityModifiers';
-import { armorConstantForLevel, versatilityMultiplierFrom } from './ratings';
+import {
+  MAXIMUM_ARMOR_REDUCTION,
+  armorConstantForLevel,
+  versatilityMultiplierFrom,
+} from './ratings';
 import { applyParryHaste } from './parryHaste';
 import type { AttackEvent } from './reactions';
 import { runReactions } from './reactions';
@@ -621,7 +625,19 @@ export function scaleByPower(request: DamageRequest, weaponDamage = 0): number {
  */
 export function armorDamageMultiplier(armor: number, targetLevel: number): number {
   if (armor <= 0) return 1;
-  return 1 - armor / (armorConstantForLevel(targetLevel) + armor);
+  /*
+   * AND THE OWNER'S 75% HARD CAP, which the curve cannot reach by itself --
+   * `armor / (K + armor)` is an asymptote. Clamped on the MULTIPLIER, so the
+   * floor is `1 - 0.75`: a bigger multiplier is less reduction, and taking
+   * the max is what keeps at least a quarter of every blow coming through.
+   *
+   * See `MAXIMUM_ARMOR_REDUCTION` for where it binds -- 17,265 armor at level
+   * 63, which the Bear Druid is about 500 short of.
+   */
+  return Math.max(
+    1 - MAXIMUM_ARMOR_REDUCTION,
+    1 - armor / (armorConstantForLevel(targetLevel) + armor),
+  );
 }
 
 /** The fraction of damage armor removes. The complement of the multiplier. */

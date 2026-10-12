@@ -60,6 +60,35 @@ export const RATING_PER_PERCENT = {
 export const CRITICAL_STRIKE_MULTIPLIER = 2.0;
 
 /**
+ * The most physical damage armor may remove, whatever the armor.
+ *
+ * ============================================================================
+ * THE OWNER'S RULING: "armor has a hard cap of 75% physical damage reduction."
+ *
+ * THE CURVE NEVER REACHES IT ON ITS OWN, which is why the cap had to be stated
+ * rather than derived. `armor / (K + armor)` is an asymptote: it approaches 1
+ * and arrives at nothing, so no amount of armor produces a flat ceiling and
+ * there was no number to notice missing.
+ *
+ * WHERE IT BINDS, at level 63 where K is 5,755:
+ *
+ *     armor / (5755 + armor) = 0.75   ->   armor = 17,265
+ *
+ * SO IT IS ONE GEAR UPGRADE AWAY RATHER THAN ACADEMIC. The Bear Druid sits at
+ * **16,753** once Dire Bear Form's multiplier is applied -- 74.43% reduction,
+ * about 500 armor under the cap -- and it got there in a single change. Before
+ * that form multiplier existed the highest armor in the project was 7,864 and
+ * nothing could have come close.
+ *
+ * APPLIED AFTER ARMOR PENETRATION, which falls out of where it lives rather
+ * than needing a rule: `penetratedArmor` reduces the armor and this clamps the
+ * REDUCTION that results, so an attacker with penetration sees a smaller
+ * figure and the cap is computed from what they actually face.
+ * ============================================================================
+ */
+export const MAXIMUM_ARMOR_REDUCTION = 0.75;
+
+/**
  * The armor constant, which scales with the defender's level:
  *
  *     K = 400 + 85 * level
