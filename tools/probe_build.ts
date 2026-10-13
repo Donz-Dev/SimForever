@@ -2,8 +2,8 @@
  * ============================================================================
  * A/B A WHOLE SHOCKADIN BUILD AGAINST ITS BASELINE, UNDER SHARED SEEDS.
  *
- *   PRESET=pally_shockadin_2h VARIANTS=enchants npx vite-node tools/probe_shockadin.ts
- *   ITER=500 VARIANTS=all npx vite-node tools/probe_shockadin.ts
+ *   PRESET=pally_shockadin_2h VARIANTS=enchants npx vite-node tools/probe_build.ts
+ *   ITER=500 VARIANTS=all npx vite-node tools/probe_build.ts
  *
  * ----------------------------------------------------------------------------
  * PAIRED, FOR THE REASON `statWeights.ts` GIVES: `deriveSeed(baseSeed, i)`
@@ -23,7 +23,14 @@ import type { CharacterProfile } from '../src/profiles';
 import { profileSamples } from '../src/simulator/iterationSamples';
 import { pairedDelta } from '../src/simulator/statWeights';
 import { syncDefaultRotation } from '../src/profiles/rotation';
-import { VARIANT_GROUPS } from './shockadinVariants';
+import { VARIANT_GROUPS as SHOCKADIN } from './shockadinVariants';
+import { VARIANT_GROUPS as HUNTER } from './hunterVariants';
+
+/*
+ * ONE REGISTRY, SPREAD FROM THE PER-CLASS FILES. A group name is a command-line
+ * argument, so they share a namespace -- each file prefixes its own.
+ */
+const VARIANT_GROUPS = { ...SHOCKADIN, ...HUNTER };
 
 const PRESET = process.env.PRESET ?? 'pally_shockadin_2h';
 const ITER = Number(process.env.ITER ?? 400);

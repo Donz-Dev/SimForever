@@ -29,6 +29,104 @@ exactly like a source changing**, and the difference is whether the figure moves
 ---
 
 
+## The two ranged Hunters, optimised
+
+**THE PALADIN'S METHOD APPLIED TO A CLASS WITH ALMOST NO TALENT FREEDOM**, and
+the result is the opposite shape: the Shockadin's gains were mostly talents, and
+these two are mostly a missing list entry.
+
+| | spread | was | now |
+| --- | --- | --- | --- |
+| **BM Hunter** | 31/20/0 | 856.2 | **901.8** |
+| **LW Ranged** | 5/41/5 | 912.5 | **933.2** |
+
+Both trees were loaded into talentsforever.com and read back their spread with
+**"all 51 spent"** and nothing refunded:
+
+- BM Hunter — <https://talentsforever.com/hunter/60/5320001505101251-30520500005--ACBGHJMKNOPSVQUa-3>
+- LW Ranged — <https://talentsforever.com/hunter/60/5-3053450511503051-5-ASQVYXZacefWgbdC-3>
+
+### Arcane Shot was in BM Hunter's book and in no list
+
+**+31 ON ITS OWN, AND IT IS THE CLASS OF BUG WITH NO ZERO TO FIND.** Arcane Shot
+is a trainer shot every Hunter owns from level 6, and it is **14.6% of LW
+Ranged's damage** -- where that list has an entry and BM Hunter's did not.
+
+An entry that fires zero times prints a zero and gets looked at. An ability with
+**no entry at all** has no row, and the damage table still sums to 100%:
+`ability_audit.ts` is the only tool that sees it, and nothing in the suite did.
+
+**AT THE BOTTOM, AND THAT IS MEASURED RATHER THAN THE SAFE DEFAULT**: above
+Summon Hawk it is **-48.6**, because the hawk is 13.9% of this profile's damage
+and a shot that displaces one costs more than it brings. Above Aimed Shot it
+runs **bit-identical fights** -- the two never contend, because Aimed Shot is
+gated on the weave window and Arcane Shot is on a cooldown.
+
+**AND IT WOKE A TALENT.** Improved Arcane Shot measured bit-identical fights
+before the entry existed -- a talent whose ability no list casts.
+
+### BM Hunter's entire design space is two points
+
+Bestial Wrath is tier 30 of Beast Mastery, so **thirty-one of the fifty-one are
+spoken for** before Marksmanship starts. Mortal Shots is tier 15, so fifteen sit
+below it and its own five go on top; Hawk Eye, Lethal Attacks and Careful Aim
+come to thirteen. **Two points, and they must be below tier 15.**
+
+| | |
+| --- | --- |
+| **Improved Stings 2** (was Efficiency 2) | **+11.2** alone, **+41.7** beside the Arcane Shot entry |
+| Improved Arcane Shot 2 | **+25.0** with the entry, and **bit-identical** without it -- more Arcane Shots crowd out Aimed Shots, which hit half again as hard |
+| Rapid Killing 2 | **bit-identical fights** -- it takes Rapid Fire from five minutes to three and the fight is sixty seconds |
+
+**THE BEAST MASTERY FIVE ARE FILLER AND STAY FILLER**: every candidate is pet
+survival on a pet nothing attacks, movement, or a stun.
+
+### LW Ranged: two dead points in Survival, two more in Marksmanship
+
+| | |
+| --- | --- |
+| **Improved Stings 3/3** | **+20.8**. Serpent Sting is 13.4% of this build's damage and the talent is +20% of it |
+| Survivalist 2 -> Efficiency 2 | **bit-identical fights**. +10% health on a profile nothing attacks |
+| Rapid Killing, Scatter Shot | the other two that paid for it |
+
+**FOUR POINTS REMAIN IN EFFICIENCY AND ARE SAID TO BE FILLER.** Marksmanship
+needs thirty below Sniper Shot's tier 30, which is more than its useful talents
+come to -- and the build ends a fight with about 1,570 of 8,071 mana unspent, so
+a cost reduction buys nothing. They are there because there is nowhere better.
+
+### Everything else was already right, and that is worth recording
+
+**THE ENCHANTS AND CONSUMABLES SURVIVED EVERY CHALLENGE.** Agility beats haste,
+intellect and strength in all eight armour slots on both profiles -- the closest
+call is 1% haste on the head, **+1.9 +/- 2.3** on LW Ranged and **-3.4** on BM,
+which is noise and a loss. Agility food and Blasted Lands agility beat attack
+power, strength and intellect everywhere.
+
+**THE STAT STICK IS THE ONE WHERE THE OBVIOUS ANSWER IS WRONG FOR A GOOD
+REASON.** A ranged Hunter's two-hander NEVER SWINGS, so Crusader cannot proc and
+a weapon-damage enchant reaches nothing: Crusader, +30 Spell Power and +65 Spell
+Power all measure **-15.0, identically**, which is the 25 agility they give up
+and nothing else. Three inert enchants agreeing exactly is the containment check,
+not a coincidence.
+
+**AND THE FLASK IS A CHOICE BETWEEN TWO NOTHINGS**: +1200 Hit Points against
++150 Spell Power on a profile nothing attacks and that casts no spells runs
+**bit-identical fights**.
+
+### Both lists are otherwise optimal, which was checked rather than assumed
+
+Every other move measured a loss on both profiles: Serpent Sting removed
+**-85.2** / **-117.6**, Rapid Fire removed **-29.7** / **-54.0**, Summon Hawk to
+the bottom **-53.7**, Sniper Shot above Aimed Shot **-20.8**, Hunter's Mark
+removed **-4.7** / **-11.4**.
+
+**HUNTER'S MARK IS THE ONE WORTH NAMING**, because this project once measured it
+at **-10.1** on the melee Hunter and the owner's list kept it anyway. On both
+ranged profiles it is a clear gain, so the two findings do not conflict -- they
+are about different builds.
+
+---
+
 ## The one thing to understand first
 
 **THIS CLASS HAS THE PROJECT'S ONLY THIRD SOURCE, AND ITS OWN WIKI.**

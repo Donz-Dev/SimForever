@@ -188,6 +188,28 @@ export const HUNTER_BEAST_MASTERY: AplList = {
   { abilityId: 'rapid_fire' },
   { abilityId: 'summon_hawk', condition: hawksBelowCap },
   { abilityId: 'aimed_shot', condition: shotLandedRecently(RANGED_WEAVE_WINDOW_MS) },
+  /*
+   * ==========================================================================
+   * ARCANE SHOT, WHICH THIS LIST DID NOT HAVE AND IS WORTH **+31**.
+   *
+   * It is a trainer shot every Hunter owns from level 6, and it is **14.9% of
+   * LW Ranged's damage** -- where that list has an entry and this one did not.
+   * So it was an ability in the BOOK, in no LIST, dealing nothing: the case
+   * `ability_audit.ts` exists for and the one a DPS figure cannot show, because
+   * a row that is not there looks like a row that is not there.
+   *
+   * AT THE BOTTOM, which is the only position that cannot change what the list
+   * already does -- and here that is not merely the safe choice, it is the
+   * measured one: **above Summon Hawk it is -17.8**, because the hawk is 14.5%
+   * of this profile's damage and a shot that displaces one costs more than it
+   * brings.
+   *
+   * IT ALSO WAKES A TALENT. Improved Arcane Shot measured BIT-IDENTICAL FIGHTS
+   * before this entry existed -- see `HUNTER_BEAST_MASTERY_TALENTS`, which
+   * tried it afterwards and still prefers Improved Stings.
+   * ==========================================================================
+   */
+  { abilityId: 'arcane_shot' },
   ],
 };
 

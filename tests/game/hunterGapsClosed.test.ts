@@ -15,6 +15,18 @@ import {
   createPet,
 } from '../../src/game/actors/createPet';
 import { createPlayer } from '../../src/game/actors/createPlayer';
+import { legalise } from '../helpers/legalTalents';
+import { legalAllocation } from '../../src/game/talents/talentRules';
+import { talentsForClass } from '../../src/game/talents/talentData';
+import { runProfileBatch } from '../../src/simulator';
+
+const batchOf = (preset: string, iterations: number, seed: number) => {
+  const built = PRESETS_BY_ID.get(preset)!.build();
+  return runProfileBatch({
+    ...built,
+    simulation: { ...built.simulation, iterations, seed },
+  } as never);
+};
 import { AUTO_ATTACK_NAMES, autoAttackName } from '../../src/engine';
 import {
   HAWK_DAMAGE_PER_STRIKE,
@@ -61,6 +73,7 @@ import {
 import {
   HUNTER_BEAST_MASTERY,
   HUNTER_LONE_WOLF_MELEE,
+  HUNTER_LONE_WOLF_RANGED,
 } from '../../src/game/rotations/hunter';
 import { HUNTER_TALENT_EFFECTS } from '../../src/game/talents/hunterEffects';
 import type { AplCondition } from '../../src/game/rotations/apl';
@@ -661,15 +674,36 @@ describe('the three talents whose reasons were wrong', () => {
      * than a fight, so Rapid Fire is cast once either way -- which is exactly
      * why only a mechanism test catches it.
      */
-    const bm = PRESETS_BY_ID.get('bm_hunter')!.build();
-    const ranged = PRESETS_BY_ID.get('lw_ranged')!.build();
-    const without = characterAtCombatStart(bm)!;
-    const with2 = characterAtCombatStart(ranged)!;
+    /*
+     * BUILT BY HAND RATHER THAN READ OFF A PROFILE, which is the repair this
+     * project has now made five times: this used to compare BM Hunter against
+     * LW Ranged, and LW Ranged stopped taking Rapid Killing the day its two
+     * points bought Improved Stings instead. A test that reads a profile to pin
+     * a MECHANISM breaks on a revision that has nothing to do with it.
+     *
+     * AND NO PROFILE TAKES IT NOW, which is a fact worth pinning SEPARATELY --
+     * see below. It is worth no DPS to anything: five minutes and three minutes
+     * are both longer than a fight, so Rapid Fire is cast once either way,
+     * which is exactly why only a mechanism test catches it at all.
+     */
+    const cooldownWith = (rapid_killing: number) => {
+      const hunter = createPlayer({
+        race: 'orc',
+        characterClass: 'hunter',
+        combatStyle: 'ranged',
+        talents: legalise({ rapid_killing }, 'hunter'),
+      });
+      return toSeconds(hunter.abilities.get('rapid_fire')!.cooldownMs!);
+    };
 
-    expect(bm.talents.rapid_killing ?? 0).toBe(0);
-    expect(ranged.talents.rapid_killing).toBe(2);
-    expect(toSeconds(without.abilities.get('rapid_fire')!.cooldownMs!)).toBe(300);
-    expect(toSeconds(with2.abilities.get('rapid_fire')!.cooldownMs!)).toBe(180);
+    expect(cooldownWith(0)).toBe(300);
+    expect(cooldownWith(2)).toBe(180);
+  });
+
+  it('is taken by no profile, because the fight is shorter than either cooldown', () => {
+    for (const preset of ['bm_hunter', 'lw_ranged']) {
+      expect(PRESETS_BY_ID.get(preset)!.build().talents.rapid_killing ?? 0, preset).toBe(0);
+    }
   });
 
   it('Bestial Discipline lets half the mana regeneration through', () => {
@@ -1099,5 +1133,88 @@ describe('Wing Clip is pressed for the procs, not the 50', () => {
         critical: false,
       }),
     ).toBe(false);
+  });
+});
+
+/* -------------------------------------------------------------------------- */
+
+describe('both ranged lists cast every shot the build owns', () => {
+  /*
+   * ============================================================================
+   * ARCANE SHOT WAS IN BM HUNTER'S BOOK AND IN NO LIST, dealing nothing, for the
+   * life of the profile. It is a trainer shot every Hunter owns from level 6 and
+   * it is **14.6% of LW Ranged's damage**; adding the entry was worth **+31**.
+   *
+   * THERE IS NO ZERO ANYWHERE FOR THAT. An entry that fires zero times prints a
+   * zero and gets looked at; an ability with no entry at all simply has no row,
+   * and the damage table still sums to 100%. `ability_audit.ts` is the tool for
+   * it, and this is the regression guard for the two profiles it caught.
+   *
+   * THE ASSERTION IS THE LIST AND NOT THE ORDER. Where Arcane Shot sits is a
+   * rotation decision -- measured, and at the bottom for BM because above Summon
+   * Hawk it is -48.6 -- and a test that pins an ORDER has to give way the next
+   * time somebody measures one.
+   * ============================================================================
+   */
+  const SHOTS = ['arcane_shot', 'aimed_shot', 'serpent_sting'] as const;
+
+  it('names Arcane Shot in both ranged lists', () => {
+    for (const list of [HUNTER_BEAST_MASTERY, HUNTER_LONE_WOLF_RANGED]) {
+      const ids = list.entries.map((entry) => entry.abilityId);
+      for (const shot of SHOTS) expect(ids, `${list.name}: ${shot}`).toContain(shot);
+    }
+  });
+
+  it('casts it in a real fight on both, rather than merely listing it', () => {
+    /*
+     * THE LIST AND THE BOOK HAVE TO AGREE, which naming an id does not
+     * establish: `PriorityRotation` skips an ability the character never
+     * learned IN SILENCE, so an entry can be present and permanently inert.
+     */
+    for (const preset of ['bm_hunter', 'lw_ranged']) {
+      const batch = batchOf(preset, 10, 4242);
+      const arcane = batch.abilities.find((row) => row.abilityName === 'Arcane Shot');
+      expect(arcane, preset).toBeDefined();
+      expect(arcane!.uses, preset).toBeGreaterThan(0);
+      expect(arcane!.damage, preset).toBeGreaterThan(0);
+    }
+  });
+});
+
+describe('the two ranged Hunter trees are legal and spend all fifty-one', () => {
+  /*
+   * ============================================================================
+   * CHECKED AGAINST talentsforever.com AS WELL AS AGAINST THE RULES. Both URLs
+   * were loaded in the calculator and read back their spread with "all 51
+   * spent" and nothing refunded:
+   *
+   *   BM Hunter    31/20/0   .../hunter/60/5320001505101251-30520500005--ACBGHJMKNOPSVQUa-3
+   *   LW Ranged     5/41/5   .../hunter/60/5-3053450511503051-5-ASQVYXZacefWgbdC-3
+   *
+   * THIS EXISTS BECAUSE THE SHOCKADIN SHIPPED AN ILLEGAL TREE. `legalAllocation`
+   * now enforces `pointsBelowTier`, so a tree that would be refused in game
+   * fails here -- where before it was silently stripped by `createPlayer` and
+   * measured as a finding.
+   * ============================================================================
+   */
+  it.each([
+    ['bm_hunter', 31, 20, 0],
+    ['lw_ranged', 5, 41, 5],
+  ])('%s spends %i/%i/%i, all of it legal', (preset, bm, marks, survival) => {
+    const hunter = talentsForClass('hunter')!;
+    const allocation = PRESETS_BY_ID.get(preset as string)!.build().talents;
+
+    const { allocation: legal, dropped } = legalAllocation(hunter, allocation);
+    expect(dropped, preset as string).toEqual([]);
+    expect(Object.values(legal).reduce((a, b) => a + b, 0)).toBe(51);
+
+    const inTree = (tree: string) =>
+      Object.entries(allocation).reduce(
+        (n, [id, points]) => n + (hunter.byId.get(id)?.tree === tree ? points : 0),
+        0,
+      );
+    expect(inTree('beast_mastery')).toBe(bm);
+    expect(inTree('marksmanship')).toBe(marks);
+    expect(inTree('survival')).toBe(survival);
   });
 });

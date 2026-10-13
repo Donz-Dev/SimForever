@@ -77,8 +77,16 @@ export const PROFILES = [
   ['warrior', '2H Arms', 'https://talentsforever.com/warrior/60/30325213132515201-0505-2-CA2FAE2HE2KJIMNOLQSUEGiD-6'],
   ['warrior', 'DW Fury', 'https://talentsforever.com/warrior/60/30305013002-05253005142010501--SUVTYZbdfha1ACE4HEGKa-6'],
   ['warrior', 'Prot Warr', 'https://talentsforever.com/warrior/60/35310003002--050532120301021351-jlportmwvxyzABDCHKn-6'],
-  ['hunter', 'BM Hunter', 'https://talentsforever.com/hunter/60/5320001505101251-30502500005--ACBGHJMKNOPSVQUa-3'],
-  ['hunter', 'LW Ranged', 'https://talentsforever.com/hunter/60/502-3050052511523151-5-ASQVYXZacefWgbdC-3'],
+  /*
+   * BOTH RE-ENCODED FROM THEIR PRESETS by `encode_talent_build.mjs`, and both
+   * LOADED IN THE CALCULATOR to check: 31/20/0 and 5/41/5, "all 51 spent",
+   * nothing refunded. BM Hunter moved two Marksmanship points from Efficiency
+   * to Improved Stings; LW Ranged moved four from Survivalist, Rapid Killing
+   * and Scatter Shot into Improved Stings and filler. The perk tails are the
+   * owner's own, carried over.
+   */
+  ['hunter', 'BM Hunter', 'https://talentsforever.com/hunter/60/5320001505101251-30520500005--ACBGHJMKNOPSVQUa-3'],
+  ['hunter', 'LW Ranged', 'https://talentsforever.com/hunter/60/5-3053450511503051-5-ASQVYXZacefWgbdC-3'],
   ['hunter', 'LW Melee', 'https://talentsforever.com/hunter/60/502-005005201-500240031050220151-ACSVWYgjk3onkqtsvwx-3'],
   ['hunter', 'Hawk Melee', 'https://talentsforever.com/hunter/60/50032005001-005005001-5002500300501201-gjk3nkqstvAHSVYEDK-6'],
   ['mage', 'Frostfire', 'https://talentsforever.com/mage/60/-0055103013013304-00550003310003002-3'],

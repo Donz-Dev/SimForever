@@ -2,7 +2,7 @@
  * The full results page for one Shockadin profile: damage table, buff uptimes,
  * resource flow and the character sheet.
  *
- *   PRESET=pally_shockadin_2h npx vite-node tools/probe_shockadin_report.ts
+ *   PRESET=pally_shockadin_2h npx vite-node tools/probe_profile_report.ts
  */
 import { PRESETS_BY_ID } from '../src/profiles';
 import { runProfileBatch, characterAtCombatStart } from '../src/simulator';

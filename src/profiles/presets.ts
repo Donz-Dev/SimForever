@@ -1066,9 +1066,31 @@ const HUNTER_BEAST_MASTERY_TALENTS: TalentAllocation = {
   bestial_discipline: 2,
   frenzy: 5,
   bestial_wrath: 1,
+  /*
+   * ==========================================================================
+   * MARKSMANSHIP IS TWENTY POINTS AND EIGHTEEN OF THEM ARE FORCED.
+   *
+   * Bestial Wrath is tier 30 of Beast Mastery, so thirty-one of the fifty-one
+   * are spoken for before Marksmanship starts; Mortal Shots is tier 15, so
+   * fifteen have to sit below it and its own five go on top. Hawk Eye, Lethal
+   * Attacks and Careful Aim come to thirteen -- **so this build's entire talent
+   * design space is TWO points, and they must be below tier 15.**
+   *
+   * IMPROVED STINGS RATHER THAN EFFICIENCY, worth **+11.2** on its own and
+   * **+41.7** beside the Arcane Shot entry the list was missing. Efficiency is
+   * mana, and this profile ends a fight with about 3,100 of 7,961 unspent.
+   *
+   * IMPROVED ARCANE SHOT WAS THE OTHER CANDIDATE AND LOSES, which is worth
+   * saying because it looks like the obvious partner to the new list entry: at
+   * 2/2 it measured **+25.0** against Improved Stings' **+41.7**, because more
+   * Arcane Shots crowd out Aimed Shots, which hit for about half as much again.
+   * Measured before the entry existed it was BIT-IDENTICAL -- a talent whose
+   * ability no list casts.
+   * ==========================================================================
+   */
   hawk_eye: 3,
   lethal_attacks: 5,
-  efficiency: 2,
+  improved_stings: 2,
   careful_aim: 5,
   mortal_shots: 5,
 };
@@ -1099,26 +1121,46 @@ const HUNTER_BEAST_MASTERY_TALENTS: TalentAllocation = {
  * totals a person reads on the panel, and those are the owner's to set.
  * ============================================================================
  */
+/*
+ * ============================================================================
+ * LONE WOLF RANGED -- 5 Beast Mastery / 41 Marksmanship / 5 Survival, was
+ * 5/39/7.
+ *
+ * WHAT MOVED: Survivalist's two points and two of Marksmanship's dead ones
+ * (Rapid Killing, Scatter Shot) buy **Improved Stings 3/3**, worth **+20.8**.
+ * Serpent Sting is 11.4% of this build's damage and the talent is +20% of it.
+ *
+ * AND THE THINGS THAT MOVED OUT MEASURED BIT-IDENTICAL FIGHTS, which is the
+ * strongest statement this harness makes: swapping Survivalist for Efficiency
+ * ran the same rolls in the same order. Survivalist is +10% health on a profile
+ * nothing attacks; Rapid Killing takes Rapid Fire's cooldown from five minutes
+ * to three, and the fight is sixty seconds; Scatter Shot is a disorient.
+ *
+ * THE FOUR POINTS LEFT IN EFFICIENCY ARE FILLER AND ARE SAID SO. Marksmanship
+ * needs thirty below Sniper Shot's tier 30, which is more than its useful
+ * talents come to -- and this build ends a fight with about 1,570 of 8,071 mana
+ * unspent, so a cost reduction buys nothing. They are in a mana talent because
+ * there is nowhere better, not because they pay.
+ * ============================================================================
+ */
 const HUNTER_LONE_WOLF_RANGED_TALENTS: TalentAllocation = {
   // Beast Mastery, 5
   deadly_aspects: 5,
-  // Marksmanship, 39
+  // Marksmanship, 41
   hawk_eye: 3,
   lethal_attacks: 5,
+  improved_stings: 3,
   careful_aim: 5,
-  rapid_killing: 2,
+  efficiency: 4,
   improved_arcane_shot: 5,
   lone_wolf: 1,
   trueshot_aura: 1,
   mortal_shots: 5,
-  rapid_recuperation: 2,
   barrage: 3,
-  scatter_shot: 1,
   ranged_weapon_specialization: 5,
   sniper_shot: 1,
-  // Survival, 7
+  // Survival, 5
   improved_tracking: 5,
-  survivalist: 2,
 };
 
 /*

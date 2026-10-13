@@ -52,8 +52,9 @@ STAT=critRating CLASS=warrior npx vite-node tools/real_set_shape.ts   # what a R
 npx vite-node tools/item_budget.ts               # what an item COST to make, and whether it adds up
 FOREVER=1 npx vite-node tools/item_budget.ts     # the 64 Premier PvP cloth pieces, Forever's own
 WEAPONS=1 npx vite-node tools/item_budget.ts     # the 41 new Forever epic weapons
-PRESET=pally_shockadin_2h VARIANTS=talents npx vite-node tools/probe_shockadin.ts   # A/B a whole BUILD, PAIRED
-PRESET=pally_shockadin npx vite-node tools/probe_shockadin_report.ts   # one profile's whole results page
+PRESET=bm_hunter VARIANTS=hunterTalents npx vite-node tools/probe_build.ts   # A/B a whole BUILD, PAIRED
+PRESET=bm_hunter npx vite-node tools/probe_profile_report.ts   # one profile's whole results page
+npx vite-node tools/encode_talent_build.mjs --all   # every preset's build as a talentsforever.com URL
 ```
 
 The three audits in the middle are AUDITS rather than measurements and none of
