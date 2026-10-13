@@ -18,7 +18,7 @@ import { createPlayer } from '../../src/game/actors/createPlayer';
 import { legalise } from '../helpers/legalTalents';
 import { legalAllocation } from '../../src/game/talents/talentRules';
 import { talentsForClass } from '../../src/game/talents/talentData';
-import { runProfileBatch } from '../../src/simulator';
+import { runProfile, runProfileBatch } from '../../src/simulator';
 
 const batchOf = (preset: string, iterations: number, seed: number) => {
   const built = PRESETS_BY_ID.get(preset)!.build();
@@ -1216,5 +1216,60 @@ describe('the two ranged Hunter trees are legal and spend all fifty-one', () => 
     expect(inTree('beast_mastery')).toBe(bm);
     expect(inTree('marksmanship')).toBe(marks);
     expect(inTree('survival')).toBe(survival);
+  });
+});
+
+/* -------------------------------------------------------------------------- */
+
+describe('Arcane Shot and Summon Hawk share a cooldown', () => {
+  /*
+   * ============================================================================
+   * "SHARES COOLDOWN WITH ARCANE SHOT", which the Hunter wiki states outright
+   * and both abilities declare as `cooldownGroup: 'arcane_shot'`.
+   *
+   * ASSERTED ON THE EVENT STREAM AND NOT ON THE DECLARATION, because a
+   * `cooldownGroup` that is declared and never exercised looks exactly like one
+   * that works -- and this one became load-bearing the day Arcane Shot entered
+   * BM Hunter's list, where before it had one member and nothing to share with.
+   * ============================================================================
+   */
+  const SHARED = new Set(['arcane_shot', 'summon_hawk']);
+
+  const castGaps = (preset: string, seeds: readonly number[]) => {
+    const built = PRESETS_BY_ID.get(preset)!.build();
+    const gaps: number[] = [];
+    const counts = new Map<string, number>();
+    for (const seed of seeds) {
+      const run = runProfile(
+        { ...built, simulation: { ...built.simulation, iterations: 1, seed } },
+        seed,
+      );
+      const times = run.timeline
+        .filter((e) => e.type === 'cast' && SHARED.has((e as { abilityId: string }).abilityId))
+        .map((e) => ({ at: e.timestamp, id: (e as { abilityId: string }).abilityId }));
+      for (const t of times) counts.set(t.id, (counts.get(t.id) ?? 0) + 1);
+      for (let i = 1; i < times.length; i += 1) gaps.push(times[i].at - times[i - 1].at);
+    }
+    return { gaps, counts };
+  };
+
+  it('never lets BM Hunter cast either one within six seconds of the other', () => {
+    const { gaps, counts } = castGaps('bm_hunter', [12345, 777, 20260101, 4242, 99]);
+
+    // Both are actually being cast, or the assertion below is about nothing.
+    expect(counts.get('summon_hawk') ?? 0).toBeGreaterThan(0);
+    expect(counts.get('arcane_shot') ?? 0).toBeGreaterThan(0);
+    expect(Math.min(...gaps)).toBeGreaterThanOrEqual(seconds(6));
+  });
+
+  it('is what bounds the pair, rather than either ability on its own', () => {
+    /*
+     * THE CHECK THAT THE GROUP IS DOING THE WORK. Both are 6-second abilities,
+     * so a build that ignored the group could cast ten of EACH in a sixty
+     * second fight. The combined count has to fit in one ability's budget.
+     */
+    const { counts } = castGaps('bm_hunter', [12345]);
+    const total = (counts.get('summon_hawk') ?? 0) + (counts.get('arcane_shot') ?? 0);
+    expect(total).toBeLessThanOrEqual(11); // sixty seconds over six, plus the opener
   });
 });

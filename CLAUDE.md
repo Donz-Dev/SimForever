@@ -55,6 +55,7 @@ WEAPONS=1 npx vite-node tools/item_budget.ts     # the 41 new Forever epic weapo
 PRESET=bm_hunter VARIANTS=hunterTalents npx vite-node tools/probe_build.ts   # A/B a whole BUILD, PAIRED
 PRESET=bm_hunter npx vite-node tools/probe_profile_report.ts   # one profile's whole results page
 npx vite-node tools/encode_talent_build.mjs --all   # every preset's build as a talentsforever.com URL
+npx vite-node tools/probe_shared_cd.ts            # does a shared cooldown actually BITE, off the event stream
 ```
 
 The three audits in the middle are AUDITS rather than measurements and none of

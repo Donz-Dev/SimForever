@@ -233,7 +233,48 @@ export const HUNTER_TALENT_EFFECTS: Readonly<Record<string, TalentEffects>> = {
     },
   ],
 
-  improved_arcane_shot: [{ kind: 'abilityCooldown', abilityId: 'arcane_shot', unit: 'seconds' }],
+  improved_arcane_shot: [
+    { kind: 'abilityCooldown', abilityId: 'arcane_shot', unit: 'seconds' },
+    /*
+     * ==========================================================================
+     * THE SECOND SENTENCE IS NOT MODELLED, AND IT IS A QUESTION FOR THE OWNER
+     * RATHER THAN A GAP TO CLOSE QUIETLY.
+     *
+     * "Does not affect the cooldown of abilities which share a cooldown with
+     * Arcane Shot." Summon Hawk is that ability -- both declare
+     * `cooldownGroup: 'arcane_shot'`, which the Hunter wiki states outright --
+     * and `AbilityBook.consumeCharge` sets the group lockout from the CASTING
+     * ability's own `cooldownMs`. So a shortened Arcane Shot shortens the
+     * lockout Summon Hawk sits behind, which is what the clause forbids.
+     *
+     * MEASURED: a Beast Mastery build carrying both reads a smallest gap of
+     * **5,400ms** between consecutive casts of the pair, against the **6,000ms**
+     * the shipped build reads. `tools/probe_shared_cd.ts`.
+     *
+     * NO PROFILE REACHES IT. BM Hunter spends its two free Marksmanship points
+     * on Improved Stings, and LW Ranged takes Improved Arcane Shot 5/5 and no
+     * Summon Hawk -- a group of one has nothing to share with. So this is worth
+     * **0.0 DPS today** and is reachable by anyone who builds the combination.
+     *
+     * WHY IT IS NOT FIXED HERE: the obvious fix -- give the GROUP the base
+     * cooldown and the ability its reduced one -- changes what the group means
+     * for every other user of it, and the Shaman's shock group is the opposite
+     * case (Reverberation names every member, so there the group SHOULD
+     * shorten). Which behaviour Forever wants when the two disagree is a
+     * ruleset question, and guessing it would be inventing a mechanic on
+     * nobody's authority.
+     * ==========================================================================
+     */
+    {
+      kind: 'unmodelled',
+      reason:
+        'Its "does not affect the cooldown of abilities which share a cooldown ' +
+        'with Arcane Shot" clause. Summon Hawk shares one, and a shortened ' +
+        'Arcane Shot currently shortens the lockout it sits behind -- 5,400ms ' +
+        'against 6,000ms, measured. No profile takes both, so it is worth 0.0 ' +
+        'today; which way the group should resolve is a question for the owner.',
+    },
+  ],
 
   lone_wolf: [{ kind: 'grantAura', auraId: 'lone_wolf' }],
 

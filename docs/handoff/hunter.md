@@ -113,6 +113,34 @@ not a coincidence.
 +150 Spell Power on a profile nothing attacks and that casts no spells runs
 **bit-identical fights**.
 
+### Arcane Shot and Summon Hawk share a cooldown, and half of that is right
+
+**THE SHARING ITSELF WORKS AND IS NOW PINNED ON THE EVENT STREAM.** Both declare
+`cooldownGroup: 'arcane_shot'` -- which the Hunter wiki states outright -- and
+over five BM Hunter fights the **smallest gap between consecutive casts of
+either ability is exactly 6,000ms**. That became load-bearing the day Arcane
+Shot entered the list: before it, the group had one member and nothing to share
+with, so a declaration that was never exercised looked exactly like one that
+worked.
+
+**THE TALENT'S SECOND SENTENCE IS NOT MODELLED.** Improved Arcane Shot reads
+*"Reduces the cooldown of your Arcane Shot by 1.5 sec. Does not affect the
+cooldown of abilities which share a cooldown with Arcane Shot."*
+`AbilityBook.consumeCharge` sets the group lockout from the CASTING ability's
+own `cooldownMs`, so a shortened Arcane Shot shortens the lockout Summon Hawk
+sits behind. Measured on a build carrying both: **5,400ms against 6,000ms**.
+
+**IT IS WORTH 0.0 TODAY AND IS REACHABLE.** BM Hunter spends its two free
+Marksmanship points on Improved Stings and LW Ranged has no Summon Hawk, so
+neither profile takes the combination -- but anyone building it hits it.
+
+**AND IT IS A QUESTION RATHER THAN A GAP TO CLOSE QUIETLY.** The obvious fix --
+give the GROUP the base cooldown and the ability its reduced one -- changes what
+a group means for every other user, and the Shaman's shock group is the opposite
+case: Reverberation names every member, so there the group SHOULD shorten. Which
+behaviour Forever wants when a talent names one member of a group is the owner's
+to say. `tools/probe_shared_cd.ts` is the measurement, kept as a command.
+
 ### Both lists are otherwise optimal, which was checked rather than assumed
 
 Every other move measured a loss on both profiles: Serpent Sting removed
