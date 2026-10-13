@@ -29,6 +29,7 @@
  * ----------------------------------------------------------------------------
  */
 import { readFileSync } from 'node:fs';
+import { pathToFileURL } from 'node:url';
 
 /**
  * The profiles the ruleset owner specified, by class and name.
@@ -52,12 +53,26 @@ import { readFileSync } from 'node:fs';
  * one class no build URL was checked against.
  * ----------------------------------------------------------------------------
  */
-const PROFILES = [
+export const PROFILES = [
   ['druid', 'Moonkin', 'https://talentsforever.com/druid/60/5232220115501351--505003-BDEFHCJMNKOPjloAI-3'],
   ['druid', 'Cat', 'https://talentsforever.com/druid/60/050022-35200032021032212051-053-BEFRSQWXaZdefgcijlm-6'],
   ['druid', 'Bear', 'https://talentsforever.com/druid/60/050022-45230302120132012551--RVSYZQ1XbcdgfhijBEFTQ-6'],
   ['paladin', 'Seal Twist Ret', 'https://talentsforever.com/paladin/60/550032--05225331201330321-ABEijklmnoprtsvxwF-6'],
-  ['paladin', 'Shockadin', 'https://talentsforever.com/paladin/60/55303003000121--052252302010303-ilkjnprtmvABECHLNM-6'],
+  /*
+   * BOTH SHOCKADINS RE-ENCODED FROM THEIR PRESETS by
+   * `encode_talent_build.mjs`, which is the third and fourth URL here that is
+   * not a string somebody pasted. The build moved -- 23/0/28 to 20/0/31, see
+   * `docs/handoff/paladin.md` -- and the PERK TAIL is carried over from the
+   * owner's own Shockadin link, because perks are a choice made elsewhere and
+   * generating one would be inventing it.
+   *
+   * THE ENCODER IS CHECKED AGAINST THE TWO PALADIN URLS THAT DID NOT MOVE:
+   * re-encoding Seal Twist Ret and Prot Pally reproduces the owner's own tree
+   * digits exactly, which is what says these two are the allocation and not an
+   * encoding error.
+   */
+  ['paladin', 'Shockadin', 'https://talentsforever.com/paladin/60/550130000001212--0522533020103032-ilkjnprtmvABECHLNM-6'],
+  ['paladin', 'Shockadin 2H', 'https://talentsforever.com/paladin/60/550130000001212--0521533000133032-ilkjnprtmvABECHLNM-6'],
   ['paladin', 'Prot Pally', 'https://talentsforever.com/paladin/60/50003-0530213321301451-5022-hjAESTVYZXWabdefgk-6'],
   ['warrior', '2H Arms', 'https://talentsforever.com/warrior/60/30325213132515201-0505-2-CA2FAE2HE2KJIMNOLQSUEGiD-6'],
   ['warrior', 'DW Fury', 'https://talentsforever.com/warrior/60/30305013002-05253005142010501--SUVTYZbdfha1ACE4HEGKa-6'],
@@ -207,6 +222,7 @@ const PRESET_CONSTANTS = {
   Fire: 'MAGE_FIRE',
   'Seal Twist Ret': 'PALADIN_RETRIBUTION',
   Shockadin: 'PALADIN_SHOCKADIN',
+  'Shockadin 2H': 'PALADIN_SHOCKADIN_2H',
   'Prot Pally': 'PALADIN_PROTECTION',
   'BM Hunter': 'HUNTER_BEAST_MASTERY',
   'LW Ranged': 'HUNTER_LONE_WOLF_RANGED',
@@ -245,15 +261,55 @@ const DOCUMENTED_AMENDMENTS = {
 };
 
 /** Parse one `const NAME_TALENTS: TalentAllocation = { ... }` block. */
-function presetAllocation(source, constantName) {
-  const marker = `const ${constantName}_TALENTS: TalentAllocation = {`;
-  const start = source.indexOf(marker);
+/*
+ * ==============================================================================
+ * A CONSTANT MAY SPREAD ANOTHER, AND READING ONLY ITS LITERAL KEYS LOST HALF A
+ * BUILD IN SILENCE.
+ *
+ * `PALADIN_SHOCKADIN_TALENTS` is `{ ...SHOCKADIN_HOLY_20, <the Retribution
+ * half> }`, because both Shockadins share a forced twenty-point Holy side and
+ * writing it twice is two places to drift. This reader matched `name: number`
+ * lines inside the constant's own body, so it saw the Retribution half and
+ * reported every Holy talent as `0->N` -- a DIFF that reads exactly like a
+ * stale URL and was a blind spot in the READER.
+ *
+ * SO SPREADS ARE RESOLVED, ONE LEVEL, against constants declared the same way.
+ * One level is enough for what exists, and an unresolvable spread THROWS rather
+ * than quietly contributing nothing -- which is the failure this replaces.
+ * ==============================================================================
+ */
+function talentConstantBody(source, declaration) {
+  const start = source.indexOf(declaration);
   if (start < 0) return undefined;
-  const body = source.slice(start, source.indexOf('\n};', start));
-  const allocation = {};
+  return source.slice(start, source.indexOf('\n};', start));
+}
+
+function readTalentKeys(body, allocation) {
   for (const match of body.matchAll(/^\s*([a-z_0-9]+):\s*(\d+),/gm)) {
     allocation[match[1]] = Number(match[2]);
   }
+}
+
+function presetAllocation(source, constantName) {
+  const body = talentConstantBody(
+    source,
+    `const ${constantName}_TALENTS: TalentAllocation = {`,
+  );
+  if (body === undefined) return undefined;
+
+  const allocation = {};
+  for (const spread of body.matchAll(/^\s*\.\.\.([A-Z_0-9]+),/gm)) {
+    const inner = talentConstantBody(source, `const ${spread[1]}: TalentAllocation = {`);
+    if (inner === undefined) {
+      throw new Error(
+        `${constantName}_TALENTS spreads ${spread[1]}, which is not a TalentAllocation ` +
+          'constant in this file. The allocation would be read short.',
+      );
+    }
+    readTalentKeys(inner, allocation);
+  }
+  // The constant's own keys last, so one may override a spread's.
+  readTalentKeys(body, allocation);
   return allocation;
 }
 
@@ -324,45 +380,71 @@ function comparePresets() {
   return disagreed === 0 ? 0 : 1;
 }
 
-const args = process.argv.slice(2);
+/*
+ * THE COMMAND LINE RUNS ONLY WHEN THIS FILE IS THE ENTRY POINT, which it did
+ * not until `decode` gained a second caller.
+ *
+ * The function has been `export`ed since it was written, and AN EXPORT IS A
+ * PROMISE THAT THE MODULE CAN BE IMPORTED -- this one could not: importing it
+ * ran the whole command-line pass against the IMPORTER's argv, so
+ * `encode_talent_build.mjs` asking to encode two presets came back as "not a
+ * talentsforever build URL: pally_shockadin", and a `targets.length === 0`
+ * import would have called `process.exit(1)` on its caller.
+ */
+function runCli() {
+  const args = process.argv.slice(2);
 
-if (args.includes('--presets')) {
-  process.exit(comparePresets());
-}
-
-const targets = args.includes('--profiles')
-  ? PROFILES
-  : args.map((url) => [url.match(/talentsforever\.com\/([a-z]+)/i)?.[1] ?? '?', '', url]);
-
-if (targets.length === 0) {
-  console.log(
-    'usage: node tools/decode_talent_build.mjs <url> | --profiles | --presets',
-  );
-  process.exit(1);
-}
-
-let bad = 0;
-for (const [, name, url] of targets) {
-  try {
-    const result = decode(url);
-    const spread = result.perTree.join('/');
-    const flag = result.total === TALENT_POINTS_AT_60 ? '  ok  ' : ` ${result.total}pt `;
-    if (result.total !== TALENT_POINTS_AT_60) bad += 1;
-    console.log(
-      `${flag} ${result.classId.padEnd(8)} ${(name || '').padEnd(15)} ${spread.padEnd(10)} ` +
-        `${Object.keys(result.allocation).length} talents`,
-    );
-    if (args.includes('--verbose')) {
-      console.log(`         ${JSON.stringify(result.allocation)}`);
-    }
-  } catch (error) {
-    bad += 1;
-    console.log(` FAIL  ${(name || url).padEnd(24)} ${error.message}`);
+  if (args.includes('--presets')) {
+    process.exit(comparePresets());
   }
+
+  const targets = args.includes('--profiles')
+    ? PROFILES
+    : args.map((url) => [url.match(/talentsforever\.com\/([a-z]+)/i)?.[1] ?? '?', '', url]);
+
+  if (targets.length === 0) {
+    console.log(
+      'usage: node tools/decode_talent_build.mjs <url> | --profiles | --presets',
+    );
+    process.exit(1);
+  }
+
+  let bad = 0;
+  for (const [, name, url] of targets) {
+    try {
+      const result = decode(url);
+      const spread = result.perTree.join('/');
+      const flag = result.total === TALENT_POINTS_AT_60 ? '  ok  ' : ` ${result.total}pt `;
+      if (result.total !== TALENT_POINTS_AT_60) bad += 1;
+      console.log(
+        `${flag} ${result.classId.padEnd(8)} ${(name || '').padEnd(15)} ${spread.padEnd(10)} ` +
+          `${Object.keys(result.allocation).length} talents`,
+      );
+      if (args.includes('--verbose')) {
+        console.log(`         ${JSON.stringify(result.allocation)}`);
+      }
+    } catch (error) {
+      bad += 1;
+      console.log(` FAIL  ${(name || url).padEnd(24)} ${error.message}`);
+    }
+  }
+
+  console.log(
+    bad === 0
+      ? `\nAll ${targets.length} decoded to ${TALENT_POINTS_AT_60} points.`
+      : `\n${bad} of ${targets.length} did not decode cleanly.`,
+  );
 }
 
-console.log(
-  bad === 0
-    ? `\nAll ${targets.length} decoded to ${TALENT_POINTS_AT_60} points.`
-    : `\n${bad} of ${targets.length} did not decode cleanly.`,
-);
+/*
+ * `pathToFileURL` RATHER THAN BUILDING THE STRING BY HAND, because on Windows
+ * the hand-built one never matches: `import.meta.url` is `file:///C:/...` with
+ * three slashes and a joined `file://` + `C:/...` has two. The first version of
+ * this guard was that string, and it made BOTH the command line and the import
+ * silent -- a guard that is always false reads exactly like one that is
+ * sometimes true, which is `isWeaponUseOf(attack, 'ranged')` in four lines of
+ * tooling.
+ */
+if (import.meta.url === pathToFileURL(process.argv[1]).href) {
+  runCli();
+}

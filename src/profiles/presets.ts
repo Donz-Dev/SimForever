@@ -909,24 +909,119 @@ const PALADIN_RETRIBUTION_TALENTS: TalentAllocation = {
   twist_of_light: 1,
 };
 
-const PALADIN_SHOCKADIN_TALENTS: TalentAllocation = {
+/*
+ * ============================================================================
+ * THE TWO SHOCKADIN TREES, AND THE TIER RULE THAT SHAPES BOTH OF THEM.
+ *
+ * A TALENT'S TIER COUNTS POINTS IN STRICTLY LOWER TIERS -- not its own ranks,
+ * and not its neighbours' in the same row. That is `pointsBelowTier`, and it
+ * was measured against talentsforever.com after a generated build URL was
+ * pasted in and came back with six points refunded. It is the entire shape of
+ * what follows, so it is written out as tiers rather than as one flat object:
+ *
+ *   Holy Shock, Divine Precision, Consecrated Ground   tier 20
+ *   Vengeance, Two-Handed Weapon Specialization        tier 20 (Retribution)
+ *   Champion of the Light                              tier 25 (Retribution)
+ *
+ * SO ALMOST THE WHOLE TREE IS FORCED. Twenty below tier 20 in Holy to reach
+ * Holy Shock, twenty below tier 20 in Retribution to reach Vengeance, and
+ * twenty-five below tier 25 to reach Champion of the Light -- which leaves the
+ * SHIELD build two free points and the TWO-HANDER one.
+ *
+ * AND THE TWO-HANDER HAS FEWER BECAUSE ITS TIER 20 IS FULLER. Vengeance and
+ * Two-Handed Weapon Specialization are both tier 20 and both wanted, which is
+ * six points there: twenty-five below tier 25 minus six leaves nineteen below
+ * tier 20, one short of what tier 20 needs. So Retribution goes to 29 and Holy
+ * to 22. That is not a preference, it is arithmetic, and it is the kind of
+ * thing a flat allocation hides.
+ * ----------------------------------------------------------------------------
+ * WHAT CHANGED FROM THE OWNER'S 23/0/28, measured on the two-hander over 600
+ * to 3,000 paired iterations:
+ *
+ *   Consecrated Ground            the free points. +10% Holy damage carried by
+ *                                 the Consecration debuff, on a build that is
+ *                                 three-quarters Holy
+ *   Two-Handed Weapon Spec 3/3    the two-hander only, and it is what pushes
+ *                                 Retribution to 29
+ *   Vindication 2 -> 3            inside the forced twenty
+ *
+ * AND MANA IS NOT WHAT BINDS THIS BUILD, which is what makes the filler
+ * genuinely filler: swapping Benediction 5/5 for Deflection 5/5 measured
+ * **bit-identical fights** -- the same rolls in the same order, which is the
+ * strongest statement the harness can make. The profile ends a fight with
+ * about 3,200 mana unspent.
+ * ============================================================================
+ */
+
+/** Holy tiers 0-15: the twenty points that open tier 20. */
+const SHOCKADIN_HOLY_BELOW_20: TalentAllocation = {
   divine_strength: 5,
   divine_intellect: 5,
-  healing_light: 3,
   improved_seals: 3,
+  /*
+   * SIX OF THESE NINE ARE FILLER AND EVERY CANDIDATE IS DEAD. Holy's tiers 5
+   * and 10 offer healing, fear duration, a dispel, cast pushback and mana
+   * regeneration while casting; twenty points have to be here to reach Holy
+   * Shock at all. Reverence and Healing Light are what the owner's own build
+   * used, so they stay.
+   */
   reverence: 3,
+  healing_light: 3,
+  /*
+   * DIVINE FAVOR IS TIER 15 AND THEREFORE PART OF THE TWENTY, which is what
+   * makes it free: the point is one the tier requirement needs anyway, and the
+   * ability it grants is worth **+9.7** now that it starts no global cooldown.
+   */
   divine_favor: 1,
-  divine_precision: 2,
-  holy_shock: 1,
-  benediction: 5,
+};
+
+/** Retribution tiers 0-15: the twenty that open tier 20. */
+const SHOCKADIN_RET_BELOW_20: TalentAllocation = {
   improved_judgement: 2,
-  holy_conduit: 2,
   conviction: 5,
-  vindication: 2,
+  vindication: 3,
   sanctified_judgement: 3,
-  pursuit_of_justice: 2,
   sacred_arbiter: 1,
+  // Six of filler. See the note above on why none of it can pay.
+  benediction: 5,
+  holy_conduit: 1,
+};
+
+/**
+ * 1H AND SHIELD -- 23 Holy / 28 Retribution.
+ *
+ * Twenty-two below Retribution's tier 20 rather than twenty, because Champion
+ * of the Light needs twenty-five below tier 25 and Vengeance alone only brings
+ * it to twenty-three. The two spare go into Holy Conduit and Pursuit of
+ * Justice, which is where Retribution's dead points live.
+ */
+const PALADIN_SHOCKADIN_TALENTS: TalentAllocation = {
+  ...SHOCKADIN_HOLY_BELOW_20,
+  holy_shock: 1,
+  consecrated_ground: 2,
+  ...SHOCKADIN_RET_BELOW_20,
+  holy_conduit: 2,
+  pursuit_of_justice: 1,
   vengeance: 3,
+  champion_of_the_light: 3,
+};
+
+/**
+ * THE FAST TWO-HANDER -- 22 Holy / 29 Retribution.
+ *
+ * Two-Handed Weapon Specialization is the only talent in the class that reads
+ * the weapon this profile is named for, and taking it beside Vengeance fills
+ * Retribution's tier 20 with six points. That forces the twenty below it to be
+ * exactly twenty, pushes the tree to 29, and leaves Holy one free point where
+ * the shield build has two -- so Consecrated Ground is 1/2 here and 2/2 there.
+ */
+const PALADIN_SHOCKADIN_2H_TALENTS: TalentAllocation = {
+  ...SHOCKADIN_HOLY_BELOW_20,
+  holy_shock: 1,
+  consecrated_ground: 1,
+  ...SHOCKADIN_RET_BELOW_20,
+  vengeance: 3,
+  two_handed_weapon_specialization: 3,
   champion_of_the_light: 3,
 };
 
@@ -1967,12 +2062,86 @@ export const PROFILE_PRESETS: readonly ProfilePreset[] = withStockRotations(with
        * measured share, the highest of the four hybrids, so +150 Spell Power
        * reaches nearly all of its damage. See the Retribution row above for
        * why these are overrides and not an edit to the shared one.
+       *
+       * THE FLASK IS THE LARGEST SINGLE CONSUMABLE DECISION EITHER SHOCKADIN
+       * MAKES: +1200 Hit Points against it measures **-63** on the shield
+       * build and **-65** on the two-hander, on a profile nothing attacks.
        */
+      /*
+       * BLASTED LANDS IS INTELLECT HERE, NOT STRENGTH, AND CHAMPION OF THE
+       * LIGHT IS THE WHOLE REASON. +25 Intellect is 60% of itself as SPELL
+       * POWER on this build -- plus Divine Intellect's 10% on top -- against
+       * +25 Strength's fifty attack power, and this profile is three-quarters
+       * Holy. Measured +2.9 on the shield build and +3.0 on the two-hander.
+       */
+
       consumables: {
         ...hybridConsumables({
           school: 'school_holy',
           meleeWeaponEffect: false,
-          blastedLands: 'blasted_strength',
+          blastedLands: 'blasted_intellect',
+        }),
+        flask: 'flask_spell_power',
+        food: 'food_spell_power',
+      },
+      encounter: { ...createDefaultProfile().encounter, targetAttacks: false },
+    }),
+  },
+  /*
+   * ==========================================================================
+   * SHOCKADIN 2H -- THE SAME CHARACTER WITH THE OTHER WEAPON IN ITS HANDS.
+   *
+   * The owner asked for a fast two-hander as "an alternative to the template
+   * gear, not a replacement", and for the two setups to be optimised against
+   * each other. A PRESET is what can hold a whole setup: the talents, the
+   * enchants, the consumables and the list are all allowed to differ, and a
+   * style flip on one profile cannot carry four of those.
+   *
+   * ITS GEAR IS THE SHOCKADIN'S GEAR. The two benchmark templates differ in
+   * exactly one field -- which weapon plan is primary -- so every armour slot,
+   * both trinkets and the whole hit spread come out identical. That is the
+   * owner's "don't change the gear beyond the two weapon swaps I've
+   * identified", held by construction rather than by care.
+   * ==========================================================================
+   */
+  {
+    id: 'pally_shockadin_2h',
+    label: 'Shockadin 2H',
+    detail: 'Human, fast 2H mace, standing target. 23 Holy / 28 Retribution',
+    characterClass: 'paladin',
+    build: () => ({
+      ...createDefaultProfile(),
+      character: {
+        name: 'Shockadin 2H',
+        race: 'human',
+        characterClass: 'paladin',
+        level: 60,
+        /*
+         * THE FIELD THAT MAKES THIS A DIFFERENT CHARACTER FROM THE ROW ABOVE,
+         * and it agrees with the gear rather than overriding it: this profile's
+         * benchmark set contains the fast two-hander and NO one-hander and NO
+         * shield, because the owner ruled that holding one excludes the other
+         * -- "You cannot ever have the stats of both active. It's one or the
+         * other." See `equipExclusive`, which is that ruling where the planner
+         * enforces it.
+         */
+        combatStyle: 'two_hander',
+        stance: 'battle',
+      },
+      talents: { ...PALADIN_SHOCKADIN_2H_TALENTS },
+      raidBuffs: [...PRESET_RAID_BUFFS],
+      consumables: {
+        ...hybridConsumables({
+          school: 'school_holy',
+          /*
+           * THE SPELL-CRIT STONE ON BOTH ROWS, measured rather than assumed on
+           * each: the melee option costs **-10.2** here and **-10.4** on the
+           * shield build. A two-hander and a one-hander-plus-shield are each
+           * ONE swinging weapon, so `ConsumableCategory.perWeapon` pays the
+           * same once either way and the hands do not divide this row.
+           */
+          meleeWeaponEffect: false,
+          blastedLands: 'blasted_intellect',
         }),
         flask: 'flask_spell_power',
         food: 'food_spell_power',

@@ -47,18 +47,29 @@ export function legalise(
       if (pre) out[talent.requires] = talent.requiresRanks ?? pre.ranks;
     }
 
-    // Then filler in the same tree's lowest rows until the gate is met.
-    const inTree = () =>
-      Object.entries(out).reduce(
-        (n, [k, v]) => n + (tree.byId.get(k)?.tree === talent.tree ? v : 0),
-        0,
-      );
+    /*
+     * Then filler in the same tree's lowest rows until the gate is met.
+     *
+     * COUNTED BELOW THE TIER, NOT ACROSS THE TREE, which is the rule
+     * `pointsBelowTier` states: a talent's own ranks and its neighbours' in the
+     * same row do not open the row they sit in. This counted everything, so it
+     * stopped filling as soon as the TOTAL reached the tier -- padding a
+     * tier-20 talent with three ranks of its own to seventeen of filler and
+     * calling it legal. `createPlayer` then stripped the talent silently and
+     * the test read "worth zero" rather than failing, which is the exact
+     * failure this helper exists to prevent.
+     */
+    const belowTier = () =>
+      Object.entries(out).reduce((n, [k, v]) => {
+        const t = tree.byId.get(k);
+        return n + (t?.tree === talent.tree && t.tier < talent.tier ? v : 0);
+      }, 0);
     const filler = tree.trees
       .find((t) => t.id === talent.tree)!
       .talents.filter((t) => t.tier < talent.tier && t.id !== id)
       .sort((a, b) => a.tier - b.tier);
     for (const f of filler) {
-      while (inTree() < talent.tier && (out[f.id] ?? 0) < f.ranks) {
+      while (belowTier() < talent.tier && (out[f.id] ?? 0) < f.ranks) {
         out[f.id] = (out[f.id] ?? 0) + 1;
       }
     }

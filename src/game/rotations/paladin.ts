@@ -292,21 +292,67 @@ export const PALADIN_SHOCKADIN: AplList = {
    */
   { abilityId: 'seal_of_righteousness', condition: selfExpired('seal_of_righteousness') },
   /*
-   * DIVINE FAVOR ABOVE HOLY SHOCK, on the ruleset owner's choice, and the order
-   * is the whole of the entry: the buff is "your NEXT Holy Shock", so a Divine
-   * Favor cast below Holy Shock would spend its global cooldown arming a spell
-   * that had already gone. Its own `canCast` refuses a second one while the first
-   * is unspent, so the two-minute cooldown is what paces it rather than the list.
+   * ==========================================================================
+   * DIVINE FAVOR ABOVE HOLY SHOCK, which is where the owner put it -- AND THE
+   * POSITION IS NOW WORTH NOTHING EITHER WAY, which is the interesting part.
    *
-   * IT COSTS A GLOBAL COOLDOWN FOR NO DAMAGE OF ITS OWN, which is why it is
-   * measured rather than argued about -- the same reason Hunter's Mark is in the
-   * melee Hunter's list at a known price.
+   * THE ARGUMENT THAT PUT IT HERE WAS WRONG AND THE PLACE WAS RIGHT. It read:
+   * the buff is "your NEXT Holy Shock", so arming it below the spell it arms
+   * wastes a global cooldown. `DIVINE_FAVOR.durationMs` is **0** -- the aura
+   * lasts until it is SPENT -- so the next Holy Shock collects the crit
+   * whether Divine Favor was cast one global cooldown earlier or thirty
+   * seconds earlier. Position decided only WHEN the global cooldown was paid.
+   *
+   * AND THEN THE OWNER RULED THAT IT PAYS NONE: "the Divine Favor
+   * talent/cooldown doesn't trigger the global cooldown." Measured at 3,000
+   * paired iterations after that change, the top of the list, above
+   * Consecration, above Judgement and the very bottom are **all inside +/-2.2
+   * of each other** -- so this is a free choice and the owner's own order is
+   * what it falls back to.
+   *
+   * WHAT IS NOT FREE IS HAVING IT AT ALL: removing the entry measures
+   * **-9.7**. Off the global cooldown the ability costs one `ROTATION_POLL_MS`
+   * and buys a guaranteed Holy Shock crit, which is the same trade the racials
+   * and the mid-fight consumables make at the top of this list.
+   * ==========================================================================
    */
   { abilityId: 'divine_favor' },
+  /*
+   * ==========================================================================
+   * CONSECRATION ABOVE THE TWO TEN-SECOND STRIKES, which is where it was NOT,
+   * and it is worth **+14** on the two-hander and **+14** on the shield build.
+   *
+   * IT IS NOT ABOUT CONSECRATION'S OWN DAMAGE. The ability is on an eight
+   * second cooldown with an eight second ground effect, so at the bottom of
+   * the list it fired 6.0 times in a sixty second fight where 7.5 fit -- every
+   * cycle it lost a global cooldown to Holy Shock or Holy Strike, and the
+   * debuff spent a quarter of the fight off the target.
+   *
+   * AND CONSECRATED GROUND IS WHAT MAKES THAT EXPENSIVE. The talent is "+10%
+   * Holy damage against enemies in your Consecration", carried by the ground
+   * effect's own debuff -- so the gap in its uptime is a gap in a multiplier
+   * on three quarters of this build's damage, not just in one ability's ticks.
+   * The two changes are each worth about fifty on their own and the list order
+   * is what lets the talent collect.
+   *
+   * NOT ABOVE JUDGEMENT, which was measured and is **-9**: Judgement is on an
+   * eight second cooldown too, it carries the largest single coefficient this
+   * build has, and it is what keeps Judgement of the Crusader's +161 Holy
+   * spell power on the target.
+   * ==========================================================================
+   */
+  { abilityId: 'consecration' },
   { abilityId: 'holy_shock' },
   { abilityId: 'holy_strike' },
+  /*
+   * HAMMER OF WRATH LAST, and here it is the ONE-SECOND version: Instrument of
+   * Law is tier 25 in Retribution and neither Shockadin can afford it -- taking
+   * it costs both of Holy's tier-20 slots and measures **-41**. So this entry
+   * pays a cast that resets the swing timer on a build that is half swing
+   * damage, and is still worth having: dropping it measures **-20**, and the
+   * bottom of the list is where that cast is cheapest.
+   */
   { abilityId: 'hammer_of_wrath' },
-  { abilityId: 'consecration' },
   ],
 };
 

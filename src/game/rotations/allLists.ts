@@ -254,7 +254,7 @@ export const ALL_PRIORITY_LISTS: readonly PriorityListRecord[] = [
     name: 'PALADIN_SHOCKADIN',
     owner: 'paladin',
     list: PALADIN_SHOCKADIN,
-    profiles: ['pally_shockadin'],
+    profiles: ['pally_shockadin', 'pally_shockadin_2h'],
   },
   {
     name: 'PALADIN_PROTECTION',

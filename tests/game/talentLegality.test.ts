@@ -113,3 +113,85 @@ describe('legalAllocation', () => {
     expect(dropped).toContain('not_a_talent');
   });
 });
+
+/* -------------------------------------------------------------------------- */
+
+describe('a tier counts points BELOW it, and nothing in it', () => {
+  /*
+   * ============================================================================
+   * MEASURED AGAINST talentsforever.com, WHICH IS WHY THESE FIGURES ARE EXACT
+   * RATHER THAN A READING.
+   *
+   * `requirementsMet` asked `pointsInTree(...) < talent.tier` against the WHOLE
+   * allocation, so a talent's own ranks -- and its neighbours' in the same row
+   * -- counted towards opening the row they sit in. A talent could help open
+   * its own tier.
+   *
+   * THE CASE THAT SEPARATES THE TWO READINGS IS A TREE THAT STOPS AT THE TIER
+   * IT IS SPENDING IN, which is what an optimiser produces and no hand-written
+   * build does -- every preset in the project satisfies the strict rule anyway.
+   * It was found by pasting a generated build URL into the calculator, which is
+   * the only place the real rule is written down.
+   *
+   * Paladin Holy is the worked example because its tier 15 is cheap to reach:
+   *
+   *   14 below tier 15 + Divine Favor   the site refunds the point:
+   *                                     "Divine Favor -- Requires 15 points in
+   *                                     Holy -- 1 back"
+   *   15 below tier 15 + Divine Favor   accepted, "Points left: 0"
+   *
+   * AND A SECOND POINT IN THE SAME ROW DOES NOT HELP EITHER: 14 below tier 15
+   * plus a point in Infusion of Light AND one in Divine Favor came back with
+   * BOTH refunded, not one.
+   * ============================================================================
+   */
+  const paladin = talentsForClass('paladin')!;
+
+  const below = {
+    divine_strength: 5,
+    divine_intellect: 5,
+    improved_seals: 3,
+  };
+
+  it('refuses a tier-15 talent with fourteen points below it', () => {
+    const { allocation, dropped } = legalAllocation(paladin, {
+      ...below,
+      spiritual_focus: 1, // 14 below tier 15
+      divine_favor: 1,
+    });
+    expect(dropped).toContain('divine_favor');
+    expect(allocation.divine_favor).toBeUndefined();
+  });
+
+  it('allows it with fifteen', () => {
+    const { allocation, dropped } = legalAllocation(paladin, {
+      ...below,
+      spiritual_focus: 2, // 15 below tier 15
+      divine_favor: 1,
+    });
+    expect(dropped).toEqual([]);
+    expect(allocation.divine_favor).toBe(1);
+  });
+
+  it('does not let a neighbour in the SAME row help', () => {
+    // Infusion of Light and Divine Favor are both tier 15. Fourteen below them
+    // and a point in each: the site refunds both, so both must be dropped here.
+    const { dropped } = legalAllocation(paladin, {
+      ...below,
+      spiritual_focus: 1,
+      infusion_of_light: 1,
+      divine_favor: 1,
+    });
+    expect(dropped).toContain('divine_favor');
+    expect(dropped).toContain('infusion_of_light');
+  });
+
+  it('still opens row 1 on five points in row 0, which both readings agree on', () => {
+    /*
+     * THE EXAMPLE THE OLD COMMENT CITED FOR THE WRONG RULE, kept because it is
+     * true and because it is exactly why the wrong rule survived: it does not
+     * distinguish the two readings.
+     */
+    expect(isLegal(paladin, { divine_strength: 5, improved_seals: 1 })).toBe(true);
+  });
+});

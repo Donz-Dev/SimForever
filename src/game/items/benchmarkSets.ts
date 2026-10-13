@@ -248,6 +248,46 @@ export const BENCHMARK_TEMPLATES: readonly BenchmarkTemplate[] = [
   { presetId: 'warlock_smds', characterClass: 'warlock', label: 'SM/DS', hit: 120, expertise: 0, preferred: CASTER, armour: 'Cloth', weapons: { kind: 'twoHand', subclass: 'Staff', caster: true }, statStick: WAND_STICK },
   { presetId: 'warlock_firelock', characterClass: 'warlock', label: 'Firelock', hit: 110, expertise: 0, preferred: CASTER, armour: 'Cloth', weapons: { kind: 'twoHand', subclass: 'Staff', caster: true }, statStick: WAND_STICK },
   { presetId: 'shadow_priest', characterClass: 'priest', label: 'Shadow', characterName: 'Shadow Priest', hit: 110, expertise: 0, preferred: CASTER, armour: 'Cloth', weapons: { kind: 'twoHand', subclass: 'Staff', caster: true }, statStick: WAND_STICK },
+  /*
+   * ============================================================================
+   * SHOCKADIN 2H -- THE SHOCKADIN TEMPLATE WITH A FAST TWO-HANDER IN PLACE OF
+   * THE ONE-HANDER AND SHIELD, and nothing else different at all.
+   *
+   * THE OWNER ASKED FOR THE WEAPON AND THEN RULED ON WHAT HOLDING IT MEANS:
+   * "add a fast 2H to the profile ... an alternative to the template gear, not
+   * a replacement", and then "You cannot ever have the stats of both active.
+   * It's one or the other ... Equipping a 2H weapon REMOVES the 1H+shield from
+   * the character planner equipped items." So the ALTERNATIVE is a second
+   * template and a second preset -- a set carrying both weapons at once is
+   * exactly the state that ruling forbids.
+   *
+   * EVERY NUMBER IN THE WEAPON FALLS OUT OF THE GENERATOR. `weaponDamage` takes
+   * the two-hand epic dps line and the speed and derives the range from them,
+   * so "similar to the Seal Twist Ret weapon, except rescaled to be 2.0 swing
+   * speed with the same DPS" is `speed: 2.0` on a two-hand plan and nothing
+   * else said: at E65 the Ret's 177-266 at 3.60 and this one's 98-148 at 2.00
+   * are the same 61.5 dps.
+   *
+   * NOT `caster: true`, AND THAT IS WHAT "THE SAME DPS" DECIDES. The Shockadin's
+   * one-hander trades 15.7 dps away for about 47 budget points of stats; a
+   * caster two-hander would do the same and come out at 45.7, which is not the
+   * Ret's weapon rescaled.
+   *
+   * SAME CLASS, SAME HIT, SAME PREFERENCE ORDER, SAME PLATE as the row above:
+   * every armour slot, both trinkets and the whole 80-point hit spread is
+   * computed from those fields alone, so this set's armour is the Shockadin's
+   * armour to the point. That is the owner's "don't change the gear beyond the
+   * two weapon swaps I've identified", held by construction rather than by
+   * care, and `shockadinWeapons.test.ts` pins it.
+   *
+   * APPENDED RATHER THAN INSERTED BESIDE THE SHOCKADIN, which looks untidy and
+   * is the point: `nextId` is `BENCHMARK_ID_BASE + templateIndex * 400 + ...`,
+   * so a template inserted in the middle renumbers every set after it and
+   * silently re-points every saved profile's items. The same rule the 900,000
+   * enchant block states in its own words.
+   * ============================================================================
+   */
+  { presetId: 'pally_shockadin_2h', characterClass: 'paladin', label: 'Shockadin 2H', hit: 80, expertise: 0, preferred: ['Crit', 'Spell Power', 'Intellect', 'Strength', 'Stamina', 'Attack Power'], armour: 'Plate', weapons: { kind: 'twoHand', subclass: 'Mace', speed: 2.0 } },
 ];
 
 export const BENCHMARK_TEMPLATES_BY_PRESET: ReadonlyMap<string, BenchmarkTemplate> = new Map(

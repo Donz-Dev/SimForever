@@ -41,6 +41,50 @@ export function pointsInTree(
   return total;
 }
 
+/**
+ * Points spent in one tree in talents BELOW a tier, which is what opens it.
+ *
+ * ==============================================================================
+ * A TIER COUNTS ONLY WHAT IS ABOVE IT, AND THIS PROJECT BELIEVED OTHERWISE FOR
+ * ITS WHOLE LIFE. `requirementsMet` asked `pointsInTree(...) < talent.tier`
+ * against the WHOLE allocation, so a talent's own ranks -- and every rank in
+ * its tier and below it -- counted towards opening the tier they sit in. A
+ * talent could help open its own row.
+ *
+ * MEASURED AGAINST THE SITE THAT OWNS THE TREES, because this is a ruleset fact
+ * and not a design choice. Two builds differing in one point:
+ *
+ *   14 points below tier 15 + Divine Favor    talentsforever.com: "Divine
+ *                                             Favor -- Requires 15 points in
+ *                                             Holy -- 1 back"
+ *   15 points below tier 15 + Divine Favor    accepted, "Points left: 0"
+ *
+ * AND POINTS IN THE SAME TIER DO NOT HELP EITHER, which is the second half and
+ * needed its own probe: 14 below tier 15 plus a point in Infusion of Light AND
+ * a point in Divine Favor -- both tier 15 -- came back with BOTH rejected, not
+ * one. So the count is over STRICTLY LOWER tiers.
+ *
+ * WHY IT WENT UNNOTICED: every preset in the project satisfies the strict rule
+ * anyway. The loose one is only reachable by a build that deliberately stops a
+ * tree at the exact tier it is spending in, which is what an optimiser does and
+ * no hand-written build did. It was found by pasting a generated build URL into
+ * the calculator -- the audit the owner asked for, doing exactly its job.
+ * ==============================================================================
+ */
+export function pointsBelowTier(
+  talents: ClassTalents,
+  allocation: TalentAllocation,
+  tree: TalentTreeId,
+  tier: number,
+): number {
+  let total = 0;
+  for (const [id, points] of Object.entries(allocation)) {
+    const talent = talents.byId.get(id);
+    if (talent?.tree === tree && talent.tier < tier) total += points;
+  }
+  return total;
+}
+
 /** Points spent across every tree. */
 export function pointsSpent(allocation: TalentAllocation): number {
   return Object.values(allocation).reduce((sum, points) => sum + points, 0);
@@ -65,7 +109,9 @@ export function requirementsMet(
   const talent = talents.byId.get(talentId);
   if (!talent) return false;
 
-  if (pointsInTree(talents, allocation, talent.tree) < talent.tier) return false;
+  // Strictly BELOW the tier -- see `pointsBelowTier` for the two probes that
+  // settled this against the calculator, and for why no preset ever noticed.
+  if (pointsBelowTier(talents, allocation, talent.tree, talent.tier) < talent.tier) return false;
 
   if (talent.requires) {
     const have = allocation[talent.requires] ?? 0;
@@ -77,9 +123,21 @@ export function requirementsMet(
 /**
  * Whether an allocation is legal in its entirety.
  *
- * A tier check counts every point in the tree INCLUDING the talent's own, which
- * is how the source calculator behaves: five points in row 0 open row 1, and a
- * talent never blocks itself.
+ * A tier check counts points in talents of a LOWER tier only -- not the
+ * talent's own ranks, and not its neighbours' in the same row.
+ *
+ * ----------------------------------------------------------------------------
+ * THIS SENTENCE SAID THE OPPOSITE AND CITED THE CALCULATOR FOR IT: "a tier
+ * check counts every point in the tree INCLUDING the talent's own, which is how
+ * the source calculator behaves: five points in row 0 open row 1, and a talent
+ * never blocks itself."
+ *
+ * THE EXAMPLE IS TRUE AND DOES NOT DISTINGUISH THE TWO READINGS, which is how
+ * it held: five points in row 0 open row 1 under both rules. The case that
+ * separates them is a tree that STOPS at the tier it is spending in, and no
+ * hand-written build does that. See `pointsBelowTier` for the two probes
+ * against talentsforever.com that settled it.
+ * ----------------------------------------------------------------------------
  */
 export function isLegal(talents: ClassTalents, allocation: TalentAllocation): boolean {
   if (pointsSpent(allocation) > TOTAL_TALENT_POINTS) return false;

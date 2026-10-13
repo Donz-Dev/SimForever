@@ -174,8 +174,15 @@ describe('Anticipation', () => {
     const received = (talents: Record<string, number>) =>
       chances('melee-received', boss, built(talents), {});
 
-    const plain = received({});
+    /*
+     * BOTH SIDES CARRY THE SAME FILLER, which is what isolates the talent.
+     * `legalise` pads to the tier, and under `pointsBelowTier` that padding
+     * grew -- so comparing a padded build against an EMPTY one measures the
+     * filler as well, and the filler reaches the same five numbers Anticipation
+     * does.
+     */
     const specced = received(legalise({ anticipation: 5 }));
+    const plain = received({ ...legalise({ anticipation: 5 }), anticipation: 0 });
 
     // Twenty points at four units each is eighty units, or 0.8 percentage
     // points, on every one of the five.
@@ -574,7 +581,9 @@ describe('block chance and block value are different numbers', () => {
     const boss = createTrainingDummy({ attacks: true });
     const block = (talents: Record<string, number>) =>
       chances('melee-received', boss, built(talents), {}).block;
-    expect(block(legalise({ anticipation: 5 })) - block({})).toBe(80);
+    // Against the same filler, for the reason given on the test above.
+    const padded = legalise({ anticipation: 5 });
+    expect(block(padded) - block({ ...padded, anticipation: 0 })).toBe(80);
   });
 
   it('reads a shield inherent "44 Block" as block VALUE, not chance', () => {

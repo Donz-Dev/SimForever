@@ -66,6 +66,19 @@ const bookFor = (preset: string) => {
 
 const abilityOf = (preset: string, id: string) => bookFor(preset).find((a) => a.id === id);
 
+/*
+ * A BOOK FROM A HAND-WRITTEN ALLOCATION, for the assertions that are about the
+ * TALENT rather than about a profile.
+ *
+ * Both Shockadins take Instrument of Law 2/2 now, so the "build with no points
+ * in it" used to be `pally_shockadin` and silently stopped being one. That is
+ * the failure `grantCastModifier.test.ts` already recorded in its own words --
+ * a test that reads a profile to pin a mechanism breaks on a revision that has
+ * nothing to do with it -- and the fix is to stop reading a profile.
+ */
+const bookWith = (talents: Record<string, number>) =>
+  abilitiesForClass('paladin', 'two_hander', talents);
+
 const presetPlayer = (preset: string) => {
   const p = built(preset);
   return createPlayer({
@@ -134,14 +147,36 @@ describe('Instrument of Law, and the Hammer of Wrath it makes', () => {
   });
 
   it('is a one-second cast for a build with no points in it', () => {
-    const shockadin = abilityOf('pally_shockadin', 'hammer_of_wrath')!;
-    expect(shockadin.castTimeMs).toBe(seconds(1));
-    expect(isInstantHammerOfWrath(shockadin)).toBe(false);
+    const plain = bookWith({}).find((a) => a.id === 'hammer_of_wrath')!;
+    expect(plain.castTimeMs).toBe(seconds(1));
+    expect(isInstantHammerOfWrath(plain)).toBe(false);
   });
 
   it('rolls on the RANGED table once instant, and on the spell table before', () => {
+    const plain = bookWith({}).find((a) => a.id === 'hammer_of_wrath')!;
     expect(hammerOfWrathTable(abilityOf('pally_ret', 'hammer_of_wrath')!)).toBe('ranged-special');
-    expect(hammerOfWrathTable(abilityOf('pally_shockadin', 'hammer_of_wrath')!)).toBe('spell');
+    expect(hammerOfWrathTable(plain)).toBe('spell');
+  });
+
+  it('is out of reach for both Shockadins, which is a TIER fact and not a preference', () => {
+    /*
+     * ==========================================================================
+     * IT WAS BRIEFLY IN BOTH TREES AND MEASURED **+18**, and it is unaffordable:
+     * Instrument of Law is tier 25 in Retribution, so it needs twenty-five
+     * points below it on top of Champion of the Light's three, and neither
+     * Shockadin has five spare -- the shield build has two free points and the
+     * two-hander one. Taking it costs both of Holy's tier-20 slots, which
+     * measured **-41** on the shield build.
+     *
+     * SO THE RET PALADIN KEEPS ITS INSTANT HAMMER OF WRATH AND THE SHOCKADINS
+     * DO NOT, which is what makes the assertion above about the TALENT rather
+     * than about the ability.
+     * ==========================================================================
+     */
+    for (const preset of ['pally_shockadin', 'pally_shockadin_2h']) {
+      expect(isInstantHammerOfWrath(abilityOf(preset, 'hammer_of_wrath')!), preset).toBe(false);
+    }
+    expect(isInstantHammerOfWrath(abilityOf('pally_ret', 'hammer_of_wrath')!)).toBe(true);
   });
 
   it('still scales with SPELL power, which the ranged table does not change', () => {

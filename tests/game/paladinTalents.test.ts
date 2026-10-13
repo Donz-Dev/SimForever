@@ -27,6 +27,7 @@ import {
   consecrationGround,
   improvedSealOfFuryMana,
 } from '../../src/game/auras/paladin';
+import { DIVINE_FAVOR_ABILITY } from '../../src/game/abilities/paladin';
 import { SANCTIFIED_JUDGEMENT_SHARE_PERCENT } from '../../src/game/reactions/paladinCasts';
 import {
   HOLY_SHIELD,
@@ -648,10 +649,48 @@ describe('Divine Favor', () => {
     expect(actor.auras.has('divine_favor')).toBe(false);
   });
 
-  it('is in the Shockadin list ABOVE Holy Shock, or it arms a spell already gone', () => {
-    const ids = PALADIN_SHOCKADIN.entries.map((e) => e.abilityId);
-    expect(ids).toContain('divine_favor');
-    expect(ids.indexOf('divine_favor')).toBeLessThan(ids.indexOf('holy_shock'));
+  it('has no duration, so its place in the list cannot arm the wrong spell', () => {
+    /*
+     * ==========================================================================
+     * THIS TEST USED TO ASSERT THE OPPOSITE, and the reasoning behind it was
+     * wrong rather than stale: "Divine Favor must sit ABOVE Holy Shock or it
+     * arms a spell already gone."
+     *
+     * THE AURA LASTS UNTIL IT IS SPENT. `durationMs: 0` is "no expiry", and the
+     * cast reaction that removes it fires on the Holy Shock that used it -- so
+     * the NEXT Holy Shock collects the crit whether Divine Favor was cast one
+     * global cooldown earlier or thirty seconds earlier. Position decides only
+     * WHEN the global cooldown is paid.
+     *
+     * THAT WAS WORTH **+13.5** AT THE BOTTOM OF THE LIST, and then the owner
+     * ruled that Divine Favor pays no global cooldown at all -- so the figure
+     * is a fact about a mechanic that has since changed, and every position is
+     * now inside +/-2.2 of every other. The entry went back where the owner
+     * put it.
+     *
+     * THE ASSERTION IS THE INVARIANT UNDER BOTH, which is why it survived the
+     * ruling: the aura has no expiry, so no ordering can arm the wrong spell.
+     * The ORDER is a rotation decision and does not belong in a test.
+     * ==========================================================================
+     */
+    expect(DIVINE_FAVOR.durationMs).toBe(0);
+    expect(PALADIN_SHOCKADIN.entries.map((e) => e.abilityId)).toContain('divine_favor');
+  });
+
+  it('starts no global cooldown, by the ruleset owner ruling so', () => {
+    /*
+     * "The Divine Favor talent/cooldown doesn't trigger the global cooldown."
+     * Swift Judgement is the other Paladin ability that says so, and this is a
+     * RULING rather than a measurement for the same reason: an ability wrongly
+     * taking a global cooldown still has the right cost, the right cooldown and
+     * the right effect, so the mistake is invisible everywhere except the DPS.
+     *
+     * BEING OFF IT MEANS ONE THING -- the ability does not START one -- and it
+     * is still BLOCKED by one already running, which is why there is nothing
+     * here about `castTimeMs`.
+     */
+    expect(DIVINE_FAVOR_ABILITY.triggersGcd).toBe(false);
+    expect(DIVINE_FAVOR_ABILITY.castTimeMs ?? 0).toBe(0);
   });
 
   it('is granted by the talent, so a build without it cannot cast it', () => {
@@ -835,8 +874,14 @@ describe('Consecrated Ground', () => {
         (e) => e.kind === 'abilityBonus' && e.key === CONSECRATED_GROUND_FLAG,
       ),
     ).toBe(true);
-    // No profile takes it, so every one of them lays the plain version.
-    for (const preset of ['pally_ret', 'pally_shockadin', 'prot_pally']) {
+    /*
+     * BOTH SHOCKADINS TAKE IT 2/2 NOW -- it measured **+66** on the two-hander,
+     * which is what moved it from "no profile takes it" to the first thing the
+     * spare Holy points buy. The other two still lay the plain one, which is
+     * what makes this an assertion about the TALENT rather than about
+     * Consecration.
+     */
+    for (const preset of ['pally_ret', 'prot_pally']) {
       expect(
         bareBuild(preset).abilities.get('consecration')?.bonuses?.[CONSECRATED_GROUND_FLAG],
         preset,

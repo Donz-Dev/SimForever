@@ -35,6 +35,95 @@ the tooling to be a bit more sophisticated as well."
 | 9 | **LW Ranged** and **LW Melee** -- 5/39/7 and 5/13/33 | **0.0 to the decimal on both**, and correctly so | 774.2 |
 | 9 | **Warlock** -- a CHOOSER for the sacrificed demon, and the 15% confirmed | **no figure moved**; 24 of 27 rows 0.0 to the decimal | **774.2** |
 | 10 | **Firelock** -- 5/11/35, a new list, and an AFTERMATH INDEX THAT WAS RIGHT BY LUCK | 891.4 -> 885.5 (**-5.9**), and **26 of 27 rows 0.0** | **774.0** |
+| 12 | **Shockadin** -- a fast 2H as an EXCLUSIVE alternative, both setups optimised, and A TALENT TIER RULE THAT WAS WRONG | 787.7 -> **856.0**, and the 2H at **933.2** as the 28th row | see below |
+
+**ROUND 11 IS MISSING FROM THAT TABLE ON PURPOSE AND NOT BY ARITHMETIC.** It is
+the tank case study -- Dire Bear Form's armor multiplier, the 75% armor cap and
+the crushing-blow ruling -- and it is written up on its own branch, which had
+not merged when this row was added. **Numbering this one 12 rather than taking
+the next free integer** is the thing that stops two branches both calling
+themselves 11, which is the clean-merge arithmetic failure CLAUDE.md documents
+and which has already cost this project a profile format version.
+
+## Round twelve: a second set of hands for the Shockadin
+
+**THE OWNER'S ASK, IN TWO HALVES.** First "add a fast 2H to the profile ... an
+alternative to the template gear, not a replacement ... the user should be able
+to swap between the 2H and the 1H+Shield at will", then "optimize both setups"
+-- enchants, consumables, talents and the list, with the E65 template gear held
+fixed apart from the weapons.
+
+| | was | now |
+| --- | --- | --- |
+| **Shockadin** (1H + shield) | 787.7 | **856.0** |
+| **Shockadin 2H** (the 28th profile) | -- | **933.2** |
+
+**THE TWO CONFIGURATIONS ARE EXCLUSIVE, AND THAT IS A RULING THAT CORRECTED THE
+FIRST ATTEMPT.** It shipped with both weapons in one set, on the reasoning that
+`liveEquipment` already strips whichever hands a style cannot fill -- true, the
+stats were never doubled, and not what was asked for: "You cannot ever have the
+stats of both active. It's one or the other ... Equipping a 2H weapon REMOVES
+the 1H+shield from the character planner equipped items." **"Resolved correctly
+at the point of use" and "cannot be expressed" are different guarantees**, and
+the equipment MAP is what a person reads off the planner. `equipExclusive` is
+that ruling where the planner enforces it, for every class and every style.
+
+So the alternative is a second PRESET, which it had to be anyway: the two setups
+want different TALENTS and a style flip cannot carry those.
+
+**THE WEAPON IS THE OWNER'S SPECIFICATION STRAIGHT THROUGH THE GENERATOR.** It
+is `speed: 2.0` on a two-hand plan and nothing else said, which gives 98-148 at
+2.00 for 61.5 dps -- the same dps as Seal Twist Ret's 177-266 at 3.60, which is
+what "rescaled to 2.0 swing speed with the same DPS" asks for.
+
+**AND THE OTHER 26 PROFILES ARE BIT-IDENTICAL**, in combat-log hash AND event
+count, over three seeds.
+
+**THE LARGEST SINGLE ITEM IS A TALENT NO PROFILE TOOK**: Consecrated Ground
+2/2, **+66**, because it is +10% Holy damage carried by the Consecration debuff
+and this build is three-quarters Holy. Its wording says "Holy SPELLS" and the
+implementation reaches the seal and Holy Strike too -- a defensible reading
+while nobody took it, and **a question for the owner now that it is the biggest
+talent on the profile**.
+
+## And a talent tier counts points BELOW it, which this project had wrong
+
+**FOUND BY THE OWNER ASKING FOR THE BUILD AS A LINK SO THEY COULD AUDIT IT**, and
+it is the best argument for that ask there could be: `tools/encode_talent_build.mjs`
+turned the allocation into a talentsforever.com URL, the calculator refunded six
+points, and said exactly why.
+
+`requirementsMet` counted every point in the tree against a talent's tier --
+including the talent's OWN ranks and its neighbours' in the same row. Two probes
+against the site settle the real rule:
+
+| | |
+| --- | --- |
+| 14 points below tier 15 + Divine Favor | refunded -- *"Requires 15 points in Holy -- 1 back"* |
+| 15 below + Divine Favor | accepted |
+| 14 below + one point in EACH of two tier-15 talents | **both** refunded, so same-tier points do not help |
+
+**THE OLD COMMENT CITED THE CALCULATOR FOR THE WRONG RULE**, with an example that
+cannot tell the two apart: "five points in row 0 open row 1" is true either way.
+The case that separates them is a tree that STOPS at the tier it is spending in
+-- which is what an optimiser produces and no hand-written build does.
+
+**IT COST NOTHING HISTORICALLY AND IT COST THIS ROUND 40 DPS.** The Shockadin
+trees were rebuilt legal, which is where 896.0 and 1008.2 became 856.0 and
+933.2; `pointsBelowTier` is the fix, `talentLegality.test.ts` pins both probes,
+and the test helper that pads an allocation to legality was padding to the loose
+rule too.
+
+**AND DIVINE FAVOR IS OFF THE GLOBAL COOLDOWN NOW**, by a ruling that arrived
+after the measuring and retired a finding rather than confirming one: moving the
+entry to the bottom of the list had been worth **+13.5** because once a fight it
+displaced a Consecration. Off the global cooldown every position is inside
++/-2.2 of every other, so the entry went back where the owner put it -- and
+removing it went from **+9.9** to **-9.7**. **A measured rotation decision is
+only as settled as the mechanic under it.**
+
+The full write-up, including the two findings that turned out to be noise, is in
+[docs/handoff/paladin.md](docs/handoff/paladin.md).
 
 **AND MORE ROWS CAN BE ADDED, WHICH IS THE POINT OF ITS BEING A TABLE** --
 there are fifteen lists left and the owner has said so. **THE HEADER IS
