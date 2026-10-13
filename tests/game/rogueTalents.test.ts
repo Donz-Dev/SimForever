@@ -103,10 +103,17 @@ describe('Lethality raises crit DAMAGE for a list of named abilities', () => {
   });
 
   it('reaches every ability it names and nothing it does not', () => {
+    /*
+     * `legalise`, because Lethality is TIER 10 of Assassination and Malice's
+     * five points sit at tier 0 -- five below it, not ten. That was legal while
+     * a tier counted the talent's own ranks and is not: `pointsBelowTier`
+     * counts strictly lower tiers, so this allocation is one `createPlayer`
+     * would strip, and the test read `undefined` rather than failing.
+     */
     const rogue = createPlayer({
       race: 'orc',
       characterClass: 'rogue',
-      talents: { malice: 5, lethality: 5 },
+      talents: legalise({ malice: 5, lethality: 5 }, 'rogue'),
     });
     for (const id of [
       'sinister_strike',

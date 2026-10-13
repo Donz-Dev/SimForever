@@ -911,100 +911,118 @@ const PALADIN_RETRIBUTION_TALENTS: TalentAllocation = {
 
 /*
  * ============================================================================
- * THE TWO SHOCKADIN TREES, 20 HOLY / 31 RETRIBUTION, AND THE HOLY TWENTY IS
- * FORCED WHILE ITS COMPOSITION IS NOT.
+ * THE TWO SHOCKADIN TREES, AND THE TIER RULE THAT SHAPES BOTH OF THEM.
  *
- * Holy Shock and Divine Precision are tier 20 and a tier counts every point in
- * the tree, so this build needs exactly twenty in Holy and may choose which
- * twenty. Champion of the Light is tier 25 in Retribution and takes three, so
- * Retribution must be at least 28; twenty from Holy and fifty-one in all put
- * the rest -- thirty-one -- there.
+ * A TALENT'S TIER COUNTS POINTS IN STRICTLY LOWER TIERS -- not its own ranks,
+ * and not its neighbours' in the same row. That is `pointsBelowTier`, and it
+ * was measured against talentsforever.com after a generated build URL was
+ * pasted in and came back with six points refunded. It is the entire shape of
+ * what follows, so it is written out as tiers rather than as one flat object:
  *
- * WHAT CHANGED FROM 23/0/28, AND WHY EACH POINT MOVED. Measured on the
- * two-hander over 600 paired iterations, as a stack rather than one at a time:
+ *   Holy Shock, Divine Precision, Consecrated Ground   tier 20
+ *   Vengeance, Two-Handed Weapon Specialization        tier 20 (Retribution)
+ *   Champion of the Light                              tier 25 (Retribution)
  *
- *   Healing Light 3 -> the spare Retribution points    `scope: 'healing'`, and
- *                      no Paladin profile heals. Three points worth provably
- *                      nothing, which is the only such certainty in the tree.
- *   Reverence 3 -> Consecrated Ground 2 + filler       **+49**. Reverence is
- *                      mana regeneration while casting and this build ends a
- *                      fight with about 3,200 mana unspent.
- *   Two-Handed Weapon Specialization 3/3               **+50** on the
- *                      two-hander, and nothing at all on the shield build,
- *                      which is the one talent that genuinely divides them.
- *   Instrument of Law 2/2                              **+18**. It takes
- *                      Hammer of Wrath's one-second cast to nothing, and a
- *                      cast resets the swing timer on a build that is half
- *                      swing damage.
- *   Vindication 2 -> 3                                 part of the above.
+ * SO ALMOST THE WHOLE TREE IS FORCED. Twenty below tier 20 in Holy to reach
+ * Holy Shock, twenty below tier 20 in Retribution to reach Vengeance, and
+ * twenty-five below tier 25 to reach Champion of the Light -- which leaves the
+ * SHIELD build two free points and the TWO-HANDER one.
  *
- * AND MANA IS NOT WHAT BINDS THIS BUILD, which is the finding the rest rests
- * on: swapping Benediction 5/5 for Deflection 5/5 measured **bit-identical
- * fights** -- not "worth nothing within the interval", but the same rolls in
- * the same order, which is the strongest statement this harness can make. So
- * the six (two-hander) or nine (shield) points left over sit in the mana
- * talents because there is nowhere better for them, not because they pay.
+ * AND THE TWO-HANDER HAS FEWER BECAUSE ITS TIER 20 IS FULLER. Vengeance and
+ * Two-Handed Weapon Specialization are both tier 20 and both wanted, which is
+ * six points there: twenty-five below tier 25 minus six leaves nineteen below
+ * tier 20, one short of what tier 20 needs. So Retribution goes to 29 and Holy
+ * to 22. That is not a preference, it is arithmetic, and it is the kind of
+ * thing a flat allocation hides.
+ * ----------------------------------------------------------------------------
+ * WHAT CHANGED FROM THE OWNER'S 23/0/28, measured on the two-hander over 600
+ * to 3,000 paired iterations:
  *
- * HOLY POWER WAS TRIED AND LOSES BY 80. 5/5 needs twenty-five points in Holy
- * before it, which puts Retribution under 28 and takes Champion of the Light
- * with it -- sixty percent of this build's Intellect as spell power is worth
- * more than fifteen percent crit on two abilities.
+ *   Consecrated Ground            the free points. +10% Holy damage carried by
+ *                                 the Consecration debuff, on a build that is
+ *                                 three-quarters Holy
+ *   Two-Handed Weapon Spec 3/3    the two-hander only, and it is what pushes
+ *                                 Retribution to 29
+ *   Vindication 2 -> 3            inside the forced twenty
+ *
+ * AND MANA IS NOT WHAT BINDS THIS BUILD, which is what makes the filler
+ * genuinely filler: swapping Benediction 5/5 for Deflection 5/5 measured
+ * **bit-identical fights** -- the same rolls in the same order, which is the
+ * strongest statement the harness can make. The profile ends a fight with
+ * about 3,200 mana unspent.
  * ============================================================================
  */
-const SHOCKADIN_HOLY_20: TalentAllocation = {
+
+/** Holy tiers 0-15: the twenty points that open tier 20. */
+const SHOCKADIN_HOLY_BELOW_20: TalentAllocation = {
   divine_strength: 5,
   divine_intellect: 5,
   improved_seals: 3,
   /*
-   * ONE POINT OF FILLER, and Spiritual Focus is as good as any: every tier-5
-   * and tier-10 Holy talent this build can reach is healing, fear duration or
-   * a dispel. It is here to make the twenty rather than to do anything.
+   * SIX OF THESE NINE ARE FILLER AND EVERY CANDIDATE IS DEAD. Holy's tiers 5
+   * and 10 offer healing, fear duration, a dispel, cast pushback and mana
+   * regeneration while casting; twenty points have to be here to reach Holy
+   * Shock at all. Reverence and Healing Light are what the owner's own build
+   * used, so they stay.
    */
-  spiritual_focus: 1,
+  reverence: 3,
+  healing_light: 3,
+  /*
+   * DIVINE FAVOR IS TIER 15 AND THEREFORE PART OF THE TWENTY, which is what
+   * makes it free: the point is one the tier requirement needs anyway, and the
+   * ability it grants is worth **+9.7** now that it starts no global cooldown.
+   */
   divine_favor: 1,
-  divine_precision: 2,
-  holy_shock: 1,
-  consecrated_ground: 2,
 };
 
-const PALADIN_SHOCKADIN_TALENTS: TalentAllocation = {
-  ...SHOCKADIN_HOLY_20,
+/** Retribution tiers 0-15: the twenty that open tier 20. */
+const SHOCKADIN_RET_BELOW_20: TalentAllocation = {
   improved_judgement: 2,
   conviction: 5,
   vindication: 3,
   sanctified_judgement: 3,
   sacred_arbiter: 1,
-  instrument_of_law: 2,
-  vengeance: 3,
-  champion_of_the_light: 3,
-  // The nine that have nowhere to go. See the note above.
+  // Six of filler. See the note above on why none of it can pay.
   benediction: 5,
-  holy_conduit: 2,
-  pursuit_of_justice: 2,
+  holy_conduit: 1,
 };
 
 /**
- * The same tree with Two-Handed Weapon Specialization in it, which is the only
- * talent in the class that reads the weapon this profile is named for.
+ * 1H AND SHIELD -- 23 Holy / 28 Retribution.
  *
- * THREE OF THE SHIELD BUILD'S FILLER POINTS PAY HERE AND THE REST STILL DO NOT,
- * which is why the two allocations are written out separately rather than
- * derived from one another: a reader comparing them should see one real
- * difference, not a diff across eleven keys.
+ * Twenty-two below Retribution's tier 20 rather than twenty, because Champion
+ * of the Light needs twenty-five below tier 25 and Vengeance alone only brings
+ * it to twenty-three. The two spare go into Holy Conduit and Pursuit of
+ * Justice, which is where Retribution's dead points live.
  */
-const PALADIN_SHOCKADIN_2H_TALENTS: TalentAllocation = {
-  ...SHOCKADIN_HOLY_20,
-  improved_judgement: 2,
-  conviction: 5,
-  vindication: 3,
-  sanctified_judgement: 3,
-  sacred_arbiter: 1,
-  instrument_of_law: 2,
-  two_handed_weapon_specialization: 3,
+const PALADIN_SHOCKADIN_TALENTS: TalentAllocation = {
+  ...SHOCKADIN_HOLY_BELOW_20,
+  holy_shock: 1,
+  consecrated_ground: 2,
+  ...SHOCKADIN_RET_BELOW_20,
+  holy_conduit: 2,
+  pursuit_of_justice: 1,
   vengeance: 3,
   champion_of_the_light: 3,
-  benediction: 5,
-  holy_conduit: 1,
+};
+
+/**
+ * THE FAST TWO-HANDER -- 22 Holy / 29 Retribution.
+ *
+ * Two-Handed Weapon Specialization is the only talent in the class that reads
+ * the weapon this profile is named for, and taking it beside Vengeance fills
+ * Retribution's tier 20 with six points. That forces the twenty below it to be
+ * exactly twenty, pushes the tree to 29, and leaves Holy one free point where
+ * the shield build has two -- so Consecrated Ground is 1/2 here and 2/2 there.
+ */
+const PALADIN_SHOCKADIN_2H_TALENTS: TalentAllocation = {
+  ...SHOCKADIN_HOLY_BELOW_20,
+  holy_shock: 1,
+  consecrated_ground: 1,
+  ...SHOCKADIN_RET_BELOW_20,
+  vengeance: 3,
+  two_handed_weapon_specialization: 3,
+  champion_of_the_light: 3,
 };
 
 const PALADIN_PROTECTION_TALENTS: TalentAllocation = {

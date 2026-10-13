@@ -439,16 +439,25 @@ describe('taking points back', () => {
   });
 
   it('refuses a removal that would strand a talent below it', () => {
+    /*
+     * SIX BELOW THE TIER, NOT FIVE IN THE TREE, and the difference is the rule
+     * this test now pins: a tier counts points in STRICTLY LOWER tiers, so
+     * Improved Charge's own point does not help hold its own row open. See
+     * `pointsBelowTier`.
+     *
+     * Improved Heroic Strike and Deflection are tier 0; Improved Charge is
+     * tier 5. Six below it means one can come out and the next cannot.
+     */
     let alloc = spendMany(warrior, {}, 'improved_heroic_strike', 3);
-    alloc = spendMany(warrior, alloc, 'deflection', 2);
+    alloc = spendMany(warrior, alloc, 'deflection', 3);
     alloc = spendMany(warrior, alloc, 'improved_charge', 1);
 
-    expect(pointsInTree(warrior, alloc, 'arms')).toBe(6);
+    expect(pointsInTree(warrior, alloc, 'arms')).toBe(7);
     expect(canUnspend(warrior, alloc, 'deflection')).toBe(true);
 
     const atFive = unspend(warrior, alloc, 'deflection');
-    expect(pointsInTree(warrior, atFive, 'arms')).toBe(5);
-    // Now exactly at the tier, so any further removal strands Improved Charge.
+    // Five BELOW the tier now, so any further removal strands Improved Charge.
+    expect(pointsInTree(warrior, atFive, 'arms')).toBe(6);
     expect(canUnspend(warrior, atFive, 'deflection')).toBe(false);
     expect(canUnspend(warrior, atFive, 'improved_heroic_strike')).toBe(false);
     expect(unspend(warrior, atFive, 'deflection')).toBe(atFive);

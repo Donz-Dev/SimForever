@@ -93,143 +93,49 @@ const removeEntry = (id: string): Apply =>
 const chain = (...applies: readonly Apply[]): Apply => (profile) =>
   applies.reduce((p, f) => f(p), profile);
 
-/* --------------------------------------------------------------- the trees */
 
-/**
- * THE HOLY SIDE IS FORCED AT TWENTY POINTS AND THE COMPOSITION IS NOT.
- *
- * Holy Shock and Divine Precision are tier 20, and a tier counts every point in
- * the tree -- so this build needs exactly 20 in Holy and may choose which 20.
- * `healing_light` is `scope: 'healing'` and no Paladin profile heals, so the
- * three points it carries are the only ones here that are provably worth
- * nothing; what replaces them is the question.
+
+
+
+
+
+/*
+ * The two trees as the presets hold them, by TIER, so a variant can move the
+ * free points without disturbing the forced forty-nine.
  */
-const HOLY_20 = {
+const HOLY_BELOW_20 = {
   divine_strength: 5,
   divine_intellect: 5,
   improved_seals: 3,
   reverence: 3,
+  healing_light: 3,
   divine_favor: 1,
-  divine_precision: 2,
-  holy_shock: 1,
 };
 
-/** The same twenty with Consecrated Ground in place of Reverence. */
-const HOLY_20_CONSECRATED = {
-  divine_strength: 5,
-  divine_intellect: 5,
-  improved_seals: 3,
-  spiritual_focus: 1,
-  divine_favor: 1,
-  divine_precision: 2,
-  holy_shock: 1,
-  consecrated_ground: 2,
-};
-
-/** Retribution to 31, with the two-hand specialization. Needs Holy at 20. */
-const RET_31_TWO_HAND = {
-  benediction: 5,
+const RET_BELOW_20 = {
   improved_judgement: 2,
-  holy_conduit: 2,
   conviction: 5,
-  vindication: 2,
+  vindication: 3,
   sanctified_judgement: 3,
-  pursuit_of_justice: 2,
   sacred_arbiter: 1,
+  benediction: 5,
+  holy_conduit: 1,
+};
+
+const RET_SHIELD = {
+  ...RET_BELOW_20,
+  holy_conduit: 2,
+  pursuit_of_justice: 1,
+  vengeance: 3,
+  champion_of_the_light: 3,
+};
+
+const RET_2H = {
+  ...RET_BELOW_20,
+  vengeance: 3,
   two_handed_weapon_specialization: 3,
-  vengeance: 3,
   champion_of_the_light: 3,
 };
-
-/** Retribution to 31 with nothing two-handed in it, for the shield build. */
-const RET_31_SHIELD = {
-  benediction: 5,
-  improved_judgement: 2,
-  holy_conduit: 2,
-  conviction: 5,
-  vindication: 3,
-  sanctified_judgement: 3,
-  pursuit_of_justice: 2,
-  sacred_arbiter: 1,
-  instrument_of_law: 2,
-  vengeance: 3,
-  champion_of_the_light: 3,
-};
-
-const RET_28 = {
-  benediction: 5,
-  improved_judgement: 2,
-  holy_conduit: 2,
-  conviction: 5,
-  vindication: 2,
-  sanctified_judgement: 3,
-  pursuit_of_justice: 2,
-  sacred_arbiter: 1,
-  vengeance: 3,
-  champion_of_the_light: 3,
-};
-
-
-/* --------------------------------------------------------- the champions */
-
-/**
- * THE HOLY TWENTY, BEST COMPOSITION FOUND.
- *
- * Reverence's three points are mana regeneration while casting, and this build
- * finishes a fight with about 3,200 mana unspent -- `Benediction 5 ->
- * Deflection 5` measured BIT-IDENTICAL FIGHTS, which is the strongest possible
- * statement that mana is not what binds here. So the mana talents are filler
- * and Consecrated Ground is what the points buy instead.
- */
-const HOLY_20_BEST = {
-  divine_strength: 5,
-  divine_intellect: 5,
-  improved_seals: 3,
-  divine_favor: 1,
-  divine_precision: 2,
-  holy_shock: 1,
-  consecrated_ground: 2,
-  spiritual_focus: 1,
-};
-
-/** Retribution 31 with every talent that does something, plus six of filler. */
-const RET_31_BEST_TWO_HAND = {
-  improved_judgement: 2,
-  conviction: 5,
-  vindication: 3,
-  sanctified_judgement: 3,
-  sacred_arbiter: 1,
-  instrument_of_law: 2,
-  two_handed_weapon_specialization: 3,
-  vengeance: 3,
-  champion_of_the_light: 3,
-  benediction: 5,
-  seal_of_command: 1,
-};
-
-const RET_31_BEST_SHIELD = {
-  improved_judgement: 2,
-  conviction: 5,
-  vindication: 3,
-  sanctified_judgement: 3,
-  sacred_arbiter: 1,
-  instrument_of_law: 2,
-  vengeance: 3,
-  champion_of_the_light: 3,
-  benediction: 5,
-  holy_conduit: 2,
-  pursuit_of_justice: 2,
-};
-
-const BEST_ENCHANTS = chain(
-  enchant('head', 900002),
-  enchant('legs', 900002),
-  enchant('neck', 900009),
-);
-
-const BEST_CONSUMABLES = consumable('blasted_lands', 'blasted_intellect');
-
-const CONSECRATION_UP = moveAbove('consecration', 'holy_shock');
 
 /* ------------------------------------------------------------- the groups */
 
@@ -289,294 +195,59 @@ export const VARIANT_GROUPS: Readonly<Record<string, readonly Variant[]>> = {
     { label: 'potion Major Mana (was Spellblasting)', apply: consumable('potion', 'major_mana_potion') },
   ],
 
-  talents: [
+  /*
+   * THE FREE POINTS, AND THERE ARE ONLY TWO OF THEM (one on the two-hander).
+   * Everything else in both trees is forced by the tier rule -- see
+   * `presets.ts`. These are the Holy tier-20 slots, and the only other place
+   * they can go is Instrument of Law, which costs the lot.
+   */
+  /*
+   * TWO-HANDED WEAPON SPECIALIZATION, PRICED AS THE WHOLE TREE SWAP IT IS.
+   * It cannot simply be removed: it and Vengeance fill Retribution's tier 20,
+   * and dropping it takes the tree back under the twenty-five Champion of the
+   * Light needs. So the comparison is the two-hander running the SHIELD's
+   * legal tree -- which is also the honest question, since that is the only
+   * other legal shape.
+   */
+  twoHandSpec: [
     {
-      label: 'Healing Light 3 -> 2H Weapon Spec 3  [20/0/31]',
-      apply: tree({ ...HOLY_20, ...RET_31_TWO_HAND }),
-    },
-    {
-      label: 'Healing Light 3 -> Instr of Law 2 + Vindication  [20/0/31]',
-      apply: tree({ ...HOLY_20, ...RET_31_SHIELD }),
-    },
-    {
-      label: 'Reverence 3 -> Consecrated Ground 2  [20/0/31] 2H',
-      apply: tree({ ...HOLY_20_CONSECRATED, ...RET_31_TWO_HAND }),
-    },
-    {
-      label: 'Reverence 3 -> Consecrated Ground 2  [20/0/31] shield',
-      apply: tree({ ...HOLY_20_CONSECRATED, ...RET_31_SHIELD }),
-    },
-    {
-      label: 'Consecrated Ground 2 only  [22/0/29]',
+      label: '2H profile on the SHIELD tree (no 2H Spec, CG 2/2)',
       apply: tree({
-        ...HOLY_20,
-        consecrated_ground: 2,
-        ...RET_28,
-        vindication: 3,
-      }),
-    },
-    {
-      label: 'HOLY POWER 5/5, no Champion of the Light  [30/0/21]',
-      apply: tree({
-        divine_strength: 5,
-        divine_intellect: 5,
-        improved_seals: 3,
-        reverence: 3,
-        divine_favor: 1,
-        divine_precision: 2,
+        ...HOLY_BELOW_20,
         holy_shock: 1,
         consecrated_ground: 2,
-        spiritual_focus: 2,
-        illumination: 1,
-        holy_power: 5,
-        benediction: 5,
-        improved_judgement: 2,
-        holy_conduit: 2,
-        conviction: 5,
-        vindication: 3,
-        sanctified_judgement: 3,
-        pursuit_of_justice: 1,
-      }),
-    },
-    {
-      label: 'Benediction 5 -> Deflection 5 (is mana binding?)',
-      apply: tree({ ...HOLY_20, healing_light: 3, ...RET_28, benediction: 0, deflection: 5 }),
-    },
-    {
-      /*
-       * SANCTIFIED JUDGEMENT CANNOT BE PRICED ON ITS OWN: Vengeance requires it
-       * at 3/3, so the two are one package and removing the mana return takes
-       * the stacking damage buff with it. The guard caught that rather than
-       * measuring a tree quietly short of its capstone.
-       */
-      label: 'Vengeance 3 + Sanctified Judgement 3 out  [20/0/31]',
-      apply: tree({
-        ...HOLY_20,
-        healing_light: 3,
-        ...RET_28,
-        sanctified_judgement: 0,
-        vengeance: 0,
-        deflection: 5,
-        seal_of_command: 1,
-      }),
-    },
-    {
-      label: 'Conviction 5 -> Deflection 5 (what is melee crit worth?)',
-      apply: tree({ ...HOLY_20, healing_light: 3, ...RET_28, conviction: 0, deflection: 5 }),
-    },
-    {
-      label: 'Divine Strength 5 -> 0, filler instead',
-      apply: tree({
-        ...HOLY_20,
-        divine_strength: 0,
-        spiritual_focus: 2,
-        unyielding_faith: 2,
-        voice_of_truth: 1,
-        healing_light: 3,
-        ...RET_28,
-        pursuit_of_justice: 0,
-        deflection: 2,
+        ...RET_SHIELD,
       }),
     },
   ],
 
-  /* The stack, one layer at a time, so the parts can be checked against the sum. */
-  champion2H: [
-    { label: '1. talents [20/0/31]', apply: tree({ ...HOLY_20_BEST, ...RET_31_BEST_TWO_HAND }) },
+  freePoints: [
     {
-      label: '2. + enchants (head/legs Haste, neck SP)',
-      apply: chain(tree({ ...HOLY_20_BEST, ...RET_31_BEST_TWO_HAND }), BEST_ENCHANTS),
+      label: 'shield: Divine Precision 2 (was Consecrated Ground 2)',
+      apply: tree({ ...HOLY_BELOW_20, holy_shock: 1, divine_precision: 2, ...RET_SHIELD }),
     },
     {
-      label: '3. + Blasted Lands Intellect',
-      apply: chain(tree({ ...HOLY_20_BEST, ...RET_31_BEST_TWO_HAND }), BEST_ENCHANTS, BEST_CONSUMABLES),
-    },
-    {
-      label: '4. + Consecration above Holy Shock',
-      apply: chain(
-        tree({ ...HOLY_20_BEST, ...RET_31_BEST_TWO_HAND }),
-        BEST_ENCHANTS,
-        BEST_CONSUMABLES,
-        CONSECRATION_UP,
-      ),
-    },
-    {
-      label: '4b. as 4, but Instrument of Law 2 -> filler',
-      apply: chain(
-        tree({
-          ...HOLY_20_BEST,
-          ...RET_31_BEST_TWO_HAND,
-          instrument_of_law: 0,
-          holy_conduit: 2,
-        }),
-        BEST_ENCHANTS,
-        BEST_CONSUMABLES,
-        CONSECRATION_UP,
-      ),
-    },
-    {
-      label: '4c. as 4, but Divine Strength 5 -> Divine Favor out + filler',
-      apply: chain(
-        tree({
-          ...HOLY_20_BEST,
-          divine_favor: 0,
-          unyielding_faith: 1,
-          ...RET_31_BEST_TWO_HAND,
-        }),
-        BEST_ENCHANTS,
-        BEST_CONSUMABLES,
-        CONSECRATION_UP,
-      ),
-    },
-  ],
-
-  championShield: [
-    { label: '1. talents [20/0/31]', apply: tree({ ...HOLY_20_BEST, ...RET_31_BEST_SHIELD }) },
-    {
-      label: '2. + enchants (head/legs Haste, neck SP)',
-      apply: chain(tree({ ...HOLY_20_BEST, ...RET_31_BEST_SHIELD }), BEST_ENCHANTS),
-    },
-    {
-      label: '3. + Blasted Lands Intellect',
-      apply: chain(tree({ ...HOLY_20_BEST, ...RET_31_BEST_SHIELD }), BEST_ENCHANTS, BEST_CONSUMABLES),
-    },
-    {
-      label: '4. + Consecration above Holy Shock',
-      apply: chain(
-        tree({ ...HOLY_20_BEST, ...RET_31_BEST_SHIELD }),
-        BEST_ENCHANTS,
-        BEST_CONSUMABLES,
-        CONSECRATION_UP,
-      ),
-    },
-  ],
-
-  /* ROUND TWO: single changes against the OPTIMISED preset. */
-  r2enchants: [
-    { label: 'gloves +1% Haste (was +20 Spell Power)', apply: enchant('gloves', 900002) },
-    { label: 'head +8 Intellect (was +1% Haste)', apply: enchant('head', 900006) },
-    { label: 'legs +8 Intellect (was +1% Haste)', apply: enchant('legs', 900006) },
-    { label: 'chest +4 Defense Skill (was +4 Stats)', apply: enchant('chest', 900016) },
-    { label: 'cloak +1% Dodge (was +5 Agility)', apply: enchant('cloak', 900001) },
-    { label: 'wrists +9 Agility (was +16 Spell Power)', apply: enchant('wrists', 900019) },
-  ],
-
-  r2consumables: [
-    { label: 'weapon effect +2% melee crit (was spell)', apply: consumable('weapon_effect', 'weapon_melee_crit') },
-    { label: 'potion Frenzy (was Spellblasting)', apply: consumable('potion', 'major_frenzy_potion') },
-    { label: 'blasted lands +25 Strength (was Intellect)', apply: consumable('blasted_lands', 'blasted_strength') },
-    { label: 'blasted lands +25 Spirit', apply: consumable('blasted_lands', 'blasted_spirit') },
-    { label: 'food +20 Intellect? (not offered) -> +20 Agility', apply: consumable('food', 'food_agility') },
-  ],
-
-  r2talents: [
-    {
-      label: '2H: Instrument of Law 2 -> Holy Conduit (control)',
+      label: 'shield: Consecrated Ground 1 + Divine Precision 1',
       apply: tree({
-        ...HOLY_20_BEST,
-        improved_judgement: 2,
-        conviction: 5,
-        vindication: 3,
-        sanctified_judgement: 3,
-        sacred_arbiter: 1,
-        two_handed_weapon_specialization: 3,
-        vengeance: 3,
-        champion_of_the_light: 3,
-        benediction: 5,
-        holy_conduit: 2,
-        pursuit_of_justice: 1,
+        ...HOLY_BELOW_20,
+        holy_shock: 1,
+        consecrated_ground: 1,
+        divine_precision: 1,
+        ...RET_SHIELD,
       }),
     },
     {
-      label: '2H: Vindication 3 -> 2, 1 into filler',
+      label: 'shield: Instrument of Law 2, nothing in Holy tier 20',
       apply: tree({
-        ...HOLY_20_BEST,
-        improved_judgement: 2,
-        conviction: 5,
-        vindication: 2,
-        sanctified_judgement: 3,
-        sacred_arbiter: 1,
+        ...HOLY_BELOW_20,
+        holy_shock: 1,
+        ...RET_SHIELD,
         instrument_of_law: 2,
-        two_handed_weapon_specialization: 3,
-        vengeance: 3,
-        champion_of_the_light: 3,
-        benediction: 5,
-        holy_conduit: 2,
       }),
     },
     {
-      label: '2H: Improved Judgement 2 -> filler',
-      apply: tree({
-        ...HOLY_20_BEST,
-        improved_judgement: 0,
-        conviction: 5,
-        vindication: 3,
-        sanctified_judgement: 3,
-        sacred_arbiter: 1,
-        instrument_of_law: 2,
-        two_handed_weapon_specialization: 3,
-        vengeance: 3,
-        champion_of_the_light: 3,
-        benediction: 5,
-        holy_conduit: 2,
-        pursuit_of_justice: 1,
-      }),
-    },
-    {
-      label: '2H: Sacred Arbiter 1 -> filler',
-      apply: tree({
-        ...HOLY_20_BEST,
-        improved_judgement: 2,
-        conviction: 5,
-        vindication: 3,
-        sanctified_judgement: 3,
-        sacred_arbiter: 0,
-        instrument_of_law: 2,
-        two_handed_weapon_specialization: 3,
-        vengeance: 3,
-        champion_of_the_light: 3,
-        benediction: 5,
-        holy_conduit: 2,
-      }),
-    },
-    {
-      label: '2H: Improved Seals 3 -> filler (what is it worth?)',
-      apply: tree({
-        ...HOLY_20_BEST,
-        improved_seals: 0,
-        unyielding_faith: 2,
-        voice_of_truth: 1,
-        improved_judgement: 2,
-        conviction: 5,
-        vindication: 3,
-        sanctified_judgement: 3,
-        sacred_arbiter: 1,
-        instrument_of_law: 2,
-        two_handed_weapon_specialization: 3,
-        vengeance: 3,
-        champion_of_the_light: 3,
-        benediction: 5,
-        holy_conduit: 1,
-      }),
-    },
-    {
-      label: '2H: Consecrated Ground 2 -> filler (control)',
-      apply: tree({
-        ...HOLY_20_BEST,
-        consecrated_ground: 0,
-        unyielding_faith: 2,
-        improved_judgement: 2,
-        conviction: 5,
-        vindication: 3,
-        sanctified_judgement: 3,
-        sacred_arbiter: 1,
-        instrument_of_law: 2,
-        two_handed_weapon_specialization: 3,
-        vengeance: 3,
-        champion_of_the_light: 3,
-        benediction: 5,
-        holy_conduit: 1,
-      }),
+      label: '2H: Divine Precision 1 (was Consecrated Ground 1)',
+      apply: tree({ ...HOLY_BELOW_20, holy_shock: 1, divine_precision: 1, ...RET_2H }),
     },
   ],
 

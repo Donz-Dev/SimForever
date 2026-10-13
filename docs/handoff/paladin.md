@@ -14,181 +14,157 @@ directory for what the census columns mean and how to reprint every figure below
 
 **THE OWNER ASKED FOR A SECOND SET OF HANDS AND THEN FOR BOTH TO BE OPTIMISED**
 -- "add a fast 2H to the profile ... an alternative to the template gear, not a
-replacement ... the user should be able to swap between the 2H and the
-1H+Shield at will", and then "optimize both setups", holding the E65 template
-gear fixed apart from the weapons.
+replacement", then "optimize both setups", holding the E65 template gear fixed
+apart from the weapons.
 
-| | was | now | |
-| --- | --- | --- | --- |
-| **Shockadin** (1H + shield) | 787.7 | **896.0** | **+108.3 REAL** |
-| **Shockadin 2H** (new) | -- | **1008.2** | **+112.2 over the shield build** |
-
-**AND THE OTHER 26 PROFILES ARE BIT-IDENTICAL.** `tools/rotation_fingerprint.ts`
-over three seeds: twenty-six rows match `origin/main` in combat-log hash AND
-event count, and the only two lines that differ are the Shockadin's own and the
-new row. That is the containment check for a change touching `benchmarkSets.ts`,
-`presetEnchants.ts`, `presets.ts` and the shared Paladin list.
+| | was | now |
+| --- | --- | --- |
+| **Shockadin** (1H + shield) | 787.7 | **856.0** |
+| **Shockadin 2H** (new) | -- | **933.2** |
 
 ### The weapon
 
 `98-148 damage at 2.00 speed, 61.5 dps, +16 Intellect, +18 Critical Strike
 Rating, +39 Spell Power` at E65.
 
-**EVERY NUMBER IN IT FALLS OUT OF THE GENERATOR**, which is why it is a weapon
-PLAN and not a hand-written item: `weaponDamage` takes the two-hand epic dps
-line and the speed and derives the range from them, so the owner's "similar to
-the Seal Twist Ret weapon, except rescaled to be 2.0 swing speed with the same
-DPS" is `speed: 2.0` on a two-hand plan and nothing else said. The Ret's
-177-266 at 3.60 and this one's 98-148 at 2.00 are the same 61.5 dps.
-
-**NOT A CASTER WEAPON, AND THAT IS WHAT "THE SAME DPS" DECIDES.** The Shockadin's
-one-hander trades 15.7 dps away for about 47 budget points of stats; a caster
-two-hander would do the same and come out at 45.7 dps, which is not the Ret's
-weapon rescaled.
+**EVERY NUMBER FALLS OUT OF THE GENERATOR**, which is why it is a weapon PLAN
+and not a hand-written item: `weaponDamage` derives the range from the two-hand
+epic dps line and the speed, so "similar to the Seal Twist Ret weapon, except
+rescaled to be 2.0 swing speed with the same DPS" is `speed: 2.0` on a two-hand
+plan and nothing else said. The Ret's 177-266 at 3.60 and this one are the same
+61.5 dps. **Not `caster: true`** -- that is what "the same DPS" decides, since a
+caster two-hander comes out at 45.7.
 
 ### The two configurations are EXCLUSIVE, which is a ruling and was a correction
 
-**THE FIRST VERSION HAD BOTH IN ONE SET.** The reasoning was that `twoHand` and
-`mainHand`/`shield` are different slots and `liveEquipment` already strips
-whichever ones a combat style cannot fill, so a set filling all three is a
-character holding one configuration with the other in its bags -- and flipping
-`combatStyle` is then the whole swap. Every step of that is true, the stats were
-never doubled, and **it is not what the owner asked for**:
+**THE FIRST VERSION PUT BOTH IN ONE SET**, reasoning that `liveEquipment`
+already strips whichever hands a style cannot fill. Every step of that is true,
+the stats were never doubled, and it is not what the owner asked for:
 
-> "You cannot ever have the stats of both active. It's one or the other, which I
-> hope I was explicit about. Equipping a 2H weapon REMOVES the 1H+shield from
-> the character planner equipped items."
+> "You cannot ever have the stats of both active. It's one or the other ...
+> Equipping a 2H weapon REMOVES the 1H+shield from the character planner
+> equipped items."
 
-**TWO LAYERS HAD TO AGREE AND ONLY ONE DID.** "Resolved correctly at the point of
-use" and "cannot be expressed" are different guarantees: the equipment MAP could
-carry a two-hander beside a one-hander, and the map is what a person reads off
-the planner. `equipExclusive` in `game/items/equipRules.ts` is the ruling where
-it is enforced -- equipping a two-hander removes the main hand, the off hand and
-the shield, and equipping any of those removes the two-hander.
+**"RESOLVED CORRECTLY AT THE POINT OF USE" AND "CANNOT BE EXPRESSED" ARE
+DIFFERENT GUARANTEES**, and the equipment MAP is what a person reads off the
+planner. `equipExclusive` in `game/items/equipRules.ts` is the ruling where it
+is enforced; the Gear panel and `benchmarkEquipmentFor` both go through it. It
+reads no combat style, because it is about what two HANDS can hold.
 
-**IT IS A RULE ABOUT THE HANDS AND NOT ABOUT THE STYLE**, which is why it lives
-beside the proficiency table rather than in `liveEquipment`: a caster holding a
-two-hander as a stat stick is a style question, and this is the same answer for
-every class.
+### A TALENT TIER COUNTS POINTS BELOW IT, which this project had wrong
 
-**SO THE ALTERNATIVE IS A SECOND PRESET**, and the swap is a click on the
-preset rail or the benchmark button after changing style. The two sets are the
-same eight armour pieces and the same two trinkets; only the hands differ.
+**FOUND BY PASTING A GENERATED BUILD URL INTO talentsforever.com**, which is the
+audit the owner asked for doing exactly its job: the calculator refunded six
+points and said why.
 
-### Where the +105 and +113 came from
-
-Measured as a stack under shared seeds, 600 to 3,000 paired iterations each,
-on the two-hander:
+`requirementsMet` asked `pointsInTree(...) < talent.tier` against the WHOLE
+allocation, so a talent's own ranks -- and its neighbours' in the same row --
+counted towards opening the row they sit in. The site disagrees, and two probes
+settle it exactly:
 
 | | |
 | --- | --- |
-| **Consecrated Ground 2/2** | **+66**. "+10% Holy damage against enemies in your Consecration", carried by the ground effect's own debuff -- so it is a multiplier on three quarters of this build's damage, not on one ability's ticks |
-| **Two-Handed Weapon Specialization 3/3** | **+50**, and exactly nothing on the shield build. The one talent that genuinely divides them |
-| **Improved Seals 3/3** | **+60**, and it was already taken -- priced here as the control |
+| 14 points below tier 15 + Divine Favor | refunded: *"Divine Favor -- Requires 15 points in Holy -- 1 back"* |
+| 15 points below tier 15 + Divine Favor | accepted, *"Points left: 0"* |
+| 14 below, plus a point in Infusion of Light AND one in Divine Favor | **both** refunded, not one -- so same-tier points do not help either |
+
+**THE OLD COMMENT CITED THE CALCULATOR FOR THE WRONG RULE** and gave an example
+that does not distinguish the two readings -- "five points in row 0 open row 1"
+is true either way. The case that separates them is a tree that STOPS at the
+tier it is spending in, which is what an optimiser produces and no hand-written
+build does. `pointsBelowTier` is the fix and `talentLegality.test.ts` pins both
+probes.
+
+### What the trees look like once the rule is right
+
+Almost everything is forced. Twenty below tier 20 in Holy to reach Holy Shock,
+twenty below tier 20 in Retribution to reach Vengeance, twenty-five below tier
+25 for Champion of the Light -- which leaves the shield build **two** free
+points and the two-hander **one**.
+
+| | spread | build |
+| --- | --- | --- |
+| Shockadin | **23/0/28** | <https://talentsforever.com/paladin/60/553030030001012--052253301010303-ilkjnprtmvABECHLNM-6> |
+| Shockadin 2H | **22/0/29** | <https://talentsforever.com/paladin/60/553030030001011--052153300013303-ilkjnprtmvABECHLNM-6> |
+
+**THE TWO-HANDER HAS ONE FEWER FREE POINT BECAUSE ITS TIER 20 IS FULLER.**
+Vengeance and Two-Handed Weapon Specialization are both tier 20 and both
+wanted; six points there leaves nineteen below tier 20, one short. So
+Retribution goes to 29 and Holy to 22, and Consecrated Ground is 1/2 rather
+than 2/2.
+
+**BOTH URLS WERE LOADED IN THE CALCULATOR AND READ BACK 23/0/28 AND 22/0/29,
+"all 51 spent".** `tools/encode_talent_build.mjs` generates them and round-trips
+every one through the decoder before printing; re-encoding Seal Twist Ret and
+Prot Pally reproduces the owner's own URLs byte for byte, perk tail included,
+which is what says the encoder is reporting the allocation rather than an
+encoding error.
+
+### Where the gains came from
+
+Measured under shared seeds, 600 to 3,000 paired iterations, on the legal trees:
+
+| | |
+| --- | --- |
+| **Consecrated Ground on the free points** | the best use of them by a distance: on the shield build the alternatives measure **-13.6** (1 + Divine Precision 1), **-39.7** (Divine Precision 2) and **-41.5** (Instrument of Law 2). On the two-hander its single point beats Divine Precision's by **16.2** |
+| **Two-Handed Weapon Specialization 3/3** | **+22.2**, priced as the tree swap it is -- it cannot simply be removed, since dropping it takes Retribution back under the twenty-five Champion of the Light needs |
 | **Consecration above the two ten-second strikes** | **+14** on both. It was LAST, and fired 6.0 times in a sixty second fight where 7.5 fit |
-| **Instrument of Law 2/2** | **+18**. Hammer of Wrath loses its one-second cast, which also moves it onto the ranged table and its 2x crit |
-| **Improved Judgement 2/2** | **+14**, already taken |
-| **Divine Favor off the global cooldown** | **+3.5** and **+2.3**, an owner ruling that arrived afterwards and retired a finding. See below |
 | **head and legs +1% Haste, neck +6 Spell Power** | **+9** together |
 | **Blasted Lands +25 Intellect** rather than Strength | **+3** |
-| **Sacred Arbiter 1/1** | **+10**, already taken |
-| **Vindication 2 -> 3** | +0.9 |
+| **Divine Favor off the global cooldown** | **+3.5** and **+2.3**, an owner ruling |
+
+**AND INSTRUMENT OF LAW IS OUT, WHICH THE TIER RULE DECIDED RATHER THAN A
+MEASUREMENT.** It measured +18 while the trees were illegal; it is tier 25 in
+Retribution, so taking it costs both of Holy's tier-20 slots, and that measures
+**-41**.
 
 ### Mana is not what binds this build, and the proof is not a DPS figure
 
-**SWAPPING BENEDICTION 5/5 FOR DEFLECTION 5/5 MEASURED BIT-IDENTICAL FIGHTS.**
-Not "worth nothing within the interval" -- the same rolls in the same order,
-which is the strongest statement the harness can make. The results page agrees:
-8,255 mana gained against 5,037 spent, and the Demonic Rune's 10% gate is never
-reached on either profile.
-
-**SO SIX POINTS (two-hander) OR NINE (shield) HAVE NOWHERE TO GO.** They sit in
-Benediction, Holy Conduit and Pursuit of Justice because every other
-Retribution talent this build can reach is parry, movement speed, an
-incapacitate or a reflect on a character nothing attacks -- and Protection's
-One-Handed Weapon Specialization, the one thing that would pay the shield
-build, is eighteen points away through a tree with nothing else in it.
-
-**THAT IS AN HONEST FINDING RATHER THAN A FAILURE TO LOOK**, and it is the gap
-between the two profiles stated a second way: the two-hander has somewhere to
-put three of them and the shield build does not.
-
-### The Holy twenty is forced and its composition is not
-
-Holy Shock and Divine Precision are tier 20, and a tier counts every point in
-the tree -- so the build needs **exactly twenty** in Holy and may choose which
-twenty. Champion of the Light is tier 25 in Retribution and takes three, so
-Retribution must be **at least 28**; twenty and fifty-one put the rest, 31,
-there.
-
-**HEALING LIGHT'S THREE POINTS WERE THE ONLY ONES PROVABLY WORTH NOTHING** --
-`scope: 'healing'`, and no Paladin profile heals. What replaced them was the
-question, and the answer was Consecrated Ground plus the spare Retribution
-points.
-
-**HOLY POWER WAS TRIED AND LOSES BY 80.** 5/5 needs twenty-five points in Holy
-before it, which puts Retribution under 28 and takes Champion of the Light with
-it. Sixty percent of this build's Intellect as spell power beats fifteen
-percent crit on two abilities, and it is not close.
+**SWAPPING BENEDICTION 5/5 FOR DEFLECTION 5/5 MEASURED BIT-IDENTICAL FIGHTS** --
+not "worth nothing within the interval", but the same rolls in the same order.
+The results page agrees: 8,255 mana gained against 5,037 spent, and the Demonic
+Rune's 10% gate is never reached on either profile. So the filler points sit in
+the mana talents because there is nowhere better, not because they pay.
 
 ### Divine Favor: a finding, and then a ruling that retired it
 
-**THE ARGUMENT THAT PUT THE ENTRY ABOVE HOLY SHOCK WAS WRONG AND THE PLACE WAS
-RIGHT**, which took two steps to establish.
+The entry sat above Holy Shock because the buff is "your NEXT Holy Shock", so
+arming it below the spell it arms would waste a global cooldown. **Every step of
+that is true and the conclusion does not follow**: `DIVINE_FAVOR.durationMs` is
+**0**, so the aura lasts until it is SPENT and the next Holy Shock collects the
+crit whether it was armed one global cooldown earlier or thirty seconds earlier.
+Position decided only WHEN the global cooldown was paid, and the bottom of the
+list measured **+13.5**.
 
-The entry sat there because the buff is "your NEXT Holy Shock", so arming it
-below the spell it arms would waste a global cooldown. **Every step of that is
-true and the conclusion does not follow.** `DIVINE_FAVOR.durationMs` is **0** --
-no expiry -- and the cast reaction that spends it fires on the Holy Shock that
-used it, so the next Holy Shock collects the crit whether Divine Favor went out
-one global cooldown earlier or thirty seconds earlier. Position decided only
-WHEN the global cooldown was paid, and the bottom of the list measured **+13.5**
-against the top, with deleting the entry at **+9.9**.
+**THEN THE OWNER RULED THAT IT PAYS NONE**: "the Divine Favor talent/cooldown
+doesn't trigger the global cooldown." At 3,000 paired iterations every position
+is now within **+/-2.2** of every other, so the entry went back where the owner
+put it. What is not free is having it at all: removing it went from **+9.9** to
+**-9.7**.
 
-**AND THEN THE OWNER RULED THAT IT PAYS NO GLOBAL COOLDOWN AT ALL**: "the Divine
-Favor talent/cooldown doesn't trigger the global cooldown." `triggersGcd: false`,
-the same declaration Swift Judgement carries, and worth **+3.5** on the shield
-build and **+2.3** on the two-hander.
-
-**THAT MAKES THE WHOLE POSITION QUESTION WORTH NOTHING.** Re-measured at 3,000
-paired iterations after the change, the top of the list, above Consecration,
-above Judgement and the very bottom are **all inside +/-2.2 of each other** --
-so the entry went back where the owner put it, and the list comment says the
-position is now a free choice rather than a measured one.
-
-**WHAT IS NOT FREE IS HAVING IT AT ALL**: removing the entry measures **-9.7**,
-where before the ruling it was worth **+9.9** to remove. The ability went from
-costing more than it gave to giving for almost nothing, and the sign flip is
-entirely the global cooldown.
-
-**A MEASURED ROTATION DECISION IS ONLY AS SETTLED AS THE MECHANIC UNDER IT**,
-which is what this is worth remembering for -- the same shape as the execute
-phase's 1,440ms-to-480ms gap moving when parry haste's direction was corrected.
+**A MEASURED ROTATION DECISION IS ONLY AS SETTLED AS THE MECHANIC UNDER IT.**
 
 ### Two things that were measured and turned out to be noise
 
 **+1% HASTE AND +8 INTELLECT ON THE HEAD AND LEGS ARE A TIE.** The first sweep
 read haste at +4.65 and Intellect at +0.86 against the +8 Strength that was
 there, which looked decisive; at 4,000 paired iterations the two are **+0.4
-+/- 1.4 on the shield build and -0.4 +/- 1.6 on the two-hander**. Haste moves
-the swing timer, so it decorrelates the paired fights -- a spread of 42 against
-an interval of 3 is two coin flips that agreed. Both beat +8 Strength by two to
-three, and which of them is taken does not matter.
++/- 1.4** and **-0.4 +/- 1.6**. Haste moves the swing timer, so it decorrelates
+the paired fights -- a spread of 42 against an interval of 3 is two coin flips
+that agreed. Both beat +8 Strength by two to three.
 
 **THE MECHANISM WAS CHECKED RATHER THAN THE FIGURE**, because "worth nothing"
 and "did not apply" render identically: auto-attack attempts a fight go
-**36.944 -> 37.275 -> 37.476** across 0%, 1% and 2%, so the enchant reaches the
-swing and is simply small.
+**36.944 -> 37.275 -> 37.476** across 0%, 1% and 2%.
 
 ### One thing to put in front of the owner
 
-**CONSECRATED GROUND IS NOW WORTH +66 AND ITS WORDING SAYS "HOLY SPELLS".** It
-is implemented as `damageTakenBySchool: { holy }` on the Consecration debuff --
-deliberately, and `paladinEffects.ts` says why -- which reaches every Holy hit
-the Paladin lands, **including Seal of Righteousness and Holy Strike's Holy
-half**. That was a defensible reading of a talent nobody took; it is a
-different question now that it is the largest single talent on the profile.
-
+**CONSECRATED GROUND'S WORDING SAYS "HOLY SPELLS".** It is implemented as
+`damageTakenBySchool: { holy }` on the Consecration debuff -- deliberately, and
+`paladinEffects.ts` says why -- which reaches every Holy hit the Paladin lands,
+**including Seal of Righteousness and Holy Strike's Holy half**. That was a
+defensible reading of a talent nobody took; it is both Shockadins' free points
+now.
 ---
 
 

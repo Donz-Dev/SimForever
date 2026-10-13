@@ -158,17 +158,25 @@ describe('Instrument of Law, and the Hammer of Wrath it makes', () => {
     expect(hammerOfWrathTable(plain)).toBe('spell');
   });
 
-  it('is taken 2/2 by both Shockadins, which is worth 18 DPS of Hammer of Wrath', () => {
+  it('is out of reach for both Shockadins, which is a TIER fact and not a preference', () => {
     /*
-     * THE BUILD FACT, PINNED SEPARATELY FROM THE RULE ABOVE. Instrument of Law
-     * measured **+18** on the two-handed Shockadin against the same tree with
-     * the two points in mana filler -- it removes the one-second cast, and a
-     * cast resets the swing timer on a build that is half swing damage, as well
-     * as moving the ability onto the ranged table and its 2x crit.
+     * ==========================================================================
+     * IT WAS BRIEFLY IN BOTH TREES AND MEASURED **+18**, and it is unaffordable:
+     * Instrument of Law is tier 25 in Retribution, so it needs twenty-five
+     * points below it on top of Champion of the Light's three, and neither
+     * Shockadin has five spare -- the shield build has two free points and the
+     * two-hander one. Taking it costs both of Holy's tier-20 slots, which
+     * measured **-41** on the shield build.
+     *
+     * SO THE RET PALADIN KEEPS ITS INSTANT HAMMER OF WRATH AND THE SHOCKADINS
+     * DO NOT, which is what makes the assertion above about the TALENT rather
+     * than about the ability.
+     * ==========================================================================
      */
     for (const preset of ['pally_shockadin', 'pally_shockadin_2h']) {
-      expect(isInstantHammerOfWrath(abilityOf(preset, 'hammer_of_wrath')!), preset).toBe(true);
+      expect(isInstantHammerOfWrath(abilityOf(preset, 'hammer_of_wrath')!), preset).toBe(false);
     }
+    expect(isInstantHammerOfWrath(abilityOf('pally_ret', 'hammer_of_wrath')!)).toBe(true);
   });
 
   it('still scales with SPELL power, which the ranged table does not change', () => {

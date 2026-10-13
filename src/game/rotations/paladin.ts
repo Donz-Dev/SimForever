@@ -345,10 +345,12 @@ export const PALADIN_SHOCKADIN: AplList = {
   { abilityId: 'holy_shock' },
   { abilityId: 'holy_strike' },
   /*
-   * HAMMER OF WRATH LAST, and Instrument of Law is what makes its position
-   * nearly free: both builds take the talent, which removes the one second
-   * cast, and a cast resets the swing timer on a profile that is half swing
-   * damage. Dropping the entry altogether measures **-20**.
+   * HAMMER OF WRATH LAST, and here it is the ONE-SECOND version: Instrument of
+   * Law is tier 25 in Retribution and neither Shockadin can afford it -- taking
+   * it costs both of Holy's tier-20 slots and measures **-41**. So this entry
+   * pays a cast that resets the swing timer on a build that is half swing
+   * damage, and is still worth having: dropping it measures **-20**, and the
+   * bottom of the list is where that cast is cheapest.
    */
   { abilityId: 'hammer_of_wrath' },
   ],

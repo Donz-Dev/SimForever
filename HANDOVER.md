@@ -35,7 +35,7 @@ the tooling to be a bit more sophisticated as well."
 | 9 | **LW Ranged** and **LW Melee** -- 5/39/7 and 5/13/33 | **0.0 to the decimal on both**, and correctly so | 774.2 |
 | 9 | **Warlock** -- a CHOOSER for the sacrificed demon, and the 15% confirmed | **no figure moved**; 24 of 27 rows 0.0 to the decimal | **774.2** |
 | 10 | **Firelock** -- 5/11/35, a new list, and an AFTERMATH INDEX THAT WAS RIGHT BY LUCK | 891.4 -> 885.5 (**-5.9**), and **26 of 27 rows 0.0** | **774.0** |
-| 12 | **Shockadin** -- a fast 2H as an EXCLUSIVE alternative, and both setups optimised | 787.7 -> **896.0**, and the 2H at **1008.2** as the 28th row | see below |
+| 12 | **Shockadin** -- a fast 2H as an EXCLUSIVE alternative, both setups optimised, and A TALENT TIER RULE THAT WAS WRONG | 787.7 -> **856.0**, and the 2H at **933.2** as the 28th row | see below |
 
 **ROUND 11 IS MISSING FROM THAT TABLE ON PURPOSE AND NOT BY ARITHMETIC.** It is
 the tank case study -- Dire Bear Form's armor multiplier, the 75% armor cap and
@@ -55,8 +55,8 @@ fixed apart from the weapons.
 
 | | was | now |
 | --- | --- | --- |
-| **Shockadin** (1H + shield) | 787.7 | **896.0** |
-| **Shockadin 2H** (the 28th profile) | -- | **1008.2** |
+| **Shockadin** (1H + shield) | 787.7 | **856.0** |
+| **Shockadin 2H** (the 28th profile) | -- | **933.2** |
 
 **THE TWO CONFIGURATIONS ARE EXCLUSIVE, AND THAT IS A RULING THAT CORRECTED THE
 FIRST ATTEMPT.** It shipped with both weapons in one set, on the reasoning that
@@ -85,6 +85,34 @@ and this build is three-quarters Holy. Its wording says "Holy SPELLS" and the
 implementation reaches the seal and Holy Strike too -- a defensible reading
 while nobody took it, and **a question for the owner now that it is the biggest
 talent on the profile**.
+
+## And a talent tier counts points BELOW it, which this project had wrong
+
+**FOUND BY THE OWNER ASKING FOR THE BUILD AS A LINK SO THEY COULD AUDIT IT**, and
+it is the best argument for that ask there could be: `tools/encode_talent_build.mjs`
+turned the allocation into a talentsforever.com URL, the calculator refunded six
+points, and said exactly why.
+
+`requirementsMet` counted every point in the tree against a talent's tier --
+including the talent's OWN ranks and its neighbours' in the same row. Two probes
+against the site settle the real rule:
+
+| | |
+| --- | --- |
+| 14 points below tier 15 + Divine Favor | refunded -- *"Requires 15 points in Holy -- 1 back"* |
+| 15 below + Divine Favor | accepted |
+| 14 below + one point in EACH of two tier-15 talents | **both** refunded, so same-tier points do not help |
+
+**THE OLD COMMENT CITED THE CALCULATOR FOR THE WRONG RULE**, with an example that
+cannot tell the two apart: "five points in row 0 open row 1" is true either way.
+The case that separates them is a tree that STOPS at the tier it is spending in
+-- which is what an optimiser produces and no hand-written build does.
+
+**IT COST NOTHING HISTORICALLY AND IT COST THIS ROUND 40 DPS.** The Shockadin
+trees were rebuilt legal, which is where 896.0 and 1008.2 became 856.0 and
+933.2; `pointsBelowTier` is the fix, `talentLegality.test.ts` pins both probes,
+and the test helper that pads an allocation to legality was padding to the loose
+rule too.
 
 **AND DIVINE FAVOR IS OFF THE GLOBAL COOLDOWN NOW**, by a ruling that arrived
 after the measuring and retired a finding rather than confirming one: moving the
