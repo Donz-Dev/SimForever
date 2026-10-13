@@ -35,6 +35,55 @@ the tooling to be a bit more sophisticated as well."
 | 9 | **LW Ranged** and **LW Melee** -- 5/39/7 and 5/13/33 | **0.0 to the decimal on both**, and correctly so | 774.2 |
 | 9 | **Warlock** -- a CHOOSER for the sacrificed demon, and the 15% confirmed | **no figure moved**; 24 of 27 rows 0.0 to the decimal | **774.2** |
 | 10 | **Firelock** -- 5/11/35, a new list, and an AFTERMATH INDEX THAT WAS RIGHT BY LUCK | 891.4 -> 885.5 (**-5.9**), and **26 of 27 rows 0.0** | **774.0** |
+| 12 | **Shockadin** -- a fast 2H carried BESIDE the shield, and both setups optimised | 787.7 -> **892.5**, and the 2H at **1005.9** as the 28th row | see below |
+
+**ROUND 11 IS MISSING FROM THAT TABLE ON PURPOSE AND NOT BY ARITHMETIC.** It is
+the tank case study -- Dire Bear Form's armor multiplier, the 75% armor cap and
+the crushing-blow ruling -- and it is written up on its own branch, which had
+not merged when this row was added. **Numbering this one 12 rather than taking
+the next free integer** is the thing that stops two branches both calling
+themselves 11, which is the clean-merge arithmetic failure CLAUDE.md documents
+and which has already cost this project a profile format version.
+
+## Round twelve: a second set of hands for the Shockadin
+
+**THE OWNER'S ASK, IN TWO HALVES.** First "add a fast 2H to the profile ... an
+alternative to the template gear, not a replacement ... the user should be able
+to swap between the 2H and the 1H+Shield at will", then "optimize both setups"
+-- enchants, consumables, talents and the list, with the E65 template gear held
+fixed apart from the weapons.
+
+| | was | now |
+| --- | --- | --- |
+| **Shockadin** (1H + shield) | 787.7 | **892.5** |
+| **Shockadin 2H** (the 28th profile) | -- | **1005.9** |
+
+**THE SWAP NEEDED NO NEW CAPABILITY AT ALL.** `twoHand` and `mainHand`/`shield`
+are different slots and `liveEquipment` already strips whichever ones a combat
+style cannot fill -- so both Shockadin sets now carry the one-hander, the
+shield AND the fast two-hander, both weapons are enchanted, and flipping
+`combatStyle` is the whole mechanism. The second PRESET exists on top of that
+because the two setups want different TALENTS, and a style flip cannot carry
+those.
+
+**THE WEAPON IS THE OWNER'S SPECIFICATION STRAIGHT THROUGH THE GENERATOR.** It
+is `speed: 2.0` on a two-hand plan and nothing else said, which gives 98-148 at
+2.00 for 61.5 dps -- the same dps as Seal Twist Ret's 177-266 at 3.60, which is
+what "rescaled to 2.0 swing speed with the same DPS" asks for.
+
+**AND THE OTHER 26 PROFILES ARE BIT-IDENTICAL**, in combat-log hash AND event
+count, over three seeds.
+
+**THE LARGEST SINGLE ITEM IS A TALENT NO PROFILE TOOK**: Consecrated Ground
+2/2, **+66**, because it is +10% Holy damage carried by the Consecration debuff
+and this build is three-quarters Holy. Its wording says "Holy SPELLS" and the
+implementation reaches the seal and Holy Strike too -- a defensible reading
+while nobody took it, and **a question for the owner now that it is the biggest
+talent on the profile**.
+
+The full write-up, including the +13.5 that came from moving Divine Favor to the
+BOTTOM of the list and the two findings that turned out to be noise, is in
+[docs/handoff/paladin.md](docs/handoff/paladin.md).
 
 **AND MORE ROWS CAN BE ADDED, WHICH IS THE POINT OF ITS BEING A TABLE** --
 there are fifteen lists left and the owner has said so. **THE HEADER IS

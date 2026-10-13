@@ -292,21 +292,64 @@ export const PALADIN_SHOCKADIN: AplList = {
    */
   { abilityId: 'seal_of_righteousness', condition: selfExpired('seal_of_righteousness') },
   /*
-   * DIVINE FAVOR ABOVE HOLY SHOCK, on the ruleset owner's choice, and the order
-   * is the whole of the entry: the buff is "your NEXT Holy Shock", so a Divine
-   * Favor cast below Holy Shock would spend its global cooldown arming a spell
-   * that had already gone. Its own `canCast` refuses a second one while the first
-   * is unspent, so the two-minute cooldown is what paces it rather than the list.
+   * ==========================================================================
+   * CONSECRATION ABOVE THE TWO TEN-SECOND STRIKES, which is where it was NOT,
+   * and it is worth **+14** on the two-hander and **+14** on the shield build.
    *
-   * IT COSTS A GLOBAL COOLDOWN FOR NO DAMAGE OF ITS OWN, which is why it is
-   * measured rather than argued about -- the same reason Hunter's Mark is in the
-   * melee Hunter's list at a known price.
+   * IT IS NOT ABOUT CONSECRATION'S OWN DAMAGE. The ability is on an eight
+   * second cooldown with an eight second ground effect, so at the bottom of
+   * the list it fired 6.0 times in a sixty second fight where 7.5 fit -- every
+   * cycle it lost a global cooldown to Holy Shock or Holy Strike, and the
+   * debuff spent a quarter of the fight off the target.
+   *
+   * AND CONSECRATED GROUND IS WHAT MAKES THAT EXPENSIVE. The talent is "+10%
+   * Holy damage against enemies in your Consecration", carried by the ground
+   * effect's own debuff -- so the gap in its uptime is a gap in a multiplier
+   * on three quarters of this build's damage, not just in one ability's ticks.
+   * The two changes are each worth about fifty on their own and the list order
+   * is what lets the talent collect.
+   *
+   * NOT ABOVE JUDGEMENT, which was measured and is **-9**: Judgement is on an
+   * eight second cooldown too, it carries the largest single coefficient this
+   * build has, and it is what keeps Judgement of the Crusader's +161 Holy
+   * spell power on the target.
+   * ==========================================================================
    */
-  { abilityId: 'divine_favor' },
+  { abilityId: 'consecration' },
   { abilityId: 'holy_shock' },
   { abilityId: 'holy_strike' },
+  /*
+   * HAMMER OF WRATH LAST, and Instrument of Law is what makes its position
+   * nearly free: both builds take the talent, which removes the one second
+   * cast, and a cast resets the swing timer on a profile that is half swing
+   * damage. Dropping the entry altogether measures **-20**.
+   */
   { abilityId: 'hammer_of_wrath' },
-  { abilityId: 'consecration' },
+  /*
+   * ==========================================================================
+   * DIVINE FAVOR LAST, WHICH IS THE OPPOSITE OF WHERE IT WAS AND IS WORTH
+   * **+13.5** OVER 3,000 PAIRED ITERATIONS.
+   *
+   * IT USED TO SIT ABOVE HOLY SHOCK, with the argument that the buff is "your
+   * NEXT Holy Shock" so arming it below the spell it arms would waste a global
+   * cooldown. **Every step of that is true and the conclusion is backwards.**
+   * The aura has no duration worth the name -- it lasts UNTIL IT IS SPENT -- so
+   * where the entry sits decides WHEN the global cooldown is paid and nothing
+   * else: the next Holy Shock collects the crit whether Divine Favor was cast
+   * one global cooldown earlier or thirty seconds earlier.
+   *
+   * SO IT BELONGS WHERE A GLOBAL COOLDOWN IS CHEAPEST, which is the bottom. At
+   * the top it displaced a Consecration or a Judgement once a fight; at the
+   * bottom it is cast in a gap, which this list now has few of and still has.
+   *
+   * AND IT BEATS DELETING THE ENTRY, which was the other candidate and measured
+   * **+9.9**: removing it gives the global cooldown back and gives the crit
+   * away, where moving it keeps both. That is why the owner's entry stays --
+   * the measurement was about its POSITION, not about whether the ability
+   * belongs in the list.
+   * ==========================================================================
+   */
+  { abilityId: 'divine_favor' },
   ],
 };
 

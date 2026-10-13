@@ -1,7 +1,7 @@
 # PALADIN DEEP DIVE
 
 **Class:** Paladin
-**Profiles:** Seal Twist Ret, Shockadin, Prot Pally
+**Profiles:** Seal Twist Ret, Shockadin, **Shockadin 2H**, Prot Pally
 **State:** the deep dive is done. **1 live gap, and it is not an engine gap** --
 it was 2, and client build 1.60.1.70170 removed the talent carrying the other.
 
@@ -9,6 +9,149 @@ Read [CLAUDE.md](../../CLAUDE.md) first, then [README.md](README.md) in this
 directory for what the census columns mean and how to reprint every figure below.
 
 ---
+
+## The Shockadin deep dive, and the fast two-hander beside it
+
+**THE OWNER ASKED FOR A SECOND SET OF HANDS AND THEN FOR BOTH TO BE OPTIMISED**
+-- "add a fast 2H to the profile ... an alternative to the template gear, not a
+replacement ... the user should be able to swap between the 2H and the
+1H+Shield at will", and then "optimize both setups", holding the E65 template
+gear fixed apart from the weapons.
+
+| | was | now | |
+| --- | --- | --- | --- |
+| **Shockadin** (1H + shield) | 787.7 | **892.5** | **+104.8 REAL** |
+| **Shockadin 2H** (new) | -- | **1005.9** | **+113.4 over the shield build** |
+
+**AND THE OTHER 26 PROFILES ARE BIT-IDENTICAL.** `tools/rotation_fingerprint.ts`
+over three seeds: twenty-six rows match `origin/main` in combat-log hash AND
+event count, and the only two lines that differ are the Shockadin's own and the
+new row. That is the containment check for a change touching `benchmarkSets.ts`,
+`presetEnchants.ts`, `presets.ts` and the shared Paladin list.
+
+### The weapon
+
+`98-148 damage at 2.00 speed, 61.5 dps, +16 Intellect, +18 Critical Strike
+Rating, +39 Spell Power` at E65.
+
+**EVERY NUMBER IN IT FALLS OUT OF THE GENERATOR**, which is why it is a weapon
+PLAN and not a hand-written item: `weaponDamage` takes the two-hand epic dps
+line and the speed and derives the range from them, so the owner's "similar to
+the Seal Twist Ret weapon, except rescaled to be 2.0 swing speed with the same
+DPS" is `speed: 2.0` on a two-hand plan and nothing else said. The Ret's
+177-266 at 3.60 and this one's 98-148 at 2.00 are the same 61.5 dps.
+
+**NOT A CASTER WEAPON, AND THAT IS WHAT "THE SAME DPS" DECIDES.** The Shockadin's
+one-hander trades 15.7 dps away for about 47 budget points of stats; a caster
+two-hander would do the same and come out at 45.7 dps, which is not the Ret's
+weapon rescaled.
+
+**IT IS CARRIED BY BOTH PROFILES RATHER THAN SWAPPED IN**, and nothing new was
+built for that: `twoHand` and `mainHand`/`shield` are different slots and
+`liveEquipment` already strips whichever ones the combat style cannot fill. So
+both Shockadin sets fill all three, both weapons are enchanted, and flipping
+`combatStyle` is the whole swap. The containment check is from the other side --
+changing the two-hand enchant on the shield profile runs **bit-identical
+fights**.
+
+### Where the +105 and +113 came from
+
+Measured as a stack under shared seeds, 600 to 3,000 paired iterations each,
+on the two-hander:
+
+| | |
+| --- | --- |
+| **Consecrated Ground 2/2** | **+66**. "+10% Holy damage against enemies in your Consecration", carried by the ground effect's own debuff -- so it is a multiplier on three quarters of this build's damage, not on one ability's ticks |
+| **Two-Handed Weapon Specialization 3/3** | **+50**, and exactly nothing on the shield build. The one talent that genuinely divides them |
+| **Improved Seals 3/3** | **+60**, and it was already taken -- priced here as the control |
+| **Consecration above the two ten-second strikes** | **+14** on both. It was LAST, and fired 6.0 times in a sixty second fight where 7.5 fit |
+| **Instrument of Law 2/2** | **+18**. Hammer of Wrath loses its one-second cast, which also moves it onto the ranged table and its 2x crit |
+| **Improved Judgement 2/2** | **+14**, already taken |
+| **Divine Favor to the BOTTOM of the list** | **+13.5** over 3,000 paired iterations. See below |
+| **head and legs +1% Haste, neck +6 Spell Power** | **+9** together |
+| **Blasted Lands +25 Intellect** rather than Strength | **+3** |
+| **Sacred Arbiter 1/1** | **+10**, already taken |
+| **Vindication 2 -> 3** | +0.9 |
+
+### Mana is not what binds this build, and the proof is not a DPS figure
+
+**SWAPPING BENEDICTION 5/5 FOR DEFLECTION 5/5 MEASURED BIT-IDENTICAL FIGHTS.**
+Not "worth nothing within the interval" -- the same rolls in the same order,
+which is the strongest statement the harness can make. The results page agrees:
+8,255 mana gained against 5,037 spent, and the Demonic Rune's 10% gate is never
+reached on either profile.
+
+**SO SIX POINTS (two-hander) OR NINE (shield) HAVE NOWHERE TO GO.** They sit in
+Benediction, Holy Conduit and Pursuit of Justice because every other
+Retribution talent this build can reach is parry, movement speed, an
+incapacitate or a reflect on a character nothing attacks -- and Protection's
+One-Handed Weapon Specialization, the one thing that would pay the shield
+build, is eighteen points away through a tree with nothing else in it.
+
+**THAT IS AN HONEST FINDING RATHER THAN A FAILURE TO LOOK**, and it is the gap
+between the two profiles stated a second way: the two-hander has somewhere to
+put three of them and the shield build does not.
+
+### The Holy twenty is forced and its composition is not
+
+Holy Shock and Divine Precision are tier 20, and a tier counts every point in
+the tree -- so the build needs **exactly twenty** in Holy and may choose which
+twenty. Champion of the Light is tier 25 in Retribution and takes three, so
+Retribution must be **at least 28**; twenty and fifty-one put the rest, 31,
+there.
+
+**HEALING LIGHT'S THREE POINTS WERE THE ONLY ONES PROVABLY WORTH NOTHING** --
+`scope: 'healing'`, and no Paladin profile heals. What replaced them was the
+question, and the answer was Consecrated Ground plus the spare Retribution
+points.
+
+**HOLY POWER WAS TRIED AND LOSES BY 80.** 5/5 needs twenty-five points in Holy
+before it, which puts Retribution under 28 and takes Champion of the Light with
+it. Sixty percent of this build's Intellect as spell power beats fifteen
+percent crit on two abilities, and it is not close.
+
+### Divine Favor belongs at the BOTTOM, which is the opposite of what was written
+
+The entry sat above Holy Shock with the argument that the buff is "your NEXT
+Holy Shock", so arming it below the spell it arms would waste a global cooldown.
+**Every step of that is true and the conclusion is backwards.**
+
+`DIVINE_FAVOR.durationMs` is **0** -- no expiry -- and the cast reaction that
+spends it fires on the Holy Shock that used it. So the next Holy Shock collects
+the crit whether Divine Favor was cast one global cooldown earlier or thirty
+seconds earlier, and the entry's position decides only WHEN the global cooldown
+is paid. At the bottom it is paid in a gap. **+13.5.**
+
+**AND IT BEATS DELETING THE ENTRY, WHICH WAS THE OTHER CANDIDATE AND MEASURED
++9.9**: removing it gives the global cooldown back and gives the crit away. The
+owner's entry stays, because the measurement was about its POSITION.
+
+### Two things that were measured and turned out to be noise
+
+**+1% HASTE AND +8 INTELLECT ON THE HEAD AND LEGS ARE A TIE.** The first sweep
+read haste at +4.65 and Intellect at +0.86 against the +8 Strength that was
+there, which looked decisive; at 4,000 paired iterations the two are **+0.4
++/- 1.4 on the shield build and -0.4 +/- 1.6 on the two-hander**. Haste moves
+the swing timer, so it decorrelates the paired fights -- a spread of 42 against
+an interval of 3 is two coin flips that agreed. Both beat +8 Strength by two to
+three, and which of them is taken does not matter.
+
+**THE MECHANISM WAS CHECKED RATHER THAN THE FIGURE**, because "worth nothing"
+and "did not apply" render identically: auto-attack attempts a fight go
+**36.944 -> 37.275 -> 37.476** across 0%, 1% and 2%, so the enchant reaches the
+swing and is simply small.
+
+### One thing to put in front of the owner
+
+**CONSECRATED GROUND IS NOW WORTH +66 AND ITS WORDING SAYS "HOLY SPELLS".** It
+is implemented as `damageTakenBySchool: { holy }` on the Consecration debuff --
+deliberately, and `paladinEffects.ts` says why -- which reaches every Holy hit
+the Paladin lands, **including Seal of Righteousness and Holy Strike's Holy
+half**. That was a defensible reading of a talent nobody took; it is a
+different question now that it is the largest single talent on the profile.
+
+---
+
 
 ## Client build 1.60.1.70170 — the class this patch cost the most
 

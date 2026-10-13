@@ -470,7 +470,7 @@ describe('the bow’s +2% crit reaches ranged attacks and nothing else', () => {
 });
 
 // ---------------------------------------------------------------------------
-// What each of the 27 profiles opens with
+// What each of the 28 profiles opens with
 // ---------------------------------------------------------------------------
 
 /**
@@ -553,9 +553,26 @@ const LOADOUTS: Readonly<Record<string, Readonly<Record<string, string>>>> = {
     head: '+1% Haste', neck: '+5 Strength', cloak: '+5 Agility', chest: '+4 Stats',
     wrists: '+9 Strength', gloves: '+1% Haste', legs: '+1% Haste', feet: '+7 Agility',
   },
+  /*
+   * BOTH SHOCKADINS WEAR THE SAME EIGHT, which is the point of them being two
+   * profiles with one gear template: the only difference between the rows is
+   * which weapon is in hand, and the weapon slots are not in this table.
+   *
+   * HASTE ON THE HEAD AND LEGS AND SPELL POWER ON THE NECK, which replaced +8
+   * Strength twice and +5 Strength once. Neither the head nor the leg slot
+   * offers spell power at all, so the question for a build that is
+   * three-quarters Holy is which physical line reaches furthest -- and haste
+   * shortens the swing that carries Seal of Righteousness. Haste and +8
+   * Intellect measured as a TIE at 4,000 paired iterations (+0.4 +/- 1.4 and
+   * -0.4 +/- 1.6); both beat +8 Strength by two to three.
+   */
   pally_shockadin: {
-    head: '+8 Strength', neck: '+5 Strength', cloak: '+5 Agility', chest: '+4 Stats',
-    wrists: '+16 Spell Power', gloves: '+20 Spell Power', legs: '+8 Strength', feet: '+7 Agility',
+    head: '+1% Haste', neck: '+6 Spell Power', cloak: '+5 Agility', chest: '+4 Stats',
+    wrists: '+16 Spell Power', gloves: '+20 Spell Power', legs: '+1% Haste', feet: '+7 Agility',
+  },
+  pally_shockadin_2h: {
+    head: '+1% Haste', neck: '+6 Spell Power', cloak: '+5 Agility', chest: '+4 Stats',
+    wrists: '+16 Spell Power', gloves: '+20 Spell Power', legs: '+1% Haste', feet: '+7 Agility',
   },
   prot_pally: {
     head: '+1% Dodge', neck: '+5 Defense Skill', cloak: '+1% Dodge', chest: '+4 Stats',
@@ -611,7 +628,7 @@ const ARMOUR_SLOTS: readonly EquipmentSlot[] = [
   'ranged',
 ];
 
-describe('what each of the 27 profiles opens with', () => {
+describe('what each of the 28 profiles opens with', () => {
   it('covers every preset, so a new one cannot slip through unenchanted', () => {
     expect(PROFILE_PRESETS.map((preset) => preset.id).sort()).toEqual(
       Object.keys(LOADOUTS).sort(),

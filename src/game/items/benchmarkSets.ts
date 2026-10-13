@@ -82,6 +82,31 @@ export interface BenchmarkTemplate {
   readonly armour: ArmourClass;
   readonly weapons: WeaponPlan;
   /**
+   * A SECOND SET OF WEAPONS THE SAME CHARACTER ALSO CARRIES, for a build whose
+   * hands are a CHOICE rather than a fact about the template.
+   *
+   * ============================================================================
+   * THE SHOCKADIN IS THE ONLY ONE, and it is the owner's ask in their own
+   * words: a fast two-hander is "an alternative to the template gear, not a
+   * replacement ... the user should be able to swap between the 2H and the
+   * 1H+Shield at will."
+   *
+   * IT IS A SWAP THE *STYLE* MAKES, AND NOTHING NEW HAD TO BE BUILT FOR IT.
+   * `twoHand` and `mainHand`/`shield` are different slots, and `liveEquipment`
+   * already strips whichever ones the combat style cannot fill -- so a set that
+   * fills all three is a character holding one configuration with the other in
+   * its bags, and flipping `combatStyle` between `one_hand_shield` and
+   * `two_hander` is the whole mechanism.
+   *
+   * THE ARMOUR IS UNTOUCHED BY THIS, which is the owner's other instruction
+   * ("don't change the gear beyond the two weapon swaps"). Nothing about a
+   * weapon plan reaches the eight armour slots, the trinkets or the rating
+   * spread -- `RATING_SLOTS` is armour and jewellery only -- so the alternate
+   * adds items and moves no stat on any existing one.
+   * ============================================================================
+   */
+  readonly alternateWeapons?: WeaponPlan;
+  /**
    * The two trinkets, where this build wants something other than the default.
    *
    * ABSENT MEANS THE DPS PAIR -- "28 crit plus a scaling damage stat" and
@@ -239,7 +264,35 @@ export const BENCHMARK_TEMPLATES: readonly BenchmarkTemplate[] = [
    * was raised rather than guessed at. Settled now, and the one-handed 20% is
    * what the Shockadin's seal reads.
    */
-  { presetId: 'pally_shockadin', characterClass: 'paladin', label: 'Shockadin', hit: 80, expertise: 0, preferred: ['Crit', 'Spell Power', 'Intellect', 'Strength', 'Stamina', 'Attack Power'], armour: 'Plate', weapons: { kind: 'oneHandShield', subclass: 'Mace', speed: 2.0, caster: true } },
+  /*
+   * ============================================================================
+   * AND THE FAST TWO-HANDER, CARRIED BESIDE THE ONE-HANDER RATHER THAN INSTEAD
+   * OF IT. The owner's ask: "add a fast 2H to the profile ... an alternative to
+   * the template gear, not a replacement ... similar to the Seal Twist Ret
+   * weapon, except rescaled to be 2.0 swing speed with the same DPS."
+   *
+   * EVERY NUMBER IN IT FALLS OUT OF THE GENERATOR, which is the whole reason
+   * this is a plan and not a hand-written item. `weaponDamage` takes the
+   * two-hand epic dps line and the speed and derives the range from them, so at
+   * E65 the Ret's 177-266 at 3.60 and this one's 98-148 at 2.00 are the SAME
+   * 61.5 dps -- "rescaled to 2.0 with the same dps" is literally `speed: 2.0`
+   * on a two-hand plan, with nothing else said.
+   *
+   * NOT `caster: true`, AND THAT IS WHAT "SAME DPS" DECIDES. The one-hander
+   * above trades 15.7 dps away for ~47 budget points of stats; a caster
+   * two-hander would do the same and come out at 45.7 dps, which is not the
+   * Ret's weapon rescaled. The owner named the Ret's weapon, and the Ret's
+   * weapon is a full-damage one.
+   *
+   * ITS THREE STATS ARE THIS BUILD'S OWN, not the Ret's. `template.preferred
+   * .slice(0, 3)` is what every benchmark weapon takes, so this one buys Crit,
+   * Spell Power and Intellect where the Ret's buys Crit, Strength and Spell
+   * Power -- the same slot, the same budget, the stats the build values.
+   * "Similar to" is read as the slot and the damage; the stat line is the one
+   * thing a benchmark set exists to derive.
+   * ============================================================================
+   */
+  { presetId: 'pally_shockadin', characterClass: 'paladin', label: 'Shockadin', hit: 80, expertise: 0, preferred: ['Crit', 'Spell Power', 'Intellect', 'Strength', 'Stamina', 'Attack Power'], armour: 'Plate', weapons: { kind: 'oneHandShield', subclass: 'Mace', speed: 2.0, caster: true }, alternateWeapons: { kind: 'twoHand', subclass: 'Mace', speed: 2.0 } },
   { presetId: 'prot_pally', characterClass: 'paladin', label: 'Prot Pally', hit: 50, expertise: 20, preferred: PROT_PALLY, armour: 'Plate', weapons: { kind: 'oneHandShield', subclass: 'Mace', caster: true }, trinkets: PROT_PALLY_TRINKETS },
   { presetId: 'bm_hunter', characterClass: 'hunter', label: 'BM Hunter', hit: 80, expertise: 0, preferred: HUNTER, armour: 'Mail', weapons: { kind: 'twoHand', subclass: 'Axe', ranged: true } },
   { presetId: 'lw_ranged', characterClass: 'hunter', label: 'LW Ranged', hit: 80, expertise: 0, preferred: HUNTER, armour: 'Mail', weapons: { kind: 'twoHand', subclass: 'Axe', ranged: true } },
@@ -248,6 +301,32 @@ export const BENCHMARK_TEMPLATES: readonly BenchmarkTemplate[] = [
   { presetId: 'warlock_smds', characterClass: 'warlock', label: 'SM/DS', hit: 120, expertise: 0, preferred: CASTER, armour: 'Cloth', weapons: { kind: 'twoHand', subclass: 'Staff', caster: true }, statStick: WAND_STICK },
   { presetId: 'warlock_firelock', characterClass: 'warlock', label: 'Firelock', hit: 110, expertise: 0, preferred: CASTER, armour: 'Cloth', weapons: { kind: 'twoHand', subclass: 'Staff', caster: true }, statStick: WAND_STICK },
   { presetId: 'shadow_priest', characterClass: 'priest', label: 'Shadow', characterName: 'Shadow Priest', hit: 110, expertise: 0, preferred: CASTER, armour: 'Cloth', weapons: { kind: 'twoHand', subclass: 'Staff', caster: true }, statStick: WAND_STICK },
+  /*
+   * ============================================================================
+   * SHOCKADIN 2H -- THE SHOCKADIN TEMPLATE WITH ITS TWO WEAPON PLANS THE OTHER
+   * WAY ROUND, and nothing else different at all.
+   *
+   * Same class, same hit, same preference order, same plate: every one of the
+   * eight armour slots, both trinkets and the whole 80-point hit spread is
+   * computed from those fields alone, so this set's armour is the Shockadin's
+   * armour to the point. That is the owner's constraint -- "don't change the
+   * gear beyond the two weapon swaps I've identified" -- expressed as a
+   * template rather than asserted in prose, and `benchmarkShape.test.ts` pins
+   * it.
+   *
+   * WHY A SECOND TEMPLATE AT ALL, when one profile can flip its style: because
+   * the two setups are allowed to want DIFFERENT TALENTS, ENCHANTS AND LISTS,
+   * and a preset is the only thing that can carry a whole build. The same
+   * argument made Combat Mut a profile rather than a note on Venom.
+   *
+   * APPENDED RATHER THAN INSERTED BESIDE THE SHOCKADIN, which looks untidy and
+   * is the point: `nextId` is `BENCHMARK_ID_BASE + templateIndex * 400 + ...`,
+   * so a template inserted in the middle renumbers every set after it and
+   * silently re-points every saved profile's items. The same rule the 900,000
+   * enchant block states in its own words.
+   * ============================================================================
+   */
+  { presetId: 'pally_shockadin_2h', characterClass: 'paladin', label: 'Shockadin 2H', hit: 80, expertise: 0, preferred: ['Crit', 'Spell Power', 'Intellect', 'Strength', 'Stamina', 'Attack Power'], armour: 'Plate', weapons: { kind: 'twoHand', subclass: 'Mace', speed: 2.0 }, alternateWeapons: { kind: 'oneHandShield', subclass: 'Mace', speed: 2.0, caster: true } },
 ];
 
 export const BENCHMARK_TEMPLATES_BY_PRESET: ReadonlyMap<string, BenchmarkTemplate> = new Map(
@@ -781,9 +860,16 @@ export function benchmarkItemsFor(
   }
 
   // ---- weapons ----
-  const w = template.weapons;
-  const caster = w.caster === true;
+  /*
+   * ONE EMITTER, CALLED ONCE PER WEAPON PLAN, so a template carrying an
+   * `alternateWeapons` gets the same arithmetic for both -- the caster trade,
+   * the shield's inherent block, the three preferred stats. A second copy of
+   * this block for the alternate is the shape this file already avoids
+   * everywhere else, and the half that drifts is always the one nobody
+   * measured.
+   */
   const addWeapon = (
+    caster: boolean,
     inventory: string,
     hand: 'oneHand' | 'twoHand' | 'ranged',
     slotClass: 'full' | 'oneHand' | 'ranged' | 'light',
@@ -817,12 +903,14 @@ export function benchmarkItemsFor(
     );
   };
 
+  const emitWeapons = (w: WeaponPlan) => {
+  const caster = w.caster === true;
   if (w.kind === 'twoHand') {
     const speed = w.speed ?? (w.subclass === 'Staff' ? SPEED.Staff : SPEED.twoHand);
-    addWeapon('Two-Hand', 'twoHand', 'full', w.subclass, speed);
+    addWeapon(caster, 'Two-Hand', 'twoHand', 'full', w.subclass, speed);
   } else if (w.kind === 'dualWield') {
-    addWeapon('One-Hand', 'oneHand', 'oneHand', w.subclass, SPEED[w.subclass] ?? SPEED.oneHand);
-    addWeapon('One-Hand', 'oneHand', 'oneHand', w.offSubclass!, SPEED[w.offSubclass!] ?? SPEED.oneHand);
+    addWeapon(caster, 'One-Hand', 'oneHand', 'oneHand', w.subclass, SPEED[w.subclass] ?? SPEED.oneHand);
+    addWeapon(caster, 'One-Hand', 'oneHand', 'oneHand', w.offSubclass!, SPEED[w.offSubclass!] ?? SPEED.oneHand);
   } else {
     /*
      * `w.speed` IS HONOURED HERE TOO, and it was not. The field exists for the
@@ -832,6 +920,7 @@ export function benchmarkItemsFor(
      * whose whole point is the speed.
      */
     addWeapon(
+      caster,
       'One-Hand',
       'oneHand',
       'oneHand',
@@ -891,8 +980,18 @@ export function benchmarkItemsFor(
   }
 
   if (w.ranged) {
-    addWeapon('Ranged', 'ranged', 'ranged', 'Bow', SPEED.ranged);
+    addWeapon(caster, 'Ranged', 'ranged', 'ranged', 'Bow', SPEED.ranged);
   }
+  };
+
+  emitWeapons(template.weapons);
+  /*
+   * THE ALTERNATE AFTER THE PRIMARY, which is the order `benchmarkEquipmentFor`
+   * reads: it fills `mainHand` with the FIRST one-hander it meets, so a
+   * template whose primary is the one-hander keeps it in the main hand and a
+   * template whose primary is the two-hander still lands its one-hander there.
+   */
+  if (template.alternateWeapons) emitWeapons(template.alternateWeapons);
 
   /*
    * ============================================================================
@@ -911,7 +1010,7 @@ export function benchmarkItemsFor(
    * ============================================================================
    */
   const stick = template.statStick;
-  if (stick && !w.ranged) {
+  if (stick && !template.weapons.ranged) {
     const budget = base * SLOT_MULTIPLIER.ranged;
     const fixed = new Map<BenchStat, number>();
     const assigned = hit.get('ranged');
@@ -1025,12 +1124,23 @@ export function benchmarkEquipmentFor(
       armourIndex += 1;
       continue;
     }
-    const w = template.weapons;
+    /*
+     * THE SECOND ONE-HANDER IS AN OFF HAND ONLY IF SOME PLAN DUAL-WIELDS, and
+     * reading `template.weapons.kind` alone stopped being enough when a
+     * template gained an `alternateWeapons`: a dual-wield primary with a
+     * one-hand-and-shield alternate would put the alternate's one-hander in the
+     * off hand, which is a weapon the character then swings. No template does
+     * that today -- the Shockadin's two plans are a two-hander and a
+     * one-hander-and-shield -- so this is a guard rather than a fix, written
+     * because the failure would be a silent extra weapon rather than an error.
+     */
+    const dualWields =
+      template.weapons.kind === 'dualWield' || template.alternateWeapons?.kind === 'dualWield';
     if (item.inventoryType === 'Two-Hand') put('twoHand', item.id);
     else if (item.inventoryType === 'Ranged') put('ranged', item.id);
     else if (item.subclass === 'Shield') put('shield', item.id);
     else if (!equipment.mainHand) put('mainHand', item.id);
-    else if (w.kind === 'dualWield') put('offHand', item.id);
+    else if (dualWields) put('offHand', item.id);
   }
   return equipment as Equipment;
 }

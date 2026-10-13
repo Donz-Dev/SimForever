@@ -54,7 +54,31 @@ export const PRESET_ENCHANTS: Readonly<
   mage_arcane: { chest: 900015, cloak: 900014, feet: 900025, gloves: 900023, head: 900002, legs: 900002, neck: 900009, twoHand: 900029, wrists: 900018 },
   mage_fire: { chest: 900015, cloak: 900014, feet: 900025, gloves: 900023, head: 900002, legs: 900002, neck: 900009, twoHand: 900029, wrists: 900018 },
   pally_ret: { chest: 900015, cloak: 900011, feet: 900026, gloves: 900002, head: 900002, legs: 900002, neck: 900008, twoHand: 20034, wrists: 900017 },
-  pally_shockadin: { chest: 900015, cloak: 900011, feet: 900026, gloves: 900023, head: 900005, legs: 900005, mainHand: 22749, neck: 900008, shield: 900030, wrists: 900018 },
+  /*
+   * BOTH WEAPON CONFIGURATIONS ARE ENCHANTED, on both Shockadin rows, because
+   * both sets now carry both. A loadout naming only the live slots would mean
+   * that flipping the combat style silently dropped the weapon enchant -- the
+   * same +2.4-to-+53.7 DPS hole the benchmark buttons already had once, and
+   * just as invisible, since an unenchanted weapon looks like one nobody
+   * enchanted.
+   */
+  /*
+   * HASTE ON THE HEAD AND LEGS, AND SPELL POWER ON THE NECK, which replaces
+   * +8 Strength twice and +5 Strength once.
+   *
+   * NEITHER THE HEAD NOR THE LEG SLOT OFFERS SPELL POWER AT ALL -- the options
+   * are dodge, haste and the five primaries -- so for a build that is
+   * three-quarters Holy the question is which of the physical lines reaches
+   * furthest. Haste shortens a swing, and the swing carries Seal of
+   * Righteousness: autos and the seal together are about half this build's
+   * damage, so 1% haste measured **+4.7** against +8 Strength's two.
+   *
+   * THE GLOVES AND WRISTS KEEP THEIR SPELL POWER, which is the same question
+   * answered the other way: +20 Spell Power beats 1% haste by about two, and
+   * +16 beats +9 Strength by five.
+   */
+  pally_shockadin: { chest: 900015, cloak: 900011, feet: 900026, gloves: 900023, head: 900002, legs: 900002, mainHand: 22749, neck: 900009, shield: 900030, twoHand: 900029, wrists: 900018 },
+  pally_shockadin_2h: { chest: 900015, cloak: 900011, feet: 900026, gloves: 900023, head: 900002, legs: 900002, mainHand: 22749, neck: 900009, shield: 900030, twoHand: 900029, wrists: 900018 },
   prot_pally: { chest: 900015, cloak: 900001, feet: 900027, gloves: 900023, head: 900001, legs: 900001, mainHand: 22749, neck: 900012, shield: 900030, wrists: 900016 },
   bm_hunter: { chest: 900015, cloak: 900011, feet: 900026, gloves: 900022, head: 900003, legs: 900003, neck: 900011, ranged: 900028, twoHand: 900031, wrists: 900019 },
   lw_ranged: { chest: 900015, cloak: 900011, feet: 900026, gloves: 900022, head: 900003, legs: 900003, neck: 900011, ranged: 900028, twoHand: 900031, wrists: 900019 },

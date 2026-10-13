@@ -648,10 +648,28 @@ describe('Divine Favor', () => {
     expect(actor.auras.has('divine_favor')).toBe(false);
   });
 
-  it('is in the Shockadin list ABOVE Holy Shock, or it arms a spell already gone', () => {
-    const ids = PALADIN_SHOCKADIN.entries.map((e) => e.abilityId);
-    expect(ids).toContain('divine_favor');
-    expect(ids.indexOf('divine_favor')).toBeLessThan(ids.indexOf('holy_shock'));
+  it('has no duration, so its place in the list cannot arm the wrong spell', () => {
+    /*
+     * ==========================================================================
+     * THIS TEST USED TO ASSERT THE OPPOSITE, and the reasoning behind it was
+     * wrong rather than stale: "Divine Favor must sit ABOVE Holy Shock or it
+     * arms a spell already gone."
+     *
+     * THE AURA LASTS UNTIL IT IS SPENT. `durationMs: 0` is "no expiry", and the
+     * cast reaction that removes it fires on the Holy Shock that used it -- so
+     * the NEXT Holy Shock collects the crit whether Divine Favor was cast one
+     * global cooldown earlier or thirty seconds earlier. Position decides only
+     * WHEN the global cooldown is paid.
+     *
+     * SO THE ENTRY BELONGS WHERE A GLOBAL COOLDOWN IS CHEAPEST, which is the
+     * bottom, and the move measured **+13.5 DPS over 3,000 paired iterations**
+     * on the two-hander. The assertion is the mechanism the list order rests on
+     * rather than the order itself -- the order is a rotation decision and this
+     * is an invariant.
+     * ==========================================================================
+     */
+    expect(DIVINE_FAVOR.durationMs).toBe(0);
+    expect(PALADIN_SHOCKADIN.entries.map((e) => e.abilityId)).toContain('divine_favor');
   });
 
   it('is granted by the talent, so a build without it cannot cast it', () => {
@@ -835,8 +853,14 @@ describe('Consecrated Ground', () => {
         (e) => e.kind === 'abilityBonus' && e.key === CONSECRATED_GROUND_FLAG,
       ),
     ).toBe(true);
-    // No profile takes it, so every one of them lays the plain version.
-    for (const preset of ['pally_ret', 'pally_shockadin', 'prot_pally']) {
+    /*
+     * BOTH SHOCKADINS TAKE IT 2/2 NOW -- it measured **+66** on the two-hander,
+     * which is what moved it from "no profile takes it" to the first thing the
+     * spare Holy points buy. The other two still lay the plain one, which is
+     * what makes this an assertion about the TALENT rather than about
+     * Consecration.
+     */
+    for (const preset of ['pally_ret', 'prot_pally']) {
       expect(
         bareBuild(preset).abilities.get('consecration')?.bonuses?.[CONSECRATED_GROUND_FLAG],
         preset,
